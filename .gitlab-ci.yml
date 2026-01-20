@@ -152,6 +152,18 @@ linux-nox-sdk_official_snapshot:
       - build/_CPack_Packages/
     expire_in: 1day
 
+linux-nox-sdk_official_release:
+  image: onelab/debian.buster
+  variables:
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_OCC_CAF=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+  <<: *linux_official
+  only:
+    - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
+
 # --------------------------------------------
 # Official Windows builds (master branch only)
 # --------------------------------------------

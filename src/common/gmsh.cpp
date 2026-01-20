@@ -1380,7 +1380,7 @@ gmsh::model::mesh::partition(const int numPart,
       if(el)
         epart.push_back(std::make_pair(el, partitions[i]));
       else
-        Msg::Error("Unknown element %d", elementTags[i]);
+        Msg::Error("Unknown element %zu", elementTags[i]);
     }
   }
   GModel::current()->partitionMesh(
@@ -1802,7 +1802,7 @@ gmsh::model::mesh::removeElements(const int dim, const int tag,
   else {
     for(auto t : elementTags) {
       MElement *e = GModel::current()->getMeshElementByTag(t);
-      if(!e) { Msg::Error("Unknown element %d", t); }
+      if(!e) { Msg::Error("Unknown element %zu", t); }
       else {
         ge->removeElement(e, true);
       }
@@ -2312,7 +2312,7 @@ GMSH_API void gmsh::model::mesh::getElement(const std::size_t elementTag,
   int entityTag;
   MElement *e = GModel::current()->getMeshElementByTag(elementTag, entityTag);
   if(!e) {
-    Msg::Error("Unknown element %d", elementTag);
+    Msg::Error("Unknown element %zu", elementTag);
     return;
   }
   elementType = e->getTypeForMSH();
@@ -2389,7 +2389,7 @@ GMSH_API void gmsh::model::mesh::getLocalCoordinatesInElement(
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
   if(!e) {
     u = v = w = 0.;
-    Msg::Error("Unknown element %d", elementTag);
+    Msg::Error("Unknown element %zu", elementTag);
     return;
   }
   double xyz[3] = {x, y, z}, uvw[3];
@@ -2697,7 +2697,7 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
   for(size_t k = begin; k < end; k++) {
     MElement *e = GModel::current()->getMeshElementByTag(elementTags[k]);
     if(!e) {
-      Msg::Error("Unknown element %d", elementTags[k]);
+      Msg::Error("Unknown element %zu", elementTags[k]);
       elementQualities[k] = 0.;
       continue;
     }
@@ -3093,7 +3093,7 @@ GMSH_API void gmsh::model::mesh::getJacobian(
   if(!_checkInit()) return;
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
   if(!e) {
-    Msg::Error("Unknown element %d", elementTag);
+    Msg::Error("Unknown element %zu", elementTag);
     return;
   }
   int numPoints = localCoord.size() / 3;
@@ -3782,6 +3782,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
   }
 
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  if(!e) {
+    Msg::Error("Unknown element %zu", elementTag);
+    return;
+  }
   int elementType = e->getTypeForMSH();
   int familyType = ElementType::getParentType(elementType);
 
@@ -3905,7 +3909,7 @@ gmsh::model::mesh::getEdges(const std::vector<std::size_t> &nodeTags,
         edgeOrientations[i] = 0;
     }
     else {
-      Msg::Error("Unknown mesh node %d or %d", n0, n1);
+      Msg::Error("Unknown node %d or %d", n0, n1);
     }
   }
 }
@@ -3939,7 +3943,7 @@ GMSH_API void gmsh::model::mesh::getFaces(
       faceTags[i] = GModel::current()->getMFace(v0, v1, v2, v3, face);
     }
     else {
-      Msg::Error("Unknown mesh node %d, %d or %d", n0, n1, n2);
+      Msg::Error("Unknown node %d, %d or %d", n0, n1, n2);
     }
   }
 }
@@ -4030,7 +4034,7 @@ gmsh::model::mesh::addEdges(const std::vector<std::size_t> &edgeTags,
     for(int j = 0; j < 2; j++) {
       v[j] = m->getMeshVertexByTag(edgeNodes[2 * i + j]);
       if(!v[j]) {
-        Msg::Error("Unknown mesh node %zu", edgeNodes[2 * i + j]);
+        Msg::Error("Unknown node %zu", edgeNodes[2 * i + j]);
         return;
       }
     }
@@ -4059,7 +4063,7 @@ gmsh::model::mesh::addFaces(const int faceType,
     for(int j = 0; j < faceType; j++) {
       v[j] = m->getMeshVertexByTag(faceNodes[faceType * i + j]);
       if(!v[j]) {
-        Msg::Error("Unknown mesh node %zu", faceNodes[faceType * i + j]);
+        Msg::Error("Unknown node %zu", faceNodes[faceType * i + j]);
         return;
       }
     }
@@ -4351,6 +4355,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     return;
   }
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  if(!e) {
+    Msg::Error("Unknown element %zu", elementTag);
+    return;
+  }
   int elementType = e->getTypeForMSH();
   int familyType = ElementType::getParentType(elementType);
 

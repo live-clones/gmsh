@@ -1458,7 +1458,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::map<MVertex *, BDS_Point *> recoverMapInv;
   std::vector<GEdge *> edges =
     replacementEdges ? *replacementEdges : gf->edges();
-    
+
   //  separateLoopsToIsolatedEdges (edges, edges );
 
   FILE *fdeb = nullptr;
@@ -1477,6 +1477,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       if(fdeb != nullptr) fclose(fdeb);
       return false;
     }
+#pragma omp critical // degeneratedVertices is not thread safe
     for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
       MVertex *v1 = (*ite)->lines[i]->getVertex(0);
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);

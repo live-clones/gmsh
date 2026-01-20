@@ -200,7 +200,7 @@ struct doubleXstring{
 %token tDefineString tSetNumber tSetTag tSetString
 %token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
-%token tRectangle tDisk tWire tGeoEntity tNormal
+%token tRectangle tDisk tWire tGeoEntity tNormal tCurvature
 %token tCharacteristic tLength tParametric tElliptic
 %token tRefineMesh tRecombineMesh tAdaptMesh tTransformMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
@@ -6125,6 +6125,46 @@ FExpr_Multi :
         yymsg(0, "Surface %d does not exist", tag);
       }
     }
+
+  | tCurvature tSurface '{' FExpr '}' tParametric '{' FExpr ',' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      int tag = (int)$4;
+      GFace *gf = GModel::current()->getFaceByTag(tag);
+      if(gf) {
+        SPoint2 param($8, $10);
+        double c = gf->curvatureMax(param);
+        List_Add($$, &c);
+      }
+      else {
+        yymsg(0, "Surface %d does not exist", tag);
+      }
+    }
+
+  | tCurvature tCurve '{' FExpr '}' tParametric '{' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      int tag = (int)$4;
+      GEdge *ge = GModel::current()->getEdgeByTag(tag);
+      if(ge) {
+        double c = ge->curvature(8);
+        List_Add($$, &c);
+      }
+      else {
+        yymsg(0, "Curve %d does not exist", tag);
+      }
+    }
+
   | tParametric tPoint '{' FExpr '}' tIn tSurface '{' FExpr '}'
     {
       if(GModel::current()->getOCCInternals() &&

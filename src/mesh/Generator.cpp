@@ -829,6 +829,8 @@ static void Mesh3D(GModel *m)
     }
   }
 
+  bool hexDominant = false;
+
   for(std::size_t i = 0; i < connected.size(); i++) {
     if(CTX::instance()->abortOnError && Msg::GetErrorCount()) {
       Msg::Warning("Aborted 3D meshing");
@@ -857,6 +859,7 @@ static void Mesh3D(GModel *m)
 
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
                              gr->meshAttributes.recombine3D)) {
+        hexDominant = true;
         meshCombine3D(gr);
         RelocateVertices(gr, CTX::instance()->mesh.nbSmoothing);
       }
@@ -864,7 +867,9 @@ static void Mesh3D(GModel *m)
 #endif
   }
 
-  MakeHybridHexTetMeshConformalThroughTriHedron(m);
+  if(hexDominant)
+    MakeHybridHexTetMeshConformalThroughTriHedron(m);
+
   // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 

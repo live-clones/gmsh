@@ -152,6 +152,7 @@ CreateTopology          return tCreateTopology;
 CurrentDir              return tCurrentDirectory;
 CurrentDirectory        return tCurrentDirectory;
 CurrentFileName         return tCurrentFileName;
+Curvature               return tCurvature;
 Curve                   return tCurve;
 Cylinder                return tCylinder;
 
