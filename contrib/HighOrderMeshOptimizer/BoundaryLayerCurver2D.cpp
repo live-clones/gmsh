@@ -3744,7 +3744,7 @@ namespace BoundaryLayerCurver {
   }
 
 
-  bool dev_reorient_normals(VecPairMElemVecMElem &columns, const GFace *gface,
+  void dev_reorient_normals(VecPairMElemVecMElem &columns, const GFace *gface,
                              const GEdge *gedge, const SVector3 &normal)
   {
     for(auto &column : columns) {
