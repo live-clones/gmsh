@@ -1176,6 +1176,7 @@ namespace {
       params.activateALP = p.newAlgoActivateALP;
       params.useAngularInterp = p.newAlgoUseAngularInterp;
       params.smoothIntermediate = p.newAlgoSmoothIntermediate;
+      params.backpropStrategy = p.newAlgoBackpropStrategy;
       if(normal.norm() > .5) {
         curve2DBoundaryLayer(params, bndEl2column, normal,
                              dynamic_cast<GEdge *>(bndEnt));

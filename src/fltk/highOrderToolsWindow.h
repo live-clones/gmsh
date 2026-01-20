@@ -25,7 +25,7 @@ public:
   Fl_Box *box;
   Fl_Check_Button *butt[10];
   Fl_Value_Input *value[15];
-  Fl_Choice *choice[5];
+  Fl_Choice *choice[6];
   Fl_Button *push[3];
 
 public:

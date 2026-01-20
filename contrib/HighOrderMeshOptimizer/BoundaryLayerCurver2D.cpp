@@ -3625,41 +3625,45 @@ namespace BoundaryLayerCurver {
       }
     }
 
-    double gamma = params.endLinearizationFactor;
-    double start = params.backpropLimit;
-    int start_index = -1;
-    int N = (int)stackEdges.size();
-    if(gamma) {
-      double coeff = 0, max_displ = 0;
-      coeff = EdgeCurver2D::match_gamma_simpler(gamma, &stackEdges.back(), gface, normal);
-      // max_displ = EdgeCurver2D::match_gamma_simpler2(gamma, &stackEdges.back(), gface, normal);
-      std::cout << "coeff = " << coeff << std::endl;
-      for(int i = 1; i < N - 1; ++i) {
-        double c = 0;
-        double dx = 0;
-        if(relativePositions[i] > start) {
-          c = coeff / (1 - start) * (relativePositions[i] - start);
-          dx = max_displ / (1 - start) * (relativePositions[i] - start);
-          // if(start_index == -1) start_index = i - 1;
-          // c = coeff / (N-1 - start_index) * (i - start_index);
-          // dx = max_displ / (N-1 - start_index) * (i - start_index);
-          std::cout << "c[" << i << "] = " << c << std::endl;
-        }
-        // EdgeCurver2D::linearize(c, &stackEdges[i], gface, normal);
-        EdgeCurver2D::_reduceCurving(&stackEdges[i], c, gface);
-        // EdgeCurver2D::_reduceCurving2(&stackEdges[i], dx, gface);
     if(params.endLinearizationFactor > 0.0) {
-      InteriorEdgeCurver::linearizeEndOfBL(params, stackEdges, relativePositions, gface, normal);
-    }
+      switch(params.backpropStrategy) {
+      case 0:
+        InteriorEdgeCurver::linearizeEndOfBL(params, stackEdges, relativePositions, gface, normal);
+        break;
+      case 1:
+        double gamma = params.endLinearizationFactor;
+        double start = params.backpropLimit;
+        int start_index = -1;
+        int N = (int)stackEdges.size();
+        if(gamma) {
+          double coeff = 0, max_displ = 0;
+          coeff = EdgeCurver2D::match_gamma_simpler(gamma, &stackEdges.back(), gface, normal);
+          // max_displ = EdgeCurver2D::match_gamma_simpler2(gamma, &stackEdges.back(), gface, normal);
+          // std::cout << "coeff = " << coeff << std::endl;
+          for(int i = 1; i < N - 1; ++i) {
+            double c = 0;
+            double dx = 0;
+            if(relativePositions[i] > start) {
+              c = coeff / (1 - start) * (relativePositions[i] - start);
+              dx = max_displ / (1 - start) * (relativePositions[i] - start);
+              // if(start_index == -1) start_index = i - 1;
+              // c = coeff / (N-1 - start_index) * (i - start_index);
+              // dx = max_displ / (N-1 - start_index) * (i - start_index);
+              // std::cout << "c[" << i << "] = " << c << std::endl;
+            }
+            // EdgeCurver2D::linearize(c, &stackEdges[i], gface, normal);
+            EdgeCurver2D::_reduceCurving(&stackEdges[i], c, gface);
+            // EdgeCurver2D::_reduceCurving2(&stackEdges[i], dx, gface);
+          }
+        }
+        // Reduce curving based on
 
+        //     => • L = (L_lin + L_disc) / 2
+        //        • Z = sum |x_i-z_i| / (N-1) (car Simpson)
+        //        • R = (1 - 2*Z/L) ** 4
+        //        • R >= gamma
       }
     }
-    // Reduce curving based on
-
-      //     => • L = (L_lin + L_disc) / 2
-      //        • Z = sum |x_i-z_i| / (N-1) (car Simpson)
-      //        • R = (1 - 2*Z/L) ** 4
-      //        • R >= gamma
 
     repositionInnerVertices(stackFaces, gface);
 

@@ -166,6 +166,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   bool activateALP = (bool)o->butt[7]->value();
   bool useAngularInterp = (bool)o->butt[8]->value();
   bool smoothIntermediate = (bool)o->butt[9]->value();
+  int backpropStrategy = o->choice[5]->value();
 
 #if defined(HAVE_OPTHOM)
   FastCurvingParameters p;
@@ -185,6 +186,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   p.newAlgoActivateALP = activateALP;
   p.newAlgoUseAngularInterp = useAngularInterp;
   p.newAlgoSmoothIntermediate = smoothIntermediate;
+  p.newAlgoBackpropStrategy = backpropStrategy;
 
   auto *gm = GModel::current();
 
@@ -337,7 +339,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 3 * IW + 4 * WB;
-  int height = 33 * BH + BH / 2;
+  int height = 39 * BH + BH / 2;
   int skip = 4;
 
   win = new paletteWindow(width, height,
@@ -425,24 +427,57 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   y += BH;
 
   butt[4] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Smooth boundary before (!: detach HO nodes from geometry)");
+                                "Smooth boundary before (only P6) (!: detach HO nodes from geometry)");
   butt[4]->type(FL_TOGGLE_BUTTON);
-  butt[4]->tooltip("Choose []=skipThis or [x]=smoothTheBoundary");
+  butt[4]->tooltip("Choose []=skipThis or [x]=smoothTheBoundaryMesh");
   butt[4]->value(0);
   // butt[4]->deactivate();
 
   y += BH;
 
-  butt[5] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Ensure validity/quality of exterior mesh");
-  butt[5]->type(FL_TOGGLE_BUTTON);
-  butt[5]->tooltip("Choose []=skipThis or [x]=preserveValidityAndQuality");
-  butt[5]->value(0);
-  butt[5]->deactivate();
+  static Fl_Menu_Item menu_interpolationType[] = {
+    {"Lagrange", 0, nullptr, nullptr},
+    {"QLP (only P6)", 0, nullptr, nullptr},
+    {"QLP+ (not implemented)", 0, nullptr, nullptr},
+    {"BSpline", 0, nullptr, nullptr},
+    {"RSR (only P6)", 0, nullptr, nullptr},
+    {nullptr}};
+  choice[1] = new Fl_Choice(x, y, IW, BH, "DEV: Choose tangent (order: worst -> best)");
+  choice[1]->tooltip("First way of stabilizing the algo: use a less-oscillating interpolation");
+  choice[1]->align(FL_ALIGN_RIGHT);
+  choice[1]->menu(menu_interpolationType);
+  choice[1]->value(3);
 
   y += BH;
 
-  value[14] = new Fl_Value_Input(x, y, IW, BH, "Alignment factor");
+  butt[8] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "DEV: Use angular interp instead of positional");
+  butt[8]->tooltip("This seems to be a must have: it provide better curviing");
+  butt[8]->type(FL_TOGGLE_BUTTON);
+  butt[8]->tooltip("");
+  butt[8]->value(1);
+
+  y += BH;
+
+  butt[7] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "DEV: Activate ALP shift");
+  butt[7]->tooltip("This is a must have: it prevents nodes clustering");
+  butt[7]->type(FL_TOGGLE_BUTTON);
+  butt[7]->tooltip("");
+  butt[7]->value(1);
+
+  y += BH;
+
+  butt[9] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "DEV: Smooth intermediate layers (only P6)");
+  butt[9]->tooltip("Second way of stabilizing the algo: filter Runge-oscillations");
+  butt[9]->type(FL_TOGGLE_BUTTON);
+  butt[9]->tooltip("");
+  butt[9]->value(0);
+
+  y += BH;
+
+  value[14] = new Fl_Value_Input(x, y, IW, BH, "Alignment factor (to be rmvd?)");
   value[14]->minimum(0);
   value[14]->maximum(1);
   if(CTX::instance()->inputScrolling) value[14]->step(.01);
@@ -453,38 +488,43 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
 
+  butt[6] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "DEV: Smooth end of BL (only P6)");
+  butt[6]->type(FL_TOGGLE_BUTTON);
+  butt[6]->tooltip("Unnecessary if intermediate layers are smoothed");
+  butt[6]->value(0);
+  // butt[6]->deactivate();
+
+  y += BH;
+
   value[12] = new Fl_Value_Input(x, y, IW, BH, "End of BL linearization factor");
+  value[12]->tooltip("Choose in [0, 1], where: 0=completelyCurveEndOfBL, 1=forceLinearEndOfBL");
   value[12]->minimum(0);
   value[12]->maximum(1);
   if(CTX::instance()->inputScrolling) value[12]->step(.01);
   value[12]->align(FL_ALIGN_RIGHT);
   value[12]->value(0);
-  value[12]->tooltip("Choose in [0, 1], where: 0=completelyCurveEndOfBL, 1=forceLinearEndOfBL");
-  //value[12]->tooltip("Choose in [0, 1], where: 0=forceLinearEndOfBL, 1=completelyCurveEndOfBL");
 
   y += BH;
 
   value[13] = new Fl_Value_Input(x, y, IW, BH, "Backprop limit (BL fraction)");
+  value[13]->tooltip("Choose in [0, 1[, where: 0=backpropAffectsAllBL, 1=noBackprop");
   value[13]->minimum(0);
   value[13]->maximum(1);
   if(CTX::instance()->inputScrolling) value[13]->step(.01);
   value[13]->align(FL_ALIGN_RIGHT);
   value[13]->value(0);
-  value[13]->tooltip("Choose in [0, 1[, where: 0=backpropAffectsAllBL, 1=noBackprop");
 
   y += BH;
 
-  // FIXME: for dev purpose
-  static Fl_Menu_Item menu_interpolationType[] = {
-    {"Lagrange", 0, nullptr, nullptr},
-    {"QLP (only P6)", 0, nullptr, nullptr},
-    {"QLP+ (not implemented)", 0, nullptr, nullptr},
-    {"BSpline", 0, nullptr, nullptr},
-    {"RSR (only P6)", 0, nullptr, nullptr},
+  static Fl_Menu_Item menu_backpropagationStrategy[] = {
+    {"Linear interpolation", 0, nullptr, nullptr},
+    {"home-made", 0, nullptr, nullptr},
     {nullptr}};
-  choice[1] = new Fl_Choice(x, y, IW, BH, "Dev: Choose tangent (order: worst -> best)");
-  choice[1]->align(FL_ALIGN_RIGHT);
-  choice[1]->menu(menu_interpolationType);
+  choice[5] = new Fl_Choice(x, y, IW, BH, "DEV: Choose backpropagation strategy (WIP)");
+  choice[5]->tooltip("");
+  choice[5]->align(FL_ALIGN_RIGHT);
+  choice[5]->menu(menu_backpropagationStrategy);
 
   y += BH;
 
@@ -493,43 +533,20 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"Chebyshev", 0, nullptr, nullptr},
     {"HSR", 0, nullptr, nullptr},
     {nullptr}};
-  choice[4] = new Fl_Choice(x, y, IW, BH, "Dev: Choose hierarchical basis");
+  choice[4] = new Fl_Choice(x, y, IW, BH, "DEV: Choose hierarchical basis for linearization");
+  choice[4]->tooltip("Not implemented and may be not necessary");
   choice[4]->align(FL_ALIGN_RIGHT);
   choice[4]->menu(menu_backpropagation);
   choice[4]->deactivate();
 
   y += BH;
 
-  butt[7] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Dev: Activate ALP shift");
-  butt[7]->type(FL_TOGGLE_BUTTON);
-  butt[7]->tooltip("");
-  butt[7]->value(0);
-
-  y += BH;
-
-  butt[8] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Dev: Use angular interp instead of positional");
-  butt[8]->type(FL_TOGGLE_BUTTON);
-  butt[8]->tooltip("");
-  butt[8]->value(0);
-
-  y += BH;
-
-  butt[9] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Dev: Smooth intermediate layers");
-  butt[9]->type(FL_TOGGLE_BUTTON);
-  butt[9]->tooltip("");
-  butt[9]->value(0);
-
-  y += BH;
-
-  butt[6] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Dev: Smooth end of BL");
-  butt[6]->type(FL_TOGGLE_BUTTON);
-  butt[6]->tooltip("Choose []=skipThis or [x]=smoothTheEnd");
-  butt[6]->value(0);
-  // butt[6]->deactivate();
+  butt[5] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "Ensure validity/quality of exterior mesh");
+  butt[5]->type(FL_TOGGLE_BUTTON);
+  butt[5]->tooltip("Choose []=skipThis or [x]=preserveValidityAndQuality");
+  butt[5]->value(0);
+  butt[5]->deactivate();
 
   y += BH;
 
