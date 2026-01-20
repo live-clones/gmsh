@@ -521,6 +521,18 @@ double mat_lagToTgRSR_D_data[420] = {
     return SVector3(tx, ty, tz).unit();
   }
 
+  void lag2HSR(const fullMatrix<double> &lagCoeff, fullMatrix<double> &hsrCoeff)
+  {
+    hsrCoeff.resize(lagCoeff.size1(), lagCoeff.size2());
+    mat_lagToHSR.mult(lagCoeff, hsrCoeff);
+  }
+
+  void hsr2Lag(const fullMatrix<double> &hsrCoeff, fullMatrix<double> &lagCoeff)
+  {
+    lagCoeff.resize(hsrCoeff.size1(), hsrCoeff.size2());
+    mat_hsrToLag.mult(hsrCoeff, lagCoeff);
+  }
+
 } // namespace
 
 namespace BoundaryLayerCurver {
@@ -2999,6 +3011,96 @@ namespace BoundaryLayerCurver {
         if(allOk) return;
       }
     }
+
+    void linearizeEndOfBL(Parameters &params, std::vector<MEdgeN> &stackEdges,
+                          std::vector<double> &relativePositions,
+                          const GFace *gface, const SVector3 &normal)
+    {
+      MEdgeN &endEdge = stackEdges.back();
+      const int nV = (int)endEdge.getNumVertices();
+
+      // Save stackEdges.back() xyz coordinates (N x 3) -> original
+      fullMatrix<double> xyz_original(nV, 3);
+      for(int k = 0; k < nV; ++k) {
+        MVertex *v = endEdge.getVertex(k);
+        xyz_original(k, 0) = v->x();
+        xyz_original(k, 1) = v->y();
+        xyz_original(k, 2) = v->z();
+      }
+
+      // Linearize last edge in-place
+      EdgeCurver2D::match_gamma_simpler(params.endLinearizationFactor, &endEdge, gface,
+                                       normal);
+
+      // Save stackEdges.back() xyz coordinates (N x 3) -> linearized
+      fullMatrix<double> xyz_linearized(nV, 3);
+      for(int k = 0; k < nV; ++k) {
+        MVertex *v = endEdge.getVertex(k);
+        xyz_linearized(k, 0) = v->x();
+        xyz_linearized(k, 1) = v->y();
+        xyz_linearized(k, 2) = v->z();
+      }
+
+      // Compute difference -> diff (in Lagrange nodal values)
+      fullMatrix<double> diff_lag(nV, 3);
+      diff_lag.copy(xyz_linearized);
+      diff_lag.axpy(xyz_original, -1);
+
+      // Transform to HSR coeff (so we can apply the same "shape" correction
+      // to other edges regardless of their current nodal placement)
+      fullMatrix<double> diff_hsr;
+      lag2HSR(diff_lag, diff_hsr);
+
+      fullMatrix<double> original_hsr;
+      lag2HSR(xyz_original, original_hsr);
+      std::cout << original_hsr(2,0) << ", " << std::endl;
+      std::cout << diff_hsr(2,0) << ", " << std::endl;
+
+      const std::size_t N = stackEdges.size();
+      const double denom = 1.0 - params.backpropLimit;
+
+      if(denom <= 0.0) return;
+
+      for(std::size_t i = 1; i < N - 1; ++i) {
+        if(relativePositions[i] <= params.backpropLimit) continue;
+
+        const double fact = (relativePositions[i] - params.backpropLimit) / denom;
+
+        MEdgeN &e = stackEdges[i];
+        const std::size_t nEi = e.getNumVertices();
+
+        // Read current edge xyz (Lagrange nodal values)
+        fullMatrix<double> xyz_e_lag((int)nEi, 3);
+        for(std::size_t k = 0; k < nEi; ++k) {
+          MVertex *v = e.getVertex(k);
+          xyz_e_lag((int)k, 0) = v->x();
+          xyz_e_lag((int)k, 1) = v->y();
+          xyz_e_lag((int)k, 2) = v->z();
+        }
+
+        // Convert to HSR, add correction in HSR space, convert back
+        fullMatrix<double> xyz_e_hsr;
+        lag2HSR(xyz_e_lag, xyz_e_hsr);
+
+        std::cout << xyz_e_hsr(2,0) << ", " << fact;
+
+        // Safety: only proceed if dimensions match (same edge order)
+        if(xyz_e_hsr.size1() == diff_hsr.size1() &&
+           xyz_e_hsr.size2() == diff_hsr.size2()) {
+          xyz_e_hsr.axpy(diff_hsr, fact);
+          std::cout << ", " << xyz_e_hsr(2,0) << std::endl;
+
+          fullMatrix<double> xyz_e_new_lag;
+          hsr2Lag(xyz_e_hsr, xyz_e_new_lag);
+
+          for(std::size_t k = 0; k < nEi; ++k) {
+            MVertex *v = e.getVertex(k);
+            v->setXYZ(xyz_e_new_lag((int)k, 0), xyz_e_new_lag((int)k, 1),
+                      xyz_e_new_lag((int)k, 2));
+          }
+        }
+      }
+    }
   } // namespace InteriorEdgeCurver
 
   MElement *createPrimaryElement(MElement *el)
@@ -3546,6 +3648,10 @@ namespace BoundaryLayerCurver {
         // EdgeCurver2D::linearize(c, &stackEdges[i], gface, normal);
         EdgeCurver2D::_reduceCurving(&stackEdges[i], c, gface);
         // EdgeCurver2D::_reduceCurving2(&stackEdges[i], dx, gface);
+    if(params.endLinearizationFactor > 0.0) {
+      InteriorEdgeCurver::linearizeEndOfBL(params, stackEdges, relativePositions, gface, normal);
+    }
+
       }
     }
     // Reduce curving based on
@@ -3610,7 +3716,8 @@ namespace BoundaryLayerCurver {
     return true;
   }
 
-  SVector3 computeBisector(const SVector3 &u0, const SVector3 &u1, const SVector3 &v) {
+  SVector3 computeBisector(const SVector3 &u0, const SVector3 &u1, const SVector3 &v)
+  {
     // Normalize the input vectors
     SVector3 n0 = u0.unit();
     SVector3 n1 = u1.unit();
