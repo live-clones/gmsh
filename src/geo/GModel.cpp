@@ -710,6 +710,25 @@ void GModel::getEntities(std::vector<GEntity *> &entities, int dim) const
   }
 }
 
+void GModel::getEntities(std::vector<GEntity *> &entities,
+                         const std::vector<std::pair<int, int>> &dimTags) const
+{
+  entities.clear();
+  if(dimTags.empty()) { getEntities(entities); }
+  else {
+    for(auto dimTag : dimTags) {
+      int dim = dimTag.first, tag = dimTag.second;
+      GEntity *ge = getEntityByTag(dim, tag);
+      if(ge) {
+        entities.push_back(ge);
+      }
+      else {
+        Msg::Warning("Unknown entity of dimension %d and tag %d", dim, tag);
+      }
+    }
+  }
+}
+
 void GModel::getEntitiesInBox(std::vector<GEntity *> &entities,
                               const SBoundingBox3d &box, int dim) const
 {
@@ -981,8 +1000,7 @@ void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
       ge->physicals.push_back((t > 0) ? tag : -tag);
     else
       Msg::Warning("Unknown entity of dimension %d and tag %d in physical "
-                   "group %d",
-                   dim, t, tag);
+                   "group %d", dim, t, tag);
   }
 }
 
@@ -1651,31 +1669,34 @@ std::size_t GModel::getNumMeshParentElements() const
   return n;
 }
 
-void GModel::createMEdges(const vectorpair &dimTags)
+void GModel::createMEdges(const std::vector<std::pair<int, int>> &dimTags)
 {
-  if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  if(dimTags.empty()) {
-    getEntities(entities);
-  }
-  else
-
-  std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  getEntities(entities, dimTags);
   for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumEdges(); k++) {
         MEdge edge = e->getEdge(k);
-        GModel::current()->addMEdge(std::move(edge));
+        addMEdge(std::move(edge));
       }
     }
   }
-
 }
 
-void GModel::createMFaces(const vectorpair &dimTags)
+void GModel::createMFaces(const std::vector<std::pair<int, int>> &dimTags)
 {
+  std::vector<GEntity *> entities;
+  getEntities(entities, dimTags);
+  for(GEntity *ge : entities) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      for(int k = 0; k < e->getNumFaces(); k++) {
+        MFace face = e->getFace(k);
+        addMFace(std::move(face));
+      }
+    }
+  }
 
 }
 

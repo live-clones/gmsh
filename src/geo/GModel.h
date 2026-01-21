@@ -295,8 +295,8 @@ public:
   }
 
   // create mesh edges and faces
-  void createMEdges(const vectorpair &dimTags);
-  void createMFaces(const vectorpair &dimTags);
+  void createMEdges(const std::vector<std::pair<int, int>> &dimTags);
+  void createMFaces(const std::vector<std::pair<int, int>> &dimTags);
 
   // add a mesh edge or face in the global edge or face map with number "num",
   // or number it (starting at 1) if num == 0
@@ -498,8 +498,12 @@ public:
   // snap vertices on model edges by using geometry tolerance
   void snapVertices();
 
-  // fill a vector containing all the entities in the model
+  // fill a vector containing the entities (of dimension dim) in the model
   void getEntities(std::vector<GEntity *> &entities, int dim = -1) const;
+
+  // fill a vector containing the entities of given dimensions and tags
+  void getEntities(std::vector<GEntity *> &entities,
+                   const std::vector<std::pair<int, int>> &dimTags) const;
 
   // fill a vector containing all the entities in a given bounding box
   void getEntitiesInBox(std::vector<GEntity *> &entities,

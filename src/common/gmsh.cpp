@@ -1816,28 +1816,11 @@ gmsh::model::mesh::removeElements(const int dim, const int tag,
   // we leave the user to call reclassifyNodes()
 }
 
-static void _getEntities(const gmsh::vectorpair &dimTags,
-                         std::vector<GEntity *> &entities)
-{
-  if(dimTags.empty()) { GModel::current()->getEntities(entities); }
-  else {
-    for(auto dimTag : dimTags) {
-      int dim = dimTag.first, tag = dimTag.second;
-      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-      if(!ge) {
-        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-        return;
-      }
-      entities.push_back(ge);
-    }
-  }
-}
-
 GMSH_API void gmsh::model::mesh::reverse(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   for(auto ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       ge->getMeshElement(j)->reverse();
@@ -1866,7 +1849,7 @@ gmsh::model::mesh::affineTransform(const std::vector<double> &affineTransform,
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   for(auto ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
       MVertex *v = ge->getMeshVertex(j);
@@ -3954,33 +3937,13 @@ GMSH_API void gmsh::model::mesh::getFaces(
 GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
-  std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumEdges(); k++) {
-        MEdge edge = e->getEdge(k);
-        GModel::current()->addMEdge(std::move(edge));
-      }
-    }
-  }
+  GModel::current()->createMEdges(dimTags);
 }
 
 GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
-  std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumFaces(); k++) {
-        MFace face = e->getFace(k);
-        GModel::current()->addMFace(std::move(face));
-      }
-    }
-  }
+  GModel::current()->createMFaces(dimTags);
 }
 
 GMSH_API void
@@ -5481,7 +5444,7 @@ GMSH_API void gmsh::model::mesh::removeConstraints(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   for(std::size_t i = 0; i < entities.size(); i++)
     entities[i]->resetMeshAttributes();
 }
@@ -5869,7 +5832,7 @@ gmsh::model::mesh::getDuplicateNodes(std::vector<std::size_t> &nodeTags,
   double lc = bbox.empty() ? 1. : bbox.diag();
   double eps = lc * CTX::instance()->geom.tolerance;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   std::vector<MVertex *> vertices;
   for(std::size_t i = 0; i < entities.size(); i++) {
     vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
@@ -5885,7 +5848,7 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   GModel::current()->removeDuplicateMeshVertices(
     CTX::instance()->geom.tolerance, entities);
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -5896,7 +5859,7 @@ gmsh::model::mesh::removeDuplicateElements(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   GModel::current()->removeDuplicateMeshElements(entities);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
