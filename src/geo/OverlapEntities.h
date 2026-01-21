@@ -91,12 +91,13 @@ public:
 // For all partitions (vector entry), collections of all entities-subset to save
 // pairs.
 template <int dim>
-using OverlapCollection = std::vector<
-  std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                     std::unordered_set<MElement *>>>;
+using OverlapCollection =
+  std::vector<std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
+                                 std::unordered_set<MElement *>>>;
 
 // For each partition, we keep a map from volume entity to face/edges with their
-// parent element. Parent allows a reconstruction of a high-order boundary element.
+// parent element. Parent allows a reconstruction of a high-order boundary
+// element.
 template <int dim>
 using OveralBoundariesMesh = std::vector<std::unordered_map<
   typename EntityTraits<dim>::Entity *,
@@ -111,9 +112,8 @@ using BoundaryToPartitionEntity =
                      typename EntityTraits<dim>::BoundaryMeshObjectHash,
                      typename EntityTraits<dim>::BoundaryMeshObjectEqual>;
 
-
-
-inline std::vector<int> getEntityPartition(GEntity *entity, bool failOnNull = true)
+inline std::vector<int> getEntityPartition(GEntity *entity,
+                                           bool failOnNull = true)
 {
   if(!entity) Msg::Error("getEntityPartition: entity is null.");
   auto pv = dynamic_cast<partitionVertex *>(entity);
@@ -124,7 +124,7 @@ inline std::vector<int> getEntityPartition(GEntity *entity, bool failOnNull = tr
   if(pf) { return pf->getPartitions(); }
   auto pr = dynamic_cast<partitionRegion *>(entity);
   if(pr) { return pr->getPartitions(); }
-  if (failOnNull)
+  if(failOnNull)
     Msg::Error("getEntityPartition: entity is not a partitioned entity.");
   return {};
 }

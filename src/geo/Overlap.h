@@ -11,17 +11,20 @@
 
 #include "OverlapEntities.h"
 
-// Overlap collection: for each partition, 
-// we store all covered entities (of other partitions) with the subset of elements to use. Can be multiple layers if built 
-// accordingly
+// Overlap collection: for each partition,
+// we store all covered entities (of other partitions) with the subset of
+// elements to use. Can be multiple layers if built accordingly
 
-// Build a 1-layer overlap efficiently: we loop over all volume elements. If one of its
-// vertices belongs to a shared partitionEntity, that element is part of the overlap of that other partition.
+// Build a 1-layer overlap efficiently: we loop over all volume elements. If one
+// of its vertices belongs to a shared partitionEntity, that element is part of
+// the overlap of that other partition.
 template <int dim> OverlapCollection<dim> quickOverlap(GModel *const model);
 
-// For each partition: find all elements on other partitions touching the current overlap
-template <int dim> void extendOverlapCollection(GModel *const model,
-                                               OverlapCollection<dim> &overlaps);
+// For each partition: find all elements on other partitions touching the
+// current overlap
+template <int dim>
+void extendOverlapCollection(GModel *const model,
+                             OverlapCollection<dim> &overlaps);
 
 // Read an overlap collection and modify the GModel to add overlap entities.
 // No new elements are created but these entities will point to underlying
@@ -30,13 +33,13 @@ template <int dim>
 void buildOverlapEntities(GModel *const model,
                           const OverlapCollection<dim> &overlaps);
 
-
-// For each entity, identify the boundary (set of MEdge/MFace) of the overlap patch.
-// This includes all parts of the patch, including the interface
-// between the inner and overlap. These boundaries are computed per parent entity, so a physical interface will be a boundary.
+// For each entity, identify the boundary (set of MEdge/MFace) of the overlap
+// patch. This includes all parts of the patch, including the interface between
+// the inner and overlap. These boundaries are computed per parent entity, so a
+// physical interface will be a boundary.
 template <int dim>
 OveralBoundariesMesh<dim>
-findBoundaryOfOverlapEntities(const OverlapCollection<dim>& overlaps);
+findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps);
 
 /**
  * Robustness wrt to deep overlaps:

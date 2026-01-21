@@ -121,7 +121,8 @@ static void SetStringOptionsGUI(int num, StringXString s[])
 
 static void PrintStringOptions(int num, int level, int diff, int help,
                                StringXString s[], const char *prefix,
-                               FILE *file, std::vector<std::string> *vec = nullptr)
+                               FILE *file,
+                               std::vector<std::string> *vec = nullptr)
 {
   int i = 0;
   while(s[i].str) {
@@ -244,7 +245,8 @@ static void SetNumberOptionsGUI(int num, StringXNumber s[])
 
 static void PrintNumberOptions(int num, int level, int diff, int help,
                                StringXNumber s[], const char *prefix,
-                               FILE *file, std::vector<std::string> *vec = nullptr)
+                               FILE *file,
+                               std::vector<std::string> *vec = nullptr)
 {
   int i = 0;
   char tmp[1024];
@@ -543,7 +545,8 @@ void InitOptionsGUI(int num)
 }
 
 static void PrintOptionCategory(int level, int diff, int help, const char *cat,
-                                FILE *file, std::vector<std::string> *vec = nullptr)
+                                FILE *file,
+                                std::vector<std::string> *vec = nullptr)
 {
   if(diff || !help || !(level & GMSH_FULLRC)) return;
   if(file) {
@@ -902,8 +905,7 @@ void PrintOptionsDoc()
       return;
     }
     fprintf(file, "%s@ftable @code\n", warn);
-    for(auto it =
-          PluginManager::instance()->begin();
+    for(auto it = PluginManager::instance()->begin();
         it != PluginManager::instance()->end(); ++it) {
       GMSH_Plugin *p = it->second;
       fprintf(file, "@item Plugin(%s)\n", p->getName().c_str());
@@ -975,9 +977,7 @@ void PrintOptionsDoc()
       if(!f->callbacks.empty()) {
         fprintf(file, "Actions:@*\n");
         fprintf(file, "@table @code\n");
-        for(auto it2 =
-              f->callbacks.begin();
-            it2 != f->callbacks.end(); it2++) {
+        for(auto it2 = f->callbacks.begin(); it2 != f->callbacks.end(); it2++) {
           fprintf(file, "@item %s\n", it2->first.c_str());
           fprintf(file, "%s@*\n", it2->second->getDescription().c_str());
         }
@@ -994,7 +994,7 @@ void PrintOptionsDoc()
       Msg::Error("Unable to open file 'shortcuts.texi'");
       return;
     }
-    std::vector<std::pair<std::string, std::string> > s =
+    std::vector<std::pair<std::string, std::string>> s =
       GetShortcutsUsage("Ctrl+");
     fprintf(file, "%s@table @kbd\n", warn);
     for(std::size_t i = 0; i < s.size(); i++)
@@ -1008,7 +1008,7 @@ void PrintOptionsDoc()
       Msg::Error("Unable to open file 'mouse.texi'");
       return;
     }
-    std::vector<std::pair<std::string, std::string> > s = GetMouseUsage();
+    std::vector<std::pair<std::string, std::string>> s = GetMouseUsage();
     fprintf(file, "%s@table @kbd\n", warn);
     for(std::size_t i = 0; i < s.size(); i++)
       fprintf(file, "@item %s\n%s\n", s[i].first.c_str(), s[i].second.c_str());
@@ -1021,7 +1021,7 @@ void PrintOptionsDoc()
       Msg::Error("Unable to open file 'commandline.texi'");
       return;
     }
-    std::vector<std::pair<std::string, std::string> > s = GetUsage();
+    std::vector<std::pair<std::string, std::string>> s = GetUsage();
     fprintf(file, "%s@ftable @code\n", warn);
     for(std::size_t i = 0; i < s.size(); i++)
       if(s[i].first.size() && s[i].second.size())
@@ -1187,9 +1187,7 @@ std::string opt_general_build_info(OPT_ARGS_STR)
     if(i != ss.size() - 1) s += "; ";
   }
   std::string::size_type pos;
-  while((pos = s.find("  ")) != std::string::npos) {
-    s.replace(pos, 2, " ");
-  }
+  while((pos = s.find("  ")) != std::string::npos) { s.replace(pos, 2, " "); }
   return s;
 }
 
@@ -3672,7 +3670,8 @@ double opt_general_stereo_mode(OPT_ARGS_NUM)
   if(CTX::instance()->stereo) opt_general_camera_mode(num, action, 1.);
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.butt[17]->value(CTX::instance()->stereo);
+    FlGui::instance()->options->general.butt[17]->value(
+      CTX::instance()->stereo);
 #endif
   return CTX::instance()->stereo;
 }
@@ -3682,8 +3681,8 @@ double opt_general_eye_sep_ratio(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->eye_sep_ratio = (double)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.value[29]->value
-      (CTX::instance()->eye_sep_ratio) ;
+    FlGui::instance()->options->general.value[29]->value(
+      CTX::instance()->eye_sep_ratio);
 #endif
   return CTX::instance()->eye_sep_ratio;
 }
@@ -3693,8 +3692,8 @@ double opt_general_focallength_ratio(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->focallength_ratio = (double)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.value[30]->value
-      (CTX::instance()->focallength_ratio);
+    FlGui::instance()->options->general.value[30]->value(
+      CTX::instance()->focallength_ratio);
 #endif
   return CTX::instance()->focallength_ratio;
 }
@@ -3704,8 +3703,8 @@ double opt_general_camera_aperture(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->camera_aperture = (double)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.value[31]->value
-      (CTX::instance()->camera_aperture);
+    FlGui::instance()->options->general.value[31]->value(
+      CTX::instance()->camera_aperture);
 #endif
   return CTX::instance()->camera_aperture;
 }
@@ -3714,9 +3713,9 @@ double opt_general_camera_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->camera = (int)val;
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)){
-    FlGui::instance()->options->general.butt[18]->value
-      (CTX::instance()->camera);
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->general.butt[18]->value(
+      CTX::instance()->camera);
     FlGui::instance()->options->activate("general_camera");
   }
 #endif
@@ -4216,12 +4215,11 @@ double opt_general_light53(OPT_ARGS_NUM)
 
 double opt_general_num_threads(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    CTX::instance()->numThreads = (int)val;
-  }
+  if(action & GMSH_SET) { CTX::instance()->numThreads = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.value[32]->value(CTX::instance()->numThreads);
+    FlGui::instance()->options->general.value[32]->value(
+      CTX::instance()->numThreads);
 #endif
   return CTX::instance()->numThreads;
 }
@@ -4787,8 +4785,7 @@ double opt_geometry_occ_boolean_check_inverted(OPT_ARGS_NUM)
 
 double opt_geometry_occ_boolean_glue(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX::instance()->geom.occBooleanGlue = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.occBooleanGlue = (int)val;
   return CTX::instance()->geom.occBooleanGlue;
 }
 
@@ -4808,8 +4805,7 @@ double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM)
 
 double opt_geometry_occ_boolean_simplify(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX::instance()->geom.occBooleanSimplify = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.occBooleanSimplify = (int)val;
   return CTX::instance()->geom.occBooleanSimplify;
 }
 
@@ -4839,7 +4835,8 @@ double opt_geometry_occ_import_labels(OPT_ARGS_NUM)
 
 double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->geom.occUseGenericClosestPoint = (int)val;
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occUseGenericClosestPoint = (int)val;
   return CTX::instance()->geom.occUseGenericClosestPoint;
 }
 
@@ -5119,7 +5116,7 @@ double opt_mesh_lc_factor(OPT_ARGS_NUM)
       if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.lcFactor)
         Msg::SetOnelabChanged(2);
       CTX::instance()->mesh.lcFactor = val;
-      if(CTX::instance()->mesh.lcFactor <= 0.0){
+      if(CTX::instance()->mesh.lcFactor <= 0.0) {
         Msg::Error("Mesh element size factor must be > 0");
         CTX::instance()->mesh.lcFactor = 1.;
       }
@@ -5858,8 +5855,7 @@ double opt_mesh_partition_split_mesh_files(OPT_ARGS_NUM)
 
 double opt_mesh_split_mesh_local_brep(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.splitMeshLocalBREP = (int)val;
+  if(action & GMSH_SET) CTX::instance()->mesh.splitMeshLocalBREP = (int)val;
   return CTX::instance()->mesh.splitMeshLocalBREP;
 }
 
@@ -6150,9 +6146,7 @@ double opt_mesh_recombine_node_repositioning(OPT_ARGS_NUM)
 
 double opt_mesh_recombine_minimum_quality(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    CTX::instance()->mesh.recombineMinimumQuality = val;
-  }
+  if(action & GMSH_SET) { CTX::instance()->mesh.recombineMinimumQuality = val; }
   return CTX::instance()->mesh.recombineMinimumQuality;
 }
 
@@ -6191,9 +6185,7 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
 
 double opt_mesh_quasi_transfinite(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    CTX::instance()->mesh.quasiTransfinite = (int)val;
-  }
+  if(action & GMSH_SET) { CTX::instance()->mesh.quasiTransfinite = (int)val; }
   return CTX::instance()->mesh.quasiTransfinite;
 }
 
@@ -6224,8 +6216,7 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algo3d = (int)val;
     // "New Delaunay" is now simply "Delaunay"
-    if(CTX::instance()->mesh.algo3d == 2)
-      CTX::instance()->mesh.algo3d = 1;
+    if(CTX::instance()->mesh.algo3d == 2) CTX::instance()->mesh.algo3d = 1;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
@@ -6485,9 +6476,7 @@ double opt_mesh_cgns_import_order(OPT_ARGS_NUM)
 
 double opt_mesh_cgns_import_ignore_bc(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    CTX::instance()->mesh.cgnsImportIgnoreBC = (int)val;
-  }
+  if(action & GMSH_SET) { CTX::instance()->mesh.cgnsImportIgnoreBC = (int)val; }
   return CTX::instance()->mesh.cgnsImportIgnoreBC;
 }
 
@@ -6509,9 +6498,7 @@ double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM)
 
 double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    CTX::instance()->mesh.cgnsExportCPEX0045 = (int)val;
-  }
+  if(action & GMSH_SET) { CTX::instance()->mesh.cgnsExportCPEX0045 = (int)val; }
   return CTX::instance()->mesh.cgnsExportCPEX0045;
 }
 
@@ -6561,8 +6548,7 @@ double opt_mesh_save_parametric(OPT_ARGS_NUM)
 
 double opt_mesh_save_without_orphans(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.saveWithoutOrphans = (int)val;
+  if(action & GMSH_SET) CTX::instance()->mesh.saveWithoutOrphans = (int)val;
   return CTX::instance()->mesh.saveWithoutOrphans;
 }
 
@@ -6715,7 +6701,7 @@ double opt_mesh_nb_trihedra(OPT_ARGS_NUM)
 double opt_mesh_cpu_time(OPT_ARGS_NUM)
 {
   return CTX::instance()->mesh.timer[0] + CTX::instance()->mesh.timer[1] +
-    CTX::instance()->mesh.timer[2];
+         CTX::instance()->mesh.timer[2];
 }
 
 double opt_mesh_min_quality(OPT_ARGS_NUM)
@@ -6884,20 +6870,20 @@ double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM)
 
 double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.quadqsTopoOptimMethods = (int)val;
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsTopoOptimMethods = (int)val;
   return CTX::instance()->mesh.quadqsTopoOptimMethods;
 }
 
-double opt_mesh_quadqs_scaling_on_triangulation(OPT_ARGS_NUM) {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsScalingOnTriangulation = (double)val;
+double opt_mesh_quadqs_scaling_on_triangulation(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.quadqsScalingOnTriangulation = (double)val;
   return CTX::instance()->mesh.quadqsScalingOnTriangulation;
 }
 
 double opt_mesh_old_initial_delaunay_2d(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.oldInitialDelaunay2D = (int)val;
+  if(action & GMSH_SET) CTX::instance()->mesh.oldInitialDelaunay2D = (int)val;
   return CTX::instance()->mesh.oldInitialDelaunay2D;
 }
 
@@ -7262,9 +7248,9 @@ double opt_view_min_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
-  int tensorRep = (opt->tensorType == PViewOptions::VonMises) ?
-                    0 :
-                    (opt->tensorType == PViewOptions::MaxEigenValue) ? 1 : 2;
+  int tensorRep = (opt->tensorType == PViewOptions::VonMises)      ? 0 :
+                  (opt->tensorType == PViewOptions::MaxEigenValue) ? 1 :
+                                                                     2;
   return data->getMin(opt->timeStep, true, tensorRep, opt->forceNumComponents,
                       opt->componentMap);
 #else
@@ -7277,9 +7263,9 @@ double opt_view_max_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
-  int tensorRep = (opt->tensorType == PViewOptions::VonMises) ?
-                    0 :
-                    (opt->tensorType == PViewOptions::MinEigenValue) ? 2 : 1;
+  int tensorRep = (opt->tensorType == PViewOptions::VonMises)      ? 0 :
+                  (opt->tensorType == PViewOptions::MinEigenValue) ? 2 :
+                                                                     1;
   return data->getMax(opt->timeStep, true, tensorRep, opt->forceNumComponents,
                       opt->componentMap);
 #else

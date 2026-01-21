@@ -85,7 +85,8 @@ struct contextMeshOptions {
   int nodes, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
   int pyramids, trihedra;
   int surfaceEdges, surfaceFaces, volumeEdges, volumeFaces, numSubEdges;
-  int nodeLabels, lineLabels, surfaceLabels, volumeLabels, qualityType, labelType;
+  int nodeLabels, lineLabels, surfaceLabels, volumeLabels, qualityType;
+  int labelType;
   double nodeSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int smoothNormals, clip;

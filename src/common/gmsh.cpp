@@ -1389,10 +1389,10 @@ gmsh::model::mesh::partition(const int numPart,
 }
 
 template <int dim>
-static void _buildOverlapsForDim(const int layers, GModel* const m) {
+static void _buildOverlapsForDim(const int layers, GModel *const m)
+{
   auto ovlps = quickOverlap<dim>(m);
-  for (int i = 1; i < layers; ++i)
-    extendOverlapCollection<dim>(m, ovlps);
+  for(int i = 1; i < layers; ++i) extendOverlapCollection<dim>(m, ovlps);
   buildOverlapEntities<dim>(m, ovlps);
   overlapBuildBoundaries<dim>(m, ovlps);
 }
@@ -1427,12 +1427,12 @@ GMSH_API void gmsh::model::mesh::buildOverlaps(const int layers)
 
 template <int dim>
 static void _findPartitionForDim(const int tag, const int partition,
-                                          std::vector<int> &entities,
-                                          GModel *const model)
+                                 std::vector<int> &entities,
+                                 GModel *const model)
 {
   using Entity = typename EntityTraits<dim>::Entity;
   using PartitionEntity = typename EntityTraits<dim>::PartitionEntity;
-  std::vector<Entity*> partitionEntities;
+  std::vector<Entity *> partitionEntities;
   if constexpr(dim == 0) {
     partitionEntities =
       std::vector<Entity *>(model->firstVertex(), model->lastVertex());
@@ -1515,9 +1515,7 @@ static void _findOverlapOfBoundary(const int tag, const int partition,
   else if constexpr(dim == 3)
     entity = model->getFaceByTag(tag);
   auto it = overlapOfBnds.find(entity);
-  if(it == overlapOfBnds.end()) {
-    return;
-  }
+  if(it == overlapOfBnds.end()) { return; }
   for(auto *pe : it->second) {
     auto partitions = pe->getPartitions();
     if(partitions.size() != 1)
@@ -1618,7 +1616,8 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
   GEntity *entity = model->getEntityByTag(dim, tag);
   if(!entity) {
     Msg::Warning("findCreatingEntityForOverlapOfBoundary: no entity of "
-                 "dimension %d and tag %d", dim, tag);
+                 "dimension %d and tag %d",
+                 dim, tag);
     out = -1;
     return;
   }
@@ -1632,7 +1631,8 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
     partitionEdge *pe = dynamic_cast<partitionEdge *>(entity);
     if(!pe) {
       Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity (dim=%d, "
-                   "tag=%d) is not a partitionEdge", dim, tag);
+                   "tag=%d) is not a partitionEdge",
+                   dim, tag);
       out = -1;
       return;
     }
@@ -1641,7 +1641,8 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
     auto it = dict.find(pe);
     if(it == dict.end()) {
       Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity "
-                   "found for partitionEdge (dim=%d, tag=%d)", dim, tag);
+                   "found for partitionEdge (dim=%d, tag=%d)",
+                   dim, tag);
       out = -1;
       return;
     }
@@ -1651,7 +1652,8 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
     partitionFace *pf = dynamic_cast<partitionFace *>(entity);
     if(!pf) {
       Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity (dim=%d, "
-                   "tag=%d) is not a partitionFace", dim, tag);
+                   "tag=%d) is not a partitionFace",
+                   dim, tag);
       out = -1;
       return;
     }
@@ -1660,7 +1662,8 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
     auto it = dict.find(pf);
     if(it == dict.end()) {
       Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity "
-                   "found for partitionFace (dim=%d, tag=%d)", dim, tag);
+                   "found for partitionFace (dim=%d, tag=%d)",
+                   dim, tag);
       out = -1;
       return;
     }
@@ -8592,11 +8595,9 @@ gmsh::algorithm::triangulate(const std::vector<double> &coord,
 #endif
 }
 
-GMSH_API void
-gmsh::algorithm::tetrahedralize(const std::vector<double> &coord,
-                                std::vector<std::size_t> &tetra,
-                                std::vector<double> &steiner,
-                                const std::vector<std::size_t> &triangles)
+GMSH_API void gmsh::algorithm::tetrahedralize(
+  const std::vector<double> &coord, std::vector<std::size_t> &tetra,
+  std::vector<double> &steiner, const std::vector<std::size_t> &triangles)
 {
   if(!_checkInit()) return;
   tetra.clear();
