@@ -1463,42 +1463,41 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
   size_t numEdges = 0;
   if(binary) {
     if(fread(&numEdges, sizeof(size_t), 1, fp) != 1) {
-      Msg::Error("Error reading number of edge tags in MSH4 file.");
       return false;
     }
   }
   else {
     if(fscanf(fp, "%zu", &numEdges) != 1) {
-      Msg::Error("Error reading number of edge tags in MSH4 file.");
       return false;
     }
   }
 
+  Msg::Info("%zu edge%s", numEdges, numEdges > 1 ? "s" : "");
+
   std::array<size_t, 3> edgeData;
   for(size_t k = 0; k < numEdges; ++k) {
     if(binary) {
+      // TODO if this proves too slow we could read all edge data at once
       if(fread(edgeData.data(), sizeof(size_t), 3, fp) != 3) {
-        Msg::Error("Error reading edge tag data in MSH4 file.");
         return false;
       }
     }
     else {
       if(fscanf(fp, "%zu %zu %zu", &edgeData[0], &edgeData[1], &edgeData[2]) !=
          3) {
-        Msg::Error("Error reading edge tag data in MSH4 file.");
         return false;
       }
     }
 
-    MVertex *v0 = model->getMeshVertexByTag(edgeData[0]);
-    MVertex *v1 = model->getMeshVertexByTag(edgeData[1]);
+    MVertex *v0 = model->getMeshVertexByTag(edgeData[1]);
+    MVertex *v1 = model->getMeshVertexByTag(edgeData[2]);
     if(!v0 || !v1) {
-      Msg::Error("Invalid vertex numbers in edge tag data in MSH4 file.");
+      Msg::Error("Invalid node numbers in edge data in MSH4 file");
       return false;
     }
 
     MEdge me(v0, v1);
-    model->addMEdge(std::move(me), edgeData[2]);
+    model->addMEdge(std::move(me), edgeData[0]);
   }
 
   return true;
@@ -1506,52 +1505,54 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
 
 static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
 {
-  size_t numFaces = 0;
+  size_t numFaces3 = 0, numFaces4 = 0;
   if(binary) {
-    if(fread(&numFaces, sizeof(size_t), 1, fp) != 1) {
-      Msg::Error("Error reading number of face tags in MSH4 file.");
+    if(fread(&numFaces3, sizeof(size_t), 1, fp) != 1) {
+      return false;
+    }
+    if(fread(&numFaces4, sizeof(size_t), 1, fp) != 1) {
       return false;
     }
   }
   else {
-    if(fscanf(fp, "%zu", &numFaces) != 1) {
-      Msg::Error("Error reading number of face tags in MSH4 file.");
+    if(fscanf(fp, "%zu %zu", &numFaces3, &numFaces4) != 2) {
       return false;
     }
   }
 
-  std::array<size_t, 6>
-    faceData; // Num of vertices, the 4 vertices, the face tag
-  for(size_t k = 0; k < numFaces; ++k) {
-    if(binary) {
-      if(fread(faceData.data(), sizeof(size_t), 6, fp) != 6) {
-        Msg::Error("Error reading face tag data in MSH4 file.");
-        return false;
-      }
-    }
-    else {
-      if(fscanf(fp, "%zu %zu %zu %zu %zu %zu", &faceData[0], &faceData[1],
-                &faceData[2], &faceData[3], &faceData[4], &faceData[5]) != 6) {
-        Msg::Error("Error reading face tag data in MSH4 file.");
-        return false;
-      }
-    }
-    if(faceData[0] != 3 && faceData[0] != 4) {
-      Msg::Error("Invalid number of vertices in face tag data in MSH4 file.");
-      return false;
-    }
-    MVertex *v0 = model->getMeshVertexByTag(faceData[1]);
-    MVertex *v1 = model->getMeshVertexByTag(faceData[2]);
-    MVertex *v2 = model->getMeshVertexByTag(faceData[3]);
-    MVertex *v3 =
-      faceData[0] == 4 ? model->getMeshVertexByTag(faceData[4]) : nullptr;
-    if(!v0 || !v1 || !v2 || (faceData[0] == 4 && !v3)) {
-      Msg::Error("Invalid vertex numbers in face tag data in MSH4 file.");
-      return false;
-    }
+  Msg::Info("%zu face%s", numFaces3 + numFaces4, (numFaces3 + numFaces4) > 1 ?
+            "s" : "");
 
-    MFace mf(v0, v1, v2, v3);
-    model->addMFace(std::move(mf), faceData[5]);
+  for(int type = 3; type <= 4; type++) {
+    std::array<size_t, 5> faceData; // face tag followed by vertex tags
+    std::size_t numFaces = (type == 3) ? numFaces3 : numFaces4;
+    for(size_t k = 0; k < numFaces; ++k) {
+      if(binary) {
+        // TODO if this proves too slow we could read all face data at once
+        if(fread(faceData.data(), sizeof(size_t), type + 1, fp) != type + 1) {
+          return false;
+        }
+      }
+      else {
+        if(fscanf(fp, "%zu %zu %zu %zu", &faceData[0], &faceData[1], &faceData[2],
+                  &faceData[3]) != 4) {
+          return false;
+        }
+        if(type == 4 && fscanf(fp, "%zu", &faceData[4]) != 1) {
+          return false;
+        }
+      }
+      MVertex *v0 = model->getMeshVertexByTag(faceData[1]);
+      MVertex *v1 = model->getMeshVertexByTag(faceData[2]);
+      MVertex *v2 = model->getMeshVertexByTag(faceData[3]);
+      MVertex *v3 = type == 4 ? model->getMeshVertexByTag(faceData[4]) : nullptr;
+      if(!v0 || !v1 || !v2 || (type == 4 && !v3)) {
+        Msg::Error("Invalid node tags in face data in MSH4 file");
+        return false;
+      }
+      MFace mf(v0, v1, v2, v3);
+      model->addMFace(std::move(mf), faceData[0]);
+    }
   }
 
   return true;
@@ -1742,14 +1743,14 @@ int GModel::_readMSH4(const std::string &name)
     }
     else if(!strncmp(&str[1], "Edges", 5)) {
       if(!readMSH4Edges(this, fp, binary)) {
-        Msg::Error("Could not read edge tags");
+        Msg::Error("Could not read edges");
         fclose(fp);
         return 0;
       }
     }
     else if(!strncmp(&str[1], "Faces", 5)) {
       if(!readMSH4Faces(this, fp, binary)) {
-        Msg::Error("Could not read face tags");
+        Msg::Error("Could not read faces");
         fclose(fp);
         return 0;
       }
@@ -3162,13 +3163,14 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
     for(const auto &[edge, tag] : edges) {
       size_t v0 = edge.getVertex(0)->getNum();
       size_t v1 = edge.getVertex(1)->getNum();
+      // TODO if this proves too slow we could write all edge data at once
       if(binary) {
+        fwrite(&tag, sizeof(size_t), 1, fp);
         fwrite(&v0, sizeof(size_t), 1, fp);
         fwrite(&v1, sizeof(size_t), 1, fp);
-        fwrite(&tag, sizeof(size_t), 1, fp);
       }
       else {
-        fprintf(fp, "%zu %zu %zu\n", v0, v1, tag);
+        fprintf(fp, "%zu %zu %zu\n", tag, v0, v1);
       }
     }
 
@@ -3222,39 +3224,42 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
   auto printFaces = [&](const GModel::hashmapMFace &faces) {
     if(faces.empty()) return;
     fprintf(fp, "$Faces\n");
+    std::size_t numFaces3 = 0, numFaces4 = 0;
+    for(const auto &[face, tag] : faces) {
+      if(face.getNumVertices() == 3) numFaces3++;
+      if(face.getNumVertices() == 4) numFaces4++;
+    }
     if(binary) {
-      std::size_t numFaces = faces.size();
-      fwrite(&numFaces, sizeof(std::size_t), 1, fp);
+      fwrite(&numFaces3, sizeof(std::size_t), 1, fp);
+      fwrite(&numFaces4, sizeof(std::size_t), 1, fp);
     }
     else {
-      fprintf(fp, "%zu\n", faces.size());
+      fprintf(fp, "%zu %zu\n", numFaces3, numFaces4);
     }
-    for(const auto &[face, tag] : faces) {
-      size_t numVertices = face.getNumVertices();
-      if(numVertices > 4)
-        Msg::Error("MSH4 with face export does not support faces with more "
-                   "than 4 vertices.");
-      size_t v0 = face.getVertex(0)->getNum();
-      size_t v1 = face.getVertex(1)->getNum();
-      size_t v2 = face.getVertex(2)->getNum();
-      size_t v3 = numVertices == 4 ? face.getVertex(3)->getNum() : 0;
-
-      // In current format, we always write 4 tags and pad with a 0 if it's a
-      // triangle
-      if(binary) {
-        fwrite(&numVertices, sizeof(size_t), 1, fp);
-        fwrite(&v0, sizeof(size_t), 1, fp);
-        fwrite(&v1, sizeof(size_t), 1, fp);
-        fwrite(&v2, sizeof(size_t), 1, fp);
-        fwrite(&v3, sizeof(size_t), 1, fp);
-        fwrite(&tag, sizeof(size_t), 1, fp);
-      }
-      else {
-        fprintf(fp, "%zu %zu %zu %zu %zu %zu\n", numVertices, v0, v1, v2, v3,
-                tag);
+    for(int type = 3; type <= 4; type++) {
+      for(const auto &[face, tag] : faces) {
+        size_t numVertices = face.getNumVertices();
+        if(numVertices != type) continue;
+        size_t v0 = face.getVertex(0)->getNum();
+        size_t v1 = face.getVertex(1)->getNum();
+        size_t v2 = face.getVertex(2)->getNum();
+        size_t v3 = type == 4 ? face.getVertex(3)->getNum() : 0;
+        if(binary) {
+          // TODO if this proves too slow we could write all face data at once
+          fwrite(&tag, sizeof(size_t), 1, fp);
+          fwrite(&v0, sizeof(size_t), 1, fp);
+          fwrite(&v1, sizeof(size_t), 1, fp);
+          fwrite(&v2, sizeof(size_t), 1, fp);
+          if(type == 4) fwrite(&v3, sizeof(size_t), 1, fp);
+        }
+        else {
+          if(type == 4)
+            fprintf(fp, "%zu %zu %zu %zu %zu\n", tag, v0, v1, v2, v3);
+          else
+            fprintf(fp, "%zu %zu %zu %zu\n", tag, v0, v1, v2);
+        }
       }
     }
-
     if(binary) fprintf(fp, "\n");
     fprintf(fp, "$EndFaces\n");
   };
