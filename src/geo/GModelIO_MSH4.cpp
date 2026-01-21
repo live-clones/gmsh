@@ -1523,7 +1523,7 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
   Msg::Info("%zu face%s", numFaces3 + numFaces4, (numFaces3 + numFaces4) > 1 ?
             "s" : "");
 
-  for(int type = 3; type <= 4; type++) {
+  for(std::size_t type = 3; type <= 4; type++) {
     std::array<size_t, 5> faceData; // face tag followed by vertex tags
     std::size_t numFaces = (type == 3) ? numFaces3 : numFaces4;
     for(size_t k = 0; k < numFaces; ++k) {
@@ -3236,7 +3236,7 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
     else {
       fprintf(fp, "%zu %zu\n", numFaces3, numFaces4);
     }
-    for(int type = 3; type <= 4; type++) {
+    for(std::size_t type = 3; type <= 4; type++) {
       for(const auto &[face, tag] : faces) {
         size_t numVertices = face.getNumVertices();
         if(numVertices != type) continue;
