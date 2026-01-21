@@ -121,6 +121,16 @@ Attempt to (re)create the model topology when reading MSH2 files@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.CreateEdges
+Create mesh edges before saving MSH files@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CreateFaces
+Create mesh edges before saving MSH files@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.DrawSkinOnly
 Draw only the skin of 3D meshes?@*
 Default value: @code{0}@*
@@ -864,6 +874,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.SmoothRatio
 Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SplitMeshLocalBREP
+Only export the subset of the BREP that is relevant when splitting mesh files@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlAngularDeflection

@@ -1671,6 +1671,7 @@ std::size_t GModel::getNumMeshParentElements() const
 
 void GModel::createMEdges(const std::vector<std::pair<int, int>> &dimTags)
 {
+  Msg::StatusBar(true, "Creating mesh edges...");
   std::vector<GEntity *> entities;
   getEntities(entities, dimTags);
   for(GEntity *ge : entities) {
@@ -1682,10 +1683,12 @@ void GModel::createMEdges(const std::vector<std::pair<int, int>> &dimTags)
       }
     }
   }
+  Msg::StatusBar(true, "Done creating mesh edges");
 }
 
 void GModel::createMFaces(const std::vector<std::pair<int, int>> &dimTags)
 {
+  Msg::StatusBar(true, "Creating mesh faces...");
   std::vector<GEntity *> entities;
   getEntities(entities, dimTags);
   for(GEntity *ge : entities) {
@@ -1697,7 +1700,7 @@ void GModel::createMFaces(const std::vector<std::pair<int, int>> &dimTags)
       }
     }
   }
-
+  Msg::StatusBar(true, "Done creating mesh faces");
 }
 
 std::size_t GModel::addMEdge(MEdge &&edge, std::size_t num)

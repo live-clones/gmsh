@@ -5950,6 +5950,18 @@ double opt_mesh_create_topology_msh2(OPT_ARGS_NUM)
   return CTX::instance()->mesh.createTopologyMsh2;
 }
 
+double opt_mesh_create_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.createEdges = val;
+  return CTX::instance()->mesh.createEdges;
+}
+
+double opt_mesh_create_faces(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.createFaces = val;
+  return CTX::instance()->mesh.createFaces;
+}
+
 double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.binary = (int)val;

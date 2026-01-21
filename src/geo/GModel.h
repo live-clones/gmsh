@@ -295,8 +295,10 @@ public:
   }
 
   // create mesh edges and faces
-  void createMEdges(const std::vector<std::pair<int, int>> &dimTags);
-  void createMFaces(const std::vector<std::pair<int, int>> &dimTags);
+  void createMEdges(const std::vector<std::pair<int, int>> &dimTags =
+                    std::vector<std::pair<int, int>>());
+  void createMFaces(const std::vector<std::pair<int, int>> &dimTags =
+                    std::vector<std::pair<int, int>>());
 
   // add a mesh edge or face in the global edge or face map with number "num",
   // or number it (starting at 1) if num == 0

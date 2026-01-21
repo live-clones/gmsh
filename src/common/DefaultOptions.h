@@ -1206,6 +1206,10 @@ StringXNumber MeshOptions_Number[] = {
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
   { F|O, "CreateTopologyMsh2" , opt_mesh_create_topology_msh2, 0. ,
     "Attempt to (re)create the model topology when reading MSH2 files" },
+  { F|O, "CreateEdges" , opt_mesh_create_edges, 0. ,
+    "Create mesh edges before saving MSH files" },
+  { F|O, "CreateFaces" , opt_mesh_create_faces, 0. ,
+    "Create mesh edges before saving MSH files" },
 
   { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 0. ,
     "Draw only the skin of 3D meshes?" },
