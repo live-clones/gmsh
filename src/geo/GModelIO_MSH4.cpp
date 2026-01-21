@@ -1258,7 +1258,7 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 }
 
 template <int dim>
-static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
+static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
 {
   size_t nOverlaps = 0;
   std::set<int> addedTags;
@@ -1455,25 +1455,25 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp, bool binary
   return true;
 }
 
-static bool readMSH4EdgeTags(
+static bool readMSH4Edges(
   GModel *const model, FILE *fp, bool binary)
 {
-  size_t numEdgeTags = 0;
+  size_t numEdges = 0;
   if(binary) {
-    if (fread(&numEdgeTags, sizeof(size_t), 1, fp) != 1) {
+    if (fread(&numEdges, sizeof(size_t), 1, fp) != 1) {
       Msg::Error("Error reading number of edge tags in MSH4 file.");
       return false;
     }
   }
   else {
-    if(fscanf(fp, "%zu", &numEdgeTags) != 1) {
+    if(fscanf(fp, "%zu", &numEdges) != 1) {
       Msg::Error("Error reading number of edge tags in MSH4 file.");
       return false;
     }
   }
 
   std::array<size_t, 3> edgeData;
-  for (size_t k = 0; k < numEdgeTags; ++k) {
+  for (size_t k = 0; k < numEdges; ++k) {
     if(binary) {
       if (fread(edgeData.data(), sizeof(size_t), 3, fp) != 3) {
         Msg::Error("Error reading edge tag data in MSH4 file.");
@@ -1501,25 +1501,25 @@ static bool readMSH4EdgeTags(
   return true;
 }
 
-static bool readMSH4FaceTags(
+static bool readMSH4Faces(
   GModel *const model, FILE *fp, bool binary)
 {
-  size_t numFaceTags = 0;
+  size_t numFaces = 0;
   if(binary) {
-    if (fread(&numFaceTags, sizeof(size_t), 1, fp) != 1) {
+    if (fread(&numFaces, sizeof(size_t), 1, fp) != 1) {
       Msg::Error("Error reading number of face tags in MSH4 file.");
       return false;
     }
   }
   else {
-    if(fscanf(fp, "%zu", &numFaceTags) != 1) {
+    if(fscanf(fp, "%zu", &numFaces) != 1) {
       Msg::Error("Error reading number of face tags in MSH4 file.");
       return false;
     }
   }
 
   std::array<size_t, 6> faceData; // Num of vertices, the 4 vertices, the face tag
-  for (size_t k = 0; k < numFaceTags; ++k) {
+  for (size_t k = 0; k < numFaces; ++k) {
     if(binary) {
       if (fread(faceData.data(), sizeof(size_t), 6, fp) != 6) {
         Msg::Error("Error reading face tag data in MSH4 file.");
@@ -1734,15 +1734,15 @@ int GModel::_readMSH4(const std::string &name)
       }
       delete[] elementCache;
     }
-    else if (!strncmp(&str[1], "EdgeTags", 8)) {
-      if (!readMSH4EdgeTags(this, fp, binary)) {
+    else if (!strncmp(&str[1], "Edges", 5)) {
+      if (!readMSH4Edges(this, fp, binary)) {
         Msg::Error("Could not read edge tags");
         fclose(fp);
         return 0;
       }
     }
-    else if (!strncmp(&str[1], "FaceTags", 8)) {
-      if (!readMSH4FaceTags(this, fp, binary)) {
+    else if (!strncmp(&str[1], "Faces", 5)) {
+      if (!readMSH4Faces(this, fp, binary)) {
         Msg::Error("Could not read face tags");
         fclose(fp);
         return 0;
@@ -1762,15 +1762,15 @@ int GModel::_readMSH4(const std::string &name)
         return 0;
       }
     }
-    else if (!strncmp(&str[1], "VolumeOverlaps2D", 16)) {
-      if (!readMSH4VolumeOverlaps<2>(this, fp, binary)) {
+    else if (!strncmp(&str[1], "Overlaps2D", 10)) {
+      if (!readMSH4Overlaps<2>(this, fp, binary)) {
         Msg::Error("Could not read 2D volume overlaps");
         fclose(fp);
         return 0;
       }
     }
-    else if (!strncmp(&str[1], "VolumeOverlaps3D", 16)) {
-      if (!readMSH4VolumeOverlaps<3>(this, fp, binary)) {
+    else if (!strncmp(&str[1], "Overlaps3D", 10)) {
+      if (!readMSH4Overlaps<3>(this, fp, binary)) {
         Msg::Error("Could not read 3D volume overlaps");
         fclose(fp);
         return 0;
@@ -3147,13 +3147,14 @@ static void writeMSH4Elements(
   fprintf(fp, "$EndElements\n");
 }
 
-static void writeMSH4EdgeTags(
+static void writeMSH4Edges(
   GModel *const model, FILE *fp, bool binary, bool partitioned,
   int partitionToSave)
 {
 
   auto printEdges = [&](const GModel::hashmapMEdge &edges) {
-    fprintf(fp, "$EdgeTags\n");
+    if(edges.empty()) return;
+    fprintf(fp, "$Edges\n");
     if(binary) {
       std::size_t numEdges = edges.size();
       fwrite(&numEdges, sizeof(std::size_t), 1, fp);
@@ -3175,7 +3176,7 @@ static void writeMSH4EdgeTags(
     }
 
     if(binary) fprintf(fp, "\n");
-    fprintf(fp, "$EndEdgeTags\n");
+    fprintf(fp, "$EndEdges\n");
   };
 
   if(partitionToSave == 0 || !partitioned)
@@ -3228,11 +3229,12 @@ static void writeMSH4EdgeTags(
   }
 }
 
-static void writeMSH4FaceTags(GModel *const model, FILE *fp, bool binary,
+static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
                               bool partitioned, int partitionToSave)
 {
   auto printFaces = [&](const GModel::hashmapMFace &faces) {
-    fprintf(fp, "$FaceTags\n");
+    if(faces.empty()) return;
+    fprintf(fp, "$Faces\n");
     if(binary) {
       std::size_t numFaces = faces.size();
       fwrite(&numFaces, sizeof(std::size_t), 1, fp);
@@ -3267,7 +3269,7 @@ static void writeMSH4FaceTags(GModel *const model, FILE *fp, bool binary,
     }
 
     if(binary) fprintf(fp, "\n");
-    fprintf(fp, "$EndFaceTags\n");
+    fprintf(fp, "$EndFaces\n");
   };
 
   if(partitionToSave == 0 || !partitioned) {
@@ -3537,10 +3539,10 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
 
 // Overlap exports
 template <int dim>
-static void writeMSH4VolumeOverlaps(GModel *const model, FILE *fp,
-                                    int partitionToSave, bool binary)
+static void writeMSH4Overlaps(GModel *const model, FILE *fp,
+                              int partitionToSave, bool binary)
 {
-  fprintf(fp, "$VolumeOverlaps%dD\n", dim);
+  fprintf(fp, "$Overlaps%dD\n", dim);
   const auto &allOverlaps =
     std::get<std::vector<typename EntityTraits<dim>::OverlapEntity *>>(
       model->getAllOverlaps());
@@ -3585,7 +3587,7 @@ static void writeMSH4VolumeOverlaps(GModel *const model, FILE *fp,
 
   // Binary: one line in total
   if(binary) fprintf(fp, "\n");
-  fprintf(fp, "$EndVolumeOverlaps%dD\n", dim);
+  fprintf(fp, "$EndOverlaps%dD\n", dim);
 }
 
 template <int dim>
@@ -3809,10 +3811,10 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                     version, nonOwnedEntitiesToSave);
 
   // edges
-  writeMSH4EdgeTags(this, fp, binary, partitioned, partitionToSave);
+  writeMSH4Edges(this, fp, binary, partitioned, partitionToSave);
 
   // faces
-  writeMSH4FaceTags(this, fp, binary, partitioned, partitionToSave);
+  writeMSH4Faces(this, fp, binary, partitioned, partitionToSave);
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
@@ -3823,11 +3825,11 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // Write Volume overlaps
   if(partitioned && overlapDim > 0) {
     if(overlapDim == 2) {
-      writeMSH4VolumeOverlaps<2>(this, fp, partitionToSave, binary);
+      writeMSH4Overlaps<2>(this, fp, partitionToSave, binary);
       writeMSH4OverlapBoundaries<2>(this, fp, partitionToSave, binary);
     }
     else if(overlapDim == 3) {
-      writeMSH4VolumeOverlaps<3>(this, fp, partitionToSave, binary);
+      writeMSH4Overlaps<3>(this, fp, partitionToSave, binary);
       writeMSH4OverlapBoundaries<3>(this, fp, partitionToSave, binary);
     }
   }
