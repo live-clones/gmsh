@@ -6,6 +6,8 @@
 #ifndef HASH_H
 #define HASH_H
 
+#include "GmshConfig.h"
+
 // FNV (Fowler–Noll–Vo) hashing parameters
 
 #if defined(HAVE_64BIT_SIZE_T)
