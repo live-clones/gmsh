@@ -1397,9 +1397,15 @@ static void _buildOverlapsForDim(const int layers, GModel *const m)
   overlapBuildBoundaries<dim>(m, ovlps);
 }
 
-GMSH_API void gmsh::model::mesh::buildOverlaps(const int layers)
+GMSH_API void gmsh::model::mesh::createOverlaps(const int layers,
+                                                const bool createBoundaries)
 {
   if(!_checkInit()) return;
+
+  if(!createBoundaries) {
+    Msg::Error("Creating boundaries is currently mandatory ;-)");
+  }
+
   GModel *m = GModel::current();
   if(!m) {
     Msg::Error("No model loaded");
@@ -1526,7 +1532,7 @@ static void _findOverlapOfBoundary(const int tag, const int partition,
   }
 }
 
-GMSH_API void gmsh::model::mesh::findPartition(
+GMSH_API void gmsh::model::mesh::getPartitionEntities(
   const int dim, const int tag, const int partition, std::vector<int> &entities,
   std::vector<int> &overlapEntities)
 {
@@ -1564,9 +1570,10 @@ GMSH_API void gmsh::model::mesh::findPartition(
   }
 }
 
-GMSH_API void gmsh::model::mesh::findInnerBoundary(const int dim, const int tag,
-                                                   const int partition,
-                                                   std::vector<int> &entities)
+GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
+                                                    const int tag,
+                                                    const int partition,
+                                                    std::vector<int> &entities)
 {
   if(!_checkInit()) return;
   entities.clear();
@@ -1608,8 +1615,9 @@ GMSH_API void gmsh::model::mesh::findInnerBoundary(const int dim, const int tag,
   }
 }
 
-GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
-  const int dim, const int tag, int &out)
+GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
+                                                          const int tag,
+                                                          int &parentTag)
 {
   if(!_checkInit()) return;
   GModel *model = GModel::current();
@@ -1618,13 +1626,13 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
     Msg::Warning("findCreatingEntityForOverlapOfBoundary: no entity of "
                  "dimension %d and tag %d",
                  dim, tag);
-    out = -1;
+    parentTag = -1;
     return;
   }
   if(dim == 3 || dim == 0) {
     Msg::Warning("findCreatingEntityForOverlapOfBoundary: only supported for "
                  "1D and 2D entities");
-    out = -1;
+    parentTag = -1;
     return;
   }
   if(dim == 1) {
@@ -1633,7 +1641,7 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
       Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity (dim=%d, "
                    "tag=%d) is not a partitionEdge",
                    dim, tag);
-      out = -1;
+      parentTag = -1;
       return;
     }
     const auto &dict = std::get<std::unordered_map<partitionEdge *, GFace *>>(
@@ -1643,10 +1651,10 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
       Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity "
                    "found for partitionEdge (dim=%d, tag=%d)",
                    dim, tag);
-      out = -1;
+      parentTag = -1;
       return;
     }
-    out = it->second->tag();
+    parentTag = it->second->tag();
   }
   else if(dim == 2) {
     partitionFace *pf = dynamic_cast<partitionFace *>(entity);
@@ -1654,7 +1662,7 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
       Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity (dim=%d, "
                    "tag=%d) is not a partitionFace",
                    dim, tag);
-      out = -1;
+      parentTag = -1;
       return;
     }
     const auto &dict = std::get<std::unordered_map<partitionFace *, GRegion *>>(
@@ -1664,10 +1672,10 @@ GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
       Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity "
                    "found for partitionFace (dim=%d, tag=%d)",
                    dim, tag);
-      out = -1;
+      parentTag = -1;
       return;
     }
-    out = it->second->tag();
+    parentTag = it->second->tag();
   }
 }
 

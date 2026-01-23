@@ -1030,24 +1030,24 @@ GMSH_API void gmshModelMeshPartition(const int numPart, const size_t * elementTa
   }
 }
 
-GMSH_API void gmshModelMeshBuildOverlaps(const int layers, int * ierr)
+GMSH_API void gmshModelMeshCreateOverlaps(const int layers, const int createBoundaries, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::buildOverlaps(layers);
+    gmsh::model::mesh::createOverlaps(layers, createBoundaries);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshFindPartition(const int dim, const int tag, const int partition, int ** entityTags, size_t * entityTags_n, int ** overlapEntities, size_t * overlapEntities_n, int * ierr)
+GMSH_API void gmshModelMeshGetPartitionEntities(const int dim, const int tag, const int partition, int ** entityTags, size_t * entityTags_n, int ** overlapEntities, size_t * overlapEntities_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_entityTags_;
     std::vector<int> api_overlapEntities_;
-    gmsh::model::mesh::findPartition(dim, tag, partition, api_entityTags_, api_overlapEntities_);
+    gmsh::model::mesh::getPartitionEntities(dim, tag, partition, api_entityTags_, api_overlapEntities_);
     vector2ptr(api_entityTags_, entityTags, entityTags_n);
     vector2ptr(api_overlapEntities_, overlapEntities, overlapEntities_n);
   }
@@ -1056,12 +1056,12 @@ GMSH_API void gmshModelMeshFindPartition(const int dim, const int tag, const int
   }
 }
 
-GMSH_API void gmshModelMeshFindInnerBoundary(const int dim, const int tag, const int partition, int ** entityTags, size_t * entityTags_n, int * ierr)
+GMSH_API void gmshModelMeshGetOverlapBoundary(const int dim, const int tag, const int partition, int ** entityTags, size_t * entityTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_entityTags_;
-    gmsh::model::mesh::findInnerBoundary(dim, tag, partition, api_entityTags_);
+    gmsh::model::mesh::getOverlapBoundary(dim, tag, partition, api_entityTags_);
     vector2ptr(api_entityTags_, entityTags, entityTags_n);
   }
   catch(...){
@@ -1069,11 +1069,11 @@ GMSH_API void gmshModelMeshFindInnerBoundary(const int dim, const int tag, const
   }
 }
 
-GMSH_API void gmshModelMeshFindCreatingEntityForOverlapOfBoundary(const int dim, const int tag, int * parentTag, int * ierr)
+GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim, const int tag, int * parentTag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(dim, tag, *parentTag);
+    gmsh::model::mesh::getBoundaryOverlapParent(dim, tag, *parentTag);
   }
   catch(...){
     if(ierr) *ierr = 1;

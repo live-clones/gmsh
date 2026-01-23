@@ -474,13 +474,15 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
   }
   else {
     if(version >= 4.1) {
-      if(fscanf(fp, "%zu %zu %zu %zu", &numBlock, &totalNumRead, &minTag, &maxTag) !=
-         4) {
+      if(fscanf(fp, "%zu %zu %zu %zu", &numBlock, &totalNumRead, &minTag,
+                &maxTag) != 4) {
         return nullptr;
       }
     }
     else {
-      if(fscanf(fp, "%zu %zu", &numBlock, &totalNumRead) != 2) { return nullptr; }
+      if(fscanf(fp, "%zu %zu", &numBlock, &totalNumRead) != 2) {
+        return nullptr;
+      }
     }
   }
 
@@ -704,7 +706,7 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
   return verticesRead;
 }
 
-static std::pair<MElement *, GEntity*> *
+static std::pair<MElement *, GEntity *> *
 readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
                  std::size_t &totalNumRead, std::size_t &maxElementNum,
                  bool swap, double version)
@@ -740,8 +742,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::size_t elementRead = 0;
   std::size_t minElementNum = std::numeric_limits<std::size_t>::max();
 
-  std::pair<MElement *, GEntity*> *elementsRead =
-    new std::pair<MElement *, GEntity*>[totalNumRead];
+  std::pair<MElement *, GEntity *> *elementsRead =
+    new std::pair<MElement *, GEntity *>[totalNumRead];
   Msg::Info("%zu element%s", totalNumRead, totalNumRead > 1 ? "s" : "");
   Msg::StartProgressMeter(totalNumRead);
 
@@ -1637,8 +1639,8 @@ int GModel::_readMSH4(const std::string &name)
         !_vertexVectorCache.empty() || !_vertexMapCache.empty();
       bool dense = false;
       std::size_t totalNumRead = 0, maxNodeNum;
-      MVertex **verticesRead = readMSH4Nodes(this, fp, binary, dense, totalNumRead,
-                                           maxNodeNum, swap, version);
+      MVertex **verticesRead = readMSH4Nodes(
+        this, fp, binary, dense, totalNumRead, maxNodeNum, swap, version);
       Msg::StopProgressMeter();
       if(!verticesRead) {
         Msg::Error("Could not read nodes");
@@ -1666,8 +1668,7 @@ int GModel::_readMSH4(const std::string &name)
             if(v->onWhat())
               v->onWhat()->addMeshVertex(v);
             else // should not happen
-              Msg::Warning("Node %zu not classified on any entity",
-                           v->getNum());
+              Msg::Error("Node %zu not classified on any entity", v->getNum());
           }
           else {
             // should not happen
@@ -1684,8 +1685,7 @@ int GModel::_readMSH4(const std::string &name)
             if(v->onWhat())
               v->onWhat()->addMeshVertex(v);
             else // should not happen
-              Msg::Warning("Node %zu not classified on any entity",
-                           v->getNum());
+              Msg::Error("Node %zu not classified on any entity", v->getNum());
           }
           else {
             if(!hadNodesBefore) // should not happen
@@ -1701,9 +1701,8 @@ int GModel::_readMSH4(const std::string &name)
         !_elementVectorCache.empty() || !_elementMapCache.empty();
       bool dense = false;
       std::size_t totalNumRead = 0, maxElementNum = 0;
-      std::pair<MElement *, GEntity*> *elementsRead =
-        readMSH4Elements(this, fp, binary, dense, totalNumRead,
-                         maxElementNum, swap, version);
+      std::pair<MElement *, GEntity *> *elementsRead = readMSH4Elements(
+        this, fp, binary, dense, totalNumRead, maxElementNum, swap, version);
       Msg::StopProgressMeter();
       if(!elementsRead) {
         Msg::Error("Could not read elements");

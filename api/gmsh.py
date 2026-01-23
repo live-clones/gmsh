@@ -2214,35 +2214,40 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def buildOverlaps(layers=1):
+        def createOverlaps(layers=1, createBoundaries=True):
             """
-            gmsh.model.mesh.buildOverlaps(layers=1)
+            gmsh.model.mesh.createOverlaps(layers=1, createBoundaries=True)
 
-            Generate overlaps for all partitions with depth `layers', and build
-            boundary entities accordingly.
+            Generate node-based overlaps (of highest dimension) for all partitions,
+            with a number of layers equal to `layers'. If `createBoundaries` is set,
+            build the overlaps for the entities bounding the highest-dimensional
+            entities (i.e. "boundary overlaps"), as well as the inner boundaries of the
+            overlaps (i.e. "overlap boundaries").
 
             Types:
             - `layers': integer
+            - `createBoundaries': boolean
             """
             ierr = c_int()
-            lib.gmshModelMeshBuildOverlaps(
+            lib.gmshModelMeshCreateOverlaps(
                 c_int(layers),
+                c_int(bool(createBoundaries)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-        build_overlaps = buildOverlaps
+        create_overlaps = createOverlaps
 
         @staticmethod
-        def findPartition(dim, tag, partition):
+        def getPartitionEntities(dim, tag, partition):
             """
-            gmsh.model.mesh.findPartition(dim, tag, partition)
+            gmsh.model.mesh.getPartitionEntities(dim, tag, partition)
 
-            Find all the tags of the partitioned entities of dimension `dim' whose
-            parent has the same dim and tag as `tag', and which belong to the partition
-            of interest. If overlaps are present, fill `overlapEntities' with the tags
+            Get the tags of the partitioned entities of dimension `dim' whose parent
+            has dimension `dim' and tag `tag', and which belong to the partition
+            `partition'. If overlaps are present, fill `overlapEntities' with the tags
             of the entities that are in the overlap of the partition. Works for
-            entities of the same dim as the model as well as for entities of one less
-            dimension (overlap of boundary).
+            entities of the same dimension as the model as well as for entities one
+            dimension below (boundary overlaps).
 
             Return `entityTags', `overlapEntities'.
 
@@ -2256,7 +2261,7 @@ class model:
             api_entityTags_, api_entityTags_n_ = POINTER(c_int)(), c_size_t()
             api_overlapEntities_, api_overlapEntities_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshFindPartition(
+            lib.gmshModelMeshGetPartitionEntities(
                 c_int(dim),
                 c_int(tag),
                 c_int(partition),
@@ -2268,16 +2273,16 @@ class model:
             return (
                 _ovectorint(api_entityTags_, api_entityTags_n_.value),
                 _ovectorint(api_overlapEntities_, api_overlapEntities_n_.value))
-        find_partition = findPartition
+        get_partition_entities = getPartitionEntities
 
         @staticmethod
-        def findInnerBoundary(dim, tag, partition):
+        def getOverlapBoundary(dim, tag, partition):
             """
-            gmsh.model.mesh.findInnerBoundary(dim, tag, partition)
+            gmsh.model.mesh.getOverlapBoundary(dim, tag, partition)
 
-            Find all the tags of the entities of dimension `dim' that are inner overlap
-            boundary of the (non-partitioned) entity of dimension `dim' and tag `tag',
-            and which belong to the partition of interest.
+            Get the tags of the entities making up the overlap boundary of partition
+            `partition' inside the (non-partitioned) entity of dimension `dim' and tag
+            `tag'.
 
             Return `entityTags'.
 
@@ -2289,7 +2294,7 @@ class model:
             """
             api_entityTags_, api_entityTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshFindInnerBoundary(
+            lib.gmshModelMeshGetOverlapBoundary(
                 c_int(dim),
                 c_int(tag),
                 c_int(partition),
@@ -2298,16 +2303,16 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_entityTags_, api_entityTags_n_.value)
-        find_inner_boundary = findInnerBoundary
+        get_overlap_boundary = getOverlapBoundary
 
         @staticmethod
-        def findCreatingEntityForOverlapOfBoundary(dim, tag):
+        def getBoundaryOverlapParent(dim, tag):
             """
-            gmsh.model.mesh.findCreatingEntityForOverlapOfBoundary(dim, tag)
+            gmsh.model.mesh.getBoundaryOverlapParent(dim, tag)
 
-            In entity of dimension `dim' and tag `tag' is an overlap of boundary
-            entity, find which entity of dim `dim+1' created it. Returns -1 and outputs
-            a warning in case of incorrect input.
+            If the entity of dimension `dim' and tag `tag' is a boundary overlap, get
+            the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on
+            error.
 
             Return `parentTag'.
 
@@ -2318,7 +2323,7 @@ class model:
             """
             api_parentTag_ = c_int()
             ierr = c_int()
-            lib.gmshModelMeshFindCreatingEntityForOverlapOfBoundary(
+            lib.gmshModelMeshGetBoundaryOverlapParent(
                 c_int(dim),
                 c_int(tag),
                 byref(api_parentTag_),
@@ -2326,7 +2331,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_parentTag_.value
-        find_creating_entity_for_overlap_of_boundary = findCreatingEntityForOverlapOfBoundary
+        get_boundary_overlap_parent = getBoundaryOverlapParent
 
         @staticmethod
         def unpartition():
