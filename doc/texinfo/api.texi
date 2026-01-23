@@ -1162,7 +1162,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L136,t21.cpp}), Python (@u
 @end table
 
 @item gmsh/model/mesh/createOverlaps
-Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to @code{layers}. If @code{createBoundaries@code{ is set, build the overlaps for the entities bounding the highest-dimensional entities (i.e. "boundary overlaps"), as well as the inner boundaries of the overlaps (i.e. "overlap boundaries").
+Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to @code{layers}. If @code{createBoundaries} is set, build the overlaps for the entities bounding the highest-dimensional entities (i.e. "boundary overlaps"), as well as the inner boundaries of the overlaps (i.e. "overlap boundaries").
 
 @table @asis
 @item Input:

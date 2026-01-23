@@ -623,7 +623,7 @@ GMSH_API void gmshModelMeshPartition(const int numPart,
                                      int * ierr);
 
 /* Generate node-based overlaps (of highest dimension) for all partitions,
- * with a number of layers equal to `layers'. If `createBoundaries` is set,
+ * with a number of layers equal to `layers'. If `createBoundaries' is set,
  * build the overlaps for the entities bounding the highest-dimensional
  * entities (i.e. "boundary overlaps"), as well as the inner boundaries of the
  * overlaps (i.e. "overlap boundaries"). */
