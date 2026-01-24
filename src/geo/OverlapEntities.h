@@ -129,4 +129,4 @@ inline std::vector<int> getEntityPartition(GEntity *entity,
   return {};
 }
 
-#endif // OVERLAP_ENTITIES_H
+#endif

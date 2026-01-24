@@ -51,4 +51,4 @@ void setGeomAndPhysicalEntities(GModel *model, int meshDim,
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_READ_H
+#endif

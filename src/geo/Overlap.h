@@ -68,4 +68,4 @@ findNonOwnedVerticesToSave(
   const std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
                            std::unordered_set<MElement *>> &coveredEntities);
 
-#endif // OVERLAP_H
+#endif

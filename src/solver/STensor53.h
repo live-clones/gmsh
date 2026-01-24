@@ -2,6 +2,7 @@
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
 #ifndef STENSOR53_H_
 #define STENSOR53_H_
 
@@ -61,4 +62,4 @@ public:
   };
 };
 
-#endif // STENSOR53_H_
+#endif

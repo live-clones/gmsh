@@ -68,4 +68,4 @@ inline void CGNSZoneUnstruct::nodeFromList(const std::vector<cgsize_t> &list,
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_ZONE_UNSTRUCT_H
+#endif
