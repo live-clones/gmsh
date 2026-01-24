@@ -15,4 +15,4 @@ public:
   virtual ~Material() {}
 };
 
-#endif //_MATERIALLAW_H_
+#endif

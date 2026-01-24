@@ -126,7 +126,9 @@ public:
     PartitionVolume,
     GhostCurve,
     GhostSurface,
-    GhostVolume
+    GhostVolume,
+    OverlapSurface,
+    OverlapVolume,
   };
 
   // the mesh generation status
@@ -174,7 +176,9 @@ public:
       "Partition volume",
       "Ghost curve",
       "Ghost surface",
-      "Ghost volume"};
+      "Ghost volume",
+      "Overlap surface",
+      "Overlap volume"};
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))
       return "Undefined";
@@ -247,7 +251,9 @@ public:
 
   // properties of the underlying geometric representation of this entity
   virtual void geomProperties(std::vector<int> &integers,
-                              std::vector<double> &reals) const { }
+                              std::vector<double> &reals) const
+  {
+  }
 
   // true if parametric space is continuous in the "dim" direction
   virtual bool continuous(int dim) const { return true; }
@@ -396,11 +402,11 @@ public:
   MVertex *getMeshVertex(std::size_t index) { return mesh_vertices[index]; }
 
   // iterate over the mesh vertices
-  std::vector<MVertex*>::const_iterator getMeshVertexBegin() const
+  std::vector<MVertex *>::const_iterator getMeshVertexBegin() const
   {
     return mesh_vertices.begin();
   }
-  std::vector<MVertex*>::const_iterator getMeshVertexEnd() const
+  std::vector<MVertex *>::const_iterator getMeshVertexEnd() const
   {
     return mesh_vertices.end();
   }
@@ -410,15 +416,15 @@ public:
   // remove a mesh vertex, and delete it as well if del=true (warning: this does
   // not invalidate the mesh cache and vertex arrays, which should be taken care
   // of after a delete)
-  void removeMeshVertex(MVertex *v, bool del=false);
+  void removeMeshVertex(MVertex *v, bool del = false);
 
   // add a mesh element
   virtual void addElement(MElement *e) {}
   // remove an element or all the elements, and delete as well if del=true
   // (warning: this does not invalidate the mesh cache and vertex arrays, which
   // should be taken care of after a delete)
-  virtual void removeElement(MElement *e, bool del=false) {}
-  virtual void removeElements(bool del=false) {}
+  virtual void removeElement(MElement *e, bool del = false) {}
+  virtual void removeElements(bool del = false) {}
 
   // relocate mesh vertices using their parametric coordinates
   virtual void relocateMeshVertices() {}

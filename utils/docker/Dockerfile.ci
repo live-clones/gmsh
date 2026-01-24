@@ -9,13 +9,13 @@ RUN apt-get update && apt-get install -y git make autoconf python3 curl wget bzi
 RUN apt-get install -y clang gfortran python3-numpy python3-scipy python3-pip python3-dev swig clang-tidy valgrind texlive-latex-recommended texlive-latex-extra libreoffice fonts-cmu libpetsc-complex-dev libslepc-complex-dev libopenblas-dev libfltk1.3-dev libfreetype6-dev tcl-dev tk-dev libhdf5-dev libcgns-dev libxft-dev libocct-foundation-dev libocct-data-exchange-dev libocct-ocaf-dev libopenmpi-dev libboost-dev cargo gcovr ftp twine && apt-get clean
 
 # for the Gmsh cookbook
-RUN cargo install --root /opt/cargo mdbook
+RUN cargo install --root /opt/cargo mdbook --version 0.4.52
 
 # mmg
 RUN git clone https://github.com/MmgTools/mmg.git && cd mmg && mkdir build && cd build && cmake -DBUILD_SHARED_LIBS=1 .. && make -j8 && make install && cd .. && rm -rf mmg
 
-# mkdocs for the HPC website
-RUN pip3 install --break-system-packages --no-cache-dir Babel certifi charset-normalizer click colorama ghp-import idna Jinja2 Markdown MarkupSafe mergedeep mkdocs mkdocs-glightbox mkdocs-material mkdocs-material-extensions packaging paginate pathspec platformdirs Pygments pymdown-extensions python-dateutil PyYAML pyyaml_env_tag regex requests six urllib3 watchdog
+# various python packages (mkdocs for the HPC website, setuptools, ...)
+RUN pip3 install --break-system-packages --no-cache-dir Babel certifi charset-normalizer click colorama ghp-import idna Jinja2 Markdown MarkupSafe mergedeep mkdocs mkdocs-glightbox mkdocs-material mkdocs-material-extensions packaging paginate pathspec platformdirs Pygments pymdown-extensions python-dateutil PyYAML pyyaml_env_tag regex requests six urllib3 watchdog setuptools
 
 # gmsh library (for GetDP, GmshFEM, ...) - use "docker build --build-arg REBUILD_GMSH=somethingnew" to force rebuilding it
 ARG REBUILD_GMSH=

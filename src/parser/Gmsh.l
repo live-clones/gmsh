@@ -149,6 +149,8 @@ Cosh                    return tCosh;
 Cpu                     return tCpu;
 CreateGeometry          return tCreateGeometry;
 CreateTopology          return tCreateTopology;
+CreateMeshEdges         return tCreateMeshEdges;
+CreateMeshFaces         return tCreateMeshFaces;
 CurrentDir              return tCurrentDirectory;
 CurrentDirectory        return tCurrentDirectory;
 CurrentFileName         return tCurrentFileName;

@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <functional>
 #include "GVertex.h"
@@ -21,7 +22,6 @@
 #include "SBoundingBox3d.h"
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
-
 
 template <class scalar> class simpleFunction;
 
@@ -35,16 +35,23 @@ class gLevelset;
 class discreteFace;
 class discreteRegion;
 class MElementOctree;
+class overlapFace;
+class overlapRegion;
+class partitionEdge;
+class partitionFace;
+class partitionRegion;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel {
 public:
-  using hashmapMFace = std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>;
-  using hashmapMEdge = std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>;
-private:
+  using hashmapMFace =
+    std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>;
+  using hashmapMEdge =
+    std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>;
 
-  std::multimap<std::pair<const std::vector<int>, const std::vector<int> >,
-                std::pair<const std::string, const std::vector<int> > >
+private:
+  std::multimap<std::pair<const std::vector<int>, const std::vector<int>>,
+                std::pair<const std::string, const std::vector<int>>>
     _homologyRequests;
   std::set<GRegion *, GEntityPtrLessThan> _chainRegions;
   std::set<GFace *, GEntityPtrLessThan> _chainFaces;
@@ -55,6 +62,22 @@ private:
   // the maximum vertex and element id number in the mesh
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
+
+  // Overlaps data
+  std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>>
+    _overlaps;
+
+  std::unordered_map<GFace *, std::vector<partitionEdge *>>
+    _overlapInnerBoundaries2D;
+  std::unordered_map<GRegion *, std::vector<partitionFace *>>
+    _overlapInnerBoundaries3D;
+  std::unordered_map<GEdge *, std::vector<partitionEdge *>>
+    _overlapOfBoundaries2D;
+  std::unordered_map<GFace *, std::vector<partitionFace *>>
+    _overlapOfBoundaries3D;
+  std::tuple<std::unordered_map<partitionEdge *, GFace *>,
+             std::unordered_map<partitionFace *, GRegion *>>
+    _boundaryOfOverlapCreators;
 
 private:
   int _readMSH2(const std::string &name);
@@ -76,14 +99,13 @@ private:
   int _writeMSH4(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
                  bool append, int partitionToSave = 0,
-                 std::map<GEntity*, SBoundingBox3d> *entityBounds = nullptr);
+                 std::map<GEntity *, SBoundingBox3d> *entityBounds = nullptr);
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
-  int _writeX3dFile(FILE* fp, bool saveAll,
-                    double scalingFactor, int x3dsurfaces, int x3dedges,
-                    int x3dvertices, int x3dcolorize,
-                    std::vector<GFace *> &customFaces);
+  int _writeX3dFile(FILE *fp, bool saveAll, double scalingFactor,
+                    int x3dsurfaces, int x3dedges, int x3dvertices,
+                    int x3dcolorize, std::vector<GFace *> &customFaces);
 
 protected:
   // the name of the model
@@ -100,8 +122,8 @@ protected:
   // used for post-processing I/O)
   std::vector<MVertex *> _vertexVectorCache;
   std::map<std::size_t, MVertex *> _vertexMapCache;
-  std::vector<std::pair<MElement *, int> > _elementVectorCache;
-  std::map<std::size_t, std::pair<MElement *, int> > _elementMapCache;
+  std::vector<std::pair<MElement *, int>> _elementVectorCache;
+  std::map<std::size_t, std::pair<MElement *, int>> _elementMapCache;
   std::map<int, int> _elementIndexCache;
 
   // ghost cell information (stores partitions for each element acting
@@ -113,7 +135,7 @@ protected:
   MElementOctree *_elementOctree;
 
   // global cache storage of discrete curvatures
-  std::map<MVertex *, std::pair<SVector3, SVector3> > _curvatures;
+  std::map<MVertex *, std::pair<SVector3, SVector3>> _curvatures;
 
   // GEO (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
@@ -153,16 +175,16 @@ protected:
   std::size_t _numPartitions;
 
   // additional attributes (e.g. stored in extra sections of MSH files)
-  std::map<std::string, std::vector<std::string> > _attributes;
+  std::map<std::string, std::vector<std::string>> _attributes;
 
 protected:
   // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
   // the fly if needed
-  void _storeElementsInEntities(std::map<int, std::vector<MElement *> > &map);
+  void _storeElementsInEntities(std::map<int, std::vector<MElement *>> &map);
 
   // store the parent's pointer back into MSubElements (replacing numeric id)
-  void _storeParentsInSubElements(std::map<int, std::vector<MElement *> > &map);
+  void _storeParentsInSubElements(std::map<int, std::vector<MElement *>> &map);
 
   // loop over all vertices connected to elements and associate
   // geometrical entity
@@ -176,7 +198,7 @@ protected:
   // store the physical tags in the geometrical entities
   void
   _storePhysicalTagsInEntities(int dim,
-                               std::map<int, std::map<int, std::string> > &map);
+                               std::map<int, std::map<int, std::string>> &map);
 
 public:
   // region, face, edge and vertex iterators
@@ -272,6 +294,12 @@ public:
     maxe = _checkPointedMaxElementNum;
   }
 
+  // create mesh edges and faces
+  void createMEdges(const std::vector<std::pair<int, int>> &dimTags =
+                    std::vector<std::pair<int, int>>());
+  void createMFaces(const std::vector<std::pair<int, int>> &dimTags =
+                    std::vector<std::pair<int, int>>());
+
   // add a mesh edge or face in the global edge or face map with number "num",
   // or number it (starting at 1) if num == 0
   std::size_t addMEdge(MEdge &&edge, std::size_t num = 0);
@@ -291,15 +319,15 @@ public:
   hashmapMEdge::const_iterator lastMEdge() { return _mapEdgeNum.end(); }
   hashmapMFace::const_iterator firstMFace() { return _mapFaceNum.begin(); }
   hashmapMFace::const_iterator lastMFace() { return _mapFaceNum.end(); }
-  const hashmapMEdge& getMEdges() const { return _mapEdgeNum; }
-  const hashmapMFace& getMFaces() const { return _mapFaceNum; }
+  const hashmapMEdge &getMEdges() const { return _mapEdgeNum; }
+  const hashmapMFace &getMFaces() const { return _mapFaceNum; }
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
   void renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapping =
-                            std::map<std::size_t, std::size_t>());
+                              std::map<std::size_t, std::size_t>());
   void renumberMeshElements(const std::map<std::size_t, std::size_t> &mapping =
-                            std::map<std::size_t, std::size_t>());
+                              std::map<std::size_t, std::size_t>());
 
   // delete all the mesh-related caches (this must be called when the
   // mesh is changed)
@@ -379,6 +407,8 @@ public:
   const_eiter lastEdge() const { return edges.end(); }
   const_viter lastVertex() const { return vertices.end(); }
 
+  // Returns 0 (no overlap), 2 (2D overlap) or 3 (3D overlap)
+  int overlapDim() const;
   // get the set of entities
   std::set<GRegion *, GEntityPtrLessThan> getRegions() const
   {
@@ -390,6 +420,57 @@ public:
   {
     return vertices;
   };
+
+  void addOverlap(overlapFace *of) { std::get<0>(_overlaps).push_back(of); }
+  void addOverlap(overlapRegion *or_) { std::get<1>(_overlaps).push_back(or_); }
+
+  const std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>> &
+  getAllOverlaps() const
+  {
+    return _overlaps;
+  }
+
+  void addInnerBoundary(GFace *f, partitionEdge *e)
+  {
+    _overlapInnerBoundaries2D[f].push_back(e);
+  }
+  void addInnerBoundary(GRegion *r, partitionFace *f)
+  {
+    _overlapInnerBoundaries3D[r].push_back(f);
+  }
+  void addOverlapOfBoundary(GEdge *e, partitionEdge *pe, GFace *parent)
+  {
+    _overlapOfBoundaries2D[e].push_back(pe);
+    std::get<0>(_boundaryOfOverlapCreators)[pe] = parent;
+  }
+  void addOverlapOfBoundary(GFace *f, partitionFace *pf, GRegion *parent)
+  {
+    _overlapOfBoundaries3D[f].push_back(pf);
+    std::get<1>(_boundaryOfOverlapCreators)[pf] = parent;
+  }
+
+#ifndef SWIG
+  const auto &getOverlapInnerBoundaries2D() const
+  {
+    return _overlapInnerBoundaries2D;
+  }
+  const auto &getOverlapInnerBoundaries3D() const
+  {
+    return _overlapInnerBoundaries3D;
+  }
+  const auto &getOverlapOfBoundaries2D() const
+  {
+    return _overlapOfBoundaries2D;
+  }
+  const auto &getOverlapOfBoundaries3D() const
+  {
+    return _overlapOfBoundaries3D;
+  }
+  const auto &getBoundaryOfOverlapCreators() const
+  {
+    return _boundaryOfOverlapCreators;
+  }
+#endif
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
@@ -410,26 +491,29 @@ public:
   bool remove(GFace *f);
   bool remove(GEdge *e);
   bool remove(GVertex *v);
-  void remove(int dim, int tag, std::vector<GEntity*> &removed,
+  void remove(int dim, int tag, std::vector<GEntity *> &removed,
               bool recursive = false);
-  void remove(const std::vector<std::pair<int, int> > &dimTags,
-              std::vector<GEntity*> &removed,
-              bool recursive = false);
+  void remove(const std::vector<std::pair<int, int>> &dimTags,
+              std::vector<GEntity *> &removed, bool recursive = false);
   void remove();
 
   // snap vertices on model edges by using geometry tolerance
   void snapVertices();
 
-  // fill a vector containing all the entities in the model
+  // fill a vector containing the entities (of dimension dim) in the model
   void getEntities(std::vector<GEntity *> &entities, int dim = -1) const;
+
+  // fill a vector containing the entities of given dimensions and tags
+  void getEntities(std::vector<GEntity *> &entities,
+                   const std::vector<std::pair<int, int>> &dimTags) const;
 
   // fill a vector containing all the entities in a given bounding box
   void getEntitiesInBox(std::vector<GEntity *> &entities,
                         const SBoundingBox3d &box, int dim = -1) const;
 
   // get tags of entities of the boundary of the given input entities
-  bool getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
-                       std::vector<std::pair<int, int> > &outDimTags,
+  bool getBoundaryTags(const std::vector<std::pair<int, int>> &inDimTags,
+                       std::vector<std::pair<int, int>> &outDimTags,
                        bool combined, bool oriented = true,
                        bool recursive = false);
 
@@ -441,10 +525,9 @@ public:
   bool noPhysicalGroups();
 
   // return all physical groups (one map per dimension: 0-D to 3-D)
-  void
-  getPhysicalGroups(std::map<int, std::vector<GEntity *> > groups[4]) const;
+  void getPhysicalGroups(std::map<int, std::vector<GEntity *>> groups[4]) const;
   void getPhysicalGroups(int dim,
-                         std::map<int, std::vector<GEntity *> > &groups) const;
+                         std::map<int, std::vector<GEntity *>> &groups) const;
   void getEntitiesForPhysicalName(const std::string &name,
                                   std::vector<GEntity *> &entities) const;
   const std::map<std::pair<int, int>, std::string> &getPhysicalNames() const
@@ -574,7 +657,7 @@ public:
   MVertex *getMeshVertexByTag(std::size_t n);
 
   // add a mesh vertex to the global mesh vertex cache
-  void addMVertexToVertexCache(MVertex* v);
+  void addMVertexToVertexCache(MVertex *v);
 
   // get all the mesh vertices associated with the physical group
   // of dimension "dim" and id number "num"
@@ -617,8 +700,8 @@ public:
 
   // partition the mesh
   int partitionMesh(int num,
-                    std::vector<std::pair<MElement *, int> > elementPartition =
-                      std::vector<std::pair<MElement *, int> >());
+                    std::vector<std::pair<MElement *, int>> elementPartition =
+                      std::vector<std::pair<MElement *, int>>());
   // unpartition the mesh
   int unpartitionMesh();
   // import a mesh partitionned by a tag given by element (i.e. the old way we
@@ -638,19 +721,19 @@ public:
   void checkMeshCoherence(double tolerance);
 
   // remove duplicate mesh vertices
-  int removeDuplicateMeshVertices(double tolerance,
-                                  const std::vector<GEntity*> &entities =
-                                  std::vector<GEntity*>());
+  int removeDuplicateMeshVertices(
+    double tolerance,
+    const std::vector<GEntity *> &entities = std::vector<GEntity *>());
 
   // remove duplicate mesh elements (within an entity)
-  int removeDuplicateMeshElements(const std::vector<GEntity*> &entities =
-                                  std::vector<GEntity*>());
+  int removeDuplicateMeshElements(
+    const std::vector<GEntity *> &entities = std::vector<GEntity *>());
 
   // create a geometry (i.e. a parametrization for curves and surfaces) for the
   // given discrete entities (or all of them if dimTags is empty)
   void createGeometryOfDiscreteEntities(
-    const std::vector<std::pair<int, int> > &dimTags =
-      std::vector<std::pair<int, int> >());
+    const std::vector<std::pair<int, int>> &dimTags =
+      std::vector<std::pair<int, int>>());
 
   // make discrete entities simply connected
   void makeDiscreteRegionsSimplyConnected();
@@ -676,7 +759,7 @@ public:
   // available; see the cpp for parameter documentation
   int adaptMesh(std::vector<int> technique,
                 std::vector<simpleFunction<double> *> f,
-                std::vector<std::vector<double> > parameters, int niter,
+                std::vector<std::vector<double>> parameters, int niter,
                 bool meshAll = false);
 
   // ensure that the Jacobian of all volume elements is positive
@@ -711,8 +794,8 @@ public:
                          bool saveTri = false);
 
   // store mesh elements of a chain in a new elementary and physical entity
-  void storeChain(int dim, std::map<int, std::vector<MElement *> > &entityMap,
-                  std::map<int, std::map<int, std::string> > &physicalMap);
+  void storeChain(int dim, std::map<int, std::vector<MElement *>> &entityMap,
+                  std::map<int, std::map<int, std::string>> &physicalMap);
 
   // request homology computation
   void addHomologyRequest(const std::string &type,
@@ -720,7 +803,7 @@ public:
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
   void clearHomologyRequests();
-  void computeHomology(std::vector<std::pair<int, int> > &newPhysicals);
+  void computeHomology(std::vector<std::pair<int, int>> &newPhysicals);
 
   // mesh size callback
   std::function<double(int, int, double, double, double, double)> lcCallback;
@@ -729,7 +812,7 @@ public:
   void computeSizeField();
 
   // access global cache of discrete curvatures
-  std::map<MVertex *, std::pair<SVector3, SVector3> > &getCurvatures()
+  std::map<MVertex *, std::pair<SVector3, SVector3>> &getCurvatures()
   {
     return _curvatures;
   }
@@ -741,7 +824,7 @@ public:
                                         const std::vector<int> &regionTag);
 
   // get additional attributes
-  std::map<std::string, std::vector<std::string> > &getAttributes()
+  std::map<std::string, std::vector<std::string>> &getAttributes()
   {
     return _attributes;
   }
@@ -812,11 +895,12 @@ public:
                bool saveAll = false, double scalingFactor = 1.0,
                int oneSolidPerSurface = 0);
 
-
-  // NII format is created by Neuroimaging Informatics Technology Initiative. It is commonly used to store magnetic resonance imaging (MRI) data.
-  int readNII(const std::string &name, float isolevel = 0.0, int isoDarkMediumBright123 = 2,
-	      float reduceFraction = 0.25, int preSmooth = 1, bool onlyLargest = true,
-	      bool fillBubbles = false, int postSmooth = 1);
+  // NII format is created by Neuroimaging Informatics Technology Initiative. It
+  // is commonly used to store magnetic resonance imaging (MRI) data.
+  int readNII(const std::string &name, float isolevel = 0.0,
+              int isoDarkMediumBright123 = 2, float reduceFraction = 0.25,
+              int preSmooth = 1, bool onlyLargest = true,
+              bool fillBubbles = false, int postSmooth = 1);
 
   // X3D (only output from OCCT's triangulation)
   int writeX3D(const std::string &name, bool saveAll = false,
@@ -873,8 +957,8 @@ public:
 
   // CFD General Notation System files
   int readCGNS(const std::string &name,
-               std::vector<std::vector<MVertex *> > &vertPerZone,
-               std::vector<std::vector<MElement *> > &eltPerZone);
+               std::vector<std::vector<MVertex *>> &vertPerZone,
+               std::vector<std::vector<MElement *>> &eltPerZone);
   int writeCGNS(const std::string &name, bool saveAll = false,
                 double scalingFactor = 1.0, bool structured = false);
 

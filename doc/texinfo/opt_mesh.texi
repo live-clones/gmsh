@@ -72,7 +72,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsConstructTopology
-Reconstruct the model topology (BREP) after reading a CGNS file@*
+Reconstruct the model topology (BRep) after reading a CGNS file@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -118,6 +118,16 @@ Saved in: @code{-}
 
 @item Mesh.CreateTopologyMsh2
 Attempt to (re)create the model topology when reading MSH2 files@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CreateEdges
+Create mesh edges before saving MSH files@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CreateFaces
+Create mesh edges before saving MSH files@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -623,6 +633,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionSplitMeshFiles
 Write one file for each mesh partition@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionSplitLocalBrep
+Only export the subset of the topology (BRep) that is relevant when splitting mesh files per partition@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

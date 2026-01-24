@@ -72,4 +72,4 @@ int writeGeomEntities(std::map<GEntity *, std::string> &geomEntities,
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_WRITE_H
+#endif

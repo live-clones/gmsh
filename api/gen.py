@@ -275,6 +275,18 @@ mesh.add('generate', doc, None, iint('dim', '3'))
 doc = '''Partition the mesh of the current model into `numPart' partitions. Optionally, `elementTags' and `partitions' can be provided to specify the partition of each element explicitly.'''
 mesh.add('partition', doc, None, iint('numPart'), ivectorsize('elementTags', 'std::vector<std::size_t>()','[]', '[]'), ivectorint('partitions', 'std::vector<int>()','[]', '[]'))
 
+doc = '''Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to `layers'. If `createBoundaries' is set, build the overlaps for the entities bounding the highest-dimensional entities (i.e. "boundary overlaps"), as well as the inner boundaries of the overlaps (i.e. "overlap boundaries").'''
+mesh.add('createOverlaps', doc, None, iint('layers', '1'), ibool('createBoundaries', 'true', 'True'))
+
+doc = '''Get the tags of the partitioned entities of dimension `dim' whose parent has dimension `dim' and tag `tag', and which belong to the partition `partition'. If overlaps are present, fill `overlapEntities' with the tags of the entities that are in the overlap of the partition. Works for entities of the same dimension as the model as well as for entities one dimension below (boundary overlaps).'''
+mesh.add('getPartitionEntities', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), ovectorint('overlapEntities'))
+
+doc = '''Get the tags of the entities making up the overlap boundary of partition `partition' inside the (non-partitioned) entity of dimension `dim' and tag `tag'.'''
+mesh.add('getOverlapBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'))
+
+doc = '''If the entity of dimension `dim' and tag `tag' is a boundary overlap, get the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on error.'''
+mesh.add('getBoundaryOverlapParent', doc, None, iint('dim'), iint('tag'), oint('parentTag'))
+
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)
 

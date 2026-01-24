@@ -83,6 +83,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                  "cause information loss");
   }
 
+  if(CTX::instance()->mesh.createEdges) createMEdges();
+  if(CTX::instance()->mesh.createFaces) createMFaces();
+
   if(version < 3.0) {
     return _writeMSH2(name, version, binary, saveAll, saveParametric,
                       scalingFactor, elementStartNum, saveSinglePartition,
@@ -110,6 +113,9 @@ int GModel::writePartitionedMSH(const std::string &baseName, double version,
     Msg::Warning("Saving a partitioned mesh in a format older than 4.0 may "
                  "cause information loss");
   }
+
+  if(CTX::instance()->mesh.createEdges) createMEdges();
+  if(CTX::instance()->mesh.createFaces) createMFaces();
 
   if(version < 3.0) {
     return _writePartitionedMSH2(baseName, binary, saveAll, saveParametric,
