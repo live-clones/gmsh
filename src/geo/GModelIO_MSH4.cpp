@@ -1971,7 +1971,7 @@ static void writeMSH4Entities(
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   const bool acceptAllPartitions =
-    (partitionToSave == 0) || !CTX::instance()->mesh.splitMeshLocalBREP;
+    (partitionToSave == 0) || !CTX::instance()->mesh.partitionSplitLocalBrep;
 
   if(partition) {
     auto isInPartition = [&](GEntity *entity) {
