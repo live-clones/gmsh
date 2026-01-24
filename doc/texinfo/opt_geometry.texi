@@ -252,12 +252,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCFixSmallEdges
-Fix small edges when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
+Fix small edges when importing STEP, IGES and BREP models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCFixSmallFaces
-Fix small faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
+Fix small faces when importing STEP, IGES and BREP models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -272,7 +272,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCMakeSolids
-Fix shells and make solids when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
+Fix shells and make solids when importing STEP, IGES and BREP models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -287,12 +287,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCScaling
-Scale STEP, IGES and BRep models by the given factor when importing them with the OpenCASCADE kernel@*
+Scale STEP, IGES and BREP models by the given factor when importing them with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCSewFaces
-Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
+Sew faces when importing STEP, IGES and BREP models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

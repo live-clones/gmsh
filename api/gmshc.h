@@ -622,6 +622,45 @@ GMSH_API void gmshModelMeshPartition(const int numPart,
                                      const int * partitions, const size_t partitions_n,
                                      int * ierr);
 
+/* Generate node-based overlaps (of highest dimension) for all partitions,
+ * with a number of layers equal to `layers'. If `createBoundaries' is set,
+ * build the overlaps for the entities bounding the highest-dimensional
+ * entities (i.e. "boundary overlaps"), as well as the inner boundaries of the
+ * overlaps (i.e. "overlap boundaries"). */
+GMSH_API void gmshModelMeshCreateOverlaps(const int layers,
+                                          const int createBoundaries,
+                                          int * ierr);
+
+/* Get the tags of the partitioned entities of dimension `dim' whose parent
+ * has dimension `dim' and tag `tag', and which belong to the partition
+ * `partition'. If overlaps are present, fill `overlapEntities' with the tags
+ * of the entities that are in the overlap of the partition. Works for
+ * entities of the same dimension as the model as well as for entities one
+ * dimension below (boundary overlaps). */
+GMSH_API void gmshModelMeshGetPartitionEntities(const int dim,
+                                                const int tag,
+                                                const int partition,
+                                                int ** entityTags, size_t * entityTags_n,
+                                                int ** overlapEntities, size_t * overlapEntities_n,
+                                                int * ierr);
+
+/* Get the tags of the entities making up the overlap boundary of partition
+ * `partition' inside the (non-partitioned) entity of dimension `dim' and tag
+ * `tag'. */
+GMSH_API void gmshModelMeshGetOverlapBoundary(const int dim,
+                                              const int tag,
+                                              const int partition,
+                                              int ** entityTags, size_t * entityTags_n,
+                                              int * ierr);
+
+/* If the entity of dimension `dim' and tag `tag' is a boundary overlap, get
+ * the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on
+ * error. */
+GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim,
+                                                    const int tag,
+                                                    int * parentTag,
+                                                    int * ierr);
+
 /* Unpartition the mesh of the current model. */
 GMSH_API void gmshModelMeshUnpartition(int * ierr);
 

@@ -530,6 +530,14 @@ module gmsh
         gmshModelMeshGenerate
     procedure, nopass :: partition => &
         gmshModelMeshPartition
+    procedure, nopass :: createOverlaps => &
+        gmshModelMeshCreateOverlaps
+    procedure, nopass :: getPartitionEntities => &
+        gmshModelMeshGetPartitionEntities
+    procedure, nopass :: getOverlapBoundary => &
+        gmshModelMeshGetOverlapBoundary
+    procedure, nopass :: getBoundaryOverlapParent => &
+        gmshModelMeshGetBoundaryOverlapParent
     procedure, nopass :: unpartition => &
         gmshModelMeshUnpartition
     procedure, nopass :: optimize => &
@@ -3333,6 +3341,162 @@ module gmsh
          api_partitions_n_=size_gmsh_int(partitions), &
          ierr_=ierr)
   end subroutine gmshModelMeshPartition
+
+  !> Generate node-based overlaps (of highest dimension) for all partitions,
+  !! with a number of layers equal to `layers'. If `createBoundaries' is set,
+  !! build the overlaps for the entities bounding the highest-dimensional
+  !! entities (i.e. "boundary overlaps"), as well as the inner boundaries of the
+  !! overlaps (i.e. "overlap boundaries").
+  subroutine gmshModelMeshCreateOverlaps(layers, &
+                                         createBoundaries, &
+                                         ierr)
+    interface
+    subroutine C_API(layers, &
+                     createBoundaries, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshCreateOverlaps")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: layers
+      integer(c_int), value, intent(in) :: createBoundaries
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in), optional :: layers
+    logical, intent(in), optional :: createBoundaries
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(layers=optval_c_int(1, layers), &
+         createBoundaries=optval_c_bool(.true., createBoundaries), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshCreateOverlaps
+
+  !> Get the tags of the partitioned entities of dimension `dim' whose parent
+  !! has dimension `dim' and tag `tag', and which belong to the partition
+  !! `partition'. If overlaps are present, fill `overlapEntities' with the tags
+  !! of the entities that are in the overlap of the partition. Works for
+  !! entities of the same dimension as the model as well as for entities one
+  !! dimension below (boundary overlaps).
+  subroutine gmshModelMeshGetPartitionEntities(dim, &
+                                               tag, &
+                                               partition, &
+                                               entityTags, &
+                                               overlapEntities, &
+                                               ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     partition, &
+                     api_entityTags_, &
+                     api_entityTags_n_, &
+                     api_overlapEntities_, &
+                     api_overlapEntities_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetPartitionEntities")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: partition
+      type(c_ptr), intent(out) :: api_entityTags_
+      integer(c_size_t), intent(out) :: api_entityTags_n_
+      type(c_ptr), intent(out) :: api_overlapEntities_
+      integer(c_size_t), intent(out) :: api_overlapEntities_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: partition
+    integer(c_int), dimension(:), allocatable, intent(out) :: entityTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: overlapEntities
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_entityTags_
+    integer(c_size_t) :: api_entityTags_n_
+    type(c_ptr) :: api_overlapEntities_
+    integer(c_size_t) :: api_overlapEntities_n_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         partition=int(partition, c_int), &
+         api_entityTags_=api_entityTags_, &
+         api_entityTags_n_=api_entityTags_n_, &
+         api_overlapEntities_=api_overlapEntities_, &
+         api_overlapEntities_n_=api_overlapEntities_n_, &
+         ierr_=ierr)
+    entityTags = ovectorint_(api_entityTags_, &
+      api_entityTags_n_)
+    overlapEntities = ovectorint_(api_overlapEntities_, &
+      api_overlapEntities_n_)
+  end subroutine gmshModelMeshGetPartitionEntities
+
+  !> Get the tags of the entities making up the overlap boundary of partition
+  !! `partition' inside the (non-partitioned) entity of dimension `dim' and tag
+  !! `tag'.
+  subroutine gmshModelMeshGetOverlapBoundary(dim, &
+                                             tag, &
+                                             partition, &
+                                             entityTags, &
+                                             ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     partition, &
+                     api_entityTags_, &
+                     api_entityTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetOverlapBoundary")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: partition
+      type(c_ptr), intent(out) :: api_entityTags_
+      integer(c_size_t), intent(out) :: api_entityTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: partition
+    integer(c_int), dimension(:), allocatable, intent(out) :: entityTags
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_entityTags_
+    integer(c_size_t) :: api_entityTags_n_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         partition=int(partition, c_int), &
+         api_entityTags_=api_entityTags_, &
+         api_entityTags_n_=api_entityTags_n_, &
+         ierr_=ierr)
+    entityTags = ovectorint_(api_entityTags_, &
+      api_entityTags_n_)
+  end subroutine gmshModelMeshGetOverlapBoundary
+
+  !> If the entity of dimension `dim' and tag `tag' is a boundary overlap, get
+  !! the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on
+  !! error.
+  subroutine gmshModelMeshGetBoundaryOverlapParent(dim, &
+                                                   tag, &
+                                                   parentTag, &
+                                                   ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     parentTag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetBoundaryOverlapParent")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int) :: parentTag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer(c_int) :: parentTag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         parentTag=parentTag, &
+         ierr_=ierr)
+  end subroutine gmshModelMeshGetBoundaryOverlapParent
 
   !> Unpartition the mesh of the current model.
   subroutine gmshModelMeshUnpartition(ierr)

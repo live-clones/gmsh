@@ -129,4 +129,4 @@ class Formulation
 };
 */
 
-#endif //_SOLVERFIELD_H_
+#endif

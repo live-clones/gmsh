@@ -117,4 +117,4 @@ inline cgsize_t StructuredIndexing<DIM>::nbEntInRange(const cgsize_t *range)
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_COMMON_H
+#endif

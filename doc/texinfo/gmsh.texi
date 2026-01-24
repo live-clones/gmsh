@@ -4106,6 +4106,12 @@ Renumber the node tags in the current mesh in a continuous sequence.
 @item RenumberMeshElements;
 Renumber the elements tags in the current mesh in a continuous sequence.
 
+@item CreateMeshEdges;
+Create the edges of the current mesh.
+
+@item CreateMeshFaces;
+Create the faces of the current mesh.
+
 @item < Recursive > Color @var{color-expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Set the mesh color of the entities in @var{expression-list} to
 @var{color-expression}. @value{SYNC}

@@ -61,6 +61,7 @@
 #include "HierarchicalBasisHcurlTria.h"
 #include "HierarchicalBasisHcurlTetra.h"
 #include "HierarchicalBasisHcurlPri.h"
+#include "Overlap.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -1387,6 +1388,297 @@ gmsh::model::mesh::partition(const int numPart,
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+template <int dim>
+static void _buildOverlapsForDim(const int layers, GModel *const m)
+{
+  auto ovlps = quickOverlap<dim>(m);
+  for(int i = 1; i < layers; ++i) extendOverlapCollection<dim>(m, ovlps);
+  buildOverlapEntities<dim>(m, ovlps);
+  overlapBuildBoundaries<dim>(m, ovlps);
+}
+
+GMSH_API void gmsh::model::mesh::createOverlaps(const int layers,
+                                                const bool createBoundaries)
+{
+  if(!_checkInit()) return;
+
+  if(!createBoundaries) {
+    Msg::Error("Creating boundaries is currently mandatory ;-)");
+  }
+
+  GModel *m = GModel::current();
+  if(!m) {
+    Msg::Error("No model loaded");
+    return;
+  }
+  auto dim = m->getDim();
+  if(dim < 2)
+    Msg::Error("Model dimension (%d) is too low for overlap checks", dim);
+
+  if(layers < 1)
+    Msg::Error("Number of layers must be strictly positive, got %d", layers);
+
+  Msg::StatusBar(true, "Building overlaps...");
+
+  double t1 = Cpu(), w1 = TimeOfDay();
+  if(dim == 2)
+    _buildOverlapsForDim<2>(layers, m);
+  else
+    _buildOverlapsForDim<3>(layers, m);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  CTX::instance()->mesh.timer[1] = w2 - w1;
+  Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)",
+                 CTX::instance()->mesh.timer[1], t2 - t1);
+}
+
+template <int dim>
+static void _findPartitionForDim(const int tag, const int partition,
+                                 std::vector<int> &entities,
+                                 GModel *const model)
+{
+  using Entity = typename EntityTraits<dim>::Entity;
+  using PartitionEntity = typename EntityTraits<dim>::PartitionEntity;
+  std::vector<Entity *> partitionEntities;
+  if constexpr(dim == 0) {
+    partitionEntities =
+      std::vector<Entity *>(model->firstVertex(), model->lastVertex());
+  }
+  else if constexpr(dim == 1) {
+    partitionEntities =
+      std::vector<Entity *>(model->firstEdge(), model->lastEdge());
+  }
+  else if constexpr(dim == 2) {
+    partitionEntities =
+      std::vector<Entity *>(model->firstFace(), model->lastFace());
+  }
+  else if constexpr(dim == 3) {
+    partitionEntities =
+      std::vector<Entity *>(model->firstRegion(), model->lastRegion());
+  }
+
+  // Keep partitioned entities on this partition
+  for(Entity *e : partitionEntities) {
+    auto pe = dynamic_cast<PartitionEntity *>(e);
+    if(!pe) continue;
+    auto partitions = pe->getPartitions();
+    if(std::find(partitions.begin(), partitions.end(), partition) !=
+       partitions.end()) {
+      auto parent = pe->getParentEntity();
+      if(parent && parent->tag() == tag && parent->dim() == dim) {
+        entities.push_back(pe->tag());
+      }
+    }
+  }
+}
+
+template <int dim>
+static void _findOverlapsOfDim(const int tag, const int partition,
+                               std::vector<int> &overlapEntities,
+                               GModel *const model)
+{
+  using OverlapEntity = typename EntityTraits<dim>::OverlapEntity;
+  const auto &allOverlaps =
+    std::get<std::vector<OverlapEntity *>>(model->getAllOverlaps());
+  for(OverlapEntity *oe : allOverlaps) {
+    if(!oe) {
+      Msg::Error("Null overlapEntity pointer found");
+      continue;
+    }
+    auto covered = oe->getCovered();
+    if(!covered || !covered->getParentEntity()) continue;
+    if(covered->getParentEntity()->tag() == tag &&
+       oe->owningPartition() == partition) {
+      overlapEntities.push_back(oe->tag());
+    }
+  }
+}
+
+template <int dim> static auto _getOverlapOfBoundaries(GModel *const model)
+{
+  if constexpr(dim == 2) { return model->getOverlapOfBoundaries2D(); }
+  else if constexpr(dim == 3) {
+    return model->getOverlapOfBoundaries3D();
+  }
+  else {
+    static_assert(dim == 2 || dim == 3,
+                  "Unsupported dimension for boundary overlaps");
+  }
+}
+
+// dim is model dimension, so we look for entities of dimension dim-1
+template <int dim>
+static void _findOverlapOfBoundary(const int tag, const int partition,
+                                   std::vector<int> &overlapEntities,
+                                   GModel *const model)
+{
+  if constexpr(dim != 2 && dim != 3) return;
+
+  using BoundaryEntity = typename EntityTraits<dim - 1>::Entity;
+  const auto &overlapOfBnds = _getOverlapOfBoundaries<dim>(model);
+  BoundaryEntity *entity = nullptr;
+  if constexpr(dim == 2)
+    entity = model->getEdgeByTag(tag);
+  else if constexpr(dim == 3)
+    entity = model->getFaceByTag(tag);
+  auto it = overlapOfBnds.find(entity);
+  if(it == overlapOfBnds.end()) { return; }
+  for(auto *pe : it->second) {
+    auto partitions = pe->getPartitions();
+    if(partitions.size() != 1)
+      Msg::Error("Overlap of boundary should have exactly one partition, "
+                 "found %zu",
+                 partitions.size());
+    if(partitions.at(0) == partition) { overlapEntities.push_back(pe->tag()); }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getPartitionEntities(
+  const int dim, const int tag, const int partition, std::vector<int> &entities,
+  std::vector<int> &overlapEntities)
+{
+  if(!_checkInit()) return;
+  entities.clear();
+  overlapEntities.clear();
+  GModel *model = GModel::current();
+  int modelDim = model->getDim();
+  // For the inner parts
+  switch(dim) {
+  case 0: _findPartitionForDim<0>(tag, partition, entities, model); break;
+  case 1: _findPartitionForDim<1>(tag, partition, entities, model); break;
+  case 2: _findPartitionForDim<2>(tag, partition, entities, model); break;
+  case 3: _findPartitionForDim<3>(tag, partition, entities, model); break;
+  default:
+    Msg::Error("findPartition is not supported for dimension %d", dim);
+    return;
+  }
+
+  // Overlaps: if dim == modelDim, return the usualOverlaps. If dim == modelDim
+  // - 1, return overlap of boundaries. Else, nothing
+  if(dim == modelDim) {
+    if(dim == 2)
+      _findOverlapsOfDim<2>(tag, partition, overlapEntities, model);
+    else if(dim == 3)
+      _findOverlapsOfDim<3>(tag, partition, overlapEntities, model);
+  }
+  else if(dim == modelDim - 1) {
+    if(modelDim == 2) {
+      _findOverlapOfBoundary<2>(tag, partition, overlapEntities, model);
+    }
+    else if(modelDim == 3) {
+      _findOverlapOfBoundary<3>(tag, partition, overlapEntities, model);
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
+                                                    const int tag,
+                                                    const int partition,
+                                                    std::vector<int> &entities)
+{
+  if(!_checkInit()) return;
+  entities.clear();
+  GModel *model = GModel::current();
+  if(dim == 2) {
+    GFace *face = model->getFaceByTag(tag);
+    if(!face) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      return;
+    }
+    const auto &boundaries = model->getOverlapInnerBoundaries2D();
+    auto it = boundaries.find(face);
+    if(it == boundaries.end()) {
+      Msg::Error("No inner boundaries found for %s in partition %d",
+                 _getEntityName(dim, tag).c_str(), partition);
+    }
+    for(const auto &pe : it->second) {
+      if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+    }
+  }
+  else if(dim == 3) {
+    GRegion *region = model->getRegionByTag(tag);
+    if(!region) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      return;
+    }
+    const auto &boundaries = model->getOverlapInnerBoundaries3D();
+    auto it = boundaries.find(region);
+    if(it == boundaries.end()) {
+      Msg::Error("No inner boundaries found for %s in partition %d",
+                 _getEntityName(dim, tag).c_str(), partition);
+    }
+    for(const auto &pe : it->second) {
+      if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+    }
+  }
+  else {
+    Msg::Error("Inner boundary search is not supported for dimension %d", dim);
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
+                                                          const int tag,
+                                                          int &parentTag)
+{
+  if(!_checkInit()) return;
+  GModel *model = GModel::current();
+  GEntity *entity = model->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Warning("findCreatingEntityForOverlapOfBoundary: no entity of "
+                 "dimension %d and tag %d",
+                 dim, tag);
+    parentTag = -1;
+    return;
+  }
+  if(dim == 3 || dim == 0) {
+    Msg::Warning("findCreatingEntityForOverlapOfBoundary: only supported for "
+                 "1D and 2D entities");
+    parentTag = -1;
+    return;
+  }
+  if(dim == 1) {
+    partitionEdge *pe = dynamic_cast<partitionEdge *>(entity);
+    if(!pe) {
+      Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity (dim=%d, "
+                   "tag=%d) is not a partitionEdge",
+                   dim, tag);
+      parentTag = -1;
+      return;
+    }
+    const auto &dict = std::get<std::unordered_map<partitionEdge *, GFace *>>(
+      model->getBoundaryOfOverlapCreators());
+    auto it = dict.find(pe);
+    if(it == dict.end()) {
+      Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity "
+                   "found for partitionEdge (dim=%d, tag=%d)",
+                   dim, tag);
+      parentTag = -1;
+      return;
+    }
+    parentTag = it->second->tag();
+  }
+  else if(dim == 2) {
+    partitionFace *pf = dynamic_cast<partitionFace *>(entity);
+    if(!pf) {
+      Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity (dim=%d, "
+                   "tag=%d) is not a partitionFace",
+                   dim, tag);
+      parentTag = -1;
+      return;
+    }
+    const auto &dict = std::get<std::unordered_map<partitionFace *, GRegion *>>(
+      model->getBoundaryOfOverlapCreators());
+    auto it = dict.find(pf);
+    if(it == dict.end()) {
+      Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity "
+                   "found for partitionFace (dim=%d, tag=%d)",
+                   dim, tag);
+      parentTag = -1;
+      return;
+    }
+    parentTag = it->second->tag();
+  }
+}
+
 GMSH_API void gmsh::model::mesh::unpartition()
 {
   if(!_checkInit()) return;
@@ -1532,28 +1824,11 @@ gmsh::model::mesh::removeElements(const int dim, const int tag,
   // we leave the user to call reclassifyNodes()
 }
 
-static void _getEntities(const gmsh::vectorpair &dimTags,
-                         std::vector<GEntity *> &entities)
-{
-  if(dimTags.empty()) { GModel::current()->getEntities(entities); }
-  else {
-    for(auto dimTag : dimTags) {
-      int dim = dimTag.first, tag = dimTag.second;
-      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-      if(!ge) {
-        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-        return;
-      }
-      entities.push_back(ge);
-    }
-  }
-}
-
 GMSH_API void gmsh::model::mesh::reverse(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   for(auto ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       ge->getMeshElement(j)->reverse();
@@ -1582,7 +1857,7 @@ gmsh::model::mesh::affineTransform(const std::vector<double> &affineTransform,
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   for(auto ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
       MVertex *v = ge->getMeshVertex(j);
@@ -3670,33 +3945,13 @@ GMSH_API void gmsh::model::mesh::getFaces(
 GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
-  std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumEdges(); k++) {
-        MEdge edge = e->getEdge(k);
-        GModel::current()->addMEdge(std::move(edge));
-      }
-    }
-  }
+  GModel::current()->createMEdges(dimTags);
 }
 
 GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
-  std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumFaces(); k++) {
-        MFace face = e->getFace(k);
-        GModel::current()->addMFace(std::move(face));
-      }
-    }
-  }
+  GModel::current()->createMFaces(dimTags);
 }
 
 GMSH_API void
@@ -5197,7 +5452,7 @@ GMSH_API void gmsh::model::mesh::removeConstraints(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   for(std::size_t i = 0; i < entities.size(); i++)
     entities[i]->resetMeshAttributes();
 }
@@ -5585,7 +5840,7 @@ gmsh::model::mesh::getDuplicateNodes(std::vector<std::size_t> &nodeTags,
   double lc = bbox.empty() ? 1. : bbox.diag();
   double eps = lc * CTX::instance()->geom.tolerance;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   std::vector<MVertex *> vertices;
   for(std::size_t i = 0; i < entities.size(); i++) {
     vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
@@ -5601,7 +5856,7 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   GModel::current()->removeDuplicateMeshVertices(
     CTX::instance()->geom.tolerance, entities);
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -5612,7 +5867,7 @@ gmsh::model::mesh::removeDuplicateElements(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
-  _getEntities(dimTags, entities);
+  GModel::current()->getEntities(entities, dimTags);
   GModel::current()->removeDuplicateMeshElements(entities);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
@@ -8311,11 +8566,9 @@ gmsh::algorithm::triangulate(const std::vector<double> &coord,
 #endif
 }
 
-GMSH_API void
-gmsh::algorithm::tetrahedralize(const std::vector<double> &coord,
-                                std::vector<std::size_t> &tetra,
-                                std::vector<double> &steiner,
-                                const std::vector<std::size_t> &triangles)
+GMSH_API void gmsh::algorithm::tetrahedralize(
+  const std::vector<double> &coord, std::vector<std::size_t> &tetra,
+  std::vector<double> &steiner, const std::vector<std::size_t> &triangles)
 {
   if(!_checkInit()) return;
   tetra.clear();

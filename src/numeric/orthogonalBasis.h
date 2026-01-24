@@ -46,4 +46,4 @@ namespace JacobiPolynomials {
   }
 } // namespace JacobiPolynomials
 
-#endif // GMSH_ORTHOGONALBASIS_H
+#endif

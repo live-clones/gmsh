@@ -97,4 +97,4 @@ inline void CGNSZoneStruct<DIM>::nodeFromList(const std::vector<cgsize_t> &list,
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_ZONE_STRUCT_H
+#endif

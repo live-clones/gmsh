@@ -68,4 +68,4 @@ public:
   }
 };
 
-#endif //_QUADRATURERULES_H_
+#endif

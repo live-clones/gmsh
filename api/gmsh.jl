@@ -1865,6 +1865,115 @@ function partition(numPart, elementTags = Csize_t[], partitions = Cint[])
 end
 
 """
+    gmsh.model.mesh.createOverlaps(layers = 1, createBoundaries = true)
+
+Generate node-based overlaps (of highest dimension) for all partitions, with a
+number of layers equal to `layers`. If `createBoundaries` is set, build the
+overlaps for the entities bounding the highest-dimensional entities (i.e.
+"boundary overlaps"), as well as the inner boundaries of the overlaps (i.e.
+"overlap boundaries").
+
+Types:
+ - `layers`: integer
+ - `createBoundaries`: boolean
+"""
+function createOverlaps(layers = 1, createBoundaries = true)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateOverlaps, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}),
+          layers, createBoundaries, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const create_overlaps = createOverlaps
+
+"""
+    gmsh.model.mesh.getPartitionEntities(dim, tag, partition)
+
+Get the tags of the partitioned entities of dimension `dim` whose parent has
+dimension `dim` and tag `tag`, and which belong to the partition `partition`. If
+overlaps are present, fill `overlapEntities` with the tags of the entities that
+are in the overlap of the partition. Works for entities of the same dimension as
+the model as well as for entities one dimension below (boundary overlaps).
+
+Return `entityTags`, `overlapEntities`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `partition`: integer
+ - `entityTags`: vector of integers
+ - `overlapEntities`: vector of integers
+"""
+function getPartitionEntities(dim, tag, partition)
+    api_entityTags_ = Ref{Ptr{Cint}}()
+    api_entityTags_n_ = Ref{Csize_t}()
+    api_overlapEntities_ = Ref{Ptr{Cint}}()
+    api_overlapEntities_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPartitionEntities, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, partition, api_entityTags_, api_entityTags_n_, api_overlapEntities_, api_overlapEntities_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    entityTags = unsafe_wrap(Array, api_entityTags_[], api_entityTags_n_[], own = true)
+    overlapEntities = unsafe_wrap(Array, api_overlapEntities_[], api_overlapEntities_n_[], own = true)
+    return entityTags, overlapEntities
+end
+const get_partition_entities = getPartitionEntities
+
+"""
+    gmsh.model.mesh.getOverlapBoundary(dim, tag, partition)
+
+Get the tags of the entities making up the overlap boundary of partition
+`partition` inside the (non-partitioned) entity of dimension `dim` and tag
+`tag`.
+
+Return `entityTags`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `partition`: integer
+ - `entityTags`: vector of integers
+"""
+function getOverlapBoundary(dim, tag, partition)
+    api_entityTags_ = Ref{Ptr{Cint}}()
+    api_entityTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetOverlapBoundary, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, partition, api_entityTags_, api_entityTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    entityTags = unsafe_wrap(Array, api_entityTags_[], api_entityTags_n_[], own = true)
+    return entityTags
+end
+const get_overlap_boundary = getOverlapBoundary
+
+"""
+    gmsh.model.mesh.getBoundaryOverlapParent(dim, tag)
+
+If the entity of dimension `dim` and tag `tag` is a boundary overlap, get the
+entity of dimension `dim+1` that created it. Sets `parentTag` to -1 on error.
+
+Return `parentTag`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `parentTag`: integer
+"""
+function getBoundaryOverlapParent(dim, tag)
+    api_parentTag_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetBoundaryOverlapParent, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}, Ptr{Cint}),
+          dim, tag, api_parentTag_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_parentTag_[]
+end
+const get_boundary_overlap_parent = getBoundaryOverlapParent
+
+"""
     gmsh.model.mesh.unpartition()
 
 Unpartition the mesh of the current model.

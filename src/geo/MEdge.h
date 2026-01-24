@@ -105,14 +105,14 @@ public:
 
 inline bool operator==(const MEdge &e1, const MEdge &e2)
 {
-  return (e1.getMinVertex() == e2.getMinVertex() &&
-          e1.getMaxVertex() == e2.getMaxVertex());
+  return (e1.getMinVertex()->getNum() == e2.getMinVertex()->getNum() &&
+          e1.getMaxVertex()->getNum() == e2.getMaxVertex()->getNum());
 }
 
 inline bool operator!=(const MEdge &e1, const MEdge &e2)
 {
-  return (e1.getMinVertex() != e2.getMinVertex() ||
-          e1.getMaxVertex() != e2.getMaxVertex());
+  return (e1.getMinVertex()->getNum() != e2.getMinVertex()->getNum() ||
+          e1.getMaxVertex()->getNum() != e2.getMaxVertex()->getNum());
 }
 
 struct MEdgeEqual {

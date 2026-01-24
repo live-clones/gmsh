@@ -70,9 +70,10 @@ struct contextMeshOptions {
   int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder;
   int cgnsConstructTopology, cgnsExportCPEX0045, cgnsExportStructured;
   int preserveNumberingMsh2, createTopologyMsh2;
+  int createEdges, createFaces;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
-  int partitionCreatePhysicals, partitionSplitMeshFiles;
+  int partitionCreatePhysicals, partitionSplitMeshFiles, partitionSplitLocalBrep;
   int partitionSaveTopologyFile, partitionTriWeight, partitionQuaWeight;
   int partitionTetWeight, partitionHexWeight, partitionLinWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
@@ -85,7 +86,8 @@ struct contextMeshOptions {
   int nodes, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
   int pyramids, trihedra;
   int surfaceEdges, surfaceFaces, volumeEdges, volumeFaces, numSubEdges;
-  int nodeLabels, lineLabels, surfaceLabels, volumeLabels, qualityType, labelType;
+  int nodeLabels, lineLabels, surfaceLabels, volumeLabels, qualityType;
+  int labelType;
   double nodeSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int smoothNormals, clip;

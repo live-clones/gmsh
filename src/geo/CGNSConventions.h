@@ -43,4 +43,4 @@ std::string cgnsString(const std::string &s,
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_CONVENTIONS_H
+#endif
