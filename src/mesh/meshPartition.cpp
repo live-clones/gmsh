@@ -1241,6 +1241,128 @@ divideNonConnectedEntities(GModel *model, int dim,
   return ret;
 }
 
+typedef std::set<GEntity *, GEntityPtrLessThan> GEntitySet;
+
+// Dispatch a call to getPartitions on a partitionEntity
+static const std::vector<int> &partitionEntityGetPartitions(GEntity *entity) {
+  switch (entity->geomType()) {
+  case GEntity::PartitionPoint:
+    return static_cast<partitionVertex *>(entity)->getPartitions();
+  case GEntity::PartitionCurve:
+    return static_cast<partitionEdge *>(entity)->getPartitions();
+  case GEntity::PartitionSurface:
+    return static_cast<partitionFace *>(entity)->getPartitions();
+  case GEntity::PartitionVolume:
+    return static_cast<partitionRegion *>(entity)->getPartitions();
+  default:
+    throw std::invalid_argument("partitionEntityGetPartitions(): entity is not a partitioned entity");
+  }
+}
+
+// Dispatch a call to setPartitions on a partitionEntity
+static void partitionEntitySetPartitions(GEntity *entity, std::vector<int> &partitions) {
+  switch (entity->geomType()) {
+  case GEntity::PartitionPoint:
+    return static_cast<partitionVertex *>(entity)->setPartitions(partitions);
+  case GEntity::PartitionCurve:
+    return static_cast<partitionEdge *>(entity)->setPartitions(partitions);
+  case GEntity::PartitionSurface:
+    return static_cast<partitionFace *>(entity)->setPartitions(partitions);
+  case GEntity::PartitionVolume:
+    return static_cast<partitionRegion *>(entity)->setPartitions(partitions);
+  default:
+    throw std::invalid_argument("partitionEntitySetPartitions(): entity is not a partitioned entity");
+  }
+}
+
+// Get all the entities with a given (partition) parent
+static void modelGetEntitiesByParent(GModel *model, GEntity *parent, GEntitySet &pe) {
+  // Get all entities
+  std::vector<GEntity *> entities;
+  model->getEntities(entities);
+
+  // Find those with the given parent as parent
+  for (auto entity : entities)
+    if (entity->getParentEntity() == parent)
+      pe.insert(entity);
+}
+
+// Get all the partition entities associated with the embedded entities of a face
+static void faceGetEmbeddedPartitionEntities(GModel *model, GFace *face, GEntitySet &emb_pents) {
+  // Get all embedded entities
+  GEntitySet embedded;
+  for (auto edge : face->embeddedEdges())
+    embedded.insert(edge);
+  for (auto vtx : face->embeddedVertices())
+    embedded.insert(vtx);
+
+  // Get all entities
+  std::vector<GEntity *> entities;
+  model->getEntities(entities);
+
+  // Collect entities whose parent are embedded entities of the face
+  for (auto entity : entities) {
+    GEntity *parent = entity->getParentEntity();
+    if (parent == nullptr)
+      continue;
+
+    if (embedded.count(parent) > 0)
+      emb_pents.insert(entity);
+  }
+}
+
+// Check for vertex reference in an element
+static bool elementContainsVertex(MElement *element, GVertex *vertex) {
+  std::vector<MVertex *> el_vertices;
+  element->getVertices(el_vertices);
+
+  for (auto el_vertex : el_vertices)
+    if (el_vertex->onWhat() == vertex)
+      return true;
+
+  return false;
+}
+
+// Check for vertex reference in all elements associated with entity
+static bool entityElementsContainVertex(GEntity *entity, GVertex *vertex) {
+  for (size_t i = 0; i < entity->getNumMeshElements(); i++)
+    if (elementContainsVertex(entity->getMeshElement(i), vertex))
+      return true;
+
+  return false;
+}
+
+// Reassign partitions to embedded entities collocated with partition interfaces
+static void reassignPartitionsToEmbeddedEntities(GModel *model) {
+  for (auto face : model->getFaces()) {
+    GEntitySet chd_pents;
+    modelGetEntitiesByParent(model, face, chd_pents);
+    GEntitySet emb_pents;
+    faceGetEmbeddedPartitionEntities(model, face, emb_pents);
+
+    // For each partition embedded vertex ...
+    for (auto emb_pent : emb_pents) {
+      if (emb_pent->geomType() != GEntity::PartitionPoint)
+        continue;
+
+      // ...check if emb_pent is in an element of a lower dimensional partition entity located on face...
+      for (auto chd_pent : chd_pents) {
+        if (chd_pent->dim() >= face->dim())
+          continue;
+
+        if (entityElementsContainVertex(chd_pent, static_cast<GVertex *>(emb_pent))) {
+          // ...and if yes, (uniquely) add the partitions of that partition entity to emb_pent
+          std::vector<int> new_parts = partitionEntityGetPartitions(emb_pent);
+          for (auto part : partitionEntityGetPartitions(chd_pent))
+            if (std::count(new_parts.begin(), new_parts.end(), part) <= 0)
+            new_parts.push_back(part);
+          partitionEntitySetPartitions(emb_pent, new_parts);
+        }
+      }
+    }
+  }
+}
+
 // Create the new volume entities (omega)
 static void createNewEntities(GModel *model, hashmapelementpart &elmToPartition)
 {
@@ -2419,6 +2541,8 @@ int PartitionMesh(GModel *model, int numPart)
   assignMeshVertices(model);
   fixEmbeddedVertices(model);
 
+  reassignPartitionsToEmbeddedEntities(model);
+
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
     double t4 = Cpu(), w4 = TimeOfDay();
     Msg::StatusBar(true, "Creating ghost cells...");
@@ -2676,6 +2800,8 @@ int PartitionUsingThisSplit(GModel *model,
   assignPhysicals(model);
   assignMeshVertices(model);
   fixEmbeddedVertices(model);
+
+  reassignPartitionsToEmbeddedEntities(model);
 
   if (!elmGhosts.empty()) {
     std::sort(elmGhosts.begin(), elmGhosts.end());
