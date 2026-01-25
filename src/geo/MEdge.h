@@ -105,26 +105,18 @@ public:
 
 inline bool operator==(const MEdge &e1, const MEdge &e2)
 {
-  // FIXME it would be better to compare vertex tags instead of pointers, but
-  // the boundary layer code sometimes leads to null vertices
   return (e1.getMinVertex() == e2.getMinVertex() &&
           e1.getMaxVertex() == e2.getMaxVertex());
 }
 
 inline bool operator!=(const MEdge &e1, const MEdge &e2)
 {
-  // FIXME it would be better to compare vertex tags instead of pointers, but
-  // the boundary layer code sometimes leads to null vertices
   return (e1.getMinVertex() != e2.getMinVertex() ||
           e1.getMaxVertex() != e2.getMaxVertex());
 }
 
 struct MEdgeEqual {
-  bool operator()(const MEdge &e1, const MEdge &e2) const
-  {
-    return (e1.getMinVertex()->getNum() == e2.getMinVertex()->getNum() &&
-            e1.getMaxVertex()->getNum() == e2.getMaxVertex()->getNum());
-  }
+  bool operator()(const MEdge &e1, const MEdge &e2) const { return (e1 == e2); }
 };
 
 struct MEdgeLessThan {
