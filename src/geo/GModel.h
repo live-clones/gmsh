@@ -710,6 +710,9 @@ public:
   // write the partitioned topology file
   int writePartitionedTopology(std::string &name);
 
+  // create partition overlaps
+  int createOverlaps(int layers, bool createBoundaries=true);
+
   // /!\ Use only for compatibility with mesh format msh2 and msh3
   std::multimap<MElement *, short> &getGhostCells() { return _ghostCells; }
   void addGhostCells(MElement *elm, short partition)

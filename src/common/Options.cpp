@@ -5944,6 +5944,13 @@ double opt_mesh_partition_convert_msh2(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionConvertMsh2;
 }
 
+double opt_mesh_overlap_layers(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.overlapLayers = (int)val;
+  return CTX::instance()->mesh.overlapLayers;
+}
+
 double opt_mesh_create_topology_msh2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.createTopologyMsh2 = val;

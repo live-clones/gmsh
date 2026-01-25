@@ -85,7 +85,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "then exit"));
   s.push_back(mp("-reclassify angle", "Reclassify surface mesh, then exit"));
   s.push_back(mp("-reparam angle", "Reparametrize surface mesh, then exit"));
-  s.push_back(mp("-hybrid", "generate a hybrid hex-tet mesh with trihedron for transitions"));
+  s.push_back(mp("-hybrid", "generate a hybrid hex-tet mesh with trihedron for "
+                 "transitions"));
   s.push_back(mp("-part int", "Partition after batch mesh generation "
                  "(Mesh.NbPartitions)"));
   s.push_back(mp("-part_weight [tri,quad,tet,hex,pri,pyr,trih] int",
@@ -101,6 +102,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "(Mesh.PartitionCreatePhysicals)"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file "
                  "(Mesh.PartitionTopologyFile)"));
+  s.push_back(mp("-overlap int", "Create partition overlaps after batch mesh "
+                 "generation (Mesh.OverlapLayers)"));
   s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 "
                  "format (Mesh.PreserveNumberingMsh2)"));
   s.push_back(mp("-save_all", "Save all elements (Mesh.SaveAll)"));
@@ -530,6 +533,17 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
     if(i < argv.size()) {
       CTX::instance()->batchAfterMesh = 1;
       opt_mesh_partition_num(0, GMSH_SET, atoi(argv[i++].c_str()));
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-overlap") {
+    i++;
+    if(i < argv.size()) {
+      CTX::instance()->batchAfterMesh = 1;
+      opt_mesh_overlap_layers(0, GMSH_SET, atoi(argv[i++].c_str()));
     }
     else {
       Msg::Error("Missing number");

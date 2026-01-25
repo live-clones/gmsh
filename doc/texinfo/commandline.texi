@@ -46,6 +46,8 @@ Create ghost cells (Mesh.PartitionCreateGhostCells)
 Create physical groups for partitions (Mesh.PartitionCreatePhysicals)
 @item -part_topo_pro
 Save the partition topology .pro file (Mesh.PartitionTopologyFile)
+@item -overlap int
+Create partition overlaps after batch mesh generation (Mesh.OverlapLayers)
 @item -preserve_numbering_msh2
 Preserve element numbering in MSH2 format (Mesh.PreserveNumberingMsh2)
 @item -save_all

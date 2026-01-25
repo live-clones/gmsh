@@ -4020,6 +4020,9 @@ Change the order of the elements in the current mesh.
 @item PartitionMesh @var{expression};
 Partition the mesh into @var{expression}, using current partitioning options.
 
+@item CreateOverlaps @var{expression};
+Create partition overlaps with @var{expression} layers.
+
 @item Point | Curve @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Add a meshing constraint to embed the point(s) or curve(s) in the given
 surface. The surface mesh will conform to the mesh of the point(s) or

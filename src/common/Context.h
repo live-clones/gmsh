@@ -81,6 +81,7 @@ struct contextMeshOptions {
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
   int metisObjective, metisMinConn;
   double metisMaxLoadImbalance;
+  int overlapLayers;
   // mesh display
   int draw, changed, light, lightTwoSide, lightLines, nodeType;
   int nodes, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;

@@ -3557,6 +3557,9 @@ Command :
       else if(!strcmp($1, "PartitionMesh")) {
         GModel::current()->partitionMesh($2);
       }
+      else if(!strcmp($1, "CreateOverlaps")) {
+        GModel::current()->createOverlaps($2);
+      }
       else if(!strcmp($1, "SetCurrentWindow")) {
 #if defined(HAVE_FLTK)
         FlGui::instance()->setCurrentOpenglWindow((int)$2);

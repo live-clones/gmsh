@@ -541,6 +541,7 @@ double opt_mesh_partition_create_physicals(OPT_ARGS_NUM);
 double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);
 double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM);
 double opt_mesh_partition_convert_msh2(OPT_ARGS_NUM);
+double opt_mesh_overlap_layers(OPT_ARGS_NUM);
 double opt_mesh_create_topology_msh2(OPT_ARGS_NUM);
 double opt_mesh_create_edges(OPT_ARGS_NUM);
 double opt_mesh_create_faces(OPT_ARGS_NUM);

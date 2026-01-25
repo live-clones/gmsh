@@ -1388,47 +1388,11 @@ gmsh::model::mesh::partition(const int numPart,
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-template <int dim>
-static void _buildOverlapsForDim(const int layers, GModel *const m)
-{
-  auto ovlps = quickOverlap<dim>(m);
-  for(int i = 1; i < layers; ++i) extendOverlapCollection<dim>(m, ovlps);
-  buildOverlapEntities<dim>(m, ovlps);
-  overlapBuildBoundaries<dim>(m, ovlps);
-}
-
 GMSH_API void gmsh::model::mesh::createOverlaps(const int layers,
                                                 const bool createBoundaries)
 {
   if(!_checkInit()) return;
-
-  if(!createBoundaries) {
-    Msg::Error("Creating boundaries is currently mandatory ;-)");
-  }
-
-  GModel *m = GModel::current();
-  if(!m) {
-    Msg::Error("No model loaded");
-    return;
-  }
-  auto dim = m->getDim();
-  if(dim < 2)
-    Msg::Error("Model dimension (%d) is too low for overlap checks", dim);
-
-  if(layers < 1)
-    Msg::Error("Number of layers must be strictly positive, got %d", layers);
-
-  Msg::StatusBar(true, "Building overlaps...");
-
-  double t1 = Cpu(), w1 = TimeOfDay();
-  if(dim == 2)
-    _buildOverlapsForDim<2>(layers, m);
-  else
-    _buildOverlapsForDim<3>(layers, m);
-  double t2 = Cpu(), w2 = TimeOfDay();
-  CTX::instance()->mesh.timer[1] = w2 - w1;
-  Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)",
-                 CTX::instance()->mesh.timer[1], t2 - t1);
+  GModel::current()->createOverlaps(layers, createBoundaries);
 }
 
 template <int dim>

@@ -3835,7 +3835,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // ghostCells
   writeMSH4GhostCells(this, fp, partitionToSave, binary);
 
-  // Write Volume overlaps
+  // overlaps
   if(partitioned && overlapDim > 0) {
     if(overlapDim == 2) {
       writeMSH4Overlaps<2>(this, fp, partitionToSave, binary);

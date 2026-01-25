@@ -2433,6 +2433,44 @@ int GModel::convertOldPartitioningToNewOne()
 #endif
 }
 
+template <int dim>
+static void _buildOverlapsForDim(const int layers, GModel *const m)
+{
+  auto ovlps = quickOverlap<dim>(m);
+  for(int i = 1; i < layers; ++i) extendOverlapCollection<dim>(m, ovlps);
+  buildOverlapEntities<dim>(m, ovlps);
+  overlapBuildBoundaries<dim>(m, ovlps);
+}
+
+int GModel::createOverlaps(int layers, bool createBoundaries)
+{
+  if(!createBoundaries)
+    Msg::Warning("Creating boundaries of overlaps is currently mandatory ;-)");
+
+  auto dim = getDim();
+  if(dim < 2) {
+    Msg::Error("Model dimension (%d) is too low for overlap creation", dim);
+    return 1;
+  }
+
+  if(layers < 1) {
+    Msg::Error("Number of layers %d in overlaps must be strictly positive",
+               layers);
+    return 1;
+  }
+
+  Msg::StatusBar(true, "Building overlaps...");
+
+  double t1 = Cpu(), w1 = TimeOfDay();
+  if(dim == 2)
+    _buildOverlapsForDim<2>(layers, this);
+  else
+    _buildOverlapsForDim<3>(layers, this);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+  return 0;
+}
+
 void GModel::storeChain(int dim,
                         std::map<int, std::vector<MElement *>> &entityMap,
                         std::map<int, std::map<int, std::string>> &physicalMap)
