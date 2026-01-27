@@ -95,7 +95,6 @@ public:
   void readInputFile(const std::string &meshFileName);
   void read(const std::string s) { readInputFile(s.c_str()); }
   virtual void setMesh(const std::string &meshFileName, int dim = 0);
-  void cutMesh(gLevelset *ls);
   void setElasticDomain(int phys, double E, double nu);
   void setLagrangeMultipliers(int phys, double tau, const SVector3 &d, int tag,
                               simpleFunction<double> *f);

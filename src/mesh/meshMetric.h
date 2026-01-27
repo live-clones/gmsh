@@ -22,7 +22,6 @@ class STensor3;
 class meshMetric : public Field {
 public:
   typedef enum {
-    LEVELSET = 1,
     HESSIAN = 2,
     FREY = 3,
     EIGENDIRECTIONS = 4,

@@ -791,11 +791,6 @@ public:
   void classifySurfaces(double angleThreshold, bool includeBoundary,
                         bool forReparametrization, double curveAngleThreshold);
 
-  // build a new GModel by cutting the elements crossed by the levelset ls
-  // if cutElem is set to false, split the model without cutting the elements
-  GModel *buildCutGModel(gLevelset *ls, bool cutElem = true,
-                         bool saveTri = false);
-
   // store mesh elements of a chain in a new elementary and physical entity
   void storeChain(int dim, std::map<int, std::vector<MElement *>> &entityMap,
                   std::map<int, std::map<int, std::string>> &physicalMap);

@@ -9,8 +9,9 @@
 #include "Context.h"
 #include "GEntity.h"
 #include "GModel.h"
-#include "gmshLevelset.h"
 #include "MElementOctree.h"
+#include "simpleFunction.h"
+#include "fullMatrix.h"
 #include "OS.h"
 #include "Context.h"
 
@@ -108,7 +109,6 @@ void meshMetric::exportInfo(const char *fileendname)
   std::stringstream sg, sm, sl, sh, shm;
   sg << "meshmetric_gradients_" << fileendname;
   sm << "meshmetric_metric_" << fileendname;
-  sl << "meshmetric_levelset_" << fileendname;
   sh << "meshmetric_hessian_" << fileendname;
   shm << "meshmetric_hessianmat_" << fileendname;
   std::ofstream out_grad(sg.str().c_str());
@@ -349,58 +349,6 @@ void meshMetric::computeHessian()
     hessians[ver](2, 1) = d2udyz;
     hessians[ver](2, 2) = d2udz2;
   }
-}
-
-void meshMetric::computeMetricLevelSet(MVertex *ver, SMetric3 &hessian,
-                                       SMetric3 &metric, double &size, double x,
-                                       double y, double z)
-{
-  double signed_dist;
-  SVector3 gr;
-  if(ver) {
-    signed_dist = vals[ver];
-    gr = grads[ver];
-    hessian = hessians[ver];
-  }
-  else {
-    signed_dist = (*_fct)(x, y, z);
-    _fct->gradient(x, y, z, gr(0), gr(1), gr(2));
-    _fct->hessian(x, y, z, hessian(0, 0), hessian(0, 1), hessian(0, 2),
-                  hessian(1, 0), hessian(1, 1), hessian(1, 2), hessian(2, 0),
-                  hessian(2, 1), hessian(2, 2));
-  }
-
-  double dist = fabs(signed_dist);
-
-  SMetric3 H;
-  double norm = gr(0) * gr(0) + gr(1) * gr(1) + gr(2) * gr(2);
-  if(dist < _e && norm != 0.0) {
-    double h = hmin * (hmax / hmin - 1) * dist / _e + hmin;
-    double C = 1. / (h * h) - 1. / (hmax * hmax);
-    H(0, 0) += C * gr(0) * gr(0) / norm;
-    H(1, 1) += C * gr(1) * gr(1) / norm;
-    H(2, 2) += C * gr(2) * gr(2) / norm;
-    H(1, 0) = H(0, 1) = C * gr(1) * gr(0) / norm;
-    H(2, 0) = H(0, 2) = C * gr(2) * gr(0) / norm;
-    H(2, 1) = H(1, 2) = C * gr(2) * gr(1) / norm;
-  }
-
-  fullMatrix<double> V(3, 3);
-  fullVector<double> S(3);
-  H.eig(V, S);
-
-  double lambda1, lambda2, lambda3;
-  lambda1 = S(0);
-  lambda2 = S(1);
-  lambda3 = (_dim == 3) ? S(2) : 1.;
-
-  SVector3 t1(V(0, 0), V(1, 0), V(2, 0));
-  SVector3 t2(V(0, 1), V(1, 1), V(2, 1));
-  SVector3 t3(V(0, 2), V(1, 2), V(2, 2));
-
-  size =
-    std::min(std::min(1 / sqrt(lambda1), 1 / sqrt(lambda2)), 1 / sqrt(lambda3));
-  metric = SMetric3(lambda1, lambda2, lambda3, t1, t2, t3);
 }
 
 void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,
@@ -768,7 +716,6 @@ void meshMetric::computeMetric(int metricNumber)
     SMetric3 hessian, metric;
     double size;
     switch(_technique) {
-    case(LEVELSET): computeMetricLevelSet(ver, hessian, metric, size); break;
     case(HESSIAN): computeMetricHessian(ver, hessian, metric, size); break;
     case(FREY): computeMetricFrey(ver, hessian, metric, size); break;
     case(EIGENDIRECTIONS):
@@ -846,9 +793,6 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
         SMetric3 hessian, metric;
         double size;
         switch(_technique) {
-        case(LEVELSET):
-          computeMetricLevelSet(nullptr, hessian, metric, size, x, y, z);
-          break;
         case(HESSIAN):
           computeMetricHessian(nullptr, hessian, metric, size, x, y, z);
           break;
