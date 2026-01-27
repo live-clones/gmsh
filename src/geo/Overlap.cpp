@@ -677,6 +677,17 @@ findNonOwnedVerticesToSave(
     }
   }
 
+  // Remove owned entities - they're fully exported through getEntitiesToSave()
+  for(auto it = result.begin(); it != result.end();) {
+    auto parts = getEntityPartition(it->first, false);
+    if(std::find(parts.begin(), parts.end(), partition) != parts.end()) {
+      it = result.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+
   return result;
 }
 
