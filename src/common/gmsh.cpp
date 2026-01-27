@@ -1551,8 +1551,7 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     const auto &boundaries = model->getOverlapInnerBoundaries2D();
     auto it = boundaries.find(face);
     if(it == boundaries.end()) {
-      Msg::Error("No inner boundaries found for %s in partition %d",
-                 _getEntityName(dim, tag).c_str(), partition);
+      return;
     }
     for(const auto &pe : it->second) {
       if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
@@ -1567,8 +1566,7 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     const auto &boundaries = model->getOverlapInnerBoundaries3D();
     auto it = boundaries.find(region);
     if(it == boundaries.end()) {
-      Msg::Error("No inner boundaries found for %s in partition %d",
-                 _getEntityName(dim, tag).c_str(), partition);
+      return;
     }
     for(const auto &pe : it->second) {
       if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
