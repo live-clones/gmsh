@@ -27,7 +27,7 @@ public:
   virtual int getNumEdges() const { return _v.size(); }
   virtual MEdge getEdge(int num) const
   {
-    if(num < _v.size() - 1) return MEdge(_v[num], _v[num + 1]);
+    if(num < (int)_v.size() - 1) return MEdge(_v[num], _v[num + 1]);
     return MEdge(_v[num - 1], _v[0]);
   }
   virtual int getNumEdgesRep(bool curved) { return getNumEdges(); }
