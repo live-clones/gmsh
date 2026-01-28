@@ -17,7 +17,6 @@
 class GModel;
 class PView;
 class groupOfElements;
-class gLevelset;
 
 struct LagrangeMultiplierFieldT {
   int _tag;

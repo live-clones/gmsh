@@ -17,7 +17,6 @@ template <class scalar> class simpleFunction;
 class GModel;
 class PView;
 class groupOfElements;
-class gLevelset;
 
 struct LagrangeMultiplierField {
   int _tag;

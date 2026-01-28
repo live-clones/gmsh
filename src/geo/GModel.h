@@ -31,7 +31,6 @@ class ACIS_Internals;
 class Parasolid_Internals;
 class smooth_normals;
 class FieldManager;
-class gLevelset;
 class discreteFace;
 class discreteRegion;
 class MElementOctree;
