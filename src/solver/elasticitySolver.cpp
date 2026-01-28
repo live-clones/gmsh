@@ -18,7 +18,6 @@
 #include "quadratureRules.h"
 #include "solverField.h"
 #include "MPoint.h"
-#include "gmshLevelset.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -326,51 +325,11 @@ void elasticitySolver::readInputFile(const std::string &fn)
       }
       setMesh(name);
     }
-    else if(!strcmp(what, "CutMeshPlane")) {
-      double a, b, c, d;
-      if(fscanf(f, "%lf %lf %lf %lf", &a, &b, &c, &d) != 4) {
-        fclose(f);
-        return;
-      }
-      int tag = 1;
-      gLevelsetPlane ls(a, b, c, d, tag);
-      pModel = pModel->buildCutGModel(&ls);
-      pModel->writeMSH("cutMesh.msh");
-    }
-    else if(!strcmp(what, "CutMeshSphere")) {
-      double x, y, z, r;
-      if(fscanf(f, "%lf %lf %lf %lf", &x, &y, &z, &r) != 4) {
-        fclose(f);
-        return;
-      }
-      int tag = 1;
-      gLevelsetSphere ls(x, y, z, r, tag);
-      pModel = pModel->buildCutGModel(&ls);
-      pModel->writeMSH("cutMesh.msh");
-    }
-    else if(!strcmp(what, "CutMeshMathExpr")) {
-      char expr[256];
-      if(fscanf(f, "%s", expr) != 1) {
-        fclose(f);
-        return;
-      }
-      std::string exprS(expr);
-      int tag = 1;
-      gLevelsetMathEval ls(exprS, tag);
-      pModel = pModel->buildCutGModel(&ls);
-      pModel->writeMSH("cutMesh.msh");
-    }
     else {
       Msg::Error("Invalid input : '%s'", what);
     }
   }
   fclose(f);
-}
-
-void elasticitySolver::cutMesh(gLevelset *ls)
-{
-  pModel = pModel->buildCutGModel(ls);
-  pModel->writeMSH("cutMesh.msh");
 }
 
 void elasticitySolver::setElasticDomain(int phys, double E, double nu)

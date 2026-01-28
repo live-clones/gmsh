@@ -77,7 +77,6 @@ typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrFullLessThan>
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
-#include "MElementCut.h"
 #include "MPoint.h"
 
 extern "C" {
