@@ -12,7 +12,11 @@ endif()
 #################################################################################
 # Options
 #################################################################################
-option(HXT_ENABLE_OPENMP "Enable OpenMP" ON)
+if(MSVC)
+  option(HXT_ENABLE_OPENMP "Enable OpenMP" OFF)
+else()
+  option(HXT_ENABLE_OPENMP "Enable OpenMP" ON)
+endif()
 option(HXT_ALIGN_ALLOCATIONS "Align allocation" OFF)
 option(HXT_CORE_OBJECT_ONLY "Do not create hxt_core library" ON)
 
@@ -57,4 +61,18 @@ endif()
 #################################################################################
 if(HXT_ALIGN_ALLOCATIONS)
 	target_compile_definitions(hxt_core PUBLIC HXT_ALIGN_ALLOCATIONS)
+endif()
+
+include(GNUInstallDirs)
+
+if(NOT HXT_CORE_OBJECT_ONLY)
+  install(TARGETS hxt_core DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  set(HXT_CORE_PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_bbox.h"
+                              "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_mesh.h"
+                              "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_message.h"
+                              "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_omp.h"
+                              "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_opt.h"
+                              "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_sort.h"
+                              "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_tools.h")
+  install(FILES ${HXT_CORE_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
