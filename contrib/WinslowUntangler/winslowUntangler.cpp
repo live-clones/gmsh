@@ -184,7 +184,7 @@ namespace WinslowUntangler {
   }
 
   double update_jacobian_matrix(size_t t, UntanglerData &w,
-                                const alglib::real_1d_array &X)
+                                const alglib::real_1d_array &X, bool ppp = false)
   {
     if(w.dim == 2) {
       Eigen::Matrix<double, 2, 3> coords;
@@ -207,14 +207,14 @@ namespace WinslowUntangler {
       w.J_mat_3D[t] = (coords * w.tet_normals[t]).transpose();
       const double det = w.J_mat_3D[t].determinant();
       w.J_det[t] = det;
-      // if (det < 0.) {
-      //   DBG(t, det);
-      //   std::cout << "tet_normals" << std::endl;
-      //   std::cout << w.tet_normals[t] << std::endl;
-      //   std::cout << "J" << std::endl;
-      //   std::cout << w.J_mat_3D[t] << std::endl;
-      //   abort();
-      // }
+      if (ppp) {
+	DBG(t, det);
+	std::cout << "tet_normals" << std::endl;
+	std::cout << w.tet_normals[t] << std::endl;
+	std::cout << "J" << std::endl;
+	std::cout << w.J_mat_3D[t] << std::endl;
+	//	abort();
+      }
       return det;
     }
     return -DBL_MAX;
@@ -671,7 +671,7 @@ namespace WinslowUntangler {
       for(size_t lf = 0; lf < 4; ++lf) {
         vec3 e0 = shape[facet_vertex[lf][1]] - shape[facet_vertex[lf][0]];
         vec3 e1 = shape[facet_vertex[lf][2]] - shape[facet_vertex[lf][0]];
-        vec3 n = 0.5 * cross(e1, e0) * (1. / (3. * avg_tet_vol));
+        vec3 n = 0.5 * cross(e1, e0) * (1. / (3. * vol));
 
         data.tet_normals[t](lf, 0) = n[0];
         data.tet_normals[t](lf, 1) = n[1];
