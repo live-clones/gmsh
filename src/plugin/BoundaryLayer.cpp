@@ -9,6 +9,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "MPrism.h"
 #include "meshGEdge.h"
 #include "BoundaryLayer.h"
 #include "Context.h"
@@ -85,6 +86,36 @@ static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
 
 const int _debugBL3D = 1;
 
+
+static void getEmbeddedStructure (GModel *m, std::map<GVertex*,std::vector<GFace*> > & v2f,
+				  std::map<GEdge*,std::vector<GFace*> > & e2f,
+				  std::map<GEdge*,std::vector<GRegion*> > & e2r,
+				  std::map<GFace*,std::vector<GRegion*> > & f2r){
+  for (GModel::fiter fit = m->firstFace() ; fit != m->lastFace() ; ++fit){
+    auto ee = (*fit)->embeddedEdges();
+    for (auto ge : ee ){
+      v2f[ge->getBeginVertex()].push_back(*fit);
+      v2f[ge->getEndVertex()].push_back(*fit);
+      e2f[ge].push_back(*fit);
+    }
+  }
+  for (GModel::riter rit = m->firstRegion() ; rit != m->lastRegion() ; ++rit){
+    auto ef = (*rit)->embeddedFaces();
+    for (auto gf : ef ){
+      f2r[gf].push_back(*rit);
+      auto ee = (gf)->embeddedEdges();
+      for (auto ge : ee ){
+	if (e2f.find(ge) == e2f.end())e2r[ge].push_back(*rit);
+      }
+      auto e = (gf)->edges();
+      for (auto ge : e ){
+	if (e2f.find(ge) == e2f.end())e2r[ge].push_back(*rit);
+      }      
+    }
+    
+  }
+}
+
 bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           std::vector<GRegion *> &inVolumes, double thickness,
           std::map<MElement *, double> &layers,
@@ -121,9 +152,16 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
   ///---------------------------------------------------------
   // spawn nodes for model points
 
+  // All model points that are corners of surfaces where
+  // we want to create a layer.
+  // Consider a point gv
+  //   --> for all curves ge attached to gv
+  //       if (ge) has more that one ajacent face that wants layers
+      
   if (_debugBL3D)printf("connected points size %lu\n",connectedPoints.size());
 
   for(auto gv : connectedPoints) {
+      
     if(gv->mesh_vertices.empty()) {
       Msg::Warning("No mesh node on model point %d - abort!", gv->tag());
       return false;
@@ -135,6 +173,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
     auto connectedCurves = gv->edges();
     auto connectedSurfaces = gv->faces();
     auto connectedVolumes = gv->regions();
+    
     std::vector<GEdge *> toinsert;
 
     std::size_t found = 0;
@@ -160,6 +199,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
     }
 
     for(auto ge : toinsert) {
+      if (_debugBL3D)printf("   EDDD -- toinsert %d",ge->tag());
       MVertex *v = gv->mesh_vertices[0];
       double param;
       if(reparamMeshVertexOnEdge(v, ge, param)) {
@@ -200,13 +240,16 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 
     std::vector<GFace *> toinsert2;
     for(auto gf : connectedSurfaces) {
-      if (_debugBL3D)printf("connectedSurface %d\n",gf->tag());
+      if (_debugBL3D)printf(" --> connectedSurface %d\n",gf->tag());
       auto ed = gf->edges();
       bool edgeAlreadyDone = false;
       for(auto ge : ed)
-        if(std::find(toinsert.begin(), toinsert.end(), ge) == toinsert.end())
+        if(std::find(toinsert.begin(), toinsert.end(), ge) != toinsert.end()){
+	  if (_debugBL3D)printf(" x-> edgeAlreadyDone %d\n",ge->tag());
           edgeAlreadyDone = true;
+	}
 
+      if (_debugBL3D)printf(" --> edgeAlreadyDone %d\n",edgeAlreadyDone);
       if(edgeAlreadyDone || onSurfacesSet.find(gf) != onSurfacesSet.end()) {
         found++;
       }
@@ -215,6 +258,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
       }
     }
 
+    if (_debugBL3D)printf(" --> toInstert2 size %lu\n",toinsert2.size());
     for(auto gf : toinsert2) {
       MVertex *v = gv->mesh_vertices[0];
       SPoint2 param;
@@ -239,18 +283,29 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
     connectedCurves.insert(es.begin(), es.end());
   }
   for(auto ge : connectedCurves) {
+    if (_debugBL3D)printf(" XC-> connectedCurve %d\n",ge->tag());    
     auto fs = ge->faces();
+
     // for all faces f2ge adjacent to ge
     for(auto f2ge : fs) {
+      if (_debugBL3D)printf("  XC-> face adj %d onSurfacesSet %d\n",f2ge->tag(),
+			    onSurfacesSet.find(f2ge) != onSurfacesSet.end());    
       // if f2ge is onSurfaces of f2ge continue
       if(onSurfacesSet.find(f2ge) != onSurfacesSet.end()) continue;
       auto vs = f2ge->regions();
+
       // for all volumes v adjacent to f2ge
       for(auto vol : vs) {
         if(inVolumesSet.find(vol) == inVolumesSet.end()) continue;
         auto facesOfvol = vol->faces();
+	if (_debugBL3D)printf("  XC-> volume %d is a BL volume -- face belongs to it %d \n",vol->tag(),
+			      std::find(facesOfvol.begin(), facesOfvol.end(), f2ge) !=
+			      facesOfvol.end());    
         if(std::find(facesOfvol.begin(), facesOfvol.end(), f2ge) !=
            facesOfvol.end()) {
+	      
+	  if (_debugBL3D)printf("  XC-> edge %d onSurface %d\n",ge->tag(),f2ge->tag());    
+
           for(auto ev : ge->mesh_vertices) {
             SPoint2 param;
             reparamMeshVertexOnFace(ev, f2ge, param);
@@ -261,12 +316,50 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           }
         }
         else {
+	  if (_debugBL3D)printf(" --> edge %d in volume %d\n",ge->tag(),vol->tag());    
           for(auto ev : ge->mesh_vertices) {
             MVertex *newv = new MVertex(ev->x(), ev->y(), ev->z(), vol);
             vol->mesh_vertices.push_back(newv);
             spawned[ev].push_back(newv);
           }
         }
+      }
+    }
+  }
+
+  for(auto gf : onSurfaces) {
+    std::map<MVertex*,MVertex*> v2v;
+    auto eds = gf->edges();
+    auto vol = gf->regions();
+    for (auto gr : vol){
+      if (inVolumesSet.find(gr) == inVolumesSet.end())continue;
+      for (auto v : gf->mesh_vertices){
+	MVertex *newv = new MVertex (v->x(),v->y(),v->z(),gr);
+	gr->mesh_vertices.push_back(newv);
+	v2v[v] = newv;
+	spawned[v].push_back(newv);
+      }
+      for (auto t : gf->triangles){
+	MVertex *vs[3] = {t->getVertex(0),t->getVertex(1),t->getVertex(2)};
+	MVertex *bs[3] = {nullptr,nullptr,nullptr};
+	for (size_t i=0;i<3;i++){
+	  std::map<MVertex*,MVertex*>::iterator it = v2v.find(vs[i]);
+	  std::map<MVertex*,std::vector<MVertex*> >::iterator its = spawned.find(vs[i]);
+	  if (it != v2v.end()) bs[i] = it->second;
+	  else if (its != spawned.end() && its->second.size() ){
+	    //	    printf("vertex %p has %d spawns\n",vs[i],its->second.size());
+	    for (auto vv : its->second){
+	      if (vv->onWhat() == gr){bs[i] = vv;}
+	      if (vv->onWhat() == gf){bs[i] = vv;}
+	      if (std::find(eds.begin(), eds.end(),vv->onWhat()) == eds.end()){bs[i] = vv; }
+	    }
+	  }
+	  if (!bs[i]) {
+	    bs[i] = new MVertex (vs[i]->x(),vs[i]->y(),vs[i]->z(),gr);
+	    spawned[vs[i]].push_back(bs[i]);
+	    //	    Msg::Error("no counterpart vertex for %d",vs[i]->getNum());
+	  }
+	}
       }
     }
   }
@@ -279,12 +372,80 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           MVertex *newv = new MVertex(vv->x(), vv->y(), vv->z(), vol);
           vol->mesh_vertices.push_back(newv);
           spawned[vv].push_back(newv);
-          printf("Spawned node %zu in volume %d from surface %d\n",
-                 newv->getNum(), vol->tag(), gf->tag());
+	  //  printf("Spawned node %zu in volume %d from surface %d\n",
+	  //                 newv->getNum(), vol->tag(), gf->tag());
         }
       }
     }
   }
+
+  
+  // Embedded Stuff ------------------------------------------------------------------------
+  std::map<GVertex*,std::vector<GFace*> > verticesEmbeddedInFacesAsCurveEndpoints;
+  std::map<GEdge*,std::vector<GFace*> > edgesEmbeddedInFaces;
+  std::map<GEdge*,std::vector<GRegion*> > edgesEmbeddedInRegions;
+  std::map<GFace*,std::vector<GRegion*> > facesEmbeddedInRegions;
+  getEmbeddedStructure (m, verticesEmbeddedInFacesAsCurveEndpoints,edgesEmbeddedInFaces,
+			edgesEmbeddedInRegions,facesEmbeddedInRegions);
+  
+  for (auto v2f : verticesEmbeddedInFacesAsCurveEndpoints){
+    for (auto gf : v2f.second){
+      if (_debugBL3D)printf(" --EMP  Vertex %d embedded in Face %d\n",v2f.first->tag(),gf->tag());
+      MVertex *v = v2f.first->mesh_vertices[0];
+      SPoint2 param;
+      if(reparamMeshVertexOnFace(v, gf, param)) {
+        MFaceVertex *newv =
+          new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
+        gf->mesh_vertices.push_back(newv);
+        spawned[v].push_back(newv);
+      }
+    }
+  }
+
+  for (auto e2f : edgesEmbeddedInFaces){
+    for (auto gf : e2f.second){
+      if (_debugBL3D)printf(" --EMP  Edge %d embedded in Face %d\n",e2f.first->tag(),gf->tag());
+      for (auto v : e2f.first->mesh_vertices) {
+	SPoint2 param;
+	if(reparamMeshVertexOnFace(v, gf, param)) {
+	  for (size_t kk=0 ; kk < 2 ; kk++){
+	    MFaceVertex *newv =
+	      new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
+	    gf->mesh_vertices.push_back(newv);
+	    spawned[v].push_back(newv);
+	  }
+	}
+      }
+    }
+  }
+
+  for (auto e2r : edgesEmbeddedInRegions){
+    for (auto gr : e2r.second){
+      if (_debugBL3D)printf(" --EMP  Edge %d embedded in Region %d\n",e2r.first->tag(),gr->tag());
+      for (auto v : e2r.first->mesh_vertices) {
+	MVertex *newv = new MVertex(v->x(), v->y(), v->z(), gr);
+	gr->mesh_vertices.push_back(newv);
+	spawned[v].push_back(newv);
+      }
+    }
+  }
+  
+  for (auto f2r : facesEmbeddedInRegions){
+    for (auto gr : f2r.second){      
+      if (_debugBL3D)printf(" --EMP  Face %d embedded in Region %d\n",f2r.first->tag(),gr->tag());
+      for (auto v : f2r.first->mesh_vertices) {
+	for (size_t kk=0 ; kk < 2 ; kk++){
+	  MVertex *newv = new MVertex(v->x(), v->y(), v->z(), gr);
+	  gr->mesh_vertices.push_back(newv);
+	  spawned[v].push_back(newv);
+	}
+      }
+    }
+  }
+
+  // Embedded Stuff ------------------------------------------------------------------------
+
+  // Create Elements  
 
   for(auto gr : inVolumes) {
     for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
@@ -392,6 +553,44 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
     }
   }
 
+  ///---------------------------------------------------------
+  ///// ----> TREAT FACES -- creat prismatic layers
+  ///---------------------------------------------------------
+
+  for(auto gf : onSurfaces) {
+    std::map<MVertex*,MVertex*> v2v;
+    auto eds = gf->edges();
+    auto vol = gf->regions();
+    for (auto gr : vol){
+      if (inVolumesSet.find(gr) == inVolumesSet.end())continue;
+      for (auto t : gf->triangles){
+	MVertex *vs[3] = {t->getVertex(0),t->getVertex(1),t->getVertex(2)};
+	MVertex *bs[3] = {nullptr,nullptr,nullptr};
+	for (size_t i=0;i<3;i++){
+	  std::map<MVertex*,MVertex*>::iterator it = v2v.find(vs[i]);
+	  std::map<MVertex*,std::vector<MVertex*> >::iterator its = spawned.find(vs[i]);
+	  if (it != v2v.end()) bs[i] = it->second;
+	  else if (its != spawned.end() && its->second.size() ){
+	    //	    printf("vertex %p has %d spawns\n",vs[i],its->second.size());
+	    for (auto vv : its->second){
+	      if (vv->onWhat() == gr){bs[i] = vv;}
+	      if (vv->onWhat() == gf){bs[i] = vv;}
+	      if (std::find(eds.begin(), eds.end(),vv->onWhat()) == eds.end()){bs[i] = vv; }
+	    }
+	  }
+	}
+	if (bs[0] && bs[1] && bs[2]){
+	  gr->prisms.push_back(new MPrism(vs[0],vs[1],vs[2],bs[0],bs[1],bs[2]));
+	  layers[gr->prisms.back()] = thickness;	  
+	}
+	else{
+	  Msg::Error("Impossible to create prism in BL (%d,%d) (%d,%d) (%d,%d) %p %p %p",vs[0]->onWhat()->dim(),vs[0]->onWhat()->tag(),
+		     vs[1]->onWhat()->dim(),vs[1]->onWhat()->tag(),vs[2]->onWhat()->dim(),vs[2]->onWhat()->tag(),bs[0],bs[1],bs[2]);
+	}
+      }
+    }
+  }
+  
   return true;
 }
 
@@ -608,10 +807,59 @@ static void expandBL(
 {
   //  printf("layer size %lu\n",layers.size());
   //  std::vector<double> areas;
-  std::vector<std::array<std::array<double, 2>, 3>> sh;
+
+  // Get all vertices on the BL
+  std::set<MVertex*,MVertexPtrLessThan> touched;
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-    //    printf("%lu %lu\n",i,gf->getNumMeshElements());
     MElement *e = gf->getMeshElement(i);
+    auto it = layers.find(e);
+    if(it != layers.end()) {
+      for (size_t j=0;j<e->getNumVertices();j++){
+	touched.insert(e->getVertex(j));
+      }
+    }
+  }
+  const size_t nLayers = 3;
+  std::set<MElement*,MElementPtrLessThan> toProcess;
+  for (size_t LAYER=0;LAYER<nLayers;LAYER++){ 
+    std::set<MVertex*,MVertexPtrLessThan> layer_touched;
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      MElement *e = gf->getMeshElement(i);
+      bool found = false;
+      for (size_t j=0;j<e->getNumVertices();j++){
+	if (touched.find(e->getVertex(j)) != touched.end()) {found = true; break;}
+      }
+      if (found){
+	toProcess.insert(e);
+	for (size_t j=0;j<e->getNumVertices();j++){
+	  layer_touched.insert(e->getVertex(j));
+	}
+      }
+    }
+    touched.insert(layer_touched.begin(),layer_touched.end());
+  }
+
+  Msg::Info("Surface %d -- %d elements among %d will be untangled",
+	    gf->tag(),toProcess.size(),gf->getNumMeshElements());
+  
+  std::set<MVertex*,MVertexPtrLessThan> fixed;
+  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+    MElement *e = gf->getMeshElement(i);
+    if (toProcess.find(e) == toProcess.end()){
+      for (size_t j=0;j<e->getNumVertices();j++){
+	fixed.insert(e->getVertex(j));
+      }
+    }
+    for (size_t j=0;j<e->getNumVertices();j++){
+      if (e->getVertex(j)->onWhat()->dim() != 2) fixed.insert(e->getVertex(j));
+    }
+  }
+    
+  
+  std::vector<std::array<std::array<double, 2>, 3>> sh;
+  for(auto e : toProcess) {
+    //    printf("%lu %lu\n",i,gf->getNumMeshElements());
+    //    MElement *e = gf->getMeshElement(i);
 
     std::array<std::array<double, 2>, 4> vs;
 
@@ -641,6 +889,7 @@ static void expandBL(
     else {
       if(it != layers.end()) {
         double thickness = it->second;
+	//	printf("thickness = %g\n",thickness);
         /*
         (0,thickness)  (dx,thickness)
         +-------------+
@@ -683,23 +932,26 @@ static void expandBL(
   std::vector<bool> locked;
   std::set<MVertex *> verts;
 
-  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-    MElement *e = gf->getMeshElement(i);
+  for(auto e : toProcess) {
     for(size_t j = 0; j < e->getNumVertices(); j++)
       verts.insert(e->getVertex(j));
   }
+
   int index = 0;
   for(auto v : verts) {
     v->setIndex(index++);
-    locked.push_back(v->onWhat()->dim() == 2 ? false : true);
+    if (fixed.find(v) == fixed.end())
+      locked.push_back(false);
+    else
+      locked.push_back(true);
+      
     SPoint2 param;
     reparamMeshVertexOnFace(v, gf, param);
     points.push_back({param.x(), param.y()});
   }
   // int tricount = 0;
   double area = 0.0;
-  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-    MElement *e = gf->getMeshElement(i);
+  for(auto e : toProcess) {
     if(e->getNumVertices() == 3) {
       uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
       uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
@@ -710,10 +962,9 @@ static void expandBL(
       area += triangle_area_2d(pa, pb, pc);
     }
   }
-  printf("->area(%d) = %g\n",gf->tag(),area);
+  //  printf("->area(%d) = %g\n",gf->tag(),area);
 
-  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-    MElement *e = gf->getMeshElement(i);
+  for(auto e : toProcess) {
     uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
     uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
     uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
@@ -751,6 +1002,200 @@ static void expandBL(
     }
   }
 }
+
+inline std::array<double,3> sub(const std::array<double,3>& x,
+                                const std::array<double,3>& y)
+{
+    return { x[0] - y[0],
+             x[1] - y[1],
+             x[2] - y[2] };
+}
+
+inline double dot(const std::array<double,3>& u,
+                  const std::array<double,3>& v)
+{
+    return u[0]*v[0] + u[1]*v[1] + u[2]*v[2];
+}
+
+inline std::array<double,3> cross(const std::array<double,3>& u,
+                                  const std::array<double,3>& v)
+{
+    return {
+        u[1]*v[2] - u[2]*v[1],
+        u[2]*v[0] - u[0]*v[2],
+        u[0]*v[1] - u[1]*v[0]
+    };
+}
+
+inline double tet_volume(const std::array<double,3>& a,
+                         const std::array<double,3>& b,
+                         const std::array<double,3>& c,
+                         const std::array<double,3>& d)
+{
+    return dot(sub(a, d), cross(sub(b, d), sub(c, d))) / 6.0;
+}
+static void expandBL3D(
+  GRegion *gr,
+  std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes3D,
+  std::map<MElement *, double> &layers)
+{
+  //  printf("layer size %lu\n",layers.size());
+  //  std::vector<double> areas;
+
+
+  std::set<MVertex*,MVertexPtrLessThan> touched;
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement *e = gr->getMeshElement(i);
+    auto it = layers.find(e);
+    if(it != layers.end()) {
+      for (size_t j=0;j<e->getNumVertices();j++){
+	touched.insert(e->getVertex(j));
+      }
+    }
+  }
+
+  const size_t nLayers = 1;
+  std::set<MElement*,MElementPtrLessThan> toProcess;
+  for (size_t LAYER=0;LAYER<nLayers;LAYER++){ 
+    std::set<MVertex*,MVertexPtrLessThan> layer_touched;
+    for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
+      MElement *e = gr->getMeshElement(i);
+      bool found = false;
+      for (size_t j=0;j<e->getNumVertices();j++){
+	if (touched.find(e->getVertex(j)) != touched.end()) {found = true; break;}
+      }
+      if (found){
+	toProcess.insert(e);
+	for (size_t j=0;j<e->getNumVertices();j++){
+	  layer_touched.insert(e->getVertex(j));
+	}
+      }
+    }
+    touched.insert(layer_touched.begin(),layer_touched.end());
+  }
+
+  Msg::Info("Volume %d -- %d elements among %d will be untangled",
+	    gr->tag(),toProcess.size(),gr->getNumMeshElements());
+  
+  std::set<MVertex*,MVertexPtrLessThan> fixed;
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement *e = gr->getMeshElement(i);
+    if (toProcess.find(e) == toProcess.end()){
+      for (size_t j=0;j<e->getNumVertices();j++){
+	fixed.insert(e->getVertex(j));
+      }
+    }
+    for (size_t j=0;j<e->getNumVertices();j++){
+      if (e->getVertex(j)->onWhat()->dim() != 3) fixed.insert(e->getVertex(j));
+    }
+  }
+
+
+  std::vector<std::array<std::array<double, 3>, 4>> sh;
+  for(auto e : toProcess) {
+
+    std::array<std::array<double, 3>, 8> vs;
+
+    auto it = layers.find(e);
+
+    // TETRAHEDRA NOT IN BL !!
+    if(e->getNumVertices() == 4) {
+      auto it2 = perfectShapes3D.find(e);
+      if(it2 != perfectShapes3D.end())
+	vs = it2->second;
+      else
+	Msg::Error("Argh");
+      sh.push_back({vs[0], vs[1], vs[2], vs[3]});
+    }
+    else if(e->getNumVertices() == 6) {
+      if(it != layers.end()) {
+	double tk = it->second;
+	//	printf("tk = %12.5E\n",tk);
+	SVector3 t1 = e->getVertex(1)->point()-e->getVertex(0)->point();
+	SVector3 t2 = e->getVertex(2)->point()-e->getVertex(0)->point();
+	SVector3 n = crossprod(t2,t1);
+	n.normalize();
+	vs[0] = {e->getVertex(0)->x(), e->getVertex(0)->y(),e->getVertex(0)->z()};
+	vs[1] = {e->getVertex(1)->x(), e->getVertex(1)->y(),e->getVertex(1)->z()};
+	vs[2] = {e->getVertex(2)->x(), e->getVertex(2)->y(),e->getVertex(2)->z()};
+	vs[3] = {e->getVertex(0)->x()+n.x()*tk, e->getVertex(0)->y()+n.y()*tk,e->getVertex(0)->z()+n.z()*tk};
+	vs[4] = {e->getVertex(1)->x()+n.x()*tk, e->getVertex(1)->y()+n.y()*tk,e->getVertex(1)->z()+n.z()*tk};
+	vs[5] = {e->getVertex(2)->x()+n.x()*tk, e->getVertex(2)->y()+n.y()*tk,e->getVertex(2)->z()+n.z()*tk};	
+	int pp  [3][4] = {{0,1,2,3},{0,1,2,4},{0,1,2,5}};
+	for (size_t j=0;j<3;j++)
+	  sh.push_back({vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
+      }
+    }
+  }
+  std::vector<std::array<double, 3>> points;
+  std::vector<std::array<uint32_t, 4>> tets;
+  std::vector<bool> locked;
+  std::set<MVertex *> verts;
+
+  for(auto e : toProcess) {
+    for(size_t j = 0; j < e->getNumVertices(); j++)
+      verts.insert(e->getVertex(j));
+  }
+
+  int index = 0;
+  for(auto v : verts) {
+    v->setIndex(index++);
+    if (fixed.find(v) == fixed.end())
+      locked.push_back(false);
+    else
+      locked.push_back(true);
+    points.push_back({v->x(),v->y(),v->z()});
+  }
+
+  double volume = 0.0;
+  for(auto e : toProcess) {
+    if(e->getNumVertices() == 4) {
+      uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
+      uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
+      uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
+      uint32_t d = (uint32_t)e->getVertex(3)->getIndex();
+      std::array<double, 3> pa = points[a];
+      std::array<double, 3> pb = points[b];
+      std::array<double, 3> pc = points[c];
+      std::array<double, 3> pd = points[d];
+      volume  += tet_volume (pa, pb, pc, pd);
+    }
+  }
+
+  printf("VOLUME = %12.5E\n'",volume);
+  
+  for(auto e : toProcess) {
+    uint32_t nn[8] = {(uint32_t)e->getVertex(0)->getIndex(),
+		      (uint32_t)e->getVertex(1)->getIndex(),
+		      (uint32_t)e->getVertex(2)->getIndex(),
+		      (uint32_t)e->getVertex(3)->getIndex(),0,0,0,0};
+    if(e->getNumVertices() == 4) {
+      if (volume > 0)tets.push_back({nn[0],nn[1],nn[2],nn[3]});
+      else tets.push_back({nn[1],nn[0],nn[2],nn[3]});
+    }
+    else if (e->getNumVertices() == 6) {
+      int ppi   [3][4] = {{0,1,2,3},{0,1,2,4},{0,1,2,5}};
+      int pp  [3][4] = {{1,0,2,3},{1,0,2,4},{1,0,2,5}};
+      nn[4] = (uint32_t)e->getVertex(4)->getIndex();
+      nn[5] = (uint32_t)e->getVertex(5)->getIndex();
+      if (volume > 0)for (size_t j=0;j<3;j++)tets.push_back({nn[pp[j][0]],nn[pp[j][1]],nn[pp[j][2]],nn[pp[j][3]]});
+      else for (size_t j=0;j<3;j++)tets.push_back({nn[ppi[j][0]],nn[ppi[j][1]],nn[ppi[j][2]],nn[ppi[j][3]]});
+    }
+  }
+  printf("coucou1\n");
+  untangle_tetrahedra(points, locked, tets, sh, 1.e+0);
+  printf("coucou2\n");
+
+  for(auto v : verts) {
+    int i = v->getIndex();
+    if(!locked[i]) {
+      v->x() = points[i][0];
+      v->y() = points[i][1];
+      v->z() = points[i][2];
+    }
+  }
+}
+
 
 static std::vector<MVertex *>
 splitedge(MEdge me,
@@ -943,7 +1388,7 @@ void computePerfectShapes (std::vector<GFace*> & f,
       }
     }
 
-    printf("area (%d) = %g\n",gf->tag(), area);
+    //    printf("area (%d) = %g\n",gf->tag(), area);
     
     for(size_t i = 0; i < gf->getNumMeshElements(); i++) {
       std::vector<SPoint2> pts;
@@ -972,6 +1417,39 @@ void computePerfectShapes (std::vector<GFace*> & f,
     }
   }
 }
+
+
+void computePerfectShapes (std::vector<GRegion*> & r,			   
+			   std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes){
+  double volume = 0.0;
+  for(auto gr : r) {
+    //      std::map<MVertex*,SPoint2> ivp;
+    for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
+      std::array<std::array<double, 3>, 8> vs;
+      for(size_t j = 0; j < gr->getMeshElement(i)->getNumVertices(); j++) {
+	MVertex *v = gr->getMeshElement(i)->getVertex(j);
+	vs[j] = {v->x(),v->y(),v->z()};
+      }
+      volume  += tet_volume (vs[0],vs[1],vs[2],vs[3]);      
+    }
+
+    printf("colume = %12.5E\n",volume);
+    
+    for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
+      std::array<std::array<double, 3>, 8> vs;
+      for(size_t j = 0; j < gr->getMeshElement(i)->getNumVertices(); j++) {
+	MVertex *v = gr->getMeshElement(i)->getVertex(j);
+	vs[j] = {v->x(),v->y(),v->z()};
+      }
+      if (volume > 0)
+	perfectShapes[gr->getMeshElement(i)] = {vs[0],vs[1],vs[2],vs[3],vs[4],vs[5],vs[6],vs[7]};
+      else
+	perfectShapes[gr->getMeshElement(i)] = {vs[1],vs[0],vs[2],vs[3],vs[4],vs[5],vs[6],vs[7]};	
+    }
+  }
+}
+
+
 
 
 PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
@@ -1039,7 +1517,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   std::vector<GFace*> toExpand;
   
   if(r.empty())
-    bl(m, vv, e, f, ww, layers);
+    bl(m, vv, e, f, ww*1.6, layers);
   else
     bl3d(m, f, r, ww, layers, toExpand);
 
@@ -1047,6 +1525,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     meshGEdgeInsertBoundaryLayer(*eit, ww);
 
   std::map<MElement *, std::array<std::array<double, 2>, 4>> perfectShapes;
+  std::map<MElement *, std::array<std::array<double, 3>, 8>> perfectShapes3D;
   
   if (r.empty()){
     computePerfectShapes (f,perfectShapes);
@@ -1056,6 +1535,10 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     computePerfectShapes (toExpand,perfectShapes);
     for(auto gf : toExpand) {
       expandBL(gf, perfectShapes, layers, toExpand);
+    }
+    computePerfectShapes (r,perfectShapes3D);
+    for(auto gr : r) {
+      expandBL3D(gr, perfectShapes3D, layers);
     }
   }
 
