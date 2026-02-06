@@ -17,7 +17,6 @@
 #include "quadratureRules.h"
 #include "solverField.h"
 #include "MPoint.h"
-#include "gmshLevelset.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -51,12 +50,6 @@ void thermicSolver::solve()
   assemble(lsys);
   lsys->systemSolve();
   printf("-- done solving!\n");
-}
-
-void thermicSolver::cutMesh(gLevelset *ls)
-{
-  pModel = pModel->buildCutGModel(ls);
-  pModel->writeMSH("cutMesh.msh");
 }
 
 void thermicSolver::setThermicDomain(int phys, double k)
