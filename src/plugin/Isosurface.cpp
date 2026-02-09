@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,13 +7,14 @@
 #include "Context.h"
 
 StringXNumber IsosurfaceOptions_Number[] = {
-  {GMSH_FULLRC, "Value", GMSH_IsosurfacePlugin::callbackValue, 0.},
-  {GMSH_FULLRC, "ExtractVolume", GMSH_IsosurfacePlugin::callbackVol, 0.},
-  {GMSH_FULLRC, "RecurLevel", GMSH_IsosurfacePlugin::callbackRecur, 3},
-  {GMSH_FULLRC, "TargetError", GMSH_IsosurfacePlugin::callbackTarget, 1e-4},
-  {GMSH_FULLRC, "View", nullptr, -1.},
-  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1.},
-  {GMSH_FULLRC, "OtherView", nullptr, -1.}};
+  {GMSH_FULLRC, "Value", GMSH_IsosurfacePlugin::callbackValue, 0., ""},
+  {GMSH_FULLRC, "ExtractVolume", GMSH_IsosurfacePlugin::callbackVol, 0., ""},
+  {GMSH_FULLRC, "RecurLevel", GMSH_IsosurfacePlugin::callbackRecur, 3, ""},
+  {GMSH_FULLRC, "TargetError", GMSH_IsosurfacePlugin::callbackTarget, 1e-4, ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1., ""},
+  {GMSH_FULLRC, "OtherView", nullptr, -1., ""},
+  {GMSH_FULLRC, "Visible", nullptr, 1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterIsosurfacePlugin()
@@ -89,7 +90,8 @@ std::string GMSH_IsosurfacePlugin::getHelp() const
          "step in `View', the corresponding time step in `OtherView'. "
          "If `OtherView' < 0, the plugin uses `View' as the value "
          "source.\n\n"
-         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "If `View' < 0, the plugin is run on the current view. "
+         "If `Visible' = 1, the plugin only cuts visible entities.\n\n"
          "Plugin(Isosurface) creates as many list-based views as there "
          "are time steps in `View'.";
 }
@@ -123,6 +125,7 @@ PView *GMSH_IsosurfacePlugin::execute(PView *v)
   _valueTimeStep = (int)IsosurfaceOptions_Number[5].def;
   _valueView = (int)IsosurfaceOptions_Number[6].def;
   _orientation = GMSH_LevelsetPlugin::MAP;
+  _visible = (int)IsosurfaceOptions_Number[7].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -560,7 +560,12 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     new graphicWindow(true, CTX::instance()->numTiles,
                       CTX::instance()->detachedMenu ? true : false));
 
-  graph[0]->getWindow()->show(argc > 0 ? 1 : 0, argv);
+  if (argc > 0 && argv && argv[0]) {
+    graph[0]->getWindow()->show(1, argv);
+  }
+  else {
+    graph[0]->getWindow()->show();
+  }
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
   // re-apply color scheme (necessary after open_display to get the selection
@@ -628,6 +633,20 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
 FlGui::~FlGui()
 {
+  // copy back to temp values, in case we'd like to retrieve them after the GUI
+  // has been closed
+  drawContext *c = getCurrentDrawContext();
+  if(c) {
+    for(int i = 0; i < 3; i++) {
+      CTX::instance()->tmpRotation[i] = c->r[i];
+      CTX::instance()->tmpTranslation[i] = c->t[i];
+      CTX::instance()->tmpScale[i] = c->s[i];
+    }
+    for(int i = 0; i < 4; i++) {
+      CTX::instance()->tmpQuaternion[i] = c->quaternion[i];
+    }
+  }
+
   for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
   delete options;
   delete fields;
@@ -690,8 +709,14 @@ void FlGui::destroy()
   _instance = nullptr;
 }
 
-int FlGui::run()
+int FlGui::run(const std::string &optionFileName)
 {
+  // if optionFileName is given, we load the file before entering the event
+  // loop, and we automatically save the options when it ends
+  if(optionFileName.size()) {
+    MergeFile(optionFileName, false);
+  }
+
   // draw the scene
   drawContext::global()->draw(false);
 
@@ -699,7 +724,17 @@ int FlGui::run()
   updateTouchBar();
 #endif
 
-  return Fl::run();
+  int ret = Fl::run();
+
+  if(optionFileName.size()) {
+    PrintOptions(0, GMSH_FULLRC, 1, 0, optionFileName.c_str());
+    int old = CTX::instance()->expertMode;
+    CTX::instance()->expertMode = 1; // disable warning if non-geo file
+    visibility_save(optionFileName);
+    CTX::instance()->expertMode = old;
+  }
+
+  return ret;
 }
 
 int FlGui::testGlobalShortcuts(int event)

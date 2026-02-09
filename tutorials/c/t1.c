@@ -158,7 +158,7 @@ int main(int argc, char **argv)
       break;
     }
   }
-  if(gui) gmshFltkRun(&ierr);
+  if(gui) gmshFltkRun("", &ierr);
 
   // Note that starting with Gmsh 3.0, models can be built using other geometry
   // kernels than the default "built-in" kernel. To use the OpenCASCADE CAD

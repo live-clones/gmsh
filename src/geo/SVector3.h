@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -37,10 +37,11 @@ public:
   double normalize()
   {
     double n = norm();
+    double inv_n = 1.0/n;
     if(n) {
-      P[0] /= n;
-      P[1] /= n;
-      P[2] /= n;
+      P[0] *= inv_n;
+      P[1] *= inv_n;
+      P[2] *= inv_n;
     }
     return n;
   }

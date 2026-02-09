@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -85,7 +85,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "then exit"));
   s.push_back(mp("-reclassify angle", "Reclassify surface mesh, then exit"));
   s.push_back(mp("-reparam angle", "Reparametrize surface mesh, then exit"));
-  s.push_back(mp("-hybrid", "generate a hybrid hex-tet mesh with trihedron for transitions"));
+  s.push_back(mp("-hybrid", "generate a hybrid hex-tet mesh with trihedron for "
+                 "transitions"));
   s.push_back(mp("-part int", "Partition after batch mesh generation "
                  "(Mesh.NbPartitions)"));
   s.push_back(mp("-part_weight [tri,quad,tet,hex,pri,pyr,trih] int",
@@ -101,6 +102,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "(Mesh.PartitionCreatePhysicals)"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file "
                  "(Mesh.PartitionTopologyFile)"));
+  s.push_back(mp("-overlap int", "Create partition overlaps after batch mesh "
+                 "generation (Mesh.OverlapLayers)"));
   s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 "
                  "format (Mesh.PreserveNumberingMsh2)"));
   s.push_back(mp("-save_all", "Save all elements (Mesh.SaveAll)"));
@@ -423,7 +426,7 @@ void PrintBuildInfo()
 static bool GetGeometryOption(const std::vector<std::string> &argv,
                               std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-0") {
     CTX::instance()->batch = -1;
@@ -465,7 +468,7 @@ static bool GetGeometryOption(const std::vector<std::string> &argv,
 static bool GetMeshOption(const std::vector<std::string> &argv,
                           std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-check") {
     CTX::instance()->batch = -2;
@@ -534,6 +537,17 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
     if(i < argv.size()) {
       CTX::instance()->batchAfterMesh = 1;
       opt_mesh_partition_num(0, GMSH_SET, atoi(argv[i++].c_str()));
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-overlap") {
+    i++;
+    if(i < argv.size()) {
+      CTX::instance()->batchAfterMesh = 1;
+      opt_mesh_overlap_layers(0, GMSH_SET, atoi(argv[i++].c_str()));
     }
     else {
       Msg::Error("Missing number");
@@ -1071,7 +1085,7 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
 static bool GetPostProcessingOption(const std::vector<std::string> &argv,
                                     std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-noview") {
     opt_view_visible(0, GMSH_SET, 0);
@@ -1104,7 +1118,7 @@ static bool GetPostProcessingOption(const std::vector<std::string> &argv,
 static bool GetSolverOption(const std::vector<std::string> &argv,
                             std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-run") {
     // same as '-', but will run local Gmsh client (if no other clients are
@@ -1172,7 +1186,7 @@ static bool GetSolverOption(const std::vector<std::string> &argv,
 static bool GetOtherOption(const std::vector<std::string> &argv,
                            std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-" || argv[i] == "-parse_and_exit") {
     CTX::instance()->batch = -99;
@@ -1180,7 +1194,7 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   }
   else if(argv[i] == "-log") {
     i++;
-    if(i < argv.size()) { Msg::SetLogFile(argv[i++]); }
+    if(i < argv.size()) { Msg::SetLogFileName(argv[i++]); }
     else {
       Msg::Error("Missing filename");
       if(exitOnError) Msg::Exit(1);
@@ -1389,7 +1403,7 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   else if(argv[i] == "-help" || argv[i] == "--help") {
     Msg::Direct("Gmsh, a 3D mesh generator with pre- and post-processing "
                 "facilities");
-    Msg::Direct("Copyright (C) 1997-2024 C. Geuzaine and J.-F. Remacle");
+    Msg::Direct("Copyright (C) 1997-2025 C. Geuzaine and J.-F. Remacle");
     PrintUsage(argv[0]);
     Msg::Exit(0);
   }

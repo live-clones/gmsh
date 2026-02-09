@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -322,7 +322,7 @@ public:
   // 2D fillet and chamfer
   bool fillet2D(int &tag, const int edgeTag1,
                 const int edgeTag2,
-                double radius);
+                double radius,  int pointTag = -1, bool reverse = false);
 
   bool chamfer2D(int &tag, const int edgeTag1,
                  const int edgeTag2,
@@ -434,11 +434,14 @@ public:
   bool getMass(int dim, int tag, double &mass);
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
   bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
-  bool getDistance(int dim1, int tag1,
-                     int dim2, int tag2,
-                     double &distance,
-                     double &x1, double &y1, double &z1,
-                     double &x2, double &y2, double &z2);
+  bool getDistance(int dim1, int tag1, int dim2, int tag2, double &distance,
+                   double &x1, double &y1, double &z1,
+                   double &x2, double &y2, double &z2);
+  bool getClosestEntities(double x, double y, double z,
+                          const std::vector<std::pair<int, int> > &dimTags,
+                          std::vector<std::pair<int, int> > &outDimTags,
+                          std::vector<double> &distances,
+                          std::vector<double> &coord, int n);
   GVertex *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
   GEdge *getEdgeForOCCShape(GModel *model, const TopoDS_Edge &toFind);
   GFace *getFaceForOCCShape(GModel *model, const TopoDS_Face &toFind);
@@ -727,7 +730,7 @@ public:
   }
   bool fillet2D(int &tag, const int edgeTag1,
                 const int edgeTag2,
-                double radius)
+                double radius,  int pointTag,  bool reverse)
   {
     return _error("create fillet in 2D");
   }
@@ -891,13 +894,19 @@ public:
   {
     return false;
   }
-  bool getDistance(int dim1, int tag1,
-                     int dim2, int tag2,
-                     double &distance,
+  bool getDistance(int dim1, int tag1, int dim2, int tag2, double &distance,
                      double &x1, double &y1, double &z1,
                      double &x2, double &y2, double &z2)
   {
-    return -1;
+    return false;
+  }
+  bool getClosestEntities(double x, double y, double z,
+                          const std::vector<std::pair<int, int> > &dimTags,
+                          std::vector<std::pair<int, int> > &outDimTags,
+                          std::vector<double> &distances,
+                          std::vector<double> &coord, int n)
+  {
+    return false;
   }
   bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
                         double roundedRadius, std::vector<SPoint3> &vertices,

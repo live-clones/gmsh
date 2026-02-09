@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -62,6 +62,7 @@ public:
   int delFace(GFace *face);
 
   virtual std::vector<GFace *> faces() const { return l_faces; }
+  virtual std::vector<GEntity *> boundaryEntities() const;;
 
   virtual std::vector<int> faceOrientations() const { return l_dirs; }
   void set(std::vector<GFace *> const &f) { l_faces = f; }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -158,13 +158,10 @@ int gmshEdge::minimumMeshSegments() const
 
 int gmshEdge::minimumDrawSegments() const
 {
-  int n = List_Nbr(_c->Control_Points) - 1;
-  if(n <= 0) n = GEdge::minimumDrawSegments();
-
   if(geomType() == Line && !_c->geometry)
-    return n;
+    return 1;
   else
-    return CTX::instance()->geom.numSubEdges * n;
+    return std::max(1, CTX::instance()->geom.numSubEdges);
 }
 
 SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const

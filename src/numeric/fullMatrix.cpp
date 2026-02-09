@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -404,11 +404,15 @@ bool fullMatrix<double>::eig(fullVector<double> &DR, fullVector<double> &DI,
    work, &lwork, &info);
   delete[] work;
 
-  if(info > 0)
+  if(info > 0){
     Msg::Error("QR Algorithm failed to compute all the eigenvalues", info,
                info);
-  else if(info < 0)
+    return false;
+  }
+  else if(info < 0){
     Msg::Error("Wrong %d-th argument in eig", -info);
+    return false; 
+  }
   else if(sortRealPart)
     eigSort(N, DR._data, DI._data, VL._data, VR._data);
 

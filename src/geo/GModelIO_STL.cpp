@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -206,21 +206,30 @@ int GModel::readSTL(const std::string &name, double tolerance)
         v[k] = pos.find(x, y, z);
         if(!v[k])
           Msg::Error("Could not find node at position (%.16g, %.16g, %.16g) "
-                     "with tol=%.16g",
-                     x, y, z, eps);
+                     "with tol=%.16g", x, y, z, eps);
       }
       if(!v[0] || !v[1] || !v[2]) {
         // error
       }
       else if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]) {
-        Msg::Debug("Skipping degenerated triangle %lu %lu %lu", v[0]->getNum(),
+        Msg::Debug("Skipping degenerated triangle %zu %zu %zu", v[0]->getNum(),
                    v[1]->getNum(), v[2]->getNum());
         nbDegen++;
       }
-      else if(CTX::instance()->mesh.stlRemoveDuplicateTriangles) {
+      else if(CTX::instance()->mesh.stlRemoveBadTriangles) {
         MFace mf(v[0], v[1], v[2]);
         if(unique.find(mf) == unique.end()) {
-          faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+          if(CTX::instance()->mesh.stlRemoveBadTriangles > 1) {
+            double a = mf.approximateArea();
+            if(a < tolerance * tolerance) {
+              Msg::Warning("Skipping degenerated triangle with area %g", a);
+              nbDegen++;
+            }
+            else
+              faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+          }
+          else
+            faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
           unique.insert(mf);
         }
         else {
@@ -270,17 +279,33 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace *> &faces, bool binary,
   }
 
   for(auto it = faces.begin(); it != faces.end(); ++it) {
-    if(useGeoSTL && (*it)->stl_vertices_uv.size()) {
-      for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i += 3) {
-        SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
-        SPoint2 &p2((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 1]]);
-        SPoint2 &p3((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 2]]);
-        GPoint gp1 = (*it)->point(p1);
-        GPoint gp2 = (*it)->point(p2);
-        GPoint gp3 = (*it)->point(p3);
-        double x[3] = {gp1.x(), gp2.x(), gp3.x()};
-        double y[3] = {gp1.y(), gp2.y(), gp3.y()};
-        double z[3] = {gp1.z(), gp2.z(), gp3.z()};
+    GFace *gf = *it;
+    if(useGeoSTL) {
+      for(std::size_t i = 0; i < gf->stl_triangles.size(); i += 3) {
+        double x[3], y[3], z[3];
+        if(gf->stl_vertices_xyz.size()) {
+          SPoint3 &p1(gf->stl_vertices_xyz[gf->stl_triangles[i]]);
+          SPoint3 &p2(gf->stl_vertices_xyz[gf->stl_triangles[i + 1]]);
+          SPoint3 &p3(gf->stl_vertices_xyz[gf->stl_triangles[i + 2]]);
+          x[0] = p1.x(); x[1] = p2.x(); x[2] = p3.x();
+          y[0] = p1.y(); y[1] = p2.y(); y[2] = p3.y();
+          z[0] = p1.z(); z[1] = p2.z(); z[2] = p3.z();
+        }
+        else if(gf->stl_vertices_uv.size()){
+          SPoint2 &p1(gf->stl_vertices_uv[gf->stl_triangles[i]]);
+          SPoint2 &p2(gf->stl_vertices_uv[gf->stl_triangles[i + 1]]);
+          SPoint2 &p3(gf->stl_vertices_uv[gf->stl_triangles[i + 2]]);
+          GPoint gp1 = gf->point(p1);
+          GPoint gp2 = gf->point(p2);
+          GPoint gp3 = gf->point(p3);
+          x[0] = gp1.x(); x[1] = gp2.x(); x[2] = gp3.x();
+          y[0] = gp1.y(); y[1] = gp2.y(); y[2] = gp3.y();
+          z[0] = gp1.z(); z[1] = gp2.z(); z[2] = gp3.z();
+        }
+        else{
+          Msg::Error("Missing uv or xyz STL vertices");
+          break;
+        }
         double n[3];
         normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
         if(!binary) {
@@ -309,10 +334,10 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace *> &faces, bool binary,
       }
     }
     else {
-      for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
-        (*it)->triangles[i]->writeSTL(fp, binary, scalingFactor);
-      for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++)
-        (*it)->quadrangles[i]->writeSTL(fp, binary, scalingFactor);
+      for(std::size_t i = 0; i < gf->triangles.size(); i++)
+        gf->triangles[i]->writeSTL(fp, binary, scalingFactor);
+      for(std::size_t i = 0; i < gf->quadrangles.size(); i++)
+        gf->quadrangles[i]->writeSTL(fp, binary, scalingFactor);
     }
   }
 

@@ -80,6 +80,10 @@ int main(int argc, char **argv)
     printf("\n");
   }
 
+  for(int i = 0; i < ovv_nn; i++)
+    gmshFree(ovv[i]);
+  gmshFree(ovv_n);
+
   gmshModelOccSynchronize(&ierr);
 
   // When the boolean operation leads to simple modifications of entities, and
@@ -98,27 +102,43 @@ int main(int argc, char **argv)
 
   // The tag of the cube will change though, so we need to access it
   // programmatically:
-  const int g[] = {ov[ov_n - 1]};
+  const int g[] = {ov[1]};
   gmshModelAddPhysicalGroup(3, g, sizeof(g) / sizeof(g[0]), 10, "", &ierr);
 
   gmshFree(ov);
-  for(int i = 0; i < ovv_nn; i++)
-    gmshFree(ovv[i]);
-  gmshFree(ovv_n);
 
   // Creating entities using constructive solid geometry is very powerful, but
   // can lead to practical issues for e.g. setting mesh sizes at points, or
   // identifying boundaries.
 
   // To identify points or other bounding entities you can take advantage of the
-  // `gmshModelGetEntities()', `gmshModelGetBoundary()' and
-  // `gmshModelGetEntitiesInBoundingBox()' functions:
+  // `getEntities()', `getBoundary()', `getClosestEntities()' and
+  // `getEntitiesInBoundingBox()' functions:
 
+  // Define a physical surface for the top and right-most surfaces, by finding
+  // amongst the surfaces making up the boundary of the model, the two closest
+  // to point (1, 1, 0.5):
+  gmshModelGetEntities(&ov, &ov_n, 3, &ierr);
+  int *ov2;
+  size_t ov2_n;
+  gmshModelGetBoundary(ov, ov_n, &ov2, &ov2_n, 1, 0, 0, &ierr);
+  gmshFree(ov);
+  double *dist, *coord;
+  size_t dist_n, coord_n;
+  gmshModelOccGetClosestEntities(1, 1, 0.5, ov2, ov2_n, &ov, &ov_n,
+                                 &dist, &dist_n, &coord, &coord_n, 2, &ierr);
+  gmshFree(ov2);
+  gmshFree(dist);
+  gmshFree(coord);
+  const int g2[] = {ov[1], ov[3]};
+  gmshFree(ov);
+  gmshModelAddPhysicalGroup(2, g2, sizeof(g2) / sizeof(g2[0]), 100,
+                            "Top & right surfaces", &ierr);
+
+  // Assign a mesh size to all the points:
   double lcar1 = .1;
   double lcar2 = .0005;
   double lcar3 = .055;
-
-  // Assign a mesh size to all the points:
   gmshModelGetEntities(&ov, &ov_n, 0, &ierr);
   gmshModelMeshSetSize(ov, ov_n, lcar1, &ierr);
   gmshFree(ov);
@@ -129,7 +149,8 @@ int main(int argc, char **argv)
   gmshModelMeshSetSize(ov, ov_n, lcar3, &ierr);
   gmshFree(ov);
 
-  // Select the corner point by searching for it geometrically:
+  // Select the corner point by searching for it geometrically using a bounding
+  // box (`getClosestEntities()' could have been used as well):
   double eps = 1e-3;
   gmshModelGetEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
                                     0.5 + eps, 0.5 + eps, 0.5 + eps,
@@ -149,7 +170,7 @@ int main(int argc, char **argv)
       break;
     }
   }
-  if(gui) gmshFltkRun(&ierr);
+  if(gui) gmshFltkRun("", &ierr);
 
   gmshFinalize(&ierr);
   return 0;

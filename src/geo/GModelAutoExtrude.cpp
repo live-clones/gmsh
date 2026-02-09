@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -225,8 +225,8 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
       std::set<GEdge *, GEntityPtrLessThan> e2(f2e.begin(), f2e.end());
       // abort if different topology
       if((v1.size() != v2.size()) || (e1.size() != e2.size())) {
-        Msg::Debug(" - incompatible surfaces %d (#points=%lu, #curves=%lu) - "
-                   "%d (#points=%lu, #curves=%lu)",
+        Msg::Debug(" - incompatible surfaces %d (#points=%zu, #curves=%zu) - "
+                   "%d (#points=%zu, #curves=%zu)",
                    f1->tag(), v1.size(), e1.size(),
                    f2->tag(), v2.size(), e2.size());
         continue;
@@ -251,7 +251,7 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
 
       if(perp.size() != v1.size()) {
         Msg::Debug(" - number of extruded curves differs from number of "
-                   "source/target surface points (%lu != %lu)",
+                   "source/target surface points (%zu != %zu)",
                    perp.size(), v1.size());
         continue;
       }

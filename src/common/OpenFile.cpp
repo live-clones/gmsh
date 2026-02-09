@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -183,9 +183,13 @@ int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
   // fsetpos/fgetpos (used e.g. for user-defined functions)
   FILE *fp;
   if(!(fp = Fopen(fileName.c_str(), "rb"))) {
-    if(errorIfMissing)
+    if(errorIfMissing) {
       Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return 0;
+      return 0;
+    }
+    else{
+      return 1; // still ok
+    }
   }
 
   Msg::AddOnelabStringChoice("Gmsh/}Input files", "file", fileName, true, true,
@@ -300,9 +304,13 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   // contain binary data
   FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp) {
-    if(errorIfMissing)
+    if(errorIfMissing) {
       Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return 0;
+      return 0;
+    }
+    else{
+      return 1; // still ok
+    }
   }
 
   char header[256];
@@ -406,6 +414,9 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   }
   else if(ext == ".off" || ext == ".OFF") {
     status = GModel::current()->readOFF(fileName);
+  }
+  else if(ext == ".obj" || ext == ".OBJ") {
+    status = GModel::current()->readOBJ(fileName);
   }
   else if(ext == ".diff" || ext == ".DIFF") {
     status = GModel::current()->readDIFF(fileName);

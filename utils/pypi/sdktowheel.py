@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory() as wheel_dir:
     if os.path.isfile(os.path.join(sdk_dir, 'lib', f'gmsh-{libversion}.dll')):
         shutil.copy(os.path.join(sdk_dir, 'lib', f'gmsh-{libversion}.dll'),
                     os.path.join(data_dir, 'data', 'lib'))
-        shutil.copy(os.path.join(sdk_dir, 'lib', 'gmsh.lib'),
+        shutil.copy(os.path.join(sdk_dir, 'lib', 'gmsh.dll.lib'),
                     os.path.join(data_dir, 'data', 'lib'))
         shutil.copy(os.path.join(setup_dir, "gmsh.bat"),
                     os.path.join(data_dir, 'scripts'))

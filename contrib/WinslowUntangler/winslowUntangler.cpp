@@ -184,7 +184,7 @@ namespace WinslowUntangler {
   }
 
   double update_jacobian_matrix(size_t t, UntanglerData &w,
-                                const alglib::real_1d_array &X)
+                                const alglib::real_1d_array &X, bool ppp = false)
   {
     if(w.dim == 2) {
       Eigen::Matrix<double, 2, 3> coords;
@@ -207,14 +207,14 @@ namespace WinslowUntangler {
       w.J_mat_3D[t] = (coords * w.tet_normals[t]).transpose();
       const double det = w.J_mat_3D[t].determinant();
       w.J_det[t] = det;
-      // if (det < 0.) {
-      //   DBG(t, det);
-      //   std::cout << "tet_normals" << std::endl;
-      //   std::cout << w.tet_normals[t] << std::endl;
-      //   std::cout << "J" << std::endl;
-      //   std::cout << w.J_mat_3D[t] << std::endl;
-      //   abort();
-      // }
+      if (ppp) {
+	DBG(t, det);
+	std::cout << "tet_normals" << std::endl;
+	std::cout << w.tet_normals[t] << std::endl;
+	std::cout << "J" << std::endl;
+	std::cout << w.J_mat_3D[t] << std::endl;
+	//	abort();
+      }
       return det;
     }
     return -DBL_MAX;
@@ -247,7 +247,7 @@ namespace WinslowUntangler {
     //	positions[i/2] = {X[i],X[i+1]};
     //      }
     //      w.sizeField(positions,w.triangles,sizes,grads);
-      //      printf("%lu sizes\n",sizes.size());
+      //      printf("%zu sizes\n",sizes.size());
     //    }
 
     for(size_t i = 0; i < grad.length(); ++i) grad[i] = 0.;
@@ -363,7 +363,7 @@ namespace WinslowUntangler {
 
     if (w.isP2 && 0){
       size_t dT = (perTriangleP2 - 4)/3;
-      //      printf("%lu %lu\n",(w.triangles.size()-nElements)/dT,nElements);
+      //      printf("%zu %zu\n",(w.triangles.size()-nElements)/dT,nElements);
       double signs[5] = {1,1,-1,-1,-1};
 #pragma omp parallel for schedule(dynamic) num_threads(1) private (a_i,b_i) shared (energy)
       for(size_t tg = 0; tg < (w.triangles.size()-nElements)/dT; tg++) {
@@ -471,7 +471,7 @@ namespace WinslowUntangler {
     }
 
     data.isP2 = true;
-    //    for (auto i : permut)printf("%lu ",i);
+    //    for (auto i : permut)printf("%zu ",i);
     printf(" --- > FOUND A P2 MESH\n");
   }
 
@@ -563,7 +563,7 @@ namespace WinslowUntangler {
     // Compute initial energy
     size_t max_t = data.isP2 ? 4*(data.triangles.size()/perTriangleP2) : data.triangles.size();
     for(size_t t = 0; t < max_t; t++) {
-      //      printf("%lu %g\n",t,data.J_det[t]);
+      //      printf("%zu %g\n",t,data.J_det[t]);
       const double det = data.J_det[t];
       const double chi = coef_chi(det, data.eps);
       const double chip = coef_chip(det, data.eps);
@@ -671,7 +671,7 @@ namespace WinslowUntangler {
       for(size_t lf = 0; lf < 4; ++lf) {
         vec3 e0 = shape[facet_vertex[lf][1]] - shape[facet_vertex[lf][0]];
         vec3 e1 = shape[facet_vertex[lf][2]] - shape[facet_vertex[lf][0]];
-        vec3 n = 0.5 * cross(e1, e0) * (1. / (3. * avg_tet_vol));
+        vec3 n = 0.5 * cross(e1, e0) * (1. / (3. * vol));
 
         data.tet_normals[t](lf, 0) = n[0];
         data.tet_normals[t](lf, 1) = n[1];
@@ -772,14 +772,14 @@ namespace WinslowUntangler {
   {
     if(dim != 2 && dim != 3) return false;
     if(dim == 2 && (points2D.size() == 0 || triangles.size() == 0)) {
-      Msg::Error(
-        "Winslow untangler 2D: wrong input sizes: %li vertices, %li triangles",
+      Msg::Warning(
+        "Wrong input sizes (%li vertices, %li triangles) in 2D Winslow untangler",
         points2D.size(), triangles.size());
       return false;
     }
     if(dim == 3 && (points3D.size() == 0 || tetrahedra.size() == 0)) {
-      Msg::Error(
-        "Winslow untangler 3D: wrong input sizes: %li vertices, %li tetrahedra",
+      Msg::Warning(
+        "Wrong input sizes (%li vertices, %li tetrahedra) in 3D Windlow untangler",
         points2D.size(), triangles.size());
       return false;
     }
@@ -808,7 +808,7 @@ namespace WinslowUntangler {
     }
     else if(dim == 3) {
       auto tetIdealShapesS = tetIdealShapes;
-      scaleToUnit(points3D, tetIdealShapesS, bbmin3D, bbmax3D);
+      //      scaleToUnit(points3D, tetIdealShapesS, bbmin3D, bbmax3D);
       bool okp =
         prepareData3D(points3D, locked, tetrahedra, tetIdealShapesS, data);
       if(!okp) return false;
@@ -831,6 +831,8 @@ namespace WinslowUntangler {
       // Update regularized epsilon parameter
       data.eps = std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
 
+      //      printf("eps %g %d %d\n",data.eps,  iterMaxOuter, iterMaxInner);
+      
       double epsg = 1.e-4;
       double epsf = 1.e-12;
       double epsx = 1.e-12;
@@ -840,7 +842,7 @@ namespace WinslowUntangler {
 
         // Setup of the LBFGS solver
         alglib::ae_int_t N = dim * NV;
-        alglib::ae_int_t corr = 15; // Num of corrections in the scheme in [3,7]
+        alglib::ae_int_t corr = N < 15 ? N : 15; // Num of corrections in the scheme in [3,7]
         alglib::minlbfgsstate state;
         alglib::minlbfgsreport rep;
 	minlbfgscreate(N, corr, x, state);
@@ -867,8 +869,9 @@ namespace WinslowUntangler {
 
         if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
         lbfgsIter = rep.iterationscount;
-	printf(" detmin = %22.15E eps= %22.15E %lu iter term %lu\n",data.J_det_min,data.eps, rep.iterationscount,
-	       rep.terminationtype);
+        Msg::Debug(" detmin = %22.15E eps= %22.15E %zu iter term %zu",
+                  data.J_det_min, data.eps, rep.iterationscount,
+                  rep.terminationtype);
       } catch(alglib::ap_error e) {
         Msg::Warning("Winslow untangler, iter %i: Alglib exception thrown in "
                      "LBFGS step, error: %s",
@@ -917,7 +920,7 @@ namespace WinslowUntangler {
     /* Scale the mesh to initial size */
     if(dim == 2) { /*scaleToInitial(points2D, bbmin2D, bbmax2D);*/ }
     else if(dim == 3) {
-      scaleToInitial(points3D, bbmin3D, bbmax3D);
+      //      scaleToInitial(points3D, bbmin3D, bbmax3D);
     }
 
     if(restore) {
@@ -935,7 +938,7 @@ namespace WinslowUntangler {
 	x[i]+=1.e-8;
 	double EN2 = compute_energy_and_gradient(data, x, GRAD2);
 	x[i]-=1.e-8;
-	printf("%lu GRAD %12.5E DIFF %12.5E\n",i,GRAD[i],1.e8*(EN2-EN));
+	printf("%zu GRAD %12.5E DIFF %12.5E\n",i,GRAD[i],1.e8*(EN2-EN));
       }
     }
 #endif

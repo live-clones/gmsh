@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -52,13 +52,14 @@ GEdge::~GEdge()
 
 void GEdge::deleteMesh()
 {
+  if(getNumMeshVertices() || getNumMeshElements())
+    model()->destroyMeshCaches();
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   removeElements(true);
   correspondingVertices.clear();
   correspondingHighOrderVertices.clear();
   deleteVertexArrays();
-  model()->destroyMeshCaches();
 }
 
 void GEdge::setMeshMaster(GEdge *ge, int ori)
@@ -876,6 +877,7 @@ static bool recreateConsecutiveElements(GEdge *ge)
 
 static void meshCompound(GEdge *ge)
 {
+  
   discreteEdge *de = dynamic_cast<discreteEdge*>
     (ge->model()->getEdgeByTag(ge->tag() + 100000));
   if(de) {
@@ -919,9 +921,10 @@ static void meshCompound(GEdge *ge)
 void GEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
-  if(compound.size())
-    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
-
+  //  WHAT IS THAT ??
+  //  if(compound.size())
+  //    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
+  
   meshGEdge mesher;
   mesher(this);
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,121 +21,132 @@
 // for a beta law -- transform h_wall to beta
 //
 
-static double f_beta (double beta, double t, int n){
-  double c = atanh(1/beta);
-  double f = n*(1+atanh((t-1)/beta)/c);
+static double f_beta(double beta, double t, int n)
+{
+  double c = atanh(1 / beta);
+  double f = n * (1 + atanh((t - 1) / beta) / c);
   return f;
 }
 
-double bissection_get_beta (double beta0, double hw, double length, int n){
-  double t  = hw/length;
+double bissection_get_beta(double beta0, double hw, double length, int n)
+{
+  double t = hw / length;
 
   double beta1 = 1. + 1.e-8;
   double beta2 = 5;
-  double f1 = f_beta(beta1,t,n);
-  double f2 = f_beta(beta2,t,n);
-  if (f1 > 1 && f2 < 1){
-    while(1){
-      double beta3 = (beta1+beta2)*0.5;
-      double f3 = f_beta(beta3,t,n);
+  double f1 = f_beta(beta1, t, n);
+  double f2 = f_beta(beta2, t, n);
+  if(f1 > 1 && f2 < 1) {
+    while(1) {
+      double beta3 = (beta1 + beta2) * 0.5;
+      double f3 = f_beta(beta3, t, n);
       //      printf("%12.5E %12.5E %12.5E\n",f1,f2,f3);
-      if (fabs(f3- 1) < 1.e-8)return beta3;
-      if (f3 > 1)beta1 = beta3;
-      else beta2 = beta3;
-    }    
+      if(fabs(f3 - 1) < 1.e-8) return beta3;
+      if(f3 > 1)
+        beta1 = beta3;
+      else
+        beta2 = beta3;
+    }
   }
   return 100;
 }
 
-static double f_bump (double coef, double t, int n){
+static double f_bump(double coef, double t, int n)
+{
   double a;
   if(coef > 1.0) {
-    a = std::atan2(1.0, std::sqrt(coef - 1.))/std::sqrt(coef - 1.)/n;    
-    double A = (coef-1);
-    double f = (atan(sqrt(A)) - atan(sqrt(A)*(1-2*t)))/2/sqrt(A)/a;
+    a = std::atan2(1.0, std::sqrt(coef - 1.)) / std::sqrt(coef - 1.) / n;
+    double A = (coef - 1);
+    double f = (atan(sqrt(A)) - atan(sqrt(A) * (1 - 2 * t))) / 2 / sqrt(A) / a;
     return f;
   }
   else {
-    a = std::atanh(std::sqrt(1.-coef))/std::sqrt(1-coef)/n;    
-    double A = (1-coef);
-    double f = (atanh(sqrt(A)) - atanh(sqrt(A)*(1-2*t)))/2/sqrt(A)/a;
+    a = std::atanh(std::sqrt(1. - coef)) / std::sqrt(1 - coef) / n;
+    double A = (1 - coef);
+    double f =
+      (atanh(sqrt(A)) - atanh(sqrt(A) * (1 - 2 * t))) / 2 / sqrt(A) / a;
     return f;
   }
-  
 }
 
 // hwall given for the bump
-double bissection_get_a (double r0, double hw, double length, int n){
-  double t  = hw/length;
+double bissection_get_a(double r0, double hw, double length, int n)
+{
+  double t = hw / length;
 
   double alpha1 = 1.e-8;
   double alpha2 = 100;
-  double f1 = f_bump(alpha1,t,n);
-  double f2 = f_bump(alpha2,t,n);
-  if (f1 > 1 && f2 < 1){
-    while(1){
-      double alpha3 = (alpha1+alpha2)*0.5;
-      double f3 = f_bump(alpha3,t,n);
+  double f1 = f_bump(alpha1, t, n);
+  double f2 = f_bump(alpha2, t, n);
+  if(f1 > 1 && f2 < 1) {
+    while(1) {
+      double alpha3 = (alpha1 + alpha2) * 0.5;
+      double f3 = f_bump(alpha3, t, n);
       //      printf("%12.5E %12.5E %12.5E\n",f1,f2,f3);
-      if (fabs(f3- 1) < 1.e-8)return alpha3;
-      if (f3 > 1)alpha1 = alpha3;
-      else alpha2 = alpha3;
-    }    
+      if(fabs(f3 - 1) < 1.e-8) return alpha3;
+      if(f3 > 1)
+        alpha1 = alpha3;
+      else
+        alpha2 = alpha3;
+    }
   }
   return 1;
 }
 
-double f_prog(double r, double hw, double length, int n){
-  if (r == 1)return (n*hw/length);
-  double f = hw*(pow(r,n)-1)/(r-1)/length ;
+double f_prog(double r, double hw, double length, int n)
+{
+  if(r == 1) return (n * hw / length);
+  double f = hw * (pow(r, n) - 1) / (r - 1) / length;
   return f;
 }
 
 // hwall given for the progression
-double newton_get_r /*bissection_get_r*/ (double r0, double hw, double length, int n){
-  n = n-1;
+double newton_get_r /*bissection_get_r*/ (double r0, double hw, double length,
+                                          int n)
+{
+  n = n - 1;
 
   double r1 = 1;
   double r2 = 4;
-  double f1 = f_prog(r1,hw,length,n);
-  double f2 = f_prog(r2,hw,length,n);
+  double f1 = f_prog(r1, hw, length, n);
+  double f2 = f_prog(r2, hw, length, n);
   //  printf("%g %g\n",f1,f2);
-  if (f1 < 1 && f2 > 1){
-    while(1){
-      double r3 = (r1+r2)*0.5;
-      double f3 = f_prog(r3,hw,length,n);
+  if(f1 < 1 && f2 > 1) {
+    while(1) {
+      double r3 = (r1 + r2) * 0.5;
+      double f3 = f_prog(r3, hw, length, n);
       //      printf("%22.15E %12.5E %12.5E\n",r1,r2,r3);
-      if (fabs(f3-1) < 1.e-12)return r3;
-      if (f3 < 1)r1 = r3;
-      else r2 = r3;
-    }    
+      if(fabs(f3 - 1) < 1.e-12) return r3;
+      if(f3 < 1)
+        r1 = r3;
+      else
+        r2 = r3;
+    }
   }
   return 1;
 }
 
-
 // for a progression -- transform h_wall to ratio
-double newton_get_2r (double r0, double hw, double length, int n){
-  n = n-1;
+double newton_get_2r(double r0, double hw, double length, int n)
+{
+  n = n - 1;
   double r = r0;
   int it = 0;
-  while(1){
-    double slope = ((n-1) * pow(r,n+1) - n*pow(r,n) + r) / ((r-1)*(r-1)*r);
-    double f = (pow(r,n)-1)/(r-1) - length/hw;
+  while(1) {
+    double slope =
+      ((n - 1) * pow(r, n + 1) - n * pow(r, n) + r) / ((r - 1) * (r - 1) * r);
+    double f = (pow(r, n) - 1) / (r - 1) - length / hw;
     //    printf("%g %g\n",f,r);
     double dr = -f / slope;
     r = r + dr;
-    if (fabs(f) < 1.e-12){
-      return r;
-    }
-    if (it++ > 100){
+    if(fabs(f) < 1.e-12) { return r; }
+    if(it++ > 100) {
       //      printf("convergence impossible %g\n",f);
       break;
     }
   }
   return r;
 }
-
 
 typedef struct {
   int Num;
@@ -218,6 +229,7 @@ struct F_Lc {
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
 
     lc_here = std::min(lc_here, BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()));
+    //    printf("%d LC HERE %g %g\n",ge->tag(),t,lc_here);
     SVector3 der = ge->firstDer(t);
     return norm(der) / lc_here;
   }
@@ -289,31 +301,30 @@ struct F_Transfinite {
     //    printf("type = %d coef %g\n",type, coef);
 
     // transform type = 5 onto type = 1
-    if (type == 5){
+    if(type == 5) {
       // for a progression -- transform h_wall to ratio
       bool sgn = coef > 0;
-      coef = newton_get_r (1.1, fabs(coef), length, nbpt);
-      if (!sgn) coef = 1./coef;
+      coef = newton_get_r(1.1, fabs(coef), length, nbpt);
+      if(!sgn) coef = 1. / coef;
       type = 1;
       ge->meshAttributes.typeTransfinite = 1;
       ge->meshAttributes.coeffTransfinite = coef;
     }
-    if (type == 6){
+    if(type == 6) {
       // for a bump -- transform h_wall to a
-      coef = bissection_get_a (0.1, fabs(coef), length, nbpt);
+      coef = bissection_get_a(0.1, fabs(coef), length, nbpt);
       type = 2;
     }
     // transform type = 7 onto type = 3
-    if (type == 7){
+    if(type == 7) {
       // for a progression -- transform h_wall to ratio
       bool sgn = coef > 0;
-      coef = bissection_get_beta (2, fabs(coef), length, nbpt);
-      type = 3*(sgn ? 1 : -1);
+      coef = bissection_get_beta(2, fabs(coef), length, nbpt);
+      type = 3 * (sgn ? 1 : -1);
     }
 
-    
     int atype = std::abs(type);
-    
+
     if(CTX::instance()->mesh.flexibleTransfinite &&
        CTX::instance()->mesh.lcFactor)
       nbpt /= CTX::instance()->mesh.lcFactor;
@@ -353,7 +364,7 @@ struct F_Transfinite {
               ((double)nbpt * length);
         }
         double b = -a * length * length / (4. * (coef - 1.));
-        val = d / (-a * std::pow(t * length - (length)*0.5, 2) + b);
+        val = d / (-a * std::pow(t * length - (length) * 0.5, 2) + b);
         break;
       }
       case 3: {
@@ -516,12 +527,12 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
   }
 }
 
-
 static void fillCorrespondingNodes(GEdge *from, GEdge *to, int direction)
 {
   if(!from->getBeginVertex() || !from->getEndVertex() ||
      !to->getBeginVertex() || !to->getEndVertex()) {
-    Msg::Error("Cannot fill corresponding nodes on curves without begin/end points");
+    Msg::Error(
+      "Cannot fill corresponding nodes on curves without begin/end points");
     return;
   }
 
@@ -591,11 +602,11 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
      CTX::instance()->mesh.algoRecombine != 0) {
     if(CTX::instance()->mesh.recombineAll) { forceOdd = true; }
   }
-
+  
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
   MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
-  std::vector<std::pair<double, MVertex *> > lengths;
+  std::vector<std::pair<double, MVertex *>> lengths;
   for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++) {
     MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(ge->mesh_vertices[i]);
     if(!v) {
@@ -624,19 +635,11 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   }
   std::sort(lengths.begin(), lengths.end());
   int last = lengths.size();
+
   if(forceOdd) {
     while(last % 2 != 0) last--;
   }
-  /*
-    if(CTX::instance()->mesh.algoRecombine == 2){
-      if(last < 4) last = 0;
-        while (last %4 != 0)last--;
-      }
-      else{
-        while (last %2 != 0)last--;
-      }
-    }
-  */
+    
 
   bool filteringObservesMinimumN =
     (((int)ge->mesh_vertices.size() - last) >= nMinimumPoints);
@@ -784,10 +787,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
                            CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
-
-  if(length < CTX::instance()->mesh.toleranceEdgeLength) {
-    ge->setTooSmall(true);
-  }
+  //  printf("length %12.5E\n",length);
 
   // Integrate detJ/lc du
   filterMinimumN = 1;
@@ -841,23 +841,29 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
   }
 
   // force odd number of points if blossom is used for recombination
+  // only do it if recombination method is 2 (simple full quad) or 4
+  // bipartite labelling
+
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
     std::vector<GFace *> const &faces = ge->faces();
     if(CTX::instance()->mesh.recombineAll) {
-      if(N % 2 == 0) N++;
+      //            if(N == 2) N = 1;
       if(CTX::instance()->mesh.algoRecombine == 2 ||
-         CTX::instance()->mesh.algoRecombine == 4)
-        N = increaseN(N);
+         CTX::instance()->mesh.algoRecombine == 4){
+	if(N % 2 == 0) N++;
+      	N = increaseN(N);
+      }
     }
     else {
       for(auto it = faces.begin(); it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
-          if(N % 2 == 0) N++;
           if(CTX::instance()->mesh.algoRecombine == 2 ||
              CTX::instance()->mesh.algoRecombine == 4)
-            N = increaseN(N);
+	    N = increaseN(N);
+            //	    printf("coucou %d\n",N);
+            if(N % 2 == 0) N++;
           break;
         }
       }
@@ -896,7 +902,6 @@ void meshGEdge::operator()(GEdge *ge)
   dem(ge);
 
   if(MeshExtrudedCurve(ge)) {
-
     // if there is a periodic constraint, fill the corresponding node arrays
     if(ge->getMeshMaster() != ge) {
       GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
@@ -932,6 +937,10 @@ void meshGEdge::operator()(GEdge *ge)
   double a;
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
+
+  if(ForceNumberOfSubdivisions > 0) {
+    N = ForceNumberOfSubdivisions + 1;
+  }
 
   //  printFandPrimitive(ge->tag(),Points);
 
@@ -1030,6 +1039,7 @@ void meshGEdge::operator()(GEdge *ge)
     v0->z() = beg_p.z();
   }
 
+
   Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(),
              ge->getTypeString().c_str(), ge->mesh_vertices.size());
 
@@ -1056,4 +1066,151 @@ int meshGEdgeTargetNumberOfPoints(GEdge *ge)
   int filterMinimumN = 1;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
   return N;
+}
+
+static void assign(GEdge *ge, double t, MVertex *v)
+{
+  GPoint gp = ge->point(t);
+  double p;
+  v->getParameter(0, p);
+  //  printf("FOUND --> vertex %d  = %g -> %g\n",v->getNum(),p,t);
+  v->x() = gp.x();
+  v->y() = gp.y();
+  v->z() = gp.z();
+  v->setParameter(0, gp.u());
+}
+
+int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
+{
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  double t_left = t_begin;
+  double t_right = t_end;
+  double dt = (t_end - t_begin) / 100;
+
+  if(ge->lines.size() < 2) return 0;
+
+  MLine *l0 = ge->lines.front();
+  MLine *ln = ge->lines.back();
+
+  double eps = width * 1.e-8;
+  int diff = 0;
+
+  size_t start = 0;
+  size_t end = ge->mesh_vertices.size() - 1;
+
+  if(l0->getLength() < 1.e-12) {
+    printf("GEdge %d -- end line lengths %12.5E %12.5E\n",ge->tag(),l0->getLength(),ln->getLength());
+    for(auto v : ge->mesh_vertices) {
+      double p;
+      v->getParameter(0, p);
+      printf(" %12.5E ", p);
+    }
+    printf("\n");
+
+    diff++;
+    GPoint g_left = ge->point(t_left);
+    SPoint3 p0(g_left.x(), g_left.y(), g_left.z());
+    ;
+    while(1) {
+      t_left += dt;
+      g_left = ge->point(t_left);
+      SPoint3 p1(g_left.x(), g_left.y(), g_left.z());
+      if(p1.distance(p0) > width) break;
+    }
+
+    double t0 = t_left - dt;
+    double t1 = t_left;
+
+    //    printf("--> first guess %12.5E %12.5E %12.5E\n",t_left,t0,t1);
+
+    while(1) {
+      double t_mid = (t0 + t1) * .5;
+      g_left = ge->point(t_mid);
+      SPoint3 p1(g_left.x(), g_left.y(), g_left.z());
+      double d = p1.distance(p0);
+      //      printf("%12.5E %12.5E %12.5E %12.5E %12.5E
+      //      \n",t0,t1,t_mid,d,width);
+      if(fabs(d - width) < eps) {
+        t_left = t_mid;
+        break;
+      }
+      if(d > width)
+        t1 = t_mid;
+      else
+        t0 = t_mid;
+    }
+    assign(ge, t_left, ge->mesh_vertices[start]);
+    start++;
+  }
+
+  if(ln->getLength() < 1.e-12) {
+    //    printf("GEdge %d -- end line lengths %12.5E %12.5E
+    //    \n",ge->tag(),l0->getLength(),ln->getLength());
+    diff++;
+    GPoint g_right = ge->point(t_right);
+    SPoint3 p0(g_right.x(), g_right.y(), g_right.z());
+    while(1) {
+      t_right -= dt;
+      g_right = ge->point(t_right);
+      SPoint3 p1(g_right.x(), g_right.y(), g_right.z());
+      if(p1.distance(p0) > width) break;
+    }
+
+    double t0 = t_right;
+    double t1 = t_right + dt;
+    while(1) {
+      double t_mid = (t0 + t1) * .5;
+      g_right = ge->point(t_mid);
+      SPoint3 p1(g_right.x(), g_right.y(), g_right.z());
+      double d = p1.distance(p0);
+      if(fabs(d - width) < eps) {
+        t_right = t_mid;
+        break;
+      }
+      if(d > width)
+        t0 = t_mid;
+      else
+        t1 = t_mid;
+    }
+    assign(ge, t_right, ge->mesh_vertices[end]);
+    end--;
+  }
+
+  if(diff == 0) return 0;
+
+  int N;
+  std::vector<IntPoint> Points;
+  double a = 0.;
+  int filterMinimumN = 0;
+
+  meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
+  N = ge->mesh_vertices.size() - diff + 2;
+
+  //  printf("--> (%12.5E %12.5E) a = %12.5E\n",t_left, t_right,a );
+
+  {
+    int count = 1, NUMP = 1;
+    const double b = a / static_cast<double>(N - 1);
+    while(NUMP < N - 1) {
+      auto P1 = Points[count - 1];
+      auto P2 = Points[count];
+      //      printf("count %d %g -- (%12.5E %12.5E) (%12.5E %12.5E)
+      //      \n",count,b,P1.p,P1.t,P2.p,P2.t);
+      const double d = (double)NUMP * b;
+      if((std::abs(P2.p) >= std::abs(d)) && (std::abs(P1.p) < std::abs(d))) {
+        double const dt = P2.t - P1.t;
+        double const dp = P2.p - P1.p;
+        double const t = P1.t + dt / dp * (d - P1.p);
+        assign(ge, t, ge->mesh_vertices[start++]);
+        NUMP++;
+      }
+      else {
+        count++;
+      }
+    }
+  }
+  return 0;
 }

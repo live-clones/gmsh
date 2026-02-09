@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -27,7 +27,7 @@ namespace {
       Msg::Error(
         "Wrong sizes for Lagrange coefficients generation %d %d -- %d %d",
         monomial.size1(), point.size1(), monomial.size2(), point.size2());
-      return fullMatrix<double>(1, 1);
+      return fullMatrix<double>();
     }
 
     int ndofs = monomial.size1();

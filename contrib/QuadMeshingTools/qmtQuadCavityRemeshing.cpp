@@ -211,8 +211,6 @@ namespace QMT {
                         const vector<vector<id> > &e2f, id eStart,
                         std::vector<id> &chordEdges)
   {
-    chordEdges.size();
-
     vector<bool> visited(e2f.size(), false);
 
     /* Init */
@@ -654,6 +652,11 @@ namespace QMT {
     vector<size_t> ssr = sideSizes;
     vector<int> slt;
 
+    //    printf("sideSizes : ");
+    //    for (auto i : sideSizes) printf("%lu ",i);
+    //    printf("\n");
+    
+    
     double best = 0.;
     int rot = 0;
 
@@ -2825,8 +2828,10 @@ bool patchIsRemeshableWithQuadPattern(
       if(Ncorners != P.ncorners) continue;
       if(sideSizes.size() != P.sides.size()) continue;
 
+      
       int rot = 0;
       double score = checkPatternMatchingWithRotations(P, sideSizes, rot);
+      printf("%d %d\n",i,score);
       if(score > 0.) {
         double irreg = patternIrregularity(P);
         if(irreg < irreg_min) {
@@ -2989,12 +2994,19 @@ int improveQuadMeshTopologyWithCavityRemeshing(
   GFace *gf, const std::vector<std::pair<SPoint3, int> > &singularities,
   bool invertNormalsForQuality)
 {
+
+  // compounds -- should work  
+  if(gf->compound.size() > 0){
+    return 0;
+  }
+
   Msg::Info("- Face %i: optimize quad mesh topology (%i elements, %i cross "
             "field singularities) with cavity remeshing ...",
             gf->tag(), gf->quadrangles.size(), singularities.size());
   size_t nqb = gf->quadrangles.size();
   size_t nvb = gf->mesh_vertices.size();
 
+  
   QuadqsContext qqs;
 
   // Msg::Warning("- timeout set to 100s (debugging)");
@@ -3006,9 +3018,9 @@ int improveQuadMeshTopologyWithCavityRemeshing(
 
   bool alwaysBuildSurfaceProjector = true;
   if(alwaysBuildSurfaceProjector || !haveNiceParametrization(gf)) {
-    ctx.sp = new SurfaceProjector();
-    bool okf = fillSurfaceProjector(gf, ctx.sp);
-    if(!okf) { return false; }
+    //    ctx.sp = new SurfaceProjector();
+    //    bool okf = fillSurfaceProjector(gf, ctx.sp);
+    //    if(!okf) { return false; }
   }
 
   unordered_map<size_t, size_t> patternSizeLimits;
@@ -3114,12 +3126,36 @@ int improveQuadMeshTopologyWithCavityRemeshing(
   return 0;
 }
 
+
+/*static std::vector<GEdge *> replaceCompounds(GFace *gf){
+  std::vector<GEdge *> edges = gf->edges();
+  auto edd = edges;
+  std::set<GEdge *, GEntityPtrLessThan> bnd;
+  for(auto e : edges) 
+    if(e->compoundCurve) {
+      printf("compound curve with %lu edges\n",e->compoundCurve->lines.size());
+      bnd.insert(e->compoundCurve);
+    }
+    else bnd.insert(e);
+  edges.clear();
+  edges.insert(edges.begin(), bnd.begin(),bnd.end());
+  gf->set(edges);
+  return edd;
+}
+*/
+
+
 int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
                               double minimumQualityRequired)
 {
+  //  auto oldEdges = replaceCompounds(gf);
+
   GFaceInfo info;
   bool okf = fillGFaceInfo(gf, info);
-  if(!okf) return -1;
+  if(!okf) {
+    //    gf->set(oldEdges);
+    return -1;
+  }
 
   /* Check if convex topological disk */
   bool convexTopologicalDisk =
@@ -3129,10 +3165,12 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   Msg::Debug("- Face %i: is topological disk, try quad pattern meshing",
              gf->tag());
 
+
   double t0 = Cpu();
 
   /* Build the ordered sides */
-  const vector<GEdge *> &edges = gf->edges();
+  std::vector<GEdge *> edges = gf->edges();
+  
   unordered_map<GVertex *, vector<GEdge *> > v2e;
   for(GEdge *ge : edges) {
     if(ge->periodic(0)) continue;
@@ -3166,6 +3204,7 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
           Msg::Warning(
             "infinite loop in edges of face %i, cancel simple quad mesh",
             gf->tag());
+	  //	  gf->set(oldEdges);
           return -1;
         }
         bool vIsCorner = (corners.find(v) != corners.end());
@@ -3194,6 +3233,7 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
           Msg::Warning(
             "non manifold edge loop around face %li, cancel simple quad mesh",
             gf->tag());
+	  //	  gf->set(oldEdges);
           return -1;
         }
 
@@ -3208,10 +3248,12 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
     sidesInv = {{false}};
   }
 
+
   if(sides.size() == 0) {
     Msg::Debug("face %i (%li edges), failed to build sides", gf->tag(),
                edges.size());
     // DBG(disk);
+    //    gf->set(oldEdges);
     return -1;
   }
 
@@ -3234,7 +3276,10 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
         }
         std::vector<std::vector<MVertex *> > gevs;
         bool oks = SortEdgeConsecutive(medges, gevs);
-        if(!oks || gevs.size() != 1) return -1;
+        if(!oks || gevs.size() != 1) {
+	  //	  gf->set(oldEdges);
+	  return -1;
+	}
         if(gevs[0].front() == v1->mesh_vertices[0] &&
            gevs[0].back() == v2->mesh_vertices[0]) {
           ge_vert = gevs[0];
@@ -3246,6 +3291,7 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
         }
         else {
           Msg::Error("corner and edge vertices not matching");
+	  //	  gf->set(oldEdges);
           return -1;
         }
       }
@@ -3268,6 +3314,7 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
       Msg::Warning(
         "not enough vertices on face loop for quad meshing (%li vert)",
         sides[0].size());
+      //      gf->set(oldEdges);
       return -1;
     }
     if(disk) {
@@ -3289,7 +3336,13 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   double irreg;
   bool meshable = patchIsRemeshableWithQuadPattern(
     patternsToCheck, Ncorners, sideSizes, patternNoAndRot, irreg);
-  if(!meshable) return -1;
+
+  printf("%d %d %lu %d\n",gf->tag(),okf,sides.size(),meshable);
+
+  if(!meshable) {
+    //    gf->set(oldEdges);
+    return -1;
+  }
 
   /* Build the mesh, smooth and check the geometry quality */
   std::vector<MElement *> oldElements;
@@ -3299,12 +3352,12 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   std::vector<MVertex *> oldVertices = gf->mesh_vertices;
 
   /* SurfaceProjector, useful for smoothing */
-  SurfaceProjector *sp = new SurfaceProjector();
-  bool oksp = fillSurfaceProjector(gf, sp);
-  if(!oksp) {
-    delete sp;
-    sp = nullptr;
-  }
+  //  SurfaceProjector *sp = new SurfaceProjector();
+  //  bool oksp = fillSurfaceProjector(gf, sp);
+  //  if(!oksp) {
+  //    delete sp;
+  //    sp = nullptr;
+  //  }
 
   /* do not filter based on quality */
   QualityConstraints qConstraints;
@@ -3314,16 +3367,17 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   GFaceMeshDiff diff;
   int st = remeshPatchWithQuadPattern(gf, patternNoAndRot, sideVertices,
                                       oldElements, oldVertices, qConstraints,
-                                      invertNormalsForQuality, sp, diff);
-  if(st != 0) {
-    if(DBG_VERBOSE) {
-      Msg::Debug(
-        "remesh cavity: %li quads, failed to remesh path with quad pattern",
-        oldElements.size());
-    }
-    if(sp) delete sp;
-    return -1;
-  }
+                                      invertNormalsForQuality, nullptr, diff);
+
+  //  if(st != 0) {
+  //    if(DBG_VERBOSE) {
+  //      Msg::Debug(
+  //        "remesh cavity: %li quads, failed to remesh path with quad pattern",
+  //        oldElements.size());
+  //    }
+  //    if(sp) delete sp;
+  //    return -1;
+  //  }
 
   bool good = false;
   double sicnMin, sicnAvg;
@@ -3333,21 +3387,21 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   size_t nvb = diff.before.intVertices.size();
   size_t nva = diff.after.intVertices.size();
   {
-    GeomOptimStats stats;
-    GeomOptimOptions opt;
-    opt.sp = sp;
-    opt.outerLoopIterMax = 100;
-    opt.timeMax = 3.;
-    opt.localLocking = true;
-    opt.dxGlobalMax = 1.e-3;
-    opt.dxLocalMax = 1.e-5;
-    opt.force3DwithProjection = true;
-    opt.withBackup = false;
-    bool oko = patchOptimizeGeometryWithKernel(diff.after, opt, stats);
-    if(!oko) {
-      if(sp) delete sp;
-      return -1;
-    }
+    //    GeomOptimStats stats;
+    //    GeomOptimOptions opt;
+    //    opt.sp = sp;
+    //    opt.outerLoopIterMax = 100;
+    //    opt.timeMax = 3.;
+    //    opt.localLocking = true;
+    //    opt.dxGlobalMax = 1.e-3;
+    //    opt.dxLocalMax = 1.e-5;
+    //    opt.force3DwithProjection = true;
+    //    opt.withBackup = false;
+    //    bool oko = patchOptimizeGeometryWithKernel(diff.after, opt, stats);
+    //    if(!oko) {
+    //      if(sp) delete sp;
+    //      return -1;
+    //    }
 
     computeSICN(diff.before.elements, sicnMin, sicnAvg);
     computeSICN(diff.after.elements, sicnMinAfter, sicnAvgAfter);
@@ -3375,7 +3429,8 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
     gf->meshStatistics.status = GFace::DONE;
   }
 
-  if(sp) delete sp;
+  //  if(sp) delete sp;
 
+  //  gf->set(oldEdges);
   return good;
 }

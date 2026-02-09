@@ -81,20 +81,28 @@ end
 
 # The tag of the cube will change though, so we need to access it
 # programmatically:
-gmsh.model.addPhysicalGroup(3, [last(ov)[2]], 10)
+gmsh.model.addPhysicalGroup(3, [ov[1][2]], 10)
 
 # Creating entities using constructive solid geometry is very powerful, but can
 # lead to practical issues for e.g. setting mesh sizes at points, or identifying
 # boundaries.
 
 # To identify points or other bounding entities you can take advantage of the
-# `getEntities()', `getBoundary()' and `getEntitiesInBoundingBox()' functions:
+# `getEntities()', `getBoundary()', `getClosestEntities()' and
+# `getEntitiesInBoundingBox()' functions:
 
+# Define a physical surface for the top and right-most surfaces, by finding
+# amongst the surfaces making up the boundary of the model, the two closest to
+# point (1, 1, 0.5):
+bnd = gmsh.model.getBoundary(gmsh.model.getEntities(3))
+closest = gmsh.model.occ.getClosestEntities(1, 1, 0.5, bnd, 2)[1]
+gmsh.model.addPhysicalGroup(2, [closest[1][2], closest[2][2]], 100,
+                            "Top & right surfaces")
+
+# Assign a mesh size to all the points:
 lcar1 = .1
 lcar2 = .0005
 lcar3 = .055
-
-# Assign a mesh size to all the points:
 ov = gmsh.model.getEntities(0);
 gmsh.model.mesh.setSize(ov, lcar1);
 
@@ -102,7 +110,8 @@ gmsh.model.mesh.setSize(ov, lcar1);
 ov = gmsh.model.getBoundary(holes, false, false, true);
 gmsh.model.mesh.setSize(ov, lcar3);
 
-# Select the corner point by searching for it geometrically:
+# Select the corner point by searching for it geometrically using a bounding box
+# (`getClosestEntities()' could have been used as well):
 eps = 1e-3
 ov = gmsh.model.getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
                                          0.5 + eps, 0.5 + eps, 0.5 + eps, 0)

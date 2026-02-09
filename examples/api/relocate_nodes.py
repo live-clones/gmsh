@@ -15,7 +15,7 @@ def add_house(A, B, C):
     cl = gmsh.model.occ.addCurveLoop([l1, l2, l3, l4, l5])
 
     # plane surface - inner nodes will not move as parametrization is R2
-    # s = gmsh.model.occ.addPlaneFilling([cl])
+    # s = gmsh.model.occ.addPlaneSurface([cl])
 
     # BSpline surface - inner nodes will move
     s = gmsh.model.occ.addSurfaceFilling(cl)

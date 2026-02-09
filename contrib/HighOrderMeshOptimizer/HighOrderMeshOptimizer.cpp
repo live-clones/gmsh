@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2025 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -56,7 +56,7 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
   std::size_t numVertices = gm->indexMeshVertices(true);
   std::vector<GEntity *> entities;
   gm->getEntities(entities);
-  fprintf(f, "%lu %d\n", numVertices, dim);
+  fprintf(f, "%zu %d\n", numVertices, dim);
   for(std::size_t i = 0; i < entities.size(); i++)
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
@@ -82,7 +82,7 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
       for(size_t i = 0; i < tris.size(); i++) {
         MTriangle *t = tris[i];
         fprintf(f, "%d ", count++);
-        for(int j = 0; j < t->getNumVertices(); j++) {
+        for(size_t j = 0; j < t->getNumVertices(); j++) {
           fprintf(f, "%ld ", t->getVertex(j)->getIndex());
         }
         fprintf(f, "\n");
@@ -100,7 +100,7 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
       for(size_t i = 0; i < l.size(); i++) {
         MLine *t = l[i];
         fprintf(f, "%d ", count++);
-        for(int j = 0; j < t->getNumVertices(); j++) {
+        for(size_t j = 0; j < t->getNumVertices(); j++) {
           fprintf(f, "%ld ", t->getVertex(j)->getIndex());
         }
         fprintf(f, "%d \n", (*ite)->tag());

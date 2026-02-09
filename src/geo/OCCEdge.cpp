@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -400,13 +400,10 @@ int OCCEdge::minimumMeshSegments() const
 
 int OCCEdge::minimumDrawSegments() const
 {
-  int n = _nbpoles;
-  if(n <= 0) n = GEdge::minimumDrawSegments();
-
   if(geomType() == Line)
-    return n;
+    return 1;
   else
-    return CTX::instance()->geom.numSubEdges * n;
+    return std::max(1, CTX::instance()->geom.numSubEdges);
 }
 
 double OCCEdge::curvature(double par) const

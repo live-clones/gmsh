@@ -11,8 +11,8 @@ Box(v_out) = {
    dx_out, dy_out, dz_out
 };
 v_ = v_out;
-f_[] = Abs(Boundary{ Volume{v_}; });
-e_[] = Unique( Abs(Boundary{ Surface{f_[]}; }) );
+f_[] = Boundary{ Volume{v_}; };
+e_[] = Unique( Boundary{ Surface{f_[]}; } );
 v_out = Fillet{v_}{e_[2-1], e_[4-1], e_[6-1], e_[8-1]}{r_out};
 
 v_in = newv;
@@ -21,8 +21,8 @@ Box(v_in) = {
    dx_in, dy_in, dz_in
 };
 v_ = v_in;
-f_[] = Abs(Boundary{ Volume{v_}; });
-e_[] = Unique( Abs(Boundary{ Surface{f_[]}; }) );
+f_[] = Boundary{ Volume{v_}; };
+e_[] = Unique( Boundary{ Surface{f_[]}; } );
 v_in = Fillet{v_}{e_[2-1], e_[4-1], e_[6-1], e_[8-1]}{r_in};
 
 BooleanDifference { Volume{v_out}; Delete; }{ Volume{v_in}; Delete; }

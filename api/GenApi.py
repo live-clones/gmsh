@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1294,14 +1294,19 @@ libpath = None
 possible_libpaths = [os.path.join(moduledir, libname),
                      os.path.join(moduledir, "lib", libname),
                      os.path.join(moduledir, "Lib", libname),
+                     os.path.join(moduledir, "bin", libname),
                      # first parent dir
                      os.path.join(parentdir1, libname),
                      os.path.join(parentdir1, "lib", libname),
                      os.path.join(parentdir1, "Lib", libname),
+                     os.path.join(parentdir1, "bin", libname),
                      # second parent dir
                      os.path.join(parentdir2, libname),
                      os.path.join(parentdir2, "lib", libname),
-                     os.path.join(parentdir2, "Lib", libname)
+                     os.path.join(parentdir2, "Lib", libname),
+                     os.path.join(parentdir2, "bin", libname),
+                     # for Windows conda-forge
+                     os.path.join(parentdir2, "Library", "bin", "gmsh.dll")
                      ]
 
 for libpath_to_look in possible_libpaths:
@@ -1312,15 +1317,15 @@ for libpath_to_look in possible_libpaths:
 # if we couldn't find it, use ctype's find_library utility...
 if not libpath:
     if platform.system() == "Windows":
-        libpath = find_library("gmsh-4.11")
+        libpath = find_library("{7}-{3}.{4}")
         if not libpath:
-            libpath = find_library("gmsh")
+            libpath = find_library("{7}")
     else:
-        libpath = find_library("gmsh")
+        libpath = find_library("{7}")
 
 # ... and print a warning if everything failed
 if not libpath:
-    print("Warning: could not find Gmsh shared library " + libname +
+    print("Warning: could not find {2} shared library " + libname +
           " with ctypes.util.find_library() or in the following locations: " +
           str(possible_libpaths))
 
@@ -1342,7 +1347,7 @@ if try_numpy:
 
 prev_interrupt_handler = None
 
-# Utility functions, not part of the Gmsh Python API
+# Utility functions, not part of the {2} Python API
 
 def _ostring(s):
     sp = s.value.decode("utf-8")
@@ -1498,7 +1503,7 @@ def _ivectorvectordouble(os):
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
 
-# Gmsh Python API begins here
+# {2} Python API begins here
 """
 
 julia_header = """# {0}
@@ -1723,16 +1728,22 @@ fortran_footer = """
   end function ivectordouble_
 
   subroutine ivectorstring_(o, cstrs, cptrs)
-    character(len=*), intent(in) :: o(:)
+    character(len=*), intent(in), optional :: o(:)
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), target, allocatable, intent(out) :: cstrs(:)
     type(c_ptr), allocatable, intent(out) :: cptrs(:)
     integer :: i
-    allocate(cstrs(size(o)))    ! Return to keep references from cptrs
-    allocate(cptrs(size(o)))
-    do i = 1, size(o)
+
+    if (present(o)) then
+      allocate(cstrs(size(o)))  ! Return to keep references from cptrs
+      allocate(cptrs(size(o)))
+      do i = 1, size(o)
         cstrs(i) = istring_(o(i))
         cptrs(i) = c_loc(cstrs(i))
-    end do
+      end do
+    else
+      allocate(cstrs(0))
+      allocate(cptrs(0))
+    end if
   end subroutine ivectorstring_
 
   function ivectorpair_(o) result(v)
@@ -1985,7 +1996,7 @@ class API:
         version_patch,
         namespace = "gmsh",
         code = "Gmsh",
-        copyright = "Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle",
+        copyright = "Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle",
         issues = "https://gitlab.onelab.info/gmsh/gmsh/issues.",
         description = "Gmsh is an automatic three-dimensional finite element mesh generator with a built-in CAD engine and post-processor. Its design goal is to provide a fast, light and user-friendly meshing tool with parametric input and flexible visualization capabilities.\nGmsh is built around four modules (geometry, mesh, solver and post-processing), which can be controlled with the graphical user interface, from the command line, using text files written in Gmsh's own scripting language (.geo files), or through the C++, C, Python, Julia and Fortran application programming interface (API)."):
         self.version_major = version_major
@@ -2484,7 +2495,7 @@ class API:
             for ftype in m.submodules:
                 generate_ftypes(f, ftype, c_mpath, f_mpath, indent)
 
-        def write_function(f, fun, c_mpath, f_mpath, indent):
+        def write_function(f, fun, c_mpath, f_mpath, mpath, indent):
             def get_arg_list(args, indent):
                 arg_list = ""
                 for arg in args:
@@ -2590,6 +2601,7 @@ class API:
                     "&", f"&\n{(len(indent+fnamef)+1)*' '}"
                 )
             r += write_c_interface(args, rtype, fname, indent)
+            self.flog('f', mpath + '/' + name)
             if rtype:
                 r += f"{indent * 2}{rtype.fortran_types[0]} :: {fname}\n"
             r += get_arg_list(args, indent * 2)
@@ -2613,12 +2625,14 @@ class API:
             r += f"{indent}end {fnamef}\n"
             self.fwrite(f, r)
 
-        def write_module(f, m, c_mpath, f_mpath, indent):
+        def write_module(f, m, c_mpath, f_mpath, mpath, indent):
             c_mpath, f_mpath = get_fc_name_t(m.name, c_mpath, f_mpath)
+            if len(mpath): mpath += "/"
+            mpath += m.name
             for fun in m.fs:
-                write_function(f, fun, c_mpath, f_mpath, indent)
+                write_function(f, fun, c_mpath, f_mpath, mpath, indent)
             for m in m.submodules:
-                write_module(f, m, c_mpath, f_mpath, indent)
+                write_module(f, m, c_mpath, f_mpath, mpath, indent)
 
         self.current_lineno = 1
         with open(ns + ".f90", "w") as f:
@@ -2638,7 +2652,7 @@ class API:
                 self.fwrite(f, "\n")
             self.fwrite(f, f"{indent}contains\n")
             for module in self.modules:
-                write_module(f, module, "", "", indent)
+                write_module(f, module, "", "", "", indent)
             self.fwrite(f, fortran_footer)
 
 
@@ -2668,9 +2682,12 @@ class API:
         def find_function(lang, name, data):
             only_unique = False  # only report unique matches?
             in_comments = False  # report matches in comments?
-            if lang == 'Python':
+            if lang == 'Python' or lang == 'Julia':
                 func = name.replace('/', '.')
                 comment = '#'
+            elif lang == 'Fortran':
+                func = name.replace('/', '%')
+                comment = '!'
             else:
                 func = name.replace('/', '::')
                 comment = '//'
@@ -2696,7 +2713,7 @@ class API:
             return match
 
         def write_module(module, path, node, node_next, node_prev, cpp_data,
-                         py_data):
+                         py_data, jl_data, f90_data):
             f.write("@node " + node + ", " + node_next + ", " + node_prev +
                     ", Gmsh application programming interface\n")
             f.write("@section Namespace @code{" + path + "}: " + module.doc +
@@ -2744,9 +2761,17 @@ class API:
                             ",Julia}")
                 except:
                     pass
+                try:
+                    f.write(", @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L" +
+                            str(self.api_lineno['f'][path + '/' + name]) +
+                            ",Fortran}")
+                except:
+                    pass
                 f.write("\n")
                 cpp = find_function('C++', path + '/' + name, cpp_data)
                 py = find_function('Python', path + '/' + name, py_data)
+                jl = find_function('Julia', path + '/' + name, jl_data)
+                f90 = find_function('Fortran', path + '/' + name, f90_data)
 
                 def write_matches(lang, matches, max_matches):
                     f.write(lang + ' (')
@@ -2763,9 +2788,15 @@ class API:
                     f.write("@item " + "Examples:\n")
                     if len(cpp):
                         write_matches("C++", cpp, 5)
-                        if len(py): f.write(', ')
+                        if len(py) or len(jl) or len(f90): f.write(', ')
                     if len(py):
                         write_matches("Python", py, 5)
+                        if len(jl) or len(f90): f.write(', ')
+                    if len(jl):
+                        write_matches("Julia", jl, 5)
+                        if len(f90) or len(f90): f.write(', ')
+                    if len(f90):
+                        write_matches("Fortran", f90, 5)
                     f.write("\n")
                 f.write("@end table\n\n")
             f.write("@end ftable\n\n")
@@ -2796,8 +2827,12 @@ class API:
             cpp_data.extend(get_file_data('../exampls/api', '.cpp'))
             py_data = get_file_data('../tutorials', '.py')
             py_data.extend(get_file_data('../examples/api', '.py'))
+            jl_data = get_file_data('../tutorials', '.jl')
+            jl_data.extend(get_file_data('../examples/api', '.jl'))
+            f90_data = get_file_data('../tutorials', '.f90')
+            f90_data.extend(get_file_data('../examples/api', '.f90'))
             for i in range(N):
                 write_module(flat[i][0], flat[i][1], node_name(flat[i]),
                              "" if i == N - 1 else node_name(flat[i + 1]),
                              "" if i == 0 else node_name(flat[i - 1]),
-                             cpp_data, py_data)
+                             cpp_data, py_data, jl_data, f90_data)

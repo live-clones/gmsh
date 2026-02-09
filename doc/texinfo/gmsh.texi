@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file in the Gmsh root directory for license information.
 @c Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2024 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2025 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -351,7 +351,7 @@ actions in the geometry module automatically append the related command
 in the input script file, and can optionally also generate input for the
 languages supported by the API (see the
 @code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.12.)
+as of Gmsh 4.14.)
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,
@@ -623,12 +623,16 @@ provided on the command line with @code{-clmin} and @code{-clmax}) and
 multiplied by @code{Mesh.MeshSizeFactor} (@code{-clscale} on the command
 line).
 
-Boundary mesh sizes are interpolated during mesh generation inside
-surfaces and/or volumes depending on the value of
-@code{Mesh.MeshSizeExtendFromBoundary} (see @ref{Mesh options} for the
-default values of all these options). When the mesh element sizes are
-fully specified by a background mesh size field, it is often desirable
-to set
+Boundary mesh sizes are automatically interpolated during mesh
+generation inside surfaces and/or volumes if
+@code{Mesh.MeshSizeExtendFromBoundary} is set (it is set by default; see
+@ref{Mesh options} for the default values of all the options).  If only
+specific parts of the model should use a different mesh size
+(e.g. refinement of the mesh along an edge or within a fillet/surface),
+you may want to set @code{Mesh.MeshSizeExtendFromBoundary} to 0 to avoid
+unintentional refinement in nearby entities. Typically, when the mesh
+element sizes are fully specified by a mesh size field, it is often
+desirable to set
 @example
 Mesh.MeshSizeFromPoints = 0;
 Mesh.MeshSizeFromCurvature = 0;
@@ -2121,6 +2125,11 @@ with
   @var{boolean} |
   Point|Curve|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
   BoundingBox Point|Curve|Surface|Volume @{ @var{expression-list} @} |
+  Parametric BoundingBox Curve|Surface @{ @var{expression} @} |
+  Parametric Point @{ @var{expression} @} In Surface @{ @var{expression} @} |
+  Normal Surface @{ @var{expression} @} Parametric @{ @var{expression}, @var{expression} @} |
+  Curvature Curve @{ @var{expression} @} Parametric @{ @var{expression} @} |
+  Curvature Surface @{ @var{expression} @} Parametric @{ @var{expression}, @var{expression} @} |
   Mass Curve|Surface|Volume @{ @var{expression} @} |
   CenterOfMass Curve|Surface|Volume @{ @var{expression} @} |
   MatrixOfInertia Curve|Surface|Volume @{ @var{expression} @} |
@@ -2153,12 +2162,21 @@ The next two cases allow to retrieve entities in a given bounding box,
 or get the bounding box of a given entity, with the bounding box
 specified as (X min, Y min, Z min, X max, Y max, Z max). Beware that the
 order of coordinates is different than in the @code{BoundingBox} command
-for the scene: see @ref{Other general commands}. The last cases permit to
-retrieve the mass, the center of mass or the matrix of inertia of an
-entity, the coordinates of a given geometry point (@pxref{Points}), the
-elementary entities making up physical groups, and the tags of all
-(physical or elementary) points, curves, surfaces or volumes in the
-model. @value{SYNCS}
+for the scene: see @ref{Other general commands}. @code{Parametric
+BoundingBox} retrieves the parametric bounds (U min, U max) and (U min,
+V min, U max, V max) or a curve or a surface,
+respectively. @code{Parametric Point} retrieves the parametric
+coordinates U, V of a point on a surface. @code{Normal Surface} returns
+the normal to a surface evaluated at the specified parametric
+coordinates. @code{Curvature Curve} and. @code{Curvature Surface} return
+the curvature of a curve or a surface at the specified parametric
+coordinates.
+
+The last cases permit to retrieve the mass, the center of mass or the
+matrix of inertia of an entity, the coordinates of a given geometry
+point (@pxref{Points}), the elementary entities making up physical
+groups, and the tags of all (physical or elementary) points, curves,
+surfaces or volumes in the model. @value{SYNCS}
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Gmsh tutorial}. Note that, in order to
@@ -2517,6 +2535,9 @@ Sine of @var{expression}.
 
 @item Sinh ( @var{expression} )
 Hyperbolic sine of @var{expression}.
+
+@item Step ( @var{expression} )
+Returns 0 if @var{expression} is negative, 1 if not.
 
 @item Tan ( @var{expression} )
 Tangent of @var{expression}.
@@ -3089,11 +3110,13 @@ curve if the first and last points are identical.
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Create a circle arc. If three @var{expression}s are provided on the
 right-hand-side they define the start point, the center and the end
-point of the arc. With the built-in geometry kernel the arc should be
-strictly smaller than Pi. With the OpenCASCADE kernel, if between 4 and
-6 expressions are provided, the first three define the coordinates of
-the center, the next one defines the radius, and the optional next two
-the start and end angle.
+point of the arc; the three points should not be colinear. With the
+built-in geometry kernel the arc should be strictly smaller than
+Pi. With the OpenCASCADE kernel, if between 4 and 6 expressions are
+provided the arc is created in the X-Y plane: the first three define the
+coordinates of the center, the next one defines the radius, and the
+optional next two the start and end angle.
+
 @c TODO: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
 @item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
@@ -3367,9 +3390,9 @@ three @w{@var{expression}s} giving the X, Y and Z direction of the
 rotation axis, which should match the direction of the translation; the
 third @var{expression-list} should contain three @w{@var{expression}s}
 giving the X, Y and Z components of any point on this axis; the last
-@var{expression} should contain the rotation angle (in radians). With
-the built-in geometry kernel the angle should be strictly smaller than
-Pi.
+@var{expression} should contain the rotation angle (in radians), which
+should be strictly smaller than Pi. Only available with the built-in
+geometry kernel.
 
 @item Extrude @{ @var{extrude-list} @}
 Extrude entities in @var{extrude-list} using a translation along their
@@ -3565,10 +3588,11 @@ the X, Y and Z components of the translation vector.
 
 @item Boundary @{ @var{transform-list} @}
 (Not a transformation per-se.) Return the entities on the boundary of
-the elementary entities in @var{transform-list}, with signs indicating
-their orientation in the boundary. To get unsigned tags (e.g. to reuse
-the output in other commands), apply the @code{Abs} function on the
-returned list. @value{SYNC}
+the elementary entities in @var{transform-list}. @value{SYNC}
+
+@item OrientedBoundary @{ @var{transform-list} @}
+(Not a transformation per-se.) Same as @code{Boundary}, but returns
+entity tags with signs indicating their orientation in the boundary.
 
 @item CombinedBoundary @{ @var{transform-list} @}
 (Not a transformation per-se.) Return the boundary of the elementary
@@ -3576,10 +3600,21 @@ entities, combined as if a single entity, in
 @var{transform-list}. Useful to compute the boundary of a complex part.
 @value{SYNC}
 
+@item OrientedCombinedBoundary @{ @var{transform-list} @}
+(Not a transformation per-se.) Same as @code{CombinedBoundary}, but
+returns entity tags with signs indicating their orientation in the
+boundary.
+
 @item PointsOf @{ @var{transform-list} @}
 (Not a transformation per-se.) Return all the geometrical points on the
 boundary of the elementary entities. Useful to compute the boundary of a
 complex part. @value{SYNC}
+
+@item Closest @{ @var{expression-list} @} @{ @var{transform-list} @}
+(Not a transformation per-se.) Return the entities from
+@var{transform-list} ordered by their distance to the point with
+coordinates @var{expression-list}. Currently only available with the
+OpenCASCADE kernel.
 
 @item Intersect Curve @{ @var{expression-list} @} Surface @{ @var{expression} @}
 (Not a transformation per-se.) Return the intersections of the curves
@@ -3985,6 +4020,9 @@ Change the order of the elements in the current mesh.
 @item PartitionMesh @var{expression};
 Partition the mesh into @var{expression}, using current partitioning options.
 
+@item CreateOverlaps @var{expression};
+Create partition overlaps with @var{expression} layers.
+
 @item Point | Curve @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Add a meshing constraint to embed the point(s) or curve(s) in the given
 surface. The surface mesh will conform to the mesh of the point(s) or
@@ -4070,6 +4108,12 @@ Renumber the node tags in the current mesh in a continuous sequence.
 
 @item RenumberMeshElements;
 Renumber the elements tags in the current mesh in a continuous sequence.
+
+@item CreateMeshEdges;
+Create the edges of the current mesh.
+
+@item CreateMeshFaces;
+Create the faces of the current mesh.
 
 @item < Recursive > Color @var{color-expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Set the mesh color of the entities in @var{expression-list} to
@@ -4463,13 +4507,13 @@ geometrical and the mesh data) and @emph{views} (which hold
 post-processing data). These are manipulated by the API functions in the
 top-level namespaces @code{gmsh/model} and @code{gmsh/view},
 respectively. The other top-level namespaces are @code{gmsh/option}
-(which handles all options), @code{gmsh/plugin} (which handles
-extensions to core Gmsh functionality), @code{gmsh/graphics} (which
-handles drawing), @code{gmsh/fltk} (which handles the graphical user
-interface), @code{gmsh/parser} (which handles the Gmsh parser),
-@code{gmsh/onelab} (which handles ONELAB parameters and communications
-with external codes) and @code{gmsh/logger} (which handles information
-logging).
+(which handles all options), @code{gmsh/algorithm} (which handles raw
+algorithms), @code{gmsh/plugin} (which handles extensions to core Gmsh
+functionality), @code{gmsh/graphics} (which handles drawing),
+@code{gmsh/fltk} (which handles the graphical user interface),
+@code{gmsh/parser} (which handles the Gmsh parser), @code{gmsh/onelab}
+(which handles ONELAB parameters and communications with external codes)
+and @code{gmsh/logger} (which handles information logging).
 @item
 Geometrical data is made of model @emph{entities}, called @emph{points}
 (entities of dimension 0), @emph{curves} (entities of dimension 1),

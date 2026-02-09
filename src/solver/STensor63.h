@@ -1,7 +1,8 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
 #ifndef STENSOR63_H_
 #define STENSOR63_H_
 
@@ -65,4 +66,4 @@ public:
   };
 };
 
-#endif // STENSOR63_H_
+#endif

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -11,10 +11,10 @@
 #include "MEdge.h"
 #include "GModelIO_GEO.h"
 #include "Geo.h"
+#include "Context.h"
 
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
-#include "Context.h"
 #endif
 
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
@@ -99,6 +99,11 @@ SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
   return SPoint2(ps.u(), ps.v());
 }
 
+int discreteEdge::minimumMeshSegments() const
+{
+  return CTX::instance()->mesh.minCurveNodes;
+}
+
 double discreteEdge::curvature(double par) const
 {
   double tLoc;
@@ -175,7 +180,7 @@ int discreteEdge::createGeometry()
     for(std::size_t i = 0; i < lines.size(); i++) {
       allEdges.push_back(MEdge(lines[i]->getVertex(0), lines[i]->getVertex(1)));
     }
-    std::vector<std::vector<MVertex *> > vs;
+    std::vector<std::vector<MVertex *>> vs;
     SortEdgeConsecutive(allEdges, vs);
     if(vs.size() == 1) { vertices = vs[0]; }
     else {
@@ -215,8 +220,9 @@ void discreteEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
   if(_discretization.empty()) return;
-  meshGEdge mesher;
-  mesher(this);
+  GEdge::mesh(verbose);
+  //  meshGEdge mesher;
+  //  mesher(this);
 #endif
 }
 
@@ -239,7 +245,7 @@ bool discreteEdge::writeParametrization(FILE *fp, bool binary)
     fwrite(&d[0], sizeof(double), 4 * N, fp);
   }
   else {
-    fprintf(fp, "%lu\n", N);
+    fprintf(fp, "%zu\n", N);
     for(std::size_t i = 0; i < N; i++) {
       fprintf(fp, "%.16g %.16g %.16g %.16g\n", _discretization[i].x(),
               _discretization[i].y(), _discretization[i].z(), _pars[i]);
@@ -255,7 +261,7 @@ bool discreteEdge::readParametrization(FILE *fp, bool binary)
     if(fread(&N, sizeof(std::size_t), 1, fp) != 1) { return false; }
   }
   else {
-    if(fscanf(fp, "%lu", &N) != 1) { return false; }
+    if(fscanf(fp, "%zu", &N) != 1) { return false; }
   }
   _pars.resize(N);
   _discretization.resize(N);

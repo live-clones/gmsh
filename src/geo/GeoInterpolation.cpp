@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,6 +10,7 @@
 #include "Context.h"
 
 static double const fd_eps = 1.0e-8;
+static double const inv_fd_eps = 1.0/1.0e-8;
 
 static void InterpolateCatmullRom(Vertex *v[4], double t, Vertex &V)
 {
@@ -166,8 +167,9 @@ static Vertex InterpolateUBS(Curve *Curve, double u)
     int NbCurves = NbControlPoints + (periodic ? -1 : 1);
     int iCurve = (int)floor(u * (double)NbCurves);
     if(iCurve == NbCurves) iCurve -= 1; // u = 1
-    double t1 = (double)(iCurve) / (double)(NbCurves);
-    double t2 = (double)(iCurve + 1) / (double)(NbCurves);
+    double InvNbCurves = 1.0 / (double)(NbCurves);
+    double t1 = (double)(iCurve) * InvNbCurves;
+    double t2 = (double)(iCurve + 1) * InvNbCurves;
     double t = (u - t1) / (t2 - t1);
     Vertex *v[4];
     for(int i = 0; i < 4; i++) {
@@ -388,9 +390,10 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
     Vertex D[2];
     D[0] = InterpolateCurve(c, u - eps1, 0);
     D[1] = InterpolateCurve(c, u + eps2, 0);
-    V.Pos.X = (D[1].Pos.X - D[0].Pos.X) / (eps1 + eps2);
-    V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) / (eps1 + eps2);
-    V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) / (eps1 + eps2);
+    const double inv_eps12 = 1.0 / (eps1 + eps2);
+    V.Pos.X = (D[1].Pos.X - D[0].Pos.X) * inv_eps12;
+    V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) * inv_eps12;
+    V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) * inv_eps12;
     V.u = u;
     return V;
   }
@@ -400,9 +403,10 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
     Vertex D[2];
     D[0] = InterpolateCurve(c, u - eps1, 1);
     D[1] = InterpolateCurve(c, u + eps2, 1);
-    V.Pos.X = (D[1].Pos.X - D[0].Pos.X) / (eps1 + eps2);
-    V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) / (eps1 + eps2);
-    V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) / (eps1 + eps2);
+    const double inv_eps12 = 1.0 / (eps1 + eps2);
+    V.Pos.X = (D[1].Pos.X - D[0].Pos.X) * inv_eps12;
+    V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) * inv_eps12;
+    V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) * inv_eps12;
     V.u = u;
     return V;
   }
@@ -425,8 +429,10 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       if(i >= N - 1) i = N - 2;
       if(i < 0) i = 0;
 
-      t1 = static_cast<double>(i) / static_cast<double>(N - 1);
-      t2 = static_cast<double>(i + 1) / static_cast<double>(N - 1);
+      double inv_N1 = 1.0 / static_cast<double>(N - 1);
+
+      t1 = static_cast<double>(i) * inv_N1;
+      t2 = static_cast<double>(i + 1) * inv_N1;
       t = (u - t1) / (t2 - t1);
 
       List_Read(c->Control_Points, i, &v[1]);
@@ -876,9 +882,9 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
         D[1] = InterpolateSurface(s, u, v, 0, 0);
       }
     }
-    return Vertex((D[1].Pos.X - D[0].Pos.X) / fd_eps,
-                  (D[1].Pos.Y - D[0].Pos.Y) / fd_eps,
-                  (D[1].Pos.Z - D[0].Pos.Z) / fd_eps);
+    return Vertex((D[1].Pos.X - D[0].Pos.X) * inv_fd_eps,
+                  (D[1].Pos.Y - D[0].Pos.Y) * inv_fd_eps,
+                  (D[1].Pos.Z - D[0].Pos.Z) * inv_fd_eps);
   }
   else if(derivee == 2) {
     Vertex D[2];
@@ -912,9 +918,9 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
         D[1] = InterpolateSurface(s, u, v, 1, 1);
       }
     }
-    return Vertex((D[1].Pos.X - D[0].Pos.X) / fd_eps,
-                  (D[1].Pos.Y - D[0].Pos.Y) / fd_eps,
-                  (D[1].Pos.Z - D[0].Pos.Z) / fd_eps);
+    return Vertex((D[1].Pos.X - D[0].Pos.X) * inv_fd_eps,
+                  (D[1].Pos.Y - D[0].Pos.Y) * inv_fd_eps,
+                  (D[1].Pos.Z - D[0].Pos.Z) * inv_fd_eps);
   }
 
   if(s->geometry) {

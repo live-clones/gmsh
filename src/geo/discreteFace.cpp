@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -299,7 +299,7 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
 
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
-    Msg::Info("Triangle not found at uv=(%g,%g) on discrete surface %d",
+    Msg::Debug("Triangle not found at uv=(%g,%g) on discrete surface %d",
               param.x(), param.y(), tag());
     return SVector3(0, 0, 1);
   }
@@ -360,16 +360,16 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
   return false;
 }
 
-Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
+std::pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
-  if(_param.empty()) return Pair<SVector3, SVector3>(SVector3(), SVector3());
+  if(_param.empty()) return std::make_pair(SVector3(), SVector3());
 
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
     Msg::Info("Triangle not found for first derivative at uv=(%g,%g) on "
               "discrete surface %d",
               param.x(), param.y(), tag());
-    return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
+    return std::make_pair(SVector3(1, 0, 0), SVector3(0, 1, 0));
   }
 
   int position = (int)((MTriangle *)e - &_param.t2d[0]);
@@ -400,8 +400,8 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
     }
   }
 
-  return Pair<SVector3, SVector3>(SVector3(dxdu[0][0], dxdu[1][0], dxdu[2][0]),
-                                  SVector3(dxdu[0][1], dxdu[1][1], dxdu[2][1]));
+  return std::make_pair(SVector3(dxdu[0][0], dxdu[1][0], dxdu[2][0]),
+                        SVector3(dxdu[0][1], dxdu[1][1], dxdu[2][1]));
 }
 
 void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
@@ -488,9 +488,9 @@ void intrinsicDelaunayize(discreteFace *df)
 
   printf("isManifold %d\n", msm.isManifold());
   printf("isOriented %d\n", msm.isOriented());
-  printf("nVertices %lu\n", msm.nVertices());
-  printf("nCorners %lu\n", msm.nCorners());
-  printf("nInteriorVertices %lu\n", msm.nInteriorVertices());
+  printf("nVertices %zu\n", msm.nVertices());
+  printf("nCorners %zu\n", msm.nCorners());
+  printf("nInteriorVertices %zu\n", msm.nInteriorVertices());
 
   geometrycentral::surface::VertexPositionGeometry vpg(msm, positions);
 
@@ -500,7 +500,7 @@ void intrinsicDelaunayize(discreteFace *df)
   signpostTri.flipToDelaunay();
 
   signpostTri.delaunayRefine();
-  printf("-->nVertices %lu %lu\n", signpostTri.intrinsicMesh->nVertices(),
+  printf("-->nVertices %zu %zu\n", signpostTri.intrinsicMesh->nVertices(),
          signpostTri.mesh.nVertices());
 
   signpostTri.requireVertexIndices();
@@ -826,7 +826,7 @@ bool discreteFace::writeParametrization(FILE *fp, bool binary)
     fwrite(&stl_triangles[0], sizeof(int), stl_triangles.size(), fp);
   }
   else {
-    fprintf(fp, "%lu %lu\n", N, T);
+    fprintf(fp, "%zu %zu\n", N, T);
     for(std::size_t i = 0; i < N; i++)
       fprintf(fp,
               "%.16g %.16g %.16g %.16g %.16g %.16g %.16g "
@@ -855,7 +855,7 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
     if(fread(&T, sizeof(std::size_t), 1, fp) != 1) { return false; }
   }
   else {
-    if(fscanf(fp, "%lu %lu", &N, &T) != 2) { return false; }
+    if(fscanf(fp, "%zu %zu", &N, &T) != 2) { return false; }
   }
   std::vector<double> d(11 * N);
   stl_vertices_xyz.resize(N);

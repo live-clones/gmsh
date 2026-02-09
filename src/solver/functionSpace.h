@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -661,7 +661,7 @@ public:
                         std::vector<HessType> &hess) const
   {
   }
-  FilteredFunctionSpace<T, F>(FunctionSpace<T> *spacebase, F *filter)
+  FilteredFunctionSpace(FunctionSpace<T> *spacebase, F *filter)
     : _spacebase(spacebase), _filter(filter)
   {
   }

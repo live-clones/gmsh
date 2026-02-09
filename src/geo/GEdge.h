@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -62,6 +62,13 @@ public:
   void setEndVertex(GVertex *gv) { _v1 = gv; if(gv) gv->addEdge(this); }
   virtual GVertex *getBeginVertex() const { return _v0; }
   virtual GVertex *getEndVertex() const { return _v1; }
+  virtual std::vector<GEntity *> boundaryEntities() const
+  {
+    std::vector<GEntity *> entities;
+    if(_v0) entities.push_back(_v0);
+    if(_v1 && _v1 != _v0) entities.push_back(_v1);
+    return entities;
+  }
   void setVertex(GVertex *const f, const int orientation)
   {
     if(orientation > 0)
@@ -119,7 +126,7 @@ public:
   virtual bool isOrphan();
 
   // get the point for the given parameter location
-  virtual GPoint point(double p) const = 0;
+  virtual GPoint point(double p) const { return GPoint(); }
 
   // true if the edge contains the given parameter
   virtual bool containsParam(double pt) const;
@@ -132,7 +139,7 @@ public:
   }
 
   // get first derivative of edge at the given parameter
-  virtual SVector3 firstDer(double par) const = 0;
+  virtual SVector3 firstDer(double par) const { return SVector3(); }
 
   // get second derivative of edge at the given parameter (default
   // implentation using central differences)
@@ -219,7 +226,7 @@ public:
   virtual bool periodic(int dim) const { return _v0 == _v1; }
 
   // get bounds of parametric coordinate
-  virtual Range<double> parBounds(int i) const = 0;
+  virtual Range<double> parBounds(int i) const { return Range<double>(); }
   virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const
   {
     return parBounds(0);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -465,6 +465,12 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
 {
   Msg::StatusBar(true, "Refining mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
+
+  // reset all elements to order 1 (if the mesh was already complete second
+  // order we could use it as-is; however SetOrderN() does not currently
+  // distinguish between complete and incomplete second order when testing if
+  // the mesh should be modified)
+  SetOrder1(m);
 
   // Create 2nd order mesh (using "2nd order complete" elements) to
   // generate vertex positions

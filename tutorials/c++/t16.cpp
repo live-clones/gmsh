@@ -96,21 +96,31 @@ int main(int argc, char **argv)
 
   // The tag of the cube will change though, so we need to access it
   // programmatically:
-  gmsh::model::addPhysicalGroup(3, {ov[ov.size() - 1].second}, 10);
+  gmsh::model::addPhysicalGroup(3, {ov[0].second}, 10);
 
   // Creating entities using constructive solid geometry is very powerful, but
   // can lead to practical issues for e.g. setting mesh sizes at points, or
   // identifying boundaries.
 
   // To identify points or other bounding entities you can take advantage of the
-  // `getEntities()', `getBoundary()' and `getEntitiesInBoundingBox()'
-  // functions:
+  // `getEntities()', `getBoundary()', `getClosestEntities()' and
+  // `getEntitiesInBoundingBox()' functions:
 
+  // Define a physical surface for the top and right-most surfaces, by finding
+  // amongst the surfaces making up the boundary of the model, the two closest
+  // to point (1, 1, 0.5):
+  gmsh::model::getEntities(ov, 3);
+  std::vector<std::pair<int, int> > ov2;
+  gmsh::model::getBoundary(ov, ov2);
+  std::vector<double> dist, coord;
+  gmsh::model::occ::getClosestEntities(1, 1, 0.5, ov2, ov, dist, coord, 2);
+  gmsh::model::addPhysicalGroup(2, {ov[0].second, ov[1].second}, 100,
+                                "Top & right surfaces");
+
+  // Assign a mesh size to all the points:
   double lcar1 = .1;
   double lcar2 = .0005;
   double lcar3 = .055;
-
-  // Assign a mesh size to all the points:
   gmsh::model::getEntities(ov, 0);
   gmsh::model::mesh::setSize(ov, lcar1);
 
@@ -118,7 +128,8 @@ int main(int argc, char **argv)
   gmsh::model::getBoundary(holes, ov, false, false, true);
   gmsh::model::mesh::setSize(ov, lcar3);
 
-  // Select the corner point by searching for it geometrically:
+  // Select the corner point by searching for it geometrically using a bounding
+  // box (`getClosestEntities()' could have been used as well):
   double eps = 1e-3;
   gmsh::model::getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
                                         0.5 + eps, 0.5 + eps, 0.5 + eps, ov, 0);

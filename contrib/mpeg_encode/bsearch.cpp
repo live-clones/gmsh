@@ -31,7 +31,7 @@
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
-/*  
+/*
  *  $Header: /n/picasso/project/mpeg/mpeg_dist/mpeg_encode/RCS/bsearch.c,v 1.10 1995/08/07 21:49:01 smoot Exp $
  *  $Log: bsearch.c,v $
  *  Revision 1.10  1995/08/07 21:49:01  smoot
@@ -80,6 +80,9 @@
 #include "frames.h"
 #include "search.h"
 #include "fsize.h"
+
+#define mymax(a,b) ((a) > (b) ? (a) : (b))
+#define mymin(a,b) ((a) < (b) ? (a) : (b))
 
 
 /*==================*
@@ -237,9 +240,9 @@ BMotionSearch(LumBlock currentBlock,
     PMotionSearch(currentBlock, next, by, bx, bmy, bmx);
     return MOTION_BACKWARD;
   }
-  
+
   /* otherwise simply call the appropriate algorithm, based on user preference */
-  
+
     switch(bsearchAlg) {
 	case BSEARCH_SIMPLE:
 	    return BMotionSearchSimple(currentBlock, prev, next, by, bx, fmy,
@@ -291,12 +294,12 @@ BMotionSearchSimple(LumBlock currentBlock,
     			    /* STEP 1 */
     BMotionSearchNoInterp(currentBlock, prev, next, by, bx, fmy, fmx,
 			  &forwardErr, bmy, bmx, &backErr, TRUE);
-			  
+
     			    /* STEP 2 */
 
     ComputeBMotionLumBlock(prev, next, by, bx, MOTION_INTERPOLATE,
 			   *fmy, *fmx, *bmy, *bmx, interpBlock);
-    bestSoFar = min(backErr, forwardErr);
+    bestSoFar = mymin(backErr, forwardErr);
     interpErr = LumBlockMAD(currentBlock, interpBlock, bestSoFar);
 
 			    /* STEP 3 */
@@ -351,7 +354,7 @@ BMotionSearchCross2(LumBlock currentBlock,
     BMotionSearchNoInterp(currentBlock, prev, next, by, bx, fmy, fmx,
 			  &forwardErr, bmy, bmx, &backErr, TRUE);
 
-    bestErr = min(forwardErr, backErr);
+    bestErr = mymin(forwardErr, backErr);
 
 			    /* STEP 2 */
     ComputeBMotionLumBlock(prev, next, by, bx, MOTION_FORWARD,
@@ -359,13 +362,13 @@ BMotionSearchCross2(LumBlock currentBlock,
     ComputeBMotionLumBlock(prev, next, by, bx, MOTION_BACKWARD,
 			   0, 0, *bmy, *bmx, backBlock);
 
-    /* try a cross-search; total of 4 local searches */    
+    /* try a cross-search; total of 4 local searches */
     newbmy = *bmy;	newbmx = *bmx;
     newfmy = *fmy;	newfmx = *fmx;
 
     interpErr = FindBestMatch(forwardBlock, currentBlock, next, by, bx,
 			      &newbmy, &newbmx, bestErr, searchRangeB);
-    bestErr = min(bestErr, interpErr);
+    bestErr = mymin(bestErr, interpErr);
     interpErr2 = FindBestMatch(backBlock, currentBlock, prev, by, bx,
 			       &newfmy, &newfmx, bestErr, searchRangeB);
 
@@ -604,7 +607,7 @@ FindBestMatchExhaust(LumBlock block,
 /* maybe should try spiral pattern centered around  prev motion vector? */
 
 
-    /* try a spiral pattern */    
+    /* try a spiral pattern */
     for ( distance = stepSize; distance <= searchRange; distance += stepSize ) {
 	tempRightMY = rightMY;
 	if ( distance < tempRightMY ) {
@@ -617,7 +620,7 @@ FindBestMatchExhaust(LumBlock block,
 
 	/* do top, bottom */
 	for ( my = -distance; my < tempRightMY;
-	      my += max(tempRightMY+distance-stepSize, stepSize) ) {
+	      my += mymax(tempRightMY+distance-stepSize, stepSize) ) {
 	    if ( my < leftMY ) {
 		continue;
 	    }
@@ -639,7 +642,7 @@ FindBestMatchExhaust(LumBlock block,
 	}
 
 	/* do left, right */
-	for ( mx = -distance; mx < tempRightMX; mx += max(tempRightMX+distance-stepSize, stepSize) ) {
+	for ( mx = -distance; mx < tempRightMX; mx += mymax(tempRightMX+distance-stepSize, stepSize) ) {
 	    if ( mx < leftMX ) {
 		continue;
 	    }
@@ -748,7 +751,7 @@ FindBestMatchTwoLevel(LumBlock block,
 /* maybe should try spiral pattern centered around  prev motion vector? */
 
 
-    /* try a spiral pattern */    
+    /* try a spiral pattern */
     for ( distance = 2; distance <= searchRange; distance += 2 ) {
 	tempRightMY = rightMY;
 	if ( distance < tempRightMY ) {
@@ -761,7 +764,7 @@ FindBestMatchTwoLevel(LumBlock block,
 
 	/* do top, bottom */
 	for ( my = -distance; my < tempRightMY;
-	      my += max(tempRightMY+distance-2, 2) ) {
+	      my += mymax(tempRightMY+distance-2, 2) ) {
 	    if ( my < leftMY ) {
 		continue;
 	    }
@@ -783,7 +786,7 @@ FindBestMatchTwoLevel(LumBlock block,
 	}
 
 	/* do left, right */
-	for ( mx = -distance; mx < tempRightMX; mx += max(tempRightMX+distance-2, 2) ) {
+	for ( mx = -distance; mx < tempRightMX; mx += mymax(tempRightMX+distance-2, 2) ) {
 	    if ( mx < leftMX ) {
 		continue;
 	    }
@@ -1025,36 +1028,36 @@ BMotionSearchNoInterp(LumBlock currentBlock,
     /* CALL SEARCH PROCEDURE */
     switch(psearchAlg) {
 	case PSEARCH_SUBSAMPLE:
-	    *forwardErr = PSubSampleSearch(currentBlock, prev, by, bx, 
+	    *forwardErr = PSubSampleSearch(currentBlock, prev, by, bx,
 					   fmy, fmx, searchRangeB);
-	    *backErr = PSubSampleSearch(currentBlock, next, by, bx, 
+	    *backErr = PSubSampleSearch(currentBlock, next, by, bx,
 					bmy, bmx, searchRangeB);
 	    break;
 	case PSEARCH_EXHAUSTIVE:
-	    *forwardErr = PLocalSearch(currentBlock, prev, by, bx, fmy, fmx, 
+	    *forwardErr = PLocalSearch(currentBlock, prev, by, bx, fmy, fmx,
 				       0x7fffffff, searchRangeB);
 	    if ( backNeeded ) {
-		*backErr = PLocalSearch(currentBlock, next, by, bx, bmy, bmx, 
+		*backErr = PLocalSearch(currentBlock, next, by, bx, bmy, bmx,
 					0x7fffffff, searchRangeB);
 	    } else {
-		*backErr = PLocalSearch(currentBlock, next, by, bx, bmy, bmx, 
+		*backErr = PLocalSearch(currentBlock, next, by, bx, bmy, bmx,
 					*forwardErr, searchRangeB);
 	    }
 	    break;
 	case PSEARCH_LOGARITHMIC:
-	    *forwardErr = PLogarithmicSearch(currentBlock, prev, by, bx, 
+	    *forwardErr = PLogarithmicSearch(currentBlock, prev, by, bx,
 					     fmy, fmx, searchRangeB);
-	    *backErr = PLogarithmicSearch(currentBlock, next, by, bx, 
+	    *backErr = PLogarithmicSearch(currentBlock, next, by, bx,
 					  bmy, bmx, searchRangeB);
 	    break;
 	case PSEARCH_TWOLEVEL:
-	    *forwardErr = PTwoLevelSearch(currentBlock, prev, by, bx, fmy, fmx, 
+	    *forwardErr = PTwoLevelSearch(currentBlock, prev, by, bx, fmy, fmx,
 					  0x7fffffff, searchRangeB);
 	    if ( backNeeded ) {
-		*backErr = PTwoLevelSearch(currentBlock, next, by, bx, bmy, bmx, 
+		*backErr = PTwoLevelSearch(currentBlock, next, by, bx, bmy, bmx,
 					   0x7fffffff, searchRangeB);
 	    } else {
-		*backErr = PTwoLevelSearch(currentBlock, next, by, bx, bmy, bmx, 
+		*backErr = PTwoLevelSearch(currentBlock, next, by, bx, bmy, bmx,
 					   *forwardErr, searchRangeB);
 	    }
 	    break;

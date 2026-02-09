@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -49,7 +49,8 @@ static void scriptAddCommand(const std::string &text,
   // make sure we don't add stuff in a non-geo file
   static bool proceed = false;
   if(!CTX::instance()->expertMode && !proceed) {
-    if(ext.size() && ext != ".geo" && ext != ".GEO") {
+    if(ext.size() && ext != ".geo" && ext != ".GEO" && ext != ".opt" &&
+       ext != ".OPT" && ext != ".vis" && ext != ".VIS") {
       std::ostringstream sstream;
       sstream << "A scripting command is going to be appended to a non-`.geo' "
                  "file. Are\nyou sure you want to proceed?\n\n"

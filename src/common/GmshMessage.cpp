@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -266,7 +266,7 @@ int Msg::GetVerbosity()
   return _verbosity;
 }
 
-void Msg::SetLogFile(const std::string &name)
+void Msg::SetLogFileName(const std::string &name)
 {
   _logFileName = name;
   if(_logFile) fclose(_logFile);
@@ -277,6 +277,11 @@ void Msg::SetLogFile(const std::string &name)
   }
   else
     _logFile = nullptr;
+}
+
+std::string Msg::GetLogFileName()
+{
+  return _logFileName;
 }
 
 std::string Msg::GetLaunchDate()
@@ -397,17 +402,6 @@ void Msg::Exit(int level, bool forceLevel)
 #if defined(HAVE_MPI)
   if(level) MPI_Abort(MPI_COMM_WORLD, level);
 #endif
-
-#if defined(HAVE_OCC) && (OCC_VERSION_HEX > 0x070800)
-#if defined(__APPLE__) || defined(__linux__)
-#warning "Using _exit() instead of exit() as workaround for OCC >= 7.8 STEP bug"
-  // workaround for recent versions of OpenCASCADE (>= 7.8) which on macOS and
-  // linux invoke a global destructor in the STEP module that sometimes leads to
-  // a segfault - using _exit() bypasses the global destructor
-  _exit((forceLevel || level) ? level : _atLeastOneErrorInRun);
-#endif
-#endif
-
   exit((forceLevel || level) ? level : _atLeastOneErrorInRun);
 }
 
@@ -512,7 +506,7 @@ void Msg::Error(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+  int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
 #pragma omp critical(MsgError)
   {
@@ -521,7 +515,7 @@ void Msg::Error(const char *fmt, ...)
   }
 
   if(GetVerbosity() >= 1) {
-    if(_logFile) fprintf(_logFile, "Error: %s\n", str);
+    if(_logFile) fprintf(_logFile, "Error   : %s\n", str);
     if(_callback) (*_callback)("Error", str);
     if(_client) _client->Error(str);
 #if defined(HAVE_FLTK)
@@ -575,9 +569,9 @@ void Msg::Warning(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+  int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
+  if(_logFile) fprintf(_logFile, "Warning : %s\n", str);
   if(_callback) (*_callback)("Warning", str);
   if(_client) _client->Warning(str);
 
@@ -623,7 +617,16 @@ void Msg::Info(const char *fmt, ...)
       strcat(str, res.c_str());
   }
 
-  if(_logFile) fprintf(_logFile, "Info: %s\n", str);
+  if(_logFile) {
+    if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
+       _commSize == 1) {
+      int p =  _progressMeterCurrent;
+      fprintf(_logFile, "Info    : [%3d%%] %s\n", p, str);
+    }
+    else {
+      fprintf(_logFile, "Info    : %s\n", str);
+    }
+  }
   if(_callback) (*_callback)("Info", str);
   if(_client) _client->Info(str);
 
@@ -635,16 +638,18 @@ void Msg::Info(const char *fmt, ...)
   }
 #endif
 
-  if(CTX::instance()->terminal){
+  if(CTX::instance()->terminal) {
     if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
-        _commSize == 1) {
+       _commSize == 1) {
       int p =  _progressMeterCurrent;
       fprintf(stdout, "Info    : [%3d%%] %s\n", p, str);
     }
-    else if(_commSize > 1)
+    else if(_commSize > 1) {
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
-    else
+    }
+    else {
       fprintf(stdout, "Info    : %s\n", str);
+    }
     fflush(stdout);
   }
 }
@@ -663,9 +668,9 @@ void Msg::Direct(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+  int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(_logFile) fprintf(_logFile, "Direct: %s\n", str);
+  if(_logFile) fprintf(_logFile, "%s\n", str);
   if(_callback) (*_callback)("Direct", str);
   if(_client) _client->Info(str);
 
@@ -715,16 +720,16 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+  int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
     strcat(str, res.c_str());
   }
 
-  if(_logFile) fprintf(_logFile, "Info: %s\n", str);
-  if(_callback && log) (*_callback)("Info", str);
-  if(_client && log) _client->Info(str);
+  if(log && _logFile) fprintf(_logFile, "Info    : %s\n", str);
+  if(log && _callback) (*_callback)("Info", str);
+  if(log && _client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -756,7 +761,7 @@ void Msg::StatusGl(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+  int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(FlGui::available())
     FlGui::instance()->setStatus(str, true);
@@ -781,9 +786,9 @@ void Msg::Debug(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+  int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(_logFile) fprintf(_logFile, "Debug: %s\n", str);
+  if(_logFile) fprintf(_logFile, "Debug   : %s\n", str);
   if(_callback) (*_callback)("Debug", str);
   if(_client) _client->Info(str);
 
@@ -823,7 +828,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
-    int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+    int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
     sprintf(str2, "Info    : [%3d%%] %s", p, str);
 
     if(_client) _client->Progress(str2);
@@ -834,7 +839,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
       FlGui::check(true);
     }
 #endif
-    if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
+    if(log && _logFile) fprintf(_logFile, "%s\n", str2);
     if(_callback) (*_callback)("Progress", str);
     if(!streamIsFile(stdout) && log && CTX::instance()->terminal){
       std::string w(80, ' ');

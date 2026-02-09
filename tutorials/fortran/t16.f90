@@ -19,9 +19,10 @@ implicit none
 
 type(gmsh_t) :: gmsh
 integer(c_int) :: ret, p, t
-integer(c_int), allocatable :: ov(:,:), ovv(:,:), holes(:,:)
+integer(c_int), allocatable :: ov(:,:), ov2(:,:), ovv(:,:), holes(:,:)
 integer(c_size_t), allocatable :: ovv_n(:)
 real(c_double) :: x, y, z, r, lcar1, lcar2, lcar3, eps
+real(c_double), allocatable :: dist(:), coord(:)
 character(len=GMSH_API_MAX_STR_LEN) :: cmd, str
 character(len=GMSH_API_MAX_STR_LEN), allocatable :: log(:)
 
@@ -103,7 +104,7 @@ end do
 
 ! The tag of the cube will change though, so we need to access it
 ! programmatically:
-ret = gmsh%model%addPhysicalGroup(3, [ov(2, size(ov, 1))], 10)
+ret = gmsh%model%addPhysicalGroup(3, [ov(2, 1)], 10)
 deallocate(ov, ovv, ovv_n)
 
 ! Creating entities using constructive solid geometry is very powerful, but can
@@ -111,13 +112,25 @@ deallocate(ov, ovv, ovv_n)
 ! boundaries.
 
 ! To identify points or other bounding entities you can take advantage of the
-! `getEntities()', `getBoundary()' and `getEntitiesInBoundingBox()' functions:
+! `getEntities()', `getBoundary()', `getClosestEntities()' and
+! `getEntitiesInBoundingBox()' functions:
 
+! Define a physical surface for the top and right-most surfaces, by finding
+! amongst the surfaces making up the boundary of the model, the two closest
+! to point (1, 1, 0.5):
+call gmsh%model%getEntities(ov, 3)
+call gmsh%model%getBoundary(ov, ov2, .true., .false., .false.)
+call gmsh%model%occ%getClosestEntities(1d0, 1d0, 0.5d0, ov2, ov, dist, coord, 2)
+ret = gmsh%model%addPhysicalGroup(2, [ov(2, 1), ov(2, 2)], 100, &
+                                  "Top & right surfaces")
+deallocate(ov, ov2, dist, coord)
+
+! "Top & right surfaces"
+
+! Assign a mesh size to all the points:
 lcar1 = .1
 lcar2 = .0005
 lcar3 = .055
-
-! Assign a mesh size to all the points:
 call gmsh%model%getEntities(ov, 0)
 call gmsh%model%mesh%setSize(ov, lcar1)
 deallocate(ov)
@@ -127,7 +140,8 @@ call gmsh%model%getBoundary(holes, ov, .false., .false., .true.)
 call gmsh%model%mesh%setSize(ov, lcar3)
 deallocate(ov)
 
-! Select the corner point by searching for it geometrically:
+! Select the corner point by searching for it geometrically using a bounding box
+! (`getClosestEntities()' could have been used as well):
 eps = 1e-3
 call gmsh%model%getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps, &
                                          0.5 + eps, 0.5 + eps, 0.5 + eps, ov, 0)

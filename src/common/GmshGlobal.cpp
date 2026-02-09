@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -225,9 +225,9 @@ int GmshClearProject()
   return 1;
 }
 
-int GmshMergeFile(const std::string &fileName)
+int GmshMergeFile(const std::string &fileName, bool errorIfMissing)
 {
-  return MergeFile(fileName, true);
+  return MergeFile(fileName, errorIfMissing);
 }
 
 int GmshMergePostProcessingFile(const std::string &fileName)
@@ -354,12 +354,11 @@ int GmshBatch()
       GModel::current()->computeSizeField();
     }
     else if(CTX::instance()->batch == 69) {
-
       //      void testRelaying();
       //      testRelaying() ;
-      //      
       //
-      
+      //
+
       std::vector<int> tags;
       computeCrossField(GModel::current(), tags);
       GoodbyeMessage();
@@ -367,17 +366,21 @@ int GmshBatch()
       // still a bug in allocation somewhere
       exit(0);
     }
-    #if defined(HAVE_GEODESIC)
+#if defined(HAVE_GEODESIC)
     else if(CTX::instance()->batch == 70) { // FIXME TEST
-      makeMeshGeodesic (GModel::current());
+      makeMeshGeodesic(GModel::current());
     }
-    #endif
+#endif
 #endif
   }
 
   if(CTX::instance()->batchAfterMesh == 1 &&
      CTX::instance()->mesh.numPartitions > 1)
     GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
+
+  if(CTX::instance()->batchAfterMesh == 1 &&
+     CTX::instance()->mesh.overlapLayers > 0)
+    GModel::current()->createOverlaps(CTX::instance()->mesh.overlapLayers);
 
   if(CTX::instance()->batch > 0 || CTX::instance()->batchAfterMesh) {
     std::string name = CTX::instance()->outputFileName;

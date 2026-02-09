@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -651,7 +651,7 @@ static void _rebuild_tree_browser(bool force)
         GModel::list[i]->getNumRegions() + GModel::list[i]->getNumFaces() +
         GModel::list[i]->getNumEdges() + GModel::list[i]->getNumVertices();
     }
-    if(numEnt > 50000) {
+    if(numEnt > 10000) {
       FlGui::instance()->visibility->tree->hide();
       FlGui::instance()->visibility->tree_create->show();
       return;
@@ -833,10 +833,8 @@ void visibility_cb(Fl_Widget *w, void *data)
   FlGui::instance()->visibility->updatePerWindow(true);
 }
 
-static void visibility_save_cb(Fl_Widget *w, void *data)
+void visibility_save(const std::string &fileName)
 {
-  Msg::StatusBar(true, "Appending visibility info to '%s'...",
-                 GModel::current()->getFileName().c_str());
   // get the whole visibility information in geo format
   std::vector<int> state[4][2];
   GModel *m = GModel::current();
@@ -859,12 +857,12 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
     off += state[i][0].size();
   }
   if(on > off) {
-    scriptSetVisibilityAll(1, GModel::current()->getFileName());
+    scriptSetVisibilityAll(1, fileName);
     if(!off) return;
     mode = 0;
   }
   else {
-    scriptSetVisibilityAll(0, GModel::current()->getFileName());
+    scriptSetVisibilityAll(0, fileName);
     if(!on) return;
     mode = 1;
   }
@@ -875,7 +873,14 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
       }
     }
   }
-  scriptSetVisibility(mode, entities, GModel::current()->getFileName());
+  scriptSetVisibility(mode, entities, fileName);
+}
+
+static void visibility_save_cb(Fl_Widget *w, void *data)
+{
+  Msg::StatusBar(true, "Appending visibility info to '%s'...",
+                 GModel::current()->getFileName().c_str());
+  visibility_save(GModel::current()->getFileName());
   Msg::StatusBar(true, "Done appending visibility info");
 }
 
@@ -1377,7 +1382,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     tree_create =
       new Fl_Button(2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH,
-                    "The model contains more than 50 thousand entities,\n"
+                    "The model contains more than 10 thousand entities,\n"
                     "which might slow down the tree browser.\n\n"
                     "Create tree browser anyway?");
     tree_create->callback(build_tree_cb);

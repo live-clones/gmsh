@@ -95,6 +95,29 @@ Default value: @code{0}
 Default value: @code{0}
 @end table
 
+@item Plugin(BoundaryLayer)
+Plugin(BoundaryLayer) performs magic.
+String options:
+@table @code
+@item Volumes
+Default value: @code{""}
+@item Surfaces
+Default value: @code{""}
+@item Curves
+Default value: @code{""}
+@item Points
+Default value: @code{""}
+@end table
+Numeric options:
+@table @code
+@item Thickness
+Default value: @code{0.01}
+@item Size
+Default value: @code{0.001}
+@item Ratio
+Default value: @code{1.2}
+@end table
+
 @item Plugin(Bubbles)
 Plugin(Bubbles) constructs a geometry consisting of `bubbles' inscribed in the Voronoi of an input triangulation. `ShrinkFactor' allows to change the size of the bubbles. The plugin expects a triangulation in the `z = 0' plane to exist in the current model.@*
 @*
@@ -111,7 +134,7 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Crack)
-Plugin(Crack) creates a crack around the orientable, manifold physical group `PhysicalGroup' of dimension `Dimension' (1 or 2), embedded in a mesh of dimension `Dimension' + 1.The plugin duplicates the nodes and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the positive side are modified to use the newly generated nodes.If `OpenBoundaryPhysicalGroup' is given (> 0), its nodes are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its nodes are not duplicated. For 1D cracks, `NormalX', `NormalY' and `NormalZ' provide the reference normal of the surface in which the crack is supposed to be embedded. If `NewPhysicalGroup' is positive, use it as the tag of the newly created curve or surface; otherwise use `PhysicalGroup'.
+Plugin(Crack) creates a crack around the orientable, manifold physical group `PhysicalGroup' of dimension `Dimension' (1 or 2), embedded in a mesh of dimension `Dimension' + 1.The plugin duplicates the nodes and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the positive side are modified to use the newly generated nodes.If `OpenBoundaryPhysicalGroup' is given (> 0), its nodes are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its nodes are not duplicated. For 1D cracks, `NormalX', `NormalY' and `NormalZ' provide the reference normal of the surface in which the crack is supposed to be embedded. If `NewPhysicalGroup' is positive, use it as the tag of the newly created curve or surface; otherwise use `PhysicalGroup'. If `SwapOrientation' is set to 1, the orientation of the duplicated elements on the crack is reversed.
 Numeric options:
 @table @code
 @item Dimension
@@ -129,6 +152,8 @@ Default value: @code{1}
 @item NewPhysicalGroup
 Default value: @code{0}
 @item DebugView
+Default value: @code{0}
+@item SwapOrientation
 Default value: @code{0}
 @end table
 
@@ -299,7 +324,7 @@ Plugin(CutPlane) cuts the view `View' with the plane `A'*X + `B'*Y + `C'*Z + `D'
 @*
 If `ExtractVolume' is nonzero, the plugin extracts the elements on one side of the plane (depending on the sign of `ExtractVolume').@*
 @*
-If `View' < 0, the plugin is run on the current view.@*
+If `View' < 0, the plugin is run on the current view. If `Visible' = 1, the plugin only cuts visible entities.@*
 @*
 Plugin(CutPlane) creates one new list-based view.
 Numeric options:
@@ -320,6 +345,8 @@ Default value: @code{3}
 Default value: @code{0.0001}
 @item View
 Default value: @code{-1}
+@item Visible
+Default value: @code{1}
 @end table
 
 @item Plugin(CutSphere)
@@ -327,7 +354,7 @@ Plugin(CutSphere) cuts the view `View' with the sphere (X-`Xc')^2 + (Y-`Yc')^2 +
 @*
 If `ExtractVolume' is nonzero, the plugin extracts the elements inside (if `ExtractVolume' < 0) or outside (if `ExtractVolume' > 0) the sphere.@*
 @*
-If `View' < 0, the plugin is run on the current view.@*
+If `View' < 0, the plugin is run on the current view. If `Visible' = 1, the plugin only cuts visible entities.@*
 @*
 Plugin(CutSphere) creates one new list-based view.
 Numeric options:
@@ -348,6 +375,8 @@ Default value: @code{3}
 Default value: @code{0.0001}
 @item View
 Default value: @code{-1}
+@item Visible
+Default value: @code{1}
 @end table
 
 @item Plugin(DiscretizationError)
@@ -638,7 +667,7 @@ Default value: @code{1}
 @end table
 
 @item Plugin(Invisible)
-Plugin(Invisible) deletes (if `DeleteElements' is set) or reverses (if `ReverseElements' is set) all the invisible elements in the current model. If the bounding box defined by `XMin' < x < `XMax, `YMin' < y < `YMax and `ZMin' < z < `ZMax' is not empty, mark all elements outside the bounding box as invisible prior to deleting or inverting the elements.
+Plugin(Invisible) deletes (if `DeleteElements' is set) or reverses (if `ReverseElements' is set) all the invisible elements in the current model. If the bounding box defined by `XMin' < x < `XMax, `YMin' < y < `YMax and `ZMin' < z < `ZMax' is not empty, mark all elements outside or inside (if `Inside' is set) the bounding box as invisible prior to deleting or inverting the elements.
 Numeric options:
 @table @code
 @item DeleteElements
@@ -657,6 +686,8 @@ Default value: @code{0}
 Default value: @code{0}
 @item ZMax
 Default value: @code{0}
+@item Inside
+Default value: @code{0}
 @end table
 
 @item Plugin(Isosurface)
@@ -666,7 +697,7 @@ If `ExtractVolume' is nonzero, the plugin extracts the isovolume with values gre
 @*
 If `OtherTimeStep' < 0, the plugin uses, for each time step in `View', the corresponding time step in `OtherView'. If `OtherView' < 0, the plugin uses `View' as the value source.@*
 @*
-If `View' < 0, the plugin is run on the current view.@*
+If `View' < 0, the plugin is run on the current view. If `Visible' = 1, the plugin only cuts visible entities.@*
 @*
 Plugin(Isosurface) creates as many list-based views as there are time steps in `View'.
 Numeric options:
@@ -685,6 +716,8 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item OtherView
 Default value: @code{-1}
+@item Visible
+Default value: @code{1}
 @end table
 
 @item Plugin(Lambda2)

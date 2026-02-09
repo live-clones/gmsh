@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -97,4 +97,4 @@ inline void CGNSZoneStruct<DIM>::nodeFromList(const std::vector<cgsize_t> &list,
 
 #endif // HAVE_LIBCGNS
 
-#endif // CGNS_ZONE_STRUCT_H
+#endif

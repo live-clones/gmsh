@@ -5331,7 +5331,9 @@ alglib::complex cmatrixludet(const complex_2d_array &a, const integer_1d_array &
     {
         alglib_impl::ae_complex result = alglib_impl::cmatrixludet(const_cast<alglib_impl::ae_matrix*>(a.c_ptr()), const_cast<alglib_impl::ae_vector*>(pivots.c_ptr()), n, &_alglib_env_state);
         alglib_impl::ae_state_clear(&_alglib_env_state);
-        return *(reinterpret_cast<alglib::complex*>(&result));
+
+        alglib::complex dest(result.x, result.y);
+        return dest;
     }
     catch(alglib_impl::ae_error_type)
     {
@@ -5376,7 +5378,9 @@ alglib::complex cmatrixludet(const complex_2d_array &a, const integer_1d_array &
         alglib_impl::ae_complex result = alglib_impl::cmatrixludet(const_cast<alglib_impl::ae_matrix*>(a.c_ptr()), const_cast<alglib_impl::ae_vector*>(pivots.c_ptr()), n, &_alglib_env_state);
 
         alglib_impl::ae_state_clear(&_alglib_env_state);
-        return *(reinterpret_cast<alglib::complex*>(&result));
+
+        alglib::complex dest(result.x, result.y);
+        return dest;
     }
     catch(alglib_impl::ae_error_type)
     {
@@ -5412,7 +5416,9 @@ alglib::complex cmatrixdet(const complex_2d_array &a, const ae_int_t n)
     {
         alglib_impl::ae_complex result = alglib_impl::cmatrixdet(const_cast<alglib_impl::ae_matrix*>(a.c_ptr()), n, &_alglib_env_state);
         alglib_impl::ae_state_clear(&_alglib_env_state);
-        return *(reinterpret_cast<alglib::complex*>(&result));
+
+        alglib::complex dest(result.x, result.y);
+        return dest;
     }
     catch(alglib_impl::ae_error_type)
     {
@@ -5453,7 +5459,9 @@ alglib::complex cmatrixdet(const complex_2d_array &a)
         alglib_impl::ae_complex result = alglib_impl::cmatrixdet(const_cast<alglib_impl::ae_matrix*>(a.c_ptr()), n, &_alglib_env_state);
 
         alglib_impl::ae_state_clear(&_alglib_env_state);
-        return *(reinterpret_cast<alglib::complex*>(&result));
+
+        alglib::complex dest(result.x, result.y);
+        return dest;
     }
     catch(alglib_impl::ae_error_type)
     {
@@ -24561,17 +24569,17 @@ static void rcond_cmatrixestimatenorm(ae_int_t n,
      /* Real    */ ae_vector* rsave,
      ae_state *_state)
 {
-    ae_int_t itmax;
-    ae_int_t i;
-    ae_int_t iter;
-    ae_int_t j;
-    ae_int_t jlast;
-    ae_int_t jump;
-    double absxi;
-    double altsgn;
-    double estold;
-    double safmin;
-    double temp;
+    ae_int_t itmax{0};
+    ae_int_t i{0};
+    ae_int_t iter{0};
+    ae_int_t j{0};
+    ae_int_t jlast{0};
+    ae_int_t jump{0};
+    double absxi{0.0};
+    double altsgn{0.0};
+    double estold{0.0};
+    double safmin{0.0};
+    double temp{0.0};
 
 
     

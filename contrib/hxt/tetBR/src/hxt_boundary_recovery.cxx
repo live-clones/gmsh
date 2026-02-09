@@ -1,7 +1,7 @@
+#include "hxt_omp.h"
 extern "C" {
 #include "hxt_mesh.h"
 #include "hxt_tools.h"
-#include "hxt_omp.h"
 #include "predicates.h"
 }
 
@@ -74,7 +74,11 @@ static double orient4d(double*, double *, double *, double *, double *,
 #include <cstring>
 
 #ifdef HXT_WITHOUT_GMSH
+#ifndef _MSC_VER
 #warning "Using TetgenBR without Gmsh - please note the different licensing terms"
+#else
+#pragma message "Using TetgenBR without Gmsh - please note the different licensing terms"
+#endif
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
 #else

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,10 +24,11 @@
 
 #if defined(HAVE_HXT)
 
-extern "C" {
 #include "hxt_omp.h"
+extern "C" {
 #include "hxt_tetMesh.h"
 #include "hxt_tetDelaunay.h"
+#include "hxt_boundary_recovery.h"
 }
 
 static int getNumThreads()
@@ -53,34 +54,35 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
   double lcGlob = CTX::instance()->lc;
   int useInterpolatedSize = Extend2dMeshIn3dVolumes();
 
-  HXT_INFO("Computing %smesh sizes...", useInterpolatedSize ? "interpolated " : "");
+  HXT_INFO("Computing %smesh sizes...",
+           useInterpolatedSize ? "interpolated " : "");
 
   int nthreads = getNumThreads();
   bool exceptions = false;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
     if(exceptions) continue;
-    if(volume[i] < 0 || volume[i] >= allGR->size()) {
+    if(volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
       continue;
     }
     GRegion *gr = (*allGR)[volume[i]];
-    try{ // OpenMP forbids leaving block via exception
+    try { // OpenMP forbids leaving block via exception
       double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, pts[4 * i + 0],
                                              pts[4 * i + 1], pts[4 * i + 2]);
       if(useInterpolatedSize && pts[4 * i + 3] > 0.0)
         pts[4 * i + 3] = std::min(pts[4 * i + 3], std::min(lcGlob, lc));
       else
         pts[4 * i + 3] = std::min(lcGlob, lc);
-    }
-    catch(...) {
+    } catch(...) {
       exceptions = true;
     }
   }
 
   if(exceptions) throw std::runtime_error(Msg::GetLastError());
 
-  HXT_INFO("Done computing %smesh sizes", useInterpolatedSize ? "interpolated " : "");
+  HXT_INFO("Done computing %smesh sizes",
+           useInterpolatedSize ? "interpolated " : "");
 
   return HXT_STATUS_OK;
 }
@@ -107,8 +109,8 @@ static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions, HXTMesh *m,
   }
 
   // verify that all elements are triangles
-  for (auto const &gf: allSurfacesSet) {
-    if (gf->quadrangles.size() != 0 || gf->polygons.size() != 0) {
+  for(auto const &gf : allSurfacesSet) {
+    if(gf->quadrangles.size() != 0 || gf->polygons.size() != 0) {
       std::size_t num = gf->quadrangles.size() + gf->polygons.size();
       Msg::Error("Surface %d contains %zu elements which are not triangles. "
                  "The HXT 3D meshing algorithm only supports triangles.",
@@ -191,10 +193,10 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 {
   Msg::Debug("Start Hxt2Gmsh");
 
-  HXT_CHECK( hxtAlignedFree(&m->tetrahedra.neigh) );
-  HXT_CHECK( hxtAlignedFree(&m->tetrahedra.flag) );
-  HXT_CHECK( hxtAlignedFree(&m->points.node) );
-  HXT_CHECK( hxtAlignedFree(&m->points.color) );
+  HXT_CHECK(hxtAlignedFree(&m->tetrahedra.neigh));
+  HXT_CHECK(hxtAlignedFree(&m->tetrahedra.flag));
+  HXT_CHECK(hxtAlignedFree(&m->points.node));
+  HXT_CHECK(hxtAlignedFree(&m->points.color));
 
   std::map<uint32_t, GEdge *> i2e;
   std::map<uint32_t, GFace *> i2f;
@@ -207,8 +209,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     for(std::size_t j = 0; j < allCurves.size(); j++) {
       i2e[allCurves[j]->tag()] = allCurves[j];
       GEdge *ge = allCurves[j];
-      for(std::size_t i = 0; i < ge->lines.size(); i++)
-        delete ge->lines[i];
+      for(std::size_t i = 0; i < ge->lines.size(); i++) delete ge->lines[i];
       ge->lines.clear();
     }
 
@@ -238,19 +239,19 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     uint32_t i0 = m->lines.node[2 * i + 0];
     uint32_t i1 = m->lines.node[2 * i + 1];
     if(!c2v[i0]) {
-      double *x = &m->vertices.coord[4 * i0];
+      double *xyz = &m->vertices.coord[4 * i0];
       // FIXME compute true coordinates
-      c2v[i0] = new MEdgeVertex(x[0], x[1], x[2], ge->second, 0);
+      c2v[i0] = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge->second, 0);
     }
     if(!c2v[i1]) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4 * i1];
-      c2v[i1] = new MEdgeVertex(x[0], x[1], x[2], ge->second, 0);
+      double *xyz = &m->vertices.coord[4 * i1];
+      c2v[i1] = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge->second, 0);
     }
     ge->second->lines.push_back(new MLine(c2v[i0], c2v[i1]));
   }
-  HXT_CHECK( hxtAlignedFree(&m->lines.node) );
-  HXT_CHECK( hxtAlignedFree(&m->lines.color) );
+  HXT_CHECK(hxtAlignedFree(&m->lines.node));
+  HXT_CHECK(hxtAlignedFree(&m->lines.color));
 
   for(std::size_t i = 0; i < m->triangles.num; i++) {
     uint32_t c = m->triangles.color[i];
@@ -268,173 +269,56 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     uint32_t i2 = m->triangles.node[3 * i + 2];
     if(!c2v[i0]) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4 * i0];
-      c2v[i0] = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      double *xyz = &m->vertices.coord[4 * i0];
+      c2v[i0] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
     }
     if(!c2v[i1]) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4 * i1];
-      c2v[i1] = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      double *xyz = &m->vertices.coord[4 * i1];
+      c2v[i1] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
     }
     if(!c2v[i2]) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4 * i2];
-      c2v[i2] = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      double *xyz = &m->vertices.coord[4 * i2];
+      c2v[i2] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
     }
     gf->second->triangles.push_back(new MTriangle(c2v[i0], c2v[i1], c2v[i2]));
   }
-  HXT_CHECK( hxtAlignedFree(&m->triangles.node) );
-  HXT_CHECK( hxtAlignedFree(&m->triangles.color) );
+  HXT_CHECK(hxtAlignedFree(&m->triangles.node));
+  HXT_CHECK(hxtAlignedFree(&m->triangles.color));
 
-#if 0 // this seems to be buggy (cf. e.g. #2575)
-// #if defined(_OPENMP)
-  int nthreads = getNumThreads();
-  if(nthreads > 1) {
-    const uint32_t nR = regions.size();
-    const uint32_t nV = m->vertices.num;
-
-    size_t* ht_all, *ht_tot; // histograms for tets
-    HXT_CHECK( hxtCalloc(&ht_all, nR * (nthreads + 1), sizeof(size_t)) );
-    uint32_t* hp_all, *hp_tot; // histograms for points
-    HXT_CHECK( hxtCalloc(&hp_all, nR * (nthreads + 1) * 3 + (size_t) nV * nthreads,
-                         sizeof(uint32_t)) );
-    uint32_t* vR_all = hp_all + nR * (nthreads + 1); // color per point and per thread
-
-    #pragma omp parallel num_threads(nthreads)
-    {
-      #pragma omp single
-      {
-        nthreads = omp_get_num_threads(); /* the real number of threads */
-        ht_tot = ht_all + nR * nthreads;
-        hp_tot = hp_all + nR * nthreads;
-      }
-
-      int threadID = omp_get_thread_num();
-      size_t* ht_this = ht_all + nR * threadID;
-      uint32_t* hp_this = hp_all + nR * threadID;
-      uint32_t* vR_this = vR_all + nV * threadID;
-
-      // count the number of tetrahedra in each region in parallel
-      #pragma omp for schedule(static)
-      for(size_t i = 0; i < m->tetrahedra.num; i++) {
-        uint32_t c = m->tetrahedra.color[i];
-        if(c >= nR) continue;
-
-        ht_this[c]++;
-        uint32_t *nodes = &m->tetrahedra.node[4 * i];
-        for(int j = 0; j < 4; j++) {
-          uint32_t pt = nodes[j];
-          if(!c2v[pt])
-            vR_this[pt] = c + 1;
-        }
-      }
-
-      #pragma omp for schedule(static)
-      for(uint32_t pt = 0; pt < nV; pt++) {
-        if(c2v[pt]) continue;
-
-        uint32_t color = 0;
-        for(int thrd = 0; thrd < nthreads; thrd++) {
-          if(vR_all[thrd * nV + pt]) {
-            color = vR_all[thrd * nV + pt];
-            break;
-          }
-        }
-        color--;
-  #ifdef DEBUG
-        if(color >= nR)
-          exit(HXT_ERROR_MSG(HXT_STATUS_ERROR, "no volume or color for pt %u", pt));
-  #endif
-        vR_all[pt] = color;
-        hp_this[color]++;
-      }
-
-      #pragma omp for
-      for(uint32_t c2 = 0; c2 < 2 * nR; c2++) { // parallelism x 2 :p
-        uint32_t c = c2 >> 1;
-        if(c2 & 1) {
-          size_t sumt = 0;
-          for(int j = 0; j < nthreads + 1; j++) {
-            size_t tsumt = ht_all[j * nR + c] + sumt;
-            ht_all[j * nR + c] = sumt;
-            sumt = tsumt;
-          }
-          regions[c]->tetrahedra.resize(ht_tot[c], nullptr);
-        }
-        else {
-          uint32_t sump = 0;
-          for(int j = 0; j < nthreads + 1; j++) {
-            uint32_t tsump = hp_all[j * nR + c] + sump;
-            hp_all[j * nR + c] = sump;
-            sump = tsump;
-          }
-          regions[c]->mesh_vertices.resize(hp_tot[c], nullptr);
-        }
-      }
-
-      #pragma omp for schedule(static)
-      for(uint32_t pt = 0; pt < nV; pt++) {
-        if(c2v[pt]) continue;
-
-        uint32_t c = vR_all[pt];
-        GRegion *gr = regions[c];
-        double *x = &m->vertices.coord[4 * pt];
-        c2v[pt] = new MVertex(x[0], x[1], x[2], gr);
-        gr->mesh_vertices[hp_this[c]++] = c2v[pt];
-      }
-
-
-      #pragma omp for schedule(static)
-      for(size_t i = 0; i < m->tetrahedra.num; i++) {
-        uint32_t c = m->tetrahedra.color[i];
-        if(c >= nR) continue;
-
-        uint32_t *nodes = &m->tetrahedra.node[4 * i];
-        regions[c]->tetrahedra[ht_this[c]++] = new MTetrahedron
-          (c2v[nodes[0]], c2v[nodes[1]], c2v[nodes[2]], c2v[nodes[3]]);
-      }
-    }
-
-    HXT_CHECK( hxtFree(&ht_all) );
-    HXT_CHECK( hxtFree(&hp_all) );
+#if 1
+  std::vector<std::size_t> numtet(regions.size(), 0);
+  for(std::size_t i = 0; i < m->tetrahedra.num; i++) {
+    uint16_t c = m->tetrahedra.color[i];
+    if(c >= numtet.size()) continue;
+    numtet[c]++;
   }
-  else
+  for(std::size_t c = 0; c < numtet.size(); c++) {
+    regions[c]->tetrahedra.reserve(numtet[c]);
+    regions[c]->mesh_vertices.reserve(numtet[c] / 6);
+  }
+  for(std::size_t i = 0; i < m->tetrahedra.num; i++) {
+    uint16_t c = m->tetrahedra.color[i];
+    if(c >= regions.size()) continue;
+    GRegion *gr = regions[c];
+    MVertex *vv[4];
+    uint32_t *nodes = &m->tetrahedra.node[4 * i];
+    for(int j = 0; j < 4; j++) {
+      if(c2v[nodes[j]]) {
+        vv[j] = c2v[nodes[j]];
+        continue;
+      }
+      double *xyz = &m->vertices.coord[4 * nodes[j]];
+      vv[j] = new MVertex(xyz[0], xyz[1], xyz[2], gr);
+      gr->mesh_vertices.push_back(vv[j]);
+      c2v[nodes[j]] = vv[j];
+    }
+    gr->tetrahedra.push_back(new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
+  }
+#else
+  // TODO redo multi-threaded version
 #endif
-  {
-    std::vector<std::size_t> numtet(regions.size(), 0);
-    for(std::size_t i = 0; i < m->tetrahedra.num; i++) {
-      uint16_t c = m->tetrahedra.color[i];
-      if(c >= numtet.size())
-        continue;
-      numtet[c]++;
-    }
-    for(std::size_t i = 0; i < numtet.size(); i++) {
-      regions[i]->tetrahedra.reserve(numtet[i]);
-      regions[i]->mesh_vertices.reserve(numtet[i] / 6);
-    }
-
-    for(std::size_t i = 0; i < m->tetrahedra.num; i++) {
-      uint16_t c = m->tetrahedra.color[i];
-      if(c >= regions.size())
-        continue;
-
-      GRegion *gr = regions[c];
-      MVertex *vv[4];
-      uint32_t *nodes = &m->tetrahedra.node[4 * i];
-      for(int j = 0; j < 4; j++) {
-        if(c2v[nodes[j]]){
-          vv[j] = c2v[nodes[j]];
-          continue;
-        }
-        double *x = &m->vertices.coord[4 * nodes[j]];
-        vv[j] = new MVertex(x[0], x[1], x[2], gr);
-        gr->mesh_vertices.push_back(vv[j]);
-        c2v[nodes[j]] = vv[j];
-      }
-
-      gr->tetrahedra.push_back(new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
-    }
-  }
 
   Msg::Debug("End Hxt2Gmsh");
   return HXT_STATUS_OK;
@@ -577,12 +461,12 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     nthreads, // int defaultThreads;
     nthreads, // int delaunayThreads;
     nthreads, // int improveThreads;
-    1, // int reproducible;
+    CTX::instance()->mesh.reproducible, // int reproducible;
     (Msg::GetVerbosity() > 5) ? 2 : 1, // int verbosity;
     1, // int stat;
     1, // int refine;
     CTX::instance()->mesh.optimize, // int optimize;
-    CTX::instance()->mesh.toleranceInitialDelaunay,// tolerance for tetgen
+    CTX::instance()->mesh.toleranceInitialDelaunay, // tolerance for tetgen
     {
       // quality
       nullptr, // double (*callback)(.., userData)
@@ -614,7 +498,8 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
 }
 
 static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
-                                      std::vector<MTetrahedron *> &tets)
+                                      std::vector<MTetrahedron *> &tets,
+                                      const std::vector<MTriangle> &triangles)
 {
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
@@ -640,6 +525,7 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
     0, // insertionFirst
     0, // partitionability
     1, // perfectDelaunay
+    0, // allowOuterInsertion
     0, // verbosity
     0, // reproducible
     nthreads // delaunayThreads (0 = omp_get_max_threads)
@@ -657,6 +543,38 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
     hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, mesh->vertices.num));
   HXT_CHECK(hxtAlignedFree(&nodeInfo));
 
+  size_t nTriangles = triangles.size();
+
+  if(nTriangles > 0) {
+    HXT_CHECK(hxtAlignedMalloc(&mesh->triangles.node,
+                               3 * nTriangles * sizeof(uint32_t)));
+    HXT_CHECK(hxtAlignedMalloc(&mesh->triangles.color,
+                               nTriangles * sizeof(uint32_t)));
+    for(size_t i = 0; i < nTriangles; i++) {
+      mesh->triangles.node[3 * i + 0] = triangles[i].getVertex(0)->getIndex();
+      mesh->triangles.node[3 * i + 1] = triangles[i].getVertex(1)->getIndex();
+      mesh->triangles.node[3 * i + 2] = triangles[i].getVertex(2)->getIndex();
+      mesh->triangles.color[i] = 0;
+    }
+    mesh->triangles.num = nTriangles;
+    mesh->triangles.size = nTriangles;
+
+    hxt_boundary_recovery(mesh, 0.0);
+
+    if(nvert < mesh->vertices.num) {
+      // Steiner points!
+      std::size_t j = nvert;
+      for(size_t i = nvert; i < mesh->vertices.num; ++i) {
+        MVertex *sterinerPoint = new MVertex(mesh->vertices.coord[4 * i + 0],
+                                             mesh->vertices.coord[4 * i + 1],
+                                             mesh->vertices.coord[4 * i + 2]);
+        sterinerPoint->setIndex(j);
+        verts.push_back(sterinerPoint);
+        j++;
+      }
+    }
+  }
+
   for(size_t i = 0; i < mesh->tetrahedra.num; i++) {
     if(mesh->tetrahedra.node[i * 4 + 3] != UINT32_MAX) {
       uint32_t myColor = mesh->tetrahedra.color ? mesh->tetrahedra.color[i] : 0;
@@ -673,11 +591,12 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
 }
 
 void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
-                         std::vector<MTetrahedron *> &tets)
+                         std::vector<MTetrahedron *> &tets,
+                         const std::vector<MTriangle> &triangles)
 {
   Msg::Info("Tetrahedrizing %d nodes...", v.size());
   double t1 = Cpu(), w1 = TimeOfDay();
-  _delaunayMeshIn3DHxt(v, tets);
+  _delaunayMeshIn3DHxt(v, tets, triangles);
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::Info("Done tetrahedrizing %d nodes (Wall %gs, CPU %gs)", v.size(),
             w2 - w1, t2 - t1);
@@ -692,7 +611,8 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
 }
 
 void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
-                         std::vector<MTetrahedron *> &tets)
+                         std::vector<MTetrahedron *> &tets,
+                         const std::vector<MTriangle> &triangles)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -46,6 +46,7 @@ std::string opt_general_tmp_filename(OPT_ARGS_STR);
 std::string opt_general_error_filename(OPT_ARGS_STR);
 std::string opt_general_session_filename(OPT_ARGS_STR);
 std::string opt_general_options_filename(OPT_ARGS_STR);
+std::string opt_general_log_filename(OPT_ARGS_STR);
 std::string opt_general_number_format(OPT_ARGS_STR);
 std::string opt_general_recent_file0(OPT_ARGS_STR);
 std::string opt_general_recent_file1(OPT_ARGS_STR);
@@ -306,9 +307,7 @@ double opt_general_zoom_factor(OPT_ARGS_NUM);
 double opt_general_expert_mode(OPT_ARGS_NUM);
 double opt_general_stereo_mode(OPT_ARGS_NUM);
 double opt_general_camera_mode(OPT_ARGS_NUM);
-#if defined(HAVE_VISUDEV)
 double opt_general_heavy_visualization(OPT_ARGS_NUM);
-#endif
 double opt_general_eye_sep_ratio(OPT_ARGS_NUM);
 double opt_general_focallength_ratio(OPT_ARGS_NUM);
 double opt_general_camera_aperture(OPT_ARGS_NUM);
@@ -456,6 +455,7 @@ double opt_mesh_label_sampling(OPT_ARGS_NUM);
 double opt_mesh_optimize(OPT_ARGS_NUM);
 double opt_mesh_optimize_threshold(OPT_ARGS_NUM);
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM);
+double opt_mesh_optimize_pyramids(OPT_ARGS_NUM);
 double opt_mesh_refine_steps(OPT_ARGS_NUM);
 double opt_mesh_normals(OPT_ARGS_NUM);
 double opt_mesh_num_sub_edges(OPT_ARGS_NUM);
@@ -519,6 +519,7 @@ double opt_mesh_med_file_minor_version(OPT_ARGS_NUM);
 double opt_mesh_med_import_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_med_single_model(OPT_ARGS_NUM);
 double opt_mesh_partition_split_mesh_files(OPT_ARGS_NUM);
+double opt_mesh_partition_split_local_brep(OPT_ARGS_NUM);
 double opt_mesh_partition_save_topology_file(OPT_ARGS_NUM);
 double opt_mesh_partition_num(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_algorithm(OPT_ARGS_NUM);
@@ -540,12 +541,15 @@ double opt_mesh_partition_create_physicals(OPT_ARGS_NUM);
 double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);
 double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM);
 double opt_mesh_partition_convert_msh2(OPT_ARGS_NUM);
+double opt_mesh_overlap_layers(OPT_ARGS_NUM);
 double opt_mesh_create_topology_msh2(OPT_ARGS_NUM);
+double opt_mesh_create_edges(OPT_ARGS_NUM);
+double opt_mesh_create_faces(OPT_ARGS_NUM);
 double opt_mesh_binary(OPT_ARGS_NUM);
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM);
 double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM);
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
-double opt_mesh_stl_remove_duplicate_triangles(OPT_ARGS_NUM);
+double opt_mesh_stl_remove_bad_triangles(OPT_ARGS_NUM);
 double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM);
 double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM);
 double opt_mesh_stl_linear_deflection_relative(OPT_ARGS_NUM);
@@ -641,6 +645,7 @@ double opt_mesh_tolerance_reference_element(OPT_ARGS_NUM);
 double opt_mesh_renumber(OPT_ARGS_NUM);
 double opt_mesh_unv_strict_format(OPT_ARGS_NUM);
 double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM);
+double opt_mesh_reproducible(OPT_ARGS_NUM);
 double opt_mesh_ignore_parametrization(OPT_ARGS_NUM);
 double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM);

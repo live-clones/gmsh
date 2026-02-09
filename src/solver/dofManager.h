@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -586,7 +586,7 @@ public:
       itConstraint = constraints.find(R);
       if(itConstraint != constraints.end()) {
         for(unsigned j = 0; j < (itConstraint->second).linear.size(); j++) {
-          dataMat tmp;
+          dataMat tmp{};
           dofTraits<T>::gemm(tmp, (itConstraint->second).linear[j].second,
                              value, 1, 0);
           assemble((itConstraint->second).linear[j].first, tmp);

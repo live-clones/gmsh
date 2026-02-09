@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,8 +21,8 @@ private:
 
 protected:
   double _ref[3], _targetError;
-  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel,
-    _extractVolume;
+  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel;
+  int _extractVolume, _visible;
   typedef enum { NONE, PLANE, SPHERE, MAP } ORIENTATION;
   ORIENTATION _orientation;
 

@@ -72,7 +72,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsConstructTopology
-Reconstruct the model topology (BREP) after reading a CGNS file@*
+Reconstruct the model topology (BRep) after reading a CGNS file@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -118,6 +118,16 @@ Saved in: @code{-}
 
 @item Mesh.CreateTopologyMsh2
 Attempt to (re)create the model topology when reading MSH2 files@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CreateEdges
+Create mesh edges before saving MSH files@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CreateFaces
+Create mesh edges before saving MSH files@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -561,6 +571,11 @@ Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.OptimizePyramids
+Optimize pyramids in hybrid 3D meshes (0: smoother; 1: untangler)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PartitionHexWeight
 Weight of hexahedral element for METIS load balancing (-1: automatic)@*
 Default value: @code{-1}@*
@@ -618,6 +633,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionSplitMeshFiles
 Write one file for each mesh partition@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionSplitLocalBrep
+Only export the subset of the topology (BRep) that is relevant when splitting mesh files per partition@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -781,6 +801,11 @@ Maximum number of triangles in a single parametrization patch@*
 Default value: @code{250000}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Reproducible
+Try to produce reproducible meshes even when multi-threaded (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveAll
 Save all elements, even if they don't belong to physical groups (for some mesh formats, this removes physical groups altogether)@*
 Default value: @code{0}@*
@@ -876,8 +901,8 @@ Create one solid per surface when exporting STL files? (0: single solid, 1: one 
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.StlRemoveDuplicateTriangles
-Remove duplicate triangles when importing STL files?@*
+@item Mesh.StlRemoveBadTriangles
+Remove bad triangles when importing STL files (1: remove duplicates; 2: remove duplicate and zero-area triangles)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

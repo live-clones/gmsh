@@ -127,9 +127,10 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4], 
 
   // these formula accumulate a lot of errors...
   double xa = sqrt(e0l2);
-  double xb = (e1l2 + e0l2 - e3l2)/(2*xa);
+  double invtwoxa = 1./(2*xa);
+  double xb = (e1l2 + e0l2 - e3l2)*invtwoxa;
   double yb = sqrt(e1l2 - xb*xb);
-  double xc = (e2l2 + e0l2 - e4l2)/(2*xa);
+  double xc = (e2l2 + e0l2 - e4l2)*invtwoxa;
   double yc = (e1l2 + e2l2 - e5l2 - 2*xb*xc)/(2*yb);
   double zc = sqrt(e2l2 - xc*xc - yc*yc);
 
@@ -301,7 +302,7 @@ static HXTStatus balanceRefineWork(HXTMesh* mesh, uint32_t* startPt, uint64_t* s
 {
   uint64_t* scan;
   uint32_t ptPerThreadGoal;
-  HXT_CHECK( hxtAlignedMalloc(&scan, sizeof(size_t) * mesh->tetrahedra.num) );
+  HXT_CHECK( hxtAlignedMalloc(&scan, sizeof(uint64_t) * mesh->tetrahedra.num) );
 
   #pragma omp parallel num_threads(maxThreads)
   {
@@ -364,7 +365,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
   int maxThreads = omp_get_max_threads();
 
   uint64_t* startTet; // see balanceRefineWork
-  HXT_CHECK( hxtMalloc(&startTet, (maxThreads+1)*sizeof(size_t)) );
+  HXT_CHECK( hxtMalloc(&startTet, (maxThreads+1)*sizeof(uint64_t)) );
 
   uint32_t* startPt; // see balanceRefineWork
   HXT_CHECK( hxtMalloc(&startPt, (maxThreads+1)*sizeof(uint32_t)) );

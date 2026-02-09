@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -261,14 +261,21 @@ public:
   }
   fullMatrix(const fullMatrix<scalar> &other) : _r(other._r), _c(other._c)
   {
-    _data = new scalar[_r * _c];
-    _ownData = true;
-    for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
+    _data = nullptr;
+
+    if (_r > 0 && _c > 0) {  // Check if dimensions are valid
+      _data = new scalar[_r * _c];
+      _ownData = true;
+      for(int i = 0; i < _r * _c; ++i)
+        _data[i] = other._data[i];
+    } else {
+      _ownData = true;
+    }
   }
   fullMatrix() : _ownData(false), _r(0), _c(0), _data(0) {}
   ~fullMatrix()
   {
-    if(_data && _ownData) delete[] _data;
+    if(_data != nullptr && _ownData) delete[] _data;
   }
   // get information (size, value)
   inline int size1() const { return _r; }
@@ -311,9 +318,15 @@ public:
       if(_ownData && _data) delete[] _data;
       _r = r;
       _c = c;
-      _data = new scalar[_r * _c];
-      _ownData = true;
-      if(resetValue) setAll(scalar(0.));
+
+      if (r > 0 && c > 0) {  // Check if dimensions are valid
+        _data = new scalar[_r * _c];
+        _ownData = true;
+        if(resetValue) setAll(scalar(0.));
+      } else {
+         _data = nullptr;
+         _ownData = true;
+      }
       return true;
     }
     _r = r;
@@ -583,7 +596,7 @@ public:
 #if defined(HAVE_EIGEN) || !defined(HAVE_BLAS)
   {
     const fullMatrix<scalar> &A = transposeA ? a.transpose() : a;
-    const fullMatrix<scalar> &B = transposeA ? b.transpose() : b;
+    const fullMatrix<scalar> &B = transposeB ? b.transpose() : b;
     fullMatrix<scalar> temp(A._r, B._c);
     A.mult(B, temp);
     temp.scale(alpha);
