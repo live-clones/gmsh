@@ -6,8 +6,11 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+#include <cstdint>
 #include <string>
 #include "ColorTable.h"
+
+typedef void (*func_ptr_t)();
 
 #define GMSH_SET (1 << 0)
 #define GMSH_GET (1 << 1)
@@ -25,6 +28,7 @@
 #define OPT_ARGS_STR int num, int action, const std::string &val
 #define OPT_ARGS_NUM int num, int action, double val
 #define OPT_ARGS_COL int num, int action, unsigned int val
+#define OPT_ARGS_FUN int num, int action, func_ptr_t val
 
 // STRINGS
 
@@ -637,6 +641,7 @@ double opt_mesh_ignore_unknown_sections(OPT_ARGS_NUM);
 double opt_mesh_ignore_periodicity(OPT_ARGS_NUM);
 double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM);
 double opt_mesh_max_iter_delaunay_3d(OPT_ARGS_NUM);
+double opt_mesh_max_iter_intrinsic(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_1d(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_2d(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM);
@@ -652,6 +657,10 @@ double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM);
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM);
 double opt_mesh_quadqs_scaling_on_triangulation(OPT_ARGS_NUM);
 double opt_mesh_old_initial_delaunay_2d(OPT_ARGS_NUM);
+double opt_mesh_min_intrinsic_angle(OPT_ARGS_NUM);
+double opt_mesh_max_intrinsic_angle(OPT_ARGS_NUM);
+double opt_mesh_max_intrinsic_edge_stretch(OPT_ARGS_NUM);
+double opt_mesh_max_flat_area_change(OPT_ARGS_NUM);
 double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);
 double opt_solver_plugins(OPT_ARGS_NUM);
@@ -929,6 +938,11 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL);
 unsigned int opt_view_color_axes(OPT_ARGS_COL);
 unsigned int opt_view_color_background2d(OPT_ARGS_COL);
 
+// Function pointers
+
+func_ptr_t opt_mesh_intrinsic_triangle_quality(OPT_ARGS_FUN);
+func_ptr_t opt_mesh_intrinsic_edge_quality(OPT_ARGS_FUN);
+
 // Data structures and global functions
 
 typedef struct {
@@ -962,6 +976,14 @@ typedef struct {
   unsigned char def1[4], def2[4], def3[4], def4[4];
   const char *help;
 } StringXColor;
+
+typedef struct {
+  int level;
+  const char *str;
+  func_ptr_t (*function)(int num, int action, func_ptr_t val);
+  func_ptr_t def;
+  const char *help;
+} StringXFunctionPointer;
 
 void InitOptions(int num);
 void InitOptionsGUI(int num);

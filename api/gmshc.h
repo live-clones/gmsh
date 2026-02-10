@@ -1709,6 +1709,19 @@ GMSH_API void gmshModelMeshComputeHomology(int ** dimTags, size_t * dimTags_n,
 GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
                                              int * ierr);
 
+/* Remesh the already existing mesh using the geodesic distance. */
+GMSH_API void gmshModelMeshIntrinsicRemesh(int * ierr);
+
+/* Set the callback function evaluating the quality of edges during intrinsic
+ * remeshing. */
+GMSH_API void gmshModelMeshSetIntrinsicEdgeQuality(double (*edgeQuality)(const double intrinsicLength, const double * edgeCoord, const size_t edgeCoord_n, void * data), void * edgeQuality_data,
+                                                   int * ierr);
+
+/* Set the callback function evaluating the quality of triangles during
+ * intrinsic remeshing. */
+GMSH_API void gmshModelMeshSetIntrinsicTriangleQuality(double (*triangleQuality)(const double * intrinsicAngles, const size_t intrinsicAngles_n, const double * intrinsicLengths, const size_t intrinsicLengths_n, const size_t * numPoints, const size_t numPoints_n, const double * coord, const size_t coord_n, void * data), void * triangleQuality_data,
+                                                       int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. Available field types are listed in the "Gmsh mesh size

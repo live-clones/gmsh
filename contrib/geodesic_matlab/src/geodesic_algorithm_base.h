@@ -1,4 +1,4 @@
-//Copyright (C) 2008 Danil Kirsanov, MIT License
+// Copyright (C) 2008 Danil Kirsanov, MIT License
 
 #ifndef GEODESIC_ALGORITHM_BASE_122806
 #define GEODESIC_ALGORITHM_BASE_122806
@@ -7,161 +7,156 @@
 #include "geodesic_constants_and_simple_functions.h"
 #include <iostream>
 #include <ctime>
+#include <limits>
 
-namespace geodesic{
+namespace geodesic {
 
-class GeodesicAlgorithmBase
-{
-public:
-    enum AlgorithmType
+  class GeodesicAlgorithmBase {
+  public:
+    enum AlgorithmType { EXACT, DIJKSTRA, SUBDIVISION, UNDEFINED_ALGORITHM };
+
+    GeodesicAlgorithmBase(geodesic::Mesh *mesh)
+      : m_type(UNDEFINED_ALGORITHM), m_max_propagation_distance(1e100),
+        m_mesh(mesh) {};
+
+    virtual ~GeodesicAlgorithmBase() {};
+
+    virtual void propagate(
+      std::vector<SurfacePoint> &sources,
+      double max_propagation_distance =
+        GEODESIC_INF, // propagation algorithm stops after reaching the certain
+                      // distance from the source
+      std::vector<SurfacePoint> *stop_points =
+        NULL) = 0; // or after ensuring that all the stop_points are covered
+
+    virtual void trace_back(
+      SurfacePoint &destination, // trace back piecewise-linear path
+      std::vector<SurfacePoint> &path,
+      unsigned source_index = std::numeric_limits<unsigned>::max()) = 0;
+
+    void geodesic(
+      SurfacePoint &source, SurfacePoint &destination,
+      std::vector<SurfacePoint>
+        &path); // lazy people can find geodesic path with one function call
+
+    void geodesic(
+      std::vector<SurfacePoint> &sources,
+      std::vector<SurfacePoint> &destinations,
+      std::vector<std::vector<SurfacePoint>>
+        &paths); // lazy people can find geodesic paths with one function call
+
+    virtual unsigned best_source(
+      SurfacePoint
+        &point, // after propagation step is done, quickly find what source this
+                // point belongs to and what is the distance to this source
+      double &best_source_distance) = 0;
+
+    virtual void print_statistics() // print info about timing and memory usage
+                                    // in the propagation step of the algorithm
     {
-        EXACT,
-		DIJKSTRA,
-        SUBDIVISION,
-		UNDEFINED_ALGORITHM
+      std::cout << "propagation step took " << m_time_consumed << " seconds "
+                << std::endl;
     };
 
-	GeodesicAlgorithmBase(geodesic::Mesh* mesh):
-		m_type(UNDEFINED_ALGORITHM),
-		m_max_propagation_distance(1e100),
-		m_mesh(mesh)
-	{};	
+    AlgorithmType type() { return m_type; };
 
-	virtual ~GeodesicAlgorithmBase(){};
+    virtual std::string name();
 
-	virtual void propagate(std::vector<SurfacePoint>& sources,
-   						   double max_propagation_distance = GEODESIC_INF,			//propagation algorithm stops after reaching the certain distance from the source
-						   std::vector<SurfacePoint>* stop_points = NULL) = 0; //or after ensuring that all the stop_points are covered
+    geodesic::Mesh *mesh() { return m_mesh; };
 
-	virtual void trace_back(SurfacePoint& destination,		//trace back piecewise-linear path
-							std::vector<SurfacePoint>& path) = 0;
+  protected:
+    void set_stop_conditions(std::vector<SurfacePoint> *stop_points,
+                             double stop_distance);
+    double stop_distance() { return m_max_propagation_distance; }
 
-	void geodesic(SurfacePoint& source,
-						  SurfacePoint& destination,
-						  std::vector<SurfacePoint>& path); //lazy people can find geodesic path with one function call
+    AlgorithmType m_type; // type of the algorithm
 
-	void geodesic(std::vector<SurfacePoint>& sources,
-						  std::vector<SurfacePoint>& destinations,
-						  std::vector<std::vector<SurfacePoint> >& paths); //lazy people can find geodesic paths with one function call
+    std::vector<SurfacePoint *>
+      m_stop_vertices; // algorithm stops propagation after covering certain
+                       // surface points
+    double m_max_propagation_distance; // or reaching the certain distance
 
-	virtual unsigned best_source(SurfacePoint& point,			//after propagation step is done, quickly find what source this point belongs to and what is the distance to this source
-								 double& best_source_distance) = 0; 
+    geodesic::Mesh *m_mesh;
 
-	virtual void print_statistics()		//print info about timing and memory usage in the propagation step of the algorithm
-	{
-		std::cout << "propagation step took " << m_time_consumed << " seconds " << std::endl;
-	};	
+    double m_time_consumed; // how much time does the propagation step takes
+    double m_propagation_distance_stopped; // at what distance (if any) the
+                                           // propagation algorithm stopped
+  };
 
-	AlgorithmType type(){return m_type;};
+  inline double length(std::vector<SurfacePoint> &path)
+  {
+    double length = 0;
+    if(!path.empty()) {
+      for(unsigned i = 0; i < path.size() - 1; ++i) {
+        length += path[i].distance(&path[i + 1]);
+      }
+    }
+    return length;
+  }
 
-	virtual std::string name();
+  inline void print_info_about_path(std::vector<SurfacePoint> &path)
+  {
+    std::cout << "number of the points in the path = " << path.size()
+              << ", length of the path = " << length(path) << std::endl;
+  }
 
-	geodesic::Mesh* mesh(){return m_mesh;};
-protected:
+  inline std::string GeodesicAlgorithmBase::name()
+  {
+    switch(m_type) {
+    case EXACT: return "exact";
+    case DIJKSTRA: return "dijkstra";
+    case SUBDIVISION: return "subdivision";
+    default:
+    case UNDEFINED_ALGORITHM: return "undefined";
+    }
+  }
 
-	void set_stop_conditions(std::vector<SurfacePoint>* stop_points, 
-						     double stop_distance);
-	double stop_distance()
-	{
-		return m_max_propagation_distance;
-	}
+  inline void GeodesicAlgorithmBase::geodesic(
+    SurfacePoint &source, SurfacePoint &destination,
+    std::vector<SurfacePoint>
+      &path) // lazy people can find geodesic path with one function call
+  {
+    std::vector<SurfacePoint> sources(1, source);
+    std::vector<SurfacePoint> stop_points(1, destination);
+    double const max_propagation_distance = GEODESIC_INF;
 
-	AlgorithmType m_type;					   // type of the algorithm
+    propagate(sources, max_propagation_distance, &stop_points);
 
-	std::vector<SurfacePoint *> m_stop_vertices; // algorithm stops propagation after covering certain surface points
-	double m_max_propagation_distance;			 // or reaching the certain distance
+    trace_back(destination, path);
+  }
 
-	geodesic::Mesh* m_mesh;
+  inline void GeodesicAlgorithmBase::geodesic(
+    std::vector<SurfacePoint> &sources, std::vector<SurfacePoint> &destinations,
+    std::vector<std::vector<SurfacePoint>>
+      &paths) // lazy people can find geodesic paths with one function call
+  {
+    double const max_propagation_distance = GEODESIC_INF;
 
-	double m_time_consumed;		//how much time does the propagation step takes
-	double m_propagation_distance_stopped;		//at what distance (if any) the propagation algorithm stopped 
-};
+    propagate(sources, max_propagation_distance,
+              &destinations); // we use desinations as stop points
 
-inline double length(std::vector<SurfacePoint>& path)
-{
-	double length = 0;
-	if(!path.empty())
-	{
-		for(unsigned i=0; i<path.size()-1; ++i)
-		{
-			length += path[i].distance(&path[i+1]);
-		}
-	}
-	return length;
-}
+    paths.resize(destinations.size());
 
-inline void print_info_about_path(std::vector<SurfacePoint>& path)
-{
-	std::cout << "number of the points in the path = " << path.size()
-			  << ", length of the path = " << length(path) 
-			  << std::endl;
-}
+    for(unsigned i = 0; i < paths.size(); ++i) {
+      trace_back(destinations[i], paths[i]);
+    }
+  }
 
-inline std::string GeodesicAlgorithmBase::name()
-{
-	switch(m_type)
-	{
-	case EXACT:
-		return "exact";
-	case DIJKSTRA:
-		return "dijkstra";
-	case SUBDIVISION:
-		return "subdivision";
-	default:
-	case UNDEFINED_ALGORITHM:
-		return "undefined";
-	}
-}
+  inline void GeodesicAlgorithmBase::set_stop_conditions(
+    std::vector<SurfacePoint> *stop_points, double stop_distance)
+  {
+    m_max_propagation_distance = stop_distance;
 
-inline void GeodesicAlgorithmBase::geodesic(SurfacePoint& source,
-											SurfacePoint& destination,
-											std::vector<SurfacePoint>& path) //lazy people can find geodesic path with one function call
-{
-	std::vector<SurfacePoint> sources(1, source);
-	std::vector<SurfacePoint> stop_points(1, destination);
-	double const max_propagation_distance = GEODESIC_INF;
+    if(!stop_points) {
+      m_stop_vertices.clear();
+      return;
+    }
 
-	propagate(sources, 
-			  max_propagation_distance,
-			  &stop_points);
+    m_stop_vertices.resize(stop_points->size());
+    for(unsigned i = 0; i < stop_points->size(); ++i)
+      m_stop_vertices[i] = &(*stop_points)[i];
+  }
 
-	trace_back(destination, path);
-}
+} // namespace geodesic
 
-inline void GeodesicAlgorithmBase::geodesic(std::vector<SurfacePoint>& sources,
-											std::vector<SurfacePoint>& destinations,
-											std::vector<std::vector<SurfacePoint> >& paths) //lazy people can find geodesic paths with one function call
-{
-	double const max_propagation_distance = GEODESIC_INF;
-
-	propagate(sources, 
-			  max_propagation_distance,
-			  &destinations);		//we use desinations as stop points
-
-	paths.resize(destinations.size());
-
-	for(unsigned i=0; i<paths.size(); ++i)
-	{
-		trace_back(destinations[i], paths[i]);
-	}
-}
-
-inline void GeodesicAlgorithmBase::set_stop_conditions(std::vector<SurfacePoint>* stop_points, 
-														double stop_distance)
-{
-	m_max_propagation_distance = stop_distance;
-
-	if(!stop_points)
-	{
-		m_stop_vertices.clear();
-		return;
-	}
-
-	m_stop_vertices.resize(stop_points->size());
-	for(unsigned i = 0; i < stop_points->size(); ++i)
-		m_stop_vertices[i] = &(*stop_points)[i];
-}
-
-}//geodesic
-
-#endif //GEODESIC_ALGORITHM_BASE_122806
+#endif // GEODESIC_ALGORITHM_BASE_122806

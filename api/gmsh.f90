@@ -748,6 +748,12 @@ module gmsh
         gmshModelMeshComputeHomology
     procedure, nopass :: computeCrossField => &
         gmshModelMeshComputeCrossField
+    procedure, nopass :: intrinsicRemesh => &
+        gmshModelMeshIntrinsicRemesh
+    procedure, nopass :: setIntrinsicEdgeQuality => &
+        gmshModelMeshSetIntrinsicEdgeQuality
+    procedure, nopass :: setIntrinsicTriangleQuality => &
+        gmshModelMeshSetIntrinsicTriangleQuality
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7761,6 +7767,57 @@ module gmsh
     viewTags = ovectorint_(api_viewTags_, &
       api_viewTags_n_)
   end subroutine gmshModelMeshComputeCrossField
+
+  !> Remesh the already existing mesh using the geodesic distance.
+  subroutine gmshModelMeshIntrinsicRemesh(ierr)
+    interface
+    subroutine C_API(ierr_) &
+      bind(C, name="gmshModelMeshIntrinsicRemesh")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(ierr_=ierr)
+  end subroutine gmshModelMeshIntrinsicRemesh
+
+  !> Set the callback function evaluating the quality of edges during intrinsic
+  !! remeshing.
+  subroutine gmshModelMeshSetIntrinsicEdgeQuality(edgeQuality, &
+                                                  ierr)
+    interface
+    subroutine C_API(edgeQuality, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSetIntrinsicEdgeQuality")
+      use, intrinsic :: iso_c_binding
+      type(c_funptr), value, intent(in) :: edgeQuality
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    type(c_funptr), value, intent(in) :: edgeQuality
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(edgeQuality=edgeQuality, &
+         ierr_=ierr)
+  end subroutine gmshModelMeshSetIntrinsicEdgeQuality
+
+  !> Set the callback function evaluating the quality of triangles during
+  !! intrinsic remeshing.
+  subroutine gmshModelMeshSetIntrinsicTriangleQuality(triangleQuality, &
+                                                      ierr)
+    interface
+    subroutine C_API(triangleQuality, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSetIntrinsicTriangleQuality")
+      use, intrinsic :: iso_c_binding
+      type(c_funptr), value, intent(in) :: triangleQuality
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    type(c_funptr), value, intent(in) :: triangleQuality
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(triangleQuality=triangleQuality, &
+         ierr_=ierr)
+  end subroutine gmshModelMeshSetIntrinsicTriangleQuality
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return

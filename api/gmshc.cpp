@@ -2525,6 +2525,39 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
   }
 }
 
+GMSH_API void gmshModelMeshIntrinsicRemesh(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::intrinsicRemesh();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSetIntrinsicEdgeQuality(double (*edgeQuality)(const double intrinsicLength, const double * edgeCoord, const size_t edgeCoord_n, void * data), void * edgeQuality_data, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setIntrinsicEdgeQuality(std::bind(edgeQuality, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, edgeQuality_data));
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSetIntrinsicTriangleQuality(double (*triangleQuality)(const double * intrinsicAngles, const size_t intrinsicAngles_n, const double * intrinsicLengths, const size_t intrinsicLengths_n, const size_t * numPoints, const size_t numPoints_n, const double * coord, const size_t coord_n, void * data), void * triangleQuality_data, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setIntrinsicTriangleQuality(std::bind(triangleQuality, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8, triangleQuality_data));
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

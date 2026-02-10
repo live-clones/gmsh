@@ -1929,6 +1929,23 @@ namespace gmsh { // Top-level functions
       // of the views.
       GMSH_API void computeCrossField(std::vector<int> & viewTags);
 
+      // gmsh::model::mesh::intrinsicRemesh
+      //
+      // Remesh the already existing mesh using the geodesic distance.
+      GMSH_API void intrinsicRemesh();
+
+      // gmsh::model::mesh::setIntrinsicEdgeQuality
+      //
+      // Set the callback function evaluating the quality of edges during intrinsic
+      // remeshing.
+      GMSH_API void setIntrinsicEdgeQuality(std::function<double(const double, const double *, const size_t)> edgeQuality);
+
+      // gmsh::model::mesh::setIntrinsicTriangleQuality
+      //
+      // Set the callback function evaluating the quality of triangles during
+      // intrinsic remeshing.
+      GMSH_API void setIntrinsicTriangleQuality(std::function<double(const double *, const size_t, const double *, const size_t, const size_t *, const size_t, const double *, const size_t)> triangleQuality);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

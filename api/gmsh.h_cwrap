@@ -3330,6 +3330,50 @@ namespace gmsh { // Top-level functions
         viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
       }
 
+      // gmsh::model::mesh::intrinsicRemesh
+      //
+      // Remesh the already existing mesh using the geodesic distance.
+      inline void intrinsicRemesh()
+      {
+        int ierr = 0;
+        gmshModelMeshIntrinsicRemesh(&ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::setIntrinsicEdgeQuality
+      //
+      // Set the callback function evaluating the quality of edges during intrinsic
+      // remeshing.
+      inline void setIntrinsicEdgeQuality(std::function<double(const double, const double *, const size_t)> edgeQuality)
+      {
+        int ierr = 0;
+        struct edgeQuality_caller_  {
+          static double call(const double intrinsicLength, const double * edgeCoord, const size_t edgeCoord_n, void * callbackp_) {
+            return (*static_cast<std::function<double(const double, const double *, const size_t)>*> (callbackp_))(intrinsicLength, edgeCoord);
+          }
+        };
+        static std::function<double(const double, const double *, const size_t)>(edgeQuality_callback) = callback;
+        gmshModelMeshSetIntrinsicEdgeQuality(&edgeQuality_caller_::call, &edgeQuality_callback, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::setIntrinsicTriangleQuality
+      //
+      // Set the callback function evaluating the quality of triangles during
+      // intrinsic remeshing.
+      inline void setIntrinsicTriangleQuality(std::function<double(const double *, const size_t, const double *, const size_t, const size_t *, const size_t, const double *, const size_t)> triangleQuality)
+      {
+        int ierr = 0;
+        struct triangleQuality_caller_  {
+          static double call(const double * intrinsicAngles, const size_t intrinsicAngles_n, const double * intrinsicLengths, const size_t intrinsicLengths_n, const size_t * numPoints, const size_t numPoints_n, const double * coord, const size_t coord_n, void * callbackp_) {
+            return (*static_cast<std::function<double(const double *, const size_t, const double *, const size_t, const size_t *, const size_t, const double *, const size_t)>*> (callbackp_))(intrinsicAngles, intrinsicLengths, numPoints, coord);
+          }
+        };
+        static std::function<double(const double *, const size_t, const double *, const size_t, const size_t *, const size_t, const double *, const size_t)>(triangleQuality_callback) = callback;
+        gmshModelMeshSetIntrinsicTriangleQuality(&triangleQuality_caller_::call, &triangleQuality_callback, &ierr);
+        if(ierr) throwLastError();
+      }
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

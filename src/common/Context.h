@@ -10,6 +10,8 @@
 #include <map>
 #include <string>
 
+typedef void (*func_ptr_t)();
+
 #define NUM_SOLVERS 10
 
 class GamePad;
@@ -55,6 +57,10 @@ struct contextMeshOptions {
   int quadqsSizemapMethod, quadqsTopoOptimMethods;
   double quadqsRemeshingBoldness, quadqsScalingOnTriangulation;
   int oldInitialDelaunay2D;
+  int maxIterIntrinsic;
+  double minIntrinsicAngle, maxIntrinsicAngle, maxIntrinsicEdgeStretch,
+    maxFlatAreaChange;
+  func_ptr_t intrinsicTriangleQuality, intrinsicEdgeQuality;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;

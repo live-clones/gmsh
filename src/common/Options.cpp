@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cstdint>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6814,6 +6815,12 @@ double opt_mesh_max_iter_delaunay_3d(OPT_ARGS_NUM)
   return CTX::instance()->mesh.maxIterDelaunay3D;
 }
 
+double opt_mesh_max_iter_intrinsic(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.maxIterIntrinsic = (int)val;
+  return CTX::instance()->mesh.maxIterIntrinsic;
+}
+
 double opt_mesh_max_num_threads_1d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.maxNumThreads1D = (int)val;
@@ -6904,6 +6911,31 @@ double opt_mesh_old_initial_delaunay_2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.oldInitialDelaunay2D = (int)val;
   return CTX::instance()->mesh.oldInitialDelaunay2D;
+}
+
+double opt_mesh_min_intrinsic_angle(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.minIntrinsicAngle = (double)val;
+  return CTX::instance()->mesh.minIntrinsicAngle;
+}
+
+double opt_mesh_max_intrinsic_angle(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.maxIntrinsicAngle = (double)val;
+  return CTX::instance()->mesh.maxIntrinsicAngle;
+}
+
+double opt_mesh_max_intrinsic_edge_stretch(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.maxIntrinsicEdgeStretch = (double)val;
+  return CTX::instance()->mesh.maxIntrinsicEdgeStretch;
+}
+
+double opt_mesh_max_flat_area_change(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.maxFlatAreaChange = (double)val;
+  return CTX::instance()->mesh.maxFlatAreaChange;
 }
 
 double opt_solver_listen(OPT_ARGS_NUM)
@@ -10439,4 +10471,20 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL)
 #else
   return 0;
 #endif
+}
+
+// Function pointers option routines
+
+func_ptr_t opt_mesh_intrinsic_triangle_quality(OPT_ARGS_FUN)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.intrinsicTriangleQuality = (func_ptr_t)val;
+  return CTX::instance()->mesh.intrinsicTriangleQuality;
+}
+
+func_ptr_t opt_mesh_intrinsic_edge_quality(OPT_ARGS_FUN)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.intrinsicEdgeQuality = (func_ptr_t)val;
+  return CTX::instance()->mesh.intrinsicEdgeQuality;
 }

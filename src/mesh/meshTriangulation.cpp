@@ -527,9 +527,9 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
 
   // int nbIntersection = _list.size();
   //  printf("%d intersections\n", nbIntersection);
-  int K = 100;
+  // int K = 100;
   int _iter = 0;
-  pm->print4debug(K++);
+  // pm->print4debug(K++);
   while(!_list.empty()) {
     he = *_list.begin();
     _list.erase(_list.begin());
@@ -541,7 +541,7 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
                                       he->opposite->next->next->v);
       // printf("swapping %d %d\n", he->v->data, he->next->v->data);
       pm->swap_edge(he);
-      pm->print4debug(K++);
+      // pm->print4debug(K++);
       if(still_intersect) _list.push_back(he);
     }
     else
@@ -1127,9 +1127,9 @@ int meshTriangulate2d(const std::vector<double> &coord,
 
   if(rec) {
     for(size_t i = 0; i < rec->size(); i += 2) {
-      if(recover_edge(pm, pm->vertices[4 + (*rec)[i]],
-                      pm->vertices[4 + (*rec)[i + 1]]))
-        Msg::Error("impossible to recover an edge");
+      int result = recover_edge(pm, pm->vertices[4 + (*rec)[i]],
+                                pm->vertices[4 + (*rec)[i + 1]]);
+      if(result) { Msg::Error("impossible to recover an edge"); }
       else {
         PolyMesh::HalfEdge *he_ = pm->getEdge(pm->vertices[4 + (*rec)[i]],
                                               pm->vertices[4 + (*rec)[i + 1]]);

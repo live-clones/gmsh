@@ -4726,6 +4726,63 @@ end
 const compute_cross_field = computeCrossField
 
 """
+    gmsh.model.mesh.intrinsicRemesh()
+
+Remesh the already existing mesh using the geodesic distance.
+"""
+function intrinsicRemesh()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshIntrinsicRemesh, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const intrinsic_remesh = intrinsicRemesh
+
+"""
+    gmsh.model.mesh.setIntrinsicEdgeQuality(edgeQuality)
+
+Set the callback function evaluating the quality of edges during intrinsic
+remeshing.
+
+Types:
+ - `edgeQuality`: 
+"""
+function setIntrinsicEdgeQuality(edgeQuality)
+    api_edgeQuality__(intrinsicLength, edgeCoord, data) = edgeQuality(intrinsicLength, edgeCoord)
+    api_edgeQuality_ = @cfunction($api_edgeQuality__, Cdouble, (Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cvoid}))
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetIntrinsicEdgeQuality, gmsh.lib), Cvoid,
+          (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}),
+          api_edgeQuality_, C_NULL, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_intrinsic_edge_quality = setIntrinsicEdgeQuality
+
+"""
+    gmsh.model.mesh.setIntrinsicTriangleQuality(triangleQuality)
+
+Set the callback function evaluating the quality of triangles during intrinsic
+remeshing.
+
+Types:
+ - `triangleQuality`: 
+"""
+function setIntrinsicTriangleQuality(triangleQuality)
+    api_triangleQuality__(intrinsicAngles, intrinsicLengths, numPoints, coord, data) = triangleQuality(intrinsicAngles, intrinsicLengths, numPoints, coord)
+    api_triangleQuality_ = @cfunction($api_triangleQuality__, Cdouble, (Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cvoid}))
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetIntrinsicTriangleQuality, gmsh.lib), Cvoid,
+          (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}),
+          api_triangleQuality_, C_NULL, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_intrinsic_triangle_quality = setIntrinsicTriangleQuality
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions

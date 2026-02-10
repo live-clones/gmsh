@@ -602,6 +602,16 @@ mesh.add('computeHomology', doc, None, ovectorpair('dimTags'))
 doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views.'''
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
 
+doc = '''Remesh the already existing mesh using the geodesic distance.'''
+mesh.add('intrinsicRemesh', doc, None)
+
+doc = '''Set the callback function evaluating the quality of edges during intrinsic remeshing.'''
+mesh.add('setIntrinsicEdgeQuality', doc, None, ifun('edgeQuality', odouble, idouble('intrinsicLength'), ivectordouble('edgeCoord')))
+
+doc = '''Set the callback function evaluating the quality of triangles during intrinsic remeshing.'''
+mesh.add('setIntrinsicTriangleQuality', doc, None, ifun('triangleQuality', odouble, ivectordouble('intrinsicAngles'), ivectordouble('intrinsicLengths'), ivectorsize('numPoints'), ivectordouble('coord')))
+
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')

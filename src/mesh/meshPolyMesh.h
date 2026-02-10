@@ -6,6 +6,9 @@
 #ifndef MESH_POLYMESH_H
 #define MESH_POLYMESH_H
 
+#include <iostream>
+#include <ostream>
+#include <stdexcept>
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -181,11 +184,11 @@ public:
     }
     for(auto it : hedges) {
       HalfEdge *he = it;
-      if(he->data >= 0) {
-        fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
-                he->v->position.y(), he->opposite->v->position.x(),
-                he->opposite->v->position.y(), he->data, he->data);
-      }
+      // if(he->data >= 0) {
+      fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
+              he->v->position.y(), he->next->v->position.x(),
+              he->next->v->position.y(), he->data, he->data);
+      // }
     }
 
     fprintf(f, "};\n");
@@ -283,11 +286,21 @@ public:
   {
     //    int iter = 0;
     HalfEdge *he = v0->he;
+    if(he->v->data != v0->data)
+      throw std::runtime_error("Wrong initialization");
+    // std::cout << std::endl;
     do {
+      // std::cout << "try " << he->v->data << " " << he->next->v->data
+      //           << std::endl;
+      if(he->v->data != v0->data) throw std::runtime_error("Wrong inner loop");
       if(he->next->v == v1) return he;
       he = he->opposite;
+      // std::cout << "opp " << he->v->data << " " << he->next->v->data
+      //           << std::endl;
       if(he == NULL) return getEdgeReverse(v0, v1, he);
       he = he->next;
+      // std::cout << "next " << he->v->data << " " << he->next->v->data
+      //           << std::endl;
       //      if (iter++ >10000)return NULL;
     } while(he != v0->he);
     return NULL;
@@ -382,7 +395,7 @@ public:
 
     Vertex *v0 = heo1->v;
     Vertex *v1 = heo2->v;
-    Vertex *v2 = heo0->v;
+    Vertex *v2 = he1->v;
     Vertex *v3 = he2->v;
 
     createFace(he0->f, v0, v1, v3, heo1, heo0, he2);
@@ -819,39 +832,34 @@ public:
                          const std::vector<double> &datas = {})
   {
     std::map<PolyMesh::Face *, int> nbSplits;
-    for (auto f: faces)
-      nbSplits[f] = 0;
-    for (auto he: hes) {
+    for(auto f : faces) nbSplits[f] = 0;
+    for(auto he : hes) {
       ++nbSplits[he->f];
-      if (he->opposite != nullptr)
-        ++nbSplits[he->opposite->f];
+      if(he->opposite != nullptr) ++nbSplits[he->opposite->f];
     }
 
     std::vector<PolyMesh::HalfEdge *> hesToSwap;
-    for (size_t i = 0; i < hes.size(); ++i) {
+    for(size_t i = 0; i < hes.size(); ++i) {
       PolyMesh::HalfEdge *he = hes[i];
       SVector3 position = positions[i];
       int r;
-      if (he->opposite != nullptr)
+      if(he->opposite != nullptr)
         r = split_edge(he, position, datas.empty() ? -1 : datas[i]);
       else {
         std::vector<HalfEdge *> new_bnd_hes;
-        r = split_boundary_edge(he, position, datas.empty() ? -1 : datas[i], &new_bnd_hes);
+        r = split_boundary_edge(he, position, datas.empty() ? -1 : datas[i],
+                                &new_bnd_hes);
       }
-      if (r != 0)
-        return r;
+      if(r != 0) return r;
 
-      if (nbSplits[he->f]-- == 3)
-        hesToSwap.push_back(he->next);
-      if (he->opposite != nullptr) {
+      if(nbSplits[he->f]-- == 3) hesToSwap.push_back(he->next);
+      if(he->opposite != nullptr) {
         he = he->opposite->prev->opposite;
-        if (nbSplits[he->f]-- == 3)
-          hesToSwap.push_back(he);
+        if(nbSplits[he->f]-- == 3) hesToSwap.push_back(he);
       }
     }
 
-    for (auto he: hesToSwap)
-      swap_edge(he);
+    for(auto he : hesToSwap) swap_edge(he);
     return 0;
   }
 
@@ -906,7 +914,7 @@ public:
 
   inline int split_triangle(int index, double x, double y, double z, Face *f,
                             int (*doSwap)(PolyMesh::HalfEdge *, void *) = NULL,
-                            void *data = NULL, 
+                            void *data = NULL,
                             std::vector<HalfEdge *> *_t = NULL)
   {
     Vertex *v = new PolyMesh::Vertex(x, y, z); // one more vertex
@@ -1014,18 +1022,18 @@ public:
   }
 
   double computeDistanceToAverage(Vertex *v,
-                          std::map<Vertex *, SVector3> *cogs = nullptr,
-                          std::map<Vertex *, SVector3> *nrms = nullptr);
-  int decimate(double thresholdDistance, const std::set<Vertex *> & keep = {},
-                       std::map<Vertex *, SVector3> *cogs = nullptr,
-                       std::map<Vertex *, SVector3> *nrms = nullptr);
-  int decimateInOrder(double d, const std::set<Vertex *> & keep = {},
+                                  std::map<Vertex *, SVector3> *cogs = nullptr,
+                                  std::map<Vertex *, SVector3> *nrms = nullptr);
+  int decimate(double thresholdDistance, const std::set<Vertex *> &keep = {},
                std::map<Vertex *, SVector3> *cogs = nullptr,
                std::map<Vertex *, SVector3> *nrms = nullptr);
+  int decimateInOrder(double d, const std::set<Vertex *> &keep = {},
+                      std::map<Vertex *, SVector3> *cogs = nullptr,
+                      std::map<Vertex *, SVector3> *nrms = nullptr);
   void computeNormalsAndCentersOfGravity(
     std::map<PolyMesh::Vertex *, SVector3> &cogs,
     std::map<PolyMesh::Vertex *, SVector3> &nrms);
-  int collapseEdges(double d, const std::set<Vertex *> & keep = {});
+  int collapseEdges(double d, const std::set<Vertex *> &keep = {});
 };
 
 struct HalfEdgePtrLessThan {
@@ -1055,7 +1063,7 @@ struct HalfEdgePtrEqual {
 };
 
 // compute the degree of a given vertex v
-inline int degree(const PolyMesh::Vertex *v) 
+inline int degree(const PolyMesh::Vertex *v)
 {
   PolyMesh::HalfEdge *he = v->he;
   size_t count = 0;

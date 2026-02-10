@@ -5340,6 +5340,66 @@ class model:
             return _ovectorint(api_viewTags_, api_viewTags_n_.value)
         compute_cross_field = computeCrossField
 
+        @staticmethod
+        def intrinsicRemesh():
+            """
+            gmsh.model.mesh.intrinsicRemesh()
+
+            Remesh the already existing mesh using the geodesic distance.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshIntrinsicRemesh(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        intrinsic_remesh = intrinsicRemesh
+
+        @staticmethod
+        def setIntrinsicEdgeQuality(edgeQuality):
+            """
+            gmsh.model.mesh.setIntrinsicEdgeQuality(edgeQuality)
+
+            Set the callback function evaluating the quality of edges during intrinsic
+            remeshing.
+
+            Types:
+            - `edgeQuality': 
+            """
+            global api_edgeQuality_type_
+            api_edgeQuality_type_ = CFUNCTYPE(c_double, c_double, POINTER(c_double), c_size_t, c_void_p)
+            global api_edgeQuality_
+            api_edgeQuality_ = api_edgeQuality_type_(lambda intrinsicLength, api_edgeCoord_, api_edgeCoord_n_, _ : edgeQuality(intrinsicLength, api_edgeCoord_, api_edgeCoord_n_))
+            ierr = c_int()
+            lib.gmshModelMeshSetIntrinsicEdgeQuality(
+                api_edgeQuality_, None,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_intrinsic_edge_quality = setIntrinsicEdgeQuality
+
+        @staticmethod
+        def setIntrinsicTriangleQuality(triangleQuality):
+            """
+            gmsh.model.mesh.setIntrinsicTriangleQuality(triangleQuality)
+
+            Set the callback function evaluating the quality of triangles during
+            intrinsic remeshing.
+
+            Types:
+            - `triangleQuality': 
+            """
+            global api_triangleQuality_type_
+            api_triangleQuality_type_ = CFUNCTYPE(c_double, POINTER(c_double), c_size_t, POINTER(c_double), c_size_t, POINTER(c_size_t), c_size_t, POINTER(c_double), c_size_t, c_void_p)
+            global api_triangleQuality_
+            api_triangleQuality_ = api_triangleQuality_type_(lambda api_intrinsicAngles_, api_intrinsicAngles_n_, api_intrinsicLengths_, api_intrinsicLengths_n_, api_numPoints_, api_numPoints_n_, api_coord_, api_coord_n_, _ : triangleQuality(api_intrinsicAngles_, api_intrinsicAngles_n_, api_intrinsicLengths_, api_intrinsicLengths_n_, api_numPoints_, api_numPoints_n_, api_coord_, api_coord_n_))
+            ierr = c_int()
+            lib.gmshModelMeshSetIntrinsicTriangleQuality(
+                api_triangleQuality_, None,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_intrinsic_triangle_quality = setIntrinsicTriangleQuality
+
 
         class field:
             """

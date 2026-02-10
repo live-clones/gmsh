@@ -1,8 +1,9 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <functional>
 #include <sstream>
 #include <regex>
 
@@ -21,6 +22,7 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
+#include "meshGFaceGeodesic.h"
 #include "partitionVertex.h"
 #include "partitionEdge.h"
 #include "partitionFace.h"
@@ -5927,6 +5929,46 @@ GMSH_API void gmsh::model::mesh::computeHomology(vectorpair &dimTags)
 {
   if(!_checkInit()) return;
   GModel::current()->computeHomology(dimTags);
+}
+
+GMSH_API void gmsh::model::mesh::intrinsicRemesh()
+{
+#if defined(HAVE_GEODESIC)
+  makeMeshGeodesic(GModel::current());
+#else
+  Msg::Error("Geodesic remesh require the geodesic module");
+#endif
+}
+
+// gmsh::model::mesh::setIntrinsicEdgeQuality
+//
+// Set the callback function evaluating the quality of edges during
+// intrinsic remeshing.
+GMSH_API void gmsh::model::mesh::setIntrinsicEdgeQuality(
+  std::function<double(const double, const double *, const size_t)> callback)
+{
+#if defined(HAVE_GEODESIC)
+  highOrderPolyMesh::edgeQualityPtr = callback;
+#else
+  Msg::Error("Geodesic remesh require the geodesic module");
+#endif
+}
+
+// gmsh::model::mesh::setIntrinsicTrianglesQuality
+//
+// Set the callback function evaluating the quality of triangles during
+// intrinsic remeshing.
+GMSH_API void gmsh::model::mesh::setIntrinsicTriangleQuality(
+  std::function<double(const double *, const size_t, const double *,
+                       const size_t, const size_t *, const size_t,
+                       const double *, const size_t)>
+    callback)
+{
+#if defined(HAVE_GEODESIC)
+  highOrderPolyMesh::triangleQualityPtr = callback;
+#else
+  Msg::Error("Geodesic remesh require the geodesic module");
+#endif
 }
 
 // gmsh::model::mesh::field
