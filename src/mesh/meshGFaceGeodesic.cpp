@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 #include "meshGFaceGeodesic.h"
+#include <chrono>
 
 #if defined(HAVE_MESH) && defined(HAVE_GEODESIC)
 
@@ -4441,9 +4442,9 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
     // There exist internal points on the triangle
 
     auto it = fvs.find(pm->faces[i]);
-    // FILE *deb = nullptr;
-    FILE *deb = fopen("deb.pos", "w");
-    fprintf(deb, "View \"\"{\n");
+    FILE *deb = nullptr;
+    // FILE *deb = fopen("deb.pos", "w");
+    if(deb) fprintf(deb, "View \"\"{\n");
     if(it != fvs.end()) {
       for(size_t j = 0; j < it->second.size(); j++) {
         PolyMesh::Vertex *newv = pm->vertices[it->second[j]];

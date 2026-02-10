@@ -10,6 +10,7 @@
 #include "Numeric.h"
 #include "OS.h"
 #include <iostream>
+#include <chrono>
 
 // #include "geodesic_mesh.h"
 // #include "geodesic_algorithm_exact.h"
