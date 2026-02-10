@@ -2008,7 +2008,7 @@ GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int ta
   }
 }
 
-GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * callback_data, int * ierr)
+GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(const int dim, const int tag, const double x, const double y, const double z, const double lc, void * data), void * callback_data, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {

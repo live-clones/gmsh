@@ -2667,17 +2667,16 @@ namespace gmsh { // Top-level functions
       // callback had not been called. The callback function should return a double
       // precision number specifying the desired mesh size; returning `lc' is
       // equivalent to a no-op.
-      inline void setSizeCallback(std::function<double(int, int, double, double, double, double)> callback)
+      inline void setSizeCallback(std::function<double(const int, const int, const double, const double, const double, const double)> callback)
       {
         int ierr = 0;
         struct callback_caller_  {
-          static double call(int dim, int tag, double x, double y, double z, double lc, void * callbackp_) {
-            return (*static_cast<std::function<double(int, int, double, double, double, double)>*> (callbackp_))(dim, tag, x, y, z, lc);
+          static double call(const int dim, const int tag, const double x, const double y, const double z, const double lc, void * callbackp_) {
+            return (*static_cast<std::function<double(const int, const int, const double, const double, const double, const double)>*> (callbackp_))(dim, tag, x, y, z, lc);
           }
         };
-        // FIXME memory leak
-        auto *callback_ptr_ = new std::function<double(int, int, double, double, double, double)>(callback);
-        gmshModelMeshSetSizeCallback(&callback_caller_::call, callback_ptr_, &ierr);
+        static std::function<double(const int, const int, const double, const double, const double, const double)>(callback_callback) = callback;
+        gmshModelMeshSetSizeCallback(&callback_caller_::call, &callback_callback, &ierr);
         if(ierr) throwLastError();
       }
 

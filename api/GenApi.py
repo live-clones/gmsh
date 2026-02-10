@@ -19,10 +19,12 @@ class arg:
         self.name = name
         self.value = value
         self.out = out
+        self.cpp_type = cpp_type
         self.cpp = cpp_type + " " + name + ((" = " + value) if value else "")
         self.c_arg = name
         self.c_pre = ""
         self.c_post = ""
+        self.c_type = c_type
         self.c = c_type + " " + name
         self.cwrap_arg = self.name
         self.cwrap_pre = ""
@@ -134,6 +136,7 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.c_pre = ("    std::vector<int> " + api_name + "(" + name + ", " + name +
                " + " + name + "_n);\n")
     a.c_arg = api_name
+    a.c_type = "const int *, const size_t"
     a.c = "const int * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("int *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" +
@@ -163,6 +166,7 @@ def ivectorsize(name, value=None, python_value=None, julia_value=None):
     a.c_pre = ("    std::vector<std::size_t> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
+    a.c_type = "const size_t *, const size_t"
     a.c = "const size_t * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("size_t *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" +
@@ -192,6 +196,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.c_pre = ("    std::vector<double> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
+    a.c_type = "const double *, const size_t"
     a.c = "const double * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("double *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" +
@@ -219,6 +224,7 @@ def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a.c_pre = ("    std::vector<std::string> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
+    a.c_type = "const char * const *, const size_t"
     a.c = "const char * const * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("char **" + api_name + "; size_t " + api_name_n + "; " +
                    "vectorstring2charptrptr(" + name + ", &" + api_name +
@@ -257,6 +263,7 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
                "[i * 2 + 0];\n" + "      " + api_name + "[i].second = " +
                name + "[i * 2 + 1];\n" + "    }\n")
     a.c_arg = api_name
+    a.c_type = "const int *, const size_t"
     a.c = "const int * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("int *" + api_name + "; size_t " + api_name_n + "; " +
                    "vectorpair2intptr(" + name + ", &" + api_name + ", &" +
@@ -292,6 +299,7 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                "[i] = std::vector<int>(" + name + "[i], " + name + "[i] + " +
                name + "_n[i]);\n")
     a.c_arg = api_name
+    a.c_type = "const int * const *, const size_t *, const size_t"
     a.c = ("const int * const * " + name + ", const size_t * " + name + "_n, " +
            "const size_t " + name + "_nn")
     a.cwrap_pre = ("int **" + api_name + "; size_t *" + api_name_n + ", " +
@@ -336,6 +344,7 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
                "[i] = std::vector<std::size_t>(" + name + "[i], " + name +
                "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
+    a.c_type = "const size_t * const *, const size_t *, const size_t"
     a.c = ("const size_t * const * " + name + ", const size_t * " + name + "_n, " +
            "const size_t " + name + "_nn")
     a.cwrap_pre = ("size_t **" + api_name + "; size_t *" + api_name_n + ", " +
@@ -380,6 +389,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
                "[i] = std::vector<double>(" + name + "[i], " + name +
                "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
+    a.c_type = "const double * const *, const size_t *, const size_t"
     a.c = ("const double * const * " + name + ", const size_t * " + name + "_n, " +
            "const size_t " + name + "_nn")
     a.cwrap_pre = ("double **" + api_name + "; size_t *" + api_name_n + ", " +
@@ -520,6 +530,7 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
     a.c_pre = "    std::vector<int> " + api_name + ";\n"
     a.c_arg = api_name
     a.c_post = "    vector2ptr(" + api_name + ", " + name + ", " + name + "_n);\n"
+    a.c_type = "int **, size_t *"
     a.c = "int ** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
@@ -553,6 +564,7 @@ def ovectorsize(name, value=None, python_value=None, julia_value=None):
     a.c_pre = "    std::vector<std::size_t> " + api_name + ";\n"
     a.c_arg = api_name
     a.c_post = "    vector2ptr(" + api_name + ", " + name + ", " + name + "_n);\n"
+    a.c_type = "size_t **, size_t *"
     a.c = "size_t ** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "size_t *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
@@ -586,6 +598,7 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
     a.c_pre = "    std::vector<double> " + api_name + ";\n"
     a.c_arg = api_name
     a.c_post = "    vector2ptr(" + api_name + ", " + name + ", " + name + "_n);\n"
+    a.c_type = "double **, size_t *"
     a.c = "double ** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "double *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
@@ -620,6 +633,7 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.c_arg = api_name
     a.c_post = ("    vectorstring2charptrptr(" + api_name + ", " + name +
                 ", " + name + "_n);\n")
+    a.c_type = "char ***, size_t *"
     a.c = "char *** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "char **" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
@@ -657,6 +671,7 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
     a.c_pre = "    " + ns + "::vectorpair " + api_name + ";\n"
     a.c_arg = api_name
     a.c_post = "    vectorpair2intptr(" + api_name + ", " + name + ", " + name + "_n);\n"
+    a.c_type = "int **, size_t *"
     a.c = "int ** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
@@ -697,6 +712,7 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.c_arg = api_name
     a.c_post = ("    vectorvector2ptrptr(" + api_name + ", " + name + ", " +
                 name + "_n, " + name + "_nn);\n")
+    a.c_type = "int ***, size_t **, size_t *"
     a.c = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
     a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
@@ -746,6 +762,7 @@ def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
     a.c_arg = api_name
     a.c_post = ("    vectorvector2ptrptr(" + api_name + ", " + name + ", " +
                 name + "_n, " + name + "_nn);\n")
+    a.c_type = "size_t ***, size_t **, size_t *"
     a.c = "size_t *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
     a.cwrap_pre = "size_t **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
@@ -795,6 +812,7 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.c_arg = api_name
     a.c_post = ("    vectorvector2ptrptr(" + api_name + ", " + name + ", " +
                 name + "_n, " + name + "_nn);\n")
+    a.c_type = "double ***, size_t **, size_t *"
     a.c = "double *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
     a.cwrap_pre = ("double **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + ";\n")
@@ -845,6 +863,7 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     a.c_arg = api_name
     a.c_post = ("    vectorvectorpair2intptrptr(" + api_name + ", " + name +
                 ", " + name + "_n, " + name + "_nn);\n")
+    a.c_type = "int ***, size_t **, size_t *"
     a.c = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
     a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
@@ -897,6 +916,7 @@ def iargcargv():
     a = arg("", None, None, None, "", "", False)
     a.cpp = "int argc = 0, char ** argv = 0"
     a.c_arg = "argc, argv"
+    a.c_type = "int, char **"
     a.c = "int argc, char ** argv"
     a.c_pre = ""
     a.c_post = ""
@@ -921,38 +941,86 @@ def iargcargv():
     return a
 
 
-def isizefun(name):
+def c_to_ctypes(rc_type: str) -> str:
+    t = rc_type.replace("const", "").strip()
+    t = " ".join(t.split())  # collapse spaces
+    ts = t.split(",")
+    if len(ts) > 1:
+        return ", ".join(c_to_ctypes(t) for t in ts)
+    stars = t.count("*")
+    t = t.replace("*", "").strip()
+
+    base_map = {
+        "int": "c_int",
+        "unsigned int": "c_uint",
+        "long": "c_long",
+        "unsigned long": "c_ulong",
+        "float": "c_float",
+        "double": "c_double",
+        "char": "c_char",
+        "size_t": "c_size_t",
+        "void": "None",
+    }
+    if t not in base_map:
+        raise ValueError(f"Unknown C type: '{t}'")
+    cty = base_map[t]
+
+    if t == "char" and stars >= 1:
+        cty = "c_char_p"
+        stars -= 1
+    if t == "void" and stars >= 1:
+        cty = "c_void_p"
+        stars -= 1
+    for _ in range(stars):
+        cty = f"POINTER({cty})"
+    return cty
+
+def ifun(name, rtype, *args):
     a = arg(name, None, None, None, "", "", False)
-    a.cpp = "std::function<double(int, int, double, double, double, double)> " + name
-    a.c_arg = ("std::bind(" + name + ", std::placeholders::_1, " +
-               "std::placeholders::_2, std::placeholders::_3, " +
-               "std::placeholders::_4, std::placeholders::_5, " +
-               "std::placeholders::_6, " + name + "_data)")
-    a.c = ("double (*" + name + ")" +
-           "(int dim, int tag, double x, double y, double z, double lc, void * data), " +
-           "void * " + name + "_data")
-    a.cwrap_pre = "struct " + name + """_caller_  {
-          static double call(int dim, int tag, double x, double y, double z, double lc, void * callbackp_) {
-            return (*static_cast<std::function<double(int, int, double, double, double, double)>*> (callbackp_))(dim, tag, x, y, z, lc);
+    a.cpp = ("std::function<"+ (rtype.rc_type if rtype else "void") +
+             "(" + ", ".join(arg.c_type for arg in args)
+             + ")> " + name)
+    # a.c_pre = "".join(arg.c_pre for arg in args)
+    a.c_arg = ("std::bind("+ name + ", "
+               + "".join(f"std::placeholders::_{i + 1}, " for i in range(sum(len(arg.c_type.split(",")) for arg in args)))
+               + name + "_data)"
+    )
+    a.c = ((rtype.rc_type if rtype else "void") + " (*" + name + ")"
+        + "(" + "".join(arg.c + ", " for arg in args) + "void * data), "
+        + "void * " + name + "_data")
+    a.cwrap_pre = ("struct " + name + """_caller_  {
+          static """+ (rtype.rc_type if rtype else "void")
+        + """ call(""" + ", ".join(arg.c for arg in args) + """, void * callbackp_) {
+            return (*static_cast<std::function<""" + (rtype.rc_type if rtype else "void")
+        + "(" + ", ".join(arg.c_type for arg in args) + """)>*> (callbackp_))("""
+        + ", ".join(arg.name for arg in args) + """);
           }
         };
-        // FIXME memory leak
-        auto *""" + name + "_ptr_ = new std::function<double(int, int, double, double, double, double)>(" + name + """);
+        """
+        # // FIXME memory leak
+        """static std::function<""" + (rtype.rc_type if rtype else "void")
+        + "(" + ", ".join(arg.c_type for arg in args) + ")>("
+        + name + """_callback) = callback;
 """
-    a.cwrap_arg = "&" + name + "_caller_::call, " + name + "_ptr_"
-    a.python_pre = (
-        "global api_" + name + "_type_\n" + "            api_" + name +
-        "_type_ = " +
-        "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)\n"
-        + "            global api_" + name + "_\n" + "            api_" +
-        name + "_ = api_" + name + "_type_(lambda dim, tag, x, y, z, lc, _ : " +
-        name + "(dim, tag, x, y, z, lc))")
+    )
+    a.cwrap_arg = "&" + name + "_caller_::call, &" + name + "_callback"
+    a.python_pre = ("global api_" + name + "_type_\n" + "            api_"
+        + name + "_type_ = " + "CFUNCTYPE(" + c_to_ctypes(rtype.rc_type if rtype else "void")
+        + "".join(", " + c_to_ctypes(arg.c_type) for arg in args) + ", c_void_p)\n"
+        + "            global api_" + name + "_\n" + "            api_"
+        + name + "_ = api_" + name + "_type_(lambda "
+        + "".join(arg.cwrap_arg + ", " for arg in args) + "_ : "
+        + name + "(" + ", ".join(arg.cwrap_arg for arg in args) + "))")
     a.python_arg = "api_" + name + "_, None"
-    a.julia_pre = (
-        "api_" + name + "__(dim, tag, x, y, z, lc, data) = " + name +
-        "(dim, tag, x, y, z, lc)\n    " + "api_" + name + "_ = @cfunction($api_" +
-        name + "__" +
-        ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
+    a.julia_pre = ( "api_" + name + "__("
+        + "".join(arg.name + ", " for arg in args) + "data) = "
+        + name + "(" + ", ".join(arg.name for arg in args) + ")\n    "
+        + "api_" + name + "_ = @cfunction($api_" + name + "__" + ", "
+        # + c_to_julia(rtype.rc_type if rtype else "void")
+        + (rtype.rjulia_type if rtype else "void") + ", ("
+        # + "".join(c_to_julia(arg.c_type) + ", " for arg in args)
+        + "".join(arg.julia_ctype + ", " for arg in args)
+        + "Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_, C_NULL"
     a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
     a.fortran_args = [name]
