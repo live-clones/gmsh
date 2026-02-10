@@ -1377,7 +1377,7 @@ GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim,
  * callback had not been called. The callback function should return a double
  * precision number specifying the desired mesh size; returning `lc' is
  * equivalent to a no-op. */
-GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * callback_data,
+GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(const int dim, const int tag, const double x, const double y, const double z, const double lc, void * data), void * callback_data,
                                            int * ierr);
 
 /* Remove the mesh size callback from the current model. */

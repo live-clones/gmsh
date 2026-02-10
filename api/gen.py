@@ -486,7 +486,7 @@ doc = '''Set mesh size constraints at the given parametric points `parametricCoo
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
 
 doc = '''Set a mesh size callback for the current model. The callback function should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc'). The first two integer arguments correspond to the dimension `dim' and tag `tag' of the entity being meshed. The next four double precision arguments correspond to the coordinates `x', `y' and `z' around which to prescribe the mesh size and to the mesh size `lc' that would be prescribed if the callback had not been called. The callback function should return a double precision number specifying the desired mesh size; returning `lc' is equivalent to a no-op.'''
-mesh.add('setSizeCallback', doc, None, isizefun('callback'))
+mesh.add('setSizeCallback', doc, None, ifun('callback', odouble, iint("dim"), iint("tag"), idouble("x"), idouble("y"), idouble("z"), idouble("lc")))
 
 doc = '''Remove the mesh size callback from the current model.'''
 mesh.add('removeSizeCallback', doc, None)

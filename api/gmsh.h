@@ -1553,7 +1553,7 @@ namespace gmsh { // Top-level functions
       // callback had not been called. The callback function should return a double
       // precision number specifying the desired mesh size; returning `lc' is
       // equivalent to a no-op.
-      GMSH_API void setSizeCallback(std::function<double(int, int, double, double, double, double)> callback);
+      GMSH_API void setSizeCallback(std::function<double(const int, const int, const double, const double, const double, const double)> callback);
 
       // gmsh::model::mesh::removeSizeCallback
       //
