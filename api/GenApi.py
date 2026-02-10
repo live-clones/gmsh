@@ -980,7 +980,6 @@ def ifun(name, rtype, *args):
     a.cpp = ("std::function<"+ (rtype.rc_type if rtype else "void") +
              "(" + ", ".join(arg.c_type for arg in args)
              + ")> " + name)
-    # a.c_pre = "".join(arg.c_pre for arg in args)
     a.c_arg = ("std::bind("+ name + ", "
                + "".join(f"std::placeholders::_{i + 1}, " for i in range(sum(len(arg.c_type.split(",")) for arg in args)))
                + name + "_data)"
@@ -1016,9 +1015,7 @@ def ifun(name, rtype, *args):
         + "".join(arg.name + ", " for arg in args) + "data) = "
         + name + "(" + ", ".join(arg.name for arg in args) + ")\n    "
         + "api_" + name + "_ = @cfunction($api_" + name + "__" + ", "
-        # + c_to_julia(rtype.rc_type if rtype else "void")
         + (rtype.rjulia_type if rtype else "void") + ", ("
-        # + "".join(c_to_julia(arg.c_type) + ", " for arg in args)
         + "".join(arg.julia_ctype + ", " for arg in args)
         + "Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_, C_NULL"
