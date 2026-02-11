@@ -1669,14 +1669,14 @@ GMSH_API void gmsh::model::mesh::recombine()
 
 GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
                                           const bool force, const int niter,
-                                          const vectorpair &dimTags)
+                                          const vectorpair &dimTags, double quality)
 {
   if(!_checkInit()) return;
   if(dimTags.size()) {
     Msg::Warning(
       "Optimization of specified model entities is not interfaced yet");
   }
-  GModel::current()->optimizeMesh(how, force, niter);
+  GModel::current()->optimizeMesh(how, force, niter, quality);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
