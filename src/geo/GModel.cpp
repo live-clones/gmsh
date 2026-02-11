@@ -1547,10 +1547,10 @@ int GModel::recombineMesh()
 #endif
 }
 
-int GModel::optimizeMesh(const std::string &how, const bool force, int niter)
+int GModel::optimizeMesh(const std::string &how, const bool force, int niter, double quality)
 {
 #if defined(HAVE_MESH)
-  OptimizeMesh(this, how, force, niter);
+  OptimizeMesh(this, how, force, niter, quality);
   FixPeriodicMesh(this);
   if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
