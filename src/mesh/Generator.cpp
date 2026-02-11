@@ -9,6 +9,7 @@
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "MVertex.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "OS.h"
@@ -80,6 +81,17 @@
 #include "qmtMeshGeometryOptimization.h"
 #include "arrayGeometry.h"
 #include "geolog.h"
+#endif
+
+#if defined(HAVE_HXT)
+
+extern "C" {
+#include "hxt_tools.h"
+#include "hxt_tetOpti.h"
+#include "hxt_tetRepair.h"
+#include "hxt_tetFlag.h"
+}
+
 #endif
 
 #include "meshDuplicateVertices.h"
@@ -889,7 +901,7 @@ static void Mesh3D(GModel *m)
                  CTX::instance()->mesh.timer[2], t2 - t1);
 }
 
-void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
+void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, double quality)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
@@ -900,7 +912,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
-     how != "UntangleMeshGeometry") {
+     how != "UntangleMeshGeometry" && how != "HXT") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
   }
@@ -1093,6 +1105,194 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
                "WinslowUntangler module");
 #endif
   }
+  else if(how == "HXT") {
+#ifndef HAVE_HXT
+    Msg::Error("Optimizing using HXT requires the HXT module");
+    return;
+#else
+    auto pRegions = m->getRegions();
+    for(auto pRegion : pRegions) {
+      if(!pRegion->hexahedra.empty() || !pRegion->polyhedra.empty() || 
+        !pRegion->trihedra.empty() || !pRegion->prisms.empty() || !pRegion->pyramids.empty()) {
+        Msg::Error("HXT can only optimize a tetrahedral mesh!");
+        return;
+      }
+
+      if(pRegion->tetrahedra.size() == 0) {
+        Msg::Info("No tetrhedron to optimize");
+        continue;
+      }
+        
+
+      for(auto tet : pRegion->tetrahedra) {
+        if(tet->getNumVertices() != 4) {
+          Msg::Error("HXT can only optimize linear tetrehedra!");
+          return;
+        }
+      }
+      
+      HXTMesh* pMesh = nullptr;
+      HXTStatus ret = hxtMeshCreate(&pMesh);
+      if(ret != HXT_STATUS_OK) {
+        Msg::Error("Something went wrong when creating HXT mesh");
+        return;  
+      }
+
+      std::vector<MVertex*> pVertices(4*pRegion->tetrahedra.size());
+      for(std::size_t t = 0 ; t < pRegion->tetrahedra.size() ; ++t)
+      {
+        auto tet = pRegion->tetrahedra[t];
+        pVertices[4*t + 0] = (tet->getVertex(0));
+        pVertices[4*t + 1] = (tet->getVertex(1));
+        pVertices[4*t + 2] = (tet->getVertex(2));
+        pVertices[4*t + 3] = (tet->getVertex(3));
+      }
+
+      std::sort(pVertices.begin(), pVertices.end());
+      pVertices.erase(
+        std::unique(pVertices.begin(), pVertices.end()),
+        pVertices.end()
+      );
+
+      std::map<std::size_t, std::size_t> vertexNumToHxtVertex;
+      std::size_t counter = 0;
+      for(auto pVertex : pVertices)
+      {
+        vertexNumToHxtVertex[pVertex->getNum()] = counter;
+        counter++;
+      }
+
+      ret = hxtAlignedMalloc(&pMesh->vertices.coord, 4*pVertices.size()*sizeof(double));
+      if(ret != HXT_STATUS_OK) {
+        Msg::Error("Something went wrong when allocating memory for HXT verices");
+        hxtMeshDelete(&pMesh);
+        return;  
+      }
+
+      pMesh->vertices.num = pVertices.size();
+      pMesh->vertices.size = pVertices.size();
+
+      #pragma omp parallel for schedule(static)
+      for(std::size_t v = 0 ; v < pVertices.size() ; ++v) {
+        pMesh->vertices.coord[4*v + 0] = pVertices[v]->x();
+        pMesh->vertices.coord[4*v + 1] = pVertices[v]->y();
+        pMesh->vertices.coord[4*v + 2] = pVertices[v]->z();
+        pMesh->vertices.coord[4*v + 3] = 0.0;
+      }
+
+      ret = hxtAlignedMalloc(&pMesh->tetrahedra.node, 4*pRegion->tetrahedra.size()*sizeof(uint32_t));
+      if(ret != HXT_STATUS_OK) {
+        Msg::Error("Something went wrong when allocating memory for HXT tetrahedra");
+        hxtAlignedFree(&pMesh->vertices.coord);
+        hxtMeshDelete(&pMesh);
+        return;  
+      }
+
+      ret = hxtAlignedMalloc(&pMesh->tetrahedra.color, pRegion->tetrahedra.size()*sizeof(uint32_t));
+      if(ret != HXT_STATUS_OK) {
+        Msg::Error("Something went wrong when allocating memory for HXT tetrahedron colors");
+        hxtAlignedFree(&pMesh->tetrahedra.node);
+        hxtAlignedFree(&pMesh->vertices.coord);
+        hxtMeshDelete(&pMesh);
+        return;  
+      }
+
+      ret = hxtAlignedMalloc(&pMesh->tetrahedra.flag, pRegion->tetrahedra.size()*sizeof(uint16_t));
+      if(ret != HXT_STATUS_OK) {
+        Msg::Error("Something went wrong when allocating memory for HXT tetrahedron falgs");
+        hxtAlignedFree(&pMesh->tetrahedra.node);
+        hxtAlignedFree(&pMesh->tetrahedra.color);
+        hxtAlignedFree(&pMesh->vertices.coord);
+        hxtMeshDelete(&pMesh);
+        return;  
+      }
+
+      pMesh->tetrahedra.num = pRegion->tetrahedra.size();
+      pMesh->tetrahedra.size = pRegion->tetrahedra.size();
+
+      #pragma omp parallel for schedule(static)
+      for(std::size_t t = 0 ; t < pRegion->tetrahedra.size() ; ++t) {
+        auto tet = pRegion->tetrahedra[t];
+        pMesh->tetrahedra.node[4*t + 0] = vertexNumToHxtVertex[tet->getVertex(0)->getNum()];
+        pMesh->tetrahedra.node[4*t + 1] = vertexNumToHxtVertex[tet->getVertex(1)->getNum()];
+        pMesh->tetrahedra.node[4*t + 2] = vertexNumToHxtVertex[tet->getVertex(2)->getNum()];
+        pMesh->tetrahedra.node[4*t + 3] = vertexNumToHxtVertex[tet->getVertex(3)->getNum()];
+        pMesh->tetrahedra.color[t] = 0;
+        pMesh->tetrahedra.flag[t] = 0;
+      }
+      
+      ret = hxtTetAdjacencies(pMesh);
+      if(ret != HXT_STATUS_OK) {
+        Msg::Error("Something went wrong when computing adjacencies for HXT tetrahedra");
+        hxtAlignedFree(&pMesh->tetrahedra.node);
+        hxtAlignedFree(&pMesh->tetrahedra.color);
+        hxtAlignedFree(&pMesh->tetrahedra.flag);
+        hxtAlignedFree(&pMesh->vertices.coord);
+        hxtMeshDelete(&pMesh);
+        return;  
+      }
+
+      #pragma omp parallel for schedule(static)
+      for(std::size_t t = 0 ; t < pRegion->tetrahedra.size() ; ++t)
+      {
+        for(uint8_t i = 0 ; i < 4 ; ++i) {
+          if(pMesh->tetrahedra.neigh[4*t + i] == HXT_NO_ADJACENT)
+            setFacetConstraint(pMesh, t, i);
+          else
+          {
+              uint64_t neighElm = pMesh->tetrahedra.neigh[4*t + i]/4;
+              unsigned short neighFace = pMesh->tetrahedra.neigh[4*t + i]%4;
+
+              if(pMesh->tetrahedra.color[t] != pMesh->tetrahedra.color[neighElm])
+              {
+                  setFacetConstraint(pMesh, t, i);   
+                  setFacetConstraint(pMesh, neighElm, neighFace);   
+              }
+          }
+        }
+      }
+
+      HXTOptimizeOptions options;
+      options.bbox = nullptr;
+      options.numThreads = omp_get_max_threads();
+      options.numVerticesConstrained = pMesh->vertices.num;
+      options.qualityData = nullptr;
+      options.qualityFun = nullptr;
+      options.qualityMin = quality;
+      options.reproducible = 0;
+      options.verbosity = 2;
+
+      ret = hxtOptimizeTetrahedra(pMesh, &options);
+      if(ret != HXT_STATUS_OK) {
+        Msg::Error("Something went wrong when optimizing tetrahedra using HXT");
+        hxtAlignedFree(&pMesh->tetrahedra.node);
+        hxtAlignedFree(&pMesh->tetrahedra.color);
+        hxtAlignedFree(&pMesh->tetrahedra.flag);
+        hxtAlignedFree(&pMesh->vertices.coord);
+        hxtMeshDelete(&pMesh);
+        return;  
+      }
+
+      for(auto tet : pRegion->tetrahedra)
+        delete tet;
+
+      pRegion->tetrahedra.clear();
+      pRegion->tetrahedra.resize(pMesh->tetrahedra.num);
+      for (uint64_t i = 0; i < pMesh->tetrahedra.num ; i++){
+        auto t = &pMesh->tetrahedra.node[4*i];
+        auto tet = new MTetrahedron(pVertices[t[0]], pVertices[t[1]], pVertices[t[2]], pVertices[t[3]], i+1);
+        pRegion->tetrahedra[i] = tet;
+      }
+
+      hxtAlignedFree(&pMesh->tetrahedra.node);
+      hxtAlignedFree(&pMesh->tetrahedra.color);
+      hxtAlignedFree(&pMesh->tetrahedra.flag);
+      hxtAlignedFree(&pMesh->vertices.coord);
+      hxtMeshDelete(&pMesh);
+    }
+#endif
+  }
+
 
   if(Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(),
