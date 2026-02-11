@@ -1988,7 +1988,7 @@ function unpartition()
 end
 
 """
-    gmsh.model.mesh.optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+    gmsh.model.mesh.optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[], quality = 0.0)
 
 Optimize the mesh of the current model using `method` (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
@@ -1996,23 +1996,25 @@ direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
 smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
 Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
 "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry" for
-untangling). If `force` is set apply the optimization also to discrete entities.
-If `dimTags` (given as a vector of (dim, tag) pairs) is given, only apply the
-optimizer to the given entities.
+untangling, "HXT" for tetrahedral optimisation). If `force` is set apply the
+optimization also to discrete entities. If `dimTags` (given as a vector of (dim,
+tag) pairs) is given, only apply the optimizer to the given entities. For HXT
+optimizer, the `quality` argument should be specified
 
 Types:
  - `method`: string
  - `force`: boolean
  - `niter`: integer
  - `dimTags`: vector of pairs of integers
+ - `quality`: double
 """
-function optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+function optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[], quality = 0.0)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshOptimize, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          method, force, niter, api_dimTags_, api_dimTags_n_, ierr)
+          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
+          method, force, niter, api_dimTags_, api_dimTags_n_, quality, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
