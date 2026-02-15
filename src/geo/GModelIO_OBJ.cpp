@@ -6,11 +6,11 @@
 // Contributed by Giannis Nikiteas
 
 #include "GModel.h"
-#include "MElementCut.h"
+#include "discreteFace.h"
+#include "OS.h"
 #include "MQuadrangle.h"
 #include "MTriangle.h"
-#include "OS.h"
-#include "discreteFace.h"
+#include "MPolygon.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #define TINYOBJLOADER_USE_DOUBLE
@@ -33,12 +33,7 @@ namespace {
         new MQuadrangle(verts[0], verts[1], verts[2], verts[3]));
     }
     else if(verts.size() > 4) {
-      // Triangulate as a fan for convex polygons
-      std::vector<MTriangle *> tris;
-      for(size_t k = 1; k < verts.size() - 1; ++k) {
-        tris.push_back(new MTriangle(verts[0], verts[k], verts[k + 1]));
-      }
-      gf->addPolygon(new MPolygon(tris));
+      gf->addPolygon(new MPolygon(verts));
     }
   }
   template <typename T> void writeFace(std::ofstream &ofs, const T *elem)

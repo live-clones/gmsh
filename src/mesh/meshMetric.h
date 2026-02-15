@@ -14,7 +14,6 @@
 
 template <class scalar> class simpleFunction;
 class MVertex;
-class gLevelset;
 class MElementOctree;
 class STensor3;
 
@@ -22,7 +21,6 @@ class STensor3;
 class meshMetric : public Field {
 public:
   typedef enum {
-    LEVELSET = 1,
     HESSIAN = 2,
     FREY = 3,
     EIGENDIRECTIONS = 4,
@@ -110,9 +108,6 @@ public:
   void scaleMetric(int nbElementsTarget, nodalMetricTensor &nmt);
 
   void computeMetric(int metricNumber);
-  void computeMetricLevelSet(MVertex *ver, SMetric3 &hessian, SMetric3 &metric,
-                             double &size, double x = 0.0, double y = 0.0,
-                             double z = 0.0);
   void computeMetricHessian(MVertex *ver, SMetric3 &hessian, SMetric3 &metric,
                             double &size, double x = 0.0, double y = 0.0,
                             double z = 0.0);
