@@ -344,10 +344,8 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
   }
 
   // Get mesh data
-  std::vector<std::vector<std::vector<MVertex *>>> &v =
-    gr->transfinite_vertices;
-  std::vector<std::vector<std::vector<MVertex *>>> &vd =
-    gr2->transfinite_vertices;
+  auto &v = gr->transfinite_vertices;
+  auto &vd = gr2->transfinite_vertices;
 
   // Convert from 1-indexed CGNS to 0-indexed C++
   int ibeg = pointRange[0] - 1, iend = pointRange[3] - 1;
@@ -360,85 +358,20 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
   // Compute axis direction vectors for source region
   double srcDir[3][3];
   bool srcOK[3] = {false, false, false};
-
-  if(r[0] != 0) {
-    // i-axis: sample along i direction
-    int i0 = ibeg, i1 = ibeg, i2 = ibeg;
-    if(iend > ibeg) {
-      i1 = ibeg + 1;
-      i2 = iend;
-    }
-    else if(iend < ibeg) {
-      i1 = ibeg - 1;
-      i2 = iend;
-    }
-    if(i1 >= 0 && i1 < (int)v.size() && i2 >= 0 && i2 < (int)v.size()) {
-      MVertex *v0 = v[i0][jbeg][kbeg];
-      MVertex *v2 = v[i2][jbeg][kbeg];
-      double dx = v2->x() - v0->x();
-      double dy = v2->y() - v0->y();
-      double dz = v2->z() - v0->z();
+  for(int ri = 0; ri < 3; ri++) {
+    if(r[ri] != 0) { // sample along ri direction (i, j or k)
+      MVertex *v0 = v[ibeg][jbeg][kbeg];
+      MVertex *v1 = (ri == 0) ? v[iend][jbeg][kbeg] :
+        (ri == 1) ? v[ibeg][jend][kbeg] : v[ibeg][jbeg][kend];
+      double dx = v1->x() - v0->x();
+      double dy = v1->y() - v0->y();
+      double dz = v1->z() - v0->z();
       double len = sqrt(dx * dx + dy * dy + dz * dz);
       if(len > 1e-12) {
-        srcDir[0][0] = dx / len;
-        srcDir[0][1] = dy / len;
-        srcDir[0][2] = dz / len;
-        srcOK[0] = true;
-      }
-    }
-  }
-
-  if(r[1] != 0) {
-    // j-axis: sample along j direction
-    int j0 = jbeg, j1 = jbeg, j2 = jbeg;
-    if(jend > jbeg) {
-      j1 = jbeg + 1;
-      j2 = jend;
-    }
-    else if(jend < jbeg) {
-      j1 = jbeg - 1;
-      j2 = jend;
-    }
-    if(j1 >= 0 && j1 < (int)v[0].size() && j2 >= 0 && j2 < (int)v[0].size()) {
-      MVertex *v0 = v[ibeg][j0][kbeg];
-      MVertex *v2 = v[ibeg][j2][kbeg];
-      double dx = v2->x() - v0->x();
-      double dy = v2->y() - v0->y();
-      double dz = v2->z() - v0->z();
-      double len = sqrt(dx * dx + dy * dy + dz * dz);
-      if(len > 1e-12) {
-        srcDir[1][0] = dx / len;
-        srcDir[1][1] = dy / len;
-        srcDir[1][2] = dz / len;
-        srcOK[1] = true;
-      }
-    }
-  }
-
-  if(r[2] != 0) {
-    // k-axis: sample along k direction
-    int k0 = kbeg, k1 = kbeg, k2 = kbeg;
-    if(kend > kbeg) {
-      k1 = kbeg + 1;
-      k2 = kend;
-    }
-    else if(kend < kbeg) {
-      k1 = kbeg - 1;
-      k2 = kend;
-    }
-    if(k1 >= 0 && k1 < (int)v[0][0].size() && k2 >= 0 &&
-       k2 < (int)v[0][0].size()) {
-      MVertex *v0 = v[ibeg][jbeg][k0];
-      MVertex *v2 = v[ibeg][jbeg][k2];
-      double dx = v2->x() - v0->x();
-      double dy = v2->y() - v0->y();
-      double dz = v2->z() - v0->z();
-      double len = sqrt(dx * dx + dy * dy + dz * dz);
-      if(len > 1e-12) {
-        srcDir[2][0] = dx / len;
-        srcDir[2][1] = dy / len;
-        srcDir[2][2] = dz / len;
-        srcOK[2] = true;
+        srcDir[ri][0] = dx / len;
+        srcDir[ri][1] = dy / len;
+        srcDir[ri][2] = dz / len;
+        srcOK[ri] = true;
       }
     }
   }
@@ -446,82 +379,20 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
   // Compute axis direction vectors for donor region
   double donorDir[3][3];
   bool donorOK[3] = {false, false, false};
-
-  if(d[0] != 0) {
-    int i0 = ibeg2, i1 = ibeg2, i2 = ibeg2;
-    if(iend2 > ibeg2) {
-      i1 = ibeg2 + 1;
-      i2 = iend2;
-    }
-    else if(iend2 < ibeg2) {
-      i1 = ibeg2 - 1;
-      i2 = iend2;
-    }
-    if(i1 >= 0 && i1 < (int)vd.size() && i2 >= 0 && i2 < (int)vd.size()) {
-      MVertex *v0 = vd[i0][jbeg2][kbeg2];
-      MVertex *v2 = vd[i2][jbeg2][kbeg2];
-      double dx = v2->x() - v0->x();
-      double dy = v2->y() - v0->y();
-      double dz = v2->z() - v0->z();
+  for(int di = 0; di < 3; di++) {
+    if(d[di] != 0) { // sample along di direction (i, j or k)
+      MVertex *v0 = vd[ibeg2][jbeg2][kbeg2];
+      MVertex *v1 = (di == 0) ? vd[iend2][jbeg2][kbeg2] :
+        (di == 1) ? vd[ibeg2][jend2][kbeg2] : v1 = vd[ibeg2][jbeg2][kend2];
+      double dx = v1->x() - v0->x();
+      double dy = v1->y() - v0->y();
+      double dz = v1->z() - v0->z();
       double len = sqrt(dx * dx + dy * dy + dz * dz);
       if(len > 1e-12) {
-        donorDir[0][0] = dx / len;
-        donorDir[0][1] = dy / len;
-        donorDir[0][2] = dz / len;
-        donorOK[0] = true;
-      }
-    }
-  }
-
-  if(d[1] != 0) {
-    int j0 = jbeg2, j1 = jbeg2, j2 = jbeg2;
-    if(jend2 > jbeg2) {
-      j1 = jbeg2 + 1;
-      j2 = jend2;
-    }
-    else if(jend2 < jbeg2) {
-      j1 = jbeg2 - 1;
-      j2 = jend2;
-    }
-    if(j1 >= 0 && j1 < (int)vd[0].size() && j2 >= 0 && j2 < (int)vd[0].size()) {
-      MVertex *v0 = vd[ibeg2][j0][kbeg2];
-      MVertex *v2 = vd[ibeg2][j2][kbeg2];
-      double dx = v2->x() - v0->x();
-      double dy = v2->y() - v0->y();
-      double dz = v2->z() - v0->z();
-      double len = sqrt(dx * dx + dy * dy + dz * dz);
-      if(len > 1e-12) {
-        donorDir[1][0] = dx / len;
-        donorDir[1][1] = dy / len;
-        donorDir[1][2] = dz / len;
-        donorOK[1] = true;
-      }
-    }
-  }
-
-  if(d[2] != 0) {
-    int k0 = kbeg2, k1 = kbeg2, k2 = kbeg2;
-    if(kend2 > kbeg2) {
-      k1 = kbeg2 + 1;
-      k2 = kend2;
-    }
-    else if(kend2 < kbeg2) {
-      k1 = kbeg2 - 1;
-      k2 = kend2;
-    }
-    if(k1 >= 0 && k1 < (int)vd[0][0].size() && k2 >= 0 &&
-       k2 < (int)vd[0][0].size()) {
-      MVertex *v0 = vd[ibeg2][jbeg2][k0];
-      MVertex *v2 = vd[ibeg2][jbeg2][k2];
-      double dx = v2->x() - v0->x();
-      double dy = v2->y() - v0->y();
-      double dz = v2->z() - v0->z();
-      double len = sqrt(dx * dx + dy * dy + dz * dz);
-      if(len > 1e-12) {
-        donorDir[2][0] = dx / len;
-        donorDir[2][1] = dy / len;
-        donorDir[2][2] = dz / len;
-        donorOK[2] = true;
+        donorDir[di][0] = dx / len;
+        donorDir[di][1] = dy / len;
+        donorDir[di][2] = dz / len;
+        donorOK[di] = true;
       }
     }
   }
