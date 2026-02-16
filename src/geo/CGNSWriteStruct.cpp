@@ -383,7 +383,7 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
     if(d[di] != 0) { // sample along di direction (i, j or k)
       MVertex *v0 = vd[ibeg2][jbeg2][kbeg2];
       MVertex *v1 = (di == 0) ? vd[iend2][jbeg2][kbeg2] :
-        (di == 1) ? vd[ibeg2][jend2][kbeg2] : v1 = vd[ibeg2][jbeg2][kend2];
+        (di == 1) ? vd[ibeg2][jend2][kbeg2] : vd[ibeg2][jbeg2][kend2];
       double dx = v1->x() - v0->x();
       double dy = v1->y() - v0->y();
       double dz = v1->z() - v0->z();
