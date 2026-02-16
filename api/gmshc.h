@@ -3447,6 +3447,17 @@ GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size
                                           const size_t * triangles, const size_t triangles_n,
                                           int * ierr);
 
+/* Refine the list of tetrahedra given in the vector `tetraIn', using point
+ * coordinates `coord' and nodal size field `sizeAtNode'. The new point
+ * coordinates are outputed in the `steiner' vector, and the new tetrahedra in
+ * the `tetraOut' vector. */
+GMSH_API void gmshAlgorithmRefineTetrahedra(const double * coord, const size_t coord_n,
+                                            const double * sizeAtNode, const size_t sizeAtNode_n,
+                                            const size_t * tetraIn, const size_t tetraIn_n,
+                                            double ** steiner, size_t * steiner_n,
+                                            size_t ** tetraOut, size_t * tetraOut_n,
+                                            int * ierr);
+
 /* Set the numerical option `option' to the value `value' for plugin `name'.
  * Plugins available in the official Gmsh release are listed in the "Gmsh
  * plugins" chapter of the Gmsh reference manual
