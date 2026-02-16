@@ -283,7 +283,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   time(&rawtime);
   fprintf(fp, "%s", ctime(&rawtime));
   fprintf(fp, "     NUMNP     NELEM     NGRPS    NBSETS     NDFCD     NDFVL\n");
-  fprintf(fp, " %9ld %9d %9lu %9lu %9d %9d\n",
+  fprintf(fp, " %9zu %9d %9zu %9zu %9d %9d\n",
           indexMeshVertices(saveAll, 0, false), numElements,
           elementGroups.size(), boundaryConditions.size(), getDim(), getDim());
   fprintf(fp, "ENDOFSECTION\n");
@@ -328,7 +328,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   for(auto it = elementGroups.begin(); it != elementGroups.end(); ++it) {
     fprintf(fp, "       ELEMENT GROUP 2.0.0\n");
     fprintf(fp,
-            "GROUP: %10d ELEMENTS: %10lu MATERIAL:          0 NFLAGS: %10d\n",
+            "GROUP: %10d ELEMENTS: %10zu MATERIAL:          0 NFLAGS: %10d\n",
             it->first, it->second.size(), 1);
     std::string volumeName = getPhysicalName(3, it->first);
     if(volumeName.empty()) {
@@ -360,7 +360,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
           regionName = tmp;
         }
 
-        fprintf(fp, "%32s%8d%8lu%8d%8d\n", regionName.c_str(), 1,
+        fprintf(fp, "%32s%8d%8zu%8d%8d\n", regionName.c_str(), 1,
                 it->second.size(), 0, gambitBoundaryCode(regionName));
         std::sort(it->second.begin(), it->second.end(), sortBCs);
         for(auto tfp = it->second.begin(); tfp != it->second.end(); ++tfp) {

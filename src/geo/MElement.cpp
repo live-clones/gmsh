@@ -1787,7 +1787,7 @@ void MElement::writeNEU(FILE *fp, unsigned gambitType, int idAdjust, int phys)
 {
   if(phys < 0) reverse();
 
-  fprintf(fp, "%8lu %2d %2lu ", _num - idAdjust, gambitType, getNumVertices());
+  fprintf(fp, "%8lu %2d %2zu ", _num - idAdjust, gambitType, getNumVertices());
   for(std::size_t i = 0; i < getNumVertices(); ++i) {
     if(i == 7) fprintf(fp, "\n               ");
     fprintf(fp, "%8ld", getVertexNEU(i)->getIndex());
@@ -1845,11 +1845,11 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
     fprintf(fp, "\n");
   }
   else if(format == 1) { // small field format
-    fprintf(fp, "%-8s%-8lu%-8d", str, _num, tag);
+    fprintf(fp, "%-8s%-8zu%-8d", str, _num, tag);
     for(int i = 0; i < n; i++) {
       fprintf(fp, "%-8ld", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)) {
-        fprintf(fp, "+%s%-6lu\n+%s%-6lu", cont[ncont], _num, cont[ncont], _num);
+        fprintf(fp, "+%s%-6zu\n+%s%-6zu", cont[ncont], _num, cont[ncont], _num);
         ncont++;
       }
     }
@@ -1858,7 +1858,7 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
     fprintf(fp, "\n");
   }
   else { // large field format
-    fprintf(fp, "%-8s%-8lu%-8d", str, _num, tag);
+    fprintf(fp, "%-8s%-8zu%-8d", str, _num, tag);
     for(int i = 0; i < n; i++) {
       fprintf(fp, "%-8ld", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)) {

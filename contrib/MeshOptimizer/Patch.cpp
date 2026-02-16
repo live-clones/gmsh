@@ -285,7 +285,7 @@ void Patch::writeMSH(const char *filename)
   fprintf(f, "$Elements\n");
   fprintf(f, "%d\n", nEl());
   for(int iEl = 0; iEl < nEl(); iEl++) {
-    fprintf(f, "%d %d 2 0 0", _el[iEl]->getNum(), _el[iEl]->getTypeForMSH());
+    fprintf(f, "%zu %d 2 0 0", _el[iEl]->getNum(), _el[iEl]->getTypeForMSH());
     for(size_t iVEl = 0; iVEl < _el2V[iEl].size(); iVEl++)
       fprintf(f, " %d", _el2V[iEl][iVEl] + 1);
     fprintf(f, "\n");

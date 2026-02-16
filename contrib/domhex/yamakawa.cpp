@@ -3192,9 +3192,9 @@ void PostOp::writeMSH(const char *filename, std::vector<MElement *> &elements)
   fprintf(f, "$Elements\n");
   fprintf(f, "%d\n", (int)elements.size());
   for(std::size_t i = 0; i < elements.size(); ++i) {
-    fprintf(f, "%d %d 0", elements[i]->getNum(), elements[i]->getTypeForMSH());
+    fprintf(f, "%zu %d 0", elements[i]->getNum(), elements[i]->getTypeForMSH());
     for(std::size_t k = 0; k < elements[i]->getNumVertices(); ++k)
-      fprintf(f, " %d", elements[i]->getVertex(k)->getIndex());
+      fprintf(f, " %ld", elements[i]->getVertex(k)->getIndex());
     fprintf(f, "\n");
   }
   fprintf(f, "$EndElements\n");

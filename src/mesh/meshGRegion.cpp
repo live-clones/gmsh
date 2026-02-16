@@ -87,6 +87,25 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
   return npyram;
 }
 
+static void _deleteUnusedVertices(GRegion *gr)
+{
+  std::set<MVertex *, MVertexPtrLessThan> allverts;
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+    for(int j = 0; j < 4; j++) {
+      if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
+        allverts.insert(gr->tetrahedra[i]->getVertex(j));
+    }
+  }
+  for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
+    // FIXME: investigate crash on exit (e.g. t16.geo)
+    // if(allverts.find(gr->mesh_vertices[i]) == allverts.end())
+    //   delete gr->mesh_vertices[i];
+  }
+  gr->mesh_vertices.clear();
+  gr->mesh_vertices.insert(gr->mesh_vertices.end(), allverts.begin(),
+                           allverts.end());
+}
+
 void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 {
   if(regions.empty()) return;
@@ -192,6 +211,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 	  CTX::instance()->mesh.algo3d != ALGO_3D_RTREE) {
     insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D, 1.,
                            true, &sqr);
+    for(auto gr : regions) _deleteUnusedVertices(gr);
 
     if(sqr.buildPyramids(gr->model())) {
       //      Msg::Info("Optimizing pyramids for hybrid mesh...");

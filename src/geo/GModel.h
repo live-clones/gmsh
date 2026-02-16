@@ -779,7 +779,7 @@ public:
                  bool splitIntoHexas = false, bool barycentric = false);
 
   // optimize the mesh
-  int optimizeMesh(const std::string &how, bool force = false, int niter = 1);
+  int optimizeMesh(const std::string &how, bool force = false, int niter = 1, double quality = 0.0);
 
   // recombine the mesh
   int recombineMesh();

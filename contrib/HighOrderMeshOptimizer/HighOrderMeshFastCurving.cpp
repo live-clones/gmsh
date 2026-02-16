@@ -643,13 +643,13 @@ namespace {
       if(!fp) return;
       fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
       fprintf(fp, "$Nodes\n");
-      fprintf(fp, "%d\n", point_.size());
+      fprintf(fp, "%zu\n", point_.size());
       for(int iV = 0; iV < point_.size(); iV++)
         fprintf(fp, "%i %g %g %g\n", iV + 1, point_[iV].x(), point_[iV].y(),
                 point_[iV].z());
       fprintf(fp, "$EndNodes\n");
       fprintf(fp, "$Elements\n");
-      fprintf(fp, "%d\n", elType_.size());
+      fprintf(fp, "%zu\n", elType_.size());
       int iV = 0;
       for(int iEl = 0; iEl < elType_.size(); iEl++) {
         fprintf(fp, "%i %i 2 0 0 ", iEl + 1, elType_[iEl]);
@@ -689,20 +689,20 @@ namespace {
       if(!fp) return;
       fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
       fprintf(fp, "$Nodes\n");
-      fprintf(fp, "%d\n", vert_.size());
+      fprintf(fp, "%zu\n", vert_.size());
       for(auto itV = vert_.begin(); itV != vert_.end(); ++itV) {
         SPoint3 p = (*itV)->point();
-        fprintf(fp, "%i %g %g %g\n", (*itV)->getNum(), p.x(), p.y(), p.z());
+        fprintf(fp, "%zu %g %g %g\n", (*itV)->getNum(), p.x(), p.y(), p.z());
       }
       fprintf(fp, "$EndNodes\n");
       fprintf(fp, "$Elements\n");
-      fprintf(fp, "%d\n", elt_.size());
+      fprintf(fp, "%zu\n", elt_.size());
       int iV = 0;
       for(int iEl = 0; iEl < elt_.size(); iEl++) {
-        fprintf(fp, "%i %i 2 0 0 ", elt_[iEl]->getNum(),
+        fprintf(fp, "%zu %d 2 0 0 ", elt_[iEl]->getNum(),
                 elt_[iEl]->getTypeForMSH());
         for(int iVEl = 0; iVEl < elt_[iEl]->getNumVertices(); iVEl++)
-          fprintf(fp, " %i", elt_[iEl]->getVertex(iVEl)->getNum());
+          fprintf(fp, " %zu", elt_[iEl]->getVertex(iVEl)->getNum());
         fprintf(fp, "\n");
       }
       fprintf(fp, "$EndElements\n");
