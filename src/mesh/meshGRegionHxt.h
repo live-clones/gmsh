@@ -8,6 +8,7 @@
 
 #include <vector>
 
+class GModel;
 class GRegion;
 class MVertex;
 class MTetrahedron;
@@ -17,4 +18,5 @@ int meshGRegionHxt(std::vector<GRegion *> &regions);
 void delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
                          std::vector<MTetrahedron *> &tets,
                          const std::vector<MTriangle> &triangles);
+void optimizeMeshHXT(GModel* pModel, double quality, bool flipOnly);
 #endif
