@@ -670,13 +670,15 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr);
  * smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
  * for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
  * "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry"
- * for untangling). If `force' is set apply the optimization also to discrete
- * entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
- * only apply the optimizer to the given entities. */
+ * for untangling, "HXT" for tetrahedral optimisation). If `force' is set
+ * apply the optimization also to discrete entities. If `dimTags' (given as a
+ * vector of (dim, tag) pairs) is given, only apply the optimizer to the given
+ * entities. For HXT optimizer, the `quality' argument should be specified */
 GMSH_API void gmshModelMeshOptimize(const char * method,
                                     const int force,
                                     const int niter,
                                     const int * dimTags, const size_t dimTags_n,
+                                    const double quality,
                                     int * ierr);
 
 /* Recombine the mesh of the current model. */
