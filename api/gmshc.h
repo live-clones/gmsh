@@ -2906,12 +2906,13 @@ GMSH_API void gmshModelOccCut(const int * objectDimTags, const size_t objectDimT
  * vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
  * all interfaces conformal. When applied to entities of different dimensions,
  * the lower dimensional entities will be automatically embedded in the higher
- * dimensional entities if they are not on their boundary. Return the
- * resulting entities in `outDimTags', and the correspondance between input
- * and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
- * the tag explicitly (only valid if the boolean operation results in a single
- * entity). Remove the object if `removeObject' is set. Remove the tool if
- * `removeTool' is set. */
+ * dimensional entities if they are not on their boundary. In order to
+ * preserve entity tags, entities should be provided in ascending dimension
+ * order. Return the resulting entities in `outDimTags', and the
+ * correspondance between input and resulting entities in `outDimTagsMap'. If
+ * `tag' is positive, try to set the tag explicitly (only valid if the boolean
+ * operation results in a single entity). Remove the object if `removeObject'
+ * is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccFragment(const int * objectDimTags, const size_t objectDimTags_n,
                                    const int * toolDimTags, const size_t toolDimTags_n,
                                    int ** outDimTags, size_t * outDimTags_n,

@@ -383,8 +383,8 @@ doc_official_snapshot:
     - cd build_doc
     - cmake ..
     - make doc
-    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/dev && tar zxvf ../doc.tgz"
+    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc/gmsh-git-doc.tgz
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/dev && tar zxvf ../doc/gmsh-git-doc.tgz"
   tags:
     - linux64
     - docker
@@ -402,8 +402,9 @@ doc_official_release:
     - cd build_doc
     - cmake -DGMSH_RELEASE=1 ..
     - make doc
-    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh && tar zxvf doc.tgz"
+    - PKG=`ls gmsh-*-doc.tgz`
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/doc/${PKG}
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh && tar zxvf doc/${PKG}"
     - scp ../doc/gmsh.html ../doc/gmsh.css geuzaine@gmsh.info:.wwwgmsh/
   tags:
     - linux64

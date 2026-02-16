@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <numeric>
 #include <utility>
 #include "GmshConfig.h"
@@ -738,7 +739,8 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(solid, t, recursive);
     std::pair<int, int> p(3, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p)) outDimTags.push_back(p);
+    if(!exists || !returnNewOnly || _toPreserve.count(p))
+      outDimTags.push_back(p);
     count++;
   }
   if(highestDimOnly && count) return;
@@ -760,7 +762,8 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(face, t, recursive);
     std::pair<int, int> p(2, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p)) outDimTags.push_back(p);
+    if(!exists || !returnNewOnly || _toPreserve.count(p))
+      outDimTags.push_back(p);
     count++;
   }
   if(highestDimOnly && count) return;
@@ -782,7 +785,8 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(edge, t, recursive);
     std::pair<int, int> p(1, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p)) outDimTags.push_back(p);
+    if(!exists || !returnNewOnly || _toPreserve.count(p))
+      outDimTags.push_back(p);
     count++;
   }
   if(highestDimOnly && count) return;
@@ -804,7 +808,8 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) _bind(vertex, t, recursive);
     std::pair<int, int> p(0, t);
-    if(!exists || !returnNewOnly || _toPreserve.count(p)) outDimTags.push_back(p);
+    if(!exists || !returnNewOnly || _toPreserve.count(p))
+      outDimTags.push_back(p);
     count++;
   }
 }
@@ -999,10 +1004,11 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int middleTag,
     if(!center) {
       Standard_Real AlphaC = ElCLib::Parameter(Circ, aP2);
       Sense = (Alpha1 < AlphaC && AlphaC < Alpha2) ||
-        (AlphaC < Alpha2 && Alpha2 < Alpha1) ||
-        (Alpha2 < Alpha1 && Alpha1 < AlphaC);
-      Msg::Debug("Circle through point sense %d: Alpha1=%g, Alpha2=%g, AlphaC=%g",
-                 Sense ? 1 : 0, Alpha1, Alpha2, AlphaC);
+              (AlphaC < Alpha2 && Alpha2 < Alpha1) ||
+              (Alpha2 < Alpha1 && Alpha1 < AlphaC);
+      Msg::Debug(
+        "Circle through point sense %d: Alpha1=%g, Alpha2=%g, AlphaC=%g",
+        Sense ? 1 : 0, Alpha1, Alpha2, AlphaC);
     }
     Handle(Geom_TrimmedCurve) arc =
       new Geom_TrimmedCurve(C, Alpha1, Alpha2, Sense);
@@ -2981,8 +2987,7 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
 #if OCC_VERSION_HEX > 0x070400
     BRepOffsetAPI_MakeThickSolid ts;
     ts.MakeThickSolidByJoin(shape, exclude, offset,
-                            CTX::instance()->geom.tolerance,
-                            BRepOffset_Skin,
+                            CTX::instance()->geom.tolerance, BRepOffset_Skin,
                             Standard_True, // Intersection
                             Standard_False, // SelfInter (not available yet)
                             GeomAbs_Arc, // Join
@@ -3667,17 +3672,18 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
   gp_Dir normal = aElementarySurface->Axis().Direction();
   if(face.Orientation() == TopAbs_REVERSED) { normal = -normal; }
 
-  if(reverse) {normal = -normal; }
+  if(reverse) { normal = -normal; }
 
   gp_Pnt point;
-  if (pointTag != -1) {
-    if (!_tagVertex.IsBound(pointTag)) {
+  if(pointTag != -1) {
+    if(!_tagVertex.IsBound(pointTag)) {
       Msg::Error("Unknown OpenCASCADE point with tag %d", pointTag);
       return false;
     }
     TopoDS_Vertex v = TopoDS::Vertex(_tagVertex.Find(pointTag));
     point = BRep_Tool::Pnt(v);
-  } else {
+  }
+  else {
     // Use the first vertex of the first edge as before
     TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
     point = BRep_Tool::Pnt(v1);
@@ -3772,6 +3778,7 @@ bool OCC_Internals::offsetCurve(const int curveLoopTag, double offset,
 class OCCBooleanProgress : public Message_ProgressIndicator {
 private:
   std::string _name;
+
 public:
   OCCBooleanProgress(std::string name) : _name(name)
   {
@@ -4009,7 +4016,7 @@ bool OCC_Internals::booleanOperator(
       }
     } break;
 
-    // TODO: implement OCC_Internals::Section:
+      // TODO: implement OCC_Internals::Section:
 
     case OCC_Internals::Fragments:
     default: {
@@ -4080,11 +4087,28 @@ bool OCC_Internals::booleanOperator(
   }
   else {
     // otherwise, try to preserve the numbering of the input shapes that did not
-    // change, or that were replaced by a single shape. Note that to preserve
-    // the numbering of smaller dimension entities (on boundaries) they should
-    // appear *before* higher dimensional entities in the object/tool lists.
+    // change, or that were replaced by a single shape. Entities must be
+    // processed in ascending dimension order so that lower-dimensional boundary
+    // entities get their tags preserved before higher-dimensional entities can
+    // claim them via recursive _unbind.
+    bool sorted = std::is_sorted(
+      inDimTags.begin(), inDimTags.end(),
+      [](const auto &a, const auto &b) { return a.first < b.first; });
+    std::vector<std::size_t> dimOrder;
+    if(!sorted) {
+      Msg::Warning("Reordering %d entities by ascending dimension for boolean "
+                   "tag preservation; provide entities in ascending dimension "
+                   "order to avoid this overhead", (int)inDimTags.size());
+      dimOrder.resize(inDimTags.size());
+      std::iota(dimOrder.begin(), dimOrder.end(), 0);
+      std::stable_sort(dimOrder.begin(), dimOrder.end(),
+                       [&inDimTags](auto a, auto b) {
+                         return inDimTags[a].first < inDimTags[b].first;
+                       });
+    }
     _toPreserve.clear();
-    for(std::size_t i = 0; i < inDimTags.size(); i++) {
+    for(std::size_t ii = 0; ii < inDimTags.size(); ii++) {
+      std::size_t i = sorted ? ii : dimOrder[ii];
       int dim = inDimTags[i].first;
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
@@ -4651,8 +4675,8 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
 
   TDF_Label ref;
   if(shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
-    setShapeAttributes(attributes, shapeTool, colorTool, materialTool, layerTool, ref,
-                       partLoc, phys, true);
+    setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
+                       layerTool, ref, partLoc, phys, true);
   }
   else if(shapeTool->IsSimpleShape(label) &&
           (isRef || shapeTool->IsFree(label))) {
@@ -4688,7 +4712,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
       TDF_LabelSequence::iterator it;
       for(it = layers.begin(); it != layers.end(); ++it) {
         Handle(TDataStd_Name) n;
-        if (it->FindAttribute(TDataStd_Name::GetID(), n)) {
+        if(it->FindAttribute(TDataStd_Name::GetID(), n)) {
           TCollection_ExtendedString name = n->Get();
           layerdata = TCollection_AsciiString(name).ToCString();
         }
@@ -4700,19 +4724,20 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
       phys += matName->ToCString();
       if(layerdata.empty()) {
         Msg::Info(" - Label & material '%s' (%dD)", phys.c_str(), dim);
-      } else {
+      }
+      else {
         phys += " & " + layerdata;
         Msg::Info(" - Label & material & layer '%s' (%dD)", phys.c_str(), dim);
       }
     }
     else if(phys.size() && !layerdata.empty()) {
-        phys += " & & " + layerdata;
-        Msg::Info(" - Label & layer '%s' (%dD)", phys.c_str(), dim);
-    } else if(phys.size()) {
+      phys += " & & " + layerdata;
+      Msg::Info(" - Label & layer '%s' (%dD)", phys.c_str(), dim);
+    }
+    else if(phys.size()) {
       Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
     }
     if(phys.size()) { attributes->insert(new OCCAttributes(dim, shape, phys)); }
-
 
     Quantity_Color col;
     if(colorTool->GetColor(label, XCAFDoc_ColorGen, col)) {
@@ -4767,8 +4792,8 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
   }
   else {
     for(TDF_ChildIterator it(label); it.More(); it.Next()) {
-      setShapeAttributes(attributes, shapeTool, colorTool, materialTool, layerTool,
-                         it.Value(), partLoc, phys, false);
+      setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
+                         layerTool, it.Value(), partLoc, phys, false);
     }
   }
 }
@@ -4798,10 +4823,11 @@ void readAttributes(OCCAttributesRTree *attributes, T &reader,
     XCAFDoc_DocumentTool::ColorTool(mainLabel);
   Handle_XCAFDoc_MaterialTool materialTool =
     XCAFDoc_DocumentTool::MaterialTool(mainLabel);
-  Handle_XCAFDoc_LayerTool layerTool = XCAFDoc_DocumentTool::LayerTool(mainLabel);
+  Handle_XCAFDoc_LayerTool layerTool =
+    XCAFDoc_DocumentTool::LayerTool(mainLabel);
   // traverse the labels recursively to set attributes on shapes
-  setShapeAttributes(attributes, shapeTool, colorTool, materialTool, layerTool, mainLabel,
-                     TopLoc_Location(), "", false);
+  setShapeAttributes(attributes, shapeTool, colorTool, materialTool, layerTool,
+                     mainLabel, TopLoc_Location(), "", false);
 }
 
 #endif
@@ -4982,14 +5008,14 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
     for(auto p : topo[dim]) {
       std::string name =
         model->getElementaryName(p.second->dim(), p.second->tag());
-      file << "        <" << label << " index=\"" << index
-           << "\" name=\"" << name << "\" reference=\"" << p.first << "\"";
+      file << "        <" << label << " index=\"" << index << "\" name=\""
+           << name << "\" reference=\"" << p.first << "\"";
 #if 1
       // Gmsh XAO extension: also save the prescribed mesh size at the vertex
       if(dim == 0) {
-        double lc = static_cast<GVertex *>(p.second)->prescribedMeshSizeAtVertex();
-        if(lc != MAX_LC)
-          file << " meshsize=\"" << lc << "\"";
+        double lc =
+          static_cast<GVertex *>(p.second)->prescribedMeshSizeAtVertex();
+        if(lc != MAX_LC) file << " meshsize=\"" << lc << "\"";
       }
 #endif
       file << "/>" << std::endl;
@@ -5484,7 +5510,7 @@ bool OCC_Internals::getDistance(int dim1, int tag1, int dim2, int tag2,
 }
 
 bool OCC_Internals::getClosestEntities(
-  double x, double y, double z, const std::vector<std::pair<int, int> > &dimTags,
+  double x, double y, double z, const std::vector<std::pair<int, int>> &dimTags,
   std::vector<std::pair<int, int>> &outDimTags, std::vector<double> &distances,
   std::vector<double> &coord, int n)
 {
@@ -5503,8 +5529,8 @@ bool OCC_Internals::getClosestEntities(
     BRepExtrema_DistShapeShape dist(vertex, shape);
     if(dist.IsDone() && dist.NbSolution() > 0) {
       gp_Pnt p2 = dist.PointOnShape2(1);
-      std::tuple<int, int, double, double, double> t
-        {e.first, e.second, p2.X(), p2.Y(), p2.Z()};
+      std::tuple<int, int, double, double, double> t{e.first, e.second, p2.X(),
+                                                     p2.Y(), p2.Z()};
       d.insert(std::make_pair(dist.Value(), t));
     }
   }
@@ -5513,8 +5539,8 @@ bool OCC_Internals::getClosestEntities(
 
   int nn = 1;
   for(auto it = d.begin(); it != d.end(); it++, nn++) {
-    outDimTags.push_back(std::make_pair(std::get<0>(it->second),
-                                        std::get<1>(it->second)));
+    outDimTags.push_back(
+      std::make_pair(std::get<0>(it->second), std::get<1>(it->second)));
     distances.push_back(it->first);
     coord.push_back(std::get<2>(it->second));
     coord.push_back(std::get<3>(it->second));
@@ -6580,9 +6606,9 @@ int GModel::readOCCXAO(const std::string &fn)
 {
   if(!_occ_internals) _occ_internals = new OCC_Internals;
 
-    // We cannot use importShapes(fn) directly, as 1) we don't want to apply any
-    // changes to the OCC shape through healing; and 2) we need access to GModel
-    // to make the link between subshapes and model entities
+  // We cannot use importShapes(fn) directly, as 1) we don't want to apply any
+  // changes to the OCC shape through healing; and 2) we need access to GModel
+  // to make the link between subshapes and model entities
 
 #if defined(HAVE_OCC) && defined(HAVE_TINYXML2)
   // get XML elements

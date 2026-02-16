@@ -1758,7 +1758,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
     fprintf(fp, "%10ld", getVertexUNV(k)->getIndex());
     if(k % 8 == 7) fprintf(fp, "\n");
   }
-  if(n - 1 % 8 != 7) fprintf(fp, "\n");
+  if((n - 1) % 8 != 7) fprintf(fp, "\n");
 
   if(physical < 0) reverse();
 }
