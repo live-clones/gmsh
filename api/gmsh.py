@@ -10359,6 +10359,45 @@ class algorithm:
             _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value),
             _ovectordouble(api_steiner_, api_steiner_n_.value))
 
+    @staticmethod
+    def refineTetrahedra(coord, sizeAtNode, tetraIn):
+        """
+        gmsh.algorithm.refineTetrahedra(coord, sizeAtNode, tetraIn)
+
+        Refine the list of tetrahedra given in the vector `tetraIn', using point
+        coordinates `coord' and nodal size field `sizeAtNode'. The new point
+        coordinates are outputed in the `steiner' vector, and the new tetrahedra in
+        the `tetraOut' vector.
+
+        Return `steiner', `tetraOut'.
+
+        Types:
+        - `coord': vector of doubles
+        - `sizeAtNode': vector of doubles
+        - `tetraIn': vector of sizes
+        - `steiner': vector of doubles
+        - `tetraOut': vector of sizes
+        """
+        api_coord_, api_coord_n_ = _ivectordouble(coord)
+        api_sizeAtNode_, api_sizeAtNode_n_ = _ivectordouble(sizeAtNode)
+        api_tetraIn_, api_tetraIn_n_ = _ivectorsize(tetraIn)
+        api_steiner_, api_steiner_n_ = POINTER(c_double)(), c_size_t()
+        api_tetraOut_, api_tetraOut_n_ = POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlgorithmRefineTetrahedra(
+            api_coord_, api_coord_n_,
+            api_sizeAtNode_, api_sizeAtNode_n_,
+            api_tetraIn_, api_tetraIn_n_,
+            byref(api_steiner_), byref(api_steiner_n_),
+            byref(api_tetraOut_), byref(api_tetraOut_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectordouble(api_steiner_, api_steiner_n_.value),
+            _ovectorsize(api_tetraOut_, api_tetraOut_n_.value))
+    refine_tetrahedra = refineTetrahedra
+
 
 class plugin:
     """

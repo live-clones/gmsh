@@ -1094,6 +1094,9 @@ algorithm.add('triangulate', doc, None, ivectordouble('coordinates'), ovectorsiz
 doc = '''Tetrahedralize the points given in the `coordinates' vector as concatenated triplets of x, y, z coordinates, with (optional) constrained triangles given in the `triangles' vector as triplets of indexes (with numbering starting at 1), and return the tetrahedra as concatenated quadruplets of point indexes (with numbering starting at 1) in `tetrahedra'. Steiner points might be added in the `steiner' vector.'''
 algorithm.add('tetrahedralize', doc, None, ivectordouble('coordinates'), ovectorsize('tetrahedra'), ovectordouble('steiner'), ivectorsize('triangles', 'std::vector<std::size_t>()','[]', '[]'))
 
+doc = '''Refine the list of tetrahedra given in the vector `tetraIn', using point coordinates `coord' and nodal size field `sizeAtNode'. The new point coordinates are outputed in the `steiner' vector, and the new tetrahedra in the `tetraOut' vector. '''
+algorithm.add('refineTetrahedra', doc, None, ivectordouble('coord'), ivectordouble('sizeAtNode'), ivectorsize('tetraIn'), ovectordouble('steiner'), ovectorsize('tetraOut'))
+
 ################################################################################
 
 plugin = gmsh.add_module('plugin', 'plugin functions')
