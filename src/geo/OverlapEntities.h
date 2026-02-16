@@ -19,6 +19,7 @@
 #include <unordered_set>
 
 #include "EntityTraits.h"
+#include "MElement.h"
 
 /*
   Overlap entities
@@ -93,7 +94,9 @@ public:
 template <int dim>
 using OverlapCollection =
   std::vector<std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                                 std::unordered_set<MElement *>>>;
+                       std::unordered_set<MElement *, MElementPtrHash,
+                                          MElementPtrEqual>,
+                       GEntityPtrFullHash, GEntityPtrFullEqual>>;
 
 // For each partition, we keep a map from volume entity to face/edges with their
 // parent element. Parent allows a reconstruction of a high-order boundary
@@ -103,7 +106,8 @@ using OveralBoundariesMesh = std::vector<std::unordered_map<
   typename EntityTraits<dim>::Entity *,
   std::unordered_map<typename EntityTraits<dim>::BoundaryMeshObject, MElement *,
                      typename EntityTraits<dim>::BoundaryMeshObjectHash,
-                     typename EntityTraits<dim>::BoundaryMeshObjectEqual>>>;
+                     typename EntityTraits<dim>::BoundaryMeshObjectEqual>,
+  GEntityPtrFullHash, GEntityPtrFullEqual>>;
 
 template <int dim>
 using BoundaryToPartitionEntity =
