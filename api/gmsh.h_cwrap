@@ -6472,6 +6472,33 @@ namespace gmsh { // Top-level functions
       gmshFree(api_triangles_);
     }
 
+    // gmsh::algorithm::refineTetrahedra
+    //
+    // Refine the list of tetrahedra given in the vector `tetraIn', using point
+    // coordinates `coord' and nodal size field `sizeAtNode'. The new point
+    // coordinates are outputed in the `steiner' vector, and the new tetrahedra in
+    // the `tetraOut' vector.
+    inline void refineTetrahedra(const std::vector<double> & coord,
+                                 const std::vector<double> & sizeAtNode,
+                                 const std::vector<std::size_t> & tetraIn,
+                                 std::vector<double> & steiner,
+                                 std::vector<std::size_t> & tetraOut)
+    {
+      int ierr = 0;
+      double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+      double *api_sizeAtNode_; size_t api_sizeAtNode_n_; vector2ptr(sizeAtNode, &api_sizeAtNode_, &api_sizeAtNode_n_);
+      size_t *api_tetraIn_; size_t api_tetraIn_n_; vector2ptr(tetraIn, &api_tetraIn_, &api_tetraIn_n_);
+      double *api_steiner_; size_t api_steiner_n_;
+      size_t *api_tetraOut_; size_t api_tetraOut_n_;
+      gmshAlgorithmRefineTetrahedra(api_coord_, api_coord_n_, api_sizeAtNode_, api_sizeAtNode_n_, api_tetraIn_, api_tetraIn_n_, &api_steiner_, &api_steiner_n_, &api_tetraOut_, &api_tetraOut_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_coord_);
+      gmshFree(api_sizeAtNode_);
+      gmshFree(api_tetraIn_);
+      steiner.assign(api_steiner_, api_steiner_ + api_steiner_n_); gmshFree(api_steiner_);
+      tetraOut.assign(api_tetraOut_, api_tetraOut_ + api_tetraOut_n_); gmshFree(api_tetraOut_);
+    }
+
   } // namespace algorithm
 
   namespace plugin { // Plugin functions

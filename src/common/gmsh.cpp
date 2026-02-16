@@ -8591,6 +8591,16 @@ GMSH_API void gmsh::algorithm::tetrahedralize(
 #endif
 }
 
+GMSH_API void gmsh::algorithm::refineTetrahedra(
+  const std::vector<double> &coord, const std::vector<double> &sizeAtNode, const std::vector<std::size_t> &tetraIn, 
+  std::vector<double> &steiner, std::vector<std::size_t> &tetraOut)
+{
+  if(!_checkInit()) 
+    return;
+  
+  refineTetrahedraHxt(coord, sizeAtNode, tetraIn, steiner, tetraOut);
+}
+
 // gmsh::plugin
 
 GMSH_API void gmsh::plugin::setNumber(const std::string &name,

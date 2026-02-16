@@ -33,6 +33,8 @@ extern "C" {
 #include "hxt_tetOpti.h"
 #include "hxt_tetRepair.h"
 #include "hxt_tetFlag.h"
+#include "hxt_tetRefine.h"
+#include "hxt_tetColor.h"
 }
 
 static int getNumThreads()
@@ -801,6 +803,237 @@ void optimizeMeshHXT(GModel *pModel, double quality, bool flipOnly)
   }
 }
 
+void refineTetrahedraHxt(const std::vector<double> &coord, const std::vector<double> &sizeAtNode, const std::vector<std::size_t> &tetraIn, 
+                         std::vector<double> &steiner, std::vector<std::size_t> &tetraOut)
+{
+  tetraOut.clear();
+  steiner.clear();
+  if(coord.size() % 3) {
+    Msg::Error("Number of coordinates should be a multiple of 3");
+    return;
+  }
+  if(sizeAtNode.size() != coord.size()/3) {
+    Msg::Error("The size field has not the correct size");
+    return;
+  }
+  if(tetraIn.size() % 4) {
+    Msg::Error("Number of tetrahedron points should be a multiple of 4");
+    return;
+  }
+
+  HXTMesh* pMesh = nullptr;
+  HXTStatus ret = hxtMeshCreate(&pMesh);
+  if(ret != HXT_STATUS_OK) {
+    Msg::Error("something went wrong when creating hxt mesh");
+    return;
+  }
+
+  ret = hxtAlignedMalloc(&pMesh->vertices.coord, 4*(coord.size()/3)*sizeof(double));
+  if(ret != HXT_STATUS_OK) {
+    Msg::Error("something went wrong when allocating memory for hxt vertices");
+    hxtMeshDelete(&pMesh);
+    return;
+  }
+  pMesh->vertices.num = coord.size()/3;
+  pMesh->vertices.size = coord.size()/3;
+
+  #pragma omp parallel for schedule(static)
+  for(std::size_t n = 0 ; n < coord.size()/3 ; ++n)
+  {
+    pMesh->vertices.coord[4*n + 0] = coord[3*n + 0];
+    pMesh->vertices.coord[4*n + 1] = coord[3*n + 1];
+    pMesh->vertices.coord[4*n + 2] = coord[3*n + 2];
+    pMesh->vertices.coord[4*n + 3] = 0.0;
+  }
+
+  ret = hxtAlignedMalloc(&pMesh->tetrahedra.node, tetraIn.size()*sizeof(uint32_t));
+  if(ret != HXT_STATUS_OK) {
+    Msg::Error("something went wrong when allocating memory for hxt tetrahedra");
+    hxtAlignedFree(&pMesh->vertices.coord);
+    hxtMeshDelete(&pMesh);
+    return;
+  }
+  pMesh->tetrahedra.num = tetraIn.size()/4;
+  pMesh->tetrahedra.size = tetraIn.size()/4;
+
+  ret = hxtAlignedMalloc(&pMesh->tetrahedra.color, tetraIn.size()/4*sizeof(uint32_t));
+  if(ret != HXT_STATUS_OK) {
+    Msg::Error("something went wrong when allocating memory for hxt tetrahedra colors");
+    hxtAlignedFree(&pMesh->tetrahedra.node);
+    hxtAlignedFree(&pMesh->vertices.coord);
+    hxtMeshDelete(&pMesh);
+    return;
+  }
+
+  ret = hxtAlignedMalloc(&pMesh->tetrahedra.flag, tetraIn.size()/4*sizeof(uint16_t));
+  if(ret != HXT_STATUS_OK) {
+    Msg::Error("something went wrong when allocating memory for hxt tetrahedra colors");
+    hxtAlignedFree(&pMesh->tetrahedra.color);
+    hxtAlignedFree(&pMesh->tetrahedra.node);
+    hxtAlignedFree(&pMesh->vertices.coord);
+    hxtMeshDelete(&pMesh);
+    return;
+  }
+
+  #pragma omp parallel for schedule(static)
+  for(std::size_t t = 0 ; t < tetraIn.size()/4 ; ++t)
+  {
+    pMesh->tetrahedra.node[4*t + 0] = tetraIn[4*t + 0] - 1;
+    pMesh->tetrahedra.node[4*t + 1] = tetraIn[4*t + 1] - 1;
+    pMesh->tetrahedra.node[4*t + 2] = tetraIn[4*t + 2] - 1;
+    pMesh->tetrahedra.node[4*t + 3] = tetraIn[4*t + 3] - 1;
+    pMesh->tetrahedra.color[t] = 0;
+    pMesh->tetrahedra.flag[t] = 0;
+  }
+
+  ret = hxtTetAdjacencies(pMesh);
+  if(ret != HXT_STATUS_OK) {
+    Msg::Error("Something went wrong when computing adjacencies for HXT tetrahedra");
+    hxtAlignedFree(&pMesh->tetrahedra.node);
+    hxtAlignedFree(&pMesh->tetrahedra.color);
+    hxtAlignedFree(&pMesh->tetrahedra.flag);
+    hxtAlignedFree(&pMesh->vertices.coord);
+    hxtMeshDelete(&pMesh);
+    return;  
+  }
+
+  ret = hxtAddGhosts(pMesh);
+  if(ret != HXT_STATUS_OK) {
+    Msg::Error("Something went wrong when computing adjacencies for HXT tetrahedra");
+    hxtAlignedFree(&pMesh->tetrahedra.node);
+    hxtAlignedFree(&pMesh->tetrahedra.color);
+    hxtAlignedFree(&pMesh->tetrahedra.flag);
+    hxtAlignedFree(&pMesh->vertices.coord);
+    hxtMeshDelete(&pMesh);
+    return;  
+  }
+
+  #pragma omp parallel for schedule(static)
+  for(std::size_t t = 0 ; t < pMesh->tetrahedra.num ; ++t)
+  {
+    if(pMesh->tetrahedra.node[4*t + 3] == HXT_GHOST_VERTEX)
+    {
+      setProcessedFlag(pMesh, t);
+      pMesh->tetrahedra.color[t] = HXT_COLOR_OUT;
+    }
+
+    for(uint8_t i = 0 ; i < 4 ; ++i) {
+      if(pMesh->tetrahedra.neigh[4*t + i] == HXT_NO_ADJACENT)
+        setFacetConstraint(pMesh, t, i);
+      else
+      {
+          uint64_t neighElm = pMesh->tetrahedra.neigh[4*t + i]/4;
+          unsigned short neighFace = pMesh->tetrahedra.neigh[4*t + i]%4;
+
+          if(pMesh->tetrahedra.color[t] != pMesh->tetrahedra.color[neighElm])
+          {
+              setFacetConstraint(pMesh, t, i);   
+              setFacetConstraint(pMesh, neighElm, neighFace);   
+          }
+      }
+    }
+  }
+
+  HXTNodalSizes nodalSizes;
+  nodalSizes.array = nullptr;
+  nodalSizes.callback = nullptr;
+  nodalSizes.userData = nullptr;
+  nodalSizes.enabled = 0;
+  nodalSizes.factor = 1;
+  nodalSizes.min = std::numeric_limits<double>::max();
+  nodalSizes.max = std::numeric_limits<double>::lowest();
+  ret = hxtNodalSizesInit(pMesh, &nodalSizes);
+  if(ret != HXT_STATUS_OK) {
+    Msg::Error("Something went wrong when initializing HXT nodal size");
+    hxtAlignedFree(&pMesh->tetrahedra.node);
+    hxtAlignedFree(&pMesh->tetrahedra.color);
+    hxtAlignedFree(&pMesh->tetrahedra.flag);
+    hxtAlignedFree(&pMesh->vertices.coord);
+    hxtMeshDelete(&pMesh);
+    return;  
+  }
+
+  double nodalSizesMax = std::numeric_limits<double>::lowest();
+  double nodalSizesMin = std::numeric_limits<double>::max();
+  #pragma omp parallel for schedule(static) reduction(min: nodalSizesMin) reduction(max: nodalSizesMax)
+  for(uint32_t i = 0 ; i < pMesh->vertices.num ; i++){
+    nodalSizes.array[i] = sizeAtNode[i];
+    nodalSizesMin = std::min(nodalSizesMin, nodalSizes.array[i]);
+    nodalSizesMax = std::max(nodalSizesMax, nodalSizes.array[i]);
+  }
+  nodalSizes.min = nodalSizesMin;
+  nodalSizes.max = nodalSizesMax;
+
+  uint32_t oldVertexSize = pMesh->vertices.num;
+  HXTBbox bbox;
+  hxtBboxInit(&bbox);
+  hxtBboxAdd(&bbox, pMesh->vertices.coord, pMesh->vertices.num);
+  HXTDelaunayOptions delOptions;
+  delOptions.bbox = &bbox;
+  delOptions.delaunayThreads = getNumThreads();
+  delOptions.perfectDelaunay = 0;
+  delOptions.allowOuterInsertion = 0;
+  delOptions.insertionFirst = pMesh->vertices.num;
+  delOptions.numVerticesInMesh = pMesh->vertices.num;
+  delOptions.reproducible = 0;
+  delOptions.verbosity = 2;
+  delOptions.partitionability = 1;
+  delOptions.nodalSizes = &nodalSizes;
+  delOptions.nodalSizes->enabled = 1;
+
+  ret = hxtRefineTetrahedra(pMesh, &delOptions);
+  if(ret != HXT_STATUS_OK) {
+    Msg::Error("Something went wrong when refining tetrahedra using HXT");
+    hxtNodalSizesDestroy(delOptions.nodalSizes);
+    hxtAlignedFree(&pMesh->tetrahedra.node);
+    hxtAlignedFree(&pMesh->tetrahedra.color);
+    hxtAlignedFree(&pMesh->tetrahedra.flag);
+    hxtAlignedFree(&pMesh->vertices.coord);
+    hxtMeshDelete(&pMesh);
+    return;  
+  }
+  hxtNodalSizesDestroy(delOptions.nodalSizes);
+
+  steiner.resize(3*(pMesh->vertices.num - oldVertexSize));
+  #pragma omp parallel for schedule(static)
+  for(uint32_t v = oldVertexSize ; v < pMesh->vertices.num ; ++v)
+  {
+    uint32_t nodeIndex = v - oldVertexSize;
+    steiner[3*nodeIndex + 0] = pMesh->vertices.coord[4*v + 0];
+    steiner[3*nodeIndex + 1] = pMesh->vertices.coord[4*v + 1];
+    steiner[3*nodeIndex + 2] = pMesh->vertices.coord[4*v + 2];
+  }
+
+  std::size_t goodTetraCount = 0;
+  #pragma omp parallel for schedule(static) reduction(+: goodTetraCount)
+  for(uint64_t t = 0 ; t < pMesh->tetrahedra.num ; ++t)
+  {
+    if(pMesh->tetrahedra.color[t] != HXT_COLOR_OUT)
+      goodTetraCount++;
+  }
+
+  tetraOut.resize(4*goodTetraCount);
+  goodTetraCount = 0;
+  for(uint64_t t = 0 ; t < pMesh->tetrahedra.num ; ++t)
+  {
+    if(pMesh->tetrahedra.color[t] == HXT_COLOR_OUT)
+      continue;
+
+    tetraOut[4*goodTetraCount + 0] = pMesh->tetrahedra.node[4*t + 0] + 1;
+    tetraOut[4*goodTetraCount + 1] = pMesh->tetrahedra.node[4*t + 1] + 1;
+    tetraOut[4*goodTetraCount + 2] = pMesh->tetrahedra.node[4*t + 2] + 1;
+    tetraOut[4*goodTetraCount + 3] = pMesh->tetrahedra.node[4*t + 3] + 1;
+
+    goodTetraCount++;
+  }
+
+  hxtAlignedFree(&pMesh->tetrahedra.node);
+  hxtAlignedFree(&pMesh->tetrahedra.color);
+  hxtAlignedFree(&pMesh->tetrahedra.flag);
+  hxtAlignedFree(&pMesh->vertices.coord);
+  hxtMeshDelete(&pMesh);
+}
+
 #else
 
 int meshGRegionHxt(std::vector<GRegion *> &regions)
@@ -819,6 +1052,12 @@ void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
 void optimizeMeshHXT(GModel *pModel, double quality)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");
+}
+
+void refineTetrahedraHxt(const std::vector<double> &coord, const std::vector<double> &sizeAtNode, const std::vector<std::size_t> &tetraIn, 
+                         std::vector<double> &steiner, std::vector<std::size_t> &tetraOut)
+{
+  Msg::Error("Gmsh should be compiled with Hxt to enable this option");  
 }
 
 #endif

@@ -3868,6 +3868,18 @@ namespace gmsh { // Top-level functions
                                  std::vector<double> & steiner,
                                  const std::vector<std::size_t> & triangles = std::vector<std::size_t>());
 
+    // gmsh::algorithm::refineTetrahedra
+    //
+    // Refine the list of tetrahedra given in the vector `tetraIn', using point
+    // coordinates `coord' and nodal size field `sizeAtNode'. The new point
+    // coordinates are outputed in the `steiner' vector, and the new tetrahedra in
+    // the `tetraOut' vector.
+    GMSH_API void refineTetrahedra(const std::vector<double> & coord,
+                                   const std::vector<double> & sizeAtNode,
+                                   const std::vector<std::size_t> & tetraIn,
+                                   std::vector<double> & steiner,
+                                   std::vector<std::size_t> & tetraOut);
+
   } // namespace algorithm
 
   namespace plugin { // Plugin functions
