@@ -203,16 +203,11 @@ void gmshQuadricPlane::compute(std::vector<SPoint3> &p)
 
 double gmshQuadricPlane::distance(const SPoint3 &p)
 {
-  //  printf("p(%g %g %g) -- plane %g x + %g y + %g z + %g =
-  //  0\n",p.x(),p.y(),p.z(),meanPlane.a,meanPlane.b,meanPlane.c,meanPlane.d);
   double norm = sqrt(meanPlane.a * meanPlane.a + meanPlane.b * meanPlane.b +
                      meanPlane.c * meanPlane.c);
   double dist = fabs(meanPlane.a * p.x() + meanPlane.b * p.y() +
                      meanPlane.c * p.z() - meanPlane.d) /
                 norm;
-  //  printf("p(%g %g %g) -- plane %g x + %g y + %g z + %g = 0 DIST
-  //  %22.15E\n",p.x(),p.y(),p.z(),meanPlane.a,meanPlane.b,meanPlane.c,meanPlane.d,
-  //  dist);
   return dist;
 }
 
@@ -229,7 +224,6 @@ void gmshQuadricCylinder::compute(std::vector<SPoint3> &points)
 
 double gmshQuadricCylinder::distance(const SPoint3 &p)
 {
-  //  printf("distance = %22.15E\n", crossprod (D,(p-P)).norm() - R);
   return fabs(crossprod(D, (p - P)).norm() - R);
 }
 
@@ -238,7 +232,7 @@ void discoverQuadric(GFace *gf, int typeOfQuadric,
                      std::size_t minn)
 {
   std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan> cont;
-  printf("face %d -- %lu triangles\n", gf->tag(), gf->triangles.size());
+  printf("face %d -- %zu triangles\n", gf->tag(), gf->triangles.size());
 
   for(auto t : gf->triangles) {
     for(int i = 0; i < t->getNumEdges(); i++) {
@@ -246,7 +240,7 @@ void discoverQuadric(GFace *gf, int typeOfQuadric,
     }
   }
 
-  printf("face %d -- %lu edges\n", gf->tag(), cont.size());
+  printf("face %d -- %zu edges\n", gf->tag(), cont.size());
 
   int iter = 0;
   while(iter < (int)(gf->triangles.size() - _classified.size())) {
@@ -275,8 +269,6 @@ void discoverQuadric(GFace *gf, int typeOfQuadric,
 
     while(!_stack.empty()) {
       auto t = _stack.top();
-      //      printf("%lu %lu %lu
-      //      \n",t->getVertex(0)->getNum(),t->getVertex(1)->getNum(),t->getVertex(2)->getNum());
       _quadric.push_back(t);
       _stack.pop();
       for(int k = 0; k < 3; k++) {
@@ -305,7 +297,7 @@ void discoverQuadric(GFace *gf, int typeOfQuadric,
       }
     }
     if(_quadric.size() > minn || _quadric.size() == gf->triangles.size()) {
-      printf("iter %d _quadric.size() = %lu\n", iter, _quadric.size());
+      printf("iter %d _quadric.size() = %zu\n", iter, _quadric.size());
       std::string fn = gmshQ->name() + std::to_string(iter) + ".pos";
       FILE *f = fopen(fn.c_str(), "w");
       fprintf(f, "View \"%s \"{\n", gmshQ->name().c_str());

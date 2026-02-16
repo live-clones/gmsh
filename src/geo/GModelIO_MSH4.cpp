@@ -3485,7 +3485,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp,
       fprintf(fp, "\n");
     }
     else {
-      fprintf(fp, "%ld\n", ghostCells.size());
+      fprintf(fp, "%zu\n", ghostCells.size());
 
       for(auto it = ghostCells.begin(); it != ghostCells.end(); ++it) {
         fprintf(fp, "%zu %d %ld", it->first->getNum(), it->second[0],

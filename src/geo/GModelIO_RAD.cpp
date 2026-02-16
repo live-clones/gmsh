@@ -116,7 +116,7 @@ int GModel::writeRAD(const std::string &name, int saveAll,
       writeElementsRAD(fp, *it, (*it)->prisms, saveAll & 0x40);
     }
 
-  std::map<int, std::vector<GEntity *> > groups[4];
+  std::map<int, std::vector<GEntity *>> groups[4];
   getPhysicalGroups(groups);
 
   int setid = 0;
@@ -132,14 +132,16 @@ int GModel::writeRAD(const std::string &name, int saveAll,
           for(std::size_t i = 0; i < entities.size(); i++) {
             for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
               MElement *e = entities[i]->getMeshElement(j);
-              if(e->getNumVertices() == 3) { // Process only SH3N elements (3 vertices)
+              if(e->getNumVertices() == 3) {
+                // Process only SH3N elements (3 vertices)
                 if(!n) {
-                  fprintf(fp, "/GRSH3N/SH3N/%d\n%s", ++setid, physicalName(this, dim, it->first).c_str());
+                  fprintf(fp, "/GRSH3N/SH3N/%d\n%s", ++setid,
+                          physicalName(this, dim, it->first).c_str());
                 }
                 if(!(n % 8))
-                  fprintf(fp, "\n%10ld", e->getNum());
+                  fprintf(fp, "\n%10zu", e->getNum());
                 else
-                  fprintf(fp, "%10ld", e->getNum());
+                  fprintf(fp, "%10zu", e->getNum());
                 n++;
               }
             }
@@ -160,14 +162,16 @@ int GModel::writeRAD(const std::string &name, int saveAll,
           for(std::size_t i = 0; i < entities.size(); i++) {
             for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
               MElement *e = entities[i]->getMeshElement(j);
-              if(e->getNumVertices() == 4) { // Process only SHEL elements (4 vertices)
+              if(e->getNumVertices() == 4) {
+                // Process only SHEL elements (4 vertices)
                 if(!n) {
-                  fprintf(fp, "/GRSHEL/SHEL/%d\n%s", ++setid, physicalName(this, dim, it->first).c_str());
+                  fprintf(fp, "/GRSHEL/SHEL/%d\n%s", ++setid,
+                          physicalName(this, dim, it->first).c_str());
                 }
                 if(!(n % 8))
-                  fprintf(fp, "\n%10ld", e->getNum());
+                  fprintf(fp, "\n%10zu", e->getNum());
                 else
-                  fprintf(fp, "%10ld", e->getNum());
+                  fprintf(fp, "%10zu", e->getNum());
                 n++;
               }
             }
@@ -189,14 +193,16 @@ int GModel::writeRAD(const std::string &name, int saveAll,
           for(std::size_t i = 0; i < entities.size(); i++) {
             for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
               MElement *e = entities[i]->getMeshElement(j);
-              if(e->getDim() == 3) { // Process only BRIC elements with three dimensions
+              if(e->getDim() == 3) {
+                // Process only BRIC elements with three dimensions
                 if(!n) {
-                  fprintf(fp, "/GRBRIC/BRIC/%d\n%s", ++setid, physicalName(this, dim, it->first).c_str());
+                  fprintf(fp, "/GRBRIC/BRIC/%d\n%s", ++setid,
+                          physicalName(this, dim, it->first).c_str());
                 }
                 if(!(n % 8))
-                  fprintf(fp, "\n%10ld", e->getNum());
+                  fprintf(fp, "\n%10zu", e->getNum());
                 else
-                  fprintf(fp, "%10ld", e->getNum());
+                  fprintf(fp, "%10zu", e->getNum());
                 n++;
               }
             }
@@ -223,9 +229,9 @@ int GModel::writeRAD(const std::string &name, int saveAll,
             }
           }
         }
-        if (!hasNodes) continue; // Skip empty sets
-        fprintf(fp, "/GRNOD/NODE/%d\n%s",
-                ++setid, physicalName(this, dim, it->first).c_str());
+        if(!hasNodes) continue; // Skip empty sets
+        fprintf(fp, "/GRNOD/NODE/%d\n%s", ++setid,
+                physicalName(this, dim, it->first).c_str());
         int n = 0;
         for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
           if(!(n % 8))

@@ -70,7 +70,7 @@ static HXTStatus ReadNodesFromGmsh(FILE *fp,  HXTMesh* m)
   // scan for Nodes
   m->vertices.num = 0;
   while( fgets(buf, BUFSIZ, fp )!=NULL){
-    
+
     if(strstr(buf, "$Nodes")){
       if(fgets(buf, BUFSIZ, fp )==NULL)
         return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to read line");
@@ -86,7 +86,7 @@ static HXTStatus ReadNodesFromGmsh(FILE *fp,  HXTMesh* m)
       }
       break;
     }
-  }  
+  }
   return HXT_STATUS_OK;
 }
 
@@ -95,7 +95,7 @@ static HXTStatus ReadMeshFormatFromGmsh(FILE *fp)
 {
   char buf[BUFSIZ];
   int found = 0;
-  while(fgets(buf, BUFSIZ, fp )){    
+  while(fgets(buf, BUFSIZ, fp )){
     if(strstr(buf, "$MeshFormat")){
       if(fgets(buf, BUFSIZ, fp )==NULL)
         return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to format");
@@ -114,7 +114,7 @@ static HXTStatus ReadMeshFormatFromGmsh(FILE *fp)
 
   return HXT_STATUS_OK;
 }
-  
+
 
 // TODO: add possibility to read the elements from an array
 
@@ -124,7 +124,7 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
 {
   int k;
   char buf[BUFSIZ];
-  
+
   rewind (fp);
 
   m->lines.num = 0;
@@ -132,11 +132,11 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
   m->triangles.num = 0;
   m->tetrahedra.num = 0;
 
-  while(fgets(buf, BUFSIZ, fp )){    
+  while(fgets(buf, BUFSIZ, fp )){
     if(strstr(buf, "$Elements")){
       if(fgets(buf, BUFSIZ, fp )==NULL)
-        return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to read line");    
-      int tmpK = atoi(buf);      
+        return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to read line");
+      int tmpK = atoi(buf);
       for(k=0;k<tmpK;++k){
         int etype = 0;
         if(fgets(buf, BUFSIZ, fp )==NULL)
@@ -158,14 +158,14 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
         else {
           return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "unsupported element. HXT only support points, lines, triangles and tetrahedra.");
         }
-      }      
+      }
       break;
     }
   }
-  
+
   rewind (fp);
 
-  
+
   // prescan for elements
   if (m->tetrahedra.num){
     HXT_CHECK( hxtAlignedMalloc(&m->tetrahedra.node, (m->tetrahedra.num)*4*sizeof(uint32_t)) );
@@ -193,28 +193,28 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
     if (m->points.node == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
     m->points.size = m->points.num;
   }
-        
+
   while( fgets(buf, BUFSIZ, fp )){
 
     if(strstr(buf, "$Elements")){
       if(fgets(buf, BUFSIZ, fp )==NULL)
         return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to read line");
-      
+
       int tmpK = atoi(buf);
       m->tetrahedra.num=0;
       m->triangles.num=0;
       m->lines.num=0;
       m->points.num=0;
-      
+
       for(k=0;k<tmpK;++k){
         int etype = 0, ntags;
         if(fgets(buf, BUFSIZ, fp )==NULL)
           return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to read line");
         sscanf(buf, "%*d %d %d", &etype, &ntags);
         if(etype==TETID){ // tets
-          if(ntags==2){ // 
+          if(ntags==2){ //
             int a, b, c, d, color;
-            sscanf(buf, "%*d %*d %*d %*d %d  %d %d %d %d", 
+            sscanf(buf, "%*d %*d %*d %*d %d  %d %d %d %d",
                    &color,&a, &b, &c, &d);
             m->tetrahedra.node[4*m->tetrahedra.num+0] = a-1;
             m->tetrahedra.node[4*m->tetrahedra.num+1] = b-1;
@@ -225,9 +225,9 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
           ++m->tetrahedra.num;
         }
         else if(etype==TRIID){ // triangles
-          if(ntags==2){ // 
+          if(ntags==2){ //
             int a, b, c, color;
-            sscanf(buf, "%*d %*d %*d %*d %d  %d %d %d", 
+            sscanf(buf, "%*d %*d %*d %*d %d  %d %d %d",
                    &color,&a, &b, &c);
             m->triangles.node[3*m->triangles.num+0] = a-1;
             m->triangles.node[3*m->triangles.num+1] = b-1;
@@ -237,9 +237,9 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
           ++m->triangles.num;
         }
         else if(etype==LINEID){ // lines
-          if(ntags==2){ // 
+          if(ntags==2){ //
             int a, b, color;
-            sscanf(buf, "%*d %*d %*d %*d %d  %d %d", 
+            sscanf(buf, "%*d %*d %*d %*d %d  %d %d",
             &color, &a, &b);
             m->lines.node[2*m->lines.num+0] = a-1;
             m->lines.node[2*m->lines.num+1] = b-1;
@@ -248,7 +248,7 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
           ++m->lines.num;
         }
         else if(etype==POINTID){ // points
-          if(ntags==2){ // 
+          if(ntags==2){ //
             int a;
             sscanf(buf, "%*d %*d %*d %*d %*d  %d",&a);
             m->points.node[m->points.num] = a-1;
@@ -258,7 +258,7 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
           ++m->points.num;
         }
         else return HXT_STATUS_READ_ERROR;
-      }      
+      }
       break;
     }
   }
@@ -280,7 +280,7 @@ HXTStatus  hxtMeshReadGmsh  ( HXTMesh* m , const char *filename) {
 
   HXT_CHECK(
     ReadElementsFromGmsh(f, m));
-  
+
   fclose (f);
   return HXT_STATUS_OK;
 }
@@ -300,7 +300,7 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
                "$EndMeshFormat\n"
                "$Nodes\n"
                "%u\n",(unsigned) sizeof(double), mesh->vertices.num);
-  
+
   { /* print the nodes */
     uint32_t i;
     for (i=0; i<mesh->vertices.num; i++)
@@ -320,7 +320,7 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
         ++numRealTet;
     }
   }
-  
+
   fprintf(file,"$EndNodes\n"
           "$Elements\n"
           "%" HXTu64 "\n",
@@ -331,10 +331,10 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
           );
 
   { /* print the elements */
-    
+
     uint64_t index = 0;
     for (i=0; i<mesh->points.num; i++){
-      fprintf(file,"%lu %u 2 0 %u %u\n", ++index,POINTID,
+      fprintf(file,"%" HXTu64 " %u 2 0 %u %u\n", ++index,POINTID,
               mesh->points.node[i]+1,
               mesh->points.node[i]+1);
     }
@@ -376,4 +376,3 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
   fclose(file);
   return HXT_STATUS_OK;
 }
-
