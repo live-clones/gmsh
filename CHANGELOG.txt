@@ -1,5 +1,12 @@
-(Work-in-progress): improved handling of anisotropic surface meshes in 3D
-Delaunay; Gmsh now requires C++17 and CMake 3.10, and uses Eigen 5.0 by default.
+(Work-in-progress): added support for partition overlaps; added IO of edges and
+faces in MSH4 file format; added ability to save only local partitioned Brep in
+MSH4 files; improved handling of anisotropic surface meshes in 3D Delaunay; Gmsh
+now requires C++17 and CMake 3.10, and uses Eigen 5.0 by default.
+
+* New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
+  mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent
+
+* Incompatible API changes: new optional argument to mesh/optimize
 
 4.15.0 (October 26, 2025): new Closest, Parametric Point and Normal parser
 functions; changed Boundary and CombinedBoundary parser functions to not return
