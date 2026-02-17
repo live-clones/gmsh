@@ -23,7 +23,8 @@
 StringXNumber BoundaryLayerOptions_Number[] = {
   {GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
   {GMSH_FULLRC, "Size", nullptr, 1.e-3},
-  {GMSH_FULLRC, "Ratio", nullptr, 1.2}};
+  {GMSH_FULLRC, "Ratio", nullptr, 1.2},
+  {GMSH_FULLRC, "SmoothingLayers", nullptr, 2.}};
 
 StringXString BoundaryLayerOptions_String[] = {
   {GMSH_FULLRC, "Volumes", nullptr, ""},
@@ -117,11 +118,42 @@ static void getEmbeddedStructure (GModel *m, std::map<GVertex*,std::vector<GFace
   }
 }
 
+static void replaceFaces (GModel *gm ,
+			  std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split){
+  for(GModel::fiter fit = gm->firstFace() ; fit != gm->lastFace() ; ++fit) {
+    GFace *gf = (*fit);
+
+    std::vector<MQuadrangle*> newVec;
+    for (auto q : gf->quadrangles){
+      bool found = false;
+      for (size_t i = 0 ; i< 4 ;i++){
+	MEdge ei  = q->getEdge(i);
+	MEdge ei2 = q->getEdge((i+2)%4);
+	auto it0 = split.find(ei);
+	auto it1 = split.find(ei2);
+	if(it0 != split.end() && it1 != split.end()) {	
+	  for(size_t j = 0; j < it0->second.size() - 1; j++){
+	    newVec.push_back(new MQuadrangle(it0->second[j], it0->second[j + 1],
+					     it1->second[j + 1],it1->second[j]));
+	  
+	  }
+	  found = true;
+	}
+      }
+      if (found) delete q;
+      else newVec.push_back(q);	  
+    }
+    gf->quadrangles = newVec;
+  }
+}
+  
+
+
 static void replaceEdges (GModel *gm ,
 			  std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split){
   for(GModel::eiter eit = gm->firstEdge() ; eit != gm->lastEdge() ; ++eit) {
     GEdge *ge = (*eit);
-    printf("%d\n",ge->tag());
+    if (ge->lines.empty())continue;
     MLine *l0 = ge->lines.front();
     MLine *l1 = ge->lines.back();
     MEdge m0 = MEdge(l0->getVertex(0), l0->getVertex(1));
@@ -390,6 +422,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 	  }
 	  if (!bs[i]) {
 	    bs[i] = new MVertex (vs[i]->x(),vs[i]->y(),vs[i]->z(),gr);
+	    gr->mesh_vertices.push_back(bs[i]);
 	    spawned[vs[i]].push_back(bs[i]);
 	    //	    Msg::Error("no counterpart vertex for %d",vs[i]->getNum());
 	  }
@@ -904,12 +937,10 @@ namespace {
 static void expandBL(
   GFace *gf,
   std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes,
-  std::map<MElement *, double> &layers, std::vector<GFace *> &inSurfaces)
+  std::map<MElement *, double> &layers, std::vector<GFace *> &inSurfaces, size_t nRings)
 {
   //  printf("layer size %zu\n",layers.size());
   //  std::vector<double> areas;
-
-  constexpr size_t nRings = 3;
 
   std::set<MElement *, MElementPtrLessThan> toProcess;
   std::set<MVertex *, MVertexPtrLessThan> fixed;
@@ -1096,13 +1127,11 @@ inline double tet_volume(const std::array<double,3>& a,
 static void expandBL3D(
   GRegion *gr,
   std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes3D,
-  std::map<MElement *, double> &layers)
+  std::map<MElement *, double> &layers, size_t nRings)
 {
   //  printf("layer size %zu\n",layers.size());
   //  std::vector<double> areas;
 
-  constexpr size_t nRings = 1;
-  
   std::set<MElement *, MElementPtrLessThan> toProcess;
   std::set<MVertex *, MVertexPtrLessThan> fixed;
   buildUntangleSets(gr, /*targetDim=*/3, layers, nRings, toProcess, fixed);
@@ -1212,7 +1241,6 @@ static void expandBL3D(
   }
 }
 
-
 static std::vector<MVertex *>
 splitedge(MEdge me,
           std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
@@ -1220,7 +1248,7 @@ splitedge(MEdge me,
 {
   auto it = split.find(me);
   if(it != split.end()) return it->second;
-
+  
   std::vector<MVertex *> vs;
   vs.push_back(me.getVertex(0));
   if(me.getVertex(1)->onWhat()->dim() == 3) {
@@ -1394,8 +1422,7 @@ void splitounette3D(std::vector<GRegion *> &r,
   printf("repladceEdges\n");
   replaceEdges (r[0]->model(), split);
   printf("repladceEdges\n");
-  
-
+  replaceFaces (r[0]->model(), split);  
 }
 
 
@@ -1656,7 +1683,12 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   double thickness = BoundaryLayerOptions_Number[0].def;
   double size = BoundaryLayerOptions_Number[1].def;
   double ratio = BoundaryLayerOptions_Number[2].def;
-
+  int numLayers = (int)BoundaryLayerOptions_Number[3].def;
+  if (numLayers < 1){
+    Msg::Warning("Hey ! at least one smoothing layer dude ...");
+    numLayers = 1;
+  }
+  
   std::map<MElement *, double> layers;
 
   //  printf("perfectshapes = %zu\n",perfectShapes.size());
@@ -1693,16 +1725,16 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   if (r.empty()){
     computePerfectShapes (f,perfectShapes);
-    for(auto gf : f) expandBL(gf, perfectShapes, layers, f);
+    for(auto gf : f) expandBL(gf, perfectShapes, layers, f, numLayers);
   }
   else{
     computePerfectShapes (toExpand,perfectShapes);
     for(auto gf : toExpand) {
-      expandBL(gf, perfectShapes, layers, toExpand);
+      expandBL(gf, perfectShapes, layers, toExpand, numLayers);
     }
     computePerfectShapes (r,perfectShapes3D);
     for(auto gr : r) {
-      expandBL3D(gr, perfectShapes3D, layers);
+      expandBL3D(gr, perfectShapes3D, layers, numLayers);
     }
   }
 
