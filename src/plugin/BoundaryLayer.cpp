@@ -117,6 +117,39 @@ static void getEmbeddedStructure (GModel *m, std::map<GVertex*,std::vector<GFace
   }
 }
 
+static void replaceEdges (GModel *gm ,
+			  std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split){
+  for(GModel::eiter eit = gm->firstEdge() ; eit != gm->lastEdge() ; ++eit) {
+    GEdge *ge = (*eit);
+    printf("%d\n",ge->tag());
+    MLine *l0 = ge->lines.front();
+    MLine *l1 = ge->lines.back();
+    MEdge m0 = MEdge(l0->getVertex(0), l0->getVertex(1));
+    MEdge m1 = MEdge(l1->getVertex(0), l1->getVertex(1));
+    auto it0 = split.find(m0);
+    auto it1 = split.find(m1);
+    
+    if(it0 != split.end()) {
+      printf("coucou %d %d\n",ge->tag(),l0->getVertex(0)->onWhat()->dim());
+      std::vector<MLine *> old = ge->lines;
+      ge->lines.clear();
+      for(size_t j = 0; j < it0->second.size() - 1; j++)
+	ge->lines.push_back(new MLine(it0->second[j], it0->second[j + 1]));
+      for(size_t j = 1; j < old.size(); j++) ge->lines.push_back(old[j]);
+      delete old.front();
+    }
+    if(it1 != split.end()) {
+      	printf("poucou %d %d\n",ge->tag(),l1->getVertex(0)->onWhat()->dim());
+      size_t s = it1->second.size();
+      ge->lines.back()->setVertex(0, it1->second[s - 2]);
+      for(size_t j = 2; j < s; j++)
+	ge->lines.push_back(
+			    new MLine(it1->second[s - j], it1->second[s - j - 1]));
+    }
+  }
+}
+  
+  
 bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           std::vector<GRegion *> &inVolumes, double thickness,
           std::map<MElement *, double> &layers,
@@ -1356,39 +1389,12 @@ void splitounette3D(std::vector<GRegion *> &r,
         }
       }
     }
-
-    printf("splitounette3D 2\n");
-
-    auto edges = gr->edges();
-    for(auto ge : edges) {
-      MLine *l0 = ge->lines.front();
-      MLine *l1 = ge->lines.back();
-      MEdge m0 = MEdge(l0->getVertex(0), l0->getVertex(1));
-      MEdge m1 = MEdge(l1->getVertex(0), l1->getVertex(1));
-      auto it0 = split.find(m0);
-      auto it1 = split.find(m1);
-
-      if(it0 != split.end()) {
-        std::vector<MLine *> old = ge->lines;
-        ge->lines.clear();
-        for(size_t j = 0; j < it0->second.size() - 1; j++)
-          ge->lines.push_back(new MLine(it0->second[j], it0->second[j + 1]));
-        for(size_t j = 1; j < old.size(); j++) ge->lines.push_back(old[j]);
-        delete old.front();
-      }
-      if(it1 != split.end()) {
-        //	printf("poucou %d
-        //%d\n",ge->tag(),l1->getVertex(0)->onWhat()->dim());
-        size_t s = it1->second.size();
-        ge->lines.back()->setVertex(0, it1->second[s - 2]);
-        for(size_t j = 2; j < s; j++)
-          ge->lines.push_back(
-            new MLine(it1->second[s - j], it1->second[s - j - 1]));
-      }
-    }    
   }
 
-  printf("splitounette3D 2\n");
+  printf("repladceEdges\n");
+  replaceEdges (r[0]->model(), split);
+  printf("repladceEdges\n");
+  
 
 }
 
