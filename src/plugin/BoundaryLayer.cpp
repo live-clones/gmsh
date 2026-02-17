@@ -9,6 +9,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "MHexahedron.h"
 #include "MPrism.h"
 #include "meshGEdge.h"
 #include "BoundaryLayer.h"
@@ -85,7 +86,6 @@ static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
 }
 
 const int _debugBL3D = 1;
-
 
 static void getEmbeddedStructure (GModel *m, std::map<GVertex*,std::vector<GFace*> > & v2f,
 				  std::map<GEdge*,std::vector<GFace*> > & e2f,
@@ -800,6 +800,73 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
   return true;
 }
 
+
+namespace {
+
+  inline bool elementTouchesVertexSet(MElement *e,
+				      std::set<MVertex *, MVertexPtrLessThan> &touched)
+  {
+    for(size_t j = 0; j < e->getNumVertices(); ++j)
+      if(touched.find(e->getVertex(j)) != touched.end()) return true;
+    return false;
+  }
+  
+  template <class GEntityT>
+  static void buildUntangleSets(
+				GEntityT *ge,
+				int targetDim, // 2 for faces, 3 for regions
+				const std::map<MElement *, double> &layers,
+				size_t nRings, // how many adjacency expansions
+				std::set<MElement *, MElementPtrLessThan> &toProcess,
+				std::set<MVertex *, MVertexPtrLessThan> &fixed)
+  {
+    std::set<MVertex *, MVertexPtrLessThan> touched;
+    
+    // 1) seed touched with vertices of BL elements
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
+      MElement *e = ge->getMeshElement(i);
+      if(layers.find(e) == layers.end()) continue;
+      for(size_t j = 0; j < e->getNumVertices(); ++j)
+	touched.insert(e->getVertex(j));
+    }
+    
+    // 2) expand neighborhood by nRings
+    for(size_t ring = 0; ring < nRings; ++ring) {
+      std::set<MVertex *, MVertexPtrLessThan> newlyTouched;
+      
+      for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
+	MElement *e = ge->getMeshElement(i);
+	if(!elementTouchesVertexSet(e, touched)) continue;
+	
+	toProcess.insert(e);
+	for(size_t j = 0; j < e->getNumVertices(); ++j)
+	  newlyTouched.insert(e->getVertex(j));
+      }
+      
+      touched.insert(newlyTouched.begin(), newlyTouched.end());
+    }
+    
+    // 3) build fixed = vertices of elements not processed + vertices not classified on targetDim
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
+      MElement *e = ge->getMeshElement(i);
+      
+      if(toProcess.find(e) == toProcess.end()) {
+	for(size_t j = 0; j < e->getNumVertices(); ++j)
+	  fixed.insert(e->getVertex(j));
+      }
+      
+      for(size_t j = 0; j < e->getNumVertices(); ++j) {
+	MVertex *v = e->getVertex(j);
+	if(v->onWhat()->dim() != targetDim) fixed.insert(v);
+      }
+    }
+  }
+  
+} // namespace
+
+
+
+
 static void expandBL(
   GFace *gf,
   std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes,
@@ -808,53 +875,11 @@ static void expandBL(
   //  printf("layer size %lu\n",layers.size());
   //  std::vector<double> areas;
 
-  // Get all vertices on the BL
-  std::set<MVertex*,MVertexPtrLessThan> touched;
-  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-    MElement *e = gf->getMeshElement(i);
-    auto it = layers.find(e);
-    if(it != layers.end()) {
-      for (size_t j=0;j<e->getNumVertices();j++){
-	touched.insert(e->getVertex(j));
-      }
-    }
-  }
-  const size_t nLayers = 3;
-  std::set<MElement*,MElementPtrLessThan> toProcess;
-  for (size_t LAYER=0;LAYER<nLayers;LAYER++){ 
-    std::set<MVertex*,MVertexPtrLessThan> layer_touched;
-    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-      MElement *e = gf->getMeshElement(i);
-      bool found = false;
-      for (size_t j=0;j<e->getNumVertices();j++){
-	if (touched.find(e->getVertex(j)) != touched.end()) {found = true; break;}
-      }
-      if (found){
-	toProcess.insert(e);
-	for (size_t j=0;j<e->getNumVertices();j++){
-	  layer_touched.insert(e->getVertex(j));
-	}
-      }
-    }
-    touched.insert(layer_touched.begin(),layer_touched.end());
-  }
+  constexpr size_t nRings = 3;
 
-  Msg::Info("Surface %d -- %d elements among %d will be untangled",
-	    gf->tag(),toProcess.size(),gf->getNumMeshElements());
-  
-  std::set<MVertex*,MVertexPtrLessThan> fixed;
-  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-    MElement *e = gf->getMeshElement(i);
-    if (toProcess.find(e) == toProcess.end()){
-      for (size_t j=0;j<e->getNumVertices();j++){
-	fixed.insert(e->getVertex(j));
-      }
-    }
-    for (size_t j=0;j<e->getNumVertices();j++){
-      if (e->getVertex(j)->onWhat()->dim() != 2) fixed.insert(e->getVertex(j));
-    }
-  }
-    
+  std::set<MElement *, MElementPtrLessThan> toProcess;
+  std::set<MVertex *, MVertexPtrLessThan> fixed;
+  buildUntangleSets(gf, /*targetDim=*/2, layers, nRings, toProcess, fixed);
   
   std::vector<std::array<std::array<double, 2>, 3>> sh;
   for(auto e : toProcess) {
@@ -1041,56 +1066,12 @@ static void expandBL3D(
 {
   //  printf("layer size %lu\n",layers.size());
   //  std::vector<double> areas;
-
-
-  std::set<MVertex*,MVertexPtrLessThan> touched;
-  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
-    MElement *e = gr->getMeshElement(i);
-    auto it = layers.find(e);
-    if(it != layers.end()) {
-      for (size_t j=0;j<e->getNumVertices();j++){
-	touched.insert(e->getVertex(j));
-      }
-    }
-  }
-
-  const size_t nLayers = 1;
-  std::set<MElement*,MElementPtrLessThan> toProcess;
-  for (size_t LAYER=0;LAYER<nLayers;LAYER++){ 
-    std::set<MVertex*,MVertexPtrLessThan> layer_touched;
-    for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
-      MElement *e = gr->getMeshElement(i);
-      bool found = false;
-      for (size_t j=0;j<e->getNumVertices();j++){
-	if (touched.find(e->getVertex(j)) != touched.end()) {found = true; break;}
-      }
-      if (found){
-	toProcess.insert(e);
-	for (size_t j=0;j<e->getNumVertices();j++){
-	  layer_touched.insert(e->getVertex(j));
-	}
-      }
-    }
-    touched.insert(layer_touched.begin(),layer_touched.end());
-  }
-
-  Msg::Info("Volume %d -- %d elements among %d will be untangled",
-	    gr->tag(),toProcess.size(),gr->getNumMeshElements());
+  constexpr size_t nRings = 1;
   
-  std::set<MVertex*,MVertexPtrLessThan> fixed;
-  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
-    MElement *e = gr->getMeshElement(i);
-    if (toProcess.find(e) == toProcess.end()){
-      for (size_t j=0;j<e->getNumVertices();j++){
-	fixed.insert(e->getVertex(j));
-      }
-    }
-    for (size_t j=0;j<e->getNumVertices();j++){
-      if (e->getVertex(j)->onWhat()->dim() != 3) fixed.insert(e->getVertex(j));
-    }
-  }
-
-
+  std::set<MElement *, MElementPtrLessThan> toProcess;
+  std::set<MVertex *, MVertexPtrLessThan> fixed;
+  buildUntangleSets(gr, /*targetDim=*/3, layers, nRings, toProcess, fixed);
+  
   std::vector<std::array<std::array<double, 3>, 4>> sh;
   for(auto e : toProcess) {
 
@@ -1236,6 +1217,170 @@ splitedge(MEdge me,
   return vs;
 }
 
+void splitounette3D(std::vector<GRegion *> &r,
+                    std::map<MElement *, double> &layers,
+                    std::vector<double> &widths)
+{
+  std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> split;
+
+  // Build normalized cumulative parameters t in (0,1)
+  std::vector<double> t;
+  double tot = 0.0;
+  for(double w : widths) tot += w;
+
+  double wloc = 0.0;
+  for(double w : widths) {
+    wloc += w;
+    t.push_back(wloc / tot);
+  }
+
+  printf("splitounette3D 2\n");
+  
+  for(auto gr : r) {
+    // Copy pointers first (like in splitounette) to avoid iterating on growing vectors
+    std::vector<MElement *> temp;
+    for(size_t i = 0; i < gr->getNumMeshElements(); ++i)
+      temp.push_back(gr->getMeshElement(i));
+
+    for(size_t i = 0; i < temp.size(); ++i) {
+      MElement *e = temp[i];
+      auto itL = layers.find(e);
+      if(itL == layers.end()) continue;
+
+      const int nv = (int)e->getNumVertices();
+
+      // -----------------------------
+      // PRISM: (0,1,2) bottom, (3,4,5) top
+      // -----------------------------
+      if(nv == 6) {
+        MVertex *b0 = e->getVertex(0);
+        MVertex *b1 = e->getVertex(1);
+        MVertex *b2 = e->getVertex(2);
+        MVertex *t0 = e->getVertex(3);
+        MVertex *t1 = e->getVertex(4);
+        MVertex *t2 = e->getVertex(5);
+
+	//	printf("nv = 6 %d %d %d %d %d %d\n",b0->getNum(),b1->getNum(),b2->getNum(),
+	//	       t0->getNum(),t1->getNum(),t2->getNum())
+
+
+        // split the 3 "vertical" edges
+        std::vector<MVertex *> p0 = splitedge(MEdge(b0, t0), split, t);
+        std::vector<MVertex *> p1 = splitedge(MEdge(b1, t1), split, t);
+        std::vector<MVertex *> p2 = splitedge(MEdge(b2, t2), split, t);
+
+        // p?.size() should be widths.size()+1 (if splitedge returns both endpoints)
+        // We create slabs between index j and j+1
+        for(size_t j = 0; j < p0.size() - 1; ++j) {
+          MVertex *vb0 = p0[j];
+          MVertex *vb1 = p1[j];
+          MVertex *vb2 = p2[j];
+          MVertex *vt0 = p0[j + 1];
+          MVertex *vt1 = p1[j + 1];
+          MVertex *vt2 = p2[j + 1];
+
+          if(j == 0) {
+            // reuse original element as first layer
+            e->setVertex(0, vb0);
+            e->setVertex(1, vb1);
+            e->setVertex(2, vb2);
+            e->setVertex(3, vt0);
+            e->setVertex(4, vt1);
+            e->setVertex(5, vt2);
+            layers[e] = widths[j];
+          }
+          else {
+            MPrism *p = new MPrism(vb0, vb1, vb2, vt0, vt1, vt2);
+            gr->prisms.push_back(p);
+            layers[p] = widths[j];
+          }
+        }
+      }
+
+      // -----------------------------
+      // HEX: (0,1,2,3) bottom, (4,5,6,7) top
+      // -----------------------------
+      else if(nv == 8) {
+        MVertex *b0 = e->getVertex(0);
+        MVertex *b1 = e->getVertex(1);
+        MVertex *b2 = e->getVertex(2);
+        MVertex *b3 = e->getVertex(3);
+        MVertex *t0 = e->getVertex(4);
+        MVertex *t1 = e->getVertex(5);
+        MVertex *t2 = e->getVertex(6);
+        MVertex *t3 = e->getVertex(7);
+
+        std::vector<MVertex *> p0 = splitedge(MEdge(b0, t0), split, t);
+        std::vector<MVertex *> p1 = splitedge(MEdge(b1, t1), split, t);
+        std::vector<MVertex *> p2 = splitedge(MEdge(b2, t2), split, t);
+        std::vector<MVertex *> p3 = splitedge(MEdge(b3, t3), split, t);
+
+        for(size_t j = 0; j < p0.size() - 1; ++j) {
+          MVertex *vb0 = p0[j];
+          MVertex *vb1 = p1[j];
+          MVertex *vb2 = p2[j];
+          MVertex *vb3 = p3[j];
+          MVertex *vt0 = p0[j + 1];
+          MVertex *vt1 = p1[j + 1];
+          MVertex *vt2 = p2[j + 1];
+          MVertex *vt3 = p3[j + 1];
+
+          if(j == 0) {
+            e->setVertex(0, vb0);
+            e->setVertex(1, vb1);
+            e->setVertex(2, vb2);
+            e->setVertex(3, vb3);
+            e->setVertex(4, vt0);
+            e->setVertex(5, vt1);
+            e->setVertex(6, vt2);
+            e->setVertex(7, vt3);
+            layers[e] = widths[j];
+          }
+          else {
+            MHexahedron *h = new MHexahedron(vb0, vb1, vb2, vb3, vt0, vt1, vt2, vt3);
+            gr->hexahedra.push_back(h);
+            layers[h] = widths[j];
+          }
+        }
+      }
+    }
+
+    printf("splitounette3D 2\n");
+
+    auto edges = gr->edges();
+    for(auto ge : edges) {
+      MLine *l0 = ge->lines.front();
+      MLine *l1 = ge->lines.back();
+      MEdge m0 = MEdge(l0->getVertex(0), l0->getVertex(1));
+      MEdge m1 = MEdge(l1->getVertex(0), l1->getVertex(1));
+      auto it0 = split.find(m0);
+      auto it1 = split.find(m1);
+
+      if(it0 != split.end()) {
+        std::vector<MLine *> old = ge->lines;
+        ge->lines.clear();
+        for(size_t j = 0; j < it0->second.size() - 1; j++)
+          ge->lines.push_back(new MLine(it0->second[j], it0->second[j + 1]));
+        for(size_t j = 1; j < old.size(); j++) ge->lines.push_back(old[j]);
+        delete old.front();
+      }
+      if(it1 != split.end()) {
+        //	printf("poucou %d
+        //%d\n",ge->tag(),l1->getVertex(0)->onWhat()->dim());
+        size_t s = it1->second.size();
+        ge->lines.back()->setVertex(0, it1->second[s - 2]);
+        for(size_t j = 2; j < s; j++)
+          ge->lines.push_back(
+            new MLine(it1->second[s - j], it1->second[s - j - 1]));
+      }
+    }    
+  }
+
+  printf("splitounette3D 2\n");
+
+}
+
+
 void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
                   std::vector<double> &widths)
 {
@@ -1254,9 +1399,10 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
   //  for (auto x : t) printf("%12.5E\n",x);
 
   for(auto gf : f) {
-    std::vector<MElement *> temp;
+    std::vector<MElement *> temp;	
     for(size_t i = 0; i < gf->getNumMeshElements(); i++)
       temp.push_back(gf->getMeshElement(i));
+
     for(size_t i = 0; i < temp.size(); i++) {
       if(layers.find(temp[i]) != layers.end()) {
         if(temp[i]->getNumEdges() == 3) {
@@ -1542,9 +1688,13 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     }
   }
 
-  if(r.empty())
+  if(r.empty()){
     if(ws.size() > 1) splitounette(f, layers, ws);
-
+  }
+  else{
+    //    if(ws.size() > 1) splitounette3D(r, layers, ws);
+  }
+      
   //  for (auto gf : f)
   //    expandL(gf, perfectShapes, layers, f);
 
