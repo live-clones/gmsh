@@ -6,6 +6,7 @@
 #include <sstream>
 #include <set>
 #include "GModel.h"
+#include "GRegion.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -1189,7 +1190,17 @@ splitedge(MEdge me,
 
   std::vector<MVertex *> vs;
   vs.push_back(me.getVertex(0));
-  if(me.getVertex(1)->onWhat()->dim() == 2) {
+  if(me.getVertex(1)->onWhat()->dim() == 3) {
+    GRegion *gr = static_cast<GRegion *>(me.getVertex(1)->onWhat());
+    SPoint3 p0 = me.getVertex(0)->point();
+    SPoint3 p1 = me.getVertex(1)->point();
+    for(size_t i = 0; i < t.size() - 1; i++) {
+      SPoint3 p = p0 + (p1 - p0) * t[i];
+      vs.push_back(new MVertex(p.x(),p.y(),p.z(), gr));
+      gr->mesh_vertices.push_back(vs.back());
+    }
+  }
+  else if(me.getVertex(1)->onWhat()->dim() == 2) {
     SPoint2 p0, p1;
     GFace *gf = static_cast<GFace *>(me.getVertex(1)->onWhat());
     reparamMeshVertexOnFace(me.getVertex(0), gf, p0);
@@ -1693,7 +1704,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     if(ws.size() > 1) splitounette(f, layers, ws);
   }
   else{
-    //    if(ws.size() > 1) splitounette3D(r, layers, ws);
+    if(ws.size() > 1) splitounette3D(r, layers, ws);
   }
       
   //  for (auto gf : f)
