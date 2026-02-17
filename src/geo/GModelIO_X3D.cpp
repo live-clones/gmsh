@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle and Jeremy Theler
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle and Jeremy Theler
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -293,7 +293,7 @@ static void writeX3dEdges(FILE *fp, std::vector<GEdge *> &edges,
               "DEF=\"mat%s\"></Material><LineProperties "
               "id=\"prop%s\"></LineProperties></Appearance>\n",
               name.c_str(), name.c_str());
-      fprintf(fp, "     <LineSet vertexCount=\"%ld\">\n",
+      fprintf(fp, "     <LineSet vertexCount=\"%zu\">\n",
               (*it)->stl_vertices_xyz.size());
       fprintf(fp, "      <Coordinate point=\"\n");
       for(std::size_t i = 0; i < (*it)->stl_vertices_xyz.size(); i++) {

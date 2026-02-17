@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -779,7 +779,7 @@ public:
                  bool splitIntoHexas = false, bool barycentric = false);
 
   // optimize the mesh
-  int optimizeMesh(const std::string &how, bool force = false, int niter = 1);
+  int optimizeMesh(const std::string &how, bool force = false, int niter = 1, double quality = 0.0);
 
   // recombine the mesh
   int recombineMesh();

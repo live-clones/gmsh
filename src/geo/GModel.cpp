@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1547,10 +1547,10 @@ int GModel::recombineMesh()
 #endif
 }
 
-int GModel::optimizeMesh(const std::string &how, const bool force, int niter)
+int GModel::optimizeMesh(const std::string &how, const bool force, int niter, double quality)
 {
 #if defined(HAVE_MESH)
-  OptimizeMesh(this, how, force, niter);
+  OptimizeMesh(this, how, force, niter, quality);
   FixPeriodicMesh(this);
   if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();

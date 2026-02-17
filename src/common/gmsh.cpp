@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1551,8 +1551,7 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     const auto &boundaries = model->getOverlapInnerBoundaries2D();
     auto it = boundaries.find(face);
     if(it == boundaries.end()) {
-      Msg::Error("No inner boundaries found for %s in partition %d",
-                 _getEntityName(dim, tag).c_str(), partition);
+      return;
     }
     for(const auto &pe : it->second) {
       if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
@@ -1567,8 +1566,7 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     const auto &boundaries = model->getOverlapInnerBoundaries3D();
     auto it = boundaries.find(region);
     if(it == boundaries.end()) {
-      Msg::Error("No inner boundaries found for %s in partition %d",
-                 _getEntityName(dim, tag).c_str(), partition);
+      return;
     }
     for(const auto &pe : it->second) {
       if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
@@ -1669,14 +1667,14 @@ GMSH_API void gmsh::model::mesh::recombine()
 
 GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
                                           const bool force, const int niter,
-                                          const vectorpair &dimTags)
+                                          const vectorpair &dimTags, double quality)
 {
   if(!_checkInit()) return;
   if(dimTags.size()) {
     Msg::Warning(
       "Optimization of specified model entities is not interfaced yet");
   }
-  GModel::current()->optimizeMesh(how, force, niter);
+  GModel::current()->optimizeMesh(how, force, niter, quality);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 

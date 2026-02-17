@@ -1,5 +1,5 @@
 !
-! Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+! Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 !
 ! See the LICENSE.txt file in the Gmsh root directory for license information.
 ! Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -3517,13 +3517,15 @@ module gmsh
   !! smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
   !! for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
   !! "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry"
-  !! for untangling). If `force' is set apply the optimization also to discrete
-  !! entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
-  !! only apply the optimizer to the given entities.
+  !! for untangling, "HXT" for tetrahedral optimisation). If `force' is set
+  !! apply the optimization also to discrete entities. If `dimTags' (given as a
+  !! vector of (dim, tag) pairs) is given, only apply the optimizer to the given
+  !! entities. For HXT optimizer, the `quality' argument should be specified
   subroutine gmshModelMeshOptimize(method, &
                                    force, &
                                    niter, &
                                    dimTags, &
+                                   quality, &
                                    ierr)
     interface
     subroutine C_API(method, &
@@ -3531,6 +3533,7 @@ module gmsh
                      niter, &
                      api_dimTags_, &
                      api_dimTags_n_, &
+                     quality, &
                      ierr_) &
       bind(C, name="gmshModelMeshOptimize")
       use, intrinsic :: iso_c_binding
@@ -3539,6 +3542,7 @@ module gmsh
       integer(c_int), value, intent(in) :: niter
       integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      real(c_double), value, intent(in) :: quality
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -3546,12 +3550,14 @@ module gmsh
     logical, intent(in), optional :: force
     integer, intent(in), optional :: niter
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    real(c_double), intent(in), optional :: quality
     integer(c_int), intent(out), optional :: ierr
     call C_API(method=istring_(optval_c_str("", method)), &
          force=optval_c_bool(.false., force), &
          niter=optval_c_int(1, niter), &
          api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
+         quality=optval_c_double(0.0, quality), &
          ierr_=ierr)
   end subroutine gmshModelMeshOptimize
 
@@ -12465,12 +12471,13 @@ module gmsh
   !! vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
   !! all interfaces conformal. When applied to entities of different dimensions,
   !! the lower dimensional entities will be automatically embedded in the higher
-  !! dimensional entities if they are not on their boundary. Return the
-  !! resulting entities in `outDimTags', and the correspondance between input
-  !! and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
-  !! the tag explicitly (only valid if the boolean operation results in a single
-  !! entity). Remove the object if `removeObject' is set. Remove the tool if
-  !! `removeTool' is set.
+  !! dimensional entities if they are not on their boundary. In order to
+  !! preserve entity tags, entities should be provided in ascending dimension
+  !! order. Return the resulting entities in `outDimTags', and the
+  !! correspondance between input and resulting entities in `outDimTagsMap'. If
+  !! `tag' is positive, try to set the tag explicitly (only valid if the boolean
+  !! operation results in a single entity). Remove the object if `removeObject'
+  !! is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelOccFragment(objectDimTags, &
                                   toolDimTags, &
                                   outDimTags, &

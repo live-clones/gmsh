@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -2347,9 +2347,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def optimize(method="", force=False, niter=1, dimTags=[]):
+        def optimize(method="", force=False, niter=1, dimTags=[], quality=0.0):
             """
-            gmsh.model.mesh.optimize(method="", force=False, niter=1, dimTags=[])
+            gmsh.model.mesh.optimize(method="", force=False, niter=1, dimTags=[], quality=0.0)
 
             Optimize the mesh of the current model using `method' (empty for default
             tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
@@ -2357,15 +2357,17 @@ class model:
             smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
             for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
             "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry"
-            for untangling). If `force' is set apply the optimization also to discrete
-            entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
-            only apply the optimizer to the given entities.
+            for untangling, "HXT" for tetrahedral optimisation). If `force' is set
+            apply the optimization also to discrete entities. If `dimTags' (given as a
+            vector of (dim, tag) pairs) is given, only apply the optimizer to the given
+            entities. For HXT optimizer, the `quality' argument should be specified
 
             Types:
             - `method': string
             - `force': boolean
             - `niter': integer
             - `dimTags': vector of pairs of integers
+            - `quality': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2374,6 +2376,7 @@ class model:
                 c_int(bool(force)),
                 c_int(niter),
                 api_dimTags_, api_dimTags_n_,
+                c_double(quality),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -8700,12 +8703,13 @@ class model:
             vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
             all interfaces conformal. When applied to entities of different dimensions,
             the lower dimensional entities will be automatically embedded in the higher
-            dimensional entities if they are not on their boundary. Return the
-            resulting entities in `outDimTags', and the correspondance between input
-            and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
-            the tag explicitly (only valid if the boolean operation results in a single
-            entity). Remove the object if `removeObject' is set. Remove the tool if
-            `removeTool' is set.
+            dimensional entities if they are not on their boundary. In order to
+            preserve entity tags, entities should be provided in ascending dimension
+            order. Return the resulting entities in `outDimTags', and the
+            correspondance between input and resulting entities in `outDimTagsMap'. If
+            `tag' is positive, try to set the tag explicitly (only valid if the boolean
+            operation results in a single entity). Remove the object if `removeObject'
+            is set. Remove the tool if `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
 

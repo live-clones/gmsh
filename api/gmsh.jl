@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1988,7 +1988,7 @@ function unpartition()
 end
 
 """
-    gmsh.model.mesh.optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+    gmsh.model.mesh.optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[], quality = 0.0)
 
 Optimize the mesh of the current model using `method` (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
@@ -1996,23 +1996,25 @@ direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
 smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
 Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
 "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry" for
-untangling). If `force` is set apply the optimization also to discrete entities.
-If `dimTags` (given as a vector of (dim, tag) pairs) is given, only apply the
-optimizer to the given entities.
+untangling, "HXT" for tetrahedral optimisation). If `force` is set apply the
+optimization also to discrete entities. If `dimTags` (given as a vector of (dim,
+tag) pairs) is given, only apply the optimizer to the given entities. For HXT
+optimizer, the `quality` argument should be specified
 
 Types:
  - `method`: string
  - `force`: boolean
  - `niter`: integer
  - `dimTags`: vector of pairs of integers
+ - `quality`: double
 """
-function optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+function optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[], quality = 0.0)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshOptimize, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          method, force, niter, api_dimTags_, api_dimTags_n_, ierr)
+          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
+          method, force, niter, api_dimTags_, api_dimTags_n_, quality, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -7662,11 +7664,12 @@ the entities `objectDimTags` and `toolDimTags` (given as vectors of (dim, tag)
 pairs) in the OpenCASCADE CAD representation, making all interfaces conformal.
 When applied to entities of different dimensions, the lower dimensional entities
 will be automatically embedded in the higher dimensional entities if they are
-not on their boundary. Return the resulting entities in `outDimTags`, and the
-correspondance between input and resulting entities in `outDimTagsMap`. If `tag`
-is positive, try to set the tag explicitly (only valid if the boolean operation
-results in a single entity). Remove the object if `removeObject` is set. Remove
-the tool if `removeTool` is set.
+not on their boundary. In order to preserve entity tags, entities should be
+provided in ascending dimension order. Return the resulting entities in
+`outDimTags`, and the correspondance between input and resulting entities in
+`outDimTagsMap`. If `tag` is positive, try to set the tag explicitly (only valid
+if the boolean operation results in a single entity). Remove the object if
+`removeObject` is set. Remove the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
 

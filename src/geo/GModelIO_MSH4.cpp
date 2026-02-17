@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1961,7 +1961,10 @@ static void writeMSH4Entities(
   GModel *const model, FILE *fp, bool partition, bool binary,
   double scalingFactor, double version,
   std::map<GEntity *, SBoundingBox3d> *entityBounds, int partitionToSave,
-  const std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+  const std::unordered_map<GEntity *,
+                           std::unordered_set<MVertex *, MVertexPtrHash,
+                                              MVertexPtrEqual>,
+                           GEntityPtrFullHash, GEntityPtrFullEqual>
     &entitiesWithSubsetToExport)
 {
   std::set<GEntity *, GEntityPtrFullLessThan> ghost;
@@ -2775,7 +2778,10 @@ static void
 writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
                int partitionToSave, bool binary, int saveParametric,
                double scalingFactor, bool saveAll, double version,
-               std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+               std::unordered_map<GEntity *,
+                                  std::unordered_set<MVertex *, MVertexPtrHash,
+                                                     MVertexPtrEqual>,
+                                  GEntityPtrFullHash, GEntityPtrFullEqual>
                  &entitiesWithSubsetToExport)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
@@ -3479,7 +3485,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp,
       fprintf(fp, "\n");
     }
     else {
-      fprintf(fp, "%ld\n", ghostCells.size());
+      fprintf(fp, "%zu\n", ghostCells.size());
 
       for(auto it = ghostCells.begin(); it != ghostCells.end(); ++it) {
         fprintf(fp, "%zu %d %ld", it->first->getNum(), it->second[0],
@@ -3797,7 +3803,10 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // On those entities, find nodes and entities that must be saved partially.
   // Note that some owned entities will end up there.
-  std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+  std::unordered_map<GEntity *,
+                     std::unordered_set<MVertex *, MVertexPtrHash,
+                                        MVertexPtrEqual>,
+                     GEntityPtrFullHash, GEntityPtrFullEqual>
     entitiesWithSubsetToExport;
   if(partitionToSave > 0 && overlapDim > 0) {
     if(overlapDim == 2)

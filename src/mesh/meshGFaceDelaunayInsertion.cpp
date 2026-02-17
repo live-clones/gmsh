@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -134,7 +134,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
               degenerated->end();
             if(deg[0] && !deg[1] && !deg[2]) {
               fprintf(
-                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu,%lu};\n",
+                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu,%zu};\n",
                 u3, v1, 0., u2, v1, 0., u2, v2, 0., u3, v3, 0.,
                 (worst)->tri()->getVertex(0)->getNum(),
                 (worst)->tri()->getVertex(0)->getNum(),
@@ -143,7 +143,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
             }
             else if(!deg[0] && deg[1] && !deg[2]) {
               fprintf(
-                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu,%lu};\n",
+                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu,%zu};\n",
                 u1, v2, 0., u3, v2, 0., u3, v3, 0., u1, v1, 0.,
                 (worst)->tri()->getVertex(1)->getNum(),
                 (worst)->tri()->getVertex(1)->getNum(),
@@ -152,7 +152,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
             }
             else if(!deg[0] && !deg[1] && deg[2]) {
               fprintf(
-                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu,%lu};\n",
+                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu,%zu};\n",
                 u2, v3, 0., u1, v3, 0., u1, v1, 0., u2, v2, 0.,
                 (worst)->tri()->getVertex(2)->getNum(),
                 (worst)->tri()->getVertex(2)->getNum(),
@@ -160,7 +160,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
                 (worst)->tri()->getVertex(1)->getNum());
             }
             else if(!deg[0] && !deg[1] && !deg[2]) {
-              fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu};\n", u1,
+              fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu};\n", u1,
                       v1, 0., u2, v2, 0., u3, v3, 0.,
                       (worst)->tri()->getVertex(0)->getNum(),
                       (worst)->tri()->getVertex(1)->getNum(),
@@ -168,7 +168,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
             }
           }
           else {
-            fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu};\n", u1, v1,
+            fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu};\n", u1, v1,
                     0., u2, v2, 0., u3, v3, 0.,
                     (worst)->tri()->getVertex(0)->getNum(),
                     (worst)->tri()->getVertex(1)->getNum(),
@@ -176,7 +176,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
           }
         }
         else
-          fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu};\n",
+          fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu};\n",
                   (worst)->tri()->getVertex(0)->x(),
                   (worst)->tri()->getVertex(0)->y(),
                   (worst)->tri()->getVertex(0)->z(),

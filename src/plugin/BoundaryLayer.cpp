@@ -110,9 +110,9 @@ static void getEmbeddedStructure (GModel *m, std::map<GVertex*,std::vector<GFace
       auto e = (gf)->edges();
       for (auto ge : e ){
 	if (e2f.find(ge) == e2f.end())e2r[ge].push_back(*rit);
-      }      
+      }
     }
-    
+
   }
 }
 
@@ -157,23 +157,23 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
   // Consider a point gv
   //   --> for all curves ge attached to gv
   //       if (ge) has more that one ajacent face that wants layers
-      
-  if (_debugBL3D)printf("connected points size %lu\n",connectedPoints.size());
+
+  if (_debugBL3D)printf("connected points size %zu\n",connectedPoints.size());
 
   for(auto gv : connectedPoints) {
-      
+
     if(gv->mesh_vertices.empty()) {
       Msg::Warning("No mesh node on model point %d - abort!", gv->tag());
       return false;
     }
 
-    
+
     if (_debugBL3D)printf("connected point %d\n",gv->tag());
-    
+
     auto connectedCurves = gv->edges();
     auto connectedSurfaces = gv->faces();
     auto connectedVolumes = gv->regions();
-    
+
     std::vector<GEdge *> toinsert;
 
     std::size_t found = 0;
@@ -222,7 +222,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 
         spawned[v].push_back(newv);
         Msg::Debug(
-          "inserted node %lu from point %d in curve %d -- %lu internal nodes",
+          "inserted node %zu from point %d in curve %d -- %zu internal nodes",
           newv->getNum(), gv->tag(), ge->tag(), ge->mesh_vertices.size());
         if(end)
           ge->lines.push_back(new MLine(v, newv));
@@ -258,7 +258,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
       }
     }
 
-    if (_debugBL3D)printf(" --> toInstert2 size %lu\n",toinsert2.size());
+    if (_debugBL3D)printf(" --> toInstert2 size %zu\n",toinsert2.size());
     for(auto gf : toinsert2) {
       MVertex *v = gv->mesh_vertices[0];
       SPoint2 param;
@@ -283,13 +283,13 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
     connectedCurves.insert(es.begin(), es.end());
   }
   for(auto ge : connectedCurves) {
-    if (_debugBL3D)printf(" XC-> connectedCurve %d\n",ge->tag());    
+    if (_debugBL3D)printf(" XC-> connectedCurve %d\n",ge->tag());
     auto fs = ge->faces();
 
     // for all faces f2ge adjacent to ge
     for(auto f2ge : fs) {
       if (_debugBL3D)printf("  XC-> face adj %d onSurfacesSet %d\n",f2ge->tag(),
-			    onSurfacesSet.find(f2ge) != onSurfacesSet.end());    
+			    onSurfacesSet.find(f2ge) != onSurfacesSet.end());
       // if f2ge is onSurfaces of f2ge continue
       if(onSurfacesSet.find(f2ge) != onSurfacesSet.end()) continue;
       auto vs = f2ge->regions();
@@ -300,11 +300,11 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
         auto facesOfvol = vol->faces();
 	if (_debugBL3D)printf("  XC-> volume %d is a BL volume -- face belongs to it %d \n",vol->tag(),
 			      std::find(facesOfvol.begin(), facesOfvol.end(), f2ge) !=
-			      facesOfvol.end());    
+			      facesOfvol.end());
         if(std::find(facesOfvol.begin(), facesOfvol.end(), f2ge) !=
            facesOfvol.end()) {
-	      
-	  if (_debugBL3D)printf("  XC-> edge %d onSurface %d\n",ge->tag(),f2ge->tag());    
+
+	  if (_debugBL3D)printf("  XC-> edge %d onSurface %d\n",ge->tag(),f2ge->tag());
 
           for(auto ev : ge->mesh_vertices) {
             SPoint2 param;
@@ -316,7 +316,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           }
         }
         else {
-	  if (_debugBL3D)printf(" --> edge %d in volume %d\n",ge->tag(),vol->tag());    
+	  if (_debugBL3D)printf(" --> edge %d in volume %d\n",ge->tag(),vol->tag());
           for(auto ev : ge->mesh_vertices) {
             MVertex *newv = new MVertex(ev->x(), ev->y(), ev->z(), vol);
             vol->mesh_vertices.push_back(newv);
@@ -379,7 +379,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
     }
   }
 
-  
+
   // Embedded Stuff ------------------------------------------------------------------------
   std::map<GVertex*,std::vector<GFace*> > verticesEmbeddedInFacesAsCurveEndpoints;
   std::map<GEdge*,std::vector<GFace*> > edgesEmbeddedInFaces;
@@ -387,7 +387,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
   std::map<GFace*,std::vector<GRegion*> > facesEmbeddedInRegions;
   getEmbeddedStructure (m, verticesEmbeddedInFacesAsCurveEndpoints,edgesEmbeddedInFaces,
 			edgesEmbeddedInRegions,facesEmbeddedInRegions);
-  
+
   for (auto v2f : verticesEmbeddedInFacesAsCurveEndpoints){
     for (auto gf : v2f.second){
       if (_debugBL3D)printf(" --EMP  Vertex %d embedded in Face %d\n",v2f.first->tag(),gf->tag());
@@ -429,9 +429,9 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
       }
     }
   }
-  
+
   for (auto f2r : facesEmbeddedInRegions){
-    for (auto gr : f2r.second){      
+    for (auto gr : f2r.second){
       if (_debugBL3D)printf(" --EMP  Face %d embedded in Region %d\n",f2r.first->tag(),gr->tag());
       for (auto v : f2r.first->mesh_vertices) {
 	for (size_t kk=0 ; kk < 2 ; kk++){
@@ -445,7 +445,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 
   // Embedded Stuff ------------------------------------------------------------------------
 
-  // Create Elements  
+  // Create Elements
 
   for(auto gr : inVolumes) {
     for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
@@ -506,14 +506,14 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
         continue;
 
       toExpand.push_back(gf);
-      
+
       for(std::size_t i = 0; i < ge->lines.size(); i++) {
         MLine *l = ge->lines[i];
         auto sp0 = spawned[l->getVertex(0)];
         auto sp1 = spawned[l->getVertex(1)];
         if(sp0.empty() || sp1.empty()) {
           Msg::Warning("Could not find spawned boundary layer node for node(s) "
-                       "%lu and/or %lu",
+                       "%zu and/or %zu",
                        l->getVertex(0)->getNum(), l->getVertex(1)->getNum());
         }
         else {
@@ -530,7 +530,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           // embedded edges. Assume that points are spawned on one side and then
           // on the other in the same order.
           if(V0.size() != V1.size())
-            Msg::Error("Error Boundary Layer %lu %lu", V0.size(), V1.size());
+            Msg::Error("Error Boundary Layer %zu %zu", V0.size(), V1.size());
           for(size_t j = 0; j < V0.size(); j++) {
             std::set<MEdge, MEdgeLessThan>::iterator it =
               edges_of_elements.find(MEdge(V1[j], V0[j]));
@@ -581,7 +581,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 	}
 	if (bs[0] && bs[1] && bs[2]){
 	  gr->prisms.push_back(new MPrism(vs[0],vs[1],vs[2],bs[0],bs[1],bs[2]));
-	  layers[gr->prisms.back()] = thickness;	  
+	  layers[gr->prisms.back()] = thickness;
 	}
 	else{
 	  Msg::Error("Impossible to create prism in BL (%d,%d) (%d,%d) (%d,%d) %p %p %p",vs[0]->onWhat()->dim(),vs[0]->onWhat()->tag(),
@@ -590,7 +590,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
       }
     }
   }
-  
+
   return true;
 }
 
@@ -651,7 +651,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
               new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
             gf->mesh_vertices.push_back(newv);
             spawned[v].push_back(newv);
-            Msg::Debug("inserted node %lu from point %d in surface %d",
+            Msg::Debug("inserted node %zu from point %d in surface %d",
                        newv->getNum(), gv->tag(), gf->tag());
           }
           else {
@@ -688,7 +688,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
 
           spawned[v].push_back(newv);
           Msg::Debug(
-            "inserted node %lu from point %d in curve %d -- %lu internal nodes",
+            "inserted node %zu from point %d in curve %d -- %zu internal nodes",
             newv->getNum(), gv->tag(), ge->tag(), ge->mesh_vertices.size());
           if(end)
             ge->lines.push_back(new MLine(v, newv));
@@ -757,7 +757,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
         auto sp1 = spawned[l->getVertex(1)];
         if(sp0.empty() || sp1.empty()) {
           Msg::Warning("Could not find spawned boundary layer node for node(s) "
-                       "%lu and/or %lu",
+                       "%zu and/or %zu",
                        l->getVertex(0)->getNum(), l->getVertex(1)->getNum());
         }
         else {
@@ -774,7 +774,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
           // embedded edges. Assume that points are spawned on one side and then
           // on the other in the same order.
           if(V0.size() != V1.size())
-            Msg::Error("Error Boundary Layer %lu %lu", V0.size(), V1.size());
+            Msg::Error("Error Boundary Layer %zu %zu", V0.size(), V1.size());
           for(size_t j = 0; j < V0.size(); j++) {
             std::set<MEdge, MEdgeLessThan>::iterator it =
               edges_of_elements.find(MEdge(V1[j], V0[j]));
@@ -872,7 +872,7 @@ static void expandBL(
   std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes,
   std::map<MElement *, double> &layers, std::vector<GFace *> &inSurfaces)
 {
-  //  printf("layer size %lu\n",layers.size());
+  //  printf("layer size %zu\n",layers.size());
   //  std::vector<double> areas;
 
   constexpr size_t nRings = 3;
@@ -883,7 +883,7 @@ static void expandBL(
   
   std::vector<std::array<std::array<double, 2>, 3>> sh;
   for(auto e : toProcess) {
-    //    printf("%lu %lu\n",i,gf->getNumMeshElements());
+    //    printf("%zu %zu\n",i,gf->getNumMeshElements());
     //    MElement *e = gf->getMeshElement(i);
 
     std::array<std::array<double, 2>, 4> vs;
@@ -925,7 +925,7 @@ static void expandBL(
 	// assume here zero size quads have been generated such as nodes 0 and 1 are
 	// along the curve ... nodes 1 and 2 are at the same position, same for 0 and 3
 	double dx = distance(e->getVertex(0),e->getVertex(1));
-		
+
         std::array<double, 2> p0 = {0, 0};
         std::array<double, 2> p1 = {dx, 0};
         std::array<double, 2> p2 = {dx, thickness};
@@ -969,7 +969,7 @@ static void expandBL(
       locked.push_back(false);
     else
       locked.push_back(true);
-      
+
     SPoint2 param;
     reparamMeshVertexOnFace(v, gf, param);
     points.push_back({param.x(), param.y()});
@@ -1064,8 +1064,9 @@ static void expandBL3D(
   std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes3D,
   std::map<MElement *, double> &layers)
 {
-  //  printf("layer size %lu\n",layers.size());
+  //  printf("layer size %zu\n",layers.size());
   //  std::vector<double> areas;
+
   constexpr size_t nRings = 1;
   
   std::set<MElement *, MElementPtrLessThan> toProcess;
@@ -1101,7 +1102,7 @@ static void expandBL3D(
 	vs[2] = {e->getVertex(2)->x(), e->getVertex(2)->y(),e->getVertex(2)->z()};
 	vs[3] = {e->getVertex(0)->x()+n.x()*tk, e->getVertex(0)->y()+n.y()*tk,e->getVertex(0)->z()+n.z()*tk};
 	vs[4] = {e->getVertex(1)->x()+n.x()*tk, e->getVertex(1)->y()+n.y()*tk,e->getVertex(1)->z()+n.z()*tk};
-	vs[5] = {e->getVertex(2)->x()+n.x()*tk, e->getVertex(2)->y()+n.y()*tk,e->getVertex(2)->z()+n.z()*tk};	
+	vs[5] = {e->getVertex(2)->x()+n.x()*tk, e->getVertex(2)->y()+n.y()*tk,e->getVertex(2)->z()+n.z()*tk};
 	int pp  [3][4] = {{0,1,2,3},{0,1,2,4},{0,1,2,5}};
 	for (size_t j=0;j<3;j++)
 	  sh.push_back({vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
@@ -1144,7 +1145,7 @@ static void expandBL3D(
   }
 
   printf("VOLUME = %12.5E\n'",volume);
-  
+
   for(auto e : toProcess) {
     uint32_t nn[8] = {(uint32_t)e->getVertex(0)->getIndex(),
 		      (uint32_t)e->getVertex(1)->getIndex(),
@@ -1512,9 +1513,9 @@ std::string GMSH_BoundaryLayerPlugin::parse(std::string str,
 }
 
 
-void computePerfectShapes (std::vector<GFace*> & f,			   
+void computePerfectShapes (std::vector<GFace*> & f,
 			   std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes){
-  
+
   for(auto gf : f) {
     //      std::map<MVertex*,SPoint2> ivp;
     double area = 0.0;
@@ -1535,7 +1536,7 @@ void computePerfectShapes (std::vector<GFace*> & f,
     }
 
     //    printf("area (%d) = %g\n",gf->tag(), area);
-    
+
     for(size_t i = 0; i < gf->getNumMeshElements(); i++) {
       std::vector<SPoint2> pts;
       for(size_t j = 0; j < gf->getMeshElement(i)->getNumVertices(); j++) {
@@ -1565,7 +1566,7 @@ void computePerfectShapes (std::vector<GFace*> & f,
 }
 
 
-void computePerfectShapes (std::vector<GRegion*> & r,			   
+void computePerfectShapes (std::vector<GRegion*> & r,
 			   std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes){
   double volume = 0.0;
   for(auto gr : r) {
@@ -1576,11 +1577,11 @@ void computePerfectShapes (std::vector<GRegion*> & r,
 	MVertex *v = gr->getMeshElement(i)->getVertex(j);
 	vs[j] = {v->x(),v->y(),v->z()};
       }
-      volume  += tet_volume (vs[0],vs[1],vs[2],vs[3]);      
+      volume  += tet_volume (vs[0],vs[1],vs[2],vs[3]);
     }
 
     printf("colume = %12.5E\n",volume);
-    
+
     for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
       std::array<std::array<double, 3>, 8> vs;
       for(size_t j = 0; j < gr->getMeshElement(i)->getNumVertices(); j++) {
@@ -1590,7 +1591,7 @@ void computePerfectShapes (std::vector<GRegion*> & r,
       if (volume > 0)
 	perfectShapes[gr->getMeshElement(i)] = {vs[0],vs[1],vs[2],vs[3],vs[4],vs[5],vs[6],vs[7]};
       else
-	perfectShapes[gr->getMeshElement(i)] = {vs[1],vs[0],vs[2],vs[3],vs[4],vs[5],vs[6],vs[7]};	
+	perfectShapes[gr->getMeshElement(i)] = {vs[1],vs[0],vs[2],vs[3],vs[4],vs[5],vs[6],vs[7]};
     }
   }
 }
@@ -1641,7 +1642,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   std::map<MElement *, double> layers;
 
-  //  printf("perfectshapes = %lu\n",perfectShapes.size());
+  //  printf("perfectshapes = %zu\n",perfectShapes.size());
 
   double ww = 0.0;
   std::vector<double> ws;
@@ -1661,7 +1662,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   //  }
 
   std::vector<GFace*> toExpand;
-  
+
   if(r.empty())
     bl(m, vv, e, f, ww*1.6, layers);
   else
@@ -1672,7 +1673,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   std::map<MElement *, std::array<std::array<double, 2>, 4>> perfectShapes;
   std::map<MElement *, std::array<std::array<double, 3>, 8>> perfectShapes3D;
-  
+
   if (r.empty()){
     computePerfectShapes (f,perfectShapes);
     for(auto gf : f) expandBL(gf, perfectShapes, layers, f);

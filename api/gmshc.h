@@ -1,5 +1,5 @@
 /*
- * Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+ * Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
  *
  * See the LICENSE.txt file in the Gmsh root directory for license information.
  * Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -670,13 +670,15 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr);
  * smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
  * for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
  * "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry"
- * for untangling). If `force' is set apply the optimization also to discrete
- * entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
- * only apply the optimizer to the given entities. */
+ * for untangling, "HXT" for tetrahedral optimisation). If `force' is set
+ * apply the optimization also to discrete entities. If `dimTags' (given as a
+ * vector of (dim, tag) pairs) is given, only apply the optimizer to the given
+ * entities. For HXT optimizer, the `quality' argument should be specified */
 GMSH_API void gmshModelMeshOptimize(const char * method,
                                     const int force,
                                     const int niter,
                                     const int * dimTags, const size_t dimTags_n,
+                                    const double quality,
                                     int * ierr);
 
 /* Recombine the mesh of the current model. */
@@ -2904,12 +2906,13 @@ GMSH_API void gmshModelOccCut(const int * objectDimTags, const size_t objectDimT
  * vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
  * all interfaces conformal. When applied to entities of different dimensions,
  * the lower dimensional entities will be automatically embedded in the higher
- * dimensional entities if they are not on their boundary. Return the
- * resulting entities in `outDimTags', and the correspondance between input
- * and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
- * the tag explicitly (only valid if the boolean operation results in a single
- * entity). Remove the object if `removeObject' is set. Remove the tool if
- * `removeTool' is set. */
+ * dimensional entities if they are not on their boundary. In order to
+ * preserve entity tags, entities should be provided in ascending dimension
+ * order. Return the resulting entities in `outDimTags', and the
+ * correspondance between input and resulting entities in `outDimTagsMap'. If
+ * `tag' is positive, try to set the tag explicitly (only valid if the boolean
+ * operation results in a single entity). Remove the object if `removeObject'
+ * is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccFragment(const int * objectDimTags, const size_t objectDimTags_n,
                                    const int * toolDimTags, const size_t toolDimTags_n,
                                    int ** outDimTags, size_t * outDimTags_n,
