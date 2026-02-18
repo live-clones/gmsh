@@ -3,6 +3,10 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include <stdexcept>
 #include <sstream>
 #include <set>
 #include "GModel.h"
@@ -24,7 +28,8 @@ StringXNumber BoundaryLayerOptions_Number[] = {
   {GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
   {GMSH_FULLRC, "Size", nullptr, 1.e-3},
   {GMSH_FULLRC, "Ratio", nullptr, 1.2},
-  {GMSH_FULLRC, "SmoothingLayers", nullptr, 2.}};
+  {GMSH_FULLRC, "SmoothingLayers", nullptr, 2.},
+  {GMSH_FULLRC, "NumExactLayers", nullptr, -2.}};
 
 StringXString BoundaryLayerOptions_String[] = {
   {GMSH_FULLRC, "Volumes", nullptr, ""},
@@ -162,7 +167,7 @@ static void replaceEdges (GModel *gm ,
     auto it1 = split.find(m1);
     
     if(it0 != split.end()) {
-      printf("coucou %d %d\n",ge->tag(),l0->getVertex(0)->onWhat()->dim());
+      //      printf("coucou %d %d\n",ge->tag(),l0->getVertex(0)->onWhat()->dim());
       std::vector<MLine *> old = ge->lines;
       ge->lines.clear();
       for(size_t j = 0; j < it0->second.size() - 1; j++)
@@ -171,7 +176,7 @@ static void replaceEdges (GModel *gm ,
       delete old.front();
     }
     if(it1 != split.end()) {
-      	printf("poucou %d %d\n",ge->tag(),l1->getVertex(0)->onWhat()->dim());
+      //      	printf("poucou %d %d\n",ge->tag(),l1->getVertex(0)->onWhat()->dim());
       size_t s = it1->second.size();
       ge->lines.back()->setVertex(0, it1->second[s - 2]);
       for(size_t j = 2; j < s; j++)
@@ -1241,13 +1246,69 @@ static void expandBL3D(
   }
 }
 
+
+
 static std::vector<MVertex *>
 splitedge(MEdge me,
           std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
-          std::vector<double> &t)
+          std::vector<double> &t_init, double hwall, double ratio, double numExactLayers)
 {
   auto it = split.find(me);
   if(it != split.end()) return it->second;
+
+  std::vector<double> t = t_init;
+  int minPerfect = (numExactLayers > 0) ? (int) numExactLayers : (int) (t.size()/(-numExactLayers));
+  
+  while (1) {  
+    t = t_init;
+    int n = (int)t.size();    
+    double L   = me.length();
+    double hw0 = hwall / L;
+    double hw  = hw0;
+    double tTOT = 0.0;
+    
+    for(int i = 0; i < minPerfect; ++i){
+      tTOT += hw;
+      t[i]  = tTOT;       
+      hw   *= ratio;      
+    }
+    double hw_last = hw / ratio;
+  
+    int m = n - minPerfect;          // nb de couches à ajuster
+    double target = 1.0 - tTOT;      // ce qu'il reste à remplir (normalisé)
+    
+    if(m > 0 && target > 0.0){
+      auto sumTail = [&](double r)->double{
+	if(std::abs(r - 1.0) < 1e-14) return hw_last * m;
+	return hw_last * r * (1.0 - std::pow(r, (double)m)) / (1.0 - r);
+      };
+      
+      // bisection (monotone en r>0)
+      double lo = 1e-12, hi = 2.0;
+      while(sumTail(hi) < target) hi *= 2.0;  // élargit si nécessaire
+      
+      for(int it = 0; it < 80; ++it){
+	double mid = 0.5 * (lo + hi);
+	if(sumTail(mid) >= target) hi = mid;
+	else                      lo = mid;
+      }
+      double r_new = 0.5 * (lo + hi);
+
+      if (r_new > 1){
+	double hw2 = hw_last;
+	for(int i = minPerfect; i < n; ++i){
+	  hw2 *= r_new;
+	  tTOT += hw2;
+	  t[i] = tTOT;
+	}
+	
+	// 4) fermeture exacte (optionnel mais pratique)
+	t.back() = 1.0;
+	break;
+      }
+    }
+    minPerfect -- ;
+  }
   
   std::vector<MVertex *> vs;
   vs.push_back(me.getVertex(0));
@@ -1292,7 +1353,7 @@ splitedge(MEdge me,
 
 void splitounette3D(std::vector<GRegion *> &r,
                     std::map<MElement *, double> &layers,
-                    std::vector<double> &widths)
+                    std::vector<double> &widths, double hwall, double ratio, double numExactLayers)
 {
   std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> split;
 
@@ -1338,9 +1399,9 @@ void splitounette3D(std::vector<GRegion *> &r,
 
 
         // split the 3 "vertical" edges
-        std::vector<MVertex *> p0 = splitedge(MEdge(b0, t0), split, t);
-        std::vector<MVertex *> p1 = splitedge(MEdge(b1, t1), split, t);
-        std::vector<MVertex *> p2 = splitedge(MEdge(b2, t2), split, t);
+        std::vector<MVertex *> p0 = splitedge(MEdge(b0, t0), split, t, hwall,ratio,numExactLayers);
+        std::vector<MVertex *> p1 = splitedge(MEdge(b1, t1), split, t, hwall,ratio,numExactLayers);
+        std::vector<MVertex *> p2 = splitedge(MEdge(b2, t2), split, t, hwall,ratio,numExactLayers);
 
         // p?.size() should be widths.size()+1 (if splitedge returns both endpoints)
         // We create slabs between index j and j+1
@@ -1383,10 +1444,10 @@ void splitounette3D(std::vector<GRegion *> &r,
         MVertex *t2 = e->getVertex(6);
         MVertex *t3 = e->getVertex(7);
 
-        std::vector<MVertex *> p0 = splitedge(MEdge(b0, t0), split, t);
-        std::vector<MVertex *> p1 = splitedge(MEdge(b1, t1), split, t);
-        std::vector<MVertex *> p2 = splitedge(MEdge(b2, t2), split, t);
-        std::vector<MVertex *> p3 = splitedge(MEdge(b3, t3), split, t);
+        std::vector<MVertex *> p0 = splitedge(MEdge(b0, t0), split, t, hwall,ratio,numExactLayers);
+        std::vector<MVertex *> p1 = splitedge(MEdge(b1, t1), split, t, hwall,ratio,numExactLayers);
+        std::vector<MVertex *> p2 = splitedge(MEdge(b2, t2), split, t, hwall,ratio,numExactLayers);
+        std::vector<MVertex *> p3 = splitedge(MEdge(b3, t3), split, t, hwall,ratio,numExactLayers);
 
         for(size_t j = 0; j < p0.size() - 1; ++j) {
           MVertex *vb0 = p0[j];
@@ -1427,7 +1488,7 @@ void splitounette3D(std::vector<GRegion *> &r,
 
 
 void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
-                  std::vector<double> &widths)
+                  std::vector<double> &widths, double hwall, double ratio, double numExactLayers)
 {
   std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> split;
   std::vector<double> t;
@@ -1455,8 +1516,8 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
           //%d\n",temp[i]->getVertex(0)->getNum(),temp[i]->getVertex(1)->getNum(),temp[i]->getVertex(2)->getNum());
           MEdge m01 = MEdge(temp[i]->getVertex(0), temp[i]->getVertex(1));
           MEdge m02 = MEdge(temp[i]->getVertex(0), temp[i]->getVertex(2));
-          std::vector<MVertex *> p01 = splitedge(m01, split, t);
-          std::vector<MVertex *> p02 = splitedge(m02, split, t);
+          std::vector<MVertex *> p01 = splitedge(m01, split, t, hwall,ratio,numExactLayers);
+          std::vector<MVertex *> p02 = splitedge(m02, split, t, hwall,ratio,numExactLayers);
           temp[i]->setVertex(1, p01[1]);
           temp[i]->setVertex(2, p02[1]);
           layers[temp[i]] = widths[0];
@@ -1473,8 +1534,8 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
         else if(temp[i]->getNumEdges() == 4) {
           MEdge m03 = MEdge(temp[i]->getVertex(0), temp[i]->getVertex(3));
           MEdge m12 = MEdge(temp[i]->getVertex(1), temp[i]->getVertex(2));
-          std::vector<MVertex *> p03 = splitedge(m03, split, t);
-          std::vector<MVertex *> p12 = splitedge(m12, split, t);
+          std::vector<MVertex *> p03 = splitedge(m03, split, t, hwall,ratio,numExactLayers);
+          std::vector<MVertex *> p12 = splitedge(m12, split, t, hwall,ratio,numExactLayers);
           for(size_t j = 0; j < p03.size() - 1; j++) {
             MVertex *v0 = p03[j];
             MVertex *v1 = p12[j];
@@ -1684,6 +1745,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   double size = BoundaryLayerOptions_Number[1].def;
   double ratio = BoundaryLayerOptions_Number[2].def;
   int numLayers = (int)BoundaryLayerOptions_Number[3].def;
+  double numExactLayers = BoundaryLayerOptions_Number[4].def;
   if (numLayers < 1){
     Msg::Warning("Hey ! at least one smoothing layer dude ...");
     numLayers = 1;
@@ -1713,7 +1775,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   std::vector<GFace*> toExpand;
 
   if(r.empty())
-    bl(m, vv, e, f, ww*1.6, layers);
+    bl(m, vv, e, f, ww*1.2, layers);
   else
     bl3d(m, f, r, ww, layers, toExpand);
 
@@ -1739,10 +1801,10 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   }
 
   if(r.empty()){
-    if(ws.size() > 1) splitounette(f, layers, ws);
+    if(ws.size() > 1) splitounette(f, layers, ws, size,ratio,numExactLayers);
   }
   else{
-    if(ws.size() > 1) splitounette3D(r, layers, ws);
+    if(ws.size() > 1) splitounette3D(r, layers, ws, size,ratio,numExactLayers);
   }
       
   //  for (auto gf : f)
