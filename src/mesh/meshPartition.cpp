@@ -1712,6 +1712,15 @@ static int computeOrientation(MElement *reference, MElement *element)
   return 0;
 }
 
+static bool hasCommonPartition(const std::vector<int> &a,
+                               const std::vector<int> &b)
+{
+  for(std::size_t i = 0; i < a.size(); i++) {
+    if(std::find(b.begin(), b.end(), a[i]) != b.end()) return true;
+  }
+  return false;
+}
+
 static void assignBrep(GModel *model,
                        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
                          &boundaryEntityAndRefElement,
@@ -1763,6 +1772,50 @@ static void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
            brepWithoutOri.end()) {
           const int ori =
             computeOrientation(current, graph.element(graph.adjncy(j)));
+
+#if 1
+          // The dual graph adjacency used for partitioning is node-based. In
+          // multi-volume / non-manifold configurations, a (dim-1) element can
+          // be adjacent to a dim element without representing a true boundary
+          // entity (e.g. only sharing a vertex or an edge). In such cases
+          // computeOrientation() returns 0.
+          //
+          // If we do not filter those relationships, we can create incorrect
+          // BRep links (region<-face, face<-edge, edge<-vertex), which shows up
+          // as partition entities containing surfaces not belonging to them
+          // when Mesh.PartitionCreateTopology is enabled.
+          if(ori == 0) continue;
+
+          // Extra safety: when both entities are partition entities, enforce
+          // partition-tag compatibility. This avoids linking a partition volume
+          // to a boundary face (or lower-dimensional entity) that belongs to a
+          // different partition, which can still happen in complex multi-volume
+          // cases (e.g. due to coincident/duplicated mesh faces).
+          if(g1 && g2) {
+            if(g1->geomType() == GEntity::PartitionVolume &&
+               g2->geomType() == GEntity::PartitionSurface) {
+              partitionRegion *r = static_cast<partitionRegion *>(g1);
+              partitionFace *f = static_cast<partitionFace *>(g2);
+              if(!hasCommonPartition(r->getPartitions(), f->getPartitions()))
+                continue;
+            }
+            else if(g1->geomType() == GEntity::PartitionSurface &&
+                    g2->geomType() == GEntity::PartitionCurve) {
+              partitionFace *f = static_cast<partitionFace *>(g1);
+              partitionEdge *e = static_cast<partitionEdge *>(g2);
+              if(!hasCommonPartition(f->getPartitions(), e->getPartitions()))
+                continue;
+            }
+            else if(g1->geomType() == GEntity::PartitionCurve &&
+                    g2->geomType() == GEntity::PartitionPoint) {
+              partitionEdge *e = static_cast<partitionEdge *>(g1);
+              partitionVertex *v = static_cast<partitionVertex *>(g2);
+              if(!hasCommonPartition(e->getPartitions(), v->getPartitions()))
+                continue;
+            }
+          }
+#endif
+
           brepWithoutOri.insert(std::make_pair(g1, g2));
           brep[g1].insert(std::make_pair(ori, g2));
         }
@@ -1830,6 +1883,7 @@ static void createPartitionTopology(
   if(meshDim >= 3) {
     Msg::Info(" - Creating partition surfaces");
 
+#if 0 // old: matches too many entities
     for(std::size_t i = 0; i < model->getNumPartitions(); i++) {
       for(auto it = boundaryElements[i].begin();
           it != boundaryElements[i].end(); ++it) {
@@ -1839,6 +1893,52 @@ static void createPartitionTopology(
         }
       }
     }
+#else
+    // boundaryElements is element-based: it contains all 3D elements that have
+    // *some* neighbor in another partition. Such an element can have multiple
+    // faces that are not on a partition interface.
+    //
+    // To avoid creating/attaching partition surfaces that are not true
+    // inter-partition faces (e.g. when partitions are only adjacent through
+    // curves/edges in multi-volume configurations), we only consider faces that
+    // are actually shared between *neighboring 3D elements* belonging to
+    // different partitions.
+    for(std::size_t i = 0; i < meshGraph.ne(); i++) {
+      MElement *e0 = meshGraph.element(i);
+      if(!e0 || e0->getDim() != meshDim) continue;
+
+      const int p0 = meshGraph.partition(i) + 1;
+      for(idx_t j = meshGraph.xadj(i); j < meshGraph.xadj(i + 1); j++) {
+        const idx_t n = meshGraph.adjncy(j);
+        if(n < 0 || (std::size_t)n <= i) continue; // avoid double counting
+
+        MElement *e1 = meshGraph.element(n);
+        if(!e1 || e1->getDim() != meshDim) continue;
+
+        const int p1 = meshGraph.partition(n) + 1;
+        if(p0 == p1) continue;
+
+        // Add all shared faces between the two neighboring volume elements
+        for(int f0 = 0; f0 < e0->getNumFaces(); f0++) {
+          MFace f = e0->getFace(f0);
+          bool shared = false;
+          for(int f1 = 0; f1 < e1->getNumFaces(); f1++) {
+            if(e1->getFace(f1) == f) {
+              shared = true;
+              break;
+            }
+          }
+          if(!shared) continue;
+
+          faceToElement[f].push_back(
+            std::make_pair(e0, std::vector<int>(1, p0)));
+          faceToElement[f].push_back(
+            std::make_pair(e1, std::vector<int>(1, p1)));
+        }
+      }
+    }
+#endif
+
     int numFaceEntity = model->getMaxElementaryNumber(2);
     for(auto it = faceToElement.begin(); it != faceToElement.end(); ++it) {
       MFace f = it->first;
