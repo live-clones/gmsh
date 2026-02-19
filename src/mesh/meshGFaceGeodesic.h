@@ -14,7 +14,7 @@
 #include <utility>
 #include <vector>
 
-#define ANGLECRIT 2
+#define ANGLECRIT 3
 
 // struct EdgeQualityArgs {
 //   double intrinsicLength;
@@ -421,6 +421,7 @@ public:
                   std::pair<int, int> &ts);
   bool doWeSwapAngleHeuristic(int p0, int p1, int p2, int p3);
   bool doWeSwapLengthHeuristic(int p0, int p1, int p2, int p3);
+  bool doWeSwapMaxMin(int p0, int p1, int p2, int p3);
   bool locallyDelaunay(size_t circumindex, double circumradius,
                        size_t oppVertex);
   bool canWeSwap(const std::pair<int, int> &edge,

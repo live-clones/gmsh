@@ -2271,6 +2271,43 @@ bool highOrderPolyMesh::doWeSwapLengthHeuristic(int p0, int p1, int p2, int p3)
   return angles[0] + angles[1] > angles[2] + angles[3] + 1e-12;
 }
 
+bool highOrderPolyMesh::doWeSwapMaxMin(int p0, int p1, int p2, int p3)
+{
+  PathView edge, opp, borders[4], redge, ropp;
+  getGeodesicPath(p0, p1, edge);
+  getGeodesicPath(p2, p3, opp);
+  getGeodesicPath(p0, p3, borders[0]);
+  getGeodesicPath(p3, p1, borders[1]);
+  getGeodesicPath(p1, p2, borders[2]);
+  getGeodesicPath(p2, p0, borders[3]);
+  redge = PathView(edge, true);
+  ropp = PathView(opp, true);
+
+  std::array<double, 6> before = {computeIntrinsicAngle(edge, borders[3]),
+                                  computeIntrinsicAngle(borders[2], edge),
+                                  computeIntrinsicAngle(borders[3], borders[2]),
+                                  computeIntrinsicAngle(borders[0], redge),
+                                  computeIntrinsicAngle(borders[1], borders[0]),
+                                  computeIntrinsicAngle(redge, borders[1])};
+  std::array<double, 6> after = {computeIntrinsicAngle(opp, borders[2]),
+                                 computeIntrinsicAngle(borders[1], opp),
+                                 computeIntrinsicAngle(borders[2], borders[1]),
+                                 computeIntrinsicAngle(borders[3], ropp),
+                                 computeIntrinsicAngle(borders[0], borders[3]),
+                                 computeIntrinsicAngle(ropp, borders[0])};
+
+  for(int i = 0; i < 6; ++i) {
+    before[i] = before[i] / (M_PI / 3);
+    before[i] = (before[i] <= 1) ? before[i] : 2 - before[i];
+    after[i] = after[i] / (M_PI / 3);
+    after[i] = (after[i] <= 1) ? after[i] : 2 - after[i];
+  }
+
+  std::sort(before.begin(), before.end());
+  std::sort(after.begin(), after.end());
+  return before[0] < after[0] - 1e-12;
+}
+
 bool highOrderPolyMesh::locallyDelaunay(size_t circumindex, double circumradius,
                                         size_t oppVertex)
 {
@@ -2359,6 +2396,10 @@ inline bool highOrderPolyMesh::doWeSwap(const std::pair<int, int> &edge,
       return false;
   }
   else if(OPTION == 2) {
+    if(!doWeSwapLengthHeuristic(edge.first, edge.second, opp.first, opp.second))
+      return false;
+  }
+  else if(OPTION == 3) {
     if(!doWeSwapLengthHeuristic(edge.first, edge.second, opp.first, opp.second))
       return false;
   }
