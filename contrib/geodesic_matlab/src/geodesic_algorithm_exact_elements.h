@@ -320,7 +320,7 @@ namespace geodesic {
       // interval_pointer& interval)
       interval_pointer &interval,
       unsigned forSourceIndex = std::numeric_limits<unsigned>::max(),
-      unsigned depth = 0)
+      unsigned depth = 0, face_pointer incident_face = nullptr)
     {
       interval_pointer p = m_first;
       offset = GEODESIC_INF;
@@ -398,6 +398,13 @@ namespace geodesic {
 
         if(forSourceIndex != std::numeric_limits<unsigned>::max() &&
            forSourceIndex != p->source_index())
+          continue;
+
+        if(incident_face && p->direction() == Interval::FROM_FACE_0 &&
+           p->edge()->adjacent_faces()[0] == incident_face)
+          continue;
+        if(incident_face && p->direction() == Interval::FROM_FACE_1 &&
+           p->edge()->adjacent_faces()[1] == incident_face)
           continue;
 
         double o, d;
