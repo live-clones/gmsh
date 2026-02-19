@@ -2725,47 +2725,50 @@ namespace geodesic {
     if(best_total_distance >=
        GEODESIC_INF / 2.0) // unable to find the right path
     {
-      std::ofstream posFile("traceback_intervals.pos");
-      posFile << "View \"Traceback Intervals\" {\n";
-      for(unsigned i = 0; i < m_edge_interval_lists.size(); ++i) {
-        list_pointer list = &m_edge_interval_lists[i];
-        interval_pointer p = list->first();
-        while(p) {
-          edge_pointer edge = p->edge();
-          vertex_pointer v0 = edge->v0();
-          vertex_pointer v1 = edge->v1();
-          double start = p->start();
-          double stop = p->stop();
-          double length = edge->length();
-          double x0 = v0->x() + (v1->x() - v0->x()) * (start / length);
-          double y0 = v0->y() + (v1->y() - v0->y()) * (start / length);
-          double z0 = v0->z() + (v1->z() - v0->z()) * (start / length);
-          double x1 = v0->x() + (v1->x() - v0->x()) * (stop / length);
-          double y1 = v0->y() + (v1->y() - v0->y()) * (stop / length);
-          double z1 = v0->z() + (v1->z() - v0->z()) * (stop / length);
-          posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1 << ","
-                  << y1 << "," << z1 << "){" << p->signal(start) << ","
-                  << p->signal(stop) << "};\n";
-          p = p->next();
-        }
-      }
-      posFile << "SP(" << destination.x() << "," << destination.y() << ","
-              << destination.z() << "){" << 10 << "};\n";
-      for(size_t i = 0; i < m_sources.size(); ++i) {
-        posFile << "SP(" << m_sources[i].x() << "," << m_sources[i].y() << ","
-                << m_sources[i].z() << "){" << i << "};\n";
-      }
-      for(size_t i = 0; i < m_stop_vertices.size(); ++i) {
-        posFile << "SP(" << m_stop_vertices[i]->x() << ","
-                << m_stop_vertices[i]->y() << "," << m_stop_vertices[i]->z()
-                << "){1};\n";
-      }
-      posFile << "};\n";
-      posFile.close();
-      std::cerr << "Warning: GeodesicAlgorithmExact::trace_back: cannot find "
-                   "the right path"
-                << std::endl;
-      // return;
+      // std::ofstream posFile("traceback_intervals.pos");
+      // posFile << "View \"Traceback Intervals\" {\n";
+      // for(unsigned i = 0; i < m_edge_interval_lists.size(); ++i) {
+      //   list_pointer list = &m_edge_interval_lists[i];
+      //   interval_pointer p = list->first();
+      //   while(p) {
+      //     edge_pointer edge = p->edge();
+      //     vertex_pointer v0 = edge->v0();
+      //     vertex_pointer v1 = edge->v1();
+      //     double start = p->start();
+      //     double stop = p->stop();
+      //     double length = edge->length();
+      //     double x0 = v0->x() + (v1->x() - v0->x()) * (start / length);
+      //     double y0 = v0->y() + (v1->y() - v0->y()) * (start / length);
+      //     double z0 = v0->z() + (v1->z() - v0->z()) * (start / length);
+      //     double x1 = v0->x() + (v1->x() - v0->x()) * (stop / length);
+      //     double y1 = v0->y() + (v1->y() - v0->y()) * (stop / length);
+      //     double z1 = v0->z() + (v1->z() - v0->z()) * (stop / length);
+      //     posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1 <<
+      //     ","
+      //             << y1 << "," << z1 << "){" << p->signal(start) << ","
+      //             << p->signal(stop) << "};\n";
+      //     p = p->next();
+      //   }
+      // }
+      // posFile << "SP(" << destination.x() << "," << destination.y() << ","
+      //         << destination.z() << "){" << 10 << "};\n";
+      // for(size_t i = 0; i < m_sources.size(); ++i) {
+      //   posFile << "SP(" << m_sources[i].x() << "," << m_sources[i].y() <<
+      //   ","
+      //           << m_sources[i].z() << "){" << i << "};\n";
+      // }
+      // for(size_t i = 0; i < m_stop_vertices.size(); ++i) {
+      //   posFile << "SP(" << m_stop_vertices[i]->x() << ","
+      //           << m_stop_vertices[i]->y() << "," << m_stop_vertices[i]->z()
+      //           << "){1};\n";
+      // }
+      // posFile << "};\n";
+      // posFile.close();
+      // std::cerr << "Warning: GeodesicAlgorithmExact::trace_back: cannot find
+      // "
+      //              "the right path"
+      //           << std::endl;
+      // // return;
     }
 
     path.push_back(destination);
