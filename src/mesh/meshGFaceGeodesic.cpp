@@ -3803,6 +3803,7 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
   // Minimal halfedge representation
   std::vector<int> id(newTris.size());
   std::vector<int> next(newTris.size());
+  std::vector<int> opposite(newTris.size(), -1);
   for(int i = 0; i < newTris.size() / 3; ++i) {
     for(int j = 0; j < 3; ++j) {
       id[3 * i + j] = newTris[3 * i + j];
@@ -3810,7 +3811,6 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     }
   }
 
-  std::vector<int> opposite(id.size(), -1);
   std::vector<int> list(id.size());
   for(int i = 0; i < id.size(); ++i) {
     list.push_back(i);
@@ -3822,12 +3822,12 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     }
   }
 
-  std::unordered_map<int, PolyMesh::Vertex *> index2pv;
+  std::unordered_map<int, PolyMesh::Vertex *> id2pv;
   for(auto t : cavity) {
     auto he = ipm->faces[t]->he;
     for(int j = 0; j < 3; ++j) {
       he = he->next;
-      index2pv[he->v->data] = he->v;
+      id2pv[he->v->data] = he->v;
     }
   }
 
@@ -3839,48 +3839,40 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
 
     int ohe = opposite[he];
     if(ohe == -1 && propagate) {
-      std::pair<int, int> e = {i0, i1}, o, ts;
-      auto ats = adjacentTriangles(e);
-      if(ats.size() == 1) continue;
-      if(ats.size() == 0) {
-        std::cout << i0 << " " << i1 << std::endl;
-        throw std::runtime_error("not an edge");
+      PolyMesh::HalfEdge *ihe = id2pv[i0]->he;
+      do {
+        if(ihe->next->v->data == i1) break;
+        ihe = ihe->opposite->next;
+      } while(ihe != id2pv[i0]->he);
+      if(ihe->next->v->data != i1) {
+        Msg::Error("Could not find the edge %d %d", i0, i1);
       }
-      getOppEdge(e, o, ts);
-      if(o.first == -1 || o.second == -1) throw std::runtime_error("erroroor");
+      if(!ihe->opposite) continue;
+      int p0 = ihe->v->data;
+      int p1 = ihe->next->v->data;
+      int p3 = ihe->opposite->next->next->v->data;
+      int f103 = ihe->opposite->f->data;
+      id2pv[ihe->opposite->next->next->v->data] = ihe->opposite->next->next->v;
 
-      PolyMesh::HalfEdge *he = index2pv[i0]->he;
-      while(he->next->v->data != i1) { he = he->opposite->next; }
-      if(!he->opposite) continue;
-      e.first = he->v->data;
-      e.second = he->next->v->data;
-      o.first = he->next->next->v->data;
-      o.second = he->opposite->next->next->v->data;
-      ts.first = he->f->data;
-      ts.second = he->opposite->f->data;
-      index2pv[he->opposite->next->next->v->data] = he->opposite->next->next->v;
-
-      cavity.push_back(ts.second);
+      cavity.push_back(f103);
       int idx = id.size();
-      id.push_back(e.second);
-      id.push_back(e.first);
-      id.push_back(o.second);
+      id.push_back(p1);
+      id.push_back(p0);
+      id.push_back(p3);
       next.push_back(idx + 1);
       next.push_back(idx + 2);
       next.push_back(idx);
-      opposite.push_back(-1);
+      opposite.push_back(he);
+      opposite[he] = idx;
       opposite.push_back(-1);
       opposite.push_back(-1);
       for(int i = 0; i < id.size(); ++i) {
-        if(id[i] == e.first && id[next[i]] == e.second) {
-          opposite[i] = idx;
-          opposite[idx] = i;
-        }
-        if(id[i] == o.second && id[next[i]] == e.first) {
+        if(opposite[i] != -1) continue;
+        if(id[i] == p3 && id[next[i]] == p0) {
           opposite[i] = idx + 1;
           opposite[idx + 1] = i;
         }
-        if(id[i] == e.second && id[next[i]] == o.second) {
+        if(id[i] == p1 && id[next[i]] == p3) {
           opposite[i] = idx + 2;
           opposite[idx + 2] = i;
         }
