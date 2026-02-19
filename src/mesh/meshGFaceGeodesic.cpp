@@ -4550,12 +4550,12 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
       // std::cout << "13: " << tri.size() << " vs " << pp.size() << std::endl;
       // if(i == 13) throw std::runtime_error("stop");
       // verify if orientation is ok (it should be thet case ...)
-      // if(0) {
-      if(1) {
+      if(0) {
+        // if(1) {
         for(size_t j = 0; j < tri.size(); j += 3) {
           int n0 = tri[j] - 1;
-          int n1 = tri[j + 1] - 1;
-          int n2 = tri[j + 2] - 1;
+          int n1 = tri[j + 2] - 1; // Clockwise orientation
+          int n2 = tri[j + 1] - 1;
           PolyMesh::Vertex *j0 = pp[n0];
           PolyMesh::Vertex *j1 = pp[n1];
           PolyMesh::Vertex *j2 = pp[n2];
@@ -4581,8 +4581,8 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
 
       for(size_t j = 0; j < tri.size(); j += 3) {
         int n0 = tri[j] - 1;
-        int n1 = tri[j + 1] - 1;
-        int n2 = tri[j + 2] - 1;
+        int n1 = tri[j + 2] - 1; // Clockwise orientation
+        int n2 = tri[j + 1] - 1;
         PolyMesh::Vertex *j0 = pp[n0];
         PolyMesh::Vertex *j1 = pp[n1];
         PolyMesh::Vertex *j2 = pp[n2];
