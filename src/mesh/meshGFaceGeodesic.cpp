@@ -5327,6 +5327,49 @@ int makeMeshGeodesic(GModel *gm)
   GFace2PolyMesh((*gm->firstFace())->tag(), &pm);
   Msg::Info("Creating a Polymesh done -- %lu faces ", pm->faces.size());
 
+  // Check Manifoldness
+  std::vector<int> data(pm->vertices.size());
+  for(int i = 0; i < pm->vertices.size(); ++i) {
+    data[i] = pm->vertices[i]->data;
+    pm->vertices[i]->data = i;
+  }
+  for(int i = 0; i < pm->hedges.size(); ++i) { pm->hedges[i]->data = i; }
+  std::vector<bool> checked(pm->hedges.size(), false);
+  std::vector<int> nopp(pm->hedges.size(), 0);
+  std::vector<int> nfan(pm->vertices.size(), 0);
+  for(int i = 0; i < pm->hedges.size(); ++i) {
+    PolyMesh::HalfEdge *he = pm->hedges[i];
+    if(he->opposite) nopp[he->opposite->data]++;
+  }
+  for(int i = 0; i < pm->hedges.size(); ++i) {
+    PolyMesh::HalfEdge *he = pm->hedges[i];
+    if(checked[i]) continue;
+    nfan[he->v->data]++;
+    do {
+      checked[he->data] = true;
+      if(nopp[he->data] != 1) {
+        he = he->next->next;
+        while(nopp[he->data] == 1) { he = he->opposite->next->next; }
+      }
+      else
+        he = he->opposite->next;
+    } while(he != pm->hedges[i]);
+  }
+  int boundary_edge = 0, non_manifold_edge = 0, non_manifold_vertex = 0;
+  for(int i = 0; i < pm->vertices.size(); ++i) {
+    pm->vertices[i]->data = data[i];
+    if(nfan[i] != 1) non_manifold_vertex++;
+  }
+  for(int i = 0; i < pm->hedges.size(); ++i) {
+    if(nopp[i] == 0) boundary_edge++;
+    if(nopp[i] > 1) non_manifold_edge++;
+  }
+
+  if(boundary_edge != 0 || non_manifold_edge != 0 || non_manifold_vertex != 0)
+    Msg::Error("The surface is not a closed manifold (%d boundary edges, %d "
+               "non manifold edges, %d non manifold vertices)",
+               boundary_edge, non_manifold_edge, non_manifold_vertex);
+
   std::vector<size_t> tris;
   for(size_t i = 0; i < pm->vertices.size(); ++i) { pm->vertices[i]->data = i; }
   tris.resize(3 * pm->faces.size());
