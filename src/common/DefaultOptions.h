@@ -1384,7 +1384,7 @@ StringXNumber MeshOptions_Number[] = {
   {F | O, "MinCurveNodes", opt_mesh_min_curve_nodes, 3.,
    "Minimum number of nodes used to mesh curves other than lines, circles and "
    "ellipses"},
-  {F | O, "MinIntrinsicAngle", opt_mesh_min_intrinsic_angle, 0,
+  {F | O, "MinIntrinsicAngle", opt_mesh_min_intrinsic_angle, -1e100,
    "Minimum intrinsic angle during geodesic remeshing "},
   {F | O, "MinQuality", opt_mesh_min_quality, 0.,
    "Minimum mesh quality (inverse conditioning number, ICN) after the "
