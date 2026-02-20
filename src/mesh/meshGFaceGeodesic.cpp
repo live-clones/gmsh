@@ -2511,6 +2511,7 @@ int highOrderPolyMesh::swapEdges(int OPTION)
     set.insert(he);
   }
 
+  size_t iter = 1;
   while(!set.empty()) {
     nextSet.clear();
 
@@ -2518,6 +2519,13 @@ int highOrderPolyMesh::swapEdges(int OPTION)
     if(PRECOMPUTE_CIRCUMCENTERS) precomputeCircumcenters();
 
     while(!set.empty()) {
+      if(count >= iter * 10000) {
+        iter++;
+        Msg::Info("Already collapsed %d edges (%d triangles, queue "
+                  "size = %d)",
+                  count, triangles.size() / 3, set.size() + nextSet.size());
+      }
+
       PolyMesh::HalfEdge *he = *(set.begin());
       set.erase(set.begin());
 
@@ -2629,9 +2637,10 @@ bool highOrderPolyMesh::splitEdge(
     for(auto npv : newPathsV) {
       if(intersectGeodesicPath(bpv, npv, intersection, &faceSegments,
                                &vertexSegments)) {
-        Msg::Warning(
-          "Could not split edge %d %d: new geodesic intersects border",
-          edge.first, edge.second);
+        if(WARNING)
+          Msg::Warning(
+            "Could not split edge %d %d: new geodesic intersects border",
+            edge.first, edge.second);
         return false;
       }
     }
@@ -2644,9 +2653,10 @@ bool highOrderPolyMesh::splitEdge(
   for(auto npv : newPathsV) {
     if(intersectGeodesicPath(fpv, npv, intersection, &faceSegments,
                              &vertexSegments)) {
-      Msg::Warning(
-        "Could not split edge %d %d: new geodesic intersects original edge",
-        edge.first, edge.second);
+      if(WARNING)
+        Msg::Warning(
+          "Could not split edge %d %d: new geodesic intersects original edge",
+          edge.first, edge.second);
       return false;
     }
   }
@@ -2655,9 +2665,10 @@ bool highOrderPolyMesh::splitEdge(
   for(auto npv : newPathsV) {
     if(intersectGeodesicPath(spv, npv, intersection, &faceSegments,
                              &vertexSegments)) {
-      Msg::Warning(
-        "Could not split edge %d %d: new geodesic intersects original edge",
-        edge.first, edge.second);
+      if(WARNING)
+        Msg::Warning(
+          "Could not split edge %d %d: new geodesic intersects original edge",
+          edge.first, edge.second);
       return false;
     }
   }
@@ -2913,7 +2924,13 @@ int highOrderPolyMesh::splitEdges(const double MAXE, double MINA, double MAXA)
     queue.insert(HEdgeItem(he, length(he)));
   }
 
+  size_t iter = 0;
   while(!queue.empty()) {
+    if(++iter % 10000 == 0) {
+      Msg::Info("Already collapsed %d edges (%d triangles, queue size = %d)",
+                count, triangles.size() / 3, queue.size());
+    }
+
     HEdgeItem edgeItem = *queue.begin();
     queue.erase(queue.begin());
     PolyMesh::HalfEdge *he = edgeItem.he;
@@ -3700,9 +3717,8 @@ int highOrderPolyMesh::collapseEdges(const double MINE, double MINA,
   int removedTriangles = 0;
   while(queue.size()) {
     if(++iter % 10000 == 0) {
-      Msg::Info(
-        "Already collapsed %d edges (remaining %d triangles, queue size = %d)",
-        count, triangles.size() / 3 - removedTriangles, queue.size());
+      Msg::Info("Already collapsed %d edges (%d triangles, queue size = %d)",
+                count, triangles.size() / 3 - removedTriangles, queue.size());
     }
 
     HEdgeItem item = *queue.begin();
@@ -4299,7 +4315,7 @@ int highOrderPolyMesh::splitTriangles(double MAXE)
   std::set<int> skipTriangles;
   while(!queue.empty()) {
     if(++iter % 10000 == 0) {
-      Msg::Info("Already splitted %d triangles (remaining %d triangles, queue "
+      Msg::Info("Already splitted %d triangles (%d triangles, queue "
                 "size = %d)",
                 count, ipm->faces.size(), queue.size());
     }
