@@ -2120,13 +2120,13 @@ bool highOrderPolyMesh::swapEdge(
     if(WARNING)
       Msg::Warning("Should be swapped but could not: %d %d", edge.first,
                    edge.second);
-    // if(!splitEdge(edge, MINANGLE, MAXANGLE, adjacentEdges)) {
-    //   if(WARNING)
-    //     Msg::Warning("Could not split an edge that should be swapped");
-    //   return false;
-    // }
-    // return true;
-    return false;
+    if(!splitEdge(he, MINANGLE, MAXANGLE, adjacentEdges)) {
+      if(WARNING)
+        Msg::Warning("Could not split an edge that should be swapped");
+      return false;
+    }
+    return true;
+    // return false;
   }
 
   doSwapEdge(he);
