@@ -2247,7 +2247,7 @@ bool highOrderPolyMesh::doWeSwapAngleHeuristic(int p0, int p1, int p2, int p3)
                       computeIntrinsicAngle(borders[0], borders[3]),
                       computeIntrinsicAngle(borders[2], borders[1])};
 
-  return angles[0] + angles[1] > angles[2] + angles[3] + 1e-12;
+  return angles[0] + angles[1] > angles[2] + angles[3] + EPS;
 }
 
 bool highOrderPolyMesh::doWeSwapLengthHeuristic(int p0, int p1, int p2, int p3)
@@ -2268,7 +2268,7 @@ bool highOrderPolyMesh::doWeSwapLengthHeuristic(int p0, int p1, int p2, int p3)
                       angleHeuristic(lopp, lborders[0], lborders[3]),
                       angleHeuristic(lopp, lborders[2], lborders[1])};
 
-  return angles[0] + angles[1] > angles[2] + angles[3] + 1e-12;
+  return angles[0] + angles[1] > angles[2] + angles[3] + EPS;
 }
 
 bool highOrderPolyMesh::doWeSwapMaxMin(int p0, int p1, int p2, int p3)
@@ -2305,7 +2305,7 @@ bool highOrderPolyMesh::doWeSwapMaxMin(int p0, int p1, int p2, int p3)
 
   std::sort(before.begin(), before.end());
   std::sort(after.begin(), after.end());
-  return before[0] < after[0] - 1e-12;
+  return before[0] < after[0] - EPS;
 }
 
 bool highOrderPolyMesh::locallyDelaunay(size_t circumindex, double circumradius,
@@ -2315,7 +2315,7 @@ bool highOrderPolyMesh::locallyDelaunay(size_t circumindex, double circumradius,
   PathView path;
   getGeodesicPath(circumindex, oppVertex, path);
   double l = length(path);
-  return (l / circumradius - 1.) > -1e-8;
+  return (l / circumradius - 1.) > -EPS;
 }
 
 bool highOrderPolyMesh::canWeSwap(const std::pair<int, int> &edge,
@@ -3150,7 +3150,7 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
       continue;
     }
 
-    if(qualityAfter < 0. && (iter > 0 || qualityAfter <= qualityBefore)) {
+    if(qualityAfter < 0. || (iter > 1 && qualityAfter - qualityBefore < EPS)) {
       collapse[i] = false;
       continue;
     }
@@ -4153,6 +4153,8 @@ bool highOrderPolyMesh::splitTriangle(
     qualitiesAfter[i] = q;
     if(q < qualityAfter) qualityAfter = q;
   }
+
+  if(iter > 1 && qualityAfter - qualityBefore < EPS) { return false; }
 
   auto it = std::find(cavity.begin(), cavity.end(), iTriangle);
   if(it == cavity.end()) return false;
