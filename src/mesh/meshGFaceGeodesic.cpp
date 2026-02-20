@@ -2521,7 +2521,7 @@ int highOrderPolyMesh::swapEdges(int OPTION)
     while(!set.empty()) {
       if(count >= iter * 10000) {
         iter++;
-        Msg::Info("Already collapsed %d edges (%d triangles, queue "
+        Msg::Info("Already swapped %d edges (%d triangles, queue "
                   "size = %d)",
                   count, triangles.size() / 3, set.size() + nextSet.size());
       }
@@ -2927,7 +2927,7 @@ int highOrderPolyMesh::splitEdges(const double MAXE, double MINA, double MAXA)
   size_t iter = 0;
   while(!queue.empty()) {
     if(++iter % 10000 == 0) {
-      Msg::Info("Already collapsed %d edges (%d triangles, queue size = %d)",
+      Msg::Info("Already splitted %d edges (%d triangles, queue size = %d)",
                 count, triangles.size() / 3, queue.size());
     }
 
