@@ -1941,6 +1941,17 @@ Three dots (@dots{}) indicate a possible (multiple) repetition of the
 preceding rule.
 @end enumerate
 
+@findex GeoEntity @{ @var{expression} @}
+
+In most commands that apply to geometrical entities of several
+dimensions with the same syntax (e.g. the creation of @code{Physical
+Point | Curve | Surface | Volume}), the @code{Point}, @code{Curve},
+@code{Surface} and @code{Volume} keywords can be replaced by
+@code{GeoEntity @{ @var{expression} @}}, with @var{expression}
+respectively equal to 0, 1, 2, or 3. This makes it easier to script
+parametric geometries that are valid in several dimensions, without code
+duplication.
+
 @menu
 * General scripting commands::
 * Geometry scripting commands::
