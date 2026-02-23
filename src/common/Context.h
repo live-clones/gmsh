@@ -110,6 +110,7 @@ struct contextGeometryOptions {
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
+  int occWriteParametricCurves;
   int occBooleanCheckInverted, occBooleanGlue, occBooleanNonDestructive;
   int occBooleanPreserveNumbering, occBooleanSimplify;
   int occThruSectionsDegree, occUseGenericClosestPoint;

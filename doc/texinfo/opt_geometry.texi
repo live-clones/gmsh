@@ -271,6 +271,11 @@ Import labels and colors when importing STEP models with the OpenCASCADE kernel 
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCWriteParametricCurves
+Write parametric curves in STEP exports with the OpenCASCADE kernel@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCMakeSolids
 Fix shells and make solids when importing STEP, IGES and BREP models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
