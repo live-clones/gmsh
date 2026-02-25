@@ -280,14 +280,14 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           MEdgeVertex *vend =
             static_cast<MEdgeVertex *>(ge->mesh_vertices.back());
           newv =
-            new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, vend->getLc());
+            new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, 0, vend->getLc());
           ge->mesh_vertices.push_back(newv);
         }
         else {
           MEdgeVertex *vbeg =
             static_cast<MEdgeVertex *>(ge->mesh_vertices.front());
           newv =
-            new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, vbeg->getLc());
+            new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, 0, vbeg->getLc());
           ge->mesh_vertices.insert(ge->mesh_vertices.begin(), newv);
         }
 
@@ -747,14 +747,14 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
             MEdgeVertex *vend =
               static_cast<MEdgeVertex *>(ge->mesh_vertices.back());
             newv =
-              new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, vend->getLc());
+              new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, 0, vend->getLc());
             ge->mesh_vertices.push_back(newv);
           }
           else {
             MEdgeVertex *vbeg =
               static_cast<MEdgeVertex *>(ge->mesh_vertices.front());
             newv =
-              new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, vbeg->getLc());
+              new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, 0, vbeg->getLc());
             ge->mesh_vertices.insert(ge->mesh_vertices.begin(), newv);
           }
 
