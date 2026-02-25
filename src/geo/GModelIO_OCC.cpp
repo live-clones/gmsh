@@ -5172,6 +5172,8 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
       STEPControl_Writer writer;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
       setOCCSTEPHeader(writer);
+      Interface_Static::SetIVal("write.surfacecurve.mode",
+                                CTX::instance()->geom.occWriteParametricCurves);
 
 #if 0
       // this does not seem to solve the issue that entities get duplicated when
