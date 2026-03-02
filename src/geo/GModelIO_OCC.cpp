@@ -5174,14 +5174,11 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
       setOCCSTEPHeader(writer);
       Interface_Static::SetIVal("write.surfacecurve.mode",
                                 CTX::instance()->geom.occWriteParametricCurves);
-
-#if 0
-      // this does not seem to solve the issue that entities get duplicated when
-      // exporting STEP files (see issue #906), and leads to some regressions
-      // (see issue #2673) - so leaving it out for now:
-      Interface_Static::SetIVal("write.step.nonmanifold", 1);
-#endif
-
+      // activating this helps prevent duplicate entities in 3D STEP exports
+      // (see #3440), but does not seem effective in 2D (see #906), and could
+      // lead to regressions (see #2673)
+      Interface_Static::SetIVal("write.step.nonmanifold",
+                                CTX::instance()->geom.occWriteSTEPNonManifold);
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
         if(writer.Write(fileName.c_str()) != IFSelect_RetDone) {
           Msg::Error("Could not create file '%s'", fileName.c_str());

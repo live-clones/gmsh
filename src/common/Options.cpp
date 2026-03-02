@@ -4840,6 +4840,13 @@ double opt_geometry_occ_write_parametric_curves(OPT_ARGS_NUM)
   return CTX::instance()->geom.occWriteParametricCurves;
 }
 
+double opt_geometry_occ_write_step_non_manifold(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occWriteSTEPNonManifold = val ? 1 : 0;
+  return CTX::instance()->geom.occWriteSTEPNonManifold;
+}
+
 double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

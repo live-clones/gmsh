@@ -116,6 +116,10 @@ Default value: @code{0.01}
 Default value: @code{0.001}
 @item Ratio
 Default value: @code{1.2}
+@item SmoothingLayers
+Default value: @code{2}
+@item NumExactLayers
+Default value: @code{-2}
 @end table
 
 @item Plugin(Bubbles)
