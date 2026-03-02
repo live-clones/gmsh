@@ -5315,6 +5315,11 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
     if(DEBUG) { sanityCheck(); }
   }
 
+  if(i < niter) { Msg::Info("Converged in %d iterations", i); }
+  else {
+    Msg::Info("Did not converged after %d iterations", i);
+  }
+
   createGeodesics();
   if(PRINT) {
     printGeodesics("geodesics_adapted.pos");
