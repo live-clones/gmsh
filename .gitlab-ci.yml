@@ -115,9 +115,7 @@ linux_official_release:
     - /^gmsh_.*$/
 
 linux-sdk_official_snapshot:
-  # temp fix for Redhat EL 8/Debian Stretch support
-  image: onelab/debian.stretch.64bit
-  #image: onelab/debian.buster
+  image: onelab/debian.buster
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
