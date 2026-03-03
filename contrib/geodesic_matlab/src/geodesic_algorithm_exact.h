@@ -2932,8 +2932,8 @@ namespace geodesic {
       }
     }
 
-    if(source_index == std::numeric_limits<unsigned>::max())
-      throw std::runtime_error("Error: std max");
+    // if(source_index == std::numeric_limits<unsigned>::max())
+    //   throw std::runtime_error("Error: std max");
     SurfacePoint &source = static_cast<SurfacePoint &>(m_sources[source_index]);
     if(path.back().distance(&source) > 0) { path.push_back(source); }
   }
