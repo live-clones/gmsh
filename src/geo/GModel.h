@@ -881,6 +881,11 @@ public:
                           bool binary = false, bool saveAll = false,
                           bool saveParametric = false,
                           double scalingFactor = 1.0);
+  int writeMSHPartitions(const std::string &name,
+                         const std::vector<int> &partitions,
+                         double version = 4.1, bool binary = false,
+                         bool saveAll = false, bool saveParametric = false,
+                         double scalingFactor = 1.0);
 
   // Iridium file format
   int writeIR3(const std::string &name, int elementTagType, bool saveAll,

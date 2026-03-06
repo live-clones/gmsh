@@ -1648,6 +1648,20 @@ GMSH_API void gmsh::model::mesh::unpartition()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::mesh::writePartitions(
+  const std::string &fileName, const std::vector<int> &partitions)
+{
+  if(!_checkInit()) return;
+  if(!GModel::current()->writeMSHPartitions(
+       fileName, partitions,
+       CTX::instance()->mesh.mshFileVersion,
+       CTX::instance()->mesh.binary,
+       CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.saveParametric,
+       CTX::instance()->mesh.scalingFactor))
+    Msg::Error("Could not write partitions to file '%s'", fileName.c_str());
+}
+
 GMSH_API void gmsh::model::mesh::refine()
 {
   if(!_checkInit()) return;
