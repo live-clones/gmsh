@@ -61,7 +61,8 @@ std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
                    std::unordered_set<MElement *, MElementPtrHash,
                                       MElementPtrEqual>,
                    GEntityPtrFullHash, GEntityPtrFullEqual>
-findCoveredEntitiesAndElementsToSave(GModel *const model, int partition);
+findCoveredEntitiesAndElementsToSave(GModel *const model,
+                                     const std::vector<int> &partitions);
 
 template <int dim>
 std::unordered_map<GEntity *,
@@ -69,7 +70,7 @@ std::unordered_map<GEntity *,
                                       MVertexPtrEqual>,
                    GEntityPtrFullHash, GEntityPtrFullEqual>
 findNonOwnedVerticesToSave(
-  GModel *const model, int partition,
+  GModel *const model, const std::vector<int> &partitions,
   const std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
                            std::unordered_set<MElement *, MElementPtrHash,
                                               MElementPtrEqual>,
