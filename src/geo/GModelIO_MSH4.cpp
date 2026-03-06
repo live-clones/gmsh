@@ -3736,7 +3736,7 @@ static void writeMSH4OverlapBoundaries(GModel *const model, FILE *fp,
 
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
-                       bool append, int partitionToSave,
+                       bool append, const std::vector<int> &partitionsToSave,
                        std::map<GEntity *, SBoundingBox3d> *entityBounds)
 {
   FILE *fp = nullptr;
@@ -3811,10 +3811,9 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // Optimized export in the partitioned case:
-  // partitionToSave = 0 -> full export
-  // partitionToSave > 0, no overlap -> only export what is owned by the
-  // partition partitionToSave > 0, with overlap -> export what is owned + what
-  // is needed
+  // partitionsToSave empty -> full export
+  // partitionsToSave non-empty, no overlap -> only export what is owned by the
+  // partitions; non-empty, with overlap -> export what is owned + what is needed
   std::variant<
     std::monostate,
     decltype(findCoveredEntitiesAndElementsToSave<2>(this, std::vector<int>{})),
@@ -3822,13 +3821,13 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
     nonOwnedEntitiesToSave;
   int overlapDim = this->overlapDim(); // 0, 2 or 3
   // Find entities of other partitions that are needed in the overlap case.
-  if(partitionToSave > 0) {
+  if(!partitionsToSave.empty()) {
     if(overlapDim == 2)
       nonOwnedEntitiesToSave =
-        findCoveredEntitiesAndElementsToSave<2>(this, {partitionToSave});
+        findCoveredEntitiesAndElementsToSave<2>(this, partitionsToSave);
     else if(overlapDim == 3)
       nonOwnedEntitiesToSave =
-        findCoveredEntitiesAndElementsToSave<3>(this, {partitionToSave});
+        findCoveredEntitiesAndElementsToSave<3>(this, partitionsToSave);
   }
 
   // On those entities, find nodes and entities that must be saved partially.
@@ -3838,51 +3837,51 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                                         MVertexPtrEqual>,
                      GEntityPtrFullHash, GEntityPtrFullEqual>
     entitiesWithSubsetToExport;
-  if(partitionToSave > 0 && overlapDim > 0) {
+  if(!partitionsToSave.empty() && overlapDim > 0) {
     if(overlapDim == 2)
       entitiesWithSubsetToExport = findNonOwnedVerticesToSave<2>(
-        this, {partitionToSave}, std::get<1>(nonOwnedEntitiesToSave));
+        this, partitionsToSave, std::get<1>(nonOwnedEntitiesToSave));
     else if(overlapDim == 3)
       entitiesWithSubsetToExport = findNonOwnedVerticesToSave<3>(
-        this, {partitionToSave}, std::get<2>(nonOwnedEntitiesToSave));
+        this, partitionsToSave, std::get<2>(nonOwnedEntitiesToSave));
   }
 
   // partitioned entities (use entitiesWithSubsetToExport to limit nodes)
   if(partitioned)
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds, {partitionToSave},
+                      entityBounds, partitionsToSave,
                       entitiesWithSubsetToExport);
 
   // nodes
-  writeMSH4Nodes(this, fp, partitioned, {partitionToSave}, binary,
+  writeMSH4Nodes(this, fp, partitioned, partitionsToSave, binary,
                  saveParametric ? 1 : 0, scalingFactor, saveAll, version,
                  entitiesWithSubsetToExport);
 
   // elements
-  writeMSH4Elements(this, fp, partitioned, {partitionToSave}, binary, saveAll,
+  writeMSH4Elements(this, fp, partitioned, partitionsToSave, binary, saveAll,
                     version, nonOwnedEntitiesToSave);
 
   // edges
-  writeMSH4Edges(this, fp, binary, partitioned, {partitionToSave});
+  writeMSH4Edges(this, fp, binary, partitioned, partitionsToSave);
 
   // faces
-  writeMSH4Faces(this, fp, binary, partitioned, {partitionToSave});
+  writeMSH4Faces(this, fp, binary, partitioned, partitionsToSave);
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
 
   // ghostCells
-  writeMSH4GhostCells(this, fp, {partitionToSave}, binary);
+  writeMSH4GhostCells(this, fp, partitionsToSave, binary);
 
   // overlaps
   if(partitioned && overlapDim > 0) {
     if(overlapDim == 2) {
-      writeMSH4Overlaps<2>(this, fp, {partitionToSave}, binary);
-      writeMSH4OverlapBoundaries<2>(this, fp, {partitionToSave}, binary);
+      writeMSH4Overlaps<2>(this, fp, partitionsToSave, binary);
+      writeMSH4OverlapBoundaries<2>(this, fp, partitionsToSave, binary);
     }
     else if(overlapDim == 3) {
-      writeMSH4Overlaps<3>(this, fp, {partitionToSave}, binary);
-      writeMSH4OverlapBoundaries<3>(this, fp, {partitionToSave}, binary);
+      writeMSH4Overlaps<3>(this, fp, partitionsToSave, binary);
+      writeMSH4OverlapBoundaries<3>(this, fp, partitionsToSave, binary);
     }
   }
 
@@ -3941,7 +3940,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     }
     try { // OpenMP forbids leaving block via exception
       _writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
-                 scalingFactor, false, part, &entityBounds);
+                 scalingFactor, false, {(int)part}, &entityBounds);
     } catch(...) {
       exceptions = true;
     }
