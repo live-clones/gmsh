@@ -3195,7 +3195,8 @@ static void writeMSH4Elements(
 }
 
 static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
-                           bool partitioned, int partitionToSave)
+                           bool partitioned,
+                           const std::vector<int> &partitionsToSave)
 {
   auto printEdges = [&](const GModel::hashmapMEdge &edges) {
     if(edges.empty()) return;
@@ -3225,7 +3226,7 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
     fprintf(fp, "$EndEdges\n");
   };
 
-  if(partitionToSave == 0 || !partitioned)
+  if(partitionsToSave.empty() || !partitioned)
     printEdges(model->getMEdges());
   else {
     GModel::hashmapMEdge subsetEdges;
@@ -3246,18 +3247,20 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
     std::set<GFace *, GEntityPtrLessThan> faces;
     std::set<GEdge *, GEntityPtrLessThan> edges;
     std::set<GVertex *, GEntityPtrLessThan> vertices;
-    getEntitiesToSave(model, partitioned, {partitionToSave}, true, regions,
+    getEntitiesToSave(model, partitioned, partitionsToSave, true, regions,
                       faces, edges, vertices);
     for(auto vertex : vertices) { addEdgesFromEntity(vertex); }
     for(auto edge : edges) { addEdgesFromEntity(edge); }
     for(auto face : faces) { addEdgesFromEntity(face); }
     for(auto region : regions) { addEdgesFromEntity(region); }
     for(const auto &overlaps2D : std::get<0>(model->getAllOverlaps())) {
-      if(overlaps2D->owningPartition() == partitionToSave)
+      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                   overlaps2D->owningPartition()) != partitionsToSave.end())
         addEdgesFromEntity(overlaps2D);
     }
     for(const auto &overlaps3D : std::get<1>(model->getAllOverlaps())) {
-      if(overlaps3D->owningPartition() == partitionToSave)
+      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                   overlaps3D->owningPartition()) != partitionsToSave.end())
         addEdgesFromEntity(overlaps3D);
     }
 
@@ -3266,7 +3269,8 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
 }
 
 static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
-                           bool partitioned, int partitionToSave)
+                           bool partitioned,
+                           const std::vector<int> &partitionsToSave)
 {
   auto printFaces = [&](const GModel::hashmapMFace &faces) {
     if(faces.empty()) return;
@@ -3311,7 +3315,7 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
     fprintf(fp, "$EndFaces\n");
   };
 
-  if(partitionToSave == 0 || !partitioned) {
+  if(partitionsToSave.empty() || !partitioned) {
     printFaces(model->getMFaces());
     return;
   }
@@ -3331,18 +3335,20 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, {partitionToSave}, true, regions, faces,
+  getEntitiesToSave(model, partitioned, partitionsToSave, true, regions, faces,
                     edges, vertices);
   for(auto vertex : vertices) { addFacesFromEntity(vertex); }
   for(auto edge : edges) { addFacesFromEntity(edge); }
   for(auto face : faces) { addFacesFromEntity(face); }
   for(auto region : regions) { addFacesFromEntity(region); }
   for(const auto &overlaps2D : std::get<0>(model->getAllOverlaps())) {
-    if(overlaps2D->owningPartition() == partitionToSave)
+    if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                 overlaps2D->owningPartition()) != partitionsToSave.end())
       addFacesFromEntity(overlaps2D);
   }
   for(const auto &overlaps3D : std::get<1>(model->getAllOverlaps())) {
-    if(overlaps3D->owningPartition() == partitionToSave)
+    if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                 overlaps3D->owningPartition()) != partitionsToSave.end())
       addFacesFromEntity(overlaps3D);
   }
   printFaces(subsetFaces);
@@ -3455,7 +3461,8 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
 }
 
 static void writeMSH4GhostCells(GModel *const model, FILE *fp,
-                                int partitionToSave, bool binary)
+                                const std::vector<int> &partitionsToSave,
+                                bool binary)
 {
   std::vector<GEntity *> entities;
   model->getEntities(entities);
@@ -3478,7 +3485,9 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp,
       partition = static_cast<ghostRegion *>(entities[i])->getPartition();
     }
 
-    if(!partitionToSave || partitionToSave == partition) {
+    if(partitionsToSave.empty() ||
+       std::find(partitionsToSave.begin(), partitionsToSave.end(), partition) !=
+         partitionsToSave.end()) {
       for(auto it = ghostElements.begin(); it != ghostElements.end(); ++it) {
         if(ghostCells[it->first].size() == 0)
           ghostCells[it->first].push_back(it->second);
@@ -3862,16 +3871,16 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                     version, nonOwnedEntitiesToSave);
 
   // edges
-  writeMSH4Edges(this, fp, binary, partitioned, partitionToSave);
+  writeMSH4Edges(this, fp, binary, partitioned, {partitionToSave});
 
   // faces
-  writeMSH4Faces(this, fp, binary, partitioned, partitionToSave);
+  writeMSH4Faces(this, fp, binary, partitioned, {partitionToSave});
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
 
   // ghostCells
-  writeMSH4GhostCells(this, fp, partitionToSave, binary);
+  writeMSH4GhostCells(this, fp, {partitionToSave}, binary);
 
   // overlaps
   if(partitioned && overlapDim > 0) {
