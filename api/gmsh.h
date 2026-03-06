@@ -767,6 +767,14 @@ namespace gmsh { // Top-level functions
       // Unpartition the mesh of the current model.
       GMSH_API void unpartition();
 
+      // gmsh::model::mesh::writePartitions
+      //
+      // Write selected partitions of the mesh into a single file `fileName'. The
+      // export format is MSH4. The `partitions' vector specifies which partition
+      // numbers to include.
+      GMSH_API void writePartitions(const std::string & fileName,
+                                    const std::vector<int> & partitions);
+
       // gmsh::model::mesh::optimize
       //
       // Optimize the mesh of the current model using `method' (empty for default
