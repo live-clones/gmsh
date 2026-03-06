@@ -1960,7 +1960,8 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
 static void writeMSH4Entities(
   GModel *const model, FILE *fp, bool partition, bool binary,
   double scalingFactor, double version,
-  std::map<GEntity *, SBoundingBox3d> *entityBounds, int partitionToSave,
+  std::map<GEntity *, SBoundingBox3d> *entityBounds,
+  const std::vector<int> &partitionsToSave,
   const std::unordered_map<GEntity *,
                            std::unordered_set<MVertex *, MVertexPtrHash,
                                               MVertexPtrEqual>,
@@ -1974,14 +1975,17 @@ static void writeMSH4Entities(
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   const bool acceptAllPartitions =
-    (partitionToSave == 0) || !CTX::instance()->mesh.partitionSplitLocalBrep;
+    partitionsToSave.empty() || !CTX::instance()->mesh.partitionSplitLocalBrep;
 
   if(partition) {
     auto isInPartition = [&](GEntity *entity) {
       if(acceptAllPartitions) return true;
       auto parts = getEntityPartition(entity, false);
-      return std::find(parts.begin(), parts.end(), partitionToSave) !=
-             parts.end();
+      return std::any_of(partitionsToSave.begin(), partitionsToSave.end(),
+                         [&](int p) {
+                           return std::find(parts.begin(), parts.end(), p) !=
+                                  parts.end();
+                         });
     };
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
@@ -3769,7 +3773,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // entities (the non-partitioned ones)
   writeMSH4Entities(this, fp, false, binary, scalingFactor, version,
-                    entityBounds, 0, {});
+                    entityBounds, {}, {});
 
   // check if the mesh is partitioned... and if we actually have elements in the
   // partitioned entities
@@ -3836,7 +3840,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // partitioned entities (use entitiesWithSubsetToExport to limit nodes)
   if(partitioned)
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds, partitionToSave,
+                      entityBounds, {partitionToSave},
                       entitiesWithSubsetToExport);
 
   // nodes
