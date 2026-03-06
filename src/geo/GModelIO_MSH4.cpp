@@ -2910,12 +2910,13 @@ writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
 }
 
 static void writeMSH4Elements(
-  GModel *const model, FILE *fp, bool partitioned, int partitionToSave,
-  bool binary, bool saveAll, double version,
+  GModel *const model, FILE *fp, bool partitioned,
+  const std::vector<int> &partitionsToSave, bool binary, bool saveAll,
+  double version,
   const std::variant<
     std::monostate,
-    decltype(findCoveredEntitiesAndElementsToSave<2>(model, partitionToSave)),
-    decltype(findCoveredEntitiesAndElementsToSave<3>(model, partitionToSave))>
+    decltype(findCoveredEntitiesAndElementsToSave<2>(model, std::vector<int>{})),
+    decltype(findCoveredEntitiesAndElementsToSave<3>(model, std::vector<int>{}))>
     &overlapElements)
 {
   /**
@@ -2930,7 +2931,7 @@ static void writeMSH4Elements(
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, {partitionToSave}, saveAll, regions,
+  getEntitiesToSave(model, partitioned, partitionsToSave, saveAll, regions,
                     faces, edges, vertices);
 
   const int overlapDim = model->overlapDim();
@@ -2946,7 +2947,8 @@ static void writeMSH4Elements(
         if(partitions.size() != 1)
           Msg::Error("Overlap boundary with more than one partition.");
         int partition = *partitions.begin();
-        if(partition == partitionToSave) {
+        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                     partition) != partitionsToSave.end()) {
           if constexpr(std::is_same_v<ContainerType,
                                       std::unordered_set<GEdge *>>) {
             auto cast = static_cast<GEdge *>(entity);
@@ -3023,7 +3025,7 @@ static void writeMSH4Elements(
   if(overlapDim == 2) {
     auto overlapFaces =
       std::get_if<decltype(findCoveredEntitiesAndElementsToSave<2>(
-        model, partitionToSave))>(&overlapElements);
+        model, std::vector<int>{}))>(&overlapElements);
     if(overlapFaces) {
       for(const auto &[pface, elements] : *overlapFaces) {
         int tag = pface->tag();
@@ -3079,7 +3081,7 @@ static void writeMSH4Elements(
   if(overlapDim == 3) {
     auto overlapRegions =
       std::get_if<decltype(findCoveredEntitiesAndElementsToSave<3>(
-        model, partitionToSave))>(&overlapElements);
+        model, std::vector<int>{}))>(&overlapElements);
     if(overlapRegions) {
       for(const auto &[pregion, elements] : *overlapRegions) {
         int tag = pregion->tag();
@@ -3564,7 +3566,8 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
 // Overlap exports
 template <int dim>
 static void writeMSH4Overlaps(GModel *const model, FILE *fp,
-                              int partitionToSave, bool binary)
+                              const std::vector<int> &partitionsToSave,
+                              bool binary)
 {
   fprintf(fp, "$Overlaps%dD\n", dim);
   const auto &allOverlaps =
@@ -3572,7 +3575,9 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
       model->getAllOverlaps());
   std::vector<typename EntityTraits<dim>::OverlapEntity *> overlapsToSave;
   for(const auto &overlap : allOverlaps) {
-    if(partitionToSave == 0 || overlap->owningPartition() == partitionToSave) {
+    if(partitionsToSave.empty() ||
+       std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                 overlap->owningPartition()) != partitionsToSave.end()) {
       overlapsToSave.push_back(overlap);
     }
   }
@@ -3637,7 +3642,8 @@ template <int dim> static const auto &getOuterOverlap(GModel *const model)
 
 template <int dim>
 static void writeMSH4OverlapBoundaries(GModel *const model, FILE *fp,
-                                       int partitionToSave, bool binary)
+                                       const std::vector<int> &partitionsToSave,
+                                       bool binary)
 {
   // These are regular entities, we just need to write in what container to put
   // those
@@ -3660,9 +3666,12 @@ static void writeMSH4OverlapBoundaries(GModel *const model, FILE *fp,
         boundariesToSave;
       for(const auto &boundary : boundaries) {
         auto partitions = boundary->getPartitions();
-        if(partitionToSave == 0 ||
-           std::find(partitions.begin(), partitions.end(), partitionToSave) !=
-             partitions.end()) {
+        if(partitionsToSave.empty() ||
+           std::any_of(partitionsToSave.begin(), partitionsToSave.end(),
+                       [&](int p) {
+                         return std::find(partitions.begin(), partitions.end(),
+                                          p) != partitions.end();
+                       })) {
           boundariesToSave.push_back(boundary);
         }
       }
@@ -3794,18 +3803,18 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // is needed
   std::variant<
     std::monostate,
-    decltype(findCoveredEntitiesAndElementsToSave<2>(this, partitionToSave)),
-    decltype(findCoveredEntitiesAndElementsToSave<3>(this, partitionToSave))>
+    decltype(findCoveredEntitiesAndElementsToSave<2>(this, std::vector<int>{})),
+    decltype(findCoveredEntitiesAndElementsToSave<3>(this, std::vector<int>{}))>
     nonOwnedEntitiesToSave;
   int overlapDim = this->overlapDim(); // 0, 2 or 3
   // Find entities of other partitions that are needed in the overlap case.
   if(partitionToSave > 0) {
     if(overlapDim == 2)
       nonOwnedEntitiesToSave =
-        findCoveredEntitiesAndElementsToSave<2>(this, partitionToSave);
+        findCoveredEntitiesAndElementsToSave<2>(this, {partitionToSave});
     else if(overlapDim == 3)
       nonOwnedEntitiesToSave =
-        findCoveredEntitiesAndElementsToSave<3>(this, partitionToSave);
+        findCoveredEntitiesAndElementsToSave<3>(this, {partitionToSave});
   }
 
   // On those entities, find nodes and entities that must be saved partially.
@@ -3818,10 +3827,10 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   if(partitionToSave > 0 && overlapDim > 0) {
     if(overlapDim == 2)
       entitiesWithSubsetToExport = findNonOwnedVerticesToSave<2>(
-        this, partitionToSave, std::get<1>(nonOwnedEntitiesToSave));
+        this, {partitionToSave}, std::get<1>(nonOwnedEntitiesToSave));
     else if(overlapDim == 3)
       entitiesWithSubsetToExport = findNonOwnedVerticesToSave<3>(
-        this, partitionToSave, std::get<2>(nonOwnedEntitiesToSave));
+        this, {partitionToSave}, std::get<2>(nonOwnedEntitiesToSave));
   }
 
   // partitioned entities (use entitiesWithSubsetToExport to limit nodes)
@@ -3836,7 +3845,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                  entitiesWithSubsetToExport);
 
   // elements
-  writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
+  writeMSH4Elements(this, fp, partitioned, {partitionToSave}, binary, saveAll,
                     version, nonOwnedEntitiesToSave);
 
   // edges
@@ -3854,12 +3863,12 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // overlaps
   if(partitioned && overlapDim > 0) {
     if(overlapDim == 2) {
-      writeMSH4Overlaps<2>(this, fp, partitionToSave, binary);
-      writeMSH4OverlapBoundaries<2>(this, fp, partitionToSave, binary);
+      writeMSH4Overlaps<2>(this, fp, {partitionToSave}, binary);
+      writeMSH4OverlapBoundaries<2>(this, fp, {partitionToSave}, binary);
     }
     else if(overlapDim == 3) {
-      writeMSH4Overlaps<3>(this, fp, partitionToSave, binary);
-      writeMSH4OverlapBoundaries<3>(this, fp, partitionToSave, binary);
+      writeMSH4Overlaps<3>(this, fp, {partitionToSave}, binary);
+      writeMSH4OverlapBoundaries<3>(this, fp, {partitionToSave}, binary);
     }
   }
 
