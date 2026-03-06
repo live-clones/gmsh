@@ -2679,21 +2679,34 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
 }
 
 static void getEntitiesToSave(GModel *const model, bool partitioned,
-                              int partitionToSave, bool saveAll,
+                              const std::vector<int> &partitionsToSave,
+                              bool saveAll,
                               std::set<GRegion *, GEntityPtrLessThan> &regions,
                               std::set<GFace *, GEntityPtrLessThan> &faces,
                               std::set<GEdge *, GEntityPtrLessThan> &edges,
                               std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
+  auto matchesPartition = [&](const std::vector<int> &entityPartitions) {
+    // if no partition is specified, save all partitions
+    if(partitionsToSave.empty()) return true;
+    for(int p : partitionsToSave)
+      if(std::find(entityPartitions.begin(), entityPartitions.end(), p) !=
+         entityPartitions.end())
+        return true;
+    return false;
+  };
+  auto matchesGhost = [&](int ghostPartition) {
+    if(partitionsToSave.empty()) return false;
+    return std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                     ghostPartition) != partitionsToSave.end();
+  };
   if(partitioned) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
       if((*it)->geomType() == GEntity::PartitionPoint) {
         partitionVertex *pv = static_cast<partitionVertex *>(*it);
-        if(!partitionToSave ||
-           std::find(pv->getPartitions().begin(), pv->getPartitions().end(),
-                     partitionToSave) != pv->getPartitions().end())
+        if(matchesPartition(pv->getPartitions()))
           vertices.insert(pv);
       }
     }
@@ -2702,14 +2715,12 @@ static void getEntitiesToSave(GModel *const model, bool partitioned,
         continue;
       if((*it)->geomType() == GEntity::PartitionCurve) {
         partitionEdge *pe = static_cast<partitionEdge *>(*it);
-        if(!partitionToSave ||
-           std::find(pe->getPartitions().begin(), pe->getPartitions().end(),
-                     partitionToSave) != pe->getPartitions().end())
+        if(matchesPartition(pe->getPartitions()))
           edges.insert(pe);
       }
       else if((*it)->geomType() == GEntity::GhostCurve) {
         ghostEdge *ge = static_cast<ghostEdge *>(*it);
-        if(ge->getPartition() == partitionToSave) edges.insert(ge);
+        if(matchesGhost(ge->getPartition())) edges.insert(ge);
       }
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
@@ -2717,27 +2728,23 @@ static void getEntitiesToSave(GModel *const model, bool partitioned,
         continue;
       if((*it)->geomType() == GEntity::PartitionSurface) {
         partitionFace *pf = static_cast<partitionFace *>(*it);
-        if(!partitionToSave ||
-           std::find(pf->getPartitions().begin(), pf->getPartitions().end(),
-                     partitionToSave) != pf->getPartitions().end())
+        if(matchesPartition(pf->getPartitions()))
           faces.insert(pf);
       }
       else if((*it)->geomType() == GEntity::GhostSurface) {
         ghostFace *gf = static_cast<ghostFace *>(*it);
-        if(gf->getPartition() == partitionToSave) faces.insert(gf);
+        if(matchesGhost(gf->getPartition())) faces.insert(gf);
       }
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() == GEntity::PartitionVolume) {
         partitionRegion *pr = static_cast<partitionRegion *>(*it);
-        if(!partitionToSave ||
-           std::find(pr->getPartitions().begin(), pr->getPartitions().end(),
-                     partitionToSave) != pr->getPartitions().end())
+        if(matchesPartition(pr->getPartitions()))
           regions.insert(pr);
       }
       else if((*it)->geomType() == GEntity::GhostVolume) {
         ghostRegion *gr = static_cast<ghostRegion *>(*it);
-        if(gr->getPartition() == partitionToSave) regions.insert(gr);
+        if(matchesGhost(gr->getPartition())) regions.insert(gr);
       }
     }
   }
@@ -2788,7 +2795,7 @@ writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
+  getEntitiesToSave(model, partitioned, {partitionToSave}, saveAll, regions,
                     faces, edges, vertices);
 
   // Add entities referenced by elements but not initially included (old
@@ -2923,7 +2930,7 @@ static void writeMSH4Elements(
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
+  getEntitiesToSave(model, partitioned, {partitionToSave}, saveAll, regions,
                     faces, edges, vertices);
 
   const int overlapDim = model->overlapDim();
@@ -3224,8 +3231,8 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
     std::set<GFace *, GEntityPtrLessThan> faces;
     std::set<GEdge *, GEntityPtrLessThan> edges;
     std::set<GVertex *, GEntityPtrLessThan> vertices;
-    getEntitiesToSave(model, partitioned, partitionToSave, true, regions, faces,
-                      edges, vertices);
+    getEntitiesToSave(model, partitioned, {partitionToSave}, true, regions,
+                      faces, edges, vertices);
     for(auto vertex : vertices) { addEdgesFromEntity(vertex); }
     for(auto edge : edges) { addEdgesFromEntity(edge); }
     for(auto face : faces) { addEdgesFromEntity(face); }
@@ -3309,7 +3316,7 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, partitionToSave, true, regions, faces,
+  getEntitiesToSave(model, partitioned, {partitionToSave}, true, regions, faces,
                     edges, vertices);
   for(auto vertex : vertices) { addFacesFromEntity(vertex); }
   for(auto edge : edges) { addFacesFromEntity(edge); }
