@@ -2787,7 +2787,8 @@ static void getEntitiesToSave(GModel *const model, bool partitioned,
 
 static void
 writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
-               int partitionToSave, bool binary, int saveParametric,
+               const std::vector<int> &partitionsToSave, bool binary,
+               int saveParametric,
                double scalingFactor, bool saveAll, double version,
                std::unordered_map<GEntity *,
                                   std::unordered_set<MVertex *, MVertexPtrHash,
@@ -2799,7 +2800,7 @@ writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, {partitionToSave}, saveAll, regions,
+  getEntitiesToSave(model, partitioned, partitionsToSave, saveAll, regions,
                     faces, edges, vertices);
 
   // Add entities referenced by elements but not initially included (old
@@ -3844,7 +3845,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                       entitiesWithSubsetToExport);
 
   // nodes
-  writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
+  writeMSH4Nodes(this, fp, partitioned, {partitionToSave}, binary,
                  saveParametric ? 1 : 0, scalingFactor, saveAll, version,
                  entitiesWithSubsetToExport);
 
