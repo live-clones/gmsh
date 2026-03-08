@@ -22,6 +22,7 @@
 
 #if defined(HAVE_OCC)
 
+#include <APIHeaderSection_MakeHeader.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
@@ -45,11 +46,11 @@
 #include <BRepGProp.hxx>
 #include <BRepLib.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
+#include <BRepOffsetAPI_MakeOffset.hxx>
 #include <BRepOffsetAPI_MakePipe.hxx>
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <BRepOffsetAPI_Sewing.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
-#include <BRepOffsetAPI_MakeOffset.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCone.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
@@ -62,11 +63,11 @@
 #include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
+#include <ChFi2d_ChamferAPI.hxx>
+#include <ChFi2d_FilletAPI.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
 #include <Geom2d_Curve.hxx>
-#include <ChFi2d_ChamferAPI.hxx>
-#include <ChFi2d_FilletAPI.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <GeomConvert.hxx>
 #include <GeomFill_BSplineCurves.hxx>
@@ -81,8 +82,13 @@
 #include <Geom_Plane.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <HeaderSection_FileDescription.hxx>
+#include <HeaderSection_FileName.hxx>
+#include <HeaderSection_FileSchema.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
+#include <Interface_EntityIterator.hxx>
+#include <Interface_HArray1OfHAsciiString.hxx>
 #include <Interface_Static.hxx>
 #include <Poly_PolygonOnTriangulation.hxx>
 #include <Poly_Triangle.hxx>
@@ -90,12 +96,6 @@
 #include <ProjLib_ProjectedCurve.hxx>
 #include <STEPControl_Reader.hxx>
 #include <STEPControl_Writer.hxx>
-#include <StepData_StepModel.hxx>
-#include <Interface_EntityIterator.hxx>
-#include <HeaderSection_FileName.hxx>
-#include <HeaderSection_FileDescription.hxx>
-#include <HeaderSection_FileSchema.hxx>
-#include <APIHeaderSection_MakeHeader.hxx>
 #include <ShapeAnalysis_Edge.hxx>
 #include <ShapeBuild_ReShape.hxx>
 #include <ShapeExtend_WireData.hxx>
@@ -103,6 +103,7 @@
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
 #include <Standard_Version.hxx>
+#include <StepData_StepModel.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <TColStd_Array2OfReal.hxx>
@@ -117,6 +118,7 @@
 #include <TopTools_DataMapIteratorOfDataMapOfIntegerShape.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfShapeInteger.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <TopTools_MapOfShape.hxx>
 #include <TopoDS.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakeElips.hxx>
@@ -152,6 +154,7 @@
 #include <Quantity_Color.hxx>
 #include <STEPCAFControl_Reader.hxx>
 #include <TDF_ChildIterator.hxx>
+#include <TDF_LabelSequence.hxx>
 #include <TDF_Tool.hxx>
 #include <TDataStd_Name.hxx>
 #include <TDocStd_Document.hxx>
@@ -4546,20 +4549,20 @@ static void setTargetUnit(const std::string &unit)
     Msg::Error("Could not set OpenCASCADE target unit '%s'", unit.c_str());
 }
 
-static Handle_Interface_HArray1OfHAsciiString strToOccStrArray(std::string str)
+static Handle(Interface_HArray1OfHAsciiString) strToOccStrArray(std::string str)
 {
-  Handle_Interface_HArray1OfHAsciiString array =
+  Handle(Interface_HArray1OfHAsciiString) array =
     new Interface_HArray1OfHAsciiString(1, 1);
   array->SetValue(1, new TCollection_HAsciiString(str.c_str()));
   return array;
 }
 
-static Handle_TCollection_HAsciiString strToOccStr(std::string str)
+static Handle(TCollection_HAsciiString) strToOccStr(std::string str)
 {
   return new TCollection_HAsciiString(str.c_str());
 }
 
-static void setOCCStepHeaderFileName(Handle_HeaderSection_FileName &hfname)
+static void setOCCStepHeaderFileName(Handle(HeaderSection_FileName) &hfname)
 {
   if(!CTX::instance()->geom.occStepModelName.empty()) {
     hfname->SetName(strToOccStr(CTX::instance()->geom.occStepModelName));
@@ -4589,7 +4592,7 @@ static void setOCCStepHeaderFileName(Handle_HeaderSection_FileName &hfname)
 }
 
 static void
-setOCCSTEPHeaderDescription(Handle_HeaderSection_FileDescription &hdesc)
+setOCCSTEPHeaderDescription(Handle(HeaderSection_FileDescription) &hdesc)
 {
   if(!CTX::instance()->geom.occStepDescription.empty()) {
     hdesc->SetDescription(
@@ -4601,7 +4604,7 @@ setOCCSTEPHeaderDescription(Handle_HeaderSection_FileDescription &hdesc)
   }
 }
 
-static void setOCCSTEPHeaderSchema(Handle_HeaderSection_FileSchema &hschema,
+static void setOCCSTEPHeaderSchema(Handle(HeaderSection_FileSchema) &hschema,
                                    const Interface_EntityIterator &header)
 {
   if(!CTX::instance()->geom.occStepSchemaIdentifier.empty()) {
@@ -4610,9 +4613,9 @@ static void setOCCSTEPHeaderSchema(Handle_HeaderSection_FileSchema &hschema,
   }
   else {
     for(auto It = header; It.More(); It.Next()) {
-      const Handle_Standard_Transient &entity = It.Value();
+      const Handle(Standard_Transient) &entity = It.Value();
       if(entity->IsKind(STANDARD_TYPE(HeaderSection_FileSchema))) {
-        hschema = Handle_HeaderSection_FileSchema::DownCast(entity);
+        hschema = Handle(HeaderSection_FileSchema)::DownCast(entity);
         break;
       }
     }
@@ -4621,12 +4624,12 @@ static void setOCCSTEPHeaderSchema(Handle_HeaderSection_FileSchema &hschema,
 
 static void setOCCSTEPHeader(STEPControl_Writer &writer)
 {
-  Handle_StepData_StepModel model = writer.Model().get();
+  Handle(StepData_StepModel) model = writer.Model().get();
   APIHeaderSection_MakeHeader header = APIHeaderSection_MakeHeader();
 
-  Handle_HeaderSection_FileName hfname = header.FnValue();
-  Handle_HeaderSection_FileDescription hdesc = header.FdValue();
-  Handle_HeaderSection_FileSchema hschema = header.FsValue();
+  Handle(HeaderSection_FileName) hfname = header.FnValue();
+  Handle(HeaderSection_FileDescription) hdesc = header.FdValue();
+  Handle(HeaderSection_FileSchema) hschema = header.FsValue();
 
   setOCCStepHeaderFileName(hfname);
   setOCCSTEPHeaderDescription(hdesc);
@@ -4655,10 +4658,10 @@ static void getColorRGB(const Quantity_Color &col, double &r, double &g,
 }
 
 static void setShapeAttributes(OCCAttributesRTree *attributes,
-                               const Handle_XCAFDoc_ShapeTool &shapeTool,
-                               const Handle_XCAFDoc_ColorTool &colorTool,
-                               const Handle_XCAFDoc_MaterialTool &materialTool,
-                               const Handle_XCAFDoc_LayerTool &layerTool,
+                               const Handle(XCAFDoc_ShapeTool) &shapeTool,
+                               const Handle(XCAFDoc_ColorTool) &colorTool,
+                               const Handle(XCAFDoc_MaterialTool) &materialTool,
+                               const Handle(XCAFDoc_LayerTool) &layerTool,
                                const TDF_Label &label,
                                const TopLoc_Location &loc,
                                const std::string &pathName, bool isRef)
@@ -4803,10 +4806,10 @@ void readAttributes(OCCAttributesRTree *attributes, T &reader,
                     const std::string &format)
 {
   // dummy XCAF Application to handle the STEP XCAF Document
-  static Handle_XCAFApp_Application dummy_app =
+  static Handle(XCAFApp_Application) dummy_app =
     XCAFApp_Application::GetApplication();
   // XCAF Document to contain the STEP/IGES file itself
-  Handle_TDocStd_Document doc;
+  Handle(TDocStd_Document) doc;
   // check if a file is already open under this handle, if so, close it to
   // prevent segfaults when trying to create a new document
   if(dummy_app->NbDocuments() > 0) {
@@ -4817,13 +4820,13 @@ void readAttributes(OCCAttributesRTree *attributes, T &reader,
   // transfer STEP/IGES into the document, and get the main label
   reader.Transfer(doc);
   TDF_Label mainLabel = doc->Main();
-  Handle_XCAFDoc_ShapeTool shapeTool =
+  Handle(XCAFDoc_ShapeTool) shapeTool =
     XCAFDoc_DocumentTool::ShapeTool(mainLabel);
-  Handle_XCAFDoc_ColorTool colorTool =
+  Handle(XCAFDoc_ColorTool) colorTool =
     XCAFDoc_DocumentTool::ColorTool(mainLabel);
-  Handle_XCAFDoc_MaterialTool materialTool =
+  Handle(XCAFDoc_MaterialTool) materialTool =
     XCAFDoc_DocumentTool::MaterialTool(mainLabel);
-  Handle_XCAFDoc_LayerTool layerTool =
+  Handle(XCAFDoc_LayerTool) layerTool =
     XCAFDoc_DocumentTool::LayerTool(mainLabel);
   // traverse the labels recursively to set attributes on shapes
   setShapeAttributes(attributes, shapeTool, colorTool, materialTool, layerTool,
