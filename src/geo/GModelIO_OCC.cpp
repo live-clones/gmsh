@@ -4061,6 +4061,11 @@ bool OCC_Internals::booleanOperator(
   if(tag >= 0 || !CTX::instance()->geom.occBooleanPreserveNumbering) {
     // if we specify the tag explicitly, or if we don't care about preserving
     // the numering, just go ahead and bind the resulting shape (and sub-shapes)
+    // For fragments: protect unmodified entities from cascade unbinding so their
+    // tags are preserved, while still rebinding everything else from scratch via
+    // _multiBind (avoiding the stale-binding issues of the full preserve path).
+    // No _toPreserve needed: the entmap fix below handles correct tag
+    // lookup for unmodified entities via shape identity.
     for(std::size_t i = 0; i < inDimTags.size(); i++) {
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(remove) {
@@ -4083,8 +4088,28 @@ bool OCC_Internals::booleanOperator(
     // change, or that were replaced by a single shape. Note that to preserve
     // the numbering of smaller dimension entities (on boundaries) they should
     // appear *before* higher dimensional entities in the object/tool lists.
+    // Two-pass preserve-numbering: first populate _toPreserve (ascending dim
+    // so lower-dim entities are protected before higher-dim cascade unbind),
+    // then do all unbind/rebind work in descending dim order (volumes first)
+    // so that _unbind(face) safety checks don't block on still-bound solids.
     _toPreserve.clear();
+    // Pass 1: identify unmodified entities and protect them
     for(std::size_t i = 0; i < inDimTags.size(); i++) {
+      if(!mapDeleted[i] && mapModified[i].Extent() == 0) {
+        _toPreserve.insert(
+          std::make_pair(inDimTags[i].first, inDimTags[i].second));
+      }
+    }
+    // Pass 2: unbind/rebind in descending dimension order
+    // Build index sorted by descending dimension
+    std::vector<std::size_t> order(inDimTags.size());
+    for(std::size_t i = 0; i < order.size(); i++) order[i] = i;
+    std::stable_sort(order.begin(), order.end(),
+      [&](std::size_t a, std::size_t b) {
+        return inDimTags[a].first > inDimTags[b].first;
+      });
+    for(std::size_t idx = 0; idx < order.size(); idx++) {
+      std::size_t i = order[idx];
       int dim = inDimTags[i].first;
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
@@ -4095,11 +4120,9 @@ bool OCC_Internals::booleanOperator(
           else
             _unbind(mapOriginal[i], dim, tag, true);
         }
-        Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
-      else if(mapModified[i].Extent() == 0) { // not modified
-        _toPreserve.insert(std::make_pair(dim, tag));
-        Msg::Debug("BOOL (%d,%d) not modified", dim, tag);
+      else if(mapModified[i].Extent() == 0) { // not modified (already in _toPreserve)
+        // nothing to do
       }
       else if(mapModified[i].Extent() == 1) { // replaced by single one
         if(remove) {
@@ -4114,16 +4137,14 @@ bool OCC_Internals::booleanOperator(
                       tag, t);
           _toPreserve.insert(std::make_pair(dim, t));
         }
-        Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
-      else {
+      else { // replaced by multiple
         if(remove) {
           if(CTX::instance()->geom.occFastUnbind == 2)
             _unbindWithoutChecks(mapOriginal[i]);
           else
             _unbind(mapOriginal[i], dim, tag, true);
         }
-        Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
     for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
@@ -4140,7 +4161,10 @@ bool OCC_Internals::booleanOperator(
     std::pair<int, int> dimTag(dim, tag);
     std::vector<std::pair<int, int>> dimTags;
     if(mapModified[i].Extent() == 0) { // not modified
-      if(_isBound(dim, tag)) dimTags.push_back(dimTag);
+      if(_isBound(dim, mapOriginal[i])) {
+        int t = _find(dim, mapOriginal[i]);
+        dimTags.push_back(std::make_pair(dim, t));
+      }
     }
     else {
       TopTools_ListIteratorOfListOfShape it(mapModified[i]);
