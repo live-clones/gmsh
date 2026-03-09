@@ -4080,6 +4080,11 @@ bool OCC_Internals::booleanOperator(
   if(tag >= 0 || !CTX::instance()->geom.occBooleanPreserveNumbering) {
     // if we specify the tag explicitly, or if we don't care about preserving
     // the numering, just go ahead and bind the resulting shape (and sub-shapes)
+    // For fragments: protect unmodified entities from cascade unbinding so their
+    // tags are preserved, while still rebinding everything else from scratch via
+    // _multiBind (avoiding the stale-binding issues of the full preserve path).
+    // No _toPreserve needed: the entmap fix below handles correct tag
+    // lookup for unmodified entities via shape identity.
     for(std::size_t i = 0; i < inDimTags.size(); i++) {
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(remove) {
@@ -4099,28 +4104,25 @@ bool OCC_Internals::booleanOperator(
   }
   else {
     // otherwise, try to preserve the numbering of the input shapes that did not
-    // change, or that were replaced by a single shape. Entities must be
-    // processed in ascending dimension order so that lower-dimensional boundary
-    // entities get their tags preserved before higher-dimensional entities can
-    // claim them via recursive _unbind.
-    bool sorted = std::is_sorted(
-      inDimTags.begin(), inDimTags.end(),
-      [](const auto &a, const auto &b) { return a.first < b.first; });
-    std::vector<std::size_t> dimOrder;
-    if(!sorted) {
-      Msg::Warning("Reordering %d entities by ascending dimension for boolean "
-                   "tag preservation; provide entities in ascending dimension "
-                   "order to avoid this overhead", (int)inDimTags.size());
-      dimOrder.resize(inDimTags.size());
-      std::iota(dimOrder.begin(), dimOrder.end(), 0);
-      std::stable_sort(dimOrder.begin(), dimOrder.end(),
-                       [&inDimTags](auto a, auto b) {
-                         return inDimTags[a].first < inDimTags[b].first;
-                       });
-    }
+    // change, or that were replaced by a single shape.
+    // Two-pass approach: first mark unmodified entities for preservation, then
+    // unbind/rebind in descending dimension order (volumes before faces before
+    // edges) so that _unbind safety checks don't block on still-bound parents.
     _toPreserve.clear();
-    for(std::size_t ii = 0; ii < inDimTags.size(); ii++) {
-      std::size_t i = sorted ? ii : dimOrder[ii];
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
+      if(!mapDeleted[i] && mapModified[i].Extent() == 0) {
+        _toPreserve.insert(
+          std::make_pair(inDimTags[i].first, inDimTags[i].second));
+      }
+    }
+    std::vector<std::size_t> order(inDimTags.size());
+    std::iota(order.begin(), order.end(), 0);
+    std::stable_sort(order.begin(), order.end(),
+      [&](std::size_t a, std::size_t b) {
+        return inDimTags[a].first > inDimTags[b].first;
+      });
+    for(std::size_t idx = 0; idx < order.size(); idx++) {
+      std::size_t i = order[idx];
       int dim = inDimTags[i].first;
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
@@ -4131,11 +4133,9 @@ bool OCC_Internals::booleanOperator(
           else
             _unbind(mapOriginal[i], dim, tag, true);
         }
-        Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
-      else if(mapModified[i].Extent() == 0) { // not modified
-        _toPreserve.insert(std::make_pair(dim, tag));
-        Msg::Debug("BOOL (%d,%d) not modified", dim, tag);
+      else if(mapModified[i].Extent() == 0) { // not modified (already in _toPreserve)
+        // nothing to do
       }
       else if(mapModified[i].Extent() == 1) { // replaced by single one
         if(remove) {
@@ -4150,16 +4150,14 @@ bool OCC_Internals::booleanOperator(
                       tag, t);
           _toPreserve.insert(std::make_pair(dim, t));
         }
-        Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
-      else {
+      else { // replaced by multiple
         if(remove) {
           if(CTX::instance()->geom.occFastUnbind == 2)
             _unbindWithoutChecks(mapOriginal[i]);
           else
             _unbind(mapOriginal[i], dim, tag, true);
         }
-        Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
     for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
@@ -4176,7 +4174,10 @@ bool OCC_Internals::booleanOperator(
     std::pair<int, int> dimTag(dim, tag);
     std::vector<std::pair<int, int>> dimTags;
     if(mapModified[i].Extent() == 0) { // not modified
-      if(_isBound(dim, tag)) dimTags.push_back(dimTag);
+      if(_isBound(dim, mapOriginal[i])) {
+        int t = _find(dim, mapOriginal[i]);
+        dimTags.push_back(std::make_pair(dim, t));
+      }
     }
     else {
       NCollection_List<TopoDS_Shape>::Iterator it(mapModified[i]);
