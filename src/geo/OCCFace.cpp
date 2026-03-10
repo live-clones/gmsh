@@ -45,7 +45,7 @@
 #include <gp_Cone.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
-  : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
+  : GFace(m, num), _s(s), _sf(s, true), _radius(-1)
 {
   _setup();
 
@@ -474,7 +474,7 @@ double OCCFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
 bool OCCFace::containsPoint(const SPoint3 &pt) const
 {
-  const Standard_Real tolerance = BRep_Tool::Tolerance(_s);
+  const double tolerance = BRep_Tool::Tolerance(_s);
   BRepClass_FaceClassifier faceClassifier;
   faceClassifier.Perform(_s, gp_Pnt{pt.x(), pt.y(), pt.z()}, tolerance);
   const TopAbs_State state = faceClassifier.State();
@@ -483,7 +483,7 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
 
 bool OCCFace::containsParam(const SPoint2 &pt)
 {
-  const Standard_Real tolerance = BRep_Tool::Tolerance(_s);
+  const double tolerance = BRep_Tool::Tolerance(_s);
   BRepClass_FaceClassifier faceClassifier;
   faceClassifier.Perform(_s, gp_Pnt2d{pt.x(), pt.y()}, tolerance);
   const TopAbs_State state = faceClassifier.State();
