@@ -141,6 +141,14 @@
 #include <Message_ProgressIndicator.hxx>
 #endif
 
+#if OCC_VERSION_HEX < 0x080000
+// FIXME: this should not be necessary, but I could not figure out how to
+// replace those with direct use of NCollection* without breaking older versions
+#include <TColgp_HArray1OfPnt.hxx>
+#include <TColStd_HArray1OfBoolean.hxx>
+#include <Interface_HArray1OfHAsciiString.hxx>
+#endif
+
 #if defined(HAVE_OCC_CAF)
 #include <IGESCAFControl_Reader.hxx>
 #include <Quantity_Color.hxx>
@@ -1318,7 +1326,11 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       // BSpline through points (called "Spline" in Gmsh; will be C2, whereas it
       // is only C1 in the GEO kernel)
       int np = periodic ? ctrlPoints.Length() - 1 : ctrlPoints.Length();
+#if OCC_VERSION_HEX < 0x080000
+      Handle(TColgp_HArray1OfPnt) p = new TColgp_HArray1OfPnt(1, np);
+#else
       Handle(NCollection_HArray1<gp_Pnt>) p = new NCollection_HArray1<gp_Pnt>(1, np);
+#endif
       for(int i = 1; i <= np; i++) p->SetValue(i, ctrlPoints(i));
       GeomAPI_Interpolate intp(p, periodic, CTX::instance()->geom.tolerance);
       if(tangents.size() == 2) {
@@ -1328,8 +1340,13 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       else if(tangents.size() == pointTags.size()) {
         NCollection_Array1<gp_Vec> Tangents(1, tangents.size());
+#if OCC_VERSION_HEX < 0x080000
+        Handle(TColStd_HArray1OfBoolean) TangentFlags =
+          new TColStd_HArray1OfBoolean(1, tangents.size());
+#else
         Handle(NCollection_HArray1<bool>) TangentFlags =
           new NCollection_HArray1<bool>(1, tangents.size());
+#endif
         for(std::size_t i = 1; i <= tangents.size(); i++) {
           gp_Vec t(tangents[i - 1].x(), tangents[i - 1].y(),
                    tangents[i - 1].z());
@@ -4541,11 +4558,18 @@ static void setTargetUnit(const std::string &unit)
     Msg::Error("Could not set OpenCASCADE target unit '%s'", unit.c_str());
 }
 
+#if OCC_VERSION_HEX < 0x080000
+static Handle(Interface_HArray1OfHAsciiString) strToOccStrArray(std::string str)
+{
+  Handle(Interface_HArray1OfHAsciiString) array =
+    new Interface_HArray1OfHAsciiString(1, 1);
+#else
 static Handle(NCollection_HArray1<Handle(TCollection_HAsciiString)>)
   strToOccStrArray(std::string str)
 {
   Handle(NCollection_HArray1<Handle(TCollection_HAsciiString)>) array =
     new NCollection_HArray1<Handle(TCollection_HAsciiString)>(1, 1);
+#endif
   array->SetValue(1, new TCollection_HAsciiString(str.c_str()));
   return array;
 }
