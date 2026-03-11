@@ -70,6 +70,45 @@ StringXString *GMSH_BoundaryLayerPlugin::getOptionStr(int iopt)
   return &BoundaryLayerOptions_String[iopt];
 }
 
+static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
+                               std::array<double, 2> c)
+{
+  return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
+               (a[1] - c[1]) * (a[0] + c[0]));
+}
+
+inline std::array<double,3> sub(const std::array<double,3>& x,
+                                const std::array<double,3>& y)
+{
+    return { x[0] - y[0],
+             x[1] - y[1],
+             x[2] - y[2] };
+}
+
+inline double dot(const std::array<double,3>& u,
+                  const std::array<double,3>& v)
+{
+    return u[0]*v[0] + u[1]*v[1] + u[2]*v[2];
+}
+
+inline std::array<double,3> cross(const std::array<double,3>& u,
+                                  const std::array<double,3>& v)
+{
+    return {
+        u[1]*v[2] - u[2]*v[1],
+        u[2]*v[0] - u[0]*v[2],
+        u[0]*v[1] - u[1]*v[0]
+    };
+}
+
+inline double tet_volume(const std::array<double,3>& a,
+                         const std::array<double,3>& b,
+                         const std::array<double,3>& c,
+                         const std::array<double,3>& d)
+{
+    return dot(sub(a, d), cross(sub(b, d), sub(c, d))) / 6.0;
+}
+
 #if defined(HAVE_WINSLOWUNTANGLER)
 
 /*
@@ -84,13 +123,6 @@ StringXString *GMSH_BoundaryLayerPlugin::getOptionStr(int iopt)
     |
     s--a---x(t(0))---x(t(1))--...--x(t(n-2))-----x(t(n-1))---e
 */
-
-static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
-                               std::array<double, 2> c)
-{
-  return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
-               (a[1] - c[1]) * (a[0] + c[0]));
-}
 
 const int _debugBL3D = 1;
 
@@ -136,22 +168,22 @@ static void replaceFaces (GModel *gm ,
 	MEdge ei2 = q->getEdge((i+2)%4);
 	auto it0 = split.find(ei);
 	auto it1 = split.find(ei2);
-	if(it0 != split.end() && it1 != split.end()) {	
+	if(it0 != split.end() && it1 != split.end()) {
 	  for(size_t j = 0; j < it0->second.size() - 1; j++){
 	    newVec.push_back(new MQuadrangle(it0->second[j], it0->second[j + 1],
 					     it1->second[j + 1],it1->second[j]));
-	  
+
 	  }
 	  found = true;
 	}
       }
       if (found) delete q;
-      else newVec.push_back(q);	  
+      else newVec.push_back(q);
     }
     gf->quadrangles = newVec;
   }
 }
-  
+
 
 
 static void replaceEdges (GModel *gm ,
@@ -165,7 +197,7 @@ static void replaceEdges (GModel *gm ,
     MEdge m1 = MEdge(l1->getVertex(0), l1->getVertex(1));
     auto it0 = split.find(m0);
     auto it1 = split.find(m1);
-    
+
     if(it0 != split.end()) {
       //      printf("coucou %d %d\n",ge->tag(),l0->getVertex(0)->onWhat()->dim());
       std::vector<MLine *> old = ge->lines;
@@ -185,8 +217,8 @@ static void replaceEdges (GModel *gm ,
     }
   }
 }
-  
-  
+
+
 bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           std::vector<GRegion *> &inVolumes, double thickness,
           std::map<MElement *, double> &layers,
@@ -882,7 +914,7 @@ namespace {
       if(touched.find(e->getVertex(j)) != touched.end()) return true;
     return false;
   }
-  
+
   template <class GEntityT>
   static void buildUntangleSets(
 				GEntityT *ge,
@@ -893,7 +925,7 @@ namespace {
 				std::set<MVertex *, MVertexPtrLessThan> &fixed)
   {
     std::set<MVertex *, MVertexPtrLessThan> touched;
-    
+
     // 1) seed touched with vertices of BL elements
     for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
       MElement *e = ge->getMeshElement(i);
@@ -901,39 +933,39 @@ namespace {
       for(size_t j = 0; j < e->getNumVertices(); ++j)
 	touched.insert(e->getVertex(j));
     }
-    
+
     // 2) expand neighborhood by nRings
     for(size_t ring = 0; ring < nRings; ++ring) {
       std::set<MVertex *, MVertexPtrLessThan> newlyTouched;
-      
+
       for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
 	MElement *e = ge->getMeshElement(i);
 	if(!elementTouchesVertexSet(e, touched)) continue;
-	
+
 	toProcess.insert(e);
 	for(size_t j = 0; j < e->getNumVertices(); ++j)
 	  newlyTouched.insert(e->getVertex(j));
       }
-      
+
       touched.insert(newlyTouched.begin(), newlyTouched.end());
     }
-    
+
     // 3) build fixed = vertices of elements not processed + vertices not classified on targetDim
     for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
       MElement *e = ge->getMeshElement(i);
-      
+
       if(toProcess.find(e) == toProcess.end()) {
 	for(size_t j = 0; j < e->getNumVertices(); ++j)
 	  fixed.insert(e->getVertex(j));
       }
-      
+
       for(size_t j = 0; j < e->getNumVertices(); ++j) {
 	MVertex *v = e->getVertex(j);
 	if(v->onWhat()->dim() != targetDim) fixed.insert(v);
       }
     }
   }
-  
+
 } // namespace
 
 
@@ -950,7 +982,7 @@ static void expandBL(
   std::set<MElement *, MElementPtrLessThan> toProcess;
   std::set<MVertex *, MVertexPtrLessThan> fixed;
   buildUntangleSets(gf, /*targetDim=*/2, layers, nRings, toProcess, fixed);
-  
+
   std::vector<std::array<std::array<double, 2>, 3>> sh;
   for(auto e : toProcess) {
     //    printf("%zu %zu\n",i,gf->getNumMeshElements());
@@ -1098,37 +1130,6 @@ static void expandBL(
   }
 }
 
-inline std::array<double,3> sub(const std::array<double,3>& x,
-                                const std::array<double,3>& y)
-{
-    return { x[0] - y[0],
-             x[1] - y[1],
-             x[2] - y[2] };
-}
-
-inline double dot(const std::array<double,3>& u,
-                  const std::array<double,3>& v)
-{
-    return u[0]*v[0] + u[1]*v[1] + u[2]*v[2];
-}
-
-inline std::array<double,3> cross(const std::array<double,3>& u,
-                                  const std::array<double,3>& v)
-{
-    return {
-        u[1]*v[2] - u[2]*v[1],
-        u[2]*v[0] - u[0]*v[2],
-        u[0]*v[1] - u[1]*v[0]
-    };
-}
-
-inline double tet_volume(const std::array<double,3>& a,
-                         const std::array<double,3>& b,
-                         const std::array<double,3>& c,
-                         const std::array<double,3>& d)
-{
-    return dot(sub(a, d), cross(sub(b, d), sub(c, d))) / 6.0;
-}
 static void expandBL3D(
   GRegion *gr,
   std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes3D,
@@ -1140,7 +1141,7 @@ static void expandBL3D(
   std::set<MElement *, MElementPtrLessThan> toProcess;
   std::set<MVertex *, MVertexPtrLessThan> fixed;
   buildUntangleSets(gr, /*targetDim=*/3, layers, nRings, toProcess, fixed);
-  
+
   std::vector<std::array<std::array<double, 3>, 4>> sh;
   for(auto e : toProcess) {
 
@@ -1258,35 +1259,35 @@ splitedge(MEdge me,
 
   std::vector<double> t = t_init;
   int minPerfect = (numExactLayers > 0) ? (int) numExactLayers : (int) (t.size()/(-numExactLayers));
-  
-  while (1) {  
+
+  while (1) {
     t = t_init;
-    int n = (int)t.size();    
+    int n = (int)t.size();
     double L   = me.length();
     double hw0 = hwall / L;
     double hw  = hw0;
     double tTOT = 0.0;
-    
+
     for(int i = 0; i < minPerfect; ++i){
       tTOT += hw;
-      t[i]  = tTOT;       
-      hw   *= ratio;      
+      t[i]  = tTOT;
+      hw   *= ratio;
     }
     double hw_last = hw / ratio;
-  
+
     int m = n - minPerfect;          // nb de couches à ajuster
     double target = 1.0 - tTOT;      // ce qu'il reste à remplir (normalisé)
-    
+
     if(m > 0 && target > 0.0){
       auto sumTail = [&](double r)->double{
 	if(std::abs(r - 1.0) < 1e-14) return hw_last * m;
 	return hw_last * r * (1.0 - std::pow(r, (double)m)) / (1.0 - r);
       };
-      
+
       // bisection (monotone en r>0)
       double lo = 1e-12, hi = 2.0;
       while(sumTail(hi) < target) hi *= 2.0;  // élargit si nécessaire
-      
+
       for(int it = 0; it < 80; ++it){
 	double mid = 0.5 * (lo + hi);
 	if(sumTail(mid) >= target) hi = mid;
@@ -1301,7 +1302,7 @@ splitedge(MEdge me,
 	  tTOT += hw2;
 	  t[i] = tTOT;
 	}
-	
+
 	// 4) fermeture exacte (optionnel mais pratique)
 	t.back() = 1.0;
 	break;
@@ -1309,7 +1310,7 @@ splitedge(MEdge me,
     }
     minPerfect -- ;
   }
-  
+
   std::vector<MVertex *> vs;
   vs.push_back(me.getVertex(0));
   if(me.getVertex(1)->onWhat()->dim() == 3) {
@@ -1369,7 +1370,7 @@ void splitounette3D(std::vector<GRegion *> &r,
   }
 
   printf("splitounette3D 2\n");
-  
+
   for(auto gr : r) {
     // Copy pointers first (like in splitounette) to avoid iterating on growing vectors
     std::vector<MElement *> temp;
@@ -1483,7 +1484,7 @@ void splitounette3D(std::vector<GRegion *> &r,
   printf("repladceEdges\n");
   replaceEdges (r[0]->model(), split);
   printf("repladceEdges\n");
-  replaceFaces (r[0]->model(), split);  
+  replaceFaces (r[0]->model(), split);
 }
 
 
@@ -1505,7 +1506,7 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
   //  for (auto x : t) printf("%12.5E\n",x);
 
   for(auto gf : f) {
-    std::vector<MElement *> temp;	
+    std::vector<MElement *> temp;
     for(size_t i = 0; i < gf->getNumMeshElements(); i++)
       temp.push_back(gf->getMeshElement(i));
 
@@ -1750,7 +1751,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     Msg::Warning("Hey ! at least one smoothing layer dude ...");
     numLayers = 1;
   }
-  
+
   std::map<MElement *, double> layers;
 
   //  printf("perfectshapes = %zu\n",perfectShapes.size());
@@ -1806,7 +1807,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   else{
     if(ws.size() > 1) splitounette3D(r, layers, ws, size,ratio,numExactLayers);
   }
-      
+
   //  for (auto gf : f)
   //    expandL(gf, perfectShapes, layers, f);
 
