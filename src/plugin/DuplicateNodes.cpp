@@ -18,20 +18,30 @@
 #include "MEdge.h"
 #include "Context.h"
 
+#include "FlGui.h"
+
+// StringXNumber DuplicateNodesOption_Number[] = {
+//   {GMSH_FULLRC, "Dimension", nullptr, 1.},
+//   {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
+//   {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
+//   {GMSH_FULLRC, "NormalX", nullptr, 0.},
+//   {GMSH_FULLRC, "NormalY", nullptr, 0.},
+//   {GMSH_FULLRC, "NormalZ", nullptr, 1.},
+//   {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
+//   {GMSH_FULLRC, "DebugView", nullptr, 0},
+//   {GMSH_FULLRC, "SwapOrientation", nullptr, 0}};
+
+constexpr uint64_t SHIFT = 32LL;
+
 StringXNumber DuplicateNodesOption_Number[] = {
-  {GMSH_FULLRC, "Dimension", nullptr, 1.},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
-  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
-  {GMSH_FULLRC, "NormalX", nullptr, 0.},
-  {GMSH_FULLRC, "NormalY", nullptr, 0.},
-  {GMSH_FULLRC, "NormalZ", nullptr, 1.},
-  {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
-  {GMSH_FULLRC, "DebugView", nullptr, 0},
-  {GMSH_FULLRC, "SwapOrientation", nullptr, 0}
-};
+  {GMSH_FULLRC, "Insert quads (0), triangles (1)", nullptr, 0.0},
+  {GMSH_FULLRC, "Shrink factor", nullptr, 0.25}};
 
 extern "C" {
-GMSH_Plugin *GMSH_RegisterDuplicateNodesPlugin() { return new GMSH_DuplicateNodesPlugin(); }
+GMSH_Plugin *GMSH_RegisterDuplicateNodesPlugin()
+{
+  return new GMSH_DuplicateNodesPlugin();
+}
 }
 
 std::string GMSH_DuplicateNodesPlugin::getHelp() const
@@ -76,8 +86,7 @@ public:
   std::vector<MVertex *> data;
 };
 
-struct MEdgeDataLessThan
-{
+struct MEdgeDataLessThan {
   bool operator()(const EdgeData &e1, const EdgeData &e2) const
   {
     if(e1.edge.getMinVertex() < e2.edge.getMinVertex()) return true;
@@ -87,244 +96,190 @@ struct MEdgeDataLessThan
   }
 };
 
+/*
+ELEMENT TYPE:
+1 - point
+2 - line
+3 - triangle
+*/
+
 PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
 {
-  int dim = (int)DuplicateNodesOption_Number[0].def;
-  int physical = (int)DuplicateNodesOption_Number[1].def;
-  int open = (int)DuplicateNodesOption_Number[2].def;
-  SVector3 normal1d(DuplicateNodesOption_Number[3].def, DuplicateNodesOption_Number[4].def,
-                    DuplicateNodesOption_Number[5].def);
-  int newPhysical = (int)DuplicateNodesOption_Number[6].def;
-  int debug = (int)DuplicateNodesOption_Number[7].def;
-  int swapOrientation = (int)DuplicateNodesOption_Number[8].def;
+  size_t DNPP_ELTYPETOINSERT = (size_t)DuplicateNodesOption_Number[0].def;
+  double DNPP_SHRINK = DuplicateNodesOption_Number[1].def;
 
-  if(dim != 1 && dim != 2) {
-    Msg::Error("Crack dimension should be 1 or 2");
-    return view;
-  }
+  Msg::Info("Insert quads (0), triangles (1): %d", DNPP_ELTYPETOINSERT);
+  Msg::Info("Shrink factor parameter: %f", DNPP_SHRINK);
 
   GModel *m = GModel::current();
-  std::map<int, std::vector<GEntity *> > groups[4];
-  m->getPhysicalGroups(groups);
-  std::vector<GEntity *> entities = groups[dim][physical];
 
-  if(entities.empty()) {
-    Msg::Error("Physical group %d (dimension %d) is empty", physical, dim);
-    return view;
-  }
+  std::vector<GEntity *> entities;
+  m->getEntities(entities);
 
-  std::vector<GEntity *> openEntities;
-  if(open > 0) {
-    openEntities = groups[dim - 1][open];
-    if(openEntities.empty()) {
-      Msg::Error("Open boundary physical group %d (dimension %d) is empty",
-                 open, dim - 1);
-      return view;
+  // m->getBoundaryTags()
+
+  std::map<size_t, std::vector<MVertex *>> newNodes;
+  std::map<size_t, std::vector<MElement *>> newElements;
+  std::map<size_t, std::map<uint64_t, size_t>> edgeToElement;
+  std::map<size_t, size_t> parentVertex;
+
+  for(size_t ie = 0; ie < entities.size(); ie++) {
+    GEntity *e = entities[ie];
+    if(e->dim() != 2) continue;
+
+    for(size_t iel = 0; iel < e->getNumMeshElements(); iel++) {
+      MElement *el = e->getMeshElement(iel);
+
+      std::vector<MVertex *> vs;
+      el->getVertices(vs);
+
+      double cenx = 0.0, ceny = 0.0, cenz = 0.0;
+      for(size_t i = 0; i < vs.size(); i++) {
+        MVertex *v = vs[i];
+        cenx += v->x() / ((double)vs.size());
+        ceny += v->y() / ((double)vs.size());
+        cenz += v->z() / ((double)vs.size());
+      }
+
+      std::vector<MVertex *> nvs;
+      double lam = DNPP_SHRINK;
+
+      for(size_t i = 0; i < vs.size(); i++) {
+        MVertex *v = vs[i];
+        nvs.push_back(new MVertex((1.0 - lam) * v->x() + lam * cenx,
+                                  (1.0 - lam) * v->y() + lam * ceny,
+                                  (1.0 - lam) * v->z() + lam * cenz, e));
+      }
+
+      for(size_t i = 0; i < nvs.size(); i++) { newNodes[ie].push_back(nvs[i]); }
+
+      MElement *nel;
+      if(nvs.size() == 3) { nel = new MTriangle(nvs[0], nvs[1], nvs[2]); }
+      else if(nvs.size() == 4) {
+        nel = new MQuadrangle(nvs[0], nvs[1], nvs[2], nvs[3]);
+      }
+      else {
+        Msg::Error(
+          "The mesh contains 2D element which is not triangle nor quadrangle.");
+        return view;
+      }
+      newElements[ie].push_back(nel);
+
+      std::vector<size_t> ivs;
+      for(size_t i = 0; i < vs.size(); i++) { ivs.push_back(vs[i]->getNum()); }
+
+      for(size_t i = 0; i < ivs.size(); i++) {
+        edgeToElement[ie][(ivs[i] << SHIFT) | ivs[(i + 1) % ivs.size()]] =
+          newElements[ie].size() - 1;
+      }
+
+      for(size_t i = 0; i < nvs.size(); i++) {
+        parentVertex[nvs[i]->getNum()] = ivs[i];
+      }
     }
   }
 
-  std::set<GEntity *> crackEntities;
-  crackEntities.insert(entities.begin(), entities.end());
-  crackEntities.insert(openEntities.begin(), openEntities.end());
+  for(auto e : entities) {
+    if(e->dim() != 2) continue;
 
-  // get crack elements
-  std::vector<MElement *> crackElements;
-  for(std::size_t i = 0; i < entities.size(); i++)
-    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
-      crackElements.push_back(entities[i]->getMeshElement(j));
+    for(size_t i = 0; i < e->getNumMeshElements(); i++) {
+      MElement *el = e->getMeshElement(i);
 
-  // get internal crack nodes as well as and boundary nodes
-  std::set<MVertex *, MVertexPtrLessThan> crackVertices, bndVertices;
-  if(dim == 1) {
-    for(std::size_t i = 0; i < crackElements.size(); i++) {
-      for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
-        MVertex *v = crackElements[i]->getVertex(j);
-        crackVertices.insert(v);
-      }
-      for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices();
-          j++) {
-        MVertex *v = crackElements[i]->getVertex(j);
-        if(bndVertices.find(v) == bndVertices.end())
-          bndVertices.insert(v);
-        else
-          bndVertices.erase(v);
+      std::vector<MVertex *> vs;
+      el->getVertices(vs);
+
+      for(size_t i = 0; i < vs.size(); i++) {
+        e->removeMeshVertex(vs[i], true);
       }
     }
+
+    e->removeElements(true);
   }
-  else {
-    std::set<EdgeData, MEdgeDataLessThan> bnd;
-    for(std::size_t i = 0; i < crackElements.size(); i++) {
-      for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
-        MVertex *v = crackElements[i]->getVertex(j);
-        crackVertices.insert(v);
-      }
-      for(int j = 0; j < crackElements[i]->getNumEdges(); j++) {
-        EdgeData ed(crackElements[i]->getEdge(j));
-        if(bnd.find(ed) == bnd.end()) {
-          crackElements[i]->getEdgeVertices(j, ed.data);
-          bnd.insert(ed);
+
+  m->destroyMeshCaches();
+
+  std::map<uint64_t, bool> edgeVisited;
+  for(size_t ie = 0; ie < entities.size(); ie++) {
+    if(entities[ie]->dim() != 2) continue;
+    for(auto &[edgeHash, iel] : edgeToElement[ie]) {
+      if(edgeVisited.count(edgeHash)) continue;
+      edgeVisited[edgeHash] = true;
+
+      size_t ia, ib;
+      ib = edgeHash & ((1LL << SHIFT) - 1);
+      ia = (edgeHash >> SHIFT);
+
+      uint64_t dualHash = (ib << SHIFT) | ia;
+      if(!edgeToElement[ie].count(dualHash)) continue;
+      edgeVisited[dualHash] = true;
+      const size_t ioel = edgeToElement[ie][dualHash];
+
+      size_t iael = -1, ibel = -1, iaoel = -1, iboel = -1;
+      std::vector<MVertex *> elv;
+      newElements[ie][iel]->getVertices(elv);
+      for(size_t i = 0; i < elv.size(); i++) {
+        auto v = elv[i];
+        auto vNum = v->getNum();
+        if(parentVertex[vNum] == ia) {
+          iael = i;
+          continue;
         }
-        else
-          bnd.erase(ed);
-      }
-    }
-    for(auto it = bnd.begin(); it != bnd.end(); it++)
-      bndVertices.insert(it->data.begin(), it->data.end());
-  }
-
-  // compute the boundary nodes (if any) of the "OpenBoundary" physical group if
-  // it's a curve
-  std::set<MVertex *, MVertexPtrLessThan> bndVerticesFromOpenBoundary;
-  for(std::size_t i = 0; i < openEntities.size(); i++) {
-    if(openEntities[i]->dim() < 1) continue;
-    for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
-      MElement *e = openEntities[i]->getMeshElement(j);
-      for(std::size_t k = 0; k < e->getNumPrimaryVertices(); k++) {
-        MVertex *v = e->getVertex(k);
-        if(bndVerticesFromOpenBoundary.find(v) ==
-           bndVerticesFromOpenBoundary.end())
-          bndVerticesFromOpenBoundary.insert(v);
-        else
-          bndVerticesFromOpenBoundary.erase(v);
-      }
-    }
-  }
-
-  if(bndVerticesFromOpenBoundary.size())
-    Msg::Info("%u nodes on boundary of OpenBoundaryPhysicalGroup",
-              bndVerticesFromOpenBoundary.size());
-
-  // get open boundary nodes and remove them from boundary nodes (if they are
-  // not on the "boundary of the open boundary" ;-)
-  for(std::size_t i = 0; i < openEntities.size(); i++) {
-    for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
-      MElement *e = openEntities[i]->getMeshElement(j);
-      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
-        MVertex *v = e->getVertex(k);
-        if(bndVerticesFromOpenBoundary.find(v) ==
-           bndVerticesFromOpenBoundary.end())
-          bndVertices.erase(v);
-      }
-    }
-  }
-  for(auto it = bndVertices.begin(); it != bndVertices.end(); it++)
-    crackVertices.erase(*it);
-
-  // compute elements on the positive side of the crack
-  std::set<MElement *, MElementPtrLessThan> oneside;
-  std::vector<GEntity *> allentities;
-  m->getEntities(allentities);
-  for(std::size_t ent = 0; ent < allentities.size(); ent++) {
-    if(crackEntities.find(allentities[ent]) != crackEntities.end()) continue;
-    for(std::size_t i = 0; i < allentities[ent]->getNumMeshElements(); i++) {
-      MElement *e = allentities[ent]->getMeshElement(i);
-      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        if(crackVertices.find(e->getVertex(j)) != crackVertices.end()) {
-          // element touches the crack: find the closest crack element
-          SPoint3 b = e->barycenter();
-          double d = 1e200;
-          MElement *ce = nullptr;
-          for(std::size_t k = 0; k < crackElements.size(); k++) {
-            double d2 = b.distance(crackElements[k]->barycenter());
-            if(d2 < d) {
-              d = d2;
-              ce = crackElements[k];
-            }
-          }
-          SVector3 dv = SVector3(ce->barycenter(), e->barycenter());
-          SVector3 n;
-          if(dim == 1)
-            n = crossprod(normal1d, ce->getEdge(0).tangent());
-          else
-            n = ce->getFace(0).normal();
-          if(dot(n, dv) > 0) { oneside.insert(e); }
+        if(parentVertex[vNum] == ib) {
+          ibel = i;
+          continue;
         }
       }
-    }
-  }
+      std::vector<MVertex *> oelv;
+      newElements[ie][ioel]->getVertices(oelv);
+      for(size_t i = 0; i < oelv.size(); i++) {
+        auto v = oelv[i];
+        auto vNum = v->getNum();
+        if(parentVertex[vNum] == ia) {
+          iaoel = i;
+          continue;
+        }
+        if(parentVertex[vNum] == ib) {
+          iboel = i;
+          continue;
+        }
+      }
 
-  // create new crack entity
+      MVertex *a, *b, *oa, *ob;
+      a = newElements[ie][iel]->getVertex(iael);
+      b = newElements[ie][iel]->getVertex(ibel);
+      oa = newElements[ie][ioel]->getVertex(iaoel);
+      ob = newElements[ie][ioel]->getVertex(iboel);
 
-  // TODO: the new discrete entities do not have a consistent topology: we don't
-  // specify their bounding points/curves
-  //   a) This is easy to fix if there's no OpenBoundaryPhysicalGroup and
-  //      we crack a *single* elementary entity
-  //   b) If there is an open boundary, we need to create a new elementary
-  //      entity on the boundary, and correctly classify the nodes on it...
-  //      and we also need to create boundary elements
-  //   c) If we crack a group made of multiple elementary entities we might
-  //      want to create multiple cracked entities, and do the same as (b)
-  //      for all internal seams
-  //
-  // In practice, c) is not crucial - the current approach simply creates a
-  // single new surface/curve, which is probably fine as in solvers we won't use
-  // the internal seams.
-
-  GEdge *crackEdge = nullptr;
-  GFace *crackFace = nullptr;
-  if(dim == 1) {
-    crackEdge =
-      new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
-    m->add(crackEdge);
-  }
-  else {
-    crackFace = new discreteFace(m, m->getMaxElementaryNumber(2) + 1);
-    m->add(crackFace);
-  }
-  GEntity *crackEntity =
-    crackEdge ? (GEntity *)crackEdge : (GEntity *)crackFace;
-  crackEntity->physicals.push_back(newPhysical ? newPhysical : physical);
-
-  // duplicate internal crack nodes
-  std::map<MVertex *, MVertex *> vxv;
-  for(auto it = crackVertices.begin(); it != crackVertices.end(); it++) {
-    MVertex *v = *it;
-    MVertex *newv = new MVertex(v->x(), v->y(), v->z(), crackEntity);
-    crackEntity->mesh_vertices.push_back(newv);
-    vxv[v] = newv;
-  }
-
-  // duplicate crack elements
-  for(std::size_t i = 0; i < crackElements.size(); i++) {
-    MElement *e = crackElements[i];
-    std::vector<MVertex *> verts;
-    e->getVertices(verts);
-    for(std::size_t j = 0; j < verts.size(); j++) {
-      if(vxv.count(verts[j])) verts[j] = vxv[verts[j]];
-    }
-    MElementFactory f;
-    MElement *newe = f.create(e->getTypeForMSH(), verts, 0, e->getPartition());
-    if(swapOrientation)
-      newe->reverse();
-    if(crackEdge && newe->getType() == TYPE_LIN)
-      crackEdge->lines.push_back((MLine *)newe);
-    else if(crackFace && newe->getType() == TYPE_TRI)
-      crackFace->triangles.push_back((MTriangle *)newe);
-    else if(crackFace && newe->getType() == TYPE_QUA)
-      crackFace->quadrangles.push_back((MQuadrangle *)newe);
-  }
-
-  // for debug
-  std::map<int, std::vector<double> > d;
-
-  // replace vertices in elements on one side of the crack
-  for(auto e : oneside) {
-
-    // 1: if node duplicated, 0: if node not duplicated
-    std::vector<double> nodeDuplicated(e->getNumVertices(), 0.0);
-
-    for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-      if(vxv.count(e->getVertex(i))) {
-        e->setVertex(i, vxv[e->getVertex(i)]);
-        if(debug) nodeDuplicated[i] = 1.0;
+      if(DNPP_ELTYPETOINSERT == 0) // QUADS
+      {
+        MQuadrangle *q = new MQuadrangle(b, a, oa, ob);
+        newElements[ie].push_back(q);
+      }
+      else if(DNPP_ELTYPETOINSERT == 1) // TRIANGLES
+      {
+        MTriangle *nel1 = new MTriangle(b, a, oa);
+        newElements[ie].push_back(nel1);
+        MTriangle *nel2 = new MTriangle(oa, ob, b);
+        newElements[ie].push_back(nel2);
       }
     }
-    if(debug) d[e->getNum()] = nodeDuplicated;
   }
 
-  if(debug) {
-    view = new PView("Positive-side elements and duplicated nodes (1: true, 0: false)",
-                     "ElementNodeData", GModel::current(), d, 0, 1);
+  for(size_t ie = 0; ie < entities.size(); ie++) {
+    GEntity *e = entities[ie];
+    if(e->dim() != 2) continue;
+
+    if(!newNodes.count(ie)) continue;
+    for(size_t iv = 0; iv < newNodes[ie].size(); iv++) {
+      MVertex *v = newNodes[ie][iv];
+      e->addMeshVertex(v);
+    }
+
+    if(!newElements.count(ie)) continue;
+    for(size_t iel = 0; iel < newElements[ie].size(); iel++) {
+      MElement *el = newElements[ie][iel];
+      e->addElement(el);
+    }
   }
 
   m->destroyMeshCaches();
