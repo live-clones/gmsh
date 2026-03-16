@@ -411,45 +411,13 @@ double highOrderPolyMesh::computeAngle(SVector3 v01, SVector3 v02)
 
 inline double computeAngle2d(double pa[2], double pb[2], double pc[2])
 {
-  SVector3 p01(pb[0] - pa[0], pb[1] - pa[1], 0);
-  SVector3 p02(pc[0] - pa[0], pc[1] - pa[1], 0);
-  // double d =
-  //   (pb[0] - pa[0]) * (pc[0] - pa[0]) + (pb[1] - pa[1]) * (pc[1] - pa[1]);
-  double d = dot(p01, p02);
-  SVector3 c = crossprod(p01, p02);
-  double nc = norm(c);
-  // double nc =
-  //   abs((pb[0] - pa[0]) * (pc[1] - pa[1]) - (pb[1] - pa[1]) * (pc[0] -
-  //   pa[0]));
+  double dx = (pb[0] - pa[0]) * (pc[0] - pa[0]);
+  double dy = (pb[1] - pa[1]) * (pc[1] - pa[1]);
+  double d = dx + dy;
   double o = robustPredicates::orient2d(pa, pb, pc);
-  if(o == 0. && d >= 0.) return 0.;
-  if(o == 0. && d < 0.) return M_PI;
-  double s = (o < 0.) ? -1 : +1;
-  // double s = (c.z() < 0.) ? -1 : +1;
-  double angle = atan2(s * nc, d);
+  double angle = atan2(o, d);
   if(angle < 0.) angle += 2 * M_PI;
   return angle;
-  //
-  // double o = robustPredicates::orient2d(pa, pb, pc);
-  // double cross =
-  //   (pb[0] - pa[0]) * (pc[1] - pa[1]) - (pb[1] - pa[1]) * (pc[0] - pa[0]);
-  // double dot =
-  //   (pb[0] - pa[0]) * (pc[0] - pa[0]) + (pb[1] - pa[1]) * (pc[1] - pa[1]);
-  // if(o < 0.) cross *= -1 * abs(cross);
-  // double angle = atan2(cross, dot);
-  // // std::cout << "o: " << o << std::endl;
-  // // std::cout << "oangle: " << angle << std::endl;
-  // // if(o > 0. && angle > 0.) angle  = M_PI -angle;
-  // // if(o < 0. && angle < 0.) angle  = M_PI -angle;
-  // // if(o < 0. && angle < 0.) angle *= -1;
-  // // std::cout << "oangle: " << angle << std::endl;
-  // // if(o == 0.) angle = 0.;
-  // // std::cout << "oangle: " << angle << std::endl;
-  // // // angle *= (o > 0) - (o < 0);
-  //
-  // if(angle < 0.) angle += 2 * M_PI;
-  // std::cout << "oangle: " << angle << std::endl;
-  // return angle;
 }
 
 inline bool onFace(geodesic::SurfacePoint &sp, geodesic::Face *f)
@@ -479,31 +447,38 @@ inline bool swappedEdge(geodesic::Edge *e, geodesic::Face *f)
   return false;
 }
 
-inline void local_coordinates(double p0[3], double p1[3], double p[3],
-                              double lc[2])
+inline void local_coordinates(double d01, double d0, double d1, double lc[2])
 {
-  SVector3 v0(p0, p);
-  double d0 = norm(v0);
   if(d0 < 1e-14) {
     lc[0] = 0.0;
     lc[1] = 0.0;
     return;
   }
 
-  SVector3 v1(p1, p);
-  double d1 = norm(v1);
   if(d1 < 1e-14) {
-    lc[0] = 1.;
+    lc[0] = 1.0;
     lc[1] = 0.0;
     return;
   }
 
+  double inv_d01 = 1.0 / d01;
+  double d0_norm = d0 * inv_d01;
+  double d1_norm = d1 * inv_d01;
+  lc[0] = 0.5 + 0.5 * (d0_norm - d1_norm) * (d0_norm + d1_norm);
+  double h2 = (d0_norm - lc[0]) * (d0_norm + lc[0]);
+  lc[1] = std::sqrt(std::max(0.0, h2));
+}
+
+inline void local_coordinates(double p0[3], double p1[3], double p[3],
+                              double lc[2])
+{
+  SVector3 v0(p0, p);
+  double d0 = norm(v0);
+  SVector3 v1(p1, p);
+  double d1 = norm(v1);
   SVector3 v01(p0, p1);
   double d01 = norm(v01);
-  lc[0] = d01 / 2.0 + (d0 * d0 - d1 * d1) / (2.0 * d01);
-  lc[1] = sqrt(std::max(0.0, d0 * d0 - lc[0] * lc[0]));
-  lc[0] *= 1. / d01;
-  lc[1] *= 1. / d01;
+  local_coordinates(d01, d0, d1, lc);
 }
 
 double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,

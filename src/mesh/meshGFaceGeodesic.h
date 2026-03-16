@@ -76,15 +76,17 @@ struct PathView {
     }
   }
 
-  PathView(PathView &pv, bool reverse) : _reverse(reverse)
+  PathView(PathView &pv, bool reverse)
   {
     if(pv.ptr == nullptr) {
       ptr = nullptr;
       length = 0;
+      _reverse = false;
     }
     else {
       ptr = pv.ptr;
       length = pv.length;
+      _reverse = reverse != pv._reverse;
     }
   }
   geodesic::SurfacePoint &front() const
