@@ -3802,34 +3802,30 @@ int highOrderPolyMesh::collapseEdges(const double MINE, double MINA,
 
 char highOrderPolyMesh::outTriangleFast(int circumindex, int t)
 {
-  PathView borderPaths[3], inPaths[3];
   PathView bpv[3], ipv[3];
   auto he = ipm->faces[t]->he;
   for(int j = 0; j < 3; ++j) {
     std::pair<int, int> e = {he->v->data, he->next->v->data};
-    getGeodesicPath(e.first, e.second, borderPaths[j]);
-    getGeodesicPath(e.first, circumindex, inPaths[j]);
-    bpv[j] = PathView(borderPaths[j]);
-    ipv[j] = PathView(inPaths[j]);
+    getGeodesicPath(e.first, e.second, bpv[j]);
+    getGeodesicPath(e.first, circumindex, ipv[j]);
     he = he->next;
   }
 
-  bool neg = false;
-  char maxValue = 0b000;
-  double maxAngle = -1e100;
+  double angles[3];
   for(int j = 0; j < 3; ++j) {
-    double angle = computeIntrinsicAngle(bpv[j], bpv[(j + 2) % 3]);
-    angle -= computeIntrinsicAngle(ipv[j], bpv[(j + 2) % 3]);
-    if(angle < -1e-10) neg = true;
-    if(angle > maxAngle) {
-      maxAngle = angle;
-      maxValue = (1u << j);
-    }
+    angles[j] = computeIntrinsicAngle(bpv[j], bpv[(j + 2) % 3]);
+    angles[j] -= computeIntrinsicAngle(ipv[j], bpv[(j + 2) % 3]);
   }
-  if(neg)
-    return maxValue;
-  else
-    return 0b000;
+
+  double eps = 1e-10;
+  if(angles[0] > -eps && angles[1] > -eps && angles[2] > -eps) return 0;
+  if(angles[0] > 0 && angles[1] <= 0 && angles[2] <= 0) return 1;
+  if(angles[0] <= 0 && angles[1] > 0 && angles[2] <= 0) return 2;
+  if(angles[0] <= 0 && angles[1] <= 0 && angles[2] > 0) return 3;
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  static std::uniform_int_distribution<> distr(0, 2);
+  return distr(gen) + 1;
 }
 
 inline double triangle_area(double a, double b, double c)
@@ -4085,34 +4081,33 @@ bool highOrderPolyMesh::splitTriangle(
   // Find triangle to split
   int triangleToSplit = iTriangle;
   {
-    int newTriangle = triangleToSplit, counter = 0;
-    do {
-      ++counter;
-      if(counter > 1e6) break;
-      triangleToSplit = newTriangle;
+    char next;
+    int counter = 0, maxCounter = 1e4;
+    for(; counter < maxCounter; ++counter) {
+      next = outTriangleFast(circumindex, triangleToSplit);
+      if(next == 0) break;
 
-      char mask = outTriangleFast(circumindex, triangleToSplit);
-      if(mask == 0b000) break;
-
-      int i = __builtin_ctz(mask);
       auto he = ipm->faces[triangleToSplit]->he;
-      for(char ii = 0; ii < i; ++ii) he = he->next;
-      std::pair<int, int> e = {he->next->v->data, he->next->next->v->data};
-      auto ats = adjacentTriangles(e);
-      if(ats[0] != triangleToSplit) newTriangle = ats[0];
-      if(ats[1] != triangleToSplit) newTriangle = ats[1];
-      continue;
+      for(char ii = 0; ii < next; ++ii) he = he->next;
 
-    } while(newTriangle != triangleToSplit && counter < 1e6);
+      if(!he->opposite)
+        Msg::Error("No opposite face to find triangle to split");
+      triangleToSplit = he->opposite->f->data;
+    }
 
-    if(counter >= 1e6) {
+    if(counter >= maxCounter) {
+      // Msg::Error(("Could not found the triangle to split (endless loop)"));
       if(WARNING)
         Msg::Warning(("Could not found the triangle to split (endless loop)"));
       return false;
     }
 
-    if(outTriangleFast(circumindex, triangleToSplit) != 0b000) {
-      if(WARNING) Msg::Warning(("Circumcenter not in this triangle !"));
+    if(next != 0) {
+      // Msg::Error("Circumcenter not in this triangle ! (%d, %d)", (int)next,
+      //            counter);
+      if(WARNING)
+        Msg::Warning("Circumcenter not in this triangle ! (%d, %d)", (int)next,
+                     counter);
       return false;
     }
 
@@ -4172,6 +4167,7 @@ bool highOrderPolyMesh::splitTriangle(
         paths.push_back(tmp);
       }
     }
+    break;
   }
 
   // Check intersections
@@ -4201,7 +4197,11 @@ bool highOrderPolyMesh::splitTriangle(
     }
   }
 
-  if(true) { symbolicSwapEdges(newTris, cavity); }
+  bool result = symbolicSwapEdges(newTris, cavity);
+  // if(!result) {
+  //   Msg::Warning("Could not symbolic swap");
+  //   return false;
+  // }
 
   // if(!checkNewTriangles(newTris)) { return false; }
 
