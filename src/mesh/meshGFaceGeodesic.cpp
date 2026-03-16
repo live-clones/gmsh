@@ -2109,12 +2109,6 @@ bool highOrderPolyMesh::swapEdge(
 
   if(!doWeSwap(edge, oppEdge, p01, p23, borderPaths, OPTION)) return false;
 
-  // Check topology
-  if(adjacentTriangles(oppEdge).size() != 0) {
-    // Msg::Warning("Swap edge: Opposite edge already exists");
-    return false;
-  }
-
   bool canSwap = true;
   if(!canWeSwap(edge, oppEdge, p01, p23, borderPaths)) { canSwap = false; }
 
@@ -2132,6 +2126,12 @@ bool highOrderPolyMesh::swapEdge(
     }
     return true;
     // return false;
+  }
+
+  // Check topology
+  if(adjacentTriangles(oppEdge).size() != 0) {
+    // Msg::Warning("Swap edge: Opposite edge already exists");
+    return false;
   }
 
   doSwapEdge(he);
@@ -2508,12 +2508,12 @@ int highOrderPolyMesh::swapEdges(int OPTION)
 {
   int count = 0;
 
-  // std::unordered_set<PolyMesh::HalfEdge *> set;
-  std::set<PolyMesh::HalfEdge *> set, nextSet;
+  std::vector<PolyMesh::HalfEdge *> set, nextSet;
   for(auto he : ipm->hedges) {
     if(!he->opposite) continue;
-    if(set.find(he->opposite) != set.end()) continue;
-    set.insert(he);
+    auto it = std::find(set.begin(), set.end(), he->opposite);
+    if(it != set.end()) continue;
+    set.push_back(he);
   }
 
   size_t iter = 1;
@@ -2531,8 +2531,8 @@ int highOrderPolyMesh::swapEdges(int OPTION)
                   count, triangles.size() / 3, set.size() + nextSet.size());
       }
 
-      PolyMesh::HalfEdge *he = *(set.begin());
-      set.erase(set.begin());
+      PolyMesh::HalfEdge *he = set.back();
+      set.pop_back();
 
       std::vector<PolyMesh::HalfEdge *> adjacentEdges;
       if(!swapEdge(he, adjacentEdges, OPTION)) continue;
@@ -2540,11 +2540,11 @@ int highOrderPolyMesh::swapEdges(int OPTION)
 
       for(auto he : adjacentEdges) {
         if(!he->opposite) continue;
-        auto it = set.find(he);
+        auto it = std::find(set.begin(), set.end(), he);
         if(it != set.end()) { set.erase(it); }
-        it = set.find(he->opposite);
+        it = std::find(set.begin(), set.end(), he->opposite);
         if(it != set.end()) { set.erase(it); }
-        nextSet.insert(he);
+        nextSet.push_back(he);
       }
     }
 
@@ -3852,7 +3852,14 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     }
   }
 
+  unsigned count = 0;
   while(!list.empty()) {
+    if(count++ > 1e6) {
+      Msg::Warning("infinite swaps");
+      return false;
+      // throw std::runtime_error("infinite swaps");
+    }
+
     int he = list.back();
     list.pop_back();
 
