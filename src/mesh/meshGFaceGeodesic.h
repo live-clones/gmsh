@@ -376,6 +376,8 @@ public:
   void getGeodesicPath(int p0, int p1, PathView &path);
   void getPath(PolyMesh::HalfEdge *he, PathView &path);
   void getPath(std::pair<int, int> edge, PathView &path);
+  void printVertex(const char *fn, int i0);
+  void printGeodesic(const char *fn, int i0, int i1);
   void printGeodesics(const char *fn);
   void enforceBoundary();
 

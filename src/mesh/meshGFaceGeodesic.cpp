@@ -1131,6 +1131,35 @@ void highOrderPolyMesh::classifyGeodesicVertices(
 }
 
 // public
+void highOrderPolyMesh::printVertex(const char *fn, int i0)
+{
+  FILE *f = fopen(fn, "w");
+  fprintf(f, "View \"\"{\n");
+  geodesic::SurfacePoint sp = pointsPool[i0];
+  fprintf(f, "SP(%g,%g,%g){%d};\n", sp.x(), sp.y(), sp.z(), i0);
+  fprintf(f, "};\n");
+  fclose(f);
+}
+
+void highOrderPolyMesh::printGeodesic(const char *fn, int i0, int i1)
+{
+  FILE *f = fopen(fn, "w");
+  fprintf(f, "View \"\"{\n");
+  PathView path;
+  getGeodesicPath(i0, i1, path);
+  fprintf(f, "SP(%g,%g,%g){%d};\n", path.front().x(), path.front().y(),
+          path.front().z(), i0);
+  fprintf(f, "SP(%g,%g,%g){%d};\n", path.back().x(), path.back().y(),
+          path.back().z(), i1);
+  for(size_t k = 1; k < path.size(); ++k) {
+    fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", path[k - 1].x(),
+            path[k - 1].y(), path[k - 1].z(), path[k].x(), path[k].y(),
+            path[k].z(), 0, 10000);
+  }
+  fprintf(f, "};\n");
+  fclose(f);
+}
+
 void highOrderPolyMesh::printGeodesics(const char *fn)
 {
   FILE *f = fopen(fn, "w");
@@ -1142,6 +1171,7 @@ void highOrderPolyMesh::printGeodesics(const char *fn)
   }
   for(size_t i = 0; i < ipm->faces.size(); ++i) {
     auto he = ipm->faces[i]->he;
+    if(!he) continue;
     for(int j = 0; j < 3; ++j) {
       he = he->next;
       int i0 = he->v->data;
@@ -4898,7 +4928,7 @@ void saveIsoTriangles(int num, std::vector<int> &triangles, TypedPoints &points,
   std::ofstream f(name);
   if(!f) Msg::Error("Failed to open file: %s", name);
   f << "View \"P\"{\n";
-  for(size_t i = 0; i < ipm->faces.size() / 3; ++i) {
+  for(size_t i = 0; i < ipm->faces.size(); ++i) {
     auto he = ipm->faces[i]->he;
     auto sp0 = points[he->v->data];
     auto sp1 = points[he->next->v->data];
@@ -5208,7 +5238,9 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
 
   if(DEBUG) { sanityCheck(); }
 
+  printIndex += 6;
   for(; i < niter; ++i) {
+    printIndex -= 6;
     iter = i;
     nbrSwap = swapEdges();
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
@@ -5275,7 +5307,6 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
 
     Msg::Info("");
     if(nbrCollapse + nbrEdgeSplit + nbrTriangleSplit == 0) break;
-    printIndex -= 6;
   }
 
   if(niter > 0) {
