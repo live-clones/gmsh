@@ -49,10 +49,12 @@ body {
 }
 
 .news-link:hover {
+  color: white;
   text-decoration: underline;
 }
 
 .news-link::before { /* NEWS inject static text in the news link */
+  color: white;
   content: "🚀 First Gmsh User Meeting, 8-9 July 2026 in Liège, Belgium";
 }
 
