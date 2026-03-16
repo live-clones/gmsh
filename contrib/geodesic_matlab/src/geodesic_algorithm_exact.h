@@ -23,8 +23,8 @@
 #include "geodesic_mesh_elements.h"
 #include <unordered_set>
 
-#define GEODESIC_EPS 1e-10
-#define GEODESIC_EPS_SNAP 1e-8
+#define GEODESIC_EPS 1e-12
+#define GEODESIC_EPS_SNAP 1e-10
 #define GEODESIC_EPSDIST 1e-8
 #define MEAN_MULT 100
 #define CIRCUM_MULT 100
