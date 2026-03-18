@@ -370,34 +370,28 @@ Default value: @code{@{@}}
 @end table
 
 @item Extend
-Compute an extension of the mesh sizes from the given boundary curves (resp. surfaces) inside the surfaces (resp. volumes) being meshed. If the mesh size on the boundary, computed as the local average length of the edges of the boundary elements, is denoted by SizeBnd, the extension is computed as:@*
+Compute an extension of the boundary mesh sizes into the given surfaces (resp. volumes) being meshed using a weighted harmonic mean of the boundary sizes, with a prescribed element growth ratio. The size at a point P located at distance d_i from the i-th boundary entity is computed as:@*
 @*
-  F = f * SizeBnd + (1 - f) * SizeMax, if d < DistMax@*
+  F = min(SizeMax, (Sum_i w_i) / (Sum_i w_i / s_i)),@*
 @*
-  F = SizeMax, if d >= DistMax@*
-@*
-where d denotes the distance to the boundary and f = ((DistMax - d) / DistMax)^Power.@*
+with w_i = 1 / d_i^2 and s_i = SizeBnd_i + (Ratio - 1) * d_i, where SizeBnd_i denotes the size of the closest element to P on the i-th boundary entity.@*
 @*
 Options:@*
 @table @code
-@item CurvesList
-Tags of curves in the geometric model@*
+@item Ratio
+Element size growth ratio (>= 1)@*
+Type: float@*
+Default value: @code{1.2}
+@item SizeMax
+Mesh size away from boundaries@*
+Type: float@*
+Default value: @code{1e+22}
+@item SurfacesList
+Tags of model surfaces on which to apply the field@*
 Type: list@*
 Default value: @code{@{@}}
-@item DistMax
-Maximum distance of the size extension@*
-Type: float@*
-Default value: @code{1}
-@item Power
-Power exponent used to interpolate the mesh size@*
-Type: float@*
-Default value: @code{1}
-@item SizeMax
-Mesh size outside DistMax@*
-Type: float@*
-Default value: @code{1}
-@item SurfacesList
-Tags of surfaces in the geometric model@*
+@item VolumesList
+Tags of model volumes on which to apply the field@*
 Type: list@*
 Default value: @code{@{@}}
 @end table
