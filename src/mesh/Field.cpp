@@ -2834,14 +2834,15 @@ public:
     const int p = 2;
     double num = 0., den = 0., r = (_ratio < 1.) ? 1. : _ratio;
     for(std::size_t i = 0; i < bnd.size(); i++) {
-      if(!sbnd[i]) continue; // ignore boundary with no elements
+      if(!sbnd[i] || !dbnd[i]) continue; // ignore boundary with no elements
       double wi = 1. / std::pow(dbnd[i], p);
       double si = sbnd[i] + (r - 1) * dbnd[i];
       num += wi / si;
       den += wi;
     }
-    double val = std::min(_sizeMax, den / num);
-    return val;
+    if(num > 0 && den > 0)
+      return std::min(_sizeMax, den / num);
+    return MAX_LC;
   }
 };
 
