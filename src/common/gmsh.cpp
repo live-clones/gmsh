@@ -1504,6 +1504,12 @@ GMSH_API void gmsh::model::mesh::getPartitionEntities(
   entities.clear();
   overlapEntities.clear();
   GModel *model = GModel::current();
+  if(model->getOverlapManagers().size() > 1) {
+    Msg::Error("getPartitionEntities: expected at most one overlap group, "
+               "found %zu",
+               model->getOverlapManagers().size());
+    return;
+  }
   int modelDim = model->getDim();
   // For the inner parts
   switch(dim) {
@@ -1542,6 +1548,12 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
   if(!_checkInit()) return;
   entities.clear();
   GModel *model = GModel::current();
+  if(model->getOverlapManagers().size() > 1) {
+    Msg::Error("getOverlapBoundary: expected at most one overlap group, "
+               "found %zu",
+               model->getOverlapManagers().size());
+    return;
+  }
   if(dim == 2) {
     GFace *face = model->getFaceByTag(tag);
     if(!face) {
@@ -1583,6 +1595,13 @@ GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
 {
   if(!_checkInit()) return;
   GModel *model = GModel::current();
+  if(model->getOverlapManagers().size() > 1) {
+    Msg::Error("getBoundaryOverlapParent: expected at most one overlap group, "
+               "found %zu",
+               model->getOverlapManagers().size());
+    parentTag = -1;
+    return;
+  }
   GEntity *entity = model->getEntityByTag(dim, tag);
   if(!entity) {
     Msg::Warning("findCreatingEntityForOverlapOfBoundary: no entity of "
