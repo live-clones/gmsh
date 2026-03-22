@@ -661,8 +661,25 @@ GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim,
                                                     int * parentTag,
                                                     int * ierr);
 
+/* If the entity of dimension `dim' and tag `overlapTag' is an overlap entity
+ * (OverlapSurface or OverlapVolume) or a boundary overlap entity (a partition
+ * entity in the overlap of a boundary), set `overlappedEntityTag' to the tag
+ * of the underlying entity it covers. Sets `overlappedEntityTag' to -1 if the
+ * entity is not an overlap. */
+GMSH_API void gmshModelMeshGetOverlapOverlappedEntity(const int dim,
+                                                      const int overlapTag,
+                                                      int * overlappedEntityTag,
+                                                      int * ierr);
+
 /* Unpartition the mesh of the current model. */
 GMSH_API void gmshModelMeshUnpartition(int * ierr);
+
+/* Write selected partitions of the mesh into a single file `fileName'. The
+ * export format is MSH4. The `partitions' vector specifies which partition
+ * numbers to include. */
+GMSH_API void gmshModelMeshWritePartitions(const char * fileName,
+                                           const int * partitions, const size_t partitions_n,
+                                           int * ierr);
 
 /* Optimize the mesh of the current model using `method' (empty for default
  * tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
