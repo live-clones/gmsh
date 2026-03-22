@@ -343,6 +343,12 @@ OverlapManager &GModel::createNewOverlapManager(int layers)
   return _overlapManagers.back();
 }
 
+void GModel::clearOverlaps()
+{
+  _overlapManagers.clear();
+  _nextOverlapTag = 0;
+}
+
 void GModel::addOverlap(overlapFace *of)
 {
   if(_overlapManagers.empty()) {
