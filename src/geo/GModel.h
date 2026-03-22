@@ -417,6 +417,7 @@ public:
     return _overlapManagers;
   }
   OverlapManager &createNewOverlapManager(int layers);
+  void clearOverlaps();
 
   // Facade methods delegating to the single (back) overlap manager.
   // Add methods delegate to back(), get methods delegate to at(0).
