@@ -276,7 +276,7 @@ doc = '''Partition the mesh of the current model into `numPart' partitions. Opti
 mesh.add('partition', doc, None, iint('numPart'), ivectorsize('elementTags', 'std::vector<std::size_t>()','[]', '[]'), ivectorint('partitions', 'std::vector<int>()','[]', '[]'))
 
 doc = '''Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to `layers'. If `createBoundaries' is set, build the overlaps for the entities bounding the highest-dimensional entities (i.e. "boundary overlaps"), as well as the inner boundaries of the overlaps (i.e. "overlap boundaries").'''
-mesh.add('createOverlaps', doc, None, iint('layers', '1'), ibool('createBoundaries', 'true', 'True'))
+mesh.add('createOverlaps', doc, oint, iint('layers', '1'), ibool('createBoundaries', 'true', 'True'))
 
 doc = '''Get the tags of the partitioned entities of dimension `dim' whose parent has dimension `dim' and tag `tag', and which belong to the partition `partition'. If overlaps are present, fill `overlapEntities' with the tags of the entities that are in the overlap of the partition. Works for entities of the same dimension as the model as well as for entities one dimension below (boundary overlaps).'''
 mesh.add('getPartitionEntities', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), ovectorint('overlapEntities'))
