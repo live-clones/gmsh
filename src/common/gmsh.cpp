@@ -1388,11 +1388,11 @@ gmsh::model::mesh::partition(const int numPart,
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::createOverlaps(const int layers,
+GMSH_API int gmsh::model::mesh::createOverlaps(const int layers,
                                                 const bool createBoundaries)
 {
-  if(!_checkInit()) return;
-  GModel::current()->createOverlaps(layers, createBoundaries);
+  if(!_checkInit()) return -1;
+  return GModel::current()->createOverlaps(layers, createBoundaries);
 }
 
 template <int dim>

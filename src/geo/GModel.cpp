@@ -2529,13 +2529,13 @@ int GModel::createOverlaps(int layers, bool createBoundaries)
   auto dim = getDim();
   if(dim < 2) {
     Msg::Error("Model dimension (%d) is too low for overlap creation", dim);
-    return 1;
+    return -1;
   }
 
   if(layers < 1) {
     Msg::Error("Number of layers %d in overlaps must be strictly positive",
                layers);
-    return 1;
+    return -1;
   }
 
   Msg::StatusBar(true, "Building overlaps...");
@@ -2549,7 +2549,7 @@ int GModel::createOverlaps(int layers, bool createBoundaries)
     _buildOverlapsForDim<3>(layers, this, mgr);
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
-  return 0;
+  return mgr.tag();
 }
 
 void GModel::storeChain(int dim,
