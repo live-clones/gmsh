@@ -7,6 +7,7 @@
 //   Boris Martin
 
 #include "Overlap.h"
+#include "OverlapManager.h"
 #include <unordered_map>
 #include <unordered_set>
 #include "MElement.h"
@@ -185,7 +186,7 @@ template void extendOverlapCollection<3>(GModel *const model,
 // No new elements are created but these entities will point to underlying
 // elements of their covered partitionEntity.
 template <int dim>
-void buildOverlapEntities(GModel *const model,
+void buildOverlapEntities(GModel *const model, OverlapManager &mgr,
                           const OverlapCollection<dim> &overlaps)
 {
   static_assert(dim == 2 || dim == 3, "Only dim=2 and dim=3 are supported.");
@@ -214,15 +215,15 @@ void buildOverlapEntities(GModel *const model,
         Msg::Error("Failed to add overlap entity for partition %d and covered "
                    "entity with tag %d. (Tag already existing)",
                    partition, covered->tag());
-      model->addOverlap(overlapEntity);
+      mgr.addOverlap(overlapEntity);
 
       if constexpr(dim == 2) {
-        if(std::get<0>(model->getAllOverlaps()).back() != overlapEntity) {
+        if(std::get<0>(mgr.getAllOverlaps()).back() != overlapEntity) {
           Msg::Error("Overlap entity was not added to the model's overlaps.");
         }
       }
       if constexpr(dim == 3) {
-        if(std::get<1>(model->getAllOverlaps()).back() != overlapEntity) {
+        if(std::get<1>(mgr.getAllOverlaps()).back() != overlapEntity) {
           Msg::Error("Overlap entity was not added to the model's overlaps.");
         }
       }
@@ -243,9 +244,9 @@ void buildOverlapEntities(GModel *const model,
   }
 }
 
-template void buildOverlapEntities<2>(GModel *const model,
+template void buildOverlapEntities<2>(GModel *const model, OverlapManager &mgr,
                                       const OverlapCollection<2> &overlaps);
-template void buildOverlapEntities<3>(GModel *const model,
+template void buildOverlapEntities<3>(GModel *const model, OverlapManager &mgr,
                                       const OverlapCollection<3> &overlaps);
 
 template <int dim>
@@ -422,7 +423,7 @@ static MElement *createHighOrderFace(const MFace &face, MElement *parentElement)
 }
 
 template <int dim>
-void overlapBuildBoundaries(GModel *const model,
+void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
                             const OverlapCollection<dim> &overlaps)
 {
   // Is this MEdge/MFace on an existing partitionEdge/Face ?
@@ -524,7 +525,7 @@ void overlapBuildBoundaries(GModel *const model,
           }
         }
         model->add(bnd);
-        model->addInnerBoundary(parent, bnd);
+        mgr.addInnerBoundary(parent, bnd);
       }
 
       for(const auto &[entity, bndMap] : boundariesOfExisting) {
@@ -566,19 +567,21 @@ void overlapBuildBoundaries(GModel *const model,
                   parent->tag(), entity->dim(), entity->tag());
         model->add(bnd);
         if constexpr(dim == 2)
-          model->addOverlapOfBoundary(dynamic_cast<GEdge *>(entity), bnd,
-                                      parent);
+          mgr.addOverlapOfBoundary(dynamic_cast<GEdge *>(entity), bnd,
+                                   parent);
         else if constexpr(dim == 3)
-          model->addOverlapOfBoundary(dynamic_cast<GFace *>(entity), bnd,
-                                      parent);
+          mgr.addOverlapOfBoundary(dynamic_cast<GFace *>(entity), bnd,
+                                   parent);
       }
     }
   }
 }
 
 template void overlapBuildBoundaries<2>(GModel *const model,
+                                        OverlapManager &mgr,
                                         const OverlapCollection<2> &overlaps);
 template void overlapBuildBoundaries<3>(GModel *const model,
+                                        OverlapManager &mgr,
                                         const OverlapCollection<3> &overlaps);
 
 template <int dim>

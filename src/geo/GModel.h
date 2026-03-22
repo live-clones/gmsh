@@ -22,6 +22,7 @@
 #include "SBoundingBox3d.h"
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
+#include "OverlapManager.h"
 
 template <class scalar> class simpleFunction;
 
@@ -63,21 +64,10 @@ private:
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
 
-  // Overlaps data
-  std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>>
-    _overlaps;
-
-  std::unordered_map<GFace *, std::vector<partitionEdge *>>
-    _overlapInnerBoundaries2D;
-  std::unordered_map<GRegion *, std::vector<partitionFace *>>
-    _overlapInnerBoundaries3D;
-  std::unordered_map<GEdge *, std::vector<partitionEdge *>>
-    _overlapOfBoundaries2D;
-  std::unordered_map<GFace *, std::vector<partitionFace *>>
-    _overlapOfBoundaries3D;
-  std::tuple<std::unordered_map<partitionEdge *, GFace *>,
-             std::unordered_map<partitionFace *, GRegion *>>
-    _boundaryOfOverlapCreators;
+  // Overlaps data: each OverlapManager holds a group of overlaps with their
+  // boundary data. Multiple managers allow different overlap configurations.
+  std::vector<OverlapManager> _overlapManagers;
+  int _nextOverlapTag = 0;
 
 private:
   int _readMSH2(const std::string &name);
@@ -421,55 +411,38 @@ public:
     return vertices;
   };
 
-  void addOverlap(overlapFace *of) { std::get<0>(_overlaps).push_back(of); }
-  void addOverlap(overlapRegion *or_) { std::get<1>(_overlaps).push_back(or_); }
+  // Overlap manager access
+  const std::vector<OverlapManager> &getOverlapManagers() const
+  {
+    return _overlapManagers;
+  }
+  OverlapManager &createNewOverlapManager(int layers);
+
+  // Facade methods delegating to the single (back) overlap manager.
+  // Add methods delegate to back(), get methods delegate to at(0).
+  void addOverlap(overlapFace *of);
+  void addOverlap(overlapRegion *or_);
 
   const std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>> &
-  getAllOverlaps() const
-  {
-    return _overlaps;
-  }
+  getAllOverlaps() const;
 
-  void addInnerBoundary(GFace *f, partitionEdge *e)
-  {
-    _overlapInnerBoundaries2D[f].push_back(e);
-  }
-  void addInnerBoundary(GRegion *r, partitionFace *f)
-  {
-    _overlapInnerBoundaries3D[r].push_back(f);
-  }
-  void addOverlapOfBoundary(GEdge *e, partitionEdge *pe, GFace *parent)
-  {
-    _overlapOfBoundaries2D[e].push_back(pe);
-    std::get<0>(_boundaryOfOverlapCreators)[pe] = parent;
-  }
-  void addOverlapOfBoundary(GFace *f, partitionFace *pf, GRegion *parent)
-  {
-    _overlapOfBoundaries3D[f].push_back(pf);
-    std::get<1>(_boundaryOfOverlapCreators)[pf] = parent;
-  }
+  void addInnerBoundary(GFace *f, partitionEdge *e);
+  void addInnerBoundary(GRegion *r, partitionFace *f);
+  void addOverlapOfBoundary(GEdge *e, partitionEdge *pe, GFace *parent);
+  void addOverlapOfBoundary(GFace *f, partitionFace *pf, GRegion *parent);
 
 #ifndef SWIG
-  const auto &getOverlapInnerBoundaries2D() const
-  {
-    return _overlapInnerBoundaries2D;
-  }
-  const auto &getOverlapInnerBoundaries3D() const
-  {
-    return _overlapInnerBoundaries3D;
-  }
-  const auto &getOverlapOfBoundaries2D() const
-  {
-    return _overlapOfBoundaries2D;
-  }
-  const auto &getOverlapOfBoundaries3D() const
-  {
-    return _overlapOfBoundaries3D;
-  }
-  const auto &getBoundaryOfOverlapCreators() const
-  {
-    return _boundaryOfOverlapCreators;
-  }
+  const std::unordered_map<GFace *, std::vector<partitionEdge *>> &
+  getOverlapInnerBoundaries2D() const;
+  const std::unordered_map<GRegion *, std::vector<partitionFace *>> &
+  getOverlapInnerBoundaries3D() const;
+  const std::unordered_map<GEdge *, std::vector<partitionEdge *>> &
+  getOverlapOfBoundaries2D() const;
+  const std::unordered_map<GFace *, std::vector<partitionFace *>> &
+  getOverlapOfBoundaries3D() const;
+  const std::tuple<std::unordered_map<partitionEdge *, GFace *>,
+                   std::unordered_map<partitionFace *, GRegion *>> &
+  getBoundaryOfOverlapCreators() const;
 #endif
 
   // find the entity with the given tag

@@ -330,13 +330,92 @@ bool GModel::empty() const
 
 int GModel::overlapDim() const
 {
-  if(std::get<1>(_overlaps).size() > 0) {
-    return 3; // 3D overlap
+  int maxDim = 0;
+  for(const auto &mgr : _overlapManagers) {
+    maxDim = std::max(maxDim, mgr.overlapDim());
   }
-  else if(std::get<0>(_overlaps).size() > 0) {
-    return 2; // 2D overlap
+  return maxDim;
+}
+
+OverlapManager &GModel::createNewOverlapManager(int layers)
+{
+  _overlapManagers.emplace_back(_nextOverlapTag++, layers);
+  return _overlapManagers.back();
+}
+
+void GModel::addOverlap(overlapFace *of)
+{
+  if(_overlapManagers.empty()) {
+    Msg::Error("No overlap manager exists; call createOverlaps first");
+    return;
   }
-  return 0; // no overlap
+  _overlapManagers.back().addOverlap(of);
+}
+
+void GModel::addOverlap(overlapRegion *or_)
+{
+  if(_overlapManagers.empty()) {
+    Msg::Error("No overlap manager exists; call createOverlaps first");
+    return;
+  }
+  _overlapManagers.back().addOverlap(or_);
+}
+
+const std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>> &
+GModel::getAllOverlaps() const
+{
+  return _overlapManagers.back().getAllOverlaps();
+}
+
+void GModel::addInnerBoundary(GFace *f, partitionEdge *e)
+{
+  _overlapManagers.back().addInnerBoundary(f, e);
+}
+
+void GModel::addInnerBoundary(GRegion *r, partitionFace *f)
+{
+  _overlapManagers.back().addInnerBoundary(r, f);
+}
+
+void GModel::addOverlapOfBoundary(GEdge *e, partitionEdge *pe, GFace *parent)
+{
+  _overlapManagers.back().addOverlapOfBoundary(e, pe, parent);
+}
+
+void GModel::addOverlapOfBoundary(GFace *f, partitionFace *pf, GRegion *parent)
+{
+  _overlapManagers.back().addOverlapOfBoundary(f, pf, parent);
+}
+
+const std::unordered_map<GFace *, std::vector<partitionEdge *>> &
+GModel::getOverlapInnerBoundaries2D() const
+{
+  return _overlapManagers.back().getOverlapInnerBoundaries2D();
+}
+
+const std::unordered_map<GRegion *, std::vector<partitionFace *>> &
+GModel::getOverlapInnerBoundaries3D() const
+{
+  return _overlapManagers.back().getOverlapInnerBoundaries3D();
+}
+
+const std::unordered_map<GEdge *, std::vector<partitionEdge *>> &
+GModel::getOverlapOfBoundaries2D() const
+{
+  return _overlapManagers.back().getOverlapOfBoundaries2D();
+}
+
+const std::unordered_map<GFace *, std::vector<partitionFace *>> &
+GModel::getOverlapOfBoundaries3D() const
+{
+  return _overlapManagers.back().getOverlapOfBoundaries3D();
+}
+
+const std::tuple<std::unordered_map<partitionEdge *, GFace *>,
+                 std::unordered_map<partitionFace *, GRegion *>> &
+GModel::getBoundaryOfOverlapCreators() const
+{
+  return _overlapManagers.back().getBoundaryOfOverlapCreators();
 }
 
 GRegion *GModel::getRegionByTag(int n) const
@@ -652,8 +731,7 @@ void GModel::remove()
   faces.clear();
   edges.clear();
   vertices.clear();
-  std::get<0>(_overlaps).clear();
-  std::get<1>(_overlaps).clear();
+  _overlapManagers.clear();
 }
 
 void GModel::snapVertices()
@@ -2434,12 +2512,13 @@ int GModel::convertOldPartitioningToNewOne()
 }
 
 template <int dim>
-static void _buildOverlapsForDim(const int layers, GModel *const m)
+static void _buildOverlapsForDim(const int layers, GModel *const m,
+                                  OverlapManager &mgr)
 {
   auto ovlps = quickOverlap<dim>(m);
   for(int i = 1; i < layers; ++i) extendOverlapCollection<dim>(m, ovlps);
-  buildOverlapEntities<dim>(m, ovlps);
-  overlapBuildBoundaries<dim>(m, ovlps);
+  buildOverlapEntities<dim>(m, mgr, ovlps);
+  overlapBuildBoundaries<dim>(m, mgr, ovlps);
 }
 
 int GModel::createOverlaps(int layers, bool createBoundaries)
@@ -2461,11 +2540,13 @@ int GModel::createOverlaps(int layers, bool createBoundaries)
 
   Msg::StatusBar(true, "Building overlaps...");
 
+  auto &mgr = createNewOverlapManager(layers);
+
   double t1 = Cpu(), w1 = TimeOfDay();
   if(dim == 2)
-    _buildOverlapsForDim<2>(layers, this);
+    _buildOverlapsForDim<2>(layers, this, mgr);
   else
-    _buildOverlapsForDim<3>(layers, this);
+    _buildOverlapsForDim<3>(layers, this, mgr);
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
   return 0;
