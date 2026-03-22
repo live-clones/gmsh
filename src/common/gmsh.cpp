@@ -1641,6 +1641,75 @@ GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
   }
 }
 
+GMSH_API void gmsh::model::mesh::getOverlapOverlappedEntity(
+  const int dim, const int overlapTag, int &overlappedEntityTag)
+{
+  if(!_checkInit()) return;
+  GModel *model = GModel::current();
+  if(model->getOverlapManagers().size() > 1) {
+    Msg::Error("getOverlapOverlappedEntity: expected at most one overlap "
+               "group, found %zu",
+               model->getOverlapManagers().size());
+    overlappedEntityTag = -1;
+    return;
+  }
+  GEntity *entity = model->getEntityByTag(dim, overlapTag);
+  if(!entity) {
+    Msg::Warning("getOverlapOverlappedEntity: no entity of dimension %d and "
+                 "tag %d",
+                 dim, overlapTag);
+    overlappedEntityTag = -1;
+    return;
+  }
+  // Check for volume/surface overlaps (overlapRegion / overlapFace)
+  if(dim == 2) {
+    if(entity->geomType() == GEntity::OverlapSurface) {
+      overlapFace *of = static_cast<overlapFace *>(entity);
+      overlappedEntityTag = of->getCovered()->tag();
+      return;
+    }
+  }
+  else if(dim == 3) {
+    if(entity->geomType() == GEntity::OverlapVolume) {
+      overlapRegion *or_ = static_cast<overlapRegion *>(entity);
+      overlappedEntityTag = or_->getCovered()->tag();
+      return;
+    }
+  }
+  // Check for boundary overlaps (partitionEdge / partitionFace stored in
+  // _overlapOfBoundaries maps). These are partition entities at dim = modelDim-1
+  // that overlap a boundary entity.
+  if(dim == 1) {
+    partitionEdge *pe = dynamic_cast<partitionEdge *>(entity);
+    if(pe) {
+      const auto &overlapOfBnds = model->getOverlapOfBoundaries2D();
+      for(const auto &[edge, pes] : overlapOfBnds) {
+        for(const auto *p : pes) {
+          if(p->tag() == overlapTag) {
+            overlappedEntityTag = edge->tag();
+            return;
+          }
+        }
+      }
+    }
+  }
+  else if(dim == 2) {
+    partitionFace *pf = dynamic_cast<partitionFace *>(entity);
+    if(pf) {
+      const auto &overlapOfBnds = model->getOverlapOfBoundaries3D();
+      for(const auto &[face, pfs] : overlapOfBnds) {
+        for(const auto *p : pfs) {
+          if(p->tag() == overlapTag) {
+            overlappedEntityTag = face->tag();
+            return;
+          }
+        }
+      }
+    }
+  }
+  overlappedEntityTag = -1;
+}
+
 GMSH_API void gmsh::model::mesh::unpartition()
 {
   if(!_checkInit()) return;
