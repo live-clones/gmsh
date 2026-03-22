@@ -332,6 +332,7 @@ buildBoundaryElementToEntityDict(GModel *const model)
   auto processEntity = [&](auto *entity) {
     auto partitionEntity = dynamic_cast<BEntity *>(entity);
     if(!partitionEntity) return;
+    if(!partitionEntity->getParentEntity()) return; // skip overlap boundaries
 
     for(size_t i = 0; i < partitionEntity->getNumMeshElements(); ++i) {
       MElement *element = partitionEntity->getMeshElement(i);
