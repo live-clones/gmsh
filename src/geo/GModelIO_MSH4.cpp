@@ -1248,6 +1248,13 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 template <int dim>
 static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
 {
+  if(model->getOverlapManagers().size() > 1) {
+    Msg::Error("readMSH4Overlaps: expected at most one overlap manager, "
+               "found %zu",
+               model->getOverlapManagers().size());
+    return false;
+  }
+  if(model->getOverlapManagers().empty()) model->createNewOverlapManager(0);
   size_t nOverlaps = 0;
   std::set<int> addedTags;
   if(binary) {
@@ -1340,6 +1347,13 @@ template <int dim>
 static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
                                       bool binary)
 {
+  if(model->getOverlapManagers().size() > 1) {
+    Msg::Error("readMSH4OverlapBoundaries: expected at most one overlap "
+               "manager, found %zu",
+               model->getOverlapManagers().size());
+    return false;
+  }
+  if(model->getOverlapManagers().empty()) model->createNewOverlapManager(0);
   size_t numGlobalEntities = 0;
   if(binary) {
     if(fread(&numGlobalEntities, sizeof(size_t), 1, fp) != 1) { return false; }

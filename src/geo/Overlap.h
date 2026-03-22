@@ -11,6 +11,8 @@
 
 #include "OverlapEntities.h"
 
+class OverlapManager;
+
 // Overlap collection: for each partition,
 // we store all covered entities (of other partitions) with the subset of
 // elements to use. Can be multiple layers if built accordingly
@@ -29,8 +31,9 @@ void extendOverlapCollection(GModel *const model,
 // Read an overlap collection and modify the GModel to add overlap entities.
 // No new elements are created but these entities will point to underlying
 // elements of their covered partitionEntity. Does not handle any boundary.
+// Overlap data is stored in the provided OverlapManager.
 template <int dim>
-void buildOverlapEntities(GModel *const model,
+void buildOverlapEntities(GModel *const model, OverlapManager &mgr,
                           const OverlapCollection<dim> &overlaps);
 
 // For each entity, identify the boundary (set of MEdge/MFace) of the overlap
@@ -49,7 +52,7 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps);
  */
 
 template <int dim>
-void overlapBuildBoundaries(GModel *const model,
+void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
                             const OverlapCollection<dim> &overlaps);
 
 /**
