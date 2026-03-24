@@ -9,6 +9,8 @@ Eigen 5.0 by default.
 
 * Incompatible API changes: new optional argument to mesh/optimize
 
+4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
+
 4.15.1 (February 16, 2026): improved handling of anisotropic surface meshes in
 3D Delaunay; bug fixes.
 
