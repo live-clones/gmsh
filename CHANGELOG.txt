@@ -1,4 +1,7 @@
-4.15.1 (February 16, 2026): bug fixes.
+4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
+
+4.15.1 (February 16, 2026): improved handling of anisotropic surface meshes in
+3D Delaunay; bug fixes.
 
 4.15.0 (October 26, 2025): new Closest, Parametric Point and Normal parser
 functions; changed Boundary and CombinedBoundary parser functions to not return
