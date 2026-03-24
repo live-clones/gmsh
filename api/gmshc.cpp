@@ -4705,6 +4705,24 @@ GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size
   }
 }
 
+GMSH_API void gmshAlgorithmRefineTetrahedra(const double * coord, const size_t coord_n, const double * sizeAtNode, const size_t sizeAtNode_n, const size_t * tetraIn, const size_t tetraIn_n, double ** steiner, size_t * steiner_n, size_t ** tetraOut, size_t * tetraOut_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<double> api_sizeAtNode_(sizeAtNode, sizeAtNode + sizeAtNode_n);
+    std::vector<std::size_t> api_tetraIn_(tetraIn, tetraIn + tetraIn_n);
+    std::vector<double> api_steiner_;
+    std::vector<std::size_t> api_tetraOut_;
+    gmsh::algorithm::refineTetrahedra(api_coord_, api_sizeAtNode_, api_tetraIn_, api_steiner_, api_tetraOut_);
+    vector2ptr(api_steiner_, steiner, steiner_n);
+    vector2ptr(api_tetraOut_, tetraOut, tetraOut_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshPluginSetNumber(const char * name, const char * option, const double value, int * ierr)
 {
   if(ierr) *ierr = 0;
