@@ -209,28 +209,6 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
   std::vector<GEntity *> entities;
   m->getEntities(entities);
 
-  // std::vector<std::pair<int, int>> lineDimTags;
-  // for(size_t i = 0; i < entities.size(); i++) {
-  //   GEntity *e = entities[i];
-  //   if(e->dim() != 1) continue;
-
-  //   lineDimTags.emplace_back(1, e->tag());
-  // }
-
-  // std::vector<std::pair<int, int>> boundaryDimTags;
-  // m->getBoundaryTags(lineDimTags, boundaryDimTags, false);
-
-  // for(size_t i = 0; i < lineDimTags.size(); i++) {
-  //   Msg::Info("line: %d %d", lineDimTags[i].first, lineDimTags[i].second);
-  // }
-
-  // for(size_t i = 0; i < boundaryDimTags.size(); i++) {
-  //   Msg::Info("boundary: %d %d", boundaryDimTags[i].first,
-  //             boundaryDimTags[i].second);
-  // }
-
-  // return view;
-
   std::vector<MVertex *> newNodes;
   std::vector<size_t> newNodesEntity;
   std::vector<MElement *> newElements;
