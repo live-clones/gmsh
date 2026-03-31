@@ -22,22 +22,11 @@
 
 #include <algorithm>
 
-// StringXNumber DuplicateNodesOption_Number[] = {
-//   {GMSH_FULLRC, "Dimension", nullptr, 1.},
-//   {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
-//   {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
-//   {GMSH_FULLRC, "NormalX", nullptr, 0.},
-//   {GMSH_FULLRC, "NormalY", nullptr, 0.},
-//   {GMSH_FULLRC, "NormalZ", nullptr, 1.},
-//   {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
-//   {GMSH_FULLRC, "DebugView", nullptr, 0},
-//   {GMSH_FULLRC, "SwapOrientation", nullptr, 0}};
-
 constexpr uint64_t SHIFT = 32LL;
 
 StringXNumber DuplicateNodesOption_Number[] = {
   {GMSH_FULLRC, "Insert quads (0), triangles (1)", nullptr, 0.0},
-  {GMSH_FULLRC, "Shrink factor", nullptr, 0.25},
+  {GMSH_FULLRC, "Shrink factor", nullptr, 0.0},
   {GMSH_FULLRC, "TFEM-DG mesh on 1D etities", nullptr, 0.0}};
 
 extern "C" {
@@ -47,27 +36,35 @@ GMSH_Plugin *GMSH_RegisterDuplicateNodesPlugin()
 
 std::string GMSH_DuplicateNodesPlugin::getHelp() const
 {
-  return "TODO: EDIT THIS TEXT Plugin(Crack) create "
-         "manifold physical group `PhysicalGroup' of dimension "
-         "`Dimension' (1 or 2), embedded in a mesh of dimension "
-         "`Dimension' + 1."
-         "The plugin duplicates the nodes and the elements on "
-         "the crack and stores them in a new discrete curve "
-         "(`Dimension' = 1) or surface (`Dimension' = 2). The "
-         "elements touching the crack on the positive side "
-         "are modified to use the newly generated nodes."
-         "If `OpenBoundaryPhysicalGroup' is given (> 0), its "
-         "nodes are duplicated and the crack will be left "
-         "open on that (part of the) boundary. Otherwise, the "
-         "lips of the crack are sealed, i.e., its nodes are "
-         "not duplicated. For 1D cracks, `NormalX', `NormalY' and "
-         "`NormalZ' provide the reference normal of the surface "
-         "in which the crack is supposed to be embedded. If "
-         "`NewPhysicalGroup' is positive, use it as the tag of "
-         "the newly created curve or surface; otherwise use "
-         "`PhysicalGroup'. If `SwapOrientation' is set to 1, "
-         "the orientation of the duplicated elements on the "
-         "crack is reversed.";
+  return "This plugin enhances 2D meshes by inserting dummy zero-measure "
+         "elements along each edge of every element. This facilitates "
+         "straightforward implementation of the discontinuous Galerkin method "
+         "(DG) within the tempered finite element method (TFEM) framework, "
+         "enabling users to efficiently use DG in FEM-based implementations. "
+         "For more information about TFEM-DG, see the companion papers `DG = "
+         "FEM + flat elements' (Part I: Diffusion, Part II: Convection).\n"
+         "\n"
+         "The description of the plugin parameters follows:\n- `Insert quads "
+         "(0), "
+         "triangles (1)' - The user has the choice between the insertion of a "
+         "quadrangle or a pair of triangles along each edge. The type of dummy "
+         "elements chosen here does not have to coincide with the type of "
+         "elements in the original mesh. Quadrangles can be inserted into a "
+         "triangular mesh and vice versa.\n"
+         "- `Shrink factor' - This parameter "
+         "serves the debugging purposes, should be a real number from the "
+         "half-closed interval [0, 1), and describes how much the original "
+         "elements are scaled down. For TFEM-DG purposes, the value of this "
+         "parameter should be zero. To see the inserted dummy elements while "
+         "also keeping the original elements large enough, we recommend "
+         "setting this parameter to 0.25.\n"
+         "- `TFEM-DG mesh on 1D entities' - "
+         "In the original TFEM-DG paper, only 2D dummy elements are inserted. "
+         "However, there might be applications in which there is some "
+         "computation taking place on the edges of the surfaces. Therefore, we "
+         "add this boolean parameter (1 = true, 0 = false) by which it can be "
+         "specified whether the dummy elements should also be included in 1D "
+         "entities.";
 }
 
 int GMSH_DuplicateNodesPlugin::getNbOptions() const
