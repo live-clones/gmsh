@@ -37,7 +37,8 @@ constexpr uint64_t SHIFT = 32LL;
 
 StringXNumber DuplicateNodesOption_Number[] = {
   {GMSH_FULLRC, "Insert quads (0), triangles (1)", nullptr, 0.0},
-  {GMSH_FULLRC, "Shrink factor", nullptr, 0.25}};
+  {GMSH_FULLRC, "Shrink factor", nullptr, 0.25},
+  {GMSH_FULLRC, "TFEM-DG mesh on 1D etities", nullptr, 0.0}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterDuplicateNodesPlugin()
@@ -143,10 +144,10 @@ void removeVerticesAndElementsFromEntities(
   m->destroyMeshCaches();
 }
 
-void insertDummyElement(const int elType, const size_t iel, const size_t ioel,
-                        MVertex *a, MVertex *b, MVertex *oa, MVertex *ob,
-                        std::vector<MElement *> &newElements,
-                        std::vector<size_t> &newElementsEntity)
+void insert2DDummyElement(const int elType, const size_t iel, const size_t ioel,
+                          MVertex *a, MVertex *b, MVertex *oa, MVertex *ob,
+                          std::vector<MElement *> &newElements,
+                          std::vector<size_t> &newElementsEntity)
 {
   if(elType == 0) // QUADS
   {
@@ -169,6 +170,26 @@ void insertDummyElement(const int elType, const size_t iel, const size_t ioel,
   }
 }
 
+void handleCornersWhenMeshing1DEntity(
+  std::vector<MVertex *> vs, std::vector<MVertex *> nvs, size_t i,
+  std::map<size_t, size_t> &nodeNumTo0DEntity, size_t parentNum,
+  std::vector<GEntity *> &entities, std::vector<MVertex *> &newNodes,
+  std::vector<size_t> &targetEntityOfCopiedNode,
+  std::map<size_t, std::vector<MVertex *>> &oneDNodesByNumsOfTheirParents,
+  std::map<size_t, size_t> &newNodesNumToLineIndexToWhich1DElementWillBeAdded,
+  size_t oneDEntityIndex)
+{
+  if(!nodeNumTo0DEntity.count(parentNum)) return;
+  MVertex *zeroDEntityVertex = new MVertex(
+    vs[i]->x(), vs[i]->y(), vs[i]->z(), entities[nodeNumTo0DEntity[parentNum]]);
+  newNodes.push_back(zeroDEntityVertex);
+  targetEntityOfCopiedNode.push_back(nodeNumTo0DEntity[parentNum]);
+  oneDNodesByNumsOfTheirParents[parentNum].push_back(zeroDEntityVertex);
+  newNodesNumToLineIndexToWhich1DElementWillBeAdded[zeroDEntityVertex
+                                                      ->getNum()] =
+    oneDEntityIndex;
+}
+
 /*
 ELEMENT TYPE:
 1 - point
@@ -178,11 +199,13 @@ ELEMENT TYPE:
 
 PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
 {
-  size_t DNPP_ELTYPETOINSERT = (size_t)DuplicateNodesOption_Number[0].def;
-  double DNPP_SHRINK = DuplicateNodesOption_Number[1].def;
+  const size_t DNPP_ELTYPETOINSERT = (size_t)DuplicateNodesOption_Number[0].def;
+  const double DNPP_SHRINK = DuplicateNodesOption_Number[1].def;
+  const bool DNPP_MESH1DENT = (bool)DuplicateNodesOption_Number[2].def;
 
   Msg::Info("Insert quads (0), triangles (1): %d", DNPP_ELTYPETOINSERT);
   Msg::Info("Shrink factor parameter: %f", DNPP_SHRINK);
+  Msg::Info("TFEM-DG mesh 1D entities: %s", DNPP_MESH1DENT ? "true" : "false");
 
   GModel *m = GModel::current();
 
@@ -221,6 +244,18 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
   std::map<size_t, std::vector<size_t>>
     neighboringSurfacesOf1DElements; // 1D elem by num, entity by index
   std::map<size_t, size_t> oneDElementNumToLineIndex;
+  std::map<size_t, std::vector<MVertex *>> oneDNodesByNumsOfTheirParents;
+  std::map<size_t, size_t> nodeNumTo0DEntity;
+  std::map<size_t, size_t> newNodesNumToLineIndexToWhich1DElementWillBeAdded;
+
+  // Fill nodeNumTo0DEntity datastructure
+  for(size_t ie = 0; ie < entities.size(); ie++) {
+    GEntity *e = entities[ie];
+    if(e->dim() != 0) continue;
+    for(size_t i = 0; i < e->mesh_vertices.size(); i++) {
+      nodeNumTo0DEntity[e->mesh_vertices[i]->getNum()] = ie;
+    }
+  }
 
   // Fill edgeHashTo1DElementNum datastructure
   //  and oneDElementNumToLineIndex
@@ -309,6 +344,10 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
         nums_vs.push_back(vs[i]->getNum());
       }
 
+      for(size_t i = 0; i < nvs.size(); i++) {
+        parentVertexNum[nvs[i]->getNum()] = nums_vs[i];
+      }
+
       std::vector<size_t> targetEntityOfCopiedNode(nvs.size(), ie);
       for(size_t i = 0; i < nums_vs.size(); i++) {
         const size_t ia = i, ib = (i + 1) % nums_vs.size();
@@ -337,17 +376,42 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
             newNodes.push_back(oa);
             newNodes.push_back(ob);
 
-            targetEntityOfCopiedNode.push_back(
-              oneDElementNumToLineIndex[num1DElement]);
-            targetEntityOfCopiedNode.push_back(
-              oneDElementNumToLineIndex[num1DElement]);
+            targetEntityOfCopiedNode.push_back(oneDEntityIndex);
+            targetEntityOfCopiedNode.push_back(oneDEntityIndex);
+
+            if(DNPP_MESH1DENT) {
+              oneDNodesByNumsOfTheirParents[parentVertexNum[nvs[ia]->getNum()]]
+                .push_back(oa);
+              oneDNodesByNumsOfTheirParents[parentVertexNum[nvs[ib]->getNum()]]
+                .push_back(ob);
+
+              newNodesNumToLineIndexToWhich1DElementWillBeAdded[oa->getNum()] =
+                oneDEntityIndex;
+              newNodesNumToLineIndexToWhich1DElementWillBeAdded[ob->getNum()] =
+                oneDEntityIndex;
+
+              handleCornersWhenMeshing1DEntity(
+                vs, nvs, ia, nodeNumTo0DEntity,
+                parentVertexNum[nvs[ia]->getNum()], entities, newNodes,
+                targetEntityOfCopiedNode, oneDNodesByNumsOfTheirParents,
+                newNodesNumToLineIndexToWhich1DElementWillBeAdded,
+                oneDEntityIndex);
+
+              handleCornersWhenMeshing1DEntity(
+                vs, nvs, ib, nodeNumTo0DEntity,
+                parentVertexNum[nvs[ib]->getNum()], entities, newNodes,
+                targetEntityOfCopiedNode, oneDNodesByNumsOfTheirParents,
+                newNodesNumToLineIndexToWhich1DElementWillBeAdded,
+                oneDEntityIndex);
+            }
 
             newElements.push_back(new MLine(oa, ob));
             newElementsEntity.push_back(oneDEntityIndex);
 
-            insertDummyElement(DNPP_ELTYPETOINSERT, newFullMeasureElementIndex,
-                               newElements.size() - 1, nvs[ia], nvs[ib], oa, ob,
-                               newElements, newElementsEntity);
+            insert2DDummyElement(DNPP_ELTYPETOINSERT,
+                                 newFullMeasureElementIndex,
+                                 newElements.size() - 1, nvs[ia], nvs[ib], oa,
+                                 ob, newElements, newElementsEntity);
 
             continue;
           }
@@ -360,11 +424,38 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
             if(*std::min_element(surfaces.begin(), surfaces.end()) != ie)
               continue;
 
-            size_t targetEntity = oneDElementNumToLineIndex[num1DElement];
-            targetEntityOfCopiedNode[ia] = targetEntity;
-            targetEntityOfCopiedNode[ib] = targetEntity;
+            size_t oneDEntityIndex = oneDElementNumToLineIndex[num1DElement];
+            targetEntityOfCopiedNode[ia] = oneDEntityIndex;
+            targetEntityOfCopiedNode[ib] = oneDEntityIndex;
             newElements.push_back(new MLine(nvs[ia], nvs[ib]));
-            newElementsEntity.push_back(targetEntity);
+            newElementsEntity.push_back(oneDEntityIndex);
+
+            if(!DNPP_MESH1DENT) continue;
+            oneDNodesByNumsOfTheirParents[parentVertexNum[nvs[ia]->getNum()]]
+              .push_back(nvs[ia]);
+            oneDNodesByNumsOfTheirParents[parentVertexNum[nvs[ib]->getNum()]]
+              .push_back(nvs[ib]);
+
+            newNodesNumToLineIndexToWhich1DElementWillBeAdded[nvs[ia]
+                                                                ->getNum()] =
+              oneDEntityIndex;
+            newNodesNumToLineIndexToWhich1DElementWillBeAdded[nvs[ib]
+                                                                ->getNum()] =
+              oneDEntityIndex;
+
+            handleCornersWhenMeshing1DEntity(
+              vs, nvs, ia, nodeNumTo0DEntity,
+              parentVertexNum[nvs[ia]->getNum()], entities, newNodes,
+              targetEntityOfCopiedNode, oneDNodesByNumsOfTheirParents,
+              newNodesNumToLineIndexToWhich1DElementWillBeAdded,
+              oneDEntityIndex);
+
+            handleCornersWhenMeshing1DEntity(
+              vs, nvs, ib, nodeNumTo0DEntity,
+              parentVertexNum[nvs[ib]->getNum()], entities, newNodes,
+              targetEntityOfCopiedNode, oneDNodesByNumsOfTheirParents,
+              newNodesNumToLineIndexToWhich1DElementWillBeAdded,
+              oneDEntityIndex);
 
             continue;
           }
@@ -375,12 +466,26 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
         }
       }
 
-      for(size_t i = 0; i < nvs.size(); i++) {
-        parentVertexNum[nvs[i]->getNum()] = nums_vs[i];
-      }
-
       for(size_t i = 0; i < targetEntityOfCopiedNode.size(); i++) {
         newNodesEntity.push_back(targetEntityOfCopiedNode[i]);
+      }
+    }
+  }
+
+  if(DNPP_MESH1DENT) {
+    for(const auto &[parentNum, vs] : oneDNodesByNumsOfTheirParents) {
+      for(size_t i = 0; i < vs.size() - 1; i++) {
+        for(size_t j = i + 1; j < vs.size(); j++) {
+          MVertex *a = vs[i], *b = vs[j];
+          size_t aLine =
+            newNodesNumToLineIndexToWhich1DElementWillBeAdded[a->getNum()];
+          size_t bLine =
+            newNodesNumToLineIndexToWhich1DElementWillBeAdded[b->getNum()];
+          if(aLine != bLine) continue;
+
+          newElements.push_back(new MLine(a, b));
+          newElementsEntity.push_back(aLine);
+        }
       }
     }
   }
@@ -440,8 +545,8 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
     oa = newElements[ioel]->getVertex(iaoel);
     ob = newElements[ioel]->getVertex(iboel);
 
-    insertDummyElement(DNPP_ELTYPETOINSERT, iel, ioel, a, b, oa, ob,
-                       newElements, newElementsEntity);
+    insert2DDummyElement(DNPP_ELTYPETOINSERT, iel, ioel, a, b, oa, ob,
+                         newElements, newElementsEntity);
   }
 
   for(size_t iv = 0; iv < newNodes.size(); iv++) {
