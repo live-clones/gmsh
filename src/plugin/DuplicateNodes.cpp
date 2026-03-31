@@ -324,10 +324,15 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
             // Boundary --> add 1D element and dummy element
             const size_t oneDEntityIndex =
               oneDElementNumToLineIndex[num1DElement];
-            MVertex *oa = new MVertex(vs[ia]->x(), vs[ia]->y(), vs[ia]->z(),
-                                      entities[oneDEntityIndex]);
-            MVertex *ob = new MVertex(vs[ib]->x(), vs[ib]->y(), vs[ib]->z(),
-                                      entities[oneDEntityIndex]);
+
+            std::vector<MVertex *> oneDvs = {vs[ia], vs[ib]};
+            std::vector<MVertex *> oneDnvs;
+
+            generateNewVerticesDependingOnShrinkFactorAndCentroid(
+              DNPP_SHRINK, oneDvs, oneDnvs, entities[oneDEntityIndex]);
+
+            MVertex *oa = oneDnvs[0];
+            MVertex *ob = oneDnvs[1];
 
             newNodes.push_back(oa);
             newNodes.push_back(ob);
