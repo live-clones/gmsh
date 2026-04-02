@@ -410,12 +410,14 @@ double highOrderPolyMesh::computeAngle(SVector3 v01, SVector3 v02)
 
 inline double computeAngle2d(double pa[2], double pb[2], double pc[2])
 {
-  double dx = (pb[0] - pa[0]) * (pc[0] - pa[0]);
-  double dy = (pb[1] - pa[1]) * (pc[1] - pa[1]);
-  double d = dx + dy;
-  double o = robustPredicates::orient2d(pa, pb, pc);
-  double angle = atan2(o, d);
-  if(angle < 0.) angle += 2 * M_PI;
+  const double ux = pb[0] - pa[0];
+  const double uy = pb[1] - pa[1];
+  const double vx = pc[0] - pa[0];
+  const double vy = pc[1] - pa[1];
+  const double dot = ux * vx + uy * vy;
+  const double orient = robustPredicates::orient2d(pa, pb, pc);
+  double angle = atan2(orient, dot);
+  if(angle < 0.0) angle += 2.0 * M_PI;
   return angle;
 }
 
@@ -480,348 +482,134 @@ inline void local_coordinates(double p0[3], double p1[3], double p[3],
   local_coordinates(d01, d0, d1, lc);
 }
 
+inline void robustCrossProd(const double p0[3], const double p1[3],
+                            const double p2[3], double crossprod[3])
+{
+  double pa[2], pb[2], pc[2];
+  for(int i = 0; i < 3; ++i) {
+    int i1 = (i + 1) % 3;
+    int i2 = (i + 2) % 3;
+    pa[0] = p1[i1];
+    pa[1] = p1[i2];
+    pb[0] = p2[i1];
+    pb[1] = p2[i2];
+    pc[0] = p0[i1];
+    pc[1] = p0[i2];
+    crossprod[i] = robustPredicates::orient2d(pa, pb, pc);
+    if(isnan(crossprod[i])) Msg::Error("Error NaN");
+  }
+}
+
+inline double computeAngleOnFace(const double p0[3], const double p1[3],
+                                 const double p2[3], const double v0[3],
+                                 const double v1[3], const double v2[3])
+{
+  const double ux = p1[0] - p0[0];
+  const double uy = p1[1] - p0[1];
+  const double uz = p1[2] - p0[2];
+  const double vx = p2[0] - p0[0];
+  const double vy = p2[1] - p0[1];
+  const double vz = p2[2] - p0[2];
+  const double dot = ux * vx + uy * vy + uz * vz;
+
+  double angle_cp[3], face_cp[3];
+  robustCrossProd(p0, p1, p2, angle_cp);
+  robustCrossProd(v0, v1, v2, face_cp);
+
+  const double angle_norm =
+    sqrt(angle_cp[0] * angle_cp[0] + angle_cp[1] * angle_cp[1] +
+         angle_cp[2] * angle_cp[2]);
+  const double face_norm =
+    sqrt(face_cp[0] * face_cp[0] + face_cp[1] * face_cp[1] +
+         face_cp[2] * face_cp[2]);
+  if(angle_norm <= 0 || face_norm <= 0) return (dot >= 0.0) ? 0.0 : M_PI;
+
+  const double orient = face_cp[0] * angle_cp[0] + face_cp[1] * angle_cp[1] +
+                        face_cp[2] * angle_cp[2];
+  return atan2(((orient < 0.0) ? -1.0 : +1.0) * abs(angle_norm), dot);
+}
+
 double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
                                                 geodesic::SurfacePoint &p1,
                                                 geodesic::SurfacePoint &p2)
 {
   if(p0.type() == geodesic::FACE) {
-    double oangle;
-    {
-      geodesic::Face *f = static_cast<geodesic::Face *>(p0.base_element());
-      geodesic::Vertex *v0 = f->adjacent_vertices()[0],
-                       *v1 = f->adjacent_vertices()[1];
-      double pa[2], pb[2], pc[2];
-      local_coordinates(v0->xyz(), v1->xyz(), p0.xyz(), pa);
-      local_coordinates(v0->xyz(), v1->xyz(), p1.xyz(), pb);
-      local_coordinates(v0->xyz(), v1->xyz(), p2.xyz(), pc);
-      oangle = computeAngle2d(pa, pb, pc);
-      return oangle;
-    }
-
-    // for(int i = 0; i < 2; ++i) {
-    //   auto p = (i == 0) ? p1 : p2;
-    //   if(p.type() == geodesic::FACE) {
-    //     if(p.base_element() != p0.base_element())
-    //       Msg::Error("(FACE) p0 and p%d are not on the same face", i + 1);
-    //   }
-    //   else {
-    //     auto faces = p.base_element()->adjacent_faces();
-    //     int j = 0;
-    //     for(; j < faces.size(); ++j) {
-    //       if(faces[j] == p0.base_element()) break;
-    //     }
-    //     if(j == faces.size())
-    //       Msg::Error("(FACE) p0 and p%d do not share a face", i + 1);
-    //   }
-    // }
-    //
-    // SVector3 v01((p0).xyz(), (p1).xyz());
-    // SVector3 v02((p0).xyz(), (p2).xyz());
-    //
-    // SVector3 n = normal(p0.base_element());
-    // double angle = computeAngle(v01, v02, n);
-    // // if(abs(angle - oangle) > 1e-2) {
-    // //   std::cout << angle << " " << oangle << " " << angle - oangle <<
-    // //   std::endl; Msg::Error("false V");
-    // // }
-    // return angle;
+    geodesic::Face *f = static_cast<geodesic::Face *>(p0.base_element());
+    geodesic::Vertex *vs[3] = {f->adjacent_vertices()[0],
+                               f->adjacent_vertices()[1],
+                               f->adjacent_vertices()[2]};
+    double angle = computeAngleOnFace(p0.xyz(), p1.xyz(), p2.xyz(),
+                                      vs[0]->xyz(), vs[1]->xyz(), vs[2]->xyz());
+    if(angle < 0.0) angle += 2 * M_PI;
+    return angle;
   }
 
   if(p0.type() == geodesic::EDGE) {
-    // double oangle;
-    {
-      geodesic::Edge *e = static_cast<geodesic::Edge *>(p0.base_element());
-      geodesic::Face *f = e->adjacent_faces()[0];
-      geodesic::Vertex *v0 = e->v0(), *v1 = e->v1();
-      if(swappedEdge(e, f)) { v0 = e->v1(), v1 = e->v0(); }
-      double pa[2], pb[2], pc[2];
-      local_coordinates(v0->xyz(), v1->xyz(), p0.xyz(), pa);
-      local_coordinates(v0->xyz(), v1->xyz(), p1.xyz(), pb);
-      local_coordinates(v0->xyz(), v1->xyz(), p2.xyz(), pc);
-      if(!onFace(p1, f)) pb[1] *= -1;
-      if(!onFace(p2, f)) pc[1] *= -1;
-      return computeAngle2d(pa, pb, pc);
-      // oangle = computeAngle2d(pa, pb, pc);
-    }
+    geodesic::Edge *e = static_cast<geodesic::Edge *>(p0.base_element());
+    geodesic::Face *fs[2] = {e->adjacent_faces()[0], e->adjacent_faces()[1]};
 
-    // geodesic::Face *fs[2] = {nullptr, nullptr};
-    // for(int i = 0; i < 2; ++i) {
-    //   auto p = (i == 0) ? p1 : p2;
-    //   if(p.type() == geodesic::FACE) {
-    //     if(p.base_element() == p0.base_element()->adjacent_faces()[0] ||
-    //        p.base_element() == p0.base_element()->adjacent_faces()[1]) {
-    //       fs[i] = (geodesic::Face *)p.base_element();
-    //     }
-    //   }
-    //   else {
-    //     auto faces = p.base_element()->adjacent_faces();
-    //     for(int j = 0; j < faces.size(); ++j) {
-    //       if(faces[j] == p0.base_element()->adjacent_faces()[0] ||
-    //          faces[j] == p0.base_element()->adjacent_faces()[1]) {
-    //         fs[i] = faces[j];
-    //         break;
-    //       }
-    //     }
-    //   }
-    //   if(fs[i] == nullptr) {
-    //     std::cout << "p0 " << p0.type() << " " << p0.base_element()->id()
-    //               << std::endl;
-    //     std::cout << "p2 " << p2.type() << " " << p2.base_element()->id()
-    //               << std::endl;
-    //     Msg::Error("(EDGE) p0 and p%d do not share a face", i + 1);
-    //   }
-    // }
-    //
-    // geodesic::Vertex *v = nullptr;
-    // for(int i = 0; i < 3; ++i) {
-    //   auto vv = fs[0]->adjacent_vertices()[i];
-    //   if(vv != p0.base_element()->adjacent_vertices()[0] &&
-    //      vv != p0.base_element()->adjacent_vertices()[1]) {
-    //     v = fs[0]->adjacent_vertices()[(i + 1) % 3];
-    //     break;
-    //   }
-    // }
-    // SVector3 v01((p0).xyz(), (p1).xyz());
-    // geodesic::SurfacePoint sp(v);
-    // SVector3 v02((p0).xyz(), (sp).xyz());
-    // double a1, a2;
-    // SVector3 n = normal(fs[0]);
-    // a1 = computeAngle(v01, v02, n);
-    //
-    // if(fs[0] == fs[1]) {
-    //   v01 = SVector3((p0).xyz(), (p2).xyz());
-    //   a2 = computeAngle(v01, v02, n);
-    //
-    //   double angle = a1 - a2;
-    //   if(angle < 0.) angle += 2 * M_PI;
-    //   // if(abs(angle - oangle) > 1e-3) { Msg::Error("false 2"); }
-    //   return angle;
-    // }
-    // else {
-    //   v01 = v02;
-    //   v02 = SVector3((p0).xyz(), (p2).xyz());
-    //   n = normal(fs[1]);
-    //   double a2;
-    //   a2 = computeAngle(v01, v02, n);
-    //   // if(abs(a1 + a2 - oangle) > 1e-3) { Msg::Error("false 2"); }
-    //   return a1 + a2;
-    // }
+    auto &adj0 = (onFace(p1, fs[0])) ? fs[0]->adjacent_vertices() :
+                                       fs[1]->adjacent_vertices();
+    double angle =
+      computeAngleOnFace(p0.xyz(), p1.xyz(), e->v0()->xyz(), adj0[0]->xyz(),
+                         adj0[1]->xyz(), adj0[2]->xyz());
+    auto &adj1 = (onFace(p2, fs[0])) ? fs[0]->adjacent_vertices() :
+                                       fs[1]->adjacent_vertices();
+    angle -= computeAngleOnFace(p0.xyz(), p2.xyz(), e->v0()->xyz(),
+                                adj1[0]->xyz(), adj1[1]->xyz(), adj1[2]->xyz());
+    if(angle < 0.0) angle += 2 * M_PI;
+    return angle;
   }
 
   if(p0.type() == geodesic::VERTEX) {
-    double oangle;
-    {
-      geodesic::Face *f1 = nullptr, *f2 = nullptr;
-      geodesic::Vertex *v0 = static_cast<geodesic::Vertex *>(p0.base_element()),
-                       *v1 = nullptr, *v2 = nullptr;
+    geodesic::Face *f1 = nullptr, *f2 = nullptr;
+    geodesic::Vertex *v0 = static_cast<geodesic::Vertex *>(p0.base_element()),
+                     *v1 = nullptr, *v2 = nullptr;
 
-      auto fcs = p0.base_element()->adjacent_faces();
-      for(auto fc : fcs) {
-        if(onFace(p1, fc)) f1 = fc;
-        if(onFace(p2, fc)) f2 = fc;
-      }
-
-      int i = 0;
-      for(; i < 3; ++i) {
-        if(f1->adjacent_vertices()[i] != v0) continue;
-        v1 = f1->adjacent_vertices()[(i + 1) % 3];
-        v2 = f1->adjacent_vertices()[(i + 2) % 3];
-        break;
-      }
-      if(i == 3) Msg::Error("Not right i");
-      double pa[2], pb[2], pc[2];
-      local_coordinates(v0->xyz(), v1->xyz(), p0.xyz(), pa);
-      local_coordinates(v0->xyz(), v1->xyz(), p1.xyz(), pb);
-      bool skip = false;
-      if(f1 == f2) {
-        local_coordinates(v0->xyz(), v1->xyz(), p2.xyz(), pc);
-        double angle = computeAngle2d(pa, pb, pc);
-        // std::cout << "same face: " << angle << std::endl;
-        // std::cout << "okt " << angle << std::endl;
-        if(angle < M_PI) {
-          oangle = angle;
-          skip = true;
-          return angle;
-        }
-      }
-
-      if(!skip) {
-        local_coordinates(v0->xyz(), v1->xyz(), v2->xyz(), pc);
-        double angle = computeAngle2d(pa, pb, pc);
-        // std::cout << "first face: " << angle << std::endl;
-        geodesic::Face *f = f1;
-        do {
-          geodesic::Edge *e = f->opposite_edge(v1);
-          f = (e->adjacent_faces()[0] == f) ? e->adjacent_faces()[1] :
-                                              e->adjacent_faces()[0];
-          for(int i = 0; i < 3; ++i) {
-            if(f->adjacent_vertices()[i] != v0) continue;
-            v1 = f->adjacent_vertices()[(i + 1) % 3];
-            v2 = f->adjacent_vertices()[(i + 2) % 3];
-            if(f != f2) angle += f->corner_angles()[i];
-            // std::cout << "current face: " << angle << std::endl;
-
-            break;
-          }
-          if(f == f2) break;
-        } while(f != f1);
-
-        local_coordinates(v0->xyz(), v1->xyz(), p0.xyz(), pa);
-        local_coordinates(v0->xyz(), v1->xyz(), v1->xyz(), pb);
-        local_coordinates(v0->xyz(), v1->xyz(), p2.xyz(), pc);
-        // return angle + computeAngle2d(pa, pb, pc);
-        angle += computeAngle2d(pa, pb, pc);
-        // std::cout << "last face: " << angle << std::endl;
-        return angle;
-        // oangle = angle;
-      }
+    auto fcs = p0.base_element()->adjacent_faces();
+    for(auto fc : fcs) {
+      if(onFace(p1, fc)) f1 = fc;
+      if(onFace(p2, fc)) f2 = fc;
     }
 
-    ////
-    ////
-    ////
-    ////
-    ////
-    ////
-    ////
-    ////
-    ////
-    ////
-    ////
-    ////
-    ////
-    ////
-    //////
-    //////
-    //////
-    //////
-    //////
-    // auto fcs = p0.base_element()->adjacent_faces();
-    // geodesic::Face *fs[2] = {nullptr, nullptr};
-    // for(int i = 0; i < 2; ++i) {
-    //   auto p = (i == 0) ? p1 : p2;
-    //
-    //   for(int j = 0; j < fcs.size(); ++j) {
-    //     if(onFace(p, fcs[j])) fs[i] = fcs[j];
-    //   }
-    //
-    //   // if(p.type() == geodesic::FACE) {
-    //   //   for(int j = 0; j < fcs.size(); ++j) {
-    //   //     if(fcs[j] == p.base_element()) {
-    //   //       fs[i] = fcs[j];
-    //   //       break;
-    //   //     }
-    //   //   }
-    //   // }
-    //   // else {
-    //   //   auto faces = p.base_element()->adjacent_faces();
-    //   //   for(int j = 0; j < faces.size(); ++j) {
-    //   //     auto it = std::find(fcs.begin(), fcs.end(), faces[j]);
-    //   //     if(it != fcs.end()) {
-    //   //       fs[i] = faces[j];
-    //   //       break;
-    //   //     }
-    //   //   }
-    //   // }
-    //   if(fs[i] == nullptr) {
-    //     std::cout << p0.x() << " " << p0.y() << " " << p0.z() << " "
-    //               << std::endl;
-    //     std::cout << p2.x() << " " << p2.y() << " " << p2.z() << " "
-    //               << std::endl;
-    //     Msg::Error("(VERTEX) p0 and p%d are not on the same face", i + 1);
-    //   }
-    // }
-    //
-    // if(fs[0] == fs[1]) {
-    //   SVector3 v01((p0).xyz(), (p1).xyz());
-    //   SVector3 v02((p0).xyz(), (p2).xyz());
-    //   SVector3 n = normal(fs[0]);
-    //   double angle = computeAngle(v01, v02, n);
-    //   // std::cout << "- same face " << angle << std::endl;
-    //   if(angle < M_PI) {
-    //     // if(abs(oangle - angle) > 1e-3) {
-    //     //   std::cout << angle << " " << oangle << " diff=" << oangle -
-    //     angle
-    //     //             << std::endl;
-    //     //   Msg::Error("Not same angles");
-    //     // }
-    //     return angle;
-    //   }
-    // }
-    //
-    // double angle = 0.;
-    // geodesic::Face *f = fs[0];
-    // geodesic::Vertex *v = nullptr;
-    // for(int i = 0; i < 3; ++i) {
-    //   if(fs[0]->adjacent_vertices()[i] == p0.base_element()) {
-    //     v = fs[0]->adjacent_vertices()[(i + 2) % 3];
-    //     break;
-    //   }
-    // }
-    // SVector3 v01((p0).xyz(), (p1).xyz());
-    // geodesic::SurfacePoint sp(v);
-    // SVector3 v02((p0).xyz(), (sp).xyz());
-    // SVector3 n = normal(fs[0]);
-    // angle = computeAngle(v01, v02, n);
-    //// std::cout << "- first face " << angle << std::endl;
-    //// std::cout << angle << std::endl;
-    //
-    // for(int i = 0; i < 3; ++i) {
-    //  auto e = f->adjacent_edges()[i];
-    //  if((e->v0() == v && e->v1() == p0.base_element()) ||
-    //     (e->v0() == p0.base_element() && e->v1() == v)) {
-    //    f = (e->adjacent_faces()[0] == f) ? e->adjacent_faces()[1] :
-    //                                        e->adjacent_faces()[0];
-    //    break;
-    //  }
-    //}
-    //
-    // while(f != fs[1]) {
-    //  if(f == fs[0]) {
-    //    Msg::Error("Could not find (%g %g %g) around (%g %g %g) and (%g %g
-    //    %g)",
-    //               p2.x(), p2.y(), p2.z(), p0.x(), p0.y(), p0.z(), p1.x(),
-    //               p1.y(), p1.z());
-    //  }
-    //
-    //  for(int i = 0; i < 3; ++i) {
-    //    if(f->adjacent_vertices()[i] == p0.base_element()) {
-    //      v = f->adjacent_vertices()[(i + 2) % 3];
-    //      break;
-    //    }
-    //  }
-    //  v01 = v02;
-    //  geodesic::SurfacePoint sp(v);
-    //  v02 = SVector3((p0).xyz(), (sp).xyz());
-    //  n = normal(f);
-    //  angle += computeAngle(v01, v02, n);
-    //  // std::cout << "- current face " << angle << std::endl;
-    //
-    //  for(int i = 0; i < 3; ++i) {
-    //    auto e = f->adjacent_edges()[i];
-    //    if((e->v0() == v && e->v1() == p0.base_element()) ||
-    //       (e->v0() == p0.base_element() && e->v1() == v)) {
-    //      if(e->adjacent_faces().size() != 2)
-    //        return -computeIntrinsicAngle(p0, p2, p1);
-    //      f = (e->adjacent_faces()[0] == f) ? e->adjacent_faces()[1] :
-    //                                          e->adjacent_faces()[0];
-    //      break;
-    //    }
-    //  }
-    //}
-    //
-    // v01 = v02;
-    // v02 = SVector3((p0).xyz(), (p2).xyz());
-    // n = normal(fs[1]);
-    // angle += computeAngle(v01, v02, n);
-    //// std::cout << "- last face " << angle << std::endl;
-    //// std::cout << angle << std::endl;
-    //// if(abs(oangle - angle) > 1e-3) {
-    ////   std::cout << angle << " " << oangle << " diff=" << oangle - angle
-    ////             << std::endl;
-    ////   Msg::Error("Not same angles");
-    //// }
-    // return angle;
+    int i = 0;
+    for(; i < 3; ++i) {
+      if(f1->adjacent_vertices()[i] != v0) continue;
+      v1 = f1->adjacent_vertices()[(i + 1) % 3];
+      v2 = f1->adjacent_vertices()[(i + 2) % 3];
+      break;
+    }
+    if(i == 3) Msg::Error("Not right i");
+
+    if(f1 == f2) {
+      double angle = computeAngleOnFace(p0.xyz(), p1.xyz(), p2.xyz(), v0->xyz(),
+                                        v1->xyz(), v2->xyz());
+      if(angle < 0.0) angle += 2 * M_PI;
+      if(angle < M_PI) { return angle; }
+    }
+
+    double angle = computeAngleOnFace(p0.xyz(), p1.xyz(), v2->xyz(), v0->xyz(),
+                                      v1->xyz(), v2->xyz());
+    if(angle < 0.0) angle += 2 * M_PI;
+    geodesic::Face *f = f1;
+    geodesic::Edge *e;
+    do {
+      e = f->opposite_edge(v1);
+      f = e->opposite_face(f);
+      for(int i = 0; i < 3; ++i) {
+        if(f->adjacent_vertices()[i] != v0) continue;
+        v1 = f->adjacent_vertices()[(i + 1) % 3];
+        v2 = f->adjacent_vertices()[(i + 2) % 3];
+        if(f != f2) angle += f->corner_angles()[i];
+        break;
+      }
+    } while(f != f2);
+
+    double tmp = computeAngleOnFace(p0.xyz(), v1->xyz(), p2.xyz(), v0->xyz(),
+                                    v1->xyz(), v2->xyz());
+    if(tmp < 0.0) tmp += 2 * M_PI;
+    angle += tmp;
+    return angle;
   }
 
   Msg::Error("Computing intrinsic angle on undifined surface point");
