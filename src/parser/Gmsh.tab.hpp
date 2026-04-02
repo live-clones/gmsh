@@ -1,14 +1,14 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -33,525 +31,290 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Tokens.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
+#ifndef YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED
+# define YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int gmsh_yydebug;
+#endif
+
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     tDOUBLE = 258,
-     tSTRING = 259,
-     tBIGSTR = 260,
-     tEND = 261,
-     tAFFECT = 262,
-     tDOTS = 263,
-     tSCOPE = 264,
-     tPi = 265,
-     tMPI_Rank = 266,
-     tMPI_Size = 267,
-     tEuclidian = 268,
-     tCoordinates = 269,
-     tTestLevel = 270,
-     tExp = 271,
-     tLog = 272,
-     tLog10 = 273,
-     tSqrt = 274,
-     tSin = 275,
-     tAsin = 276,
-     tCos = 277,
-     tAcos = 278,
-     tTan = 279,
-     tRand = 280,
-     tStep = 281,
-     tAtan = 282,
-     tAtan2 = 283,
-     tSinh = 284,
-     tCosh = 285,
-     tTanh = 286,
-     tFabs = 287,
-     tAbs = 288,
-     tFloor = 289,
-     tCeil = 290,
-     tRound = 291,
-     tMin = 292,
-     tMax = 293,
-     tFmod = 294,
-     tModulo = 295,
-     tHypot = 296,
-     tList = 297,
-     tLinSpace = 298,
-     tLogSpace = 299,
-     tListFromFile = 300,
-     tCatenary = 301,
-     tPrintf = 302,
-     tError = 303,
-     tWarning = 304,
-     tStr = 305,
-     tSprintf = 306,
-     tStrCat = 307,
-     tStrPrefix = 308,
-     tStrRelative = 309,
-     tStrReplace = 310,
-     tAbsolutePath = 311,
-     tDirName = 312,
-     tStrSub = 313,
-     tStrLen = 314,
-     tFind = 315,
-     tStrFind = 316,
-     tStrCmp = 317,
-     tStrChoice = 318,
-     tUpperCase = 319,
-     tLowerCase = 320,
-     tLowerCaseIn = 321,
-     tTextAttributes = 322,
-     tBoundingBox = 323,
-     tDraw = 324,
-     tSetChanged = 325,
-     tToday = 326,
-     tFixRelativePath = 327,
-     tCurrentDirectory = 328,
-     tCurrentFileName = 329,
-     tSyncModel = 330,
-     tNewModel = 331,
-     tMass = 332,
-     tCenterOfMass = 333,
-     tMatrixOfInertia = 334,
-     tOnelabAction = 335,
-     tOnelabRun = 336,
-     tCodeName = 337,
-     tCpu = 338,
-     tMemory = 339,
-     tTotalMemory = 340,
-     tCreateTopology = 341,
-     tCreateGeometry = 342,
-     tClassifySurfaces = 343,
-     tRenumberMeshNodes = 344,
-     tRenumberMeshElements = 345,
-     tCreateMeshEdges = 346,
-     tCreateMeshFaces = 347,
-     tDistanceFunction = 348,
-     tDefineConstant = 349,
-     tUndefineConstant = 350,
-     tDefineNumber = 351,
-     tDefineStruct = 352,
-     tNameStruct = 353,
-     tDimNameSpace = 354,
-     tAppend = 355,
-     tDefineString = 356,
-     tSetNumber = 357,
-     tSetTag = 358,
-     tSetString = 359,
-     tPoint = 360,
-     tCircle = 361,
-     tEllipse = 362,
-     tCurve = 363,
-     tSphere = 364,
-     tPolarSphere = 365,
-     tSurface = 366,
-     tSpline = 367,
-     tVolume = 368,
-     tBox = 369,
-     tCylinder = 370,
-     tCone = 371,
-     tTorus = 372,
-     tEllipsoid = 373,
-     tQuadric = 374,
-     tShapeFromFile = 375,
-     tRectangle = 376,
-     tDisk = 377,
-     tWire = 378,
-     tGeoEntity = 379,
-     tNormal = 380,
-     tCurvature = 381,
-     tCharacteristic = 382,
-     tLength = 383,
-     tParametric = 384,
-     tElliptic = 385,
-     tRefineMesh = 386,
-     tRecombineMesh = 387,
-     tAdaptMesh = 388,
-     tTransformMesh = 389,
-     tRelocateMesh = 390,
-     tReorientMesh = 391,
-     tSetFactory = 392,
-     tThruSections = 393,
-     tWedge = 394,
-     tFillet = 395,
-     tChamfer = 396,
-     tPlane = 397,
-     tRuled = 398,
-     tTransfinite = 399,
-     tPhysical = 400,
-     tCompound = 401,
-     tPeriodic = 402,
-     tParent = 403,
-     tUsing = 404,
-     tPlugin = 405,
-     tDegenerated = 406,
-     tRecursive = 407,
-     tSewing = 408,
-     tRotate = 409,
-     tTranslate = 410,
-     tSymmetry = 411,
-     tDilate = 412,
-     tExtrude = 413,
-     tLevelset = 414,
-     tAffine = 415,
-     tClosest = 416,
-     tBooleanUnion = 417,
-     tBooleanIntersection = 418,
-     tBooleanDifference = 419,
-     tBooleanSection = 420,
-     tBooleanFragments = 421,
-     tThickSolid = 422,
-     tRecombine = 423,
-     tSmoother = 424,
-     tSplit = 425,
-     tDelete = 426,
-     tCoherence = 427,
-     tHealShapes = 428,
-     tIntersect = 429,
-     tMeshAlgorithm = 430,
-     tReverseMesh = 431,
-     tMeshSize = 432,
-     tMeshSizeFromBoundary = 433,
-     tLayers = 434,
-     tScaleLast = 435,
-     tHole = 436,
-     tAlias = 437,
-     tAliasWithOptions = 438,
-     tCopyOptions = 439,
-     tQuadTriAddVerts = 440,
-     tQuadTriNoNewVerts = 441,
-     tRecombLaterals = 442,
-     tTransfQuadTri = 443,
-     tText2D = 444,
-     tText3D = 445,
-     tInterpolationScheme = 446,
-     tTime = 447,
-     tCombine = 448,
-     tBSpline = 449,
-     tBezier = 450,
-     tNurbs = 451,
-     tNurbsOrder = 452,
-     tNurbsKnots = 453,
-     tColor = 454,
-     tColorTable = 455,
-     tFor = 456,
-     tIn = 457,
-     tEndFor = 458,
-     tIf = 459,
-     tElseIf = 460,
-     tElse = 461,
-     tEndIf = 462,
-     tExit = 463,
-     tAbort = 464,
-     tField = 465,
-     tReturn = 466,
-     tCall = 467,
-     tSlide = 468,
-     tMacro = 469,
-     tShow = 470,
-     tHide = 471,
-     tGetValue = 472,
-     tGetStringValue = 473,
-     tGetEnv = 474,
-     tGetString = 475,
-     tGetNumber = 476,
-     tUnique = 477,
-     tSetMaxTag = 478,
-     tHomology = 479,
-     tCohomology = 480,
-     tBetti = 481,
-     tExists = 482,
-     tFileExists = 483,
-     tGetForced = 484,
-     tGetForcedStr = 485,
-     tGMSH_MAJOR_VERSION = 486,
-     tGMSH_MINOR_VERSION = 487,
-     tGMSH_PATCH_VERSION = 488,
-     tGmshExecutableName = 489,
-     tSetPartition = 490,
-     tNameToString = 491,
-     tStringToName = 492,
-     tUnsplitWindow = 493,
-     tAFFECTDIVIDE = 494,
-     tAFFECTTIMES = 495,
-     tAFFECTMINUS = 496,
-     tAFFECTPLUS = 497,
-     tOR = 498,
-     tAND = 499,
-     tNOTEQUAL = 500,
-     tEQUAL = 501,
-     tGREATERGREATER = 502,
-     tLESSLESS = 503,
-     tGREATEROREQUAL = 504,
-     tLESSOREQUAL = 505,
-     UNARYPREC = 506,
-     tMINUSMINUS = 507,
-     tPLUSPLUS = 508
-   };
+  enum yytokentype
+  {
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    tDOUBLE = 258,                 /* tDOUBLE  */
+    tSTRING = 259,                 /* tSTRING  */
+    tBIGSTR = 260,                 /* tBIGSTR  */
+    tEND = 261,                    /* tEND  */
+    tAFFECT = 262,                 /* tAFFECT  */
+    tDOTS = 263,                   /* tDOTS  */
+    tSCOPE = 264,                  /* tSCOPE  */
+    tPi = 265,                     /* tPi  */
+    tMPI_Rank = 266,               /* tMPI_Rank  */
+    tMPI_Size = 267,               /* tMPI_Size  */
+    tEuclidian = 268,              /* tEuclidian  */
+    tCoordinates = 269,            /* tCoordinates  */
+    tTestLevel = 270,              /* tTestLevel  */
+    tExp = 271,                    /* tExp  */
+    tLog = 272,                    /* tLog  */
+    tLog10 = 273,                  /* tLog10  */
+    tSqrt = 274,                   /* tSqrt  */
+    tSin = 275,                    /* tSin  */
+    tAsin = 276,                   /* tAsin  */
+    tCos = 277,                    /* tCos  */
+    tAcos = 278,                   /* tAcos  */
+    tTan = 279,                    /* tTan  */
+    tRand = 280,                   /* tRand  */
+    tStep = 281,                   /* tStep  */
+    tAtan = 282,                   /* tAtan  */
+    tAtan2 = 283,                  /* tAtan2  */
+    tSinh = 284,                   /* tSinh  */
+    tCosh = 285,                   /* tCosh  */
+    tTanh = 286,                   /* tTanh  */
+    tFabs = 287,                   /* tFabs  */
+    tAbs = 288,                    /* tAbs  */
+    tFloor = 289,                  /* tFloor  */
+    tCeil = 290,                   /* tCeil  */
+    tRound = 291,                  /* tRound  */
+    tMin = 292,                    /* tMin  */
+    tMax = 293,                    /* tMax  */
+    tFmod = 294,                   /* tFmod  */
+    tModulo = 295,                 /* tModulo  */
+    tHypot = 296,                  /* tHypot  */
+    tList = 297,                   /* tList  */
+    tLinSpace = 298,               /* tLinSpace  */
+    tLogSpace = 299,               /* tLogSpace  */
+    tListFromFile = 300,           /* tListFromFile  */
+    tCatenary = 301,               /* tCatenary  */
+    tPrintf = 302,                 /* tPrintf  */
+    tError = 303,                  /* tError  */
+    tWarning = 304,                /* tWarning  */
+    tStr = 305,                    /* tStr  */
+    tSprintf = 306,                /* tSprintf  */
+    tStrCat = 307,                 /* tStrCat  */
+    tStrPrefix = 308,              /* tStrPrefix  */
+    tStrRelative = 309,            /* tStrRelative  */
+    tStrReplace = 310,             /* tStrReplace  */
+    tAbsolutePath = 311,           /* tAbsolutePath  */
+    tDirName = 312,                /* tDirName  */
+    tStrSub = 313,                 /* tStrSub  */
+    tStrLen = 314,                 /* tStrLen  */
+    tFind = 315,                   /* tFind  */
+    tStrFind = 316,                /* tStrFind  */
+    tStrCmp = 317,                 /* tStrCmp  */
+    tStrChoice = 318,              /* tStrChoice  */
+    tUpperCase = 319,              /* tUpperCase  */
+    tLowerCase = 320,              /* tLowerCase  */
+    tLowerCaseIn = 321,            /* tLowerCaseIn  */
+    tTextAttributes = 322,         /* tTextAttributes  */
+    tBoundingBox = 323,            /* tBoundingBox  */
+    tDraw = 324,                   /* tDraw  */
+    tSetChanged = 325,             /* tSetChanged  */
+    tToday = 326,                  /* tToday  */
+    tFixRelativePath = 327,        /* tFixRelativePath  */
+    tCurrentDirectory = 328,       /* tCurrentDirectory  */
+    tCurrentFileName = 329,        /* tCurrentFileName  */
+    tSyncModel = 330,              /* tSyncModel  */
+    tNewModel = 331,               /* tNewModel  */
+    tMass = 332,                   /* tMass  */
+    tCenterOfMass = 333,           /* tCenterOfMass  */
+    tMatrixOfInertia = 334,        /* tMatrixOfInertia  */
+    tOnelabAction = 335,           /* tOnelabAction  */
+    tOnelabRun = 336,              /* tOnelabRun  */
+    tCodeName = 337,               /* tCodeName  */
+    tCpu = 338,                    /* tCpu  */
+    tMemory = 339,                 /* tMemory  */
+    tTotalMemory = 340,            /* tTotalMemory  */
+    tCreateTopology = 341,         /* tCreateTopology  */
+    tCreateGeometry = 342,         /* tCreateGeometry  */
+    tClassifySurfaces = 343,       /* tClassifySurfaces  */
+    tRenumberMeshNodes = 344,      /* tRenumberMeshNodes  */
+    tRenumberMeshElements = 345,   /* tRenumberMeshElements  */
+    tCreateMeshEdges = 346,        /* tCreateMeshEdges  */
+    tCreateMeshFaces = 347,        /* tCreateMeshFaces  */
+    tDistanceFunction = 348,       /* tDistanceFunction  */
+    tDefineConstant = 349,         /* tDefineConstant  */
+    tUndefineConstant = 350,       /* tUndefineConstant  */
+    tDefineNumber = 351,           /* tDefineNumber  */
+    tDefineStruct = 352,           /* tDefineStruct  */
+    tNameStruct = 353,             /* tNameStruct  */
+    tDimNameSpace = 354,           /* tDimNameSpace  */
+    tAppend = 355,                 /* tAppend  */
+    tDefineString = 356,           /* tDefineString  */
+    tSetNumber = 357,              /* tSetNumber  */
+    tSetTag = 358,                 /* tSetTag  */
+    tSetString = 359,              /* tSetString  */
+    tPoint = 360,                  /* tPoint  */
+    tCircle = 361,                 /* tCircle  */
+    tEllipse = 362,                /* tEllipse  */
+    tCurve = 363,                  /* tCurve  */
+    tSphere = 364,                 /* tSphere  */
+    tPolarSphere = 365,            /* tPolarSphere  */
+    tSurface = 366,                /* tSurface  */
+    tSpline = 367,                 /* tSpline  */
+    tVolume = 368,                 /* tVolume  */
+    tBox = 369,                    /* tBox  */
+    tCylinder = 370,               /* tCylinder  */
+    tCone = 371,                   /* tCone  */
+    tTorus = 372,                  /* tTorus  */
+    tEllipsoid = 373,              /* tEllipsoid  */
+    tQuadric = 374,                /* tQuadric  */
+    tShapeFromFile = 375,          /* tShapeFromFile  */
+    tRectangle = 376,              /* tRectangle  */
+    tDisk = 377,                   /* tDisk  */
+    tWire = 378,                   /* tWire  */
+    tGeoEntity = 379,              /* tGeoEntity  */
+    tNormal = 380,                 /* tNormal  */
+    tCurvature = 381,              /* tCurvature  */
+    tCharacteristic = 382,         /* tCharacteristic  */
+    tLength = 383,                 /* tLength  */
+    tParametric = 384,             /* tParametric  */
+    tElliptic = 385,               /* tElliptic  */
+    tRefineMesh = 386,             /* tRefineMesh  */
+    tRecombineMesh = 387,          /* tRecombineMesh  */
+    tAdaptMesh = 388,              /* tAdaptMesh  */
+    tTransformMesh = 389,          /* tTransformMesh  */
+    tRelocateMesh = 390,           /* tRelocateMesh  */
+    tReorientMesh = 391,           /* tReorientMesh  */
+    tSetFactory = 392,             /* tSetFactory  */
+    tThruSections = 393,           /* tThruSections  */
+    tWedge = 394,                  /* tWedge  */
+    tFillet = 395,                 /* tFillet  */
+    tChamfer = 396,                /* tChamfer  */
+    tPlane = 397,                  /* tPlane  */
+    tRuled = 398,                  /* tRuled  */
+    tTransfinite = 399,            /* tTransfinite  */
+    tPhysical = 400,               /* tPhysical  */
+    tCompound = 401,               /* tCompound  */
+    tPeriodic = 402,               /* tPeriodic  */
+    tParent = 403,                 /* tParent  */
+    tUsing = 404,                  /* tUsing  */
+    tPlugin = 405,                 /* tPlugin  */
+    tDegenerated = 406,            /* tDegenerated  */
+    tRecursive = 407,              /* tRecursive  */
+    tSewing = 408,                 /* tSewing  */
+    tRotate = 409,                 /* tRotate  */
+    tTranslate = 410,              /* tTranslate  */
+    tSymmetry = 411,               /* tSymmetry  */
+    tDilate = 412,                 /* tDilate  */
+    tExtrude = 413,                /* tExtrude  */
+    tLevelset = 414,               /* tLevelset  */
+    tAffine = 415,                 /* tAffine  */
+    tClosest = 416,                /* tClosest  */
+    tBooleanUnion = 417,           /* tBooleanUnion  */
+    tBooleanIntersection = 418,    /* tBooleanIntersection  */
+    tBooleanDifference = 419,      /* tBooleanDifference  */
+    tBooleanSection = 420,         /* tBooleanSection  */
+    tBooleanFragments = 421,       /* tBooleanFragments  */
+    tThickSolid = 422,             /* tThickSolid  */
+    tRecombine = 423,              /* tRecombine  */
+    tSmoother = 424,               /* tSmoother  */
+    tSplit = 425,                  /* tSplit  */
+    tDelete = 426,                 /* tDelete  */
+    tCoherence = 427,              /* tCoherence  */
+    tHealShapes = 428,             /* tHealShapes  */
+    tIntersect = 429,              /* tIntersect  */
+    tMeshAlgorithm = 430,          /* tMeshAlgorithm  */
+    tReverseMesh = 431,            /* tReverseMesh  */
+    tMeshSize = 432,               /* tMeshSize  */
+    tMeshSizeFromBoundary = 433,   /* tMeshSizeFromBoundary  */
+    tLayers = 434,                 /* tLayers  */
+    tScaleLast = 435,              /* tScaleLast  */
+    tHole = 436,                   /* tHole  */
+    tAlias = 437,                  /* tAlias  */
+    tAliasWithOptions = 438,       /* tAliasWithOptions  */
+    tCopyOptions = 439,            /* tCopyOptions  */
+    tQuadTriAddVerts = 440,        /* tQuadTriAddVerts  */
+    tQuadTriNoNewVerts = 441,      /* tQuadTriNoNewVerts  */
+    tRecombLaterals = 442,         /* tRecombLaterals  */
+    tTransfQuadTri = 443,          /* tTransfQuadTri  */
+    tText2D = 444,                 /* tText2D  */
+    tText3D = 445,                 /* tText3D  */
+    tInterpolationScheme = 446,    /* tInterpolationScheme  */
+    tTime = 447,                   /* tTime  */
+    tCombine = 448,                /* tCombine  */
+    tBSpline = 449,                /* tBSpline  */
+    tBezier = 450,                 /* tBezier  */
+    tNurbs = 451,                  /* tNurbs  */
+    tNurbsOrder = 452,             /* tNurbsOrder  */
+    tNurbsKnots = 453,             /* tNurbsKnots  */
+    tColor = 454,                  /* tColor  */
+    tColorTable = 455,             /* tColorTable  */
+    tFor = 456,                    /* tFor  */
+    tIn = 457,                     /* tIn  */
+    tEndFor = 458,                 /* tEndFor  */
+    tIf = 459,                     /* tIf  */
+    tElseIf = 460,                 /* tElseIf  */
+    tElse = 461,                   /* tElse  */
+    tEndIf = 462,                  /* tEndIf  */
+    tExit = 463,                   /* tExit  */
+    tAbort = 464,                  /* tAbort  */
+    tField = 465,                  /* tField  */
+    tReturn = 466,                 /* tReturn  */
+    tCall = 467,                   /* tCall  */
+    tSlide = 468,                  /* tSlide  */
+    tMacro = 469,                  /* tMacro  */
+    tShow = 470,                   /* tShow  */
+    tHide = 471,                   /* tHide  */
+    tGetValue = 472,               /* tGetValue  */
+    tGetStringValue = 473,         /* tGetStringValue  */
+    tGetEnv = 474,                 /* tGetEnv  */
+    tGetString = 475,              /* tGetString  */
+    tGetNumber = 476,              /* tGetNumber  */
+    tUnique = 477,                 /* tUnique  */
+    tSetMaxTag = 478,              /* tSetMaxTag  */
+    tHomology = 479,               /* tHomology  */
+    tCohomology = 480,             /* tCohomology  */
+    tBetti = 481,                  /* tBetti  */
+    tExists = 482,                 /* tExists  */
+    tFileExists = 483,             /* tFileExists  */
+    tGetForced = 484,              /* tGetForced  */
+    tGetForcedStr = 485,           /* tGetForcedStr  */
+    tGMSH_MAJOR_VERSION = 486,     /* tGMSH_MAJOR_VERSION  */
+    tGMSH_MINOR_VERSION = 487,     /* tGMSH_MINOR_VERSION  */
+    tGMSH_PATCH_VERSION = 488,     /* tGMSH_PATCH_VERSION  */
+    tGmshExecutableName = 489,     /* tGmshExecutableName  */
+    tSetPartition = 490,           /* tSetPartition  */
+    tNameToString = 491,           /* tNameToString  */
+    tStringToName = 492,           /* tStringToName  */
+    tUnsplitWindow = 493,          /* tUnsplitWindow  */
+    tAFFECTPLUS = 494,             /* tAFFECTPLUS  */
+    tAFFECTMINUS = 495,            /* tAFFECTMINUS  */
+    tAFFECTTIMES = 496,            /* tAFFECTTIMES  */
+    tAFFECTDIVIDE = 497,           /* tAFFECTDIVIDE  */
+    tOR = 498,                     /* tOR  */
+    tAND = 499,                    /* tAND  */
+    tEQUAL = 500,                  /* tEQUAL  */
+    tNOTEQUAL = 501,               /* tNOTEQUAL  */
+    tLESSOREQUAL = 502,            /* tLESSOREQUAL  */
+    tGREATEROREQUAL = 503,         /* tGREATEROREQUAL  */
+    tLESSLESS = 504,               /* tLESSLESS  */
+    tGREATERGREATER = 505,         /* tGREATERGREATER  */
+    tPLUSPLUS = 506,               /* tPLUSPLUS  */
+    tMINUSMINUS = 507,             /* tMINUSMINUS  */
+    UNARYPREC = 508                /* UNARYPREC  */
+  };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
-#define tDOUBLE 258
-#define tSTRING 259
-#define tBIGSTR 260
-#define tEND 261
-#define tAFFECT 262
-#define tDOTS 263
-#define tSCOPE 264
-#define tPi 265
-#define tMPI_Rank 266
-#define tMPI_Size 267
-#define tEuclidian 268
-#define tCoordinates 269
-#define tTestLevel 270
-#define tExp 271
-#define tLog 272
-#define tLog10 273
-#define tSqrt 274
-#define tSin 275
-#define tAsin 276
-#define tCos 277
-#define tAcos 278
-#define tTan 279
-#define tRand 280
-#define tStep 281
-#define tAtan 282
-#define tAtan2 283
-#define tSinh 284
-#define tCosh 285
-#define tTanh 286
-#define tFabs 287
-#define tAbs 288
-#define tFloor 289
-#define tCeil 290
-#define tRound 291
-#define tMin 292
-#define tMax 293
-#define tFmod 294
-#define tModulo 295
-#define tHypot 296
-#define tList 297
-#define tLinSpace 298
-#define tLogSpace 299
-#define tListFromFile 300
-#define tCatenary 301
-#define tPrintf 302
-#define tError 303
-#define tWarning 304
-#define tStr 305
-#define tSprintf 306
-#define tStrCat 307
-#define tStrPrefix 308
-#define tStrRelative 309
-#define tStrReplace 310
-#define tAbsolutePath 311
-#define tDirName 312
-#define tStrSub 313
-#define tStrLen 314
-#define tFind 315
-#define tStrFind 316
-#define tStrCmp 317
-#define tStrChoice 318
-#define tUpperCase 319
-#define tLowerCase 320
-#define tLowerCaseIn 321
-#define tTextAttributes 322
-#define tBoundingBox 323
-#define tDraw 324
-#define tSetChanged 325
-#define tToday 326
-#define tFixRelativePath 327
-#define tCurrentDirectory 328
-#define tCurrentFileName 329
-#define tSyncModel 330
-#define tNewModel 331
-#define tMass 332
-#define tCenterOfMass 333
-#define tMatrixOfInertia 334
-#define tOnelabAction 335
-#define tOnelabRun 336
-#define tCodeName 337
-#define tCpu 338
-#define tMemory 339
-#define tTotalMemory 340
-#define tCreateTopology 341
-#define tCreateGeometry 342
-#define tClassifySurfaces 343
-#define tRenumberMeshNodes 344
-#define tRenumberMeshElements 345
-#define tCreateMeshEdges 346
-#define tCreateMeshFaces 347
-#define tDistanceFunction 348
-#define tDefineConstant 349
-#define tUndefineConstant 350
-#define tDefineNumber 351
-#define tDefineStruct 352
-#define tNameStruct 353
-#define tDimNameSpace 354
-#define tAppend 355
-#define tDefineString 356
-#define tSetNumber 357
-#define tSetTag 358
-#define tSetString 359
-#define tPoint 360
-#define tCircle 361
-#define tEllipse 362
-#define tCurve 363
-#define tSphere 364
-#define tPolarSphere 365
-#define tSurface 366
-#define tSpline 367
-#define tVolume 368
-#define tBox 369
-#define tCylinder 370
-#define tCone 371
-#define tTorus 372
-#define tEllipsoid 373
-#define tQuadric 374
-#define tShapeFromFile 375
-#define tRectangle 376
-#define tDisk 377
-#define tWire 378
-#define tGeoEntity 379
-#define tNormal 380
-#define tCurvature 381
-#define tCharacteristic 382
-#define tLength 383
-#define tParametric 384
-#define tElliptic 385
-#define tRefineMesh 386
-#define tRecombineMesh 387
-#define tAdaptMesh 388
-#define tTransformMesh 389
-#define tRelocateMesh 390
-#define tReorientMesh 391
-#define tSetFactory 392
-#define tThruSections 393
-#define tWedge 394
-#define tFillet 395
-#define tChamfer 396
-#define tPlane 397
-#define tRuled 398
-#define tTransfinite 399
-#define tPhysical 400
-#define tCompound 401
-#define tPeriodic 402
-#define tParent 403
-#define tUsing 404
-#define tPlugin 405
-#define tDegenerated 406
-#define tRecursive 407
-#define tSewing 408
-#define tRotate 409
-#define tTranslate 410
-#define tSymmetry 411
-#define tDilate 412
-#define tExtrude 413
-#define tLevelset 414
-#define tAffine 415
-#define tClosest 416
-#define tBooleanUnion 417
-#define tBooleanIntersection 418
-#define tBooleanDifference 419
-#define tBooleanSection 420
-#define tBooleanFragments 421
-#define tThickSolid 422
-#define tRecombine 423
-#define tSmoother 424
-#define tSplit 425
-#define tDelete 426
-#define tCoherence 427
-#define tHealShapes 428
-#define tIntersect 429
-#define tMeshAlgorithm 430
-#define tReverseMesh 431
-#define tMeshSize 432
-#define tMeshSizeFromBoundary 433
-#define tLayers 434
-#define tScaleLast 435
-#define tHole 436
-#define tAlias 437
-#define tAliasWithOptions 438
-#define tCopyOptions 439
-#define tQuadTriAddVerts 440
-#define tQuadTriNoNewVerts 441
-#define tRecombLaterals 442
-#define tTransfQuadTri 443
-#define tText2D 444
-#define tText3D 445
-#define tInterpolationScheme 446
-#define tTime 447
-#define tCombine 448
-#define tBSpline 449
-#define tBezier 450
-#define tNurbs 451
-#define tNurbsOrder 452
-#define tNurbsKnots 453
-#define tColor 454
-#define tColorTable 455
-#define tFor 456
-#define tIn 457
-#define tEndFor 458
-#define tIf 459
-#define tElseIf 460
-#define tElse 461
-#define tEndIf 462
-#define tExit 463
-#define tAbort 464
-#define tField 465
-#define tReturn 466
-#define tCall 467
-#define tSlide 468
-#define tMacro 469
-#define tShow 470
-#define tHide 471
-#define tGetValue 472
-#define tGetStringValue 473
-#define tGetEnv 474
-#define tGetString 475
-#define tGetNumber 476
-#define tUnique 477
-#define tSetMaxTag 478
-#define tHomology 479
-#define tCohomology 480
-#define tBetti 481
-#define tExists 482
-#define tFileExists 483
-#define tGetForced 484
-#define tGetForcedStr 485
-#define tGMSH_MAJOR_VERSION 486
-#define tGMSH_MINOR_VERSION 487
-#define tGMSH_PATCH_VERSION 488
-#define tGmshExecutableName 489
-#define tSetPartition 490
-#define tNameToString 491
-#define tStringToName 492
-#define tUnsplitWindow 493
-#define tAFFECTDIVIDE 494
-#define tAFFECTTIMES 495
-#define tAFFECTMINUS 496
-#define tAFFECTPLUS 497
-#define tOR 498
-#define tAND 499
-#define tNOTEQUAL 500
-#define tEQUAL 501
-#define tGREATERGREATER 502
-#define tLESSLESS 503
-#define tGREATEROREQUAL 504
-#define tLESSOREQUAL 505
-#define UNARYPREC 506
-#define tMINUSMINUS 507
-#define tPLUSPLUS 508
 
-
-
-
+/* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 169 "Gmsh.y"
+union YYSTYPE
 {
+#line 169 "Gmsh.y"
+
   char *c;
   int i;
   unsigned int u;
@@ -560,14 +323,20 @@ typedef union YYSTYPE
   Shape s;
   List_T *l;
   struct TwoChar c2;
-}
-/* Line 1529 of yacc.c.  */
-#line 566 "Gmsh.tab.hpp"
-	YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
+
+#line 328 "Gmsh.tab.hpp"
+
+};
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
 #endif
+
 
 extern YYSTYPE gmsh_yylval;
 
+
+int gmsh_yyparse (void);
+
+
+#endif /* !YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED  */
