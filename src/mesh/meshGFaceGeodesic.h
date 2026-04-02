@@ -57,9 +57,9 @@ struct pair_hash {
 #include <cassert>
 
 struct PathView {
-  geodesic::SurfacePoint *ptr;
-  size_t length;
-  bool _reverse;
+  geodesic::SurfacePoint *ptr = nullptr;
+  size_t length = 0;
+  bool _reverse = false;
 
   PathView() {};
   PathView(std::vector<geodesic::SurfacePoint> &v, bool reverse = false)
@@ -135,6 +135,12 @@ struct PathView {
 
   Iterator begin() const { return {ptr, _reverse}; }
   Iterator end() const { return {ptr + length, _reverse}; }
+
+  bool operator!=(const PathView &other) const
+  {
+    return (other.ptr != ptr || other.length != length ||
+            other._reverse != _reverse);
+  }
 };
 
 struct EdgeItem {
