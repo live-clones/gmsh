@@ -3570,7 +3570,7 @@ inline void barycentric_from_lengths(
 
 bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
                                           std::vector<size_t> &cavity,
-                                          bool propagate)
+                                          bool propagate, bool insert)
 {
   bool swapped = true;
 
@@ -3684,8 +3684,72 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     if(!canWeSwap(edge, oppEdge, p01, p23, borderPaths)) {
       // Msg::Warning("Edge should be swapped");
       // return false;
-      swapped = false;
-      continue;
+      if(insert) {
+        if(false) {
+          // Try split edge
+          double l = length(edge);
+          std::vector<geodesic::SurfacePoint> firstHalf, secondHalf;
+          splitPath(p01, .5 * l, firstHalf, secondHalf);
+          geodesic::SurfacePoint newSP = firstHalf.back();
+          int newId = pointsPool.size();
+          pointsPool.push_back(newSP);
+
+          std::vector<PathView> newEdges(4), borderEdges(4);
+          getGeodesicPath(newId, edge.first, newEdges[0]);
+          getGeodesicPath(newId, edge.second, newEdges[1]);
+          getGeodesicPath(newId, oppEdge.first, newEdges[2]);
+          getGeodesicPath(newId, oppEdge.second, newEdges[3]);
+          getGeodesicPath(edge.first, oppEdge.second, borderEdges[0]);
+          getGeodesicPath(oppEdge.second, edge.second, borderEdges[1]);
+          getGeodesicPath(edge.second, oppEdge.first, borderEdges[2]);
+          getGeodesicPath(oppEdge.first, edge.first, borderEdges[3]);
+          bool intersect = intersectNewEdges(newEdges, borderEdges);
+          if(intersect) {
+            pointsPool.remove(newId);
+            return false;
+          }
+
+          // Do split edge
+          size_t offset = next.size();
+          id.push_back(newId);
+          id.push_back(id[next[he]]);
+          id.push_back(id[next[next[he]]]);
+          next.push_back(offset + 1);
+          next.push_back(offset + 2);
+          next.push_back(offset);
+          opposite.push_back(ohe);
+          opposite.push_back(opposite[next[he]]);
+          opposite.push_back(next[he]);
+
+          id.push_back(newId);
+          id.push_back(id[next[ohe]]);
+          id.push_back(id[next[next[ohe]]]);
+          next.push_back(offset + 4);
+          next.push_back(offset + 5);
+          next.push_back(offset + 3);
+          opposite.push_back(he);
+          opposite.push_back(opposite[next[ohe]]);
+          opposite.push_back(next[ohe]);
+
+          id[next[he]] = newId;
+          opposite[he] = offset + 3;
+          opposite[next[he]] = offset + 2;
+          id[next[ohe]] = newId;
+          opposite[ohe] = offset;
+          opposite[next[ohe]] = offset + 5;
+        }
+
+        swapped = false;
+        continue;
+      }
+      else {
+        return false;
+      }
+    }
+
+    if(count++ > 1e2) {
+      if(WARNING) Msg::Warning("infinite swaps");
+      return false;
     }
 
     opposite[he] = opposite[next[ohe]];

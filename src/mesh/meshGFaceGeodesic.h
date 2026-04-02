@@ -411,7 +411,8 @@ public:
   void precomputeCircumcenters();
 
   bool symbolicSwapEdges(std::vector<size_t> &newTris,
-                         std::vector<size_t> &cavity, bool propagate = true);
+                         std::vector<size_t> &cavity, bool propagate = true,
+                         bool insert = true);
   bool swapEdge(PolyMesh::HalfEdge *he,
                 std::vector<PolyMesh::HalfEdge *> &adjacentEdges,
                 int OPTION = ANGLECRIT);
