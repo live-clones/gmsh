@@ -4213,26 +4213,44 @@ module gmsh
   !> Relocate the nodes classified on the entity of dimension `dim' and tag
   !! `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
   !! for all entities of dimension `dim'. If `dim' and `tag' are negative,
-  !! relocate all the nodes in the mesh.
+  !! relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+  !! length == `dim') can be provided to linearly rescale each parametric
+  !! coordinate in the new parameter range, based on the provided one.
   subroutine gmshModelMeshRelocateNodes(dim, &
                                         tag, &
+                                        min, &
+                                        max, &
                                         ierr)
     interface
     subroutine C_API(dim, &
                      tag, &
+                     api_min_, &
+                     api_min_n_, &
+                     api_max_, &
+                     api_max_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshRelocateNodes")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*), optional :: api_min_
+      integer(c_size_t), value, intent(in) :: api_min_n_
+      real(c_double), dimension(*), optional :: api_max_
+      integer(c_size_t), value, intent(in) :: api_max_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in), optional :: dim
     integer, intent(in), optional :: tag
+    real(c_double), dimension(:), intent(in), optional :: min
+    real(c_double), dimension(:), intent(in), optional :: max
     integer(c_int), intent(out), optional :: ierr
     call C_API(dim=optval_c_int(-1, dim), &
          tag=optval_c_int(-1, tag), &
+         api_min_=min, &
+         api_min_n_=size_gmsh_double(min), &
+         api_max_=max, &
+         api_max_n_=size_gmsh_double(max), &
          ierr_=ierr)
   end subroutine gmshModelMeshRelocateNodes
 

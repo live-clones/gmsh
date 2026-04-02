@@ -2150,7 +2150,9 @@ GMSH_API void gmsh::model::mesh::reclassifyNodes()
   GModel::current()->pruneMeshVertexAssociations();
 }
 
-GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag)
+GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag,
+                                               const std::vector<double> &min,
+                                               const std::vector<double> &max)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
@@ -2166,7 +2168,7 @@ GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag)
     GModel::current()->getEntities(entities, dim);
   }
   for(std::size_t i = 0; i < entities.size(); i++)
-    entities[i]->relocateMeshVertices();
+    entities[i]->relocateMeshVertices(min, max);
 }
 
 static void
