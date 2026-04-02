@@ -398,11 +398,9 @@ public:
                          geodesic::SurfacePoint &circumcenter,
                          double circumradius);
 
-  bool intersectGeodesicPath(
-    PathView &p0, PathView &p1, SVector3 &intersection,
-    std::unordered_map<geodesic::Face *, size_t> *faceSegments = nullptr,
-    std::unordered_map<geodesic::Vertex *, std::array<size_t, 2>>
-      *vertexSegments = nullptr);
+  bool intersectGeodesicPath(PathView &p0, PathView &p1);
+  bool intersectNewEdges(std::vector<PathView> &newEdges,
+                         std::vector<PathView> &borderEdges);
 
   void removePoint(size_t i);
 
