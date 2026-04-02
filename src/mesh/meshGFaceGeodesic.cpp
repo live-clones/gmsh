@@ -1247,7 +1247,8 @@ void highOrderPolyMesh::createInitialGeodesics()
   std::vector<geodesic::SurfacePoint> path;
   for(auto kv : edges) {
     if(kv.second.size() == 0)
-      throw std::runtime_error("Should not be in edges");
+      Msg::Error("Edge %d %d is not in the intial mesh", kv.first.first,
+                 kv.first.second);
     path = {pointsPool[kv.first.first], pointsPool[kv.first.second]};
     setGeodesic(kv.first, path);
   }
@@ -1258,7 +1259,8 @@ void highOrderPolyMesh::createGeodesics()
   std::vector<std::pair<int, int>> eds;
   for(auto kv : edges) {
     if(kv.second.size() == 0)
-      throw std::runtime_error("Should not be in edges");
+      Msg::Error("Edge %d %d is not in the mesh", kv.first.first,
+                 kv.first.second);
     eds.push_back(kv.first);
   }
   createGeodesicsInParallel(eds);
@@ -1400,7 +1402,7 @@ void highOrderPolyMesh::createCircumcenter(
     if(WARNING) Msg::Warning(("Could not find circumcenter"));
     circumradius = geodesic::GEODESIC_INF;
   }
-  if(isnan(circumradius)) throw std::runtime_error("error circumradius is nan");
+  if(isnan(circumradius)) Msg::Error("The computed circumradius is NaN");
 }
 
 void highOrderPolyMesh::createCircumcenters(
@@ -1456,7 +1458,7 @@ void highOrderPolyMesh::getCircumcenter(std::array<int, 3> &tri,
     circumindex = it->second.first;
     circumradius = it->second.second;
     if(circumindex >= pointsPool.size())
-      throw std::runtime_error("not existing center");
+      Msg::Error("The circumcenter does not exist");
     return;
   }
   std::vector<geodesic::SurfacePoint> pts = {
@@ -1940,7 +1942,7 @@ void highOrderPolyMesh::removeAdjacency(std::vector<size_t> &trgls)
                                triangles[3 * t + (j + 1) % 3]};
       if(e.first > e.second) std::swap(e.first, e.second);
       auto it = edges.find(e);
-      if(it == edges.end()) throw std::runtime_error("edge not found");
+      if(it == edges.end()) Msg::Error("edge not found");
       auto &ats = it->second;
       if(ats[0] == t) std::swap(ats[0], ats.back());
       ats.pop_back();
@@ -3305,9 +3307,9 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
       }
     }
     if(pointsPool.type(it.second.first) == PointType::Unused)
-      throw std::runtime_error("circumcenter does not exist 0");
+      Msg::Error("Circumcenter is a removed point");
     if(it.second.first >= pointsPool.size())
-      throw std::runtime_error("circumcenter does not exist 1");
+      Msg::Error("Circumcenter is outside of the points array");
   }
 
   // Points
@@ -3520,10 +3522,10 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
   for(auto it : circumIndexRadius) {
     for(auto t : it.first) {
       if(pointsPool.type(t) == PointType::Unused)
-        throw std::runtime_error("unused point still have circumcenter");
+        Msg::Error("Unused point still have circumcenter");
     }
     if(it.second.first >= pointsPool.size())
-      throw std::runtime_error("circumcenter does not exist");
+      Msg::Error("Circumcenter is outside of the points array");
   }
 }
 
@@ -3733,7 +3735,7 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
                 << std::endl;
       std::cout << id[ohe] << " " << id[next[ohe]] << " " << id[next[next[ohe]]]
                 << std::endl;
-      throw std::runtime_error("wrong values");
+      Msg::Error("Error in the symbolic representation of the cavity");
     }
 
     PathView p01, p23;
@@ -4066,7 +4068,8 @@ bool highOrderPolyMesh::splitTriangle(
   }
   if(cavity.size() != newTris.size() / 3) {
     std::cout << cavity.size() << " vs " << newTris.size() / 3 << std::endl;
-    throw std::runtime_error("erooor not good size");
+    Msg::Error("The number of triangles after the split does not correspond to "
+               "the cavity and inserted points");
   }
   for(int i = 0; i < cavity.size(); ++i) {
     auto t = cavity[i];
@@ -4398,7 +4401,8 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
       meshTriangulate2d(coord, tri,
                         recover_all.empty() ? nullptr : &recover_all);
 
-      if(tri.size() == 0) throw std::runtime_error("zero triangles");
+      if(tri.size() == 0)
+        Msg::Error("CutMesh: Zero triangles after remeshing a face");
       // if(i == 13)
       // std::cout << "13: " << tri.size() << " vs " << pp.size() << std::endl;
       // if(i == 13) throw std::runtime_error("stop");
@@ -4459,7 +4463,7 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
       }
     }
     else
-      Msg::Error("Triangle with less than 3 vertices");
+      Msg::Error("CutMesh: Triangle with less than 3 vertices");
     if(deb) {
       fprintf(deb, "};\n");
       fclose(deb);
