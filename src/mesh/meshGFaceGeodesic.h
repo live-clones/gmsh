@@ -54,7 +54,6 @@ struct pair_hash {
 };
 
 #include <vector>
-#include <cstdint>
 #include <cassert>
 
 struct PathView {

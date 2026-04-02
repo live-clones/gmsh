@@ -19,7 +19,6 @@
 #include <map>
 #include <ostream>
 #include <random>
-#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -38,16 +37,16 @@
 #define PRINT false
 #define WARNING false
 #define ASTAR true
-#define EPS 1e-12
+#define EPS 1e-8
 #define CIRCUMMULT 5
 #define PRECOMPUTE_CIRCUMCENTERS false
+
+#define NUM_AGRESSIVE_LOOPS 3
 
 #define MINANGLE (CTX::instance()->mesh.minIntrinsicAngle)
 #define MAXANGLE CTX::instance()->mesh.maxIntrinsicAngle
 #define MINAHEURISTIC MINANGLE
 #define MAXAHEURISTIC MAXANGLE
-
-#define SWAP_AFTER_COLLAPSE true
 
 #define LENGTH_CRITERION CTX::instance()->mesh.maxIntrinsicEdgeStretch
 #define LENGTH_QUALITY 1 / (LENGTH_CRITERION)
@@ -3131,15 +3130,9 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
     }
     if(!collapse[i]) continue;
 
-    if(SWAP_AFTER_COLLAPSE) {
-      if(!symbolicSwapEdges(newTris, cavityi, false)) {
-        collapse[i] = false;
-        continue;
-      }
-      // if(!checkNewTriangles(newTris)) {
-      //   collapse[i] = false;
-      //   continue;
-      // }
+    if(!symbolicSwapEdges(newTris, cavityi, true, false)) {
+      collapse[i] = false;
+      continue;
     }
 
     // Before
@@ -3216,7 +3209,8 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
       continue;
     }
 
-    if(qualityAfter < 0. || (iter > 1 && qualityAfter - qualityBefore < EPS)) {
+    if(qualityAfter < 0. ||
+       (iter > NUM_AGRESSIVE_LOOPS && qualityAfter - qualityBefore < EPS)) {
       collapse[i] = false;
       continue;
     }
@@ -3476,7 +3470,6 @@ void highOrderPolyMesh::doCollapseEdge(
   for(int i = 0; i < cavity.size() - 2; ++i) {
     size_t t = cavity[i];
     auto he = ipm->faces[t]->he;
-    if(!he) continue;
     for(int j = 0; j < 3; ++j) {
       he->v->he = he;
       auto it =
@@ -3500,9 +3493,9 @@ void highOrderPolyMesh::doCollapseEdge(
   for(auto v : verticesInCavity) {
     PolyMesh::HalfEdge *he = v->he;
     do {
+      if(!he->opposite || !he->opposite->next) Msg::Error("Boundary vertex !");
       auto it = std::find(added.begin(), added.end(), he->opposite);
       if(it == added.end()) adjacentEdges.push_back(HEdgeItem(he, length(he)));
-      if(!he->opposite || !he->opposite->next) Msg::Error("Boundary vertex !");
       he = he->opposite->next;
     } while(he != v->he);
   }
@@ -3894,12 +3887,6 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
 
   unsigned count = 0;
   while(!list.empty()) {
-    if(count++ > 1e6) {
-      Msg::Warning("infinite swaps");
-      return false;
-      // throw std::runtime_error("infinite swaps");
-    }
-
     int he = list.back();
     list.pop_back();
 
@@ -3992,19 +3979,13 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
 
     int toAdd[4] = {he, next[next[he]], ohe, next[next[ohe]]};
     for(int j = 0; j < 4; ++j) {
-      for(int i = 0; i < list.size(); ++i) {
-        if(list[i] == toAdd[j] && next[list[i]] == next[toAdd[j]]) {
-          toAdd[j] = -1;
-          break;
-        }
-        if(list[i] == next[toAdd[j]] && next[list[i]] == toAdd[j]) {
-          toAdd[j] = -1;
-          break;
-        }
+      auto it = std::find(list.begin(), list.end(), toAdd[j]);
+      if(it != list.end()) continue;
+      if(opposite[toAdd[j]] != -1) {
+        auto it = std::find(list.begin(), list.end(), opposite[toAdd[j]]);
+        if(it != list.end()) continue;
       }
-    }
-    for(int j = 0; j < 4; ++j) {
-      if(toAdd[j] != -1) list.push_back(toAdd[j]);
+      list.push_back(toAdd[j]);
     }
   }
 
@@ -4042,7 +4023,7 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       ++it;
   }
 
-  return swapped;
+  return true;
 }
 
 bool highOrderPolyMesh::splitTriangle(
@@ -4226,15 +4207,25 @@ bool highOrderPolyMesh::splitTriangle(
     if(q < qualityAfter) qualityAfter = q;
   }
 
-  if(iter > 1 && qualityAfter - qualityBefore < EPS) { return false; }
+  if(iter > NUM_AGRESSIVE_LOOPS && qualityAfter - qualityBefore < EPS) {
+    if(WARNING)
+      Msg::Warning("Quality does not improve after splitting the triangle");
+    return false;
+  }
 
   auto it = std::find(cavity.begin(), cavity.end(), iTriangle);
-  if(it == cavity.end()) return false;
+  if(it == cavity.end()) {
+    if(WARNING) Msg::Warning("Triangle to split not in the cavity");
+    return false;
+  }
 
   // Split Triangle
   bool success = pointsPool.convertToVertex(circumindex);
 
-  if(!success) { return false; }
+  if(!success) {
+    if(WARNING) Msg::Warning("Could not convert circumcenter to vertex");
+    return false;
+  }
 
   PolyMesh::Vertex *newV = new PolyMesh::Vertex(
     pointsPool[circumindex].x(), pointsPool[circumindex].y(),
@@ -5091,6 +5082,21 @@ void printCuttedMesh(PolyMesh *pm, std::map<int, int> colors)
 
 bool highOrderPolyMesh::sanityCheck()
 {
+  std::vector<PathView> newEdges, borderEdges;
+  PathView p;
+  for(size_t i = 0; i < ipm->hedges.size(); ++i) {
+    PolyMesh::HalfEdge *he = ipm->hedges[i];
+    if(he->v->data > he->next->v->data) continue;
+    getPath(he, p);
+    newEdges.push_back(p);
+  }
+  if(intersectNewEdges(newEdges, borderEdges)) {
+    printGeodesics("geodesics_intersection.pos");
+    Msg::Error("Intersection between edges !");
+  }
+
+  return true;
+
   if(ipm->faces.size() != triangles.size() / 3)
     Msg::Error("Triangles sizes does not correspond: %d vs %d",
                ipm->faces.size(), triangles.size() / 3);
@@ -5631,6 +5637,18 @@ int makeMeshGeodesic(GModel *gm)
   Msg::Info("Mean area triangle: %g", meanA);
   Msg::Info("Max area triangle: %g", maxA);
   Msg::Info("Nbr areas less than %g: %d", zeroAreaMax, nbrZeroArea);
+
+  int diffEd = nbrEdgeGreaterThanMax + nbrEdgeLessThanMin;
+  if(diffEd == 0)
+    Msg::Info("All Edge Constraints are verified");
+  else
+    Msg::Info("%d Edge Contraints were not verified", diffEd);
+
+  int diffTri = nbrAngleGreaterThanMax + nbrAngleLessThanMin;
+  if(diffTri == 0)
+    Msg::Info("All Triangle Constraints are verified");
+  else
+    Msg::Info("%d Triangle Contraints were not verified", diffTri);
 
   auto endStat = std::chrono::high_resolution_clock::now();
   elapsed = endStat - endCut;
