@@ -2339,8 +2339,8 @@ int highOrderPolyMesh::swapEdges(int OPTION)
   std::vector<PolyMesh::HalfEdge *> set, nextSet;
   for(auto he : ipm->hedges) {
     if(!he->opposite) continue;
-    auto it = std::find(set.begin(), set.end(), he->opposite);
-    if(it != set.end()) continue;
+    // auto it = std::find(set.begin(), set.end(), he->opposite);
+    // if(it != set.end()) continue;
     set.push_back(he);
   }
 
@@ -2368,10 +2368,10 @@ int highOrderPolyMesh::swapEdges(int OPTION)
 
       for(auto he : adjacentEdges) {
         if(!he->opposite) continue;
-        auto it = std::find(set.begin(), set.end(), he);
-        if(it != set.end()) { set.erase(it); }
-        it = std::find(set.begin(), set.end(), he->opposite);
-        if(it != set.end()) { set.erase(it); }
+        // auto it = std::find(set.begin(), set.end(), he);
+        // if(it != set.end()) { set.erase(it); }
+        // it = std::find(set.begin(), set.end(), he->opposite);
+        // if(it != set.end()) { set.erase(it); }
         nextSet.push_back(he);
       }
     }
