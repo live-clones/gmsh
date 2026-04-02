@@ -427,7 +427,9 @@ public:
   virtual void removeElements(bool del = false) {}
 
   // relocate mesh vertices using their parametric coordinates
-  virtual void relocateMeshVertices() {}
+  virtual void relocateMeshVertices
+    (const std::vector<double> &pmin = std::vector<double>(),
+     const std::vector<double> &pmax = std::vector<double>()) {}
 
   // clean downcasts
   GVertex *cast2Vertex();

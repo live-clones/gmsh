@@ -1374,11 +1374,13 @@ GMSH_API void gmshModelMeshReclassifyNodes(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshRelocateNodes(const int dim, const int tag, int * ierr)
+GMSH_API void gmshModelMeshRelocateNodes(const int dim, const int tag, const double * min, const size_t min_n, const double * max, const size_t max_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::relocateNodes(dim, tag);
+    std::vector<double> api_min_(min, min + min_n);
+    std::vector<double> api_max_(max, max + max_n);
+    gmsh::model::mesh::relocateNodes(dim, tag, api_min_, api_max_);
   }
   catch(...){
     if(ierr) *ierr = 1;

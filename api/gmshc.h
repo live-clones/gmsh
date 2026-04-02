@@ -840,9 +840,13 @@ GMSH_API void gmshModelMeshReclassifyNodes(int * ierr);
 /* Relocate the nodes classified on the entity of dimension `dim' and tag
  * `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
  * for all entities of dimension `dim'. If `dim' and `tag' are negative,
- * relocate all the nodes in the mesh. */
+ * relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+ * length == `dim') can be provided to linearly rescale each parametric
+ * coordinate in the new parameter range, based on the provided one. */
 GMSH_API void gmshModelMeshRelocateNodes(const int dim,
                                          const int tag,
+                                         const double * min, const size_t min_n,
+                                         const double * max, const size_t max_n,
                                          int * ierr);
 
 /* Get the elements classified on the entity of dimension `dim' and tag `tag'.

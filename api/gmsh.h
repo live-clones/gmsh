@@ -970,9 +970,13 @@ namespace gmsh { // Top-level functions
       // Relocate the nodes classified on the entity of dimension `dim' and tag
       // `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
       // for all entities of dimension `dim'. If `dim' and `tag' are negative,
-      // relocate all the nodes in the mesh.
+      // relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+      // length == `dim') can be provided to linearly rescale each parametric
+      // coordinate in the new parameter range, based on the provided one.
       GMSH_API void relocateNodes(const int dim = -1,
-                                  const int tag = -1);
+                                  const int tag = -1,
+                                  const std::vector<double> & min = std::vector<double>(),
+                                  const std::vector<double> & max = std::vector<double>());
 
       // gmsh::model::mesh::getElements
       //

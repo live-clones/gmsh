@@ -183,7 +183,8 @@ bool GVertex::isOrphan()
   return false;
 }
 
-void GVertex::relocateMeshVertices()
+void GVertex::relocateMeshVertices(const std::vector<double> &pmin,
+                                   const std::vector<double> &pmax)
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
     MVertex *v = mesh_vertices[i];
