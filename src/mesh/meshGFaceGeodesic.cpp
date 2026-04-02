@@ -4540,49 +4540,52 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new,
   //
   // Vertices
   //
-  std::set<int> vertexTags;
   std::vector<int> faceTags(ipm->faces.size());
-  std::map<int, int> faceTags2Index;
-  for(size_t i = 0; i < ipm->faces.size(); ++i) {
-    std::set<int> faces;
-    auto fhe = ipm->faces[i]->he;
-    for(int j = 0; j < 3; ++j) {
-      int index = pm->vertices[sp2pv[fhe->v->data]]->data;
-      vertexTags.insert(index); // TODO: manage non-vertex sp
-      PolyMesh::HalfEdge *he = pm_new->vertices[index]->he;
-      std::set<int> otherFaces;
-      do {
-        otherFaces.insert(he->f->data);
-        if(he->opposite != nullptr)
-          he = he->opposite->next;
-        else {
-          while(he->prev->opposite != nullptr) {
-            he = he->prev->opposite;
-            otherFaces.insert(he->f->data);
-          }
-          pm_new->vertices[index]->he = he;
-        }
-      } while(he != pm_new->vertices[index]->he);
-      if(j == 0)
-        faces = otherFaces;
+  std::unordered_map<int, int> faceTags2Index;
+  std::vector<size_t> offset(ipm->vertices.size() + 1, 0);
+  std::vector<int> tags;
+  size_t current = 0;
+  std::unordered_map<int, size_t> data2index;
+  for(size_t i = 0; i < ipm->vertices.size(); ++i) {
+    data2index[ipm->vertices[i]->data] = i;
+    PolyMesh::Vertex *v = pm_new->vertices[sp2pv[ipm->vertices[i]->data]];
+    PolyMesh::HalfEdge *he = v->he;
+    do {
+      int tag = he->f->data;
+      auto it = std::find(tags.begin() + current, tags.end(), tag);
+      if(it == tags.end()) tags.push_back(tag);
+
+      if(he->opposite) { he = he->opposite->next; }
       else {
-        std::set<int> intersection;
-        std::set_intersection(
-          faces.begin(), faces.end(), otherFaces.begin(), otherFaces.end(),
-          std::inserter(intersection, intersection.begin()));
-        faces = intersection;
+        while(he->next->next->opposite) he = he->next->next->opposite;
       }
-      fhe = fhe->next;
+
+    } while(he != v->he);
+    current = tags.size();
+    offset[i + 1] = current;
+  }
+
+  std::vector<int> commonFaces;
+  for(size_t i = 0; i < ipm->faces.size(); ++i) {
+    PolyMesh::HalfEdge *he = ipm->faces[i]->he;
+    size_t is[3] = {data2index[he->v->data], data2index[he->next->v->data],
+                    data2index[he->next->next->v->data]};
+    commonFaces.clear();
+    for(size_t ii = offset[is[0]]; ii < offset[is[0] + 1]; ++ii) {
+      for(size_t jj = offset[is[1]]; jj < offset[is[1] + 1]; ++jj) {
+        if(tags[ii] != tags[jj]) continue;
+        for(size_t kk = offset[is[2]]; kk < offset[is[2] + 1]; ++kk) {
+          if(tags[ii] != tags[kk]) continue;
+          commonFaces.push_back(tags[ii]);
+        }
+      }
     }
-    if(faces.size() != 1) {
-      auto he = ipm->faces[i]->he;
-      Msg::Error("Triangle %lu (%lu %lu %lu) correspond to %lu faces", i,
-                 he->v->data, he->next->v->data, he->next->next->v->data,
-                 faces.size());
-      return;
-    }
-    faceTags[i] = *faces.begin();
-    faceTags2Index[faceTags[i]] = i;
+    if(commonFaces.size() != 1)
+      Msg::Error("Triangle %d (%d %d %d) correspond to %d face tags", i,
+                 ipm->faces[i]->he->v->data, ipm->faces[i]->he->next->v->data,
+                 ipm->faces[i]->he->next->next->v->data, commonFaces.size());
+    faceTags[i] = commonFaces[0];
+    faceTags2Index[commonFaces[0]] = i;
   }
   std::ofstream outputVertices;
 
