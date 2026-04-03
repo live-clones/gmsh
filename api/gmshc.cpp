@@ -1030,24 +1030,26 @@ GMSH_API void gmshModelMeshPartition(const int numPart, const size_t * elementTa
   }
 }
 
-GMSH_API void gmshModelMeshCreateOverlaps(const int layers, const int createBoundaries, int * ierr)
+GMSH_API int gmshModelMeshCreateOverlaps(const int layers, const int createBoundaries, int * ierr)
 {
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::createOverlaps(layers, createBoundaries);
+    result_api_ = gmsh::model::mesh::createOverlaps(layers, createBoundaries);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
+  return result_api_;
 }
 
-GMSH_API void gmshModelMeshGetPartitionEntities(const int dim, const int tag, const int partition, int ** entityTags, size_t * entityTags_n, int ** overlapEntities, size_t * overlapEntities_n, int * ierr)
+GMSH_API void gmshModelMeshGetPartitionEntities(const int dim, const int tag, const int partition, int ** entityTags, size_t * entityTags_n, int ** overlapEntities, size_t * overlapEntities_n, const int overlapIndex, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_entityTags_;
     std::vector<int> api_overlapEntities_;
-    gmsh::model::mesh::getPartitionEntities(dim, tag, partition, api_entityTags_, api_overlapEntities_);
+    gmsh::model::mesh::getPartitionEntities(dim, tag, partition, api_entityTags_, api_overlapEntities_, overlapIndex);
     vector2ptr(api_entityTags_, entityTags, entityTags_n);
     vector2ptr(api_overlapEntities_, overlapEntities, overlapEntities_n);
   }
@@ -1056,12 +1058,12 @@ GMSH_API void gmshModelMeshGetPartitionEntities(const int dim, const int tag, co
   }
 }
 
-GMSH_API void gmshModelMeshGetOverlapBoundary(const int dim, const int tag, const int partition, int ** entityTags, size_t * entityTags_n, int * ierr)
+GMSH_API void gmshModelMeshGetOverlapBoundary(const int dim, const int tag, const int partition, int ** entityTags, size_t * entityTags_n, const int overlapIndex, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_entityTags_;
-    gmsh::model::mesh::getOverlapBoundary(dim, tag, partition, api_entityTags_);
+    gmsh::model::mesh::getOverlapBoundary(dim, tag, partition, api_entityTags_, overlapIndex);
     vector2ptr(api_entityTags_, entityTags, entityTags_n);
   }
   catch(...){
@@ -1069,11 +1071,22 @@ GMSH_API void gmshModelMeshGetOverlapBoundary(const int dim, const int tag, cons
   }
 }
 
-GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim, const int tag, int * parentTag, int * ierr)
+GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim, const int tag, int * parentTag, const int overlapIndex, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::getBoundaryOverlapParent(dim, tag, *parentTag);
+    gmsh::model::mesh::getBoundaryOverlapParent(dim, tag, *parentTag, overlapIndex);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetOverlapOverlappedEntity(const int dim, const int overlapTag, int * overlappedEntityTag, const int overlapIndex, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getOverlapOverlappedEntity(dim, overlapTag, *overlappedEntityTag, overlapIndex);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1085,6 +1098,18 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::unpartition();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshWritePartitions(const char * fileName, const int * partitions, const size_t partitions_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_partitions_(partitions, partitions + partitions_n);
+    gmsh::model::mesh::writePartitions(fileName, api_partitions_);
   }
   catch(...){
     if(ierr) *ierr = 1;

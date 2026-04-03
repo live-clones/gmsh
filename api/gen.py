@@ -278,14 +278,17 @@ mesh.add('partition', doc, None, iint('numPart'), ivectorsize('elementTags', 'st
 doc = '''Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to `layers'. If `createBoundaries' is set, build the overlaps for the entities bounding the highest-dimensional entities (i.e. "boundary overlaps"), as well as the inner boundaries of the overlaps (i.e. "overlap boundaries").'''
 mesh.add('createOverlaps', doc, oint, iint('layers', '1'), ibool('createBoundaries', 'true', 'True'))
 
-doc = '''Get the tags of the partitioned entities of dimension `dim' whose parent has dimension `dim' and tag `tag', and which belong to the partition `partition'. If overlaps are present, fill `overlapEntities' with the tags of the entities that are in the overlap of the partition. Works for entities of the same dimension as the model as well as for entities one dimension below (boundary overlaps).'''
-mesh.add('getPartitionEntities', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), ovectorint('overlapEntities'))
+doc = '''Get the tags of the partitioned entities of dimension `dim' whose parent has dimension `dim' and tag `tag', and which belong to the partition `partition'. If overlaps are present, fill `overlapEntities' with the tags of the entities that are in the overlap of the partition. Works for entities of the same dimension as the model as well as for entities one dimension below (boundary overlaps). `overlapIndex' selects which overlap group to query (as returned by `createOverlaps').'''
+mesh.add('getPartitionEntities', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), ovectorint('overlapEntities'), iint('overlapIndex', '0'))
 
-doc = '''Get the tags of the entities making up the overlap boundary of partition `partition' inside the (non-partitioned) entity of dimension `dim' and tag `tag'.'''
-mesh.add('getOverlapBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'))
+doc = '''Get the tags of the entities making up the overlap boundary of partition `partition' inside the (non-partitioned) entity of dimension `dim' and tag `tag'. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getOverlapBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), iint('overlapIndex', '0'))
 
-doc = '''If the entity of dimension `dim' and tag `tag' is a boundary overlap, get the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on error.'''
-mesh.add('getBoundaryOverlapParent', doc, None, iint('dim'), iint('tag'), oint('parentTag'))
+doc = '''If the entity of dimension `dim' and tag `tag' is a boundary overlap, get the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on error. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getBoundaryOverlapParent', doc, None, iint('dim'), iint('tag'), oint('parentTag'), iint('overlapIndex', '0'))
+
+doc = '''If the entity of dimension `dim' and tag `overlapTag' is an overlap entity (OverlapSurface or OverlapVolume) or a boundary overlap entity (a partition entity in the overlap of a boundary), set `overlappedEntityTag' to the tag of the underlying entity it covers. Sets `overlappedEntityTag' to -1 if the entity is not an overlap. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getOverlapOverlappedEntity', doc, None, iint('dim'), iint('overlapTag'), oint('overlappedEntityTag'), iint('overlapIndex', '0'))
 
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)
