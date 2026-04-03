@@ -343,6 +343,25 @@ OverlapManager &GModel::createNewOverlapManager(int layers)
   return _overlapManagers.back();
 }
 
+OverlapManager *GModel::createOverlapManagerWithTag(int tag, int layers)
+{
+  if(getOverlapManagerByTag(tag)) {
+    Msg::Error("Overlap manager with tag %d already exists", tag);
+    return nullptr;
+  }
+  _overlapManagers.emplace_back(tag, layers);
+  _nextOverlapTag = std::max(_nextOverlapTag, tag + 1);
+  return &_overlapManagers.back();
+}
+
+OverlapManager *GModel::getOverlapManagerByTag(int tag)
+{
+  for(auto &mgr : _overlapManagers) {
+    if(mgr.tag() == tag) return &mgr;
+  }
+  return nullptr;
+}
+
 void GModel::clearOverlaps()
 {
   _overlapManagers.clear();
