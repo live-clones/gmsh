@@ -1248,96 +1248,110 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 template <int dim>
 static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
 {
-  if(model->getOverlapManagers().size() > 1) {
-    Msg::Error("readMSH4Overlaps: expected at most one overlap manager, "
-               "found %zu",
-               model->getOverlapManagers().size());
-    return false;
-  }
-  if(model->getOverlapManagers().empty()) model->createNewOverlapManager(0);
-  size_t nOverlaps = 0;
-  std::set<int> addedTags;
+  size_t numManagers = 0;
   if(binary) {
-    if(fread(&nOverlaps, sizeof(size_t), 1, fp) != 1) { return false; }
+    if(fread(&numManagers, sizeof(size_t), 1, fp) != 1) { return false; }
   }
   else {
-    if(fscanf(fp, "%zu", &nOverlaps) != 1) { return false; }
+    if(fscanf(fp, "%zu", &numManagers) != 1) { return false; }
   }
-  Msg::Info("Reading %zu volume overlap%s of dim %d", nOverlaps,
-            nOverlaps > 1 ? "s" : "", dim);
-  for(size_t k = 0; k < nOverlaps; k++) {
-    int tag, coveredTag, partition;
-    size_t numElements = 0;
+  Msg::Info("Reading %zu overlap manager%s of dim %d", numManagers,
+            numManagers > 1 ? "s" : "", dim);
+
+  for(size_t m = 0; m < numManagers; m++) {
+    int mgrTag, mgrLayers;
+    size_t nOverlaps = 0;
     if(binary) {
-      if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
-      if(fread(&coveredTag, sizeof(int), 1, fp) != 1) { return false; }
-      if(fread(&partition, sizeof(int), 1, fp) != 1) { return false; }
-      if(fread(&numElements, sizeof(size_t), 1, fp) != 1) { return false; }
+      if(fread(&mgrTag, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&mgrLayers, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&nOverlaps, sizeof(size_t), 1, fp) != 1) { return false; }
     }
     else {
-      if(fscanf(fp, "%d %d %d %zu", &tag, &coveredTag, &partition,
-                &numElements) != 4) {
+      if(fscanf(fp, "%d %d %zu", &mgrTag, &mgrLayers, &nOverlaps) != 3) {
         return false;
       }
     }
-    GEntity *coveredEntity = model->getEntityByTag(dim, coveredTag);
-    if(!coveredEntity) {
-      Msg::Error("Could not find %dD entity %d in volume overlap", dim,
-                 coveredTag);
-      return false;
-    }
-    auto covered = dynamic_cast<typename EntityTraits<dim>::PartitionEntity *>(
-      coveredEntity);
-    if(!covered) {
-      Msg::Error("Could not cast %dD entity %d in volume overlap. "
-                 "It is of type %s",
-                 dim, coveredTag, coveredEntity->getTypeString().c_str());
-      return false;
-    }
-    auto overlapEntity =
-      new typename EntityTraits<dim>::OverlapEntity(model, covered, partition);
-    overlapEntity->setTag(tag);
 
-    auto foundEntity = model->getEntityByTag(dim, tag);
-    if(foundEntity) {
-      Msg::Error("Volume overlap with tag %d already exists in model, "
-                 "and is of type %s",
-                 tag, foundEntity->getTypeString().c_str());
-      delete overlapEntity;
-      return false;
+    // Find or create the manager with this tag
+    OverlapManager *mgr = model->getOverlapManagerByTag(mgrTag);
+    if(!mgr) {
+      mgr = model->createOverlapManagerWithTag(mgrTag, mgrLayers);
+      if(!mgr) return false;
     }
 
-    model->addOverlap(overlapEntity);
-    if(!model->add(overlapEntity)) {
-      Msg::Error("Could not add volume overlap with tag %d to model", tag);
-      // Note: overlapEntity was already added to overlap collection,
-      // but not to the main model - this is an inconsistent state
-      delete overlapEntity;
-      return false;
-    }
-
-    // Read elements
-    for(size_t i = 0; i < numElements; i++) {
-      size_t elementTag = 0;
+    for(size_t k = 0; k < nOverlaps; k++) {
+      int tag, coveredTag, partition;
+      size_t numElements = 0;
       if(binary) {
-        if(fread(&elementTag, sizeof(size_t), 1, fp) != 1) { return false; }
+        if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
+        if(fread(&coveredTag, sizeof(int), 1, fp) != 1) { return false; }
+        if(fread(&partition, sizeof(int), 1, fp) != 1) { return false; }
+        if(fread(&numElements, sizeof(size_t), 1, fp) != 1) { return false; }
       }
       else {
-        if(fscanf(fp, "%zu", &elementTag) != 1) { return false; }
-      }
-      MElement *element = model->getMeshElementByTag(elementTag);
-
-      if(!element) {
-        Msg::Warning("Couldn't find an element, rebuilding the cache...");
-        model->rebuildMeshElementCache();
-        element = model->getMeshElementByTag(elementTag);
-        if(!element) {
-          Msg::Error("Unknown element %zu in volume overlap %d of dimension %d",
-                     elementTag, tag, dim);
+        if(fscanf(fp, "%d %d %d %zu", &tag, &coveredTag, &partition,
+                  &numElements) != 4) {
           return false;
         }
       }
-      overlapEntity->addElement(element);
+      GEntity *coveredEntity = model->getEntityByTag(dim, coveredTag);
+      if(!coveredEntity) {
+        Msg::Error("Could not find %dD entity %d in volume overlap", dim,
+                   coveredTag);
+        return false;
+      }
+      auto covered =
+        dynamic_cast<typename EntityTraits<dim>::PartitionEntity *>(
+          coveredEntity);
+      if(!covered) {
+        Msg::Error("Could not cast %dD entity %d in volume overlap. "
+                   "It is of type %s",
+                   dim, coveredTag, coveredEntity->getTypeString().c_str());
+        return false;
+      }
+      auto overlapEntity = new typename EntityTraits<dim>::OverlapEntity(
+        model, covered, partition);
+      overlapEntity->setTag(tag);
+
+      auto foundEntity = model->getEntityByTag(dim, tag);
+      if(foundEntity) {
+        Msg::Error("Volume overlap with tag %d already exists in model, "
+                   "and is of type %s",
+                   tag, foundEntity->getTypeString().c_str());
+        delete overlapEntity;
+        return false;
+      }
+
+      mgr->addOverlap(overlapEntity);
+      if(!model->add(overlapEntity)) {
+        Msg::Error("Could not add volume overlap with tag %d to model", tag);
+        delete overlapEntity;
+        return false;
+      }
+
+      for(size_t i = 0; i < numElements; i++) {
+        size_t elementTag = 0;
+        if(binary) {
+          if(fread(&elementTag, sizeof(size_t), 1, fp) != 1) { return false; }
+        }
+        else {
+          if(fscanf(fp, "%zu", &elementTag) != 1) { return false; }
+        }
+        MElement *element = model->getMeshElementByTag(elementTag);
+
+        if(!element) {
+          Msg::Warning("Couldn't find an element, rebuilding the cache...");
+          model->rebuildMeshElementCache();
+          element = model->getMeshElementByTag(elementTag);
+          if(!element) {
+            Msg::Error(
+              "Unknown element %zu in volume overlap %d of dimension %d",
+              elementTag, tag, dim);
+            return false;
+          }
+        }
+        overlapEntity->addElement(element);
+      }
     }
   }
   return true;
@@ -1347,110 +1361,131 @@ template <int dim>
 static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
                                       bool binary)
 {
-  if(model->getOverlapManagers().size() > 1) {
-    Msg::Error("readMSH4OverlapBoundaries: expected at most one overlap "
-               "manager, found %zu",
-               model->getOverlapManagers().size());
-    return false;
-  }
-  if(model->getOverlapManagers().empty()) model->createNewOverlapManager(0);
-  size_t numGlobalEntities = 0;
+  size_t numManagers = 0;
   if(binary) {
-    if(fread(&numGlobalEntities, sizeof(size_t), 1, fp) != 1) { return false; }
+    if(fread(&numManagers, sizeof(size_t), 1, fp) != 1) { return false; }
   }
   else {
-    if(fscanf(fp, "%zu", &numGlobalEntities) != 1) { return false; }
+    if(fscanf(fp, "%zu", &numManagers) != 1) { return false; }
   }
-  for(size_t k = 0; k < numGlobalEntities; ++k) {
-    int dimOfEntity, tag;
-    size_t numBoundaryEntities;
+
+  for(size_t m = 0; m < numManagers; m++) {
+    int mgrTag;
+    size_t numGlobalEntities = 0;
     if(binary) {
-      if(fread(&dimOfEntity, sizeof(int), 1, fp) != 1) { return false; }
-      if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
-      if(fread(&numBoundaryEntities, sizeof(size_t), 1, fp) != 1) {
+      if(fread(&mgrTag, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&numGlobalEntities, sizeof(size_t), 1, fp) != 1) {
         return false;
       }
     }
     else {
-      if(fscanf(fp, "%d %d %zu", &dimOfEntity, &tag, &numBoundaryEntities) !=
-         3) {
+      if(fscanf(fp, "%d %zu", &mgrTag, &numGlobalEntities) != 2) {
         return false;
       }
     }
-    GEntity *entity = model->getEntityByTag(dimOfEntity, tag);
-    if(!entity) {
-      Msg::Error("Could not find %dD entity %d in overlap boundary",
-                 dimOfEntity, tag);
+
+    OverlapManager *mgr = model->getOverlapManagerByTag(mgrTag);
+    if(!mgr) {
+      Msg::Error("readMSH4OverlapBoundaries: no manager with tag %d", mgrTag);
       return false;
     }
-    std::vector<int> boundaryTags(numBoundaryEntities);
-    std::vector<int> creatorTags(numBoundaryEntities, -1);
-    if(binary) {
-      for(size_t i = 0; i < numBoundaryEntities; ++i) {
-        if(fread(&boundaryTags[i], sizeof(int), 1, fp) != 1) { return false; }
-        if(fread(&creatorTags[i], sizeof(int), 1, fp) != 1) { return false; }
-      }
-    }
-    else {
-      for(size_t i = 0; i < numBoundaryEntities; ++i) {
-        if(fscanf(fp, "%d %d", &boundaryTags[i], &creatorTags[i]) != 2) {
+
+    for(size_t k = 0; k < numGlobalEntities; ++k) {
+      int dimOfEntity, tag;
+      size_t numBoundaryEntities;
+      if(binary) {
+        if(fread(&dimOfEntity, sizeof(int), 1, fp) != 1) { return false; }
+        if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
+        if(fread(&numBoundaryEntities, sizeof(size_t), 1, fp) != 1) {
           return false;
         }
-      }
-    }
-    for(size_t i = 0; i < numBoundaryEntities; ++i) {
-      int boundaryTag = boundaryTags[i];
-      int creatorTag = creatorTags[i];
-      GEntity *boundaryEntity = model->getEntityByTag(dim - 1, boundaryTag);
-      if(!boundaryEntity) {
-        Msg::Error("Could not find %dD boundary entity %d in overlap", dim - 1,
-                   boundaryTag);
-        return false;
-      }
-      if(dim == dimOfEntity) {
-        auto parentCast =
-          dynamic_cast<typename EntityTraits<dim>::Entity *>(entity);
-        if(!parentCast)
-          Msg::Error("Could not cast %dD entity %d in overlap boundary.", dim,
-                     tag);
-        auto boundaryCast =
-          dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
-            boundaryEntity);
-        if(!boundaryCast)
-          Msg::Error("Could not cast %dD boundary entity %d in overlap "
-                     "boundary.",
-                     dim - 1, boundaryTag);
-        model->addInnerBoundary(parentCast, boundaryCast);
       }
       else {
-        auto parentCast =
-          dynamic_cast<typename EntityTraits<dim - 1>::Entity *>(entity);
-        if(!parentCast)
-          Msg::Error("Could not cast %dD entity %d in overlap boundary.",
-                     dim - 1, tag);
-        auto boundaryCast =
-          dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
-            boundaryEntity);
-        if(!boundaryCast)
-          Msg::Error("Could not cast %dD boundary entity %d in overlap "
-                     "boundary.",
+        if(fscanf(fp, "%d %d %zu", &dimOfEntity, &tag,
+                  &numBoundaryEntities) != 3) {
+          return false;
+        }
+      }
+      GEntity *entity = model->getEntityByTag(dimOfEntity, tag);
+      if(!entity) {
+        Msg::Error("Could not find %dD entity %d in overlap boundary",
+                   dimOfEntity, tag);
+        return false;
+      }
+      std::vector<int> boundaryTags(numBoundaryEntities);
+      std::vector<int> creatorTags(numBoundaryEntities, -1);
+      if(binary) {
+        for(size_t i = 0; i < numBoundaryEntities; ++i) {
+          if(fread(&boundaryTags[i], sizeof(int), 1, fp) != 1) {
+            return false;
+          }
+          if(fread(&creatorTags[i], sizeof(int), 1, fp) != 1) {
+            return false;
+          }
+        }
+      }
+      else {
+        for(size_t i = 0; i < numBoundaryEntities; ++i) {
+          if(fscanf(fp, "%d %d", &boundaryTags[i], &creatorTags[i]) != 2) {
+            return false;
+          }
+        }
+      }
+      for(size_t i = 0; i < numBoundaryEntities; ++i) {
+        int boundaryTag = boundaryTags[i];
+        int creatorTag = creatorTags[i];
+        GEntity *boundaryEntity = model->getEntityByTag(dim - 1, boundaryTag);
+        if(!boundaryEntity) {
+          Msg::Error("Could not find %dD boundary entity %d in overlap",
                      dim - 1, boundaryTag);
-        GEntity *creatorEntity = model->getEntityByTag(dim, creatorTag);
-        if(!creatorEntity) {
-          Msg::Error("Could not find %dD creator entity %d in overlap "
-                     "boundary.",
-                     dim, creatorTag);
           return false;
         }
-        auto creator =
-          dynamic_cast<typename EntityTraits<dim>::Entity *>(creatorEntity);
-        if(!creator) {
-          Msg::Error("Could not cast %dD creator entity %d in overlap "
-                     "boundary. It is of type %s",
-                     dim, creatorTag, creatorEntity->getTypeString().c_str());
-          return false;
+        if(dim == dimOfEntity) {
+          auto parentCast =
+            dynamic_cast<typename EntityTraits<dim>::Entity *>(entity);
+          if(!parentCast)
+            Msg::Error("Could not cast %dD entity %d in overlap boundary.",
+                       dim, tag);
+          auto boundaryCast =
+            dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
+              boundaryEntity);
+          if(!boundaryCast)
+            Msg::Error("Could not cast %dD boundary entity %d in overlap "
+                       "boundary.",
+                       dim - 1, boundaryTag);
+          mgr->addInnerBoundary(parentCast, boundaryCast);
         }
-        model->addOverlapOfBoundary(parentCast, boundaryCast, creator);
+        else {
+          auto parentCast =
+            dynamic_cast<typename EntityTraits<dim - 1>::Entity *>(entity);
+          if(!parentCast)
+            Msg::Error("Could not cast %dD entity %d in overlap boundary.",
+                       dim - 1, tag);
+          auto boundaryCast =
+            dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
+              boundaryEntity);
+          if(!boundaryCast)
+            Msg::Error("Could not cast %dD boundary entity %d in overlap "
+                       "boundary.",
+                       dim - 1, boundaryTag);
+          GEntity *creatorEntity = model->getEntityByTag(dim, creatorTag);
+          if(!creatorEntity) {
+            Msg::Error("Could not find %dD creator entity %d in overlap "
+                       "boundary.",
+                       dim, creatorTag);
+            return false;
+          }
+          auto creator =
+            dynamic_cast<typename EntityTraits<dim>::Entity *>(creatorEntity);
+          if(!creator) {
+            Msg::Error("Could not cast %dD creator entity %d in overlap "
+                       "boundary. It is of type %s",
+                       dim, creatorTag,
+                       creatorEntity->getTypeString().c_str());
+            return false;
+          }
+          mgr->addOverlapOfBoundary(parentCast, boundaryCast, creator);
+        }
       }
     }
   }
@@ -2040,21 +2075,23 @@ static void writeMSH4Entities(
       }
     }
     // Overlap boundaries are partition entities too
-    const auto &innerBnd2D = model->getOverlapInnerBoundaries2D();
-    for(const auto &[parent, boundarySet] : innerBnd2D) {
-      for(const auto &boundary : boundarySet) { edges.insert(boundary); }
-    }
-    const auto &outerBnd2D = model->getOverlapOfBoundaries2D();
-    for(const auto &[parent, boundaryMap] : outerBnd2D) {
-      for(const auto &boundary : boundaryMap) { edges.insert(boundary); }
-    }
-    const auto &innerBnd3D = model->getOverlapInnerBoundaries3D();
-    for(const auto &[parent, boundarySet] : innerBnd3D) {
-      for(const auto &boundary : boundarySet) { faces.insert(boundary); }
-    }
-    const auto &outerBnd3D = model->getOverlapOfBoundaries3D();
-    for(const auto &[parent, boundaryMap] : outerBnd3D) {
-      for(const auto &boundary : boundaryMap) { faces.insert(boundary); }
+    for(const auto &mgr : model->getOverlapManagers()) {
+      for(const auto &[parent, boundarySet] :
+          mgr.getOverlapInnerBoundaries2D()) {
+        for(const auto &boundary : boundarySet) { edges.insert(boundary); }
+      }
+      for(const auto &[parent, boundaryMap] :
+          mgr.getOverlapOfBoundaries2D()) {
+        for(const auto &boundary : boundaryMap) { edges.insert(boundary); }
+      }
+      for(const auto &[parent, boundarySet] :
+          mgr.getOverlapInnerBoundaries3D()) {
+        for(const auto &boundary : boundarySet) { faces.insert(boundary); }
+      }
+      for(const auto &[parent, boundaryMap] :
+          mgr.getOverlapOfBoundaries3D()) {
+        for(const auto &boundary : boundaryMap) { faces.insert(boundary); }
+      }
     }
   }
   else {
@@ -2990,10 +3027,12 @@ static void writeMSH4Elements(
     }
   };
 
-  addOverlapBoundaries(model->getOverlapInnerBoundaries2D(), overlapBnd2D);
-  addOverlapBoundaries(model->getOverlapOfBoundaries2D(), overlapBnd2D);
-  addOverlapBoundaries(model->getOverlapInnerBoundaries3D(), overlapBnd3D);
-  addOverlapBoundaries(model->getOverlapOfBoundaries3D(), overlapBnd3D);
+  for(const auto &mgr : model->getOverlapManagers()) {
+    addOverlapBoundaries(mgr.getOverlapInnerBoundaries2D(), overlapBnd2D);
+    addOverlapBoundaries(mgr.getOverlapOfBoundaries2D(), overlapBnd2D);
+    addOverlapBoundaries(mgr.getOverlapInnerBoundaries3D(), overlapBnd3D);
+    addOverlapBoundaries(mgr.getOverlapOfBoundaries3D(), overlapBnd3D);
+  }
 
   std::map<std::pair<int, int>, std::vector<MElement *>> elementsByType[4];
   std::size_t numElements = 0;
@@ -3259,15 +3298,17 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
     for(auto edge : edges) { addEdgesFromEntity(edge); }
     for(auto face : faces) { addEdgesFromEntity(face); }
     for(auto region : regions) { addEdgesFromEntity(region); }
-    for(const auto &overlaps2D : std::get<0>(model->getAllOverlaps())) {
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   overlaps2D->owningPartition()) != partitionsToSave.end())
-        addEdgesFromEntity(overlaps2D);
-    }
-    for(const auto &overlaps3D : std::get<1>(model->getAllOverlaps())) {
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   overlaps3D->owningPartition()) != partitionsToSave.end())
-        addEdgesFromEntity(overlaps3D);
+    for(const auto &mgr : model->getOverlapManagers()) {
+      for(const auto &of : std::get<0>(mgr.getAllOverlaps())) {
+        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                     of->owningPartition()) != partitionsToSave.end())
+          addEdgesFromEntity(of);
+      }
+      for(const auto &or_ : std::get<1>(mgr.getAllOverlaps())) {
+        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                     or_->owningPartition()) != partitionsToSave.end())
+          addEdgesFromEntity(or_);
+      }
     }
 
     printEdges(subsetEdges);
@@ -3347,15 +3388,17 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
   for(auto edge : edges) { addFacesFromEntity(edge); }
   for(auto face : faces) { addFacesFromEntity(face); }
   for(auto region : regions) { addFacesFromEntity(region); }
-  for(const auto &overlaps2D : std::get<0>(model->getAllOverlaps())) {
-    if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                 overlaps2D->owningPartition()) != partitionsToSave.end())
-      addFacesFromEntity(overlaps2D);
-  }
-  for(const auto &overlaps3D : std::get<1>(model->getAllOverlaps())) {
-    if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                 overlaps3D->owningPartition()) != partitionsToSave.end())
-      addFacesFromEntity(overlaps3D);
+  for(const auto &mgr : model->getOverlapManagers()) {
+    for(const auto &of : std::get<0>(mgr.getAllOverlaps())) {
+      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                   of->owningPartition()) != partitionsToSave.end())
+        addFacesFromEntity(of);
+    }
+    for(const auto &or_ : std::get<1>(mgr.getAllOverlaps())) {
+      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                   or_->owningPartition()) != partitionsToSave.end())
+        addFacesFromEntity(or_);
+    }
   }
   printFaces(subsetFaces);
 }
@@ -3598,70 +3641,85 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
                               bool binary)
 {
   fprintf(fp, "$Overlaps%dD\n", dim);
-  const auto &allOverlaps =
-    std::get<std::vector<typename EntityTraits<dim>::OverlapEntity *>>(
-      model->getAllOverlaps());
-  std::vector<typename EntityTraits<dim>::OverlapEntity *> overlapsToSave;
-  for(const auto &overlap : allOverlaps) {
-    if(partitionsToSave.empty() ||
-       std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                 overlap->owningPartition()) != partitionsToSave.end()) {
-      overlapsToSave.push_back(overlap);
-    }
-  }
-
-  size_t numOverlaps = overlapsToSave.size();
+  const auto &managers = model->getOverlapManagers();
+  size_t numManagers = managers.size();
   if(binary)
-    fwrite(&numOverlaps, sizeof(std::size_t), 1, fp);
+    fwrite(&numManagers, sizeof(std::size_t), 1, fp);
   else
-    fprintf(fp, "%zu\n", numOverlaps);
-  // Print number of overlapEntities. Then, for each entity, we print its tag,
-  // the tag of the covered entity the number of elements, then all elements
-  for(const auto &overlap : overlapsToSave) {
-    int tag = overlap->tag();
-    int coveredTag = overlap->getCovered()->tag();
-    int partition = overlap->owningPartition();
-    std::size_t numElements = overlap->getNumMeshElements();
-    std::vector<size_t> tags;
-    tags.reserve(numElements);
-    for(size_t k = 0; k < numElements; k++) {
-      tags.push_back(overlap->getMeshElement(k)->getNum());
+    fprintf(fp, "%zu\n", numManagers);
+
+  for(const auto &mgr : managers) {
+    const auto &allOverlaps =
+      std::get<std::vector<typename EntityTraits<dim>::OverlapEntity *>>(
+        mgr.getAllOverlaps());
+    std::vector<typename EntityTraits<dim>::OverlapEntity *> overlapsToSave;
+    for(const auto &overlap : allOverlaps) {
+      if(partitionsToSave.empty() ||
+         std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                   overlap->owningPartition()) != partitionsToSave.end()) {
+        overlapsToSave.push_back(overlap);
+      }
     }
+
+    int mgrTag = mgr.tag();
+    int mgrLayers = mgr.layers();
+    size_t numOverlaps = overlapsToSave.size();
     if(binary) {
-      fwrite(&tag, sizeof(int), 1, fp);
-      fwrite(&coveredTag, sizeof(int), 1, fp);
-      fwrite(&partition, sizeof(int), 1, fp);
-      fwrite(&numElements, sizeof(std::size_t), 1, fp);
-      fwrite(tags.data(), sizeof(std::size_t), numElements, fp);
+      fwrite(&mgrTag, sizeof(int), 1, fp);
+      fwrite(&mgrLayers, sizeof(int), 1, fp);
+      fwrite(&numOverlaps, sizeof(std::size_t), 1, fp);
     }
     else {
-      fprintf(fp, "%d %d %d %zu\n", tag, coveredTag, partition, numElements);
-      for(size_t tag : tags) fprintf(fp, "%zu ", tag);
-      fprintf(fp, "\n");
+      fprintf(fp, "%d %d %zu\n", mgrTag, mgrLayers, numOverlaps);
+    }
+
+    for(const auto &overlap : overlapsToSave) {
+      int tag = overlap->tag();
+      int coveredTag = overlap->getCovered()->tag();
+      int partition = overlap->owningPartition();
+      std::size_t numElements = overlap->getNumMeshElements();
+      std::vector<size_t> tags;
+      tags.reserve(numElements);
+      for(size_t k = 0; k < numElements; k++) {
+        tags.push_back(overlap->getMeshElement(k)->getNum());
+      }
+      if(binary) {
+        fwrite(&tag, sizeof(int), 1, fp);
+        fwrite(&coveredTag, sizeof(int), 1, fp);
+        fwrite(&partition, sizeof(int), 1, fp);
+        fwrite(&numElements, sizeof(std::size_t), 1, fp);
+        fwrite(tags.data(), sizeof(std::size_t), numElements, fp);
+      }
+      else {
+        fprintf(fp, "%d %d %d %zu\n", tag, coveredTag, partition, numElements);
+        for(size_t tag : tags) fprintf(fp, "%zu ", tag);
+        fprintf(fp, "\n");
+      }
     }
   }
 
-  // Binary: one line in total
   if(binary) fprintf(fp, "\n");
   fprintf(fp, "$EndOverlaps%dD\n", dim);
 }
 
-template <int dim> static const auto &getInnerOverlap(GModel *const model)
+template <int dim>
+static const auto &getInnerOverlapFromMgr(const OverlapManager &mgr)
 {
-  if constexpr(dim == 2) { return model->getOverlapInnerBoundaries2D(); }
+  if constexpr(dim == 2) { return mgr.getOverlapInnerBoundaries2D(); }
   else if constexpr(dim == 3) {
-    return model->getOverlapInnerBoundaries3D();
+    return mgr.getOverlapInnerBoundaries3D();
   }
   else {
     static_assert(dim == 2 || dim == 3, "Unsupported dimension for overlap");
   }
 }
 
-template <int dim> static const auto &getOuterOverlap(GModel *const model)
+template <int dim>
+static const auto &getOuterOverlapFromMgr(const OverlapManager &mgr)
 {
-  if constexpr(dim == 2) { return model->getOverlapOfBoundaries2D(); }
+  if constexpr(dim == 2) { return mgr.getOverlapOfBoundaries2D(); }
   else if constexpr(dim == 3) {
-    return model->getOverlapOfBoundaries3D();
+    return mgr.getOverlapOfBoundaries3D();
   }
   else {
     static_assert(dim == 2 || dim == 3, "Unsupported dimension for overlap");
@@ -3673,77 +3731,86 @@ static void writeMSH4OverlapBoundaries(GModel *const model, FILE *fp,
                                        const std::vector<int> &partitionsToSave,
                                        bool binary)
 {
-  // These are regular entities, we just need to write in what container to put
-  // those
   fprintf(fp, "$OverlapBoundaries%dD\n", dim);
-  const auto &overlapBoundaries = getInnerOverlap<dim>(model);
-  const auto &outerOverlapBoundaries = getOuterOverlap<dim>(model);
+  const auto &managers = model->getOverlapManagers();
+  size_t numManagers = managers.size();
+  if(binary)
+    fwrite(&numManagers, sizeof(std::size_t), 1, fp);
+  else
+    fprintf(fp, "%zu\n", numManagers);
 
-  {
+  for(const auto &mgr : managers) {
+    const auto &overlapBoundaries = getInnerOverlapFromMgr<dim>(mgr);
+    const auto &outerOverlapBoundaries = getOuterOverlapFromMgr<dim>(mgr);
+
+    int mgrTag = mgr.tag();
     size_t numEntities =
       overlapBoundaries.size() + outerOverlapBoundaries.size();
-    if(binary) { fwrite(&numEntities, sizeof(std::size_t), 1, fp); }
-    else {
-      fprintf(fp, "%zu\n", numEntities);
+    if(binary) {
+      fwrite(&mgrTag, sizeof(int), 1, fp);
+      fwrite(&numEntities, sizeof(std::size_t), 1, fp);
     }
-  }
+    else {
+      fprintf(fp, "%d %zu\n", mgrTag, numEntities);
+    }
 
-  auto writeEntityOverlapPairs = [&](const auto &set) {
-    for(const auto &[entity, boundaries] : set) {
-      std::vector<typename EntityTraits<dim>::BoundaryEntity *>
-        boundariesToSave;
-      for(const auto &boundary : boundaries) {
-        auto partitions = boundary->getPartitions();
-        if(partitionsToSave.empty() ||
-           std::any_of(partitionsToSave.begin(), partitionsToSave.end(),
-                       [&](int p) {
-                         return std::find(partitions.begin(), partitions.end(),
-                                          p) != partitions.end();
-                       })) {
-          boundariesToSave.push_back(boundary);
-        }
-      }
-      std::size_t numBoundaries = boundariesToSave.size();
-      int thisDim = entity->dim();
-      int tag = entity->tag();
-      if(binary) {
-        fwrite(&thisDim, sizeof(int), 1, fp);
-        fwrite(&tag, sizeof(int), 1, fp);
-        fwrite(&numBoundaries, sizeof(std::size_t), 1, fp);
-      }
-      else {
-        fprintf(fp, "%d %d %zu\n", entity->dim(), entity->tag(),
-                boundariesToSave.size());
-      }
-      for(const auto &boundary : boundariesToSave) {
-        int boundaryTag = boundary->tag();
-        int creatorTag = 0;
-        if(thisDim == dim - 1) {
-          try {
-            auto creator =
-              std::get<dim - 2>(model->getBoundaryOfOverlapCreators())
-                .at(boundary);
-            creatorTag = creator->tag();
-          } catch(const std::out_of_range &) {
-            Msg::Error("No creator found for boundary %d of entity %d",
-                       boundaryTag, tag);
+    auto writeEntityOverlapPairs = [&](const auto &set) {
+      for(const auto &[entity, boundaries] : set) {
+        std::vector<typename EntityTraits<dim>::BoundaryEntity *>
+          boundariesToSave;
+        for(const auto &boundary : boundaries) {
+          auto partitions = boundary->getPartitions();
+          if(partitionsToSave.empty() ||
+             std::any_of(partitionsToSave.begin(), partitionsToSave.end(),
+                         [&](int p) {
+                           return std::find(partitions.begin(),
+                                            partitions.end(),
+                                            p) != partitions.end();
+                         })) {
+            boundariesToSave.push_back(boundary);
           }
         }
+        std::size_t numBoundaries = boundariesToSave.size();
+        int thisDim = entity->dim();
+        int tag = entity->tag();
         if(binary) {
-          fwrite(&boundaryTag, sizeof(int), 1, fp);
-          fwrite(&creatorTag, sizeof(int), 1, fp);
+          fwrite(&thisDim, sizeof(int), 1, fp);
+          fwrite(&tag, sizeof(int), 1, fp);
+          fwrite(&numBoundaries, sizeof(std::size_t), 1, fp);
         }
         else {
-          fprintf(fp, "%d %d\n", boundaryTag, creatorTag);
+          fprintf(fp, "%d %d %zu\n", entity->dim(), entity->tag(),
+                  boundariesToSave.size());
+        }
+        for(const auto &boundary : boundariesToSave) {
+          int boundaryTag = boundary->tag();
+          int creatorTag = 0;
+          if(thisDim == dim - 1) {
+            try {
+              auto creator =
+                std::get<dim - 2>(mgr.getBoundaryOfOverlapCreators())
+                  .at(boundary);
+              creatorTag = creator->tag();
+            } catch(const std::out_of_range &) {
+              Msg::Error("No creator found for boundary %d of entity %d",
+                         boundaryTag, tag);
+            }
+          }
+          if(binary) {
+            fwrite(&boundaryTag, sizeof(int), 1, fp);
+            fwrite(&creatorTag, sizeof(int), 1, fp);
+          }
+          else {
+            fprintf(fp, "%d %d\n", boundaryTag, creatorTag);
+          }
         }
       }
-    }
-  };
+    };
 
-  writeEntityOverlapPairs(overlapBoundaries);
-  writeEntityOverlapPairs(outerOverlapBoundaries);
+    writeEntityOverlapPairs(overlapBoundaries);
+    writeEntityOverlapPairs(outerOverlapBoundaries);
+  }
 
-  // Binary: one line in total
   if(binary) fprintf(fp, "\n");
   fprintf(fp, "$EndOverlapBoundaries%dD\n", dim);
 }
