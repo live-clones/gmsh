@@ -2224,30 +2224,34 @@ class model:
             entities (i.e. "boundary overlaps"), as well as the inner boundaries of the
             overlaps (i.e. "overlap boundaries").
 
+            Return an integer.
+
             Types:
             - `layers': integer
             - `createBoundaries': boolean
             """
             ierr = c_int()
-            lib.gmshModelMeshCreateOverlaps(
+            api_result_ = lib.gmshModelMeshCreateOverlaps(
                 c_int(layers),
                 c_int(bool(createBoundaries)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+            return api_result_
         create_overlaps = createOverlaps
 
         @staticmethod
-        def getPartitionEntities(dim, tag, partition):
+        def getPartitionEntities(dim, tag, partition, overlapIndex=0):
             """
-            gmsh.model.mesh.getPartitionEntities(dim, tag, partition)
+            gmsh.model.mesh.getPartitionEntities(dim, tag, partition, overlapIndex=0)
 
             Get the tags of the partitioned entities of dimension `dim' whose parent
             has dimension `dim' and tag `tag', and which belong to the partition
             `partition'. If overlaps are present, fill `overlapEntities' with the tags
             of the entities that are in the overlap of the partition. Works for
             entities of the same dimension as the model as well as for entities one
-            dimension below (boundary overlaps).
+            dimension below (boundary overlaps). `overlapIndex' selects which overlap
+            group to query (as returned by `createOverlaps').
 
             Return `entityTags', `overlapEntities'.
 
@@ -2257,6 +2261,7 @@ class model:
             - `partition': integer
             - `entityTags': vector of integers
             - `overlapEntities': vector of integers
+            - `overlapIndex': integer
             """
             api_entityTags_, api_entityTags_n_ = POINTER(c_int)(), c_size_t()
             api_overlapEntities_, api_overlapEntities_n_ = POINTER(c_int)(), c_size_t()
@@ -2267,6 +2272,7 @@ class model:
                 c_int(partition),
                 byref(api_entityTags_), byref(api_entityTags_n_),
                 byref(api_overlapEntities_), byref(api_overlapEntities_n_),
+                c_int(overlapIndex),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -2276,13 +2282,13 @@ class model:
         get_partition_entities = getPartitionEntities
 
         @staticmethod
-        def getOverlapBoundary(dim, tag, partition):
+        def getOverlapBoundary(dim, tag, partition, overlapIndex=0):
             """
-            gmsh.model.mesh.getOverlapBoundary(dim, tag, partition)
+            gmsh.model.mesh.getOverlapBoundary(dim, tag, partition, overlapIndex=0)
 
             Get the tags of the entities making up the overlap boundary of partition
             `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-            `tag'.
+            `tag'. `overlapIndex' selects which overlap group to query.
 
             Return `entityTags'.
 
@@ -2291,6 +2297,7 @@ class model:
             - `tag': integer
             - `partition': integer
             - `entityTags': vector of integers
+            - `overlapIndex': integer
             """
             api_entityTags_, api_entityTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -2299,6 +2306,7 @@ class model:
                 c_int(tag),
                 c_int(partition),
                 byref(api_entityTags_), byref(api_entityTags_n_),
+                c_int(overlapIndex),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -2306,13 +2314,13 @@ class model:
         get_overlap_boundary = getOverlapBoundary
 
         @staticmethod
-        def getBoundaryOverlapParent(dim, tag):
+        def getBoundaryOverlapParent(dim, tag, overlapIndex=0):
             """
-            gmsh.model.mesh.getBoundaryOverlapParent(dim, tag)
+            gmsh.model.mesh.getBoundaryOverlapParent(dim, tag, overlapIndex=0)
 
             If the entity of dimension `dim' and tag `tag' is a boundary overlap, get
             the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on
-            error.
+            error. `overlapIndex' selects which overlap group to query.
 
             Return `parentTag'.
 
@@ -2320,6 +2328,7 @@ class model:
             - `dim': integer
             - `tag': integer
             - `parentTag': integer
+            - `overlapIndex': integer
             """
             api_parentTag_ = c_int()
             ierr = c_int()
@@ -2327,11 +2336,45 @@ class model:
                 c_int(dim),
                 c_int(tag),
                 byref(api_parentTag_),
+                c_int(overlapIndex),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_parentTag_.value
         get_boundary_overlap_parent = getBoundaryOverlapParent
+
+        @staticmethod
+        def getOverlapOverlappedEntity(dim, overlapTag, overlapIndex=0):
+            """
+            gmsh.model.mesh.getOverlapOverlappedEntity(dim, overlapTag, overlapIndex=0)
+
+            If the entity of dimension `dim' and tag `overlapTag' is an overlap entity
+            (OverlapSurface or OverlapVolume) or a boundary overlap entity (a partition
+            entity in the overlap of a boundary), set `overlappedEntityTag' to the tag
+            of the underlying entity it covers. Sets `overlappedEntityTag' to -1 if the
+            entity is not an overlap. `overlapIndex' selects which overlap group to
+            query.
+
+            Return `overlappedEntityTag'.
+
+            Types:
+            - `dim': integer
+            - `overlapTag': integer
+            - `overlappedEntityTag': integer
+            - `overlapIndex': integer
+            """
+            api_overlappedEntityTag_ = c_int()
+            ierr = c_int()
+            lib.gmshModelMeshGetOverlapOverlappedEntity(
+                c_int(dim),
+                c_int(overlapTag),
+                byref(api_overlappedEntityTag_),
+                c_int(overlapIndex),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_overlappedEntityTag_.value
+        get_overlap_overlapped_entity = getOverlapOverlappedEntity
 
         @staticmethod
         def unpartition():
@@ -2345,6 +2388,29 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+
+        @staticmethod
+        def writePartitions(fileName, partitions):
+            """
+            gmsh.model.mesh.writePartitions(fileName, partitions)
+
+            Write selected partitions of the mesh into a single file `fileName'. The
+            export format is MSH4. The `partitions' vector specifies which partition
+            numbers to include.
+
+            Types:
+            - `fileName': string
+            - `partitions': vector of integers
+            """
+            api_partitions_, api_partitions_n_ = _ivectorint(partitions)
+            ierr = c_int()
+            lib.gmshModelMeshWritePartitions(
+                c_char_p(fileName.encode()),
+                api_partitions_, api_partitions_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        write_partitions = writePartitions
 
         @staticmethod
         def optimize(method="", force=False, niter=1, dimTags=[], quality=0.0):
