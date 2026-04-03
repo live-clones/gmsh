@@ -345,12 +345,14 @@ OverlapManager &GModel::createNewOverlapManager(int layers)
 
 OverlapManager *GModel::createOverlapManagerWithTag(int tag, int layers)
 {
-  if(getOverlapManagerByTag(tag)) {
-    Msg::Error("Overlap manager with tag %d already exists", tag);
+  if(tag != (int)_overlapManagers.size()) {
+    Msg::Error("Overlap manager tag %d does not match expected position %zu. "
+               "Tags must be sequential.",
+               tag, _overlapManagers.size());
     return nullptr;
   }
   _overlapManagers.emplace_back(tag, layers);
-  _nextOverlapTag = std::max(_nextOverlapTag, tag + 1);
+  _nextOverlapTag = tag + 1;
   return &_overlapManagers.back();
 }
 
