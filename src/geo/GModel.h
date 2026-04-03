@@ -417,6 +417,9 @@ public:
     return _overlapManagers;
   }
   OverlapManager &createNewOverlapManager(int layers);
+  // Forcing the tag for IO
+  OverlapManager *createOverlapManagerWithTag(int tag, int layers);
+  OverlapManager *getOverlapManagerByTag(int tag);
   void clearOverlaps();
 
   // Facade methods delegating to the single (back) overlap manager.
