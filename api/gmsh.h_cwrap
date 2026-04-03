@@ -1285,12 +1285,13 @@ namespace gmsh { // Top-level functions
       // build the overlaps for the entities bounding the highest-dimensional
       // entities (i.e. "boundary overlaps"), as well as the inner boundaries of
       // the overlaps (i.e. "overlap boundaries").
-      inline void createOverlaps(const int layers = 1,
-                                 const bool createBoundaries = true)
+      inline int createOverlaps(const int layers = 1,
+                                const bool createBoundaries = true)
       {
         int ierr = 0;
-        gmshModelMeshCreateOverlaps(layers, (int)createBoundaries, &ierr);
+        int result_api_ = gmshModelMeshCreateOverlaps(layers, (int)createBoundaries, &ierr);
         if(ierr) throwLastError();
+        return result_api_;
       }
 
       // gmsh::model::mesh::getPartitionEntities
@@ -1300,17 +1301,19 @@ namespace gmsh { // Top-level functions
       // `partition'. If overlaps are present, fill `overlapEntities' with the tags
       // of the entities that are in the overlap of the partition. Works for
       // entities of the same dimension as the model as well as for entities one
-      // dimension below (boundary overlaps).
+      // dimension below (boundary overlaps). `overlapIndex' selects which overlap
+      // group to query (as returned by `createOverlaps').
       inline void getPartitionEntities(const int dim,
                                        const int tag,
                                        const int partition,
                                        std::vector<int> & entityTags,
-                                       std::vector<int> & overlapEntities)
+                                       std::vector<int> & overlapEntities,
+                                       const int overlapIndex = 0)
       {
         int ierr = 0;
         int *api_entityTags_; size_t api_entityTags_n_;
         int *api_overlapEntities_; size_t api_overlapEntities_n_;
-        gmshModelMeshGetPartitionEntities(dim, tag, partition, &api_entityTags_, &api_entityTags_n_, &api_overlapEntities_, &api_overlapEntities_n_, &ierr);
+        gmshModelMeshGetPartitionEntities(dim, tag, partition, &api_entityTags_, &api_entityTags_n_, &api_overlapEntities_, &api_overlapEntities_n_, overlapIndex, &ierr);
         if(ierr) throwLastError();
         entityTags.assign(api_entityTags_, api_entityTags_ + api_entityTags_n_); gmshFree(api_entityTags_);
         overlapEntities.assign(api_overlapEntities_, api_overlapEntities_ + api_overlapEntities_n_); gmshFree(api_overlapEntities_);
@@ -1320,15 +1323,16 @@ namespace gmsh { // Top-level functions
       //
       // Get the tags of the entities making up the overlap boundary of partition
       // `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-      // `tag'.
+      // `tag'. `overlapIndex' selects which overlap group to query.
       inline void getOverlapBoundary(const int dim,
                                      const int tag,
                                      const int partition,
-                                     std::vector<int> & entityTags)
+                                     std::vector<int> & entityTags,
+                                     const int overlapIndex = 0)
       {
         int ierr = 0;
         int *api_entityTags_; size_t api_entityTags_n_;
-        gmshModelMeshGetOverlapBoundary(dim, tag, partition, &api_entityTags_, &api_entityTags_n_, &ierr);
+        gmshModelMeshGetOverlapBoundary(dim, tag, partition, &api_entityTags_, &api_entityTags_n_, overlapIndex, &ierr);
         if(ierr) throwLastError();
         entityTags.assign(api_entityTags_, api_entityTags_ + api_entityTags_n_); gmshFree(api_entityTags_);
       }
@@ -1337,13 +1341,32 @@ namespace gmsh { // Top-level functions
       //
       // If the entity of dimension `dim' and tag `tag' is a boundary overlap, get
       // the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on
-      // error.
+      // error. `overlapIndex' selects which overlap group to query.
       inline void getBoundaryOverlapParent(const int dim,
                                            const int tag,
-                                           int & parentTag)
+                                           int & parentTag,
+                                           const int overlapIndex = 0)
       {
         int ierr = 0;
-        gmshModelMeshGetBoundaryOverlapParent(dim, tag, &parentTag, &ierr);
+        gmshModelMeshGetBoundaryOverlapParent(dim, tag, &parentTag, overlapIndex, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::getOverlapOverlappedEntity
+      //
+      // If the entity of dimension `dim' and tag `overlapTag' is an overlap entity
+      // (OverlapSurface or OverlapVolume) or a boundary overlap entity (a
+      // partition entity in the overlap of a boundary), set `overlappedEntityTag'
+      // to the tag of the underlying entity it covers. Sets `overlappedEntityTag'
+      // to -1 if the entity is not an overlap. `overlapIndex' selects which
+      // overlap group to query.
+      inline void getOverlapOverlappedEntity(const int dim,
+                                             const int overlapTag,
+                                             int & overlappedEntityTag,
+                                             const int overlapIndex = 0)
+      {
+        int ierr = 0;
+        gmshModelMeshGetOverlapOverlappedEntity(dim, overlapTag, &overlappedEntityTag, overlapIndex, &ierr);
         if(ierr) throwLastError();
       }
 
@@ -1355,6 +1378,21 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelMeshUnpartition(&ierr);
         if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::writePartitions
+      //
+      // Write selected partitions of the mesh into a single file `fileName'. The
+      // export format is MSH4. The `partitions' vector specifies which partition
+      // numbers to include.
+      inline void writePartitions(const std::string & fileName,
+                                  const std::vector<int> & partitions)
+      {
+        int ierr = 0;
+        int *api_partitions_; size_t api_partitions_n_; vector2ptr(partitions, &api_partitions_, &api_partitions_n_);
+        gmshModelMeshWritePartitions(fileName.c_str(), api_partitions_, api_partitions_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_partitions_);
       }
 
       // gmsh::model::mesh::optimize
