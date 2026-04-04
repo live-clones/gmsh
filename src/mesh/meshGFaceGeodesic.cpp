@@ -980,22 +980,6 @@ void highOrderPolyMesh::printGeodesics(const char *fn)
   fclose(f);
 }
 
-void highOrderPolyMesh::enforceBoundary()
-{
-  for(size_t i = 0; i < ipm->faces.size(); ++i) {
-    auto he = ipm->faces[i]->he;
-    for(int j = 0; j < 3; ++j) {
-      auto i0 = he->v->data;
-      auto i1 = he->next->v->data;
-      std::pair<int, int> edge = {std::min(i0, i1), std::max(i0, i1)};
-      if(edges[edge].size() != 1) continue;
-
-      PathView path;
-      getBoundaryPath(i0, i1, path);
-    }
-  }
-}
-
 // CONSTRUCTORS
 highOrderPolyMesh::highOrderPolyMesh(PolyMesh *polyMesh,
                                      std::vector<size_t> &tris)
@@ -1026,15 +1010,6 @@ highOrderPolyMesh::highOrderPolyMesh(PolyMesh *polyMesh,
       int i0 = v2n[vs[i]->data];
       int i1 = v2n[vs[(i + 1) % 3]->data];
       if(i0 < 0 || i1 < 0) Msg::Error("The problem is here");
-      std::pair<int, int> p =
-        std::make_pair(std::min(i0, i1), std::max(i0, i1));
-      auto it = edges.find(p);
-      if(it == edges.end()) {
-        std::vector<size_t> tmp = {triangles.size() / 3};
-        edges[p] = tmp;
-      }
-      else
-        it->second.push_back(triangles.size() / 3);
     }
     triangles.push_back(v2n[vs[0]->data]);
     triangles.push_back(v2n[vs[1]->data]);
@@ -1245,23 +1220,21 @@ void highOrderPolyMesh::createGeodesicsInParallel(
 void highOrderPolyMesh::createInitialGeodesics()
 {
   std::vector<geodesic::SurfacePoint> path;
-  for(auto kv : edges) {
-    if(kv.second.size() == 0)
-      Msg::Error("Edge %d %d is not in the intial mesh", kv.first.first,
-                 kv.first.second);
-    path = {pointsPool[kv.first.first], pointsPool[kv.first.second]};
-    setGeodesic(kv.first, path);
+  for(auto he : ipm->hedges) {
+    std::pair<int, int> e = {he->v->data, he->next->v->data};
+    path = {pointsPool[e.first], pointsPool[e.second]};
+    setGeodesic(e, path);
   }
 }
 
 void highOrderPolyMesh::createGeodesics()
 {
   std::vector<std::pair<int, int>> eds;
-  for(auto kv : edges) {
-    if(kv.second.size() == 0)
-      Msg::Error("Edge %d %d is not in the mesh", kv.first.first,
-                 kv.first.second);
-    eds.push_back(kv.first);
+  for(auto he : ipm->hedges) {
+    std::pair<int, int> e = {he->v->data, he->next->v->data};
+    if(e.first > e.second) std::swap(e.first, e.second);
+    auto it = std::find(eds.begin(), eds.end(), e);
+    if(it == eds.end()) eds.push_back(e);
   }
   createGeodesicsInParallel(eds);
 }
@@ -1330,52 +1303,6 @@ void highOrderPolyMesh::getBoundaryPath(int p0, int p1, PathView &path)
 // END GET BOUNDARY PATH
 
 // GET PATH
-void highOrderPolyMesh::getPath(std::pair<int, int> edge,
-                                int boundaryOrientation, PathView &path)
-{
-  if(boundaryOrientation == 0) {
-    getGeodesicPath(edge.first, edge.second, path);
-    return;
-  }
-  if(boundaryOrientation == 1) {
-    getBoundaryPath(edge.first, edge.second, path);
-    return;
-  }
-  if(boundaryOrientation == -1) {
-    getBoundaryPath(edge.second, edge.first, path);
-    path = PathView(path, true);
-    return;
-  }
-  Msg::Error("Error: boundaryOrientation = %d", boundaryOrientation);
-}
-
-int highOrderPolyMesh::getBoundaryOrientation(std::pair<int, int> edge)
-{
-  int i0 = edge.first, i1 = edge.second;
-  std::pair<int, int> e = {i0, i1};
-  if(e.first > e.second) std::swap(e.first, e.second);
-
-  auto it = edges.find(e);
-  if(it == edges.end()) { return 0; }
-
-  if(it->second.size() == 2 || it->second.size() == 0) return 0;
-
-  if(it->second.size() == 1) {
-    for(int j = 0; j < 3; ++j) {
-      if(triangles[3 * edges[e][0] + j] == i0 &&
-         triangles[3 * edges[e][0] + (j + 1) % 3] == i1)
-        return 1;
-      if(triangles[3 * edges[e][0] + j] == i1 &&
-         triangles[3 * edges[e][0] + (j + 1) % 3] == i0)
-        return -1;
-    }
-    Msg::Error("Error: edge not found in triangle");
-  }
-
-  Msg::Error("Error: edge %d %d has %d triangles", it->first.first,
-             it->first.second, it->second.size());
-  return -2;
-}
 
 void highOrderPolyMesh::getPath(PolyMesh::HalfEdge *he, PathView &path)
 {
@@ -1386,8 +1313,7 @@ void highOrderPolyMesh::getPath(PolyMesh::HalfEdge *he, PathView &path)
 }
 void highOrderPolyMesh::getPath(std::pair<int, int> edge, PathView &path)
 {
-  int boundaryOrientation = getBoundaryOrientation(edge);
-  getPath(edge, boundaryOrientation, path);
+  getGeodesicPath(edge.first, edge.second, path);
 }
 // END GET GEODESIC PATH
 
@@ -1834,15 +1760,6 @@ double highOrderPolyMesh::adimLength(PolyMesh::HalfEdge *he)
   return adimLength(e);
 }
 
-std::vector<size_t> &
-highOrderPolyMesh::adjacentTriangles(std::pair<int, int> edge)
-{
-  if(edge.first > edge.second) std::swap(edge.first, edge.second);
-  auto it = edges.find(edge);
-  static std::vector<size_t> empty;
-  return it == edges.end() ? empty : it->second;
-}
-
 inline double areaHeuristic(double a, double b, double c)
 {
   double s = (a + b + c) / 2;
@@ -1880,10 +1797,6 @@ bool highOrderPolyMesh::swapEdge(
   oppEdge.second = he->opposite->next->next->v->data;
   ts.first = he->f->data;
   ts.second = he->opposite->f->data;
-  std::vector<size_t> ats = adjacentTriangles(edge);
-  if(ats.size() != 2)
-    Msg::Error("In swapEdge: edge %d %d has %d triangles", edge.first,
-               edge.second, ats.size());
 
   PathView p01, p23;
   getGeodesicPath(edge.first, edge.second, p01);
@@ -1915,12 +1828,6 @@ bool highOrderPolyMesh::swapEdge(
     // return false;
   }
 
-  // Check topology
-  if(adjacentTriangles(oppEdge).size() != 0) {
-    // Msg::Warning("Swap edge: Opposite edge already exists");
-    return false;
-  }
-
   doSwapEdge(he);
 
   adjacentEdges.clear();
@@ -1932,35 +1839,6 @@ bool highOrderPolyMesh::swapEdge(
   return true;
 }
 
-void highOrderPolyMesh::removeAdjacency(std::vector<size_t> &trgls)
-{
-  for(auto t : trgls) {
-    for(int j = 0; j < 3; ++j) {
-      std::pair<int, int> e = {triangles[3 * t + j],
-                               triangles[3 * t + (j + 1) % 3]};
-      if(e.first > e.second) std::swap(e.first, e.second);
-      auto it = edges.find(e);
-      if(it == edges.end()) Msg::Error("edge not found");
-      auto &ats = it->second;
-      if(ats[0] == t) std::swap(ats[0], ats.back());
-      ats.pop_back();
-      if(ats.size() == 0) edges.erase(it);
-    }
-  }
-}
-
-void highOrderPolyMesh::addAdjacency(std::vector<size_t> &trgls)
-{
-  for(auto t : trgls) {
-    for(int j = 0; j < 3; ++j) {
-      std::pair<int, int> e = {triangles[3 * t + j],
-                               triangles[3 * t + (j + 1) % 3]};
-      if(e.first > e.second) std::swap(e.first, e.second);
-      edges[e].push_back(t);
-    }
-  }
-}
-
 void highOrderPolyMesh::doSwapEdge(PolyMesh::HalfEdge *he)
 {
   std::pair<int, int> edge = {he->v->data, he->next->v->data},
@@ -1968,7 +1846,6 @@ void highOrderPolyMesh::doSwapEdge(PolyMesh::HalfEdge *he)
                                  he->opposite->next->next->v->data},
                       ts = {he->f->data, he->opposite->f->data};
   std::vector<size_t> ats = {(size_t)ts.first, (size_t)ts.second};
-  removeAdjacency(ats);
 
   triangles[3 * ats[0]] = edge.first;
   triangles[3 * ats[0] + 1] = oppEdge.second;
@@ -1977,31 +1854,22 @@ void highOrderPolyMesh::doSwapEdge(PolyMesh::HalfEdge *he)
   triangles[3 * ats[1] + 1] = oppEdge.first;
   triangles[3 * ats[1] + 2] = oppEdge.second;
 
-  addAdjacency(ats);
-
   if(ipm->swap_edge(he)) Msg::Error("Could not swap pm");
 }
 
-void highOrderPolyMesh::getOppEdge(const std::pair<int, int> &p01,
+void highOrderPolyMesh::getOppEdge(const PolyMesh::HalfEdge *he,
                                    std::pair<int, int> &p23,
                                    std::pair<int, int> &ts)
 {
-  p23 = {-1, -1};
-  ts = {-1, -1};
-  for(auto t : adjacentTriangles(p01)) {
-    auto is = triangles.begin() + 3 * t;
-    for(int j = 0; j < 3; ++j) {
-      if(is[j] == p01.first && is[(j + 1) % 3] == p01.second) {
-        p23.first = is[(j + 2) % 3];
-        ts.first = t;
-        break;
-      }
-      if(is[j] == p01.second && is[(j + 1) % 3] == p01.first) {
-        p23.second = is[(j + 2) % 3];
-        ts.second = t;
-        break;
-      }
-    }
+  p23.first = he->next->next->v->data;
+  ts.first = he->f->data;
+  if(he->opposite) {
+    p23.second = he->opposite->next->next->v->data;
+    ts.second = he->opposite->f->data;
+  }
+  else {
+    p23.second = -1;
+    ts.second = -1;
   }
 }
 
@@ -2409,18 +2277,7 @@ bool highOrderPolyMesh::splitEdge(
   geodesic::SurfacePoint midPoint = firstHalf.back();
 
   std::pair<int, int> oppEdge, ts;
-  getOppEdge(edge, oppEdge, ts);
-
-  oppEdge.first = he->next->next->v->data;
-  ts.first = he->f->data;
-  if(he->opposite) {
-    oppEdge.second = he->opposite->next->next->v->data;
-    ts.second = he->opposite->f->data;
-  }
-  else {
-    oppEdge.second = -1;
-    ts.second = -1;
-  }
+  getOppEdge(he, oppEdge, ts);
 
   int oppVertices[2] = {oppEdge.first, oppEdge.second};
 
@@ -2473,11 +2330,9 @@ bool highOrderPolyMesh::splitEdge(
   // Split edge
   //
   std::pair<int, int> o, tts;
-  getOppEdge(edge, o, tts);
+  getOppEdge(he, o, tts);
   adjTriangles = {(size_t)tts.first, (size_t)tts.second};
-  removeAdjacency(adjTriangles);
 
-  edges.erase(edge);
   int mid = pointsPool.size();
   pointsPool.push_back(midPoint);
 
@@ -2558,7 +2413,6 @@ bool highOrderPolyMesh::splitEdge(
       he = he->next;
     }
   }
-  addAdjacency(adjTriangles);
 
   setGeodesic({edge.first, mid}, firstHalf);
   setAdimLength({std::min(edge.first, mid), std::max(edge.first, mid)},
@@ -3079,7 +2933,6 @@ void highOrderPolyMesh::doCollapseEdge(
     }
   }
 
-  removeAdjacency(cavity);
   std::unordered_map<int, PolyMesh::Vertex *> index2pv;
   std::vector<PolyMesh::HalfEdge *> boundary;
   for(auto t : cavity) {
@@ -3206,8 +3059,6 @@ void highOrderPolyMesh::doCollapseEdge(
 
   cavity.resize(cavity.size() - 2);
 
-  addAdjacency(cavity);
-
   adjacentEdges.clear();
   std::vector<PolyMesh::HalfEdge *> added;
   for(auto v : verticesInCavity) {
@@ -3312,16 +3163,6 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
     v->data = old2New[v->data];
   }
   ipm->clean();
-
-  // // Edges
-  edges.clear();
-  for(size_t i = 0; i < triangles.size(); i += 3) {
-    for(unsigned j = 0; j < 3; ++j) {
-      std::pair<int, int> e = {triangles[i + j], triangles[i + (j + 1) % 3]};
-      if(e.first > e.second) std::swap(e.first, e.second);
-      edges[e].push_back(i / 3);
-    }
-  }
 
   // Geodesics
   std::vector<std::pair<int, int>> toInsertEdge;
@@ -3905,8 +3746,7 @@ bool highOrderPolyMesh::splitTriangle(
     if(abs(length({e.first, e.second}) - length({e.first, circumindex}) -
            length({circumindex, e.second})) > 1e-12)
       continue;
-    auto ats = adjacentTriangles(e);
-    ats = {(size_t)he->f->data};
+    std::vector<size_t> ats = {(size_t)he->f->data};
     if(he->opposite) ats.push_back(he->opposite->f->data);
     cavity = ats;
     newTris.clear();
@@ -4012,7 +3852,6 @@ bool highOrderPolyMesh::splitTriangle(
     }
   }
   for(auto he : boundary) { he->v->he = he; }
-  removeAdjacency(cavity);
 
   cavity.push_back(triangles.size() / 3);
   cavity.push_back(triangles.size() / 3 + 1);
@@ -4094,8 +3933,6 @@ bool highOrderPolyMesh::splitTriangle(
       he = he->next;
     }
   }
-
-  addAdjacency(cavity);
 
   adjTriangles.resize(cavity.size());
   for(int i = 0; i < cavity.size(); ++i) {
@@ -5224,13 +5061,6 @@ int makeMeshGeodesic(GModel *gm)
 
   // hop.sanityCheck();
 
-  for(auto &kv : hop.edges) {
-    if(kv.second.size() != 2) {
-      Msg::Warning("Edge %d %d is adjacent to %d faces !", kv.first.first,
-                   kv.first.second, kv.second.size());
-    }
-  }
-
   // hop.trueCoord = std::vector<SVector3>(hop.pm->vertices.size());
   // for(size_t i = 0; i < hop.pm->vertices.size(); ++i) {
   //   hop.trueCoord[i] = SVector3(hop.pm->vertices[i]->position);
@@ -5275,10 +5105,11 @@ int makeMeshGeodesic(GModel *gm)
   unsigned angleBins[72] = {0}, zeroAngle = 0;
   double minAngle = 1e100, maxAngle = 0., meanAngle = 0., zeroAngleMax = 1e-5,
          zeroAreaMax = 1e-5;
-  for(auto kv : hop.edges) {
-    if(kv.second.size() == 0)
-      Msg::Warning("Edge without triangle adjacence in edges");
-    std::pair<int, int> e = kv.first;
+  std::unordered_set<PolyMesh::HalfEdge *> checkedHE;
+  for(auto he : hop.ipm->hedges) {
+    auto it = checkedHE.find(he);
+    if(it != checkedHE.end()) continue;
+    std::pair<int, int> e = {he->v->data, he->next->v->data};
     PathView path;
     hop.getGeodesicPath(e.first, e.second, path);
     PathView pv(path);
@@ -5288,6 +5119,8 @@ int makeMeshGeodesic(GModel *gm)
     if(almax > MAXE) nbrEdgeGreaterThanMax++;
     double q = hop.getEdgeQuality(e);
     if(q < 0.) edgeQualityLessThanZero++;
+    checkedHE.insert(he);
+    if(he->opposite) checkedHE.insert(he->opposite);
   }
   for(size_t i = 0; i < hop.ipm->faces.size(); ++i) {
     auto he = hop.ipm->faces[i]->he;
@@ -5371,8 +5204,8 @@ int makeMeshGeodesic(GModel *gm)
   }
   meanA /= hop.ipm->faces.size();
 
-  Msg::Info("Number of vertices: %d", hop.pointsPool.size());
-  Msg::Info("Number of edges: %d", hop.edges.size());
+  Msg::Info("Number of vertices: %d", hop.ipm->vertices.size());
+  Msg::Info("Number of edges: %d", hop.ipm->hedges.size() / 2);
   Msg::Info("Number of triangles: %d", hop.ipm->faces.size());
   Msg::Info("Number of edges less than %g: %d", MINE, nbrEdgeLessThanMin);
   Msg::Info("Number of edges greater than %g: %d", MAXE, nbrEdgeGreaterThanMax);
