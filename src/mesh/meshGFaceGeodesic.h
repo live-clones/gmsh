@@ -323,8 +323,6 @@ public:
   geodesic::Mesh geoMesh; // geometric mesh
   TypedPoints pointsPool; // points of the IGA
   std::map<std::pair<int, int>, int> tags; // edge <a b>, triangles
-  std::unordered_map<std::pair<int, int>, std::vector<size_t>, pair_hash>
-    edges; // edge <a b>, triangles
   std::unordered_map<std::pair<int, int>, std::vector<geodesic::SurfacePoint>,
                      pair_hash>
     geodesics; // one geodesic per edge
@@ -425,7 +423,7 @@ public:
   void removeAdjacency(std::vector<size_t> &trigls);
   void addAdjacency(std::vector<size_t> &trigls);
   void doSwapEdge(PolyMesh::HalfEdge *he);
-  void getOppEdge(const std::pair<int, int> &p01, std::pair<int, int> &p23,
+  void getOppEdge(const PolyMesh::HalfEdge *he, std::pair<int, int> &p23,
                   std::pair<int, int> &ts);
   bool doWeSwapAngleHeuristic(int p0, int p1, int p2, int p3);
   bool doWeSwapLengthHeuristic(int p0, int p1, int p2, int p3);
@@ -530,7 +528,6 @@ private:
   double length(PathView &path);
   void setLength(std::pair<int, int> edge, double length);
   void setAdimLength(std::pair<int, int> edge, double length);
-  std::vector<size_t> &adjacentTriangles(std::pair<int, int> edge);
   void splitPath(PathView &path, const double length,
                  std::vector<geodesic::SurfacePoint> &firstHalf,
                  std::vector<geodesic::SurfacePoint> &secondHalf);
