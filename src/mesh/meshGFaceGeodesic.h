@@ -518,7 +518,6 @@ private:
   bool edgeValid(int p0, int p1, int p2, int p3);
   void addVertexOnSurface(PolyMesh::Face *f, int v);
   void addVertexOnEdge(PolyMesh::HalfEdge *e, int v);
-  void addPolyMeshVertexTag(PolyMesh::Vertex *v, int tag);
   void addPolyMeshVertexVertexTag(PolyMesh::Vertex *v, PolyMesh::Vertex *w,
                                   int tag);
   void classifyGeodesic(std::pair<int, int> pair, const PathView &p, int i0,
