@@ -699,17 +699,6 @@ void highOrderPolyMesh::addVertexOnEdge(PolyMesh::HalfEdge *e, int v)
   }
 }
 
-void highOrderPolyMesh::addPolyMeshVertexTag(PolyMesh::Vertex *v, int tag)
-{
-  auto it = pvtags.find(v);
-  if(it != pvtags.end())
-    it->second.push_back(tag);
-  else {
-    std::vector<int> tmp = {tag};
-    pvtags[v] = tmp;
-  }
-}
-
 void highOrderPolyMesh::addPolyMeshVertexVertexTag(PolyMesh::Vertex *v,
                                                    PolyMesh::Vertex *w, int tag)
 {
@@ -752,7 +741,6 @@ void highOrderPolyMesh::classifyGeodesic(std::pair<int, int> pair,
       geodesic::Vertex *pv = static_cast<geodesic::Vertex *>(_s.base_element());
       //	printf("point %lu geodesic vertex %d - %g %g
       //%g\n",i,pv->id(),_s.x(),_s.y(),_s.z());
-      addPolyMeshVertexTag(pm->vertices[pv->id()], tag);
       addPolyMeshVertexVertexTag(pm->vertices[pv->id()], pm->vertices[last],
                                  tag);
       last = pv->id();
@@ -786,7 +774,6 @@ void highOrderPolyMesh::classifyGeodesic(std::pair<int, int> pair,
         new PolyMesh::Vertex(_s.x(), _s.y(), _s.z(), pm->vertices.size());
       pm->vertices.push_back(newv);
       addVertexOnEdge(he, pm->vertices.size() - 1);
-      addPolyMeshVertexTag(newv, tag);
       addPolyMeshVertexVertexTag(newv, pm->vertices[last], tag);
       last = pm->vertices.size() - 1;
     }
@@ -798,7 +785,6 @@ void highOrderPolyMesh::classifyGeodesic(std::pair<int, int> pair,
       //	printf("point %lu geodesic face %d \n",i,pf->id());
       pm->vertices.push_back(newv);
       addVertexOnSurface(pm->faces[pf->id()], pm->vertices.size() - 1);
-      addPolyMeshVertexTag(newv, tag);
       addPolyMeshVertexVertexTag(newv, pm->vertices[last], tag);
       last = pm->vertices.size() - 1;
     }
@@ -877,14 +863,6 @@ void highOrderPolyMesh::classifyGeodesicVertices(
     it = sp2pv.find(is[2]);
     if(it == sp2pv.end()) Msg::Error("point not found");
     vs[2] = pm->vertices[it->second];
-    for(int j = 0; j < 3; ++j) {
-      // auto i0 = he->v->data;
-      // auto i1 = he->next->v->data;
-      int tag = getTag({is[j], is[(j + 1) % 3]});
-      addPolyMeshVertexTag(vs[j], tag);
-      addPolyMeshVertexTag(vs[(j + 1) % 3], tag);
-      he = he->next;
-    }
   }
 
   std::set<std::pair<int, int>> done;
