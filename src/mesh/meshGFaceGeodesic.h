@@ -328,7 +328,6 @@ public:
     geodesics; // one geodesic per edge
   std::vector<std::vector<std::pair<int, int>>> vertexGeodesics;
   std::unordered_map<int, std::vector<std::array<int, 3>>> vertexTriangles;
-  std::vector<int> triangles; // 3 integers per triangle
   std::map<PolyMesh::Face *, int> f2n;
   std::map<PolyMesh::Vertex *, std::vector<int>> pvtags;
   std::map<PolyMesh::Vertex *, std::vector<std::pair<PolyMesh::Vertex *, int>>>
@@ -539,8 +538,7 @@ private:
                      double **edgePointsCoods);
 };
 
-void saveIsoTriangles(int num, std::vector<int> &hopTriangles,
-                      TypedPoints &hopPoints, PolyMesh *ipm);
+void saveIsoTriangles(int num, TypedPoints &hopPoints, PolyMesh *ipm);
 void printCuttedMesh(PolyMesh *pm, std::map<int, int> colors = {});
 bool colorFaces(PolyMesh *pm, std::map<int, int> &face2Colors,
                 int maxColor = 4);

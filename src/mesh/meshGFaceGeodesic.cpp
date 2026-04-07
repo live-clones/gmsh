@@ -878,8 +878,6 @@ void highOrderPolyMesh::classifyGeodesicVertices(
     if(it == sp2pv.end()) Msg::Error("point not found");
     vs[2] = pm->vertices[it->second];
     for(int j = 0; j < 3; ++j) {
-      // auto i0 = triangles[3 * i + j];
-      // auto i1 = triangles[3 * i + (j + 1) % 3];
       // auto i0 = he->v->data;
       // auto i1 = he->next->v->data;
       int tag = getTag({is[j], is[(j + 1) % 3]});
@@ -1002,18 +1000,6 @@ highOrderPolyMesh::highOrderPolyMesh(PolyMesh *polyMesh,
       v2n[i] = pointsPool.size();
       pointsPool.push_back(gv);
     }
-  }
-  for(size_t i = 0; i < tris.size() / 3; ++i) {
-    PolyMesh::Vertex *vs[3];
-    for(int j = 0; j < 3; ++j) vs[j] = vertices[tris[3 * i + j]];
-    for(size_t i = 0; i < 3; i++) {
-      int i0 = v2n[vs[i]->data];
-      int i1 = v2n[vs[(i + 1) % 3]->data];
-      if(i0 < 0 || i1 < 0) Msg::Error("The problem is here");
-    }
-    triangles.push_back(v2n[vs[0]->data]);
-    triangles.push_back(v2n[vs[1]->data]);
-    triangles.push_back(v2n[vs[2]->data]);
   }
 }
 
@@ -1847,13 +1833,6 @@ void highOrderPolyMesh::doSwapEdge(PolyMesh::HalfEdge *he)
                       ts = {he->f->data, he->opposite->f->data};
   std::vector<size_t> ats = {(size_t)ts.first, (size_t)ts.second};
 
-  triangles[3 * ats[0]] = edge.first;
-  triangles[3 * ats[0] + 1] = oppEdge.second;
-  triangles[3 * ats[0] + 2] = oppEdge.first;
-  triangles[3 * ats[1]] = edge.second;
-  triangles[3 * ats[1] + 1] = oppEdge.first;
-  triangles[3 * ats[1] + 2] = oppEdge.second;
-
   if(ipm->swap_edge(he)) Msg::Error("Could not swap pm");
 }
 
@@ -2224,7 +2203,7 @@ int highOrderPolyMesh::swapEdges(int OPTION)
         iter++;
         Msg::Info("Already swapped %d edges (%d triangles, queue "
                   "size = %d)",
-                  count, triangles.size() / 3, set.size() + nextSet.size());
+                  count, ipm->faces.size(), set.size() + nextSet.size());
       }
 
       PolyMesh::HalfEdge *he = set.back();
@@ -2264,8 +2243,6 @@ bool highOrderPolyMesh::splitEdge(
   PolyMesh::HalfEdge *he, double MINA, double MAXA,
   std::vector<PolyMesh::HalfEdge *> &adjacentEdges)
 {
-  std::vector<size_t> adjTriangles = {(size_t)he->f->data};
-  if(he->opposite) adjTriangles.push_back(he->opposite->f->data);
   std::pair<int, int> edge = {he->v->data, he->next->v->data};
 
   // Compute new point
@@ -2329,29 +2306,8 @@ bool highOrderPolyMesh::splitEdge(
   //
   // Split edge
   //
-  std::pair<int, int> o, tts;
-  getOppEdge(he, o, tts);
-  adjTriangles = {(size_t)tts.first, (size_t)tts.second};
-
   int mid = pointsPool.size();
   pointsPool.push_back(midPoint);
-
-  int nbTriangles = adjTriangles.size();
-  for(int i = 0; i < nbTriangles; ++i) {
-    int t = adjTriangles[i], j = 0;
-    for(; j < 3; ++j) {
-      if((triangles[3 * t + j] == edge.first &&
-          triangles[3 * t + (j + 1) % 3] == edge.second) ||
-         (triangles[3 * t + j] == edge.second &&
-          triangles[3 * t + (j + 1) % 3] == edge.first))
-        break;
-    }
-    adjTriangles.push_back(triangles.size() / 3);
-    triangles.push_back(mid);
-    triangles.push_back(triangles[3 * t + (j + 1) % 3]);
-    triangles.push_back(triangles[3 * t + (j + 2) % 3]);
-    triangles[3 * t + (j + 1) % 3] = mid;
-  }
 
   std::vector<PolyMesh::Face *> faces;
   PolyMesh::Vertex *newV = new PolyMesh::Vertex(
@@ -2578,7 +2534,7 @@ int highOrderPolyMesh::splitEdges(const double MAXE, double MINA, double MAXA)
   while(!queue.empty()) {
     if(++iter % 10000 == 0) {
       Msg::Info("Already splitted %d edges (%d triangles, queue size = %d)",
-                count, triangles.size() / 3, queue.size());
+                count, ipm->faces.size(), queue.size());
     }
 
     HEdgeItem edgeItem = *queue.begin();
@@ -2722,19 +2678,19 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
     double areaBefore = 0;
     for(auto t : cavityi) {
       double angles[3], lengths[3], dlengths[3];
+      PolyMesh::HalfEdge *he = ipm->faces[t]->he;
       for(int j = 0; j < 3; ++j) {
-        angles[j] = computeIntrinsicAngle(triangles[3 * t + j],
-                                          triangles[3 * t + (j + 1) % 3],
-                                          triangles[3 * t + (j + 2) % 3]);
+        angles[j] = computeIntrinsicAngle(he->v->data, he->next->v->data,
+                                          he->next->next->v->data);
         PathView path;
-        getGeodesicPath(triangles[3 * t + j], triangles[3 * t + (j + 1) % 3],
-                        path);
+        getGeodesicPath(he->v->data, he->next->v->data, path);
         lengths[j] = length(path);
         dlengths[j] = norm(SVector3(path.front().xyz(), path.back().xyz()));
+        he = he->next;
       }
 
-      size_t tri[3] = {(size_t)triangles[3 * t], (size_t)triangles[3 * t + 1],
-                       (size_t)triangles[3 * t + 2]};
+      size_t tri[3] = {(size_t)he->v->data, (size_t)he->next->v->data,
+                       (size_t)he->next->next->v->data};
       double q = getTriangleQuality(tri);
 
       if(q < qualityBefore) qualityBefore = q;
@@ -2984,8 +2940,6 @@ void highOrderPolyMesh::doCollapseEdge(
     PolyMesh::HalfEdge *he = ipm->faces[t]->he;
 
     if(i >= cavity.size() - 2) {
-      for(int j = 0; j < 3; ++j) triangles[3 * t + j] = -1;
-
       he->f->he = nullptr;
       for(int i = 0; i < 3; ++i) {
         he->f = nullptr;
@@ -2993,10 +2947,6 @@ void highOrderPolyMesh::doCollapseEdge(
       }
       continue;
     }
-
-    triangles[3 * t] = newTris[3 * i];
-    triangles[3 * t + 1] = newTris[3 * i + 1];
-    triangles[3 * t + 2] = newTris[3 * i + 2];
 
     for(int j = 0; j < 3; ++j) {
       if(!index2pv[newTris[3 * i + j]]) Msg::Error("index2pv not found");
@@ -3116,47 +3066,19 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
   // Triangles
   std::unordered_map<int, int> old2NewTriangle;
   front = 0;
-  back = triangles.size() / 3 - 1;
+  back = ipm->faces.size() - 1;
   for(; front <= back; ++front) {
-    // std::cout << front << std::endl;
-    // if(triangles[3 * front] != -1) continue;
-    if(triangles[3 * front] != -1 && triangles[3 * front + 1] != -1 &&
-       triangles[3 * front + 2] != -1)
-      continue;
+    if(ipm->faces[front]->he != nullptr) continue;
 
-    // while(triangles[3 * back] == -1 && back != front) --back;
-    while((triangles[3 * back] == -1 || triangles[3 * back + 1] == -1 ||
-           triangles[3 * back + 2] == -1) &&
-          back != front) {
-      // std::cout << "back: " << back << std::endl;
-      --back;
-    }
-    if(back == front) {
-      // std::cout << "break: " << front << " " << back << std::endl;
-      // --front;
-      break;
-    }
+    while(ipm->faces[back]->he == nullptr && back != front) { --back; }
+    if(back == front) { break; }
 
-    // std::cout << "back swap: " << triangles[3 * back] << " "
-    //           << triangles[3 * back + 1] << " " << triangles[3 * back +
-    //           2]
-    //           << std::endl;
-
-    std::swap(triangles[3 * front], triangles[3 * back]);
-    std::swap(triangles[3 * front + 1], triangles[3 * back + 1]);
-    std::swap(triangles[3 * front + 2], triangles[3 * back + 2]);
     PolyMesh::Face *ffront = ipm->faces[front], *fback = ipm->faces[back];
     std::swap(ffront->he, fback->he);
 
     ffront->he->f = ffront;
     ffront->he->next->f = ffront;
     ffront->he->next->next->f = ffront;
-  }
-  triangles.resize(3 * front);
-  // std::cout << triangles.size() << std::endl;
-  for(size_t i = 0; i < triangles.size(); ++i) {
-    auto it = old2New.find(triangles[i]);
-    if(it != old2New.end()) triangles[i] = it->second;
   }
   for(auto v : ipm->vertices) {
     if(old2New.find(v->data) == old2New.end()) continue;
@@ -3321,7 +3243,7 @@ int highOrderPolyMesh::collapseEdges(const double MINE, double MINA,
   while(queue.size()) {
     if(++iter % 10000 == 0) {
       Msg::Info("Already collapsed %d edges (%d triangles, queue size = %d)",
-                count, triangles.size() / 3 - removedTriangles, queue.size());
+                count, ipm->faces.size() - removedTriangles, queue.size());
     }
 
     HEdgeItem item = *queue.begin();
@@ -3853,9 +3775,8 @@ bool highOrderPolyMesh::splitTriangle(
   }
   for(auto he : boundary) { he->v->he = he; }
 
-  cavity.push_back(triangles.size() / 3);
-  cavity.push_back(triangles.size() / 3 + 1);
-  triangles.insert(triangles.end(), {-1, -1, -1, -1, -1, -1});
+  cavity.push_back(ipm->faces.size());
+  cavity.push_back(ipm->faces.size() + 1);
   for(int i = 0; i < 2; ++i) {
     PolyMesh::HalfEdge *hs[3] = {new PolyMesh::HalfEdge(nullptr),
                                  new PolyMesh::HalfEdge(nullptr),
@@ -3882,7 +3803,6 @@ bool highOrderPolyMesh::splitTriangle(
     auto t = cavity[i];
     auto he = ipm->faces[t]->he;
     for(int j = 0; j < 3; ++j) {
-      triangles[3 * t + j] = newTris[3 * i + j];
       auto it = index2pv.find(newTris[3 * i + j]);
       if(it == index2pv.end()) Msg::Error("Vertex not foud");
       he->v = index2pv[newTris[3 * i + j]];
@@ -4562,8 +4482,7 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new,
 }
 // END WRITE
 
-void saveIsoTriangles(int num, std::vector<int> &triangles, TypedPoints &points,
-                      PolyMesh *ipm)
+void saveIsoTriangles(int num, TypedPoints &points, PolyMesh *ipm)
 {
   char name[256];
   snprintf(name, sizeof(name), "isoTriangle%d.pos", num);
@@ -4718,7 +4637,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
 
     if(PRINT) {
       printGeodesics("geodesics_swapped.pos");
-      saveIsoTriangles(printIndex++, triangles, pointsPool, ipm);
+      saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
 
@@ -4729,7 +4648,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
 
     if(PRINT) {
       printGeodesics("geodesics_collapse.pos");
-      saveIsoTriangles(printIndex++, triangles, pointsPool, ipm);
+      saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
 
@@ -4739,7 +4658,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
 
     if(PRINT) {
       printGeodesics("geodesics_swapped.pos");
-      saveIsoTriangles(printIndex++, triangles, pointsPool, ipm);
+      saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
 
@@ -4750,7 +4669,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
 
     if(PRINT) {
       printGeodesics("geodesics_triangle_split.pos");
-      saveIsoTriangles(printIndex++, triangles, pointsPool, ipm);
+      saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
 
@@ -4760,7 +4679,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
 
     if(PRINT) {
       printGeodesics("geodesics_swapped_after_triangle_split.pos");
-      saveIsoTriangles(printIndex++, triangles, pointsPool, ipm);
+      saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
 
@@ -4771,7 +4690,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
 
     if(PRINT) {
       printGeodesics("geodesics_edge_split.pos");
-      saveIsoTriangles(printIndex++, triangles, pointsPool, ipm);
+      saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
 
@@ -4786,7 +4705,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
 
     if(PRINT) {
       printGeodesics("geodesics_swapped.pos");
-      saveIsoTriangles(printIndex++, triangles, pointsPool, ipm);
+      saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
   }
@@ -4799,7 +4718,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
   createGeodesics();
   if(PRINT) {
     printGeodesics("geodesics_adapted.pos");
-    saveIsoTriangles(printIndex++, triangles, pointsPool, ipm);
+    saveIsoTriangles(printIndex++, pointsPool, ipm);
   }
 
   Msg::Info("Adaptation ended.");
@@ -4891,7 +4810,7 @@ int makeMeshGeodesic(GModel *gm)
 
   if(PRINT) {
     hop.printGeodesics("geodesics.pos");
-    saveIsoTriangles(0, hop.triangles, hop.pointsPool, hop.ipm);
+    saveIsoTriangles(0, hop.pointsPool, hop.ipm);
   }
 
   std::set<size_t> keep;
