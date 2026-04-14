@@ -585,7 +585,7 @@ namespace geodesic {
       double end, // start/end of the interval
       double alpha, // corner angle
       double L, // length of the new edge
-      int source_index, unsigned depth,
+      int source_index,
       bool first_interval, // if it is the first interval on the edge
       bool last_interval, bool turn_left, bool turn_right,
       IntervalWithStop *candidates); // if it is the last interval on the edge
@@ -667,8 +667,7 @@ namespace geodesic {
       std::vector<face_pointer> &incident_faces,
       interval_pointer &best_interval, double &best_total_distance,
       double &best_interval_position,
-      unsigned forSourceIndex = std::numeric_limits<unsigned>::max(),
-      unsigned depth = 0);
+      unsigned forSourceIndex = std::numeric_limits<unsigned>::max());
 
     void possible_traceback_edges(SurfacePoint &point,
                                   std::vector<edge_pointer> &storage,
@@ -748,7 +747,7 @@ namespace geodesic {
     SurfacePoint &point, std::vector<edge_pointer> const &storage,
     std::vector<face_pointer> &incident_faces, interval_pointer &best_interval,
     double &best_total_distance, double &best_interval_position,
-    unsigned forSourceIndex, unsigned depth)
+    unsigned forSourceIndex)
   {
     best_total_distance = 1e100;
     for(unsigned i = 0; i < storage.size(); ++i) {
@@ -761,8 +760,7 @@ namespace geodesic {
 
       list->find_closest_point(&point, offset, distance,
                                //  interval);
-                               interval, forSourceIndex, depth,
-                               incident_faces[i]);
+                               interval, forSourceIndex, incident_faces[i]);
 
       if(distance > best_total_distance) continue;
       best_interval = interval;
@@ -1619,7 +1617,7 @@ namespace geodesic {
           mStop, // start/end of the interval
           mAngle, // corner angle
           mLengthL, // length of the new edge
-          min_interval->source_index(), min_interval->depth(),
+          min_interval->source_index(),
           first_interval, // if it is the first interval on the edge
           last_interval, turn_left, turn_right,
           candidates); // if it is the last interval on the edge
@@ -1633,7 +1631,7 @@ namespace geodesic {
           min_interval->stop(), // start/end of the interval
           face->vertex_angle(edge->v0()), // corner angle
           next_edge->length(), // length of the new edge
-          min_interval->source_index(), min_interval->depth(),
+          min_interval->source_index(),
           first_interval, // if it is the first interval on the edge
           last_interval, turn_left, turn_right,
           candidates); // if it is the last interval on the edge
@@ -1697,7 +1695,7 @@ namespace geodesic {
             mStop, // start/end of the interval
             mAngle, // corner angle
             mLengthR, // length of the new edge
-            min_interval->source_index(), min_interval->depth(),
+            min_interval->source_index(),
             last_interval, // if it is the first interval on the edge
             first_interval, turn_right, turn_left,
             candidates); // if it is the last interval on the edge
@@ -1712,7 +1710,7 @@ namespace geodesic {
             length - min_interval->start(), // start/end of the interval
             face->vertex_angle(edge->v1()), // corner angle
             next_edge->length(), // length of the new edge
-            min_interval->source_index(), min_interval->depth(),
+            min_interval->source_index(),
             last_interval, // if it is the first interval on the edge
             first_interval, turn_right, turn_left,
             candidates); // if it is the last interval on the edge
@@ -2399,7 +2397,7 @@ namespace geodesic {
     double end, // start/end of the interval
     double alpha, // corner angle
     double L, // length of the new edge
-    int source_index, unsigned depth,
+    int source_index,
     bool first_interval, // if it is the first interval on the edge
     bool last_interval, bool turn_left, bool turn_right,
     IntervalWithStop *candidates) // if it is the last interval on the edge
@@ -2412,9 +2410,7 @@ namespace geodesic {
     IntervalWithStop *p = candidates;
 
     p->source_index() = source_index;
-    p->depth() = depth + 1;
     (p + 1)->source_index() = source_index;
-    (p + 1)->depth() = depth + 1;
 
     if(std::abs(pseudo_y) <= 1e-30) // pseudo-source is on the edge
     {
@@ -2573,7 +2569,6 @@ namespace geodesic {
         p->edge() = edge;
         p->direction() = direction;
         p->source_index() = source_interval->source_index();
-        p->depth() = source_interval->depth() + 1;
 
         p->min() = 0.0; // it will be changed later on
 
@@ -2589,7 +2584,6 @@ namespace geodesic {
         p->edge() = edge;
         p->direction() = direction;
         p->source_index() = source_interval->source_index();
-        p->depth() = source_interval->depth() + 1;
 
         double length = edge_length;
         p->pseudo_x() = length - p->pseudo_x();
