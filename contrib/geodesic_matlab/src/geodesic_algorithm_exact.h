@@ -72,8 +72,7 @@ namespace geodesic {
 
     void
     trace_back(SurfacePoint &destination, // trace back piecewise-linear path
-               std::vector<SurfacePoint> &path,
-               unsigned source_index = std::numeric_limits<unsigned>::max());
+               std::vector<SurfacePoint> &path);
 
     // void clearCallbacks()
     // {
@@ -607,8 +606,10 @@ namespace geodesic {
 
     interval_pointer best_first_interval(SurfacePoint &point,
                                          double &best_total_distance,
-                                         double &best_interval_position,
-                                         unsigned &best_source_index);
+                                         double &best_interval_position);
+
+    inline void debugPrint(std::string filename,
+                           std::vector<geodesic::SurfacePoint> points);
 
     bool (GeodesicAlgorithmExact::*m_check_stop_condition)();
     bool check_stop_points();
@@ -662,12 +663,12 @@ namespace geodesic {
 
     long visible_from_source(SurfacePoint &point); // used in backtracing
 
-    void best_point_on_the_edge_set(
-      SurfacePoint &point, std::vector<edge_pointer> const &storage,
-      std::vector<face_pointer> &incident_faces,
-      interval_pointer &best_interval, double &best_total_distance,
-      double &best_interval_position,
-      unsigned forSourceIndex = std::numeric_limits<unsigned>::max());
+    void best_point_on_the_edge_set(SurfacePoint &point,
+                                    std::vector<edge_pointer> const &storage,
+                                    std::vector<face_pointer> &incident_faces,
+                                    interval_pointer &best_interval,
+                                    double &best_total_distance,
+                                    double &best_interval_position);
 
     void possible_traceback_edges(SurfacePoint &point,
                                   std::vector<edge_pointer> &storage,
@@ -746,8 +747,7 @@ namespace geodesic {
   inline void GeodesicAlgorithmExact::best_point_on_the_edge_set(
     SurfacePoint &point, std::vector<edge_pointer> const &storage,
     std::vector<face_pointer> &incident_faces, interval_pointer &best_interval,
-    double &best_total_distance, double &best_interval_position,
-    unsigned forSourceIndex)
+    double &best_total_distance, double &best_interval_position)
   {
     best_total_distance = 1e100;
     for(unsigned i = 0; i < storage.size(); ++i) {
@@ -760,7 +760,7 @@ namespace geodesic {
 
       list->find_closest_point(&point, offset, distance,
                                //  interval);
-                               interval, forSourceIndex, incident_faces[i]);
+                               interval, incident_faces[i]);
 
       if(distance > best_total_distance) continue;
       best_interval = interval;
@@ -1250,7 +1250,6 @@ namespace geodesic {
     double db_m_1 = db - 1;
     double db_p_1 = db + 1;
     double db2_m_1 = db_m_1 * db_p_1;
-    double xb_xc_m_dc = xb * xc - dc;
     double xc2_p_yc2_m_dc2 = xc * xc + (yc - dc) * (yc + dc);
     double db_dc_m_xc = db * dc - xc;
     double dc_m_db_xc = dc - db * xc;
@@ -1814,13 +1813,16 @@ namespace geodesic {
 
   inline bool GeodesicAlgorithmExact::check_stop_points()
   {
+#if HEAP
+    double queue_distance = (m_queue.top())->min();
+#else
     double queue_distance = (*m_queue.begin())->min();
+#endif
+
     while(m_next_stop_index < m_stop_vertices.size()) {
       double best_total_distance = GEODESIC_INF, best_interval_position;
-      unsigned best_source_index = std::numeric_limits<unsigned>::max();
       best_first_interval(*m_stop_vertices[m_next_stop_index],
-                          best_total_distance, best_interval_position,
-                          best_source_index);
+                          best_total_distance, best_interval_position);
       if(queue_distance <= best_total_distance + 1e-12)
       // if (queue_distance <= best_total_distance * 1.1)
       {
@@ -2607,17 +2609,15 @@ namespace geodesic {
     double &best_source_distance)
   {
     double best_interval_position;
-    unsigned best_source_index = std::numeric_limits<unsigned>::max();
-
-    best_first_interval(point, best_source_distance, best_interval_position,
-                        best_source_index);
-
-    return best_source_index;
+    auto interval_pointer =
+      best_first_interval(point, best_source_distance, best_interval_position);
+    return interval_pointer->source_index();
   }
 
-  inline interval_pointer GeodesicAlgorithmExact::best_first_interval(
-    SurfacePoint &point, double &best_total_distance,
-    double &best_interval_position, unsigned &best_source_index)
+  inline interval_pointer
+  GeodesicAlgorithmExact::best_first_interval(SurfacePoint &point,
+                                              double &best_total_distance,
+                                              double &best_interval_position)
   {
     assert(point.type() != UNDEFINED_POINT);
     // std::cout << "point type: " << point.type() << std::endl;
@@ -2631,10 +2631,7 @@ namespace geodesic {
 
       best_interval_position = point.distance(e->v0());
       best_interval = list->covering_interval(best_interval_position);
-      if(best_interval &&
-         (best_source_index == std::numeric_limits<unsigned>::max() ||
-          best_source_index == best_interval->source_index())) {
-        // assert(best_interval && best_interval->d() < GEODESIC_INF);
+      if(best_interval) {
         best_total_distance = best_interval->signal(best_interval_position);
       }
     }
@@ -2648,44 +2645,16 @@ namespace geodesic {
         double distance;
         interval_pointer interval;
 
-        unsigned source_index = best_source_index;
-        list->find_closest_point(&point, offset, distance, interval,
-                                 source_index);
+        list->find_closest_point(&point, offset, distance, interval);
 
         if(interval && distance < best_total_distance) {
           best_interval = interval;
           best_total_distance = distance;
           best_interval_position = offset;
-          // best_source_index = interval->source_index();
         }
       }
-
-      // check for all sources that might be located inside this face
-      SortedSources::sorted_iterator_pair local_sources = m_sources.sources(f);
-      for(SortedSources::sorted_iterator it = local_sources.first;
-          it != local_sources.second; ++it) {
-        SurfacePointWithIndex *source = *it;
-        if(best_source_index != std::numeric_limits<unsigned>::max() &&
-           source->index() != best_source_index)
-          continue;
-        double distance = point.distance(source);
-        if(distance < best_total_distance) {
-          best_interval = NULL;
-          best_total_distance = distance;
-          best_interval_position = 0.0;
-          best_source_index = source->index();
-        }
-      }
-      if(best_interval) best_source_index = best_interval->source_index();
     }
     else if(point.type() == VERTEX) {
-      // std::vector<edge_pointer> possible_edges;
-      // possible_traceback_edges(point, possible_edges);
-      // unsigned source_index = best_source_index;
-      // best_point_on_the_edge_set(point, possible_edges, best_interval,
-      //                            best_total_distance, best_interval_position,
-      //                            source_index);
-
       vertex_pointer v = static_cast<vertex_pointer>(point.base_element());
       for(unsigned i = 0; i < v->adjacent_edges().size(); ++i) {
         edge_pointer e = v->adjacent_edges()[i];
@@ -2694,18 +2663,7 @@ namespace geodesic {
         double position = e->v0()->id() == v->id() ? 0.0 : e->length();
         interval_pointer interval = list->covering_interval(position);
         if(!interval) continue;
-        if(best_source_index != std::numeric_limits<unsigned>::max() &&
-           interval->source_index() != best_source_index)
-          continue;
-
-        // if(best_interval != nullptr &&
-        //    best_interval->depth() >= interval->depth())
-        //   continue;
         double distance = interval->signal(position);
-        //
-        // std::cout << "\t" << interval->d() << " "
-        //           << interval->stop() - interval->start() << std::endl;
-        //
         if(distance < best_total_distance) {
           best_interval = interval;
           best_total_distance = distance;
@@ -2714,222 +2672,150 @@ namespace geodesic {
       }
     }
 
-    if(best_interval &&
-       best_source_index == std::numeric_limits<unsigned>::max())
-      best_source_index = best_interval->source_index();
     return best_interval;
+  }
+
+  inline void
+  GeodesicAlgorithmExact::debugPrint(std::string filename,
+                                     std::vector<geodesic::SurfacePoint> points)
+  {
+    std::ofstream posFile(filename);
+    posFile << "View \"Intervals\" {\n";
+    for(unsigned i = 0; i < m_edge_interval_lists.size(); ++i) {
+      list_pointer list = &m_edge_interval_lists[i];
+      interval_pointer p = list->first();
+      while(p) {
+        edge_pointer edge = p->edge();
+        vertex_pointer v0 = edge->v0();
+        vertex_pointer v1 = edge->v1();
+        double start = p->start();
+        double stop = p->stop();
+        double length = edge->length();
+        double x0 = v0->x() + (v1->x() - v0->x()) * (start / length);
+        double y0 = v0->y() + (v1->y() - v0->y()) * (start / length);
+        double z0 = v0->z() + (v1->z() - v0->z()) * (start / length);
+        double x1 = v0->x() + (v1->x() - v0->x()) * (stop / length);
+        double y1 = v0->y() + (v1->y() - v0->y()) * (stop / length);
+        double z1 = v0->z() + (v1->z() - v0->z()) * (stop / length);
+        posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1 << ","
+                << y1 << "," << z1 << "){" << p->signal(start) << ","
+                << p->signal(stop) << "};\n";
+        p = p->next();
+      }
+    }
+    for(auto p : points) {
+      posFile << "SP(" << p.x() << "," << p.y() << "," << p.z() << "){" << -1
+              << "};\n";
+    }
+    for(size_t i = 0; i < m_sources.size(); ++i) {
+      posFile << "SP(" << m_sources[i].x() << "," << m_sources[i].y() << ","
+              << m_sources[i].z() << "){" << i << "};\n";
+    }
+    for(size_t i = 0; i < m_stop_vertices.size(); ++i) {
+      posFile << "SP(" << m_stop_vertices[i]->x() << ","
+              << m_stop_vertices[i]->y() << "," << m_stop_vertices[i]->z()
+              << "){1};\n";
+    }
+    posFile << "};\n";
+    posFile.close();
   }
 
   inline void GeodesicAlgorithmExact::trace_back(
     SurfacePoint &destination, // trace back piecewise-linear path
-    std::vector<SurfacePoint> &path, unsigned source_index)
+    std::vector<SurfacePoint> &path)
   {
-    // if(m_strategy == FINDCIRCUMCENTER &&
-    //    destination.type() == UNDEFINED_POINT) {
-    //   path = m_shortest_path;
-    //   return;
-    // }
-
     path.clear();
-    double best_total_distance = geodesic::GEODESIC_INF;
-    double best_interval_position = 0.;
-    // std::cout << source_index << std::endl;
-    interval_pointer best_interval = best_first_interval(
-      destination, best_total_distance, best_interval_position, source_index);
-
-    // if(true)
-    if(best_total_distance >=
-       GEODESIC_INF / 2.0) // unable to find the right path
-    {
-      // std::ofstream posFile("traceback_intervals.pos");
-      // posFile << "View \"Traceback Intervals\" {\n";
-      // for(unsigned i = 0; i < m_edge_interval_lists.size(); ++i) {
-      //   list_pointer list = &m_edge_interval_lists[i];
-      //   interval_pointer p = list->first();
-      //   while(p) {
-      //     edge_pointer edge = p->edge();
-      //     vertex_pointer v0 = edge->v0();
-      //     vertex_pointer v1 = edge->v1();
-      //     double start = p->start();
-      //     double stop = p->stop();
-      //     double length = edge->length();
-      //     double x0 = v0->x() + (v1->x() - v0->x()) * (start / length);
-      //     double y0 = v0->y() + (v1->y() - v0->y()) * (start / length);
-      //     double z0 = v0->z() + (v1->z() - v0->z()) * (start / length);
-      //     double x1 = v0->x() + (v1->x() - v0->x()) * (stop / length);
-      //     double y1 = v0->y() + (v1->y() - v0->y()) * (stop / length);
-      //     double z1 = v0->z() + (v1->z() - v0->z()) * (stop / length);
-      //     posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1 <<
-      //     ","
-      //             << y1 << "," << z1 << "){" << p->signal(start) << ","
-      //             << p->signal(stop) << "};\n";
-      //     p = p->next();
-      //   }
-      // }
-      // posFile << "SP(" << destination.x() << "," << destination.y() << ","
-      //         << destination.z() << "){" << 10 << "};\n";
-      // for(size_t i = 0; i < m_sources.size(); ++i) {
-      //   posFile << "SP(" << m_sources[i].x() << "," << m_sources[i].y() <<
-      //   ","
-      //           << m_sources[i].z() << "){" << i << "};\n";
-      // }
-      // for(size_t i = 0; i < m_stop_vertices.size(); ++i) {
-      //   posFile << "SP(" << m_stop_vertices[i]->x() << ","
-      //           << m_stop_vertices[i]->y() << "," << m_stop_vertices[i]->z()
-      //           << "){1};\n";
-      // }
-      // posFile << "};\n";
-      // posFile.close();
-      // std::cerr << "Warning: GeodesicAlgorithmExact::trace_back: cannot find
-      // "
-      //              "the right path"
-      //           << std::endl;
-      // // return;
-    }
-
     path.push_back(destination);
 
-    // std::cout << "ok" << std::endl;
+    double best_total_distance = geodesic::GEODESIC_INF;
+    double best_interval_position = 0.;
+    interval_pointer best_interval = best_first_interval(
+      destination, best_total_distance, best_interval_position);
 
-    // std::cout << std::endl;
-    double lastDistance = best_total_distance;
-    // std::cout << std::setprecision(std::numeric_limits<double>::max_digits10)
-    //           << lastDistance << " (" << best_interval->source_index() << ")
-    //           "
-    //           << std::endl;
-    if(best_interval) // if we did not hit the face source immediately
-    {
-      if(best_interval->source_index() == std::numeric_limits<int>::max())
-        throw std::runtime_error("Error: source is max");
-
-      std::vector<edge_pointer> possible_edges;
-      possible_edges.reserve(10);
-
-      unsigned depth = std::numeric_limits<unsigned>::max();
-      // std::cout << depth << std::endl;
-      unsigned counter = 0;
-      interval_pointer interval = nullptr;
-      std::vector<face_pointer> incident_faces;
-      while(
-        visible_from_source(path.back()) <
-        0) // while this point is not in the direct visibility of some source
-           // (if we are inside the FACE, we obviously hit the source)
-      {
-        SurfacePoint &q = path.back();
-        // std::cout << "oo " << q.base_element()->id() << " " << last
-        //           << std::endl;
-        // std::cout << "ok " << q.base_element()->id()
-        // << " " << last
-        //           << std::endl;
-
-        double total_distance;
-        double position = 0.;
-
-        possible_traceback_edges(q, possible_edges, incident_faces, interval);
-        interval = nullptr;
-        best_point_on_the_edge_set(q, possible_edges, incident_faces, interval,
-                                   total_distance, position, source_index,
-                                   depth);
-
-        if(!interval) {
-          std::cout << "Could not find a trace back interval" << std::endl;
-          throw std::runtime_error(
-            "Error: Could not find a trace back interval");
+    // check for all sources that might be located inside this face
+    if(destination.type() == geodesic::FACE) {
+      SortedSources::sorted_iterator_pair local_sources = m_sources.sources(
+        static_cast<geodesic::Face *>(destination.base_element()));
+      double minDistance = GEODESIC_INF;
+      unsigned minSource = 0;
+      for(auto it = local_sources.first; it != local_sources.second; ++it) {
+        SurfacePointWithIndex *source = *it;
+        double distance = destination.distance(source);
+        if(distance < minDistance) {
+          minDistance = distance;
+          minSource = source->index();
         }
-
-        // if(total_distance - lastDistance > 1e-9) {
-        //   std::cout << std::setprecision(
-        //                  std::numeric_limits<double>::max_digits10)
-        //             << total_distance << " ( " <<
-        //             best_interval->source_index()
-        //             << " )" << " > " << lastDistance
-        //             << ", diff = " << total_distance - lastDistance
-        //
-        //             << std::endl;
-        //   // throw std::runtime_error(
-        //   //   "Distance increased: " + std::to_string(total_distance) + " >
-        //   " +
-        //   //   std::to_string(lastDistance) + " (diff " +
-        //   //   std::to_string(total_distance - lastDistance) + ")");
-        // }
-        lastDistance = total_distance;
-
-        depth = interval->depth();
-        // std::cout << depth << std::endl;
-        // std::cout << q.x() << " " << q.y() << " " << q.z() << " " <<
-        // q.type()
-        //           << std::endl;
-        // std::cout << total_distance << std::endl;
-        // assert(total_distance < GEODESIC_INF);
-        // source_index = interval->source_index();
-
-        edge_pointer e = interval->edge();
-        double local_epsilon = 1e5 * SMALLEST_INTERVAL_RATIO * e->length();
-        // std::cout << "pos: " << position << " vs " << local_epsilon
-        //           << std::endl;
-        if(position < local_epsilon) { path.push_back(SurfacePoint(e->v0())); }
-        else if(position > e->length() - local_epsilon) {
-          path.push_back(SurfacePoint(e->v1()));
-        }
-        else {
-          double normalized_position = position / e->length();
-          path.push_back(SurfacePoint(e, normalized_position));
-        }
-        // std::cout << best_interval->source_index() << ": " << total_distance
-        //           << "\n";
-        if(++counter >= 1e8) {
-          std::cout << "Could not trace back geodesic in less that " +
-                         std::to_string(counter) + " steps"
-                    << std::endl;
-          std::ofstream posFile("traceback_intervals.pos");
-          posFile << "View \"Traceback Intervals\" {\n";
-          for(unsigned i = 0; i < m_edge_interval_lists.size(); ++i) {
-            list_pointer list = &m_edge_interval_lists[i];
-            interval_pointer p = list->first();
-            while(p) {
-              edge_pointer edge = p->edge();
-              vertex_pointer v0 = edge->v0();
-              vertex_pointer v1 = edge->v1();
-              double start = p->start();
-              double stop = p->stop();
-              double length = edge->length();
-              double x0 = v0->x() + (v1->x() - v0->x()) * (start / length);
-              double y0 = v0->y() + (v1->y() - v0->y()) * (start / length);
-              double z0 = v0->z() + (v1->z() - v0->z()) * (start / length);
-              double x1 = v0->x() + (v1->x() - v0->x()) * (stop / length);
-              double y1 = v0->y() + (v1->y() - v0->y()) * (stop / length);
-              double z1 = v0->z() + (v1->z() - v0->z()) * (stop / length);
-              posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1
-                      << "," << y1 << "," << z1 << "){" << p->signal(start)
-                      << "," << p->signal(stop) << "};\n";
-              p = p->next();
-            }
-          }
-          posFile << "SP(" << destination.x() << "," << destination.y() << ","
-                  << destination.z() << "){" << 10 << "};\n";
-          for(size_t i = 0; i < m_sources.size(); ++i) {
-            posFile << "SP(" << m_sources[i].x() << "," << m_sources[i].y()
-                    << "," << m_sources[i].z() << "){" << i << "};\n";
-          }
-          for(size_t i = 0; i < m_stop_vertices.size(); ++i) {
-            posFile << "SP(" << m_stop_vertices[i]->x() << ","
-                    << m_stop_vertices[i]->y() << "," << m_stop_vertices[i]->z()
-                    << "){1};\n";
-          }
-          posFile << "};\n";
-          posFile.close();
-
-          throw std::runtime_error(
-            "Error: Could not trace back geodesic in less that " +
-            std::to_string(counter) + " steps");
-        }
+      }
+      if(minDistance < best_total_distance) {
+        SurfacePoint &source =
+          static_cast<SurfacePoint &>(m_sources[minSource]);
+        path.push_back(source);
+        return;
       }
     }
 
-    // if(source_index == std::numeric_limits<unsigned>::max())
-    //   throw std::runtime_error("Error: std max");
-    SurfacePoint &source = static_cast<SurfacePoint &>(m_sources[source_index]);
-    if(path.back().distance(&source) > 0) { path.push_back(source); }
+    if(best_total_distance >= GEODESIC_INF / 2.0 ||
+       !best_interval) // unable to find the right path
+    {
+      if(false) debugPrint("first_trace_back_intervals.pos", {destination});
+      throw std::runtime_error("could not find first interval for trace back");
+    }
+
+    unsigned sourceIndex = best_interval->source_index();
+
+    std::vector<edge_pointer> possible_edges;
+    possible_edges.reserve(10);
+
+    unsigned counter = 0;
+    interval_pointer interval = nullptr;
+    std::vector<face_pointer> incident_faces;
+    while(visible_from_source(path.back()) <
+          0) // while this point is not in the direct visibility of some source
+             // (if we are inside the FACE, we obviously hit the source)
+    {
+      SurfacePoint &q = path.back();
+
+      double total_distance;
+      double position = 0.;
+      possible_traceback_edges(q, possible_edges, incident_faces, interval);
+      interval = nullptr;
+      best_point_on_the_edge_set(q, possible_edges, incident_faces, interval,
+                                 total_distance, position);
+
+      if(!interval) {
+        std::cout << "Could not find next trace back interval" << std::endl;
+        if(false) debugPrint("trace_back_intervals.pos", path);
+        throw std::runtime_error(
+          "Error: Could not find next trace back interval");
+      }
+
+      edge_pointer e = interval->edge();
+      double local_epsilon = 1e5 * SMALLEST_INTERVAL_RATIO * e->length();
+      if(position < local_epsilon) { path.push_back(SurfacePoint(e->v0())); }
+      else if(position > e->length() - local_epsilon) {
+        path.push_back(SurfacePoint(e->v1()));
+      }
+      else {
+        double normalized_position = position / e->length();
+        path.push_back(SurfacePoint(e, normalized_position));
+      }
+      if(++counter >= 1e8) {
+        std::cout << "Could not trace back geodesic in less that " +
+                       std::to_string(counter) + " steps"
+                  << std::endl;
+        if(false)
+          debugPrint("endless_trace_back_intervals.pos",
+                     {destination, *(path.rbegin() + 2), *(path.rbegin() + 1),
+                      *(path.rbegin())});
+
+        throw std::runtime_error(
+          "Error: Could not trace back geodesic in less that " +
+          std::to_string(counter) + " steps");
+      }
+    }
+
+    SurfacePoint &source = static_cast<SurfacePoint &>(m_sources[sourceIndex]);
+    path.push_back(source);
   }
 
   // // Linked
@@ -3956,8 +3842,7 @@ namespace geodesic {
     //    m_sources[2].base_element()->id() == 8)
     //   print = true;
     double d, p;
-    unsigned source_index = std::numeric_limits<unsigned>::max();
-    best_first_interval(circumCenter, d, p, source_index);
+    best_first_interval(circumCenter, d, p);
     if(d >= GEODESIC_INF) return false;
 
     std::vector<edge_pointer> possible_edges;

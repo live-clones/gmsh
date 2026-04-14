@@ -313,12 +313,11 @@ namespace geodesic {
       return p; // && p->start() <= offset ? p : NULL;
     };
 
-    void find_closest_point(
-      SurfacePoint *point, double &offset, double &distance,
-      // interval_pointer& interval)
-      interval_pointer &interval,
-      unsigned forSourceIndex = std::numeric_limits<unsigned>::max(),
-      face_pointer incident_face = nullptr)
+    void find_closest_point(SurfacePoint *point, double &offset,
+                            double &distance,
+                            // interval_pointer& interval)
+                            interval_pointer &interval,
+                            face_pointer incident_face = nullptr)
     {
       interval_pointer p = m_first;
       offset = GEODESIC_INF;
@@ -392,11 +391,6 @@ namespace geodesic {
 
       for(; p; p = p->next()) {
         if(p->min() >= GEODESIC_INF) continue;
-        // std::cout << "\t\t" << p->depth() << std::endl;
-
-        if(forSourceIndex != std::numeric_limits<unsigned>::max() &&
-           forSourceIndex != p->source_index())
-          continue;
 
         if(incident_face && p->direction() == Interval::FROM_FACE_0 &&
            p->edge()->adjacent_faces()[0] == incident_face)
