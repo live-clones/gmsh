@@ -43,8 +43,8 @@
 
 #define NUM_AGRESSIVE_LOOPS 3
 
-#define MINANGLE (CTX::instance()->mesh.minIntrinsicAngle)
-#define MAXANGLE CTX::instance()->mesh.maxIntrinsicAngle
+#define MINANGLE (CTX::instance()->mesh.minIntrinsicAngle * M_PI / 180)
+#define MAXANGLE (CTX::instance()->mesh.maxIntrinsicAngle * M_PI / 180)
 #define MINAHEURISTIC MINANGLE
 #define MAXAHEURISTIC MAXANGLE
 
