@@ -571,6 +571,8 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
       if(onFace(p1, fc)) f1 = fc;
       if(onFace(p2, fc)) f2 = fc;
     }
+    if(!f1) Msg::Error("p0 and p1 not on a same face");
+    if(!f2) Msg::Error("p0 and p2 not on a same face");
 
     int i = 0;
     for(; i < 3; ++i) {
@@ -1380,25 +1382,31 @@ size_t highOrderPolyMesh::setCircumcenter(std::array<int, 3> &tri,
 }
 
 // INTERSECT GEODESIC PATH
-static void getSegmentFaces(geodesic::SurfacePoint &sp0,
-                            geodesic::SurfacePoint &sp1,
-                            std::vector<geodesic::Face *> &faces)
+inline static void getSegmentFaces(geodesic::SurfacePoint &sp0,
+                                   geodesic::SurfacePoint &sp1,
+                                   std::array<geodesic::Face *, 2> &faces)
 {
-  faces.clear();
+  faces = {nullptr, nullptr};
+  auto base0 = sp0.base_element();
+  auto base1 = sp1.base_element();
   if(sp0.type() == geodesic::FACE) {
-    faces.push_back(static_cast<geodesic::Face *>(sp0.base_element()));
+    faces[0] = static_cast<geodesic::Face *>(base0);
     return;
   }
   if(sp1.type() == geodesic::FACE) {
-    faces.push_back(static_cast<geodesic::Face *>(sp1.base_element()));
+    faces[0] = static_cast<geodesic::Face *>(base1);
     return;
   }
 
-  auto &adj0 = sp0.base_element()->adjacent_faces();
-  auto &adj1 = sp1.base_element()->adjacent_faces();
+  auto &adj0 = base0->adjacent_faces();
+  auto &adj1 = base1->adjacent_faces();
+  int found = 0;
   for(auto f0 : adj0) {
     for(auto f1 : adj1) {
-      if(f0 == f1) { faces.push_back(f0); }
+      if(f0 == f1) {
+        faces[found++] = f0;
+        if(found == 2) return;
+      }
     }
   }
 }
@@ -1494,27 +1502,28 @@ inline bool intersect(double p0[3], double p1[3], double s0[3], double s1[3],
 
 bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
 {
-  std::vector<geodesic::Face *> faces;
+  std::array<geodesic::Face *, 2> faces;
 
   // Memoization of last p0 argument
   static PathView last_p0;
-  static std::unordered_map<geodesic::Face *, std::vector<int>> faceToSegments;
-  static std::unordered_map<geodesic::Vertex *, std::vector<int>>
-    vertexToSegments;
+  static std::vector<std::pair<geodesic::Face *, int>> faceToSegments2;
+  static std::vector<std::pair<geodesic::Vertex *, int>> vertexToSegments2;
   if(p0 != last_p0) {
-    faceToSegments.clear();
-    vertexToSegments.clear();
+    faceToSegments2.clear();
+    vertexToSegments2.clear();
     for(size_t i = 1; i < p0.size(); ++i) {
       getSegmentFaces(p0[i - 1], p0[i], faces);
-      for(auto f : faces) { faceToSegments[f].push_back(i); }
+      faceToSegments2.push_back({faces[0], i});
+      if(faces[1]) faceToSegments2.push_back({faces[1], i});
 
-      if(p0[i - 1].type() == geodesic::VERTEX)
-        vertexToSegments[static_cast<geodesic::Vertex *>(
-                           p0[i - 1].base_element())]
-          .push_back(i);
-      if(p0[i].type() == geodesic::VERTEX)
-        vertexToSegments[static_cast<geodesic::Vertex *>(p0[i].base_element())]
-          .push_back(i);
+      if(p0[i - 1].type() == geodesic::VERTEX) {
+        vertexToSegments2.push_back(
+          {static_cast<geodesic::Vertex *>(p0[i - 1].base_element()), i});
+      }
+      if(p0[i].type() == geodesic::VERTEX) {
+        vertexToSegments2.push_back(
+          {static_cast<geodesic::Vertex *>(p0[i].base_element()), i});
+      }
     }
   }
 
@@ -1523,19 +1532,30 @@ bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
     is.clear();
     // Get all coplanar segments
     getSegmentFaces(p1[j - 1], p1[j], faces);
-    for(auto f : faces) {
-      for(auto i : faceToSegments[f]) { is.push_back(i); }
+    for(auto i : faceToSegments2) {
+      if(i.first != faces[0]) continue;
+      is.push_back(i.second);
+    }
+    if(faces[1]) {
+      for(auto i : faceToSegments2) {
+        if(i.first != faces[1]) continue;
+        is.push_back(i.second);
+      }
     }
 
     if(p1[j - 1].type() == geodesic::VERTEX) {
-      for(auto i : vertexToSegments[static_cast<geodesic::Vertex *>(
-            p1[j - 1].base_element())])
-        is.push_back(i);
+      for(auto i : vertexToSegments2) {
+        if(i.first != static_cast<geodesic::Vertex *>(p1[j - 1].base_element()))
+          continue;
+        is.push_back(i.second);
+      }
     }
     if(p1[j].type() == geodesic::VERTEX) {
-      for(auto i : vertexToSegments[static_cast<geodesic::Vertex *>(
-            p1[j].base_element())])
-        is.push_back(i);
+      for(auto i : vertexToSegments2) {
+        if(i.first != static_cast<geodesic::Vertex *>(p1[j].base_element()))
+          continue;
+        is.push_back(i.second);
+      }
     }
 
     std::sort(is.begin(), is.end());
