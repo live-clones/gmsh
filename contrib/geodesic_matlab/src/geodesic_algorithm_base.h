@@ -29,10 +29,9 @@ namespace geodesic {
       std::vector<SurfacePoint> *stop_points =
         NULL) = 0; // or after ensuring that all the stop_points are covered
 
-    virtual void trace_back(
-      SurfacePoint &destination, // trace back piecewise-linear path
-      std::vector<SurfacePoint> &path,
-      unsigned source_index = std::numeric_limits<unsigned>::max()) = 0;
+    virtual void
+    trace_back(SurfacePoint &destination, // trace back piecewise-linear path
+               std::vector<SurfacePoint> &path) = 0;
 
     void geodesic(
       SurfacePoint &source, SurfacePoint &destination,
