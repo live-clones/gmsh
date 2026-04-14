@@ -99,14 +99,14 @@ namespace geodesic {
       : m_start(0.), m_d(geodesic::GEODESIC_INF), m_pseudo_x(0.),
         m_pseudo_y(0.), m_min(geodesic::GEODESIC_INF), m_next(nullptr),
         m_edge(nullptr), m_source_index(0),
-        m_direction(DirectionType::UNDEFINED_DIRECTION), m_depth(0) {};
+        m_direction(DirectionType::UNDEFINED_DIRECTION) {};
     ~Interval() {};
 
     Interval(const Interval &other)
       : m_start(other.m_start), m_d(other.m_d), m_pseudo_x(other.m_pseudo_x),
         m_pseudo_y(other.m_pseudo_y), m_min(other.m_min), m_next(other.m_next),
         m_edge(other.m_edge), m_source_index(other.m_source_index),
-        m_direction(other.m_direction), m_depth(other.m_depth) {};
+        m_direction(other.m_direction) {};
 
     enum DirectionType {
       FROM_FACE_0,
@@ -256,7 +256,6 @@ namespace geodesic {
     interval_pointer &next() { return m_next; };
     edge_pointer &edge() { return m_edge; };
     DirectionType &direction() { return m_direction; };
-    unsigned &depth() { return m_depth; };
     bool visible_from_source() { return m_direction == FROM_SOURCE; };
     unsigned &source_index() { return m_source_index; };
 
@@ -279,7 +278,6 @@ namespace geodesic {
     edge_pointer m_edge; // edge that the interval belongs to
     unsigned m_source_index; // the source it belongs to
     DirectionType m_direction; // where the interval is coming from
-    unsigned m_depth;
   };
 
   struct IntervalWithStop : public Interval {
@@ -320,7 +318,7 @@ namespace geodesic {
       // interval_pointer& interval)
       interval_pointer &interval,
       unsigned forSourceIndex = std::numeric_limits<unsigned>::max(),
-      unsigned depth = 0, face_pointer incident_face = nullptr)
+      face_pointer incident_face = nullptr)
     {
       interval_pointer p = m_first;
       offset = GEODESIC_INF;
@@ -550,7 +548,6 @@ namespace geodesic {
     m_direction = UNDEFINED_DIRECTION;
     m_edge = edge;
     m_source_index = source_index;
-    m_depth = 0;
 
     m_start = 0.0;
     // m_stop = edge->length();
