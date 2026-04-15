@@ -919,6 +919,28 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
     opt_mesh_lc_from_curvature_iso(0, GMSH_SET, 1);
     i++;
   }
+  else if(argv[i] == "-max_intrinsic_angle" ||
+          argv[i] == "-maxIntrinsicAngle") {
+    i++;
+    if(i < argv.size()) {
+      opt_mesh_max_intrinsic_angle(0, GMSH_SET, atof(argv[i++].c_str()));
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-min_intrinsic_angle" ||
+          argv[i] == "-minIntrinsicAngle") {
+    i++;
+    if(i < argv.size()) {
+      opt_mesh_min_intrinsic_angle(0, GMSH_SET, atof(argv[i++].c_str()));
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
   else if(argv[i] == "-smooth") {
     i++;
     if(i < argv.size())
