@@ -29,8 +29,10 @@ namespace {
       gf->addTriangle(new MTriangle(verts[0], verts[1], verts[2]));
     }
     else if(verts.size() == 4) {
-      gf->addQuadrangle(
-        new MQuadrangle(verts[0], verts[1], verts[2], verts[3]));
+      //gf->addQuadrangle(
+      //  new MQuadrangle(verts[0], verts[1], verts[2], verts[3]));
+      gf->addTriangle(new MTriangle(verts[0], verts[1], verts[2]));
+      gf->addTriangle(new MTriangle(verts[2], verts[3], verts[0]));
     }
     else if(verts.size() > 4) {
       // Triangulate as a fan for convex polygons
