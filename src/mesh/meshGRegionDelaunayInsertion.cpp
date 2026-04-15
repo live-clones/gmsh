@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1202,25 +1202,6 @@ static int isCavityCompatibleWithEmbeddedFace(
   return 1;
 }
 
-static void _deleteUnusedVertices(GRegion *gr)
-{
-  std::set<MVertex *, MVertexPtrLessThan> allverts;
-  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
-    for(int j = 0; j < 4; j++) {
-      if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
-        allverts.insert(gr->tetrahedra[i]->getVertex(j));
-    }
-  }
-  for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
-    // FIXME: investigate crash on exit (e.g. t16.geo)
-    // if(allverts.find(gr->mesh_vertices[i]) == allverts.end())
-    //   delete gr->mesh_vertices[i];
-  }
-  gr->mesh_vertices.clear();
-  gr->mesh_vertices.insert(gr->mesh_vertices.end(), allverts.begin(),
-                           allverts.end());
-}
-
 void insertVerticesInRegion(GRegion *gr, int maxIter,
                             double worstTetRadiusTarget, bool _classify,
                             splitQuadRecovery *sqr)
@@ -1564,8 +1545,6 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
     myFactory.Free(worst);
     allTets.erase(allTets.begin());
   }
-
-  _deleteUnusedVertices(gr);
 }
 
 // do a 3D delaunay mesh assuming a set of vertices

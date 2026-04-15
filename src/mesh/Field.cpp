@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -31,6 +31,8 @@
 #include "fullMatrix.h"
 #include "SPoint3KDTree.h"
 #include "MVertex.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -2650,102 +2652,101 @@ public:
   }
 };
 
+class search {
+public:
+  std::vector<double> sizes;
+  SPoint3Cloud pc;
+  SPoint3CloudAdaptor<SPoint3Cloud> pcadaptor;
+  SPoint3KDTree *kdtree;
+  search() : pcadaptor(pc), kdtree(nullptr) {}
+  ~search() { if(kdtree) delete kdtree; }
+};
+
 class ExtendField : public Field {
-  std::list<int> _tagCurves, _tagSurfaces;
-  std::vector<double> _sizeCurves, _sizeSurfaces;
-  SPoint3Cloud _pcCurves, _pcSurfaces;
-  SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtreeCurves, _pc2kdtreeSurfaces;
-  SPoint3KDTree *_kdtreeCurves, *_kdtreeSurfaces;
-  double _distMax, _sizeMax, _power;
+  std::list<int> _surfaceTags, _volumeTags;
+  std::set<GEntity*> _entities;
+  std::map<GEntity*, search> _searchCurves, _searchSurfaces;
+  double _sizeMax, _ratio;
 public:
   ExtendField()
-    : _pc2kdtreeCurves(_pcCurves), _pc2kdtreeSurfaces(_pcSurfaces),
-      _kdtreeCurves(nullptr), _kdtreeSurfaces(nullptr)
   {
-    _distMax = 1.;
-    _sizeMax = 1.;
-    _power = 1.;
-    options["CurvesList"] = new FieldOptionList(
-      _tagCurves, "Tags of curves in the geometric model", &updateNeeded);
+    _sizeMax = MAX_LC;
+    _ratio = 1.2;
     options["SurfacesList"] = new FieldOptionList(
-      _tagSurfaces, "Tags of surfaces in the geometric model", &updateNeeded);
-    options["DistMax"] = new FieldOptionDouble(
-      _distMax, "Maximum distance of the size extension");
+      _surfaceTags, "Tags of model surfaces on which to apply the field",
+      &updateNeeded);
+    options["VolumesList"] = new FieldOptionList(
+      _volumeTags, "Tags of model volumes on which to apply the field",
+      &updateNeeded);
     options["SizeMax"] = new FieldOptionDouble(
-      _sizeMax, "Mesh size outside DistMax");
-    options["Power"] = new FieldOptionDouble(
-      _power, "Power exponent used to interpolate the mesh size");
+      _sizeMax, "Mesh size away from boundaries");
+    options["Ratio"] = new FieldOptionDouble(
+      _ratio, "Element size growth ratio (>= 1)");
   }
-  ~ExtendField()
-  {
-    if(_kdtreeCurves) delete _kdtreeCurves;
-    if(_kdtreeSurfaces) delete _kdtreeSurfaces;
-  }
+  ~ExtendField() {}
   const char *getName() { return "Extend"; }
   std::string getDescription()
   {
-    return "Compute an extension of the mesh sizes from the given boundary "
-           "curves (resp. surfaces) inside the surfaces (resp. volumes) "
-           "being meshed. If the mesh size on the boundary, computed "
-           "as the local average length of the edges of the boundary elements, "
-           "is denoted by SizeBnd, the extension is computed as:\n\n"
-           "  F = f * SizeBnd + (1 - f) * SizeMax, if d < DistMax\n\n"
-           "  F = SizeMax, if d >= DistMax\n\n"
-           "where d denotes the distance to the boundary and "
-           "f = ((DistMax - d) / DistMax)^Power.";
+    return "Compute an extension of the boundary mesh sizes into the given "
+           "surfaces (resp. volumes) using a weighted harmonic mean of the "
+           "boundary sizes, with a prescribed element growth ratio. The size "
+           "at a point P located at distance d_i from the i-th boundary entity "
+           "is computed as:\n\n"
+           "  F = min(SizeMax, (Sum_i w_i) / (Sum_i w_i / s_i)),\n\n"
+           "with w_i = 1 / d_i^2 and s_i = SizeBnd_i + (Ratio - 1) * d_i, "
+           "where SizeBnd_i denotes the size of the closest element to P "
+           "on the i-th boundary entity.";
   }
   void recomputeCurves()
   {
-    _sizeCurves.clear();
-    _pcCurves.pts.clear();
-    if(_kdtreeCurves) delete _kdtreeCurves;
-    for(auto t : _tagCurves) {
-      GEdge *ge = GModel::current()->getEdgeByTag(t);
-      if(ge) {
-        for(auto e : ge->lines) {
-          _pcCurves.pts.push_back(e->barycenter());
-          _sizeCurves.push_back(e->getEdge(0).length());
+    _searchCurves.clear();
+    for(auto ge : _entities) {
+      if(ge->dim() != 2) continue;
+      GFace *gf = static_cast<GFace*>(ge);
+      for(auto ge : gf->edges()) {
+        auto &s = _searchCurves[ge];
+        if(s.sizes.empty()) {
+          for(auto e : ge->lines) {
+            s.sizes.push_back(e->getEdge(0).length());
+            s.pc.pts.push_back(e->barycenter());
+          }
+          if(!s.sizes.empty()) {
+            s.kdtree = new SPoint3KDTree
+              (3, s.pcadaptor, nanoflann::KDTreeSingleIndexAdaptorParams(10));
+            s.kdtree->buildIndex();
+          }
         }
       }
-      else {
-        Msg::Warning("Unknown curve %d", t);
-      }
-    }
-    if(_sizeCurves.empty()) {
-      _kdtreeCurves = nullptr;
-    }
-    else {
-      _kdtreeCurves = new SPoint3KDTree(3, _pc2kdtreeCurves,
-                                        nanoflann::KDTreeSingleIndexAdaptorParams(10));
-      _kdtreeCurves->buildIndex();
     }
   }
   void recomputeSurfaces()
   {
-    _sizeSurfaces.clear();
-    _pcSurfaces.pts.clear();
-    if(_kdtreeSurfaces) delete _kdtreeSurfaces;
-    for(auto t : _tagSurfaces) {
-      GFace *gf = GModel::current()->getFaceByTag(t);
-      if(gf) {
-        for(auto e : gf->triangles) {
-          _pcSurfaces.pts.push_back(e->barycenter());
-          double s = e->getEdge(0).length() + e->getEdge(1).length() +
-            e->getEdge(2).length();
-          _sizeSurfaces.push_back(s / 3.);
+    _searchSurfaces.clear();
+    for(auto ge : _entities) {
+      if(ge->dim() != 3) continue;
+      GRegion *gr = static_cast<GRegion*>(ge);
+      for(auto gf : gr->faces()) {
+        auto &s = _searchSurfaces[gf];
+        if(s.sizes.empty()) {
+          for(auto e : gf->triangles) {
+            double l = e->getEdge(0).length() + e->getEdge(1).length() +
+              e->getEdge(2).length();
+            s.sizes.push_back(l / 3.);
+            s.pc.pts.push_back(e->barycenter());
+          }
+          for(auto e : gf->quadrangles) {
+            double l = e->getEdge(0).length() + e->getEdge(1).length() +
+              e->getEdge(2).length() + e->getEdge(3).length();
+            s.sizes.push_back(l / 4.);
+            s.pc.pts.push_back(e->barycenter());
+          }
+          if(!s.sizes.empty()) {
+            s.kdtree = new SPoint3KDTree
+              (3, s.pcadaptor, nanoflann::KDTreeSingleIndexAdaptorParams(10));
+            s.kdtree->buildIndex();
+          }
         }
       }
-      else {
-        Msg::Warning("Unknown surface %d", t);
-      }
-    }
-    if(_sizeSurfaces.empty()) {
-      _kdtreeSurfaces = nullptr;
-    }
-    else {
-      _kdtreeSurfaces = new SPoint3KDTree(3, _pc2kdtreeSurfaces,
-                                          nanoflann::KDTreeSingleIndexAdaptorParams(10));
-      _kdtreeSurfaces->buildIndex();
     }
   }
   using Field::operator();
@@ -2753,55 +2754,95 @@ public:
   {
     if(!ge) return MAX_LC;
     if(ge->dim() != 2 && ge->dim() != 3) return MAX_LC;
-    if(ge->dim() == 2 && _tagCurves.empty()) return MAX_LC;
-    if(ge->dim() == 3 && _tagSurfaces.empty()) return MAX_LC;
-#pragma omp critical(ExtendFieldCurves)
+
+#pragma omp critical(ExtendField)
+    if(updateNeeded) {
+      _entities.clear();
+      for(auto t : _surfaceTags) {
+        GFace *gf = GModel::current()->getFaceByTag(t);
+        if(gf) {
+          _entities.insert(gf);
+        }
+        else {
+          Msg::Warning("Unknown surface %d", t);
+        }
+      }
+      for(auto t : _volumeTags) {
+        GRegion *gr = GModel::current()->getRegionByTag(t);
+        if(gr) {
+          _entities.insert(gr);
+        }
+        else {
+          Msg::Warning("Unknown volume %d", t);
+        }
+      }
+    }
+
+    if(_entities.find(ge) == _entities.end()) return MAX_LC;
+
+#pragma omp critical(ExtendField)
     if(updateNeeded ||
-       (ge->dim() == 2 && _tagCurves.size() && _sizeCurves.empty())) {
+       (ge->dim() == 2 && _surfaceTags.size() && _searchCurves.empty())) {
       // we are meshing our first surface; recompute distance to the elements on
       // curves, and invalidate the distance to surfaces
       recomputeCurves();
-      _sizeSurfaces.clear();
+      _searchSurfaces.clear();
       updateNeeded = false;
     }
-#pragma omp critical(ExtendFieldSurfaces)
+#pragma omp critical(ExtendField)
     if(updateNeeded ||
-       (ge->dim() == 3 && _tagSurfaces.size() && _sizeSurfaces.empty())) {
+       (ge->dim() == 3 && _volumeTags.size() && _searchSurfaces.empty())) {
       // we are meshing our first volume; recompute distance to the elements on
       // surfaces, and invalidate the distance to curves (to be ready for
       // subsequent surface meshing pass)
       recomputeSurfaces();
-      _sizeCurves.clear();
+      _searchCurves.clear();
       updateNeeded = false;
     }
+
     double pt[3] = {X, Y, Z};
-    nanoflann::KNNResultSet<double> res(1);
-    std::size_t index = 0;
-    double dist2 = 0., sbnd = 0.;
-    res.init(&index, &dist2);
-    if(ge->dim() == 2 && _kdtreeCurves) {
-      _kdtreeCurves->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
-      sbnd = _sizeCurves[index];
+    std::vector<GEntity *> bnd = ge->boundaryEntities();
+    std::vector<double> sbnd(bnd.size(), 0.), dbnd(bnd.size(), 0.);
+    for(std::size_t i = 0; i < bnd.size(); i++) {
+      nanoflann::KNNResultSet<double> res(1);
+      std::size_t index = 0;
+      double dist2 = 0.;
+      res.init(&index, &dist2);
+      if(ge->dim() == 2) {
+        auto &s = _searchCurves[bnd[i]];
+        if(s.kdtree) {
+          s.kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
+          sbnd[i] = s.sizes[index];
+        }
+      }
+      else {
+        auto &s = _searchSurfaces[bnd[i]];
+        if(s.kdtree) {
+          s.kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
+          sbnd[i] = s.sizes[index];
+        }
+      }
+      // "unscale" the boundary size according to the per-entity and/or the
+      // global mesh size factor, so that, if a factor is applied, it will be on
+      // the interpolated "specified" mesh size values
+      if(ge && ge->getMeshSizeFactor() != 1.0)
+        sbnd[i] /= ge->getMeshSizeFactor();
+      sbnd[i] /= CTX::instance()->mesh.lcFactor;
+      dbnd[i] = sqrt(dist2);
     }
-    else if(ge->dim() == 3 && _kdtreeSurfaces) {
-      _kdtreeSurfaces->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
-      sbnd = _sizeSurfaces[index];
+
+    const int p = 2;
+    double num = 0., den = 0., r = (_ratio < 1.) ? 1. : _ratio;
+    for(std::size_t i = 0; i < bnd.size(); i++) {
+      if(!sbnd[i] || !dbnd[i]) continue; // ignore boundary with no elements
+      double wi = 1. / std::pow(dbnd[i], p);
+      double si = sbnd[i] + (r - 1) * dbnd[i];
+      num += wi / si;
+      den += wi;
     }
-    if(sbnd <= 0 || _distMax <= 0 || _sizeMax <= 0) return MAX_LC;
-    double d = sqrt(dist2);
-    if(d >= _distMax) return _sizeMax;
-    double f = (_distMax - d) / _distMax;
-    if(_power != 1.) {
-      f = std::pow(f, _power);
-    }
-    // "unscale" the boundary size according to the per-entity and/or the global
-    // mesh size factor, so that, if a factor is applied, it will be on the
-    // interpolated "specified" mesh size values
-    if(ge && ge->getMeshSizeFactor() != 1.0)
-      sbnd /= ge->getMeshSizeFactor();
-    sbnd /= CTX::instance()->mesh.lcFactor;
-    double s = f * sbnd + (1. - f) * _sizeMax;
-    return s;
+    if(num > 0 && den > 0)
+      return std::min(_sizeMax, den / num);
+    return MAX_LC;
   }
 };
 

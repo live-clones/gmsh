@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -435,6 +435,8 @@ double opt_geometry_occ_boolean_simplify(OPT_ARGS_NUM);
 double opt_geometry_occ_scaling(OPT_ARGS_NUM);
 double opt_geometry_occ_export_only_visible(OPT_ARGS_NUM);
 double opt_geometry_occ_import_labels(OPT_ARGS_NUM);
+double opt_geometry_occ_write_parametric_curves(OPT_ARGS_NUM);
+double opt_geometry_occ_write_step_non_manifold(OPT_ARGS_NUM);
 double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM);
 double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);

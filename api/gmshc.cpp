@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1091,7 +1091,7 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const int niter, const int * dimTags, const size_t dimTags_n, int * ierr)
+GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const int niter, const int * dimTags, const size_t dimTags_n, const double quality, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -1100,7 +1100,7 @@ GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const 
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    gmsh::model::mesh::optimize(method, force, niter, api_dimTags_);
+    gmsh::model::mesh::optimize(method, force, niter, api_dimTags_, quality);
   }
   catch(...){
     if(ierr) *ierr = 1;

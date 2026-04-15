@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file in the Gmsh root directory for license information.
 @c Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2025 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2026 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -1940,6 +1940,17 @@ Multiple choices are separated by @code{|}.
 Three dots (@dots{}) indicate a possible (multiple) repetition of the
 preceding rule.
 @end enumerate
+
+@findex GeoEntity @{ @var{expression} @}
+
+In most commands that apply to geometrical entities of several
+dimensions with the same syntax (e.g. the creation of @code{Physical
+Point | Curve | Surface | Volume}), the @code{Point}, @code{Curve},
+@code{Surface} and @code{Volume} keywords can be replaced by
+@code{GeoEntity @{ @var{expression} @}}, with @var{expression}
+respectively equal to 0, 1, 2, or 3. This makes it easier to script
+parametric geometries that are valid in several dimensions, without code
+duplication.
 
 @menu
 * General scripting commands::

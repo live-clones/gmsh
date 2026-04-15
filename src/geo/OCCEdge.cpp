@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -267,7 +267,7 @@ bool OCCEdge::containsPoint(const SPoint3 &pt) const
   double u;
   SPoint3 xyz;
   if(_project(pt.data(), u, xyz.data())) {
-    const Standard_Real tolerance = BRep_Tool::Tolerance(_c);
+    const double tolerance = BRep_Tool::Tolerance(_c);
     if(pt.distance(xyz) <= tolerance) return true;
   }
   return false;
@@ -412,7 +412,7 @@ double OCCEdge::curvature(double par) const
 
   if(degenerate(0)) return eps;
 
-  Standard_Real Crv;
+  double Crv;
   if(_curve.IsNull()) {
     Geom2dLProp_CLProps2d aCLProps(_curve2d, 2, eps);
     aCLProps.SetParameter(par);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,6 +9,7 @@
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "MVertex.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "OS.h"
@@ -27,6 +28,7 @@
 #include "meshGFaceOptimize.h"
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
+#include "meshGRegionHxt.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
@@ -889,7 +891,7 @@ static void Mesh3D(GModel *m)
                  CTX::instance()->mesh.timer[2], t2 - t1);
 }
 
-void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
+void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, double quality)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
@@ -900,7 +902,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
-     how != "UntangleMeshGeometry") {
+     how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
   }
@@ -1093,6 +1095,18 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
                "WinslowUntangler module");
 #endif
   }
+  else if(how == "HXT" || how =="HXT_FlipOnly") {
+#ifndef HAVE_HXT
+    Msg::Error("Optimizing using HXT requires the HXT module");
+    return;
+#else
+    if(how == "HXT_FlipOnly")
+      optimizeMeshHXT(m, quality, true);
+    else
+      optimizeMeshHXT(m, quality, false);
+#endif
+  }
+
 
   if(Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(),
