@@ -35,7 +35,7 @@
 
 #define DEBUG false
 #define PRINT false
-#define WARNING false
+#define WARNING true
 #define ASTAR true
 #define EPS 1e-8
 #define CIRCUMMULT 5
@@ -3508,7 +3508,7 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       }
     }
 
-    if(count++ > 1e2) {
+    if(count++ > 1e3) {
       if(WARNING) Msg::Warning("infinite swaps");
       return false;
     }
@@ -3622,9 +3622,9 @@ bool highOrderPolyMesh::splitTriangle(
     }
 
     if(counter >= maxCounter) {
-      // Msg::Error(("Could not found the triangle to split (endless loop)"));
+      // Msg::Error(("Could not find the triangle to split (endless loop)"));
       if(WARNING)
-        Msg::Warning(("Could not found the triangle to split (endless loop)"));
+        Msg::Warning(("Could not find the triangle to split (endless loop)"));
       return false;
     }
 
@@ -3731,11 +3731,11 @@ bool highOrderPolyMesh::splitTriangle(
     return false;
   }
 
-  auto it = std::find(cavity.begin(), cavity.end(), iTriangle);
-  if(it == cavity.end()) {
-    if(WARNING) Msg::Warning("Triangle to split not in the cavity");
-    return false;
-  }
+  // auto it = std::find(cavity.begin(), cavity.end(), iTriangle);
+  // if(it == cavity.end()) {
+  //   if(WARNING) Msg::Warning("Triangle to split not in the cavity");
+  //   return false;
+  // }
 
   // Split Triangle
   bool success = pointsPool.convertToVertex(circumindex);
