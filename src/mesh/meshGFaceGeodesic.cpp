@@ -1510,35 +1510,35 @@ bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
     cachedIntersectionVertices.clear();
     cachedIntersectionFaces.clear();
     for(size_t i = 1; i < size0; ++i) {
-      if(p0[i - 1].type() == geodesic::VERTEX && i > 1) {
+      geodesic::SurfacePoint &start = p0[i - 1], &end = p0[i];
+
+      if(start.type() == geodesic::VERTEX && i > 1) {
         cachedIntersectionVertices.push_back(
-          static_cast<geodesic::Vertex *>(p0[i - 1].base_element()));
+          static_cast<geodesic::Vertex *>(start.base_element()));
       }
 
-      getSegmentFaces(p0[i - 1], p0[i], faces);
+      getSegmentFaces(start, end, faces);
       cachedIntersectionFaces[faces[0]] = i;
-      if(faces[1]) { cachedIntersectionFaces[faces[1]] = i; }
+      if(faces[1]) cachedIntersectionFaces[faces[1]] = i;
     }
     cachedIntersectionPath = p0;
   }
 
   for(size_t j = 1; j < size1; ++j) {
-    geodesic::SurfacePoint start = p1[j - 1], end = p1[j];
+    geodesic::SurfacePoint &start = p1[j - 1], &end = p1[j];
 
     // Check intersection through vertices
     if(start.type() == geodesic::VERTEX && j > 1) {
       geodesic::Vertex *v =
         static_cast<geodesic::Vertex *>(start.base_element());
-      if(std::find(cachedIntersectionVertices.begin(),
-                   cachedIntersectionVertices.end(),
-                   v) != cachedIntersectionVertices.end())
-        return true;
+      for(geodesic::Vertex *w : cachedIntersectionVertices) {
+        if(v == w) return true;
+      }
     }
 
     // Check intersection on faces
     getSegmentFaces(start, end, faces);
-    for(int k = 0; k < 2; ++k) {
-      geodesic::Face *face = faces[k];
+    for(geodesic::Face *face : faces) {
       if(!face) continue;
       auto it = cachedIntersectionFaces.find(face);
       if(it != cachedIntersectionFaces.end()) {
