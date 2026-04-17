@@ -1506,23 +1506,20 @@ bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
   size_t size0 = p0.size(), size1 = p1.size();
 
   // Memoization of last p0 argument
-  static PathView last_p0;
-  static std::vector<geodesic::Vertex *> vertexIntersected;
-  static std::unordered_map<geodesic::Face *, int> faceIntersected;
-  if(p0 != last_p0) {
-    vertexIntersected.clear();
-    faceIntersected.clear();
+  if(p0 != cachedIntersectionPath) {
+    cachedIntersectionVertices.clear();
+    cachedIntersectionFaces.clear();
     for(size_t i = 1; i < size0; ++i) {
       if(p0[i - 1].type() == geodesic::VERTEX && i > 1) {
-        vertexIntersected.push_back(
+        cachedIntersectionVertices.push_back(
           static_cast<geodesic::Vertex *>(p0[i - 1].base_element()));
       }
 
       getSegmentFaces(p0[i - 1], p0[i], faces);
-      faceIntersected[faces[0]] = i;
-      if(faces[1]) { faceIntersected[faces[1]] = i; }
+      cachedIntersectionFaces[faces[0]] = i;
+      if(faces[1]) { cachedIntersectionFaces[faces[1]] = i; }
     }
-    last_p0 = p0;
+    cachedIntersectionPath = p0;
   }
 
   for(size_t j = 1; j < size1; ++j) {
@@ -1532,8 +1529,9 @@ bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
     if(start.type() == geodesic::VERTEX && j > 1) {
       geodesic::Vertex *v =
         static_cast<geodesic::Vertex *>(start.base_element());
-      if(std::find(vertexIntersected.begin(), vertexIntersected.end(), v) !=
-         vertexIntersected.end())
+      if(std::find(cachedIntersectionVertices.begin(),
+                   cachedIntersectionVertices.end(),
+                   v) != cachedIntersectionVertices.end())
         return true;
     }
 
@@ -1542,8 +1540,8 @@ bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
     for(int k = 0; k < 2; ++k) {
       geodesic::Face *face = faces[k];
       if(!face) continue;
-      auto it = faceIntersected.find(face);
-      if(it != faceIntersected.end()) {
+      auto it = cachedIntersectionFaces.find(face);
+      if(it != cachedIntersectionFaces.end()) {
         size_t i = it->second;
         bool result =
           intersect(p0[i - 1].xyz(), p0[i].xyz(), start.xyz(), end.xyz(),
