@@ -1503,70 +1503,53 @@ inline bool intersect(double p0[3], double p1[3], double s0[3], double s1[3],
 bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
 {
   std::array<geodesic::Face *, 2> faces;
+  size_t size0 = p0.size(), size1 = p1.size();
 
   // Memoization of last p0 argument
   static PathView last_p0;
-  static std::vector<std::pair<geodesic::Face *, int>> faceToSegments2;
-  static std::vector<std::pair<geodesic::Vertex *, int>> vertexToSegments2;
+  static std::vector<geodesic::Vertex *> vertexIntersected;
+  static std::unordered_map<geodesic::Face *, int> faceIntersected;
   if(p0 != last_p0) {
-    faceToSegments2.clear();
-    vertexToSegments2.clear();
-    for(size_t i = 1; i < p0.size(); ++i) {
-      getSegmentFaces(p0[i - 1], p0[i], faces);
-      faceToSegments2.push_back({faces[0], i});
-      if(faces[1]) faceToSegments2.push_back({faces[1], i});
+    vertexIntersected.clear();
+    faceIntersected.clear();
+    for(size_t i = 1; i < size0; ++i) {
+      if(p0[i - 1].type() == geodesic::VERTEX && i > 1) {
+        vertexIntersected.push_back(
+          static_cast<geodesic::Vertex *>(p0[i - 1].base_element()));
+      }
 
-      if(p0[i - 1].type() == geodesic::VERTEX) {
-        vertexToSegments2.push_back(
-          {static_cast<geodesic::Vertex *>(p0[i - 1].base_element()), i});
-      }
-      if(p0[i].type() == geodesic::VERTEX) {
-        vertexToSegments2.push_back(
-          {static_cast<geodesic::Vertex *>(p0[i].base_element()), i});
-      }
+      getSegmentFaces(p0[i - 1], p0[i], faces);
+      faceIntersected[faces[0]] = i;
+      if(faces[1]) { faceIntersected[faces[1]] = i; }
     }
     last_p0 = p0;
   }
 
-  std::vector<int> is;
-  for(size_t j = 1; j < p1.size(); ++j) {
-    is.clear();
-    // Get all coplanar segments
-    getSegmentFaces(p1[j - 1], p1[j], faces);
-    for(auto i : faceToSegments2) {
-      if(i.first != faces[0]) continue;
-      is.push_back(i.second);
-    }
-    if(faces[1]) {
-      for(auto i : faceToSegments2) {
-        if(i.first != faces[1]) continue;
-        is.push_back(i.second);
-      }
+  for(size_t j = 1; j < size1; ++j) {
+    geodesic::SurfacePoint start = p1[j - 1], end = p1[j];
+
+    // Check intersection through vertices
+    if(start.type() == geodesic::VERTEX && j > 1) {
+      geodesic::Vertex *v =
+        static_cast<geodesic::Vertex *>(start.base_element());
+      if(std::find(vertexIntersected.begin(), vertexIntersected.end(), v) !=
+         vertexIntersected.end())
+        return true;
     }
 
-    if(p1[j - 1].type() == geodesic::VERTEX) {
-      for(auto i : vertexToSegments2) {
-        if(i.first != static_cast<geodesic::Vertex *>(p1[j - 1].base_element()))
-          continue;
-        is.push_back(i.second);
+    // Check intersection on faces
+    getSegmentFaces(start, end, faces);
+    for(int k = 0; k < 2; ++k) {
+      geodesic::Face *face = faces[k];
+      if(!face) continue;
+      auto it = faceIntersected.find(face);
+      if(it != faceIntersected.end()) {
+        size_t i = it->second;
+        bool result =
+          intersect(p0[i - 1].xyz(), p0[i].xyz(), start.xyz(), end.xyz(),
+                    i == 1, i + 1 == size0, j == 1, j + 1 == size1);
+        if(result) return true;
       }
-    }
-    if(p1[j].type() == geodesic::VERTEX) {
-      for(auto i : vertexToSegments2) {
-        if(i.first != static_cast<geodesic::Vertex *>(p1[j].base_element()))
-          continue;
-        is.push_back(i.second);
-      }
-    }
-
-    std::sort(is.begin(), is.end());
-    is.erase(std::unique(is.begin(), is.end()), is.end());
-
-    for(auto i : is) {
-      bool result = intersect(p0[i - 1].xyz(), p0[i].xyz(), p1[j - 1].xyz(),
-                              p1[j].xyz(), i - 1 == 0, i == p0.size() - 1,
-                              j - 1 == 0, j == p1.size() - 1);
-      if(result) return true;
     }
   }
   return false;
