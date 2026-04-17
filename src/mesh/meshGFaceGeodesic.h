@@ -351,9 +351,12 @@ public:
   static std::function<double(const double *, const size_t, const double *,
                               const size_t, const size_t *, const size_t,
                               const double *, const size_t)>
-
     triangleQualityPtr;
   unsigned iter;
+
+  PathView cachedIntersectionPath = PathView();
+  std::vector<geodesic::Vertex *> cachedIntersectionVertices;
+  std::unordered_map<geodesic::Face *, int> cachedIntersectionFaces;
 
   highOrderPolyMesh(PolyMesh *pm, std::vector<size_t> &tris);
   highOrderPolyMesh(PolyMesh *pm);
