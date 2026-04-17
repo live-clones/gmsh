@@ -1525,6 +1525,7 @@ bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
           {static_cast<geodesic::Vertex *>(p0[i].base_element()), i});
       }
     }
+    last_p0 = p0;
   }
 
   std::vector<int> is;
