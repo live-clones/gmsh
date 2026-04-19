@@ -530,6 +530,85 @@ inline double computeAngleOnFace(const double p0[3], const double p1[3],
   return atan2(((orient < 0.0) ? -1.0 : +1.0) * abs(angle_norm), dot);
 }
 
+inline void getFaceParamCoord(geodesic::SurfacePoint &p, geodesic::Face *f,
+                              double uv[2])
+{
+  if(p.type() == geodesic::FACE) {
+    uv[0] = p.uv()[0];
+    uv[1] = p.uv()[1];
+  }
+  else if(p.type() == geodesic::EDGE) {
+    geodesic::Edge *e = static_cast<geodesic::Edge *>(p.base_element());
+    if(f->adjacent_vertices()[0] == e->v0() &&
+       f->adjacent_vertices()[1] == e->v1()) {
+      uv[0] = p.uv()[0];
+      uv[1] = 0.;
+    }
+    else if(f->adjacent_vertices()[1] == e->v0() &&
+            f->adjacent_vertices()[0] == e->v1()) {
+      uv[0] = 1. - p.uv()[0];
+      uv[1] = 0.;
+    }
+    else if(f->adjacent_vertices()[1] == e->v0() &&
+            f->adjacent_vertices()[2] == e->v1()) {
+      uv[0] = 1 - p.uv()[0];
+      uv[1] = p.uv()[0];
+    }
+    else if(f->adjacent_vertices()[2] == e->v0() &&
+            f->adjacent_vertices()[1] == e->v1()) {
+      uv[0] = p.uv()[0];
+      uv[1] = 1 - p.uv()[0];
+    }
+    else if(f->adjacent_vertices()[2] == e->v0() &&
+            f->adjacent_vertices()[0] == e->v1()) {
+      uv[0] = 0.;
+      uv[1] = 1 - p.uv()[0];
+    }
+    else if(f->adjacent_vertices()[0] == e->v0() &&
+            f->adjacent_vertices()[2] == e->v1()) {
+      uv[0] = 0.;
+      uv[1] = p.uv()[0];
+    }
+  }
+  else if(p.type() == geodesic::VERTEX) {
+    if(f->adjacent_vertices()[0] == p.base_element()) {
+      uv[0] = 0.;
+      uv[1] = 0.;
+    }
+    else if(f->adjacent_vertices()[1] == p.base_element()) {
+      uv[0] = 1.;
+      uv[1] = 0.;
+    }
+    else if(f->adjacent_vertices()[2] == p.base_element()) {
+      uv[0] = 0.;
+      uv[1] = 1.;
+    }
+  }
+  else {
+    Msg::Error("Undefined surface point");
+  }
+}
+
+inline double computeAngleOnFace(geodesic::SurfacePoint &p0,
+                                 geodesic::SurfacePoint &p1,
+                                 geodesic::SurfacePoint &p2, geodesic::Face *f)
+{
+  double p0_uv[2], p1_uv[2], p2_uv[2];
+  getFaceParamCoord(p0, f, p0_uv);
+  getFaceParamCoord(p1, f, p1_uv);
+  getFaceParamCoord(p2, f, p2_uv);
+
+  double v01_u = p1_uv[0] - p0_uv[0];
+  double v01_v = p1_uv[1] - p0_uv[1];
+  double v02_u = p2_uv[0] - p0_uv[0];
+  double v02_v = p2_uv[1] - p0_uv[1];
+  double dot = v01_u * (f->G()[0] * v02_u + f->G()[1] * v02_v) +
+               v01_v * (f->G()[1] * v02_u + f->G()[2] * v02_v);
+  double cross = f->G()[3] * (v01_u * v02_v - v01_v * v02_u);
+  double angle = atan2(cross, dot);
+  return angle;
+}
+
 double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
                                                 geodesic::SurfacePoint &p1,
                                                 geodesic::SurfacePoint &p2)
@@ -539,8 +618,7 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
     geodesic::Vertex *vs[3] = {f->adjacent_vertices()[0],
                                f->adjacent_vertices()[1],
                                f->adjacent_vertices()[2]};
-    double angle = computeAngleOnFace(p0.xyz(), p1.xyz(), p2.xyz(),
-                                      vs[0]->xyz(), vs[1]->xyz(), vs[2]->xyz());
+    double angle = computeAngleOnFace(p0, p1, p2, f);
     if(angle < 0.0) angle += 2 * M_PI;
     return angle;
   }
@@ -549,15 +627,11 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
     geodesic::Edge *e = static_cast<geodesic::Edge *>(p0.base_element());
     geodesic::Face *fs[2] = {e->adjacent_faces()[0], e->adjacent_faces()[1]};
 
-    auto &adj0 = (onFace(p1, fs[0])) ? fs[0]->adjacent_vertices() :
-                                       fs[1]->adjacent_vertices();
-    double angle =
-      computeAngleOnFace(p0.xyz(), p1.xyz(), e->v0()->xyz(), adj0[0]->xyz(),
-                         adj0[1]->xyz(), adj0[2]->xyz());
-    auto &adj1 = (onFace(p2, fs[0])) ? fs[0]->adjacent_vertices() :
-                                       fs[1]->adjacent_vertices();
-    angle -= computeAngleOnFace(p0.xyz(), p2.xyz(), e->v0()->xyz(),
-                                adj1[0]->xyz(), adj1[1]->xyz(), adj1[2]->xyz());
+    geodesic::Face *f = (onFace(p1, fs[0])) ? fs[0] : fs[1];
+    geodesic::SurfacePoint sp(e->v0());
+    double angle = computeAngleOnFace(p0, p1, sp, f);
+    f = (onFace(p2, fs[0])) ? fs[0] : fs[1];
+    angle -= computeAngleOnFace(p0, p2, sp, f);
     if(angle < 0.0) angle += 2 * M_PI;
     return angle;
   }
@@ -585,14 +659,13 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
     if(i == 3) Msg::Error("Not right i");
 
     if(f1 == f2) {
-      double angle = computeAngleOnFace(p0.xyz(), p1.xyz(), p2.xyz(), v0->xyz(),
-                                        v1->xyz(), v2->xyz());
+      double angle = computeAngleOnFace(p0, p1, p2, f1);
       if(angle < 0.0) angle += 2 * M_PI;
       if(angle < M_PI) { return angle; }
     }
 
-    double angle = computeAngleOnFace(p0.xyz(), p1.xyz(), v2->xyz(), v0->xyz(),
-                                      v1->xyz(), v2->xyz());
+    geodesic::SurfacePoint sp(v2);
+    double angle = computeAngleOnFace(p0, p1, sp, f1);
     if(angle < 0.0) angle += 2 * M_PI;
     geodesic::Face *f = f1;
     geodesic::Edge *e;
@@ -608,8 +681,8 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
       }
     } while(f != f2);
 
-    double tmp = computeAngleOnFace(p0.xyz(), v1->xyz(), p2.xyz(), v0->xyz(),
-                                    v1->xyz(), v2->xyz());
+    sp = geodesic::SurfacePoint(v1);
+    double tmp = computeAngleOnFace(p0, sp, p2, f);
     if(tmp < 0.0) tmp += 2 * M_PI;
     angle += tmp;
     return angle;

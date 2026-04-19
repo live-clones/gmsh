@@ -186,10 +186,12 @@ namespace geodesic {
     }
 
     double *corner_angles() { return m_corner_angles; };
+    double *G() { return m_metric_matrix; };
 
   private:
     double m_corner_angles[3]; // triangle angles in radians; angles correspond
                                // to vertices in m_adjacent_vertices
+    double m_metric_matrix[4]; // G11, G12, G22, sqrt(det(G))
   };
 
   class Edge : public MeshElementBase {
@@ -285,7 +287,11 @@ namespace geodesic {
 
     SurfacePoint(vertex_pointer v)
       : // set the surface point in the vertex
-        SurfacePoint::Point3D(v), m_p(v) {};
+        SurfacePoint::Point3D(v), m_p(v)
+    {
+      m_param_coord[0] = 0.;
+      m_param_coord[1] = 0.;
+    };
 
     SurfacePoint(face_pointer f, double v = 1. / 3, double w = 1. / 3)
       : // set the surface point in the center of the face
@@ -304,6 +310,8 @@ namespace geodesic {
       x() = u * v0->x() + v * v1->x() + w * v2->x();
       y() = u * v0->y() + v * v1->y() + w * v2->y();
       z() = u * v0->z() + v * v1->z() + w * v2->z();
+      m_param_coord[0] = v;
+      m_param_coord[1] = w;
     };
 
     SurfacePoint(
@@ -317,6 +325,8 @@ namespace geodesic {
       x() = b * v0->x() + a * v1->x();
       y() = b * v0->y() + a * v1->y();
       z() = b * v0->z() + a * v1->z();
+      m_param_coord[0] = a;
+      m_param_coord[1] = 0.;
     };
 
     SurfacePoint(base_pointer g, double x, double y, double z,
@@ -332,9 +342,11 @@ namespace geodesic {
 
     PointType type() { return m_p ? m_p->type() : UNDEFINED_POINT; };
     base_pointer &base_element() { return m_p; };
+    double *uv() { return m_param_coord; };
 
   protected:
     base_pointer m_p; // could be face, vertex or edge pointer
+    double m_param_coord[2] = {-1., -1.};
   };
 
   inline edge_pointer Face::opposite_edge(vertex_pointer v)
