@@ -2554,8 +2554,9 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
   edge.first = he->v->data;
   edge.second = he->next->v->data;
 
-  // Two possible vertex in which collapse
-  std::vector<size_t> midIndices = {(size_t)edge.first, (size_t)edge.second};
+  // Three possible vertex in which collapse
+  std::vector<size_t> midIndices = {(size_t)edge.first, (size_t)edge.second,
+                                    pointsPool.size()};
 
   std::vector<size_t> borderVertices, cavity;
   cavity = {(size_t)he->f->data};
@@ -2605,6 +2606,13 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
       if(borderEdges[i].second == borderEdges[j].second) return false;
     }
   }
+
+  // Insert point
+  PathView path;
+  std::vector<geodesic::SurfacePoint> firstHalf, secondHalf;
+  getPath(he, path);
+  splitPath(path, .5 * length(path), firstHalf, secondHalf);
+  pointsPool.push_back(firstHalf.back());
 
   std::vector<bool> collapse(midIndices.size(), true);
   std::vector<double> maxlgths(midIndices.size(), 0.);
@@ -2739,7 +2747,10 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
     if(!collapse[j]) continue;
     if(i == -1 || qualities[j] > qualities[i]) i = j;
   }
-  if(i == -1) return false;
+  if(i == -1) {
+    removePoint(pointsPool.size() - 1);
+    return false;
+  }
 
   doCollapseEdge(edge, midIndices[i], cavities[i], newTriss[i],
                  removedEdgeItems, adjacentEdges);
@@ -2891,28 +2902,23 @@ void highOrderPolyMesh::doCollapseEdge(
 
   // Remove points
   if(index != edge.first) {
-    for(auto kv : index2pv) {
-      if(kv.first == edge.first) {
-        kv.second->he = nullptr;
-        kv.second->data = -1;
-      }
-    }
-    removePoint(edge.first);
+    PolyMesh::Vertex *v = index2pv[edge.first];
+    v->he = nullptr;
+    v->data = -1;
   }
   if(index != edge.second) {
-    for(auto kv : index2pv) {
-      if(kv.first == edge.second) {
-        kv.second->he = nullptr;
-        kv.second->data = -1;
-      }
-    }
+    PolyMesh::Vertex *v = index2pv[edge.second];
+    v->he = nullptr;
+    v->data = -1;
     removePoint(edge.second);
   }
-  if(index == pointsPool.size()) {
-    pointsPool.push_back(pointsPool[index]);
-    ipm->vertices.push_back(new PolyMesh::Vertex(pointsPool[index].x(),
-                                                 pointsPool[index].y(),
-                                                 pointsPool[index].z(), index));
+  if(index != pointsPool.size() - 1) { removePoint(pointsPool.size() - 1); }
+
+  // Add point if neccessary
+  if(index == pointsPool.size() - 1) {
+    geodesic::SurfacePoint sp = pointsPool[index];
+    index2pv[index] = new PolyMesh::Vertex(sp.x(), sp.y(), sp.z(), index);
+    ipm->vertices.push_back(index2pv[index]);
   }
 
   for(int i = 0; i < cavity.size(); ++i) {
@@ -3679,10 +3685,14 @@ bool highOrderPolyMesh::splitTriangle(
 
   // Check intersections
   bool intersect = intersectNewEdges(paths, borderPaths);
-  if(intersect) return false;
+  if(intersect) {
+    if(WARNING)
+      Msg::Warning("Could not split triangle: intersections with new edges");
+    return false;
+  }
 
   if(!symbolicSwapEdges(newTris, cavity, true, true)) {
-    // if(WARNING) Msg::Warning("Could not symbolic swap");
+    if(WARNING) Msg::Warning("Could not symbolic swap");
     return false;
   }
 
@@ -3709,7 +3719,6 @@ bool highOrderPolyMesh::splitTriangle(
 
   if(qualityAfter < 0. &&
      (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
-    // if(iter > NUM_AGRESSIVE_LOOPS && qualityAfter - qualityBefore < EPS) {
     if(WARNING)
       Msg::Warning("Quality does not improve after splitting the triangle");
     return false;
