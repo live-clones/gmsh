@@ -35,7 +35,7 @@
 
 #define DEBUG false
 #define PRINT false
-#define WARNING true
+#define WARNING false
 #define ASTAR true
 #define EPS 1e-8
 #define CIRCUMMULT 5
@@ -2727,8 +2727,8 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
       continue;
     }
 
-    if(qualityAfter < 0. ||
-       (iter > NUM_AGRESSIVE_LOOPS && qualityAfter - qualityBefore < EPS)) {
+    if(qualityAfter < 0. &&
+       (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
       collapse[i] = false;
       continue;
     }
@@ -3707,7 +3707,9 @@ bool highOrderPolyMesh::splitTriangle(
     if(q < qualityAfter) qualityAfter = q;
   }
 
-  if(iter > NUM_AGRESSIVE_LOOPS && qualityAfter - qualityBefore < EPS) {
+  if(qualityAfter < 0. &&
+     (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
+    // if(iter > NUM_AGRESSIVE_LOOPS && qualityAfter - qualityBefore < EPS) {
     if(WARNING)
       Msg::Warning("Quality does not improve after splitting the triangle");
     return false;
