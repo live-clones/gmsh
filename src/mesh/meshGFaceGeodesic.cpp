@@ -3681,7 +3681,7 @@ bool highOrderPolyMesh::splitTriangle(
   bool intersect = intersectNewEdges(paths, borderPaths);
   if(intersect) return false;
 
-  if(!symbolicSwapEdges(newTris, cavity, true, false)) {
+  if(!symbolicSwapEdges(newTris, cavity, true, true)) {
     // if(WARNING) Msg::Warning("Could not symbolic swap");
     return false;
   }
