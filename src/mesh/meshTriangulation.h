@@ -20,10 +20,17 @@ PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
 void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
 int PolyMesh2GFace(PolyMesh *pm, int faceTag);
-int PolyMeshDelaunayize (int faceTag);
+int PolyMeshDelaunayize(int faceTag);
 int meshTriangulate2d(const std::vector<double> &coord,
                       std::vector<std::size_t> &tri,
                       const std::vector<size_t> *edges_to_recover = 0);
+PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y);
+int delaunayEdgeCriterionPlaneIsotropic(PolyMesh::HalfEdge *he, void *);
+int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1, PolyMesh::Vertex *b0,
+              PolyMesh::Vertex *b1);
+int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
+                 PolyMesh::Vertex *v_end);
+
 // apply Delaunay refinement using old algorithms
 // FIXME -- not working yet
 void GFaceDelaunayRefinementOldMesher(int faceTag);

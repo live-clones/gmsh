@@ -286,7 +286,7 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
   return 0;
 }
 
-static int delaunayEdgeCriterionPlaneIsotropic(PolyMesh::HalfEdge *he, void *)
+int delaunayEdgeCriterionPlaneIsotropic(PolyMesh::HalfEdge *he, void *)
 {
   if(he->opposite == nullptr) return -1;
   PolyMesh::Vertex *v0 = he->v;
@@ -391,7 +391,7 @@ qmTriangle::gamma
 }
 */
 
-static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
+PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
 {
   double POS[2] = {x, y};
   PolyMesh::HalfEdge *he = f->he;
@@ -445,8 +445,8 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
 // recover an edge that goes from v_start --> v_end
 // ----------------------------------- assume it's internal !!!
 
-static int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1,
-                     PolyMesh::Vertex *b0, PolyMesh::Vertex *b1)
+int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1, PolyMesh::Vertex *b0,
+              PolyMesh::Vertex *b1)
 {
   double s0 =
     robustPredicates::orient2d(v0->position, v1->position, b0->position);
@@ -461,9 +461,10 @@ static int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1,
   return 1;
 }
 
-static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
-                        PolyMesh::Vertex *v_end)
+int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
+                 PolyMesh::Vertex *v_end)
 {
+  const size_t MAX_ITER = 1e6;
   PolyMesh::HalfEdge *he = v_start->he;
   std::list<PolyMesh::HalfEdge *> _list;
 
@@ -482,7 +483,11 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
       _list.push_back(he->next);
       break;
     }
-    he = he->next->next->opposite;
+    if(he->next->next->opposite)
+      he = he->next->next->opposite;
+    else {
+      while(he->opposite) { he = he->opposite->next; }
+    }
   } while(he != v_start->he);
 
   //  printf("coucou2 %lu\n",_list.size());
@@ -492,7 +497,7 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
   // find all intersections
   int iter = 0;
   while(1) {
-    if(iter++ > 1000) return -3;
+    if(iter++ > MAX_ITER) return -3;
     he = _list.back();
     he = he->opposite;
     if(!he) return -2;
@@ -546,7 +551,7 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     }
     else
       _list.push_back(he);
-    if(_iter++ > 1000) return -1;
+    if(_iter++ > MAX_ITER) return -1;
   }
   //  printf("%d intersections done\n", nbIntersection);
   return _list.size();

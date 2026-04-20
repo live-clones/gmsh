@@ -343,6 +343,7 @@ public:
   std::vector<geodesic::GeodesicAlgorithmExact> algorithms;
   // std::map<geodesic::SurfacePoint *, PolyMesh::Vertex *> sp2pv;
   std::map<size_t, size_t> sp2pv;
+  std::map<size_t, geodesic::SurfacePoint> pv2sp;
   std::unordered_map<std::array<int, 3>, std::pair<size_t, double>>
     circumIndexRadius;
   std::set<std::pair<int, int>> delaunayEdges;
@@ -550,5 +551,7 @@ void intrinsicTriangulation(geodesic::GeodesicAlgorithmExact &algorithm,
                             std::vector<int> &triangles,
                             std::vector<geodesic::SurfacePoint> &circumcenters,
                             std::vector<double> &circumradii, bool print);
+inline void getFaceParamCoord(geodesic::SurfacePoint &p, geodesic::Face *f,
+                              double uv[2]);
 
 #endif

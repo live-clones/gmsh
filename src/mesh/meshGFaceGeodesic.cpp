@@ -817,6 +817,7 @@ void highOrderPolyMesh::classifyGeodesic(std::pair<int, int> pair,
       geodesic::Vertex *pv = static_cast<geodesic::Vertex *>(_s.base_element());
       //	printf("point %lu geodesic vertex %d - %g %g
       //%g\n",i,pv->id(),_s.x(),_s.y(),_s.z());
+      pv2sp[pv->id()] = _s;
       addPolyMeshVertexVertexTag(pm->vertices[pv->id()], pm->vertices[last],
                                  tag);
       last = pv->id();
@@ -850,6 +851,7 @@ void highOrderPolyMesh::classifyGeodesic(std::pair<int, int> pair,
         new PolyMesh::Vertex(_s.x(), _s.y(), _s.z(), pm->vertices.size());
       pm->vertices.push_back(newv);
       addVertexOnEdge(he, pm->vertices.size() - 1);
+      pv2sp[pm->vertices.size() - 1] = _s;
       addPolyMeshVertexVertexTag(newv, pm->vertices[last], tag);
       last = pm->vertices.size() - 1;
     }
@@ -861,6 +863,7 @@ void highOrderPolyMesh::classifyGeodesic(std::pair<int, int> pair,
       //	printf("point %lu geodesic face %d \n",i,pf->id());
       pm->vertices.push_back(newv);
       addVertexOnSurface(pm->faces[pf->id()], pm->vertices.size() - 1);
+      pv2sp[pm->vertices.size() - 1] = _s;
       addPolyMeshVertexVertexTag(newv, pm->vertices[last], tag);
       last = pm->vertices.size() - 1;
     }
@@ -880,6 +883,7 @@ void highOrderPolyMesh::classifyGeodesicVertices(
     if(_s.type() == geodesic::VERTEX) { // saddle vertex
       geodesic::Vertex *pv = static_cast<geodesic::Vertex *>(_s.base_element());
       sp2pv[i] = pv->id();
+      pv2sp[pv->id()] = _s;
       // std::cout << i << " vertex " << pv->id() << std::endl;
       // pointVertices[i] = pm->vertices[pv->id()];
       pointVertices.push_back(pm->vertices[pv->id()]);
@@ -892,6 +896,7 @@ void highOrderPolyMesh::classifyGeodesicVertices(
       pm->vertices.push_back(newv);
       addVertexOnSurface(pm->faces[pf->id()], pm->vertices.size() - 1);
       sp2pv[i] = pm->vertices.size() - 1;
+      pv2sp[pm->vertices.size() - 1] = _s;
       // std::cout << i << " face " << pm->vertices.size() - 1 << std::endl;
       // pointVertices[i] = newv;
       pointVertices.push_back(newv);
@@ -920,6 +925,7 @@ void highOrderPolyMesh::classifyGeodesicVertices(
       pm->vertices.push_back(newv);
       addVertexOnEdge(he, pm->vertices.size() - 1);
       sp2pv[i] = pm->vertices.size() - 1;
+      pv2sp[pm->vertices.size() - 1] = _s;
       // std::cout << i << " edge " << pm->vertices.size() - 1 << std::endl;
       // pointVertices[i] = newv;
       pointVertices.push_back(newv);
@@ -4033,6 +4039,158 @@ int highOrderPolyMesh::splitTriangles(double MAXE)
 // END SPLIT TRIANGLE
 
 // CUT MESH
+
+inline void addPP(PolyMesh::Vertex *v, std::vector<PolyMesh::Vertex *> &pp,
+                  std::vector<double> &coord, geodesic::Face *f,
+                  geodesic::SurfacePoint &sp)
+{
+  double uv[2];
+  getFaceParamCoord(sp, f, uv);
+  coord.push_back(uv[0]);
+  coord.push_back(uv[1]);
+  pp.push_back(v);
+}
+
+int triangulate(const std::vector<double> &coord, const size_t offsets[3],
+                const std::vector<size_t> *rec, std::vector<std::size_t> &tri)
+{
+  // Initial Triangulation
+  int k = 0;
+  for(int j = 0; j < 3; ++j) {
+    ++k;
+    for(; k < offsets[j]; ++k) {
+      tri.push_back(k);
+      tri.push_back((k + 1) % offsets[2]);
+      tri.push_back((offsets[j] + 1) % offsets[2]);
+    }
+  }
+  tri.push_back(1);
+  tri.push_back(offsets[0] + 1);
+  tri.push_back((offsets[1] + 1) % offsets[2]);
+
+  PolyMesh *pm = new PolyMesh;
+
+  // Create Vertices
+  for(int i = 0; i < offsets[2]; ++i) {
+    PolyMesh::Vertex *v =
+      new PolyMesh::Vertex(coord[2 * i], coord[2 * i + 1], 0, i + 1);
+    pm->vertices.push_back(v);
+  }
+
+  // Create Faces
+  for(int i = 0; i < tri.size(); i += 3) {
+    PolyMesh::Vertex *v0 = pm->vertices[tri[i]];
+    PolyMesh::Vertex *v1 = pm->vertices[tri[i + 2]]; // oriented cw
+    PolyMesh::Vertex *v2 = pm->vertices[tri[i + 1]];
+    PolyMesh::HalfEdge *he0 = new PolyMesh::HalfEdge(v0);
+    PolyMesh::HalfEdge *he1 = new PolyMesh::HalfEdge(v1);
+    PolyMesh::HalfEdge *he2 = new PolyMesh::HalfEdge(v2);
+    PolyMesh::Face *f = new PolyMesh::Face(he0);
+    v0->he = he0;
+    v1->he = he1;
+    v2->he = he2;
+    he0->next = he1;
+    he1->prev = he0;
+    he1->next = he2;
+    he2->prev = he1;
+    he2->next = he0;
+    he0->prev = he2;
+    he0->f = he1->f = he2->f = f;
+    pm->faces.push_back(f);
+    pm->hedges.push_back(he0);
+    pm->hedges.push_back(he1);
+    pm->hedges.push_back(he2);
+    he0->data = pm->hedges.size() - 3;
+    he1->data = pm->hedges.size() - 2;
+    he2->data = pm->hedges.size() - 1;
+  }
+
+  // Create Face Adjacency
+  for(int i = 0; i < pm->hedges.size(); ++i) {
+    for(int j = i + 1; j < pm->hedges.size(); ++j) {
+      PolyMesh::HalfEdge *he0 = pm->hedges[i];
+      PolyMesh::HalfEdge *he1 = pm->hedges[j];
+      if(he0->v == he1->next->v && he0->next->v == he1->v) {
+        he0->opposite = he1;
+        he1->opposite = he0;
+      }
+    }
+  }
+
+  // Swap Edges
+  std::stack<PolyMesh::HalfEdge *> _stack;
+  for(auto he : pm->hedges) { _stack.push(he); }
+  std::vector<bool> _updated(pm->hedges.size(), true);
+  std::vector<PolyMesh::HalfEdge *> _touched;
+  while(!_stack.empty()) {
+    PolyMesh::HalfEdge *he = _stack.top();
+    _stack.pop();
+    if(!_updated[he->data]) continue;
+    _touched.push_back(he);
+    if(delaunayEdgeCriterionPlaneIsotropic(he, nullptr) == 1) {
+      pm->swap_edge(he);
+
+      PolyMesh::HalfEdge *H[4] = {he->next, he->next->next, he->opposite->next,
+                                  he->opposite->next->next};
+
+      for(int k = 0; k < 4; k++) {
+        he = H[k];
+        if(!he->opposite) continue;
+
+        _updated[he->data] = true;
+        _updated[he->opposite->data] = true;
+        _stack.push(he);
+      }
+    }
+    else {
+      _updated[he->data] = false;
+      if(he->opposite) _updated[he->opposite->data] = false;
+    }
+  }
+
+  // Insert Face Points
+  PolyMesh::Face *f = pm->faces[0];
+  for(size_t i = 2 * offsets[2]; i < coord.size(); i += 2) {
+    double x = coord[i];
+    double y = coord[i + 1];
+    // find face in which lies x,y
+    f = Walk(f, x, y);
+    if(!f) Msg::Error("face not found");
+    // split f and then swap edges to recover delaunayness
+    pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
+                       nullptr);
+    pm->vertices[pm->vertices.size() - 1]->data = i / 2 + 1;
+  }
+
+  // Recover Edges
+  if(rec) {
+    for(size_t i = 0; i < rec->size(); i += 2) {
+      int result =
+        recover_edge(pm, pm->vertices[(*rec)[i]], pm->vertices[(*rec)[i + 1]]);
+      if(result) {
+        Msg::Error("impossible to recover an edge %d %d (%d %d): %d", (*rec)[i],
+                   (*rec)[i + 1], tri.size() / 3 + 2, pm->vertices.size(),
+                   result);
+      }
+    }
+  }
+
+  // Recover Triangulation
+  tri.clear();
+  for(auto t : pm->faces) {
+    int i0 = t->he->v->data;
+    int i1 = t->he->next->v->data;
+    int i2 = t->he->next->next->v->data;
+    tri.push_back(i0);
+    tri.push_back(i1);
+    tri.push_back(i2);
+  }
+
+  delete pm;
+
+  return 0;
+}
+
 PolyMesh *
 highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
 {
@@ -4042,6 +4200,7 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
   pvtags.clear();
   pvvtags.clear();
   sp2pv.clear();
+  pv2sp.clear();
   _saddle.clear();
   size_t nbFaces = pm->faces.size();
   std::vector<SVector3> p0;
@@ -4082,22 +4241,36 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
   classifyGeodesicVertices(pointVertices);
   Msg::Info("Classifying Geodesic Vertices Done\n");
 
+  std::map<PolyMesh::HalfEdge *, size_t> heVerticesStart;
+  std::map<PolyMesh::HalfEdge *, size_t> heVerticesEnd;
+  std::vector<PolyMesh::Vertex *> heVertices;
+
   Msg::Info("Spliting original mesh using geodesics\n");
   for(auto it : evs) {
     PolyMesh::HalfEdge *he = it.first;
-    std::vector<PolyMesh::Vertex *> vv;
+    geodesic::Edge *e =
+      static_cast<geodesic::Edge *>(pv2sp[it.second[0]].base_element());
+    bool swap;
+    if(he->v->data == e->v0()->id() && he->next->v->data == e->v1()->id())
+      swap = false;
+    else if(he->v->data == e->v1()->id() && he->next->v->data == e->v0()->id())
+      swap = true;
+    else
+      Msg::Error("edge and hedge not corresponding");
+    std::vector<std::pair<double, PolyMesh::Vertex *>> vv;
     for(auto i : it.second) {
-      vv.push_back(pm->vertices[i]);
-      pm->vertices[i]->position = pm->vertices[i]->position - he->v->position;
+      if(!swap)
+        vv.push_back({pv2sp[i].uv()[0], pm->vertices[i]});
+      else
+        vv.push_back({1. - pv2sp[i].uv()[0], pm->vertices[i]});
     }
-    std::sort(vv.begin(), vv.end(), compareVertexOnHalfEdge);
-    for(auto i : it.second) {
-      pm->vertices[i]->position = pm->vertices[i]->position + he->v->position;
-    }
+    std::sort(vv.begin(), vv.end());
+    PolyMesh::HalfEdge *hhe = he;
+    heVerticesStart[hhe] = heVertices.size();
     for(size_t k = 0; k < vv.size(); k++) {
-      pm->split_edge_general(he, vv[k]);
-      he = he->next;
+      heVertices.push_back(vv[k].second);
     }
+    heVerticesEnd[hhe] = heVertices.size();
   }
   Msg::Info("Spliting original mesh using geodesics Done\n");
 
@@ -4148,19 +4321,30 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
     std::vector<double> coord;
     std::vector<PolyMesh::Vertex *> pp;
     PolyMesh::HalfEdge *he = pm->faces[i]->he;
-    double maxX = 0., maxY = 0.;
-    do {
-      SVector3 pos = he->v->position;
-      double x = dot(pos - p0[i], t1[i]);
-      double y = dot(pos - p0[i], t2[i]);
-      if(x > maxX) maxX = x;
-      if(y > maxY) maxY = y;
-      coord.push_back(x);
-      coord.push_back(y);
-      pp.push_back(he->v);
+    size_t edgeOffset[3] = {0, 0, 0};
+    for(int j = 0; j < 3; ++j) {
+      geodesic::SurfacePoint sp(&geoMesh.vertices()[he->v->data]);
+      addPP(he->v, pp, coord, &geoMesh.faces()[pm->faces[i]->data], sp);
+      PolyMesh::Vertex *v0 = he->v, *v1 = he->next->v;
+      PolyMesh::HalfEdge *hhe;
+      if(v0->data < v1->data) {
+        hhe = pm->getEdge(v0, v1);
+        for(size_t k = heVerticesStart[hhe]; k < heVerticesEnd[he]; ++k) {
+          addPP(heVertices[k], pp, coord, &geoMesh.faces()[pm->faces[i]->data],
+                pv2sp[heVertices[k]->data]);
+        }
+      }
+      else {
+        hhe = pm->getEdge(v1, v0);
+        for(size_t k = heVerticesEnd[hhe] - 1; k + 1 > heVerticesStart[hhe];
+            --k) {
+          addPP(heVertices[k], pp, coord, &geoMesh.faces()[pm->faces[i]->data],
+                pv2sp[heVertices[k]->data]);
+        }
+      }
+      edgeOffset[j] = pp.size();
       he = he->next;
-      // if(he->v->data == 2) std::cout << "2 with " << i << std::endl;
-    } while(he != pm->faces[i]->he);
+    }
 
     // // add salt
     // double local_eps = 1e-14 * sqrt(maxX * maxX + maxY * maxY);
@@ -4187,12 +4371,7 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
     if(it != fvs.end()) {
       for(size_t j = 0; j < it->second.size(); j++) {
         PolyMesh::Vertex *newv = pm->vertices[it->second[j]];
-        SVector3 pos = newv->position;
-        double x = dot(pos - p0[i], t1[i]);
-        double y = dot(pos - p0[i], t2[i]);
-        coord.push_back(x);
-        coord.push_back(y);
-        pp.push_back(newv);
+        addPP(newv, pp, coord, &geoMesh.faces()[i], pv2sp[newv->data]);
       }
     }
     for(size_t j = 0; j < coord.size(); j += 2) {
@@ -4248,8 +4427,7 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
 
     if(pp.size() >= 3) {
       std::vector<size_t> tri;
-      meshTriangulate2d(coord, tri,
-                        recover_all.empty() ? nullptr : &recover_all);
+      triangulate(coord, edgeOffset, &recover_all, tri);
 
       if(tri.size() == 0)
         Msg::Error("CutMesh: Zero triangles after remeshing a face");
