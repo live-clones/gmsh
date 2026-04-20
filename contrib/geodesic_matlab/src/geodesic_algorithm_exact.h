@@ -2758,7 +2758,8 @@ namespace geodesic {
        !best_interval) // unable to find the right path
     {
       if(false) debugPrint("first_trace_back_intervals.pos", {destination});
-      throw std::runtime_error("could not find first interval for trace back");
+      throw std::runtime_error(
+        "Error: could not find first interval for trace back");
     }
 
     unsigned sourceIndex = best_interval->source_index();
