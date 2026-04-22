@@ -121,7 +121,9 @@ public:
   bool isOnSeam(const GFace *gf) const;
 
   // relocate mesh vertex using GVertex coordinates
-  void relocateMeshVertices();
+  void relocateMeshVertices
+    (const std::vector<double> &pmin = std::vector<double>(),
+     const std::vector<double> &pmax = std::vector<double>());
 
   std::vector<MPoint *> points;
 
