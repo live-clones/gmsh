@@ -3519,8 +3519,9 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     opposite[next[he]] = next[ohe];
     opposite[next[ohe]] = next[he];
 
-    int toAdd[4] = {he, next[next[he]], ohe, next[next[ohe]]};
-    for(int j = 0; j < 4; ++j) {
+    int toAdd[6] = {he,  next[he],  next[next[he]],
+                    ohe, next[ohe], next[next[ohe]]};
+    for(int j = 0; j < 6; ++j) {
       auto it = std::find(list.begin(), list.end(), toAdd[j]);
       if(it != list.end()) continue;
       if(opposite[toAdd[j]] != -1) {
