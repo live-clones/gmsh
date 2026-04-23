@@ -40,6 +40,7 @@
 #define EPS 1e-8
 #define CIRCUMMULT 5
 #define PRECOMPUTE_CIRCUMCENTERS false
+#define SPLIT_IF_CANT_SWAP true
 
 #define NUM_AGRESSIVE_LOOPS 3
 
@@ -1782,6 +1783,9 @@ bool highOrderPolyMesh::swapEdge(
   if(q < 0.) { canSwap = false; }
 
   if(!canSwap) {
+#if !SPLIT_IF_CANT_SWAP
+    return false;
+#endif
     if(WARNING)
       Msg::Warning("Should be swapped but could not: %d %d", edge.first,
                    edge.second);
@@ -1791,7 +1795,6 @@ bool highOrderPolyMesh::swapEdge(
       return false;
     }
     return true;
-    // return false;
   }
 
   doSwapEdge(he);
@@ -3427,6 +3430,11 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     if(!doWeSwap(edge, oppEdge, p01, p23, borderPaths, ANGLECRIT)) { continue; }
 
     if(!canWeSwap(edge, oppEdge, p01, p23, borderPaths)) {
+#if !SPLIT_IF_CANT_SWAP
+      possible = false;
+      break;
+#endif
+
       // Msg::Warning("Edge should be swapped");
       if(!insert) {
         possible = false;
