@@ -3539,15 +3539,7 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
 
     int toAdd[6] = {he,  next[he],  next[next[he]],
                     ohe, next[ohe], next[next[ohe]]};
-    for(int j = 0; j < 6; ++j) {
-      auto it = std::find(list.begin(), list.end(), toAdd[j]);
-      if(it != list.end()) continue;
-      if(opposite[toAdd[j]] != -1) {
-        auto it = std::find(list.begin(), list.end(), opposite[toAdd[j]]);
-        if(it != list.end()) continue;
-      }
-      list.push_back(toAdd[j]);
-    }
+    for(int j = 0; j < 6; ++j) { list.push_back(toAdd[j]); }
   }
 
   if(!possible) {
@@ -3557,29 +3549,18 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     return false;
   }
 
-  newTris.clear();
-  for(int i = 0; i < id.size(); ++i) {
-    if(id[i] == -1) continue;
-    newTris.push_back(id[i]);
-    newTris.push_back(id[next[i]]);
-    newTris.push_back(id[next[next[i]]]);
-    id[next[next[i]]] = -1;
-    id[next[i]] = -1;
-    id[i] = -1;
-  }
-
   // Remove unchanged triangles
   for(auto it = cavity.begin(); it != cavity.end();) {
     bool remove = false;
-    for(int i = 0; i < newTris.size() / 3; ++i) {
-      auto he = ipm->faces[*it]->he;
+    auto he = ipm->faces[*it]->he;
+    for(int i = 0; i < id.size(); i += 3) {
       for(int j = 0; j < 3; ++j) {
-        if(he->v->data != newTris[3 * i + j]) continue;
-        if(he->next->v->data != newTris[3 * i + (j + 1) % 3]) continue;
-        if(he->next->next->v->data != newTris[3 * i + (j + 2) % 3]) continue;
-        newTris.erase(newTris.begin() + 3 * i);
-        newTris.erase(newTris.begin() + 3 * i);
-        newTris.erase(newTris.begin() + 3 * i);
+        if(he->v->data != id[i + j]) continue;
+        if(he->next->v->data != id[i + (j + 1) % 3]) continue;
+        if(he->next->next->v->data != id[i + (j + 2) % 3]) continue;
+        id[i] = -1;
+        id[i + 1] = -1;
+        id[i + 2] = -1;
         remove = true;
         break;
       }
@@ -3589,6 +3570,14 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       it = cavity.erase(it);
     else
       ++it;
+  }
+
+  newTris.clear();
+  for(int i = 0; i < id.size(); i += 3) {
+    if(id[i] == -1) continue;
+    newTris.push_back(id[i]);
+    newTris.push_back(id[i + 1]);
+    newTris.push_back(id[i + 2]);
   }
 
   return true;
