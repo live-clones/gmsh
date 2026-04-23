@@ -920,7 +920,7 @@ void highOrderPolyMesh::printGeodesic(const char *fn, int i0, int i1)
   for(size_t k = 1; k < path.size(); ++k) {
     fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", path[k - 1].x(),
             path[k - 1].y(), path[k - 1].z(), path[k].x(), path[k].y(),
-            path[k].z(), 0, 10000);
+            path[k].z(), i0, i1);
   }
   fprintf(f, "};\n");
   fclose(f);
@@ -930,8 +930,9 @@ void highOrderPolyMesh::printGeodesics(const char *fn)
 {
   FILE *f = fopen(fn, "w");
   fprintf(f, "View \"\"{\n");
-  for(size_t i = 0; i < pointsPool.size(); i += 1) {
-    int tag = (pointsPool.type(i) == PointType::Vertex) ? 1000 : 2000;
+  for(size_t i = 0; i < pointsPool.size(); ++i) {
+    if(pointsPool.type(i) == PointType::Unused) continue;
+    int tag = (pointsPool.type(i) == PointType::Vertex) ? i : 1e5 + i;
     fprintf(f, "SP(%g,%g,%g){%d};\n", pointsPool[i].x(), pointsPool[i].y(),
             pointsPool[i].z(), tag);
   }
@@ -4639,6 +4640,39 @@ bool highOrderPolyMesh::sanityCheck()
       he = he->next;
     }
   }
+  if(ipm->faces.size() != ipm->hedges.size() / 3)
+    Msg::Error("Not right number of hedges compared to faces");
+
+  // Check geodesics
+  for(auto kv : geodesics) {
+    auto i0 = kv.first.first;
+    auto i1 = kv.first.second;
+    auto &first = kv.second.front();
+    auto &second = kv.second.back();
+    if(abs(pointsPool[i0].x() - first.x()) > 1e-3 ||
+       abs(pointsPool[i0].y() - first.y()) > 1e-3 ||
+       abs(pointsPool[i0].z() - first.z()) > 1e-3) {
+      printGeodesic("geodesic_sanity.pos", i0, i1);
+      printVertex("vertex_sanity_0.pos", i0);
+      printVertex("vertex_sanity_1.pos", i1);
+      std::cout << pointsPool[i0].x() - first.x() << " "
+                << pointsPool[i0].y() - first.y() << " "
+                << pointsPool[i0].z() - first.z() << std::endl;
+      Msg::Error("Geodesic %d %d deos not start at %d", i0, i1, i0);
+    }
+    if(abs(pointsPool[i1].x() - second.x()) > 1e-3 ||
+       abs(pointsPool[i1].y() - second.y()) > 1e-3 ||
+       abs(pointsPool[i1].z() - second.z()) > 1e-3) {
+      printGeodesic("geodesic_sanity.pos", i0, i1);
+      printVertex("vertex_sanity_0.pos", i0);
+      printVertex("vertex_sanity_1.pos", i1);
+      std::cout << abs(pointsPool[i1].x() - second.x()) << " "
+                << abs(pointsPool[i1].y() - second.y()) << " "
+                << abs(pointsPool[i1].z() - second.z()) << std::endl;
+
+      Msg::Error("Geodesic %d %d deos not end at %d", i0, i1, i1);
+    }
+  }
 
   // Intersection
   std::vector<PathView> newEdges, borderEdges;
@@ -4738,7 +4772,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
     if(nbrCollapse + nbrEdgeSplit + nbrTriangleSplit == 0) break;
   }
 
-  if(niter > 0) {
+  if(niter >= 0) {
     nbrSwap = swapEdges();
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
               ipm->faces.size());
@@ -4907,7 +4941,7 @@ int makeMeshGeodesic(GModel *gm)
       if(angle < minAngle) minAngle = angle;
       if(angle > maxAngle) maxAngle = angle;
       meanAngle += angle;
-      unsigned idx = (unsigned)((angle / M_PI) * 36);
+      unsigned idx = std::min((unsigned)35, (unsigned)((angle / M_PI) * 36));
       angleBins[idx]++;
       if(angle < 1e-3) ++zeroAngle;
       he = he->next;
