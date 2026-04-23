@@ -3334,6 +3334,7 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
 
   // Minimal halfedge representation
   std::vector<int> id(newTris.size());
+  std::vector<bool> updated(newTris.size(), true);
   std::vector<int> next(newTris.size());
   std::vector<int> opposite(newTris.size(), -1);
   for(int i = 0; i < newTris.size() / 3; ++i) {
@@ -3368,6 +3369,9 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     int he = list.back();
     list.pop_back();
 
+    if(!updated[he]) continue;
+    updated[he] = false;
+
     int i0 = id[he], i1 = id[next[he]], i2 = id[next[next[he]]];
 
     int ohe = opposite[he];
@@ -3392,6 +3396,9 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       id.push_back(p1);
       id.push_back(p0);
       id.push_back(p3);
+      updated.push_back(true);
+      updated.push_back(true);
+      updated.push_back(true);
       next.push_back(idx + 1);
       next.push_back(idx + 2);
       next.push_back(idx);
@@ -3479,6 +3486,9 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       id.push_back(newId);
       id.push_back(id[next[he]]);
       id.push_back(id[next[next[he]]]);
+      updated.push_back(true);
+      updated.push_back(true);
+      updated.push_back(true);
       next.push_back(offset + 1);
       next.push_back(offset + 2);
       next.push_back(offset);
@@ -3489,6 +3499,9 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       id.push_back(newId);
       id.push_back(id[next[ohe]]);
       id.push_back(id[next[next[ohe]]]);
+      updated.push_back(true);
+      updated.push_back(true);
+      updated.push_back(true);
       next.push_back(offset + 4);
       next.push_back(offset + 5);
       next.push_back(offset + 3);
@@ -3505,6 +3518,12 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       id[next[ohe]] = newId;
       opposite[ohe] = offset;
       opposite[next[ohe]] = offset + 5;
+      updated[he] = true;
+      updated[next[he]] = true;
+      updated[next[next[he]]] = true;
+      updated[ohe] = true;
+      updated[next[ohe]] = true;
+      updated[next[next[ohe]]] = true;
 
       list.push_back(he);
       list.push_back(next[he]);
@@ -3539,7 +3558,10 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
 
     int toAdd[6] = {he,  next[he],  next[next[he]],
                     ohe, next[ohe], next[next[ohe]]};
-    for(int j = 0; j < 6; ++j) { list.push_back(toAdd[j]); }
+    for(int j = 0; j < 6; ++j) {
+      list.push_back(toAdd[j]);
+      updated[toAdd[j]] = true;
+    }
   }
 
   if(!possible) {
