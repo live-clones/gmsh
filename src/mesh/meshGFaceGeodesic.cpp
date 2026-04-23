@@ -968,6 +968,8 @@ highOrderPolyMesh::highOrderPolyMesh(PolyMesh *polyMesh,
   pm = polyMesh;
   ipm = new PolyMesh(*pm);
 
+  for(int i = 0; i < ipm->hedges.size(); ++i) ipm->hedges[i]->data = i;
+
   polyMeshToGeodesicMesh(pm, geoMesh, f2n);
   algorithms = std::vector<geodesic::GeodesicAlgorithmExact>(
     getNumThreads(), geodesic::GeodesicAlgorithmExact(&geoMesh));
@@ -2167,47 +2169,42 @@ int highOrderPolyMesh::swapEdges(int OPTION)
 {
   int count = 0;
 
-  std::vector<PolyMesh::HalfEdge *> set, nextSet;
+  std::vector<PolyMesh::HalfEdge *> set;
+  std::vector<bool> updated(ipm->hedges.size(), true);
   for(auto he : ipm->hedges) {
     if(!he->opposite) continue;
-    // auto it = std::find(set.begin(), set.end(), he->opposite);
-    // if(it != set.end()) continue;
     set.push_back(he);
   }
 
+  // Pre-compute circumcenters
+  if(PRECOMPUTE_CIRCUMCENTERS) precomputeCircumcenters();
+
   size_t iter = 1;
   while(!set.empty()) {
-    nextSet.clear();
-
-    // Pre-compute circumcenters
-    if(PRECOMPUTE_CIRCUMCENTERS) precomputeCircumcenters();
-
-    while(!set.empty()) {
-      if(count >= iter * 10000) {
-        iter++;
-        Msg::Info("Already swapped %d edges (%d triangles, queue "
-                  "size = %d)",
-                  count, ipm->faces.size(), set.size() + nextSet.size());
-      }
-
-      PolyMesh::HalfEdge *he = set.back();
-      set.pop_back();
-
-      std::vector<PolyMesh::HalfEdge *> adjacentEdges;
-      if(!swapEdge(he, adjacentEdges, OPTION)) continue;
-      ++count;
-
-      for(auto he : adjacentEdges) {
-        if(!he->opposite) continue;
-        // auto it = std::find(set.begin(), set.end(), he);
-        // if(it != set.end()) { set.erase(it); }
-        // it = std::find(set.begin(), set.end(), he->opposite);
-        // if(it != set.end()) { set.erase(it); }
-        nextSet.push_back(he);
-      }
+    if(count >= iter * 10000) {
+      iter++;
+      Msg::Info("Already swapped %d edges (%d triangles, queue "
+                "size = %d)",
+                count, ipm->faces.size(), set.size());
     }
 
-    set = nextSet;
+    PolyMesh::HalfEdge *he = set.back();
+    set.pop_back();
+
+    if(!updated[he->data]) continue;
+    updated[he->data] = false;
+
+    std::vector<PolyMesh::HalfEdge *> adjacentEdges;
+    if(!swapEdge(he, adjacentEdges, OPTION)) continue;
+    ++count;
+
+    if(updated.size() < ipm->hedges.size())
+      updated.resize(ipm->hedges.capacity(), true);
+    for(auto he : adjacentEdges) {
+      if(!he->opposite) continue;
+      set.push_back(he);
+      updated[he->data] = true;
+    }
   }
 
   return count;
@@ -2302,6 +2299,9 @@ bool highOrderPolyMesh::splitEdge(
   ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
   ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
   ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
+  ipm->hedges[ipm->hedges.size() - 3]->data = ipm->hedges.size() - 3;
+  ipm->hedges[ipm->hedges.size() - 2]->data = ipm->hedges.size() - 2;
+  ipm->hedges[ipm->hedges.size() - 1]->data = ipm->hedges.size() - 1;
   PolyMesh::Face *fs[2] = {he->f, ipm->faces.back()};
   faces.push_back(fs[0]);
   faces.push_back(fs[1]);
@@ -2324,6 +2324,9 @@ bool highOrderPolyMesh::splitEdge(
     ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
     ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
     ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
+    ipm->hedges[ipm->hedges.size() - 3]->data = ipm->hedges.size() - 3;
+    ipm->hedges[ipm->hedges.size() - 2]->data = ipm->hedges.size() - 2;
+    ipm->hedges[ipm->hedges.size() - 1]->data = ipm->hedges.size() - 1;
     fs[0] = he->opposite->f;
     fs[1] = ipm->faces.back();
     faces.push_back(fs[0]);
@@ -3070,6 +3073,7 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
     v->data = old2New[v->data];
   }
   ipm->clean();
+  for(int i = 0; i < ipm->hedges.size(); ++i) ipm->hedges[i]->data = i;
 
   // Geodesics
   std::vector<std::pair<int, int>> toInsertEdge;
@@ -3843,6 +3847,8 @@ bool highOrderPolyMesh::splitTriangle(
         ipm->hedges.push_back(hes[j]);
         ohe = new PolyMesh::HalfEdge(nullptr);
         ipm->hedges.push_back(ohe);
+        ipm->hedges[ipm->hedges.size() - 2]->data = ipm->hedges.size() - 2;
+        ipm->hedges[ipm->hedges.size() - 1]->data = ipm->hedges.size() - 1;
       }
       hes[j]->v = vs[j];
       ohe->v = vs[(j + 1) % 3];
