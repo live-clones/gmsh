@@ -16,7 +16,6 @@
 
 #include <Standard_Version.hxx>
 #include <TopoDS.hxx>
-#include <Geom2dLProp_CLProps2d.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_OffsetCurve.hxx>
 #include <Geom_Ellipse.hxx>
@@ -34,6 +33,12 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRep_Builder.hxx>
 #include <BOPTools_AlgoTools.hxx>
+
+#if OCC_VERSION_HEX < 0x080000
+#include <Geom2dLProp_CLProps2d.hxx>
+#else
+#include <GeomLProp.hxx>
+#endif
 
 OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   : GEdge(m, num, v1, v2), _c(c), _trimmed(nullptr)
@@ -414,7 +419,11 @@ double OCCEdge::curvature(double par) const
 
   double Crv;
   if(_curve.IsNull()) {
+#if OCC_VERSION_HEX < 0x080000
     Geom2dLProp_CLProps2d aCLProps(_curve2d, 2, eps);
+#else
+    GeomLProp_CLProps2d aCLProps(_curve2d, 2, eps);
+#endif
     aCLProps.SetParameter(par);
     if(!aCLProps.IsTangentDefined())
       Crv = eps;
