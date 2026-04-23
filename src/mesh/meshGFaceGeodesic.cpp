@@ -2905,6 +2905,7 @@ void highOrderPolyMesh::doCollapseEdge(
     PolyMesh::Vertex *v = index2pv[edge.first];
     v->he = nullptr;
     v->data = -1;
+    removePoint(edge.first);
   }
   if(index != edge.second) {
     PolyMesh::Vertex *v = index2pv[edge.second];
