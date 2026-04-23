@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,6 +8,7 @@
 
 #include <vector>
 
+class GModel;
 class GRegion;
 class MVertex;
 class MTetrahedron;
@@ -17,4 +18,5 @@ int meshGRegionHxt(std::vector<GRegion *> &regions);
 void delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
                          std::vector<MTetrahedron *> &tets,
                          const std::vector<MTriangle> &triangles);
+void optimizeMeshHXT(GModel* pModel, double quality, bool flipOnly);
 #endif

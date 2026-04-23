@@ -9,7 +9,8 @@ gmsh.model.mesh.generate(3)
 gmsh.plugin.setString('BoundaryLayer','Surfaces','7,8,9,10,11')
 gmsh.plugin.setString('BoundaryLayer','Volumes','1')
 gmsh.plugin.setNumber('BoundaryLayer','Thickness',1/40.)
-gmsh.plugin.setNumber('BoundaryLayer','Size',1/400.)
+gmsh.plugin.setNumber('BoundaryLayer','Size',1/40000.)
+gmsh.plugin.setNumber('BoundaryLayer','Ratio',1.4)
 
 gmsh.plugin.run('BoundaryLayer')
 

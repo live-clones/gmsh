@@ -4,7 +4,7 @@ This is the binary Software Development Kit (SDK) for Gmsh ${GMSH_VERSION}:
   * C++ compiler: ${CMAKE_CXX_COMPILER}
   * C++ compiler ID: ${CMAKE_CXX_COMPILER_ID}
   * C++ compiler version: ${CXX_COMPILER_VERSION}
-  * C++ compiler flags:${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
+  * C++ compiler flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
   * Build options:${GMSH_CONFIG_OPTIONS}
 
 Gmsh is distributed under the terms of the GNU General Public License: see

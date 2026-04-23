@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -29,8 +29,10 @@ namespace {
       gf->addTriangle(new MTriangle(verts[0], verts[1], verts[2]));
     }
     else if(verts.size() == 4) {
-      gf->addQuadrangle(
-        new MQuadrangle(verts[0], verts[1], verts[2], verts[3]));
+      //gf->addQuadrangle(
+      //  new MQuadrangle(verts[0], verts[1], verts[2], verts[3]));
+      gf->addTriangle(new MTriangle(verts[0], verts[1], verts[2]));
+      gf->addTriangle(new MTriangle(verts[2], verts[3], verts[0]));
     }
     else if(verts.size() > 4) {
       // Triangulate as a fan for convex polygons

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -919,6 +919,28 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
     opt_mesh_lc_from_curvature_iso(0, GMSH_SET, 1);
     i++;
   }
+  else if(argv[i] == "-max_intrinsic_angle" ||
+          argv[i] == "-maxIntrinsicAngle") {
+    i++;
+    if(i < argv.size()) {
+      opt_mesh_max_intrinsic_angle(0, GMSH_SET, atof(argv[i++].c_str()));
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-min_intrinsic_angle" ||
+          argv[i] == "-minIntrinsicAngle") {
+    i++;
+    if(i < argv.size()) {
+      opt_mesh_min_intrinsic_angle(0, GMSH_SET, atof(argv[i++].c_str()));
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
   else if(argv[i] == "-smooth") {
     i++;
     if(i < argv.size())
@@ -1403,7 +1425,7 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   else if(argv[i] == "-help" || argv[i] == "--help") {
     Msg::Direct("Gmsh, a 3D mesh generator with pre- and post-processing "
                 "facilities");
-    Msg::Direct("Copyright (C) 1997-2025 C. Geuzaine and J.-F. Remacle");
+    Msg::Direct("Copyright (C) 1997-2026 C. Geuzaine and J.-F. Remacle");
     PrintUsage(argv[0]);
     Msg::Exit(0);
   }
