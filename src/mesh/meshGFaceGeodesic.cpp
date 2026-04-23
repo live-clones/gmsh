@@ -3047,6 +3047,7 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
     }
 
     old2New[back] = front;
+    old2New[front] = back;
     pointsPool.swap(front, back);
   }
   pointsPool.resize(front);
@@ -3083,15 +3084,23 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
     auto itfirst = old2New.find(edge.first);
     auto itsecond = old2New.find(edge.second);
     if(itfirst == old2New.end() && itsecond == old2New.end()) {
-      ++it;
+      if(edge.first < pointsPool.size() && edge.second < pointsPool.size()) {
+        ++it;
+      }
+      else {
+        it = geodesics.erase(it);
+      }
       continue;
     }
     std::pair<int, int> newEdge = edge;
     if(itfirst != old2New.end()) newEdge.first = itfirst->second;
     if(itsecond != old2New.end()) newEdge.second = itsecond->second;
 
-    toInsertEdge.push_back(newEdge);
-    toInsertGeo.push_back(std::move(it->second));
+    if(newEdge.first < pointsPool.size() &&
+       newEdge.second < pointsPool.size()) {
+      toInsertEdge.push_back(newEdge);
+      toInsertGeo.push_back(it->second);
+    }
     it = geodesics.erase(it);
   }
   for(size_t i = 0; i < toInsertEdge.size(); ++i) {
@@ -3158,10 +3167,6 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
                          std::vector<std::pair<int, int>>(0));
   for(auto it = geodesics.begin(); it != geodesics.end();) {
     auto &e = it->first;
-    if(e.first >= pointsPool.size() || e.second >= pointsPool.size()) {
-      it = geodesics.erase(it);
-      continue;
-    }
     toIEvg.push_back(e.first);
     toIGvg.push_back(e);
     toIEvg.push_back(e.second);
