@@ -2313,141 +2313,84 @@ bool highOrderPolyMesh::splitEdge(
   splitPath(edgePath, halfLength, firstHalf, secondHalf);
   geodesic::SurfacePoint midPoint = firstHalf.back();
 
-  std::pair<int, int> oppEdge, ts;
-  getOppEdge(he, oppEdge, ts);
+  int mid = pointsPool.size();
+  pointsPool.push_back(midPoint);
 
-  int oppVertices[2] = {oppEdge.first, oppEdge.second};
-
-  std::vector<std::pair<int, int>> borderEdges;
-  if(oppVertices[0] != -1) {
-    borderEdges.push_back({edge.second, oppVertices[0]});
-    borderEdges.push_back({oppVertices[0], edge.first});
-  }
-  else {
-    borderEdges.push_back({edge.second, edge.first});
-  }
-  if(oppVertices[1] != -1) {
-    borderEdges.push_back({edge.first, oppVertices[1]});
-    borderEdges.push_back({oppVertices[1], edge.second});
-  }
-  else {
-    borderEdges.push_back({edge.first, edge.second});
+  PolyMesh::HalfEdge *ohe = he->opposite;
+  std::vector<size_t> cavity, newTris;
+  cavity.push_back(he->f->data);
+  if(ohe) cavity.push_back(ohe->f->data);
+  size_t is[4];
+  int N = 4;
+  is[0] = he->v->data;
+  is[1] = he->next->v->data;
+  is[2] = he->next->next->v->data;
+  if(ohe)
+    is[3] = ohe->next->next->v->data;
+  else
+    N = 3;
+  newTris.push_back(mid);
+  newTris.push_back(is[2]);
+  newTris.push_back(is[0]);
+  newTris.push_back(mid);
+  newTris.push_back(is[1]);
+  newTris.push_back(is[2]);
+  if(ohe) {
+    newTris.push_back(mid);
+    newTris.push_back(is[3]);
+    newTris.push_back(is[1]);
+    newTris.push_back(mid);
+    newTris.push_back(is[0]);
+    newTris.push_back(is[3]);
   }
 
   geodesic::SurfacePoint &pt_start = midPoint;
   std::vector<geodesic::SurfacePoint> pts_end;
-  for(int i = 0; i < 2; ++i) {
-    if(oppVertices[i] == -1) continue;
-    pts_end.push_back(pointsPool[oppVertices[i]]);
-  }
-  std::vector<std::vector<geodesic::SurfacePoint>> newPaths;
-  createGeodesics(pt_start, pts_end, newPaths);
-  std::vector<double> newLengths(newPaths.size());
-  std::vector<PathView> newPathsV(pts_end.size());
-  for(int i = 0; i < newPaths.size(); ++i) {
-    PathView pv(newPaths[i]);
-    newLengths[i] = adimLength(pv);
-    newPathsV[i] = PathView(newPaths[i]);
+  for(int j = 0; j < N; ++j) pts_end.push_back(pointsPool[is[j]]);
+  std::vector<std::vector<geodesic::SurfacePoint>> paths;
+  createGeodesics(pt_start, pts_end, paths);
+  for(int j = 0; j < N; ++j) setGeodesic({is[j], mid}, paths[j]);
+
+  std::vector<PathView> newPaths(N), borderPaths(N);
+  for(int j = 0; j < N; ++j) { getGeodesicPath(mid, is[j], newPaths[j]); }
+  getGeodesicPath(is[1], is[2], borderPaths[0]);
+  getGeodesicPath(is[2], is[0], borderPaths[1]);
+  if(N == 3)
+    borderPaths.pop_back();
+  else {
+    getGeodesicPath(is[0], is[3], borderPaths[2]);
+    getGeodesicPath(is[3], is[1], borderPaths[3]);
   }
 
-  std::vector<PathView> newEdges = {newPaths[0], newPaths[1], firstHalf,
-                                    secondHalf},
-                        borderPaths(borderEdges.size());
-  for(int i = 0; i < borderEdges.size(); ++i)
-    getPath(borderEdges[i], borderPaths[i]);
-  if(intersectNewEdges(newEdges, borderPaths)) {
+  if(intersectNewEdges(newPaths, borderPaths)) {
     if(WARNING)
       Msg::Warning("Could not split edge %d %d: new geodesic intersects "
                    "(themself or with border)",
                    edge.first, edge.second);
+    pointsPool.remove(mid);
     return false;
   }
 
-  //
-  // Split edge
-  //
-  int mid = pointsPool.size();
-  pointsPool.push_back(midPoint);
-
-  std::vector<PolyMesh::Face *> faces;
-  PolyMesh::Vertex *newV = new PolyMesh::Vertex(
-    pointsPool[mid].x(), pointsPool[mid].y(), pointsPool[mid].z(), mid);
-  ipm->vertices.push_back(newV);
-  ipm->faces.push_back(new PolyMesh::Face(nullptr));
-  ipm->faces.back()->data = ipm->faces.size() - 1;
-  ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
-  ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
-  ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
-  ipm->hedges[ipm->hedges.size() - 3]->data = ipm->hedges.size() - 3;
-  ipm->hedges[ipm->hedges.size() - 2]->data = ipm->hedges.size() - 2;
-  ipm->hedges[ipm->hedges.size() - 1]->data = ipm->hedges.size() - 1;
-  PolyMesh::Face *fs[2] = {he->f, ipm->faces.back()};
-  faces.push_back(fs[0]);
-  faces.push_back(fs[1]);
-  PolyMesh::HalfEdge *hes[6] = {he,
-                                he->next,
-                                he->next->next,
-                                *(ipm->hedges.rbegin()),
-                                *(ipm->hedges.rbegin() + 1),
-                                *(ipm->hedges.rbegin() + 2)};
-  PolyMesh::Vertex *vs[3] = {hes[0]->v, hes[1]->v, hes[2]->v};
-  ipm->createFace(fs[0], vs[0], newV, vs[2], hes[0], hes[3], hes[2]);
-  ipm->createFace(fs[1], newV, vs[1], vs[2], hes[4], hes[1], hes[5]);
-  hes[3]->opposite = hes[5];
-  hes[5]->opposite = hes[3];
-  if(he->opposite) {
-    he->opposite->opposite = hes[4];
-    hes[4]->opposite = he->opposite;
-    ipm->faces.push_back(new PolyMesh::Face(nullptr));
-    ipm->faces.back()->data = ipm->faces.size() - 1;
-    ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
-    ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
-    ipm->hedges.push_back(new PolyMesh::HalfEdge(nullptr));
-    ipm->hedges[ipm->hedges.size() - 3]->data = ipm->hedges.size() - 3;
-    ipm->hedges[ipm->hedges.size() - 2]->data = ipm->hedges.size() - 2;
-    ipm->hedges[ipm->hedges.size() - 1]->data = ipm->hedges.size() - 1;
-    fs[0] = he->opposite->f;
-    fs[1] = ipm->faces.back();
-    faces.push_back(fs[0]);
-    faces.push_back(fs[1]);
-    hes[0] = he->opposite;
-    hes[1] = he->opposite->next;
-    hes[2] = he->opposite->next->next;
-    hes[3] = *(ipm->hedges.rbegin());
-    hes[4] = *(ipm->hedges.rbegin() + 1);
-    hes[5] = *(ipm->hedges.rbegin() + 2);
-    vs[0] = hes[0]->v;
-    vs[1] = hes[1]->v;
-    vs[2] = hes[2]->v;
-    ipm->createFace(fs[0], vs[0], newV, vs[2], hes[0], hes[3], hes[2]);
-    ipm->createFace(fs[1], newV, vs[1], vs[2], hes[4], hes[1], hes[5]);
-    hes[3]->opposite = hes[5];
-    hes[5]->opposite = hes[3];
-    he->opposite = hes[4];
-    hes[4]->opposite = he;
+  bool result = symbolicSwapEdges(newTris, cavity, true, true);
+  if(!result) {
+    if(WARNING)
+      Msg::Warning("Could not split edge %d %d: symbolic swap was not possible",
+                   edge.first, edge.second);
+    pointsPool.remove(mid);
+    return false;
   }
 
+  // Split edge
+  replaceCavity(cavity, newTris);
+
   adjacentEdges.clear();
-  for(auto f : faces) {
-    auto he = f->he;
+  for(auto t : cavity) {
+    auto he = ipm->faces[t]->he;
     for(int j = 0; j < 3; ++j) {
+      // adjacentEdges.push_back(HEdgeItem(he, length(he)));
       adjacentEdges.push_back(he);
       he = he->next;
     }
-  }
-
-  setGeodesic({edge.first, mid}, firstHalf);
-  setAdimLength({std::min(edge.first, mid), std::max(edge.first, mid)},
-                halfLength);
-  setGeodesic({mid, edge.second}, secondHalf);
-  setAdimLength({std::min(edge.second, mid), std::max(edge.second, mid)},
-                halfLength);
-  for(int i = 0; i < 2; ++i) {
-    if(oppVertices[i] == -1) continue;
-    setGeodesic({oppVertices[i], mid}, newPaths[i]);
-    setAdimLength(
-      {std::min(oppVertices[i], mid), std::max(oppVertices[i], mid)},
-      newLengths[i]);
   }
 
   return true;
