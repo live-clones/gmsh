@@ -166,23 +166,26 @@ void insert2DDummyElement(const int elType, const size_t iel, const size_t ioel,
 }
 
 void handleCornersWhenMeshing1DEntity(
-  std::vector<MVertex *> vs, std::vector<MVertex *> nvs, size_t i,
+  std::vector<MVertex *> nvs, size_t i,
   std::map<size_t, size_t> &nodeNumTo0DEntity, size_t parentNum,
-  std::vector<GEntity *> &entities, std::vector<MVertex *> &newNodes,
-  std::vector<size_t> &targetEntityOfCopiedNode,
-  std::map<size_t, std::vector<MVertex *>> &oneDNodesByNumsOfTheirParents,
-  std::map<size_t, size_t> &newNodesNumToLineIndexToWhich1DElementWillBeAdded,
-  size_t oneDEntityIndex)
+  size_t oneDEntityIndex, std::map<size_t, MVertex *> &zeroDEntityToVertex,
+  std::vector<MElement *> &newElements, std::vector<size_t> &newElementsEntity)
 {
-  if(!nodeNumTo0DEntity.count(parentNum)) return;
-  MVertex *zeroDEntityVertex = new MVertex(
-    vs[i]->x(), vs[i]->y(), vs[i]->z(), entities[nodeNumTo0DEntity[parentNum]]);
-  newNodes.push_back(zeroDEntityVertex);
-  targetEntityOfCopiedNode.push_back(nodeNumTo0DEntity[parentNum]);
-  oneDNodesByNumsOfTheirParents[parentNum].push_back(zeroDEntityVertex);
-  newNodesNumToLineIndexToWhich1DElementWillBeAdded[zeroDEntityVertex
-                                                      ->getNum()] =
-    oneDEntityIndex;
+  if(!nodeNumTo0DEntity.count(parentNum))
+    return; // If I am not on a corner, I return
+
+  size_t zeroD_ie = nodeNumTo0DEntity[parentNum];
+  MVertex *zeroDEntityVertex;
+  if(!zeroDEntityToVertex.count(zeroD_ie)) {
+    zeroDEntityToVertex[zeroD_ie] = nvs[i];
+    return;
+  }
+  else {
+    zeroDEntityVertex = zeroDEntityToVertex[zeroD_ie];
+  }
+
+  newElements.push_back(new MLine(zeroDEntityVertex, nvs[i]));
+  newElementsEntity.push_back(oneDEntityIndex);
 }
 
 /*
@@ -219,6 +222,7 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
   std::map<size_t, size_t> oneDElementNumToLineIndex;
   std::map<size_t, std::vector<MVertex *>> oneDNodesByNumsOfTheirParents;
   std::map<size_t, size_t> nodeNumTo0DEntity;
+  std::map<size_t, MVertex *> zeroDEntityToVertex;
   std::map<size_t, size_t> newNodesNumToLineIndexToWhich1DElementWillBeAdded;
 
   // Fill nodeNumTo0DEntity datastructure
@@ -364,18 +368,14 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
                 oneDEntityIndex;
 
               handleCornersWhenMeshing1DEntity(
-                vs, nvs, ia, nodeNumTo0DEntity,
-                parentVertexNum[nvs[ia]->getNum()], entities, newNodes,
-                targetEntityOfCopiedNode, oneDNodesByNumsOfTheirParents,
-                newNodesNumToLineIndexToWhich1DElementWillBeAdded,
-                oneDEntityIndex);
+                oneDnvs, 0, nodeNumTo0DEntity,
+                parentVertexNum[nvs[ia]->getNum()], oneDEntityIndex,
+                zeroDEntityToVertex, newElements, newElementsEntity);
 
               handleCornersWhenMeshing1DEntity(
-                vs, nvs, ib, nodeNumTo0DEntity,
-                parentVertexNum[nvs[ib]->getNum()], entities, newNodes,
-                targetEntityOfCopiedNode, oneDNodesByNumsOfTheirParents,
-                newNodesNumToLineIndexToWhich1DElementWillBeAdded,
-                oneDEntityIndex);
+                oneDnvs, 1, nodeNumTo0DEntity,
+                parentVertexNum[nvs[ib]->getNum()], oneDEntityIndex,
+                zeroDEntityToVertex, newElements, newElementsEntity);
             }
 
             newElements.push_back(new MLine(oa, ob));
@@ -417,18 +417,14 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
               oneDEntityIndex;
 
             handleCornersWhenMeshing1DEntity(
-              vs, nvs, ia, nodeNumTo0DEntity,
-              parentVertexNum[nvs[ia]->getNum()], entities, newNodes,
-              targetEntityOfCopiedNode, oneDNodesByNumsOfTheirParents,
-              newNodesNumToLineIndexToWhich1DElementWillBeAdded,
-              oneDEntityIndex);
+              nvs, ia, nodeNumTo0DEntity, parentVertexNum[nvs[ia]->getNum()],
+              oneDEntityIndex, zeroDEntityToVertex, newElements,
+              newElementsEntity);
 
             handleCornersWhenMeshing1DEntity(
-              vs, nvs, ib, nodeNumTo0DEntity,
-              parentVertexNum[nvs[ib]->getNum()], entities, newNodes,
-              targetEntityOfCopiedNode, oneDNodesByNumsOfTheirParents,
-              newNodesNumToLineIndexToWhich1DElementWillBeAdded,
-              oneDEntityIndex);
+              nvs, ib, nodeNumTo0DEntity, parentVertexNum[nvs[ib]->getNum()],
+              oneDEntityIndex, zeroDEntityToVertex, newElements,
+              newElementsEntity);
 
             continue;
           }
