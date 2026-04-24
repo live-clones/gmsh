@@ -2839,8 +2839,26 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
     return false;
   }
 
-  doCollapseEdge(edge, midIndices[i], cavities[i], newTriss[i],
-                 removedEdgeItems, adjacentEdges);
+  // Remove edges
+  removedEdgeItems.clear();
+  for(auto t : cavities[i]) {
+    auto he = ipm->faces[t]->he;
+    for(int j = 0; j < 3; ++j) {
+      removedEdgeItems.push_back(HEdgeItem(he, length(he)));
+      he = he->next;
+    }
+  }
+
+  doCollapseEdge(edge, midIndices[i], cavities[i], newTriss[i]);
+
+  adjacentEdges.clear();
+  for(auto t : cavities[i]) {
+    auto he = ipm->faces[t]->he;
+    for(int j = 0; j < 3; ++j) {
+      adjacentEdges.push_back(HEdgeItem(he, length(he)));
+      he = he->next;
+    }
+  }
 
   return true;
 }
@@ -2951,149 +2969,18 @@ std::function<double(const double *, const size_t, const double *, const size_t,
                      const size_t)>
   highOrderPolyMesh::triangleQualityPtr = triangleQualityDefault;
 
-void highOrderPolyMesh::doCollapseEdge(
-  std::pair<int, int> &edge, size_t index, std::vector<size_t> &cavity,
-  std::vector<size_t> &newTris, std::vector<HEdgeItem> &removedEdgeItems,
-  // std::vector<std::pair<int, int>> &borderEdges,
-  std::vector<HEdgeItem> &adjacentEdges)
+void highOrderPolyMesh::doCollapseEdge(std::pair<int, int> &edge, size_t index,
+                                       std::vector<size_t> &cavity,
+                                       std::vector<size_t> &newTris)
 {
-  // Remove edges
-  removedEdgeItems.clear();
-  for(auto t : cavity) {
-    auto he = ipm->faces[t]->he;
-    for(int j = 0; j < 3; ++j) {
-      removedEdgeItems.push_back(HEdgeItem(he, length(he)));
-      he = he->next;
-    }
-  }
-
-  std::unordered_map<int, PolyMesh::Vertex *> index2pv;
-  std::vector<PolyMesh::HalfEdge *> boundary;
-  for(auto t : cavity) {
-    auto he = ipm->faces[t]->he;
-    for(int j = 0; j < 3; ++j) {
-      index2pv[he->v->data] = he->v;
-      he->v->he = nullptr;
-      he->v = nullptr;
-      auto it = std::find(boundary.begin(), boundary.end(), he);
-      if(it != boundary.end()) boundary.erase(it);
-      if(he->opposite) {
-        he->opposite->opposite = nullptr;
-        boundary.push_back(he->opposite);
-      }
-      he->opposite = nullptr;
-      he = he->next;
-    }
-  }
-  for(auto he : boundary) { he->v->he = he; }
-
   // Remove points
-  if(index != edge.first) {
-    PolyMesh::Vertex *v = index2pv[edge.first];
-    v->he = nullptr;
-    v->data = -1;
-    removePoint(edge.first);
-  }
-  if(index != edge.second) {
-    PolyMesh::Vertex *v = index2pv[edge.second];
-    v->he = nullptr;
-    v->data = -1;
-    removePoint(edge.second);
-  }
+  if(index != edge.first) { removePoint(edge.first); }
+  if(index != edge.second) { removePoint(edge.second); }
   if(index != pointsPool.size() - 1) { removePoint(pointsPool.size() - 1); }
 
-  // Add point if neccessary
-  if(index == pointsPool.size() - 1) {
-    geodesic::SurfacePoint sp = pointsPool[index];
-    index2pv[index] = new PolyMesh::Vertex(sp.x(), sp.y(), sp.z(), index);
-    ipm->vertices.push_back(index2pv[index]);
-  }
+  replaceCavity(cavity, newTris);
 
-  for(int i = 0; i < cavity.size(); ++i) {
-    int t = cavity[i];
-    PolyMesh::HalfEdge *he = ipm->faces[t]->he;
-
-    if(i >= cavity.size() - 2) {
-      he->f->he = nullptr;
-      for(int i = 0; i < 3; ++i) {
-        he->f = nullptr;
-        he = he->next;
-      }
-      continue;
-    }
-
-    for(int j = 0; j < 3; ++j) {
-      if(!index2pv[newTris[3 * i + j]]) Msg::Error("index2pv not found");
-      PolyMesh::Vertex *v = index2pv[newTris[3 * i + j]];
-      he->v = v;
-      v->he = he;
-      he = he->next;
-    }
-  }
-  for(int i = 0; i < cavity.size() - 2; ++i) {
-    size_t t = cavity[i];
-    auto he = ipm->faces[t]->he;
-    if(!he) continue;
-    for(int j = 0; j < 3; ++j) {
-      he = he->next;
-      for(auto bhe : boundary) {
-        if(bhe->next->v->data == he->v->data &&
-           bhe->v->data == he->next->v->data) {
-          he->opposite = bhe;
-          bhe->opposite = he;
-          break;
-        }
-      }
-      for(int ii = i + 1; ii < cavity.size() - 2; ++ii) {
-        size_t tt = cavity[ii];
-        auto hhe = ipm->faces[tt]->he;
-        if(!hhe) continue;
-        for(int jj = 0; jj < 3; ++jj) {
-          hhe = hhe->next;
-          if(he->v->data == hhe->next->v->data &&
-             he->next->v->data == hhe->v->data) {
-            he->opposite = hhe;
-            hhe->opposite = he;
-            break;
-          }
-        }
-      }
-      if(!he->opposite)
-        Msg::Error("Could not find opp of %d %d", he->v->data,
-                   he->next->v->data);
-    }
-  }
-  std::vector<PolyMesh::Vertex *> verticesInCavity;
-  for(int i = 0; i < cavity.size() - 2; ++i) {
-    size_t t = cavity[i];
-    auto he = ipm->faces[t]->he;
-    for(int j = 0; j < 3; ++j) {
-      he->v->he = he;
-      auto it =
-        std::find(verticesInCavity.begin(), verticesInCavity.end(), he->v);
-      if(it == verticesInCavity.end()) verticesInCavity.push_back(he->v);
-      he = he->next;
-    }
-  }
-  int rfcount = 0;
-  for(auto t : cavity) {
-    if(ipm->faces[t]->he == nullptr) rfcount++;
-  }
-  if(rfcount != 2) Msg::Error("Did not removed 2 faces");
-
-  cavity.resize(cavity.size() - 2);
-
-  adjacentEdges.clear();
-  std::vector<PolyMesh::HalfEdge *> added;
-  for(auto v : verticesInCavity) {
-    PolyMesh::HalfEdge *he = v->he;
-    do {
-      if(!he->opposite || !he->opposite->next) Msg::Error("Boundary vertex !");
-      auto it = std::find(added.begin(), added.end(), he->opposite);
-      if(it == added.end()) adjacentEdges.push_back(HEdgeItem(he, length(he)));
-      he = he->opposite->next;
-    } while(he != v->he);
-  }
+  return;
 }
 
 void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
@@ -3691,6 +3578,142 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
   return true;
 }
 
+void highOrderPolyMesh::replaceCavity(std::vector<size_t> &cavity,
+                                      std::vector<size_t> &newTris)
+{
+  std::vector<PolyMesh::HalfEdge *> boundary;
+  std::vector<PolyMesh::Face *> fcs;
+  std::vector<PolyMesh::HalfEdge *> hdgs;
+  std::unordered_map<int, PolyMesh::Vertex *> index2pv;
+  for(size_t i = cavity.size() - 1; i + 1 > 0; --i) {
+    PolyMesh::Face *f = ipm->faces[cavity[i]];
+    fcs.push_back(f);
+    PolyMesh::HalfEdge *he = f->he;
+    for(int j = 0; j < 3; ++j) {
+      he = he->next;
+      he->f = nullptr;
+      index2pv[he->v->data] = he->v;
+
+      if(!he->opposite) {
+        boundary.push_back(he);
+        continue;
+      }
+
+      auto it = std::find(boundary.begin(), boundary.end(), he->opposite);
+      if(it == boundary.end()) {
+        boundary.push_back(he);
+        continue;
+      }
+
+      boundary.erase(it);
+      hdgs.push_back(he);
+      hdgs.push_back(he->opposite);
+    }
+  }
+
+  for(auto kv : index2pv) { kv.second->he = nullptr; }
+  for(auto he : boundary) { he->v->he = he; }
+  for(auto he : boundary) {
+    he->next = he->next->v->he;
+    if(!he->next) Msg::Error("no next");
+  }
+  for(auto he : hdgs) he->v = nullptr;
+  for(auto f : fcs) f->he = nullptr;
+
+  for(int i = 0; i < newTris.size() / 3; ++i) {
+    size_t *is = &(newTris[3 * i]);
+    // Vertices
+    PolyMesh::Vertex *vs[3] = {nullptr, nullptr, nullptr};
+    for(int j = 0; j < 3; ++j) {
+      auto it = index2pv.find(is[j]);
+      if(it != index2pv.end()) {
+        vs[j] = it->second;
+        continue;
+      }
+      // Create vertex if not exist
+      vs[j] = new PolyMesh::Vertex(pointsPool[is[j]].x(), pointsPool[is[j]].y(),
+                                   pointsPool[is[j]].z(), is[j]);
+      ipm->vertices.push_back(vs[j]);
+      index2pv[is[j]] = vs[j];
+    }
+
+    // HalfEdges
+    PolyMesh::HalfEdge *hes[3] = {nullptr, nullptr, nullptr};
+    for(int j = 0; j < 3; ++j) {
+      // Search in Boundary
+      for(auto it = boundary.begin(); it < boundary.end(); ++it) {
+        if((*it)->v->data == is[j] &&
+           (*it)->opposite->v->data == is[(j + 1) % 3]) {
+          hes[j] = (*it);
+          boundary.erase(it);
+          break;
+        }
+      }
+      if(hes[j]) continue;
+
+      // Create HalfEdge pair
+      PolyMesh::HalfEdge *ohe;
+      if(hdgs.size() >= 2) {
+        hes[j] = hdgs.back();
+        hdgs.pop_back();
+        ohe = hdgs.back();
+        hdgs.pop_back();
+      }
+      else {
+        hes[j] = new PolyMesh::HalfEdge(nullptr);
+        ipm->hedges.push_back(hes[j]);
+        ohe = new PolyMesh::HalfEdge(nullptr);
+        ipm->hedges.push_back(ohe);
+        ipm->hedges[ipm->hedges.size() - 2]->data = ipm->hedges.size() - 2;
+        ipm->hedges[ipm->hedges.size() - 1]->data = ipm->hedges.size() - 1;
+      }
+      hes[j]->v = vs[j];
+      ohe->v = vs[(j + 1) % 3];
+      hes[j]->opposite = ohe;
+      ohe->opposite = hes[j];
+      boundary.push_back(ohe);
+    }
+
+    // Face
+    PolyMesh::Face *f;
+    if(!fcs.empty()) {
+      f = fcs.back();
+      fcs.pop_back();
+    }
+    else {
+      f = new PolyMesh::Face(nullptr);
+      ipm->faces.push_back(f);
+      f->data = ipm->faces.size() - 1;
+      cavity.push_back(f->data);
+    }
+    f->he = hes[0];
+
+    // HalfEdges connectivity
+    for(int j = 0; j < 3; ++j) {
+      hes[j]->next = hes[(j + 1) % 3];
+      hes[j]->f = f;
+      hes[j]->v->he = hes[j];
+    }
+  }
+  cavity.resize(newTris.size() / 3);
+}
+
+bool highOrderPolyMesh::doSplitTriangle(size_t circumindex,
+                                        std::vector<size_t> &cavity,
+                                        std::vector<size_t> &newTris)
+{
+  bool success = pointsPool.convertToVertex(circumindex);
+
+  if(!success) {
+    if(WARNING) Msg::Warning("Could not convert circumcenter to vertex");
+    return false;
+  }
+
+  replaceCavity(cavity, newTris);
+
+  return true;
+}
+
 bool highOrderPolyMesh::splitTriangle(
   int iTriangle, double MINA, double MAXA, std::set<int> &skipTriangles,
   std::vector<TriangleItem> removedTriangles,
@@ -3864,126 +3887,14 @@ bool highOrderPolyMesh::splitTriangle(
   }
 
   // Split Triangle
-  bool success = pointsPool.convertToVertex(circumindex);
-
-  if(!success) {
-    if(WARNING) Msg::Warning("Could not convert circumcenter to vertex");
-    return false;
-  }
 
   removedTriangles.resize(cavity.size());
-  std::vector<PolyMesh::HalfEdge *> boundary;
-  std::vector<PolyMesh::Face *> fcs;
-  std::vector<PolyMesh::HalfEdge *> hdgs;
-  std::unordered_map<int, PolyMesh::Vertex *> index2pv;
   for(size_t i = 0; i < cavity.size(); ++i) {
     removedTriangles[i] = TriangleItem((int)cavity[i], qualitiesBefore[i]);
-    PolyMesh::Face *f = ipm->faces[cavity[i]];
-    fcs.push_back(f);
-    PolyMesh::HalfEdge *he = f->he;
-    for(int j = 0; j < 3; ++j) {
-      he = he->next;
-      index2pv[he->v->data] = he->v;
-      he->v->he = nullptr;
-      he->f = nullptr;
-
-      if(!he->opposite) {
-        boundary.push_back(he);
-        continue;
-      }
-
-      auto it = std::find(boundary.begin(), boundary.end(), he->opposite);
-      if(it == boundary.end()) {
-        boundary.push_back(he);
-        continue;
-      }
-
-      boundary.erase(it);
-      hdgs.push_back(he);
-      hdgs.push_back(he->opposite);
-    }
-  }
-  for(auto he : boundary) { he->v->he = he; }
-  for(auto he : boundary) {
-    he->next = he->next->v->he;
-    if(!he->next) Msg::Error("no next");
   }
 
-  for(int i = 0; i < newTris.size() / 3; ++i) {
-    size_t *is = &(newTris[3 * i]);
-    // Vertices
-    PolyMesh::Vertex *vs[3] = {nullptr, nullptr, nullptr};
-    for(int j = 0; j < 3; ++j) {
-      auto it = index2pv.find(is[j]);
-      if(it != index2pv.end()) {
-        vs[j] = it->second;
-        continue;
-      }
-      // Create vertex if not exist
-      vs[j] = new PolyMesh::Vertex(pointsPool[is[j]].x(), pointsPool[is[j]].y(),
-                                   pointsPool[is[j]].z(), is[j]);
-      ipm->vertices.push_back(vs[j]);
-      index2pv[is[j]] = vs[j];
-    }
-
-    // HalfEdges
-    PolyMesh::HalfEdge *hes[3] = {nullptr, nullptr, nullptr};
-    for(int j = 0; j < 3; ++j) {
-      // Search in Boundary
-      for(auto it = boundary.begin(); it < boundary.end(); ++it) {
-        if((*it)->v->data == is[j] &&
-           (*it)->opposite->v->data == is[(j + 1) % 3]) {
-          hes[j] = (*it);
-          boundary.erase(it);
-          break;
-        }
-      }
-      if(hes[j]) continue;
-
-      // Create HalfEdge pair
-      PolyMesh::HalfEdge *ohe;
-      if(hdgs.size() >= 2) {
-        hes[j] = hdgs.back();
-        hdgs.pop_back();
-        ohe = hdgs.back();
-        hdgs.pop_back();
-      }
-      else {
-        hes[j] = new PolyMesh::HalfEdge(nullptr);
-        ipm->hedges.push_back(hes[j]);
-        ohe = new PolyMesh::HalfEdge(nullptr);
-        ipm->hedges.push_back(ohe);
-        ipm->hedges[ipm->hedges.size() - 2]->data = ipm->hedges.size() - 2;
-        ipm->hedges[ipm->hedges.size() - 1]->data = ipm->hedges.size() - 1;
-      }
-      hes[j]->v = vs[j];
-      ohe->v = vs[(j + 1) % 3];
-      hes[j]->opposite = ohe;
-      ohe->opposite = hes[j];
-      boundary.push_back(ohe);
-    }
-
-    // Face
-    PolyMesh::Face *f;
-    if(!fcs.empty()) {
-      f = fcs.back();
-      fcs.pop_back();
-    }
-    else {
-      f = new PolyMesh::Face(nullptr);
-      ipm->faces.push_back(f);
-      f->data = ipm->faces.size() - 1;
-      cavity.push_back(f->data);
-    }
-    f->he = hes[0];
-
-    // HalfEdges connectivity
-    for(int j = 0; j < 3; ++j) {
-      hes[j]->next = hes[(j + 1) % 3];
-      hes[j]->f = f;
-      hes[j]->v->he = hes[j];
-    }
-  }
+  bool splitted = doSplitTriangle(circumindex, cavity, newTris);
+  if(!splitted) { return false; }
 
   adjTriangles.resize(cavity.size());
   for(int i = 0; i < cavity.size(); ++i) {

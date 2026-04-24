@@ -460,6 +460,9 @@ public:
   int splitEdges(const double MAXE, double MINA, double MAXA = 1e100);
 
   char outTriangleFast(int circumindex, int t);
+  void replaceCavity(std::vector<size_t> &cavity, std::vector<size_t> &newTris);
+  bool doSplitTriangle(size_t circumindex, std::vector<size_t> &cavity,
+                       std::vector<size_t> &newTris);
   bool splitTriangle(int iTriangle, double MINA, double MAXA,
                      std::set<int> &skipTriangles,
                      std::vector<TriangleItem> removedTriangles,
@@ -481,9 +484,8 @@ public:
                     std::vector<size_t> &newTris, double minHeuristicAngle,
                     double maxHeuristicAngle);
   void doCollapseEdge(std::pair<int, int> &edge, size_t index,
-                      std::vector<size_t> &cavity, std::vector<size_t> &newTris,
-                      std::vector<HEdgeItem> &removedEdgeItems,
-                      std::vector<HEdgeItem> &adjacentEdges);
+                      std::vector<size_t> &cavity,
+                      std::vector<size_t> &newTris);
   void cleanAfterCollapse(std::set<size_t> &keep);
   bool doWeCollapse(PolyMesh::HalfEdge *he, double MINE);
   int collapseEdges(const double MINE, double MINA, double MAXA,
