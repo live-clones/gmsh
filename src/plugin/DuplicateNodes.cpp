@@ -4,8 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
-//   Erik Schnaubelt
-//   Louis Denis
+//   Jiri Szotkowski 
 
 #include "DuplicateNodes.h"
 #include "GModel.h"
@@ -25,9 +24,9 @@
 constexpr uint64_t SHIFT = 32LL;
 
 StringXNumber DuplicateNodesOption_Number[] = {
-  {GMSH_FULLRC, "Insert quads (0), triangles (1)", nullptr, 0.0},
-  {GMSH_FULLRC, "Shrink factor", nullptr, 0.0},
-  {GMSH_FULLRC, "TFEM-DG mesh on 1D etities", nullptr, 0.0}};
+  {GMSH_FULLRC, "InsertMode", nullptr, 0.0},
+  {GMSH_FULLRC, "ShrinkFactor", nullptr, 0.0},
+  {GMSH_FULLRC, "Insert1DElement", nullptr, 0.0}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterDuplicateNodesPlugin()
@@ -44,21 +43,20 @@ std::string GMSH_DuplicateNodesPlugin::getHelp() const
          "For more information about TFEM-DG, see the companion papers `DG = "
          "FEM + flat elements' (Part I: Diffusion, Part II: Convection).\n"
          "\n"
-         "The description of the plugin parameters follows:\n- `Insert quads "
-         "(0), "
-         "triangles (1)' - The user has the choice between the insertion of a "
-         "quadrangle or a pair of triangles along each edge. The type of dummy "
-         "elements chosen here does not have to coincide with the type of "
-         "elements in the original mesh. Quadrangles can be inserted into a "
+         "The description of the plugin parameters follows:\n- `InsertMode'  "
+         " - The user has the choice between the insertion of a quadrangle "
+         "(InsertMode=0) or a pair of triangles (InsertMode=1) along each edge. "
+         "The type of dummy elements chosen here does not have to coincide with" 
+         "the type of elements in the original mesh. Quadrangles can be inserted into a "
          "triangular mesh and vice versa.\n"
-         "- `Shrink factor' - This parameter "
+         "- `ShrinkFactor' - This parameter "
          "serves the debugging purposes, should be a real number from the "
          "half-closed interval [0, 1), and describes how much the original "
          "elements are scaled down. For TFEM-DG purposes, the value of this "
          "parameter should be zero. To see the inserted dummy elements while "
          "also keeping the original elements large enough, we recommend "
          "setting this parameter to 0.25.\n"
-         "- `TFEM-DG mesh on 1D entities' - "
+         "- `Insert1DElement' - "
          "In the original TFEM-DG paper, only 2D dummy elements are inserted. "
          "However, there might be applications in which there is some "
          "computation taking place on the edges of the surfaces. Therefore, we "
@@ -200,9 +198,9 @@ PView *GMSH_DuplicateNodesPlugin::execute(PView *view)
   const double DNPP_SHRINK = DuplicateNodesOption_Number[1].def;
   const bool DNPP_MESH1DENT = (bool)DuplicateNodesOption_Number[2].def;
 
-  Msg::Info("Insert quads (0), triangles (1): %d", DNPP_ELTYPETOINSERT);
-  Msg::Info("Shrink factor parameter: %f", DNPP_SHRINK);
-  Msg::Info("TFEM-DG mesh 1D entities: %s", DNPP_MESH1DENT ? "true" : "false");
+  Msg::Info("InsertMode (1 = triangle, 0 = quads): %d", DNPP_ELTYPETOINSERT);
+  Msg::Info("ShrinkFactor: %f", DNPP_SHRINK);
+  Msg::Info("Insert1DElement: %s", DNPP_MESH1DENT ? "true" : "false");
 
   GModel *m = GModel::current();
 
