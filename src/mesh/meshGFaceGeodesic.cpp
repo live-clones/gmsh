@@ -2625,7 +2625,8 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
   std::pair<size_t, size_t> edge = {he->v->data, he->next->v->data};
 
   // The edge can be collapsed into one of three vertices
-  std::vector<size_t> midIndices = {edge.first, edge.second, pointsPool.size()};
+  const size_t N = 3;
+  size_t midIndices[N] = {edge.first, edge.second, pointsPool.size()};
 
   // Find cavity
   std::vector<size_t> cavity, stack;
@@ -2675,30 +2676,24 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
   pointsPool.push_back(firstHalf.back());
 
   // Find the best vertex to collapse the edge into
-  std::vector<bool> collapse(midIndices.size(), true);
-  std::vector<double> qualities(midIndices.size(), 1.);
-  std::vector<std::vector<size_t>> newTriss(midIndices.size());
-  std::vector<std::vector<size_t>> cavities(midIndices.size());
-  for(size_t i = 0; i < midIndices.size(); ++i) {
+  bool doCollapseArray[N];
+  double qualityArray[N];
+  std::vector<size_t> newTrianglesArray[N];
+  std::vector<size_t> cavityArray[N];
+  for(size_t i = 0; i < N; ++i) {
+    doCollapseArray[i] = true;
+    qualityArray[i] = 1.;
+    newTrianglesArray[i] = {};
+    cavityArray[i] = cavity;
+  }
+  for(size_t i = 0; i < N; ++i) {
     auto &midIndex = midIndices[i];
-    std::vector<size_t> &newTris = newTriss[i];
-    std::vector<size_t> &cavityi = cavities[i];
-    cavityi = cavity;
+    std::vector<size_t> &newTriangles = newTrianglesArray[i];
+    std::vector<size_t> &cavity = cavityArray[i];
 
     if(keep.count(midIndex)) {
-      collapse[i] = false;
+      doCollapseArray[i] = false;
       continue;
-    }
-
-    std::vector<geodesic::SurfacePoint> pts_end(borderEdges.size());
-    std::vector<PathView> borderPaths(borderEdges.size());
-    newTris.resize(3 * borderEdges.size());
-    for(int j = 0; j < borderEdges.size(); ++j) {
-      newTris[3 * j] = borderEdges[j].first;
-      newTris[3 * j + 1] = borderEdges[j].second;
-      newTris[3 * j + 2] = midIndex;
-      pts_end[j] = pointsPool[borderEdges[j].first];
-      getPath(borderEdges[j], borderPaths[j]);
     }
 
     std::vector<PathView> newEdges(borderEdges.size()),
@@ -2709,66 +2704,69 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
                       borderEdgesPV[j]);
     }
     if(intersectNewEdges(newEdges, borderEdgesPV)) {
-      collapse[i] = false;
+      doCollapseArray[i] = false;
       continue;
     }
 
-    bool result = symbolicSwapEdges(newTris, cavityi, true, false);
+    newTriangles.resize(3 * borderEdges.size());
+    for(int j = 0; j < borderEdges.size(); ++j) {
+      newTriangles[3 * j] = borderEdges[j].first;
+      newTriangles[3 * j + 1] = borderEdges[j].second;
+      newTriangles[3 * j + 2] = midIndex;
+    }
+    bool result = symbolicSwapEdges(newTriangles, cavity, true, false);
     if(!result) {
-      collapse[i] = false;
+      doCollapseArray[i] = false;
       continue;
     }
 
     // Qualities
-    std::vector<size_t> oldTris(cavityi.size() * 3);
-    for(size_t i = 0; i < cavityi.size(); ++i) {
-      PolyMesh::HalfEdge *he = ipm->faces[cavityi[i]]->he;
-      oldTris[3 * i] = he->v->data;
-      oldTris[3 * i + 1] = he->next->v->data;
-      oldTris[3 * i + 2] = he->next->next->v->data;
+    std::vector<size_t> oldTriangles(cavity.size() * 3);
+    for(size_t i = 0; i < cavity.size(); ++i) {
+      PolyMesh::HalfEdge *he = ipm->faces[cavity[i]]->he;
+      oldTriangles[3 * i] = he->v->data;
+      oldTriangles[3 * i + 1] = he->next->v->data;
+      oldTriangles[3 * i + 2] = he->next->next->v->data;
     }
-    double qualityBefore = getQuality(oldTris);
+    double qualityBefore = getQuality(oldTriangles);
 
-    double qualityAfter = getQuality(newTris);
+    double qualityAfter = getQuality(newTriangles);
 
     if(qualityAfter < 0. &&
        (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
-      collapse[i] = false;
+      doCollapseArray[i] = false;
       continue;
     }
 
-    qualities[i] = qualityAfter - qualityBefore;
+    qualityArray[i] = qualityAfter - qualityBefore;
   }
 
   int i = -1;
-  for(int j = 0; j < midIndices.size(); ++j) {
-    if(!collapse[j]) continue;
-    if(i == -1 || qualities[j] > qualities[i]) i = j;
+  for(int j = 0; j < N; ++j) {
+    if(!doCollapseArray[j]) continue;
+    if(i == -1 || qualityArray[j] > qualityArray[i]) i = j;
   }
   if(i == -1) {
     removePoint(pointsPool.size() - 1);
     return false;
   }
 
-  // Remove edges
+  // Collapse Edge
+
   removedEdgeItems.clear();
-  for(auto t : cavities[i]) {
+  for(auto t : cavityArray[i]) {
     auto he = ipm->faces[t]->he;
-    for(int j = 0; j < 3; ++j) {
+    for(int j = 0; j < 3; ++j, he = he->next)
       removedEdgeItems.push_back(HEdgeItem(he, length(he)));
-      he = he->next;
-    }
   }
 
-  doCollapseEdge(edge, midIndices[i], cavities[i], newTriss[i]);
+  doCollapseEdge(edge, midIndices[i], cavityArray[i], newTrianglesArray[i]);
 
   adjacentEdges.clear();
-  for(auto t : cavities[i]) {
+  for(auto t : cavityArray[i]) {
     auto he = ipm->faces[t]->he;
-    for(int j = 0; j < 3; ++j) {
+    for(int j = 0; j < 3; ++j, he = he->next)
       adjacentEdges.push_back(HEdgeItem(he, length(he)));
-      he = he->next;
-    }
   }
 
   return true;
