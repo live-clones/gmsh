@@ -439,6 +439,9 @@ public:
                  PathView &p23, std::array<PathView, 4> &borderPaths);
   bool checkNewTriangles(std::vector<size_t> newTris);
   double getQuality(std::vector<size_t> &triangles);
+  void getBorder(std::vector<size_t> &triangles,
+                 std::vector<std::pair<size_t, size_t>> &borderEdges,
+                 std::vector<std::pair<size_t, size_t>> &innerEdges);
   bool doWeSwap(const std::pair<int, int> &edge, std::pair<int, int> &opp,
                 PathView &p01, PathView &p23, std::array<PathView, 4> &borders,
                 int OPTION = ANGLECRIT);
@@ -484,7 +487,7 @@ public:
   bool doWeCollapse(double minAngleBefore, double maxAngleBefore,
                     std::vector<size_t> &newTris, double minHeuristicAngle,
                     double maxHeuristicAngle);
-  void doCollapseEdge(std::pair<int, int> &edge, size_t index,
+  void doCollapseEdge(std::pair<size_t, size_t> &edge, size_t index,
                       std::vector<size_t> &cavity,
                       std::vector<size_t> &newTris);
   void cleanAfterCollapse(std::set<size_t> &keep);

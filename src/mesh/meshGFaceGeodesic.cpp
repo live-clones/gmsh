@@ -2113,22 +2113,8 @@ double highOrderPolyMesh::getQuality(std::vector<size_t> &triangles)
 
   // Edge Quality
   if(edgeQualityPtr != nullptr) {
-    std::vector<std::pair<size_t, size_t>> boundaryEdges;
-    std::vector<std::pair<size_t, size_t>> innerEdges;
-    for(int j = 0; j < triangles.size() / 3; ++j) {
-      size_t *is = &triangles[3 * j];
-      for(int k = 0; k < 3; ++k) {
-        std::pair<size_t, size_t> opp = {is[(k + 1) % 3], is[k]};
-        auto it = std::find(boundaryEdges.begin(), boundaryEdges.end(), opp);
-        if(it != boundaryEdges.end()) {
-          boundaryEdges.erase(it);
-          innerEdges.push_back(opp);
-        }
-        else {
-          boundaryEdges.push_back({is[k], is[(k + 1) % 3]});
-        }
-      }
-    }
+    std::vector<std::pair<size_t, size_t>> borderEdges, innerEdges;
+    getBorder(triangles, borderEdges, innerEdges);
     for(int j = 0; j < innerEdges.size(); ++j) {
       double q = getEdgeQuality(innerEdges[j]);
       if(q < quality) quality = q;
@@ -2146,6 +2132,28 @@ double highOrderPolyMesh::getQuality(std::vector<size_t> &triangles)
   }
 
   return quality;
+}
+
+void highOrderPolyMesh::getBorder(
+  std::vector<size_t> &triangles,
+  std::vector<std::pair<size_t, size_t>> &borderEdges,
+  std::vector<std::pair<size_t, size_t>> &innerEdges)
+{
+  borderEdges.clear();
+  innerEdges.clear();
+  for(size_t i = 0; i < triangles.size(); i += 3) {
+    size_t *is = &triangles[i];
+    for(int j = 0; j < 3; ++j) {
+      std::pair<int, int> o = {is[(j + 1) % 3], is[j]};
+      auto it = std::find(borderEdges.begin(), borderEdges.end(), o);
+      if(it != borderEdges.end()) {
+        borderEdges.erase(it);
+        innerEdges.push_back(o);
+      }
+      else
+        borderEdges.push_back({is[j], is[(j + 1) % 3]});
+    }
+  }
 }
 
 inline bool highOrderPolyMesh::doWeSwap(const std::pair<int, int> &edge,
@@ -2614,21 +2622,18 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
                                      std::vector<HEdgeItem> &removedEdgeItems,
                                      double MINA, double MAXA)
 {
-  std::pair<int, int> edge = {he->v->data, he->next->v->data};
-  edge.first = he->v->data;
-  edge.second = he->next->v->data;
+  std::pair<size_t, size_t> edge = {he->v->data, he->next->v->data};
 
-  // Three possible vertex in which collapse
-  std::vector<size_t> midIndices = {(size_t)edge.first, (size_t)edge.second,
-                                    pointsPool.size()};
+  // The edge can be collapsed into one of three vertices
+  std::vector<size_t> midIndices = {edge.first, edge.second, pointsPool.size()};
 
-  std::vector<size_t> borderVertices, cavity;
-  cavity = {(size_t)he->f->data};
-  if(he->opposite) cavity.push_back(he->opposite->f->data);
-  std::vector<size_t> toCheck = cavity;
-  while(!toCheck.empty()) {
-    size_t t = toCheck.back();
-    toCheck.pop_back();
+  // Find cavity
+  std::vector<size_t> cavity, stack;
+  stack.push_back(he->f->data);
+  while(!stack.empty()) {
+    size_t t = stack.back();
+    stack.pop_back();
+    cavity.push_back(t);
     auto he = ipm->faces[t]->he;
     for(int j = 0; j < 3; ++j) {
       he = he->next;
@@ -2640,29 +2645,20 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
       if(!he->opposite) continue;
       size_t of = he->opposite->f->data;
       if(std::find(cavity.begin(), cavity.end(), of) != cavity.end()) continue;
-      if(std::find(toCheck.begin(), toCheck.end(), of) != toCheck.end())
-        continue;
-      cavity.push_back(of);
-      toCheck.push_back(of);
-    }
-  }
-
-  std::vector<std::pair<int, int>> borderEdges;
-  for(auto t : cavity) {
-    auto he = ipm->faces[t]->he;
-    for(int j = 0; j < 3; ++j) {
-      he = he->next;
-      std::pair<int, int> e = {he->v->data, he->next->v->data}, o = e;
-      std::swap(o.first, o.second);
-      auto it = std::find(borderEdges.begin(), borderEdges.end(), o);
-      if(it != borderEdges.end())
-        borderEdges.erase(it);
-      else
-        borderEdges.push_back(e);
+      if(std::find(stack.begin(), stack.end(), of) != stack.end()) continue;
+      stack.push_back(of);
     }
   }
 
   // Check topology
+  std::vector<size_t> oldTriangles(3 * cavity.size());
+  for(size_t i = 0; i < cavity.size(); ++i) {
+    PolyMesh::HalfEdge *he = ipm->faces[cavity[i]]->he;
+    for(int j = 0; j < 3; ++j, he = he->next)
+      oldTriangles[3 * i + j] = he->v->data;
+  }
+  std::vector<std::pair<size_t, size_t>> borderEdges, innerEdges;
+  getBorder(oldTriangles, borderEdges, innerEdges);
   if(borderEdges.size() + 2 != cavity.size()) return false;
   for(int i = 0; i < borderEdges.size(); ++i) {
     for(int j = i + 1; j < borderEdges.size(); ++j) {
@@ -2671,14 +2667,14 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
     }
   }
 
-  // Insert point
+  // Insert mid point
   PathView path;
   std::vector<geodesic::SurfacePoint> firstHalf, secondHalf;
   getPath(he, path);
   splitPath(path, .5 * length(path), firstHalf, secondHalf);
   pointsPool.push_back(firstHalf.back());
 
-  // Find best vertex to collapse into
+  // Find the best vertex to collapse the edge into
   std::vector<bool> collapse(midIndices.size(), true);
   std::vector<double> qualities(midIndices.size(), 1.);
   std::vector<std::vector<size_t>> newTriss(midIndices.size());
@@ -2884,7 +2880,8 @@ std::function<double(const double *, const size_t, const double *, const size_t,
                      const size_t)>
   highOrderPolyMesh::triangleQualityPtr = triangleQualityDefault;
 
-void highOrderPolyMesh::doCollapseEdge(std::pair<int, int> &edge, size_t index,
+void highOrderPolyMesh::doCollapseEdge(std::pair<size_t, size_t> &edge,
+                                       size_t index,
                                        std::vector<size_t> &cavity,
                                        std::vector<size_t> &newTris)
 {
