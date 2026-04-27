@@ -438,6 +438,7 @@ public:
                  const std::pair<int, int> &oppEdge, PathView &p01,
                  PathView &p23, std::array<PathView, 4> &borderPaths);
   bool checkNewTriangles(std::vector<size_t> newTris);
+  double getQuality(std::vector<size_t> &triangles);
   bool doWeSwap(const std::pair<int, int> &edge, std::pair<int, int> &opp,
                 PathView &p01, PathView &p23, std::array<PathView, 4> &borders,
                 int OPTION = ANGLECRIT);

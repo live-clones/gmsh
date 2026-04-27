@@ -2107,6 +2107,47 @@ bool highOrderPolyMesh::checkNewTriangles(std::vector<size_t> newTris)
   return true;
 }
 
+double highOrderPolyMesh::getQuality(std::vector<size_t> &triangles)
+{
+  double quality = 1.;
+
+  // Edge Quality
+  if(edgeQualityPtr != nullptr) {
+    std::vector<std::pair<size_t, size_t>> boundaryEdges;
+    std::vector<std::pair<size_t, size_t>> innerEdges;
+    for(int j = 0; j < triangles.size() / 3; ++j) {
+      size_t *is = &triangles[3 * j];
+      for(int k = 0; k < 3; ++k) {
+        std::pair<size_t, size_t> opp = {is[(k + 1) % 3], is[k]};
+        auto it = std::find(boundaryEdges.begin(), boundaryEdges.end(), opp);
+        if(it != boundaryEdges.end()) {
+          boundaryEdges.erase(it);
+          innerEdges.push_back(opp);
+        }
+        else {
+          boundaryEdges.push_back({is[k], is[(k + 1) % 3]});
+        }
+      }
+    }
+    for(int j = 0; j < innerEdges.size(); ++j) {
+      double q = getEdgeQuality(innerEdges[j]);
+      if(q < quality) quality = q;
+    }
+  }
+
+  // Triangle Quality
+  if(triangleQualityPtr != nullptr) {
+    for(int j = 0; j < triangles.size() / 3; ++j) {
+      size_t *is = &triangles[3 * j];
+      size_t tri[3] = {is[0], is[1], is[2]};
+      double q = getTriangleQuality(tri);
+      if(q < quality) quality = q;
+    }
+  }
+
+  return quality;
+}
+
 inline bool highOrderPolyMesh::doWeSwap(const std::pair<int, int> &edge,
                                         std::pair<int, int> &opp, PathView &p01,
                                         PathView &p23,
@@ -2637,6 +2678,7 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
   splitPath(path, .5 * length(path), firstHalf, secondHalf);
   pointsPool.push_back(firstHalf.back());
 
+  // Find best vertex to collapse into
   std::vector<bool> collapse(midIndices.size(), true);
   std::vector<double> qualities(midIndices.size(), 1.);
   std::vector<std::vector<size_t>> newTriss(midIndices.size());
@@ -2681,41 +2723,25 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
       continue;
     }
 
-    // Before
-    double qualityBefore = 1.;
-    for(auto t : cavityi) {
-      PolyMesh::HalfEdge *he = ipm->faces[t]->he;
-      size_t tri[3] = {(size_t)he->v->data, (size_t)he->next->v->data,
-                       (size_t)he->next->next->v->data};
-      double q = getTriangleQuality(tri);
-      if(q < qualityBefore) qualityBefore = q;
+    // Qualities
+    std::vector<size_t> oldTris(cavityi.size() * 3);
+    for(size_t i = 0; i < cavityi.size(); ++i) {
+      PolyMesh::HalfEdge *he = ipm->faces[cavityi[i]]->he;
+      oldTris[3 * i] = he->v->data;
+      oldTris[3 * i + 1] = he->next->v->data;
+      oldTris[3 * i + 2] = he->next->next->v->data;
     }
+    double qualityBefore = getQuality(oldTris);
 
-    // After
-    double qualityAfter = 1.;
-    for(int j = 0; j < newTris.size() / 3; ++j) {
-      for(int k = 0; k < 3; ++k) {
-        double q =
-          getEdgeQuality({newTris[3 * j + k], newTris[3 * j + (k + 1) % 3]});
-        if(q < 0.) {
-          collapse[i] = false;
-          break;
-        }
-      }
-      if(!collapse[i]) break;
-
-      size_t tri[3] = {newTris[3 * j], newTris[3 * j + 1], newTris[3 * j + 2]};
-      double q = getTriangleQuality(tri);
-      if(q < qualityAfter) qualityAfter = q;
-      qualities[i] = qualityAfter;
-    }
-    if(!collapse[i]) continue;
+    double qualityAfter = getQuality(newTris);
 
     if(qualityAfter < 0. &&
        (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
       collapse[i] = false;
       continue;
     }
+
+    qualities[i] = qualityAfter - qualityBefore;
   }
 
   int i = -1;
