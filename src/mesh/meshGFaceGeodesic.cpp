@@ -1809,12 +1809,6 @@ double highOrderPolyMesh::adimLength(PolyMesh::HalfEdge *he)
   return adimLength(e);
 }
 
-inline double areaHeuristic(double a, double b, double c)
-{
-  double s = (a + b + c) / 2;
-  return sqrt(s * (s - a) * (s - b) * (s - c));
-}
-
 inline double angleHeuristic(double a, double b, double c)
 {
   return acos((b * b + c * c - a * a) / (2 * b * c));
@@ -2644,10 +2638,6 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
   pointsPool.push_back(firstHalf.back());
 
   std::vector<bool> collapse(midIndices.size(), true);
-  std::vector<double> maxlgths(midIndices.size(), 0.);
-  std::vector<double> minlgths(midIndices.size(), 1e100);
-  std::vector<double> areas(midIndices.size(), 0.);
-  std::vector<double> arearatios(midIndices.size(), 0.);
   std::vector<double> qualities(midIndices.size(), 1.);
   std::vector<std::vector<size_t>> newTriss(midIndices.size());
   std::vector<std::vector<size_t>> cavities(midIndices.size());
@@ -2693,59 +2683,24 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
 
     // Before
     double qualityBefore = 1.;
-    double areaBefore = 0;
     for(auto t : cavityi) {
-      double angles[3], lengths[3], dlengths[3];
       PolyMesh::HalfEdge *he = ipm->faces[t]->he;
-      for(int j = 0; j < 3; ++j) {
-        angles[j] = computeIntrinsicAngle(he->v->data, he->next->v->data,
-                                          he->next->next->v->data);
-        PathView path;
-        getGeodesicPath(he->v->data, he->next->v->data, path);
-        lengths[j] = length(path);
-        dlengths[j] = norm(SVector3(path.front().xyz(), path.back().xyz()));
-        he = he->next;
-      }
-
       size_t tri[3] = {(size_t)he->v->data, (size_t)he->next->v->data,
                        (size_t)he->next->next->v->data};
       double q = getTriangleQuality(tri);
-
       if(q < qualityBefore) qualityBefore = q;
-
-      areaBefore += areaHeuristic(dlengths[0], dlengths[1], dlengths[2]);
     }
 
     // After
-    double area = 0., qualityAfter = 1., maxAdimLength = 0.;
+    double qualityAfter = 1.;
     for(int j = 0; j < newTris.size() / 3; ++j) {
-      double angles[3], lengths[3];
-      double ls[3];
       for(int k = 0; k < 3; ++k) {
-        angles[k] = computeIntrinsicAngle(newTris[3 * j + k],
-                                          newTris[3 * j + (k + 1) % 3],
-                                          newTris[3 * j + (k + 2) % 3]);
-        PathView path;
-        getGeodesicPath(newTris[3 * j + k], newTris[3 * j + (k + 1) % 3], path);
-        lengths[k] = length(path);
-        SVector3 v(path.front().xyz(), path.back().xyz());
-        ls[k] = norm(v);
-        if(lengths[k] > maxlgths[i]) maxlgths[i] = lengths[k];
-        if(lengths[k] < minlgths[i]) minlgths[i] = lengths[k];
-
-        std::vector<double *> edgePointsCoords(path.size());
-        for(int i = 0; i < path.size(); ++i) {
-          edgePointsCoords[i] = path[i].xyz();
-        }
         double q =
           getEdgeQuality({newTris[3 * j + k], newTris[3 * j + (k + 1) % 3]});
-
         if(q < 0.) {
           collapse[i] = false;
           break;
         }
-        double al = adimLength(path);
-        if(al > maxAdimLength) maxAdimLength = al;
       }
       if(!collapse[i]) break;
 
@@ -2753,17 +2708,8 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
       double q = getTriangleQuality(tri);
       if(q < qualityAfter) qualityAfter = q;
       qualities[i] = qualityAfter;
-
-      areas[i] += areaHeuristic(ls[0], ls[1], ls[2]);
-      area += areaHeuristic(ls[0], ls[1], ls[2]);
     }
     if(!collapse[i]) continue;
-
-    double areaRatio = areaBefore / area;
-    if(areaRatio > 1. + FLAT_AREA_RATIO || areaRatio < 1. - FLAT_AREA_RATIO) {
-      collapse[i] = false;
-      continue;
-    }
 
     if(qualityAfter < 0. &&
        (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
