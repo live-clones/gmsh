@@ -14,8 +14,6 @@
 #include <utility>
 #include <vector>
 
-#define ANGLECRIT 1
-
 // struct EdgeQualityArgs {
 //   double intrinsicLength;
 //   size_t numPoints;
@@ -415,39 +413,29 @@ public:
   void write(const PolyMesh *pm_new,
              std::vector<PolyMesh::Vertex *> &pointVertices);
 
-  void precomputeCircumcenters();
-
   bool symbolicSwapEdges(std::vector<size_t> &newTris,
                          std::vector<size_t> &cavity, bool propagate = true,
                          bool insert = true);
   bool swapEdge(PolyMesh::HalfEdge *he,
                 std::vector<PolyMesh::HalfEdge *> &adjacentEdges,
-                int OPTION = ANGLECRIT);
+                bool heuristic = true);
   void removeAdjacency(std::vector<size_t> &trigls);
   void addAdjacency(std::vector<size_t> &trigls);
   void doSwapEdge(PolyMesh::HalfEdge *he);
-  void getOppEdge(const PolyMesh::HalfEdge *he, std::pair<int, int> &p23,
-                  std::pair<int, int> &ts);
-  bool doWeSwapAngleHeuristic(int p0, int p1, int p2, int p3);
-  bool doWeSwapLengthHeuristic(int p0, int p1, int p2, int p3);
-  bool doWeSwapMaxMin(int p0, int p1, int p2, int p3);
-  bool doWeSwapTest(int p0, int p1, int p2, int p3);
+  bool doWeSwapAngleHeuristic(std::pair<int, int> &edge,
+                              std::pair<int, int> &oppEdge);
   bool locallyDelaunay(size_t circumindex, double circumradius,
                        size_t oppVertex);
-  bool canWeSwap(const std::pair<int, int> &edge,
-                 const std::pair<int, int> &oppEdge, PathView &p01,
-                 PathView &p23, std::array<PathView, 4> &borderPaths);
+  bool canWeSwap(std::pair<int, int> &edge, std::pair<int, int> &oppEdge);
   bool checkNewTriangles(std::vector<size_t> newTris);
   double getQuality(std::vector<size_t> &triangles);
   void getBorder(std::vector<size_t> &triangles,
                  std::vector<std::pair<size_t, size_t>> &borderEdges,
                  std::vector<std::pair<size_t, size_t>> &innerEdges);
-  bool doWeSwap(const std::pair<int, int> &edge, std::pair<int, int> &opp,
-                PathView &p01, PathView &p23, std::array<PathView, 4> &borders,
-                int OPTION = ANGLECRIT);
-  bool doWeSwapIntrinsic(const std::pair<int, int> &p01,
-                         std::pair<int, int> &p23);
-  int swapEdges(int OPTION = ANGLECRIT);
+  bool doWeSwap(std::pair<int, int> &edge, std::pair<int, int> &opp,
+                bool heuristic = true);
+  bool doWeSwapIntrinsic(std::pair<int, int> &p01, std::pair<int, int> &p23);
+  int swapEdges(bool heuristic = true);
 
   void meshAdapt(int niter, double MINE, double MAXE, double MINA, double MAXA,
                  std::set<size_t> &keepSet);

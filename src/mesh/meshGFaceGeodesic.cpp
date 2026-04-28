@@ -36,10 +36,11 @@
 #define DEBUG false
 #define PRINT false
 #define WARNING false
+#define PRINT_STEP 1e5
 #define ASTAR true
 #define EPS 1e-8
 #define CIRCUMMULT 5
-#define PRECOMPUTE_CIRCUMCENTERS false
+#define HEURISTIC_SWAP true
 #define SPLIT_IF_CANT_SWAP true
 
 #define NUM_AGRESSIVE_LOOPS 3
@@ -419,40 +420,6 @@ inline bool swappedEdge(geodesic::Edge *e, geodesic::Face *f)
   }
   Msg::Error("could not find orientation");
   return false;
-}
-
-inline void local_coordinates(double d01, double d0, double d1, double lc[2])
-{
-  if(d0 < 1e-14) {
-    lc[0] = 0.0;
-    lc[1] = 0.0;
-    return;
-  }
-
-  if(d1 < 1e-14) {
-    lc[0] = 1.0;
-    lc[1] = 0.0;
-    return;
-  }
-
-  double inv_d01 = 1.0 / d01;
-  double d0_norm = d0 * inv_d01;
-  double d1_norm = d1 * inv_d01;
-  lc[0] = 0.5 + 0.5 * (d0_norm - d1_norm) * (d0_norm + d1_norm);
-  double h2 = (d0_norm - lc[0]) * (d0_norm + lc[0]);
-  lc[1] = std::sqrt(std::max(0.0, h2));
-}
-
-inline void local_coordinates(double p0[3], double p1[3], double p[3],
-                              double lc[2])
-{
-  SVector3 v0(p0, p);
-  double d0 = norm(v0);
-  SVector3 v1(p1, p);
-  double d1 = norm(v1);
-  SVector3 v01(p0, p1);
-  double d01 = norm(v01);
-  local_coordinates(d01, d0, d1, lc);
 }
 
 inline void robustCrossProd(const double p0[3], const double p1[3],
@@ -1785,11 +1752,6 @@ double highOrderPolyMesh::adimLength(PolyMesh::HalfEdge *he)
   return adimLength(e);
 }
 
-inline double angleHeuristic(double a, double b, double c)
-{
-  return acos((b * b + c * c - a * a) / (2 * b * c));
-}
-
 // SWAP EDGE
 /*
              p2                                 p2
@@ -1804,49 +1766,38 @@ inline double angleHeuristic(double a, double b, double c)
 */
 bool highOrderPolyMesh::swapEdge(
   PolyMesh::HalfEdge *he, std::vector<PolyMesh::HalfEdge *> &adjacentEdges,
-  int OPTION)
+  bool heuristic)
 {
   if(!he->opposite)
     Msg::Error("In swapEdge: halfedge %d %d has no opposite halfedge",
                he->v->data, he->next->v->data);
-  std::pair<int, int> edge, oppEdge, ts;
-  edge.first = he->v->data;
-  edge.second = he->next->v->data;
-  oppEdge.first = he->next->next->v->data;
-  oppEdge.second = he->opposite->next->next->v->data;
-  ts.first = he->f->data;
-  ts.second = he->opposite->f->data;
+  PolyMesh::HalfEdge *ohe = he->opposite;
+  std::pair<int, int> edge = {he->v->data, ohe->v->data},
+                      oppEdge = {he->next->next->v->data,
+                                 ohe->next->next->v->data};
 
-  PathView p01, p23;
-  getGeodesicPath(edge.first, edge.second, p01);
-  getGeodesicPath(oppEdge.first, oppEdge.second, p23);
-  std::array<PathView, 4> borderPaths;
-  getGeodesicPath(edge.first, oppEdge.second, borderPaths[0]);
-  getGeodesicPath(oppEdge.second, edge.second, borderPaths[1]);
-  getGeodesicPath(edge.second, oppEdge.first, borderPaths[2]);
-  getGeodesicPath(oppEdge.first, edge.first, borderPaths[3]);
+  if(!doWeSwap(edge, oppEdge, heuristic)) return false;
 
-  if(!doWeSwap(edge, oppEdge, p01, p23, borderPaths, OPTION)) return false;
-
-  bool canSwap = true;
-  if(!canWeSwap(edge, oppEdge, p01, p23, borderPaths)) { canSwap = false; }
+  bool canSwap = canWeSwap(edge, oppEdge);
 
   double q = getEdgeQuality(oppEdge);
-  if(q < 0.) { canSwap = false; }
+  if(q < 0.) canSwap = false;
 
   if(!canSwap) {
-#if !SPLIT_IF_CANT_SWAP
-    return false;
-#endif
     if(WARNING)
       Msg::Warning("Should be swapped but could not: %d %d", edge.first,
                    edge.second);
+
+#if SPLIT_IF_CANT_SWAP
     if(!splitEdge(he, MINANGLE, MAXANGLE, adjacentEdges)) {
       if(WARNING)
         Msg::Warning("Could not split an edge that should be swapped");
       return false;
     }
     return true;
+#else
+    return false;
+#endif
   }
 
   doSwapEdge(he);
@@ -1854,37 +1805,15 @@ bool highOrderPolyMesh::swapEdge(
   adjacentEdges.clear();
   adjacentEdges.push_back(he->next);
   adjacentEdges.push_back(he->next->next);
-  adjacentEdges.push_back(he->opposite->next);
-  adjacentEdges.push_back(he->opposite->next->next);
+  adjacentEdges.push_back(ohe->next);
+  adjacentEdges.push_back(ohe->next->next);
 
   return true;
 }
 
 void highOrderPolyMesh::doSwapEdge(PolyMesh::HalfEdge *he)
 {
-  std::pair<int, int> edge = {he->v->data, he->next->v->data},
-                      oppEdge = {he->next->next->v->data,
-                                 he->opposite->next->next->v->data},
-                      ts = {he->f->data, he->opposite->f->data};
-  std::vector<size_t> ats = {(size_t)ts.first, (size_t)ts.second};
-
   if(ipm->swap_edge(he)) Msg::Error("Could not swap pm");
-}
-
-void highOrderPolyMesh::getOppEdge(const PolyMesh::HalfEdge *he,
-                                   std::pair<int, int> &p23,
-                                   std::pair<int, int> &ts)
-{
-  p23.first = he->next->next->v->data;
-  ts.first = he->f->data;
-  if(he->opposite) {
-    p23.second = he->opposite->next->next->v->data;
-    ts.second = he->opposite->f->data;
-  }
-  else {
-    p23.second = -1;
-    ts.second = -1;
-  }
 }
 
 //         / \
@@ -1895,26 +1824,14 @@ void highOrderPolyMesh::getOppEdge(const PolyMesh::HalfEdge *he,
 //  b[0] \     / b[1]
 //         \ /
 //
-bool highOrderPolyMesh::doWeSwapAngleHeuristic(int p0, int p1, int p2, int p3)
-// bool highOrderPolyMesh::doWeSwapAngleHeuristic(PathView &edge, PathView &opp,
-//                                                std::array<PathView, 4>
-//                                                &borders)
+bool highOrderPolyMesh::doWeSwapAngleHeuristic(std::pair<int, int> &edge,
+                                               std::pair<int, int> &oppEdge)
 {
-  PathView edge, redge, borders[4];
-  getGeodesicPath(p0, p1, edge);
-  redge = PathView(edge, true);
-  getGeodesicPath(p0, p3, borders[0]);
-  getGeodesicPath(p3, p1, borders[1]);
-  getGeodesicPath(p1, p2, borders[2]);
-  getGeodesicPath(p2, p0, borders[3]);
-  // PathView redge = PathView(edge, true);
-
-  // double b0 = computeIntrinsicAngle(edge, borders[3]);
-  // double b1 = computeIntrinsicAngle(borders[0], redge);
-  // double b2 = computeIntrinsicAngle(borders[2], edge);
-  // double b3 = computeIntrinsicAngle(redge, borders[1]);
-  // double b4 = computeIntrinsicAngle(borders[3], borders[2]);
-  // double b5 = computeIntrinsicAngle(borders[1], borders[0]);
+  PathView borders[4];
+  getGeodesicPath(edge.first, oppEdge.second, borders[0]);
+  getGeodesicPath(oppEdge.second, edge.second, borders[1]);
+  getGeodesicPath(edge.second, oppEdge.first, borders[2]);
+  getGeodesicPath(oppEdge.first, edge.first, borders[3]);
 
   double angles[4] = {computeIntrinsicAngle(borders[3], borders[2]),
                       computeIntrinsicAngle(borders[1], borders[0]),
@@ -1922,99 +1839,6 @@ bool highOrderPolyMesh::doWeSwapAngleHeuristic(int p0, int p1, int p2, int p3)
                       computeIntrinsicAngle(borders[2], borders[1])};
 
   return angles[0] + angles[1] > angles[2] + angles[3] + EPS;
-}
-
-bool highOrderPolyMesh::doWeSwapLengthHeuristic(int p0, int p1, int p2, int p3)
-{
-  PathView edge, opp, borders[4];
-  getGeodesicPath(p0, p1, edge);
-  getGeodesicPath(p2, p3, opp);
-  getGeodesicPath(p0, p3, borders[0]);
-  getGeodesicPath(p3, p1, borders[1]);
-  getGeodesicPath(p1, p2, borders[2]);
-  getGeodesicPath(p2, p0, borders[3]);
-  double ledge = length(edge), lopp = length(opp),
-         lborders[4] = {length(borders[0]), length(borders[1]),
-                        length(borders[2]), length(borders[3])};
-
-  double angles[4] = {angleHeuristic(ledge, lborders[1], lborders[0]),
-                      angleHeuristic(ledge, lborders[3], lborders[2]),
-                      angleHeuristic(lopp, lborders[0], lborders[3]),
-                      angleHeuristic(lopp, lborders[2], lborders[1])};
-
-  double angle102 = angleHeuristic(lborders[2], ledge, lborders[3]);
-  double angle301 = angleHeuristic(lborders[1], ledge, lborders[0]);
-  double lopph = sqrt(lborders[0] * lborders[0] + lborders[3] * lborders[3] -
-                      2 * lborders[0] * lborders[3] * cos(angle102 + angle301));
-
-  angles[2] = angleHeuristic(lopph, lborders[0], lborders[3]);
-  angles[3] = angleHeuristic(lopph, lborders[2], lborders[1]);
-
-  return angles[0] + angles[1] > angles[2] + angles[3] + EPS;
-  // return angles[0] + angles[1] > M_PI + EPS;
-}
-
-bool highOrderPolyMesh::doWeSwapMaxMin(int p0, int p1, int p2, int p3)
-{
-  PathView edge, opp, borders[4], redge, ropp;
-  getGeodesicPath(p0, p1, edge);
-  getGeodesicPath(p2, p3, opp);
-  getGeodesicPath(p0, p3, borders[0]);
-  getGeodesicPath(p3, p1, borders[1]);
-  getGeodesicPath(p1, p2, borders[2]);
-  getGeodesicPath(p2, p0, borders[3]);
-  redge = PathView(edge, true);
-  ropp = PathView(opp, true);
-
-  double angles[4] = {computeIntrinsicAngle(borders[0], borders[3]),
-                      computeIntrinsicAngle(borders[1], borders[0]),
-                      computeIntrinsicAngle(borders[2], borders[1]),
-                      computeIntrinsicAngle(borders[3], borders[2])};
-
-  std::array<double, 6> before = {
-    angles[3],
-    angles[0] - computeIntrinsicAngle(borders[0], redge),
-    angles[2] - computeIntrinsicAngle(redge, borders[1]),
-    angles[1],
-    angles[2] - computeIntrinsicAngle(borders[2], edge),
-    angles[0] - computeIntrinsicAngle(edge, borders[3])};
-  std::array<double, 6> after = {
-    angles[0],
-    angles[1] - computeIntrinsicAngle(borders[1], opp),
-    angles[3] - computeIntrinsicAngle(opp, borders[2]),
-    angles[2],
-    angles[3] - computeIntrinsicAngle(borders[3], ropp),
-    angles[1] - computeIntrinsicAngle(ropp, borders[0])};
-
-  std::sort(before.begin(), before.end());
-  std::sort(after.begin(), after.end());
-  return before[0] < after[0] - EPS;
-}
-
-bool highOrderPolyMesh::doWeSwapTest(int p0, int p1, int p2, int p3)
-{
-  PathView edge, borders[4];
-  getGeodesicPath(p0, p1, edge);
-  getGeodesicPath(p0, p3, borders[0]);
-  getGeodesicPath(p3, p1, borders[1]);
-  getGeodesicPath(p1, p2, borders[2]);
-  getGeodesicPath(p2, p0, borders[3]);
-
-  double d01 = length(edge);
-  double d02 = length(borders[3]);
-  double d12 = length(borders[2]);
-  double d03 = length(borders[0]);
-  double d13 = length(borders[1]);
-  double xy0[2], xy1[2], xy2[2], xy3[3];
-  local_coordinates(d01, 0.0, d01, xy0);
-  local_coordinates(d01, d01, 0.0, xy1);
-  local_coordinates(d01, d02, d12, xy2);
-  local_coordinates(d01, d03, d13, xy3);
-  xy3[1] = -xy3[1];
-
-  double inCircle = robustPredicates::incircle(xy0, xy1, xy2, xy3);
-
-  return inCircle > 0;
 }
 
 bool highOrderPolyMesh::locallyDelaunay(size_t circumindex, double circumradius,
@@ -2027,34 +1851,20 @@ bool highOrderPolyMesh::locallyDelaunay(size_t circumindex, double circumradius,
   return (l / circumradius - 1.) > -EPS;
 }
 
-bool highOrderPolyMesh::canWeSwap(const std::pair<int, int> &edge,
-                                  const std::pair<int, int> &oppEdge,
-                                  PathView &p01, PathView &p23,
-                                  std::array<PathView, 4> &borders)
+bool highOrderPolyMesh::canWeSwap(std::pair<int, int> &edge,
+                                  std::pair<int, int> &oppEdge)
 {
-  SVector3 intersection;
-  std::unordered_map<geodesic::Face *, size_t> faceSegments;
-  std::unordered_map<geodesic::Vertex *, std::array<size_t, 2>> vertexSegments;
+  PathView p01, p23;
+  getGeodesicPath(edge.first, edge.second, p01);
+  getGeodesicPath(oppEdge.first, oppEdge.second, p23);
+  if(!intersectGeodesicPath(p23, p01)) return false;
 
-  if(!intersectGeodesicPath(p23, p01)) {
-    // if(WARNING)
-    //   Msg::Warning("Could not swap edge %d %d: geodesics do not intersect",
-    //                edge.first, edge.second);
-    return false;
-  }
-
-  std::vector<std::pair<size_t, size_t>> newEdges = {oppEdge},
-                                         borderEdges = {
-                                           {edge.first, oppEdge.second},
-                                           {oppEdge.second, edge.second},
-                                           {edge.second, oppEdge.first},
-                                           {oppEdge.first, edge.first}};
-  if(intersectNewEdges(newEdges, borderEdges)) {
-    // if(WARNING)
-    //   Msg::Warning("Could not swap edge %d %d: new edge intersect border",
-    //                edge.first, edge.second);
-    return false;
-  }
+  std::vector<std::pair<size_t, size_t>> newEdges = {oppEdge}, borderEdges(4);
+  borderEdges[0] = {edge.first, oppEdge.second};
+  borderEdges[1] = {oppEdge.second, edge.second};
+  borderEdges[2] = {edge.second, oppEdge.first};
+  borderEdges[3] = {oppEdge.first, edge.first};
+  if(intersectNewEdges(newEdges, borderEdges)) return false;
 
   return true;
 }
@@ -2130,45 +1940,20 @@ void highOrderPolyMesh::getBorder(
   }
 }
 
-inline bool highOrderPolyMesh::doWeSwap(const std::pair<int, int> &edge,
-                                        std::pair<int, int> &opp, PathView &p01,
-                                        PathView &p23,
-                                        std::array<PathView, 4> &borders,
-                                        int OPTION)
+inline bool highOrderPolyMesh::doWeSwap(std::pair<int, int> &edge,
+                                        std::pair<int, int> &opp,
+                                        bool heuristic)
 {
-  if(OPTION == 0) {
-    // bool swapI = doWeSwapIntrinsic(edge, opp);
-    // bool swapL =
-    //   doWeSwapAngleHeuristic(edge.first, edge.second, opp.first, opp.second);
-    // static int count = 0;
-    // if(swapI != swapL) std::cout << "noswap: " << ++count << std::endl;
+  if(heuristic) {
+    if(!doWeSwapAngleHeuristic(edge, opp)) return false;
+  }
+  else {
     if(!doWeSwapIntrinsic(edge, opp)) return false;
-  }
-  else if(OPTION == 1) {
-    if(!doWeSwapAngleHeuristic(edge.first, edge.second, opp.first, opp.second))
-      return false;
-  }
-  else if(OPTION == 2) {
-    if(!doWeSwapLengthHeuristic(edge.first, edge.second, opp.first, opp.second))
-      return false;
-  }
-  else if(OPTION == 3) {
-    if(!doWeSwapMaxMin(edge.first, edge.second, opp.first, opp.second))
-      return false;
-  }
-  else if(OPTION == 4) {
-    bool swap = doWeSwapTest(edge.first, edge.second, opp.first, opp.second);
-    // bool swapOpp = doWeSwapTest(opp.first, opp.second, edge.second,
-    // edge.first); if(swap == swapOpp) {
-    //   std::cout << "swap swap" << std::endl;
-    //   throw std::runtime_error("swap swap");
-    // }
-    if(!swap) return false;
   }
   return true;
 }
 
-bool highOrderPolyMesh::doWeSwapIntrinsic(const std::pair<int, int> &edge,
+bool highOrderPolyMesh::doWeSwapIntrinsic(std::pair<int, int> &edge,
                                           std::pair<int, int> &oppEdge)
 {
   // Check if current config is locally Delaunay
@@ -2211,60 +1996,11 @@ bool highOrderPolyMesh::doWeSwapIntrinsic(const std::pair<int, int> &edge,
   if(isLocallyDelaunay) return true;
 
   Msg::Warning("Neither config is locally Delaunay testing edge swap");
-  // static int count = 0;
-  // std::cout << "neither: " << ++count << std::endl;
-  // {
-  //   std::array<int, 3> tri = {edge.first, edge.second, oppEdge.first};
-  //   size_t circumindex;
-  //   double circumradius;
-  //   getCircumcenter(tri, circumindex, circumradius);
-  //   std::cout << circumradius << std::endl;
-  //   tri = {edge.first, oppEdge.second, edge.second};
-  //   getCircumcenter(tri, circumindex, circumradius);
-  //   std::cout << circumradius << std::endl;
-  //   tri = {edge.first, oppEdge.second, oppEdge.first};
-  //   getCircumcenter(tri, circumindex, circumradius);
-  //   std::cout << circumradius << std::endl;
-  //   tri = {edge.second, oppEdge.first, oppEdge.second};
-  //   getCircumcenter(tri, circumindex, circumradius);
-  //   std::cout << circumradius << std::endl;
-  // }
   return false;
 }
 
-void highOrderPolyMesh::precomputeCircumcenters()
+int highOrderPolyMesh::swapEdges(bool heuristic)
 {
-  std::vector<size_t> ts;
-  std::vector<std::vector<geodesic::SurfacePoint>> pts;
-  std::vector<geodesic::SurfacePoint> circumcenters;
-  std::vector<double> circumradii(ipm->faces.size());
-  for(size_t i = 0; i < ipm->faces.size(); ++i) {
-    auto he = ipm->faces[i]->he;
-    std::array<int, 3> tri = {he->v->data, he->next->v->data,
-                              he->next->next->v->data};
-    std::sort(tri.begin(), tri.end());
-    auto it = circumIndexRadius.find(tri);
-    if(it != circumIndexRadius.end()) continue;
-    ts.push_back(i);
-    pts.push_back({pointsPool[he->v->data], pointsPool[he->next->v->data],
-                   pointsPool[he->next->next->v->data]});
-  }
-  createCircumcenters(pts, circumcenters, circumradii);
-
-  for(size_t i = 0; i < ts.size(); ++i) {
-    size_t t = ts[i];
-    auto he = ipm->faces[t]->he;
-    std::array<int, 3> tri = {he->v->data, he->next->v->data,
-                              he->next->next->v->data};
-    std::sort(tri.begin(), tri.end());
-    setCircumcenter(tri, circumcenters[i], circumradii[i]);
-  }
-}
-
-int highOrderPolyMesh::swapEdges(int OPTION)
-{
-  int count = 0;
-
   std::vector<PolyMesh::HalfEdge *> set;
   std::vector<bool> updated(ipm->hedges.size(), true);
   for(auto he : ipm->hedges) {
@@ -2272,12 +2008,9 @@ int highOrderPolyMesh::swapEdges(int OPTION)
     set.push_back(he);
   }
 
-  // Pre-compute circumcenters
-  if(PRECOMPUTE_CIRCUMCENTERS) precomputeCircumcenters();
-
-  size_t iter = 1;
+  size_t count = 0, iter = 1;
   while(!set.empty()) {
-    if(count >= iter * 10000) {
+    if(count >= iter * PRINT_STEP) {
       iter++;
       Msg::Info("Already swapped %d edges (%d triangles, queue "
                 "size = %d)",
@@ -2291,7 +2024,7 @@ int highOrderPolyMesh::swapEdges(int OPTION)
     updated[he->data] = false;
 
     std::vector<PolyMesh::HalfEdge *> adjacentEdges;
-    if(!swapEdge(he, adjacentEdges, OPTION)) continue;
+    if(!swapEdge(he, adjacentEdges, heuristic)) continue;
     ++count;
 
     if(updated.size() < ipm->hedges.size())
@@ -3324,41 +3057,25 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     int i3 = id[next[next[ohe]]];
 
     if(i0 != id[next[ohe]] || i1 != id[ohe]) {
-      std::cout << id[he] << " " << id[next[he]] << " " << id[next[next[he]]]
-                << std::endl;
-      std::cout << id[ohe] << " " << id[next[ohe]] << " " << id[next[next[ohe]]]
-                << std::endl;
       Msg::Error("Error in the symbolic representation of the cavity");
     }
 
-    PathView p01, p23;
-    getGeodesicPath(i0, i1, p01);
-    getGeodesicPath(i2, i3, p23);
-    std::array<PathView, 4> borderPaths;
-    getGeodesicPath(i0, i3, borderPaths[0]);
-    getGeodesicPath(i3, i1, borderPaths[1]);
-    getGeodesicPath(i1, i2, borderPaths[2]);
-    getGeodesicPath(i2, i0, borderPaths[3]);
-
     std::pair<int, int> edge = {i0, i1}, oppEdge = {i2, i3};
 
-    if(!doWeSwap(edge, oppEdge, p01, p23, borderPaths, ANGLECRIT)) { continue; }
+    if(!doWeSwap(edge, oppEdge, HEURISTIC_SWAP)) { continue; }
 
-    if(!canWeSwap(edge, oppEdge, p01, p23, borderPaths)) {
-#if !SPLIT_IF_CANT_SWAP
-      possible = false;
-      break;
-#endif
-
-      // Msg::Warning("Edge should be swapped");
+    if(!canWeSwap(edge, oppEdge)) {
       if(!insert) {
         possible = false;
         break;
       }
 
+#if SPLIT_IF_CANT_SWAP
       // Try split edge
       double l = length(edge);
       std::vector<geodesic::SurfacePoint> firstHalf, secondHalf;
+      PathView p01;
+      getGeodesicPath(i0, i1, p01);
       splitPath(p01, .5 * l, firstHalf, secondHalf);
       geodesic::SurfacePoint newSP = firstHalf.back();
       int newId = pointsPool.size();
@@ -3437,6 +3154,10 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       list.push_back(next[next[opposite[ohe]]]);
 
       continue;
+#else
+      possible = false;
+      break;
+#endif
     }
 
     if(count++ > 1e4) {
@@ -4785,7 +4506,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
   for(; i < niter; ++i) {
     printIndex -= 6;
     iter = i;
-    nbrSwap = swapEdges();
+    nbrSwap = swapEdges(HEURISTIC_SWAP);
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
               ipm->faces.size());
 
@@ -4806,7 +4527,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
     }
     if(DEBUG) { sanityCheck(); }
 
-    nbrSwap = swapEdges();
+    nbrSwap = swapEdges(HEURISTIC_SWAP);
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
               ipm->faces.size());
 
@@ -4827,7 +4548,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
     }
     if(DEBUG) { sanityCheck(); }
 
-    nbrSwap = swapEdges();
+    nbrSwap = swapEdges(HEURISTIC_SWAP);
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
               ipm->faces.size());
 
@@ -4853,7 +4574,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
   }
 
   if(niter >= 0) {
-    nbrSwap = swapEdges();
+    nbrSwap = swapEdges(HEURISTIC_SWAP);
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
               ipm->faces.size());
 
