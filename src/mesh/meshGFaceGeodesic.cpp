@@ -551,18 +551,18 @@ inline void getFaceParamCoord(geodesic::SurfacePoint &p, geodesic::Face *f,
     }
     else if(f->adjacent_vertices()[1] == e->v0() &&
             f->adjacent_vertices()[2] == e->v1()) {
-      uv[0] = 1 - p.uv()[0];
+      uv[0] = 1. - p.uv()[0];
       uv[1] = p.uv()[0];
     }
     else if(f->adjacent_vertices()[2] == e->v0() &&
             f->adjacent_vertices()[1] == e->v1()) {
       uv[0] = p.uv()[0];
-      uv[1] = 1 - p.uv()[0];
+      uv[1] = 1. - p.uv()[0];
     }
     else if(f->adjacent_vertices()[2] == e->v0() &&
             f->adjacent_vertices()[0] == e->v1()) {
       uv[0] = 0.;
-      uv[1] = 1 - p.uv()[0];
+      uv[1] = 1. - p.uv()[0];
     }
     else if(f->adjacent_vertices()[0] == e->v0() &&
             f->adjacent_vertices()[2] == e->v1()) {
@@ -604,7 +604,7 @@ inline double computeAngleOnFace(geodesic::SurfacePoint &p0,
   double v02_v = p2_uv[1] - p0_uv[1];
   double dot = v01_u * (f->G()[0] * v02_u + f->G()[1] * v02_v) +
                v01_v * (f->G()[1] * v02_u + f->G()[2] * v02_v);
-  double cross = f->G()[3] * (v01_u * v02_v - v01_v * v02_u);
+  double cross = f->G()[3] * robustPredicates::orient2d(p0_uv, p1_uv, p2_uv);
   double angle = atan2(cross, dot);
   return angle;
 }
