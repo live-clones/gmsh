@@ -1646,8 +1646,8 @@ bool highOrderPolyMesh::intersectNewEdges(
   for(int i = 0; i < newPaths.size(); ++i) {
     for(int j = 0; j < borderPaths.size(); ++j) {
       if(intersectGeodesicPath(newPaths[i], borderPaths[j])) {
-        // if(WARNING) Msg::Warning("Intersection between new path and border
-        // !");
+        // if(WARNING) Msg::Warning("Intersection between new path and
+        // border!");
         return true;
       }
     }
@@ -3680,45 +3680,39 @@ bool highOrderPolyMesh::splitTriangle(
     newEdges[i] = {he->v->data, circumindex};
   }
 
-  // Split edge instead of triangle if needed
-  for(int i = 0; i < 3; ++i) {
-    he = he->next;
-    std::pair<int, int> e = {he->v->data, he->next->v->data};
-    if(abs(length({e.first, e.second}) - length({e.first, circumindex}) -
-           length({circumindex, e.second})) > 1e-12)
-      continue;
-    std::vector<size_t> ats = {(size_t)he->f->data};
-    if(he->opposite) ats.push_back(he->opposite->f->data);
-    cavity = ats;
-    newTris.clear();
-    newEdges.clear();
-    borderEdges.clear();
-    newTris.reserve(12);
-    newEdges.reserve(4);
-    borderEdges.reserve(4);
-    for(auto t : ats) {
-      auto he = ipm->faces[t]->he;
-      for(int i = 0; i < 3; ++i) {
-        he = he->next;
-        if((he->v->data == e.first || he->v->data == e.second) &&
-           (he->next->v->data == e.first || he->next->v->data == e.second))
-          continue;
-        newTris.push_back(he->v->data);
-        newTris.push_back(he->next->v->data);
-        newTris.push_back(circumindex);
-        borderEdges.push_back({he->v->data, he->next->v->data});
-        newEdges.push_back({he->v->data, circumindex});
-      }
-    }
-    break;
-  }
-
   // Check intersections
   bool intersect = intersectNewEdges(newEdges, borderEdges);
   if(intersect) {
-    if(WARNING)
-      Msg::Warning("Could not split triangle: intersections with new edges");
-    return false;
+    // Split edge instead of triangle
+    int i = 0;
+    for(; i < 3; ++i, he = he->next) {
+      if(!he->opposite) {
+        Msg::Error("No implementation for triangle split on the boundary");
+      }
+      PolyMesh::HalfEdge *ohe = he->opposite;
+
+      std::pair<int, int> e = {he->v->data, he->next->v->data};
+      cavity = {(size_t)he->f->data, (size_t)ohe->f->data};
+      size_t is[4] = {(size_t)he->v->data, (size_t)ohe->v->data,
+                      (size_t)he->next->next->v->data,
+                      (size_t)ohe->next->next->v->data};
+      newTris = {circumindex, is[2], is[0], circumindex, is[1], is[2],
+                 circumindex, is[0], is[3], circumindex, is[3], is[1]};
+      newEdges = {{circumindex, is[0]},
+                  {circumindex, is[1]},
+                  {circumindex, is[2]},
+                  {circumindex, is[3]}};
+      borderEdges = {
+        {is[0], is[3]}, {is[3], is[1]}, {is[1], is[2]}, {is[2], is[0]}};
+      intersect = intersectNewEdges(newEdges, borderEdges);
+      if(!intersect) break;
+    }
+    if(i == 3) {
+      if(WARNING)
+        Msg::Warning("Could not split triangle: intersection between new edges "
+                     "and/or border edges");
+      return false;
+    }
   }
 
   size_t nPointBefore = pointsPool.size();
@@ -3750,8 +3744,8 @@ bool highOrderPolyMesh::splitTriangle(
   }
 
   if(qualityAfter < 0. &&
-     (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
-    // if(iter > NUM_AGRESSIVE_LOOPS && qualityAfter - qualityBefore < EPS) {
+     // (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
+     iter > NUM_AGRESSIVE_LOOPS && qualityAfter - qualityBefore < EPS) {
     if(WARNING)
       Msg::Warning("Quality does not improve after splitting the triangle");
     for(int i = nPointBefore; i < pointsPool.size(); ++i) {
