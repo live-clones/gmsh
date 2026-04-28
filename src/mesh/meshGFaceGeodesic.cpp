@@ -615,9 +615,6 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
 {
   if(p0.type() == geodesic::FACE) {
     geodesic::Face *f = static_cast<geodesic::Face *>(p0.base_element());
-    geodesic::Vertex *vs[3] = {f->adjacent_vertices()[0],
-                               f->adjacent_vertices()[1],
-                               f->adjacent_vertices()[2]};
     double angle = computeAngleOnFace(p0, p1, p2, f);
     if(angle < 0.0) angle += 2 * M_PI;
     return angle;
@@ -1636,19 +1633,26 @@ bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
   return false;
 }
 
-bool highOrderPolyMesh::intersectNewEdges(std::vector<PathView> &newEdges,
-                                          std::vector<PathView> &borderEdges)
+bool highOrderPolyMesh::intersectNewEdges(
+  std::vector<std::pair<size_t, size_t>> &newEdges,
+  std::vector<std::pair<size_t, size_t>> &borderEdges)
 {
-  for(int i = 0; i < newEdges.size(); ++i) {
-    for(int j = 0; j < borderEdges.size(); ++j) {
-      if(intersectGeodesicPath(newEdges[i], borderEdges[j])) {
+  std::vector<PathView> newPaths(newEdges.size()),
+    borderPaths(borderEdges.size());
+  for(int i = 0; i < newEdges.size(); ++i) getPath(newEdges[i], newPaths[i]);
+  for(int i = 0; i < borderEdges.size(); ++i)
+    getPath(borderEdges[i], borderPaths[i]);
+
+  for(int i = 0; i < newPaths.size(); ++i) {
+    for(int j = 0; j < borderPaths.size(); ++j) {
+      if(intersectGeodesicPath(newPaths[i], borderPaths[j])) {
         // if(WARNING) Msg::Warning("Intersection between new path and border
         // !");
         return true;
       }
     }
     for(int j = 0; j < i; ++j) {
-      if(intersectGeodesicPath(newEdges[i], newEdges[j])) {
+      if(intersectGeodesicPath(newPaths[i], newPaths[j])) {
         // if(WARNING) Msg::Warning("Intersection between new paths !");
         return true;
       }
@@ -2067,9 +2071,12 @@ bool highOrderPolyMesh::canWeSwap(const std::pair<int, int> &edge,
     return false;
   }
 
-  std::vector<PathView> newEdges = {p23},
-                        borderEdges = {borders[0], borders[1], borders[2],
-                                       borders[3]};
+  std::vector<std::pair<size_t, size_t>> newEdges = {oppEdge},
+                                         borderEdges = {
+                                           {edge.first, oppEdge.second},
+                                           {oppEdge.second, edge.second},
+                                           {edge.second, oppEdge.first},
+                                           {oppEdge.first, edge.first}};
   if(intersectNewEdges(newEdges, borderEdges)) {
     // if(WARNING)
     //   Msg::Warning("Could not swap edge %d %d: new edge intersect border",
@@ -2082,7 +2089,7 @@ bool highOrderPolyMesh::canWeSwap(const std::pair<int, int> &edge,
 
 bool highOrderPolyMesh::checkNewTriangles(std::vector<size_t> newTris)
 {
-  std::vector<std::pair<int, int>> edgesToCheck;
+  std::vector<std::pair<size_t, size_t>> edgesToCheck;
   for(int i = 0; i < newTris.size() / 3; ++i) {
     for(int j = 0; j < 3; ++j) {
       std::pair<int, int> e = {newTris[3 * i + j],
@@ -2093,13 +2100,8 @@ bool highOrderPolyMesh::checkNewTriangles(std::vector<size_t> newTris)
     }
   }
 
-  PathView p;
-  std::vector<PathView> edgePaths, borderPaths;
-  for(auto it = edgesToCheck.begin(); it != edgesToCheck.end(); ++it) {
-    getPath(*it, p);
-    edgePaths.push_back(p);
-  }
-  if(intersectNewEdges(edgePaths, borderPaths)) {
+  std::vector<std::pair<size_t, size_t>> borderEdges;
+  if(intersectNewEdges(edgesToCheck, borderEdges)) {
     // Msg::Warning("Intersection between new triangles");
     return false;
   }
@@ -2394,18 +2396,18 @@ bool highOrderPolyMesh::splitEdge(
   createGeodesics(pt_start, pts_end, paths);
   for(int j = 0; j < N; ++j) setGeodesic({is[j], mid}, paths[j]);
 
-  std::vector<PathView> newPaths(N), borderPaths(N);
-  for(int j = 0; j < N; ++j) { getGeodesicPath(mid, is[j], newPaths[j]); }
-  getGeodesicPath(is[1], is[2], borderPaths[0]);
-  getGeodesicPath(is[2], is[0], borderPaths[1]);
+  std::vector<std::pair<size_t, size_t>> newEdges(N), borderEdges(N);
+  for(int j = 0; j < N; ++j) newEdges[j] = {mid, is[j]};
+  borderEdges[0] = {is[1], is[2]};
+  borderEdges[1] = {is[2], is[0]};
   if(N == 3)
-    borderPaths.pop_back();
+    borderEdges.pop_back();
   else {
-    getGeodesicPath(is[0], is[3], borderPaths[2]);
-    getGeodesicPath(is[3], is[1], borderPaths[3]);
+    borderEdges[2] = {is[0], is[3]};
+    borderEdges[3] = {is[3], is[1]};
   }
 
-  if(intersectNewEdges(newPaths, borderPaths)) {
+  if(intersectNewEdges(newEdges, borderEdges)) {
     if(WARNING)
       Msg::Warning("Could not split edge %d %d: new geodesic intersects "
                    "(themself or with border)",
@@ -2696,14 +2698,10 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
       continue;
     }
 
-    std::vector<PathView> newEdges(borderEdges.size()),
-      borderEdgesPV(borderEdges.size());
-    for(int j = 0; j < borderEdges.size(); ++j) {
-      getGeodesicPath(midIndex, borderEdges[j].first, newEdges[j]);
-      getGeodesicPath(borderEdges[j].second, borderEdges[j].first,
-                      borderEdgesPV[j]);
-    }
-    if(intersectNewEdges(newEdges, borderEdgesPV)) {
+    std::vector<std::pair<size_t, size_t>> newEdges(borderEdges.size());
+    for(int j = 0; j < borderEdges.size(); ++j)
+      newEdges[j] = {midIndex, borderEdges[j].first};
+    if(intersectNewEdges(newEdges, borderEdges)) {
       doCollapseArray[i] = false;
       continue;
     }
@@ -2769,35 +2767,6 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
       adjacentEdges.push_back(HEdgeItem(he, length(he)));
   }
 
-  return true;
-}
-
-bool highOrderPolyMesh::canWeCollapse(
-  std::vector<PathView> &newPaths, std::vector<PathView> &borderPaths,
-  std::vector<geodesic::SurfacePoint> &borderPath, double &minAngleAfter,
-  double &maxAngleAfter)
-{
-  if(intersectNewEdges(newPaths, borderPaths)) {
-    // Msg::Warning("Collaspe edge : border intersect !");
-    return false;
-  }
-
-  // Check angles
-  for(size_t i = 0; i < borderPaths.size(); ++i) {
-    PathView paths[3];
-    paths[0] = newPaths[i];
-    paths[0] = PathView(paths[0], true);
-    paths[1] = borderPaths[i];
-    paths[2] = newPaths[(i + 1) % newPaths.size()];
-    for(int j = 0; j < 3; ++j) {
-      SVector3 n;
-      double angle = computeIntrinsicAngle(paths[j], paths[(j + 2) % 3]);
-      if(angle < 1e-6 || angle > M_PI - 1e-6) { return false; }
-      if(i == 0 && j == 0) { minAngleAfter = maxAngleAfter = angle; }
-      if(angle < minAngleAfter) minAngleAfter = angle;
-      if(angle > maxAngleAfter) maxAngleAfter = angle;
-    }
-  }
   return true;
 }
 
@@ -3349,15 +3318,15 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       int newId = pointsPool.size();
       pointsPool.push_back(newSP);
 
-      std::vector<PathView> newEdges(4), borderEdges(4);
-      getGeodesicPath(newId, edge.first, newEdges[0]);
-      getGeodesicPath(newId, edge.second, newEdges[1]);
-      getGeodesicPath(newId, oppEdge.first, newEdges[2]);
-      getGeodesicPath(newId, oppEdge.second, newEdges[3]);
-      getGeodesicPath(edge.first, oppEdge.second, borderEdges[0]);
-      getGeodesicPath(oppEdge.second, edge.second, borderEdges[1]);
-      getGeodesicPath(edge.second, oppEdge.first, borderEdges[2]);
-      getGeodesicPath(oppEdge.first, edge.first, borderEdges[3]);
+      std::vector<std::pair<size_t, size_t>> newEdges(4), borderEdges(4);
+      newEdges[0] = {newId, edge.first};
+      newEdges[1] = {newId, edge.second};
+      newEdges[2] = {newId, oppEdge.first};
+      newEdges[3] = {newId, oppEdge.second};
+      borderEdges[0] = {edge.first, oppEdge.second};
+      borderEdges[1] = {oppEdge.second, edge.second};
+      borderEdges[2] = {edge.second, oppEdge.first};
+      borderEdges[3] = {oppEdge.first, edge.first};
       bool intersect = intersectNewEdges(newEdges, borderEdges);
       if(intersect) {
         possible = false;
@@ -3705,11 +3674,10 @@ bool highOrderPolyMesh::splitTriangle(
                                  (size_t)he->v->data,
                                  circumindex};
 
-  std::vector<PathView> paths(3), borderPaths(3);
-  for(int i = 0; i < 3; ++i) {
-    getGeodesicPath(he->v->data, he->next->v->data, borderPaths[i]);
-    getGeodesicPath(he->v->data, circumindex, paths[i]);
-    he = he->next;
+  std::vector<std::pair<size_t, size_t>> newEdges(3), borderEdges(3);
+  for(int i = 0; i < 3; ++i, he = he->next) {
+    borderEdges[i] = {he->v->data, he->next->v->data};
+    newEdges[i] = {he->v->data, circumindex};
   }
 
   // Split edge instead of triangle if needed
@@ -3723,11 +3691,11 @@ bool highOrderPolyMesh::splitTriangle(
     if(he->opposite) ats.push_back(he->opposite->f->data);
     cavity = ats;
     newTris.clear();
-    paths.clear();
-    borderPaths.clear();
+    newEdges.clear();
+    borderEdges.clear();
     newTris.reserve(12);
-    paths.reserve(4);
-    borderPaths.reserve(4);
+    newEdges.reserve(4);
+    borderEdges.reserve(4);
     for(auto t : ats) {
       auto he = ipm->faces[t]->he;
       for(int i = 0; i < 3; ++i) {
@@ -3738,18 +3706,15 @@ bool highOrderPolyMesh::splitTriangle(
         newTris.push_back(he->v->data);
         newTris.push_back(he->next->v->data);
         newTris.push_back(circumindex);
-        PathView tmp;
-        getGeodesicPath(he->v->data, he->next->v->data, tmp);
-        borderPaths.push_back(tmp);
-        getGeodesicPath(he->v->data, circumindex, tmp);
-        paths.push_back(tmp);
+        borderEdges.push_back({he->v->data, he->next->v->data});
+        newEdges.push_back({he->v->data, circumindex});
       }
     }
     break;
   }
 
   // Check intersections
-  bool intersect = intersectNewEdges(paths, borderPaths);
+  bool intersect = intersectNewEdges(newEdges, borderEdges);
   if(intersect) {
     if(WARNING)
       Msg::Warning("Could not split triangle: intersections with new edges");
@@ -4780,13 +4745,11 @@ bool highOrderPolyMesh::sanityCheck()
   }
 
   // Intersection
-  std::vector<PathView> newEdges, borderEdges;
-  PathView p;
+  std::vector<std::pair<size_t, size_t>> newEdges, borderEdges;
   for(size_t i = 0; i < ipm->hedges.size(); ++i) {
     PolyMesh::HalfEdge *he = ipm->hedges[i];
     if(he->v->data > he->next->v->data) continue;
-    getPath(he, p);
-    newEdges.push_back(p);
+    newEdges.push_back({he->v->data, he->next->v->data});
   }
   if(intersectNewEdges(newEdges, borderEdges)) {
     printGeodesics("geodesics_intersection.pos");

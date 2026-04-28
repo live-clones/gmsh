@@ -406,8 +406,8 @@ public:
                          double circumradius);
 
   bool intersectGeodesicPath(PathView &p0, PathView &p1);
-  bool intersectNewEdges(std::vector<PathView> &newEdges,
-                         std::vector<PathView> &borderEdges);
+  bool intersectNewEdges(std::vector<std::pair<size_t, size_t>> &newEdges,
+                         std::vector<std::pair<size_t, size_t>> &borderEdges);
 
   void removePoint(size_t i);
 

@@ -734,7 +734,7 @@ namespace geodesic {
     std::vector<SurfacePoint> m_circumcenter;
     std::vector<size_t> m_circumsources;
     SurfacePoint m_circumcenter_heuristic;
-    double m_max_remaining_distance;
+    // double m_max_remaining_distance;
     std::vector<SurfacePoint> m_shortest_path;
     std::vector<double> m_circumradius;
     // std::map<Face *, std::array<bool, 3>> m_face_sources;
