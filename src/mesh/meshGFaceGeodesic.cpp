@@ -3122,32 +3122,73 @@ int highOrderPolyMesh::collapseEdges(const double MINE, double MINA,
 }
 // END COLLAPSE EDGE
 
-char highOrderPolyMesh::outTriangleFast(int circumindex, int t)
+int highOrderPolyMesh::findTriangleToSplit(int circumindex, int t)
 {
-  PathView bpv[3], ipv[3];
-  auto he = ipm->faces[t]->he;
-  for(int j = 0; j < 3; ++j) {
-    std::pair<int, int> e = {he->v->data, he->next->v->data};
-    getGeodesicPath(e.first, e.second, bpv[j]);
-    getGeodesicPath(e.first, circumindex, ipv[j]);
-    he = he->next;
-  }
-
+  const double eps = 1e-10;
+  PathView borderPaths[3], newPaths[3];
   double angles[3];
-  for(int j = 0; j < 3; ++j) {
-    angles[j] = computeIntrinsicAngle(bpv[j], bpv[(j + 2) % 3]);
-    angles[j] -= computeIntrinsicAngle(ipv[j], bpv[(j + 2) % 3]);
+
+  size_t counter = 0;
+  const size_t MAX_COUNTER = 1e4;
+  while(++counter < MAX_COUNTER) {
+    auto he = ipm->faces[t]->he;
+    for(int j = 0; j < 3; ++j, he = he->next) {
+      size_t i0 = he->v->data, i1 = he->next->v->data;
+      getGeodesicPath(i0, i1, borderPaths[j]);
+      getGeodesicPath(i0, circumindex, newPaths[j]);
+    }
+
+    for(int j = 0; j < 3; ++j) {
+      angles[j] =
+        computeIntrinsicAngle(borderPaths[j], borderPaths[(j + 2) % 3]);
+      angles[j] -= computeIntrinsicAngle(newPaths[j], borderPaths[(j + 2) % 3]);
+    }
+
+    // Point inside triangle
+    if(angles[0] > -eps && angles[1] > -eps && angles[2] > -eps) return t;
+
+    int i = 0;
+    for(; i < 3; ++i) { // Find intersection strictly inside opposite edge
+      if(intersectGeodesicPath(newPaths[(i + 2) % 3], borderPaths[(i + 1) % 3]))
+        continue;
+      if(intersectGeodesicPath(newPaths[(i + 2) % 3], borderPaths[(i + 2) % 3]))
+        continue;
+      if(intersectGeodesicPath(newPaths[(i + 2) % 3], borderPaths[i])) break;
+    }
+
+    if(i < 3) { // Follow intersections for C_MAX steps
+      const size_t C_MAX = 1e3;
+      for(int j = 0; j < i; ++j) he = he->next;
+      PathView p;
+      size_t c = 0;
+      while(++c < C_MAX) {
+        if(!he->opposite)
+          Msg::Error("Intersection between an edge and the boundary");
+
+        he = he->opposite->next;
+        getGeodesicPath(he->v->data, he->next->v->data, p);
+        if(intersectGeodesicPath(newPaths[(i + 2) % 3], p)) continue;
+
+        he = he->next;
+        getGeodesicPath(he->v->data, he->next->v->data, p);
+        if(intersectGeodesicPath(newPaths[(i + 2) % 3], p)) continue;
+
+        break;
+      }
+      t = he->f->data;
+    }
+    else { // Randomly choose an adjacent face
+      static std::random_device rd;
+      static std::mt19937 gen(rd());
+      static std::uniform_int_distribution<> distr(0, 2);
+      int N = distr(gen);
+      for(int j = 0; j < N; ++j) he = he->next;
+      if(!he->opposite) Msg::Error("No implementation for boundary triangles");
+      t = he->opposite->f->data;
+    }
   }
 
-  double eps = 1e-10;
-  if(angles[0] > -eps && angles[1] > -eps && angles[2] > -eps) return 0;
-  if(angles[0] > 0 && angles[1] <= 0 && angles[2] <= 0) return 1;
-  if(angles[0] <= 0 && angles[1] > 0 && angles[2] <= 0) return 2;
-  if(angles[0] <= 0 && angles[1] <= 0 && angles[2] > 0) return 3;
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  static std::uniform_int_distribution<> distr(0, 2);
-  return distr(gen) + 1;
+  return -1;
 }
 
 inline double triangle_area(double a, double b, double c)
@@ -3627,40 +3668,12 @@ bool highOrderPolyMesh::splitTriangle(
   }
 
   // Find triangle to split
-  int triangleToSplit = iTriangle;
-  {
-    char next;
-    int counter = 0, maxCounter = 1e4;
-    for(; counter < maxCounter; ++counter) {
-      next = outTriangleFast(circumindex, triangleToSplit);
-      if(next == 0) break;
-
-      auto he = ipm->faces[triangleToSplit]->he;
-      for(char ii = 0; ii < next; ++ii) he = he->next;
-
-      if(!he->opposite)
-        Msg::Error("No opposite face to find triangle to split");
-      triangleToSplit = he->opposite->f->data;
-    }
-
-    if(counter >= maxCounter) {
-      // Msg::Error(("Could not find the triangle to split (endless loop)"));
-      if(WARNING)
-        Msg::Warning(("Could not find the triangle to split (endless loop)"));
-      return false;
-    }
-
-    if(next != 0) {
-      // Msg::Error("Circumcenter not in this triangle ! (%d, %d)", (int)next,
-      //            counter);
-      if(WARNING)
-        Msg::Warning("Circumcenter not in this triangle ! (%d, %d)", (int)next,
-                     counter);
-      return false;
-    }
-
-    if(skipTriangles.find(triangleToSplit) != skipTriangles.end()) return false;
+  int t = findTriangleToSplit(circumindex, iTriangle);
+  if(t == -1) {
+    if(WARNING) Msg::Warning("Could not find triangle to split");
+    return false;
   }
+  int triangleToSplit = t;
 
   std::vector<size_t> cavity = {(size_t)triangleToSplit};
   auto he = ipm->faces[triangleToSplit]->he;

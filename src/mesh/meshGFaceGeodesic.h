@@ -463,7 +463,7 @@ public:
                  std::vector<PolyMesh::HalfEdge *> &adjacentEdges);
   int splitEdges(const double MAXE, double MINA, double MAXA = 1e100);
 
-  char outTriangleFast(int circumindex, int t);
+  int findTriangleToSplit(int circumindex, int t);
   void replaceCavity(std::vector<size_t> &cavity, std::vector<size_t> &newTris);
   bool doSplitTriangle(size_t circumindex, std::vector<size_t> &cavity,
                        std::vector<size_t> &newTris);
