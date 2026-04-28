@@ -64,8 +64,7 @@ T interpolate(std::vector<T> &values, geodesic::SurfacePoint &sp)
   if(values.empty()) Msg::Error("values not defined");
   if(sp.type() == geodesic::VERTEX) {
     geodesic::Vertex *v = (geodesic::Vertex *)sp.base_element();
-
-    if(values.size() - 1 < v->id()) Msg::Error("Value not defined for vertex");
+    if(v->id() >= values.size()) Msg::Error("Value not defined for vertex");
     return values[v->id()];
   }
 
@@ -73,18 +72,10 @@ T interpolate(std::vector<T> &values, geodesic::SurfacePoint &sp)
     geodesic::Edge *e = (geodesic::Edge *)sp.base_element();
     geodesic::Vertex *v0 = e->v0();
     geodesic::Vertex *v1 = e->v1();
-
-    SVector3 d = SVector3(sp.x() - v0->x(), sp.y() - v0->y(), sp.z() - v0->z());
-    SVector3 d1 =
-      SVector3(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
-    double t = dot(d1, d) / dot(d1, d1);
-
-    if(values.size() - 1 < v0->id() || values.size() - 1 < v1->id())
-      Msg::Error("Value not defined for vertex");
-    T p0 = values[v0->id()];
-    T p1 = values[v1->id()];
-    T p = ((1 - t) * p0 + t * p1);
-    return p;
+    if(v0->id() >= values.size() || v1->id() >= values.size())
+      Msg::Error("Value not defined for edge vertex");
+    double u = sp.uv()[0];
+    return (1. - u) * values[v0->id()] + u * values[v1->id()];
   }
 
   if(sp.type() == geodesic::FACE) {
@@ -92,35 +83,16 @@ T interpolate(std::vector<T> &values, geodesic::SurfacePoint &sp)
     auto &v0 = f->adjacent_vertices()[0];
     auto &v1 = f->adjacent_vertices()[1];
     auto &v2 = f->adjacent_vertices()[2];
-
-    SVector3 d = SVector3(sp.x() - v0->x(), sp.y() - v0->y(), sp.z() - v0->z());
-    SVector3 d1 =
-      SVector3(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
-    SVector3 d2 =
-      SVector3(v2->x() - v0->x(), v2->y() - v0->y(), v2->z() - v0->z());
-    double a = crossprod(d1, d2).norm();
-    double v = crossprod(d1, d).norm() / a;
-    double u = crossprod(d, d2).norm() / a;
-
-    if(values.size() - 1 < v0->id() || values.size() - 1 < v1->id() ||
-       values.size() - 1 < v2->id())
-      Msg::Error("Value not defined for vertex");
-    T p0 = values[v0->id()];
-    T p1 = values[v1->id()];
-    T p2 = values[v2->id()];
-    T p = ((1 - u - v) * p0 + u * p1 + v * p2);
-    return p;
+    if(v0->id() >= values.size() || v1->id() >= values.size() ||
+       v2->id() >= values.size())
+      Msg::Error("Value not defined for face vertex");
+    double u = sp.uv()[0], v = sp.uv()[1], w = 1. - u - v;
+    return w * values[v0->id()] + u * values[v1->id()] + v * values[v2->id()];
   }
 
   Msg::Error("SurfacePoint type unknown");
   return T();
 }
-
-// SPoint3 highOrderPolyMesh::getTrueCoords(geodesic::SurfacePoint &sp)
-// {
-//   SVector3 p = interpolate<SVector3>(trueCoord, sp);
-//   return SPoint3(p);
-// }
 
 double highOrderPolyMesh::cl(geodesic::SurfacePoint &sp)
 {
