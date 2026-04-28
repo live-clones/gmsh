@@ -2760,12 +2760,45 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
 
   doCollapseEdge(edge, midIndices[i], cavityArray[i], newTrianglesArray[i]);
 
-  adjacentEdges.clear();
-  for(auto t : cavityArray[i]) {
-    auto he = ipm->faces[t]->he;
-    for(int j = 0; j < 3; ++j, he = he->next)
-      adjacentEdges.push_back(HEdgeItem(he, length(he)));
+  std::vector<PolyMesh::Vertex *> adjacentVertices;
+  for(size_t t : cavityArray[i]) {
+    PolyMesh::HalfEdge *he = ipm->faces[t]->he;
+    for(int j = 0; j < 3; ++j, he = he->next) {
+      auto it =
+        std::find(adjacentVertices.begin(), adjacentVertices.end(), he->v);
+      if(it == adjacentVertices.end()) adjacentVertices.push_back(he->v);
+    }
   }
+
+  std::vector<PolyMesh::HalfEdge *> adjacentHEdges;
+  for(PolyMesh::Vertex *v : adjacentVertices) {
+    PolyMesh::HalfEdge *he = v->he;
+    do {
+      auto it = std::find(adjacentHEdges.begin(), adjacentHEdges.end(), he);
+      if(it == adjacentHEdges.end()) {
+        if(he->opposite) {
+          it = std::find(adjacentHEdges.begin(), adjacentHEdges.end(),
+                         he->opposite);
+          if(it == adjacentHEdges.end()) adjacentHEdges.push_back(he);
+        }
+        else
+          adjacentHEdges.push_back(he);
+      }
+
+      if(he->opposite)
+        he = he->opposite->next;
+      else {
+        he = he->next->next;
+        while(he->opposite) he = he->opposite->next->next;
+        he = he->next;
+      }
+    } while(he != v->he);
+  }
+
+  adjacentEdges.clear();
+  adjacentEdges.reserve(adjacentHEdges.size());
+  for(PolyMesh::HalfEdge *he : adjacentHEdges)
+    adjacentEdges.push_back(HEdgeItem(he, length(he)));
 
   return true;
 }
