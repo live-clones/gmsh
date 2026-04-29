@@ -510,7 +510,7 @@ public:
                               const size_t, const size_t *, const size_t,
                               const double *, const size_t)>
     triangleQualityPtr;
-  unsigned iter;
+  unsigned iteration_loop;
 
   PathView cachedIntersectionPath = PathView();
   std::vector<geodesic::Vertex *> cachedIntersectionVertices;
@@ -620,11 +620,9 @@ public:
                      std::vector<TriangleItem> &adjacentTriangles);
   int splitTriangles(double MAXE);
 
-  bool collapseEdge(PolyMesh::HalfEdge *he, std::set<size_t> keep,
+  bool collapseEdge(PolyMesh::HalfEdge *he,
                     std::vector<HEdgeItem> &adjacentEdges,
-                    // std::vector<std::pair<int,int>> &removedEdges,
-                    std::vector<HEdgeItem> &removedEdgeItems, double MINA = 0,
-                    double MAXA = 1e100);
+                    std::vector<HEdgeItem> &removedEdgeItems);
   bool canWeCollapse(std::vector<PathView> &newPaths,
                      std::vector<PathView> &borderPaths,
                      std::vector<geodesic::SurfacePoint> &borderPath,
@@ -634,13 +632,12 @@ public:
   bool doWeCollapse(double minAngleBefore, double maxAngleBefore,
                     std::vector<size_t> &newTris, double minHeuristicAngle,
                     double maxHeuristicAngle);
-  void doCollapseEdge(std::pair<size_t, size_t> &edge, size_t index,
-                      std::vector<size_t> &cavity,
-                      std::vector<size_t> &newTris);
-  void cleanAfterCollapse(std::set<size_t> &keep);
-  bool doWeCollapse(PolyMesh::HalfEdge *he, double MINE);
-  int collapseEdges(const double MINE, double MINA, double MAXA,
-                    std::set<size_t> &keep);
+  inline void doCollapseEdge(std::pair<size_t, size_t> &edge, size_t index,
+                             std::vector<size_t> &cavity,
+                             std::vector<size_t> &newTris);
+  void cleanAfterCollapse();
+  bool doWeCollapse(PolyMesh::HalfEdge *he);
+  int collapseEdges();
 
   SPoint3 getTrueCoords(geodesic::SurfacePoint &sp);
   double cl(geodesic::SurfacePoint &sp);

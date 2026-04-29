@@ -37,7 +37,8 @@
 #define DEBUG false
 #define PRINT false
 #define WARNING false
-#define PRINT_STEP 1e5
+#define PRINT_STEP ((size_t)1e4)
+#define PRINT_STEP_SWAP ((size_t)1e5)
 #define ASTAR true
 #define EPS 1e-8
 #define CIRCUMMULT 5
@@ -2009,10 +2010,9 @@ int highOrderPolyMesh::swapEdges(bool heuristic)
     set.push_back(he);
   }
 
-  size_t count = 0, iter = 1;
+  size_t count = 0, iter = 0;
   while(!set.empty()) {
-    if(count >= iter * PRINT_STEP) {
-      iter++;
+    if(++iter % PRINT_STEP_SWAP == 0) {
       Msg::Info("Already swapped %d edges (%d triangles, queue "
                 "size = %d)",
                 count, ipm->faces.size(), set.size());
@@ -2325,15 +2325,13 @@ int highOrderPolyMesh::splitEdges(const double MAXE, double MINA, double MAXA)
   pA ------ p0 ------ p1 ------ pE       pA ---------- pNew ---------- pE
 */
 bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
-                                     std::set<size_t> keep,
                                      std::vector<HEdgeItem> &adjacentEdges,
-                                     std::vector<HEdgeItem> &removedEdgeItems,
-                                     double MINA, double MAXA)
+                                     std::vector<HEdgeItem> &removedEdgeItems)
 {
   std::pair<size_t, size_t> edge = {he->v->data, he->next->v->data};
 
   // The edge can be collapsed into one of three vertices
-  const size_t N = 3;
+  constexpr size_t N = 3;
   size_t midIndices[N] = {edge.first, edge.second, pointsPool.size()};
 
   // Find cavity
@@ -2394,15 +2392,11 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
     newTrianglesArray[i] = {};
     cavityArray[i] = cavity;
   }
+
   for(size_t i = 0; i < N; ++i) {
     auto &midIndex = midIndices[i];
     std::vector<size_t> &newTriangles = newTrianglesArray[i];
     std::vector<size_t> &cavity = cavityArray[i];
-
-    if(keep.count(midIndex)) {
-      doCollapseArray[i] = false;
-      continue;
-    }
 
     std::vector<std::pair<size_t, size_t>> newEdges(borderEdges.size());
     for(int j = 0; j < borderEdges.size(); ++j)
@@ -2436,13 +2430,13 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
 
     double qualityAfter = getQuality(newTriangles);
 
+    qualityArray[i] = qualityAfter - qualityBefore;
+
     if(qualityAfter < 0. &&
-       (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
+       (iteration_loop > NUM_AGRESSIVE_LOOPS || qualityArray[i] < EPS)) {
       doCollapseArray[i] = false;
       continue;
     }
-
-    qualityArray[i] = qualityAfter - qualityBefore;
   }
 
   int i = -1;
@@ -2586,10 +2580,10 @@ std::function<double(const double *, const size_t, const double *, const size_t,
                      const size_t)>
   highOrderPolyMesh::triangleQualityPtr = triangleQualityDefault;
 
-void highOrderPolyMesh::doCollapseEdge(std::pair<size_t, size_t> &edge,
-                                       size_t index,
-                                       std::vector<size_t> &cavity,
-                                       std::vector<size_t> &newTris)
+inline void highOrderPolyMesh::doCollapseEdge(std::pair<size_t, size_t> &edge,
+                                              size_t index,
+                                              std::vector<size_t> &cavity,
+                                              std::vector<size_t> &newTris)
 {
   // Remove points
   if(index != edge.first) { removePoint(edge.first); }
@@ -2597,12 +2591,11 @@ void highOrderPolyMesh::doCollapseEdge(std::pair<size_t, size_t> &edge,
   if(index != pointsPool.size() - 1) { removePoint(pointsPool.size() - 1); }
 
   replaceCavity(cavity, newTris);
-
-  return;
 }
 
-void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
+void highOrderPolyMesh::cleanAfterCollapse()
 {
+  // Circumcircles
   for(auto it = circumIndexRadius.begin(); it != circumIndexRadius.end();) {
     if(pointsPool.type(it->second.first) == PointType::Unused)
       it = circumIndexRadius.erase(it);
@@ -2627,15 +2620,9 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
   size_t front = 0, back = pointsPool.size() - 1;
   for(; front <= back; ++front) {
     if(pointsPool.type(front) != PointType::Unused) continue;
-    // if(pointsPool.type(front) == PointType::Vertex) continue;
 
     while(pointsPool.type(back) == PointType::Unused && back != front) --back;
-    // while(pointsPool.type(back) != PointType::Vertex && back != front)
-    // --back;
-    if(back == front) {
-      // --front;
-      break;
-    }
+    if(back == front) { break; }
 
     old2New[back] = front;
     old2New[front] = back;
@@ -2721,8 +2708,6 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
   for(size_t i = 0; i < toInsertEdgeOrdered.size(); ++i) {
     adimLengths.emplace(toInsertEdgeOrdered[i], toInsertLen[i]);
   }
-  // geodesics.clear();
-  // lengths.clear();
 
   // CircumInfos
   std::vector<std::pair<std::array<int, 3>, std::pair<size_t, double>>>
@@ -2748,7 +2733,6 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
     it = circumIndexRadius.erase(it);
   }
   for(auto kv : toInsert2) circumIndexRadius.emplace(kv.first, kv.second);
-  // circumIndexRadius.clear();
 
   // VertexInfos
   std::vector<int> toIEvg;
@@ -2787,16 +2771,6 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
   for(size_t i = 0; i < toITri.size(); ++i)
     vertexTriangles[toITriE[i]].push_back(toITri[i]);
 
-  // Keep
-  std::vector<size_t> toInsertKeep;
-  for(auto it = keep.begin(); it != keep.end();) {
-    auto itt = old2New.find(*it);
-    if(itt == old2New.end()) continue;
-    toInsertKeep.push_back(itt->second);
-    keep.erase(it);
-  }
-  for(auto i : toInsertKeep) keep.insert(i);
-
   for(auto it : circumIndexRadius) {
     for(auto t : it.first) {
       if(pointsPool.type(t) == PointType::Unused)
@@ -2807,26 +2781,23 @@ void highOrderPolyMesh::cleanAfterCollapse(std::set<size_t> &keep)
   }
 }
 
-bool highOrderPolyMesh::doWeCollapse(PolyMesh::HalfEdge *he, double MINE)
+bool highOrderPolyMesh::doWeCollapse(PolyMesh::HalfEdge *he)
 {
   double l = adimLengthMin(he);
-  return l < MINE;
+  return l < 1.;
 }
 
-int highOrderPolyMesh::collapseEdges(const double MINE, double MINA,
-                                     double MAXA, std::set<size_t> &keep)
+int highOrderPolyMesh::collapseEdges()
 {
   std::set<HEdgeItem, std::less<HEdgeItem>> queue;
   for(auto he : ipm->hedges) {
-    if(!doWeCollapse(he, MINE)) continue;
+    if(!doWeCollapse(he)) continue;
     queue.insert(HEdgeItem(he, length(he)));
   }
 
-  size_t iter = 0;
-  int count = 0;
-  int removedTriangles = 0;
+  size_t count = 0, iter = 0, removedTriangles = 0;
   while(queue.size()) {
-    if(++iter % 10000 == 0) {
+    if(++iter % PRINT_STEP == 0) {
       Msg::Info("Already collapsed %d edges (%d triangles, queue size = %d)",
                 count, ipm->faces.size() - removedTriangles, queue.size());
     }
@@ -2837,12 +2808,10 @@ int highOrderPolyMesh::collapseEdges(const double MINE, double MINA,
 
     std::vector<HEdgeItem> adjacentEdges;
     std::vector<HEdgeItem> removedEdgeItems;
-    int nbrRemovedTri = he->opposite ? 2 : 1;
-    if(!collapseEdge(he, keep, adjacentEdges, removedEdgeItems, MINA, MAXA)) {
-      continue;
-    }
+    int nbrTriangles = he->opposite ? 2 : 1;
+    if(!collapseEdge(he, adjacentEdges, removedEdgeItems)) { continue; }
     ++count;
-    removedTriangles += nbrRemovedTri;
+    removedTriangles += nbrTriangles;
 
     for(auto item : removedEdgeItems) {
       auto it = queue.find(item);
@@ -2850,12 +2819,12 @@ int highOrderPolyMesh::collapseEdges(const double MINE, double MINA,
     }
 
     for(auto item : adjacentEdges) {
-      if(!doWeCollapse(item.he, MINE)) continue;
+      if(!doWeCollapse(item.he)) continue;
       queue.insert(item);
     }
   }
 
-  cleanAfterCollapse(keep);
+  cleanAfterCollapse();
 
   return count;
 }
@@ -3421,7 +3390,8 @@ bool highOrderPolyMesh::splitTriangle(
 
   if(qualityAfter < 0. &&
      // (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
-     iter > NUM_AGRESSIVE_LOOPS && qualityAfter - qualityBefore < EPS) {
+     iteration_loop > NUM_AGRESSIVE_LOOPS &&
+     qualityAfter - qualityBefore < EPS) {
     if(WARNING)
       Msg::Warning("Quality does not improve after splitting the triangle");
     for(int i = nPointBefore; i < pointsPool.size(); ++i) {
@@ -4442,7 +4412,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
   printIndex += 6;
   for(; i < niter; ++i) {
     printIndex -= 6;
-    iter = i;
+    iteration_loop = i;
     nbrSwap = swapEdges(HEURISTIC_SWAP);
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
               ipm->faces.size());
@@ -4454,7 +4424,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
     if(DEBUG) { sanityCheck(); }
 
     // Collapse edges
-    nbrCollapse = collapseEdges(MINE, MINA, MAXA, keepSet);
+    nbrCollapse = collapseEdges();
     Msg::Info("Number of edge collapse: \t%d\tTriangles: %d", nbrCollapse,
               ipm->faces.size());
 
