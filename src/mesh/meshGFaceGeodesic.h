@@ -7,10 +7,12 @@
 #include "geodesic_mesh.h"
 #include "geodesic_algorithm_exact.h"
 #include "GModel.h"
+#include <algorithm>
 #include <array>
 #include <functional>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -44,10 +46,18 @@ PolyMesh *createPolyMesh(const std::vector<double> &p,
                          const std::vector<size_t> &vertexNum = {});
 
 struct pair_hash {
-  std::size_t operator()(const std::pair<int, int> &p) const
+  inline std::size_t operator()(const std::pair<int, int> &p) const
   {
     return (static_cast<std::size_t>(p.first) << 32) |
            static_cast<unsigned int>(p.second);
+  }
+
+  inline std::size_t operator()(const std::pair<size_t, size_t> &v) const
+  {
+    // LLM suggestion
+    std::size_t seed = v.first;
+    seed ^= v.second + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    return seed;
   }
 };
 
@@ -312,6 +322,155 @@ private:
   std::vector<PointType> types;
 };
 
+// TriMesh CLASS
+class TriMesh {
+public:
+  static constexpr size_t NONE = std::numeric_limits<size_t>::max();
+
+  std::vector<size_t> vertices;
+  std::vector<size_t> opposites;
+  std::unordered_map<std::pair<size_t, size_t>, size_t, pair_hash> boundary;
+
+  inline size_t &vertex(size_t he) { return vertices[he]; }
+  inline size_t &opposite(size_t he) { return opposites[he]; }
+
+  inline size_t vertex(size_t he) const { return vertices[he]; }
+  inline size_t opposite(size_t he) const { return opposites[he]; }
+  inline size_t size() const { return vertices.size() / 3; }
+  inline size_t face(size_t he) const { return he / 3; }
+  inline size_t face_he(size_t face) const { return 3 * face; }
+  inline size_t next(size_t he) const
+  {
+    return (he % 3 == 2) ? he - 2 : he + 1;
+  }
+  inline size_t prev(size_t he) const
+  {
+    return (he % 3 == 0) ? he + 2 : he - 1;
+  }
+  inline size_t rotate_ccw(size_t he) const
+  {
+    if(opposites[he] != NONE)
+      return next(opposite(he));
+    else {
+      he = prev(he);
+      while(opposite(he) != NONE) he = prev(opposite(he));
+      return next(he);
+    }
+  }
+
+  size_t add_face(size_t v0, size_t v1, size_t v2)
+  {
+    size_t he = vertices.size();
+    vertices.push_back(v0);
+    vertices.push_back(v1);
+    vertices.push_back(v2);
+    opposites.push_back(NONE);
+    opposites.push_back(NONE);
+    opposites.push_back(NONE);
+
+    // Find opposites
+    for(int i = 0; i < 3; ++i, he = next(he)) {
+      size_t start = vertex(he);
+      size_t end = vertex(next(he));
+      std::pair<size_t, size_t> key = {std::min(start, end),
+                                       std::max(start, end)};
+      auto it = boundary.find(key);
+      if(it == boundary.end()) {
+        boundary[key] = he;
+        continue;
+      }
+
+      opposite(he) = it->second;
+      opposite(it->second) = he;
+      boundary.erase(it);
+    }
+
+    return face(he);
+  }
+
+  void remove_face(size_t face)
+  {
+    size_t he = face_he(face);
+    // Remove opposites
+    for(int i = 0; i < 3; ++i, he = next(he)) {
+      size_t start = vertex(he);
+      size_t end = vertex(next(he));
+      std::pair<size_t, size_t> key = {std::min(start, end),
+                                       std::max(start, end)};
+      size_t opp = opposite(he);
+      if(opp != NONE) {
+        opposite(opp) = NONE;
+        boundary[key] = opp;
+      }
+      else
+        boundary.erase(key);
+    }
+
+    vertices[he] = NONE;
+    vertices[he + 1] = NONE;
+    vertices[he + 2] = NONE;
+    opposites[he] = NONE;
+    opposites[he + 1] = NONE;
+    opposites[he + 2] = NONE;
+  }
+
+  inline void set_boundary(size_t he)
+  {
+    size_t start = vertex(he);
+    size_t end = vertex(next(he));
+    std::pair<size_t, size_t> key = {std::min(start, end),
+                                     std::max(start, end)};
+    boundary[key] = he;
+  }
+
+  void swap(size_t he)
+  {
+    size_t ohe = opposite(he);
+    if(ohe == NONE) Msg::Error("No opposite half edge");
+
+    for(int i = 0; i < 2; ++i) {
+      vertex(next(he)) = vertex(prev(ohe));
+      opposite(he) = opposite(next(ohe));
+      if(opposite(he) == NONE)
+        set_boundary(he);
+      else
+        opposite(opposite(he)) = he;
+
+      std::swap(he, ohe);
+    }
+
+    opposite(next(he)) = next(ohe);
+    opposite(next(ohe)) = next(he);
+  }
+
+  void split(size_t he, size_t v)
+  {
+    size_t ohe = opposite(he);
+    for(int i = 0; i < 2; ++i) {
+      size_t newhe = vertices.size();
+      vertices.push_back(v);
+      vertices.push_back(vertex(next(he)));
+      vertices.push_back(vertex(prev(he)));
+      opposites.push_back(ohe);
+      opposites.push_back(opposite(next(he)));
+      opposites.push_back(next(he));
+
+      if(opposite(next(newhe)) == NONE)
+        set_boundary(next(newhe));
+      else
+        opposite(opposite(next(he))) = next(newhe);
+
+      opposite(next(he)) = prev(newhe);
+      vertex(next(he)) = v;
+
+      if(ohe == NONE) break;
+      opposite(ohe) = newhe;
+      std::swap(he, ohe);
+    }
+  }
+};
+
+// MAIN CLASS
 class highOrderPolyMesh {
   int maxTag;
 
@@ -413,7 +572,7 @@ public:
   void write(const PolyMesh *pm_new,
              std::vector<PolyMesh::Vertex *> &pointVertices);
 
-  bool symbolicSwapEdges(std::vector<size_t> &newTris,
+  bool symbolicSwapEdges(std::vector<size_t> &newTriangles,
                          std::vector<size_t> &cavity, bool propagate = true,
                          bool insert = true);
   bool swapEdge(PolyMesh::HalfEdge *he,

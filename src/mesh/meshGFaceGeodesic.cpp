@@ -16,6 +16,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <ostream>
 #include <random>
@@ -2867,7 +2868,7 @@ int highOrderPolyMesh::findTriangleToSplit(int circumindex, int t)
   double angles[3];
 
   size_t counter = 0;
-  const size_t MAX_COUNTER = 1e4;
+  constexpr size_t MAX_COUNTER = 1e4;
   while(++counter < MAX_COUNTER) {
     auto he = ipm->faces[t]->he;
     for(int j = 0; j < 3; ++j, he = he->next) {
@@ -2895,7 +2896,7 @@ int highOrderPolyMesh::findTriangleToSplit(int circumindex, int t)
     }
 
     if(i < 3) { // Follow intersections for C_MAX steps
-      const size_t C_MAX = 1e3;
+      constexpr size_t C_MAX = 1e3;
       for(int j = 0; j < i; ++j) he = he->next;
       PathView p;
       size_t c = 0;
@@ -2956,7 +2957,7 @@ inline void barycentric_from_lengths(
   *w = areaPAB / areaABC;
 }
 
-bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
+bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTriangles,
                                           std::vector<size_t> &cavity,
                                           bool propagate, bool insert)
 {
@@ -2964,29 +2965,20 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
   bool possible = true;
 
   // Minimal halfedge representation
-  std::vector<int> id(newTris.size());
-  std::vector<bool> updated(newTris.size(), true);
-  std::vector<int> next(newTris.size());
-  std::vector<int> opposite(newTris.size(), -1);
-  for(int i = 0; i < newTris.size() / 3; ++i) {
-    for(int j = 0; j < 3; ++j) {
-      id[3 * i + j] = newTris[3 * i + j];
-      next[3 * i + j] = 3 * i + (j + 1) % 3;
-    }
+  TriMesh mesh;
+  for(size_t i = 0; i < newTriangles.size(); i += 3)
+    mesh.add_face(newTriangles[i], newTriangles[i + 1], newTriangles[i + 2]);
+
+  std::vector<bool> updated(newTriangles.size(), true);
+  std::vector<size_t> list;
+  for(size_t i = 0; i < mesh.size(); ++i) {
+    size_t he = mesh.face_he(i);
+    list.push_back(he);
+    list.push_back(mesh.next(he));
+    list.push_back(mesh.prev(he));
   }
 
-  std::vector<int> list(id.size());
-  for(int i = 0; i < id.size(); ++i) {
-    list.push_back(i);
-    for(int j = i + 1; j < id.size(); ++j) {
-      if(id[i] != id[next[j]]) continue;
-      if(id[j] != id[next[i]]) continue;
-      opposite[i] = j;
-      opposite[j] = i;
-    }
-  }
-
-  std::unordered_map<int, PolyMesh::Vertex *> id2pv;
+  std::unordered_map<size_t, PolyMesh::Vertex *> id2pv;
   for(auto t : cavity) {
     auto he = ipm->faces[t]->he;
     for(int j = 0; j < 3; ++j) {
@@ -2995,68 +2987,54 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
     }
   }
 
-  unsigned count = 0;
+  constexpr size_t MAX_COUNT = 1e4;
+  size_t count = 0;
   while(!list.empty()) {
-    int he = list.back();
+    size_t he = list.back();
     list.pop_back();
 
     if(!updated[he]) continue;
     updated[he] = false;
 
-    int i0 = id[he], i1 = id[next[he]], i2 = id[next[next[he]]];
+    size_t i0 = mesh.vertex(he), i1 = mesh.vertex(mesh.next(he)),
+           i2 = mesh.vertex(mesh.prev(he));
 
-    int ohe = opposite[he];
-    if(ohe == -1 && propagate) {
+    size_t ohe = mesh.opposite(he);
+
+    if(ohe == TriMesh::NONE && propagate) {
       PolyMesh::HalfEdge *ihe = id2pv[i0]->he;
       do {
         if(ihe->next->v->data == i1) break;
-        ihe = ihe->opposite->next;
+        if(ihe->opposite)
+          ihe = ihe->opposite->next;
+        else {
+          ihe = ihe->next->next;
+          while(ihe->opposite) ihe = ihe->opposite->next->next;
+          ihe = ihe->next;
+        }
       } while(ihe != id2pv[i0]->he);
       if(ihe->next->v->data != i1) {
         Msg::Error("Could not find the edge %d %d", i0, i1);
       }
       if(!ihe->opposite) continue;
-      int p0 = ihe->v->data;
-      int p1 = ihe->next->v->data;
-      int p3 = ihe->opposite->next->next->v->data;
-      int f103 = ihe->opposite->f->data;
+      size_t p0 = ihe->v->data;
+      size_t p1 = ihe->next->v->data;
+      size_t p3 = ihe->opposite->next->next->v->data;
+      size_t f103 = ihe->opposite->f->data;
       id2pv[ihe->opposite->next->next->v->data] = ihe->opposite->next->next->v;
 
       cavity.push_back(f103);
-      int idx = id.size();
-      id.push_back(p1);
-      id.push_back(p0);
-      id.push_back(p3);
-      updated.push_back(true);
-      updated.push_back(true);
-      updated.push_back(true);
-      next.push_back(idx + 1);
-      next.push_back(idx + 2);
-      next.push_back(idx);
-      opposite.push_back(he);
-      opposite[he] = idx;
-      opposite.push_back(-1);
-      opposite.push_back(-1);
-      for(int i = 0; i < id.size(); ++i) {
-        if(opposite[i] != -1) continue;
-        if(id[i] == p3 && id[next[i]] == p0) {
-          opposite[i] = idx + 1;
-          opposite[idx + 1] = i;
-        }
-        if(id[i] == p1 && id[next[i]] == p3) {
-          opposite[i] = idx + 2;
-          opposite[idx + 2] = i;
-        }
-      }
 
-      ohe = idx;
+      size_t face = mesh.add_face(p1, p0, p3);
+
+      ohe = mesh.face_he(face);
     }
 
-    if(ohe == -1) continue;
+    if(ohe == TriMesh::NONE) continue;
 
-    int i3 = id[next[next[ohe]]];
+    size_t i3 = mesh.vertex(mesh.prev(ohe));
 
-    if(i0 != id[next[ohe]] || i1 != id[ohe]) {
+    if(i0 != mesh.vertex(mesh.next(ohe)) || i1 != mesh.vertex(ohe)) {
       Msg::Error("Error in the symbolic representation of the cavity");
     }
 
@@ -3078,14 +3056,14 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       getGeodesicPath(i0, i1, p01);
       splitPath(p01, .5 * l, firstHalf, secondHalf);
       geodesic::SurfacePoint newSP = firstHalf.back();
-      int newId = pointsPool.size();
+      size_t mid = pointsPool.size();
       pointsPool.push_back(newSP);
 
       std::vector<std::pair<size_t, size_t>> newEdges(4), borderEdges(4);
-      newEdges[0] = {newId, edge.first};
-      newEdges[1] = {newId, edge.second};
-      newEdges[2] = {newId, oppEdge.first};
-      newEdges[3] = {newId, oppEdge.second};
+      newEdges[0] = {mid, edge.first};
+      newEdges[1] = {mid, edge.second};
+      newEdges[2] = {mid, oppEdge.first};
+      newEdges[3] = {mid, oppEdge.second};
       borderEdges[0] = {edge.first, oppEdge.second};
       borderEdges[1] = {oppEdge.second, edge.second};
       borderEdges[2] = {edge.second, oppEdge.first};
@@ -3097,62 +3075,25 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       }
 
       // Do split edge
-      size_t offset = next.size();
-      id.push_back(newId);
-      id.push_back(id[next[he]]);
-      id.push_back(id[next[next[he]]]);
-      updated.push_back(true);
-      updated.push_back(true);
-      updated.push_back(true);
-      next.push_back(offset + 1);
-      next.push_back(offset + 2);
-      next.push_back(offset);
-      opposite.push_back(ohe);
-      opposite.push_back(opposite[next[he]]);
-      opposite.push_back(next[he]);
+      mesh.split(he, mid);
 
-      id.push_back(newId);
-      id.push_back(id[next[ohe]]);
-      id.push_back(id[next[next[ohe]]]);
-      updated.push_back(true);
-      updated.push_back(true);
-      updated.push_back(true);
-      next.push_back(offset + 4);
-      next.push_back(offset + 5);
-      next.push_back(offset + 3);
-      opposite.push_back(he);
-      opposite.push_back(opposite[next[ohe]]);
-      opposite.push_back(next[ohe]);
+      size_t add[12] = {he,
+                        mesh.next(he),
+                        mesh.prev(he),
+                        mesh.opposite(he),
+                        mesh.next(mesh.opposite(he)),
+                        mesh.prev(mesh.opposite(he)),
+                        ohe,
+                        mesh.next(ohe),
+                        mesh.prev(ohe),
+                        mesh.opposite(ohe),
+                        mesh.next(mesh.opposite(ohe)),
+                        mesh.prev(mesh.opposite(ohe))};
 
-      if(opposite[next[he]] != -1) opposite[opposite[next[he]]] = offset + 1;
-      if(opposite[next[ohe]] != -1) opposite[opposite[next[ohe]]] = offset + 4;
-
-      id[next[he]] = newId;
-      opposite[he] = offset + 3;
-      opposite[next[he]] = offset + 2;
-      id[next[ohe]] = newId;
-      opposite[ohe] = offset;
-      opposite[next[ohe]] = offset + 5;
-      updated[he] = true;
-      updated[next[he]] = true;
-      updated[next[next[he]]] = true;
-      updated[ohe] = true;
-      updated[next[ohe]] = true;
-      updated[next[next[ohe]]] = true;
-
-      list.push_back(he);
-      list.push_back(next[he]);
-      list.push_back(next[next[he]]);
-      list.push_back(opposite[he]);
-      list.push_back(next[opposite[he]]);
-      list.push_back(next[next[opposite[he]]]);
-      list.push_back(ohe);
-      list.push_back(next[ohe]);
-      list.push_back(next[next[ohe]]);
-      list.push_back(opposite[ohe]);
-      list.push_back(next[opposite[ohe]]);
-      list.push_back(next[next[opposite[ohe]]]);
-
+      for(size_t i : add) {
+        list.push_back(i);
+        updated[i] = true;
+      }
       continue;
 #else
       possible = false;
@@ -3160,26 +3101,20 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
 #endif
     }
 
-    if(count++ > 1e4) {
+    if(count++ > MAX_COUNT) {
       if(WARNING) Msg::Warning("infinite swaps");
       possible = false;
       break;
     }
 
-    opposite[he] = opposite[next[ohe]];
-    if(opposite[he] != -1) opposite[opposite[he]] = he;
-    opposite[ohe] = opposite[next[he]];
-    if(opposite[ohe] != -1) opposite[opposite[ohe]] = ohe;
-    id[next[he]] = i3;
-    id[next[ohe]] = i2;
-    opposite[next[he]] = next[ohe];
-    opposite[next[ohe]] = next[he];
+    mesh.swap(he);
 
-    int toAdd[6] = {he,  next[he],  next[next[he]],
-                    ohe, next[ohe], next[next[ohe]]};
-    for(int j = 0; j < 6; ++j) {
-      list.push_back(toAdd[j]);
-      updated[toAdd[j]] = true;
+    size_t add[6] = {he,  mesh.next(he),  mesh.prev(he),
+                     ohe, mesh.next(ohe), mesh.prev(ohe)};
+
+    for(size_t i : add) {
+      list.push_back(i);
+      updated[i] = true;
     }
   }
 
@@ -3194,14 +3129,15 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
   for(auto it = cavity.begin(); it != cavity.end();) {
     bool remove = false;
     auto he = ipm->faces[*it]->he;
-    for(int i = 0; i < id.size(); i += 3) {
+    for(size_t i = 0; i < mesh.size(); ++i) {
+      size_t fhe = mesh.face_he(i);
+      size_t vs[3] = {mesh.vertex(fhe), mesh.vertex(mesh.next(fhe)),
+                      mesh.vertex(mesh.prev(fhe))};
       for(int j = 0; j < 3; ++j) {
-        if(he->v->data != id[i + j]) continue;
-        if(he->next->v->data != id[i + (j + 1) % 3]) continue;
-        if(he->next->next->v->data != id[i + (j + 2) % 3]) continue;
-        id[i] = -1;
-        id[i + 1] = -1;
-        id[i + 2] = -1;
+        if(he->v->data != vs[j]) continue;
+        if(he->next->v->data != vs[(j + 1) % 3]) continue;
+        if(he->next->next->v->data != vs[(j + 2) % 3]) continue;
+        mesh.remove_face(i);
         remove = true;
         break;
       }
@@ -3213,12 +3149,13 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTris,
       ++it;
   }
 
-  newTris.clear();
-  for(int i = 0; i < id.size(); i += 3) {
-    if(id[i] == -1) continue;
-    newTris.push_back(id[i]);
-    newTris.push_back(id[i + 1]);
-    newTris.push_back(id[i + 2]);
+  newTriangles.clear();
+  for(size_t i = 0; i < mesh.size(); ++i) {
+    size_t he = mesh.face_he(i);
+    if(mesh.vertex(he) == TriMesh::NONE) continue;
+    newTriangles.push_back(mesh.vertex(he));
+    newTriangles.push_back(mesh.vertex(mesh.next(he)));
+    newTriangles.push_back(mesh.vertex(mesh.prev(he)));
   }
 
   return true;
