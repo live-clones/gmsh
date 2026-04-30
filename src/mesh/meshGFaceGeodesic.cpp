@@ -2846,7 +2846,7 @@ int highOrderPolyMesh::collapseEdges()
 
 int highOrderPolyMesh::findTriangleToSplit(int circumindex, int t)
 {
-  const double eps = 1e-10;
+  constexpr double eps = 1e-10;
   PathView borderPaths[3], newPaths[3];
   double angles[3];
 
@@ -2879,7 +2879,7 @@ int highOrderPolyMesh::findTriangleToSplit(int circumindex, int t)
     }
 
     if(i < 3) { // Follow intersections for C_MAX steps
-      constexpr size_t C_MAX = 1e3;
+      constexpr size_t C_MAX = 1e2;
       for(int j = 0; j < i; ++j) he = he->next;
       PathView p;
       size_t c = 0;
@@ -3286,57 +3286,44 @@ bool highOrderPolyMesh::doSplitTriangle(size_t circumindex,
 }
 
 bool highOrderPolyMesh::splitTriangle(
-  int iTriangle, double MINA, double MAXA, std::set<int> &skipTriangles,
-  std::vector<TriangleItem> removedTriangles,
-  std::vector<TriangleItem> &adjTriangles)
+  int iTriangle, std::vector<TriangleItem> removedTriangles,
+  std::vector<TriangleItem> &adjacentTriangles)
 {
-  if(skipTriangles.find(iTriangle) != skipTriangles.end()) {
-    if(WARNING) Msg::Warning("In splitTriangle: skip triangle");
-    return false;
-  }
-
   double radius;
   size_t circumindex;
   getCircumcenter(iTriangle, circumindex, radius);
   geodesic::SurfacePoint sp = pointsPool[circumindex];
 
-  if(radius == geodesic::GEODESIC_INF) {
-    if(WARNING) Msg::Warning("In splitTriangle: circumradius is infinite");
-    return false;
-  }
-  if(sp.type() == geodesic::UNDEFINED_POINT) {
-    if(WARNING) Msg::Warning("In splitTriangle: circumcenter is undefined");
-    return false;
-  }
-  if(radius == -1) {
-    if(WARNING) Msg::Warning("In splitTriangle: circumradius is not computed");
+  if(radius == geodesic::GEODESIC_INF || radius == -1 ||
+     sp.type() == geodesic::UNDEFINED_POINT) {
+    if(WARNING)
+      Msg::Warning("In splitTriangle: circumcircle could not be found");
     return false;
   }
 
   if(pointsPool.type(circumindex) != PointType::Circumcenter) {
-    if(WARNING) Msg::Warning("Point not circumcenter anymore");
+    if(WARNING) Msg::Warning("The circumcenter is already a vertex or removed");
     return false;
   }
 
   // Find triangle to split
-  int t = findTriangleToSplit(circumindex, iTriangle);
-  if(t == -1) {
+  int triangleToSplit = findTriangleToSplit(circumindex, iTriangle);
+  if(triangleToSplit == -1) {
     if(WARNING) Msg::Warning("Could not find triangle to split");
     return false;
   }
-  int triangleToSplit = t;
 
   std::vector<size_t> cavity = {(size_t)triangleToSplit};
   auto he = ipm->faces[triangleToSplit]->he;
-  std::vector<size_t> newTris = {(size_t)he->v->data,
-                                 (size_t)he->next->v->data,
-                                 circumindex,
-                                 (size_t)he->next->v->data,
-                                 (size_t)he->next->next->v->data,
-                                 circumindex,
-                                 (size_t)he->next->next->v->data,
-                                 (size_t)he->v->data,
-                                 circumindex};
+  std::vector<size_t> newTriangles = {(size_t)he->v->data,
+                                      (size_t)he->next->v->data,
+                                      circumindex,
+                                      (size_t)he->next->v->data,
+                                      (size_t)he->next->next->v->data,
+                                      circumindex,
+                                      (size_t)he->next->next->v->data,
+                                      (size_t)he->v->data,
+                                      circumindex};
 
   std::vector<std::pair<size_t, size_t>> newEdges(3), borderEdges(3);
   for(int i = 0; i < 3; ++i, he = he->next) {
@@ -3360,8 +3347,8 @@ bool highOrderPolyMesh::splitTriangle(
       size_t is[4] = {(size_t)he->v->data, (size_t)ohe->v->data,
                       (size_t)he->next->next->v->data,
                       (size_t)ohe->next->next->v->data};
-      newTris = {circumindex, is[2], is[0], circumindex, is[1], is[2],
-                 circumindex, is[0], is[3], circumindex, is[3], is[1]};
+      newTriangles = {circumindex, is[2], is[0], circumindex, is[1], is[2],
+                      circumindex, is[0], is[3], circumindex, is[3], is[1]};
       newEdges = {{circumindex, is[0]},
                   {circumindex, is[1]},
                   {circumindex, is[2]},
@@ -3380,37 +3367,26 @@ bool highOrderPolyMesh::splitTriangle(
   }
 
   size_t nPointBefore = pointsPool.size();
-  bool result = symbolicSwapEdges(newTris, cavity, true, true);
+  bool result = symbolicSwapEdges(newTriangles, cavity, true, true);
   if(!result) {
     if(WARNING) Msg::Warning("Could not symbolic swap");
     return false;
   }
 
   // Compute triangles qualities
-  std::vector<double> qualitiesBefore(cavity.size()),
-    qualitiesAfter(newTris.size() / 3);
-  double qualityBefore = 1., qualityAfter = 1.;
-  for(int i = 0; i < cavity.size(); ++i) {
-    size_t t = cavity[i];
-    auto he = ipm->faces[t]->he;
-    size_t tri[3] = {(size_t)he->v->data, (size_t)he->next->v->data,
-                     (size_t)he->next->next->v->data};
-    double q = getTriangleQuality(tri);
-    qualitiesBefore[i] = q;
-    if(q < qualityBefore) qualityBefore = q;
+  std::vector<size_t> oldTriangles(cavity.size() * 3);
+  for(size_t i = 0; i < cavity.size(); ++i) {
+    PolyMesh::HalfEdge *he = ipm->faces[cavity[i]]->he;
+    oldTriangles[3 * i] = he->v->data;
+    oldTriangles[3 * i + 1] = he->next->v->data;
+    oldTriangles[3 * i + 2] = he->next->next->v->data;
   }
+  double qualityBefore = getQuality(oldTriangles);
 
-  for(int i = 0; i < newTris.size() / 3; ++i) {
-    size_t tri[3] = {newTris[3 * i], newTris[3 * i + 1], newTris[3 * i + 2]};
-    double q = getTriangleQuality(tri);
-    qualitiesAfter[i] = q;
-    if(q < qualityAfter) qualityAfter = q;
-  }
+  double qualityAfter = getQuality(newTriangles);
 
-  if(qualityAfter < 0. &&
-     // (iter > NUM_AGRESSIVE_LOOPS || qualityAfter - qualityBefore < EPS)) {
-     iteration_loop > NUM_AGRESSIVE_LOOPS &&
-     qualityAfter - qualityBefore < EPS) {
+  if(qualityAfter < 0. && qualityAfter - qualityBefore < EPS &&
+     iteration_loop > NUM_AGRESSIVE_LOOPS) {
     if(WARNING)
       Msg::Warning("Quality does not improve after splitting the triangle");
     for(int i = nPointBefore; i < pointsPool.size(); ++i) {
@@ -3424,21 +3400,29 @@ bool highOrderPolyMesh::splitTriangle(
 
   removedTriangles.resize(cavity.size());
   for(size_t i = 0; i < cavity.size(); ++i) {
-    removedTriangles[i] = TriangleItem((int)cavity[i], qualitiesBefore[i]);
+    PolyMesh::HalfEdge *he = ipm->faces[cavity[i]]->he;
+    size_t tri[3] = {(size_t)he->v->data, (size_t)he->next->v->data,
+                     (size_t)he->next->next->v->data};
+    double q = getTriangleQuality(tri);
+    removedTriangles[i] = TriangleItem((int)cavity[i], q);
   }
 
-  bool splitted = doSplitTriangle(circumindex, cavity, newTris);
+  bool splitted = doSplitTriangle(circumindex, cavity, newTriangles);
   if(!splitted) { return false; }
 
-  adjTriangles.resize(cavity.size());
+  adjacentTriangles.resize(cavity.size());
   for(int i = 0; i < cavity.size(); ++i) {
-    adjTriangles[i] = TriangleItem((int)cavity[i], qualitiesAfter[i]);
+    PolyMesh::HalfEdge *he = ipm->faces[cavity[i]]->he;
+    size_t tri[3] = {(size_t)he->v->data, (size_t)he->next->v->data,
+                     (size_t)he->next->next->v->data};
+    double q = getTriangleQuality(tri);
+    adjacentTriangles[i] = TriangleItem((int)cavity[i], q);
   }
 
   return true;
 }
 
-int highOrderPolyMesh::splitTriangles(double MAXE)
+int highOrderPolyMesh::splitTriangles()
 {
   std::set<TriangleItem, std::less<TriangleItem>> queue;
   for(size_t i = 0; i < ipm->faces.size(); ++i) {
@@ -3451,9 +3435,8 @@ int highOrderPolyMesh::splitTriangles(double MAXE)
   }
 
   int count = 0, iter = 0;
-  std::set<int> skipTriangles;
   while(!queue.empty()) {
-    if(++iter % 10000 == 0) {
+    if(++iter % PRINT_STEP == 0) {
       Msg::Info("Already splitted %d triangles (%d triangles, queue "
                 "size = %d)",
                 count, ipm->faces.size(), queue.size());
@@ -3461,18 +3444,14 @@ int highOrderPolyMesh::splitTriangles(double MAXE)
 
     TriangleItem item = *queue.begin();
     queue.erase(queue.begin());
-    std::vector<TriangleItem> removedTriangles, adjTriangles;
+    std::vector<TriangleItem> removedTriangles, adjacentTriangles;
 
-    if(splitTriangle(item.index, MINANGLE, MAXANGLE, skipTriangles,
-                     removedTriangles, adjTriangles)) {
+    if(splitTriangle(item.index, removedTriangles, adjacentTriangles)) {
       ++count;
 
-      for(auto item : removedTriangles) {
-        auto it = queue.find(item);
-        if(it != queue.end()) queue.erase(it);
-      }
+      for(auto item : removedTriangles) queue.erase(item);
 
-      for(auto item : adjTriangles) {
+      for(auto item : adjacentTriangles) {
         if(item.quality < 0.) queue.insert(item);
       }
     }
@@ -4464,7 +4443,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
     if(DEBUG) { sanityCheck(); }
 
     // Split triangles
-    nbrTriangleSplit = splitTriangles(MAXE);
+    nbrTriangleSplit = splitTriangles();
     Msg::Info("Number of triangle split: \t%d\tTriangles: %d", nbrTriangleSplit,
               ipm->faces.size());
 

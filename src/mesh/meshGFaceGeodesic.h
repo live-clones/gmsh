@@ -614,11 +614,9 @@ public:
   void replaceCavity(std::vector<size_t> &cavity, std::vector<size_t> &newTris);
   bool doSplitTriangle(size_t circumindex, std::vector<size_t> &cavity,
                        std::vector<size_t> &newTris);
-  bool splitTriangle(int iTriangle, double MINA, double MAXA,
-                     std::set<int> &skipTriangles,
-                     std::vector<TriangleItem> removedTriangles,
+  bool splitTriangle(int iTriangle, std::vector<TriangleItem> removedTriangles,
                      std::vector<TriangleItem> &adjacentTriangles);
-  int splitTriangles(double MAXE);
+  int splitTriangles();
 
   bool collapseEdge(PolyMesh::HalfEdge *he,
                     std::vector<HEdgeItem> &removedEdgeItems,
