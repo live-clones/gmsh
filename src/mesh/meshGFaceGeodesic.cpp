@@ -1791,11 +1791,14 @@ bool highOrderPolyMesh::swapEdge(
                    edge.second);
 
 #if SPLIT_IF_CANT_SWAP
-    if(!splitEdge(he, MINANGLE, MAXANGLE, adjacentEdges)) {
+    std::vector<HEdgeItem> removedEdges, adjacentEdgeItems;
+    if(!splitEdge(he, removedEdges, adjacentEdgeItems)) {
       if(WARNING)
         Msg::Warning("Could not split an edge that should be swapped");
       return false;
     }
+    adjacentEdges.clear();
+    for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
     return true;
 #else
     return false;
@@ -2050,9 +2053,9 @@ int highOrderPolyMesh::swapEdges(bool heuristic)
     /               \              /   t   | tNew  \
   p0 --------------- p1          p0 ----- mid ------ p1
 */
-bool highOrderPolyMesh::splitEdge(
-  PolyMesh::HalfEdge *he, double MINA, double MAXA,
-  std::vector<PolyMesh::HalfEdge *> &adjacentEdges)
+bool highOrderPolyMesh::splitEdge(PolyMesh::HalfEdge *he,
+                                  std::vector<HEdgeItem> &removedEdges,
+                                  std::vector<HEdgeItem> &adjacentEdges)
 {
   std::pair<int, int> edge = {he->v->data, he->next->v->data};
 
@@ -2062,13 +2065,12 @@ bool highOrderPolyMesh::splitEdge(
   getPath(edge, edgePath);
   double edgeLength = length(edge), halfLength = .5 * edgeLength;
   splitPath(edgePath, halfLength, firstHalf, secondHalf);
-  geodesic::SurfacePoint midPoint = firstHalf.back();
 
   int mid = pointsPool.size();
-  pointsPool.push_back(midPoint);
+  pointsPool.push_back(firstHalf.back());
 
   PolyMesh::HalfEdge *ohe = he->opposite;
-  std::vector<size_t> cavity, newTris;
+  std::vector<size_t> cavity, newTriangles;
   cavity.push_back(he->f->data);
   if(ohe) cavity.push_back(ohe->f->data);
   size_t is[4];
@@ -2080,22 +2082,22 @@ bool highOrderPolyMesh::splitEdge(
     is[3] = ohe->next->next->v->data;
   else
     N = 3;
-  newTris.push_back(mid);
-  newTris.push_back(is[2]);
-  newTris.push_back(is[0]);
-  newTris.push_back(mid);
-  newTris.push_back(is[1]);
-  newTris.push_back(is[2]);
+  newTriangles.push_back(mid);
+  newTriangles.push_back(is[2]);
+  newTriangles.push_back(is[0]);
+  newTriangles.push_back(mid);
+  newTriangles.push_back(is[1]);
+  newTriangles.push_back(is[2]);
   if(ohe) {
-    newTris.push_back(mid);
-    newTris.push_back(is[3]);
-    newTris.push_back(is[1]);
-    newTris.push_back(mid);
-    newTris.push_back(is[0]);
-    newTris.push_back(is[3]);
+    newTriangles.push_back(mid);
+    newTriangles.push_back(is[3]);
+    newTriangles.push_back(is[1]);
+    newTriangles.push_back(mid);
+    newTriangles.push_back(is[0]);
+    newTriangles.push_back(is[3]);
   }
 
-  geodesic::SurfacePoint &pt_start = midPoint;
+  geodesic::SurfacePoint &pt_start = pointsPool[mid];
   std::vector<geodesic::SurfacePoint> pts_end;
   for(int j = 0; j < N; ++j) pts_end.push_back(pointsPool[is[j]]);
   std::vector<std::vector<geodesic::SurfacePoint>> paths;
@@ -2122,7 +2124,7 @@ bool highOrderPolyMesh::splitEdge(
     return false;
   }
 
-  bool result = symbolicSwapEdges(newTris, cavity, true, true);
+  bool result = symbolicSwapEdges(newTriangles, cavity, true, true);
   if(!result) {
     if(WARNING)
       Msg::Warning("Could not split edge %d %d: symbolic swap was not possible",
@@ -2132,14 +2134,21 @@ bool highOrderPolyMesh::splitEdge(
   }
 
   // Split edge
-  replaceCavity(cavity, newTris);
+
+  removedEdges.clear();
+  for(auto t : cavity) {
+    auto he = ipm->faces[t]->he;
+    for(int j = 0; j < 3; ++j, he = he->next)
+      removedEdges.push_back(HEdgeItem(he, length(he)));
+  }
+
+  replaceCavity(cavity, newTriangles);
 
   adjacentEdges.clear();
   for(auto t : cavity) {
     auto he = ipm->faces[t]->he;
     for(int j = 0; j < 3; ++j) {
-      // adjacentEdges.push_back(HEdgeItem(he, length(he)));
-      adjacentEdges.push_back(he);
+      adjacentEdges.push_back({he, length(he)});
       he = he->next;
     }
   }
@@ -2274,19 +2283,19 @@ void highOrderPolyMesh::splitPath(
                firstHalf.size(), secondHalf.size());
 }
 
-bool highOrderPolyMesh::doWeSplit(PolyMesh::HalfEdge *he, double MAXE)
+bool highOrderPolyMesh::doWeSplit(PolyMesh::HalfEdge *he)
 {
   double l = adimLengthMax(he);
-  return l > MAXE;
+  return l > 1.;
 }
 
-int highOrderPolyMesh::splitEdges(const double MAXE, double MINA, double MAXA)
+int highOrderPolyMesh::splitEdges()
 {
   int count = 0;
   std::set<HEdgeItem, std::greater<HEdgeItem>> queue;
 
   for(auto he : ipm->hedges) {
-    if(!doWeSplit(he, MAXE)) continue;
+    if(!doWeSplit(he)) continue;
     queue.insert(HEdgeItem(he, length(he)));
   }
 
@@ -2301,13 +2310,18 @@ int highOrderPolyMesh::splitEdges(const double MAXE, double MINA, double MAXA)
     queue.erase(queue.begin());
     PolyMesh::HalfEdge *he = edgeItem.he;
 
-    std::vector<PolyMesh::HalfEdge *> adjacentEdges;
-    if(!splitEdge(he, MINA, MAXA, adjacentEdges)) continue;
+    std::vector<HEdgeItem> removedEdges, adjacentEdges;
+    if(!splitEdge(he, removedEdges, adjacentEdges)) continue;
     ++count;
 
-    for(auto he : adjacentEdges) {
-      if(!doWeSplit(he, MAXE)) continue;
-      queue.insert(HEdgeItem(he, length(he)));
+    for(auto item : removedEdges) {
+      auto it = queue.find(item);
+      if(it != queue.end()) queue.erase(it);
+    }
+
+    for(auto item : adjacentEdges) {
+      if(!doWeSplit(item.he)) continue;
+      queue.insert(item);
     }
   }
 
@@ -2325,8 +2339,8 @@ int highOrderPolyMesh::splitEdges(const double MAXE, double MINA, double MAXA)
   pA ------ p0 ------ p1 ------ pE       pA ---------- pNew ---------- pE
 */
 bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
-                                     std::vector<HEdgeItem> &adjacentEdges,
-                                     std::vector<HEdgeItem> &removedEdgeItems)
+                                     std::vector<HEdgeItem> &removedEdgeItems,
+                                     std::vector<HEdgeItem> &adjacentEdges)
 {
   std::pair<size_t, size_t> edge = {he->v->data, he->next->v->data};
 
@@ -2807,13 +2821,13 @@ int highOrderPolyMesh::collapseEdges()
     PolyMesh::HalfEdge *he = item.he;
 
     std::vector<HEdgeItem> adjacentEdges;
-    std::vector<HEdgeItem> removedEdgeItems;
+    std::vector<HEdgeItem> removedEdges;
     int nbrTriangles = he->opposite ? 2 : 1;
-    if(!collapseEdge(he, adjacentEdges, removedEdgeItems)) { continue; }
+    if(!collapseEdge(he, removedEdges, adjacentEdges)) { continue; }
     ++count;
     removedTriangles += nbrTriangles;
 
-    for(auto item : removedEdgeItems) {
+    for(auto item : removedEdges) {
       auto it = queue.find(item);
       if(it != queue.end()) queue.erase(it);
     }
@@ -4471,7 +4485,7 @@ void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
     if(DEBUG) { sanityCheck(); }
 
     // Split edges
-    nbrEdgeSplit = splitEdges(MAXE, 0, 1e100);
+    nbrEdgeSplit = splitEdges();
     Msg::Info("Number of edge split: \t%d\tTriangles: %d", nbrEdgeSplit,
               ipm->faces.size());
 

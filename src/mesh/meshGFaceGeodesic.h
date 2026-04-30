@@ -568,7 +568,7 @@ public:
 
   void removePoint(size_t i);
 
-  bool doWeSplit(PolyMesh::HalfEdge *he, double MAXE);
+  bool doWeSplit(PolyMesh::HalfEdge *he);
   void write(const PolyMesh *pm_new,
              std::vector<PolyMesh::Vertex *> &pointVertices);
 
@@ -606,9 +606,9 @@ public:
                   std::vector<geodesic::SurfacePoint> &circumcenters,
                   std::vector<double> &circumradii);
 
-  bool splitEdge(PolyMesh::HalfEdge *, double MINA, double MAXA,
-                 std::vector<PolyMesh::HalfEdge *> &adjacentEdges);
-  int splitEdges(const double MAXE, double MINA, double MAXA = 1e100);
+  bool splitEdge(PolyMesh::HalfEdge *he, std::vector<HEdgeItem> &removedEdges,
+                 std::vector<HEdgeItem> &adjacentEdges);
+  int splitEdges();
 
   int findTriangleToSplit(int circumindex, int t);
   void replaceCavity(std::vector<size_t> &cavity, std::vector<size_t> &newTris);
@@ -621,8 +621,8 @@ public:
   int splitTriangles(double MAXE);
 
   bool collapseEdge(PolyMesh::HalfEdge *he,
-                    std::vector<HEdgeItem> &adjacentEdges,
-                    std::vector<HEdgeItem> &removedEdgeItems);
+                    std::vector<HEdgeItem> &removedEdgeItems,
+                    std::vector<HEdgeItem> &adjacentEdges);
   bool canWeCollapse(std::vector<PathView> &newPaths,
                      std::vector<PathView> &borderPaths,
                      std::vector<geodesic::SurfacePoint> &borderPath,
