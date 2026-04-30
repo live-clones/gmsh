@@ -492,11 +492,8 @@ public:
   std::map<PolyMesh::Face *, std::vector<int>> fvs;
   std::map<PolyMesh::HalfEdge *, std::vector<int>> evs;
   std::map<int, int> _saddle;
-  std::vector<double> characLength;
   std::vector<double> characLengthMin;
   std::vector<double> characLengthMax;
-  std::unordered_map<std::pair<int, int>, double, pair_hash> lengths;
-  std::unordered_map<std::pair<int, int>, double, pair_hash> adimLengths;
   std::vector<geodesic::GeodesicAlgorithmExact> algorithms;
   // std::map<geodesic::SurfacePoint *, PolyMesh::Vertex *> sp2pv;
   std::map<size_t, size_t> sp2pv;
@@ -596,8 +593,7 @@ public:
   bool doWeSwapIntrinsic(std::pair<int, int> &p01, std::pair<int, int> &p23);
   int swapEdges(bool heuristic = true);
 
-  void meshAdapt(int niter, double MINE, double MAXE, double MINA, double MAXA,
-                 std::set<size_t> &keepSet);
+  void meshAdapt(int niter);
 
   int intrinsicTriangulate();
 
@@ -638,18 +634,13 @@ public:
   int collapseEdges();
 
   SPoint3 getTrueCoords(geodesic::SurfacePoint &sp);
-  double cl(geodesic::SurfacePoint &sp);
   double clMin(geodesic::SurfacePoint &sp);
   double clMax(geodesic::SurfacePoint &sp);
   bool sanityCheck();
   double length(std::pair<int, int> edge);
-  double adimLength(std::pair<int, int> edge);
   double length(PolyMesh::HalfEdge *he);
-  double adimLength(PolyMesh::HalfEdge *he);
   double adimLengthMin(PolyMesh::HalfEdge *he);
   double adimLengthMax(PolyMesh::HalfEdge *he);
-  double adimLength(std::vector<geodesic::SurfacePoint> &path);
-  double adimLength(PathView &path);
   double adimLengthMin(PathView &path);
   double adimLengthMax(PathView &path);
 
@@ -675,8 +666,8 @@ private:
   void classifyGeodesic(std::pair<int, int> pair, const PathView &p, int i0,
                         int i1);
   void classifyGeodesicVertices(std::vector<PolyMesh::Vertex *> &pointVertices);
+  double length(std::vector<geodesic::SurfacePoint> *path);
   double length(PathView &path);
-  void setLength(std::pair<int, int> edge, double length);
   void setAdimLength(std::pair<int, int> edge, double length);
   void splitPath(PathView &path, const double length,
                  std::vector<geodesic::SurfacePoint> &firstHalf,

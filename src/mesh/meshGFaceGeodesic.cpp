@@ -37,8 +37,8 @@
 #define DEBUG false
 #define PRINT false
 #define WARNING false
-#define PRINT_STEP ((size_t)1e4)
-#define PRINT_STEP_SWAP ((size_t)1e5)
+#define PRINT_STEP ((size_t)1e5)
+#define PRINT_STEP_SWAP ((size_t)1e6)
 #define ASTAR true
 #define EPS 1e-8
 #define CIRCUMMULT 5
@@ -97,11 +97,6 @@ T interpolate(std::vector<T> &values, geodesic::SurfacePoint &sp)
   return T();
 }
 
-double highOrderPolyMesh::cl(geodesic::SurfacePoint &sp)
-{
-  double p = interpolate<double>(characLength, sp);
-  return p;
-}
 double highOrderPolyMesh::clMin(geodesic::SurfacePoint &sp)
 {
   double p = interpolate<double>(characLengthMin, sp);
@@ -1162,8 +1157,6 @@ void highOrderPolyMesh::createGeodesicsInParallel(
   std::vector<std::unordered_map<
     std::pair<int, int>, std::vector<geodesic::SurfacePoint>, pair_hash>>
     __geodesics(nthreads);
-  std::vector<std::unordered_map<std::pair<int, int>, double, pair_hash>>
-    __lengths(nthreads);
 
 #if defined(_OPENMP)
 #pragma omp parallel for num_threads(nthreads) schedule(dynamic)
@@ -1192,7 +1185,6 @@ void highOrderPolyMesh::createGeodesicsInParallel(
         path;
       std::reverse(path.begin(), path.end());
       __geodesics[Msg::GetThreadNum()][pairs[j]] = path;
-      __lengths[Msg::GetThreadNum()][pairs[j]] = adimLength(path);
     }
   }
 
@@ -1201,7 +1193,6 @@ void highOrderPolyMesh::createGeodesicsInParallel(
       setGeodesic(it->first, it->second);
     }
   }
-  for(auto l : __lengths) adimLengths.insert(l.begin(), l.end());
 }
 
 void highOrderPolyMesh::createInitialGeodesics()
@@ -1609,13 +1600,9 @@ void highOrderPolyMesh::removePoint(size_t i)
   for(auto e : vertexGeodesics[i]) {
     auto it = geodesics.find(e);
     if(it != geodesics.end()) geodesics.erase(e);
-    auto itt = adimLengths.find(e);
-    if(itt != adimLengths.end()) adimLengths.erase(e);
     std::swap(e.first, e.second);
     it = geodesics.find(e);
     if(it != geodesics.end()) geodesics.erase(e);
-    itt = adimLengths.find(e);
-    if(itt != adimLengths.end()) adimLengths.erase(e);
   }
   vertexGeodesics[i].clear();
 
@@ -1628,28 +1615,6 @@ void highOrderPolyMesh::removePoint(size_t i)
   }
 
   pointsPool.remove(i);
-}
-
-double highOrderPolyMesh::adimLength(std::vector<geodesic::SurfacePoint> &path)
-{
-  PathView pv(path);
-  return adimLength(pv);
-}
-double highOrderPolyMesh::adimLength(PathView &path)
-{
-  if(path.size() < 2) Msg::Error("Path smaller than 2 (size=%d)", path.size());
-  double adimentionalLength = 0;
-  double cl0, cl1 = cl(path[0]);
-  for(size_t i = 0; i < path.size() - 1; ++i) {
-    SVector3 dl((path[i]).xyz(), (path[i + 1]).xyz());
-    cl0 = cl1;
-    cl1 = cl(path[i + 1]);
-    adimentionalLength += dl.norm() * 2 / (cl0 + cl1);
-  }
-  if(adimentionalLength < 0)
-    Msg::Error("Negative adimentional length in computation: %g",
-               adimentionalLength);
-  return adimentionalLength;
 }
 
 double highOrderPolyMesh::adimLengthMin(PathView &path)
@@ -1686,6 +1651,12 @@ double highOrderPolyMesh::adimLengthMax(PathView &path)
   return adimentionalLength;
 }
 
+double highOrderPolyMesh::length(std::vector<geodesic::SurfacePoint> *path)
+{
+  PathView view(*path);
+  return length(view);
+}
+
 double highOrderPolyMesh::length(PathView &path)
 {
   if(path.size() < 2) Msg::Error("Path smaller than 2 (size=%d)", path.size());
@@ -1697,40 +1668,14 @@ double highOrderPolyMesh::length(PathView &path)
   return l;
 }
 
-void highOrderPolyMesh::setLength(std::pair<int, int> edge, double length)
-{
-  if(length <= 0.)
-    Msg::Error("Negative or null adimentional length: %g", length);
-  if(edge.first > edge.second) std::swap(edge.first, edge.second);
-  adimLengths[edge] = length;
-}
-
-void highOrderPolyMesh::setAdimLength(std::pair<int, int> edge, double length)
-{
-  if(length <= 0.)
-    Msg::Error("Negative or null adimentional length: %g", length);
-  if(edge.first > edge.second) std::swap(edge.first, edge.second);
-  adimLengths[edge] = length;
-}
-
 double highOrderPolyMesh::length(std::pair<int, int> edge)
 {
   PathView path;
   getGeodesicPath(edge.first, edge.second, path);
-  lengths[edge] = length(path);
-  return lengths[edge];
+  double l = length(path);
+  return l;
 }
 
-double highOrderPolyMesh::adimLength(std::pair<int, int> edge)
-{
-  auto it = adimLengths.find(edge);
-  if(it != adimLengths.end()) { return it->second; }
-
-  PathView path;
-  getGeodesicPath(edge.first, edge.second, path);
-  adimLengths[edge] = adimLength(path);
-  return adimLengths[edge];
-}
 double highOrderPolyMesh::adimLengthMin(PolyMesh::HalfEdge *he)
 {
   PathView path;
@@ -1747,11 +1692,6 @@ double highOrderPolyMesh::length(PolyMesh::HalfEdge *he)
 {
   std::pair<int, int> e = {he->v->data, he->next->v->data};
   return length(e);
-}
-double highOrderPolyMesh::adimLength(PolyMesh::HalfEdge *he)
-{
-  std::pair<int, int> e = {he->v->data, he->next->v->data};
-  return adimLength(e);
 }
 
 // SWAP EDGE
@@ -2016,7 +1956,7 @@ int highOrderPolyMesh::swapEdges(bool heuristic)
   size_t count = 0, iter = 0;
   while(!set.empty()) {
     if(++iter % PRINT_STEP_SWAP == 0) {
-      Msg::Info("Already swapped %d edges (%d triangles, queue "
+      Msg::Info("\tAlready swapped %d edges (%d triangles, queue "
                 "size = %d)",
                 count, ipm->faces.size(), set.size());
     }
@@ -2302,7 +2242,7 @@ int highOrderPolyMesh::splitEdges()
   size_t iter = 0;
   while(!queue.empty()) {
     if(++iter % 10000 == 0) {
-      Msg::Info("Already splitted %d edges (%d triangles, queue size = %d)",
+      Msg::Info("\tAlready splitted %d edges (%d triangles, queue size = %d)",
                 count, ipm->faces.size(), queue.size());
     }
 
@@ -2699,30 +2639,6 @@ void highOrderPolyMesh::cleanAfterCollapse()
     geodesics.emplace(toInsertEdge[i], std::move(toInsertGeo[i]));
   }
 
-  // Lengths
-  std::vector<std::pair<int, int>> toInsertEdgeOrdered;
-  std::vector<double> toInsertLen;
-  for(auto it = adimLengths.begin(); it != adimLengths.end();) {
-    const std::pair<int, int> &edge = it->first;
-    auto itfirst = old2New.find(edge.first);
-    auto itsecond = old2New.find(edge.second);
-    if(itfirst == old2New.end() && itsecond == old2New.end()) {
-      ++it;
-      continue;
-    }
-    std::pair<int, int> newEdge = edge;
-    if(itfirst != old2New.end()) newEdge.first = itfirst->second;
-    if(itsecond != old2New.end()) newEdge.second = itsecond->second;
-
-    toInsertLen.push_back(it->second);
-    if(newEdge.first > newEdge.second) std::swap(newEdge.first, newEdge.second);
-    toInsertEdgeOrdered.push_back(newEdge);
-    it = adimLengths.erase(it);
-  }
-  for(size_t i = 0; i < toInsertEdgeOrdered.size(); ++i) {
-    adimLengths.emplace(toInsertEdgeOrdered[i], toInsertLen[i]);
-  }
-
   // CircumInfos
   std::vector<std::pair<std::array<int, 3>, std::pair<size_t, double>>>
     toInsert2;
@@ -2812,7 +2728,7 @@ int highOrderPolyMesh::collapseEdges()
   size_t count = 0, iter = 0, removedTriangles = 0;
   while(queue.size()) {
     if(++iter % PRINT_STEP == 0) {
-      Msg::Info("Already collapsed %d edges (%d triangles, queue size = %d)",
+      Msg::Info("\tAlready collapsed %d edges (%d triangles, queue size = %d)",
                 count, ipm->faces.size() - removedTriangles, queue.size());
     }
 
@@ -3437,7 +3353,7 @@ int highOrderPolyMesh::splitTriangles()
   int count = 0, iter = 0;
   while(!queue.empty()) {
     if(++iter % PRINT_STEP == 0) {
-      Msg::Info("Already splitted %d triangles (%d triangles, queue "
+      Msg::Info("\tAlready splitted %d triangles (%d triangles, queue "
                 "size = %d)",
                 count, ipm->faces.size(), queue.size());
     }
@@ -4397,9 +4313,7 @@ bool highOrderPolyMesh::sanityCheck()
   return true;
 }
 
-void highOrderPolyMesh::meshAdapt(int niter, double MINE, double MAXE,
-                                  double MINA, double MAXA,
-                                  std::set<size_t> &keepSet)
+void highOrderPolyMesh::meshAdapt(int niter)
 {
   Msg::Info("Begin adaptation:\t\t\tTriangles: %d", ipm->faces.size());
   int i = 0, nbrSwap = 0, nbrCollapse = 0, nbrEdgeSplit = 0,
@@ -4574,13 +4488,6 @@ int makeMeshGeodesic(GModel *gm)
   Msg::Info("Creating a Geodesic Mesh");
   highOrderPolyMesh hop(pm, tris);
 
-  // hop.sanityCheck();
-
-  // hop.trueCoord = std::vector<SVector3>(hop.pm->vertices.size());
-  // for(size_t i = 0; i < hop.pm->vertices.size(); ++i) {
-  //   hop.trueCoord[i] = SVector3(hop.pm->vertices[i]->position);
-  // }
-  hop.characLength = std::vector<double>(hop.pm->vertices.size(), 1);
   double clmin = std::max(1e-100, CTX::instance()->mesh.lcMin);
   double clmax = std::min(1e+100, CTX::instance()->mesh.lcMax);
   hop.characLengthMin = std::vector<double>(hop.pm->vertices.size(), clmin);
@@ -4593,13 +4500,8 @@ int makeMeshGeodesic(GModel *gm)
     saveIsoTriangles(0, hop.pointsPool, hop.ipm);
   }
 
-  std::set<size_t> keep;
   int adapt = CTX::instance()->mesh.maxIterIntrinsic;
-  double MINE = 1.;
-  double MAXE = 1.;
-  double MINA = MINANGLE;
-  double MAXA = MAXANGLE;
-  hop.meshAdapt(adapt, MINE, MAXE, MINA, MAXA, keep);
+  hop.meshAdapt(adapt);
 
   auto endAdapt = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = endAdapt - start;
@@ -4630,8 +4532,8 @@ int makeMeshGeodesic(GModel *gm)
     PathView pv(path);
     double almin = hop.adimLengthMin(pv);
     double almax = hop.adimLengthMax(pv);
-    if(almin < MINE) nbrEdgeLessThanMin++;
-    if(almax > MAXE) nbrEdgeGreaterThanMax++;
+    if(almin < 1.) nbrEdgeLessThanMin++;
+    if(almax > 1.) nbrEdgeGreaterThanMax++;
     double q = hop.getEdgeQuality(e);
     if(q < 0.) edgeQualityLessThanZero++;
     checkedHE.insert(he);
@@ -4642,8 +4544,8 @@ int makeMeshGeodesic(GModel *gm)
     for(int j = 0; j < 3; ++j) {
       double angle = hop.computeIntrinsicAngle(he->v->data, he->next->v->data,
                                                he->next->next->v->data);
-      if(angle < MINA) nbrAngleLessThanMin++;
-      if(angle > MAXA) nbrAngleGreaterThanMax++;
+      if(angle < MINANGLE) nbrAngleLessThanMin++;
+      if(angle > MAXANGLE) nbrAngleGreaterThanMax++;
       if(angle < minAngle) minAngle = angle;
       if(angle > maxAngle) maxAngle = angle;
       meanAngle += angle;
@@ -4722,10 +4624,10 @@ int makeMeshGeodesic(GModel *gm)
   Msg::Info("Number of vertices: %d", hop.ipm->vertices.size());
   Msg::Info("Number of edges: %d", hop.ipm->hedges.size() / 2);
   Msg::Info("Number of triangles: %d", hop.ipm->faces.size());
-  Msg::Info("Number of edges less than %g: %d", MINE, nbrEdgeLessThanMin);
-  Msg::Info("Number of edges greater than %g: %d", MAXE, nbrEdgeGreaterThanMax);
-  Msg::Info("Number of angles less than %g: %d", MINA, nbrAngleLessThanMin);
-  Msg::Info("Number of angles greater than %g: %d", MAXA,
+  Msg::Info("Number of edges less than %g: %d", 1, nbrEdgeLessThanMin);
+  Msg::Info("Number of edges greater than %g: %d", 1, nbrEdgeGreaterThanMax);
+  Msg::Info("Number of angles less than %g: %d", MINANGLE, nbrAngleLessThanMin);
+  Msg::Info("Number of angles greater than %g: %d", MAXANGLE,
             nbrAngleGreaterThanMax);
   Msg::Info("Minimum angle: %g (%g deg)", minAngle,
             minAngle / (2 * M_PI) * 360);
