@@ -2995,6 +2995,7 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTriangles,
       cavity.push_back(f103);
 
       size_t face = mesh.add_face(p1, p0, p3);
+      for(int i = 0; i < 3; ++i) updated.push_back(true);
 
       ohe = mesh.face_he(face);
     }
@@ -3045,6 +3046,10 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTriangles,
 
       // Do split edge
       mesh.split(he, mid);
+      for(int i = 0; i < 3; ++i) updated.push_back(true);
+      if(mesh.opposite(he) != TriMesh::NONE) {
+        for(int i = 0; i < 3; ++i) updated.push_back(true);
+      }
 
       size_t add[12] = {he,
                         mesh.next(he),
