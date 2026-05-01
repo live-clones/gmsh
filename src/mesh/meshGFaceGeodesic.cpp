@@ -45,8 +45,6 @@
 #define HEURISTIC_SWAP true
 #define SPLIT_IF_CANT_SWAP true
 
-#define NUM_AGRESSIVE_LOOPS 3
-
 #define MINANGLE (CTX::instance()->mesh.minIntrinsicAngle * M_PI / 180)
 #define MAXANGLE (CTX::instance()->mesh.maxIntrinsicAngle * M_PI / 180)
 #define MINAHEURISTIC MINANGLE
@@ -2386,8 +2384,7 @@ bool highOrderPolyMesh::collapseEdge(PolyMesh::HalfEdge *he,
 
     qualityArray[i] = qualityAfter - qualityBefore;
 
-    if(qualityAfter < 0. &&
-       (iteration_loop > NUM_AGRESSIVE_LOOPS || qualityArray[i] < EPS)) {
+    if(qualityAfter < 0. && qualityArray[i] < EPS) {
       doCollapseArray[i] = false;
       continue;
     }
@@ -3301,8 +3298,7 @@ bool highOrderPolyMesh::splitTriangle(
 
   double qualityAfter = getQuality(newTriangles);
 
-  if(qualityAfter < 0. && qualityAfter - qualityBefore < EPS &&
-     iteration_loop > NUM_AGRESSIVE_LOOPS) {
+  if(qualityAfter < 0. && qualityAfter - qualityBefore < EPS) {
     if(WARNING)
       Msg::Warning("Quality does not improve after splitting the triangle");
     for(int i = nPointBefore; i < pointsPool.size(); ++i) {
