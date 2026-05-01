@@ -2789,7 +2789,7 @@ int highOrderPolyMesh::collapseEdges()
 
 int highOrderPolyMesh::findTriangleToSplit(int circumindex, int t)
 {
-  constexpr double eps = 1e-10;
+  constexpr double eps = 0;
   PathView borderPaths[3], newPaths[3];
   double angles[3];
 
@@ -4377,7 +4377,7 @@ void highOrderPolyMesh::meshAdapt(int niter)
               ipm->faces.size());
 
     if(PRINT) {
-      printGeodesics("geodesics_swapped.pos");
+      printGeodesics("geodesics_swapped_after_collapse.pos");
       saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
@@ -4424,7 +4424,7 @@ void highOrderPolyMesh::meshAdapt(int niter)
               ipm->faces.size());
 
     if(PRINT) {
-      printGeodesics("geodesics_swapped.pos");
+      printGeodesics("geodesics_swapped_after_edge_split.pos");
       saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }

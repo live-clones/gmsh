@@ -279,7 +279,6 @@ public:
     for(int j = 0; j < points.size(); ++j) {
       if(type(j) != PointType::Vertex) continue;
       if(norm(SVector3(points[i].xyz(), points[j].xyz())) < 1e-10) {
-        Msg::Warning("A vertex already exists at this location");
         return false;
       }
     }
