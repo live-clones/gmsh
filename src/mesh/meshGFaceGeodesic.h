@@ -603,7 +603,7 @@ public:
                   std::vector<double> &circumradii);
 
   bool splitEdge(PolyMesh::HalfEdge *he, std::vector<HEdgeItem> &removedEdges,
-                 std::vector<HEdgeItem> &adjacentEdges);
+                 std::vector<HEdgeItem> &adjacentEdges, bool propagate = true);
   int splitEdges();
 
   int findTriangleToSplit(int circumindex, int t);

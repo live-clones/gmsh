@@ -1730,7 +1730,7 @@ bool highOrderPolyMesh::swapEdge(
 
 #if SPLIT_IF_CANT_SWAP
     std::vector<HEdgeItem> removedEdges, adjacentEdgeItems;
-    if(!splitEdge(he, removedEdges, adjacentEdgeItems)) {
+    if(!splitEdge(he, removedEdges, adjacentEdgeItems, false)) {
       if(WARNING)
         Msg::Warning("Could not split an edge that should be swapped");
       return false;
@@ -1993,8 +1993,10 @@ int highOrderPolyMesh::swapEdges(bool heuristic)
 */
 bool highOrderPolyMesh::splitEdge(PolyMesh::HalfEdge *he,
                                   std::vector<HEdgeItem> &removedEdges,
-                                  std::vector<HEdgeItem> &adjacentEdges)
+                                  std::vector<HEdgeItem> &adjacentEdges,
+                                  bool propagate)
 {
+  size_t nPointBefore = pointsPool.size();
   std::pair<int, int> edge = {he->v->data, he->next->v->data};
 
   // Compute new point
@@ -2062,13 +2064,41 @@ bool highOrderPolyMesh::splitEdge(PolyMesh::HalfEdge *he,
     return false;
   }
 
-  bool result = symbolicSwapEdges(newTriangles, cavity, true, true);
-  if(!result) {
-    if(WARNING)
-      Msg::Warning("Could not split edge %d %d: symbolic swap was not possible",
-                   edge.first, edge.second);
-    pointsPool.remove(mid);
-    return false;
+  if(propagate) {
+    bool result = symbolicSwapEdges(newTriangles, cavity, true, true);
+    if(!result) {
+      if(WARNING)
+        Msg::Warning(
+          "Could not split edge %d %d: symbolic swap was not possible",
+          edge.first, edge.second);
+      for(int i = nPointBefore; i < pointsPool.size(); ++i) {
+        if(pointsPool.type(i) != PointType::Vertex) continue;
+        pointsPool.remove(i);
+      }
+      return false;
+    }
+
+    // Quality
+    std::vector<size_t> oldTriangles(cavity.size() * 3);
+    for(size_t i = 0; i < cavity.size(); ++i) {
+      PolyMesh::HalfEdge *he = ipm->faces[cavity[i]]->he;
+      oldTriangles[3 * i] = he->v->data;
+      oldTriangles[3 * i + 1] = he->next->v->data;
+      oldTriangles[3 * i + 2] = he->next->next->v->data;
+    }
+    double qualityBefore = getQuality(oldTriangles);
+
+    double qualityAfter = getQuality(newTriangles);
+
+    if(qualityAfter < 0. && qualityAfter - qualityBefore < EPS) {
+      if(WARNING)
+        Msg::Warning("Could not split edge, the quality deos not improve");
+      for(int i = nPointBefore; i < pointsPool.size(); ++i) {
+        if(pointsPool.type(i) != PointType::Vertex) continue;
+        pointsPool.remove(i);
+      }
+      return false;
+    }
   }
 
   // Split edge
