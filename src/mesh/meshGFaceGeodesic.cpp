@@ -1712,14 +1712,37 @@ bool highOrderPolyMesh::swapEdge(
 
 #if SPLIT_IF_CANT_SWAP
     std::vector<HEdgeItem> removedEdges, adjacentEdgeItems;
-    if(!splitEdge(he, removedEdges, adjacentEdgeItems, false)) {
-      if(WARNING)
-        Msg::Warning("Could not split an edge that should be swapped");
-      return false;
+    // Try split edge
+    if(splitEdge(he, removedEdges, adjacentEdgeItems, false)) {
+      adjacentEdges.clear();
+      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+      return true;
     }
+
+    // Try split border edges
+    PolyMesh::HalfEdge *hes[4] = {he->next, he->next->next, he->opposite->next,
+                                  he->opposite->next->next};
     adjacentEdges.clear();
-    for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
-    return true;
+    bool s0 = splitEdge(hes[0], removedEdges, adjacentEdgeItems);
+    if(s0) {
+      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+    }
+    bool s1 = splitEdge(hes[1], removedEdges, adjacentEdgeItems);
+    if(s1) {
+      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+    }
+    bool s2 = splitEdge(hes[2], removedEdges, adjacentEdgeItems);
+    if(s2) {
+      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+    }
+    bool s3 = splitEdge(hes[3], removedEdges, adjacentEdgeItems);
+    if(s3) {
+      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+    }
+    if(s0 || s1 || s2 || s3) return true;
+
+    if(WARNING) Msg::Warning("Could not split an edge that should be swapped");
+    return false;
 #else
     return false;
 #endif
