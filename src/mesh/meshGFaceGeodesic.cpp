@@ -1688,7 +1688,7 @@ double highOrderPolyMesh::length(PolyMesh::HalfEdge *he)
 */
 bool highOrderPolyMesh::swapEdge(
   PolyMesh::HalfEdge *he, std::vector<PolyMesh::HalfEdge *> &adjacentEdges,
-  bool heuristic)
+  bool heuristic, bool split_if_cant_swap)
 {
   if(!he->opposite)
     Msg::Error("In swapEdge: halfedge %d %d has no opposite halfedge",
@@ -1710,42 +1710,42 @@ bool highOrderPolyMesh::swapEdge(
       Msg::Warning("Should be swapped but could not: %d %d", edge.first,
                    edge.second);
 
-#if SPLIT_IF_CANT_SWAP
-    std::vector<HEdgeItem> removedEdges, adjacentEdgeItems;
-    // Try split edge
-    if(splitEdge(he, removedEdges, adjacentEdgeItems, false)) {
+    if(split_if_cant_swap) {
+      std::vector<HEdgeItem> removedEdges, adjacentEdgeItems;
+      // Try split edge
+      if(splitEdge(he, removedEdges, adjacentEdgeItems, false)) {
+        adjacentEdges.clear();
+        for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+        return true;
+      }
+
+      // Try split border edges
+      PolyMesh::HalfEdge *hes[4] = {
+        he->next, he->next->next, he->opposite->next, he->opposite->next->next};
       adjacentEdges.clear();
-      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
-      return true;
+      bool s0 = splitEdge(hes[0], removedEdges, adjacentEdgeItems, false);
+      if(s0) {
+        for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+      }
+      bool s1 = splitEdge(hes[1], removedEdges, adjacentEdgeItems, false);
+      if(s1) {
+        for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+      }
+      bool s2 = splitEdge(hes[2], removedEdges, adjacentEdgeItems, false);
+      if(s2) {
+        for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+      }
+      bool s3 = splitEdge(hes[3], removedEdges, adjacentEdgeItems, false);
+      if(s3) {
+        for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
+      }
+      if(s0 || s1 || s2 || s3) return true;
+
+      if(WARNING)
+        Msg::Warning("Could not split an edge that should be swapped");
     }
 
-    // Try split border edges
-    PolyMesh::HalfEdge *hes[4] = {he->next, he->next->next, he->opposite->next,
-                                  he->opposite->next->next};
-    adjacentEdges.clear();
-    bool s0 = splitEdge(hes[0], removedEdges, adjacentEdgeItems);
-    if(s0) {
-      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
-    }
-    bool s1 = splitEdge(hes[1], removedEdges, adjacentEdgeItems);
-    if(s1) {
-      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
-    }
-    bool s2 = splitEdge(hes[2], removedEdges, adjacentEdgeItems);
-    if(s2) {
-      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
-    }
-    bool s3 = splitEdge(hes[3], removedEdges, adjacentEdgeItems);
-    if(s3) {
-      for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
-    }
-    if(s0 || s1 || s2 || s3) return true;
-
-    if(WARNING) Msg::Warning("Could not split an edge that should be swapped");
     return false;
-#else
-    return false;
-#endif
   }
 
   doSwapEdge(he);
@@ -1947,7 +1947,7 @@ bool highOrderPolyMesh::doWeSwapIntrinsic(std::pair<int, int> &edge,
   return false;
 }
 
-int highOrderPolyMesh::swapEdges(bool heuristic)
+int highOrderPolyMesh::swapEdges(bool heuristic, bool split_if_cant_swap)
 {
   std::vector<PolyMesh::HalfEdge *> set;
   std::vector<bool> updated(ipm->hedges.size(), true);
@@ -1971,7 +1971,7 @@ int highOrderPolyMesh::swapEdges(bool heuristic)
     updated[he->data] = false;
 
     std::vector<PolyMesh::HalfEdge *> adjacentEdges;
-    if(!swapEdge(he, adjacentEdges, heuristic)) continue;
+    if(!swapEdge(he, adjacentEdges, heuristic, split_if_cant_swap)) continue;
     ++count;
 
     if(updated.size() < ipm->hedges.size())
@@ -1999,7 +1999,7 @@ int highOrderPolyMesh::swapEdges(bool heuristic)
 bool highOrderPolyMesh::splitEdge(PolyMesh::HalfEdge *he,
                                   std::vector<HEdgeItem> &removedEdges,
                                   std::vector<HEdgeItem> &adjacentEdges,
-                                  bool propagate)
+                                  bool check_quality)
 {
   size_t nPointBefore = pointsPool.size();
   std::pair<int, int> edge = {he->v->data, he->next->v->data};
@@ -2069,20 +2069,19 @@ bool highOrderPolyMesh::splitEdge(PolyMesh::HalfEdge *he,
     return false;
   }
 
-  if(propagate) {
-    bool result = symbolicSwapEdges(newTriangles, cavity, true, true);
-    if(!result) {
-      if(WARNING)
-        Msg::Warning(
-          "Could not split edge %d %d: symbolic swap was not possible",
-          edge.first, edge.second);
-      for(int i = nPointBefore; i < pointsPool.size(); ++i) {
-        if(pointsPool.type(i) != PointType::Vertex) continue;
-        pointsPool.remove(i);
-      }
-      return false;
+  bool result = symbolicSwapEdges(newTriangles, cavity, true, true);
+  if(!result) {
+    if(WARNING)
+      Msg::Warning("Could not split edge %d %d: symbolic swap was not possible",
+                   edge.first, edge.second);
+    for(int i = nPointBefore; i < pointsPool.size(); ++i) {
+      if(pointsPool.type(i) != PointType::Vertex) continue;
+      pointsPool.remove(i);
     }
+    return false;
+  }
 
+  if(check_quality) {
     // Quality
     std::vector<size_t> oldTriangles(cavity.size() * 3);
     for(size_t i = 0; i < cavity.size(); ++i) {
@@ -4356,7 +4355,12 @@ void highOrderPolyMesh::meshAdapt(int niter)
   for(; i < niter; ++i) {
     printIndex -= 6;
     iteration_loop = i;
-    nbrSwap = swapEdges(HEURISTIC_SWAP);
+    if(i == 0)
+      nbrSwap = swapEdges(HEURISTIC_SWAP, false);
+    else
+      nbrSwap = 0;
+
+    nbrSwap += swapEdges(HEURISTIC_SWAP);
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
               ipm->faces.size());
 

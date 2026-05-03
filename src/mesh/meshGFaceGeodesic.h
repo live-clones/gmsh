@@ -573,7 +573,7 @@ public:
                          bool insert = true);
   bool swapEdge(PolyMesh::HalfEdge *he,
                 std::vector<PolyMesh::HalfEdge *> &adjacentEdges,
-                bool heuristic = true);
+                bool heuristic = true, bool split_if_cant_swap = true);
   void removeAdjacency(std::vector<size_t> &trigls);
   void addAdjacency(std::vector<size_t> &trigls);
   void doSwapEdge(PolyMesh::HalfEdge *he);
@@ -590,7 +590,7 @@ public:
   bool doWeSwap(std::pair<int, int> &edge, std::pair<int, int> &opp,
                 bool heuristic = true);
   bool doWeSwapIntrinsic(std::pair<int, int> &p01, std::pair<int, int> &p23);
-  int swapEdges(bool heuristic = true);
+  int swapEdges(bool heuristic = true, bool split_if_cant_swap = true);
 
   void meshAdapt(int niter);
 
@@ -602,7 +602,8 @@ public:
                   std::vector<double> &circumradii);
 
   bool splitEdge(PolyMesh::HalfEdge *he, std::vector<HEdgeItem> &removedEdges,
-                 std::vector<HEdgeItem> &adjacentEdges, bool propagate = true);
+                 std::vector<HEdgeItem> &adjacentEdges,
+                 bool check_quality = true);
   int splitEdges();
 
   int findTriangleToSplit(int circumindex, int t);
