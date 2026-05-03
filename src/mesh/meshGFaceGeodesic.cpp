@@ -1446,67 +1446,45 @@ inline static void getSegmentFaces(geodesic::SurfacePoint &sp0,
 //   }
 // }
 
-inline bool intersect(double p0[3], double p1[3], double s0[3], double s1[3],
+inline bool intersect(double P0[2], double P1[2], double S0[2], double S1[2],
                       bool excludeP0, bool excludeP1, bool excludeS0,
                       bool excludeS1)
 {
-  double eps = 1e-12;
+  double o0 = robustPredicates::orient2d(S0, S1, P0);
+  double o1 = robustPredicates::orient2d(S0, S1, P1);
+  double o2 = robustPredicates::orient2d(P0, P1, S0);
+  double o3 = robustPredicates::orient2d(P0, P1, S1);
 
-  SVector3 u(p0, p1), v(s0, s1), w(p0, s0);
-  double inv_local_scale = 1. / norm(u);
-  u *= inv_local_scale;
-  v *= inv_local_scale;
-  w *= inv_local_scale;
-  SVector3 v_u = crossprod(v, u);
-  SVector3 v_w = crossprod(v, w);
-  SVector3 u_w = crossprod(u, w);
-
-  double norm_2_v_u = dot(v_u, v_u);
-  double norm_2_v_w = dot(v_w, v_w);
-  double norm_2_u_w = dot(u_w, u_w);
-
-  if(norm_2_v_u <= eps) { // Parallel
-    if(norm_2_v_w > eps && norm_2_u_w > eps) return false; // Parallel disjoint
-    // Colinear
-    double norm_u = norm(u);
-    if(norm_u < eps) Msg::Error("Two points too close");
-    u *= 1. / norm_u;
-    double u_dot_v = dot(u, v);
-    double u_dot_w = dot(u, w);
-
-    if(u_dot_v >= 0.0) {
-      if(u_dot_w > 1.0 + eps) return false;
-      if(u_dot_w + u_dot_v < 0.0 - eps) return false;
-      if(u_dot_w > 1.0 - eps && (excludeP1 || excludeS0)) return false;
-      if(u_dot_w + u_dot_v < 0.0 + eps && (excludeP0 || excludeS1))
-        return false;
+  // Colinear case
+  if(o0 == 0. && o1 == 0 && o2 == 0. && o3 == 0.) {
+    int i = (P0[0] == P1[0]) ? 1 : 0;
+    if(P1[i] < P0[i]) {
+      std::swap(P0, P1);
+      std::swap(excludeP0, excludeP1);
     }
-    else {
-      if(u_dot_w < 0.0 - eps) return false;
-      if(u_dot_w + u_dot_v > 1.0 + eps) return false;
-      if(u_dot_w < 0.0 + eps && (excludeP0 || excludeS0)) return false;
-      if(u_dot_w + u_dot_v > 1.0 - eps && (excludeP1 || excludeS1))
-        return false;
+    if(S1[i] < S0[i]) {
+      std::swap(S0, S1);
+      std::swap(excludeS0, excludeS1);
     }
+    if(S0[i] < P0[i]) {
+      std::swap(S0, P0);
+      std::swap(excludeS0, excludeP0);
+      std::swap(S1, P1);
+      std::swap(excludeS1, excludeP1);
+    }
+
+    if(P1[i] < S0[i]) return false;
+    if(P1[i] == S0[i] && excludeP1 && excludeS0) return false;
     return true;
   }
 
-  double inv_norm = 1. / sqrt(norm_2_v_u);
-  v_u *= inv_norm;
-  v_w *= inv_norm;
-  u_w *= inv_norm;
-  double pos_p = dot(v_u, v_w);
-  double pos_s = dot(v_u, u_w);
+  // Exclude Endpoints
+  if((o0 == 0. && excludeP0) || (o1 == 0 && excludeP1)) {
+    if((o2 == 0. && excludeS0) || (o3 == 0 && excludeS1)) return false;
+  }
 
-  if(pos_p < 0.0 - eps) return false;
-  if(pos_p > 1.0 + eps) return false;
-  if(pos_s < 0.0 - eps) return false;
-  if(pos_s > 1.0 + eps) return false;
-
-  if(pos_p < 0.0 + eps && excludeP0) return false;
-  if(pos_p > 1.0 - eps && excludeP1) return false;
-  if(pos_s < 0.0 + eps && excludeS0) return false;
-  if(pos_s > 1.0 - eps && excludeS1) return false;
+  // General Case
+  if(o0 * o1 > 0. || o2 * o3 > 0.) return false;
   return true;
 }
 
@@ -1553,10 +1531,14 @@ bool highOrderPolyMesh::intersectGeodesicPath(PathView &p0, PathView &p1)
       auto it = cachedIntersectionFaces.find(face);
       if(it != cachedIntersectionFaces.end()) {
         size_t i = it->second;
-        bool result =
-          intersect(p0[i - 1].xyz(), p0[i].xyz(), start.xyz(), end.xyz(),
-                    i == 1, i + 1 == size0, j == 1, j + 1 == size1);
-        if(result) return true;
+        double P0[2], P1[2], S0[2], S1[2];
+        getFaceParamCoord(p0[i - 1], face, P0);
+        getFaceParamCoord(p0[i], face, P1);
+        getFaceParamCoord(start, face, S0);
+        getFaceParamCoord(end, face, S1);
+        if(intersect(P0, P1, S0, S1, i == 1, i + 1 == size0, j == 1,
+                     j + 1 == size1))
+          return true;
       }
     }
   }

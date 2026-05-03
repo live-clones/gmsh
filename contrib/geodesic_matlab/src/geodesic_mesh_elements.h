@@ -303,6 +303,10 @@ namespace geodesic {
       // add(f->adjacent_vertices()[2]);
       // multiply(1./3.);
 
+      v = 1. - v;
+      v = 1. - v;
+      w = 1. - w;
+      w = 1. - w;
       double u = 1. - v - w;
       vertex_pointer v0 = f->adjacent_vertices()[0];
       vertex_pointer v1 = f->adjacent_vertices()[1];
@@ -319,7 +323,8 @@ namespace geodesic {
       double a = 0.5)
       : m_p(e)
     {
-      double b = 1 - a;
+      double b = 1. - a;
+      a = 1. - b;
       vertex_pointer v0 = e->adjacent_vertices()[0];
       vertex_pointer v1 = e->adjacent_vertices()[1];
       x() = b * v0->x() + a * v1->x();
