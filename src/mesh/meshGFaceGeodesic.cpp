@@ -1830,8 +1830,8 @@ bool highOrderPolyMesh::checkNewTriangles(std::vector<size_t> newTris)
   std::vector<std::pair<size_t, size_t>> edgesToCheck;
   for(int i = 0; i < newTris.size() / 3; ++i) {
     for(int j = 0; j < 3; ++j) {
-      std::pair<int, int> e = {newTris[3 * i + j],
-                               newTris[3 * i + (j + 1) % 3]};
+      std::pair<size_t, size_t> e = {newTris[3 * i + j],
+                                     newTris[3 * i + (j + 1) % 3]};
       if(e.first > e.second) std::swap(e.first, e.second);
       auto it = std::find(edgesToCheck.begin(), edgesToCheck.end(), e);
       if(it == edgesToCheck.end()) edgesToCheck.push_back(e);
@@ -1884,7 +1884,7 @@ void highOrderPolyMesh::getBorder(
   for(size_t i = 0; i < triangles.size(); i += 3) {
     size_t *is = &triangles[i];
     for(int j = 0; j < 3; ++j) {
-      std::pair<int, int> o = {is[(j + 1) % 3], is[j]};
+      std::pair<size_t, size_t> o = {is[(j + 1) % 3], is[j]};
       auto it = std::find(borderEdges.begin(), borderEdges.end(), o);
       if(it != borderEdges.end()) {
         borderEdges.erase(it);
