@@ -3328,6 +3328,16 @@ bool highOrderPolyMesh::splitTriangle(
     return false;
   }
 
+  auto it = std::find(cavity.begin(), cavity.end(), iTriangle);
+  if(it == cavity.end()) {
+    if(WARNING) Msg::Warning("Triangle to split is not in the cavity");
+    for(int i = nPointBefore; i < pointsPool.size(); ++i) {
+      if(pointsPool.type(i) != PointType::Vertex) continue;
+      pointsPool.remove(i);
+    }
+    return false;
+  }
+
   // Compute triangles qualities
   std::vector<size_t> oldTriangles(cavity.size() * 3);
   for(size_t i = 0; i < cavity.size(); ++i) {

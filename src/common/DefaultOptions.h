@@ -1311,7 +1311,7 @@ StringXNumber MeshOptions_Number[] = {
   {F | O, "MaxIterDelaunay3D", opt_mesh_max_iter_delaunay_3d, 0,
    "Maximum number of point insertion iterations in 3D Delaunay mesher "
    "(0: unlimited)"},
-  {F | O, "MaxIterIntrinsic", opt_mesh_max_iter_intrinsic, 15,
+  {F | O, "MaxIterIntrinsic", opt_mesh_max_iter_intrinsic, 25,
    "Maximum number of loop iterations in intrinsic remesher "
    "(0: unlimited)"},
   {F | O, "MaxNumThreads1D", opt_mesh_max_num_threads_1d, 0.,
