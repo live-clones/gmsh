@@ -791,6 +791,11 @@ public:
   void classifySurfaces(double angleThreshold, bool includeBoundary,
                         bool forReparametrization, double curveAngleThreshold);
 
+  // classify surfaces based on existing discrete surface assignments (from a
+  // loaded mesh file): rebuild the edge/vertex topology without changing the
+  // triangle-to-surface assignment
+  void classifySurfacesFromDiscrete();
+
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements
   GModel *buildCutGModel(gLevelset *ls, bool cutElem = true,

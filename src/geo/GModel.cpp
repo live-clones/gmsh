@@ -3714,6 +3714,11 @@ void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
                 curveAngleThreshold);
 }
 
+void GModel::classifySurfacesFromDiscrete()
+{
+  classifyFacesFromDiscrete(this);
+}
+
 void GModel::addHomologyRequest(const std::string &type,
                                 const std::vector<int> &domain,
                                 const std::vector<int> &subdomain,

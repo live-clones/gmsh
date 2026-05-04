@@ -5205,6 +5205,28 @@ class model:
         classify_surfaces = classifySurfaces
 
         @staticmethod
+        def classifySurfacesFromDiscrete(exportDiscrete=True):
+            """
+            gmsh.model.mesh.classifySurfacesFromDiscrete(exportDiscrete=True)
+
+            Classify the surface mesh based on the existing discrete surface
+            assignments (e.g. loaded from a mesh file): rebuild the edge/vertex
+            topology without changing the triangle-to-surface assignment. If 
+            `exportDiscrete' is set, clear any built-in CAD kernel entities and 
+            export the discrete entities in the built-in CAD kernel.
+
+            Types:
+            - `exportDiscrete': boolean
+            """
+            ierr = c_int()
+            lib.gmshModelMeshClassifySurfacesFromDiscrete(
+                c_int(bool(exportDiscrete)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        classify_surfaces_from_discrete = classifySurfacesFromDiscrete
+
+        @staticmethod
         def createGeometry(dimTags=[]):
             """
             gmsh.model.mesh.createGeometry(dimTags=[])
