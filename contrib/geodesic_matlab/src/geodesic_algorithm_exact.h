@@ -2611,7 +2611,10 @@ namespace geodesic {
     double best_interval_position;
     auto interval_pointer =
       best_first_interval(point, best_source_distance, best_interval_position);
-    return interval_pointer->source_index();
+    if(interval_pointer)
+      return interval_pointer->source_index();
+    else
+      return -1;
   }
 
   inline interval_pointer

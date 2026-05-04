@@ -197,6 +197,8 @@ namespace geodesic {
         v->adjacent_faces()[count[v->id()]++] = &f;
       }
     }
+    for(auto v : m_vertices)
+      std::sort(v.adjacent_faces().begin(), v.adjacent_faces().end());
 
     // find all edges
     // i.e. find all half-edges, sort and combine them into edges
@@ -261,6 +263,7 @@ namespace geodesic {
         e.adjacent_faces()[0] = &m_faces[half_edges[i].face_id];
         i += 1;
       }
+      std::sort(e.adjacent_faces().begin(), e.adjacent_faces().end());
     }
 
     //			Vertices->adjacent Edges

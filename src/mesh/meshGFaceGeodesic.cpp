@@ -1392,9 +1392,9 @@ size_t highOrderPolyMesh::setCircumcenter(std::array<int, 3> &tri,
 }
 
 // INTERSECT GEODESIC PATH
-inline static void getSegmentFaces(geodesic::SurfacePoint &sp0,
-                                   geodesic::SurfacePoint &sp1,
-                                   std::array<geodesic::Face *, 2> &faces)
+inline void getSegmentFaces(geodesic::SurfacePoint &sp0,
+                            geodesic::SurfacePoint &sp1,
+                            std::array<geodesic::Face *, 2> &faces)
 {
   faces = {nullptr, nullptr};
   auto base0 = sp0.base_element();
@@ -1411,12 +1411,20 @@ inline static void getSegmentFaces(geodesic::SurfacePoint &sp0,
   auto &adj0 = base0->adjacent_faces();
   auto &adj1 = base1->adjacent_faces();
   int found = 0;
-  for(auto f0 : adj0) {
-    for(auto f1 : adj1) {
-      if(f0 == f1) {
-        faces[found++] = f0;
-        if(found == 2) return;
-      }
+  auto it0 = adj0.begin();
+  auto it1 = adj1.begin();
+
+  while(it0 != adj0.end() && it1 != adj1.end() && found < 2) {
+    if(*it0 == *it1) {
+      faces[found++] = *it0;
+      ++it0;
+      ++it1;
+    }
+    else if(*it0 < *it1) {
+      ++it0;
+    }
+    else {
+      ++it1;
     }
   }
 }
