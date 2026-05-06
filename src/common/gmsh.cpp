@@ -5878,9 +5878,29 @@ GMSH_API void gmsh::model::mesh::classifySurfaces(
   const double angle, const bool boundary, const bool forReparametrization,
   const double curveAngle, const bool exportDiscrete)
 {
+  auto old_ = std::vector<int>();
+  auto new_ = std::vector<int>();
+  classifySurfaces(angle, old_, new_, boundary, forReparametrization,
+                   curveAngle, exportDiscrete); 
+}
+
+GMSH_API void gmsh::model::mesh::classifySurfaces(const double angle,
+  std::vector<int> &oldSurfaceTags, std::vector<int> &newSurfaceTags,
+  const bool boundary, const bool forReparametrization,
+  const double curveAngle, const bool exportDiscrete)
+{
   if(!_checkInit()) return;
+  std::map<int, std::vector<int>> splitMap;
   GModel::current()->classifySurfaces(angle, boundary, forReparametrization,
-                                      curveAngle);
+                                      curveAngle, splitMap);
+  oldSurfaceTags.clear();
+  newSurfaceTags.clear();
+  for(auto &kv : splitMap) {
+    for(auto newTag : kv.second) {
+      oldSurfaceTags.push_back(kv.first);
+      newSurfaceTags.push_back(newTag);
+    }
+  }
   if(exportDiscrete) {
     // Warning: this clears GEO_Internals!
     GModel::current()->exportDiscreteGEOInternals();

@@ -1665,6 +1665,27 @@ GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const int exportDiscrete,
                                             int * ierr);
 
+/* Classify ("color") the surface mesh based on the angle threshold `angle'
+ * (in radians), and create new discrete surfaces, curves and points
+ * accordingly. The oldSurfaceTags and newSurfaceTags arrays map the old
+ * surface tags to the new surface tags, ie. oldSurfaceTags[i] corresponds 
+ * to newSurfaceTags[i]. Removed surfaces tags are not returned, only old 
+ * surfaces that map to one or more new surfaces are returned. If `boundary'
+ * is set, also create discrete curves on the boundary if the surface is open.
+ * If `forReparametrization' is set, create curves and surfaces that can be
+ * reparametrized using a single map. If `curveAngle' is less than Pi, also
+ * force curves to be split according to `curveAngle'. If `exportDiscrete'
+ * is set, clear any built-in CAD kernel entities and export the discrete 
+ * entities in the built-in CAD kernel. */
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
+                                            int ** oldSurfaceTags, size_t * oldSurfaceTags_n,
+                                            int ** newSurfaceTags, size_t * newSurfaceTags_n,
+                                            const int boundary,
+                                            const int forReparametrization,
+                                            const double curveAngle,
+                                            const int exportDiscrete,
+                                            int * ierr);
+
 /* Create a geometry for the discrete entities `dimTags' (given as a vector of
  * (dim, tag) pairs) represented solely by a mesh (without an underlying CAD
  * description), i.e. create a parametrization for discrete curves and

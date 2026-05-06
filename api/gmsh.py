@@ -5178,23 +5178,35 @@ class model:
 
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create new discrete surfaces, curves and points
-            accordingly. If `boundary' is set, also create discrete curves on the
-            boundary if the surface is open. If `forReparametrization' is set, create
-            curves and surfaces that can be reparametrized using a single map. If
-            `curveAngle' is less than Pi, also force curves to be split according to
-            `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
-            entities and export the discrete entities in the built-in CAD kernel.
+            accordingly. The oldSurfaceTags and newSurfaceTags arrays map the old
+            surface tags to the new surface tags, ie. oldSurfaceTags[i] corresponds 
+            to newSurfaceTags[i]. Removed surfaces tags are not returned, only old 
+            surfaces that map to one or more new surfaces are returned. If `boundary'
+            is set, also create discrete curves on the boundary if the surface is open.
+            If `forReparametrization' is set, create curves and surfaces that can be
+            reparametrized using a single map. If `curveAngle' is less than Pi, also
+            force curves to be split according to `curveAngle'. If `exportDiscrete'
+            is set, clear any built-in CAD kernel entities and export the discrete 
+            entities in the built-in CAD kernel.
+
+            Return `oldSurfaceTags', `newSurfaceTags'.
 
             Types:
             - `angle': double
+            - `oldSurfaceTags': vector of integers
+            - `newSurfaceTags': vector of integers
             - `boundary': boolean
             - `forReparametrization': boolean
             - `curveAngle': double
             - `exportDiscrete': boolean
             """
+            api_oldSurfaceTags_, api_oldSurfaceTags_n_ = POINTER(c_int)(), c_size_t()
+            api_newSurfaceTags_, api_newSurfaceTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
                 c_double(angle),
+                byref(api_oldSurfaceTags_), byref(api_oldSurfaceTags_n_),
+                byref(api_newSurfaceTags_), byref(api_newSurfaceTags_n_),
                 c_int(bool(boundary)),
                 c_int(bool(forReparametrization)),
                 c_double(curveAngle),
@@ -5202,6 +5214,10 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+            return (
+                _ovectorint(api_oldSurfaceTags_, api_oldSurfaceTags_n_.value),
+                _ovectorint(api_newSurfaceTags_, api_newSurfaceTags_n_.value)
+            )
         classify_surfaces = classifySurfaces
 
         @staticmethod
