@@ -16,6 +16,7 @@
 #include "GModel.h"
 #include "GRegion.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "delaunay3d.h"
@@ -516,15 +517,13 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
   }
 }
 
-static void setLcs(MTriangle *t,
+static void setLcs(MElement *t,
                    std::map<MVertex *, double, MVertexPtrLessThan> &vSizes,
                    std::set<MVertex *, MVertexPtrLessThan> &bndVertices)
 {
-  for(int i = 0; i < 3; i++) {
-    bndVertices.insert(t->getVertex(i));
-    MEdge e = t->getEdge(i);
-    MVertex *vi = e.getVertex(0);
-    MVertex *vj = e.getVertex(1);
+  auto setLc = [&](MVertex *vi, MVertex *vj) {
+    bndVertices.insert(vi);
+    bndVertices.insert(vj);
     double dx = vi->x() - vj->x();
     double dy = vi->y() - vj->y();
     double dz = vi->z() - vj->z();
@@ -541,6 +540,11 @@ static void setLcs(MTriangle *t,
       if(iti == vSizes.end() || iti->second < l) vSizes[vi] = l;
       if(itj == vSizes.end() || itj->second < l) vSizes[vj] = l;
     }
+  };
+
+  for(int i = 0; i < t->getNumEdges(); i++) {
+    MEdge e = t->getEdge(i);
+    setLc(e.getVertex(0), e.getVertex(1));
   }
 
   // use average edge length
@@ -1259,7 +1263,14 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
       for(std::size_t i = 0; i < gf->triangles.size(); i++) {
         setLcs(gf->triangles[i], vSizesMap, bndVertices);
       }
+      for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
+        setLcs(gf->quadrangles[i], vSizesMap, bndVertices);
+      }
     }
+    //if(sqr) {
+//      for(auto it = sqr->getTri().begin(); it != sqr->getTri().end(); ++it)
+  //      setLcs(it->first, vSizesMap, bndVertices);
+    //}
     for(std::size_t i = 0; i < gr->tetrahedra.size(); i++)
       setLcs(gr->tetrahedra[i], vSizesMap, bndVertices);
 
@@ -1420,6 +1431,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
         MTetrahedron *toto = (*itc)->tet();
         // (*itc)->setDeleted(false);
         toto->xyz2uvw(center, uvw);
+        //f("uvw = %g %g %g\n", uvw[0], uvw[1], uvw[2]);
         if(toto->isInside(uvw[0], uvw[1], uvw[2])) {
           worst = (*itc);
           FOUND = true;
