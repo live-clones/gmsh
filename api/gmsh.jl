@@ -9179,6 +9179,39 @@ function tetrahedralize(coordinates, triangles = Csize_t[])
     return tetrahedra, steiner
 end
 
+"""
+    gmsh.algorithm.refineTetrahedra(coord, sizeAtNode, tetraIn)
+
+Refine the list of tetrahedra given in the vector `tetraIn`, using point
+coordinates `coord` and nodal size field `sizeAtNode`. The new point coordinates
+are outputed in the `steiner` vector, and the new tetrahedra in the `tetraOut`
+vector.
+
+Return `steiner`, `tetraOut`.
+
+Types:
+ - `coord`: vector of doubles
+ - `sizeAtNode`: vector of doubles
+ - `tetraIn`: vector of sizes
+ - `steiner`: vector of doubles
+ - `tetraOut`: vector of sizes
+"""
+function refineTetrahedra(coord, sizeAtNode, tetraIn)
+    api_steiner_ = Ref{Ptr{Cdouble}}()
+    api_steiner_n_ = Ref{Csize_t}()
+    api_tetraOut_ = Ref{Ptr{Csize_t}}()
+    api_tetraOut_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlgorithmRefineTetrahedra, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, sizeAtNode), length(sizeAtNode), convert(Vector{Csize_t}, tetraIn), length(tetraIn), api_steiner_, api_steiner_n_, api_tetraOut_, api_tetraOut_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    steiner = unsafe_wrap(Array, api_steiner_[], api_steiner_n_[], own = true)
+    tetraOut = unsafe_wrap(Array, api_tetraOut_[], api_tetraOut_n_[], own = true)
+    return steiner, tetraOut
+end
+const refine_tetrahedra = refineTetrahedra
+
 end # end of module algorithm
 
 """
