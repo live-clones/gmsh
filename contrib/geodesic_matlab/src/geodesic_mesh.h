@@ -16,6 +16,8 @@
 #include "geodesic_memory.h"
 #include "geodesic_constants_and_simple_functions.h"
 
+#include "robustPredicates.h"
+
 namespace geodesic {
 
   struct edge_visible_from_source {
@@ -330,23 +332,25 @@ namespace geodesic {
              1e-5); // algorithm works well with non-degenerate meshes only
 
       auto &vs = f.adjacent_vertices();
-      double M[3 * 2];
-      M[0] = vs[1]->x() - vs[0]->x();
-      M[1] = vs[1]->y() - vs[0]->y();
-      M[2] = vs[1]->z() - vs[0]->z();
-      M[3] = vs[2]->x() - vs[0]->x();
-      M[4] = vs[2]->y() - vs[0]->y();
-      M[5] = vs[2]->z() - vs[0]->z();
-      double G[2 * 2];
-      G[0] = M[0] * M[0] + M[1] * M[1] + M[2] * M[2];
-      G[1] = M[3] * M[0] + M[4] * M[1] + M[5] * M[2];
-      // G[2] = M[0] * M[3] + M[1] * M[4] + M[2] * M[5];
-      G[3] = M[3] * M[3] + M[4] * M[4] + M[5] * M[5];
-      double det = G[0] * G[3] - G[1] * G[1];
-      f.G()[0] = G[0];
-      f.G()[1] = G[1];
-      f.G()[2] = G[3];
-      f.G()[3] = sqrt(det);
+      double *J = f.J();
+      J[0] = vs[1]->x() - vs[0]->x();
+      J[1] = vs[1]->y() - vs[0]->y();
+      J[2] = vs[1]->z() - vs[0]->z();
+      J[3] = vs[2]->x() - vs[0]->x();
+      J[4] = vs[2]->y() - vs[0]->y();
+      J[5] = vs[2]->z() - vs[0]->z();
+
+      double *xy[3] = {vs[0]->xyz(), vs[1]->xyz(), vs[2]->xyz()};
+      double *yz[3] = {vs[0]->xyz() + 1, vs[1]->xyz() + 1, vs[2]->xyz() + 1};
+      double tmp[6] = {vs[0]->z(), vs[0]->x(), vs[1]->z(),
+                       vs[1]->x(), vs[2]->z(), vs[2]->x()};
+      double *zx[3] = {&tmp[0], &tmp[2], &tmp[4]};
+      double cx = robustPredicates::orient2d(yz[1], yz[2], yz[0]);
+      double cy = robustPredicates::orient2d(zx[1], zx[2], zx[0]);
+      double cz = robustPredicates::orient2d(xy[1], xy[2], xy[0]);
+      double det = cx * cx + cy * cy + cz * cz;
+
+      f.sqrt_det() = sqrt(det);
     }
 
     // define m_turn_around_flag for vertices

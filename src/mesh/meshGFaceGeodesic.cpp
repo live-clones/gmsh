@@ -536,9 +536,15 @@ inline double computeAngleOnFace(geodesic::SurfacePoint &p0,
   double v01_v = p1_uv[1] - p0_uv[1];
   double v02_u = p2_uv[0] - p0_uv[0];
   double v02_v = p2_uv[1] - p0_uv[1];
-  double dot = v01_u * (f->G()[0] * v02_u + f->G()[1] * v02_v) +
-               v01_v * (f->G()[1] * v02_u + f->G()[2] * v02_v);
-  double cross = f->G()[3] * robustPredicates::orient2d(p0_uv, p1_uv, p2_uv);
+  double v01_x = f->J()[0] * v01_u + f->J()[3] * v01_v;
+  double v01_y = f->J()[1] * v01_u + f->J()[4] * v01_v;
+  double v01_z = f->J()[2] * v01_u + f->J()[5] * v01_v;
+  double v02_x = f->J()[0] * v02_u + f->J()[3] * v02_v;
+  double v02_y = f->J()[1] * v02_u + f->J()[4] * v02_v;
+  double v02_z = f->J()[2] * v02_u + f->J()[5] * v02_v;
+  double dot = v01_x * v02_x + v01_y * v02_y + v01_z * v02_z;
+  double cross =
+    f->sqrt_det() * robustPredicates::orient2d(p0_uv, p1_uv, p2_uv);
   double angle = atan2(cross, dot);
   return angle;
 }
@@ -1789,12 +1795,16 @@ bool highOrderPolyMesh::doWeSwapAngleHeuristic(std::pair<int, int> &edge,
   getGeodesicPath(edge.second, oppEdge.first, borders[2]);
   getGeodesicPath(oppEdge.first, edge.first, borders[3]);
 
-  double angles[4] = {computeIntrinsicAngle(borders[3], borders[2]),
-                      computeIntrinsicAngle(borders[1], borders[0]),
-                      computeIntrinsicAngle(borders[0], borders[3]),
-                      computeIntrinsicAngle(borders[2], borders[1])};
+  double before = computeIntrinsicAngle(borders[3], borders[2]) +
+                  computeIntrinsicAngle(borders[1], borders[0]);
+  double after = computeIntrinsicAngle(borders[0], borders[3]) +
+                 computeIntrinsicAngle(borders[2], borders[1]);
 
-  return angles[0] + angles[1] > angles[2] + angles[3] + EPS;
+  if(abs(before - after) < 1e-6) {
+    return std::min(edge.first, edge.second) >
+           std::min(oppEdge.first, oppEdge.second);
+  }
+  return before > after;
 }
 
 bool highOrderPolyMesh::locallyDelaunay(size_t circumindex, double circumradius,

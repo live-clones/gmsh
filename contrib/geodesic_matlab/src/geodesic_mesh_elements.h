@@ -186,12 +186,14 @@ namespace geodesic {
     }
 
     double *corner_angles() { return m_corner_angles; };
-    double *G() { return m_metric_matrix; };
+    double *J() { return m_jacobian_matrix; };
+    double &sqrt_det() { return m_sqrt_det; };
 
   private:
     double m_corner_angles[3]; // triangle angles in radians; angles correspond
                                // to vertices in m_adjacent_vertices
-    double m_metric_matrix[4]; // G11, G12, G22, sqrt(det(G))
+    double m_jacobian_matrix[3 * 2];
+    double m_sqrt_det;
   };
 
   class Edge : public MeshElementBase {
