@@ -512,6 +512,10 @@ public:
   std::vector<geodesic::Vertex *> cachedIntersectionVertices;
   std::unordered_map<geodesic::Face *, int> cachedIntersectionFaces;
 
+  std::chrono::duration<double> timer_geodesic_propagation{0};
+  std::chrono::duration<double> timer_geodesic_trace_back{0};
+  std::chrono::duration<double> timer_circumcenter{0};
+
   highOrderPolyMesh(PolyMesh *pm, std::vector<size_t> &tris);
   highOrderPolyMesh(PolyMesh *pm);
   ~highOrderPolyMesh()

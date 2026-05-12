@@ -36,6 +36,7 @@
 
 #define DEBUG false
 #define PRINT false
+#define PRINT_COLORED false
 #define WARNING false
 #define PRINT_STEP ((size_t)1e5)
 #define PRINT_STEP_SWAP ((size_t)1e6)
@@ -1061,7 +1062,10 @@ void highOrderPolyMesh::createGeodesics(
 
   std::vector<geodesic::SurfacePoint> pts_start = {pt_start};
 #if ASTAR
+  auto start = std::chrono::high_resolution_clock::now();
   algorithms[Msg::GetThreadNum()].propagateAStar(pts_start, 0, &pts_end);
+  auto end = std::chrono::high_resolution_clock::now();
+  timer_geodesic_propagation += end - start;
 #else
   algorithms[Msg::GetThreadNum()].propagate(pts_start, 0, &pts_end);
 #endif
@@ -1070,16 +1074,28 @@ void highOrderPolyMesh::createGeodesics(
   paths.resize(pts_end.size());
   for(size_t j = 0; j < pts_end.size(); j++) {
     std::vector<geodesic::SurfacePoint> path;
+    auto start = std::chrono::high_resolution_clock::now();
     algorithms[Msg::GetThreadNum()].trace_back(pts_end[j], path);
+    auto end = std::chrono::high_resolution_clock::now();
+    timer_geodesic_trace_back += end - start;
     if(path.empty()) {
       Msg::Info("propagation did not go far enough, widening the search");
 #if ASTAR
+      auto start = std::chrono::high_resolution_clock::now();
+
       algorithms[Msg::GetThreadNum()].propagateAStar(pts_start, 1.e22,
                                                      &pts_end);
+      auto end = std::chrono::high_resolution_clock::now();
+      timer_geodesic_propagation += end - start;
+
 #else
       algorithms[Msg::GetThreadNum()].propagate(pts_start, 1.e22, &pts_end);
 #endif
+      start = std::chrono::high_resolution_clock::now();
       algorithms[Msg::GetThreadNum()].trace_back(pts_end[j], path);
+      end = std::chrono::high_resolution_clock::now();
+      timer_geodesic_trace_back += end - start;
+
       std::reverse(path.begin(), path.end());
     }
     if(path.empty()) Msg::Error("Error: geodesic path is empty");
@@ -1304,8 +1320,11 @@ void highOrderPolyMesh::createCircumcenter(
   std::vector<geodesic::SurfacePoint> &pts,
   geodesic::SurfacePoint &circumcenter, double &circumradius)
 {
+  auto start = std::chrono::high_resolution_clock::now();
   algorithms[Msg::GetThreadNum()].propagateToCircumcenter(
     pts, 0.0, circumcenter, circumradius);
+  auto end = std::chrono::high_resolution_clock::now();
+  timer_circumcenter += end - start;
   if(circumcenter.type() == geodesic::UNDEFINED_POINT) {
     if(WARNING) Msg::Warning(("Could not find circumcenter"));
     circumradius = geodesic::GEODESIC_INF;
@@ -4379,16 +4398,10 @@ void highOrderPolyMesh::meshAdapt(int niter)
 
   if(DEBUG) { sanityCheck(); }
 
-  printIndex += 6;
-  for(; i < niter; ++i) {
-    printIndex -= 6;
-    iteration_loop = i;
-    if(i == 0)
-      nbrSwap = swapEdges(HEURISTIC_SWAP, false);
-    else
-      nbrSwap = 0;
-
+  if(niter >= 0) {
+    nbrSwap = swapEdges(HEURISTIC_SWAP, false);
     nbrSwap += swapEdges(HEURISTIC_SWAP);
+
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
               ipm->faces.size());
 
@@ -4397,6 +4410,10 @@ void highOrderPolyMesh::meshAdapt(int niter)
       saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
+  }
+
+  for(; i < niter; ++i, printIndex -= 3) {
+    iteration_loop = i;
 
     // Collapse edges
     nbrCollapse = collapseEdges();
@@ -4405,37 +4422,6 @@ void highOrderPolyMesh::meshAdapt(int niter)
 
     if(PRINT) {
       printGeodesics("geodesics_collapse.pos");
-      saveIsoTriangles(printIndex++, pointsPool, ipm);
-    }
-    if(DEBUG) { sanityCheck(); }
-
-    nbrSwap = swapEdges(HEURISTIC_SWAP);
-    Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
-              ipm->faces.size());
-
-    if(PRINT) {
-      printGeodesics("geodesics_swapped_after_collapse.pos");
-      saveIsoTriangles(printIndex++, pointsPool, ipm);
-    }
-    if(DEBUG) { sanityCheck(); }
-
-    // Split triangles
-    nbrTriangleSplit = splitTriangles();
-    Msg::Info("Number of triangle split: \t%d\tTriangles: %d", nbrTriangleSplit,
-              ipm->faces.size());
-
-    if(PRINT) {
-      printGeodesics("geodesics_triangle_split.pos");
-      saveIsoTriangles(printIndex++, pointsPool, ipm);
-    }
-    if(DEBUG) { sanityCheck(); }
-
-    nbrSwap = swapEdges(HEURISTIC_SWAP);
-    Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
-              ipm->faces.size());
-
-    if(PRINT) {
-      printGeodesics("geodesics_swapped_after_triangle_split.pos");
       saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
@@ -4451,21 +4437,21 @@ void highOrderPolyMesh::meshAdapt(int niter)
     }
     if(DEBUG) { sanityCheck(); }
 
-    Msg::Info("");
-    if(nbrCollapse + nbrEdgeSplit + nbrTriangleSplit == 0) break;
-  }
-
-  if(niter >= 0) {
-    nbrSwap = swapEdges(HEURISTIC_SWAP);
-    Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
+    // Split triangles
+    nbrTriangleSplit = splitTriangles();
+    Msg::Info("Number of triangle split: \t%d\tTriangles: %d", nbrTriangleSplit,
               ipm->faces.size());
 
     if(PRINT) {
-      printGeodesics("geodesics_swapped_after_edge_split.pos");
+      printGeodesics("geodesics_triangle_split.pos");
       saveIsoTriangles(printIndex++, pointsPool, ipm);
     }
     if(DEBUG) { sanityCheck(); }
+
+    Msg::Info("");
+    if(nbrCollapse + nbrEdgeSplit + nbrTriangleSplit == 0) break;
   }
+  printIndex += 3;
 
   if(i < niter) { Msg::Info("Converged in %d iterations", i); }
   else {
@@ -4564,10 +4550,14 @@ int makeMeshGeodesic(GModel *gm)
   }
 
   int adapt = CTX::instance()->mesh.maxIterIntrinsic;
+
+  auto endInit = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = endInit - start;
+  Msg::Info("Initialization elapsed time: %.2lf seconds", elapsed.count());
   hop.meshAdapt(adapt);
 
   auto endAdapt = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed = endAdapt - start;
+  elapsed = endAdapt - endInit;
   Msg::Info("Computation elapsed time: %.2lf seconds", elapsed.count());
 
   std::vector<PolyMesh::Vertex *> pointVertices;
@@ -4727,15 +4717,17 @@ int makeMeshGeodesic(GModel *gm)
   elapsed = endStat - endCut;
   Msg::Info("Statistics elapsed time: %.2lf seconds", elapsed.count());
 
-  std::map<int, int> face2Colors;
-  int c = 4;
-  Msg::Info("Trying to color with %d colors.", c);
-  while(!colorFaces(pm_new, face2Colors, c)) {
-    Msg::Info("Coloring with %d colors failed.", c);
-    c++;
+  if(PRINT_COLORED) {
+    std::map<int, int> face2Colors;
+    int c = 4;
     Msg::Info("Trying to color with %d colors.", c);
+    while(!colorFaces(pm_new, face2Colors, c)) {
+      Msg::Info("Coloring with %d colors failed.", c);
+      c++;
+      Msg::Info("Trying to color with %d colors.", c);
+    }
+    printCuttedMesh(pm_new, face2Colors);
   }
-  printCuttedMesh(pm_new, face2Colors);
 
   hop.write(pm_new, pointVertices);
 
@@ -4745,7 +4737,13 @@ int makeMeshGeodesic(GModel *gm)
 
   elapsed = end - start;
   Msg::Info("----------------------------------------");
-  Msg::Info("Total elapsed time: %.2lf seconds", elapsed.count());
+  Msg::Info("Total elapsed time: %.3lf seconds", elapsed.count());
+  Msg::Info("Geodesic propagation: %.3lf seconds",
+            hop.timer_geodesic_propagation.count());
+  Msg::Info("Geodesic trace back: %.3lf seconds",
+            hop.timer_geodesic_trace_back.count());
+  Msg::Info("Circumcenter search: %.3lf seconds",
+            hop.timer_circumcenter.count());
 
   return 0;
 }
