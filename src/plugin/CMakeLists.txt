@@ -34,6 +34,7 @@ set(SRC
   SpanningTree.cpp
   NewView.cpp
   SimplePartition.cpp Crack.cpp
+  DuplicateNodes.cpp
   MeshSubEntities.cpp
   MeshVolume.cpp
   CVTRemesh.cpp
