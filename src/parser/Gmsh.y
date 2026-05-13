@@ -1574,9 +1574,13 @@ PhysicalId_per_dim_entity :
     }
   | StringExpr
     {
-      int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
-      GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
-      $$ = GModel::current()->setPhysicalName(std::string($1), dim_entity, t + 1);
+      $$ = GModel::current()->getPhysicalNumber(dim_entity, std::string($1));
+
+      if ($$ < 0) {
+        int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
+        GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
+        $$ = GModel::current()->setPhysicalName(std::string($1), dim_entity, t + 1);
+      }
       Free($1);
     }
   | StringExpr ',' FExpr
