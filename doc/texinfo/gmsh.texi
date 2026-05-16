@@ -2104,8 +2104,8 @@ automatically used.
 @code{DefineNumber} allows to define a ONELAB variable in-line. The
 @var{expression} given as the first argument is the default value; this
 is followed by the various ONELAB options. See the
-@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
-ONELAB tutorial wiki} for more information.
+@uref{https://gitlab.onelab.info/doc/models/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
+ONELAB wiki} for more information.
 
 @cindex Expressions, lists
 
@@ -2286,8 +2286,8 @@ into a string.
 @code{DefineString} allows to define a ONELAB variable in-line. The
 @var{string-expression} given as the first argument is the default
 value; this is followed by the various ONELAB options. See the
-@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
-ONELAB tutorial wiki} for more information.
+@uref{https://gitlab.onelab.info/doc/models/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
+ONELAB wiki} for more information.
 
 String expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8}, for an interesting usage of
@@ -2824,8 +2824,8 @@ Create a new expression identifier @var{string}, with value
 @item DefineConstant[ @var{string} = @{ @var{expression}|@var{string-expression}, @var{onelab-options} @} <, ...>];
 Same as the previous case, except that the variable is also exchanged
 with the ONELAB database if it has not been defined before. See the
-@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
-ONELAB tutorial wiki} for more information.
+@uref{https://gitlab.onelab.info/doc/models/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
+ONELAB wiki} for more information.
 
 @item SetNumber( @var{string-expression} , @var{expression} );
 Set the value a numeric ONELAB variable @var{string-expression}.
