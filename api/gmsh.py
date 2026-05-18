@@ -4417,7 +4417,7 @@ class model:
             """
             gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags=[])
 
-            Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
+            Set a transfinite meshing constraint on the volume `tag'. `cornerTags' can
             be used to specify the (6 or 8) corners of the transfinite interpolation
             explicitly.
 
@@ -6826,7 +6826,7 @@ class model:
                 """
                 gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags=[])
 
-                Set a transfinite meshing constraint on the surface `tag' in the built-in
+                Set a transfinite meshing constraint on the volume `tag' in the built-in
                 CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
                 corners of the transfinite interpolation explicitly.
 

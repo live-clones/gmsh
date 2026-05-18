@@ -6548,7 +6548,7 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshSetTransfiniteSurface
 
-  !> Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
+  !> Set a transfinite meshing constraint on the volume `tag'. `cornerTags' can
   !! be used to specify the (6 or 8) corners of the transfinite interpolation
   !! explicitly.
   subroutine gmshModelMeshSetTransfiniteVolume(tag, &
@@ -9721,7 +9721,7 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelGeoMeshSetTransfiniteSurface
 
-  !> Set a transfinite meshing constraint on the surface `tag' in the built-in
+  !> Set a transfinite meshing constraint on the volume `tag' in the built-in
   !! CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
   !! corners of the transfinite interpolation explicitly.
   subroutine gmshModelGeoMeshSetTransfiniteVolume(tag, &
