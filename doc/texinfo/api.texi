@@ -2270,7 +2270,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L158,x2.cpp}), Python (@url
 @end table
 
 @item gmsh/model/mesh/setTransfiniteVolume
-Set a transfinite meshing constraint on the surface @code{tag}. @code{cornerTags} can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.
+Set a transfinite meshing constraint on the volume @code{tag}. @code{cornerTags} can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.
 
 @table @asis
 @item Input:
@@ -3634,7 +3634,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t6.cpp#L67,t6.cpp}), Python (@url{
 @end table
 
 @item gmsh/model/geo/mesh/setTransfiniteVolume
-Set a transfinite meshing constraint on the surface @code{tag} in the built-in CAD kernel representation. @code{cornerTags} can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.
+Set a transfinite meshing constraint on the volume @code{tag} in the built-in CAD kernel representation. @code{cornerTags} can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.
 
 @table @asis
 @item Input:

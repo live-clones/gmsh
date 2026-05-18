@@ -279,6 +279,7 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp(cc + "q", "Quit"));
   s.push_back(mp(cc + "r", "Rename project file"));
   s.push_back(mp(cc + "s", "Save mesh in default format"));
+  s.push_back(mp(cc + "t", "Run solver"));
   s.push_back(mp("Shift+" + cc + "c", "Show clipping plane window"));
   s.push_back(mp("Shift+" + cc + "h", "Show current options and workspace "
                  "window"));

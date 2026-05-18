@@ -1589,9 +1589,9 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setTransfiniteVolume
       //
-      // Set a transfinite meshing constraint on the surface `tag'. `cornerTags'
-      // can be used to specify the (6 or 8) corners of the transfinite
-      // interpolation explicitly.
+      // Set a transfinite meshing constraint on the volume `tag'. `cornerTags' can
+      // be used to specify the (6 or 8) corners of the transfinite interpolation
+      // explicitly.
       GMSH_API void setTransfiniteVolume(const int tag,
                                          const std::vector<int> & cornerTags = std::vector<int>());
 
@@ -2504,9 +2504,9 @@ namespace gmsh { // Top-level functions
 
         // gmsh::model::geo::mesh::setTransfiniteVolume
         //
-        // Set a transfinite meshing constraint on the surface `tag' in the built-
-        // in CAD kernel representation. `cornerTags' can be used to specify the (6
-        // or 8) corners of the transfinite interpolation explicitly.
+        // Set a transfinite meshing constraint on the volume `tag' in the built-in
+        // CAD kernel representation. `cornerTags' can be used to specify the (6 or
+        // 8) corners of the transfinite interpolation explicitly.
         GMSH_API void setTransfiniteVolume(const int tag,
                                            const std::vector<int> & cornerTags = std::vector<int>());
 

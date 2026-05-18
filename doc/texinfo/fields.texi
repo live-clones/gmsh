@@ -370,7 +370,7 @@ Default value: @code{@{@}}
 @end table
 
 @item Extend
-Compute an extension of the boundary mesh sizes into the given surfaces (resp. volumes) being meshed using a weighted harmonic mean of the boundary sizes, with a prescribed element growth ratio. The size at a point P located at distance d_i from the i-th boundary entity is computed as:@*
+Compute an extension of the boundary mesh sizes into the given surfaces (resp. volumes) using a weighted harmonic mean of the boundary sizes, with a prescribed element growth ratio. The size at a point P located at distance d_i from the i-th boundary entity is computed as:@*
 @*
   F = min(SizeMax, (Sum_i w_i) / (Sum_i w_i / s_i)),@*
 @*

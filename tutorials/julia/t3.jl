@@ -94,8 +94,8 @@ gmsh.option.setColor("Geometry.Surfaces", r, g, b, a)
 # parameters can be modified interactively in the GUI, and can be exchanged with
 # other codes connected to the same ONELAB database. The database can be
 # accessed through the Gmsh Julia API using JSON-formatted strings (see
-# https://gitlab.onelab.info/doc/tutorials/-/wikis/ONELAB-JSON-interface for
-# more information):
+# https://gitlab.onelab.info/doc/models/wikis/ONELAB-JSON-interface for more
+# information):
 gmsh.onelab.set("""[
   {
     "type":"number",
