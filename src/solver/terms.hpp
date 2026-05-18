@@ -228,9 +228,6 @@ template<class T1> void LoadTermOnBorder<T1>::get(MElement *ele, int npts, IntPt
     const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
     std::vector<typename TensorialTraits<T1>::ValType> Vals;
     LinearTerm<T1>::space1.f(ele, u, v, w, Vals);
-    if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B ||
-       ele->getTypeForMSH() == MSH_POLYG_B)
-      ele->movePointFromParentSpaceToElementSpace(u, v, w);
     SPoint3 p;
     ele->pnt(u, v, w, p);
     typename TensorialTraits<T1>::ValType load = (*Load)(p.x(), p.y(), p.z());

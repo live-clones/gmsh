@@ -12,7 +12,7 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
-#include "MElementCut.h"
+#include "MPolyhedron.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
 #include "boundaryLayersData.h"

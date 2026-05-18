@@ -32,7 +32,6 @@ set(SRC
   ExtrudeParams.cpp
   Geo.cpp GeoInterpolation.cpp
   scriptStringInterface.cpp
-  gmshLevelset.cpp
   findLinks.cpp
   SOrientedBoundingBox.cpp
   GeomMeshMatcher.cpp
@@ -41,7 +40,7 @@ set(SRC
   MFace.cpp
   MElement.cpp MElementOctree.cpp
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp
-    MHexahedron.cpp MPrism.cpp MPyramid.cpp MTrihedron.cpp MElementCut.cpp MSubElement.cpp
+    MHexahedron.cpp MPrism.cpp MPyramid.cpp MTrihedron.cpp MSubElement.cpp
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   MVertexBoundaryLayerData.cpp
   CGNSCommon.cpp

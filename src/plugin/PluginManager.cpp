@@ -60,7 +60,6 @@
 #include "DiscretizationError.h"
 #include "Scal2Tens.h"
 #include "Scal2Vec.h"
-#include "CutMesh.h"
 #include "SpanningTree.h"
 #include "NewView.h"
 #include "MeshSubEntities.h"
@@ -294,9 +293,6 @@ void PluginManager::registerDefaultPlugins()
 #if defined(HAVE_ANN)
     allPlugins.insert(
       std::make_pair("NearestNeighbor", GMSH_RegisterNearestNeighborPlugin()));
-#endif
-#if defined(HAVE_DINTEGRATION)
-    allPlugins.insert(std::make_pair("CutMesh", GMSH_RegisterCutMeshPlugin()));
 #endif
     allPlugins.insert(
       std::make_pair("SpanningTree", GMSH_RegisterSpanningTreePlugin()));
