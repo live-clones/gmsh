@@ -45,7 +45,7 @@ opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
 opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
 opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
-opt(PROFILE "Enable profiling compiler flags" OFF)
+opt(COVERAGE "Enable code coverage instrumentation (GCC/Clang only)" OFF)
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
@@ -91,6 +91,7 @@ opt(POST "Enable post-processing module (required by GUI)" ${DEFAULT})
 opt(POPPLER "Enable Poppler for displaying PDF documents (experimental)" OFF)
 opt(PRIVATE_API "Enable private API" OFF)
 opt(PRO "Enable PRO extensions" ${DEFAULT})
+opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
@@ -386,6 +387,24 @@ if(ENABLE_PROFILE)
     if(FNOFP)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
     endif()
+endif()
+
+if(ENABLE_COVERAGE)
+  if(NOT (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang" AND
+          CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang"))
+    message(FATAL_ERROR "ENABLE_COVERAGE requires GCC or Clang")
+  endif()
+  if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Warning: CMAKE_BUILD_TYPE=Debug is recommended for "
+            "accurate counters when ENABLE_COVERAGE is on")
+  endif()
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+  # Don't add --coverage to CMAKE_Fortran_FLAGS (on macOS the link driver is
+  # clang, but gfortran's --coverage instrumentation references gcc's libgcov)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} --coverage")
 endif()
 
 macro(append_gmsh_src DIRNAME FILES)
@@ -2331,6 +2350,65 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
                      "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
         endforeach()
     endif()
+  endif()
+endif()
+
+if(ENABLE_COVERAGE)
+  # Workflow:
+  #   cmake -DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug ..
+  #   make
+  #   make coverage_reset   # optional, to start fresh
+  #   ctest                 # accumulates counters in .gcda files
+  #   make coverage         # produces <build>/coverage/index.html
+  find_program(LCOV lcov)
+  find_program(GENHTML genhtml)
+  if(LCOV AND GENHTML)
+    set(LCOV_IGNORE "")
+    set(GENHTML_IGNORE "")
+    execute_process(COMMAND ${LCOV} --version
+                    OUTPUT_VARIABLE LCOV_VERSION_STRING
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    ERROR_QUIET)
+    if(LCOV_VERSION_STRING MATCHES "LCOV version ([0-9]+)")
+      if(CMAKE_MATCH_1 GREATER_EQUAL 2)
+        set(LCOV_IGNORE --ignore-errors unused,source,source,inconsistent,inconsistent
+            --ignore-errors unsupported,unsupported,format)
+        set(GENHTML_IGNORE --ignore-errors unused,category,inconsistent,source
+            --synthesize-missing)
+      endif()
+    endif()
+    set(COV_RAW ${CMAKE_BINARY_DIR}/coverage.raw.info)
+    set(COV_FILTERED ${CMAKE_BINARY_DIR}/coverage.info)
+    set(COV_HTML ${CMAKE_BINARY_DIR}/coverage)
+    add_custom_target(coverage_reset
+      COMMAND ${LCOV} --quiet --directory ${CMAKE_BINARY_DIR}
+                      --zerocounters
+      COMMENT "Resetting code coverage counters")
+    add_custom_target(coverage
+      COMMAND ${LCOV} --quiet --directory ${CMAKE_BINARY_DIR}
+                      --base-directory ${CMAKE_SOURCE_DIR}
+                      --capture --output-file ${COV_RAW}
+                      ${LCOV_IGNORE}
+      COMMAND ${LCOV} --quiet
+                      --remove ${COV_RAW}
+                        "${CMAKE_SOURCE_DIR}/contrib/*"
+                        "${CMAKE_BINARY_DIR}/*"
+                        "petsc/include/*"
+                        "/usr/*" "/opt/*" "/Library/*" "/Applications/*"
+                      ${LCOV_IGNORE}
+                      --output-file ${COV_FILTERED}
+      COMMAND ${GENHTML} --quiet --legend
+                         --title "Gmsh ${GMSH_VERSION} code coverage"
+                         --output-directory ${COV_HTML}
+                         ${GENHTML_IGNORE}
+                         ${COV_FILTERED}
+      COMMAND ${CMAKE_COMMAND} -E echo
+              "Coverage report: ${COV_HTML}/index.html"
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      COMMENT "Generating HTML coverage report")
+    add_dependencies(coverage gmsh)
+  else()
+    message(FATAL_ERROR "ENABLE_COVERAGE requires lcov/genhtml")
   endif()
 endif()
 
