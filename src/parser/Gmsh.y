@@ -6168,7 +6168,7 @@ FExpr_Multi :
       int tag = (int)$4;
       GEdge *ge = GModel::current()->getEdgeByTag(tag);
       if(ge) {
-        double c = ge->curvature(8);
+        double c = ge->curvature($8);
         List_Add($$, &c);
       }
       else {

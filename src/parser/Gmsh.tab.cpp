@@ -14505,7 +14505,7 @@ yyreduce:
       int tag = (int)(yyvsp[(4) - (9)].d);
       GEdge *ge = GModel::current()->getEdgeByTag(tag);
       if(ge) {
-        double c = ge->curvature(8);
+        double c = ge->curvature((yyvsp[(8) - (9)].d));
         List_Add((yyval.l), &c);
       }
       else {
