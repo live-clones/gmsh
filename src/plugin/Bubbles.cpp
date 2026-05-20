@@ -26,7 +26,7 @@ std::string GMSH_BubblesPlugin::getHelp() const
 {
   return "Plugin(Bubbles) constructs a geometry consisting of "
          "`bubbles' inscribed in the Voronoi of an input triangulation. "
-         "`ShrinkFactor' allows to change the size of the bubbles. "
+         "`ShrinkFactor' changes the size of the bubbles. "
          "The plugin expects a triangulation in the `z = 0' plane to exist "
          "in the current model.\n\n"
          "Plugin(Bubbles) creates one `.geo' file.";

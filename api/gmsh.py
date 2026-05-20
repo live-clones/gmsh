@@ -503,9 +503,9 @@ class option:
         """
         gmsh.option.setColor(name, r, g, b, a=255)
 
-        Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
-        `g', `b' and `a' should be integers between 0 and 255. `name' is of the
-        form "Category.Color.Option" or "Category[num].Color.Option". Available
+        Set a color option to the RGBA value (`r', `g', `b', `a'), where `r', `g',
+        `b' and `a' should be integers between 0 and 255. `name' is of the form
+        "Category.Color.Option" or "Category[num].Color.Option". Available
         categories and options are listed in the "Gmsh options" chapter of the Gmsh
         reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
         For conciseness "Color." can be ommitted in `name'.
@@ -8043,7 +8043,7 @@ class model:
             `outDimTags' as a vector of (dim, tag) pairs. If the optional argument
             `makeRuled' is set, the surfaces created on the boundary are forced to be
             ruled surfaces. If `maxDegree' is positive, set the maximal degree of
-            resulting surface. The optional argument `continuity' allows to specify the
+            resulting surface. The optional argument `continuity' specifies the
             continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
             "CN"). The optional argument `parametrization' sets the parametrization
             type ("ChordLength", "Centripetal", "IsoParametric"). The optional argument
@@ -10201,8 +10201,8 @@ class view:
             gmsh.view.option.setColor(tag, name, r, g, b, a=255)
 
             Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
-            view with tag `tag', where where `r', `g', `b' and `a' should be integers
-            between 0 and 255.
+            view with tag `tag', where `r', `g', `b' and `a' should be integers between
+            0 and 255.
 
             Types:
             - `tag': integer

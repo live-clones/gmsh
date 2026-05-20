@@ -28,8 +28,8 @@ Enable CGNS import/export (experimental) (default: ON)
 Enable high-order CGNS import/export following CPEX0045 (experimental) (default: OFF)
 @item ENABLE_CAIRO
 Enable Cairo to render fonts (experimental) (default: ON)
-@item ENABLE_PROFILE
-Enable profiling compiler flags (default: OFF)
+@item ENABLE_COVERAGE
+Enable code coverage instrumentation (GCC/Clang only) (default: OFF)
 @item ENABLE_DINTEGRATION
 Enable discrete integration (needed for levelsets) (default: ON)
 @item ENABLE_DOMHEX
@@ -58,6 +58,8 @@ Enable Mathex expression parser (used by plugins and options) (default: ON)
 Enable MED mesh and post file formats (default: ON)
 @item ENABLE_MESH
 Enable mesh module (default: ON)
+@item ENABLE_MESQUITE
+Enable mesquite (default: ON)
 @item ENABLE_METIS
 Enable Metis mesh partitioner (default: ON)
 @item ENABLE_MMG
@@ -72,6 +74,8 @@ Enable static Visual C++ runtime (default: OFF)
 Enable MUMPS sparse direct linear solver (default: OFF)
 @item ENABLE_NETGEN
 Enable Netgen 3D frontal mesh generator (default: ON)
+@item ENABLE_NII2MESH
+Enable 3D voxel image to a triangulated mesh (default: ON)
 @item ENABLE_NUMPY
 Enable fullMatrix and numpy array conversion for private API (default: OFF)
 @item ENABLE_PETSC4PY
@@ -116,6 +120,8 @@ Enable Poppler for displaying PDF documents (experimental) (default: OFF)
 Enable private API (default: OFF)
 @item ENABLE_PRO
 Enable PRO extensions (default: ON)
+@item ENABLE_PROFILE
+Enable profiling compiler flags (default: OFF)
 @item ENABLE_QUADMESHINGTOOLS
 Enable QuadMeshingTools extensions (default: ON)
 @item ENABLE_QUADTRI
@@ -134,8 +140,14 @@ Use system versions of contrib libraries, when possible (default: OFF)
 Enable libtcmalloc (fast malloc that does not release memory) (default: OFF)
 @item ENABLE_TESTS
 Enable tests (default: ON)
+@item ENABLE_TINYOBJLOADER
+Enable TibyObjLoader for reading Wavefront files) (default: ON)
+@item ENABLE_TINYXML2
+Enable TinyXML2 parser (used by XAO reader) (default: ON)
 @item ENABLE_TOUCHBAR
 Enable Apple Touch bar (default: ON)
+@item ENABLE_UNTANGLE
+Enable 2D and 3D UNTANGLER (default: ON)
 @item ENABLE_VISUDEV
 Enable additional visualization capabilities for development purposes (default: OFF)
 @item ENABLE_VOROPP
