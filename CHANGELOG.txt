@@ -1,8 +1,8 @@
 (Work-in-progress): added support for partition overlaps; added IO of edges and
 faces in MSH4 file format; added ability to save only local partitioned Brep in
 MSH4 files; the Extend mesh size field is now applied per entity and takes an
-element growth rate as input; Gmsh now requires C++17 and CMake 3.10, and uses
-Eigen 5.0 by default.
+element growth rate as input; new Curvature Curve|Surface parser functions; Gmsh
+now requires C++17 and CMake 3.10, and uses Eigen 5.0 by default.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent
