@@ -174,7 +174,7 @@ do num = 1, 3
   end do
   if (num == 3) then
     ! Here we could make a system call to generate a movie. For example,
-    ! with ffmeg:
+    ! with ffmpeg:
     end if
 end do
 

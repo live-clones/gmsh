@@ -105,12 +105,12 @@ gmsh.model.mesh.reclassifyNodes()
 # them later on:
 gmsh.model.mesh.createGeometry()
 
-# Note that for more complicated meshes, e.g. for on input unstructured STL
+# Note that for more complicated meshes, e.g. for an input unstructured STL
 # mesh, we could use `classifySurfaces()' to automatically create the discrete
 # entities and the topology; but we would then have to extract the boundaries
 # afterwards.
 
-# Create other build-in CAD entities to form one volume below the terrain
+# Create other built-in CAD entities to form one volume below the terrain
 # surface. Beware that only built-in CAD entities can be hybrid, i.e. have
 # discrete entities on their boundary: OpenCASCADE does not support this
 # feature.

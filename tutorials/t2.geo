@@ -37,6 +37,9 @@ Translate {0, 0.05, 0} { Duplicata{ Point{3}; } }
 // This command created a new point with an automatically assigned tag. This tag
 // can be obtained using the graphical user interface by hovering the mouse over
 // the point: in this case, the new point has tag `6'.
+//
+// A more robust approach, which avoids hard-coding such tags, is shown a few
+// lines below using the value returned by the transformation command.
 
 Line(7) = {3, 6};
 Line(8) = {6, 5};
@@ -99,7 +102,7 @@ Volume(129) = {128};
 
 Extrude {0, 0, 0.12} { Surface{my_new_surfs[1]}; }
 
-// The following command permits to manually assign a mesh size to some of the
+// The following command lets you manually assign a mesh size to some of the
 // new points:
 
 MeshSize {103, 105, 109, 102, 28, 24, 6, 5} = lc * 3;

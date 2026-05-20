@@ -48,7 +48,7 @@ for t in elementTypes:
        str(interpolationOrder) + " polynomials", localCoords, 3)
 
     # Return the basis functions evaluated at the integration points. Selecting
-    # "Lagrange" and "GradLagrange" returns the isoparamtric basis functions and
+    # "Lagrange" and "GradLagrange" returns the isoparametric basis functions and
     # their gradient (in the reference space of the given element type). A
     # specific interpolation order can be requested using "LagrangeN" and
     # "GradLagrangeN" with N = 1, 2, ... Other supported function spaces include

@@ -162,7 +162,7 @@ for num in range(1, 4):
 
     if num == 3:
         # Here we could make a system call to generate a movie. For example,
-        # with ffmeg:
+        # with ffmpeg:
 
         # import subprocess
         # subprocess.call("ffmpeg -i t8-%d.jpg t8.mpg".split(' '))

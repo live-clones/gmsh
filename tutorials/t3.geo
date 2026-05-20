@@ -49,7 +49,7 @@ DefineConstant[ angle = {90, Min 0, Max 120, Step 1,
 // ONELAB parameter does not exist in the database, `DefineConstant' will create
 // it and assign the default value `90'. Moreover, if the variable `angle' was
 // defined before the call to `DefineConstant', the `DefineConstant' call would
-// simply be skipped. This allows to build generic parametric models, whose
+// simply be skipped. This lets you build generic parametric models, whose
 // parameters can be frozen from the outside - the parameters ceasing to be
 // "parameters".
 //

@@ -12,6 +12,10 @@ Merge "t13_data.stl";
 // We first classify ("color") the surfaces by splitting the original surface
 // along sharp geometrical features. This will create new discrete surfaces,
 // curves and points.
+//
+// Classifying means grouping the mesh triangles into patches and attaching each
+// patch to a new discrete surface, so that a geometry (and hence a new mesh)
+// can later be built from them.
 
 DefineConstant[
   // Angle between two triangles above which an edge is considered as sharp
