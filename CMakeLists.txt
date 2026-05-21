@@ -2365,10 +2365,8 @@ if(ENABLE_COVERAGE)
   if(LCOV AND GENHTML)
     set(LCOV_IGNORE "")
     set(GENHTML_IGNORE "")
-    execute_process(COMMAND ${LCOV} --version
-                    OUTPUT_VARIABLE LCOV_VERSION_STRING
-                    OUTPUT_STRIP_TRAILING_WHITESPACE
-                    ERROR_QUIET)
+    execute_process(COMMAND ${LCOV} --version OUTPUT_VARIABLE LCOV_VERSION_STRING
+                    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
     if(LCOV_VERSION_STRING MATCHES "LCOV version ([0-9]+)")
       if(CMAKE_MATCH_1 GREATER_EQUAL 2)
         set(LCOV_IGNORE --ignore-errors unused,source,source,inconsistent,inconsistent
@@ -2381,29 +2379,19 @@ if(ENABLE_COVERAGE)
     set(COV_FILTERED ${CMAKE_BINARY_DIR}/coverage.info)
     set(COV_HTML ${CMAKE_BINARY_DIR}/coverage)
     add_custom_target(coverage_reset
-      COMMAND ${LCOV} --quiet --directory ${CMAKE_BINARY_DIR}
-                      --zerocounters
+      COMMAND ${LCOV} --quiet --directory ${CMAKE_BINARY_DIR} --zerocounters
       COMMENT "Resetting code coverage counters")
     add_custom_target(coverage
       COMMAND ${LCOV} --quiet --directory ${CMAKE_BINARY_DIR}
-                      --base-directory ${CMAKE_SOURCE_DIR}
-                      --capture --output-file ${COV_RAW}
-                      ${LCOV_IGNORE}
-      COMMAND ${LCOV} --quiet
-                      --remove ${COV_RAW}
-                        "${CMAKE_SOURCE_DIR}/contrib/*"
-                        "${CMAKE_BINARY_DIR}/*"
-                        "petsc/include/*"
-                        "/usr/*" "/opt/*" "/Library/*" "/Applications/*"
-                      ${LCOV_IGNORE}
-                      --output-file ${COV_FILTERED}
+        --base-directory ${CMAKE_SOURCE_DIR} --capture --output-file ${COV_RAW}
+        ${LCOV_IGNORE}
+      COMMAND ${LCOV} --quiet --remove ${COV_RAW} "${CMAKE_SOURCE_DIR}/contrib/*"
+        "${CMAKE_BINARY_DIR}/*" "petsc/include/*" "/usr/*" "/opt/*" "/Library/*"
+        "/Applications/*" ${LCOV_IGNORE} --output-file ${COV_FILTERED}
       COMMAND ${GENHTML} --quiet --legend
-                         --title "Gmsh ${GMSH_VERSION} code coverage"
-                         --output-directory ${COV_HTML}
-                         ${GENHTML_IGNORE}
-                         ${COV_FILTERED}
-      COMMAND ${CMAKE_COMMAND} -E echo
-              "Coverage report: ${COV_HTML}/index.html"
+        --title "Gmsh ${GMSH_VERSION} code coverage" --output-directory ${COV_HTML}
+        ${GENHTML_IGNORE} ${COV_FILTERED}
+      COMMAND ${CMAKE_COMMAND} -E echo "Coverage report: ${COV_HTML}/index.html"
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       COMMENT "Generating HTML coverage report")
     add_dependencies(coverage gmsh)
