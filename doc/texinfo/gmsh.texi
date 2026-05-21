@@ -102,7 +102,7 @@ all copies.
 
 @ifnottex
 @node Top, Obtaining Gmsh, (dir), (dir)
-@top Gmsh
+@top Gmsh @value{GMSH-VERSION}
 
 Christophe Geuzaine and Jean-Fran@,{c}ois Remacle
 
