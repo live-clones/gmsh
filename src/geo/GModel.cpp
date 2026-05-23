@@ -1052,9 +1052,23 @@ void GModel::getInnerPhysicalNamesIterators(std::vector<piter> &iterators)
 
 int GModel::setPhysicalName(const std::string &name, int dim, int number)
 {
-  // check if the name is already used
-  int findPhy = getPhysicalNumber(dim, name);
-  if(findPhy != -1) return findPhy;
+  if (!number) {
+    // check if the name is already used
+    int findPhy = getPhysicalNumber(dim, name);
+    if(findPhy != -1) return findPhy;
+  }
+  else {
+    auto findName = getPhysicalName(dim, number);
+    if (findName == name) {
+      return number;
+    }
+    else if (findName != "") {
+      Msg::Warning("Discarding physical name '%s': name '%s' already assigned "
+                   "to entity of dimension %i and tag %i", name.c_str(),
+                   findName.c_str(), dim, number);
+      return number;
+    }
+  }
 
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
