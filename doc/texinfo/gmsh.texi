@@ -102,11 +102,11 @@ all copies.
 
 @ifnottex
 @node Top, Obtaining Gmsh, (dir), (dir)
-@top Gmsh
+@top Gmsh @value{GMSH-VERSION}
 
 Christophe Geuzaine and Jean-Fran@,{c}ois Remacle
 
-Gmsh is an automatic 3D finite element mesh generator with build-in pre-
+Gmsh is an automatic 3D finite element mesh generator with built-in pre-
 and post-processing facilities. This is the @cite{Gmsh Reference Manual}
 for Gmsh @value{GMSH-VERSION} (@today{}).
 @end ifnottex
@@ -205,7 +205,7 @@ from the GNU Project webpage
 @uref{https://www.gnu.org/copyleft/gpl-faq.html}.  Detailed copyright
 information can be found in @ref{Copyright and credits}.
 
-If you want to integrate parts of Gmsh into a closed-source software, or
+If you want to integrate parts of Gmsh into closed-source software, or
 want to sell a modified closed-source version of Gmsh, you will need to
 obtain a different license. Please @uref{http://geuz.org, contact us
 directly} for more information.
@@ -226,7 +226,7 @@ in Gmsh, please file an issue on
 @url{https://gitlab.onelab.info/gmsh/gmsh/issues}. Provide as precise a
 description of the problem as you can, including sample input files that
 produce the bug. Don't forget to mention both the version of Gmsh and
-your operation system.
+your operating system.
 
 See @ref{Frequently asked questions}, and the
 @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking system} to
@@ -243,7 +243,7 @@ see which problems we already know about.
 @cindex Overview
 
 Gmsh is a three-dimensional finite element mesh generator with a
-build-in CAD engine and post-processor. Its design goal is to provide a
+built-in CAD engine and post-processor. Its design goal is to provide a
 fast, light and user-friendly meshing tool with parametric input and
 flexible visualization capabilities.
 
@@ -338,7 +338,7 @@ example, by default Gmsh imports STEP and IGES files through
 OpenCASCADE, which will lead to the creation of model entities with an
 internal OpenCASCADE representation. Models represented with the
 built-in CAD kernel can be serialized to disk by exporting them as
-@file{.geo_unrolled} files, while models contructed with the OpenCASCADE
+@file{.geo_unrolled} files, while models constructed with the OpenCASCADE
 kernel can be serialized as @file{.brep} or @file{.xao} files.
 
 The @ref{Gmsh tutorial}, starting with @ref{t1}, is the best place to
@@ -402,7 +402,7 @@ constrained by a @emph{mesh size field}, which prescribes the desired
 size of the elements in the mesh. This size field can be uniform,
 specified by values associated with points in the geometry, or defined
 by general mesh size fields (for example related to the distance to some
-boundary, to a arbitrary scalar field defined on another mesh, etc.):
+boundary, to an arbitrary scalar field defined on another mesh, etc.):
 see @ref{Gmsh mesh size fields}. For each meshing step, all structured
 mesh directives are executed first, and serve as additional constraints
 for the unstructured parts. (The generation and handling of conformal
@@ -471,7 +471,7 @@ and edges are swapped if a better geometrical configuration is obtained.
 The ``Delaunay'' algorithm is inspired by the work of the GAMMA team at
 INRIA@footnote{P.-L. George and P. Frey, @emph{Mesh generation}, Hermes,
 Lyon, 2000.}. New points are inserted sequentially at the circumcenter
-of the element that has the largest adimensional circumradius. The mesh
+of the element that has the largest dimensionless circumradius. The mesh
 is then reconnected using an anisotropic Delaunay criterion.
 @item
 The ``Frontal-Delaunay'' algorithm is inspired by the work of
@@ -488,7 +488,7 @@ for Numerical Methods in Engineering, 94(5), pp. 494-512, 2013.} is a
 variant of the ``Frontal-Delaunay'' algorithm aiming at generating
 right-angle triangles suitable for recombination; and
 ``BAMG''@footnote{F. Hecht, @emph{BAMG: bidimensional anisotropic mesh
-generator}, User Guide, INRIA, Rocquencourt, 1998.} allows to generate
+generator}, User Guide, INRIA, Rocquencourt, 1998.} can generate
 anisotropic triangulations.
 @end itemize
 
@@ -521,12 +521,12 @@ generator based on abstract rules}, Comput. Visual. Sci., 1, pp. 41--52,
 The ``HXT'' algorithm@footnote{C. Marot, J. Pellerin and J.‐F. Remacle,
 @emph{One machine, one minute, three billion tetrahedra}, International
 Journal for Numerical Methods in Engineering 117.9, pp 967-990, 2019.}
-is a new efficient and parallel reimplementaton of the Delaunay
+is a new efficient and parallel reimplementation of the Delaunay
 algorithm.
 @item
 Other experimental algorithms with specific features are also available.
 In particular, ``MMG3D''@footnote{C. Dobrzynski, @emph{MMG3D: user
-guide}, INRIA, 2012.}  allows to generate anisotropic
+guide}, INRIA, 2012.}  can generate anisotropic
 tetrahedralizations.
 @end itemize
 
@@ -545,7 +545,7 @@ i.e. curves (resp. surfaces) are each meshed sequentially, but several
 curves (resp. surfaces) can be meshed at the same time.
 @item
 3D meshing using HXT is parallelized using a fine-grained approach,
-i.e. the actual meshing procedure for a single volume is done is
+i.e. the actual meshing procedure for a single volume is done in
 parallel.
 @end itemize
 The number of threads can be controlled with the @code{-nt} flag on the
@@ -645,7 +645,7 @@ In all cases, meshes are constrained by structured meshing constraints
 (e.g. transfinite or extruded meshes) as well as by any discrete model
 entity that is not equipped with a geometry (which will thus preserve
 its mesh during mesh generation). Meshes on curves are further
-constrainted by the @code{Mesh.MinLineNodes}, @code{Mesh.MinCircleNodes}
+constrained by the @code{Mesh.MinLineNodes}, @code{Mesh.MinCircleNodes}
 and @code{Mesh.MinCurveNodes} options.
 
 @c .........................................................................
@@ -682,7 +682,7 @@ physical group definitions.
 
 Gmsh implements a ONELAB (@uref{http://onelab.info}) server to exchange
 data with external solvers or other codes (called ``clients''). The
-ONELAB interface allows to call such clients and have them share
+ONELAB interface can call such clients and have them share
 parameters and modeling information.
 
 The implementation is based on a client-server model, with a server-side
@@ -812,12 +812,12 @@ segments, triangles and tetrahedra) finite element meshes (see @ref{Mesh
 module}), with fine control over the element size (@pxref{Specifying
 mesh element sizes});
 @item
-create simple extruded geometries and meshes, and allow to automatically
+create simple extruded geometries and meshes, and automatically
 couple such structured meshes with unstructured ones (using a layer of
 pyramids in 3D);
 @item
 generate high-order (curved) meshes that conform to the CAD model
-geometry. High-order mesh optimization tools allow to guarantee the
+geometry. High-order mesh optimization tools can guarantee the
 validity of such curved meshes;
 @item
 interact with external solvers by defining ONELAB parameters, shared
@@ -859,7 +859,7 @@ Here are some known weaknesses of Gmsh:
 Gmsh is not a multi-bloc mesh generator: all meshes produced by Gmsh are
 conforming in the sense of finite element meshes;
 @item
-Gmsh's graphical user interface is only exposing a limited number of the
+Gmsh's graphical user interface exposes only a limited number of the
 available features, and many aspects of the interface could be enhanced
 (especially manipulators).
 @item
@@ -894,7 +894,7 @@ As a standalone application, Gmsh can be controlled with the GUI
 (@pxref{Gmsh graphical user interface}), through the command line
 (@pxref{Gmsh command-line interface}) and through @file{.geo} script
 files (@pxref{Gmsh scripting language}). In addition, the ONELAB
-interface (@pxref{Solver module}) allows to interact with the Gmsh
+interface (@pxref{Solver module}) lets you interact with the Gmsh
 application through Unix or TCP/IP sockets.  Binary versions of the Gmsh
 app for Windows, Linux and macOS can be downloaded from
 @url{https://gmsh.info/#Download}. Several Linux distributions also ship
@@ -1757,7 +1757,7 @@ scale.
 Several files can be loaded simultaneously. When specified on the
 command line, the first one defines the active model (in the same way as
 using the `File->Open' menu) and the others are `merged' into this model
-(in the same way as using the the `File->Merge' menu). For example, to
+(in the same way as using the `File->Merge' menu). For example, to
 merge the post-processing views contained in the files
 @url{@value{GITLAB-PREFIX}/tutorials/view1.pos,view1.pos} and
 @url{@value{GITLAB-PREFIX}/tutorials/view5.msh,view5.msh} together with
@@ -1767,7 +1767,7 @@ command:
 > gmsh t1.geo view1.pos view5.msh
 @end example
 
-When one or more more post-processing views are loaded, a
+When one or more post-processing views are loaded, a
 `Post-Processing' entry in the tree menu appears. With the previous
 command, three views will appear in the tree menu under
 `Post-processing', respectively labeled `A scalar map', `Nodal scalar
@@ -1850,7 +1850,7 @@ For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left
 @cindex Command-line options
 @cindex Options, command line
 
-Gmsh defines a number of commands-line switches that can be used to
+Gmsh defines a number of command-line switches that can be used to
 control Gmsh in ``batch'' mode from the command line, and pass options
 without resorting to a script (@pxref{Gmsh scripting language}) or the
 API (@pxref{Gmsh application programming interface}).
@@ -1995,12 +1995,12 @@ Gmsh script files support both C and C++ style comments:
 
 @enumerate
 @item
-any text comprised between @code{/*} and @code{*/} pairs is ignored;
+any text between @code{/*} and @code{*/} pairs is ignored;
 @item
 the rest of a line after a double slash @code{//} is ignored.
 @end enumerate
 
-These commands won't have the described effects inside double quotes or
+These comment delimiters won't have the described effects inside double quotes or
 inside keywords. Also note that `white space' (spaces, tabs, new line
 characters) is ignored inside all expressions.
 
@@ -2029,7 +2029,7 @@ evaluated during the parsing of the script file:
 @var{expression}:
   @var{real} |
   @var{string} |
-  @var{string} ~ @{ @var{expression} @}
+  @var{string} ~ @{ @var{expression} @} |
   @var{string} [ @var{expression} ] |
   # @var{string} [ ] |
   ( @var{expression} ) |
@@ -2058,7 +2058,7 @@ commands. When @code{~@{@var{expression}@}} is appended to a string
 @var{string}, the result is a new string formed by the concatenation of
 @var{string}, @code{_} (an underscore) and the value of the
 @var{expression}. This is most useful in loops (@pxref{Loops and
-conditionals}), where it permits to define unique strings
+conditionals}), where it can define unique strings
 automatically. For example,
 @example
 For i In @{1:3@}
@@ -2072,9 +2072,9 @@ x_2 = 2;
 x_3 = 3;
 @end example
 
-The brackets @code{[]} permit to extract one item from a list
-(parentheses can also be used instead of brackets). The @code{#} permits
-to get the size of a list. The operators @var{operator-unary-left},
+The brackets @code{[]} extract one item from a list
+(parentheses can also be used instead of brackets). The @code{#} returns
+the size of a list. The operators @var{operator-unary-left},
 @var{operator-unary-right}, @var{operator-binary},
 @var{operator-ternary-left} and @var{operator-ternary-right} are defined
 in @ref{Operators}. For the definition of @w{@var{built-in-function}s},
@@ -2090,9 +2090,9 @@ string. @code{TextAttributes} creates attributes for text
 strings. @code{Exists} checks if a variable with the given name exists
 (i.e., has been defined previously), and @code{FileExists} checks if the
 file with the given name exists.  @code{StringToName} creates a name
-from the provided string.  @code{GetNumber} allows to get the value of a
+from the provided string.  @code{GetNumber} returns the value of a
 ONELAB variable (the optional second argument is the default value
-returned if the variable does not exist). @code{GetValue} allows to ask
+returned if the variable does not exist). @code{GetValue} asks
 the user for a value interactively (the second argument is the value
 returned in non-interactive mode). For example, inserting
 @code{GetValue("Value of parameter alpha?", 5.76)} in an input file will
@@ -2101,15 +2101,15 @@ default value is 5.76. If the option @code{General.NoPopup} is set
 (@pxref{General options}), no question is asked and the default value is
 automatically used.
 
-@code{DefineNumber} allows to define a ONELAB variable in-line. The
+@code{DefineNumber} defines a ONELAB variable in-line. The
 @var{expression} given as the first argument is the default value; this
 is followed by the various ONELAB options. See the
-@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
-ONELAB tutorial wiki} for more information.
+@uref{https://gitlab.onelab.info/doc/models/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
+ONELAB wiki} for more information.
 
 @cindex Expressions, lists
 
-List of expressions are also widely used, and are defined as:
+Lists of expressions are also widely used, and are defined as:
 @example
 @var{expression-list}:
   @var{expression-list-item} <, @var{expression-list-item}> @dots{}
@@ -2150,40 +2150,40 @@ with
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
 
-The second case in this last definition permits to create a list
-containing the range of numbers comprised between two
-@w{@var{expression}s}, with a unit incrementation step. The third case
-also permits to create a list containing the range of numbers comprised
+The second case in this last definition creates a list
+containing the range of numbers between two
+@w{@var{expression}s}, with a unit increment. The third case
+also creates a list containing the range of numbers comprised
 between two @w{@var{expression}s}, but with a positive or negative
-incrementation step equal to the third @var{expression}. The fourth,
-fifth and sixth cases permit to reference an expression list
+increment equal to the third @var{expression}. The fourth,
+fifth and sixth cases reference an expression list
 (parentheses can also be used instead of brackets).  @code{Unique} sorts
 the entries in the list and removes all duplicates.  @code{Abs} takes
 the absolute value of all entries in the list. @code{ListFromFile} reads
 a list of numbers from a file. @code{LinSpace} and @code{LogSpace}
 construct lists using linear or logarithmic spacing. The next two cases
-permit to reference an expression sublist (whose elements are those
+reference an expression sublist (whose elements are those
 corresponding to the indices provided by the @var{expression-list}).
-The next cases permit to retrieve the indices of entities created
+The next cases retrieve the indices of entities created
 through geometrical transformations, extrusions and boolean operations
 (see @ref{Transformations}, @ref{Extrusions} and @ref{Boolean
 operations}).
 
-The next two cases allow to retrieve entities in a given bounding box,
+The next two cases retrieve entities in a given bounding box,
 or get the bounding box of a given entity, with the bounding box
 specified as (X min, Y min, Z min, X max, Y max, Z max). Beware that the
-order of coordinates is different than in the @code{BoundingBox} command
+order of coordinates is different from that in the @code{BoundingBox} command
 for the scene: see @ref{Other general commands}. @code{Parametric
 BoundingBox} retrieves the parametric bounds (U min, U max) and (U min,
-V min, U max, V max) or a curve or a surface,
+V min, U max, V max) of a curve or a surface,
 respectively. @code{Parametric Point} retrieves the parametric
 coordinates U, V of a point on a surface. @code{Normal Surface} returns
 the normal to a surface evaluated at the specified parametric
-coordinates. @code{Curvature Curve} and. @code{Curvature Surface} return
+coordinates. @code{Curvature Curve} and @code{Curvature Surface} return
 the curvature of a curve or a surface at the specified parametric
 coordinates.
 
-The last cases permit to retrieve the mass, the center of mass or the
+The last cases retrieve the mass, the center of mass or the
 matrix of inertia of an entity, the coordinates of a given geometry
 point (@pxref{Points}), the elementary entities making up physical
 groups, and the tags of all (physical or elementary) points, curves,
@@ -2226,7 +2226,7 @@ String expressions are defined as:
   "@var{string}" |
   @var{string} | @var{string}[ @var{expression} ] |
   Today | OnelabAction | GmshExecutableName |
-  CurrentDirectory | CurrentDir | CurrentFileName
+  CurrentDirectory | CurrentDir | CurrentFileName |
   StrPrefix ( @var{string-expression} ) |
   StrRelative ( @var{string-expression} ) |
   StrCat ( @var{string-expression} <,@dots{}> ) |
@@ -2243,7 +2243,7 @@ String expressions are defined as:
   GetEnv ( @var{string-expression} ) |
   GetString ( @var{string-expression} <,@var{string-expression}>) |
   GetStringValue ( @var{string-expression} , @var{string-expression} ) |
-  StrReplace ( @var{string-expression} , @var{string-expression} , @var{string-expression} )
+  StrReplace ( @var{string-expression} , @var{string-expression} , @var{string-expression} ) |
   NameToString ( @var{string} ) | N2S ( @var{string} ) |
   <Physical> Point|Curve|Surface|Volume @{ @var{expression} @} |
   DefineString(@var{string-expression}, @var{onelab-options})
@@ -2271,8 +2271,8 @@ equivalent to the @code{sprintf} C function (where
 @var{string-expression} is a format string that can contain floating
 point formatting characters: @code{%e}, @code{%g}, etc.) The various
 @w{@var{string-option}s} are listed in @ref{Gmsh
-options}. @code{GetEnvThe} gets the value of an environment variable
-from the operating system. @code{GetString} allows to get a ONELAB
+options}. @code{GetEnv} gets the value of an environment variable
+from the operating system. @code{GetString} returns a ONELAB
 string value (the second optional argument is the default value returned
 if the variable does not exist).  @code{GetStringValue} asks the user
 for a value interactively (the second argument is the value used in
@@ -2283,17 +2283,17 @@ etc., or @code{Point}, etc., retrieve the name of the physical or
 elementary entity, if any.  @code{NameToString} converts a variable name
 into a string.
 
-@code{DefineString} allows to define a ONELAB variable in-line. The
+@code{DefineString} defines a ONELAB variable in-line. The
 @var{string-expression} given as the first argument is the default
 value; this is followed by the various ONELAB options. See the
-@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
-ONELAB tutorial wiki} for more information.
+@uref{https://gitlab.onelab.info/doc/models/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
+ONELAB wiki} for more information.
 
 String expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8}, for an interesting usage of
 @w{@var{string-expression}s} in an animation script.
 
-List of string expressions are defined as:
+Lists of string expressions are defined as:
 @example
 @var{string-expression-list}:
   @var{string-expression} <,@dots{}>
@@ -2309,7 +2309,7 @@ List of string expressions are defined as:
 @cindex Expressions, color
 @cindex Colors
 
-Colors expressions are hybrids between fixed-length braced
+Color expressions are hybrids between fixed-length braced
 @w{@var{expression-list}s} and @w{@var{string}s}:
 @example
 @var{color-expression}:
@@ -2318,14 +2318,14 @@ Colors expressions are hybrids between fixed-length braced
   @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @} |
   @var{color-option}
 @end example
-The first case permits to use the X Windows names to refer to colors,
+The first case lets you use the X Windows names to refer to colors,
 e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
 (see @url{@value{GITLAB-PREFIX}/src/common/Colors.h,src/common/Colors.h}
-in the source code for a complete list). The second case permits to
-define colors by using three expressions to specify their red, green and
-blue components (with values comprised between 0 and 255). The third
-case permits to define colors by using their red, green and blue color
-components as well as their alpha channel. The last case permits to use
+in the source code for a complete list). The second case
+defines colors by using three expressions to specify their red, green and
+blue components (with values between 0 and 255). The third
+case defines colors by using their red, green and blue color
+components as well as their alpha channel. The last case uses
 the value of a @var{color-option} as a @var{color-expression}. The
 various @w{@var{color-option}s} are listed in @ref{Gmsh options}.
 
@@ -2353,7 +2353,6 @@ See @ref{t3}, for an example of the use of color expressions.
 @findex @var{operator-unary-left}
 @findex @var{operator-unary-right}
 @findex @var{operator-binary}
-@findex @var{operator-unary-left}
 @findex @var{operator-ternary-left}
 @findex @var{operator-ternary-right}
 
@@ -2373,9 +2372,9 @@ Logical not.
 @var{operator-unary-right}:
 @ftable @code
 @item ++
-Post-incrementation.
+Post-increment.
 @item --
-Post-decrementation.
+Post-decrement.
 @end ftable
 
 @noindent
@@ -2434,9 +2433,9 @@ argument.
 
 @findex ()
 
-The evaluation priorities are summarized below@footnote{The affectation
+The evaluation priorities are summarized below@footnote{The assignment
 operators are introduced in @ref{Other general commands}.} (from stronger to
-weaker, i.e., @code{*} has a highest evaluation priority than @code{+}).
+weaker, i.e., @code{*} has a higher evaluation priority than @code{+}).
 Parentheses @code{()} may be used anywhere to change the order of
 evaluation:
 
@@ -2463,7 +2462,7 @@ evaluation:
 @subsection Built-in functions
 
 @cindex Functions, built-in
-@findex @var{build-in-function}
+@findex @var{built-in-function}
 
 A built-in function is composed of an identifier followed by a pair of
 parentheses containing an @var{expression-list}, the list of its
@@ -2472,7 +2471,7 @@ brackets, instead of parentheses. Here is the list of the built-in
 functions currently implemented:
 
 @noindent
-@var{build-in-function}:
+@var{built-in-function}:
 
 @ftable @code
 @item Acos ( @var{expression} )
@@ -2515,7 +2514,7 @@ the sign of the first.
 Rounds @var{expression} down to the nearest integer.
 
 @item Hypot ( @var{expression}, @var{expression} )
-Returns the square root of the sum of the square of its two arguments.
+Returns the square root of the sum of the squares of its two arguments.
 
 @item Log ( @var{expression} )
 Natural logarithm of @var{expression} (@var{expression} > 0).
@@ -2579,7 +2578,7 @@ and can contain any Gmsh command.  A synonym for @code{Macro} is
 
 @item Return
 End the body of the current user-defined macro. Macro declarations
-cannot be imbricated.
+cannot be nested.
 
 @item Call @var{string} | @var{string-expression} ;
 Execute the body of a (previously defined) macro named @var{string}.
@@ -2600,36 +2599,36 @@ available outside, too!
 @cindex Loops
 @cindex Conditionals
 
-Loops and conditionals are defined as follows, and can be imbricated:
+Loops and conditionals are defined as follows, and can be nested:
 
 @ftable @code
 @item For ( @var{expression} : @var{expression} )
 Iterate from the value of the first @var{expression} to the value of the
-second @var{expression}, with a unit incrementation step. At each
-iteration, the commands comprised between `@code{For ( @var{expression}
+second @var{expression}, with a unit increment. At each
+iteration, the commands between `@code{For ( @var{expression}
 : @var{expression} )}' and the matching @code{EndFor} are executed.
 
 @item For ( @var{expression} : @var{expression} : @var{expression} )
 Iterate from the value of the first @var{expression} to the value of the
-second @var{expression}, with a positive or negative incrementation step
+second @var{expression}, with a positive or negative increment
 equal to the third @var{expression}. At each iteration, the commands
-comprised between `@code{For ( @var{expression} : @var{expression} :
+between `@code{For ( @var{expression} : @var{expression} :
 @var{expression} )}' and the matching @code{EndFor} are executed.
 
 @item For @var{string} In @{ @var{expression} : @var{expression} @}
 Iterate from the value of the first @var{expression} to the value of the
-second @var{expression}, with a unit incrementation step. At each
-iteration, the value of the iterate is affected to an expression named
-@var{string}, and the commands comprised between `@code{For @var{string}
+second @var{expression}, with a unit increment. At each
+iteration, the value of the iterate is assigned to an expression named
+@var{string}, and the commands between `@code{For @var{string}
 In @{ @var{expression} : @var{expression} @}}' and the matching
 @code{EndFor} are executed.
 
 @item For @var{string} In @{ @var{expression} : @var{expression} : @var{expression} @}
 Iterate from the value of the first @var{expression} to the value of the
-second @var{expression}, with a positive or negative incrementation step
+second @var{expression}, with a positive or negative increment
 equal to the third @var{expression}. At each iteration, the value of the
-iterate is affected to an expression named @var{string}, and the
-commands comprised between `@code{For @var{string} In @{
+iterate is assigned to an expression named @var{string}, and the
+commands between `@code{For @var{string} In @{
 @var{expression} : @var{expression} : @var{expression} @}}' and the
 matching @code{EndFor} are executed.
 
@@ -2665,7 +2664,7 @@ End a matching @code{If} command.
 
 @cindex General commands
 @cindex Commands, general
-@cindex Expressions, affectation
+@cindex Expressions, assignment
 @cindex Expressions, identifiers
 
 @findex =
@@ -2679,7 +2678,7 @@ The following commands can be used anywhere in a Gmsh script:
 @ftable @code
 
 @item @var{string} = @var{expression};
-Create a new expression identifier @var{string}, or affects
+Create a new expression identifier @var{string}, or assign
 @var{expression} to an existing expression identifier. The following
 expression identifiers are predefined (hardcoded in Gmsh's parser):
 
@@ -2716,7 +2715,7 @@ Return the total memory available (in Mb).
 @item newp
 Return the next available point tag. As explained in @ref{Geometry
 module}, a unique tag must be associated with every geometrical point:
-@code{newp} permits to know the highest tag already attributed (plus
+@code{newp} returns the highest tag already attributed (plus
 one). This is mostly useful when writing user-defined macros
 (@pxref{User-defined macros}) or general geometric primitives, when one
 does not know @emph{a priori} which tags are already attributed, and
@@ -2752,32 +2751,32 @@ empty list.
 
 @item @var{string}[] = @{ @var{expression-list} @};
 Create a new expression list identifier @code{@var{string}} with the
-list @var{expression-list}, or affects @var{expression-list} to an
+list @var{expression-list}, or assign @var{expression-list} to an
 existing expression list identifier. Parentheses are also allowed
 instead of square brackets; although not recommended, brackets and
-parentheses can also be completely ommitted.
+parentheses can also be completely omitted.
 
 @item @var{string} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
-Affect each item in the right hand side @var{expression-list} to the
+Assign each item in the right hand side @var{expression-list} to the
 elements (indexed by the left hand side @var{expression-list}) of an
 existing expression list identifier. The two @w{@var{expression-list}s}
 must contain the same number of items. Parentheses can also be used
 instead of brackets.
 
 @item @var{string} += @var{expression};
-Add and affect @var{expression} to an existing expression identifier.
+Add @var{expression} to an existing expression identifier.
 
 @item @var{string} -= @var{expression};
-Subtract and affect @var{expression} to an existing expression identifier.
+Subtract @var{expression} from an existing expression identifier.
 
 @item @var{string} *= @var{expression};
-Multiply and affect @var{expression} to an existing expression identifier.
+Multiply an existing expression identifier by @var{expression}.
 
 @item @var{string} /= @var{expression};
-Divide and affect @var{expression} to an existing expression identifier.
+Divide an existing expression identifier by @var{expression}.
 
 @item @var{string} += @{ @var{expression-list} @};
-Append @var{expression-list} to an existing expression list or creates a
+Append @var{expression-list} to an existing expression list or create a
 new expression list with @var{expression-list}.
 
 @item @var{string} -= @{ @var{expression-list} @};
@@ -2785,22 +2784,22 @@ Remove the items in @var{expression-list} from the existing expression
 list.
 
 @item @var{string} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
-Add and affect, item per item, the right hand side @var{expression-list}
+Add and assign, item by item, the right hand side @var{expression-list}
 to an existing expression list identifier. Parentheses can also be used
 instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] -= @{ @var{expression-list} @};
-Subtract and affect, item per item, the right hand side
+Subtract and assign, item by item, the right hand side
 @var{expression-list} to an existing expression list identifier.
 Parentheses can also be used instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] *= @{ @var{expression-list} @};
-Multiply and affect, item per item, the right hand side
+Multiply and assign, item by item, the right hand side
 @var{expression-list} to an existing expression list
 identifier. Parentheses can also be used instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] /= @{ @var{expression-list} @};
-Divide and affect, item per item, the right hand side
+Divide and assign, item by item, the right hand side
 @var{expression-list} to an existing expression list
 identifier. Parentheses can also be used instead of brackets.
 
@@ -2819,40 +2818,40 @@ also be used instead of brackets.
 
 @item DefineConstant[ @var{string} = @var{expression}|@var{string-expression} <, ...>];
 Create a new expression identifier @var{string}, with value
-@var{expression}, only if has not been defined before.
+@var{expression}, only if it has not been defined before.
 
 @item DefineConstant[ @var{string} = @{ @var{expression}|@var{string-expression}, @var{onelab-options} @} <, ...>];
 Same as the previous case, except that the variable is also exchanged
 with the ONELAB database if it has not been defined before. See the
-@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
-ONELAB tutorial wiki} for more information.
+@uref{https://gitlab.onelab.info/doc/models/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
+ONELAB wiki} for more information.
 
 @item SetNumber( @var{string-expression} , @var{expression} );
-Set the value a numeric ONELAB variable @var{string-expression}.
+Set the value of a numeric ONELAB variable @var{string-expression}.
 
 @item SetString( @var{string-expression} , @var{string-expression} );
-Set the value a string ONELAB variable @var{string-expression}.
+Set the value of a string ONELAB variable @var{string-expression}.
 
 @item @var{number-option} = @var{expression};
-Affect @var{expression} to a real option.
+Assign @var{expression} to a real option.
 
 @item @var{string-option} = @var{string-expression};
-Affect @var{string-expression} to a string option.
+Assign @var{string-expression} to a string option.
 
 @item @var{color-option} = @var{color-expression};
-Affect @var{color-expression} to a color option.
+Assign @var{color-expression} to a color option.
 
 @item @var{number-option} += @var{expression};
-Add and affect @var{expression} to a real option.
+Add @var{expression} to a real option.
 
 @item @var{number-option} -= @var{expression};
-Subtract and affect @var{expression} to a real option.
+Subtract @var{expression} from a real option.
 
 @item @var{number-option} *= @var{expression};
-Multiply and affect @var{expression} to a real option.
+Multiply a real option by @var{expression}.
 
 @item @var{number-option} /= @var{expression};
-Divide and affect @var{expression} to a real option.
+Divide a real option by @var{expression}.
 
 @item Abort;
 Abort the current script.
@@ -2890,7 +2889,7 @@ is not absolute, @var{string-expression} is appended to the path of the
 current file. @value{SYNC}
 
 @item ShapeFromFile( @var{string-expression} );
-Merge a BREP, STEP or IGES file and returns the tags of the
+Merge a BREP, STEP or IGES file and return the tags of the
 highest-dimensional entities. Only available with the OpenCASCADE
 geometry kernel.
 
@@ -2904,7 +2903,7 @@ Split the current window horizontally, with the ratio given by @var{expression}.
 Split the current window vertically, with the ratio given by @var{expression}.
 
 @item SetCurrentWindow @var{expression};
-Set the current window by speficying its index (starting at 0) in the
+Set the current window by specifying its index (starting at 0) in the
 list of all windows. When new windows are created by splits, new windows
 are appended at the end of the list.
 
@@ -2938,7 +2937,7 @@ the views.
 @item BoundingBox @{ @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
 Force the bounding box of the scene to the given @w{@var{expression}s}
 (X min, X max, Y min, Y max, Z min, Z max). Beware that order of the
-coordinates is different than in the @code{BoundingBox} commands for
+coordinates is different from that in the @code{BoundingBox} commands for
 model entities: see @ref{Floating point expressions}.
 
 @item Delete Model;
@@ -2970,7 +2969,7 @@ appended to the path of the current file. @value{SYNC}
 Suspend the execution of Gmsh during @var{expression} seconds.
 
 @item SystemCall @var{string-expression};
-Executes a (blocking) system call.
+Execute a (blocking) system call.
 
 @item NonBlockingSystemCall @var{string-expression};
 Execute a (non-blocking) system call.
@@ -3075,7 +3074,7 @@ Create a physical point. The @var{expression} inside the parentheses is
 the physical point's tag; the @var{expression-list} on the right hand
 side should contain the tags of all the elementary points that need to
 be grouped inside the physical point.  If a @var{string-expression} is
-given instead instead of @var{expression} inside the parentheses, a
+given instead of @var{expression} inside the parentheses, a
 string label is associated with the physical tag, which can be either
 provided explicitly (after the comma) or not (in which case a unique tag
 is automatically created).
@@ -3121,7 +3120,7 @@ curve if the first and last points are identical.
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Create a circle arc. If three @var{expression}s are provided on the
 right-hand-side they define the start point, the center and the end
-point of the arc; the three points should not be colinear. With the
+point of the arc; the three points should not be collinear. With the
 built-in geometry kernel the arc should be strictly smaller than
 Pi. With the OpenCASCADE kernel, if between 4 and 6 expressions are
 provided the arc is created in the X-Y plane: the first three define the
@@ -3134,7 +3133,7 @@ optional next two the start and end angle.
 Create an ellipse arc. If four @var{expression}s are provided on the
 right-hand-side they define the start point, the center point, a point
 anywhere on the major axis and the end point. If the first point is a
-major axis point, the third expression can be ommitted. With the
+major axis point, the third expression can be omitted. With the
 OpenCASCADE kernel, if between 5 and 7 expressions are provided, the
 first three define the coordinates of the center, the next two define
 the major (along the x-axis) and minor radii (along the y-axis), and the
@@ -3176,7 +3175,7 @@ Create a physical curve. The @var{expression} inside the parentheses is
 the physical curve's tag; the @var{expression-list} on the right hand
 side should contain the tags of all the elementary curves that need to
 be grouped inside the physical curve. If a @var{string-expression} is
-given instead instead of @var{expression} inside the parentheses, a
+given instead of @var{expression} inside the parentheses, a
 string label is associated with the physical tag, which can be either
 provided explicitly (after the comma) or not (in which case a unique tag
 is automatically created). In some mesh file formats (e.g. MSH2),
@@ -3217,7 +3216,7 @@ loop should be composed of either three or four curves, the surface is
 constructed using transfinite interpolation, and the optional @code{In
 Sphere} argument forces the surface to be a spherical patch (the extra
 parameter gives the tag of the center of the sphere). With the
-OpenCASCADE kernel, a BSpline surface is constructucted by optimization
+OpenCASCADE kernel, a BSpline surface is constructed by optimization
 to match the bounding curves, as well as the (optional) points provided
 after @code{Using Point}.
 
@@ -3232,7 +3231,7 @@ or 4 Bezier curves can be provided. @code{Bezier Surface} is only
 available with the OpenCASCADE kernel.
 
 @item Disk ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a disk. When four expressions are provided on the right hand
+Create a disk. When four expressions are provided on the right hand
 side (3 coordinates of the center and the radius), the disk is circular.
 A fifth expression defines the radius along Y, leading to an ellipse.
 @code{Disk} is only available with the OpenCASCADE kernel.
@@ -3251,7 +3250,7 @@ constitute the surface loop. A surface loop must always represent a
 closed shell, and the surfaces should be oriented consistently (using
 negative tags to specify reverse orientation). (Surface loops are used
 to create volumes: see @ref{Volumes}.) With the OpenCASCADE kernel, the
-optional @code{Using Sewing} argument allows to build a shell made of
+optional @code{Using Sewing} argument lets you build a shell made of
 surfaces that share geometrically identical (but topologically
 different) curves.
 
@@ -3260,7 +3259,7 @@ Create a physical surface. The @var{expression} inside the parentheses
 is the physical surface's tag; the @var{expression-list} on the right
 hand side should contain the tags of all the elementary surfaces that
 need to be grouped inside the physical surface.  If a
-@var{string-expression} is given instead instead of @var{expression}
+@var{string-expression} is given instead of @var{expression}
 inside the parentheses, a string label is associated with the physical
 tag, which can be either provided explicitly (after the comma) or not
 (in which case a unique tag is automatically created).  In some mesh
@@ -3329,7 +3328,7 @@ with the OpenCASCADE kernel.
 
 @item Wedge ( @var{expression} ) = @{ @var{expression-list} @};
 Create a right angular wedge, defined by the 3 coordinates of the
-right-angle point and the 3 extends. An additional parameter defines the
+right-angle point and the 3 extents. An additional parameter defines the
 top X extent (zero by default). @code{Wedge} is only available with the
 OpenCASCADE kernel.
 
@@ -3350,7 +3349,7 @@ Create a physical volume. The @var{expression} inside the parentheses is
 the physical volume's tag; the @var{expression-list} on the right hand
 side should contain the tags of all the elementary volumes that need to
 be grouped inside the physical volume. If a @var{string-expression} is
-given instead instead of @var{expression} inside the parentheses, a
+given instead of @var{expression} inside the parentheses, a
 string label is associated with the physical tag, which can be either
 provided explicitly (after the comma) or not (in which case a unique tag
 is automatically created).
@@ -3410,7 +3409,7 @@ Extrude entities in @var{extrude-list} using a translation along their
 normal. Only available with the built-in geometry kernel.
 
 @item Extrude @{ @var{extrude-list} @} Using Wire @{ @var{expression-list} @}
-Extrude entities in @var{extrude-list} along the give wire. Only
+Extrude entities in @var{extrude-list} along the given wire. Only
 available with the OpenCASCADE geometry kernel.
 
 @item ThruSections @{ @var{expression-list} @}
@@ -3462,7 +3461,7 @@ extruded entity at indices 2, 3, etc.  For example:
   Printf("side curves = %g and %g", out[2], out[3]);
 @end example
 
-This behaviour can be changed with the
+This behavior can be changed with the
 @code{Geometry.ExtrudeReturnLateralEntities} option (@pxref{Geometry
 options}).
 
@@ -3482,7 +3481,7 @@ options}).
 @findex @var{boolean}
 
 Boolean operations can be applied on curves, surfaces and volumes. All
-boolean operation act on two lists of elementary entities. The first
+boolean operations act on two lists of elementary entities. The first
 list represents the object; the second represents the tool. The general
 syntax for boolean operations is as follows:
 
@@ -3598,42 +3597,42 @@ Translate all elementary entities in @var{transform-list}. The
 the X, Y and Z components of the translation vector.
 
 @item Boundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Return the entities on the boundary of
+(Not a transformation per se.) Return the entities on the boundary of
 the elementary entities in @var{transform-list}. @value{SYNC}
 
 @item OrientedBoundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Same as @code{Boundary}, but returns
+(Not a transformation per se.) Same as @code{Boundary}, but returns
 entity tags with signs indicating their orientation in the boundary.
 
 @item CombinedBoundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Return the boundary of the elementary
+(Not a transformation per se.) Return the boundary of the elementary
 entities, combined as if a single entity, in
 @var{transform-list}. Useful to compute the boundary of a complex part.
 @value{SYNC}
 
 @item OrientedCombinedBoundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Same as @code{CombinedBoundary}, but
+(Not a transformation per se.) Same as @code{CombinedBoundary}, but
 returns entity tags with signs indicating their orientation in the
 boundary.
 
 @item PointsOf @{ @var{transform-list} @}
-(Not a transformation per-se.) Return all the geometrical points on the
+(Not a transformation per se.) Return all the geometrical points on the
 boundary of the elementary entities. Useful to compute the boundary of a
 complex part. @value{SYNC}
 
 @item Closest @{ @var{expression-list} @} @{ @var{transform-list} @}
-(Not a transformation per-se.) Return the entities from
+(Not a transformation per se.) Return the entities from
 @var{transform-list} ordered by their distance to the point with
 coordinates @var{expression-list}. Currently only available with the
 OpenCASCADE kernel.
 
 @item Intersect Curve @{ @var{expression-list} @} Surface @{ @var{expression} @}
-(Not a transformation per-se.) Return the intersections of the curves
+(Not a transformation per se.) Return the intersections of the curves
 given in @var{expression-list} with the specified surface. Currently
 only available with the built-in kernel.
 
 @item Split Curve @{ @var{expression} @} Point @{ @var{expression-list} @}
-(Not a transformation per-se.) Split the curve @var{expression} on the
+(Not a transformation per se.) Split the curve @var{expression} on the
 specified control points. Only available with the built-in kernel, for
 splines and BSplines. @c multi-lines are not officially supported
 @end ftable
@@ -3709,7 +3708,7 @@ Show all entities.
 Change the current (surface) geometry used by the built-in geometry kernel to a (polar) sphere, defined by the two point tags specified on the right hand side. The @var{expression} between parentheses on the left hand side specifies a new unique tag for this geometry.
 
 @item Parametric Surface ( @var{expression} ) = "@var{string}" "@var{string}" "@var{string}";
-Change the current (surface) geometry used by the built-in geometry kernel to a parametric surface defined by the three strings expression evaluating to the x, y and z coordinates. The @var{expression} between parentheses on the left hand side specifies a new unique tag for this geometry.
+Change the current (surface) geometry used by the built-in geometry kernel to a parametric surface defined by the three string expressions evaluating to the x, y and z coordinates. The @var{expression} between parentheses on the left hand side specifies a new unique tag for this geometry.
 
 @item Coordinates Surface @var{expression};
 Change the current (surface) geometry used by the built-in geometry kernel to the geometry identified by the given @var{expression}.
@@ -3729,7 +3728,7 @@ Restore the default planar geometry for the built-in geometry kernel.
 @cindex Mesh, scripting commands
 @cindex Scripting commands, Mesh
 
-The mesh module scripting commands allow to modify the mesh element
+The mesh module scripting commands modify the mesh element
 sizes and specify structured grid parameters. Certain meshing actions
 (e.g. ``mesh all the surfaces'') can also be specified in the script
 files, but are usually performed either in the GUI or on the command
@@ -3765,7 +3764,7 @@ Set the option @var{string} of the @var{expression}-th field.
 @item Background Field = @var{expression};
 Select the @var{expression}-th field as the one used to compute element
 sizes. Only one background field can be given; if you want to combine
-several field, use the @code{Min} or @code{Max} field (see below).
+several fields, use the @code{Min} or @code{Max} field (see below).
 @end ftable
 
 @c .........................................................................
@@ -3820,7 +3819,7 @@ surface in @code{num[0]} and the tag of the new volume in @code{num[1]}:
 num[] = Extrude @{0,0,1@} @{ Surface@{1@}; Layers@{10@}; @};
 @end example
 
-@code{QuadTriNoNewVerts} and @code{QuadTriAddVerts} allow to connect
+@code{QuadTriNoNewVerts} and @code{QuadTriAddVerts} connect
 structured, extruded volumes containing quadrangle-faced elements to
 structured or unstructured tetrahedral volumes, by subdividing into
 triangles any quadrangles on boundary surfaces shared with tetrahedral
@@ -3836,7 +3835,7 @@ interface the inner, unmodified elements to the triangle-meshed region
 boundaries.
 
 In some rare cases, due to certain lateral boundary conditions, it may
-not be possible make a valid element subdivision with
+not be possible to make a valid element subdivision with
 @code{QuadTriNoNewVerts} without adding additional nodes. In this
 case, an internal node is created at the node-based centroid of the
 element. The element is then divided using that node. When an internal
@@ -3891,7 +3890,7 @@ no view is specified, the mesh of the boundary layer entities is created
 using a gouraud-shaded (smoothed) normal field. If a scalar view is
 specified, it locally prescribes the thickness of the layer. If a
 vector-valued view is specified it locally prescribes both the extrusion
-direction and the thickness. Specifying a boundary layer index allows to
+direction and the thickness. Specifying a boundary layer index lets you
 extrude several independent boundary layers (with independent normal
 smoothing). @code{ScaleLastLayer} scales the height of the last (top)
 layer of each normal's extrusion by the average length of the edges in
@@ -4009,8 +4008,8 @@ Optimize the current mesh with the given algorithm (currently
 for Netgen optimizer, @code{"HighOrder"} for direct high-order mesh
 optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
 @code{"HighOrderFastCurving"} for fast curving algorithm,
-@code{"UntangleTets''} for untangling tetrahedral meshes,
-@code{"UntangleTris''} for untangling xy-planar triangular meshes,
+@code{"UntangleTets"} for untangling tetrahedral meshes,
+@code{"UntangleTris"} for untangling xy-planar triangular meshes,
 @code{"Laplace2D"} for Laplace smoothing, @code{"Relocate2D"} and
 @code{"Relocate3D"} for node relocation).
 
@@ -4020,7 +4019,7 @@ Perform adaptive mesh generation. Documentation not yet available.
 @item RelocateMesh Point | Curve | Surface @{ @var{expression-list-or-all} @};
 Relocate the mesh nodes on the given entities using the parametric
 coordinates stored in the nodes. Useful for creating perturbation of
-meshes e.g. for sensitivity analyzes. @value{SYNC}
+meshes e.g. for sensitivity analyses. @value{SYNC}
 
 @item RecombineMesh;
 Recombine the current mesh into quadrangles. @value{SYNC}
@@ -4037,7 +4036,7 @@ Create partition overlaps with @var{expression} layers.
 @item Point | Curve @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Add a meshing constraint to embed the point(s) or curve(s) in the given
 surface. The surface mesh will conform to the mesh of the point(s) or
-curves(s). @value{SYNC}
+curve(s). @value{SYNC}
 
 @item Point | Curve | Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
 Add a meshing constraint to embed the point(s), curve(s) or surface(s)
@@ -4118,7 +4117,7 @@ sets an angle threshold to force splitting of the generated curves.
 Renumber the node tags in the current mesh in a continuous sequence.
 
 @item RenumberMeshElements;
-Renumber the elements tags in the current mesh in a continuous sequence.
+Renumber the element tags in the current mesh in a continuous sequence.
 
 @item CreateMeshEdges;
 Create the edges of the current mesh.
@@ -4177,7 +4176,7 @@ the moment). @value{SYNC}
 Compute a basis representation for homology spaces after a mesh has
 been generated. The first @var{expression-list} is a list of
 dimensions whose homology bases are computed; if empty, all bases are
-computed. The second @var{expression-list} is a list physical groups
+computed. The second @var{expression-list} is a list of physical groups
 that constitute the computation domain; if empty, the whole mesh is
 the domain. The third @var{expression-list} is a list of physical
 groups that constitute the relative subdomain of relative homology
@@ -4219,7 +4218,7 @@ memory. If what you really want is multiple physical copies of the data,
 just merge the file containing the post-processing view multiple times.
 
 @item AliasWithOptions View[@var{expression}];
-Create an alias of the @var{expression}-th post-processing view and copies
+Create an alias of the @var{expression}-th post-processing view and copy
 all the options of the @var{expression}-th view to the new aliased view.
 
 @item CopyOptions View[@var{expression}, @var{expression}];
@@ -4319,7 +4318,7 @@ View "@var{string}" @{
 @end group
 @end example
 
-where the 47 object @w{@var{type}s} that can be displayed are:
+where the object @w{@var{type}s} that can be displayed are:
 
 @example
                       @var{type}  #@var{coordinates}  #@var{values}
@@ -4472,7 +4471,7 @@ INTERPOLATION_SCHEME
 @cindex API
 @cindex Programming, API
 
-The Gmsh application programming interface (API) allows to integrate the
+The Gmsh application programming interface (API) lets you integrate the
 Gmsh library in external applications written in C++, C, Python, Julia
 or Fortran. By design, the Gmsh API is purely functional, and only uses
 elementary types from the target languages. See the
@@ -4572,7 +4571,7 @@ contain triangular and/or quadrangular elements and all the nodes not
 classified on its boundary or on its embedded entities (curves and
 points). A model volume will contain tetrahedra, hexahedra, etc. and all
 the nodes not classified on its boundary or on its embedded entities
-(surfaces, curves and points). This data model allows to easily and
+(surfaces, curves and points). This data model lets you easily and
 efficiently handle the creation, modification and destruction of
 conformal meshes. All the mesh-related functions are provided in the
 @code{gmsh/model/mesh} namespace.
@@ -4585,7 +4584,7 @@ display @emph{options} and @emph{data}, unless the view is an
 options, and the data points to a reference view).  View data can
 contain several @emph{steps} (e.g. to store time series) and can be
 either linked to one or more models@footnote{Each step can be linked to
-a different model, which allows to have a single time series based on
+a different model, which makes it possible to have a single time series based on
 multiple (e.g. deforming or moving) meshes.} (@emph{mesh-based} data, as
 stored in MSH files: cf. @ref{MSH file format}) or independent from any
 model (@emph{list-based} data, as stored in parsed POS files:
@@ -4635,7 +4634,7 @@ graphic window at runtime.
 Gmsh's default behavior is to save some of these options in a per-user
 ``session resource'' file (cf. ``Saved in:
 @code{General.SessionFileName}'' in the option descriptions below) every
-time Gmsh is shut down. This permits for example to automatically
+time Gmsh is shut down. This lets Gmsh, for example, automatically
 remember the size and location of the windows or which fonts to use. A
 second set of options can be saved (automatically or manually with the
 `File->Save Options As Default' menu) in a per-user ``option'' file
@@ -4881,7 +4880,7 @@ In binary mode (@code{Mesh.Binary=1} or @code{-bin} on the command
 line), all the numerical values (integer and floating point) not marked
 as ASCII in the format description below are written in binary form,
 using the type given between parentheses. The block structure of the
-@code{$Nodes} and @code{$Elements} sections allows to read integer and
+@code{$Nodes} and @code{$Elements} sections makes it possible to read integer and
 floating point data in each block in a single step (e.g. using
 @code{fread} in C).
 
@@ -6359,7 +6358,7 @@ quadrangles
 tetrahedra
 (@url{@value{GITLAB-PREFIX}/src/geo/MTetrahedron.h,src/geo/MTetrahedron.h}),
 etc. All the mesh elements are derived from
-@url{@value{GITLAB-PREFIX}/geo/MElement.h,src/geo/MElement.h},
+@url{@value{GITLAB-PREFIX}/src/geo/MElement.h,src/geo/MElement.h},
 and are stored in the corresponding model entities: one mesh point per
 geometrical point, mesh lines in geometrical curves, triangles and
 quadrangles in surfaces, etc. The elements are defined in terms of their
@@ -6429,7 +6428,7 @@ To add a new option in Gmsh:
 @enumerate
 @item
 create the option in the @code{CTX} class
-(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h}
+(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h})
 if it's a classical option, or in the @code{PViewOptions} class
 (@url{@value{GITLAB-PREFIX}/src/post/PViewOptions.h,src/post/PViewOptions.h})
 if it's a post-processing view-dependent option;
@@ -6446,7 +6445,7 @@ create the handling routine @code{opt_XXX} in
 @url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h});
 @item
 optional: create the associated widget in
-@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.h};
+@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.cpp};
 @end enumerate
 
 @c =========================================================================
@@ -6575,7 +6574,7 @@ Disable opaque move in your window manager.
 
 @item The graphics display very slowly.
 
-Are you are executing Gmsh from a remote host (via the network)
+Are you executing Gmsh from a remote host (via the network)
 without GLX?  You should turn double buffering off (with the `-nodb'
 command-line switch).
 
@@ -6594,7 +6593,7 @@ guesses the format from the file extension, so you can just type
 @file{myfile.jpg} in the dialog and Gmsh will automatically create a JPEG
 image file.
 
-@item How save high-resolution images?
+@item How can I save high-resolution images?
 
 You can specify the dimension in the dialog (e.g. set the width of the
 image to 5000 pixels; leaving one dimension negative will rescale using
@@ -6659,7 +6658,7 @@ use this new file for subsequent computations;
 @item
 or you may set the @code{Geometry.AutoCoherence} option to 0. This will
 prevent any automatic duplicate check/replacement. If you still need to
-remove the duplicates entities, simply add @code{Coherence;} at
+remove the duplicate entities, simply add @code{Coherence;} at
 strategic locations in your @file{.geo} files (e.g. before the creation
 of curve loops, etc.).
 @end itemize
@@ -6691,7 +6690,7 @@ e.g. @url{@value{GITLAB-PREFIX}/examples/boolean/import.geo,examples/boolean/imp
 You should @emph{not} export STEP models as @file{.geo} files. By
 design, Gmsh never translates from one CAD format to another. The
 ``unrolled GEO'' feature is there for unrolling complex GEO scripts
-writted with the built-in geometry kernel. While it can indeed export a
+written with the built-in geometry kernel. While it can indeed export a
 limited subset of geometrical entities created by other CAD kernels
 (e.g. OpenCASCADE), this feature is available for debugging purposes.
 
@@ -6781,7 +6780,7 @@ The swapping algorithm is not very clever. Try to change the surface
 mesh a bit, or recombine your mesh to generate prisms or hexahedra
 instead of tetrahedra.
 
-@item Does Gmsh automatically couple unstructured tetrahedral meshes and structured hexahedral meshed using pyramids?
+@item Does Gmsh automatically couple unstructured tetrahedral meshes and structured hexahedral meshes using pyramids?
 
 Yes, but only if pyramids need to be created on a single side of the
 quadrangular surface mesh.
@@ -6801,7 +6800,7 @@ algorithm with smoothing (e.g., with @code{Mesh.Smoothing = 10}).
 Yes, just choose the appropriate order in the mesh menu after the mesh
 is completed. High-order optimization tools are also available in the
 mesh menu. You can select the order on the command line with e.g.
-@code{-order 2}, and activcate high-order optimization with
+@code{-order 2}, and activate high-order optimization with
 @code{-optimize_ho}.
 
 @item Can I import an existing surface mesh in Gmsh and use it to build a 3D mesh?
@@ -6838,17 +6837,17 @@ define up to 6 clipping planes in Gmsh (i.e., enough to define a
 ``cube'' inside your model) and each plane can clip either the geometry,
 the mesh, the post-processing views, or any combination of the above.
 The clipping planes are defined using the four coefficients A,B,C,D of
-the equation A*x+B*y+C*y+D=0, which can be adjusted interactively by
+the equation A*x+B*y+C*z+D=0, which can be adjusted interactively by
 dragging the mouse in the input fields.
 
-@item What is the signification of SICN, Gamma and SIGE in Tools->Statistics?
+@item What is the meaning of SICN, Gamma and SIGE in Tools->Statistics?
 
 They measure the quality of the elements' shape in a mesh. They are defined for
 all 2D and 3D element types, except Gamma which is not defined for hexes and pyramids.
-The `S-' of SICN and SIGE stands for `Signed'. Those two measures actually give two information
+The `S-' of SICN and SIGE stands for `Signed'. Those two measures actually give two pieces of information
 on an element: Their absolute value gives the element's shape quality while their sign
 gives the element validity. In other words, negative values of SICN and SIGE
-indicate tangled elements. The pure quality part of the measures take values
+indicate tangled elements. The pure quality part of the measures takes values
 between 0 and 1, with 1 corresponding to the best shape.
 
 The measures are computed for 3D elements if any, otherwise for 2D elements. Given values
@@ -6858,11 +6857,11 @@ Graphs plot the number of elements vs. the quality measure.
 Meaning of the measures:
 @itemize
 @item
-`(S-)ICN' stands  for (Signed-) Inverse Condition Number. Low-ICN elements influence
+`(S-)ICN' stands for (Signed-) Inverse Condition Number. Low-ICN elements influence
 negatively the condition number of the stiffness matrix which, as a result, can
 introduce roundoff errors, or significantly reduce the convergence speed of iterative methods.
 @item
-`(S-)IGE' stands  for (Signed-) Inverse Gradient Error. Low-IGE elements influence
+`(S-)IGE' stands for (Signed-) Inverse Gradient Error. Low-IGE elements influence
 negatively the error on the gradient of the FE solution. For hexahedra, the measure
 is the well-known "scaled Jacobian" as defined in the hexahedral community.
 @item
@@ -6949,7 +6948,7 @@ visualization data on the fly. See e.g.
 @url{@value{GITLAB-PREFIX}/examples/api/custom_gui.py,custom_gui.py},
 @url{@value{GITLAB-PREFIX}/examples/api/custom_gui.cpp,custom_gui.cpp}.
 
-Another (rather crude) approach if to launch the Gmsh app everytime you
+Another (rather crude) approach is to launch the Gmsh app every time you
 want to visualize something (a simple C program showing how to do this
 is given in
 @url{@value{GITLAB-PREFIX}/utils/misc/callgmsh.c,utils/misc/callgmsh.c}).

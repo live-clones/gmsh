@@ -152,8 +152,8 @@ namespace gmsh { // Top-level functions
 
     // gmsh::option::setColor
     //
-    // Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
-    // `g', `b' and `a' should be integers between 0 and 255. `name' is of the form
+    // Set a color option to the RGBA value (`r', `g', `b', `a'), where `r', `g',
+    // `b' and `a' should be integers between 0 and 255. `name' is of the form
     // "Category.Color.Option" or "Category[num].Color.Option". Available
     // categories and options are listed in the "Gmsh options" chapter of the Gmsh
     // reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For
@@ -970,9 +970,13 @@ namespace gmsh { // Top-level functions
       // Relocate the nodes classified on the entity of dimension `dim' and tag
       // `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
       // for all entities of dimension `dim'. If `dim' and `tag' are negative,
-      // relocate all the nodes in the mesh.
+      // relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+      // length == `dim') can be provided to linearly rescale each parametric
+      // coordinate in the new parameter range, based on the provided one.
       GMSH_API void relocateNodes(const int dim = -1,
-                                  const int tag = -1);
+                                  const int tag = -1,
+                                  const std::vector<double> & min = std::vector<double>(),
+                                  const std::vector<double> & max = std::vector<double>());
 
       // gmsh::model::mesh::getElements
       //
@@ -1589,9 +1593,9 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setTransfiniteVolume
       //
-      // Set a transfinite meshing constraint on the surface `tag'. `cornerTags'
-      // can be used to specify the (6 or 8) corners of the transfinite
-      // interpolation explicitly.
+      // Set a transfinite meshing constraint on the volume `tag'. `cornerTags' can
+      // be used to specify the (6 or 8) corners of the transfinite interpolation
+      // explicitly.
       GMSH_API void setTransfiniteVolume(const int tag,
                                          const std::vector<int> & cornerTags = std::vector<int>());
 
@@ -2487,9 +2491,9 @@ namespace gmsh { // Top-level functions
 
         // gmsh::model::geo::mesh::setTransfiniteVolume
         //
-        // Set a transfinite meshing constraint on the surface `tag' in the built-
-        // in CAD kernel representation. `cornerTags' can be used to specify the (6
-        // or 8) corners of the transfinite interpolation explicitly.
+        // Set a transfinite meshing constraint on the volume `tag' in the built-in
+        // CAD kernel representation. `cornerTags' can be used to specify the (6 or
+        // 8) corners of the transfinite interpolation explicitly.
         GMSH_API void setTransfiniteVolume(const int tag,
                                            const std::vector<int> & cornerTags = std::vector<int>());
 
@@ -3000,8 +3004,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags' as a vector of (dim, tag) pairs. If the optional argument
       // `makeRuled' is set, the surfaces created on the boundary are forced to be
       // ruled surfaces. If `maxDegree' is positive, set the maximal degree of
-      // resulting surface. The optional argument `continuity' allows to specify
-      // the continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
+      // resulting surface. The optional argument `continuity' specifies the
+      // continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
       // "CN"). The optional argument `parametrization' sets the parametrization
       // type ("ChordLength", "Centripetal", "IsoParametric"). The optional
       // argument `smoothing' determines if smoothing is applied.
@@ -3811,7 +3815,7 @@ namespace gmsh { // Top-level functions
       // gmsh::view::option::setColor
       //
       // Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
-      // view with tag `tag', where where `r', `g', `b' and `a' should be integers
+      // view with tag `tag', where `r', `g', `b' and `a' should be integers
       // between 0 and 255.
       GMSH_API void setColor(const int tag,
                              const std::string & name,

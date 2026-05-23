@@ -56,6 +56,8 @@ gmsh.model.mesh.field.setNumber(1, "Sampling", 100)
 # SizeMin -o----------------/
 #          |                |    |
 #        Point         DistMin  DistMax
+#
+# (y axis: element size; x axis: distance from the Distance field)
 gmsh.model.mesh.field.add("Threshold", 2)
 gmsh.model.mesh.field.setNumber(2, "InField", 1)
 gmsh.model.mesh.field.setNumber(2, "SizeMin", lc / 30)
@@ -101,7 +103,7 @@ gmsh.model.mesh.field.setNumbers(7, "FieldsList", [2, 3, 5, 6])
 
 gmsh.model.mesh.field.setAsBackgroundMesh(7)
 
-# The API also allows to set a global mesh size callback, which is called each
+# The API can also set a global mesh size callback, which is called each
 # time the mesh size is queried
 def meshSizeCallback(dim, tag, x, y, z, lc):
     return min(lc, 0.02 * x + 0.01)

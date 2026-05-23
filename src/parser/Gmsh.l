@@ -178,7 +178,8 @@ ElseIf                  return tElseIf;
 EndFor                  return tEndFor;
 EndIf                   return tEndIf;
 Error                   return tError;
-Euclidian               return tEuclidian;
+Euclidian               return tEuclidean; // misspelling
+Euclidean               return tEuclidean;
 Exists                  return tExists;
 Exit                    return tExit;
 Exp                     return tExp;

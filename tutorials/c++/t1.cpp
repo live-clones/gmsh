@@ -30,8 +30,12 @@ int main(int argc, char **argv)
   // gmsh::model::geo::addPoint():
   // - the first 3 arguments are the point coordinates (x, y, z)
   // - the next (optional) argument is the target mesh size close to the point
-  // - the last (optional) argument is the point tag (a stricly positive integer
-  //   that uniquely identifies the point)
+  // - the last (optional) argument is the point tag (a strictly positive
+  //   integer that uniquely identifies the point)
+  //
+  // Note the ordering contrast with the `.geo' scripting syntax, where the tag
+  // comes first (`Point(1) = {x, y, z, lc}'): in the API it is the trailing
+  // argument.
   double lc = 1e-2;
   gmsh::model::geo::addPoint(0, 0, 0, lc, 1);
 
@@ -40,7 +44,7 @@ int main(int argc, char **argv)
   // to specify mesh sizes is to use general mesh size Fields (see `t10.cpp'). A
   // particular case is the use of a background mesh (see `t7.cpp').
   //
-  // If no target mesh size of provided, a default uniform coarse size will be
+  // If no target mesh size is provided, a default uniform coarse size will be
   // used for the model, based on the overall model size.
   //
   // We can then define some additional points. All points should have different
@@ -52,7 +56,7 @@ int main(int argc, char **argv)
   // and returned by the function:
   int p4 = gmsh::model::geo::addPoint(0, .3, 0, lc);
 
-  // Curves are Gmsh's second type of elementery entities, and, amongst curves,
+  // Curves are Gmsh's second type of elementary entities, and, amongst curves,
   // straight lines are the simplest. The API to create straight line segments
   // with the built-in kernel follows the same conventions: the first 2
   // arguments are point tags (the start and end points of the line), and the
@@ -64,6 +68,10 @@ int main(int argc, char **argv)
   // Note that curve tags are separate from point tags - hence we can reuse tag
   // `1' for our first curve. And as a general rule, elementary entity tags in
   // Gmsh have to be unique per geometrical dimension.
+  //
+  // The API uses a consistent `addX'/`getX' camelCase naming scheme across all
+  // kernels and modules. See the extended tutorial `x1.cpp' for a fuller
+  // description of this entity, element and node data model.
   gmsh::model::geo::addLine(1, 2, 1);
   gmsh::model::geo::addLine(3, 2, 2);
   gmsh::model::geo::addLine(3, p4, 3);
@@ -78,6 +86,12 @@ int main(int argc, char **argv)
   // (which must be unique amongst curve loops) as the second (optional)
   // argument:
   gmsh::model::geo::addCurveLoop({4, 1, -2, 3}, 1);
+
+  // The sign of each curve in the loop encodes its orientation: a curve gets a
+  // positive sign when its own start-to-end direction matches the direction we
+  // travel around the loop, and a negative sign otherwise. Curve 2 here was
+  // defined from point 3 to point 2, but the loop traverses that edge from 2 to
+  // 3, hence the `-2'.
 
   // We can then define the surface as a list of curve loops (only one here,
   // representing the external contour, since there are no holes--see `t4.cpp'
@@ -106,7 +120,7 @@ int main(int argc, char **argv)
   // that belong to at least one physical group. (To force Gmsh to save all
   // elements, whether they belong to physical groups or not, set the
   // `Mesh.SaveAll' option to 1.) Physical groups are also identified by tags,
-  // i.e. stricly positive integers, that should be unique per dimension (0D,
+  // i.e. strictly positive integers, that should be unique per dimension (0D,
   // 1D, 2D or 3D). Physical groups can also be given names.
   //
   // Here we define a physical curve that groups the left, bottom and right

@@ -15,4 +15,4 @@ Plane Surface(6) = {5};
 //+
 Physical Surface(7) = {6};
 //+
-Recombine Surface {6};
+//Recombine Surface {6};
