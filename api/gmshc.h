@@ -840,9 +840,13 @@ GMSH_API void gmshModelMeshReclassifyNodes(int * ierr);
 /* Relocate the nodes classified on the entity of dimension `dim' and tag
  * `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
  * for all entities of dimension `dim'. If `dim' and `tag' are negative,
- * relocate all the nodes in the mesh. */
+ * relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+ * length == `dim') can be provided to linearly rescale each parametric
+ * coordinate in the new parameter range, based on the provided one. */
 GMSH_API void gmshModelMeshRelocateNodes(const int dim,
                                          const int tag,
+                                         const double * min, const size_t min_n,
+                                         const double * max, const size_t max_n,
                                          int * ierr);
 
 /* Get the elements classified on the entity of dimension `dim' and tag `tag'.
@@ -3449,7 +3453,7 @@ GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size
 
 /* Refine the list of tetrahedra given in the vector `tetraIn', using point
  * coordinates `coord' and nodal size field `sizeAtNode'. The new point
- * coordinates are outputed in the `steiner' vector, and the new tetrahedra in
+ * coordinates are returned in the `steiner' vector, and the new tetrahedra in
  * the `tetraOut' vector. */
 GMSH_API void gmshAlgorithmRefineTetrahedra(const double * coord, const size_t coord_n,
                                             const double * sizeAtNode, const size_t sizeAtNode_n,

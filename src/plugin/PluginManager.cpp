@@ -73,6 +73,7 @@
 #include "BoundaryAngles.h"
 #include "MeshSizeFieldView.h"
 #include "BoundaryLayer.h"
+#include "DuplicateNodes.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -253,6 +254,7 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(
       std::make_pair("SimplePartition", GMSH_RegisterSimplePartitionPlugin()));
     allPlugins.insert(std::make_pair("Crack", GMSH_RegisterCrackPlugin()));
+    allPlugins.insert(std::make_pair("DuplicateNodes", GMSH_RegisterDuplicateNodesPlugin()));
     allPlugins.insert(std::make_pair(
       "ShowNeighborElements", GMSH_RegisterShowNeighborElementsPlugin()));
     allPlugins.insert(
@@ -276,6 +278,7 @@ void PluginManager::registerDefaultPlugins()
       std::make_pair("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
     allPlugins.insert(std::make_pair("MeshSizeFieldView",
                                      GMSH_RegisterMeshSizeFieldViewPlugin()));
+    
 #endif
 #if defined(HAVE_REVOROPT)
     allPlugins.insert(

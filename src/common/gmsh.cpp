@@ -2150,7 +2150,9 @@ GMSH_API void gmsh::model::mesh::reclassifyNodes()
   GModel::current()->pruneMeshVertexAssociations();
 }
 
-GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag)
+GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag,
+                                               const std::vector<double> &min,
+                                               const std::vector<double> &max)
 {
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
@@ -2166,7 +2168,7 @@ GMSH_API void gmsh::model::mesh::relocateNodes(const int dim, const int tag)
     GModel::current()->getEntities(entities, dim);
   }
   for(std::size_t i = 0; i < entities.size(); i++)
-    entities[i]->relocateMeshVertices();
+    entities[i]->relocateMeshVertices(min, max);
 }
 
 static void
@@ -8592,12 +8594,13 @@ GMSH_API void gmsh::algorithm::tetrahedralize(
 }
 
 GMSH_API void gmsh::algorithm::refineTetrahedra(
-  const std::vector<double> &coord, const std::vector<double> &sizeAtNode, const std::vector<std::size_t> &tetraIn, 
-  std::vector<double> &steiner, std::vector<std::size_t> &tetraOut)
+  const std::vector<double> &coord, const std::vector<double> &sizeAtNode,
+  const std::vector<std::size_t> &tetraIn, std::vector<double> &steiner,
+  std::vector<std::size_t> &tetraOut)
 {
-  if(!_checkInit()) 
+  if(!_checkInit())
     return;
-  
+
 #if defined(HAVE_MESH)
   refineTetrahedraHxt(coord, sizeAtNode, tetraIn, steiner, tetraOut);
 #else

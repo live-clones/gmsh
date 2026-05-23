@@ -2891,23 +2891,31 @@ class model:
         reclassify_nodes = reclassifyNodes
 
         @staticmethod
-        def relocateNodes(dim=-1, tag=-1):
+        def relocateNodes(dim=-1, tag=-1, min=[], max=[]):
             """
-            gmsh.model.mesh.relocateNodes(dim=-1, tag=-1)
+            gmsh.model.mesh.relocateNodes(dim=-1, tag=-1, min=[], max=[])
 
             Relocate the nodes classified on the entity of dimension `dim' and tag
             `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
             for all entities of dimension `dim'. If `dim' and `tag' are negative,
-            relocate all the nodes in the mesh.
+            relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+            length == `dim') can be provided to linearly rescale each parametric
+            coordinate in the new parameter range, based on the provided one.
 
             Types:
             - `dim': integer
             - `tag': integer
+            - `min': vector of doubles
+            - `max': vector of doubles
             """
+            api_min_, api_min_n_ = _ivectordouble(min)
+            api_max_, api_max_n_ = _ivectordouble(max)
             ierr = c_int()
             lib.gmshModelMeshRelocateNodes(
                 c_int(dim),
                 c_int(tag),
+                api_min_, api_min_n_,
+                api_max_, api_max_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -10366,7 +10374,7 @@ class algorithm:
 
         Refine the list of tetrahedra given in the vector `tetraIn', using point
         coordinates `coord' and nodal size field `sizeAtNode'. The new point
-        coordinates are outputed in the `steiner' vector, and the new tetrahedra in
+        coordinates are returned in the `steiner' vector, and the new tetrahedra in
         the `tetraOut' vector.
 
         Return `steiner', `tetraOut'.
