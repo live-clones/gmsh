@@ -48,8 +48,8 @@
 #include "PView.h"
 #endif
 
-static bool readMSH4Physicals(GModel *const model, FILE *fp,
-                              GEntity *const entity, bool binary, bool swap)
+bool readMSH4Physicals(GModel *const model, FILE *fp, GEntity *const entity,
+                       bool binary, bool swap)
 {
   std::size_t numPhy = 0;
   if(binary) {
@@ -75,9 +75,9 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
   return true;
 }
 
-static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
-                                     GEntity *const entity, bool binary,
-                                     bool swap, int maxTagEmbed)
+bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
+                              GEntity *const entity, bool binary, bool swap,
+                              int maxTagEmbed)
 {
   std::size_t numBrep = 0;
   std::vector<GEntity *> boundingEntities, embeddedEntities;
@@ -181,12 +181,11 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
   return true;
 }
 
-static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
-                               bool partition, int dim, int &tag,
-                               int &parentDim, int &parentTag,
-                               std::vector<int> &partitions, double &minX,
-                               double &minY, double &minZ, double &maxX,
-                               double &maxY, double &maxZ)
+bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
+                        bool partition, int dim, int &tag, int &parentDim,
+                        int &parentTag, std::vector<int> &partitions,
+                        double &minX, double &minY, double &minZ, double &maxX,
+                        double &maxY, double &maxZ)
 {
   if(partition) {
     if(binary) {
@@ -277,8 +276,8 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
   return true;
 }
 
-static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
-                             bool binary, bool swap, double version)
+bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
+                      bool binary, bool swap, double version)
 {
   if(partition) {
     std::size_t numPartitions = 0;
@@ -454,10 +453,9 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   return true;
 }
 
-static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
-                               bool &dense, std::size_t &totalNumRead,
-                               std::size_t &maxNodeNum, bool swap,
-                               double version)
+MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
+                        std::size_t &totalNumRead, std::size_t &maxNodeNum,
+                        bool swap, double version)
 {
   std::size_t numBlock = 0, minTag = 0, maxTag = 0;
   totalNumRead = 0;
@@ -706,7 +704,7 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
   return verticesRead;
 }
 
-static std::pair<MElement *, GEntity *> *
+std::pair<MElement *, GEntity *> *
 readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
                  std::size_t &totalNumRead, std::size_t &maxElementNum,
                  bool swap, double version)
@@ -940,8 +938,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
   return elementsRead;
 }
 
-static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
-                                  bool swap, double version)
+bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
+                           bool swap, double version)
 {
   std::size_t numPeriodicLinks = 0;
   if(binary) {
@@ -1089,8 +1087,8 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
   return true;
 }
 
-static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
-                                  bool swap)
+bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
+                           bool swap)
 {
   std::size_t numGhostCells = 0;
   if(binary) {
@@ -1187,7 +1185,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
   return true;
 }
 
-static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
+bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 {
   if(CTX::instance()->mesh.ignoreParametrizationMsh4) return true;
 
@@ -1246,7 +1244,7 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 }
 
 template <int dim>
-static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
+bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
 {
   size_t nOverlaps = 0;
   std::set<int> addedTags;
@@ -1337,8 +1335,7 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
 }
 
 template <int dim>
-static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
-                                      bool binary)
+bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp, bool binary)
 {
   size_t numGlobalEntities = 0;
   if(binary) {
@@ -1443,7 +1440,7 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
   return true;
 }
 
-static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
+bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
 {
   size_t numEdges = 0;
   if(binary) {
@@ -1482,7 +1479,7 @@ static bool readMSH4Edges(GModel *const model, FILE *fp, bool binary)
   return true;
 }
 
-static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
+bool readMSH4Faces(GModel *const model, FILE *fp, bool binary)
 {
   size_t numFaces3 = 0, numFaces4 = 0;
   if(binary) {
@@ -1915,7 +1912,7 @@ int GModel::_readMSH4(const std::string &name)
   return 1;
 }
 
-static void writeMSH4Physicals(FILE *fp, GEntity *const entity, bool binary)
+void writeMSH4Physicals(FILE *fp, GEntity *const entity, bool binary)
 {
   if(binary) {
     std::vector<int> phys = entity->getPhysicalEntities();
@@ -1936,9 +1933,9 @@ static void writeMSH4Physicals(FILE *fp, GEntity *const entity, bool binary)
   }
 }
 
-static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
-                                 double scalingFactor, bool binary, int dim,
-                                 double version)
+void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
+                          double scalingFactor, bool binary, int dim,
+                          double version)
 {
   double bb[6] = {0., 0., 0., 0., 0., 0.};
   if(!boundBox.empty()) {
@@ -1957,7 +1954,7 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
   }
 }
 
-static void writeMSH4Entities(
+void writeMSH4Entities(
   GModel *const model, FILE *fp, bool partition, bool binary,
   double scalingFactor, double version,
   std::map<GEntity *, SBoundingBox3d> *entityBounds, int partitionToSave,
@@ -2467,10 +2464,9 @@ static void writeMSH4Entities(
 }
 
 template <class It>
-static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
-                                 int saveParametric, double scalingFactor,
-                                 double version, It begin, It end,
-                                 size_t numVerts)
+void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
+                          int saveParametric, double scalingFactor,
+                          double version, It begin, It end, size_t numVerts)
 {
   int parametric = saveParametric;
   if(ge->dim() != 1 && ge->dim() != 2)
@@ -2540,7 +2536,7 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   }
 }
 
-static std::size_t
+std::size_t
 getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
                       std::set<GFace *, GEntityPtrLessThan> &faces,
                       std::set<GEdge *, GEntityPtrLessThan> &edges,
@@ -2675,12 +2671,12 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
   return numVertices;
 }
 
-static void getEntitiesToSave(GModel *const model, bool partitioned,
-                              int partitionToSave, bool saveAll,
-                              std::set<GRegion *, GEntityPtrLessThan> &regions,
-                              std::set<GFace *, GEntityPtrLessThan> &faces,
-                              std::set<GEdge *, GEntityPtrLessThan> &edges,
-                              std::set<GVertex *, GEntityPtrLessThan> &vertices)
+void getEntitiesToSave(GModel *const model, bool partitioned,
+                       int partitionToSave, bool saveAll,
+                       std::set<GRegion *, GEntityPtrLessThan> &regions,
+                       std::set<GFace *, GEntityPtrLessThan> &faces,
+                       std::set<GEdge *, GEntityPtrLessThan> &edges,
+                       std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   if(partitioned) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
@@ -2771,12 +2767,11 @@ static void getEntitiesToSave(GModel *const model, bool partitioned,
   }
 }
 
-static void
-writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
-               int partitionToSave, bool binary, int saveParametric,
-               double scalingFactor, bool saveAll, double version,
-               std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
-                 &entitiesWithSubsetToExport)
+void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
+                    int partitionToSave, bool binary, int saveParametric,
+                    double scalingFactor, bool saveAll, double version,
+                    std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+                      &entitiesWithSubsetToExport)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -2896,7 +2891,7 @@ writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   fprintf(fp, "$EndNodes\n");
 }
 
-static void writeMSH4Elements(
+void writeMSH4Elements(
   GModel *const model, FILE *fp, bool partitioned, int partitionToSave,
   bool binary, bool saveAll, double version,
   const std::variant<
@@ -3166,8 +3161,8 @@ static void writeMSH4Elements(
   fprintf(fp, "$EndElements\n");
 }
 
-static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
-                           bool partitioned, int partitionToSave)
+void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
+                    bool partitioned, int partitionToSave)
 {
   auto printEdges = [&](const GModel::hashmapMEdge &edges) {
     if(edges.empty()) return;
@@ -3237,8 +3232,8 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
   }
 }
 
-static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
-                           bool partitioned, int partitionToSave)
+void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
+                    bool partitioned, int partitionToSave)
 {
   auto printFaces = [&](const GModel::hashmapMFace &faces) {
     if(faces.empty()) return;
@@ -3320,8 +3315,8 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
   printFaces(subsetFaces);
 }
 
-static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
-                                   double version)
+void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
+                            double version)
 {
   // To avoid saving correspondences bwteen nodes that are not saved (either in
   // the same file or not at all, e.g. in the partitioned case, or simply if
@@ -3426,8 +3421,8 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
   fprintf(fp, "$EndPeriodic\n");
 }
 
-static void writeMSH4GhostCells(GModel *const model, FILE *fp,
-                                int partitionToSave, bool binary)
+void writeMSH4GhostCells(GModel *const model, FILE *fp, int partitionToSave,
+                         bool binary)
 {
   std::vector<GEntity *> entities;
   model->getEntities(entities);
@@ -3494,8 +3489,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp,
   }
 }
 
-static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
-                                      bool binary)
+void writeMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 {
   std::size_t nParamE = 0, nParamF = 0;
 
@@ -3550,8 +3544,8 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
 
 // Overlap exports
 template <int dim>
-static void writeMSH4Overlaps(GModel *const model, FILE *fp,
-                              int partitionToSave, bool binary)
+void writeMSH4Overlaps(GModel *const model, FILE *fp, int partitionToSave,
+                       bool binary)
 {
   fprintf(fp, "$Overlaps%dD\n", dim);
   const auto &allOverlaps =
@@ -3600,7 +3594,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
   fprintf(fp, "$EndOverlaps%dD\n", dim);
 }
 
-template <int dim> static const auto &getInnerOverlap(GModel *const model)
+template <int dim> const auto &getInnerOverlap(GModel *const model)
 {
   if constexpr(dim == 2) { return model->getOverlapInnerBoundaries2D(); }
   else if constexpr(dim == 3) {
@@ -3611,7 +3605,7 @@ template <int dim> static const auto &getInnerOverlap(GModel *const model)
   }
 }
 
-template <int dim> static const auto &getOuterOverlap(GModel *const model)
+template <int dim> const auto &getOuterOverlap(GModel *const model)
 {
   if constexpr(dim == 2) { return model->getOverlapOfBoundaries2D(); }
   else if constexpr(dim == 3) {
@@ -3623,8 +3617,8 @@ template <int dim> static const auto &getOuterOverlap(GModel *const model)
 }
 
 template <int dim>
-static void writeMSH4OverlapBoundaries(GModel *const model, FILE *fp,
-                                       int partitionToSave, bool binary)
+void writeMSH4OverlapBoundaries(GModel *const model, FILE *fp,
+                                int partitionToSave, bool binary)
 {
   // These are regular entities, we just need to write in what container to put
   // those
@@ -3913,8 +3907,8 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
   return 1;
 }
 
-static bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag,
-                                std::vector<int> &partitions)
+bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag,
+                         std::vector<int> &partitions)
 {
   if(name[0] != '_') return false;
 

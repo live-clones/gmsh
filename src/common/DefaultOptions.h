@@ -1390,7 +1390,7 @@ StringXNumber MeshOptions_Number[] = {
     "[Deprecated]"},
   { F|O|D, "MinimumElementsPerTwoPi" , opt_mesh_lc_from_curvature, 0. ,
     "[Deprecated]" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 5.0 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
     "Minor version of the MED file format to use (-1: use minor version of the MED library)" },

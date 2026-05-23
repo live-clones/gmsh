@@ -21,7 +21,7 @@ set(SRC
     GModelVertexArrays.cpp
     GModelParametrize.cpp GModelAutoExtrude.cpp
     GModelIO_GEO.cpp GModelIO_OCC.cpp
-    GModelIO_MSH.cpp GModelIO_MSH2.cpp GModelIO_MSH3.cpp GModelIO_MSH4.cpp
+    GModelIO_MSH.cpp GModelIO_MSH2.cpp GModelIO_MSH3.cpp GModelIO_MSH4.cpp GModelIO_MSH5.cpp
     GModelIO_VTK.cpp GModelIO_CGNS.cpp GModelIO_MED.cpp GModelIO_MESH.cpp
     GModelIO_STL.cpp  GModelIO_TOCHNOG.cpp GModelIO_PLY.cpp GModelIO_VRML.cpp
     GModelIO_UNV.cpp GModelIO_BDF.cpp GModelIO_IR3.cpp GModelIO_DIFF.cpp

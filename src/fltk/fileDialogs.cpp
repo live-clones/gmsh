@@ -1156,6 +1156,8 @@ int mshFileDialog(const char *name)
                                       {"Version 2 Binary", 0, nullptr, nullptr},
                                       {"Version 4 ASCII", 0, nullptr, nullptr},
                                       {"Version 4 Binary", 0, nullptr, nullptr},
+                                      {"Version 5 ASCII", 0, nullptr, nullptr},
+                                      {"Version 5 Binary", 0, nullptr, nullptr},
                                       {nullptr}};
 
   int BBB = BB + 9; // labels too long
@@ -1203,8 +1205,10 @@ int mshFileDialog(const char *name)
     dialog->c->value(0);
   else if(opt_mesh_msh_file_version(0, GMSH_GET, 0) < 4.0)
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 2);
-  else
+  else if(opt_mesh_msh_file_version(0, GMSH_GET, 0) < 5.0)
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 3 : 4);
+  else
+    dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 5 : 6);
   dialog->b[0]->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[1]->value(opt_mesh_save_parametric(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[2]->value(opt_mesh_partition_split_mesh_files(0, GMSH_GET, 0) ? 1 :
@@ -1227,10 +1231,10 @@ int mshFileDialog(const char *name)
           0, GMSH_SET | GMSH_GUI,
           (dialog->c->value() == 0)                            ? 1.0 :
           (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 :
-                                                                 4.1);
-        opt_mesh_binary(
-          0, GMSH_SET | GMSH_GUI,
-          (dialog->c->value() == 2 || dialog->c->value() == 4) ? 1 : 0);
+          (dialog->c->value() == 3 || dialog->c->value() == 4) ? 4.1 :
+                                                                 5.0);
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI,
+                        (dialog->c->value() % 2 == 0) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
                           dialog->b[0]->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI,
