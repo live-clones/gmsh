@@ -711,12 +711,25 @@ bool GEdge::isOrphan()
   return false;
 }
 
-void GEdge::relocateMeshVertices()
+void GEdge::relocateMeshVertices(const std::vector<double> &pmin,
+                                 const std::vector<double> &pmax)
 {
+  bool rescale = (pmin.size() == 1 && pmax.size() == 1);
+  double tmin = 0, tmax = 0;
+  if(rescale) {
+    printf("rescaling parameter bounds in curve %d\n", tag());
+    Range<double> tr = parBounds(0);
+    tmin = tr.low();
+    tmax = tr.high();
+  }
+
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
     MVertex *v = mesh_vertices[i];
     double u0 = 0;
     if(v->getParameter(0, u0)) {
+      if(rescale) {
+        u0 = tmin + (tmax - tmin) * (u0 - pmin[0]) / (pmax[0] - pmin[0]);
+      }
       GPoint p = point(u0);
       v->x() = p.x();
       v->y() = p.y();
@@ -877,7 +890,7 @@ static bool recreateConsecutiveElements(GEdge *ge)
 
 static void meshCompound(GEdge *ge)
 {
-  
+
   discreteEdge *de = dynamic_cast<discreteEdge*>
     (ge->model()->getEdgeByTag(ge->tag() + 100000));
   if(de) {
@@ -924,7 +937,7 @@ void GEdge::mesh(bool verbose)
   //  WHAT IS THAT ??
   //  if(compound.size())
   //    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
-  
+
   meshGEdge mesher;
   mesher(this);
 

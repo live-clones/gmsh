@@ -2104,12 +2104,29 @@ void GFace::moveToValidRange(SPoint2 &pt) const
   }
 }
 
-void GFace::relocateMeshVertices()
+void GFace::relocateMeshVertices(const std::vector<double> &pmin,
+                                 const std::vector<double> &pmax)
 {
+  bool rescale = (pmin.size() == 2 && pmax.size() == 2);
+  double u0min = 0, u0max = 0, u1min = 0, u1max = 0;
+  if(rescale) {
+    printf("rescaling parameter bounds in surface %d\n", tag());
+    Range<double> u0r = parBounds(0);
+    Range<double> u1r = parBounds(1);
+    u0min = u0r.low();
+    u0max = u0r.high();
+    u1min = u1r.low();
+    u1max = u1r.high();
+  }
+
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
     MVertex *v = mesh_vertices[i];
     double u0 = 0., u1 = 0.;
     if(v->getParameter(0, u0) && v->getParameter(1, u1)) {
+      if(rescale) {
+        u0 = u0min + (u0max - u0min) * (u0 - pmin[0]) / (pmax[0] - pmin[0]);
+        u1 = u1min + (u1max - u1min) * (u1 - pmin[1]) / (pmax[1] - pmin[1]);
+      }
       GPoint p = point(u0, u1);
       v->x() = p.x();
       v->y() = p.y();
