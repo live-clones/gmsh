@@ -84,7 +84,7 @@
      tPi = 265,
      tMPI_Rank = 266,
      tMPI_Size = 267,
-     tEuclidian = 268,
+     tEuclidean = 268,
      tCoordinates = 269,
      tTestLevel = 270,
      tExp = 271,
@@ -338,7 +338,7 @@
 #define tPi 265
 #define tMPI_Rank 266
 #define tMPI_Size 267
-#define tEuclidian 268
+#define tEuclidean 268
 #define tCoordinates 269
 #define tTestLevel 270
 #define tExp 271
@@ -1597,7 +1597,7 @@ static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "tDOUBLE", "tSTRING", "tBIGSTR", "tEND",
   "tAFFECT", "tDOTS", "tSCOPE", "tPi", "tMPI_Rank", "tMPI_Size",
-  "tEuclidian", "tCoordinates", "tTestLevel", "tExp", "tLog", "tLog10",
+  "tEuclidean", "tCoordinates", "tTestLevel", "tExp", "tLog", "tLog10",
   "tSqrt", "tSin", "tAsin", "tCos", "tAcos", "tTan", "tRand", "tStep",
   "tAtan", "tAtan2", "tSinh", "tCosh", "tTanh", "tFabs", "tAbs", "tFloor",
   "tCeil", "tRound", "tMin", "tMax", "tFmod", "tModulo", "tHypot", "tList",

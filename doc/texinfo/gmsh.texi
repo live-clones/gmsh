@@ -1995,7 +1995,7 @@ Gmsh script files support both C and C++ style comments:
 
 @enumerate
 @item
-any text comprised between @code{/*} and @code{*/} pairs is ignored;
+any text between @code{/*} and @code{*/} pairs is ignored;
 @item
 the rest of a line after a double slash @code{//} is ignored.
 @end enumerate
@@ -2109,7 +2109,7 @@ ONELAB wiki} for more information.
 
 @cindex Expressions, lists
 
-List of expressions are also widely used, and are defined as:
+Lists of expressions are also widely used, and are defined as:
 @example
 @var{expression-list}:
   @var{expression-list-item} <, @var{expression-list-item}> @dots{}
@@ -2151,11 +2151,11 @@ with
 @end example
 
 The second case in this last definition creates a list
-containing the range of numbers comprised between two
-@w{@var{expression}s}, with a unit incrementation step. The third case
+containing the range of numbers between two
+@w{@var{expression}s}, with a unit increment. The third case
 also creates a list containing the range of numbers comprised
 between two @w{@var{expression}s}, but with a positive or negative
-incrementation step equal to the third @var{expression}. The fourth,
+increment equal to the third @var{expression}. The fourth,
 fifth and sixth cases reference an expression list
 (parentheses can also be used instead of brackets).  @code{Unique} sorts
 the entries in the list and removes all duplicates.  @code{Abs} takes
@@ -2226,7 +2226,7 @@ String expressions are defined as:
   "@var{string}" |
   @var{string} | @var{string}[ @var{expression} ] |
   Today | OnelabAction | GmshExecutableName |
-  CurrentDirectory | CurrentDir | CurrentFileName
+  CurrentDirectory | CurrentDir | CurrentFileName |
   StrPrefix ( @var{string-expression} ) |
   StrRelative ( @var{string-expression} ) |
   StrCat ( @var{string-expression} <,@dots{}> ) |
@@ -2293,7 +2293,7 @@ String expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8}, for an interesting usage of
 @w{@var{string-expression}s} in an animation script.
 
-List of string expressions are defined as:
+Lists of string expressions are defined as:
 @example
 @var{string-expression-list}:
   @var{string-expression} <,@dots{}>
@@ -2309,7 +2309,7 @@ List of string expressions are defined as:
 @cindex Expressions, color
 @cindex Colors
 
-Colors expressions are hybrids between fixed-length braced
+Color expressions are hybrids between fixed-length braced
 @w{@var{expression-list}s} and @w{@var{string}s}:
 @example
 @var{color-expression}:
@@ -2323,7 +2323,7 @@ e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
 (see @url{@value{GITLAB-PREFIX}/src/common/Colors.h,src/common/Colors.h}
 in the source code for a complete list). The second case
 defines colors by using three expressions to specify their red, green and
-blue components (with values comprised between 0 and 255). The third
+blue components (with values between 0 and 255). The third
 case defines colors by using their red, green and blue color
 components as well as their alpha channel. The last case uses
 the value of a @var{color-option} as a @var{color-expression}. The
@@ -2353,7 +2353,6 @@ See @ref{t3}, for an example of the use of color expressions.
 @findex @var{operator-unary-left}
 @findex @var{operator-unary-right}
 @findex @var{operator-binary}
-@findex @var{operator-unary-left}
 @findex @var{operator-ternary-left}
 @findex @var{operator-ternary-right}
 
@@ -2373,9 +2372,9 @@ Logical not.
 @var{operator-unary-right}:
 @ftable @code
 @item ++
-Post-incrementation.
+Post-increment.
 @item --
-Post-decrementation.
+Post-decrement.
 @end ftable
 
 @noindent
@@ -2434,9 +2433,9 @@ argument.
 
 @findex ()
 
-The evaluation priorities are summarized below@footnote{The affectation
+The evaluation priorities are summarized below@footnote{The assignment
 operators are introduced in @ref{Other general commands}.} (from stronger to
-weaker, i.e., @code{*} has a highest evaluation priority than @code{+}).
+weaker, i.e., @code{*} has a higher evaluation priority than @code{+}).
 Parentheses @code{()} may be used anywhere to change the order of
 evaluation:
 
@@ -2515,7 +2514,7 @@ the sign of the first.
 Rounds @var{expression} down to the nearest integer.
 
 @item Hypot ( @var{expression}, @var{expression} )
-Returns the square root of the sum of the square of its two arguments.
+Returns the square root of the sum of the squares of its two arguments.
 
 @item Log ( @var{expression} )
 Natural logarithm of @var{expression} (@var{expression} > 0).
@@ -2579,7 +2578,7 @@ and can contain any Gmsh command.  A synonym for @code{Macro} is
 
 @item Return
 End the body of the current user-defined macro. Macro declarations
-cannot be imbricated.
+cannot be nested.
 
 @item Call @var{string} | @var{string-expression} ;
 Execute the body of a (previously defined) macro named @var{string}.
@@ -2600,36 +2599,36 @@ available outside, too!
 @cindex Loops
 @cindex Conditionals
 
-Loops and conditionals are defined as follows, and can be imbricated:
+Loops and conditionals are defined as follows, and can be nested:
 
 @ftable @code
 @item For ( @var{expression} : @var{expression} )
 Iterate from the value of the first @var{expression} to the value of the
-second @var{expression}, with a unit incrementation step. At each
-iteration, the commands comprised between `@code{For ( @var{expression}
+second @var{expression}, with a unit increment. At each
+iteration, the commands between `@code{For ( @var{expression}
 : @var{expression} )}' and the matching @code{EndFor} are executed.
 
 @item For ( @var{expression} : @var{expression} : @var{expression} )
 Iterate from the value of the first @var{expression} to the value of the
-second @var{expression}, with a positive or negative incrementation step
+second @var{expression}, with a positive or negative increment
 equal to the third @var{expression}. At each iteration, the commands
-comprised between `@code{For ( @var{expression} : @var{expression} :
+between `@code{For ( @var{expression} : @var{expression} :
 @var{expression} )}' and the matching @code{EndFor} are executed.
 
 @item For @var{string} In @{ @var{expression} : @var{expression} @}
 Iterate from the value of the first @var{expression} to the value of the
-second @var{expression}, with a unit incrementation step. At each
-iteration, the value of the iterate is affected to an expression named
-@var{string}, and the commands comprised between `@code{For @var{string}
+second @var{expression}, with a unit increment. At each
+iteration, the value of the iterate is assigned to an expression named
+@var{string}, and the commands between `@code{For @var{string}
 In @{ @var{expression} : @var{expression} @}}' and the matching
 @code{EndFor} are executed.
 
 @item For @var{string} In @{ @var{expression} : @var{expression} : @var{expression} @}
 Iterate from the value of the first @var{expression} to the value of the
-second @var{expression}, with a positive or negative incrementation step
+second @var{expression}, with a positive or negative increment
 equal to the third @var{expression}. At each iteration, the value of the
-iterate is affected to an expression named @var{string}, and the
-commands comprised between `@code{For @var{string} In @{
+iterate is assigned to an expression named @var{string}, and the
+commands between `@code{For @var{string} In @{
 @var{expression} : @var{expression} : @var{expression} @}}' and the
 matching @code{EndFor} are executed.
 
@@ -2665,7 +2664,7 @@ End a matching @code{If} command.
 
 @cindex General commands
 @cindex Commands, general
-@cindex Expressions, affectation
+@cindex Expressions, assignment
 @cindex Expressions, identifiers
 
 @findex =
@@ -2679,7 +2678,7 @@ The following commands can be used anywhere in a Gmsh script:
 @ftable @code
 
 @item @var{string} = @var{expression};
-Create a new expression identifier @var{string}, or affects
+Create a new expression identifier @var{string}, or assign
 @var{expression} to an existing expression identifier. The following
 expression identifiers are predefined (hardcoded in Gmsh's parser):
 
@@ -2752,32 +2751,32 @@ empty list.
 
 @item @var{string}[] = @{ @var{expression-list} @};
 Create a new expression list identifier @code{@var{string}} with the
-list @var{expression-list}, or affects @var{expression-list} to an
+list @var{expression-list}, or assign @var{expression-list} to an
 existing expression list identifier. Parentheses are also allowed
 instead of square brackets; although not recommended, brackets and
-parentheses can also be completely ommitted.
+parentheses can also be completely omitted.
 
 @item @var{string} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
-Affect each item in the right hand side @var{expression-list} to the
+Assign each item in the right hand side @var{expression-list} to the
 elements (indexed by the left hand side @var{expression-list}) of an
 existing expression list identifier. The two @w{@var{expression-list}s}
 must contain the same number of items. Parentheses can also be used
 instead of brackets.
 
 @item @var{string} += @var{expression};
-Add and affect @var{expression} to an existing expression identifier.
+Add @var{expression} to an existing expression identifier.
 
 @item @var{string} -= @var{expression};
-Subtract and affect @var{expression} to an existing expression identifier.
+Subtract @var{expression} from an existing expression identifier.
 
 @item @var{string} *= @var{expression};
-Multiply and affect @var{expression} to an existing expression identifier.
+Multiply an existing expression identifier by @var{expression}.
 
 @item @var{string} /= @var{expression};
-Divide and affect @var{expression} to an existing expression identifier.
+Divide an existing expression identifier by @var{expression}.
 
 @item @var{string} += @{ @var{expression-list} @};
-Append @var{expression-list} to an existing expression list or creates a
+Append @var{expression-list} to an existing expression list or create a
 new expression list with @var{expression-list}.
 
 @item @var{string} -= @{ @var{expression-list} @};
@@ -2785,22 +2784,22 @@ Remove the items in @var{expression-list} from the existing expression
 list.
 
 @item @var{string} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
-Add and affect, item per item, the right hand side @var{expression-list}
+Add and assign, item by item, the right hand side @var{expression-list}
 to an existing expression list identifier. Parentheses can also be used
 instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] -= @{ @var{expression-list} @};
-Subtract and affect, item per item, the right hand side
+Subtract and assign, item by item, the right hand side
 @var{expression-list} to an existing expression list identifier.
 Parentheses can also be used instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] *= @{ @var{expression-list} @};
-Multiply and affect, item per item, the right hand side
+Multiply and assign, item by item, the right hand side
 @var{expression-list} to an existing expression list
 identifier. Parentheses can also be used instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] /= @{ @var{expression-list} @};
-Divide and affect, item per item, the right hand side
+Divide and assign, item by item, the right hand side
 @var{expression-list} to an existing expression list
 identifier. Parentheses can also be used instead of brackets.
 
@@ -2819,7 +2818,7 @@ also be used instead of brackets.
 
 @item DefineConstant[ @var{string} = @var{expression}|@var{string-expression} <, ...>];
 Create a new expression identifier @var{string}, with value
-@var{expression}, only if has not been defined before.
+@var{expression}, only if it has not been defined before.
 
 @item DefineConstant[ @var{string} = @{ @var{expression}|@var{string-expression}, @var{onelab-options} @} <, ...>];
 Same as the previous case, except that the variable is also exchanged
@@ -2828,31 +2827,31 @@ with the ONELAB database if it has not been defined before. See the
 ONELAB wiki} for more information.
 
 @item SetNumber( @var{string-expression} , @var{expression} );
-Set the value a numeric ONELAB variable @var{string-expression}.
+Set the value of a numeric ONELAB variable @var{string-expression}.
 
 @item SetString( @var{string-expression} , @var{string-expression} );
-Set the value a string ONELAB variable @var{string-expression}.
+Set the value of a string ONELAB variable @var{string-expression}.
 
 @item @var{number-option} = @var{expression};
-Affect @var{expression} to a real option.
+Assign @var{expression} to a real option.
 
 @item @var{string-option} = @var{string-expression};
-Affect @var{string-expression} to a string option.
+Assign @var{string-expression} to a string option.
 
 @item @var{color-option} = @var{color-expression};
-Affect @var{color-expression} to a color option.
+Assign @var{color-expression} to a color option.
 
 @item @var{number-option} += @var{expression};
-Add and affect @var{expression} to a real option.
+Add @var{expression} to a real option.
 
 @item @var{number-option} -= @var{expression};
-Subtract and affect @var{expression} to a real option.
+Subtract @var{expression} from a real option.
 
 @item @var{number-option} *= @var{expression};
-Multiply and affect @var{expression} to a real option.
+Multiply a real option by @var{expression}.
 
 @item @var{number-option} /= @var{expression};
-Divide and affect @var{expression} to a real option.
+Divide a real option by @var{expression}.
 
 @item Abort;
 Abort the current script.
@@ -2890,7 +2889,7 @@ is not absolute, @var{string-expression} is appended to the path of the
 current file. @value{SYNC}
 
 @item ShapeFromFile( @var{string-expression} );
-Merge a BREP, STEP or IGES file and returns the tags of the
+Merge a BREP, STEP or IGES file and return the tags of the
 highest-dimensional entities. Only available with the OpenCASCADE
 geometry kernel.
 
@@ -2904,7 +2903,7 @@ Split the current window horizontally, with the ratio given by @var{expression}.
 Split the current window vertically, with the ratio given by @var{expression}.
 
 @item SetCurrentWindow @var{expression};
-Set the current window by speficying its index (starting at 0) in the
+Set the current window by specifying its index (starting at 0) in the
 list of all windows. When new windows are created by splits, new windows
 are appended at the end of the list.
 
@@ -2970,7 +2969,7 @@ appended to the path of the current file. @value{SYNC}
 Suspend the execution of Gmsh during @var{expression} seconds.
 
 @item SystemCall @var{string-expression};
-Executes a (blocking) system call.
+Execute a (blocking) system call.
 
 @item NonBlockingSystemCall @var{string-expression};
 Execute a (non-blocking) system call.
@@ -3121,7 +3120,7 @@ curve if the first and last points are identical.
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Create a circle arc. If three @var{expression}s are provided on the
 right-hand-side they define the start point, the center and the end
-point of the arc; the three points should not be colinear. With the
+point of the arc; the three points should not be collinear. With the
 built-in geometry kernel the arc should be strictly smaller than
 Pi. With the OpenCASCADE kernel, if between 4 and 6 expressions are
 provided the arc is created in the X-Y plane: the first three define the
@@ -3134,7 +3133,7 @@ optional next two the start and end angle.
 Create an ellipse arc. If four @var{expression}s are provided on the
 right-hand-side they define the start point, the center point, a point
 anywhere on the major axis and the end point. If the first point is a
-major axis point, the third expression can be ommitted. With the
+major axis point, the third expression can be omitted. With the
 OpenCASCADE kernel, if between 5 and 7 expressions are provided, the
 first three define the coordinates of the center, the next two define
 the major (along the x-axis) and minor radii (along the y-axis), and the
@@ -3217,7 +3216,7 @@ loop should be composed of either three or four curves, the surface is
 constructed using transfinite interpolation, and the optional @code{In
 Sphere} argument forces the surface to be a spherical patch (the extra
 parameter gives the tag of the center of the sphere). With the
-OpenCASCADE kernel, a BSpline surface is constructucted by optimization
+OpenCASCADE kernel, a BSpline surface is constructed by optimization
 to match the bounding curves, as well as the (optional) points provided
 after @code{Using Point}.
 
@@ -3232,7 +3231,7 @@ or 4 Bezier curves can be provided. @code{Bezier Surface} is only
 available with the OpenCASCADE kernel.
 
 @item Disk ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a disk. When four expressions are provided on the right hand
+Create a disk. When four expressions are provided on the right hand
 side (3 coordinates of the center and the radius), the disk is circular.
 A fifth expression defines the radius along Y, leading to an ellipse.
 @code{Disk} is only available with the OpenCASCADE kernel.
@@ -3329,7 +3328,7 @@ with the OpenCASCADE kernel.
 
 @item Wedge ( @var{expression} ) = @{ @var{expression-list} @};
 Create a right angular wedge, defined by the 3 coordinates of the
-right-angle point and the 3 extends. An additional parameter defines the
+right-angle point and the 3 extents. An additional parameter defines the
 top X extent (zero by default). @code{Wedge} is only available with the
 OpenCASCADE kernel.
 
@@ -3410,7 +3409,7 @@ Extrude entities in @var{extrude-list} using a translation along their
 normal. Only available with the built-in geometry kernel.
 
 @item Extrude @{ @var{extrude-list} @} Using Wire @{ @var{expression-list} @}
-Extrude entities in @var{extrude-list} along the give wire. Only
+Extrude entities in @var{extrude-list} along the given wire. Only
 available with the OpenCASCADE geometry kernel.
 
 @item ThruSections @{ @var{expression-list} @}
@@ -3482,7 +3481,7 @@ options}).
 @findex @var{boolean}
 
 Boolean operations can be applied on curves, surfaces and volumes. All
-boolean operation act on two lists of elementary entities. The first
+boolean operations act on two lists of elementary entities. The first
 list represents the object; the second represents the tool. The general
 syntax for boolean operations is as follows:
 
@@ -3598,42 +3597,42 @@ Translate all elementary entities in @var{transform-list}. The
 the X, Y and Z components of the translation vector.
 
 @item Boundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Return the entities on the boundary of
+(Not a transformation per se.) Return the entities on the boundary of
 the elementary entities in @var{transform-list}. @value{SYNC}
 
 @item OrientedBoundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Same as @code{Boundary}, but returns
+(Not a transformation per se.) Same as @code{Boundary}, but returns
 entity tags with signs indicating their orientation in the boundary.
 
 @item CombinedBoundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Return the boundary of the elementary
+(Not a transformation per se.) Return the boundary of the elementary
 entities, combined as if a single entity, in
 @var{transform-list}. Useful to compute the boundary of a complex part.
 @value{SYNC}
 
 @item OrientedCombinedBoundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Same as @code{CombinedBoundary}, but
+(Not a transformation per se.) Same as @code{CombinedBoundary}, but
 returns entity tags with signs indicating their orientation in the
 boundary.
 
 @item PointsOf @{ @var{transform-list} @}
-(Not a transformation per-se.) Return all the geometrical points on the
+(Not a transformation per se.) Return all the geometrical points on the
 boundary of the elementary entities. Useful to compute the boundary of a
 complex part. @value{SYNC}
 
 @item Closest @{ @var{expression-list} @} @{ @var{transform-list} @}
-(Not a transformation per-se.) Return the entities from
+(Not a transformation per se.) Return the entities from
 @var{transform-list} ordered by their distance to the point with
 coordinates @var{expression-list}. Currently only available with the
 OpenCASCADE kernel.
 
 @item Intersect Curve @{ @var{expression-list} @} Surface @{ @var{expression} @}
-(Not a transformation per-se.) Return the intersections of the curves
+(Not a transformation per se.) Return the intersections of the curves
 given in @var{expression-list} with the specified surface. Currently
 only available with the built-in kernel.
 
 @item Split Curve @{ @var{expression} @} Point @{ @var{expression-list} @}
-(Not a transformation per-se.) Split the curve @var{expression} on the
+(Not a transformation per se.) Split the curve @var{expression} on the
 specified control points. Only available with the built-in kernel, for
 splines and BSplines. @c multi-lines are not officially supported
 @end ftable
@@ -3709,7 +3708,7 @@ Show all entities.
 Change the current (surface) geometry used by the built-in geometry kernel to a (polar) sphere, defined by the two point tags specified on the right hand side. The @var{expression} between parentheses on the left hand side specifies a new unique tag for this geometry.
 
 @item Parametric Surface ( @var{expression} ) = "@var{string}" "@var{string}" "@var{string}";
-Change the current (surface) geometry used by the built-in geometry kernel to a parametric surface defined by the three strings expression evaluating to the x, y and z coordinates. The @var{expression} between parentheses on the left hand side specifies a new unique tag for this geometry.
+Change the current (surface) geometry used by the built-in geometry kernel to a parametric surface defined by the three string expressions evaluating to the x, y and z coordinates. The @var{expression} between parentheses on the left hand side specifies a new unique tag for this geometry.
 
 @item Coordinates Surface @var{expression};
 Change the current (surface) geometry used by the built-in geometry kernel to the geometry identified by the given @var{expression}.
@@ -3765,7 +3764,7 @@ Set the option @var{string} of the @var{expression}-th field.
 @item Background Field = @var{expression};
 Select the @var{expression}-th field as the one used to compute element
 sizes. Only one background field can be given; if you want to combine
-several field, use the @code{Min} or @code{Max} field (see below).
+several fields, use the @code{Min} or @code{Max} field (see below).
 @end ftable
 
 @c .........................................................................
@@ -3836,7 +3835,7 @@ interface the inner, unmodified elements to the triangle-meshed region
 boundaries.
 
 In some rare cases, due to certain lateral boundary conditions, it may
-not be possible make a valid element subdivision with
+not be possible to make a valid element subdivision with
 @code{QuadTriNoNewVerts} without adding additional nodes. In this
 case, an internal node is created at the node-based centroid of the
 element. The element is then divided using that node. When an internal
@@ -3891,7 +3890,7 @@ no view is specified, the mesh of the boundary layer entities is created
 using a gouraud-shaded (smoothed) normal field. If a scalar view is
 specified, it locally prescribes the thickness of the layer. If a
 vector-valued view is specified it locally prescribes both the extrusion
-direction and the thickness. Specifying a boundary layer index allows to
+direction and the thickness. Specifying a boundary layer index lets you
 extrude several independent boundary layers (with independent normal
 smoothing). @code{ScaleLastLayer} scales the height of the last (top)
 layer of each normal's extrusion by the average length of the edges in
@@ -4009,8 +4008,8 @@ Optimize the current mesh with the given algorithm (currently
 for Netgen optimizer, @code{"HighOrder"} for direct high-order mesh
 optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
 @code{"HighOrderFastCurving"} for fast curving algorithm,
-@code{"UntangleTets''} for untangling tetrahedral meshes,
-@code{"UntangleTris''} for untangling xy-planar triangular meshes,
+@code{"UntangleTets"} for untangling tetrahedral meshes,
+@code{"UntangleTris"} for untangling xy-planar triangular meshes,
 @code{"Laplace2D"} for Laplace smoothing, @code{"Relocate2D"} and
 @code{"Relocate3D"} for node relocation).
 
@@ -4020,7 +4019,7 @@ Perform adaptive mesh generation. Documentation not yet available.
 @item RelocateMesh Point | Curve | Surface @{ @var{expression-list-or-all} @};
 Relocate the mesh nodes on the given entities using the parametric
 coordinates stored in the nodes. Useful for creating perturbation of
-meshes e.g. for sensitivity analyzes. @value{SYNC}
+meshes e.g. for sensitivity analyses. @value{SYNC}
 
 @item RecombineMesh;
 Recombine the current mesh into quadrangles. @value{SYNC}
@@ -4037,7 +4036,7 @@ Create partition overlaps with @var{expression} layers.
 @item Point | Curve @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Add a meshing constraint to embed the point(s) or curve(s) in the given
 surface. The surface mesh will conform to the mesh of the point(s) or
-curves(s). @value{SYNC}
+curve(s). @value{SYNC}
 
 @item Point | Curve | Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
 Add a meshing constraint to embed the point(s), curve(s) or surface(s)
@@ -4118,7 +4117,7 @@ sets an angle threshold to force splitting of the generated curves.
 Renumber the node tags in the current mesh in a continuous sequence.
 
 @item RenumberMeshElements;
-Renumber the elements tags in the current mesh in a continuous sequence.
+Renumber the element tags in the current mesh in a continuous sequence.
 
 @item CreateMeshEdges;
 Create the edges of the current mesh.
@@ -4177,7 +4176,7 @@ the moment). @value{SYNC}
 Compute a basis representation for homology spaces after a mesh has
 been generated. The first @var{expression-list} is a list of
 dimensions whose homology bases are computed; if empty, all bases are
-computed. The second @var{expression-list} is a list physical groups
+computed. The second @var{expression-list} is a list of physical groups
 that constitute the computation domain; if empty, the whole mesh is
 the domain. The third @var{expression-list} is a list of physical
 groups that constitute the relative subdomain of relative homology
@@ -4219,7 +4218,7 @@ memory. If what you really want is multiple physical copies of the data,
 just merge the file containing the post-processing view multiple times.
 
 @item AliasWithOptions View[@var{expression}];
-Create an alias of the @var{expression}-th post-processing view and copies
+Create an alias of the @var{expression}-th post-processing view and copy
 all the options of the @var{expression}-th view to the new aliased view.
 
 @item CopyOptions View[@var{expression}, @var{expression}];
@@ -4319,7 +4318,7 @@ View "@var{string}" @{
 @end group
 @end example
 
-where the 47 object @w{@var{type}s} that can be displayed are:
+where the object @w{@var{type}s} that can be displayed are:
 
 @example
                       @var{type}  #@var{coordinates}  #@var{values}
