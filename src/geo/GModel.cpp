@@ -1063,7 +1063,9 @@ int GModel::setPhysicalName(const std::string &name, int dim, int number)
       return number;
     }
     else if (findName != "") {
-      Msg::Warning("Discarding physical name '%s', tag %i of dimension %i is already assigned to '%s'.", name.c_str(), number, dim, findName.c_str());
+      Msg::Warning("Discarding physical name '%s': name '%s' already assigned "
+                   "to entity of dimension %i and tag %i", name.c_str(),
+                   findName.c_str(), dim, number);
       return number;
     }
   }
