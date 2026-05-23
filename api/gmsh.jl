@@ -2501,22 +2501,26 @@ end
 const reclassify_nodes = reclassifyNodes
 
 """
-    gmsh.model.mesh.relocateNodes(dim = -1, tag = -1)
+    gmsh.model.mesh.relocateNodes(dim = -1, tag = -1, min = Cdouble[], max = Cdouble[])
 
 Relocate the nodes classified on the entity of dimension `dim` and tag `tag`
 using their parametric coordinates. If `tag` < 0, relocate the nodes for all
 entities of dimension `dim`. If `dim` and `tag` are negative, relocate all the
-nodes in the mesh.
+nodes in the mesh. Optional `min` and `max` vectors (of length == `dim`) can be
+provided to linearly rescale each parametric coordinate in the new parameter
+range, based on the provided one.
 
 Types:
  - `dim`: integer
  - `tag`: integer
+ - `min`: vector of doubles
+ - `max`: vector of doubles
 """
-function relocateNodes(dim = -1, tag = -1)
+function relocateNodes(dim = -1, tag = -1, min = Cdouble[], max = Cdouble[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshRelocateNodes, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}),
-          dim, tag, ierr)
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, min), length(min), convert(Vector{Cdouble}, max), length(max), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
