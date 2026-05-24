@@ -14,6 +14,7 @@ set(SRC
 	polynomialBasis.cpp
 	incompleteBasis.cpp
 	pyramidalBasis.cpp
+	meanValueBasis.cpp
 	BergotBasis.cpp
 	orthogonalBasis.cpp
     bezierBasis.cpp
