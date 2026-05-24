@@ -7,6 +7,8 @@
 #include <algorithm>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
+#include "MElement.h"
+#include "MPolygon.h"
 #include "onelab.h"
 #include "Iso.h"
 #include "MEdge.h"
@@ -642,54 +644,57 @@ static void addScalarQuadrangle(PView *p, double **xyz, double **val, bool pre,
     addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], unique);
 }
 
-static void addOutlinePolygon(PView *p, double **xyz, unsigned int color,
-                              bool pre, int numNodes)
-{
-  for(int i = 0; i < numNodes / 3; i++)
-    addOutlineTriangle(p, xyz, color, pre, 3 * i, 3 * i + 1, 3 * i + 2);
-}
-
-static void addScalarPolygon(PView *p, double **xyz, double **val, bool pre,
-                             int numNodes)
+static void addOutlinePolygon(PView *p, int ient, int iele, int numNodes,
+                              double **xyz, unsigned int color, bool pre)
 {
   PViewOptions *opt = p->getOptions();
-
-  if(opt->boundary > 0) {
-    const int il[3][2] = {{0, 1}, {1, 2}, {2, 0}};
-    std::map<MEdge, int, MEdgeLessThan> edges;
-    std::vector<MVertex *> verts;
-    verts.reserve(numNodes);
-    for(int i = 0; i < numNodes; i++)
-      verts.push_back(new MVertex(xyz[i][0], xyz[i][1], xyz[i][2]));
-    for(int i = 0; i < numNodes / 3; i++) {
-      for(int j = 0; j < 3; j++) {
-        MEdge ed(verts[3 * i + il[j][0]], verts[3 * i + il[j][1]]);
-        std::map<MEdge, int, MEdgeLessThan>::iterator ite;
-        for(ite = edges.begin(); ite != edges.end(); ite++)
-          if((*ite).first == ed) break;
-        if(ite == edges.end())
-          edges[ed] = 100 * i + j;
+  PViewData *data = p->getData();
+  MPolygon *polygon =
+    static_cast<MPolygon *>(data->getElement(opt->timeStep, ient, iele));
+  SVector3 nfac = polygon->getNormal();
+  for(int i = 0; i < polygon->getNumEdgesRep(false); i++) {
+    std::array<size_t, 2> is = polygon->getEdgeRepIndices(false, i);
+    double x[2] = {xyz[is[0]][0], xyz[is[1]][0]};
+    double y[2] = {xyz[is[0]][1], xyz[is[1]][1]};
+    double z[2] = {xyz[is[0]][2], xyz[is[1]][2]};
+    SVector3 n[2] = {nfac, nfac};
+    unsigned int col[2] = {color, color};
+    if(opt->smoothNormals) {
+      for(int j = 0; j < 2; j++) {
+        if(pre)
+          p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
         else
-          edges.erase(ite);
+          p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
       }
     }
+    getLineNormal(p, x, y, z, nullptr, n, false);
+    if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
+  }
+}
 
+static void addScalarPolygon(PView *p, int ient, int iele, int numNodes,
+                             double **xyz, double **val, bool pre,
+                             bool unique = false)
+{
+  PViewOptions *opt = p->getOptions();
+  PViewData *data = p->getData();
+  MPolygon *polygon =
+    static_cast<MPolygon *>(data->getElement(opt->timeStep, ient, iele));
+
+  if(opt->boundary > 0) {
     opt->boundary--;
-    for(auto ite = edges.begin(); ite != edges.end(); ite++) {
-      int i = (int)(*ite).second / 100;
-      int j = (*ite).second % 100;
-      if(j < 3)
-        addScalarLine(p, xyz, val, pre, 3 * i + il[j][0], 3 * i + il[j][0],
-                      true);
+    for(int i = 0; i < polygon->getNumEdgesRep(false); i++) {
+      std::array<size_t, 2> is = polygon->getEdgeRepIndices(false, i);
+      addScalarLine(p, xyz, val, pre, is[0], is[1], true);
     }
     opt->boundary++;
-
-    for(int i = 0; i < numNodes; i++) delete verts[i];
     return;
   }
 
-  for(int i = 0; i < numNodes / 3; i++)
-    addScalarTriangle(p, xyz, val, pre, 3 * i, 3 * i + 1, 3 * i + 2);
+  for(int i = 0; i < polygon->getNumFacesRep(false); i++) {
+    std::array<size_t, 3> is = polygon->getFaceRepIndices(false, i);
+    addScalarTriangle(p, xyz, val, pre, is[0], is[1], is[2], unique);
+  }
 }
 
 static void addOutlineTetrahedron(PView *p, double **xyz, unsigned int color,
@@ -874,8 +879,8 @@ static void addScalarTrihedron(PView *p, double **xyz, double **val, bool pre,
   addScalarQuadrangle(p, xyz, val, pre, i0, i1, i2, i3, unique);
 }
 
-static void addOutlinePolyhedron(PView *p, double **xyz, unsigned int color,
-                                 bool pre, int numNodes)
+static void addOutlinePolyhedron(PView *p, int ient, int iele, int numNodes,
+                                 double **xyz, unsigned int color, bool pre)
 {
   // FIXME: this code is horribly slow
   const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
@@ -907,8 +912,8 @@ static void addOutlinePolyhedron(PView *p, double **xyz, unsigned int color,
   for(int i = 0; i < numNodes; i++) delete verts[i];
 }
 
-static void addScalarPolyhedron(PView *p, double **xyz, double **val, bool pre,
-                                int numNodes)
+static void addScalarPolyhedron(PView *p, int ient, int iele, int numNodes,
+                                double **xyz, double **val, bool pre)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -919,8 +924,8 @@ static void addScalarPolyhedron(PView *p, double **xyz, double **val, bool pre,
                          4 * i + 3);
 }
 
-static void addOutlineElement(PView *p, int type, double **xyz, bool pre,
-                              int numNodes)
+static void addOutlineElement(PView *p, int ient, int iele, int numNodes,
+                              int type, double **xyz, bool pre)
 {
   PViewOptions *opt = p->getOptions();
   switch(type) {
@@ -931,7 +936,7 @@ static void addOutlineElement(PView *p, int type, double **xyz, bool pre,
     addOutlineQuadrangle(p, xyz, opt->color.quadrangle, pre);
     break;
   case TYPE_POLYG:
-    addOutlinePolygon(p, xyz, opt->color.quadrangle, pre, numNodes);
+    addOutlinePolygon(p, ient, iele, numNodes, xyz, opt->color.quadrangle, pre);
     break;
   case TYPE_TET:
     addOutlineTetrahedron(p, xyz, opt->color.tetrahedron, pre);
@@ -943,26 +948,30 @@ static void addOutlineElement(PView *p, int type, double **xyz, bool pre,
   case TYPE_PYR: addOutlinePyramid(p, xyz, opt->color.pyramid, pre); break;
   case TYPE_TRIH: addOutlineTrihedron(p, xyz, opt->color.pyramid, pre); break;
   case TYPE_POLYH:
-    addOutlinePolyhedron(p, xyz, opt->color.pyramid, pre, numNodes);
+    addOutlinePolyhedron(p, ient, iele, numNodes, xyz, opt->color.pyramid, pre);
     break;
   }
 }
 
-static void addScalarElement(PView *p, int type, double **xyz, double **val,
-                             bool pre, int numNodes)
+static void addScalarElement(PView *p, int ient, int iele, int numNodes,
+                             int type, double **xyz, double **val, bool pre)
 {
   switch(type) {
   case TYPE_PNT: addScalarPoint(p, xyz, val, pre); break;
   case TYPE_LIN: addScalarLine(p, xyz, val, pre); break;
   case TYPE_TRI: addScalarTriangle(p, xyz, val, pre); break;
   case TYPE_QUA: addScalarQuadrangle(p, xyz, val, pre); break;
-  case TYPE_POLYG: addScalarPolygon(p, xyz, val, pre, numNodes); break;
+  case TYPE_POLYG:
+    addScalarPolygon(p, ient, iele, numNodes, xyz, val, pre);
+    break;
   case TYPE_TET: addScalarTetrahedron(p, xyz, val, pre); break;
   case TYPE_HEX: addScalarHexahedron(p, xyz, val, pre); break;
   case TYPE_PRI: addScalarPrism(p, xyz, val, pre); break;
   case TYPE_PYR: addScalarPyramid(p, xyz, val, pre); break;
   case TYPE_TRIH: addScalarTrihedron(p, xyz, val, pre); break;
-  case TYPE_POLYH: addScalarPolyhedron(p, xyz, val, pre, numNodes); break;
+  case TYPE_POLYH:
+    addScalarPolyhedron(p, ient, iele, numNodes, xyz, val, pre);
+    break;
   }
 }
 
@@ -987,7 +996,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     double min = opt->tmpMin, max = opt->tmpMax;
     opt->tmpMin = opt->externalMin;
     opt->tmpMax = opt->externalMax;
-    addScalarElement(p, type, xyz, val2, pre, numNodes);
+    addScalarElement(p, ient, iele, numNodes, type, xyz, val2, pre);
     opt->tmpMin = min;
     opt->tmpMax = max;
 
@@ -1134,11 +1143,10 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
 
   if(opt->tensorType == PViewOptions::VonMises) {
     for(int i = 0; i < numNodes; i++) val[i][0] = ComputeVonMises(val[i]);
-    addScalarElement(p, type, xyz, val, pre, numNodes);
+    addScalarElement(p, iEnt, iEle, numNodes, type, xyz, val, pre);
   }
   else if(opt->tensorType == PViewOptions::FrameVectors) {
     if(opt->glyphLocation == PViewOptions::Vertex) {
-
       double **vval = new double *[numNodes];
       for(int j = 0; j < numNodes; j++) vval[j] = new double[3];
 
@@ -1147,7 +1155,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
         for(int d = 0; d < 2; d++) { // for each direction
           for(int j = 0; j < numNodes; j++) { // for each node
             for(int k = 0; k < 3; k++) { // for each vector component
-              vval[j][k] = (2*d-1) * val[j][3*i+k];
+              vval[j][k] = (2 * d - 1) * val[j][3 * i + k];
             }
           }
           addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval, pre);
@@ -1209,46 +1217,46 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
   }
   else if(opt->tensorType == PViewOptions::Ellipse ||
           opt->tensorType == PViewOptions::Ellipsoid ||
-	  opt->tensorType == PViewOptions::Frame) {
+          opt->tensorType == PViewOptions::Frame) {
     if(opt->glyphLocation == PViewOptions::Vertex) {
       double vval[3][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
       for(int i = 0; i < numNodes; i++) {
-	if (opt->tensorType == PViewOptions::Frame) {
-	  SVector3 v0 (val[i][0],val[i][3],val[i][6]);
-	  SVector3 v1 (val[i][1],val[i][4],val[i][7]);
-	  SVector3 v2 (val[i][2],val[i][5],val[i][8]);
-	  S(0) = v0.norm();
-	  S(1) = v1.norm();
-	  S(2) = v2.norm();
-	  for(int k = 0; k < 3; k++) vval[k][0] = xyz[i][k];
-	  vval[0][1] = v0.x();
-	  vval[0][2] = v0.y();
-	  vval[0][3] = v0.z();
-	  vval[1][1] = v1.x();
-	  vval[1][2] = v1.y();
-	  vval[1][3] = v1.z();
-	  vval[2][1] = v2.x();
-	  vval[2][2] = v2.y();
-	  vval[2][3] = v2.z();
-	}
-	else {
-	  for(int j = 0; j < 3; j++) {
-	    tensor(j, 0) = val[i][0 + j * 3];
-	    tensor(j, 1) = val[i][1 + j * 3];
-	    tensor(j, 2) = val[i][2 + j * 3];
-	  }
-	  tensor.eig(S, imS, leftV, rightV, false);
-	  for(int k = 0; k < 3; k++) {
-	    vval[k][0] = xyz[i][k];
-	    for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
-	  }
-	}
+        if(opt->tensorType == PViewOptions::Frame) {
+          SVector3 v0(val[i][0], val[i][3], val[i][6]);
+          SVector3 v1(val[i][1], val[i][4], val[i][7]);
+          SVector3 v2(val[i][2], val[i][5], val[i][8]);
+          S(0) = v0.norm();
+          S(1) = v1.norm();
+          S(2) = v2.norm();
+          for(int k = 0; k < 3; k++) vval[k][0] = xyz[i][k];
+          vval[0][1] = v0.x();
+          vval[0][2] = v0.y();
+          vval[0][3] = v0.z();
+          vval[1][1] = v1.x();
+          vval[1][2] = v1.y();
+          vval[1][3] = v1.z();
+          vval[2][1] = v2.x();
+          vval[2][2] = v2.y();
+          vval[2][3] = v2.z();
+        }
+        else {
+          for(int j = 0; j < 3; j++) {
+            tensor(j, 0) = val[i][0 + j * 3];
+            tensor(j, 1) = val[i][1 + j * 3];
+            tensor(j, 2) = val[i][2 + j * 3];
+          }
+          tensor.eig(S, imS, leftV, rightV, false);
+          for(int k = 0; k < 3; k++) {
+            vval[k][0] = xyz[i][k];
+            for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
+          }
+        }
 
-	// double lmax = std::max(S(0), std::max(S(1), S(2)));
-	// double lmin = std::min(S(0), std::min(S(1), S(2)));
-	double det = S(0)*S(1)*S(2);
+        // double lmax = std::max(S(0), std::max(S(1), S(2)));
+        // double lmin = std::min(S(0), std::min(S(1), S(2)));
+        double det = S(0) * S(1) * S(2);
 
-	// printf("%12.5E %12.5E %12.5E \n",det,opt->tmpMin, opt->tmpMax);
+        // printf("%12.5E %12.5E %12.5E \n",det,opt->tmpMin, opt->tmpMax);
 
         unsigned int color = opt->getColor(
           det, opt->tmpMin, opt->tmpMax, false,
@@ -1317,7 +1325,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
       addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[2], pre);
     }
     else
-      addScalarElement(p, type, xyz, val, pre, numNodes);
+      addScalarElement(p, iEnt, iEle, numNodes, type, xyz, val, pre);
     for(int i = 0; i < 3; i++) {
       for(int j = 0; j < numNodes; j++) delete[] vval[i][j];
       delete[] vval[i];
@@ -1419,7 +1427,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         opt->tmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
 
       if(opt->showElement && !data->useGaussPoints())
-        addOutlineElement(p, type, xyz, preprocessNormalsOnly, numNodes);
+        addOutlineElement(p, ent, i, numNodes, type, xyz,
+                          preprocessNormalsOnly);
 
       if(opt->intervalsType != PViewOptions::Numeric) {
         if(data->useGaussPoints()) {
@@ -1433,8 +1442,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
             xyz2[0][2] = xyz[j][2];
             for(int k = 0; k < numComp; k++) val2[0][k] = val[j][k];
             if(numComp == 1 && opt->drawScalars)
-              addScalarElement(p, TYPE_PNT, xyz2, val2, preprocessNormalsOnly,
-                               numNodes);
+              addScalarElement(p, ent, i, numNodes, TYPE_PNT, xyz2, val2,
+                               preprocessNormalsOnly);
             else if(numComp == 3 && opt->drawVectors)
               addVectorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2,
                                preprocessNormalsOnly);
@@ -1446,7 +1455,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
           }
         }
         else if(numComp == 1 && opt->drawScalars)
-          addScalarElement(p, type, xyz, val, preprocessNormalsOnly, numNodes);
+          addScalarElement(p, ent, i, numNodes, type, xyz, val,
+                           preprocessNormalsOnly);
         else if(numComp == 3 && opt->drawVectors)
           addVectorElement(p, ent, i, numNodes, type, xyz, val,
                            preprocessNormalsOnly);
