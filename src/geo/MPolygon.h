@@ -10,6 +10,7 @@
 #include "MTriangle.h"
 #include "SVector3.h"
 
+#include <array>
 #include <unordered_map>
 #include <utility>
 
@@ -108,32 +109,48 @@ public:
     computeNormal();
   }
   ~MPolygon() {}
+
   int getNumSimplices() { return _tri.size() / 3; }
+  std::array<size_t, 3> getSimplexIndices(int num) const
+  {
+    return {_tri[3 * num], _tri[3 * num + 1], _tri[3 * num + 2]};
+  }
   MTriangle getSimplex(int num) const
   {
-    return MTriangle(_vertices[_tri[3 * num]], _vertices[_tri[3 * num + 1]],
-                     _vertices[_tri[3 * num + 2]]);
+    std::array<size_t, 3> is = getSimplexIndices(num);
+    return MTriangle(_vertices[is[0]], _vertices[is[1]], _vertices[is[2]]);
+  }
+  std::size_t getNumBorderVertices() const { return _border.size(); }
+  size_t getBorderVertexIndex(int num) const { return _border[num]; }
+  MVertex *getBorderVertex(int num)
+  {
+    return _vertices[getBorderVertexIndex(num)];
+  }
+  const MVertex *getBorderVertex(int num) const
+  {
+    return _vertices[getBorderVertexIndex(num)];
   }
   SVector3 getNormal() const { return _normal; }
+
   virtual int getDim() const { return 2; }
   virtual std::size_t getNumVertices() const { return _vertices.size(); }
   virtual MVertex *getVertex(int num) { return _vertices[num]; }
-  virtual const MVertex *getVertex(int num) const
-  {
-    return _vertices[_border[num]];
-  }
+  virtual const MVertex *getVertex(int num) const { return _vertices[num]; }
   virtual int getNumEdges() const { return _border.size(); }
+  std::array<size_t, 2> getEdgeIndices(int num) const
+  {
+    if(num < (int)_border.size() - 1) return {_border[num], _border[num + 1]};
+    return {_border[num], _border[0]};
+  }
   virtual MEdge getEdge(int num) const
   {
-    if(num < (int)_border.size() - 1)
-      return MEdge(_vertices[_border[num]], _vertices[_border[num + 1]]);
-    return MEdge(_vertices[_border[num]], _vertices[_border[0]]);
+    std::array<size_t, 2> is = getEdgeIndices(num);
+    return MEdge(_vertices[is[0]], _vertices[is[1]]);
   }
   virtual int getNumEdgesRep(bool curved) { return getNumEdges(); }
   std::array<size_t, 2> getEdgeRepIndices(bool curved, int num) const
   {
-    if(num < (int)_border.size() - 1) return {_border[num], _border[num + 1]};
-    return {_border[num], _border[0]};
+    return getEdgeIndices(num);
   }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n)
@@ -147,11 +164,15 @@ public:
     }
   }
   virtual int getNumFaces() { return 1; }
+  std::array<size_t, 3> getFaceIndices(int num) const
+  {
+    return {_tri[3 * num], _tri[3 * num + 1], _tri[3 * num + 2]};
+  }
   virtual MFace getFace(int num) const { return MFace(_vertices); }
   virtual int getNumFacesRep(bool curved) { return _tri.size() / 3; }
   std::array<size_t, 3> getFaceRepIndices(bool curved, int num) const
   {
-    return {_tri[3 * num], _tri[3 * num + 1], _tri[3 * num + 2]};
+    return getFaceIndices(num);
   }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n)

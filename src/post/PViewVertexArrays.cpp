@@ -9,6 +9,7 @@
 #include "GmshDefines.h"
 #include "MElement.h"
 #include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "onelab.h"
 #include "Iso.h"
 #include "MEdge.h"
@@ -691,8 +692,8 @@ static void addScalarPolygon(PView *p, int ient, int iele, int numNodes,
     return;
   }
 
-  for(int i = 0; i < polygon->getNumFacesRep(false); i++) {
-    std::array<size_t, 3> is = polygon->getFaceRepIndices(false, i);
+  for(int i = 0; i < polygon->getNumSimplices(); i++) {
+    std::array<size_t, 3> is = polygon->getSimplexIndices(i);
     addScalarTriangle(p, xyz, val, pre, is[0], is[1], is[2], unique);
   }
 }
@@ -916,12 +917,24 @@ static void addScalarPolyhedron(PView *p, int ient, int iele, int numNodes,
                                 double **xyz, double **val, bool pre)
 {
   PViewOptions *opt = p->getOptions();
+  PViewData *data = p->getData();
+  MPolyhedron *polyhedron =
+    static_cast<MPolyhedron *>(data->getElement(opt->timeStep, ient, iele));
 
-  if(opt->boundary > 0) { return; }
+  if(opt->boundary > 0) {
+    opt->boundary--;
+    for(int i = 0; i < polyhedron->getNumFacesRep(false); i++) {
+      std::array<size_t, 3> is = polyhedron->getFaceRepIndices(false, i);
+      addScalarTriangle(p, xyz, val, pre, is[0], is[1], is[2], true);
+    }
+    opt->boundary++;
+    return;
+  }
 
-  for(int i = 0; i < numNodes / 4; i++)
-    addScalarTetrahedron(p, xyz, val, pre, 4 * i, 4 * i + 1, 4 * i + 2,
-                         4 * i + 3);
+  for(int i = 0; i < polyhedron->getNumSimplices(); i++) {
+    std::array<size_t, 4> is = polyhedron->getSimplexIndices(i);
+    addScalarTetrahedron(p, xyz, val, pre, is[0], is[1], is[2], is[3]);
+  }
 }
 
 static void addOutlineElement(PView *p, int ient, int iele, int numNodes,
