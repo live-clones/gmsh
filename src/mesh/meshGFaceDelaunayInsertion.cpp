@@ -759,8 +759,8 @@ static int insertVertexB(std::list<edgeXface> &shell,
       d4 = pv.norm() / d3;
     }
 
-    if((d1 < LL * .5 || d2 < LL * .5 || d4 < LL * .01 || cosv < -.9999) &&
-       !force) {
+    if((d1 < LL * .5 || d2 < LL * .5 || d4 < LL * .4 || cosv < -.9999) &&
+       !force) { // d4 < LL * .01
       printf("%g %g %g %g (LL=%g, cosv=%g)\n", d1, d2, d3, d4, LL, cosv);
       onePointIsTooClose = true;
     }
