@@ -33,7 +33,7 @@ class GmshInteractiveClient{
     add_history("Point(2) = {5,0,0,lc};");
     add_history("Line(1) = {1,2};");
     add_history("argh");
-    
+
     while (1) {
       // read input char until CR, LF, EOF or ^D
       char *ptr = readline(prompt);
@@ -53,7 +53,7 @@ class GmshInteractiveClient{
           system(&ptr[1]);
         }
         else if(!strcmp(ptr, "argh")){
-          // test speed of string sending with a 1Mb view
+          // test speed of string sending with a 1MB view
           char *dat = new char[1200000];
           strcpy(dat, "View \"test\" {\n");
           int n = strlen(dat);
@@ -78,7 +78,7 @@ class GmshInteractiveClient{
   }
 };
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
   if(argc < 2){
     printf("usage: %s socket\n", argv[0]);

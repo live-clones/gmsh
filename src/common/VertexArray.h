@@ -218,7 +218,7 @@ public:
   // sort the arrays with elements back to front wrt the eye position
   void sort(double x, double y, double z);
   // estimate the size of the vertex array in megabytes
-  double getMemoryInMb();
+  double getMemoryInMB();
   // serialize the vertex array into a string (for sending over the
   // network)
   char *toChar(int num, const std::string &name, int type, double min,

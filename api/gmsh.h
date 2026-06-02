@@ -4212,12 +4212,12 @@ namespace gmsh { // Top-level functions
 
     // gmsh::logger::getMemory
     //
-    // Return memory usage (in Mb).
+    // Return memory usage (in MB).
     GMSH_API double getMemory();
 
     // gmsh::logger::getTotalMemory
     //
-    // Return total available memory (in Mb).
+    // Return total available memory (in MB).
     GMSH_API double getTotalMemory();
 
     // gmsh::logger::getLastError

@@ -11378,7 +11378,7 @@ class logger:
         """
         gmsh.logger.getMemory()
 
-        Return memory usage (in Mb).
+        Return memory usage (in MB).
 
         Return a double.
         """
@@ -11396,7 +11396,7 @@ class logger:
         """
         gmsh.logger.getTotalMemory()
 
-        Return total available memory (in Mb).
+        Return total available memory (in MB).
 
         Return a double.
         """

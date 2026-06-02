@@ -3707,10 +3707,10 @@ GMSH_API double gmshLoggerGetWallTime(int * ierr);
 /* Return CPU time (in s). */
 GMSH_API double gmshLoggerGetCpuTime(int * ierr);
 
-/* Return memory usage (in Mb). */
+/* Return memory usage (in MB). */
 GMSH_API double gmshLoggerGetMemory(int * ierr);
 
-/* Return total available memory (in Mb). */
+/* Return total available memory (in MB). */
 GMSH_API double gmshLoggerGetTotalMemory(int * ierr);
 
 /* Return last error message, if any. */

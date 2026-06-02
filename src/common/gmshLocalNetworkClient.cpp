@@ -454,7 +454,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 #endif
     break;
   case GmshSocket::GMSH_SPEED_TEST:
-    Msg::Info("Got %d Mb message in %g seconds", length / 1024 / 1024,
+    Msg::Info("Got %d MB message in %g seconds", length / 1024 / 1024,
               TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {

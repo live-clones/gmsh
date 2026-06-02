@@ -385,14 +385,14 @@ PView *PView::getViewByTag(int tag, int timeStep, int partition)
   return nullptr;
 }
 
-double PView::getMemoryInMb()
+double PView::getMemoryInMB()
 {
   double mem = 0;
-  if(va_points) mem += va_points->getMemoryInMb();
-  if(va_lines) mem += va_lines->getMemoryInMb();
-  if(va_triangles) mem += va_triangles->getMemoryInMb();
-  if(va_vectors) mem += va_vectors->getMemoryInMb();
-  if(va_ellipses) mem += va_ellipses->getMemoryInMb();
-  mem += getData()->getMemoryInMb();
+  if(va_points) mem += va_points->getMemoryInMB();
+  if(va_lines) mem += va_lines->getMemoryInMB();
+  if(va_triangles) mem += va_triangles->getMemoryInMB();
+  if(va_vectors) mem += va_vectors->getMemoryInMB();
+  if(va_ellipses) mem += va_ellipses->getMemoryInMB();
+  mem += getData()->getMemoryInMB();
   return mem;
 }

@@ -130,7 +130,7 @@ public:
                std::vector<double> &z, std::vector<double> &v);
   void addStep(std::vector<double> &y);
   bool isListBased() { return true; }
-  double getMemoryInMb();
+  double getMemoryInMB();
 
   // specific to list-based data sets
   void setOrder2(int type);

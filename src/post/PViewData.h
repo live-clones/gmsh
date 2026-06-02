@@ -284,8 +284,8 @@ public:
   // is the view a list-based dataset
   virtual bool isListBased() { return false; }
 
-  // get (approx) memry used by data in Mb
-  virtual double getMemoryInMb() { return 0; }
+  // get (approx) memry used by data in MB
+  virtual double getMemoryInMB() { return 0; }
 
   // get GModel (if view supports it)
   virtual GModel *getModel(int step);

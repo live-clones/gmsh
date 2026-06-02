@@ -32,7 +32,7 @@ VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   _colors.reserve(nb * 4);
 }
 
-double VertexArray::getMemoryInMb()
+double VertexArray::getMemoryInMB()
 {
   int bytes = _vertices.size() * sizeof(float) +
               _normals.size() * sizeof(normal_type) +

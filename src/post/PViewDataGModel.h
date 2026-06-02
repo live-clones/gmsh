@@ -175,7 +175,7 @@ public:
     return _gaussPoints[msh];
   }
   std::set<int> &getPartitions() { return _partitions; }
-  double getMemoryInMb()
+  double getMemoryInMB()
   {
     double b = 0.;
     for(std::size_t i = 0; i < getNumData(); i++) b += getMult(i);
@@ -254,7 +254,7 @@ public:
   int getType(int step, int ent, int ele);
   void reverseElement(int step, int ent, int ele);
   void smooth();
-  double getMemoryInMb();
+  double getMemoryInMB();
   bool combineTime(nameData &nd);
   bool skipEntity(int step, int ent);
   bool skipElement(int step, int ent, int ele, bool checkVisibility = false,

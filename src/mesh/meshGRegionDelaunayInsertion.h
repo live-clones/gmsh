@@ -37,9 +37,9 @@ class MTet4Factory;
 //   plus the data -> 20 MB
 // * sizeof(MVertex) = 44 Bytes and there are about 200000 verts per
 //   million tet -> 9MB
-// * vector of char lengths per vertex -> 1.6Mb
+// * vector of char lengths per vertex -> 1.6MB
 // * vectors in GEntities to store the element and vertex pointers
-//   -> 5Mb
+//   -> 5MB
 //
 // Grand total should thus be about 100 MB.
 

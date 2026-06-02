@@ -1597,13 +1597,13 @@ public:
     p->va_ellipses->finalize();
 
     Msg::Debug(
-      "%d vertices in vertex arrays (%g Mb)",
+      "%d vertices in vertex arrays (%g MB)",
       p->va_points->getNumVertices() + p->va_lines->getNumVertices() +
         p->va_triangles->getNumVertices() + p->va_vectors->getNumVertices() +
         p->va_ellipses->getNumVertices(),
-      p->va_points->getMemoryInMb() + p->va_lines->getMemoryInMb() +
-        p->va_triangles->getMemoryInMb() + p->va_vectors->getMemoryInMb() +
-        p->va_ellipses->getMemoryInMb());
+      p->va_points->getMemoryInMB() + p->va_lines->getMemoryInMB() +
+        p->va_triangles->getMemoryInMB() + p->va_vectors->getMemoryInMB() +
+        p->va_ellipses->getMemoryInMB());
 
     p->setChanged(false);
     return true;

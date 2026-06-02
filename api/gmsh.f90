@@ -15933,7 +15933,7 @@ module gmsh
     gmshLoggerGetCpuTime = C_API(ierr_=ierr)
   end function gmshLoggerGetCpuTime
 
-  !> Return memory usage (in Mb).
+  !> Return memory usage (in MB).
   function gmshLoggerGetMemory(ierr)
     interface
     function C_API(ierr_) &
@@ -15948,7 +15948,7 @@ module gmsh
     gmshLoggerGetMemory = C_API(ierr_=ierr)
   end function gmshLoggerGetMemory
 
-  !> Return total available memory (in Mb).
+  !> Return total available memory (in MB).
   function gmshLoggerGetTotalMemory(ierr)
     interface
     function C_API(ierr_) &

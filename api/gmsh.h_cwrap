@@ -7103,7 +7103,7 @@ namespace gmsh { // Top-level functions
 
     // gmsh::logger::getMemory
     //
-    // Return memory usage (in Mb).
+    // Return memory usage (in MB).
     inline double getMemory()
     {
       int ierr = 0;
@@ -7114,7 +7114,7 @@ namespace gmsh { // Top-level functions
 
     // gmsh::logger::getTotalMemory
     //
-    // Return total available memory (in Mb).
+    // Return total available memory (in MB).
     inline double getTotalMemory()
     {
       int ierr = 0;

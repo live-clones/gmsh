@@ -2707,10 +2707,10 @@ Return the rank of the current processor.
 Return the current CPU time (in seconds).
 
 @item Memory
-Return the current memory usage (in Mb).
+Return the current memory usage (in MB).
 
 @item TotalMemory
-Return the total memory available (in Mb).
+Return the total memory available (in MB).
 
 @item newp
 Return the next available point tag. As explained in @ref{Geometry

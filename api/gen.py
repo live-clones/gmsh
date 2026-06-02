@@ -1259,10 +1259,10 @@ logger.add('getWallTime', doc, odouble)
 doc = '''Return CPU time (in s).'''
 logger.add('getCpuTime', doc, odouble)
 
-doc = '''Return memory usage (in Mb).'''
+doc = '''Return memory usage (in MB).'''
 logger.add('getMemory', doc, odouble)
 
-doc = '''Return total available memory (in Mb).'''
+doc = '''Return total available memory (in MB).'''
 logger.add('getTotalMemory', doc, odouble)
 
 doc = '''Return last error message, if any.'''
