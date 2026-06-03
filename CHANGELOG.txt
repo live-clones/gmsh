@@ -1,13 +1,16 @@
 (Work-in-progress): added support for partition overlaps; added IO of edges and
 faces in MSH4 file format; added ability to save only local partitioned Brep in
 MSH4 files; the Extend mesh size field is now applied per entity and takes an
-element growth rate as input; Gmsh now requires C++17 and CMake 3.10, and uses
-Eigen 5.0 by default.
+element growth rate as input; new Curvature Curve|Surface parser functions; new
+Plugin(DuplicateNodes), Gmsh now requires C++17 and CMake 3.10, and uses Eigen
+5.0 by default;  fixed mangled output of wavefront obj exporter.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
-  mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent
+  mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent,
+  algorithm/refineTetrahedra
 
-* Incompatible API changes: new optional argument to mesh/optimize
+* Incompatible API changes: new optional argument to mesh/optimize and
+  mesh/relocateNodes
 
 4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
 

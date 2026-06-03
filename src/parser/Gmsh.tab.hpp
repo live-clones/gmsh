@@ -49,7 +49,7 @@
      tPi = 265,
      tMPI_Rank = 266,
      tMPI_Size = 267,
-     tEuclidian = 268,
+     tEuclidean = 268,
      tCoordinates = 269,
      tTestLevel = 270,
      tExp = 271,
@@ -303,7 +303,7 @@
 #define tPi 265
 #define tMPI_Rank 266
 #define tMPI_Size 267
-#define tEuclidian 268
+#define tEuclidean 268
 #define tCoordinates 269
 #define tTestLevel 270
 #define tExp 271

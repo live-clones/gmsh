@@ -11,10 +11,10 @@
 // dimensional ones (i.e. if points, curves or surfaces are part of the boundary
 // of volumes).
 
-// Embedding constraints allow to force a mesh to be conformal to other lower
+// Embedding constraints can force a mesh to be conformal to other lower
 // dimensional entities.
 
-// We start one again by including the first tutorial:
+// We start once again by including the first tutorial:
 Include "t1.geo";
 
 // We change the mesh size to generate coarser mesh
@@ -66,10 +66,10 @@ Surface{s} In Volume {1};
 
 // Note that with the OpenCASCADE kernel (see `t16.geo'), when the
 // `BooleanFragments' command is applied to entities of different dimensions,
-// the lower dimensional entities will be autmatically embedded in the higher
+// the lower dimensional entities will be automatically embedded in the higher
 // dimensional entities if necessary.
 
 Physical Point("Embedded point") = {p};
-Physical Curve("Embdded curve") = {l};
+Physical Curve("Embedded curve") = {l};
 Physical Surface("Embedded surface") = {s};
 Physical Volume("Volume") = {1};

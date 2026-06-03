@@ -24,7 +24,7 @@ Point(1) = {0, 0, 0, lc};
 // specify mesh sizes is to use general mesh size Fields (see `t10.geo'). A
 // particular case is the use of a background mesh (see `t7.geo').
 
-// If no target mesh size of provided, a default uniform coarse size will be
+// If no target mesh size is provided, a default uniform coarse size will be
 // used for the model, based on the overall model size.
 
 // We can then define some additional points. All points should have different
@@ -56,6 +56,12 @@ Line(4) = {4, 1};
 // a loop):
 
 Curve Loop(1) = {4, 1, -2, 3};
+
+// The sign of each curve in the loop encodes its orientation: a curve gets a
+// positive sign when its own start-to-end direction matches the direction we
+// travel around the loop, and a negative sign otherwise. Curve 2 here was
+// defined from point 3 to point 2, but the loop traverses that edge from 2 to
+// 3, hence the `-2'.
 
 // We can then define the surface as a list of curve loops (only one here,
 // representing the external contour, since there are no holes--see `t4.geo' for

@@ -104,8 +104,8 @@ public:
   void setEye(SPoint3 &p) { _eye = p; }
   //  void setDrawContext(drawContext *ctx){_ctx=ctx;}
 
-  // get (approx.) memory used by the view, in Mb
-  double getMemoryInMb();
+  // get (approx.) memory used by the view, in MB
+  double getMemoryInMB();
 
 #ifndef SWIG
   // the static list of all loaded views

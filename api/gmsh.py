@@ -503,9 +503,9 @@ class option:
         """
         gmsh.option.setColor(name, r, g, b, a=255)
 
-        Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
-        `g', `b' and `a' should be integers between 0 and 255. `name' is of the
-        form "Category.Color.Option" or "Category[num].Color.Option". Available
+        Set a color option to the RGBA value (`r', `g', `b', `a'), where `r', `g',
+        `b' and `a' should be integers between 0 and 255. `name' is of the form
+        "Category.Color.Option" or "Category[num].Color.Option". Available
         categories and options are listed in the "Gmsh options" chapter of the Gmsh
         reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
         For conciseness "Color." can be ommitted in `name'.
@@ -2891,23 +2891,31 @@ class model:
         reclassify_nodes = reclassifyNodes
 
         @staticmethod
-        def relocateNodes(dim=-1, tag=-1):
+        def relocateNodes(dim=-1, tag=-1, min=[], max=[]):
             """
-            gmsh.model.mesh.relocateNodes(dim=-1, tag=-1)
+            gmsh.model.mesh.relocateNodes(dim=-1, tag=-1, min=[], max=[])
 
             Relocate the nodes classified on the entity of dimension `dim' and tag
             `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
             for all entities of dimension `dim'. If `dim' and `tag' are negative,
-            relocate all the nodes in the mesh.
+            relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+            length == `dim') can be provided to linearly rescale each parametric
+            coordinate in the new parameter range, based on the provided one.
 
             Types:
             - `dim': integer
             - `tag': integer
+            - `min': vector of doubles
+            - `max': vector of doubles
             """
+            api_min_, api_min_n_ = _ivectordouble(min)
+            api_max_, api_max_n_ = _ivectordouble(max)
             ierr = c_int()
             lib.gmshModelMeshRelocateNodes(
                 c_int(dim),
                 c_int(tag),
+                api_min_, api_min_n_,
+                api_max_, api_max_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -4417,7 +4425,7 @@ class model:
             """
             gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags=[])
 
-            Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
+            Set a transfinite meshing constraint on the volume `tag'. `cornerTags' can
             be used to specify the (6 or 8) corners of the transfinite interpolation
             explicitly.
 
@@ -6826,7 +6834,7 @@ class model:
                 """
                 gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags=[])
 
-                Set a transfinite meshing constraint on the surface `tag' in the built-in
+                Set a transfinite meshing constraint on the volume `tag' in the built-in
                 CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
                 corners of the transfinite interpolation explicitly.
 
@@ -8043,7 +8051,7 @@ class model:
             `outDimTags' as a vector of (dim, tag) pairs. If the optional argument
             `makeRuled' is set, the surfaces created on the boundary are forced to be
             ruled surfaces. If `maxDegree' is positive, set the maximal degree of
-            resulting surface. The optional argument `continuity' allows to specify the
+            resulting surface. The optional argument `continuity' specifies the
             continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
             "CN"). The optional argument `parametrization' sets the parametrization
             type ("ChordLength", "Centripetal", "IsoParametric"). The optional argument
@@ -10201,8 +10209,8 @@ class view:
             gmsh.view.option.setColor(tag, name, r, g, b, a=255)
 
             Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
-            view with tag `tag', where where `r', `g', `b' and `a' should be integers
-            between 0 and 255.
+            view with tag `tag', where `r', `g', `b' and `a' should be integers between
+            0 and 255.
 
             Types:
             - `tag': integer
@@ -10358,6 +10366,45 @@ class algorithm:
         return (
             _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value),
             _ovectordouble(api_steiner_, api_steiner_n_.value))
+
+    @staticmethod
+    def refineTetrahedra(coord, sizeAtNode, tetraIn):
+        """
+        gmsh.algorithm.refineTetrahedra(coord, sizeAtNode, tetraIn)
+
+        Refine the list of tetrahedra given in the vector `tetraIn', using point
+        coordinates `coord' and nodal size field `sizeAtNode'. The new point
+        coordinates are returned in the `steiner' vector, and the new tetrahedra in
+        the `tetraOut' vector.
+
+        Return `steiner', `tetraOut'.
+
+        Types:
+        - `coord': vector of doubles
+        - `sizeAtNode': vector of doubles
+        - `tetraIn': vector of sizes
+        - `steiner': vector of doubles
+        - `tetraOut': vector of sizes
+        """
+        api_coord_, api_coord_n_ = _ivectordouble(coord)
+        api_sizeAtNode_, api_sizeAtNode_n_ = _ivectordouble(sizeAtNode)
+        api_tetraIn_, api_tetraIn_n_ = _ivectorsize(tetraIn)
+        api_steiner_, api_steiner_n_ = POINTER(c_double)(), c_size_t()
+        api_tetraOut_, api_tetraOut_n_ = POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlgorithmRefineTetrahedra(
+            api_coord_, api_coord_n_,
+            api_sizeAtNode_, api_sizeAtNode_n_,
+            api_tetraIn_, api_tetraIn_n_,
+            byref(api_steiner_), byref(api_steiner_n_),
+            byref(api_tetraOut_), byref(api_tetraOut_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectordouble(api_steiner_, api_steiner_n_.value),
+            _ovectorsize(api_tetraOut_, api_tetraOut_n_.value))
+    refine_tetrahedra = refineTetrahedra
 
 
 class plugin:
@@ -11331,7 +11378,7 @@ class logger:
         """
         gmsh.logger.getMemory()
 
-        Return memory usage (in Mb).
+        Return memory usage (in MB).
 
         Return a double.
         """
@@ -11349,7 +11396,7 @@ class logger:
         """
         gmsh.logger.getTotalMemory()
 
-        Return total available memory (in Mb).
+        Return total available memory (in MB).
 
         Return a double.
         """

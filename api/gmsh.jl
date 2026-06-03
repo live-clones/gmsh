@@ -269,8 +269,8 @@ const get_string = getString
 """
     gmsh.option.setColor(name, r, g, b, a = 255)
 
-Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
-`b` and `a` should be integers between 0 and 255. `name` is of the form
+Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where `r`, `g`, `b`
+and `a` should be integers between 0 and 255. `name` is of the form
 "Category.Color.Option" or "Category[num].Color.Option". Available categories
 and options are listed in the "Gmsh options" chapter of the Gmsh reference
 manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For conciseness
@@ -2501,22 +2501,26 @@ end
 const reclassify_nodes = reclassifyNodes
 
 """
-    gmsh.model.mesh.relocateNodes(dim = -1, tag = -1)
+    gmsh.model.mesh.relocateNodes(dim = -1, tag = -1, min = Cdouble[], max = Cdouble[])
 
 Relocate the nodes classified on the entity of dimension `dim` and tag `tag`
 using their parametric coordinates. If `tag` < 0, relocate the nodes for all
 entities of dimension `dim`. If `dim` and `tag` are negative, relocate all the
-nodes in the mesh.
+nodes in the mesh. Optional `min` and `max` vectors (of length == `dim`) can be
+provided to linearly rescale each parametric coordinate in the new parameter
+range, based on the provided one.
 
 Types:
  - `dim`: integer
  - `tag`: integer
+ - `min`: vector of doubles
+ - `max`: vector of doubles
 """
-function relocateNodes(dim = -1, tag = -1)
+function relocateNodes(dim = -1, tag = -1, min = Cdouble[], max = Cdouble[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshRelocateNodes, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}),
-          dim, tag, ierr)
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, min), length(min), convert(Vector{Cdouble}, max), length(max), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -3863,7 +3867,7 @@ const set_transfinite_surface = setTransfiniteSurface
 """
     gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
 
-Set a transfinite meshing constraint on the surface `tag`. `cornerTags` can be
+Set a transfinite meshing constraint on the volume `tag`. `cornerTags` can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 
@@ -6059,7 +6063,7 @@ const set_transfinite_surface = setTransfiniteSurface
 """
     gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
 
-Set a transfinite meshing constraint on the surface `tag` in the built-in CAD
+Set a transfinite meshing constraint on the volume `tag` in the built-in CAD
 kernel representation. `cornerTags` can be used to specify the (6 or 8) corners
 of the transfinite interpolation explicitly.
 
@@ -7064,10 +7068,10 @@ selected automatically. The new entities are returned in `outDimTags` as a
 vector of (dim, tag) pairs. If the optional argument `makeRuled` is set, the
 surfaces created on the boundary are forced to be ruled surfaces. If `maxDegree`
 is positive, set the maximal degree of resulting surface. The optional argument
-`continuity` allows to specify the continuity of the resulting shape ("C0",
-"G1", "C1", "G2", "C2", "C3", "CN"). The optional argument `parametrization`
-sets the parametrization type ("ChordLength", "Centripetal", "IsoParametric").
-The optional argument `smoothing` determines if smoothing is applied.
+`continuity` specifies the continuity of the resulting shape ("C0", "G1", "C1",
+"G2", "C2", "C3", "CN"). The optional argument `parametrization` sets the
+parametrization type ("ChordLength", "Centripetal", "IsoParametric"). The
+optional argument `smoothing` determines if smoothing is applied.
 
 Return `outDimTags`.
 
@@ -9036,8 +9040,8 @@ const get_string = getString
     gmsh.view.option.setColor(tag, name, r, g, b, a = 255)
 
 Set the color option `name` to the RGBA value (`r`, `g`, `b`, `a`) for the view
-with tag `tag`, where where `r`, `g`, `b` and `a` should be integers between 0
-and 255.
+with tag `tag`, where `r`, `g`, `b` and `a` should be integers between 0 and
+255.
 
 Types:
  - `tag`: integer
@@ -9178,6 +9182,39 @@ function tetrahedralize(coordinates, triangles = Csize_t[])
     steiner = unsafe_wrap(Array, api_steiner_[], api_steiner_n_[], own = true)
     return tetrahedra, steiner
 end
+
+"""
+    gmsh.algorithm.refineTetrahedra(coord, sizeAtNode, tetraIn)
+
+Refine the list of tetrahedra given in the vector `tetraIn`, using point
+coordinates `coord` and nodal size field `sizeAtNode`. The new point coordinates
+are returned in the `steiner` vector, and the new tetrahedra in the `tetraOut`
+vector.
+
+Return `steiner`, `tetraOut`.
+
+Types:
+ - `coord`: vector of doubles
+ - `sizeAtNode`: vector of doubles
+ - `tetraIn`: vector of sizes
+ - `steiner`: vector of doubles
+ - `tetraOut`: vector of sizes
+"""
+function refineTetrahedra(coord, sizeAtNode, tetraIn)
+    api_steiner_ = Ref{Ptr{Cdouble}}()
+    api_steiner_n_ = Ref{Csize_t}()
+    api_tetraOut_ = Ref{Ptr{Csize_t}}()
+    api_tetraOut_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlgorithmRefineTetrahedra, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, sizeAtNode), length(sizeAtNode), convert(Vector{Csize_t}, tetraIn), length(tetraIn), api_steiner_, api_steiner_n_, api_tetraOut_, api_tetraOut_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    steiner = unsafe_wrap(Array, api_steiner_[], api_steiner_n_[], own = true)
+    tetraOut = unsafe_wrap(Array, api_tetraOut_[], api_tetraOut_n_[], own = true)
+    return steiner, tetraOut
+end
+const refine_tetrahedra = refineTetrahedra
 
 end # end of module algorithm
 
@@ -10158,7 +10195,7 @@ const get_cpu_time = getCpuTime
 """
     gmsh.logger.getMemory()
 
-Return memory usage (in Mb).
+Return memory usage (in MB).
 
 Return a double.
 """
@@ -10175,7 +10212,7 @@ const get_memory = getMemory
 """
     gmsh.logger.getTotalMemory()
 
-Return total available memory (in Mb).
+Return total available memory (in MB).
 
 Return a double.
 """

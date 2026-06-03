@@ -124,9 +124,9 @@ GMSH_API void gmshOptionGetString(const char * name,
                                   char ** value,
                                   int * ierr);
 
-/* Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
- * `g', `b' and `a' should be integers between 0 and 255. `name' is of the
- * form "Category.Color.Option" or "Category[num].Color.Option". Available
+/* Set a color option to the RGBA value (`r', `g', `b', `a'), where `r', `g',
+ * `b' and `a' should be integers between 0 and 255. `name' is of the form
+ * "Category.Color.Option" or "Category[num].Color.Option". Available
  * categories and options are listed in the "Gmsh options" chapter of the Gmsh
  * reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
  * For conciseness "Color." can be ommitted in `name'. */
@@ -840,9 +840,13 @@ GMSH_API void gmshModelMeshReclassifyNodes(int * ierr);
 /* Relocate the nodes classified on the entity of dimension `dim' and tag
  * `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
  * for all entities of dimension `dim'. If `dim' and `tag' are negative,
- * relocate all the nodes in the mesh. */
+ * relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+ * length == `dim') can be provided to linearly rescale each parametric
+ * coordinate in the new parameter range, based on the provided one. */
 GMSH_API void gmshModelMeshRelocateNodes(const int dim,
                                          const int tag,
+                                         const double * min, const size_t min_n,
+                                         const double * max, const size_t max_n,
                                          int * ierr);
 
 /* Get the elements classified on the entity of dimension `dim' and tag `tag'.
@@ -1407,7 +1411,7 @@ GMSH_API void gmshModelMeshSetTransfiniteSurface(const int tag,
                                                  const int * cornerTags, const size_t cornerTags_n,
                                                  int * ierr);
 
-/* Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
+/* Set a transfinite meshing constraint on the volume `tag'. `cornerTags' can
  * be used to specify the (6 or 8) corners of the transfinite interpolation
  * explicitly. */
 GMSH_API void gmshModelMeshSetTransfiniteVolume(const int tag,
@@ -2197,7 +2201,7 @@ GMSH_API void gmshModelGeoMeshSetTransfiniteSurface(const int tag,
                                                     const int * cornerTags, const size_t cornerTags_n,
                                                     int * ierr);
 
-/* Set a transfinite meshing constraint on the surface `tag' in the built-in
+/* Set a transfinite meshing constraint on the volume `tag' in the built-in
  * CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
  * corners of the transfinite interpolation explicitly. */
 GMSH_API void gmshModelGeoMeshSetTransfiniteVolume(const int tag,
@@ -2667,7 +2671,7 @@ GMSH_API int gmshModelOccAddTorus(const double x,
  * `outDimTags' as a vector of (dim, tag) pairs. If the optional argument
  * `makeRuled' is set, the surfaces created on the boundary are forced to be
  * ruled surfaces. If `maxDegree' is positive, set the maximal degree of
- * resulting surface. The optional argument `continuity' allows to specify the
+ * resulting surface. The optional argument `continuity' specifies the
  * continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
  * "CN"). The optional argument `parametrization' sets the parametrization
  * type ("ChordLength", "Centripetal", "IsoParametric"). The optional argument
@@ -3399,8 +3403,8 @@ GMSH_API void gmshViewOptionGetString(const int tag,
                                       int * ierr);
 
 /* Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
- * view with tag `tag', where where `r', `g', `b' and `a' should be integers
- * between 0 and 255. */
+ * view with tag `tag', where `r', `g', `b' and `a' should be integers between
+ * 0 and 255. */
 GMSH_API void gmshViewOptionSetColor(const int tag,
                                      const char * name,
                                      const int r,
@@ -3446,6 +3450,17 @@ GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size
                                           double ** steiner, size_t * steiner_n,
                                           const size_t * triangles, const size_t triangles_n,
                                           int * ierr);
+
+/* Refine the list of tetrahedra given in the vector `tetraIn', using point
+ * coordinates `coord' and nodal size field `sizeAtNode'. The new point
+ * coordinates are returned in the `steiner' vector, and the new tetrahedra in
+ * the `tetraOut' vector. */
+GMSH_API void gmshAlgorithmRefineTetrahedra(const double * coord, const size_t coord_n,
+                                            const double * sizeAtNode, const size_t sizeAtNode_n,
+                                            const size_t * tetraIn, const size_t tetraIn_n,
+                                            double ** steiner, size_t * steiner_n,
+                                            size_t ** tetraOut, size_t * tetraOut_n,
+                                            int * ierr);
 
 /* Set the numerical option `option' to the value `value' for plugin `name'.
  * Plugins available in the official Gmsh release are listed in the "Gmsh
@@ -3692,10 +3707,10 @@ GMSH_API double gmshLoggerGetWallTime(int * ierr);
 /* Return CPU time (in s). */
 GMSH_API double gmshLoggerGetCpuTime(int * ierr);
 
-/* Return memory usage (in Mb). */
+/* Return memory usage (in MB). */
 GMSH_API double gmshLoggerGetMemory(int * ierr);
 
-/* Return total available memory (in Mb). */
+/* Return total available memory (in MB). */
 GMSH_API double gmshLoggerGetTotalMemory(int * ierr);
 
 /* Return last error message, if any. */

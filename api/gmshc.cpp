@@ -1374,11 +1374,13 @@ GMSH_API void gmshModelMeshReclassifyNodes(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshRelocateNodes(const int dim, const int tag, int * ierr)
+GMSH_API void gmshModelMeshRelocateNodes(const int dim, const int tag, const double * min, const size_t min_n, const double * max, const size_t max_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::relocateNodes(dim, tag);
+    std::vector<double> api_min_(min, min + min_n);
+    std::vector<double> api_max_(max, max + max_n);
+    gmsh::model::mesh::relocateNodes(dim, tag, api_min_, api_max_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -4699,6 +4701,24 @@ GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size
     gmsh::algorithm::tetrahedralize(api_coordinates_, api_tetrahedra_, api_steiner_, api_triangles_);
     vector2ptr(api_tetrahedra_, tetrahedra, tetrahedra_n);
     vector2ptr(api_steiner_, steiner, steiner_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshAlgorithmRefineTetrahedra(const double * coord, const size_t coord_n, const double * sizeAtNode, const size_t sizeAtNode_n, const size_t * tetraIn, const size_t tetraIn_n, double ** steiner, size_t * steiner_n, size_t ** tetraOut, size_t * tetraOut_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<double> api_sizeAtNode_(sizeAtNode, sizeAtNode + sizeAtNode_n);
+    std::vector<std::size_t> api_tetraIn_(tetraIn, tetraIn + tetraIn_n);
+    std::vector<double> api_steiner_;
+    std::vector<std::size_t> api_tetraOut_;
+    gmsh::algorithm::refineTetrahedra(api_coord_, api_sizeAtNode_, api_tetraIn_, api_steiner_, api_tetraOut_);
+    vector2ptr(api_steiner_, steiner, steiner_n);
+    vector2ptr(api_tetraOut_, tetraOut, tetraOut_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

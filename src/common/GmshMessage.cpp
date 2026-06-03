@@ -484,7 +484,7 @@ std::string Msg::PrintResources(bool printDate, bool printWallTime,
   std::string pmem = "";
   if(mem && printMem){
     char tmp[128];
-    sprintf(tmp, "Mem %gMb", (double)mem / 1024. / 1024.);
+    sprintf(tmp, "Mem %gMB", (double)mem / 1024. / 1024.);
     pmem = tmp;
   }
 

@@ -671,7 +671,7 @@ void PViewDataList::smooth()
   finalize();
 }
 
-double PViewDataList::getMemoryInMb()
+double PViewDataList::getMemoryInMB()
 {
   double b = 0.;
   b += (TimeStepMin.size() + TimeStepMax.size() + Time.size()) * sizeof(double);

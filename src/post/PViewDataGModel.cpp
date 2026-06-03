@@ -753,11 +753,11 @@ void PViewDataGModel::smooth()
   finalize();
 }
 
-double PViewDataGModel::getMemoryInMb()
+double PViewDataGModel::getMemoryInMB()
 {
   double m = 0.;
   for(std::size_t i = 0; i < _steps.size(); i++)
-    m += _steps[i]->getMemoryInMb();
+    m += _steps[i]->getMemoryInMB();
   return m;
 }
 

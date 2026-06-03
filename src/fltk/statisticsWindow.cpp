@@ -374,7 +374,7 @@ void statisticsWindow::compute(bool elementQuality)
   static char mem[256];
   std::size_t m = GetMemoryUsage();
   if(m) {
-    sprintf(mem, "Memory usage: %gMb", m / 1024. / 1024.);
+    sprintf(mem, "Memory usage: %gMB", m / 1024. / 1024.);
     memUsage->label(mem);
   }
 }

@@ -385,7 +385,9 @@ public:
   std::set<MVertex *> constr_vertices;
 
   // relocate mesh vertices using parametric coordinates
-  void relocateMeshVertices();
+  void relocateMeshVertices
+    (const std::vector<double> &pmin = std::vector<double>(),
+     const std::vector<double> &pmax = std::vector<double>());
 
   std::vector<MTriangle *> triangles;
   std::vector<MQuadrangle *> quadrangles;

@@ -251,7 +251,9 @@ public:
                       const double relax = 1, bool first = true) const;
 
   // relocate mesh vertices using parametric coordinates
-  void relocateMeshVertices();
+  void relocateMeshVertices
+    (const std::vector<double> &pmin = std::vector<double>(),
+     const std::vector<double> &pmax = std::vector<double>());
 
   struct {
     char method;

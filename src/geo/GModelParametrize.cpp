@@ -503,6 +503,9 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
   gm->destroyMeshCaches();
   gm->deleteVertexArrays();
 
+  gm->createGeometryOfDiscreteEntities();
+
+
   // we have created and deleted discrete entities; call this to reset the
   // handles in the old GEO database (without this, empty discrete entities will
   // show up at the next sync between the GEO database and the GModel).
@@ -688,6 +691,14 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   }
 #endif
   unsigned nnz = 0;
+  auto angle = [](const double a[3], const double e[3], double na, double ne) {
+    if(na <= 0. || ne <= 0.) return 0.;
+    double c = (a[0] * e[0] + a[1] * e[1] + a[2] * e[2]) / (na * ne);
+    const double eps = 1.e-8;
+    if(c < -1. + eps) c = -1. + eps;
+    if(c > 1.) c = 1.;
+    return acos(c);
+  };
   for(auto it = edges.begin(); it != edges.end(); ++it) {
     for(int ij = 0; ij < 2; ij++) {
       MVertex *v0 = it->first.getVertex(ij);
@@ -701,11 +712,11 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
       if(vLeft == v0 || vLeft == v1) vLeft = tLeft->getVertex(2);
       double e[3] = {v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z()};
       double ne = sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+      if(ne <= 0.) continue;
       double a[3] = {vLeft->x() - v0->x(), vLeft->y() - v0->y(),
                      vLeft->z() - v0->z()};
       double na = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
-      double thetaL =
-        acos((a[0] * e[0] + a[1] * e[1] + a[2] * e[2]) / (na * ne));
+      double thetaL = angle(a, e, na, ne);
       double thetaR = 0.;
       if(it->second.size() == 2) {
         MTriangle *tRight = it->second[1];
@@ -715,7 +726,7 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
         double b[3] = {vRight->x() - v0->x(), vRight->y() - v0->y(),
                        vRight->z() - v0->z()};
         double nb = sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
-        thetaR = acos((b[0] * e[0] + b[1] * e[1] + b[2] * e[2]) / (nb * ne));
+        thetaR = angle(b, e, nb, ne);
       }
       double c = (tan(.5 * thetaL) + tan(.5 * thetaR)) / ne;
       lsys->addToMatrix(index0, index1, -c);
@@ -831,17 +842,33 @@ static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
   std::vector<SPoint2> stl_nodes_uv;
   std::vector<SPoint3> stl_nodes_xyz;
   std::vector<int> stl_triangles;
+
+  const double eps = 1.e-10;
+  std::vector<double> areas(t.size());
+  double average_area = 0.;
+  for(std::size_t i = 0; i < t.size(); i++) {
+    double a = fabs(t[i]->getVolume());
+    areas[i] = a;
+    average_area += a;
+  }
+  average_area /= t.size();
+
   computeParametrization(t, nodes, stl_nodes_uv, stl_nodes_xyz, stl_triangles);
   for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+    if(i / 3 >= areas.size()) break;
+    double area3d = areas[i / 3];
+    if(area3d <= eps * average_area) continue;
     double u0 = stl_nodes_uv[stl_triangles[i + 0]].x();
     double v0 = stl_nodes_uv[stl_triangles[i + 0]].y();
     double u1 = stl_nodes_uv[stl_triangles[i + 1]].x();
     double v1 = stl_nodes_uv[stl_triangles[i + 1]].y();
     double u2 = stl_nodes_uv[stl_triangles[i + 2]].x();
     double v2 = stl_nodes_uv[stl_triangles[i + 2]].y();
-    double det = fabs((u1 - u0) * (v2 - v0) - (v1 - v0) * (u2 - u0));
-    if(det < 1.e-8) {
-      why << "parametrized triangles are too small (" << det << ")";
+    double areaUV =
+      0.5 * fabs((u1 - u0) * (v2 - v0) - (v1 - v0) * (u2 - u0));
+    if(areaUV * average_area < eps * area3d) {
+      why << "parametrized triangle is too small (area uv/area 3d = "
+          << areaUV / area3d << ", threshold = " << eps / average_area << ")";
       return 2;
     }
   }
@@ -913,7 +940,7 @@ bool makePartitionSimplyConnected(std::vector<MTriangle *> &t,
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut)
 {
-  Msg::Info("Splitting triangulations to make them parametrizable:");
+  Msg::Info("Splitting triangulations to make them parametrizable (max %d):",max_elems_per_cut);
 
   for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     int part = 0;

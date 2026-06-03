@@ -27,8 +27,12 @@ gmsh.model.add("t1")
 # gmsh.model.geo.addPoint():
 # - the first 3 arguments are the point coordinates (x, y, z)
 # - the next (optional) argument is the target mesh size close to the point
-# - the last (optional) argument is the point tag (a stricly positive integer
+# - the last (optional) argument is the point tag (a strictly positive integer
 #   that uniquely identifies the point)
+#
+# Note the ordering contrast with the `.geo' scripting syntax, where the tag
+# comes first (`Point(1) = {x, y, z, lc}'): in the API it is the trailing
+# argument.
 lc = 1e-2
 gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
 
@@ -42,7 +46,7 @@ gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
 # sizes is to use general mesh size Fields (see `t10.py'). A particular case is
 # the use of a background mesh (see `t7.py').
 #
-# If no target mesh size of provided, a default uniform coarse size will be used
+# If no target mesh size is provided, a default uniform coarse size will be used
 # for the model, based on the overall model size.
 #
 # We can then define some additional points. All points should have different
@@ -54,7 +58,7 @@ gmsh.model.geo.addPoint(.1, .3, 0, lc, 3)
 # returned by the function:
 p4 = gmsh.model.geo.addPoint(0, .3, 0, lc)
 
-# Curves are Gmsh's second type of elementery entities, and, amongst curves,
+# Curves are Gmsh's second type of elementary entities, and, amongst curves,
 # straight lines are the simplest. The API to create straight line segments with
 # the built-in kernel follows the same conventions: the first 2 arguments are
 # point tags (the start and end points of the line), and the last (optional one)
@@ -66,6 +70,9 @@ p4 = gmsh.model.geo.addPoint(0, .3, 0, lc)
 # Note that curve tags are separate from point tags - hence we can reuse tag `1'
 # for our first curve. And as a general rule, elementary entity tags in Gmsh
 # have to be unique per geometrical dimension.
+#
+# See the extended tutorial `x1.py' for a fuller description of this entity,
+# element and node data model.
 gmsh.model.geo.addLine(1, 2, 1)
 gmsh.model.geo.addLine(3, 2, 2)
 gmsh.model.geo.addLine(3, p4, 3)
@@ -79,6 +86,12 @@ gmsh.model.geo.addLine(4, 1, p4)
 # of integers as first argument, and the curve loop tag (which must be unique
 # amongst curve loops) as the second (optional) argument:
 gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
+
+# The sign of each curve in the loop encodes its orientation: a curve gets a
+# positive sign when its own start-to-end direction matches the direction we
+# travel around the loop, and a negative sign otherwise. Curve 2 here was
+# defined from point 3 to point 2, but the loop traverses that edge from 2 to 3,
+# hence the `-2'.
 
 # We can then define the surface as a list of curve loops (only one here,
 # representing the external contour, since there are no holes--see `t4.py' for
@@ -105,7 +118,7 @@ gmsh.model.geo.synchronize()
 # groups are defined, Gmsh will export in output files only mesh elements that
 # belong to at least one physical group. (To force Gmsh to save all elements,
 # whether they belong to physical groups or not, set the `Mesh.SaveAll' option
-# to 1.) Physical groups are also identified by tags, i.e. stricly positive
+# to 1.) Physical groups are also identified by tags, i.e. strictly positive
 # integers, that should be unique per dimension (0D, 1D, 2D or 3D). Physical
 # groups can also be given names.
 #
