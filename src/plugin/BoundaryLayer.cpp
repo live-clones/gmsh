@@ -119,7 +119,7 @@ inline double tet_volume(const std::array<double, 3> &a,
     s--a---x(t(0))---x(t(1))--...--x(t(n-2))-----x(t(n-1))---e
 */
 
-const int _debugBL3D = 0;
+const int _debugBL3D = 1;
 
 static void getEmbeddedStructure(GModel *m,
                                  std::map<GVertex *, std::vector<GFace *>> &v2f,
@@ -130,26 +130,365 @@ static void getEmbeddedStructure(GModel *m,
   for(GModel::fiter fit = m->firstFace(); fit != m->lastFace(); ++fit) {
     auto ee = (*fit)->embeddedEdges();
     for(auto ge : ee) {
+      if(_debugBL3D)
+        printf(" --EMP  getEmbeddedStructure: Edge %d embedded in Face %d\n",
+               ge->tag(), (*fit)->tag());
       v2f[ge->getBeginVertex()].push_back(*fit);
       v2f[ge->getEndVertex()].push_back(*fit);
       e2f[ge].push_back(*fit);
+      if(_debugBL3D)
+        printf(" --EMP  getEmbeddedStructure: endpoints %d/%d embedded in "
+               "Face %d\n",
+               ge->getBeginVertex()->tag(), ge->getEndVertex()->tag(),
+               (*fit)->tag());
     }
   }
   for(GModel::riter rit = m->firstRegion(); rit != m->lastRegion(); ++rit) {
     auto ef = (*rit)->embeddedFaces();
     for(auto gf : ef) {
+      if(_debugBL3D)
+        printf(" --EMP  getEmbeddedStructure: Face %d embedded in Region %d\n",
+               gf->tag(), (*rit)->tag());
       f2r[gf].push_back(*rit);
       auto ee = (gf)->embeddedEdges();
       for(auto ge : ee) {
-        if(e2f.find(ge) == e2f.end()) e2r[ge].push_back(*rit);
+        if(e2f.find(ge) == e2f.end()) {
+          if(_debugBL3D)
+            printf(" --EMP  getEmbeddedStructure: embedded Edge %d from Face "
+                   "%d embedded in Region %d\n",
+                   ge->tag(), gf->tag(), (*rit)->tag());
+          e2r[ge].push_back(*rit);
+        }
       }
       auto e = (gf)->edges();
       for(auto ge : e) {
-        if(e2f.find(ge) == e2f.end()) e2r[ge].push_back(*rit);
+        if(e2f.find(ge) == e2f.end()) {
+          if(_debugBL3D)
+            printf(" --EMP  getEmbeddedStructure: boundary Edge %d of Face %d "
+                   "embedded in Region %d\n",
+                   ge->tag(), gf->tag(), (*rit)->tag());
+          e2r[ge].push_back(*rit);
+        }
+      }
+    }
+  }
+  if(_debugBL3D)
+    printf(" --EMP  getEmbeddedStructure: summary %zu vertices-in-faces, %zu "
+           "edges-in-faces, %zu edges-in-regions, %zu faces-in-regions\n",
+           v2f.size(), e2f.size(), e2r.size(), f2r.size());
+}
+
+namespace {
+
+// side[0] and side[1] store the elements adjacent to an embedded mesh vertex
+// with matching and opposite local orientation, respectively.
+struct EmbeddedElementSides {
+  std::vector<MElement *> side[2];
+};
+
+struct EmbeddedElementSideData {
+  std::map<std::pair<GEdge *, GFace *>,
+           std::map<MVertex *, EmbeddedElementSides>>
+    curvesInFaces;
+  std::map<std::pair<GFace *, GRegion *>,
+           std::map<MVertex *, EmbeddedElementSides>>
+    facesInRegions;
+};
+
+struct EmbeddedVertexSpawns {
+  MVertex *side[2] = {nullptr, nullptr};
+};
+
+struct EmbeddedCurveFaceSpawns {
+  std::map<std::pair<GEdge *, GFace *>,
+           std::map<MVertex *, EmbeddedVertexSpawns>>
+    curvesInFaces;
+  std::map<std::pair<GFace *, GRegion *>,
+           std::map<MVertex *, EmbeddedVertexSpawns>>
+    facesInRegions;
+};
+
+static void addEmbeddedSideElement(EmbeddedElementSides &sides, int side,
+                                   MElement *element)
+{
+  std::vector<MElement *> &elements = sides.side[side];
+  if(std::find(elements.begin(), elements.end(), element) == elements.end())
+    elements.push_back(element);
+}
+
+static void addEmbeddedSideElement(
+  std::map<MVertex *, EmbeddedElementSides> &vertexSides, MVertex *vertex,
+  int side, MElement *element)
+{
+  addEmbeddedSideElement(vertexSides[vertex], side, element);
+}
+
+static bool vectorContainsElement(const std::vector<MElement *> &elements,
+                                  MElement *element)
+{
+  return std::find(elements.begin(), elements.end(), element) != elements.end();
+}
+
+static bool embeddedSidesContainElement(const EmbeddedElementSides &sides,
+                                        MElement *element)
+{
+  return vectorContainsElement(sides.side[0], element) ||
+         vectorContainsElement(sides.side[1], element);
+}
+
+static bool elementHasVertex(MElement *element, MVertex *vertex)
+{
+  for(std::size_t i = 0; i < element->getNumVertices(); i++)
+    if(element->getVertex(i) == vertex) return true;
+  return false;
+}
+
+static double elementSideInFace(GFace *gf, MLine *line, MElement *element)
+{
+  SPoint2 p0, p1;
+  if(!reparamMeshVertexOnFace(line->getVertex(0), gf, p0) ||
+     !reparamMeshVertexOnFace(line->getVertex(1), gf, p1))
+    return 0.;
+  SPoint3 b = element->barycenter(true);
+  SPoint2 pb = gf->parFromPoint(b, false);
+  return (p1.x() - p0.x()) * (pb.y() - p0.y()) -
+         (p1.y() - p0.y()) * (pb.x() - p0.x());
+}
+
+static bool classifyElementFromEmbeddedLine(
+  GFace *gf, MLine *line, const EmbeddedElementSides &lineVertexSides,
+  MElement *element, int &side)
+{
+  for(int knownSide = 0; knownSide < 2; knownSide++) {
+    if(lineVertexSides.side[knownSide].empty()) continue;
+    double known = elementSideInFace(gf, line, lineVertexSides.side[knownSide][0]);
+    double current = elementSideInFace(gf, line, element);
+    if(std::abs(known) < 1.e-12 || std::abs(current) < 1.e-12) continue;
+    side = (known * current > 0.) ? knownSide : 1 - knownSide;
+    return true;
+  }
+  return false;
+}
+
+static MFaceVertex *createMFaceVertex(MVertex *v, GFace *gf)
+{
+  SPoint2 param;
+  if(!reparamMeshVertexOnFace(v, gf, param)) return nullptr;
+  MFaceVertex *newv =
+    new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
+  gf->mesh_vertices.push_back(newv);
+  return newv;
+}
+
+static MVertex *createMRegionVertex(MVertex *v, GRegion *gr)
+{
+  MVertex *newv = new MVertex(v->x(), v->y(), v->z(), gr);
+  gr->mesh_vertices.push_back(newv);
+  return newv;
+}
+
+static void replaceEmbeddedCurveFaceVertices(
+  GFace *gf, const std::map<MVertex *, EmbeddedElementSides> &vertexSides,
+  const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns)
+{
+  std::size_t numElements = gf->getNumMeshElements();
+  for(std::size_t i = 0; i < numElements; i++) {
+    MElement *element = gf->getMeshElement(i);
+    if(element->getDim() != 2) continue;
+
+    int elementSide = -1;
+    for(auto v2s : vertexSides) {
+      for(int side = 0; side < 2; side++) {
+        if(vectorContainsElement(v2s.second.side[side], element)) {
+          elementSide = side;
+          break;
+        }
+      }
+      if(elementSide >= 0) break;
+    }
+    if(elementSide < 0) continue;
+
+    std::vector<MVertex *> oldVertices;
+    oldVertices.reserve(element->getNumVertices());
+    for(std::size_t j = 0; j < element->getNumVertices(); j++)
+      oldVertices.push_back(element->getVertex(j));
+
+    for(std::size_t j = 0; j < oldVertices.size(); j++) {
+      auto itSpawns = vertexSpawns.find(oldVertices[j]);
+      if(itSpawns == vertexSpawns.end()) continue;
+      MVertex *newv = itSpawns->second.side[elementSide];
+      if(newv) element->setVertex(j, newv);
+    }
+  }
+}
+
+static void replaceEmbeddedFaceRegionVertices(
+  GRegion *gr, const std::map<MVertex *, EmbeddedElementSides> &vertexSides,
+  const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns)
+{
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement *element = gr->getMeshElement(i);
+    if(element->getDim() != 3) continue;
+    for(std::size_t j = 0; j < element->getNumVertices(); j++) {
+      auto itSpawns = vertexSpawns.find(element->getVertex(j));
+      if(itSpawns == vertexSpawns.end()) continue;
+      auto itSides = vertexSides.find(itSpawns->first);
+      if(itSides == vertexSides.end()) continue;
+      for(int side = 0; side < 2; side++) {
+        if(!itSpawns->second.side[side]) continue;
+        if(vectorContainsElement(itSides->second.side[side], element)) {
+          element->setVertex(j, itSpawns->second.side[side]);
+          break;
+        }
       }
     }
   }
 }
+
+static MEdge findElementEdge(MElement *element, MVertex *v0, MVertex *v1)
+{
+  MEdge edge(v0, v1);
+  for(int i = 0; i < element->getNumEdges(); i++) {
+    MEdge elementEdge = element->getEdge(i);
+    if(elementEdge == edge) return elementEdge;
+  }
+  return MEdge();
+}
+
+static MEdge findSideElementEdge(
+  const std::map<MVertex *, EmbeddedElementSides> &vertexSides, MVertex *v0,
+  MVertex *v1, MVertex *sv0, MVertex *sv1, int side)
+{
+  auto it = vertexSides.find(v0);
+  if(it == vertexSides.end()) it = vertexSides.find(v1);
+  if(it == vertexSides.end()) return MEdge();
+  for(auto element : it->second.side[side]) {
+    MEdge edge = findElementEdge(element, sv0, sv1);
+    if(edge.getVertex(0)) return edge;
+  }
+  return MEdge();
+}
+
+static void addEmbeddedCurveFaceQuadrangle(
+  GFace *gf, MLine *line, MVertex *sv0, MVertex *sv1,
+  const MEdge &sideEdge, double thickness,
+  std::map<MElement *, double> &layers)
+{
+  if(sideEdge.getVertex(0) == sv0)
+    gf->quadrangles.push_back(
+      new MQuadrangle(line->getVertex(0), line->getVertex(1), sv1, sv0));
+  else
+    gf->quadrangles.push_back(
+      new MQuadrangle(line->getVertex(1), line->getVertex(0), sv0, sv1));
+  layers[gf->quadrangles.back()] = thickness;
+}
+
+static void addEmbeddedFaceRegionElement(
+  GRegion *gr, MElement *embeddedElement,
+  const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns, int side,
+  double thickness, std::map<MElement *, double> &layers)
+{
+  int type = embeddedElement->getTypeForMSH();
+  if(type != MSH_TRI_3 && type != MSH_QUA_4) return;
+
+  std::size_t n = (type == MSH_TRI_3) ? 3 : 4;
+  MVertex *vs[4] = {nullptr, nullptr, nullptr, nullptr};
+  MVertex *bs[4] = {nullptr, nullptr, nullptr, nullptr};
+  for(std::size_t i = 0; i < n; i++) {
+    vs[i] = embeddedElement->getVertex(i);
+    auto it = vertexSpawns.find(vs[i]);
+    if(it == vertexSpawns.end()) return;
+    bs[i] = it->second.side[side];
+    if(!bs[i]) return;
+  }
+
+  if(type == MSH_TRI_3) {
+    gr->prisms.push_back(new MPrism(vs[0], vs[1], vs[2], bs[0], bs[1], bs[2]));
+    layers[gr->prisms.back()] = thickness;
+  }
+  else {
+    gr->hexahedra.push_back(new MHexahedron(vs[0], vs[1], vs[2], vs[3], bs[0],
+                                            bs[1], bs[2], bs[3]));
+    layers[gr->hexahedra.back()] = thickness;
+  }
+}
+
+static void buildEmbeddedElementSideData(
+  const std::map<GEdge *, std::vector<GFace *>> &edgesEmbeddedInFaces,
+  const std::map<GFace *, std::vector<GRegion *>> &facesEmbeddedInRegions,
+  EmbeddedElementSideData &data)
+{
+  for(auto e2f : edgesEmbeddedInFaces) {
+    GEdge *ge = e2f.first;
+    for(auto gf : e2f.second) {
+      std::map<MVertex *, EmbeddedElementSides> &vertexSides =
+        data.curvesInFaces[std::make_pair(ge, gf)];
+      for(auto line : ge->lines) {
+        MEdge embeddedEdge(line->getVertex(0), line->getVertex(1));
+        for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+          MElement *element = gf->getMeshElement(i);
+          if(element->getDim() != 2) continue;
+          for(int j = 0; j < element->getNumEdges(); j++) {
+            MEdge elementEdge = element->getEdge(j);
+            if(elementEdge != embeddedEdge) continue;
+            int side = (elementEdge.getVertex(0) == embeddedEdge.getVertex(0)) ?
+                         0 :
+                         1;
+            addEmbeddedSideElement(vertexSides, embeddedEdge.getVertex(0), side,
+                                   element);
+            addEmbeddedSideElement(vertexSides, embeddedEdge.getVertex(1), side,
+                                   element);
+          }
+        }
+      }
+      for(auto line : ge->lines) {
+        for(int iVertex = 0; iVertex < 2; iVertex++) {
+          MVertex *embeddedVertex = line->getVertex(iVertex);
+          EmbeddedElementSides &sides = vertexSides[embeddedVertex];
+          for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+            MElement *element = gf->getMeshElement(i);
+            if(element->getDim() != 2) continue;
+            if(!elementHasVertex(element, embeddedVertex)) continue;
+            if(embeddedSidesContainElement(sides, element)) continue;
+            int side = -1;
+            if(classifyElementFromEmbeddedLine(gf, line, sides, element, side))
+              addEmbeddedSideElement(sides, side, element);
+          }
+        }
+      }
+    }
+  }
+
+  for(auto f2r : facesEmbeddedInRegions) {
+    GFace *gf = f2r.first;
+    for(auto gr : f2r.second) {
+      std::map<MVertex *, EmbeddedElementSides> &vertexSides =
+        data.facesInRegions[std::make_pair(gf, gr)];
+      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+        MElement *embeddedElement = gf->getMeshElement(i);
+        if(embeddedElement->getDim() != 2) continue;
+        MFace embeddedFace = embeddedElement->getFace(0);
+        for(std::size_t j = 0; j < gr->getNumMeshElements(); j++) {
+          MElement *element = gr->getMeshElement(j);
+          if(element->getDim() != 3) continue;
+          for(int k = 0; k < element->getNumFaces(); k++) {
+            if(element->getFace(k) != embeddedFace) continue;
+            int ithFace = 0, sign = 0, rot = 0;
+            if(element->getFaceInfo(embeddedFace, ithFace, sign, rot)) {
+              int side = sign > 0 ? 0 : 1;
+              for(std::size_t l = 0; l < embeddedElement->getNumVertices(); l++)
+                addEmbeddedSideElement(vertexSides,
+                                       embeddedElement->getVertex(l), side,
+                                       element);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+} // namespace
 
 static void
 replaceFaces(GModel *gm,
@@ -505,6 +844,27 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
                        edgesEmbeddedInFaces, edgesEmbeddedInRegions,
                        facesEmbeddedInRegions);
 
+  EmbeddedElementSideData embeddedElementSideData;
+  buildEmbeddedElementSideData(edgesEmbeddedInFaces, facesEmbeddedInRegions,
+                               embeddedElementSideData);
+  EmbeddedCurveFaceSpawns embeddedCurveFaceSpawns;
+  if(_debugBL3D) {
+    for(auto c2f : embeddedElementSideData.curvesInFaces)
+      for(auto v2s : c2f.second)
+        printf(" --EMP  Edge %d embedded in Face %d, vertex %zu: %zu/%zu "
+               "elements\n",
+               c2f.first.first->tag(), c2f.first.second->tag(),
+               v2s.first->getNum(), v2s.second.side[0].size(),
+               v2s.second.side[1].size());
+    for(auto f2r : embeddedElementSideData.facesInRegions)
+      for(auto v2s : f2r.second)
+        printf(" --EMP  Face %d embedded in Region %d, vertex %zu: %zu/%zu "
+               "elements\n",
+               f2r.first.first->tag(), f2r.first.second->tag(),
+               v2s.first->getNum(), v2s.second.side[0].size(),
+               v2s.second.side[1].size());
+  }
+
   for(auto v2f : verticesEmbeddedInFacesAsCurveEndpoints) {
     for(auto gf : v2f.second) {
       if(_debugBL3D)
@@ -522,21 +882,57 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
   }
 
   for(auto e2f : edgesEmbeddedInFaces) {
+    GEdge *emb = e2f.first;
     for(auto gf : e2f.second) {
       if(_debugBL3D)
-        printf(" --EMP  Edge %d embedded in Face %d\n", e2f.first->tag(),
-               gf->tag());
-      for(auto v : e2f.first->mesh_vertices) {
-        SPoint2 param;
-        if(reparamMeshVertexOnFace(v, gf, param)) {
-          for(size_t kk = 0; kk < 2; kk++) {
-            MFaceVertex *newv =
-              new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
-            gf->mesh_vertices.push_back(newv);
+        printf(" --EMP  Edge %d embedded in Face %d\n", emb->tag(), gf->tag());
+
+      std::pair<GEdge *, GFace *> key = std::make_pair(emb, gf);
+      std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns =
+        embeddedCurveFaceSpawns.curvesInFaces[key];
+      const std::map<MVertex *, EmbeddedElementSides> &vertexSides =
+        embeddedElementSideData.curvesInFaces[key];
+
+      MVertex *begin = emb->getBeginVertex()->mesh_vertices.empty() ?
+                         nullptr :
+                         emb->getBeginVertex()->mesh_vertices[0];
+      MVertex *end = emb->getEndVertex()->mesh_vertices.empty() ?
+                       nullptr :
+                       emb->getEndVertex()->mesh_vertices[0];
+      MVertex *endPoints[2] = {begin, end};
+      for(int i = 0; i < 2; i++) {
+        MVertex *v = endPoints[i];
+        if(!v) continue;
+        MVertex *newv = nullptr;
+        auto it = spawned.find(v);
+        if(it != spawned.end()) {
+          for(auto sp : it->second) {
+            if(sp->onWhat() == gf) {
+              newv = sp;
+              break;
+            }
+          }
+        }
+        if(!newv) {
+          newv = createMFaceVertex(v, gf);
+          if(newv) spawned[v].push_back(newv);
+        }
+        vertexSpawns[v].side[0] = newv;
+        vertexSpawns[v].side[1] = newv;
+      }
+
+      for(auto v : emb->mesh_vertices) {
+        for(int side = 0; side < 2; side++) {
+          MFaceVertex *newv = createMFaceVertex(v, gf);
+          if(newv) {
             spawned[v].push_back(newv);
+            vertexSpawns[v].side[side] = newv;
           }
         }
       }
+
+      replaceEmbeddedCurveFaceVertices(gf, vertexSides, vertexSpawns);
+
     }
   }
 
@@ -554,17 +950,70 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
   }
 
   for(auto f2r : facesEmbeddedInRegions) {
+    GFace *embeddedFace = f2r.first;
     for(auto gr : f2r.second) {
       if(_debugBL3D)
-        printf(" --EMP  Face %d embedded in Region %d\n", f2r.first->tag(),
+        printf(" --EMP  Face %d embedded in Region %d\n", embeddedFace->tag(),
                gr->tag());
-      for(auto v : f2r.first->mesh_vertices) {
-        for(size_t kk = 0; kk < 2; kk++) {
-          MVertex *newv = new MVertex(v->x(), v->y(), v->z(), gr);
-          gr->mesh_vertices.push_back(newv);
-          spawned[v].push_back(newv);
+
+      std::pair<GFace *, GRegion *> key = std::make_pair(embeddedFace, gr);
+      std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns =
+        embeddedCurveFaceSpawns.facesInRegions[key];
+      const std::map<MVertex *, EmbeddedElementSides> &vertexSides =
+        embeddedElementSideData.facesInRegions[key];
+
+      auto embeddedEdges = embeddedFace->edges();
+      for(auto ge : embeddedEdges) {
+        for(auto v : ge->mesh_vertices) {
+          MVertex *newv = nullptr;
+          auto it = spawned.find(v);
+          if(it != spawned.end()) {
+            for(auto sp : it->second) {
+              if(sp->onWhat() == gr) {
+                newv = sp;
+                break;
+              }
+            }
+          }
+          if(!newv) {
+            newv = createMRegionVertex(v, gr);
+            spawned[v].push_back(newv);
+          }
+          vertexSpawns[v].side[0] = newv;
+          vertexSpawns[v].side[1] = newv;
         }
       }
+
+      auto embeddedVertices = embeddedFace->vertices();
+      for(auto gv : embeddedVertices) {
+        if(gv->mesh_vertices.empty()) continue;
+        MVertex *v = gv->mesh_vertices[0];
+        MVertex *newv = nullptr;
+        auto it = spawned.find(v);
+        if(it != spawned.end()) {
+          for(auto sp : it->second) {
+            if(sp->onWhat() == gr) {
+              newv = sp;
+              break;
+            }
+          }
+        }
+        if(!newv) {
+          newv = createMRegionVertex(v, gr);
+          spawned[v].push_back(newv);
+        }
+        vertexSpawns[v].side[0] = newv;
+        vertexSpawns[v].side[1] = newv;
+      }
+
+      for(auto v : embeddedFace->mesh_vertices) {
+        for(int side = 0; side < 2; side++) {
+          MVertex *newv = createMRegionVertex(v, gr);
+          vertexSpawns[v].side[side] = newv;
+        }
+      }
+
+      replaceEmbeddedFaceRegionVertices(gr, vertexSides, vertexSpawns);
     }
   }
 
@@ -587,6 +1036,22 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
     }
   }
 
+  for(auto f2r : facesEmbeddedInRegions) {
+    GFace *embeddedFace = f2r.first;
+    for(auto gr : f2r.second) {
+      std::pair<GFace *, GRegion *> key = std::make_pair(embeddedFace, gr);
+      const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns =
+        embeddedCurveFaceSpawns.facesInRegions[key];
+      for(std::size_t i = 0; i < embeddedFace->getNumMeshElements(); i++) {
+        MElement *element = embeddedFace->getMeshElement(i);
+        if(element->getDim() != 2) continue;
+        for(int side = 0; side < 2; side++)
+          addEmbeddedFaceRegionElement(gr, element, vertexSpawns, side,
+                                       thickness, layers);
+      }
+    }
+  }
+
   std::set<GFace *> surfacesAdjacentToVolumesForBoundaryLayer;
   for(auto gr : inVolumes) {
     auto fs = gr->faces();
@@ -603,6 +1068,44 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           if(v->onWhat() == gf || v->onWhat()->dim() == 1) {
             e->setVertex(j, v);
           }
+        }
+      }
+    }
+  }
+
+  for(auto e2f : edgesEmbeddedInFaces) {
+    GEdge *emb = e2f.first;
+    for(auto gf : e2f.second) {
+      std::pair<GEdge *, GFace *> key = std::make_pair(emb, gf);
+      const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns =
+        embeddedCurveFaceSpawns.curvesInFaces[key];
+      const std::map<MVertex *, EmbeddedElementSides> &vertexSides =
+        embeddedElementSideData.curvesInFaces[key];
+      for(auto line : emb->lines) {
+        MVertex *v0 = line->getVertex(0);
+        MVertex *v1 = line->getVertex(1);
+        auto it0 = vertexSpawns.find(v0);
+        auto it1 = vertexSpawns.find(v1);
+        if(it0 == vertexSpawns.end() || it1 == vertexSpawns.end()) {
+          Msg::Warning("Could not find embedded boundary layer node for "
+                       "node(s) %zu and/or %zu",
+                       v0->getNum(), v1->getNum());
+          continue;
+        }
+        for(int side = 0; side < 2; side++) {
+          MVertex *sv0 = it0->second.side[side];
+          MVertex *sv1 = it1->second.side[side];
+          if(!sv0 || !sv1) continue;
+          MEdge sideEdge =
+            findSideElementEdge(vertexSides, v0, v1, sv0, sv1, side);
+          if(!sideEdge.getVertex(0)) {
+            Msg::Warning("Could not find side %d edge for embedded curve %d "
+                         "in face %d",
+                         side, emb->tag(), gf->tag());
+            continue;
+          }
+          addEmbeddedCurveFaceQuadrangle(gf, line, sv0, sv1, sideEdge,
+                                         thickness, layers);
         }
       }
     }
@@ -868,6 +1371,83 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
     }
   }
 
+  // Embedded Stuff
+  // ------------------------------------------------------------------------
+  std::map<GVertex *, std::vector<GFace *>>
+    verticesEmbeddedInFacesAsCurveEndpoints;
+  std::map<GEdge *, std::vector<GFace *>> edgesEmbeddedInFaces;
+  std::map<GEdge *, std::vector<GRegion *>> edgesEmbeddedInRegions;
+  std::map<GFace *, std::vector<GRegion *>> facesEmbeddedInRegions;
+  getEmbeddedStructure(m, verticesEmbeddedInFacesAsCurveEndpoints,
+                       edgesEmbeddedInFaces, edgesEmbeddedInRegions,
+                       facesEmbeddedInRegions);
+
+  EmbeddedElementSideData embeddedElementSideData;
+  buildEmbeddedElementSideData(edgesEmbeddedInFaces, facesEmbeddedInRegions,
+                               embeddedElementSideData);
+  EmbeddedCurveFaceSpawns embeddedCurveFaceSpawns;
+
+  for(auto v2f : verticesEmbeddedInFacesAsCurveEndpoints) {
+    for(auto gf : v2f.second) {
+      if(inSurfacesSet.find(gf) == inSurfacesSet.end()) continue;
+      if(_debugBL3D)
+        printf(" --EMP  Vertex %d embedded in Face %d\n", v2f.first->tag(),
+               gf->tag());
+    }
+  }
+
+  for(auto e2f : edgesEmbeddedInFaces) {
+    GEdge *emb = e2f.first;
+    for(auto gf : e2f.second) {
+      if(inSurfacesSet.find(gf) == inSurfacesSet.end()) continue;
+      if(_debugBL3D)
+        printf(" --EMP  Edge %d embedded in Face %d\n", emb->tag(), gf->tag());
+
+      std::pair<GEdge *, GFace *> key = std::make_pair(emb, gf);
+      std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns =
+        embeddedCurveFaceSpawns.curvesInFaces[key];
+      const std::map<MVertex *, EmbeddedElementSides> &vertexSides =
+        embeddedElementSideData.curvesInFaces[key];
+
+      MVertex *begin = emb->getBeginVertex()->mesh_vertices.empty() ?
+                         nullptr :
+                         emb->getBeginVertex()->mesh_vertices[0];
+      MVertex *end = emb->getEndVertex()->mesh_vertices.empty() ?
+                       nullptr :
+                       emb->getEndVertex()->mesh_vertices[0];
+      MVertex *endPoints[2] = {begin, end};
+      for(int i = 0; i < 2; i++) {
+        MVertex *v = endPoints[i];
+        if(!v) continue;
+        MVertex *newv = nullptr;
+        auto it = spawned.find(v);
+        if(it != spawned.end()) {
+          for(auto sp : it->second) {
+            if(sp->onWhat() == gf) {
+              newv = sp;
+              break;
+            }
+          }
+        }
+        if(!newv) {
+          newv = createMFaceVertex(v, gf);
+          if(newv) spawned[v].push_back(newv);
+        }
+        vertexSpawns[v].side[0] = newv;
+        vertexSpawns[v].side[1] = newv;
+      }
+
+      for(auto v : emb->mesh_vertices) {
+        for(int side = 0; side < 2; side++)
+          vertexSpawns[v].side[side] = createMFaceVertex(v, gf);
+      }
+
+      replaceEmbeddedCurveFaceVertices(gf, vertexSides, vertexSpawns);
+    }
+  }
+  // Embedded Stuff
+  // ------------------------------------------------------------------------
+
   std::set<GEntity *> modified;
   for(auto vv : spawned)
     for(auto v : vv.second) modified.insert(v->onWhat());
@@ -881,6 +1461,45 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
           if(v->onWhat() == gf || v->onWhat()->dim() == 1) {
             e->setVertex(j, v);
           }
+        }
+      }
+    }
+  }
+
+  for(auto e2f : edgesEmbeddedInFaces) {
+    GEdge *emb = e2f.first;
+    for(auto gf : e2f.second) {
+      if(inSurfacesSet.find(gf) == inSurfacesSet.end()) continue;
+      std::pair<GEdge *, GFace *> key = std::make_pair(emb, gf);
+      const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns =
+        embeddedCurveFaceSpawns.curvesInFaces[key];
+      const std::map<MVertex *, EmbeddedElementSides> &vertexSides =
+        embeddedElementSideData.curvesInFaces[key];
+      for(auto line : emb->lines) {
+        MVertex *v0 = line->getVertex(0);
+        MVertex *v1 = line->getVertex(1);
+        auto it0 = vertexSpawns.find(v0);
+        auto it1 = vertexSpawns.find(v1);
+        if(it0 == vertexSpawns.end() || it1 == vertexSpawns.end()) {
+          Msg::Warning("Could not find embedded boundary layer node for "
+                       "node(s) %zu and/or %zu",
+                       v0->getNum(), v1->getNum());
+          continue;
+        }
+        for(int side = 0; side < 2; side++) {
+          MVertex *sv0 = it0->second.side[side];
+          MVertex *sv1 = it1->second.side[side];
+          if(!sv0 || !sv1) continue;
+          MEdge sideEdge =
+            findSideElementEdge(vertexSides, v0, v1, sv0, sv1, side);
+          if(!sideEdge.getVertex(0)) {
+            Msg::Warning("Could not find side %d edge for embedded curve %d "
+                         "in face %d",
+                         side, emb->tag(), gf->tag());
+            continue;
+          }
+          addEmbeddedCurveFaceQuadrangle(gf, line, sv0, sv1, sideEdge,
+                                         thickness, layers);
         }
       }
     }
@@ -1040,7 +1659,7 @@ static void expandBL(
 
     if(e->getNumVertices() == 3) {
       if(it != layers.end()) {
-        double T = M_PI / 6.;
+        double T = M_PI / 3.;
         double thickness = it->second;
         //	double fact = it->second/sqrt(3.0);
         vs[0] = {0, 0.};
@@ -1065,17 +1684,82 @@ static void expandBL(
         // assume here zero size quads have been generated such as nodes 0 and 1
         // are along the curve ... nodes 1 and 2 are at the same position, same
         // for 0 and 3
+        const int perfectShapeStrategy2D =
+          (gf->geomType() == GEntity::Plane) ? 1 : 3;
+        std::array<double, 2> perfectEdge0;
+        std::array<double, 2> perfectEdge1;
+        std::array<double, 2> perfectLayer1;
+        std::array<double, 2> perfectLayer0;
         double dx = distance(e->getVertex(0), e->getVertex(1));
+        perfectEdge0 = {0., 0.};
+        perfectEdge1 = {dx, 0.};
+        perfectLayer1 = {dx, thickness};
+        perfectLayer0 = {0., thickness};
 
-        std::array<double, 2> p0 = {0., 0.};
-        std::array<double, 2> p1 = {dx, 0.};
-        std::array<double, 2> p2 = {dx, thickness};
-        std::array<double, 2> p3 = {0., thickness};
+        if(perfectShapeStrategy2D == 2) {
+          SPoint2 paramEdge0, paramEdge1;
+          bool haveParamEdge0 =
+            reparamMeshVertexOnFace(e->getVertex(0), gf, paramEdge0);
+          bool haveParamEdge1 =
+            reparamMeshVertexOnFace(e->getVertex(1), gf, paramEdge1);
+          SPoint2 edgeTangent = paramEdge1 - paramEdge0;
+          SPoint2 normalFromEdge0, normalFromEdge1;
+          bool haveNormalFromEdge0 =
+            haveParamEdge0 && haveParamEdge1 &&
+            metricNormalVector(gf, paramEdge0, edgeTangent, 1., thickness,
+                               normalFromEdge0);
+          bool haveNormalFromEdge1 =
+            haveParamEdge0 && haveParamEdge1 &&
+            metricNormalVector(gf, paramEdge1, edgeTangent, 1., thickness,
+                               normalFromEdge1);
+          if(haveNormalFromEdge0 && haveNormalFromEdge1) {
+            SPoint2 paramLayer0 = paramEdge0 + normalFromEdge0;
+            SPoint2 paramLayer1 = paramEdge1 + normalFromEdge1;
+            perfectEdge0 = {paramEdge0.x(), paramEdge0.y()};
+            perfectEdge1 = {paramEdge1.x(), paramEdge1.y()};
+            perfectLayer1 = {paramLayer1.x(), paramLayer1.y()};
+            perfectLayer0 = {paramLayer0.x(), paramLayer0.y()};
+          }
+        }
+        else if(perfectShapeStrategy2D == 3) {
+          SPoint2 paramEdge0, paramEdge1;
+          bool haveParamEdge0 =
+            reparamMeshVertexOnFace(e->getVertex(0), gf, paramEdge0);
+          bool haveParamEdge1 =
+            reparamMeshVertexOnFace(e->getVertex(1), gf, paramEdge1);
+          if(haveParamEdge0 && haveParamEdge1) {
+            SPoint3 pointEdge0 = e->getVertex(0)->point();
+            SPoint3 pointEdge1 = e->getVertex(1)->point();
+            SVector3 edgeDirection(pointEdge0, pointEdge1);
+            double edgeLength = edgeDirection.norm();
+            if(edgeLength > 0.) {
+              edgeDirection.normalize();
+              SVector3 normalAtEdge0 = gf->normal(paramEdge0);
+              SVector3 normalAtEdge1 = gf->normal(paramEdge1);
+              SVector3 layerDirection0 = crossprod(normalAtEdge0, edgeDirection);
+              SVector3 layerDirection1 = crossprod(normalAtEdge1, edgeDirection);
+              if(layerDirection0.norm() > 0. && layerDirection1.norm() > 0.) {
+                layerDirection0.normalize();
+                layerDirection1.normalize();
+                SPoint3 queryLayer0 = pointEdge0 + layerDirection0 * thickness;
+                SPoint3 queryLayer1 = pointEdge1 + layerDirection1 * thickness;
+                double guess0[2] = {paramEdge0.x(), paramEdge0.y()};
+                double guess1[2] = {paramEdge1.x(), paramEdge1.y()};
+                GPoint closestLayer0 = gf->closestPoint(queryLayer0, guess0);
+                GPoint closestLayer1 = gf->closestPoint(queryLayer1, guess1);
+                perfectEdge0 = {paramEdge0.x(), paramEdge0.y()};
+                perfectEdge1 = {paramEdge1.x(), paramEdge1.y()};
+                perfectLayer1 = {closestLayer1.u(), closestLayer1.v()};
+                perfectLayer0 = {closestLayer0.u(), closestLayer0.v()};
+              }
+            }
+          }
+        }
 
-        sh.push_back({p0, p1, p2});
-        sh.push_back({p2, p3, p0});
-        sh.push_back({p0, p1, p3});
-        sh.push_back({p1, p2, p3});
+        sh.push_back({perfectEdge0, perfectEdge1, perfectLayer1});
+        sh.push_back({perfectLayer1, perfectLayer0, perfectEdge0});
+        sh.push_back({perfectEdge0, perfectEdge1, perfectLayer0});
+        sh.push_back({perfectEdge1, perfectLayer1, perfectLayer0});
         //	printf(" %g %g %g %g %g %g\n",dx,thickness, triangle_area_2d(p0, p1,
         //p2), triangle_area_2d(p2, p3, p0), 	       triangle_area_2d(p0, p1,
         //p3),triangle_area_2d(p1, p2, p3));
@@ -1464,25 +2148,6 @@ static bool metricNormalVector(GFace *gf, const SPoint2 &p,
   return true;
 }
 
-static bool metricNormalPoint(GFace *gf, const SPoint2 &p0, const SPoint2 &p1,
-                              double distance, SPoint2 &p)
-{
-  SPoint2 d = p1 - p0;
-  if(d.x() * d.x() + d.y() * d.y() <= 1.e-28) return false;
-
-  // The existing parametric edge gives the side of the boundary layer. Use its
-  // Euclidean perpendicular as a local boundary tangent, then build the vector
-  // normal to that tangent with respect to the surface metric.
-  SPoint2 tangent(-d.y(), d.x()), normal;
-  double side = 1.;
-  if(!metricNormalVector(gf, p0, tangent, side, distance, normal))
-    return false;
-  if(normal.x() * d.x() + normal.y() * d.y() < 0.)
-    normal = SPoint2(-normal.x(), -normal.y());
-  p = p0 + normal;
-  return true;
-}
-
 static std::vector<MVertex *>
 splitedge(MEdge me,
           std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
@@ -1504,31 +2169,11 @@ splitedge(MEdge me,
   }
   if(minPerfect < 0) minPerfect = 0;
 
-  double metricLength = me.length();
-  if(me.getVertex(1)->onWhat()->dim() == 2) {
-    GFace *gf = static_cast<GFace *>(me.getVertex(1)->onWhat());
-    SPoint2 p0, p1;
-    double g[3];
-    if(reparamMeshVertexOnFace(me.getVertex(0), gf, p0) &&
-       reparamMeshVertexOnFace(me.getVertex(1), gf, p1) &&
-       surfaceMetric(gf, p0, g)) {
-      metricLength = metricNorm(g, p1 - p0);
-      Msg::Debug("BoundaryLayer split edge on face %d: chord=%g "
-                 "metric-local=%g",
-                 gf->tag(), me.length(), metricLength);
-    }
-    else {
-      Msg::Warning("BoundaryLayer split edge: could not reparametrize edge "
-                   "%zu-%zu on face; using chord length",
-                   me.getVertex(0)->getNum(), me.getVertex(1)->getNum());
-    }
-  }
-
   bool adjusted = true;
   int iter = 0;
   while(minPerfect >= 0 && 0) {
     t = t_init;
-    double L = metricLength;
+    double L = me.length();
     if(L <= 0. || !std::isfinite(L)) {
       Msg::Warning("BoundaryLayer split edge: invalid edge length %g for "
                    "vertices %zu %zu",
@@ -1624,10 +2269,7 @@ splitedge(MEdge me,
     reparamMeshVertexOnFace(me.getVertex(0), gf, p0);
     reparamMeshVertexOnFace(me.getVertex(1), gf, p1);
     for(size_t i = 0; i < t.size() - 1; i++) {
-      SPoint2 p;
-      if(metricLength <= 0. ||
-         !metricNormalPoint(gf, p0, p1, t[i] * metricLength, p))
-        p = p0 + (p1 - p0) * t[i];
+      SPoint2 p = p0 + (p1 - p0) * t[i];
       GPoint gp = gf->point(p.x(), p.y());
       vs.push_back(new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, p.x(), p.y()));
       gf->mesh_vertices.push_back(vs.back());
