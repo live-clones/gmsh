@@ -12,6 +12,7 @@
 #cmakedefine HAVE_ALGLIB
 #cmakedefine HAVE_ANN
 #cmakedefine HAVE_BAMG
+#cmakedefine HAVE_BOUNDARY_LAYERS
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_CAIRO

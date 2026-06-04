@@ -1,7 +1,17 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh Boundary Layer Plugin - Copyright (C) 2026 C. Geuzaine and J.-F. Remacle
 //
-// See the LICENSE.txt file in the Gmsh root directory for license information.
-// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU Affero General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+// details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 #include <cmath>
@@ -1443,7 +1453,7 @@ static bool metricNormalVector(GFace *gf, const SPoint2 &p,
   double g[3];
   if(!surfaceMetric(gf, p, g)) return false;
 
-  
+
   double rhs[2] = {-tangent.y(), tangent.x()};
   double det = g[0] * g[2] - g[1] * g[1];
   double n[2] = {(g[2] * rhs[0] - g[1] * rhs[1]) / det,

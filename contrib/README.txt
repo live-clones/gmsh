@@ -4,6 +4,7 @@ their own respective license:
 
 * ALGLIB: GNU General Public License (GPL) v. 2 or later
 * ANN: GNU Lesser General Public License
+* BoundaryLayers: GNU Affero General Public License (AGPL) v. 3 or later
 * DiscreteIntegration: MIT/X11 License
 * HighOrderMeshOptimizer: MIT/X11 License
 * MathEx: GNU Lesser General Public License (LGPL) v. 2.1 or later, with static

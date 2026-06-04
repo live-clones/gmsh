@@ -72,8 +72,11 @@
 #include "Summation.h"
 #include "BoundaryAngles.h"
 #include "MeshSizeFieldView.h"
-#include "BoundaryLayer.h"
 #include "DuplicateNodes.h"
+
+#if defined(HAVE_BOUNDARY_LAYERS)
+#include "BoundaryLayer.h"
+#endif
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -278,7 +281,7 @@ void PluginManager::registerDefaultPlugins()
       std::make_pair("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
     allPlugins.insert(std::make_pair("MeshSizeFieldView",
                                      GMSH_RegisterMeshSizeFieldViewPlugin()));
-    
+
 #endif
 #if defined(HAVE_REVOROPT)
     allPlugins.insert(
@@ -303,8 +306,10 @@ void PluginManager::registerDefaultPlugins()
 #endif
     allPlugins.insert(
       std::make_pair("SpanningTree", GMSH_RegisterSpanningTreePlugin()));
+#if defined(HAVE_BOUNDARY_LAYERS)
     allPlugins.insert(
       std::make_pair("BoundaryLayer", GMSH_RegisterBoundaryLayerPlugin()));
+#endif
   }
 
 #if defined(HAVE_FLTK)
