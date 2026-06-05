@@ -29,6 +29,7 @@
 #include "meshGEdge.h"
 #include "BoundaryLayer.h"
 #include "Context.h"
+#include "OS.h"
 
 #if defined(HAVE_WINSLOWUNTANGLER)
 #include "winslowUntangler.h"
@@ -674,8 +675,10 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
         Msg::Debug(
           "inserted node %zu from point %d in curve %d -- %zu internal nodes",
           newv->getNum(), gv->tag(), ge->tag(), ge->mesh_vertices.size());
-        if(end)
-          ge->lines.push_back(new MLine(v, newv));
+        if(end) {
+          ge->lines.back()->setVertex(1, newv);
+          ge->lines.push_back(new MLine(newv, v));
+        }
         else
           ge->lines.insert(ge->lines.begin(), new MLine(newv, v));
       }
@@ -1350,8 +1353,10 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
           Msg::Debug(
             "inserted node %zu from point %d in curve %d -- %zu internal nodes",
             newv->getNum(), gv->tag(), ge->tag(), ge->mesh_vertices.size());
-          if(end)
-            ge->lines.push_back(new MLine(v, newv));
+          if(end) {
+            ge->lines.back()->setVertex(1, newv);
+            ge->lines.push_back(new MLine(newv, v));
+          }
           else
             ge->lines.insert(ge->lines.begin(), new MLine(newv, v));
         }
@@ -1641,10 +1646,6 @@ namespace {
 
 } // namespace
 
-static bool metricNormalVector(GFace *gf, const SPoint2 &p,
-                               const SPoint2 &tangent, double side,
-                               double distance, SPoint2 &normal);
-
 static void expandBL(
   GFace *gf,
   std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes,
@@ -1694,8 +1695,6 @@ static void expandBL(
         // assume here zero size quads have been generated such as nodes 0 and 1
         // are along the curve ... nodes 1 and 2 are at the same position, same
         // for 0 and 3
-        const int perfectShapeStrategy2D =
-          (gf->geomType() == GEntity::Plane) ? 1 : 3;
         std::array<double, 2> perfectEdge0;
         std::array<double, 2> perfectEdge1;
         std::array<double, 2> perfectLayer1;
@@ -1706,32 +1705,7 @@ static void expandBL(
         perfectLayer1 = {dx, thickness};
         perfectLayer0 = {0., thickness};
 
-        if(perfectShapeStrategy2D == 2) {
-          SPoint2 paramEdge0, paramEdge1;
-          bool haveParamEdge0 =
-            reparamMeshVertexOnFace(e->getVertex(0), gf, paramEdge0);
-          bool haveParamEdge1 =
-            reparamMeshVertexOnFace(e->getVertex(1), gf, paramEdge1);
-          SPoint2 edgeTangent = paramEdge1 - paramEdge0;
-          SPoint2 normalFromEdge0, normalFromEdge1;
-          bool haveNormalFromEdge0 =
-            haveParamEdge0 && haveParamEdge1 &&
-            metricNormalVector(gf, paramEdge0, edgeTangent, 1., thickness,
-                               normalFromEdge0);
-          bool haveNormalFromEdge1 =
-            haveParamEdge0 && haveParamEdge1 &&
-            metricNormalVector(gf, paramEdge1, edgeTangent, 1., thickness,
-                               normalFromEdge1);
-          if(haveNormalFromEdge0 && haveNormalFromEdge1) {
-            SPoint2 paramLayer0 = paramEdge0 + normalFromEdge0;
-            SPoint2 paramLayer1 = paramEdge1 + normalFromEdge1;
-            perfectEdge0 = {paramEdge0.x(), paramEdge0.y()};
-            perfectEdge1 = {paramEdge1.x(), paramEdge1.y()};
-            perfectLayer1 = {paramLayer1.x(), paramLayer1.y()};
-            perfectLayer0 = {paramLayer0.x(), paramLayer0.y()};
-          }
-        }
-        else if(perfectShapeStrategy2D == 3) {
+        if(gf->geomType() != GEntity::Plane) {
           SPoint2 paramEdge0, paramEdge1;
           bool haveParamEdge0 =
             reparamMeshVertexOnFace(e->getVertex(0), gf, paramEdge0);
@@ -1764,6 +1738,61 @@ static void expandBL(
               }
             }
           }
+        }
+
+        int numBoundaryVertices = 0;
+        int freeVertex = -1;
+        std::array<std::array<double, 2>, 4> boundaryParam;
+        bool haveBoundaryParam[4] = {false, false, false, false};
+        for(int j = 0; j < 4; j++) {
+          if(e->getVertex(j)->onWhat()->dim() < 2) {
+            SPoint2 param;
+            if(reparamMeshVertexOnFace(e->getVertex(j), gf, param)) {
+              boundaryParam[j] = {param.x(), param.y()};
+              haveBoundaryParam[j] = true;
+              numBoundaryVertices++;
+            }
+          }
+          else
+            freeVertex = j;
+        }
+        bool haveBoundaryParallelogram = false;
+        if(numBoundaryVertices == 3 && freeVertex >= 0) {
+          for(int j = 0; j < 4; j++) {
+            if(haveBoundaryParam[j]) {
+              if(j == 0) perfectEdge0 = boundaryParam[j];
+              else if(j == 1) perfectEdge1 = boundaryParam[j];
+              else if(j == 2) perfectLayer1 = boundaryParam[j];
+              else if(j == 3) perfectLayer0 = boundaryParam[j];
+            }
+          }
+          if(freeVertex == 0)
+            perfectEdge0 = {perfectEdge1[0] + perfectLayer0[0] -
+                              perfectLayer1[0],
+                            perfectEdge1[1] + perfectLayer0[1] -
+                              perfectLayer1[1]};
+          else if(freeVertex == 1)
+            perfectEdge1 = {perfectEdge0[0] + perfectLayer1[0] -
+                              perfectLayer0[0],
+                            perfectEdge0[1] + perfectLayer1[1] -
+                              perfectLayer0[1]};
+          else if(freeVertex == 2)
+            perfectLayer1 = {perfectEdge1[0] + perfectLayer0[0] -
+                               perfectEdge0[0],
+                             perfectEdge1[1] + perfectLayer0[1] -
+                               perfectEdge0[1]};
+          else
+            perfectLayer0 = {perfectEdge0[0] + perfectLayer1[0] -
+                               perfectEdge1[0],
+                             perfectEdge0[1] + perfectLayer1[1] -
+                               perfectEdge1[1]};
+          haveBoundaryParallelogram = true;
+        }
+
+        if(haveBoundaryParallelogram &&
+           triangle_area_2d(perfectEdge0, perfectEdge1, perfectLayer1) < 0.) {
+          std::swap(perfectEdge0, perfectEdge1);
+          std::swap(perfectLayer0, perfectLayer1);
         }
 
         sh.push_back({perfectEdge0, perfectEdge1, perfectLayer1});
@@ -2095,9 +2124,10 @@ static void expandBL3D(
             {nn[ppi[j][0]], nn[ppi[j][1]], nn[ppi[j][2]], nn[ppi[j][3]]});
     }
   }
-  printf("coucou1\n");
+  double tUntangle = TimeOfDay();
   untangle_tetrahedra(points, locked, tets, sh, 1.e+0);
-  printf("coucou2\n");
+  Msg::Info("Boundary layer 3D untangling done in %g s",
+            TimeOfDay() - tUntangle);
 
   for(auto v : verts) {
     int i = v->getIndex();
@@ -2107,55 +2137,6 @@ static void expandBL3D(
       v->z() = points[i][2];
     }
   }
-}
-
-static bool surfaceMetric(GFace *gf, const SPoint2 &p, double g[3])
-{
-  std::pair<SVector3, SVector3> der = gf->firstDer(p);
-  g[0] = dot(der.first, der.first);
-  g[1] = dot(der.first, der.second);
-  g[2] = dot(der.second, der.second);
-  double det = g[0] * g[2] - g[1] * g[1];
-  return std::isfinite(det) && det > 1.e-28 && std::isfinite(g[0]) &&
-         std::isfinite(g[1]) && std::isfinite(g[2]);
-}
-
-static double metricNorm(const double g[3], const SPoint2 &d)
-{
-  double du = d.x(), dv = d.y();
-  double l2 = g[0] * du * du + 2. * g[1] * du * dv + g[2] * dv * dv;
-  return (l2 > 0. && std::isfinite(l2)) ? std::sqrt(l2) : 0.;
-}
-
-static bool metricNormalVector(GFace *gf, const SPoint2 &p,
-                               const SPoint2 &tangent, double side,
-                               double distance, SPoint2 &normal)
-{
-  if(tangent.x() * tangent.x() + tangent.y() * tangent.y() <= 1.e-28)
-    return false;
-
-  double g[3];
-  if(!surfaceMetric(gf, p, g)) return false;
-
-
-  double rhs[2] = {-tangent.y(), tangent.x()};
-  double det = g[0] * g[2] - g[1] * g[1];
-  double n[2] = {(g[2] * rhs[0] - g[1] * rhs[1]) / det,
-                 (-g[1] * rhs[0] + g[0] * rhs[1]) / det};
-
-  if(side * (tangent.x() * n[1] - tangent.y() * n[0]) < 0.) {
-    n[0] = -n[0];
-    n[1] = -n[1];
-  }
-
-  double l = metricNorm(g, SPoint2(n[0], n[1]));
-
-  //printf("gf tag %d g = %g %g %g distance = %g\n", gf->tag(), g[0], g[1], g[2], distance);
-
-  if(l <= 0.) return false;
-
-  normal = SPoint2(distance * n[0] / l, distance * n[1] / l);
-  return true;
 }
 
 static std::vector<MVertex *>
@@ -2786,22 +2767,27 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   else
     bl3d(m, f, r, ww, layers, toExpand);
 
-  for(GModel::eiter eit = m->firstEdge(); eit != m->lastEdge(); ++eit)
-    meshGEdgeInsertBoundaryLayer(*eit, ww);
 
   std::map<MElement *, std::array<std::array<double, 2>, 4>> perfectShapes;
   std::map<MElement *, std::array<std::array<double, 3>, 8>> perfectShapes3D;
-
   if(r.empty()) {
     computePerfectShapes(f, perfectShapes);
+  }
+  else {
+    computePerfectShapes(r, perfectShapes3D);
+    computePerfectShapes(toExpand, perfectShapes);
+  }
+
+  for(GModel::eiter eit = m->firstEdge(); eit != m->lastEdge(); ++eit)
+    meshGEdgeInsertBoundaryLayer(*eit, ww);
+
+  if(r.empty()) {
     for(auto gf : f) expandBL(gf, perfectShapes, layers, f, numLayers);
   }
   else {
-    computePerfectShapes(toExpand, perfectShapes);
     for(auto gf : toExpand) {
       expandBL(gf, perfectShapes, layers, toExpand, numLayers);
     }
-    computePerfectShapes(r, perfectShapes3D);
     for(auto gr : r) { expandBL3D(gr, perfectShapes3D, layers, numLayers); }
   }
 

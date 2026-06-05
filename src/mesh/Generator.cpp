@@ -659,7 +659,7 @@ static void Mesh2D(GModel *m)
     bool debug = (Msg::GetVerbosity() == 99);
 
     transferSeamGEdgesVerticesToGFace(m);
-    quadMeshingOfSimpleFacesWithPatterns(m, .02);
+    //quadMeshingOfSimpleFacesWithPatterns(m, .02);
     if(debug) m->writeMSH("opti1.msh");
     //    if(debug) m->writeMSH("opti2.msh");
     //    optimizeTopologyWithCavityRemeshing(m);
