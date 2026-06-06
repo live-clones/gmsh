@@ -1,0 +1,533 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+
+<head>
+
+<title>First Gmsh User Meeting: 8-9 July 2026, Liège (Belgium)</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="keywords" content="free, finite elements, mesh generator, fem,
+unstructured grids, delaunay, discontinuous galerkin, triangulation,
+automatic, maillages, mailleur 3D, mesh adaptation, postprocessing,
+post processing, post-processor, postprocessor, post-processeur, CAD,
+CAO, OpenGL, GL2PS, Gmesh">
+<meta name="viewport" content="width=device-width">
+<link href="https://gmsh.info/gmsh.css" rel="stylesheet" type="text/css">
+<link href="/favicon.ico" rel="shortcut icon" type="image/x-icon">
+
+<style>
+  ul.small { font-size:90%; margin-top:1ex; margin-bottom:1ex; }
+  div.talk { font-style: italic; margin-left:2.5ex; margin-right:2.5ex;
+             margin-bottom:1ex; }
+  table th { background-color:#f0f0f0; }
+  table td { background-color:#f7f7f7; }
+  img.title { height:1em; }
+  :root {
+    --text-primary: #1f1f1d;
+    --text-secondary: #6b6a64;
+    --text-tertiary: #94938c;
+    --bg-page: #ffffff;
+    --bg-secondary: #f3f1ea;
+    --bg-tertiary: #ebe9e1;
+    --border: rgba(0,0,0,0.12);
+    --border-strong: rgba(0,0,0,0.28);
+    --mesh-bg: #B5D4F4; --mesh-tx: #0C447C;
+    --fem-bg: #C0DD97;  --fem-tx: #3B6D11;
+    --app-bg: #FAC775;  --app-tx: #633806;
+    --integ-bg: #CECBF6;--integ-tx: #3C3489;
+    --poster-bg: #E1F5EE; --poster-tx: #0F6E56; --poster-bd: #5DCAA5;
+    --invited-bg: #EEEDFE; --invited-tx: #3C3489; --invited-bd: #AFA9EC;
+    --wooclap-bg: #FAEEDA; --wooclap-tx: #633806; --wooclap-bd: #EF9F27;
+  }
+  .wrap { margin: 0 auto; padding: 1rem 0; }
+  .subtitle { font-size: 90%; color: var(--text-secondary); margin-bottom: 0.75rem; }
+  .day { margin-bottom: 1.25rem; }
+  .day-header { font-size: 95%; font-weight: 600; padding: 0.4rem 0.75rem;
+                background: var(--bg-secondary); border-radius: 8px; margin-bottom: 0.5rem;
+                border-left: 3px solid var(--border-strong); }
+  .slot { display: grid; grid-template-columns: 96px 1fr; border-bottom: 1px solid var(--border); }
+  .slot:last-child { border-bottom: none; }
+  .time { padding: 0.4rem 0.5rem 0.4rem 0; font-size: 83%; color: var(--text-secondary);
+          white-space: nowrap; }
+  .content { padding: 0.3rem 0; }
+  .section-title { font-size: 90%; font-weight: 600; color: var(--text-secondary); margin: 2px 0; }
+  .talk { margin: 3px 0; padding: 5px; border-radius: 4px; font-size: 13.5px; line-height: 1.3; }
+  .slot .talk { margin-left: 0; margin-right: 0; font-style: normal; }
+  .talk-head { display: flex; gap: 6px; align-items: baseline; justify-content: space-between; }
+  .talk-title { font-weight: 600; }
+  .talk-dur { font-size: 90%; opacity: 0.8; white-space: nowrap; padding-left: 6px; }
+  .talk-auth { font-size: 95%; opacity: 0.92; margin-top: 1px; }
+  .talk-aff { font-size: 90%; opacity: 0.72; font-style: italic; margin-top: 1px; }
+  .t-mesh { background: var(--mesh-bg); color: var(--mesh-tx); }
+  .t-fem { background: var(--fem-bg); color: var(--fem-tx); }
+  .t-app { background: var(--app-bg); color: var(--app-tx); }
+  .t-integ { background: var(--integ-bg); color: var(--integ-tx); }
+  .t-poster-item { background: var(--poster-bg); color: var(--poster-tx); }
+  .t-break { background: var(--bg-tertiary); color: var(--text-secondary); font-style: italic;
+             text-align: center; padding: 5px; border-radius: 4px; font-size: 90%; }
+  .t-wooclap { background: var(--wooclap-bg); color: var(--wooclap-tx);
+               border: 1px solid var(--wooclap-bd); padding: 5px 9px; border-radius: 4px;
+               font-size: 90%; }
+  .t-poster { background: var(--poster-bg); color: var(--poster-tx);
+              border: 1px solid var(--poster-bd); padding: 5px 9px; border-radius: 4px;
+              font-size: 90%; }
+  .poster-label { font-size: 90%; font-weight: 600; color: var(--poster-tx); margin: 6px 0 2px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 0.9rem; }
+  .leg-item { display: flex; align-items: center; gap: 5px; font-size: 80%;
+              color: var(--text-secondary); }
+  .leg-dot { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .chair { font-size: 90%; color: var(--text-tertiary); margin-top: 4px; }
+  @media print {
+    html, body { font-size: 9pt; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .wrap { padding: 0; max-width: none; }
+    h1 { font-size: 15pt; margin-bottom: 0.1rem; }
+    .subtitle { font-size: 85%; margin-bottom: 0.35rem; }
+    .legend { gap: 4px 10px; margin-bottom: 0.45rem; }
+    .leg-item { font-size: 75%; }
+    .leg-dot { width: 9px; height: 9px; }
+    .day { margin-bottom: 0.5rem; /*page-break-inside: avoid;*/ }
+    .day-header { font-size: 105%; padding: 0.2rem 0.5rem; margin-bottom: 0.25rem; }
+    .slot { grid-template-columns: 74px 1fr; /*page-break-inside: avoid;*/ }
+    .talk { page-break-inside: avoid; }
+    .time { font-size: 82%; padding: 0.18rem 0.4rem 0.18rem 0; }
+    .content { padding: 0.1rem 0; }
+    .section-title { font-size: 88%; margin: 1px 0; }
+    .talk { font-size: 9pt; line-height: 1.2; margin: 2px 0; padding: 3px 4px; }
+    .talk-auth { font-size: 92%; }
+    .talk-dur, .talk-aff { font-size: 85%; }
+    .t-break { font-size: 88%; padding: 2px 4px; }
+    .t-wooclap, .t-poster { font-size: 88%; padding: 3px 5px; }
+    .poster-label { font-size: 88%; margin: 4px 0 1px; }
+    .chair { font-size: 85%; margin-top: 2px; }
+  }
+</style>
+
+</head>
+
+<body>
+
+<h1 class="short">First Gmsh User Meeting</h1>
+
+<div id="banner">
+  <img src="uliege_campus.jpg" alt="">
+  <img src="uliege_amphis_europe_out.jpg" alt="">
+  <img src="uliege_amphis_europe_in.jpg" alt="">
+</div>
+
+<h1>8–9 July 2026, Liège, Belgium&nbsp;<img class="title"
+  src="https://gmsh.info/gallery/gmsh_title.png" alt=""></h1>
+
+<p>The first Gmsh User Meeting will take place on 8–9 July 2026 in Liège,
+  Belgium. The two-day event will bring together researchers, engineers, and
+  developers from around the world to share their experiences
+  with <a href="https://gmsh.info">Gmsh</a>, discover recent developments, and
+  discuss future directions for open-source mesh generation and numerical
+  simulation.</p>
+
+<h2><a name="Registration"></a>Registration</h2>
+
+<p>To register please <a href="https://forms.gle/anNumWLAtzF4XUcA6">complete the
+  online form</a>:
+  <ul>
+    <li>Registration fees are 80 EUR, which includes coffee breaks and lunches
+      on July 8 and July 9
+    <li>An optional 80 EUR fee applies for participation in the conference
+      banquet
+    <li>Payment is only possible by bank transfer
+  </ul>
+</p>
+<p>Upon arrival at the user meeting, each participant will receive an official
+  receipt from the University of Liège for the registration fee paid, together
+  with a certificate of attendance.</p>
+
+<!-- p>Registration is now closed. Please
+  <a href="https://people.montefiore.uliege.be/geuzaine/">get in touch</a> by
+  email if you haven't registered and would still like to attend.</p -->
+
+<!-- p>During the registration process, you will have the opportunity to submit
+  an abstract if you wish to present your work, either as an oral presentation
+  or a poster.</p -->
+
+<!-- p>We encourage you to register as early as possible (and before 1 June 2026 at
+  the latest), as this will greatly help us with the practical organisation of
+  the event.</p -->
+
+<h2><a name="Location"></a>Location</h2>
+
+<p>The Gmsh User Meeting will be held at the
+<a href="https://www.campus.uliege.be/cms/c_1763578/en/b4-amphitheatres-of-europe">Amphitheatres
+of Europe</a> (<a href="https://maps.app.goo.gl/pVdwkTHFAZh8LPwCA">Google Maps</a>), on
+the <a href="https://www.campus.uliege.be/cms/c_9038317/en/liege-sart-tilman">Sart
+Tilman Campus</a> of the <a href="http://www.uliege.be/">University of
+Liège</a> in Belgium. The campus can be reached
+<a href="https://www.campus.uliege.be/cms/c_20527639/en/faq-acces-campus-sart-tilman#q1;">by
+public transport</a> (e.g. from the Liège-Guillemins train station or the city
+center), by car and by bike.</p>
+
+<h2><a name="Accomodation"></a>Accommodation</h2>
+
+<p>Several hotels are available in the centre of Liège, which is connected to
+the Sart Tilman campus by regular bus service (approximately 30
+minutes). Options range from budget-friendly to upscale, particularly around the
+Liège-Guillemins train station and the city centre. Apartments and rooms can
+also be found on Airbnb throughout the city. We recommend booking early, as July
+is a popular period for visiting Liège.</p>
+
+<h2><a name="Program"></a>Program</h2>
+
+<!-- p>
+  The program will feature invited talks, technical tutorials, and opportunities
+  for informal exchanges with the Gmsh development team. Whether you are a
+  long-time user or new to the ecosystem, the Gmsh User Meeting will be a unique
+  occasion to connect with the community and contribute to shaping the next
+  generation of tools.
+</p>
+
+<p>
+  The program will be built from the contributions proposed by participants
+  during registration, and will be made available on this page after June 1st.
+</p -->
+
+<div class="wrap">
+
+  <div class="legend">
+    <div class="leg-item"><span class="leg-dot" style="background:#B5D4F4"></span> Meshing</div>
+    <div class="leg-item"><span class="leg-dot" style="background:#C0DD97"></span> FEM / physics</div>
+    <div class="leg-item"><span class="leg-dot" style="background:#CECBF6"></span> Integrations</div>
+    <div class="leg-item"><span class="leg-dot" style="background:#FAC775"></span> Industrial applications</div>
+    <div class="leg-item"><span class="leg-dot" style="background:#FAEEDA; border:1px solid #EF9F27"></span> Wooclap / discussion</div>
+    <div class="leg-item"><span class="leg-dot" style="background:#E1F5EE; border:1px solid #5DCAA5"></span> Posters</div>
+  </div>
+
+  <div class="day">
+    <div class="day-header">Tuesday 8 July</div>
+
+    <div class="slot">
+      <div class="time">08:30</div>
+      <div class="content"><div class="t-break">Registration &amp; welcome</div></div>
+    </div>
+
+    <div class="slot">
+      <div class="time">09:00 – 10:00</div>
+      <div class="content">
+        <div class="section-title">Opening</div>
+        <div class="talk t-mesh">
+          <div class="talk-head"><span class="talk-title">Gmsh: recent advances and future directions</span><span class="talk-dur">60 min</span></div>
+          <div class="talk-auth">C. Geuzaine, J.-F. Remacle</div>
+          <div class="talk-aff">ULiège · UCLouvain</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">10:00 – 10:30</div>
+      <div class="content"><div class="t-break">☕ Coffee break</div></div>
+    </div>
+
+    <div class="slot">
+      <div class="time">10:30 – 11:30</div>
+      <div class="content">
+        <div class="section-title">Session 1 — Unstructured meshing</div>
+        <div class="talk t-mesh">
+          <div class="talk-head"><span class="talk-title">Scaling Gmsh-based FEM on LUMI: handling thousands of partitions</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">B. Martin, C. Geuzaine</div>
+          <div class="talk-aff">ULiège</div>
+        </div>
+        <div class="talk t-mesh">
+          <div class="talk-head"><span class="talk-title">TBD</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">E. Arcese, M. Baray</div>
+          <div class="talk-aff">CEA · CEA CESTA</div>
+        </div>
+        <div class="talk t-mesh">
+          <div class="talk-head"><span class="talk-title">Intrinsic meshing of closed surfaces</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">T. Gabriel, J.-F. Remacle, C. Geuzaine</div>
+          <div class="talk-aff">ULiège · UCLouvain</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">11:30 – 12:30</div>
+      <div class="content">
+        <div class="section-title">Session 2 — CFD &amp; aerospace</div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">Automatic &amp; robust aircraft mesh generator for CPACS</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">O. Albers</div>
+          <div class="talk-aff">DLR &amp; Forschungszentrum Jülich</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">Gmsh in the CEASIOMpy workflow: preliminary aircraft design</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">G. Benedetti, L. Deligny</div>
+          <div class="talk-aff">CFS Engineering</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">A comparative study of Gmsh and OpenFOAM meshing around a motorbike</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">F. Viennas, M. Kalatzis, P. K. Papadopoulos</div>
+          <div class="talk-aff">University of Patras</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">Aerodynamic Design of Aeronautical Configurations based on RANS and Large-Eddy Simulations</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">T. Toulorge</div>
+          <div class="talk-aff">Cenaero</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">12:30 – 14:00</div>
+      <div class="content">
+        <div class="t-poster">🍽 Lunch + poster session (90 min)</div>
+        <div class="poster-label">Posters</div>
+        <div class="talk t-poster-item">
+          <div class="talk-title">Use of Gmsh and GetDP to aid in the electrical insulation system design</div>
+          <div class="talk-auth">O. A. I. Rahmouni</div>
+          <div class="talk-aff">Amphenol AUXEL (R&amp;D)</div>
+        </div>
+        <div class="talk t-poster-item">
+          <div class="talk-title">Color-based tagging of CAD surfaces for automated physical group creation in Gmsh</div>
+          <div class="talk-auth">A. Mukherjee</div>
+          <div class="talk-aff">Karlsruhe Institute of Technology (wbk)</div>
+        </div>
+        <div class="talk t-poster-item">
+          <div class="talk-title">Integral dielectric kernel implementation to model RF heating in toroidal plasmas</div>
+          <div class="talk-auth">B. C. G. Reman, P. U. Lamalle, J. Zaleski, C. Slaby, C. Geuzaine, V. Maquet, D. Van Eester, M. Campos Pinto, Y. Güçlü, E. Moral Sánchez</div>
+          <div class="talk-aff">LPP-ERM/KMS</div>
+        </div>
+        <div class="talk t-poster-item">
+          <div class="talk-title">Elastoplastic rotor analysis of electrical machines using ONELAB with isotropic hardening and contact modeling</div>
+          <div class="talk-auth">D. Keller</div>
+          <div class="talk-aff">THWS — Technology Transfer Center for E-Mobility (TTZ-EMO)</div>
+        </div>
+        <div class="talk t-poster-item">
+          <div class="talk-title">Higher-order NURBS-enhanced finite elements</div>
+          <div class="talk-auth">R. Hahn, C. Geuzaine, S. Schöps</div>
+          <div class="talk-aff">Technical University of Darmstadt</div>
+        </div>
+        <div class="talk t-poster-item">
+          <div class="talk-title">A fast and accurate boundary-coupled finite element method for computing AC losses</div>
+          <div class="talk-auth">A. Pons, S. Küttler, T. Cherrière, A. Mercier, L. Benmamas, G. Krebs, C. Geuzaine</div>
+          <div class="talk-aff">Université Paris-Saclay / CentraleSupélec / CNRS (GeePs) · Sorbonne Université · Safran Tech</div>
+        </div>
+        <div class="talk t-poster-item">
+          <div class="talk-title">Topology-preserving transformations</div>
+          <div class="talk-auth">D. Masotti, R. Specogna</div>
+          <div class="talk-aff">EMC Gems Srl</div>
+        </div>
+        <div class="talk t-poster-item">
+          <div class="talk-title">Finite element modelling of bones loaded by muscle-induced forces with heterogeneous material properties from CT scans of fossils</div>
+          <div class="talk-auth">L. Leruth, F. Della Giustina, N. Chatar, V. Fischer, R. Boman</div>
+          <div class="talk-aff">ULiège</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">14:00 – 14:15</div>
+      <div class="content"><div class="t-wooclap"><strong>Wooclap — live poll</strong>: questions &amp; topics to address (right after lunch)</div></div>
+    </div>
+
+    <div class="slot">
+      <div class="time">14:15 – 15:15</div>
+      <div class="content">
+        <div class="section-title">Session 3 — Structured meshing</div>
+        <div class="talk t-mesh">
+          <div class="talk-head"><span class="talk-title">HexaMSH: a structured hexahedral meshing tool based on Gmsh</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">J. Eustache</div>
+          <div class="talk-aff">MFP Michelin</div>
+        </div>
+        <div class="talk t-mesh">
+          <div class="talk-head"><span class="talk-title">Automatic hex meshing for extrudable geometries</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">A. Dadalau</div>
+          <div class="talk-aff">Meshparts GmbH</div>
+        </div>
+        <div class="talk t-mesh">
+          <div class="talk-head"><span class="talk-title">Structured meshing based on Gmsh</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">J. Tampio</div>
+          <div class="talk-aff">Quanscient</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">15:15 – 15:45</div>
+      <div class="content"><div class="t-break">☕ Coffee break</div></div>
+    </div>
+
+    <div class="slot">
+      <div class="time">15:45 – 17:00</div>
+      <div class="content">
+        <div class="section-title">Session 4 — Industrial applications</div>
+        <div class="talk t-app">
+          <div class="talk-head"><span class="talk-title">Gmsh in SpaceSuite: space environment effects analysis</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">B. Jeanty-Ruard, A. Trouche, B. Tezenas du Montcel, N. Chabalier, J. Forest</div>
+          <div class="talk-aff">Artenum</div>
+        </div>
+        <div class="talk t-app">
+          <div class="talk-head"><span class="talk-title">GmSAFIR: preparing SAFIR simulations in a free &amp; open-source environment</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">B. Guillaume</div>
+          <div class="talk-aff">Efectis France</div>
+        </div>
+        <div class="talk t-app">
+          <div class="talk-head"><span class="talk-title">CAD production for advanced Monte Carlo simulations</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">C. Coustet, R. Fournier, M. Bati, C. Calliot, A. Sayed-Kassem</div>
+          <div class="talk-aff">Méso-Star · Univ. Toulouse (Laplace, IRIT) · Univ. Pau (LMAP) · ArcelorMittal</div>
+        </div>
+        <div class="talk t-app">
+          <div class="talk-head"><span class="talk-title">Automated layer generation &amp; meshing for additive manufacturing</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">A. Evdokimov</div>
+          <div class="talk-aff">heatshape GmbH</div>
+        </div>
+        <div class="talk t-app">
+          <div class="talk-head"><span class="talk-title">Modeling the broaching process for a gear shifter sleeve with distorted blanks</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">L. Schuster, N. Nouri, V. Schulze</div>
+          <div class="talk-aff">Karlsruhe Institute of Technology (wbk)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">19:30</div>
+      <div class="content"><div class="t-break">🍷 Banquet</div></div>
+    </div>
+  </div>
+
+  <div class="day">
+    <div class="day-header">Wednesday 9 July</div>
+
+    <div class="slot">
+      <div class="time">09:00 – 10:40</div>
+      <div class="content">
+        <div class="section-title">Session 5 — Integrations &amp; ecosystem</div>
+        <div class="talk t-integ">
+          <div class="talk-head"><span class="talk-title">GmshDG: a multi-GPU Discontinuous Galerkin solver for Maxwell's equations</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">O. Louant, M. Cicuttin, C. Geuzaine</div>
+          <div class="talk-aff">ULiège · Politecnico di Torino</div>
+        </div>
+        <div class="talk t-integ">
+          <div class="talk-head"><span class="talk-title">NX-Magnetics: an industrial implementation of GetDP &amp; Gmsh in Siemens' Simcenter 3D</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">P. Binde</div>
+          <div class="talk-aff">Dr. Binde Ingenieure GmbH</div>
+        </div>
+        <div class="talk t-integ">
+          <div class="talk-head"><span class="talk-title">GmshPlugin for SALOME: advanced mesh generation &amp; sub-mesh strategies</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">M. A. Badri &amp; the SALOME team</div>
+          <div class="talk-aff">CEA</div>
+        </div>
+        <div class="talk t-integ">
+          <div class="talk-head"><span class="talk-title">Gmsh and GetDP in the browser (WebAssembly)</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">A. Sepahvand</div>
+          <div class="talk-aff">Insim.ai</div>
+        </div>
+        <div class="talk t-integ">
+          <div class="talk-head"><span class="talk-title">Meshing in Quanscient Allsolve</span><span class="talk-dur">20 min</span></div>
+          <div class="talk-auth">J. Haapsaari</div>
+          <div class="talk-aff">Quanscient</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">10:40 – 11:10</div>
+      <div class="content"><div class="t-break">☕ Coffee break</div></div>
+    </div>
+
+    <div class="slot">
+      <div class="time">11:10 – 12:25</div>
+      <div class="content">
+        <div class="section-title">Session 6 — Electromagnetics, superconductors &amp; photonics</div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">ONELAB for photonics</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">G. Demésy</div>
+          <div class="talk-aff">Aix-Marseille Université · Institut Fresnel</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">Gmsh applications for finite element simulation of superconductors</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">J. Dular, C. Halvarsson, E. Schnaubelt, A. Verweij, M. Wozniak</div>
+          <div class="talk-aff">ULiège · CERN</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">FiQuS: a Gmsh- and GetDP-based finite element quench simulator at CERN</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">M. Wozniak, J. Dular, C. Halvarsson, E. Schnaubelt, A. Verweij</div>
+          <div class="talk-aff">CERN</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">An open-source 3D FEM electromagnetic solver toolchain using Gmsh and Palace</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">N. Bunke</div>
+          <div class="talk-aff">Technische Universität Berlin</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">TBD</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">J. Gyselinck, R. Sabariego</div>
+          <div class="talk-aff">ULB · KU Leuven</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">12:25 – 14:00</div>
+      <div class="content"><div class="t-poster">🍽 Lunch + poster session — 2nd viewing (95 min)</div></div>
+    </div>
+
+    <div class="slot">
+      <div class="time">14:00 – 15:00</div>
+      <div class="content">
+        <div class="section-title">Session 7 — Solid mechanics, geosciences &amp; transport</div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">TBD</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">J. Lambrechts</div>
+          <div class="talk-aff">UCLouvain (iMMC)</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">Automating geosystem mesh generation with Gmsh (WBGeo)</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">M. Baes, M. Cacace, J. von Harten, A. Lüpges, F. Wellmann, B. Rumpe</div>
+          <div class="talk-aff">GFZ Helmholtz Centre for Geosciences, Potsdam</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">High-definition simulation of packed-bed liquid chromatography</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">X. Xu, E. von Lieres, M. Behr</div>
+          <div class="talk-aff">RWTH Aachen University (CATS)</div>
+        </div>
+        <div class="talk t-fem">
+          <div class="talk-head"><span class="talk-title">Multiscale topology optimization subject to lattice dehomogenization</span><span class="talk-dur">15 min</span></div>
+          <div class="talk-auth">P.-A. Beaufort, E. Kuci</div>
+          <div class="talk-aff">Cenaero</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">15:00 – 15:30</div>
+      <div class="content"><div class="t-break">☕ Coffee break</div></div>
+    </div>
+
+    <div class="slot">
+      <div class="time">15:30 – 16:30</div>
+      <div class="content">
+        <div class="t-wooclap"><strong>Plenary discussion — Wooclap follow-up</strong>: actions, Gmsh roadmap, community priorities</div>
+        <div class="chair">Chaired by C. Geuzaine, J.-F. Remacle</div>
+      </div>
+    </div>
+
+    <div class="slot">
+      <div class="time">16:30</div>
+      <div class="content"><div class="t-break">Closing</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- h2><a name="Sponsors"></a>Sponsors</h2>
+
+Please <a href="https://people.montefiore.uliege.be/geuzaine/">get in touch</a>
+if you want to sponsor the event! -->
+
+<center>
+  <a href="http://www.uliege.be/"><img src="uliege_logo.png" style="height:7ex;
+  margin:2ex" alt=""></a>
+  <a href="http://www.uclouvain.be/"><img src="uclouvain_logo.png"
+  style="height:7ex; margin:2ex" alt=""></a>
+</center>
+
+</body>
+</html>
