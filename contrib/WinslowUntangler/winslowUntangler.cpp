@@ -4,7 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author : Maxence Reberol
-//        : JF Remacle added the support of P2 triangles, parallelize, vectorize and optimized the code
+//        : JF Remacle added the support of P2 triangles, parallelize, vectorize
+//        and optimized the code
 // This module re-implements the constrained 2d/3d untangler described in the
 // paper:
 //
@@ -16,8 +17,10 @@
 #include "winslowUntangler.h"
 
 #include <math.h>
+#include <algorithm>
 #include <cfloat>
 
+#include "gmshLBFGS.h"
 #include "GmshMessage.h"
 #include "OS.h"
 
@@ -42,20 +45,21 @@
 
 size_t perTriangleP2 = 19;
 
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) && defined(HAVE_QUADMESHINGTOOLS)
+#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
+  defined(HAVE_QUADMESHINGTOOLS)
 
 using namespace ArrayGeometry;
 
 namespace WinslowUntangler {
 
-  inline double tri_area(vec2 a, vec2 b, vec2 c)
+  static inline double tri_area(vec2 a, vec2 b, vec2 c)
   {
     return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
                  (a[1] - c[1]) * (a[0] + c[0]));
   }
 
-  double area(const std::vector<std::array<double, 2> > &points,
-              const std::vector<std::array<uint32_t, 3> > &triangles)
+  static double area(const std::vector<std::array<double, 2>> &points,
+                     const std::vector<std::array<uint32_t, 3>> &triangles)
   {
     double sum = 0.;
     for(size_t i = 0; i < triangles.size(); ++i) {
@@ -65,13 +69,13 @@ namespace WinslowUntangler {
     return sum;
   }
 
-  inline double tet_volume(vec3 a, vec3 b, vec3 c, vec3 d)
+  static inline double tet_volume(vec3 a, vec3 b, vec3 c, vec3 d)
   {
     return dot((a - d), cross(b - d, c - d)) / 6.;
   }
 
-  double volume(const std::vector<std::array<double, 3> > &points,
-                const std::vector<std::array<uint32_t, 4> > &tets)
+  static double volume(const std::vector<std::array<double, 3>> &points,
+                       const std::vector<std::array<uint32_t, 4>> &tets)
   {
     double sum = 0.;
     for(size_t i = 0; i < tets.size(); ++i) {
@@ -82,12 +86,12 @@ namespace WinslowUntangler {
     return sum;
   }
 
-  inline double coef_chi(double D, double eps)
+  static inline double coef_chi(double D, double eps)
   {
     return 0.5 * (D + std::sqrt(eps * eps + D * D));
   }
 
-  inline double coef_chip(double D, double eps)
+  static inline double coef_chip(double D, double eps)
   {
     return 0.5 + D / (2. * std::sqrt(eps * eps + D * D));
   }
@@ -109,16 +113,16 @@ namespace WinslowUntangler {
     // half is only used for ensuring jacobian positivity
     bool isP2 = false;
     // ---------------------------------------------------
-    std::vector<std::array<uint32_t, 3> > triangles;
-    std::vector<Eigen::Matrix<double, 3, 2> > tri_normals;
+    std::vector<std::array<uint32_t, 3>> triangles;
+    std::vector<Eigen::Matrix<double, 3, 2>> tri_normals;
 
     // Data for 3D volume
-    std::vector<std::array<uint32_t, 4> > tetrahedra;
-    std::vector<Eigen::Matrix<double, 4, 3> > tet_normals;
+    std::vector<std::array<uint32_t, 4>> tetrahedra;
+    std::vector<Eigen::Matrix<double, 4, 3>> tet_normals;
 
     // Data updated during computations
     std::vector<Eigen::Matrix2d> J_mat_2D;
-    std::vector<Eigen::Matrix<double, 3, 3> > J_mat_3D;
+    std::vector<Eigen::Matrix<double, 3, 3>> J_mat_3D;
     std::vector<double> J_det;
 
     // Stats
@@ -135,9 +139,8 @@ namespace WinslowUntangler {
     std::vector<double> element_energy;
   };
 
-
-  double update_jacobian_matrix(size_t t, UntanglerData &w,
-                                const alglib::real_1d_array &X)
+  static double update_jacobian_matrix(size_t t, UntanglerData &w,
+                                       const std::vector<double> &X)
   {
     if(w.dim == 2) {
       Eigen::Matrix<double, 2, 3> coords;
@@ -165,33 +168,102 @@ namespace WinslowUntangler {
     return -DBL_MAX;
   }
 
-  double compute_energy_and_gradient_2D(UntanglerData &w,
-                                        const alglib::real_1d_array &X,
-                                        alglib::real_1d_array &grad)
+  static void compute_energy_and_gradient_2D_P2(UntanglerData &w,
+                                                const std::vector<double> &X,
+                                                std::vector<double> &grad,
+                                                size_t nElements,
+                                                double &energy)
+  {
+    size_t dT = (perTriangleP2 - 4) / 3;
+    //      printf("%zu %zu\n",(w.triangles.size()-nElements)/dT,nElements);
+    double signs[5] = {1, 1, -1, -1, -1};
+    for(size_t tg = 0; tg < (w.triangles.size() - nElements) / dT; tg++) {
+      // Update jacobian with current triangle coordinates
+      double det = 0.0;
+      for(size_t l = 0; l < dT; l++) {
+        size_t t = nElements + tg * dT;
+        double D = update_jacobian_matrix(t + l, w, X); //
+        det += signs[l] * D;
+      }
+      // printf("det = %12.5E\n", det);
+
+      // Compute energy contribution from
+      // combination of 5 triangles (3 for the moment)
+      const double chi = coef_chi(det, w.eps);
+      const double chip = coef_chip(det, w.eps);
+      const double g_eps = (det * det + 1.) / chi;
+      const double Ec = w.lambda * g_eps;
+
+      if(det < w.J_det_min) w.J_det_min = det;
+      if(det <= 0.) w.nb_invalid += 1;
+      energy += Ec;
+
+      // Compute contribution to global gradient
+      for(size_t j = 0; j < dT; j++) {
+        size_t t = nElements + tg * dT;
+        const double J00 = w.J_mat_2D[t + j](0, 0);
+        const double J01 = w.J_mat_2D[t + j](0, 1);
+        const double J10 = w.J_mat_2D[t + j](1, 0);
+        const double J11 = w.J_mat_2D[t + j](1, 1);
+        const double scale =
+          w.lambda * signs[j] / chi * (2. * det - g_eps * chip);
+        const double d00 = scale * J11;
+        const double d10 = -scale * J01;
+        const double d01 = -scale * J10;
+        const double d11 = scale * J00;
+
+        for(size_t k = 0; k < 3; ++k) {
+          uint32_t v = w.triangles[t + j][k];
+          if(w.locked[v]) continue;
+          const double n0 = w.tri_normals[t + j](k, 0);
+          const double n1 = w.tri_normals[t + j](k, 1);
+          grad[2 * v + 0] += d00 * n0 + d10 * n1;
+          grad[2 * v + 1] += d01 * n0 + d11 * n1;
+        }
+      }
+    }
+  }
+
+  static double compute_energy_and_gradient_2D(UntanglerData &w,
+                                               const std::vector<double> &X,
+                                               std::vector<double> &grad)
   {
     // Initial values
     w.J_det_min = DBL_MAX;
     w.nb_invalid = 0;
     double energy = 0.;
-    Eigen::Vector2d a_i, b_i;
 
-    for(size_t i = 0; i < grad.length(); ++i) grad[i] = 0.;
+    for(size_t i = 0; i < grad.size(); ++i) grad[i] = 0.;
 
     // Loop over triangle/tet contributions
     const size_t nElements =
-      w.isP2 ? 4 * (w.triangles.size() / perTriangleP2) :
-               w.triangles.size();
+      w.isP2 ? 4 * (w.triangles.size() / perTriangleP2) : w.triangles.size();
 
     for(size_t t = 0; t < nElements; t++) {
-      // Update jacobian with current triangle coordinates
-      const double det = /*dets[t];//*/update_jacobian_matrix(t, w, X);//
-      // printf("det = %12.5E\n", det);
+      const auto &tri = w.triangles[t];
+      const auto &N = w.tri_normals[t];
+
+      const double x0 = X[2 * tri[0] + 0], y0 = X[2 * tri[0] + 1];
+      const double x1 = X[2 * tri[1] + 0], y1 = X[2 * tri[1] + 1];
+      const double x2 = X[2 * tri[2] + 0], y2 = X[2 * tri[2] + 1];
+
+      const double J00 = x0 * N(0, 0) + x1 * N(1, 0) + x2 * N(2, 0);
+      const double J10 = x0 * N(0, 1) + x1 * N(1, 1) + x2 * N(2, 1);
+      const double J01 = y0 * N(0, 0) + y1 * N(1, 0) + y2 * N(2, 0);
+      const double J11 = y0 * N(0, 1) + y1 * N(1, 1) + y2 * N(2, 1);
+
+      const double det = J00 * J11 - J01 * J10;
+      w.J_mat_2D[t](0, 0) = J00;
+      w.J_mat_2D[t](0, 1) = J01;
+      w.J_mat_2D[t](1, 0) = J10;
+      w.J_mat_2D[t](1, 1) = J11;
+      w.J_det[t] = det;
 
       // Compute energy contribution from triangle
       const double chi = coef_chi(det, w.eps);
       const double chip = coef_chip(det, w.eps);
-      const double f_eps =
-        (w.J_mat_2D[t].transpose() * w.J_mat_2D[t]).trace() / chi;
+      const double traceJtJ = J00 * J00 + J10 * J10 + J01 * J01 + J11 * J11;
+      const double f_eps = traceJtJ / chi;
       const double g_eps = (det * det + 1.) / chi;
       const double Ec = f_eps + w.lambda * g_eps;
       // printf("%12.5E %12.5E %12.5E %12.5E\n", f_eps, g_eps, det, chi);
@@ -201,88 +273,28 @@ namespace WinslowUntangler {
       energy += Ec;
 
       // Compute contribution to global gradient
-      for(size_t i = 0; i < 2; ++i) {
-        a_i = w.J_mat_2D[t].col(i);
-        if(i == 0) {
-          b_i(0) = w.J_mat_2D[t](1, 1);
-          b_i(1) = -w.J_mat_2D[t](0, 1);
-        }
-        else {
-          b_i(0) = -w.J_mat_2D[t](1, 0);
-          b_i(1) = w.J_mat_2D[t](0, 0);
-        };
+      const double coeff =
+        f_eps * chip - 2. * w.lambda * det + w.lambda * g_eps * chip;
+      const double scaleA = 2. / chi;
+      const double scaleB = coeff / chi;
+      const double d00 = scaleA * J00 - scaleB * J11;
+      const double d10 = scaleA * J10 + scaleB * J01;
+      const double d01 = scaleA * J01 + scaleB * J10;
+      const double d11 = scaleA * J11 - scaleB * J00;
 
-        Eigen::Vector2d dphi_da =
-          2. / chi * a_i -
-          1. / chi *
-            (f_eps * chip - 2. * w.lambda * det +
-             w.lambda * g_eps * chip) *
-            b_i;
-
-        for(size_t k = 0; k < 3; ++k) {
-          uint32_t v = w.triangles[t][k];
-          double gc = 0;
-          if(!w.locked[v]) gc = dphi_da.dot(w.tri_normals[t].row(k));
-          grad[2 * v + i] += gc;
-        }
+      for(size_t k = 0; k < 3; ++k) {
+        uint32_t v = tri[k];
+        if(w.locked[v]) continue;
+        const double n0 = N(k, 0), n1 = N(k, 1);
+        grad[2 * v + 0] += d00 * n0 + d10 * n1;
+        grad[2 * v + 1] += d01 * n0 + d11 * n1;
       }
     }
 
     //    printf("COMPUTING ENERGY eps = %22.15E\n",w.eps);
 
     if(w.isP2 && 0) {
-      size_t dT = (perTriangleP2 - 4) / 3;
-      //      printf("%zu %zu\n",(w.triangles.size()-nElements)/dT,nElements);
-      double signs[5] = {1, 1, -1, -1, -1};
-      for(size_t tg = 0; tg < (w.triangles.size() - nElements) / dT; tg++) {
-        // Update jacobian with current triangle coordinates
-        double det = 0.0;
-        for(size_t l = 0; l < dT; l++) {
-          size_t t = nElements + tg * dT;
-          double D = update_jacobian_matrix(t + l, w, X); //
-          det += signs[l] * D;
-        }
-        // printf("det = %12.5E\n", det);
-
-        // Compute energy contribution from
-        // combination of 5 triangles (3 for the moment)
-        const double chi = coef_chi(det, w.eps);
-        const double chip = coef_chip(det, w.eps);
-        const double g_eps = (det * det + 1.) / chi;
-        const double Ec = w.lambda * g_eps;
-
-        if(det < w.J_det_min) w.J_det_min = det;
-        if(det <= 0.) w.nb_invalid += 1;
-        energy += Ec;
-
-        // Compute contribution to global gradient
-        for(size_t j = 0; j < dT; j++) {
-          size_t t = nElements + tg * dT;
-
-          for(size_t i = 0; i < 2; ++i) {
-            Eigen::Vector2d a_i = w.J_mat_2D[t + j].col(i);
-            Eigen::Vector2d b_i;
-            if(i == 0) {
-              b_i(0) = w.J_mat_2D[t + j](1, 1);
-              b_i(1) = -w.J_mat_2D[t + j](0, 1);
-            }
-            else {
-              b_i(0) = -w.J_mat_2D[t + j](1, 0);
-              b_i(1) = w.J_mat_2D[t + j](0, 0);
-            };
-
-            Eigen::Vector2d dphi_da =
-              w.lambda * signs[j] / chi * (2. * det - g_eps * chip) * b_i;
-
-            for(size_t k = 0; k < 3; ++k) {
-              uint32_t v = w.triangles[t + j][k];
-              double gc = 0;
-              if(!w.locked[v]) gc = dphi_da.dot(w.tri_normals[t + j].row(k));
-              grad[2 * v + i] += gc;
-            }
-          }
-        }
-      }
+      compute_energy_and_gradient_2D_P2(w, X, grad, nElements, energy);
     }
 
     //    printf("energy = %12.5E\n",energy);
@@ -292,17 +304,15 @@ namespace WinslowUntangler {
     return w.energy;
   }
 
-
-  double compute_energy_and_gradient3D_scalarized(UntanglerData &w,
-                                                  const alglib::real_1d_array &X,
-                                                  alglib::real_1d_array &grad)
+  static double compute_energy_and_gradient3D_scalarized(
+    UntanglerData &w, const std::vector<double> &X, std::vector<double> &grad)
   {
     w.J_det_min = DBL_MAX;
     w.nb_invalid = 0;
     double energy = 0.;
 
     const size_t nElements = w.tetrahedra.size();
-    const size_t gradLength = grad.length();
+    const size_t gradLength = grad.size();
     int nthreads = 1;
 #if defined(_OPENMP)
     const int maxThreads3DScalarized = 8;
@@ -340,104 +350,103 @@ namespace WinslowUntangler {
       double *gradLocal = &GL[thread_num * gradLength];
       for(size_t i = 0; i < gradLength; ++i) gradLocal[i] = 0.;
 
-      const size_t tBegin = nElements * (size_t)thread_num /
-                            (size_t)actual_threads;
-      const size_t tEnd = nElements * (size_t)(thread_num + 1) /
-                          (size_t)actual_threads;
+      const size_t tBegin =
+        nElements * (size_t)thread_num / (size_t)actual_threads;
+      const size_t tEnd =
+        nElements * (size_t)(thread_num + 1) / (size_t)actual_threads;
       for(size_t t = tBegin; t < tEnd; t++) {
         const auto &tet = w.tetrahedra[t];
         const auto &N = w.tet_normals[t];
 
-      const double x0 = X[3 * tet[0] + 0], y0 = X[3 * tet[0] + 1],
-                   z0 = X[3 * tet[0] + 2];
-      const double x1 = X[3 * tet[1] + 0], y1 = X[3 * tet[1] + 1],
-                   z1 = X[3 * tet[1] + 2];
-      const double x2 = X[3 * tet[2] + 0], y2 = X[3 * tet[2] + 1],
-                   z2 = X[3 * tet[2] + 2];
-      const double x3 = X[3 * tet[3] + 0], y3 = X[3 * tet[3] + 1],
-                   z3 = X[3 * tet[3] + 2];
+        const double x0 = X[3 * tet[0] + 0], y0 = X[3 * tet[0] + 1],
+                     z0 = X[3 * tet[0] + 2];
+        const double x1 = X[3 * tet[1] + 0], y1 = X[3 * tet[1] + 1],
+                     z1 = X[3 * tet[1] + 2];
+        const double x2 = X[3 * tet[2] + 0], y2 = X[3 * tet[2] + 1],
+                     z2 = X[3 * tet[2] + 2];
+        const double x3 = X[3 * tet[3] + 0], y3 = X[3 * tet[3] + 1],
+                     z3 = X[3 * tet[3] + 2];
 
-      const double J00 = x0 * N(0, 0) + x1 * N(1, 0) + x2 * N(2, 0) +
-                         x3 * N(3, 0);
-      const double J10 = x0 * N(0, 1) + x1 * N(1, 1) + x2 * N(2, 1) +
-                         x3 * N(3, 1);
-      const double J20 = x0 * N(0, 2) + x1 * N(1, 2) + x2 * N(2, 2) +
-                         x3 * N(3, 2);
-      const double J01 = y0 * N(0, 0) + y1 * N(1, 0) + y2 * N(2, 0) +
-                         y3 * N(3, 0);
-      const double J11 = y0 * N(0, 1) + y1 * N(1, 1) + y2 * N(2, 1) +
-                         y3 * N(3, 1);
-      const double J21 = y0 * N(0, 2) + y1 * N(1, 2) + y2 * N(2, 2) +
-                         y3 * N(3, 2);
-      const double J02 = z0 * N(0, 0) + z1 * N(1, 0) + z2 * N(2, 0) +
-                         z3 * N(3, 0);
-      const double J12 = z0 * N(0, 1) + z1 * N(1, 1) + z2 * N(2, 1) +
-                         z3 * N(3, 1);
-      const double J22 = z0 * N(0, 2) + z1 * N(1, 2) + z2 * N(2, 2) +
-                         z3 * N(3, 2);
+        const double J00 =
+          x0 * N(0, 0) + x1 * N(1, 0) + x2 * N(2, 0) + x3 * N(3, 0);
+        const double J10 =
+          x0 * N(0, 1) + x1 * N(1, 1) + x2 * N(2, 1) + x3 * N(3, 1);
+        const double J20 =
+          x0 * N(0, 2) + x1 * N(1, 2) + x2 * N(2, 2) + x3 * N(3, 2);
+        const double J01 =
+          y0 * N(0, 0) + y1 * N(1, 0) + y2 * N(2, 0) + y3 * N(3, 0);
+        const double J11 =
+          y0 * N(0, 1) + y1 * N(1, 1) + y2 * N(2, 1) + y3 * N(3, 1);
+        const double J21 =
+          y0 * N(0, 2) + y1 * N(1, 2) + y2 * N(2, 2) + y3 * N(3, 2);
+        const double J02 =
+          z0 * N(0, 0) + z1 * N(1, 0) + z2 * N(2, 0) + z3 * N(3, 0);
+        const double J12 =
+          z0 * N(0, 1) + z1 * N(1, 1) + z2 * N(2, 1) + z3 * N(3, 1);
+        const double J22 =
+          z0 * N(0, 2) + z1 * N(1, 2) + z2 * N(2, 2) + z3 * N(3, 2);
 
-      const double det = J00 * (J11 * J22 - J12 * J21) -
-                         J01 * (J10 * J22 - J12 * J20) +
-                         J02 * (J10 * J21 - J11 * J20);
-      w.J_det[t] = det;
+        const double det = J00 * (J11 * J22 - J12 * J21) -
+                           J01 * (J10 * J22 - J12 * J20) +
+                           J02 * (J10 * J21 - J11 * J20);
+        w.J_det[t] = det;
 
-      const double chi = coef_chi(det, w.eps);
-      const double chip = coef_chip(det, w.eps);
-      const double chi13 = std::cbrt(chi);
-      const double chi23 = chi13 * chi13;
-      const double traceJtJ =
-        J00 * J00 + J10 * J10 + J20 * J20 + J01 * J01 + J11 * J11 +
-        J21 * J21 + J02 * J02 + J12 * J12 + J22 * J22;
-      const double f_eps = traceJtJ / chi23;
-      const double g_eps = (det * det + 1.) / chi;
-      const double Ec = f_eps + w.lambda * g_eps;
+        const double chi = coef_chi(det, w.eps);
+        const double chip = coef_chip(det, w.eps);
+        const double chi13 = std::cbrt(chi);
+        const double chi23 = chi13 * chi13;
+        const double traceJtJ = J00 * J00 + J10 * J10 + J20 * J20 + J01 * J01 +
+                                J11 * J11 + J21 * J21 + J02 * J02 + J12 * J12 +
+                                J22 * J22;
+        const double f_eps = traceJtJ / chi23;
+        const double g_eps = (det * det + 1.) / chi;
+        const double Ec = f_eps + w.lambda * g_eps;
 
-      w.element_energy[t] = Ec;
+        w.element_energy[t] = Ec;
 
-      const double coeff =
-        2. / 3. * f_eps * chip - 2. * w.lambda * det +
-        w.lambda * g_eps * chip;
-      const double scaleA = 2. / chi23;
-      const double scaleB = coeff / chi;
+        const double coeff = 2. / 3. * f_eps * chip - 2. * w.lambda * det +
+                             w.lambda * g_eps * chip;
+        const double scaleA = 2. / chi23;
+        const double scaleB = coeff / chi;
 
-      const double b00 = J11 * J22 - J21 * J12;
-      const double b10 = J21 * J02 - J01 * J22;
-      const double b20 = J01 * J12 - J11 * J02;
-      const double d00 = scaleA * J00 - scaleB * b00;
-      const double d10 = scaleA * J10 - scaleB * b10;
-      const double d20 = scaleA * J20 - scaleB * b20;
+        const double b00 = J11 * J22 - J21 * J12;
+        const double b10 = J21 * J02 - J01 * J22;
+        const double b20 = J01 * J12 - J11 * J02;
+        const double d00 = scaleA * J00 - scaleB * b00;
+        const double d10 = scaleA * J10 - scaleB * b10;
+        const double d20 = scaleA * J20 - scaleB * b20;
 
-      const double b01 = J12 * J20 - J22 * J10;
-      const double b11 = J22 * J00 - J02 * J20;
-      const double b21 = J02 * J10 - J12 * J00;
-      const double d01 = scaleA * J01 - scaleB * b01;
-      const double d11 = scaleA * J11 - scaleB * b11;
-      const double d21 = scaleA * J21 - scaleB * b21;
+        const double b01 = J12 * J20 - J22 * J10;
+        const double b11 = J22 * J00 - J02 * J20;
+        const double b21 = J02 * J10 - J12 * J00;
+        const double d01 = scaleA * J01 - scaleB * b01;
+        const double d11 = scaleA * J11 - scaleB * b11;
+        const double d21 = scaleA * J21 - scaleB * b21;
 
-      const double b02 = J10 * J21 - J20 * J11;
-      const double b12 = J20 * J01 - J00 * J21;
-      const double b22 = J00 * J11 - J10 * J01;
-      const double d02 = scaleA * J02 - scaleB * b02;
-      const double d12 = scaleA * J12 - scaleB * b12;
-      const double d22 = scaleA * J22 - scaleB * b22;
+        const double b02 = J10 * J21 - J20 * J11;
+        const double b12 = J20 * J01 - J00 * J21;
+        const double b22 = J00 * J11 - J10 * J01;
+        const double d02 = scaleA * J02 - scaleB * b02;
+        const double d12 = scaleA * J12 - scaleB * b12;
+        const double d22 = scaleA * J22 - scaleB * b22;
 
-      for(size_t k = 0; k < 4; ++k) {
-        uint32_t v = tet[k];
-        if(w.locked[v]) continue;
-        const double n0 = N(k, 0), n1 = N(k, 1), n2 = N(k, 2);
-        gradLocal[3 * v + 0] += d00 * n0 + d10 * n1 + d20 * n2;
-        gradLocal[3 * v + 1] += d01 * n0 + d11 * n1 + d21 * n2;
-        gradLocal[3 * v + 2] += d02 * n0 + d12 * n1 + d22 * n2;
-	      }
+        for(size_t k = 0; k < 4; ++k) {
+          uint32_t v = tet[k];
+          if(w.locked[v]) continue;
+          const double n0 = N(k, 0), n1 = N(k, 1), n2 = N(k, 2);
+          gradLocal[3 * v + 0] += d00 * n0 + d10 * n1 + d20 * n2;
+          gradLocal[3 * v + 1] += d01 * n0 + d11 * n1 + d21 * n2;
+          gradLocal[3 * v + 2] += d02 * n0 + d12 * n1 + d22 * n2;
+        }
       }
 
 #if defined(_OPENMP)
 #pragma omp barrier
 #endif
-      const size_t gBegin = gradLength * (size_t)thread_num /
-                            (size_t)actual_threads;
-      const size_t gEnd = gradLength * (size_t)(thread_num + 1) /
-                          (size_t)actual_threads;
+      const size_t gBegin =
+        gradLength * (size_t)thread_num / (size_t)actual_threads;
+      const size_t gEnd =
+        gradLength * (size_t)(thread_num + 1) / (size_t)actual_threads;
       for(size_t i = gBegin; i < gEnd; ++i) {
         double g = 0.;
         for(int j = 0; j < actual_threads; ++j)
@@ -458,45 +467,59 @@ namespace WinslowUntangler {
     return w.energy;
   }
 
-  void lbfgs_callback(const alglib::real_1d_array &x, double &f,
-                      alglib::real_1d_array &grad, void *ptr)
+  struct AlglibLBFGSData {
+    UntanglerData *data = nullptr;
+    std::vector<double> x;
+    std::vector<double> grad;
+  };
+
+  static void lbfgs_callback(const alglib::real_1d_array &x, double &f,
+                             alglib::real_1d_array &grad, void *ptr)
   {
-    UntanglerData *wp = static_cast<UntanglerData *>(ptr);
-    UntanglerData &w = *wp;
+    AlglibLBFGSData *callbackData = static_cast<AlglibLBFGSData *>(ptr);
+    UntanglerData &w = *callbackData->data;
     double t1 = TimeOfDay();
-    f = (w.dim == 3) ? compute_energy_and_gradient3D_scalarized(w, x, grad) :
-                       compute_energy_and_gradient_2D(w, x, grad);
+    callbackData->x.resize(x.length());
+    callbackData->grad.resize(x.length());
+    for(size_t i = 0; i < x.length(); ++i) callbackData->x[i] = x[i];
+    f =
+      (w.dim == 3) ?
+        compute_energy_and_gradient3D_scalarized(w, callbackData->x,
+                                                 callbackData->grad) :
+        compute_energy_and_gradient_2D(w, callbackData->x, callbackData->grad);
+    for(size_t i = 0; i < x.length(); ++i) grad[i] = callbackData->grad[i];
     w.profile_callback += TimeOfDay() - t1;
     w.profile_callback_calls++;
   }
 
-  void checkIfP2(UntanglerData &data, std::vector<size_t> &permut) {
-    if (perTriangleP2 < 10)return;
+  static void checkIfP2(UntanglerData &data, std::vector<size_t> &permut)
+  {
+    if(perTriangleP2 < 10) return;
     // if P2 triangles are considered, I send to
     // the optimizer the three "bezier corner" triangles
-    if (data.triangles.size() % perTriangleP2 != 0) return;
+    if(data.triangles.size() % perTriangleP2 != 0) return;
     // Three successive triangles should always be numbered as
     // (a,d,f)(b,e,d)(c,f,e) which correspond to bezier triangles
-    for (size_t i=0; i<data.triangles.size(); i+=perTriangleP2){
-      auto t1 = data.triangles[i+0];
-      auto t2 = data.triangles[i+1];
-      auto t3 = data.triangles[i+2];
-      if (t1[1] != t2[2])return;
-      if (t2[1] != t3[2])return;
-      if (t3[1] != t1[2])return;
+    for(size_t i = 0; i < data.triangles.size(); i += perTriangleP2) {
+      auto t1 = data.triangles[i + 0];
+      auto t2 = data.triangles[i + 1];
+      auto t3 = data.triangles[i + 2];
+      if(t1[1] != t2[2]) return;
+      if(t2[1] != t3[2]) return;
+      if(t3[1] != t1[2]) return;
     }
     auto xxx = data.triangles;
     data.triangles.clear();
-    for (size_t i=0; i<xxx.size(); i+=perTriangleP2){
-      for (size_t j=0;j<4;j++){
-	permut.push_back(i+j);
-	data.triangles.push_back(xxx[i+j]);
+    for(size_t i = 0; i < xxx.size(); i += perTriangleP2) {
+      for(size_t j = 0; j < 4; j++) {
+        permut.push_back(i + j);
+        data.triangles.push_back(xxx[i + j]);
       }
     }
-    for (size_t i=0; i<xxx.size(); i+=perTriangleP2){
-      for (size_t j=4;j<perTriangleP2;j++){
-	permut.push_back(i+j);
-	data.triangles.push_back(xxx[i+j]);
+    for(size_t i = 0; i < xxx.size(); i += perTriangleP2) {
+      for(size_t j = 4; j < perTriangleP2; j++) {
+        permut.push_back(i + j);
+        data.triangles.push_back(xxx[i + j]);
       }
     }
 
@@ -505,11 +528,11 @@ namespace WinslowUntangler {
     printf(" --- > FOUND A P2 MESH\n");
   }
 
-  bool prepareData2D(
-    const std::vector<std::array<double, 2> > &points,
+  static bool prepareData2D(
+    const std::vector<std::array<double, 2>> &points,
     const std::vector<bool> &locked,
-    const std::vector<std::array<uint32_t, 3> > &tris,
-    const std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+    const std::vector<std::array<uint32_t, 3>> &tris,
+    const std::vector<std::array<std::array<double, 2>, 3>> &triIdealShapes,
     UntanglerData &data)
   {
     if(triIdealShapes.size() != 0 &&
@@ -526,13 +549,14 @@ namespace WinslowUntangler {
     // If it is true, add additional triangles that allow
     // to verify the positivity of P2 triangles ...
     std::vector<size_t> permut;
-    checkIfP2 (data,permut);
+    checkIfP2(data, permut);
     // ----------------------------------------------------
     data.locked = locked;
     data.J_mat_2D.resize(data.triangles.size());
     data.J_det.resize(data.triangles.size(), 0.);
     data.tri_normals.resize(data.triangles.size());
-    double avg_tri_area = area(points, data.triangles) / double(data.triangles.size());
+    double avg_tri_area =
+      area(points, data.triangles) / double(data.triangles.size());
     if(avg_tri_area <= 0) {
       Msg::Warning(
         "Winslow untangler 2D: average triangle area is negative: %.3e",
@@ -577,8 +601,11 @@ namespace WinslowUntangler {
     }
 
     // Update jacobian matrices with current triangle coordinates
-    alglib::real_1d_array x0;
-    x0.setcontent(2 * points.size(), points.front().data());
+    std::vector<double> x0(2 * points.size());
+    for(size_t i = 0; i < points.size(); ++i) {
+      x0[2 * i + 0] = points[i][0];
+      x0[2 * i + 1] = points[i][1];
+    }
     data.J_det_min = DBL_MAX;
     data.nb_invalid = 0;
     data.energy = 0.;
@@ -591,7 +618,8 @@ namespace WinslowUntangler {
       std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
 
     // Compute initial energy
-    size_t max_t = data.isP2 ? 4*(data.triangles.size()/perTriangleP2) : data.triangles.size();
+    size_t max_t = data.isP2 ? 4 * (data.triangles.size() / perTriangleP2) :
+                               data.triangles.size();
     for(size_t t = 0; t < max_t; t++) {
       //      printf("%zu %g\n",t,data.J_det[t]);
       const double det = data.J_det[t];
@@ -604,11 +632,11 @@ namespace WinslowUntangler {
     }
     // P2 extension
 
-    size_t dT = (perTriangleP2 - 4)/3;
-    double signs[5] = {1,1,-1,-1,-1};
-    for(size_t t = max_t; t < data.triangles.size(); t+=dT) {
+    size_t dT = (perTriangleP2 - 4) / 3;
+    double signs[5] = {1, 1, -1, -1, -1};
+    for(size_t t = max_t; t < data.triangles.size(); t += dT) {
       double det = 0;
-      for (size_t l=0;l<dT;l++)det += signs[l] * data.J_det[t+l];
+      for(size_t l = 0; l < dT; l++) det += signs[l] * data.J_det[t + l];
 
       const double chi = coef_chi(det, data.eps);
       const double g_eps = (det * det + 1.) / chi;
@@ -619,11 +647,11 @@ namespace WinslowUntangler {
     return true;
   }
 
-  bool prepareData3D(
-    const std::vector<std::array<double, 3> > &points,
+  static bool prepareData3D(
+    const std::vector<std::array<double, 3>> &points,
     const std::vector<bool> &locked,
-    const std::vector<std::array<uint32_t, 4> > &tets,
-    const std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
+    const std::vector<std::array<uint32_t, 4>> &tets,
+    const std::vector<std::array<std::array<double, 3>, 4>> &tetIdealShapes,
     UntanglerData &data)
   {
     if(tetIdealShapes.size() != 0 &&
@@ -662,8 +690,10 @@ namespace WinslowUntangler {
     //    double avg_ideal_vol = 1.;
     //    if(tetIdealShapes.size() > 0.) {
     //      for(size_t t = 0; t < tetIdealShapes.size(); ++t) {
-    //        avg_ideal_vol += tet_volume(tetIdealShapes[t][0], tetIdealShapes[t][1],
-    //                                    tetIdealShapes[t][2], tetIdealShapes[t][3]);
+    //        avg_ideal_vol += tet_volume(tetIdealShapes[t][0],
+    //        tetIdealShapes[t][1],
+    //                                    tetIdealShapes[t][2],
+    //                                    tetIdealShapes[t][3]);
     //      }
     //      avg_ideal_vol /= double(tetIdealShapes.size());
     //    }
@@ -709,8 +739,12 @@ namespace WinslowUntangler {
     }
 
     // Update jacobian matrices with current triangle coordinates
-    alglib::real_1d_array x0;
-    x0.setcontent(3 * points.size(), points.front().data());
+    std::vector<double> x0(3 * points.size());
+    for(size_t i = 0; i < points.size(); ++i) {
+      x0[3 * i + 0] = points[i][0];
+      x0[3 * i + 1] = points[i][1];
+      x0[3 * i + 2] = points[i][2];
+    }
     data.J_det_min = DBL_MAX;
     data.nb_invalid = 0;
     data.energy = 0.;
@@ -738,8 +772,8 @@ namespace WinslowUntangler {
     return true;
   }
 
-  void optional_lbfgs_callback(const alglib::real_1d_array &x, double func,
-                               void *ptr)
+  static void optional_lbfgs_callback(const alglib::real_1d_array &x,
+                                      double func, void *ptr)
   {
     (void)x;
     (void)ptr;
@@ -748,43 +782,46 @@ namespace WinslowUntangler {
 
   // same function for 2D and 3D to avoid redundant code
   // only the structs of the appropriate dimension are used
-  bool untangle_simplex_elements(
-    size_t dim, std::vector<std::array<double, 2> > &points2D,
-    std::vector<std::array<double, 3> > &points3D,
+  static bool untangle_simplex_elements(
+    size_t dim, std::vector<std::array<double, 2>> &points2D,
+    std::vector<std::array<double, 3>> &points3D,
     const std::vector<bool> &locked,
-    const std::vector<std::array<uint32_t, 3> > &triangles,
-    const std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
-    const std::vector<std::array<uint32_t, 4> > &tetrahedra,
-    const std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
+    const std::vector<std::array<uint32_t, 3>> &triangles,
+    const std::vector<std::array<std::array<double, 2>, 3>> &triIdealShapes,
+    const std::vector<std::array<uint32_t, 4>> &tetrahedra,
+    const std::vector<std::array<std::array<double, 3>, 4>> &tetIdealShapes,
     double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
     double timeMax,
-    const std::function<void (const std::vector<std::array<double, 2> > &points,
-                              const std::vector<std::array<uint32_t, 3> > &triangles,
-                              std::vector<double> &s, // size and grad sizes at nodes
-                              std::vector<std::array<double, 3> > &grads)> & sizeField,
-    const std::function<void (const std::vector<std::array<double, 2> > &points,
-                              const std::vector<std::array<uint32_t, 3> > &triangles,
-                              std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes)> &updateIdealTriangularShapes)
+    const std::function<
+      void(const std::vector<std::array<double, 2>> &points,
+           const std::vector<std::array<uint32_t, 3>> &triangles,
+           std::vector<double> &s, // size and grad sizes at nodes
+           std::vector<std::array<double, 3>> &grads)> &sizeField,
+    const std::function<
+      void(const std::vector<std::array<double, 2>> &points,
+           const std::vector<std::array<uint32_t, 3>> &triangles,
+           std::vector<std::array<std::array<double, 2>, 3>> &triIdealShapes)>
+      &updateIdealTriangularShapes)
   {
     if(dim != 2 && dim != 3) return false;
     if(dim == 2 && (points2D.size() == 0 || triangles.size() == 0)) {
-      Msg::Warning(
-        "Wrong input sizes (%li vertices, %li triangles) in 2D Winslow untangler",
-        points2D.size(), triangles.size());
+      Msg::Warning("Wrong input sizes (%li vertices, %li triangles) in 2D "
+                   "Winslow untangler",
+                   points2D.size(), triangles.size());
       return false;
     }
     if(dim == 3 && (points3D.size() == 0 || tetrahedra.size() == 0)) {
-      Msg::Warning(
-        "Wrong input sizes (%li vertices, %li tetrahedra) in 3D Windlow untangler",
-        points2D.size(), triangles.size());
+      Msg::Warning("Wrong input sizes (%li vertices, %li tetrahedra) in 3D "
+                   "Windlow untangler",
+                   points2D.size(), triangles.size());
       return false;
     }
     (void)sizeField;
 
     // Save initial positions, in case they need to be restored
     bool restore = false;
-    std::vector<std::array<double, 2> > backup2D = points2D;
-    std::vector<std::array<double, 3> > backup3D = points3D;
+    std::vector<std::array<double, 2>> backup2D = points2D;
+    std::vector<std::array<double, 3>> backup3D = points3D;
 
     UntanglerData data;
     data.lambda = lambda;
@@ -816,41 +853,90 @@ namespace WinslowUntangler {
     double t0 = Cpu();
     double E_prev = data.energy;
     // Copy positions in solver array
-    alglib::real_1d_array x;
-    x.setcontent(dim * NV, points);
-    alglib::real_1d_array grad;
-    grad.setcontent(dim * NV, points);
+    std::vector<double> x(dim * NV);
+    for(size_t i = 0; i < x.size(); ++i) x[i] = points[i];
 
     for(int iter = 0; iter < iterMaxOuter; iter++) {
       // Update regularized epsilon parameter
-      data.eps = std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
+      data.eps =
+        std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
 
       //      printf("eps %g %d %d\n",data.eps,  iterMaxOuter, iterMaxInner);
-      
+
       double epsg = 1.e-4;
       double epsf = 1.e-12;
       double epsx = 1.e-12;
-      // LBFGS from ALGLIB
+      // LBFGS solver: 0 = ALGLIB, 1 = GmshLBFGS skeleton
+      static int lbfgsSolver = 1;
       int lbfgsIter = 0;
       try {
+        int terminationType = 0;
+        if(lbfgsSolver == 0) {
+          alglib::real_1d_array xAlg;
+          xAlg.setcontent((alglib::ae_int_t)x.size(), x.data());
+          AlglibLBFGSData callbackData;
+          callbackData.data = &data;
+          // Setup of the LBFGS solver
+          alglib::ae_int_t N = dim * NV;
+          alglib::ae_int_t corr =
+            N < 15 ? N : 15; // Num of corrections in the scheme in [3,7]
+          alglib::minlbfgsstate state;
+          alglib::minlbfgsreport rep;
+          minlbfgscreate(N, corr, xAlg, state);
+          // LBFGS stopping criteria
+          minlbfgssetcond(state, epsg, epsf, epsx,
+                          (alglib::ae_int_t)iterMaxInner);
+          // Run LBFGS
+          double tLbfgs = TimeOfDay();
+          minlbfgsoptimize(state, lbfgs_callback, optional_lbfgs_callback,
+                           &callbackData);
+          data.profile_lbfgs += TimeOfDay() - tLbfgs;
 
-        // Setup of the LBFGS solver
-        alglib::ae_int_t N = dim * NV;
-        alglib::ae_int_t corr = N < 15 ? N : 15; // Num of corrections in the scheme in [3,7]
-        alglib::minlbfgsstate state;
-        alglib::minlbfgsreport rep;
-        minlbfgscreate(N, corr, x, state);
-        // LBFGS stopping criteria
-        minlbfgssetcond(state, epsg, epsf, epsx,
-                        (alglib::ae_int_t)iterMaxInner);
-        // Run LBFGS
-        double tLbfgs = TimeOfDay();
-        minlbfgsoptimize(state, lbfgs_callback, optional_lbfgs_callback,
-                         &data);
-        data.profile_lbfgs += TimeOfDay() - tLbfgs;
+          // Extract coordinates
+          minlbfgsresults(state, xAlg, rep);
+          for(size_t i = 0; i < x.size(); ++i) x[i] = xAlg[i];
+          lbfgsIter = rep.iterationscount;
+          terminationType = rep.terminationtype;
+        }
+        else {
+          GmshLBFGS::Options options;
+          options.maxIterations = iterMaxInner;
+          options.memory = (int)std::min<size_t>(15, x.size());
+          options.gradientTolerance = epsg;
+          options.functionTolerance = epsf;
+          options.stepTolerance = epsx;
+          options.maxLineSearchSteps = 80;
+          options.verbose = 0;
+          options.numThreads = 8;
 
-        // Extract coordinates
-        minlbfgsresults(state, x, rep);
+          auto fg = [&data](const std::vector<double> &xin,
+                            std::vector<double> &gout) {
+            double t1 = TimeOfDay();
+            double f =
+              (data.dim == 3) ?
+                compute_energy_and_gradient3D_scalarized(data, xin, gout) :
+                compute_energy_and_gradient_2D(data, xin, gout);
+            data.profile_callback += TimeOfDay() - t1;
+            data.profile_callback_calls++;
+            return f;
+          };
+
+          double tLbfgs = TimeOfDay();
+          GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, options);
+          data.profile_lbfgs += TimeOfDay() - tLbfgs;
+
+          lbfgsIter = result.iterations;
+          terminationType = result.converged ? 4 : result.terminationType;
+          Msg::Info("GmshLBFGS profiling: total %g s, function %g s, "
+                    "direction %g s, line-search %g s, update %g s, "
+                    "unaccounted %g s, evaluations %d",
+                    result.timeTotal, result.timeFunction, result.timeDirection,
+                    result.timeLineSearch, result.timeUpdate,
+                    result.timeTotal - result.timeFunction -
+                      result.timeDirection - result.timeLineSearch -
+                      result.timeUpdate,
+                    result.functionEvaluations);
+        }
 
         for(size_t v = 0; v < NV; ++v) {
           for(size_t d = 0; d < dim; ++d) {
@@ -864,11 +950,9 @@ namespace WinslowUntangler {
           prepareData2D(points2D, locked, triangles, triIdealShapesS, data);
         }
 
-        if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
-        lbfgsIter = rep.iterationscount;
-        Msg::Debug(" detmin = %22.15E eps= %22.15E %zu iter term %zu",
-                  data.J_det_min, data.eps, rep.iterationscount,
-                  rep.terminationtype);
+        if(terminationType != 4 && terminationType != 5) { nFail += 1; }
+        Msg::Debug(" detmin = %22.15E eps= %22.15E %i iter term %i",
+                   data.J_det_min, data.eps, lbfgsIter, terminationType);
       } catch(alglib::ap_error e) {
         Msg::Warning("Winslow untangler, iter %i: Alglib exception thrown in "
                      "LBFGS step, error: %s",
@@ -921,15 +1005,14 @@ namespace WinslowUntangler {
 
 #if 0 // TEST OF GRADIENT !!
     {
-      alglib::real_1d_array GRAD,GRAD2;
-      GRAD.setcontent(dim * NV, points);
-      GRAD2.setcontent(dim * NV, points);
-      double EN  = compute_energy_and_gradient_2D(data, x, GRAD);
-      for (size_t i=0;i<dim * NV;i++){
-	x[i]+=1.e-8;
-	double EN2 = compute_energy_and_gradient_2D(data, x, GRAD2);
-	x[i]-=1.e-8;
-	printf("%zu GRAD %12.5E DIFF %12.5E\n",i,GRAD[i],1.e8*(EN2-EN));
+      std::vector<double> GRAD(dim * NV), GRAD2(dim * NV);
+      double EN = compute_energy_and_gradient_2D(data, x, GRAD);
+      for(size_t i = 0; i < dim * NV; i++) {
+        x[i] += 1.e-8;
+        double EN2 = compute_energy_and_gradient_2D(data, x, GRAD2);
+        x[i] -= 1.e-8;
+        printf("%zu GRAD %12.5E DIFF %12.5E\n", i, GRAD[i],
+               1.e8 * (EN2 - EN));
       }
     }
 #endif
@@ -954,27 +1037,31 @@ using namespace WinslowUntangler;
 #endif
 
 bool untangle_triangles_2D(
-  std::vector<std::array<double, 2> > &points, const std::vector<bool> &locked,
-  const std::vector<std::array<uint32_t, 3> > &triangles,
-  const std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+  std::vector<std::array<double, 2>> &points, const std::vector<bool> &locked,
+  const std::vector<std::array<uint32_t, 3>> &triangles,
+  const std::vector<std::array<std::array<double, 2>, 3>> &triIdealShapes,
   double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
   double timeMax,
-  const std::function<void (const std::vector<std::array<double, 2> > &points,
-			    const std::vector<std::array<uint32_t, 3> > &triangles,
-			    std::vector<double> &s, // size and grad sizes at nodes
-			    std::vector<std::array<double, 3> > &grads)> & sizeField,
-  const std::function<void (const std::vector<std::array<double, 2> > &points,
-			    const std::vector<std::array<uint32_t, 3> > &triangles,
-			    std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes)> &updateIdealTriangularShapes)
+  const std::function<
+    void(const std::vector<std::array<double, 2>> &points,
+         const std::vector<std::array<uint32_t, 3>> &triangles,
+         std::vector<double> &s, // size and grad sizes at nodes
+         std::vector<std::array<double, 3>> &grads)> &sizeField,
+  const std::function<
+    void(const std::vector<std::array<double, 2>> &points,
+         const std::vector<std::array<uint32_t, 3>> &triangles,
+         std::vector<std::array<std::array<double, 2>, 3>> &triIdealShapes)>
+    &updateIdealTriangularShapes)
 {
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) && defined(HAVE_QUADMESHINGTOOLS)
-  std::vector<std::array<double, 3> > points3D;
-  const std::vector<std::array<uint32_t, 4> > tetrahedra;
-  const std::vector<std::array<std::array<double, 3>, 4> > tetIdealShapes;
+#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
+  defined(HAVE_QUADMESHINGTOOLS)
+  std::vector<std::array<double, 3>> points3D;
+  const std::vector<std::array<uint32_t, 4>> tetrahedra;
+  const std::vector<std::array<std::array<double, 3>, 4>> tetIdealShapes;
   return untangle_simplex_elements(
     2, points, points3D, locked, triangles, triIdealShapes, tetrahedra,
     tetIdealShapes, lambda, iterMaxInner, iterMaxOuter, iterFailMax, timeMax,
-    sizeField,updateIdealTriangularShapes);
+    sizeField, updateIdealTriangularShapes);
 #else
   Msg::Error(
     "Winslow untangler requires modules Eigen, Alglib and QuadMeshingTools");
@@ -983,17 +1070,17 @@ bool untangle_triangles_2D(
 }
 
 bool untangle_tetrahedra(
-  std::vector<std::array<double, 3> > &points,
-  const std::vector<bool> &locked,
-  const std::vector<std::array<uint32_t, 4> > &tets,
-  const std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
+  std::vector<std::array<double, 3>> &points, const std::vector<bool> &locked,
+  const std::vector<std::array<uint32_t, 4>> &tets,
+  const std::vector<std::array<std::array<double, 3>, 4>> &tetIdealShapes,
   double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
   double timeMax)
 {
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) && defined(HAVE_QUADMESHINGTOOLS)
-  std::vector<std::array<double, 2> > points2D;
-  const std::vector<std::array<uint32_t, 3> > tris;
-  const std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
+#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
+  defined(HAVE_QUADMESHINGTOOLS)
+  std::vector<std::array<double, 2>> points2D;
+  const std::vector<std::array<uint32_t, 3>> tris;
+  const std::vector<std::array<std::array<double, 2>, 3>> triIdealShapes;
   return untangle_simplex_elements(
     3, points2D, points, locked, tris, triIdealShapes, tets, tetIdealShapes,
     lambda, iterMaxInner, iterMaxOuter, iterFailMax, timeMax, nullptr, nullptr);

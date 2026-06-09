@@ -33,6 +33,7 @@
 
 #if defined(HAVE_WINSLOWUNTANGLER)
 #include "winslowUntangler.h"
+#include "winslowUntanglerGMSH.h"
 #endif
 
 StringXNumber BoundaryLayerOptions_Number[] = {
@@ -130,7 +131,7 @@ inline double tet_volume(const std::array<double, 3> &a,
     s--a---x(t(0))---x(t(1))--...--x(t(n-2))-----x(t(n-1))---e
 */
 
-const int _debugBL3D = 1;
+const int _debugBL3D = 0;
 
 static void getEmbeddedStructure(GModel *m,
                                  std::map<GVertex *, std::vector<GFace *>> &v2f,
@@ -191,313 +192,316 @@ static void getEmbeddedStructure(GModel *m,
 
 namespace {
 
-// side[0] and side[1] store the elements adjacent to an embedded mesh vertex
-// with matching and opposite local orientation, respectively.
-struct EmbeddedElementSides {
-  std::vector<MElement *> side[2];
-};
+  // side[0] and side[1] store the elements adjacent to an embedded mesh vertex
+  // with matching and opposite local orientation, respectively.
+  struct EmbeddedElementSides {
+    std::vector<MElement *> side[2];
+  };
 
-struct EmbeddedElementSideData {
-  std::map<std::pair<GEdge *, GFace *>,
-           std::map<MVertex *, EmbeddedElementSides>>
-    curvesInFaces;
-  std::map<std::pair<GFace *, GRegion *>,
-           std::map<MVertex *, EmbeddedElementSides>>
-    facesInRegions;
-};
+  struct EmbeddedElementSideData {
+    std::map<std::pair<GEdge *, GFace *>,
+             std::map<MVertex *, EmbeddedElementSides>>
+      curvesInFaces;
+    std::map<std::pair<GFace *, GRegion *>,
+             std::map<MVertex *, EmbeddedElementSides>>
+      facesInRegions;
+  };
 
-struct EmbeddedVertexSpawns {
-  MVertex *side[2] = {nullptr, nullptr};
-};
+  struct EmbeddedVertexSpawns {
+    MVertex *side[2] = {nullptr, nullptr};
+  };
 
-struct EmbeddedCurveFaceSpawns {
-  std::map<std::pair<GEdge *, GFace *>,
-           std::map<MVertex *, EmbeddedVertexSpawns>>
-    curvesInFaces;
-  std::map<std::pair<GFace *, GRegion *>,
-           std::map<MVertex *, EmbeddedVertexSpawns>>
-    facesInRegions;
-};
+  struct EmbeddedCurveFaceSpawns {
+    std::map<std::pair<GEdge *, GFace *>,
+             std::map<MVertex *, EmbeddedVertexSpawns>>
+      curvesInFaces;
+    std::map<std::pair<GFace *, GRegion *>,
+             std::map<MVertex *, EmbeddedVertexSpawns>>
+      facesInRegions;
+  };
 
-static void addEmbeddedSideElement(EmbeddedElementSides &sides, int side,
-                                   MElement *element)
-{
-  std::vector<MElement *> &elements = sides.side[side];
-  if(std::find(elements.begin(), elements.end(), element) == elements.end())
-    elements.push_back(element);
-}
-
-static void addEmbeddedSideElement(
-  std::map<MVertex *, EmbeddedElementSides> &vertexSides, MVertex *vertex,
-  int side, MElement *element)
-{
-  addEmbeddedSideElement(vertexSides[vertex], side, element);
-}
-
-static bool vectorContainsElement(const std::vector<MElement *> &elements,
-                                  MElement *element)
-{
-  return std::find(elements.begin(), elements.end(), element) != elements.end();
-}
-
-static bool embeddedSidesContainElement(const EmbeddedElementSides &sides,
-                                        MElement *element)
-{
-  return vectorContainsElement(sides.side[0], element) ||
-         vectorContainsElement(sides.side[1], element);
-}
-
-static bool elementHasVertex(MElement *element, MVertex *vertex)
-{
-  for(std::size_t i = 0; i < element->getNumVertices(); i++)
-    if(element->getVertex(i) == vertex) return true;
-  return false;
-}
-
-static double elementSideInFace(GFace *gf, MLine *line, MElement *element)
-{
-  SPoint2 p0, p1;
-  if(!reparamMeshVertexOnFace(line->getVertex(0), gf, p0) ||
-     !reparamMeshVertexOnFace(line->getVertex(1), gf, p1))
-    return 0.;
-  SPoint3 b = element->barycenter(true);
-  SPoint2 pb = gf->parFromPoint(b, false);
-  return (p1.x() - p0.x()) * (pb.y() - p0.y()) -
-         (p1.y() - p0.y()) * (pb.x() - p0.x());
-}
-
-static bool classifyElementFromEmbeddedLine(
-  GFace *gf, MLine *line, const EmbeddedElementSides &lineVertexSides,
-  MElement *element, int &side)
-{
-  for(int knownSide = 0; knownSide < 2; knownSide++) {
-    if(lineVertexSides.side[knownSide].empty()) continue;
-    double known = elementSideInFace(gf, line, lineVertexSides.side[knownSide][0]);
-    double current = elementSideInFace(gf, line, element);
-    if(std::abs(known) < 1.e-12 || std::abs(current) < 1.e-12) continue;
-    side = (known * current > 0.) ? knownSide : 1 - knownSide;
-    return true;
+  static void addEmbeddedSideElement(EmbeddedElementSides &sides, int side,
+                                     MElement *element)
+  {
+    std::vector<MElement *> &elements = sides.side[side];
+    if(std::find(elements.begin(), elements.end(), element) == elements.end())
+      elements.push_back(element);
   }
-  return false;
-}
 
-static MFaceVertex *createMFaceVertex(MVertex *v, GFace *gf)
-{
-  SPoint2 param;
-  if(!reparamMeshVertexOnFace(v, gf, param)) return nullptr;
-  MFaceVertex *newv =
-    new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
-  gf->mesh_vertices.push_back(newv);
-  return newv;
-}
+  static void
+  addEmbeddedSideElement(std::map<MVertex *, EmbeddedElementSides> &vertexSides,
+                         MVertex *vertex, int side, MElement *element)
+  {
+    addEmbeddedSideElement(vertexSides[vertex], side, element);
+  }
 
-static MVertex *createMRegionVertex(MVertex *v, GRegion *gr)
-{
-  MVertex *newv = new MVertex(v->x(), v->y(), v->z(), gr);
-  gr->mesh_vertices.push_back(newv);
-  return newv;
-}
+  static bool vectorContainsElement(const std::vector<MElement *> &elements,
+                                    MElement *element)
+  {
+    return std::find(elements.begin(), elements.end(), element) !=
+           elements.end();
+  }
 
-static void replaceEmbeddedCurveFaceVertices(
-  GFace *gf, const std::map<MVertex *, EmbeddedElementSides> &vertexSides,
-  const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns)
-{
-  std::size_t numElements = gf->getNumMeshElements();
-  for(std::size_t i = 0; i < numElements; i++) {
-    MElement *element = gf->getMeshElement(i);
-    if(element->getDim() != 2) continue;
+  static bool embeddedSidesContainElement(const EmbeddedElementSides &sides,
+                                          MElement *element)
+  {
+    return vectorContainsElement(sides.side[0], element) ||
+           vectorContainsElement(sides.side[1], element);
+  }
 
-    int elementSide = -1;
-    for(auto v2s : vertexSides) {
-      for(int side = 0; side < 2; side++) {
-        if(vectorContainsElement(v2s.second.side[side], element)) {
-          elementSide = side;
-          break;
+  static bool elementHasVertex(MElement *element, MVertex *vertex)
+  {
+    for(std::size_t i = 0; i < element->getNumVertices(); i++)
+      if(element->getVertex(i) == vertex) return true;
+    return false;
+  }
+
+  static double elementSideInFace(GFace *gf, MLine *line, MElement *element)
+  {
+    SPoint2 p0, p1;
+    if(!reparamMeshVertexOnFace(line->getVertex(0), gf, p0) ||
+       !reparamMeshVertexOnFace(line->getVertex(1), gf, p1))
+      return 0.;
+    SPoint3 b = element->barycenter(true);
+    SPoint2 pb = gf->parFromPoint(b, false);
+    return (p1.x() - p0.x()) * (pb.y() - p0.y()) -
+           (p1.y() - p0.y()) * (pb.x() - p0.x());
+  }
+
+  static bool
+  classifyElementFromEmbeddedLine(GFace *gf, MLine *line,
+                                  const EmbeddedElementSides &lineVertexSides,
+                                  MElement *element, int &side)
+  {
+    for(int knownSide = 0; knownSide < 2; knownSide++) {
+      if(lineVertexSides.side[knownSide].empty()) continue;
+      double known =
+        elementSideInFace(gf, line, lineVertexSides.side[knownSide][0]);
+      double current = elementSideInFace(gf, line, element);
+      if(std::abs(known) < 1.e-12 || std::abs(current) < 1.e-12) continue;
+      side = (known * current > 0.) ? knownSide : 1 - knownSide;
+      return true;
+    }
+    return false;
+  }
+
+  static MFaceVertex *createMFaceVertex(MVertex *v, GFace *gf)
+  {
+    SPoint2 param;
+    if(!reparamMeshVertexOnFace(v, gf, param)) return nullptr;
+    MFaceVertex *newv =
+      new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
+    gf->mesh_vertices.push_back(newv);
+    return newv;
+  }
+
+  static MVertex *createMRegionVertex(MVertex *v, GRegion *gr)
+  {
+    MVertex *newv = new MVertex(v->x(), v->y(), v->z(), gr);
+    gr->mesh_vertices.push_back(newv);
+    return newv;
+  }
+
+  static void replaceEmbeddedCurveFaceVertices(
+    GFace *gf, const std::map<MVertex *, EmbeddedElementSides> &vertexSides,
+    const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns)
+  {
+    std::size_t numElements = gf->getNumMeshElements();
+    for(std::size_t i = 0; i < numElements; i++) {
+      MElement *element = gf->getMeshElement(i);
+      if(element->getDim() != 2) continue;
+
+      int elementSide = -1;
+      for(auto v2s : vertexSides) {
+        for(int side = 0; side < 2; side++) {
+          if(vectorContainsElement(v2s.second.side[side], element)) {
+            elementSide = side;
+            break;
+          }
         }
+        if(elementSide >= 0) break;
       }
-      if(elementSide >= 0) break;
-    }
-    if(elementSide < 0) continue;
+      if(elementSide < 0) continue;
 
-    std::vector<MVertex *> oldVertices;
-    oldVertices.reserve(element->getNumVertices());
-    for(std::size_t j = 0; j < element->getNumVertices(); j++)
-      oldVertices.push_back(element->getVertex(j));
+      std::vector<MVertex *> oldVertices;
+      oldVertices.reserve(element->getNumVertices());
+      for(std::size_t j = 0; j < element->getNumVertices(); j++)
+        oldVertices.push_back(element->getVertex(j));
 
-    for(std::size_t j = 0; j < oldVertices.size(); j++) {
-      auto itSpawns = vertexSpawns.find(oldVertices[j]);
-      if(itSpawns == vertexSpawns.end()) continue;
-      MVertex *newv = itSpawns->second.side[elementSide];
-      if(newv) element->setVertex(j, newv);
-    }
-  }
-}
-
-static void replaceEmbeddedFaceRegionVertices(
-  GRegion *gr, const std::map<MVertex *, EmbeddedElementSides> &vertexSides,
-  const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns)
-{
-  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
-    MElement *element = gr->getMeshElement(i);
-    if(element->getDim() != 3) continue;
-    for(std::size_t j = 0; j < element->getNumVertices(); j++) {
-      auto itSpawns = vertexSpawns.find(element->getVertex(j));
-      if(itSpawns == vertexSpawns.end()) continue;
-      auto itSides = vertexSides.find(itSpawns->first);
-      if(itSides == vertexSides.end()) continue;
-      for(int side = 0; side < 2; side++) {
-        if(!itSpawns->second.side[side]) continue;
-        if(vectorContainsElement(itSides->second.side[side], element)) {
-          element->setVertex(j, itSpawns->second.side[side]);
-          break;
-        }
+      for(std::size_t j = 0; j < oldVertices.size(); j++) {
+        auto itSpawns = vertexSpawns.find(oldVertices[j]);
+        if(itSpawns == vertexSpawns.end()) continue;
+        MVertex *newv = itSpawns->second.side[elementSide];
+        if(newv) element->setVertex(j, newv);
       }
     }
   }
-}
 
-static MEdge findElementEdge(MElement *element, MVertex *v0, MVertex *v1)
-{
-  MEdge edge(v0, v1);
-  for(int i = 0; i < element->getNumEdges(); i++) {
-    MEdge elementEdge = element->getEdge(i);
-    if(elementEdge == edge) return elementEdge;
-  }
-  return MEdge();
-}
-
-static MEdge findSideElementEdge(
-  const std::map<MVertex *, EmbeddedElementSides> &vertexSides, MVertex *v0,
-  MVertex *v1, MVertex *sv0, MVertex *sv1, int side)
-{
-  auto it = vertexSides.find(v0);
-  if(it == vertexSides.end()) it = vertexSides.find(v1);
-  if(it == vertexSides.end()) return MEdge();
-  for(auto element : it->second.side[side]) {
-    MEdge edge = findElementEdge(element, sv0, sv1);
-    if(edge.getVertex(0)) return edge;
-  }
-  return MEdge();
-}
-
-static void addEmbeddedCurveFaceQuadrangle(
-  GFace *gf, MLine *line, MVertex *sv0, MVertex *sv1,
-  const MEdge &sideEdge, double thickness,
-  std::map<MElement *, double> &layers)
-{
-  if(sideEdge.getVertex(0) == sv0)
-    gf->quadrangles.push_back(
-      new MQuadrangle(line->getVertex(0), line->getVertex(1), sv1, sv0));
-  else
-    gf->quadrangles.push_back(
-      new MQuadrangle(line->getVertex(1), line->getVertex(0), sv0, sv1));
-  layers[gf->quadrangles.back()] = thickness;
-}
-
-static void addEmbeddedFaceRegionElement(
-  GRegion *gr, MElement *embeddedElement,
-  const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns, int side,
-  double thickness, std::map<MElement *, double> &layers)
-{
-  int type = embeddedElement->getTypeForMSH();
-  if(type != MSH_TRI_3 && type != MSH_QUA_4) return;
-
-  std::size_t n = (type == MSH_TRI_3) ? 3 : 4;
-  MVertex *vs[4] = {nullptr, nullptr, nullptr, nullptr};
-  MVertex *bs[4] = {nullptr, nullptr, nullptr, nullptr};
-  for(std::size_t i = 0; i < n; i++) {
-    vs[i] = embeddedElement->getVertex(i);
-    auto it = vertexSpawns.find(vs[i]);
-    if(it == vertexSpawns.end()) return;
-    bs[i] = it->second.side[side];
-    if(!bs[i]) return;
-  }
-
-  if(type == MSH_TRI_3) {
-    gr->prisms.push_back(new MPrism(vs[0], vs[1], vs[2], bs[0], bs[1], bs[2]));
-    layers[gr->prisms.back()] = thickness;
-  }
-  else {
-    gr->hexahedra.push_back(new MHexahedron(vs[0], vs[1], vs[2], vs[3], bs[0],
-                                            bs[1], bs[2], bs[3]));
-    layers[gr->hexahedra.back()] = thickness;
-  }
-}
-
-static void buildEmbeddedElementSideData(
-  const std::map<GEdge *, std::vector<GFace *>> &edgesEmbeddedInFaces,
-  const std::map<GFace *, std::vector<GRegion *>> &facesEmbeddedInRegions,
-  EmbeddedElementSideData &data)
-{
-  for(auto e2f : edgesEmbeddedInFaces) {
-    GEdge *ge = e2f.first;
-    for(auto gf : e2f.second) {
-      std::map<MVertex *, EmbeddedElementSides> &vertexSides =
-        data.curvesInFaces[std::make_pair(ge, gf)];
-      for(auto line : ge->lines) {
-        MEdge embeddedEdge(line->getVertex(0), line->getVertex(1));
-        for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-          MElement *element = gf->getMeshElement(i);
-          if(element->getDim() != 2) continue;
-          for(int j = 0; j < element->getNumEdges(); j++) {
-            MEdge elementEdge = element->getEdge(j);
-            if(elementEdge != embeddedEdge) continue;
-            int side = (elementEdge.getVertex(0) == embeddedEdge.getVertex(0)) ?
-                         0 :
-                         1;
-            addEmbeddedSideElement(vertexSides, embeddedEdge.getVertex(0), side,
-                                   element);
-            addEmbeddedSideElement(vertexSides, embeddedEdge.getVertex(1), side,
-                                   element);
+  static void replaceEmbeddedFaceRegionVertices(
+    GRegion *gr, const std::map<MVertex *, EmbeddedElementSides> &vertexSides,
+    const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns)
+  {
+    for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
+      MElement *element = gr->getMeshElement(i);
+      if(element->getDim() != 3) continue;
+      for(std::size_t j = 0; j < element->getNumVertices(); j++) {
+        auto itSpawns = vertexSpawns.find(element->getVertex(j));
+        if(itSpawns == vertexSpawns.end()) continue;
+        auto itSides = vertexSides.find(itSpawns->first);
+        if(itSides == vertexSides.end()) continue;
+        for(int side = 0; side < 2; side++) {
+          if(!itSpawns->second.side[side]) continue;
+          if(vectorContainsElement(itSides->second.side[side], element)) {
+            element->setVertex(j, itSpawns->second.side[side]);
+            break;
           }
         }
       }
-      for(auto line : ge->lines) {
-        for(int iVertex = 0; iVertex < 2; iVertex++) {
-          MVertex *embeddedVertex = line->getVertex(iVertex);
-          EmbeddedElementSides &sides = vertexSides[embeddedVertex];
+    }
+  }
+
+  static MEdge findElementEdge(MElement *element, MVertex *v0, MVertex *v1)
+  {
+    MEdge edge(v0, v1);
+    for(int i = 0; i < element->getNumEdges(); i++) {
+      MEdge elementEdge = element->getEdge(i);
+      if(elementEdge == edge) return elementEdge;
+    }
+    return MEdge();
+  }
+
+  static MEdge findSideElementEdge(
+    const std::map<MVertex *, EmbeddedElementSides> &vertexSides, MVertex *v0,
+    MVertex *v1, MVertex *sv0, MVertex *sv1, int side)
+  {
+    auto it = vertexSides.find(v0);
+    if(it == vertexSides.end()) it = vertexSides.find(v1);
+    if(it == vertexSides.end()) return MEdge();
+    for(auto element : it->second.side[side]) {
+      MEdge edge = findElementEdge(element, sv0, sv1);
+      if(edge.getVertex(0)) return edge;
+    }
+    return MEdge();
+  }
+
+  static void addEmbeddedCurveFaceQuadrangle(
+    GFace *gf, MLine *line, MVertex *sv0, MVertex *sv1, const MEdge &sideEdge,
+    double thickness, std::map<MElement *, double> &layers)
+  {
+    if(sideEdge.getVertex(0) == sv0)
+      gf->quadrangles.push_back(
+        new MQuadrangle(line->getVertex(0), line->getVertex(1), sv1, sv0));
+    else
+      gf->quadrangles.push_back(
+        new MQuadrangle(line->getVertex(1), line->getVertex(0), sv0, sv1));
+    layers[gf->quadrangles.back()] = thickness;
+  }
+
+  static void addEmbeddedFaceRegionElement(
+    GRegion *gr, MElement *embeddedElement,
+    const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns, int side,
+    double thickness, std::map<MElement *, double> &layers)
+  {
+    int type = embeddedElement->getTypeForMSH();
+    if(type != MSH_TRI_3 && type != MSH_QUA_4) return;
+
+    std::size_t n = (type == MSH_TRI_3) ? 3 : 4;
+    MVertex *vs[4] = {nullptr, nullptr, nullptr, nullptr};
+    MVertex *bs[4] = {nullptr, nullptr, nullptr, nullptr};
+    for(std::size_t i = 0; i < n; i++) {
+      vs[i] = embeddedElement->getVertex(i);
+      auto it = vertexSpawns.find(vs[i]);
+      if(it == vertexSpawns.end()) return;
+      bs[i] = it->second.side[side];
+      if(!bs[i]) return;
+    }
+
+    if(type == MSH_TRI_3) {
+      gr->prisms.push_back(
+        new MPrism(vs[0], vs[1], vs[2], bs[0], bs[1], bs[2]));
+      layers[gr->prisms.back()] = thickness;
+    }
+    else {
+      gr->hexahedra.push_back(new MHexahedron(vs[0], vs[1], vs[2], vs[3], bs[0],
+                                              bs[1], bs[2], bs[3]));
+      layers[gr->hexahedra.back()] = thickness;
+    }
+  }
+
+  static void buildEmbeddedElementSideData(
+    const std::map<GEdge *, std::vector<GFace *>> &edgesEmbeddedInFaces,
+    const std::map<GFace *, std::vector<GRegion *>> &facesEmbeddedInRegions,
+    EmbeddedElementSideData &data)
+  {
+    for(auto e2f : edgesEmbeddedInFaces) {
+      GEdge *ge = e2f.first;
+      for(auto gf : e2f.second) {
+        std::map<MVertex *, EmbeddedElementSides> &vertexSides =
+          data.curvesInFaces[std::make_pair(ge, gf)];
+        for(auto line : ge->lines) {
+          MEdge embeddedEdge(line->getVertex(0), line->getVertex(1));
           for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
             MElement *element = gf->getMeshElement(i);
             if(element->getDim() != 2) continue;
-            if(!elementHasVertex(element, embeddedVertex)) continue;
-            if(embeddedSidesContainElement(sides, element)) continue;
-            int side = -1;
-            if(classifyElementFromEmbeddedLine(gf, line, sides, element, side))
-              addEmbeddedSideElement(sides, side, element);
+            for(int j = 0; j < element->getNumEdges(); j++) {
+              MEdge elementEdge = element->getEdge(j);
+              if(elementEdge != embeddedEdge) continue;
+              int side =
+                (elementEdge.getVertex(0) == embeddedEdge.getVertex(0)) ? 0 : 1;
+              addEmbeddedSideElement(vertexSides, embeddedEdge.getVertex(0),
+                                     side, element);
+              addEmbeddedSideElement(vertexSides, embeddedEdge.getVertex(1),
+                                     side, element);
+            }
+          }
+        }
+        for(auto line : ge->lines) {
+          for(int iVertex = 0; iVertex < 2; iVertex++) {
+            MVertex *embeddedVertex = line->getVertex(iVertex);
+            EmbeddedElementSides &sides = vertexSides[embeddedVertex];
+            for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+              MElement *element = gf->getMeshElement(i);
+              if(element->getDim() != 2) continue;
+              if(!elementHasVertex(element, embeddedVertex)) continue;
+              if(embeddedSidesContainElement(sides, element)) continue;
+              int side = -1;
+              if(classifyElementFromEmbeddedLine(gf, line, sides, element,
+                                                 side))
+                addEmbeddedSideElement(sides, side, element);
+            }
           }
         }
       }
     }
-  }
 
-  for(auto f2r : facesEmbeddedInRegions) {
-    GFace *gf = f2r.first;
-    for(auto gr : f2r.second) {
-      std::map<MVertex *, EmbeddedElementSides> &vertexSides =
-        data.facesInRegions[std::make_pair(gf, gr)];
-      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-        MElement *embeddedElement = gf->getMeshElement(i);
-        if(embeddedElement->getDim() != 2) continue;
-        MFace embeddedFace = embeddedElement->getFace(0);
-        for(std::size_t j = 0; j < gr->getNumMeshElements(); j++) {
-          MElement *element = gr->getMeshElement(j);
-          if(element->getDim() != 3) continue;
-          for(int k = 0; k < element->getNumFaces(); k++) {
-            if(element->getFace(k) != embeddedFace) continue;
-            int ithFace = 0, sign = 0, rot = 0;
-            if(element->getFaceInfo(embeddedFace, ithFace, sign, rot)) {
-              int side = sign > 0 ? 0 : 1;
-              for(std::size_t l = 0; l < embeddedElement->getNumVertices(); l++)
-                addEmbeddedSideElement(vertexSides,
-                                       embeddedElement->getVertex(l), side,
-                                       element);
+    for(auto f2r : facesEmbeddedInRegions) {
+      GFace *gf = f2r.first;
+      for(auto gr : f2r.second) {
+        std::map<MVertex *, EmbeddedElementSides> &vertexSides =
+          data.facesInRegions[std::make_pair(gf, gr)];
+        for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+          MElement *embeddedElement = gf->getMeshElement(i);
+          if(embeddedElement->getDim() != 2) continue;
+          MFace embeddedFace = embeddedElement->getFace(0);
+          for(std::size_t j = 0; j < gr->getNumMeshElements(); j++) {
+            MElement *element = gr->getMeshElement(j);
+            if(element->getDim() != 3) continue;
+            for(int k = 0; k < element->getNumFaces(); k++) {
+              if(element->getFace(k) != embeddedFace) continue;
+              int ithFace = 0, sign = 0, rot = 0;
+              if(element->getFaceInfo(embeddedFace, ithFace, sign, rot)) {
+                int side = sign > 0 ? 0 : 1;
+                for(std::size_t l = 0; l < embeddedElement->getNumVertices();
+                    l++)
+                  addEmbeddedSideElement(
+                    vertexSides, embeddedElement->getVertex(l), side, element);
+              }
             }
           }
         }
       }
     }
   }
-}
 
 } // namespace
 
@@ -945,7 +949,6 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
       }
 
       replaceEmbeddedCurveFaceVertices(gf, vertexSides, vertexSpawns);
-
     }
   }
 
@@ -1720,8 +1723,10 @@ static void expandBL(
               edgeDirection.normalize();
               SVector3 normalAtEdge0 = gf->normal(paramEdge0);
               SVector3 normalAtEdge1 = gf->normal(paramEdge1);
-              SVector3 layerDirection0 = crossprod(normalAtEdge0, edgeDirection);
-              SVector3 layerDirection1 = crossprod(normalAtEdge1, edgeDirection);
+              SVector3 layerDirection0 =
+                crossprod(normalAtEdge0, edgeDirection);
+              SVector3 layerDirection1 =
+                crossprod(normalAtEdge1, edgeDirection);
               if(layerDirection0.norm() > 0. && layerDirection1.norm() > 0.) {
                 layerDirection0.normalize();
                 layerDirection1.normalize();
@@ -1760,32 +1765,32 @@ static void expandBL(
         if(numBoundaryVertices == 3 && freeVertex >= 0) {
           for(int j = 0; j < 4; j++) {
             if(haveBoundaryParam[j]) {
-              if(j == 0) perfectEdge0 = boundaryParam[j];
-              else if(j == 1) perfectEdge1 = boundaryParam[j];
-              else if(j == 2) perfectLayer1 = boundaryParam[j];
-              else if(j == 3) perfectLayer0 = boundaryParam[j];
+              if(j == 0)
+                perfectEdge0 = boundaryParam[j];
+              else if(j == 1)
+                perfectEdge1 = boundaryParam[j];
+              else if(j == 2)
+                perfectLayer1 = boundaryParam[j];
+              else if(j == 3)
+                perfectLayer0 = boundaryParam[j];
             }
           }
           if(freeVertex == 0)
-            perfectEdge0 = {perfectEdge1[0] + perfectLayer0[0] -
-                              perfectLayer1[0],
-                            perfectEdge1[1] + perfectLayer0[1] -
-                              perfectLayer1[1]};
+            perfectEdge0 = {
+              perfectEdge1[0] + perfectLayer0[0] - perfectLayer1[0],
+              perfectEdge1[1] + perfectLayer0[1] - perfectLayer1[1]};
           else if(freeVertex == 1)
-            perfectEdge1 = {perfectEdge0[0] + perfectLayer1[0] -
-                              perfectLayer0[0],
-                            perfectEdge0[1] + perfectLayer1[1] -
-                              perfectLayer0[1]};
+            perfectEdge1 = {
+              perfectEdge0[0] + perfectLayer1[0] - perfectLayer0[0],
+              perfectEdge0[1] + perfectLayer1[1] - perfectLayer0[1]};
           else if(freeVertex == 2)
-            perfectLayer1 = {perfectEdge1[0] + perfectLayer0[0] -
-                               perfectEdge0[0],
-                             perfectEdge1[1] + perfectLayer0[1] -
-                               perfectEdge0[1]};
+            perfectLayer1 = {
+              perfectEdge1[0] + perfectLayer0[0] - perfectEdge0[0],
+              perfectEdge1[1] + perfectLayer0[1] - perfectEdge0[1]};
           else
-            perfectLayer0 = {perfectEdge0[0] + perfectLayer1[0] -
-                               perfectEdge1[0],
-                             perfectEdge0[1] + perfectLayer1[1] -
-                               perfectEdge1[1]};
+            perfectLayer0 = {
+              perfectEdge0[0] + perfectLayer1[0] - perfectEdge1[0],
+              perfectEdge0[1] + perfectLayer1[1] - perfectEdge1[1]};
           haveBoundaryParallelogram = true;
         }
 
@@ -1800,8 +1805,8 @@ static void expandBL(
         sh.push_back({perfectEdge0, perfectEdge1, perfectLayer0});
         sh.push_back({perfectEdge1, perfectLayer1, perfectLayer0});
         //	printf(" %g %g %g %g %g %g\n",dx,thickness, triangle_area_2d(p0, p1,
-        //p2), triangle_area_2d(p2, p3, p0), 	       triangle_area_2d(p0, p1,
-        //p3),triangle_area_2d(p1, p2, p3));
+        // p2), triangle_area_2d(p2, p3, p0), 	       triangle_area_2d(p0, p1,
+        // p3),triangle_area_2d(p1, p2, p3));
       }
       else {
         auto it2 = perfectShapes.find(e);
@@ -1885,7 +1890,11 @@ static void expandBL(
   }
   printf("face %d: %zu vertices, %zu triangles\n", gf->tag(), points.size(),
          triangles.size());
+#if 1
+  untangle_triangles_2D_GMSH(points, locked, triangles, sh, 1.e+0);
+#else
   untangle_triangles_2D(points, locked, triangles, sh, 1.e+0);
+#endif
 
   for(auto v : verts) {
     int i = v->getIndex();
@@ -1982,8 +1991,7 @@ static void expandBL3D(
       int pp[6][4] = {{0, 1, 2, 6}, {0, 2, 3, 6}, {0, 3, 7, 6},
                       {0, 7, 4, 6}, {0, 4, 5, 6}, {0, 5, 1, 6}};
       for(size_t j = 0; j < 6; j++)
-        sh.push_back(
-          {vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
+        sh.push_back({vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
     }
     else if(type == MSH_PYR_5) {
       auto it2 = perfectShapes3D.find(e);
@@ -1991,11 +1999,9 @@ static void expandBL3D(
         vs = it2->second;
       else
         Msg::Error("Argh");
-      int pp[4][4] = {{0, 1, 2, 4}, {0, 2, 3, 4},
-                      {0, 1, 3, 4}, {1, 2, 3, 4}};
+      int pp[4][4] = {{0, 1, 2, 4}, {0, 2, 3, 4}, {0, 1, 3, 4}, {1, 2, 3, 4}};
       for(size_t j = 0; j < 4; j++)
-        sh.push_back(
-          {vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
+        sh.push_back({vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
     }
   }
   std::vector<std::array<double, 3>> points;
@@ -2055,7 +2061,7 @@ static void expandBL3D(
     }
   }
 
-  printf("VOLUME = %12.5E\n'", volume);
+  printf("VOLUME = %12.5E\n", volume);
 
   for(auto e : toProcess) {
     int type = e->getTypeForMSH();
@@ -2106,10 +2112,8 @@ static void expandBL3D(
             {nn[ppi[j][0]], nn[ppi[j][1]], nn[ppi[j][2]], nn[ppi[j][3]]});
     }
     else if(type == MSH_PYR_5) {
-      int ppi[4][4] = {{0, 1, 2, 4}, {0, 2, 3, 4},
-                       {0, 1, 3, 4}, {1, 2, 3, 4}};
-      int pp[4][4] = {{1, 0, 2, 4}, {2, 0, 3, 4},
-                      {1, 0, 3, 4}, {2, 1, 3, 4}};
+      int ppi[4][4] = {{0, 1, 2, 4}, {0, 2, 3, 4}, {0, 1, 3, 4}, {1, 2, 3, 4}};
+      int pp[4][4] = {{1, 0, 2, 4}, {2, 0, 3, 4}, {1, 0, 3, 4}, {2, 1, 3, 4}};
       nn[4] = (uint32_t)e->getVertex(4)->getIndex();
       // computePerfectShapes() already reverses pyramids when the region
       // volume is negative. Use the opposite tet orientation here so that the
@@ -2125,7 +2129,11 @@ static void expandBL3D(
     }
   }
   double tUntangle = TimeOfDay();
+#if 1
+  untangle_tetrahedra_GMSH(points, locked, tets, sh, 1.e+0);
+#else
   untangle_tetrahedra(points, locked, tets, sh, 1.e+0);
+#endif
   Msg::Info("Boundary layer 3D untangling done in %g s",
             TimeOfDay() - tUntangle);
 
@@ -2583,7 +2591,7 @@ void computePerfectShapes(
   std::vector<GFace *> &f,
   std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes)
 {
-  //printf("COMPUTE PERFECT SHAPES for %lu\n", f.size());
+  // printf("COMPUTE PERFECT SHAPES for %lu\n", f.size());
   for(auto gf : f) {
     //      std::map<MVertex*,SPoint2> ivp;
     double area = 0.0;
@@ -2610,7 +2618,7 @@ void computePerfectShapes(
       }
     }
 
-    printf("area (%d) = %g\n",gf->tag(), area);
+    printf("area (%d) = %g\n", gf->tag(), area);
 
     for(size_t i = 0; i < gf->getNumMeshElements(); i++) {
       std::vector<SPoint2> pts;
@@ -2767,12 +2775,9 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   else
     bl3d(m, f, r, ww, layers, toExpand);
 
-
   std::map<MElement *, std::array<std::array<double, 2>, 4>> perfectShapes;
   std::map<MElement *, std::array<std::array<double, 3>, 8>> perfectShapes3D;
-  if(r.empty()) {
-    computePerfectShapes(f, perfectShapes);
-  }
+  if(r.empty()) { computePerfectShapes(f, perfectShapes); }
   else {
     computePerfectShapes(r, perfectShapes3D);
     computePerfectShapes(toExpand, perfectShapes);
