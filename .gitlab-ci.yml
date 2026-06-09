@@ -385,6 +385,7 @@ doc_official_snapshot:
     - make doc
     - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc/gmsh-git-doc.tgz
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/dev && tar zxvf ../doc/gmsh-git-doc.tgz"
+    - scp ../doc/news/* geuzaine@gmsh.info:.wwwgmsh/news/
   tags:
     - linux64
     - docker
