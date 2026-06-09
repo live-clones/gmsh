@@ -1,4 +1,6 @@
 set(WU_SRC
+  gmshLBFGS.cpp
+  winslowUntanglerGMSH.cpp
   winslowUntangler.cpp
   meshSurfaceUntangling.cpp
   meshVolumeUntangling.cpp
