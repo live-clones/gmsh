@@ -5791,7 +5791,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
             coordMaster, tagMaster, returnCoord);
     std::vector<double> affineTransform = ge->affineTransform;
     std::vector<double> tempCoord(3,0);
-    double Threshold = 1e-6;
+    double tol = 1e-6;
 
     for(std::size_t i = 0; i < entityKeysMaster_temp.size(); i++) {
       tempCoord[0] = coordMaster[3 * i + 0]*affineTransform[0] + coordMaster[3 * i + 1]*affineTransform[1] + coordMaster[3 * i + 2]*affineTransform[2] + affineTransform[3] ;
@@ -5799,9 +5799,10 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
       tempCoord[2] = coordMaster[3 * i + 0]*affineTransform[8] + coordMaster[3 * i + 1]*affineTransform[9] + coordMaster[3 * i + 2]*affineTransform[10] + affineTransform[11] ;
       
       for(std::size_t j = 0; j < entityKeys.size(); j++) {
-        if(std::abs(tempCoord[0] - coord[3 * j + 0])<Threshold &&
-           std::abs(tempCoord[1] - coord[3 * j + 1])<Threshold &&
-           std::abs(tempCoord[2] - coord[3 * j + 2])<Threshold){
+        if(entityKeysMaster[j]==entityKeys[j] &&
+           std::abs(tempCoord[0] - coord[3 * j + 0])<tol &&
+           std::abs(tempCoord[1] - coord[3 * j + 1])<tol &&
+           std::abs(tempCoord[2] - coord[3 * j + 2])<tol){
             entityKeysMaster[j] = entityKeysMaster_temp[i];
             break;
         }
