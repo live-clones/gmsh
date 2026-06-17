@@ -1,5 +1,4 @@
 #include "GEntity.h"
-#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Context.h"
 #include "GFace.h"
@@ -7,6 +6,7 @@
 #include "SPoint3.h"
 #include "SVector3.h"
 #include "geodesic_constants_and_simple_functions.h"
+#include "gmsh.h"
 #include "meshPolyMesh.h"
 #include "meshTriangulation.h"
 
@@ -16,7 +16,6 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
-#include <limits>
 #include <map>
 #include <ostream>
 #include <random>
@@ -3921,6 +3920,67 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
 
   PolyMesh *pm_new = createPolyMesh(pm, tris, bnds);
 
+  // Set face data to ipm_face_index
+  std::vector<std::vector<int>> vertexFaceTags(ipm->vertices.size());
+  std::unordered_map<int, int> tag2index;
+  for(size_t i = 0; i < ipm->vertices.size(); ++i) {
+    auto &faceTags = vertexFaceTags[i];
+    int tag = ipm->vertices[i]->data;
+    tag2index[tag] = i;
+    PolyMesh::Vertex *v = pm_new->vertices[sp2pv[tag]];
+    PolyMesh::HalfEdge *he = v->he;
+    do {
+      auto it = std::find(faceTags.begin(), faceTags.end(), he->f->data);
+      if(it == faceTags.end()) faceTags.push_back(he->f->data);
+
+      if(he->opposite)
+        he = he->opposite->next;
+      else {
+        he = he->next->next;
+        while(he->opposite) he = he->opposite->next->next;
+        he = he->next;
+      }
+    } while(he != v->he);
+  }
+
+  std::vector<int> faceTag2Index(ipm->faces.size(), -1);
+  for(size_t i = 0; i < ipm->faces.size(); ++i) {
+    auto *he = ipm->faces[i]->he;
+
+    const auto &tags0 = vertexFaceTags[tag2index[he->v->data]];
+    const auto &tags1 = vertexFaceTags[tag2index[he->next->v->data]];
+    const auto &tags2 = vertexFaceTags[tag2index[he->next->next->v->data]];
+
+    for(const int tag : tags0) {
+      bool foundIn1 = false;
+      for(const int t1 : tags1) {
+        if(t1 == tag) {
+          foundIn1 = true;
+          break;
+        }
+      }
+      if(!foundIn1) continue;
+
+      bool foundIn2 = false;
+      for(const int t2 : tags2) {
+        if(t2 == tag) {
+          foundIn2 = true;
+          break;
+        }
+      }
+
+      if(foundIn2) {
+        faceTag2Index[tag - 1] = i;
+        break;
+      }
+    }
+  }
+
+  for(size_t i = 0; i < pm_new->faces.size(); ++i) {
+    PolyMesh::Face *f = pm_new->faces[i];
+    f->data = faceTag2Index[f->data - 1] + 1;
+  }
+
   if(PRINT) {
     // Write the cutted mesh to a .pos file
     std::ofstream posFile("cutted_mesh.pos");
@@ -3967,7 +4027,7 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
 // END CUT MESH
 
 // WRITE
-void highOrderPolyMesh::write(const PolyMesh *pm_new,
+void highOrderPolyMesh::write(GModel *gm, PolyMesh *pm_new,
                               std::vector<PolyMesh::Vertex *> &pointVertices)
 {
   std::ofstream posFile("elements.pos");
@@ -4198,6 +4258,199 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new,
 
   for(size_t i = 0; i < pm_new->vertices.size(); ++i) {
     delete index2MVertex[i];
+  }
+
+  {
+    // GModel
+    std::string modelName = "Intrinsic Mesh", oldModelName;
+    gmsh::model::getCurrent(oldModelName);
+    gmsh::model::add(modelName);
+    gmsh::model::addDiscreteEntity(0, 1);
+    gmsh::model::addDiscreteEntity(1, 1);
+    gmsh::model::addDiscreteEntity(2, 1);
+    int tagsViewTag = gmsh::view::add("Intrinsic Tags");
+    int pcViewTag = gmsh::view::add("Intrinsic Parametric Coord");
+    size_t maxNodeTag = 0, maxElementTag = 0;
+    std::vector<double> tagData, uData, vData;
+
+    // Nodes
+    std::unordered_map<PolyMesh::Vertex *, size_t> tags, intrinsicTags;
+    size_t N = pm_new->vertices.size();
+    std::vector<size_t> nodeTags(N);
+    std::vector<double> coord(3 * N);
+    for(size_t i = 0; i < N; ++i) {
+      PolyMesh::Vertex *v = pm_new->vertices[i];
+      tags[v] = ++maxNodeTag;
+      nodeTags[i] = tags[v];
+      coord[3 * i] = v->position.x();
+      coord[3 * i + 1] = v->position.y();
+      coord[3 * i + 2] = v->position.z();
+    }
+    gmsh::model::mesh::addNodes(2, 1, nodeTags, coord);
+
+    // Points
+    N = ipm->vertices.size();
+    std::vector<size_t> elementTags(N), elementNodeTags(N);
+    tagData.resize(N);
+    uData.resize(N);
+    vData.resize(N);
+    for(size_t i = 0; i < N; ++i) {
+      PolyMesh::Vertex *v = pm_new->vertices[sp2pv[ipm->vertices[i]->data]];
+      elementTags[i] = ++maxElementTag;
+      elementNodeTags[i] = tags[v];
+      intrinsicTags[ipm->vertices[i]] = i + 1;
+      tagData[i] = i + 1;
+      uData[i] = 0.;
+      vData[i] = 0.;
+    }
+    gmsh::model::mesh::addElementsByType(1, MSH_PNT, elementTags,
+                                         elementNodeTags);
+    gmsh::view::addHomogeneousModelData(
+      tagsViewTag, 0, modelName, "ElementNodeData", elementTags, tagData);
+    gmsh::view::addHomogeneousModelData(pcViewTag, 0, modelName,
+                                        "ElementNodeData", elementTags, uData);
+    gmsh::view::addHomogeneousModelData(pcViewTag, 1, modelName,
+                                        "ElementNodeData", elementTags, vData);
+
+    // Lines
+    std::unordered_set<std::pair<size_t, size_t>, pair_hash> edgs;
+    elementTags.clear();
+    elementNodeTags.clear();
+    tagData.clear();
+    uData.clear();
+    vData.clear();
+    size_t maxLineTag = 0;
+    for(size_t i = 0; i < ipm->faces.size(); ++i) {
+      int faceTag = faceTags[i];
+      auto fhe = ipm->faces[i]->he;
+      for(int j = 0; j < 3; ++j, fhe = fhe->next) {
+        auto v0 = fhe->v;
+        auto v1 = fhe->next->v;
+        int index0 = pm->vertices[sp2pv[v0->data]]->data;
+        int index1 = pm->vertices[sp2pv[v1->data]]->data;
+        auto it = edgs.find({index1, index0});
+        if(it != edgs.end()) continue;
+        edgs.insert({index0, index1});
+        PolyMesh::HalfEdge *he = pm_new->vertices[index0]->he;
+        std::vector<PolyMesh::Vertex *> vs;
+        std::vector<double> lengths = {0.};
+        while(he->v->data != index1) {
+          while(he->data == -1 || he->f->data != faceTag) {
+            if(he->opposite == nullptr) {
+              Msg::Error("HalfEdge not found");
+              return;
+            }
+            he = he->opposite->next;
+          }
+          double dl = norm(he->v->position - he->next->v->position);
+          lengths.push_back(lengths.back() + dl);
+          vs.push_back(he->v);
+          he = he->next;
+        }
+        vs.push_back(he->v);
+
+        double inv_l = 1. / lengths.back();
+        for(size_t k = 0; k < lengths.size(); ++k) lengths[k] *= inv_l;
+
+        if(vs.size() <= 1) Msg::Error("not true edge");
+        ++maxLineTag;
+        for(size_t k = 1; k < vs.size(); ++k) {
+          elementTags.push_back(++maxElementTag);
+          elementNodeTags.push_back(tags[vs[k - 1]]);
+          elementNodeTags.push_back(tags[vs[k]]);
+          tagData.push_back(intrinsicTags[v0]);
+          tagData.push_back(intrinsicTags[v1]);
+          uData.push_back(lengths[k - 1]);
+          uData.push_back(lengths[k]);
+          vData.push_back(0.);
+          vData.push_back(0.);
+        }
+      }
+    }
+
+    gmsh::model::mesh::addElementsByType(1, MSH_LIN_2, elementTags,
+                                         elementNodeTags);
+    gmsh::view::addHomogeneousModelData(
+      tagsViewTag, 0, modelName, "ElementNodeData", elementTags, tagData);
+    gmsh::view::addHomogeneousModelData(pcViewTag, 0, modelName,
+                                        "ElementNodeData", elementTags, uData);
+    gmsh::view::addHomogeneousModelData(pcViewTag, 1, modelName,
+                                        "ElementNodeData", elementTags, vData);
+
+    // Faces
+    N = pm_new->faces.size();
+    elementTags.resize(N);
+    elementNodeTags.resize(3 * N);
+    tagData.resize(3 * pm_new->faces.size());
+    uData.resize(3 * pm_new->faces.size());
+    vData.resize(3 * pm_new->faces.size());
+    for(size_t i = 0; i < N; ++i) {
+      elementTags[i] = ++maxElementTag;
+      PolyMesh::HalfEdge *he = pm_new->faces[i]->he;
+      elementNodeTags[3 * i] = tags[he->v];
+      elementNodeTags[3 * i + 1] = tags[he->next->v];
+      elementNodeTags[3 * i + 2] = tags[he->next->next->v];
+      int fData = pm_new->faces[i]->data;
+      tagData[3 * i] = intrinsicTags[ipm->faces[fData - 1]->he->v];
+      tagData[3 * i + 1] = intrinsicTags[ipm->faces[fData - 1]->he->next->v];
+      tagData[3 * i + 2] =
+        intrinsicTags[ipm->faces[fData - 1]->he->next->next->v];
+    }
+    gmsh::model::mesh::addElementsByType(1, MSH_TRI_3, elementTags,
+                                         elementNodeTags);
+    gmsh::view::addHomogeneousModelData(
+      tagsViewTag, 0, modelName, "ElementNodeData", elementTags, tagData);
+
+    GEntity *ge = GModel::current()->getEntityByTag(2, 1);
+    for(size_t i = 0; i < ipm->faces.size(); ++i) {
+      std::vector<MTriangle *> mtriangles;
+      std::vector<MVertex *> mvertices;
+      PolyMesh::HalfEdge *he = ipm->faces[i]->he;
+      int faceTag = i + 1;
+      for(int j = 0; j < 3; ++j, he = he->next) {
+        MVertex *v = static_cast<MVertex *>(
+          ge->getMeshVertex(tags[pm_new->vertices[sp2pv[he->v->data]]] - 1));
+        mvertices.push_back(v);
+      }
+      for(size_t j = 0; j < pm_new->faces.size(); ++j) {
+        PolyMesh::Face *f = pm_new->faces[j];
+        if(f->data != faceTag) continue;
+        MTriangle *t =
+          static_cast<MTriangle *>(ge->getMeshElementByType(TYPE_TRI, j));
+        mtriangles.push_back(t);
+      }
+      std::vector<MVertex *> nodes;
+      std::vector<SPoint2> stl_vertices_uv;
+      std::vector<SPoint3> stl_vertices_xyz;
+      std::vector<int> stl_triangles;
+      computeParametrization(mtriangles, nodes, stl_vertices_uv,
+                             stl_vertices_xyz, stl_triangles, mvertices);
+      std::unordered_map<MVertex *, size_t> mv2index;
+      for(size_t k = 0; k < nodes.size(); ++k) mv2index[nodes[k]] = k;
+      size_t index = 0;
+      for(size_t j = 0; j < pm_new->faces.size(); ++j) {
+        PolyMesh::Face *f = pm_new->faces[j];
+        if(f->data != faceTag) continue;
+        for(int k = 0; k < 3; ++k) {
+          SPoint2 uv = stl_vertices_uv[stl_triangles[index++]];
+          double u = (1. - uv[0] + sqrt(3) * uv[1]) / 3;
+          double v = (1. - uv[0] - sqrt(3) * uv[1]) / 3;
+          uData[3 * j + k] = u;
+          vData[3 * j + k] = v;
+        }
+      }
+    }
+    gmsh::view::addHomogeneousModelData(pcViewTag, 0, modelName,
+                                        "ElementNodeData", elementTags, uData);
+    gmsh::view::addHomogeneousModelData(pcViewTag, 1, modelName,
+                                        "ElementNodeData", elementTags, vData);
+
+    // Write
+    gmsh::write("intrinsic.msh");
+    gmsh::view::write(tagsViewTag, "intrinsic.msh", true);
+    gmsh::view::write(pcViewTag, "intrinsic.msh", true);
+
+    gmsh::model::setCurrent(oldModelName);
   }
 }
 // END WRITE
@@ -4729,7 +4982,7 @@ int makeMeshGeodesic(GModel *gm)
     printCuttedMesh(pm_new, face2Colors);
   }
 
-  hop.write(pm_new, pointVertices);
+  hop.write(gm, pm_new, pointVertices);
 
   auto end = std::chrono::high_resolution_clock::now();
   elapsed = end - endStat;

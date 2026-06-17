@@ -570,7 +570,7 @@ public:
   void removePoint(size_t i);
 
   bool doWeSplit(PolyMesh::HalfEdge *he);
-  void write(const PolyMesh *pm_new,
+  void write(GModel *gm, PolyMesh *pm_new,
              std::vector<PolyMesh::Vertex *> &pointVertices);
 
   bool symbolicSwapEdges(std::vector<size_t> &newTriangles,
