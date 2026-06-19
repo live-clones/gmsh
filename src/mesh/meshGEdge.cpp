@@ -1100,15 +1100,7 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
 
   size_t start = 0;
   size_t end = ge->mesh_vertices.size() - 1;
-
-  if(ge->tag() == 2) {
-    printf("GEdge %d -- end line lengths %12.5E %12.5E\n",ge->tag(),l0->getLength(),ln->getLength());
-    for(std::size_t i = 0; i < ge->lines.size(); i++) {
-      MLine *l = ge->lines[i];
-      printf("  line %zu: %d %d\n", i, l->getVertex(0)->getNum(),
-             l->getVertex(1)->getNum());
-    }
-  }
+ 
   if(l0->getLength() < 1.e-12) {
     for(auto v : ge->mesh_vertices) {
       double p;
@@ -1131,10 +1123,6 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
     double t0 = t_left - dt;
     double t1 = t_left;
 
-    if(ge->tag() == 2) {
-      printf("dt %12.5E --> first guess %12.5E %12.5E %12.5E %12.5E %12.5E\n",dt,t_left,t0,t1,p1.distance(p0),width );
-    }
-
     while(1) {
       double t_mid = (t0 + t1) * .5;
       g_left = ge->point(t_mid);
@@ -1156,8 +1144,6 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   }
 
   if(ln->getLength() < 1.e-12) {
-    //    printf("GEdge %d -- end line lengths %12.5E %12.5E
-    //    \n",ge->tag(),l0->getLength(),ln->getLength());
     diff++;
     GPoint g_right = ge->point(t_right);
     SPoint3 p0(g_right.x(), g_right.y(), g_right.z());
@@ -1197,8 +1183,6 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
 
   meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
   N = ge->mesh_vertices.size() - diff + 2;
-
-  //  printf("--> (%12.5E %12.5E) a = %12.5E\n",t_left, t_right,a );
 
   {
     int count = 1, NUMP = 1;

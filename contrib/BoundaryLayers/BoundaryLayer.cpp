@@ -31,17 +31,18 @@
 #include "Context.h"
 #include "OS.h"
 
-#if defined(HAVE_WINSLOWUNTANGLER)
-#include "winslowUntangler.h"
+#include "highOrderBoundaryLayerUntangler.h"
 #include "winslowUntanglerGMSH.h"
-#endif
 
 StringXNumber BoundaryLayerOptions_Number[] = {
   {GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
   {GMSH_FULLRC, "Size", nullptr, 1.e-3},
   {GMSH_FULLRC, "Ratio", nullptr, 1.2},
   {GMSH_FULLRC, "SmoothingLayers", nullptr, 2.},
-  {GMSH_FULLRC, "NumExactLayers", nullptr, -2.}};
+  {GMSH_FULLRC, "NumExactLayers", nullptr, -2.},
+  {GMSH_FULLRC, "HighOrder", nullptr, 1.},
+  {GMSH_FULLRC, "HighOrderStrategy", nullptr, 2.},
+  {GMSH_FULLRC, "HighOrderPostSplitUntangle", nullptr, 0.}};
 
 StringXString BoundaryLayerOptions_String[] = {
   {GMSH_FULLRC, "Volumes", nullptr, ""},
@@ -115,8 +116,6 @@ inline double tet_volume(const std::array<double, 3> &a,
 {
   return dot(sub(a, d), cross(sub(b, d), sub(c, d))) / 6.0;
 }
-
-#if defined(HAVE_WINSLOWUNTANGLER)
 
 /*
     nodes at start (s) and end (e) of GEdge ge
@@ -506,8 +505,28 @@ namespace {
 } // namespace
 
 static void
+classifyVertexOnFace(GFace *gf, MVertex *v)
+{
+  if(!gf || !v || !v->onWhat() || v->onWhat()->dim() <= 2) return;
+
+  SPoint3 p = v->point();
+  SPoint2 param = gf->parFromPoint(p);
+  double guess[2] = {param.x(), param.y()};
+  GPoint gp = gf->closestPoint(p, guess);
+  v->x() = gp.x();
+  v->y() = gp.y();
+  v->z() = gp.z();
+  v->setParameter(0, gp.u());
+  v->setParameter(1, gp.v());
+  v->setEntity(gf);
+  gf->mesh_vertices.push_back(v);
+}
+
+static void
 replaceFaces(GModel *gm,
-             std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split)
+             std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
+             std::map<MElement *, double> &layers,
+             const std::vector<double> &widths)
 {
   for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
     GFace *gf = (*fit);
@@ -515,6 +534,7 @@ replaceFaces(GModel *gm,
     std::vector<MQuadrangle *> newVec;
     for(auto q : gf->quadrangles) {
       bool found = false;
+      auto itLayer = layers.find(q);
       for(size_t i = 0; i < 4; i++) {
         MEdge ei = q->getEdge(i);
         MEdge ei2 = q->getEdge((i + 2) % 4);
@@ -522,15 +542,22 @@ replaceFaces(GModel *gm,
         auto it1 = split.find(ei2);
         if(it0 != split.end() && it1 != split.end()) {
           for(size_t j = 0; j < it0->second.size() - 1; j++) {
-            newVec.push_back(new MQuadrangle(it0->second[j], it0->second[j + 1],
-                                             it1->second[j + 1],
-                                             it1->second[j]));
+            MQuadrangle *nq = new MQuadrangle(it0->second[j],
+                                              it0->second[j + 1],
+                                              it1->second[j + 1],
+                                              it1->second[j]);
+            for(int k = 0; k < 4; ++k) classifyVertexOnFace(gf, nq->getVertex(k));
+            newVec.push_back(nq);
+            if(itLayer != layers.end())
+              layers[nq] = j < widths.size() ? widths[j] : itLayer->second;
           }
           found = true;
         }
       }
-      if(found)
+      if(found) {
+        if(itLayer != layers.end()) layers.erase(itLayer);
         delete q;
+      }
       else
         newVec.push_back(q);
     }
@@ -1233,6 +1260,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
             }
           }
         }
+
         if(type == MSH_TRI_3 && bs[0] && bs[1] && bs[2]) {
           gr->prisms.push_back(
             new MPrism(vs[0], vs[1], vs[2], bs[0], bs[1], bs[2]));
@@ -1960,8 +1988,9 @@ static void expandBL3D(
         vs[5] = {e->getVertex(2)->x() + n.x() * tk,
                  e->getVertex(2)->y() + n.y() * tk,
                  e->getVertex(2)->z() + n.z() * tk};
-        int pp[3][4] = {{0, 1, 2, 3}, {0, 1, 2, 4}, {0, 1, 2, 5}};
-        for(size_t j = 0; j < 3; j++)
+        int pp[6][4] = {{0, 1, 2, 3}, {0, 1, 2, 4}, {0, 1, 2, 5},
+                        {4, 3, 5, 0}, {4, 3, 5, 1}, {4, 3, 5, 2}};
+        for(size_t j = 0; j < 6; j++)
           sh.push_back(
             {vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
       }
@@ -2080,16 +2109,18 @@ static void expandBL3D(
         tets.push_back({nn[1], nn[0], nn[2], nn[3]});
     }
     else if(type == MSH_PRI_6) {
-      int ppi[3][4] = {{0, 1, 2, 3}, {0, 1, 2, 4}, {0, 1, 2, 5}};
-      int pp[3][4] = {{1, 0, 2, 3}, {1, 0, 2, 4}, {1, 0, 2, 5}};
+      int ppi[6][4] = {{0, 1, 2, 3}, {0, 1, 2, 4}, {0, 1, 2, 5},
+                       {4, 3, 5, 0}, {4, 3, 5, 1}, {4, 3, 5, 2}};
+      int pp[6][4] = {{1, 0, 2, 3}, {1, 0, 2, 4}, {1, 0, 2, 5},
+                      {3, 4, 5, 0}, {3, 4, 5, 1}, {3, 4, 5, 2}};
       nn[4] = (uint32_t)e->getVertex(4)->getIndex();
       nn[5] = (uint32_t)e->getVertex(5)->getIndex();
       if(volume > 0)
-        for(size_t j = 0; j < 3; j++)
+        for(size_t j = 0; j < 6; j++)
           tets.push_back(
             {nn[pp[j][0]], nn[pp[j][1]], nn[pp[j][2]], nn[pp[j][3]]});
       else
-        for(size_t j = 0; j < 3; j++)
+        for(size_t j = 0; j < 6; j++)
           tets.push_back(
             {nn[ppi[j][0]], nn[ppi[j][1]], nn[ppi[j][2]], nn[ppi[j][3]]});
     }
@@ -2449,7 +2480,7 @@ void splitounette3D(std::vector<GRegion *> &r,
   Msg::Info("BoundaryLayer splitounette3D: replace edges");
   replaceEdges(r[0]->model(), split);
   Msg::Info("BoundaryLayer splitounette3D: replace faces");
-  replaceFaces(r[0]->model(), split);
+  replaceFaces(r[0]->model(), split, layers, widths);
   Msg::Info("BoundaryLayer splitounette3D: done");
 }
 
@@ -2559,8 +2590,6 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
     }
   }
 }
-
-#endif // HAVE_WINSLOWUNTANGLER
 
 std::string GMSH_BoundaryLayerPlugin::parse(std::string str,
                                             std::list<int> &physical)
@@ -2702,7 +2731,6 @@ void computePerfectShapes(
 
 PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 {
-#if defined(HAVE_WINSLOWUNTANGLER)
   GModel *m = GModel::current();
 
   std::string volume = BoundaryLayerOptions_String[0].def;
@@ -2742,10 +2770,15 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   double ratio = BoundaryLayerOptions_Number[2].def;
   int numLayers = (int)BoundaryLayerOptions_Number[3].def;
   double numExactLayers = BoundaryLayerOptions_Number[4].def;
+  int highOrder = (int)BoundaryLayerOptions_Number[5].def;
+  int highOrderStrategy = (int)BoundaryLayerOptions_Number[6].def;
+  int highOrderPostSplitUntangle = (int)BoundaryLayerOptions_Number[7].def;
   if(numLayers < 1) {
     Msg::Warning("Hey ! at least one smoothing layer dude ...");
     numLayers = 1;
   }
+  if(highOrder < 1) highOrder = 1;
+  if(highOrderStrategy < 0) highOrderStrategy = 0;
 
   std::map<MElement *, double> layers;
 
@@ -2797,11 +2830,61 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   }
 
   if(r.empty()) {
-    if(ws.size() > 1) splitounette(f, layers, ws, size, ratio, numExactLayers);
+    if(highOrder <= 1 || highOrderStrategy == 1) {
+      if(ws.size() > 1) {
+        if(highOrder > 1)
+          Msg::Info("Boundary layer high-order mode: splitting %zu low-order "
+                    "layers before P%d untangling",
+                    ws.size(), highOrder);
+        splitounette(f, layers, ws, size, ratio, numExactLayers);
+      }
+    }
+    else if(ws.size() > 1) {
+      Msg::Info("Boundary layer high-order mode: delaying layer splitting to "
+                "high-order strategy %d",
+                highOrderStrategy);
+    }
   }
-  else {
-    if(ws.size() > 1)
+  else if(ws.size() > 1) {
+    if(highOrder <= 1 || highOrderStrategy == 1) {
+      if(highOrder > 1)
+        Msg::Info("Boundary layer high-order mode: splitting %zu low-order "
+                  "volume layers before P%d untangling",
+                  ws.size(), highOrder);
       splitounette3D(r, layers, ws, size, ratio, numExactLayers);
+      // The split creates the individual side quads, which must be pushed in
+      // the adjacent surfaces with their own layer width.
+      perfectShapes.clear();
+      computePerfectShapes(toExpand, perfectShapes);
+      for(auto gf : toExpand)
+        expandBL(gf, perfectShapes, layers, toExpand, numLayers);
+    }
+    else {
+      Msg::Info("Boundary layer high-order mode: delaying volume layer "
+                "splitting to high-order strategy %d",
+                highOrderStrategy);
+    }
+  }
+
+  if(highOrder > 1) {
+    std::set<MElement *, MElementPtrLessThan> toProcess;
+    std::set<MVertex *, MVertexPtrLessThan> fixed;
+    if(r.empty()) {
+      for(auto gf : f)
+        buildUntangleSets(gf, /*targetDim=*/2, layers, numLayers, toProcess,
+                          fixed);
+    }
+    else {
+      for(auto gf : toExpand)
+        buildUntangleSets(gf, /*targetDim=*/2, layers, numLayers, toProcess,
+                          fixed);
+      for(auto gr : r)
+        buildUntangleSets(gr, /*targetDim=*/3, layers, numLayers, toProcess,
+                          fixed);
+    }
+    untangleHighOrderBoundaryLayerPN(m, toProcess, fixed, highOrder, &layers,
+                                     &ws, highOrderStrategy,
+                                     highOrderPostSplitUntangle != 0);
   }
 
   //  for (auto gf : f)
@@ -2809,8 +2892,5 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   CTX::instance()->mesh.changed = ENT_ALL;
 
-#else
-  Msg::Error("Plugin(BoundaryLayer) requires Winslow untangler");
-#endif
   return v;
 }

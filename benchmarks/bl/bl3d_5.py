@@ -2,7 +2,7 @@ import gmsh
 l = 8.e-2
 gmsh.initialize()
 gmsh.merge('bl3d_5.brep')
-gmsh.option.setNumber('Mesh.MeshSizeFactor',.05);
+gmsh.option.setNumber('Mesh.MeshSizeFactor',.15);
 gmsh.model.mesh.generate(3)
 
 

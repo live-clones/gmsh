@@ -1,7 +1,17 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh Boundary Layer Plugin - Copyright (C) 2026 C. Geuzaine and J.-F. Remacle
 //
-// See the LICENSE.txt file in the Gmsh root directory for license information.
-// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU Affero General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+// details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "gmshLBFGS.h"
 
@@ -13,11 +23,15 @@
 #include <cmath>
 #include <limits>
 
+#if defined(HAVE_EIGEN)
+#include <Eigen/Dense>
+#endif
+
 #if !defined(F77NAME)
 #define F77NAME(x) (x##_)
 #endif
 
-#if defined(HAVE_BLAS)
+#if defined(HAVE_BLAS) && !defined(HAVE_EIGEN)
 extern "C" {
 double F77NAME(ddot)(int *n, double *x, int *incx, double *y, int *incy);
 void F77NAME(daxpy)(int *n, double *alpha, double *x, int *incx, double *y,
@@ -29,17 +43,25 @@ void F77NAME(dscal)(int *n, double *alpha, double *x, int *incx);
 
 namespace GmshLBFGS {
   namespace {
+#if defined(HAVE_EIGEN)
+    typedef Eigen::Map<Eigen::VectorXd> EigenVec;
+    typedef Eigen::Map<const Eigen::VectorXd> ConstEigenVec;
+#elif defined(HAVE_BLAS)
     static int blasSize(size_t n)
     {
       return (n > (size_t)std::numeric_limits<int>::max()) ?
                std::numeric_limits<int>::max() :
                (int)n;
     }
+#endif
 
     static double dot(const std::vector<double> &a,
                       const std::vector<double> &b)
     {
-#if defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+      return ConstEigenVec(a.data(), a.size()).dot(
+        ConstEigenVec(b.data(), b.size()));
+#elif defined(HAVE_BLAS)
       int n = blasSize(a.size()), inc = 1;
       return F77NAME(ddot)(&n, const_cast<double *>(a.data()), &inc,
                            const_cast<double *>(b.data()), &inc);
@@ -58,7 +80,9 @@ namespace GmshLBFGS {
     static void axpy(double a, const std::vector<double> &x,
                      std::vector<double> &y)
     {
-#if defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+      EigenVec(y.data(), y.size()) += a * ConstEigenVec(x.data(), x.size());
+#elif defined(HAVE_BLAS)
       int n = blasSize(x.size()), inc = 1;
       F77NAME(daxpy)(&n, &a, const_cast<double *>(x.data()), &inc, y.data(),
                      &inc);
@@ -72,7 +96,10 @@ namespace GmshLBFGS {
                                  std::vector<double> &out)
     {
       out.resize(a.size());
-#if defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+      EigenVec(out.data(), out.size()) =
+        ConstEigenVec(a.data(), a.size()) - ConstEigenVec(b.data(), b.size());
+#elif defined(HAVE_BLAS)
       int n = blasSize(a.size()), inc = 1;
       double minusOne = -1.;
       F77NAME(dcopy)(&n, const_cast<double *>(a.data()), &inc, out.data(),
@@ -89,7 +116,11 @@ namespace GmshLBFGS {
                            std::vector<double> &out)
     {
       out.resize(x.size());
-#if defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+      EigenVec(out.data(), out.size()) =
+        ConstEigenVec(x.data(), x.size()) +
+        step * ConstEigenVec(direction.data(), direction.size());
+#elif defined(HAVE_BLAS)
       int n = blasSize(x.size()), inc = 1;
       F77NAME(dcopy)(&n, const_cast<double *>(x.data()), &inc, out.data(),
                      &inc);
@@ -104,7 +135,10 @@ namespace GmshLBFGS {
                              std::vector<double> &out)
     {
       out.resize(x.size());
-#if defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+      EigenVec(out.data(), out.size()) =
+        scale * ConstEigenVec(x.data(), x.size());
+#elif defined(HAVE_BLAS)
       int n = blasSize(x.size()), inc = 1;
       F77NAME(dcopy)(&n, const_cast<double *>(x.data()), &inc, out.data(),
                      &inc);
@@ -116,7 +150,9 @@ namespace GmshLBFGS {
 
     static void scale(std::vector<double> &x, double scale)
     {
-#if defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+      EigenVec(x.data(), x.size()) *= scale;
+#elif defined(HAVE_BLAS)
       int n = blasSize(x.size()), inc = 1;
       F77NAME(dscal)(&n, &scale, x.data(), &inc);
 #else
@@ -250,13 +286,16 @@ namespace GmshLBFGS {
           f = fNew;
           accepted = true;
           result.iterations = iter + 1;
+          result.gradientNorm = norm(g);
           result.timeUpdate += TimeOfDay() - t;
 
           if(options.verbose) {
             Msg::Info("GmshLBFGS iter %d accepted: step %.6g, f %.16g, "
                       "|g| %.6g, corrections %d",
-                      iter, step, f, norm(g), (int)sList.size());
+                      iter, step, f, result.gradientNorm, (int)sList.size());
           }
+          if(options.iterationCallback)
+            options.iterationCallback(iter + 1, f, result.gradientNorm, step);
 
           if(std::abs(fOld - f) <=
              options.functionTolerance * std::max(1., std::abs(f))) {
@@ -284,6 +323,9 @@ namespace GmshLBFGS {
       }
       if(result.converged) break;
     }
+
+    if(!result.converged && result.terminationType == 0)
+      result.terminationType = 5;
 
     result.finalValue = f;
     result.gradientNorm = norm(g);
