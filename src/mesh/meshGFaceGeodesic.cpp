@@ -4756,6 +4756,7 @@ int makeMeshGeodesic(GModel *gm)
       if(nopp[he->data] != 1) {
         he = he->next->next;
         while(nopp[he->data] == 1) { he = he->opposite->next->next; }
+        he = he->next;
       }
       else
         he = he->opposite->next;
