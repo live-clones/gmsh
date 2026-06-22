@@ -20,9 +20,13 @@
 #include <algorithm>
 #include <cfloat>
 
-#include "gmshLBFGS.h"
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "OS.h"
+
+#if defined(HAVE_BOUNDARY_LAYERS)
+#include "gmshLBFGS.h"
+#endif
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -866,8 +870,12 @@ namespace WinslowUntangler {
       double epsg = 1.e-4;
       double epsf = 1.e-12;
       double epsx = 1.e-12;
-      // LBFGS solver: 0 = ALGLIB, 1 = GmshLBFGS skeleton
+      // LBFGS solver: 0 = ALGLIB, 1 = GmshLBFGS
+#if defined(HAVE_BOUNDARY_LAYERS)
       static int lbfgsSolver = 1;
+#else
+      static int lbfgsSolver = 0;
+#endif
       int lbfgsIter = 0;
       try {
         int terminationType = 0;
@@ -898,6 +906,7 @@ namespace WinslowUntangler {
           lbfgsIter = rep.iterationscount;
           terminationType = rep.terminationtype;
         }
+#if defined(HAVE_BOUNDARY_LAYERS)
         else {
           GmshLBFGS::Options options;
           options.maxIterations = iterMaxInner;
@@ -937,6 +946,7 @@ namespace WinslowUntangler {
                       result.timeUpdate,
                     result.functionEvaluations);
         }
+#endif
 
         for(size_t v = 0; v < NV; ++v) {
           for(size_t d = 0; d < dim; ++d) {

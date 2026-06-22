@@ -1,7 +1,17 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh Boundary Layer Plugin - Copyright (C) 2026 C. Geuzaine and J.-F. Remacle
 //
-// See the LICENSE.txt file in the Gmsh root directory for license information.
-// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU Affero General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+// details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "winslowUntanglerGMSH.h"
 
@@ -578,6 +588,51 @@ namespace {
     return true;
   }
 
+  static void initialLaplacianSmooth3D(
+    std::vector<double> &x, const std::vector<bool> &locked,
+    const std::vector<std::array<uint32_t, 4>> &tets)
+  {
+    const int nIter = 10;
+    const size_t nVertices = locked.size();
+    std::vector<std::vector<uint32_t>> adj(nVertices);
+
+    auto addEdge = [&adj](uint32_t a, uint32_t b) {
+      adj[a].push_back(b);
+      adj[b].push_back(a);
+    };
+    for(const auto &tet : tets) {
+      addEdge(tet[0], tet[1]);
+      addEdge(tet[0], tet[2]);
+      addEdge(tet[0], tet[3]);
+      addEdge(tet[1], tet[2]);
+      addEdge(tet[1], tet[3]);
+      addEdge(tet[2], tet[3]);
+    }
+    for(auto &a : adj) {
+      std::sort(a.begin(), a.end());
+      a.erase(std::unique(a.begin(), a.end()), a.end());
+    }
+
+    std::vector<double> xNew(x.size());
+    for(int iter = 0; iter < nIter; ++iter) {
+      xNew = x;
+      for(size_t v = 0; v < nVertices; ++v) {
+        if(locked[v] || adj[v].empty()) continue;
+        double sx = 0., sy = 0., sz = 0.;
+        for(uint32_t u : adj[v]) {
+          sx += x[3 * u + 0];
+          sy += x[3 * u + 1];
+          sz += x[3 * u + 2];
+        }
+        const double inv = 1. / (double)adj[v].size();
+        xNew[3 * v + 0] = sx * inv;
+        xNew[3 * v + 1] = sy * inv;
+        xNew[3 * v + 2] = sz * inv;
+      }
+      x.swap(xNew);
+    }
+  }
+
   static bool optimize(UntanglerDataGMSH &data, std::vector<double> &x,
                        double *points, size_t NV, int iterMaxInner,
                        int iterMaxOuter, int iterFailMax, double timeMax)
@@ -600,6 +655,18 @@ namespace {
       options.maxLineSearchSteps = 80;
       options.verbose = 0;
       options.numThreads = requestedNumThreads();
+      int lastInner = 0;
+      double lastGradNorm = 0.;
+      double lastStep = 0.;
+      if(data.dim == 3) {
+        options.iterationCallback =
+          [&lastInner, &lastGradNorm,
+           &lastStep](int inner, double /*f*/, double gradNorm, double step) {
+            lastInner = inner;
+            lastGradNorm = gradNorm;
+            lastStep = step;
+          };
+      }
 
       auto fg = [&data](const std::vector<double> &xin,
                         std::vector<double> &gout) {
@@ -621,11 +688,20 @@ namespace {
       data.profileLBFGSUpdate += result.timeUpdate;
       data.profileLBFGSEvaluations += result.functionEvaluations;
 
-      for(size_t i = 0; i < data.dim * NV; ++i) points[i] = x[i];
-      if(!result.converged) nFail++;
-
       const double dErel =
         data.energy > 0 ? std::abs(data.energy - EPrev) / data.energy : 0.;
+      for(size_t i = 0; i < data.dim * NV; ++i) points[i] = x[i];
+      if(data.dim == 3) {
+        Msg::Info("GMSH Winslow 3D outer %d: eps %.6g, E %.6e, detmin "
+                  "%.6g, invalid %d, |g| %.6g, step %.6g, inner %d, "
+                  "term %d",
+                  iter, data.eps, data.energy, data.JDetMin, data.nbInvalid,
+                  lastGradNorm, lastStep, lastInner, result.terminationType);
+      }
+      if(result.terminationType != 4 &&
+         !(result.terminationType == 5 && dErel > 1.e-5))
+        nFail++;
+
       Msg::Debug("GMSH Winslow iter %d: eps=%g E=%.3e dE/E=%.3e "
                  "min(detJ)=%g inner=%d term=%d",
                  iter, data.eps, data.energy, dErel, data.JDetMin,
@@ -715,6 +791,12 @@ bool untangle_tetrahedra_GMSH(
     x[3 * i + 0] = points[i][0];
     x[3 * i + 1] = points[i][1];
     x[3 * i + 2] = points[i][2];
+  }
+  initialLaplacianSmooth3D(x, locked, tets);
+  for(size_t i = 0; i < points.size(); ++i) {
+    points[i][0] = x[3 * i + 0];
+    points[i][1] = x[3 * i + 1];
+    points[i][2] = x[3 * i + 2];
   }
   initializeEnergy(data, x);
   const bool converged =

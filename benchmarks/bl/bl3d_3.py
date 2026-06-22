@@ -12,6 +12,7 @@ gmsh.plugin.setNumber('BoundaryLayer','Thickness',1/5.)
 gmsh.plugin.setNumber('BoundaryLayer','Size',1.e-5)
 gmsh.plugin.setNumber('BoundaryLayer','Ratio',2.)
 gmsh.plugin.setNumber('BoundaryLayer','SmoothingLayers',4.)
+gmsh.plugin.setNumber("BoundaryLayer", "HighOrder", 2)
 
 gmsh.plugin.run('BoundaryLayer')
 

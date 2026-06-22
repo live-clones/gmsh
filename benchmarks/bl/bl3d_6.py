@@ -10,9 +10,10 @@ gmsh.plugin.setString('BoundaryLayer','Surfaces','88, 74, 104, 105, 120, 119, 10
  110, 60, 71, 3, 55, 49, 59, 109, 114, 48, 54, 68, 38, 90, 2, 108, 70, 39, 47, 37, 9, 56, 98, 10, 115, 75, 76, 77, 80, 61, 78, 62, 63, 64, 46, 65, 66, 67, 45, 44, 15, 43, 42, 14, 41, 13, 40, 12, 11, 16, 34, 35, 17, 36, 30, 31, 32, 26, 33, 25, 21, 27, 23,\
  18, 22, 28, 24, 29, 19, 20')
 gmsh.plugin.setString('BoundaryLayer','Volumes','1')
-gmsh.plugin.setNumber('BoundaryLayer','Thickness', 35.)
-gmsh.plugin.setNumber('BoundaryLayer','Size',1)
-gmsh.plugin.setNumber('BoundaryLayer','SmoothingLayers',5)
+gmsh.plugin.setNumber('BoundaryLayer','Thickness', 10.)
+gmsh.plugin.setNumber('BoundaryLayer','Size',10)
+gmsh.plugin.setNumber('BoundaryLayer','SmoothingLayers',8)
+#gmsh.plugin.setNumber("BoundaryLayer", "HighOrder", 2)
 
 gmsh.plugin.run('BoundaryLayer')
 

@@ -1,5 +1,8 @@
 set(SRC
   BoundaryLayer.cpp
+  gmshLBFGS.cpp
+  highOrderBoundaryLayerUntangler.cpp
+  winslowUntanglerGMSH.cpp
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
