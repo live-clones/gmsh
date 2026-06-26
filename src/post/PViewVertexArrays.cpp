@@ -654,7 +654,7 @@ static void addOutlinePolygon(PView *p, int ient, int iele, int numNodes,
     static_cast<MPolygon *>(data->getElement(opt->timeStep, ient, iele));
   SVector3 nfac = polygon->getNormal();
   for(int i = 0; i < polygon->getNumEdgesRep(false); i++) {
-    std::array<size_t, 2> is = polygon->getEdgeRepIndices(false, i);
+    std::array<int, 2> is = polygon->getEdgeRepIndices(false, i);
     double x[2] = {xyz[is[0]][0], xyz[is[1]][0]};
     double y[2] = {xyz[is[0]][1], xyz[is[1]][1]};
     double z[2] = {xyz[is[0]][2], xyz[is[1]][2]};
@@ -685,15 +685,15 @@ static void addScalarPolygon(PView *p, int ient, int iele, int numNodes,
   if(opt->boundary > 0) {
     opt->boundary--;
     for(int i = 0; i < polygon->getNumEdgesRep(false); i++) {
-      std::array<size_t, 2> is = polygon->getEdgeRepIndices(false, i);
+      std::array<int, 2> is = polygon->getEdgeRepIndices(false, i);
       addScalarLine(p, xyz, val, pre, is[0], is[1], true);
     }
     opt->boundary++;
     return;
   }
 
-  for(int i = 0; i < polygon->getNumSimplices(); i++) {
-    std::array<size_t, 3> is = polygon->getSimplexIndices(i);
+  for(int i = 0; i < polygon->getNumTriangles(); i++) {
+    std::array<int, 3> is = polygon->getTriangleIndices(i);
     addScalarTriangle(p, xyz, val, pre, is[0], is[1], is[2], unique);
   }
 }
@@ -924,15 +924,15 @@ static void addScalarPolyhedron(PView *p, int ient, int iele, int numNodes,
   if(opt->boundary > 0) {
     opt->boundary--;
     for(int i = 0; i < polyhedron->getNumFacesRep(false); i++) {
-      std::array<size_t, 3> is = polyhedron->getFaceRepIndices(false, i);
+      std::array<int, 3> is = polyhedron->getFaceRepIndices(false, i);
       addScalarTriangle(p, xyz, val, pre, is[0], is[1], is[2], true);
     }
     opt->boundary++;
     return;
   }
 
-  for(int i = 0; i < polyhedron->getNumSimplices(); i++) {
-    std::array<size_t, 4> is = polyhedron->getSimplexIndices(i);
+  for(int i = 0; i < polyhedron->getNumTetrahedra(); i++) {
+    std::array<int, 4> is = polyhedron->getTetrahedronIndices(i);
     addScalarTetrahedron(p, xyz, val, pre, is[0], is[1], is[2], is[3]);
   }
 }

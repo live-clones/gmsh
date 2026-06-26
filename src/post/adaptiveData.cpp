@@ -7,49 +7,60 @@
 #include <list>
 #include <set>
 #include <algorithm>
+#include <vector>
 #include "adaptiveData.h"
-#include "PViewDataGModel.h"
+#include "MElement.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "Plugin.h"
 #include "OS.h"
 #include "GmshDefines.h"
 
-//#define TIMER
+// #define TIMER
 
 std::set<adaptiveVertex> adaptivePoint::allVertices;
 std::set<adaptiveVertex> adaptiveLine::allVertices;
 std::set<adaptiveVertex> adaptiveTriangle::allVertices;
 std::set<adaptiveVertex> adaptiveQuadrangle::allVertices;
+std::set<adaptiveVertex> adaptivePolygon::allVertices;
 std::set<adaptiveVertex> adaptiveTetrahedron::allVertices;
 std::set<adaptiveVertex> adaptiveHexahedron::allVertices;
 std::set<adaptiveVertex> adaptivePrism::allVertices;
 std::set<adaptiveVertex> adaptivePyramid::allVertices;
+std::set<adaptiveVertex> adaptivePolyhedron::allVertices;
 
 std::list<adaptivePoint *> adaptivePoint::all;
 std::list<adaptiveLine *> adaptiveLine::all;
 std::list<adaptiveTriangle *> adaptiveTriangle::all;
 std::list<adaptiveQuadrangle *> adaptiveQuadrangle::all;
+std::list<adaptivePolygon *> adaptivePolygon::all;
 std::list<adaptiveTetrahedron *> adaptiveTetrahedron::all;
 std::list<adaptiveHexahedron *> adaptiveHexahedron::all;
 std::list<adaptivePrism *> adaptivePrism::all;
 std::list<adaptivePyramid *> adaptivePyramid::all;
+std::list<adaptivePolyhedron *> adaptivePolyhedron::all;
 
 int adaptivePoint::numNodes = 1;
 int adaptiveLine::numNodes = 2;
 int adaptiveTriangle::numNodes = 3;
 int adaptiveQuadrangle::numNodes = 4;
+int adaptivePolygon::numNodes = -1;
 int adaptivePrism::numNodes = 6;
 int adaptiveTetrahedron::numNodes = 4;
 int adaptiveHexahedron::numNodes = 8;
 int adaptivePyramid::numNodes = 5;
+int adaptivePolyhedron::numNodes = -1;
 
 int adaptivePoint::numEdges = 0;
 int adaptiveLine::numEdges = 1;
 int adaptiveTriangle::numEdges = 3;
 int adaptiveQuadrangle::numEdges = 4;
+int adaptivePolygon::numEdges = -1;
 int adaptivePrism::numEdges = 9;
 int adaptiveTetrahedron::numEdges = 6;
 int adaptiveHexahedron::numEdges = 12;
 int adaptivePyramid::numEdges = 8;
+int adaptivePolyhedron::numEdges = -1;
 
 std::vector<vectInt> globalVTKData::vtkGlobalConnectivity;
 std::vector<int> globalVTKData::vtkGlobalCellType;
@@ -1352,82 +1363,282 @@ bool adaptiveElements<T>::adapt(double tol, int numComp,
   return true;
 }
 
+bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
+                   std::vector<PCoords> &coords, std::vector<PValues> &values)
+{
+  int type = e->getType();
+
+  std::vector<size_t> simplices;
+  if(type == TYPE_POLYG) {
+    MPolygon *polygon = static_cast<MPolygon *>(e);
+    int numSimplices = polygon->getNumTriangles();
+    for(int i = 0; i < numSimplices; ++i) {
+      std::array<int, 3> is = polygon->getTriangleIndices(i);
+      for(auto ii : is) simplices.push_back(ii);
+    }
+  }
+  if(type == TYPE_POLYH) {
+    MPolyhedron *polyhedron = static_cast<MPolyhedron *>(e);
+    int numSimplices = polyhedron->getNumTetrahedra();
+    for(int i = 0; i < numSimplices; ++i) {
+      std::array<int, 4> is = polyhedron->getTetrahedronIndices(i);
+      for(auto ii : is) simplices.push_back(ii);
+    }
+  }
+
+  // Refinement
+  auto hasher = [](const std::pair<std::size_t, std::size_t> p) -> size_t {
+    std::size_t packed = (p.first << 32) | (p.second & 0xFFFFFFFF);
+    return std::hash<std::size_t>{}(packed);
+  };
+  for(int i = 0; i < level; ++i) {
+    // create sub simplices
+    if(type == TYPE_POLYG) {
+      std::vector<size_t> newSimplices(4 * simplices.size());
+      std::unordered_map<std::pair<std::size_t, std::size_t>, size_t,
+                         decltype(hasher)>
+        mids(0, hasher);
+      for(int j = 0; j < simplices.size(); j += 3) {
+        // create middles
+        size_t *is = &simplices[j];
+        size_t mid[3];
+        for(int k = 0; k < 3; ++k) {
+          size_t i0 = is[k], i1 = is[(k + 1) % 3];
+          std::pair<size_t, size_t> edge = {std::min(i0, i1), std::max(i0, i1)};
+          auto it = mids.find(edge);
+          if(it == mids.end()) {
+            it = mids.insert({edge, coords.size()}).first;
+            mids[{std::min(i0, i1), std::max(i0, i1)}] = coords.size();
+            double x = .5 * (coords[i0].c[0] + coords[i1].c[0]);
+            double y = .5 * (coords[i0].c[1] + coords[i1].c[1]);
+            double z = .5 * (coords[i0].c[2] + coords[i1].c[2]);
+            coords.push_back(PCoords(x, y, z));
+          }
+          mid[k] = it->second;
+        }
+        // create new simplices
+        for(int k = 0; k < 3; ++k) {
+          newSimplices[4 * j + 3 * k] = is[k];
+          newSimplices[4 * j + 3 * k + 1] = mid[k];
+          newSimplices[4 * j + 3 * k + 2] = mid[(k + 2) % 3];
+        }
+        newSimplices[4 * j + 9] = mid[0];
+        newSimplices[4 * j + 10] = mid[1];
+        newSimplices[4 * j + 11] = mid[2];
+      }
+      simplices = std::move(newSimplices);
+    }
+    else if(type == TYPE_POLYH) {
+      std::vector<size_t> newSimplices(8 * simplices.size());
+      std::unordered_map<std::pair<std::size_t, std::size_t>, size_t,
+                         decltype(hasher)>
+        mids(0, hasher);
+      for(int j = 0; j < simplices.size(); j += 4) {
+        // create middles
+        size_t *is = &simplices[j];
+        size_t mid[6];
+        int count = 0;
+        for(int k = 0; k < 4; ++k) {
+          for(int l = k + 1; l < 4; ++l) {
+            size_t i0 = is[k], i1 = is[l];
+            std::pair<size_t, size_t> edge = {std::min(i0, i1),
+                                              std::max(i0, i1)};
+            auto it = mids.find(edge);
+            if(it == mids.end()) {
+              it = mids.insert({edge, coords.size()}).first;
+              mids[{std::min(i0, i1), std::max(i0, i1)}] = coords.size();
+              double x = .5 * (coords[i0].c[0] + coords[i1].c[0]);
+              double y = .5 * (coords[i0].c[1] + coords[i1].c[1]);
+              double z = .5 * (coords[i0].c[2] + coords[i1].c[2]);
+              coords.push_back(PCoords(x, y, z));
+            }
+            mid[count++] = it->second;
+          }
+        }
+        // create new simplices
+        newSimplices[8 * j + 0] = is[0];
+        newSimplices[8 * j + 1] = mid[0];
+        newSimplices[8 * j + 2] = mid[1];
+        newSimplices[8 * j + 3] = mid[2];
+        newSimplices[8 * j + 4] = is[1];
+        newSimplices[8 * j + 5] = mid[0];
+        newSimplices[8 * j + 6] = mid[3];
+        newSimplices[8 * j + 7] = mid[4];
+        newSimplices[8 * j + 8] = is[2];
+        newSimplices[8 * j + 9] = mid[1];
+        newSimplices[8 * j + 10] = mid[3];
+        newSimplices[8 * j + 11] = mid[5];
+        newSimplices[8 * j + 12] = is[3];
+        newSimplices[8 * j + 13] = mid[2];
+        newSimplices[8 * j + 14] = mid[4];
+        newSimplices[8 * j + 15] = mid[5];
+        newSimplices[8 * j + 16] = mid[0];
+        newSimplices[8 * j + 17] = mid[1];
+        newSimplices[8 * j + 18] = mid[2];
+        newSimplices[8 * j + 19] = mid[3];
+        newSimplices[8 * j + 20] = mid[0];
+        newSimplices[8 * j + 21] = mid[2];
+        newSimplices[8 * j + 22] = mid[3];
+        newSimplices[8 * j + 23] = mid[4];
+        newSimplices[8 * j + 24] = mid[1];
+        newSimplices[8 * j + 25] = mid[2];
+        newSimplices[8 * j + 26] = mid[3];
+        newSimplices[8 * j + 27] = mid[5];
+        newSimplices[8 * j + 28] = mid[2];
+        newSimplices[8 * j + 29] = mid[3];
+        newSimplices[8 * j + 30] = mid[4];
+        newSimplices[8 * j + 31] = mid[5];
+      }
+      simplices = std::move(newSimplices);
+    }
+  }
+
+  // Compute values using mean value coordinates
+  if(type == TYPE_POLYH)
+    Msg::Error("Mean Value Coordinates not implemented for polyhedra !");
+  for(size_t i = values.size(); i < coords.size(); ++i) {
+    if(type == TYPE_POLYG) {
+      MPolygon *polygon = static_cast<MPolygon *>(e);
+      std::vector<double> MVCoord;
+      polygon->meanValueCoord(coords[i].c, MVCoord);
+      values.push_back(PValues(numComp));
+      for(int j = 0; j < numNodes; ++j) {
+        for(int k = 0; k < numComp; ++k) {
+          values.back().v[k] += MVCoord[j] * values[j].v[k];
+        }
+      }
+    }
+    else if(type == TYPE_POLYH) {
+      MPolyhedron *polyhedron = static_cast<MPolyhedron *>(e);
+      std::vector<double> MVCoord(polyhedron->getNumVertices(), 0.0);
+      // std::vector<double> MVCoord;
+      // polygon->meanValueCoord(coords[i].c, MVCoord);
+      values.push_back(PValues(numComp));
+      for(int j = 0; j < numNodes; ++j) {
+        for(int k = 0; k < numComp; ++k) {
+          values.back().v[k] += MVCoord[j] * values[j].v[k];
+        }
+      }
+    }
+  }
+
+  std::vector<PCoords> newCoords(simplices.size(), PCoords(0, 0, 0));
+  std::vector<PValues> newValues(simplices.size(), PValues(numComp));
+  for(int j = 0; j < simplices.size(); ++j) {
+    newCoords[j] = coords[simplices[j]];
+    newValues[j] = values[simplices[j]];
+  }
+  coords = std::move(newCoords);
+  values = std::move(newValues);
+  if(type == TYPE_POLYG) numNodes = 3;
+  if(type == TYPE_POLYH) numNodes = 4;
+  return true;
+}
+
 template <class T>
 void adaptiveElements<T>::addInView(double tol, int step, PViewData *in,
-                                    PViewDataList *out, GMSH_PostPlugin *plug)
+                                    PViewDataList *out, GMSH_PostPlugin *plug,
+                                    int level)
 {
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
 
   int numEle = 0, *outNb = nullptr;
   std::vector<double> *outList = nullptr;
-  switch(T::numEdges) {
-  case 0:
+  int type = 0;
+  bool clear = true;
+  if constexpr(std::is_same<T, adaptivePoint>::value) {
     numEle = in->getNumPoints();
     outNb =
       (numComp == 1) ? &out->NbSP : ((numComp == 3) ? &out->NbVP : &out->NbTP);
     outList =
       (numComp == 1) ? &out->SP : ((numComp == 3) ? &out->VP : &out->TP);
-    break;
-  case 1:
+    type = TYPE_PNT;
+  }
+  if constexpr(std::is_same<T, adaptiveLine>::value) {
     numEle = in->getNumLines();
     outNb =
       (numComp == 1) ? &out->NbSL : ((numComp == 3) ? &out->NbVL : &out->NbTL);
     outList =
       (numComp == 1) ? &out->SL : ((numComp == 3) ? &out->VL : &out->TL);
-    break;
-  case 3:
+    type = TYPE_LIN;
+  }
+  if constexpr(std::is_same<T, adaptiveTriangle>::value) {
     numEle = in->getNumTriangles();
     outNb =
       (numComp == 1) ? &out->NbST : ((numComp == 3) ? &out->NbVT : &out->NbTT);
     outList =
       (numComp == 1) ? &out->ST : ((numComp == 3) ? &out->VT : &out->TT);
-    break;
-  case 4:
+    type = TYPE_TRI;
+  }
+  if constexpr(std::is_same<T, adaptiveQuadrangle>::value) {
     numEle = in->getNumQuadrangles();
     outNb =
       (numComp == 1) ? &out->NbSQ : ((numComp == 3) ? &out->NbVQ : &out->NbTQ);
     outList =
       (numComp == 1) ? &out->SQ : ((numComp == 3) ? &out->VQ : &out->TQ);
-    break;
-  case 6:
+    type = TYPE_QUA;
+  }
+  if constexpr(std::is_same<T, adaptivePolygon>::value) {
+    numEle = in->getNumPolygons();
+    outNb =
+      (numComp == 1) ? &out->NbST : ((numComp == 3) ? &out->NbVT : &out->NbTT);
+    outList =
+      (numComp == 1) ? &out->ST : ((numComp == 3) ? &out->VT : &out->TT);
+    type = TYPE_POLYG;
+    if(in->getNumTriangles()) clear = false;
+  }
+  if constexpr(std::is_same<T, adaptiveTetrahedron>::value) {
     numEle = in->getNumTetrahedra();
     outNb =
       (numComp == 1) ? &out->NbSS : ((numComp == 3) ? &out->NbVS : &out->NbTS);
     outList =
       (numComp == 1) ? &out->SS : ((numComp == 3) ? &out->VS : &out->TS);
-    break;
-  case 9:
+    type = TYPE_TET;
+  }
+  if constexpr(std::is_same<T, adaptivePrism>::value) {
     numEle = in->getNumPrisms();
     outNb =
       (numComp == 1) ? &out->NbSI : ((numComp == 3) ? &out->NbVI : &out->NbTI);
     outList =
       (numComp == 1) ? &out->SI : ((numComp == 3) ? &out->VI : &out->TI);
-    break;
-  case 8:
+    type = TYPE_PRI;
+  }
+  if constexpr(std::is_same<T, adaptivePyramid>::value) {
     numEle = in->getNumPyramids();
     outNb =
       (numComp == 1) ? &out->NbSY : ((numComp == 3) ? &out->NbVY : &out->NbTY);
     outList =
       (numComp == 1) ? &out->SY : ((numComp == 3) ? &out->VY : &out->TY);
-    break;
-  case 12:
+    type = TYPE_PYR;
+  }
+  if constexpr(std::is_same<T, adaptiveHexahedron>::value) {
     numEle = in->getNumHexahedra();
     outNb =
       (numComp == 1) ? &out->NbSH : ((numComp == 3) ? &out->NbVH : &out->NbTH);
     outList =
       (numComp == 1) ? &out->SH : ((numComp == 3) ? &out->VH : &out->TH);
-    break;
+    type = TYPE_HEX;
+  }
+  if constexpr(std::is_same<T, adaptivePolyhedron>::value) {
+    numEle = in->getNumPolyhedra();
+    outNb =
+      (numComp == 1) ? &out->NbSS : ((numComp == 3) ? &out->NbVS : &out->NbTS);
+    outList =
+      (numComp == 1) ? &out->SS : ((numComp == 3) ? &out->VS : &out->TS);
+    type = TYPE_POLYH;
+    if(in->getNumTetrahedra()) clear = false;
   }
   if(!numEle) return;
 
-  outList->clear();
-  *outNb = 0;
+  if(clear) {
+    outList->clear();
+    *outNb = 0;
+  }
 
   for(int ent = 0; ent < in->getNumEntities(step); ent++) {
     for(int ele = 0; ele < in->getNumElements(step, ent); ele++) {
-      if(in->skipElement(step, ent, ele) ||
-         in->getNumEdges(step, ent, ele) != T::numEdges)
+      if(in->skipElement(step, ent, ele) || in->getType(step, ent, ele) != type)
         continue;
       int numNodes = in->getNumNodes(step, ent, ele);
       std::vector<PCoords> coords;
@@ -1475,18 +1686,27 @@ void adaptiveElements<T>::addInView(double tol, int step, PViewData *in,
         break;
       }
       }
-      if(adapt(tol, numComp, coords, values, out->Min, out->Max, plug)) {
-        *outNb += coords.size() / T::numNodes;
-        for(std::size_t i = 0; i < coords.size() / T::numNodes; i++) {
-          for(int k = 0; k < T::numNodes; ++k)
-            outList->push_back(coords[T::numNodes * i + k].c[0]);
-          for(int k = 0; k < T::numNodes; ++k)
-            outList->push_back(coords[T::numNodes * i + k].c[1]);
-          for(int k = 0; k < T::numNodes; ++k)
-            outList->push_back(coords[T::numNodes * i + k].c[2]);
-          for(int k = 0; k < T::numNodes; ++k)
+
+      bool result = false;
+      if(type == TYPE_POLYG || type == TYPE_POLYH) {
+        result = adaptPolytope(level, numComp, in->getElement(step, ent, ele),
+                               numNodes, coords, values);
+      }
+      else {
+        result = adapt(tol, numComp, coords, values, out->Min, out->Max, plug);
+      }
+      if(result) {
+        *outNb += coords.size() / numNodes;
+        for(std::size_t i = 0; i < coords.size() / numNodes; i++) {
+          for(int k = 0; k < numNodes; ++k)
+            outList->push_back(coords[numNodes * i + k].c[0]);
+          for(int k = 0; k < numNodes; ++k)
+            outList->push_back(coords[numNodes * i + k].c[1]);
+          for(int k = 0; k < numNodes; ++k)
+            outList->push_back(coords[numNodes * i + k].c[2]);
+          for(int k = 0; k < numNodes; ++k)
             for(int l = 0; l < numComp; ++l)
-              outList->push_back(values[T::numNodes * i + k].v[l]);
+              outList->push_back(values[numNodes * i + k].v[l]);
         }
       }
     }
@@ -1524,6 +1744,9 @@ adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
     _inData->getInterpolationMatrices(TYPE_QUA, p);
     _quadrangles = new adaptiveElements<adaptiveQuadrangle>(p);
   }
+  if(_inData->getNumPolygons()) {
+    _polygons = new adaptiveElements<adaptivePolygon>(p);
+  }
   if(_inData->getNumTetrahedra()) {
     _inData->getInterpolationMatrices(TYPE_TET, p);
     _tetrahedra = new adaptiveElements<adaptiveTetrahedron>(p);
@@ -1540,6 +1763,9 @@ adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
     _inData->getInterpolationMatrices(TYPE_PYR, p);
     _pyramids = new adaptiveElements<adaptivePyramid>(p);
   }
+  if(_inData->getNumPolyhedra()) {
+    _polyhedra = new adaptiveElements<adaptivePolyhedron>(p);
+  }
   upWriteVTK(true); // By default, write VTK data if called...
   upBuildStaticData(false); // ... and do not generated global static data
                             // structure (only useful for ParaView plugin).
@@ -1551,11 +1777,13 @@ adaptiveData::~adaptiveData()
   if(_lines) delete _lines;
   if(_triangles) delete _triangles;
   if(_quadrangles) delete _quadrangles;
+  if(_polygons) delete _polygons;
   if(_tetrahedra) delete _tetrahedra;
   if(_prisms) delete _prisms;
   if(_hexahedra) delete _hexahedra;
   if(_pyramids) delete _pyramids;
   if(_outData) delete _outData;
+  if(_polyhedra) delete _polyhedra;
 }
 
 double adaptiveData::timerInit = 0.;
@@ -1583,10 +1811,14 @@ void adaptiveData::changeResolution(int step, int level, double tol,
     if(_triangles) _triangles->addInView(tol, step, _inData, _outData, plug);
     if(_quadrangles)
       _quadrangles->addInView(tol, step, _inData, _outData, plug);
+    if(_polygons)
+      _polygons->addInView(tol, step, _inData, _outData, plug, level);
     if(_tetrahedra) _tetrahedra->addInView(tol, step, _inData, _outData, plug);
     if(_prisms) _prisms->addInView(tol, step, _inData, _outData, plug);
     if(_hexahedra) _hexahedra->addInView(tol, step, _inData, _outData, plug);
     if(_pyramids) _pyramids->addInView(tol, step, _inData, _outData, plug);
+    if(_polyhedra)
+      _polyhedra->addInView(tol, step, _inData, _outData, plug, level);
     _outData->finalize();
   }
   _step = step;
