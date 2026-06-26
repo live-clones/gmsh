@@ -25,7 +25,7 @@ public:
     : MElement(num, part)
   {
     std::unordered_set<MVertex *> set;
-    for(int i = 0; i < vertices.size(); ++i) {
+    for(size_t i = 0; i < vertices.size(); ++i) {
       MVertex *v = vertices[i];
       auto it = set.find(v);
       if(it == set.end()) {
@@ -52,6 +52,10 @@ public:
     return MEdge(_vertices[is[0]], _vertices[is[1]]);
   }
   virtual int getNumEdgesRep(bool curved) { return getNumEdges(); }
+  std::array<int, 2> getEdgeRepIndices(bool curved, int num) const
+  {
+    return getEdgeIndices(num);
+  }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n)
   {
@@ -112,16 +116,16 @@ public:
                                 std::vector<MVertex *> &simplicesVertices)
   {
     std::unordered_map<MVertex *, int> indices;
-    for(int i = 0; i < _vertices.size(); ++i) indices[_vertices[i]] = i;
+    for(size_t i = 0; i < _vertices.size(); ++i) indices[_vertices[i]] = i;
 
     // Polygons
     _polygons.resize(borderVertices.size());
-    for(int i = 0; i < borderVertices.size(); ++i)
+    for(size_t i = 0; i < borderVertices.size(); ++i)
       _polygons[i] = indices[borderVertices[i]];
     _polygonStarts = borderOffset;
 
     // Lines
-    for(int i = 0; i < _polygonStarts.size(); ++i) {
+    for(size_t i = 0; i < _polygonStarts.size(); ++i) {
       int N = _polygonStarts[i + 1] - _polygonStarts[i];
       for(int j = 0; j < N; ++j) {
         int index0 = _polygonStarts[i] + j;
@@ -134,7 +138,7 @@ public:
 
     // Tetrahedra
     _tetrahedra.resize(simplicesVertices.size());
-    for(int i = 0; i < simplicesVertices.size(); ++i)
+    for(size_t i = 0; i < simplicesVertices.size(); ++i)
       _tetrahedra[i] = indices[simplicesVertices[i]];
 
     // Triangles
@@ -144,7 +148,7 @@ public:
     };
     std::unordered_map<std::array<int, 3>, int, decltype(hasher)> faces(0,
                                                                         hasher);
-    for(int i = 0; i < _tetrahedra.size(); i += 4) {
+    for(size_t i = 0; i < _tetrahedra.size(); i += 4) {
       for(int j = 0; j < 4; ++j) {
         int i0 = _tetrahedra[i + MTetrahedron::faces_tetra(j, 0)];
         int i1 = _tetrahedra[i + MTetrahedron::faces_tetra(j, 1)];
@@ -154,7 +158,7 @@ public:
         ++faces[t];
       }
     }
-    for(int i = 0; i < _tetrahedra.size(); i += 4) {
+    for(size_t i = 0; i < _tetrahedra.size(); i += 4) {
       for(int j = 0; j < 4; ++j) {
         int i0 = _tetrahedra[i + MTetrahedron::faces_tetra(j, 0)];
         int i1 = _tetrahedra[i + MTetrahedron::faces_tetra(j, 1)];

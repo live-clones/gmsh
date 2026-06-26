@@ -883,34 +883,20 @@ static void addScalarTrihedron(PView *p, double **xyz, double **val, bool pre,
 static void addOutlinePolyhedron(PView *p, int ient, int iele, int numNodes,
                                  double **xyz, unsigned int color, bool pre)
 {
-  // FIXME: this code is horribly slow
-  const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
-  std::map<MFace, int, MFaceLessThan> triFaces;
-  std::vector<MVertex *> verts;
-  verts.reserve(numNodes);
-  for(int i = 0; i < numNodes; i++)
-    verts.push_back(new MVertex(xyz[i][0], xyz[i][1], xyz[i][2]));
-  for(int i = 0; i < numNodes / 4; i++) {
-    for(int j = 0; j < 4; j++) {
-      MFace f(verts[4 * i + it[j][0]], verts[4 * i + it[j][1]],
-              verts[4 * i + it[j][2]]);
-      std::map<MFace, int, MFaceLessThan>::iterator ite;
-      for(ite = triFaces.begin(); ite != triFaces.end(); ite++)
-        if((*ite).first == f) break;
-      if(ite == triFaces.end())
-        triFaces[f] = 100 * i + j;
-      else
-        triFaces.erase(ite);
-    }
+  PViewOptions *opt = p->getOptions();
+  PViewData *data = p->getData();
+  MPolyhedron *polyhedron =
+    static_cast<MPolyhedron *>(data->getElement(opt->timeStep, ient, iele));
+  for(int i = 0; i < polyhedron->getNumEdgesRep(false); i++) {
+    std::array<int, 2> is = polyhedron->getEdgeRepIndices(false, i);
+    double x[2] = {xyz[is[0]][0], xyz[is[1]][0]};
+    double y[2] = {xyz[is[0]][1], xyz[is[1]][1]};
+    double z[2] = {xyz[is[0]][2], xyz[is[1]][2]};
+    SVector3 n[2];
+    unsigned int col[2] = {color, color};
+    getLineNormal(p, x, y, z, nullptr, n, false);
+    if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
   }
-  for(auto ite = triFaces.begin(); ite != triFaces.end(); ite++) {
-    int i = (int)(*ite).second / 100;
-    int j = (*ite).second % 100;
-    if(j < 4)
-      addOutlineTriangle(p, xyz, color, pre, 4 * i + it[j][0], 4 * i + it[j][1],
-                         4 * i + it[j][2]);
-  }
-  for(int i = 0; i < numNodes; i++) delete verts[i];
 }
 
 static void addScalarPolyhedron(PView *p, int ient, int iele, int numNodes,

@@ -2564,24 +2564,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
   case MSH_QUA_32: return new MQuadrangleN(v, 8, num, part);
   case MSH_QUA_36I: return new MQuadrangleN(v, 9, num, part);
   case MSH_QUA_40: return new MQuadrangleN(v, 10, num, part);
-  case MSH_POLYG_:
-    if(v.size() == 3)
-      return new MTriangle(v, num, part);
-    else if(v.size() == 6) {
-      int shift0 = 0, shift1 = 0;
-      for(int i = 0; i < 3; ++i) {
-        if(v[i] != v[3] && v[i] != v[4] && v[i] != v[5]) shift0 = i;
-        if(v[3 + i] != v[0] && v[3 + i] != v[1] && v[3 + i] != v[2]) shift1 = i;
-      }
-      v[0] = v[shift0];
-      v[1] = v[3 + (shift1 + 2) % 3];
-      v[2] = v[3 + shift1];
-      v[3] = v[3 + (shift1 + 1) % 3];
-      v.resize(4);
-      return new MQuadrangle(v, num, part);
-    }
-    else
-      return new MPolygon(v, num, part);
+  case MSH_POLYG_: return new MPolygon(v, num, part);
   case MSH_TET_4: return new MTetrahedron(v, num, part);
   case MSH_TET_10: return new MTetrahedron10(v, num, part);
   case MSH_HEX_8: return new MHexahedron(v, num, part);

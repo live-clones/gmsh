@@ -58,9 +58,6 @@ int GModel::readMSH(const std::string &name)
       else if(version < 5.0) {
         return _readMSH4(name);
       }
-      else if(version < 6.0) {
-        return _readMSH5(name);
-      }
       else {
         Msg::Error("Unknown MSH file version %g", version);
         return 0;
@@ -103,10 +100,6 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     return _writeMSH4(name, version, binary, saveAll, saveParametric,
                       scalingFactor, append);
   }
-  else if(version < 6.0) {
-    return _writeMSH5(name, version, binary, saveAll, saveParametric,
-                      scalingFactor, append);
-  }
 
   Msg::Error("Unknown MSH file version %g", version);
   return 0;
@@ -134,10 +127,6 @@ int GModel::writePartitionedMSH(const std::string &baseName, double version,
   }
   else if(version < 5.0) {
     return _writePartitionedMSH4(baseName, version, binary, saveAll,
-                                 saveParametric, scalingFactor);
-  }
-  else if(version < 6.0) {
-    return _writePartitionedMSH5(baseName, version, binary, saveAll,
                                  saveParametric, scalingFactor);
   }
 

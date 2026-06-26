@@ -102,14 +102,6 @@ private:
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
-  int _readMSH5(const std::string &name);
-  int _writeMSH5(const std::string &name, double version, bool binary,
-                 bool saveAll, bool saveParametric, double scalingFactor,
-                 bool append, int partitionToSave = 0,
-                 std::map<GEntity *, SBoundingBox3d> *entityBounds = nullptr);
-  int _writePartitionedMSH5(const std::string &baseName, double version,
-                            bool binary, bool saveAll, bool saveParametric,
-                            double scalingFactor);
   int _writeX3dFile(FILE *fp, bool saveAll, double scalingFactor,
                     int x3dsurfaces, int x3dedges, int x3dvertices,
                     int x3dcolorize, std::vector<GFace *> &customFaces);

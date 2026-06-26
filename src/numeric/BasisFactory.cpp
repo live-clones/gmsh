@@ -7,7 +7,6 @@
 #include "GmshDefines.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
-#include "meanValueBasis.h"
 #include "bezierBasis.h"
 #include "miniBasis.h"
 #include "CondNumBasis.h"
@@ -45,7 +44,7 @@ const nodalBasis *BasisFactory::getNodalBasis(int tag)
     case(TYPE_HEX): F = new polynomialBasis(tag); break;
     case(TYPE_PYR): F = new pyramidalBasis(tag); break;
     case(TYPE_POLYG):
-    case(TYPE_POLYH): F = new meanValueBasis(); break;
+    case(TYPE_POLYH): break;
     default:
       Msg::Error("Unknown type of element %d (in BasisFactory)", tag);
       return nullptr;
@@ -72,10 +71,7 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag, FuncSpaceData fsd)
 
   JacobianBasis *J = new JacobianBasis(tag, data);
 
-  std::pair<
-    std::map<std::pair<int, FuncSpaceData>, JacobianBasis *>::const_iterator,
-    bool>
-    inserted;
+  std::pair<std::map<std::pair<int, FuncSpaceData>, JacobianBasis *>::const_iterator, bool> inserted;
 #pragma omp critical(getJacobianBasis)
   {
     inserted = js.insert(std::make_pair(pairData, J));
@@ -113,8 +109,7 @@ const CondNumBasis *BasisFactory::getCondNumBasis(int tag, int cnOrder)
 
   CondNumBasis *M = new CondNumBasis(tag, cnOrder);
 
-  std::pair<std::map<std::pair<int, int>, CondNumBasis *>::const_iterator, bool>
-    inserted;
+  std::pair<std::map<std::pair<int, int>, CondNumBasis *>::const_iterator, bool> inserted;
 #pragma omp critical(getCondNumBasis)
   {
     inserted = cs.insert(std::make_pair(pairData, M));
@@ -133,10 +128,7 @@ const GradientBasis *BasisFactory::getGradientBasis(int tag, FuncSpaceData fsd)
 
   GradientBasis *G = new GradientBasis(tag, data);
 
-  std::pair<
-    std::map<std::pair<int, FuncSpaceData>, GradientBasis *>::const_iterator,
-    bool>
-    inserted;
+  std::pair<std::map<std::pair<int, FuncSpaceData>, GradientBasis *>::const_iterator, bool> inserted;
 #pragma omp critical(getGradientBasis)
   {
     inserted = gs.insert(std::make_pair(pairData, G));
@@ -165,8 +157,7 @@ const bezierBasis *BasisFactory::getBezierBasis(FuncSpaceData fsd)
 
   bezierBasis *B = new bezierBasis(data);
 
-  std::pair<std::map<FuncSpaceData, bezierBasis *>::const_iterator, bool>
-    inserted;
+  std::pair<std::map<FuncSpaceData, bezierBasis *>::const_iterator, bool> inserted;
 #pragma omp critical(getBezierBasis)
   {
     inserted = bs.insert(std::make_pair(data, B));
