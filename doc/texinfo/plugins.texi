@@ -120,6 +120,12 @@ Default value: @code{1.2}
 Default value: @code{2}
 @item NumExactLayers
 Default value: @code{-2}
+@item HighOrder
+Default value: @code{1}
+@item HighOrderStrategy
+Default value: @code{2}
+@item HighOrderPostSplitUntangle
+Default value: @code{0}
 @end table
 
 @item Plugin(Bubbles)
@@ -427,6 +433,23 @@ Numeric options:
 @table @code
 @item View
 Default value: @code{-1}
+@end table
+
+@item Plugin(DuplicateNodes)
+This plugin enhances 2D meshes by inserting dummy zero-measure elements along each edge of every element. This facilitates straightforward implementation of the discontinuous Galerkin method (DG) within the tempered finite element method (TFEM) framework, enabling users to efficiently use DG in FEM-based implementations. For more information about TFEM-DG, see the companion papers `DG = FEM + flat elements' (Part I: Diffusion, Part II: Convection).@*
+@*
+The description of the plugin parameters follows:@*
+- `InsertMode'   - The user has the choice between the insertion of a quadrangle (InsertMode=0) or a pair of triangles (InsertMode=1) along each edge. The type of dummy elements chosen here does not have to coincide withthe type of elements in the original mesh. Quadrangles can be inserted into a triangular mesh and vice versa.@*
+- `ShrinkFactor' - This parameter serves the debugging purposes, should be a real number from the half-closed interval [0, 1), and describes how much the original elements are scaled down. For TFEM-DG purposes, the value of this parameter should be zero. To see the inserted dummy elements while also keeping the original elements large enough, we recommend setting this parameter to 0.25.@*
+- `Insert1DElement' - In the original TFEM-DG paper, only 2D dummy elements are inserted. However, there might be applications in which there is some computation taking place on the edges of the surfaces. Therefore, we add this boolean parameter (1 = true, 0 = false) by which it can be specified whether the dummy elements should also be included in 1D entities.
+Numeric options:
+@table @code
+@item InsertMode
+Default value: @code{0}
+@item ShrinkFactor
+Default value: @code{0}
+@item Insert1DElement
+Default value: @code{0}
 @end table
 
 @item Plugin(Eigenvalues)

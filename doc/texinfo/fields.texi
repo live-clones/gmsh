@@ -374,10 +374,14 @@ Compute an extension of the boundary mesh sizes into the given surfaces (resp. v
 @*
   F = min(SizeMax, (Sum_i w_i) / (Sum_i w_i / s_i)),@*
 @*
-with w_i = 1 / d_i^2 and s_i = SizeBnd_i + (Ratio - 1) * d_i, where SizeBnd_i denotes the size of the closest element to P on the i-th boundary entity.@*
+with w_i = 1 / d_i^2 and s_i = SizeBnd_i + (Ratio - 1) * d_i, where SizeBnd_i denotes the size of the closest element to P on the i-th boundary entity. Treat embedded entities as part of the boundary if IncludeEmbedded is set.@*
 @*
 Options:@*
 @table @code
+@item IncludeEmbedded
+Include embedded entities@*
+Type: boolean@*
+Default value: @code{1}
 @item Ratio
 Element size growth ratio (>= 1)@*
 Type: float@*
