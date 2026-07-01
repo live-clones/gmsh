@@ -39,6 +39,8 @@
 #include <BRepBuilderAPI_NurbsConvert.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepClass_FaceClassifier.hxx>
+#include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepFill_CurveConstraint.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
@@ -5545,12 +5547,28 @@ bool OCC_Internals::getClosestEntities(
       return false;
     }
     TopoDS_Shape shape = _find(e.first, e.second);
-    BRepExtrema_DistShapeShape dist(vertex, shape);
-    if(dist.IsDone() && dist.NbSolution() > 0) {
-      gp_Pnt p2 = dist.PointOnShape2(1);
-      std::tuple<int, int, double, double, double> t{e.first, e.second, p2.X(),
-                                                     p2.Y(), p2.Z()};
-      d.insert(std::make_pair(dist.Value(), t));
+    // BRepExtrema_DistShapeShape.InnerSolution() does not seem to work
+    // reliably: manually check if point is inside first, in which case we
+    // return a zero distance
+    bool inside = false;
+    if(e.first == 3) {
+      BRepClass3d_SolidClassifier solidClassifier(shape);
+      solidClassifier.Perform(aPnt, CTX::instance()->geom.tolerance);
+      const TopAbs_State state = solidClassifier.State();
+      inside = (state == TopAbs_IN || state == TopAbs_ON);
+    }
+    if(inside) {
+      std::tuple<int, int, double, double, double> t{e.first, e.second, x, y, z};
+      d.insert(std::make_pair(0., t));
+    }
+    else {
+      BRepExtrema_DistShapeShape dist(vertex, shape);
+      if(dist.IsDone() && dist.NbSolution() > 0) {
+        gp_Pnt p2 = dist.PointOnShape2(1);
+        std::tuple<int, int, double, double, double> t{e.first, e.second, p2.X(),
+                                                       p2.Y(), p2.Z()};
+        d.insert(std::make_pair(dist.Value(), t));
+      }
     }
   }
 
