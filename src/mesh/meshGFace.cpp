@@ -748,6 +748,7 @@ static bool algoDelaunay2D(GFace *gf)
   if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
      gf->getMeshingAlgo() == ALGO_2D_BAMG ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL ||
+     gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR ||
@@ -2021,6 +2022,9 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // passed in order not to recompute local coordinates of vertices
   if(algoDelaunay2D(gf) && !onlyInitialMesh) {
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) { bowyerWatsonFrontal(gf); }
+    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT) {
+      bowyerWatsonFrontalOptimized(gf);
+    }
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
       bowyerWatsonFrontalLayers(gf, true);
     }
@@ -3126,6 +3130,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates,
                           &true_boundary);
+    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT)
+      bowyerWatsonFrontalOptimized(gf, &equivalence, &parametricCoordinates,
+                                   &true_boundary);
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
       bowyerWatsonFrontalLayers(gf, true, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
@@ -3291,6 +3298,7 @@ void meshGFace::operator()(GFace *gf, bool print)
   case ALGO_2D_INITIAL_ONLY: algo = "Initial Mesh Only"; break;
   case ALGO_2D_DELAUNAY: algo = "Delaunay"; break;
   case ALGO_2D_FRONTAL: algo = "Frontal-Delaunay"; break;
+  case ALGO_2D_FRONTAL_OPT: algo = "Frontal-Delaunay Optimized"; break;
   case ALGO_2D_BAMG: algo = "Bamg"; break;
   case ALGO_2D_FRONTAL_QUAD: algo = "Frontal-Delaunay for Quads"; break;
   case ALGO_2D_PACK_PRLGRMS: algo = "Packing of Parallelograms"; break;

@@ -12,7 +12,7 @@ set(SRC
   meshGFacePack.cpp
     meshGFaceTransfinite.cpp meshGFaceExtruded.cpp
     meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp
-    meshGFaceOptimize.cpp
+    meshGFaceDelaunayInsertionOptimized.cpp meshGFaceOptimize.cpp
     meshGFaceBipartiteLabelling.cpp
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
