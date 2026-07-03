@@ -67,6 +67,7 @@
 #cmakedefine HAVE_PLUGINS
 #cmakedefine HAVE_POST
 #cmakedefine HAVE_POPPLER
+#cmakedefine HAVE_PRIVATE_API
 #cmakedefine HAVE_QUADTRI
 #cmakedefine HAVE_QUADMESHINGTOOLS
 #cmakedefine HAVE_REVOROPT

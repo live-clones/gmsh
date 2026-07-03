@@ -166,6 +166,7 @@ if(ENABLE_PRIVATE_API)
        contrib/MeshQualityOptimizer/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
       ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h ${HEADERS})
+  set_config_option(HAVE_PRIVATE_API "PrivateAPI")
   get_property(IAMCHILD DIRECTORY PROPERTY PARENT_DIRECTORY)
   if(IAMCHILD)
     set(GMSH_PRIVATE_API ${GMSH_PRIVATE_API} PARENT_SCOPE)
