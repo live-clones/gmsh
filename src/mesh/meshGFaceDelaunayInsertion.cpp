@@ -25,6 +25,7 @@
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
 #include "fullMatrix.h"
+#include <chrono>
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"
@@ -1300,10 +1301,20 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   std::set<GEntity *> degenerated;
   getDegeneratedVertices(gf, degenerated);
 
+  // Debug-only phase timers (verbosity >= 4) to attribute the time spent in
+  // the frontal algorithm to its build/refine/transfer phases.
+  using _clk = std::chrono::steady_clock;
+  const bool _timePhases = Msg::GetVerbosity() >= 4;
+  auto _ms = [](_clk::time_point a, _clk::time_point b) {
+    return std::chrono::duration<double, std::milli>(b - a).count();
+  };
+  const auto _tStart = _clk::now();
+
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)) {
     Msg::Error("Invalid meshing data structure");
     return;
   }
+  const auto _tBuilt = _clk::now();
 
   int ITER = 0, active_edge;
   // compute active triangle
@@ -1365,7 +1376,16 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   //  char name[245];
   //  sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
   //  _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
+  const auto _tRefined = _clk::now();
   transferDataStructure(gf, AllTris, DATA);
+
+  if(_timePhases) {
+    const auto _tTransfer = _clk::now();
+    Msg::Info("algo6 face %d phases (ms): build=%.1f refine=%.1f "
+              "transfer=%.1f total=%.1f",
+              gf->tag(), _ms(_tStart, _tBuilt), _ms(_tBuilt, _tRefined),
+              _ms(_tRefined, _tTransfer), _ms(_tStart, _tTransfer));
+  }
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 
