@@ -166,7 +166,6 @@ if(ENABLE_PRIVATE_API)
        contrib/MeshQualityOptimizer/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
       ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h ${HEADERS})
-  set_config_option(HAVE_PRIVATE_API "PrivateAPI")
   get_property(IAMCHILD DIRECTORY PROPERTY PARENT_DIRECTORY)
   if(IAMCHILD)
     set(GMSH_PRIVATE_API ${GMSH_PRIVATE_API} PARENT_SCOPE)
@@ -248,6 +247,11 @@ macro(set_config_option VARNAME STRING)
   list(APPEND CONFIG_OPTIONS ${STRING})
   message(STATUS "Found " ${STRING})
 endmacro()
+
+# add private api config option
+if(ENABLE_PRIVATE_API)
+  set_config_option(HAVE_PRIVATE_API "PrivateAPI")
+endif()
 
 # check the size of size_t
 check_type_size("size_t" SIZEOF_SIZE_T)
