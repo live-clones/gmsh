@@ -199,10 +199,6 @@ struct IndexedMeshData {
   std::vector<IndexedEdgeFace> shellBuffer;
   std::vector<std::size_t> cavityBuffer;
   std::vector<std::size_t> cavityStack;
-  std::vector<std::array<std::size_t, 3> > newTriBuffer;
-  std::vector<double> newLcBuffer;
-  std::vector<std::size_t> otherSideBuffer;
-  std::vector<int> otherSideSlotBuffer;
   std::vector<std::size_t> newCavityBuffer;
 
   inline MVertex *vertex(std::size_t i) const { return vertices[i]; }
@@ -932,18 +928,25 @@ static int findOtherSideSlot(const IndexedMeshData &data, std::size_t otherSide,
 }
 
 // Retriangulate the cavity by connecting the new vertex iv to the ordered
-// shell. Faithful indexed translation of algo 6's insertVertexB: the same
-// validation (cavity area conservation and proximity/angle checks, with the
-// same square roots), with the new triangles staged in scratch buffers and
-// only committed to the mesh once every check has passed. Negative return
-// values are the same rejection codes as algo 6 (-6/-7 are additional
-// consistency guards on the shell ring).
+// shell, in two passes. Pass 1 performs every validation check before the
+// mesh is modified in any way - cavity area conservation, proximity/angle
+// checks and the adjacency consistency guard - so no staging or rollback
+// machinery is needed; pass 2 then creates and wires the new triangles in
+// a single sweep over the ordered shell. Negative return values are the
+// same rejection codes as algo 6 (-6/-7 are additional consistency guards
+// on the shell ring).
+//
+// The proximity checks are algo 6's tests in squared form (no square
+// roots): d < t  <=>  d^2 < t^2, and
+// cos < -0.9999  <=>  num < 0 && num^2 > (2*0.9999)^2 d1^2 d2^2 with
+// num = d1^2 + d2^2 - d3^2. Decisions can differ from the sqrt forms only
+// within a rounding error of the thresholds.
 static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
-                                std::vector<std::size_t> &cavity, bool force,
-                                GFace *gf, std::size_t iv,
-                                IndexedActiveQueue *activeTets,
-                                IndexedMeshData &data,
-                                bool verifyStarShapeness = true)
+                         std::vector<std::size_t> &cavity, bool force,
+                         GFace *gf, std::size_t iv,
+                         IndexedActiveQueue *activeTets,
+                         IndexedMeshData &data,
+                         bool verifyStarShapeness = true)
 {
   if(cavity.size() == 1) return -1;
 
@@ -963,22 +966,6 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
                       return volume + std::abs(getSurfUV(triangle, data));
                     });
 
-  std::vector<std::array<std::size_t, 3> > &newTris = data.newTriBuffer;
-  std::vector<double> &newLcs = data.newLcBuffer;
-  std::vector<std::size_t> &otherSides = data.otherSideBuffer;
-  std::vector<int> &otherSideSlots = data.otherSideSlotBuffer;
-  std::vector<std::size_t> &new_cavity = data.newCavityBuffer;
-  newTris.clear();
-  newLcs.clear();
-  otherSides.clear();
-  otherSideSlots.clear();
-  new_cavity.clear();
-  newTris.reserve(shell.size());
-  newLcs.reserve(shell.size());
-  otherSides.reserve(shell.size());
-  otherSideSlots.reserve(shell.size());
-  new_cavity.reserve(shell.size() * 2);
-
   bool onePointIsTooClose = false;
 
   // Loop-invariant across shell edges: the inserted vertex's sizes and
@@ -987,94 +974,104 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
   const double vSizeBGMIv = data.vSizesBGM[iv];
   const std::array<double, 3> &pvv = data.vxyz[iv];
   const bool extend1d = Extend1dMeshIn2dSurfaces(gf);
+  constexpr double cosThreshSq = (2. * .9999) * (2. * .9999);
 
   for(auto it = shell.begin(); it != shell.end(); ++it) {
-    std::size_t i0, i1;
-    if(it->ori > 0) {
-      i0 = it->v[0];
-      i1 = it->v[1];
-    }
-    else {
-      i0 = it->v[1];
-      i1 = it->v[0];
-    }
+    const std::size_t i0 = it->ori > 0 ? it->v[0] : it->v[1];
+    const std::size_t i1 = it->ori > 0 ? it->v[1] : it->v[0];
 
-    std::array<std::size_t, 3> tri = {{i0, i1, iv}};
-    double lc =
-      ONE_THIRD * (data.vSizes[i0] + data.vSizes[i1] + vSizeIv);
-    double lcBGM = ONE_THIRD * (data.vSizesBGM[i0] +
-                                data.vSizesBGM[i1] + vSizeBGMIv);
-    double LL = std::min(lc, lcBGM);
-    double radiusLc = extend1d ? LL : lcBGM;
+    if(!force) {
+      const double lc =
+        ONE_THIRD * (data.vSizes[i0] + data.vSizes[i1] + vSizeIv);
+      const double lcBGM =
+        ONE_THIRD * (data.vSizesBGM[i0] + data.vSizesBGM[i1] + vSizeBGMIv);
+      const double LL = std::min(lc, lcBGM);
 
-    // Same arithmetic as distance(MVertex*, MVertex*) (MVertex.h) and algo
-    // 6's SVector3 expressions, reading the SoA coordinates instead of the
-    // MVertex objects.
-    const std::array<double, 3> &pv0 = data.vxyz[i0];
-    const std::array<double, 3> &pv1 = data.vxyz[i1];
-    auto dist3 = [](const std::array<double, 3> &a,
-                    const std::array<double, 3> &b) {
-      const double dx = a[0] - b[0];
-      const double dy = a[1] - b[1];
-      const double dz = a[2] - b[2];
-      return std::sqrt(dx * dx + dy * dy + dz * dz);
-    };
-    double d1 = dist3(pv0, pvv);
-    double d2 = dist3(pv1, pvv);
-    double d3 = dist3(pv0, pv1);
-    double d4 = 1.e22;
-    // avoid angles that are too obtuse
-    double cosv = ((d1 * d1 + d2 * d2 - d3 * d3) / (2. * d1 * d2));
+      const std::array<double, 3> &pv0 = data.vxyz[i0];
+      const std::array<double, 3> &pv1 = data.vxyz[i1];
+      auto dist3sq = [](const std::array<double, 3> &a,
+                        const std::array<double, 3> &b) {
+        const double dx = a[0] - b[0];
+        const double dy = a[1] - b[1];
+        const double dz = a[2] - b[2];
+        return dx * dx + dy * dy + dz * dz;
+      };
+      const double d1sq = dist3sq(pv0, pvv);
+      const double d2sq = dist3sq(pv1, pvv);
+      const double d3sq = dist3sq(pv0, pv1);
+      const double h = LL * .5;
+      bool tooClose = d1sq < h * h || d2sq < h * h;
 
-    if(data.vdim[i0] != 2 && data.vdim[i1] != 2) {
-      SVector3 v0v1(pv1[0] - pv0[0], pv1[1] - pv0[1], pv1[2] - pv0[2]);
-      SVector3 v0v(pvv[0] - pv0[0], pvv[1] - pv0[1], pvv[2] - pv0[2]);
-      SVector3 pv = crossprod(v0v1, v0v);
-      d4 = pv.norm() / d3;
-    }
-
-    if((d1 < LL * .5 || d2 < LL * .5 || d4 < LL * .4 || cosv < -.9999) &&
-       !force) {
-      onePointIsTooClose = true;
+      if(!tooClose && data.vdim[i0] != 2 && data.vdim[i1] != 2) {
+        // d4 = |v0v1 x v0v| / d3 < 0.4 LL  <=>  |cross|^2 < (0.4 LL)^2 d3^2
+        const double ax = pv1[0] - pv0[0], ay = pv1[1] - pv0[1],
+                     az = pv1[2] - pv0[2];
+        const double bx = pvv[0] - pv0[0], by = pvv[1] - pv0[1],
+                     bz = pvv[2] - pv0[2];
+        const double cx = ay * bz - az * by, cy = az * bx - ax * bz,
+                     cz = ax * by - ay * bx;
+        const double crossSq = cx * cx + cy * cy + cz * cz;
+        const double t = LL * .4;
+        tooClose = crossSq < t * t * d3sq;
+      }
+      if(!tooClose) {
+        // avoid angles that are too obtuse
+        const double num = d1sq + d2sq - d3sq;
+        tooClose = num < 0. && num * num > cosThreshSq * d1sq * d2sq;
+      }
+      if(tooClose) onePointIsTooClose = true;
     }
 
+    const std::array<std::size_t, 3> tri = {{i0, i1, iv}};
     double ss = std::abs(getSurfUV(tri, data));
     if(ss < 1.e-25) ss = 1.e22;
-
     newVolume += ss;
 
-    newTris.push_back(tri);
-    newLcs.push_back(radiusLc);
-    std::size_t otherSide = data.neigh[it->t1][it->i1];
-    otherSides.push_back(otherSide);
-    int otherSideSlot = findOtherSideSlot(data, otherSide, it->t1);
-    otherSideSlots.push_back(otherSideSlot);
-    if(otherSide != INVALID_TRIANGLE && otherSideSlot < 0) return -7;
+    const std::size_t otherSide = data.neigh[it->t1][it->i1];
+    if(otherSide != INVALID_TRIANGLE &&
+       findOtherSideSlot(data, otherSide, it->t1) < 0)
+      return -7;
   }
 
   // for adding a point we require that the area remains the same after
   // addition of the point, and that the point is not too close to an edge
   if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose) {
-    // Commit: release the cavity slots (except those still referenced by the
-    // active queue, see IndexedActiveQueue::pop), then create the new
-    // triangles and wire them - to their outer neighbor across the shell
-    // edge (slot 1, precomputed above) and to their ring neighbors (slots 0
-    // and 2, consecutive shell edges share the new vertex).
-    for(std::size_t triangle : cavity) {
-      if(!(data.flags[triangle] & TRI_IN_QUEUE))
-        data.releaseTriangleSlot(triangle);
-    }
+    // Pass 2: all checks passed - create the new triangles and wire them in
+    // one sweep over the ordered shell: to the outer neighbor across the
+    // shell edge (slot 1) and to the ring neighbors (slots 0 and 2,
+    // consecutive shell edges share the new vertex). The cavity slots are
+    // released only after the sweep, so the neigh[] rows of the deleted
+    // cavity triangles read by the wiring stay valid.
+    std::vector<std::size_t> &new_cavity = data.newCavityBuffer;
+    new_cavity.clear();
+    new_cavity.reserve(shell.size() * 2);
 
     std::size_t first = INVALID_TRIANGLE;
     std::size_t prev = INVALID_TRIANGLE;
-    for(std::size_t i = 0; i < newTris.size(); i++) {
-      std::size_t nt = addTriangle(data, newTris[i], newLcs[i], gf);
-      new_cavity.push_back(nt);
-      if(otherSides[i] != INVALID_TRIANGLE) new_cavity.push_back(otherSides[i]);
+    for(auto it = shell.begin(); it != shell.end(); ++it) {
+      const std::size_t i0 = it->ori > 0 ? it->v[0] : it->v[1];
+      const std::size_t i1 = it->ori > 0 ? it->v[1] : it->v[0];
 
-      data.neigh[nt][1] = otherSides[i];
-      if(otherSides[i] != INVALID_TRIANGLE)
-        data.neigh[otherSides[i]][otherSideSlots[i]] = nt;
+      const double lc =
+        ONE_THIRD * (data.vSizes[i0] + data.vSizes[i1] + vSizeIv);
+      const double lcBGM =
+        ONE_THIRD * (data.vSizesBGM[i0] + data.vSizesBGM[i1] + vSizeBGMIv);
+      const double radiusLc = extend1d ? std::min(lc, lcBGM) : lcBGM;
+
+      const std::size_t otherSide = data.neigh[it->t1][it->i1];
+      const std::size_t nt = addTriangle(data, {{i0, i1, iv}}, radiusLc, gf);
+      new_cavity.push_back(nt);
+
+      data.neigh[nt][1] = otherSide;
+      if(otherSide != INVALID_TRIANGLE) {
+        new_cavity.push_back(otherSide);
+        for(int f = 0; f < 3; f++) {
+          if(data.neigh[otherSide][f] == it->t1) {
+            data.neigh[otherSide][f] = nt;
+            break;
+          }
+        }
+      }
       if(prev != INVALID_TRIANGLE) {
         data.neigh[nt][0] = prev;
         data.neigh[prev][2] = nt;
@@ -1086,6 +1083,11 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
     }
     data.neigh[first][0] = prev;
     data.neigh[prev][2] = first;
+
+    for(std::size_t triangle : cavity) {
+      if(!(data.flags[triangle] & TRI_IN_QUEUE))
+        data.releaseTriangleSlot(triangle);
+    }
 
     if(activeTets) {
       for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
@@ -1099,7 +1101,7 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
     return 1;
   }
   else {
-    // the cavity is NOT star shaped: undelete it (nothing was created yet)
+    // the cavity is NOT star shaped: undelete it (nothing was created)
     std::for_each(begin(cavity), end(cavity), [&](std::size_t triangle) {
       data.flags[triangle] &= ~TRI_DELETED;
     });
