@@ -36,6 +36,7 @@
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
 #include "qualityMeasures.h"
+#include "GModel.h"
 #include "GFace.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -182,10 +183,21 @@ struct IndexedEdgeFace {
 struct IndexedMeshData {
   // per-vertex arrays
   std::vector<double> Us, Vs, vSizes, vSizesBGM;
+  // MVertex backing per vertex id. Filled for the imported block; interior
+  // slots stay null during meshing and are materialized at transfer.
   std::vector<MVertex *> vertices;
   std::vector<std::array<double, 3> > vxyz;
   std::vector<char> vdim;
   std::set<std::pair<std::size_t, std::size_t> > internalEdgeIds;
+  // Deferred-materialization bookkeeping. In the eager scheme every
+  // insertion attempt consumes one node number (algo 6 deletes rejected
+  // vertices with plain delete, burning their number), so the accepted
+  // vertex of attempt k must get number vertexNumBase + k + 1 at
+  // materialization.
+  std::size_t numBoundary = 0;
+  std::size_t vertexNumBase = 0;
+  std::size_t numAttempts = 0;
+  std::vector<std::size_t> attemptOrdinal; // per interior vertex
   // per-triangle arrays
   std::vector<std::array<std::size_t, 3> > triangles;
   std::vector<std::array<std::size_t, 3> > neigh;
@@ -203,28 +215,29 @@ struct IndexedMeshData {
 
   inline MVertex *vertex(std::size_t i) const { return vertices[i]; }
 
-  // Register a newly inserted vertex. It is always interior to the face
-  // (dim 2), and parametricCoordinates can never contain a brand-new
-  // vertex, so no override lookup is needed (algo 6's addVertex performed
-  // one that could not match).
-  std::size_t addVertex(MVertex *mv, double u, double v, double size,
-                        double sizeBGM)
+  // Register a newly inserted vertex, SoA only - no MVertex is created
+  // until the transfer. It is always interior to the face (dim 2), and
+  // parametricCoordinates can never contain a brand-new vertex, so no
+  // override lookup is needed (algo 6's addVertex performed one that could
+  // not match).
+  std::size_t addInteriorVertex(double u, double v, double x, double y,
+                                double z, double size, double sizeBGM)
   {
     const std::size_t idx = Us.size();
-    mv->setIndex((long int)idx);
     Us.push_back(u);
     Vs.push_back(v);
     vSizes.push_back(size);
     vSizesBGM.push_back(sizeBGM);
-    vertices.push_back(mv);
-    vxyz.push_back({{mv->x(), mv->y(), mv->z()}});
+    vertices.push_back(nullptr);
+    vxyz.push_back({{x, y, z}});
     vdim.push_back(2);
+    attemptOrdinal.push_back(numAttempts++);
     return idx;
   }
 
-  // Rejected insertion: drop the vertex from every array (the caller owns
-  // and deletes the MVertex itself).
-  void removeLastVertex()
+  // Rejected insertion: drop the vertex. The attempt itself stays counted
+  // (its node number is burned, matching algo 6's plain delete).
+  void removeLastInteriorVertex()
   {
     Us.pop_back();
     Vs.pop_back();
@@ -233,6 +246,7 @@ struct IndexedMeshData {
     vertices.pop_back();
     vxyz.pop_back();
     vdim.pop_back();
+    attemptOrdinal.pop_back();
   }
 
   void releaseTriangleSlot(std::size_t t)
@@ -629,6 +643,7 @@ static bool buildMeshGenerationDataStructures(
     data.vxyz.push_back({{v->x(), v->y(), v->z()}});
     data.vdim.push_back((char)v->onWhat()->dim());
   }
+  data.numBoundary = data.Us.size();
 
   // index the internal (embedded) edges by vertex ids so the cavity walk
   // needs no MEdge/MVertex
@@ -1151,8 +1166,6 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
     // computed hereafter
     GPoint p = gf->point(center[0], center[1]);
 
-    MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
-
     const std::array<std::size_t, 3> &tri = data.triangles[ptin];
     double lc1 = (1. - uv[0] - uv[1]) * data.vSizes[tri[0]] +
                  uv[0] * data.vSizes[tri[1]] +
@@ -1163,7 +1176,10 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
     else
       lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
 
-    std::size_t iv = data.addVertex(v, center[0], center[1], lc1, lc);
+    // SoA only: the MFaceVertex is materialized at transfer (this attempt
+    // consumes one node number either way, see attemptOrdinal)
+    std::size_t iv = data.addInteriorVertex(center[0], center[1], p.x(),
+                                            p.y(), p.z(), lc1, lc);
 
     int result = -9;
     if(p.succeeded()) {
@@ -1200,14 +1216,14 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
                    center[0], center[1]);
 
       data.circumRadius[worst] = -1;
-      data.removeLastVertex();
-      delete v;
+      data.removeLastInteriorVertex();
       for(auto itc = cavity.begin(); itc != cavity.end(); ++itc)
         data.flags[*itc] &= ~TRI_DELETED;
       return false;
     }
     else {
-      gf->mesh_vertices.push_back(v);
+      // gf->mesh_vertices is filled at transfer, in the same (acceptance)
+      // order as the eager path
       return true;
     }
   }
@@ -1363,9 +1379,48 @@ static void computeEquivalences(GFace *gf,
   }
 }
 
+template <class V> static void releaseVector(V &v) { V().swap(v); }
+
 static void transferDataStructure(GFace *gf, IndexedMeshData &data,
                                   std::map<MVertex *, MVertex *> *equivalence)
 {
+  // Refinement is over: release everything the transfer does not need
+  // before materializing the final mesh (MVertex + MTriangle), so the dead
+  // refinement structures do not coexist with it at the memory peak. The
+  // transfer still needs Us/Vs (orientation), vertices, triangles,
+  // sourceTriangles and the TRI_DELETED bit of flags.
+  releaseVector(data.neigh);
+  releaseVector(data.circumRadius);
+  releaseVector(data.freeTriangleSlots);
+  releaseVector(data.shellBuffer);
+  releaseVector(data.cavityBuffer);
+  releaseVector(data.cavityStack);
+  releaseVector(data.newCavityBuffer);
+  releaseVector(data.vdim);
+  releaseVector(data.vSizes);
+  releaseVector(data.vSizesBGM);
+
+  // Materialize the interior vertices (deferred during meshing). Node
+  // numbers replicate the eager scheme exactly: every insertion attempt
+  // consumed one number (rejected attempts burn theirs, as algo 6 deletes
+  // the vertex with plain delete), so the accepted vertex of attempt k gets
+  // vertexNumBase + k + 1, and the model counter ends at
+  // vertexNumBase + numAttempts. mesh_vertices is filled in index order,
+  // which is the acceptance order the eager path used.
+  for(std::size_t i = data.numBoundary; i < data.vertices.size(); i++) {
+    const std::size_t num =
+      data.vertexNumBase + data.attemptOrdinal[i - data.numBoundary] + 1;
+    MVertex *v =
+      new MFaceVertex(data.vxyz[i][0], data.vxyz[i][1], data.vxyz[i][2], gf,
+                      data.Us[i], data.Vs[i], num);
+    v->setIndex((long int)i); // as the eager path did for dim 2 vertices
+    data.vertices[i] = v;
+    gf->mesh_vertices.push_back(v);
+  }
+  GModel::current()->setMaxVertexNumber(data.vertexNumBase + data.numAttempts);
+  releaseVector(data.vxyz);
+  releaseVector(data.attemptOrdinal);
+
   // Create the MTriangles and orient them consistently with the reference
   // (first) triangle in a single pass. The param indices needed for the
   // normal are already in data.triangles[t], so no per-vertex getIndex()
@@ -1438,6 +1493,9 @@ void bowyerWatsonFrontalOptimized(
     Msg::Error("Invalid meshing data structure");
     return;
   }
+  // Base for the deferred node numbering: the eager scheme would take its
+  // numbers from here (same source as the MVertex constructor).
+  DATA.vertexNumBase = GModel::current()->getMaxVertexNumber();
   const auto _tBuilt = _clk::now();
 
   int ITER = 0, active_edge;
@@ -1483,6 +1541,10 @@ void bowyerWatsonFrontalOptimized(
   }
 
   const auto _tRefined = _clk::now();
+
+  // the queue is empty but its heap vector kept its capacity
+  releaseVector(ActiveTris.heap);
+
   transferDataStructure(gf, DATA, equivalence);
 
   if(_timePhases) {
