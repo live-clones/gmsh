@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <map>
+#include <algorithm>
 #include <chrono>
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -1389,26 +1390,60 @@ BDS2GMSH(BDS_Mesh *m, GFace *gf,
 
 static void deleteUnusedVertices(GFace *gf)
 {
-  std::set<MVertex *, MVertexPtrLessThan> allverts;
+  // O(n) via index marking instead of inserting millions of pointers into a
+  // std::set. Clobbering MVertex::_index is safe here: only vertices
+  // classified on this face are touched (private to the face, so also safe
+  // under the per-face OpenMP parallelism of Mesh2D), and _index carries no
+  // meaning at this point of the pipeline (writers re-assign it).
+  // Sentinels: -2 = used by an element, -3 = already collected.
+  for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++)
+    gf->mesh_vertices[i]->setIndex(-1);
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     for(int j = 0; j < 3; j++) {
-      if(gf->triangles[i]->getVertex(j)->onWhat() == gf)
-        allverts.insert(gf->triangles[i]->getVertex(j));
+      MVertex *v = gf->triangles[i]->getVertex(j);
+      if(v->onWhat() == gf) v->setIndex(-2);
     }
   }
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     for(int j = 0; j < 4; j++) {
-      if(gf->quadrangles[i]->getVertex(j)->onWhat() == gf)
-        allverts.insert(gf->quadrangles[i]->getVertex(j));
+      MVertex *v = gf->quadrangles[i]->getVertex(j);
+      if(v->onWhat() == gf) v->setIndex(-2);
     }
   }
+
+  // Filter mesh_vertices in place (stable): keeps the existing num-sorted
+  // order in all normal flows, so no re-sort is needed below.
+  std::vector<MVertex *> allverts;
+  allverts.reserve(gf->mesh_vertices.size());
   for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++) {
-    if(allverts.find(gf->mesh_vertices[i]) == allverts.end())
-      delete gf->mesh_vertices[i];
+    MVertex *v = gf->mesh_vertices[i];
+    if(v->getIndex() == -2) {
+      allverts.push_back(v);
+      v->setIndex(-3); // collected (also deduplicates)
+    }
+    else if(v->getIndex() == -1)
+      delete v;
   }
-  gf->mesh_vertices.clear();
-  gf->mesh_vertices.insert(gf->mesh_vertices.end(), allverts.begin(),
-                           allverts.end());
+
+  // Register used vertices that were missing from mesh_vertices, as the
+  // previous implementation did (can only happen in exotic flows).
+  auto collect = [&](MVertex *v) {
+    if(v->onWhat() == gf && v->getIndex() == -2) {
+      allverts.push_back(v);
+      v->setIndex(-3);
+    }
+  };
+  for(std::size_t i = 0; i < gf->triangles.size(); i++)
+    for(int j = 0; j < 3; j++) collect(gf->triangles[i]->getVertex(j));
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++)
+    for(int j = 0; j < 4; j++) collect(gf->quadrangles[i]->getVertex(j));
+
+  // The historical contract is "sorted by num" (the original implementation
+  // was a std::set<MVertex*, MVertexPtrLessThan>); only pay for the sort
+  // when the preserved order does not already satisfy it.
+  if(!std::is_sorted(allverts.begin(), allverts.end(), MVertexPtrLessThan()))
+    std::sort(allverts.begin(), allverts.end(), MVertexPtrLessThan());
+  gf->mesh_vertices.swap(allverts);
 }
 /*
 static void separateLoopsToIsolatedEdges (std::vector<GEdge*> &edges,
