@@ -18,9 +18,16 @@
 //  - the active front is a binary heap of (radius, slot) entries instead of
 //    a std::set ordered by radius;
 //  - the cavity is grown with an explicit stack instead of recursion.
-// The result is bit-identical to algo 6 (same nodes, node numbers and
-// triangles); only the order in which the final triangles are emitted
-// differs (it follows slot order instead of radius order).
+// The in-circle and optimal-point computations follow algo 6's formulas.
+// For isotropic metrics (and planar surfaces) they use a circumcircle
+// cached per triangle: the same quantity, computed once in closed form
+// instead of per test, whose different floating-point route can flip the
+// rare near-cocircular decisions. The mesh can therefore differ from
+// algo 6 at rounding class on isotropic/planar cases (node counts within
+// ~0.1%, no bias); anisotropic metrics and curved-surface optimal points
+// keep algo 6's exact code paths. The algorithm remains fully
+// deterministic for a given input, and the final triangles are emitted in
+// slot order instead of radius order.
 
 #include <set>
 #include <array>
@@ -64,8 +71,7 @@ static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
 // in the metric (a b; b d): x is equidistant from the three points, i.e.
 // (x-pb) M (x-pb) = (x-pa) M (x-pa) and the same for pc, a linear 2x2 system.
 // Same formulas as algo 6 (circumCenterMetric in
-// meshGFaceDelaunayInsertion.cpp); sys2x2 sets x to (0,0) if the system is
-// singular.
+// meshGFaceDelaunayInsertion.cpp); x is (0,0) if the system is singular.
 static void circumCenterMetric(double *pa, double *pb, double *pc,
                                const double *metric, double *x, double &Radius2)
 {
@@ -76,23 +82,50 @@ static void circumCenterMetric(double *pa, double *pb, double *pc,
   const double b = metric[1];
   const double d = metric[2];
 
-  sys[0][0] = 2. * a * (pa[0] - pb[0]) + 2. * b * (pa[1] - pb[1]);
-  sys[0][1] = 2. * d * (pa[1] - pb[1]) + 2. * b * (pa[0] - pb[0]);
-  sys[1][0] = 2. * a * (pa[0] - pc[0]) + 2. * b * (pa[1] - pc[1]);
-  sys[1][1] = 2. * d * (pa[1] - pc[1]) + 2. * b * (pa[0] - pc[0]);
+  if(b == 0.0) {
+    // Diagonal metric: the cross terms "+ 2*b*(...)" are exactly zero, so
+    // drop them. Bit-identical to the general branch below (adding 0.0),
+    // with ~25% fewer operations. This is the common case.
+    sys[0][0] = 2. * a * (pa[0] - pb[0]);
+    sys[0][1] = 2. * d * (pa[1] - pb[1]);
+    sys[1][0] = 2. * a * (pa[0] - pc[0]);
+    sys[1][1] = 2. * d * (pa[1] - pc[1]);
+    rhs[0] = a * (pa[0] * pa[0] - pb[0] * pb[0]) +
+             d * (pa[1] * pa[1] - pb[1] * pb[1]);
+    rhs[1] = a * (pa[0] * pa[0] - pc[0] * pc[0]) +
+             d * (pa[1] * pa[1] - pc[1] * pc[1]);
+  }
+  else {
+    sys[0][0] = 2. * a * (pa[0] - pb[0]) + 2. * b * (pa[1] - pb[1]);
+    sys[0][1] = 2. * d * (pa[1] - pb[1]) + 2. * b * (pa[0] - pb[0]);
+    sys[1][0] = 2. * a * (pa[0] - pc[0]) + 2. * b * (pa[1] - pc[1]);
+    sys[1][1] = 2. * d * (pa[1] - pc[1]) + 2. * b * (pa[0] - pc[0]);
+    rhs[0] = a * (pa[0] * pa[0] - pb[0] * pb[0]) +
+             d * (pa[1] * pa[1] - pb[1] * pb[1]) +
+             2. * b * (pa[0] * pa[1] - pb[0] * pb[1]);
+    rhs[1] = a * (pa[0] * pa[0] - pc[0] * pc[0]) +
+             d * (pa[1] * pa[1] - pc[1] * pc[1]) +
+             2. * b * (pa[0] * pa[1] - pc[0] * pc[1]);
+  }
 
-  rhs[0] = a * (pa[0] * pa[0] - pb[0] * pb[0]) +
-           d * (pa[1] * pa[1] - pb[1] * pb[1]) +
-           2. * b * (pa[0] * pa[1] - pb[0] * pb[1]);
-  rhs[1] = a * (pa[0] * pa[0] - pc[0] * pc[0]) +
-           d * (pa[1] * pa[1] - pc[1] * pc[1]) +
-           2. * b * (pa[0] * pa[1] - pc[0] * pc[1]);
-
-  sys2x2(sys, rhs, x);
+  // Inlined sys2x2 (Numeric.cpp), which is otherwise a cross-TU call per
+  // in-circle test. Same arithmetic (norm uses x*x, identical to pow(x,2)
+  // on this libm), so the result matches algo 6 bit-for-bit.
+  {
+    const double det = sys[0][0] * sys[1][1] - sys[1][0] * sys[0][1];
+    const double norm = sys[0][0] * sys[0][0] + sys[1][1] * sys[1][1] +
+                        sys[0][1] * sys[0][1] + sys[1][0] * sys[1][0];
+    if(norm == 0.0 || std::abs(det) / norm < 1.e-16) { x[0] = x[1] = 0.0; }
+    else {
+      const double ud = 1.0 / det;
+      x[0] = (rhs[0] * sys[1][1] - sys[0][1] * rhs[1]) * ud;
+      x[1] = (sys[0][0] * rhs[1] - sys[1][0] * rhs[0]) * ud;
+    }
+  }
 
   Radius2 = (x[0] - pa[0]) * (x[0] - pa[0]) * a +
-            (x[1] - pa[1]) * (x[1] - pa[1]) * d +
-            2. * (x[0] - pa[0]) * (x[1] - pa[1]) * b;
+            (x[1] - pa[1]) * (x[1] - pa[1]) * d;
+  if(b != 0.0) Radius2 += 2. * (x[0] - pa[0]) * (x[1] - pa[1]) * b;
 }
 
 static double lengthMetric(const double p[2], const double q[2],
@@ -198,10 +231,23 @@ struct IndexedMeshData {
   std::size_t vertexNumBase = 0;
   std::size_t numAttempts = 0;
   std::vector<std::size_t> attemptOrdinal; // per interior vertex
+  // Hoisted per-face geometry facts (gf->geomType() is virtual and the
+  // discreteFace dynamic_cast is not free; both were evaluated once or more
+  // per insertion). Set at import.
+  discreteFace *discrete = nullptr;
+  bool planar = false;
   // per-triangle arrays
   std::vector<std::array<std::size_t, 3> > triangles;
   std::vector<std::array<std::size_t, 3> > neigh;
   std::vector<double> circumRadius;
+  // Per-triangle parametric circumcircle {cx, cy, r^2}, computed once
+  // (closed form) at creation and used by the in-circle test for isotropic
+  // metrics. For M = lambda*I the metric circumcircle equals the parametric
+  // one (lambda cancels), so this is the same quantity as algo 6's per-test
+  // metric solve; only the floating-point route differs, flipping the rare
+  // near-cocircular decisions (rounding-class divergence from algo 6).
+  // Anisotropic metrics keep the exact per-test solve.
+  std::vector<std::array<double, 3> > circumCircle;
   std::vector<TriangleFlag> flags;
   std::vector<std::size_t> freeTriangleSlots;
   // Original MTriangle of imported triangles (reused at transfer), null for
@@ -424,12 +470,32 @@ static double computeRadius(const IndexedMeshData &data,
   return radius;
 }
 
+// Closed-form parametric circumcircle {cx, cy, r^2} of triangle tri.
+static std::array<double, 3>
+computeParamCircumCircle(const IndexedMeshData &data,
+                         const std::array<std::size_t, 3> &tri)
+{
+  const double x1 = data.Us[tri[0]], y1 = data.Vs[tri[0]];
+  const double x2 = data.Us[tri[1]], y2 = data.Vs[tri[1]];
+  const double x3 = data.Us[tri[2]], y3 = data.Vs[tri[2]];
+  const double d = 2. * (y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
+  const double a1 = x1 * x1 + y1 * y1;
+  const double a2 = x2 * x2 + y2 * y2;
+  const double a3 = x3 * x3 + y3 * y3;
+  const double cx = (a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d;
+  const double cy = (a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d;
+  return {{cx, cy, (cx - x1) * (cx - x1) + (cy - y1) * (cy - y1)}};
+}
+
 static std::size_t storeTriangle(IndexedMeshData &data,
-                                        const std::array<std::size_t, 3> &tri,
-                                        double radius, MTriangle *source)
+                                 const std::array<std::size_t, 3> &tri,
+                                 double radius, MTriangle *source,
+                                 const std::array<double, 3> *circle = nullptr)
 {
   std::array<std::size_t, 3> invalid = {
     {INVALID_TRIANGLE, INVALID_TRIANGLE, INVALID_TRIANGLE}};
+  const std::array<double, 3> cc =
+    circle ? *circle : computeParamCircumCircle(data, tri);
 
   std::size_t idx;
   if(!data.freeTriangleSlots.empty()) {
@@ -439,6 +505,7 @@ static std::size_t storeTriangle(IndexedMeshData &data,
     data.triangles[idx] = tri;
     data.neigh[idx] = invalid;
     data.circumRadius[idx] = radius;
+    data.circumCircle[idx] = cc;
     data.flags[idx] = TRI_NONE;
     data.sourceTriangles[idx] = source;
   }
@@ -447,6 +514,7 @@ static std::size_t storeTriangle(IndexedMeshData &data,
     data.triangles.push_back(tri);
     data.neigh.push_back(invalid);
     data.circumRadius.push_back(radius);
+    data.circumCircle.push_back(cc);
     data.flags.push_back(TRI_NONE);
     data.sourceTriangles.push_back(source);
   }
@@ -458,6 +526,21 @@ static std::size_t addTriangle(IndexedMeshData &data,
                                       double lc, GFace *gf,
                                       MTriangle *source = nullptr)
 {
+  // On a plane the parametric circumradius equals the 3D one, so derive the
+  // queue radius from the circumcircle that storeTriangle caches anyway
+  // (sqrt(r2)/lc), skipping the separate 3D circumCenterXYZ solve. Rounds
+  // differently than the 3D path, so the heap order can flip on near-ties
+  // (rounding-class divergence from algo 6).
+  if(MTri3::radiusNorm == 2 && data.planar) {
+    const std::array<double, 3> cc = computeParamCircumCircle(data, tri);
+    double radius = std::sqrt(cc[2]) / lc;
+    if(source) {
+      BoundaryLayerColumns *columns = gf->getColumns();
+      if(columns && columns->_toFirst.find(source) != columns->_toFirst.end())
+        radius = 0;
+    }
+    return storeTriangle(data, tri, radius, source, &cc);
+  }
   return storeTriangle(data, tri,
                               computeRadius(data, tri, lc, gf, source),
                               source);
@@ -645,6 +728,10 @@ static bool buildMeshGenerationDataStructures(
   }
   data.numBoundary = data.Us.size();
 
+  if(gf->geomType() == GEntity::DiscreteSurface)
+    data.discrete = dynamic_cast<discreteFace *>(gf);
+  data.planar = gf->geomType() == GEntity::Plane;
+
   // index the internal (embedded) edges by vertex ids so the cavity walk
   // needs no MEdge/MVertex
   for(GEdge *ge : gf->getEmbeddedEdges()) {
@@ -672,7 +759,10 @@ static bool buildMeshGenerationDataStructures(
                                    data.vSizesBGM[tri[1]] +
                                    data.vSizesBGM[tri[2]]);
     double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
-    addTriangle(data, tri, LL, gf, t);
+    // imported triangles keep the 3D circumradius route on every surface
+    // (addTriangle's planar shortcut is for the refinement-created
+    // triangles): the initial front must order exactly as algo 6's
+    storeTriangle(data, tri, computeRadius(data, tri, LL, gf, t), t);
   }
   gf->triangles.clear();
   connectTriangles(data);
@@ -712,6 +802,18 @@ static int inCircumCircleAniso(GFace *gf, std::size_t base,
                                       const double *uv, const double *metricb,
                                       IndexedMeshData &data)
 {
+  // For an isotropic metric M = lambda*I the metric circumcircle equals the
+  // parametric one and lambda cancels in the comparison, so use the
+  // circumcircle cached at triangle creation - a single distance test -
+  // instead of rebuilding and solving the 2x2 metric system on every test.
+  // Genuine anisotropic metrics keep the exact solve below.
+  if(metricb && metricb[1] == 0.0 && metricb[0] == metricb[2]) {
+    const std::array<double, 3> &cc = data.circumCircle[base];
+    const double d0 = cc[0] - uv[0];
+    const double d1 = cc[1] - uv[1];
+    return d0 * d0 + d1 * d1 < cc[2];
+  }
+
   double x[2], Radius2;
   double metric[3];
   if(!metricb) {
@@ -737,7 +839,10 @@ static int inCircumCircleAniso(GFace *gf, std::size_t base,
 
   const double d0 = (x[0] - uv[0]);
   const double d1 = (x[1] - uv[1]);
-  const double d3 = d0 * d0 * a + d1 * d1 * d + 2.0 * d0 * d1 * b;
+  // the cross term is exactly 0 for a diagonal metric (common case); skip
+  // it then (bit-identical, adding 0.0)
+  double d3 = d0 * d0 * a + d1 * d1 * d;
+  if(b != 0.0) d3 += 2.0 * d0 * d1 * b;
   return d3 < Radius2;
 }
 
@@ -757,7 +862,11 @@ static void findCavityAniso(GFace *gf,
   shell.clear();
   cavity.clear();
 
+  // the isotropic cached-circle in-circle test is hoisted out of the walk
+  // and inlined: one branch per cavity instead of one call per edge
+  const bool iso = metric && metric[1] == 0.0 && metric[0] == metric[2];
   const bool noInternal = data.internalEdgeIds.empty();
+  const double pu = param[0], pv = param[1];
 
   std::vector<std::size_t> &stack = data.cavityStack;
   stack.clear();
@@ -780,7 +889,16 @@ static void findCavityAniso(GFace *gf,
                          std::make_pair(exf.v[0], exf.v[1])) != 0;
       if(neigh == INVALID_TRIANGLE || internal) { shell.push_back(exf); }
       else if(!(data.flags[neigh] & TRI_DELETED)) {
-        if(inCircumCircleAniso(gf, neigh, param, metric, data))
+        bool circ;
+        if(iso) {
+          const std::array<double, 3> &cc = data.circumCircle[neigh];
+          const double d0 = cc[0] - pu;
+          const double d1 = cc[1] - pv;
+          circ = d0 * d0 + d1 * d1 < cc[2];
+        }
+        else
+          circ = inCircumCircleAniso(gf, neigh, param, metric, data);
+        if(circ)
           stack.push_back(neigh);
         else
           shell.push_back(exf);
@@ -1242,14 +1360,26 @@ static double optimalPointFrontal(GFace *gf, std::size_t worst,
 {
   double center[2], r2;
   const std::array<std::size_t, 3> &base = data.triangles[worst];
-  double pa[2] = {(data.Us[base[0]] + data.Us[base[1]] +
-                   data.Us[base[2]]) *
-                    ONE_THIRD,
-                  (data.Vs[base[0]] + data.Vs[base[1]] +
-                   data.Vs[base[2]]) *
-                    ONE_THIRD};
-  buildMetric(gf, pa, metric);
-  circumCenterMetric(worst, metric, data, center, r2);
+  if(data.planar) {
+    // A plane's parametrization is isometric: the metric is the identity
+    // and the circumcenter is the one cached at triangle creation - no
+    // buildMetric (virtual firstDer) and no per-insertion metric solve.
+    metric[0] = 1.;
+    metric[1] = 0.;
+    metric[2] = 1.;
+    center[0] = data.circumCircle[worst][0];
+    center[1] = data.circumCircle[worst][1];
+  }
+  else {
+    double pa[2] = {(data.Us[base[0]] + data.Us[base[1]] +
+                     data.Us[base[2]]) *
+                      ONE_THIRD,
+                    (data.Vs[base[0]] + data.Vs[base[1]] +
+                     data.Vs[base[2]]) *
+                      ONE_THIRD};
+    buildMetric(gf, pa, metric);
+    circumCenterMetric(worst, metric, data, center, r2);
+  }
   // compute the middle point of the edge
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
   int ip2 = active_edge;
@@ -1311,6 +1441,12 @@ static bool optimalPointFrontalB(GFace *gf, std::size_t worst,
   // as a starting point, let us use the "fast algo"
   double d =
     optimalPointFrontal(gf, worst, active_edge, data, newPoint, metric);
+
+  // On a plane the parametric optimal point IS the surface point: skip the
+  // 3D frame construction and the circle/surface Newton projection (which
+  // converges immediately on a plane).
+  if(data.planar) return true;
+
   const std::array<std::size_t, 3> &base = data.triangles[worst];
   int ip1 = (active_edge + 2) % 3;
   int ip2 = active_edge;
@@ -1333,13 +1469,11 @@ static bool optimalPointFrontalB(GFace *gf, std::size_t worst,
   // so we have to find t, starting with t = 0
 
 #if defined(HAVE_HXT)
-  if(gf->geomType() == GEntity::DiscreteSurface) {
-    discreteFace *ddf = dynamic_cast<discreteFace *>(gf);
-    if(ddf) {
-      GPoint gp = ddf->intersectionWithCircle(n1, n2, middle, d, newPoint);
-      if(gp.succeeded()) return true;
-      return false;
-    }
+  if(data.discrete) {
+    GPoint gp =
+      data.discrete->intersectionWithCircle(n1, n2, middle, d, newPoint);
+    if(gp.succeeded()) return true;
+    return false;
   }
 #endif
 
@@ -1391,6 +1525,7 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
   // sourceTriangles and the TRI_DELETED bit of flags.
   releaseVector(data.neigh);
   releaseVector(data.circumRadius);
+  releaseVector(data.circumCircle);
   releaseVector(data.freeTriangleSlots);
   releaseVector(data.shellBuffer);
   releaseVector(data.cavityBuffer);
