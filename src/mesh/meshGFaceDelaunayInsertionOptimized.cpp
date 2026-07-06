@@ -51,7 +51,7 @@
 static constexpr double ONE_THIRD = 1.0 / 3.0;
 // radius threshold (in metric units) below which a triangle is small enough
 // and does not need to be refined
-static double LIMIT_ = 0.5 * std::sqrt(2.0);
+static const double LIMIT_ = 0.5 * std::sqrt(2.0);
 
 static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
                                            double *q2)
@@ -88,10 +88,10 @@ static void circumCenterMetric(double *pa, double *pb, double *pc,
     sys[0][1] = 2. * d * (pa[1] - pb[1]);
     sys[1][0] = 2. * a * (pa[0] - pc[0]);
     sys[1][1] = 2. * d * (pa[1] - pc[1]);
-    rhs[0] = a * (pa[0] * pa[0] - pb[0] * pb[0]) +
-             d * (pa[1] * pa[1] - pb[1] * pb[1]);
-    rhs[1] = a * (pa[0] * pa[0] - pc[0] * pc[0]) +
-             d * (pa[1] * pa[1] - pc[1] * pc[1]);
+    rhs[0] =
+      a * (pa[0] * pa[0] - pb[0] * pb[0]) + d * (pa[1] * pa[1] - pb[1] * pb[1]);
+    rhs[1] =
+      a * (pa[0] * pa[0] - pc[0] * pc[0]) + d * (pa[1] * pa[1] - pc[1] * pc[1]);
   }
   else {
     sys[0][0] = 2. * a * (pa[0] - pb[0]) + 2. * b * (pa[1] - pb[1]);
@@ -121,8 +121,8 @@ static void circumCenterMetric(double *pa, double *pb, double *pc,
     }
   }
 
-  Radius2 = (x[0] - pa[0]) * (x[0] - pa[0]) * a +
-            (x[1] - pa[1]) * (x[1] - pa[1]) * d;
+  Radius2 =
+    (x[0] - pa[0]) * (x[0] - pa[0]) * a + (x[1] - pa[1]) * (x[1] - pa[1]) * d;
   if(b != 0.0) Radius2 += 2. * (x[0] - pa[0]) * (x[1] - pa[1]) * b;
 }
 
@@ -177,7 +177,6 @@ struct IndexedEdgeFace {
   int i1;
   int ori;
 
-  IndexedEdgeFace() : v{0, 0}, t1(INVALID_TRIANGLE), i1(0), ori(1) {}
   IndexedEdgeFace(const IndexedMeshData &data, std::size_t t, int iFac);
 
   inline bool operator<(const IndexedEdgeFace &other) const
@@ -216,20 +215,24 @@ struct IndexedMeshData {
   // MVertex backing per vertex id. Filled for the imported block; interior
   // slots stay null during meshing and are materialized at transfer.
   std::vector<MVertex *> vertices;
-  std::vector<std::array<double, 3> > vxyz;
+  std::vector<std::array<double, 3>> vxyz;
   std::vector<char> vdim;
-  std::set<std::pair<std::size_t, std::size_t> > internalEdgeIds;
+  // internal (embedded) edges as sorted id pairs, in a sorted vector
+  // (immutable after import, looked up with std::binary_search)
+  std::vector<std::pair<std::size_t, std::size_t>> internalEdgeIds;
   // Number of imported vertices; slots >= numBoundary are the interior
   // vertices created by the refinement, materialized at transfer.
   std::size_t numBoundary = 0;
-  // Hoisted per-face geometry facts (gf->geomType() is virtual and the
-  // discreteFace dynamic_cast is not free; both were evaluated once or more
-  // per insertion). Set at import.
+  // Hoisted per-face facts, constant during meshing but not free to query
+  // (geomType() is virtual, the discreteFace dynamic_cast has a cost and
+  // Extend1dMeshIn2dSurfaces re-reads CTX and the face attributes). Set at
+  // import.
   discreteFace *discrete = nullptr;
   bool planar = false;
+  bool extend1d = false;
   // per-triangle arrays
-  std::vector<std::array<std::size_t, 3> > triangles;
-  std::vector<std::array<std::size_t, 3> > neigh;
+  std::vector<std::array<std::size_t, 3>> triangles;
+  std::vector<std::array<std::size_t, 3>> neigh;
   std::vector<double> circumRadius;
   // Per-triangle parametric circumcircle {cx, cy, r^2}, computed once
   // (closed form) at creation and used by the in-circle test for isotropic
@@ -238,7 +241,7 @@ struct IndexedMeshData {
   // metric solve; only the floating-point route differs, flipping the rare
   // near-cocircular decisions (rounding-class divergence from algo 6).
   // Anisotropic metrics keep the exact per-test solve.
-  std::vector<std::array<double, 3> > circumCircle;
+  std::vector<std::array<double, 3>> circumCircle;
   std::vector<TriangleFlag> flags;
   std::vector<std::size_t> freeTriangleSlots;
   // Original MTriangle of imported triangles (reused at transfer), null for
@@ -307,16 +310,6 @@ struct IndexedMeshData {
   }
 };
 
-static bool faceKeyLess(const std::array<std::size_t, 3> &a,
-                               const std::array<std::size_t, 3> &b)
-{
-  for(std::size_t i = 0; i < a.size(); i++) {
-    if(a[i] < b[i]) return true;
-    if(a[i] > b[i]) return false;
-  }
-  return false;
-}
-
 // Active-front heap element. The circum radius is stored inline (packed with
 // the triangle index) so the comparator does not chase circumRadius[idx] - a
 // dependent random-access load - on every heap sift. A triangle's radius
@@ -339,16 +332,18 @@ struct IndexedActiveCompare {
   {
     if(a.radius < b.radius) return true;
     if(a.radius > b.radius) return false;
-    if(faceKeyLess(data->faceKey(b.t), data->faceKey(a.t))) return true;
-    if(faceKeyLess(data->faceKey(a.t), data->faceKey(b.t))) return false;
+    const std::array<std::size_t, 3> ka = data->faceKey(a.t);
+    const std::array<std::size_t, 3> kb = data->faceKey(b.t);
+    if(kb < ka) return true;
+    if(ka < kb) return false;
     return a.t > b.t;
   }
 };
 
 // The active front as a contiguous binary heap (std::push_heap/pop_heap)
 // instead of algo 6's std::set<MTri3*>: same top element at every pop, no
-// per-node allocation. The TRI_IN_QUEUE flag gives the O(1) membership test that
-// the set gave for free.
+// per-node allocation. The TRI_IN_QUEUE flag gives the O(1) membership test
+// that the set gave for free.
 struct IndexedActiveQueue {
   IndexedMeshData *data;
   IndexedActiveCompare compare;
@@ -357,7 +352,6 @@ struct IndexedActiveQueue {
   explicit IndexedActiveQueue(IndexedMeshData *d) : data(d), compare{d} {}
 
   inline bool empty() const { return heap.empty(); }
-  inline std::size_t size() const { return heap.size(); }
 
   void push(std::size_t t)
   {
@@ -391,9 +385,8 @@ struct IndexedActiveQueue {
 // formulas, as the MTri3 constructor (meshGFaceDelaunayInsertion.cpp), for
 // each of the three MTri3::radiusNorm conventions.
 static double computeRadius(const IndexedMeshData &data,
-                                   const std::array<std::size_t, 3> &tri,
-                                   double lc, GFace *gf,
-                                   MTriangle *source = nullptr)
+                            const std::array<std::size_t, 3> &tri, double lc,
+                            GFace *gf, MTriangle *source = nullptr)
 {
   double center[3];
   double pa[3] = {data.vxyz[tri[0]][0], data.vxyz[tri[0]][1],
@@ -428,13 +421,14 @@ static double computeRadius(const IndexedMeshData &data,
       backgroundMesh::current() ?
         backgroundMesh::current()->getAngle(midpoint[0], midpoint[1], 0) :
         0.0;
+    const double ca = std::cos(quadAngle), sa = std::sin(quadAngle);
 
-    double x0 = p1[0] * std::cos(quadAngle) + p1[1] * std::sin(quadAngle);
-    double y0 = -p1[0] * std::sin(quadAngle) + p1[1] * std::cos(quadAngle);
-    double x1 = p2[0] * std::cos(quadAngle) + p2[1] * std::sin(quadAngle);
-    double y1 = -p2[0] * std::sin(quadAngle) + p2[1] * std::cos(quadAngle);
-    double x2 = p3[0] * std::cos(quadAngle) + p3[1] * std::sin(quadAngle);
-    double y2 = -p3[0] * std::sin(quadAngle) + p3[1] * std::cos(quadAngle);
+    double x0 = p1[0] * ca + p1[1] * sa;
+    double y0 = -p1[0] * sa + p1[1] * ca;
+    double x1 = p2[0] * ca + p2[1] * sa;
+    double y1 = -p2[0] * sa + p2[1] * ca;
+    double x2 = p3[0] * ca + p3[1] * sa;
+    double y2 = -p3[0] * sa + p3[1] * ca;
     double xmax = std::max(std::max(x0, x1), x2);
     double ymax = std::max(std::max(y0, y1), y2);
     double xmin = std::min(std::min(x0, x1), x2);
@@ -509,9 +503,8 @@ static std::size_t storeTriangle(IndexedMeshData &data,
 }
 
 static std::size_t addTriangle(IndexedMeshData &data,
-                                      const std::array<std::size_t, 3> &tri,
-                                      double lc, GFace *gf,
-                                      MTriangle *source = nullptr)
+                               const std::array<std::size_t, 3> &tri, double lc,
+                               GFace *gf, MTriangle *source = nullptr)
 {
   // On a plane the parametric circumradius equals the 3D one, so derive the
   // queue radius from the circumcircle that storeTriangle caches anyway
@@ -528,9 +521,8 @@ static std::size_t addTriangle(IndexedMeshData &data,
     }
     return storeTriangle(data, tri, radius, source, &cc);
   }
-  return storeTriangle(data, tri,
-                              computeRadius(data, tri, lc, gf, source),
-                              source);
+  return storeTriangle(data, tri, computeRadius(data, tri, lc, gf, source),
+                       source);
 }
 
 IndexedEdgeFace::IndexedEdgeFace(const IndexedMeshData &data, std::size_t t,
@@ -625,8 +617,7 @@ static void connectTriangles(IndexedMeshData &data)
 // active-front tie-break can compare sorted vertex-index triplets - exactly
 // algo 6's sorted getNum() triplets (see IndexedMeshData::faceKey).
 static bool buildMeshGenerationDataStructures(
-  GFace *gf, IndexedMeshData &data,
-  std::map<MVertex *, MVertex *> *equivalence,
+  GFace *gf, IndexedMeshData &data, std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
   std::map<MVertex *, double> vSizesMap;
@@ -670,8 +661,8 @@ static bool buildMeshGenerationDataStructures(
   // with the other faces meshed in parallel, so their id lives in a local
   // map instead - only the import needs it (the refinement works on ids and
   // only ever creates dim 2 vertices).
-  std::vector<std::pair<MVertex *, double> > byNum(vSizesMap.begin(),
-                                                   vSizesMap.end());
+  std::vector<std::pair<MVertex *, double>> byNum(vSizesMap.begin(),
+                                                  vSizesMap.end());
   std::sort(byNum.begin(), byNum.end(),
             [](const std::pair<MVertex *, double> &a,
                const std::pair<MVertex *, double> &b) {
@@ -718,6 +709,7 @@ static bool buildMeshGenerationDataStructures(
   if(gf->geomType() == GEntity::DiscreteSurface)
     data.discrete = dynamic_cast<discreteFace *>(gf);
   data.planar = gf->geomType() == GEntity::Plane;
+  data.extend1d = Extend1dMeshIn2dSurfaces(gf);
 
   // index the internal (embedded) edges by vertex ids so the cavity walk
   // needs no MEdge/MVertex
@@ -727,9 +719,10 @@ static bool buildMeshGenerationDataStructures(
       std::size_t a = vertexId(ge->lines[i]->getVertex(0));
       std::size_t b = vertexId(ge->lines[i]->getVertex(1));
       if(a > b) std::swap(a, b);
-      data.internalEdgeIds.insert(std::make_pair(a, b));
+      data.internalEdgeIds.push_back(std::make_pair(a, b));
     }
   }
+  std::sort(data.internalEdgeIds.begin(), data.internalEdgeIds.end());
 
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     MTriangle *t = gf->triangles[i];
@@ -739,13 +732,12 @@ static bool buildMeshGenerationDataStructures(
     // 0.3333333333 (and not 1./3.) reproduces the shared builder's constant:
     // the sizes feed the queue radii, where the last bit matters for the
     // front ordering
-    double lc =
-      0.3333333333 * (data.vSizes[tri[0]] + data.vSizes[tri[1]] +
-                      data.vSizes[tri[2]]);
-    double lcBGM = 0.3333333333 * (data.vSizesBGM[tri[0]] +
-                                   data.vSizesBGM[tri[1]] +
-                                   data.vSizesBGM[tri[2]]);
-    double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
+    double lc = 0.3333333333 * (data.vSizes[tri[0]] + data.vSizes[tri[1]] +
+                                data.vSizes[tri[2]]);
+    double lcBGM =
+      0.3333333333 * (data.vSizesBGM[tri[0]] + data.vSizesBGM[tri[1]] +
+                      data.vSizesBGM[tri[2]]);
+    double LL = data.extend1d ? std::min(lc, lcBGM) : lcBGM;
     // imported triangles keep the 3D circumradius route on every surface
     // (addTriangle's planar shortcut is for the refinement-created
     // triangles): the initial front must order exactly as algo 6's
@@ -759,8 +751,8 @@ static bool buildMeshGenerationDataStructures(
 
 // a triangle is "active" when it has at least one edge on the front, i.e.
 // shared with a triangle that is either outside the domain or small enough
-static bool isActive(const IndexedMeshData &data, std::size_t t,
-                            double limit_, int &active)
+static bool isActive(const IndexedMeshData &data, std::size_t t, double limit_,
+                     int &active)
 {
   if(data.flags[t] & TRI_DELETED) return false;
   for(active = 0; active < 3; active++) {
@@ -773,8 +765,8 @@ static bool isActive(const IndexedMeshData &data, std::size_t t,
 }
 
 static void circumCenterMetric(std::size_t base, const double *metric,
-                                      IndexedMeshData &data, double *x,
-                                      double &Radius2)
+                               const IndexedMeshData &data, double *x,
+                               double &Radius2)
 {
   const std::array<std::size_t, 3> &tri = data.triangles[base];
   double pa[2] = {data.Us[tri[0]], data.Vs[tri[0]]};
@@ -785,9 +777,9 @@ static void circumCenterMetric(std::size_t base, const double *metric,
 
 // Is uv inside the metric circumcircle of triangle base? Same computation as
 // algo 6's inCircumCircleAniso(GFace*, MTriangle*, ...).
-static int inCircumCircleAniso(GFace *gf, std::size_t base,
-                                      const double *uv, const double *metricb,
-                                      IndexedMeshData &data)
+static int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
+                               const double *metricb,
+                               const IndexedMeshData &data)
 {
   // For an isotropic metric M = lambda*I the metric circumcircle equals the
   // parametric one and lambda cancels in the comparison, so use the
@@ -805,12 +797,9 @@ static int inCircumCircleAniso(GFace *gf, std::size_t base,
   double metric[3];
   if(!metricb) {
     const std::array<std::size_t, 3> &tri = data.triangles[base];
-    double pa[2] = {(data.Us[tri[0]] + data.Us[tri[1]] +
-                     data.Us[tri[2]]) *
-                      ONE_THIRD,
-                    (data.Vs[tri[0]] + data.Vs[tri[1]] +
-                     data.Vs[tri[2]]) *
-                      ONE_THIRD};
+    double pa[2] = {
+      (data.Us[tri[0]] + data.Us[tri[1]] + data.Us[tri[2]]) * ONE_THIRD,
+      (data.Vs[tri[0]] + data.Vs[tri[1]] + data.Vs[tri[2]]) * ONE_THIRD};
     buildMetric(gf, pa, metric);
   }
   else {
@@ -840,11 +829,9 @@ static int inCircumCircleAniso(GFace *gf, std::size_t base,
 // explicit stack of triangle ids; only the order in which entries are
 // collected differs, which permutes triangle slot reuse and therefore the
 // element order of the final export.
-static void findCavityAniso(GFace *gf,
-                                   std::vector<IndexedEdgeFace> &shell,
-                                   std::vector<std::size_t> &cavity,
-                                   double *metric, double *param,
-                                   std::size_t t, IndexedMeshData &data)
+static void findCavityAniso(GFace *gf, std::vector<IndexedEdgeFace> &shell,
+                            std::vector<std::size_t> &cavity, double *metric,
+                            double *param, std::size_t t, IndexedMeshData &data)
 {
   shell.clear();
   cavity.clear();
@@ -872,8 +859,9 @@ static void findCavityAniso(GFace *gf,
       // take care of untouchable internal edges; exf.v is sorted and
       // internalEdgeIds stores sorted id pairs
       const bool internal =
-        !noInternal && data.internalEdgeIds.count(
-                         std::make_pair(exf.v[0], exf.v[1])) != 0;
+        !noInternal && std::binary_search(data.internalEdgeIds.begin(),
+                                          data.internalEdgeIds.end(),
+                                          std::make_pair(exf.v[0], exf.v[1]));
       if(neigh == INVALID_TRIANGLE || internal) { shell.push_back(exf); }
       else if(!(data.flags[neigh] & TRI_DELETED)) {
         bool circ;
@@ -894,8 +882,8 @@ static void findCavityAniso(GFace *gf,
   }
 }
 
-static bool invMapUV(std::size_t t, double *p, IndexedMeshData &data,
-                            double *uv, double tol)
+static bool invMapUV(std::size_t t, double *p, const IndexedMeshData &data,
+                     double *uv, double tol)
 {
   double mat[2][2];
   double b[2];
@@ -923,7 +911,7 @@ static bool invMapUV(std::size_t t, double *p, IndexedMeshData &data,
 }
 
 static inline double getSurfUV(const std::array<std::size_t, 3> &tri,
-                                      IndexedMeshData &data)
+                               const IndexedMeshData &data)
 {
   double u1 = data.Us[tri[0]];
   double v1 = data.Vs[tri[0]];
@@ -938,7 +926,7 @@ static inline double getSurfUV(const std::array<std::size_t, 3> &tri,
   return 0.5 * (vv1[0] * vv2[1] - vv1[1] * vv2[0]);
 }
 
-static inline double getSurfUV(std::size_t t, IndexedMeshData &data)
+static inline double getSurfUV(std::size_t t, const IndexedMeshData &data)
 {
   return getSurfUV(data.triangles[t], data);
 }
@@ -946,8 +934,7 @@ static inline double getSurfUV(std::size_t t, IndexedMeshData &data)
 // walk from t towards pt, crossing the edge whose supporting line separates
 // the current triangle's barycenter from pt
 static std::size_t search4Triangle(std::size_t t, double pt[2],
-                                          IndexedMeshData &data, double uv[2],
-                                          bool force = false)
+                                   const IndexedMeshData &data, double uv[2])
 {
   if(t == INVALID_TRIANGLE || (data.flags[t] & TRI_DELETED))
     return INVALID_TRIANGLE;
@@ -956,16 +943,12 @@ static std::size_t search4Triangle(std::size_t t, double pt[2],
 
   if(inside) return t;
   SPoint3 q1(pt[0], pt[1], 0);
-  int ITER = 0;
-  while(ITER++ <= (int)data.triangles.size()) {
+  std::size_t ITER = 0;
+  while(ITER++ <= data.triangles.size()) {
     const std::array<std::size_t, 3> &tri = data.triangles[t];
-    SPoint3 q2((data.Us[tri[0]] + data.Us[tri[1]] +
-                data.Us[tri[2]]) *
-                 ONE_THIRD,
-               (data.Vs[tri[0]] + data.Vs[tri[1]] +
-                data.Vs[tri[2]]) *
-                 ONE_THIRD,
-               0);
+    SPoint3 q2(
+      (data.Us[tri[0]] + data.Us[tri[1]] + data.Us[tri[2]]) * ONE_THIRD,
+      (data.Vs[tri[0]] + data.Vs[tri[1]] + data.Vs[tri[2]]) * ONE_THIRD, 0);
     int i;
     for(i = 0; i < 3; i++) {
       std::size_t i1 = tri[i == 0 ? 2 : i - 1];
@@ -985,16 +968,6 @@ static std::size_t search4Triangle(std::size_t t, double pt[2],
     if(inside) return t;
   }
 
-  if(!force) return INVALID_TRIANGLE;
-
-  // when the walk is allowed to fail (seams, degenerated edges), fall back
-  // to a linear scan
-  for(std::size_t i = 0; i < data.triangles.size(); i++) {
-    if(!(data.flags[i] & TRI_DELETED)) {
-      inside = invMapUV(i, pt, data, uv, 1.e-8);
-      if(inside) return i;
-    }
-  }
   return INVALID_TRIANGLE;
 }
 
@@ -1022,10 +995,10 @@ static bool orderShell(std::vector<IndexedEdgeFace> &shell)
     auto it2 = std::next(it);
     if(it2 == shell.end()) break;
 
-    auto found = std::find_if(it2, shell.end(),
-                              [next_v](const IndexedEdgeFace &edge) {
-                                return shellStart(edge) == next_v;
-                              });
+    auto found =
+      std::find_if(it2, shell.end(), [next_v](const IndexedEdgeFace &edge) {
+        return shellStart(edge) == next_v;
+      });
     if(found == shell.end()) return false;
     if(found != it2) std::iter_swap(it2, found);
     ++it;
@@ -1062,11 +1035,9 @@ static int findOtherSideSlot(const IndexedMeshData &data, std::size_t otherSide,
 // num = d1^2 + d2^2 - d3^2. Decisions can differ from the sqrt forms only
 // within a rounding error of the thresholds.
 static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
-                         std::vector<std::size_t> &cavity, bool force,
-                         GFace *gf, std::size_t iv,
-                         IndexedActiveQueue *activeTets,
-                         IndexedMeshData &data,
-                         bool verifyStarShapeness = true)
+                         std::vector<std::size_t> &cavity, GFace *gf,
+                         std::size_t iv, IndexedActiveQueue &activeTets,
+                         IndexedMeshData &data)
 {
   if(cavity.size() == 1) return -1;
 
@@ -1074,33 +1045,32 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
 
   if(!orderShell(shell)) return -6;
 
-  double EPS = verifyStarShapeness ? 1.e-12 : 1.e12;
+  const double EPS = 1.e-12;
 
   // check that the cavity area is conserved by the retriangulation (i.e.
   // that the cavity is star-shaped around the new vertex)
-  double newVolume = 0.0;
+  double newArea = 0.0;
 
-  double oldVolume =
+  double oldArea =
     std::accumulate(begin(cavity), end(cavity), 0.0,
-                    [&](double volume, const std::size_t triangle) {
-                      return volume + std::abs(getSurfUV(triangle, data));
+                    [&](double area, const std::size_t triangle) {
+                      return area + std::abs(getSurfUV(triangle, data));
                     });
 
   bool onePointIsTooClose = false;
 
-  // Loop-invariant across shell edges: the inserted vertex's sizes and
-  // coordinates, and the surface's 1d-extension flag.
+  // loop-invariant across shell edges: the inserted vertex's sizes and
+  // coordinates
   const double vSizeIv = data.vSizes[iv];
   const double vSizeBGMIv = data.vSizesBGM[iv];
   const std::array<double, 3> &pvv = data.vxyz[iv];
-  const bool extend1d = Extend1dMeshIn2dSurfaces(gf);
   constexpr double cosThreshSq = (2. * .9999) * (2. * .9999);
 
   for(auto it = shell.begin(); it != shell.end(); ++it) {
-    const std::size_t i0 = it->ori > 0 ? it->v[0] : it->v[1];
-    const std::size_t i1 = it->ori > 0 ? it->v[1] : it->v[0];
+    const std::size_t i0 = shellStart(*it);
+    const std::size_t i1 = shellEnd(*it);
 
-    if(!force) {
+    {
       const double lc =
         ONE_THIRD * (data.vSizes[i0] + data.vSizes[i1] + vSizeIv);
       const double lcBGM =
@@ -1145,7 +1115,7 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
     const std::array<std::size_t, 3> tri = {{i0, i1, iv}};
     double ss = std::abs(getSurfUV(tri, data));
     if(ss < 1.e-25) ss = 1.e22;
-    newVolume += ss;
+    newArea += ss;
 
     const std::size_t otherSide = data.neigh[it->t1][it->i1];
     if(otherSide != INVALID_TRIANGLE &&
@@ -1155,7 +1125,7 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
 
   // for adding a point we require that the area remains the same after
   // addition of the point, and that the point is not too close to an edge
-  if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose) {
+  if(std::abs(oldArea - newArea) < EPS * oldArea && !onePointIsTooClose) {
     // Pass 2: all checks passed - create the new triangles and wire them in
     // one sweep over the ordered shell: to the outer neighbor across the
     // shell edge (slot 1) and to the ring neighbors (slots 0 and 2,
@@ -1169,14 +1139,14 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
     std::size_t first = INVALID_TRIANGLE;
     std::size_t prev = INVALID_TRIANGLE;
     for(auto it = shell.begin(); it != shell.end(); ++it) {
-      const std::size_t i0 = it->ori > 0 ? it->v[0] : it->v[1];
-      const std::size_t i1 = it->ori > 0 ? it->v[1] : it->v[0];
+      const std::size_t i0 = shellStart(*it);
+      const std::size_t i1 = shellEnd(*it);
 
       const double lc =
         ONE_THIRD * (data.vSizes[i0] + data.vSizes[i1] + vSizeIv);
       const double lcBGM =
         ONE_THIRD * (data.vSizesBGM[i0] + data.vSizesBGM[i1] + vSizeBGMIv);
-      const double radiusLc = extend1d ? std::min(lc, lcBGM) : lcBGM;
+      const double radiusLc = data.extend1d ? std::min(lc, lcBGM) : lcBGM;
 
       const std::size_t otherSide = data.neigh[it->t1][it->i1];
       const std::size_t nt = addTriangle(data, {{i0, i1, iv}}, radiusLc, gf);
@@ -1209,13 +1179,11 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
         data.releaseTriangleSlot(triangle);
     }
 
-    if(activeTets) {
-      for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
-        int active_edge;
-        if(isActive(data, *i, LIMIT_, active_edge) &&
-           data.circumRadius[*i] > LIMIT_) {
-          activeTets->push(*i);
-        }
+    for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
+      int active_edge;
+      if(isActive(data, *i, LIMIT_, active_edge) &&
+         data.circumRadius[*i] > LIMIT_) {
+        activeTets.push(*i);
       }
     }
     return 1;
@@ -1225,17 +1193,15 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
     std::for_each(begin(cavity), end(cavity), [&](std::size_t triangle) {
       data.flags[triangle] &= ~TRI_DELETED;
     });
-    if(std::abs(oldVolume - newVolume) > EPS * oldVolume) return -3;
+    if(std::abs(oldArea - newArea) > EPS * oldArea) return -3;
     if(onePointIsTooClose) return -4;
     return -5;
   }
 }
 
 static bool insertAPoint(GFace *gf, double center[2], double metric[3],
-                                IndexedMeshData &data,
-                                IndexedActiveQueue *ActiveTris = nullptr,
-                                std::size_t worst = INVALID_TRIANGLE,
-                                bool testStarShapeness = false)
+                         IndexedMeshData &data, IndexedActiveQueue &activeTris,
+                         std::size_t worst)
 {
   if(worst == INVALID_TRIANGLE || (data.flags[worst] & TRI_DELETED)) {
     Msg::Error("Could not insert point");
@@ -1270,11 +1236,19 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
     // we use here local coordinates as real coordinates x,y and z will be
     // computed hereafter
     GPoint p = gf->point(center[0], center[1]);
+    if(!p.succeeded()) {
+      Msg::Debug("Point %g %g cannot be inserted because the surface "
+                 "projection failed",
+                 center[0], center[1]);
+      data.circumRadius[worst] = -1;
+      for(auto itc = cavity.begin(); itc != cavity.end(); ++itc)
+        data.flags[*itc] &= ~TRI_DELETED;
+      return false;
+    }
 
     const std::array<std::size_t, 3> &tri = data.triangles[ptin];
     double lc1 = (1. - uv[0] - uv[1]) * data.vSizes[tri[0]] +
-                 uv[0] * data.vSizes[tri[1]] +
-                 uv[1] * data.vSizes[tri[2]];
+                 uv[0] * data.vSizes[tri[1]] + uv[1] * data.vSizes[tri[2]];
     double lc;
     if(CTX::instance()->mesh.algo2d == ALGO_2D_BAMG)
       lc = 1.;
@@ -1282,17 +1256,13 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
       lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
 
     // SoA only: the MFaceVertex is materialized at transfer
-    std::size_t iv = data.addInteriorVertex(center[0], center[1], p.x(),
-                                            p.y(), p.z(), lc1, lc);
+    std::size_t iv = data.addInteriorVertex(center[0], center[1], p.x(), p.y(),
+                                            p.z(), lc1, lc);
 
-    int result = -9;
-    if(p.succeeded()) {
-      result = insertVertexB(shell, cavity, false, gf, iv, ActiveTris,
-                                    data, testStarShapeness);
-    }
+    int result = insertVertexB(shell, cavity, gf, iv, activeTris, data);
     if(result != 1) {
       if(result == -1)
-        Msg::Debug("Point %g %g cannot be inserted because cavity if of size 1",
+        Msg::Debug("Point %g %g cannot be inserted because cavity is of size 1",
                    center[0], center[1]);
       if(result == -2)
         Msg::Debug("Point %g %g cannot be inserted because euler formula is "
@@ -1338,10 +1308,9 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
   }
 }
 
-static double optimalPointFrontal(GFace *gf, std::size_t worst,
-                                         int active_edge,
-                                         IndexedMeshData &data,
-                                         double newPoint[2], double metric[3])
+static double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
+                                  const IndexedMeshData &data,
+                                  double newPoint[2], double metric[3])
 {
   double center[2], r2;
   const std::array<std::size_t, 3> &base = data.triangles[worst];
@@ -1356,12 +1325,9 @@ static double optimalPointFrontal(GFace *gf, std::size_t worst,
     center[1] = data.circumCircle[worst][1];
   }
   else {
-    double pa[2] = {(data.Us[base[0]] + data.Us[base[1]] +
-                     data.Us[base[2]]) *
-                      ONE_THIRD,
-                    (data.Vs[base[0]] + data.Vs[base[1]] +
-                     data.Vs[base[2]]) *
-                      ONE_THIRD};
+    double pa[2] = {
+      (data.Us[base[0]] + data.Us[base[1]] + data.Us[base[2]]) * ONE_THIRD,
+      (data.Vs[base[0]] + data.Vs[base[1]] + data.Vs[base[2]]) * ONE_THIRD};
     buildMetric(gf, pa, metric);
     circumCenterMetric(worst, metric, data, center, r2);
   }
@@ -1384,12 +1350,10 @@ static double optimalPointFrontal(GFace *gf, std::size_t worst,
     std::sqrt(dir[0] * dir[0] * metric[0] + 2 * dir[1] * dir[0] * metric[1] +
               dir[1] * dir[1] * metric[2]);
 
-  const double rhoM1 =
-    0.5 * (data.vSizes[base[ip1]] + data.vSizes[base[ip2]]);
+  const double rhoM1 = 0.5 * (data.vSizes[base[ip1]] + data.vSizes[base[ip2]]);
   const double rhoM2 =
     0.5 * (data.vSizesBGM[base[ip1]] + data.vSizesBGM[base[ip2]]);
-  const double rhoM =
-    Extend1dMeshIn2dSurfaces(gf) ? std::min(rhoM1, rhoM2) : rhoM2;
+  const double rhoM = data.extend1d ? std::min(rhoM1, rhoM2) : rhoM2;
   const double rhoM_hat = rhoM;
 
   const double q = lengthMetric(center, midpoint, metric);
@@ -1419,9 +1383,9 @@ static double optimalPointFrontal(GFace *gf, std::size_t worst,
    and the edge length
 */
 
-static bool optimalPointFrontalB(GFace *gf, std::size_t worst,
-                                        int active_edge, IndexedMeshData &data,
-                                        double newPoint[2], double metric[3])
+static bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
+                                 const IndexedMeshData &data,
+                                 double newPoint[2], double metric[3])
 {
   // as a starting point, let us use the "fast algo"
   double d =
@@ -1478,7 +1442,7 @@ static bool optimalPointFrontalB(GFace *gf, std::size_t worst,
 // Same as computeEquivalences (meshGFaceOptimize.cpp), which takes the shared
 // bidimMeshData; only the equivalence map is actually used.
 static void computeEquivalences(GFace *gf,
-                                   std::map<MVertex *, MVertex *> *equivalence)
+                                std::map<MVertex *, MVertex *> *equivalence)
 {
   if(equivalence) {
     std::vector<MTriangle *> newT;
@@ -1526,10 +1490,10 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
   // atomic counter increment: consecutive in serial, interleaved across
   // faces meshed in parallel - unique either way.
   for(std::size_t i = data.numBoundary; i < data.vertices.size(); i++) {
-    MVertex *v =
-      new MFaceVertex(data.vxyz[i][0], data.vxyz[i][1], data.vxyz[i][2], gf,
-                      data.Us[i], data.Vs[i]);
-    v->setIndex((long int)i); // face-owned vertices carry their id, as at import
+    MVertex *v = new MFaceVertex(data.vxyz[i][0], data.vxyz[i][1],
+                                 data.vxyz[i][2], gf, data.Us[i], data.Vs[i]);
+    v->setIndex(
+      (long int)i); // face-owned vertices carry their id, as at import
     data.vertices[i] = v;
     gf->mesh_vertices.push_back(v);
   }
@@ -1562,9 +1526,9 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
 
     double n2[3];
     if(!BL)
-      normal3points(data.Us[tri[0]], data.Vs[tri[0]], 0.,
-                    data.Us[tri[1]], data.Vs[tri[1]], 0.,
-                    data.Us[tri[2]], data.Vs[tri[2]], 0., n2);
+      normal3points(data.Us[tri[0]], data.Vs[tri[0]], 0., data.Us[tri[1]],
+                    data.Vs[tri[1]], 0., data.Us[tri[2]], data.Vs[tri[2]], 0.,
+                    n2);
     else {
       MVertex *v0 = data.vertex(tri[0]), *v1 = data.vertex(tri[1]),
               *v2 = data.vertex(tri[2]);
@@ -1591,7 +1555,6 @@ void bowyerWatsonFrontalOptimized(
 {
   IndexedMeshData DATA;
   IndexedActiveQueue ActiveTris(&DATA);
-  bool testStarShapeness = true;
   if(!buildMeshGenerationDataStructures(gf, DATA, equivalence,
                                         parametricCoordinates)) {
     Msg::Error("Invalid meshing data structure");
@@ -1602,8 +1565,7 @@ void bowyerWatsonFrontalOptimized(
   // seed the front: collect every active triangle, then heapify once (linear
   // instead of algo 6's scan of the radius-ordered set)
   for(std::size_t t = 0; t < DATA.triangles.size(); t++) {
-    if(DATA.circumRadius[t] > LIMIT_ &&
-       isActive(DATA, t, LIMIT_, active_edge))
+    if(DATA.circumRadius[t] > LIMIT_ && isActive(DATA, t, LIMIT_, active_edge))
       ActiveTris.pushUnordered(t);
   }
   ActiveTris.makeHeap();
@@ -1614,8 +1576,7 @@ void bowyerWatsonFrontalOptimized(
               RV.high() + (RV.high() - RV.low()));
 
   // insert points
-  while(1) {
-    if(ActiveTris.empty()) break;
+  while(!ActiveTris.empty()) {
     std::size_t worst = ActiveTris.pop();
 
     if(!(DATA.flags[worst] & TRI_DELETED) &&
@@ -1626,14 +1587,12 @@ void bowyerWatsonFrontalOptimized(
                    DATA.vertices.size() - DATA.numBoundary,
                    DATA.circumRadius[worst]);
       double newPoint[2], metric[3];
-      if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint,
-                                     metric)) {
+      if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric)) {
         SPoint2 NP(newPoint[0], newPoint[1]);
-        int nnnn;
+        int nIntersections;
         if(!true_boundary ||
-           pointInsideParametricDomain(*true_boundary, NP, FAR, nnnn))
-          insertAPoint(gf, newPoint, metric, DATA, &ActiveTris, worst,
-                              testStarShapeness);
+           pointInsideParametricDomain(*true_boundary, NP, FAR, nIntersections))
+          insertAPoint(gf, newPoint, metric, DATA, ActiveTris, worst);
       }
       else {
         Msg::Debug("no point found");
