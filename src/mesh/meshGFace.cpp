@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <map>
 #include <algorithm>
-#include <chrono>
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GFace.h"
@@ -1510,15 +1509,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
   if(CTX::instance()->debugSurface > 0) debug = true;
 
-  // Debug-only phase timers (verbosity >= 4) to attribute the meshGenerator
-  // time outside the refinement algorithm itself.
-  using _clk = std::chrono::steady_clock;
-  const bool _timePhases = Msg::GetVerbosity() >= 4;
-  auto _ms = [](_clk::time_point a, _clk::time_point b) {
-    return std::chrono::duration<double, std::milli>(b - a).count();
-  };
-  const auto _t0 = _clk::now();
-
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
@@ -2072,8 +2062,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(!onlyInitialMesh)
     modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
 
-  const auto _t1 = _clk::now(); // end of initial mesh / recovery / BL prep
-
   // the delaunay algo is based directly on internal gmsh structures BDS mesh is
   // passed in order not to recompute local coordinates of vertices
   if(algoDelaunay2D(gf) && !onlyInitialMesh) {
@@ -2104,8 +2092,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
        !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
       laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
   }
-
-  const auto _t2 = _clk::now(); // end of refinement dispatch (+ smoothing)
 
   if(debug) {
     char name[256];
@@ -2144,28 +2130,16 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
   }
 
-  const auto _t3 = _clk::now(); // end of BL insert / split / recombine
-
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
                        gf->meshStatistics.best_element_shape,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
 
-  const auto _t4 = _clk::now();
-
   //  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
 
   // remove unused vertices, generated e.g. during background mesh
   deleteUnusedVertices(gf);
-
-  if(_timePhases) {
-    const auto _t5 = _clk::now();
-    Msg::Info("meshGenerator face %d phases (ms): initial=%.1f refine=%.1f "
-              "misc=%.1f shapes=%.1f delUnused=%.1f total=%.1f",
-              gf->tag(), _ms(_t0, _t1), _ms(_t1, _t2), _ms(_t2, _t3),
-              _ms(_t3, _t4), _ms(_t4, _t5), _ms(_t0, _t5));
-  }
 
   return true;
 }

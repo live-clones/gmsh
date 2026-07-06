@@ -34,7 +34,6 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
-#include <chrono>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "robustPredicates.h"
@@ -199,11 +198,10 @@ struct IndexedEdgeFace {
 // Vertices are parallel arrays indexed by a vertex id: parametric
 // coordinates and sizes (same content as algo 6's bidimMeshData), xyz
 // (interleaved, one cache line) and onWhat()->dim(), so the hot loop never
-// needs the MVertex object. Ids are assigned in MVertex::getNum() order (the
-// import fills the arrays in num order, insertions append with strictly
-// larger nums), so the id is a creation-order key. Internal (embedded)
-// edges are stored as sorted id pairs, so the cavity walk needs no
-// MEdge/MVertex.
+// needs the MVertex object. The import fills the arrays in MVertex::getNum()
+// order and the refinement appends its vertices in creation order, so the
+// id is a creation-order key (see faceKey). Internal (embedded) edges are
+// stored as sorted id pairs, so the cavity walk needs no MEdge/MVertex.
 //
 // Triangles are parallel arrays indexed by a triangle slot id: vertex-id
 // triplets, neighbor slots, metric circumradius and state flags, replacing
@@ -256,9 +254,8 @@ struct IndexedMeshData {
 
   // Register a newly inserted vertex, SoA only - no MVertex is created
   // until the transfer. It is always interior to the face (dim 2), and
-  // parametricCoordinates can never contain a brand-new vertex, so no
-  // override lookup is needed (algo 6's addVertex performed one that could
-  // not match).
+  // unlike at import no parametric-coordinate override applies (the
+  // periodic map can only contain pre-existing vertices).
   std::size_t addInteriorVertex(double u, double v, double x, double y,
                                 double z, double size, double sizeBGM)
   {
@@ -296,12 +293,12 @@ struct IndexedMeshData {
     freeTriangleSlots.push_back(t);
   }
 
-  // Sorted vertex-index triplet of triangle t, computed on demand (only used
+  // Sorted vertex-id triplet of triangle t, computed on demand (only used
   // by the active-front comparator on circum-radius ties, which are rare).
-  // Comparing index triplets is identical to comparing algo 6's sorted
-  // getNum() triplets because vertex indices are order-isomorphic to nums:
-  // the boundary block is sorted by getNum() at import, and interior vertices
-  // are appended in creation order with strictly larger nums.
+  // Comparing id triplets is identical to comparing algo 6's sorted
+  // getNum() triplets because both are creation-order keys: the imported
+  // block is sorted by getNum() and the refinement creates its vertices in
+  // id order, exactly as algo 6 creates its vertices in num order.
   std::array<std::size_t, 3> faceKey(std::size_t t) const
   {
     std::array<std::size_t, 3> key = triangles[t];
@@ -321,8 +318,8 @@ static bool faceKeyLess(const std::array<std::size_t, 3> &a,
 }
 
 // Active-front heap element. The circum radius is stored inline (packed with
-// the triangle index) so the comparator does not chase circumRadius[idx] by
-// random index on every heap sift, which was memory-bound. A triangle's radius
+// the triangle index) so the comparator does not chase circumRadius[idx] - a
+// dependent random-access load - on every heap sift. A triangle's radius
 // is fixed once it is in the queue (it is only written at creation and, for the
 // just-popped "worst", after removal; in-queue deleted triangles keep their
 // slot until popped), so the packed value always equals circumRadius[idx] and
@@ -1329,8 +1326,7 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
       return false;
     }
     else {
-      // gf->mesh_vertices is filled at transfer, in the same (acceptance)
-      // order as the eager path
+      // gf->mesh_vertices is filled at transfer, in acceptance order
       return true;
     }
   }
@@ -1526,27 +1522,25 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
 
   // Materialize the interior vertices (deferred during meshing) in index
   // order, which is their acceptance order; mesh_vertices is filled in the
-  // same order. The MVertex constructor assigns the node numbers (an
-  // atomic counter increment, as the eager path did per insertion):
-  // consecutive in serial, interleaved across faces meshed in parallel -
-  // unique either way.
+  // same order. The MVertex constructor assigns the node numbers through an
+  // atomic counter increment: consecutive in serial, interleaved across
+  // faces meshed in parallel - unique either way.
   for(std::size_t i = data.numBoundary; i < data.vertices.size(); i++) {
     MVertex *v =
       new MFaceVertex(data.vxyz[i][0], data.vxyz[i][1], data.vxyz[i][2], gf,
                       data.Us[i], data.Vs[i]);
-    v->setIndex((long int)i); // as the eager path did for dim 2 vertices
+    v->setIndex((long int)i); // face-owned vertices carry their id, as at import
     data.vertices[i] = v;
     gf->mesh_vertices.push_back(v);
   }
   releaseVector(data.vxyz);
 
   // Create the MTriangles and orient them consistently with the reference
-  // (first) triangle in a single pass. The param indices needed for the
-  // normal are already in data.triangles[t], so no per-vertex getIndex()
-  // (a virtual MVertex::onWhat()->dim() call and a possible map lookup) is
-  // needed: Us[tri[k]] is exactly Us[getIndex(vertex(tri[k]))], so this is
-  // bit-identical to the two-pass orientation of the shared
-  // transferDataStructure (meshGFaceOptimize.cpp).
+  // (first) triangle in a single pass. The parametric coordinates that the
+  // normals need are read directly through the vertex ids in
+  // data.triangles[t] - the same values the shared transferDataStructure
+  // (meshGFaceOptimize.cpp) obtains per vertex through
+  // bidimMeshData::getIndex - so the orientation decisions are identical.
   // gf->triangles is empty here (the import consumed and cleared it, and the
   // boundary-layer elements are only re-inserted by the caller after the
   // algorithm returns), so the reference is the first live triangle.
@@ -1595,15 +1589,6 @@ void bowyerWatsonFrontalOptimized(
   std::map<MVertex *, SPoint2> *parametricCoordinates,
   std::vector<SPoint2> *true_boundary)
 {
-  // Debug-only phase timers (verbosity >= 4), mirroring the ones in
-  // bowyerWatsonFrontal so the two algorithms can be compared phase by phase.
-  using _clk = std::chrono::steady_clock;
-  const bool _timePhases = Msg::GetVerbosity() >= 4;
-  auto _ms = [](_clk::time_point a, _clk::time_point b) {
-    return std::chrono::duration<double, std::milli>(b - a).count();
-  };
-  const auto _tStart = _clk::now();
-
   IndexedMeshData DATA;
   IndexedActiveQueue ActiveTris(&DATA);
   bool testStarShapeness = true;
@@ -1612,7 +1597,6 @@ void bowyerWatsonFrontalOptimized(
     Msg::Error("Invalid meshing data structure");
     return;
   }
-  const auto _tBuilt = _clk::now();
 
   int ITER = 0, active_edge;
   // seed the front: collect every active triangle, then heapify once (linear
@@ -1638,8 +1622,9 @@ void bowyerWatsonFrontalOptimized(
        isActive(DATA, worst, LIMIT_, active_edge) &&
        DATA.circumRadius[worst] > LIMIT_) {
       if(ITER++ % 5000 == 0)
-        Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
-                   gf->mesh_vertices.size(), DATA.circumRadius[worst]);
+        Msg::Debug("%7zu points created -- Worst tri radius is %8.3f",
+                   DATA.vertices.size() - DATA.numBoundary,
+                   DATA.circumRadius[worst]);
       double newPoint[2], metric[3];
       if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint,
                                      metric)) {
@@ -1656,20 +1641,10 @@ void bowyerWatsonFrontalOptimized(
     }
   }
 
-  const auto _tRefined = _clk::now();
-
   // the queue is empty but its heap vector kept its capacity
   releaseVector(ActiveTris.heap);
 
   transferDataStructure(gf, DATA, equivalence);
-
-  if(_timePhases) {
-    const auto _tTransfer = _clk::now();
-    Msg::Info("algo12 face %d phases (ms): build=%.1f refine=%.1f "
-              "transfer=%.1f total=%.1f",
-              gf->tag(), _ms(_tStart, _tBuilt), _ms(_tBuilt, _tRefined),
-              _ms(_tRefined, _tTransfer), _ms(_tStart, _tTransfer));
-  }
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
