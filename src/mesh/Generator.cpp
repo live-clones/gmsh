@@ -4,7 +4,6 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
-#include <chrono>
 #include <stack>
 #include <stdexcept>
 
@@ -1679,14 +1678,8 @@ void GenerateMesh(GModel *m, int ask)
   Msg::Info("%d nodes %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());
 
-  const auto _tq0 = std::chrono::steady_clock::now();
   GetQualityFast(m, m->getMeshStatus(), CTX::instance()->mesh.minQuality,
                  CTX::instance()->mesh.avgQuality);
-  if(Msg::GetVerbosity() >= 4)
-    Msg::Info("GetQualityFast (ms): %.1f",
-              std::chrono::duration<double, std::milli>(
-                std::chrono::steady_clock::now() - _tq0)
-                .count());
   Msg::Debug("ICN mesh quality: min=%g avg=%g",
              CTX::instance()->mesh.minQuality,
              CTX::instance()->mesh.avgQuality);
