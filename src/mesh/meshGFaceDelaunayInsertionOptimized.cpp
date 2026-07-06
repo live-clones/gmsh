@@ -43,7 +43,6 @@
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
 #include "qualityMeasures.h"
-#include "GModel.h"
 #include "GFace.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -222,15 +221,9 @@ struct IndexedMeshData {
   std::vector<std::array<double, 3> > vxyz;
   std::vector<char> vdim;
   std::set<std::pair<std::size_t, std::size_t> > internalEdgeIds;
-  // Deferred-materialization bookkeeping. In the eager scheme every
-  // insertion attempt consumes one node number (algo 6 deletes rejected
-  // vertices with plain delete, burning their number), so the accepted
-  // vertex of attempt k must get number vertexNumBase + k + 1 at
-  // materialization.
+  // Number of imported vertices; slots >= numBoundary are the interior
+  // vertices created by the refinement, materialized at transfer.
   std::size_t numBoundary = 0;
-  std::size_t vertexNumBase = 0;
-  std::size_t numAttempts = 0;
-  std::vector<std::size_t> attemptOrdinal; // per interior vertex
   // Hoisted per-face geometry facts (gf->geomType() is virtual and the
   // discreteFace dynamic_cast is not free; both were evaluated once or more
   // per insertion). Set at import.
@@ -277,12 +270,10 @@ struct IndexedMeshData {
     vertices.push_back(nullptr);
     vxyz.push_back({{x, y, z}});
     vdim.push_back(2);
-    attemptOrdinal.push_back(numAttempts++);
     return idx;
   }
 
-  // Rejected insertion: drop the vertex. The attempt itself stays counted
-  // (its node number is burned, matching algo 6's plain delete).
+  // Rejected insertion: drop the vertex from every array.
   void removeLastInteriorVertex()
   {
     Us.pop_back();
@@ -292,7 +283,6 @@ struct IndexedMeshData {
     vertices.pop_back();
     vxyz.pop_back();
     vdim.pop_back();
-    attemptOrdinal.pop_back();
   }
 
   void releaseTriangleSlot(std::size_t t)
@@ -1294,8 +1284,7 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
     else
       lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
 
-    // SoA only: the MFaceVertex is materialized at transfer (this attempt
-    // consumes one node number either way, see attemptOrdinal)
+    // SoA only: the MFaceVertex is materialized at transfer
     std::size_t iv = data.addInteriorVertex(center[0], center[1], p.x(),
                                             p.y(), p.z(), lc1, lc);
 
@@ -1535,26 +1524,21 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
   releaseVector(data.vSizes);
   releaseVector(data.vSizesBGM);
 
-  // Materialize the interior vertices (deferred during meshing). Node
-  // numbers replicate the eager scheme exactly: every insertion attempt
-  // consumed one number (rejected attempts burn theirs, as algo 6 deletes
-  // the vertex with plain delete), so the accepted vertex of attempt k gets
-  // vertexNumBase + k + 1, and the model counter ends at
-  // vertexNumBase + numAttempts. mesh_vertices is filled in index order,
-  // which is the acceptance order the eager path used.
+  // Materialize the interior vertices (deferred during meshing) in index
+  // order, which is their acceptance order; mesh_vertices is filled in the
+  // same order. The MVertex constructor assigns the node numbers (an
+  // atomic counter increment, as the eager path did per insertion):
+  // consecutive in serial, interleaved across faces meshed in parallel -
+  // unique either way.
   for(std::size_t i = data.numBoundary; i < data.vertices.size(); i++) {
-    const std::size_t num =
-      data.vertexNumBase + data.attemptOrdinal[i - data.numBoundary] + 1;
     MVertex *v =
       new MFaceVertex(data.vxyz[i][0], data.vxyz[i][1], data.vxyz[i][2], gf,
-                      data.Us[i], data.Vs[i], num);
+                      data.Us[i], data.Vs[i]);
     v->setIndex((long int)i); // as the eager path did for dim 2 vertices
     data.vertices[i] = v;
     gf->mesh_vertices.push_back(v);
   }
-  GModel::current()->setMaxVertexNumber(data.vertexNumBase + data.numAttempts);
   releaseVector(data.vxyz);
-  releaseVector(data.attemptOrdinal);
 
   // Create the MTriangles and orient them consistently with the reference
   // (first) triangle in a single pass. The param indices needed for the
@@ -1628,9 +1612,6 @@ void bowyerWatsonFrontalOptimized(
     Msg::Error("Invalid meshing data structure");
     return;
   }
-  // Base for the deferred node numbering: the eager scheme would take its
-  // numbers from here (same source as the MVertex constructor).
-  DATA.vertexNumBase = GModel::current()->getMaxVertexNumber();
   const auto _tBuilt = _clk::now();
 
   int ITER = 0, active_edge;
