@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <map>
+#include <algorithm>
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GFace.h"
@@ -117,7 +118,28 @@ static void computeElementShapes(GFace *gf, double &worst, double &avg,
   nT = 0;
   greaterThan = 0;
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-    double q = qmTriangle::gamma(gf->triangles[i]);
+    MTriangle *t = gf->triangles[i];
+    const MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1),
+                  *v2 = t->getVertex(2);
+    // Same quantity as qmTriangle::gamma (2 * inradius / circumradius), in
+    // the algebraically equivalent form 4 |u x v|^2 / (a b c (a + b + c)):
+    // one cross product and three square roots instead of three vector
+    // normalizations plus three cross-product norms. Values agree to
+    // roundoff (max observed difference ~1e-14).
+    const double u1x = v1->x() - v0->x(), u1y = v1->y() - v0->y(),
+                 u1z = v1->z() - v0->z();
+    const double u2x = v2->x() - v0->x(), u2y = v2->y() - v0->y(),
+                 u2z = v2->z() - v0->z();
+    const double u3x = v2->x() - v1->x(), u3y = v2->y() - v1->y(),
+                 u3z = v2->z() - v1->z();
+    const double cx = u1y * u2z - u1z * u2y, cy = u1z * u2x - u1x * u2z,
+                 cz = u1x * u2y - u1y * u2x;
+    const double c2 = cx * cx + cy * cy + cz * cz;
+    const double la = std::sqrt(u1x * u1x + u1y * u1y + u1z * u1z);
+    const double lb = std::sqrt(u2x * u2x + u2y * u2y + u2z * u2z);
+    const double lc = std::sqrt(u3x * u3x + u3y * u3y + u3z * u3z);
+    const double den = la * lb * lc * (la + lb + lc);
+    const double q = (den > 0.) ? 4. * c2 / den : 0.;
     if(q > .9) greaterThan++;
     avg += q;
     worst = std::min(worst, q);
@@ -747,6 +769,7 @@ static bool algoDelaunay2D(GFace *gf)
   if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
      gf->getMeshingAlgo() == ALGO_2D_BAMG ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL ||
+     gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR ||
@@ -1387,26 +1410,60 @@ BDS2GMSH(BDS_Mesh *m, GFace *gf,
 
 static void deleteUnusedVertices(GFace *gf)
 {
-  std::set<MVertex *, MVertexPtrLessThan> allverts;
+  // O(n) via index marking instead of inserting millions of pointers into a
+  // std::set. Clobbering MVertex::_index is safe here: only vertices
+  // classified on this face are touched (private to the face, so also safe
+  // under the per-face OpenMP parallelism of Mesh2D), and _index carries no
+  // meaning at this point of the pipeline (writers re-assign it).
+  // Sentinels: -2 = used by an element, -3 = already collected.
+  for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++)
+    gf->mesh_vertices[i]->setIndex(-1);
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     for(int j = 0; j < 3; j++) {
-      if(gf->triangles[i]->getVertex(j)->onWhat() == gf)
-        allverts.insert(gf->triangles[i]->getVertex(j));
+      MVertex *v = gf->triangles[i]->getVertex(j);
+      if(v->onWhat() == gf) v->setIndex(-2);
     }
   }
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     for(int j = 0; j < 4; j++) {
-      if(gf->quadrangles[i]->getVertex(j)->onWhat() == gf)
-        allverts.insert(gf->quadrangles[i]->getVertex(j));
+      MVertex *v = gf->quadrangles[i]->getVertex(j);
+      if(v->onWhat() == gf) v->setIndex(-2);
     }
   }
+
+  // Filter mesh_vertices in place (stable): keeps the existing num-sorted
+  // order in all normal flows, so no re-sort is needed below.
+  std::vector<MVertex *> allverts;
+  allverts.reserve(gf->mesh_vertices.size());
   for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++) {
-    if(allverts.find(gf->mesh_vertices[i]) == allverts.end())
-      delete gf->mesh_vertices[i];
+    MVertex *v = gf->mesh_vertices[i];
+    if(v->getIndex() == -2) {
+      allverts.push_back(v);
+      v->setIndex(-3); // collected (also deduplicates)
+    }
+    else if(v->getIndex() == -1)
+      delete v;
   }
-  gf->mesh_vertices.clear();
-  gf->mesh_vertices.insert(gf->mesh_vertices.end(), allverts.begin(),
-                           allverts.end());
+
+  // Register used vertices that were missing from mesh_vertices, as the
+  // previous implementation did (can only happen in exotic flows).
+  auto collect = [&](MVertex *v) {
+    if(v->onWhat() == gf && v->getIndex() == -2) {
+      allverts.push_back(v);
+      v->setIndex(-3);
+    }
+  };
+  for(std::size_t i = 0; i < gf->triangles.size(); i++)
+    for(int j = 0; j < 3; j++) collect(gf->triangles[i]->getVertex(j));
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++)
+    for(int j = 0; j < 4; j++) collect(gf->quadrangles[i]->getVertex(j));
+
+  // The historical contract is "sorted by num" (the original implementation
+  // was a std::set<MVertex*, MVertexPtrLessThan>); only pay for the sort
+  // when the preserved order does not already satisfy it.
+  if(!std::is_sorted(allverts.begin(), allverts.end(), MVertexPtrLessThan()))
+    std::sort(allverts.begin(), allverts.end(), MVertexPtrLessThan());
+  gf->mesh_vertices.swap(allverts);
 }
 /*
 static void separateLoopsToIsolatedEdges (std::vector<GEdge*> &edges,
@@ -2009,6 +2066,9 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // passed in order not to recompute local coordinates of vertices
   if(algoDelaunay2D(gf) && !onlyInitialMesh) {
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) { bowyerWatsonFrontal(gf); }
+    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT) {
+      bowyerWatsonFrontalOptimized(gf);
+    }
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
       bowyerWatsonFrontalLayers(gf, true);
     }
@@ -3100,6 +3160,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates,
                           &true_boundary);
+    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT)
+      bowyerWatsonFrontalOptimized(gf, &equivalence, &parametricCoordinates,
+                                   &true_boundary);
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
       bowyerWatsonFrontalLayers(gf, true, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
@@ -3265,6 +3328,7 @@ void meshGFace::operator()(GFace *gf, bool print)
   case ALGO_2D_INITIAL_ONLY: algo = "Initial Mesh Only"; break;
   case ALGO_2D_DELAUNAY: algo = "Delaunay"; break;
   case ALGO_2D_FRONTAL: algo = "Frontal-Delaunay"; break;
+  case ALGO_2D_FRONTAL_OPT: algo = "Frontal-Delaunay Optimized"; break;
   case ALGO_2D_BAMG: algo = "Bamg"; break;
   case ALGO_2D_FRONTAL_QUAD: algo = "Frontal-Delaunay for Quads"; break;
   case ALGO_2D_PACK_PRLGRMS: algo = "Packing of Parallelograms"; break;

@@ -6103,6 +6103,9 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
     case ALGO_2D_INITIAL_ONLY:
       FlGui::instance()->options->mesh.choice[2]->value(8);
       break;
+    case ALGO_2D_FRONTAL_OPT:
+      FlGui::instance()->options->mesh.choice[2]->value(9);
+      break;
     case ALGO_2D_AUTO:
     default: FlGui::instance()->options->mesh.choice[2]->value(0); break;
     }

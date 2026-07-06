@@ -989,6 +989,9 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
       else if(argv[i] == "FrontalDelaunay2D" || argv[i] == "front2d" ||
               argv[i] == "frontal")
         opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL);
+      else if(argv[i] == "FrontalDelaunayOptimized2D" ||
+              argv[i] == "frontopt2d" || argv[i] == "frontalopt")
+        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL_OPT);
       else if(argv[i] == "bamg")
         opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_BAMG);
       else if(argv[i] == "DelaunayFrontalForQuads" || argv[i] == "delquad")
