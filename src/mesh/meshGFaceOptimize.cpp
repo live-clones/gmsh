@@ -733,9 +733,9 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   return false;
 }
 
-static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
-                                           const std::vector<MElement *> &e1,
-                                           MVertex *v1, const SPoint2 &before,
+static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf, MElement *const *e1,
+                                           std::size_t ne1, MVertex *v1,
+                                           const SPoint2 &before,
                                            const SPoint2 &after)
 {
   double surface_old = 0;
@@ -747,7 +747,7 @@ static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
   SPoint3 pbefore(v1->x(), v1->y(), v1->z());
 
   double minq = 1.0;
-  for(std::size_t j = 0; j < e1.size(); ++j) {
+  for(std::size_t j = 0; j < ne1; ++j) {
     surface_old += surfaceFaceUV(e1[j], gf, false);
     minq = std::min(e1[j]->etaShapeMeasure(), minq);
   }
@@ -757,7 +757,7 @@ static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
   v1->setXYZ(pafter.x(), pafter.y(), pafter.z());
 
   double minq_new = 1.0;
-  for(std::size_t j = 0; j < e1.size(); ++j) {
+  for(std::size_t j = 0; j < ne1; ++j) {
     surface_new += surfaceFaceUV(e1[j], gf, false);
     minq_new = std::min(e1[j]->etaShapeMeasure(), minq_new);
   }
@@ -912,8 +912,8 @@ struct p1p2p3 {
   MVertex *p1, *p2;
 };
 
-static void _relocate(GFace *gf, MVertex *ver,
-                      const std::vector<MElement *> &lt)
+static void _relocate(GFace *gf, MVertex *ver, MElement *const *lt,
+                      std::size_t nlt)
 {
   if(ver->onWhat() != gf) return;
   MFaceVertex *fv = dynamic_cast<MFaceVertex *>(ver);
@@ -925,7 +925,7 @@ static void _relocate(GFace *gf, MVertex *ver,
 
   // compute the vertices connected to that one
   std::map<MVertex *, SPoint2, MVertexPtrLessThan> pts;
-  for(std::size_t i = 0; i < lt.size(); i++) {
+  for(std::size_t i = 0; i < nlt; i++) {
     for(int j = 0; j < lt[i]->getNumEdges(); j++) {
       MEdge e = lt[i]->getEdge(j);
       SPoint2 param0, param1;
@@ -963,7 +963,8 @@ static void _relocate(GFace *gf, MVertex *ver,
   SPoint2 actual = before;
   for(int ITER = 0; ITER < MAXITER; ITER++) {
     SPoint2 trial = after * FACTOR + before * (1. - FACTOR);
-    bool success = _isItAGoodIdeaToMoveThatVertex(gf, lt, ver, actual, trial);
+    bool success =
+      _isItAGoodIdeaToMoveThatVertex(gf, lt, nlt, ver, actual, trial);
     if(success) {
       GPoint pt = gf->point(trial);
       if(pt.succeeded()) {
@@ -977,6 +978,63 @@ static void _relocate(GFace *gf, MVertex *ver,
     }
     FACTOR /= 1.4;
   }
+}
+
+void VertexToElementCSR::finalize()
+{
+  _elements.resize(_pairs.size());
+  if(_pairs.empty()) {
+    _first.push_back(0);
+    return;
+  }
+  std::size_t minNum = _pairs[0].first->getNum(), maxNum = minNum;
+  for(std::size_t i = 1; i < _pairs.size(); i++) {
+    std::size_t num = _pairs[i].first->getNum();
+    minNum = std::min(minNum, num);
+    maxNum = std::max(maxNum, num);
+  }
+  std::size_t range = maxNum - minNum + 1;
+  if(range <= 2 * _pairs.size() + 1024) {
+    // the vertex numbers span a compact range (the common case for a freshly
+    // generated mesh): distribute the elements with a counting sort, in O(N)
+    std::vector<std::size_t> first(range + 1, 0);
+    std::vector<MVertex *> byNum(range, nullptr);
+    for(std::size_t i = 0; i < _pairs.size(); i++)
+      first[_pairs[i].first->getNum() - minNum + 1]++;
+    for(std::size_t k = 0; k < range; k++) first[k + 1] += first[k];
+    std::vector<std::size_t> next(first.begin(), first.end() - 1);
+    for(std::size_t i = 0; i < _pairs.size(); i++) {
+      std::size_t k = _pairs[i].first->getNum() - minNum;
+      byNum[k] = _pairs[i].first;
+      _elements[next[k]++] = _pairs[i].second;
+    }
+    for(std::size_t k = 0; k < range; k++) {
+      if(first[k + 1] != first[k]) {
+        _vertices.push_back(byNum[k]);
+        _first.push_back(first[k]);
+      }
+    }
+    _first.push_back(_pairs.size());
+  }
+  else {
+    // sparse vertex numbers: a stable sort keeps, for each vertex, the
+    // elements in insertion order
+    std::stable_sort(_pairs.begin(), _pairs.end(),
+                     [](const std::pair<MVertex *, MElement *> &a,
+                        const std::pair<MVertex *, MElement *> &b) {
+                       return a.first->getNum() < b.first->getNum();
+                     });
+    for(std::size_t i = 0; i < _pairs.size(); i++) {
+      if(i == 0 || _pairs[i].first != _pairs[i - 1].first) {
+        _vertices.push_back(_pairs[i].first);
+        _first.push_back(i);
+      }
+      _elements[i] = _pairs[i].second;
+    }
+    _first.push_back(_pairs.size());
+  }
+  _pairs.clear();
+  _pairs.shrink_to_fit();
 }
 
 void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
@@ -996,16 +1054,16 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 
   std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);
-  v2t_cont adj;
-  buildVertexToElement(gf->triangles, adj);
-  buildVertexToElement(gf->quadrangles, adj);
+  VertexToElementCSR adj;
+  adj.add(gf->triangles);
+  adj.add(gf->quadrangles);
+  adj.finalize();
   for(int i = 0; i < niter; i++) {
-    auto it = adj.begin();
-    while(it != adj.end()) {
-      if(vs.find(it->first) == vs.end()) {
-        _relocate(gf, it->first, it->second);
+    for(std::size_t j = 0; j < adj.numVertices(); j++) {
+      MVertex *v = adj.vertex(j);
+      if(vs.find(v) == vs.end()) {
+        _relocate(gf, v, adj.elements(j), adj.numElements(j));
       }
-      ++it;
     }
   }
 }

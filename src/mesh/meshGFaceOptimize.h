@@ -48,6 +48,46 @@ void buildVertexToElement(std::vector<T *> const &elements, v2t_cont &adj)
   }
 }
 
+// Same adjacency information as a v2t_cont filled by buildVertexToElement(),
+// but stored in a flat CSR (compressed sparse row) layout: vertices are
+// ordered by increasing MVertex::getNum() and the elements adjacent to each
+// vertex keep their insertion order, so iterating gives exactly the same
+// deterministic order as the std::map-based container at a fraction of the
+// construction cost
+class VertexToElementCSR {
+public:
+  template <class T> void add(std::vector<T *> const &elements)
+  {
+    for(std::size_t i = 0, elements_size = elements.size(); i < elements_size;
+        i++) {
+      T *const t = elements[i];
+      for(std::size_t j = 0, vertices_size = t->getNumVertices();
+          j < vertices_size; j++) {
+        _pairs.push_back(std::pair<MVertex *, MElement *>(t->getVertex(j), t));
+      }
+    }
+  }
+  // sort the adjacency by increasing vertex number; must be called once,
+  // after the last add() and before accessing the data
+  void finalize();
+  std::size_t numVertices() const { return _vertices.size(); }
+  MVertex *vertex(std::size_t i) const { return _vertices[i]; }
+  MElement *const *elements(std::size_t i) const
+  {
+    return &_elements[_first[i]];
+  }
+  std::size_t numElements(std::size_t i) const
+  {
+    return _first[i + 1] - _first[i];
+  }
+
+private:
+  std::vector<std::pair<MVertex *, MElement *> > _pairs;
+  std::vector<MVertex *> _vertices;
+  std::vector<std::size_t> _first;
+  std::vector<MElement *> _elements;
+};
+
 template <class T>
 void buildEdgeToElement(std::vector<T *> &eles, e2t_cont &adj);
 
