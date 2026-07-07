@@ -912,7 +912,8 @@ struct p1p2p3 {
 };
 
 static void _relocate(GFace *gf, MVertex *ver, MElement *const *lt,
-                      std::size_t nlt)
+                      std::size_t nlt,
+                      std::vector<std::pair<MVertex *, SPoint2> > &pts)
 {
   if(ver->onWhat() != gf) return;
   MFaceVertex *fv = dynamic_cast<MFaceVertex *>(ver);
@@ -922,24 +923,43 @@ static void _relocate(GFace *gf, MVertex *ver, MElement *const *lt,
   ver->getParameter(0, initu);
   ver->getParameter(1, initv);
 
-  // compute the vertices connected to that one
-  std::map<MVertex *, SPoint2, MVertexPtrLessThan> pts;
-  for(std::size_t i = 0; i < nlt; i++) {
-    for(int j = 0; j < lt[i]->getNumEdges(); j++) {
-      MEdge e = lt[i]->getEdge(j);
-      SPoint2 param0, param1;
-      if(e.getVertex(0) == ver) {
-        reparamMeshEdgeOnFace(e.getVertex(0), e.getVertex(1), gf, param0,
-                              param1);
-        pts[e.getVertex(1)] = param1;
+  // compute the vertices connected to that one; a neighbour shared by two
+  // elements keeps the parameters of its last occurrence
+  pts.clear();
+  auto addNeighbor = [&pts](MVertex *v, const SPoint2 &p) {
+    for(std::size_t k = 0; k < pts.size(); k++) {
+      if(pts[k].first == v) {
+        pts[k].second = p;
+        return;
       }
-      else if(e.getVertex(1) == ver) {
-        reparamMeshEdgeOnFace(e.getVertex(0), e.getVertex(1), gf, param0,
-                              param1);
-        pts[e.getVertex(0)] = param0;
+    }
+    pts.push_back(std::pair<MVertex *, SPoint2>(v, p));
+  };
+  for(std::size_t i = 0; i < nlt; i++) {
+    // for first order triangles and quadrangles (the only elements that
+    // reach this point), edge j connects vertices j and j + 1
+    int ne = lt[i]->getNumEdges();
+    for(int j = 0; j < ne; j++) {
+      MVertex *e0 = lt[i]->getVertex(j);
+      MVertex *e1 = lt[i]->getVertex(j == ne - 1 ? 0 : j + 1);
+      SPoint2 param0, param1;
+      if(e0 == ver) {
+        reparamMeshEdgeOnFace(e0, e1, gf, param0, param1);
+        addNeighbor(e1, param1);
+      }
+      else if(e1 == ver) {
+        reparamMeshEdgeOnFace(e0, e1, gf, param0, param1);
+        addNeighbor(e0, param0);
       }
     }
   }
+  // accumulate in increasing vertex number order, so that the target does
+  // not depend on the order in which the elements list the neighbours
+  std::sort(pts.begin(), pts.end(),
+            [](const std::pair<MVertex *, SPoint2> &a,
+               const std::pair<MVertex *, SPoint2> &b) {
+              return a.first->getNum() < b.first->getNum();
+            });
 
   SPoint2 before(initu, initv);
   double metric[3];
@@ -1057,11 +1077,12 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
   adj.add(gf->triangles);
   adj.add(gf->quadrangles);
   adj.finalize();
+  std::vector<std::pair<MVertex *, SPoint2> > pts;
   for(int i = 0; i < niter; i++) {
     for(std::size_t j = 0; j < adj.numVertices(); j++) {
       MVertex *v = adj.vertex(j);
       if(vs.find(v) == vs.end()) {
-        _relocate(gf, v, adj.elements(j), adj.numElements(j));
+        _relocate(gf, v, adj.elements(j), adj.numElements(j), pts);
       }
     }
   }
