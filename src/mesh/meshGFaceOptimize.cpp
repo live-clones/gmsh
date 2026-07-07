@@ -733,16 +733,239 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   return false;
 }
 
+// Squared sine and cosine of the angle between two vectors: |a x b|^2 and
+// a . b
+static inline void _sin2CosAngle(const double *a, const double *b,
+                                 double &sin2A, double &cosA)
+{
+  double cx = a[1] * b[2] - b[1] * a[2];
+  double cy = -(a[0] * b[2] - b[0] * a[2]);
+  double cz = a[0] * b[1] - b[0] * a[1];
+  sin2A = cx * cx + cy * cy + cz * cz;
+  cosA = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+// Squared sine and cosine of the smallest corner angle of the (first order)
+// triangle (p0, p1, p2) - the angle whose atan2 the eta shape quality of
+// qmTriangle would evaluate. The corner is selected by comparing
+// cos(angle) / (norm of the angle sides), which decreases when the angle
+// increases on [0, pi]; the comparison uses the squares (of both the cosine
+// and the sine, so no sqrt is needed at all), with the sign of the cosines
+// handled separately; ties within round-off pick the first of the tied
+// corners, whose angle is then equal to the smallest one up to round-off
+static void _minCornerSin2Cos(const double *p0, const double *p1,
+                              const double *p2, double &sin2min,
+                              double &cosmin)
+{
+  double s2[3], c[3];
+  {
+    double a[3] = {p0[0] - p1[0], p0[1] - p1[1], p0[2] - p1[2]};
+    double b[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+    _sin2CosAngle(a, b, s2[0], c[0]);
+  }
+  {
+    double a[3] = {p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]};
+    double b[3] = {p0[0] - p2[0], p0[1] - p2[1], p0[2] - p2[2]};
+    _sin2CosAngle(a, b, s2[1], c[1]);
+  }
+  {
+    double a[3] = {p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]};
+    double b[3] = {p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]};
+    _sin2CosAngle(a, b, s2[2], c[2]);
+  }
+
+  int imin = 0;
+  for(int i = 1; i < 3; i++) {
+    bool smaller;
+    if(c[i] >= 0 && c[imin] < 0) { smaller = true; }
+    else if(c[i] < 0 && c[imin] >= 0) {
+      smaller = false;
+    }
+    else {
+      double x = c[i] * c[i] * (s2[imin] + c[imin] * c[imin]);
+      double y = c[imin] * c[imin] * (s2[i] + c[i] * c[i]);
+      if(c[i] >= 0) { // both cosines >= 0: larger cos^2, smaller angle
+        smaller = x > y;
+      }
+      else { // both cosines < 0: larger cos^2, angle closer to pi
+        smaller = x < y;
+      }
+    }
+    if(smaller) imin = i;
+  }
+
+  sin2min = s2[imin];
+  cosmin = c[imin];
+}
+
+// Shape quality of an element for the relocation test. For first order
+// triangles the squared sine and the cosine of the smallest corner angle
+// are kept instead of the eta quality itself, so that qualities can be
+// compared without evaluating eta (no atan2, no sqrt): eta increases with
+// the smallest angle, whose cosine is always positive (the angle is at
+// most 60 degrees), so the comparison of the squared cosines scaled by the
+// squared side norms gives the comparison of the qualities, up to
+// round-off. For other element types the exact eta values are compared.
+struct elementQuality {
+  double s2, c; // valid when isSin2Cos
+  double val; // valid when !isSin2Cos
+  bool isSin2Cos;
+  double eta() const
+  {
+    if(!isSin2Cos) return val;
+    // same formula as qmTriangle::eta
+    double amin = 180 * std::atan2(std::sqrt(s2), c) / M_PI;
+    return 1. - std::abs(60. - amin) * (1. / 60.);
+  }
+  bool operator<(const elementQuality &o) const
+  {
+    if(isSin2Cos && o.isSin2Cos && c > 0 && o.c > 0) {
+      double x = c * c * (o.s2 + o.c * o.c);
+      double y = o.c * o.c * (s2 + c * c);
+      return x > y; // larger scaled cos^2: smaller angle, lower quality
+    }
+    return eta() < o.eta();
+  }
+};
+
+// Everything needed to test the relocation of a vertex inside its star (the
+// elements that surround it), fetched once per vertex: the parametric and
+// cartesian coordinates of the corners, which corner is the relocated
+// vertex, and the element type. evaluate() computes the total parametric
+// area (with the formulas of surfaceFaceUV) and the minimum shape quality
+// (ordered like the eta of etaShapeMeasure, up to round-off - see
+// elementQuality) of the whole star for a candidate position of the vertex.
+struct vertexStar {
+  MElement *const *elements;
+  std::size_t n;
+  std::vector<double> u, v; // parametric coordinates, 4 corners per element
+  std::vector<double> p; // cartesian coordinates, 3 per corner
+  std::vector<int> nv; // number of corners of each element
+  std::vector<int> iver; // corner index of the relocated vertex
+  std::vector<char> isTri; // first order triangle?
+  void build(GFace *gf, MVertex *ver, MElement *const *lt, std::size_t nlt)
+  {
+    elements = lt;
+    n = nlt;
+    u.resize(4 * n);
+    v.resize(4 * n);
+    p.resize(12 * n);
+    nv.resize(n);
+    iver.resize(n);
+    isTri.resize(n);
+    for(std::size_t i = 0; i < n; i++) {
+      MElement *e = lt[i];
+      int m = (int)e->getNumVertices();
+      nv[i] = m;
+      iver[i] = -1; // stays -1 when the vertex is a high order node
+      isTri[i] = (e->getType() == TYPE_TRI && e->getPolynomialOrder() == 1);
+      for(int j = 0; j < m; j++) {
+        MVertex *w = e->getVertex(j);
+        if(w == ver) {
+          iver[i] = j;
+          continue;
+        }
+        // only the (up to 4) corners enter the area formula; higher order
+        // elements should not get here (laplaceSmoothing rejects them), and
+        // if one does, surface() warns and gives it a zero area, like
+        // surfaceFaceUV
+        if(j >= 4) continue;
+        // a corner classified on the surface carries its parametric
+        // coordinates, which is what reparamMeshVertexOnFace would return
+        double uu, vv;
+        if(w->onWhat() == gf && w->getParameter(0, uu) &&
+           w->getParameter(1, vv)) {
+          u[4 * i + j] = uu;
+          v[4 * i + j] = vv;
+        }
+        else {
+          SPoint2 q;
+          reparamMeshVertexOnFace(w, gf, q);
+          u[4 * i + j] = q.x();
+          v[4 * i + j] = q.y();
+        }
+        p[12 * i + 3 * j] = w->x();
+        p[12 * i + 3 * j + 1] = w->y();
+        p[12 * i + 3 * j + 2] = w->z();
+      }
+    }
+  }
+  // area formula of surfaceFaceUV(element, gf, false) on the cached corners
+  double surface(std::size_t i) const
+  {
+    if(nv[i] > 4) {
+      Msg::Warning("surfaceFaceUV only for first order elements");
+      return 0;
+    }
+    const double *uu = &u[4 * i], *vv = &v[4 * i];
+    if(nv[i] == 3)
+      return 0.5 * fabs((uu[1] - uu[0]) * (vv[2] - vv[0]) -
+                        (uu[2] - uu[0]) * (vv[1] - vv[0]));
+    const double a1 =
+      0.5 * fabs((uu[1] - uu[0]) * (vv[2] - vv[0]) -
+                 (uu[2] - uu[0]) * (vv[1] - vv[0])) +
+      0.5 * fabs((uu[3] - uu[2]) * (vv[0] - vv[2]) -
+                 (uu[0] - uu[2]) * (vv[3] - vv[2]));
+    const double a2 =
+      0.5 * fabs((uu[2] - uu[1]) * (vv[3] - vv[1]) -
+                 (uu[3] - uu[1]) * (vv[2] - vv[1])) +
+      0.5 * fabs((uu[0] - uu[3]) * (vv[1] - vv[3]) -
+                 (uu[1] - uu[3]) * (vv[0] - vv[3]));
+    return std::min(a2, a1);
+  }
+  // total area and minimum quality with the relocated vertex at the
+  // parametric position `uvVer` and cartesian position `xyzVer`; for the
+  // (rare) elements that are not first order triangles the quality is
+  // evaluated on the mesh, so the relocated vertex itself must be at
+  // `xyzVer` when calling this
+  void evaluate(const SPoint2 &uvVer, const double *xyzVer, double &surface_,
+                elementQuality &minq)
+  {
+    surface_ = 0;
+    elementQuality q;
+    for(std::size_t i = 0; i < n; i++) {
+      int k = iver[i];
+      if(k >= 0 && k < 4) {
+        u[4 * i + k] = uvVer.x();
+        v[4 * i + k] = uvVer.y();
+        double *pk = &p[12 * i + 3 * k];
+        pk[0] = xyzVer[0];
+        pk[1] = xyzVer[1];
+        pk[2] = xyzVer[2];
+      }
+      surface_ += surface(i);
+      if(isTri[i]) {
+        _minCornerSin2Cos(&p[12 * i], &p[12 * i + 3], &p[12 * i + 6], q.s2,
+                          q.c);
+        q.isSin2Cos = true;
+      }
+      else {
+        q.val = elements[i]->etaShapeMeasure();
+        q.isSin2Cos = false;
+      }
+      if(i == 0) {
+        minq = q;
+        // cap the initial minimum at 1; only relevant for element types
+        // whose eta may exceed 1 (the eta of a triangle never does)
+        if(!q.isSin2Cos) minq.val = std::min(q.val, 1.0);
+      }
+      else if(q < minq) {
+        minq = q;
+      }
+    }
+  }
+};
+
 // Move v1 from `before` to `after` if this does not increase the parametric
-// surface area of the elements e1 and does not decrease their minimum shape
-// quality. `surface` and `minq` hold the area and quality at `before`; they
-// are updated to the values at `after` when the move is accepted. Return
-// true (with v1 left at `after`) if the move was accepted.
-static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf, MElement *const *e1,
-                                           std::size_t ne1, MVertex *v1,
-                                           const SPoint2 &before,
+// surface area of its star and does not decrease the minimum shape quality.
+// `surface` and `minq` hold the area and quality at `before`; they are
+// updated to the values at `after` when the move is accepted. Return true
+// (with v1 left at `after`) if the move was accepted.
+static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf, vertexStar &star,
+                                           MVertex *v1, const SPoint2 &before,
                                            const SPoint2 &after,
-                                           double &surface, double &minq)
+                                           double &surface,
+                                           elementQuality &minq)
 {
   GPoint gp = gf->point(after);
   if(!gp.succeeded()) return false;
@@ -752,12 +975,10 @@ static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf, MElement *const *e1,
   v1->setParameter(1, after.y());
   v1->setXYZ(gp.x(), gp.y(), gp.z());
 
-  double surface_new = 0;
-  double minq_new = 1.0;
-  for(std::size_t j = 0; j < ne1; ++j) {
-    surface_new += surfaceFaceUV(e1[j], gf, false);
-    minq_new = std::min(e1[j]->etaShapeMeasure(), minq_new);
-  }
+  double xyz[3] = {gp.x(), gp.y(), gp.z()};
+  double surface_new;
+  elementQuality minq_new;
+  star.evaluate(after, xyz, surface_new, minq_new);
 
   if((1. + 1.e-10) * surface < surface_new || minq_new < minq) {
     v1->setParameter(0, before.x());
@@ -913,7 +1134,8 @@ struct p1p2p3 {
 
 static void _relocate(GFace *gf, MVertex *ver, MElement *const *lt,
                       std::size_t nlt,
-                      std::vector<std::pair<MVertex *, SPoint2> > &pts)
+                      std::vector<std::pair<MVertex *, SPoint2> > &pts,
+                      vertexStar &star)
 {
   if(ver->onWhat() != gf) return;
   MFaceVertex *fv = dynamic_cast<MFaceVertex *>(ver);
@@ -996,18 +1218,17 @@ static void _relocate(GFace *gf, MVertex *ver, MElement *const *lt,
   // surface area and minimum quality of the elements around ver at its
   // current position: they only change when a trial move is accepted, in
   // which case _isItAGoodIdeaToMoveThatVertex updates them
-  double surface = 0;
-  double minq = 1.0;
-  for(std::size_t i = 0; i < nlt; i++) {
-    surface += surfaceFaceUV(lt[i], gf, false);
-    minq = std::min(lt[i]->etaShapeMeasure(), minq);
-  }
+  star.build(gf, ver, lt, nlt);
+  double xyz0[3] = {ver->x(), ver->y(), ver->z()};
+  double surface;
+  elementQuality minq;
+  star.evaluate(before, xyz0, surface, minq);
   double FACTOR = 1.0;
   const int MAXITER = 5;
   SPoint2 actual = before;
   for(int ITER = 0; ITER < MAXITER; ITER++) {
     SPoint2 trial = after * FACTOR + before * (1. - FACTOR);
-    if(_isItAGoodIdeaToMoveThatVertex(gf, lt, nlt, ver, actual, trial, surface,
+    if(_isItAGoodIdeaToMoveThatVertex(gf, star, ver, actual, trial, surface,
                                       minq)) {
       actual = trial;
     }
@@ -1094,11 +1315,12 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
   adj.add(gf->quadrangles);
   adj.finalize();
   std::vector<std::pair<MVertex *, SPoint2> > pts;
+  vertexStar star;
   for(int i = 0; i < niter; i++) {
     for(std::size_t j = 0; j < adj.numVertices(); j++) {
       MVertex *v = adj.vertex(j);
       if(vs.find(v) == vs.end()) {
-        _relocate(gf, v, adj.elements(j), adj.numElements(j), pts);
+        _relocate(gf, v, adj.elements(j), adj.numElements(j), pts, star);
       }
     }
   }
