@@ -1801,7 +1801,7 @@ static void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
   }
 }
 
-// Create the new entities between each partitions (sigma and bndSigma).
+// Create the new entities between each partitions (sigma and bndSigma). If the option partitionCreateTopology is set to 2, only the partition surfaces between the partitions are created..
 static void createPartitionTopology(
   GModel *model,
   const std::vector<std::set<MElement *, MElementPtrLessThan> >
@@ -1871,7 +1871,7 @@ static void createPartitionTopology(
     fillElementToEntity(model, elementToEntity, 2);
   }
 
-  if(meshDim >= 2) {
+  if(meshDim >= 2 && CTX::instance()->mesh.partitionCreateTopology != 2) {
     Msg::Info(" - Creating partition curves");
 
     if(meshDim == 2) {
@@ -1958,7 +1958,7 @@ static void createPartitionTopology(
     fillElementToEntity(model, elementToEntity, 1);
   }
 
-  if(meshDim >= 1) {
+  if(meshDim >= 1 && CTX::instance()->mesh.partitionCreateTopology != 2) {
     Msg::Info(" - Creating partition points");
     if(meshDim == 1) {
       for(std::size_t i = 0; i < model->getNumPartitions(); i++) {

@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   // create simple chessboard-like partitions). This will create new
   // ("partitioned") entities in the model, that will behave exactly like other
   // model entities. In particular, the full boundary representation is
-  // constructed provided that Mesh.PartitionCreateTopology == 1. The only
+  // constructed provided that Mesh.PartitionCreateTopology == 1. If Mesh.PartitionCreateTopology == 2, only the partition surfaces between the partitions are created. The only
   // difference is that partitioned entities have a "parent", which allows to
   // link the partitioned entity with the entity it is a subset of. There are
   // other options to govern how physical groups are treated

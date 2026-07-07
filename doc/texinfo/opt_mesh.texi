@@ -617,7 +617,7 @@ Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionCreateTopology
-Create boundary representation of partitions@*
+Create boundary representation of partitions. If set to 2, the curves and points at the boundary will be skipped@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
