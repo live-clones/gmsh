@@ -923,18 +923,11 @@ static void _relocate(GFace *gf, MVertex *ver, MElement *const *lt,
   ver->getParameter(0, initu);
   ver->getParameter(1, initv);
 
-  // compute the vertices connected to that one; a neighbour shared by two
-  // elements keeps the parameters of its last occurrence
+  // compute the vertices connected to that one. A neighbour classified on
+  // the surface has a single parametrization, read once (its second
+  // occurrence, on the other edge that joins it to the vertex, is skipped);
+  // the other neighbours keep the parameters of their last occurrence
   pts.clear();
-  auto addNeighbor = [&pts](MVertex *v, const SPoint2 &p) {
-    for(std::size_t k = 0; k < pts.size(); k++) {
-      if(pts[k].first == v) {
-        pts[k].second = p;
-        return;
-      }
-    }
-    pts.push_back(std::pair<MVertex *, SPoint2>(v, p));
-  };
   for(std::size_t i = 0; i < nlt; i++) {
     // for first order triangles and quadrangles (the only elements that
     // reach this point), edge j connects vertices j and j + 1
@@ -942,15 +935,38 @@ static void _relocate(GFace *gf, MVertex *ver, MElement *const *lt,
     for(int j = 0; j < ne; j++) {
       MVertex *e0 = lt[i]->getVertex(j);
       MVertex *e1 = lt[i]->getVertex(j == ne - 1 ? 0 : j + 1);
-      SPoint2 param0, param1;
-      if(e0 == ver) {
-        reparamMeshEdgeOnFace(e0, e1, gf, param0, param1);
-        addNeighbor(e1, param1);
+      MVertex *nbr;
+      if(e0 == ver)
+        nbr = e1;
+      else if(e1 == ver)
+        nbr = e0;
+      else
+        continue;
+      std::pair<MVertex *, SPoint2> *entry = nullptr;
+      for(std::size_t k = 0; k < pts.size(); k++) {
+        if(pts[k].first == nbr) {
+          entry = &pts[k];
+          break;
+        }
       }
-      else if(e1 == ver) {
-        reparamMeshEdgeOnFace(e0, e1, gf, param0, param1);
-        addNeighbor(e0, param0);
+      if(entry && nbr->onWhat() == gf) continue;
+      // a neighbour classified on the surface carries its parametric
+      // coordinates, which is what reparamMeshEdgeOnFace would return
+      SPoint2 pn;
+      double uu, vv;
+      if(nbr->onWhat() == gf && nbr->getParameter(0, uu) &&
+         nbr->getParameter(1, vv)) {
+        pn = SPoint2(uu, vv);
       }
+      else {
+        SPoint2 param0, param1;
+        reparamMeshEdgeOnFace(e0, e1, gf, param0, param1);
+        pn = (e0 == ver) ? param1 : param0;
+      }
+      if(entry)
+        entry->second = pn;
+      else
+        pts.push_back(std::pair<MVertex *, SPoint2>(nbr, pn));
     }
   }
   // accumulate in increasing vertex number order, so that the target does
