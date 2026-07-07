@@ -1211,13 +1211,8 @@ void VertexToElementCSR::finalize()
     _first.push_back(0);
     return;
   }
-  std::size_t minNum = _pairs[0].first->getNum(), maxNum = minNum;
-  for(std::size_t i = 1; i < _pairs.size(); i++) {
-    std::size_t num = _pairs[i].first->getNum();
-    minNum = std::min(minNum, num);
-    maxNum = std::max(maxNum, num);
-  }
-  std::size_t range = maxNum - minNum + 1;
+  const std::size_t minNum = _minNum;
+  const std::size_t range = _maxNum - minNum + 1;
   if(range <= 2 * _pairs.size() + 1024) {
     // the vertex numbers span a compact range (the common case for a freshly
     // generated mesh): distribute the elements with a counting sort, in O(N)
