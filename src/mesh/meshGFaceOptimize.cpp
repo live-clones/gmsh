@@ -733,69 +733,37 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   return false;
 }
 
-// Squared sine and cosine of the angle between two vectors: |a x b|^2 and
-// a . b
-static inline void _sin2CosAngle(const double *a, const double *b,
-                                 double &sin2A, double &cosA)
-{
-  double cx = a[1] * b[2] - b[1] * a[2];
-  double cy = -(a[0] * b[2] - b[0] * a[2]);
-  double cz = a[0] * b[1] - b[0] * a[1];
-  sin2A = cx * cx + cy * cy + cz * cz;
-  cosA = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
-
 // Squared sine and cosine of the smallest corner angle of the (first order)
 // triangle (p0, p1, p2) - the angle whose atan2 the eta shape quality of
-// qmTriangle would evaluate. The corner is selected by comparing
-// cos(angle) / (norm of the angle sides), which decreases when the angle
-// increases on [0, pi]; the comparison uses the squares (of both the cosine
-// and the sine, so no sqrt is needed at all), with the sign of the cosines
-// handled separately; ties within round-off pick the first of the tied
-// corners, whose angle is then equal to the smallest one up to round-off
+// qmTriangle would evaluate. The squared sine numerator |a x b|^2 is the
+// same at the three corners (twice the triangle area, squared), so it is
+// computed once; and since cos(angle) = c / sqrt(c^2 + sin2) increases with
+// the dot product c for a fixed sin2, the smallest angle is simply the
+// corner with the largest c. No sqrt, no atan2, and a single cross product;
+// ties within round-off pick the first of the tied corners, whose angle is
+// then equal to the smallest one up to round-off
 static void _minCornerSin2Cos(const double *p0, const double *p1,
                               const double *p2, double &sin2min,
                               double &cosmin)
 {
-  double s2[3], c[3];
-  {
-    double a[3] = {p0[0] - p1[0], p0[1] - p1[1], p0[2] - p1[2]};
-    double b[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-    _sin2CosAngle(a, b, s2[0], c[0]);
-  }
-  {
-    double a[3] = {p1[0] - p2[0], p1[1] - p2[1], p1[2] - p2[2]};
-    double b[3] = {p0[0] - p2[0], p0[1] - p2[1], p0[2] - p2[2]};
-    _sin2CosAngle(a, b, s2[1], c[1]);
-  }
-  {
-    double a[3] = {p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]};
-    double b[3] = {p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]};
-    _sin2CosAngle(a, b, s2[2], c[2]);
-  }
+  double e01[3] = {p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]};
+  double e12[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+  double e20[3] = {p0[0] - p2[0], p0[1] - p2[1], p0[2] - p2[2]};
 
-  int imin = 0;
-  for(int i = 1; i < 3; i++) {
-    bool smaller;
-    if(c[i] >= 0 && c[imin] < 0) { smaller = true; }
-    else if(c[i] < 0 && c[imin] >= 0) {
-      smaller = false;
-    }
-    else {
-      double x = c[i] * c[i] * (s2[imin] + c[imin] * c[imin]);
-      double y = c[imin] * c[imin] * (s2[i] + c[i] * c[i]);
-      if(c[i] >= 0) { // both cosines >= 0: larger cos^2, smaller angle
-        smaller = x > y;
-      }
-      else { // both cosines < 0: larger cos^2, angle closer to pi
-        smaller = x < y;
-      }
-    }
-    if(smaller) imin = i;
-  }
+  double cx = e01[1] * e12[2] - e12[1] * e01[2];
+  double cy = -(e01[0] * e12[2] - e12[0] * e01[2]);
+  double cz = e01[0] * e12[1] - e12[0] * e01[1];
+  sin2min = cx * cx + cy * cy + cz * cz;
 
-  sin2min = s2[imin];
-  cosmin = c[imin];
+  // dot products of the vectors of each corner: at p0, (p1-p0).(p2-p0) =
+  // e01.(-e20), and similarly at p1 and p2
+  double c0 = -(e01[0] * e20[0] + e01[1] * e20[1] + e01[2] * e20[2]);
+  double c1 = -(e01[0] * e12[0] + e01[1] * e12[1] + e01[2] * e12[2]);
+  double c2 = -(e12[0] * e20[0] + e12[1] * e20[1] + e12[2] * e20[2]);
+
+  cosmin = c0;
+  if(c1 > cosmin) cosmin = c1;
+  if(c2 > cosmin) cosmin = c2;
 }
 
 // Shape quality of an element for the relocation test. For first order
