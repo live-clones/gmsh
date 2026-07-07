@@ -733,41 +733,40 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   return false;
 }
 
+// Move v1 from `before` to `after` if this does not increase the parametric
+// surface area of the elements e1 and does not decrease their minimum shape
+// quality. `surface` and `minq` hold the area and quality at `before`; they
+// are updated to the values at `after` when the move is accepted. Return
+// true (with v1 left at `after`) if the move was accepted.
 static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf, MElement *const *e1,
                                            std::size_t ne1, MVertex *v1,
                                            const SPoint2 &before,
-                                           const SPoint2 &after)
+                                           const SPoint2 &after,
+                                           double &surface, double &minq)
 {
-  double surface_old = 0;
-  double surface_new = 0;
-
   GPoint gp = gf->point(after);
   if(!gp.succeeded()) return false;
-  SPoint3 pafter(gp.x(), gp.y(), gp.z());
   SPoint3 pbefore(v1->x(), v1->y(), v1->z());
-
-  double minq = 1.0;
-  for(std::size_t j = 0; j < ne1; ++j) {
-    surface_old += surfaceFaceUV(e1[j], gf, false);
-    minq = std::min(e1[j]->etaShapeMeasure(), minq);
-  }
 
   v1->setParameter(0, after.x());
   v1->setParameter(1, after.y());
-  v1->setXYZ(pafter.x(), pafter.y(), pafter.z());
+  v1->setXYZ(gp.x(), gp.y(), gp.z());
 
+  double surface_new = 0;
   double minq_new = 1.0;
   for(std::size_t j = 0; j < ne1; ++j) {
     surface_new += surfaceFaceUV(e1[j], gf, false);
     minq_new = std::min(e1[j]->etaShapeMeasure(), minq_new);
   }
 
-  v1->setParameter(0, before.x());
-  v1->setParameter(1, before.y());
-  v1->setXYZ(pbefore.x(), pbefore.y(), pbefore.z());
-  if((1. + 1.e-10) * surface_old < surface_new || minq_new < minq) {
+  if((1. + 1.e-10) * surface < surface_new || minq_new < minq) {
+    v1->setParameter(0, before.x());
+    v1->setParameter(1, before.y());
+    v1->setXYZ(pbefore.x(), pbefore.y(), pbefore.z());
     return false;
   }
+  surface = surface_new;
+  minq = minq_new;
   return true;
 }
 
@@ -958,23 +957,23 @@ static void _relocate(GFace *gf, MVertex *ver, MElement *const *lt,
     COUNT += F;
   }
   after *= (1.0 / COUNT);
+  // surface area and minimum quality of the elements around ver at its
+  // current position: they only change when a trial move is accepted, in
+  // which case _isItAGoodIdeaToMoveThatVertex updates them
+  double surface = 0;
+  double minq = 1.0;
+  for(std::size_t i = 0; i < nlt; i++) {
+    surface += surfaceFaceUV(lt[i], gf, false);
+    minq = std::min(lt[i]->etaShapeMeasure(), minq);
+  }
   double FACTOR = 1.0;
   const int MAXITER = 5;
   SPoint2 actual = before;
   for(int ITER = 0; ITER < MAXITER; ITER++) {
     SPoint2 trial = after * FACTOR + before * (1. - FACTOR);
-    bool success =
-      _isItAGoodIdeaToMoveThatVertex(gf, lt, nlt, ver, actual, trial);
-    if(success) {
-      GPoint pt = gf->point(trial);
-      if(pt.succeeded()) {
-        actual = trial;
-        ver->setParameter(0, trial.x());
-        ver->setParameter(1, trial.y());
-        ver->x() = pt.x();
-        ver->y() = pt.y();
-        ver->z() = pt.z();
-      }
+    if(_isItAGoodIdeaToMoveThatVertex(gf, lt, nlt, ver, actual, trial, surface,
+                                      minq)) {
+      actual = trial;
     }
     FACTOR /= 1.4;
   }
