@@ -50,6 +50,13 @@ protected:
   bool _combined;
   // for some algorithms to omit this cell
   bool _immune;
+  // whether this cell is currently a live member of its cell complex
+  // (removed cells stay in the complex's cell containers as tombstones
+  // until compaction, so membership is tracked here in constant time)
+  bool _inComplex = false;
+  // whether this cell is currently in a reduction work queue (replaces the
+  // tree-based queue dedup sets with a constant-time flag)
+  bool _queued = false;
 
   // list of cells on the boundary and on the coboundary of this cell.
   // Cells typically have only a handful of (co)boundary neighbors, so a
@@ -102,6 +109,11 @@ public:
 
   void setImmune(bool immune) { _immune = immune; };
   bool getImmune() const { return _immune; };
+
+  void setInComplex(bool in) { _inComplex = in; }
+  bool inComplex() const { return _inComplex; }
+  void setQueued(bool queued) { _queued = queued; }
+  bool getQueued() const { return _queued; }
 
   int getNumSortedVertices() const { return _si.size(); }
   inline int getSortedVertex(int vertex) const;
