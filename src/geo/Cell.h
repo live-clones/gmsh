@@ -55,6 +55,13 @@ protected:
   std::map<Cell *, BdInfo, CellPtrLessThan> _bd;
   std::map<Cell *, BdInfo, CellPtrLessThan> _cbd;
 
+  // number of _bd/_cbd entries with a nonzero current orientation, kept in
+  // sync incrementally so getBoundarySize()/getCoboundarySize() and
+  // firstBoundary()/firstCoboundary() don't need to rescan entries left
+  // behind (with zero current but nonzero original orientation) for restore
+  int _bdSize = 0;
+  int _cbdSize = 0;
+
   Cell() {}
 
 private:
