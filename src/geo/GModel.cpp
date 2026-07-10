@@ -3743,18 +3743,35 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
   std::set<dpair> domains;
   for(auto it = _homologyRequests.begin(); it != _homologyRequests.end(); it++)
     domains.insert(it->first);
-  Msg::Info("Number of cell complexes to construct: %d", domains.size());
 
+  // requests on the same domain share one cell complex, which is relabeled
+  // for each new subdomain instead of being reconstructed from scratch
+  std::map<std::vector<int>, int> domainRequestCount;
+  for(auto it = _homologyRequests.begin(); it != _homologyRequests.end(); it++)
+    domainRequestCount[it->first.first]++;
+  Msg::Info("Number of cell complexes to construct: %d",
+            (int)domainRequestCount.size());
+
+  Homology *homology = nullptr;
+  std::vector<int> prevDomain;
+  // the domains set is ordered by (domain, subdomain): requests with the
+  // same domain are consecutive
   for(auto it = domains.begin(); it != domains.end(); it++) {
     std::pair<std::multimap<dpair, tpair>::iterator,
               std::multimap<dpair, tpair>::iterator>
       itp = _homologyRequests.equal_range(*it);
-    bool prepareToRestore = (itp.first != --itp.second);
-    itp.second++;
     std::vector<int> imdomain;
-    Homology *homology =
-      new Homology(this, itp.first->first.first, itp.first->first.second,
-                   imdomain, prepareToRestore);
+    if(homology != nullptr && it->first == prevDomain) {
+      // same domain as the previous requests, new subdomain
+      homology->setSubdomain(it->second);
+    }
+    else {
+      delete homology;
+      bool prepareToRestore = domainRequestCount[it->first] > 1;
+      homology =
+        new Homology(this, it->first, it->second, imdomain, prepareToRestore);
+      prevDomain = it->first;
+    }
 
     for(auto itt = itp.first; itt != itp.second; itt++) {
       std::string type = itt->second.first;
@@ -3806,8 +3823,8 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
       }
     }
     pruneMeshVertexAssociations();
-    delete homology;
   }
+  delete homology;
   Msg::Info("");
 
   double t2 = Cpu(), w2 = TimeOfDay();

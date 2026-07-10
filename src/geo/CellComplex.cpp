@@ -1216,6 +1216,102 @@ bool CellComplex::restoreComplex()
   }
 }
 
+// compare cells by their sorted vertex numbers only, disregarding the cell
+// numbers (like CellPtrLessThan does for unnumbered cells)
+static bool vertexOrderLessThan(const Cell *c1, const Cell *c2)
+{
+  if(c1->getNumSortedVertices() != c2->getNumSortedVertices())
+    return c1->getNumSortedVertices() < c2->getNumSortedVertices();
+  for(int i = 0; i < c1->getNumSortedVertices(); i++) {
+    if(c1->getSortedVertex(i) < c2->getSortedVertex(i)) return true;
+    if(c1->getSortedVertex(i) > c2->getSortedVertex(i)) return false;
+  }
+  return false;
+}
+
+Cell *CellComplex::_findCellVertexOrder(Cell *cell) const
+{
+  const std::vector<Cell *> &cells = _cells[cell->getDim()];
+  auto it = std::lower_bound(cells.begin(), cells.end(), cell,
+                             vertexOrderLessThan);
+  if(it != cells.end() && !vertexOrderLessThan(cell, *it)) return *it;
+  return nullptr;
+}
+
+bool CellComplex::relabel(std::vector<MElement *> &subdomainElements,
+                          std::vector<MElement *> &immuneElements)
+{
+  if(!_saveorig) return false;
+  if(_reduced && !restoreComplex()) return false;
+
+  // clear the domain and immunity markings (the reductions and the chain
+  // smoothening leave the immunity flags dirty)
+  for(int dim = 0; dim < 4; dim++) {
+    for(std::size_t i = 0; i < _cells[dim].size(); i++) {
+      _cells[dim][i]->setDomain(0);
+      _cells[dim][i]->setImmune(false);
+    }
+  }
+
+  // mark the closure of the subdomain elements, like the subdomain pass of
+  // the constructor does: the boundary links of the restored complex
+  // provide the descent to the subcells
+  std::queue<Cell *> Q;
+  for(std::size_t i = 0; i < subdomainElements.size(); i++) {
+    std::pair<Cell *, bool> maybeCell =
+      Cell::createCell(subdomainElements[i], 1);
+    if(!maybeCell.second) { // degenerate element, also ignored when building
+      delete maybeCell.first;
+      continue;
+    }
+    Cell *cell = _findCellVertexOrder(maybeCell.first);
+    delete maybeCell.first;
+    if(!cell) return false;
+    if(cell->getDomain() == 0) {
+      cell->setDomain(1);
+      Q.push(cell);
+    }
+  }
+  while(!Q.empty()) {
+    Cell *cell = Q.front();
+    Q.pop();
+    for(auto it = cell->firstBoundary(); it != cell->lastBoundary(); it++) {
+      if(it->second.get() == 0) continue;
+      Cell *bdCell = it->first;
+      if(bdCell->getDomain() == 0) {
+        bdCell->setDomain(1);
+        Q.push(bdCell);
+      }
+    }
+  }
+
+  for(std::size_t i = 0; i < immuneElements.size(); i++) {
+    std::pair<Cell *, bool> maybeCell = Cell::createCell(immuneElements[i], 0);
+    if(!maybeCell.second) {
+      delete maybeCell.first;
+      continue;
+    }
+    Cell *cell = _findCellVertexOrder(maybeCell.first);
+    delete maybeCell.first;
+    if(!cell) return false;
+    cell->setImmune(true);
+  }
+
+  // recompute the domain cell counts
+  _relative = false;
+  for(int dim = 0; dim < 4; dim++) {
+    int sub = 0;
+    for(std::size_t i = 0; i < _cells[dim].size(); i++)
+      if(_cells[dim][i]->inSubdomain()) sub++;
+    _numSubdomainCells[dim] = sub;
+    _numRelativeCells[dim] = _cells[dim].size() - sub;
+    if(sub > 0) _relative = true;
+  }
+
+  Msg::Debug("Relabeled the cell complex for a new subdomain");
+  return true;
+}
+
 void CellComplex::printComplex(int dim)
 {
   if(getSize(dim) == 0) Msg::Info("Cell complex dimension %d is empty", dim);

@@ -95,6 +95,11 @@ private:
   static std::vector<Cell *>::const_iterator
   _findCell(const std::vector<Cell *> &cells, Cell *cell);
 
+  // find the cell with the same vertices as the given (unnumbered) cell:
+  // valid after construction, since the cells are numbered in sorted vertex
+  // order and hence the number-sorted containers are also vertex-ordered
+  Cell *_findCellVertexOrder(Cell *cell) const;
+
   // queued coreduction
   int coreduction(Cell *startCell, int omit, std::vector<Cell *> &omittedCells);
 
@@ -242,6 +247,15 @@ public:
 
   // restore the cell complex to its original state before (co)reduction
   bool restoreComplex();
+
+  // relabel the (restored) original cell complex for a new relative
+  // subdomain, instead of constructing the same complex from scratch:
+  // clears the domain and immunity markings, marks the closure of the given
+  // subdomain elements and reapplies the immune elements. Returns false if
+  // an element has no cell in this complex (the cell complexes of the two
+  // subdomains differ): the caller then needs a full reconstruction.
+  bool relabel(std::vector<MElement *> &subdomainElements,
+               std::vector<MElement *> &immuneElements);
 
   // print the vertices of cells of certain dimension
   void printComplex(int dim);
