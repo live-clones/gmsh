@@ -42,32 +42,41 @@ bool equalVertices(const std::vector<MVertex *> &v1,
 
 int Cell::_globalNum = 0;
 
-std::pair<Cell *, bool> Cell::createCell(MElement *element, int domain)
+std::pair<Cell *, bool> Cell::createCell(MElement *element, int domain,
+                                         std::deque<Cell> &pool)
 {
-  Cell *cell = new Cell();
+  pool.emplace_back();
+  Cell *cell = &pool.back();
   cell->_dim = element->getDim();
   cell->_domain = domain;
   cell->_combined = false;
   cell->_immune = false;
   cell->_num = 0;
 
-  for(std::size_t i = 0; i < element->getNumPrimaryVertices(); i++)
-    cell->_v.push_back(element->getVertex(i));
+  std::size_t nv = element->getNumPrimaryVertices();
+  if(nv > 8) return std::make_pair(cell, false);
+  cell->_nv = nv;
+  for(std::size_t i = 0; i < nv; i++) cell->_v[i] = element->getVertex(i);
 
   return std::make_pair(cell, cell->_sortVertexIndices());
 }
 
-std::pair<Cell *, bool> Cell::createCell(Cell *parent, int i)
+Cell *Cell::createCell(Cell *parent, const std::vector<MVertex *> &vertices,
+                       std::deque<Cell> &pool)
 {
-  Cell *cell = new Cell();
+  pool.emplace_back();
+  Cell *cell = &pool.back();
   cell->_dim = parent->getDim() - 1;
   cell->_domain = parent->getDomain();
   cell->_combined = false;
   cell->_immune = false;
   cell->_num = 0;
 
-  parent->findBdElement(i, cell->_v);
-  return std::make_pair(cell, cell->_sortVertexIndices());
+  cell->_nv = vertices.size();
+  for(std::size_t i = 0; i < vertices.size(); i++) cell->_v[i] = vertices[i];
+
+  cell->_sortVertexIndices(); // the caller checked for degeneracy already
+  return cell;
 }
 
 Cell::Cell(MElement *element, int domain)
@@ -78,8 +87,10 @@ Cell::Cell(MElement *element, int domain)
   _immune = false;
   _num = 0;
 
-  for(std::size_t i = 0; i < element->getNumPrimaryVertices(); i++)
-    _v.push_back(element->getVertex(i));
+  std::size_t nv = element->getNumPrimaryVertices();
+  if(nv > 8) return; // not an element handled by the homology solver
+  _nv = nv;
+  for(std::size_t i = 0; i < nv; i++) _v[i] = element->getVertex(i);
 
   _sortVertexIndices();
 }
@@ -92,7 +103,11 @@ Cell::Cell(Cell *parent, int i)
   _immune = false;
   _num = 0;
 
-  parent->findBdElement(i, _v);
+  std::vector<MVertex *> vertices;
+  parent->findBdElement(i, vertices);
+  _nv = vertices.size();
+  for(std::size_t j = 0; j < vertices.size(); j++) _v[j] = vertices[j];
+
   _sortVertexIndices();
 }
 
@@ -100,7 +115,7 @@ bool Cell::_sortVertexIndices()
 {
   // cells have at most 8 vertices (hexahedra): sort a small fixed-size
   // array in place instead of allocating a std::map for every single cell
-  int n = (int)_v.size();
+  int n = (int)_nv;
   std::pair<MVertex *, char> vi[8];
   for(int i = 0; i < n; i++) vi[i] = std::make_pair(_v[i], (char)i);
 
@@ -117,8 +132,8 @@ bool Cell::_sortVertexIndices()
     }
   }
 
-  _si.reserve(n);
-  for(int i = 0; i < n; i++) _si.push_back(vi[i].second);
+  for(int i = 0; i < n; i++) _si[i] = vi[i].second;
+  _nsi = n;
 
   return true;
 }
@@ -491,7 +506,7 @@ int Cell::getTypeMSH() const
 
 bool Cell::hasVertex(int vertex) const
 {
-  for(std::size_t i = 0; i < _v.size(); i++) {
+  for(int i = 0; i < (int)_nv; i++) {
     if(_v[i]->getNum() == vertex) return true;
   }
   return false;

@@ -45,6 +45,12 @@ private:
   // original cells removed during reductions
   std::vector<Cell *> _removedcells;
 
+  // storage of the elementary cells: a deque allocates them in chunks
+  // without relocating (their addresses stay valid), and frees them
+  // wholesale on destruction instead of one delete per cell. Combined
+  // cells are few and are still allocated individually.
+  std::deque<Cell> _cellPool;
+
   // cell complex dimension
   int _dim;
 

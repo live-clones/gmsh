@@ -229,9 +229,10 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain,
     if(type == TYPE_QUA || type == TYPE_HEX || type == TYPE_PYR ||
        type == TYPE_PRI)
       _simplicial = false;
-    std::pair<Cell *, bool> maybeCell = Cell::createCell(element, domain);
+    std::pair<Cell *, bool> maybeCell =
+      Cell::createCell(element, domain, _cellPool);
     if(!maybeCell.second) {
-      delete maybeCell.first;
+      _cellPool.pop_back();
       continue;
     }
 
@@ -241,7 +242,7 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain,
     int n = sortedVertexNums(vertices, nums);
     std::pair<Cell **, bool> insert = index.insertKey(dim, nums, n);
     if(!insert.second) {
-      delete cell;
+      _cellPool.pop_back();
       cell = *insert.first;
       if(domain) cell->setDomain(domain);
     }
@@ -299,7 +300,7 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain,
           if(domain) newCell->setDomain(domain);
         }
         else {
-          newCell = Cell::createCell(cell, i).first;
+          newCell = Cell::createCell(cell, vertices, _cellPool);
           *insert.first = newCell;
           _createCount++;
         }
@@ -397,12 +398,13 @@ bool CellComplex::_immunizeCells(std::vector<MElement *> &elements)
 
 CellComplex::~CellComplex()
 {
-  // removed cells are deleted through _removedcells: only the live cells
-  // remain to be deleted here
+  // the elementary cells are freed wholesale with the pool: only the
+  // individually allocated combined cells need to be deleted (live ones
+  // here, removed ones through _removedcells)
   for(int i = 0; i < 4; i++) {
     for(std::size_t j = 0; j < _cells[i].size(); j++) {
       Cell *cell = _cells[i][j];
-      if(cell->inComplex()) {
+      if(cell->inComplex() && cell->isCombined()) {
         delete cell;
         _deleteCount++;
       }
@@ -410,9 +412,12 @@ CellComplex::~CellComplex()
   }
 
   for(std::size_t i = 0; i < _removedcells.size(); i++) {
-    delete _removedcells.at(i);
-    _deleteCount++;
+    if(_removedcells.at(i)->isCombined()) {
+      delete _removedcells.at(i);
+      _deleteCount++;
+    }
   }
+  _deleteCount += (int)_cellPool.size();
 
   Msg::Debug("Total number of cells created: %d", _createCount);
   Msg::Debug("Total number of cells deleted: %d", _deleteCount);
@@ -1258,14 +1263,10 @@ bool CellComplex::relabel(std::vector<MElement *> &subdomainElements,
   // provide the descent to the subcells
   std::queue<Cell *> Q;
   for(std::size_t i = 0; i < subdomainElements.size(); i++) {
-    std::pair<Cell *, bool> maybeCell =
-      Cell::createCell(subdomainElements[i], 1);
-    if(!maybeCell.second) { // degenerate element, also ignored when building
-      delete maybeCell.first;
+    Cell tmp(subdomainElements[i], 1);
+    if(tmp.getNumSortedVertices() == 0) // degenerate, ignored when building
       continue;
-    }
-    Cell *cell = _findCellVertexOrder(maybeCell.first);
-    delete maybeCell.first;
+    Cell *cell = _findCellVertexOrder(&tmp);
     if(!cell) return false;
     if(cell->getDomain() == 0) {
       cell->setDomain(1);
@@ -1286,13 +1287,9 @@ bool CellComplex::relabel(std::vector<MElement *> &subdomainElements,
   }
 
   for(std::size_t i = 0; i < immuneElements.size(); i++) {
-    std::pair<Cell *, bool> maybeCell = Cell::createCell(immuneElements[i], 0);
-    if(!maybeCell.second) {
-      delete maybeCell.first;
-      continue;
-    }
-    Cell *cell = _findCellVertexOrder(maybeCell.first);
-    delete maybeCell.first;
+    Cell tmp(immuneElements[i], 0);
+    if(tmp.getNumSortedVertices() == 0) continue;
+    Cell *cell = _findCellVertexOrder(&tmp);
     if(!cell) return false;
     cell->setImmune(true);
   }
