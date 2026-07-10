@@ -72,6 +72,13 @@ private:
                     std::queue<Cell *> &Q,
                     std::set<Cell *, CellPtrLessThan> &Qset);
 
+  // enqueue the live boundary/coboundary neighbors of a cell directly,
+  // without materializing an intermediate (cell, orientation) map
+  void enqueueBoundaryCells(Cell *cell, std::queue<Cell *> &Q,
+                            std::set<Cell *, CellPtrLessThan> &Qset);
+  void enqueueCoboundaryCells(Cell *cell, std::queue<Cell *> &Q,
+                              std::set<Cell *, CellPtrLessThan> &Qset);
+
   // insert/remove a cell from this cell complex
   void removeCell(Cell *cell, bool other = true, bool del = false);
   void insertCell(Cell *cell);

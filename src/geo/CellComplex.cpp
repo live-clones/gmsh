@@ -298,6 +298,32 @@ void CellComplex::enqueueCells(
   }
 }
 
+void CellComplex::enqueueBoundaryCells(Cell *cell, std::queue<Cell *> &Q,
+                                       std::set<Cell *, CellPtrLessThan> &Qset)
+{
+  for(auto it = cell->firstBoundary(); it != cell->lastBoundary(); it++) {
+    if(it->second.get() == 0) continue;
+    Cell *c = it->first;
+    if(Qset.find(c) == Qset.end()) {
+      Qset.insert(c);
+      Q.push(c);
+    }
+  }
+}
+
+void CellComplex::enqueueCoboundaryCells(
+  Cell *cell, std::queue<Cell *> &Q, std::set<Cell *, CellPtrLessThan> &Qset)
+{
+  for(auto it = cell->firstCoboundary(); it != cell->lastCoboundary(); it++) {
+    if(it->second.get() == 0) continue;
+    Cell *c = it->first;
+    if(Qset.find(c) == Qset.end()) {
+      Qset.insert(c);
+      Q.push(c);
+    }
+  }
+}
+
 int CellComplex::coreduction(Cell *startCell, int omit,
                              std::vector<Cell *> &omittedCells)
 {
@@ -309,9 +335,6 @@ int CellComplex::coreduction(Cell *startCell, int omit,
   Q.push(startCell);
   Qset.insert(startCell);
 
-  std::map<Cell *, short int, CellPtrLessThan> bd_s;
-  std::map<Cell *, short int, CellPtrLessThan> cbd_c;
-
   Cell *s;
   while(!Q.empty()) {
     s = Q.front();
@@ -321,19 +344,15 @@ int CellComplex::coreduction(Cell *startCell, int omit,
        inSameDomain(s, s->firstBoundary()->first) && !s->getImmune() &&
        !s->firstBoundary()->first->getImmune() &&
        abs(s->firstBoundary()->second.get()) < 2) {
-      s->getBoundary(bd_s);
+      Cell *partner = s->firstBoundary()->first;
       removeCell(s);
-      bd_s.begin()->first->getCoboundary(cbd_c);
-      enqueueCells(cbd_c, Q, Qset);
-      removeCell(bd_s.begin()->first);
-      if(bd_s.begin()->first->getDim() == omit) {
-        omittedCells.push_back(bd_s.begin()->first);
-      }
+      enqueueCoboundaryCells(partner, Q, Qset);
+      removeCell(partner);
+      if(partner->getDim() == omit) { omittedCells.push_back(partner); }
       coreductions++;
     }
     else if(s->getBoundarySize() == 0) {
-      s->getCoboundary(cbd_c);
-      enqueueCells(cbd_c, Q, Qset);
+      enqueueCoboundaryCells(s, Q, Qset);
     }
   }
   _reduced = true;
@@ -349,31 +368,55 @@ int CellComplex::reduction(int dim, int omit, std::vector<Cell *> &omittedCells)
 
   int count = 0;
 
-  bool reduced = true;
-  while(reduced) {
-    reduced = false;
-    auto cit = firstCell(dim - 1);
-    while(cit != lastCell(dim - 1)) {
-      Cell *cell = *cit;
-      if(cell->getCoboundarySize() == 1 &&
-         inSameDomain(cell, cell->firstCoboundary()->first) &&
-         !cell->getImmune() && !cell->firstCoboundary()->first->getImmune() &&
-         !cell->firstCoboundary()->first->getImmune() &&
-         abs(cell->firstCoboundary()->second.get()) < 2) {
-        cit++;
-        if(dim == omit) {
-          omittedCells.push_back(cell->firstCoboundary()->first);
-        }
-        removeCell(cell->firstCoboundary()->first);
-        removeCell(cell);
-        count++;
-        reduced = true;
-      }
+  // Reduce (cell, unique coboundary partner) pairs. A single forward sweep
+  // over the existing sorted set of dim-1 cells finds most reductions
+  // directly (no auxiliary structure needed, like the original algorithm).
+  // Removing a partner can make other dim-1 cells on its boundary newly
+  // reducible; those are pushed to a plain follow-up queue instead of
+  // repeating the whole O(n) sweep until a pass finds nothing, which can
+  // cost O(passes*n) for long chains of reductions. Since a cell can only
+  // be pushed as a side effect of removing one of its (few) boundary
+  // cells, the total number of pushes is bounded by O(n): no dedup set is
+  // needed, a stale/duplicate entry is just an O(1) no-op when popped.
+  std::queue<Cell *> Q;
 
-      if(getSize(dim) == 0 || getSize(dim - 1) == 0) break;
-      if(cit != lastCell(dim - 1)) cit++;
+  auto tryReduce = [&](Cell *cell) {
+    if(cell->getCoboundarySize() != 1 ||
+       !inSameDomain(cell, cell->firstCoboundary()->first) ||
+       cell->getImmune() || cell->firstCoboundary()->first->getImmune() ||
+       abs(cell->firstCoboundary()->second.get()) >= 2)
+      return false;
+
+    Cell *partner = cell->firstCoboundary()->first;
+    if(dim == omit) omittedCells.push_back(partner);
+
+    for(auto bit = partner->firstBoundary(); bit != partner->lastBoundary();
+        bit++) {
+      if(bit->second.get() != 0 && bit->first != cell) Q.push(bit->first);
     }
+
+    removeCell(partner);
+    removeCell(cell);
+    count++;
+    return true;
+  };
+
+  auto cit = firstCell(dim - 1);
+  while(cit != lastCell(dim - 1)) {
+    Cell *cell = *cit;
+    cit++;
+    tryReduce(cell);
+    if(getSize(dim) == 0 || getSize(dim - 1) == 0) break;
   }
+
+  while(!Q.empty()) {
+    Cell *cell = Q.front();
+    Q.pop();
+    if(getSize(dim) == 0 || getSize(dim - 1) == 0) break;
+    if(!hasCell(cell)) continue;
+    tryReduce(cell);
+  }
+
   _reduced = true;
   Msg::Debug("Cell complex %d-reduction removed %dv, %df, %de, %dn", dim,
              numCells[3] - getSize(3), numCells[2] - getSize(2),
@@ -391,30 +434,49 @@ int CellComplex::coreduction(int dim, int omit,
 
   int count = 0;
 
-  bool reduced = true;
-  while(reduced) {
-    reduced = false;
-    auto cit = firstCell(dim);
-    while(cit != lastCell(dim)) {
-      Cell *cell = *cit;
-      if(cell->getBoundarySize() == 1 &&
-         inSameDomain(cell, cell->firstBoundary()->first) &&
-         !cell->getImmune() && !cell->firstBoundary()->first->getImmune() &&
-         abs(cell->firstBoundary()->second.get()) < 2) {
-        ++cit;
-        if(dim - 1 == omit) {
-          omittedCells.push_back(cell->firstBoundary()->first);
-        }
-        removeCell(cell->firstBoundary()->first);
-        removeCell(cell);
-        count++;
-        reduced = true;
-      }
+  // see reduction() above for the rationale: a single sweep over the
+  // existing sorted set of dim cells finds most reductions, and a plain
+  // (dedup-free) follow-up queue handles the cascades that a removal can
+  // trigger, instead of repeating the whole sweep until a pass is empty.
+  std::queue<Cell *> Q;
 
-      if(getSize(dim) == 0 || getSize(dim - 1) == 0) break;
-      if(cit != lastCell(dim)) cit++;
+  auto tryReduce = [&](Cell *cell) {
+    if(cell->getBoundarySize() != 1 ||
+       !inSameDomain(cell, cell->firstBoundary()->first) ||
+       cell->getImmune() || cell->firstBoundary()->first->getImmune() ||
+       abs(cell->firstBoundary()->second.get()) >= 2)
+      return false;
+
+    Cell *partner = cell->firstBoundary()->first;
+    if(dim - 1 == omit) omittedCells.push_back(partner);
+
+    for(auto cbit = partner->firstCoboundary();
+        cbit != partner->lastCoboundary(); cbit++) {
+      if(cbit->second.get() != 0 && cbit->first != cell) Q.push(cbit->first);
     }
+
+    removeCell(partner);
+    removeCell(cell);
+    count++;
+    return true;
+  };
+
+  auto cit = firstCell(dim);
+  while(cit != lastCell(dim)) {
+    Cell *cell = *cit;
+    cit++;
+    tryReduce(cell);
+    if(getSize(dim) == 0 || getSize(dim - 1) == 0) break;
   }
+
+  while(!Q.empty()) {
+    Cell *cell = Q.front();
+    Q.pop();
+    if(getSize(dim) == 0 || getSize(dim - 1) == 0) break;
+    if(!hasCell(cell)) continue;
+    tryReduce(cell);
+  }
+
   _reduced = true;
   Msg::Debug("Cell complex %d-coreduction removed %dv, %df, %de, %dn", dim,
              numCells[3] - getSize(3), numCells[2] - getSize(2),
@@ -674,7 +736,6 @@ int CellComplex::combine(int dim)
 
   std::queue<Cell *> Q;
   std::set<Cell *, CellPtrLessThan> Qset;
-  std::map<Cell *, short int, CellPtrLessThan> bd_c;
   int count = 0;
 
   auto cit = firstCell(dim);
@@ -687,8 +748,7 @@ int CellComplex::combine(int dim)
     }
 
     Cell *cell = *cit;
-    cell->getBoundary(bd_c);
-    enqueueCells(bd_c, Q, Qset);
+    enqueueBoundaryCells(cell, Q, Qset);
 
     while(Q.size() != 0) {
       Cell *s = Q.front();
@@ -707,10 +767,8 @@ int CellComplex::combine(int dim)
            inSameDomain(s, c2) && c1->getImmune() == c2->getImmune()) {
           removeCell(s, true, false);
 
-          c1->getBoundary(bd_c);
-          enqueueCells(bd_c, Q, Qset);
-          c2->getBoundary(bd_c);
-          enqueueCells(bd_c, Q, Qset);
+          enqueueBoundaryCells(c1, Q, Qset);
+          enqueueBoundaryCells(c2, Q, Qset);
 
           // c1 and c2 are about to be erased from _cells[dim]: only move the
           // outer iterator if it would otherwise be invalidated (erasing a
@@ -762,7 +820,6 @@ int CellComplex::cocombine(int dim)
 
   std::queue<Cell *> Q;
   std::set<Cell *, CellPtrLessThan> Qset;
-  std::map<Cell *, short int, CellPtrLessThan> cbd_c;
   int count = 0;
 
   auto cit = firstCell(dim);
@@ -776,8 +833,7 @@ int CellComplex::cocombine(int dim)
 
     Cell *cell = *cit;
 
-    cell->getCoboundary(cbd_c);
-    enqueueCells(cbd_c, Q, Qset);
+    enqueueCoboundaryCells(cell, Q, Qset);
 
     while(Q.size() != 0) {
       Cell *s = Q.front();
@@ -795,10 +851,8 @@ int CellComplex::cocombine(int dim)
            inSameDomain(s, c2) && c1->getImmune() == c2->getImmune()) {
           removeCell(s, true, false);
 
-          c1->getCoboundary(cbd_c);
-          enqueueCells(cbd_c, Q, Qset);
-          c2->getCoboundary(cbd_c);
-          enqueueCells(cbd_c, Q, Qset);
+          enqueueCoboundaryCells(c1, Q, Qset);
+          enqueueCoboundaryCells(c2, Q, Qset);
 
           // see combine() for why a full reset to firstCell(dim) is not
           // needed here: only fix up the iterator if it is about to be
