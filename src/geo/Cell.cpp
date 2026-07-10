@@ -98,18 +98,27 @@ Cell::Cell(Cell *parent, int i)
 
 bool Cell::_sortVertexIndices()
 {
-  std::map<MVertex *, int, MVertexPtrLessThan> si;
+  // cells have at most 8 vertices (hexahedra): sort a small fixed-size
+  // array in place instead of allocating a std::map for every single cell
+  int n = (int)_v.size();
+  std::pair<MVertex *, char> vi[8];
+  for(int i = 0; i < n; i++) vi[i] = std::make_pair(_v[i], (char)i);
 
-  bool noinsert = false;
-  for(std::size_t i = 0; i < _v.size(); i++)
-    noinsert = (!si.insert(std::make_pair(_v[i], i)).second || noinsert);
+  std::sort(vi, vi + n,
+            [](const std::pair<MVertex *, char> &a,
+               const std::pair<MVertex *, char> &b) {
+              return a.first->getNum() < b.first->getNum();
+            });
 
-  if(noinsert == true) {
-    Msg::Warning("The input mesh has degenerate elements, ignored");
-    return false;
+  for(int i = 1; i < n; i++) {
+    if(vi[i].first->getNum() == vi[i - 1].first->getNum()) {
+      Msg::Warning("The input mesh has degenerate elements, ignored");
+      return false;
+    }
   }
 
-  for(auto it = si.begin(); it != si.end(); it++) _si.push_back(it->second);
+  _si.reserve(n);
+  for(int i = 0; i < n; i++) _si.push_back(vi[i].second);
 
   return true;
 }
@@ -484,15 +493,10 @@ int Cell::getTypeMSH() const
 
 bool Cell::hasVertex(int vertex) const
 {
-  std::vector<int> v;
   for(std::size_t i = 0; i < _v.size(); i++) {
-    v.push_back(_v[(int)_si[i]]->getNum());
+    if(_v[i]->getNum() == vertex) return true;
   }
-  auto it = std::find(v.begin(), v.end(), vertex);
-  if(it != v.end())
-    return true;
-  else
-    return false;
+  return false;
 }
 
 bool CombinedCell::hasVertex(int vertex) const
