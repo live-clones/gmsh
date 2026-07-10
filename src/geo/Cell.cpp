@@ -789,15 +789,29 @@ CombinedCell::CombinedCell(Cell *c1, Cell *c2, bool orMatch, bool co)
   _domain = c1->getDomain();
   _combined = true;
   _immune = (c1->getImmune() || c2->getImmune());
+  _dim = c1->getDim();
 
-  // cells
-  c1->getCells(_cells);
-  std::map<Cell *, int, CellPtrLessThan> c2Cells;
-  c2->getCells(c2Cells);
-  for(auto cit = c2Cells.begin(); cit != c2Cells.end(); cit++) {
-    if(!orMatch) (*cit).second = -1 * (*cit).second;
-    _cells.insert(*cit);
+  // constituent cells: steal the list of the bigger cell c1 instead of
+  // copying it, and merge in the smaller cell's list. c1 and c2 are merged
+  // into this cell and removed from the complex right after, so they no
+  // longer need their lists; this small-to-large merging keeps a chain of
+  // k combinations O(k log k) in total instead of O(k^2)
+  if(c1->isCombined()) {
+    CombinedCell *cc1 = static_cast<CombinedCell *>(c1);
+    _cells.swap(cc1->_cells);
   }
+  else
+    _cells[c1] = 1;
+  if(c2->isCombined()) {
+    CombinedCell *cc2 = static_cast<CombinedCell *>(c2);
+    for(auto cit = cc2->_cells.begin(); cit != cc2->_cells.end(); cit++) {
+      int coeff = orMatch ? cit->second : -1 * cit->second;
+      _cells.insert(std::make_pair(cit->first, coeff));
+    }
+    cc2->_cells.clear();
+  }
+  else
+    _cells[c2] = orMatch ? 1 : -1;
 
   // boundary cells
   for(auto it = c1->firstBoundary(); it != c1->lastBoundary(); it++) {
@@ -846,6 +860,7 @@ CombinedCell::CombinedCell(std::vector<Cell *> &cells)
   _domain = cells.at(0)->getDomain();
   _combined = true;
   _immune = false;
+  _dim = cells.at(0)->getDim();
 
   // cells
   for(std::size_t i = 0; i < cells.size(); i++) {
