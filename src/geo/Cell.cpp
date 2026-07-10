@@ -534,9 +534,12 @@ Cell::_bdLowerBound(std::vector<std::pair<Cell *, BdInfo> > &v, Cell *cell)
 std::vector<std::pair<Cell *, BdInfo> >::iterator
 Cell::_bdFind(std::vector<std::pair<Cell *, BdInfo> > &v, Cell *cell)
 {
-  auto it = _bdLowerBound(v, cell);
-  if(it != v.end() && it->first == cell) return it;
-  return v.end();
+  // (co)boundary lists are short (typically 2 to 15 entries): a linear scan
+  // for the exact cell pointer beats a binary search here, since it needs
+  // no cell number dereferences and no data-dependent branches
+  auto it = v.begin();
+  while(it != v.end() && it->first != cell) ++it;
+  return it;
 }
 
 void Cell::saveCellBoundary()
