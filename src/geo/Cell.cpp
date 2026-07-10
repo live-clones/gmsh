@@ -221,32 +221,35 @@ int Cell::findBdCellOrientation(Cell *cell, int i) const
   }
   return 0;*/
 
-  std::vector<MVertex *> v;
-  cell->getMeshVertices(v);
+  // boundary cells have at most 4 vertices: gather their numbers on the
+  // stack instead of copying the vertex vector on every call
+  std::size_t vn[4] = {0, 0, 0, 0};
+  int nv = cell->getNumVertices() < 4 ? cell->getNumVertices() : 4;
+  for(int j = 0; j < nv; j++) vn[j] = cell->getMeshVertex(j)->getNum();
   switch(_dim) {
   case 0: return 0;
   case 1:
-    if(v[0]->getNum() == _v[0]->getNum())
+    if(vn[0] == _v[0]->getNum())
       return -1;
-    else if(v[0]->getNum() == _v[1]->getNum())
+    else if(vn[0] == _v[1]->getNum())
       return 1;
     return 0;
   case 2:
     switch(getNumVertices()) {
     case 3:
-      if(_v[MTriangle::edges_tri(i, 0)]->getNum() == v[0]->getNum() &&
-         _v[MTriangle::edges_tri(i, 1)]->getNum() == v[1]->getNum())
+      if(_v[MTriangle::edges_tri(i, 0)]->getNum() == vn[0] &&
+         _v[MTriangle::edges_tri(i, 1)]->getNum() == vn[1])
         return 1;
-      if(_v[MTriangle::edges_tri(i, 1)]->getNum() == v[0]->getNum() &&
-         _v[MTriangle::edges_tri(i, 0)]->getNum() == v[1]->getNum())
+      if(_v[MTriangle::edges_tri(i, 1)]->getNum() == vn[0] &&
+         _v[MTriangle::edges_tri(i, 0)]->getNum() == vn[1])
         return -1;
       break;
     case 4:
-      if(_v[MQuadrangle::edges_quad(i, 0)]->getNum() == v[0]->getNum() &&
-         _v[MQuadrangle::edges_quad(i, 1)]->getNum() == v[1]->getNum())
+      if(_v[MQuadrangle::edges_quad(i, 0)]->getNum() == vn[0] &&
+         _v[MQuadrangle::edges_quad(i, 1)]->getNum() == vn[1])
         return 1;
-      if(_v[MQuadrangle::edges_quad(i, 0)]->getNum() == v[1]->getNum() &&
-         _v[MQuadrangle::edges_quad(i, 1)]->getNum() == v[0]->getNum())
+      if(_v[MQuadrangle::edges_quad(i, 0)]->getNum() == vn[1] &&
+         _v[MQuadrangle::edges_quad(i, 1)]->getNum() == vn[0])
         return -1;
       break;
     default: return 0;
@@ -254,212 +257,212 @@ int Cell::findBdCellOrientation(Cell *cell, int i) const
   case 3:
     switch(getNumVertices()) {
     case 4:
-      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == v[0]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == v[1]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == v[2]->getNum())
+      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == vn[0] &&
+         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == vn[1] &&
+         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == vn[2])
         return 1;
-      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == v[1]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == v[2]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == v[0]->getNum())
+      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == vn[1] &&
+         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == vn[2] &&
+         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == vn[0])
         return 1;
-      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == v[2]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == v[0]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == v[1]->getNum())
+      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == vn[2] &&
+         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == vn[0] &&
+         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == vn[1])
         return 1;
-      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == v[0]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == v[2]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == v[1]->getNum())
+      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == vn[0] &&
+         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == vn[2] &&
+         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == vn[1])
         return -1;
-      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == v[1]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == v[0]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == v[2]->getNum())
+      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == vn[1] &&
+         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == vn[0] &&
+         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == vn[2])
         return -1;
-      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == v[2]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == v[1]->getNum() &&
-         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == v[0]->getNum())
+      if(_v[MTetrahedron::faces_tetra(i, 0)]->getNum() == vn[2] &&
+         _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == vn[1] &&
+         _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == vn[0])
         return -1;
       break;
     case 5:
       if(i < 4) {
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[2]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[2])
           return 1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[0]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[0])
           return 1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[1]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[1])
           return 1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[1]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[1])
           return -1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[2]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[2])
           return -1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[0]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[0])
           return -1;
       }
       else {
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == v[3]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == vn[3])
           return 1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[3]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == v[0]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[3] &&
+           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == vn[0])
           return 1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[3]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == v[1]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[3] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == vn[1])
           return 1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[3]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == v[2]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[3] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == vn[2])
           return 1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[3]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == v[1]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[3] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == vn[1])
           return -1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[3]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == v[0]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[3] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == vn[0])
           return -1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[2]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == v[3]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[2] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == vn[3])
           return -1;
-        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[1]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == v[0]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == v[3]->getNum() &&
-           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == v[2]->getNum())
+        if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == vn[1] &&
+           _v[MPyramid::faces_pyramid(i, 1)]->getNum() == vn[0] &&
+           _v[MPyramid::faces_pyramid(i, 2)]->getNum() == vn[3] &&
+           _v[MPyramid::faces_pyramid(i, 3)]->getNum() == vn[2])
           return -1;
       }
       return 0;
       break;
     case 6:
       if(i < 2) {
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[2]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[2])
           return 1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[0]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[0])
           return 1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[1]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[1])
           return 1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[1]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[1])
           return -1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[2]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[2])
           return -1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[0]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[0])
           return -1;
       }
       else {
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 3)]->getNum() == v[3]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 3)]->getNum() == vn[3])
           return 1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[3]->getNum() &&
-           _v[MPrism::faces_prism(i, 3)]->getNum() == v[0]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[3] &&
+           _v[MPrism::faces_prism(i, 3)]->getNum() == vn[0])
           return 1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[3]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 3)]->getNum() == v[1]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[3] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 3)]->getNum() == vn[1])
           return 1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[3]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 3)]->getNum() == v[2]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[3] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 3)]->getNum() == vn[2])
           return 1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[3]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 3)]->getNum() == v[1]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[3] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 3)]->getNum() == vn[1])
           return -1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[3]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 3)]->getNum() == v[0]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[3] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 3)]->getNum() == vn[0])
           return -1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[2]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 3)]->getNum() == v[3]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[2] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 3)]->getNum() == vn[3])
           return -1;
-        if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[1]->getNum() &&
-           _v[MPrism::faces_prism(i, 1)]->getNum() == v[0]->getNum() &&
-           _v[MPrism::faces_prism(i, 2)]->getNum() == v[3]->getNum() &&
-           _v[MPrism::faces_prism(i, 3)]->getNum() == v[2]->getNum())
+        if(_v[MPrism::faces_prism(i, 0)]->getNum() == vn[1] &&
+           _v[MPrism::faces_prism(i, 1)]->getNum() == vn[0] &&
+           _v[MPrism::faces_prism(i, 2)]->getNum() == vn[3] &&
+           _v[MPrism::faces_prism(i, 3)]->getNum() == vn[2])
           return -1;
       }
       break;
     case 8:
-      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == v[0]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == v[1]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == v[2]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == v[3]->getNum())
+      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == vn[0] &&
+         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == vn[1] &&
+         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == vn[2] &&
+         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == vn[3])
         return 1;
-      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == v[1]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == v[2]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == v[3]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == v[0]->getNum())
+      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == vn[1] &&
+         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == vn[2] &&
+         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == vn[3] &&
+         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == vn[0])
         return 1;
-      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == v[2]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == v[3]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == v[0]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == v[1]->getNum())
+      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == vn[2] &&
+         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == vn[3] &&
+         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == vn[0] &&
+         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == vn[1])
         return 1;
-      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == v[3]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == v[0]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == v[1]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == v[2]->getNum())
+      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == vn[3] &&
+         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == vn[0] &&
+         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == vn[1] &&
+         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == vn[2])
         return 1;
-      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == v[0]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == v[3]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == v[2]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == v[1]->getNum())
+      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == vn[0] &&
+         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == vn[3] &&
+         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == vn[2] &&
+         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == vn[1])
         return -1;
-      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == v[3]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == v[2]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == v[1]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == v[0]->getNum())
+      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == vn[3] &&
+         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == vn[2] &&
+         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == vn[1] &&
+         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == vn[0])
         return -1;
-      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == v[2]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == v[1]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == v[0]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == v[3]->getNum())
+      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == vn[2] &&
+         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == vn[1] &&
+         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == vn[0] &&
+         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == vn[3])
         return -1;
-      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == v[1]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == v[0]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == v[3]->getNum() &&
-         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == v[2]->getNum())
+      if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == vn[1] &&
+         _v[MHexahedron::faces_hexa(i, 1)]->getNum() == vn[0] &&
+         _v[MHexahedron::faces_hexa(i, 2)]->getNum() == vn[3] &&
+         _v[MHexahedron::faces_hexa(i, 3)]->getNum() == vn[2])
         return -1;
       break;
     default: return 0;
@@ -598,6 +601,8 @@ void Cell::addBoundaryCell(int orientation, Cell *cell, bool other)
   }
   else {
     if(orientation != 0) _bdSize++;
+    // reserve a typical boundary size up front to avoid growth reallocations
+    if(_bd.capacity() == 0) _bd.reserve(4);
     _bd.insert(_bdLowerBound(_bd, cell),
                std::make_pair(cell, BdInfo(orientation)));
   }
@@ -624,6 +629,9 @@ void Cell::addCoboundaryCell(int orientation, Cell *cell, bool other)
   }
   else {
     if(orientation != 0) _cbdSize++;
+    // reserve a typical coboundary size up front to avoid growth
+    // reallocations
+    if(_cbd.capacity() == 0) _cbd.reserve(4);
     _cbd.insert(_bdLowerBound(_cbd, cell),
                 std::make_pair(cell, BdInfo(orientation)));
   }
