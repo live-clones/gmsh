@@ -20,6 +20,7 @@
 
 class Cell;
 class BdInfo;
+class CellConstructionIndex;
 
 class CellComplex {
 private:
@@ -60,7 +61,8 @@ private:
   int _numSubdomainCells[4];
 
   // for constructor
-  bool _insertCells(std::vector<MElement *> &elements, int domain);
+  bool _insertCells(std::vector<MElement *> &elements, int domain,
+                    CellConstructionIndex &index);
   bool _removeCells(std::vector<MElement *> &elements, int domain);
 
   bool _immunizeCells(std::vector<MElement *> &elements);

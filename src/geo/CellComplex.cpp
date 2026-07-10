@@ -5,11 +5,146 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
+#include <array>
+#include <unordered_map>
 #include "CellComplex.h"
 #include "MElement.h"
 #include "OS.h"
 
 double CellComplex::_patience = 10;
+
+template <std::size_t N> struct CellVertexKeyHash {
+  std::size_t operator()(const std::array<std::size_t, N> &key) const
+  {
+    std::size_t h = 0;
+    for(std::size_t i = 0; i < N; i++)
+      h = h * 0x9e3779b97f4a7c15ul ^ key[i];
+    return h;
+  }
+};
+
+// Construction-time index from the sorted mesh vertex numbers of a cell to
+// the unique cell with those vertices. Looking up a candidate boundary cell
+// here costs one hash instead of the tree descent with vertex-list
+// comparisons that a find in the _cells sets costs, and requires no
+// speculatively allocated Cell for candidates that are duplicates (which is
+// the common case: an interior facet is a duplicate for all its parents but
+// the first).
+class CellConstructionIndex {
+private:
+  template <std::size_t N>
+  using KeyMap = std::unordered_map<std::array<std::size_t, N>, Cell *,
+                                    CellVertexKeyHash<N> >;
+  // sized by the maximum number of vertices of a cell of each dimension
+  // (hexahedron: 8, quadrangle: 4, line: 2, point: 1)
+  KeyMap<1> _i0;
+  KeyMap<2> _i1;
+  KeyMap<4> _i2;
+  KeyMap<8> _i3;
+
+  // insert a slot for the cell with the given sorted vertex numbers:
+  // returns the address of the (stable) Cell* slot and whether the key was
+  // absent. The keys are zero-padded; since the numbers are sorted and a
+  // cell has no duplicate vertices, padding cannot alias another cell.
+  template <std::size_t N>
+  static std::pair<Cell **, bool> _insertKey(KeyMap<N> &m,
+                                             const std::size_t *nums, int n)
+  {
+    std::array<std::size_t, N> key = {};
+    for(int i = 0; i < n; i++) key[i] = nums[i];
+    auto ins = m.insert(std::make_pair(key, (Cell *)nullptr));
+    return std::make_pair(&ins.first->second, ins.second);
+  }
+
+public:
+  std::pair<Cell **, bool> insertKey(int dim, const std::size_t *nums, int n)
+  {
+    switch(dim) {
+    case 0: return _insertKey(_i0, nums, n);
+    case 1: return _insertKey(_i1, nums, n);
+    case 2: return _insertKey(_i2, nums, n);
+    default: return _insertKey(_i3, nums, n);
+    }
+  }
+
+  std::size_t size(int dim) const
+  {
+    switch(dim) {
+    case 0: return _i0.size();
+    case 1: return _i1.size();
+    case 2: return _i2.size();
+    default: return _i3.size();
+    }
+  }
+
+  void reserve(int dim, std::size_t n)
+  {
+    switch(dim) {
+    case 0: _i0.reserve(n); break;
+    case 1: _i1.reserve(n); break;
+    case 2: _i2.reserve(n); break;
+    default: _i3.reserve(n); break;
+    }
+  }
+
+  // get the cells of a dimension ordered as CellPtrLessThan orders
+  // unnumbered cells (by vertex count, then by sorted vertex numbers):
+  // sorting the flat keys stored in the index avoids the two dependent
+  // pointer loads per vertex that comparing Cell objects costs
+  void getSortedCells(int dim, std::vector<Cell *> &cells) const
+  {
+    switch(dim) {
+    case 0: _getSortedCells(_i0, cells); break;
+    case 1: _getSortedCells(_i1, cells); break;
+    case 2: _getSortedCells(_i2, cells); break;
+    default: _getSortedCells(_i3, cells); break;
+    }
+  }
+
+private:
+  template <std::size_t N>
+  static void _getSortedCells(const KeyMap<N> &m, std::vector<Cell *> &cells)
+  {
+    struct Entry {
+      std::array<std::size_t, N> key;
+      int n;
+      Cell *cell;
+    };
+    std::vector<Entry> entries;
+    entries.reserve(m.size());
+    for(auto &kv : m)
+      entries.push_back(
+        Entry{kv.first, kv.second->getNumSortedVertices(), kv.second});
+    std::sort(entries.begin(), entries.end(),
+              [](const Entry &a, const Entry &b) {
+                if(a.n != b.n) return a.n < b.n;
+                return a.key < b.key;
+              });
+    cells.clear();
+    cells.reserve(entries.size());
+    for(auto &e : entries) cells.push_back(e.cell);
+  }
+};
+
+// gather the vertex numbers of the given vertices in ascending order;
+// returns -1 if there are duplicate vertices (degenerate cell)
+static int sortedVertexNums(const std::vector<MVertex *> &v,
+                            std::size_t *nums)
+{
+  int n = (int)v.size();
+  for(int i = 0; i < n; i++) {
+    std::size_t num = v[i]->getNum();
+    int j = i;
+    while(j > 0 && nums[j - 1] > num) {
+      nums[j] = nums[j - 1];
+      j--;
+    }
+    nums[j] = num;
+  }
+  for(int i = 1; i < n; i++)
+    if(nums[i] == nums[i - 1]) return -1;
+  return n;
+}
 
 CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
                          std::vector<MElement *> &subdomainElements,
@@ -24,11 +159,12 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
   _biggestCell.second = -1.;
   _deleteCount = 0;
   _createCount = 0;
-  _insertCells(subdomainElements, 1);
+  CellConstructionIndex index;
+  _insertCells(subdomainElements, 1, index);
   if(getSize(0) > 0) _relative = true;
   for(int i = 0; i < 4; i++) _numSubdomainCells[i] = getSize(i);
 
-  _insertCells(domainElements, 0);
+  _insertCells(domainElements, 0, index);
   for(int i = 0; i < 4; i++)
     _numRelativeCells[i] = getSize(i) - _numSubdomainCells[i];
 
@@ -38,7 +174,14 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
   int num = 0;
   for(int dim = 0; dim < 4; dim++) {
     if(getSize(dim) != 0) _dim = dim;
-    if(_saveorig) _ocells[dim] = _cells[dim];
+    if(_saveorig) {
+      // copy with hinted end-insertion: iterating _cells[dim] yields the
+      // cells in ascending order, making each insertion amortized constant
+      // time instead of a comparison-heavy tree search
+      _ocells[dim].clear();
+      for(auto cit = firstCell(dim); cit != lastCell(dim); cit++)
+        _ocells[dim].insert(_ocells[dim].end(), *cit);
+    }
     for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
       Cell *cell = *cit;
       cell->setNum(++num);
@@ -63,7 +206,8 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
              getNumCells(0, 0));
 }
 
-bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
+bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain,
+                               CellConstructionIndex &index)
 {
   std::pair<Cell *, double> smallestElement[4];
   std::pair<Cell *, double> biggestElement[4];
@@ -74,6 +218,9 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
   _dim = 0;
 
   double t1 = Cpu();
+
+  std::size_t nums[8];
+  std::vector<MVertex *> vertices;
 
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *element = elements.at(i);
@@ -94,14 +241,18 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
 
     if(_dim < dim) _dim = dim;
     Cell *cell = maybeCell.first;
-    std::pair<citer, bool> insert = _cells[cell->getDim()].insert(cell);
+    maybeCell.first->getMeshVertices(vertices);
+    int n = sortedVertexNums(vertices, nums);
+    std::pair<Cell **, bool> insert = index.insertKey(dim, nums, n);
     if(!insert.second) {
       delete cell;
-      cell = *(insert.first);
+      cell = *insert.first;
       if(domain) cell->setDomain(domain);
     }
-    else
+    else {
+      *insert.first = cell;
       _createCount++;
+    }
 
     if(domain == 0) {
       double size = fabs(element->getVolume());
@@ -114,6 +265,10 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
   _smallestCell = smallestElement[_dim];
   _biggestCell = biggestElement[_dim];
 
+  // cells of each dimension in CellPtrLessThan order: cells of dimension
+  // dim are complete once the boundary cells of dimension dim+1 have been
+  // created, so each dimension needs to be sorted only once
+  std::vector<Cell *> sortedCells[4];
   for(int dim = 3; dim > 0; dim--) {
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience && dim > 1) {
@@ -123,24 +278,35 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
         Msg::Info(" - Creating subdomain %d-cells", dim);
     }
 
-    for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
-      Cell *cell = *cit;
+    // iterate the cells in the same sorted order as the previous
+    // std::set-based implementation, so the constructed complex (and hence
+    // the cell numbering) is identical
+    index.getSortedCells(dim, sortedCells[dim]);
+    std::vector<Cell *> &cells = sortedCells[dim];
+    if(!cells.empty())
+      index.reserve(dim - 1, index.size(dim - 1) +
+                               cells.size() * cells[0]->getNumBdElements() / 2);
+
+    for(std::size_t ic = 0; ic < cells.size(); ic++) {
+      Cell *cell = cells[ic];
       for(int i = 0; i < cell->getNumBdElements(); i++) {
-        std::pair<Cell *, bool> maybeCell = Cell::createCell(cell, i);
-        if(!maybeCell.second) {
-          delete maybeCell.first;
+        cell->findBdElement(i, vertices);
+        int n = sortedVertexNums(vertices, nums);
+        if(n < 0) {
+          Msg::Warning("The input mesh has degenerate elements, ignored");
           continue;
         }
-        Cell *newCell = maybeCell.first;
-        std::pair<citer, bool> insert =
-          _cells[newCell->getDim()].insert(newCell);
+        std::pair<Cell **, bool> insert = index.insertKey(dim - 1, nums, n);
+        Cell *newCell;
         if(!insert.second) {
-          delete newCell;
-          newCell = *(insert.first);
+          newCell = *insert.first;
           if(domain) newCell->setDomain(domain);
         }
-        else
+        else {
+          newCell = Cell::createCell(cell, i).first;
+          *insert.first = newCell;
           _createCount++;
+        }
         if(domain == 0) {
           int ori = cell->findBdCellOrientation(newCell, i);
           cell->addBoundaryCell(ori, newCell, true);
@@ -151,6 +317,16 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
         }
       }
     }
+  }
+  index.getSortedCells(0, sortedCells[0]);
+
+  // build the sorted cell sets with hinted end-insertion: since the cells
+  // arrive in ascending order each insertion is amortized constant time,
+  // instead of a tree search with vertex-list comparisons per cell
+  for(int dim = 0; dim < 4; dim++) {
+    _cells[dim].clear();
+    for(std::size_t i = 0; i < sortedCells[dim].size(); i++)
+      _cells[dim].insert(_cells[dim].end(), sortedCells[dim][i]);
   }
   return true;
 }
