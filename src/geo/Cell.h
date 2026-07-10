@@ -51,9 +51,13 @@ protected:
   // for some algorithms to omit this cell
   bool _immune;
 
-  // list of cells on the boundary and on the coboundary of this cell
-  std::map<Cell *, BdInfo, CellPtrLessThan> _bd;
-  std::map<Cell *, BdInfo, CellPtrLessThan> _cbd;
+  // list of cells on the boundary and on the coboundary of this cell.
+  // Cells typically have only a handful of (co)boundary neighbors, so a
+  // vector kept sorted by CellPtrLessThan is faster and far more
+  // memory-efficient (one heap block instead of a tree node per entry)
+  // than a std::map for this size range.
+  std::vector<std::pair<Cell *, BdInfo> > _bd;
+  std::vector<std::pair<Cell *, BdInfo> > _cbd;
 
   // number of _bd/_cbd entries with a nonzero current orientation, kept in
   // sync incrementally so getBoundarySize()/getCoboundarySize() and
@@ -61,6 +65,12 @@ protected:
   // behind (with zero current but nonzero original orientation) for restore
   int _bdSize = 0;
   int _cbdSize = 0;
+
+  // find/locate cell in a sorted (co)boundary vector
+  static std::vector<std::pair<Cell *, BdInfo> >::iterator
+  _bdLowerBound(std::vector<std::pair<Cell *, BdInfo> > &v, Cell *cell);
+  static std::vector<std::pair<Cell *, BdInfo> >::iterator
+  _bdFind(std::vector<std::pair<Cell *, BdInfo> > &v, Cell *cell);
 
   Cell() {}
 
@@ -112,7 +122,7 @@ public:
   virtual bool hasVertex(int vertex) const;
 
   // (co)boundary cell iterator
-  typedef std::map<Cell *, BdInfo, CellPtrLessThan>::iterator biter;
+  typedef std::vector<std::pair<Cell *, BdInfo> >::iterator biter;
 
   // iterators to (first/last (co)boundary cells of this cell
   // (orig: to original (co)boundary cells of this cell)

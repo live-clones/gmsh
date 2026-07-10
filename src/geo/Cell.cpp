@@ -518,6 +518,24 @@ void Cell::printCell()
   printf("combined: %d. \n", isCombined());
 };
 
+std::vector<std::pair<Cell *, BdInfo> >::iterator
+Cell::_bdLowerBound(std::vector<std::pair<Cell *, BdInfo> > &v, Cell *cell)
+{
+  CellPtrLessThan lt;
+  return std::lower_bound(v.begin(), v.end(), cell,
+                          [&lt](const std::pair<Cell *, BdInfo> &a, Cell *b) {
+                            return lt(a.first, b);
+                          });
+}
+
+std::vector<std::pair<Cell *, BdInfo> >::iterator
+Cell::_bdFind(std::vector<std::pair<Cell *, BdInfo> > &v, Cell *cell)
+{
+  auto it = _bdLowerBound(v, cell);
+  if(it != v.end() && it->first == cell) return it;
+  return v.end();
+}
+
 void Cell::saveCellBoundary()
 {
   for(auto it = firstCoboundary(); it != lastCoboundary(); it++) {
@@ -539,7 +557,10 @@ void Cell::restoreCellBoundary()
     else
       cbdSize++;
   }
-  for(std::size_t i = 0; i < toRemove.size(); i++) _cbd.erase(toRemove[i]);
+  for(std::size_t i = 0; i < toRemove.size(); i++) {
+    auto it = _bdFind(_cbd, toRemove[i]);
+    if(it != _cbd.end()) _cbd.erase(it);
+  }
   _cbdSize = cbdSize;
   toRemove.clear();
   int bdSize = 0;
@@ -550,13 +571,16 @@ void Cell::restoreCellBoundary()
     else
       bdSize++;
   }
-  for(std::size_t i = 0; i < toRemove.size(); i++) _bd.erase(toRemove[i]);
+  for(std::size_t i = 0; i < toRemove.size(); i++) {
+    auto it = _bdFind(_bd, toRemove[i]);
+    if(it != _bd.end()) _bd.erase(it);
+  }
   _bdSize = bdSize;
 }
 
 void Cell::addBoundaryCell(int orientation, Cell *cell, bool other)
 {
-  auto it = _bd.find(cell);
+  auto it = _bdFind(_bd, cell);
   if(it != _bd.end()) {
     bool wasLive = (it->second.get() != 0);
     int newOrientation = it->second.get() + orientation;
@@ -573,15 +597,16 @@ void Cell::addBoundaryCell(int orientation, Cell *cell, bool other)
     }
   }
   else {
-    _bd.insert(std::make_pair(cell, BdInfo(orientation)));
     if(orientation != 0) _bdSize++;
+    _bd.insert(_bdLowerBound(_bd, cell),
+               std::make_pair(cell, BdInfo(orientation)));
   }
   if(other) cell->addCoboundaryCell(orientation, this, false);
 }
 
 void Cell::addCoboundaryCell(int orientation, Cell *cell, bool other)
 {
-  auto it = _cbd.find(cell);
+  auto it = _bdFind(_cbd, cell);
   if(it != _cbd.end()) {
     bool wasLive = (it->second.get() != 0);
     int newOrientation = it->second.get() + orientation;
@@ -598,15 +623,16 @@ void Cell::addCoboundaryCell(int orientation, Cell *cell, bool other)
     }
   }
   else {
-    _cbd.insert(std::make_pair(cell, BdInfo(orientation)));
     if(orientation != 0) _cbdSize++;
+    _cbd.insert(_bdLowerBound(_cbd, cell),
+                std::make_pair(cell, BdInfo(orientation)));
   }
   if(other) cell->addBoundaryCell(orientation, this, false);
 }
 
 void Cell::removeBoundaryCell(Cell *cell, bool other)
 {
-  auto it = _bd.find(cell);
+  auto it = _bdFind(_bd, cell);
   if(it != _bd.end()) {
     if(it->second.get() != 0) _bdSize--;
     it->second.set(0);
@@ -617,7 +643,7 @@ void Cell::removeBoundaryCell(Cell *cell, bool other)
 
 void Cell::removeCoboundaryCell(Cell *cell, bool other)
 {
-  auto it = _cbd.find(cell);
+  auto it = _bdFind(_cbd, cell);
   if(it != _cbd.end()) {
     if(it->second.get() != 0) _cbdSize--;
     it->second.set(0);
@@ -628,13 +654,12 @@ void Cell::removeCoboundaryCell(Cell *cell, bool other)
 
 bool Cell::hasBoundary(Cell *cell, bool orig)
 {
+  auto it = _bdFind(_bd, cell);
   if(!orig) {
-    auto it = _bd.find(cell);
     if(it != _bd.end() && it->second.get() != 0) return true;
     return false;
   }
   else {
-    auto it = _bd.find(cell);
     if(it != _bd.end() && it->second.geto() != 0) return true;
     return false;
   }
@@ -642,13 +667,12 @@ bool Cell::hasBoundary(Cell *cell, bool orig)
 
 bool Cell::hasCoboundary(Cell *cell, bool orig)
 {
+  auto it = _bdFind(_cbd, cell);
   if(!orig) {
-    auto it = _cbd.find(cell);
     if(it != _cbd.end() && it->second.get() != 0) return true;
     return false;
   }
   else {
-    auto it = _cbd.find(cell);
     if(it != _cbd.end() && it->second.geto() != 0) return true;
     return false;
   }
@@ -658,9 +682,9 @@ Cell::biter Cell::firstBoundary(bool orig)
 {
   auto it = _bd.begin();
   if(!orig)
-    while(it->second.get() == 0 && it != _bd.end()) it++;
+    while(it != _bd.end() && it->second.get() == 0) it++;
   else
-    while(it->second.geto() == 0 && it != _bd.end()) it++;
+    while(it != _bd.end() && it->second.geto() == 0) it++;
   return it;
 }
 
@@ -670,9 +694,9 @@ Cell::biter Cell::firstCoboundary(bool orig)
 {
   auto it = _cbd.begin();
   if(!orig)
-    while(it->second.get() == 0 && it != _cbd.end()) it++;
+    while(it != _cbd.end() && it->second.get() == 0) it++;
   else
-    while(it->second.geto() == 0 && it != _cbd.end()) it++;
+    while(it != _cbd.end() && it->second.geto() == 0) it++;
   return it;
 }
 
