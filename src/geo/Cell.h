@@ -8,6 +8,7 @@
 #ifndef CELL_H
 #define CELL_H
 
+#include <deque>
 #include <map>
 #include <vector>
 #include "MElement.h"
@@ -79,19 +80,33 @@ protected:
   static std::vector<std::pair<Cell *, BdInfo> >::iterator
   _bdFind(std::vector<std::pair<Cell *, BdInfo> > &v, Cell *cell);
 
-  Cell() {}
-
 private:
   char _dim;
-  std::vector<MVertex *> _v;
+  // vertices and sorted vertex order, stored inline (a cell has at most 8
+  // corner vertices): avoids two heap allocations per cell. _nsi is 0 when
+  // the cell is degenerate (duplicate vertices).
+  char _nv = 0;
+  char _nsi = 0;
+  MVertex *_v[8];
   // sorted vertices of this cell (used for ordering of the cells)
-  std::vector<char> _si;
+  char _si[8];
 
-  inline bool _sortVertexIndices();
+  bool _sortVertexIndices();
 
 public:
-  static std::pair<Cell *, bool> createCell(MElement *element, int domain);
-  static std::pair<Cell *, bool> createCell(Cell *parent, int i);
+  // the default constructor is public so that elementary cells can live in
+  // a container owned by the cell complex instead of being allocated one
+  // by one
+  Cell() {}
+
+  // create a cell in the pool container; the returned pointers stay valid
+  // since std::deque never relocates its elements. The bool is false for a
+  // degenerate cell: the caller should then discard it with pop_back().
+  static std::pair<Cell *, bool>
+  createCell(MElement *element, int domain, std::deque<Cell> &pool);
+  static Cell *createCell(Cell *parent,
+                          const std::vector<MVertex *> &vertices,
+                          std::deque<Cell> &pool);
 
   Cell(MElement *element, int domain);
   Cell(Cell *parent, int i);
@@ -105,7 +120,10 @@ public:
   int getTypeMSH() const;
   virtual int getDim() const { return _dim; }
   bool inSubdomain() const { return _domain ? true : false; }
-  void getMeshVertices(std::vector<MVertex *> &v) const { v = _v; }
+  void getMeshVertices(std::vector<MVertex *> &v) const
+  {
+    v.assign(_v, _v + (int)_nv);
+  }
 
   void setImmune(bool immune) { _immune = immune; };
   bool getImmune() const { return _immune; };
@@ -115,13 +133,13 @@ public:
   void setQueued(bool queued) { _queued = queued; }
   bool getQueued() const { return _queued; }
 
-  int getNumSortedVertices() const { return _si.size(); }
+  int getNumSortedVertices() const { return _nsi; }
   int getSortedVertex(int vertex) const
   {
     return _v[(int)_si[vertex]]->getNum();
   }
-  int getNumVertices() const { return _v.size(); }
-  MVertex *getMeshVertex(int vertex) const { return _v.at(vertex); }
+  int getNumVertices() const { return _nv; }
+  MVertex *getMeshVertex(int vertex) const { return _v[vertex]; }
 
   void findBdElement(int i, std::vector<MVertex *> &vertices) const;
   int getNumBdElements() const;
