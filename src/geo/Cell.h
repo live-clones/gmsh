@@ -116,7 +116,10 @@ public:
   bool getQueued() const { return _queued; }
 
   int getNumSortedVertices() const { return _si.size(); }
-  inline int getSortedVertex(int vertex) const;
+  int getSortedVertex(int vertex) const
+  {
+    return _v[(int)_si[vertex]]->getNum();
+  }
   int getNumVertices() const { return _v.size(); }
   MVertex *getMeshVertex(int vertex) const { return _v.at(vertex); }
 

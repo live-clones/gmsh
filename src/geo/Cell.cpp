@@ -123,11 +123,6 @@ bool Cell::_sortVertexIndices()
   return true;
 }
 
-inline int Cell::getSortedVertex(int vertex) const
-{
-  return _v[(int)_si[vertex]]->getNum();
-}
-
 void Cell::findBdElement(int i, std::vector<MVertex *> &vertices) const
 {
   vertices.clear();
