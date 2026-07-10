@@ -165,8 +165,12 @@ static double smoothPrimitive(GEdge *ge, double alpha,
     int count1 = 0;
     int count2 = 0;
 
-    // use a gauss-seidel iteration; iterate forward and then backward;
-    // convergence is usually very fast
+    // Gauss-Seidel iteration, forward then backward, until the mesh sizes reach
+    // their fixed point. A triggered relaxation may recompute the value lc
+    // already holds (the backward test compares the slope against xp[i-1] while
+    // the update scales by xp[i], so a point with xp[i] > 1.01*xp[i-1] keeps
+    // satisfying the trigger with an unchanged value); count only relaxations
+    // that actually change lc, so the loop stops once the sizes are stationary.
     for(std::size_t i = 1; i < Points.size(); i++) {
       double dh =
         (Points[i].xp / Points[i].lc - Points[i - 1].xp / Points[i - 1].lc);
@@ -175,8 +179,11 @@ static double smoothPrimitive(GEdge *ge, double alpha,
       if(dhdt / Points[i].xp > (alpha - 1.) * 1.01) {
         double hnew =
           Points[i - 1].xp / Points[i - 1].lc + dt * (alpha - 1) * Points[i].xp;
-        Points[i].lc = Points[i].xp / hnew;
-        count1++;
+        double lcnew = Points[i].xp / hnew;
+        if(lcnew != Points[i].lc) {
+          Points[i].lc = lcnew;
+          count1++;
+        }
       }
     }
 
@@ -188,8 +195,11 @@ static double smoothPrimitive(GEdge *ge, double alpha,
       if(dhdt / Points[i - 1].xp > (alpha - 1.) * 1.01) {
         double hnew =
           Points[i].xp / Points[i].lc + dt * (alpha - 1) * Points[i].xp;
-        Points[i - 1].lc = Points[i - 1].xp / hnew;
-        count2++;
+        double lcnew = Points[i - 1].xp / hnew;
+        if(lcnew != Points[i - 1].lc) {
+          Points[i - 1].lc = lcnew;
+          count2++;
+        }
       }
     }
 
