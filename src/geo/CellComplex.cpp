@@ -677,7 +677,8 @@ int CellComplex::combine(int dim)
   std::map<Cell *, short int, CellPtrLessThan> bd_c;
   int count = 0;
 
-  for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
+  auto cit = firstCell(dim);
+  while(cit != lastCell(dim)) {
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience) {
       t1 = Cpu();
@@ -711,13 +712,20 @@ int CellComplex::combine(int dim)
           c2->getBoundary(bd_c);
           enqueueCells(bd_c, Q, Qset);
 
+          // c1 and c2 are about to be erased from _cells[dim]: only move the
+          // outer iterator if it would otherwise be invalidated (erasing a
+          // std::set element only invalidates iterators to that element).
+          // A full reset to firstCell(dim) is not needed for correctness:
+          // all cells whose (co)boundary can be affected by this merge are
+          // already captured by the Q/Qset propagation above.
+          while(cit != lastCell(dim) && (*cit == c1 || *cit == c2)) cit++;
+
           CombinedCell *newCell = new CombinedCell(c1, c2, (or1 != or2));
           _createCount++;
           removeCell(c1, true, c1->isCombined());
           removeCell(c2, true, c2->isCombined());
           insertCell(newCell);
 
-          cit = firstCell(dim);
           count++;
 
           if(c1->isCombined()) {
@@ -732,6 +740,8 @@ int CellComplex::combine(int dim)
       }
       Qset.erase(s);
     }
+
+    if(cit != lastCell(dim)) cit++;
   }
 
   Msg::Debug("Cell complex %d-combine removed %dv, %df, %de, %dn", dim,
@@ -755,7 +765,8 @@ int CellComplex::cocombine(int dim)
   std::map<Cell *, short int, CellPtrLessThan> cbd_c;
   int count = 0;
 
-  for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
+  auto cit = firstCell(dim);
+  while(cit != lastCell(dim)) {
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience) {
       t1 = Cpu();
@@ -789,13 +800,17 @@ int CellComplex::cocombine(int dim)
           c2->getCoboundary(cbd_c);
           enqueueCells(cbd_c, Q, Qset);
 
+          // see combine() for why a full reset to firstCell(dim) is not
+          // needed here: only fix up the iterator if it is about to be
+          // invalidated by erasing c1/c2 below.
+          while(cit != lastCell(dim) && (*cit == c1 || *cit == c2)) cit++;
+
           CombinedCell *newCell = new CombinedCell(c1, c2, (or1 != or2), true);
           _createCount++;
           removeCell(c1, true, c1->isCombined());
           removeCell(c2, true, c2->isCombined());
           insertCell(newCell);
 
-          cit = firstCell(dim);
           count++;
 
           if(c1->isCombined()) {
@@ -810,6 +825,8 @@ int CellComplex::cocombine(int dim)
       }
       Qset.erase(s);
     }
+
+    if(cit != lastCell(dim)) cit++;
   }
 
   Msg::Debug("Cell complex %d-cocombine removed %dv, %df, %de, %dn", dim,
