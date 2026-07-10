@@ -194,13 +194,17 @@ class CombinedCell : public Cell {
 private:
   // list of cells this cell is a combination of
   std::map<Cell *, int, CellPtrLessThan> _cells;
+  // dimension of the combined cells: cached, since when this cell is
+  // merged into another combined cell its list is stolen (small-to-large
+  // merging), while the removed cell may still be asked for its dimension
+  int _dim;
 
 public:
   CombinedCell(Cell *c1, Cell *c2, bool orMatch, bool co = false);
   CombinedCell(std::vector<Cell *> &cells);
   ~CombinedCell() {}
 
-  int getDim() const { return _cells.begin()->first->getDim(); }
+  int getDim() const { return _dim; }
   void getCells(std::map<Cell *, int, CellPtrLessThan> &cells)
   {
     cells = _cells;
