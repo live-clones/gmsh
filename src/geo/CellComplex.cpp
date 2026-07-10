@@ -8,10 +8,46 @@
 #include <array>
 #include <unordered_map>
 #include "CellComplex.h"
+#include "Context.h"
 #include "MElement.h"
 #include "OS.h"
 
 double CellComplex::_patience = 10;
+
+// sort with OpenMP when threads and enough work are available: the chunks
+// are sorted in parallel and then merged pairwise. The comparators used
+// here are strict total orders on distinct entries, so the result is
+// identical to a serial sort regardless of the number of threads.
+template <class T, class Compare>
+static void parallelSort(std::vector<T> &v, Compare comp)
+{
+#if defined(_OPENMP)
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+  if(nthreads > 1 && v.size() > 65536) {
+    std::size_t n = v.size();
+    int nc = nthreads;
+    std::vector<std::size_t> bounds(nc + 1);
+    for(int i = 0; i <= nc; i++) bounds[i] = n * i / nc;
+#pragma omp parallel for num_threads(nthreads)
+    for(int i = 0; i < nc; i++)
+      std::sort(v.begin() + bounds[i], v.begin() + bounds[i + 1], comp);
+    for(int width = 1; width < nc; width *= 2) {
+      int step = 2 * width;
+#pragma omp parallel for num_threads(nthreads)
+      for(int i = 0; i < nc; i += step) {
+        int mid = i + width < nc ? i + width : nc;
+        int hi = i + step < nc ? i + step : nc;
+        if(mid < hi)
+          std::inplace_merge(v.begin() + bounds[i], v.begin() + bounds[mid],
+                             v.begin() + bounds[hi], comp);
+      }
+    }
+    return;
+  }
+#endif
+  std::sort(v.begin(), v.end(), comp);
+}
 
 template <std::size_t N> struct CellVertexKeyHash {
   std::size_t operator()(const std::array<std::size_t, N> &key) const
@@ -115,11 +151,10 @@ private:
     for(auto &kv : m)
       entries.push_back(
         Entry{kv.first, kv.second->getNumSortedVertices(), kv.second});
-    std::sort(entries.begin(), entries.end(),
-              [](const Entry &a, const Entry &b) {
-                if(a.n != b.n) return a.n < b.n;
-                return a.key < b.key;
-              });
+    parallelSort(entries, [](const Entry &a, const Entry &b) {
+      if(a.n != b.n) return a.n < b.n;
+      return a.key < b.key;
+    });
     cells.clear();
     cells.reserve(entries.size());
     for(auto &e : entries) cells.push_back(e.cell);
