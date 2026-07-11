@@ -475,57 +475,109 @@ static void printTets(const char *fn, std::list<MTet4 *> &cavity,
 
 // Priority queue of tets ordered like compareTet4Ptr (largest circumradius
 // first, ties broken on the smaller element number). The keys are stored
-// inline in a binary heap so that comparisons do not chase MTet4 pointers,
+// inline in a 4-ary heap so that comparisons do not chase MTet4 pointers,
 // which made the former std::set-based container dominate the run time.
-// Entries are pushed once, when the tet is created; the caller never re-pushes
-// a tet, so an entry is stale only if its tet was deleted in the meantime.
+// Entries are pushed once, when the tet is created; the caller never
+// re-pushes a tet, so an entry is stale only if its tet was deleted in the
+// meantime. Tets whose radius is already below the refinement target can
+// never be refined: they bypass the heap and sit in an unordered side list,
+// which is swept periodically to release the ones that got deleted.
 class tetRadiusQueue {
-public:
   struct entry {
     double radius;
     std::size_t num;
     MTet4 *t;
   };
-
-private:
-  struct entryLess {
-    bool operator()(const entry &a, const entry &b) const
-    {
-      if(a.radius != b.radius) return a.radius < b.radius;
-      return a.num > b.num;
-    }
-  };
+  static bool entryLess(const entry &a, const entry &b)
+  {
+    if(a.radius != b.radius) return a.radius < b.radius;
+    return a.num > b.num;
+  }
+  MTet4Factory &_factory;
+  double _threshold;
   std::vector<entry> _h;
+  std::vector<MTet4 *> _small;
+  std::size_t _smallAlive;
 
 public:
+  tetRadiusQueue(MTet4Factory &factory, double threshold)
+    : _factory(factory), _threshold(threshold), _smallAlive(0)
+  {
+  }
   bool empty() const { return _h.empty(); }
-  std::size_t size() const { return _h.size(); }
+  std::size_t totalSize() const { return _h.size() + _small.size(); }
   void push(MTet4 *t)
   {
+    if(t->getRadius() < _threshold) {
+      _small.push_back(t);
+      if(_small.size() > 2 * _smallAlive + 1024) sweepSmall();
+      return;
+    }
     _h.push_back({t->getRadius(), t->tet()->getNum(), t});
-    std::push_heap(_h.begin(), _h.end(), entryLess());
+    std::size_t i = _h.size() - 1;
+    while(i) {
+      std::size_t p = (i - 1) >> 2;
+      if(entryLess(_h[p], _h[i]))
+        std::swap(_h[p], _h[i]);
+      else
+        break;
+      i = p;
+    }
   }
   MTet4 *top() const { return _h.front().t; }
   void pop()
   {
-    std::pop_heap(_h.begin(), _h.end(), entryLess());
+    entry last = _h.back();
     _h.pop_back();
+    const std::size_t n = _h.size();
+    if(!n) return;
+    std::size_t i = 0;
+    while(true) {
+      std::size_t c = 4 * i + 1;
+      if(c >= n) break;
+      std::size_t best = c;
+      std::size_t end = std::min(c + 4, n);
+      for(std::size_t j = c + 1; j < end; j++)
+        if(entryLess(_h[best], _h[j])) best = j;
+      if(entryLess(last, _h[best])) {
+        _h[i] = _h[best];
+        i = best;
+      }
+      else
+        break;
+    }
+    _h[i] = last;
+  }
+  void sweepSmall()
+  {
+    std::size_t kept = 0;
+    for(std::size_t i = 0; i < _small.size(); i++) {
+      if(_small[i]->isDeleted())
+        _factory.Free(_small[i]);
+      else
+        _small[kept++] = _small[i];
+    }
+    _small.resize(kept);
+    _smallAlive = kept;
   }
   // Free the deleted tets and return the remaining ones ordered as
   // compareTet4Ptr would order them; "extra" contains alive tets whose entry
   // was already popped (failed insertions, with their radius forced to 0)
-  void drainSorted(MTet4Factory &myFactory, std::vector<MTet4 *> &extra,
-                   std::vector<MTet4 *> &sorted)
+  void drainSorted(std::vector<MTet4 *> &extra, std::vector<MTet4 *> &sorted)
   {
     for(auto &e : _h) {
       if(e.t->isDeleted()) {
-        myFactory.Free(e.t);
+        _factory.Free(e.t);
         e.t = nullptr;
       }
     }
+    sweepSmall();
+    for(auto t : _small)
+      _h.push_back({t->getRadius(), t->tet()->getNum(), t});
+    _small.clear();
     for(auto t : extra) {
       if(t->isDeleted())
-        myFactory.Free(t);
+        _factory.Free(t);
       else
         _h.push_back({t->getRadius(), t->tet()->getNum(), t});
     }
@@ -1338,7 +1390,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   std::vector<double> vSizes, vSizesBGM;
   MTet4Factory myFactory;
-  tetRadiusQueue allTets;
+  tetRadiusQueue allTets(myFactory, worstTetRadiusTarget);
   // initial tets, ordered as the tetRadiusQueue (and the former std::set
   // container) would order them, so that the classification below - whose
   // iteration order can influence vertex and element ordering - is unchanged
@@ -1525,7 +1577,8 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
       break;
     }
     if(allTets.empty()) {
-      Msg::Warning("No tetrahedra in region %d", gr->tag());
+      if(!allTets.totalSize())
+        Msg::Warning("No tetrahedra in region %d", gr->tag());
       break;
     }
 
@@ -1657,7 +1710,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
   // free the deleted tets and recover the remaining ones, ordered as the
   // former std::set container would order them
   std::vector<MTet4 *> aliveTets;
-  allTets.drainSorted(myFactory, failedTets, aliveTets);
+  allTets.drainSorted(failedTets, aliveTets);
 
   double t2 = TimeOfDay();
   double dt = (t2 - t1);
