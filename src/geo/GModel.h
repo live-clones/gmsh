@@ -83,6 +83,10 @@ private:
              std::unordered_map<partitionFace *, GRegion *>>
     _boundaryOfOverlapCreators;
 
+  // forget all overlap data (the pointed-to entities are owned by the
+  // regions/faces/edges sets, not by these containers)
+  void _clearOverlapData();
+
 private:
   int _readMSH2(const std::string &name);
   int _writeMSH2(const std::string &name, double version, bool binary,
