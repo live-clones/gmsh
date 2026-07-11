@@ -35,6 +35,7 @@ template <int dim> OverlapCollection<dim> quickOverlap(GModel *const model)
     model->getNumPartitions(); // Ensure the model is partitioned
   if(numParts == 0) {
     Msg::Error("Model is not partitioned. Cannot compute quick overlap.");
+    return {};
   }
 
   double time0 = Cpu();
@@ -202,39 +203,24 @@ void buildOverlapEntities(GModel *const model, OverlapManager &mgr,
     const int partition = i + 1; // Partitions are 1-indexed
     for(const auto &[covered, elements] : overlaps[i]) {
       if(!covered) continue; // Skip null entities
-      OverlapEntity *overlapEntity = nullptr;
-      try {
-        overlapEntity = new OverlapEntity(model, covered, partition);
-      } catch(const std::bad_alloc &e) {
-        Msg::Error("Failed to allocate memory for overlap entity for partition "
-                   "%d and covered entity with tag %d: %s",
-                   partition, covered->tag(), e.what());
-      }
-      bool add = model->add(overlapEntity);
-      if(!add)
-        Msg::Error("Failed to add overlap entity for partition %d and covered "
-                   "entity with tag %d. (Tag already existing)",
-                   partition, covered->tag());
-      mgr.addOverlap(overlapEntity);
 
-      if constexpr(dim == 2) {
-        if(std::get<0>(mgr.getAllOverlaps()).back() != overlapEntity) {
-          Msg::Error("Overlap entity was not added to the model's overlaps.");
-        }
-      }
-      if constexpr(dim == 3) {
-        if(std::get<1>(mgr.getAllOverlaps()).back() != overlapEntity) {
-          Msg::Error("Overlap entity was not added to the model's overlaps.");
-        }
-      }
-
-      auto parent =
-        dynamic_cast<ParentEntityType *>(covered->getParentEntity());
-      if(!parent) {
+      // Boundary construction later groups overlaps by this parent
+      if(!dynamic_cast<ParentEntityType *>(covered->getParentEntity())) {
         Msg::Error("Parent entity of dim %d and tag %d is not of the expected "
                    "type or was not found.",
                    covered->dim(), covered->tag());
+        continue;
       }
+
+      auto overlapEntity = new OverlapEntity(model, covered, partition);
+      if(!model->add(overlapEntity)) {
+        Msg::Error("Failed to add overlap entity for partition %d and covered "
+                   "entity with tag %d. (Tag already existing)",
+                   partition, covered->tag());
+        delete overlapEntity;
+        continue;
+      }
+      mgr.addOverlap(overlapEntity);
 
       // Add elements to the overlap entity - no new creation
       for(const auto &element : elements) {
@@ -377,6 +363,12 @@ static MLine *createHighOrderLine(const MEdge &edge, MElement *parentElement)
   MEdgeN hoEdge = parentElement->getHighOrderEdge(edge);
   std::size_t numVertices = hoEdge.getNumVertices();
 
+  if(numVertices == 0) {
+    // getEdgeInfo is not implemented for this parent element type: fall back
+    // to a first-order line built from the corner vertices
+    return new MLine(edge.getVertex(0), edge.getVertex(1));
+  }
+
   if(numVertices == 2) {
     return new MLine(hoEdge.getVertex(0), hoEdge.getVertex(1));
   }
@@ -398,6 +390,21 @@ static MElement *createHighOrderFace(const MFace &face, MElement *parentElement)
 {
   MFaceN hoFace = parentElement->getHighOrderFace(face);
   std::size_t numVertices = hoFace.getNumVertices();
+
+  if(numVertices == 0) {
+    // getFaceInfo is not implemented for this parent element type (e.g.
+    // trihedra, polyhedra): fall back to a first-order element built from the
+    // corner vertices
+    if(face.getNumVertices() == 3) {
+      return new MTriangle(face.getVertex(0), face.getVertex(1),
+                           face.getVertex(2));
+    }
+    else {
+      return new MQuadrangle(face.getVertex(0), face.getVertex(1),
+                             face.getVertex(2), face.getVertex(3));
+    }
+  }
+
   int order = hoFace.getPolynomialOrder();
 
   std::vector<MVertex *> vertices(numVertices);
@@ -470,7 +477,10 @@ void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
         if(it != boundaryToEntity.end()) {
           auto partitionEntity = it->second;
           auto parentEntity = (partitionEntity->getParentEntity());
-          if(!parentEntity) { Msg::Error("No parent entity"); }
+          if(!parentEntity) {
+            Msg::Error("No parent entity");
+            continue;
+          }
 
           // If it is part of the outer boundary, add it to the overlap of
           // boundary
