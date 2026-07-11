@@ -1322,12 +1322,14 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
         return false;
       }
 
-      mgr->addOverlap(overlapEntity);
+      // Register in the manager only once the model owns the entity, so the
+      // failure path does not leave a dangling pointer in the manager
       if(!model->add(overlapEntity)) {
         Msg::Error("Could not add volume overlap with tag %d to model", tag);
         delete overlapEntity;
         return false;
       }
+      mgr->addOverlap(overlapEntity);
 
       for(size_t i = 0; i < numElements; i++) {
         size_t elementTag = 0;
@@ -1443,31 +1445,39 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
         if(dim == dimOfEntity) {
           auto parentCast =
             dynamic_cast<typename EntityTraits<dim>::Entity *>(entity);
-          if(!parentCast)
+          if(!parentCast) {
             Msg::Error("Could not cast %dD entity %d in overlap boundary.",
                        dim, tag);
+            return false;
+          }
           auto boundaryCast =
             dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
               boundaryEntity);
-          if(!boundaryCast)
+          if(!boundaryCast) {
             Msg::Error("Could not cast %dD boundary entity %d in overlap "
                        "boundary.",
                        dim - 1, boundaryTag);
+            return false;
+          }
           mgr->addInnerBoundary(parentCast, boundaryCast);
         }
         else {
           auto parentCast =
             dynamic_cast<typename EntityTraits<dim - 1>::Entity *>(entity);
-          if(!parentCast)
+          if(!parentCast) {
             Msg::Error("Could not cast %dD entity %d in overlap boundary.",
                        dim - 1, tag);
+            return false;
+          }
           auto boundaryCast =
             dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
               boundaryEntity);
-          if(!boundaryCast)
+          if(!boundaryCast) {
             Msg::Error("Could not cast %dD boundary entity %d in overlap "
                        "boundary.",
                        dim - 1, boundaryTag);
+            return false;
+          }
           GEntity *creatorEntity = model->getEntityByTag(dim, creatorTag);
           if(!creatorEntity) {
             Msg::Error("Could not find %dD creator entity %d in overlap "
