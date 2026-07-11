@@ -457,11 +457,80 @@ static void printTets(const char *fn, std::list<MTet4 *> &cavity,
 
 #endif
 
+// Priority queue of tets ordered like compareTet4Ptr (largest circumradius
+// first, ties broken on the smaller element number). The keys are stored
+// inline in a binary heap so that comparisons do not chase MTet4 pointers,
+// which made the former std::set-based container dominate the run time.
+// Entries are pushed once, when the tet is created; the caller never re-pushes
+// a tet, so an entry is stale only if its tet was deleted in the meantime.
+class tetRadiusQueue {
+public:
+  struct entry {
+    double radius;
+    std::size_t num;
+    MTet4 *t;
+  };
+
+private:
+  struct entryLess {
+    bool operator()(const entry &a, const entry &b) const
+    {
+      if(a.radius != b.radius) return a.radius < b.radius;
+      return a.num > b.num;
+    }
+  };
+  std::vector<entry> _h;
+
+public:
+  bool empty() const { return _h.empty(); }
+  std::size_t size() const { return _h.size(); }
+  void push(MTet4 *t)
+  {
+    _h.push_back({t->getRadius(), t->tet()->getNum(), t});
+    std::push_heap(_h.begin(), _h.end(), entryLess());
+  }
+  MTet4 *top() const { return _h.front().t; }
+  void pop()
+  {
+    std::pop_heap(_h.begin(), _h.end(), entryLess());
+    _h.pop_back();
+  }
+  // Free the deleted tets and return the remaining ones ordered as
+  // compareTet4Ptr would order them; "extra" contains alive tets whose entry
+  // was already popped (failed insertions, with their radius forced to 0)
+  void drainSorted(MTet4Factory &myFactory, std::vector<MTet4 *> &extra,
+                   std::vector<MTet4 *> &sorted)
+  {
+    for(auto &e : _h) {
+      if(e.t->isDeleted()) {
+        myFactory.Free(e.t);
+        e.t = nullptr;
+      }
+    }
+    for(auto t : extra) {
+      if(t->isDeleted())
+        myFactory.Free(t);
+      else
+        _h.push_back({t->getRadius(), t->tet()->getNum(), t});
+    }
+    std::sort(_h.begin(), _h.end(), [](const entry &a, const entry &b) {
+      if(a.radius != b.radius) return a.radius > b.radius;
+      return a.num < b.num;
+    });
+    sorted.clear();
+    sorted.reserve(_h.size());
+    for(auto &e : _h) {
+      if(e.t) sorted.push_back(e.t);
+    }
+    _h.clear();
+  }
+};
+
 bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
                    MVertex *v, double lc1, double lc2,
                    std::vector<double> &vSizes, std::vector<double> &vSizesBGM,
                    MTet4 *t, MTet4Factory &myFactory,
-                   std::set<MTet4 *, compareTet4Ptr> &allTets,
+                   tetRadiusQueue &allTets,
                    const std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
 {
   std::vector<MTet4 *> new_cavity;
@@ -501,7 +570,7 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
       connectTets(new_cavity.begin(), new_cavity.end(), &allEmbeddedFaces);
     }
 
-    allTets.insert(new_tets.begin(), new_tets.end());
+    for(std::size_t i = 0; i < new_tets.size(); i++) allTets.push(new_tets[i]);
 
     return true;
   }
@@ -1137,22 +1206,6 @@ double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
   return xxx;
 }
 
-static void memoryCleanup(MTet4Factory &myFactory,
-                          std::set<MTet4 *, compareTet4Ptr> &allTets)
-{
-  // int n1 = allTets.size();
-  auto itd = allTets.begin();
-  while(itd != allTets.end()) {
-    if((*itd)->isDeleted()) {
-      myFactory.Free((*itd));
-      allTets.erase(itd++);
-    }
-    else
-      itd++;
-  }
-  // Msg::Info("Cleaning up memory %d -> %d", n1, allTets.size());
-}
-
 static int isCavityCompatibleWithEmbeddedEdges(std::vector<MTet4 *> &cavity,
                                                std::vector<faceXtet> &shell,
                                                edgeContainerB &allEmbeddedEdges)
@@ -1216,7 +1269,11 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   std::vector<double> vSizes, vSizesBGM;
   MTet4Factory myFactory(1600000);
-  std::set<MTet4 *, compareTet4Ptr> &allTets = myFactory.getAllTets();
+  tetRadiusQueue allTets;
+  // initial tets, ordered as the tetRadiusQueue (and the former std::set
+  // container) would order them, so that the classification below - whose
+  // iteration order can influence vertex and element ordering - is unchanged
+  std::vector<MTet4 *> tets0;
   int NUM = 0;
 
   // leave this in a block so the map gets deallocated directly
@@ -1283,13 +1340,14 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     gr->tetrahedra[i]->setVolumePositive();
-    allTets.insert(myFactory.Create(gr->tetrahedra[i], vSizes, vSizesBGM));
+    tets0.push_back(myFactory.Create(gr->tetrahedra[i], vSizes, vSizesBGM));
   }
+  std::sort(tets0.begin(), tets0.end(), compareTet4Ptr());
 
   gr->tetrahedra.clear();
 
   // SLOW
-  connectTets(allTets.begin(), allTets.end());
+  connectTets(tets0.begin(), tets0.end());
 
   // classify the tets on the right region
 
@@ -1298,7 +1356,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
     buildFaceSearchStructure(gr->model(), search, true); // only triangles
     if(sqr) search.insert(sqr->getTri().begin(), sqr->getTri().end());
 
-    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = tets0.begin(); it != tets0.end(); ++it) {
       if(!(*it)->onWhat()) {
         std::list<MTet4 *> theRegion;
         std::set<GFace *> faces_bound;
@@ -1343,11 +1401,11 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
   }
   else {
     // FIXME ... too simple
-    for(auto it = allTets.begin(); it != allTets.end(); ++it)
+    for(auto it = tets0.begin(); it != tets0.end(); ++it)
       (*it)->setOnWhat(gr);
   }
 
-  for(auto it = allTets.begin(); it != allTets.end(); ++it) {
+  for(auto it = tets0.begin(); it != tets0.end(); ++it) {
     (*it)->setNeigh(0, nullptr);
     (*it)->setNeigh(1, nullptr);
     (*it)->setNeigh(2, nullptr);
@@ -1367,8 +1425,14 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
     createAllEmbeddedFaces((*it), allEmbeddedFaces);
     createAllEmbeddedEdges((*it), allEmbeddedEdges);
   }
-  connectTets(allTets.begin(), allTets.end(), &allEmbeddedFaces);
-  Msg::Debug("All %d tets were connected", allTets.size());
+  connectTets(tets0.begin(), tets0.end(), &allEmbeddedFaces);
+  Msg::Debug("All %d tets were connected", tets0.size());
+
+  for(auto t : tets0) allTets.push(t);
+  tets0.clear();
+
+  // alive tets whose queue entry was consumed by a failed insertion
+  std::vector<MTet4 *> failedTets;
 
   // here the classification should be done
 
@@ -1392,11 +1456,11 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
       break;
     }
 
-    MTet4 *worst = *allTets.begin();
+    MTet4 *worst = allTets.top();
 
     if(worst->isDeleted()) {
+      allTets.pop();
       myFactory.Free(worst);
-      allTets.erase(allTets.begin());
     }
     else {
       if(ITER++ % 500 == 0)
@@ -1405,6 +1469,8 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
                   ITER - 1, REALCOUNT, worst->getRadius(), COUNT_MISS_1,
                   COUNT_MISS_2);
       if(worst->getRadius() < worstTetRadiusTarget) break;
+      allTets.pop();
+      MTet4 *popped = worst;
 
       double center[3];
       double uvw[3];
@@ -1490,7 +1556,8 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
            !insertVertexB(shell, cavity, v, lc1, lc2, vSizes, vSizesBGM, worst,
                           myFactory, allTets, allEmbeddedFaces)) {
           COUNT_MISS_1++;
-          myFactory.changeTetRadius(allTets.begin(), 0.);
+          popped->forceRadius(0.);
+          failedTets.push_back(popped);
           for(auto itc = cavity.begin(); itc != cavity.end(); ++itc)
             (*itc)->setDeleted(false);
           delete v;
@@ -1505,22 +1572,20 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
       }
 
       else {
-        myFactory.changeTetRadius(allTets.begin(), 0.0);
+        popped->forceRadius(0.);
+        failedTets.push_back(popped);
         COUNT_MISS_2++;
         for(auto itc = cavity.begin(); itc != cavity.end(); ++itc)
           (*itc)->setDeleted(false);
       }
     }
-
-    // Normally, a tet mesh contains about 6 times more tets than vertices. This
-    // allows to clean up the set of tets when lots of deleted ones are present
-    // in the mesh
-    if(allTets.size() > 7 * vSizes.size() && ITER > 1000) {
-      memoryCleanup(myFactory, allTets);
-    }
   }
 
-  memoryCleanup(myFactory, allTets);
+  // free the deleted tets and recover the remaining ones, ordered as the
+  // former std::set container would order them
+  std::vector<MTet4 *> aliveTets;
+  allTets.drainSorted(myFactory, failedTets, aliveTets);
+
   double t2 = TimeOfDay();
   double dt = (t2 - t1);
   int COUNT_MISS = COUNT_MISS_1 + COUNT_MISS_2;
@@ -1528,13 +1593,13 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
   Msg::Info(" - %d Delaunay cavities modified for star shapeness",
             NB_CORRECTION_OF_CAVITY);
   Msg::Info(" - %d nodes could not be inserted", COUNT_MISS);
-  Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)", allTets.size(),
-            dt, (int)(allTets.size() / dt));
+  Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)", aliveTets.size(),
+            dt, (int)(aliveTets.size() / dt));
 
   // relocate vertices
   int nbReloc = 0;
   for(int SM = 0; SM < CTX::instance()->mesh.nbSmoothing; SM++) {
-    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = aliveTets.begin(); it != aliveTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double qq = (*it)->getQuality();
         if(qq < .4)
@@ -1547,15 +1612,13 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   Msg::Info("%d node relocations", nbReloc);
 
-  while(1) {
-    if(allTets.begin() == allTets.end()) break;
-    MTet4 *worst = *allTets.begin();
+  for(auto it = aliveTets.begin(); it != aliveTets.end(); ++it) {
+    MTet4 *worst = *it;
     if(!worst->isDeleted()) {
       worst->onWhat()->tetrahedra.push_back(worst->tet());
       worst->tet() = nullptr;
     }
     myFactory.Free(worst);
-    allTets.erase(allTets.begin());
   }
 }
 
