@@ -240,28 +240,50 @@ struct faceXtet {
   }
 };
 
+// connect the tets by sorting their faces, with the sorted vertex numbers of
+// each face stored inline, so that the sort neither chases the vertex
+// pointers nor moves large entries around
 template <class ITER>
-void connectTets_vector2_templ(std::size_t _size, ITER beg, ITER end,
-                               std::vector<faceXtet> &conn)
+void connectTetsFast(std::size_t _size, ITER beg, ITER end)
 {
-  conn.clear();
+  struct tetFace {
+    std::size_t v0, v1, v2;
+    MTet4 *t;
+    int i;
+    bool operator<(const tetFace &o) const
+    {
+      if(v0 != o.v0) return v0 < o.v0;
+      if(v1 != o.v1) return v1 < o.v1;
+      return v2 < o.v2;
+    }
+    bool sameFace(const tetFace &o) const
+    {
+      return v0 == o.v0 && v1 == o.v1 && v2 == o.v2;
+    }
+  };
+  std::vector<tetFace> conn;
   conn.reserve(4 * _size);
   for(ITER IT = beg; IT != end; ++IT) {
     MTet4 *t = *IT;
-    if(!t->isDeleted()) {
-      for(int j = 0; j < 4; j++) { conn.push_back(faceXtet(t, j)); }
+    if(t->isDeleted()) continue;
+    std::size_t n[4] = {
+      t->tet()->getVertex(0)->getNum(), t->tet()->getVertex(1)->getNum(),
+      t->tet()->getVertex(2)->getNum(), t->tet()->getVertex(3)->getNum()};
+    for(int j = 0; j < 4; j++) {
+      std::size_t a = n[faces[j][0]], b = n[faces[j][1]], c = n[faces[j][2]];
+      if(a > b) std::swap(a, b);
+      if(b > c) std::swap(b, c);
+      if(a > b) std::swap(a, b);
+      conn.push_back({a, b, c, t, j});
     }
   }
-  if(!conn.size()) return;
-
   std::sort(conn.begin(), conn.end());
-
-  for(std::size_t i = 0; i < conn.size() - 1; i++) {
-    faceXtet &f1 = conn[i];
-    faceXtet &f2 = conn[i + 1];
-    if(f1 == f2 && f1.t1 != f2.t1) {
-      f1.t1->setNeigh(f1.i1, f2.t1);
-      f2.t1->setNeigh(f2.i1, f1.t1);
+  for(std::size_t i = 0; i + 1 < conn.size(); i++) {
+    tetFace &f1 = conn[i];
+    tetFace &f2 = conn[i + 1];
+    if(f1.sameFace(f2) && f1.t != f2.t) {
+      f1.t->setNeigh(f1.i, f2.t);
+      f2.t->setNeigh(f2.i, f1.t);
       ++i;
     }
   }
@@ -305,16 +327,6 @@ void connectTets(std::vector<MTet4 *> &l,
                  const std::set<MFace, MFaceLessThan> *embeddedFaces)
 {
   connectTets(l.begin(), l.end(), embeddedFaces);
-}
-
-void connectTets_vector2(std::list<MTet4 *> &l, std::vector<faceXtet> &conn)
-{
-  connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn);
-}
-
-void connectTets_vector2(std::vector<MTet4 *> &l, std::vector<faceXtet> &conn)
-{
-  connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn);
 }
 
 // Ensure the star-shapeness of the delaunay cavity
@@ -1098,8 +1110,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   createAllEmbeddedEdges(gr, allEmbeddedEdges);
 
   if(allEmbeddedFaces.empty()) {
-    std::vector<faceXtet> conn;
-    connectTets_vector2(allTets, conn);
+    connectTetsFast(allTets.size(), allTets.begin(), allTets.end());
   }
   else {
     // daaaaaaamn slow !!!
@@ -1467,10 +1478,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   gr->tetrahedra.clear();
 
-  {
-    std::vector<faceXtet> conn;
-    connectTets_vector2_templ(tets0.size(), tets0.begin(), tets0.end(), conn);
-  }
+  connectTetsFast(tets0.size(), tets0.begin(), tets0.end());
 
   // classify the tets on the right region
 
