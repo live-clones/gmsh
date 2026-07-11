@@ -997,7 +997,17 @@ void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
     std::vector<cavityContainer> cavity(NPTS_AT_ONCE);
     std::vector<connContainer> bnd(NPTS_AT_ONCE);
     std::vector<bool> ok(NPTS_AT_ONCE);
-    connContainer faceToTet;
+    // scratch buffers to connect the new tets of a cavity: the new tet built
+    // on boundary face k has that face as its face 0, whose neighbor is
+    // known; its three other faces each contain the inserted vertex plus one
+    // boundary face edge, and match the face of the new tet built on the
+    // boundary face sharing that edge
+    struct ballEdge {
+      Vert *a, *b;
+      std::size_t tetFace;
+    };
+    std::vector<ballEdge> ballEdges;
+    std::vector<Tet *> newTets;
     std::vector<Tet *> Choice(NPTS_AT_ONCE);
     for(std::size_t K = 0; K < NPTS_AT_ONCE; K++)
       Choice[K] = randomTet(0, allocator);
@@ -1072,17 +1082,21 @@ void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
         if(ok[K]) {
           cavityContainer &cavityK = cavity[K];
           connContainer &bndK = bnd[K];
-          faceToTet.clear();
           const std::size_t cSize = cavityK.size();
           const std::size_t bSize = bndK.size();
           Choice[K] = cavityK[0];
+          ballEdges.clear();
+          newTets.clear();
           for(std::size_t i = 0; i < bSize; i++) {
             // reuse memory slots of invalid elements
             Tet *t = (i < cSize) ? cavityK[i] : allocator.newTet(myThread);
             if(i < cSize && t->V[0]->_thread != myThread)
               cacheMisses[myThread]++;
-            t->setVerticesNoTest(bndK[i].f.V[0], bndK[i].f.V[1], bndK[i].f.V[2],
-                                 vToAdd[K]);
+            Vert *f0 = bndK[i].f.V[0];
+            Vert *f1 = bndK[i].f.V[1];
+            Vert *f2 = bndK[i].f.V[2];
+            t->setVerticesNoTest(f0, f1, f2, vToAdd[K]);
+            newTets.push_back(t);
             Tet *neigh = bndK[i].t;
             t->T[0] = neigh;
             t->T[1] = t->T[2] = t->T[3] = nullptr;
@@ -1100,9 +1114,30 @@ void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
                 break;
               }
             }
-            computeAdjacencies(t, 1, faceToTet);
-            computeAdjacencies(t, 2, faceToTet);
-            computeAdjacencies(t, 3, faceToTet);
+            // faces 1, 2, 3 of t contain the inserted vertex and one edge of
+            // the boundary face (see the face numbering in Tet::getFace)
+            ballEdges.push_back(
+              {std::min(f1, f2), std::max(f1, f2), 4 * i + 1});
+            ballEdges.push_back(
+              {std::min(f0, f2), std::max(f0, f2), 4 * i + 2});
+            ballEdges.push_back(
+              {std::min(f0, f1), std::max(f0, f1), 4 * i + 3});
+          }
+          std::sort(ballEdges.begin(), ballEdges.end(),
+                    [](const ballEdge &e1, const ballEdge &e2) {
+                      if(e1.a != e2.a) return e1.a < e2.a;
+                      return e1.b < e2.b;
+                    });
+          for(std::size_t i = 0; i + 1 < ballEdges.size(); i++) {
+            const ballEdge &e1 = ballEdges[i];
+            const ballEdge &e2 = ballEdges[i + 1];
+            if(e1.a == e2.a && e1.b == e2.b) {
+              Tet *t1 = newTets[e1.tetFace >> 2];
+              Tet *t2 = newTets[e2.tetFace >> 2];
+              t1->T[e1.tetFace & 3] = t2;
+              t2->T[e2.tetFace & 3] = t1;
+              ++i;
+            }
           }
           for(std::size_t i = bSize; i < cSize; i++) {
             cavityK[i]->V[0] = nullptr;
