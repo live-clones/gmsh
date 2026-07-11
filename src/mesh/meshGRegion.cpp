@@ -122,21 +122,20 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
 
 static void _deleteUnusedVertices(GRegion *gr)
 {
-  std::set<MVertex *, MVertexPtrLessThan> allverts;
+  std::vector<MVertex *> allverts;
+  allverts.reserve(4 * gr->tetrahedra.size());
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     for(int j = 0; j < 4; j++) {
       if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
-        allverts.insert(gr->tetrahedra[i]->getVertex(j));
+        allverts.push_back(gr->tetrahedra[i]->getVertex(j));
     }
   }
-  for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
-    // FIXME: investigate crash on exit (e.g. t16.geo)
-    // if(allverts.find(gr->mesh_vertices[i]) == allverts.end())
-    //   delete gr->mesh_vertices[i];
-  }
-  gr->mesh_vertices.clear();
-  gr->mesh_vertices.insert(gr->mesh_vertices.end(), allverts.begin(),
-                           allverts.end());
+  std::sort(allverts.begin(), allverts.end(), MVertexPtrLessThan());
+  allverts.erase(std::unique(allverts.begin(), allverts.end()),
+                 allverts.end());
+  // FIXME: investigate crash on exit if we delete the unused vertices
+  // (e.g. t16.geo)
+  gr->mesh_vertices = allverts;
 }
 
 void MeshDelaunayVolume(std::vector<GRegion *> &regions)
