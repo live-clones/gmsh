@@ -41,16 +41,19 @@ void buildOverlapEntities(GModel *const model, OverlapManager &mgr,
 // the inner and overlap. These boundaries are computed per parent entity, so a
 // physical interface will be a boundary.
 template <int dim>
-OveralBoundariesMesh<dim>
+OverlapBoundariesMesh<dim>
 findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps);
 
 /**
- * Robustness wrt to deep overlaps:
- * for inner partitions, if it's an interface, we look af whether it is an
- * internal interface or not
- * TODO: create entities, add correct elem type. Orientation of the elements ?
+ * Create the boundary entities of the overlap patches and register them in
+ * the manager. Facets lying on an existing dim-1 entity become "overlaps of
+ * boundaries" (grouped by that entity); facets on a partition interface not
+ * involving the overlap's partition (robustness for deep overlaps on thin
+ * partitions), or on no existing entity at all, become new "inner boundary"
+ * entities. Facets on an interface involving the partition itself are not
+ * duplicated: the existing interface entity already represents them.
+ * TODO: check the orientation of the created boundary elements.
  */
-
 template <int dim>
 void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
                             const OverlapCollection<dim> &overlaps);
@@ -60,24 +63,14 @@ void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
  */
 
 template <int dim>
-std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                   std::unordered_set<MElement *, MElementPtrHash,
-                                      MElementPtrEqual>,
-                   GEntityPtrFullHash, GEntityPtrFullEqual>
+CoveredElementsMap<dim>
 findCoveredEntitiesAndElementsToSave(GModel *const model,
                                      const std::vector<int> &partitions);
 
 template <int dim>
-std::unordered_map<GEntity *,
-                   std::unordered_set<MVertex *, MVertexPtrHash,
-                                      MVertexPtrEqual>,
-                   GEntityPtrFullHash, GEntityPtrFullEqual>
-findNonOwnedVerticesToSave(
-  GModel *const model, const std::vector<int> &partitions,
-  const std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                           std::unordered_set<MElement *, MElementPtrHash,
-                                              MElementPtrEqual>,
-                           GEntityPtrFullHash, GEntityPtrFullEqual>
-    &coveredEntities);
+EntityToVerticesMap
+findNonOwnedVerticesToSave(GModel *const model,
+                           const std::vector<int> &partitions,
+                           const CoveredElementsMap<dim> &coveredEntities);
 
 #endif
