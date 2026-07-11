@@ -6,6 +6,7 @@
 #ifndef MESH_GREGION_DELAUNAY_INSERTION_H
 #define MESH_GREGION_DELAUNAY_INSERTION_H
 
+#include <cstdint>
 #include <list>
 #include <set>
 #include <map>
@@ -231,7 +232,8 @@ void connectTets(std::list<MTet4 *> &,
 void connectTets(std::vector<MTet4 *> &,
                  const std::set<MFace, MFaceLessThan> * = nullptr);
 void delaunayMeshIn3D(std::vector<MVertex *> &, std::vector<MTetrahedron *> &,
-                      bool removeBox = false);
+                      bool removeBox = false,
+                      std::vector<std::int64_t> *neighbors = nullptr);
 void insertVerticesInRegion(GRegion *gr, int maxIter,
                             double worstTetRadiusTarget, bool _classify = true,
                             splitQuadRecovery *sqr = nullptr);
