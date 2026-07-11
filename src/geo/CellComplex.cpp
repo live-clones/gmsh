@@ -66,60 +66,104 @@ template <std::size_t N> struct CellVertexKeyHash {
 // speculatively allocated Cell for candidates that are duplicates (which is
 // the common case: an interior facet is a duplicate for all its parents but
 // the first).
+//
+// The maps are split into a fixed number of shards by hash, so that the
+// parallel construction pipeline can deduplicate the shards concurrently
+// (a cell always lands in the same shard, and a shard is only ever touched
+// by one thread at a time). The results do not depend on the shard count.
 class CellConstructionIndex {
+public:
+  static int numShards() { return 16; }
+
 private:
   template <std::size_t N>
   using KeyMap = std::unordered_map<std::array<std::size_t, N>, Cell *,
                                     CellVertexKeyHash<N> >;
   // sized by the maximum number of vertices of a cell of each dimension
   // (hexahedron: 8, quadrangle: 4, line: 2, point: 1)
-  KeyMap<1> _i0;
-  KeyMap<2> _i1;
-  KeyMap<4> _i2;
-  KeyMap<8> _i3;
+  KeyMap<1> _i0[16];
+  KeyMap<2> _i1[16];
+  KeyMap<4> _i2[16];
+  KeyMap<8> _i3[16];
 
-  // insert a slot for the cell with the given sorted vertex numbers:
-  // returns the address of the (stable) Cell* slot and whether the key was
-  // absent. The keys are zero-padded; since the numbers are sorted and a
-  // cell has no duplicate vertices, padding cannot alias another cell.
+  // the keys are zero-padded; since the numbers are sorted and a cell has
+  // no duplicate vertices, padding cannot alias another cell
   template <std::size_t N>
-  static std::pair<Cell **, bool> _insertKey(KeyMap<N> &m,
-                                             const std::size_t *nums, int n)
+  static std::array<std::size_t, N> _key(const std::size_t *nums, int n)
   {
     std::array<std::size_t, N> key = {};
     for(int i = 0; i < n; i++) key[i] = nums[i];
-    auto ins = m.insert(std::make_pair(key, (Cell *)nullptr));
+    return key;
+  }
+
+  template <std::size_t N>
+  static int _shard(const std::array<std::size_t, N> &key)
+  {
+    // top bits of the multiplicative hash
+    return (int)(CellVertexKeyHash<N>()(key) >> 60);
+  }
+
+  // insert a slot for the cell with the given sorted vertex numbers:
+  // returns the address of the (stable) Cell* slot and whether the key was
+  // absent
+  template <std::size_t N>
+  static std::pair<Cell **, bool> _insertKey(KeyMap<N> *maps,
+                                             const std::size_t *nums, int n,
+                                             int shard)
+  {
+    std::array<std::size_t, N> key = _key<N>(nums, n);
+    if(shard < 0) shard = _shard(key);
+    auto ins = maps[shard].insert(std::make_pair(key, (Cell *)nullptr));
     return std::make_pair(&ins.first->second, ins.second);
   }
 
 public:
-  std::pair<Cell **, bool> insertKey(int dim, const std::size_t *nums, int n)
+  // shard that the cell with the given sorted vertex numbers belongs to
+  int shardOf(int dim, const std::size_t *nums, int n) const
   {
     switch(dim) {
-    case 0: return _insertKey(_i0, nums, n);
-    case 1: return _insertKey(_i1, nums, n);
-    case 2: return _insertKey(_i2, nums, n);
-    default: return _insertKey(_i3, nums, n);
+    case 0: return _shard(_key<1>(nums, n));
+    case 1: return _shard(_key<2>(nums, n));
+    case 2: return _shard(_key<4>(nums, n));
+    default: return _shard(_key<8>(nums, n));
+    }
+  }
+
+  std::pair<Cell **, bool> insertKey(int dim, const std::size_t *nums, int n,
+                                     int shard = -1)
+  {
+    switch(dim) {
+    case 0: return _insertKey(_i0, nums, n, shard);
+    case 1: return _insertKey(_i1, nums, n, shard);
+    case 2: return _insertKey(_i2, nums, n, shard);
+    default: return _insertKey(_i3, nums, n, shard);
     }
   }
 
   std::size_t size(int dim) const
   {
-    switch(dim) {
-    case 0: return _i0.size();
-    case 1: return _i1.size();
-    case 2: return _i2.size();
-    default: return _i3.size();
+    std::size_t size = 0;
+    for(int s = 0; s < numShards(); s++) {
+      switch(dim) {
+      case 0: size += _i0[s].size(); break;
+      case 1: size += _i1[s].size(); break;
+      case 2: size += _i2[s].size(); break;
+      default: size += _i3[s].size(); break;
+      }
     }
+    return size;
   }
 
   void reserve(int dim, std::size_t n)
   {
-    switch(dim) {
-    case 0: _i0.reserve(n); break;
-    case 1: _i1.reserve(n); break;
-    case 2: _i2.reserve(n); break;
-    default: _i3.reserve(n); break;
+    std::size_t ns = n / numShards() + 1;
+    for(int s = 0; s < numShards(); s++) {
+      switch(dim) {
+      case 0: _i0[s].reserve(ns); break;
+      case 1: _i1[s].reserve(ns); break;
+      case 2: _i2[s].reserve(ns); break;
+      default: _i3[s].reserve(ns); break;
+      }
     }
   }
 
@@ -139,18 +183,32 @@ public:
 
 private:
   template <std::size_t N>
-  static void _getSortedCells(const KeyMap<N> &m, std::vector<Cell *> &cells)
+  static void _getSortedCells(const KeyMap<N> *maps, std::vector<Cell *> &cells)
   {
     struct Entry {
       std::array<std::size_t, N> key;
       int n;
       Cell *cell;
     };
-    std::vector<Entry> entries;
-    entries.reserve(m.size());
-    for(auto &kv : m)
-      entries.push_back(
-        Entry{kv.first, kv.second->getNumSortedVertices(), kv.second});
+    std::size_t offsets[17];
+    offsets[0] = 0;
+    for(int s = 0; s < numShards(); s++)
+      offsets[s + 1] = offsets[s] + maps[s].size();
+    std::vector<Entry> entries(offsets[numShards()]);
+    // fill the shard segments in parallel: walking the hash map nodes is
+    // latency-bound and each shard writes a disjoint range
+#if defined(_OPENMP)
+    int nthreads = CTX::instance()->numThreads;
+    if(!nthreads) nthreads = Msg::GetMaxThreads();
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic) \
+  if(nthreads > 1 && entries.size() > 65536)
+#endif
+    for(int s = 0; s < numShards(); s++) {
+      std::size_t o = offsets[s];
+      for(auto &kv : maps[s])
+        entries[o++] =
+          Entry{kv.first, kv.second->getNumSortedVertices(), kv.second};
+    }
     parallelSort(entries, [](const Entry &a, const Entry &b) {
       if(a.n != b.n) return a.n < b.n;
       return a.key < b.key;
@@ -194,6 +252,7 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
   _biggestCell.second = -1.;
   _deleteCount = 0;
   _createCount = 0;
+  _cellPool.resize(CellConstructionIndex::numShards());
   CellConstructionIndex index;
   _insertCells(subdomainElements, 1, index);
   if(getSize(0) > 0) _relative = true;
@@ -206,6 +265,8 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
   _removeCells(nonsubdomainElements, 1);
   _removeCells(nondomainElements, 0);
   _immunizeCells(immuneElements);
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
   int num = 0;
   for(int dim = 0; dim < 4; dim++) {
     if(getSize(dim) != 0) _dim = dim;
@@ -217,8 +278,15 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
       Cell *cell = *cit;
       cell->setNum(++num);
       cell->increaseGlobalNum();
-      cell->saveCellBoundary();
     }
+    // saving the original boundary orientations only touches the cell's
+    // own lists
+#if defined(_OPENMP)
+#pragma omp parallel for num_threads(nthreads) schedule(static) \
+  if(nthreads > 1 && _cells[dim].size() > 65536)
+#endif
+    for(std::size_t i = 0; i < _cells[dim].size(); i++)
+      _cells[dim][i]->saveCellBoundary();
   }
 
   _reduced = false;
@@ -253,45 +321,56 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain,
   std::size_t nums[8];
   std::vector<MVertex *> vertices;
 
-  for(std::size_t i = 0; i < elements.size(); i++) {
-    MElement *element = elements.at(i);
-    int dim = element->getDim();
-    int type = element->getType();
-    if(type == TYPE_POLYG || type == TYPE_POLYH) {
-      Msg::Error("Mesh element type %d not implemented in homology solver",
-                 type);
-    }
-    if(type == TYPE_QUA || type == TYPE_HEX || type == TYPE_PYR ||
-       type == TYPE_PRI)
-      _simplicial = false;
-    std::pair<Cell *, bool> maybeCell =
-      Cell::createCell(element, domain, _cellPool);
-    if(!maybeCell.second) {
-      _cellPool.pop_back();
-      continue;
-    }
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
 
-    if(_dim < dim) _dim = dim;
-    Cell *cell = maybeCell.first;
-    maybeCell.first->getMeshVertices(vertices);
-    int n = sortedVertexNums(vertices, nums);
-    std::pair<Cell **, bool> insert = index.insertKey(dim, nums, n);
-    if(!insert.second) {
-      _cellPool.pop_back();
-      cell = *insert.first;
-      if(domain) cell->setDomain(domain);
-    }
-    else {
-      *insert.first = cell;
-      _createCount++;
-    }
+  if(nthreads > 1 && elements.size() > 65536) {
+    _insertElementCells(elements, domain, index, nthreads, smallestElement,
+                        biggestElement);
+  }
+  else {
+    for(std::size_t i = 0; i < elements.size(); i++) {
+      MElement *element = elements.at(i);
+      int dim = element->getDim();
+      int type = element->getType();
+      if(type == TYPE_POLYG || type == TYPE_POLYH) {
+        Msg::Error("Mesh element type %d not implemented in homology solver",
+                   type);
+      }
+      if(type == TYPE_QUA || type == TYPE_HEX || type == TYPE_PYR ||
+         type == TYPE_PRI)
+        _simplicial = false;
+      std::pair<Cell *, bool> maybeCell =
+        Cell::createCell(element, domain, _cellPool[0]);
+      if(!maybeCell.second) {
+        _cellPool[0].pop_back();
+        continue;
+      }
 
-    if(domain == 0) {
-      double size = fabs(element->getVolume());
-      if(smallestElement[dim].second < 0. || smallestElement[dim].second > size)
-        smallestElement[dim] = std::make_pair(cell, size);
-      if(biggestElement[dim].second < 0. || biggestElement[dim].second < size)
-        biggestElement[dim] = std::make_pair(cell, size);
+      if(_dim < dim) _dim = dim;
+      Cell *cell = maybeCell.first;
+      maybeCell.first->getMeshVertices(vertices);
+      int n = sortedVertexNums(vertices, nums);
+      std::pair<Cell **, bool> insert = index.insertKey(dim, nums, n);
+      if(!insert.second) {
+        _cellPool[0].pop_back();
+        cell = *insert.first;
+        if(domain) cell->setDomain(domain);
+      }
+      else {
+        *insert.first = cell;
+        _createCount++;
+      }
+
+      if(domain == 0) {
+        double size = fabs(element->getVolume());
+        if(smallestElement[dim].second < 0. ||
+           smallestElement[dim].second > size)
+          smallestElement[dim] = std::make_pair(cell, size);
+        if(biggestElement[dim].second < 0. ||
+           biggestElement[dim].second < size)
+          biggestElement[dim] = std::make_pair(cell, size);
+      }
     }
   }
   _smallestCell = smallestElement[_dim];
@@ -319,6 +398,11 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain,
       index.reserve(dim - 1, index.size(dim - 1) +
                                cells.size() * cells[0]->getNumBdElements() / 2);
 
+    if(nthreads > 1 && cells.size() > 65536) {
+      _insertBoundaryCells(cells, dim, domain, index, nthreads);
+      continue;
+    }
+
     for(std::size_t ic = 0; ic < cells.size(); ic++) {
       Cell *cell = cells[ic];
       for(int i = 0; i < cell->getNumBdElements(); i++) {
@@ -335,7 +419,7 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain,
           if(domain) newCell->setDomain(domain);
         }
         else {
-          newCell = Cell::createCell(cell, vertices, _cellPool);
+          newCell = Cell::createCell(cell, vertices, _cellPool[0]);
           *insert.first = newCell;
           _createCount++;
         }
@@ -355,11 +439,348 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain,
   // the sorted vectors are the cell containers
   for(int dim = 0; dim < 4; dim++) {
     _cells[dim] = std::move(sortedCells[dim]);
+#if defined(_OPENMP)
+#pragma omp parallel for num_threads(nthreads) schedule(static) \
+  if(nthreads > 1 && _cells[dim].size() > 65536)
+#endif
     for(std::size_t i = 0; i < _cells[dim].size(); i++)
       _cells[dim][i]->setInComplex(true);
     _numLiveCells[dim] = _cells[dim].size();
   }
   return true;
+}
+
+void CellComplex::_insertElementCells(
+  std::vector<MElement *> &elements, int domain, CellConstructionIndex &index,
+  int nthreads, std::pair<Cell *, double> *smallestElement,
+  std::pair<Cell *, double> *biggestElement)
+{
+  // Parallel version of the element-cell creation of _insertCells, with
+  // results identical to the serial loop: a pass over the elements computes
+  // the sorted vertex keys and index shards in parallel, and a pass over
+  // the shards deduplicates them and creates the cells (see
+  // _insertBoundaryCells for why this is race-free and deterministic).
+  const int nshards = CellConstructionIndex::numShards();
+  const std::size_t blockSize = 1 << 21;
+
+  std::size_t buf = std::min(blockSize, elements.size());
+  std::vector<std::array<std::size_t, 8> > keys(buf);
+  std::vector<signed char> keyLen(buf);
+  std::vector<unsigned char> shard(buf);
+  long long created = 0;
+  int maxDim = _dim;
+  bool nonSimplicial = false;
+
+  // per-dimension smallest/biggest element, tracked as (volume, element
+  // index): ties are broken by the element index, matching the strict
+  // comparisons of the serial loop where the first minimum/maximum wins
+  std::pair<double, std::size_t> smallest[4], biggest[4];
+  for(int i = 0; i < 4; i++) {
+    smallest[i] = std::make_pair(-1., (std::size_t)0);
+    biggest[i] = std::make_pair(-1., (std::size_t)0);
+  }
+
+  for(std::size_t e0 = 0; e0 < elements.size(); e0 += blockSize) {
+    const std::size_t ne = std::min(elements.size(), e0 + blockSize) - e0;
+
+    // pass A: element keys, shards, type flags, volume extrema
+#pragma omp parallel num_threads(nthreads)
+    {
+      std::size_t nums[8];
+      int tMaxDim = 0;
+      bool tNonSimplicial = false;
+      std::pair<double, std::size_t> tSmallest[4], tBiggest[4];
+      for(int i = 0; i < 4; i++) {
+        tSmallest[i] = std::make_pair(-1., (std::size_t)0);
+        tBiggest[i] = std::make_pair(-1., (std::size_t)0);
+      }
+#pragma omp for schedule(static)
+      for(std::size_t ie = 0; ie < ne; ie++) {
+        MElement *element = elements[e0 + ie];
+        int dim = element->getDim();
+        int type = element->getType();
+        if(type == TYPE_POLYG || type == TYPE_POLYH) {
+          keyLen[ie] = -3; // unsupported, Msg::Error emitted below
+          continue;
+        }
+        if(type == TYPE_QUA || type == TYPE_HEX || type == TYPE_PYR ||
+           type == TYPE_PRI)
+          tNonSimplicial = true;
+        std::size_t nv = element->getNumPrimaryVertices();
+        if(nv > 8) {
+          keyLen[ie] = -2; // treated like a degenerate cell
+          continue;
+        }
+        for(std::size_t j = 0; j < nv; j++)
+          nums[j] = element->getVertex(j)->getNum();
+        // sort the numbers in place (insertion sort like sortedVertexNums)
+        for(std::size_t j = 1; j < nv; j++) {
+          std::size_t num = nums[j];
+          std::size_t k = j;
+          while(k > 0 && nums[k - 1] > num) {
+            nums[k] = nums[k - 1];
+            k--;
+          }
+          nums[k] = num;
+        }
+        bool degenerate = false;
+        for(std::size_t j = 1; j < nv; j++)
+          if(nums[j] == nums[j - 1]) degenerate = true;
+        if(degenerate) {
+          keyLen[ie] = -2;
+          continue;
+        }
+        keyLen[ie] = (signed char)nv;
+        for(std::size_t j = 0; j < nv; j++) keys[ie][j] = nums[j];
+        for(std::size_t j = nv; j < 8; j++) keys[ie][j] = 0;
+        shard[ie] = index.shardOf(dim, nums, (int)nv);
+        if(tMaxDim < dim) tMaxDim = dim;
+
+        if(domain == 0) {
+          double size = fabs(element->getVolume());
+          std::size_t idx = e0 + ie;
+          if(tSmallest[dim].first < 0. || tSmallest[dim].first > size ||
+             (tSmallest[dim].first == size && tSmallest[dim].second > idx))
+            tSmallest[dim] = std::make_pair(size, idx);
+          if(tBiggest[dim].first < 0. || tBiggest[dim].first < size ||
+             (tBiggest[dim].first == size && tBiggest[dim].second > idx))
+            tBiggest[dim] = std::make_pair(size, idx);
+        }
+      }
+#pragma omp critical
+      {
+        if(tMaxDim > maxDim) maxDim = tMaxDim;
+        if(tNonSimplicial) nonSimplicial = true;
+        for(int i = 0; i < 4; i++) {
+          if(tSmallest[i].first >= 0. &&
+             (smallest[i].first < 0. || smallest[i].first > tSmallest[i].first ||
+              (smallest[i].first == tSmallest[i].first &&
+               smallest[i].second > tSmallest[i].second)))
+            smallest[i] = tSmallest[i];
+          if(tBiggest[i].first >= 0. &&
+             (biggest[i].first < 0. || biggest[i].first < tBiggest[i].first ||
+              (biggest[i].first == tBiggest[i].first &&
+               biggest[i].second > tBiggest[i].second)))
+            biggest[i] = tBiggest[i];
+        }
+      }
+    }
+
+    // report the skipped elements like the serial loop does
+    for(std::size_t ie = 0; ie < ne; ie++) {
+      if(keyLen[ie] == -3)
+        Msg::Error("Mesh element type %d not implemented in homology solver",
+                   elements[e0 + ie]->getType());
+      else if(keyLen[ie] == -2)
+        Msg::Warning("The input mesh has degenerate elements, ignored");
+    }
+
+    // pass B: deduplicate and create the element cells
+#pragma omp parallel for num_threads(nthreads) schedule(dynamic) \
+  reduction(+ : created)
+    for(int s = 0; s < nshards; s++) {
+      for(std::size_t ie = 0; ie < ne; ie++) {
+        if(keyLen[ie] < 0 || shard[ie] != s) continue;
+        MElement *element = elements[e0 + ie];
+        std::pair<Cell **, bool> insert =
+          index.insertKey(element->getDim(), keys[ie].data(), keyLen[ie], s);
+        if(!insert.second) {
+          if(domain) (*insert.first)->setDomain(domain);
+        }
+        else {
+          std::pair<Cell *, bool> maybeCell =
+            Cell::createCell(element, domain, _cellPool[s]);
+          *insert.first = maybeCell.first;
+          created++;
+        }
+      }
+    }
+  }
+
+  _createCount += (int)created;
+  _dim = maxDim;
+  if(nonSimplicial) _simplicial = false;
+
+  // resolve the smallest/biggest elements to their (deduplicated) cells
+  if(domain == 0) {
+    std::size_t nums[8];
+    for(int dim = 0; dim < 4; dim++) {
+      for(int m = 0; m < 2; m++) {
+        std::pair<double, std::size_t> &best = m ? biggest[dim] : smallest[dim];
+        if(best.first < 0.) continue;
+        MElement *element = elements[best.second];
+        std::size_t nv = element->getNumPrimaryVertices();
+        for(std::size_t j = 0; j < nv; j++)
+          nums[j] = element->getVertex(j)->getNum();
+        std::sort(nums, nums + nv);
+        std::pair<Cell **, bool> slot =
+          index.insertKey(element->getDim(), nums, (int)nv);
+        if(m)
+          biggestElement[dim] = std::make_pair(*slot.first, best.first);
+        else
+          smallestElement[dim] = std::make_pair(*slot.first, best.first);
+      }
+    }
+  }
+}
+
+void CellComplex::_insertBoundaryCells(std::vector<Cell *> &cells, int dim,
+                                       int domain,
+                                       CellConstructionIndex &index,
+                                       int nthreads)
+{
+  // Parallel version of the boundary-cell creation of _insertCells, with
+  // results identical to the serial loop. The parent cells are processed in
+  // blocks; for each block:
+  //  - pass A computes the sorted vertex keys of all candidate boundary
+  //    cells and their index shards, in parallel over the parents;
+  //  - pass B deduplicates the candidates and creates the new cells, in
+  //    parallel over the index shards (a cell always belongs to exactly one
+  //    shard, so no two threads ever touch the same hash map, and the cells
+  //    are created in per-shard pools);
+  //  - pass C computes the boundary orientations and adds the parent-side
+  //    boundary links, in parallel over the parents (a parent is only
+  //    touched by its own thread, and the boundary cells are only read);
+  //  - pass D adds the facet-side coboundary links, in parallel over the
+  //    shards (a boundary cell is only touched by its shard's thread).
+  // All final containers are sorted and each (parent, facet) pair
+  // contributes exactly one link, so the outcome does not depend on the
+  // thread count or scheduling.
+  const int nshards = CellConstructionIndex::numShards();
+  const int stride = (dim == 3) ? 6 : (dim == 2) ? 4 : 2;
+  const std::size_t blockParents =
+    std::max((std::size_t)1, (std::size_t)(1 << 21) / stride);
+
+  // the cells whose facets have to replace the reduction heuristic markers
+  // (the serial loop updates the marker for each facet: the last one wins)
+  std::size_t smallestIdx = cells.size(), biggestIdx = cells.size();
+  if(domain == 0) {
+    for(std::size_t ic = 0; ic < cells.size(); ic++) {
+      if(cells[ic] == _smallestCell.first) smallestIdx = ic;
+      if(cells[ic] == _biggestCell.first) biggestIdx = ic;
+    }
+  }
+
+  const std::size_t bufCand = std::min(blockParents, cells.size()) * stride;
+  std::vector<std::array<std::size_t, 4> > keys(bufCand);
+  std::vector<signed char> keyLen(bufCand);
+  std::vector<unsigned char> shard(bufCand);
+  std::vector<Cell *> facet(bufCand);
+  std::vector<signed char> ori(domain == 0 ? bufCand : 0);
+  long long created = 0;
+
+  for(std::size_t p0 = 0; p0 < cells.size(); p0 += blockParents) {
+    const std::size_t nb = std::min(cells.size(), p0 + blockParents) - p0;
+    const std::size_t ncand = nb * stride;
+
+    // pass A: candidate keys and shards
+#pragma omp parallel num_threads(nthreads)
+    {
+      std::vector<MVertex *> vertices;
+      std::size_t nums[8];
+#pragma omp for schedule(static)
+      for(std::size_t ip = 0; ip < nb; ip++) {
+        Cell *cell = cells[p0 + ip];
+        int nbd = cell->getNumBdElements();
+        for(int i = 0; i < stride; i++) {
+          std::size_t c = ip * stride + i;
+          if(i >= nbd) {
+            keyLen[c] = -1;
+            continue;
+          }
+          cell->findBdElement(i, vertices);
+          int n = sortedVertexNums(vertices, nums);
+          if(n < 0) {
+            keyLen[c] = -2; // degenerate
+            continue;
+          }
+          keyLen[c] = n;
+          for(int j = 0; j < n; j++) keys[c][j] = nums[j];
+          for(int j = n; j < 4; j++) keys[c][j] = 0;
+          shard[c] = index.shardOf(dim - 1, nums, n);
+        }
+      }
+    }
+
+    // degenerate cells are ignored, like in the serial loop
+    for(std::size_t c = 0; c < ncand; c++) {
+      if(keyLen[c] == -2)
+        Msg::Warning("The input mesh has degenerate elements, ignored");
+    }
+
+    // pass B: deduplicate and create the boundary cells
+#pragma omp parallel num_threads(nthreads) reduction(+ : created)
+    {
+      std::vector<MVertex *> vertices;
+#pragma omp for schedule(dynamic)
+      for(int s = 0; s < nshards; s++) {
+        for(std::size_t c = 0; c < ncand; c++) {
+          if(keyLen[c] < 0 || shard[c] != s) continue;
+          std::pair<Cell **, bool> insert =
+            index.insertKey(dim - 1, keys[c].data(), keyLen[c], s);
+          if(!insert.second) {
+            Cell *fc = *insert.first;
+            if(domain) fc->setDomain(domain);
+            facet[c] = fc;
+          }
+          else {
+            Cell *cell = cells[p0 + c / stride];
+            cell->findBdElement((int)(c % stride), vertices);
+            Cell *newCell = Cell::createCell(cell, vertices, _cellPool[s]);
+            *insert.first = newCell;
+            facet[c] = newCell;
+            created++;
+          }
+        }
+      }
+    }
+
+    if(domain == 0) {
+      // pass C: boundary orientations and parent-side boundary links
+#pragma omp parallel for num_threads(nthreads) schedule(static)
+      for(std::size_t ip = 0; ip < nb; ip++) {
+        Cell *cell = cells[p0 + ip];
+        int nbd = cell->getNumBdElements();
+        for(int i = 0; i < nbd; i++) {
+          std::size_t c = ip * stride + i;
+          if(keyLen[c] < 0) continue;
+          int o = cell->findBdCellOrientation(facet[c], i);
+          ori[c] = (signed char)o;
+          cell->addBoundaryCell(o, facet[c], false);
+        }
+      }
+
+      // pass D: facet-side coboundary links
+#pragma omp parallel num_threads(nthreads)
+      {
+#pragma omp for schedule(dynamic)
+        for(int s = 0; s < nshards; s++) {
+          for(std::size_t c = 0; c < ncand; c++) {
+            if(keyLen[c] < 0 || shard[c] != s) continue;
+            facet[c]->addCoboundaryCell(ori[c], cells[p0 + c / stride],
+                                        false);
+          }
+        }
+      }
+
+      // heuristic marker cells: like in the serial loop, the last valid
+      // facet of the marker parent replaces the marker
+      for(int m = 0; m < 2; m++) {
+        std::size_t idx = m ? biggestIdx : smallestIdx;
+        if(idx < p0 || idx >= p0 + nb) continue;
+        for(int i = stride - 1; i >= 0; i--) {
+          std::size_t c = (idx - p0) * stride + i;
+          if(keyLen[c] < 0) continue;
+          if(m)
+            _biggestCell = std::make_pair(facet[c], _biggestCell.second);
+          else
+            _smallestCell = std::make_pair(facet[c], _smallestCell.second);
+          break;
+        }
+      }
+    }
+  }
+  _createCount += (int)created;
 }
 
 bool CellComplex::_removeCells(std::vector<MElement *> &elements, int domain)
@@ -452,7 +873,8 @@ CellComplex::~CellComplex()
       _deleteCount++;
     }
   }
-  _deleteCount += (int)_cellPool.size();
+  for(std::size_t i = 0; i < _cellPool.size(); i++)
+    _deleteCount += (int)_cellPool[i].size();
 
   Msg::Debug("Total number of cells created: %d", _createCount);
   Msg::Debug("Total number of cells deleted: %d", _deleteCount);
