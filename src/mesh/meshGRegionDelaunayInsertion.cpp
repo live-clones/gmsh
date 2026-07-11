@@ -176,8 +176,10 @@ int MTet4::inCircumSphere(const double *p) const
                   base->getVertex(2)->z()};
   double pd[3] = {base->getVertex(3)->x(), base->getVertex(3)->y(),
                   base->getVertex(3)->z()};
+  double orient = orientSgn ? (double)orientSgn :
+                              robustPredicates::orient3d(pa, pb, pc, pd);
   double result = robustPredicates::insphere(pa, pb, pc, pd, (double *)p) *
-                  robustPredicates::orient3d(pa, pb, pc, pd);
+                  orient;
   return (result > 0) ? 1 : 0;
 }
 
