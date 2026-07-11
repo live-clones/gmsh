@@ -26,6 +26,24 @@
 
 int MTet4::radiusNorm = 2;
 
+MTet4Factory::MTet4Factory() : extend(Extend2dMeshIn3dVolumes()) {}
+
+MTetrahedron *MTet4Factory::createTet(MVertex *v0, MVertex *v1, MVertex *v2,
+                                      MVertex *v3)
+{
+  if(!freeTet.empty()) {
+    MTetrahedron *t = freeTet.back();
+    freeTet.pop_back();
+    t->setVertex(0, v0);
+    t->setVertex(1, v1);
+    t->setVertex(2, v2);
+    t->setVertex(3, v3);
+    t->forceNum(GModel::current()->incrementAndGetMaxElementNumber());
+    return t;
+  }
+  return new MTetrahedron(v0, v1, v2, v3);
+}
+
 #ifdef DEBUG_BOUNDARY_RECOVERY
 
 static void testIfBoundaryIsRecovered(GRegion *gr)
@@ -407,28 +425,24 @@ void findCavity(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
   t->setDeleted(true);
   cavity.push_back(t);
 
-  std::queue<MTet4 *> cavity_queue;
-
-  if(!cavity.empty()) { cavity_queue.push(cavity.back()); }
-
-  while(!cavity_queue.empty()) {
+  // breadth-first traversal: the cavity vector itself acts as the queue,
+  // since each tet is appended to it exactly once
+  for(std::size_t idx = 0; idx < cavity.size(); idx++) {
+    MTet4 *const current = cavity[idx];
     for(int i = 0; i < 4; i++) {
-      MTet4 *const neighbour = cavity_queue.front()->getNeigh(i);
-      if(!neighbour) { shell.push_back(faceXtet(cavity_queue.front(), i)); }
+      MTet4 *const neighbour = current->getNeigh(i);
+      if(!neighbour) { shell.push_back(faceXtet(current, i)); }
       else if(!neighbour->isDeleted()) {
         if(neighbour->inCircumSphere(v) &&
-           (neighbour->onWhat() == cavity_queue.front()->onWhat())) {
+           (neighbour->onWhat() == current->onWhat())) {
           neighbour->setDeleted(true);
-
           cavity.push_back(neighbour);
-          cavity_queue.push(neighbour);
         }
         else {
-          shell.push_back(faceXtet(cavity_queue.front(), i));
+          shell.push_back(faceXtet(current, i));
         }
       }
     }
-    cavity_queue.pop();
   }
 }
 
@@ -543,16 +557,21 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
 
   auto it = shell.begin();
 
+  double const lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lc2) : lc2;
+  double const lcSq = (lc * .05) * (lc * .05);
+  auto tooClose = [&](MVertex *w) {
+    double dx = w->x() - v->x(), dy = w->y() - v->y(), dz = w->z() - v->z();
+    return dx * dx + dy * dy + dz * dz < lcSq;
+  };
+
   bool onePointIsTooClose = false;
   while(it != shell.end()) {
-    MTetrahedron *tr =
-      new MTetrahedron(it->getVertex(0), it->getVertex(1), it->getVertex(2), v);
+    MTetrahedron *tr = myFactory.createTet(it->getVertex(0), it->getVertex(1),
+                                           it->getVertex(2), v);
     MTet4 *t4 = myFactory.Create(tr, vSizes, vSizesBGM, lc1, lc2);
     t4->setOnWhat(t->onWhat());
 
-    double const lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lc2) : lc2;
-    if(distance(it->v[0], v) < lc * .05 || distance(it->v[1], v) < lc * .05 ||
-       distance(it->v[2], v) < lc * .05)
+    if(tooClose(it->v[0]) || tooClose(it->v[1]) || tooClose(it->v[2]))
       onePointIsTooClose = true;
 
     new_tets.push_back(t4);
@@ -1316,7 +1335,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 #endif
 
   std::vector<double> vSizes, vSizesBGM;
-  MTet4Factory myFactory(1600000);
+  MTet4Factory myFactory;
   tetRadiusQueue allTets;
   // initial tets, ordered as the tetRadiusQueue (and the former std::set
   // container) would order them, so that the classification below - whose
@@ -1491,6 +1510,10 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   double t1 = TimeOfDay();
 
+  // scratch vectors reused across iterations
+  std::vector<faceXtet> shell;
+  std::vector<MTet4 *> cavity;
+
   // main loop in Delaunay inserstion starts here
 
   while(1) {
@@ -1536,8 +1559,8 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
       tetcircumcenter(pa, pb, pc, pd, center, nullptr, nullptr, nullptr);
 
       // A TEST !!!
-      std::vector<faceXtet> shell;
-      std::vector<MTet4 *> cavity;
+      shell.clear();
+      cavity.clear();
       MVertex vv(center[0], center[1], center[2], worst->onWhat());
       findCavity(shell, cavity, &vv, worst);
       bool FOUND = false;

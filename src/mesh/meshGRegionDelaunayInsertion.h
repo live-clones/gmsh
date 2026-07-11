@@ -86,9 +86,10 @@ public:
   }
 
   void setup(MTetrahedron *t, std::vector<double> &sizes,
-             std::vector<double> &sizesBGM)
+             std::vector<double> &sizesBGM, bool extend)
   {
     base = t;
+    gr = nullptr;
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
     double center[3];
     circumcenter(center);
@@ -96,19 +97,6 @@ public:
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
     circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
-    /*
-    if (base->getVertex(0)->getIndex() >= sizes.size() ||
-    base->getVertex(1)->getIndex() >= sizes.size() ||
-    base->getVertex(2)->getIndex() >= sizes.size() ||
-    base->getVertex(3)->getIndex() >= sizes.size()){
-      printf("ERROR %d vs %d %d %d %d\n",sizes.size() ,
-         base->getVertex(0)->getIndex(),
-         base->getVertex(1)->getIndex(),
-         base->getVertex(2)->getIndex(),
-         base->getVertex(3)->getIndex());
-
-    }
-    */
     double lc1 = 0.25 * (sizes[base->getVertex(0)->getIndex()] +
                          sizes[base->getVertex(1)->getIndex()] +
                          sizes[base->getVertex(2)->getIndex()] +
@@ -117,15 +105,16 @@ public:
                            sizesBGM[base->getVertex(1)->getIndex()] +
                            sizesBGM[base->getVertex(2)->getIndex()] +
                            sizesBGM[base->getVertex(3)->getIndex()]);
-    double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lcBGM) : lcBGM;
+    double lc = extend ? std::min(lc1, lcBGM) : lcBGM;
     circum_radius /= lc;
     deleted = false;
   }
 
   void setup(MTetrahedron *t, std::vector<double> &sizes,
-             std::vector<double> &sizesBGM, double lcA, double lcB)
+             std::vector<double> &sizesBGM, double lcA, double lcB, bool extend)
   {
     base = t;
+    gr = nullptr;
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
     double center[3];
     circumcenter(center);
@@ -133,26 +122,13 @@ public:
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
     circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
-
-    /*
-    if (base->getVertex(0)->getIndex() >= sizes.size() ||
-    base->getVertex(1)->getIndex() >= sizes.size() ||
-    base->getVertex(2)->getIndex() >= sizes.size()){
-      printf("ERROR %d vs %d %d %d %d\n",sizes.size() ,
-         base->getVertex(0)->getIndex(),
-         base->getVertex(1)->getIndex(),
-         base->getVertex(2)->getIndex(),
-         base->getVertex(3)->getIndex());
-
-    }
-    */
     double lc1 = 0.25 * (sizes[base->getVertex(0)->getIndex()] +
                          sizes[base->getVertex(1)->getIndex()] +
                          sizes[base->getVertex(2)->getIndex()] + lcA);
     double lcBGM = 0.25 * (sizesBGM[base->getVertex(0)->getIndex()] +
                            sizesBGM[base->getVertex(1)->getIndex()] +
                            sizesBGM[base->getVertex(2)->getIndex()] + lcB);
-    double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lcBGM) : lcBGM;
+    double lc = extend ? std::min(lc1, lcBGM) : lcBGM;
     circum_radius /= lc;
     deleted = false;
   }
@@ -227,91 +203,57 @@ struct compareTet4Ptr {
   }
 };
 
+// Creates and recycles the MTet4 and MTetrahedron objects of the Delaunay
+// refinement: freed objects are kept in free lists and handed out again,
+// which avoids the constant allocator churn of cavity remeshing. Recycled
+// MTetrahedra get a fresh element number, so the numbering is the same as
+// with plain new/delete.
 class MTet4Factory {
-public:
-  typedef std::set<MTet4 *, compareTet4Ptr> container;
-  typedef container::iterator iterator;
-
 private:
-  container allTets;
-#ifdef GMSH_PRE_ALLOCATE_STRATEGY
-  MTet4 *allSlots;
-  int s_last, s_alloc;
-  std::stack<MTet4 *> emptySlots;
-  inline MTet4 *getANewSlot()
-  {
-    if(s_last >= s_alloc) return 0;
-    MTet4 *t = &(allSlots[s_last]);
-    s_last++;
-    return t;
-  }
-  inline MTet4 *getAnEmptySlot()
-  {
-    if(!emptySlots.empty()) {
-      MTet4 *t = emptySlots.top();
-      emptySlots.pop();
-      return t;
-    }
-    return getANewSlot();
-  };
-#endif
+  bool extend;
+  std::vector<MTet4 *> freeTet4;
+  std::vector<MTetrahedron *> freeTet;
+
 public:
-  MTet4Factory(int _size = 1000000)
-  {
-#ifdef GMSH_PRE_ALLOCATE_STRATEGY
-    s_last = 0;
-    s_alloc = _size;
-    allSlots = new MTet4[s_alloc];
-#endif
-  }
+  MTet4Factory();
   ~MTet4Factory()
   {
-#ifdef GMSH_PRE_ALLOCATE_STRATEGY
-    delete[] allSlots;
-#endif
+    for(auto t : freeTet) delete t;
+    for(auto t : freeTet4) delete t;
   }
+  MTetrahedron *createTet(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3);
   MTet4 *Create(MTetrahedron *t, std::vector<double> &sizes,
                 std::vector<double> &sizesBGM)
   {
-#ifdef GMSH_PRE_ALLOCATE_STRATEGY
-    MTet4 *t4 = getAnEmptySlot();
-#else
-    MTet4 *t4 = new MTet4;
-#endif
-    t4->setup(t, sizes, sizesBGM);
+    MTet4 *t4;
+    if(!freeTet4.empty()) {
+      t4 = freeTet4.back();
+      freeTet4.pop_back();
+    }
+    else
+      t4 = new MTet4;
+    t4->setup(t, sizes, sizesBGM, extend);
     return t4;
   }
   MTet4 *Create(MTetrahedron *t, std::vector<double> &sizes,
                 std::vector<double> &sizesBGM, double lc1, double lc2)
   {
-#ifdef GMSH_PRE_ALLOCATE_STRATEGY
-    MTet4 *t4 = getAnEmptySlot();
-#else
-    MTet4 *t4 = new MTet4;
-#endif
-    t4->setup(t, sizes, sizesBGM, lc1, lc2);
+    MTet4 *t4;
+    if(!freeTet4.empty()) {
+      t4 = freeTet4.back();
+      freeTet4.pop_back();
+    }
+    else
+      t4 = new MTet4;
+    t4->setup(t, sizes, sizesBGM, lc1, lc2, extend);
     return t4;
   }
-
   void Free(MTet4 *t)
   {
-    if(t->tet()) delete t->tet();
+    if(t->tet()) freeTet.push_back(t->tet());
     t->tet() = nullptr;
-#ifdef GMSH_PRE_ALLOCATE_STRATEGY
-    emptySlots.push(t);
-    t->setDeleted(true);
-#else
-    delete t;
-#endif
+    freeTet4.push_back(t);
   }
-  void changeTetRadius(iterator it, double r)
-  {
-    MTet4 *t = *it;
-    allTets.erase(it);
-    t->forceRadius(r);
-    allTets.insert(t);
-  }
-  container &getAllTets() { return allTets; }
 };
 
 void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm);
