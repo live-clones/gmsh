@@ -133,7 +133,9 @@ public:
     const double dz = base->getVertex(0)->z() - cc[2];
     r2 = dx * dx + dy * dy + dz * dz;
     circum_radius = std::sqrt(r2);
-    sphTol = orientSgn ? 2. * cerr : 1.e300;
+    // 3 covers the sqrt(2) slack of bounding 2*cerr*(d+r) by
+    // sphTol*sqrt(d^2+r^2) in inCircumSphere
+    sphTol = orientSgn ? 3. * cerr : 1.e300;
   }
 
   void setup(MTetrahedron *t, std::vector<double> &sizes,
