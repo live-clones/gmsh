@@ -1467,8 +1467,10 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   gr->tetrahedra.clear();
 
-  // SLOW
-  connectTets(tets0.begin(), tets0.end());
+  {
+    std::vector<faceXtet> conn;
+    connectTets_vector2_templ(tets0.size(), tets0.begin(), tets0.end(), conn);
+  }
 
   // classify the tets on the right region
 
@@ -1526,12 +1528,6 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
       (*it)->setOnWhat(gr);
   }
 
-  for(auto it = tets0.begin(); it != tets0.end(); ++it) {
-    (*it)->setNeigh(0, nullptr);
-    (*it)->setNeigh(1, nullptr);
-    (*it)->setNeigh(2, nullptr);
-    (*it)->setNeigh(3, nullptr);
-  }
   // store all embedded edges and faces
   std::set<MFace, MFaceLessThan> allEmbeddedFaces;
   std::size_t N = 0;
@@ -1546,7 +1542,27 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
     createAllEmbeddedFaces((*it), allEmbeddedFaces);
     createAllEmbeddedEdges((*it), allEmbeddedEdges);
   }
-  connectTets(tets0.begin(), tets0.end(), &allEmbeddedFaces);
+  if(allEmbeddedFaces.empty()) {
+    // the neighbors computed before the classification are still valid: only
+    // remove the links towards the tets that were deleted because they lie in
+    // the void, exactly as reconnecting the alive tets from scratch would
+    for(auto it = tets0.begin(); it != tets0.end(); ++it) {
+      for(int i = 0; i < 4; i++) {
+        MTet4 *n = (*it)->getNeigh(i);
+        if(n && n->isDeleted()) (*it)->setNeigh(i, nullptr);
+      }
+    }
+  }
+  else {
+    // rebuild the adjacencies without connecting tets across embedded faces
+    for(auto it = tets0.begin(); it != tets0.end(); ++it) {
+      (*it)->setNeigh(0, nullptr);
+      (*it)->setNeigh(1, nullptr);
+      (*it)->setNeigh(2, nullptr);
+      (*it)->setNeigh(3, nullptr);
+    }
+    connectTets(tets0.begin(), tets0.end(), &allEmbeddedFaces);
+  }
   Msg::Debug("All %d tets were connected", tets0.size());
 
   for(auto t : tets0) allTets.push(t);
