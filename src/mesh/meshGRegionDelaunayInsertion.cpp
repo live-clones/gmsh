@@ -533,8 +533,10 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
                    tetRadiusQueue &allTets,
                    const std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
 {
+  const bool hasEmbedded = !allEmbeddedFaces.empty();
+
   std::vector<MTet4 *> new_cavity;
-  new_cavity.reserve(shell.size());
+  if(hasEmbedded) new_cavity.reserve(2 * shell.size());
 
   std::vector<MTet4 *> new_tets;
   new_tets.reserve(shell.size());
@@ -554,17 +556,63 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
       onePointIsTooClose = true;
 
     new_tets.push_back(t4);
-    new_cavity.push_back(t4);
 
-    MTet4 *otherSide = it->t1->getNeigh(it->i1);
-
-    if(otherSide) new_cavity.push_back(otherSide);
+    if(hasEmbedded) {
+      new_cavity.push_back(t4);
+      MTet4 *otherSide = it->t1->getNeigh(it->i1);
+      if(otherSide) new_cavity.push_back(otherSide);
+    }
     ++it;
   }
   if(!onePointIsTooClose) {
-    if(allEmbeddedFaces.empty()) {
-      std::vector<faceXtet> conn;
-      connectTets_vector2(new_cavity, conn);
+    if(!hasEmbedded) {
+      // connect the new tets directly, without sorting all their faces: the
+      // new tet built on shell face k is (v0, v1, v2, v), so its face 0 is
+      // the shell face itself, whose neighbor is the tet outside the cavity;
+      // its faces 1, 2 and 3 contain the new vertex plus one shell face edge
+      // each, and match the face of the new tet built on the shell face
+      // sharing that edge
+      struct shellEdge {
+        MVertex *a, *b;
+        int tetFace;
+      };
+      std::vector<shellEdge> edges;
+      edges.reserve(3 * shell.size());
+      for(std::size_t k = 0; k < shell.size(); k++) {
+        MVertex *f0 = shell[k].getVertex(0);
+        MVertex *f1 = shell[k].getVertex(1);
+        MVertex *f2 = shell[k].getVertex(2);
+        edges.push_back({std::min(f0, f2), std::max(f0, f2), (int)(4 * k + 1)});
+        edges.push_back({std::min(f0, f1), std::max(f0, f1), (int)(4 * k + 2)});
+        edges.push_back({std::min(f1, f2), std::max(f1, f2), (int)(4 * k + 3)});
+      }
+      std::sort(edges.begin(), edges.end(),
+                [](const shellEdge &e1, const shellEdge &e2) {
+                  if(e1.a != e2.a) return e1.a < e2.a;
+                  return e1.b < e2.b;
+                });
+      for(std::size_t i = 0; i + 1 < edges.size(); i++) {
+        const shellEdge &e1 = edges[i];
+        const shellEdge &e2 = edges[i + 1];
+        if(e1.a == e2.a && e1.b == e2.b) {
+          MTet4 *t1 = new_tets[e1.tetFace >> 2];
+          MTet4 *t2 = new_tets[e2.tetFace >> 2];
+          t1->setNeigh(e1.tetFace & 3, t2);
+          t2->setNeigh(e2.tetFace & 3, t1);
+          ++i;
+        }
+      }
+      for(std::size_t k = 0; k < shell.size(); k++) {
+        MTet4 *otherSide = shell[k].t1->getNeigh(shell[k].i1);
+        if(!otherSide) continue;
+        new_tets[k]->setNeigh(0, otherSide);
+        for(int j = 0; j < 4; j++) {
+          if(otherSide->getNeigh(j) == shell[k].t1) {
+            otherSide->setNeigh(j, new_tets[k]);
+            break;
+          }
+        }
+      }
     }
     else {
       connectTets(new_cavity.begin(), new_cavity.end(), &allEmbeddedFaces);
