@@ -422,33 +422,6 @@ public:
   OverlapManager *getOverlapManagerByTag(int tag);
   void clearOverlaps();
 
-  // Facade methods delegating to the single (back) overlap manager.
-  // Add methods delegate to back(), get methods delegate to at(0).
-  void addOverlap(overlapFace *of);
-  void addOverlap(overlapRegion *or_);
-
-  const std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>> &
-  getAllOverlaps() const;
-
-  void addInnerBoundary(GFace *f, partitionEdge *e);
-  void addInnerBoundary(GRegion *r, partitionFace *f);
-  void addOverlapOfBoundary(GEdge *e, partitionEdge *pe, GFace *parent);
-  void addOverlapOfBoundary(GFace *f, partitionFace *pf, GRegion *parent);
-
-#ifndef SWIG
-  const std::unordered_map<GFace *, std::vector<partitionEdge *>> &
-  getOverlapInnerBoundaries2D() const;
-  const std::unordered_map<GRegion *, std::vector<partitionFace *>> &
-  getOverlapInnerBoundaries3D() const;
-  const std::unordered_map<GEdge *, std::vector<partitionEdge *>> &
-  getOverlapOfBoundaries2D() const;
-  const std::unordered_map<GFace *, std::vector<partitionFace *>> &
-  getOverlapOfBoundaries3D() const;
-  const std::tuple<std::unordered_map<partitionEdge *, GFace *>,
-                   std::unordered_map<partitionFace *, GRegion *>> &
-  getBoundaryOfOverlapCreators() const;
-#endif
-
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
   GFace *getFaceByTag(int n) const;
