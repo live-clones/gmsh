@@ -55,6 +55,15 @@ public:
     this->quadrangles.clear();
     this->polygons.clear();
   }
+  // Never delete shared elements, whatever the caller asked for
+  void removeElement(MElement *e, bool del = false) override
+  {
+    GFace::removeElement(e, false);
+  }
+  void removeElements(bool del = false) override
+  {
+    GFace::removeElements(false);
+  }
 };
 
 class overlapRegion : public discreteRegion {
@@ -83,6 +92,15 @@ public:
     this->pyramids.clear();
     this->trihedra.clear();
     this->polyhedra.clear();
+  }
+  // Never delete shared elements, whatever the caller asked for
+  void removeElement(MElement *e, bool del = false) override
+  {
+    GRegion::removeElement(e, false);
+  }
+  void removeElements(bool del = false) override
+  {
+    GRegion::removeElements(false);
   }
 };
 
