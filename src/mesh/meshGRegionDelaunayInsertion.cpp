@@ -1843,11 +1843,12 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 // do a 3D delaunay mesh assuming a set of vertices
 
 void delaunayMeshIn3D(std::vector<MVertex *> &v,
-                      std::vector<MTetrahedron *> &result, bool removeBox)
+                      std::vector<MTetrahedron *> &result, bool removeBox,
+                      std::vector<std::int64_t> *neighbors)
 {
   Msg::Info("Tetrahedrizing %d nodes...", v.size());
   double t1 = Cpu(), w1 = TimeOfDay();
-  delaunayTriangulation(1, 1, v, result, removeBox);
+  delaunayTriangulation(1, 1, v, result, removeBox, neighbors);
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::Info("Done tetrahedrizing %d nodes (Wall %gs, CPU %gs)", v.size(),
             w2 - w1, t2 - t1);

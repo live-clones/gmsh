@@ -12,6 +12,7 @@
 #include <set>
 #include <stack>
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include <algorithm>
 #include <cmath>
@@ -1346,7 +1347,8 @@ static void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
 void delaunayTriangulation(const int numThreads, const int nptsatonce,
                            std::vector<MVertex *> &S,
-                           std::vector<MTetrahedron *> &T, bool removeBox)
+                           std::vector<MTetrahedron *> &T, bool removeBox,
+                           std::vector<std::int64_t> *neighbors)
 {
   std::vector<MVertex *> _temp;
   std::vector<Vert *> _vertices;
@@ -1396,6 +1398,7 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
     }
   }
 
+  std::vector<Tet *> outTets;
   for(int myThread = 0; myThread < numThreads; myThread++) {
     for(std::size_t i = 0; i < allocator.size(myThread); i++) {
       Tet *t = allocator(myThread, i);
@@ -1408,10 +1411,31 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
           MVertex *v4 = _temp[t->V[3]->getNum()];
           MTetrahedron *tr = new MTetrahedron(v1, v2, v3, v4);
           T.push_back(tr);
+          if(neighbors) outTets.push_back(t);
         }
         else if(!removeBox) {
           Msg::Error("Error in triangulation");
         }
+      }
+    }
+  }
+
+  if(neighbors) {
+    std::unordered_map<Tet *, std::int64_t> idxOf;
+    idxOf.reserve(outTets.size());
+    for(std::size_t i = 0; i < outTets.size(); i++)
+      idxOf[outTets[i]] = (std::int64_t)i;
+    neighbors->clear();
+    neighbors->reserve(4 * outTets.size());
+    for(std::size_t i = 0; i < outTets.size(); i++) {
+      for(int k = 0; k < 4; k++) {
+        Tet *n = outTets[i]->T[k];
+        std::int64_t idx = -1;
+        if(n && n->V[0]) {
+          auto it = idxOf.find(n);
+          if(it != idxOf.end()) idx = it->second;
+        }
+        neighbors->push_back(idx);
       }
     }
   }
