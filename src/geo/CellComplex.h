@@ -48,8 +48,10 @@ private:
   // storage of the elementary cells: a deque allocates them in chunks
   // without relocating (their addresses stay valid), and frees them
   // wholesale on destruction instead of one delete per cell. Combined
-  // cells are few and are still allocated individually.
-  std::deque<Cell> _cellPool;
+  // cells are few and are still allocated individually. One pool per
+  // index shard, so the parallel construction can create cells
+  // concurrently; the serial paths use the first pool.
+  std::vector<std::deque<Cell> > _cellPool;
 
   // cell complex dimension
   int _dim;
@@ -75,6 +77,20 @@ private:
   // for constructor
   bool _insertCells(std::vector<MElement *> &elements, int domain,
                     CellConstructionIndex &index);
+
+  // create the boundary cells of the given dim-dimensional cells and wire
+  // up the boundary/coboundary links, in parallel (see the implementation
+  // for the pipeline; the result is identical to the serial code path)
+  void _insertBoundaryCells(std::vector<Cell *> &cells, int dim, int domain,
+                            CellConstructionIndex &index, int nthreads);
+
+  // create the cells of the given mesh elements in parallel (the parallel
+  // counterpart of the first loop of _insertCells, with identical results)
+  void _insertElementCells(std::vector<MElement *> &elements, int domain,
+                           CellConstructionIndex &index, int nthreads,
+                           std::pair<Cell *, double> *smallestElement,
+                           std::pair<Cell *, double> *biggestElement);
+
   bool _removeCells(std::vector<MElement *> &elements, int domain);
 
   bool _immunizeCells(std::vector<MElement *> &elements);
