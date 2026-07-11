@@ -1523,11 +1523,14 @@ GMSH_API void gmsh::model::mesh::getPartitionEntities(
     return;
   }
 
-  // Overlaps: if dim == modelDim, return the usualOverlaps. If dim == modelDim
-  // - 1, return overlap of boundaries. Else, nothing
+  // Overlaps: if dim == modelDim, return the usual overlaps. If dim ==
+  // modelDim - 1, return overlap of boundaries. Else, nothing
   if(overlapIndex < 0 ||
      overlapIndex >= (int)model->getOverlapManagers().size()) {
-    if(!model->getOverlapManagers().empty())
+    // Only the default overlapIndex == 0 stays silent on an overlap-free
+    // model, so plain partition queries keep working; an explicit index is
+    // always an error
+    if(overlapIndex != 0 || !model->getOverlapManagers().empty())
       Msg::Error("getPartitionEntities: overlap index %d out of range "
                  "(have %zu managers)",
                  overlapIndex, model->getOverlapManagers().size());
