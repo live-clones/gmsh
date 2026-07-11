@@ -2074,23 +2074,33 @@ static void writeMSH4Entities(
         if(gr) regions.insert(gr);
       }
     }
-    // Overlap boundaries are partition entities too
+    // Overlap boundaries are partition entities too. Filter by saved
+    // partition like the loops above, so per-partition files do not declare
+    // the (empty) overlap boundaries of every other partition
     for(const auto &mgr : model->getOverlapManagers()) {
       for(const auto &[parent, boundarySet] :
           mgr.getOverlapInnerBoundaries2D()) {
-        for(const auto &boundary : boundarySet) { edges.insert(boundary); }
+        for(const auto &boundary : boundarySet) {
+          if(isInPartition(boundary)) edges.insert(boundary);
+        }
       }
       for(const auto &[parent, boundaryMap] :
           mgr.getOverlapOfBoundaries2D()) {
-        for(const auto &boundary : boundaryMap) { edges.insert(boundary); }
+        for(const auto &boundary : boundaryMap) {
+          if(isInPartition(boundary)) edges.insert(boundary);
+        }
       }
       for(const auto &[parent, boundarySet] :
           mgr.getOverlapInnerBoundaries3D()) {
-        for(const auto &boundary : boundarySet) { faces.insert(boundary); }
+        for(const auto &boundary : boundarySet) {
+          if(isInPartition(boundary)) faces.insert(boundary);
+        }
       }
       for(const auto &[parent, boundaryMap] :
           mgr.getOverlapOfBoundaries3D()) {
-        for(const auto &boundary : boundaryMap) { faces.insert(boundary); }
+        for(const auto &boundary : boundaryMap) {
+          if(isInPartition(boundary)) faces.insert(boundary);
+        }
       }
     }
   }
@@ -3087,10 +3097,14 @@ static void writeMSH4Elements(
     if(overlapFaces) {
       for(const auto &[pface, elements] : *overlapFaces) {
         int tag = pface->tag();
-        if(faces.count(pface)) continue; // already saved
-        if(!saveAll && pface->physicals.size() == 0 &&
-           pface->geomType() != GEntity::GhostSurface)
-          continue;
+        // Skip only if the loop above actually wrote this entity's elements:
+        // elements are referenced by tag in $Overlaps2D and the reader has no
+        // tolerance for missing ones, so the physicals/saveAll filter must not
+        // drop them
+        if(faces.count(pface) &&
+           (saveAll || pface->physicals.size() ||
+            pface->geomType() == GEntity::GhostSurface))
+          continue; // already saved
 
         numElements += elements.size();
         for(const auto &element : elements) {
@@ -3143,10 +3157,14 @@ static void writeMSH4Elements(
     if(overlapRegions) {
       for(const auto &[pregion, elements] : *overlapRegions) {
         int tag = pregion->tag();
-        if(regions.count(pregion)) continue; // already saved
-        if(!saveAll && pregion->physicals.size() == 0 &&
-           pregion->geomType() != GEntity::GhostVolume)
-          continue;
+        // Skip only if the loop above actually wrote this entity's elements:
+        // elements are referenced by tag in $Overlaps3D and the reader has no
+        // tolerance for missing ones, so the physicals/saveAll filter must not
+        // drop them
+        if(regions.count(pregion) &&
+           (saveAll || pregion->physicals.size() ||
+            pregion->geomType() == GEntity::GhostVolume))
+          continue; // already saved
 
         numElements += elements.size();
         for(const auto &element : elements) {
