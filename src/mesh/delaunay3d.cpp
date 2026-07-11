@@ -179,14 +179,83 @@ struct Face {
 struct Tet {
   Tet *T[4];
   Vert *V[4];
+  // circumcenter, squared circumradius and roundoff bound, cached when the
+  // vertices are set so that most in-sphere tests are a simple distance
+  // comparison; sphTol is set to 1e300 when the cache cannot be trusted and
+  // the exact predicates must always be used
+  double cc[3], r2, sphTol;
   CHECKTYPE _bitset[MAX_NUM_THREADS_];
   bool _modified;
 
-  Tet() : _modified(true)
+  Tet() : sphTol(1.e300), _modified(true)
   {
     V[0] = V[1] = V[2] = V[3] = nullptr;
     T[0] = T[1] = T[2] = T[3] = nullptr;
     setAllDeleted();
+  }
+  void computeSphere()
+  {
+    sphTol = 1.e300;
+    if(!V[0] || !V[1] || !V[2] || !V[3]) return;
+    const double *a = (double *)V[0];
+    const double *b = (double *)V[1];
+    const double *c = (double *)V[2];
+    const double *d = (double *)V[3];
+    const double xba = b[0] - a[0], yba = b[1] - a[1], zba = b[2] - a[2];
+    const double xca = c[0] - a[0], yca = c[1] - a[1], zca = c[2] - a[2];
+    const double xda = d[0] - a[0], yda = d[1] - a[1], zda = d[2] - a[2];
+    const double balength = xba * xba + yba * yba + zba * zba;
+    const double calength = xca * xca + yca * yca + zca * zca;
+    const double dalength = xda * xda + yda * yda + zda * zda;
+    const double xcrosscd = yca * zda - yda * zca;
+    const double ycrosscd = zca * xda - zda * xca;
+    const double zcrosscd = xca * yda - xda * yca;
+    const double xcrossdb = yda * zba - yba * zda;
+    const double ycrossdb = zda * xba - zba * xda;
+    const double zcrossdb = xda * yba - xba * yda;
+    const double xcrossbc = yba * zca - yca * zba;
+    const double ycrossbc = zba * xca - zca * xba;
+    const double zcrossbc = xba * yca - xca * yba;
+    // plain floating-point determinant: only use the cache when it is far
+    // enough from zero for its sign and magnitude to be reliable
+    const double det = xba * xcrosscd + yba * ycrosscd + zba * zcrosscd;
+    const double permanent =
+      fabs(xba) * (fabs(yca * zda) + fabs(yda * zca)) +
+      fabs(yba) * (fabs(zca * xda) + fabs(zda * xca)) +
+      fabs(zba) * (fabs(xca * yda) + fabs(xda * yca));
+    const double eps = 2.220446049250313e-16;
+    if(fabs(det) < 1.e6 * eps * permanent) return;
+    const double denominator = 0.5 / det;
+    const double xcirca =
+      (balength * xcrosscd + calength * xcrossdb + dalength * xcrossbc) *
+      denominator;
+    const double ycirca =
+      (balength * ycrosscd + calength * ycrossdb + dalength * ycrossbc) *
+      denominator;
+    const double zcirca =
+      (balength * zcrosscd + calength * zcrossdb + dalength * zcrossbc) *
+      denominator;
+    cc[0] = xcirca + a[0];
+    cc[1] = ycirca + a[1];
+    cc[2] = zcirca + a[2];
+    // measure the radius from the stored (rounded) center, so that its
+    // roundoff cancels between the two sides of the in-sphere comparison
+    const double dxr = a[0] - cc[0], dyr = a[1] - cc[1], dzr = a[2] - cc[2];
+    r2 = dxr * dxr + dyr * dyr + dzr * dzr;
+    // conservative bound on the roundoff of the center, dominated by the
+    // cancellations in the cross products and numerator sums plus the
+    // relative error of the plain determinant; generous safety margins
+    const double across =
+      fabs(yca * zda) + fabs(yda * zca) + fabs(yda * zba) + fabs(yba * zda) +
+      fabs(yba * zca) + fabs(yca * zba) + fabs(zca * xda) + fabs(zda * xca) +
+      fabs(zda * xba) + fabs(zba * xda) + fabs(zba * xca) + fabs(zca * xba) +
+      fabs(xca * yda) + fabs(xda * yca) + fabs(xda * yba) + fabs(xba * yda) +
+      fabs(xba * yca) + fabs(xca * yba);
+    const double maxlength = std::max(balength, std::max(calength, dalength));
+    const double relden = 64. * eps * permanent / fabs(det);
+    const double cerr =
+      maxlength * across * fabs(denominator) * (4096. * eps + 2. * relden);
+    sphTol = 3. * cerr;
   }
   int setVerticesNoTest(Vert *v0, Vert *v1, Vert *v2, Vert *v3)
   {
@@ -197,6 +266,7 @@ struct Tet {
     V[3] = v3;
     for(int i = 0; i < 4; i++)
       if(V[i]) V[i]->setT(this);
+    computeSphere();
     return 1;
   }
   int setVertices(Vert *v0, Vert *v1, Vert *v2, Vert *v3)
@@ -210,12 +280,14 @@ struct Tet {
     V[3] = v3;
     for(int i = 0; i < 4; i++)
       if(V[i]) V[i]->setT(this);
+    computeSphere();
     if(val > 0) { return 1; }
     else if(val < 0) {
       V[0] = v1;
       V[1] = v0;
       V[2] = v2;
       V[3] = v3;
+      computeSphere();
       return -1;
     }
     else {
@@ -250,6 +322,16 @@ struct Tet {
   }
   bool inSphere(Vert *vd, int thread)
   {
+    // filtered test on the cached circumsphere: decide with a simple
+    // distance comparison when it lies outside the roundoff bound, and fall
+    // back to the exact predicates otherwise
+    const double dx = vd->x() - cc[0], dy = vd->y() - cc[1],
+                 dz = vd->z() - cc[2];
+    const double d2 = dx * dx + dy * dy + dz * dz;
+    const double diff = d2 - r2;
+    const double s = d2 + r2;
+    const double bound = sphTol * std::sqrt(s) + 1.e-12 * s;
+    if(std::abs(diff) > bound) return diff < 0;
     return inSphereTest_s(V[0], V[1], V[2], V[3], vd);
   }
 };
