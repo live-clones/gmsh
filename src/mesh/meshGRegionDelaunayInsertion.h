@@ -26,6 +26,12 @@ double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
                        double circumcenter[3], double *xi, double *eta,
                        double *zeta);
 
+// same as tetcircumcenter (with bit-identical result), but also returns a
+// conservative bound on the roundoff error of the computed circumcenter
+double tetcircumcenterBounded(double a[3], double b[3], double c[3],
+                              double d[3], double circumcenter[3],
+                              double *err);
+
 class MTet4Factory;
 
 // Memory usage for 1 million tets:
@@ -52,6 +58,11 @@ private:
   // 0 means unknown, in which case inCircumSphere computes it on the fly
   signed char orientSgn;
   double circum_radius;
+  // circumcenter, squared circumradius and roundoff bound cached by setup(),
+  // so that most in-sphere tests are a simple distance comparison; sphTol is
+  // set to 1e300 when the cache cannot be trusted and the exact predicates
+  // must always be used
+  double cc[3], r2, sphTol;
   MTetrahedron *base;
   MTet4 *neigh[4];
   GRegion *gr;
@@ -60,18 +71,19 @@ public:
   static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm
   ~MTet4() {}
   MTet4()
-    : deleted(false), orientSgn(0), circum_radius(0.0), base(nullptr),
-      gr(nullptr)
+    : deleted(false), orientSgn(0), circum_radius(0.0), sphTol(1.e300),
+      base(nullptr), gr(nullptr)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
   }
   MTet4(MTetrahedron *t, double qual)
-    : deleted(false), orientSgn(0), circum_radius(qual), base(t), gr(nullptr)
+    : deleted(false), orientSgn(0), circum_radius(qual), sphTol(1.e300),
+      base(t), gr(nullptr)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
   }
   MTet4(MTetrahedron *t, const qmTetrahedron::Measures &qm)
-    : deleted(false), orientSgn(0), base(t), gr(nullptr)
+    : deleted(false), orientSgn(0), sphTol(1.e300), base(t), gr(nullptr)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
     double vol;
@@ -91,6 +103,38 @@ public:
     double D[4] = {v3->x(), v3->y(), v3->z()};
     return tetcircumcenter(A, B, C, D, res, nullptr, nullptr, nullptr);
   }
+  double circumcenterBounded(double *res, double *err)
+  {
+    MVertex *v0 = base->getVertex(0);
+    MVertex *v1 = base->getVertex(1);
+    MVertex *v2 = base->getVertex(2);
+    MVertex *v3 = base->getVertex(3);
+    double A[4] = {v0->x(), v0->y(), v0->z()};
+    double B[4] = {v1->x(), v1->y(), v1->z()};
+    double C[4] = {v2->x(), v2->y(), v2->z()};
+    double D[4] = {v3->x(), v3->y(), v3->z()};
+    return tetcircumcenterBounded(A, B, C, D, res, err);
+  }
+  // circumcenter cached by setup()
+  void cachedCircumcenter(double *res) const
+  {
+    res[0] = cc[0];
+    res[1] = cc[1];
+    res[2] = cc[2];
+  }
+
+  void setupGeom()
+  {
+    double cerr;
+    const double o = circumcenterBounded(cc, &cerr);
+    orientSgn = (o > 0) ? -1 : (o < 0) ? 1 : 0;
+    const double dx = base->getVertex(0)->x() - cc[0];
+    const double dy = base->getVertex(0)->y() - cc[1];
+    const double dz = base->getVertex(0)->z() - cc[2];
+    r2 = dx * dx + dy * dy + dz * dz;
+    circum_radius = std::sqrt(r2);
+    sphTol = orientSgn ? 2. * cerr : 1.e300;
+  }
 
   void setup(MTetrahedron *t, std::vector<double> &sizes,
              std::vector<double> &sizesBGM, bool extend)
@@ -98,13 +142,7 @@ public:
     base = t;
     gr = nullptr;
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
-    double center[3];
-    const double o = circumcenter(center);
-    orientSgn = (o > 0) ? -1 : (o < 0) ? 1 : 0;
-    const double dx = base->getVertex(0)->x() - center[0];
-    const double dy = base->getVertex(0)->y() - center[1];
-    const double dz = base->getVertex(0)->z() - center[2];
-    circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
+    setupGeom();
     double lc1 = 0.25 * (sizes[base->getVertex(0)->getIndex()] +
                          sizes[base->getVertex(1)->getIndex()] +
                          sizes[base->getVertex(2)->getIndex()] +
@@ -124,13 +162,7 @@ public:
     base = t;
     gr = nullptr;
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
-    double center[3];
-    const double o = circumcenter(center);
-    orientSgn = (o > 0) ? -1 : (o < 0) ? 1 : 0;
-    const double dx = base->getVertex(0)->x() - center[0];
-    const double dy = base->getVertex(0)->y() - center[1];
-    const double dz = base->getVertex(0)->z() - center[2];
-    circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
+    setupGeom();
     double lc1 = 0.25 * (sizes[base->getVertex(0)->getIndex()] +
                          sizes[base->getVertex(1)->getIndex()] +
                          sizes[base->getVertex(2)->getIndex()] + lcA);
