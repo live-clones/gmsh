@@ -255,14 +255,15 @@ struct faceXtet {
 
 // connect the tets by sorting their faces, with the sorted vertex numbers of
 // each face stored inline, so that the sort neither chases the vertex
-// pointers nor moves large entries around
-template <class ITER>
-void connectTetsFast(std::size_t _size, ITER beg, ITER end)
+// pointers nor moves large entries around; KEY is the smallest unsigned
+// integer type that can hold the vertex numbers
+template <class KEY, class ITER>
+void connectTetsFastT(std::size_t _size, ITER beg, ITER end)
 {
   struct tetFace {
-    std::size_t v0, v1, v2;
-    MTet4 *t;
+    KEY v0, v1, v2;
     int i;
+    MTet4 *t;
     bool operator<(const tetFace &o) const
     {
       if(v0 != o.v0) return v0 < o.v0;
@@ -279,15 +280,16 @@ void connectTetsFast(std::size_t _size, ITER beg, ITER end)
   for(ITER IT = beg; IT != end; ++IT) {
     MTet4 *t = *IT;
     if(t->isDeleted()) continue;
-    std::size_t n[4] = {
-      t->tet()->getVertex(0)->getNum(), t->tet()->getVertex(1)->getNum(),
-      t->tet()->getVertex(2)->getNum(), t->tet()->getVertex(3)->getNum()};
+    KEY n[4] = {(KEY)t->tet()->getVertex(0)->getNum(),
+                (KEY)t->tet()->getVertex(1)->getNum(),
+                (KEY)t->tet()->getVertex(2)->getNum(),
+                (KEY)t->tet()->getVertex(3)->getNum()};
     for(int j = 0; j < 4; j++) {
-      std::size_t a = n[faces[j][0]], b = n[faces[j][1]], c = n[faces[j][2]];
+      KEY a = n[faces[j][0]], b = n[faces[j][1]], c = n[faces[j][2]];
       if(a > b) std::swap(a, b);
       if(b > c) std::swap(b, c);
       if(a > b) std::swap(a, b);
-      conn.push_back({a, b, c, t, j});
+      conn.push_back({a, b, c, j, t});
     }
   }
   std::sort(conn.begin(), conn.end());
@@ -300,6 +302,15 @@ void connectTetsFast(std::size_t _size, ITER beg, ITER end)
       ++i;
     }
   }
+}
+
+template <class ITER>
+void connectTetsFast(std::size_t _size, ITER beg, ITER end)
+{
+  if(GModel::current()->getMaxVertexNumber() <= 0xffffffffull)
+    connectTetsFastT<std::uint32_t>(_size, beg, end);
+  else
+    connectTetsFastT<std::size_t>(_size, beg, end);
 }
 
 template <class ITER>
@@ -1108,9 +1119,18 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   if(gr->tetrahedra.empty()) return;
 
   typedef std::vector<MTet4 *> CONTAINER;
+  // the initial MTet4s live in one contiguous block; the local mesh
+  // modifications allocate the ones they create individually
+  std::vector<MTet4> initialTets(gr->tetrahedra.size());
+  auto inBlock = [&initialTets](MTet4 *t) {
+    return t >= initialTets.data() &&
+           t < initialTets.data() + initialTets.size();
+  };
   CONTAINER allTets;
+  allTets.reserve(gr->tetrahedra.size());
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
-    MTet4 *t = new MTet4(gr->tetrahedra[i], qm);
+    MTet4 *t = &initialTets[i];
+    *t = MTet4(gr->tetrahedra[i], qm);
     t->setOnWhat(gr);
     allTets.push_back(t);
   }
@@ -1269,14 +1289,11 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   }
 
   for(auto it = allTets.begin(); it != allTets.end(); ++it) {
-    if(!(*it)->isDeleted()) {
-      gr->tetrahedra.push_back((*it)->tet());
-      delete *it;
-    }
+    if(!(*it)->isDeleted()) { gr->tetrahedra.push_back((*it)->tet()); }
     else {
       delete(*it)->tet();
-      delete *it;
     }
+    if(!inBlock(*it)) delete *it;
   }
 }
 
