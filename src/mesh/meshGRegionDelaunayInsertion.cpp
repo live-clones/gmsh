@@ -2491,6 +2491,132 @@ public:
       return false;
     }
   }
+
+  // flat port of smoothVertex() and buildVertexCavity_recur() from
+  // meshGRegionLocalMeshMod.cpp, with the same logic and floating-point
+  // operations; hot[].radius plays the role of the stored MTet4 quality,
+  // and (as with the former MTet4 bridge) links to deleted tets are treated
+  // as absent
+  std::vector<std::uint32_t> smoothCavity;
+  std::vector<double> smoothQuals;
+
+  bool vertexCavityFlat(std::uint32_t t, std::uint32_t vIdx)
+  {
+    static const int vFac[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}};
+    int iV = -1;
+    for(int i = 0; i < 4; i++) {
+      if(tetV[4 * t + i] == vIdx) {
+        iV = i;
+        break;
+      }
+    }
+    if(iV == -1) {
+      Msg::Warning("Trying to build a cavity of tets for a node that does "
+                   "not belong to this tet - skipping cavity");
+      return false;
+    }
+    for(int i = 0; i < 3; i++) {
+      const std::uint32_t np = hot[t].N[vFac[iV][i]];
+      if(np != FLAT_NONE && !tetDeleted[np >> 2]) {
+        const std::uint32_t neigh = np >> 2;
+        bool found = false;
+        for(std::size_t j = 0; j < smoothCavity.size(); j++) {
+          if(smoothCavity[j] == neigh) {
+            found = true;
+            j = smoothCavity.size();
+          }
+        }
+        if(!found) {
+          smoothCavity.push_back(neigh);
+          if(!vertexCavityFlat(neigh, vIdx)) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  bool smoothVertexFlat(std::uint32_t t, int iVertex,
+                        const std::vector<std::uint8_t> &movable,
+                        const qmTetrahedron::Measures &cr)
+  {
+    const std::uint32_t vIdx = tetV[4 * t + iVertex];
+    if(!movable[vIdx]) return false;
+
+    smoothCavity.clear();
+    smoothCavity.push_back(t);
+    if(!vertexCavityFlat(t, vIdx)) return false;
+
+    double xcg = 0, ycg = 0, zcg = 0;
+    double vTot = 0;
+    double worst = 1.0;
+
+    for(std::size_t i = 0; i < smoothCavity.size(); i++) {
+      const std::uint32_t s = smoothCavity[i];
+      const double *w0 = &vXYZ[3 * tetV[4 * s + 0]];
+      const double *w1 = &vXYZ[3 * tetV[4 * s + 1]];
+      const double *w2 = &vXYZ[3 * tetV[4 * s + 2]];
+      const double *w3 = &vXYZ[3 * tetV[4 * s + 3]];
+      // same as fabs(MTetrahedron::getVolume())
+      double mat[3][3];
+      mat[0][0] = w1[0] - w0[0];
+      mat[0][1] = w2[0] - w0[0];
+      mat[0][2] = w3[0] - w0[0];
+      mat[1][0] = w1[1] - w0[1];
+      mat[1][1] = w2[1] - w0[1];
+      mat[1][2] = w3[1] - w0[1];
+      mat[2][0] = w1[2] - w0[2];
+      mat[2][1] = w2[2] - w0[2];
+      mat[2][2] = w3[2] - w0[2];
+      double volume = fabs(det3x3(mat) * 0.166666666666666666);
+      double q = hot[s].radius;
+      worst = std::min(worst, q);
+      xcg += 0.25 * (w0[0] + w1[0] + w2[0] + w3[0]) * volume;
+      ycg += 0.25 * (w0[1] + w1[1] + w2[1] + w3[1]) * volume;
+      zcg += 0.25 * (w0[2] + w1[2] + w2[2] + w3[2]) * volume;
+      vTot += volume;
+    }
+    xcg /= (vTot);
+    ycg /= (vTot);
+    zcg /= (vTot);
+    double volumeAfter = 0.0;
+
+    double *vc = &vXYZ[3 * vIdx];
+    const double x = vc[0];
+    const double y = vc[1];
+    const double z = vc[2];
+    vc[0] = xcg;
+    vc[1] = ycg;
+    vc[2] = zcg;
+    double worstAfter = 1.0;
+    smoothQuals.resize(smoothCavity.size());
+    for(std::size_t i = 0; i < smoothCavity.size(); i++) {
+      double volume;
+      const std::uint32_t s = smoothCavity[i];
+      const double *w0 = &vXYZ[3 * tetV[4 * s + 0]];
+      const double *w1 = &vXYZ[3 * tetV[4 * s + 1]];
+      const double *w2 = &vXYZ[3 * tetV[4 * s + 2]];
+      const double *w3 = &vXYZ[3 * tetV[4 * s + 3]];
+      smoothQuals[i] = qmTetrahedron::qm(w0[0], w0[1], w0[2], w1[0], w1[1],
+                                         w1[2], w2[0], w2[1], w2[2], w3[0],
+                                         w3[1], w3[2], cr, &volume);
+      volumeAfter += volume;
+      worstAfter = std::min(worstAfter, smoothQuals[i]);
+    }
+
+    if(fabs(volumeAfter - vTot) > 1.e-10 * vTot || worstAfter < worst) {
+      vc[0] = x;
+      vc[1] = y;
+      vc[2] = z;
+      return false;
+    }
+    else {
+      // restore new quality
+      for(std::size_t i = 0; i < smoothCavity.size(); i++) {
+        hot[smoothCavity[i]].radius = smoothQuals[i];
+      }
+      return true;
+    }
+  }
 };
 
 } // namespace
@@ -2781,20 +2907,7 @@ static void refineRegionFlat(GRegion *gr, int maxIter,
   Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)", aliveTets.size(),
             dt, (int)(aliveTets.size() / dt));
 
-  // materialize the new vertices, in insertion order
-  for(auto &nv : K.newVertices) {
-    MVertex *v =
-      new MVertex(nv.x, nv.y, nv.z, K.regions[nv.region], nv.num);
-    v->setIndex(nv.index);
-    K.vPtr[nv.index] = v;
-    K.regions[nv.region]->mesh_vertices.push_back(v);
-  }
-
-  // release everything the export no longer needs, and extract the radii
-  // and adjacencies of the surviving tets, so that the flat arrays can be
-  // freed before the MTet4 bridge of the smoothing pass gets allocated
-  const std::size_t nAlive = aliveTets.size();
-  const std::size_t nSlots = K.tetNum.size();
+  // release the queue containers, which the export does not need
   for(auto &b : K.buckets) std::vector<flatKernel::qEntry>().swap(b);
   std::vector<flatKernel::qEntry>().swap(K.active);
   std::vector<flatKernel::qEntry>().swap(K.overflow);
@@ -2803,31 +2916,59 @@ static void refineRegionFlat(GRegion *gr, int maxIter,
   std::vector<std::uint64_t>().swap(K.embEdges);
   std::vector<std::array<std::uint32_t, 3> >().swap(K.embFaces);
   std::vector<std::int8_t>().swap(K.tetOrient);
-  std::vector<std::uint8_t>().swap(K.tetDeleted);
-  std::vector<double>().swap(K.vXYZ);
-  std::vector<double> aliveRadius(nAlive);
-  std::vector<std::uint32_t> aliveN(4 * nAlive);
-  {
-    // map slot -> position in aliveTets to convert the packed adjacencies
-    std::vector<std::uint32_t> slotPos(nSlots, FLAT_NONE);
-    for(std::size_t bi = 0; bi < nAlive; bi++) slotPos[aliveTets[bi]] = bi;
-    for(std::size_t bi = 0; bi < nAlive; bi++) {
-      const std::uint32_t s = aliveTets[bi];
-      aliveRadius[bi] = K.hot[s].radius;
-      for(int k = 0; k < 4; k++) {
-        const std::uint32_t np = K.hot[s].N[k];
-        aliveN[4 * bi + k] = (np == FLAT_NONE) ? FLAT_NONE : slotPos[np >> 2];
+
+  // relocate vertices, on the flat arrays
+  int nbReloc = 0;
+  if(CTX::instance()->mesh.nbSmoothing > 0) {
+    std::vector<std::uint8_t> movable(K.vPtr.size());
+    for(std::size_t i = 0; i < K.vPtr.size(); i++) {
+      // vertices created by the refinement are not materialized yet and are
+      // all inside a volume, i.e. movable
+      movable[i] = K.vPtr[i] ? (K.vPtr[i]->onWhat() &&
+                                K.vPtr[i]->onWhat()->dim() == 3) :
+                               1;
+    }
+    for(int SM = 0; SM < CTX::instance()->mesh.nbSmoothing; SM++) {
+      for(auto s : aliveTets) {
+        if(!K.tetDeleted[s]) {
+          double qq = K.hot[s].radius;
+          if(qq < .4)
+            for(int i = 0; i < 4; i++) {
+              if(K.smoothVertexFlat(s, i, movable, qmTetrahedron::QMTET_GAMMA))
+                nbReloc++;
+            }
+        }
+      }
+    }
+    // write the relocated coordinates back into the pre-existing vertices
+    for(std::size_t i = 0; i < K.vPtr.size(); i++) {
+      if(K.vPtr[i] && movable[i]) {
+        K.vPtr[i]->x() = K.vXYZ[3 * i];
+        K.vPtr[i]->y() = K.vXYZ[3 * i + 1];
+        K.vPtr[i]->z() = K.vXYZ[3 * i + 2];
       }
     }
   }
-  std::vector<flatKernel::tetHot>().swap(K.hot);
 
-  // materialize the tets (reusing the imported MTetrahedra), bridge them to
-  // MTet4s (in one contiguous block) for the smoothing pass, then hand them
-  // to their regions
-  std::vector<MTet4> bridge(nAlive);
-  for(std::size_t bi = 0; bi < nAlive; bi++) {
-    const std::uint32_t s = aliveTets[bi];
+  Msg::Info("%d node relocations", nbReloc);
+
+  // materialize the new vertices in insertion order, with their (possibly
+  // relocated) coordinates
+  for(auto &nv : K.newVertices) {
+    MVertex *v = new MVertex(K.vXYZ[3 * nv.index], K.vXYZ[3 * nv.index + 1],
+                             K.vXYZ[3 * nv.index + 2], K.regions[nv.region],
+                             nv.num);
+    v->setIndex(nv.index);
+    K.vPtr[nv.index] = v;
+    K.regions[nv.region]->mesh_vertices.push_back(v);
+  }
+  std::vector<flatKernel::tetHot>().swap(K.hot);
+  std::vector<std::uint8_t>().swap(K.tetDeleted);
+  std::vector<double>().swap(K.vXYZ);
+
+  // materialize the tets (reusing the imported MTetrahedra) and hand them to
+  // their regions
+  for(auto s : aliveTets) {
     MTetrahedron *mt = K.tetMT[s];
     if(!mt) {
       mt = new MTetrahedron(K.vPtr[K.tetV[4 * s + 0]],
@@ -2839,40 +2980,7 @@ static void refineRegionFlat(GRegion *gr, int maxIter,
       if(K.tetNum[s] > 0x7fffffffull) mt->forceNum(K.tetNum[s]);
     }
     K.tetMT[s] = nullptr;
-    MTet4 *t4 = &bridge[bi];
-    t4->setTet(mt);
-    t4->forceRadius(aliveRadius[bi]);
-    t4->setOnWhat(K.regions[K.tetRegion[s]]);
-  }
-  std::vector<MTetrahedron *>().swap(K.tetMT);
-  std::vector<std::uint32_t>().swap(K.tetV);
-  std::vector<double>().swap(aliveRadius);
-  for(std::size_t bi = 0; bi < nAlive; bi++) {
-    for(int k = 0; k < 4; k++) {
-      const std::uint32_t np = aliveN[4 * bi + k];
-      if(np != FLAT_NONE) bridge[bi].setNeigh(k, &bridge[np]);
-    }
-  }
-  std::vector<std::uint32_t>().swap(aliveN);
-
-  // relocate vertices
-  int nbReloc = 0;
-  for(int SM = 0; SM < CTX::instance()->mesh.nbSmoothing; SM++) {
-    for(auto it = bridge.begin(); it != bridge.end(); ++it) {
-      if(!it->isDeleted()) {
-        double qq = it->getQuality();
-        if(qq < .4)
-          for(int i = 0; i < 4; i++) {
-            if(smoothVertex(&(*it), i, qmTetrahedron::QMTET_GAMMA)) nbReloc++;
-          }
-      }
-    }
-  }
-
-  Msg::Info("%d node relocations", nbReloc);
-
-  for(auto it = bridge.begin(); it != bridge.end(); ++it) {
-    if(!it->isDeleted()) { it->onWhat()->tetrahedra.push_back(it->tet()); }
+    K.regions[K.tetRegion[s]]->tetrahedra.push_back(mt);
   }
 }
 
