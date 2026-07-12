@@ -507,7 +507,7 @@ int Cell::getTypeMSH() const
 bool Cell::hasVertex(int vertex) const
 {
   for(int i = 0; i < (int)_nv; i++) {
-    if(_v[i]->getNum() == vertex) return true;
+    if(_v[i]->getNum() == (std::size_t)vertex) return true;
   }
   return false;
 }
