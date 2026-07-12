@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include "GmshMessage.h"
 #include "robustPredicates.h"
 #include "OS.h"
@@ -732,8 +733,8 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
 }
 
 static void setLcs(MElement *t,
-                   std::map<MVertex *, double, MVertexPtrLessThan> &vSizes,
-                   std::set<MVertex *, MVertexPtrLessThan> &bndVertices)
+                   std::unordered_map<MVertex *, double> &vSizes,
+                   std::unordered_set<MVertex *> &bndVertices)
 {
   auto setLc = [&](MVertex *vi, MVertex *vj) {
     bndVertices.insert(vi);
@@ -789,8 +790,8 @@ static void setLcs(MElement *t,
 }
 
 static void setLcs(MTetrahedron *t,
-                   std::map<MVertex *, double, MVertexPtrLessThan> &vSizes,
-                   std::set<MVertex *, MVertexPtrLessThan> &bndVertices)
+                   std::unordered_map<MVertex *, double> &vSizes,
+                   std::unordered_set<MVertex *> &bndVertices)
 {
   for(int i = 0; i < 4; i++) {
     for(int j = i + 1; j < 4; j++) {
@@ -1506,8 +1507,8 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   // leave this in a block so the map gets deallocated directly
   {
-    std::map<MVertex *, double, MVertexPtrLessThan> vSizesMap;
-    std::set<MVertex *, MVertexPtrLessThan> bndVertices;
+    std::unordered_map<MVertex *, double> vSizesMap;
+    std::unordered_set<MVertex *> bndVertices;
 
     for(auto rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion();
         ++rit) {
@@ -1559,10 +1560,22 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
     for(std::size_t i = 0; i < gr->tetrahedra.size(); i++)
       setLcs(gr->tetrahedra[i], vSizesMap, bndVertices);
 
-    for(auto it = vSizesMap.begin(); it != vSizesMap.end(); ++it) {
-      it->first->setIndex(NUM++);
-      vSizes.push_back(it->second);
-      vSizesBGM.push_back(it->second);
+    // assign the vertex indices in the same order (by vertex number) as the
+    // former MVertexPtrLessThan-sorted map
+    std::vector<std::pair<std::size_t, std::pair<MVertex *, double> > > bynum;
+    bynum.reserve(vSizesMap.size());
+    for(auto it = vSizesMap.begin(); it != vSizesMap.end(); ++it)
+      bynum.push_back(
+        std::make_pair(it->first->getNum(), std::make_pair(it->first,
+                                                           it->second)));
+    std::sort(bynum.begin(), bynum.end(),
+              [](const std::pair<std::size_t, std::pair<MVertex *, double> > &a,
+                 const std::pair<std::size_t, std::pair<MVertex *, double> > &b)
+              { return a.first < b.first; });
+    for(auto &p : bynum) {
+      p.second.first->setIndex(NUM++);
+      vSizes.push_back(p.second.second);
+      vSizesBGM.push_back(p.second.second);
     }
   }
 
