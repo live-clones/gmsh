@@ -1669,7 +1669,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
   }
   Msg::Debug("All %d tets were connected", tets0.size());
 
-  if(CTX::instance()->mesh.flatRefine3D)
+  if(CTX::instance()->mesh.flatRefineDelaunay3D)
     refineRegionFlat(gr, maxIter, worstTetRadiusTarget, tets0, myFactory,
                      vSizes, vSizesBGM, NUM, allEmbeddedFaces,
                      allEmbeddedEdges);
@@ -1883,7 +1883,8 @@ static void refineRegionMTet4(GRegion *gr, int maxIter,
 }
 
 // ---------------------------------------------------------------------------
-// Flat-array refinement kernel (selected with Mesh.FlatRefine3D): the same
+// Flat-array refinement kernel (selected with Mesh.FlatRefineDelaunay3D):
+// the same
 // algorithm and floating-point operations as refineRegionMTet4, but operating
 // on index-based arrays instead of MTet4/MTetrahedron/MVertex objects, which
 // are only materialized when the refinement is done. The meshes produced are

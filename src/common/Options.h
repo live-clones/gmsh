@@ -570,7 +570,7 @@ double opt_mesh_recombine_minimum_quality(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_level(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM);
-double opt_mesh_flat_refine3d(OPT_ARGS_NUM);
+double opt_mesh_flat_refine_delaunay3d(OPT_ARGS_NUM);
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
 double opt_mesh_quasi_transfinite(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
