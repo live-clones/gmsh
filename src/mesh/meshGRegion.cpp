@@ -122,14 +122,38 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
 
 static void _deleteUnusedVertices(GRegion *gr)
 {
-  // sort on inline keys, as sorting the pointers with MVertexPtrLessThan
-  // reads the vertex numbers through the pointers at each comparison
+  // deduplicate the tet corners first (through the vertex indices set by the
+  // refinement), so that only the unique vertices need to be sorted - on
+  // inline keys, as sorting pointers with MVertexPtrLessThan reads the
+  // vertex numbers through the pointers at each comparison
   std::vector<std::pair<std::size_t, MVertex *> > allverts;
-  allverts.reserve(4 * gr->tetrahedra.size());
-  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+  std::vector<std::uint8_t> seen;
+  bool haveIndices = true;
+  for(std::size_t i = 0; i < gr->tetrahedra.size() && haveIndices; i++) {
     for(int j = 0; j < 4; j++) {
       MVertex *v = gr->tetrahedra[i]->getVertex(j);
-      if(v->onWhat() == gr) allverts.push_back(std::make_pair(v->getNum(), v));
+      if(v->onWhat() != gr) continue;
+      const long idx = v->getIndex();
+      if(idx < 0) {
+        haveIndices = false;
+        break;
+      }
+      if((std::size_t)idx >= seen.size()) seen.resize(idx + 1, 0);
+      if(!seen[idx]) {
+        seen[idx] = 1;
+        allverts.push_back(std::make_pair(v->getNum(), v));
+      }
+    }
+  }
+  if(!haveIndices) {
+    allverts.clear();
+    allverts.reserve(4 * gr->tetrahedra.size());
+    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+      for(int j = 0; j < 4; j++) {
+        MVertex *v = gr->tetrahedra[i]->getVertex(j);
+        if(v->onWhat() == gr)
+          allverts.push_back(std::make_pair(v->getNum(), v));
+      }
     }
   }
   std::sort(allverts.begin(), allverts.end());
