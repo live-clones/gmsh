@@ -2449,7 +2449,7 @@ GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int bounda
   }
 }
 
-GMSH_API void gmshModelMeshClassifySurfaces(const double angle, int ** oldSurfaceTags, size_t * oldSurfaceTags_n, int ** newSurfaceTags, size_t * newSurfaceTags_n, const int boundary, const int forReparametrization, const double curveAngle, const int exportDiscrete, int * ierr)
+GMSH_API void gmshModelMeshClassifySurfacesWithTags(const double angle, int ** oldSurfaceTags, size_t * oldSurfaceTags_n, int ** newSurfaceTags, size_t * newSurfaceTags_n, const int boundary, const int forReparametrization, const double curveAngle, const int exportDiscrete, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {

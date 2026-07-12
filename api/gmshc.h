@@ -1677,14 +1677,14 @@ GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
  * force curves to be split according to `curveAngle'. If `exportDiscrete'
  * is set, clear any built-in CAD kernel entities and export the discrete 
  * entities in the built-in CAD kernel. */
-GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
-                                            int ** oldSurfaceTags, size_t * oldSurfaceTags_n,
-                                            int ** newSurfaceTags, size_t * newSurfaceTags_n,
-                                            const int boundary,
-                                            const int forReparametrization,
-                                            const double curveAngle,
-                                            const int exportDiscrete,
-                                            int * ierr);
+GMSH_API void gmshModelMeshClassifySurfacesWithTags(const double angle,
+                                                    int ** oldSurfaceTags, size_t * oldSurfaceTags_n,
+                                                    int ** newSurfaceTags, size_t * newSurfaceTags_n,
+                                                    const int boundary,
+                                                    const int forReparametrization,
+                                                    const double curveAngle,
+                                                    const int exportDiscrete,
+                                                    int * ierr);
 
 /* Create a geometry for the discrete entities `dimTags' (given as a vector of
  * (dim, tag) pairs) represented solely by a mesh (without an underlying CAD

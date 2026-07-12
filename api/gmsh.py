@@ -5203,7 +5203,7 @@ class model:
             api_oldSurfaceTags_, api_oldSurfaceTags_n_ = POINTER(c_int)(), c_size_t()
             api_newSurfaceTags_, api_newSurfaceTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshClassifySurfaces(
+            lib.gmshModelMeshClassifySurfacesWithTags(
                 c_double(angle),
                 byref(api_oldSurfaceTags_), byref(api_oldSurfaceTags_n_),
                 byref(api_newSurfaceTags_), byref(api_newSurfaceTags_n_),
