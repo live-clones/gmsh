@@ -504,22 +504,6 @@ int Cell::getTypeMSH() const
   }
 }
 
-bool Cell::hasVertex(int vertex) const
-{
-  for(int i = 0; i < (int)_nv; i++) {
-    if(_v[i]->getNum() == vertex) return true;
-  }
-  return false;
-}
-
-bool CombinedCell::hasVertex(int vertex) const
-{
-  for(auto cit = _cells.begin(); cit != _cells.end(); cit++) {
-    if(cit->first->hasVertex(vertex)) return true;
-  }
-  return false;
-}
-
 void Cell::printCell()
 {
   printf("%d-cell %d: \n", getDim(), getNum());
