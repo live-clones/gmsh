@@ -1468,6 +1468,15 @@ static int isCavityCompatibleWithEmbeddedFace(
   return 1;
 }
 
+static void refineRegionMTet4(GRegion *gr, int maxIter,
+                              double worstTetRadiusTarget,
+                              std::vector<MTet4 *> &tets0,
+                              MTet4Factory &myFactory,
+                              std::vector<double> &vSizes,
+                              std::vector<double> &vSizesBGM, int &NUM,
+                              const std::set<MFace, MFaceLessThan> &allEmbeddedFaces,
+                              edgeContainerB &allEmbeddedEdges);
+
 void insertVerticesInRegion(GRegion *gr, int maxIter,
                             double worstTetRadiusTarget, bool _classify,
                             splitQuadRecovery *sqr)
@@ -1478,7 +1487,6 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   std::vector<double> vSizes, vSizesBGM;
   MTet4Factory myFactory;
-  tetRadiusQueue allTets(myFactory, worstTetRadiusTarget);
   // initial tets, ordered as the tetRadiusQueue (and the former std::set
   // container) would order them, so that the classification below - whose
   // iteration order can influence vertex and element ordering - is unchanged
@@ -1650,13 +1658,31 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
   }
   Msg::Debug("All %d tets were connected", tets0.size());
 
+  refineRegionMTet4(gr, maxIter, worstTetRadiusTarget, tets0, myFactory,
+                    vSizes, vSizesBGM, NUM, allEmbeddedFaces,
+                    allEmbeddedEdges);
+}
+
+// Bowyer-Watson refinement kernel: consumes the classified and connected tets
+// of tets0 (all MTet4 wrappers are freed), grows vSizes/vSizesBGM and the
+// vertex index counter NUM as nodes are inserted, adds the new vertices and
+// the final tets to their respective regions
+static void refineRegionMTet4(GRegion *gr, int maxIter,
+                              double worstTetRadiusTarget,
+                              std::vector<MTet4 *> &tets0,
+                              MTet4Factory &myFactory,
+                              std::vector<double> &vSizes,
+                              std::vector<double> &vSizesBGM, int &NUM,
+                              const std::set<MFace, MFaceLessThan> &allEmbeddedFaces,
+                              edgeContainerB &allEmbeddedEdges)
+{
+  tetRadiusQueue allTets(myFactory, worstTetRadiusTarget);
+
   for(auto t : tets0) allTets.push(t);
   tets0.clear();
 
   // alive tets whose queue entry was consumed by a failed insertion
   std::vector<MTet4 *> failedTets;
-
-  // here the classification should be done
 
   int ITER = 0, REALCOUNT = 0;
   int NB_CORRECTION_OF_CAVITY = 0;
