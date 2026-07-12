@@ -151,9 +151,6 @@ public:
   void saveCellBoundary();
   void restoreCellBoundary();
 
-  // true if this cell has given vertex
-  virtual bool hasVertex(int vertex) const;
-
   // (co)boundary cell iterator
   typedef std::vector<std::pair<Cell *, BdInfo> >::iterator biter;
 
@@ -231,7 +228,6 @@ public:
     cells = _cells;
   }
   int getNumCells() const { return _cells.size(); }
-  bool hasVertex(int vertex) const;
 
   bool operator==(const Cell &c2) const
   {
