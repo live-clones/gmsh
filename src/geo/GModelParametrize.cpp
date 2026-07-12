@@ -521,6 +521,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
 
 void classifyFacesFromDiscrete(GModel *gm)
 {
+#if defined(HAVE_MESH)
   Msg::StatusBar(true, "Classifying surfaces from discrete...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
@@ -729,6 +730,9 @@ void classifyFacesFromDiscrete(GModel *gm)
   Msg::StatusBar(true,
                  "Done classifying surfaces from discrete (Wall %gs, CPU %gs)",
                  w2 - w1, t2 - t1);
+#else
+  Msg::Error("Surface classification requires the mesh module");
+#endif
 }
 
 int computeDiscreteCurvatures(GModel *gm)
