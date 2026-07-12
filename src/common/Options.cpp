@@ -6211,6 +6211,12 @@ double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombine3DConformity;
 }
 
+double opt_mesh_flat_refine3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) { CTX::instance()->mesh.flatRefine3D = (int)val; }
+  return CTX::instance()->mesh.flatRefine3D;
+}
+
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
