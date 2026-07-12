@@ -123,6 +123,9 @@ public:
     res[1] = cc[1];
     res[2] = cc[2];
   }
+  double cachedR2() const { return r2; }
+  double cachedSphTol() const { return sphTol; }
+  int cachedOrientSgn() const { return orientSgn; }
 
   void setupGeom()
   {

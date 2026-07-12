@@ -3,10 +3,12 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <array>
 #include <set>
 #include <map>
 #include <algorithm>
 #include <queue>
+#include <unordered_map>
 #include "GmshMessage.h"
 #include "robustPredicates.h"
 #include "OS.h"
@@ -1477,6 +1479,15 @@ static void refineRegionMTet4(GRegion *gr, int maxIter,
                               const std::set<MFace, MFaceLessThan> &allEmbeddedFaces,
                               edgeContainerB &allEmbeddedEdges);
 
+static void refineRegionFlat(GRegion *gr, int maxIter,
+                             double worstTetRadiusTarget,
+                             std::vector<MTet4 *> &tets0,
+                             MTet4Factory &myFactory,
+                             std::vector<double> &vSizes,
+                             std::vector<double> &vSizesBGM, int &NUM,
+                             const std::set<MFace, MFaceLessThan> &allEmbeddedFaces,
+                             edgeContainerB &allEmbeddedEdges);
+
 void insertVerticesInRegion(GRegion *gr, int maxIter,
                             double worstTetRadiusTarget, bool _classify,
                             splitQuadRecovery *sqr)
@@ -1658,9 +1669,14 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
   }
   Msg::Debug("All %d tets were connected", tets0.size());
 
-  refineRegionMTet4(gr, maxIter, worstTetRadiusTarget, tets0, myFactory,
-                    vSizes, vSizesBGM, NUM, allEmbeddedFaces,
-                    allEmbeddedEdges);
+  if(CTX::instance()->mesh.flatRefine3D)
+    refineRegionFlat(gr, maxIter, worstTetRadiusTarget, tets0, myFactory,
+                     vSizes, vSizesBGM, NUM, allEmbeddedFaces,
+                     allEmbeddedEdges);
+  else
+    refineRegionMTet4(gr, maxIter, worstTetRadiusTarget, tets0, myFactory,
+                      vSizes, vSizesBGM, NUM, allEmbeddedFaces,
+                      allEmbeddedEdges);
 }
 
 // Bowyer-Watson refinement kernel: consumes the classified and connected tets
@@ -1863,6 +1879,1000 @@ static void refineRegionMTet4(GRegion *gr, int maxIter,
       worst->tet() = nullptr;
     }
     myFactory.Free(worst);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Flat-array refinement kernel (selected with Mesh.FlatRefine3D): the same
+// algorithm and floating-point operations as refineRegionMTet4, but operating
+// on index-based arrays instead of MTet4/MTetrahedron/MVertex objects, which
+// are only materialized when the refinement is done. The meshes produced are
+// bit-for-bit identical, including the node and element numbering.
+
+namespace {
+
+constexpr std::uint32_t FLAT_NONE = 0xffffffffu;
+
+class flatKernel {
+public:
+  GRegion *gr;
+  std::vector<double> &vSizes, &vSizesBGM;
+  int &NUM;
+  bool extend;
+  bool hasEmbedded;
+
+  // regions referenced by the tets (onWhat values)
+  std::vector<GRegion *> regions;
+
+  // vertices, indexed like MVertex::getIndex(); Steiner points are appended
+  std::vector<double> vXYZ; // 3 per vertex
+  std::vector<MVertex *> vPtr; // null for not-yet-materialized Steiner points
+
+  // tets; slots of deleted tets are recycled through freeSlots
+  std::vector<std::uint32_t> tetV; // 4 vertex indices per tet
+  // hot per-tet block: a single 64-byte cache line holding everything the
+  // cavity search needs (cached circumsphere, queue key, packed neighbors)
+  struct alignas(64) tetHot {
+    double cc[3], r2, sphTol;
+    double radius; // normalized circumradius (queue key)
+    std::uint32_t N[4]; // packed neighbors (4 * tet + face)
+  };
+  std::vector<tetHot> hot;
+  std::vector<std::uint64_t> tetNum; // element number
+  std::vector<std::uint16_t> tetRegion; // index into regions (0xffff: void)
+  std::vector<std::int8_t> tetOrient;
+  std::vector<std::uint8_t> tetDeleted;
+  std::vector<MTetrahedron *> tetMT; // imported elements, null for new tets
+  std::vector<std::uint32_t> freeSlots;
+
+  // embedded entities as sorted vertex index pairs/triples
+  std::vector<std::uint64_t> embEdges;
+  std::vector<std::array<std::uint32_t, 3> > embFaces;
+
+  // successful insertions, replayed at export to materialize the vertices
+  struct newVertex {
+    double x, y, z;
+    std::size_t num;
+    int index;
+    std::uint16_t region;
+  };
+  std::vector<newVertex> newVertices;
+
+  // Priority queue with the same total order as tetRadiusQueue (radius
+  // descending, ties on the smaller element number), but organized in
+  // disjoint radius buckets: entries are appended unsorted to their bucket,
+  // and only the highest nonempty ("active") bucket is sorted, once, and
+  // consumed through a cursor. Entries pushed into the active radius range
+  // go to a small overflow heap. Since the buckets partition the radius axis,
+  // popping the best of (cursor head, overflow top) yields the exact global
+  // maximum, so the insertion order - and thus the mesh - is unchanged.
+  struct qEntry {
+    double radius;
+    std::uint32_t num; // element number relative to numBase (see qNum)
+    std::uint32_t t;
+  };
+  static const int NB_BUCKETS = 256;
+  std::vector<qEntry> buckets[NB_BUCKETS];
+  std::vector<qEntry> active; // sorted descending, consumed via cursor
+  std::size_t cursor;
+  std::vector<qEntry> overflow; // 4-ary max-heap
+  int activeB, pendingHigh;
+  std::vector<std::uint32_t> smallList;
+  std::size_t smallAlive;
+  double threshold;
+  std::uint64_t numBase; // smallest element number in play
+  std::uint32_t qNum(std::uint32_t t) const
+  {
+    const std::uint64_t d = tetNum[t] - numBase;
+    if(d > 0xfffffff0ull) {
+      Msg::Error("Element number range too large for the refinement queue");
+      return 0xfffffff0u;
+    }
+    return (std::uint32_t)d;
+  }
+
+  flatKernel(GRegion *_gr, std::vector<double> &_vSizes,
+             std::vector<double> &_vSizesBGM, int &_NUM, double _threshold)
+    : gr(_gr), vSizes(_vSizes), vSizesBGM(_vSizesBGM), NUM(_NUM),
+      extend(Extend2dMeshIn3dVolumes()), hasEmbedded(false), cursor(0),
+      activeB(-1), pendingHigh(-1), smallAlive(0), threshold(_threshold),
+      numBase(0)
+  {
+  }
+  ~flatKernel()
+  {
+    for(auto t : tetMT) {
+      if(t) delete t;
+    }
+  }
+
+  void freeSlot(std::uint32_t s)
+  {
+    if(tetMT[s]) {
+      delete tetMT[s];
+      tetMT[s] = nullptr;
+    }
+    freeSlots.push_back(s);
+  }
+  std::uint32_t allocSlot()
+  {
+    std::uint32_t s;
+    if(!freeSlots.empty()) {
+      s = freeSlots.back();
+      freeSlots.pop_back();
+    }
+    else {
+      s = (std::uint32_t)tetNum.size();
+      tetV.resize(tetV.size() + 4);
+      hot.resize(hot.size() + 1);
+      tetNum.push_back(0);
+      tetRegion.push_back(0xffff);
+      tetOrient.push_back(0);
+      tetDeleted.push_back(0);
+      tetMT.push_back(nullptr);
+    }
+    tetDeleted[s] = 0;
+    tetMT[s] = nullptr;
+    for(int k = 0; k < 4; k++) hot[s].N[k] = FLAT_NONE;
+    return s;
+  }
+
+  static bool qLess(const qEntry &a, const qEntry &b)
+  {
+    if(a.radius != b.radius) return a.radius < b.radius;
+    return a.num > b.num;
+  }
+  static bool qGreater(const qEntry &a, const qEntry &b)
+  {
+    if(a.radius != b.radius) return a.radius > b.radius;
+    return a.num < b.num;
+  }
+  int bucketOf(double r) const
+  {
+    // exponent-based buckets on r/threshold - 1, so that the resolution is
+    // finest near the threshold where the radii concentrate
+    const double x = r / threshold - 1.;
+    if(x <= 0.) return 0;
+    int e;
+    const double m = std::frexp(x, &e);
+    int b = 4 * (44 + e) + (int)((m - 0.5) * 8.);
+    if(b < 0) b = 0;
+    if(b >= NB_BUCKETS) b = NB_BUCKETS - 1;
+    return b;
+  }
+  void qPush(std::uint32_t t)
+  {
+    const double r = hot[t].radius;
+    if(r < threshold) {
+      smallList.push_back(t);
+      if(smallList.size() > 2 * smallAlive + 1024) sweepSmall();
+      return;
+    }
+    const int b = bucketOf(r);
+    if(b == activeB) {
+      overflow.push_back({r, qNum(t), t});
+      std::size_t i = overflow.size() - 1;
+      while(i) {
+        std::size_t p = (i - 1) >> 2;
+        if(qLess(overflow[p], overflow[i]))
+          std::swap(overflow[p], overflow[i]);
+        else
+          break;
+        i = p;
+      }
+    }
+    else {
+      buckets[b].push_back({r, qNum(t), t});
+      if(b > activeB && b > pendingHigh) pendingHigh = b;
+    }
+  }
+  void qActivate(int b)
+  {
+    active = std::move(buckets[b]);
+    buckets[b].clear();
+    std::sort(active.begin(), active.end(),
+              [](const qEntry &a, const qEntry &b) { return qGreater(a, b); });
+    cursor = 0;
+    activeB = b;
+  }
+  // make the next entry available; returns false if no entries remain
+  bool qNormalize()
+  {
+    if(pendingHigh > activeB) {
+      // entries appeared above the active radius range: put the remains of
+      // the active bucket back and activate the highest pending bucket
+      if(activeB >= 0) {
+        for(std::size_t i = cursor; i < active.size(); i++)
+          buckets[activeB].push_back(active[i]);
+        buckets[activeB].insert(buckets[activeB].end(), overflow.begin(),
+                                overflow.end());
+        active.clear();
+        overflow.clear();
+        cursor = 0;
+      }
+      const int b = pendingHigh;
+      pendingHigh = -1;
+      qActivate(b);
+    }
+    while(cursor >= active.size() && overflow.empty()) {
+      int b = activeB;
+      while(b >= 0 && buckets[b].empty()) b--;
+      if(b < 0) return false;
+      qActivate(b);
+    }
+    return true;
+  }
+  // qNormalize() must have returned true before calling qTop()/qPop()
+  bool qTopIsCursor() const
+  {
+    if(cursor >= active.size()) return false;
+    if(overflow.empty()) return true;
+    return qLess(overflow.front(), active[cursor]);
+  }
+  const qEntry &qTop() const
+  {
+    return qTopIsCursor() ? active[cursor] : overflow.front();
+  }
+  void qPop()
+  {
+    if(qTopIsCursor()) {
+      cursor++;
+      return;
+    }
+    qEntry last = overflow.back();
+    overflow.pop_back();
+    const std::size_t n = overflow.size();
+    if(!n) return;
+    std::size_t i = 0;
+    while(true) {
+      std::size_t c = 4 * i + 1;
+      if(c >= n) break;
+      std::size_t best = c;
+      std::size_t end = std::min(c + 4, n);
+      for(std::size_t j = c + 1; j < end; j++)
+        if(qLess(overflow[best], overflow[j])) best = j;
+      if(qLess(last, overflow[best])) {
+        overflow[i] = overflow[best];
+        i = best;
+      }
+      else
+        break;
+    }
+    overflow[i] = last;
+  }
+  void sweepSmall()
+  {
+    std::size_t kept = 0;
+    for(std::size_t i = 0; i < smallList.size(); i++) {
+      if(tetDeleted[smallList[i]])
+        freeSlot(smallList[i]);
+      else
+        smallList[kept++] = smallList[i];
+    }
+    smallList.resize(kept);
+    smallAlive = kept;
+  }
+  void drainSorted(std::vector<std::uint32_t> &extraTets,
+                   std::vector<std::uint32_t> &sorted)
+  {
+    std::vector<qEntry> all;
+    for(std::size_t i = cursor; i < active.size(); i++) all.push_back(active[i]);
+    for(auto &e : overflow) all.push_back(e);
+    for(int b = 0; b < NB_BUCKETS; b++)
+      for(auto &e : buckets[b]) all.push_back(e);
+    active.clear();
+    overflow.clear();
+    for(auto &e : all) {
+      if(tetDeleted[e.t]) {
+        freeSlot(e.t);
+        e.t = FLAT_NONE;
+      }
+    }
+    sweepSmall();
+    for(auto t : smallList) all.push_back({hot[t].radius, qNum(t), t});
+    smallList.clear();
+    for(auto t : extraTets) {
+      if(tetDeleted[t])
+        freeSlot(t);
+      else
+        all.push_back({hot[t].radius, qNum(t), t});
+    }
+    std::sort(all.begin(), all.end(),
+              [](const qEntry &a, const qEntry &b) { return qGreater(a, b); });
+    sorted.clear();
+    sorted.reserve(all.size());
+    for(auto &e : all) {
+      if(e.t != FLAT_NONE) sorted.push_back(e.t);
+    }
+  }
+
+  // same geometry and operations as MTet4::setupGeom() + the lcA/lcB variant
+  // of MTet4::setup()
+  void setupCreatedTet(std::uint32_t s, double lcA, double lcB)
+  {
+    const std::uint32_t *v = &tetV[4 * s];
+    double *A = &vXYZ[3 * v[0]], *B = &vXYZ[3 * v[1]], *C = &vXYZ[3 * v[2]],
+           *D = &vXYZ[3 * v[3]];
+    tetHot &sph = hot[s];
+    double cerr;
+    const double o = tetcircumcenterBounded(A, B, C, D, sph.cc, &cerr);
+    tetOrient[s] = (o > 0) ? -1 : (o < 0) ? 1 : 0;
+    const double dx = A[0] - sph.cc[0];
+    const double dy = A[1] - sph.cc[1];
+    const double dz = A[2] - sph.cc[2];
+    sph.r2 = dx * dx + dy * dy + dz * dz;
+    double circum_radius = std::sqrt(sph.r2);
+    sph.sphTol = tetOrient[s] ? 3. * cerr : 1.e300;
+    double lc1 = 0.25 * (vSizes[v[0]] + vSizes[v[1]] + vSizes[v[2]] + lcA);
+    double lcBGM =
+      0.25 * (vSizesBGM[v[0]] + vSizesBGM[v[1]] + vSizesBGM[v[2]] + lcB);
+    double lc = extend ? std::min(lc1, lcBGM) : lcBGM;
+    sph.radius = circum_radius / lc;
+  }
+
+  // same test and operations as MTet4::inCircumSphere()
+  int inCircumSphereF(std::uint32_t t, const double *p) const
+  {
+    const tetHot &s = hot[t];
+    const double dx = p[0] - s.cc[0], dy = p[1] - s.cc[1], dz = p[2] - s.cc[2];
+    const double d2 = dx * dx + dy * dy + dz * dz;
+    const double diff = d2 - s.r2;
+    const double ss = d2 + s.r2;
+    const double bound = s.sphTol * std::sqrt(ss) + 1.e-12 * ss;
+    if(std::abs(diff) > bound) return (diff < 0) ? 1 : 0;
+    const std::uint32_t *v = &tetV[4 * t];
+    const double *pa = &vXYZ[3 * v[0]], *pb = &vXYZ[3 * v[1]],
+                 *pc = &vXYZ[3 * v[2]], *pd = &vXYZ[3 * v[3]];
+    double orient = tetOrient[t] ? (double)tetOrient[t] :
+                                   robustPredicates::orient3d(pa, pb, pc, pd);
+    double result = robustPredicates::insphere(pa, pb, pc, pd, p) * orient;
+    return (result > 0) ? 1 : 0;
+  }
+
+  // same traversal as findCavity()
+  void findCavityF(const double *p, std::uint32_t t,
+                   std::vector<std::uint32_t> &cavity,
+                   std::vector<std::uint32_t> &shell)
+  {
+    tetDeleted[t] = 1;
+    cavity.push_back(t);
+    for(std::size_t idx = 0; idx < cavity.size(); idx++) {
+      const std::uint32_t current = cavity[idx];
+      const std::uint16_t reg = tetRegion[current];
+      for(int i = 0; i < 4; i++) {
+        const std::uint32_t np = hot[current].N[i];
+        if(np == FLAT_NONE) { shell.push_back(4 * current + i); }
+        else {
+          const std::uint32_t neighbour = np >> 2;
+          if(!tetDeleted[neighbour]) {
+            if(inCircumSphereF(neighbour, p) && tetRegion[neighbour] == reg) {
+              tetDeleted[neighbour] = 1;
+              cavity.push_back(neighbour);
+            }
+            else {
+              shell.push_back(4 * current + i);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  void faceTriple(std::uint32_t e, std::uint32_t *tri) const
+  {
+    const std::uint32_t t = e >> 2, f = e & 3;
+    std::uint32_t a = tetV[4 * t + faces[f][0]];
+    std::uint32_t b = tetV[4 * t + faces[f][1]];
+    std::uint32_t c = tetV[4 * t + faces[f][2]];
+    if(a > b) std::swap(a, b);
+    if(b > c) std::swap(b, c);
+    if(a > b) std::swap(a, b);
+    tri[0] = a;
+    tri[1] = b;
+    tri[2] = c;
+  }
+  int findShellFace(const std::vector<std::uint32_t> &shell,
+                    std::uint32_t e) const
+  {
+    std::uint32_t tri[3], tri2[3];
+    faceTriple(e, tri);
+    for(std::size_t i = 0; i < shell.size(); i++) {
+      faceTriple(shell[i], tri2);
+      if(tri[0] == tri2[0] && tri[1] == tri2[1] && tri[2] == tri2[2])
+        return (int)i;
+    }
+    return -1;
+  }
+  bool visibleF(std::uint32_t e, const double *p) const
+  {
+    const std::uint32_t t = e >> 2, f = e & 3;
+    const double *a = &vXYZ[3 * tetV[4 * t + faces[f][0]]];
+    const double *b = &vXYZ[3 * tetV[4 * t + faces[f][1]]];
+    const double *c = &vXYZ[3 * tetV[4 * t + faces[f][2]]];
+    return robustPredicates::orient3d(a, b, c, p) < 0.0;
+  }
+
+  // same effective logic as makeCavityStarShaped() (whose verifyShell()
+  // always returns 1) and extendCavity()
+  void extendCavityF(std::vector<std::uint32_t> &shell,
+                     std::vector<std::uint32_t> &cavity, std::uint32_t fxt)
+  {
+    const std::uint32_t opp = hot[fxt >> 2].N[fxt & 3] >> 2;
+    for(int i = 0; i < 4; i++) {
+      const std::uint32_t e = 4 * opp + i;
+      int pos = findShellFace(shell, e);
+      if(pos < 0)
+        shell.push_back(e);
+      else
+        shell.erase(shell.begin() + pos);
+    }
+    cavity.push_back(opp);
+    tetDeleted[opp] = 1;
+  }
+  int makeCavityStarShapedF(std::vector<std::uint32_t> &shell,
+                            std::vector<std::uint32_t> &cavity,
+                            const double *p)
+  {
+    std::vector<std::uint32_t> wrong;
+    for(auto e : shell) {
+      if(!visibleF(e, p)) wrong.push_back(e);
+    }
+    if(wrong.empty()) return 0;
+    while(!wrong.empty()) {
+      const std::uint32_t fxt = wrong.front();
+      if(findShellFace(shell, fxt) >= 0) {
+        const std::uint32_t np = hot[fxt >> 2].N[fxt & 3];
+        if(np != FLAT_NONE &&
+           tetRegion[np >> 2] == tetRegion[fxt >> 2]) {
+          extendCavityF(shell, cavity, fxt);
+        }
+        else {
+          return -1;
+        }
+      }
+      wrong.erase(wrong.begin());
+    }
+    return 1;
+  }
+
+  // same outcome as isCavityCompatibleWithEmbeddedEdges/Face()
+  static std::uint64_t edgeKey(std::uint32_t a, std::uint32_t b)
+  {
+    if(a > b) std::swap(a, b);
+    return ((std::uint64_t)a << 32) | b;
+  }
+  bool compatibleWithEmbedded(const std::vector<std::uint32_t> &cavity,
+                              const std::vector<std::uint32_t> &shell) const
+  {
+    if(!embEdges.empty()) {
+      std::vector<std::uint64_t> ed;
+      ed.reserve(shell.size() * 3);
+      std::uint32_t tri[3];
+      for(auto e : shell) {
+        faceTriple(e, tri);
+        ed.push_back(edgeKey(tri[0], tri[1]));
+        ed.push_back(edgeKey(tri[1], tri[2]));
+        ed.push_back(edgeKey(tri[2], tri[0]));
+      }
+      static const int te[6][2] = {{0, 1}, {1, 2}, {2, 0},
+                                   {3, 0}, {3, 2}, {3, 1}};
+      for(auto t : cavity) {
+        for(int j = 0; j < 6; j++) {
+          std::uint64_t k =
+            edgeKey(tetV[4 * t + te[j][0]], tetV[4 * t + te[j][1]]);
+          if(std::find(ed.begin(), ed.end(), k) == ed.end() &&
+             std::binary_search(embEdges.begin(), embEdges.end(), k))
+            return false;
+        }
+      }
+    }
+    if(!embFaces.empty()) {
+      std::vector<std::array<std::uint32_t, 3> > shellFaces;
+      shellFaces.reserve(shell.size());
+      std::uint32_t tri[3];
+      for(auto e : shell) {
+        faceTriple(e, tri);
+        shellFaces.push_back({tri[0], tri[1], tri[2]});
+      }
+      for(auto t : cavity) {
+        for(int j = 0; j < 4; j++) {
+          faceTriple(4 * t + j, tri);
+          std::array<std::uint32_t, 3> f = {tri[0], tri[1], tri[2]};
+          if(std::find(shellFaces.begin(), shellFaces.end(), f) ==
+               shellFaces.end() &&
+             std::binary_search(embFaces.begin(), embFaces.end(), f))
+            return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // same as insertVertexB()
+  bool insertVertexF(std::vector<std::uint32_t> &shell,
+                     std::vector<std::uint32_t> &cavity, int vIdx, double lc1,
+                     double lc2, std::uint16_t reg,
+                     std::vector<std::uint32_t> &newTets, GModel *model)
+  {
+    newTets.clear();
+
+    const double *vx = &vXYZ[3 * vIdx];
+    double const lc = extend ? std::min(lc1, lc2) : lc2;
+    double const lcSq = (lc * .05) * (lc * .05);
+    auto tooClose = [&](std::uint32_t w) {
+      const double *ww = &vXYZ[3 * w];
+      double dx = ww[0] - vx[0], dy = ww[1] - vx[1], dz = ww[2] - vx[2];
+      return dx * dx + dy * dy + dz * dz < lcSq;
+    };
+
+    bool onePointIsTooClose = false;
+    for(std::size_t k = 0; k < shell.size(); k++) {
+      const std::uint32_t t = shell[k] >> 2, f = shell[k] & 3;
+      const std::uint32_t f0 = tetV[4 * t + faces[f][0]];
+      const std::uint32_t f1 = tetV[4 * t + faces[f][1]];
+      const std::uint32_t f2 = tetV[4 * t + faces[f][2]];
+      const std::uint64_t num = model->incrementAndGetMaxElementNumber();
+      const std::uint32_t s = allocSlot();
+      tetV[4 * s + 0] = f0;
+      tetV[4 * s + 1] = f1;
+      tetV[4 * s + 2] = f2;
+      tetV[4 * s + 3] = (std::uint32_t)vIdx;
+      tetNum[s] = num;
+      tetRegion[s] = reg;
+      setupCreatedTet(s, lc1, lc2);
+
+      if(tooClose(f0) || tooClose(f1) || tooClose(f2))
+        onePointIsTooClose = true;
+
+      newTets.push_back(s);
+    }
+    if(!onePointIsTooClose) {
+      // internal faces: same shell-edge matching as insertVertexB
+      struct shellEdge {
+        std::uint32_t a, b;
+        std::uint32_t tetFace;
+      };
+      std::vector<shellEdge> edges;
+      edges.reserve(3 * shell.size());
+      for(std::size_t k = 0; k < shell.size(); k++) {
+        const std::uint32_t s = newTets[k];
+        const std::uint32_t f0 = tetV[4 * s + 0];
+        const std::uint32_t f1 = tetV[4 * s + 1];
+        const std::uint32_t f2 = tetV[4 * s + 2];
+        edges.push_back({std::min(f0, f2), std::max(f0, f2),
+                         (std::uint32_t)(4 * k + 1)});
+        edges.push_back({std::min(f0, f1), std::max(f0, f1),
+                         (std::uint32_t)(4 * k + 2)});
+        edges.push_back({std::min(f1, f2), std::max(f1, f2),
+                         (std::uint32_t)(4 * k + 3)});
+      }
+      std::sort(edges.begin(), edges.end(),
+                [](const shellEdge &e1, const shellEdge &e2) {
+                  if(e1.a != e2.a) return e1.a < e2.a;
+                  return e1.b < e2.b;
+                });
+      for(std::size_t i = 0; i + 1 < edges.size(); i++) {
+        const shellEdge &e1 = edges[i];
+        const shellEdge &e2 = edges[i + 1];
+        if(e1.a == e2.a && e1.b == e2.b) {
+          const std::uint32_t t1 = newTets[e1.tetFace >> 2];
+          const std::uint32_t t2 = newTets[e2.tetFace >> 2];
+          hot[t1].N[e1.tetFace & 3] = 4 * t2 + (e2.tetFace & 3);
+          hot[t2].N[e2.tetFace & 3] = 4 * t1 + (e1.tetFace & 3);
+          ++i;
+        }
+      }
+      // outward faces: the packed neighbor of the shell face gives both the
+      // outside tet and its back face; as in the object kernel, do not
+      // connect across an embedded face
+      std::uint32_t tri[3];
+      for(std::size_t k = 0; k < shell.size(); k++) {
+        const std::uint32_t out = hot[shell[k] >> 2].N[shell[k] & 3];
+        if(out == FLAT_NONE) continue;
+        if(hasEmbedded && !embFaces.empty()) {
+          faceTriple(shell[k], tri);
+          std::array<std::uint32_t, 3> f = {tri[0], tri[1], tri[2]};
+          if(std::binary_search(embFaces.begin(), embFaces.end(), f)) continue;
+        }
+        hot[newTets[k]].N[0] = out;
+        hot[out >> 2].N[out & 3] = 4 * newTets[k] + 0;
+      }
+
+      for(std::size_t i = 0; i < newTets.size(); i++) qPush(newTets[i]);
+
+      return true;
+    }
+    else /* one point is too close */ {
+      for(std::size_t i = 0; i < newTets.size(); i++) {
+        tetDeleted[newTets[i]] = 1;
+        freeSlot(newTets[i]);
+      }
+      for(auto t : cavity) tetDeleted[t] = 0;
+      return false;
+    }
+  }
+};
+
+} // namespace
+
+static void refineRegionFlat(GRegion *gr, int maxIter,
+                             double worstTetRadiusTarget,
+                             std::vector<MTet4 *> &tets0,
+                             MTet4Factory &myFactory,
+                             std::vector<double> &vSizes,
+                             std::vector<double> &vSizesBGM, int &NUM,
+                             const std::set<MFace, MFaceLessThan> &allEmbeddedFaces,
+                             edgeContainerB &allEmbeddedEdges)
+{
+  flatKernel K(gr, vSizes, vSizesBGM, NUM, worstTetRadiusTarget);
+  GModel *model = gr->model();
+
+  // import the classified and connected tets
+  {
+    const std::size_t n = tets0.size();
+    K.vXYZ.resize(3 * (std::size_t)NUM);
+    K.vPtr.resize(NUM, nullptr);
+    K.tetV.resize(4 * n);
+    K.hot.resize(n);
+    K.tetNum.resize(n);
+    K.tetRegion.resize(n);
+    K.tetOrient.resize(n);
+    K.tetDeleted.resize(n);
+    K.tetMT.resize(n);
+
+    std::unordered_map<MTet4 *, std::uint32_t> idxOf;
+    idxOf.reserve(n);
+    for(std::size_t i = 0; i < n; i++) idxOf[tets0[i]] = (std::uint32_t)i;
+    std::map<GRegion *, std::uint16_t> regIdx;
+    for(std::size_t i = 0; i < n; i++) {
+      MTet4 *t4 = tets0[i];
+      for(int j = 0; j < 4; j++) {
+        MVertex *mv = t4->tet()->getVertex(j);
+        const std::uint32_t idx = (std::uint32_t)mv->getIndex();
+        K.tetV[4 * i + j] = idx;
+        K.vPtr[idx] = mv;
+        K.vXYZ[3 * idx + 0] = mv->x();
+        K.vXYZ[3 * idx + 1] = mv->y();
+        K.vXYZ[3 * idx + 2] = mv->z();
+      }
+      GRegion *r = t4->onWhat();
+      if(r) {
+        auto it = regIdx.find(r);
+        if(it == regIdx.end()) {
+          it = regIdx.insert(std::make_pair(r, (std::uint16_t)K.regions.size()))
+                 .first;
+          K.regions.push_back(r);
+        }
+        K.tetRegion[i] = it->second;
+      }
+      else
+        K.tetRegion[i] = 0xffff;
+      K.tetNum[i] = t4->tet()->getNum();
+      K.hot[i].radius = t4->getRadius();
+      t4->cachedCircumcenter(K.hot[i].cc);
+      K.hot[i].r2 = t4->cachedR2();
+      K.hot[i].sphTol = t4->cachedSphTol();
+      K.tetOrient[i] = (std::int8_t)t4->cachedOrientSgn();
+      K.tetDeleted[i] = t4->isDeleted() ? 1 : 0;
+      K.tetMT[i] = t4->tet();
+    }
+    for(std::size_t i = 0; i < n; i++) {
+      MTet4 *t4 = tets0[i];
+      for(int k = 0; k < 4; k++) {
+        MTet4 *nb = t4->getNeigh(k);
+        if(!nb) { K.hot[i].N[k] = FLAT_NONE; }
+        else {
+          const std::uint32_t j = idxOf[nb];
+          int bf = -1;
+          for(int m = 0; m < 4; m++) {
+            if(nb->getNeigh(m) == t4) {
+              bf = m;
+              break;
+            }
+          }
+          if(bf < 0) {
+            Msg::Error("Non-mutual tet adjacency in flat kernel import");
+            bf = 0;
+          }
+          K.hot[i].N[k] = 4 * j + bf;
+        }
+      }
+    }
+    // the MTetrahedra are kept (owned by the kernel until export); the MTet4
+    // wrappers are released
+    for(std::size_t i = 0; i < n; i++) {
+      tets0[i]->tet() = nullptr;
+      myFactory.Free(tets0[i]);
+    }
+    tets0.clear();
+
+    // embedded entities as index pairs/triples
+    for(auto &f : allEmbeddedFaces) {
+      std::uint32_t a = (std::uint32_t)f.getVertex(0)->getIndex();
+      std::uint32_t b = (std::uint32_t)f.getVertex(1)->getIndex();
+      std::uint32_t c = (std::uint32_t)f.getVertex(2)->getIndex();
+      if(a > b) std::swap(a, b);
+      if(b > c) std::swap(b, c);
+      if(a > b) std::swap(a, b);
+      K.embFaces.push_back({a, b, c});
+    }
+    std::sort(K.embFaces.begin(), K.embFaces.end());
+    for(auto &bucket : allEmbeddedEdges._hash) {
+      for(auto &e : bucket) {
+        K.embEdges.push_back(
+          flatKernel::edgeKey((std::uint32_t)e.getVertex(0)->getIndex(),
+                              (std::uint32_t)e.getVertex(1)->getIndex()));
+      }
+    }
+    std::sort(K.embEdges.begin(), K.embEdges.end());
+    K.hasEmbedded = !K.embEdges.empty() || !K.embFaces.empty();
+
+    if(n) {
+      K.numBase = K.tetNum[0];
+      for(std::size_t i = 1; i < n; i++)
+        if(K.tetNum[i] < K.numBase) K.numBase = K.tetNum[i];
+    }
+    for(std::uint32_t i = 0; i < (std::uint32_t)n; i++) K.qPush(i);
+  }
+
+  // main loop: same structure, decisions and messages as refineRegionMTet4
+  std::vector<std::uint32_t> failedTets;
+  int ITER = 0, REALCOUNT = 0;
+  int NB_CORRECTION_OF_CAVITY = 0;
+  int COUNT_MISS_1 = 0;
+  int COUNT_MISS_2 = 0;
+
+  double t1 = TimeOfDay();
+
+  std::vector<std::uint32_t> shell, cavity, newTets;
+
+  while(1) {
+    if(maxIter > 0 && ITER >= maxIter) {
+      Msg::Info("Max. number of iterations reached (%d) - stopping insertion",
+                ITER);
+      break;
+    }
+    if(!K.qNormalize()) {
+      if(K.smallList.empty())
+        Msg::Warning("No tetrahedra in region %d", gr->tag());
+      break;
+    }
+
+    const std::uint32_t worst0 = K.qTop().t;
+
+    if(K.tetDeleted[worst0]) {
+      K.qPop();
+      K.freeSlot(worst0);
+    }
+    else {
+      if(ITER++ % 500 == 0)
+        Msg::Info("It. %d - %d nodes created - worst tet radius %g (nodes "
+                  "removed %d %d)",
+                  ITER - 1, REALCOUNT, K.hot[worst0].radius, COUNT_MISS_1,
+                  COUNT_MISS_2);
+      if(K.hot[worst0].radius < worstTetRadiusTarget) break;
+      K.qPop();
+      const std::uint32_t popped = worst0;
+      std::uint32_t worst = worst0;
+
+      double center[3];
+      double uvw[3];
+      center[0] = K.hot[worst].cc[0];
+      center[1] = K.hot[worst].cc[1];
+      center[2] = K.hot[worst].cc[2];
+
+      // replicates the vertex number consumed by the former stack MVertex
+      model->incrementAndGetMaxVertexNumber();
+
+      shell.clear();
+      cavity.clear();
+      K.findCavityF(center, worst, cavity, shell);
+      bool FOUND = false;
+      for(auto t : cavity) {
+        // same as MTetrahedron::xyz2uvw() + isInside()
+        const std::uint32_t *tv = &K.tetV[4 * t];
+        const double *w0 = &K.vXYZ[3 * tv[0]], *w1 = &K.vXYZ[3 * tv[1]],
+                     *w2 = &K.vXYZ[3 * tv[2]], *w3 = &K.vXYZ[3 * tv[3]];
+        double mat[3][3], b[3];
+        mat[0][0] = w1[0] - w0[0];
+        mat[0][1] = w2[0] - w0[0];
+        mat[0][2] = w3[0] - w0[0];
+        mat[1][0] = w1[1] - w0[1];
+        mat[1][1] = w2[1] - w0[1];
+        mat[1][2] = w3[1] - w0[1];
+        mat[2][0] = w1[2] - w0[2];
+        mat[2][1] = w2[2] - w0[2];
+        mat[2][2] = w3[2] - w0[2];
+        b[0] = center[0] - w0[0];
+        b[1] = center[1] - w0[1];
+        b[2] = center[2] - w0[2];
+        double det;
+        sys3x3(mat, b, uvw, &det);
+        double tol = CTX::instance()->mesh.toleranceReferenceElement;
+        if(!(uvw[0] < (-tol) || uvw[1] < (-tol) || uvw[2] < (-tol) ||
+             uvw[0] > ((1. + tol) - uvw[1] - uvw[2]))) {
+          worst = t;
+          FOUND = true;
+          break;
+        }
+      }
+
+      if(FOUND && K.hasEmbedded) {
+        FOUND = K.compatibleWithEmbedded(cavity, shell);
+      }
+
+      bool correctedCavityIncompatibleWithEmbeddedEntities = false;
+
+      if(FOUND) {
+        const std::size_t vnum = model->incrementAndGetMaxVertexNumber();
+        const int vIdx = NUM++;
+        K.vXYZ.push_back(center[0]);
+        K.vXYZ.push_back(center[1]);
+        K.vXYZ.push_back(center[2]);
+        K.vPtr.push_back(nullptr);
+
+        bool starShaped = true;
+        bool correctCavity = false;
+        while(1) {
+          int k = K.makeCavityStarShapedF(shell, cavity, center);
+          if(k == -1) {
+            starShaped = false;
+            break;
+          }
+          else if(k == 0)
+            break;
+          else if(k == 1)
+            correctCavity = true;
+        }
+        if(correctCavity && starShaped) {
+          NB_CORRECTION_OF_CAVITY++;
+          if(!K.compatibleWithEmbedded(cavity, shell)) {
+            correctedCavityIncompatibleWithEmbeddedEntities = true;
+          }
+        }
+        const std::uint32_t *wv = &K.tetV[4 * worst];
+        double lc1 = (1 - uvw[0] - uvw[1] - uvw[2]) * vSizes[wv[0]] +
+                     uvw[0] * vSizes[wv[1]] + uvw[1] * vSizes[wv[2]] +
+                     uvw[2] * vSizes[wv[3]];
+        double lc2 = BGM_MeshSize(K.regions[K.tetRegion[worst]], 0, 0,
+                                  center[0], center[1], center[2]);
+
+        if(correctedCavityIncompatibleWithEmbeddedEntities || !starShaped ||
+           !K.insertVertexF(shell, cavity, vIdx, lc1, lc2,
+                            K.tetRegion[worst], newTets, model)) {
+          COUNT_MISS_1++;
+          K.hot[popped].radius = 0.;
+          failedTets.push_back(popped);
+          for(auto t : cavity) K.tetDeleted[t] = 0;
+          K.vXYZ.resize(3 * (std::size_t)vIdx);
+          K.vPtr.pop_back();
+          NUM--;
+        }
+        else {
+          vSizes.push_back(lc1);
+          vSizesBGM.push_back(lc2);
+          REALCOUNT++;
+          K.newVertices.push_back({center[0], center[1], center[2], vnum, vIdx,
+                                   K.tetRegion[worst]});
+        }
+      }
+
+      else {
+        K.hot[popped].radius = 0.;
+        failedTets.push_back(popped);
+        COUNT_MISS_2++;
+        for(auto t : cavity) K.tetDeleted[t] = 0;
+      }
+    }
+  }
+
+  // free the deleted tets and recover the remaining ones, ordered as
+  // compareTet4Ptr would order them
+  std::vector<std::uint32_t> aliveTets;
+  K.drainSorted(failedTets, aliveTets);
+
+  double t2 = TimeOfDay();
+  double dt = (t2 - t1);
+  int COUNT_MISS = COUNT_MISS_1 + COUNT_MISS_2;
+  Msg::Info("3D refinement terminated (%d nodes total):", (int)vSizes.size());
+  Msg::Info(" - %d Delaunay cavities modified for star shapeness",
+            NB_CORRECTION_OF_CAVITY);
+  Msg::Info(" - %d nodes could not be inserted", COUNT_MISS);
+  Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)", aliveTets.size(),
+            dt, (int)(aliveTets.size() / dt));
+
+  // materialize the new vertices, in insertion order
+  for(auto &nv : K.newVertices) {
+    MVertex *v =
+      new MVertex(nv.x, nv.y, nv.z, K.regions[nv.region], nv.num);
+    v->setIndex(nv.index);
+    K.vPtr[nv.index] = v;
+    K.regions[nv.region]->mesh_vertices.push_back(v);
+  }
+
+  // release everything the export no longer needs, and extract the radii
+  // and adjacencies of the surviving tets, so that the flat arrays can be
+  // freed before the MTet4 bridge of the smoothing pass gets allocated
+  const std::size_t nAlive = aliveTets.size();
+  const std::size_t nSlots = K.tetNum.size();
+  for(auto &b : K.buckets) std::vector<flatKernel::qEntry>().swap(b);
+  std::vector<flatKernel::qEntry>().swap(K.active);
+  std::vector<flatKernel::qEntry>().swap(K.overflow);
+  std::vector<std::uint32_t>().swap(K.freeSlots);
+  std::vector<std::uint32_t>().swap(K.smallList);
+  std::vector<std::uint64_t>().swap(K.embEdges);
+  std::vector<std::array<std::uint32_t, 3> >().swap(K.embFaces);
+  std::vector<std::int8_t>().swap(K.tetOrient);
+  std::vector<std::uint8_t>().swap(K.tetDeleted);
+  std::vector<double>().swap(K.vXYZ);
+  std::vector<double> aliveRadius(nAlive);
+  std::vector<std::uint32_t> aliveN(4 * nAlive);
+  {
+    // map slot -> position in aliveTets to convert the packed adjacencies
+    std::vector<std::uint32_t> slotPos(nSlots, FLAT_NONE);
+    for(std::size_t bi = 0; bi < nAlive; bi++) slotPos[aliveTets[bi]] = bi;
+    for(std::size_t bi = 0; bi < nAlive; bi++) {
+      const std::uint32_t s = aliveTets[bi];
+      aliveRadius[bi] = K.hot[s].radius;
+      for(int k = 0; k < 4; k++) {
+        const std::uint32_t np = K.hot[s].N[k];
+        aliveN[4 * bi + k] = (np == FLAT_NONE) ? FLAT_NONE : slotPos[np >> 2];
+      }
+    }
+  }
+  std::vector<flatKernel::tetHot>().swap(K.hot);
+
+  // materialize the tets (reusing the imported MTetrahedra), bridge them to
+  // MTet4s (in one contiguous block) for the smoothing pass, then hand them
+  // to their regions
+  std::vector<MTet4> bridge(nAlive);
+  for(std::size_t bi = 0; bi < nAlive; bi++) {
+    const std::uint32_t s = aliveTets[bi];
+    MTetrahedron *mt = K.tetMT[s];
+    if(!mt) {
+      mt = new MTetrahedron(K.vPtr[K.tetV[4 * s + 0]],
+                            K.vPtr[K.tetV[4 * s + 1]],
+                            K.vPtr[K.tetV[4 * s + 2]],
+                            K.vPtr[K.tetV[4 * s + 3]],
+                            K.tetNum[s] <= 0x7fffffffull ? (int)K.tetNum[s] :
+                                                           1);
+      if(K.tetNum[s] > 0x7fffffffull) mt->forceNum(K.tetNum[s]);
+    }
+    K.tetMT[s] = nullptr;
+    MTet4 *t4 = &bridge[bi];
+    t4->setTet(mt);
+    t4->forceRadius(aliveRadius[bi]);
+    t4->setOnWhat(K.regions[K.tetRegion[s]]);
+  }
+  std::vector<MTetrahedron *>().swap(K.tetMT);
+  std::vector<std::uint32_t>().swap(K.tetV);
+  std::vector<double>().swap(aliveRadius);
+  for(std::size_t bi = 0; bi < nAlive; bi++) {
+    for(int k = 0; k < 4; k++) {
+      const std::uint32_t np = aliveN[4 * bi + k];
+      if(np != FLAT_NONE) bridge[bi].setNeigh(k, &bridge[np]);
+    }
+  }
+  std::vector<std::uint32_t>().swap(aliveN);
+
+  // relocate vertices
+  int nbReloc = 0;
+  for(int SM = 0; SM < CTX::instance()->mesh.nbSmoothing; SM++) {
+    for(auto it = bridge.begin(); it != bridge.end(); ++it) {
+      if(!it->isDeleted()) {
+        double qq = it->getQuality();
+        if(qq < .4)
+          for(int i = 0; i < 4; i++) {
+            if(smoothVertex(&(*it), i, qmTetrahedron::QMTET_GAMMA)) nbReloc++;
+          }
+      }
+    }
+  }
+
+  Msg::Info("%d node relocations", nbReloc);
+
+  for(auto it = bridge.begin(); it != bridge.end(); ++it) {
+    if(!it->isDeleted()) { it->onWhat()->tetrahedra.push_back(it->tet()); }
   }
 }
 
