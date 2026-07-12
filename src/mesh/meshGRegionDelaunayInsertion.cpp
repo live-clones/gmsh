@@ -1987,7 +1987,7 @@ public:
   std::vector<qEntry> active; // sorted descending, consumed via cursor
   std::size_t cursor;
   std::vector<qEntry> overflow; // 4-ary max-heap
-  int activeB, pendingHigh;
+  int activeB;
   std::vector<std::uint32_t> smallList;
   std::size_t smallAlive;
   double threshold;
@@ -2006,8 +2006,7 @@ public:
              std::vector<double> &_vSizesBGM, int &_NUM, double _threshold)
     : gr(_gr), vSizes(_vSizes), vSizesBGM(_vSizesBGM), NUM(_NUM),
       extend(Extend2dMeshIn3dVolumes()), hasEmbedded(false), cursor(0),
-      activeB(-1), pendingHigh(-1), smallAlive(0), threshold(_threshold),
-      numBase(0)
+      activeB(-1), smallAlive(0), threshold(_threshold), numBase(0)
   {
   }
   ~flatKernel()
@@ -2080,7 +2079,10 @@ public:
       return;
     }
     const int b = bucketOf(r);
-    if(b == activeB) {
+    // everything at or above the active radius range goes to the overflow
+    // heap: entries above the active bucket must not reactivate it, which
+    // would sort its remains again and again on large meshes
+    if(activeB >= 0 && b >= activeB) {
       overflow.push_back({r, qNum(t), t});
       std::size_t i = overflow.size() - 1;
       while(i) {
@@ -2094,7 +2096,6 @@ public:
     }
     else {
       buckets[b].push_back({r, qNum(t), t});
-      if(b > activeB && b > pendingHigh) pendingHigh = b;
     }
   }
   void qActivate(int b)
@@ -2109,24 +2110,10 @@ public:
   // make the next entry available; returns false if no entries remain
   bool qNormalize()
   {
-    if(pendingHigh > activeB) {
-      // entries appeared above the active radius range: put the remains of
-      // the active bucket back and activate the highest pending bucket
-      if(activeB >= 0) {
-        for(std::size_t i = cursor; i < active.size(); i++)
-          buckets[activeB].push_back(active[i]);
-        buckets[activeB].insert(buckets[activeB].end(), overflow.begin(),
-                                overflow.end());
-        active.clear();
-        overflow.clear();
-        cursor = 0;
-      }
-      const int b = pendingHigh;
-      pendingHigh = -1;
-      qActivate(b);
-    }
     while(cursor >= active.size() && overflow.empty()) {
-      int b = activeB;
+      // buckets above the active one can only be nonempty before the first
+      // activation, since later pushes at or above it go to the overflow heap
+      int b = (activeB < 0) ? NB_BUCKETS - 1 : activeB;
       while(b >= 0 && buckets[b].empty()) b--;
       if(b < 0) return false;
       qActivate(b);
