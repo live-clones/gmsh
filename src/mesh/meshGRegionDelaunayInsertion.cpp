@@ -2744,9 +2744,16 @@ static void refineRegionFlat(GRegion *gr, int maxIter,
     }
     for(std::size_t i = 0; i < n; i++) {
       MTet4 *t4 = tets0[i];
+      if(t4->isDeleted()) {
+        // tets deleted by the classification (lying in the void) still point
+        // to their old neighbors, but their adjacencies are never used: they
+        // only wait in the queue to be freed
+        for(int k = 0; k < 4; k++) K.hot[i].N[k] = FLAT_NONE;
+        continue;
+      }
       for(int k = 0; k < 4; k++) {
         MTet4 *nb = t4->getNeigh(k);
-        if(!nb) { K.hot[i].N[k] = FLAT_NONE; }
+        if(!nb || nb->isDeleted()) { K.hot[i].N[k] = FLAT_NONE; }
         else {
           const std::uint32_t j = idxOf[nb];
           int bf = -1;
