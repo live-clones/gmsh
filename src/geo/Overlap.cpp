@@ -205,7 +205,17 @@ void buildOverlapEntities(GModel *const model, OverlapManager &mgr,
         continue;
       }
 
-      auto overlapEntity = new OverlapEntity(model, covered, partition);
+      OverlapEntity *overlapEntity = nullptr;
+      try {
+        overlapEntity = new OverlapEntity(model, covered, partition);
+      } catch(const std::bad_alloc &e) {
+        // Correct whether Msg::Error aborts/throws (abortOnError >= 2) or
+        // returns: in the latter case we must skip the entity
+        Msg::Error("Failed to allocate memory for overlap entity for partition "
+                   "%d and covered entity with tag %d: %s",
+                   partition, covered->tag(), e.what());
+        continue;
+      }
       if(!model->add(overlapEntity)) {
         Msg::Error("Failed to add overlap entity for partition %d and covered "
                    "entity with tag %d. (Tag already existing)",
@@ -214,6 +224,17 @@ void buildOverlapEntities(GModel *const model, OverlapManager &mgr,
         continue;
       }
       mgr.addOverlap(overlapEntity);
+
+      if constexpr(dim == 2) {
+        if(std::get<0>(mgr.getAllOverlaps()).back() != overlapEntity) {
+          Msg::Error("Overlap entity was not added to the manager's overlaps.");
+        }
+      }
+      if constexpr(dim == 3) {
+        if(std::get<1>(mgr.getAllOverlaps()).back() != overlapEntity) {
+          Msg::Error("Overlap entity was not added to the manager's overlaps.");
+        }
+      }
 
       // Add elements to the overlap entity - no new creation
       for(const auto &element : elements) {
