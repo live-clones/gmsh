@@ -8,6 +8,7 @@
 #ifndef CELL_H
 #define CELL_H
 
+#include <deque>
 #include <map>
 #include <vector>
 #include "MElement.h"
@@ -50,24 +51,62 @@ protected:
   bool _combined;
   // for some algorithms to omit this cell
   bool _immune;
+  // whether this cell is currently a live member of its cell complex
+  // (removed cells stay in the complex's cell containers as tombstones
+  // until compaction, so membership is tracked here in constant time)
+  bool _inComplex = false;
+  // whether this cell is currently in a reduction work queue (replaces the
+  // tree-based queue dedup sets with a constant-time flag)
+  bool _queued = false;
 
-  // list of cells on the boundary and on the coboundary of this cell
-  std::map<Cell *, BdInfo, CellPtrLessThan> _bd;
-  std::map<Cell *, BdInfo, CellPtrLessThan> _cbd;
+  // list of cells on the boundary and on the coboundary of this cell.
+  // Cells typically have only a handful of (co)boundary neighbors, so a
+  // vector kept sorted by CellPtrLessThan is faster and far more
+  // memory-efficient (one heap block instead of a tree node per entry)
+  // than a std::map for this size range.
+  std::vector<std::pair<Cell *, BdInfo> > _bd;
+  std::vector<std::pair<Cell *, BdInfo> > _cbd;
 
-  Cell() {}
+  // number of _bd/_cbd entries with a nonzero current orientation, kept in
+  // sync incrementally so getBoundarySize()/getCoboundarySize() and
+  // firstBoundary()/firstCoboundary() don't need to rescan entries left
+  // behind (with zero current but nonzero original orientation) for restore
+  int _bdSize = 0;
+  int _cbdSize = 0;
+
+  // find/locate cell in a sorted (co)boundary vector
+  static std::vector<std::pair<Cell *, BdInfo> >::iterator
+  _bdLowerBound(std::vector<std::pair<Cell *, BdInfo> > &v, Cell *cell);
+  static std::vector<std::pair<Cell *, BdInfo> >::iterator
+  _bdFind(std::vector<std::pair<Cell *, BdInfo> > &v, Cell *cell);
 
 private:
   char _dim;
-  std::vector<MVertex *> _v;
+  // vertices and sorted vertex order, stored inline (a cell has at most 8
+  // corner vertices): avoids two heap allocations per cell. _nsi is 0 when
+  // the cell is degenerate (duplicate vertices).
+  char _nv = 0;
+  char _nsi = 0;
+  MVertex *_v[8];
   // sorted vertices of this cell (used for ordering of the cells)
-  std::vector<char> _si;
+  char _si[8];
 
-  inline bool _sortVertexIndices();
+  bool _sortVertexIndices();
 
 public:
-  static std::pair<Cell *, bool> createCell(MElement *element, int domain);
-  static std::pair<Cell *, bool> createCell(Cell *parent, int i);
+  // the default constructor is public so that elementary cells can live in
+  // a container owned by the cell complex instead of being allocated one
+  // by one
+  Cell() {}
+
+  // create a cell in the pool container; the returned pointers stay valid
+  // since std::deque never relocates its elements. The bool is false for a
+  // degenerate cell: the caller should then discard it with pop_back().
+  static std::pair<Cell *, bool>
+  createCell(MElement *element, int domain, std::deque<Cell> &pool);
+  static Cell *createCell(Cell *parent,
+                          const std::vector<MVertex *> &vertices,
+                          std::deque<Cell> &pool);
 
   Cell(MElement *element, int domain);
   Cell(Cell *parent, int i);
@@ -81,15 +120,26 @@ public:
   int getTypeMSH() const;
   virtual int getDim() const { return _dim; }
   bool inSubdomain() const { return _domain ? true : false; }
-  void getMeshVertices(std::vector<MVertex *> &v) const { v = _v; }
+  void getMeshVertices(std::vector<MVertex *> &v) const
+  {
+    v.assign(_v, _v + (int)_nv);
+  }
 
   void setImmune(bool immune) { _immune = immune; };
   bool getImmune() const { return _immune; };
 
-  int getNumSortedVertices() const { return _si.size(); }
-  inline int getSortedVertex(int vertex) const;
-  int getNumVertices() const { return _v.size(); }
-  MVertex *getMeshVertex(int vertex) const { return _v.at(vertex); }
+  void setInComplex(bool in) { _inComplex = in; }
+  bool inComplex() const { return _inComplex; }
+  void setQueued(bool queued) { _queued = queued; }
+  bool getQueued() const { return _queued; }
+
+  int getNumSortedVertices() const { return _nsi; }
+  int getSortedVertex(int vertex) const
+  {
+    return _v[(int)_si[vertex]]->getNum();
+  }
+  int getNumVertices() const { return _nv; }
+  MVertex *getMeshVertex(int vertex) const { return _v[vertex]; }
 
   void findBdElement(int i, std::vector<MVertex *> &vertices) const;
   int getNumBdElements() const;
@@ -105,7 +155,7 @@ public:
   virtual bool hasVertex(int vertex) const;
 
   // (co)boundary cell iterator
-  typedef std::map<Cell *, BdInfo, CellPtrLessThan>::iterator biter;
+  typedef std::vector<std::pair<Cell *, BdInfo> >::iterator biter;
 
   // iterators to (first/last (co)boundary cells of this cell
   // (orig: to original (co)boundary cells of this cell)
@@ -165,13 +215,17 @@ class CombinedCell : public Cell {
 private:
   // list of cells this cell is a combination of
   std::map<Cell *, int, CellPtrLessThan> _cells;
+  // dimension of the combined cells: cached, since when this cell is
+  // merged into another combined cell its list is stolen (small-to-large
+  // merging), while the removed cell may still be asked for its dimension
+  int _dim;
 
 public:
   CombinedCell(Cell *c1, Cell *c2, bool orMatch, bool co = false);
   CombinedCell(std::vector<Cell *> &cells);
   ~CombinedCell() {}
 
-  int getDim() const { return _cells.begin()->first->getDim(); }
+  int getDim() const { return _dim; }
   void getCells(std::map<Cell *, int, CellPtrLessThan> &cells)
   {
     cells = _cells;

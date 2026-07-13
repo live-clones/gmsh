@@ -122,21 +122,48 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
 
 static void _deleteUnusedVertices(GRegion *gr)
 {
-  std::set<MVertex *, MVertexPtrLessThan> allverts;
-  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+  // deduplicate the tet corners first (through the vertex indices set by the
+  // refinement), so that only the unique vertices need to be sorted - on
+  // inline keys, as sorting pointers with MVertexPtrLessThan reads the
+  // vertex numbers through the pointers at each comparison
+  std::vector<std::pair<std::size_t, MVertex *> > allverts;
+  std::vector<std::uint8_t> seen;
+  bool haveIndices = true;
+  for(std::size_t i = 0; i < gr->tetrahedra.size() && haveIndices; i++) {
     for(int j = 0; j < 4; j++) {
-      if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
-        allverts.insert(gr->tetrahedra[i]->getVertex(j));
+      MVertex *v = gr->tetrahedra[i]->getVertex(j);
+      if(v->onWhat() != gr) continue;
+      const long idx = v->getIndex();
+      if(idx < 0) {
+        haveIndices = false;
+        break;
+      }
+      if((std::size_t)idx >= seen.size()) seen.resize(idx + 1, 0);
+      if(!seen[idx]) {
+        seen[idx] = 1;
+        allverts.push_back(std::make_pair(v->getNum(), v));
+      }
     }
   }
-  for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
-    // FIXME: investigate crash on exit (e.g. t16.geo)
-    // if(allverts.find(gr->mesh_vertices[i]) == allverts.end())
-    //   delete gr->mesh_vertices[i];
+  if(!haveIndices) {
+    allverts.clear();
+    allverts.reserve(4 * gr->tetrahedra.size());
+    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+      for(int j = 0; j < 4; j++) {
+        MVertex *v = gr->tetrahedra[i]->getVertex(j);
+        if(v->onWhat() == gr)
+          allverts.push_back(std::make_pair(v->getNum(), v));
+      }
+    }
   }
+  std::sort(allverts.begin(), allverts.end());
+  allverts.erase(std::unique(allverts.begin(), allverts.end()),
+                 allverts.end());
+  // FIXME: investigate crash on exit if we delete the unused vertices
+  // (e.g. t16.geo)
   gr->mesh_vertices.clear();
-  gr->mesh_vertices.insert(gr->mesh_vertices.end(), allverts.begin(),
-                           allverts.end());
+  gr->mesh_vertices.reserve(allverts.size());
+  for(auto &p : allverts) gr->mesh_vertices.push_back(p.second);
 }
 
 void MeshDelaunayVolume(std::vector<GRegion *> &regions)

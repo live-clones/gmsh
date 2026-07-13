@@ -55,6 +55,30 @@ std::vector<int> vecN0(int n)
   return v;
 }
 
+void Homology::setSubdomain(const std::vector<int> &physicalSubdomain)
+{
+  _subdomain = physicalSubdomain;
+  _getEntities(_subdomain, _subdomainEntities);
+
+  // the results of the previous subdomain no longer apply
+  _deleteChains();
+  _deleteCochains();
+  for(int i = 0; i < 4; i++) _betti[i] = -1;
+
+  if(_cellComplex != nullptr) {
+    std::vector<MElement *> subdomainElements;
+    std::vector<MElement *> immuneElements;
+    _getElements(_subdomainEntities, subdomainElements);
+    _getElements(_immuneEntities, immuneElements);
+    if(!_cellComplex->relabel(subdomainElements, immuneElements)) {
+      // the new subdomain is not contained in the cell complex: fall back
+      // to a full reconstruction on the next computation
+      delete _cellComplex;
+      _cellComplex = nullptr;
+    }
+  }
+}
+
 void Homology::_getEntities(const std::vector<int> &physicalGroups,
                             std::vector<GEntity *> &entities)
 {

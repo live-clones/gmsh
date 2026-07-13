@@ -1231,6 +1231,9 @@ StringXNumber MeshOptions_Number[] = {
     "First tag (>= 1) of mesh elements when generating or renumbering a mesh" },
   { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
     "First tag (>= 1) of mesh nodes when generating or renumbering a mesh" },
+  { F|O, "FlatRefineDelaunay3D" , opt_mesh_flat_refine_delaunay3d , 1. ,
+    "Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to "
+    "use the original object-based kernel, which produces the same meshes)" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },
