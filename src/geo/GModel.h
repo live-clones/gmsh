@@ -69,10 +69,6 @@ private:
   std::vector<OverlapManager> _overlapManagers;
   int _nextOverlapTag = 0;
 
-  // forget all overlap data (the pointed-to entities are owned by the
-  // regions/faces/edges sets, not by these containers)
-  void _clearOverlapData();
-
 private:
   int _readMSH2(const std::string &name);
   int _writeMSH2(const std::string &name, double version, bool binary,
