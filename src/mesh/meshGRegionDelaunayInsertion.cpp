@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <array>
+#include <cstring>
 #include <set>
 #include <map>
 #include <algorithm>
@@ -1971,23 +1972,38 @@ public:
 
   // Priority queue with the same total order as tetRadiusQueue (radius
   // descending, ties on the smaller element number), but organized in
-  // disjoint radius buckets: entries are appended unsorted to their bucket,
-  // and only the highest nonempty ("active") bucket is sorted, once, and
-  // consumed through a cursor. Entries pushed into the active radius range
-  // go to a small overflow heap. Since the buckets partition the radius axis,
-  // popping the best of (cursor head, overflow top) yields the exact global
-  // maximum, so the insertion order - and thus the mesh - is unchanged.
+  // disjoint radius segments, ordered on the raw bits of the radius (which,
+  // for positive doubles, order like the values): entries are appended
+  // unsorted to their segment, and only the highest nonempty segment is
+  // sorted, once, and consumed through a cursor. Segments too large to be
+  // sorted in one go are first split radix-style on the next bits of the
+  // key, so the sorting pauses stay bounded on huge meshes. Entries pushed
+  // at or above the active radius range go to a small overflow heap. Since
+  // the segments partition the radius axis, popping the best of (cursor
+  // head, overflow top) yields the exact global maximum, so the insertion
+  // order - and thus the mesh - is unchanged.
   struct qEntry {
     double radius;
     std::uint32_t num; // element number relative to numBase (see qNum)
     std::uint32_t t;
   };
-  static const int NB_BUCKETS = 256;
-  std::vector<qEntry> buckets[NB_BUCKETS];
+  struct qSegment {
+    std::uint64_t minKey; // lower bound of the segment's key range
+    std::vector<qEntry> v;
+  };
+  static std::uint64_t qKey(double r)
+  {
+    // radii are positive, so the IEEE bit patterns order like the values
+    std::uint64_t k;
+    memcpy(&k, &r, 8);
+    return k;
+  }
+  static const std::size_t Q_SORT_LIMIT = 1 << 20;
+  std::vector<qSegment> segs; // ascending minKey: back() = highest range
   std::vector<qEntry> active; // sorted descending, consumed via cursor
   std::size_t cursor;
+  std::uint64_t activeMin; // lower key bound of the active range
   std::vector<qEntry> overflow; // 4-ary max-heap
-  int activeB;
   std::vector<std::uint32_t> smallList;
   std::size_t smallAlive;
   double threshold;
@@ -2006,8 +2022,10 @@ public:
              std::vector<double> &_vSizesBGM, int &_NUM, double _threshold)
     : gr(_gr), vSizes(_vSizes), vSizesBGM(_vSizesBGM), NUM(_NUM),
       extend(Extend2dMeshIn3dVolumes()), hasEmbedded(false), cursor(0),
-      activeB(-1), smallAlive(0), threshold(_threshold), numBase(0)
+      activeMin(0xffffffffffffffffull), // nothing active yet
+      smallAlive(0), threshold(_threshold), numBase(0)
   {
+    segs.push_back({0, {}});
   }
   ~flatKernel()
   {
@@ -2057,19 +2075,6 @@ public:
     if(a.radius != b.radius) return a.radius > b.radius;
     return a.num < b.num;
   }
-  int bucketOf(double r) const
-  {
-    // exponent-based buckets on r/threshold - 1, so that the resolution is
-    // finest near the threshold where the radii concentrate
-    const double x = r / threshold - 1.;
-    if(x <= 0.) return 0;
-    int e;
-    const double m = std::frexp(x, &e);
-    int b = 4 * (44 + e) + (int)((m - 0.5) * 8.);
-    if(b < 0) b = 0;
-    if(b >= NB_BUCKETS) b = NB_BUCKETS - 1;
-    return b;
-  }
   void qPush(std::uint32_t t)
   {
     const double r = hot[t].radius;
@@ -2078,11 +2083,11 @@ public:
       if(smallList.size() > 2 * smallAlive + 1024) sweepSmall();
       return;
     }
-    const int b = bucketOf(r);
+    const std::uint64_t k = qKey(r);
     // everything at or above the active radius range goes to the overflow
-    // heap: entries above the active bucket must not reactivate it, which
+    // heap: entries above the active range must not reactivate it, which
     // would sort its remains again and again on large meshes
-    if(activeB >= 0 && b >= activeB) {
+    if(k >= activeMin) {
       overflow.push_back({r, qNum(t), t});
       std::size_t i = overflow.size() - 1;
       while(i) {
@@ -2095,28 +2100,64 @@ public:
       }
     }
     else {
-      buckets[b].push_back({r, qNum(t), t});
+      // find the segment whose range contains the key (segments are ordered
+      // by ascending minKey and the first one starts at 0)
+      std::size_t lo = 0, hi = segs.size() - 1;
+      while(lo < hi) {
+        std::size_t mid = (lo + hi + 1) / 2;
+        if(segs[mid].minKey <= k)
+          lo = mid;
+        else
+          hi = mid - 1;
+      }
+      segs[lo].v.push_back({r, qNum(t), t});
     }
-  }
-  void qActivate(int b)
-  {
-    active = std::move(buckets[b]);
-    buckets[b].clear();
-    std::sort(active.begin(), active.end(),
-              [](const qEntry &a, const qEntry &b) { return qGreater(a, b); });
-    cursor = 0;
-    activeB = b;
   }
   // make the next entry available; returns false if no entries remain
   bool qNormalize()
   {
     while(cursor >= active.size() && overflow.empty()) {
-      // buckets above the active one can only be nonempty before the first
-      // activation, since later pushes at or above it go to the overflow heap
-      int b = (activeB < 0) ? NB_BUCKETS - 1 : activeB;
-      while(b >= 0 && buckets[b].empty()) b--;
-      if(b < 0) return false;
-      qActivate(b);
+      while(!segs.empty() && segs.back().v.empty()) segs.pop_back();
+      if(segs.empty()) {
+        activeMin = 0; // everything now goes through the overflow heap
+        return !overflow.empty();
+      }
+      std::vector<qEntry> top = std::move(segs.back().v);
+      const std::uint64_t topMin = segs.back().minKey;
+      segs.pop_back();
+      if(top.size() > Q_SORT_LIMIT) {
+        // split radix-style on the 8 bits below the highest bit in which
+        // the keys of the segment differ
+        std::uint64_t kmin = ~0ull, kmax = 0;
+        for(auto &e : top) {
+          const std::uint64_t k = qKey(e.radius);
+          kmin = std::min(kmin, k);
+          kmax = std::max(kmax, k);
+        }
+        if(kmin != kmax) {
+          int hb = 63;
+          while(!((kmax - kmin) >> hb)) hb--;
+          int shift = hb - 7;
+          if(shift < 0) shift = 0;
+          const std::size_t nsub = (std::size_t)((kmax - kmin) >> shift) + 1;
+          const std::size_t base = segs.size();
+          for(std::size_t i = 0; i < nsub; i++)
+            segs.push_back({i ? kmin + (i << shift) : topMin,
+                            std::vector<qEntry>()});
+          for(auto &e : top)
+            segs[base + (std::size_t)((qKey(e.radius) - kmin) >> shift)]
+              .v.push_back(e);
+          continue;
+        }
+        // all keys are equal: fall through and sort (on the element numbers)
+      }
+      active = std::move(top);
+      std::sort(active.begin(), active.end(),
+                [](const qEntry &a, const qEntry &b) {
+                  return qGreater(a, b);
+                });
+      cursor = 0;
+      activeMin = topMin;
     }
     return true;
   }
@@ -2176,10 +2217,11 @@ public:
     std::vector<qEntry> all;
     for(std::size_t i = cursor; i < active.size(); i++) all.push_back(active[i]);
     for(auto &e : overflow) all.push_back(e);
-    for(int b = 0; b < NB_BUCKETS; b++)
-      for(auto &e : buckets[b]) all.push_back(e);
+    for(auto &sg : segs)
+      for(auto &e : sg.v) all.push_back(e);
     active.clear();
     overflow.clear();
+    segs.clear();
     for(auto &e : all) {
       if(tetDeleted[e.t]) {
         freeSlot(e.t);
@@ -2926,7 +2968,7 @@ static void refineRegionFlat(GRegion *gr, int maxIter,
             dt, (int)(aliveTets.size() / dt));
 
   // release the queue containers, which the export does not need
-  for(auto &b : K.buckets) std::vector<flatKernel::qEntry>().swap(b);
+  std::vector<flatKernel::qSegment>().swap(K.segs);
   std::vector<flatKernel::qEntry>().swap(K.active);
   std::vector<flatKernel::qEntry>().swap(K.overflow);
   std::vector<std::uint32_t>().swap(K.freeSlots);
