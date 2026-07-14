@@ -2102,9 +2102,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
 }
 bool backgroundMeshAndGuidingFieldExists(GModel *gm)
 {
-  Msg::Error("Module QUADMESHINGTOOLS required for function "
-             "backgroundMeshAndGuidingFieldExists");
-  return -10;
+  return false;
 }
 int optimizeTopologyWithCavityRemeshing(GModel *gm)
 {
