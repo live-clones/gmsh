@@ -1629,6 +1629,20 @@ Cell *CellComplex::getACell(int dim, int domain)
 bool CellComplex::restoreComplex()
 {
   if(_saveorig) {
+    // delete the live combined cells first, while the tombstone entries of
+    // _cells still point to valid memory: the removed combined cells are
+    // also referenced by tombstones, so freeing them (below) before this
+    // sweep would make the inComplex() reads dereference freed cells
+    for(int i = 0; i < 4; i++) {
+      for(std::size_t j = 0; j < _cells[i].size(); j++) {
+        Cell *cell = _cells[i][j];
+        if(cell->inComplex() && cell->isCombined()) {
+          delete cell;
+          _deleteCount++;
+        }
+      }
+    }
+
     for(std::size_t i = 0; i < _removedcells.size(); i++) {
       Cell *cell = _removedcells.at(i);
       if(cell->isCombined()) {
@@ -1639,16 +1653,6 @@ bool CellComplex::restoreComplex()
     _removedcells.clear();
 
     for(int i = 0; i < 4; i++) {
-      // removed cells were deleted or revived through _removedcells above;
-      // only live combined cells remain to be deleted here
-      for(std::size_t j = 0; j < _cells[i].size(); j++) {
-        Cell *cell = _cells[i][j];
-        if(cell->inComplex() && cell->isCombined()) {
-          delete cell;
-          _deleteCount++;
-        }
-      }
-
       // plain index loop: the skipping cell iterator cannot be used here,
       // since the revived cells only become live again inside this loop
       _cells[i] = _ocells[i];
