@@ -410,9 +410,7 @@ static MElement *createHighOrderFace(const MFace &face, MElement *parentElement)
   std::size_t numVertices = hoFace.getNumVertices();
 
   if(numVertices == 0) {
-    // getFaceInfo is not implemented for this parent element type (e.g.
-    // trihedra, polyhedra): fall back to a first-order element built from the
-    // corner vertices
+    Msg::Warning("Could not extract high-order face in createHighOrderFace");
     if(face.getNumVertices() == 3) {
       return new MTriangle(face.getVertex(0), face.getVertex(1),
                            face.getVertex(2));
