@@ -199,6 +199,9 @@ void GModel::destroy(bool keepName)
   vertices.clear();
   std::set<GVertex *, GEntityPtrLessThan>().swap(vertices);
 
+  // The overlap containers point into the entities deleted above
+  _clearOverlapData();
+
   destroyMeshCaches();
 
   resetOCCInternals();
@@ -652,8 +655,19 @@ void GModel::remove()
   faces.clear();
   edges.clear();
   vertices.clear();
+  _clearOverlapData();
+}
+
+void GModel::_clearOverlapData()
+{
   std::get<0>(_overlaps).clear();
   std::get<1>(_overlaps).clear();
+  _overlapInnerBoundaries2D.clear();
+  _overlapInnerBoundaries3D.clear();
+  _overlapOfBoundaries2D.clear();
+  _overlapOfBoundaries3D.clear();
+  std::get<0>(_boundaryOfOverlapCreators).clear();
+  std::get<1>(_boundaryOfOverlapCreators).clear();
 }
 
 void GModel::snapVertices()
@@ -2470,6 +2484,11 @@ int GModel::createOverlaps(int layers, bool createBoundaries)
   if(layers < 1) {
     Msg::Error("Number of layers %d in overlaps must be strictly positive",
                layers);
+    return 1;
+  }
+
+  if(getNumPartitions() == 0) {
+    Msg::Error("Model is not partitioned: cannot create overlaps");
     return 1;
   }
 
