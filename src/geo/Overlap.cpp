@@ -383,8 +383,7 @@ static MLine *createHighOrderLine(const MEdge &edge, MElement *parentElement)
   std::size_t numVertices = hoEdge.getNumVertices();
 
   if(numVertices == 0) {
-    // getEdgeInfo is not implemented for this parent element type: fall back
-    // to a first-order line built from the corner vertices
+    Msg::Warning("Could not extract high-order edge in createHighOrderLine");
     return new MLine(edge.getVertex(0), edge.getVertex(1));
   }
 
