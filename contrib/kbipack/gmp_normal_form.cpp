@@ -427,329 +427,285 @@ create_gmp_Hermite_normal_form(gmp_matrix * A,
 }
 
 
+/* ================================================================= */
+/* Fast Smith normal form.                                           */
+/*                                                                   */
+/* The previous driver reduced to Smith form by recomputing a full   */
+/* Hermite normal form of the *entire* matrix -- plus a full         */
+/* transposed Hermite -- once per invariant factor, which is         */
+/* O(n^4)..O(n^5) big-integer work.  This version diagonalises       */
+/* directly on the shrinking Schur complement: for each pivot        */
+/* position it clears the pivot's row and column with extended-gcd   */
+/* rotations restricted to the trailing submatrix, then enforces the */
+/* divisibility of the trailing block by the pivot.  It never leaves  */
+/* the trailing submatrix, so it is O(n^3) with small constants and  */
+/* collapses to O(rank * n^2) when many invariant factors are units  */
+/* (the common case in homology).                                    */
+/*                                                                   */
+/* Note on coefficient growth: like plain fraction-free elimination,  */
+/* this method does not keep the trailing block reduced, so on large  */
+/* *dense* full-rank inputs the intermediate integers can grow faster */
+/* than in the reduction-based Kannan-Bachem driver.  Homology feeds  */
+/* only small, sparse boundary/kernel matrices (entries in {-1,0,1}), */
+/* where this method is both faster and growth-free; the dense regime */
+/* is not exercised by Gmsh.                                          */
+/*                                                                   */
+/* The elementary-operation wrappers keep the *same* left/right      */
+/* factor bookkeeping and INVERTED/NOT_INVERTED contract as the      */
+/* Hermite code above: an operation on the canonical matrix is       */
+/* mirrored either directly onto the factor (INVERTED) or as the     */
+/* inverse operation on the opposite side (NOT_INVERTED).            */
+/* ================================================================= */
+
+#define GNF_ENT(M, i, j) ((M)->storage[(size_t)(j) * (M)->rows + (size_t)(i)])
+
+/* ---- row operations (premultiply the canonical matrix) ---- */
+
+static void gnf_row_swap(gmp_normal_form *nf, size_t r1, size_t r2)
+{
+  gmp_matrix_swap_rows(r1, r2, nf->canonical);
+  if(nf->left_inverted == INVERTED)
+    gmp_matrix_swap_rows(r1, r2, nf->left);
+  else
+    gmp_matrix_swap_cols(r1, r2, nf->left);
+}
+
+/* canonical: row_dst <- q*row_src + row_dst */
+static void gnf_row_addmul(gmp_normal_form *nf, mpz_t q, size_t src, size_t dst)
+{
+  gmp_matrix_add_row(q, src, dst, nf->canonical);
+  if(nf->left_inverted == INVERTED)
+    gmp_matrix_add_row(q, src, dst, nf->left);
+  else {
+    mpz_t nq; mpz_init(nq); mpz_neg(nq, q);
+    gmp_matrix_add_col(nq, dst, src, nf->left);   /* col_src += -q*col_dst */
+    mpz_clear(nq);
+  }
+}
+
+/* canonical rows (r1,r2) <- [[a,b],[c,d]] (r1,r2); det = a*d-b*c must be +-1 */
+static void gnf_row_rot(gmp_normal_form *nf,
+                        mpz_t a, mpz_t b, size_t r1,
+                        mpz_t c, mpz_t d, size_t r2)
+{
+  gmp_matrix_row_rot(a, b, r1, c, d, r2, nf->canonical);
+  if(nf->left_inverted == INVERTED)
+    gmp_matrix_row_rot(a, b, r1, c, d, r2, nf->left);
+  else {
+    /* E^{-1} as a column rotation on the left factor.  With
+       det = a*d-b*c (= +-1, so 1/det = det), the col_rot parameters are
+       (det*d, -det*c, r1, -det*b, det*a, r2). */
+    mpz_t det, t, ap, bp, cp, dp;
+    mpz_init(det); mpz_init(t);
+    mpz_init(ap); mpz_init(bp); mpz_init(cp); mpz_init(dp);
+    mpz_mul(det, a, d); mpz_mul(t, b, c); mpz_sub(det, det, t);
+    mpz_mul(ap, det, d);
+    mpz_mul(bp, det, c); mpz_neg(bp, bp);
+    mpz_mul(cp, det, b); mpz_neg(cp, cp);
+    mpz_mul(dp, det, a);
+    gmp_matrix_col_rot(ap, bp, r1, cp, dp, r2, nf->left);
+    mpz_clear(det); mpz_clear(t);
+    mpz_clear(ap); mpz_clear(bp); mpz_clear(cp); mpz_clear(dp);
+  }
+}
+
+/* ---- column operations (postmultiply the canonical matrix) ---- */
+
+static void gnf_col_swap(gmp_normal_form *nf, size_t c1, size_t c2)
+{
+  gmp_matrix_swap_cols(c1, c2, nf->canonical);
+  if(nf->right_inverted == INVERTED)
+    gmp_matrix_swap_cols(c1, c2, nf->right);
+  else
+    gmp_matrix_swap_rows(c1, c2, nf->right);
+}
+
+static void gnf_col_neg(gmp_normal_form *nf, size_t c)
+{
+  gmp_matrix_negate_col(c, nf->canonical);
+  if(nf->right_inverted == INVERTED)
+    gmp_matrix_negate_col(c, nf->right);
+  else
+    gmp_matrix_negate_row(c, nf->right);
+}
+
+/* canonical: col_dst <- q*col_src + col_dst */
+static void gnf_col_addmul(gmp_normal_form *nf, mpz_t q, size_t src, size_t dst)
+{
+  gmp_matrix_add_col(q, src, dst, nf->canonical);
+  if(nf->right_inverted == INVERTED)
+    gmp_matrix_add_col(q, src, dst, nf->right);
+  else {
+    mpz_t nq; mpz_init(nq); mpz_neg(nq, q);
+    gmp_matrix_add_row(nq, dst, src, nf->right);   /* row_src += -q*row_dst */
+    mpz_clear(nq);
+  }
+}
+
+/* canonical cols (c1,c2) <- (c1,c2) [[a,c],[b,d]] via col_rot(a,b,c1,c,d,c2) */
+static void gnf_col_rot(gmp_normal_form *nf,
+                        mpz_t a, mpz_t b, size_t c1,
+                        mpz_t c, mpz_t d, size_t c2)
+{
+  gmp_matrix_col_rot(a, b, c1, c, d, c2, nf->canonical);
+  if(nf->right_inverted == INVERTED)
+    gmp_matrix_col_rot(a, b, c1, c, d, c2, nf->right);
+  else {
+    /* F^{-1} as a row rotation on the right factor.  The right-multiplying
+       factor is [[a,c],[b,d]] with det = a*d-b*c; the row_rot parameters are
+       (det*d, -det*c, c1, -det*b, det*a, c2). */
+    mpz_t det, t, ap, bp, cp, dp;
+    mpz_init(det); mpz_init(t);
+    mpz_init(ap); mpz_init(bp); mpz_init(cp); mpz_init(dp);
+    mpz_mul(det, a, d); mpz_mul(t, b, c); mpz_sub(det, det, t);
+    mpz_mul(ap, det, d);
+    mpz_mul(bp, det, c); mpz_neg(bp, bp);
+    mpz_mul(cp, det, b); mpz_neg(cp, cp);
+    mpz_mul(dp, det, a);
+    gmp_matrix_row_rot(ap, bp, c1, cp, dp, c2, nf->right);
+    mpz_clear(det); mpz_clear(t);
+    mpz_clear(ap); mpz_clear(bp); mpz_clear(cp); mpz_clear(dp);
+  }
+}
+
+/* Zero canonical(i,t) against the pivot canonical(t,t) (both entries live in
+   column t).  When the pivot divides the entry we subtract a multiple of the
+   pivot row, leaving the pivot row untouched; otherwise we apply an
+   extended-gcd row rotation, which strictly shrinks the pivot.  Mixing the two
+   is essential: a gcd rotation in the divisible case can return a Bezout
+   coefficient of 0 and merely shuffle rows, never making progress. */
+static void gnf_clear_below(gmp_normal_form *nf, size_t t, size_t i,
+                            mpz_t g, mpz_t bez1, mpz_t bez2,
+                            mpz_t c2, mpz_t d2, mpz_t p, mpz_t e)
+{
+  gmp_matrix *C = nf->canonical;
+  mpz_set(p, GNF_ENT(C, t, t));
+  mpz_set(e, GNF_ENT(C, i, t));
+  mpz_tdiv_qr(bez1, bez2, e, p);            /* e = bez1*p + bez2 */
+  if(mpz_sgn(bez2) == 0) {
+    mpz_neg(bez1, bez1);
+    gnf_row_addmul(nf, bez1, t + 1, i + 1); /* row_i += -(e/p)*row_t */
+    return;
+  }
+  mpz_gcdext(g, bez1, bez2, p, e);          /* bez1*p + bez2*e = g */
+  mpz_divexact(c2, e, g); mpz_neg(c2, c2);  /* -e/g */
+  mpz_divexact(d2, p, g);                    /*  p/g */
+  gnf_row_rot(nf, bez1, bez2, t + 1, c2, d2, i + 1);
+}
+
+/* Zero canonical(t,j) against the pivot canonical(t,t) (both entries live in
+   row t).  Same divisible/indivisible split as gnf_clear_below. */
+static void gnf_clear_right(gmp_normal_form *nf, size_t t, size_t j,
+                            mpz_t g, mpz_t bez1, mpz_t bez2,
+                            mpz_t c2, mpz_t d2, mpz_t p, mpz_t e)
+{
+  gmp_matrix *C = nf->canonical;
+  mpz_set(p, GNF_ENT(C, t, t));
+  mpz_set(e, GNF_ENT(C, t, j));
+  mpz_tdiv_qr(bez1, bez2, e, p);            /* e = bez1*p + bez2 */
+  if(mpz_sgn(bez2) == 0) {
+    mpz_neg(bez1, bez1);
+    gnf_col_addmul(nf, bez1, t + 1, j + 1); /* col_j += -(e/p)*col_t */
+    return;
+  }
+  mpz_gcdext(g, bez1, bez2, p, e);
+  mpz_divexact(c2, e, g); mpz_neg(c2, c2);
+  mpz_divexact(d2, p, g);
+  gnf_col_rot(nf, bez1, bez2, t + 1, c2, d2, j + 1);
+}
+
 gmp_normal_form *
 create_gmp_Smith_normal_form(gmp_matrix * A,
-			     inverted_flag left_inverted,
-			     inverted_flag right_inverted)
+                             inverted_flag left_inverted,
+                             inverted_flag right_inverted)
 {
+  gmp_normal_form *nf;
+  gmp_matrix *C;
+  size_t rows, cols, ndiag, t;
+  mpz_t g, bez1, bez2, c2, d2, e, p, q, r;
 
-  gmp_normal_form * new_nf;
-  gmp_matrix * canonical;
-  gmp_matrix * elbow;
-  inverted_flag elbow_flag;
-  size_t rows, cols;
-  size_t i, j;
-  size_t subd_ind, row_undivisible;
-  size_t last_ready_row, first_ready_col, ind;
-  mpz_t  pivot;
-  mpz_t  remainder;
+  if(A == NULL) return NULL;
 
-  if(A == NULL)
+  nf = create_gmp_trivial_normal_form(A, left_inverted, right_inverted);
+  if(nf == NULL) return NULL;   /* A already destroyed */
+
+  C = nf->canonical;
+  rows = C->rows;
+  cols = C->cols;
+  ndiag = (rows < cols) ? rows : cols;
+
+  mpz_init(g); mpz_init(bez1); mpz_init(bez2);
+  mpz_init(c2); mpz_init(d2);
+  mpz_init(e); mpz_init(p); mpz_init(q); mpz_init(r);
+
+  for(t = 0; t < ndiag; t++)
     {
-      return NULL;
+      size_t pi = t, pj = t, i, j;
+      int have_pivot = 0;
+
+      /* Pick the smallest-magnitude nonzero in the trailing block as the
+         initial pivot.  This tends to surface unit (+-1) pivots first, which
+         then clear their row and column in a single pass with no growth. */
+      for(j = t; j < cols; j++)
+        for(i = t; i < rows; i++)
+          if(mpz_sgn(GNF_ENT(C, i, j)) != 0)
+            if(!have_pivot ||
+               mpz_cmpabs(GNF_ENT(C, i, j), GNF_ENT(C, pi, pj)) < 0)
+              { pi = i; pj = j; have_pivot = 1; }
+
+      if(!have_pivot) break;   /* trailing block is all zero: we are done */
+
+      if(pi != t) gnf_row_swap(nf, t + 1, pi + 1);
+      if(pj != t) gnf_col_swap(nf, t + 1, pj + 1);
+
+      for(;;)
+        {
+          int dirty = 0, found = 0;
+
+          for(i = t + 1; i < rows; i++)
+            if(mpz_sgn(GNF_ENT(C, i, t)) != 0)
+              gnf_clear_below(nf, t, i, g, bez1, bez2, c2, d2, p, e);
+
+          for(j = t + 1; j < cols; j++)
+            if(mpz_sgn(GNF_ENT(C, t, j)) != 0)
+              gnf_clear_right(nf, t, j, g, bez1, bez2, c2, d2, p, e);
+
+          /* Clearing the row may have re-dirtied column t, and vice versa. */
+          for(i = t + 1; i < rows; i++)
+            if(mpz_sgn(GNF_ENT(C, i, t)) != 0) { dirty = 1; break; }
+          if(!dirty)
+            for(j = t + 1; j < cols; j++)
+              if(mpz_sgn(GNF_ENT(C, t, j)) != 0) { dirty = 1; break; }
+          if(dirty) continue;
+
+          /* The pivot must divide every entry of the trailing block.  If not,
+             fold an offending row into the pivot row and reduce again; the
+             pivot's gcd then strictly shrinks, so this terminates. */
+          mpz_set(p, GNF_ENT(C, t, t));
+          for(j = t + 1; j < cols && !found; j++)
+            for(i = t + 1; i < rows && !found; i++)
+              {
+                if(mpz_sgn(GNF_ENT(C, i, j)) == 0) continue;
+                mpz_tdiv_r(r, GNF_ENT(C, i, j), p);
+                if(mpz_sgn(r) != 0)
+                  {
+                    mpz_set_si(q, 1);
+                    gnf_row_addmul(nf, q, i + 1, t + 1);  /* row_t += row_i */
+                    found = 1;
+                  }
+              }
+          if(found) continue;
+
+          break;
+        }
+
+      if(mpz_sgn(GNF_ENT(C, t, t)) < 0) gnf_col_neg(nf, t + 1);
     }
 
-  new_nf =
-    create_gmp_trivial_normal_form(A, left_inverted, right_inverted);
-
-  if(new_nf == NULL)
-    {
-      /* A has been destroyed already */
-      return NULL;
-    }
-
-  canonical = new_nf -> canonical;
-  mpz_init(pivot);
-  mpz_init(remainder);
-  rows = canonical->rows;
-  cols = canonical->cols;
-  last_ready_row  = 0;
-  first_ready_col = (cols < rows) ? (cols+1) : (rows+1);
-
-  while(first_ready_col > last_ready_row + 1)
-    {
-      /*******/
-      /* HNF */
-      /*******/
-
-      if(gmp_normal_form_make_Hermite(new_nf) != EXIT_SUCCESS)
-	{
-	  destroy_gmp_normal_form(new_nf);
-	  mpz_clear(pivot);
-	  mpz_clear(remainder);
-	  return NULL;
-	}
-
-#ifdef DEBUG
-      printf("HNF\n");
-      gmp_matrix_printf (new_nf -> left);
-      gmp_matrix_printf (new_nf -> canonical);
-      gmp_matrix_printf (new_nf -> right);
-#endif
-
-      /**********************/
-      /* Find ready columns */
-      /**********************/
-
-      /* If a diagonal entry is zero, so is the corresponding
-	 column. The zero diagonals always reside in the end.
-	 Seek until zero diagonal encountered, but stay within the matrix! */
-      ind = 1;
-      while ( (ind < first_ready_col) &&
-	      (mpz_cmp_si(canonical -> storage[(ind-1)+(ind-1)*rows], 0) != 0)
-	      )
-	{
-	  ind ++;
-	}
-      first_ready_col = ind;
-
-      /* Note: The number of ready cols is settled after the first HNF,
-	 but the check is cheap. */
-
-      /**********************************************/
-      /* Permute unit diagonals such that they lead */
-      /**********************************************/
-
-      /* If the recently computed HNF has ones on the diagonal, their
-	 corresponding rows are all zero (except the diagonal).
-	 They are then settled, because the next LHNF kills the elements
-	 on their columns. */
-
-      ind = last_ready_row+1;
-
-      /* Stay within the nonzero cols of the matrix */
-      while (ind < first_ready_col)
-	{
-	  /* Unit diagonal encountered */
-	  if(mpz_cmp_si ( canonical->storage[(ind-1) + (ind-1)*rows],
-			  1) == 0)
-	    {
-	      /* If not in the beginning, permute to extend the leading minor
-		 with unit diagonals */
-	      if(ind != last_ready_row+1)
-		{
-		  gmp_matrix_swap_rows(last_ready_row+1,     ind,
-				       new_nf -> canonical);
-
-		  if(left_inverted == INVERTED)
-		    {
-		      gmp_matrix_swap_rows(last_ready_row+1, ind,
-					   new_nf -> left);
-		    }
-		  else
-		    {
-		      gmp_matrix_swap_cols(last_ready_row+1, ind,
-					   new_nf -> left);
-		    }
-
-		  gmp_matrix_swap_cols(last_ready_row+1,     ind,
-				       new_nf -> canonical);
-
-		  if(right_inverted == INVERTED)
-		    {
-		      gmp_matrix_swap_cols(last_ready_row+1, ind,
-					   new_nf -> right);
-		    }
-		  else
-		    {
-		      gmp_matrix_swap_rows(last_ready_row+1, ind,
-					   new_nf -> right);
-		    }
-		}
-	      last_ready_row ++;
-	    }
-	  ind++;
-	}
-
-#ifdef DEBUG
-      printf("Leading units\n");
-      gmp_matrix_printf (new_nf -> left);
-      gmp_matrix_printf (new_nf -> canonical);
-      gmp_matrix_printf (new_nf -> right);
-#endif
-
-      /********/
-      /* LHNF */
-      /********/
-
-      /* Extravagant strategy: Compute HNF of an explicit tranpose. */
-
-      /* 1. Transpose everything in the normal form */
-      if(gmp_matrix_transp(canonical) != EXIT_SUCCESS)
-	{
-	  destroy_gmp_normal_form(new_nf);
-	  mpz_clear(pivot);
-	  mpz_clear(remainder);
-	  return NULL;
-	}
-      if(gmp_matrix_transp(new_nf->left) != EXIT_SUCCESS)
-	{
-	  destroy_gmp_normal_form(new_nf);
-	  mpz_clear(pivot);
-	  mpz_clear(remainder);
-	  return NULL;
-	}
-      if(gmp_matrix_transp(new_nf->right) != EXIT_SUCCESS)
-	{
-	  destroy_gmp_normal_form(new_nf);
-	  mpz_clear(pivot);
-	  mpz_clear(remainder);
-	  return NULL;
-	}
-
-      elbow          = new_nf ->left;
-      new_nf ->left  = new_nf ->right;
-      new_nf ->right = elbow;
-      elbow_flag              = new_nf ->left_inverted;
-      new_nf ->left_inverted  = new_nf ->right_inverted;
-      new_nf ->right_inverted = elbow_flag;
-
-      /* 2. Compute HNF of the transpose */
-      if(gmp_normal_form_make_Hermite(new_nf) != EXIT_SUCCESS)
-	{
-	  destroy_gmp_normal_form(new_nf);
-	  mpz_clear(pivot);
-	  mpz_clear(remainder);
-	  return NULL;
-	}
-
-      /* 3. Transpose everything back */
-      if(gmp_matrix_transp(canonical) != EXIT_SUCCESS)
-	{
-	  destroy_gmp_normal_form(new_nf);
-	  mpz_clear(pivot);
-	  mpz_clear(remainder);
-	  return NULL;
-	}
-      if(gmp_matrix_transp(new_nf->left) != EXIT_SUCCESS)
-	{
-	  destroy_gmp_normal_form(new_nf);
-	  mpz_clear(pivot);
-	  mpz_clear(remainder);
-	  return NULL;
-	}
-      if(gmp_matrix_transp(new_nf->right) != EXIT_SUCCESS)
-	{
-	  destroy_gmp_normal_form(new_nf);
-	  mpz_clear(pivot);
-	  mpz_clear(remainder);
-	  return NULL;
-	}
-      elbow          = new_nf ->left;
-      new_nf ->left  = new_nf ->right;
-      new_nf ->right = elbow;
-      elbow_flag              = new_nf ->left_inverted;
-      new_nf ->left_inverted  = new_nf ->right_inverted;
-      new_nf ->right_inverted = elbow_flag;
-
-
-#ifdef DEBUG
-      printf("LHNF\n");
-      gmp_matrix_printf (new_nf -> left);
-      gmp_matrix_printf (new_nf -> canonical);
-      gmp_matrix_printf (new_nf -> right);
-#endif
-
-
-      /*****************************************************/
-      /* Check if more of the leading normal form is ready */
-      /*****************************************************/
-
-      /* The matrix is in LHNF, i.e. it is upper triangular.
-	 If the row trailing the top left diagonal element is
-	 zero, the diagonal element may be an invariant factor
-	 on its final position, and the stage may be ready.
-
-	 The stage may not still be ready: The leading diagonal element
-	 of D may not divide the rest of the Schur complement. */
-
-      subd_ind = 0;
-      row_undivisible = 0;
-
-      /* Explanation of loop conditions:
-	 1.) No relative primes found from Schur complement
-	 2.) Stay within the Schur complement
-	 3.) If a nonzero is found from the trailing row, the stage is
-	     definitely not ready */
-      while (row_undivisible == 0 &&
-	     last_ready_row + 1 < first_ready_col &&
-	     subd_ind == 0)
-	{
-	  subd_ind =
-	    gmp_matrix_row_inz(last_ready_row+1,
-			       last_ready_row+2, cols,
-			       canonical);
-
-	  /* printf("subd_ind %i\n", subd_ind);
-	     printf("last_ready_row %i\n", last_ready_row); */
-
-	  /* No nonzeros found, the stage may be ready */
-	  if (subd_ind == 0)
-	    {
-	      mpz_set (pivot,
-		       canonical->storage[(last_ready_row)+
-					  (last_ready_row)*rows]);
-
-	      /* Check whether the pivot divides all elements in the Schur
-		 complement */
-	      row_undivisible = 0;
-	      for(j = last_ready_row+2; j < first_ready_col; j++)
-		{
-		  for(i = last_ready_row+2; i <= j; i++)
-		    {
-		      mpz_tdiv_r (remainder,
-				  canonical->storage[(i-1)+
-						     (j-1)*rows],
-				  pivot);
-
-		      if(mpz_cmp_si(remainder, 0) !=0)
-			{
-			  row_undivisible = i;
-			  /* col_undivisible = j; */
-			}
-		    }
-		}
-
-	      /* printf("Row undivisible %i\n", row_undivisible); */
-
-	      /* If a relative prime was found from the Schur complement,
-		 add that row to the first row of the Schur complement */
-	      if(row_undivisible != 0)
-		{
-		  mpz_set_si (remainder, 1);
-		  gmp_matrix_add_row(remainder,
-				     row_undivisible, last_ready_row+1,
-				     canonical);
-
-		  /* [ 1 0] [1 0] = [1 0]
-		     [-1 1] [1 1]   [0 1] */
-
-		  if(left_inverted == INVERTED)
-		    {
-		      gmp_matrix_add_row(remainder,
-					 row_undivisible, last_ready_row+1,
-					 new_nf->left);
-		    }
-		  else
-		    {
-		      mpz_neg (remainder, remainder);
-		      gmp_matrix_add_col(remainder,
-					 last_ready_row+1, row_undivisible,
-					 new_nf->left);
-		    }
-		}
-	      /* The Schur complement is smaller by one again */
-	      else
-		{
-		  last_ready_row++;
-		}
-	    }
-	}
-    }  /* The main loop ends here */
-
-  mpz_clear(pivot);
-  mpz_clear(remainder);
-  return new_nf;
+  mpz_clear(g); mpz_clear(bez1); mpz_clear(bez2);
+  mpz_clear(c2); mpz_clear(d2);
+  mpz_clear(e); mpz_clear(p); mpz_clear(q); mpz_clear(r);
+  return nf;
 }
 
 int destroy_gmp_normal_form(gmp_normal_form * nf)
