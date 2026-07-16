@@ -626,18 +626,20 @@ gmp_matrix_transp(gmp_matrix * M)
 }
 
 
-/* Portable init+store of a signed 64-bit value into an mpz_t. */
+/* Portable init+store of a signed 64-bit value into an mpz_t.  The two-halves
+   form (for a 32-bit long) needs real GMP; the bundled mpz shim is a machine
+   long, so there a plain mpz_init_set_si is sufficient and all that fits. */
 static void kbi_mpz_init_set_i64(mpz_t r, int64_t v)
 {
-#if LONG_MAX >= 9223372036854775807L
-  mpz_init_set_si(r, (long)v);
-#else
+#if defined(HAVE_GMP) && (LONG_MAX < 9223372036854775807L)
   int neg = (v < 0);
   uint64_t a = neg ? (uint64_t)(-(v + 1)) + 1u : (uint64_t)v;
   mpz_init_set_ui(r, (unsigned long)(a >> 32));
   mpz_mul_2exp(r, r, 32);
   mpz_add_ui(r, r, (unsigned long)(a & 0xffffffffu));
   if(neg) mpz_neg(r, r);
+#else
+  mpz_init_set_si(r, (long)v);
 #endif
 }
 
@@ -646,7 +648,7 @@ static size_t kbi_maxbits(const mpz_t *st, size_t n)
   size_t mb = 0, k;
   for(k = 0; k < n; k++)
     {
-      size_t b = (mpz_sgn(st[k]) == 0) ? 0 : mpz_sizeinbase(st[k], 2);
+      size_t b = (mpz_sgn((mpz_ptr)st[k]) == 0) ? 0 : mpz_sizeinbase((mpz_ptr)st[k], 2);
       if(b > mb) mb = b;
     }
   return mb;
@@ -681,7 +683,7 @@ kbi_gemm(const mpz_t *Ast, size_t ra, size_t ca,
     {
       int64_t *Ai = (int64_t *) malloc(ra * ca * sizeof(int64_t));
       if(Ai == NULL) { free(C); return NULL; }
-      for(k = 0; k < ra * ca; k++) Ai[k] = (int64_t) mpz_get_si(Ast[k]);
+      for(k = 0; k < ra * ca; k++) Ai[k] = (int64_t) mpz_get_si((mpz_ptr)Ast[k]);
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic) private(i, k)
@@ -692,7 +694,7 @@ kbi_gemm(const mpz_t *Ast, size_t ra, size_t ca,
           const mpz_t *Bcol = &Bst[j * rb];
           for(k = 0; k < ca; k++)
             {
-              int64_t b = (int64_t) mpz_get_si(Bcol[k]);
+              int64_t b = (int64_t) mpz_get_si((mpz_ptr)Bcol[k]);
               if(b == 0) continue;
               const int64_t *Acol = &Ai[k * ra];
               for(i = 0; i < ra; i++) acc[i] += Acol[i] * b;
