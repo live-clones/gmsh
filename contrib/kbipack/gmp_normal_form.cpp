@@ -533,7 +533,7 @@ static size_t he_col_inz(size_t r1, size_t r2, size_t c, int64_t *M, size_t rows
 /* Eliminate column "col" against the leading diagonal (mirrors
    gmp_Hermite_eliminate_step); column ops on C are mirrored onto R. */
 static void he_eliminate(int64_t *C, size_t m, int64_t *R, size_t nR,
-                         inverted_flag rinv, size_t col, int *of)
+                         inverted_flag rinv, size_t col, int *disturbed, int *of)
 {
   size_t row_limit = (m >= col) ? col - 1 : m, ind;
   for(ind = 1; ind <= row_limit && !*of; ind++) {
@@ -544,6 +544,10 @@ static void he_eliminate(int64_t *C, size_t m, int64_t *R, size_t nR,
     int64_t g = he_gcdext(pivot, elem, &bez1, &bez2);
     int64_t cff1 = -(elem / g);   /* -elem/g */
     int64_t cff2 = pivot / g;     /*  pivot/g */
+    /* The leading column "ind" changes unless (bez1,bez2) == (1,0), i.e.
+       unless the leading pivot is a unit; if it changes, the leading block
+       may become unreduced. */
+    if(bez1 != 1 || bez2 != 0) *disturbed = 1;
     he_col_rot(bez1, bez2, ind, cff1, cff2, col, C, m, of);
     if(rinv == INVERTED)
       he_col_rot(bez1, bez2, ind, cff1, cff2, col, R, nR, of);
@@ -553,14 +557,18 @@ static void he_eliminate(int64_t *C, size_t m, int64_t *R, size_t nR,
   }
 }
 
-/* Reduce off-diagonals of the leading block (mirrors gmp_Hermite_reduce_step). */
+/* Reduce off-diagonals of the leading block (mirrors gmp_Hermite_reduce_step).
+   When row_only is set, only row "col" is reduced (the rest of the block is
+   already reduced and undisturbed); this is exact because the entries skipped
+   would have failed the reduction guard anyway, and it turns the O(col^2)
+   block sweep into an O(col) row sweep. */
 static void he_reduce(int64_t *C, size_t m, int64_t *R, size_t nR,
-                      inverted_flag rinv, size_t col, int *of)
+                      inverted_flag rinv, size_t col, int row_only, int *of)
 {
   size_t i, j;
   if(col < 1 || col > m) return;
   for(j = col - 1; j >= 1 && !*of; j--) {
-    for(i = j + 1; i <= col; i++) {
+    for(i = (row_only ? col : j + 1); i <= col; i++) {
       int64_t pivot = HE(C, m, i - 1, i - 1);
       int64_t elem = HE(C, m, i - 1, j - 1);
       int64_t ap = pivot < 0 ? -pivot : pivot;
@@ -576,15 +584,27 @@ static void he_reduce(int64_t *C, size_t m, int64_t *R, size_t nR,
   }
 }
 
+/* TMP HNF phase timers */
 /* Full Hermite reduction on int64 storage.  Returns 0 on success, 1 on
-   overflow (in which case C/L/R are left partially modified and discarded). */
+   overflow (in which case C/L/R are left partially modified and discarded).
+
+   "clean" tracks whether the already-processed leading block is fully reduced.
+   It stays true as long as elimination only uses unit pivots (the totally-
+   unimodular case), which never disturbs the leading columns; then each
+   reduction only has to touch the pivot's new row instead of re-sweeping the
+   whole block.  A non-unit pivot clears the flag and forces one full reduce. */
 static int he_make_hermite(int64_t *C, size_t m, size_t n,
                            int64_t *L, int64_t *R,
                            inverted_flag linv, inverted_flag rinv, int *of)
 {
   size_t schur = 1, ncols = n, colind;
+  int clean = 1;
   while(schur <= m && schur <= ncols && !*of) {
-    if(schur > 1) he_eliminate(C, m, R, n, rinv, schur, of);
+    if(schur > 1) {
+      int dist = 0;
+      he_eliminate(C, m, R, n, rinv, schur, &dist, of);
+      if(dist) clean = 0;
+    }
     if(*of) return 1;
     size_t pivot_off = he_col_inz(schur, m, schur, C, m);
     if(pivot_off == 0) {
@@ -592,7 +612,10 @@ static int he_make_hermite(int64_t *C, size_t m, size_t n,
       if(rinv == INVERTED) he_swap_cols(schur, ncols, R, n);
       else he_swap_rows(schur, ncols, R, n, n);
       ncols--;
-      if(schur > 1) he_reduce(C, m, R, n, rinv, schur - 1, of);
+      if(schur > 1 && !clean) {
+        he_reduce(C, m, R, n, rinv, schur - 1, 0, of);
+        clean = 1;
+      }
     }
     else {
       size_t pivot_ind = schur + pivot_off - 1;
@@ -604,14 +627,20 @@ static int he_make_hermite(int64_t *C, size_t m, size_t n,
         if(rinv == INVERTED) he_neg_col(schur, R, n);
         else he_neg_row(schur, R, n, n);
       }
-      he_reduce(C, m, R, n, rinv, schur, of);
+      he_reduce(C, m, R, n, rinv, schur, clean, of);
+      clean = 1;
       schur++;
     }
   }
   colind = schur;
   while(colind <= ncols && !*of) {
-    he_eliminate(C, m, R, n, rinv, colind, of);
-    he_reduce(C, m, R, n, rinv, schur - 1, of);
+    int dist = 0;
+    he_eliminate(C, m, R, n, rinv, colind, &dist, of);
+    if(dist) clean = 0;
+    if(!clean) {
+      he_reduce(C, m, R, n, rinv, schur - 1, 0, of);
+      clean = 1;
+    }
     colind++;
   }
   return *of ? 1 : 0;
