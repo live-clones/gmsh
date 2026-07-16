@@ -45,6 +45,8 @@
 */
 
 #include<stdlib.h>
+#include<stdint.h>
+#include<limits.h>
 #include"gmp_blas.h"
 #include"gmp_matrix.h"
 #include"gmp_normal_form.h"
@@ -396,6 +398,297 @@ gmp_normal_form_make_Hermite(gmp_normal_form * nf)
 
 
 
+/* ================================================================= */
+/* Fast native-integer Hermite normal form.                          */
+/*                                                                   */
+/* This runs exactly the same Kannan-Bachem reduction as             */
+/* gmp_normal_form_make_Hermite above, but on int64 storage instead  */
+/* of mpz_t.  The incidence matrices of a cell complex are totally   */
+/* unimodular, so the Hermite form and its unimodular factors have   */
+/* tiny entries; keeping them in machine words removes the per-op GMP */
+/* overhead that otherwise dominates.  Every arithmetic step is       */
+/* range-checked against int64; on overflow (or if the input entries  */
+/* are already too large) the caller discards the attempt and runs    */
+/* the exact mpz path, so the result is always correct.              */
+/*                                                                   */
+/* Column-major storage, 0-based element access. */
+#define HE(a, rows, i0, j0) ((a)[(size_t)(j0) * (size_t)(rows) + (size_t)(i0)])
+
+static int he_fits(__int128 v)
+{
+  return v <= (__int128)INT64_MAX && v >= (__int128)INT64_MIN;
+}
+
+/* g = |gcd(a,b)| >= 0, with s*a + t*b = g (minimal cofactors). */
+static int64_t he_gcdext(int64_t a, int64_t b, int64_t *s, int64_t *t)
+{
+  int64_t old_r = a, r = b, old_s = 1, s1 = 0, old_t = 0, t1 = 1;
+  while(r != 0) {
+    int64_t q = old_r / r, tmp;
+    tmp = old_r - q * r; old_r = r; r = tmp;
+    tmp = old_s - q * s1; old_s = s1; s1 = tmp;
+    tmp = old_t - q * t1; old_t = t1; t1 = tmp;
+  }
+  if(old_r < 0) { old_r = -old_r; old_s = -old_s; old_t = -old_t; }
+  *s = old_s; *t = old_t;
+  return old_r;
+}
+
+/* ceil(n/d) for d > 0 */
+static int64_t he_cdiv_q(int64_t n, int64_t d)
+{
+  int64_t q = n / d, rem = n % d;
+  if(rem != 0 && ((rem > 0) == (d > 0))) q++;
+  return q;
+}
+
+/* Elementary operations on int64 column-major matrices (1-based targets). */
+static void he_swap_cols(size_t c1, size_t c2, int64_t *M, size_t rows)
+{
+  size_t i;
+  if(c1 == c2) return;
+  for(i = 0; i < rows; i++) {
+    int64_t t = HE(M, rows, i, c1 - 1);
+    HE(M, rows, i, c1 - 1) = HE(M, rows, i, c2 - 1);
+    HE(M, rows, i, c2 - 1) = t;
+  }
+}
+static void he_swap_rows(size_t r1, size_t r2, int64_t *M, size_t rows, size_t cols)
+{
+  size_t j;
+  if(r1 == r2) return;
+  for(j = 0; j < cols; j++) {
+    int64_t t = HE(M, rows, r1 - 1, j);
+    HE(M, rows, r1 - 1, j) = HE(M, rows, r2 - 1, j);
+    HE(M, rows, r2 - 1, j) = t;
+  }
+}
+static void he_neg_col(size_t c, int64_t *M, size_t rows)
+{ size_t i; for(i = 0; i < rows; i++) HE(M, rows, i, c - 1) = -HE(M, rows, i, c - 1); }
+static void he_neg_row(size_t r, int64_t *M, size_t rows, size_t cols)
+{ size_t j; for(j = 0; j < cols; j++) HE(M, rows, r - 1, j) = -HE(M, rows, r - 1, j); }
+
+/* col_dst <- cff*col_src + col_dst */
+static void he_add_col(int64_t cff, size_t src, size_t dst,
+                       int64_t *M, size_t rows, int *of)
+{
+  size_t i;
+  for(i = 0; i < rows; i++) {
+    __int128 v = (__int128)HE(M, rows, i, dst - 1)
+               + (__int128)cff * HE(M, rows, i, src - 1);
+    if(!he_fits(v)) { *of = 1; return; }
+    HE(M, rows, i, dst - 1) = (int64_t)v;
+  }
+}
+/* row_dst <- cff*row_src + row_dst */
+static void he_add_row(int64_t cff, size_t src, size_t dst,
+                       int64_t *M, size_t rows, size_t cols, int *of)
+{
+  size_t j;
+  for(j = 0; j < cols; j++) {
+    __int128 v = (__int128)HE(M, rows, dst - 1, j)
+               + (__int128)cff * HE(M, rows, src - 1, j);
+    if(!he_fits(v)) { *of = 1; return; }
+    HE(M, rows, dst - 1, j) = (int64_t)v;
+  }
+}
+/* col1 <- a*col1 + b*col2 ; col2 <- c*col1_old + d*col2 */
+static void he_col_rot(int64_t a, int64_t b, size_t c1,
+                       int64_t c, int64_t d, size_t c2,
+                       int64_t *M, size_t rows, int *of)
+{
+  size_t i;
+  for(i = 0; i < rows; i++) {
+    int64_t x = HE(M, rows, i, c1 - 1), y = HE(M, rows, i, c2 - 1);
+    __int128 nx = (__int128)a * x + (__int128)b * y;
+    __int128 ny = (__int128)c * x + (__int128)d * y;
+    if(!he_fits(nx) || !he_fits(ny)) { *of = 1; return; }
+    HE(M, rows, i, c1 - 1) = (int64_t)nx;
+    HE(M, rows, i, c2 - 1) = (int64_t)ny;
+  }
+}
+static void he_row_rot(int64_t a, int64_t b, size_t r1,
+                       int64_t c, int64_t d, size_t r2,
+                       int64_t *M, size_t rows, size_t cols, int *of)
+{
+  size_t j;
+  for(j = 0; j < cols; j++) {
+    int64_t x = HE(M, rows, r1 - 1, j), y = HE(M, rows, r2 - 1, j);
+    __int128 nx = (__int128)a * x + (__int128)b * y;
+    __int128 ny = (__int128)c * x + (__int128)d * y;
+    if(!he_fits(nx) || !he_fits(ny)) { *of = 1; return; }
+    HE(M, rows, r1 - 1, j) = (int64_t)nx;
+    HE(M, rows, r2 - 1, j) = (int64_t)ny;
+  }
+}
+/* first index in [r1,r2] (1-based) with M(.,c)!=0, as offset in [1..], else 0 */
+static size_t he_col_inz(size_t r1, size_t r2, size_t c, int64_t *M, size_t rows)
+{
+  size_t k;
+  for(k = r1; k <= r2; k++)
+    if(HE(M, rows, k - 1, c - 1) != 0) return k - r1 + 1;
+  return 0;
+}
+
+/* Eliminate column "col" against the leading diagonal (mirrors
+   gmp_Hermite_eliminate_step); column ops on C are mirrored onto R. */
+static void he_eliminate(int64_t *C, size_t m, int64_t *R, size_t nR,
+                         inverted_flag rinv, size_t col, int *of)
+{
+  size_t row_limit = (m >= col) ? col - 1 : m, ind;
+  for(ind = 1; ind <= row_limit && !*of; ind++) {
+    int64_t elem = HE(C, m, ind - 1, col - 1);
+    if(elem == 0) continue;
+    int64_t pivot = HE(C, m, ind - 1, ind - 1);
+    int64_t bez1, bez2;
+    int64_t g = he_gcdext(pivot, elem, &bez1, &bez2);
+    int64_t cff1 = -(elem / g);   /* -elem/g */
+    int64_t cff2 = pivot / g;     /*  pivot/g */
+    he_col_rot(bez1, bez2, ind, cff1, cff2, col, C, m, of);
+    if(rinv == INVERTED)
+      he_col_rot(bez1, bez2, ind, cff1, cff2, col, R, nR, of);
+    else
+      /* row_rot(pivot/g, elem/g, ind, -bez2, bez1, col) on R */
+      he_row_rot(cff2, -cff1, ind, -bez2, bez1, col, R, nR, nR, of);
+  }
+}
+
+/* Reduce off-diagonals of the leading block (mirrors gmp_Hermite_reduce_step). */
+static void he_reduce(int64_t *C, size_t m, int64_t *R, size_t nR,
+                      inverted_flag rinv, size_t col, int *of)
+{
+  size_t i, j;
+  if(col < 1 || col > m) return;
+  for(j = col - 1; j >= 1 && !*of; j--) {
+    for(i = j + 1; i <= col; i++) {
+      int64_t pivot = HE(C, m, i - 1, i - 1);
+      int64_t elem = HE(C, m, i - 1, j - 1);
+      int64_t ap = pivot < 0 ? -pivot : pivot;
+      int64_t ae = elem < 0 ? -elem : elem;
+      if(ae >= ap || elem < 0) {
+        int64_t cff = he_cdiv_q(-elem, pivot);
+        he_add_col(cff, i, j, C, m, of);
+        if(rinv == INVERTED) he_add_col(cff, i, j, R, nR, of);
+        else he_add_row(-cff, j, i, R, nR, nR, of);
+      }
+    }
+    if(j == 1) break;   /* avoid size_t underflow */
+  }
+}
+
+/* Full Hermite reduction on int64 storage.  Returns 0 on success, 1 on
+   overflow (in which case C/L/R are left partially modified and discarded). */
+static int he_make_hermite(int64_t *C, size_t m, size_t n,
+                           int64_t *L, int64_t *R,
+                           inverted_flag linv, inverted_flag rinv, int *of)
+{
+  size_t schur = 1, ncols = n, colind;
+  while(schur <= m && schur <= ncols && !*of) {
+    if(schur > 1) he_eliminate(C, m, R, n, rinv, schur, of);
+    if(*of) return 1;
+    size_t pivot_off = he_col_inz(schur, m, schur, C, m);
+    if(pivot_off == 0) {
+      he_swap_cols(schur, ncols, C, m);
+      if(rinv == INVERTED) he_swap_cols(schur, ncols, R, n);
+      else he_swap_rows(schur, ncols, R, n, n);
+      ncols--;
+      if(schur > 1) he_reduce(C, m, R, n, rinv, schur - 1, of);
+    }
+    else {
+      size_t pivot_ind = schur + pivot_off - 1;
+      he_swap_rows(schur, pivot_ind, C, m, n);
+      if(linv == INVERTED) he_swap_rows(schur, pivot_ind, L, m, m);
+      else he_swap_cols(schur, pivot_ind, L, m);
+      if(HE(C, m, schur - 1, schur - 1) < 0) {
+        he_neg_col(schur, C, m);
+        if(rinv == INVERTED) he_neg_col(schur, R, n);
+        else he_neg_row(schur, R, n, n);
+      }
+      he_reduce(C, m, R, n, rinv, schur, of);
+      schur++;
+    }
+  }
+  colind = schur;
+  while(colind <= ncols && !*of) {
+    he_eliminate(C, m, R, n, rinv, colind, of);
+    he_reduce(C, m, R, n, rinv, schur - 1, of);
+    colind++;
+  }
+  return *of ? 1 : 0;
+}
+
+/* Portable store of an int64 into an mpz_t. */
+static void he_mpz_set_i64(mpz_t r, int64_t v)
+{
+#if LONG_MAX >= 9223372036854775807L
+  mpz_set_si(r, (long)v);
+#else
+  int neg = (v < 0);
+  uint64_t a = neg ? (uint64_t)(-(v + 1)) + 1u : (uint64_t)v;
+  mpz_set_ui(r, (unsigned long)(a >> 32));
+  mpz_mul_2exp(r, r, 32);
+  mpz_add_ui(r, r, (unsigned long)(a & 0xffffffffu));
+  if(neg) mpz_neg(r, r);
+#endif
+}
+
+static gmp_matrix *he_to_gmp(const int64_t *a, size_t rows, size_t cols)
+{
+  gmp_matrix *M = create_gmp_matrix_zero(rows, cols);
+  size_t idx;
+  if(M == NULL) return NULL;
+  for(idx = 0; idx < rows * cols; idx++) he_mpz_set_i64(M->storage[idx], a[idx]);
+  return M;
+}
+
+/* Attempt the native-integer Hermite form; returns the normal form on
+   success, or NULL if the fast path is not applicable / overflowed (A is
+   left untouched so the caller can run the exact mpz path). */
+static gmp_normal_form *
+he_fast_hermite(gmp_matrix *A, inverted_flag linv, inverted_flag rinv)
+{
+  size_t m = A->rows, n = A->cols, idx;
+  size_t mb = 0;
+  int of = 0;
+  int64_t *C, *L, *R;
+  gmp_normal_form *nf;
+
+  for(idx = 0; idx < m * n; idx++) {
+    size_t b = (mpz_sgn(A->storage[idx]) == 0) ? 0 : mpz_sizeinbase(A->storage[idx], 2);
+    if(b > mb) mb = b;
+    if(!mpz_fits_slong_p(A->storage[idx]) || mb > 31) return NULL;
+  }
+
+  C = (int64_t *)malloc(m * n * sizeof(int64_t));
+  L = (int64_t *)calloc(m * m, sizeof(int64_t));
+  R = (int64_t *)calloc(n * n, sizeof(int64_t));
+  if(C == NULL || L == NULL || R == NULL) { free(C); free(L); free(R); return NULL; }
+
+  for(idx = 0; idx < m * n; idx++) C[idx] = (int64_t)mpz_get_si(A->storage[idx]);
+  for(idx = 0; idx < m; idx++) HE(L, m, idx, idx) = 1;
+  for(idx = 0; idx < n; idx++) HE(R, n, idx, idx) = 1;
+
+  if(he_make_hermite(C, m, n, L, R, linv, rinv, &of) != 0 || of) {
+    free(C); free(L); free(R);
+    return NULL;   /* overflow: fall back to the exact path */
+  }
+
+  nf = (gmp_normal_form *)malloc(sizeof(gmp_normal_form));
+  if(nf == NULL) { free(C); free(L); free(R); return NULL; }
+  nf->canonical = he_to_gmp(C, m, n);
+  nf->left = he_to_gmp(L, m, m);
+  nf->right = he_to_gmp(R, n, n);
+  nf->left_inverted = linv;
+  nf->right_inverted = rinv;
+  free(C); free(L); free(R);
+  if(nf->canonical == NULL || nf->left == NULL || nf->right == NULL) {
+    destroy_gmp_normal_form(nf);
+    return NULL;
+  }
+  destroy_gmp_matrix(A);
+  return nf;
+}
+
 gmp_normal_form *
 create_gmp_Hermite_normal_form(gmp_matrix * A,
 			       inverted_flag left_inverted,
@@ -406,6 +699,14 @@ create_gmp_Hermite_normal_form(gmp_matrix * A,
   if(A == NULL)
     {
       return NULL;
+    }
+
+  /* Try the fast native-integer path; it returns NULL (leaving A intact)
+     when the entries are too large or an intermediate overflow occurs. */
+  new_nf = he_fast_hermite(A, left_inverted, right_inverted);
+  if(new_nf != NULL)
+    {
+      return new_nf;
     }
 
   new_nf =
