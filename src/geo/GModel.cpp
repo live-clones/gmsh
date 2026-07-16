@@ -43,6 +43,7 @@
 #include "Options.h"
 #include "GModelParametrize.h"
 #include "Overlap.h"
+#include "Homology.h"
 
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
@@ -61,10 +62,6 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewDataGModel.h"
-#endif
-
-#if defined(HAVE_KBIPACK)
-#include "Homology.h"
 #endif
 
 std::vector<GModel *> GModel::list;
@@ -3733,7 +3730,6 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
 
   if(_homologyRequests.empty()) return;
 
-#if defined(HAVE_KBIPACK)
   Msg::StatusBar(true, "Homology and cohomology computation...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
@@ -3832,10 +3828,6 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
                  "Done homology and cohomology computation "
                  "(Wall %gs, CPU %gs)",
                  w2 - w1, t2 - t1);
-
-#else
-  Msg::Error("Homology computation requires KBIPACK");
-#endif
 }
 
 void GModel::computeSizeField()
