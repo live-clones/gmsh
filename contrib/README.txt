@@ -23,7 +23,6 @@ their own respective license:
 * gmm: GNU Lesser General Public License (LGPL), v. 3 or later
 * hxt: GNU General Public License (GPL) v. 2 or later, with exception for
   linking with Gmsh under Gmsh license
-* kbipack: GNU General Public License (GPL) v. 2 or later
 * metis: Apache License (APL), v. 2.0
 * mobile: GNU General Public License (GPL), v. 2 or later
 * mpeg_encode: freely distributed, but patents are held by several companies on

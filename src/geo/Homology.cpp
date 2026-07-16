@@ -8,8 +8,6 @@
 #include "Homology.h"
 #include "fullMatrix.h"
 
-#if defined(HAVE_KBIPACK)
-
 Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
                    const std::vector<int> &physicalSubdomain,
                    const std::vector<int> &physicalImdomain, bool saveOrig,
@@ -707,5 +705,3 @@ void Homology::storeCells(CellComplex *cellComplex, int dim)
   _model->storeChain(dim, entityMap, physicalMap);
   _model->setPhysicalName("Cell Complex", dim, physicalNum);
 }
-
-#endif
