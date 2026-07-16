@@ -641,6 +641,16 @@ static gmp_matrix *he_to_gmp(const int64_t *a, size_t rows, size_t cols)
   return M;
 }
 
+/* Write an int64 canonical back into the (same-shape) input matrix's storage,
+   so the input pointer stays valid as nf->canonical -- matching the mpz path,
+   which repurposes A as the canonical rather than freeing it.  Some callers
+   (ChainComplex::Inclusion) read the input pointer after the call. */
+static void he_store_i64(gmp_matrix *M, const int64_t *a)
+{
+  size_t idx;
+  for(idx = 0; idx < M->rows * M->cols; idx++) he_mpz_set_i64(M->storage[idx], a[idx]);
+}
+
 /* Attempt the native-integer Hermite form; returns the normal form on
    success, or NULL if the fast path is not applicable / overflowed (A is
    left untouched so the caller can run the exact mpz path). */
@@ -673,19 +683,25 @@ he_fast_hermite(gmp_matrix *A, inverted_flag linv, inverted_flag rinv)
     return NULL;   /* overflow: fall back to the exact path */
   }
 
-  nf = (gmp_normal_form *)malloc(sizeof(gmp_normal_form));
-  if(nf == NULL) { free(C); free(L); free(R); return NULL; }
-  nf->canonical = he_to_gmp(C, m, n);
-  nf->left = he_to_gmp(L, m, m);
-  nf->right = he_to_gmp(R, n, n);
-  nf->left_inverted = linv;
-  nf->right_inverted = rinv;
-  free(C); free(L); free(R);
-  if(nf->canonical == NULL || nf->left == NULL || nf->right == NULL) {
-    destroy_gmp_normal_form(nf);
-    return NULL;
+  /* Build the factors first; if anything fails, leave A untouched so the
+     caller can still run the exact mpz path. */
+  {
+    gmp_matrix *newL = he_to_gmp(L, m, m);
+    gmp_matrix *newR = he_to_gmp(R, n, n);
+    nf = (gmp_normal_form *)malloc(sizeof(gmp_normal_form));
+    if(newL == NULL || newR == NULL || nf == NULL) {
+      destroy_gmp_matrix(newL); destroy_gmp_matrix(newR); free(nf);
+      free(C); free(L); free(R);
+      return NULL;
+    }
+    he_store_i64(A, C);          /* repurpose A as the canonical */
+    nf->canonical = A;
+    nf->left = newL;
+    nf->right = newR;
+    nf->left_inverted = linv;
+    nf->right_inverted = rinv;
   }
-  destroy_gmp_matrix(A);
+  free(C); free(L); free(R);
   return nf;
 }
 
@@ -915,6 +931,194 @@ static void gnf_clear_right(gmp_normal_form *nf, size_t t, size_t j,
   gnf_col_rot(nf, bez1, bez2, t + 1, c2, d2, j + 1);
 }
 
+/* ================================================================= */
+/* Fast native-integer Smith normal form.                            */
+/*                                                                   */
+/* This runs exactly the diagonalisation below on int64 storage, with */
+/* the same pivot choice, clearing and factor bookkeeping, reusing    */
+/* the he_* int64 primitives from the Hermite path.  Every arithmetic */
+/* step is range-checked; on overflow (or entries too large to fit in */
+/* 32 bits) the attempt is discarded and the exact mpz path runs.  The */
+/* algorithm is reproduced step for step, so the result is bit-        */
+/* identical to the mpz path (canonical and both transforms).         */
+/* ================================================================= */
+
+typedef struct {
+  int64_t *C, *L, *R;   /* canonical m x n, left m x m, right n x n */
+  size_t m, n;
+  inverted_flag linv, rinv;
+  int of;
+} sn_ctx;
+
+/* ---- row operations on the canonical matrix, mirrored onto L ---- */
+static void sn_row_swap(sn_ctx *x, size_t r1, size_t r2)
+{
+  he_swap_rows(r1, r2, x->C, x->m, x->n);
+  if(x->linv == INVERTED) he_swap_rows(r1, r2, x->L, x->m, x->m);
+  else he_swap_cols(r1, r2, x->L, x->m);
+}
+static void sn_row_addmul(sn_ctx *x, int64_t q, size_t src, size_t dst)
+{
+  he_add_row(q, src, dst, x->C, x->m, x->n, &x->of);
+  if(x->linv == INVERTED) he_add_row(q, src, dst, x->L, x->m, x->m, &x->of);
+  else he_add_col(-q, dst, src, x->L, x->m, &x->of);   /* col_src += -q*col_dst */
+}
+static void sn_row_rot(sn_ctx *x, int64_t a, int64_t b, size_t r1,
+                       int64_t c, int64_t d, size_t r2)
+{
+  he_row_rot(a, b, r1, c, d, r2, x->C, x->m, x->n, &x->of);
+  if(x->linv == INVERTED)
+    he_row_rot(a, b, r1, c, d, r2, x->L, x->m, x->m, &x->of);
+  else {
+    int64_t det = (int64_t)((__int128)a * d - (__int128)b * c);
+    he_col_rot(det * d, -det * c, r1, -det * b, det * a, r2, x->L, x->m, &x->of);
+  }
+}
+
+/* ---- column operations on the canonical matrix, mirrored onto R ---- */
+static void sn_col_swap(sn_ctx *x, size_t c1, size_t c2)
+{
+  he_swap_cols(c1, c2, x->C, x->m);
+  if(x->rinv == INVERTED) he_swap_cols(c1, c2, x->R, x->n);
+  else he_swap_rows(c1, c2, x->R, x->n, x->n);
+}
+static void sn_col_neg(sn_ctx *x, size_t c)
+{
+  he_neg_col(c, x->C, x->m);
+  if(x->rinv == INVERTED) he_neg_col(c, x->R, x->n);
+  else he_neg_row(c, x->R, x->n, x->n);
+}
+static void sn_col_addmul(sn_ctx *x, int64_t q, size_t src, size_t dst)
+{
+  he_add_col(q, src, dst, x->C, x->m, &x->of);
+  if(x->rinv == INVERTED) he_add_col(q, src, dst, x->R, x->n, &x->of);
+  else he_add_row(-q, dst, src, x->R, x->n, x->n, &x->of);  /* row_src += -q*row_dst */
+}
+static void sn_col_rot(sn_ctx *x, int64_t a, int64_t b, size_t c1,
+                       int64_t c, int64_t d, size_t c2)
+{
+  he_col_rot(a, b, c1, c, d, c2, x->C, x->m, &x->of);
+  if(x->rinv == INVERTED)
+    he_col_rot(a, b, c1, c, d, c2, x->R, x->n, &x->of);
+  else {
+    int64_t det = (int64_t)((__int128)a * d - (__int128)b * c);
+    he_row_rot(det * d, -det * c, c1, -det * b, det * a, c2, x->R, x->n, x->n, &x->of);
+  }
+}
+
+/* Zero C(i,t) against pivot C(t,t); subtract when the pivot divides, else a
+   gcd rotation (mirrors gnf_clear_below).  Indices here are 0-based. */
+static void sn_clear_below(sn_ctx *x, size_t t, size_t i)
+{
+  int64_t p = HE(x->C, x->m, t, t), e = HE(x->C, x->m, i, t);
+  int64_t quo = e / p, rem = e - quo * p;
+  if(rem == 0) { sn_row_addmul(x, -quo, t + 1, i + 1); return; }
+  int64_t bez1, bez2, g = he_gcdext(p, e, &bez1, &bez2);
+  sn_row_rot(x, bez1, bez2, t + 1, -(e / g), p / g, i + 1);
+}
+static void sn_clear_right(sn_ctx *x, size_t t, size_t j)
+{
+  int64_t p = HE(x->C, x->m, t, t), e = HE(x->C, x->m, t, j);
+  int64_t quo = e / p, rem = e - quo * p;
+  if(rem == 0) { sn_col_addmul(x, -quo, t + 1, j + 1); return; }
+  int64_t bez1, bez2, g = he_gcdext(p, e, &bez1, &bez2);
+  sn_col_rot(x, bez1, bez2, t + 1, -(e / g), p / g, j + 1);
+}
+
+static gmp_normal_form *
+sn_fast_smith(gmp_matrix *A, inverted_flag linv, inverted_flag rinv)
+{
+  size_t m = A->rows, n = A->cols, ndiag = (m < n) ? m : n, t, idx;
+  size_t mb = 0;
+  sn_ctx x;
+  gmp_normal_form *nf;
+
+  for(idx = 0; idx < m * n; idx++) {
+    size_t b = (mpz_sgn(A->storage[idx]) == 0) ? 0 : mpz_sizeinbase(A->storage[idx], 2);
+    if(b > mb) mb = b;
+    if(!mpz_fits_slong_p(A->storage[idx]) || mb > 31) return NULL;
+  }
+
+  x.C = (int64_t *)malloc(m * n * sizeof(int64_t));
+  x.L = (int64_t *)calloc(m * m, sizeof(int64_t));
+  x.R = (int64_t *)calloc(n * n, sizeof(int64_t));
+  if(x.C == NULL || x.L == NULL || x.R == NULL) { free(x.C); free(x.L); free(x.R); return NULL; }
+  x.m = m; x.n = n; x.linv = linv; x.rinv = rinv; x.of = 0;
+  for(idx = 0; idx < m * n; idx++) x.C[idx] = (int64_t)mpz_get_si(A->storage[idx]);
+  for(idx = 0; idx < m; idx++) HE(x.L, m, idx, idx) = 1;
+  for(idx = 0; idx < n; idx++) HE(x.R, n, idx, idx) = 1;
+
+  for(t = 0; t < ndiag && !x.of; t++) {
+    size_t pi = t, pj = t, i, j;
+    int have = 0;
+    int64_t best = 0;
+    for(j = t; j < n; j++)
+      for(i = t; i < m; i++) {
+        int64_t v = HE(x.C, m, i, j);
+        if(v == 0) continue;
+        int64_t av = v < 0 ? -v : v;
+        if(!have || av < best) { best = av; pi = i; pj = j; have = 1; }
+      }
+    if(!have) break;
+    if(pi != t) sn_row_swap(&x, t + 1, pi + 1);
+    if(pj != t) sn_col_swap(&x, t + 1, pj + 1);
+
+    for(;;) {
+      int dirty = 0, found = 0;
+      if(x.of) break;
+      for(i = t + 1; i < m; i++)
+        if(HE(x.C, m, i, t) != 0) sn_clear_below(&x, t, i);
+      for(j = t + 1; j < n; j++)
+        if(HE(x.C, m, t, j) != 0) sn_clear_right(&x, t, j);
+      if(x.of) break;
+      for(i = t + 1; i < m; i++)
+        if(HE(x.C, m, i, t) != 0) { dirty = 1; break; }
+      if(!dirty)
+        for(j = t + 1; j < n; j++)
+          if(HE(x.C, m, t, j) != 0) { dirty = 1; break; }
+      if(dirty) continue;
+      {
+        int64_t p = HE(x.C, m, t, t);
+        for(j = t + 1; j < n && !found; j++)
+          for(i = t + 1; i < m && !found; i++) {
+            int64_t v = HE(x.C, m, i, j);
+            if(v != 0 && v % p != 0) {
+              sn_row_addmul(&x, 1, i + 1, t + 1);   /* row_t += row_i */
+              found = 1;
+            }
+          }
+      }
+      if(found) continue;
+      break;
+    }
+    if(!x.of && HE(x.C, m, t, t) < 0) sn_col_neg(&x, t + 1);
+  }
+
+  if(x.of) { free(x.C); free(x.L); free(x.R); return NULL; }
+
+  /* Build the factors first; on any failure leave A untouched for the mpz
+     fallback.  On success repurpose A as the canonical (the mpz path does the
+     same, and ChainComplex reads the input pointer after the call). */
+  {
+    gmp_matrix *newL = he_to_gmp(x.L, m, m);
+    gmp_matrix *newR = he_to_gmp(x.R, n, n);
+    nf = (gmp_normal_form *)malloc(sizeof(gmp_normal_form));
+    if(newL == NULL || newR == NULL || nf == NULL) {
+      destroy_gmp_matrix(newL); destroy_gmp_matrix(newR); free(nf);
+      free(x.C); free(x.L); free(x.R);
+      return NULL;
+    }
+    he_store_i64(A, x.C);        /* repurpose A as the canonical */
+    nf->canonical = A;
+    nf->left = newL;
+    nf->right = newR;
+    nf->left_inverted = linv;
+    nf->right_inverted = rinv;
+  }
+  free(x.C); free(x.L); free(x.R);
+  return nf;
+}
+
 gmp_normal_form *
 create_gmp_Smith_normal_form(gmp_matrix * A,
                              inverted_flag left_inverted,
@@ -926,6 +1130,11 @@ create_gmp_Smith_normal_form(gmp_matrix * A,
   mpz_t g, bez1, bez2, c2, d2, e, p, q, r;
 
   if(A == NULL) return NULL;
+
+  /* Fast native-integer path (returns NULL, A intact, on overflow / big
+     entries so the exact mpz diagonalisation below runs instead). */
+  nf = sn_fast_smith(A, left_inverted, right_inverted);
+  if(nf != NULL) return nf;
 
   nf = create_gmp_trivial_normal_form(A, left_inverted, right_inverted);
   if(nf == NULL) return NULL;   /* A already destroyed */
