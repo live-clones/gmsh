@@ -100,6 +100,11 @@ void mpz_neg(mpz_ptr rop, mpz_ptr op)
   rop->z = -op->z;
 }
 
+void mpz_sub(mpz_ptr rop, mpz_ptr op1, mpz_ptr op2)
+{
+  rop->z = addcheck(op1->z, -op2->z);
+}
+
 
 // division
 void mpz_divexact(mpz_ptr q, mpz_ptr n, mpz_ptr d)
@@ -131,6 +136,14 @@ void mpz_tdiv_r(mpz_ptr r, mpz_ptr n, mpz_ptr d)
   else r->z = temp.rem;
 }
 
+void mpz_tdiv_qr(mpz_ptr q, mpz_ptr r, mpz_ptr n, mpz_ptr d)
+{
+  ldiv_t temp;
+  temp = ldiv(n->z, d->z);   /* truncates toward zero; rem has sign of n */
+  q->z = temp.quot;
+  r->z = temp.rem;
+}
+
 // compare
 int mpz_cmp_si(mpz_ptr op1, signed long int op2)
 {
@@ -159,6 +172,24 @@ signed long int mpz_get_si(mpz_ptr op)
 {
   signed long int temp = op->z;
   return temp;
+}
+
+/* This masquerade already holds a machine long, so a value always "fits". */
+int mpz_fits_slong_p(mpz_ptr op)
+{
+  (void)op;
+  return 1;
+}
+
+/* Number of significant bits (base is assumed to be 2, as used by Kbipack). */
+size_t mpz_sizeinbase(mpz_ptr op, int base)
+{
+  unsigned long v = (op->z < 0) ? (unsigned long)(-(op->z)) : (unsigned long)(op->z);
+  size_t bits = 0;
+  (void)base;
+  if(v == 0) return 1;
+  while(v) { bits++; v >>= 1; }
+  return bits;
 }
 
 long int gcd(long int a, long int b)

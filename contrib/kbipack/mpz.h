@@ -50,26 +50,30 @@ void mpz_clear(mpz_ptr x);
 
 // arithmethic
 void mpz_add(mpz_ptr rop, mpz_ptr op1, mpz_ptr op2);
+void mpz_sub(mpz_ptr rop, mpz_ptr op1, mpz_ptr op2);
 void mpz_mul(mpz_ptr rop, mpz_ptr op1, mpz_ptr op2);
 void mpz_addmul(mpz_ptr rop, mpz_ptr op1, mpz_ptr op2);
 void mpz_neg(mpz_ptr rop, mpz_ptr op);
 
-// division 
+// division
 void mpz_divexact(mpz_ptr q, mpz_ptr n, mpz_ptr d);
 void mpz_cdiv_q(mpz_ptr q, mpz_ptr n, mpz_ptr d);
 void mpz_cdiv_qr(mpz_ptr q, mpz_ptr r, mpz_ptr n, mpz_ptr d);
 void mpz_tdiv_r(mpz_ptr r, mpz_ptr n, mpz_ptr d);
+void mpz_tdiv_qr(mpz_ptr q, mpz_ptr r, mpz_ptr n, mpz_ptr d);
 
 // compare
 int mpz_cmp_si(mpz_ptr op1, signed long int op2);
 int mpz_cmpabs(mpz_ptr op1, mpz_ptr op2);
 int mpz_sgn(mpz_ptr op);
+int mpz_fits_slong_p(mpz_ptr op);
 
 // extended Euclid's algorithm
 void mpz_gcdext(mpz_ptr g, mpz_ptr s, mpz_ptr t, mpz_ptr a, mpz_ptr b);
 
 // conversion
 signed long int mpz_get_si(mpz_ptr op);
+size_t mpz_sizeinbase(mpz_ptr op, int base);
 
 // io
 size_t mpz_out_str(FILE *stream, int base, mpz_ptr op);

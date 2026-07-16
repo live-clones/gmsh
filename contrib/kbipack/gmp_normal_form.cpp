@@ -646,18 +646,20 @@ static int he_make_hermite(int64_t *C, size_t m, size_t n,
   return *of ? 1 : 0;
 }
 
-/* Portable store of an int64 into an mpz_t. */
+/* Portable store of an int64 into an mpz_t.  The two-halves form (for a 32-bit
+   long) needs real GMP; the bundled mpz shim is itself a machine long, so there
+   a plain mpz_set_si is both sufficient and all that is representable. */
 static void he_mpz_set_i64(mpz_t r, int64_t v)
 {
-#if LONG_MAX >= 9223372036854775807L
-  mpz_set_si(r, (long)v);
-#else
+#if defined(HAVE_GMP) && (LONG_MAX < 9223372036854775807L)
   int neg = (v < 0);
   uint64_t a = neg ? (uint64_t)(-(v + 1)) + 1u : (uint64_t)v;
   mpz_set_ui(r, (unsigned long)(a >> 32));
   mpz_mul_2exp(r, r, 32);
   mpz_add_ui(r, r, (unsigned long)(a & 0xffffffffu));
   if(neg) mpz_neg(r, r);
+#else
+  mpz_set_si(r, (long)v);
 #endif
 }
 
