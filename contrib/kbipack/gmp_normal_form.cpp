@@ -414,10 +414,52 @@ gmp_normal_form_make_Hermite(gmp_normal_form * nf)
 /* Column-major storage, 0-based element access. */
 #define HE(a, rows, i0, j0) ((a)[(size_t)(j0) * (size_t)(rows) + (size_t)(i0)])
 
-static int he_fits(__int128 v)
+/* Overflow-checked int64 arithmetic.  Where the compiler has a 128-bit type
+   (GCC/Clang) we use it directly; otherwise (e.g. MSVC) we fall back to the
+   standard branch-based signed-overflow tests.  he_axpy computes base + a*x and
+   he_axby computes a*x + b*y, each returning 0 (and leaving *out untouched) on
+   overflow so the caller can drop to the exact mpz path. */
+#if defined(__SIZEOF_INT128__) && !defined(KBIPACK_NO_INT128)
+static int he_axpy(int64_t base, int64_t a, int64_t x, int64_t *out)
 {
-  return v <= (__int128)INT64_MAX && v >= (__int128)INT64_MIN;
+  __int128 v = (__int128)base + (__int128)a * x;
+  if(v > INT64_MAX || v < INT64_MIN) return 0;
+  *out = (int64_t)v; return 1;
 }
+static int he_axby(int64_t a, int64_t x, int64_t b, int64_t y, int64_t *out)
+{
+  __int128 v = (__int128)a * x + (__int128)b * y;
+  if(v > INT64_MAX || v < INT64_MIN) return 0;
+  *out = (int64_t)v; return 1;
+}
+#else
+static int he_mul64(int64_t a, int64_t b, int64_t *out)
+{
+  if(a > 0) {
+    if(b > 0) { if(a > INT64_MAX / b) return 0; }
+    else      { if(b < INT64_MIN / a) return 0; }
+  } else {
+    if(b > 0) { if(a < INT64_MIN / b) return 0; }
+    else      { if(a != 0 && b < INT64_MAX / a) return 0; }
+  }
+  *out = a * b; return 1;
+}
+static int he_add64(int64_t a, int64_t b, int64_t *out)
+{
+  if((b > 0 && a > INT64_MAX - b) || (b < 0 && a < INT64_MIN - b)) return 0;
+  *out = a + b; return 1;
+}
+static int he_axpy(int64_t base, int64_t a, int64_t x, int64_t *out)
+{
+  int64_t p;
+  return he_mul64(a, x, &p) && he_add64(base, p, out);
+}
+static int he_axby(int64_t a, int64_t x, int64_t b, int64_t y, int64_t *out)
+{
+  int64_t ax, by;
+  return he_mul64(a, x, &ax) && he_mul64(b, y, &by) && he_add64(ax, by, out);
+}
+#endif
 
 /* g = |gcd(a,b)| >= 0, with s*a + t*b = g (minimal cofactors). */
 static int64_t he_gcdext(int64_t a, int64_t b, int64_t *s, int64_t *t)
@@ -474,10 +516,9 @@ static void he_add_col(int64_t cff, size_t src, size_t dst,
 {
   size_t i;
   for(i = 0; i < rows; i++) {
-    __int128 v = (__int128)HE(M, rows, i, dst - 1)
-               + (__int128)cff * HE(M, rows, i, src - 1);
-    if(!he_fits(v)) { *of = 1; return; }
-    HE(M, rows, i, dst - 1) = (int64_t)v;
+    int64_t v;
+    if(!he_axpy(HE(M, rows, i, dst - 1), cff, HE(M, rows, i, src - 1), &v)) { *of = 1; return; }
+    HE(M, rows, i, dst - 1) = v;
   }
 }
 /* row_dst <- cff*row_src + row_dst */
@@ -486,10 +527,9 @@ static void he_add_row(int64_t cff, size_t src, size_t dst,
 {
   size_t j;
   for(j = 0; j < cols; j++) {
-    __int128 v = (__int128)HE(M, rows, dst - 1, j)
-               + (__int128)cff * HE(M, rows, src - 1, j);
-    if(!he_fits(v)) { *of = 1; return; }
-    HE(M, rows, dst - 1, j) = (int64_t)v;
+    int64_t v;
+    if(!he_axpy(HE(M, rows, dst - 1, j), cff, HE(M, rows, src - 1, j), &v)) { *of = 1; return; }
+    HE(M, rows, dst - 1, j) = v;
   }
 }
 /* col1 <- a*col1 + b*col2 ; col2 <- c*col1_old + d*col2 */
@@ -499,12 +539,10 @@ static void he_col_rot(int64_t a, int64_t b, size_t c1,
 {
   size_t i;
   for(i = 0; i < rows; i++) {
-    int64_t x = HE(M, rows, i, c1 - 1), y = HE(M, rows, i, c2 - 1);
-    __int128 nx = (__int128)a * x + (__int128)b * y;
-    __int128 ny = (__int128)c * x + (__int128)d * y;
-    if(!he_fits(nx) || !he_fits(ny)) { *of = 1; return; }
-    HE(M, rows, i, c1 - 1) = (int64_t)nx;
-    HE(M, rows, i, c2 - 1) = (int64_t)ny;
+    int64_t x = HE(M, rows, i, c1 - 1), y = HE(M, rows, i, c2 - 1), nx, ny;
+    if(!he_axby(a, x, b, y, &nx) || !he_axby(c, x, d, y, &ny)) { *of = 1; return; }
+    HE(M, rows, i, c1 - 1) = nx;
+    HE(M, rows, i, c2 - 1) = ny;
   }
 }
 static void he_row_rot(int64_t a, int64_t b, size_t r1,
@@ -513,12 +551,10 @@ static void he_row_rot(int64_t a, int64_t b, size_t r1,
 {
   size_t j;
   for(j = 0; j < cols; j++) {
-    int64_t x = HE(M, rows, r1 - 1, j), y = HE(M, rows, r2 - 1, j);
-    __int128 nx = (__int128)a * x + (__int128)b * y;
-    __int128 ny = (__int128)c * x + (__int128)d * y;
-    if(!he_fits(nx) || !he_fits(ny)) { *of = 1; return; }
-    HE(M, rows, r1 - 1, j) = (int64_t)nx;
-    HE(M, rows, r2 - 1, j) = (int64_t)ny;
+    int64_t x = HE(M, rows, r1 - 1, j), y = HE(M, rows, r2 - 1, j), nx, ny;
+    if(!he_axby(a, x, b, y, &nx) || !he_axby(c, x, d, y, &ny)) { *of = 1; return; }
+    HE(M, rows, r1 - 1, j) = nx;
+    HE(M, rows, r2 - 1, j) = ny;
   }
 }
 /* first index in [r1,r2] (1-based) with M(.,c)!=0, as offset in [1..], else 0 */
@@ -1000,10 +1036,10 @@ static void sn_row_rot(sn_ctx *x, int64_t a, int64_t b, size_t r1,
   he_row_rot(a, b, r1, c, d, r2, x->C, x->m, x->n, &x->of);
   if(x->linv == INVERTED)
     he_row_rot(a, b, r1, c, d, r2, x->L, x->m, x->m, &x->of);
-  else {
-    int64_t det = (int64_t)((__int128)a * d - (__int128)b * c);
-    he_col_rot(det * d, -det * c, r1, -det * b, det * a, r2, x->L, x->m, &x->of);
-  }
+  else
+    /* every rotation the Smith clears build has determinant +1, so the
+       inverse factor is just the adjugate (avoids a 64-bit-overflowing det). */
+    he_col_rot(d, -c, r1, -b, a, r2, x->L, x->m, &x->of);
 }
 
 /* ---- column operations on the canonical matrix, mirrored onto R ---- */
@@ -1031,10 +1067,9 @@ static void sn_col_rot(sn_ctx *x, int64_t a, int64_t b, size_t c1,
   he_col_rot(a, b, c1, c, d, c2, x->C, x->m, &x->of);
   if(x->rinv == INVERTED)
     he_col_rot(a, b, c1, c, d, c2, x->R, x->n, &x->of);
-  else {
-    int64_t det = (int64_t)((__int128)a * d - (__int128)b * c);
-    he_row_rot(det * d, -det * c, c1, -det * b, det * a, c2, x->R, x->n, x->n, &x->of);
-  }
+  else
+    /* determinant +1 (see sn_row_rot): inverse factor is the adjugate. */
+    he_row_rot(d, -c, c1, -b, a, c2, x->R, x->n, x->n, &x->of);
 }
 
 /* Zero C(i,t) against pivot C(t,t); subtract when the pivot divides, else a
