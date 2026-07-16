@@ -18,8 +18,6 @@
 #include "FlGui.h"
 #endif
 
-#if defined(HAVE_KBIPACK)
-
 void updateFltk()
 {
 #if defined(HAVE_FLTK)
@@ -262,5 +260,3 @@ bool ElemChain::inEntity(GEntity *e) const
     if(!_vertexCache[e].count(this->getMeshVertex(i))) return false;
   return true;
 }
-
-#endif

@@ -16,8 +16,6 @@
 #include "GModel.h"
 #include "Options.h"
 
-#if defined(HAVE_KBIPACK)
-
 std::vector<int> vecN0(int n);
 
 // Interface class for homology computation in Gmsh
@@ -167,7 +165,5 @@ public:
   // in _model, for debugging
   void storeCells(CellComplex *cellComplex, int dim);
 };
-
-#endif
 
 #endif
