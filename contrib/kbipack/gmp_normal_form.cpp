@@ -1050,14 +1050,19 @@ sn_fast_smith(gmp_matrix *A, inverted_flag linv, inverted_flag rinv)
 
   for(t = 0; t < ndiag && !x.of; t++) {
     size_t pi = t, pj = t, i, j;
-    int have = 0;
+    int have = 0, unit = 0;
     int64_t best = 0;
-    for(j = t; j < n; j++)
+    /* Smallest-magnitude pivot.  A nonzero integer has magnitude >= 1, so the
+       first entry of magnitude 1 in scan order is already the smallest-
+       magnitude choice: stop there (this is the usual case -- the matrices are
+       totally unimodular -- and avoids an O(n^2) scan per pivot). */
+    for(j = t; j < n && !unit; j++)
       for(i = t; i < m; i++) {
         int64_t v = HE(x.C, m, i, j);
         if(v == 0) continue;
         int64_t av = v < 0 ? -v : v;
-        if(!have || av < best) { best = av; pi = i; pj = j; have = 1; }
+        if(!have || av < best) { best = av; pi = i; pj = j; have = 1;
+          if(av == 1) { unit = 1; break; } }
       }
     if(!have) break;
     if(pi != t) sn_row_swap(&x, t + 1, pi + 1);
@@ -1079,14 +1084,17 @@ sn_fast_smith(gmp_matrix *A, inverted_flag linv, inverted_flag rinv)
       if(dirty) continue;
       {
         int64_t p = HE(x.C, m, t, t);
-        for(j = t + 1; j < n && !found; j++)
-          for(i = t + 1; i < m && !found; i++) {
-            int64_t v = HE(x.C, m, i, j);
-            if(v != 0 && v % p != 0) {
-              sn_row_addmul(&x, 1, i + 1, t + 1);   /* row_t += row_i */
-              found = 1;
+        /* A unit pivot divides everything, so the trailing block is trivially
+           divisible -- skip the O(n^2) scan (again the usual case). */
+        if(p != 1 && p != -1)
+          for(j = t + 1; j < n && !found; j++)
+            for(i = t + 1; i < m && !found; i++) {
+              int64_t v = HE(x.C, m, i, j);
+              if(v != 0 && v % p != 0) {
+                sn_row_addmul(&x, 1, i + 1, t + 1);   /* row_t += row_i */
+                found = 1;
+              }
             }
-          }
       }
       if(found) continue;
       break;
