@@ -1998,7 +1998,7 @@ public:
     memcpy(&k, &r, 8);
     return k;
   }
-  static const std::size_t Q_SORT_LIMIT = 1 << 20;
+  static const std::size_t Q_SORT_LIMIT = 1 << 15;
   std::vector<qSegment> segs; // ascending minKey: back() = highest range
   std::vector<qEntry> active; // sorted descending, consumed via cursor
   std::size_t cursor;
@@ -2116,6 +2116,16 @@ public:
   // make the next entry available; returns false if no entries remain
   bool qNormalize()
   {
+    // once the segments have run dry (activeMin == 0) every push goes to the
+    // overflow heap, which then degenerates into the whole queue: each push
+    // sifts, and each insertion pops through a dozen dead entries; rebuild
+    // the segments from the heap so pushes return to O(1) appends and dead
+    // entries are consumed for free from the sorted runs
+    if(cursor >= active.size() && segs.empty() && overflow.size() > 1024) {
+      segs.push_back({0, std::move(overflow)});
+      overflow.clear();
+      activeMin = 0xffffffffffffffffull;
+    }
     while(cursor >= active.size() && overflow.empty()) {
       while(!segs.empty() && segs.back().v.empty()) segs.pop_back();
       if(segs.empty()) {
