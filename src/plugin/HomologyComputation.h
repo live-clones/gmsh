@@ -11,8 +11,6 @@
 #include <string>
 #include "Plugin.h"
 
-#if defined(HAVE_KBIPACK)
-
 extern "C" {
 GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin();
 }
@@ -34,7 +32,5 @@ public:
   PView *execute(PView *);
   bool parseStringOpt(int stringOpt, std::vector<int> &intList);
 };
-
-#endif
 
 #endif

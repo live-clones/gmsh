@@ -15,8 +15,6 @@
 #include "Homology.h"
 #include "HomologyComputation.h"
 
-#if defined(HAVE_KBIPACK)
-
 StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "ComputeHomology", nullptr, 1.},
   {GMSH_FULLRC, "ComputeCohomology", nullptr, 0.},
@@ -149,5 +147,3 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   return nullptr;
 }
-
-#endif

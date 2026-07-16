@@ -272,6 +272,10 @@ void PluginManager::registerDefaultPlugins()
       std::make_pair("BoundaryAngles", GMSH_RegisterBoundaryAnglesPlugin()));
     allPlugins.insert(
       std::make_pair("Invisible", GMSH_RegisterInvisiblePlugin()));
+    allPlugins.insert(std::make_pair("HomologyComputation",
+                                     GMSH_RegisterHomologyComputationPlugin()));
+    allPlugins.insert(std::make_pair(
+      "HomologyPostProcessing", GMSH_RegisterHomologyPostProcessingPlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::make_pair("AnalyseMeshQuality",
                                      GMSH_RegisterAnalyseMeshQualityPlugin()));
@@ -286,12 +290,6 @@ void PluginManager::registerDefaultPlugins()
 #if defined(HAVE_REVOROPT)
     allPlugins.insert(
       std::make_pair("CVTRemesh", GMSH_RegisterCVTRemeshPlugin()));
-#endif
-#if defined(HAVE_KBIPACK)
-    allPlugins.insert(std::make_pair("HomologyComputation",
-                                     GMSH_RegisterHomologyComputationPlugin()));
-    allPlugins.insert(std::make_pair(
-      "HomologyPostProcessing", GMSH_RegisterHomologyPostProcessingPlugin()));
 #endif
 #if defined(HAVE_SOLVER)
     allPlugins.insert(

@@ -16,8 +16,6 @@
 #include "fullMatrix.h"
 #include "HomologyPostProcessing.h"
 
-#if defined(HAVE_KBIPACK)
-
 StringXNumber HomologyPostProcessingOptions_Number[] = {
   {GMSH_FULLRC, "ApplyBoundaryOperatorToResults", nullptr, 0}};
 
@@ -316,5 +314,3 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
 
   return nullptr;
 }
-
-#endif
