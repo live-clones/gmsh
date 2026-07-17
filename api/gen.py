@@ -275,20 +275,26 @@ mesh.add('generate', doc, None, iint('dim', '3'))
 doc = '''Partition the mesh of the current model into `numPart' partitions. Optionally, `elementTags' and `partitions' can be provided to specify the partition of each element explicitly.'''
 mesh.add('partition', doc, None, iint('numPart'), ivectorsize('elementTags', 'std::vector<std::size_t>()','[]', '[]'), ivectorint('partitions', 'std::vector<int>()','[]', '[]'))
 
-doc = '''Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to `layers'. If `createBoundaries' is set, build the overlaps for the entities bounding the highest-dimensional entities (i.e. "boundary overlaps"), as well as the inner boundaries of the overlaps (i.e. "overlap boundaries").'''
-mesh.add('createOverlaps', doc, None, iint('layers', '1'), ibool('createBoundaries', 'true', 'True'))
+doc = '''Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to `layers'. The overlaps of the bounding entities (i.e. "boundary overlaps") and the inner boundaries of the overlaps (i.e. "overlap boundaries") are always built: the `createBoundaries' flag is currently ignored. Return the tag of the newly created overlap group, which can be passed as `overlapIndex' to the query functions (tags are assigned sequentially from 0, so the tag is also the position of the group).'''
+mesh.add('createOverlaps', doc, oint, iint('layers', '1'), ibool('createBoundaries', 'true', 'True'))
 
-doc = '''Get the tags of the partitioned entities of dimension `dim' whose parent has dimension `dim' and tag `tag', and which belong to the partition `partition'. If overlaps are present, fill `overlapEntities' with the tags of the entities that are in the overlap of the partition. Works for entities of the same dimension as the model as well as for entities one dimension below (boundary overlaps).'''
-mesh.add('getPartitionEntities', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), ovectorint('overlapEntities'))
+doc = '''Get the tags of the partitioned entities of dimension `dim' whose parent has dimension `dim' and tag `tag', and which belong to the partition `partition'. If overlaps are present, fill `overlapEntities' with the tags of the entities that are in the overlap of the partition. Works for entities of the same dimension as the model as well as for entities one dimension below (boundary overlaps). `overlapIndex' selects which overlap group to query (as returned by `createOverlaps').'''
+mesh.add('getPartitionEntities', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), ovectorint('overlapEntities'), iint('overlapIndex', '0'))
 
-doc = '''Get the tags of the entities making up the overlap boundary of partition `partition' inside the (non-partitioned) entity of dimension `dim' and tag `tag'.'''
-mesh.add('getOverlapBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'))
+doc = '''Get the tags of the entities making up the overlap boundary of partition `partition' inside the (non-partitioned) entity of dimension `dim' and tag `tag'. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getOverlapBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), iint('overlapIndex', '0'))
 
-doc = '''If the entity of dimension `dim' and tag `tag' is a boundary overlap, get the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on error.'''
-mesh.add('getBoundaryOverlapParent', doc, None, iint('dim'), iint('tag'), oint('parentTag'))
+doc = '''If the entity of dimension `dim' and tag `tag' is a boundary overlap, get the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on error. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getBoundaryOverlapParent', doc, None, iint('dim'), iint('tag'), oint('parentTag'), iint('overlapIndex', '0'))
+
+doc = '''If the entity of dimension `dim' and tag `overlapTag' is an overlap entity (OverlapSurface or OverlapVolume) or a boundary overlap entity (a partition entity in the overlap of a boundary), set `overlappedEntityTag' to the tag of the underlying entity it covers. Sets `overlappedEntityTag' to -1 if the entity is not an overlap. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getOverlapOverlappedEntity', doc, None, iint('dim'), iint('overlapTag'), oint('overlappedEntityTag'), iint('overlapIndex', '0'))
 
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)
+
+doc = '''Write selected partitions of the mesh into a single file `fileName'. The export format is MSH4. The `partitions' vector specifies which partition numbers to include.'''
+mesh.add('writePartitions', doc, None, istring('fileName'), ivectorint('partitions'))
 
 doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation, "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry" for untangling, "HXT" for tetrahedral optimisation). If `force' is set apply the optimization also to discrete entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given, only apply the optimizer to the given entities. For HXT optimizer, the `quality' argument should be specified'''
 mesh.add('optimize', doc, None, istring('method', '""'), ibool('force', 'false', 'False'), iint('niter', '1'), ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'), idouble('quality', '0.0'))

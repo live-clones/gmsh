@@ -22,6 +22,7 @@
 #include "SBoundingBox3d.h"
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
+#include "OverlapManager.h"
 
 template <class scalar> class simpleFunction;
 
@@ -63,21 +64,10 @@ private:
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
 
-  // Overlaps data
-  std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>>
-    _overlaps;
-
-  std::unordered_map<GFace *, std::vector<partitionEdge *>>
-    _overlapInnerBoundaries2D;
-  std::unordered_map<GRegion *, std::vector<partitionFace *>>
-    _overlapInnerBoundaries3D;
-  std::unordered_map<GEdge *, std::vector<partitionEdge *>>
-    _overlapOfBoundaries2D;
-  std::unordered_map<GFace *, std::vector<partitionFace *>>
-    _overlapOfBoundaries3D;
-  std::tuple<std::unordered_map<partitionEdge *, GFace *>,
-             std::unordered_map<partitionFace *, GRegion *>>
-    _boundaryOfOverlapCreators;
+  // Overlaps data: each OverlapManager holds a group of overlaps with their
+  // boundary data. Multiple managers allow different overlap configurations.
+  std::vector<OverlapManager> _overlapManagers;
+  int _nextOverlapTag = 0;
 
 private:
   int _readMSH2(const std::string &name);
@@ -98,7 +88,7 @@ private:
   int _readMSH4(const std::string &name);
   int _writeMSH4(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 bool append, int partitionToSave = 0,
+                 bool append, const std::vector<int> &partitionsToSave = {},
                  std::map<GEntity *, SBoundingBox3d> *entityBounds = nullptr);
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
@@ -421,56 +411,16 @@ public:
     return vertices;
   };
 
-  void addOverlap(overlapFace *of) { std::get<0>(_overlaps).push_back(of); }
-  void addOverlap(overlapRegion *or_) { std::get<1>(_overlaps).push_back(or_); }
-
-  const std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>> &
-  getAllOverlaps() const
+  // Overlap manager access
+  const std::vector<OverlapManager> &getOverlapManagers() const
   {
-    return _overlaps;
+    return _overlapManagers;
   }
-
-  void addInnerBoundary(GFace *f, partitionEdge *e)
-  {
-    _overlapInnerBoundaries2D[f].push_back(e);
-  }
-  void addInnerBoundary(GRegion *r, partitionFace *f)
-  {
-    _overlapInnerBoundaries3D[r].push_back(f);
-  }
-  void addOverlapOfBoundary(GEdge *e, partitionEdge *pe, GFace *parent)
-  {
-    _overlapOfBoundaries2D[e].push_back(pe);
-    std::get<0>(_boundaryOfOverlapCreators)[pe] = parent;
-  }
-  void addOverlapOfBoundary(GFace *f, partitionFace *pf, GRegion *parent)
-  {
-    _overlapOfBoundaries3D[f].push_back(pf);
-    std::get<1>(_boundaryOfOverlapCreators)[pf] = parent;
-  }
-
-#ifndef SWIG
-  const auto &getOverlapInnerBoundaries2D() const
-  {
-    return _overlapInnerBoundaries2D;
-  }
-  const auto &getOverlapInnerBoundaries3D() const
-  {
-    return _overlapInnerBoundaries3D;
-  }
-  const auto &getOverlapOfBoundaries2D() const
-  {
-    return _overlapOfBoundaries2D;
-  }
-  const auto &getOverlapOfBoundaries3D() const
-  {
-    return _overlapOfBoundaries3D;
-  }
-  const auto &getBoundaryOfOverlapCreators() const
-  {
-    return _boundaryOfOverlapCreators;
-  }
-#endif
+  OverlapManager &createNewOverlapManager(int layers);
+  // Forcing the tag for IO
+  OverlapManager *createOverlapManagerWithTag(int tag, int layers);
+  OverlapManager *getOverlapManagerByTag(int tag);
+  void clearOverlaps();
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
@@ -881,6 +831,11 @@ public:
                           bool binary = false, bool saveAll = false,
                           bool saveParametric = false,
                           double scalingFactor = 1.0);
+  int writeMSHPartitions(const std::string &name,
+                         const std::vector<int> &partitions,
+                         double version = 4.1, bool binary = false,
+                         bool saveAll = false, bool saveParametric = false,
+                         double scalingFactor = 1.0);
 
   // Iridium file format
   int writeIR3(const std::string &name, int elementTagType, bool saveAll,

@@ -592,6 +592,28 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
   return 0;
 }
 
+// Reassign lower-dimensional elements to the partition of a higher-dimensional
+// neighbor, so boundary/interface elements follow the bulk element they bound.
+// Sweeps i = 1..3 to bridge codimension gaps (e.g. a node bounding a volume).
+static void correctTopology(const Graph &graph, std::vector<idx_t> &epart)
+{
+  for(int i = 1; i < 4; i++) {
+    for(std::size_t j = 0; j < graph.ne(); j++) {
+      if(graph.element(j)->getDim() == graph.dim()) continue;
+
+      for(idx_t k = graph.xadj(j); k < graph.xadj(j + 1); k++) {
+        if(graph.element(j)->getDim() ==
+           graph.element(graph.adjncy(k))->getDim() - i) {
+          if(epart[j] != epart[graph.adjncy(k)]) {
+            epart[j] = epart[graph.adjncy(k)];
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
 // Partition a graph created by makeGraph using Metis library. Returns: 0 =
 // success, 1 = error, 2 = exception thrown.
 static int partitionGraph(Graph &graph, bool verbose)
@@ -724,21 +746,7 @@ static int partitionGraph(Graph &graph, bool verbose)
     }
 
     // Check and correct the topology
-    for(int i = 1; i < 4; i++) {
-      for(std::size_t j = 0; j < graph.ne(); j++) {
-        if(graph.element(j)->getDim() == graph.dim()) continue;
-
-        for(idx_t k = graph.xadj(j); k < graph.xadj(j + 1); k++) {
-          if(graph.element(j)->getDim() ==
-             graph.element(graph.adjncy(k))->getDim() - i) {
-            if(epart[j] != epart[graph.adjncy(k)]) {
-              epart[j] = epart[graph.adjncy(k)];
-              break;
-            }
-          }
-        }
-      }
-    }
+    correctTopology(graph, epart);
     graph.partition(epart);
     if(verbose) Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
   } catch(...) {
@@ -2542,6 +2550,11 @@ int UnpartitionMesh(GModel *model)
       model->remove(face);
       delete face;
     }
+    else if(face->geomType() == GEntity::OverlapSurface) {
+      face->deleteMesh();
+      model->remove(face);
+      delete face;
+    }
   }
 
   // Loop over volumes
@@ -2590,9 +2603,15 @@ int UnpartitionMesh(GModel *model)
       model->remove(region);
       delete region;
     }
+    else if(region->geomType() == GEntity::OverlapVolume) {
+      region->deleteMesh();
+      model->remove(region);
+      delete region;
+    }
   }
 
   model->setNumPartitions(0);
+  model->clearOverlaps();
 
   std::map<std::pair<int, int>, std::string> physicalNames =
     model->getPhysicalNames();

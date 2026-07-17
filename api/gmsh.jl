@@ -1868,10 +1868,14 @@ end
     gmsh.model.mesh.createOverlaps(layers = 1, createBoundaries = true)
 
 Generate node-based overlaps (of highest dimension) for all partitions, with a
-number of layers equal to `layers`. If `createBoundaries` is set, build the
-overlaps for the entities bounding the highest-dimensional entities (i.e.
-"boundary overlaps"), as well as the inner boundaries of the overlaps (i.e.
-"overlap boundaries").
+number of layers equal to `layers`. The overlaps of the bounding entities (i.e.
+"boundary overlaps") and the inner boundaries of the overlaps (i.e. "overlap
+boundaries") are always built: the `createBoundaries` flag is currently ignored.
+Return the tag of the newly created overlap group, which can be passed as
+`overlapIndex` to the query functions (tags are assigned sequentially from 0, so
+the tag is also the position of the group).
+
+Return an integer.
 
 Types:
  - `layers`: integer
@@ -1879,22 +1883,24 @@ Types:
 """
 function createOverlaps(layers = 1, createBoundaries = true)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshCreateOverlaps, gmsh.lib), Cvoid,
+    api_result_ = ccall((:gmshModelMeshCreateOverlaps, gmsh.lib), Cint,
           (Cint, Cint, Ptr{Cint}),
           layers, createBoundaries, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    return api_result_
 end
 const create_overlaps = createOverlaps
 
 """
-    gmsh.model.mesh.getPartitionEntities(dim, tag, partition)
+    gmsh.model.mesh.getPartitionEntities(dim, tag, partition, overlapIndex = 0)
 
 Get the tags of the partitioned entities of dimension `dim` whose parent has
 dimension `dim` and tag `tag`, and which belong to the partition `partition`. If
 overlaps are present, fill `overlapEntities` with the tags of the entities that
 are in the overlap of the partition. Works for entities of the same dimension as
 the model as well as for entities one dimension below (boundary overlaps).
+`overlapIndex` selects which overlap group to query (as returned by
+`createOverlaps`).
 
 Return `entityTags`, `overlapEntities`.
 
@@ -1904,16 +1910,17 @@ Types:
  - `partition`: integer
  - `entityTags`: vector of integers
  - `overlapEntities`: vector of integers
+ - `overlapIndex`: integer
 """
-function getPartitionEntities(dim, tag, partition)
+function getPartitionEntities(dim, tag, partition, overlapIndex = 0)
     api_entityTags_ = Ref{Ptr{Cint}}()
     api_entityTags_n_ = Ref{Csize_t}()
     api_overlapEntities_ = Ref{Ptr{Cint}}()
     api_overlapEntities_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPartitionEntities, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, partition, api_entityTags_, api_entityTags_n_, api_overlapEntities_, api_overlapEntities_n_, ierr)
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          dim, tag, partition, api_entityTags_, api_entityTags_n_, api_overlapEntities_, api_overlapEntities_n_, overlapIndex, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     entityTags = unsafe_wrap(Array, api_entityTags_[], api_entityTags_n_[], own = true)
     overlapEntities = unsafe_wrap(Array, api_overlapEntities_[], api_overlapEntities_n_[], own = true)
@@ -1922,11 +1929,11 @@ end
 const get_partition_entities = getPartitionEntities
 
 """
-    gmsh.model.mesh.getOverlapBoundary(dim, tag, partition)
+    gmsh.model.mesh.getOverlapBoundary(dim, tag, partition, overlapIndex = 0)
 
 Get the tags of the entities making up the overlap boundary of partition
 `partition` inside the (non-partitioned) entity of dimension `dim` and tag
-`tag`.
+`tag`. `overlapIndex` selects which overlap group to query.
 
 Return `entityTags`.
 
@@ -1935,14 +1942,15 @@ Types:
  - `tag`: integer
  - `partition`: integer
  - `entityTags`: vector of integers
+ - `overlapIndex`: integer
 """
-function getOverlapBoundary(dim, tag, partition)
+function getOverlapBoundary(dim, tag, partition, overlapIndex = 0)
     api_entityTags_ = Ref{Ptr{Cint}}()
     api_entityTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetOverlapBoundary, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, partition, api_entityTags_, api_entityTags_n_, ierr)
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          dim, tag, partition, api_entityTags_, api_entityTags_n_, overlapIndex, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     entityTags = unsafe_wrap(Array, api_entityTags_[], api_entityTags_n_[], own = true)
     return entityTags
@@ -1950,10 +1958,11 @@ end
 const get_overlap_boundary = getOverlapBoundary
 
 """
-    gmsh.model.mesh.getBoundaryOverlapParent(dim, tag)
+    gmsh.model.mesh.getBoundaryOverlapParent(dim, tag, overlapIndex = 0)
 
 If the entity of dimension `dim` and tag `tag` is a boundary overlap, get the
 entity of dimension `dim+1` that created it. Sets `parentTag` to -1 on error.
+`overlapIndex` selects which overlap group to query.
 
 Return `parentTag`.
 
@@ -1961,17 +1970,46 @@ Types:
  - `dim`: integer
  - `tag`: integer
  - `parentTag`: integer
+ - `overlapIndex`: integer
 """
-function getBoundaryOverlapParent(dim, tag)
+function getBoundaryOverlapParent(dim, tag, overlapIndex = 0)
     api_parentTag_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBoundaryOverlapParent, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}, Ptr{Cint}),
-          dim, tag, api_parentTag_, ierr)
+          (Cint, Cint, Ptr{Cint}, Cint, Ptr{Cint}),
+          dim, tag, api_parentTag_, overlapIndex, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_parentTag_[]
 end
 const get_boundary_overlap_parent = getBoundaryOverlapParent
+
+"""
+    gmsh.model.mesh.getOverlapOverlappedEntity(dim, overlapTag, overlapIndex = 0)
+
+If the entity of dimension `dim` and tag `overlapTag` is an overlap entity
+(OverlapSurface or OverlapVolume) or a boundary overlap entity (a partition
+entity in the overlap of a boundary), set `overlappedEntityTag` to the tag of
+the underlying entity it covers. Sets `overlappedEntityTag` to -1 if the entity
+is not an overlap. `overlapIndex` selects which overlap group to query.
+
+Return `overlappedEntityTag`.
+
+Types:
+ - `dim`: integer
+ - `overlapTag`: integer
+ - `overlappedEntityTag`: integer
+ - `overlapIndex`: integer
+"""
+function getOverlapOverlappedEntity(dim, overlapTag, overlapIndex = 0)
+    api_overlappedEntityTag_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetOverlapOverlappedEntity, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}, Cint, Ptr{Cint}),
+          dim, overlapTag, api_overlappedEntityTag_, overlapIndex, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_overlappedEntityTag_[]
+end
+const get_overlap_overlapped_entity = getOverlapOverlappedEntity
 
 """
     gmsh.model.mesh.unpartition()
@@ -1986,6 +2024,27 @@ function unpartition()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+
+"""
+    gmsh.model.mesh.writePartitions(fileName, partitions)
+
+Write selected partitions of the mesh into a single file `fileName`. The export
+format is MSH4. The `partitions` vector specifies which partition numbers to
+include.
+
+Types:
+ - `fileName`: string
+ - `partitions`: vector of integers
+"""
+function writePartitions(fileName, partitions)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshWritePartitions, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          fileName, convert(Vector{Cint}, partitions), length(partitions), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const write_partitions = writePartitions
 
 """
     gmsh.model.mesh.optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[], quality = 0.0)
