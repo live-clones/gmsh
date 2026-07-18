@@ -4590,6 +4590,28 @@ end
 const classify_surfaces = classifySurfaces
 
 """
+    gmsh.model.mesh.classifySurfacesFromDiscrete(exportDiscrete = true)
+
+Classify the surface mesh based on the existing discrete surface assignments
+(e.g. loaded from a mesh file): rebuild the edge/vertex topology without
+changing the triangle-to-surface assignment. If `exportDiscrete` is set, clear
+any built-in CAD kernel entities and export the discrete entities in the built-
+in CAD kernel.
+
+Types:
+ - `exportDiscrete`: boolean
+"""
+function classifySurfacesFromDiscrete(exportDiscrete = true)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshClassifySurfacesFromDiscrete, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}),
+          exportDiscrete, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const classify_surfaces_from_discrete = classifySurfacesFromDiscrete
+
+"""
     gmsh.model.mesh.createGeometry(dimTags = Tuple{Cint,Cint}[])
 
 Create a geometry for the discrete entities `dimTags` (given as a vector of

@@ -1882,9 +1882,9 @@ namespace gmsh { // Top-level functions
       //
       // Classify the surface mesh based on the existing discrete surface
       // assignments (e.g. loaded from a mesh file): rebuild the edge/vertex
-      // topology without changing the triangle-to-surface assignment. If 
-      // `exportDiscrete' is set, clear any built-in CAD kernel entities and 
-      // export the discrete entities in the built-in CAD kernel.
+      // topology without changing the triangle-to-surface assignment. If
+      // `exportDiscrete' is set, clear any built-in CAD kernel entities and export
+      // the discrete entities in the built-in CAD kernel.
       GMSH_API void classifySurfacesFromDiscrete(const bool exportDiscrete = true);
 
       // gmsh::model::mesh::createGeometry
