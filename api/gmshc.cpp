@@ -2438,11 +2438,15 @@ GMSH_API void gmshModelMeshGetVisibility(const size_t * elementTags, const size_
   }
 }
 
-GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, const double curveAngle, const int exportDiscrete, int * ierr)
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle, int ** oldSurfaceTags, size_t * oldSurfaceTags_n, int ** newSurfaceTags, size_t * newSurfaceTags_n, const int boundary, const int forReparametrization, const double curveAngle, const int exportDiscrete, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization, curveAngle, exportDiscrete);
+    std::vector<int> api_oldSurfaceTags_;
+    std::vector<int> api_newSurfaceTags_;
+    gmsh::model::mesh::classifySurfaces(angle, api_oldSurfaceTags_, api_newSurfaceTags_, boundary, forReparametrization, curveAngle, exportDiscrete);
+    vector2ptr(api_oldSurfaceTags_, oldSurfaceTags, oldSurfaceTags_n);
+    vector2ptr(api_newSurfaceTags_, newSurfaceTags, newSurfaceTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

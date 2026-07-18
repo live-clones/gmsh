@@ -4564,28 +4564,41 @@ const get_visibility = getVisibility
     gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
-radians), and create new discrete surfaces, curves and points accordingly. If
-`boundary` is set, also create discrete curves on the boundary if the surface is
-open. If `forReparametrization` is set, create curves and surfaces that can be
-reparametrized using a single map. If `curveAngle` is less than Pi, also force
-curves to be split according to `curveAngle`. If `exportDiscrete` is set, clear
-any built-in CAD kernel entities and export the discrete entities in the built-
-in CAD kernel.
+radians), and create new discrete surfaces, curves and points accordingly. The
+`oldSurfaceTags` and `newSurfaceTags` vectors map the old surface tags to the
+new surface tags, ie. `oldSurfaceTags[i]` corresponds to `newSurfaceTags[i]`.
+Removed surface tags are not returned, only old surfaces that map to one or more
+new surfaces are returned. If `boundary` is set, also create discrete curves on
+the boundary if the surface is open. If `forReparametrization` is set, create
+curves and surfaces that can be reparametrized using a single map. If
+`curveAngle` is less than Pi, also force curves to be split according to
+`curveAngle`. If `exportDiscrete` is set, clear any built-in CAD kernel entities
+and export the discrete entities in the built-in CAD kernel.
+
+Return `oldSurfaceTags`, `newSurfaceTags`.
 
 Types:
  - `angle`: double
+ - `oldSurfaceTags`: vector of integers
+ - `newSurfaceTags`: vector of integers
  - `boundary`: boolean
  - `forReparametrization`: boolean
  - `curveAngle`: double
  - `exportDiscrete`: boolean
 """
 function classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
+    api_oldSurfaceTags_ = Ref{Ptr{Cint}}()
+    api_oldSurfaceTags_n_ = Ref{Csize_t}()
+    api_newSurfaceTags_ = Ref{Ptr{Cint}}()
+    api_newSurfaceTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Cint, Cdouble, Cint, Ptr{Cint}),
-          angle, boundary, forReparametrization, curveAngle, exportDiscrete, ierr)
+          (Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cdouble, Cint, Ptr{Cint}),
+          angle, api_oldSurfaceTags_, api_oldSurfaceTags_n_, api_newSurfaceTags_, api_newSurfaceTags_n_, boundary, forReparametrization, curveAngle, exportDiscrete, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    oldSurfaceTags = unsafe_wrap(Array, api_oldSurfaceTags_[], api_oldSurfaceTags_n_[], own = true)
+    newSurfaceTags = unsafe_wrap(Array, api_newSurfaceTags_[], api_newSurfaceTags_n_[], own = true)
+    return oldSurfaceTags, newSurfaceTags
 end
 const classify_surfaces = classifySurfaces
 

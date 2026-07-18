@@ -3710,8 +3710,18 @@ void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
                               bool forReparametrization,
                               double curveAngleThreshold)
 {
+  auto splitMap = std::map<int, std::vector<int>>();
   classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
-                curveAngleThreshold);
+                curveAngleThreshold, splitMap);
+}
+
+void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
+                              bool forReparametrization,
+                              double curveAngleThreshold,
+                              std::map<int, std::vector<int>> &splitMap)
+{
+  classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
+                curveAngleThreshold, splitMap);
 }
 
 void GModel::addHomologyRequest(const std::string &type,

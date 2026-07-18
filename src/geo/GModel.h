@@ -791,6 +791,13 @@ public:
   void classifySurfaces(double angleThreshold, bool includeBoundary,
                         bool forReparametrization, double curveAngleThreshold);
 
+  // reclassify a surface mesh, using an angle threshold to tag edges and faces
+  // splitMap will map the old surfaces to the new surfaces created by the splitting
+  // (if any)
+  void classifySurfaces(double angleThreshold, bool includeBoundary,
+                        bool forReparametrization, double curveAngleThreshold,
+                        std::map<int, std::vector<int>> &splitMap);
+
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements
   GModel *buildCutGModel(gLevelset *ls, bool cutElem = true,
