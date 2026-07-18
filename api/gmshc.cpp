@@ -2493,7 +2493,7 @@ GMSH_API void gmshModelMeshClassifySurfacesFromDiscrete(const int exportDiscrete
   try {
     gmsh::model::mesh::classifySurfacesFromDiscrete(exportDiscrete);
   }
-  catch(...) {
+  catch(...){
     if(ierr) *ierr = 1;
   }
 }
