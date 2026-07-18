@@ -6092,16 +6092,6 @@ GMSH_API void gmsh::model::mesh::importStl()
   }
 }
 
-GMSH_API void gmsh::model::mesh::classifySurfaces(
-  const double angle, const bool boundary, const bool forReparametrization,
-  const double curveAngle, const bool exportDiscrete)
-{
-  auto old_ = std::vector<int>();
-  auto new_ = std::vector<int>();
-  classifySurfaces(angle, old_, new_, boundary, forReparametrization,
-                   curveAngle, exportDiscrete); 
-}
-
 GMSH_API void gmsh::model::mesh::classifySurfaces(const double angle,
   std::vector<int> &oldSurfaceTags, std::vector<int> &newSurfaceTags,
   const bool boundary, const bool forReparametrization,
