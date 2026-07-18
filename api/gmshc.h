@@ -1665,6 +1665,14 @@ GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const int exportDiscrete,
                                             int * ierr);
 
+/* Classify the surface mesh based on the existing discrete surface
+ * assignments (e.g. loaded from a mesh file): rebuild the edge/vertex
+ * topology without changing the triangle-to-surface assignment. If
+ * `exportDiscrete' is set, clear any built-in CAD kernel entities and export
+ * the discrete entities in the built-in CAD kernel. */
+GMSH_API void gmshModelMeshClassifySurfacesFromDiscrete(const int exportDiscrete,
+                                                        int * ierr);
+
 /* Create a geometry for the discrete entities `dimTags' (given as a vector of
  * (dim, tag) pairs) represented solely by a mesh (without an underlying CAD
  * description), i.e. create a parametrization for discrete curves and

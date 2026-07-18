@@ -9,6 +9,7 @@
 void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
                    bool forParametrization, double curveAngleThreshold);
 void classifyFaces(GModel *gm, double curveAngleThreshold);
+void classifyFacesFromDiscrete(GModel *gm);
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut);
 void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,

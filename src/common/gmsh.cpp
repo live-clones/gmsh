@@ -5887,6 +5887,17 @@ GMSH_API void gmsh::model::mesh::classifySurfaces(
   }
 }
 
+GMSH_API void gmsh::model::mesh::classifySurfacesFromDiscrete(
+  const bool exportDiscrete)
+{
+  if(!_checkInit()) return;
+  GModel::current()->classifySurfacesFromDiscrete();
+  if(exportDiscrete) {
+    // Warning: this clears GEO_Internals!
+    GModel::current()->exportDiscreteGEOInternals();
+  }
+}
+
 GMSH_API void gmsh::model::mesh::createGeometry(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;

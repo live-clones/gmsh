@@ -738,6 +738,8 @@ module gmsh
         gmshModelMeshGetVisibility
     procedure, nopass :: classifySurfaces => &
         gmshModelMeshClassifySurfaces
+    procedure, nopass :: classifySurfacesFromDiscrete => &
+        gmshModelMeshClassifySurfacesFromDiscrete
     procedure, nopass :: createGeometry => &
         gmshModelMeshCreateGeometry
     procedure, nopass :: createTopology => &
@@ -7615,6 +7617,28 @@ module gmsh
          exportDiscrete=optval_c_bool(.true., exportDiscrete), &
          ierr_=ierr)
   end subroutine gmshModelMeshClassifySurfaces
+
+  !> Classify the surface mesh based on the existing discrete surface
+  !! assignments (e.g. loaded from a mesh file): rebuild the edge/vertex
+  !! topology without changing the triangle-to-surface assignment. If
+  !! `exportDiscrete' is set, clear any built-in CAD kernel entities and export
+  !! the discrete entities in the built-in CAD kernel.
+  subroutine gmshModelMeshClassifySurfacesFromDiscrete(exportDiscrete, &
+                                                       ierr)
+    interface
+    subroutine C_API(exportDiscrete, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshClassifySurfacesFromDiscrete")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: exportDiscrete
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    logical, intent(in), optional :: exportDiscrete
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(exportDiscrete=optval_c_bool(.true., exportDiscrete), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshClassifySurfacesFromDiscrete
 
   !> Create a geometry for the discrete entities `dimTags' (given as a vector of
   !! (dim, tag) pairs) represented solely by a mesh (without an underlying CAD

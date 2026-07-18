@@ -2449,6 +2449,17 @@ GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int bounda
   }
 }
 
+GMSH_API void gmshModelMeshClassifySurfacesFromDiscrete(const int exportDiscrete, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::classifySurfacesFromDiscrete(exportDiscrete);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshCreateGeometry(const int * dimTags, const size_t dimTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
