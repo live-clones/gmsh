@@ -1691,11 +1691,11 @@ if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
          GMSH_LONG_DESCRIPTION)
   else()
     if ("${GMSH_EXTRA_VERSION}" MATCHES "-nox")
-      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1+nox")
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev${DATE}+nox")
       file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst
            GMSH_LONG_DESCRIPTION)
     else ()
-      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1")
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev${DATE}")
       file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst
            GMSH_LONG_DESCRIPTION)
     endif()
