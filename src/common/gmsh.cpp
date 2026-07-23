@@ -5904,7 +5904,11 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
       if(foundKey)
       {
           entityKeysMaster[j] = foundKey->entityKeys;
-          orientationSign[j] = -1;
+
+
+          // orientation is between two keys so size og orientation is half the size of keys.
+          // orientationSign[j] = -1;
+
           // Reverse the orientation of the elements with tags `elementTags'.
           // GMSH_API void reverseElements(const std::vector<std::size_t> & elementTags);
       }
