@@ -62,17 +62,29 @@ int main(int argc, char **argv)
   std::vector<std::size_t> entityKeysMaster;
   std::vector<double> coord;
   std::vector<double> coordMaster;
-  gmsh::model::mesh::getPeriodicKeys(elementType,functionSpaceType,tagSlave,tagMaster,typeKeys,typeKeysMaster,entityKeys,entityKeysMaster,coord,coordMaster);
+  std::vector<int> orientationSign;
+  gmsh::model::mesh::getPeriodicKeys(elementType,functionSpaceType,tagSlave,tagMaster,typeKeys,typeKeysMaster,
+                                      entityKeys,entityKeysMaster,coord,coordMaster,orientationSign,true);
   std::cout << "Out, I have: " <<tagMaster << std::endl;
   PrintVector(entityKeysMaster);
   PrintVector(entityKeys);
 
-  PrintVector(typeKeysMaster);
-  PrintVector(typeKeys);
+  // PrintVector(typeKeysMaster);
+  // PrintVector(typeKeys);
 
   std::cout << " coordinates are ok" << std::endl;
-  PrintVector(coordMaster);
-  PrintVector(coord);
+  // PrintVector(coordMaster);
+  // PrintVector(coord);
+
+  std::cout << " orientationSign: " << std::endl;
+  PrintVector(orientationSign);
+
+  std::vector<int> basisFunctionsOrientationMaster;
+  gmsh::model::mesh::getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationMaster,tagMaster);
+  PrintVector(basisFunctionsOrientationMaster);
+  std::vector<int> basisFunctionsOrientationDependent;
+  gmsh::model::mesh::getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationDependent,tagSlave);
+  PrintVector(basisFunctionsOrientationDependent);
 
   std::cout << " The reference: " << std::endl;
   tagMaster = l1;

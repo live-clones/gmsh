@@ -2317,7 +2317,7 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim, const int tag, int * 
   }
 }
 
-GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType, const char * functionSpaceType, const int tag, int * tagMaster, int ** typeKeys, size_t * typeKeys_n, int ** typeKeysMaster, size_t * typeKeysMaster_n, size_t ** entityKeys, size_t * entityKeys_n, size_t ** entityKeysMaster, size_t * entityKeysMaster_n, double ** coord, size_t * coord_n, double ** coordMaster, size_t * coordMaster_n, const int returnCoord, int * ierr)
+GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType, const char * functionSpaceType, const int tag, int * tagMaster, int ** typeKeys, size_t * typeKeys_n, int ** typeKeysMaster, size_t * typeKeysMaster_n, size_t ** entityKeys, size_t * entityKeys_n, size_t ** entityKeysMaster, size_t * entityKeysMaster_n, double ** coord, size_t * coord_n, double ** coordMaster, size_t * coordMaster_n, int ** orientationSign, size_t * orientationSign_n, const int returnCoord, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -2327,13 +2327,15 @@ GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType, const char * f
     std::vector<std::size_t> api_entityKeysMaster_;
     std::vector<double> api_coord_;
     std::vector<double> api_coordMaster_;
-    gmsh::model::mesh::getPeriodicKeys(elementType, functionSpaceType, tag, *tagMaster, api_typeKeys_, api_typeKeysMaster_, api_entityKeys_, api_entityKeysMaster_, api_coord_, api_coordMaster_, returnCoord);
+    std::vector<int> api_orientationSign_;
+    gmsh::model::mesh::getPeriodicKeys(elementType, functionSpaceType, tag, *tagMaster, api_typeKeys_, api_typeKeysMaster_, api_entityKeys_, api_entityKeysMaster_, api_coord_, api_coordMaster_, api_orientationSign_, returnCoord);
     vector2ptr(api_typeKeys_, typeKeys, typeKeys_n);
     vector2ptr(api_typeKeysMaster_, typeKeysMaster, typeKeysMaster_n);
     vector2ptr(api_entityKeys_, entityKeys, entityKeys_n);
     vector2ptr(api_entityKeysMaster_, entityKeysMaster, entityKeysMaster_n);
     vector2ptr(api_coord_, coord, coord_n);
     vector2ptr(api_coordMaster_, coordMaster, coordMaster_n);
+    vector2ptr(api_orientationSign_, orientationSign, orientationSign_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

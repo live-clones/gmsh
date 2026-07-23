@@ -1814,6 +1814,7 @@ namespace gmsh { // Top-level functions
                                     std::vector<std::size_t> & entityKeysMaster,
                                     std::vector<double> & coord,
                                     std::vector<double> & coordMaster,
+                                    std::vector<int> & orientationSign,
                                     const bool returnCoord = true);
 
       // gmsh::model::mesh::importStl

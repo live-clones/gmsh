@@ -62,6 +62,7 @@
 #include "HierarchicalBasisHcurlTetra.h"
 #include "HierarchicalBasisHcurlPri.h"
 #include "Overlap.h"
+#include "rtree.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -5722,12 +5723,83 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
 }
 
+
+struct KeyXYZ
+{
+  int typekey;
+  std::size_t entityKeys;
+  double x,y,z;
+};
+
+class KeyXYZRTree {
+private:
+  RTree<struct KeyXYZ *, double, 3, double> *_rtree;   
+  double _tol;
+  static bool rtree_callback(struct KeyXYZ *v, void *ctx)
+  {
+    struct KeyXYZ **out = static_cast<KeyXYZ **>(ctx);   
+    *out = v;
+    return false; // we're done searching
+  }
+
+public:
+  KeyXYZRTree(double tolerance = 1.e-8)
+  {
+    _rtree = new RTree<struct KeyXYZ *, double, 3, double>();
+    _tol = tolerance;
+  }
+  ~KeyXYZRTree()
+  {
+    _rtree->RemoveAll();
+    delete _rtree;
+  }
+  void insert(struct KeyXYZ *v)
+  {
+    struct KeyXYZ *out;
+    double _min[3] = {v->x - _tol, v->y - _tol, v->z - _tol};
+    double _max[3] = {v->x + _tol, v->y + _tol, v->z + _tol};
+
+    if(!_rtree->Search(_min, _max, rtree_callback, &out)) {
+      _rtree->Insert(_min, _max, v);
+    }
+    else {
+      // std::cout << "Node " << v->entityKeys << "("<<v->x <<","<< v->y<< ","<<v->z << ") already exists with tolerance " << _tol
+                // << ": node " <<out->entityKeys << "("<<out->x <<","<<out->y << ","<<out->z << ")" << std::endl;
+      Msg::Debug("Node %d (%.16g, %.16g, %.16g) already exists "
+                       "with tolerance %g: node %d (%.16g, %.16g, %.16g)",
+                       v->entityKeys, v->x, v->y, v->z, _tol, out->entityKeys, out->x,
+                       out->y, out->z);
+    }
+  }
+  struct KeyXYZ *find(struct KeyXYZ *n)
+  {
+    struct KeyXYZ *out;
+    double _min[3] = {n->x - _tol, n->y - _tol, n->z - _tol};
+    double _max[3] = {n->x + _tol, n->y + _tol, n->z + _tol};
+    if(_rtree->Search(_min, _max, rtree_callback, &out)) { return out; }
+    else {
+      // std::cout << "Could not find node corresponding to reference node " << n->entityKeys <<
+      //           "("<<n->x <<","<<n->y << ","<<n->z << ")" << std::endl;
+      Msg::Debug("Could not find node corresponding to reference node "
+                       "%d (%g, %g, %g)",
+                       n->entityKeys, n->x, n->y, n->z);
+      return 0;
+    }
+  }
+};
+
+
+
+
 GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const int elementType, const std::string &functionSpaceType, const int tag,
   int &tagMaster, std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
   std::vector<std::size_t> &entityKeys,
-  std::vector<std::size_t> &entityKeysMaster, std::vector<double> &coord,
-  std::vector<double> &coordMaster, const bool returnCoord)
+  std::vector<std::size_t> &entityKeysMaster, 
+  std::vector<double> &coord,
+  std::vector<double> &coordMaster, 
+  std::vector<int> &orientationSign,
+  const bool returnCoord)
 {
   if(!_checkInit()) return;
   int dim = ElementType::getDimension(elementType);
@@ -5786,26 +5858,55 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
     }
   }
   else if(functionSpaceType == "HcurlLegendre" || functionSpaceType == "H1Legendre") {
-    std::cout << functionSpaceType << std::endl;
+
+    std::vector<int> basisFunctionsOrientationMaster;
+    getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationMaster,tagMaster);
+    std::vector<int> basisFunctionsOrientationDependent;
+    getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationDependent,tag);
+
+    // For lines, easy, only 2 orientations, but not facets in 3D
+    orientationSign = std::vector<int>(basisFunctionsOrientationDependent.size(),1);
+    
+
     getKeys(elementType, functionSpaceType, typeKeysMaster, entityKeysMaster_temp,
             coordMaster, tagMaster, returnCoord);
     std::vector<double> affineTransform = ge->affineTransform;
     std::vector<double> tempCoord(3,0);
-    double tol = 1e-6;
+    double tol = 1.e-8;
+    KeyXYZRTree keyTree(tol);
+
 
     for(std::size_t i = 0; i < entityKeysMaster_temp.size(); i++) {
-      tempCoord[0] = coordMaster[3 * i + 0]*affineTransform[0] + coordMaster[3 * i + 1]*affineTransform[1] + coordMaster[3 * i + 2]*affineTransform[2] + affineTransform[3] ;
-      tempCoord[1] = coordMaster[3 * i + 0]*affineTransform[4] + coordMaster[3 * i + 1]*affineTransform[5] + coordMaster[3 * i + 2]*affineTransform[6] + affineTransform[7] ;
-      tempCoord[2] = coordMaster[3 * i + 0]*affineTransform[8] + coordMaster[3 * i + 1]*affineTransform[9] + coordMaster[3 * i + 2]*affineTransform[10] + affineTransform[11] ;
+      struct KeyXYZ* Key = new KeyXYZ();
+
+      Key->x = coordMaster[3 * i + 0]*affineTransform[0] + coordMaster[3 * i + 1]*affineTransform[1] + coordMaster[3 * i + 2]*affineTransform[2] + affineTransform[3] ;
+      Key->y = coordMaster[3 * i + 0]*affineTransform[4] + coordMaster[3 * i + 1]*affineTransform[5] + coordMaster[3 * i + 2]*affineTransform[6] + affineTransform[7] ;
+      Key->z = coordMaster[3 * i + 0]*affineTransform[8] + coordMaster[3 * i + 1]*affineTransform[9] + coordMaster[3 * i + 2]*affineTransform[10] + affineTransform[11] ;
+   
+      Key->typekey = typeKeysMaster[i];
+      Key->entityKeys = entityKeysMaster_temp[i];
+
+      keyTree.insert(Key);
+    }
+
+    // Find the matching of keys with the transformed coordMaster and coord (dependent).
+    for(std::size_t j = 0; j < entityKeys.size(); j++) {
+      struct KeyXYZ* Key = new KeyXYZ();
+
+      Key->x = coord[3 * j + 0];
+      Key->y = coord[3 * j + 1]; 
+      Key->z = coord[3 * j + 2];
       
-      for(std::size_t j = 0; j < entityKeys.size(); j++) {
-        if(entityKeysMaster[j]==entityKeys[j] &&
-           std::abs(tempCoord[0] - coord[3 * j + 0])<tol &&
-           std::abs(tempCoord[1] - coord[3 * j + 1])<tol &&
-           std::abs(tempCoord[2] - coord[3 * j + 2])<tol){
-            entityKeysMaster[j] = entityKeysMaster_temp[i];
-            break;
-        }
+      Key->typekey = typeKeys[j];
+      Key->entityKeys = entityKeys[j];
+
+      struct KeyXYZ *foundKey = keyTree.find(Key);
+      if(foundKey)
+      {
+          entityKeysMaster[j] = foundKey->entityKeys;
+          orientationSign[j] = -1;
+          // Reverse the orientation of the elements with tags `elementTags'.
+          // GMSH_API void reverseElements(const std::vector<std::size_t> & elementTags);
       }
     }
   }

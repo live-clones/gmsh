@@ -4367,7 +4367,7 @@ space type `functionSpaceType`. If `returnCoord` is set, the `coord` and
 `coordMaster` vectors contain the x, y, z coordinates locating basis functions
 for sorting purposes.
 
-Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
+Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`, `orientationSign`.
 
 Types:
  - `elementType`: integer
@@ -4380,6 +4380,7 @@ Types:
  - `entityKeysMaster`: vector of sizes
  - `coord`: vector of doubles
  - `coordMaster`: vector of doubles
+ - `orientationSign`: vector of integers
  - `returnCoord`: boolean
 """
 function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
@@ -4396,10 +4397,12 @@ function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true
     api_coord_n_ = Ref{Csize_t}()
     api_coordMaster_ = Ref{Ptr{Cdouble}}()
     api_coordMaster_n_ = Ref{Csize_t}()
+    api_orientationSign_ = Ref{Ptr{Cint}}()
+    api_orientationSign_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPeriodicKeys, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, returnCoord, ierr)
+          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, api_orientationSign_, api_orientationSign_n_, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own = true)
     typeKeysMaster = unsafe_wrap(Array, api_typeKeysMaster_[], api_typeKeysMaster_n_[], own = true)
@@ -4407,7 +4410,8 @@ function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true
     entityKeysMaster = unsafe_wrap(Array, api_entityKeysMaster_[], api_entityKeysMaster_n_[], own = true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     coordMaster = unsafe_wrap(Array, api_coordMaster_[], api_coordMaster_n_[], own = true)
-    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster
+    orientationSign = unsafe_wrap(Array, api_orientationSign_[], api_orientationSign_n_[], own = true)
+    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster, orientationSign
 end
 const get_periodic_keys = getPeriodicKeys
 

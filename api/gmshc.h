@@ -1610,6 +1610,7 @@ GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType,
                                            size_t ** entityKeysMaster, size_t * entityKeysMaster_n,
                                            double ** coord, size_t * coord_n,
                                            double ** coordMaster, size_t * coordMaster_n,
+                                           int ** orientationSign, size_t * orientationSign_n,
                                            const int returnCoord,
                                            int * ierr);
 

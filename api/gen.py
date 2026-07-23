@@ -558,7 +558,7 @@ doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their c
 mesh.add('getPeriodicNodes', doc, None, iint('dim'), iint('tag'), oint('tagMaster'), ovectorsize('nodeTags'), ovectorsize('nodeTagsMaster'), ovectordouble('affineTransform'), ibool('includeHighOrderNodes', 'false', 'False'))
 
 doc = '''Get the master entity `tagMaster' and the key pairs (`typeKeyMaster', `entityKeyMaster') corresponding to the entity `tag' and the key pairs (`typeKey', `entityKey') for the elements of type `elementType' and function space type `functionSpaceType'. If `returnCoord' is set, the `coord' and `coordMaster' vectors contain the x, y, z coordinates locating basis functions for sorting purposes.'''
-mesh.add('getPeriodicKeys', doc, None, iint('elementType'), istring('functionSpaceType'), iint('tag'), oint('tagMaster'), ovectorint('typeKeys'), ovectorint('typeKeysMaster'), ovectorsize('entityKeys'), ovectorsize('entityKeysMaster'), ovectordouble('coord'), ovectordouble('coordMaster'), ibool('returnCoord', 'true', 'True'))
+mesh.add('getPeriodicKeys', doc, None, iint('elementType'), istring('functionSpaceType'), iint('tag'), oint('tagMaster'), ovectorint('typeKeys'), ovectorint('typeKeysMaster'), ovectorsize('entityKeys'), ovectorsize('entityKeysMaster'), ovectordouble('coord'), ovectordouble('coordMaster'), ovectorint('orientationSign'), ibool('returnCoord', 'true', 'True'))
 
 doc = '''Import the model STL representation (if available) as the current mesh.'''
 mesh.add('importStl', doc, None)

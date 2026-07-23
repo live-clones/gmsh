@@ -3107,6 +3107,7 @@ namespace gmsh { // Top-level functions
                                   std::vector<std::size_t> & entityKeysMaster,
                                   std::vector<double> & coord,
                                   std::vector<double> & coordMaster,
+                                  std::vector<int> & orientationSign,
                                   const bool returnCoord = true)
       {
         int ierr = 0;
@@ -3116,7 +3117,8 @@ namespace gmsh { // Top-level functions
         size_t *api_entityKeysMaster_; size_t api_entityKeysMaster_n_;
         double *api_coord_; size_t api_coord_n_;
         double *api_coordMaster_; size_t api_coordMaster_n_;
-        gmshModelMeshGetPeriodicKeys(elementType, functionSpaceType.c_str(), tag, &tagMaster, &api_typeKeys_, &api_typeKeys_n_, &api_typeKeysMaster_, &api_typeKeysMaster_n_, &api_entityKeys_, &api_entityKeys_n_, &api_entityKeysMaster_, &api_entityKeysMaster_n_, &api_coord_, &api_coord_n_, &api_coordMaster_, &api_coordMaster_n_, (int)returnCoord, &ierr);
+        int *api_orientationSign_; size_t api_orientationSign_n_;
+        gmshModelMeshGetPeriodicKeys(elementType, functionSpaceType.c_str(), tag, &tagMaster, &api_typeKeys_, &api_typeKeys_n_, &api_typeKeysMaster_, &api_typeKeysMaster_n_, &api_entityKeys_, &api_entityKeys_n_, &api_entityKeysMaster_, &api_entityKeysMaster_n_, &api_coord_, &api_coord_n_, &api_coordMaster_, &api_coordMaster_n_, &api_orientationSign_, &api_orientationSign_n_, (int)returnCoord, &ierr);
         if(ierr) throwLastError();
         typeKeys.assign(api_typeKeys_, api_typeKeys_ + api_typeKeys_n_); gmshFree(api_typeKeys_);
         typeKeysMaster.assign(api_typeKeysMaster_, api_typeKeysMaster_ + api_typeKeysMaster_n_); gmshFree(api_typeKeysMaster_);
@@ -3124,6 +3126,7 @@ namespace gmsh { // Top-level functions
         entityKeysMaster.assign(api_entityKeysMaster_, api_entityKeysMaster_ + api_entityKeysMaster_n_); gmshFree(api_entityKeysMaster_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
         coordMaster.assign(api_coordMaster_, api_coordMaster_ + api_coordMaster_n_); gmshFree(api_coordMaster_);
+        orientationSign.assign(api_orientationSign_, api_orientationSign_ + api_orientationSign_n_); gmshFree(api_orientationSign_);
       }
 
       // gmsh::model::mesh::importStl
