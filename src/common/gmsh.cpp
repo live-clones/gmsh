@@ -5906,7 +5906,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
           entityKeysMaster[j] = foundKey->entityKeys;
 
 
-          // orientation is between two keys so size og orientation is half the size of keys.
+          // orientation is between two nodes so size of orientation is half the size of keys. (keys are only end node of edge)
           // orientationSign[j] = -1;
 
           // Reverse the orientation of the elements with tags `elementTags'.
