@@ -1534,10 +1534,9 @@ GMSH_API void gmsh::model::mesh::getPartitionEntities(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
-                                                    const int tag,
-                                                    const int partition,
-                                                    std::vector<int> &entities)
+GMSH_API void gmsh::model::mesh::getOverlapBoundary(
+  const int dim, const int tag, const int partition,
+  std::vector<int> &entities, const bool includeInnerModelBoundaries)
 {
   if(!_checkInit()) return;
   entities.clear();
@@ -1550,11 +1549,31 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     }
     const auto &boundaries = model->getOverlapInnerBoundaries2D();
     auto it = boundaries.find(face);
-    if(it == boundaries.end()) {
-      return;
+    if(it != boundaries.end()) {
+      for(const auto &pe : it->second) {
+        if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+      }
     }
-    for(const auto &pe : it->second) {
-      if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+    if(includeInnerModelBoundaries) {
+      // Also include overlap boundaries that coincide with an internal
+      // boundary of the (non-partitioned) model, i.e. an existing curve
+      // shared by two or more parent faces: these are stored per-curve, not
+      // per-face, so filter by the parent face recorded at creation time.
+      // Boundaries that coincide with the outer boundary of the whole model
+      // (a curve used by a single parent face) have nothing on the other
+      // side, so they are never returned here. The entities themselves are
+      // still created and registered regardless of this flag.
+      const auto &boundariesOfExisting = model->getOverlapOfBoundaries2D();
+      const auto &creators =
+        std::get<0>(model->getBoundaryOfOverlapCreators());
+      for(const auto &[edge, pes] : boundariesOfExisting) {
+        if(edge && edge->faces().size() < 2) continue;
+        for(const auto &pe : pes) {
+          auto itc = creators.find(pe);
+          if(itc == creators.end() || itc->second != face) continue;
+          if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+        }
+      }
     }
   }
   else if(dim == 3) {
@@ -1565,11 +1584,25 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     }
     const auto &boundaries = model->getOverlapInnerBoundaries3D();
     auto it = boundaries.find(region);
-    if(it == boundaries.end()) {
-      return;
+    if(it != boundaries.end()) {
+      for(const auto &pe : it->second) {
+        if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+      }
     }
-    for(const auto &pe : it->second) {
-      if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+    if(includeInnerModelBoundaries) {
+      // Same as the 2D case above, based on adjacent regions instead of
+      // adjacent faces.
+      const auto &boundariesOfExisting = model->getOverlapOfBoundaries3D();
+      const auto &creators =
+        std::get<1>(model->getBoundaryOfOverlapCreators());
+      for(const auto &[face2, pfs] : boundariesOfExisting) {
+        if(face2 && face2->regions().size() < 2) continue;
+        for(const auto &pf : pfs) {
+          auto itc = creators.find(pf);
+          if(itc == creators.end() || itc->second != region) continue;
+          if(pf->getPartition(0) == partition) entities.push_back(pf->tag());
+        }
+      }
     }
   }
   else {

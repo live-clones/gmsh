@@ -3430,11 +3430,16 @@ module gmsh
 
   !> Get the tags of the entities making up the overlap boundary of partition
   !! `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-  !! `tag'.
+  !! `tag'. By default only the boundary entities that are internal to the
+  !! partition overlap (not coinciding with any non-partitioned entity) are
+  !! returned. If `includeInnerModelBoundaries' is set, also return the boundary
+  !! entities that coincide with an internal boundary of the (non-partitioned)
+  !! model, i.e. that are shared by two or more non-partitioned entities.
   subroutine gmshModelMeshGetOverlapBoundary(dim, &
                                              tag, &
                                              partition, &
                                              entityTags, &
+                                             includeInnerModelBoundaries, &
                                              ierr)
     interface
     subroutine C_API(dim, &
@@ -3442,6 +3447,7 @@ module gmsh
                      partition, &
                      api_entityTags_, &
                      api_entityTags_n_, &
+                     includeInnerModelBoundaries, &
                      ierr_) &
       bind(C, name="gmshModelMeshGetOverlapBoundary")
       use, intrinsic :: iso_c_binding
@@ -3450,6 +3456,7 @@ module gmsh
       integer(c_int), value, intent(in) :: partition
       type(c_ptr), intent(out) :: api_entityTags_
       integer(c_size_t), intent(out) :: api_entityTags_n_
+      integer(c_int), value, intent(in) :: includeInnerModelBoundaries
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -3457,6 +3464,7 @@ module gmsh
     integer, intent(in) :: tag
     integer, intent(in) :: partition
     integer(c_int), dimension(:), allocatable, intent(out) :: entityTags
+    logical, intent(in), optional :: includeInnerModelBoundaries
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_entityTags_
     integer(c_size_t) :: api_entityTags_n_
@@ -3465,6 +3473,7 @@ module gmsh
          partition=int(partition, c_int), &
          api_entityTags_=api_entityTags_, &
          api_entityTags_n_=api_entityTags_n_, &
+         includeInnerModelBoundaries=optval_c_bool(.false., includeInnerModelBoundaries), &
          ierr_=ierr)
     entityTags = ovectorint_(api_entityTags_, &
       api_entityTags_n_)

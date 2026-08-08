@@ -646,11 +646,16 @@ GMSH_API void gmshModelMeshGetPartitionEntities(const int dim,
 
 /* Get the tags of the entities making up the overlap boundary of partition
  * `partition' inside the (non-partitioned) entity of dimension `dim' and tag
- * `tag'. */
+ * `tag'. By default only the boundary entities that are internal to the
+ * partition overlap (not coinciding with any non-partitioned entity) are
+ * returned. If `includeInnerModelBoundaries' is set, also return the boundary
+ * entities that coincide with an internal boundary of the (non-partitioned)
+ * model, i.e. that are shared by two or more non-partitioned entities. */
 GMSH_API void gmshModelMeshGetOverlapBoundary(const int dim,
                                               const int tag,
                                               const int partition,
                                               int ** entityTags, size_t * entityTags_n,
+                                              const int includeInnerModelBoundaries,
                                               int * ierr);
 
 /* If the entity of dimension `dim' and tag `tag' is a boundary overlap, get

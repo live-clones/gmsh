@@ -1922,11 +1922,15 @@ end
 const get_partition_entities = getPartitionEntities
 
 """
-    gmsh.model.mesh.getOverlapBoundary(dim, tag, partition)
+    gmsh.model.mesh.getOverlapBoundary(dim, tag, partition, includeInnerModelBoundaries = false)
 
 Get the tags of the entities making up the overlap boundary of partition
 `partition` inside the (non-partitioned) entity of dimension `dim` and tag
-`tag`.
+`tag`. By default only the boundary entities that are internal to the partition
+overlap (not coinciding with any non-partitioned entity) are returned. If
+`includeInnerModelBoundaries` is set, also return the boundary entities that
+coincide with an internal boundary of the (non-partitioned) model, i.e. that are
+shared by two or more non-partitioned entities.
 
 Return `entityTags`.
 
@@ -1935,14 +1939,15 @@ Types:
  - `tag`: integer
  - `partition`: integer
  - `entityTags`: vector of integers
+ - `includeInnerModelBoundaries`: boolean
 """
-function getOverlapBoundary(dim, tag, partition)
+function getOverlapBoundary(dim, tag, partition, includeInnerModelBoundaries = false)
     api_entityTags_ = Ref{Ptr{Cint}}()
     api_entityTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetOverlapBoundary, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, partition, api_entityTags_, api_entityTags_n_, ierr)
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          dim, tag, partition, api_entityTags_, api_entityTags_n_, includeInnerModelBoundaries, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     entityTags = unsafe_wrap(Array, api_entityTags_[], api_entityTags_n_[], own = true)
     return entityTags

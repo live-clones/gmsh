@@ -2276,13 +2276,17 @@ class model:
         get_partition_entities = getPartitionEntities
 
         @staticmethod
-        def getOverlapBoundary(dim, tag, partition):
+        def getOverlapBoundary(dim, tag, partition, includeInnerModelBoundaries=False):
             """
-            gmsh.model.mesh.getOverlapBoundary(dim, tag, partition)
+            gmsh.model.mesh.getOverlapBoundary(dim, tag, partition, includeInnerModelBoundaries=False)
 
             Get the tags of the entities making up the overlap boundary of partition
             `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-            `tag'.
+            `tag'. By default only the boundary entities that are internal to the
+            partition overlap (not coinciding with any non-partitioned entity) are
+            returned. If `includeInnerModelBoundaries' is set, also return the boundary
+            entities that coincide with an internal boundary of the (non-partitioned)
+            model, i.e. that are shared by two or more non-partitioned entities.
 
             Return `entityTags'.
 
@@ -2291,6 +2295,7 @@ class model:
             - `tag': integer
             - `partition': integer
             - `entityTags': vector of integers
+            - `includeInnerModelBoundaries': boolean
             """
             api_entityTags_, api_entityTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -2299,6 +2304,7 @@ class model:
                 c_int(tag),
                 c_int(partition),
                 byref(api_entityTags_), byref(api_entityTags_n_),
+                c_int(bool(includeInnerModelBoundaries)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
