@@ -256,16 +256,29 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
   using MBnd = typename EntityTraits<dim>::BoundaryMeshObject;
   using Hash = typename EntityTraits<dim>::BoundaryMeshObjectHash;
   using Equal = typename EntityTraits<dim>::BoundaryMeshObjectEqual;
-  // Track count and one parent element for each boundary
-  // We only need one element since boundaries with count==1 are kept
-  using BndInfoMap =
-    std::unordered_map<MBnd, std::pair<unsigned, MElement *>, Hash, Equal>;
+  // Track count, one parent element and the covered entity's parent for each
+  // boundary. Counting is done globally per partition (merging all parents):
+  // an edge/face bordering two covered (ghost) elements cancels out
+  // regardless of which parent entity they came from, since it is then
+  // interior to the overlap patch of that partition, not part of its
+  // boundary. This matters when a partition's overlap covers elements from
+  // two different parent entities that are adjacent to each other (e.g. a
+  // sliver of one parent picked up next to the bulk ghost layer of another,
+  // when the mesh partition boundary doesn't exactly follow the parent-parent
+  // BREP boundary): without the global count, the shared seam between the two
+  // covered patches would wrongly appear as a boundary on both sides.
+  struct BndInfo {
+    unsigned count = 0;
+    MElement *element = nullptr;
+    Entity *parent = nullptr;
+  };
+  using BndInfoMap = std::unordered_map<MBnd, BndInfo, Hash, Equal>;
   OveralBoundariesMesh<dim> result(overlaps.size());
 
 // Embarassingly parallel
 #pragma omp parallel for schedule(dynamic)
   for(size_t i = 0; i < overlaps.size(); ++i) {
-    std::unordered_map<Entity *, BndInfoMap> counts;
+    BndInfoMap dict;
 
     for(const auto &[covered, elements] : overlaps[i]) {
       if(!covered) continue; // Skip null entities
@@ -276,33 +289,31 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
           covered->dim(), covered->tag());
       }
 
-      auto &dict = counts[parent];
       for(const auto &element : elements) {
         if constexpr(dim == 2) {
           for(int j = 0; j < element->getNumEdges(); ++j) {
             MBnd edge = element->getEdge(j);
             auto &info = dict[edge];
-            info.first++;
-            info.second = element; // Store the parent element
+            info.count++;
+            info.element = element; // Store the parent element
+            info.parent = parent;
           }
         }
         else if constexpr(dim == 3) {
           for(int j = 0; j < element->getNumFaces(); ++j) {
             MBnd face = element->getFace(j);
             auto &info = dict[face];
-            info.first++;
-            info.second = element; // Store the parent element
+            info.count++;
+            info.element = element; // Store the parent element
+            info.parent = parent;
           }
         }
       }
     }
 
-    for(const auto &[parent, boundaryInfo] : counts) {
-      auto &boundaryMap = result[i][parent];
-      for(const auto &[boundary, info] : boundaryInfo) {
-        if(info.first == 1) { // Only keep unique boundaries
-          boundaryMap[boundary] = info.second; // Map boundary to parent element
-        }
+    for(const auto &[boundary, info] : dict) {
+      if(info.count == 1) { // Only keep unique boundaries
+        result[i][info.parent][boundary] = info.element;
       }
     }
   }

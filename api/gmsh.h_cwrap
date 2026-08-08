@@ -1320,15 +1320,21 @@ namespace gmsh { // Top-level functions
       //
       // Get the tags of the entities making up the overlap boundary of partition
       // `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-      // `tag'.
+      // `tag'. By default only the boundary entities that are internal to the
+      // partition overlap (not coinciding with any non-partitioned entity) are
+      // returned. If `includeInnerModelBoundaries' is set, also return the
+      // boundary entities that coincide with an internal boundary of the (non-
+      // partitioned) model, i.e. that are shared by two or more non-partitioned
+      // entities.
       inline void getOverlapBoundary(const int dim,
                                      const int tag,
                                      const int partition,
-                                     std::vector<int> & entityTags)
+                                     std::vector<int> & entityTags,
+                                     const bool includeInnerModelBoundaries = false)
       {
         int ierr = 0;
         int *api_entityTags_; size_t api_entityTags_n_;
-        gmshModelMeshGetOverlapBoundary(dim, tag, partition, &api_entityTags_, &api_entityTags_n_, &ierr);
+        gmshModelMeshGetOverlapBoundary(dim, tag, partition, &api_entityTags_, &api_entityTags_n_, (int)includeInnerModelBoundaries, &ierr);
         if(ierr) throwLastError();
         entityTags.assign(api_entityTags_, api_entityTags_ + api_entityTags_n_); gmshFree(api_entityTags_);
       }
