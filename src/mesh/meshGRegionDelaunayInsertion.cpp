@@ -351,31 +351,62 @@ void connectTetsFast(ITER beg, ITER end)
     connectTetsFastT<std::size_t>(beg, end);
 }
 
+// connect the tets of a range by matching their faces on the sorted vertex
+// numbers: the faces are collected in one array and sorted, which brings the
+// two copies of a face next to each other. The local mesh modifications call
+// this on the few tets around a cavity, so the array stays small; a std::set
+// of faces would allocate a node per face and chase the vertex pointers at
+// every comparison.
 template <class ITER>
 void connectTets(
   ITER beg, ITER end,
   const std::set<MFace, MFaceLessThan> *allEmbeddedFaces = nullptr)
 {
-  std::set<faceXtet> conn;
-  while(beg != end) {
-    if(!(*beg)->isDeleted()) {
-      for(int i = 0; i < 4; i++) {
-        faceXtet fxt(*beg, i);
-        // if a face is embedded, do not connect tets on both sides!
-        if(!allEmbeddedFaces ||
-           allEmbeddedFaces->find(MFace(fxt.v[0], fxt.v[1], fxt.v[2])) ==
-             allEmbeddedFaces->end()) {
-          auto found = conn.find(fxt);
-          if(found == conn.end())
-            conn.insert(fxt);
-          else if(found->t1 != *beg) {
-            found->t1->setNeigh(found->i1, *beg);
-            (*beg)->setNeigh(i, found->t1);
-          }
-        }
-      }
+  struct tetFace {
+    std::size_t v0, v1, v2;
+    MTet4 *t;
+    int i;
+    bool operator<(const tetFace &o) const
+    {
+      if(v0 != o.v0) return v0 < o.v0;
+      if(v1 != o.v1) return v1 < o.v1;
+      return v2 < o.v2;
     }
-    ++beg;
+  };
+  const bool hasEmbedded = allEmbeddedFaces && !allEmbeddedFaces->empty();
+
+  std::vector<tetFace> conn;
+  for(ITER IT = beg; IT != end; ++IT) {
+    MTet4 *t = *IT;
+    if(t->isDeleted()) continue;
+    for(int j = 0; j < 4; j++) {
+      std::size_t a = t->tet()->getVertex(faces[j][0])->getNum();
+      std::size_t b = t->tet()->getVertex(faces[j][1])->getNum();
+      std::size_t c = t->tet()->getVertex(faces[j][2])->getNum();
+      if(a > b) std::swap(a, b);
+      if(b > c) std::swap(b, c);
+      if(a > b) std::swap(a, b);
+      conn.push_back({a, b, c, t, j});
+    }
+  }
+  std::sort(conn.begin(), conn.end());
+
+  for(std::size_t k = 0; k + 1 < conn.size(); k++) {
+    const tetFace &f1 = conn[k];
+    const tetFace &f2 = conn[k + 1];
+    if(f1.v0 != f2.v0 || f1.v1 != f2.v1 || f1.v2 != f2.v2) continue;
+    if(f1.t != f2.t) {
+      // if a face is embedded, do not connect tets on both sides!
+      if(hasEmbedded &&
+         allEmbeddedFaces->find(MFace(f1.t->tet()->getVertex(faces[f1.i][0]),
+                                      f1.t->tet()->getVertex(faces[f1.i][1]),
+                                      f1.t->tet()->getVertex(faces[f1.i][2]))) !=
+           allEmbeddedFaces->end())
+        continue;
+      f1.t->setNeigh(f1.i, f2.t);
+      f2.t->setNeigh(f2.i, f1.t);
+    }
+    k++;
   }
 }
 
