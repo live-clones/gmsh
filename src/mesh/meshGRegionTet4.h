@@ -23,7 +23,7 @@
 #include "BackgroundMeshTools.h"
 #include "qualityMeasures.h"
 #include "robustPredicates.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
 #include "GModel.h"
 
 class GRegion;

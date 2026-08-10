@@ -17,7 +17,9 @@ set(SRC
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
-    meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp
+    meshGRegionDelaunay.cpp meshGRegionTet4.cpp
+    meshGRegionRefine.cpp meshGRegionOptimize.cpp meshGRegionAdapt.cpp
+    meshGRegionTransfinite.cpp
     meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp
   meshGRegionBoundaryLayer.cpp
@@ -36,9 +38,6 @@ set(SRC
   meshPartition.cpp
   meshRefine.cpp
   delaunay3d.cpp
-  meshGRegionOptimize.cpp
-  meshGRegionAdapt.cpp
-  meshGRegionRefine.cpp
   DivideAndConquer.cpp
   Field.cpp
   filterElements.cpp

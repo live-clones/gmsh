@@ -15,7 +15,7 @@
 #include <set>
 #include <vector>
 
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
 #include "meshGRegionTet4.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "GRegion.h"
