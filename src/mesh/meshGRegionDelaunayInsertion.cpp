@@ -18,6 +18,7 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "meshGRegionOptimizeFlat.h"
 #include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionTet4.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "MTriangle.h"
@@ -135,7 +136,7 @@ struct edgeContainerB {
   }
 };
 
-static void
+void
 createAllEmbeddedEdges(GRegion *gr,
                        std::set<MEdge, MEdgeLessThan> &allEmbeddedEdges)
 {
@@ -159,7 +160,7 @@ static void createAllEmbeddedEdges(GRegion *gr, edgeContainerB &embedded)
   }
 }
 
-static void
+void
 createAllEmbeddedFaces(GRegion *gr,
                        std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
 {
@@ -254,162 +255,6 @@ struct faceXtet {
     return robustPredicates::orient3d(a, b, c, d) < 0.0;
   }
 };
-
-// Connect the tets by matching their faces, keyed on the sorted vertex
-// numbers of each face so that nothing chases the vertex pointers twice.
-// The faces are bucketed on their smallest vertex with a counting sort,
-// which is linear and writes each face once, and only the (small) buckets
-// are sorted, on the two remaining vertices: a pair of matching faces is
-// then always adjacent inside one bucket. KEY is the smallest unsigned
-// integer type that can hold the vertex numbers.
-template <class KEY, class ITER>
-void connectTetsFastT(ITER beg, ITER end)
-{
-  struct tetFace {
-    KEY v1, v2; // the two largest vertices of the face
-    KEY tet; // index of the tet in [beg, end)
-    KEY i; // face of that tet
-    bool operator<(const tetFace &o) const
-    {
-      if(v1 != o.v1) return v1 < o.v1;
-      return v2 < o.v2;
-    }
-  };
-
-  // the smallest vertex of a face, which is what it is bucketed on
-  auto minVertex = [](const KEY n[4], int j) {
-    KEY a = n[faces[j][0]];
-    a = std::min(a, n[faces[j][1]]);
-    return std::min(a, n[faces[j][2]]);
-  };
-  auto tetNums = [](MTet4 *t, KEY n[4]) {
-    for(int k = 0; k < 4; k++) n[k] = (KEY)t->tet()->getVertex(k)->getNum();
-  };
-
-  // count the faces of each bucket
-  std::vector<KEY> start(
-    (std::size_t)GModel::current()->getMaxVertexNumber() + 2, 0);
-  for(ITER IT = beg; IT != end; ++IT) {
-    if((*IT)->isDeleted()) continue;
-    KEY n[4];
-    tetNums(*IT, n);
-    for(int j = 0; j < 4; j++) start[minVertex(n, j) + 1]++;
-  }
-  for(std::size_t v = 1; v < start.size(); v++) start[v] += start[v - 1];
-  const std::size_t nFaces = start.back();
-  if(!nFaces) return;
-
-  // scatter the faces into their bucket
-  std::vector<tetFace> sorted(nFaces);
-  {
-    std::vector<KEY> cursor(start.begin(), start.end() - 1);
-    KEY idx = 0;
-    for(ITER IT = beg; IT != end; ++IT, ++idx) {
-      if((*IT)->isDeleted()) continue;
-      KEY n[4];
-      tetNums(*IT, n);
-      for(int j = 0; j < 4; j++) {
-        KEY a = n[faces[j][0]], b = n[faces[j][1]], c = n[faces[j][2]];
-        if(a > b) std::swap(a, b);
-        if(b > c) std::swap(b, c);
-        if(a > b) std::swap(a, b);
-        tetFace &f = sorted[cursor[a]++];
-        f.v1 = b;
-        f.v2 = c;
-        f.tet = idx;
-        f.i = (KEY)j;
-      }
-    }
-  }
-
-  // inside a bucket, matching faces end up next to each other
-  for(std::size_t v = 0; v + 1 < start.size(); v++) {
-    const std::size_t b = start[v], e = start[v + 1];
-    if(e - b < 2) continue;
-    std::sort(sorted.begin() + b, sorted.begin() + e);
-    for(std::size_t k = b; k + 1 < e; k++) {
-      const tetFace &f1 = sorted[k];
-      const tetFace &f2 = sorted[k + 1];
-      if(f1.v1 == f2.v1 && f1.v2 == f2.v2) {
-        MTet4 *t1 = *(beg + f1.tet);
-        MTet4 *t2 = *(beg + f2.tet);
-        if(t1 != t2) {
-          t1->setNeigh(f1.i, t2);
-          t2->setNeigh(f2.i, t1);
-          ++k;
-        }
-      }
-    }
-  }
-}
-
-template <class ITER>
-void connectTetsFast(ITER beg, ITER end)
-{
-  if(GModel::current()->getMaxVertexNumber() <= 0xffffffffull)
-    connectTetsFastT<std::uint32_t>(beg, end);
-  else
-    connectTetsFastT<std::size_t>(beg, end);
-}
-
-// connect the tets of a range by matching their faces on the sorted vertex
-// numbers: the faces are collected in one array and sorted, which brings the
-// two copies of a face next to each other. The local mesh modifications call
-// this on the few tets around a cavity, so the array stays small; a std::set
-// of faces would allocate a node per face and chase the vertex pointers at
-// every comparison.
-template <class ITER>
-void connectTets(
-  ITER beg, ITER end,
-  const std::set<MFace, MFaceLessThan> *allEmbeddedFaces = nullptr)
-{
-  struct tetFace {
-    std::size_t v0, v1, v2;
-    MTet4 *t;
-    int i;
-    bool operator<(const tetFace &o) const
-    {
-      if(v0 != o.v0) return v0 < o.v0;
-      if(v1 != o.v1) return v1 < o.v1;
-      return v2 < o.v2;
-    }
-  };
-  const bool hasEmbedded = allEmbeddedFaces && !allEmbeddedFaces->empty();
-
-  std::vector<tetFace> conn;
-  for(ITER IT = beg; IT != end; ++IT) {
-    MTet4 *t = *IT;
-    if(t->isDeleted()) continue;
-    for(int j = 0; j < 4; j++) {
-      std::size_t a = t->tet()->getVertex(faces[j][0])->getNum();
-      std::size_t b = t->tet()->getVertex(faces[j][1])->getNum();
-      std::size_t c = t->tet()->getVertex(faces[j][2])->getNum();
-      if(a > b) std::swap(a, b);
-      if(b > c) std::swap(b, c);
-      if(a > b) std::swap(a, b);
-      conn.push_back({a, b, c, t, j});
-    }
-  }
-  std::sort(conn.begin(), conn.end());
-
-  for(std::size_t k = 0; k + 1 < conn.size(); k++) {
-    const tetFace &f1 = conn[k];
-    const tetFace &f2 = conn[k + 1];
-    if(f1.v0 != f2.v0 || f1.v1 != f2.v1 || f1.v2 != f2.v2) continue;
-    if(f1.t != f2.t) {
-      // if a face is embedded, do not connect tets on both sides!
-      if(hasEmbedded &&
-         allEmbeddedFaces->find(MFace(f1.t->tet()->getVertex(faces[f1.i][0]),
-                                      f1.t->tet()->getVertex(faces[f1.i][1]),
-                                      f1.t->tet()->getVertex(faces[f1.i][2]))) !=
-           allEmbeddedFaces->end())
-        continue;
-      f1.t->setNeigh(f1.i, f2.t);
-      f2.t->setNeigh(f2.i, f1.t);
-    }
-    k++;
-  }
-}
 
 void connectTets(std::list<MTet4 *> &l,
                  const std::set<MFace, MFaceLessThan> *embeddedFaces)

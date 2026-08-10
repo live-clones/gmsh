@@ -6,7 +6,7 @@
 #ifndef MESH_GREGION_LOCAL_MESH_MOD_H
 #define MESH_GREGION_LOCAL_MESH_MOD_H
 
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionTet4.h"
 #include "qualityMeasures.h"
 
 // Local mesh modification operators. Those operators only apply to
