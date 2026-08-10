@@ -37,6 +37,8 @@ set(SRC
   meshRefine.cpp
   delaunay3d.cpp
   meshGRegionOptimize.cpp
+  meshGRegionAdapt.cpp
+  meshGRegionRefine.cpp
   DivideAndConquer.cpp
   Field.cpp
   filterElements.cpp
