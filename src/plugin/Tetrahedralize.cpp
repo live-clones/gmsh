@@ -11,6 +11,7 @@
 
 #if defined(HAVE_MESH)
 #include "meshGRegionDelaunayInsertion.h"
+#include "MTetrahedron.h"
 #endif
 
 StringXNumber TetrahedralizeOptions_Number[] = {
