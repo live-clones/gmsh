@@ -51,6 +51,8 @@ struct flatOpt {
   std::vector<std::uint8_t> tetDeleted;
   std::vector<MTetrahedron *> tetMT; // element object, null for created tets
   std::vector<std::uint32_t> freeSlots;
+  // elements of the tets the swaps removed, reused for the ones they create
+  std::vector<MTetrahedron *> spare;
 
   flatOpt(const qmTetrahedron::Measures &m) : qm(m) {}
 
@@ -83,7 +85,12 @@ struct flatOpt {
       std::uint32_t s = freeSlots.back();
       freeSlots.pop_back();
       tetDeleted[s] = 0;
-      tetMT[s] = nullptr;
+      // the slot is reused for another tet: keep its element for one of the
+      // tets to be created, it must not be dropped on the floor
+      if(tetMT[s]) {
+        spare.push_back(tetMT[s]);
+        tetMT[s] = nullptr;
+      }
       for(int k = 0; k < 4; k++) tetN[4 * s + k] = FLAT_NONE;
       return s;
     }
@@ -518,7 +525,6 @@ void flatOpt::exportRegion(GRegion *gr)
     }
   }
 
-  std::vector<MTetrahedron *> spare;
   for(std::size_t t = 0; t < nTets(); t++) {
     if(tetDeleted[t] && tetMT[t]) {
       spare.push_back(tetMT[t]);
@@ -573,17 +579,38 @@ bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm)
     K.tetQual[t] = K.quality((std::uint32_t)t, &vol);
   }
 
-  {
-    double worst = 1.0, avg = 0.;
+  // same report as the object-based optimizer
+  const int nbRanges = 10;
+  int quality_ranges[nbRanges];
+  auto report = [&K, &quality_ranges, nbRanges](const char *what) {
+    double vol = 0., worst = 1.0, avg = 0.;
     std::size_t count = 0;
+    for(int i = 0; i < nbRanges; i++) quality_ranges[i] = 0;
     for(std::size_t t = 0; t < K.nTets(); t++) {
-      worst = std::min(worst, K.tetQual[t]);
-      avg += K.tetQual[t];
+      if(K.tetDeleted[t]) continue;
+      vol += K.volume((std::uint32_t)t);
+      const double qual = K.tetQual[t];
+      worst = std::min(qual, worst);
+      avg += qual;
       count++;
+      for(int i = 0; i < nbRanges; i++) {
+        if(qual >= (double)i / nbRanges && qual < (double)(i + 1) / nbRanges) {
+          quality_ranges[i]++;
+          break;
+        }
+      }
     }
-    Msg::Info("Optimization starts with worst = %g / average = %g:", worst,
-              count ? avg / count : 0.);
-  }
+    Msg::Info("Optimization %s (volume = %g) with worst = %g / average = %g:",
+              what, vol, worst, count ? avg / count : 0.);
+  };
+  auto printRanges = [&quality_ranges, nbRanges]() {
+    for(int i = 0; i < nbRanges; i++) {
+      Msg::Info("%3.2f < quality < %3.2f : %9d elements", (double)i / nbRanges,
+                (double)(i + 1) / nbRanges, quality_ranges[i]);
+    }
+  };
+  report("starts");
+  printRanges();
 
   int nbESwap = 0, nbReloc = 0;
   double worstA = 0.0;
@@ -629,19 +656,19 @@ bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm)
     worstA = worst;
   }
 
-  {
-    double vol = 0., worst = 1.0, avg = 0.;
-    std::size_t count = 0;
-    for(std::size_t t = 0; t < K.nTets(); t++) {
-      if(K.tetDeleted[t]) continue;
-      vol += K.volume((std::uint32_t)t);
-      worst = std::min(worst, K.tetQual[t]);
-      avg += K.tetQual[t];
-      count++;
-    }
-    Msg::Info("Optimization done (volume = %g) with worst = %g / average = %g:",
-              vol, worst, count ? avg / count : 0.);
+  report("done");
+
+  std::size_t illegals = 0;
+  const double sliverLimit = 0.001;
+  for(std::size_t t = 0; t < K.nTets(); t++) {
+    if(!K.tetDeleted[t] && K.tetQual[t] < sliverLimit) illegals++;
   }
+  if(illegals)
+    Msg::Warning("%zu ill-shaped tets are still in the mesh", illegals);
+  else
+    Msg::Info("No ill-shaped tets in the mesh :-)");
+
+  printRanges();
 
   K.exportRegion(gr);
   return true;
