@@ -9,7 +9,7 @@
 // The tetrahedron wrapper the object-based 3D kernels work on, its
 // allocator, and the routines that build the adjacencies of a set of such
 // tetrahedra. This is internal to the 3D meshing sources: the entry points
-// the rest of Gmsh calls are in meshGRegionDelaunayInsertion.h.
+// the rest of Gmsh calls are in meshGRegionDelaunay.h.
 
 #include <cstdint>
 #include <list>
@@ -36,30 +36,11 @@ class MTet4Factory;
 // matters, not the orientation)
 static const int tet4Faces[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 3, 1}, {1, 3, 2}};
 
-
 // same as tetcircumcenter (with bit-identical result), but also returns a
 // conservative bound on the roundoff error of the computed circumcenter
 double tetcircumcenterBounded(double a[3], double b[3], double c[3],
                               double d[3], double circumcenter[3],
                               double *err);
-
-class MTet4Factory;
-
-
-// Memory usage for 1 million tets:
-//
-// * sizeof(MTet4) = 36 Bytes and sizeof(MTetrahedron) = 28 Bytes
-//   -> 64 MB
-// * rb tree containing all pointers sorted with respect to tet
-//   radius: each bucket of the tree contains 4 pointers (16 Bytes)
-//   plus the data -> 20 MB
-// * sizeof(MVertex) = 44 Bytes and there are about 200000 verts per
-//   million tet -> 9MB
-// * vector of char lengths per vertex -> 1.6MB
-// * vectors in GEntities to store the element and vertex pointers
-//   -> 5MB
-//
-// Grand total should thus be about 100 MB.
 
 class MTet4 {
   friend class MTet4Factory;
@@ -81,7 +62,6 @@ private:
   GRegion *gr;
 
 public:
-  static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm
   ~MTet4() {}
   MTet4()
     : deleted(false), orientSgn(0), circum_radius(0.0), sphTol(1.e300),

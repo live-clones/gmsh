@@ -32,13 +32,14 @@
 
 static bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm);
 
-// Flat port of optimizeMesh(): the mesh is held in index-based arrays (four
-// vertex indices and four packed neighbors per tet, coordinates per vertex)
-// instead of MTet4 wrappers over MTetrahedron over MVertex. The optimization
-// itself is unchanged - sweep the tets, edge-swap the ones below the quality
-// threshold, then relocate the nodes of those that remain - but the sweeps
-// walk contiguous arrays, the adjacency is built once on dense indices, and
-// a swap rewrites integers instead of allocating elements.
+// Flat port of optimizeMesh(), which follows it in this file: the mesh is
+// held in index-based arrays (four vertex indices and four packed neighbors
+// per tet, coordinates per vertex) instead of MTet4 wrappers over
+// MTetrahedron over MVertex. The optimization itself is unchanged - sweep the
+// tets, edge-swap the ones below the quality threshold, then relocate the
+// nodes of those that remain - but the sweeps walk contiguous arrays, the
+// adjacency is built once on dense indices, and a swap rewrites integers
+// instead of allocating elements.
 
 namespace {
 
@@ -801,7 +802,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     connectTetsFast(allTets.begin(), allTets.end());
   }
   else {
-    // daaaaaaamn slow !!!
+    // the embedded faces have to be left unconnected, which the bucketed
+    // version above does not know how to do
     connectTets(allTets.begin(), allTets.end(), &allEmbeddedFaces);
   }
 
