@@ -254,64 +254,101 @@ struct faceXtet {
   }
 };
 
-// connect the tets by sorting their faces, with the sorted vertex numbers of
-// each face stored inline, so that the sort neither chases the vertex
-// pointers nor moves large entries around; KEY is the smallest unsigned
-// integer type that can hold the vertex numbers
+// Connect the tets by matching their faces, keyed on the sorted vertex
+// numbers of each face so that nothing chases the vertex pointers twice.
+// The faces are bucketed on their smallest vertex with a counting sort,
+// which is linear and writes each face once, and only the (small) buckets
+// are sorted, on the two remaining vertices: a pair of matching faces is
+// then always adjacent inside one bucket. KEY is the smallest unsigned
+// integer type that can hold the vertex numbers.
 template <class KEY, class ITER>
-void connectTetsFastT(std::size_t _size, ITER beg, ITER end)
+void connectTetsFastT(ITER beg, ITER end)
 {
   struct tetFace {
-    KEY v0, v1, v2;
-    int i;
-    MTet4 *t;
+    KEY v1, v2; // the two largest vertices of the face
+    KEY tet; // index of the tet in [beg, end)
+    KEY i; // face of that tet
     bool operator<(const tetFace &o) const
     {
-      if(v0 != o.v0) return v0 < o.v0;
       if(v1 != o.v1) return v1 < o.v1;
       return v2 < o.v2;
     }
-    bool sameFace(const tetFace &o) const
-    {
-      return v0 == o.v0 && v1 == o.v1 && v2 == o.v2;
-    }
   };
-  std::vector<tetFace> conn;
-  conn.reserve(4 * _size);
+
+  // the smallest vertex of a face, which is what it is bucketed on
+  auto minVertex = [](const KEY n[4], int j) {
+    KEY a = n[faces[j][0]];
+    a = std::min(a, n[faces[j][1]]);
+    return std::min(a, n[faces[j][2]]);
+  };
+  auto tetNums = [](MTet4 *t, KEY n[4]) {
+    for(int k = 0; k < 4; k++) n[k] = (KEY)t->tet()->getVertex(k)->getNum();
+  };
+
+  // count the faces of each bucket
+  std::vector<KEY> start(
+    (std::size_t)GModel::current()->getMaxVertexNumber() + 2, 0);
   for(ITER IT = beg; IT != end; ++IT) {
-    MTet4 *t = *IT;
-    if(t->isDeleted()) continue;
-    KEY n[4] = {(KEY)t->tet()->getVertex(0)->getNum(),
-                (KEY)t->tet()->getVertex(1)->getNum(),
-                (KEY)t->tet()->getVertex(2)->getNum(),
-                (KEY)t->tet()->getVertex(3)->getNum()};
-    for(int j = 0; j < 4; j++) {
-      KEY a = n[faces[j][0]], b = n[faces[j][1]], c = n[faces[j][2]];
-      if(a > b) std::swap(a, b);
-      if(b > c) std::swap(b, c);
-      if(a > b) std::swap(a, b);
-      conn.push_back({a, b, c, j, t});
+    if((*IT)->isDeleted()) continue;
+    KEY n[4];
+    tetNums(*IT, n);
+    for(int j = 0; j < 4; j++) start[minVertex(n, j) + 1]++;
+  }
+  for(std::size_t v = 1; v < start.size(); v++) start[v] += start[v - 1];
+  const std::size_t nFaces = start.back();
+  if(!nFaces) return;
+
+  // scatter the faces into their bucket
+  std::vector<tetFace> sorted(nFaces);
+  {
+    std::vector<KEY> cursor(start.begin(), start.end() - 1);
+    KEY idx = 0;
+    for(ITER IT = beg; IT != end; ++IT, ++idx) {
+      if((*IT)->isDeleted()) continue;
+      KEY n[4];
+      tetNums(*IT, n);
+      for(int j = 0; j < 4; j++) {
+        KEY a = n[faces[j][0]], b = n[faces[j][1]], c = n[faces[j][2]];
+        if(a > b) std::swap(a, b);
+        if(b > c) std::swap(b, c);
+        if(a > b) std::swap(a, b);
+        tetFace &f = sorted[cursor[a]++];
+        f.v1 = b;
+        f.v2 = c;
+        f.tet = idx;
+        f.i = (KEY)j;
+      }
     }
   }
-  std::sort(conn.begin(), conn.end());
-  for(std::size_t i = 0; i + 1 < conn.size(); i++) {
-    tetFace &f1 = conn[i];
-    tetFace &f2 = conn[i + 1];
-    if(f1.sameFace(f2) && f1.t != f2.t) {
-      f1.t->setNeigh(f1.i, f2.t);
-      f2.t->setNeigh(f2.i, f1.t);
-      ++i;
+
+  // inside a bucket, matching faces end up next to each other
+  for(std::size_t v = 0; v + 1 < start.size(); v++) {
+    const std::size_t b = start[v], e = start[v + 1];
+    if(e - b < 2) continue;
+    std::sort(sorted.begin() + b, sorted.begin() + e);
+    for(std::size_t k = b; k + 1 < e; k++) {
+      const tetFace &f1 = sorted[k];
+      const tetFace &f2 = sorted[k + 1];
+      if(f1.v1 == f2.v1 && f1.v2 == f2.v2) {
+        MTet4 *t1 = *(beg + f1.tet);
+        MTet4 *t2 = *(beg + f2.tet);
+        if(t1 != t2) {
+          t1->setNeigh(f1.i, t2);
+          t2->setNeigh(f2.i, t1);
+          ++k;
+        }
+      }
     }
   }
 }
 
 template <class ITER>
-void connectTetsFast(std::size_t _size, ITER beg, ITER end)
+void connectTetsFast(ITER beg, ITER end)
 {
   if(GModel::current()->getMaxVertexNumber() <= 0xffffffffull)
-    connectTetsFastT<std::uint32_t>(_size, beg, end);
+    connectTetsFastT<std::uint32_t>(beg, end);
   else
-    connectTetsFastT<std::size_t>(_size, beg, end);
+    connectTetsFastT<std::size_t>(beg, end);
 }
 
 template <class ITER>
@@ -1144,7 +1181,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   createAllEmbeddedEdges(gr, allEmbeddedEdges);
 
   if(allEmbeddedFaces.empty()) {
-    connectTetsFast(allTets.size(), allTets.begin(), allTets.end());
+    connectTetsFast(allTets.begin(), allTets.end());
   }
   else {
     // daaaaaaamn slow !!!
@@ -1620,7 +1657,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   gr->tetrahedra.clear();
 
-  connectTetsFast(tets0.size(), tets0.begin(), tets0.end());
+  connectTetsFast(tets0.begin(), tets0.end());
 
   // classify the tets on the right region
 
