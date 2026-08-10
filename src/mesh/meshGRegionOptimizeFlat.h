@@ -12,9 +12,10 @@ class GRegion;
 
 // Flat-array port of optimizeMesh(): same edge swaps and same node
 // relocations, but on index-based arrays instead of the MTet4/MTetrahedron
-// object graph. Returns false when the region is not handled (embedded
-// entities, non-tetrahedral elements, ...), in which case the caller must
-// fall back to the object-based optimizer.
+// object graph. Only the tets of the region are optimized; any other element
+// is left untouched, and nodes are then not relocated, as they may belong to
+// one. Returns false when the region cannot be handled, in which case the
+// caller must fall back to the object-based optimizer.
 bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm);
 
 #endif

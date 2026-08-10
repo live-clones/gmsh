@@ -636,9 +636,15 @@ bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm)
   if(qMin <= 0.0) return true;
   if(gr->tetrahedra.empty()) return true;
 
-  // the flat path handles purely tetrahedral regions only
-  if(!gr->hexahedra.empty() || !gr->prisms.empty() || !gr->pyramids.empty())
-    return false;
+  // only the tets of the region are optimized. The other elements are left
+  // alone and are not even imported: a tet face shared with one of them has
+  // no neighbor here, so no cavity can reach across it and no swap can touch
+  // them. Relocating a node is another matter, since a node of a tet can
+  // belong to a pyramid (or a hexahedron or a prism) whose shape the cavity
+  // does not see, so that is skipped when the region is not purely
+  // tetrahedral.
+  const bool onlyTets =
+    gr->hexahedra.empty() && gr->prisms.empty() && gr->pyramids.empty();
 
   double w1 = TimeOfDay();
 
@@ -703,11 +709,13 @@ bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
     if(!nbCreated) break;
 
-    for(std::size_t t = 0; t < K.nTets(); t++) {
-      if(K.tetDeleted[t]) continue;
-      if(K.tetQual[t] < qMin) {
-        for(int i = 0; i < 4; i++) {
-          if(K.smoothVertex((std::uint32_t)t, i)) nbReloc++;
+    if(onlyTets) {
+      for(std::size_t t = 0; t < K.nTets(); t++) {
+        if(K.tetDeleted[t]) continue;
+        if(K.tetQual[t] < qMin) {
+          for(int i = 0; i < 4; i++) {
+            if(K.smoothVertex((std::uint32_t)t, i)) nbReloc++;
+          }
         }
       }
     }
