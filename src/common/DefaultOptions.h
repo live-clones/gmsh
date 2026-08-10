@@ -1234,10 +1234,11 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "FlatRefineDelaunay3D" , opt_mesh_flat_refine_delaunay3d , 1. ,
     "Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to "
     "use the original object-based kernel, which produces the same meshes)" },
-  { F|O, "FlatOptimize3D" , opt_mesh_flat_optimize_3d , 0. ,
-    "Use the flat-array kernel to optimize 3D Delaunay meshes (experimental; "
-    "same edge swaps and node relocations as the default optimizer, on "
-    "index-based arrays)" },
+  { F|O, "FlatOptimize3D" , opt_mesh_flat_optimize_3d , 1. ,
+    "Use the flat-array kernel to optimize 3D meshes (set to 0 to use the "
+    "original object-based kernel, which performs the same operations and "
+    "gives meshes of the same quality; regions with embedded entities always "
+    "use the original kernel)" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },
