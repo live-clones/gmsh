@@ -1249,31 +1249,46 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
       }
     }
 
-    double totalVolumeb = 0.0;
+    // only the qualities are needed here: they are cached in the MTet4s,
+    // while the volumes would each chase the four vertices of a tet (the
+    // total volume is reported once, at the end)
     double worst = 1.0;
     double avg = 0;
     int count = 0;
     for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
-        double vol = fabs((*it)->tet()->getVolume());
         double qual = (*it)->getQuality();
         worst = std::min(qual, worst);
         avg += qual;
         count++;
-        totalVolumeb += vol;
       }
     }
 
     double t2 = Cpu(), w2 = TimeOfDay();
-    Msg::Info("%d edge swaps, %d node relocations (volume = %g): "
+    Msg::Info("%d edge swaps, %d node relocations: "
               "worst = %g / average = %g (Wall %gs, CPU %gs)",
-              nbESwap, nbReloc, totalVolumeb, worst, avg / count, w2 - w1,
-              t2 - t1);
+              nbESwap, nbReloc, worst, avg / count, w2 - w1, t2 - t1);
     if(worstA != 0.0 && worst - worstA < 1.e-6) break;
     worstA = worst;
   }
 
   for(auto t : to_delete) delete t;
+
+  {
+    double totalVolumeb = 0.0, worst = 1.0, avg = 0.;
+    int count = 0;
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
+      if(!(*it)->isDeleted()) {
+        totalVolumeb += fabs((*it)->tet()->getVolume());
+        double qual = (*it)->getQuality();
+        worst = std::min(qual, worst);
+        avg += qual;
+        count++;
+      }
+    }
+    Msg::Info("Optimization done (volume = %g) with worst = %g / average = %g:",
+              totalVolumeb, worst, count ? avg / count : 0.);
+  }
 
   if(illegals.size()) {
     Msg::Warning("%d ill-shaped tets are still in the mesh", illegals.size());
