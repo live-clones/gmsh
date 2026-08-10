@@ -1881,9 +1881,8 @@ public:
 
   // flat port of smoothVertex() and buildVertexCavity_recur() from
   // meshGRegionLocalMeshMod.cpp, with the same logic and floating-point
-  // operations; hot[].radius plays the role of the stored MTet4 quality,
-  // and (as with the former MTet4 bridge) links to deleted tets are treated
-  // as absent
+  // operations; hot[].radius plays the role of the stored MTet4 quality, and
+  // links to deleted tets are treated as absent
   std::vector<std::uint32_t> smoothCavity;
   std::vector<double> smoothQuals;
 
