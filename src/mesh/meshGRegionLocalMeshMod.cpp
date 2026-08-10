@@ -242,9 +242,11 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
   int permut[6] = {0, 3, 1, 2, 5, 4};
   iLocalEdge = permut[iLocalEdge];
 
-  std::vector<MTet4 *> cavity;
-  std::vector<MTet4 *> outside;
-  std::vector<MVertex *> ring;
+  // reused across calls: the optimizer calls this once per bad tet, and
+  // these three would otherwise be allocated and freed every time
+  static thread_local std::vector<MTet4 *> cavity;
+  static thread_local std::vector<MTet4 *> outside;
+  static thread_local std::vector<MVertex *> ring;
   MVertex *v1, *v2;
 
   //  printf("a\n");
