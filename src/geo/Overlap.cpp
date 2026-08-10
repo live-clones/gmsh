@@ -258,14 +258,22 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
   using Equal = typename EntityTraits<dim>::BoundaryMeshObjectEqual;
   // Track count and one parent element for each boundary
   // We only need one element since boundaries with count==1 are kept
-  using BndInfoMap =
-    std::unordered_map<MBnd, std::pair<unsigned, MElement *>, Hash, Equal>;
   OveralBoundariesMesh<dim> result(overlaps.size());
 
-// Embarassingly parallel
+  struct BndInfo {
+    unsigned count = 0;
+    MElement *element = nullptr;
+    Entity *parent = nullptr;
+  };
+  using BndInfoMap = std::unordered_map<MBnd, BndInfo, Hash, Equal>;
+
+// Embarassingly parallel, loop over partitions
 #pragma omp parallel for schedule(dynamic)
   for(size_t i = 0; i < overlaps.size(); ++i) {
-    std::unordered_map<Entity *, BndInfoMap> counts;
+    //std::unordered_map<Entity *, BndInfoMap> counts;
+    BndInfoMap dict;
+
+
 
     for(const auto &[covered, elements] : overlaps[i]) {
       if(!covered) continue; // Skip null entities
@@ -276,33 +284,31 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
           covered->dim(), covered->tag());
       }
 
-      auto &dict = counts[parent];
       for(const auto &element : elements) {
         if constexpr(dim == 2) {
           for(int j = 0; j < element->getNumEdges(); ++j) {
             MBnd edge = element->getEdge(j);
             auto &info = dict[edge];
-            info.first++;
-            info.second = element; // Store the parent element
+            info.count++;
+            info.element = element; // Store the parent element
+            info.parent = parent;
           }
         }
         else if constexpr(dim == 3) {
           for(int j = 0; j < element->getNumFaces(); ++j) {
             MBnd face = element->getFace(j);
             auto &info = dict[face];
-            info.first++;
-            info.second = element; // Store the parent element
+            info.count++;
+            info.element = element; // Store the parent element
+            info.parent = parent;
           }
         }
       }
     }
 
-    for(const auto &[parent, boundaryInfo] : counts) {
-      auto &boundaryMap = result[i][parent];
-      for(const auto &[boundary, info] : boundaryInfo) {
-        if(info.first == 1) { // Only keep unique boundaries
-          boundaryMap[boundary] = info.second; // Map boundary to parent element
-        }
+    for(const auto &[boundary, info] : dict) {
+      if(info.count == 1) { // Facet seen exactly once: on the patch boundary
+        result[i][info.parent][boundary] = info.element;
       }
     }
   }
