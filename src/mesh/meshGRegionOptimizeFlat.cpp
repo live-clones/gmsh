@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <vector>
@@ -11,9 +12,13 @@
 #include "meshGRegionOptimizeFlat.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "GRegion.h"
+#include "GFace.h"
+#include "GEdge.h"
 #include "GEntity.h"
 #include "GmshMessage.h"
 #include "MTetrahedron.h"
+#include "MTriangle.h"
+#include "MLine.h"
 #include "MVertex.h"
 #include "Context.h"
 #include "OS.h"
@@ -53,6 +58,29 @@ struct flatOpt {
   std::vector<std::uint32_t> freeSlots;
   // elements of the tets the swaps removed, reused for the ones they create
   std::vector<MTetrahedron *> spare;
+
+  // embedded entities, as sorted vertex index triples and pairs: the tets on
+  // both sides of an embedded face are never connected, which turns it into
+  // a wall the cavities cannot cross, and an embedded edge is never swapped
+  std::vector<std::array<std::uint32_t, 3> > embFaces;
+  std::vector<std::uint64_t> embEdges;
+
+  static std::uint64_t edgeKey(std::uint32_t a, std::uint32_t b)
+  {
+    if(a > b) std::swap(a, b);
+    return ((std::uint64_t)a << 32) | b;
+  }
+  bool isEmbeddedFace(std::uint32_t a, std::uint32_t b, std::uint32_t c) const
+  {
+    if(embFaces.empty()) return false;
+    const std::array<std::uint32_t, 3> f = {a, b, c};
+    return std::binary_search(embFaces.begin(), embFaces.end(), f);
+  }
+  bool isEmbeddedEdge(std::uint32_t a, std::uint32_t b) const
+  {
+    if(embEdges.empty()) return false;
+    return std::binary_search(embEdges.begin(), embEdges.end(), edgeKey(a, b));
+  }
 
   flatOpt(const qmTetrahedron::Measures &m) : qm(m) {}
 
@@ -129,9 +157,17 @@ bool flatOpt::importRegion(GRegion *gr)
   tetDeleted.assign(n, 0);
   tetMT.resize(n);
 
-  // mark all the vertices in play, then number them
+  // mark all the vertices in play, then number them; the vertices of the
+  // embedded entities are marked too, so that one that no tet references
+  // (an entity that is not part of this mesh) is detected below
   for(std::size_t i = 0; i < n; i++)
     for(int k = 0; k < 4; k++) gr->tetrahedra[i]->getVertex(k)->setIndex(-1);
+  for(auto gf : gr->embeddedFaces())
+    for(auto tri : gf->triangles)
+      for(int k = 0; k < 3; k++) tri->getVertex(k)->setIndex(-1);
+  for(auto ge : gr->embeddedEdges())
+    for(auto l : ge->lines)
+      for(int k = 0; k < 2; k++) l->getVertex(k)->setIndex(-1);
 
   std::uint32_t nv = 0;
   for(std::size_t i = 0; i < n; i++) {
@@ -151,6 +187,32 @@ bool flatOpt::importRegion(GRegion *gr)
       tetV[4 * i + k] = (std::uint32_t)mv->getIndex();
     }
   }
+
+  // embedded entities, in the same indices; an entity whose nodes are not
+  // all in the mesh is not something this kernel should silently ignore
+  for(auto gf : gr->embeddedFaces()) {
+    for(auto tri : gf->triangles) {
+      std::array<std::uint32_t, 3> f;
+      for(int k = 0; k < 3; k++) {
+        const int idx = tri->getVertex(k)->getIndex();
+        if(idx < 0) return false;
+        f[k] = (std::uint32_t)idx;
+      }
+      std::sort(f.begin(), f.end());
+      embFaces.push_back(f);
+    }
+  }
+  std::sort(embFaces.begin(), embFaces.end());
+
+  for(auto ge : gr->embeddedEdges()) {
+    for(auto l : ge->lines) {
+      const int a = l->getVertex(0)->getIndex();
+      const int b = l->getVertex(1)->getIndex();
+      if(a < 0 || b < 0) return false;
+      embEdges.push_back(edgeKey((std::uint32_t)a, (std::uint32_t)b));
+    }
+  }
+  std::sort(embEdges.begin(), embEdges.end());
   return true;
 }
 
@@ -208,8 +270,12 @@ void flatOpt::buildAdjacencies()
     for(std::size_t k = b; k + 1 < e; k++) {
       if(sorted[k].v1 == sorted[k + 1].v1 && sorted[k].v2 == sorted[k + 1].v2) {
         const tetFace &f1 = sorted[k], &f2 = sorted[k + 1];
-        tetN[4 * f1.t + f1.i] = 4 * f2.t + f2.i;
-        tetN[4 * f2.t + f2.i] = 4 * f1.t + f1.i;
+        // the bucket is the smallest vertex of the face, so the triple is
+        // (v, v1, v2), already sorted
+        if(!isEmbeddedFace((std::uint32_t)v, f1.v1, f1.v2)) {
+          tetN[4 * f1.t + f1.i] = 4 * f2.t + f2.i;
+          tetN[4 * f2.t + f2.i] = 4 * f1.t + f1.i;
+        }
         k++;
       }
     }
@@ -247,8 +313,10 @@ void flatOpt::connectLocal(const std::vector<std::uint32_t> &tets)
   for(std::size_t k = 0; k + 1 < conn.size(); k++) {
     const tetFace &f1 = conn[k], &f2 = conn[k + 1];
     if(f1.v0 == f2.v0 && f1.v1 == f2.v1 && f1.v2 == f2.v2 && f1.t != f2.t) {
-      tetN[4 * f1.t + f1.i] = 4 * f2.t + f2.i;
-      tetN[4 * f2.t + f2.i] = 4 * f1.t + f1.i;
+      if(!isEmbeddedFace(f1.v0, f1.v1, f1.v2)) {
+        tetN[4 * f1.t + f1.i] = 4 * f2.t + f2.i;
+        tetN[4 * f2.t + f2.i] = 4 * f1.t + f1.i;
+      }
       k++;
     }
   }
@@ -330,6 +398,13 @@ bool flatOpt::edgeSwap(std::uint32_t tet, int iLocalEdge, int &nbCreated)
 {
   static const int permut[6] = {0, 3, 1, 2, 5, 4};
   iLocalEdge = permut[iLocalEdge];
+
+  // an embedded edge must survive: the permutation above maps the caller's
+  // edge numbering (MTetrahedron's) to the local one, so this is the edge
+  // the swap would remove
+  if(isEmbeddedEdge(tetV[4 * tet + fEdges[iLocalEdge][0]],
+                    tetV[4 * tet + fEdges[iLocalEdge][1]]))
+    return false;
 
   static thread_local std::vector<std::uint32_t> cavity, outside, ring, touched;
   std::uint32_t v1, v2;
@@ -561,11 +636,8 @@ bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm)
   if(qMin <= 0.0) return true;
   if(gr->tetrahedra.empty()) return true;
 
-  // the flat path handles plain tetrahedral regions only
+  // the flat path handles purely tetrahedral regions only
   if(!gr->hexahedra.empty() || !gr->prisms.empty() || !gr->pyramids.empty())
-    return false;
-  if(!gr->embeddedFaces().empty() || !gr->embeddedEdges().empty() ||
-     !gr->embeddedVertices().empty())
     return false;
 
   double w1 = TimeOfDay();
