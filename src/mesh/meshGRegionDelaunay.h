@@ -3,8 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef MESH_GREGION_DELAUNAY_INSERTION_H
-#define MESH_GREGION_DELAUNAY_INSERTION_H
+#ifndef MESH_GREGION_DELAUNAY_H
+#define MESH_GREGION_DELAUNAY_H
 
 // The 3D Delaunay mesher: tetrahedralize a set of points, fill a region with
 // tetrahedra, and optimize the tetrahedra of a region. The data structures

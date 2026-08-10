@@ -22,7 +22,7 @@
 #include "OS.h"
 #include "meshGRegion.h"
 #include "meshGRegionLocalMeshMod.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
 #include "meshGRegionTet4.h"
 #include "GModel.h"
 #include "GRegion.h"

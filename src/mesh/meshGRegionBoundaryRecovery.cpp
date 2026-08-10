@@ -13,7 +13,7 @@
 #if defined(HAVE_TETGENBR)
 
 #include "meshGRegion.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
 #include "robustPredicates.h"
 #include "GModel.h"
 #include "GRegion.h"

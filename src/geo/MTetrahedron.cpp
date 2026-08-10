@@ -13,7 +13,7 @@
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
 #include "meshGFaceDelaunayInsertion.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
 #endif
 
 #define SQU(a) ((a) * (a))

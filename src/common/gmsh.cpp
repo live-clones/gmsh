@@ -68,7 +68,7 @@
 #include "meshGFace.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
 #include "meshGRegionHxt.h"
 #include "gmshCrossFields.h"
 #include "qualityMeasuresJacobian.h"
