@@ -14,6 +14,21 @@
 
 enum localMeshModAction { GMSH_DOIT, GMSH_EVALONLY };
 
+// the possible retriangulations of the ring of an edge, for edge swaps
+typedef struct {
+  int nbr_triangles; // number of different triangles
+  int (*triangles)[3]; // triangles array
+  int nbr_trianguls; // number of different triangulations
+  int nbr_triangles_2; // number of triangles / triangulation
+  int (*trianguls)[5]; // retriangulations array
+} SwapPattern;
+
+void BuildSwapPattern3(SwapPattern *sc);
+void BuildSwapPattern4(SwapPattern *sc);
+void BuildSwapPattern5(SwapPattern *sc);
+void BuildSwapPattern6(SwapPattern *sc);
+void BuildSwapPattern7(SwapPattern *sc);
+
 int LaplaceSmoothing(GRegion *gr);
 
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,

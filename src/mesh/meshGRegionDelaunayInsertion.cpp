@@ -16,6 +16,7 @@
 #include "OS.h"
 #include "meshGRegion.h"
 #include "meshGRegionLocalMeshMod.h"
+#include "meshGRegionOptimizeFlat.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -1186,6 +1187,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   if(qMin <= 0.0) return;
 
   if(gr->tetrahedra.empty()) return;
+
+  if(CTX::instance()->mesh.flatOptimize3D && optimizeMeshFlat(gr, qm)) return;
 
   typedef std::vector<MTet4 *> CONTAINER;
   // the initial MTet4s live in one contiguous block; the local mesh
