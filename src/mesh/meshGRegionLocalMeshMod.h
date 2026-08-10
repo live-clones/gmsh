@@ -29,8 +29,6 @@ void BuildSwapPattern5(SwapPattern *sc);
 void BuildSwapPattern6(SwapPattern *sc);
 void BuildSwapPattern7(SwapPattern *sc);
 
-int LaplaceSmoothing(GRegion *gr);
-
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
               const qmTetrahedron::Measures &cr,
               const std::set<MFace, MFaceLessThan> &embeddedFaces);
@@ -42,15 +40,9 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalFace,
 bool smoothVertex(MTet4 *t, int iLocalVertex,
                   const qmTetrahedron::Measures &cr);
 
-bool smoothVertexOptimize(MTet4 *t, int iVertex,
-                          const qmTetrahedron::Measures &cr);
-
 bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
                     int iTarget, const qmTetrahedron::Measures &cr,
                     const localMeshModAction = GMSH_DOIT,
                     double *result = nullptr);
-
-bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
-               int iLocalEdge, const qmTetrahedron::Measures &cr);
 
 #endif
