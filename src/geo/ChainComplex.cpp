@@ -104,11 +104,20 @@ void ChainComplex::KerCod(int dim)
       normalForm.rightInverse.block(0, rank, normalForm.rightInverse.rows(),
                                     normalForm.rightInverse.cols() - rank);
   }
+  // The right inverse is square in the number of columns and is not needed for
+  // the cokernel below; release it before that allocates, so the two are never
+  // resident together.
+  normalForm.rightInverse = IntegerMatrix();
 
   if(rank > 0) {
-    _codH[dim] = normalForm.canonical.block(0, 0, normalForm.canonical.rows(),
-                                            rank)
-                   .permuteRows(normalForm.rowPermutation);
+    // block() followed by permuteRows() allocates the result twice, and it is
+    // as large as the canonical form itself; do both in a single pass
+    const std::size_t rows = normalForm.canonical.rows();
+    IntegerMatrix cod(rows, rank);
+    for(std::size_t j = 0; j < rank; j++)
+      for(std::size_t i = 0; i < rows; i++)
+        cod(normalForm.rowPermutation[i], j) = normalForm.canonical(i, j);
+    _codH[dim] = std::move(cod);
   }
 }
 
@@ -120,7 +129,10 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
     return;
 
   IntegerMatrix &Zbasis = _kerH[lowDim];
-  IntegerMatrix Bbasis = _codH[highDim];
+  // referenced, not copied: the boundary basis is as large as the cycle basis,
+  // and a copy of it would stay resident across the normal form below. It is
+  // read but never written here, and remains available as basis 2.
+  const IntegerMatrix &Bbasis = _codH[highDim];
 
   if(Bbasis.rows() < Bbasis.cols()) return;
   if(Zbasis.rows() < Zbasis.cols()) return;
@@ -128,17 +140,26 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
   // inv(U)*A*inv(V) = S
   SmithForm normalForm = smithNormalForm(Zbasis, true);
 
-  std::size_t cols = Zbasis.cols();
+  const std::size_t cols = Zbasis.cols();
+  // Only the diagonal of the canonical form is used below, but it is stored
+  // dense and is as large as the cycle basis; take the invariant factors and
+  // release it before the two products below allocate.
+  std::vector<std::int64_t> invariant(cols);
   for(std::size_t i = 0; i < cols; i++) {
-    if(normalForm.canonical(i, i) == 0) return;
+    invariant[i] = normalForm.canonical(i, i);
+    if(invariant[i] == 0) return;
+  }
+  normalForm.canonical = IntegerMatrix();
+
+  IntegerMatrix LB;
+  {
+    IntegerMatrix left = normalForm.left * Bbasis;
+    normalForm.left = IntegerMatrix(); // square in the number of cycles
+    LB = left.block(0, 0, cols, left.cols());
   }
 
-  Bbasis = normalForm.left * Bbasis;
-
-  IntegerMatrix LB = Bbasis.block(0, 0, Zbasis.cols(), Bbasis.cols());
-
   for(std::size_t i = 0; i < LB.rows(); i++) {
-    std::int64_t divisor = normalForm.canonical(i, i);
+    std::int64_t divisor = invariant[i];
     for(std::size_t j = 0; j < LB.cols(); j++) {
       std::int64_t elem = LB(i, j);
       if(elem % divisor != 0) return;
@@ -157,7 +178,10 @@ void ChainComplex::Quotient(int dim, int setDim)
   std::size_t rows = _jMatrix[dim].rows();
   std::size_t cols = _jMatrix[dim].cols();
 
-  SmithForm normalForm = smithNormalForm(_jMatrix[dim], false);
+  // The incidence matrix is square in the number of cycles and its only other
+  // reader is the emptiness test computeHomology() makes before calling here,
+  // so move it in rather than leaving a second copy resident.
+  SmithForm normalForm = smithNormalForm(std::move(_jMatrix[dim]), false);
 
   for(std::size_t i = 0; i < cols; i++) {
     std::int64_t elem = normalForm.canonical(i, i);
@@ -229,6 +253,10 @@ void ChainComplex::computeHomology(bool dual)
                         IntegerMatrix::identity(getHMatrix(highDim)->rows()));
         }
         Inclusion(lowDim, highDim);
+        // Quotient() consumes the incidence matrix, so record whether there
+        // was one before calling it; neither it nor Inclusion() alters the
+        // cokernel, so testing that up front is equivalent too
+        const bool haveJ = (getJMatrix(lowDim) != nullptr);
         Quotient(lowDim, setDim);
 
         if(getCodHMatrix(highDim) == nullptr) {
@@ -236,8 +264,7 @@ void ChainComplex::computeHomology(bool dual)
                               *getKerHMatrix(lowDim) :
                               IntegerMatrix());
         }
-        else if(getJMatrix(lowDim) == nullptr ||
-                getQMatrix(lowDim) == nullptr) {
+        else if(!haveJ || getQMatrix(lowDim) == nullptr) {
           setHbasis(setDim, IntegerMatrix());
         }
         else {
