@@ -7,6 +7,7 @@
 #define SMITH_NORMAL_FORM_H
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -14,6 +15,8 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+#include "GmshMessage.h"
 
 // Exact integer linear algebra for the homology solver (ChainComplex):
 // dense matrices of 64-bit integers, with Hermite and Smith normal forms
@@ -161,6 +164,39 @@ namespace NormalFormDetail {
     }
     return b;
   }
+
+// Periodic progress reporting. On large homology problems the normal forms
+// below can run for hours inside a single call, with no output at all; this
+// reports the pivot reached at most every 'interval' seconds. No completion
+// estimate is given: the per-pivot cost varies by orders of magnitude over a
+// run, so any extrapolation from the elapsed time would be misleading.
+class ProgressTicker {
+public:
+  ProgressTicker(const char *what, std::size_t total, int interval = 30)
+    : _what(what), _total(total), _interval(interval),
+      _last(std::chrono::steady_clock::now()), _start(_last)
+  {
+  }
+  void tick(std::size_t done)
+  {
+    auto now = std::chrono::steady_clock::now();
+    if(std::chrono::duration_cast<std::chrono::seconds>(now - _last).count() <
+       _interval)
+      return;
+    _last = now;
+    double elapsed =
+      std::chrono::duration_cast<std::chrono::seconds>(now - _start).count();
+    Msg::Info("%s: pivot %lu/%lu (%.1f%%), %.0f s elapsed", _what,
+              (unsigned long)done, (unsigned long)_total,
+              _total ? 100. * (double)done / (double)_total : 100., elapsed);
+  }
+
+private:
+  const char *_what;
+  std::size_t _total;
+  int _interval;
+  std::chrono::steady_clock::time_point _last, _start;
+};
 
 } // namespace NormalFormDetail
 
@@ -538,7 +574,9 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
     }
   };
 
+  nfd::ProgressTicker progress("Hermite normal form", std::min(m, n));
   while(schur < m && schur < ncols) {
+    progress.tick(schur);
     if(schur > 0 && eliminate(schur)) clean = false;
 
     std::size_t pivotRow = m;
@@ -694,7 +732,9 @@ inline SmithForm smithNormalForm(IntegerMatrix A, bool invertedFactors)
   };
 
   const std::size_t ndiag = std::min(m, n);
+  nfd::ProgressTicker progress("Smith normal form", ndiag);
   for(std::size_t t = 0; t < ndiag; t++) {
+    progress.tick(t);
     // Smallest-magnitude nonzero of the trailing block as the pivot: this
     // surfaces unit pivots first, which clear their row and column in a
     // single pass with no growth. A nonzero integer has magnitude >= 1, so
