@@ -662,8 +662,12 @@ module gmsh
         gmshModelMeshPreallocateBarycenters
     procedure, nopass :: getElementEdgeNodes => &
         gmshModelMeshGetElementEdgeNodes
+    procedure, nopass :: getElementEdgeNodesCoord => &
+        gmshModelMeshGetElementEdgeNodesCoord
     procedure, nopass :: getElementFaceNodes => &
         gmshModelMeshGetElementFaceNodes
+    procedure, nopass :: getElementFaceNodesCoord => &
+        gmshModelMeshGetElementFaceNodesCoord
     procedure, nopass :: getGhostElements => &
         gmshModelMeshGetGhostElements
     procedure, nopass :: setSize => &
@@ -6240,6 +6244,76 @@ module gmsh
       api_nodeTags_n_)
   end subroutine gmshModelMeshGetElementEdgeNodes
 
+  !> Get the nodes on the edges of all elements of type `elementType' classified
+  !! on the entity of tag `tag'. `nodeTags' contains the node tags of the edges
+  !! for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. `coord' contains the
+  !! coordinates of the node: [e1a1n1x, e1a1n1y, e1a1n1z, e1a1n2x, ...]. Data is
+  !! returned by element, with elements in the same order as in `getElements'
+  !! and `getElementsByType'. If `primary' is set, only the primary (begin/end)
+  !! nodes of the edges are returned. If `tag' < 0, get the edge nodes for all
+  !! entities. If `numTasks' > 1, only compute and return the part of the data
+  !! indexed by `task' (for C++ only; output vector must be preallocated).
+  subroutine gmshModelMeshGetElementEdgeNodesCoord(elementType, &
+                                                   nodeTags, &
+                                                   coord, &
+                                                   tag, &
+                                                   primary, &
+                                                   task, &
+                                                   numTasks, &
+                                                   ierr)
+    interface
+    subroutine C_API(elementType, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_coord_, &
+                     api_coord_n_, &
+                     tag, &
+                     primary, &
+                     task, &
+                     numTasks, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetElementEdgeNodesCoord")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: elementType
+      type(c_ptr), intent(out) :: api_nodeTags_
+      integer(c_size_t), intent(out) :: api_nodeTags_n_
+      type(c_ptr), intent(out) :: api_coord_
+      integer(c_size_t) :: api_coord_n_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: primary
+      integer(c_size_t), value, intent(in) :: task
+      integer(c_size_t), value, intent(in) :: numTasks
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: elementType
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
+    real(c_double), dimension(:), allocatable, intent(out) :: coord
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: primary
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_nodeTags_
+    integer(c_size_t) :: api_nodeTags_n_
+    type(c_ptr) :: api_coord_
+    integer(c_size_t) :: api_coord_n_
+    call C_API(elementType=int(elementType, c_int), &
+         api_nodeTags_=api_nodeTags_, &
+         api_nodeTags_n_=api_nodeTags_n_, &
+         api_coord_=api_coord_, &
+         api_coord_n_=api_coord_n_, &
+         tag=optval_c_int(-1, tag), &
+         primary=optval_c_bool(.false., primary), &
+         task=optval_c_size_t(0, task), &
+         numTasks=optval_c_size_t(1, numTasks), &
+         ierr_=ierr)
+    nodeTags = ovectorsize_(api_nodeTags_, &
+      api_nodeTags_n_)
+    coord = ovectordouble_(api_coord_, &
+      api_coord_n_)
+  end subroutine gmshModelMeshGetElementEdgeNodesCoord
+
   !> Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
   !! for quadrangular faces) of all elements of type `elementType' classified on
   !! the entity of tag `tag'. `nodeTags' contains the node tags of the faces for
@@ -6302,6 +6376,83 @@ module gmsh
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
   end subroutine gmshModelMeshGetElementFaceNodes
+
+  !> Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
+  !! for quadrangular faces) of all elements of type `elementType' classified on
+  !! the entity of tag `tag'. `nodeTags' contains the node tags of the faces for
+  !! all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. `coord' contains
+  !! the coordinates of the node: [e1a1n1x, e1a1n1y, e1a1n1z, e1a1n2x, ...].
+  !! Data is returned by element, with elements in the same order as in
+  !! `getElements' and `getElementsByType'. If `primary' is set, only the
+  !! primary (corner) nodes of the faces are returned. If `tag' < 0, get the
+  !! face nodes for all entities. If `numTasks' > 1, only compute and return the
+  !! part of the data indexed by `task' (for C++ only; output vector must be
+  !! preallocated).
+  subroutine gmshModelMeshGetElementFaceNodesCoord(elementType, &
+                                                   faceType, &
+                                                   nodeTags, &
+                                                   coord, &
+                                                   tag, &
+                                                   primary, &
+                                                   task, &
+                                                   numTasks, &
+                                                   ierr)
+    interface
+    subroutine C_API(elementType, &
+                     faceType, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_coord_, &
+                     api_coord_n_, &
+                     tag, &
+                     primary, &
+                     task, &
+                     numTasks, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetElementFaceNodesCoord")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: elementType
+      integer(c_int), value, intent(in) :: faceType
+      type(c_ptr), intent(out) :: api_nodeTags_
+      integer(c_size_t), intent(out) :: api_nodeTags_n_
+      type(c_ptr), intent(out) :: api_coord_
+      integer(c_size_t) :: api_coord_n_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: primary
+      integer(c_size_t), value, intent(in) :: task
+      integer(c_size_t), value, intent(in) :: numTasks
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: elementType
+    integer, intent(in) :: faceType
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
+    real(c_double), dimension(:), allocatable, intent(out) :: coord
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: primary
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_nodeTags_
+    integer(c_size_t) :: api_nodeTags_n_
+    type(c_ptr) :: api_coord_
+    integer(c_size_t) :: api_coord_n_
+    call C_API(elementType=int(elementType, c_int), &
+         faceType=int(faceType, c_int), &
+         api_nodeTags_=api_nodeTags_, &
+         api_nodeTags_n_=api_nodeTags_n_, &
+         api_coord_=api_coord_, &
+         api_coord_n_=api_coord_n_, &
+         tag=optval_c_int(-1, tag), &
+         primary=optval_c_bool(.false., primary), &
+         task=optval_c_size_t(0, task), &
+         numTasks=optval_c_size_t(1, numTasks), &
+         ierr_=ierr)
+    nodeTags = ovectorsize_(api_nodeTags_, &
+      api_nodeTags_n_)
+    coord = ovectordouble_(api_coord_, &
+      api_coord_n_)
+  end subroutine gmshModelMeshGetElementFaceNodesCoord
 
   !> Get the ghost elements `elementTags' and their associated `partitions'
   !! stored in the ghost entity of dimension `dim' and tag `tag'.

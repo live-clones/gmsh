@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   gmsh::model::add("t1");
 
   int order = 1;
-  int dim = 3;
+  int dim = 2;
   int tagDependent;
   int tagMaster;
 
@@ -108,6 +108,11 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(dim);
   gmsh::model::mesh::setOrder(order);
 
+
+
+
+
+
   int elementType;
   if(dim==2)
     elementType = gmsh::model::mesh::getElementType("line",order);
@@ -117,7 +122,7 @@ int main(int argc, char **argv)
   std::string functionSpaceType = "HcurlLegendre"; // no order
   // functionSpaceType = "H1Legendre"; // H1legendre is defined by the end nodes but HCurl is edges but the numbers don't match in gui.
 
-  std::cout << "\n Comparison of outputs for master/dependent using getPeriodicKeys for functionSpaceType:" << functionSpaceType << "\n" << std::endl;
+  std::cout << "\nComparison of outputs for master/dependent using getPeriodicKeys for functionSpaceType:" << functionSpaceType << "\n" << std::endl;
   
 
   std::vector<int> typeKeys;
@@ -133,18 +138,12 @@ int main(int argc, char **argv)
   std::cout << "Check if the tagMaster is the right one: tagMasterBackUp" << std::endl;
   std::cout << "tagMaster: " <<tagMaster  << " tagMasterBackUp: " <<tagMasterBackUp << std::endl;
 
-  std::cout << "\n Check the keys of the master and the dependent to see the effect getPeriodicKeys has on it" << std::endl;
+  std::cout << "\nCheck the keys of the master and the dependent to see the effect getPeriodicKeys has on it" << std::endl;
   PrintVector(entityKeysMaster);
   PrintVector(entityKeys);
 
-  // PrintVector(typeKeysMaster);
-  // PrintVector(typeKeys);
 
-  std::cout << " \n Check of coordinates (there are ok)" << std::endl;
-  // PrintVector(coordMaster);
-  // PrintVector(coord);
-
-  std::cout << " \n Futur vector returning the link +/-1 between the keys: orientationSign: " << std::endl;
+  std::cout << " \nFutur vector returning the link +/-1 between the keys: orientationSign: " << std::endl;
   PrintVector(orientationSign);
 
   std::vector<int> basisFunctionsOrientationMaster;
@@ -152,33 +151,45 @@ int main(int argc, char **argv)
   std::vector<int> basisFunctionsOrientationDependent;
   gmsh::model::mesh::getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationDependent,tagDependent);
 
-  std::cout << "\n Return orientation of the basis function for dependent and master" << std::endl;
+  std::cout << "\nReturn orientation of the basis function for dependent and master" << std::endl;
   PrintVector(basisFunctionsOrientationMaster);
   PrintVector(basisFunctionsOrientationDependent);
 
-  
-  gmsh::model::mesh::getKeys(elementType, functionSpaceType, typeKeysMaster, entityKeysMaster,coordMaster, tagMasterBackUp);
-  gmsh::model::mesh::getKeys(elementType, functionSpaceType, typeKeys, entityKeys,coord, tagDependent);
-  
-  std::cout << " \n The keys reference before periodic effect: " << std::endl;
-  PrintVector(entityKeysMaster);
-  PrintVector(entityKeys);
+  std::vector<std::size_t> nodeTagsMaster, nodeTags;
+  std::vector<double> coordNodeMaster,coordNode;
+  if(dim==2)
+  {
+    gmsh::model::mesh::getElementEdgeNodesCoord(elementType,nodeTagsMaster,coordNodeMaster,tagMaster,true);
+    gmsh::model::mesh::getElementEdgeNodesCoord(elementType,nodeTags,coordNode,tagDependent,true);
+  }
+  else if(dim==3)
+  {
+    int elementType3D = gmsh::model::mesh::getElementType("tetrahedron",order);
+    gmsh::model::mesh::getElementFaceNodesCoord(elementType,elementType,nodeTagsMaster,coordNodeMaster,tagMaster,true);
+    gmsh::model::mesh::getElementFaceNodesCoord(elementType,elementType,nodeTags,coordNode,tagDependent,true);
+  }
+  std::cout << "\nReturn the coordinates of the nodes of the edge/face for dependent and master" << std::endl;
+  PrintVector(coordNodeMaster);
+  PrintVector(coordNode);
 
 
-  std::vector<std::size_t> edgeNodesMaster, edgeNodesDependent;
-  gmsh::model::mesh::getElementEdgeNodes(elementType, edgeNodesDependent, tagDependent);
-  gmsh::model::mesh::getElementEdgeNodes(elementType, edgeNodesMaster, tagMasterBackUp);
+  if(dim==3)
+  {
+    std::vector<std::size_t> edgeNodesMaster, edgeNodesDependent;
+    gmsh::model::mesh::getElementEdgeNodes(elementType, edgeNodesDependent, tagDependent);
+    gmsh::model::mesh::getElementEdgeNodes(elementType, edgeNodesMaster, tagMasterBackUp);
 
-  gmsh::model::mesh::createEdges();
+    gmsh::model::mesh::createEdges();
 
-  std::vector<std::size_t> edgeTagsMaster,edgeTagsDependent;
-  std::vector<int> edgeOrientations;
-  gmsh::model::mesh::getEdges(edgeNodesMaster, edgeTagsMaster, edgeOrientations);
-  gmsh::model::mesh::getEdges(edgeNodesDependent, edgeTagsDependent, edgeOrientations);
+    std::vector<std::size_t> edgeTagsMaster,edgeTagsDependent;
+    std::vector<int> edgeOrientations;
+    gmsh::model::mesh::getEdges(edgeNodesMaster, edgeTagsMaster, edgeOrientations);
+    gmsh::model::mesh::getEdges(edgeNodesDependent, edgeTagsDependent, edgeOrientations);
 
-  std::cout << " \n The keys for edges in 3D have tags created for this need, not visible in ht GUI: " << std::endl;
-  PrintVector(edgeTagsMaster);
-  PrintVector(edgeTagsDependent);
+    std::cout << " \n The keys for edges in 3D have tags created for this need, not visible in ht GUI: " << std::endl;
+    PrintVector(edgeTagsMaster);
+    PrintVector(edgeTagsDependent);
+  }
 
 
   gmsh::write("t1.msh");

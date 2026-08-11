@@ -3633,6 +3633,46 @@ end
 const get_element_edge_nodes = getElementEdgeNodes
 
 """
+    gmsh.model.mesh.getElementEdgeNodesCoord(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
+
+Get the nodes on the edges of all elements of type `elementType` classified on
+the entity of tag `tag`. `nodeTags` contains the node tags of the edges for all
+the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. `coord` contains the coordinates of
+the node: [e1a1n1x, e1a1n1y, e1a1n1z, e1a1n2x, ...]. Data is returned by
+element, with elements in the same order as in `getElements` and
+`getElementsByType`. If `primary` is set, only the primary (begin/end) nodes of
+the edges are returned. If `tag` < 0, get the edge nodes for all entities. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`
+(for C++ only; output vector must be preallocated).
+
+Return `nodeTags`, `coord`.
+
+Types:
+ - `elementType`: integer
+ - `nodeTags`: vector of sizes
+ - `coord`: vector of doubles
+ - `tag`: integer
+ - `primary`: boolean
+ - `task`: size
+ - `numTasks`: size
+"""
+function getElementEdgeNodesCoord(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementEdgeNodesCoord, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, tag, primary, task, numTasks, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    return nodeTags, coord
+end
+const get_element_edge_nodes_coord = getElementEdgeNodesCoord
+
+"""
     gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
 
 Get the nodes on the faces of type `faceType` (3 for triangular faces, 4 for
@@ -3668,6 +3708,48 @@ function getElementFaceNodes(elementType, faceType, tag = -1, primary = false, t
     return nodeTags
 end
 const get_element_face_nodes = getElementFaceNodes
+
+"""
+    gmsh.model.mesh.getElementFaceNodesCoord(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+
+Get the nodes on the faces of type `faceType` (3 for triangular faces, 4 for
+quadrangular faces) of all elements of type `elementType` classified on the
+entity of tag `tag`. `nodeTags` contains the node tags of the faces for all
+elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. `coord` contains the
+coordinates of the node: [e1a1n1x, e1a1n1y, e1a1n1z, e1a1n2x, ...]. Data is
+returned by element, with elements in the same order as in `getElements` and
+`getElementsByType`. If `primary` is set, only the primary (corner) nodes of the
+faces are returned. If `tag` < 0, get the face nodes for all entities. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`
+(for C++ only; output vector must be preallocated).
+
+Return `nodeTags`, `coord`.
+
+Types:
+ - `elementType`: integer
+ - `faceType`: integer
+ - `nodeTags`: vector of sizes
+ - `coord`: vector of doubles
+ - `tag`: integer
+ - `primary`: boolean
+ - `task`: size
+ - `numTasks`: size
+"""
+function getElementFaceNodesCoord(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementFaceNodesCoord, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, faceType, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, tag, primary, task, numTasks, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    return nodeTags, coord
+end
+const get_element_face_nodes_coord = getElementFaceNodesCoord
 
 """
     gmsh.model.mesh.getGhostElements(dim, tag)

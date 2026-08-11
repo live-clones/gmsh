@@ -4168,6 +4168,51 @@ class model:
         get_element_edge_nodes = getElementEdgeNodes
 
         @staticmethod
+        def getElementEdgeNodesCoord(elementType, tag=-1, primary=False, task=0, numTasks=1):
+            """
+            gmsh.model.mesh.getElementEdgeNodesCoord(elementType, tag=-1, primary=False, task=0, numTasks=1)
+
+            Get the nodes on the edges of all elements of type `elementType' classified
+            on the entity of tag `tag'. `nodeTags' contains the node tags of the edges
+            for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. `coord' contains the
+            coordinates of the node: [e1a1n1x, e1a1n1y, e1a1n1z, e1a1n2x, ...]. Data is
+            returned by element, with elements in the same order as in `getElements'
+            and `getElementsByType'. If `primary' is set, only the primary (begin/end)
+            nodes of the edges are returned. If `tag' < 0, get the edge nodes for all
+            entities. If `numTasks' > 1, only compute and return the part of the data
+            indexed by `task' (for C++ only; output vector must be preallocated).
+
+            Return `nodeTags', `coord'.
+
+            Types:
+            - `elementType': integer
+            - `nodeTags': vector of sizes
+            - `coord': vector of doubles
+            - `tag': integer
+            - `primary': boolean
+            - `task': size
+            - `numTasks': size
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementEdgeNodesCoord(
+                c_int(elementType),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                c_int(tag),
+                c_int(bool(primary)),
+                c_size_t(task),
+                c_size_t(numTasks),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value))
+        get_element_edge_nodes_coord = getElementEdgeNodesCoord
+
+        @staticmethod
         def getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1):
             """
             gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1)
@@ -4208,6 +4253,55 @@ class model:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
         get_element_face_nodes = getElementFaceNodes
+
+        @staticmethod
+        def getElementFaceNodesCoord(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1):
+            """
+            gmsh.model.mesh.getElementFaceNodesCoord(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1)
+
+            Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
+            for quadrangular faces) of all elements of type `elementType' classified on
+            the entity of tag `tag'. `nodeTags' contains the node tags of the faces for
+            all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. `coord' contains
+            the coordinates of the node: [e1a1n1x, e1a1n1y, e1a1n1z, e1a1n2x, ...].
+            Data is returned by element, with elements in the same order as in
+            `getElements' and `getElementsByType'. If `primary' is set, only the
+            primary (corner) nodes of the faces are returned. If `tag' < 0, get the
+            face nodes for all entities. If `numTasks' > 1, only compute and return the
+            part of the data indexed by `task' (for C++ only; output vector must be
+            preallocated).
+
+            Return `nodeTags', `coord'.
+
+            Types:
+            - `elementType': integer
+            - `faceType': integer
+            - `nodeTags': vector of sizes
+            - `coord': vector of doubles
+            - `tag': integer
+            - `primary': boolean
+            - `task': size
+            - `numTasks': size
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementFaceNodesCoord(
+                c_int(elementType),
+                c_int(faceType),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                c_int(tag),
+                c_int(bool(primary)),
+                c_size_t(task),
+                c_size_t(numTasks),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value))
+        get_element_face_nodes_coord = getElementFaceNodesCoord
 
         @staticmethod
         def getGhostElements(dim, tag):

@@ -4945,6 +4945,79 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
   }
 }
 
+GMSH_API void gmsh::model::mesh::getElementEdgeNodesCoord(const int elementType,
+                                            std::vector<std::size_t> & nodeTags,
+                                            std::vector<double> & coord,
+                                            const int tag,
+                                            const bool primary,
+                                            const std::size_t task,
+                                            const std::size_t numTasks)
+{
+  if(!_checkInit()) return;
+  int dim = ElementType::getDimension(elementType);
+  std::map<int, std::vector<GEntity *>> typeEnt;
+  _getEntitiesForElementTypes(dim, tag, typeEnt);
+  const std::vector<GEntity *> &entities(typeEnt[elementType]);
+  int familyType = ElementType::getParentType(elementType);
+  std::size_t numElements = 0;
+  int numEdgesPerEle = 0, numNodesPerEdge = 0;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    int n = ge->getNumMeshElementsByType(familyType);
+    if(n && !numNodesPerEdge) {
+      MElement *e = ge->getMeshElementByType(familyType, 0);
+      numEdgesPerEle = e->getNumEdges();
+      if(primary) { numNodesPerEdge = 2; }
+      else {
+        std::vector<MVertex *> v;
+        // we could use e->getHighOrderEdge() here if we decide to remove
+        // getEdgeVertices
+        e->getEdgeVertices(0, v);
+        numNodesPerEdge = v.size();
+      }
+    }
+    numElements += n;
+  }
+  if(!numTasks) {
+    Msg::Error("Number of tasks should be > 0");
+    return;
+  }
+  if(!numElements || !numEdgesPerEle || !numNodesPerEdge) return;
+  if(numEdgesPerEle * numNodesPerEdge * numElements != nodeTags.size()) {
+    if(numTasks > 1)
+      Msg::Warning("Nodes should be preallocated if numTasks > 1");
+    nodeTags.resize(numEdgesPerEle * numNodesPerEdge * numElements);
+    coord.resize(numEdgesPerEle * numNodesPerEdge * numElements * 3);
+  }
+  const size_t begin = (task * numElements) / numTasks;
+  const size_t end = ((task + 1) * numElements) / numTasks;
+  size_t o = 0;
+  size_t idx = numEdgesPerEle * numNodesPerEdge * begin;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
+      if(o >= begin && o < end) {
+        MElement *e = ge->getMeshElementByType(familyType, j);
+        for(int k = 0; k < numEdgesPerEle; k++) {
+          std::vector<MVertex *> v;
+          // we could use e->getHighOrderEdge() here if we decide to remove
+          // getEdgeVertices
+          e->getEdgeVertices(k, v);
+          std::size_t N = primary ? 2 : v.size();
+          for(std::size_t l = 0; l < N; l++) {
+            nodeTags[idx] = v[l]->getNum();
+            coord[3*idx+0] = v[l]->x();
+            coord[3*idx+1] = v[l]->y();
+            coord[3*idx+2] = v[l]->z();
+            idx++;
+          }
+        }
+      }
+      o++;
+    }
+  }
+}
+
 GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   const int elementType, const int faceType, std::vector<std::size_t> &nodeTags,
   const int tag, const bool primary, const std::size_t task,
@@ -5015,6 +5088,90 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
           std::size_t N = primary ? faceType : v.size();
           for(std::size_t l = 0; l < N; l++) {
             nodeTags[idx++] = v[l]->getNum();
+          }
+        }
+      }
+      o++;
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getElementFaceNodesCoord(
+  const int elementType, const int faceType, std::vector<std::size_t> &nodeTags,
+  std::vector<double> & coord, const int tag, const bool primary, 
+  const std::size_t task,const std::size_t numTasks)
+{
+  if(!_checkInit()) return;
+  int dim = ElementType::getDimension(elementType);
+  std::map<int, std::vector<GEntity *>> typeEnt;
+  _getEntitiesForElementTypes(dim, tag, typeEnt);
+  const std::vector<GEntity *> &entities(typeEnt[elementType]);
+  int familyType = ElementType::getParentType(elementType);
+  std::size_t numElements = 0;
+  int numFacesPerEle = 0, numNodesPerFace = 0;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    int n = ge->getNumMeshElementsByType(familyType);
+    if(n && !numNodesPerFace) {
+      MElement *e = ge->getMeshElementByType(familyType, 0);
+      int nf = e->getNumFaces();
+      numFacesPerEle = 0;
+      for(int k = 0; k < nf; k++) {
+        MFace f = e->getFace(k);
+        if(faceType == (int)f.getNumVertices()) {
+          numFacesPerEle++;
+          if(!numNodesPerFace) {
+            if(primary) { numNodesPerFace = faceType; }
+            else {
+              std::vector<MVertex *> v;
+              // we could use e->getHighOrderFace() here if we decide to remove
+              // getFaceVertices
+              e->getFaceVertices(k, v);
+              numNodesPerFace = v.size();
+              std::cout << "numNodesPerFace =  " <<numNodesPerFace << std::endl;
+            }
+          }
+        }
+      }
+    }
+    numElements += n;
+  }
+
+  if(!numTasks) {
+    Msg::Error("Number of tasks should be > 0");
+    return;
+  }
+  if(!numElements || !numFacesPerEle || !numNodesPerFace) return;
+  if(numFacesPerEle * numNodesPerFace * numElements > nodeTags.size()) {
+    if(numTasks > 1)
+      Msg::Warning("Nodes should be preallocated if numTasks > 1");
+    nodeTags.resize(numFacesPerEle * numNodesPerFace * numElements);
+    coord.resize(numFacesPerEle * numNodesPerFace * numElements * 3);
+  }
+  const size_t begin = (task * numElements) / numTasks;
+  const size_t end = ((task + 1) * numElements) / numTasks;
+  size_t o = 0;
+  size_t idx = numFacesPerEle * numNodesPerFace * begin;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
+      if(o >= begin && o < end) {
+        MElement *e = ge->getMeshElementByType(familyType, j);
+        int nf = e->getNumFaces();
+        for(int k = 0; k < nf; k++) {
+          MFace f = e->getFace(k);
+          if(faceType != (int)f.getNumVertices()) continue;
+          std::vector<MVertex *> v;
+          // we could use e->getHighOrderFace() here if we decide to remove
+          // getFaceVertices
+          e->getFaceVertices(k, v);
+          std::size_t N = primary ? faceType : v.size();
+          for(std::size_t l = 0; l < N; l++) {
+            nodeTags[idx] = v[l]->getNum();
+            coord[3*idx+0] = v[l]->x();
+            coord[3*idx+1] = v[l]->y();
+            coord[3*idx+2] = v[l]->z();
+            idx++;
           }
         }
       }
@@ -5729,6 +5886,7 @@ struct KeyXYZ
   int typekey;
   std::size_t entityKeys;
   double x,y,z;
+  std::vector<int> nodes;
 };
 
 class KeyXYZRTree {
@@ -5787,6 +5945,73 @@ public:
     }
   }
 };
+
+
+
+
+struct NodeXYZ
+{
+  int nodeTag;
+  double x,y,z;
+};
+
+class NodeXYZRTree {
+private:
+  RTree<struct NodeXYZ *, double, 3, double> *_rtree;   
+  double _tol;
+  static bool rtree_callback(struct NodeXYZ *v, void *ctx)
+  {
+    struct NodeXYZ **out = static_cast<NodeXYZ **>(ctx);   
+    *out = v;
+    return false; // we're done searching
+  }
+
+public:
+  NodeXYZRTree(double tolerance = 1.e-8)
+  {
+    _rtree = new RTree<struct NodeXYZ *, double, 3, double>();
+    _tol = tolerance;
+  }
+  ~NodeXYZRTree()
+  {
+    _rtree->RemoveAll();
+    delete _rtree;
+  }
+  void insert(struct NodeXYZ *v)
+  {
+    struct NodeXYZ *out;
+    double _min[3] = {v->x - _tol, v->y - _tol, v->z - _tol};
+    double _max[3] = {v->x + _tol, v->y + _tol, v->z + _tol};
+
+    if(!_rtree->Search(_min, _max, rtree_callback, &out)) {
+      _rtree->Insert(_min, _max, v);
+    }
+    else {
+      Msg::Debug("Node %d (%.16g, %.16g, %.16g) already exists "
+                       "with tolerance %g: node %d (%.16g, %.16g, %.16g)",
+                       v->nodeTag, v->x, v->y, v->z, _tol, out->nodeTag, out->x,
+                       out->y, out->z);
+    }
+  }
+  struct NodeXYZ *find(struct NodeXYZ *n)
+  {
+    struct NodeXYZ *out;
+    double _min[3] = {n->x - _tol, n->y - _tol, n->z - _tol};
+    double _max[3] = {n->x + _tol, n->y + _tol, n->z + _tol};
+    if(_rtree->Search(_min, _max, rtree_callback, &out)) { return out; }
+    else {
+      // std::cout << "Could not find node corresponding to reference node " << n->entityKeys <<
+      //           "("<<n->x <<","<<n->y << ","<<n->z << ")" << std::endl;
+      Msg::Debug("Could not find node corresponding to reference node "
+                       "%d (%g, %g, %g)",
+                       n->nodeTag, n->x, n->y, n->z);
+      return 0;
+    }
+  }
+};
+
+
+
 
 
 
@@ -5857,25 +6082,53 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
       }
     }
   }
-  else if(functionSpaceType == "HcurlLegendre" || functionSpaceType == "H1Legendre") {
+  else if(functionSpaceType == "HcurlLegendre" || functionSpaceType == "H1Legendre") 
+  {
+    std::vector<double> affineTransform = ge->affineTransform;
 
-    std::vector<int> basisFunctionsOrientationMaster;
-    getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationMaster,tagMaster);
-    std::vector<int> basisFunctionsOrientationDependent;
-    getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationDependent,tag);
+
+    // std::vector<int> basisFunctionsOrientationMaster;
+    // getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationMaster,tagMaster);
+    // std::vector<int> basisFunctionsOrientationDependent;
+    // getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationDependent,tag);
+
+
+
+    std::vector<std::size_t> nodeTagsMaster, nodeTags;
+    std::vector<double> coordNodeMaster,coordNode;
+    getElementEdgeNodesCoord(elementType,nodeTagsMaster,coordNodeMaster,tagMaster,true);
+    getElementEdgeNodesCoord(elementType,nodeTags,coordNode,tag,true);
+
+
+    double tol = 1.e-8;
+    NodeXYZRTree NodeTree(tol);
+    for (std::size_t i = 0; i < nodeTagsMaster.size(); i++)
+    {
+      struct NodeXYZ* Node = new NodeXYZ();
+
+      Node->x = coordNodeMaster[3 * i + 0]*affineTransform[0] + coordNodeMaster[3 * i + 1]*affineTransform[1] + coordNodeMaster[3 * i + 2]*affineTransform[2] + affineTransform[3] ;
+      Node->y = coordNodeMaster[3 * i + 0]*affineTransform[4] + coordNodeMaster[3 * i + 1]*affineTransform[5] + coordNodeMaster[3 * i + 2]*affineTransform[6] + affineTransform[7] ;
+      Node->z = coordNodeMaster[3 * i + 0]*affineTransform[8] + coordNodeMaster[3 * i + 1]*affineTransform[9] + coordNodeMaster[3 * i + 2]*affineTransform[10] + affineTransform[11] ;
+      
+      Node->nodeTag = nodeTagsMaster[i];
+
+      struct NodeXYZ *foundNode = NodeTree.find(Node);
+      if(!foundNode)
+        NodeTree.insert(Node);
+    }
 
     // For lines, easy, only 2 orientations, but not facets in 3D
-    orientationSign = std::vector<int>(basisFunctionsOrientationDependent.size(),1);
+    orientationSign = std::vector<int>(typeKeys.size(),1);
     
 
     getKeys(elementType, functionSpaceType, typeKeysMaster, entityKeysMaster_temp,
             coordMaster, tagMaster, returnCoord);
-    std::vector<double> affineTransform = ge->affineTransform;
-    std::vector<double> tempCoord(3,0);
-    double tol = 1.e-8;
+    int nbrNodePerKey = nodeTagsMaster.size()/typeKeysMaster.size();
+
+
+
+
     KeyXYZRTree keyTree(tol);
-
-
     for(std::size_t i = 0; i < entityKeysMaster_temp.size(); i++) {
       struct KeyXYZ* Key = new KeyXYZ();
 
@@ -5886,10 +6139,16 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
       Key->typekey = typeKeysMaster[i];
       Key->entityKeys = entityKeysMaster_temp[i];
 
+      std::vector<int> nodesForKey;
+      for (int f = 0; f < nbrNodePerKey; ++f)
+        nodesForKey[f] = nodeTagsMaster[nbrNodePerKey*i+f];
+      Key->nodes = nodesForKey;
+
       keyTree.insert(Key);
     }
 
-    // Find the matching of keys with the transformed coordMaster and coord (dependent).
+
+    // Find the match between the keys with the transformed coordMaster and coord (dependent).
     for(std::size_t j = 0; j < entityKeys.size(); j++) {
       struct KeyXYZ* Key = new KeyXYZ();
 
@@ -5900,17 +6159,38 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
       Key->typekey = typeKeys[j];
       Key->entityKeys = entityKeys[j];
 
+      std::vector<int> nodesForKey;
+      for (int f = 0; f < nbrNodePerKey; ++f)
+        nodesForKey[f] = nodeTags[nbrNodePerKey*j+f];
+      Key->nodes = nodesForKey;
+
       struct KeyXYZ *foundKey = keyTree.find(Key);
       if(foundKey)
       {
           entityKeysMaster[j] = foundKey->entityKeys;
 
+          struct NodeXYZ* node = new NodeXYZ();
+          node->x = coordNode[3 * j * 2 + 0];
+          node->y = coordNode[3 * j * 2 + 1]; 
+          node->z = coordNode[3 * j * 2 + 2];
+          node->nodeTag = nodeTags[2*j];
+          struct NodeXYZ *foundNode = NodeTree.find(node);
+          int node1=foundNode->nodeTag;
 
+
+          node = new NodeXYZ();
+          node->x = coordNode[3 * j * 2 + 3];
+          node->y = coordNode[3 * j * 2 + 4]; 
+          node->z = coordNode[3 * j * 2 + 5];
+          node->nodeTag = nodeTags[2*j];
+          foundNode = NodeTree.find(node);
+          int node2=foundNode->nodeTag;
+
+          // std::cout << "node1Master = " << node1 << "node2Master = " << node2 << std::endl;
+          // std::cout << "node1Slave = " << nodeTags[2*j] << " and node2Slave " << nodeTags[2*j+1] << std::endl;
+          if(nodeTags[2*j]>nodeTags[2*j+1] && node1<node2)
+            orientationSign[j] = -1;
           // orientation is between two nodes so size of orientation is half the size of keys. (keys are only end node of edge)
-          // orientationSign[j] = -1;
-
-          // Reverse the orientation of the elements with tags `elementTags'.
-          // GMSH_API void reverseElements(const std::vector<std::size_t> & elementTags);
       }
     }
   }

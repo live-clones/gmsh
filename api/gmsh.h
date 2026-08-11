@@ -1493,6 +1493,26 @@ namespace gmsh { // Top-level functions
                                         const std::size_t task = 0,
                                         const std::size_t numTasks = 1);
 
+      // gmsh::model::mesh::getElementEdgeNodesCoord
+      //
+      // Get the nodes on the edges of all elements of type `elementType'
+      // classified on the entity of tag `tag'. `nodeTags' contains the node tags
+      // of the edges for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. `coord'
+      // contains the coordinates of the node: [e1a1n1x, e1a1n1y, e1a1n1z, e1a1n2x,
+      // ...]. Data is returned by element, with elements in the same order as in
+      // `getElements' and `getElementsByType'. If `primary' is set, only the
+      // primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the
+      // edge nodes for all entities. If `numTasks' > 1, only compute and return
+      // the part of the data indexed by `task' (for C++ only; output vector must
+      // be preallocated).
+      GMSH_API void getElementEdgeNodesCoord(const int elementType,
+                                             std::vector<std::size_t> & nodeTags,
+                                             std::vector<double> & coord,
+                                             const int tag = -1,
+                                             const bool primary = false,
+                                             const std::size_t task = 0,
+                                             const std::size_t numTasks = 1);
+
       // gmsh::model::mesh::getElementFaceNodes
       //
       // Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
@@ -1511,6 +1531,28 @@ namespace gmsh { // Top-level functions
                                         const bool primary = false,
                                         const std::size_t task = 0,
                                         const std::size_t numTasks = 1);
+
+      // gmsh::model::mesh::getElementFaceNodesCoord
+      //
+      // Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
+      // for quadrangular faces) of all elements of type `elementType' classified
+      // on the entity of tag `tag'. `nodeTags' contains the node tags of the faces
+      // for all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. `coord'
+      // contains the coordinates of the node: [e1a1n1x, e1a1n1y, e1a1n1z, e1a1n2x,
+      // ...]. Data is returned by element, with elements in the same order as in
+      // `getElements' and `getElementsByType'. If `primary' is set, only the
+      // primary (corner) nodes of the faces are returned. If `tag' < 0, get the
+      // face nodes for all entities. If `numTasks' > 1, only compute and return
+      // the part of the data indexed by `task' (for C++ only; output vector must
+      // be preallocated).
+      GMSH_API void getElementFaceNodesCoord(const int elementType,
+                                             const int faceType,
+                                             std::vector<std::size_t> & nodeTags,
+                                             std::vector<double> & coord,
+                                             const int tag = -1,
+                                             const bool primary = false,
+                                             const std::size_t task = 0,
+                                             const std::size_t numTasks = 1);
 
       // gmsh::model::mesh::getGhostElements
       //
