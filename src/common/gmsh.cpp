@@ -1457,11 +1457,25 @@ static void _findOverlapsOfDim(const int tag, const int partition,
   }
 }
 
-template <int dim> static auto _getOverlapOfBoundaries(GModel *const model)
+template <int dim>
+static const auto &_getOverlapOfBoundaries(GModel *const model)
 {
   if constexpr(dim == 2) { return model->getOverlapOfBoundaries2D(); }
   else if constexpr(dim == 3) {
     return model->getOverlapOfBoundaries3D();
+  }
+  else {
+    static_assert(dim == 2 || dim == 3,
+                  "Unsupported dimension for boundary overlaps");
+  }
+}
+
+template <int dim>
+static const auto &_getInnerBoundariesOnInterface(GModel *const model)
+{
+  if constexpr(dim == 2) { return model->getInnerBoundariesOnInterface2D(); }
+  else if constexpr(dim == 3) {
+    return model->getInnerBoundariesOnInterface3D();
   }
   else {
     static_assert(dim == 2 || dim == 3,
@@ -1478,22 +1492,28 @@ static void _findOverlapOfBoundary(const int tag, const int partition,
   if constexpr(dim != 2 && dim != 3) return;
 
   using BoundaryEntity = typename EntityTraits<dim - 1>::Entity;
-  const auto &overlapOfBnds = _getOverlapOfBoundaries<dim>(model);
   BoundaryEntity *entity = nullptr;
   if constexpr(dim == 2)
     entity = model->getEdgeByTag(tag);
   else if constexpr(dim == 3)
     entity = model->getFaceByTag(tag);
-  auto it = overlapOfBnds.find(entity);
-  if(it == overlapOfBnds.end()) { return; }
-  for(auto *pe : it->second) {
-    auto partitions = pe->getPartitions();
-    if(partitions.size() != 1)
-      Msg::Error("Overlap of boundary should have exactly one partition, "
-                 "found %zu",
-                 partitions.size());
-    if(partitions.at(0) == partition) { overlapEntities.push_back(pe->tag()); }
-  }
+
+  auto collectFrom = [&](const auto &map) {
+    auto it = map.find(entity);
+    if(it == map.end()) { return; }
+    for(auto *pe : it->second) {
+      auto partitions = pe->getPartitions();
+      if(partitions.size() != 1)
+        Msg::Error("Overlap of boundary should have exactly one partition, "
+                   "found %zu",
+                   partitions.size());
+      if(partitions.at(0) == partition) {
+        overlapEntities.push_back(pe->tag());
+      }
+    }
+  };
+  collectFrom(_getOverlapOfBoundaries<dim>(model));
+  collectFrom(_getInnerBoundariesOnInterface<dim>(model));
 }
 
 GMSH_API void gmsh::model::mesh::getPartitionEntities(
@@ -1550,11 +1570,23 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     }
     const auto &boundaries = model->getOverlapInnerBoundaries2D();
     auto it = boundaries.find(face);
-    if(it == boundaries.end()) {
-      return;
+    if(it != boundaries.end()) {
+      for(const auto &pe : it->second) {
+        if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+      }
     }
-    for(const auto &pe : it->second) {
-      if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+    // Union semantics: artificial boundaries lying on an internal interface
+    // are inner boundaries too; include the ones this parent created
+    const auto &creators =
+      std::get<std::unordered_map<partitionEdge *, GFace *>>(
+        model->getBoundaryOfOverlapCreators());
+    for(const auto &[iface, pes] : model->getInnerBoundariesOnInterface2D()) {
+      for(const auto &pe : pes) {
+        if(pe->getPartition(0) != partition) continue;
+        auto itc = creators.find(pe);
+        if(itc != creators.end() && itc->second == face)
+          entities.push_back(pe->tag());
+      }
     }
   }
   else if(dim == 3) {
@@ -1565,15 +1597,68 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     }
     const auto &boundaries = model->getOverlapInnerBoundaries3D();
     auto it = boundaries.find(region);
-    if(it == boundaries.end()) {
-      return;
+    if(it != boundaries.end()) {
+      for(const auto &pe : it->second) {
+        if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+      }
     }
-    for(const auto &pe : it->second) {
-      if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
+    // Union semantics: artificial boundaries lying on an internal interface
+    // are inner boundaries too; include the ones this parent created
+    const auto &creators =
+      std::get<std::unordered_map<partitionFace *, GRegion *>>(
+        model->getBoundaryOfOverlapCreators());
+    for(const auto &[iface, pfs] : model->getInnerBoundariesOnInterface3D()) {
+      for(const auto &pf : pfs) {
+        if(pf->getPartition(0) != partition) continue;
+        auto itc = creators.find(pf);
+        if(itc != creators.end() && itc->second == region)
+          entities.push_back(pf->tag());
+      }
     }
   }
   else {
     Msg::Error("Inner boundary search is not supported for dimension %d", dim);
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getOverlapInterfaceBoundary(
+  const int dim, const int tag, const int partition,
+  std::vector<int> &entityTags)
+{
+  if(!_checkInit()) return;
+  entityTags.clear();
+  GModel *model = GModel::current();
+  // Note: (dim, tag) is the *interface* entity (dim-1 of the model), unlike
+  // getOverlapBoundary which takes the dim-D parent entity
+  if(dim == 1) {
+    GEdge *edge = model->getEdgeByTag(tag);
+    if(!edge) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      return;
+    }
+    const auto &boundaries = model->getInnerBoundariesOnInterface2D();
+    auto it = boundaries.find(edge);
+    if(it == boundaries.end()) { return; }
+    for(const auto &pe : it->second) {
+      if(pe->getPartition(0) == partition) entityTags.push_back(pe->tag());
+    }
+  }
+  else if(dim == 2) {
+    GFace *face = model->getFaceByTag(tag);
+    if(!face) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      return;
+    }
+    const auto &boundaries = model->getInnerBoundariesOnInterface3D();
+    auto it = boundaries.find(face);
+    if(it == boundaries.end()) { return; }
+    for(const auto &pf : it->second) {
+      if(pf->getPartition(0) == partition) entityTags.push_back(pf->tag());
+    }
+  }
+  else {
+    Msg::Error("Interface boundary search is not supported for dimension %d",
+               dim);
   }
 }
 

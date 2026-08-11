@@ -2282,7 +2282,10 @@ class model:
 
             Get the tags of the entities making up the overlap boundary of partition
             `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-            `tag'.
+            `tag'. Returns the union of the plain inner boundaries and of the inner
+            boundaries lying on an internal interface that were created by this parent
+            entity (the latter can be queried separately with
+            `getOverlapInterfaceBoundary').
 
             Return `entityTags'.
 
@@ -2304,6 +2307,41 @@ class model:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_entityTags_, api_entityTags_n_.value)
         get_overlap_boundary = getOverlapBoundary
+
+        @staticmethod
+        def getOverlapInterfaceBoundary(dim, tag, partition):
+            """
+            gmsh.model.mesh.getOverlapInterfaceBoundary(dim, tag, partition)
+
+            Get the tags of the overlap boundary entities of partition `partition' that
+            lie on the internal interface entity of dimension `dim' and tag `tag' (a
+            dim-1 entity of the model shared by two entities of dimension `dim'+1).
+            These boundaries are artificial (the domain continues on the other side of
+            the interface) and carry a transmission condition, but keep the interface
+            identity so an interface-aware condition can be imposed. Note that `dim' is
+            the dimension of the interface, one below the model dimension, unlike
+            `getOverlapBoundary' which takes the parent entity.
+
+            Return `entityTags'.
+
+            Types:
+            - `dim': integer
+            - `tag': integer
+            - `partition': integer
+            - `entityTags': vector of integers
+            """
+            api_entityTags_, api_entityTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetOverlapInterfaceBoundary(
+                c_int(dim),
+                c_int(tag),
+                c_int(partition),
+                byref(api_entityTags_), byref(api_entityTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorint(api_entityTags_, api_entityTags_n_.value)
+        get_overlap_interface_boundary = getOverlapInterfaceBoundary
 
         @staticmethod
         def getBoundaryOverlapParent(dim, tag):

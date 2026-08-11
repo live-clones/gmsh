@@ -1069,6 +1069,19 @@ GMSH_API void gmshModelMeshGetOverlapBoundary(const int dim, const int tag, cons
   }
 }
 
+GMSH_API void gmshModelMeshGetOverlapInterfaceBoundary(const int dim, const int tag, const int partition, int ** entityTags, size_t * entityTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_entityTags_;
+    gmsh::model::mesh::getOverlapInterfaceBoundary(dim, tag, partition, api_entityTags_);
+    vector2ptr(api_entityTags_, entityTags, entityTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim, const int tag, int * parentTag, int * ierr)
 {
   if(ierr) *ierr = 0;
