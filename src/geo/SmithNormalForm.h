@@ -401,6 +401,134 @@ public:
   }
 };
 
+// The sequence of elementary column operations that a normal form applies to
+// an identity matrix in order to accumulate a unimodular factor.
+//
+// Recording the operations instead of performing them lets individual columns
+// of the factor be recovered afterwards without the factor ever existing: it
+// is a product of elementary matrices, F = E_1 E_2 ... E_K, so
+//
+//     F e_j = E_1 (E_2 ( ... (E_K e_j)))
+//
+// and each E_k acts on a vector in O(1). The callers in ChainComplex only ever
+// read a few columns of these factors -- the kernel basis is often a single
+// column -- while the factor itself is square in the number of columns of the
+// matrix being reduced, which is where the memory goes on large problems.
+class ElementaryOpLog {
+private:
+  enum class Kind : std::uint8_t { AddMultiple, Rotate, Swap, Negate };
+  struct Op {
+    Kind kind;
+    std::size_t c1, c2;
+    std::int64_t a, b, c, d;
+  };
+  std::vector<Op> _ops;
+  std::size_t _dim = 0;
+  // whether the operations were applied to the factor as row operations
+  // (F <- E_k F, so F = E_K ... E_1) or as column operations (F <- F E_k, so
+  // F = E_1 ... E_K). The two replay in opposite orders.
+  bool _rowOps = false;
+
+public:
+  void setDimension(std::size_t n, bool rowOps = false)
+  {
+    _dim = n;
+    _rowOps = rowOps;
+  }
+  std::size_t dimension() const { return _dim; }
+  std::size_t size() const { return _ops.size(); }
+  void clear()
+  {
+    _ops.clear();
+    _ops.shrink_to_fit();
+  }
+
+  // col(dst) += a * col(src)
+  void addMultiple(std::int64_t a, std::size_t src, std::size_t dst)
+  {
+    _ops.push_back({Kind::AddMultiple, src, dst, a, 0, 0, 0});
+  }
+  // (col(c1), col(c2)) <- (a*col(c1) + b*col(c2), c*col(c1) + d*col(c2))
+  void rotate(std::int64_t a, std::int64_t b, std::size_t c1, std::int64_t c,
+              std::int64_t d, std::size_t c2)
+  {
+    _ops.push_back({Kind::Rotate, c1, c2, a, b, c, d});
+  }
+  void swap(std::size_t c1, std::size_t c2)
+  {
+    _ops.push_back({Kind::Swap, c1, c2, 0, 0, 0, 0});
+  }
+  void negate(std::size_t c)
+  {
+    _ops.push_back({Kind::Negate, c, c, 0, 0, 0, 0});
+  }
+
+  // M <- F * M. Every elementary factor acts on M as a row operation, so this
+  // never materialises F: it costs one pass over M's rows per recorded
+  // operation, against the rows x rows x cols of forming F and multiplying.
+  void applyLeft(IntegerMatrix &M) const
+  {
+    namespace nfd = NormalFormDetail;
+    for(std::size_t k = 0; k < _ops.size(); k++) {
+      // row-operation factors compose on the left, so replay them in order;
+      // column-operation factors compose on the right, so replay in reverse
+      const Op &o = _ops[_rowOps ? k : _ops.size() - 1 - k];
+      switch(o.kind) {
+      case Kind::AddMultiple:
+        // as a column operation on F, E = I + a e_src e_dst^T, so E * M adds
+        // a times row dst to row src -- the two indices exchange roles
+        if(_rowOps)
+          M.addRowMultiple(o.a, o.c1, o.c2);
+        else
+          M.addRowMultiple(o.a, o.c2, o.c1);
+        break;
+      case Kind::Rotate:
+        if(_rowOps)
+          M.rotateRows(o.a, o.b, o.c1, o.c, o.d, o.c2);
+        else
+          M.rotateRows(o.a, o.c, o.c1, o.b, o.d, o.c2);
+        break;
+      case Kind::Swap: M.swapRows(o.c1, o.c2); break;
+      case Kind::Negate: M.negateRow(o.c1); break;
+      }
+    }
+  }
+
+  // columns [first, last) of the accumulated factor (column-operation logs)
+  IntegerMatrix columns(std::size_t first, std::size_t last) const
+  {
+    namespace nfd = NormalFormDetail;
+    if(last < first) last = first;
+    IntegerMatrix res(_dim, last - first);
+    std::vector<std::int64_t> v(_dim);
+    for(std::size_t j = first; j < last; j++) {
+      std::fill(v.begin(), v.end(), (std::int64_t)0);
+      v[j] = 1;
+      // the operations were applied left to right, so replay them in reverse
+      for(std::size_t k = _ops.size(); k-- > 0;) {
+        const Op &o = _ops[k];
+        switch(o.kind) {
+        case Kind::AddMultiple:
+          if(v[o.c2] != 0) v[o.c1] = nfd::addMul(v[o.c1], o.a, v[o.c2]);
+          break;
+        case Kind::Rotate: {
+          std::int64_t x = v[o.c1], y = v[o.c2];
+          if(x == 0 && y == 0) break;
+          v[o.c1] = nfd::mulMul(o.a, x, o.c, y);
+          v[o.c2] = nfd::mulMul(o.b, x, o.d, y);
+          break;
+        }
+        case Kind::Swap: std::swap(v[o.c1], v[o.c2]); break;
+        case Kind::Negate: v[o.c1] = nfd::negate(v[o.c1]); break;
+        }
+      }
+      std::int64_t *out = res.colData(j - first);
+      for(std::size_t i = 0; i < _dim; i++) out[i] = v[i];
+    }
+    return res;
+  }
+};
+
 // Hermite normal form A = P^T * L * U (Kannan-Bachem):
 // - canonical: L, lower triangular with positive diagonal entries and
 //   non-negative subdiagonal entries smaller than the diagonal entry of
@@ -412,7 +540,10 @@ public:
 struct HermiteForm {
   std::vector<std::size_t> rowPermutation;
   IntegerMatrix canonical;
-  IntegerMatrix rightInverse;
+  // inv(U), held as the operations that build it rather than as the n x n
+  // matrix: use rightInverse.columns(first, last) to materialise the part
+  // actually wanted (see ColumnOpLog)
+  ElementaryOpLog rightInverse;
 };
 
 // Smith normal form inv(U) * A * inv(V) = S (i.e. A = U * S * V):
@@ -421,9 +552,12 @@ struct HermiteForm {
 // - left, right: the unimodular factors U and V if invertedFactors is
 //   false, or their inverses inv(U) and inv(V) if it is true.
 struct SmithForm {
-  IntegerMatrix left;
+  // the factors are held as the operations that would build them from the
+  // identity, not as the m x m and n x n matrices: use applyLeft() to form a
+  // product with one, or columns() to read part of one
+  ElementaryOpLog left;
   IntegerMatrix canonical;
-  IntegerMatrix right;
+  ElementaryOpLog right;
 };
 
 inline HermiteForm hermiteNormalForm(IntegerMatrix A)
@@ -435,9 +569,9 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
   nf.rowPermutation.resize(m);
   std::iota(nf.rowPermutation.begin(), nf.rowPermutation.end(), (std::size_t)0);
   nf.canonical = std::move(A);
-  nf.rightInverse = IntegerMatrix::identity(n);
+  nf.rightInverse.setDimension(n, /*rowOps=*/false);
   IntegerMatrix &C = nf.canonical;
-  IntegerMatrix &R = nf.rightInverse;
+  ElementaryOpLog &R = nf.rightInverse;
 
   // "schur" is the diagonal position where the current Schur complement
   // starts; "clean" tracks whether the leading block is fully reduced, which
@@ -482,7 +616,7 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
       std::int64_t g = nfd::extendedGcd(p, e, s, t);
       std::int64_t c = nfd::negate(e / g), d = p / g;
       C.rotateCols(s, t, i, c, d, col);
-      R.rotateCols(s, t, i, c, d, col);
+      R.rotate(s, t, i, c, d, col);
       // (s, t) == (1, 0) leaves column i bit-for-bit unchanged, so only a
       // non-unit pivot can disturb the leading block or its sparse record
       if(s != 1 || t != 0) {
@@ -516,7 +650,7 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
       // the smallest cff with 0 <= e + cff * p < p, i.e. ceil(-e/p)
       std::int64_t cff = nfd::negate(nfd::floorDiv(e, p));
       C.addColMultiple(cff, i, j);
-      R.addColMultiple(cff, i, j);
+      R.addMultiple(cff, i, j);
       return true;
     };
 
@@ -590,7 +724,7 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
       // the column is all zero, hence settled: permute it to the end; the
       // elimination may have left the leading block unreduced
       C.swapCols(schur, ncols - 1);
-      R.swapCols(schur, ncols - 1);
+      R.swap(schur, ncols - 1);
       ncols--;
       if(schur > 0 && !clean) {
         reduce((std::ptrdiff_t)schur - 1, false, false);
@@ -604,7 +738,7 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
       std::swap(nf.rowPermutation[schur], nf.rowPermutation[pivotRow]);
       if(C(schur, schur) < 0) {
         C.negateCol(schur);
-        R.negateCol(schur);
+        R.negate(schur);
       }
       // this column position may have been recycled by an earlier retirement,
       // and the new diagonal block row (schur, schur) is empty by definition
@@ -636,11 +770,9 @@ inline SmithForm smithNormalForm(IntegerMatrix A, bool invertedFactors)
 
   SmithForm nf;
   nf.canonical = std::move(A);
-  nf.left = IntegerMatrix::identity(m);
-  nf.right = IntegerMatrix::identity(n);
   IntegerMatrix &C = nf.canonical;
-  IntegerMatrix &L = nf.left;
-  IntegerMatrix &R = nf.right;
+  ElementaryOpLog &L = nf.left;
+  ElementaryOpLog &R = nf.right;
 
   // Row/column operations on the canonical matrix, mirrored onto the
   // factors: an operation is applied directly to the factor when the
@@ -650,55 +782,55 @@ inline SmithForm smithNormalForm(IntegerMatrix A, bool invertedFactors)
   //
   // Whichever of the two mirrorings applies, exactly one factor receives row
   // operations: 'left' when the inverse factors are requested, 'right' when
-  // they are not. That factor is therefore held TRANSPOSED for the duration
-  // and transposed back before returning, which turns those row operations
-  // into column operations. The point is cache behaviour, not arithmetic: the
-  // storage is column-major, so a row operation touches one cache line per
-  // column and costs a cache miss per entry, while a column operation walks
-  // contiguous memory. The single transpose at the end is O(mn) against the
-  // O(mn) per operation this saves.
-  const bool leftT = inv, rightT = !inv; // which factor is held transposed
+  // they are not. Neither factor is built: both are recorded as the sequence
+  // of elementary operations that would build them, which is what the flag
+  // below distinguishes. Every mirroring is a column operation on the factor
+  // as it would be stored, so the factor receiving row operations is recorded
+  // transposed -- exactly as it was previously held transposed for cache
+  // reasons -- and ElementaryOpLog replays it accordingly.
+  L.setDimension(m, /*rowOps=*/inv);
+  R.setDimension(n, /*rowOps=*/!inv);
   auto rowSwap = [&](std::size_t r1, std::size_t r2) {
     C.swapRows(r1, r2);
-    L.swapCols(r1, r2); // L^T column swap if leftT, else L's own column swap
+    L.swap(r1, r2);
   };
   auto rowAddMultiple = [&](std::int64_t q, std::size_t src, std::size_t dst) {
     C.addRowMultiple(q, src, dst);
     if(inv)
-      L.addColMultiple(q, src, dst); // on L^T
+      L.addMultiple(q, src, dst);
     else
-      L.addColMultiple(nfd::negate(q), dst, src);
+      L.addMultiple(nfd::negate(q), dst, src);
   };
   auto rowRotate = [&](std::int64_t a, std::int64_t b, std::size_t r1,
                        std::int64_t c, std::int64_t d, std::size_t r2) {
     C.rotateRows(a, b, r1, c, d, r2);
     if(inv)
-      L.rotateCols(a, b, r1, c, d, r2); // on L^T
+      L.rotate(a, b, r1, c, d, r2);
     else
-      L.rotateCols(d, nfd::negate(c), r1, nfd::negate(b), a, r2);
+      L.rotate(d, nfd::negate(c), r1, nfd::negate(b), a, r2);
   };
   auto colSwap = [&](std::size_t c1, std::size_t c2) {
     C.swapCols(c1, c2);
-    R.swapCols(c1, c2); // R's own column swap if inv, else R^T's
+    R.swap(c1, c2);
   };
   auto colNegate = [&](std::size_t c) {
     C.negateCol(c);
-    R.negateCol(c); // likewise
+    R.negate(c);
   };
   auto colAddMultiple = [&](std::int64_t q, std::size_t src, std::size_t dst) {
     C.addColMultiple(q, src, dst);
     if(inv)
-      R.addColMultiple(q, src, dst);
+      R.addMultiple(q, src, dst);
     else
-      R.addColMultiple(nfd::negate(q), dst, src); // on R^T
+      R.addMultiple(nfd::negate(q), dst, src);
   };
   auto colRotate = [&](std::int64_t a, std::int64_t b, std::size_t c1,
                        std::int64_t c, std::int64_t d, std::size_t c2) {
     C.rotateCols(a, b, c1, c, d, c2);
     if(inv)
-      R.rotateCols(a, b, c1, c, d, c2);
-    else // on R^T
-      R.rotateCols(d, nfd::negate(c), c1, nfd::negate(b), a, c2);
+      R.rotate(a, b, c1, c, d, c2);
+    else
+      R.rotate(d, nfd::negate(c), c1, nfd::negate(b), a, c2);
   };
 
   // Zero C(i,t) against the pivot C(t,t). When the pivot divides the entry,
@@ -800,9 +932,6 @@ inline SmithForm smithNormalForm(IntegerMatrix A, bool invertedFactors)
     if(C(t, t) < 0) colNegate(t);
   }
 
-  // undo the storage transpose of whichever factor took the row operations
-  if(leftT) L.transposeInPlace();
-  if(rightT) R.transposeInPlace();
 
   return nf;
 }

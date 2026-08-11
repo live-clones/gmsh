@@ -100,14 +100,12 @@ void ChainComplex::KerCod(int dim)
   while(rank < minRowCol && normalForm.canonical(rank, rank) != 0) rank++;
 
   if(rank != normalForm.canonical.cols()) {
+    // the kernel is the trailing columns of inv(U); materialise just those
+    // rather than the whole square factor, which is never otherwise used
     _kerH[dim] =
-      normalForm.rightInverse.block(0, rank, normalForm.rightInverse.rows(),
-                                    normalForm.rightInverse.cols() - rank);
+      normalForm.rightInverse.columns(rank, normalForm.canonical.cols());
   }
-  // The right inverse is square in the number of columns and is not needed for
-  // the cokernel below; release it before that allocates, so the two are never
-  // resident together.
-  normalForm.rightInverse = IntegerMatrix();
+  normalForm.rightInverse.clear();
 
   if(rank > 0) {
     // block() followed by permuteRows() allocates the result twice, and it is
@@ -153,8 +151,12 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
 
   IntegerMatrix LB;
   {
-    IntegerMatrix left = normalForm.left * Bbasis;
-    normalForm.left = IntegerMatrix(); // square in the number of cycles
+    // left * Bbasis, without ever forming 'left': replaying the recorded
+    // operations onto a copy of the boundary basis costs one pass per
+    // operation instead of a square-by-rectangular product
+    IntegerMatrix left = Bbasis;
+    normalForm.left.applyLeft(left);
+    normalForm.left.clear();
     LB = left.block(0, 0, cols, left.cols());
   }
 
@@ -167,7 +169,9 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
     }
   }
 
-  setJMatrix(lowDim, normalForm.right * LB);
+  // likewise right * LB, in place, so no third matrix of this size is needed
+  normalForm.right.applyLeft(LB);
+  setJMatrix(lowDim, std::move(LB));
 }
 
 void ChainComplex::Quotient(int dim, int setDim)
@@ -191,7 +195,9 @@ void ChainComplex::Quotient(int dim, int setDim)
 
   std::size_t rank = cols - _torsion[setDim].size();
   if(rows - rank > 0) {
-    setQMatrix(dim, normalForm.left.block(0, rank, rows, rows - rank));
+    // the quotient basis is the trailing columns of the left factor; the
+    // number of them is the Betti number, so this materialises very few
+    setQMatrix(dim, normalForm.left.columns(rank, rows));
   }
 }
 
