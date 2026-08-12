@@ -254,7 +254,7 @@ static bool verifyShell(MVertex *v, MTet4 *t, std::vector<faceXtet> &shell)
   return (NBAD_AFTER < NBAD_BEFORE);
 }
 
-int makeCavityStarShaped(std::vector<faceXtet> &shell,
+static int makeCavityStarShaped(std::vector<faceXtet> &shell,
                          std::vector<MTet4 *> &cavity, MVertex *v)
 {
   std::vector<faceXtet> wrong;
@@ -290,7 +290,7 @@ int makeCavityStarShaped(std::vector<faceXtet> &shell,
   return 1;
 }
 
-void findCavity(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
+static void findCavity(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
                 MVertex *v, MTet4 *t)
 {
   t->setDeleted(true);
@@ -463,7 +463,7 @@ public:
   }
 };
 
-bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
+static bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
                    MVertex *v, double lc1, double lc2,
                    std::vector<double> &vSizes, std::vector<double> &vSizesBGM,
                    MTet4 *t, MTet4Factory &myFactory,
@@ -687,7 +687,7 @@ static void completeTheSetOfFaces(GModel *model, std::set<GFace *> &faces_bound)
   faces_bound.insert(toAdd.begin(), toAdd.end());
 }
 
-GRegion *getRegionFromBoundingFaces(GModel *model,
+static GRegion *getRegionFromBoundingFaces(GModel *model,
                                     std::set<GFace *> &faces_bound)
 {
   completeTheSetOfFaces(model, faces_bound);
@@ -715,7 +715,7 @@ GRegion *getRegionFromBoundingFaces(GModel *model,
   return nullptr;
 }
 
-void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
+static void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
                             std::set<GFace *> &faces_bound, GRegion *bidon,
                             GModel *model, const fs_cont &search)
 {

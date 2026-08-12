@@ -13,13 +13,9 @@
 #include "meshGRegionTet4.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "GmshMessage.h"
-#include "GModel.h"
-#include "GRegion.h"
-#include "GFace.h"
-#include "MTetrahedron.h"
-#include "MVertex.h"
-#include "Context.h"
 #include "OS.h"
+#include "GRegion.h"
+#include "MTetrahedron.h"
 
 void adaptMeshGRegion::operator()(GRegion *gr)
 {

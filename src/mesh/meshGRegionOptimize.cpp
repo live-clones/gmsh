@@ -49,6 +49,8 @@ const std::uint32_t FLAT_NONE = 0xffffffff;
 const int fEdges[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
 const int fEfaces[6][2] = {{0, 2}, {0, 1}, {1, 2}, {0, 3}, {2, 3}, {1, 3}};
 const int fFaces[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}};
+// the three faces containing a vertex; the numbering happens to make this
+// the same table as fFaces, but it is the other way round (vertex to faces)
 const int fVFac[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}};
 
 struct flatOpt {
@@ -670,7 +672,7 @@ static bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm)
   // same report as the object-based optimizer
   const int nbRanges = 10;
   int quality_ranges[nbRanges];
-  auto report = [&K, &quality_ranges, nbRanges](const char *what) {
+  auto report = [&K, &quality_ranges](const char *what) {
     double vol = 0., worst = 1.0, avg = 0.;
     std::size_t count = 0;
     for(int i = 0; i < nbRanges; i++) quality_ranges[i] = 0;
@@ -691,7 +693,7 @@ static bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm)
     Msg::Info("Optimization %s (volume = %g) with worst = %g / average = %g:",
               what, vol, worst, count ? avg / count : 0.);
   };
-  auto printRanges = [&quality_ranges, nbRanges]() {
+  auto printRanges = [&quality_ranges]() {
     for(int i = 0; i < nbRanges; i++) {
       Msg::Info("%3.2f < quality < %3.2f : %9d elements", (double)i / nbRanges,
                 (double)(i + 1) / nbRanges, quality_ranges[i]);
