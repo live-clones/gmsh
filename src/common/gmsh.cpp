@@ -1512,8 +1512,9 @@ static void _findOverlapOfBoundary(const int tag, const int partition,
       }
     }
   };
+  // Only plain overlaps of boundaries: inner boundaries lying on an internal
+  // interface are a distinct class, queried with getOverlapInterfaceBoundary
   collectFrom(_getOverlapOfBoundaries<dim>(model));
-  collectFrom(_getInnerBoundariesOnInterface<dim>(model));
 }
 
 GMSH_API void gmsh::model::mesh::getPartitionEntities(
@@ -1575,19 +1576,6 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
         if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
       }
     }
-    // Union semantics: artificial boundaries lying on an internal interface
-    // are inner boundaries too; include the ones this parent created
-    const auto &creators =
-      std::get<std::unordered_map<partitionEdge *, GFace *>>(
-        model->getBoundaryOfOverlapCreators());
-    for(const auto &[iface, pes] : model->getInnerBoundariesOnInterface2D()) {
-      for(const auto &pe : pes) {
-        if(pe->getPartition(0) != partition) continue;
-        auto itc = creators.find(pe);
-        if(itc != creators.end() && itc->second == face)
-          entities.push_back(pe->tag());
-      }
-    }
   }
   else if(dim == 3) {
     GRegion *region = model->getRegionByTag(tag);
@@ -1600,19 +1588,6 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     if(it != boundaries.end()) {
       for(const auto &pe : it->second) {
         if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
-      }
-    }
-    // Union semantics: artificial boundaries lying on an internal interface
-    // are inner boundaries too; include the ones this parent created
-    const auto &creators =
-      std::get<std::unordered_map<partitionFace *, GRegion *>>(
-        model->getBoundaryOfOverlapCreators());
-    for(const auto &[iface, pfs] : model->getInnerBoundariesOnInterface3D()) {
-      for(const auto &pf : pfs) {
-        if(pf->getPartition(0) != partition) continue;
-        auto itc = creators.find(pf);
-        if(itc != creators.end() && itc->second == region)
-          entities.push_back(pf->tag());
       }
     }
   }
