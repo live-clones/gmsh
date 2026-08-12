@@ -1470,18 +1470,6 @@ static const auto &_getOverlapOfBoundaries(GModel *const model)
   }
 }
 
-template <int dim>
-static const auto &_getInnerBoundariesOnInterface(GModel *const model)
-{
-  if constexpr(dim == 2) { return model->getInnerBoundariesOnInterface2D(); }
-  else if constexpr(dim == 3) {
-    return model->getInnerBoundariesOnInterface3D();
-  }
-  else {
-    static_assert(dim == 2 || dim == 3,
-                  "Unsupported dimension for boundary overlaps");
-  }
-}
 
 // dim is model dimension, so we look for entities of dimension dim-1
 template <int dim>
