@@ -21,7 +21,7 @@ static int vFac[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}};
 // this edge and all vertices that are forming the outer ring of the cavity; we
 // return true if the cavity is closed and false if it is open
 
-void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
+static void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
                                      std::vector<MTet4 *> &outside)
 {
   outside.clear();
@@ -47,7 +47,7 @@ void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
   }
 }
 
-bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
+static bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
                      std::vector<MTet4 *> &cavity,
                      std::vector<MTet4 *> &outside,
                      std::vector<MVertex *> &ring)
