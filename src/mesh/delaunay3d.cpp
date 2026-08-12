@@ -428,8 +428,6 @@ void HilbertSortB::ComputeGrayCode(int n)
         // Calculate the permuted Gray code by xor with the start point (e).
         transgc[e][d][i] = (g ^ e);
       }
-      //      assert(transgc[e][d][0] == e);
-      //      assert(transgc[e][d][N - 1] == f);
     } // d
   } // e
 
@@ -560,7 +558,6 @@ void HilbertSortB::Sort(Vert **vertices, int arraysize, int e, int d,
 
   if(maxDepth > 0) {
     if((depth + 1) == maxDepth) {
-      // printf("max depth attained\n");
       return;
     }
   }
@@ -700,15 +697,12 @@ static bool removeIsolatedTets(Tet *containsV, cavityContainer &cavity,
     }
   }
   if(cc.size() == cavity.size()) return false;
-  // Msg::Info("   cavity updated(%3ld elements) %3ld isolated tet removed",
-  //           cavity.size(),cavity.size()-cc.size());
   cavity = cc;
   return true;
 }
 
 static Tet *tetInsideCavityWithFAce(Face &f, cavityContainer &cavity)
 {
-  // printf("size of cavity %ld\n",cavity.size());
   for(std::size_t i = 0; i < cavity.size(); i++) {
     Tet *t = cavity[i];
     for(std::size_t iFace = 0; iFace < 4; iFace++) {
