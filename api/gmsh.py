@@ -2282,10 +2282,10 @@ class model:
 
             Get the tags of the entities making up the overlap boundary of partition
             `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-            `tag'. Returns the union of the plain inner boundaries and of the inner
-            boundaries lying on an internal interface that were created by this parent
-            entity (the latter can be queried separately with
-            `getOverlapInterfaceBoundary').
+            `tag'. Only the plain inner boundaries are returned: the inner boundaries
+            lying on an internal interface are a distinct class, queried with
+            `getOverlapInterfaceBoundary'. A solver imposing a transmission condition
+            on the whole rim of an overlap patch must therefore combine both.
 
             Return `entityTags'.
 

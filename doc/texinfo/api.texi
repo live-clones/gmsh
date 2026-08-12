@@ -1190,7 +1190,7 @@ Get the tags of the partitioned entities of dimension @code{dim} whose parent ha
 @end table
 
 @item gmsh/model/mesh/getOverlapBoundary
-Get the tags of the entities making up the overlap boundary of partition @code{partition} inside the (non-partitioned) entity of dimension @code{dim} and tag @code{tag}. Returns the union of the plain inner boundaries and of the inner boundaries lying on an internal interface that were created by this parent entity (the latter can be queried separately with @code{getOverlapInterfaceBoundary}).
+Get the tags of the entities making up the overlap boundary of partition @code{partition} inside the (non-partitioned) entity of dimension @code{dim} and tag @code{tag}. Only the plain inner boundaries are returned: the inner boundaries lying on an internal interface are a distinct class, queried with @code{getOverlapInterfaceBoundary}. A solver imposing a transmission condition on the whole rim of an overlap patch must therefore combine both.
 
 @table @asis
 @item Input:
