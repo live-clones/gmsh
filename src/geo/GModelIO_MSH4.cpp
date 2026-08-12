@@ -3775,7 +3775,16 @@ static void writeMSH4EntityOverlapPairs(FILE *fp, bool binary,
                                         GModel *const model,
                                         int partitionToSave, const Map &set)
 {
-  for(const auto &[entity, boundaries] : set) {
+  // Use deterministic ordering
+  std::vector<typename Map::key_type> keys;
+  keys.reserve(set.size());
+  for(const auto &entry : set) keys.push_back(entry.first);
+  std::sort(keys.begin(), keys.end(), [](const auto &a, const auto &b) {
+    return a->dim() != b->dim() ? a->dim() < b->dim() : a->tag() < b->tag();
+  });
+
+  for(const auto &entity : keys) {
+    const auto &boundaries = set.at(entity);
     std::vector<typename EntityTraits<dim>::BoundaryEntity *> boundariesToSave;
     for(const auto &boundary : boundaries) {
       auto partitions = boundary->getPartitions();
