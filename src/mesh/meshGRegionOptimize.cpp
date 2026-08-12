@@ -30,6 +30,11 @@
 #include "Context.h"
 #include "OS.h"
 
+// the quality histogram both kernels report. At namespace scope so that the
+// lambdas below use it without capturing it: whether a constant needs to be
+// captured is read differently by different compilers.
+constexpr int nbRanges = 10;
+
 static bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm);
 
 // Flat port of optimizeMesh(), which follows it in this file: the mesh is
@@ -670,7 +675,6 @@ static bool optimizeMeshFlat(GRegion *gr, const qmTetrahedron::Measures &qm)
   }
 
   // same report as the object-based optimizer
-  const int nbRanges = 10;
   int quality_ranges[nbRanges];
   auto report = [&K, &quality_ranges](const char *what) {
     double vol = 0., worst = 1.0, avg = 0.;
@@ -811,7 +815,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 
   double t1 = Cpu(), w1 = TimeOfDay();
   std::vector<MTet4 *> illegals;
-  const int nbRanges = 10;
   int quality_ranges[nbRanges];
   {
     double totalVolumeb = 0.0;
