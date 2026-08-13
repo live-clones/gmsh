@@ -2658,6 +2658,15 @@ int PartitionUsingThisSplit(GModel *model,
       }
     }
   }
+
+  // Assign the corrected partitions back to the elements
+  for(std::size_t i = 0; i < graph.ne(); i++) {
+    if(graph.element(i)) {
+      elmToPartition[graph.element(i)] = part[i] + 1;
+      graph.element(i)->setPartition(part[i] + 1);
+    }
+  }
+
   graph.partition(part);
 
   model->setNumPartitions(graph.nparts());
