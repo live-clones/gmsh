@@ -35,8 +35,6 @@ public:
     : discreteFace(model, model->getMaxElementaryNumber(2) + 1),
       _covered(covered), _partition(partition)
   {
-    Msg::Info("Creating overlapFace for partition %d covering face with tag %d",
-              _partition, this->tag());
   }
 
   virtual GeomType geomType() const override { return OverlapSurface; }
@@ -68,7 +66,7 @@ public:
 
 class overlapRegion : public discreteRegion {
 private:
-  partitionRegion *_covered;
+  partitionRegion *_covered = nullptr;
   int _partition;
 
 public:
@@ -80,7 +78,11 @@ public:
 
   virtual GeomType geomType() const override { return OverlapVolume; }
   int owningPartition() const { return _partition; }
-  partitionRegion *getCovered() const { return _covered; }
+  partitionRegion *getCovered() const
+  {
+    if(!_covered) Msg::Error("No covered entity");
+    return _covered;
+  }
 
   virtual ~overlapRegion() { deleteMesh(); }
   virtual void deleteMesh() override
@@ -116,11 +118,23 @@ using OverlapCollection =
                                           MElementPtrEqual>,
                        GEntityPtrFullHash, GEntityPtrFullEqual>>;
 
+// One partition's worth of overlap data: covered entity -> subset of its
+// elements to save
+template <int dim>
+using CoveredElementsMap = typename OverlapCollection<dim>::value_type;
+
+// Map from entity to the subset of its mesh vertices to save
+using EntityToVerticesMap =
+  std::unordered_map<GEntity *,
+                     std::unordered_set<MVertex *, MVertexPtrHash,
+                                        MVertexPtrEqual>,
+                     GEntityPtrFullHash, GEntityPtrFullEqual>;
+
 // For each partition, we keep a map from volume entity to face/edges with their
 // parent element. Parent allows a reconstruction of a high-order boundary
 // element.
 template <int dim>
-using OveralBoundariesMesh = std::vector<std::unordered_map<
+using OverlapBoundariesMesh = std::vector<std::unordered_map<
   typename EntityTraits<dim>::Entity *,
   std::unordered_map<typename EntityTraits<dim>::BoundaryMeshObject, MElement *,
                      typename EntityTraits<dim>::BoundaryMeshObjectHash,
