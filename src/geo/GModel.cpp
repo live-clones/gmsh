@@ -341,6 +341,33 @@ OverlapManager &GModel::createNewOverlapManager(int layers)
   return _overlapManagers.back();
 }
 
+OverlapManager *GModel::createOverlapManagerWithTag(int tag, int layers)
+{
+  if(tag != (int)_overlapManagers.size()) {
+    Msg::Error("Overlap manager tag %d does not match expected position %zu. "
+               "Tags must be sequential.",
+               tag, _overlapManagers.size());
+    return nullptr;
+  }
+  _overlapManagers.emplace_back(tag, layers);
+  _nextOverlapTag = tag + 1;
+  return &_overlapManagers.back();
+}
+
+OverlapManager *GModel::getOverlapManagerByTag(int tag)
+{
+  for(auto &mgr : _overlapManagers) {
+    if(mgr.tag() == tag) return &mgr;
+  }
+  return nullptr;
+}
+
+void GModel::clearOverlaps()
+{
+  _overlapManagers.clear();
+  _nextOverlapTag = 0;
+}
+
 void GModel::addOverlap(overlapFace *of)
 {
   if(_overlapManagers.empty()) {
