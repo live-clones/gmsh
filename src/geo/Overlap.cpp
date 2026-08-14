@@ -19,7 +19,7 @@
 
 #include <OS.h> // Timing
 
-// Small util. Convert to partitionFace or partionRegion semi-statically
+// Small util. Convert to partitionFace or partitionRegion semi-statically
 template <int dim>
 static typename EntityTraits<dim>::PartitionEntity *
 castToPartitionEntity(GEntity *e)
@@ -42,7 +42,7 @@ template <int dim> OverlapCollection<dim> quickOverlap(GModel *const model)
 
   std::map<MVertex *, std::set<int>> vertexToPartitions;
 
-  // Function that takes a partitioned entity and adds fills the dictionary for
+  // Function that takes a partitioned entity and fills the dictionary for
   // all used (not owned!) vertices
   auto updateVertexToPartition = [&vertexToPartitions](GEntity *ge) {
     auto partsToAdd = getEntityPartition(ge, false);
@@ -59,14 +59,11 @@ template <int dim> OverlapCollection<dim> quickOverlap(GModel *const model)
 
   // For each partition and each partitioned entity, we keep a dict mapping a
   // partitioned entity to the elements of its overlaps. These elements are not
-  // separed by origin
+  // separated by origin
   OverlapCollection<dim> overlap(numParts);
 
   auto handleEntity = [&overlap, &vertexToPartitions](GEntity *entity) {
     auto partitionEntity = castToPartitionEntity<dim>(entity);
-    static_assert(std::is_same_v<decltype(partitionEntity),
-                                 typename EntityTraits<dim>::PartitionEntity *>,
-                  "The cast to PartitionEntity failed. Check the entity type.");
     if(!partitionEntity || partitionEntity->getPartitions().size() != 1) return;
 
     int partition = partitionEntity->getPartitions()[0];
@@ -76,11 +73,13 @@ template <int dim> OverlapCollection<dim> quickOverlap(GModel *const model)
       for(size_t v = 0; v < element->getNumVertices(); ++v) {
         if(element->getVertex(v)->onWhat()->dim() == dim)
           continue; // Non-Boundary vertex, skip it
-        // It is critical in some cases to check we uses partitions of the
+        // It is critical in some cases to check we use partitions of the
         // vertex and not the partitions of its entities (Particular case when a
         // vertex is on partitions that do not use the interface on which it
         // lies, if the BREP isn't perfect)
-        auto parts = vertexToPartitions[element->getVertex(v)];
+        auto it = vertexToPartitions.find(element->getVertex(v));
+        if(it == vertexToPartitions.end()) continue;
+        const auto &parts = it->second;
         // If this element has a vertex used by other partitions, it is part of
         // their overlap
         for(int part : parts) {
@@ -141,6 +140,7 @@ void extendOverlapCollection(GModel *const model,
   // We will loop over all elements of the dimension. If it shares a vertex with
   // one already in the overlap, we add it.
   auto addElements = [&](typename EntityTraits<dim>::PartitionEntity *pe) {
+    const auto &partitions = pe->getPartitions();
     for(size_t ie = 0; ie < pe->getNumMeshElements(); ++ie) {
       MElement *element = pe->getMeshElement(ie);
       for(size_t v = 0; v < element->getNumVertices(); ++v) {
@@ -149,7 +149,6 @@ void extendOverlapCollection(GModel *const model,
         for(auto it = range.first; it != range.second; ++it) {
           int partitionIndex = it->second;
           // Do not overlap yourself!
-          auto partitions = pe->getPartitions();
           if(std::find(partitions.begin(), partitions.end(),
                        partitionIndex + 1) != partitions.end()) {
             continue;
@@ -161,19 +160,13 @@ void extendOverlapCollection(GModel *const model,
   };
 
   if constexpr(dim == 2) {
-    for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
-      auto face = *it;
-      auto partitionEntity =
-        dynamic_cast<typename EntityTraits<dim>::PartitionEntity *>(face);
-      if(partitionEntity) { addElements(partitionEntity); }
+    for(auto *face : model->getFaces()) {
+      if(auto *pe = castToPartitionEntity<dim>(face)) addElements(pe);
     }
   }
   else if constexpr(dim == 3) {
-    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
-      auto region = *it;
-      auto partitionEntity =
-        dynamic_cast<typename EntityTraits<dim>::PartitionEntity *>(region);
-      if(partitionEntity) { addElements(partitionEntity); }
+    for(auto *region : model->getRegions()) {
+      if(auto *pe = castToPartitionEntity<dim>(region)) addElements(pe);
     }
   }
 }
@@ -236,7 +229,7 @@ template void buildOverlapEntities<3>(GModel *const model, OverlapManager &mgr,
                                       const OverlapCollection<3> &overlaps);
 
 template <int dim>
-OveralBoundariesMesh<dim>
+OverlapBoundariesMesh<dim>
 findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
 {
   using Entity = typename EntityTraits<dim>::Entity;
@@ -245,7 +238,7 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
   using Equal = typename EntityTraits<dim>::BoundaryMeshObjectEqual;
   // Track count and one parent element for each boundary
   // We only need one element since boundaries with count==1 are kept
-  OveralBoundariesMesh<dim> result(overlaps.size());
+  OverlapBoundariesMesh<dim> result(overlaps.size());
 
   struct BndInfo {
     unsigned count = 0;
@@ -254,7 +247,7 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
   };
   using BndInfoMap = std::unordered_map<MBnd, BndInfo, Hash, Equal>;
 
-// Embarassingly parallel, loop over partitions
+// Embarrassingly parallel, loop over partitions
 #pragma omp parallel for schedule(dynamic)
   for(size_t i = 0; i < overlaps.size(); ++i) {
     //std::unordered_map<Entity *, BndInfoMap> counts;
@@ -303,9 +296,9 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
   return result;
 }
 
-template OveralBoundariesMesh<2>
+template OverlapBoundariesMesh<2>
 findBoundaryOfOverlapEntities<2>(const OverlapCollection<2> &overlaps);
-template OveralBoundariesMesh<3>
+template OverlapBoundariesMesh<3>
 findBoundaryOfOverlapEntities<3>(const OverlapCollection<3> &overlaps);
 
 template <int dim>
@@ -554,8 +547,6 @@ void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
             auto parts = getEntityPartition(partitionEntity);
             if(std::find(parts.begin(), parts.end(), partition) ==
                parts.end()) {
-              // Msg::Warning("Interface between two other subdomains added as
-              // artificial boundary.");
               innerboundaryMap[melement] = parentElement;
             }
           }
@@ -585,18 +576,10 @@ void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
           model, model->getMaxElementaryNumber(dim - 1) + 1, {partition});
 
         fillBoundary(bnd, bndMap);
-        if constexpr(dim == 2) {
-          Msg::Info("Created overlap of boundary entity with %lu elements for "
-                    "partition %d.",
-                    bnd->getNumMeshElements(), partition);
-        }
-        else if constexpr(dim == 3) {
-          Msg::Info("Created overlap of boundary entity with %lu elements for "
-                    "partition %d in dimension %d.",
-                    bnd->getNumMeshElements(), partition, dim);
-        }
-        Msg::Info("Entity %d %d is creating an overlap of %d %d", parent->dim(),
-                  parent->tag(), entity->dim(), entity->tag());
+        Msg::Debug("Created overlap of boundary entity with %lu elements for "
+                   "partition %d (entity %d/%d, created by %d/%d)",
+                   bnd->getNumMeshElements(), partition, entity->dim(),
+                   entity->tag(), parent->dim(), parent->tag());
         model->add(bnd);
         if constexpr(dim == 2)
           mgr.addOverlapOfBoundary(dynamic_cast<GEdge *>(entity), bnd,
@@ -623,11 +606,11 @@ void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
                    entity->tag(), parent->dim(), parent->tag());
         model->add(bnd);
         if constexpr(dim == 2)
-          mgr.addInnerBoundaryOnInterface(dynamic_cast<GEdge *>(entity),
-                                          bnd, parent);
+          mgr.addInnerBoundaryOnInterface(dynamic_cast<GEdge *>(entity), bnd,
+                                          parent);
         else if constexpr(dim == 3)
-          mgr.addInnerBoundaryOnInterface(dynamic_cast<GFace *>(entity),
-                                          bnd, parent);
+          mgr.addInnerBoundaryOnInterface(dynamic_cast<GFace *>(entity), bnd,
+                                          parent);
       }
     }
   }
@@ -641,18 +624,11 @@ template void overlapBuildBoundaries<3>(GModel *const model,
                                         const OverlapCollection<3> &overlaps);
 
 template <int dim>
-std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                   std::unordered_set<MElement *, MElementPtrHash,
-                                      MElementPtrEqual>,
-                   GEntityPtrFullHash, GEntityPtrFullEqual>
+CoveredElementsMap<dim>
 findCoveredEntitiesAndElementsToSave(GModel *const model,
                                      const std::vector<int> &partitions)
 {
-  std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                     std::unordered_set<MElement *, MElementPtrHash,
-                                        MElementPtrEqual>,
-                     GEntityPtrFullHash, GEntityPtrFullEqual>
-    result;
+  CoveredElementsMap<dim> result;
 
   using overlapEntityType = typename EntityTraits<dim>::OverlapEntity;
 
@@ -676,38 +652,21 @@ findCoveredEntitiesAndElementsToSave(GModel *const model,
   return result;
 }
 
-template std::unordered_map<typename EntityTraits<2>::PartitionEntity *,
-                            std::unordered_set<MElement *, MElementPtrHash,
-                                               MElementPtrEqual>,
-                            GEntityPtrFullHash, GEntityPtrFullEqual>
+template CoveredElementsMap<2>
 findCoveredEntitiesAndElementsToSave<2>(GModel *const model,
-                                       const std::vector<int> &partitions);
+                                        const std::vector<int> &partitions);
 
-template std::unordered_map<typename EntityTraits<3>::PartitionEntity *,
-                            std::unordered_set<MElement *, MElementPtrHash,
-                                               MElementPtrEqual>,
-                            GEntityPtrFullHash, GEntityPtrFullEqual>
+template CoveredElementsMap<3>
 findCoveredEntitiesAndElementsToSave<3>(GModel *const model,
-                                       const std::vector<int> &partitions);
+                                        const std::vector<int> &partitions);
 
 template <int dim>
-std::unordered_map<GEntity *,
-                   std::unordered_set<MVertex *, MVertexPtrHash,
-                                      MVertexPtrEqual>,
-                   GEntityPtrFullHash, GEntityPtrFullEqual>
-findNonOwnedVerticesToSave(
-  GModel *const model, const std::vector<int> &partitions,
-  const std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                           std::unordered_set<MElement *, MElementPtrHash,
-                                              MElementPtrEqual>,
-                           GEntityPtrFullHash, GEntityPtrFullEqual>
-    &coveredEntities)
+EntityToVerticesMap
+findNonOwnedVerticesToSave(GModel *const model,
+                           const std::vector<int> &partitions,
+                           const CoveredElementsMap<dim> &coveredEntities)
 {
-  std::unordered_map<GEntity *,
-                     std::unordered_set<MVertex *, MVertexPtrHash,
-                                        MVertexPtrEqual>,
-                     GEntityPtrFullHash, GEntityPtrFullEqual>
-    result;
+  EntityToVerticesMap result;
   for(const auto &[coveredEntity, elements] : coveredEntities) {
     for(MElement *elem : elements) {
       for(size_t v = 0; v < elem->getNumVertices(); ++v) {
@@ -781,25 +740,11 @@ findNonOwnedVerticesToSave(
   return result;
 }
 
-template std::unordered_map<GEntity *,
-                            std::unordered_set<MVertex *, MVertexPtrHash,
-                                               MVertexPtrEqual>,
-                            GEntityPtrFullHash, GEntityPtrFullEqual>
-findNonOwnedVerticesToSave<2>(
-  GModel *const model, const std::vector<int> &partitions,
-  const std::unordered_map<typename EntityTraits<2>::PartitionEntity *,
-                           std::unordered_set<MElement *, MElementPtrHash,
-                                              MElementPtrEqual>,
-                           GEntityPtrFullHash, GEntityPtrFullEqual>
-    &coveredEntities);
-template std::unordered_map<GEntity *,
-                            std::unordered_set<MVertex *, MVertexPtrHash,
-                                               MVertexPtrEqual>,
-                            GEntityPtrFullHash, GEntityPtrFullEqual>
-findNonOwnedVerticesToSave<3>(
-  GModel *const model, const std::vector<int> &partitions,
-  const std::unordered_map<typename EntityTraits<3>::PartitionEntity *,
-                           std::unordered_set<MElement *, MElementPtrHash,
-                                              MElementPtrEqual>,
-                           GEntityPtrFullHash, GEntityPtrFullEqual>
-    &coveredEntities);
+template EntityToVerticesMap
+findNonOwnedVerticesToSave<2>(GModel *const model,
+                              const std::vector<int> &partitions,
+                              const CoveredElementsMap<2> &coveredEntities);
+template EntityToVerticesMap
+findNonOwnedVerticesToSave<3>(GModel *const model,
+                              const std::vector<int> &partitions,
+                              const CoveredElementsMap<3> &coveredEntities);
