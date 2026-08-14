@@ -631,7 +631,8 @@ std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
                    std::unordered_set<MElement *, MElementPtrHash,
                                       MElementPtrEqual>,
                    GEntityPtrFullHash, GEntityPtrFullEqual>
-findCoveredEntitiesAndElementsToSave(GModel *const model, int partition)
+findCoveredEntitiesAndElementsToSave(GModel *const model,
+                                     const std::vector<int> &partitions)
 {
   std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
                      std::unordered_set<MElement *, MElementPtrHash,
@@ -644,7 +645,9 @@ findCoveredEntitiesAndElementsToSave(GModel *const model, int partition)
   const auto &overlaps =
     std::get<std::vector<overlapEntityType *>>(model->getAllOverlaps());
   for(auto overlapPtr : overlaps) {
-    if(overlapPtr->owningPartition() != partition) continue;
+    if(std::find(partitions.begin(), partitions.end(),
+                 overlapPtr->owningPartition()) == partitions.end())
+      continue;
     size_t numElements = overlapPtr->getNumMeshElements();
     for(size_t i = 0; i < numElements; ++i) {
       MElement *element = overlapPtr->getMeshElement(i);
@@ -659,13 +662,15 @@ template std::unordered_map<typename EntityTraits<2>::PartitionEntity *,
                             std::unordered_set<MElement *, MElementPtrHash,
                                                MElementPtrEqual>,
                             GEntityPtrFullHash, GEntityPtrFullEqual>
-findCoveredEntitiesAndElementsToSave<2>(GModel *const model, int partition);
+findCoveredEntitiesAndElementsToSave<2>(GModel *const model,
+                                       const std::vector<int> &partitions);
 
 template std::unordered_map<typename EntityTraits<3>::PartitionEntity *,
                             std::unordered_set<MElement *, MElementPtrHash,
                                                MElementPtrEqual>,
                             GEntityPtrFullHash, GEntityPtrFullEqual>
-findCoveredEntitiesAndElementsToSave<3>(GModel *const model, int partition);
+findCoveredEntitiesAndElementsToSave<3>(GModel *const model,
+                                       const std::vector<int> &partitions);
 
 template <int dim>
 std::unordered_map<GEntity *,
@@ -673,7 +678,7 @@ std::unordered_map<GEntity *,
                                       MVertexPtrEqual>,
                    GEntityPtrFullHash, GEntityPtrFullEqual>
 findNonOwnedVerticesToSave(
-  GModel *const model, int partition,
+  GModel *const model, const std::vector<int> &partitions,
   const std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
                            std::unordered_set<MElement *, MElementPtrHash,
                                               MElementPtrEqual>,
@@ -696,7 +701,7 @@ findNonOwnedVerticesToSave(
   }
 
   // Add empty entities that are the BREP of the covered entities
-  if(partition == 0) return result;
+  if(partitions.empty()) return result;
 
   for(const auto &[coveredEntity, _] : coveredEntities) {
     result[coveredEntity]; // This will create an empty set if not present
@@ -720,7 +725,7 @@ findNonOwnedVerticesToSave(
     auto parts = getEntityPartition(coveredEntity);
     for(int part : parts) partitionsToExport.insert(part);
   }
-  partitionsToExport.erase(partition); // Remove own partition (full export)
+  for(int p : partitions) partitionsToExport.erase(p);
 
   for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
     auto pv = dynamic_cast<partitionVertex *>(*it);
@@ -745,7 +750,9 @@ findNonOwnedVerticesToSave(
   // Remove owned entities - they're fully exported through getEntitiesToSave()
   for(auto it = result.begin(); it != result.end();) {
     auto parts = getEntityPartition(it->first, false);
-    if(std::find(parts.begin(), parts.end(), partition) != parts.end()) {
+    if(std::any_of(partitions.begin(), partitions.end(), [&](int p) {
+         return std::find(parts.begin(), parts.end(), p) != parts.end();
+       })) {
       it = result.erase(it);
     }
     else {
@@ -761,7 +768,7 @@ template std::unordered_map<GEntity *,
                                                MVertexPtrEqual>,
                             GEntityPtrFullHash, GEntityPtrFullEqual>
 findNonOwnedVerticesToSave<2>(
-  GModel *const model, int partition,
+  GModel *const model, const std::vector<int> &partitions,
   const std::unordered_map<typename EntityTraits<2>::PartitionEntity *,
                            std::unordered_set<MElement *, MElementPtrHash,
                                               MElementPtrEqual>,
@@ -772,7 +779,7 @@ template std::unordered_map<GEntity *,
                                                MVertexPtrEqual>,
                             GEntityPtrFullHash, GEntityPtrFullEqual>
 findNonOwnedVerticesToSave<3>(
-  GModel *const model, int partition,
+  GModel *const model, const std::vector<int> &partitions,
   const std::unordered_map<typename EntityTraits<3>::PartitionEntity *,
                            std::unordered_set<MElement *, MElementPtrHash,
                                               MElementPtrEqual>,
