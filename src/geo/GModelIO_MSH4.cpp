@@ -1322,12 +1322,14 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
         return false;
       }
 
-      mgr->addOverlap(overlapEntity);
+      // Register in the manager only once the model owns the entity, so the
+      // failure path does not leave a dangling pointer in the manager
       if(!model->add(overlapEntity)) {
         Msg::Error("Could not add volume overlap with tag %d to model", tag);
         delete overlapEntity;
         return false;
       }
+      mgr->addOverlap(overlapEntity);
 
       for(size_t i = 0; i < numElements; i++) {
         size_t elementTag = 0;
@@ -1443,31 +1445,39 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
         if(dim == dimOfEntity) {
           auto parentCast =
             dynamic_cast<typename EntityTraits<dim>::Entity *>(entity);
-          if(!parentCast)
+          if(!parentCast) {
             Msg::Error("Could not cast %dD entity %d in overlap boundary.",
                        dim, tag);
+            return false;
+          }
           auto boundaryCast =
             dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
               boundaryEntity);
-          if(!boundaryCast)
+          if(!boundaryCast) {
             Msg::Error("Could not cast %dD boundary entity %d in overlap "
                        "boundary.",
                        dim - 1, boundaryTag);
+            return false;
+          }
           mgr->addInnerBoundary(parentCast, boundaryCast);
         }
         else {
           auto parentCast =
             dynamic_cast<typename EntityTraits<dim - 1>::Entity *>(entity);
-          if(!parentCast)
+          if(!parentCast) {
             Msg::Error("Could not cast %dD entity %d in overlap boundary.",
                        dim - 1, tag);
+            return false;
+          }
           auto boundaryCast =
             dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
               boundaryEntity);
-          if(!boundaryCast)
+          if(!boundaryCast) {
             Msg::Error("Could not cast %dD boundary entity %d in overlap "
                        "boundary.",
                        dim - 1, boundaryTag);
+            return false;
+          }
           GEntity *creatorEntity = model->getEntityByTag(dim, creatorTag);
           if(!creatorEntity) {
             Msg::Error("Could not find %dD creator entity %d in overlap "
@@ -2214,15 +2224,21 @@ static void writeMSH4Entities(
         if(gr) regions.insert(gr);
       }
     }
-    // Overlap boundaries are partition entities too
+    // Overlap boundaries are partition entities too. Filter by saved
+    // partition like the loops above, so per-partition files do not declare
+    // the (empty) overlap boundaries of every other partition
     for(const auto &mgr : model->getOverlapManagers()) {
       for(const auto &[parent, boundarySet] :
           mgr.getOverlapInnerBoundaries2D()) {
-        for(const auto &boundary : boundarySet) { edges.insert(boundary); }
+        for(const auto &boundary : boundarySet) {
+          if(isInPartition(boundary)) edges.insert(boundary);
+        }
       }
       for(const auto &[parent, boundaryMap] :
           mgr.getOverlapOfBoundaries2D()) {
-        for(const auto &boundary : boundaryMap) { edges.insert(boundary); }
+        for(const auto &boundary : boundaryMap) {
+          if(isInPartition(boundary)) edges.insert(boundary);
+        }
       }
       for(const auto &[iface, boundarySet] :
           mgr.getInnerBoundariesOnInterface2D()) {
@@ -2230,11 +2246,15 @@ static void writeMSH4Entities(
       }
       for(const auto &[parent, boundarySet] :
           mgr.getOverlapInnerBoundaries3D()) {
-        for(const auto &boundary : boundarySet) { faces.insert(boundary); }
+        for(const auto &boundary : boundarySet) {
+          if(isInPartition(boundary)) faces.insert(boundary);
+        }
       }
       for(const auto &[parent, boundaryMap] :
           mgr.getOverlapOfBoundaries3D()) {
-        for(const auto &boundary : boundaryMap) { faces.insert(boundary); }
+        for(const auto &boundary : boundaryMap) {
+          if(isInPartition(boundary)) faces.insert(boundary);
+        }
       }
       for(const auto &[iface, boundarySet] :
           mgr.getInnerBoundariesOnInterface3D()) {
@@ -3237,10 +3257,14 @@ static void writeMSH4Elements(
     if(overlapFaces) {
       for(const auto &[pface, elements] : *overlapFaces) {
         int tag = pface->tag();
-        if(faces.count(pface)) continue; // already saved
-        if(!saveAll && pface->physicals.size() == 0 &&
-           pface->geomType() != GEntity::GhostSurface)
-          continue;
+        // Skip only if the loop above actually wrote this entity's elements:
+        // elements are referenced by tag in $Overlaps2D and the reader has no
+        // tolerance for missing ones, so the physicals/saveAll filter must not
+        // drop them
+        if(faces.count(pface) &&
+           (saveAll || pface->physicals.size() ||
+            pface->geomType() == GEntity::GhostSurface))
+          continue; // already saved
 
         numElements += elements.size();
         for(const auto &element : elements) {
@@ -3293,10 +3317,14 @@ static void writeMSH4Elements(
     if(overlapRegions) {
       for(const auto &[pregion, elements] : *overlapRegions) {
         int tag = pregion->tag();
-        if(regions.count(pregion)) continue; // already saved
-        if(!saveAll && pregion->physicals.size() == 0 &&
-           pregion->geomType() != GEntity::GhostVolume)
-          continue;
+        // Skip only if the loop above actually wrote this entity's elements:
+        // elements are referenced by tag in $Overlaps3D and the reader has no
+        // tolerance for missing ones, so the physicals/saveAll filter must not
+        // drop them
+        if(regions.count(pregion) &&
+           (saveAll || pregion->physicals.size() ||
+            pregion->geomType() == GEntity::GhostVolume))
+          continue; // already saved
 
         numElements += elements.size();
         for(const auto &element : elements) {
