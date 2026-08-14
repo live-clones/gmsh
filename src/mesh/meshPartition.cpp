@@ -2542,6 +2542,11 @@ int UnpartitionMesh(GModel *model)
       model->remove(face);
       delete face;
     }
+    else if(face->geomType() == GEntity::OverlapSurface) {
+      face->deleteMesh();
+      model->remove(face);
+      delete face;
+    }
   }
 
   // Loop over volumes
@@ -2590,9 +2595,15 @@ int UnpartitionMesh(GModel *model)
       model->remove(region);
       delete region;
     }
+    else if(region->geomType() == GEntity::OverlapVolume) {
+      region->deleteMesh();
+      model->remove(region);
+      delete region;
+    }
   }
 
   model->setNumPartitions(0);
+  model->clearOverlaps();
 
   std::map<std::pair<int, int>, std::string> physicalNames =
     model->getPhysicalNames();
