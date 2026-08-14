@@ -1093,6 +1093,17 @@ GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim, const int tag
   }
 }
 
+GMSH_API void gmshModelMeshGetOverlapOverlappedEntity(const int dim, const int overlapTag, int * overlappedEntityTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getOverlapOverlappedEntity(dim, overlapTag, *overlappedEntityTag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshUnpartition(int * ierr)
 {
   if(ierr) *ierr = 0;

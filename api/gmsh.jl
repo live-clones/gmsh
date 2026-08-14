@@ -2010,6 +2010,37 @@ end
 const get_boundary_overlap_parent = getBoundaryOverlapParent
 
 """
+    gmsh.model.mesh.getOverlapOverlappedEntity(dim, overlapTag)
+
+If the entity of dimension `dim` and tag `overlapTag` is a highest-dimensional
+overlap entity (OverlapSurface or OverlapVolume), set `overlappedEntityTag` to
+the tag of the partition entity whose elements it covers. This covered partition
+entity belongs to a partition different from the partition owning the overlap.
+For a boundary overlap that extends an existing model boundary, or an inner
+overlap boundary lying on an internal interface, set `overlappedEntityTag` to
+the tag of the underlying boundary or interface entity. A plain inner overlap
+boundary has no underlying same-dimensional entity and returns -1. Set
+`overlappedEntityTag` to -1 if the entity is not an overlap.
+
+Return `overlappedEntityTag`.
+
+Types:
+ - `dim`: integer
+ - `overlapTag`: integer
+ - `overlappedEntityTag`: integer
+"""
+function getOverlapOverlappedEntity(dim, overlapTag)
+    api_overlappedEntityTag_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetOverlapOverlappedEntity, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}, Ptr{Cint}),
+          dim, overlapTag, api_overlappedEntityTag_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_overlappedEntityTag_[]
+end
+const get_overlap_overlapped_entity = getOverlapOverlappedEntity
+
+"""
     gmsh.model.mesh.unpartition()
 
 Unpartition the mesh of the current model.
