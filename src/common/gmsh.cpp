@@ -1491,12 +1491,14 @@ static void _findOverlapOfBoundary(const int tag, const int partition,
     auto it = map.find(entity);
     if(it == map.end()) { return; }
     for(auto *pe : it->second) {
-      auto partitions = pe->getPartitions();
-      if(partitions.size() != 1)
+      const auto &partitions = pe->getPartitions();
+      if(partitions.size() != 1) {
         Msg::Error("Overlap of boundary should have exactly one partition, "
                    "found %zu",
                    partitions.size());
-      if(partitions.at(0) == partition) {
+        continue;
+      }
+      if(partitions.front() == partition) {
         overlapEntities.push_back(pe->tag());
       }
     }
@@ -1527,11 +1529,14 @@ GMSH_API void gmsh::model::mesh::getPartitionEntities(
     return;
   }
 
-  // Overlaps: if dim == modelDim, return the usualOverlaps. If dim == modelDim
-  // - 1, return overlap of boundaries. Else, nothing
+  // Overlaps: if dim == modelDim, return the usual overlaps. If dim ==
+  // modelDim - 1, return overlap of boundaries. Else, nothing
   if(overlapIndex < 0 ||
      overlapIndex >= (int)model->getOverlapManagers().size()) {
-    if(!model->getOverlapManagers().empty())
+    // Only the default overlapIndex == 0 stays silent on an overlap-free
+    // model, so plain partition queries keep working; an explicit index is
+    // always an error
+    if(overlapIndex != 0 || !model->getOverlapManagers().empty())
       Msg::Error("getPartitionEntities: overlap index %d out of range "
                  "(have %zu managers)",
                  overlapIndex, model->getOverlapManagers().size());
@@ -1581,6 +1586,12 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     auto it = boundaries.find(face);
     if(it != boundaries.end()) {
       for(const auto &pe : it->second) {
+        if(pe->numPartitions() != 1) {
+          Msg::Error("Overlap boundary should have exactly one partition, "
+                     "found %zu",
+                     pe->numPartitions());
+          continue;
+        }
         if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
       }
     }
@@ -1595,6 +1606,12 @@ GMSH_API void gmsh::model::mesh::getOverlapBoundary(const int dim,
     auto it = boundaries.find(region);
     if(it != boundaries.end()) {
       for(const auto &pe : it->second) {
+        if(pe->numPartitions() != 1) {
+          Msg::Error("Overlap boundary should have exactly one partition, "
+                     "found %zu",
+                     pe->numPartitions());
+          continue;
+        }
         if(pe->getPartition(0) == partition) entities.push_back(pe->tag());
       }
     }
@@ -1631,6 +1648,12 @@ GMSH_API void gmsh::model::mesh::getOverlapInterfaceBoundary(
     auto it = boundaries.find(edge);
     if(it == boundaries.end()) { return; }
     for(const auto &pe : it->second) {
+      if(pe->numPartitions() != 1) {
+        Msg::Error("Overlap interface boundary should have exactly one "
+                   "partition, found %zu",
+                   pe->numPartitions());
+        continue;
+      }
       if(pe->getPartition(0) == partition) entityTags.push_back(pe->tag());
     }
   }
@@ -1644,6 +1667,12 @@ GMSH_API void gmsh::model::mesh::getOverlapInterfaceBoundary(
     auto it = boundaries.find(face);
     if(it == boundaries.end()) { return; }
     for(const auto &pf : it->second) {
+      if(pf->numPartitions() != 1) {
+        Msg::Error("Overlap interface boundary should have exactly one "
+                   "partition, found %zu",
+                   pf->numPartitions());
+        continue;
+      }
       if(pf->getPartition(0) == partition) entityTags.push_back(pf->tag());
     }
   }
@@ -1671,23 +1700,23 @@ GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
   const auto &mgr = model->getOverlapManagers().at(overlapIndex);
   GEntity *entity = model->getEntityByTag(dim, tag);
   if(!entity) {
-    Msg::Warning("findCreatingEntityForOverlapOfBoundary: no entity of "
-                 "dimension %d and tag %d",
-                 dim, tag);
+    Msg::Error("getBoundaryOverlapParent: no entity of dimension %d and "
+               "tag %d",
+               dim, tag);
     parentTag = -1;
     return;
   }
   if(dim == 3 || dim == 0) {
-    Msg::Warning("findCreatingEntityForOverlapOfBoundary: only supported for "
-                 "1D and 2D entities");
+    Msg::Error("getBoundaryOverlapParent: only supported for 1D and 2D "
+               "entities");
     parentTag = -1;
     return;
   }
   if(dim == 1) {
     partitionEdge *pe = dynamic_cast<partitionEdge *>(entity);
     if(!pe) {
-      Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity (dim=%d, "
-                   "tag=%d) is not a partitionEdge",
+      Msg::Warning("getBoundaryOverlapParent: entity (dim=%d, tag=%d) is not "
+                   "a partitionEdge",
                    dim, tag);
       parentTag = -1;
       return;
@@ -1696,8 +1725,8 @@ GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
       mgr.getBoundaryOfOverlapCreators());
     auto it = dict.find(pe);
     if(it == dict.end()) {
-      Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity "
-                   "found for partitionEdge (dim=%d, tag=%d)",
+      Msg::Warning("getBoundaryOverlapParent: no creating entity found for "
+                   "partitionEdge (dim=%d, tag=%d)",
                    dim, tag);
       parentTag = -1;
       return;
@@ -1707,8 +1736,8 @@ GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
   else if(dim == 2) {
     partitionFace *pf = dynamic_cast<partitionFace *>(entity);
     if(!pf) {
-      Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity (dim=%d, "
-                   "tag=%d) is not a partitionFace",
+      Msg::Warning("getBoundaryOverlapParent: entity (dim=%d, tag=%d) is not "
+                   "a partitionFace",
                    dim, tag);
       parentTag = -1;
       return;
@@ -1717,8 +1746,8 @@ GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
       mgr.getBoundaryOfOverlapCreators());
     auto it = dict.find(pf);
     if(it == dict.end()) {
-      Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity "
-                   "found for partitionFace (dim=%d, tag=%d)",
+      Msg::Warning("getBoundaryOverlapParent: no creating entity found for "
+                   "partitionFace (dim=%d, tag=%d)",
                    dim, tag);
       parentTag = -1;
       return;

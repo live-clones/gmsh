@@ -43,12 +43,12 @@ void buildOverlapEntities(GModel *const model, OverlapManager &mgr,
 // part of the boundary; results are still grouped by the parent entity of the
 // adjacent element.
 template <int dim>
-OveralBoundariesMesh<dim>
+OverlapBoundariesMesh<dim>
 findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps);
 
 /**
- * Create the boundary entities of the overlap patches and register them on
- * the model, in three classes:
+ * Create the boundary entities of the overlap patches and register them in
+ * the manager, in three classes:
  * - "overlap of boundary": facets on a one-sided dim-1 entity (outer physical
  *   boundary), grouped by that entity — the physical BC extends there;
  * - "inner boundary on interface": facets on a two-sided dim-1 entity (an
@@ -71,24 +71,14 @@ void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
  */
 
 template <int dim>
-std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                   std::unordered_set<MElement *, MElementPtrHash,
-                                      MElementPtrEqual>,
-                   GEntityPtrFullHash, GEntityPtrFullEqual>
+CoveredElementsMap<dim>
 findCoveredEntitiesAndElementsToSave(GModel *const model,
                                      const std::vector<int> &partitions);
 
 template <int dim>
-std::unordered_map<GEntity *,
-                   std::unordered_set<MVertex *, MVertexPtrHash,
-                                      MVertexPtrEqual>,
-                   GEntityPtrFullHash, GEntityPtrFullEqual>
-findNonOwnedVerticesToSave(
-  GModel *const model, const std::vector<int> &partitions,
-  const std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                           std::unordered_set<MElement *, MElementPtrHash,
-                                              MElementPtrEqual>,
-                           GEntityPtrFullHash, GEntityPtrFullEqual>
-    &coveredEntities);
+EntityToVerticesMap
+findNonOwnedVerticesToSave(GModel *const model,
+                           const std::vector<int> &partitions,
+                           const CoveredElementsMap<dim> &coveredEntities);
 
 #endif

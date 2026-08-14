@@ -1547,8 +1547,8 @@ static bool readMSH4OverlapInterfaceBoundaries(GModel *const model, FILE *fp,
         }
       }
       else {
-        if(fscanf(fp, "%d %d %zu", &dimOfEntity, &tag, &numBoundaryEntities) !=
-           3) {
+        if(fscanf(fp, "%d %d %zu", &dimOfEntity, &tag,
+                  &numBoundaryEntities) != 3) {
           return false;
         }
       }
@@ -1560,7 +1560,8 @@ static bool readMSH4OverlapInterfaceBoundaries(GModel *const model, FILE *fp,
       }
       GEntity *entity = model->getEntityByTag(dimOfEntity, tag);
       if(!entity) {
-        Msg::Error("Could not find %dD entity %d in overlap interface boundary",
+        Msg::Error("Could not find %dD entity %d in overlap interface "
+                   "boundary",
                    dimOfEntity, tag);
         return false;
       }
@@ -1576,8 +1577,12 @@ static bool readMSH4OverlapInterfaceBoundaries(GModel *const model, FILE *fp,
       std::vector<int> creatorTags(numBoundaryEntities, -1);
       if(binary) {
         for(size_t i = 0; i < numBoundaryEntities; ++i) {
-          if(fread(&boundaryTags[i], sizeof(int), 1, fp) != 1) { return false; }
-          if(fread(&creatorTags[i], sizeof(int), 1, fp) != 1) { return false; }
+          if(fread(&boundaryTags[i], sizeof(int), 1, fp) != 1) {
+            return false;
+          }
+          if(fread(&creatorTags[i], sizeof(int), 1, fp) != 1) {
+            return false;
+          }
         }
       }
       else {
@@ -2161,11 +2166,7 @@ static void writeMSH4Entities(
   double scalingFactor, double version,
   std::map<GEntity *, SBoundingBox3d> *entityBounds,
   const std::vector<int> &partitionsToSave,
-  const std::unordered_map<GEntity *,
-                           std::unordered_set<MVertex *, MVertexPtrHash,
-                                              MVertexPtrEqual>,
-                           GEntityPtrFullHash, GEntityPtrFullEqual>
-    &entitiesWithSubsetToExport)
+  const EntityToVerticesMap &entitiesWithSubsetToExport)
 {
   std::set<GEntity *, GEntityPtrFullLessThan> ghost;
   std::set<GRegion *, GEntityPtrLessThan> regions;
@@ -2242,7 +2243,9 @@ static void writeMSH4Entities(
       }
       for(const auto &[iface, boundarySet] :
           mgr.getInnerBoundariesOnInterface2D()) {
-        for(const auto &boundary : boundarySet) { edges.insert(boundary); }
+        for(const auto &boundary : boundarySet) {
+          if(isInPartition(boundary)) edges.insert(boundary);
+        }
       }
       for(const auto &[parent, boundarySet] :
           mgr.getOverlapInnerBoundaries3D()) {
@@ -2258,7 +2261,9 @@ static void writeMSH4Entities(
       }
       for(const auto &[iface, boundarySet] :
           mgr.getInnerBoundariesOnInterface3D()) {
-        for(const auto &boundary : boundarySet) { faces.insert(boundary); }
+        for(const auto &boundary : boundarySet) {
+          if(isInPartition(boundary)) faces.insert(boundary);
+        }
       }
     }
   }
@@ -3009,11 +3014,7 @@ writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
                const std::vector<int> &partitionsToSave, bool binary,
                int saveParametric,
                double scalingFactor, bool saveAll, double version,
-               std::unordered_map<GEntity *,
-                                  std::unordered_set<MVertex *, MVertexPtrHash,
-                                                     MVertexPtrEqual>,
-                                  GEntityPtrFullHash, GEntityPtrFullEqual>
-                 &entitiesWithSubsetToExport)
+               EntityToVerticesMap &entitiesWithSubsetToExport)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -3137,15 +3138,12 @@ static void writeMSH4Elements(
   GModel *const model, FILE *fp, bool partitioned,
   const std::vector<int> &partitionsToSave, bool binary, bool saveAll,
   double version,
-  const std::variant<
-    std::monostate,
-    decltype(findCoveredEntitiesAndElementsToSave<2>(model, std::vector<int>{})),
-    decltype(findCoveredEntitiesAndElementsToSave<3>(model, std::vector<int>{}))>
-    &overlapElements)
+  const std::variant<std::monostate, CoveredElementsMap<2>,
+                     CoveredElementsMap<3>> &overlapElements)
 {
   /**
    * If the mesh is partitioned and only one partition is saved, we save
-   * 1) elements on an enitity belonging to (at least) this partition
+   * 1) elements on an entity belonging to (at least) this partition
    * 2) overlap boundary elements if there is an overlap
    * 3) overlapped entities, with only the subset of elements actually used by
    * the overlaps
@@ -3251,9 +3249,7 @@ static void writeMSH4Elements(
   // Overlap faces - TODO: ensure it's exported only if not all partitions are
   // saved
   if(overlapDim == 2) {
-    auto overlapFaces =
-      std::get_if<decltype(findCoveredEntitiesAndElementsToSave<2>(
-        model, std::vector<int>{}))>(&overlapElements);
+    auto overlapFaces = std::get_if<CoveredElementsMap<2>>(&overlapElements);
     if(overlapFaces) {
       for(const auto &[pface, elements] : *overlapFaces) {
         int tag = pface->tag();
@@ -3311,9 +3307,7 @@ static void writeMSH4Elements(
   // Overlap regions - TODO: ensure it's exported only if not all partitions are
   // saved
   if(overlapDim == 3) {
-    auto overlapRegions =
-      std::get_if<decltype(findCoveredEntitiesAndElementsToSave<3>(
-        model, std::vector<int>{}))>(&overlapElements);
+    auto overlapRegions = std::get_if<CoveredElementsMap<3>>(&overlapElements);
     if(overlapRegions) {
       for(const auto &[pregion, elements] : *overlapRegions) {
         int tag = pregion->tag();
@@ -3967,8 +3961,7 @@ static void writeMSH4EntityOverlapPairs(FILE *fp, bool binary,
       if(thisDim == dim - 1) {
         try {
           auto creator =
-            std::get<dim - 2>(mgr.getBoundaryOfOverlapCreators())
-              .at(boundary);
+            std::get<dim - 2>(mgr.getBoundaryOfOverlapCreators()).at(boundary);
           creatorTag = creator->tag();
         } catch(const std::out_of_range &) {
           Msg::Error("No creator found for boundary %d of entity %d",
@@ -4146,10 +4139,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // partitionsToSave empty -> full export
   // partitionsToSave non-empty, no overlap -> only export what is owned by the
   // partitions; non-empty, with overlap -> export what is owned + what is needed
-  std::variant<
-    std::monostate,
-    decltype(findCoveredEntitiesAndElementsToSave<2>(this, std::vector<int>{})),
-    decltype(findCoveredEntitiesAndElementsToSave<3>(this, std::vector<int>{}))>
+  std::variant<std::monostate, CoveredElementsMap<2>, CoveredElementsMap<3>>
     nonOwnedEntitiesToSave;
   int overlapDim = this->overlapDim(); // 0, 2 or 3
   // Find entities of other partitions that are needed in the overlap case.
@@ -4164,11 +4154,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // On those entities, find nodes and entities that must be saved partially.
   // Note that some owned entities will end up there.
-  std::unordered_map<GEntity *,
-                     std::unordered_set<MVertex *, MVertexPtrHash,
-                                        MVertexPtrEqual>,
-                     GEntityPtrFullHash, GEntityPtrFullEqual>
-    entitiesWithSubsetToExport;
+  EntityToVerticesMap entitiesWithSubsetToExport;
   if(!partitionsToSave.empty() && overlapDim > 0) {
     if(overlapDim == 2)
       entitiesWithSubsetToExport = findNonOwnedVerticesToSave<2>(
