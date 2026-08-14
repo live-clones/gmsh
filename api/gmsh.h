@@ -780,6 +780,20 @@ namespace gmsh { // Top-level functions
                                              const int tag,
                                              int & parentTag);
 
+      // gmsh::model::mesh::getOverlapOverlappedEntity
+      //
+      // If the entity of dimension `dim' and tag `overlapTag' is a highest-
+      // dimensional overlap entity (OverlapSurface or OverlapVolume), set
+      // `overlappedEntityTag' to the tag of the partition entity whose elements it
+      // covers. This covered partition entity belongs to a partition different
+      // from the partition owning the overlap. If it is a boundary overlap entity,
+      // set `overlappedEntityTag' to the tag of the underlying model boundary
+      // entity it covers. Set `overlappedEntityTag' to -1 if the entity is not an
+      // overlap.
+      GMSH_API void getOverlapOverlappedEntity(const int dim,
+                                               const int overlapTag,
+                                               int & overlappedEntityTag);
+
       // gmsh::model::mesh::unpartition
       //
       // Unpartition the mesh of the current model.

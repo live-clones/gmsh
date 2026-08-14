@@ -290,6 +290,9 @@ mesh.add('getOverlapInterfaceBoundary', doc, None, iint('dim'), iint('tag'), iin
 doc = '''If the entity of dimension `dim' and tag `tag' is a boundary overlap, get the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on error.'''
 mesh.add('getBoundaryOverlapParent', doc, None, iint('dim'), iint('tag'), oint('parentTag'))
 
+doc = '''If the entity of dimension `dim' and tag `overlapTag' is a highest-dimensional overlap entity (OverlapSurface or OverlapVolume), set `overlappedEntityTag' to the tag of the partition entity whose elements it covers. This covered partition entity belongs to a partition different from the partition owning the overlap. If it is a boundary overlap entity, set `overlappedEntityTag' to the tag of the underlying model boundary entity it covers. Set `overlappedEntityTag' to -1 if the entity is not an overlap.'''
+mesh.add('getOverlapOverlappedEntity', doc, None, iint('dim'), iint('overlapTag'), oint('overlappedEntityTag'))
+
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)
 
