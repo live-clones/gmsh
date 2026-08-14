@@ -678,6 +678,16 @@ GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim,
                                                     int * parentTag,
                                                     int * ierr);
 
+/* If the entity of dimension `dim' and tag `overlapTag' is an overlap entity
+ * (OverlapSurface or OverlapVolume) or a boundary overlap entity (a partition
+ * entity in the overlap of a boundary), set `overlappedEntityTag' to the tag
+ * of the underlying entity it covers. Sets `overlappedEntityTag' to -1 if the
+ * entity is not an overlap. */
+GMSH_API void gmshModelMeshGetOverlapOverlappedEntity(const int dim,
+                                                      const int overlapTag,
+                                                      int * overlappedEntityTag,
+                                                      int * ierr);
+
 /* Unpartition the mesh of the current model. */
 GMSH_API void gmshModelMeshUnpartition(int * ierr);
 
