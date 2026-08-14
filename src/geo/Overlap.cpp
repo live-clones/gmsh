@@ -614,11 +614,11 @@ void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
                    entity->tag(), parent->dim(), parent->tag());
         model->add(bnd);
         if constexpr(dim == 2)
-          model->addInnerBoundaryOnInterface(dynamic_cast<GEdge *>(entity),
-                                             bnd, parent);
+          mgr.addInnerBoundaryOnInterface(dynamic_cast<GEdge *>(entity),
+                                          bnd, parent);
         else if constexpr(dim == 3)
-          model->addInnerBoundaryOnInterface(dynamic_cast<GFace *>(entity),
-                                             bnd, parent);
+          mgr.addInnerBoundaryOnInterface(dynamic_cast<GFace *>(entity),
+                                          bnd, parent);
       }
     }
   }
@@ -647,16 +647,20 @@ findCoveredEntitiesAndElementsToSave(GModel *const model,
 
   using overlapEntityType = typename EntityTraits<dim>::OverlapEntity;
 
-  const auto &overlaps =
-    std::get<std::vector<overlapEntityType *>>(model->getAllOverlaps());
-  for(auto overlapPtr : overlaps) {
-    if(std::find(partitions.begin(), partitions.end(),
-                 overlapPtr->owningPartition()) == partitions.end())
-      continue;
-    size_t numElements = overlapPtr->getNumMeshElements();
-    for(size_t i = 0; i < numElements; ++i) {
-      MElement *element = overlapPtr->getMeshElement(i);
-      result[overlapPtr->getCovered()].insert(element);
+  // Aggregate over all overlap managers: the writer exports every manager's
+  // overlaps, so the covered elements of every manager must be saved as well
+  for(const auto &mgr : model->getOverlapManagers()) {
+    const auto &overlaps =
+      std::get<std::vector<overlapEntityType *>>(mgr.getAllOverlaps());
+    for(auto overlapPtr : overlaps) {
+      if(std::find(partitions.begin(), partitions.end(),
+                   overlapPtr->owningPartition()) == partitions.end())
+        continue;
+      size_t numElements = overlapPtr->getNumMeshElements();
+      for(size_t i = 0; i < numElements; ++i) {
+        MElement *element = overlapPtr->getMeshElement(i);
+        result[overlapPtr->getCovered()].insert(element);
+      }
     }
   }
 
