@@ -596,17 +596,17 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
 // neighbor's partition; sweeps codim 1..3, so the highest-dimensional one wins.
 static void correctTopology(const Graph &graph, std::vector<idx_t> &epart)
 {
-  for(int i = 1; i < 4; i++) {
+  for(int codim : {1, 2, 3}) {
     for(std::size_t j = 0; j < graph.ne(); j++) {
-      if(graph.element(j)->getDim() == graph.dim()) continue;
+      const int dim = graph.element(j)->getDim();
+      if(dim == graph.dim()) continue;
 
       for(idx_t k = graph.xadj(j); k < graph.xadj(j + 1); k++) {
-        if(graph.element(j)->getDim() ==
-           graph.element(graph.adjncy(k))->getDim() - i) {
-          if(epart[j] != epart[graph.adjncy(k)]) {
-            epart[j] = epart[graph.adjncy(k)];
-            break;
-          }
+        const idx_t nbr = graph.adjncy(k);
+        if(graph.element(nbr)->getDim() == dim + codim &&
+           epart[j] != epart[nbr]) {
+          epart[j] = epart[nbr];
+          break;
         }
       }
     }
