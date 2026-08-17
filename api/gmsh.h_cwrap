@@ -1382,6 +1382,21 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
+      // gmsh::model::mesh::writePartitions
+      //
+      // Write selected partitions of the mesh into a single file `fileName'. The
+      // export format is MSH4. The `partitions' vector specifies which partition
+      // numbers to include.
+      inline void writePartitions(const std::string & fileName,
+                                  const std::vector<int> & partitions)
+      {
+        int ierr = 0;
+        int *api_partitions_; size_t api_partitions_n_; vector2ptr(partitions, &api_partitions_, &api_partitions_n_);
+        gmshModelMeshWritePartitions(fileName.c_str(), api_partitions_, api_partitions_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_partitions_);
+      }
+
       // gmsh::model::mesh::optimize
       //
       // Optimize the mesh of the current model using `method' (empty for default
