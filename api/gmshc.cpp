@@ -1104,6 +1104,18 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshWritePartitions(const char * fileName, const int * partitions, const size_t partitions_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_partitions_(partitions, partitions + partitions_n);
+    gmsh::model::mesh::writePartitions(fileName, api_partitions_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const int niter, const int * dimTags, const size_t dimTags_n, const double quality, int * ierr)
 {
   if(ierr) *ierr = 0;
