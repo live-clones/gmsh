@@ -102,7 +102,7 @@ private:
   int _readMSH4(const std::string &name);
   int _writeMSH4(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 bool append, int partitionToSave = 0,
+                 bool append, const std::vector<int> &partitionsToSave = {},
                  std::map<GEntity *, SBoundingBox3d> *entityBounds = nullptr);
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
@@ -905,6 +905,11 @@ public:
                           bool binary = false, bool saveAll = false,
                           bool saveParametric = false,
                           double scalingFactor = 1.0);
+  int writeMSHPartitions(const std::string &name,
+                         const std::vector<int> &partitions,
+                         double version = 4.1, bool binary = false,
+                         bool saveAll = false, bool saveParametric = false,
+                         double scalingFactor = 1.0);
 
   // Iridium file format
   int writeIR3(const std::string &name, int elementTagType, bool saveAll,
