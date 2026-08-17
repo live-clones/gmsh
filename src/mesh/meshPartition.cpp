@@ -592,9 +592,8 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
   return 0;
 }
 
-// Reassign lower-dimensional elements to the partition of a higher-dimensional
-// neighbor, so boundary/interface elements follow the bulk element they bound.
-// Sweeps i = 1..3 to bridge codimension gaps (e.g. a node bounding a volume).
+// Make lower-dim elements follow the bulk they bound, adopting a higher-dim
+// neighbor's partition; sweeps codim 1..3, so the highest-dimensional one wins.
 static void correctTopology(const Graph &graph, std::vector<idx_t> &epart)
 {
   for(int i = 1; i < 4; i++) {
