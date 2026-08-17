@@ -747,11 +747,29 @@ namespace gmsh { // Top-level functions
       //
       // Get the tags of the entities making up the overlap boundary of partition
       // `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-      // `tag'.
+      // `tag'. Only the plain inner boundaries are returned: the inner boundaries
+      // lying on an internal interface are a distinct class, queried with
+      // `getOverlapInterfaceBoundary'. A solver imposing a transmission condition
+      // on the whole rim of an overlap patch must therefore combine both.
       GMSH_API void getOverlapBoundary(const int dim,
                                        const int tag,
                                        const int partition,
                                        std::vector<int> & entityTags);
+
+      // gmsh::model::mesh::getOverlapInterfaceBoundary
+      //
+      // Get the tags of the overlap boundary entities of partition `partition'
+      // that lie on the internal interface entity of dimension `dim' and tag `tag'
+      // (a dim-1 entity of the model shared by two entities of dimension `dim'+1).
+      // These boundaries are artificial (the domain continues on the other side of
+      // the interface) and carry a transmission condition, but keep the interface
+      // identity so an interface-aware condition can be imposed. Note that `dim'
+      // is the dimension of the interface, one below the model dimension, unlike
+      // `getOverlapBoundary' which takes the parent entity.
+      GMSH_API void getOverlapInterfaceBoundary(const int dim,
+                                                const int tag,
+                                                const int partition,
+                                                std::vector<int> & entityTags);
 
       // gmsh::model::mesh::getBoundaryOverlapParent
       //
