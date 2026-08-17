@@ -544,6 +544,8 @@ module gmsh
         gmshModelMeshGetBoundaryOverlapParent
     procedure, nopass :: unpartition => &
         gmshModelMeshUnpartition
+    procedure, nopass :: writePartitions => &
+        gmshModelMeshWritePartitions
     procedure, nopass :: optimize => &
         gmshModelMeshOptimize
     procedure, nopass :: recombine => &
@@ -3564,6 +3566,34 @@ module gmsh
     integer(c_int), intent(out), optional :: ierr
     call C_API(ierr_=ierr)
   end subroutine gmshModelMeshUnpartition
+
+  !> Write selected partitions of the mesh into a single file `fileName'. The
+  !! export format is MSH4. The `partitions' vector specifies which partition
+  !! numbers to include.
+  subroutine gmshModelMeshWritePartitions(fileName, &
+                                          partitions, &
+                                          ierr)
+    interface
+    subroutine C_API(fileName, &
+                     api_partitions_, &
+                     api_partitions_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshWritePartitions")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
+      integer(c_int), dimension(*) :: api_partitions_
+      integer(c_size_t), value, intent(in) :: api_partitions_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: fileName
+    integer(c_int), dimension(:), intent(in) :: partitions
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(fileName=istring_(fileName), &
+         api_partitions_=partitions, &
+         api_partitions_n_=size_gmsh_int(partitions), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshWritePartitions
 
   !> Optimize the mesh of the current model using `method' (empty for default
   !! tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for

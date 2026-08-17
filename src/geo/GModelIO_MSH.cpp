@@ -133,3 +133,20 @@ int GModel::writePartitionedMSH(const std::string &baseName, double version,
   Msg::Error("Unknown MSH file version %g", version);
   return 0;
 }
+
+int GModel::writeMSHPartitions(const std::string &name,
+                               const std::vector<int> &partitions,
+                               double version, bool binary, bool saveAll,
+                               bool saveParametric, double scalingFactor)
+{
+  if(version < 4.0) {
+    Msg::Error("Writing selected partitions requires MSH format >= 4.0");
+    return 0;
+  }
+
+  if(CTX::instance()->mesh.createEdges) createMEdges();
+  if(CTX::instance()->mesh.createFaces) createMFaces();
+
+  return _writeMSH4(name, version, binary, saveAll, saveParametric,
+                    scalingFactor, false, partitions);
+}
