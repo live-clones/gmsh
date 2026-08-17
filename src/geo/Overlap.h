@@ -33,21 +33,32 @@ template <int dim>
 void buildOverlapEntities(GModel *const model,
                           const OverlapCollection<dim> &overlaps);
 
-// For each entity, identify the boundary (set of MEdge/MFace) of the overlap
-// patch. This includes all parts of the patch, including the interface between
-// the inner and overlap. These boundaries are computed per parent entity, so a
-// physical interface will be a boundary.
+// For each partition, identify the boundary (set of MEdge/MFace) of the
+// overlap patch. This includes all parts of the patch, including the interface
+// between the inner and overlap. Facets are counted partition-wise (across
+// parent entities), so a physical interface strictly inside the patch is NOT
+// part of the boundary; results are still grouped by the parent entity of the
+// adjacent element.
 template <int dim>
 OveralBoundariesMesh<dim>
 findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps);
 
 /**
- * Robustness wrt to deep overlaps:
- * for inner partitions, if it's an interface, we look af whether it is an
- * internal interface or not
- * TODO: create entities, add correct elem type. Orientation of the elements ?
+ * Create the boundary entities of the overlap patches and register them on
+ * the model, in three classes:
+ * - "overlap of boundary": facets on a one-sided dim-1 entity (outer physical
+ *   boundary), grouped by that entity — the physical BC extends there;
+ * - "inner boundary on interface": facets on a two-sided dim-1 entity (an
+ *   internal material interface), grouped by that entity — artificial, the
+ *   domain continues on the other side, but the interface identity is kept so
+ *   the solver can impose an interface-aware transmission condition;
+ * - "inner boundary": facets on a partition interface not involving the
+ *   overlap's partition (robustness for deep overlaps on thin partitions), or
+ *   on no existing entity at all — artificial transmission boundary.
+ * Facets on an interface involving the partition itself are not duplicated:
+ * the existing interface entity already represents them.
+ * TODO: check the orientation of the created boundary elements.
  */
-
 template <int dim>
 void overlapBuildBoundaries(GModel *const model,
                             const OverlapCollection<dim> &overlaps);
