@@ -2385,6 +2385,29 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def writePartitions(fileName, partitions):
+            """
+            gmsh.model.mesh.writePartitions(fileName, partitions)
+
+            Write selected partitions of the mesh into a single file `fileName'. The
+            export format is MSH4. The `partitions' vector specifies which partition
+            numbers to include.
+
+            Types:
+            - `fileName': string
+            - `partitions': vector of integers
+            """
+            api_partitions_, api_partitions_n_ = _ivectorint(partitions)
+            ierr = c_int()
+            lib.gmshModelMeshWritePartitions(
+                c_char_p(fileName.encode()),
+                api_partitions_, api_partitions_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        write_partitions = writePartitions
+
+        @staticmethod
         def optimize(method="", force=False, niter=1, dimTags=[], quality=0.0):
             """
             gmsh.model.mesh.optimize(method="", force=False, niter=1, dimTags=[], quality=0.0)

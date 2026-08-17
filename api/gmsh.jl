@@ -2024,6 +2024,27 @@ function unpartition()
 end
 
 """
+    gmsh.model.mesh.writePartitions(fileName, partitions)
+
+Write selected partitions of the mesh into a single file `fileName`. The export
+format is MSH4. The `partitions` vector specifies which partition numbers to
+include.
+
+Types:
+ - `fileName`: string
+ - `partitions`: vector of integers
+"""
+function writePartitions(fileName, partitions)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshWritePartitions, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          fileName, convert(Vector{Cint}, partitions), length(partitions), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const write_partitions = writePartitions
+
+"""
     gmsh.model.mesh.optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[], quality = 0.0)
 
 Optimize the mesh of the current model using `method` (empty for default
