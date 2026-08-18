@@ -27,6 +27,8 @@
 
 
 #include<stdlib.h>
+#include<stdint.h>
+#include<limits.h>
 #include"gmp_matrix.h"
 
 gmp_matrix *
@@ -624,11 +626,106 @@ gmp_matrix_transp(gmp_matrix * M)
 }
 
 
+/* Portable init+store of a signed 64-bit value into an mpz_t.  The two-halves
+   form (for a 32-bit long) needs real GMP; the bundled mpz shim is a machine
+   long, so there a plain mpz_init_set_si is sufficient and all that fits. */
+static void kbi_mpz_init_set_i64(mpz_t r, int64_t v)
+{
+#if defined(HAVE_GMP) && (LONG_MAX < 9223372036854775807L)
+  int neg = (v < 0);
+  uint64_t a = neg ? (uint64_t)(-(v + 1)) + 1u : (uint64_t)v;
+  mpz_init_set_ui(r, (unsigned long)(a >> 32));
+  mpz_mul_2exp(r, r, 32);
+  mpz_add_ui(r, r, (unsigned long)(a & 0xffffffffu));
+  if(neg) mpz_neg(r, r);
+#else
+  mpz_init_set_si(r, (long)v);
+#endif
+}
+
+static size_t kbi_maxbits(const mpz_t *st, size_t n)
+{
+  size_t mb = 0, k;
+  for(k = 0; k < n; k++)
+    {
+      size_t b = (mpz_sgn((mpz_ptr)st[k]) == 0) ? 0 : mpz_sizeinbase((mpz_ptr)st[k], 2);
+      if(b > mb) mb = b;
+    }
+  return mb;
+}
+
+/* Dense product new = A*B, all column-major mpz_t; A is ra x ca, B is
+   rb x cb with ca == rb.  Returns a freshly-allocated, fully mpz_init'd
+   array of ra*cb entries (or NULL on allocation failure).
+
+   The (totally-unimodular) matrices arising in homology have tiny entries,
+   so nearly every dot product fits in a signed 64-bit accumulator.  In that
+   case the product is computed in native integers -- structural zeros
+   skipped, columns of the result computed in parallel -- with only the final
+   entries converted back to mpz_t; this removes the per-multiply GMP call
+   overhead that otherwise dominates.  Larger entries fall back to the exact
+   big-integer path. */
+static mpz_t *
+kbi_gemm(const mpz_t *Ast, size_t ra, size_t ca,
+         const mpz_t *Bst, size_t rb, size_t cb)
+{
+  size_t i, j, k;
+  mpz_t *C = (mpz_t *) calloc(ra * cb, sizeof(mpz_t));
+  if(C == NULL) return NULL;
+
+  /* A length-ca dot product is bounded by 2^(bitlen(ca)+bA+bB); require the
+     bound (and portable 32-bit extraction of the operands) to hold. */
+  size_t bA = kbi_maxbits(Ast, ra * ca);
+  size_t bB = kbi_maxbits(Bst, rb * cb);
+  size_t bK = 0; { size_t t = ca; while(t) { bK++; t >>= 1; } }
+
+  if(bA <= 31 && bB <= 31 && bA + bB + bK <= 62)
+    {
+      int64_t *Ai = (int64_t *) malloc(ra * ca * sizeof(int64_t));
+      if(Ai == NULL) { free(C); return NULL; }
+      for(k = 0; k < ra * ca; k++) Ai[k] = (int64_t) mpz_get_si((mpz_ptr)Ast[k]);
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic) private(i, k)
+#endif
+      for(j = 0; j < cb; j++)
+        {
+          int64_t *acc = (int64_t *) calloc(ra, sizeof(int64_t));
+          const mpz_t *Bcol = &Bst[j * rb];
+          for(k = 0; k < ca; k++)
+            {
+              int64_t b = (int64_t) mpz_get_si((mpz_ptr)Bcol[k]);
+              if(b == 0) continue;
+              const int64_t *Acol = &Ai[k * ra];
+              for(i = 0; i < ra; i++) acc[i] += Acol[i] * b;
+            }
+          for(i = 0; i < ra; i++)
+            kbi_mpz_init_set_i64(C[i + j * ra], acc[i]);
+          free(acc);
+        }
+      free(Ai);
+    }
+  else
+    {
+      /* Exact big-integer fallback (the original algorithm). */
+      for(j = 0; j < cb; j++)
+        for(i = 0; i < ra; i++)
+          {
+            mpz_init(C[i + j * ra]);
+            gmp_blas_dot(&(C[i + j * ra]), ca,
+                         (mpz_t *) &(Ast[i]),      ra,
+                         (mpz_t *) &(Bst[j * rb]), 1);
+          }
+    }
+
+  return C;
+}
+
 int
 gmp_matrix_right_mult(gmp_matrix * A, const gmp_matrix * B)
 {
   mpz_t * new_storage;
-  size_t i,j;
+  size_t i;
   size_t rows_A, cols_A, rows_B, cols_B;
 
   if((A == NULL) || (B == NULL))
@@ -646,24 +743,10 @@ gmp_matrix_right_mult(gmp_matrix * A, const gmp_matrix * B)
       return EXIT_FAILURE;
     }
 
-  /* Create new storage for the product */
-  new_storage = (mpz_t *) calloc(rows_A*cols_B, sizeof(mpz_t));
+  new_storage = kbi_gemm(A->storage, rows_A, cols_A, B->storage, rows_B, cols_B);
   if(new_storage == NULL)
     {
       return EXIT_FAILURE;
-    }
-
-  /* Compute the product to the storage */
-  for(j = 1; j <= cols_B; j++)
-    {
-      for(i = 1; i <= rows_A; i++)
-	{
-	  mpz_init (new_storage[(i-1)+(j-1)*rows_A]);
-	  gmp_blas_dot(&(new_storage[(i-1)+(j-1)*rows_A]),
-		       cols_A,
-		       (mpz_t *) &(A->storage[i-1]),          rows_A,
-		       (mpz_t *) &(B->storage[(j-1)*rows_B]), 1);
-	}
     }
 
   /* Get rid of the old storage */
@@ -684,7 +767,7 @@ int
 gmp_matrix_left_mult(const gmp_matrix * A, gmp_matrix * B)
 {
   mpz_t * new_storage;
-  size_t i,j;
+  size_t i;
   size_t rows_A, cols_A, rows_B, cols_B;
 
   if((A == NULL) || (B == NULL))
@@ -702,24 +785,10 @@ gmp_matrix_left_mult(const gmp_matrix * A, gmp_matrix * B)
       return EXIT_FAILURE;
     }
 
-  /* Create new storage for the product */
-  new_storage = (mpz_t *) calloc(rows_A*cols_B, sizeof(mpz_t));
+  new_storage = kbi_gemm(A->storage, rows_A, cols_A, B->storage, rows_B, cols_B);
   if(new_storage == NULL)
     {
       return EXIT_FAILURE;
-    }
-
-  /* Compute the product to the storage */
-  for(j = 1; j <= cols_B; j++)
-    {
-      for(i = 1; i <= rows_A; i++)
-	{
-	  mpz_init (new_storage[(i-1)+(j-1)*rows_A]);
-	  gmp_blas_dot(&(new_storage[(i-1)+(j-1)*rows_A]),
-		       cols_A,
-		       (mpz_t *) &(A->storage[i-1]),          rows_A,
-		       (mpz_t *) &(B->storage[(j-1)*rows_B]), 1);
-	}
     }
 
   /* Get rid of the old storage */
@@ -729,7 +798,7 @@ gmp_matrix_left_mult(const gmp_matrix * A, gmp_matrix * B)
     }
   free(B->storage);
 
-  /* Update A */
+  /* Update B */
   B -> storage = new_storage;
   B -> rows    = rows_A;
 
