@@ -427,6 +427,34 @@ static MElement *createHighOrderFace(const MFace &face, MElement *parentElement)
   }
 }
 
+// Fill a boundary entity with high-order boundary elements rebuilt from the
+// stored parent elements. Overloaded on the boundary entity type instead of
+// using "if constexpr", which MSVC does not discard properly inside a lambda
+template <class Map>
+static void fillBoundaryEntity(partitionEdge *bnd, const Map &bndMap)
+{
+  for(const auto &it : bndMap)
+    bnd->addLine(createHighOrderLine(it.first, it.second));
+}
+
+template <class Map>
+static void fillBoundaryEntity(partitionFace *bnd, const Map &bndMap)
+{
+  for(const auto &it : bndMap) {
+    MElement *elem = createHighOrderFace(it.first, it.second);
+    if(MTriangle *tri = dynamic_cast<MTriangle *>(elem)) {
+      bnd->addTriangle(tri);
+    }
+    else if(MQuadrangle *quad = dynamic_cast<MQuadrangle *>(elem)) {
+      bnd->addQuadrangle(quad);
+    }
+    else {
+      Msg::Error("Unexpected element type in 3D overlap boundary.");
+      delete elem;
+    }
+  }
+}
+
 template <int dim>
 void overlapBuildBoundaries(GModel *const model,
                             const OverlapCollection<dim> &overlaps)
@@ -453,33 +481,6 @@ void overlapBuildBoundaries(GModel *const model,
     Msg::Error(
       "Number of boundary elements does not match number of partitions.");
   }
-
-  // Fill a boundary entity with high-order boundary elements rebuilt from the
-  // stored parent elements
-  auto fillBoundary = [](typename EntityTraits<dim>::BoundaryEntity *bnd,
-                         const BoundaryToElementMap &bndMap) {
-    if constexpr(dim == 2) {
-      for(const auto &[edge, parentElement] : bndMap) {
-        auto elem = createHighOrderLine(edge, parentElement);
-        bnd->addLine(elem);
-      }
-    }
-    else if constexpr(dim == 3) {
-      for(const auto &[face, parentElement] : bndMap) {
-        auto elem = createHighOrderFace(face, parentElement);
-        if(auto tri = dynamic_cast<MTriangle *>(elem)) {
-          bnd->addTriangle(tri);
-        }
-        else if(auto quad = dynamic_cast<MQuadrangle *>(elem)) {
-          bnd->addQuadrangle(quad);
-        }
-        else {
-          Msg::Error("Unexpected element type in 3D overlap boundary.");
-          delete elem;
-        }
-      }
-    }
-  };
 
   // Loop over all partitions
   for(size_t i = 0; i < boundaryElements.size(); ++i) {
@@ -560,7 +561,7 @@ void overlapBuildBoundaries(GModel *const model,
         auto bnd = new typename EntityTraits<dim>::BoundaryEntity(
           model, model->getMaxElementaryNumber(dim - 1) + 1, {partition});
 
-        fillBoundary(bnd, innerboundaryMap);
+        fillBoundaryEntity(bnd, innerboundaryMap);
         model->add(bnd);
         model->addInnerBoundary(parent, bnd);
       }
@@ -572,7 +573,7 @@ void overlapBuildBoundaries(GModel *const model,
         auto bnd = new typename EntityTraits<dim>::BoundaryEntity(
           model, model->getMaxElementaryNumber(dim - 1) + 1, {partition});
 
-        fillBoundary(bnd, bndMap);
+        fillBoundaryEntity(bnd, bndMap);
         if constexpr(dim == 2) {
           Msg::Info("Created overlap of boundary entity with %lu elements for "
                     "partition %d.",
@@ -604,7 +605,7 @@ void overlapBuildBoundaries(GModel *const model,
         auto bnd = new typename EntityTraits<dim>::BoundaryEntity(
           model, model->getMaxElementaryNumber(dim - 1) + 1, {partition});
 
-        fillBoundary(bnd, bndMap);
+        fillBoundaryEntity(bnd, bndMap);
         Msg::Debug("Created inner boundary on interface with %lu elements for "
                    "partition %d (interface %d/%d, created by %d/%d)",
                    bnd->getNumMeshElements(), partition, entity->dim(),
