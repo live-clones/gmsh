@@ -7,7 +7,12 @@
 
 #pragma once
 
+#include "GmshGlobal.h"
 #include "qmtMeshUtils.h"
+
+#include <array>
+#include <cstddef>
+#include <vector>
 
 
 class SurfaceProjector;
@@ -19,6 +24,18 @@ class SurfaceProjector;
  * @return 0 if success
  */
 int initDiskQuadrangulations();
+
+/**
+ * @brief Return the exhaustive stored disk quadrangulations with exactly B
+ * boundary vertices and I interior vertices. Boundary vertices are numbered
+ * [0, B), in loop order; interior vertices are numbered [B, B + I).
+ *
+ * This read-only accessor makes the topology database available to external
+ * quality-driven cavity optimizers without exposing GFace/MElement internals.
+ */
+GMSH_API int getDiskQuadrangulations(
+  std::size_t boundaryVertexCount, std::size_t interiorVertexCount,
+  std::vector<std::vector<std::array<std::size_t, 4> > > &quadrangulations);
 
 /**
  * @brief Look for the best topological disk quadrangulation remeshing
