@@ -88,21 +88,41 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     if(swap) SwapBytes((char *)&numBrep, sizeof(std::size_t), 1);
 
     std::vector<int> brepTags(numBrep);
-    if(fread(&brepTags[0], sizeof(int), numBrep, fp) != numBrep) {
+    if(numBrep &&
+       fread(brepTags.data(), sizeof(int), numBrep, fp) != numBrep) {
       return false;
     }
-    if(swap) SwapBytes((char *)&brepTags[0], sizeof(int), numBrep);
+    if(swap && numBrep)
+      SwapBytes((char *)brepTags.data(), sizeof(int), numBrep);
 
     for(std::size_t i = 0; i < numBrep; i++) {
-      GEntity *brep =
-        model->getEntityByTag(entity->dim() - 1, std::abs(brepTags[i]));
-      if(!brep) {
-        Msg::Warning("Entity %d not found in the Brep of entity %d",
-                     brepTags[i], entity->tag());
+      const int entityTag = brepTags[i];
+      // Embedded entities are serialized with a temporary tag offset. Decode
+      // them in binary files exactly as in the ASCII path below.
+      if(std::abs(entityTag) > maxTagEmbed) {
+        const int embeddedTag = std::abs(entityTag) - maxTagEmbed;
+        GEntity *emb =
+          model->getEntityByTag(entity->dim() - 1, embeddedTag);
+        if(!emb) {
+          Msg::Warning("Embedded entity %d not found in the Brep of entity %d",
+                       embeddedTag, entity->tag());
+        }
+        else {
+          embeddedEntities.push_back(emb);
+        }
       }
       else {
-        boundingEntities.push_back(brep);
-        boundingSign.push_back((std::abs(brepTags[i]) == brepTags[i] ? 1 : -1));
+        GEntity *brep =
+          model->getEntityByTag(entity->dim() - 1, std::abs(entityTag));
+        if(!brep) {
+          Msg::Warning("Entity %d not found in the Brep of entity %d",
+                       entityTag, entity->tag());
+        }
+        else {
+          boundingEntities.push_back(brep);
+          boundingSign.push_back(
+            (std::abs(entityTag) == entityTag ? 1 : -1));
+        }
       }
     }
   }
