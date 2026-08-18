@@ -2585,6 +2585,7 @@ namespace gmsh { // Top-level functions
       inline void getElementEdgeNodesCoord(const int elementType,
                                            std::vector<std::size_t> & nodeTags,
                                            std::vector<double> & coord,
+                                           std::size_t & numElements,
                                            const int tag = -1,
                                            const bool primary = false,
                                            const std::size_t task = 0,
@@ -2593,7 +2594,7 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         size_t *api_nodeTags_; size_t api_nodeTags_n_;
         double *api_coord_; size_t api_coord_n_;
-        gmshModelMeshGetElementEdgeNodesCoord(elementType, &api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, tag, (int)primary, task, numTasks, &ierr);
+        gmshModelMeshGetElementEdgeNodesCoord(elementType, &api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, &numElements, tag, (int)primary, task, numTasks, &ierr);
         if(ierr) throwLastError();
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);

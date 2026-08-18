@@ -3645,12 +3645,13 @@ the edges are returned. If `tag` < 0, get the edge nodes for all entities. If
 `numTasks` > 1, only compute and return the part of the data indexed by `task`
 (for C++ only; output vector must be preallocated).
 
-Return `nodeTags`, `coord`.
+Return `nodeTags`, `coord`, `numElements`.
 
 Types:
  - `elementType`: integer
  - `nodeTags`: vector of sizes
  - `coord`: vector of doubles
+ - `numElements`: size
  - `tag`: integer
  - `primary`: boolean
  - `task`: size
@@ -3661,14 +3662,15 @@ function getElementEdgeNodesCoord(elementType, tag = -1, primary = false, task =
     api_nodeTags_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
+    api_numElements_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementEdgeNodesCoord, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, tag, primary, task, numTasks, ierr)
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_numElements_, tag, primary, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
-    return nodeTags, coord
+    return nodeTags, coord, api_numElements_[]
 end
 const get_element_edge_nodes_coord = getElementEdgeNodesCoord
 

@@ -4948,6 +4948,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
 GMSH_API void gmsh::model::mesh::getElementEdgeNodesCoord(const int elementType,
                                             std::vector<std::size_t> & nodeTags,
                                             std::vector<double> & coord,
+                                            std::size_t & numElements,
                                             const int tag,
                                             const bool primary,
                                             const std::size_t task,
@@ -4959,7 +4960,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodesCoord(const int elementType,
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
-  std::size_t numElements = 0;
+  numElements = 0;
   int numEdgesPerEle = 0, numNodesPerEdge = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
@@ -5883,7 +5884,8 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
 
 struct KeyXYZ
 {
-  int typekey;
+  std::vector<int> index;
+  std::vector<int> typekey;
   std::size_t entityKeys;
   double x,y,z;
   std::vector<int> nodes;
@@ -5921,8 +5923,6 @@ public:
       _rtree->Insert(_min, _max, v);
     }
     else {
-      // std::cout << "Node " << v->entityKeys << "("<<v->x <<","<< v->y<< ","<<v->z << ") already exists with tolerance " << _tol
-                // << ": node " <<out->entityKeys << "("<<out->x <<","<<out->y << ","<<out->z << ")" << std::endl;
       Msg::Debug("Node %d (%.16g, %.16g, %.16g) already exists "
                        "with tolerance %g: node %d (%.16g, %.16g, %.16g)",
                        v->entityKeys, v->x, v->y, v->z, _tol, out->entityKeys, out->x,
@@ -5936,8 +5936,6 @@ public:
     double _max[3] = {n->x + _tol, n->y + _tol, n->z + _tol};
     if(_rtree->Search(_min, _max, rtree_callback, &out)) { return out; }
     else {
-      // std::cout << "Could not find node corresponding to reference node " << n->entityKeys <<
-      //           "("<<n->x <<","<<n->y << ","<<n->z << ")" << std::endl;
       Msg::Debug("Could not find node corresponding to reference node "
                        "%d (%g, %g, %g)",
                        n->entityKeys, n->x, n->y, n->z);
@@ -6027,6 +6025,14 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const bool returnCoord)
 {
   if(!_checkInit()) return;
+  int order = 0;
+  int numComponents = 0;
+  std::string fsName = "";
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, order, numComponents)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    return;
+  }
+
   int dim = ElementType::getDimension(elementType);
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) {
@@ -6039,21 +6045,25 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
     typeKeysMaster.clear();
     entityKeys.clear();
     entityKeysMaster.clear();
+    orientationSign.clear();
     return;
   }
 
   std::vector<std::size_t> entityKeysMaster_temp;
+  std::vector<double> coordMaster_temp;
   tagMaster = ge->getMeshMaster()->tag();
   getKeys(elementType, functionSpaceType, typeKeys, entityKeys, coord, tag,
           returnCoord);
   typeKeysMaster = typeKeys;
   entityKeysMaster = entityKeys;
   coordMaster = coord;
+  orientationSign = std::vector<int>(typeKeys.size(),1);
 
   int nthreads = CTX::instance()->numThreads;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
 
-  if(functionSpaceType == "IsoParametric" || functionSpaceType == "Lagrange") {
+  if(fsName == "IsoParametric" || fsName == "Lagrange") 
+  {
 #pragma omp parallel for num_threads(nthreads)
     for(std::size_t i = 0; i < entityKeys.size(); i++) {
       MVertex *v = GModel::current()->getMeshVertexByTag(entityKeys[i]);
@@ -6082,22 +6092,16 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
       }
     }
   }
-  else if(functionSpaceType == "HcurlLegendre" || functionSpaceType == "H1Legendre") 
+  else if(fsName == "HcurlLegendre" || fsName == "H1Legendre") 
   {
     std::vector<double> affineTransform = ge->affineTransform;
-
-
-    // std::vector<int> basisFunctionsOrientationMaster;
-    // getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationMaster,tagMaster);
-    // std::vector<int> basisFunctionsOrientationDependent;
-    // getBasisFunctionsOrientation(elementType,functionSpaceType,basisFunctionsOrientationDependent,tag);
-
-
-
     std::vector<std::size_t> nodeTagsMaster, nodeTags;
     std::vector<double> coordNodeMaster,coordNode;
-    getElementEdgeNodesCoord(elementType,nodeTagsMaster,coordNodeMaster,tagMaster,true);
-    getElementEdgeNodesCoord(elementType,nodeTags,coordNode,tag,true);
+    std::size_t numElements = 0;
+    getElementEdgeNodesCoord(elementType,nodeTagsMaster,coordNodeMaster,numElements,tagMaster,true);
+    getElementEdgeNodesCoord(elementType,nodeTags,coordNode,numElements,tag,true);
+    int nbrPrimaryNodePerElement = nodeTags.size()/numElements;
+    int nbrKeysPerElement = entityKeys.size()/numElements;
 
 
     double tol = 1.e-8;
@@ -6115,83 +6119,115 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
       struct NodeXYZ *foundNode = NodeTree.find(Node);
       if(!foundNode)
         NodeTree.insert(Node);
-    }
+    }    
 
-    // For lines, easy, only 2 orientations, but not facets in 3D
-    orientationSign = std::vector<int>(typeKeys.size(),1);
-    
-
-    getKeys(elementType, functionSpaceType, typeKeysMaster, entityKeysMaster_temp,
-            coordMaster, tagMaster, returnCoord);
-    int nbrNodePerKey = nodeTagsMaster.size()/typeKeysMaster.size();
-
+    getKeys(elementType, functionSpaceType, typeKeysMaster, entityKeysMaster_temp,coordMaster_temp, tagMaster, returnCoord);
+    coordMaster=coordMaster_temp;
 
 
 
     KeyXYZRTree keyTree(tol);
-    for(std::size_t i = 0; i < entityKeysMaster_temp.size(); i++) {
-      struct KeyXYZ* Key = new KeyXYZ();
+    int diffKey=0;
 
-      Key->x = coordMaster[3 * i + 0]*affineTransform[0] + coordMaster[3 * i + 1]*affineTransform[1] + coordMaster[3 * i + 2]*affineTransform[2] + affineTransform[3] ;
-      Key->y = coordMaster[3 * i + 0]*affineTransform[4] + coordMaster[3 * i + 1]*affineTransform[5] + coordMaster[3 * i + 2]*affineTransform[6] + affineTransform[7] ;
-      Key->z = coordMaster[3 * i + 0]*affineTransform[8] + coordMaster[3 * i + 1]*affineTransform[9] + coordMaster[3 * i + 2]*affineTransform[10] + affineTransform[11] ;
+    struct KeyXYZ* Key = new KeyXYZ();
+    for(unsigned i = 0; i < entityKeysMaster_temp.size(); i++) 
+    {
+      if(diffKey==0)
+      {
+        Key = new KeyXYZ();
+        Key->x = coordMaster[3 * i + 0]*affineTransform[0] + coordMaster[3 * i + 1]*affineTransform[1] + coordMaster[3 * i + 2]*affineTransform[2] + affineTransform[3] ;
+        Key->y = coordMaster[3 * i + 0]*affineTransform[4] + coordMaster[3 * i + 1]*affineTransform[5] + coordMaster[3 * i + 2]*affineTransform[6] + affineTransform[7] ;
+        Key->z = coordMaster[3 * i + 0]*affineTransform[8] + coordMaster[3 * i + 1]*affineTransform[9] + coordMaster[3 * i + 2]*affineTransform[10] + affineTransform[11] ;
    
-      Key->typekey = typeKeysMaster[i];
-      Key->entityKeys = entityKeysMaster_temp[i];
+        Key->typekey = {typeKeysMaster[i]};
+        Key->index = {static_cast<int>(i)};
+        Key->entityKeys = entityKeysMaster_temp[i];
 
-      std::vector<int> nodesForKey;
-      for (int f = 0; f < nbrNodePerKey; ++f)
-        nodesForKey[f] = nodeTagsMaster[nbrNodePerKey*i+f];
-      Key->nodes = nodesForKey;
+        std::vector<int> nodesForKey;
+        for (int f = 0; f < nbrPrimaryNodePerElement; ++f)
+          nodesForKey.push_back(nodeTagsMaster[nbrPrimaryNodePerElement*i+f]);
+        Key->nodes = nodesForKey;
+      }
+      else
+      {
+        Key->typekey.push_back(typeKeysMaster[i]);
+        Key->index.push_back(static_cast<int>(i));
+      }
 
       keyTree.insert(Key);
+      
+      diffKey++;
+      if(diffKey>order)
+      {
+        keyTree.insert(Key);
+        diffKey=0;
+      }
     }
 
 
     // Find the match between the keys with the transformed coordMaster and coord (dependent).
-    for(std::size_t j = 0; j < entityKeys.size(); j++) {
-      struct KeyXYZ* Key = new KeyXYZ();
+    int el = 0;
+    diffKey=0;
+    struct KeyXYZ *foundKey;
+    for(unsigned j = 0; j < entityKeys.size(); j++) {
+      if((el+1)*nbrKeysPerElement <= j)
+        el++;
 
+      struct KeyXYZ* Key = new KeyXYZ();
       Key->x = coord[3 * j + 0];
       Key->y = coord[3 * j + 1]; 
       Key->z = coord[3 * j + 2];
+
+      if(diffKey==0)
+        foundKey = keyTree.find(Key);
       
-      Key->typekey = typeKeys[j];
-      Key->entityKeys = entityKeys[j];
-
-      std::vector<int> nodesForKey;
-      for (int f = 0; f < nbrNodePerKey; ++f)
-        nodesForKey[f] = nodeTags[nbrNodePerKey*j+f];
-      Key->nodes = nodesForKey;
-
-      struct KeyXYZ *foundKey = keyTree.find(Key);
       if(foundKey)
       {
           entityKeysMaster[j] = foundKey->entityKeys;
+          typeKeysMaster[j] = foundKey->typekey[diffKey];
+
+          coordMaster[j*3+0]= coordMaster_temp[foundKey->index[diffKey]*3+0];
+          coordMaster[j*3+1]= coordMaster_temp[foundKey->index[diffKey]*3+1];
+          coordMaster[j*3+2]= coordMaster_temp[foundKey->index[diffKey]*3+2];
 
           struct NodeXYZ* node = new NodeXYZ();
-          node->x = coordNode[3 * j * 2 + 0];
-          node->y = coordNode[3 * j * 2 + 1]; 
-          node->z = coordNode[3 * j * 2 + 2];
-          node->nodeTag = nodeTags[2*j];
+          node->x = coordNode[3 * el * 2 + 0];
+          node->y = coordNode[3 * el * 2 + 1]; 
+          node->z = coordNode[3 * el * 2 + 2];
+          node->nodeTag = nodeTags[2*el];
+
           struct NodeXYZ *foundNode = NodeTree.find(node);
+          if(!foundNode)
+            std::cout << "No matching node for periodicity." << std::endl;
           int node1=foundNode->nodeTag;
 
-
           node = new NodeXYZ();
-          node->x = coordNode[3 * j * 2 + 3];
-          node->y = coordNode[3 * j * 2 + 4]; 
-          node->z = coordNode[3 * j * 2 + 5];
-          node->nodeTag = nodeTags[2*j];
+          node->x = coordNode[3 * el * 2 + 3];
+          node->y = coordNode[3 * el * 2 + 4]; 
+          node->z = coordNode[3 * el * 2 + 5];
+          node->nodeTag = nodeTags[2*el];
+
           foundNode = NodeTree.find(node);
+          if(!foundNode)
+            std::cout << "No matching node for periodicity." << std::endl;
           int node2=foundNode->nodeTag;
 
-          // std::cout << "node1Master = " << node1 << "node2Master = " << node2 << std::endl;
-          // std::cout << "node1Slave = " << nodeTags[2*j] << " and node2Slave " << nodeTags[2*j+1] << std::endl;
-          if(nodeTags[2*j]>nodeTags[2*j+1] && node1<node2)
-            orientationSign[j] = -1;
+          // CLaude code
+          bool flip = (nodeTags[2*el] > nodeTags[2*el+1] && node1 < node2) || (nodeTags[2*el] < nodeTags[2*el+1] && node1 > node2);
+          if(flip) {
+            int localIndex = static_cast<int>(j - el*nbrKeysPerElement); // 0 = se, 1 = se2, ...
+            int degree = localIndex + 1;                                  // p = 1, 2, ...
+            orientationSign[j] = (degree % 2 == 0) ? 1 : -1;
+          }
+          // End of Claude code
+
           // orientation is between two nodes so size of orientation is half the size of keys. (keys are only end node of edge)
+
+
       }
+      diffKey++;
+      if(diffKey>order)
+        diffKey=0;
     }
   }
 

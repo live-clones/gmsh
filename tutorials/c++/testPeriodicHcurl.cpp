@@ -13,19 +13,59 @@ template <typename Type> void PrintVector( std::vector<Type> &vec ) {
     std::cout << ")" << std::endl;
 }
 
+void getInverse33(std::vector<double> &J, std::vector<double> &Jinv, int gp)
+{
+    for (int Point = 0; Point < gp; ++Point)
+    {
+        double a = J[9*Point + 0*3+0], b = J[9*Point + 0*3+1], c = J[9*Point + 0*3+2], d = J[9*Point + 1*3+0], e = J[9*Point + 1*3+1], f = J[9*Point + 1*3+2], g = J[9*Point + 2*3+0], h = J[9*Point + 2*3+1], i = J[9*Point + 2*3+2];
+
+        double det = a*e*i + b*f*g + c*d*h-
+                        g*e*c - h*f*a - i*d*b;
+
+        Jinv[9*Point + 0*3+0] = 1/det * (e*i - h*f); //ei-fh
+        Jinv[9*Point + 0*3+1] = 1/det * (c*h - b*i); //ch-bi
+        Jinv[9*Point + 0*3+2] = 1/det * (b*f - c*e); //bf-ce
+
+        Jinv[9*Point + 1*3+0] = 1/det * (f*g - d*i); //fg-di
+        Jinv[9*Point + 1*3+1] = 1/det * (a*i - c*g); //ai-cg
+        Jinv[9*Point + 1*3+2] = 1/det * (c*d - a*f); //cd-af
+
+        Jinv[9*Point + 2*3+0] = 1/det * (d*h - e*g); //dh-eg
+        Jinv[9*Point + 2*3+1] = 1/det * (b*g - a*h); //bg-ah
+        Jinv[9*Point + 2*3+2] = 1/det * (a*e - b*d); //ae-bd
+    }
+
+}
+
+void getBasisInversed(std::vector<double> &Jinv, int gp,
+                      std::vector<double> &basis,std::vector<double> &newBasis)
+{
+  for (int i = 0; i < 3; ++i)
+  {
+    newBasis[i] = basis[0]*Jinv[9*gp+3*i+0]+basis[1]*Jinv[9*gp+3*i+1]+basis[2]*Jinv[9*gp+3*i+2];
+  }
+}
+
+double vw(const std::vector<double> &v,
+              const std::vector<double> &w)
+{
+    return v[0]*(w[0]) + v[1]*(w[1]) + v[2]*(w[2]);
+}
+
 int main(int argc, char **argv)
 {
   gmsh::initialize();
 
   gmsh::model::add("t1");
 
-  int order = 1;
+  int order = 2;
   int dim = 2;
   int tagDependent;
   int tagMaster;
 
   double lc = 1e-1;
   double l = .1, h=.15, w = .2;
+  int NbrElement = 10;
 
   std::vector<double> translation({1, 0, 0, 0,
                                    0, 1, 0, h, 
@@ -52,10 +92,10 @@ int main(int argc, char **argv)
     gmsh::model::geo::synchronize();
     gmsh::model::mesh::setPeriodic(dim-1, {l3}, {l1}, translation);
 
-    gmsh::model::mesh::setTransfiniteCurve(l1,3,"Progression",1);
-    gmsh::model::mesh::setTransfiniteCurve(l2,3,"Progression",1);
-    gmsh::model::mesh::setTransfiniteCurve(l3,3,"Progression",1);
-    gmsh::model::mesh::setTransfiniteCurve(l4,3,"Progression",1);
+    gmsh::model::mesh::setTransfiniteCurve(l1,NbrElement,"Progression",1);
+    gmsh::model::mesh::setTransfiniteCurve(l2,NbrElement,"Progression",1);
+    gmsh::model::mesh::setTransfiniteCurve(l3,NbrElement,"Progression",1);
+    gmsh::model::mesh::setTransfiniteCurve(l4,NbrElement,"Progression",1);
     gmsh::model::mesh::setTransfiniteSurface(1);
 
     gmsh::model::mesh::setRecombine(2, 1);
@@ -94,7 +134,7 @@ int main(int argc, char **argv)
     // Transfinite mesh
     gmsh::model::getEntities(allEntities, 1);
     for (int i = 0; i < allEntities.size(); ++i)
-      gmsh::model::mesh::setTransfiniteCurve(allEntities[i].second,3,"Progression",1);
+      gmsh::model::mesh::setTransfiniteCurve(allEntities[i].second,NbrElement,"Progression",1);
 
     gmsh::model::getEntities(allEntities, 2);
     for (int i = 0; i < allEntities.size(); ++i)
@@ -122,6 +162,8 @@ int main(int argc, char **argv)
   std::string functionSpaceType = "HcurlLegendre"; // no order
   // functionSpaceType = "H1Legendre"; // H1legendre is defined by the end nodes but HCurl is edges but the numbers don't match in gui.
 
+  functionSpaceType+=std::to_string(order-1);
+
   std::cout << "\nComparison of outputs for master/dependent using getPeriodicKeys for functionSpaceType:" << functionSpaceType << "\n" << std::endl;
   
 
@@ -142,6 +184,13 @@ int main(int argc, char **argv)
   PrintVector(entityKeysMaster);
   PrintVector(entityKeys);
 
+  std::cout << "\nCheck the Typekeys of the master and the dependent to see the effect getPeriodicKeys has on it" << std::endl;
+  PrintVector(typeKeysMaster);
+  PrintVector(typeKeys);
+
+  std::cout << " \nCoordinates of the keys: " << std::endl;
+  PrintVector(coord);
+  PrintVector(coordMaster);
 
   std::cout << " \nFutur vector returning the link +/-1 between the keys: orientationSign: " << std::endl;
   PrintVector(orientationSign);
@@ -155,12 +204,17 @@ int main(int argc, char **argv)
   PrintVector(basisFunctionsOrientationMaster);
   PrintVector(basisFunctionsOrientationDependent);
 
+
+
+
+
   std::vector<std::size_t> nodeTagsMaster, nodeTags;
   std::vector<double> coordNodeMaster,coordNode;
   if(dim==2)
   {
-    gmsh::model::mesh::getElementEdgeNodesCoord(elementType,nodeTagsMaster,coordNodeMaster,tagMaster,true);
-    gmsh::model::mesh::getElementEdgeNodesCoord(elementType,nodeTags,coordNode,tagDependent,true);
+    std::size_t numElements;
+    gmsh::model::mesh::getElementEdgeNodesCoord(elementType,nodeTagsMaster,coordNodeMaster,numElements,tagMaster,true);
+    gmsh::model::mesh::getElementEdgeNodesCoord(elementType,nodeTags,coordNode,numElements,tagDependent,true);
   }
   else if(dim==3)
   {
@@ -171,6 +225,7 @@ int main(int argc, char **argv)
   std::cout << "\nReturn the coordinates of the nodes of the edge/face for dependent and master" << std::endl;
   PrintVector(coordNodeMaster);
   PrintVector(coordNode);
+
 
 
   if(dim==3)
@@ -198,6 +253,105 @@ int main(int argc, char **argv)
   if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
+
+
+
+  /*
+
+  std::unordered_map<int,std::unordered_map<int,int>> dof2dof2value;
+  std::unordered_map<int,int> dof2value;
+  std::vector<double> elementTypes,elementTags,nodeTags,localCoords,weights,jacobians,
+                      determinants,Global_GP_coord,basisFunctionsOrientation,
+                      basisFunctions,curl_basisFunctions,basisDof,basisDof2,newBasis,newBasis2,invJacobian,keys;
+  int numComponents, numOrientations;
+  double vector, somme, sommeSource;
+
+  double term, termCurl, termSource;
+
+
+  gmsh::model::getEntities(entityTags, dim);
+  entityTags.push_back(tagSource);
+  
+  for (int i = 0; i < entityTags.size(); ++i)
+  {
+    gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, dimension, EntityTags[j]);
+
+    for (int e = 0; e < elementTags.size(); ++e)
+    {
+      gmsh::model::mesh::getIntegrationPoints(elementTypes[e],gauss,localCoords, weights);
+      gmsh::model::mesh::getJacobians(elementTypes[e],localCoords,jacobians,determinants,Global_GP_coord,EntityTags[j]);
+
+      gmsh::model::mesh::getBasisFunctions(elementTypes[e],localCoords,functionSpaceType,numComponents,basisFunctions,numOrientations);
+      gmsh::model::mesh::getBasisFunctions(elementTypes[e],localCoords,curl_functionSpaceType,numComponents,curl_basisFunctions,numOrientations);
+
+      gmsh::model::mesh::getBasisFunctionsOrientation(elementTypes[e],functionSpaceType,basisFunctionsOrientation,entityTags[i]);
+      gmsh::model::mesh::getKeysForElement();
+
+      getInverse33(Jacobian,invJacobian,weights.size());
+      for (int dof = 0; dof < keys.size(); ++dof)
+      {
+        sommeSource=0;
+        for (int dof2 = 0; dof2 < keys.size(); ++dof2)
+        {
+          somme=0;
+          for (int g = 0; g < weights.size(); ++g)
+          {
+            basisDof[0]=basisFunctions[dof,orientation,g+0];
+            basisDof[0]=basisFunctions[dof,orientation,g+0];
+            basisDof[0]=basisFunctions[dof,orientation,g+0];
+            getBasisInversed(invJacobian,g,basisDof,newBasis);
+
+            basisDof2[0]=basisFunctions[dof2,orientation,g+0];
+            basisDof2[0]=basisFunctions[dof2,orientation,g+0];
+            basisDof2[0]=basisFunctions[dof2,orientation,g+0];
+            getBasisInversed(invJacobian,g,basisDof2,newBasis2);
+
+            vectorProduct = vw(newBasis,newBasis2);
+            somme+=weights[g] * vectorProduct * determinant[] * term;
+
+
+// if curl, how do I do the invJacobians product to nabla?
+            basisDof[0]=basisFunctions[dof,orientation,g+0];
+            basisDof[0]=basisFunctions[dof,orientation,g+0];
+            basisDof[0]=basisFunctions[dof,orientation,g+0];
+            getBasisInversed(invJacobian,g,basisDof,newBasis);
+
+            basisDof2[0]=basisFunctions[dof2,orientation,g+0];
+            basisDof2[0]=basisFunctions[dof2,orientation,g+0];
+            basisDof2[0]=basisFunctions[dof2,orientation,g+0];
+            getBasisInversed(invJacobian,g,basisDof2,newBasis2);
+
+            vectorProduct = vw(newBasis,newBasis2);
+            somme+=weights[g] * vectorProduct * determinant[] * termCurl;
+
+
+            if(entityTags[i] == tagSource && dof == 0)
+            {
+              vectorProduct = invJacobian * basisFunctions[dof2];
+              sommeSource+=weights[g] * vectorProduct * determinant[] * termSource;
+            }
+
+
+          }
+          dof2dof2value.insert()
+        }
+        dof2value.insert()
+      }
+    }
+  }
+
+  // Periodicity
+  for (int i = 0; i < entityKeysMaster.size(); ++i)
+  {
+    dof2dof2value[entityKeysMaster[i]]=dof2dof2value[entityKeys[i]];
+  }
+
+
+// How to apply Dirichlet and print the solution:
+      
+    ->  Mii=1 & Ji=Eimp
+
+*/
 
   return 0;
 }

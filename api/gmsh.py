@@ -4182,12 +4182,13 @@ class model:
             entities. If `numTasks' > 1, only compute and return the part of the data
             indexed by `task' (for C++ only; output vector must be preallocated).
 
-            Return `nodeTags', `coord'.
+            Return `nodeTags', `coord', `numElements'.
 
             Types:
             - `elementType': integer
             - `nodeTags': vector of sizes
             - `coord': vector of doubles
+            - `numElements': size
             - `tag': integer
             - `primary': boolean
             - `task': size
@@ -4195,11 +4196,13 @@ class model:
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            api_numElements_ = c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElementEdgeNodesCoord(
                 c_int(elementType),
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
                 byref(api_coord_), byref(api_coord_n_),
+                byref(api_numElements_),
                 c_int(tag),
                 c_int(bool(primary)),
                 c_size_t(task),
@@ -4209,7 +4212,8 @@ class model:
                 raise Exception(logger.getLastError())
             return (
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
-                _ovectordouble(api_coord_, api_coord_n_.value))
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                api_numElements_.value)
         get_element_edge_nodes_coord = getElementEdgeNodesCoord
 
         @staticmethod

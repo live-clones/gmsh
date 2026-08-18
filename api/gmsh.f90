@@ -6256,6 +6256,7 @@ module gmsh
   subroutine gmshModelMeshGetElementEdgeNodesCoord(elementType, &
                                                    nodeTags, &
                                                    coord, &
+                                                   numElements, &
                                                    tag, &
                                                    primary, &
                                                    task, &
@@ -6267,6 +6268,7 @@ module gmsh
                      api_nodeTags_n_, &
                      api_coord_, &
                      api_coord_n_, &
+                     numElements, &
                      tag, &
                      primary, &
                      task, &
@@ -6279,6 +6281,7 @@ module gmsh
       integer(c_size_t), intent(out) :: api_nodeTags_n_
       type(c_ptr), intent(out) :: api_coord_
       integer(c_size_t) :: api_coord_n_
+      integer(c_size_t) :: numElements
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: primary
       integer(c_size_t), value, intent(in) :: task
@@ -6289,6 +6292,7 @@ module gmsh
     integer, intent(in) :: elementType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     real(c_double), dimension(:), allocatable, intent(out) :: coord
+    integer(c_size_t) :: numElements
     integer, intent(in), optional :: tag
     logical, intent(in), optional :: primary
     integer, intent(in), optional :: task
@@ -6303,6 +6307,7 @@ module gmsh
          api_nodeTags_n_=api_nodeTags_n_, &
          api_coord_=api_coord_, &
          api_coord_n_=api_coord_n_, &
+         numElements=numElements, &
          tag=optval_c_int(-1, tag), &
          primary=optval_c_bool(.false., primary), &
          task=optval_c_size_t(0, task), &
