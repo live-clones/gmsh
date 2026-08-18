@@ -207,6 +207,18 @@ bool discreteFace_rtree_callback(std::pair<MTriangle *, MTriangle *> *t,
   return true;
 }
 
+class dfCircleCandidates {
+public:
+  std::vector<std::pair<MTriangle *, MTriangle *> *> triangles;
+};
+
+static bool discreteFace_circle_rtree_callback(
+  std::pair<MTriangle *, MTriangle *> *triangle, void *context)
+{
+  static_cast<dfCircleCandidates *>(context)->triangles.push_back(triangle);
+  return true;
+}
+
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                                   SVector3 *normal) const
 {
@@ -800,6 +812,178 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
   pp.setNoSuccess();
   // Msg::Warning("Could not intersect with circle");
   return pp;
+}
+
+GPoint discreteFace::intersectionWithCircleSpatial(const SVector3 &n1,
+                                                   const SVector3 &n2,
+                                                   const SVector3 &p,
+                                                   const double &R,
+                                                   double uv[2])
+{
+  auto failure = []() {
+    GPoint result(0.0);
+    result.setNoSuccess();
+    return result;
+  };
+  if(_param.empty() || R <= 0.0) return failure();
+
+  // Keep the fast frontal estimate: when it lies just outside the
+  // parametrized domain there is no seed triangle, and selecting the first
+  // circle intersection in source-triangle order can jump to another fold of
+  // the discrete surface. Use this estimate to rank all spatial candidates.
+  const double estimatedUV[2] = {uv[0], uv[1]};
+
+  SVector3 circleNormal = crossprod(n1, n2);
+  if(circleNormal.normalize() <= 1.e-14) return failure();
+
+  MTriangle *seed2d =
+    (MTriangle *)_param.oct->find(uv[0], uv[1], 0.0, -1, true);
+  MTriangle *seed3d = nullptr;
+  if(seed2d) {
+    const std::ptrdiff_t position = seed2d - &_param.t2d[0];
+    if(position >= 0 && (std::size_t)position < _param.t3d.size())
+      seed3d = &_param.t3d[(std::size_t)position];
+  }
+
+  // Every possible solution belongs to the 3D AABB of the complete circle.
+  // Query the R-tree already built for closestPoint() instead of scanning all
+  // parametrization triangles. The L1 extent is slightly conservative even
+  // if the supplied circle basis is not perfectly orthonormal.
+  const double scale = std::max(1.0, _param.bbox.diag());
+  const double padding = std::max(1.e-12 * scale, 1.e-10 * std::abs(R));
+  double minimum[3], maximum[3];
+  for(int component = 0; component < 3; component++) {
+    const double extent =
+      std::abs(R) *
+        (std::abs(n1[component]) + std::abs(n2[component])) +
+      padding;
+    minimum[component] = p[component] - extent;
+    maximum[component] = p[component] + extent;
+  }
+  dfCircleCandidates candidates;
+  _param.rtree3d.Search(minimum, maximum,
+                        discreteFace_circle_rtree_callback, &candidates);
+
+  const MTriangle *const triangleBase = &_param.t3d[0];
+  std::sort(candidates.triangles.begin(), candidates.triangles.end(),
+            [triangleBase](const auto *first, const auto *second) {
+              return first->first - triangleBase <
+                     second->first - triangleBase;
+            });
+  candidates.triangles.erase(
+    std::unique(candidates.triangles.begin(), candidates.triangles.end()),
+    candidates.triangles.end());
+
+  auto intersectTriangle = [&](MTriangle *t3d, MTriangle *t2d,
+                               GPoint &result, double resultUV[2],
+                               double &distance2) {
+    const SVector3 v0(t3d->getVertex(0)->x(), t3d->getVertex(0)->y(),
+                      t3d->getVertex(0)->z());
+    const SVector3 v1(t3d->getVertex(1)->x(), t3d->getVertex(1)->y(),
+                      t3d->getVertex(1)->z());
+    const SVector3 v2(t3d->getVertex(2)->x(), t3d->getVertex(2)->y(),
+                      t3d->getVertex(2)->z());
+    const SVector3 edge1 = v1 - v0;
+    const SVector3 edge2 = v2 - v0;
+    SVector3 triangleNormal = crossprod(edge1, edge2);
+    if(triangleNormal.normalize() <= 1.e-14) return false;
+
+    const SVector3 lineDirection =
+      crossprod(circleNormal, triangleNormal);
+    const double lineNorm2 = lineDirection.normSq();
+    if(lineNorm2 <= 1.e-24) return false;
+
+    // A point on the intersection of n.x=n.p and t.x=t.v0. This vector form
+    // replaces the three coordinate-dependent 2x2 solves in the legacy code.
+    const double circlePlane = dot(circleNormal, p);
+    const double trianglePlane = dot(triangleNormal, v0);
+    const SVector3 lineOrigin =
+      (circlePlane * crossprod(triangleNormal, lineDirection) +
+       trianglePlane * crossprod(lineDirection, circleNormal)) *
+      (1.0 / lineNorm2);
+    const SVector3 closest =
+      lineOrigin + lineDirection *
+                     (dot(p - lineOrigin, lineDirection) / lineNorm2);
+    double height2 = R * R - (closest - p).normSq();
+    const double discriminantTolerance =
+      1.e-12 * std::max(R * R, scale * scale);
+    if(height2 < -discriminantTolerance) return false;
+    height2 = std::max(0.0, height2);
+
+    const double gram00 = dot(edge1, edge1);
+    const double gram01 = dot(edge1, edge2);
+    const double gram11 = dot(edge2, edge2);
+    const double gramDet = gram00 * gram11 - gram01 * gram01;
+    if(gramDet <= 1.e-28 * std::max(1.0, gram00 * gram11)) return false;
+
+    const double rootScale = std::sqrt(height2 / lineNorm2);
+    const double preferredSign = dot(n2, lineDirection) >= 0.0 ? 1.0 : -1.0;
+    const SVector3 points[2] = {
+      closest + lineDirection * (preferredSign * rootScale),
+      closest - lineDirection * (preferredSign * rootScale)};
+    bool found = false;
+    for(const SVector3 &point : points) {
+      const double rhs0 = dot(point - v0, edge1);
+      const double rhs1 = dot(point - v0, edge2);
+      const double bary1 = (rhs0 * gram11 - gram01 * rhs1) / gramDet;
+      const double bary2 = (gram00 * rhs1 - gram01 * rhs0) / gramDet;
+      if(bary1 < -1.e-6 || bary2 < -1.e-6 ||
+         1.0 - bary1 - bary2 < -1.e-6)
+        continue;
+
+      const MVertex *uv0 = t2d->getVertex(0);
+      const MVertex *uv1 = t2d->getVertex(1);
+      const MVertex *uv2 = t2d->getVertex(2);
+      const double candidateUV[2] = {
+        uv0->x() * (1.0 - bary1 - bary2) + uv1->x() * bary1 +
+          uv2->x() * bary2,
+        uv0->y() * (1.0 - bary1 - bary2) + uv1->y() * bary1 +
+          uv2->y() * bary2};
+      const double du = candidateUV[0] - estimatedUV[0];
+      const double dv = candidateUV[1] - estimatedUV[1];
+      const double candidateDistance2 = du * du + dv * dv;
+      if(!found || candidateDistance2 < distance2) {
+        distance2 = candidateDistance2;
+        resultUV[0] = candidateUV[0];
+        resultUV[1] = candidateUV[1];
+        result = GPoint(point.x(), point.y(), point.z(), this, resultUV);
+        found = true;
+      }
+    }
+    return found;
+  };
+
+  GPoint result;
+  double resultUV[2], distance2 = std::numeric_limits<double>::max();
+  if(seed3d &&
+     intersectTriangle(seed3d, seed2d, result, resultUV, distance2)) {
+    uv[0] = resultUV[0];
+    uv[1] = resultUV[1];
+    return result;
+  }
+
+  GPoint best;
+  double bestUV[2] = {0.0, 0.0};
+  double bestDistance2 = std::numeric_limits<double>::max();
+  for(const auto *candidate : candidates.triangles) {
+    if(candidate->first == seed3d) continue;
+    double candidateUV[2];
+    double candidateDistance2 = std::numeric_limits<double>::max();
+    if(intersectTriangle(candidate->first, candidate->second, result,
+                         candidateUV, candidateDistance2) &&
+       candidateDistance2 < bestDistance2) {
+      best = result;
+      bestUV[0] = candidateUV[0];
+      bestUV[1] = candidateUV[1];
+      bestDistance2 = candidateDistance2;
+    }
+  }
+  if(bestDistance2 < std::numeric_limits<double>::max()) {
+    uv[0] = bestUV[0];
+    uv[1] = bestUV[1];
+    return best;
+  }
+  return failure();
 }
 
 bool discreteFace::writeParametrization(FILE *fp, bool binary)

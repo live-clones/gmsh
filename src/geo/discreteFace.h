@@ -70,6 +70,13 @@ public:
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
                                 const SVector3 &p, const double &R,
                                 double uv[2]);
+  // Spatially accelerated variant used by the optimized frontal mesher. The
+  // original implementation is intentionally kept for reproducible A/B
+  // comparisons with algorithm 6.
+  GPoint intersectionWithCircleSpatial(const SVector3 &n1,
+                                       const SVector3 &n2,
+                                       const SVector3 &p, const double &R,
+                                       double uv[2]);
   bool writeParametrization(FILE *fp, bool binary);
   bool readParametrization(FILE *fp, bool binary);
   virtual void resetMeshAttributes();
