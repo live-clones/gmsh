@@ -36,6 +36,12 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
                             double worstTetRadiusTarget, bool _classify = true,
                             splitQuadRecovery *sqr = nullptr);
 
+// distribute the tetrahedra left in regions[0]->tetrahedra by boundary
+// recovery on a connected group of regions to the region each one belongs to
+// (no-op if regions.size() < 2)
+void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
+                                 splitQuadRecovery *sqr = nullptr);
+
 // improve the tetrahedra of a region by local mesh modifications
 void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm);
 

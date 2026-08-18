@@ -867,6 +867,75 @@ static void refineRegionMTet4(GRegion *gr, int maxIter,
                               const std::set<MFace, MFaceLessThan> &allEmbeddedFaces,
                               edgeContainerB &allEmbeddedEdges);
 
+void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
+                                 splitQuadRecovery *sqr)
+{
+  if(regions.size() < 2) return;
+
+  GRegion *gr = regions[0];
+  if(gr->tetrahedra.empty()) return;
+
+  // Boundary recovery on a connected group of regions leaves every
+  // tetrahedron of the whole group in regions[0]->tetrahedra, with no
+  // per-tet region info yet (MTet4::onWhat() unset). Build adjacency and
+  // flood-fill from each boundary, exactly like insertVerticesInRegion's own
+  // classify step, then move each tet to the region it was found to belong
+  // to (or drop it if it falls in the "void" outside every region).
+  std::vector<MTet4 *> allTets;
+  allTets.reserve(gr->tetrahedra.size());
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+    gr->tetrahedra[i]->setVolumePositive();
+    allTets.push_back(new MTet4(gr->tetrahedra[i], 0.));
+  }
+  gr->tetrahedra.clear();
+
+  connectTets(allTets.begin(), allTets.end());
+
+  fs_cont search;
+  buildFaceSearchStructure(gr->model(), search, true); // only triangles
+  if(sqr) search.insert(sqr->getTri().begin(), sqr->getTri().end());
+
+  for(auto it = allTets.begin(); it != allTets.end(); ++it) {
+    if(!(*it)->onWhat()) {
+      std::list<MTet4 *> theRegion;
+      std::set<GFace *> faces_bound;
+      GRegion *bidon = (GRegion *)123;
+      non_recursive_classify(*it, theRegion, faces_bound, bidon, gr->model(),
+                             search);
+      GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
+      if(myGRegion && myGRegion->tetrahedra.empty()) {
+        for(auto it2 = theRegion.begin(); it2 != theRegion.end(); ++it2) {
+          (*it2)->setOnWhat(myGRegion);
+          // Make sure that Steiner points will end up in the right region
+          std::vector<MVertex *> vertices;
+          (*it2)->tet()->getVertices(vertices);
+          for(auto itv = vertices.begin(); itv != vertices.end(); ++itv) {
+            if((*itv)->onWhat() != nullptr && (*itv)->onWhat()->dim() == 3 &&
+               (*itv)->onWhat() != myGRegion) {
+              myGRegion->addMeshVertex(*itv);
+              (*itv)->setEntity(myGRegion);
+            }
+          }
+        }
+      }
+      else {
+        // the tets are in the void
+        for(auto it2 = theRegion.begin(); it2 != theRegion.end(); ++it2)
+          (*it2)->setDeleted(true);
+      }
+    }
+  }
+  search.clear();
+
+  for(MTet4 *t : allTets) {
+    if(!t->isDeleted() && t->onWhat())
+      t->onWhat()->tetrahedra.push_back(t->tet());
+    else
+      delete t->tet();
+    delete t;
+  }
+}
+
 void insertVerticesInRegion(GRegion *gr, int maxIter,
                             double worstTetRadiusTarget, bool _classify,
                             splitQuadRecovery *sqr)

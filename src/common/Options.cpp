@@ -6599,6 +6599,12 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
   return CTX::instance()->mesh.algo3d;
 }
 
+double opt_mesh_mmg3d_combine_domains(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.mmg3dCombineDomains = (int)val;
+  return CTX::instance()->mesh.mmg3dCombineDomains;
+}
+
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
