@@ -7,12 +7,16 @@
 #define SMITH_NORMAL_FORM_H
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <numeric>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+#include "GmshMessage.h"
 
 // Exact integer linear algebra for the homology solver (ChainComplex):
 // dense matrices of 64-bit integers, with Hermite and Smith normal forms
@@ -161,7 +165,41 @@ namespace NormalFormDetail {
     return b;
   }
 
+// Periodic progress reporting. On large homology problems the normal forms
+// below can run for hours inside a single call, with no output at all; this
+// reports the pivot reached at most every 'interval' seconds. No completion
+// estimate is given: the per-pivot cost varies by orders of magnitude over a
+// run, so any extrapolation from the elapsed time would be misleading.
+class ProgressTicker {
+public:
+  ProgressTicker(const char *what, std::size_t total, int interval = 30)
+    : _what(what), _total(total), _interval(interval),
+      _last(std::chrono::steady_clock::now()), _start(_last)
+  {
+  }
+  void tick(std::size_t done)
+  {
+    auto now = std::chrono::steady_clock::now();
+    if(std::chrono::duration_cast<std::chrono::seconds>(now - _last).count() <
+       _interval)
+      return;
+    _last = now;
+    double elapsed =
+      std::chrono::duration_cast<std::chrono::seconds>(now - _start).count();
+    Msg::Info("%s: pivot %lu/%lu (%.1f%%), %.0f s elapsed", _what,
+              (unsigned long)done, (unsigned long)_total,
+              _total ? 100. * (double)done / (double)_total : 100., elapsed);
+  }
+
+private:
+  const char *_what;
+  std::size_t _total;
+  int _interval;
+  std::chrono::steady_clock::time_point _last, _start;
+};
+
 } // namespace NormalFormDetail
+
 
 // A dense matrix of 64-bit integers, stored column-major. A default
 // -constructed (0 x 0) matrix doubles as a "no matrix" value.
@@ -186,6 +224,12 @@ public:
   std::size_t rows() const { return _rows; }
   std::size_t cols() const { return _cols; }
   bool empty() const { return _storage.empty(); }
+  // the contiguous storage of column j
+  const std::int64_t *colData(std::size_t j) const
+  {
+    return _storage.data() + j * _rows;
+  }
+  std::int64_t *colData(std::size_t j) { return _storage.data() + j * _rows; }
 
   // 0-based element access
   std::int64_t operator()(std::size_t i, std::size_t j) const
@@ -211,6 +255,12 @@ public:
 
   void transposeInPlace()
   {
+    if(_rows == _cols) { // genuinely in place, so no second copy is allocated
+      for(std::size_t j = 0; j < _cols; j++)
+        for(std::size_t i = j + 1; i < _rows; i++)
+          std::swap(_storage[j * _rows + i], _storage[i * _rows + j]);
+      return;
+    }
     IntegerMatrix t(_cols, _rows);
     for(std::size_t j = 0; j < _cols; j++)
       for(std::size_t i = 0; i < _rows; i++) t(j, i) = (*this)(i, j);
@@ -221,8 +271,11 @@ public:
   void swapRows(std::size_t r1, std::size_t r2)
   {
     if(r1 == r2) return;
-    for(std::size_t j = 0; j < _cols; j++)
-      std::swap((*this)(r1, j), (*this)(r2, j));
+    for(std::size_t j = 0; j < _cols; j++) {
+      std::int64_t &a = (*this)(r1, j), &b = (*this)(r2, j);
+      if(a == 0 && b == 0) continue; // no store, so the line stays clean
+      std::swap(a, b);
+    }
   }
   void swapCols(std::size_t c1, std::size_t c2)
   {
@@ -240,19 +293,24 @@ public:
     for(std::size_t i = 0; i < _rows; i++)
       (*this)(i, c) = NormalFormDetail::negate((*this)(i, c));
   }
-  // row(dst) += a * row(src)
+  // row(dst) += a * row(src). Skipping the structural zeros of the source
+  // matters here: these matrices are very sparse but stored dense, and where
+  // the source entry is zero the destination is neither read nor written.
   void addRowMultiple(std::int64_t a, std::size_t src, std::size_t dst)
   {
-    for(std::size_t j = 0; j < _cols; j++)
-      (*this)(dst, j) =
-        NormalFormDetail::addMul((*this)(dst, j), a, (*this)(src, j));
+    for(std::size_t j = 0; j < _cols; j++) {
+      std::int64_t s = (*this)(src, j);
+      if(s == 0) continue;
+      (*this)(dst, j) = NormalFormDetail::addMul((*this)(dst, j), a, s);
+    }
   }
   // col(dst) += a * col(src)
   void addColMultiple(std::int64_t a, std::size_t src, std::size_t dst)
   {
+    const std::int64_t *s = colData(src);
+    std::int64_t *d = colData(dst);
     for(std::size_t i = 0; i < _rows; i++)
-      (*this)(i, dst) =
-        NormalFormDetail::addMul((*this)(i, dst), a, (*this)(i, src));
+      if(s[i] != 0) d[i] = NormalFormDetail::addMul(d[i], a, s[i]);
   }
   // (row(r1), row(r2)) <- (a*row(r1) + b*row(r2), c*row(r1) + d*row(r2))
   void rotateRows(std::int64_t a, std::int64_t b, std::size_t r1,
@@ -260,6 +318,7 @@ public:
   {
     for(std::size_t j = 0; j < _cols; j++) {
       std::int64_t x = (*this)(r1, j), y = (*this)(r2, j);
+      if(x == 0 && y == 0) continue; // both results are zero as well
       (*this)(r1, j) = NormalFormDetail::mulMul(a, x, b, y);
       (*this)(r2, j) = NormalFormDetail::mulMul(c, x, d, y);
     }
@@ -268,10 +327,12 @@ public:
   void rotateCols(std::int64_t a, std::int64_t b, std::size_t c1,
                   std::int64_t c, std::int64_t d, std::size_t c2)
   {
+    std::int64_t *p1 = colData(c1), *p2 = colData(c2);
     for(std::size_t i = 0; i < _rows; i++) {
-      std::int64_t x = (*this)(i, c1), y = (*this)(i, c2);
-      (*this)(i, c1) = NormalFormDetail::mulMul(a, x, b, y);
-      (*this)(i, c2) = NormalFormDetail::mulMul(c, x, d, y);
+      std::int64_t x = p1[i], y = p2[i];
+      if(x == 0 && y == 0) continue; // both results are zero as well
+      p1[i] = NormalFormDetail::mulMul(a, x, b, y);
+      p2[i] = NormalFormDetail::mulMul(c, x, d, y);
     }
   }
 
@@ -378,6 +439,34 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
   IntegerMatrix &C = nf.canonical;
   IntegerMatrix &R = nf.rightInverse;
 
+  // "schur" is the diagonal position where the current Schur complement
+  // starts; "clean" tracks whether the leading block is fully reduced, which
+  // holds as long as elimination only meets unit pivots (always, for the
+  // totally unimodular matrices of homology) and allows the cheap rowOnly
+  // reductions
+  std::size_t schur = 0, ncols = n;
+  bool clean = true;
+
+  // Sparse record of the leading block: leadNz[j] holds, in ascending order,
+  // the rows i with j < i < schur and C(i, j) != 0. The reduction below can
+  // only act where C(i, j) != 0 -- a zero entry is always already reduced,
+  // because every diagonal entry of the leading block is nonzero -- so this
+  // lets the full block sweep walk the block's nonzeros instead of all of its
+  // O(col^2) positions. That is what makes the sweep affordable: reduction
+  // against a unit pivot clears the entry outright, so the leading block is
+  // very nearly diagonal and almost every column is skipped in O(1).
+  std::vector<std::vector<std::size_t>> leadNz(n);
+  std::vector<std::size_t> queue, newNz; // scratch, reused across columns
+
+  // recompute leadNz[j] over the rows (j, schur) of the leading block
+  auto rebuildLeadNz = [&](std::size_t j) {
+    std::vector<std::size_t> &nz = leadNz[j];
+    nz.clear();
+    const std::int64_t *cj = C.colData(j);
+    for(std::size_t i = j + 1; i < schur; i++)
+      if(cj[i] != 0) nz.push_back(i);
+  };
+
   // Eliminate the entries of column col above the diagonal against the
   // leading diagonal with extended-gcd column rotations, mirrored onto the
   // right factor. Returns true if a leading column changed, which happens
@@ -392,9 +481,14 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
       std::int64_t p = C(i, i), s, t;
       std::int64_t g = nfd::extendedGcd(p, e, s, t);
       std::int64_t c = nfd::negate(e / g), d = p / g;
-      if(s != 1 || t != 0) disturbed = true;
       C.rotateCols(s, t, i, c, d, col);
       R.rotateCols(s, t, i, c, d, col);
+      // (s, t) == (1, 0) leaves column i bit-for-bit unchanged, so only a
+      // non-unit pivot can disturb the leading block or its sparse record
+      if(s != 1 || t != 0) {
+        disturbed = true;
+        rebuildLeadNz(i);
+      }
     }
     return disturbed;
   };
@@ -405,30 +499,84 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
   // and undisturbed, and the skipped entries would have failed the reduction
   // guard anyway, so this is exact and turns the O(col^2) block sweep into
   // an O(col) row sweep.
-  auto reduce = [&](std::ptrdiff_t col, bool rowOnly) {
+  // newRow says whether row col has just joined the leading block, and so is
+  // not yet accounted for in leadNz; when it has not, a column with no
+  // recorded nonzero is skipped without touching the matrix at all.
+  auto reduce = [&](std::ptrdiff_t col, bool rowOnly, bool newRow) {
     if(col < 0 || col >= (std::ptrdiff_t)m) return;
+    const std::size_t cc = (std::size_t)col;
+
+    // reduce C(i, j) against the pivot C(i, i); returns true if it acted
+    auto reduceEntry = [&](std::size_t i, std::size_t j) -> bool {
+      std::int64_t e = C(i, j);
+      if(e == 0) return false; // a zero entry is already reduced
+      std::int64_t p = C(i, i);
+      std::int64_t ap = p < 0 ? -p : p, ae = e < 0 ? -e : e;
+      if(ae < ap && e >= 0) return false;
+      // the smallest cff with 0 <= e + cff * p < p, i.e. ceil(-e/p)
+      std::int64_t cff = nfd::negate(nfd::floorDiv(e, p));
+      C.addColMultiple(cff, i, j);
+      R.addColMultiple(cff, i, j);
+      return true;
+    };
+
     for(std::ptrdiff_t j = col - 1; j >= 0; j--) {
-      for(std::size_t i = rowOnly ? col : j + 1; i <= (std::size_t)col; i++) {
-        std::int64_t p = C(i, i), e = C(i, j);
-        std::int64_t ap = p < 0 ? -p : p, ae = e < 0 ? -e : e;
-        if(ae >= ap || e < 0) {
-          // the smallest cff with 0 <= e + cff * p < p, i.e. ceil(-e/p)
-          std::int64_t cff = nfd::negate(nfd::floorDiv(e, p));
-          C.addColMultiple(cff, i, j);
-          R.addColMultiple(cff, i, j);
+      const std::size_t jj = (std::size_t)j;
+      std::vector<std::size_t> &nz = leadNz[jj];
+
+      if(rowOnly || nz.empty()) {
+        // Only row col can act. For rowOnly that is by assumption: the rest of
+        // the block is reduced and undisturbed, and the skipped entries would
+        // have failed the reduction guard anyway, so this is exact. Otherwise
+        // it is because nothing else in this column of the block is nonzero.
+        // Either way acting on row col cannot cascade -- it is the block's
+        // last row -- so no queue is needed.
+        if(newRow) {
+          reduceEntry(cc, jj);
+          if(C(cc, jj) != 0) nz.push_back(cc); // row col joins the block
         }
+        continue;
       }
+
+      // Full sweep. Only rows already recorded as nonzero, plus the new row
+      // col, can act -- and acting on row i adds column i's pattern below row
+      // i to column j, so those rows are queued as well. Rows are processed in
+      // ascending order, which is the order the dense sweep used and the order
+      // in which entries become final.
+      queue.clear();
+      for(std::size_t r : nz)
+        if(r <= cc) queue.push_back(r);
+      if(newRow && cc > jj && (queue.empty() || queue.back() != cc))
+        queue.push_back(cc);
+      if(queue.empty()) continue;
+      std::make_heap(queue.begin(), queue.end(), std::greater<std::size_t>());
+
+      newNz.clear();
+      std::size_t last = (std::size_t)-1;
+      while(!queue.empty()) {
+        std::pop_heap(queue.begin(), queue.end(), std::greater<std::size_t>());
+        std::size_t i = queue.back();
+        queue.pop_back();
+        if(i == last) continue; // the queue may hold duplicates
+        last = i;
+        if(reduceEntry(i, jj)) {
+          for(std::size_t r : leadNz[i])
+            if(r > i && r <= cc) {
+              queue.push_back(r);
+              std::push_heap(queue.begin(), queue.end(),
+                             std::greater<std::size_t>());
+            }
+        }
+        // rows below i are still open, but row i is now final
+        if(C(i, jj) != 0) newNz.push_back(i);
+      }
+      nz.swap(newNz); // ascending by construction
     }
   };
 
-  // "schur" is the diagonal position where the current Schur complement
-  // starts; "clean" tracks whether the leading block is fully reduced, which
-  // holds as long as elimination only meets unit pivots (always, for the
-  // totally unimodular matrices of homology) and allows the cheap rowOnly
-  // reductions
-  std::size_t schur = 0, ncols = n;
-  bool clean = true;
+  nfd::ProgressTicker progress("Hermite normal form", std::min(m, n));
   while(schur < m && schur < ncols) {
+    progress.tick(schur);
     if(schur > 0 && eliminate(schur)) clean = false;
 
     std::size_t pivotRow = m;
@@ -445,7 +593,7 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
       R.swapCols(schur, ncols - 1);
       ncols--;
       if(schur > 0 && !clean) {
-        reduce((std::ptrdiff_t)schur - 1, false);
+        reduce((std::ptrdiff_t)schur - 1, false, false);
         clean = true;
       }
     }
@@ -458,7 +606,10 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
         C.negateCol(schur);
         R.negateCol(schur);
       }
-      reduce((std::ptrdiff_t)schur, clean);
+      // this column position may have been recycled by an earlier retirement,
+      // and the new diagonal block row (schur, schur) is empty by definition
+      leadNz[schur].clear();
+      reduce((std::ptrdiff_t)schur, clean, true);
       clean = true;
       schur++;
     }
@@ -469,7 +620,7 @@ inline HermiteForm hermiteNormalForm(IntegerMatrix A)
   for(std::size_t col = schur; col < ncols; col++) {
     if(eliminate(col)) clean = false;
     if(!clean) {
-      reduce((std::ptrdiff_t)schur - 1, false);
+      reduce((std::ptrdiff_t)schur - 1, false, false);
       clean = true;
     }
   }
@@ -496,17 +647,25 @@ inline SmithForm smithNormalForm(IntegerMatrix A, bool invertedFactors)
   // (inverse) factor is requested, and as the inverse operation on the
   // opposite side otherwise. All rotations built below have determinant +1,
   // so their inverse is simply the adjugate.
+  //
+  // Whichever of the two mirrorings applies, exactly one factor receives row
+  // operations: 'left' when the inverse factors are requested, 'right' when
+  // they are not. That factor is therefore held TRANSPOSED for the duration
+  // and transposed back before returning, which turns those row operations
+  // into column operations. The point is cache behaviour, not arithmetic: the
+  // storage is column-major, so a row operation touches one cache line per
+  // column and costs a cache miss per entry, while a column operation walks
+  // contiguous memory. The single transpose at the end is O(mn) against the
+  // O(mn) per operation this saves.
+  const bool leftT = inv, rightT = !inv; // which factor is held transposed
   auto rowSwap = [&](std::size_t r1, std::size_t r2) {
     C.swapRows(r1, r2);
-    if(inv)
-      L.swapRows(r1, r2);
-    else
-      L.swapCols(r1, r2);
+    L.swapCols(r1, r2); // L^T column swap if leftT, else L's own column swap
   };
   auto rowAddMultiple = [&](std::int64_t q, std::size_t src, std::size_t dst) {
     C.addRowMultiple(q, src, dst);
     if(inv)
-      L.addRowMultiple(q, src, dst);
+      L.addColMultiple(q, src, dst); // on L^T
     else
       L.addColMultiple(nfd::negate(q), dst, src);
   };
@@ -514,38 +673,32 @@ inline SmithForm smithNormalForm(IntegerMatrix A, bool invertedFactors)
                        std::int64_t c, std::int64_t d, std::size_t r2) {
     C.rotateRows(a, b, r1, c, d, r2);
     if(inv)
-      L.rotateRows(a, b, r1, c, d, r2);
+      L.rotateCols(a, b, r1, c, d, r2); // on L^T
     else
       L.rotateCols(d, nfd::negate(c), r1, nfd::negate(b), a, r2);
   };
   auto colSwap = [&](std::size_t c1, std::size_t c2) {
     C.swapCols(c1, c2);
-    if(inv)
-      R.swapCols(c1, c2);
-    else
-      R.swapRows(c1, c2);
+    R.swapCols(c1, c2); // R's own column swap if inv, else R^T's
   };
   auto colNegate = [&](std::size_t c) {
     C.negateCol(c);
-    if(inv)
-      R.negateCol(c);
-    else
-      R.negateRow(c);
+    R.negateCol(c); // likewise
   };
   auto colAddMultiple = [&](std::int64_t q, std::size_t src, std::size_t dst) {
     C.addColMultiple(q, src, dst);
     if(inv)
       R.addColMultiple(q, src, dst);
     else
-      R.addRowMultiple(nfd::negate(q), dst, src);
+      R.addColMultiple(nfd::negate(q), dst, src); // on R^T
   };
   auto colRotate = [&](std::int64_t a, std::int64_t b, std::size_t c1,
                        std::int64_t c, std::int64_t d, std::size_t c2) {
     C.rotateCols(a, b, c1, c, d, c2);
     if(inv)
       R.rotateCols(a, b, c1, c, d, c2);
-    else
-      R.rotateRows(d, nfd::negate(c), c1, nfd::negate(b), a, c2);
+    else // on R^T
+      R.rotateCols(d, nfd::negate(c), c1, nfd::negate(b), a, c2);
   };
 
   // Zero C(i,t) against the pivot C(t,t). When the pivot divides the entry,
@@ -579,7 +732,9 @@ inline SmithForm smithNormalForm(IntegerMatrix A, bool invertedFactors)
   };
 
   const std::size_t ndiag = std::min(m, n);
+  nfd::ProgressTicker progress("Smith normal form", ndiag);
   for(std::size_t t = 0; t < ndiag; t++) {
+    progress.tick(t);
     // Smallest-magnitude nonzero of the trailing block as the pivot: this
     // surfaces unit pivots first, which clear their row and column in a
     // single pass with no growth. A nonzero integer has magnitude >= 1, so
@@ -644,6 +799,10 @@ inline SmithForm smithNormalForm(IntegerMatrix A, bool invertedFactors)
 
     if(C(t, t) < 0) colNegate(t);
   }
+
+  // undo the storage transpose of whichever factor took the row operations
+  if(leftT) L.transposeInPlace();
+  if(rightT) R.transposeInPlace();
 
   return nf;
 }
