@@ -84,6 +84,10 @@
 #include "geolog.h"
 #endif
 
+#if defined(HAVE_QUADOPTIMIZER)
+#include "smallCavityOptimizer.h"
+#endif
+
 #include "meshDuplicateVertices.h"
 
 class EmbeddedCompatibilityTest {
@@ -717,10 +721,10 @@ static void Mesh2D(GModel *m)
     bool debug = (Msg::GetVerbosity() == 99);
 
     transferSeamGEdgesVerticesToGFace(m);
-    //quadMeshingOfSimpleFacesWithPatterns(m, .02);
-    if(debug) m->writeMSH("opti1.msh");
+    quadMeshingOfSimpleFacesWithPatterns(m, .02);
+    //    if(debug) m->writeMSH("opti1.msh");
     //    if(debug) m->writeMSH("opti2.msh");
-    //    optimizeTopologyWithCavityRemeshing(m);
+    //optimizeTopologyWithCavityRemeshing(m);
 
     if(Msg::GetVerbosity() == 99) {
       std::vector<std::pair<SPoint3, int>> singularities;
@@ -731,7 +735,7 @@ static void Mesh2D(GModel *m)
       }
     }
 
-    OptimizeMesh(m, "UntangleTris");
+    OptimizeMesh(m, "OptimizeQuads");
     if(debug) m->writeMSH("opti4.msh");
 
     for(GFace *gf : m->getFaces()) {
@@ -959,6 +963,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
+     how != "OptimizeQuads" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
      how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
@@ -1018,6 +1023,28 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
       //                   gf->tag());
       //      }
     }
+#endif
+  }
+  else if(how == "OptimizeQuads") {
+#if defined(HAVE_QUADOPTIMIZER)
+    QuadOptimizer::SmallCavityOptimizerOptions options;
+    options.verbose = Msg::GetVerbosity() > 4 ? 1 : 0;
+    const QuadOptimizer::AllFacesOptimizerResult result =
+      QuadOptimizer::optimizeSmallQuadCavitiesAllFaces(options);
+    if(!result.success) {
+      Msg::Error("OptimizeQuads failed");
+    }
+    else {
+      Msg::Info("OptimizeQuads: %zu faces, %zu topology changes, absolute "
+                "violations %zu -> %zu, preferred violations %zu -> %zu",
+                result.facesWithQuadrangles, result.acceptedCavities,
+                result.initialObjective.absoluteViolationCount,
+                result.finalObjective.absoluteViolationCount,
+                result.initialObjective.preferredViolationCount,
+                result.finalObjective.preferredViolationCount);
+    }
+#else
+    Msg::Error("OptimizeQuads requires QUADOPTIMIZER");
 #endif
   }
   else if(how == "MesquiteImprove2D") {

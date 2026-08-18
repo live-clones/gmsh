@@ -461,6 +461,40 @@ int initDiskQuadrangulations()
   return 0;
 }
 
+GMSH_API int getDiskQuadrangulations(
+  std::size_t boundaryVertexCount, std::size_t interiorVertexCount,
+  std::vector<std::vector<std::array<std::size_t, 4> > > &quadrangulations)
+{
+  quadrangulations.clear();
+  if(QMT::B_disk_quadrangulations.empty() &&
+     !QMT::load_disk_quadrangulations_from_raw_data())
+    return -1;
+  if(boundaryVertexCount >= QMT::B_disk_quadrangulations.size()) return 0;
+
+  for(const QMT::Quadrangulation &stored :
+      QMT::B_disk_quadrangulations[boundaryVertexCount]) {
+    QMT::id maximumVertex = 0;
+    for(const QMT::id4 &quad : stored)
+      for(const QMT::id vertex : quad)
+        maximumVertex = std::max(maximumVertex, vertex);
+    const std::size_t vertexCount =
+      stored.empty() ? boundaryVertexCount :
+                       static_cast<std::size_t>(maximumVertex) + 1;
+    if(vertexCount < boundaryVertexCount ||
+       vertexCount - boundaryVertexCount != interiorVertexCount)
+      continue;
+    quadrangulations.emplace_back();
+    auto &output = quadrangulations.back();
+    output.reserve(stored.size());
+    for(const QMT::id4 &quad : stored)
+      output.push_back({static_cast<std::size_t>(quad[0]),
+                        static_cast<std::size_t>(quad[1]),
+                        static_cast<std::size_t>(quad[2]),
+                        static_cast<std::size_t>(quad[3])});
+  }
+  return 0;
+}
+
 int remeshLocalWithDiskQuadrangulation(
   GFace *gf, const std::vector<MElement *> &elements,
   const std::vector<MVertex *> &intVertices,
