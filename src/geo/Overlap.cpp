@@ -258,14 +258,22 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
   using Equal = typename EntityTraits<dim>::BoundaryMeshObjectEqual;
   // Track count and one parent element for each boundary
   // We only need one element since boundaries with count==1 are kept
-  using BndInfoMap =
-    std::unordered_map<MBnd, std::pair<unsigned, MElement *>, Hash, Equal>;
   OveralBoundariesMesh<dim> result(overlaps.size());
 
-// Embarassingly parallel
+  struct BndInfo {
+    unsigned count = 0;
+    MElement *element = nullptr;
+    Entity *parent = nullptr;
+  };
+  using BndInfoMap = std::unordered_map<MBnd, BndInfo, Hash, Equal>;
+
+// Embarassingly parallel, loop over partitions
 #pragma omp parallel for schedule(dynamic)
   for(size_t i = 0; i < overlaps.size(); ++i) {
-    std::unordered_map<Entity *, BndInfoMap> counts;
+    //std::unordered_map<Entity *, BndInfoMap> counts;
+    BndInfoMap dict;
+
+
 
     for(const auto &[covered, elements] : overlaps[i]) {
       if(!covered) continue; // Skip null entities
@@ -276,33 +284,31 @@ findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps)
           covered->dim(), covered->tag());
       }
 
-      auto &dict = counts[parent];
       for(const auto &element : elements) {
         if constexpr(dim == 2) {
           for(int j = 0; j < element->getNumEdges(); ++j) {
             MBnd edge = element->getEdge(j);
             auto &info = dict[edge];
-            info.first++;
-            info.second = element; // Store the parent element
+            info.count++;
+            info.element = element; // Store the parent element
+            info.parent = parent;
           }
         }
         else if constexpr(dim == 3) {
           for(int j = 0; j < element->getNumFaces(); ++j) {
             MBnd face = element->getFace(j);
             auto &info = dict[face];
-            info.first++;
-            info.second = element; // Store the parent element
+            info.count++;
+            info.element = element; // Store the parent element
+            info.parent = parent;
           }
         }
       }
     }
 
-    for(const auto &[parent, boundaryInfo] : counts) {
-      auto &boundaryMap = result[i][parent];
-      for(const auto &[boundary, info] : boundaryInfo) {
-        if(info.first == 1) { // Only keep unique boundaries
-          boundaryMap[boundary] = info.second; // Map boundary to parent element
-        }
+    for(const auto &[boundary, info] : dict) {
+      if(info.count == 1) { // Facet seen exactly once: on the patch boundary
+        result[i][info.parent][boundary] = info.element;
       }
     }
   }
@@ -421,6 +427,34 @@ static MElement *createHighOrderFace(const MFace &face, MElement *parentElement)
   }
 }
 
+// Fill a boundary entity with high-order boundary elements rebuilt from the
+// stored parent elements. Overloaded on the boundary entity type instead of
+// using "if constexpr", which MSVC does not discard properly inside a lambda
+template <class Map>
+static void fillBoundaryEntity(partitionEdge *bnd, const Map &bndMap)
+{
+  for(const auto &it : bndMap)
+    bnd->addLine(createHighOrderLine(it.first, it.second));
+}
+
+template <class Map>
+static void fillBoundaryEntity(partitionFace *bnd, const Map &bndMap)
+{
+  for(const auto &it : bndMap) {
+    MElement *elem = createHighOrderFace(it.first, it.second);
+    if(MTriangle *tri = dynamic_cast<MTriangle *>(elem)) {
+      bnd->addTriangle(tri);
+    }
+    else if(MQuadrangle *quad = dynamic_cast<MQuadrangle *>(elem)) {
+      bnd->addQuadrangle(quad);
+    }
+    else {
+      Msg::Error("Unexpected element type in 3D overlap boundary.");
+      delete elem;
+    }
+  }
+}
+
 template <int dim>
 void overlapBuildBoundaries(GModel *const model,
                             const OverlapCollection<dim> &overlaps)
@@ -458,6 +492,10 @@ void overlapBuildBoundaries(GModel *const model,
       std::unordered_map<GEntity *, BoundaryToElementMap,
                          GEntityPtrFullHash, GEntityPtrFullEqual>
         boundariesOfExisting;
+      // Same, for artificial boundaries lying on an internal interface
+      std::unordered_map<GEntity *, BoundaryToElementMap,
+                         GEntityPtrFullHash, GEntityPtrFullEqual>
+        boundariesOnInterface;
 
       if(!parent) continue; // Skip null entities
       if(boundaryMap.empty()) continue; // Skip empty maps
@@ -470,10 +508,32 @@ void overlapBuildBoundaries(GModel *const model,
           auto parentEntity = (partitionEntity->getParentEntity());
           if(!parentEntity) { Msg::Error("No parent entity"); }
 
-          // If it is part of the outer boundary, add it to the overlap of
-          // boundary
+          // A dim-1 geometric parent is either part of the outer boundary
+          // (one-sided) or an internal interface between two dim-D entities
+          // (two-sided). One-sided: extend the physical boundary (overlap of
+          // boundary). Two-sided: the domain continues on the other side, so
+          // the rim is artificial but keeps the interface identity (inner
+          // boundary on interface).
           if(parentEntity->dim() == dim - 1) {
-            boundariesOfExisting[parentEntity][melement] = parentElement;
+            bool twoSided = false;
+            if constexpr(dim == 2)
+              twoSided =
+                static_cast<GEdge *>(parentEntity)->faces().size() >= 2;
+            else if constexpr(dim == 3)
+              twoSided = static_cast<GFace *>(parentEntity)->numRegions() == 2;
+            if(twoSided) {
+              // Skip glue facets: if the facet's partition entity belongs to
+              // the current partition, the patch attaches to its own subdomain
+              // here (same guard as the inter-partition branch below)
+              auto parts = getEntityPartition(partitionEntity);
+              if(std::find(parts.begin(), parts.end(), partition) ==
+                 parts.end()) {
+                boundariesOnInterface[parentEntity][melement] = parentElement;
+              }
+            }
+            else {
+              boundariesOfExisting[parentEntity][melement] = parentElement;
+            }
           }
           else {
             // Element is on an interface between two subdomains. If none of the
@@ -501,28 +561,7 @@ void overlapBuildBoundaries(GModel *const model,
         auto bnd = new typename EntityTraits<dim>::BoundaryEntity(
           model, model->getMaxElementaryNumber(dim - 1) + 1, {partition});
 
-        // Add elements with high-order support
-        if constexpr(dim == 2) {
-          for(const auto &[edge, parentElement] : innerboundaryMap) {
-            auto elem = createHighOrderLine(edge, parentElement);
-            bnd->addLine(elem);
-          }
-        }
-        else if constexpr(dim == 3) {
-          for(const auto &[face, parentElement] : innerboundaryMap) {
-            auto elem = createHighOrderFace(face, parentElement);
-            if(auto tri = dynamic_cast<MTriangle *>(elem)) {
-              bnd->addTriangle(tri);
-            }
-            else if(auto quad = dynamic_cast<MQuadrangle *>(elem)) {
-              bnd->addQuadrangle(quad);
-            }
-            else {
-              Msg::Error("Unexpected element type in 3D overlap boundary.");
-              delete elem;
-            }
-          }
-        }
+        fillBoundaryEntity(bnd, innerboundaryMap);
         model->add(bnd);
         model->addInnerBoundary(parent, bnd);
       }
@@ -534,30 +573,13 @@ void overlapBuildBoundaries(GModel *const model,
         auto bnd = new typename EntityTraits<dim>::BoundaryEntity(
           model, model->getMaxElementaryNumber(dim - 1) + 1, {partition});
 
-        // Add elements with high-order support
+        fillBoundaryEntity(bnd, bndMap);
         if constexpr(dim == 2) {
-          for(const auto &[edge, parentElement] : bndMap) {
-            auto elem = createHighOrderLine(edge, parentElement);
-            bnd->addLine(elem);
-          }
           Msg::Info("Created overlap of boundary entity with %lu elements for "
                     "partition %d.",
                     bnd->getNumMeshElements(), partition);
         }
         else if constexpr(dim == 3) {
-          for(const auto &[face, parentElement] : bndMap) {
-            auto elem = createHighOrderFace(face, parentElement);
-            if(auto tri = dynamic_cast<MTriangle *>(elem)) {
-              bnd->addTriangle(tri);
-            }
-            else if(auto quad = dynamic_cast<MQuadrangle *>(elem)) {
-              bnd->addQuadrangle(quad);
-            }
-            else {
-              Msg::Error("Unexpected element type in 3D overlap boundary.");
-              delete elem;
-            }
-          }
           Msg::Info("Created overlap of boundary entity with %lu elements for "
                     "partition %d in dimension %d.",
                     bnd->getNumMeshElements(), partition, dim);
@@ -571,6 +593,30 @@ void overlapBuildBoundaries(GModel *const model,
         else if constexpr(dim == 3)
           model->addOverlapOfBoundary(dynamic_cast<GFace *>(entity), bnd,
                                       parent);
+      }
+
+      // Artificial boundaries lying on an internal interface: same role as
+      // inner boundaries (transmission condition), but grouped per interface
+      // entity so the solver can choose an interface-aware condition
+      for(const auto &[entity, bndMap] : boundariesOnInterface) {
+        if(!entity) continue; // Skip null entities
+        if(bndMap.empty()) continue; // Skip empty maps
+
+        auto bnd = new typename EntityTraits<dim>::BoundaryEntity(
+          model, model->getMaxElementaryNumber(dim - 1) + 1, {partition});
+
+        fillBoundaryEntity(bnd, bndMap);
+        Msg::Debug("Created inner boundary on interface with %lu elements for "
+                   "partition %d (interface %d/%d, created by %d/%d)",
+                   bnd->getNumMeshElements(), partition, entity->dim(),
+                   entity->tag(), parent->dim(), parent->tag());
+        model->add(bnd);
+        if constexpr(dim == 2)
+          model->addInnerBoundaryOnInterface(dynamic_cast<GEdge *>(entity),
+                                             bnd, parent);
+        else if constexpr(dim == 3)
+          model->addInnerBoundaryOnInterface(dynamic_cast<GFace *>(entity),
+                                             bnd, parent);
       }
     }
   }
