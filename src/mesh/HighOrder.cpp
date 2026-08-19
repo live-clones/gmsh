@@ -8,6 +8,7 @@
 //
 
 #include <sstream>
+#include <unordered_map>
 #include <vector>
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -27,6 +28,7 @@
 #include "InnerVertexPlacement.h"
 #include "Context.h"
 #include "MFace.h"
+#include "MFaceHash.h"
 #include "ExtrudeParams.h"
 
 // for each pair of vertices (an edge), we build a list of vertices that are the
@@ -34,12 +36,22 @@
 // is supposed to be (by construction) consistent with the ordering of the pair.
 // FIXME: replace this by std::map<MEdge, std::vector<MVertex *>,
 // MEdgeLessThan>!
-typedef std::map<std::pair<MVertex *, MVertex *>, std::vector<MVertex *>>
+struct MVertexPairHash {
+  std::size_t operator()(const std::pair<MVertex *, MVertex *> &p) const
+  {
+    std::size_t v[2] = {p.first->getNum(), p.second->getNum()};
+    return HashFNV1a<sizeof(std::size_t[2])>::eval(v);
+  }
+};
+typedef std::unordered_map<std::pair<MVertex *, MVertex *>,
+                           std::vector<MVertex *>, MVertexPairHash>
   edgeContainer;
 
 // for each face (a list of vertices) we build a list of vertices that are the
 // high order representation of the face
-typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
+typedef std::unordered_map<MFace, std::vector<MVertex *>, MFaceHash,
+                           MFaceEqual>
+  faceContainer;
 
 // Functions that help optimizing placement of points on geometry
 
@@ -371,8 +383,7 @@ static void interpVerticesInExistingEdge(GEntity *ge, const MElement *edgeEl,
                                          std::vector<MVertex *> &veEdge,
                                          int nPts)
 {
-  fullMatrix<double> points;
-  points = edgeEl->getFunctionSpace(nPts + 1)->points;
+  const fullMatrix<double> &points = edgeEl->getFunctionSpace(nPts + 1)->points;
   for(int k = 2; k < nPts + 2; k++) {
     SPoint3 pos;
     edgeEl->pnt(points(k, 0), 0., 0., pos);
@@ -486,28 +497,30 @@ static void getEdgeVertices(GRegion *gr, MElement *ele,
                             std::vector<MVertex *> &ve,
                             edgeContainer &edgeVertices, int nPts = 1)
 {
+  std::vector<MVertex *> veOld, veEdge;
   for(int i = 0; i < ele->getNumEdges(); i++) {
-    std::vector<MVertex *> veOld;
+    veOld.clear();
     ele->getEdgeVertices(i, veOld);
     MVertex *vMin, *vMax;
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
-    std::vector<MVertex *> veEdge;
-    if(edgeVertices.count(p)) { // Vertices already exist
+    veEdge.clear();
+    auto eIter = edgeVertices.find(p);
+    if(eIter != edgeVertices.end()) { // Vertices already exist
+      std::vector<MVertex *> &eVtcs = eIter->second;
       if(increasing)
-        veEdge.assign(edgeVertices[p].begin(), edgeVertices[p].end());
+        veEdge.assign(eVtcs.begin(), eVtcs.end());
       else
-        veEdge.assign(edgeVertices[p].rbegin(), edgeVertices[p].rend());
+        veEdge.assign(eVtcs.rbegin(), eVtcs.rend());
     }
     else { // Vertices do not exist, create them
       const MLineN edgeEl(veOld, ele->getPolynomialOrder());
       interpVerticesInExistingEdge(gr, &edgeEl, veEdge, nPts);
+      std::vector<MVertex *> &eVtcs = edgeVertices[p];
       if(increasing) // Add newly created vertices to list
-        edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(),
-                               veEdge.end());
+        eVtcs.insert(eVtcs.end(), veEdge.begin(), veEdge.end());
       else
-        edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(),
-                               veEdge.rend());
+        eVtcs.insert(eVtcs.end(), veEdge.rbegin(), veEdge.rend());
     }
     ve.insert(ve.end(), veEdge.begin(), veEdge.end());
   }
