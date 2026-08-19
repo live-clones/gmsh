@@ -23,6 +23,7 @@
 #cmakedefine HAVE_GEOMETRYCENTRAL
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP
+#cmakedefine HAVE_HIERARCHICAL_BASIS
 #cmakedefine HAVE_HXT
 #cmakedefine HAVE_KBIPACK
 #cmakedefine HAVE_LAPACK

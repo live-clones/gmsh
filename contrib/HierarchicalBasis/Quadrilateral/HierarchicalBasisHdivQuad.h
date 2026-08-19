@@ -1,0 +1,128 @@
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributed by Nawfel BENATIA (2025), based on Ismail Badia's contribution (2019).
+//
+// Reference : Solin, P., Segeth, K., & Dolezel, I. (2003).
+//             Higher-Order Finite Element Methods (1st ed.).
+//             Chapman and Hall/CRC. https://doi.org/10.1201/9780203488041
+
+#ifndef HIERARCHICAL_BASIS_HDIV_QUAD_H
+#define HIERARCHICAL_BASIS_HDIV_QUAD_H
+
+#include <stdexcept>
+#include "HierarchicalBasisHdiv.h"
+
+/*
+ *
+ *         v
+ *         ^
+ *         |+1
+ *   3<----------2
+ *   |     |     ^
+ *   |     |     |
+ * -1|     +---- |+1 --> u
+ *   |           |
+ *   v           |
+ *   0---------->1
+ *       -1
+ *
+ * Oriented Edges:
+ *  e0={v0;v1}    e1={v1;v2}  e2={v2;v3}  e3={v3;v4}
+ *  pe3,pe1<=pf2       pe0,pe2<=pf1
+ *
+ */
+class HierarchicalBasisHdivQuad : public HierarchicalBasisHdiv {
+private:
+    std::array<int, 4> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches the edge 0 order)
+    std::array<int, 2> _pf; /* _pf[0] face function order in  direction u
+                             & _pf[1] face function order in  direction v */
+    
+    static double _affineCoordinate(int const &j, double const &u, double const &v); // affine coordinate lambdaj j=1..4
+    
+    // edgeBasis=[phie0_{0},...phie0_{pe0},phie1_{0},...phie1_{pe1}...]
+    // faceBasis=[phieFf1{n1,n2} (with 0<=n1<=pf1 , 2<=n2<=pf2+1), phieFf2{n1,n2}
+    // (with 2<=n1<=pf1+1 , 0<=n2<=pf2) ]
+  
+    virtual void generateHdivBasis(double const &u, double const &v, double const &w,
+                                    std::vector<std::vector<double> > &edgeBasis,
+                                    std::vector<std::vector<double> > &faceBasis,
+                                    std::vector<std::vector<double> > &bubbleBasis);
+  
+    virtual void generateDivBasis(double const &u, double const &v, double const &w,
+                                   std::vector<std::vector<double> > &edgeBasis,
+                                   std::vector<std::vector<double> > &faceBasis,
+                                   std::vector<std::vector<double> > &bubbleBasis);
+    
+    virtual void orientOneFace(double const &u, double const &v, double const &w,
+                               int const &flag1, int const &flag2, int const &flag3,
+                               int const &faceNumber, std::vector<std::vector<double> > &faceFunctions,
+                               std::string typeFunction);
+    virtual void orientOneFace(double const &u, double const &v, double const &w,
+                               int const &flag1, int const &flag2, int const &flag3,
+                               int const &faceNumber, std::vector<double> &faceFunctions,
+                               std::string typeFunction);
+    
+public:
+    HierarchicalBasisHdivQuad(int order);
+    
+    virtual ~HierarchicalBasisHdivQuad() = default;
+
+    virtual unsigned int getNumberOfOrientations() const;
+    
+    virtual void generateBasis(double const &u, double const &v, double const &w,
+                               std::vector<std::vector<double> > &vertexBasis,
+                               std::vector<std::vector<double> > &edgeBasis,
+                               std::vector<std::vector<double> > &faceBasis,
+                               std::vector<std::vector<double> > &bubbleBasis,
+                               std::string typeFunction) {
+        if(typeFunction == "HdivLegendre") {
+            generateHdivBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+        }
+        else {
+            throw std::runtime_error("unknown typeFunction");
+        }
+    }
+    
+    virtual void generateBasis(double const &u, double const &v, double const &w,
+                               std::vector<double> &vertexBasis,
+                               std::vector<double> &edgeBasis,
+                               std::vector<double> &faceBasis,
+                               std::vector<double> &bubbleBasis,
+                               std::string typeFunction) {
+        if(typeFunction == "DivHdivLegendre") {
+            generateDivBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+        }
+        else {
+            throw std::runtime_error("unknown typeFunction");
+        }
+    }
+
+    virtual void orientEdgeFunctionsForNegativeFlag(std::vector<std::vector<double> > &edgeFunctions);
+    virtual void orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions);
+
+    virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                            std::vector<std::vector<double> > &edgeBasis,
+                            const std::vector<std::vector<double> > &eTablePositiveFlag,
+                            const std::vector<std::vector<double> > &eTableNegativeFlag);
+    virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                            std::vector<double> &edgeBasis,
+                            const std::vector<double> &eTablePositiveFlag,
+                            const std::vector<double> &eTableNegativeFlag);
+
+    virtual void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+                            const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
+                            const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
+                            std::vector<std::vector<double> > &fTableCopy);
+
+    virtual void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+                            const std::vector<double> &quadFaceFunctionsAllOrientation,
+                            const std::vector<double> &triFaceFunctionsAllOrientation,
+                            std::vector<double> &fTableCopy);
+    
+    virtual void getKeysInfo(std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo);
+};
+
+#endif
