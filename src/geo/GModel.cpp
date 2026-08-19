@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <limits>
 #include <stdlib.h>
 #include <sstream>
@@ -2769,20 +2770,48 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex *> &vertices)
 void GModel::pruneMeshVertexAssociations()
 {
   std::vector<GEntity *> entities;
-  std::set<MVertex *, MVertexPtrLessThan> vertSet;
+  std::vector<MVertex *> vertices;
   getEntities(entities);
+  std::size_t maxNum = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       MElement *e = entities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
         v->setEntity(nullptr);
-        vertSet.insert(v);
+        if(v->getNum() > maxNum) maxNum = v->getNum();
+        vertices.push_back(v);
       }
     }
     entities[i]->mesh_vertices.clear();
   }
-  std::vector<MVertex *> vertices(vertSet.begin(), vertSet.end());
+
+  // sort the nodes by increasing number and remove the duplicates; if the
+  // numbering is dense enough, bucketing the nodes by number does this in
+  // linear time, using no more memory than the list of nodes we just built -
+  // otherwise (sparse numbering, e.g. after reading a mesh with arbitrary node
+  // tags) fall back on a sort
+  if(vertices.size() && maxNum < vertices.size()) {
+    std::vector<MVertex *> slots(maxNum + 1, nullptr);
+    std::size_t nVert = 0;
+    for(std::size_t i = 0; i < vertices.size(); i++) {
+      std::size_t num = vertices[i]->getNum();
+      if(!slots[num]) { // as with a set, the first node with a given number wins
+        slots[num] = vertices[i];
+        nVert++;
+      }
+    }
+    std::vector<MVertex *>().swap(vertices);
+    vertices.reserve(nVert);
+    for(std::size_t n = 0; n <= maxNum; n++)
+      if(slots[n]) vertices.push_back(slots[n]);
+  }
+  else {
+    std::stable_sort(vertices.begin(), vertices.end(), MVertexPtrLessThan());
+    vertices.erase(
+      std::unique(vertices.begin(), vertices.end(), MVertexPtrEqual()),
+      vertices.end());
+  }
   _associateEntityWithMeshVertices();
   // associate mesh nodes primarily with chain entities
   for(auto it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {
