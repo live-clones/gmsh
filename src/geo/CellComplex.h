@@ -20,6 +20,7 @@
 
 class Cell;
 class BdInfo;
+class CellConstructionIndex;
 
 class CellComplex {
 private:
@@ -28,15 +29,29 @@ private:
 
   GModel *_model;
 
-  // sorted containers of unique cells in this cell complex
-  // one for each dimension
-  std::set<Cell *, CellPtrLessThan> _cells[4];
+  // sorted (by CellPtrLessThan) containers of unique cells in this cell
+  // complex, one for each dimension. Removing a cell only clears its
+  // in-complex flag (see Cell::inComplex()) and leaves a tombstone entry
+  // behind, so removals during the reductions are constant time; tombstones
+  // are skipped during iteration and reclaimed by _compactIfNeeded()
+  std::vector<Cell *> _cells[4];
 
-  // original cells of this cell complex
-  std::set<Cell *, CellPtrLessThan> _ocells[4];
+  // number of live (non-tombstone) cells in _cells, one per dimension
+  int _numLiveCells[4];
+
+  // original cells of this cell complex (always all live)
+  std::vector<Cell *> _ocells[4];
 
   // original cells removed during reductions
   std::vector<Cell *> _removedcells;
+
+  // storage of the elementary cells: a deque allocates them in chunks
+  // without relocating (their addresses stay valid), and frees them
+  // wholesale on destruction instead of one delete per cell. Combined
+  // cells are few and are still allocated individually. One pool per
+  // index shard, so the parallel construction can create cells
+  // concurrently; the serial paths use the first pool.
+  std::vector<std::deque<Cell> > _cellPool;
 
   // cell complex dimension
   int _dim;
@@ -60,21 +75,52 @@ private:
   int _numSubdomainCells[4];
 
   // for constructor
-  bool _insertCells(std::vector<MElement *> &elements, int domain);
+  bool _insertCells(std::vector<MElement *> &elements, int domain,
+                    CellConstructionIndex &index);
+
+  // create the boundary cells of the given dim-dimensional cells and wire
+  // up the boundary/coboundary links, in parallel (see the implementation
+  // for the pipeline; the result is identical to the serial code path)
+  void _insertBoundaryCells(std::vector<Cell *> &cells, int dim, int domain,
+                            CellConstructionIndex &index, int nthreads);
+
+  // create the cells of the given mesh elements in parallel (the parallel
+  // counterpart of the first loop of _insertCells, with identical results)
+  void _insertElementCells(std::vector<MElement *> &elements, int domain,
+                           CellConstructionIndex &index, int nthreads,
+                           std::pair<Cell *, double> *smallestElement,
+                           std::pair<Cell *, double> *biggestElement);
+
   bool _removeCells(std::vector<MElement *> &elements, int domain);
 
   bool _immunizeCells(std::vector<MElement *> &elements);
 
   Cell *_omitCell(Cell *cell, bool dual);
 
-  // enqueue cells in queue if they are not there already
-  void enqueueCells(std::map<Cell *, short int, CellPtrLessThan> &cells,
-                    std::queue<Cell *> &Q,
-                    std::set<Cell *, CellPtrLessThan> &Qset);
+  // enqueue the live boundary/coboundary neighbors of a cell that are not
+  // already queued (tracked by the constant-time Cell::getQueued() flag,
+  // which the queue consumer must clear when it takes a cell out)
+  void enqueueBoundaryCells(Cell *cell, std::queue<Cell *> &Q);
+  void enqueueCoboundaryCells(Cell *cell, std::queue<Cell *> &Q);
 
   // insert/remove a cell from this cell complex
-  void removeCell(Cell *cell, bool other = true, bool del = false);
+  void removeCell(Cell *cell, bool other = true);
   void insertCell(Cell *cell);
+
+  // reclaim the tombstones of dimension dim (unconditionally, or only if
+  // they outnumber the live cells); must only be called when no cell
+  // iterators are held
+  void _compact(int dim);
+  void _compactIfNeeded(int dim);
+
+  // binary search in a sorted cell container
+  static std::vector<Cell *>::const_iterator
+  _findCell(const std::vector<Cell *> &cells, Cell *cell);
+
+  // find the cell with the same vertices as the given (unnumbered) cell:
+  // valid after construction, since the cells are numbered in sorted vertex
+  // order and hence the number-sorted containers are also vertex-ordered
+  Cell *_findCellVertexOrder(Cell *cell) const;
 
   // queued coreduction
   int coreduction(Cell *startCell, int omit, std::vector<Cell *> &omittedCells);
@@ -116,17 +162,55 @@ public:
   // std::set<Cell*, CellPtrLessThan> getOrigCells(int dim){ return
   // _ocells[dim]; }
 
-  // iterator for the cells of same dimension
-  typedef std::set<Cell *, CellPtrLessThan>::iterator citer;
+  // iterator for the cells of same dimension: skips the tombstones of
+  // removed cells that remain in the container until compaction
+  class citer {
+  private:
+    const std::vector<Cell *> *_v;
+    std::size_t _i;
+    // dead cells are tombstones only in the current-cell containers; the
+    // original-cell containers are always fully live
+    bool _skip;
+    void _skipDead()
+    {
+      if(_skip)
+        while(_i < _v->size() && !(*_v)[_i]->inComplex()) _i++;
+    }
+
+  public:
+    citer() : _v(nullptr), _i(0), _skip(false) {}
+    citer(const std::vector<Cell *> *v, std::size_t i, bool skip)
+      : _v(v), _i(i), _skip(skip)
+    {
+      _skipDead();
+    }
+    Cell *operator*() const { return (*_v)[_i]; }
+    citer &operator++()
+    {
+      _i++;
+      _skipDead();
+      return *this;
+    }
+    citer operator++(int)
+    {
+      citer it = *this;
+      ++(*this);
+      return it;
+    }
+    bool operator==(const citer &other) const { return _i == other._i; }
+    bool operator!=(const citer &other) const { return _i != other._i; }
+  };
 
   // iterators to the first and last cells of certain dimension
   citer firstCell(int dim, bool orig = false)
   {
-    return orig ? _ocells[dim].begin() : _cells[dim].begin();
+    return orig ? citer(&_ocells[dim], 0, false) :
+                  citer(&_cells[dim], 0, true);
   }
   citer lastCell(int dim, bool orig = false)
   {
-    return orig ? _ocells[dim].end() : _cells[dim].end();
+    return orig ? citer(&_ocells[dim], _ocells[dim].size(), false) :
+                  citer(&_cells[dim], _cells[dim].size(), true);
   }
 
   // true if cell complex has given cell
@@ -185,6 +269,15 @@ public:
 
   // restore the cell complex to its original state before (co)reduction
   bool restoreComplex();
+
+  // relabel the (restored) original cell complex for a new relative
+  // subdomain, instead of constructing the same complex from scratch:
+  // clears the domain and immunity markings, marks the closure of the given
+  // subdomain elements and reapplies the immune elements. Returns false if
+  // an element has no cell in this complex (the cell complexes of the two
+  // subdomains differ): the caller then needs a full reconstruction.
+  bool relabel(std::vector<MElement *> &subdomainElements,
+               std::vector<MElement *> &immuneElements);
 
   // print the vertices of cells of certain dimension
   void printComplex(int dim);

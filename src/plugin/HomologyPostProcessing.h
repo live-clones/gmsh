@@ -12,8 +12,6 @@
 #include "Plugin.h"
 #include "Chain.h"
 
-#if defined(HAVE_KBIPACK)
-
 extern "C" {
 GMSH_Plugin *GMSH_RegisterHomologyPostProcessingPlugin();
 }
@@ -37,7 +35,5 @@ public:
   bool invertIntegerMatrix(std::vector<int> &matrix);
   int detIntegerMatrix(std::vector<int> &matrix);
 };
-
-#endif
 
 #endif
