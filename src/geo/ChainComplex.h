@@ -8,23 +8,10 @@
 #ifndef CHAINCOMPLEX_H
 #define CHAINCOMPLEX_H
 
-#include "GmshConfig.h"
-#if defined(HAVE_KBIPACK)
-
-#include <cstdio>
-#include <string>
-#include <algorithm>
-#include <set>
-#include <queue>
+#include <map>
+#include <vector>
 #include "CellComplex.h"
-
-#if defined(HAVE_GMP)
-#include "gmp.h"
-#include "gmp_normal_form.h"
-#else
-#include "mpz.h"
-#include "gmp_normal_form.h"
-#endif
+#include "SmithNormalForm.h"
 
 class CellComplex;
 
@@ -35,21 +22,21 @@ class CellComplex;
 class ChainComplex {
 private:
   // boundary operator matrices for this chain complex
-  // h_k: C_k -> C_(k-1)
-  gmp_matrix *_hMatrix[5];
+  // h_k: C_k -> C_(k-1); an empty matrix means "no matrix"
+  IntegerMatrix _hMatrix[5];
 
-  // Basis matrices for the kernels and codomains of the boundary operator
+  // basis matrices for the kernels and codomains of the boundary operator
   // matrices
-  gmp_matrix *_kerH[5];
-  gmp_matrix *_codH[5];
+  IntegerMatrix _kerH[5];
+  IntegerMatrix _codH[5];
 
   // matrix of the mapping B_k -> Z_k
-  gmp_matrix *_jMatrix[5];
+  IntegerMatrix _jMatrix[5];
   // matrix of the mapping H_k -> Z_k
-  gmp_matrix *_qMatrix[5];
+  IntegerMatrix _qMatrix[5];
 
   // bases for homology groups
-  gmp_matrix *_hbasis[5];
+  IntegerMatrix _hbasis[5];
   // torsion coefficients of homology generators
   // corresponding the columns of _hbasis
   std::vector<long int> _torsion[5];
@@ -62,73 +49,57 @@ private:
   std::map<Cell *, int, CellPtrLessThan> _cellIndices[4];
 
   // set the matrices
-  void setHMatrix(int dim, gmp_matrix *matrix)
+  void setKerHMatrix(int dim, IntegerMatrix matrix)
   {
-    if(dim > -1 && dim < 5) _hMatrix[dim] = matrix;
+    if(dim > -1 && dim < 5) _kerH[dim] = std::move(matrix);
   }
-  void setKerHMatrix(int dim, gmp_matrix *matrix)
+  void setCodHMatrix(int dim, IntegerMatrix matrix)
   {
-    if(dim > -1 && dim < 5) _kerH[dim] = matrix;
+    if(dim > -1 && dim < 5) _codH[dim] = std::move(matrix);
   }
-  void setCodHMatrix(int dim, gmp_matrix *matrix)
+  void setJMatrix(int dim, IntegerMatrix matrix)
   {
-    if(dim > -1 && dim < 5) _codH[dim] = matrix;
+    if(dim > -1 && dim < 5) _jMatrix[dim] = std::move(matrix);
   }
-  void setJMatrix(int dim, gmp_matrix *matrix)
+  void setQMatrix(int dim, IntegerMatrix matrix)
   {
-    if(dim > -1 && dim < 5) _jMatrix[dim] = matrix;
+    if(dim > -1 && dim < 5) _qMatrix[dim] = std::move(matrix);
   }
-  void setQMatrix(int dim, gmp_matrix *matrix)
+  void setHbasis(int dim, IntegerMatrix matrix)
   {
-    if(dim > -1 && dim < 5) _qMatrix[dim] = matrix;
-  }
-  void setHbasis(int dim, gmp_matrix *matrix)
-  {
-    if(dim > -1 && dim < 5) _hbasis[dim] = matrix;
+    if(dim > -1 && dim < 5) _hbasis[dim] = std::move(matrix);
   }
 
-  // get the boundary operator matrix dim->dim-1
-  gmp_matrix *getHMatrix(int dim) const
+  // get the matrices; nullptr when out of range or not present
+  IntegerMatrix *getHMatrix(int dim)
   {
-    if(dim > -1 && dim < 5)
-      return _hMatrix[dim];
-    else
-      return nullptr;
+    return (dim > -1 && dim < 5 && !_hMatrix[dim].empty()) ? &_hMatrix[dim] :
+                                                             nullptr;
   }
-  gmp_matrix *getKerHMatrix(int dim) const
+  IntegerMatrix *getKerHMatrix(int dim)
   {
-    if(dim > -1 && dim < 5)
-      return _kerH[dim];
-    else
-      return nullptr;
+    return (dim > -1 && dim < 5 && !_kerH[dim].empty()) ? &_kerH[dim] :
+                                                          nullptr;
   }
-  gmp_matrix *getCodHMatrix(int dim) const
+  IntegerMatrix *getCodHMatrix(int dim)
   {
-    if(dim > -1 && dim < 5)
-      return _codH[dim];
-    else
-      return nullptr;
+    return (dim > -1 && dim < 5 && !_codH[dim].empty()) ? &_codH[dim] :
+                                                          nullptr;
   }
-  gmp_matrix *getJMatrix(int dim) const
+  IntegerMatrix *getJMatrix(int dim)
   {
-    if(dim > -1 && dim < 5)
-      return _jMatrix[dim];
-    else
-      return nullptr;
+    return (dim > -1 && dim < 5 && !_jMatrix[dim].empty()) ? &_jMatrix[dim] :
+                                                             nullptr;
   }
-  gmp_matrix *getQMatrix(int dim) const
+  IntegerMatrix *getQMatrix(int dim)
   {
-    if(dim > -1 && dim < 5)
-      return _qMatrix[dim];
-    else
-      return nullptr;
+    return (dim > -1 && dim < 5 && !_qMatrix[dim].empty()) ? &_qMatrix[dim] :
+                                                             nullptr;
   }
-  gmp_matrix *getHbasis(int dim) const
+  IntegerMatrix *getHbasis(int dim)
   {
-    if(dim > -1 && dim < 5)
-      return _hbasis[dim];
-    else
-      return nullptr;
+    return (dim > -1 && dim < 5 && !_hbasis[dim].empty()) ? &_hbasis[dim] :
+                                                            nullptr;
   }
 
   // local deformation tools for chains
@@ -146,22 +117,14 @@ public:
   // domain = 1 : absolute chain space of all cells in cellComplex
   // domain = 2 : absolute chain space of cells in subdomain
   ChainComplex(CellComplex *cellComplex, int domain = 0);
-  ~ChainComplex();
 
   int getDim() const { return _dim; }
 
   // 1 : Z basis (cycles)
   // 2 : B basis (boundaries)
   // 3 : H basis (homology)
-  // get the bases for various spaces
-  gmp_matrix *getBasis(int dim, int basis);
-  gmp_matrix *getBoundaryOp(int dim)
-  {
-    if(dim > -1 && dim < 5)
-      return _hMatrix[dim];
-    else
-      return nullptr;
-  }
+  // get the bases for various spaces; nullptr when not present
+  IntegerMatrix *getBasis(int dim, int basis);
 
   // compute basis for kernel and codomain of boundary operator matrix
   // of dimension dim (ie. ker(h_dim) and cod(h_dim) )
@@ -196,8 +159,6 @@ public:
       return 0;
   }
 
-  // get coefficient vector for dim-dimensional Hbasis chain chainNumber
-  std::vector<int> getCoeffVector(int dim, int chainNumber);
   // get basis chain from a basis matrix
   // (deform: with local deformations to make chain smoother and to have
   // smaller support, deformed chain is homologous to the old one,
@@ -208,25 +169,6 @@ public:
   int getBasisSize(int dim, int basis);
   // homology torsion coefficient for dim-dimensional chain num
   int getTorsion(int dim, int num);
-
-  // apply a transformation T to a basis (T should be unimodular)
-  void transformBasis(gmp_matrix *T, int dim, int basis)
-  {
-    if(basis == 3 && _hbasis[dim] != nullptr) {
-      gmp_matrix_right_mult(_hbasis[dim], T);
-    }
-  }
-  // void printBasisChain(std::map<Cell*, int, CellPtrLessThan>& chain);
-
-  // debugging aid
-  int printMatrix(gmp_matrix *matrix)
-  {
-    printf("%d rows and %d columns\n", (int)gmp_matrix_rows(matrix),
-           (int)gmp_matrix_cols(matrix));
-    return gmp_matrix_printf(matrix);
-  }
-  void matrixTest();
 };
 
-#endif
 #endif

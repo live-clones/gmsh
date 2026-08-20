@@ -8,8 +8,6 @@
 #include "Homology.h"
 #include "fullMatrix.h"
 
-#if defined(HAVE_KBIPACK)
-
 Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
                    const std::vector<int> &physicalSubdomain,
                    const std::vector<int> &physicalImdomain, bool saveOrig,
@@ -53,6 +51,30 @@ std::vector<int> vecN0(int n)
   v.reserve(n);
   for(int i = 0; i < n; i++) v.push_back(i);
   return v;
+}
+
+void Homology::setSubdomain(const std::vector<int> &physicalSubdomain)
+{
+  _subdomain = physicalSubdomain;
+  _getEntities(_subdomain, _subdomainEntities);
+
+  // the results of the previous subdomain no longer apply
+  _deleteChains();
+  _deleteCochains();
+  for(int i = 0; i < 4; i++) _betti[i] = -1;
+
+  if(_cellComplex != nullptr) {
+    std::vector<MElement *> subdomainElements;
+    std::vector<MElement *> immuneElements;
+    _getElements(_subdomainEntities, subdomainElements);
+    _getElements(_immuneEntities, immuneElements);
+    if(!_cellComplex->relabel(subdomainElements, immuneElements)) {
+      // the new subdomain is not contained in the cell complex: fall back
+      // to a full reconstruction on the next computation
+      delete _cellComplex;
+      _cellComplex = nullptr;
+    }
+  }
 }
 
 void Homology::_getEntities(const std::vector<int> &physicalGroups,
@@ -683,5 +705,3 @@ void Homology::storeCells(CellComplex *cellComplex, int dim)
   _model->storeChain(dim, entityMap, physicalMap);
   _model->setPhysicalName("Cell Complex", dim, physicalNum);
 }
-
-#endif
