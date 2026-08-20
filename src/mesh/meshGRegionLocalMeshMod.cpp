@@ -8,17 +8,6 @@
 #include "GRegion.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
-#include "MHexahedron.h"
-#include "MPrism.h"
-#include "MPyramid.h"
-
-typedef struct {
-  int nbr_triangles; // number of different triangles
-  int (*triangles)[3]; // triangles array
-  int nbr_trianguls; // number of different triangulations
-  int nbr_triangles_2; // number of triangles / triangulation
-  int (*trianguls)[5]; // retriangulations array
-} SwapPattern;
 
 static int edges[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
 static int efaces[6][2] = {{0, 2}, {0, 1}, {1, 2}, {0, 3}, {2, 3}, {1, 3}};
@@ -32,7 +21,7 @@ static int vFac[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}};
 // this edge and all vertices that are forming the outer ring of the cavity; we
 // return true if the cavity is closed and false if it is open
 
-void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
+static void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
                                      std::vector<MTet4 *> &outside)
 {
   outside.clear();
@@ -58,7 +47,7 @@ void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
   }
 }
 
-bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
+static bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
                      std::vector<MTet4 *> &cavity,
                      std::vector<MTet4 *> &outside,
                      std::vector<MVertex *> &ring)
@@ -242,9 +231,11 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
   int permut[6] = {0, 3, 1, 2, 5, 4};
   iLocalEdge = permut[iLocalEdge];
 
-  std::vector<MTet4 *> cavity;
-  std::vector<MTet4 *> outside;
-  std::vector<MVertex *> ring;
+  // reused across calls: the optimizer calls this once per bad tet, and
+  // these three would otherwise be allocated and freed every time
+  static thread_local std::vector<MTet4 *> cavity;
+  static thread_local std::vector<MTet4 *> outside;
+  static thread_local std::vector<MVertex *> ring;
   MVertex *v1, *v2;
 
   //  printf("a\n");
@@ -348,40 +339,6 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
   for(std::size_t i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
 
   connectTets(outside, &embeddedFaces);
-
-  return true;
-}
-
-bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
-               int iLocalEdge, const qmTetrahedron::Measures &cr)
-{
-  std::vector<MTet4 *> cavity;
-  std::vector<MTet4 *> outside;
-  std::vector<MVertex *> ring;
-  MVertex *v1, *v2;
-
-  bool closed =
-    buildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
-  if(!closed) return false;
-
-  for(std::size_t j = 0; j < ring.size(); j++) {
-    MVertex *pv1 = ring[j];
-    MVertex *pv2 = ring[(j + 1) % ring.size()];
-    MTetrahedron *tr1 = new MTetrahedron(pv1, pv2, newVertex, v1);
-    MTetrahedron *tr2 = new MTetrahedron(newVertex, pv2, pv1, v2);
-    MTet4 *t41 = new MTet4(tr1, cr);
-    MTet4 *t42 = new MTet4(tr2, cr);
-    t41->setOnWhat(cavity[0]->onWhat());
-    t42->setOnWhat(cavity[0]->onWhat());
-    outside.push_back(t41);
-    outside.push_back(t42);
-    newTets.push_back(t41);
-    newTets.push_back(t42);
-  }
-
-  for(std::size_t i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
-
-  connectTets(outside);
 
   return true;
 }
@@ -687,7 +644,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
     t->tet()->getVertex(iVertex)->x() = x;
     t->tet()->getVertex(iVertex)->y() = y;
     t->tet()->getVertex(iVertex)->z() = z;
-    return false; // smoothVertexOptimize(t, iVertex, cr);
+    return false;
   }
   else {
     // restore new quality
@@ -696,170 +653,4 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
     }
     return true;
   }
-}
-
-struct smoothVertexData3D {
-  MVertex *v;
-  std::vector<MTet4 *> ts;
-  double LC;
-};
-
-double smoothing_objective_function_3D(double X, double Y, double Z, MVertex *v,
-                                       std::vector<MTet4 *> &ts)
-{
-  const double oldX = v->x();
-  const double oldY = v->y();
-  const double oldZ = v->z();
-  v->x() = X;
-  v->y() = Y;
-  v->z() = Z;
-
-  auto it = ts.begin();
-  auto ite = ts.end();
-  double qMin = 1, vol;
-  while(it != ite) {
-    qMin = std::min(
-      qmTetrahedron::qm((*it)->tet(), qmTetrahedron::QMTET_GAMMA, &vol), qMin);
-    ++it;
-  }
-  v->x() = oldX;
-  v->y() = oldY;
-  v->z() = oldZ;
-  return -qMin;
-}
-
-void deriv_smoothing_objective_function_3D(double *XYZ, double *dF, double &F,
-                                           void *data)
-{
-  smoothVertexData3D *svd = (smoothVertexData3D *)data;
-  MVertex *v = svd->v;
-  const double LARGE = svd->LC * 1.e5;
-  const double SMALL = 1. / LARGE;
-  F = smoothing_objective_function_3D(XYZ[0], XYZ[1], XYZ[2], v, svd->ts);
-  double F_X =
-    smoothing_objective_function_3D(XYZ[0] + SMALL, XYZ[1], XYZ[2], v, svd->ts);
-  double F_Y =
-    smoothing_objective_function_3D(XYZ[0], XYZ[1] + SMALL, XYZ[2], v, svd->ts);
-  double F_Z =
-    smoothing_objective_function_3D(XYZ[0], XYZ[1], XYZ[2] + SMALL, v, svd->ts);
-  dF[0] = (F_X - F) * LARGE;
-  dF[1] = (F_Y - F) * LARGE;
-  dF[2] = (F_Z - F) * LARGE;
-}
-
-double smooth_obj_3D(double *XYZ, void *data)
-{
-  smoothVertexData3D *svd = (smoothVertexData3D *)data;
-  return smoothing_objective_function_3D(XYZ[0], XYZ[1], XYZ[2], svd->v,
-                                         svd->ts);
-}
-
-bool smoothVertexOptimize(MTet4 *t, int iVertex,
-                          const qmTetrahedron::Measures &cr)
-{
-  if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3) return false;
-
-  smoothVertexData3D vd;
-  vd.ts.push_back(t);
-  vd.v = t->tet()->getVertex(iVertex);
-  vd.LC = 1.0; // WRONG
-  if(!buildVertexCavity_recur(t, t->tet()->getVertex(iVertex), vd.ts))
-    return false;
-
-  double xyzopti[3] = {vd.v->x(), vd.v->y(), vd.v->z()};
-
-  // double val = 0.;
-  Msg::Error("Fletcher-Reeves minimizer routine must be reimplemented");
-  // minimize_N(3, smooth_obj_3D, deriv_smoothing_objective_function_3D, &vd, 4,
-  //         xyzopti, val);
-
-  double vTot = 0;
-
-  for(std::size_t i = 0; i < vd.ts.size(); i++) {
-    double volume = fabs(vd.ts[i]->tet()->getVolume());
-    vTot += volume;
-  }
-
-  double volumeAfter = 0.0;
-
-  double x = t->tet()->getVertex(iVertex)->x();
-  double y = t->tet()->getVertex(iVertex)->y();
-  double z = t->tet()->getVertex(iVertex)->z();
-
-  t->tet()->getVertex(iVertex)->x() = xyzopti[0];
-  t->tet()->getVertex(iVertex)->y() = xyzopti[1];
-  t->tet()->getVertex(iVertex)->z() = xyzopti[2];
-
-  std::vector<double> newQuals(vd.ts.size());
-  for(std::size_t i = 0; i < vd.ts.size(); i++) {
-    double volume;
-    newQuals[i] = qmTetrahedron::qm(vd.ts[i]->tet(), cr, &volume);
-    volumeAfter += volume;
-  }
-
-  if(fabs(volumeAfter - vTot) > 1.e-10 * vTot) {
-    t->tet()->getVertex(iVertex)->x() = x;
-    t->tet()->getVertex(iVertex)->y() = y;
-    t->tet()->getVertex(iVertex)->z() = z;
-    return false;
-  }
-  else {
-    // restore new quality
-    for(std::size_t i = 0; i < vd.ts.size(); i++) {
-      vd.ts[i]->setQuality(newQuals[i]);
-    }
-    return true;
-  }
-}
-
-template <class ITERATOR>
-void fillv_(std::multimap<MVertex *, MElement *> &vertexToElement,
-            ITERATOR it_beg, ITERATOR it_end)
-{
-  for(ITERATOR IT = it_beg; IT != it_end; ++IT) {
-    MElement *el = *IT;
-    for(std::size_t j = 0; j < el->getNumVertices(); j++) {
-      MVertex *e = el->getVertex(j);
-      vertexToElement.insert(std::make_pair(e, el));
-    }
-  }
-}
-
-int LaplaceSmoothing(GRegion *gr)
-{
-  std::multimap<MVertex *, MElement *> vertexToElement;
-  fillv_(vertexToElement, (gr)->tetrahedra.begin(), (gr)->tetrahedra.end());
-  fillv_(vertexToElement, (gr)->hexahedra.begin(), (gr)->hexahedra.end());
-  fillv_(vertexToElement, (gr)->prisms.begin(), (gr)->prisms.end());
-  fillv_(vertexToElement, (gr)->pyramids.begin(), (gr)->pyramids.end());
-  int N = 0;
-  for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
-    MVertex *v = gr->mesh_vertices[i];
-    auto it = vertexToElement.lower_bound(v);
-    auto it_low = it;
-    auto it_up = vertexToElement.upper_bound(v);
-    double minQual = 1.e22;
-    double volTot = 0.0;
-    double xold = v->x(), yold = v->y(), zold = v->z();
-    SPoint3 pNew(0, 0, 0);
-    for(; it != it_up; ++it) {
-      minQual = std::min(minQual, it->second->minSICNShapeMeasure());
-      double vol = fabs(it->second->getVolume());
-      SPoint3 cog = it->second->barycenter();
-      pNew += cog * vol;
-      volTot += vol;
-    }
-    pNew *= (1. / volTot);
-    v->setXYZ(pNew.x(), pNew.y(), pNew.z());
-    double minQual2 = 1.e22;
-    for(it = it_low; it != it_up; ++it) {
-      minQual2 = std::min(minQual2, it->second->minSICNShapeMeasure());
-      if(minQual2 < minQual) {
-        v->setXYZ(xold, yold, zold);
-        break;
-      }
-    }
-    if(minQual < minQual2) N++;
-  }
-  return N;
 }
