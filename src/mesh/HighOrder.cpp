@@ -8,6 +8,8 @@
 //
 
 #include <sstream>
+#include <mutex>
+#include <unordered_map>
 #include <vector>
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -27,19 +29,94 @@
 #include "InnerVertexPlacement.h"
 #include "Context.h"
 #include "MFace.h"
+#include "MFaceHash.h"
 #include "ExtrudeParams.h"
+#include "Field.h"
 
 // for each pair of vertices (an edge), we build a list of vertices that are the
 // high order representation of the edge. The ordering of vertices in the list
 // is supposed to be (by construction) consistent with the ordering of the pair.
 // FIXME: replace this by std::map<MEdge, std::vector<MVertex *>,
 // MEdgeLessThan>!
-typedef std::map<std::pair<MVertex *, MVertex *>, std::vector<MVertex *>>
-  edgeContainer;
+struct MVertexPairHash {
+  std::size_t operator()(const std::pair<MVertex *, MVertex *> &p) const
+  {
+    std::size_t v[2] = {p.first->getNum(), p.second->getNum()};
+    return HashFNV1a<sizeof(std::size_t[2])>::eval(v);
+  }
+};
+typedef std::unordered_map<std::pair<MVertex *, MVertex *>,
+                           std::vector<MVertex *>, MVertexPairHash>
+  edgeMap;
 
 // for each face (a list of vertices) we build a list of vertices that are the
 // high order representation of the face
-typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
+typedef std::unordered_map<MFace, std::vector<MVertex *>, MFaceHash, MFaceEqual>
+  faceMap;
+
+// The two containers above are shared by all the entities being curved, and are
+// written to while the elements of an entity are treated in parallel. They are
+// thus split in shards: a given edge (resp. face) always lands in the same
+// shard, and a thread only ever locks the shard it is about to touch. With a
+// single shard no lock is taken at all, i.e. the behaviour - and in particular
+// the order in which the nodes are created, hence their numbering - is exactly
+// the serial one.
+template <class MAP, class KEY, class HASH> class shardedContainer {
+private:
+  std::vector<MAP> _shards;
+  std::vector<std::mutex> _locks;
+  HASH _hash;
+
+public:
+  shardedContainer(std::size_t nShards)
+    : _shards(nShards < 1 ? 1 : nShards), _locks(nShards < 1 ? 1 : nShards)
+  {
+  }
+  bool isParallel() const { return _shards.size() > 1; }
+  std::size_t shardOf(const KEY &k) const
+  {
+    return _shards.size() > 1 ? (_hash(k) % _shards.size()) : 0;
+  }
+  MAP &shard(std::size_t i) { return _shards[i]; }
+  void lock(std::size_t i)
+  {
+    if(_shards.size() > 1) _locks[i].lock();
+  }
+  void unlock(std::size_t i)
+  {
+    if(_shards.size() > 1) _locks[i].unlock();
+  }
+};
+
+typedef shardedContainer<edgeMap, std::pair<MVertex *, MVertex *>,
+                         MVertexPairHash>
+  edgeContainer;
+typedef shardedContainer<faceMap, MFace, MFaceHash> faceContainer;
+
+template <class C> class shardLock {
+private:
+  C &_container;
+  std::size_t _shard;
+
+public:
+  shardLock(C &c, std::size_t shard) : _container(c), _shard(shard)
+  {
+    _container.lock(_shard);
+  }
+  ~shardLock() { _container.unlock(_shard); }
+};
+
+// Reparametrizing a node classified on a curve or on a point goes through the
+// (stateful) OCCEdge/OCCVertex caches, which are not thread-safe. Those nodes
+// are only the ones on the boundary of the surface being curved, i.e. a small
+// fraction of them, so simply serializing those reparametrizations costs
+// nothing measurable.
+static std::mutex boundaryReparamMutex;
+
+static inline bool onBoundaryOfFace(const MVertex *v)
+{
+  return v->onWhat() && v->onWhat()->dim() < 2;
+}
 
 // Functions that help optimizing placement of points on geometry
 
@@ -198,6 +275,13 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
       SPoint3 pc(t * pN + (1. - t) * p0);
       double guess[2] = {u[i], v[i]};
       GPoint gp = gf->closestPoint(pc, guess);
+      // the guess is a linear interpolation of the parameters of the two
+      // endpoints, which is meaningless if the edge crosses a seam: if the
+      // projection lands further away than the edge is long, it converged to
+      // some other part of the surface - redo it without the guess
+      if(gp.succeeded() &&
+         pc.distance(SPoint3(gp.x(), gp.y(), gp.z())) > p0.distance(pN))
+        gp = gf->closestPoint(pc, nullptr);
       if(gp.succeeded()) {
         u[i] = gp.u();
         v[i] = gp.v();
@@ -334,7 +418,13 @@ static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
 {
   SPoint2 p0, p1;
   double US[100], VS[100];
-  bool reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
+  bool reparamOK;
+  if(onBoundaryOfFace(v0) || onBoundaryOfFace(v1)) {
+    std::lock_guard<std::mutex> lock(boundaryReparamMutex);
+    reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
+  }
+  else
+    reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
   if(reparamOK) {
     SPoint3 pnt0, pnt1;
     if(nPts >= 30)
@@ -371,8 +461,7 @@ static void interpVerticesInExistingEdge(GEntity *ge, const MElement *edgeEl,
                                          std::vector<MVertex *> &veEdge,
                                          int nPts)
 {
-  fullMatrix<double> points;
-  points = edgeEl->getFunctionSpace(nPts + 1)->points;
+  const fullMatrix<double> &points = edgeEl->getFunctionSpace(nPts + 1)->points;
   for(int k = 2; k < nPts + 2; k++) {
     SPoint3 pos;
     edgeEl->pnt(points(k, 0), 0., 0., pos);
@@ -416,13 +505,15 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
     linear ? false : getEdgeVerticesOnGeo(ge, veOld[0], veOld[1], veEdge, nPts);
   // If not on geometry, create from mesh interpolation
   if(!gotVertOnGeo) interpVerticesInExistingEdge(ge, ele, veEdge, nPts);
-  if(edgeVertices.count(p) == 0) {
+  const std::size_t sh = edgeVertices.shardOf(p);
+  shardLock<edgeContainer> lock(edgeVertices, sh);
+  edgeMap &em = edgeVertices.shard(sh);
+  if(em.count(p) == 0) {
+    std::vector<MVertex *> &eVtcs = em[p];
     if(increasing) // Add newly created vertices to list
-      edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(),
-                             veEdge.end());
+      eVtcs.insert(eVtcs.end(), veEdge.begin(), veEdge.end());
     else
-      edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(),
-                             veEdge.rend());
+      eVtcs.insert(eVtcs.end(), veEdge.rbegin(), veEdge.rend());
   }
   else if(p.first != p.second) {
     // Vertices already exist and edge is not a degenerated edge
@@ -450,9 +541,12 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
     std::vector<MVertex *> veEdge;
 
-    auto eIter = edgeVertices.find(p);
+    const std::size_t sh = edgeVertices.shardOf(p);
+    shardLock<edgeContainer> lock(edgeVertices, sh);
+    edgeMap &em = edgeVertices.shard(sh);
+    auto eIter = em.find(p);
 
-    if(eIter != edgeVertices.end()) { // Vertices already exist
+    if(eIter != em.end()) { // Vertices already exist
       std::vector<MVertex *> &eVtcs = eIter->second;
       if(increasing)
         veEdge.assign(eVtcs.begin(), eVtcs.end());
@@ -470,7 +564,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
         interpVerticesInExistingEdge(gf, &edgeEl, veEdge, nPts);
       }
 
-      std::vector<MVertex *> &eVtcs = edgeVertices[p];
+      std::vector<MVertex *> &eVtcs = em[p];
 
       if(increasing) // Add newly created vertices to list
         eVtcs.insert(eVtcs.end(), veEdge.begin(), veEdge.end());
@@ -486,28 +580,33 @@ static void getEdgeVertices(GRegion *gr, MElement *ele,
                             std::vector<MVertex *> &ve,
                             edgeContainer &edgeVertices, int nPts = 1)
 {
+  std::vector<MVertex *> veOld, veEdge;
   for(int i = 0; i < ele->getNumEdges(); i++) {
-    std::vector<MVertex *> veOld;
+    veOld.clear();
     ele->getEdgeVertices(i, veOld);
     MVertex *vMin, *vMax;
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
-    std::vector<MVertex *> veEdge;
-    if(edgeVertices.count(p)) { // Vertices already exist
+    veEdge.clear();
+    const std::size_t sh = edgeVertices.shardOf(p);
+    shardLock<edgeContainer> lock(edgeVertices, sh);
+    edgeMap &em = edgeVertices.shard(sh);
+    auto eIter = em.find(p);
+    if(eIter != em.end()) { // Vertices already exist
+      std::vector<MVertex *> &eVtcs = eIter->second;
       if(increasing)
-        veEdge.assign(edgeVertices[p].begin(), edgeVertices[p].end());
+        veEdge.assign(eVtcs.begin(), eVtcs.end());
       else
-        veEdge.assign(edgeVertices[p].rbegin(), edgeVertices[p].rend());
+        veEdge.assign(eVtcs.rbegin(), eVtcs.rend());
     }
     else { // Vertices do not exist, create them
       const MLineN edgeEl(veOld, ele->getPolynomialOrder());
       interpVerticesInExistingEdge(gr, &edgeEl, veEdge, nPts);
+      std::vector<MVertex *> &eVtcs = em[p];
       if(increasing) // Add newly created vertices to list
-        edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(),
-                               veEdge.end());
+        eVtcs.insert(eVtcs.end(), veEdge.begin(), veEdge.end());
       else
-        edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(),
-                               veEdge.rend());
+        eVtcs.insert(eVtcs.end(), veEdge.rbegin(), veEdge.rend());
     }
     ve.insert(ve.end(), veEdge.begin(), veEdge.end());
   }
@@ -708,8 +807,18 @@ static void getFaceVerticesOnGeo(GFace *gf,
 {
   SPoint2 pts[1000];
   bool reparamOK = true;
+  bool onBoundary = false;
   for(std::size_t k = 0; k < vertices.size(); ++k)
-    reparamOK &= reparamMeshVertexOnFace(vertices[k], gf, pts[k]);
+    onBoundary = onBoundary || onBoundaryOfFace(vertices[k]);
+  if(onBoundary) {
+    std::lock_guard<std::mutex> lock(boundaryReparamMutex);
+    for(std::size_t k = 0; k < vertices.size(); ++k)
+      reparamOK &= reparamMeshVertexOnFace(vertices[k], gf, pts[k]);
+  }
+  else {
+    for(std::size_t k = 0; k < vertices.size(); ++k)
+      reparamOK &= reparamMeshVertexOnFace(vertices[k], gf, pts[k]);
+  }
   for(int k = 0; k < coefficients.size1(); k++) {
     double X(0), Y(0), Z(0), GUESS[2] = {0, 0};
     for(int j = 0; j < coefficients.size2(); j++) {
@@ -731,7 +840,18 @@ static void getFaceVerticesOnGeo(GFace *gf,
         gp = gf->point(SPoint2(GUESS[0], GUESS[1]));
       }
       else {
-        gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
+        SPoint3 pc(X, Y, Z);
+        gp = gf->closestPoint(pc, GUESS);
+        // see the comment in computeEquidistantParameters(): an interpolated
+        // guess is not reliable across a seam, so check that the projection
+        // stays within the element it was computed from
+        if(gp.succeeded()) {
+          double h = 0.;
+          for(std::size_t j = 0; j < vertices.size(); j++)
+            h = std::max(h, pc.distance(vertices[j]->point()));
+          if(pc.distance(SPoint3(gp.x(), gp.y(), gp.z())) > h)
+            gp = gf->closestPoint(pc, nullptr);
+        }
       }
       if(gp.g()) {
         v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
@@ -741,7 +861,8 @@ static void getFaceVerticesOnGeo(GFace *gf,
       }
     }
     else {
-      GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
+      // no reparametrization: GUESS was never computed, so don't pass it on
+      GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), nullptr);
       if(gp.succeeded())
         v = new MVertex(gp.x(), gp.y(), gp.z(), gf);
       else
@@ -785,8 +906,12 @@ static void getFaceVertices(GFace *gf, MElement *ele,
   }
 
   MFace face = ele->getFace(0);
-  faceVertices[face].insert(faceVertices[face].end(), vFace.begin(),
-                            vFace.end());
+  {
+    const std::size_t sh = faceVertices.shardOf(face);
+    shardLock<faceContainer> lock(faceVertices, sh);
+    std::vector<MVertex *> &fVtcs = faceVertices.shard(sh)[face];
+    fVtcs.insert(fVtcs.end(), vFace.begin(), vFace.end());
+  }
   newVertices.insert(newVertices.end(), vFace.begin(), vFace.end());
 }
 
@@ -867,8 +992,11 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
   for(int i = 0; i < ele->getNumFaces(); i++) {
     MFace face = ele->getFace(i);
     std::vector<MVertex *> vFace;
-    auto fIter = faceVertices.find(face);
-    if(fIter != faceVertices.end()) { // Vertices already exist
+    const std::size_t sh = faceVertices.shardOf(face);
+    shardLock<faceContainer> lock(faceVertices, sh);
+    faceMap &fm = faceVertices.shard(sh);
+    auto fIter = fm.find(face);
+    if(fIter != fm.end()) { // Vertices already exist
       std::vector<MVertex *> vtcs = fIter->second;
       int orientation;
       bool swap;
@@ -892,8 +1020,8 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
         getInnerVertexPlacement(type, nPts + 1);
       interpVerticesInExistingFace(gr, *coefficients, faceBoundaryVertices,
                                    vFace);
-      faceVertices[face].insert(faceVertices[face].end(), vFace.begin(),
-                                vFace.end());
+      std::vector<MVertex *> &fVtcs = fm[face];
+      fVtcs.insert(fVtcs.end(), vFace.begin(), vFace.end());
     }
     newVertices.insert(newVertices.end(), vFace.begin(), vFace.end());
   }
@@ -929,6 +1057,32 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
 }
 
 // Creation of high-order elements
+
+// The nodal bases (BasisFactory) and the inner node placement matrices are
+// global caches, filled on first use behind an unprotected lookup. Fill the
+// entries the loops below are going to need before going parallel, so that they
+// are only ever read from several threads.
+template <class T>
+static void warmUpCaches(const std::vector<T *> &elements, int nPts)
+{
+  if(elements.empty()) return;
+  MElement *e = elements[0];
+  e->getFunctionSpace();
+  e->getFunctionSpace(nPts + 1);
+  getInnerVertexPlacement(e->getType(), nPts + 1);
+  for(int i = 0; i < e->getNumFaces(); i++) {
+    MFace f = e->getFace(i);
+    getInnerVertexPlacement(f.getNumVertices() == 3 ? TYPE_TRI : TYPE_QUA,
+                            nPts + 1);
+  }
+  if(e->getNumEdges()) { // used to interpolate the nodes of an existing edge
+    std::vector<MVertex *> ve;
+    e->getEdgeVertices(0, ve);
+    const MLineN edgeEl(ve, e->getPolynomialOrder());
+    edgeEl.getFunctionSpace();
+    edgeEl.getFunctionSpace(nPts + 1);
+  }
+}
 
 static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
                          int nbPts = 1)
@@ -1004,26 +1158,30 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
 
 static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
                          faceContainer &faceVertices, bool linear,
-                         bool incomplete, int nPts = 1)
+                         bool incomplete, int nPts = 1, int nthreads = 1)
 {
-  std::vector<MTriangle *> triangles2;
+  warmUpCaches(gf->triangles, nPts);
+  warmUpCaches(gf->quadrangles, nPts);
+
+  std::vector<MTriangle *> triangles2(gf->triangles.size());
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  if(nthreads > 1)
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-    MTriangle *t = gf->triangles[i];
-    MTriangle *tNew =
-      setHighOrder(t, gf, edgeVertices, faceVertices, linear, incomplete, nPts);
-    triangles2.push_back(tNew);
-    delete t;
+    triangles2[i] = setHighOrder(gf->triangles[i], gf, edgeVertices,
+                                 faceVertices, linear, incomplete, nPts);
   }
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) delete gf->triangles[i];
   gf->triangles = triangles2;
 
-  std::vector<MQuadrangle *> quadrangles2;
+  std::vector<MQuadrangle *> quadrangles2(gf->quadrangles.size());
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  if(nthreads > 1)
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
-    MQuadrangle *q = gf->quadrangles[i];
-    MQuadrangle *qNew =
-      setHighOrder(q, gf, edgeVertices, faceVertices, linear, incomplete, nPts);
-    quadrangles2.push_back(qNew);
-    delete q;
+    quadrangles2[i] = setHighOrder(gf->quadrangles[i], gf, edgeVertices,
+                                   faceVertices, linear, incomplete, nPts);
   }
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++)
+    delete gf->quadrangles[i];
   gf->quadrangles = quadrangles2;
   gf->deleteVertexArrays();
 }
@@ -1147,46 +1305,51 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
 
 static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                          faceContainer &faceVertices, bool incomplete,
-                         int nPts = 1)
+                         int nPts = 1, int nthreads = 1)
 {
-  std::vector<MTetrahedron *> tetrahedra2;
+  warmUpCaches(gr->tetrahedra, nPts);
+  warmUpCaches(gr->hexahedra, nPts);
+  warmUpCaches(gr->prisms, nPts);
+  warmUpCaches(gr->pyramids, nPts);
+
+  std::vector<MTetrahedron *> tetrahedra2(gr->tetrahedra.size());
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  if(nthreads > 1)
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
-    MTetrahedron *t = gr->tetrahedra[i];
-    MTetrahedron *tNew =
-      setHighOrder(t, gr, edgeVertices, faceVertices, incomplete, nPts);
-    tetrahedra2.push_back(tNew);
-    delete t;
+    tetrahedra2[i] = setHighOrder(gr->tetrahedra[i], gr, edgeVertices, faceVertices, incomplete,
+                         nPts);
   }
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) delete gr->tetrahedra[i];
   gr->tetrahedra = tetrahedra2;
 
-  std::vector<MHexahedron *> hexahedra2;
+  std::vector<MHexahedron *> hexahedra2(gr->hexahedra.size());
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  if(nthreads > 1)
   for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
-    MHexahedron *h = gr->hexahedra[i];
-    MHexahedron *hNew =
-      setHighOrder(h, gr, edgeVertices, faceVertices, incomplete, nPts);
-    hexahedra2.push_back(hNew);
-    delete h;
+    hexahedra2[i] = setHighOrder(gr->hexahedra[i], gr, edgeVertices, faceVertices, incomplete,
+                         nPts);
   }
+  for(std::size_t i = 0; i < gr->hexahedra.size(); i++) delete gr->hexahedra[i];
   gr->hexahedra = hexahedra2;
 
-  std::vector<MPrism *> prisms2;
+  std::vector<MPrism *> prisms2(gr->prisms.size());
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  if(nthreads > 1)
   for(std::size_t i = 0; i < gr->prisms.size(); i++) {
-    MPrism *p = gr->prisms[i];
-    MPrism *pNew =
-      setHighOrder(p, gr, edgeVertices, faceVertices, incomplete, nPts);
-    prisms2.push_back(pNew);
-    delete p;
+    prisms2[i] = setHighOrder(gr->prisms[i], gr, edgeVertices, faceVertices, incomplete,
+                         nPts);
   }
+  for(std::size_t i = 0; i < gr->prisms.size(); i++) delete gr->prisms[i];
   gr->prisms = prisms2;
 
-  std::vector<MPyramid *> pyramids2;
+  std::vector<MPyramid *> pyramids2(gr->pyramids.size());
+#pragma omp parallel for schedule(static) num_threads(nthreads)                \
+  if(nthreads > 1)
   for(std::size_t i = 0; i < gr->pyramids.size(); i++) {
-    MPyramid *p = gr->pyramids[i];
-    MPyramid *pNew =
-      setHighOrder(p, gr, edgeVertices, faceVertices, incomplete, nPts);
-    pyramids2.push_back(pNew);
-    delete p;
+    pyramids2[i] = setHighOrder(gr->pyramids[i], gr, edgeVertices, faceVertices, incomplete,
+                         nPts);
   }
+  for(std::size_t i = 0; i < gr->pyramids.size(); i++) delete gr->pyramids[i];
   gr->pyramids = pyramids2;
 
   gr->deleteVertexArrays();
@@ -1338,6 +1501,17 @@ void checkHighOrderTetrahedron(const char *cc, GModel *m,
       minJGlob, avg / (count ? count : 1), bad.size());
 }
 
+// extruded meshes and boundary layer columns are not thread-safe either, so
+// the entities carrying them are curved serially
+template <class T> static int threadsFor(T *ge, int nthreads)
+{
+  if(nthreads <= 1) return 1;
+  if(ge->meshAttributes.extrude &&
+     ge->meshAttributes.extrude->mesh.ExtrudeMesh)
+    return 1;
+  return nthreads;
+}
+
 static int getOrder(GEntity *ge)
 {
   for(std::size_t i = 0; i < ge->getNumMeshElements(); i++)
@@ -1354,13 +1528,17 @@ static void setHighOrderFromExistingMesh(GEdge *ge, edgeContainer &edgeVertices)
     MVertex *vMin, *vMax;
     const bool increasing = getMinMaxVert(v[0], v[1], vMin, vMax);
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
-    if(edgeVertices.count(p) == 0) {
+    const std::size_t sh = edgeVertices.shardOf(p);
+    shardLock<edgeContainer> lock(edgeVertices, sh);
+    edgeMap &em = edgeVertices.shard(sh);
+    if(em.count(p) == 0) {
+      std::vector<MVertex *> &eVtcs = em[p];
       if(increasing)
-        edgeVertices[p].insert(edgeVertices[p].end(),
-                               v.begin() + e->getNumPrimaryVertices(), v.end());
+        eVtcs.insert(eVtcs.end(), v.begin() + e->getNumPrimaryVertices(),
+                     v.end());
       else
-        edgeVertices[p].insert(edgeVertices[p].end(), v.rbegin(),
-                               v.rend() - e->getNumPrimaryVertices());
+        eVtcs.insert(eVtcs.end(), v.rbegin(),
+                     v.rend() - e->getNumPrimaryVertices());
     }
   }
 }
@@ -1376,24 +1554,30 @@ static void setHighOrderFromExistingMesh(GFace *gf, edgeContainer &edgeVertices,
       const bool increasing =
         getMinMaxVert(edg.getVertex(0), edg.getVertex(1), vMin, vMax);
       std::pair<MVertex *, MVertex *> p(vMin, vMax);
-      if(edgeVertices.count(p) == 0) {
+      const std::size_t sh = edgeVertices.shardOf(p);
+      shardLock<edgeContainer> lock(edgeVertices, sh);
+      edgeMap &em = edgeVertices.shard(sh);
+      if(em.count(p) == 0) {
         std::vector<MVertex *> edgv;
         e->getEdgeVertices(j, edgv);
+        std::vector<MVertex *> &eVtcs = em[p];
         if(increasing)
-          edgeVertices[p].insert(edgeVertices[p].end(), edgv.begin() + 2,
-                                 edgv.end());
+          eVtcs.insert(eVtcs.end(), edgv.begin() + 2, edgv.end());
         else
-          edgeVertices[p].insert(edgeVertices[p].end(), edgv.rbegin(),
-                                 edgv.rend() - 2);
+          eVtcs.insert(eVtcs.end(), edgv.rbegin(), edgv.rend() - 2);
       }
     }
     MFace f = e->getFace(0);
     std::vector<MVertex *> facev;
-    if(faceVertices.count(f) == 0) {
+    const std::size_t fsh = faceVertices.shardOf(f);
+    shardLock<faceContainer> flock(faceVertices, fsh);
+    faceMap &fm = faceVertices.shard(fsh);
+    if(fm.count(f) == 0) {
       e->getFaceVertices(0, facev);
+      std::vector<MVertex *> &fVtcs = fm[f];
       for(std::size_t j = e->getNumPrimaryVertices() + e->getNumEdgeVertices();
           j < facev.size(); j++) {
-        faceVertices[f].push_back(facev[j]);
+        fVtcs.push_back(facev[j]);
       }
     }
   }
@@ -1433,9 +1617,40 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   m->destroyMeshCaches();
 
+  // placing high-order nodes always provides an initial guess for the point
+  // projections, and checks the result (see computeEquidistantParameters() and
+  // getFaceVerticesOnGeo()), so we can use the fast local projection here even
+  // though it is off by default for the rest of the code
+  int oldFastProjection = CTX::instance()->geom.occFastProjection;
+  CTX::instance()->geom.occFastProjection = 1;
+
+  // Curving the elements of a surface or of a volume is done in parallel, on
+  // General.NumThreads threads, or on Mesh.MaxNumThreads2D/3D if they are set -
+  // as for the meshers. The containers below are shared, hence sharded (with
+  // more shards than threads, so that two threads rarely want the same one at
+  // the same time). A single thread means a single shard, i.e. no locking and
+  // the exact serial behaviour, down to the node numbering.
+  int nthreads2D = CTX::instance()->numThreads;
+  if(CTX::instance()->mesh.maxNumThreads2D > 0)
+    nthreads2D = CTX::instance()->mesh.maxNumThreads2D;
+  if(!nthreads2D) nthreads2D = Msg::GetMaxThreads();
+  int nthreads3D = CTX::instance()->numThreads;
+  if(CTX::instance()->mesh.maxNumThreads3D > 0)
+    nthreads3D = CTX::instance()->mesh.maxNumThreads3D;
+  if(!nthreads3D) nthreads3D = Msg::GetMaxThreads();
+  if(nthreads2D < 1) nthreads2D = 1;
+  if(nthreads3D < 1) nthreads3D = 1;
+  // boundary layers are not yet thread-safe
+  if(m->getFields()->getNumBoundaryLayerFields()) {
+    nthreads2D = 1;
+    nthreads3D = 1;
+  }
+  const int nthreadsMax = std::max(nthreads2D, nthreads3D);
+  const std::size_t nShards = (nthreadsMax > 1) ? 16 * nthreadsMax : 1;
+
   // Keep track of vertex/entities created
-  edgeContainer edgeVertices;
-  faceContainer faceVertices;
+  edgeContainer edgeVertices(nShards);
+  faceContainer faceVertices(nShards);
 
   int counter = 0;
   int nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
@@ -1459,7 +1674,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
     Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     if(getOrder(*it) != order)
-      setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
+      setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,
+                   threadsFor(*it, nthreads2D));
     else
       setHighOrderFromExistingMesh(*it, edgeVertices, faceVertices);
     if((*it)->getColumns() != nullptr) (*it)->getColumns()->clearElementData();
@@ -1470,9 +1686,12 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
     Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     if(getOrder(*it) != order)
-      setHighOrder(*it, edgeVertices, faceVertices, incomplete, nPts);
+      setHighOrder(*it, edgeVertices, faceVertices, incomplete, nPts,
+                   threadsFor(*it, nthreads3D));
     if((*it)->getColumns() != nullptr) (*it)->getColumns()->clearElementData();
   }
+
+  CTX::instance()->geom.occFastProjection = oldFastProjection;
 
   // store nodes in entities
   m->pruneMeshVertexAssociations();

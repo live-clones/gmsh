@@ -1212,9 +1212,12 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
   if(geomType() == BoundaryLayerSurface) return GPoint();
 
 #if defined(HAVE_ALGLIB)
-  // Test initial guess
-  double min_u = initialGuess[0];
-  double min_v = initialGuess[1];
+  // Test initial guess (a null guess means the caller has none: start from the
+  // middle of the parameter range, the sampling below will do the rest)
+  double min_u = initialGuess ? initialGuess[0] :
+                                0.5 * (parBounds(0).low() + parBounds(0).high());
+  double min_v = initialGuess ? initialGuess[1] :
+                                0.5 * (parBounds(1).low() + parBounds(1).high());
   GPoint pnt = point(min_u, min_v);
   SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
   double min_dist = queryPoint.distance(spnt);

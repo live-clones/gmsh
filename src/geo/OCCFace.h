@@ -15,6 +15,7 @@
 
 #include <BRepLProp_SLProps.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
+#include <ShapeAnalysis_Surface.hxx>
 #include <TopoDS_Face.hxx>
 
 class OCCFace : public GFace {
@@ -28,12 +29,27 @@ private:
   double _radius;
   SPoint3 _center;
   void _setup();
-  mutable GeomAPI_ProjectPointOnSurf _projector;
-  bool _project(const double p[3], double uv[2], double xyz[3]) const;
+  // both projectors keep state from one projection to the next, so they cannot
+  // be shared between threads: keep one of each per thread, created on demand
+  // (a model can have many surfaces, most of which are never projected on)
+  mutable std::vector<GeomAPI_ProjectPointOnSurf *> _projectors;
+  // local projector, used when an initial guess is available: much faster than
+  // the global search performed by the projector above, especially on B-splines
+  mutable std::vector<Handle(ShapeAnalysis_Surface)> _localProjectors;
+  double _projectorBounds[4];
+  double _tolerance;
+  GeomAPI_ProjectPointOnSurf &_projector(GeomAPI_ProjectPointOnSurf &fallback)
+    const;
+  const Handle(ShapeAnalysis_Surface) & _localProjector() const;
+  bool _project(const double p[3], double uv[2], double xyz[3],
+                const double *initialGuess = nullptr) const;
 
 public:
   OCCFace(GModel *m, TopoDS_Face s, int num);
-  virtual ~OCCFace() {}
+  virtual ~OCCFace()
+  {
+    for(std::size_t i = 0; i < _projectors.size(); i++) delete _projectors[i];
+  }
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;
   virtual GPoint point(double par1, double par2) const;
