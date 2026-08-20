@@ -1237,8 +1237,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "FlatOptimize3D" , opt_mesh_flat_optimize_3d , 1. ,
     "Use the flat-array kernel to optimize 3D meshes (set to 0 to use the "
     "original object-based kernel, which performs the same operations and "
-    "gives meshes of the same quality; regions with embedded entities always "
-    "use the original kernel)" },
+    "gives meshes of the same quality)" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },
