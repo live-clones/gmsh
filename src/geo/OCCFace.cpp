@@ -34,6 +34,7 @@
 #include <Geom_ToroidalSurface.hxx>
 #include <IntTools_Context.hxx>
 #include <ShapeAnalysis.hxx>
+#include <BRep_Tool.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <Standard_Version.hxx>
 #include <TopExp_Explorer.hxx>
@@ -180,6 +181,8 @@ void OCCFace::_setup()
     vmax += vtol;
   }
   _projector.Init(_occface, umin, umax, vmin, vmax);
+  _localProjector = new ShapeAnalysis_Surface(_occface);
+  _tolerance = BRep_Tool::Tolerance(_s);
 
   if(OCCFace::geomType() == GEntity::Sphere) {
     gp_Sphere sphere = surface.Sphere();
@@ -287,9 +290,47 @@ GPoint OCCFace::point(double par1, double par2) const
   return GPoint(val.X(), val.Y(), val.Z(), this, pp);
 }
 
-bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
+bool OCCFace::_project(const double p[3], double uv[2], double xyz[3],
+                       const double *initialGuess) const
 {
   gp_Pnt pnt(p[0], p[1], p[2]);
+
+  // when we know where the projection should land, start a local Newton search
+  // from there instead of searching the whole surface: GeomAPI_ProjectPointOnSurf
+  // samples a grid over the full parameter range for every single point, which
+  // is very slow on B-splines. NextValueOfUV() falls back on the global search
+  // by itself if the local search does not converge.
+  if(initialGuess && CTX::instance()->geom.occFastProjection &&
+     !_localProjector.IsNull()) {
+    try {
+      gp_Pnt2d uvGuess(initialGuess[0], initialGuess[1]);
+      // a local search can only be trusted if it ends up at least as close to
+      // the point as the guess it started from: if it does not, either the
+      // guess was meaningless (some callers pass an uninitialized one) or the
+      // Newton iteration converged to another part of the surface
+      double dGuess = _localProjector->Value(uvGuess).Distance(pnt);
+      gp_Pnt2d uvLoc = _localProjector->NextValueOfUV(uvGuess, pnt, _tolerance);
+      gp_Pnt res = _localProjector->Value(uvLoc);
+      if(res.Distance(pnt) <= dGuess + _tolerance) {
+        uv[0] = uvLoc.X();
+        uv[1] = uvLoc.Y();
+        if(xyz) {
+          xyz[0] = res.X();
+          xyz[1] = res.Y();
+          xyz[2] = res.Z();
+        }
+        return true;
+      }
+      Msg::Debug("OCC local projection rejected on surface %d, falling back "
+                 "on the global search", tag());
+      // fall through to the global search below
+    } catch(Standard_Failure &err) {
+      Msg::Debug("OCC local projection failed on surface %d: %s", tag(),
+                 err.GetMessageString());
+      // fall through to the global search below
+    }
+  }
+
   _projector.Perform(pnt);
   if(!_projector.NbPoints()) {
     Msg::Debug("Projection of point (%g, %g, %g) on surface %d failed", p[0],
@@ -319,7 +360,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
     return GFace::closestPoint(qp, initialGuess);
 #endif
   double uv[2], xyz[3];
-  if(_project(qp.data(), uv, xyz))
+  if(_project(qp.data(), uv, xyz, initialGuess))
     return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
   else {
     return GFace::closestPoint(qp, initialGuess);

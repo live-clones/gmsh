@@ -210,6 +210,13 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
       SPoint3 pc(t * pN + (1. - t) * p0);
       double guess[2] = {u[i], v[i]};
       GPoint gp = gf->closestPoint(pc, guess);
+      // the guess is a linear interpolation of the parameters of the two
+      // endpoints, which is meaningless if the edge crosses a seam: if the
+      // projection lands further away than the edge is long, it converged to
+      // some other part of the surface - redo it without the guess
+      if(gp.succeeded() &&
+         pc.distance(SPoint3(gp.x(), gp.y(), gp.z())) > p0.distance(pN))
+        gp = gf->closestPoint(pc, nullptr);
       if(gp.succeeded()) {
         u[i] = gp.u();
         v[i] = gp.v();
@@ -744,7 +751,18 @@ static void getFaceVerticesOnGeo(GFace *gf,
         gp = gf->point(SPoint2(GUESS[0], GUESS[1]));
       }
       else {
-        gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
+        SPoint3 pc(X, Y, Z);
+        gp = gf->closestPoint(pc, GUESS);
+        // see the comment in computeEquidistantParameters(): an interpolated
+        // guess is not reliable across a seam, so check that the projection
+        // stays within the element it was computed from
+        if(gp.succeeded()) {
+          double h = 0.;
+          for(std::size_t j = 0; j < vertices.size(); j++)
+            h = std::max(h, pc.distance(vertices[j]->point()));
+          if(pc.distance(SPoint3(gp.x(), gp.y(), gp.z())) > h)
+            gp = gf->closestPoint(pc, nullptr);
+        }
       }
       if(gp.g()) {
         v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
@@ -754,7 +772,8 @@ static void getFaceVerticesOnGeo(GFace *gf,
       }
     }
     else {
-      GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
+      // no reparametrization: GUESS was never computed, so don't pass it on
+      GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), nullptr);
       if(gp.succeeded())
         v = new MVertex(gp.x(), gp.y(), gp.z(), gf);
       else
@@ -1446,6 +1465,13 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   m->destroyMeshCaches();
 
+  // placing high-order nodes always provides an initial guess for the point
+  // projections, and checks the result (see computeEquidistantParameters() and
+  // getFaceVerticesOnGeo()), so we can use the fast local projection here even
+  // though it is off by default for the rest of the code
+  int oldFastProjection = CTX::instance()->geom.occFastProjection;
+  CTX::instance()->geom.occFastProjection = 1;
+
   // Keep track of vertex/entities created
   edgeContainer edgeVertices;
   faceContainer faceVertices;
@@ -1486,6 +1512,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
       setHighOrder(*it, edgeVertices, faceVertices, incomplete, nPts);
     if((*it)->getColumns() != nullptr) (*it)->getColumns()->clearElementData();
   }
+
+  CTX::instance()->geom.occFastProjection = oldFastProjection;
 
   // store nodes in entities
   m->pruneMeshVertexAssociations();
