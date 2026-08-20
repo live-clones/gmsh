@@ -157,10 +157,23 @@ template <class T> static bool areOnlySomeElementsVisible(std::vector<T *> &elem
   return false;
 }
 
+static bool useCurvedRepresentation(MElement *element)
+{
+  // A four-node quadrangle is bilinear, not planar in general.  Subdivide it
+  // through its reference-space mapping whenever the user requests more than
+  // one display sub-edge, just like a higher-order element.
+  if(element->getType() == TYPE_QUA &&
+     CTX::instance()->mesh.numSubEdges > 1)
+    return true;
+  return (element->getPolynomialOrder() > 1) &&
+         (element->maxDistToStraight() >
+          curvedRepTol * element->getInnerRadius());
+}
+
 template <class T> static bool areSomeElementsCurved(std::vector<T *> &elements)
 {
   for(std::size_t i = 0; i < elements.size(); i++)
-    if(elements[i]->getPolynomialOrder() > 1) return true;
+    if(useCurvedRepresentation(elements[i])) return true;
   return false;
 }
 
@@ -169,9 +182,7 @@ static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
 {
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
-    const bool curved =
-      (ele->getPolynomialOrder() > 1) &&
-      (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
+    const bool curved = useCurvedRepresentation(ele);
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
     for(int j = 0; j < ele->getNumFacesRep(curved); j++) {
@@ -205,9 +216,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
     unsigned int c = getColorByElement(ele);
     unsigned int col[4] = {c, c, c, c};
 
-    const bool curved =
-      (ele->getPolynomialOrder() > 1) &&
-      (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
+    const bool curved = useCurvedRepresentation(ele);
 
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
