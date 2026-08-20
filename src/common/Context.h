@@ -114,7 +114,7 @@ struct contextGeometryOptions {
   int occWriteParametricCurves, occWriteSTEPNonManifold;
   int occBooleanCheckInverted, occBooleanGlue, occBooleanNonDestructive;
   int occBooleanPreserveNumbering, occBooleanSimplify;
-  int occThruSectionsDegree, occUseGenericClosestPoint;
+  int occThruSectionsDegree, occUseGenericClosestPoint, occFastProjection;
   int occBrepFormatVersion;
   double occScaling;
   std::string occTargetUnit;
