@@ -54,10 +54,8 @@ opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
-opt(GMP "Enable GMP for Kbipack (advanced)" ON)
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
 opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
-opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module" ${DEFAULT})
@@ -161,7 +159,7 @@ if(ENABLE_PRIVATE_API)
           "on the stable public API (gmsh/api) instead.")
   file(GLOB_RECURSE HEADERS src/common/*.h src/numeric/*.h src/numeric/*.hpp
        src/geo/*.h src/mesh/*.h src/solver/*.h src/post/*.h src/plugin/*.h
-       src/graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
+       src/graphics/*.h contrib/DiscreteIntegration/*.h
        contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
        contrib/MeshQualityOptimizer/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
@@ -821,23 +819,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/DiscreteIntegration AND
   add_subdirectory(contrib/DiscreteIntegration)
   include_directories(contrib/DiscreteIntegration)
   set_config_option(HAVE_DINTEGRATION "DIntegration")
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/kbipack AND ENABLE_KBIPACK)
-  set_config_option(HAVE_KBIPACK "Kbipack")
-  add_subdirectory(contrib/kbipack)
-  include_directories(contrib/kbipack)
-  if(ENABLE_GMP)
-    find_library(GMP_LIB gmp)
-    find_path(GMP_INC "gmp.h" PATH_SUFFIXES src include)
-  endif()
-  if(GMP_LIB AND GMP_INC)
-    set_config_option(HAVE_GMP "GMP")
-    list(APPEND EXTERNAL_LIBRARIES ${GMP_LIB})
-    list(APPEND EXTERNAL_INCLUDES ${GMP_INC})
-  else()
-    message(STATUS "GMP not found: Kbipack uses long int")
-  endif()
 endif()
 
 if(ENABLE_MATHEX)
@@ -2419,7 +2400,7 @@ message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
 mark_as_advanced(ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
-                 GMP_INC GMP_LIB MMG_INC MMG_LIB HDF5_LIB
+                 MMG_INC MMG_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB
                  BISON FLEX MAKEINFO TEXI2PDF FLTK_CONFIG_SCRIPT
