@@ -17,10 +17,9 @@ bool compare(const MVertex *const v0, const MVertex *const v1)
   return v0->getNum() < v1->getNum();
 }
 
-void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
+static void sortVertices(MVertex *const *v, int n, char *s)
 {
-  if(v.size() == 3) {
-    s.resize(3);
+  if(n == 3) {
     if(v[0]->getNum() < v[1]->getNum() && v[0]->getNum() < v[2]->getNum()) {
       s[0] = 0;
       s[1] = 1;
@@ -38,57 +37,77 @@ void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
       s[2] = 1;
     }
 
-    if(v[s[2]]->getNum() < v[s[1]]->getNum()) {
+    if(v[int(s[2])]->getNum() < v[int(s[1])]->getNum()) {
       char temp = s[1];
       s[1] = s[2];
       s[2] = temp;
     }
     return;
   }
-  else if(v.size() == 4) {
+  else if(n == 4) {
     // avoid overhead of general case below
-    MVertex * sorted[4] {v[0], v[1], v[2], v[3]};
+    MVertex *sorted[4]{v[0], v[1], v[2], v[3]};
     std::sort(&sorted[0], &sorted[4], compare);
-    s.reserve(4);
-    for(int i = 0; i < 4; ++i) {
-      s.push_back(
-        std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
-    }
+    for(int i = 0; i < 4; ++i)
+      s[i] = std::distance(v, std::find(v, v + 4, sorted[i]));
     return;
   }
 
-  std::vector<MVertex *> sorted = v;
+  std::vector<MVertex *> sorted(v, v + n);
   std::sort(sorted.begin(), sorted.end(), compare);
-  s.reserve(sorted.size());
-  for(std::size_t i = 0; i < sorted.size(); i++)
-    s.push_back(
-      std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
+  for(int i = 0; i < n; i++)
+    s[i] = std::distance(v, std::find(v, v + n, sorted[i]));
+}
+
+void MFace::_initialize(MVertex *const *v, int n)
+{
+  _n = n;
+  if(n > 4) { // polygonal face of a cut element: allocate
+    _p = new polygon;
+    _p->v.assign(v, v + n);
+    _p->si.resize(n);
+    sortVertices(_p->v.data(), n, _p->si.data());
+    // keep the inline storage well-defined, it is copied around unconditionally
+    for(int i = 0; i < 4; i++) {
+      _v[i] = nullptr;
+      _si[i] = 0;
+    }
+  }
+  else {
+    _p = nullptr;
+    for(int i = 0; i < 4; i++) {
+      _v[i] = (i < n) ? v[i] : nullptr;
+      _si[i] = 0;
+    }
+    if(n) sortVertices(_v, n, _si);
+  }
+}
+
+void MFace::_copy(const MFace &f)
+{
+  _copyInline(f);
+  _p = f._p ? new polygon(*f._p) : nullptr;
 }
 
 MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
 {
-  _v.reserve(v3 ? 4 : 3);
-  _v.push_back(v0);
-  _v.push_back(v1);
-  _v.push_back(v2);
-  if(v3) _v.push_back(v3);
-  sortVertices(_v, _si);
+  MVertex *v[4] = {v0, v1, v2, v3};
+  _initialize(v, v3 ? 4 : 3);
 }
 
 MFace::MFace(const std::vector<MVertex *> &v)
 {
-  _v.reserve(v.size());
-  for(std::size_t i = 0; i < v.size(); i++) _v.push_back(v[i]);
-  sortVertices(_v, _si);
+  _initialize(v.data(), (int)v.size());
 }
+
 void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
 {
   // Reference : "Higher-Order Finite Element Methods"; Pavel Solin, Karel
   // Segeth, Ivo Dolezel, Chapman and Hall/CRC (2003)
-  if(_v.size() == 3) { // triangular face
-    if(_v[int(_si[0])]->getNum() == _v[0]->getNum()) {
+  if(getNumVertices() == 3) { // triangular face
+    if(getSortedVertex(0)->getNum() == getVertex(0)->getNum()) {
       faceOrientationFlag[0] = 0;
-      if(_v[int(_si[1])]->getNum() == _v[1]->getNum()) {
+      if(getSortedVertex(1)->getNum() == getVertex(1)->getNum()) {
         faceOrientationFlag[1] = 1;
       }
       else {
@@ -96,9 +115,9 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
       }
     }
     else {
-      if(_v[1]->getNum() == _v[int(_si[0])]->getNum()) {
+      if(getVertex(1)->getNum() == getSortedVertex(0)->getNum()) {
         faceOrientationFlag[0] = 1;
-        if(_v[0]->getNum() == _v[int(_si[2])]->getNum()) {
+        if(getVertex(0)->getNum() == getSortedVertex(2)->getNum()) {
           faceOrientationFlag[1] = 1;
         }
         else {
@@ -107,7 +126,7 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
       }
       else {
         faceOrientationFlag[0] = 2;
-        if(_v[1]->getNum() == _v[int(_si[2])]->getNum()) {
+        if(getVertex(1)->getNum() == getSortedVertex(2)->getNum()) {
           faceOrientationFlag[1] = 1;
         }
         else {
@@ -119,7 +138,7 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
   else { // quadrilateral face
     int c = 0;
     for(int i = 0; i < 4; i++) {
-      if(_v[int(_si[0])]->getNum() == unsigned(_v[i]->getNum())) { c = i; }
+      if(getSortedVertex(0)->getNum() == unsigned(getVertex(i)->getNum())) { c = i; }
     }
     int indexopposedVertex = 0;
     switch(c) {
@@ -128,18 +147,18 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
     case(2): indexopposedVertex = 1; break;
     case(3): indexopposedVertex = 0; break;
     }
-    int numVertexOpposed = _v[indexopposedVertex]->getNum();
+    int numVertexOpposed = getVertex(indexopposedVertex)->getNum();
 
-    int axis1A = _v[int(_si[0])]->getNum();
+    int axis1A = getSortedVertex(0)->getNum();
     int axis1B = 0;
-    if(_v[int(_si[1])]->getNum() == unsigned(numVertexOpposed)) {
-      axis1B = _v[int(_si[2])]->getNum();
+    if(getSortedVertex(1)->getNum() == unsigned(numVertexOpposed)) {
+      axis1B = getSortedVertex(2)->getNum();
     }
     else {
-      axis1B = _v[int(_si[1])]->getNum();
+      axis1B = getSortedVertex(1)->getNum();
     }
-    if(unsigned(axis1A) == _v[0]->getNum()) {
-      if(unsigned(axis1B) == _v[1]->getNum()) {
+    if(unsigned(axis1A) == getVertex(0)->getNum()) {
+      if(unsigned(axis1B) == getVertex(1)->getNum()) {
         faceOrientationFlag[0] = 1;
         faceOrientationFlag[1] = 1;
         faceOrientationFlag[2] = 1;
@@ -151,8 +170,8 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
       }
     }
     else {
-      if(unsigned(axis1A) == _v[1]->getNum()) {
-        if(unsigned(axis1B) == _v[0]->getNum()) {
+      if(unsigned(axis1A) == getVertex(1)->getNum()) {
+        if(unsigned(axis1B) == getVertex(0)->getNum()) {
           faceOrientationFlag[0] = -1;
           faceOrientationFlag[1] = 1;
           faceOrientationFlag[2] = 1;
@@ -164,8 +183,8 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
         }
       }
       else {
-        if(unsigned(axis1A) == _v[2]->getNum()) {
-          if(unsigned(axis1B) == _v[3]->getNum()) {
+        if(unsigned(axis1A) == getVertex(2)->getNum()) {
+          if(unsigned(axis1B) == getVertex(3)->getNum()) {
             faceOrientationFlag[0] = 1;
             faceOrientationFlag[1] = -1;
             faceOrientationFlag[2] = 1;
@@ -177,7 +196,7 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
           }
         }
         else {
-          if(unsigned(axis1B) == _v[2]->getNum()) {
+          if(unsigned(axis1B) == getVertex(2)->getNum()) {
             faceOrientationFlag[0] = -1;
             faceOrientationFlag[1] = -1;
             faceOrientationFlag[2] = 1;
@@ -195,18 +214,18 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
 
 double MFace::approximateArea() const
 {
-  SPoint3 p0 = _v[0]->point(), p1 = _v[1]->point(), p2 = _v[2]->point();
+  SPoint3 p0 = getVertex(0)->point(), p1 = getVertex(1)->point(), p2 = getVertex(2)->point();
   double a = triangle_area(p0, p1, p2);
-  if(_v.size() == 3) return a;
-  a += triangle_area(p0, p2, _v[3]->point());
+  if(getNumVertices() == 3) return a;
+  a += triangle_area(p0, p2, getVertex(3)->point());
   return a;
 }
 
 SVector3 MFace::normal() const
 {
   double n[3];
-  normal3points(_v[0]->x(), _v[0]->y(), _v[0]->z(), _v[1]->x(), _v[1]->y(),
-                _v[1]->z(), _v[2]->x(), _v[2]->y(), _v[2]->z(), n);
+  normal3points(getVertex(0)->x(), getVertex(0)->y(), getVertex(0)->z(), getVertex(1)->x(), getVertex(1)->y(),
+                getVertex(1)->z(), getVertex(2)->x(), getVertex(2)->y(), getVertex(2)->z(), n);
   return SVector3(n[0], n[1], n[2]);
 }
 
@@ -218,12 +237,12 @@ bool MFace::computeCorrespondence(const MFace &other, int &rotation,
 
   if(*this == other) {
     for(std::size_t i = 0; i < getNumVertices(); i++) {
-      if(_v[0] == other.getVertex(i)) {
+      if(getVertex(0) == other.getVertex(i)) {
         rotation = i;
         break;
       }
     }
-    if(_v[1] == other.getVertex((rotation + 1) % getNumVertices()))
+    if(getVertex(1) == other.getVertex((rotation + 1) % getNumVertices()))
       swap = false;
     else
       swap = true;
