@@ -94,7 +94,7 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Clip
 Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ColorCarousel
 Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical group, 3: by mesh partition)@*
@@ -158,6 +158,16 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.FirstNodeTag
 First tag (>= 1) of mesh nodes when generating or renumbering a mesh@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.FlatRefineDelaunay3D
+Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to use the original object-based kernel, which produces the same meshes)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.FlatOptimize3D
+Use the flat-array kernel to optimize 3D meshes (set to 0 to use the original object-based kernel, which performs the same operations and gives meshes of the same quality)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

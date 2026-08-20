@@ -38,12 +38,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-45ae1f4bd; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260625; Build host: ace-dave-2.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk GMP Gmm[contrib] Hxt Jpeg Kbipack MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] TouchBar Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.0.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-5afbb580a; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260820; Build host: mac.user.uliege.priv; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk GMP Gmm[contrib] Hxt Jpeg Kbipack MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.0.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{"64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk GMP Gmm[contrib] Hxt Jpeg Kbipack MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] TouchBar Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader"}@*
+Default value: @code{"64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk GMP Gmm[contrib] Hxt Jpeg Kbipack MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -183,7 +183,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"5.0.0-git-45ae1f4bd"}@*
+Default value: @code{"5.0.0-git-5afbb580a"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -379,127 +379,127 @@ Saved in: @code{General.OptionsFileName}
 @item General.Clip0A
 First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')@*
 Default value: @code{1}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip0B
 Second coefficient in equation for clipping plane 0 (`B' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip0C
 Third coefficient in equation for clipping plane 0 (`C' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip0D
 Fourth coefficient in equation for clipping plane 0 (`D' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip1A
 First coefficient in equation for clipping plane 1@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip1B
 Second coefficient in equation for clipping plane 1@*
 Default value: @code{1}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip1C
 Third coefficient in equation for clipping plane 1@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip1D
 Fourth coefficient in equation for clipping plane 1@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip2A
 First coefficient in equation for clipping plane 2@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip2B
 Second coefficient in equation for clipping plane 2@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip2C
 Third coefficient in equation for clipping plane 2@*
 Default value: @code{1}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip2D
 Fourth coefficient in equation for clipping plane 2@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip3A
 First coefficient in equation for clipping plane 3@*
 Default value: @code{-1}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip3B
 Second coefficient in equation for clipping plane 3@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip3C
 Third coefficient in equation for clipping plane 3@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip3D
 Fourth coefficient in equation for clipping plane 3@*
 Default value: @code{1}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip4A
 First coefficient in equation for clipping plane 4@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip4B
 Second coefficient in equation for clipping plane 4@*
 Default value: @code{-1}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip4C
 Third coefficient in equation for clipping plane 4@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip4D
 Fourth coefficient in equation for clipping plane 4@*
 Default value: @code{1}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip5A
 First coefficient in equation for clipping plane 5@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip5B
 Second coefficient in equation for clipping plane 5@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip5C
 Third coefficient in equation for clipping plane 5@*
 Default value: @code{-1}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Clip5D
 Fourth coefficient in equation for clipping plane 5@*
 Default value: @code{1}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.ClipFactor
 Near and far clipping plane distance factor (decrease value for better z-buffer resolution)@*
 Default value: @code{5}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.ClipOnlyDrawIntersectingVolume
 Only draw layer of elements that intersect the clipping plane@*
@@ -1049,17 +1049,17 @@ Saved in: @code{General.OptionsFileName}
 @item General.RotationCenterX
 X coordinate of the center of rotation@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.RotationCenterY
 Y coordinate of the center of rotation@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.RotationCenterZ
 Z coordinate of the center of rotation@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item General.SaveOptions
 Automatically save current options in General.OptionsFileName (1) or per model (2)when the graphical user interface is closed?@*
