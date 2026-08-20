@@ -89,7 +89,7 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.Clip
 Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.CopyMeshingMethod
 Copy meshing method (unstructured or transfinite) when duplicating geometrical entities with built-in geometry kernel?@*

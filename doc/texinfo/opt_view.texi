@@ -229,7 +229,7 @@ Saved in: @code{General.OptionsFileName}
 @item View.Clip
 Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item View.Closed
 Close the subtree containing this view@*
