@@ -1036,11 +1036,8 @@ StringXNumber GeometryOptions_Number[] = {
     "[Deprecated]" },
   { F|O, "OCCFastProjection" , opt_geometry_occ_fast_projection , 0. ,
     "Start point projections in the OpenCASCADE kernel from the initial guess "
-    "provided by the caller, when there is one, instead of searching the whole "
-    "surface: much faster (in particular on B-splines), but only correct if the "
-    "caller checks the result, as an interpolated guess is meaningless across a "
-    "seam. Turned on automatically while placing high-order nodes, which does "
-    "check it" },
+    "provided by the caller (much faster, but only correct if the caller checks "
+    "the result)" },
   { F|O, "OCCUseGenericClosestPoint" , opt_geometry_occ_use_generic_closest_point , 0. ,
     "Use generic algrithm to compute point projections in the OpenCASCADE kernel "
     "(less robust, but significally faster in some configurations)" },
