@@ -1435,7 +1435,7 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh nodes as solid color dots (0) or 3D spheres (1)" },
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Display size of normal vectors (in pixels)" },
-  { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
+  { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 1. ,
     "Number of edge subdivisions used to draw high-order mesh elements" },
 
   { F|O, "OldInitialDelaunay2D" , opt_mesh_old_initial_delaunay_2d , 0. ,

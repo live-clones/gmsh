@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <cmath>
 #include "drawContext.h"
 #include "GmshMessage.h"
@@ -408,7 +409,20 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)
     glEnable(GL_POLYGON_OFFSET_FILL);
 
-  glDrawArrays(type, 0, va->getNumVertices());
+  // Some OpenGL implementations fail on very large client-side vertex
+  // arrays, even though the vertex count still fits in GLsizei. Draw complete
+  // elements in bounded chunks instead. Keeping chunk boundaries aligned with
+  // the number of vertices per element preserves the primitive topology.
+  const int numVertices = va->getNumVertices();
+  const int verticesPerElement = va->getNumVerticesPerElement();
+  const int maxElementsPerDraw = 1 << 16;
+  const int maxVerticesPerDraw =
+    std::max(verticesPerElement,
+             maxElementsPerDraw * verticesPerElement);
+  for(int first = 0; first < numVertices; first += maxVerticesPerDraw) {
+    const int count = std::min(maxVerticesPerDraw, numVertices - first);
+    glDrawArrays(type, first, count);
+  }
 
   glDisable(GL_POLYGON_OFFSET_FILL);
   glDisable(GL_LIGHTING);
