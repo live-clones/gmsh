@@ -10,7 +10,7 @@
 
 #include "MVertex.h"
 #include "MTriangle.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionTet4.h"
 
 static int faces[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 3, 1}, {1, 3, 2}};
 
