@@ -177,6 +177,8 @@ int MQuadrangle::getNumFacesRep(bool curved)
     return 2 * std::pow(CTX::instance()->mesh.numSubEdges, 2);
   }
 #endif
+  if(curved)
+    return 2 * std::pow(CTX::instance()->mesh.numSubEdges, 2);
   return 2;
 }
 
@@ -274,6 +276,11 @@ void MQuadrangle::getFaceRep(bool curved, int num, double *x, double *y,
     return;
   }
 #endif
+  if(curved) {
+    _myGetFaceRep(this, num, x, y, z, n,
+                  CTX::instance()->mesh.numSubEdges);
+    return;
+  }
   static const int f[2][3] = {{0, 1, 2}, {0, 2, 3}};
   _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
 }
