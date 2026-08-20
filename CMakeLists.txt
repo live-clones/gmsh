@@ -333,13 +333,8 @@ if(NOT HAVE_64BIT_SIZE_T AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 if(ENABLE_OPENMP)
-  find_package(OpenMP)
-  if(OpenMP_FOUND OR OPENMP_FOUND)
-    set_config_option(HAVE_OPENMP "OpenMP")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
-  elseif(APPLE AND EXISTS "/opt/local/lib/libomp")
+  # special cases handled first:
+  if(APPLE AND EXISTS "/opt/local/lib/libomp")
     # official Apple compiler with macports' libomp
     set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
     set(CMAKE_C_FLAGS
@@ -367,6 +362,15 @@ if(ENABLE_OPENMP)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
     list(APPEND EXTERNAL_LIBRARIES "/usr/local/lib64/libgomp.a")
+  else()
+    # general case:
+    find_package(OpenMP)
+    if(OpenMP_FOUND OR OPENMP_FOUND)
+      set_config_option(HAVE_OPENMP "OpenMP")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+      list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
+    endif()
   endif()
 endif()
 
