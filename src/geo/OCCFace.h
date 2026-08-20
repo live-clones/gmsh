@@ -15,6 +15,7 @@
 
 #include <BRepLProp_SLProps.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
+#include <ShapeAnalysis_Surface.hxx>
 #include <TopoDS_Face.hxx>
 
 class OCCFace : public GFace {
@@ -29,7 +30,12 @@ private:
   SPoint3 _center;
   void _setup();
   mutable GeomAPI_ProjectPointOnSurf _projector;
-  bool _project(const double p[3], double uv[2], double xyz[3]) const;
+  // local projector, used when an initial guess is available: much faster than
+  // the global search performed by _projector, especially on B-splines
+  mutable Handle(ShapeAnalysis_Surface) _localProjector;
+  double _tolerance;
+  bool _project(const double p[3], double uv[2], double xyz[3],
+                const double *initialGuess = nullptr) const;
 
 public:
   OCCFace(GModel *m, TopoDS_Face s, int num);
