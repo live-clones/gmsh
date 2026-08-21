@@ -529,6 +529,80 @@ static void finishSurfaceMesh(GFace *gf)
   deleteUnusedVertices(gf);
 }
 
+// Build the background (cross field) mesh needed by the quad-oriented
+// algorithms. Returns whether the mesher should work in the "infinite" metric
+// of that background mesh.
+//
+// buildForFrontalQuad reproduces a divergence between the two generators: the
+// non-periodic one skips building the background mesh when it is only after
+// the initial mesh, the periodic one always builds it (it decides about
+// onlyInitialMesh later). FIXME: see Stage 4.
+static bool
+setupBackgroundMesh(GFace *gf, bool buildForFrontalQuad,
+                    std::map<MVertex *, MVertex *> *equivalence,
+                    std::map<MVertex *, SPoint2> *parametricCoordinates)
+{
+  bool infty = false;
+  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
+    infty = true;
+    if(buildForFrontalQuad)
+      buildBackgroundMesh(gf, CTX::instance()->mesh.crossFieldClosestPoint,
+                          equivalence, parametricCoordinates);
+  }
+  else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
+    infty = true;
+    /* New version of PACK / QUADQS use a different background mesh */
+  }
+  return infty;
+}
+
+// Run the selected Delaunay-based algorithm on the initial mesh, then smooth.
+// These algorithms work directly on the gmsh structures; equivalence and
+// parametricCoordinates carry the seam node duplication of periodic faces and
+// are null otherwise.
+//
+// seedBamgWithBowyerWatson reproduces a divergence between the two generators:
+// for ALGO_2D_BAMG - the only algorithm reaching the last branch - the
+// non-periodic one first lays down a coarse Bowyer-Watson mesh, the periodic
+// one calls Bamg directly. FIXME: see Stage 4.
+static void
+runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
+                     std::map<MVertex *, MVertex *> *equivalence,
+                     std::map<MVertex *, SPoint2> *parametricCoordinates,
+                     std::vector<SPoint2> *true_boundary)
+{
+  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) {
+    bowyerWatsonFrontal(gf, equivalence, parametricCoordinates, true_boundary);
+  }
+  else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT) {
+    bowyerWatsonFrontalOptimized(gf, equivalence, parametricCoordinates,
+                                 true_boundary);
+  }
+  else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
+    bowyerWatsonFrontalLayers(gf, true, equivalence, parametricCoordinates);
+  }
+  else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS) {
+    bowyerWatsonParallelograms(gf, equivalence, parametricCoordinates);
+  }
+  else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
+    Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
+  }
+  else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
+          gf->getMeshingAlgo() == ALGO_2D_AUTO) {
+    bowyerWatson(gf, 1000000000, equivalence, parametricCoordinates);
+  }
+  else {
+    if(seedBamgWithBowyerWatson)
+      bowyerWatson(gf, 15000, equivalence, parametricCoordinates);
+    meshGFaceBamg(gf);
+  }
+
+  if(!infty ||
+     !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
+    laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
+}
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
@@ -1049,50 +1123,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::vector<MTriangle *> blTris;
   std::set<MVertex *, MVertexPtrLessThan> verts;
 
-  bool infty = false;
-  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
-    infty = true;
-    if(!onlyInitialMesh)
-      buildBackgroundMesh(gf, CTX::instance()->mesh.crossFieldClosestPoint);
-  }
-  else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
-          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
-    infty = true;
-    /* New version of PACK / QUADQS use a different background mesh */
-  }
+  bool infty = setupBackgroundMesh(gf, !onlyInitialMesh, nullptr, nullptr);
 
   if(!onlyInitialMesh)
     modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
 
-  // the delaunay algo is based directly on internal gmsh structures BDS mesh is
-  // passed in order not to recompute local coordinates of vertices
-  if(algoDelaunay2D(gf) && !onlyInitialMesh) {
-    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) { bowyerWatsonFrontal(gf); }
-    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT) {
-      bowyerWatsonFrontalOptimized(gf);
-    }
-    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
-      bowyerWatsonFrontalLayers(gf, true);
-    }
-    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS) {
-      bowyerWatsonParallelograms(gf);
-    }
-    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
-      Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
-    }
-    else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
-            gf->getMeshingAlgo() == ALGO_2D_AUTO) {
-      bowyerWatson(gf);
-    }
-    else {
-      bowyerWatson(gf, 15000);
-      meshGFaceBamg(gf);
-    }
-
-    if(!infty ||
-       !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
-      laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
-  }
+  if(algoDelaunay2D(gf) && !onlyInitialMesh)
+    runDelaunayAlgorithm(gf, infty, true, nullptr, nullptr, nullptr);
 
   if(debug) {
     char name[256];
@@ -2040,17 +2077,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 1, gf);
   }
 
-  bool infty = false;
-  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
-    infty = true;
-    buildBackgroundMesh(gf, CTX::instance()->mesh.crossFieldClosestPoint,
-                        &equivalence, &parametricCoordinates);
-  }
-  else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
-          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
-    infty = true;
-    /* New version of PACK / QUADQS use a different background mesh */
-  }
+  bool infty =
+    setupBackgroundMesh(gf, true, &equivalence, &parametricCoordinates);
 
   bool onlyInitialMesh = (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY);
 
@@ -2067,29 +2095,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                              verts.end());
   }
 
-  if(algoDelaunay2D(gf) && !onlyInitialMesh) {
-    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
-      bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates,
-                          &true_boundary);
-    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT)
-      bowyerWatsonFrontalOptimized(gf, &equivalence, &parametricCoordinates,
-                                   &true_boundary);
-    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
-      bowyerWatsonFrontalLayers(gf, true, &equivalence, &parametricCoordinates);
-    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
-      bowyerWatsonParallelograms(gf, &equivalence, &parametricCoordinates);
-    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
-      Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
-    }
-    else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
-            gf->getMeshingAlgo() == ALGO_2D_AUTO)
-      bowyerWatson(gf, 1000000000, &equivalence, &parametricCoordinates);
-    else
-      meshGFaceBamg(gf);
-    if(!infty ||
-       !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
-      laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
-  }
+  if(algoDelaunay2D(gf) && !onlyInitialMesh)
+    runDelaunayAlgorithm(gf, infty, false, &equivalence, &parametricCoordinates,
+                         &true_boundary);
 
   if(debug) {
     char name[256];
