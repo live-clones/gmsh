@@ -836,57 +836,16 @@ collectBoundaryNodes(GFace *gf, std::vector<GEdge *> &edges,
   return true;
 }
 
-// Builds An initial triangular mesh that respects the boundaries of
-// the domain, including embedded points and surfaces
-
-bool meshGenerator(GFace *gf, int RECUR_ITER,
-                   bool repairSelfIntersecting1dMesh, int onlyInitialMesh,
-                   bool debug, std::vector<GEdge *> *replacementEdges)
+// Add every boundary node to the BDS mesh as a BDS point, in the parametric
+// space of the face, keeping the correspondence both ways in recoverMap /
+// recoverMapInv and accumulating the parametric bounding box.
+static void buildBDSPoints(
+  GFace *gf, std::set<MVertex *, MVertexPtrLessThan> &all_vertices, BDS_Mesh *m,
+  std::vector<BDS_Point *> &points, SBoundingBox3d &bbox,
+  std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap,
+  std::map<MVertex *, BDS_Point *> &recoverMapInv)
 {
-  if(CTX::instance()->debugSurface > 0 &&
-     gf->tag() != CTX::instance()->debugSurface) {
-    gf->meshStatistics.status = GFace::DONE;
-    return true;
-  }
-  if(CTX::instance()->debugSurface > 0) debug = true;
-
-  BDS_GeomEntity CLASS_F(1, 2);
-  BDS_GeomEntity CLASS_EXTERIOR(1, 3);
-  std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
-  std::map<MVertex *, BDS_Point *> recoverMapInv;
-  std::vector<GEdge *> edges =
-    replacementEdges ? *replacementEdges : gf->edges();
-
-  std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-  std::set<MVertex *, MVertexPtrLessThan> all_vertices;
-  if(!collectBoundaryNodes(gf, edges, emb_edges, all_vertices,
-                           debug && RECUR_ITER == 0))
-    return false;
-
-  if(all_vertices.size() < 3) {
-    Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
-                 "the boundary",
-                 gf->tag(), all_vertices.size());
-    gf->meshStatistics.status = GFace::DONE;
-    return true;
-  }
-  else if(all_vertices.size() == 3) {
-    MVertex *vv[3] = {nullptr, nullptr, nullptr};
-    int i = 0;
-    for(auto it = all_vertices.begin(); it != all_vertices.end(); it++) {
-      vv[i++] = *it;
-    }
-    gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
-    gf->meshStatistics.status = GFace::DONE;
-    return true;
-  }
-
-  // Buid a BDS_Mesh structure that is convenient for doing the actual
-  // meshing procedure
-  BDS_Mesh *m = new BDS_Mesh;
-
-  std::vector<BDS_Point *> points(all_vertices.size());
-  SBoundingBox3d bbox;
+  points.resize(all_vertices.size());
   int count = 0;
   for(auto it = all_vertices.begin(); it != all_vertices.end(); it++) {
     MVertex *here = *it;
@@ -905,7 +864,18 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   bbox.makeCube();
+}
 
+// Build the initial triangulation of the boundary nodes: either the old
+// divide & conquer hull mesher, which only triangulates the points and leaves
+// boundary recovery and colouring to the caller, or the newer PolyMesh based
+// initial mesher, which triangulates, recovers and colours in one go.
+static void initialTriangulation(
+  GFace *gf, BDS_Mesh *m, std::vector<BDS_Point *> &points,
+  SBoundingBox3d &bbox, std::set<MVertex *, MVertexPtrLessThan> &all_vertices,
+  std::map<MVertex *, BDS_Point *> &recoverMapInv,
+  std::vector<GEdge *> *replacementEdges)
+{
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
@@ -1019,6 +989,63 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
     delete pm;
   }
+}
+
+// Builds An initial triangular mesh that respects the boundaries of
+// the domain, including embedded points and surfaces
+
+bool meshGenerator(GFace *gf, int RECUR_ITER,
+                   bool repairSelfIntersecting1dMesh, int onlyInitialMesh,
+                   bool debug, std::vector<GEdge *> *replacementEdges)
+{
+  if(CTX::instance()->debugSurface > 0 &&
+     gf->tag() != CTX::instance()->debugSurface) {
+    gf->meshStatistics.status = GFace::DONE;
+    return true;
+  }
+  if(CTX::instance()->debugSurface > 0) debug = true;
+
+  BDS_GeomEntity CLASS_F(1, 2);
+  BDS_GeomEntity CLASS_EXTERIOR(1, 3);
+  std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
+  std::map<MVertex *, BDS_Point *> recoverMapInv;
+  std::vector<GEdge *> edges =
+    replacementEdges ? *replacementEdges : gf->edges();
+
+  std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
+  std::set<MVertex *, MVertexPtrLessThan> all_vertices;
+  if(!collectBoundaryNodes(gf, edges, emb_edges, all_vertices,
+                           debug && RECUR_ITER == 0))
+    return false;
+
+  if(all_vertices.size() < 3) {
+    Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
+                 "the boundary",
+                 gf->tag(), all_vertices.size());
+    gf->meshStatistics.status = GFace::DONE;
+    return true;
+  }
+  else if(all_vertices.size() == 3) {
+    MVertex *vv[3] = {nullptr, nullptr, nullptr};
+    int i = 0;
+    for(auto it = all_vertices.begin(); it != all_vertices.end(); it++) {
+      vv[i++] = *it;
+    }
+    gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
+    gf->meshStatistics.status = GFace::DONE;
+    return true;
+  }
+
+  // Buid a BDS_Mesh structure that is convenient for doing the actual
+  // meshing procedure
+  BDS_Mesh *m = new BDS_Mesh;
+
+  std::vector<BDS_Point *> points;
+  SBoundingBox3d bbox;
+  buildBDSPoints(gf, all_vertices, m, points, bbox, recoverMap, recoverMapInv);
+
+  initialTriangulation(gf, m, points, bbox, all_vertices, recoverMapInv,
+                       replacementEdges);
 
   if(debug && RECUR_ITER == 0) {
     char name[245];
