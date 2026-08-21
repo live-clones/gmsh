@@ -3232,9 +3232,6 @@ static bool isMeshValid(GFace *gf)
   return false;
 }
 
-// for debugging, change value from -1 to -100;
-int debugSurface = -1; //-100;
-
 void meshGFace::operator()(GFace *gf, bool print)
 {
   gf->model()->setCurrentMeshEntity(gf);
@@ -3315,16 +3312,17 @@ void meshGFace::operator()(GFace *gf, bool print)
   quadMeshRemoveHalfOfOneDMesh halfmesh(gf, periodic);
 
   if(periodic) {
-    if(!meshGeneratorPeriodic(gf, 0, repairSelfIntersecting1dMesh,
-                              debugSurface >= 0 || debugSurface == -100)) {
+    // the generators turn debug output on themselves, from
+    // CTX::instance()->debugSurface
+    if(!meshGeneratorPeriodic(gf, 0, repairSelfIntersecting1dMesh, false)) {
       Msg::Error("Impossible to mesh periodic surface %d", gf->tag());
       gf->meshStatistics.status = GFace::FAILED;
     }
   }
   else {
     meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
-                  (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ? 1 : 0,
-                  (debugSurface >= 0 || debugSurface == -100), NULL);
+                  (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ? 1 : 0, false,
+                  nullptr);
   }
 
   if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
