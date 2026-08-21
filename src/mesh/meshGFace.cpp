@@ -747,11 +747,9 @@ computeSizeField(BDS_Mesh *m,
 // Returns false if one of the curves is a seam, leaving the face status alone
 // so that the caller falls back to the periodic generator, or if the 1D mesh
 // does not close up, in which case the face is marked FAILED.
-static bool
-collectBoundaryNodes(GFace *gf, std::vector<GEdge *> &edges,
-                     std::vector<GEdge *> &emb_edges,
-                     std::set<MVertex *, MVertexPtrLessThan> &all_vertices,
-                     bool debug)
+static bool collectBoundaryNodes(
+  GFace *gf, std::vector<GEdge *> &edges, std::vector<GEdge *> &emb_edges,
+  std::set<MVertex *, MVertexPtrLessThan> &all_vertices, bool debug)
 {
   FILE *fdeb = nullptr;
   if(debug) {
@@ -839,11 +837,12 @@ collectBoundaryNodes(GFace *gf, std::vector<GEdge *> &edges,
 // Add every boundary node to the BDS mesh as a BDS point, in the parametric
 // space of the face, keeping the correspondence both ways in recoverMap /
 // recoverMapInv and accumulating the parametric bounding box.
-static void buildBDSPoints(
-  GFace *gf, std::set<MVertex *, MVertexPtrLessThan> &all_vertices, BDS_Mesh *m,
-  std::vector<BDS_Point *> &points, SBoundingBox3d &bbox,
-  std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap,
-  std::map<MVertex *, BDS_Point *> &recoverMapInv)
+static void
+buildBDSPoints(GFace *gf, std::set<MVertex *, MVertexPtrLessThan> &all_vertices,
+               BDS_Mesh *m, std::vector<BDS_Point *> &points,
+               SBoundingBox3d &bbox,
+               std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap,
+               std::map<MVertex *, BDS_Point *> &recoverMapInv)
 {
   points.resize(all_vertices.size());
   int count = 0;
@@ -870,11 +869,12 @@ static void buildBDSPoints(
 // divide & conquer hull mesher, which only triangulates the points and leaves
 // boundary recovery and colouring to the caller, or the newer PolyMesh based
 // initial mesher, which triangulates, recovers and colours in one go.
-static void initialTriangulation(
-  GFace *gf, BDS_Mesh *m, std::vector<BDS_Point *> &points,
-  SBoundingBox3d &bbox, std::set<MVertex *, MVertexPtrLessThan> &all_vertices,
-  std::map<MVertex *, BDS_Point *> &recoverMapInv,
-  std::vector<GEdge *> *replacementEdges)
+static void
+initialTriangulation(GFace *gf, BDS_Mesh *m, std::vector<BDS_Point *> &points,
+                     SBoundingBox3d &bbox,
+                     std::set<MVertex *, MVertexPtrLessThan> &all_vertices,
+                     std::map<MVertex *, BDS_Point *> &recoverMapInv,
+                     std::vector<GEdge *> *replacementEdges)
 {
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
@@ -991,12 +991,110 @@ static void initialTriangulation(
   }
 }
 
+// Outcome of recovering the 1D mesh inside the initial triangulation.
+enum class EdgeRecovery {
+  Recovered, // every model edge is now an edge of the triangulation
+  Failed, // unrecoverable, the face is marked FAILED
+  Retry // the 1D mesh self-intersects; it has been refined, mesh again
+};
+
+// Force the edges of the 1D mesh into the initial triangulation. Curves whose
+// mesh edges intersect cannot be recovered; those are split (when the caller
+// allows it) and the whole face has to be meshed again.
+//
+// The caller owns the BDS mesh and must delete it unless the result is
+// Recovered.
+static EdgeRecovery
+recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
+                     std::vector<GEdge *> &emb_edges,
+                     std::map<MVertex *, BDS_Point *> &recoverMapInv,
+                     std::set<EdgeToRecover> &edgesToRecover,
+                     std::set<EdgeToRecover> &edgesNotRecovered, int RECUR_ITER,
+                     bool repairSelfIntersecting1dMesh, bool debug)
+{
+  // Recover the boundary edges and compute characteristic lenghts using mesh
+  // edge spacing. If two of these edges intersect, then the 1D mesh have to be
+  // densified
+  Msg::Debug("Recovering %d model edges", edges.size());
+  auto ite = edges.begin();
+  while(ite != edges.end()) {
+    if(!(*ite)->isMeshDegenerated())
+      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
+                  &edgesNotRecovered, 1);
+    ++ite;
+  }
+  ite = emb_edges.begin();
+  while(ite != emb_edges.end()) {
+    if(!(*ite)->isMeshDegenerated())
+      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
+                  &edgesNotRecovered, 1);
+    ++ite;
+  }
+
+  // effectively recover the medge
+  ite = edges.begin();
+  while(ite != edges.end()) {
+    if(!(*ite)->isMeshDegenerated()) {
+      if(!recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
+                      &edgesNotRecovered, 2)) {
+        gf->meshStatistics.status = GFace::FAILED;
+        return EdgeRecovery::Failed;
+      }
+    }
+    ++ite;
+  }
+
+  Msg::Debug("Recovering %d mesh edges (%d not recovered)",
+             edgesToRecover.size(), edgesNotRecovered.size());
+
+  if(edgesNotRecovered.size() || gf->meshStatistics.refineAllEdges) {
+    std::ostringstream sstream;
+    for(auto itr = edgesNotRecovered.begin(); itr != edgesNotRecovered.end();
+        ++itr)
+      sstream << " " << itr->ge->tag();
+    if(gf->meshStatistics.refineAllEdges) {
+      Msg::Info("8-| Splitting all edges and trying again");
+    }
+    else {
+      Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
+                edgesNotRecovered.size(), sstream.str().c_str());
+      if(repairSelfIntersecting1dMesh)
+        Msg::Info("8-| Splitting those edges and trying again - level %d",
+                  RECUR_ITER);
+    }
+    if(debug) {
+      char name[245];
+      sprintf(name, "surface%d-not_yet_recovered-real-%d.msh", gf->tag(),
+              RECUR_ITER);
+      gf->model()->writeMSH(name);
+    }
+
+    if(repairSelfIntersecting1dMesh) {
+      remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered);
+      gf->meshStatistics.refineAllEdges = false;
+    }
+    else {
+      auto itr = edgesNotRecovered.begin();
+      for(; itr != edgesNotRecovered.end(); ++itr) {
+        int p1 = itr->p1;
+        int p2 = itr->p2;
+        int tag = itr->ge->tag();
+        Msg::Error("Edge not recovered: %d %d %d", p1, p2, tag);
+      }
+    }
+
+    return EdgeRecovery::Retry;
+  }
+
+  return EdgeRecovery::Recovered;
+}
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
-bool meshGenerator(GFace *gf, int RECUR_ITER,
-                   bool repairSelfIntersecting1dMesh, int onlyInitialMesh,
-                   bool debug, std::vector<GEdge *> *replacementEdges)
+bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
+                   int onlyInitialMesh, bool debug,
+                   std::vector<GEdge *> *replacementEdges)
 {
   if(CTX::instance()->debugSurface > 0 &&
      gf->tag() != CTX::instance()->debugSurface) {
@@ -1055,89 +1153,18 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 1, gf);
   }
 
-  // Recover the boundary edges and compute characteristic lenghts using mesh
-  // edge spacing. If two of these edges intersect, then the 1D mesh have to be
-  // densified
-  Msg::Debug("Recovering %d model edges", edges.size());
   std::set<EdgeToRecover> edgesToRecover;
   std::set<EdgeToRecover> edgesNotRecovered;
-  auto ite = edges.begin();
-  while(ite != edges.end()) {
-    if(!(*ite)->isMeshDegenerated())
-      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
-                  &edgesNotRecovered, 1);
-    ++ite;
-  }
-  ite = emb_edges.begin();
-  while(ite != emb_edges.end()) {
-    if(!(*ite)->isMeshDegenerated())
-      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
-                  &edgesNotRecovered, 1);
-    ++ite;
-  }
-
-  // effectively recover the medge
-  ite = edges.begin();
-  while(ite != edges.end()) {
-    if(!(*ite)->isMeshDegenerated()) {
-      if(!recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
-                      &edgesNotRecovered, 2)) {
-        delete m;
-        gf->meshStatistics.status = GFace::FAILED;
-        return false;
-      }
-    }
-    ++ite;
-  }
-
-  Msg::Debug("Recovering %d mesh edges (%d not recovered)",
-             edgesToRecover.size(), edgesNotRecovered.size());
-
-  if(edgesNotRecovered.size() || gf->meshStatistics.refineAllEdges) {
-    std::ostringstream sstream;
-    for(auto itr = edgesNotRecovered.begin(); itr != edgesNotRecovered.end();
-        ++itr)
-      sstream << " " << itr->ge->tag();
-    if(gf->meshStatistics.refineAllEdges) {
-      Msg::Info("8-| Splitting all edges and trying again");
-    }
-    else {
-      Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
-                edgesNotRecovered.size(), sstream.str().c_str());
-      if(repairSelfIntersecting1dMesh)
-        Msg::Info("8-| Splitting those edges and trying again - level %d",
-                  RECUR_ITER);
-    }
-    if(debug) {
-      char name[245];
-      sprintf(name, "surface%d-not_yet_recovered-real-%d.msh", gf->tag(),
-              RECUR_ITER);
-      gf->model()->writeMSH(name);
-    }
-
-    if(repairSelfIntersecting1dMesh) {
-      remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered);
-      gf->meshStatistics.refineAllEdges = false;
-    }
-    else {
-      auto itr = edgesNotRecovered.begin();
-      for(; itr != edgesNotRecovered.end(); ++itr) {
-        int p1 = itr->p1;
-        int p2 = itr->p2;
-        int tag = itr->ge->tag();
-        Msg::Error("Edge not recovered: %d %d %d", p1, p2, tag);
-      }
-    }
-
-    // delete the mesh
+  EdgeRecovery rec = recoverBoundaryEdges(
+    gf, m, edges, emb_edges, recoverMapInv, edgesToRecover, edgesNotRecovered,
+    RECUR_ITER, repairSelfIntersecting1dMesh, debug);
+  if(rec != EdgeRecovery::Recovered) {
     delete m;
-    if(RECUR_ITER < CTX::instance()->mesh.maxRetries) {
+    if(rec == EdgeRecovery::Retry &&
+       RECUR_ITER < CTX::instance()->mesh.maxRetries)
       return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
                            onlyInitialMesh, debug, replacementEdges);
-    }
-    else {
-      return false;
-    }
+    return false;
   }
 
   if(RECUR_ITER > 0)
@@ -1148,7 +1175,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   colorExteriorTriangles(m, &CLASS_F, &CLASS_EXTERIOR, false, true);
 
-  ite = emb_edges.begin();
+  auto ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
     if(!(*ite)->isMeshDegenerated())
       recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
@@ -2335,4 +2362,3 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   if(quadqs) CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
 }
-
