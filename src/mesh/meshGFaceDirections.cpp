@@ -51,7 +51,9 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
 
 void directions_storage(GFace *gf)
 {
-  std::set<MVertex *> vertices;
+  // ordered by node number, not by address: the loop below fills
+  // gf->storage1..4 in this order
+  std::set<MVertex *, MVertexPtrLessThan> vertices;
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *element = gf->getMeshElement(i);
     for(std::size_t j = 0; j < element->getNumVertices(); j++) {

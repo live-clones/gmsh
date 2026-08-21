@@ -8,9 +8,9 @@
 
 #include <set>
 #include <vector>
+#include "MVertex.h"
 
 class GFace;
-class MVertex;
 class MTriangle;
 class MQuadrangle;
 
@@ -18,9 +18,9 @@ class MQuadrangle;
 // columns, filter the ones that overlap, and remesh the rest of the face
 // against the boundary layer front. Returns the new elements and nodes in
 // blQuads, blTris and verts; does nothing if the face has no boundary layer.
-void modifyInitialMeshForBoundaryLayers(GFace *gf,
-                                        std::vector<MQuadrangle *> &blQuads,
-                                        std::vector<MTriangle *> &blTris,
-                                        std::set<MVertex *> &verts, bool debug);
+void modifyInitialMeshForBoundaryLayers(
+  GFace *gf, std::vector<MQuadrangle *> &blQuads,
+  std::vector<MTriangle *> &blTris,
+  std::set<MVertex *, MVertexPtrLessThan> &verts, bool debug);
 
 #endif
