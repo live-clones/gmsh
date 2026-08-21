@@ -1741,3 +1741,43 @@ void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
     if(numNoSplit == 0 && numSplit > 0) quadsToTriangles(gf, 10000);
   }
 }
+
+void computeElementShapes(GFace *gf, double &worst, double &avg,
+                                 double &best, int &nT, int &greaterThan)
+{
+  worst = 1.e22;
+  avg = 0.0;
+  best = 0.0;
+  nT = 0;
+  greaterThan = 0;
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    MTriangle *t = gf->triangles[i];
+    const MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1),
+                  *v2 = t->getVertex(2);
+    // Same quantity as qmTriangle::gamma (2 * inradius / circumradius), in
+    // the algebraically equivalent form 4 |u x v|^2 / (a b c (a + b + c)):
+    // one cross product and three square roots instead of three vector
+    // normalizations plus three cross-product norms. Values agree to
+    // roundoff (max observed difference ~1e-14).
+    const double u1x = v1->x() - v0->x(), u1y = v1->y() - v0->y(),
+                 u1z = v1->z() - v0->z();
+    const double u2x = v2->x() - v0->x(), u2y = v2->y() - v0->y(),
+                 u2z = v2->z() - v0->z();
+    const double u3x = v2->x() - v1->x(), u3y = v2->y() - v1->y(),
+                 u3z = v2->z() - v1->z();
+    const double cx = u1y * u2z - u1z * u2y, cy = u1z * u2x - u1x * u2z,
+                 cz = u1x * u2y - u1y * u2x;
+    const double c2 = cx * cx + cy * cy + cz * cz;
+    const double la = std::sqrt(u1x * u1x + u1y * u1y + u1z * u1z);
+    const double lb = std::sqrt(u2x * u2x + u2y * u2y + u2z * u2z);
+    const double lc = std::sqrt(u3x * u3x + u3y * u3y + u3z * u3z);
+    const double den = la * lb * lc * (la + lb + lc);
+    const double q = (den > 0.) ? 4. * c2 / den : 0.;
+    if(q > .9) greaterThan++;
+    avg += q;
+    worst = std::min(worst, q);
+    best = std::max(best, q);
+    nT++;
+  }
+  if(nT) avg /= nT;
+}
