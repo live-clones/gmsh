@@ -526,11 +526,11 @@ static void finishSurfaceMesh(GFace *gf)
 // of that background mesh.
 //
 // allowBuild is false only when the non-periodic generator is being re-entered
-// from the boundary layer code (onlyInitialMesh == 99), which must not rebuild
-// the background mesh. The two generators spell the condition differently but
-// mean the same thing: a face whose algorithm is FRONTAL_QUAD is never a face
-// that only wants its initial mesh, so the INITIAL_ONLY half of the
-// non-periodic "!onlyInitialMesh" can never suppress a build.
+// from the boundary layer code, which must not rebuild the background mesh.
+// The two generators spell the condition differently but mean the same thing:
+// a face whose algorithm is FRONTAL_QUAD is never a face that only wants its
+// initial mesh, so the InitialOnly half of the non-periodic test can never
+// suppress a build.
 static bool
 setupBackgroundMesh(GFace *gf, bool allowBuild,
                     std::map<MVertex *, MVertex *> *equivalence,
@@ -1326,7 +1326,7 @@ static void initialTriangulationPeriodic(
 // the domain, including embedded points and surfaces
 
 bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
-                   int onlyInitialMesh, bool debug,
+                   MeshExtent extent, bool debug,
                    std::vector<GEdge *> *replacementEdges)
 {
   if(CTX::instance()->debugSurface > 0 &&
@@ -1396,7 +1396,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     if(rec == EdgeRecovery::Retry &&
        RECUR_ITER < CTX::instance()->mesh.maxRetries)
       return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
-                           onlyInitialMesh, debug, replacementEdges);
+                           extent, debug, replacementEdges);
     return false;
   }
 
@@ -1417,7 +1417,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   // compute characteristic lengths at vertices
-  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG && !onlyInitialMesh) {
+  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG &&
+     extent == MeshExtent::Full) {
     Msg::Debug("Computing mesh size field at mesh nodes %d",
                edgesToRecover.size());
     computeSizeField(m, recoverMap);
@@ -1468,7 +1469,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   Msg::Debug("Starting to add internal nodes");
   // start mesh generation
-  if(!algoDelaunay2D(gf) && !onlyInitialMesh) {
+  if(!algoDelaunay2D(gf) && extent == MeshExtent::Full) {
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
                   &recoverMapInv, nullptr);
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
@@ -1484,12 +1485,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   std::vector<MTriangle *> blTris;
   std::set<MVertex *, MVertexPtrLessThan> verts;
 
-  bool infty = setupBackgroundMesh(gf, !onlyInitialMesh, nullptr, nullptr);
+  bool infty =
+    setupBackgroundMesh(gf, extent == MeshExtent::Full, nullptr, nullptr);
 
-  if(!onlyInitialMesh)
+  if(extent == MeshExtent::Full)
     modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
 
-  if(algoDelaunay2D(gf) && !onlyInitialMesh)
+  if(algoDelaunay2D(gf) && extent == MeshExtent::Full)
     runDelaunayAlgorithm(gf, infty, true, nullptr, nullptr, nullptr);
 
   if(debug) {
@@ -1506,7 +1508,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 
-  if(onlyInitialMesh != 99) recombineSurfaceMesh(gf);
+  if(extent != MeshExtent::BoundaryLayerRemesh) recombineSurfaceMesh(gf);
 
   finishSurfaceMesh(gf);
 
@@ -2344,8 +2346,10 @@ void meshGFace::operator()(GFace *gf, bool print)
   }
   else {
     meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
-                  (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ? 1 : 0, false,
-                  nullptr);
+                  (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ?
+                    MeshExtent::InitialOnly :
+                    MeshExtent::Full,
+                  false, nullptr);
   }
 
   if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
