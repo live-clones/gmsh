@@ -88,8 +88,8 @@ public:
         generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis, bubbleBasis);
     }
 
-    void orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions);
-    void orientEdgeFunctionsForNegativeFlag(std::vector<std::vector<double> > &edgeFunctions);
+    void orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions) override;
+    void orientEdgeFunctionsForNegativeFlag(std::vector<std::vector<double> > &edgeFunctions) override;
 
     void orientEdge(int const &flagOrientation, int const &edgeNumber,
                     std::vector<double> &edgeFunctions,

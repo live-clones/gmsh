@@ -68,61 +68,61 @@ private:
                                std::vector<std::vector<double> > &gradientFace,
                                std::vector<std::vector<double> > &gradientBubble);
   
-    virtual void orientOneFace(double const &u, double const &v, double const &w,
+    void orientOneFace(double const &u, double const &v, double const &w,
                                int const &flag1, int const &flag2, int const &flag3,
                                int const &faceNumber, std::vector<double> &faceBasis,
-                               std::string typeFunction = "H1Legendre");
-    virtual void orientOneFace(double const &u, double const &v, double const &w,
+                               std::string typeFunction = "H1Legendre") override;
+    void orientOneFace(double const &u, double const &v, double const &w,
                                int const &flag1, int const &flag2, int const &flag3,
                                int const &faceNumber, std::vector<std::vector<double> > &faceFunctions,
-                               std::string typeFunction = "GradH1Legendre");
+                               std::string typeFunction = "GradH1Legendre") override;
 public:
     HierarchicalBasisH1Tetra(int order);
     ~HierarchicalBasisH1Tetra() override = default;
-    virtual unsigned int getNumberOfOrientations() const;
+    unsigned int getNumberOfOrientations() const override;
     
     // vertexBasis = [v0,...,v3]
     // edgeBasis   = [phie0_{2},...,phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
     // faceBasis   = [phif0_{1,1},...,phif0_{1,pF0-2},phif0_{2,1}...,phif0_{2,pF0-3},...,phief0_{pF-2,1},phif1_{1,1}...]
     // bubbleBasis = [phieb_{1,1,1},...,phieb_{1,1,pb-3},...]   n1+n2+n3<=pb-1
-    virtual void generateBasis(double const &u, double const &v, double const &w,
+    void generateBasis(double const &u, double const &v, double const &w,
                                std::vector<double> &vertexBasis,
                                std::vector<double> &edgeBasis,
                                std::vector<double> &faceBasis,
                                std::vector<double> &bubbleBasis,
-                               std::string typeFunction);
+                               std::string typeFunction) override;
 
-    virtual void generateBasis(double const &u, double const &v, double const &w,
+    void generateBasis(double const &u, double const &v, double const &w,
                                std::vector<std::vector<double> > &vertexBasis,
                                std::vector<std::vector<double> > &edgeBasis,
                                std::vector<std::vector<double> > &faceBasis,
                                std::vector<std::vector<double> > &bubbleBasis,
-                               std::string typeFunction) {
+                               std::string typeFunction) override {
         generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis, bubbleBasis);
     }
 
-    virtual void orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions);
-    virtual void orientEdgeFunctionsForNegativeFlag(std::vector<std::vector<double> > &edgeFunctions);
+    void orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions) override;
+    void orientEdgeFunctionsForNegativeFlag(std::vector<std::vector<double> > &edgeFunctions) override;
 
-    virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+    void orientEdge(int const &flagOrientation, int const &edgeNumber,
                             std::vector<double> &edgeFunctions,
                             const std::vector<double> &eTablePositiveFlag,
-                            const std::vector<double> &eTableNegativeFlag);
-    virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                            const std::vector<double> &eTableNegativeFlag) override;
+    void orientEdge(int const &flagOrientation, int const &edgeNumber,
                             std::vector<std::vector<double> > &edgeBasis,
                             const std::vector<std::vector<double> > &eTablePositiveFlag,
-                            const std::vector<std::vector<double> > &eTableNegativeFlag);
+                            const std::vector<std::vector<double> > &eTableNegativeFlag) override;
   
-    virtual void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
                             const std::vector<double> &quadFaceFunctionsAllOrientation,
                             const std::vector<double> &triFaceFunctionsAllOrientation,
-                            std::vector<double> &fTableCopy);
-    virtual void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+                            std::vector<double> &fTableCopy) override;
+    void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
                             const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
                             const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
-                            std::vector<std::vector<double> > &fTableCopy);
+                            std::vector<std::vector<double> > &fTableCopy) override;
   
-    virtual void getKeysInfo(std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo);
+    void getKeysInfo(std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo) override;
 };
 
 #endif

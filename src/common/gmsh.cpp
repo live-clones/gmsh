@@ -3105,16 +3105,14 @@ GMSH_API void gmsh::model::mesh::getJacobian(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType, // in
-                                                   const std::vector<double> &localCoord, // in
-                                                   const std::string &functionSpaceType, // in
-                                                   int &numComponents, // out
-                                                   std::vector<double> &basisFunctions, // out
-                                                   int &numOrientations, // out
-                                                   const std::vector<int> &wantedOrientations) { // in
+GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType,
+                                                   const std::vector<double> &localCoord,
+                                                   const std::string &functionSpaceType,
+                                                   int &numComponents,
+                                                   std::vector<double> &basisFunctions,
+                                                   int &numOrientations,
+                                                   const std::vector<int> &wantedOrientations) {
     
-    std::cout << "[DEBUG] getBasisFunctions appelée !" << std::endl;
-
     if(!_checkInit()) {
         return;
     }
@@ -3185,7 +3183,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType, // in
             return;
         }
 #if defined(HAVE_HIERARCHICAL_BASIS)
-        std::cout<<"new HIERARCHICAL_BASIS code"<<std::endl;
         const std::size_t vSize = basis->getNumVertexFunction();
         const std::size_t bSize = basis->getNumBubbleFunction();
         const std::size_t eSize = basis->getNumEdgeFunction();
@@ -3193,7 +3190,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType, // in
         const std::size_t trifSize = basis->getNumTriFaceFunction();
         const std::size_t fSize = trifSize + quadfSize;
 #else
-        std::cout<<"old HIERARCHICAL_BASIS code"<<std::endl;
         const std::size_t vSize = basis->getnVertexFunction();
         const std::size_t bSize = basis->getnBubbleFunction();
         const std::size_t eSize = basis->getnEdgeFunction();
@@ -5996,10 +5992,10 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
     getElementEdgeNodesCoord(elementType,nodeTagsMasterEdges,coordNodeMaster,numElements,tagMaster,true);
     getElementEdgeNodesCoord(elementType,nodeTagsEdges,coordNode,numElements,tag,true);
     
-    // std::vector<std::size_t> nodeTagsMaster, nodeTags;
-    // std::vector<double> parametricCoordUseless;
-    // getNodes(nodeTags,coordNode,parametricCoordUseless,dim,tag);
-    // getNodes(nodeTagsMaster,coordNodeMaster,parametricCoordUseless,dim,tagMaster);
+    std::vector<std::size_t> nodeTagsMaster, nodeTags;
+    std::vector<double> parametricCoordUseless;
+    getNodes(nodeTags,coordNode,parametricCoordUseless,dim,tag,true);
+    getNodes(nodeTagsMaster,coordNodeMaster,parametricCoordUseless,dim,tagMaster,true);
     // order of output (5,6,7,8,9,18,19,20,21,22,23,1,2)
     // 1-18-5-19-6-20-7-21-8-22-9-23-2
 
@@ -6018,8 +6014,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
       Node->x = coordNodeMaster[3 * i + 0]*affineTransform[0] + coordNodeMaster[3 * i + 1]*affineTransform[1] + coordNodeMaster[3 * i + 2]*affineTransform[2] + affineTransform[3] ;
       Node->y = coordNodeMaster[3 * i + 0]*affineTransform[4] + coordNodeMaster[3 * i + 1]*affineTransform[5] + coordNodeMaster[3 * i + 2]*affineTransform[6] + affineTransform[7] ;
       Node->z = coordNodeMaster[3 * i + 0]*affineTransform[8] + coordNodeMaster[3 * i + 1]*affineTransform[9] + coordNodeMaster[3 * i + 2]*affineTransform[10] + affineTransform[11] ;
-      
-
+        
       struct NodeXYZ *foundNode = NodeTree.find(Node);
       if(!foundNode)
         NodeTree.insert(Node);

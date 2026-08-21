@@ -74,8 +74,6 @@ void HierarchicalBasisH1Tria::generateBasis(double const &u, double const &v, do
                                             std::vector<double> &bubbleBasis,
                                             std::string typeFunction) {
 
-    std::cout << "Info : New Code" << std::endl;
-
     // to map onto the reference domain of gmsh: u,v in (0,1) and uc,vc in (-1,1)
     double uc = 2 * u - 1;
     double vc = 2 * v - 1;
