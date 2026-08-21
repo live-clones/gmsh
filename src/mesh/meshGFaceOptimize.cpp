@@ -1686,8 +1686,7 @@ void quadsToTriangles(GFace *gf, double minqual)
   // WARNING: First quad element is replaced by one of the two triangles,
   // without taking care of if it is the truly the first one or not.
 
-  //  std::map<MElement*,MElement*> _toFirst;
-  std::map<MElement *, std::vector<MElement *>> newElemColumns;
+  blElemColumns newElemColumns;
 
   for(auto it = _columns->_elemColumns.begin();
       it != _columns->_elemColumns.end(); it++) {

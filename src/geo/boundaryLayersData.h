@@ -41,6 +41,14 @@ struct BoundaryLayerFan {
   }
 };
 
+// The boundary layer containers below are keyed on MVertex*/MElement* but
+// ordered by mesh number, not by raw pointer value: boundary layer
+// construction iterates them, so ordering by address would make the resulting
+// mesh depend on where the allocator happened to put the nodes and elements.
+typedef std::map<MElement *, MElement *, MElementPtrLessThan> blElemToFirst;
+typedef std::map<MElement *, std::vector<MElement *>, MElementPtrLessThan>
+  blElemColumns;
+
 struct edgeColumn {
   const BoundaryLayerData &_c1, &_c2;
   edgeColumn(const BoundaryLayerData &c1, const BoundaryLayerData &c2)
@@ -50,18 +58,20 @@ struct edgeColumn {
 };
 
 class BoundaryLayerColumns {
-  std::map<MVertex *, BoundaryLayerFan> _fans;
+  std::map<MVertex *, BoundaryLayerFan, MVertexPtrLessThan> _fans;
 
 public:
   // Element columns
-  std::map<MElement *, MElement *> _toFirst;
-  std::map<MElement *, std::vector<MElement *> > _elemColumns;
+  blElemToFirst _toFirst;
+  blElemColumns _elemColumns;
   std::map<MFace, GFace *, MFaceLessThan> _inverse_classification;
-  std::multimap<MVertex *, BoundaryLayerData> _data;
+  std::multimap<MVertex *, BoundaryLayerData, MVertexPtrLessThan> _data;
   size_t size() const { return _data.size(); }
-  typedef std::multimap<MVertex *, BoundaryLayerData>::iterator iter;
-  typedef std::map<MVertex *, BoundaryLayerFan>::iterator iterf;
-  std::multimap<MVertex *, MVertex *> _non_manifold_edges;
+  typedef std::multimap<MVertex *, BoundaryLayerData,
+                        MVertexPtrLessThan>::iterator iter;
+  typedef std::map<MVertex *, BoundaryLayerFan, MVertexPtrLessThan>::iterator
+    iterf;
+  std::multimap<MVertex *, MVertex *, MVertexPtrLessThan> _non_manifold_edges;
   std::multimap<MEdge, SVector3, MEdgeLessThan> _normals;
   void clearData()
   {
