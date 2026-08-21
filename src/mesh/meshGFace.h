@@ -49,8 +49,6 @@ int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(
   GFace *gf,
   std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges = nullptr);
-bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
-                                 SPoint2 &out, int &N);
 
 /**
  * @brief Automatically set transfinite constraints on curves and faces
