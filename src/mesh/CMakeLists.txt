@@ -16,6 +16,7 @@ set(SRC
     meshGFaceBipartiteLabelling.cpp
     meshGFaceOrient.cpp meshGFaceQuadHalf.cpp meshGFaceCopy.cpp
     meshGFaceDirections.cpp meshGFaceBoundaryLayer.cpp
+    meshGFaceParamBoundary.cpp
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp

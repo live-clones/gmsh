@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "GmshMessage.h"
 #include "meshGFace.h"
+#include "meshGFaceParamBoundary.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMesh.h"
 #include "GVertex.h"
