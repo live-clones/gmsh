@@ -15,7 +15,7 @@ set(SRC
     meshGFaceDelaunayInsertionOptimized.cpp meshGFaceOptimize.cpp
     meshGFaceBipartiteLabelling.cpp
     meshGFaceOrient.cpp meshGFaceQuadHalf.cpp meshGFaceCopy.cpp
-    meshGFaceDirections.cpp
+    meshGFaceDirections.cpp meshGFaceBoundaryLayer.cpp
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
