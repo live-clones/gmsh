@@ -450,6 +450,85 @@ static void deleteUnusedVertices(GFace *gf)
   gf->mesh_vertices.swap(allverts);
 }
 
+// Delete the faces that were not tagged as belonging to the face, then the
+// edges left without any face, classifying the surviving edges and their
+// endpoints. Finally drop the four fake points of the enclosing box.
+static void pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
+{
+  {
+    auto itt = m->triangles.begin();
+    while(itt != m->triangles.end()) {
+      BDS_Face *t = *itt;
+      if(!t->g) m->del_face(t);
+      ++itt;
+    }
+  }
+  m->cleanup();
+
+  {
+    auto ite = m->edges.begin();
+    while(ite != m->edges.end()) {
+      BDS_Edge *e = *ite;
+      if(e->numfaces() == 0)
+        m->del_edge(e);
+      else {
+        if(!e->g) e->g = CLASS_F;
+        if(!e->p1->g || e->p1->g->classif_degree > e->g->classif_degree)
+          e->p1->g = e->g;
+        if(!e->p2->g || e->p2->g->classif_degree > e->g->classif_degree)
+          e->p2->g = e->g;
+      }
+      ++ite;
+    }
+  }
+  m->cleanup();
+  m->del_point(m->find_point(-1));
+  m->del_point(m->find_point(-2));
+  m->del_point(m->find_point(-3));
+  m->del_point(m->find_point(-4));
+}
+
+// Recombine the surface mesh into quadrangles, for the recombination
+// algorithms that run at the end of the 2D mesher (the others run inside
+// quadMeshRemoveHalfOfOneDMesh).
+//
+// noNodeRepositioningForQuadqs reproduces a divergence between the two
+// generators: the periodic one disables node repositioning when the 2D
+// algorithm is QUAD_QUASI_STRUCT, the non-periodic one does not. Unexplained;
+// preserved here rather than silently unified.
+static void recombineSurfaceMesh(GFace *gf, bool noNodeRepositioningForQuadqs)
+{
+  if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
+     (CTX::instance()->mesh.algoRecombine <= 1 ||
+      CTX::instance()->mesh.algoRecombine == 4)) {
+    if(CTX::instance()->mesh.algoRecombine == 4) {
+      meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
+    }
+    else {
+      bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
+      int topo = CTX::instance()->mesh.recombineOptimizeTopology;
+      int repos = CTX::instance()->mesh.recombineNodeRepositioning;
+      if(noNodeRepositioningForQuadqs &&
+         CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
+        repos = false;
+      double minqual = CTX::instance()->mesh.recombineMinimumQuality;
+      recombineIntoQuads(gf, blossom, topo, repos, minqual);
+    }
+  }
+}
+
+// Compute the quality statistics of the finished mesh and drop the nodes that
+// ended up unused (generated e.g. during background mesh construction).
+static void finishSurfaceMesh(GFace *gf)
+{
+  computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
+                       gf->meshStatistics.average_element_shape,
+                       gf->meshStatistics.best_element_shape,
+                       gf->meshStatistics.nbTriangle,
+                       gf->meshStatistics.nbGoodQuality);
+  deleteUnusedVertices(gf);
+}
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
@@ -909,36 +988,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
   }
 
-  // delete useless stuff
-  auto itt = m->triangles.begin();
-  while(itt != m->triangles.end()) {
-    BDS_Face *t = *itt;
-    if(!t->g) m->del_face(t);
-    ++itt;
-  }
-  m->cleanup();
-
-  {
-    auto ite = m->edges.begin();
-    while(ite != m->edges.end()) {
-      BDS_Edge *e = *ite;
-      if(e->numfaces() == 0)
-        m->del_edge(e);
-      else {
-        if(!e->g) e->g = &CLASS_F;
-        if(!e->p1->g || e->p1->g->classif_degree > e->g->classif_degree)
-          e->p1->g = e->g;
-        if(!e->p2->g || e->p2->g->classif_degree > e->g->classif_degree)
-          e->p2->g = e->g;
-      }
-      ++ite;
-    }
-  }
-  m->cleanup();
-  m->del_point(m->find_point(-1));
-  m->del_point(m->find_point(-2));
-  m->del_point(m->find_point(-3));
-  m->del_point(m->find_point(-4));
+  pruneAndCleanupBDS(m, &CLASS_F);
 
   if(debug) {
     char name[245];
@@ -1062,30 +1112,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 
-  if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     (onlyInitialMesh != 99) &&
-     (CTX::instance()->mesh.algoRecombine <= 1 ||
-      CTX::instance()->mesh.algoRecombine == 4)) {
-    if(CTX::instance()->mesh.algoRecombine == 4) {
-      meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
-    }
-    else {
-      bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
-      int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-      int repos = CTX::instance()->mesh.recombineNodeRepositioning;
-      double minqual = CTX::instance()->mesh.recombineMinimumQuality;
-      recombineIntoQuads(gf, blossom, topo, repos, minqual);
-    }
-  }
+  if(onlyInitialMesh != 99) recombineSurfaceMesh(gf, false);
 
-  computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
-                       gf->meshStatistics.average_element_shape,
-                       gf->meshStatistics.best_element_shape,
-                       gf->meshStatistics.nbTriangle,
-                       gf->meshStatistics.nbGoodQuality);
-
-  // remove unused vertices, generated e.g. during background mesh
-  deleteUnusedVertices(gf);
+  finishSurfaceMesh(gf);
 
   return true;
 }
@@ -1881,41 +1910,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     }
   }
 
-  // delete useless stuff
-  {
-    auto itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      BDS_Face *t = *itt;
-      if(!t->g) { m->del_face(t); }
-      ++itt;
-    }
-  }
-
-  m->cleanup();
-
-  {
-    auto ite = m->edges.begin();
-    while(ite != m->edges.end()) {
-      BDS_Edge *edge = *ite;
-      if(edge->numfaces() == 0)
-        m->del_edge(edge);
-      else {
-        if(!edge->g) edge->g = &CLASS_F;
-        if(!edge->p1->g ||
-           edge->p1->g->classif_degree > edge->g->classif_degree)
-          edge->p1->g = edge->g;
-        if(!edge->p2->g ||
-           edge->p2->g->classif_degree > edge->g->classif_degree)
-          edge->p2->g = edge->g;
-      }
-      ++ite;
-    }
-  }
-  m->cleanup();
-  m->del_point(m->find_point(-1));
-  m->del_point(m->find_point(-2));
-  m->del_point(m->find_point(-3));
-  m->del_point(m->find_point(-4));
+  pruneAndCleanupBDS(m, &CLASS_F);
 
   if(debug) {
     char name[245];
@@ -2110,33 +2105,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   // delete the mesh
   delete m;
 
-  if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     (CTX::instance()->mesh.algoRecombine <= 1 ||
-      CTX::instance()->mesh.algoRecombine == 4)) {
-    if(CTX::instance()->mesh.algoRecombine == 4) {
-      meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
-    }
-    else {
-      bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
-      int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-      int repos = CTX::instance()->mesh.recombineNodeRepositioning;
-      if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
-        repos = false;
-      double minqual = CTX::instance()->mesh.recombineMinimumQuality;
-      recombineIntoQuads(gf, blossom, topo, repos, minqual);
-    }
-  }
-
-  computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
-                       gf->meshStatistics.average_element_shape,
-                       gf->meshStatistics.best_element_shape,
-                       gf->meshStatistics.nbTriangle,
-                       gf->meshStatistics.nbGoodQuality);
+  recombineSurfaceMesh(gf, true);
 
   gf->meshStatistics.status = GFace::DONE;
 
-  // Remove unused vertices, generated e.g. during background mesh
-  deleteUnusedVertices(gf);
+  finishSurfaceMesh(gf);
 
   return true;
 }
