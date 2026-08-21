@@ -5987,18 +5987,29 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   {
     std::vector<double> affineTransform = ge->affineTransform;
     std::vector<std::size_t> nodeTagsMasterEdges, nodeTagsEdges;
-    std::vector<double> coordNodeMaster,coordNode;
     std::size_t numElements = 0;
-    getElementEdgeNodesCoord(elementType,nodeTagsMasterEdges,coordNodeMaster,numElements,tagMaster,true);
-    getElementEdgeNodesCoord(elementType,nodeTagsEdges,coordNode,numElements,tag,true);
-    
+    std::vector<double> coordNodeMaster,coordNode;
+
+    // Swap for getElementEdgeNodesCoord instead of getElementEdgeNodes and modify coordNode in pair search
+    // getElementEdgeNodesCoord(elementType,nodeTagsMasterEdges,coordNodeMaster,numElements,tagMaster,true);
+    // getElementEdgeNodesCoord(elementType,nodeTagsEdges,coordNode,numElements,tag,true);
+
+    getElementEdgeNodes(elementType,nodeTagsMasterEdges,tagMaster,true);
+    getElementEdgeNodes(elementType,nodeTagsEdges,tag,true);
+
+    std::vector<std::vector<std::size_t> > elementTagsDummy;
+    std::vector<std::vector<std::size_t> > nodeTagsDummy;
+    std::vector<int> elementTypes;
     std::vector<std::size_t> nodeTagsMaster, nodeTags;
     std::vector<double> parametricCoordUseless;
+
+    getElements(elementTypes,elementTagsDummy,nodeTagsDummy,dim,tag);
+
+    numElements=elementTypes.size();
     getNodes(nodeTags,coordNode,parametricCoordUseless,dim,tag,true);
     getNodes(nodeTagsMaster,coordNodeMaster,parametricCoordUseless,dim,tagMaster,true);
     // order of output (5,6,7,8,9,18,19,20,21,22,23,1,2)
     // 1-18-5-19-6-20-7-21-8-22-9-23-2
-
 
     int nbrPrimaryNodePerElement = nodeTagsEdges.size()/numElements;
     int nbrKeysPerElement = entityKeys.size()/numElements;
@@ -6091,12 +6102,13 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
 
           struct NodeXYZ* node = new NodeXYZ();
           node->nodeTag = nodeTagsEdges[2*el];
-          // auto it = find(nodeTags.begin(), nodeTags.end(), nodeTagsEdges[2*el]);
-          // int index = distance(nodeTags.begin(), it);
-          // remove *2 in the following
-          node->x = coordNode[3 * el * 2 + 0];
-          node->y = coordNode[3 * el * 2 + 1]; 
-          node->z = coordNode[3 * el * 2 + 2];
+
+          auto it = find(nodeTags.begin(), nodeTags.end(), nodeTagsEdges[2*el]);
+          int index = distance(nodeTags.begin(), it);
+          // index->el*2 in the following for getElementEdgeNodeCoord
+          node->x = coordNode[3 * index + 0];
+          node->y = coordNode[3 * index + 1]; 
+          node->z = coordNode[3 * index + 2];
 
           struct NodeXYZ *foundNode = NodeTree.find(node);
           if(!foundNode)
@@ -6104,9 +6116,9 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
           int node1=foundNode->nodeTag;
 
           node = new NodeXYZ();
-          node->x = coordNode[3 * el * 2 + 3];
-          node->y = coordNode[3 * el * 2 + 4]; 
-          node->z = coordNode[3 * el * 2 + 5];
+          node->x = coordNode[3 * index + 3];
+          node->y = coordNode[3 * index + 4]; 
+          node->z = coordNode[3 * index + 5];
           node->nodeTag = nodeTagsEdges[2*el];
 
           foundNode = NodeTree.find(node);
