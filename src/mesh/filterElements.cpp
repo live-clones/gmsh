@@ -24,9 +24,7 @@ struct MElement_Wrapper {
   std::vector<MElement *> _notOverlap;
   MElement_Wrapper(MElement *e, const std::vector<MElement *> &notOverlap)
     : _overlap(false), _e(e), _notOverlap(notOverlap)
-  {
-    std::sort(_notOverlap.begin(), _notOverlap.end());
-  }
+  { std::sort(_notOverlap.begin(), _notOverlap.end()); }
 };
 
 /** OVERLAP TEST IN 2D
@@ -172,20 +170,29 @@ bool rtree_callback(MElement *e1, void *pe2)
   return true;
 }
 
-struct Less_Partition
-{
+struct Less_Partition {
   bool operator()(const MElement *f1, const MElement *f2) const
-  {
-    return f1->getPartition() < f2->getPartition();
-  }
+  { return f1->getPartition() < f2->getPartition(); }
 };
 
 void filterColumns(std::vector<MElement *> &elem, blElemColumns &_elemColumns)
 {
   std::sort(elem.begin(), elem.end());
   std::vector<MElement *> toKeep;
-  for(auto it = _elemColumns.begin(); it != _elemColumns.end(); ++it) {
-    const std::vector<MElement *> &c = it->second;
+
+  // Walk the columns in order of element number. _elemColumns is keyed on
+  // MElement* and ordered by address on purpose (see boundaryLayersData.h),
+  // which would otherwise make the order of the boundary layer elements - and
+  // hence the mesh - depend on where the allocator put them. The elements are
+  // all alive at this point, so reading their numbers here is safe.
+  std::vector<MElement *> firsts;
+  firsts.reserve(_elemColumns.size());
+  for(auto it = _elemColumns.begin(); it != _elemColumns.end(); ++it)
+    firsts.push_back(it->first);
+  std::sort(firsts.begin(), firsts.end(), MElementPtrLessThan());
+
+  for(std::size_t iCol = 0; iCol < firsts.size(); iCol++) {
+    const std::vector<MElement *> &c = _elemColumns[firsts[iCol]];
     std::size_t MAX = c.size();
     //    printf("size of column %d\n",c.size());
     for(std::size_t i = 0; i < c.size(); i++) {
