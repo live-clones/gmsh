@@ -359,8 +359,7 @@ void refineMeshMMG(GRegion *gr)
 static void MMG2gmshGroup(std::vector<GRegion *> &regions, MMG5_pMesh mmg,
                           std::map<int, MVertex *> &mmg2gmsh)
 {
-  int np, ne, nt, na, ref;
-  double cx, cy, cz;
+  int np, ne, nt, na;
 
   if(MMG3D_Get_meshSize(mmg, &np, &ne, nullptr, &nt, nullptr, &na) != 1)
     Msg::Error("Mmg3d: unable to get mesh size");
@@ -377,8 +376,12 @@ static void MMG2gmshGroup(std::vector<GRegion *> &regions, MMG5_pMesh mmg,
   std::vector<double> vx(np + 1), vy(np + 1), vz(np + 1);
   std::vector<int> vref(np + 1);
   for(int k = 1; k <= np; k++) {
-    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, &ref, nullptr, nullptr) != 1)
+    double cx, cy, cz;
+    int ref;
+    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, &ref, nullptr, nullptr) != 1) {
       Msg::Error("Mmg3d: unable to get vertex %d", k);
+      continue;
+    }
     vx[k] = cx;
     vy[k] = cy;
     vz[k] = cz;
@@ -392,10 +395,12 @@ static void MMG2gmshGroup(std::vector<GRegion *> &regions, MMG5_pMesh mmg,
   }
 
   for(int k = 1; k <= ne; k++) {
-    int v1mmg, v2mmg, v3mmg, v4mmg;
+    int v1mmg, v2mmg, v3mmg, v4mmg, ref;
     if(MMG3D_Get_tetrahedron(mmg, &v1mmg, &v2mmg, &v3mmg, &v4mmg, &ref,
-                             nullptr) != 1)
+                             nullptr) != 1) {
       Msg::Error("Mmg3d: unable to get tetrahedron %d", k);
+      continue;
+    }
 
     auto rit = tagToRegion.find(ref);
     if(rit == tagToRegion.end()) {
@@ -406,6 +411,17 @@ static void MMG2gmshGroup(std::vector<GRegion *> &regions, MMG5_pMesh mmg,
     GRegion *gr = rit->second;
 
     int vmmg[4] = {v1mmg, v2mmg, v3mmg, v4mmg};
+    bool valid = true;
+    for(int j = 0; j < 4; j++) {
+      if(vmmg[j] < 1 || vmmg[j] > np) {
+        Msg::Error("Mmg3d: invalid vertex index %d in tetrahedron %d",
+                   vmmg[j], k);
+        valid = false;
+        break;
+      }
+    }
+    if(!valid) continue;
+
     MVertex *v[4];
     for(int j = 0; j < 4; j++) {
       auto vit = kToMVertex.find(vmmg[j]);

@@ -910,8 +910,19 @@ void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
           std::vector<MVertex *> vertices;
           (*it2)->tet()->getVertices(vertices);
           for(auto itv = vertices.begin(); itv != vertices.end(); ++itv) {
-            if((*itv)->onWhat() != nullptr && (*itv)->onWhat()->dim() == 3 &&
-               (*itv)->onWhat() != myGRegion) {
+            GEntity *oldGe = (*itv)->onWhat();
+            if(oldGe != nullptr && oldGe->dim() == 3 && oldGe != myGRegion) {
+              // The vertex is still registered in oldGe->mesh_vertices (it
+              // was put there when created during boundary recovery on the
+              // whole group, before per-region classification existed).
+              // Drop it from there before re-adding it to myGRegion:
+              // otherwise it ends up in two regions' mesh_vertices at once,
+              // and refineMeshMMGGroup's/insertVerticesInRegion's cleanup
+              // (which deletes every vertex of every region in the group)
+              // double-frees it, corrupting the heap.
+              std::vector<MVertex *> &oldMV = oldGe->mesh_vertices;
+              oldMV.erase(std::remove(oldMV.begin(), oldMV.end(), *itv),
+                         oldMV.end());
               myGRegion->addMeshVertex(*itv);
               (*itv)->setEntity(myGRegion);
             }
