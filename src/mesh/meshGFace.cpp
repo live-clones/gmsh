@@ -316,7 +316,9 @@ public:
         (*ite)->mesh_vertices.clear();
         for(std::size_t i = 0; i < (*ite)->lines.size(); i += 2) {
           if(i + 1 >= (*ite)->lines.size()) {
-            Msg::Error("1D mesh of MEdge %d cannot be divided by 2 --  %lu lines",(*ite)->tag(),  (*ite)->lines.size());
+            Msg::Error(
+              "1D mesh of MEdge %d cannot be divided by 2 --  %lu lines",
+              (*ite)->tag(), (*ite)->lines.size());
             break;
           }
           MVertex *v1 = (*ite)->lines[i]->getVertex(0);
@@ -796,10 +798,11 @@ static bool recoverEdge(BDS_Mesh *m, GFace *gf, GEdge *ge,
           e->g = g;
         else {
           if(_fatallyFailed) {
-            Msg::Warning("Unable to recover the edge %d (%d/%d) on curve %d (on "
-                       "surface %d)",
-                       ge->lines[i]->getNum(), i + 1, ge->lines.size(),
-                       ge->tag(), gf->tag());
+            Msg::Warning(
+              "Unable to recover the edge %d (%d/%d) on curve %d (on "
+              "surface %d)",
+              ge->lines[i]->getNum(), i + 1, ge->lines.size(), ge->tag(),
+              gf->tag());
             if(Msg::GetVerbosity() == 99) {
               outputScalarField(m->triangles, "wrongmesh.pos", 0);
               outputScalarField(m->triangles, "wrongparam.pos", 1);
@@ -1492,20 +1495,20 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       v1 = degeneratedVertices::instance().find(v1);
       v2 = degeneratedVertices::instance().find(v2);
       if(fdeb) {
-	fprintf(fdeb, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", v1->x(), v1->y(),
-		v1->z(), v2->x(), v2->y(), v2->z(), (*ite)->tag(),
-		(*ite)->tag());
+        fprintf(fdeb, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", v1->x(), v1->y(),
+                v1->z(), v2->x(), v2->y(), v2->z(), (*ite)->tag(),
+                (*ite)->tag());
       }
       all_vertices.insert(v1);
       all_vertices.insert(v2);
       if(boundary.find(v1) == boundary.end())
-	boundary.insert(v1);
+        boundary.insert(v1);
       else
-	boundary.erase(v1);
+        boundary.erase(v1);
       if(boundary.find(v2) == boundary.end())
-	boundary.insert(v2);
+        boundary.insert(v2);
       else
-	boundary.erase(v2);
+        boundary.erase(v2);
     }
     ++ite;
   }
@@ -2747,9 +2750,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
         MVertex *v2 = recoverMap[p2];
         GEdge *ge = getGEdge(gf, v1, v2);
         if(ge) edgesNotRecovered.insert(EdgeToRecover(num1, num2, ge));
-        if(!e) {
-          doItAgain = true;
-        }
+        if(!e) { doItAgain = true; }
         else {
           e->g = &CLASS_E;
         }
@@ -3195,8 +3196,10 @@ void meshGFace::operator()(GFace *gf, bool print)
   deMeshGFace dem;
   dem(gf);
 
-  if(MeshTransfiniteSurface(gf)){
-    if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+  if(MeshTransfiniteSurface(gf)) {
+    if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
+      directions_storage(gf);
+    }
     return;
   }
   if(MeshExtrudedSurface(gf)) return;
@@ -3211,7 +3214,9 @@ void meshGFace::operator()(GFace *gf, bool print)
                 gf->getTypeString().c_str(), gf->getMeshMaster()->tag());
       copyMesh(gff, gf);
       gf->meshStatistics.status = GFace::DONE;
-      if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+      if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
+        directions_storage(gf);
+      }
       return;
     }
     else
