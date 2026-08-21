@@ -559,7 +559,9 @@ setupBackgroundMesh(GFace *gf, bool allowBuild,
 // seedBamgWithBowyerWatson reproduces a divergence between the two generators:
 // for ALGO_2D_BAMG - the only algorithm reaching the last branch - the
 // non-periodic one first lays down a coarse Bowyer-Watson mesh, the periodic
-// one calls Bamg directly. FIXME: see Stage 4.
+// one calls Bamg directly. Note Bamg is nondeterministic (a plain square gives
+// four different meshes in five runs), so neither behaviour can be compared
+// against the other by hashing; left as it is.
 static void
 runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
                      std::map<MVertex *, MVertex *> *equivalence,
@@ -694,7 +696,12 @@ static void colorExteriorTriangles(BDS_Mesh *m, BDS_GeomEntity *CLASS_F,
 // Beware: the two generators call this at different points. The non-periodic
 // one runs the Delaunay algorithm first and splices afterwards, so that
 // algorithm never sees the boundary layer elements; the periodic one splices
-// first. FIXME: see Stage 4.
+// first, and never calls splitElementsInBoundaryLayerIfNeeded() either.
+//
+// This is reachable: a standalone cylindrical surface (a seam, so the periodic
+// generator, with a boundary layer on its bounding circle) goes through it,
+// although the mesh that comes out of that combination is poor. Which of the
+// two orders is intended is a meshing question, so both are left as they are.
 static void
 insertBoundaryLayerElements(GFace *gf, std::vector<MQuadrangle *> &blQuads,
                             std::vector<MTriangle *> &blTris,
