@@ -710,37 +710,58 @@ insertBoundaryLayerElements(GFace *gf, std::vector<MQuadrangle *> &blQuads,
                            verts.end());
 }
 
-// Builds An initial triangular mesh that respects the boundaries of
-// the domain, including embedded points and surfaces
-
-bool meshGenerator(GFace *gf, int RECUR_ITER,
-                   bool repairSelfIntersecting1dMesh, int onlyInitialMesh,
-                   bool debug, std::vector<GEdge *> *replacementEdges)
+// Set the target size at every BDS point from the background mesh, using the
+// model entity the corresponding mesh node sits on. Only the non-periodic
+// generator does this: the periodic one sets the sizes while building its
+// consecutive lists of vertices.
+static void
+computeSizeField(BDS_Mesh *m,
+                 std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap)
 {
-  if(CTX::instance()->debugSurface > 0 &&
-     gf->tag() != CTX::instance()->debugSurface) {
-    gf->meshStatistics.status = GFace::DONE;
-    return true;
+  auto it = m->points.begin();
+  for(; it != m->points.end(); ++it) {
+    BDS_Point *pp = *it;
+    auto itv = recoverMap.find(pp);
+    if(itv != recoverMap.end()) {
+      MVertex *here = itv->second;
+      GEntity *ge = here->onWhat();
+      if(ge->dim() == 0) {
+        pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
+      }
+      else if(ge->dim() == 1) {
+        double u;
+        here->getParameter(0, u);
+        pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
+      }
+      else
+        pp->lcBGM() = MAX_LC;
+      pp->lc() = pp->lcBGM();
+    }
   }
-  if(CTX::instance()->debugSurface > 0) debug = true;
+}
 
-  BDS_GeomEntity CLASS_F(1, 2);
-  BDS_GeomEntity CLASS_EXTERIOR(1, 3);
-  std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
-  std::map<MVertex *, BDS_Point *> recoverMapInv;
-  std::vector<GEdge *> edges =
-    replacementEdges ? *replacementEdges : gf->edges();
-
+// Collect every mesh node on the boundary of the face: the nodes of its
+// curves (following the degenerated-vertex identifications), of its embedded
+// curves and of its embedded points. Optionally dump the boundary as a view.
+//
+// Returns false if one of the curves is a seam, leaving the face status alone
+// so that the caller falls back to the periodic generator, or if the 1D mesh
+// does not close up, in which case the face is marked FAILED.
+static bool
+collectBoundaryNodes(GFace *gf, std::vector<GEdge *> &edges,
+                     std::vector<GEdge *> &emb_edges,
+                     std::set<MVertex *, MVertexPtrLessThan> &all_vertices,
+                     bool debug)
+{
   FILE *fdeb = nullptr;
-  if(debug && RECUR_ITER == 0) {
+  if(debug) {
     char name[245];
     sprintf(name, "surface%d-boundary-real.pos", gf->tag());
     fdeb = fopen(name, "w");
     fprintf(fdeb, "View \"\"{\n");
   }
 
-  // build a set with all points of the boundaries
-  std::set<MVertex *, MVertexPtrLessThan> all_vertices, boundary;
+  std::set<MVertex *, MVertexPtrLessThan> boundary;
   auto ite = edges.begin();
   while(ite != edges.end()) {
     if((*ite)->isSeam(gf)) {
@@ -788,7 +809,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     return false;
   }
 
-  std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
   ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
     if(!(*ite)->isMeshDegenerated()) {
@@ -812,6 +832,36 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
                         (*itvx)->mesh_vertices.end());
     ++itvx;
   }
+
+  return true;
+}
+
+// Builds An initial triangular mesh that respects the boundaries of
+// the domain, including embedded points and surfaces
+
+bool meshGenerator(GFace *gf, int RECUR_ITER,
+                   bool repairSelfIntersecting1dMesh, int onlyInitialMesh,
+                   bool debug, std::vector<GEdge *> *replacementEdges)
+{
+  if(CTX::instance()->debugSurface > 0 &&
+     gf->tag() != CTX::instance()->debugSurface) {
+    gf->meshStatistics.status = GFace::DONE;
+    return true;
+  }
+  if(CTX::instance()->debugSurface > 0) debug = true;
+
+  BDS_GeomEntity CLASS_F(1, 2);
+  BDS_GeomEntity CLASS_EXTERIOR(1, 3);
+  std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
+  std::map<MVertex *, BDS_Point *> recoverMapInv;
+  std::vector<GEdge *> edges =
+    replacementEdges ? *replacementEdges : gf->edges();
+
+  std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
+  std::set<MVertex *, MVertexPtrLessThan> all_vertices;
+  if(!collectBoundaryNodes(gf, edges, emb_edges, all_vertices,
+                           debug && RECUR_ITER == 0))
+    return false;
 
   if(all_vertices.size() < 3) {
     Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
@@ -984,7 +1034,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   Msg::Debug("Recovering %d model edges", edges.size());
   std::set<EdgeToRecover> edgesToRecover;
   std::set<EdgeToRecover> edgesNotRecovered;
-  ite = edges.begin();
+  auto ite = edges.begin();
   while(ite != edges.end()) {
     if(!(*ite)->isMeshDegenerated())
       recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
@@ -1083,26 +1133,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG && !onlyInitialMesh) {
     Msg::Debug("Computing mesh size field at mesh nodes %d",
                edgesToRecover.size());
-    auto it = m->points.begin();
-    for(; it != m->points.end(); ++it) {
-      BDS_Point *pp = *it;
-      auto itv = recoverMap.find(pp);
-      if(itv != recoverMap.end()) {
-        MVertex *here = itv->second;
-        GEntity *ge = here->onWhat();
-        if(ge->dim() == 0) {
-          pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
-        }
-        else if(ge->dim() == 1) {
-          double u;
-          here->getParameter(0, u);
-          pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
-        }
-        else
-          pp->lcBGM() = MAX_LC;
-        pp->lc() = pp->lcBGM();
-      }
-    }
+    computeSizeField(m, recoverMap);
   }
 
   pruneAndCleanupBDS(m, &CLASS_F);
