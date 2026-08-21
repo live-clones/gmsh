@@ -41,13 +41,19 @@ struct BoundaryLayerFan {
   }
 };
 
-// The boundary layer containers below are keyed on MVertex*/MElement* but
-// ordered by mesh number, not by raw pointer value: boundary layer
+// The node containers of BoundaryLayerColumns are keyed on MVertex* but
+// ordered by node number, not by raw pointer value: boundary layer
 // construction iterates them, so ordering by address would make the resulting
-// mesh depend on where the allocator happened to put the nodes and elements.
-typedef std::map<MElement *, MElement *, MElementPtrLessThan> blElemToFirst;
-typedef std::map<MElement *, std::vector<MElement *>, MElementPtrLessThan>
-  blElemColumns;
+// mesh depend on where the allocator happened to put the nodes.
+//
+// The element containers below must NOT do the same. quadsToTriangles() in
+// meshGFaceOptimize.cpp deletes the quadrangles it splits while they are still
+// keys here, and then erases them by key; comparing the addresses of freed
+// pointers is fine, but a comparator that dereferences them - as
+// MElementPtrLessThan does, to read getNum() - crashes. Ordering by address is
+// deliberate here.
+typedef std::map<MElement *, MElement *> blElemToFirst;
+typedef std::map<MElement *, std::vector<MElement *>> blElemColumns;
 
 struct edgeColumn {
   const BoundaryLayerData &_c1, &_c2;
@@ -96,13 +102,9 @@ public:
   BoundaryLayerColumns() {}
   inline void addColumn(const SVector3 &dir, MVertex *v,
                         const std::vector<MVertex *> &_column)
-  {
-    _data.insert(std::make_pair(v, BoundaryLayerData(dir, _column)));
-  }
+  { _data.insert(std::make_pair(v, BoundaryLayerData(dir, _column))); }
   inline void addFan(MVertex *v, MEdge e1, MEdge e2, bool s, int type)
-  {
-    _fans.insert(std::make_pair(v, BoundaryLayerFan(e1, e2, s, type)));
-  }
+  { _fans.insert(std::make_pair(v, BoundaryLayerFan(e1, e2, s, type))); }
   inline const BoundaryLayerFan *getFan(MVertex *v) const
   {
     auto it = _fans.find(v);
