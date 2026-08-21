@@ -491,12 +491,7 @@ static void pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
 // Recombine the surface mesh into quadrangles, for the recombination
 // algorithms that run at the end of the 2D mesher (the others run inside
 // quadMeshRemoveHalfOfOneDMesh).
-//
-// noNodeRepositioningForQuadqs reproduces a divergence between the two
-// generators: the periodic one disables node repositioning when the 2D
-// algorithm is QUAD_QUASI_STRUCT, the non-periodic one does not. Unexplained;
-// preserved here rather than silently unified.
-static void recombineSurfaceMesh(GFace *gf, bool noNodeRepositioningForQuadqs)
+static void recombineSurfaceMesh(GFace *gf)
 {
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      (CTX::instance()->mesh.algoRecombine <= 1 ||
@@ -508,9 +503,6 @@ static void recombineSurfaceMesh(GFace *gf, bool noNodeRepositioningForQuadqs)
       bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
       int topo = CTX::instance()->mesh.recombineOptimizeTopology;
       int repos = CTX::instance()->mesh.recombineNodeRepositioning;
-      if(noNodeRepositioningForQuadqs &&
-         CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
-        repos = false;
       double minqual = CTX::instance()->mesh.recombineMinimumQuality;
       recombineIntoQuads(gf, blossom, topo, repos, minqual);
     }
@@ -533,19 +525,21 @@ static void finishSurfaceMesh(GFace *gf)
 // algorithms. Returns whether the mesher should work in the "infinite" metric
 // of that background mesh.
 //
-// buildForFrontalQuad reproduces a divergence between the two generators: the
-// non-periodic one skips building the background mesh when it is only after
-// the initial mesh, the periodic one always builds it (it decides about
-// onlyInitialMesh later). FIXME: see Stage 4.
+// allowBuild is false only when the non-periodic generator is being re-entered
+// from the boundary layer code (onlyInitialMesh == 99), which must not rebuild
+// the background mesh. The two generators spell the condition differently but
+// mean the same thing: a face whose algorithm is FRONTAL_QUAD is never a face
+// that only wants its initial mesh, so the INITIAL_ONLY half of the
+// non-periodic "!onlyInitialMesh" can never suppress a build.
 static bool
-setupBackgroundMesh(GFace *gf, bool buildForFrontalQuad,
+setupBackgroundMesh(GFace *gf, bool allowBuild,
                     std::map<MVertex *, MVertex *> *equivalence,
                     std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
   bool infty = false;
   if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
     infty = true;
-    if(buildForFrontalQuad)
+    if(allowBuild)
       buildBackgroundMesh(gf, CTX::instance()->mesh.crossFieldClosestPoint,
                           equivalence, parametricCoordinates);
   }
@@ -608,15 +602,18 @@ runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
 // flood fill the interior from an edge separating the two, and finally clear
 // the exterior tag so that only interior faces keep a classification.
 //
-// Two flags reproduce divergences between the two generators:
-// skipDeletedFaces - the periodic one skips deleted faces when looking for the
-//   seed triangle, since a deleted face has no usable neighbours;
-// tagFromOppositeNegativeNode - the non-periodic one runs an extra pass that
-//   seeds the interior from an edge whose opposite node is one of the fake
-//   points. FIXME: see Stage 4.
+// A deleted face is never used as the seed: it has no usable neighbours to
+// recurse through. Only the periodic generator used to check this, but no
+// deleted face is ever met here in practice, so the check is now done for
+// both.
+//
+// tagFromOppositeNegativeNode is still a divergence: only the non-periodic
+// generator runs the last pass, seeding the interior from an edge whose
+// opposite node is one of the fake points. Unlike the deleted-face check that
+// pass really does fire - on most faces of the regression suite - so unifying
+// it would change meshes, and it is left parameterised.
 static void colorExteriorTriangles(BDS_Mesh *m, BDS_GeomEntity *CLASS_F,
                                    BDS_GeomEntity *CLASS_EXTERIOR,
-                                   bool skipDeletedFaces,
                                    bool tagFromOppositeNegativeNode)
 {
   {
@@ -628,7 +625,7 @@ static void colorExteriorTriangles(BDS_Mesh *m, BDS_GeomEntity *CLASS_F,
     itt = m->triangles.begin();
     while(itt != m->triangles.end()) {
       BDS_Face *t = *itt;
-      if(skipDeletedFaces && t->deleted) {
+      if(t->deleted) {
         // If triangle is deleted, it won't have the correct neighbours
         // to tag recursively
         ++itt;
@@ -1402,7 +1399,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   Msg::Debug("Boundary edges recovered for surface %d", gf->tag());
 
-  colorExteriorTriangles(m, &CLASS_F, &CLASS_EXTERIOR, false, true);
+  colorExteriorTriangles(m, &CLASS_F, &CLASS_EXTERIOR, true);
 
   auto ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
@@ -1502,7 +1499,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 
-  if(onlyInitialMesh != 99) recombineSurfaceMesh(gf, false);
+  if(onlyInitialMesh != 99) recombineSurfaceMesh(gf);
 
   finishSurfaceMesh(gf);
 
@@ -2032,7 +2029,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     Msg::Info(":-) All edges recovered after %d iteration%s", RECUR_ITER,
               (RECUR_ITER > 1) ? "s" : "");
 
-  colorExteriorTriangles(m, &CLASS_F, &CLASS_EXTERIOR, true, false);
+  colorExteriorTriangles(m, &CLASS_F, &CLASS_EXTERIOR, false);
 
   pruneAndCleanupBDS(m, &CLASS_F);
 
@@ -2196,7 +2193,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   // delete the mesh
   delete m;
 
-  recombineSurfaceMesh(gf, true);
+  recombineSurfaceMesh(gf);
 
   gf->meshStatistics.status = GFace::DONE;
 
