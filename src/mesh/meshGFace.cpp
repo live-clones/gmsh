@@ -997,7 +997,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   std::vector<MQuadrangle *> blQuads;
   std::vector<MTriangle *> blTris;
-  std::set<MVertex *> verts;
+  std::set<MVertex *, MVertexPtrLessThan> verts;
 
   bool infty = false;
   if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
@@ -2063,7 +2063,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     // boundary layer
     std::vector<MQuadrangle *> blQuads;
     std::vector<MTriangle *> blTris;
-    std::set<MVertex *> verts;
+    std::set<MVertex *, MVertexPtrLessThan> verts;
     modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
     gf->quadrangles.insert(gf->quadrangles.begin(), blQuads.begin(),
                            blQuads.end());

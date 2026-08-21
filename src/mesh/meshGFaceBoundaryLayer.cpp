@@ -39,10 +39,10 @@ static void addOrRemove(MVertex *v1, MVertex *v2,
   }
 }
 
-void modifyInitialMeshForBoundaryLayers(GFace *gf,
-                                        std::vector<MQuadrangle *> &blQuads,
-                                        std::vector<MTriangle *> &blTris,
-                                        std::set<MVertex *> &verts, bool debug)
+void modifyInitialMeshForBoundaryLayers(
+  GFace *gf, std::vector<MQuadrangle *> &blQuads,
+  std::vector<MTriangle *> &blTris,
+  std::set<MVertex *, MVertexPtrLessThan> &verts, bool debug)
 {
   if(!buildAdditionalPoints2D(gf)) return;
   BoundaryLayerColumns *_columns = gf->getColumns();
