@@ -1089,6 +1089,235 @@ recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
   return EdgeRecovery::Recovered;
 }
 
+// Initial triangulation for a periodic face: add the embedded points and
+// curves to the BDS mesh, enclose everything in a box of four fake points and
+// run the divide & conquer hull mesher. edgesEmbedded collects the BDS point
+// pairs of the embedded curve segments, which the caller recovers afterwards.
+static void initialTriangulationPeriodic(
+  GFace *gf, BDS_Mesh *m,
+  std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap,
+  std::vector<std::vector<BDS_Point *>> &edgeLoops_BDS,
+  std::vector<int> &edgesEmbedded, SBoundingBox3d &bbox, int &nbPointsTotal,
+  double du, double dv, double LC2D)
+{
+  int count = 0;
+
+  // Embedded Vertices
+  // add embedded vertices
+  std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+  auto itvx = emb_vertx.begin();
+
+  std::map<MVertex *, std::set<BDS_Point *>> invertedRecoverMap;
+  for(auto it = recoverMap.begin(); it != recoverMap.end(); it++) {
+    invertedRecoverMap[it->second].insert(it->first);
+  }
+
+  int pNum = m->MAXPOINTNUMBER;
+  nbPointsTotal += emb_vertx.size();
+  {
+    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
+    std::set<MVertex *> vs;
+    auto ite = emb_edges.begin();
+    while(ite != emb_edges.end()) {
+      for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
+        for(std::size_t j = 0; j < 2; j++) {
+          MVertex *v = (*ite)->lines[i]->getVertex(j);
+          if(invertedRecoverMap.find(v) == invertedRecoverMap.end() &&
+             vs.find(v) == vs.end()) {
+            vs.insert(v);
+          }
+        }
+      }
+      ++ite;
+    }
+    nbPointsTotal += vs.size();
+  }
+  DocRecord doc(nbPointsTotal + 4);
+
+  while(itvx != emb_vertx.end()) {
+    MVertex *v = (*itvx)->mesh_vertices[0];
+    double uv[2] = {0, 0};
+    GPoint gp = gf->closestPoint(SPoint3(v->x(), v->y(), v->z()), uv);
+    BDS_Point *pp = m->add_point(++pNum, gp.u(), gp.v(), gf);
+    m->add_geom(-(*itvx)->tag(), 0);
+    pp->g = m->get_geom(-(*itvx)->tag(), 0);
+    pp->lcBGM() = BGM_MeshSize(*itvx, 0, 0, v->x(), v->y(), v->z());
+    pp->lc() = pp->lcBGM();
+    recoverMap[pp] = v;
+    double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+                (double)RAND_MAX;
+    double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+                (double)RAND_MAX;
+    doc.points[count].where.h = pp->u + XX;
+    doc.points[count].where.v = pp->v + YY;
+    doc.points[count].adjacent = nullptr;
+    doc.points[count].data = pp;
+    count++;
+    ++itvx;
+  }
+
+  std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
+  std::set<MVertex *> vs;
+  std::map<MVertex *, BDS_Point *> facile;
+  auto ite = emb_edges.begin();
+  while(ite != emb_edges.end()) {
+    m->add_geom(-(*ite)->tag(), 1);
+    for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
+      for(std::size_t j = 0; j < 2; j++) {
+        MVertex *v = (*ite)->lines[i]->getVertex(j);
+        BDS_Point *pp = nullptr;
+        const auto it = invertedRecoverMap.find(v);
+        if(it != invertedRecoverMap.end()) {
+          if(it->second.size() > 1) {
+            const GEdge *edge = (*ite);
+            const Range<double> parBounds = edge->parBoundsOnFace(gf);
+            GPoint firstPoint = edge->point(parBounds.low());
+            GPoint lastPoint = edge->point(parBounds.high());
+            double param;
+            if(v->point().distance(
+                 SPoint3(firstPoint.x(), firstPoint.y(), firstPoint.z())) <
+               v->point().distance(
+                 SPoint3(lastPoint.x(), lastPoint.y(), lastPoint.z()))) {
+              // Vertex lies on first point of edge
+              param = parBounds.low();
+            }
+            else {
+              // Vertex lies on last point of edge
+              param = parBounds.high();
+            }
+            SPoint2 pointOnSurface = edge->reparamOnFace(gf, param, 1);
+
+            const std::set<BDS_Point *> &possiblePoints = it->second;
+            for(auto pntIt = possiblePoints.begin();
+                pntIt != possiblePoints.end(); ++pntIt) {
+              if(pointOnSurface.distance(SPoint2((*pntIt)->u, (*pntIt)->v)) <
+                 1e-10) {
+                pp = (*pntIt);
+                break;
+              }
+            }
+            if(pp == nullptr) {
+              Msg::Error("Embedded edge node %d is on the seam edge of "
+                         "surface %d and no appropriate point could be "
+                         "found!",
+                         v->getNum(), gf->tag());
+            }
+          }
+          else {
+            pp = *(it->second.begin());
+          }
+          facile[v] = pp;
+        }
+        if(pp == nullptr && vs.find(v) == vs.end()) {
+          vs.insert(v);
+          double uv[2] = {0, 0};
+          GPoint gp = gf->closestPoint(SPoint3(v->x(), v->y(), v->z()), uv);
+          BDS_Point *pp = m->add_point(++pNum, gp.u(), gp.v(), gf);
+          pp->g = m->get_geom(-(*ite)->tag(), 1);
+          if(v->onWhat()->dim() == 0)
+            pp->lcBGM() =
+              BGM_MeshSize(v->onWhat(), 0, 0, v->x(), v->y(), v->z());
+          else {
+            double uu;
+            v->getParameter(0, uu);
+            pp->lcBGM() = BGM_MeshSize(*ite, uu, 0, v->x(), v->y(), v->z());
+          }
+          pp->lc() = pp->lcBGM();
+          recoverMap[pp] = v;
+          facile[v] = pp;
+          double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+                      (double)RAND_MAX;
+          double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+                      (double)RAND_MAX;
+          doc.points[count].where.h = pp->u + XX;
+          doc.points[count].where.v = pp->v + YY;
+          doc.points[count].adjacent = nullptr;
+          doc.points[count].data = pp;
+          count++;
+        }
+      }
+    }
+    for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
+      BDS_Point *p0 = facile[(*ite)->lines[i]->getVertex(0)];
+      BDS_Point *p1 = facile[(*ite)->lines[i]->getVertex(1)];
+      if(p0 && p1) {
+        edgesEmbedded.push_back(p0->iD);
+        edgesEmbedded.push_back(p1->iD);
+      }
+    }
+    ++ite;
+  }
+
+  for(std::size_t i = 0; i < edgeLoops_BDS.size(); i++) {
+    std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
+    for(std::size_t j = 0; j < edgeLoop_BDS.size(); j++) {
+      BDS_Point *pp = edgeLoop_BDS[j];
+      double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+                  (double)RAND_MAX;
+      double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+                  (double)RAND_MAX;
+      doc.points[count].where.h = pp->u + XX;
+      doc.points[count].where.v = pp->v + YY;
+      doc.points[count].adjacent = nullptr;
+      doc.points[count].data = pp;
+      count++;
+    }
+  }
+
+  // Increase the size of the bounding box, add 4 points that enclose
+  // the domain, use negative number to distinguish those fake
+  // vertices
+
+  if(du / dv < 1200 && dv / du < 1200) {
+    // Fix a bug here if the size of the box is zero
+    bbox.makeCube();
+  }
+
+  bbox *= 3.5;
+  GPoint bb[4] = {GPoint(bbox.min().x(), bbox.min().y(), 0),
+                  GPoint(bbox.min().x(), bbox.max().y(), 0),
+                  GPoint(bbox.max().x(), bbox.min().y(), 0),
+                  GPoint(bbox.max().x(), bbox.max().y(), 0)};
+  for(int ip = 0; ip < 4; ip++) {
+    BDS_Point *pp = m->add_point(-ip - 1, bb[ip].x(), bb[ip].y(), gf);
+    m->add_geom(gf->tag(), 2);
+    BDS_GeomEntity *g = m->get_geom(gf->tag(), 2);
+    pp->g = g;
+    doc.points[nbPointsTotal + ip].where.h = bb[ip].x();
+    doc.points[nbPointsTotal + ip].where.v = bb[ip].y();
+    doc.points[nbPointsTotal + ip].adjacent = nullptr;
+    doc.points[nbPointsTotal + ip].data = pp;
+  }
+
+  // Use "fast" inhouse recursive algo to generate the triangulation
+  // At this stage the triangulation is not what we need
+  //   -) It does not necessary recover the boundaries
+  //   -) It contains triangles outside the domain (the first edge
+  //      loop is the outer one)
+  Msg::Debug("Meshing of the convex hull (%d nodes)", nbPointsTotal);
+
+  try {
+    doc.MakeMeshWithPoints();
+  } catch(std::runtime_error &e) {
+    Msg::Error("%s", e.what());
+  }
+
+  for(int i = 0; i < doc.numTriangles; i++) {
+    int a = doc.triangles[i].a;
+    int b = doc.triangles[i].b;
+    int c = doc.triangles[i].c;
+    int n = doc.numPoints;
+    if(a < 0 || a >= n || b < 0 || b >= n || c < 0 || c >= n) {
+      Msg::Warning("Skipping bad triangle %d", i);
+      continue;
+    }
+    BDS_Point *p1 = (BDS_Point *)doc.points[doc.triangles[i].a].data;
+    BDS_Point *p2 = (BDS_Point *)doc.points[doc.triangles[i].b].data;
+    BDS_Point *p3 = (BDS_Point *)doc.points[doc.triangles[i].c].data;
+    m->add_triangle(p1->iD, p2->iD, p3->iD);
+  }
+}
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
@@ -1673,224 +1902,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   std::vector<int> edgesEmbedded;
 
-  {
-    int count = 0;
-
-    // Embedded Vertices
-    // add embedded vertices
-    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
-    auto itvx = emb_vertx.begin();
-
-    std::map<MVertex *, std::set<BDS_Point *>> invertedRecoverMap;
-    for(auto it = recoverMap.begin(); it != recoverMap.end(); it++) {
-      invertedRecoverMap[it->second].insert(it->first);
-    }
-
-    int pNum = m->MAXPOINTNUMBER;
-    nbPointsTotal += emb_vertx.size();
-    {
-      std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-      std::set<MVertex *> vs;
-      auto ite = emb_edges.begin();
-      while(ite != emb_edges.end()) {
-        for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
-          for(std::size_t j = 0; j < 2; j++) {
-            MVertex *v = (*ite)->lines[i]->getVertex(j);
-            if(invertedRecoverMap.find(v) == invertedRecoverMap.end() &&
-               vs.find(v) == vs.end()) {
-              vs.insert(v);
-            }
-          }
-        }
-        ++ite;
-      }
-      nbPointsTotal += vs.size();
-    }
-    DocRecord doc(nbPointsTotal + 4);
-
-    while(itvx != emb_vertx.end()) {
-      MVertex *v = (*itvx)->mesh_vertices[0];
-      double uv[2] = {0, 0};
-      GPoint gp = gf->closestPoint(SPoint3(v->x(), v->y(), v->z()), uv);
-      BDS_Point *pp = m->add_point(++pNum, gp.u(), gp.v(), gf);
-      m->add_geom(-(*itvx)->tag(), 0);
-      pp->g = m->get_geom(-(*itvx)->tag(), 0);
-      pp->lcBGM() = BGM_MeshSize(*itvx, 0, 0, v->x(), v->y(), v->z());
-      pp->lc() = pp->lcBGM();
-      recoverMap[pp] = v;
-      double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
-      double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                  (double)RAND_MAX;
-      doc.points[count].where.h = pp->u + XX;
-      doc.points[count].where.v = pp->v + YY;
-      doc.points[count].adjacent = nullptr;
-      doc.points[count].data = pp;
-      count++;
-      ++itvx;
-    }
-
-    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-    std::set<MVertex *> vs;
-    std::map<MVertex *, BDS_Point *> facile;
-    auto ite = emb_edges.begin();
-    while(ite != emb_edges.end()) {
-      m->add_geom(-(*ite)->tag(), 1);
-      for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
-        for(std::size_t j = 0; j < 2; j++) {
-          MVertex *v = (*ite)->lines[i]->getVertex(j);
-          BDS_Point *pp = nullptr;
-          const auto it = invertedRecoverMap.find(v);
-          if(it != invertedRecoverMap.end()) {
-            if(it->second.size() > 1) {
-              const GEdge *edge = (*ite);
-              const Range<double> parBounds = edge->parBoundsOnFace(gf);
-              GPoint firstPoint = edge->point(parBounds.low());
-              GPoint lastPoint = edge->point(parBounds.high());
-              double param;
-              if(v->point().distance(
-                   SPoint3(firstPoint.x(), firstPoint.y(), firstPoint.z())) <
-                 v->point().distance(
-                   SPoint3(lastPoint.x(), lastPoint.y(), lastPoint.z()))) {
-                // Vertex lies on first point of edge
-                param = parBounds.low();
-              }
-              else {
-                // Vertex lies on last point of edge
-                param = parBounds.high();
-              }
-              SPoint2 pointOnSurface = edge->reparamOnFace(gf, param, 1);
-
-              const std::set<BDS_Point *> &possiblePoints = it->second;
-              for(auto pntIt = possiblePoints.begin();
-                  pntIt != possiblePoints.end(); ++pntIt) {
-                if(pointOnSurface.distance(SPoint2((*pntIt)->u, (*pntIt)->v)) <
-                   1e-10) {
-                  pp = (*pntIt);
-                  break;
-                }
-              }
-              if(pp == nullptr) {
-                Msg::Error("Embedded edge node %d is on the seam edge of "
-                           "surface %d and no appropriate point could be "
-                           "found!",
-                           v->getNum(), gf->tag());
-              }
-            }
-            else {
-              pp = *(it->second.begin());
-            }
-            facile[v] = pp;
-          }
-          if(pp == nullptr && vs.find(v) == vs.end()) {
-            vs.insert(v);
-            double uv[2] = {0, 0};
-            GPoint gp = gf->closestPoint(SPoint3(v->x(), v->y(), v->z()), uv);
-            BDS_Point *pp = m->add_point(++pNum, gp.u(), gp.v(), gf);
-            pp->g = m->get_geom(-(*ite)->tag(), 1);
-            if(v->onWhat()->dim() == 0)
-              pp->lcBGM() =
-                BGM_MeshSize(v->onWhat(), 0, 0, v->x(), v->y(), v->z());
-            else {
-              double uu;
-              v->getParameter(0, uu);
-              pp->lcBGM() = BGM_MeshSize(*ite, uu, 0, v->x(), v->y(), v->z());
-            }
-            pp->lc() = pp->lcBGM();
-            recoverMap[pp] = v;
-            facile[v] = pp;
-            double XX = CTX::instance()->mesh.randFactor * LC2D *
-                        (double)rand() / (double)RAND_MAX;
-            double YY = CTX::instance()->mesh.randFactor * LC2D *
-                        (double)rand() / (double)RAND_MAX;
-            doc.points[count].where.h = pp->u + XX;
-            doc.points[count].where.v = pp->v + YY;
-            doc.points[count].adjacent = nullptr;
-            doc.points[count].data = pp;
-            count++;
-          }
-        }
-      }
-      for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
-        BDS_Point *p0 = facile[(*ite)->lines[i]->getVertex(0)];
-        BDS_Point *p1 = facile[(*ite)->lines[i]->getVertex(1)];
-        if(p0 && p1) {
-          edgesEmbedded.push_back(p0->iD);
-          edgesEmbedded.push_back(p1->iD);
-        }
-      }
-      ++ite;
-    }
-
-    for(std::size_t i = 0; i < edgeLoops_BDS.size(); i++) {
-      std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
-      for(std::size_t j = 0; j < edgeLoop_BDS.size(); j++) {
-        BDS_Point *pp = edgeLoop_BDS[j];
-        double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                    (double)RAND_MAX;
-        double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-                    (double)RAND_MAX;
-        doc.points[count].where.h = pp->u + XX;
-        doc.points[count].where.v = pp->v + YY;
-        doc.points[count].adjacent = nullptr;
-        doc.points[count].data = pp;
-        count++;
-      }
-    }
-
-    // Increase the size of the bounding box, add 4 points that enclose
-    // the domain, use negative number to distinguish those fake
-    // vertices
-
-    if(du / dv < 1200 && dv / du < 1200) {
-      // Fix a bug here if the size of the box is zero
-      bbox.makeCube();
-    }
-
-    bbox *= 3.5;
-    GPoint bb[4] = {GPoint(bbox.min().x(), bbox.min().y(), 0),
-                    GPoint(bbox.min().x(), bbox.max().y(), 0),
-                    GPoint(bbox.max().x(), bbox.min().y(), 0),
-                    GPoint(bbox.max().x(), bbox.max().y(), 0)};
-    for(int ip = 0; ip < 4; ip++) {
-      BDS_Point *pp = m->add_point(-ip - 1, bb[ip].x(), bb[ip].y(), gf);
-      m->add_geom(gf->tag(), 2);
-      BDS_GeomEntity *g = m->get_geom(gf->tag(), 2);
-      pp->g = g;
-      doc.points[nbPointsTotal + ip].where.h = bb[ip].x();
-      doc.points[nbPointsTotal + ip].where.v = bb[ip].y();
-      doc.points[nbPointsTotal + ip].adjacent = nullptr;
-      doc.points[nbPointsTotal + ip].data = pp;
-    }
-
-    // Use "fast" inhouse recursive algo to generate the triangulation
-    // At this stage the triangulation is not what we need
-    //   -) It does not necessary recover the boundaries
-    //   -) It contains triangles outside the domain (the first edge
-    //      loop is the outer one)
-    Msg::Debug("Meshing of the convex hull (%d nodes)", nbPointsTotal);
-
-    try {
-      doc.MakeMeshWithPoints();
-    } catch(std::runtime_error &e) {
-      Msg::Error("%s", e.what());
-    }
-
-    for(int i = 0; i < doc.numTriangles; i++) {
-      int a = doc.triangles[i].a;
-      int b = doc.triangles[i].b;
-      int c = doc.triangles[i].c;
-      int n = doc.numPoints;
-      if(a < 0 || a >= n || b < 0 || b >= n || c < 0 || c >= n) {
-        Msg::Warning("Skipping bad triangle %d", i);
-        continue;
-      }
-      BDS_Point *p1 = (BDS_Point *)doc.points[doc.triangles[i].a].data;
-      BDS_Point *p2 = (BDS_Point *)doc.points[doc.triangles[i].b].data;
-      BDS_Point *p3 = (BDS_Point *)doc.points[doc.triangles[i].c].data;
-      m->add_triangle(p1->iD, p2->iD, p3->iD);
-    }
-  }
+  initialTriangulationPeriodic(gf, m, recoverMap, edgeLoops_BDS, edgesEmbedded,
+                               bbox, nbPointsTotal, du, dv, LC2D);
 
   // Recover the boundary edges and compute characteristic lenghts using mesh
   // edge spacing
