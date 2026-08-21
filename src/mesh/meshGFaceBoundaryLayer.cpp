@@ -467,5 +467,5 @@ void modifyInitialMeshForBoundaryLayers(
 
   deMeshGFace kil_;
   kil_(gf);
-  meshGenerator(gf, 0, false, 99, false, &hop);
+  meshGenerator(gf, 0, false, MeshExtent::BoundaryLayerRemesh, false, &hop);
 }
