@@ -61,9 +61,6 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
     }
   }
   N = count;
-  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd
-  //  size %zu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count,
-  //  count%2);
   if(count % 2 == 0) return false;
   return true;
 }
@@ -279,8 +276,6 @@ private:
     edges.insert(edges.begin(), emb.begin(), emb.end());
     auto ite = edges.begin();
     while(ite != edges.end()) {
-      //      printf("restore %d  %d -->
-      //      %d\n",(*ite)->tag(),(*ite)->lines.size(),_backup[*ite].size());
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         delete(*ite)->lines[i];
       }
@@ -331,27 +326,14 @@ public:
           v2->y() = 0.5 * (v1->y() + v3->y());
           v2->z() = 0.5 * (v1->z() + v3->z());
           temp.push_back(new MLine(v1, v3));
-          //	  printf("%d %d %d %d
-          //%d\n",(*ite)->tag(),v1->onWhat()->dim(),v1->onWhat()->tag(),v3->onWhat()->dim(),v3->onWhat()->tag());
           if(v1->onWhat() == *ite &&
              std::find((*ite)->mesh_vertices.begin(),
                        (*ite)->mesh_vertices.end(),
                        v1) == (*ite)->mesh_vertices.end()) {
-            //	  	    printf("adding vertex %d to
-            //%d\n",v1->getNum(),(*ite)->tag());
             (*ite)->mesh_vertices.push_back(v1);
           }
-          //	  if(v3->onWhat() == *ite &&
-          //std::find((*ite)->mesh_vertices.begin(),
-          //(*ite)->mesh_vertices.end(), v3) == (*ite)->mesh_vertices.end()) {
-          //	    printf("adding vertex %d to
-          //%d\n",v3->getNum(),(*ite)->tag());
-          //	    (*ite)->mesh_vertices.push_back(v3);
-          //	  }
           _middle[MEdge(v1, v3)] = v2;
         }
-        //	printf("%d %d --> %d\n",(*ite)->tag(),
-        //(*ite)->lines.size(),temp.size());
         _backup[*ite] = (*ite)->lines;
         (*ite)->lines = temp;
       }
@@ -950,7 +932,6 @@ static void modifyInitialMeshForBoundaryLayers(
                     v->x(), v->y(), v->z(), N + 1, N + 1, N + 1);
         }
 
-        // int M = std::max(c1._column.size(),c2._column.size());
         for(std::size_t l = 0; l < myCol.size(); l++)
           _columns->_toFirst[myCol[l]] = myCol[0];
         _columns->_elemColumns[myCol[0]] = myCol;
@@ -2026,7 +2007,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
           gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
     infty = true;
     /* New version of PACK / QUADQS use a different background mesh */
-    // if(!onlyInitialMesh) buildBackgroundMesh(gf, false);
   }
 
   if(!onlyInitialMesh)
@@ -2047,7 +2027,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
       Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
-      // bowyerWatsonParallelogramsConstrained(gf, gf->constr_vertices);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO) {
@@ -2065,9 +2044,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   if(debug) {
     char name[256];
-    // sprintf(name, "trueBoundary%d.pos", gf->tag());
-    // std::vector<SPoint2> bnd;
-    // trueBoundary(name, gf,bnd);
     sprintf(name, "real%d.pos", gf->tag());
     outputScalarField(m->triangles, name, 0, gf);
     sprintf(name, "param%d.pos", gf->tag());
@@ -2105,8 +2081,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.best_element_shape,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
-
-  //  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
 
   // remove unused vertices, generated e.g. during background mesh
   deleteUnusedVertices(gf);
@@ -2374,7 +2348,6 @@ static bool buildConsecutiveListOfVertices(
       pp->g = g;
       bbox += SPoint3(U, V, 0);
     }
-    // printf("node %d coord %g %g\n", here->getNum(), pp->u, pp->v);
     result.push_back(pp);
     recoverMapLocal[pp] = here;
     count++;
@@ -2767,30 +2740,17 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       int num2 = edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD;
       BDS_Edge *e = m->find_edge(num1, num2);
       if(!e) {
-        // printf("recovering %d %d\n",num1,num2);
         e = m->recover_edge(num1, num2, _fatallyFailed);
         BDS_Point *p1 = m->find_point(num1);
         BDS_Point *p2 = m->find_point(num2);
         MVertex *v1 = recoverMap[p1];
         MVertex *v2 = recoverMap[p2];
         GEdge *ge = getGEdge(gf, v1, v2);
-        // if (!ge){
-        //   Msg::Error("cannot find GEdge with mesh edge %d %d (%d %d)\n",
-        //              num1, num2, v1->getNum(), v2->getNum());
-        // }
         if(ge) edgesNotRecovered.insert(EdgeToRecover(num1, num2, ge));
         if(!e) {
-          // what is before does not seem to work properly
-          // Msg::Warning("ITER %d Impossible to recover the edge %d %d",
-          //              RECUR_ITER, num1, num2);
-          // Msg::Warning("Will split model edge  %d and try again", ge->tag());
           doItAgain = true;
-          // gf->meshStatistics.status = GFace::FAILED;
-          // delete m;
-          // return false;
         }
         else {
-          // Msg::Warning("ITER %d edge %d %d RECOVERED",RECUR_ITER, num1,num2);
           e->g = &CLASS_E;
         }
       }
@@ -2848,7 +2808,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       gf->meshStatistics.refineAllEdges = false;
     }
     // delete the mesh
-    // getchar();
     if(debug) {
       char name[245];
       sprintf(name, "surface%d-initial-real-afterITER%d.pos", gf->tag(),
@@ -3075,9 +3034,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     }
   }
 
-  // Msg::Info("%d points that are duplicated for Delaunay meshing",
-  //           equivalence.size());
-
   // fill the small gmsh structures
   BDS2GMSH(m, gf, recoverMap);
 
@@ -3099,7 +3055,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
           gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
     infty = true;
     /* New version of PACK / QUADQS use a different background mesh */
-    // buildBackgroundMesh(gf, false, &equivalence, &parametricCoordinates);
   }
 
   bool onlyInitialMesh = (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY);
@@ -3130,8 +3085,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       bowyerWatsonParallelograms(gf, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
       Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
-      // bowyerWatsonParallelogramsConstrained(
-      //   gf, gf->constr_vertices, &equivalence, &parametricCoordinates);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
@@ -3179,8 +3132,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.best_element_shape,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
-
-  //  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
 
   gf->meshStatistics.status = GFace::DONE;
 
