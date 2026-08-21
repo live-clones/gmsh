@@ -180,8 +180,7 @@ struct Less_Partition
   }
 };
 
-void filterColumns(std::vector<MElement *> &elem,
-                   std::map<MElement *, std::vector<MElement *> > &_elemColumns)
+void filterColumns(std::vector<MElement *> &elem, blElemColumns &_elemColumns)
 {
   std::sort(elem.begin(), elem.end());
   std::vector<MElement *> toKeep;
@@ -212,10 +211,10 @@ void filterColumns(std::vector<MElement *> &elem,
   elem = toKeep;
 }
 
-static void filterOverlappingElements(
-  std::vector<MLine *> &lines, std::vector<MElement *> &els,
-  std::map<MElement *, std::vector<MElement *> > &_elemColumns,
-  std::map<MElement *, MElement *> &_toFirst)
+static void filterOverlappingElements(std::vector<MLine *> &lines,
+                                      std::vector<MElement *> &els,
+                                      blElemColumns &_elemColumns,
+                                      blElemToFirst &_toFirst)
 {
   std::vector<MElement *> newEls;
   RTree<MElement *, double, 3, double> rtree;
@@ -248,11 +247,11 @@ static void filterOverlappingElements(
 // WE SHOULD ADD THE BOUNDARY OF THE DOMAIN IN ORDER TO AVOID
 // ELEMENTS THAT ARE OUTSIDE THE DOMAIN --> FIXME
 
-void filterOverlappingElements(
-  std::vector<MLine *> &bdry, std::vector<MTriangle *> &blTris,
-  std::vector<MQuadrangle *> &blQuads,
-  std::map<MElement *, std::vector<MElement *> > &_elemColumns,
-  std::map<MElement *, MElement *> &_toFirst)
+void filterOverlappingElements(std::vector<MLine *> &bdry,
+                               std::vector<MTriangle *> &blTris,
+                               std::vector<MQuadrangle *> &blQuads,
+                               blElemColumns &_elemColumns,
+                               blElemToFirst &_toFirst)
 {
   std::vector<MElement *> vvv;
   vvv.insert(vvv.begin(), blTris.begin(), blTris.end());
