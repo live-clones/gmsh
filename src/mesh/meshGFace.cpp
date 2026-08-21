@@ -603,6 +603,113 @@ runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
     laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
 }
 
+// Tag the triangles that lie outside the domain: start from a triangle
+// touching one of the four fake box points, flood fill the exterior, then
+// flood fill the interior from an edge separating the two, and finally clear
+// the exterior tag so that only interior faces keep a classification.
+//
+// Two flags reproduce divergences between the two generators:
+// skipDeletedFaces - the periodic one skips deleted faces when looking for the
+//   seed triangle, since a deleted face has no usable neighbours;
+// tagFromOppositeNegativeNode - the non-periodic one runs an extra pass that
+//   seeds the interior from an edge whose opposite node is one of the fake
+//   points. FIXME: see Stage 4.
+static void colorExteriorTriangles(BDS_Mesh *m, BDS_GeomEntity *CLASS_F,
+                                   BDS_GeomEntity *CLASS_EXTERIOR,
+                                   bool skipDeletedFaces,
+                                   bool tagFromOppositeNegativeNode)
+{
+  {
+    auto itt = m->triangles.begin();
+    while(itt != m->triangles.end()) {
+      (*itt)->g = nullptr;
+      ++itt;
+    }
+    itt = m->triangles.begin();
+    while(itt != m->triangles.end()) {
+      BDS_Face *t = *itt;
+      if(skipDeletedFaces && t->deleted) {
+        // If triangle is deleted, it won't have the correct neighbours
+        // to tag recursively
+        ++itt;
+        continue;
+      }
+      BDS_Point *n[4];
+      if(t->getNodes(n)) {
+        if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
+          recur_tag(t, CLASS_EXTERIOR);
+          break;
+        }
+      }
+      ++itt;
+    }
+  }
+
+  // now find an edge that has belongs to one of the exterior triangles
+  {
+    auto ite = m->edges.begin();
+    while(ite != m->edges.end()) {
+      BDS_Edge *e = *ite;
+      if(e->g && e->numfaces() == 2) {
+        if(e->faces(0)->g == CLASS_EXTERIOR) {
+          recur_tag(e->faces(1), CLASS_F);
+          break;
+        }
+        else if(e->faces(1)->g == CLASS_EXTERIOR) {
+          recur_tag(e->faces(0), CLASS_F);
+          break;
+        }
+      }
+      ++ite;
+    }
+    auto itt = m->triangles.begin();
+    while(itt != m->triangles.end()) {
+      if((*itt)->g == CLASS_EXTERIOR) (*itt)->g = nullptr;
+      ++itt;
+    }
+  }
+
+  if(tagFromOppositeNegativeNode) {
+    auto ite = m->edges.begin();
+    while(ite != m->edges.end()) {
+      BDS_Edge *e = *ite;
+      if(e->g && e->numfaces() == 2) {
+        BDS_Point *oface[2];
+        e->oppositeof(oface);
+        if(oface[0]->iD < 0) {
+          recur_tag(e->faces(1), CLASS_F);
+          break;
+        }
+        else if(oface[1]->iD < 0) {
+          recur_tag(e->faces(0), CLASS_F);
+          break;
+        }
+      }
+      ++ite;
+    }
+  }
+}
+
+// Splice the boundary layer elements and nodes built by
+// modifyInitialMeshForBoundaryLayers() into the face, in front of the elements
+// the mesher produced.
+//
+// Beware: the two generators call this at different points. The non-periodic
+// one runs the Delaunay algorithm first and splices afterwards, so that
+// algorithm never sees the boundary layer elements; the periodic one splices
+// first. FIXME: see Stage 4.
+static void
+insertBoundaryLayerElements(GFace *gf, std::vector<MQuadrangle *> &blQuads,
+                            std::vector<MTriangle *> &blTris,
+                            std::set<MVertex *, MVertexPtrLessThan> &verts)
+{
+  gf->quadrangles.insert(gf->quadrangles.begin(), blQuads.begin(),
+                         blQuads.end());
+  gf->triangles.insert(gf->triangles.begin(), blTris.begin(), blTris.end());
+  gf->mesh_vertices.insert(gf->mesh_vertices.begin(), verts.begin(),
+                           verts.end());
+}
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
@@ -962,71 +1069,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   Msg::Debug("Boundary edges recovered for surface %d", gf->tag());
 
-  // look for a triangle that has a negative node and recursively tag all
-  // exterior triangles
-  {
-    auto itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      (*itt)->g = nullptr;
-      ++itt;
-    }
-    itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      BDS_Face *t = *itt;
-      BDS_Point *n[4];
-      if(t->getNodes(n)) {
-        if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
-          recur_tag(t, &CLASS_EXTERIOR);
-          break;
-        }
-      }
-      ++itt;
-    }
-  }
-
-  // now find an edge that has belongs to one of the exterior triangles
-  {
-    auto ite = m->edges.begin();
-    while(ite != m->edges.end()) {
-      BDS_Edge *e = *ite;
-      if(e->g && e->numfaces() == 2) {
-        if(e->faces(0)->g == &CLASS_EXTERIOR) {
-          recur_tag(e->faces(1), &CLASS_F);
-          break;
-        }
-        else if(e->faces(1)->g == &CLASS_EXTERIOR) {
-          recur_tag(e->faces(0), &CLASS_F);
-          break;
-        }
-      }
-      ++ite;
-    }
-    auto itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      if((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = nullptr;
-      ++itt;
-    }
-  }
-
-  {
-    auto ite = m->edges.begin();
-    while(ite != m->edges.end()) {
-      BDS_Edge *e = *ite;
-      if(e->g && e->numfaces() == 2) {
-        BDS_Point *oface[2];
-        e->oppositeof(oface);
-        if(oface[0]->iD < 0) {
-          recur_tag(e->faces(1), &CLASS_F);
-          break;
-        }
-        else if(oface[1]->iD < 0) {
-          recur_tag(e->faces(0), &CLASS_F);
-          break;
-        }
-      }
-      ++ite;
-    }
-  }
+  colorExteriorTriangles(m, &CLASS_F, &CLASS_EXTERIOR, false, true);
 
   ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
@@ -1141,11 +1184,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   delete m;
 
-  gf->quadrangles.insert(gf->quadrangles.begin(), blQuads.begin(),
-                         blQuads.end());
-  gf->triangles.insert(gf->triangles.begin(), blTris.begin(), blTris.end());
-  gf->mesh_vertices.insert(gf->mesh_vertices.begin(), verts.begin(),
-                           verts.end());
+  insertBoundaryLayerElements(gf, blQuads, blTris, verts);
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 
@@ -1895,57 +1934,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     Msg::Info(":-) All edges recovered after %d iteration%s", RECUR_ITER,
               (RECUR_ITER > 1) ? "s" : "");
 
-  // look for a triangle that has a negative node and recursively tag all
-  // exterior triangles
-  {
-    auto itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      (*itt)->g = nullptr;
-      ++itt;
-    }
-    itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      BDS_Face *t = *itt;
-      if(t->deleted) {
-        // If triangle is deleted, it won't have the correct neighbours
-        // to tag recursively
-        ++itt;
-        continue;
-      }
-      BDS_Point *n[4];
-      if(t->getNodes(n)) {
-        if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
-          recur_tag(t, &CLASS_EXTERIOR);
-          break;
-        }
-      }
-      ++itt;
-    }
-  }
-
-  // now find an edge that has belongs to one of the exterior triangles
-  {
-    auto ite = m->edges.begin();
-    while(ite != m->edges.end()) {
-      BDS_Edge *edge = *ite;
-      if(edge->g && edge->numfaces() == 2) {
-        if(edge->faces(0)->g == &CLASS_EXTERIOR) {
-          recur_tag(edge->faces(1), &CLASS_F);
-          break;
-        }
-        else if(edge->faces(1)->g == &CLASS_EXTERIOR) {
-          recur_tag(edge->faces(0), &CLASS_F);
-          break;
-        }
-      }
-      ++ite;
-    }
-    auto itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      if((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = nullptr;
-      ++itt;
-    }
-  }
+  colorExteriorTriangles(m, &CLASS_F, &CLASS_EXTERIOR, true, false);
 
   pruneAndCleanupBDS(m, &CLASS_F);
 
@@ -2088,11 +2077,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     std::vector<MTriangle *> blTris;
     std::set<MVertex *, MVertexPtrLessThan> verts;
     modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
-    gf->quadrangles.insert(gf->quadrangles.begin(), blQuads.begin(),
-                           blQuads.end());
-    gf->triangles.insert(gf->triangles.begin(), blTris.begin(), blTris.end());
-    gf->mesh_vertices.insert(gf->mesh_vertices.begin(), verts.begin(),
-                             verts.end());
+    insertBoundaryLayerElements(gf, blQuads, blTris, verts);
   }
 
   if(algoDelaunay2D(gf) && !onlyInitialMesh)
