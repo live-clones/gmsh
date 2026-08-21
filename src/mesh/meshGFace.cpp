@@ -450,6 +450,19 @@ static void deleteUnusedVertices(GFace *gf)
   gf->mesh_vertices.swap(allverts);
 }
 
+// Write the two debug views of the BDS mesh, in real space and in parametric
+// space, as surface<tag>-<what>-real.pos and surface<tag>-<what>-param.pos.
+// Only the parametric view uses the face; outputScalarField ignores it for the
+// real one.
+static void debugViews(BDS_Mesh *m, GFace *gf, const char *what)
+{
+  char name[256];
+  snprintf(name, sizeof(name), "surface%d-%s-real.pos", gf->tag(), what);
+  outputScalarField(m->triangles, name, 0, gf);
+  snprintf(name, sizeof(name), "surface%d-%s-param.pos", gf->tag(), what);
+  outputScalarField(m->triangles, name, 1, gf);
+}
+
 // Delete the faces that were not tagged as belonging to the face, then the
 // edges left without any face, classifying the surviving edges and their
 // endpoints. Finally drop the four fake points of the enclosing box.
@@ -1378,13 +1391,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   initialTriangulation(gf, m, points, bbox, all_vertices, recoverMapInv,
                        replacementEdges);
 
-  if(debug && RECUR_ITER == 0) {
-    char name[245];
-    sprintf(name, "surface%d-initial-real.pos", gf->tag());
-    outputScalarField(m->triangles, name, 0, gf);
-    sprintf(name, "surface%d-initial-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1, gf);
-  }
+  if(debug && RECUR_ITER == 0) debugViews(m, gf, "initial");
 
   std::set<EdgeToRecover> edgesToRecover;
   std::set<EdgeToRecover> edgesNotRecovered;
@@ -1426,13 +1433,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   pruneAndCleanupBDS(m, &CLASS_F);
 
-  if(debug) {
-    char name[245];
-    sprintf(name, "surface%d-recovered-real.pos", gf->tag());
-    outputScalarField(m->triangles, name, 0, gf);
-    sprintf(name, "surface%d-recovered-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1, gf);
-  }
+  if(debug) debugViews(m, gf, "recovered");
 
   if(1) {
     auto itt = m->triangles.begin();
@@ -1917,13 +1918,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   BDS_GeomEntity CLASS_E(1, 1);
   BDS_GeomEntity CLASS_EXTERIOR(3, 2);
 
-  if(debug) {
-    char name[245];
-    sprintf(name, "surface%d-initial-real.pos", gf->tag());
-    outputScalarField(m->triangles, name, 0, gf);
-    sprintf(name, "surface%d-initial-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1, gf);
-  }
+  if(debug) debugViews(m, gf, "initial");
 
   bool _fatallyFailed;
 
@@ -2042,13 +2037,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   pruneAndCleanupBDS(m, &CLASS_F);
 
-  if(debug) {
-    char name[245];
-    sprintf(name, "surface%d-recovered-real.pos", gf->tag());
-    outputScalarField(m->triangles, name, 0, gf);
-    sprintf(name, "surface%d-recovered-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1, gf);
-  }
+  if(debug) debugViews(m, gf, "recovered");
 
   if(algoDelaunay2D(gf)) {
     // Call this function to untangle elements in Cartesian space
@@ -2066,36 +2055,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true, nullptr,
                   &recoverMap, &true_boundary);
-    if(debug) {
-      char name[245];
-      sprintf(name, "surface%d-phase1-real.pos", gf->tag());
-      outputScalarField(m->triangles, name, 0, gf);
-      sprintf(name, "surface%d-phase1-param.pos", gf->tag());
-      outputScalarField(m->triangles, name, 1, gf);
-    }
-    if(debug) {
-      char name[245];
-      sprintf(name, "surface%d-phase2-real.pos", gf->tag());
-      outputScalarField(m->triangles, name, 0, gf);
-      sprintf(name, "surface%d-phase2-param.pos", gf->tag());
-      outputScalarField(m->triangles, name, 1, gf);
-    }
+    if(debug) debugViews(m, gf, "phase1");
+    if(debug) debugViews(m, gf, "phase2");
     refineMeshBDS(gf, *m, -CTX::instance()->mesh.refineSteps, false, nullptr,
                   &recoverMap, &true_boundary);
-    if(debug) {
-      char name[245];
-      sprintf(name, "surface%d-phase3-real.pos", gf->tag());
-      outputScalarField(m->triangles, name, 0);
-      sprintf(name, "surface%d-phase3-param.pos", gf->tag());
-      outputScalarField(m->triangles, name, 1, gf);
-    }
-    if(debug) {
-      char name[245];
-      sprintf(name, "surface%d-phase4-real.pos", gf->tag());
-      outputScalarField(m->triangles, name, 0);
-      sprintf(name, "surface%d-phase4-param.pos", gf->tag());
-      outputScalarField(m->triangles, name, 1, gf);
-    }
+    if(debug) debugViews(m, gf, "phase3");
+    if(debug) debugViews(m, gf, "phase4");
 
     if(gf->meshStatistics.status == GFace::FAILED) {
       // splitall
@@ -2162,13 +2127,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   // fill the small gmsh structures
   BDS2GMSH(m, gf, recoverMap);
 
-  if(debug) {
-    char name[245];
-    sprintf(name, "surface%d-final-real.pos", gf->tag());
-    outputScalarField(m->triangles, name, 0, gf);
-    sprintf(name, "surface%d-final-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1, gf);
-  }
+  if(debug) debugViews(m, gf, "final");
 
   bool infty =
     setupBackgroundMesh(gf, true, &equivalence, &parametricCoordinates);
