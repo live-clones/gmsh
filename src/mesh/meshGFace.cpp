@@ -783,7 +783,9 @@ static bool collectBoundaryNodes(
       if(fdeb != nullptr) fclose(fdeb);
       return false;
     }
-#pragma omp critical // degeneratedVertices is not thread safe
+    // degeneratedVertices is a global singleton with no locking of its own,
+    // so this loop is a serialization point for the parallel meshing of faces
+#pragma omp critical
     for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
       MVertex *v1 = (*ite)->lines[i]->getVertex(0);
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
@@ -2212,6 +2214,21 @@ static bool isMeshValid(GFace *gf)
   return false;
 }
 
+namespace {
+  // Restore a global meshing option when leaving the scope. meshGFace has to
+  // change Mesh.Algorithm while it meshes a face; doing it by hand leaks the
+  // changed value if the mesher throws, and the 2D meshing loop in
+  // Generator.cpp does catch exceptions and carry on, so the leak is
+  // reachable.
+  struct RestoreOptionAtEndOfScope {
+    int *_option, _initial;
+    RestoreOptionAtEndOfScope(int *option) : _option(option), _initial(*option)
+    {
+    }
+    ~RestoreOptionAtEndOfScope() { *_option = _initial; }
+  };
+} // namespace
+
 void meshGFace::operator()(GFace *gf, bool print)
 {
   gf->model()->setCurrentMeshEntity(gf);
@@ -2252,13 +2269,26 @@ void meshGFace::operator()(GFace *gf, bool print)
                    gf->getMeshMaster()->tag());
   }
 
-  /* The ALGO_2D_QUAD_QUASI_STRUCT is using ALGO_2D_PACK_PRLGRMS
-   * to generate a initial quad-dominant mesh */
-  bool quadqs = false;
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-    quadqs = true;
+  // ALGO_2D_QUAD_QUASI_STRUCT generates its initial quad-dominant mesh with
+  // ALGO_2D_PACK_PRLGRMS, and says so by changing the global option for the
+  // duration of the call: both generators and a good deal of the code they
+  // call read Mesh.Algorithm directly rather than the algorithm of the face.
+  //
+  // In practice this never fires when meshing through GenerateMesh(): it
+  // builds a QuadqsContextUpdater before meshing anything, and that already
+  // moves Mesh.Algorithm off QUAD_QUASI_STRUCT. Kept for the paths that reach
+  // a face some other way, but with the restore tied to the scope: doing it by
+  // hand at the end of the function leaked the changed value whenever the
+  // mesher threw.
+  //
+  // Note that this is not thread safe either way. Faces are meshed in parallel
+  // (the "omp parallel for" over faces in Generator.cpp), so a thread changing
+  // the option races with the others reading it. Passing the effective
+  // algorithm down instead would fix that, but it reaches well beyond this
+  // file.
+  RestoreOptionAtEndOfScope restoreAlgo2d(&CTX::instance()->mesh.algo2d);
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
     CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
-  }
 
   const char *algo = "Unknown";
 
@@ -2339,6 +2369,4 @@ void meshGFace::operator()(GFace *gf, bool print)
     (*this)(gf, print);
     gf->unsetMeshingAlgo();
   }
-
-  if(quadqs) CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
 }
