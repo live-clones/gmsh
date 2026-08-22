@@ -333,7 +333,9 @@ if(NOT HAVE_64BIT_SIZE_T AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 if(ENABLE_OPENMP)
-  # special cases handled first:
+  find_package(OpenMP)
+  # special cases on macOS are handled first; then the general case; then the
+  # specific static linking for our official builds on Linux:
   if(APPLE AND EXISTS "/opt/local/lib/libomp")
     # official Apple compiler with macports' libomp
     set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
@@ -356,6 +358,12 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/homebrew/opt/libomp/lib -lomp")
+  elseif(OpenMP_FOUND OR OPENMP_FOUND)
+    # general case
+    set_config_option(HAVE_OPENMP "OpenMP")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND EXISTS "/usr/local/lib64/libgomp.a")
     # custom static openmp for official linux builds
     set_config_option(HAVE_OPENMP "OpenMP[static]")
@@ -363,14 +371,7 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
     list(APPEND EXTERNAL_LIBRARIES "/usr/local/lib64/libgomp.a")
   else()
-    # general case:
-    find_package(OpenMP)
-    if(OpenMP_FOUND OR OPENMP_FOUND)
-      set_config_option(HAVE_OPENMP "OpenMP")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-      list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
-    endif()
+    message(WARNING "Could not find suitable OpenMP configuration")
   endif()
 endif()
 
@@ -398,7 +399,7 @@ if(ENABLE_COVERAGE)
     message(FATAL_ERROR "ENABLE_COVERAGE requires GCC or Clang")
   endif()
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(STATUS "Warning: CMAKE_BUILD_TYPE=Debug is recommended for "
+    message(WARNING "CMAKE_BUILD_TYPE=Debug is recommended for "
             "accurate counters when ENABLE_COVERAGE is on")
   endif()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
