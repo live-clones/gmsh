@@ -681,6 +681,13 @@ GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim,
 /* Unpartition the mesh of the current model. */
 GMSH_API void gmshModelMeshUnpartition(int * ierr);
 
+/* Write selected partitions of the mesh into a single file `fileName'. The
+ * export format is MSH4. The `partitions' vector specifies which partition
+ * numbers to include. */
+GMSH_API void gmshModelMeshWritePartitions(const char * fileName,
+                                           const int * partitions, const size_t partitions_n,
+                                           int * ierr);
+
 /* Optimize the mesh of the current model using `method' (empty for default
  * tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
  * direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
