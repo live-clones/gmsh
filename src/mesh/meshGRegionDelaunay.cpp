@@ -867,6 +867,48 @@ static void refineRegionMTet4(GRegion *gr, int maxIter,
                               const std::set<MFace, MFaceLessThan> &allEmbeddedFaces,
                               edgeContainerB &allEmbeddedEdges);
 
+GFace *getSharedFace(GRegion *r1, GRegion *r2)
+{
+  std::vector<GFace *> f1 = r1->faces();
+  std::vector<GFace *> f2 = r2->faces();
+  for(GFace *f : f1) {
+    if(std::find(f2.begin(), f2.end(), f) != f2.end()) return f;
+  }
+  return nullptr;
+}
+
+bool insertVertexInFaceTriangulation(GFace *gf, MVertex *v)
+{
+  double xyz[3] = {v->x(), v->y(), v->z()};
+  const double eps = 1e-8;
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    MTriangle *t = gf->triangles[i];
+    double uvw[3];
+    t->xyz2uvw(xyz, uvw);
+    if(uvw[0] < -eps || uvw[1] < -eps || uvw[0] + uvw[1] > 1 + eps) continue;
+
+    MVertex *a = t->getVertex(0), *b = t->getVertex(1), *c = t->getVertex(2);
+    // xyz2uvw only checks the in-plane projection; also check that v
+    // actually lies close to the plane of this specific triangle.
+    double rebuilt[3] = {
+      a->x() + uvw[0] * (b->x() - a->x()) + uvw[1] * (c->x() - a->x()),
+      a->y() + uvw[0] * (b->y() - a->y()) + uvw[1] * (c->y() - a->y()),
+      a->z() + uvw[0] * (b->z() - a->z()) + uvw[1] * (c->z() - a->z())};
+    double dx = rebuilt[0] - xyz[0], dy = rebuilt[1] - xyz[1],
+           dz = rebuilt[2] - xyz[2];
+    double tol = eps * t->maxEdge();
+    if(dx * dx + dy * dy + dz * dz > tol * tol) continue;
+
+    gf->triangles.erase(gf->triangles.begin() + i);
+    delete t;
+    gf->triangles.push_back(new MTriangle(a, b, v));
+    gf->triangles.push_back(new MTriangle(b, c, v));
+    gf->triangles.push_back(new MTriangle(c, a, v));
+    return true;
+  }
+  return false;
+}
+
 void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
                                  splitQuadRecovery *sqr)
 {
@@ -894,6 +936,18 @@ void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
   fs_cont search;
   buildFaceSearchStructure(gr->model(), search, true); // only triangles
   if(sqr) search.insert(sqr->getTri().begin(), sqr->getTri().end());
+
+  // Track every region a Steiner point gets claimed by below: a point
+  // claimed by more than one region during this pass is not a genuine
+  // interior point of either one -- it sits exactly on the interface
+  // between them. This happens because meshGRegionBoundaryRecovery.cpp
+  // unconditionally calls TetGen's suppresssteinerpoints(), which can
+  // reclassify a facet-constrained Steiner point as a free interior point
+  // (without moving its coordinates) once it determines the facet no
+  // longer structurally needs it as a constraint -- TetGen has no notion
+  // that this "facet" is actually a preserved interface between two of the
+  // group's regions. See the follow-up pass after this loop.
+  std::map<MVertex *, std::set<GRegion *>> multiRegionVertices;
 
   for(auto it = allTets.begin(); it != allTets.end(); ++it) {
     if(!(*it)->onWhat()) {
@@ -925,6 +979,8 @@ void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
                          oldMV.end());
               myGRegion->addMeshVertex(*itv);
               (*itv)->setEntity(myGRegion);
+              multiRegionVertices[*itv].insert(static_cast<GRegion *>(oldGe));
+              multiRegionVertices[*itv].insert(myGRegion);
             }
           }
         }
@@ -937,6 +993,41 @@ void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
     }
   }
   search.clear();
+
+  for(auto &pr : multiRegionVertices) {
+    MVertex *v = pr.first;
+    std::set<GRegion *> &claimants = pr.second;
+    if(claimants.size() != 2) {
+      Msg::Warning("Mesh vertex %lu was claimed by %zu regions while "
+                   "classifying a multi-domain mesh; leaving it as is",
+                   v->getNum(), claimants.size());
+      continue;
+    }
+    auto cit = claimants.begin();
+    GRegion *r1 = *cit++;
+    GRegion *r2 = *cit;
+    GFace *shared = getSharedFace(r1, r2);
+    if(!shared) {
+      Msg::Warning("Mesh vertex %lu is shared between regions %d and %d "
+                   "with no common surface; leaving it classified on a "
+                   "region",
+                   v->getNum(), r1->tag(), r2->tag());
+      continue;
+    }
+    if(!insertVertexInFaceTriangulation(shared, v)) {
+      Msg::Warning("Could not locate a triangle of surface %d containing "
+                   "mesh vertex %lu; leaving it classified on a region",
+                   shared->tag(), v->getNum());
+      continue;
+    }
+    GEntity *currentGe = v->onWhat();
+    if(currentGe) {
+      std::vector<MVertex *> &curMV = currentGe->mesh_vertices;
+      curMV.erase(std::remove(curMV.begin(), curMV.end(), v), curMV.end());
+    }
+    shared->addMeshVertex(v);
+    v->setEntity(shared);
+  }
 
   for(MTet4 *t : allTets) {
     if(!t->isDeleted() && t->onWhat())

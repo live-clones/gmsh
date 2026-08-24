@@ -42,6 +42,15 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
                                  splitQuadRecovery *sqr = nullptr);
 
+// find the GFace shared between two regions of the same group, if any
+GFace *getSharedFace(GRegion *r1, GRegion *r2);
+
+// locally re-triangulate gf to make v (known to lie in gf's geometric support,
+// e.g. exactly on a planar interface) a genuine triangle corner again: find the
+// triangle that contains it and split it into three, preserving orientation.
+// Returns false (no change made) if no containing triangle can be found
+bool insertVertexInFaceTriangulation(GFace *gf, MVertex *v);
+
 // improve the tetrahedra of a region by local mesh modifications
 void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm);
 

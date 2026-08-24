@@ -13,6 +13,8 @@
 
 #if defined(HAVE_MMG)
 
+#include <algorithm>
+#include <array>
 #include <set>
 #include <map>
 #include <vector>
@@ -23,6 +25,7 @@
 #include "MVertex.h"
 #include "BackgroundMeshTools.h"
 #include "Context.h"
+#include "meshGRegionDelaunayInsertion.h"
 
 extern "C" {
 #include <mmg/libmmg.h>
@@ -394,6 +397,32 @@ static void MMG2gmshGroup(std::vector<GRegion *> &regions, MMG5_pMesh mmg,
     if(it != mmg2gmsh.end()) kToMVertex[k] = it->second;
   }
 
+  // Mmg can overwrite a boundary vertex's smuggled ref (the original gmsh
+  // vertex number) with the region reference of an adjacent tetrahedron,
+  // for points sitting on an internal multi-material interface -- even
+  // though their position is preserved exactly. Fall back to matching by
+  // coordinate for anything the ref-based lookup above missed.
+  std::map<std::array<double, 3>, MVertex *> coordToGmsh;
+  for(auto &p : mmg2gmsh)
+    coordToGmsh[{p.second->x(), p.second->y(), p.second->z()}] = p.second;
+  for(int k = 1; k <= np; k++) {
+    if(kToMVertex.count(k)) continue;
+    auto cit = coordToGmsh.find({vx[k], vy[k], vz[k]});
+    if(cit != coordToGmsh.end()) kToMVertex[k] = cit->second;
+  }
+
+  // A vertex not recognized above as an existing boundary/interface vertex
+  // gets created fresh, attached to whichever region's tetrahedron uses it
+  // first below -- correct for a genuine new interior point, but Mmg can
+  // also return tetrahedra on both sides of an internal multi-material
+  // interface that all reference the very same (unrecognized) point index,
+  // for reasons not fully understood (observed even with every boundary
+  // triangle/vertex explicitly marked required in Mmg, and even though Mmg
+  // never allocates a new point there -- see the investigation notes on
+  // fix/mmg3d-multidomain). Track which regions end up claiming each
+  // region-classified vertex so such cases can be repaired below.
+  std::map<MVertex *, std::set<GRegion *>> multiRegionVertices;
+
   for(int k = 1; k <= ne; k++) {
     int v1mmg, v2mmg, v3mmg, v4mmg, ref;
     if(MMG3D_Get_tetrahedron(mmg, &v1mmg, &v2mmg, &v3mmg, &v4mmg, &ref,
@@ -427,14 +456,58 @@ static void MMG2gmshGroup(std::vector<GRegion *> &regions, MMG5_pMesh mmg,
       auto vit = kToMVertex.find(vmmg[j]);
       if(vit != kToMVertex.end()) {
         v[j] = vit->second;
-        continue;
       }
-      MVertex *nv = new MVertex(vx[vmmg[j]], vy[vmmg[j]], vz[vmmg[j]], gr);
-      gr->mesh_vertices.push_back(nv);
-      kToMVertex[vmmg[j]] = nv;
-      v[j] = nv;
+      else {
+        MVertex *nv = new MVertex(vx[vmmg[j]], vy[vmmg[j]], vz[vmmg[j]], gr);
+        gr->mesh_vertices.push_back(nv);
+        kToMVertex[vmmg[j]] = nv;
+        v[j] = nv;
+      }
+      // Vertices matched above are boundary vertices (dim 2) unless they
+      // were themselves created earlier in this same loop as a new,
+      // region-classified point (dim 3): only the latter can be a
+      // multi-region sharing case, an already-correct boundary vertex used
+      // by both regions' tetrahedra is normal and not touched here.
+      if(v[j]->onWhat() && v[j]->onWhat()->dim() == 3)
+        multiRegionVertices[v[j]].insert(gr);
     }
     gr->tetrahedra.push_back(new MTetrahedron(v[0], v[1], v[2], v[3]));
+  }
+
+  for(auto &pr : multiRegionVertices) {
+    MVertex *v = pr.first;
+    std::set<GRegion *> &claimants = pr.second;
+    if(claimants.size() < 2) continue;
+    if(claimants.size() != 2) {
+      Msg::Warning("Mesh vertex %lu was claimed by %zu regions in the "
+                   "combined MMG3D write-back; leaving it as is",
+                   v->getNum(), claimants.size());
+      continue;
+    }
+    auto cit = claimants.begin();
+    GRegion *r1 = *cit++;
+    GRegion *r2 = *cit;
+    GFace *shared = getSharedFace(r1, r2);
+    if(!shared) {
+      Msg::Warning("Mesh vertex %lu is shared between regions %d and %d "
+                   "with no common surface; leaving it classified on a "
+                   "region",
+                   v->getNum(), r1->tag(), r2->tag());
+      continue;
+    }
+    if(!insertVertexInFaceTriangulation(shared, v)) {
+      Msg::Warning("Could not locate a triangle of surface %d containing "
+                   "mesh vertex %lu; leaving it classified on a region",
+                   shared->tag(), v->getNum());
+      continue;
+    }
+    GEntity *currentGe = v->onWhat();
+    if(currentGe) {
+      std::vector<MVertex *> &curMV = currentGe->mesh_vertices;
+      curMV.erase(std::remove(curMV.begin(), curMV.end(), v), curMV.end());
+    }
+    shared->addMeshVertex(v);
+    v->setEntity(shared);
   }
 }
 
