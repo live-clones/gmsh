@@ -34,6 +34,7 @@
 #include "partitionVertex.h"
 #include "gmshSurface.h"
 #include "SmoothData.h"
+#include "VertexArray.h"
 #include "Context.h"
 #include "OS.h"
 #include "StringUtils.h"
@@ -72,8 +73,9 @@ GModel::GModel(const std::string &name)
   : _name(name), _visible(1), _elementOctree(nullptr), _geo_internals(nullptr),
     _occ_internals(nullptr), _acis_internals(nullptr),
     _parasolid_internals(nullptr), _fields(nullptr),
-    _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr),
-    lcCallback(nullptr)
+    _va_lines_batch_edges(nullptr), _va_lines_batch_faces(nullptr),
+    _va_lines_batch_regions(nullptr), _currentMeshEntity(nullptr),
+    _numPartitions(0), normals(nullptr), lcCallback(nullptr)
 {
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
@@ -108,6 +110,10 @@ GModel::~GModel()
     }
     if(!othervisible && list.size()) list.back()->setVisibility(1);
   }
+
+  delete _va_lines_batch_edges;
+  delete _va_lines_batch_faces;
+  delete _va_lines_batch_regions;
 
   destroy();
   deleteGEOInternals();
@@ -310,6 +316,12 @@ void GModel::deleteVertexArrays()
     (*it)->deleteVertexArrays();
   for(auto it = firstVertex(); it != lastVertex(); ++it)
     (*it)->deleteVertexArrays();
+  delete _va_lines_batch_edges;
+  _va_lines_batch_edges = nullptr;
+  delete _va_lines_batch_faces;
+  _va_lines_batch_faces = nullptr;
+  delete _va_lines_batch_regions;
+  _va_lines_batch_regions = nullptr;
 }
 
 void GModel::deleteGeometryVertexArrays()

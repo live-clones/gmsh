@@ -37,6 +37,7 @@ class discreteRegion;
 class MElementOctree;
 class overlapFace;
 class overlapRegion;
+class VertexArray;
 class partitionEdge;
 class partitionFace;
 class partitionRegion;
@@ -156,6 +157,14 @@ protected:
 
   // characteristic length (mesh size) fields
   FieldManager *_fields;
+
+  // every visible entity's va_lines (wireframe) merged into a single buffer
+  // per entity dimension, so it can be drawn with one glDrawArrays call
+  // instead of one per entity; rebuilt alongside the per-entity arrays in
+  // fillVertexArrays()
+  VertexArray *_va_lines_batch_edges;
+  VertexArray *_va_lines_batch_faces;
+  VertexArray *_va_lines_batch_regions;
 
   // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
@@ -347,6 +356,11 @@ public:
   void deleteVertexArrays();
   // delete the vertex arrays used for efficient geometry drawing
   void deleteGeometryVertexArrays();
+  // every visible entity's va_lines merged into one buffer per dimension
+  // (nullptr if not built, e.g. no entities or arrays not yet filled)
+  VertexArray *getEdgeLinesBatch() { return _va_lines_batch_edges; }
+  VertexArray *getFaceLinesBatch() { return _va_lines_batch_faces; }
+  VertexArray *getRegionLinesBatch() { return _va_lines_batch_regions; }
 
   // remove all mesh vertex associations to geometrical entities and remove
   // vertices from geometrical entities, then _associateEntityWithMeshVertices

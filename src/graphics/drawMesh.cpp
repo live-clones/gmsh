@@ -450,6 +450,50 @@ public:
   }
 };
 
+// Draw every visible entity's lines in one shot, using a va_lines merged by
+// GModel::fillVertexArrays() (getEdgeLinesBatch()/getFaceLinesBatch()/
+// getRegionLinesBatch()) -- replaces one glDrawArrays call per entity with a
+// single call. Per-vertex colors are baked in at build time (see
+// getColorByElement() in GModelVertexArrays.cpp) regardless of ColorCarousel,
+// so unless forceColor is set (a single broadcast color for everyone, e.g.
+// Mesh.SurfaceFaces/VolumeFaces forcing wireframe to one color) this always
+// uses the per-vertex color array -- unlike the per-entity drawArrays(),
+// which can broadcast a single per-entity color, that optimization doesn't
+// apply once multiple entities (each potentially a different color under
+// ColorCarousel 1/2) are merged into one buffer.
+// This is only valid for the normal render pass: entity-level picking
+// (GMSH_SELECT) still needs each entity drawn separately with its own
+// glPushName, and a selected entity's highlight color is redrawn
+// individually on top by the caller.
+static void drawBatchedArrays(VertexArray *va, GLint type, bool useNormalArray,
+                              int forceColor, unsigned int color)
+{
+  if(!va || !va->getNumVertices()) return;
+  bindVertexArrayVertices(va);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  if(useNormalArray) {
+    glEnable(GL_LIGHTING);
+    bindVertexArrayNormals(va);
+    glEnableClientState(GL_NORMAL_ARRAY);
+  }
+  else
+    glDisableClientState(GL_NORMAL_ARRAY);
+  if(forceColor) {
+    glDisableClientState(GL_COLOR_ARRAY);
+    glColor4ubv((GLubyte *)&color);
+  }
+  else {
+    bindVertexArrayColors(va);
+    glEnableClientState(GL_COLOR_ARRAY);
+  }
+  glDrawArrays(type, 0, va->getNumVertices());
+  unbindVertexArrayBuffers();
+  glDisable(GL_LIGHTING);
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+}
+
 // GEdge drawing routines
 
 class drawMeshGEdge {
@@ -473,8 +517,15 @@ public:
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    if(CTX::instance()->mesh.lines)
-      drawArrays(_ctx, e, e->va_lines, GL_LINES, false);
+    if(CTX::instance()->mesh.lines) {
+      // skip if already covered by the single batched draw call issued
+      // before this loop (see drawContext::drawMesh()); still draw
+      // individually during entity picking, and to redraw a selected
+      // entity's highlight color on top of the batch
+      bool batched = (_ctx->render_mode == drawContext::GMSH_RENDER &&
+                      !e->getSelection() && e->model()->getEdgeLinesBatch());
+      if(!batched) drawArrays(_ctx, e, e->va_lines, GL_LINES, false);
+    }
 
     if(CTX::instance()->mesh.lineLabels) drawElementLabels(_ctx, e, e->lines);
 
@@ -517,10 +568,23 @@ public:
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    drawArrays(_ctx, f, f->va_lines, GL_LINES,
-               CTX::instance()->mesh.light && CTX::instance()->mesh.lightLines,
-               CTX::instance()->mesh.surfaceFaces,
-               CTX::instance()->color.mesh.line);
+    {
+      // skip if already covered by the single batched draw call issued
+      // before the GFace loop (see drawContext::drawMesh()); still draw
+      // individually during entity picking. When forceColor is off,
+      // selection also forces an individual redraw so the highlight color
+      // shows on top of the batch -- but when forceColor is on (surfaces
+      // filled), the wireframe color is the same fixed color regardless of
+      // selection, so every face can stay batched.
+      bool forceColor = CTX::instance()->mesh.surfaceFaces;
+      bool batched = (_ctx->render_mode == drawContext::GMSH_RENDER &&
+                      (forceColor || !f->getSelection()) &&
+                      f->model()->getFaceLinesBatch());
+      if(!batched)
+        drawArrays(_ctx, f, f->va_lines, GL_LINES,
+                  CTX::instance()->mesh.light && CTX::instance()->mesh.lightLines,
+                  forceColor, CTX::instance()->color.mesh.line);
+    }
 
     if(CTX::instance()->mesh.lightTwoSide)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -598,10 +662,18 @@ public:
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    drawArrays(
-      _ctx, r, r->va_lines, GL_LINES,
-      CTX::instance()->mesh.light && (CTX::instance()->mesh.lightLines > 1),
-      CTX::instance()->mesh.volumeFaces, CTX::instance()->color.mesh.line);
+    {
+      // see the analogous comment in drawMeshGFace above
+      bool forceColor = CTX::instance()->mesh.volumeFaces;
+      bool batched = (_ctx->render_mode == drawContext::GMSH_RENDER &&
+                      (forceColor || !r->getSelection()) &&
+                      r->model()->getRegionLinesBatch());
+      if(!batched)
+        drawArrays(_ctx, r, r->va_lines, GL_LINES,
+                  CTX::instance()->mesh.light &&
+                    (CTX::instance()->mesh.lightLines > 1),
+                  forceColor, CTX::instance()->color.mesh.line);
+    }
 
     if(CTX::instance()->mesh.lightTwoSide)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -742,15 +814,31 @@ void drawContext::drawMesh()
       int status = m->getMeshStatus();
       if(status >= 0)
         std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
-      if(status >= 1)
+      if(status >= 1) {
+        if(CTX::instance()->mesh.lines && render_mode == GMSH_RENDER)
+          drawBatchedArrays(m->getEdgeLinesBatch(), GL_LINES, false, 0, 0);
         std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
+      }
       if(status >= 2) {
         beginFakeTransparency();
+        if(CTX::instance()->mesh.surfaceEdges && render_mode == GMSH_RENDER)
+          drawBatchedArrays(m->getFaceLinesBatch(), GL_LINES,
+                            CTX::instance()->mesh.light &&
+                              CTX::instance()->mesh.lightLines,
+                            CTX::instance()->mesh.surfaceFaces,
+                            CTX::instance()->color.mesh.line);
         std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
         endFakeTransparency();
       }
-      if(status >= 3)
+      if(status >= 3) {
+        if(CTX::instance()->mesh.volumeEdges && render_mode == GMSH_RENDER)
+          drawBatchedArrays(m->getRegionLinesBatch(), GL_LINES,
+                            CTX::instance()->mesh.light &&
+                              (CTX::instance()->mesh.lightLines > 1),
+                            CTX::instance()->mesh.volumeFaces,
+                            CTX::instance()->color.mesh.line);
         std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
+      }
     }
   }
 

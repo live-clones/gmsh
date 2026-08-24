@@ -457,8 +457,26 @@ bool GModel::fillVertexArrays()
 
   int status = getMeshStatus();
 
-  if(status >= 1 && CTX::instance()->mesh.changed & ENT_CURVE)
+  if(status >= 1 && CTX::instance()->mesh.changed & ENT_CURVE) {
     std::for_each(firstEdge(), lastEdge(), initMeshGEdge());
+
+    // merge every visible curve's va_lines into a single buffer, so the
+    // wireframe can be drawn with one glDrawArrays call instead of one per
+    // curve; per-entity va_lines are kept around for picking and for
+    // redrawing the (rare) currently-selected entity on top
+    delete _va_lines_batch_edges;
+    _va_lines_batch_edges = nullptr;
+    if(CTX::instance()->mesh.lines) {
+      int numVertices = 0;
+      for(auto it = firstEdge(); it != lastEdge(); ++it)
+        if((*it)->va_lines) numVertices += (*it)->va_lines->getNumVertices();
+      if(numVertices) {
+        _va_lines_batch_edges = new VertexArray(2, numVertices / 2);
+        for(auto it = firstEdge(); it != lastEdge(); ++it)
+          if((*it)->va_lines) _va_lines_batch_edges->merge((*it)->va_lines);
+      }
+    }
+  }
 
   if(status >= 2 && CTX::instance()->mesh.changed & ENT_SURFACE) {
     if(normals) delete normals;
@@ -466,9 +484,40 @@ bool GModel::fillVertexArrays()
     if(CTX::instance()->mesh.smoothNormals)
       std::for_each(firstFace(), lastFace(), initSmoothNormalsGFace());
     std::for_each(firstFace(), lastFace(), initMeshGFace());
+
+    // merge every visible face's va_lines (surface wireframe), same idea as
+    // for curves above
+    delete _va_lines_batch_faces;
+    _va_lines_batch_faces = nullptr;
+    if(CTX::instance()->mesh.surfaceEdges) {
+      int numVertices = 0;
+      for(auto it = firstFace(); it != lastFace(); ++it)
+        if((*it)->va_lines) numVertices += (*it)->va_lines->getNumVertices();
+      if(numVertices) {
+        _va_lines_batch_faces = new VertexArray(2, numVertices / 2);
+        for(auto it = firstFace(); it != lastFace(); ++it)
+          if((*it)->va_lines) _va_lines_batch_faces->merge((*it)->va_lines);
+      }
+    }
   }
 
-  if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
+  if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME) {
     std::for_each(firstRegion(), lastRegion(), initMeshGRegion());
+
+    // merge every visible region's va_lines (volume wireframe), same idea as
+    // for curves above
+    delete _va_lines_batch_regions;
+    _va_lines_batch_regions = nullptr;
+    if(CTX::instance()->mesh.volumeEdges) {
+      int numVertices = 0;
+      for(auto it = firstRegion(); it != lastRegion(); ++it)
+        if((*it)->va_lines) numVertices += (*it)->va_lines->getNumVertices();
+      if(numVertices) {
+        _va_lines_batch_regions = new VertexArray(2, numVertices / 2);
+        for(auto it = firstRegion(); it != lastRegion(); ++it)
+          if((*it)->va_lines) _va_lines_batch_regions->merge((*it)->va_lines);
+      }
+    }
+  }
   return true;
 }
