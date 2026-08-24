@@ -113,13 +113,20 @@ private:
   std::vector<MElement *> _element;
   // Vertex corresponding to each graph vertex in eptr
   std::vector<idx_t> _vertex;
+  // When _trackVertex is set, the entries of _vertex that get used are
+  // recorded, so that eraseVertex() can reset just those instead of sweeping
+  // the whole (mesh-sized) array. divideNonConnectedEntities() resets between
+  // every partition entity, which otherwise costs O(#entities x #nodes).
+  bool _trackVertex;
+  std::vector<idx_t> _usedVertex;
   // The partitions output from the partitioner, in an integer type independent
   // from METIS
   std::vector<int> _partition;
 
 public:
   Graph(GModel *model)
-    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _vwgt(nullptr)
+    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _trackVertex(false),
+      _vwgt(nullptr)
   {
   }
   ~Graph() { clear(); }
@@ -167,7 +174,12 @@ public:
     _vertex.resize(size, -1);
   }
   void adjncy(std::size_t i, idx_t adjncy) { _adjncy[i] = adjncy; };
-  void vertex(std::size_t i, idx_t vertex) { _vertex[i] = vertex; };
+  void vertex(std::size_t i, idx_t vertex)
+  {
+    _vertex[i] = vertex;
+    if(_trackVertex) _usedVertex.push_back((idx_t)i);
+  };
+  void trackVertex(bool track) { _trackVertex = track; };
   void partition(const std::vector<idx_t> &epart)
   {
     // converts into METIS-independent integer type
@@ -189,7 +201,14 @@ public:
   }
   void eraseVertex()
   {
-    for(std::size_t i = 0; i < _vertex.size(); i++) _vertex[i] = -1;
+    if(_trackVertex) {
+      for(std::size_t i = 0; i < _usedVertex.size(); i++)
+        _vertex[_usedVertex[i]] = -1;
+      _usedVertex.clear();
+    }
+    else {
+      for(std::size_t i = 0; i < _vertex.size(); i++) _vertex[i] = -1;
+    }
   }
   std::vector<std::set<MElement *, MElementPtrLessThan> >
   getBoundaryElements(idx_t size = 0)
@@ -930,6 +949,26 @@ public:
   bool empty() const { return _owner.empty(); }
 };
 
+// The per-entity graphs below are reused from one partition entity to the
+// next, so they only need to be as large as the largest single entity, not as
+// large as the whole mesh: sizing them from the model made every dimension
+// allocate and zero a mesh-sized eind array.
+template <class ENTITY, class ITERATOR>
+static void maxEntitySize(ITERATOR it_beg, ITERATOR it_end, int geomType,
+                          std::size_t &maxElements, std::size_t &maxEind)
+{
+  maxElements = 0;
+  maxEind = 0;
+  for(ITERATOR it = it_beg; it != it_end; ++it) {
+    if((*it)->geomType() != geomType) continue;
+    std::size_t ne = (*it)->getNumMeshElements(), eind = 0;
+    for(std::size_t i = 0; i < ne; i++)
+      eind += (*it)->getMeshElement(i)->getNumPrimaryVertices();
+    maxElements = std::max(maxElements, ne);
+    maxEind = std::max(maxEind, eind);
+  }
+}
+
 static bool
 divideNonConnectedEntities(GModel *model, int dim,
                            std::set<GRegion *, GEntityPtrLessThan> &regions,
@@ -1027,15 +1066,18 @@ divideNonConnectedEntities(GModel *model, int dim,
   if(dim < 0 || dim == 1) {
     // We build a graph
     Graph graph(model);
-    graph.ne(model->getNumMeshElements(1));
+    std::size_t maxElements = 0, maxEind = 0;
+    maxEntitySize<GEdge>(edges.begin(), edges.end(), GEntity::PartitionCurve, maxElements, maxEind);
+    graph.ne(maxElements);
     graph.nn(model->getNumMeshVertices(1));
     graph.dim(model->getMeshDim());
-    graph.elementResize(graph.ne());
+    graph.elementResize(maxElements);
     graph.vertexResize(model->getMaxVertexNumber());
-    graph.eptrResize(graph.ne() + 1);
+    graph.eptrResize(maxElements + 1);
     graph.eptr(0, 0);
-    std::size_t eindSize = getSizeOfEind(model);
-    graph.eindResize(eindSize);
+    graph.eindResize(maxEind);
+    // reset only the entries actually used by each entity
+    graph.trackVertex(true);
 
     int elementaryNumber = model->getMaxElementaryNumber(1);
 
@@ -1157,15 +1199,18 @@ divideNonConnectedEntities(GModel *model, int dim,
   if(dim < 0 || dim == 2) {
     // We build a graph
     Graph graph(model);
-    graph.ne(model->getNumMeshElements(2));
+    std::size_t maxElements = 0, maxEind = 0;
+    maxEntitySize<GFace>(faces.begin(), faces.end(), GEntity::PartitionSurface, maxElements, maxEind);
+    graph.ne(maxElements);
     graph.nn(model->getNumMeshVertices(2));
     graph.dim(model->getMeshDim());
-    graph.elementResize(graph.ne());
+    graph.elementResize(maxElements);
     graph.vertexResize(model->getMaxVertexNumber());
-    graph.eptrResize(graph.ne() + 1);
+    graph.eptrResize(maxElements + 1);
     graph.eptr(0, 0);
-    std::size_t eindSize = getSizeOfEind(model);
-    graph.eindResize(eindSize);
+    graph.eindResize(maxEind);
+    // reset only the entries actually used by each entity
+    graph.trackVertex(true);
 
     int elementaryNumber = model->getMaxElementaryNumber(2);
 
@@ -1290,15 +1335,18 @@ divideNonConnectedEntities(GModel *model, int dim,
   if(dim < 0 || dim == 3) {
     // We build a graph
     Graph graph(model);
-    graph.ne(model->getNumMeshElements(3));
+    std::size_t maxElements = 0, maxEind = 0;
+    maxEntitySize<GRegion>(regions.begin(), regions.end(), GEntity::PartitionVolume, maxElements, maxEind);
+    graph.ne(maxElements);
     graph.nn(model->getNumMeshVertices(3));
     graph.dim(model->getMeshDim());
-    graph.elementResize(graph.ne());
+    graph.elementResize(maxElements);
     graph.vertexResize(model->getMaxVertexNumber());
-    graph.eptrResize(graph.ne() + 1);
+    graph.eptrResize(maxElements + 1);
     graph.eptr(0, 0);
-    std::size_t eindSize = getSizeOfEind(model);
-    graph.eindResize(eindSize);
+    graph.eindResize(maxEind);
+    // reset only the entries actually used by each entity
+    graph.trackVertex(true);
 
     int elementaryNumber = model->getMaxElementaryNumber(3);
 

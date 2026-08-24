@@ -33,8 +33,10 @@ private:
   // to change once a mesh has been generated, unless the mesh is explicitly
   // renumbered)
   std::size_t _num;
-  // the number of the mesh partition the element belongs to
-  short _partition;
+  // the number of the mesh partition the element belongs to (this used to be a
+  // short, which silently overflowed above 32767 partitions; widening it is
+  // free, as the bytes were padding)
+  int _partition;
   // a visibility flag
   char _visible;
 
@@ -88,7 +90,7 @@ public:
 
   // get/set the partition to which the element belongs
   virtual int getPartition() const { return _partition; }
-  virtual void setPartition(int num) { _partition = (short)num; }
+  virtual void setPartition(int num) { _partition = num; }
 
   // get/set the visibility flag
   virtual char getVisibility() const;
