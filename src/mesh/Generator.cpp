@@ -735,7 +735,10 @@ static void Mesh2D(GModel *m)
       }
     }
 
-    OptimizeMesh(m, "OptimizeQuads");
+    if(CTX::instance()->mesh.quadqsCleanupMethod == 0)
+      OptimizeMesh(m, "OptimizeQuads");
+    else if(CTX::instance()->mesh.quadqsCleanupMethod == 1)
+      OptimizeMesh(m, "OptimizeQuadsFast");
     if(debug) m->writeMSH("opti4.msh");
 
     for(GFace *gf : m->getFaces()) {
@@ -963,7 +966,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
-     how != "OptimizeQuads" &&
+     how != "OptimizeQuads" && how != "OptimizeQuadsFast" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
      how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
@@ -1025,26 +1028,33 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
     }
 #endif
   }
-  else if(how == "OptimizeQuads") {
+  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast") {
 #if defined(HAVE_QUADOPTIMIZER)
     QuadOptimizer::SmallCavityOptimizerOptions options;
+    options.fastInteractiveCleanUp = how == "OptimizeQuadsFast";
+    if(options.fastInteractiveCleanUp)
+      options.postTopologyNeighborSmoothingPasses = 1;
     options.verbose = Msg::GetVerbosity() > 4 ? 1 : 0;
     const QuadOptimizer::AllFacesOptimizerResult result =
       QuadOptimizer::optimizeSmallQuadCavitiesAllFaces(options);
     if(!result.success) {
-      Msg::Error("OptimizeQuads failed");
+      Msg::Error("%s failed", how.c_str());
     }
     else {
-      Msg::Info("OptimizeQuads: %zu faces, %zu topology changes, absolute "
-                "violations %zu -> %zu, preferred violations %zu -> %zu",
+      Msg::Info("%s: %zu faces, %zu topology changes, bad "
+                "elements %zu -> %zu, absolute violations %zu -> %zu, "
+                "preferred violations %zu -> %zu",
+                how.c_str(),
                 result.facesWithQuadrangles, result.acceptedCavities,
+                result.initialObjective.absoluteBadElementCount,
+                result.finalObjective.absoluteBadElementCount,
                 result.initialObjective.absoluteViolationCount,
                 result.finalObjective.absoluteViolationCount,
                 result.initialObjective.preferredViolationCount,
                 result.finalObjective.preferredViolationCount);
     }
 #else
-    Msg::Error("OptimizeQuads requires QUADOPTIMIZER");
+    Msg::Error("%s requires QUADOPTIMIZER", how.c_str());
 #endif
   }
   else if(how == "MesquiteImprove2D") {

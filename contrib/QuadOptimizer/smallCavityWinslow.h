@@ -35,6 +35,13 @@ namespace QuadOptimizer {
     double minimumJacobian = 0.;
   };
 
+  // Linear-time initializer for interactive CleanUp. The boundary stays fixed
+  // and the function rejects folded parametric quadrangles.
+  GMSH_API bool initializeSmallQuadCavityHarmonic(
+    std::vector<std::array<double, 2> > &parametricPoints,
+    std::size_t boundaryVertexCount,
+    const std::vector<std::array<std::size_t, 4> > &quadrangles);
+
   // Optimize a quadrangulated topological disk in a two-dimensional surface
   // parameterization. Vertices [0, boundaryVertexCount) are fixed. Only the
   // 2 coordinates of the remaining (small number of) interior vertices are

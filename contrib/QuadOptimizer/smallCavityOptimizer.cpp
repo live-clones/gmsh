@@ -18,10 +18,12 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <limits>
 #include <map>
+#include <queue>
 #include <set>
 #include <unordered_map>
 #include <utility>
@@ -40,8 +42,30 @@ namespace QuadOptimizer {
     using ConnectivitySignature =
       std::vector<std::array<std::size_t, 4> >;
     using Adjacency = std::unordered_map<MVertex *, std::vector<MElement *> >;
+    using Edge = std::pair<MVertex *, MVertex *>;
 
-    enum class CavityKind { Node, Edge, Triangle, Quadrangle };
+    Edge canonicalEdge(MVertex *a, MVertex *b)
+    {
+      if(std::less<MVertex *>()(b, a)) std::swap(a, b);
+      return {a, b};
+    }
+
+    enum class CavityKind {
+      Node,
+      Edge,
+      Triangle,
+      Quadrangle,
+      CleanUpConnectivity,
+      CleanUpBoundary,
+      CleanUpShape,
+      CleanUpSize
+    };
+
+    struct ValenceObjective {
+      std::size_t severeCount = 0;
+      std::size_t irregularCount = 0;
+      double penalty = 0.;
+    };
 
     struct CavitySeed {
       GFaceMeshPatch patch;
@@ -49,6 +73,13 @@ namespace QuadOptimizer {
       bool alwaysTryTopology = false;
       CavityKind kind = CavityKind::Node;
       SpecificationObjective objective;
+      ValenceObjective valence;
+      bool flexibleInteriorCount = false;
+      // Cached from the face half-edge topology when the cavity is built.
+      // Candidate ranking is deliberately independent of a subsequent scan
+      // over every element of the GFace.
+      std::vector<std::size_t> boundaryOutsideQuadDegree;
+      std::vector<std::size_t> boundaryIdealQuadDegree;
     };
 
     struct DiamondSeed {
@@ -68,6 +99,8 @@ namespace QuadOptimizer {
     struct SizeScore {
       bool admissible = false;
       double meanSquaredLogRatio = std::numeric_limits<double>::infinity();
+      double minimumRatio = std::numeric_limits<double>::infinity();
+      double maximumRatio = 0.;
     };
 
     struct Candidate {
@@ -78,6 +111,7 @@ namespace QuadOptimizer {
       std::vector<std::size_t> interiorAssignment;
       SpecificationObjective objective;
       double sizeError = std::numeric_limits<double>::infinity();
+      ValenceObjective valence;
     };
 
     std::vector<MElement *> surfaceElements(GFace *face)
@@ -89,6 +123,221 @@ namespace QuadOptimizer {
         elements.push_back(quadrangle);
       return elements;
     }
+
+    // Mutable side-car half-edge topology for a single manifold GFace. Gmsh
+    // keeps its public surface mesh in triangle/quadrangle vectors; this index
+    // gives CleanUp constant-time element twins and vertex stars without
+    // changing that storage. Accepted cavity diffs update only the removed and
+    // inserted elements.
+    class FaceHalfEdgeTopology {
+      static constexpr std::size_t invalid =
+        std::numeric_limits<std::size_t>::max();
+
+      struct HalfEdge {
+        MVertex *origin = nullptr;
+        MVertex *destination = nullptr;
+        MElement *element = nullptr;
+        std::size_t next = invalid;
+        std::size_t previous = invalid;
+        std::size_t twin = invalid;
+        bool active = false;
+      };
+
+      std::vector<HalfEdge> _halfEdges;
+      std::unordered_map<MElement *, std::vector<std::size_t> >
+        _elementHalfEdges;
+      std::unordered_map<MVertex *, std::vector<std::size_t> > _outgoing;
+      std::map<Edge, std::vector<std::size_t> > _edgeHalfEdges;
+      std::set<MElement *> _elements;
+      bool _manifold = true;
+
+      void compactEdge(const Edge &edge)
+      {
+        auto found = _edgeHalfEdges.find(edge);
+        if(found == _edgeHalfEdges.end()) return;
+        auto &indices = found->second;
+        indices.erase(std::remove_if(indices.begin(), indices.end(),
+                                     [&](std::size_t index) {
+                                       return index >= _halfEdges.size() ||
+                                              !_halfEdges[index].active;
+                                     }),
+                      indices.end());
+        if(indices.empty()) _edgeHalfEdges.erase(found);
+      }
+
+      void compactOutgoing(MVertex *vertex)
+      {
+        auto found = _outgoing.find(vertex);
+        if(found == _outgoing.end()) return;
+        auto &indices = found->second;
+        indices.erase(std::remove_if(indices.begin(), indices.end(),
+                                     [&](std::size_t index) {
+                                       return index >= _halfEdges.size() ||
+                                              !_halfEdges[index].active;
+                                     }),
+                      indices.end());
+        if(indices.empty()) _outgoing.erase(found);
+      }
+
+    public:
+      FaceHalfEdgeTopology() = default;
+
+      explicit FaceHalfEdgeTopology(const std::vector<MElement *> &elements)
+      {
+        for(MElement *element : elements) addElement(element);
+      }
+
+      bool manifold() const { return _manifold; }
+
+      bool addElement(MElement *element)
+      {
+        if(!element || _elementHalfEdges.find(element) !=
+                         _elementHalfEdges.end())
+          return false;
+        const std::size_t count = element->getNumPrimaryVertices();
+        if(count != 3 && count != 4) return false;
+        const std::size_t first = _halfEdges.size();
+        std::vector<std::size_t> indices(count);
+        for(std::size_t i = 0; i < count; ++i) {
+          const std::size_t index = first + i;
+          indices[i] = index;
+          HalfEdge halfEdge;
+          halfEdge.origin = element->getVertex(static_cast<int>(i));
+          halfEdge.destination =
+            element->getVertex(static_cast<int>((i + 1) % count));
+          halfEdge.element = element;
+          halfEdge.next = first + (i + 1) % count;
+          halfEdge.previous = first + (i + count - 1) % count;
+          halfEdge.active = true;
+          _halfEdges.push_back(halfEdge);
+        }
+        _elementHalfEdges[element] = indices;
+        _elements.insert(element);
+        for(const std::size_t index : indices) {
+          HalfEdge &halfEdge = _halfEdges[index];
+          _outgoing[halfEdge.origin].push_back(index);
+          const Edge edge =
+            canonicalEdge(halfEdge.origin, halfEdge.destination);
+          compactEdge(edge);
+          auto &incidences = _edgeHalfEdges[edge];
+          if(incidences.size() == 1) {
+            halfEdge.twin = incidences.front();
+            _halfEdges[incidences.front()].twin = index;
+          }
+          else if(!incidences.empty()) {
+            // More than two incident surface elements: CleanUp assumes and
+            // exploits a manifold GFace, so keep the index diagnosable.
+            _manifold = false;
+          }
+          incidences.push_back(index);
+        }
+        return true;
+      }
+
+      bool removeElement(MElement *element)
+      {
+        const auto found = _elementHalfEdges.find(element);
+        if(found == _elementHalfEdges.end()) return false;
+        std::vector<Edge> touchedEdges;
+        std::vector<MVertex *> touchedVertices;
+        for(const std::size_t index : found->second) {
+          HalfEdge &halfEdge = _halfEdges[index];
+          if(!halfEdge.active) continue;
+          touchedEdges.push_back(
+            canonicalEdge(halfEdge.origin, halfEdge.destination));
+          touchedVertices.push_back(halfEdge.origin);
+          if(halfEdge.twin != invalid &&
+             halfEdge.twin < _halfEdges.size() &&
+             _halfEdges[halfEdge.twin].active)
+            _halfEdges[halfEdge.twin].twin = invalid;
+          halfEdge.twin = invalid;
+          halfEdge.active = false;
+        }
+        _elementHalfEdges.erase(found);
+        _elements.erase(element);
+        for(const Edge &edge : touchedEdges) compactEdge(edge);
+        for(MVertex *vertex : touchedVertices) compactOutgoing(vertex);
+        return true;
+      }
+
+      bool replace(const std::vector<MElement *> &removed,
+                   const std::vector<MElement *> &inserted)
+      {
+        bool ok = true;
+        for(MElement *element : removed) ok = removeElement(element) && ok;
+        for(MElement *element : inserted) ok = addElement(element) && ok;
+        return ok && _manifold;
+      }
+
+      std::vector<MElement *> elements() const
+      {
+        return {_elements.begin(), _elements.end()};
+      }
+
+      std::vector<MVertex *> vertices() const
+      {
+        std::vector<MVertex *> result;
+        result.reserve(_outgoing.size());
+        for(const auto &entry : _outgoing)
+          if(!entry.second.empty()) result.push_back(entry.first);
+        return result;
+      }
+
+      std::vector<MElement *> incidentElements(MVertex *vertex) const
+      {
+        std::vector<MElement *> result;
+        const auto found = _outgoing.find(vertex);
+        if(found == _outgoing.end()) return result;
+        result.reserve(found->second.size());
+        for(const std::size_t index : found->second)
+          if(index < _halfEdges.size() && _halfEdges[index].active)
+            result.push_back(_halfEdges[index].element);
+        return result;
+      }
+
+      std::size_t quadDegree(MVertex *vertex) const
+      {
+        std::size_t degree = 0;
+        const auto found = _outgoing.find(vertex);
+        if(found == _outgoing.end()) return degree;
+        for(const std::size_t index : found->second)
+          if(index < _halfEdges.size() && _halfEdges[index].active &&
+             _halfEdges[index].element->getNumPrimaryVertices() == 4)
+            ++degree;
+        return degree;
+      }
+
+      std::vector<MElement *> neighbors(MElement *element) const
+      {
+        std::vector<MElement *> result;
+        const auto found = _elementHalfEdges.find(element);
+        if(found == _elementHalfEdges.end()) return result;
+        for(const std::size_t index : found->second) {
+          if(index >= _halfEdges.size() || !_halfEdges[index].active)
+            continue;
+          const std::size_t twin = _halfEdges[index].twin;
+          if(twin != invalid && twin < _halfEdges.size() &&
+             _halfEdges[twin].active)
+            result.push_back(_halfEdges[twin].element);
+        }
+        return result;
+      }
+
+      std::vector<std::pair<Edge, std::vector<MElement *> > > edges() const
+      {
+        std::vector<std::pair<Edge, std::vector<MElement *> > > result;
+        result.reserve(_edgeHalfEdges.size());
+        for(const auto &entry : _edgeHalfEdges) {
+          std::vector<MElement *> elements;
+          elements.reserve(entry.second.size());
+          for(const std::size_t index : entry.second)
+            if(index < _halfEdges.size() && _halfEdges[index].active)
+              elements.push_back(_halfEdges[index].element);
+          if(!elements.empty()) result.push_back({entry.first, elements});
+        }
+        return result;
+      }
+    };
 
     Adjacency buildAdjacency(const std::vector<MElement *> &elements)
     {
@@ -121,10 +370,180 @@ namespace QuadOptimizer {
              std::set<MVertex *>(second.begin(), second.end());
     }
 
+    std::size_t currentQuadDegree(MVertex *vertex,
+                                  const Adjacency &adjacency)
+    {
+      const auto found = adjacency.find(vertex);
+      if(found == adjacency.end()) return 0;
+      return static_cast<std::size_t>(std::count_if(
+        found->second.begin(), found->second.end(), [](const MElement *element) {
+          return element && element->getNumPrimaryVertices() == 4;
+        }));
+    }
+
+    double boundaryDomainAngleDegrees(
+      GFace *face, MVertex *vertex,
+      const std::vector<MElement *> &incidentElements);
+
+    double boundaryDomainAngleDegrees(GFace *face, MVertex *vertex,
+                                      const Adjacency &adjacency)
+    {
+      const auto found = adjacency.find(vertex);
+      if(!face || found == adjacency.end()) return 180.;
+      return boundaryDomainAngleDegrees(face, vertex, found->second);
+    }
+
+    double boundaryDomainAngleDegrees(
+      GFace *face, MVertex *vertex,
+      const std::vector<MElement *> &incidentElements)
+    {
+      if(!face || incidentElements.empty()) return 180.;
+      SPoint2 center;
+      if(!reparamMeshVertexOnFace(vertex, face, center, true) ||
+         !std::isfinite(center.x()) || !std::isfinite(center.y()))
+        return 180.;
+      double total = 0.;
+      for(MElement *element : incidentElements) {
+        if(!element) continue;
+        const std::size_t count = element->getNumPrimaryVertices();
+        if(count != 3 && count != 4) continue;
+        std::size_t local = count;
+        for(std::size_t i = 0; i < count; ++i)
+          if(element->getVertex(static_cast<int>(i)) == vertex) {
+            local = i;
+            break;
+          }
+        if(local == count) continue;
+        SPoint2 previous, next;
+        if(!reparamMeshVertexOnFaceWithRef(
+             face,
+             element->getVertex(static_cast<int>((local + count - 1) % count)),
+             center, previous) ||
+           !reparamMeshVertexOnFaceWithRef(
+             face, element->getVertex(static_cast<int>((local + 1) % count)),
+             center, next))
+          continue;
+        const double ax = previous.x() - center.x();
+        const double ay = previous.y() - center.y();
+        const double bx = next.x() - center.x();
+        const double by = next.y() - center.y();
+        const double denominator =
+          std::sqrt((ax * ax + ay * ay) * (bx * bx + by * by));
+        if(!(denominator > 0.)) continue;
+        total += std::acos(std::clamp((ax * bx + ay * by) / denominator,
+                                     -1., 1.)) *
+                 180. / 3.141592653589793238462643383279502884;
+      }
+      return total > 0. ? total : 180.;
+    }
+
+    std::size_t idealQuadDegree(GFace *face, MVertex *vertex,
+                                const Adjacency &adjacency)
+    {
+      if(vertex && vertex->onWhat() == face) return 4;
+      const double angle = boundaryDomainAngleDegrees(face, vertex, adjacency);
+      if(angle < 25.) return 0;
+      if(angle < 115.) return 1;
+      if(angle < 205.) return 2;
+      if(angle < 295.) return 3;
+      return 4;
+    }
+
+    std::size_t idealQuadDegree(GFace *face, MVertex *vertex,
+                                const FaceHalfEdgeTopology &topology)
+    {
+      if(vertex && vertex->onWhat() == face) return 4;
+      const double angle = boundaryDomainAngleDegrees(
+        face, vertex, topology.incidentElements(vertex));
+      if(angle < 25.) return 0;
+      if(angle < 115.) return 1;
+      if(angle < 205.) return 2;
+      if(angle < 295.) return 3;
+      return 4;
+    }
+
+    void addValence(ValenceObjective &objective, std::size_t actual,
+                    std::size_t ideal, bool interior)
+    {
+      const long difference = static_cast<long>(actual) -
+                              static_cast<long>(ideal);
+      if(difference != 0) ++objective.irregularCount;
+      if((interior && (actual <= 2 || actual >= 6)) ||
+         (!interior && std::abs(difference) > 1))
+        ++objective.severeCount;
+      objective.penalty += static_cast<double>(difference * difference);
+    }
+
+    bool improvesValence(const ValenceObjective &candidate,
+                         const ValenceObjective &reference)
+    {
+      if(candidate.severeCount != reference.severeCount)
+        return candidate.severeCount < reference.severeCount;
+      if(candidate.irregularCount != reference.irregularCount)
+        return candidate.irregularCount < reference.irregularCount;
+      return candidate.penalty < reference.penalty - 1.e-12;
+    }
+
+    void cacheCavityValence(CavitySeed &seed,
+                            const FaceHalfEdgeTopology &topology)
+    {
+      const std::vector<MVertex *> &boundary =
+        seed.patch.bdrVertices.front();
+      seed.boundaryOutsideQuadDegree.assign(boundary.size(), 0);
+      seed.boundaryIdealQuadDegree.assign(boundary.size(), 0);
+      std::unordered_map<MVertex *, std::size_t> boundaryIndex;
+      boundaryIndex.reserve(boundary.size());
+      for(std::size_t i = 0; i < boundary.size(); ++i)
+        boundaryIndex[boundary[i]] = i;
+      std::vector<std::size_t> local(boundary.size(), 0);
+      for(MElement *element : seed.patch.elements)
+        for(std::size_t i = 0; i < element->getNumPrimaryVertices(); ++i) {
+          const auto found = boundaryIndex.find(
+            element->getVertex(static_cast<int>(i)));
+          if(found != boundaryIndex.end()) ++local[found->second];
+        }
+
+      seed.valence = {};
+      for(std::size_t i = 0; i < boundary.size(); ++i) {
+        MVertex *vertex = boundary[i];
+        const std::size_t global = topology.quadDegree(vertex);
+        const std::size_t outside =
+          global >= local[i] ? global - local[i] : 0;
+        const std::size_t ideal = idealQuadDegree(seed.patch.gf, vertex,
+                                                  topology);
+        seed.boundaryOutsideQuadDegree[i] = outside;
+        seed.boundaryIdealQuadDegree[i] = ideal;
+        addValence(seed.valence, global, ideal,
+                   vertex->onWhat() == seed.patch.gf);
+      }
+      for(MVertex *vertex : seed.patch.intVertices)
+        addValence(seed.valence, topology.quadDegree(vertex), 4, true);
+    }
+
+    bool noWorseAbsoluteSpecifications(
+      const SpecificationObjective &candidate,
+      const SpecificationObjective &reference, double tolerance)
+    {
+      if(candidate.absoluteBadElementCount > reference.absoluteBadElementCount)
+        return false;
+      if(candidate.worstAbsoluteViolation >
+         reference.worstAbsoluteViolation + tolerance *
+           std::max({1., candidate.worstAbsoluteViolation,
+                     reference.worstAbsoluteViolation}))
+        return false;
+      if(candidate.absoluteViolationCount > reference.absoluteViolationCount)
+        return false;
+      return candidate.absolutePenalty <= reference.absolutePenalty +
+        tolerance * std::max({1., candidate.absolutePenalty,
+                              reference.absolutePenalty});
+    }
+
     double objectivePriority(const SpecificationObjective &objective)
     {
-      return 1.e15 * static_cast<double>(objective.absoluteViolationCount) +
-             1.e10 * objective.absolutePenalty +
+      return 1.e18 * static_cast<double>(objective.absoluteBadElementCount) +
+             1.e15 * objective.worstAbsoluteViolation +
+             1.e12 * static_cast<double>(objective.absoluteViolationCount) +
+             1.e9 * objective.absolutePenalty +
              1.e7 * static_cast<double>(objective.preferredViolationCount) +
              1.e3 * objective.preferredPenalty + objective.shapePenalty;
     }
@@ -136,6 +555,35 @@ namespace QuadOptimizer {
            !evaluateElementQuality(element).passesAbsoluteSpecifications)
           return true;
       return false;
+    }
+
+    bool hasQualitySpecificationFailure(
+      const SpecificationObjective &objective)
+    {
+      return objective.absoluteBadElementCount != 0 ||
+             objective.absoluteViolationCount != 0 ||
+             objective.preferredViolationCount != 0;
+    }
+
+    bool flexibleCavityNeedsRepair(
+      const CavitySeed &seed,
+      const SmallCavityOptimizerOptions &options)
+    {
+      if(options.fastInteractiveCleanUp) {
+        if(seed.kind == CavityKind::CleanUpSize) return true;
+        if(seed.objective.absoluteBadElementCount != 0 ||
+           seed.objective.absoluteViolationCount != 0)
+          return true;
+        if(seed.kind == CavityKind::CleanUpConnectivity ||
+           seed.kind == CavityKind::CleanUpBoundary)
+          return seed.valence.severeCount != 0;
+        return false;
+      }
+      if(hasQualitySpecificationFailure(seed.objective)) return true;
+      if(seed.kind == CavityKind::CleanUpConnectivity ||
+         seed.kind == CavityKind::CleanUpBoundary)
+        return seed.valence.irregularCount != 0;
+      return seed.kind == CavityKind::CleanUpSize;
     }
 
     std::vector<CavitySeed> collectCavities(
@@ -715,12 +1163,13 @@ namespace QuadOptimizer {
       return true;
     }
 
-    bool physicalExistingConnectivitySignature(
-      const GFaceMeshPatch &patch, ConnectivitySignature &signature)
+    bool physicalElementsConnectivitySignature(
+      const std::vector<MElement *> &elements,
+      ConnectivitySignature &signature)
     {
       signature.clear();
-      signature.reserve(patch.elements.size());
-      for(MElement *element : patch.elements) {
+      signature.reserve(elements.size());
+      for(MElement *element : elements) {
         if(element->getNumPrimaryVertices() != 4) return false;
         std::array<std::size_t, 4> quad;
         for(std::size_t i = 0; i < 4; ++i)
@@ -730,6 +1179,13 @@ namespace QuadOptimizer {
       }
       std::sort(signature.begin(), signature.end());
       return true;
+    }
+
+    bool physicalExistingConnectivitySignature(
+      const GFaceMeshPatch &patch, ConnectivitySignature &signature)
+    {
+      return physicalElementsConnectivitySignature(patch.elements,
+                                                    signature);
     }
 
     ConnectivitySignature physicalCandidateConnectivitySignature(
@@ -750,22 +1206,63 @@ namespace QuadOptimizer {
 
     std::vector<PatternConfiguration> rankPatterns(
       const GFaceMeshPatch &patch, const std::vector<Pattern> &patterns,
-      int maximum, std::size_t targetInteriorVertexCount)
+      int maximum, std::size_t targetInteriorVertexCount,
+      const CavitySeed *cachedSeed = nullptr)
     {
+      if(maximum <= 0) return {};
       const std::size_t boundaryCount = patch.bdrVertices.front().size();
-      std::vector<double> originalBoundaryDegree(boundaryCount, 0.);
-      for(MElement *element : patch.elements) {
-        for(std::size_t i = 0; i < element->getNumPrimaryVertices(); ++i) {
-          MVertex *vertex = element->getVertex(static_cast<int>(i));
-          const auto found = std::find(patch.bdrVertices.front().begin(),
-                                       patch.bdrVertices.front().end(), vertex);
-          if(found != patch.bdrVertices.front().end())
-            originalBoundaryDegree[static_cast<std::size_t>(
-              found - patch.bdrVertices.front().begin())] += 1.;
+      std::vector<double> desiredLocalDegree(boundaryCount, 0.);
+      if(cachedSeed &&
+         cachedSeed->boundaryOutsideQuadDegree.size() == boundaryCount &&
+         cachedSeed->boundaryIdealQuadDegree.size() == boundaryCount) {
+        for(std::size_t i = 0; i < boundaryCount; ++i)
+          desiredLocalDegree[i] = std::max(
+            0., static_cast<double>(cachedSeed->boundaryIdealQuadDegree[i]) -
+                  static_cast<double>(
+                    cachedSeed->boundaryOutsideQuadDegree[i]));
+      }
+      else {
+        const Adjacency globalAdjacency =
+          buildAdjacency(surfaceElements(patch.gf));
+        std::vector<double> currentLocalDegree(boundaryCount, 0.);
+        for(MElement *element : patch.elements) {
+          for(std::size_t i = 0; i < element->getNumPrimaryVertices(); ++i) {
+            MVertex *vertex = element->getVertex(static_cast<int>(i));
+            const auto found = std::find(
+              patch.bdrVertices.front().begin(),
+              patch.bdrVertices.front().end(), vertex);
+            if(found != patch.bdrVertices.front().end())
+              currentLocalDegree[static_cast<std::size_t>(
+                found - patch.bdrVertices.front().begin())] += 1.;
+          }
+        }
+        for(std::size_t i = 0; i < boundaryCount; ++i) {
+          MVertex *vertex = patch.bdrVertices.front()[i];
+          const double global =
+            static_cast<double>(currentQuadDegree(vertex, globalAdjacency));
+          const double outside = global - currentLocalDegree[i];
+          desiredLocalDegree[i] = std::max(
+            0., static_cast<double>(idealQuadDegree(
+                  patch.gf, vertex, globalAdjacency)) - outside);
         }
       }
 
-      std::vector<PatternConfiguration> ranked;
+      const auto better = [](const PatternConfiguration &a,
+                             const PatternConfiguration &b) {
+        if(a.score != b.score) return a.score < b.score;
+        if(a.pattern != b.pattern) return a.pattern < b.pattern;
+        if(a.reflected != b.reflected)
+          return static_cast<int>(a.reflected) <
+                 static_cast<int>(b.reflected);
+        return a.rotation < b.rotation;
+      };
+      const std::size_t limit = static_cast<std::size_t>(maximum);
+      // `better` makes the worst retained configuration the heap top. This
+      // keeps exactly the same deterministic top-K as the previous global
+      // sort, but uses O(K) memory and O(N log K) work.
+      std::priority_queue<PatternConfiguration,
+                          std::vector<PatternConfiguration>,
+                          decltype(better)> best(better);
       for(std::size_t p = 0; p < patterns.size(); ++p) {
         std::vector<double> degree(
           boundaryCount + targetInteriorVertexCount, 0.);
@@ -780,7 +1277,7 @@ namespace QuadOptimizer {
                 (rotation + boundaryCount - vertex) % boundaryCount :
                 (vertex + rotation) % boundaryCount;
               const double difference =
-                degree[vertex] - originalBoundaryDegree[mapped];
+                degree[vertex] - desiredLocalDegree[mapped];
               score += difference * difference;
             }
             for(std::size_t vertex = boundaryCount; vertex < degree.size();
@@ -788,23 +1285,66 @@ namespace QuadOptimizer {
               const double difference = degree[vertex] - 4.;
               score += difference * difference;
             }
-            ranked.push_back({score, p, rotation, reflected});
+            const PatternConfiguration configuration = {
+              score, p, rotation, reflected};
+            if(best.size() < limit)
+              best.push(configuration);
+            else if(better(configuration, best.top())) {
+              best.pop();
+              best.push(configuration);
+            }
           }
         }
       }
-      std::sort(ranked.begin(), ranked.end(),
-                [](const PatternConfiguration &a,
-                   const PatternConfiguration &b) {
-                  if(a.score != b.score) return a.score < b.score;
-                  if(a.pattern != b.pattern) return a.pattern < b.pattern;
-                  if(a.reflected != b.reflected)
-                    return static_cast<int>(a.reflected) <
-                           static_cast<int>(b.reflected);
-                  return a.rotation < b.rotation;
-                });
-      if(ranked.size() > static_cast<std::size_t>(maximum))
-        ranked.resize(static_cast<std::size_t>(maximum));
+      std::vector<PatternConfiguration> ranked;
+      ranked.reserve(best.size());
+      while(!best.empty()) {
+        ranked.push_back(best.top());
+        best.pop();
+      }
+      std::sort(ranked.begin(), ranked.end(), better);
       return ranked;
+    }
+
+    ValenceObjective currentPatchValence(const GFaceMeshPatch &patch)
+    {
+      const Adjacency adjacency = buildAdjacency(surfaceElements(patch.gf));
+      ValenceObjective objective;
+      for(MVertex *vertex : patch.bdrVertices.front())
+        addValence(objective, currentQuadDegree(vertex, adjacency),
+                   idealQuadDegree(patch.gf, vertex, adjacency),
+                   vertex->onWhat() == patch.gf);
+      for(MVertex *vertex : patch.intVertices)
+        addValence(objective, currentQuadDegree(vertex, adjacency), 4, true);
+      return objective;
+    }
+
+    ValenceObjective candidatePatchValence(const CavitySeed &seed,
+                                            const Pattern &quadrangles,
+                                            std::size_t interiorCount)
+    {
+      const GFaceMeshPatch &patch = seed.patch;
+      const std::size_t boundaryCount = patch.bdrVertices.front().size();
+      std::vector<std::size_t> candidateDegree(
+        boundaryCount + interiorCount, 0);
+      for(const auto &quad : quadrangles)
+        for(const std::size_t vertex : quad)
+          if(vertex < candidateDegree.size()) ++candidateDegree[vertex];
+
+      ValenceObjective objective;
+      for(std::size_t i = 0; i < boundaryCount; ++i) {
+        MVertex *vertex = patch.bdrVertices.front()[i];
+        if(i >= seed.boundaryOutsideQuadDegree.size() ||
+           i >= seed.boundaryIdealQuadDegree.size())
+          return {};
+        addValence(objective,
+                   seed.boundaryOutsideQuadDegree[i] + candidateDegree[i],
+                   seed.boundaryIdealQuadDegree[i],
+                   vertex->onWhat() == patch.gf);
+      }
+      for(std::size_t i = 0; i < interiorCount; ++i)
+        addValence(objective, candidateDegree[boundaryCount + i], 4, true);
+      return objective;
     }
 
     double distance(const Point &a, const Point &b)
@@ -846,12 +1386,15 @@ namespace QuadOptimizer {
           .5 * (xyz[edge.first][2] + xyz[edge.second][2])};
         const double size = targetSize(face, midpointUv, midpointXyz, options);
         const double ratio = distance(xyz[edge.first], xyz[edge.second]) / size;
-        if(!std::isfinite(ratio) ||
-           ratio < options.minimumEdgeSizeRatio ||
-           ratio > options.maximumEdgeSizeRatio) {
+        if(!std::isfinite(ratio) || !(ratio > 0.)) {
           score.admissible = false;
-          return score;
+          continue;
         }
+        score.minimumRatio = std::min(score.minimumRatio, ratio);
+        score.maximumRatio = std::max(score.maximumRatio, ratio);
+        if(ratio < options.minimumEdgeSizeRatio ||
+           ratio > options.maximumEdgeSizeRatio)
+          score.admissible = false;
         error += std::pow(std::log(ratio), 2);
       }
       score.meanSquaredLogRatio = error / static_cast<double>(edges.size());
@@ -899,11 +1442,213 @@ namespace QuadOptimizer {
         const Point ax = {a->x(), a->y(), a->z()};
         const Point bx = {b->x(), b->y(), b->z()};
         const double ratio = distance(ax, bx) / size;
-        if(!std::isfinite(ratio) || !(ratio > 0.)) return score;
+        if(!std::isfinite(ratio) || !(ratio > 0.)) {
+          score.admissible = false;
+          continue;
+        }
+        score.minimumRatio = std::min(score.minimumRatio, ratio);
+        score.maximumRatio = std::max(score.maximumRatio, ratio);
+        if(ratio < options.minimumEdgeSizeRatio ||
+           ratio > options.maximumEdgeSizeRatio)
+          score.admissible = false;
         error += std::pow(std::log(ratio), 2);
       }
       score.meanSquaredLogRatio = error / static_cast<double>(edges.size());
       return score;
+    }
+
+    std::vector<CavitySeed> collectCleanUpCavities(
+      GFace *face, const SmallCavityOptimizerOptions &options,
+      CavityKind kind, const FaceHalfEdgeTopology &topology,
+      bool criticalShapeOnly = false,
+      const std::set<MVertex *> *focusVertices = nullptr)
+    {
+      std::vector<MElement *> elements;
+      if(focusVertices) {
+        std::set<MElement *> focusedElements;
+        for(MVertex *vertex : *focusVertices) {
+          const std::vector<MElement *> incident =
+            topology.incidentElements(vertex);
+          focusedElements.insert(incident.begin(), incident.end());
+        }
+        elements.assign(focusedElements.begin(), focusedElements.end());
+      }
+      else {
+        elements = topology.elements();
+      }
+      const auto edges = kind == CavityKind::CleanUpSize ?
+        topology.edges() :
+        std::vector<std::pair<Edge, std::vector<MElement *> > >();
+
+      std::vector<CavitySeed> cavities;
+      std::set<std::vector<std::uintptr_t> > signatures;
+      auto add = [&](const std::set<MElement *> &patchElements) {
+        if(patchElements.empty() ||
+           patchElements.size() > static_cast<std::size_t>(
+             options.maximumCleanUpCavityElements))
+          return;
+        for(MElement *element : patchElements)
+          if(!element || element->getNumPrimaryVertices() != 4) return;
+        std::vector<std::uintptr_t> signature;
+        signature.reserve(patchElements.size());
+        for(MElement *element : patchElements)
+          signature.push_back(reinterpret_cast<std::uintptr_t>(element));
+        std::sort(signature.begin(), signature.end());
+        if(!signatures.insert(signature).second) return;
+
+        CavitySeed seed;
+        std::vector<MElement *> ordered(patchElements.begin(),
+                                        patchElements.end());
+        if(!patchFromElements(face, ordered, seed.patch) ||
+           seed.patch.bdrVertices.size() != 1 ||
+           seed.patch.bdrVertices.front().size() < 4 ||
+           seed.patch.bdrVertices.front().size() > 20 ||
+           seed.patch.bdrVertices.front().size() % 2 != 0 ||
+           !seed.patch.embVertices.empty())
+          return;
+        seed.interiorVertexCount = seed.patch.intVertices.size();
+        seed.alwaysTryTopology = true;
+        seed.flexibleInteriorCount = true;
+        seed.kind = kind;
+        seed.objective = specificationObjective(seed.patch.elements);
+        cacheCavityValence(seed, topology);
+        cavities.push_back(std::move(seed));
+      };
+
+      auto expandAndAdd = [&](const std::vector<MElement *> &initial) {
+        std::set<MElement *> patch(initial.begin(), initial.end());
+        add(patch);
+        for(int ring = 0; ring < options.maximumCleanUpCavityRings; ++ring) {
+          std::set<MElement *> expanded = patch;
+          for(MElement *element : patch) {
+            const std::vector<MElement *> adjacent =
+              topology.neighbors(element);
+            expanded.insert(adjacent.begin(), adjacent.end());
+          }
+          if(expanded == patch ||
+             expanded.size() > static_cast<std::size_t>(
+               options.maximumCleanUpCavityElements))
+            break;
+          patch.swap(expanded);
+          add(patch);
+        }
+      };
+
+      if(kind == CavityKind::CleanUpConnectivity) {
+        const std::vector<MVertex *> vertices = focusVertices ?
+          std::vector<MVertex *>(focusVertices->begin(),
+                                 focusVertices->end()) :
+          topology.vertices();
+        for(MVertex *vertex : vertices) {
+          if(!vertex || vertex->onWhat() != face) continue;
+          const std::size_t degree = topology.quadDegree(vertex);
+          if(options.fastInteractiveCleanUp) {
+            if(degree > 2 && degree < 6) continue;
+          }
+          else if(degree == 4)
+            continue;
+          expandAndAdd(topology.incidentElements(vertex));
+        }
+      }
+      else if(kind == CavityKind::CleanUpBoundary) {
+        const std::vector<MVertex *> vertices = focusVertices ?
+          std::vector<MVertex *>(focusVertices->begin(),
+                                 focusVertices->end()) :
+          topology.vertices();
+        for(MVertex *vertex : vertices) {
+          if(!vertex || vertex->onWhat() == face ||
+             !vertex->onWhat() || vertex->onWhat()->dim() >= 2)
+            continue;
+          const long degree = static_cast<long>(topology.quadDegree(vertex));
+          const long ideal = static_cast<long>(
+            idealQuadDegree(face, vertex, topology));
+          if(options.fastInteractiveCleanUp ?
+               std::abs(degree - ideal) > 1 : degree != ideal)
+            expandAndAdd(topology.incidentElements(vertex));
+        }
+        // Figure 15: a boundary diamond has exactly one vertex on the model
+        // boundary. Its one- and two-ring patches are tried; the spec and
+        // valence objective decide whether collapse is safe.
+        if(!options.fastInteractiveCleanUp) {
+          for(MElement *element : elements) {
+            if(!element || element->getNumPrimaryVertices() != 4) continue;
+            std::size_t boundaryVertices = 0;
+            for(std::size_t i = 0; i < 4; ++i) {
+              MVertex *vertex = element->getVertex(static_cast<int>(i));
+              if(vertex && vertex->onWhat() != face) ++boundaryVertices;
+            }
+            if(boundaryVertices == 1) expandAndAdd({element});
+          }
+        }
+      }
+      else if(kind == CavityKind::CleanUpShape) {
+        for(MElement *element : elements) {
+          if(!element || element->getNumPrimaryVertices() != 4)
+            continue;
+          const ElementQuality quality = evaluateElementQuality(element);
+          const SpecificationObjective objective =
+            specificationObjective(quality);
+          if((criticalShapeOnly || options.fastInteractiveCleanUp) ?
+               (quality.topologicallyValid &&
+                quality.passesAbsoluteSpecifications) :
+               (quality.passesAbsoluteSpecifications &&
+                objective.preferredViolationCount == 0))
+            continue;
+          expandAndAdd({element});
+          for(MElement *neighbor : topology.neighbors(element))
+            expandAndAdd({element, neighbor});
+        }
+      }
+      else if(kind == CavityKind::CleanUpSize) {
+        for(const auto &entry : edges) {
+          if(focusVertices &&
+             focusVertices->find(entry.first.first) == focusVertices->end() &&
+             focusVertices->find(entry.first.second) == focusVertices->end())
+            continue;
+          if(entry.second.size() != 2 ||
+             entry.second[0]->getNumPrimaryVertices() != 4 ||
+             entry.second[1]->getNumPrimaryVertices() != 4)
+            continue;
+          MVertex *a = entry.first.first;
+          MVertex *b = entry.first.second;
+          if(!a || !b || a->onWhat() != face || b->onWhat() != face)
+            continue;
+          SPoint2 auv, buv;
+          if(!reparamMeshVertexOnFace(a, face, auv, true) ||
+             !reparamMeshVertexOnFaceWithRef(face, b, auv, buv))
+            continue;
+          const UV midpointUv = {.5 * (auv.x() + buv.x()),
+                                 .5 * (auv.y() + buv.y())};
+          const Point midpointXyz = {.5 * (a->x() + b->x()),
+                                     .5 * (a->y() + b->y()),
+                                     .5 * (a->z() + b->z())};
+          const double size = targetSize(face, midpointUv, midpointXyz,
+                                         options);
+          const Point ax = {a->x(), a->y(), a->z()};
+          const Point bx = {b->x(), b->y(), b->z()};
+          if(std::isfinite(size) && size > 0. &&
+             distance(ax, bx) / size > options.cleanUpLongEdgeRatio)
+            expandAndAdd(entry.second);
+        }
+      }
+
+      std::sort(cavities.begin(), cavities.end(),
+                [kind](const CavitySeed &a, const CavitySeed &b) {
+                  if(kind == CavityKind::CleanUpConnectivity ||
+                     kind == CavityKind::CleanUpBoundary) {
+                    if(a.valence.severeCount != b.valence.severeCount)
+                      return a.valence.severeCount > b.valence.severeCount;
+                    if(a.valence.irregularCount != b.valence.irregularCount)
+                      return a.valence.irregularCount > b.valence.irregularCount;
+                    if(a.valence.penalty != b.valence.penalty)
+                      return a.valence.penalty > b.valence.penalty;
+                  }
+                  const double ap = objectivePriority(a.objective);
+                  const double bp = objectivePriority(b.objective);
+                  if(ap != bp) return ap > bp;
+                  return a.patch.elements.size() < b.patch.elements.size();
+                });
+      return cavities;
     }
 
     SpecificationObjective candidateObjective(
@@ -1097,6 +1842,117 @@ namespace QuadOptimizer {
       return true;
     }
 
+    bool executeFlexibleCandidate(
+      GFace *face, const CavitySeed &seed, const Candidate &candidate,
+      std::vector<MVertex *> &resultInterior,
+      std::vector<MElement *> *resultElements = nullptr,
+      FaceHalfEdgeTopology *topology = nullptr)
+    {
+      const std::size_t boundaryCount =
+        seed.patch.bdrVertices.front().size();
+      if(candidate.uv.size() < boundaryCount ||
+         candidate.xyz.size() != candidate.uv.size() ||
+         candidate.interiorAssignment.size() !=
+           candidate.uv.size() - boundaryCount)
+        return false;
+
+      const std::size_t createdMarker =
+        std::numeric_limits<std::size_t>::max();
+      std::vector<MVertex *> localVertices =
+        seed.patch.bdrVertices.front();
+      std::vector<MVertex *> created;
+      std::set<std::size_t> retainedIndices;
+      for(std::size_t i = 0; i < candidate.interiorAssignment.size(); ++i) {
+        const std::size_t assignment = candidate.interiorAssignment[i];
+        const std::size_t local = boundaryCount + i;
+        if(assignment == createdMarker) {
+          MVertex *vertex = new MFaceVertex(
+            candidate.xyz[local][0], candidate.xyz[local][1],
+            candidate.xyz[local][2], face, candidate.uv[local][0],
+            candidate.uv[local][1]);
+          created.push_back(vertex);
+          localVertices.push_back(vertex);
+        }
+        else {
+          if(assignment >= seed.patch.intVertices.size() ||
+             !retainedIndices.insert(assignment).second) {
+            for(MVertex *vertex : created) delete vertex;
+            return false;
+          }
+          localVertices.push_back(seed.patch.intVertices[assignment]);
+        }
+      }
+
+      std::vector<MElement *> newElements;
+      newElements.reserve(candidate.quadrangles.size());
+      for(const auto &quad : candidate.quadrangles) {
+        bool valid = true;
+        for(const std::size_t vertex : quad)
+          valid = valid && vertex < localVertices.size();
+        if(!valid) {
+          for(MElement *element : newElements) delete element;
+          for(MVertex *vertex : created) delete vertex;
+          return false;
+        }
+        newElements.push_back(new MQuadrangle(
+          localVertices[quad[0]], localVertices[quad[1]],
+          localVertices[quad[2]], localVertices[quad[3]]));
+      }
+      if(!orientElementsAccordingToBoundarySegment(
+           seed.patch.bdrVertices.front()[0],
+           seed.patch.bdrVertices.front()[1], newElements)) {
+        for(MElement *element : newElements) delete element;
+        for(MVertex *vertex : created) delete vertex;
+        return false;
+      }
+
+      // Validate the complete topological transaction before GFaceMeshDiff
+      // deletes any old element or vertex. In particular, a duplicate quad
+      // would otherwise create four third edge incidences and leave both the
+      // mesh and the side-car half-edge index partially modified.
+      FaceHalfEdgeTopology validatedTopology;
+      if(topology) {
+        validatedTopology = *topology;
+        if(!validatedTopology.replace(seed.patch.elements, newElements)) {
+          for(MElement *element : newElements) delete element;
+          for(MVertex *vertex : created) delete vertex;
+          return false;
+        }
+      }
+
+      GFaceMeshDiff diff;
+      diff.gf = face;
+      diff.before = seed.patch;
+      diff.before.intVertices.clear();
+      for(std::size_t i = 0; i < seed.patch.intVertices.size(); ++i)
+        if(retainedIndices.find(i) == retainedIndices.end())
+          diff.before.intVertices.push_back(seed.patch.intVertices[i]);
+      diff.after.gf = face;
+      diff.after.bdrVertices = seed.patch.bdrVertices;
+      diff.after.intVertices = created;
+      const std::vector<MElement *> insertedElements = newElements;
+      diff.after.elements = std::move(newElements);
+      if(!diff.execute(true)) return false;
+      if(topology) *topology = std::move(validatedTopology);
+
+      resultInterior.clear();
+      resultInterior.reserve(candidate.interiorAssignment.size());
+      std::size_t createdIndex = 0;
+      for(std::size_t i = 0; i < candidate.interiorAssignment.size(); ++i) {
+        const std::size_t assignment = candidate.interiorAssignment[i];
+        const std::size_t local = boundaryCount + i;
+        MVertex *vertex = assignment == createdMarker ?
+          created[createdIndex++] : seed.patch.intVertices[assignment];
+        vertex->setXYZ(candidate.xyz[local][0], candidate.xyz[local][1],
+                       candidate.xyz[local][2]);
+        vertex->setParameter(0, candidate.uv[local][0]);
+        vertex->setParameter(1, candidate.uv[local][1]);
+        resultInterior.push_back(vertex);
+      }
+      if(resultElements) *resultElements = insertedElements;
+      return true;
+    }
+
     bool interiorVertexCavity(GFace *face,
                               const std::vector<MVertex *> &interior,
                               const Adjacency &adjacency, CavitySeed &seed)
@@ -1108,6 +1964,33 @@ namespace QuadOptimizer {
         unionStars(interior, adjacency);
       if(patchElements.empty() ||
          !patchFromElements(face, patchElements, seed.patch) ||
+         seed.patch.bdrVertices.size() != 1 ||
+         seed.patch.bdrVertices.front().size() < 4 ||
+         seed.patch.bdrVertices.front().size() % 2 != 0 ||
+         !seed.patch.embVertices.empty() ||
+         !sameVertices(seed.patch.intVertices, interior))
+        return false;
+      seed.interiorVertexCount = interior.size();
+      seed.objective = specificationObjective(seed.patch.elements);
+      return true;
+    }
+
+    bool interiorVertexCavity(GFace *face,
+                              const std::vector<MVertex *> &interior,
+                              const FaceHalfEdgeTopology &topology,
+                              CavitySeed &seed)
+    {
+      if(interior.empty()) return false;
+      std::set<MElement *> unique;
+      for(MVertex *vertex : interior) {
+        if(!vertex || vertex->onWhat() != face) return false;
+        const std::vector<MElement *> incident =
+          topology.incidentElements(vertex);
+        if(incident.empty()) return false;
+        unique.insert(incident.begin(), incident.end());
+      }
+      const std::vector<MElement *> patchElements(unique.begin(), unique.end());
+      if(!patchFromElements(face, patchElements, seed.patch) ||
          seed.patch.bdrVertices.size() != 1 ||
          seed.patch.bdrVertices.front().size() < 4 ||
          seed.patch.bdrVertices.front().size() % 2 != 0 ||
@@ -1201,6 +2084,7 @@ namespace QuadOptimizer {
 
     enum class ExistingSmoothingStatus {
       Invalid,
+      SkippedSpecificationCompliant,
       RejectedWinslow,
       RejectedSize,
       RejectedQuality,
@@ -1212,6 +2096,9 @@ namespace QuadOptimizer {
       const SmallCavityOptimizerOptions &options)
     {
       seed.objective = specificationObjective(seed.patch.elements);
+      if(options.topologyOnlyIfCavityHasSpecificationFailure &&
+         !hasQualitySpecificationFailure(seed.objective))
+        return ExistingSmoothingStatus::SkippedSpecificationCompliant;
       std::vector<UV> uv;
       Pattern pattern;
       if(!existingPatternAndParametrization(seed, uv, pattern))
@@ -1243,29 +2130,76 @@ namespace QuadOptimizer {
       }
       const SpecificationObjective objective =
         candidateObjective(pattern, xyz);
-      (void)objective;
+      if(!improvesSpecificationObjective(
+           objective, seed.objective, options.objectiveRelativeTolerance))
+        return ExistingSmoothingStatus::RejectedQuality;
       applySmoothedGeometry(seed, uv, xyz);
       return ExistingSmoothingStatus::Accepted;
     }
 
     void smoothTopologyNeighborhood(
       GFace *face, const std::vector<MVertex *> &coreInterior,
-      const SmallCavityOptimizerOptions &options)
+      const SmallCavityOptimizerOptions &options,
+      const FaceHalfEdgeTopology *topology = nullptr)
     {
       for(int pass = 0; pass < options.postTopologyNeighborSmoothingPasses;
           ++pass) {
-        const std::vector<MElement *> elements = surfaceElements(face);
-        const Adjacency adjacency = buildAdjacency(elements);
         CavitySeed core;
-        if(!interiorVertexCavity(face, coreInterior, adjacency, core)) return;
+        Adjacency adjacency;
+        if(topology) {
+          if(!interiorVertexCavity(face, coreInterior, *topology, core))
+            return;
+        }
+        else {
+          adjacency = buildAdjacency(surfaceElements(face));
+          if(!interiorVertexCavity(face, coreInterior, adjacency, core))
+            return;
+        }
         const std::vector<MVertex *> boundary = core.patch.bdrVertices.front();
         smoothExistingCavity(face, core, options);
         for(MVertex *vertex : boundary) {
           CavitySeed neighbor;
-          if(interiorVertexCavity(face, {vertex}, adjacency, neighbor))
+          const bool valid = topology ?
+            interiorVertexCavity(face, {vertex}, *topology, neighbor) :
+            interiorVertexCavity(face, {vertex}, adjacency, neighbor);
+          if(valid)
             smoothExistingCavity(face, neighbor, options);
         }
       }
+    }
+
+    std::size_t smoothLocalVertexStars(
+      GFace *face, const std::vector<MVertex *> &focusVertices,
+      const SmallCavityOptimizerOptions &options,
+      const FaceHalfEdgeTopology &topology)
+    {
+      std::set<MVertex *> unique(focusVertices.begin(), focusVertices.end());
+      SmallCavityOptimizerOptions localOptions = options;
+      // The current mesh is already untangled. A short solve on each modified
+      // one-ring is enough to recover the Winslow equilibrium without turning
+      // the interactive cleanup into a global nonlinear optimization.
+      localOptions.winslow.maxInnerIterations =
+        std::min(localOptions.winslow.maxInnerIterations, 50);
+      localOptions.winslow.maxOuterIterations =
+        std::min(localOptions.winslow.maxOuterIterations, 2);
+      localOptions.winslow.maxLineSearchSteps =
+        std::min(localOptions.winslow.maxLineSearchSteps, 20);
+      localOptions.winslow.gradientTolerance =
+        std::max(localOptions.winslow.gradientTolerance, 1.e-7);
+
+      std::size_t accepted = 0;
+      for(int pass = 0;
+          pass < options.postTopologyNeighborSmoothingPasses; ++pass) {
+        for(MVertex *vertex : unique) {
+          if(!vertex || vertex->onWhat() != face) continue;
+          CavitySeed seed;
+          if(!interiorVertexCavity(face, {vertex}, topology, seed)) continue;
+          if(smoothExistingCavity(face, seed, localOptions) ==
+             ExistingSmoothingStatus::Accepted)
+            ++accepted;
+        }
+      }
+      return accepted;
     }
 
     ExistingTopologyWinslowResult smoothAllInteriorVertexCavities(
@@ -1290,9 +2224,15 @@ namespace QuadOptimizer {
           const ExistingSmoothingStatus status =
             smoothExistingCavity(face, seed, options);
           if(status == ExistingSmoothingStatus::Invalid) continue;
+          if(status ==
+             ExistingSmoothingStatus::SkippedSpecificationCompliant) {
+            ++result.skippedSpecificationCompliant;
+            continue;
+          }
           ++result.admissibleCavities;
           ++result.cavitiesOptimized;
           switch(status) {
+          case ExistingSmoothingStatus::SkippedSpecificationCompliant: break;
           case ExistingSmoothingStatus::RejectedWinslow:
             ++result.rejectedByWinslow;
             break;
@@ -1764,6 +2704,283 @@ namespace QuadOptimizer {
       return true;
     }
 
+    bool tryFlexibleCleanUpCavity(
+      GFace *face, const CavitySeed &seed,
+      const SmallCavityOptimizerOptions &options,
+      SmallCavityOptimizerResult &result,
+      FaceHalfEdgeTopology *topology,
+      std::set<ConnectivitySignature> &topologyHistory)
+    {
+      ++result.cavitiesVisited;
+      ++result.cleanUpCavitiesVisited;
+      if(options.topologyOnlyIfCavityHasSpecificationFailure &&
+         !flexibleCavityNeedsRepair(seed, options)) {
+        ++result.skippedSpecificationCompliant;
+        return false;
+      }
+      const std::size_t boundaryCount =
+        seed.patch.bdrVertices.front().size();
+      if(boundaryCount < 4 || boundaryCount > 20 || boundaryCount % 2)
+        return false;
+
+      std::vector<UV> boundary;
+      if(!boundaryParametrization(seed.patch, boundary)) return false;
+      boundary.resize(boundaryCount);
+      UV centroid = {0., 0.};
+      for(const UV &point : boundary) {
+        centroid[0] += point[0];
+        centroid[1] += point[1];
+      }
+      centroid[0] /= static_cast<double>(boundaryCount);
+      centroid[1] /= static_cast<double>(boundaryCount);
+
+      const SizeScore beforeSize = existingSizeScore(seed.patch, options);
+      SmallCavityWinslowOptions winslowOptions = options.winslow;
+      winslowOptions.harmonicInitialization = true;
+      ConnectivitySignature existingConnectivity;
+      const bool existingIsAllQuad =
+        existingConnectivitySignature(seed.patch, existingConnectivity);
+      ConnectivitySignature physicalExistingConnectivity;
+      if(physicalExistingConnectivitySignature(
+           seed.patch, physicalExistingConnectivity))
+        topologyHistory.insert(physicalExistingConnectivity);
+      std::set<ConnectivitySignature> triedConnectivity;
+      const std::size_t createdMarker =
+        std::numeric_limits<std::size_t>::max();
+
+      auto admissible = [&](const Candidate &candidate) {
+        const bool specificationImprovement = improvesSpecificationObjective(
+          candidate.objective, seed.objective,
+          options.objectiveRelativeTolerance);
+        if(seed.kind == CavityKind::CleanUpShape)
+          return specificationImprovement;
+        if(seed.kind == CavityKind::CleanUpConnectivity ||
+           seed.kind == CavityKind::CleanUpBoundary)
+          return specificationImprovement ||
+            (noWorseAbsoluteSpecifications(
+               candidate.objective, seed.objective,
+               options.objectiveRelativeTolerance) &&
+             improvesValence(candidate.valence, seed.valence));
+        if(seed.kind == CavityKind::CleanUpSize)
+          return noWorseAbsoluteSpecifications(
+                   candidate.objective, seed.objective,
+                   options.objectiveRelativeTolerance) &&
+                 std::isfinite(candidate.sizeError) &&
+                 candidate.sizeError + 1.e-12 <
+                   beforeSize.meanSquaredLogRatio;
+        return specificationImprovement;
+      };
+
+      auto better = [&](const Candidate &candidate,
+                        const Candidate &reference) {
+        if(improvesSpecificationObjective(
+             candidate.objective, reference.objective,
+             options.objectiveRelativeTolerance))
+          return true;
+        if(improvesSpecificationObjective(
+             reference.objective, candidate.objective,
+             options.objectiveRelativeTolerance))
+          return false;
+        if(improvesValence(candidate.valence, reference.valence)) return true;
+        if(improvesValence(reference.valence, candidate.valence)) return false;
+        return candidate.sizeError < reference.sizeError;
+      };
+
+      // Screen many connectivities with a deliberately short Winslow solve,
+      // then spend the full nonlinear solve only on the geometrically best
+      // shortlist. This preserves the large cavity search while avoiding
+      // hundreds of fully converged solves for every seed.
+      SmallCavityWinslowOptions screeningOptions = winslowOptions;
+      screeningOptions.maxInnerIterations =
+        std::min(screeningOptions.maxInnerIterations, 20);
+      screeningOptions.maxOuterIterations = 1;
+      screeningOptions.maxLineSearchSteps =
+        std::min(screeningOptions.maxLineSearchSteps, 12);
+      std::vector<Candidate> screened;
+      const int interiorMaximum =
+        std::max(0, options.maximumCleanUpInteriorVertices);
+      const int candidateBudget = options.fastInteractiveCleanUp ?
+        std::min(seed.kind == CavityKind::CleanUpShape ? 64 : 10,
+                 options.maximumCleanUpCandidatesPerCavity) :
+        options.maximumCleanUpCandidatesPerCavity;
+      const int perInteriorMaximum = std::max(
+        1, candidateBudget /
+             std::max(1, interiorMaximum + 1));
+      for(int interior = 0; interior <= interiorMaximum; ++interior) {
+        std::vector<Pattern> patterns;
+        if(getDiskQuadrangulations(
+             boundaryCount, static_cast<std::size_t>(interior), patterns) != 0 ||
+           patterns.empty())
+          continue;
+        const std::vector<PatternConfiguration> ranked = rankPatterns(
+          seed.patch, patterns, perInteriorMaximum,
+          static_cast<std::size_t>(interior), &seed);
+        for(const PatternConfiguration &configuration : ranked) {
+          Pattern quadrangles = transformPattern(
+            patterns[configuration.pattern], boundaryCount,
+            configuration.rotation, configuration.reflected);
+          ConnectivitySignature connectivity = quadrangles;
+          for(auto &quad : connectivity) std::sort(quad.begin(), quad.end());
+          std::sort(connectivity.begin(), connectivity.end());
+          if((existingIsAllQuad &&
+              static_cast<std::size_t>(interior) ==
+                seed.patch.intVertices.size() &&
+              connectivity == existingConnectivity) ||
+             !triedConnectivity.insert(connectivity).second)
+            continue;
+
+          std::vector<UV> uv = boundary;
+          uv.resize(boundaryCount + static_cast<std::size_t>(interior),
+                    centroid);
+          ++result.topologyCandidatesOptimized;
+          if(interior > 0) {
+            const bool untangled = options.fastInteractiveCleanUp ?
+              initializeSmallQuadCavityHarmonic(
+                uv, boundaryCount, quadrangles) :
+              [&]() {
+                const SmallCavityWinslowResult winslow =
+                  optimizeSmallQuadCavityWinslow(
+                    uv, boundaryCount, quadrangles, screeningOptions);
+                return winslow.success && winslow.untangled;
+              }();
+            if(!untangled) {
+              ++result.rejectedByWinslow;
+              continue;
+            }
+          }
+          std::vector<Point> xyz;
+          if(!mapCandidate(face, boundaryCount,
+                           seed.patch.bdrVertices.front(), uv, xyz)) {
+            ++result.rejectedByWinslow;
+            continue;
+          }
+          const SizeScore size =
+            candidateSizeScore(face, uv, xyz, quadrangles, options);
+          if((options.enforceSizeMap ||
+              seed.kind == CavityKind::CleanUpSize) && !size.admissible) {
+            ++result.rejectedBySize;
+            continue;
+          }
+
+          Candidate candidate;
+          candidate.valid = true;
+          candidate.uv = std::move(uv);
+          candidate.xyz = std::move(xyz);
+          candidate.quadrangles = std::move(quadrangles);
+          candidate.objective =
+            candidateObjective(candidate.quadrangles, candidate.xyz);
+          candidate.valence = candidatePatchValence(
+            seed, candidate.quadrangles,
+            static_cast<std::size_t>(interior));
+          candidate.sizeError = size.meanSquaredLogRatio;
+          candidate.interiorAssignment.resize(
+            static_cast<std::size_t>(interior), createdMarker);
+          const std::size_t retained = std::min(
+            candidate.interiorAssignment.size(),
+            seed.patch.intVertices.size());
+          for(std::size_t i = 0; i < retained; ++i)
+            candidate.interiorAssignment[i] = i;
+
+          if(std::find(candidate.interiorAssignment.begin(),
+                       candidate.interiorAssignment.end(), createdMarker) ==
+             candidate.interiorAssignment.end()) {
+            const ConnectivitySignature physicalConnectivity =
+              physicalCandidateConnectivitySignature(
+                seed, candidate.quadrangles,
+                candidate.interiorAssignment);
+            if(topologyHistory.find(physicalConnectivity) !=
+               topologyHistory.end())
+              continue;
+          }
+
+          screened.push_back(std::move(candidate));
+        }
+      }
+
+      std::stable_sort(screened.begin(), screened.end(),
+                       [&](const Candidate &a, const Candidate &b) {
+                         if(better(a, b)) return true;
+                         if(better(b, a)) return false;
+                         return a.quadrangles < b.quadrangles;
+                       });
+
+      Candidate best;
+      if(options.fastInteractiveCleanUp) {
+        for(Candidate &candidate : screened) {
+          if(!admissible(candidate)) {
+            ++result.rejectedByQuality;
+            continue;
+          }
+          best = std::move(candidate);
+          break;
+        }
+      }
+      const std::size_t refinementCount = std::min(
+        screened.size(), options.fastInteractiveCleanUp ? 0 :
+          static_cast<std::size_t>(
+            options.maximumCleanUpWinslowCandidatesPerCavity));
+      for(std::size_t i = 0; i < refinementCount; ++i) {
+        Candidate candidate = std::move(screened[i]);
+        if(candidate.uv.size() > boundaryCount) {
+          SmallCavityWinslowOptions refinementOptions = winslowOptions;
+          // The screened coordinates are already harmonic and untangled.
+          refinementOptions.harmonicInitialization = false;
+          const SmallCavityWinslowResult winslow =
+            optimizeSmallQuadCavityWinslow(
+              candidate.uv, boundaryCount, candidate.quadrangles,
+              refinementOptions);
+          if(!winslow.success || !winslow.untangled) {
+            ++result.rejectedByWinslow;
+            continue;
+          }
+          if(!mapCandidate(face, boundaryCount,
+                           seed.patch.bdrVertices.front(), candidate.uv,
+                           candidate.xyz)) {
+            ++result.rejectedByWinslow;
+            continue;
+          }
+          const SizeScore size = candidateSizeScore(
+            face, candidate.uv, candidate.xyz, candidate.quadrangles,
+            options);
+          if((options.enforceSizeMap ||
+              seed.kind == CavityKind::CleanUpSize) && !size.admissible) {
+            ++result.rejectedBySize;
+            continue;
+          }
+          candidate.objective =
+            candidateObjective(candidate.quadrangles, candidate.xyz);
+          candidate.sizeError = size.meanSquaredLogRatio;
+        }
+        if(!admissible(candidate)) {
+          ++result.rejectedByQuality;
+          continue;
+        }
+        if(!best.valid || better(candidate, best))
+          best = std::move(candidate);
+      }
+      if(!best.valid) return false;
+      std::vector<MVertex *> interior;
+      std::vector<MElement *> insertedElements;
+      if(!executeFlexibleCandidate(face, seed, best, interior,
+                                   &insertedElements, topology))
+        return false;
+      ConnectivitySignature insertedConnectivity;
+      if(physicalElementsConnectivitySignature(insertedElements,
+                                                insertedConnectivity))
+        topologyHistory.insert(std::move(insertedConnectivity));
+      if(options.fastInteractiveCleanUp) {
+        std::vector<MVertex *> localVertices =
+          seed.patch.bdrVertices.front();
+        localVertices.insert(localVertices.end(), interior.begin(),
+                             interior.end());
+        result.acceptedFinalSmoothingCavities += smoothLocalVertexStars(
+          face, localVertices, options, *topology);
+      }
+      else
+        smoothTopologyNeighborhood(face, interior, options, topology);
+      return true;
+    }
+
   } // namespace
 
   SmallCavityOptimizerResult optimizeSmallQuadCavities(
@@ -1776,6 +2993,13 @@ namespace QuadOptimizer {
        options.postTopologyNeighborSmoothingPasses < 0 ||
        options.maximumOptimizationPasses < 0 ||
        options.maximumTopologyCandidatesPerCavity <= 0 ||
+       options.maximumCleanUpCandidatesPerCavity <= 0 ||
+       options.maximumCleanUpWinslowCandidatesPerCavity <= 0 ||
+       options.maximumCleanUpCavityRings < 0 ||
+       options.maximumCleanUpCavityElements <= 0 ||
+       options.maximumCleanUpInteriorVertices < 0 ||
+       options.maximumCleanUpInteriorVertices > 4 ||
+       !(options.cleanUpLongEdgeRatio > 1.) ||
        !(options.minimumEdgeSizeRatio > 0.) ||
        !(options.maximumEdgeSizeRatio > options.minimumEdgeSizeRatio) ||
        options.maximumRelativeSizeErrorIncrease < 0.) {
@@ -1910,6 +3134,10 @@ namespace QuadOptimizer {
             case CavityKind::Quadrangle:
               ++result.acceptedFourInteriorVertexCavities;
               break;
+            case CavityKind::CleanUpConnectivity:
+            case CavityKind::CleanUpBoundary:
+            case CavityKind::CleanUpShape:
+            case CavityKind::CleanUpSize: break;
             }
             if(options.verbose)
               Msg::Info("QuadOptimizer: accepted cavity B=%zu I=%zu",
@@ -1923,20 +3151,131 @@ namespace QuadOptimizer {
       return accepted;
     };
 
-    for(int pass = 0; pass < options.maximumOptimizationPasses; ++pass) {
+    auto optimizeCleanUpStage = [&](CavityKind kind, bool enabled,
+                                    bool criticalShapeOnly = false)
+      -> std::size_t {
+      if(!enabled) return 0;
+      FaceHalfEdgeTopology topology(surfaceElements(face));
+      if(!topology.manifold()) {
+        Msg::Warning("QuadOptimizer CleanUp: skipping a non-manifold GFace");
+        return 0;
+      }
+      std::size_t accepted = 0;
+      while(accepted <
+            static_cast<std::size_t>(options.maximumAcceptedCavities)) {
+        const std::vector<CavitySeed> cavities =
+          collectCleanUpCavities(face, options, kind, topology,
+                                 criticalShapeOnly, nullptr);
+        std::set<MVertex *> reservedVertices;
+        std::size_t acceptedInWave = 0;
+        for(const CavitySeed &cavity : cavities) {
+          if(accepted >=
+             static_cast<std::size_t>(options.maximumAcceptedCavities))
+            break;
+          std::vector<MVertex *> cavityVertices =
+            cavity.patch.bdrVertices.front();
+          cavityVertices.insert(cavityVertices.end(),
+                                cavity.patch.intVertices.begin(),
+                                cavity.patch.intVertices.end());
+          if(std::any_of(cavityVertices.begin(), cavityVertices.end(),
+                         [&](MVertex *vertex) {
+                           return reservedVertices.find(vertex) !=
+                                  reservedVertices.end();
+                         }))
+            continue;
+          if(!tryFlexibleCleanUpCavity(face, cavity, options, result,
+                                       &topology, topologyHistory))
+            continue;
+          reservedVertices.insert(cavityVertices.begin(),
+                                  cavityVertices.end());
+          ++acceptedInWave;
+          ++accepted;
+          switch(kind) {
+          case CavityKind::CleanUpConnectivity:
+            ++result.cleanUpConnectivityAccepted;
+            break;
+          case CavityKind::CleanUpBoundary:
+            ++result.cleanUpBoundaryAccepted;
+            break;
+          case CavityKind::CleanUpShape:
+            ++result.cleanUpShapeAccepted;
+            break;
+          case CavityKind::CleanUpSize:
+            ++result.cleanUpSizeAccepted;
+            break;
+          case CavityKind::Node:
+          case CavityKind::Edge:
+          case CavityKind::Triangle:
+          case CavityKind::Quadrangle: break;
+          }
+          if(options.verbose)
+            Msg::Info("QuadOptimizer CleanUp: accepted %s cavity B=%zu "
+                      "I=%zu elements=%zu",
+                      kind == CavityKind::CleanUpConnectivity ? "connectivity" :
+                      kind == CavityKind::CleanUpBoundary ? "boundary" :
+                      kind == CavityKind::CleanUpShape ? "shape" : "size",
+                      cavity.patch.bdrVertices.front().size(),
+                      cavity.interiorVertexCount,
+                      cavity.patch.elements.size());
+        }
+        if(acceptedInWave == 0) break;
+        if(options.fastInteractiveCleanUp) break;
+      }
+      return accepted;
+    };
+
+    auto timedCleanUpStage = [&](CavityKind kind, bool enabled,
+                                 bool criticalShapeOnly,
+                                 double &seconds) -> std::size_t {
+      const auto start = std::chrono::steady_clock::now();
+      const std::size_t accepted = optimizeCleanUpStage(
+        kind, enabled, criticalShapeOnly);
+      seconds += std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - start).count();
+      return accepted;
+    };
+
+    // Kinney processes chevrons and bowties before connectivity cleanup: a
+    // connectivity edit around a twisted quad tends to make it worse. The
+    // generalized shape collector also catches ordinary >160 degree cases.
+    timedCleanUpStage(CavityKind::CleanUpShape, options.cleanUpShape,
+                      true, result.cleanUpCriticalSeconds);
+
+    const int cleanupPasses = options.maximumOptimizationPasses;
+    for(int pass = 0; pass < cleanupPasses; ++pass) {
       ++result.passes;
       std::size_t topologyChanges = 0;
-      // One ordered optimization pass: nodes, edges, triangles, quads,
-      // diamonds, then geometry smoothing.
-      topologyChanges += splitAllValenceSixVertices();
-      topologyChanges += optimizeCavityStage(CavityKind::Node);
-      topologyChanges += optimizeCavityStage(CavityKind::Edge);
-      topologyChanges += convertAllBoundaryTriangleQuadTriangleFans();
-      topologyChanges += optimizeCavityStage(CavityKind::Triangle);
-      topologyChanges += optimizeCavityStage(CavityKind::Quadrangle);
-      topologyChanges += eliminateAllDiamonds();
+      // CleanUp order: connectivity, boundary, shape and size. Existing
+      // specialized operations are retained as fast paths within the same
+      // pass; flexible disk remeshing supplies fill_2/fill_3/fill_4 and the
+      // larger examples from the paper.
+      if(!options.fastInteractiveCleanUp)
+        topologyChanges += splitAllValenceSixVertices();
+      topologyChanges += timedCleanUpStage(
+        CavityKind::CleanUpConnectivity, options.cleanUpConnectivity,
+        false, result.cleanUpConnectivitySeconds);
+      if(!options.fastInteractiveCleanUp) {
+        topologyChanges += optimizeCavityStage(CavityKind::Node);
+        topologyChanges += optimizeCavityStage(CavityKind::Edge);
+        topologyChanges += eliminateAllDiamonds();
+        topologyChanges += convertAllBoundaryTriangleQuadTriangleFans();
+      }
+      topologyChanges += timedCleanUpStage(
+        CavityKind::CleanUpBoundary, options.cleanUpBoundary, false,
+        result.cleanUpBoundarySeconds);
+      if(!options.fastInteractiveCleanUp) {
+        topologyChanges += optimizeCavityStage(CavityKind::Triangle);
+        topologyChanges += optimizeCavityStage(CavityKind::Quadrangle);
+      }
+      topologyChanges += timedCleanUpStage(
+        CavityKind::CleanUpShape, options.cleanUpShape, false,
+        result.cleanUpShapeSeconds);
+      topologyChanges += timedCleanUpStage(
+        CavityKind::CleanUpSize, options.cleanUpSize, false,
+        result.cleanUpSizeSeconds);
 
-      if(options.finalSmoothingPasses > 0) {
+      if(!options.fastInteractiveCleanUp &&
+         options.finalSmoothingPasses > 0) {
         SmallCavityOptimizerOptions smoothingOptions = options;
         smoothingOptions.smoothingPasses = options.finalSmoothingPasses;
         const ExistingTopologyWinslowResult smoothing =
@@ -1990,9 +3329,15 @@ namespace QuadOptimizer {
         const ExistingSmoothingStatus status =
           smoothExistingCavity(face, seed, options);
         if(status == ExistingSmoothingStatus::Invalid) return;
+        if(status ==
+           ExistingSmoothingStatus::SkippedSpecificationCompliant) {
+          ++result.skippedSpecificationCompliant;
+          return;
+        }
         ++result.admissibleCavities;
         ++result.cavitiesOptimized;
         switch(status) {
+        case ExistingSmoothingStatus::SkippedSpecificationCompliant: break;
         case ExistingSmoothingStatus::RejectedWinslow:
           ++result.rejectedByWinslow;
           break;
@@ -2078,6 +3423,20 @@ namespace QuadOptimizer {
     }
 
     for(const FaceOptimizerResult &face : result.faces) {
+      if(options.verbose)
+        Msg::Info("QuadOptimizer face %d timing(s): critical=%.6g "
+                  "connectivity=%.6g boundary=%.6g shape=%.6g size=%.6g; "
+                  "accepted=%zu/%zu/%zu/%zu",
+                  face.faceTag,
+                  face.optimizer.cleanUpCriticalSeconds,
+                  face.optimizer.cleanUpConnectivitySeconds,
+                  face.optimizer.cleanUpBoundarySeconds,
+                  face.optimizer.cleanUpShapeSeconds,
+                  face.optimizer.cleanUpSizeSeconds,
+                  face.optimizer.cleanUpConnectivityAccepted,
+                  face.optimizer.cleanUpBoundaryAccepted,
+                  face.optimizer.cleanUpShapeAccepted,
+                  face.optimizer.cleanUpSizeAccepted);
       result.success = result.success && face.optimizer.success;
       result.acceptedCavities +=
         face.optimizer.acceptedDiamonds +
@@ -2086,7 +3445,11 @@ namespace QuadOptimizer {
         face.optimizer.acceptedEdgeSwaps +
         face.optimizer.acceptedOneInteriorVertexCavities +
         face.optimizer.acceptedThreeInteriorVertexCavities +
-        face.optimizer.acceptedFourInteriorVertexCavities;
+        face.optimizer.acceptedFourInteriorVertexCavities +
+        face.optimizer.cleanUpConnectivityAccepted +
+        face.optimizer.cleanUpBoundaryAccepted +
+        face.optimizer.cleanUpShapeAccepted +
+        face.optimizer.cleanUpSizeAccepted;
       result.initialObjective += face.optimizer.initialObjective;
       result.finalObjective += face.optimizer.finalObjective;
     }

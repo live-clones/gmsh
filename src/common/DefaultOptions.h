@@ -1519,6 +1519,9 @@ StringXNumber MeshOptions_Number[] = {
       "2: cross-field + CAD small features adaptation,"
       "3: from background mesh (e.g. sizes in current triangulation),"
       "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
+  { F|O, "QuadqsCleanupMethod" , opt_mesh_quadqs_cleanup_method, 0 ,
+    "Cleanup after packing of parallelograms. 0: exhaustive OptimizeQuads, "
+      "1: paper-style interactive OptimizeQuadsFast, 2: disabled" },
   { F|O, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
     "Topology optimization methods in QuadQuasiStructured. 0: default (all),"
       "100: pattern-based CAD faces,"

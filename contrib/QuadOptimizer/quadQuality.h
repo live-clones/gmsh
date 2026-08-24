@@ -24,12 +24,20 @@ namespace QuadOptimizer {
     double minimumAngleDegrees = 0.;
     double maximumAngleDegrees = 0.;
     double skewingDegrees = 0.;
+    bool topologicallyValid = true;
     bool passesAbsoluteSpecifications = false;
   };
 
   struct SpecificationObjective {
+    // The production goal is that every element passes every absolute
+    // specification. Count bad elements separately from individual failed
+    // criteria so several failures on one element cannot hide another bad
+    // element.
+    std::size_t absoluteBadElementCount = 0;
     std::size_t absoluteViolationCount = 0;
+    double worstAbsoluteViolation = 0.;
     std::size_t preferredViolationCount = 0;
+    double worstPreferredViolation = 0.;
     double absolutePenalty = 0.;
     double preferredPenalty = 0.;
     double shapePenalty = 0.;

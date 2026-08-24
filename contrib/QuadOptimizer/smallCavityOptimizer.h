@@ -22,6 +22,19 @@ namespace QuadOptimizer {
     bool eliminateDiamonds = true;
     bool splitValenceSixVertices = true;
     bool convertBoundaryTriangleQuadTriangleFans = true;
+    // Kinney CleanUp stages. The implementation detects generic cavities
+    // around the configurations described in the paper and enumerates all
+    // stored disk quadrangulations instead of relying on the unpublished
+    // table of 64 proprietary valence patterns.
+    bool cleanUpConnectivity = true;
+    bool cleanUpBoundary = true;
+    bool cleanUpShape = true;
+    bool cleanUpSize = true;
+    // Experimental paper-style path used by OptimizeQuadsFast. It keeps the
+    // exhaustive API unchanged while using constant-size local decisions,
+    // harmonic candidate placement and local Winslow relaxation after every
+    // accepted edit.
+    bool fastInteractiveCleanUp = false;
     bool topologyOnlyIfCavityHasSpecificationFailure = true;
     int smoothingPasses = 2;
     int finalSmoothingPasses = 2;
@@ -29,12 +42,20 @@ namespace QuadOptimizer {
     int maximumOptimizationPasses = 3;
     int maximumAcceptedCavities = 100;
     int maximumTopologyCandidatesPerCavity = 24;
+    // Connectivity candidates are screened with a short Winslow solve; only
+    // the best shortlist receives the fully converged solve.
+    int maximumCleanUpCandidatesPerCavity = 128;
+    int maximumCleanUpWinslowCandidatesPerCavity = 12;
+    int maximumCleanUpCavityRings = 2;
+    int maximumCleanUpCavityElements = 12;
+    int maximumCleanUpInteriorVertices = 4;
+    double cleanUpLongEdgeRatio = 2.5;
 
     // Optional size-map filter. It is disabled by default: cavity boundaries
     // are fixed, so size variations remain local.
     bool enforceSizeMap = false;
     // Positive: constant target size. Non-positive: query BGM_MeshSize.
-    double targetSize = 1.;
+    double targetSize = -1.;
     double minimumEdgeSizeRatio = .35;
     double maximumEdgeSizeRatio = 2.5;
     bool enforceRelativeSizeErrorIncrease = false;
@@ -68,6 +89,16 @@ namespace QuadOptimizer {
     std::size_t acceptedOneInteriorVertexCavities = 0;
     std::size_t acceptedThreeInteriorVertexCavities = 0;
     std::size_t acceptedFourInteriorVertexCavities = 0;
+    std::size_t cleanUpCavitiesVisited = 0;
+    std::size_t cleanUpConnectivityAccepted = 0;
+    std::size_t cleanUpBoundaryAccepted = 0;
+    std::size_t cleanUpShapeAccepted = 0;
+    std::size_t cleanUpSizeAccepted = 0;
+    double cleanUpCriticalSeconds = 0.;
+    double cleanUpConnectivitySeconds = 0.;
+    double cleanUpBoundarySeconds = 0.;
+    double cleanUpShapeSeconds = 0.;
+    double cleanUpSizeSeconds = 0.;
     SpecificationObjective initialObjective;
     SpecificationObjective finalObjective;
   };
@@ -82,6 +113,7 @@ namespace QuadOptimizer {
     std::size_t rejectedByWinslow = 0;
     std::size_t rejectedBySize = 0;
     std::size_t rejectedByQuality = 0;
+    std::size_t skippedSpecificationCompliant = 0;
     SpecificationObjective initialObjective;
     SpecificationObjective finalObjective;
   };
@@ -101,9 +133,9 @@ namespace QuadOptimizer {
     std::vector<FaceOptimizerResult> faces;
   };
 
-  // Repeatedly rebuild local adjacency, find a worst admissible cavity, try
-  // the best disk-quadrangulation patterns and execute one improving mesh diff.
-  // Boundary vertices are never moved. Topology and geometry changes are local.
+  // Maintain a half-edge index of the manifold face, rank local cavities, try
+  // the best disk-quadrangulation patterns and execute improving mesh diffs in
+  // vertex-disjoint waves. Boundary vertices are never moved.
   GMSH_API SmallCavityOptimizerResult optimizeSmallQuadCavities(
     GFace *face,
     const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions());

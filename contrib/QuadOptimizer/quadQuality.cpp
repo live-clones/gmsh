@@ -58,6 +58,88 @@ namespace QuadOptimizer {
                           cross(subtract(c, a), subtract(d, a)));
     }
 
+    Point polygonNormal(const std::vector<Point> &vertices)
+    {
+      Point normal = {0., 0., 0.};
+      for(std::size_t i = 0; i < vertices.size(); ++i) {
+        const Point contribution =
+          cross(vertices[i], vertices[(i + 1) % vertices.size()]);
+        for(std::size_t d = 0; d < 3; ++d) normal[d] += contribution[d];
+      }
+      return normal;
+    }
+
+    using Point2 = std::array<double, 2>;
+
+    Point2 project(const Point &point, std::size_t droppedCoordinate)
+    {
+      if(droppedCoordinate == 0) return {point[1], point[2]};
+      if(droppedCoordinate == 1) return {point[0], point[2]};
+      return {point[0], point[1]};
+    }
+
+    double orient2d(const Point2 &a, const Point2 &b, const Point2 &c)
+    {
+      return (b[0] - a[0]) * (c[1] - a[1]) -
+             (b[1] - a[1]) * (c[0] - a[0]);
+    }
+
+    bool properIntersection(const Point2 &a, const Point2 &b,
+                            const Point2 &c, const Point2 &d,
+                            double tolerance)
+    {
+      const double abc = orient2d(a, b, c);
+      const double abd = orient2d(a, b, d);
+      const double cda = orient2d(c, d, a);
+      const double cdb = orient2d(c, d, b);
+      return ((abc > tolerance && abd < -tolerance) ||
+              (abc < -tolerance && abd > tolerance)) &&
+             ((cda > tolerance && cdb < -tolerance) ||
+              (cda < -tolerance && cdb > tolerance));
+    }
+
+    bool bowtie(const std::vector<Point> &vertices, const Point &normal)
+    {
+      if(vertices.size() != 4) return false;
+      const std::size_t dropped = static_cast<std::size_t>(
+        std::max_element(normal.begin(), normal.end(),
+                         [](double a, double b) {
+                           return std::abs(a) < std::abs(b);
+                         }) - normal.begin());
+      std::array<Point2, 4> points;
+      double minimum[2] = {std::numeric_limits<double>::infinity(),
+                           std::numeric_limits<double>::infinity()};
+      double maximum[2] = {-std::numeric_limits<double>::infinity(),
+                           -std::numeric_limits<double>::infinity()};
+      for(std::size_t i = 0; i < 4; ++i) {
+        points[i] = project(vertices[i], dropped);
+        for(std::size_t d = 0; d < 2; ++d) {
+          minimum[d] = std::min(minimum[d], points[i][d]);
+          maximum[d] = std::max(maximum[d], points[i][d]);
+        }
+      }
+      const double scale2 = std::pow(maximum[0] - minimum[0], 2) +
+                            std::pow(maximum[1] - minimum[1], 2);
+      const double tolerance =
+        1.e-12 * std::max(scale2, std::numeric_limits<double>::min());
+      return properIntersection(points[0], points[1], points[2], points[3],
+                                tolerance) ||
+             properIntersection(points[1], points[2], points[3], points[0],
+                                tolerance);
+    }
+
+    double upperViolation(double value, double limit)
+    {
+      if(!std::isfinite(value)) return 1.e15;
+      return std::max(0., value / limit - 1.);
+    }
+
+    double lowerViolation(double value, double limit)
+    {
+      if(!std::isfinite(value)) return 1.e15;
+      return std::max(0., 1. - value / limit);
+    }
+
     double upperPenalty(double value, double limit)
     {
       if(!std::isfinite(value)) return 1.e30;
@@ -77,6 +159,10 @@ namespace QuadOptimizer {
     {
       if(!(value < absolute)) ++objective.absoluteViolationCount;
       if(!(value < preferred)) ++objective.preferredViolationCount;
+      objective.worstAbsoluteViolation = std::max(
+        objective.worstAbsoluteViolation, upperViolation(value, absolute));
+      objective.worstPreferredViolation = std::max(
+        objective.worstPreferredViolation, upperViolation(value, preferred));
       objective.absolutePenalty += upperPenalty(value, absolute);
       objective.preferredPenalty += upperPenalty(value, preferred);
     }
@@ -86,6 +172,10 @@ namespace QuadOptimizer {
     {
       if(!(value > absolute)) ++objective.absoluteViolationCount;
       if(!(value > preferred)) ++objective.preferredViolationCount;
+      objective.worstAbsoluteViolation = std::max(
+        objective.worstAbsoluteViolation, lowerViolation(value, absolute));
+      objective.worstPreferredViolation = std::max(
+        objective.worstPreferredViolation, lowerViolation(value, preferred));
       objective.absolutePenalty += lowerPenalty(value, absolute);
       objective.preferredPenalty += lowerPenalty(value, preferred);
     }
@@ -163,6 +253,7 @@ namespace QuadOptimizer {
     ElementQuality quality;
     quality.kind = kind;
     if(vertices.size() != count) {
+      quality.topologicallyValid = false;
       quality.warpingDegrees = quality.edgeRatio =
         quality.minimumAngleDegrees = quality.maximumAngleDegrees =
           quality.skewingDegrees =
@@ -170,7 +261,17 @@ namespace QuadOptimizer {
       return quality;
     }
 
+    Point normal = {0., 0., 0.};
     if(kind == SurfaceElementKind::Quadrangle) {
+      normal = polygonNormal(vertices);
+      double scale = 0.;
+      for(std::size_t i = 0; i < count; ++i)
+        scale = std::max(
+          scale, norm(subtract(vertices[(i + 1) % count], vertices[i])));
+      quality.topologicallyValid =
+        norm(normal) > 1.e-12 * std::max(scale * scale,
+                                        std::numeric_limits<double>::min()) &&
+        !bowtie(vertices, normal);
       quality.warpingDegrees =
         std::max(normalAngle(vertices[0], vertices[1], vertices[2], vertices[3]),
                  normalAngle(vertices[1], vertices[2], vertices[3], vertices[0]));
@@ -186,8 +287,13 @@ namespace QuadOptimizer {
         minimumEdge, norm(subtract(vertices[next], vertices[i])));
       maximumEdge = std::max(
         maximumEdge, norm(subtract(vertices[next], vertices[i])));
-      angles[i] = angleDegrees(subtract(vertices[previous], vertices[i]),
-                               subtract(vertices[next], vertices[i]));
+      const Point previousDirection = subtract(vertices[previous], vertices[i]);
+      const Point nextDirection = subtract(vertices[next], vertices[i]);
+      angles[i] = angleDegrees(previousDirection, nextDirection);
+      if(kind == SurfaceElementKind::Quadrangle &&
+         quality.topologicallyValid &&
+         dot(cross(nextDirection, previousDirection), normal) < 0.)
+        angles[i] = 360. - angles[i];
     }
     quality.edgeRatio = minimumEdge > 0. ?
                           maximumEdge / minimumEdge :
@@ -207,11 +313,13 @@ namespace QuadOptimizer {
       std::isfinite(quality.skewingDegrees);
     if(kind == SurfaceElementKind::Triangle) {
       quality.passesAbsoluteSpecifications = finite &&
+        quality.topologicallyValid &&
         quality.edgeRatio < 10. && quality.minimumAngleDegrees > 10. &&
         quality.maximumAngleDegrees < 150. && quality.skewingDegrees < 160.;
     }
     else {
       quality.passesAbsoluteSpecifications = finite &&
+        quality.topologicallyValid &&
         quality.warpingDegrees < 25. && quality.edgeRatio < 10. &&
         quality.minimumAngleDegrees > 25. &&
         quality.maximumAngleDegrees < 160. && quality.skewingDegrees < 160.;
@@ -254,6 +362,8 @@ namespace QuadOptimizer {
         std::pow((quality.maximumAngleDegrees - 90.) / 90., 2) +
         std::pow(quality.skewingDegrees / 125., 2);
     }
+    objective.absoluteBadElementCount =
+      quality.passesAbsoluteSpecifications ? 0 : 1;
     return objective;
   }
 
@@ -269,8 +379,13 @@ namespace QuadOptimizer {
   SpecificationObjective &operator+=(SpecificationObjective &left,
                                       const SpecificationObjective &right)
   {
+    left.absoluteBadElementCount += right.absoluteBadElementCount;
     left.absoluteViolationCount += right.absoluteViolationCount;
+    left.worstAbsoluteViolation =
+      std::max(left.worstAbsoluteViolation, right.worstAbsoluteViolation);
     left.preferredViolationCount += right.preferredViolationCount;
+    left.worstPreferredViolation =
+      std::max(left.worstPreferredViolation, right.worstPreferredViolation);
     left.absolutePenalty += right.absolutePenalty;
     left.preferredPenalty += right.preferredPenalty;
     left.shapePenalty += right.shapePenalty;
@@ -281,6 +396,15 @@ namespace QuadOptimizer {
                                       const SpecificationObjective &reference,
                                       double tolerance)
   {
+    if(candidate.absoluteBadElementCount != reference.absoluteBadElementCount)
+      return candidate.absoluteBadElementCount <
+             reference.absoluteBadElementCount;
+    if(less(candidate.worstAbsoluteViolation,
+            reference.worstAbsoluteViolation, tolerance))
+      return true;
+    if(less(reference.worstAbsoluteViolation,
+            candidate.worstAbsoluteViolation, tolerance))
+      return false;
     if(candidate.absoluteViolationCount != reference.absoluteViolationCount)
       return candidate.absoluteViolationCount < reference.absoluteViolationCount;
     if(less(candidate.absolutePenalty, reference.absolutePenalty, tolerance))
@@ -289,6 +413,12 @@ namespace QuadOptimizer {
       return false;
     if(candidate.preferredViolationCount != reference.preferredViolationCount)
       return candidate.preferredViolationCount < reference.preferredViolationCount;
+    if(less(candidate.worstPreferredViolation,
+            reference.worstPreferredViolation, tolerance))
+      return true;
+    if(less(reference.worstPreferredViolation,
+            candidate.worstPreferredViolation, tolerance))
+      return false;
     if(less(candidate.preferredPenalty, reference.preferredPenalty, tolerance))
       return true;
     if(less(reference.preferredPenalty, candidate.preferredPenalty, tolerance))

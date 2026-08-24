@@ -6919,6 +6919,12 @@ double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.quadqsSizemapMethod;
 }
 
+double opt_mesh_quadqs_cleanup_method(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsCleanupMethod = (int)val;
+  return CTX::instance()->mesh.quadqsCleanupMethod;
+}
+
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

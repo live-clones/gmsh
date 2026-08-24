@@ -170,36 +170,59 @@ namespace QuadOptimizer {
         }
       }
 
-      Point centroid = {0., 0.};
-      for(std::size_t i = 0; i < boundaryVertexCount; ++i) {
-        centroid[0] += points[i][0];
-        centroid[1] += points[i][1];
-      }
-      centroid[0] /= static_cast<double>(boundaryVertexCount);
-      centroid[1] /= static_cast<double>(boundaryVertexCount);
-      for(std::size_t i = boundaryVertexCount; i < vertexCount; ++i)
-        points[i] = centroid;
+      const std::size_t interiorCount =
+        vertexCount - boundaryVertexCount;
+      if(interiorCount == 0) return;
 
-      for(int iteration = 0; iteration < 10000; ++iteration) {
-        double maximumChange = 0.;
-        for(std::size_t i = boundaryVertexCount; i < vertexCount; ++i) {
-          if(neighbors[i].empty()) continue;
-          Point average = {0., 0.};
-          for(const std::size_t neighbor : neighbors[i]) {
-            average[0] += points[neighbor][0];
-            average[1] += points[neighbor][1];
+      // Solve the uniform graph-Laplacian equations directly. CleanUp uses at
+      // most a handful of interior nodes; a tiny dense solve is both exact and
+      // substantially cheaper than thousands of Gauss-Seidel sweeps.
+      std::vector<std::vector<double> > system(
+        interiorCount, std::vector<double>(interiorCount + 2, 0.));
+      for(std::size_t local = 0; local < interiorCount; ++local) {
+        const std::size_t vertex = boundaryVertexCount + local;
+        if(neighbors[vertex].empty())
+          throw std::invalid_argument(
+            "Small-cavity interior vertex has no neighbor");
+        system[local][local] =
+          static_cast<double>(neighbors[vertex].size());
+        for(const std::size_t neighbor : neighbors[vertex]) {
+          if(neighbor >= boundaryVertexCount) {
+            system[local][neighbor - boundaryVertexCount] -= 1.;
           }
-          const double inverse = 1. / static_cast<double>(neighbors[i].size());
-          average[0] *= inverse;
-          average[1] *= inverse;
-          maximumChange =
-            std::max(maximumChange,
-                     std::hypot(average[0] - points[i][0],
-                                average[1] - points[i][1]));
-          points[i] = average;
+          else {
+            system[local][interiorCount] += points[neighbor][0];
+            system[local][interiorCount + 1] += points[neighbor][1];
+          }
         }
-        if(maximumChange < 1.e-13) break;
       }
+
+      for(std::size_t column = 0; column < interiorCount; ++column) {
+        std::size_t pivot = column;
+        for(std::size_t row = column + 1; row < interiorCount; ++row)
+          if(std::abs(system[row][column]) >
+             std::abs(system[pivot][column]))
+            pivot = row;
+        if(std::abs(system[pivot][column]) <=
+           std::numeric_limits<double>::epsilon())
+          throw std::invalid_argument(
+            "Small-cavity harmonic system is singular");
+        if(pivot != column) std::swap(system[pivot], system[column]);
+        const double inverse = 1. / system[column][column];
+        for(std::size_t j = column; j < interiorCount + 2; ++j)
+          system[column][j] *= inverse;
+        for(std::size_t row = 0; row < interiorCount; ++row) {
+          if(row == column) continue;
+          const double factor = system[row][column];
+          if(factor == 0.) continue;
+          for(std::size_t j = column; j < interiorCount + 2; ++j)
+            system[row][j] -= factor * system[column][j];
+        }
+      }
+      for(std::size_t local = 0; local < interiorCount; ++local)
+        points[boundaryVertexCount + local] = {
+          system[local][interiorCount],
+          system[local][interiorCount + 1]};
     }
 
     WinslowData prepareData(
@@ -254,6 +277,41 @@ namespace QuadOptimizer {
     }
 
   } // namespace
+
+  bool initializeSmallQuadCavityHarmonic(
+    std::vector<std::array<double, 2> > &parametricPoints,
+    std::size_t boundaryVertexCount,
+    const std::vector<std::array<std::size_t, 4> > &quadrangles)
+  {
+    if(boundaryVertexCount < 4 ||
+       boundaryVertexCount > parametricPoints.size() ||
+       quadrangles.empty())
+      return false;
+    try {
+      harmonicInitialize(parametricPoints, boundaryVertexCount,
+                         quadrangles);
+    }
+    catch(const std::invalid_argument &) { return false; }
+
+    const double orientation =
+      boundarySignedArea(parametricPoints, boundaryVertexCount);
+    if(!std::isfinite(orientation) || std::abs(orientation) <=
+         std::numeric_limits<double>::epsilon())
+      return false;
+    const double sign = orientation > 0. ? 1. : -1.;
+    for(const auto &quad : quadrangles) {
+      for(const std::size_t vertex : quad)
+        if(vertex >= parametricPoints.size()) return false;
+      for(const auto &corner : quadCornerTriangles) {
+        const double area = signedArea(
+          parametricPoints[quad[corner[0]]],
+          parametricPoints[quad[corner[1]]],
+          parametricPoints[quad[corner[2]]]);
+        if(!std::isfinite(area) || sign * area <= 1.e-14) return false;
+      }
+    }
+    return true;
+  }
 
   SmallCavityWinslowResult optimizeSmallQuadCavityWinslow(
     std::vector<std::array<double, 2> > &parametricPoints,

@@ -53,7 +53,7 @@ struct contextMeshOptions {
   unsigned int randomSeed;
   int nLayersPerGap;
   double gradation;
-  int quadqsSizemapMethod, quadqsTopoOptimMethods;
+  int quadqsSizemapMethod, quadqsTopoOptimMethods, quadqsCleanupMethod;
   double quadqsRemeshingBoldness, quadqsScalingOnTriangulation;
   int oldInitialDelaunay2D;
   // mesh IO

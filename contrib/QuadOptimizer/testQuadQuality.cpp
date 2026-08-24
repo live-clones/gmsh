@@ -50,5 +50,36 @@ int main()
     std::cerr << "quality objective ordering is incorrect\n";
     return 3;
   }
+
+
+  const std::vector<std::array<double, 3> > chevron = {
+    {0., 0., 0.}, {2., 0., 0.}, {.4, .4, 0.}, {0., 2., 0.}};
+  const ElementQuality chevronQuality =
+    evaluateElementQuality(SurfaceElementKind::Quadrangle, chevron);
+  if(!chevronQuality.topologicallyValid ||
+     !(chevronQuality.maximumAngleDegrees > 180.) ||
+     chevronQuality.passesAbsoluteSpecifications) {
+    std::cerr << "chevron was not recognized\n";
+    return 4;
+  }
+
+  const std::vector<std::array<double, 3> > bowtie = {
+    {0., 0., 0.}, {1., 1., 0.}, {0., 1., 0.}, {1., 0., 0.}};
+  const ElementQuality bowtieQuality =
+    evaluateElementQuality(SurfaceElementKind::Quadrangle, bowtie);
+  if(bowtieQuality.topologicallyValid ||
+     bowtieQuality.passesAbsoluteSpecifications) {
+    std::cerr << "bowtie was not recognized\n";
+    return 5;
+  }
+
+  SpecificationObjective twoBad = specificationObjective(badQuad);
+  twoBad += specificationObjective(chevronQuality);
+  if(twoBad.absoluteBadElementCount != 2 ||
+     !improvesSpecificationObjective(specificationObjective(badQuad),
+                                     twoBad)) {
+    std::cerr << "bad-element objective ordering is incorrect\n";
+    return 6;
+  }
   return 0;
 }
