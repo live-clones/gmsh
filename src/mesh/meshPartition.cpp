@@ -916,6 +916,41 @@ static void fillConnectedElements(
   } while(!stop);
 }
 
+// When a partition entity turns out to be non-connected and is split into
+// several components, the BRep of the original entity must not simply be
+// copied to every component: a component only bounds a neighboring entity if
+// its own mesh actually touches that neighbor. This records, for every
+// component, the neighbors it was found to touch, so that the BRep can be
+// distributed among the components instead of duplicated onto all of them.
+// The components claim their boundary keys (faces for surfaces, edges for
+// curves), then the candidate neighbors are probed in a single pass.
+template <class KEY, class HASH, class EQUAL> class BRepDistributor {
+private:
+  std::unordered_map<KEY, std::size_t, HASH, EQUAL> _owner;
+  std::vector<std::set<GEntity *, GEntityPtrFullLessThan> > _bounds;
+
+public:
+  std::size_t newComponent()
+  {
+    _bounds.resize(_bounds.size() + 1);
+    return _bounds.size() - 1;
+  }
+  void claim(const KEY &key, std::size_t component)
+  {
+    _owner.insert(std::make_pair(key, component));
+  }
+  void probe(const KEY &key, GEntity *neighbor)
+  {
+    auto it = _owner.find(key);
+    if(it != _owner.end()) _bounds[it->second].insert(neighbor);
+  }
+  bool touches(std::size_t component, GEntity *neighbor) const
+  {
+    return _bounds[component].find(neighbor) != _bounds[component].end();
+  }
+  bool empty() const { return _owner.empty(); }
+};
+
 static bool
 divideNonConnectedEntities(GModel *model, int dim,
                            std::set<GRegion *, GEntityPtrLessThan> &regions,
@@ -935,6 +970,35 @@ divideNonConnectedEntities(GModel *model, int dim,
 
         if(vertex->getNumMeshElements() > 1) {
           ret = true;
+          // Capture the B-Rep before any of it gets rewired below
+          std::vector<GEdge *> BRepEdges = vertex->edges();
+          std::vector<GEdge *> beginOf, endOf;
+          for(auto itBRep = BRepEdges.begin(); itBRep != BRepEdges.end();
+              ++itBRep) {
+            if(vertex == (*itBRep)->getBeginVertex()) beginOf.push_back(*itBRep);
+            if(vertex == (*itBRep)->getEndVertex()) endOf.push_back(*itBRep);
+          }
+          // A component only bounds a curve if its node is an extremity of
+          // that curve's mesh: nodes interior to the chain do not bound it
+          std::map<GEdge *, std::set<MVertex *> > extremities;
+          for(auto itBRep = BRepEdges.begin(); itBRep != BRepEdges.end();
+              ++itBRep) {
+            if(extremities.find(*itBRep) != extremities.end()) continue;
+            std::map<MVertex *, int> count;
+            for(std::size_t j = 0; j < (*itBRep)->lines.size(); j++) {
+              count[(*itBRep)->lines[j]->getVertex(0)]++;
+              count[(*itBRep)->lines[j]->getVertex(1)]++;
+            }
+            // a node bounds the chain unless it is interior to it, i.e.
+            // unless exactly two lines meet there (non-manifold junctions,
+            // where three or more lines meet, do bound it)
+            std::set<MVertex *> &ext = extremities[*itBRep];
+            for(auto itC = count.begin(); itC != count.end(); ++itC)
+              if(itC->second != 2) ext.insert(itC->first);
+          }
+          std::vector<partitionVertex *> created;
+          std::vector<MVertex *> createdNodes;
+
           for(std::size_t i = 0; i < vertex->getNumMeshElements(); i++) {
             // Create the new partitionVertex
             partitionVertex *pvertex = new partitionVertex(
@@ -944,21 +1008,30 @@ divideNonConnectedEntities(GModel *model, int dim,
             // Add to model
             model->add(pvertex);
             // Add elements
-            pvertex->addElement(vertex->getMeshElement(i));
-            // Move B-Rep
-            std::vector<GEdge *> BRepEdges = vertex->edges();
-            if(!BRepEdges.empty()) {
-              for(auto itBRep = BRepEdges.begin(); itBRep != BRepEdges.end();
-                  ++itBRep) {
-                if(vertex == (*itBRep)->getBeginVertex()) {
-                  (*itBRep)->setVertex(pvertex, 1);
-                  pvertex->addEdge(*itBRep);
-                }
-                if(vertex == (*itBRep)->getEndVertex()) {
-                  (*itBRep)->setVertex(pvertex, -1);
-                  pvertex->addEdge(*itBRep);
+            MElement *point = vertex->getMeshElement(i);
+            pvertex->addElement(point);
+            created.push_back(pvertex);
+            createdNodes.push_back(point->getVertex(0));
+          }
+
+          // Move B-Rep: hand each curve to the component that actually
+          // terminates it, instead of to all of them. If no component does
+          // (the original B-Rep was already questionable), fall back to the
+          // previous behaviour and give it to the first one.
+          for(int slot = 0; slot < 2; slot++) {
+            std::vector<GEdge *> &brep = slot ? endOf : beginOf;
+            for(auto itBRep = brep.begin(); itBRep != brep.end(); ++itBRep) {
+              const std::set<MVertex *> &ext = extremities[*itBRep];
+              std::size_t pick = created.size();
+              for(std::size_t i = 0; i < created.size(); i++) {
+                if(ext.find(createdNodes[i]) != ext.end()) {
+                  pick = i;
+                  break;
                 }
               }
+              if(pick == created.size()) pick = 0;
+              (*itBRep)->setVertex(created[pick], slot ? -1 : 1);
+              created[pick]->addEdge(*itBRep);
             }
           }
 
@@ -986,6 +1059,19 @@ divideNonConnectedEntities(GModel *model, int dim,
     graph.eindResize(eindSize);
 
     int elementaryNumber = model->getMaxElementaryNumber(1);
+
+    // The split entities are created in a second pass, so that the B-Rep of
+    // the originals can be distributed among the components rather than
+    // copied to each of them
+    struct PendingEdgeSplit {
+      partitionEdge *edge;
+      std::vector<GFace *> brep;
+      std::vector<int> orientations;
+      std::vector<std::size_t> components;
+      std::vector<std::vector<MElement *> > elements;
+    };
+    std::vector<PendingEdgeSplit> pending;
+    BRepDistributor<MEdge, MEdgeHash, MEdgeEqual> distributor;
 
     for(auto it = edges.begin(); it != edges.end(); ++it) {
       if((*it)->geomType() == GEntity::PartitionCurve) {
@@ -1019,52 +1105,72 @@ divideNonConnectedEntities(GModel *model, int dim,
 
         if(connectedElements.size() > 1) {
           ret = true;
-          std::vector<GFace *> BRepFaces = edge->faces();
-
-          std::vector<int> oldOrientations;
-          oldOrientations.reserve(BRepFaces.size());
-
-          if(!BRepFaces.empty()) {
-            for(auto itBRep = BRepFaces.begin(); itBRep != BRepFaces.end();
-                ++itBRep) {
-              oldOrientations.push_back((*itBRep)->delEdge(edge));
-            }
+          PendingEdgeSplit split;
+          split.edge = edge;
+          split.brep = edge->faces();
+          split.orientations.reserve(split.brep.size());
+          for(auto itBRep = split.brep.begin(); itBRep != split.brep.end();
+              ++itBRep) {
+            split.orientations.push_back((*itBRep)->delEdge(edge));
           }
-
           for(std::size_t i = 0; i < connectedElements.size(); i++) {
-            // Create the new partitionEdge
-            partitionEdge *pedge =
-              new partitionEdge(model, ++elementaryNumber, nullptr, nullptr,
-                                edge->getPartitions());
-            // Assign parent entity
-            pedge->setParentEntity(edge->getParentEntity());
-            // Add to model
-            model->add(pedge);
+            std::size_t comp = distributor.newComponent();
+            split.components.push_back(comp);
+            split.elements.push_back(std::vector<MElement *>(
+              connectedElements[i].begin(), connectedElements[i].end()));
             for(auto itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
-              // Add elements
-              pedge->addElement((*itSet));
-            }
-            // Move B-Rep
-            if(BRepFaces.size() > 0) {
-              std::size_t j = 0;
-              for(auto itBRep = BRepFaces.begin(); itBRep != BRepFaces.end();
-                  ++itBRep) {
-                (*itBRep)->setEdge(pedge, oldOrientations[j]);
-                pedge->addFace(*itBRep);
-                j++;
-              }
+              distributor.claim((*itSet)->getEdge(0), comp);
             }
           }
-
-          model->remove(edge);
-          edge->lines.clear();
-          edge->mesh_vertices.clear();
-          delete edge;
+          pending.push_back(split);
         }
 
         connectedElements.clear();
       }
+    }
+
+    // Probe the candidate surfaces once, to find out which component each of
+    // them is actually bounded by
+    if(!pending.empty()) {
+      std::set<GFace *, GEntityPtrFullLessThan> candidates;
+      for(std::size_t i = 0; i < pending.size(); i++)
+        candidates.insert(pending[i].brep.begin(), pending[i].brep.end());
+      for(auto itC = candidates.begin(); itC != candidates.end(); ++itC) {
+        for(std::size_t i = 0; i < (*itC)->getNumMeshElements(); i++) {
+          MElement *e = (*itC)->getMeshElement(i);
+          for(int j = 0; j < e->getNumEdges(); j++)
+            distributor.probe(e->getEdge(j), *itC);
+        }
+      }
+    }
+
+    for(std::size_t p = 0; p < pending.size(); p++) {
+      PendingEdgeSplit &split = pending[p];
+      for(std::size_t i = 0; i < split.components.size(); i++) {
+        // Create the new partitionEdge
+        partitionEdge *pedge =
+          new partitionEdge(model, ++elementaryNumber, nullptr, nullptr,
+                            split.edge->getPartitions());
+        // Assign parent entity
+        pedge->setParentEntity(split.edge->getParentEntity());
+        // Add to model
+        model->add(pedge);
+        // Add elements
+        for(std::size_t j = 0; j < split.elements[i].size(); j++)
+          pedge->addElement(split.elements[i][j]);
+        // Move B-Rep: only to the surfaces this component really bounds
+        for(std::size_t j = 0; j < split.brep.size(); j++) {
+          if(!distributor.touches(split.components[i], split.brep[j])) continue;
+          split.brep[j]->setEdge(pedge, split.orientations[j]);
+          pedge->addFace(split.brep[j]);
+        }
+      }
+
+      model->remove(split.edge);
+      split.edge->lines.clear();
+      split.edge->mesh_vertices.clear();
+      delete split.edge;
     }
   }
 
@@ -1083,6 +1189,19 @@ divideNonConnectedEntities(GModel *model, int dim,
     graph.eindResize(eindSize);
 
     int elementaryNumber = model->getMaxElementaryNumber(2);
+
+    // The split entities are created in a second pass, so that the B-Rep of
+    // the originals can be distributed among the components rather than
+    // copied to each of them
+    struct PendingFaceSplit {
+      partitionFace *face;
+      std::vector<GRegion *> brep;
+      std::vector<int> orientations;
+      std::vector<std::size_t> components;
+      std::vector<std::vector<MElement *> > elements;
+    };
+    std::vector<PendingFaceSplit> pending;
+    BRepDistributor<MFace, MFaceHash, MFaceEqual> distributor;
 
     for(auto it = faces.begin(); it != faces.end(); ++it) {
       if((*it)->geomType() == GEntity::PartitionSurface) {
@@ -1119,49 +1238,72 @@ divideNonConnectedEntities(GModel *model, int dim,
 
         if(connectedElements.size() > 1) {
           ret = true;
+          PendingFaceSplit split;
+          split.face = face;
           std::list<GRegion *> BRepRegions = face->regions();
-          std::vector<int> oldOrientations;
-          if(BRepRegions.size() > 0) {
-            for(auto itBRep = BRepRegions.begin(); itBRep != BRepRegions.end();
-                ++itBRep) {
-              oldOrientations.push_back((*itBRep)->delFace(face));
-            }
+          split.brep.assign(BRepRegions.begin(), BRepRegions.end());
+          split.orientations.reserve(split.brep.size());
+          for(std::size_t j = 0; j < split.brep.size(); j++) {
+            split.orientations.push_back(split.brep[j]->delFace(face));
           }
-
           for(std::size_t i = 0; i < connectedElements.size(); i++) {
-            // Create the new partitionFace
-            partitionFace *pface = new partitionFace(model, ++elementaryNumber,
-                                                     face->getPartitions());
-            // Assign parent entity
-            pface->setParentEntity(face->getParentEntity());
-            // Add to model
-            model->add(pface);
+            std::size_t comp = distributor.newComponent();
+            split.components.push_back(comp);
+            split.elements.push_back(std::vector<MElement *>(
+              connectedElements[i].begin(), connectedElements[i].end()));
             for(auto itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
-              // Add elements
-              pface->addElement((*itSet));
-            }
-            // Move B-Rep
-            if(BRepRegions.size() > 0) {
-              std::size_t j = 0;
-              for(auto itBRep = BRepRegions.begin();
-                  itBRep != BRepRegions.end(); ++itBRep) {
-                (*itBRep)->setFace(pface, oldOrientations[j]);
-                pface->addRegion(*itBRep);
-                j++;
-              }
+              distributor.claim((*itSet)->getFace(0), comp);
             }
           }
-
-          model->remove(face);
-          face->triangles.clear();
-          face->quadrangles.clear();
-          face->mesh_vertices.clear();
-          delete face;
+          pending.push_back(split);
         }
 
         connectedElements.clear();
       }
+    }
+
+    // Probe the candidate volumes once, to find out which component each of
+    // them is actually bounded by
+    if(!pending.empty()) {
+      std::set<GRegion *, GEntityPtrFullLessThan> candidates;
+      for(std::size_t i = 0; i < pending.size(); i++)
+        candidates.insert(pending[i].brep.begin(), pending[i].brep.end());
+      for(auto itC = candidates.begin(); itC != candidates.end(); ++itC) {
+        for(std::size_t i = 0; i < (*itC)->getNumMeshElements(); i++) {
+          MElement *e = (*itC)->getMeshElement(i);
+          for(int j = 0; j < e->getNumFaces(); j++)
+            distributor.probe(e->getFace(j), *itC);
+        }
+      }
+    }
+
+    for(std::size_t p = 0; p < pending.size(); p++) {
+      PendingFaceSplit &split = pending[p];
+      for(std::size_t i = 0; i < split.components.size(); i++) {
+        // Create the new partitionFace
+        partitionFace *pface = new partitionFace(model, ++elementaryNumber,
+                                                 split.face->getPartitions());
+        // Assign parent entity
+        pface->setParentEntity(split.face->getParentEntity());
+        // Add to model
+        model->add(pface);
+        // Add elements
+        for(std::size_t j = 0; j < split.elements[i].size(); j++)
+          pface->addElement(split.elements[i][j]);
+        // Move B-Rep: only to the volumes this component really bounds
+        for(std::size_t j = 0; j < split.brep.size(); j++) {
+          if(!distributor.touches(split.components[i], split.brep[j])) continue;
+          split.brep[j]->setFace(pface, split.orientations[j]);
+          pface->addRegion(split.brep[j]);
+        }
+      }
+
+      model->remove(split.face);
+      split.face->triangles.clear();
+      split.face->quadrangles.clear();
+      split.face->mesh_vertices.clear();
+      delete split.face;
     }
   }
 
