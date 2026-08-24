@@ -55,6 +55,15 @@ public:
     this->quadrangles.clear();
     this->polygons.clear();
   }
+  // Never delete shared elements, whatever the caller asked for
+  void removeElement(MElement *e, bool del = false) override
+  {
+    GFace::removeElement(e, false);
+  }
+  void removeElements(bool del = false) override
+  {
+    GFace::removeElements(false);
+  }
 };
 
 class overlapRegion : public discreteRegion {
@@ -83,6 +92,15 @@ public:
     this->pyramids.clear();
     this->trihedra.clear();
     this->polyhedra.clear();
+  }
+  // Never delete shared elements, whatever the caller asked for
+  void removeElement(MElement *e, bool del = false) override
+  {
+    GRegion::removeElement(e, false);
+  }
+  void removeElements(bool del = false) override
+  {
+    GRegion::removeElements(false);
   }
 };
 
@@ -117,9 +135,12 @@ using BoundaryToPartitionEntity =
                      typename EntityTraits<dim>::BoundaryMeshObjectEqual>;
 
 inline std::vector<int> getEntityPartition(GEntity *entity,
-                                           bool failOnNull = true)
+                                           bool errorIfNotPartitioned = true)
 {
-  if(!entity) Msg::Error("getEntityPartition: entity is null.");
+  if(!entity) {
+    Msg::Error("getEntityPartition: entity is null.");
+    return {};
+  }
   auto pv = dynamic_cast<partitionVertex *>(entity);
   if(pv) { return pv->getPartitions(); }
   auto pe = dynamic_cast<partitionEdge *>(entity);
@@ -128,7 +149,7 @@ inline std::vector<int> getEntityPartition(GEntity *entity,
   if(pf) { return pf->getPartitions(); }
   auto pr = dynamic_cast<partitionRegion *>(entity);
   if(pr) { return pr->getPartitions(); }
-  if(failOnNull)
+  if(errorIfNotPartitioned)
     Msg::Error("getEntityPartition: entity is not a partitioned entity.");
   return {};
 }
