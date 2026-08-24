@@ -125,8 +125,8 @@ private:
 
 public:
   Graph(GModel *model)
-    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _trackVertex(false),
-      _vwgt(nullptr)
+    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _vwgt(nullptr),
+      _trackVertex(false)
   {
   }
   ~Graph() { clear(); }
