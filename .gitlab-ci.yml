@@ -453,8 +453,14 @@ pypi_official_snapshot:
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ win_amd64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ macosx_10_15_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSARM-sdk/ macosx_12_0_arm64
-    - scp gmsh-*.dev1+nox*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev-nox/gmsh/
-    - scp gmsh-*.dev1-*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev/gmsh/
+    - VERSION=`cat version.txt`
+    # upload the new dated dev wheels first, then prune old versions on the
+    # server, keeping the two most recent ones so an in-progress pip install of
+    # the version being replaced is not broken
+    - scp gmsh-*+nox*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev-nox/gmsh/
+    - scp $(ls gmsh-*.whl | grep -vF +nox) geuzaine@gmsh.info:.wwwgmsh/python-packages-dev/gmsh/
+    - 'ssh geuzaine@gmsh.info "cd .wwwgmsh/python-packages-dev-nox/gmsh && ls gmsh-${VERSION}.dev*.whl 2>/dev/null | sed -E ''s/.*\.dev([0-9]+).*/\1/'' | sort -u | head -n -2 | while read d; do rm -f gmsh-${VERSION}.dev\${d}*.whl; done"'
+    - 'ssh geuzaine@gmsh.info "cd .wwwgmsh/python-packages-dev/gmsh && ls gmsh-${VERSION}.dev*.whl 2>/dev/null | sed -E ''s/.*\.dev([0-9]+).*/\1/'' | sort -u | head -n -2 | while read d; do rm -f gmsh-${VERSION}.dev\${d}*.whl; done"'
   tags:
     - linux64
     - docker
