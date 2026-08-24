@@ -198,9 +198,16 @@ drawContext::drawContext(openglWindow *window, drawTransform *transform)
 
   _quadric = nullptr; // cannot create it here: needs valid opengl context
   _displayLists = 0;
+
+  _pickFBO = _pickColorRenderbuffer = _pickDepthRenderbuffer = 0;
+  _pickFBOWidth = _pickFBOHeight = 0;
 }
 
-drawContext::~drawContext() { invalidateQuadricsAndDisplayLists(); }
+drawContext::~drawContext()
+{
+  invalidateQuadricsAndDisplayLists();
+  _invalidatePickFBO();
+}
 
 double drawContext::highResolutionPixelFactor()
 {
@@ -230,6 +237,7 @@ void drawContext::invalidateQuadricsAndDisplayLists()
     glDeleteLists(_displayLists, 3);
     _displayLists = 0;
   }
+  _invalidatePickFBO();
 }
 
 void drawContext::createQuadricsAndDisplayLists()
@@ -1246,6 +1254,254 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
      elements.size() || points.size() || views.size())
     return true;
   return false;
+}
+
+void drawContext::_invalidatePickFBO()
+{
+#if defined(HAVE_GLEW)
+  if(_pickFBO) {
+    glDeleteFramebuffers(1, &_pickFBO);
+    _pickFBO = 0;
+  }
+  if(_pickColorRenderbuffer) {
+    glDeleteRenderbuffers(1, &_pickColorRenderbuffer);
+    _pickColorRenderbuffer = 0;
+  }
+  if(_pickDepthRenderbuffer) {
+    glDeleteRenderbuffers(1, &_pickDepthRenderbuffer);
+    _pickDepthRenderbuffer = 0;
+  }
+#endif
+  _pickFBOWidth = _pickFBOHeight = 0;
+}
+
+bool drawContext::_ensurePickFBO()
+{
+#if defined(HAVE_GLEW)
+  if(!vboSupported) return false; // no usable GL extension loading
+
+  int w = viewport[2] - viewport[0], h = viewport[3] - viewport[1];
+  if(w <= 0 || h <= 0) return false;
+  if(_pickFBO && _pickFBOWidth == w && _pickFBOHeight == h) return true;
+
+  _invalidatePickFBO();
+
+  GLint prevFBO = 0, prevRB = 0;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFBO);
+  glGetIntegerv(GL_RENDERBUFFER_BINDING, &prevRB);
+
+  glGenFramebuffers(1, &_pickFBO);
+  glGenRenderbuffers(1, &_pickColorRenderbuffer);
+  glGenRenderbuffers(1, &_pickDepthRenderbuffer);
+
+  glBindRenderbuffer(GL_RENDERBUFFER, _pickColorRenderbuffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, w, h);
+  glBindRenderbuffer(GL_RENDERBUFFER, _pickDepthRenderbuffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, _pickFBO);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                            GL_RENDERBUFFER, _pickColorRenderbuffer);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                            GL_RENDERBUFFER, _pickDepthRenderbuffer);
+
+  bool ok =
+    (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+  glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)prevRB);
+  glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)prevFBO);
+
+  if(!ok) {
+    _invalidatePickFBO();
+    return false;
+  }
+  _pickFBOWidth = w;
+  _pickFBOHeight = h;
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool drawContext::selectFast(int type, int x, int y, int w, int h,
+                             std::vector<GVertex *> &vertices,
+                             std::vector<GEdge *> &edges,
+                             std::vector<GFace *> &faces,
+                             std::vector<GRegion *> &regions, bool &ranOk)
+{
+  vertices.clear();
+  edges.clear();
+  faces.clear();
+  regions.clear();
+  ranOk = false;
+
+#if !defined(HAVE_GLEW)
+  return false;
+#else
+  GModel *m = GModel::current();
+  if(!m) return false;
+
+  bool wantFaces = (type == ENT_ALL || type == ENT_NONE || type == ENT_SURFACE);
+  // conservative bail-out: with Geometry.SurfaceType == 0 there's no
+  // va_geom_triangles to color-ID render, so a "no hit" result here could
+  // be a false negative -- let the caller fall back to the accurate
+  // (if potentially slower) select() instead. Same for a pick region bigger
+  // than the FBO, or no usable FBO at all: ranOk stays false in every case
+  // below up to the point rendering actually starts.
+  if(wantFaces && CTX::instance()->geom.surfaceType == 0) return false;
+
+  if(!_ensurePickFBO()) return false;
+  if(w <= 0 || h <= 0 || w > _pickFBOWidth || h > _pickFBOHeight) return false;
+
+  ranOk = true;
+
+  GLint prevFBO = 0;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, _pickFBO);
+  glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+  glViewport(0, 0, _pickFBOWidth, _pickFBOHeight);
+  glDisable(GL_DITHER);
+  glDisable(GL_BLEND);
+  glDisable(GL_LINE_SMOOTH);
+  glDisable(GL_POINT_SMOOTH);
+  glDisable(GL_POLYGON_SMOOTH);
+  glDisable(GL_LIGHTING);
+  glEnable(GL_DEPTH_TEST);
+  glShadeModel(GL_FLAT);
+
+  // reuse the exact narrow-pick-region projection select() uses
+  int savedRenderMode = render_mode;
+  render_mode = drawContext::GMSH_SELECT;
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  initProjection(x, y, w, h);
+  initPosition(false);
+
+  int readX = x - w / 2;
+  int readY = (viewport[3] - y) - h / 2;
+  std::vector<unsigned char> pixels((std::size_t)w * h * 4);
+
+  auto clearBuffers = [&]() {
+    glClearColor(idColorClear[0] / 255.f, idColorClear[1] / 255.f,
+                idColorClear[2] / 255.f, idColorClear[3] / 255.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  };
+
+  auto renderType = [&](int t) {
+    unsigned char col[4];
+    switch(t) {
+    case 0:
+      for(auto it = m->firstVertex(); it != m->lastVertex(); ++it) {
+        idColorPack(0, (*it)->tag(), col);
+        drawGVertexID(this, *it, col);
+      }
+      break;
+    case 1:
+      for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
+        idColorPack(1, (*it)->tag(), col);
+        drawGEdgeID(this, *it, col);
+      }
+      break;
+    case 2:
+      for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
+        idColorPack(2, (*it)->tag(), col);
+        drawGFaceID(this, *it, col);
+      }
+      break;
+    case 3:
+      for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+        idColorPack(3, (*it)->tag(), col);
+        drawGRegionID(this, *it, col);
+      }
+      break;
+    }
+  };
+
+  // read back the pick box and decode the nearest-to-center non-background
+  // pixel, mirroring the forgiving tolerance the old 5x5 GL_SELECT pick box
+  // had (any hit touching the box could win, not just the exact center)
+  auto readAndDecode = [&](int &outType, int &outTag) -> bool {
+    glReadPixels(readX, readY, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
+    int cx = w / 2, cy = h / 2;
+    int bestDist = -1, bestType = -1, bestTag = -1;
+    for(int j = 0; j < h; j++) {
+      for(int i = 0; i < w; i++) {
+        const unsigned char *p = &pixels[((std::size_t)j * w + i) * 4];
+        int tp, tg;
+        if(!idColorUnpack(p, tp, tg)) continue;
+        int dx = i - cx, dy = j - cy;
+        int dist = dx * dx + dy * dy;
+        if(bestDist < 0 || dist < bestDist) {
+          bestDist = dist;
+          bestType = tp;
+          bestTag = tg;
+        }
+      }
+    }
+    if(bestDist < 0) return false;
+    outType = bestType;
+    outTag = bestTag;
+    return true;
+  };
+
+  auto resolve = [&](int t, int tag) {
+    switch(t) {
+    case 0:
+      if(GVertex *v = m->getVertexByTag(tag)) vertices.push_back(v);
+      break;
+    case 1:
+      if(GEdge *e = m->getEdgeByTag(tag)) edges.push_back(e);
+      break;
+    case 2:
+      if(GFace *f = m->getFaceByTag(tag)) faces.push_back(f);
+      break;
+    case 3:
+      if(GRegion *r = m->getRegionByTag(tag)) regions.push_back(r);
+      break;
+    }
+  };
+
+  bool found = false;
+  int hitType = -1, hitTag = -1;
+
+  if(type == ENT_NONE) {
+    // lowest-dimension type present wins (point < curve < surface < volume),
+    // matching select()'s typmin logic -- render/read one type at a time so
+    // a farther point still beats a nearer curve, etc.
+    for(int t = 0; t < 4 && !found; t++) {
+      if(t == 2 && !wantFaces) continue; // already bailed out above if so
+      clearBuffers();
+      renderType(t);
+      found = readAndDecode(hitType, hitTag);
+    }
+  }
+  else if(type == ENT_ALL) {
+    // any type, closest wins -- render together in one depth-tested pass
+    clearBuffers();
+    for(int t = 0; t < 4; t++) renderType(t);
+    found = readAndDecode(hitType, hitTag);
+  }
+  else {
+    int t = (type == ENT_POINT) ? 0 :
+            (type == ENT_CURVE) ? 1 :
+            (type == ENT_SURFACE) ? 2 : 3;
+    clearBuffers();
+    renderType(t);
+    found = readAndDecode(hitType, hitTag);
+  }
+
+  if(found) resolve(hitType, hitTag);
+
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glPopAttrib();
+  glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)prevFBO);
+  render_mode = savedRenderMode;
+
+  return found;
+#endif
 }
 
 void drawContext::recenterForRotationCenterChange(SPoint3 newRotationCenter)

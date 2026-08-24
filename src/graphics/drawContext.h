@@ -134,6 +134,15 @@ private:
   openglWindow *_openglWindow;
   std::map<std::string, imgtex> _imageTextures;
 
+  // offscreen framebuffer used by selectFast() to pick geometry entities via
+  // color-coded rendering instead of the (suspected slow on some drivers)
+  // GL_SELECT mode; created lazily, sized to match the window's viewport,
+  // HAVE_GLEW-gated (selectFast() falls back to select() when unavailable)
+  GLuint _pickFBO, _pickColorRenderbuffer, _pickDepthRenderbuffer;
+  int _pickFBOWidth, _pickFBOHeight;
+  bool _ensurePickFBO();
+  void _invalidatePickFBO();
+
 public:
   Camera camera;
   double r[3]; // current Euler angles (in degrees!)
@@ -237,6 +246,17 @@ public:
               std::vector<GRegion *> &regions,
               std::vector<MElement *> &elements, std::vector<SPoint2> &points,
               std::vector<PView *> &views);
+  // faster replacement for select() covering geometry entities only (no
+  // mesh elements, no post-processing views): color-ID offscreen rendering
+  // instead of GL_SELECT. Sets ranOk=false (and returns false) when it
+  // couldn't run at all -- no GLEW, or Geometry.SurfaceType == 0 so
+  // surfaces aren't pickable through this path -- in which case the caller
+  // should fall back to select(); ranOk=true means it did run, and the
+  // return value then means what it says (true = something was hit).
+  bool selectFast(int type, int x, int y, int w, int h,
+                  std::vector<GVertex *> &vertices,
+                  std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
+                  std::vector<GRegion *> &regions, bool &ranOk);
   void recenterForRotationCenterChange(SPoint3 newRotationCenter);
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
@@ -311,6 +331,29 @@ void bindVertexArrayVertices(VertexArray *va);
 void bindVertexArrayNormals(VertexArray *va);
 void bindVertexArrayColors(VertexArray *va);
 void unbindVertexArrayBuffers();
+
+// Pack/unpack an entity type (0=point,1=edge,2=face,3=region) + tag into an
+// RGBA8 color for drawContext::selectFast()'s color-ID picking. Used both by
+// the draw*ID() functions below (encode) and by selectFast() itself
+// (decode). A decoded type outside 0-3 means "no hit" -- see idColorClear,
+// the sentinel the pick framebuffer is cleared to.
+void idColorPack(int type, int tag, unsigned char color[4]);
+bool idColorUnpack(const unsigned char color[4], int &type, int &tag);
+extern const unsigned char idColorClear[4];
+
+// Minimal, single-color variants of the geometry entity drawers, used by
+// selectFast(): draw just enough geometry to be pick-tested against (no
+// labels/tangents/normals/highlighting), in the given ID color, with
+// lighting disabled. Skip entities that aren't currently pickable
+// (invisible, or not shown per Geometry.Points/Curves/Surfaces/Volumes and
+// not selected) exactly like the normal drawG*() functors in drawGeom.cpp.
+void drawGVertexID(drawContext *ctx, GVertex *v, const unsigned char color[4]);
+void drawGEdgeID(drawContext *ctx, GEdge *e, const unsigned char color[4]);
+// returns false if this face has no va_geom_triangles to draw (e.g.
+// Geometry.SurfaceType == 0); selectFast() checks this globally upfront, so
+// callers shouldn't normally hit it, but it's returned defensively
+bool drawGFaceID(drawContext *ctx, GFace *f, const unsigned char color[4]);
+void drawGRegionID(drawContext *ctx, GRegion *r, const unsigned char color[4]);
 
 // Must be called once a valid OpenGL context is current (e.g. the first
 // time a window is drawn) to enable VBO-backed vertex array rendering; a

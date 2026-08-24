@@ -165,6 +165,9 @@ protected:
   VertexArray *_va_lines_batch_edges;
   VertexArray *_va_lines_batch_faces;
   VertexArray *_va_lines_batch_regions;
+  // same idea, for every visible entity's va_triangles (filled surface/volume)
+  VertexArray *_va_triangles_batch_faces;
+  VertexArray *_va_triangles_batch_regions;
 
   // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
@@ -361,6 +364,8 @@ public:
   VertexArray *getEdgeLinesBatch() { return _va_lines_batch_edges; }
   VertexArray *getFaceLinesBatch() { return _va_lines_batch_faces; }
   VertexArray *getRegionLinesBatch() { return _va_lines_batch_regions; }
+  VertexArray *getFaceTrianglesBatch() { return _va_triangles_batch_faces; }
+  VertexArray *getRegionTrianglesBatch() { return _va_triangles_batch_regions; }
 
   // remove all mesh vertex associations to geometrical entities and remove
   // vertices from geometrical entities, then _associateEntityWithMeshVertices

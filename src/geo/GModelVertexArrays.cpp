@@ -499,6 +499,22 @@ bool GModel::fillVertexArrays()
           if((*it)->va_lines) _va_lines_batch_faces->merge((*it)->va_lines);
       }
     }
+
+    // merge every visible face's va_triangles (filled surface), same idea
+    delete _va_triangles_batch_faces;
+    _va_triangles_batch_faces = nullptr;
+    if(CTX::instance()->mesh.surfaceFaces) {
+      int numVertices = 0;
+      for(auto it = firstFace(); it != lastFace(); ++it)
+        if((*it)->va_triangles)
+          numVertices += (*it)->va_triangles->getNumVertices();
+      if(numVertices) {
+        _va_triangles_batch_faces = new VertexArray(3, numVertices / 3);
+        for(auto it = firstFace(); it != lastFace(); ++it)
+          if((*it)->va_triangles)
+            _va_triangles_batch_faces->merge((*it)->va_triangles);
+      }
+    }
   }
 
   if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME) {
@@ -516,6 +532,23 @@ bool GModel::fillVertexArrays()
         _va_lines_batch_regions = new VertexArray(2, numVertices / 2);
         for(auto it = firstRegion(); it != lastRegion(); ++it)
           if((*it)->va_lines) _va_lines_batch_regions->merge((*it)->va_lines);
+      }
+    }
+
+    // merge every visible region's va_triangles (filled volume faces), same
+    // idea
+    delete _va_triangles_batch_regions;
+    _va_triangles_batch_regions = nullptr;
+    if(CTX::instance()->mesh.volumeFaces) {
+      int numVertices = 0;
+      for(auto it = firstRegion(); it != lastRegion(); ++it)
+        if((*it)->va_triangles)
+          numVertices += (*it)->va_triangles->getNumVertices();
+      if(numVertices) {
+        _va_triangles_batch_regions = new VertexArray(3, numVertices / 3);
+        for(auto it = firstRegion(); it != lastRegion(); ++it)
+          if((*it)->va_triangles)
+            _va_triangles_batch_regions->merge((*it)->va_triangles);
       }
     }
   }

@@ -74,7 +74,8 @@ GModel::GModel(const std::string &name)
     _occ_internals(nullptr), _acis_internals(nullptr),
     _parasolid_internals(nullptr), _fields(nullptr),
     _va_lines_batch_edges(nullptr), _va_lines_batch_faces(nullptr),
-    _va_lines_batch_regions(nullptr), _currentMeshEntity(nullptr),
+    _va_lines_batch_regions(nullptr), _va_triangles_batch_faces(nullptr),
+    _va_triangles_batch_regions(nullptr), _currentMeshEntity(nullptr),
     _numPartitions(0), normals(nullptr), lcCallback(nullptr)
 {
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
@@ -114,6 +115,8 @@ GModel::~GModel()
   delete _va_lines_batch_edges;
   delete _va_lines_batch_faces;
   delete _va_lines_batch_regions;
+  delete _va_triangles_batch_faces;
+  delete _va_triangles_batch_regions;
 
   destroy();
   deleteGEOInternals();
@@ -322,6 +325,10 @@ void GModel::deleteVertexArrays()
   _va_lines_batch_faces = nullptr;
   delete _va_lines_batch_regions;
   _va_lines_batch_regions = nullptr;
+  delete _va_triangles_batch_faces;
+  _va_triangles_batch_faces = nullptr;
+  delete _va_triangles_batch_regions;
+  _va_triangles_batch_regions = nullptr;
 }
 
 void GModel::deleteGeometryVertexArrays()

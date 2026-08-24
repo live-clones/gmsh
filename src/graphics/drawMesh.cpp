@@ -486,8 +486,11 @@ static void drawBatchedArrays(VertexArray *va, GLint type, bool useNormalArray,
     bindVertexArrayColors(va);
     glEnableClientState(GL_COLOR_ARRAY);
   }
+  if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)
+    glEnable(GL_POLYGON_OFFSET_FILL);
   glDrawArrays(type, 0, va->getNumVertices());
   unbindVertexArrayBuffers();
+  glDisable(GL_POLYGON_OFFSET_FILL);
   glDisable(GL_LIGHTING);
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
@@ -589,8 +592,16 @@ public:
     if(CTX::instance()->mesh.lightTwoSide)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    drawArrays(_ctx, f, f->va_triangles, GL_TRIANGLES,
-               CTX::instance()->mesh.light);
+    {
+      // skip if already covered by the single batched draw call issued
+      // before the GFace loop; still draw individually during entity
+      // picking, and to redraw a selected entity's highlight color on top
+      bool batched = (_ctx->render_mode == drawContext::GMSH_RENDER &&
+                      !f->getSelection() && f->model()->getFaceTrianglesBatch());
+      if(!batched)
+        drawArrays(_ctx, f, f->va_triangles, GL_TRIANGLES,
+                  CTX::instance()->mesh.light);
+    }
 
     if(CTX::instance()->mesh.surfaceLabels) {
       if(CTX::instance()->mesh.triangles)
@@ -678,8 +689,14 @@ public:
     if(CTX::instance()->mesh.lightTwoSide)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    drawArrays(_ctx, r, r->va_triangles, GL_TRIANGLES,
-               CTX::instance()->mesh.light);
+    {
+      // see the analogous comment in drawMeshGFace above
+      bool batched = (_ctx->render_mode == drawContext::GMSH_RENDER &&
+                      !r->getSelection() && r->model()->getRegionTrianglesBatch());
+      if(!batched)
+        drawArrays(_ctx, r, r->va_triangles, GL_TRIANGLES,
+                  CTX::instance()->mesh.light);
+    }
 
     if(CTX::instance()->mesh.volumeLabels) {
       if(CTX::instance()->mesh.tetrahedra)
@@ -827,6 +844,14 @@ void drawContext::drawMesh()
                               CTX::instance()->mesh.lightLines,
                             CTX::instance()->mesh.surfaceFaces,
                             CTX::instance()->color.mesh.line);
+        if(CTX::instance()->mesh.surfaceFaces && render_mode == GMSH_RENDER) {
+          // matches the GL_LIGHT_MODEL_TWO_SIDE toggling drawMeshGFace does
+          // around its own (per-entity fallback) triangle draw below
+          glLightModelf(GL_LIGHT_MODEL_TWO_SIDE,
+                        CTX::instance()->mesh.lightTwoSide ? GL_TRUE : GL_FALSE);
+          drawBatchedArrays(m->getFaceTrianglesBatch(), GL_TRIANGLES,
+                            CTX::instance()->mesh.light, 0, 0);
+        }
         std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
         endFakeTransparency();
       }
@@ -837,6 +862,14 @@ void drawContext::drawMesh()
                               (CTX::instance()->mesh.lightLines > 1),
                             CTX::instance()->mesh.volumeFaces,
                             CTX::instance()->color.mesh.line);
+        if(CTX::instance()->mesh.volumeFaces && render_mode == GMSH_RENDER) {
+          // matches the GL_LIGHT_MODEL_TWO_SIDE toggling drawMeshGRegion does
+          // around its own (per-entity fallback) triangle draw below
+          glLightModelf(GL_LIGHT_MODEL_TWO_SIDE,
+                        CTX::instance()->mesh.lightTwoSide ? GL_TRUE : GL_FALSE);
+          drawBatchedArrays(m->getRegionTrianglesBatch(), GL_TRIANGLES,
+                            CTX::instance()->mesh.light, 0, 0);
+        }
         std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
       }
     }

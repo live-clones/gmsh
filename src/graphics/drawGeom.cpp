@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
+#include <algorithm>
 #include "drawContext.h"
 #include "Context.h"
 #include "gl2ps.h"
@@ -12,6 +13,96 @@
 #include "SBoundingBox3d.h"
 #include "GmshMessage.h"
 #include "StringUtils.h"
+
+const unsigned char idColorClear[4] = {255, 0, 0, 0};
+
+void idColorPack(int type, int tag, unsigned char color[4])
+{
+  color[0] = (unsigned char)type;
+  color[1] = (unsigned char)((tag >> 16) & 0xFF);
+  color[2] = (unsigned char)((tag >> 8) & 0xFF);
+  color[3] = (unsigned char)(tag & 0xFF);
+}
+
+bool idColorUnpack(const unsigned char color[4], int &type, int &tag)
+{
+  type = color[0];
+  if(type < 0 || type > 3) return false;
+  tag = (color[1] << 16) | (color[2] << 8) | color[3];
+  return true;
+}
+
+void drawGVertexID(drawContext *ctx, GVertex *v, const unsigned char color[4])
+{
+  if(!v->getVisibility()) return;
+  if(v->geomType() == GEntity::BoundaryLayerPoint) return;
+  if(!(CTX::instance()->geom.points || v->getSelection() > 1)) return;
+  double x = v->x(), y = v->y(), z = v->z();
+  ctx->transform(x, y, z);
+  glColor4ubv(color);
+  glPointSize((float)std::max(CTX::instance()->geom.pointSize,
+                              CTX::instance()->geom.selectedPointSize));
+  glBegin(GL_POINTS);
+  glVertex3d(x, y, z);
+  glEnd();
+}
+
+void drawGEdgeID(drawContext *ctx, GEdge *e, const unsigned char color[4])
+{
+  if(!e->getVisibility()) return;
+  if(e->geomType() == GEntity::DiscreteCurve) return;
+  if(e->geomType() == GEntity::PartitionCurve) return;
+  if(e->geomType() == GEntity::BoundaryLayerCurve) return;
+  if(!(CTX::instance()->geom.curves || e->getSelection() > 1)) return;
+  glColor4ubv(color);
+  glLineWidth((float)std::max(CTX::instance()->geom.curveWidth,
+                              CTX::instance()->geom.selectedCurveWidth));
+  Range<double> t_bounds = e->parBounds(0);
+  double t_min = t_bounds.low(), t_max = t_bounds.high();
+  int N = e->minimumDrawSegments() + 1;
+  glBegin(GL_LINE_STRIP);
+  for(int i = 0; i < N; i++) {
+    double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
+    GPoint p = e->point(t);
+    double x = p.x(), y = p.y(), z = p.z();
+    ctx->transform(x, y, z);
+    glVertex3d(x, y, z);
+  }
+  glEnd();
+}
+
+bool drawGFaceID(drawContext *ctx, GFace *f, const unsigned char color[4])
+{
+  if(!f->getVisibility()) return true;
+  if(f->geomType() == GEntity::PartitionSurface) return true;
+  if(f->geomType() == GEntity::BoundaryLayerSurface) return true;
+  if(!(CTX::instance()->geom.surfaces || f->getSelection() > 1)) return true;
+  if(CTX::instance()->geom.surfaceType > 0) f->fillVertexArray();
+  if(!f->va_geom_triangles || !f->va_geom_triangles->getNumVertices())
+    return false;
+  bindVertexArrayVertices(f->va_geom_triangles);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+  glColor4ubv(color);
+  glDrawArrays(GL_TRIANGLES, 0, f->va_geom_triangles->getNumVertices());
+  unbindVertexArrayBuffers();
+  glDisableClientState(GL_VERTEX_ARRAY);
+  return true;
+}
+
+void drawGRegionID(drawContext *ctx, GRegion *r, const unsigned char color[4])
+{
+  if(!r->getVisibility()) return;
+  if(!(CTX::instance()->geom.volumes || r->getSelection() > 1)) return;
+  SBoundingBox3d bb = r->bounds(true); // fast approx if mesh-based
+  SPoint3 p = bb.center();
+  double x = p.x(), y = p.y(), z = p.z();
+  ctx->transform(x, y, z);
+  double size = std::max(8., bb.diag() / 50.);
+  glColor4ubv(color);
+  ctx->drawSphere(size, x, y, z, 0);
+}
 
 static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
                             double z, double offset)

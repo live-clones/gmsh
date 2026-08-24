@@ -825,8 +825,27 @@ bool openglWindow::_select(
   if(_lock) return false;
   _lock = true;
   make_current();
-  bool ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
-                          edges, faces, regions, elements, points, views);
+
+  bool ret;
+  // geometry-entity-only, single-hit queries (no mesh elements, no
+  // post-processing views, no drag/lasso multi-select) can use the faster
+  // color-ID picking path instead of GL_SELECT; it reports ranOk=false when
+  // it couldn't run at all (as opposed to running and finding nothing), in
+  // which case fall back to select(). multiple=true (drag/lasso) always
+  // uses select(), since selectFast() only ever returns one hit.
+  if(!mesh && !post && !multiple) {
+    bool ranOk = false;
+    ret = _ctx->selectFast(type, x, y, w, h, vertices, edges, faces, regions,
+                           ranOk);
+    if(!ranOk)
+      ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
+                         edges, faces, regions, elements, points, views);
+  }
+  else {
+    ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
+                       edges, faces, regions, elements, points, views);
+  }
+
   _lock = false;
   return ret;
 }
