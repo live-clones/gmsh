@@ -105,8 +105,8 @@ private:
   // The size of the eptr array is n + 1, where n is the number of elements in
   // the mesh.
   std::vector<idx_t> _eptr;
-  // The metis graph structure
-  idx_t *_xadj, *_adjncy;
+  // The metis graph structure, in CSR form
+  std::vector<idx_t> _xadj, _adjncy;
   // The weight associated to each elements of eptr
   idx_t *_vwgt;
   // Element corresponding to each graph element in eptr
@@ -119,8 +119,7 @@ private:
 
 public:
   Graph(GModel *model)
-    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _xadj(nullptr),
-      _adjncy(nullptr), _vwgt(nullptr)
+    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _vwgt(nullptr)
   {
   }
   ~Graph() { clear(); }
@@ -131,9 +130,9 @@ public:
   std::size_t eind(std::size_t i) const { return _eind[i]; };
   std::size_t eptr(std::size_t i) const { return _eptr[i]; };
   idx_t xadj(std::size_t i) const { return _xadj[i]; };
-  idx_t *xadj() const { return _xadj; };
+  idx_t *xadj() { return _xadj.data(); };
   idx_t adjncy(std::size_t i) const { return _adjncy[i]; };
-  idx_t *adjncy() const { return _adjncy; };
+  idx_t *adjncy() { return _adjncy.data(); };
   idx_t *vwgt() const { return _vwgt; };
   MElement *element(std::size_t i) const { return _element[i]; };
   idx_t vertex(std::size_t i) const { return _vertex[i]; };
@@ -177,14 +176,7 @@ public:
   };
   void clear()
   {
-    if(_xadj) {
-      delete[] _xadj;
-      _xadj = nullptr;
-    }
-    if(_adjncy) {
-      delete[] _adjncy;
-      _adjncy = nullptr;
-    }
+    clearDualGraph();
     if(_vwgt) {
       delete[] _vwgt;
       _vwgt = nullptr;
@@ -192,14 +184,8 @@ public:
   }
   void clearDualGraph()
   {
-    if(_xadj) {
-      delete[] _xadj;
-      _xadj = nullptr;
-    }
-    if(_adjncy) {
-      delete[] _adjncy;
-      _adjncy = nullptr;
-    }
+    std::vector<idx_t>().swap(_xadj);
+    std::vector<idx_t>().swap(_adjncy);
   }
   void eraseVertex()
   {
@@ -276,8 +262,12 @@ public:
       }
     }
   }
+  // Builds the element-element (dual) graph in CSR form. The neighbor search
+  // is done in a single pass: the previous version probed the node-element
+  // adjacency twice, once to size _xadj and once to fill _adjncy.
   void createDualGraph(bool connectedAll)
   {
+    // invert the element-node map into a node-element map
     std::vector<idx_t> nptr(_nn + 1, 0);
     std::vector<idx_t> nind(_eptr[_ne], 0);
 
@@ -298,68 +288,57 @@ public:
     for(std::size_t i = _nn; i > 0; i--) nptr[i] = nptr[i - 1];
     nptr[0] = 0;
 
-    _xadj = new idx_t[_ne + 1];
-    for(std::size_t i = 0; i < _ne + 1; i++) _xadj[i] = 0;
-
-    std::vector<idx_t> nbrs(_ne, 0);
-    std::vector<idx_t> marker(_ne, 0);
+    // numCommonNodesInDualGraph() is a pure function of the pair of element
+    // types, so resolve it once per type pair here instead of doing virtual
+    // calls per candidate neighbor in the loop below
+    std::vector<unsigned char> etype(_ne, 0);
+    std::vector<MElement *> rep(TYPE_MAX_NUM + 1, nullptr);
     for(std::size_t i = 0; i < _ne; i++) {
-      std::size_t l = 0;
-      for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) {
-        for(idx_t k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
-          if(nind[k] != (idx_t)i) {
-            if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
-            marker[nind[k]]++;
-          }
-        }
+      if(!_element[i]) continue;
+      const int t = _element[i]->getType();
+      etype[i] = (unsigned char)t;
+      rep[t] = _element[i];
+    }
+    int threshold[TYPE_MAX_NUM + 1][TYPE_MAX_NUM + 1];
+    for(int a = 0; a <= TYPE_MAX_NUM; a++) {
+      for(int b = 0; b <= TYPE_MAX_NUM; b++) {
+        threshold[a][b] = (connectedAll || !rep[a] || !rep[b]) ?
+                            1 :
+                            rep[a]->numCommonNodesInDualGraph(rep[b]);
       }
-
-      std::size_t nbrsNeighbors = 0;
-      for(std::size_t j = 0; j < l; j++) {
-        if(marker[nbrs[j]] >=
-           (connectedAll ?
-              1 :
-              _element[i]->numCommonNodesInDualGraph(_element[nbrs[j]])))
-          nbrsNeighbors++;
-        marker[nbrs[j]] = 0;
-        nbrs[j] = 0;
-      }
-
-      _xadj[i] = nbrsNeighbors;
     }
 
-    for(std::size_t i = 1; i < _ne; i++) _xadj[i] = _xadj[i] + _xadj[i - 1];
-    for(std::size_t i = _ne; i > 0; i--) _xadj[i] = _xadj[i - 1];
-    _xadj[0] = 0;
+    // marker[n] counts how many nodes element n shares with the element being
+    // processed. One byte is enough: it saturates at 255, which is still above
+    // every threshold, so the comparison below is unaffected.
+    std::vector<unsigned char> marker(_ne, 0);
+    std::vector<idx_t> nbrs;
+    nbrs.reserve(256);
 
-    _adjncy = new idx_t[_xadj[_ne]];
-    for(idx_t i = 0; i < _xadj[_ne]; i++) _adjncy[i] = 0;
+    _xadj.assign(_ne + 1, 0);
+    std::vector<idx_t>().swap(_adjncy);
+    _adjncy.reserve(_eptr[_ne]);
 
     for(std::size_t i = 0; i < _ne; i++) {
-      std::size_t l = 0;
+      nbrs.clear();
       for(idx_t j = _eptr[i]; j < _eptr[i + 1]; j++) {
         for(idx_t k = nptr[_eind[j]]; k < nptr[_eind[j] + 1]; k++) {
-          if(nind[k] != (idx_t)i) {
-            if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
-            marker[nind[k]]++;
-          }
+          const idx_t n = nind[k];
+          if(n == (idx_t)i) continue;
+          if(marker[n] == 0) nbrs.push_back(n);
+          if(marker[n] != 255) marker[n]++;
         }
       }
 
-      for(std::size_t j = 0; j < l; j++) {
-        if(marker[nbrs[j]] >=
-           (connectedAll ?
-              1 :
-              _element[i]->numCommonNodesInDualGraph(_element[nbrs[j]]))) {
-          _adjncy[_xadj[i]] = nbrs[j];
-          _xadj[i] = _xadj[i] + 1;
-        }
-        marker[nbrs[j]] = 0;
-        nbrs[j] = 0;
+      const int *row = threshold[etype[i]];
+      for(std::size_t j = 0; j < nbrs.size(); j++) {
+        const idx_t n = nbrs[j];
+        if(marker[n] >= row[etype[n]]) _adjncy.push_back(n);
+        marker[n] = 0;
       }
+
+      _xadj[i + 1] = (idx_t)_adjncy.size();
     }
-    for(std::size_t i = _ne; i > 0; i--) _xadj[i] = _xadj[i - 1];
-    _xadj[0] = 0;
   }
   void fillDefaultWeights()
   {
