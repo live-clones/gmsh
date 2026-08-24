@@ -782,12 +782,27 @@ if(HAVE_FLTK OR ENABLE_GRAPHICS)
     # that are not statically available in the system OpenGL headers on all
     # platforms (e.g. Windows only exposes OpenGL 1.1 in opengl32.dll). If
     # GLEW is not found the vertex-array rendering code falls back to the
-    # legacy client-side array path.
+    # legacy client-side array path. GLEW_FOUND can be TRUE even though the
+    # actual library could not be located (seen e.g. on some macOS/Homebrew
+    # setups, where FindGLEW.cmake still reports success but leaves
+    # GLEW_LIBRARY/GLEW_LIBRARIES pointing at a NOTFOUND cache variable) --
+    # trust the imported target when available (it can only exist if GLEW
+    # was genuinely resolved) and otherwise double check the raw variables
+    # before using them, so a broken GLEW install degrades to "not found"
+    # instead of a hard CMake generate error.
     find_package(GLEW)
-    if(GLEW_FOUND)
+    if(TARGET GLEW::GLEW)
+      set_config_option(HAVE_GLEW "GLEW")
+      list(APPEND EXTERNAL_LIBRARIES GLEW::GLEW)
+    elseif(GLEW_FOUND AND GLEW_LIBRARIES AND GLEW_INCLUDE_DIRS AND
+           NOT GLEW_LIBRARIES MATCHES "NOTFOUND" AND
+           NOT GLEW_INCLUDE_DIRS MATCHES "NOTFOUND")
       set_config_option(HAVE_GLEW "GLEW")
       list(APPEND EXTERNAL_LIBRARIES ${GLEW_LIBRARIES})
       list(APPEND EXTERNAL_INCLUDES ${GLEW_INCLUDE_DIRS})
+    elseif(GLEW_FOUND)
+      message(STATUS "GLEW reported as found but its library/include path "
+                     "could not be resolved: disabling GLEW support")
     endif()
   endif()
 endif()
