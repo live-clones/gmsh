@@ -356,6 +356,24 @@ static bool outBounds(SPoint2 p, double minu, double maxu, double minv, double m
   return false;
 }
 
+static bool inParametricDomain(GFace *gf, const SPoint2 &p)
+{
+  if(gf->getNativeType() == GEntity::GmshModel) {
+    // The generic GFace::containsParam() only checks the rectangular UV
+    // bounds. For built-in plane surfaces this includes holes and the parts of
+    // the bounding rectangle outside trimmed loops, where PACK can otherwise
+    // propagate indefinitely and sample unrelated values from a background
+    // size field. gmshFace::containsPoint() performs the actual loop test.
+    if(gf->geomType() == GEntity::Plane) {
+      GPoint gp = gf->point(p);
+      if(!gp.succeeded()) return false;
+      return gf->containsPoint(SPoint3(gp.x(), gp.y(), gp.z()));
+    }
+    return true;
+  }
+  return gf->containsParam(p);
+}
+
 static bool close2sing(std::vector<MVertex*> &s, GFace *gf, SPoint2 p, Field *f){
 
   if (s.empty())return false;
@@ -546,10 +564,10 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     surfacePointWithExclusionRegion *parent = fifo.front();
     fifo.pop();
     for(int i = 0; i < 4; i++) {
-      if(!close2sing (singularities,gf,parent->_p[i],cross_field)
-	 && !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
-	 !outBounds(parent->_p[i],minu,maxu,minv,maxv)
-	 && (gf->getNativeType() == GEntity::GmshModel || gf->containsParam(parent->_p[i])))
+      if(!outBounds(parent->_p[i], minu, maxu, minv, maxv) &&
+	 inParametricDomain(gf, parent->_p[i]) &&
+	 !close2sing(singularities, gf, parent->_p[i], cross_field) &&
+	 !inExclusionZone(parent->_v, parent->_p[i], rtree))
 	{
 	  GPoint gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =

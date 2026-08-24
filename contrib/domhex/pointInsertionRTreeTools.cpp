@@ -105,8 +105,13 @@ bool inExclusionZone(
   RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree)
 {
   my_wrapper w(p, parent);
-  double _min[2] = {p.x() - 1.e-1, p.y() - 1.e-1},
-         _max[2] = {p.x() + 1.e-1, p.y() + 1.e-1};
+  // Exclusion regions are stored in the R-tree with their axis-aligned
+  // bounding boxes. A point query is therefore sufficient to retrieve every
+  // region that can contain p. The previous fixed-size UV window made each
+  // query visit a large fraction of the tree on fine or strongly graded size
+  // maps, turning the packing loop effectively quadratic.
+  double _min[2] = {p.x(), p.y()};
+  double _max[2] = {p.x(), p.y()};
   rtree.Search(_min, _max, rtree_callback, &w);
 
   return w._tooclose;
