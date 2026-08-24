@@ -116,6 +116,10 @@ void transferDataStructure(GFace *gf,
                            std::set<MTri3 *, compareTri3Ptr> &AllTris,
                            bidimMeshData &DATA);
 void computeEquivalences(GFace *gf, bidimMeshData &DATA);
+// compute the gamma quality statistics of the triangles and quadrangles of a
+// surface mesh
+void computeElementShapes(GFace *gf, double &worst, double &avg, double &best,
+                          int &nT, int &greaterThan);
 void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
                         bool nodeRepositioning, double minqual);
 

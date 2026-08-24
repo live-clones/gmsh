@@ -14,13 +14,10 @@
 
 class MTriangle;
 
-/**
- * @brief Class to project 3D points on a triangulated surface.
- *        If a parametrization is available, the UV are interpolated
- *        at the triangle projection.
- *        Not associated to the mesh elements of a GEntity, so it can be
- *        used on mesh sub-patches or on background mesh.
- */
+// Project 3D points on a triangulated surface. If a parametrization is
+// available, the UV are interpolated at the triangle projection. Not
+// associated to the mesh elements of a GEntity, so it can be used on mesh
+// sub-patches or on a background mesh.
 class SurfaceProjector {
 public:
   SurfaceProjector() : gf(NULL), OctIdx(0) {}
@@ -29,46 +26,28 @@ public:
   SurfaceProjector &operator=(SurfaceProjector const &) = delete;
   ~SurfaceProjector();
 
-  /**
-   * @brief Fill the triangles and uvs from the triangles, then build the
-   * octree. Overwrite existing triangulation/octree if there is one.
-   *
-   * @param gf The CAD face containing the triangles
-   * @param triangles The triangles used to build the triangulated geometry
-   * support
-   * @param useCADStl If true, build and use the STL of the CAD face
-   *
-   * @return true if success
-   */
+  // Fill the triangles and uvs from the triangles, then build the octree,
+  // overwriting the existing triangulation and octree if there is one. gf is
+  // the CAD face containing the triangles; with useCADStl, build and use the
+  // STL of that face instead. Returns true on success.
   bool initialize(GFace *gf, const std::vector<MTriangle *> &triangles, bool useCADStl = false);
 
-  /**
-   * @brief Clear the triangulation and delete the octree
-   */
+  // Clear the triangulation and delete the octree.
   void clear();
 
-  /**
-   * @brief The SurfaceProjector can project with an analytical formula instead
-   * of a triangulation and a octree Supported shapes: Sphere
-   *
-   * @param gf The face containing the analytical parameters
-   *
-   * @return true if success
-   */
+  // Project with an analytical formula instead of a triangulation and an
+  // octree, taking the parameters from gf. Supported shapes: sphere. Returns
+  // true on success.
   bool setAnalyticalProjection(GFace *gf);
 
-  /**
-   * @brief Get the query closest point on the triangulated surface.
-   *
-   * @param query[3] 3D coordinates of the query point
-   * @param evalOnCAD If param available, evaluate the face CAD mapping at the
-   * interpolated UV
-   * @param projectOnCAD If param available, call closestPoint from the CAD
-   * geometry engine, with the interpolated UV as initial guess
-   *
-   * @return the projection, check GPoint::succeeded() for projection success /
-   * failure
-   */
+  // Get the point of the triangulated surface closest to query, given as 3D
+  // coordinates. Check GPoint::succeeded() on the result to tell success from
+  // failure.
+  //
+  // evalOnCAD: if a parametrization is available, evaluate the CAD mapping of
+  //   the face at the interpolated UV
+  // projectOnCAD: if a parametrization is available, call closestPoint from
+  //   the CAD engine, with the interpolated UV as initial guess
   GPoint closestPoint(const double query[3], bool evalOnCAD = false,
                       bool projectOnCAD = false) const;
 

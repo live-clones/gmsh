@@ -16,6 +16,7 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
+#include "meshGFaceParamBoundary.h"
 #include "GModel.h"
 #include "GFace.h"
 #include "Numeric.h"
