@@ -3687,10 +3687,12 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp,
 {
   std::vector<GEntity *> entities;
   model->getEntities(entities);
-  std::map<MElement *, std::vector<int>> ghostCells;
+  // ordered by element number: ordering by pointer made the emitted order
+  // allocator-dependent, so two identical runs produced different files
+  std::map<MElement *, std::vector<int>, MElementPtrLessThan> ghostCells;
 
   for(std::size_t i = 0; i < entities.size(); i++) {
-    std::map<MElement *, int> ghostElements;
+    std::map<MElement *, int, MElementPtrLessThan> ghostElements;
     int partition = -1;
 
     if(entities[i]->geomType() == GEntity::GhostCurve) {
