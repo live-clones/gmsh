@@ -22,6 +22,7 @@
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FLTK
 #cmakedefine HAVE_GEOMETRYCENTRAL
+#cmakedefine HAVE_GLEW
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_HXT
 #cmakedefine HAVE_LAPACK
@@ -85,5 +86,15 @@
 #define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"
 
 ${GMSH_CONFIG_PRAGMAS}
+
+#if defined(HAVE_GLEW)
+// GLEW requires its header to be the very first OpenGL-related header
+// included in a translation unit. GmshConfig.h is included before any
+// FLTK/OpenGL header throughout the codebase (not just in src/graphics and
+// src/fltk -- e.g. several files in src/mesh, src/geo and src/plugin also
+// pull in FlGui.h/drawContext.h), so centralizing the include here is more
+// robust than trying to enumerate every affected file.
+#include <GL/glew.h>
+#endif
 
 #endif

@@ -777,6 +777,18 @@ if(HAVE_FLTK OR ENABLE_GRAPHICS)
     else()
       message(SEND_ERROR "Could not find GLU: disabling OpenGL support")
     endif()
+
+    # GLEW is used to load the OpenGL VBO entry points (glGenBuffers & co.)
+    # that are not statically available in the system OpenGL headers on all
+    # platforms (e.g. Windows only exposes OpenGL 1.1 in opengl32.dll). If
+    # GLEW is not found the vertex-array rendering code falls back to the
+    # legacy client-side array path.
+    find_package(GLEW)
+    if(GLEW_FOUND)
+      set_config_option(HAVE_GLEW "GLEW")
+      list(APPEND EXTERNAL_LIBRARIES ${GLEW_LIBRARIES})
+      list(APPEND EXTERNAL_INCLUDES ${GLEW_INCLUDE_DIRS})
+    endif()
   endif()
 endif()
 

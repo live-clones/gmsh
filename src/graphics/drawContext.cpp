@@ -40,6 +40,138 @@ void drawContext::setDrawGeomTransientFunction(void (*fct)(void *))
   drawGeomTransient = fct;
 }
 
+// VBO-backed vertex array rendering. VertexArray (src/common) stays
+// OpenGL-agnostic (it's also used headless, e.g. GmshRemote.cpp), so all the
+// actual GL calls live here; VertexArray only owns the raw buffer ids and a
+// revision counter, and is deleted through deleteVBOCallback below rather
+// than calling GL directly, since a VertexArray can be destroyed (e.g. a
+// model closed from a script) while no OpenGL context is current.
+
+#if defined(HAVE_GLEW)
+static bool vboSupported = false;
+static std::vector<unsigned int> vboPendingDeletion;
+
+static void queueVBODeletion(unsigned int vbo[3])
+{
+  for(int i = 0; i < 3; i++)
+    if(vbo[i]) vboPendingDeletion.push_back(vbo[i]);
+}
+#endif
+
+void initVertexArrayVBOSupport()
+{
+#if defined(HAVE_GLEW)
+  static bool done = false;
+  if(done) return;
+  done = true;
+  glewExperimental = GL_FALSE;
+  GLenum err = glewInit();
+  if(err != GLEW_OK) {
+    Msg::Warning("Could not initialize GLEW (%s): using legacy client-side "
+                 "vertex arrays",
+                 (const char *)glewGetErrorString(err));
+    return;
+  }
+  vboSupported = (GLEW_VERSION_1_5 || GLEW_ARB_vertex_buffer_object);
+  if(vboSupported) VertexArray::deleteVBOCallback = queueVBODeletion;
+#endif
+}
+
+void flushDeletedVertexArrayVBOs()
+{
+#if defined(HAVE_GLEW)
+  if(!vboPendingDeletion.empty()) {
+    glDeleteBuffers((GLsizei)vboPendingDeletion.size(), &vboPendingDeletion[0]);
+    vboPendingDeletion.clear();
+  }
+#endif
+}
+
+void bindVertexArrayVertices(VertexArray *va)
+{
+#if defined(HAVE_GLEW)
+  if(vboSupported) {
+    GLsizeiptr bytes = va->getNumVertices() * 3 * sizeof(float);
+    if(va->_vboVertices == 0) {
+      glGenBuffers(1, &va->_vboVertices);
+      glBindBuffer(GL_ARRAY_BUFFER, va->_vboVertices);
+      glBufferData(GL_ARRAY_BUFFER, bytes, va->getVertexArray(),
+                   GL_DYNAMIC_DRAW);
+      va->_vboVerticesRevision = va->_revision;
+    }
+    else {
+      glBindBuffer(GL_ARRAY_BUFFER, va->_vboVertices);
+      if(va->_vboVerticesRevision != va->_revision) {
+        glBufferSubData(GL_ARRAY_BUFFER, 0, bytes, va->getVertexArray());
+        va->_vboVerticesRevision = va->_revision;
+      }
+    }
+    glVertexPointer(3, GL_FLOAT, 0, (void *)0);
+    return;
+  }
+#endif
+  glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
+}
+
+void bindVertexArrayNormals(VertexArray *va)
+{
+#if defined(HAVE_GLEW)
+  if(vboSupported) {
+    GLsizeiptr bytes = va->getNumVertices() * 3 * sizeof(normal_type);
+    if(va->_vboNormals == 0) {
+      glGenBuffers(1, &va->_vboNormals);
+      glBindBuffer(GL_ARRAY_BUFFER, va->_vboNormals);
+      glBufferData(GL_ARRAY_BUFFER, bytes, va->getNormalArray(),
+                   GL_DYNAMIC_DRAW);
+      va->_vboNormalsRevision = va->_revision;
+    }
+    else {
+      glBindBuffer(GL_ARRAY_BUFFER, va->_vboNormals);
+      if(va->_vboNormalsRevision != va->_revision) {
+        glBufferSubData(GL_ARRAY_BUFFER, 0, bytes, va->getNormalArray());
+        va->_vboNormalsRevision = va->_revision;
+      }
+    }
+    glNormalPointer(NORMAL_GLTYPE, 0, (void *)0);
+    return;
+  }
+#endif
+  glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
+}
+
+void bindVertexArrayColors(VertexArray *va)
+{
+#if defined(HAVE_GLEW)
+  if(vboSupported) {
+    GLsizeiptr bytes = va->getNumVertices() * 4 * sizeof(unsigned char);
+    if(va->_vboColors == 0) {
+      glGenBuffers(1, &va->_vboColors);
+      glBindBuffer(GL_ARRAY_BUFFER, va->_vboColors);
+      glBufferData(GL_ARRAY_BUFFER, bytes, va->getColorArray(),
+                   GL_DYNAMIC_DRAW);
+      va->_vboColorsRevision = va->_revision;
+    }
+    else {
+      glBindBuffer(GL_ARRAY_BUFFER, va->_vboColors);
+      if(va->_vboColorsRevision != va->_revision) {
+        glBufferSubData(GL_ARRAY_BUFFER, 0, bytes, va->getColorArray());
+        va->_vboColorsRevision = va->_revision;
+      }
+    }
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, (void *)0);
+    return;
+  }
+#endif
+  glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
+}
+
+void unbindVertexArrayBuffers()
+{
+#if defined(HAVE_GLEW)
+  if(vboSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
+}
+
 extern SPoint2 getGraph2dDataPointForTag(unsigned int);
 
 drawContext::drawContext(openglWindow *window, drawTransform *transform)

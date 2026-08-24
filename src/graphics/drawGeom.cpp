@@ -268,11 +268,11 @@ private:
                         int forceColor = 0, unsigned int color = 0)
   {
     if(!va || !va->getNumVertices()) return;
-    glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
+    bindVertexArrayVertices(va);
     glEnableClientState(GL_VERTEX_ARRAY);
     if(useNormalArray) {
       glEnable(GL_LIGHTING);
-      glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
+      bindVertexArrayNormals(va);
       glEnableClientState(GL_NORMAL_ARRAY);
     }
     else {
@@ -283,7 +283,7 @@ private:
       glColor4ubv((GLubyte *)&color);
     }
     else {
-      glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
+      bindVertexArrayColors(va);
       glEnableClientState(GL_COLOR_ARRAY);
     }
     if(CTX::instance()->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
@@ -299,6 +299,7 @@ private:
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
     glDrawArrays(GL_TRIANGLES, 0, va->getNumVertices());
+    unbindVertexArrayBuffers();
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

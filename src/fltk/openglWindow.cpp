@@ -185,6 +185,9 @@ void openglWindow::draw()
 
   if(!context_valid()) { _ctx->invalidateQuadricsAndDisplayLists(); }
 
+  initVertexArrayVBOSupport();
+  flushDeletedVertexArrayVBOs();
+
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
   _ctx->viewport[2] = w();

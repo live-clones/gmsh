@@ -14,6 +14,7 @@
 
 template<int N> float ElementDataLessThan<N>::tolerance = 0.0F;
 float BarycenterLessThan::tolerance = 0.0F;
+void (*VertexArray::deleteVBOCallback)(unsigned int vbo[3]) = nullptr;
 
 VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   : _numVerticesPerElement(numVerticesPerElement)
@@ -230,6 +231,7 @@ void VertexArray::sort(double x, double y, double z)
   _vertices = sortedVertices;
   _normals = sortedNormals;
   _colors = sortedColors;
+  _revision++;
 }
 
 char *VertexArray::toChar(int num, const std::string &name, int type,

@@ -378,12 +378,12 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     }
   }
 
-  glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
+  bindVertexArrayVertices(va);
   glEnableClientState(GL_VERTEX_ARRAY);
 
   if(useNormalArray) {
     glEnable(GL_LIGHTING);
-    glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
+    bindVertexArrayNormals(va);
     glEnableClientState(GL_NORMAL_ARRAY);
   }
   else
@@ -396,7 +396,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   else if(CTX::instance()->pickElements ||
           (!e->getSelection() && (CTX::instance()->mesh.colorCarousel == 0 ||
                                   CTX::instance()->mesh.colorCarousel == 3))) {
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
+    bindVertexArrayColors(va);
     glEnableClientState(GL_COLOR_ARRAY);
   }
   else {
@@ -409,6 +409,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     glEnable(GL_POLYGON_OFFSET_FILL);
 
   glDrawArrays(type, 0, va->getNumVertices());
+  unbindVertexArrayBuffers();
 
   glDisable(GL_POLYGON_OFFSET_FILL);
   glDisable(GL_LIGHTING);

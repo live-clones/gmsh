@@ -13,6 +13,10 @@
 #include "SPoint2.h"
 #include "Camera.h"
 
+// pulls in <GL/glew.h> when HAVE_GLEW is set, which must be included before
+// any other OpenGL header
+#include "GmshConfig.h"
+
 #if defined(WIN32)
 #include <windows.h>
 #undef min
@@ -27,7 +31,6 @@
 #include <GL/glu.h>
 #endif
 
-#include "GmshConfig.h"
 #if defined(HAVE_VISUDEV)
 #define NORMAL_GLTYPE GL_FLOAT
 #else
@@ -43,6 +46,7 @@ class GRegion;
 class MElement;
 class PView;
 class openglWindow;
+class VertexArray;
 
 class drawTransform {
 public:
@@ -295,6 +299,30 @@ public:
   static void setDrawGeomTransientFunction(void (*fct)(void *));
   static void (*drawGeomTransient)(void *);
 };
+
+// Bind one of va's vertex/normal/color attribute arrays for glDrawArrays,
+// using a real GPU-resident buffer object when available (see HAVE_GLEW),
+// falling back transparently to the legacy client-side array otherwise.
+// Each call binds exactly one attribute so callers can skip whichever ones
+// they don't need for a given draw (e.g. no normals when lighting is off).
+// Call unbindVertexArrayBuffers() once done to reset the GL_ARRAY_BUFFER
+// binding left over from the VBO path.
+void bindVertexArrayVertices(VertexArray *va);
+void bindVertexArrayNormals(VertexArray *va);
+void bindVertexArrayColors(VertexArray *va);
+void unbindVertexArrayBuffers();
+
+// Must be called once a valid OpenGL context is current (e.g. the first
+// time a window is drawn) to enable VBO-backed vertex array rendering; a
+// no-op if built without GLEW, in which case the functions above always use
+// the legacy client-side array path.
+void initVertexArrayVBOSupport();
+
+// Frees any GPU buffer objects that were queued for deletion by a
+// VertexArray destroyed while no OpenGL context was current. Must be
+// called once per frame while a context is current (e.g. at the top of
+// openglWindow::draw()).
+void flushDeletedVertexArrayVBOs();
 
 class mousePosition {
 public:

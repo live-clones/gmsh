@@ -169,8 +169,31 @@ private:
   void _addElement(MElement *ele);
 
 public:
+  // GPU buffer object ids (vertex, normal, color); 0 means "not allocated".
+  // Kept as raw ids (not GLuint) so this header stays OpenGL-agnostic, since
+  // VertexArray is also used without OpenGL (e.g. GmshRemote.cpp). Owned and
+  // populated by the graphics layer; deleted through deleteVBOCallback so no
+  // GL call is ever made from a context that might not be current.
+  unsigned int _vboVertices = 0, _vboNormals = 0, _vboColors = 0;
+  // _revision is bumped whenever the CPU-side arrays change after they were
+  // possibly already uploaded to the GPU (i.e. by sort()). Each buffer
+  // tracks the revision it was last uploaded at, independently, since a
+  // given draw call may only bind a subset of the 3 buffers (e.g. a forced
+  // color skips the color buffer) -- a single shared "dirty" flag would let
+  // an unbound buffer's upload be silently skipped and forgotten.
+  int _revision = 0;
+  int _vboVerticesRevision = -1, _vboNormalsRevision = -1,
+      _vboColorsRevision = -1;
+  static void (*deleteVBOCallback)(unsigned int vbo[3]);
+
   VertexArray(int numVerticesPerElement, int numElements);
-  ~VertexArray() {}
+  ~VertexArray()
+  {
+    if(deleteVBOCallback && (_vboVertices || _vboNormals || _vboColors)) {
+      unsigned int vbo[3] = {_vboVertices, _vboNormals, _vboColors};
+      deleteVBOCallback(vbo);
+    }
+  }
   // return the number of vertices in the array
   int getNumVertices() { return (int)_vertices.size() / 3; }
   // return the number of vertices per element
