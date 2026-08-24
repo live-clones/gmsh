@@ -850,68 +850,92 @@ static void assignMeshVertices(GModel *model)
   }
 }
 
+// Splits the graph into connected components. The previous implementation
+// accumulated each component into a std::set<MElement *> and then deep-copied
+// it into the output, and it consumed _adjncy as it went (writing 0 over the
+// entries it had followed), which forced an O(#components x ne) rescan to find
+// the next seed. This keeps a visited flag instead and leaves the graph
+// intact.
+//
+// The seed order is preserved exactly, quirks included: index 0 doubles as
+// both a valid element and the "no edge" marker in _adjncy, so an element is
+// only ever seeded from if it has an adjacency entry that is not 0, and
+// elements with no edges at all are picked up afterwards, in index order,
+// starting at index 1.
 static void fillConnectedElements(
-  std::vector<std::set<MElement *, MElementPtrLessThan> > &connectedElements,
-  Graph &graph)
+  std::vector<std::vector<MElement *> > &connectedElements, Graph &graph)
 {
   if(graph.ne() < 2) return;
 
-  std::stack<idx_t> elementStack;
-  std::set<MElement *, MElementPtrLessThan> elements;
+  std::vector<char> visited(graph.ne(), 0);
+  std::vector<idx_t> stack;
+  std::vector<MElement *> elements;
+
   idx_t startElement = 0;
-  bool stop = true;
-  std::size_t size = 0;
+  std::size_t cursor = 0;
   idx_t isolatedElements = 0;
+  std::size_t covered = 0;
 
-  do {
-    // Inititalization
-    elementStack.push(startElement);
-    elements.insert(graph.element(startElement));
+  while(true) {
+    stack.push_back(startElement);
+    visited[startElement] = 1;
+    elements.push_back(graph.element(startElement));
 
-    while(elementStack.size() != 0) {
-      idx_t top = elementStack.top();
-      elementStack.pop();
-      elements.insert(graph.element(top));
-
+    while(!stack.empty()) {
+      const idx_t top = stack.back();
+      stack.pop_back();
       for(idx_t i = graph.xadj(top); i < graph.xadj(top + 1); i++) {
-        if(graph.adjncy(i) != 0) {
-          elementStack.push(graph.adjncy(i));
-          graph.adjncy(i, 0);
-        }
+        const idx_t n = graph.adjncy(i);
+        if(n == 0 || visited[n]) continue;
+        visited[n] = 1;
+        elements.push_back(graph.element(n));
+        stack.push_back(n);
       }
     }
-    connectedElements.push_back(elements);
-    size += elements.size();
-    elements.clear();
 
-    stop = (size == graph.ne() ? true : false);
+    std::sort(elements.begin(), elements.end(), MElementPtrLessThan());
+    covered += elements.size();
+    connectedElements.push_back(std::vector<MElement *>());
+    connectedElements.back().swap(elements);
 
+    if(covered >= graph.ne()) break;
+
+    // next seed: the first element not yet reached that has at least one
+    // adjacency entry different from 0. Eligibility only ever goes away, so a
+    // moving cursor visits each element at most once overall.
     startElement = 0;
-    if(!stop) {
-      for(std::size_t i = 0; i < graph.ne(); i++) {
-        for(idx_t j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
+    while(cursor < graph.ne()) {
+      if(!visited[cursor]) {
+        bool hasEdge = false;
+        for(idx_t j = graph.xadj(cursor); j < graph.xadj(cursor + 1); j++) {
           if(graph.adjncy(j) != 0) {
-            startElement = i;
-            i = graph.ne();
+            hasEdge = true;
             break;
           }
         }
+        if(hasEdge) break;
       }
-      if(startElement == 0) {
-        idx_t skipIsolatedElements = 0;
-        for(std::size_t i = 1; i < graph.ne(); i++) {
-          if(graph.xadj(i) == graph.xadj(i + 1)) {
-            if(skipIsolatedElements == isolatedElements) {
-              startElement = i;
-              isolatedElements++;
-              break;
-            }
-            skipIsolatedElements++;
+      cursor++;
+    }
+    if(cursor < graph.ne()) { startElement = (idx_t)cursor; }
+    else {
+      // only elements without any edge are left
+      idx_t skipIsolatedElements = 0;
+      for(std::size_t i = 1; i < graph.ne(); i++) {
+        if(graph.xadj(i) == graph.xadj(i + 1)) {
+          if(skipIsolatedElements == isolatedElements) {
+            startElement = (idx_t)i;
+            isolatedElements++;
+            break;
           }
+          skipIsolatedElements++;
         }
       }
     }
-  } while(!stop);
+    // nothing left to seed from: the remaining elements, if any, are
+    // unreachable (the previous implementation looped forever here)
+    if(startElement == 0) break;
+  }
 }
 
 // When a partition entity turns out to be non-connected and is split into
@@ -1120,8 +1144,7 @@ divideNonConnectedEntities(GModel *model, int dim,
           continue;
         }
 
-        std::vector<std::set<MElement *, MElementPtrLessThan> >
-          connectedElements;
+        std::vector<std::vector<MElement *> > connectedElements;
         fillConnectedElements(connectedElements, graph);
 
         if(connectedElements.size() > 1) {
@@ -1137,12 +1160,10 @@ divideNonConnectedEntities(GModel *model, int dim,
           for(std::size_t i = 0; i < connectedElements.size(); i++) {
             std::size_t comp = distributor.newComponent();
             split.components.push_back(comp);
-            split.elements.push_back(std::vector<MElement *>(
-              connectedElements[i].begin(), connectedElements[i].end()));
-            for(auto itSet = connectedElements[i].begin();
-                itSet != connectedElements[i].end(); ++itSet) {
-              distributor.claim((*itSet)->getEdge(0), comp);
-            }
+            for(std::size_t j = 0; j < connectedElements[i].size(); j++)
+              distributor.claim(connectedElements[i][j]->getEdge(0), comp);
+            split.elements.push_back(std::vector<MElement *>());
+            split.elements.back().swap(connectedElements[i]);
           }
           pending.push_back(split);
         }
@@ -1256,8 +1277,7 @@ divideNonConnectedEntities(GModel *model, int dim,
           continue;
         }
 
-        std::vector<std::set<MElement *, MElementPtrLessThan> >
-          connectedElements;
+        std::vector<std::vector<MElement *> > connectedElements;
         fillConnectedElements(connectedElements, graph);
 
         if(connectedElements.size() > 1) {
@@ -1273,12 +1293,10 @@ divideNonConnectedEntities(GModel *model, int dim,
           for(std::size_t i = 0; i < connectedElements.size(); i++) {
             std::size_t comp = distributor.newComponent();
             split.components.push_back(comp);
-            split.elements.push_back(std::vector<MElement *>(
-              connectedElements[i].begin(), connectedElements[i].end()));
-            for(auto itSet = connectedElements[i].begin();
-                itSet != connectedElements[i].end(); ++itSet) {
-              distributor.claim((*itSet)->getFace(0), comp);
-            }
+            for(std::size_t j = 0; j < connectedElements[i].size(); j++)
+              distributor.claim(connectedElements[i][j]->getFace(0), comp);
+            split.elements.push_back(std::vector<MElement *>());
+            split.elements.back().swap(connectedElements[i]);
           }
           pending.push_back(split);
         }
@@ -1388,8 +1406,7 @@ divideNonConnectedEntities(GModel *model, int dim,
           continue;
         }
 
-        std::vector<std::set<MElement *, MElementPtrLessThan> >
-          connectedElements;
+        std::vector<std::vector<MElement *> > connectedElements;
         fillConnectedElements(connectedElements, graph);
 
         if(connectedElements.size() > 1) {
