@@ -68,8 +68,8 @@ windows_ci:
 
 windows_msvc_ci:
   script:
-    - md build
-    - cd build
+    - md build_msvc
+    - cd build_msvc
     - cmake -DENABLE_OPENMP=0 ..
     - msbuild package.vcxproj
   tags:
