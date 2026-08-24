@@ -16,14 +16,11 @@ namespace CppUtils {
   template <typename T> class RestoreValueAtEndOfLife;
 }
 
-/**
- * @brief The QuadQuasiStructured meshing mode requires control
- *        over various meshing parameters which are stored in the
- *        global context. To deal with this without adding conditions
- *        everywhere in the other meshing parts, we use this updater
- *        which must be created at the beginning of the meshing cycle,
- *        and deleted at the end to restore the initial values.
- */
+// The QuadQuasiStructured meshing mode needs control over various meshing
+// parameters stored in the global context. To deal with that without adding
+// conditions everywhere in the other meshing parts, we use this updater, which
+// must be created at the beginning of the meshing cycle and deleted at the end
+// to restore the initial values.
 class QuadqsContextUpdater {
 public:
   QuadqsContextUpdater();
@@ -40,139 +37,73 @@ protected:
   std::vector<CppUtils::RestoreValueAtEndOfLife<double>* > backups_double;
 };
 
-/**
- * @brief
- *
- * @param[in] gm GModel containing the CAD and/or meshes
- * @param[in] overwriteGModelMesh delete existing mesh, rebuild from CAD
- * @param[in] deleteGModelMeshAfter after background mesh creation, delete the
- * GModel mesh
- * @param[in] overwriteField overwrite existing background field
- * @param[in] N the N-symmetry field invariance. N=4 for cross and N=6 for
- * asterisk fields
- *
- * @return 0 if success
- */
+// Build the background mesh and the guiding field of gm, which contains the
+// CAD and/or the meshes. Returns 0 on success.
+//
+// overwriteGModelMesh: delete the existing mesh and rebuild it from the CAD
+// deleteGModelMeshAfter: delete the GModel mesh once the background mesh is
+//   built
+// overwriteField: overwrite the existing background field
+// N: the N-symmetry field invariance, 4 for cross and 6 for asterisk fields
 int BuildBackgroundMeshAndGuidingField(GModel *gm,
                                        bool overwriteGModelMesh = false,
                                        bool deleteGModelMeshAfter = false,
                                        bool overwriteField = false,
                                        int N = 4);
 
-/**
- * @brief To check if a compatible background mesh and
- *        guiding field already exists
- *
- * @return true if exists
- */
+// Check whether a compatible background mesh and guiding field already exist.
 bool backgroundMeshAndGuidingFieldExists(GModel *gm);
 
-/**
- * @brief Look for non-ideal vertex valences in quad mesh and find a better
- *        local remeshing by looking into all disk quadrangulations.
- *        Quad quality (SICN) is monitored and the minimum will not decrease.
- *        Executes over CAD faces in parallel if multiple threads available.
- *        Only faces whose meshing status is GFace::PENDING are processed
- *
- * @param gm The model containing the face quad meshes.
- *
- * @return 0 if success
- */
+// Look for non-ideal node valences in the quad meshes of gm and find a better
+// local remeshing by looking into all disk quadrangulations. Quad quality
+// (SICN) is monitored and its minimum will not decrease. Runs over the CAD
+// faces in parallel if several threads are available, and only processes faces
+// whose meshing status is GFace::PENDING. Returns 0 on success.
 int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm);
 
-/**
- * @brief Mesh vertices on seam curves (and isolated corners) are
- *        reparametrized on the associated GFace and transfered.
- *        The seam curves have empty meshes in the end.
- *
- * @param gm The model containing the meshes
- *
- * @return 0 if success
- */
+// Reparametrize the mesh nodes on seam curves (and isolated corners) of gm on
+// the associated GFace and transfer them there; the seam curves end up with
+// empty meshes. Returns 0 on success.
 int transferSeamGEdgesVerticesToGFace(GModel *gm);
 
-/**
- * @brief Look for patches of quads with >=3 irregular vertices which
- *        can be remeshed with more regular quad meshes. The replacement
- *        meshes are subdivisions of a list of predefined patterns.
- *        Irregular vertices matching cross field singularities are
- *        preserved.
- *        Executes over CAD faces in parallel if multiple threads available.
- *        Only faces whose meshing status is GFace::PENDING are processed
- *
- * @param gm The model containing the face quad meshes.
- *
- * @return 0 if success
- */
+// Look for patches of quads with three or more irregular nodes in gm that can
+// be remeshed with more regular quad meshes; the replacement meshes are
+// subdivisions of a list of predefined patterns. Irregular nodes matching
+// cross field singularities are preserved. Runs over the CAD faces in parallel
+// if several threads are available, and only processes faces whose meshing
+// status is GFace::PENDING. Returns 0 on success.
 int optimizeTopologyWithCavityRemeshing(GModel *gm);
 
-/**
- * @brief Look for simple CAD faces (topological disk, a few corners)
- *        which can be remeshed with simple quad patterns.
- *        The patterns are the same that are used in cavity remeshing.
- *        Executes over CAD faces in parallel if multiple threads available.
- *        Only faces whose meshing status is GFace::PENDING are processed
- *
- * @param gm The model containing the face quad meshes.
- * @param minimumQualityRequired Minimum quality (SICN) required to accept a new
- * quad mesh
- *
- * @return 0 if success
- */
+// Look for simple CAD faces of gm (topological disk, a few corners) that can
+// be remeshed with simple quad patterns, the same ones used in cavity
+// remeshing. Runs over the CAD faces in parallel if several threads are
+// available, and only processes faces whose meshing status is GFace::PENDING.
+// Returns 0 on success.
+//
+// minimumQualityRequired: minimum quality (SICN) to accept a new quad mesh
 int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
                                          double minimumQualityRequired = 0.5);
 
-/**
- * @brief Midpoint subdivision of the surface mesh with projections
- *        on the CAD surfaces, using the background mesh for
- *        faster projections.
- *
- * @param gm The model containing the surface meshes
- *
- * @return 0 if success
- */
+// Midpoint subdivision of the surface meshes of gm, with projections on the
+// CAD surfaces, using the background mesh for faster projections. Returns 0 on
+// success.
 int RefineMeshWithBackgroundMeshProjection(GModel *gm);
 
-/**
- * @brief The initial unstructured quad-tri mesh may contain
- * very bad configurations (e.g. valence 50+) due to failures
- * in algo pack. This method replaces them by meshes produced
- * with algo meshadapt.
- *
- * @param gm The model containing the surface meshes
- *
- * @return 0 if success
- */
+// The initial unstructured quad-tri mesh may contain very bad configurations
+// (valence 50+, say) when the packing algorithm fails; replace those by meshes
+// produced with MeshAdapt. Returns 0 on success.
 int replaceBadQuadDominantMeshes(GModel *gm);
 
-/**
- * @brief Identify face acute corners and set the first
- * curve mesh vertices at same length from corner
- *
- * @param gm The model containing the curve meshes
- *
- * @return 0 if success
- */
+// Identify the acute corners of the faces of gm and set the first nodes of the
+// curve meshes at the same length from the corner. Returns 0 on success.
 int optimize1DMeshAtAcuteCorners(GModel *gm);
 
-/**
- * @brief Add one extruded quad layer on curves where the
- * boundary quad valences are not ideal
- *
- * @param gm The model containing the surface meshes
- *
- * @return 0 if success
- */
+// Add one extruded quad layer on the curves of gm where the boundary quad
+// valences are not ideal. Returns 0 on success.
 int optimizeQuadMeshBoundaries(GModel *gm);
 
-/**
- * @brief Delete background meshes and fields that have
- * been used by quadqs meshing/remeshing
- *
- * @param gm The model containing the surface meshes
- *
- * @return 0 if success
- */
+// Delete the background meshes and fields used by quadqs meshing and
+// remeshing. Returns 0 on success.
 int quadqsCleanup(GModel *gm);
 
 #endif

@@ -16,8 +16,6 @@
 #include "GModel.h"
 #include "Options.h"
 
-#if defined(HAVE_KBIPACK)
-
 std::vector<int> vecN0(int n);
 
 // Interface class for homology computation in Gmsh
@@ -103,6 +101,12 @@ public:
   GModel *getModel() const { return _model; }
   void setFileName(const std::string &fileName) { _fileName = fileName; }
 
+  // change the relative subdomain, keeping the domain: relabels the already
+  // constructed cell complex if possible (much cheaper than the full
+  // reconstruction that is otherwise triggered by the next computation),
+  // and clears the previously computed results
+  void setSubdomain(const std::vector<int> &physicalSubdomain);
+
   void getDomain(std::vector<int> &domain) const { domain = _domain; }
   void getSubdomain(std::vector<int> &subdomain) const
   {
@@ -161,7 +165,5 @@ public:
   // in _model, for debugging
   void storeCells(CellComplex *cellComplex, int dim);
 };
-
-#endif
 
 #endif

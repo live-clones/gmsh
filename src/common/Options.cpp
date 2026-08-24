@@ -4854,6 +4854,12 @@ double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM)
   return CTX::instance()->geom.occUseGenericClosestPoint;
 }
 
+double opt_geometry_occ_fast_projection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occFastProjection = (int)val;
+  return CTX::instance()->geom.occFastProjection;
+}
+
 double opt_geometry_old_circle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.oldCircle = (int)val;
@@ -6209,6 +6215,22 @@ double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM)
     CTX::instance()->mesh.recombine3DConformity = (int)val;
   }
   return CTX::instance()->mesh.recombine3DConformity;
+}
+
+double opt_mesh_flat_refine_delaunay3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.flatRefineDelaunay3D = (int)val;
+  }
+  return CTX::instance()->mesh.flatRefineDelaunay3D;
+}
+
+double opt_mesh_flat_optimize_3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.flatOptimize3D = (int)val;
+  }
+  return CTX::instance()->mesh.flatOptimize3D;
 }
 
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)

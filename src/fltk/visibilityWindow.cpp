@@ -42,6 +42,7 @@ typedef unsigned long intptr_t;
 #include "partitionEdge.h"
 #include "partitionFace.h"
 #include "partitionRegion.h"
+#include "OverlapEntities.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -218,6 +219,14 @@ public:
             ps = static_cast<partitionFace *>(entities[j])->getPartitions();
           else if(entities[j]->geomType() == GEntity::PartitionVolume)
             ps = static_cast<partitionRegion *>(entities[j])->getPartitions();
+          // overlap entities are not partition entities: they store the
+          // partition they belong to as a single tag
+          else if(entities[j]->geomType() == GEntity::OverlapSurface)
+            ps.push_back(
+              static_cast<overlapFace *>(entities[j])->owningPartition());
+          else if(entities[j]->geomType() == GEntity::OverlapVolume)
+            ps.push_back(
+              static_cast<overlapRegion *>(entities[j])->owningPartition());
           for(auto p : ps) {
             if(p == _tag) entities[j]->setVisibility(val, recursive);
           }

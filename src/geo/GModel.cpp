@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <limits>
 #include <stdlib.h>
 #include <sstream>
@@ -43,6 +44,7 @@
 #include "Options.h"
 #include "GModelParametrize.h"
 #include "Overlap.h"
+#include "Homology.h"
 
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
@@ -61,10 +63,6 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewDataGModel.h"
-#endif
-
-#if defined(HAVE_KBIPACK)
-#include "Homology.h"
 #endif
 
 std::vector<GModel *> GModel::list;
@@ -2769,20 +2767,48 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex *> &vertices)
 void GModel::pruneMeshVertexAssociations()
 {
   std::vector<GEntity *> entities;
-  std::set<MVertex *, MVertexPtrLessThan> vertSet;
+  std::vector<MVertex *> vertices;
   getEntities(entities);
+  std::size_t maxNum = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       MElement *e = entities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
         v->setEntity(nullptr);
-        vertSet.insert(v);
+        if(v->getNum() > maxNum) maxNum = v->getNum();
+        vertices.push_back(v);
       }
     }
     entities[i]->mesh_vertices.clear();
   }
-  std::vector<MVertex *> vertices(vertSet.begin(), vertSet.end());
+
+  // sort the nodes by increasing number and remove the duplicates; if the
+  // numbering is dense enough, bucketing the nodes by number does this in
+  // linear time, using no more memory than the list of nodes we just built -
+  // otherwise (sparse numbering, e.g. after reading a mesh with arbitrary node
+  // tags) fall back on a sort
+  if(vertices.size() && maxNum < vertices.size()) {
+    std::vector<MVertex *> slots(maxNum + 1, nullptr);
+    std::size_t nVert = 0;
+    for(std::size_t i = 0; i < vertices.size(); i++) {
+      std::size_t num = vertices[i]->getNum();
+      if(!slots[num]) { // as with a set, the first node with a given number wins
+        slots[num] = vertices[i];
+        nVert++;
+      }
+    }
+    std::vector<MVertex *>().swap(vertices);
+    vertices.reserve(nVert);
+    for(std::size_t n = 0; n <= maxNum; n++)
+      if(slots[n]) vertices.push_back(slots[n]);
+  }
+  else {
+    std::stable_sort(vertices.begin(), vertices.end(), MVertexPtrLessThan());
+    vertices.erase(
+      std::unique(vertices.begin(), vertices.end(), MVertexPtrEqual()),
+      vertices.end());
+  }
   _associateEntityWithMeshVertices();
   // associate mesh nodes primarily with chain entities
   for(auto it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {
@@ -3733,7 +3759,6 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
 
   if(_homologyRequests.empty()) return;
 
-#if defined(HAVE_KBIPACK)
   Msg::StatusBar(true, "Homology and cohomology computation...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
@@ -3743,18 +3768,35 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
   std::set<dpair> domains;
   for(auto it = _homologyRequests.begin(); it != _homologyRequests.end(); it++)
     domains.insert(it->first);
-  Msg::Info("Number of cell complexes to construct: %d", domains.size());
 
+  // requests on the same domain share one cell complex, which is relabeled
+  // for each new subdomain instead of being reconstructed from scratch
+  std::map<std::vector<int>, int> domainRequestCount;
+  for(auto it = _homologyRequests.begin(); it != _homologyRequests.end(); it++)
+    domainRequestCount[it->first.first]++;
+  Msg::Info("Number of cell complexes to construct: %d",
+            (int)domainRequestCount.size());
+
+  Homology *homology = nullptr;
+  std::vector<int> prevDomain;
+  // the domains set is ordered by (domain, subdomain): requests with the
+  // same domain are consecutive
   for(auto it = domains.begin(); it != domains.end(); it++) {
     std::pair<std::multimap<dpair, tpair>::iterator,
               std::multimap<dpair, tpair>::iterator>
       itp = _homologyRequests.equal_range(*it);
-    bool prepareToRestore = (itp.first != --itp.second);
-    itp.second++;
     std::vector<int> imdomain;
-    Homology *homology =
-      new Homology(this, itp.first->first.first, itp.first->first.second,
-                   imdomain, prepareToRestore);
+    if(homology != nullptr && it->first == prevDomain) {
+      // same domain as the previous requests, new subdomain
+      homology->setSubdomain(it->second);
+    }
+    else {
+      delete homology;
+      bool prepareToRestore = domainRequestCount[it->first] > 1;
+      homology =
+        new Homology(this, it->first, it->second, imdomain, prepareToRestore);
+      prevDomain = it->first;
+    }
 
     for(auto itt = itp.first; itt != itp.second; itt++) {
       std::string type = itt->second.first;
@@ -3806,8 +3848,8 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
       }
     }
     pruneMeshVertexAssociations();
-    delete homology;
   }
+  delete homology;
   Msg::Info("");
 
   double t2 = Cpu(), w2 = TimeOfDay();
@@ -3815,10 +3857,6 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
                  "Done homology and cohomology computation "
                  "(Wall %gs, CPU %gs)",
                  w2 - w1, t2 - t1);
-
-#else
-  Msg::Error("Homology computation requires KBIPACK");
-#endif
 }
 
 void GModel::computeSizeField()

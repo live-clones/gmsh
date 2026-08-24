@@ -43,6 +43,7 @@ struct contextMeshOptions {
   int hoCurveOuterBL;
   double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
+  int flatRefineDelaunay3D, flatOptimize3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, ignoreUnknownSections;
   int boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
@@ -113,7 +114,7 @@ struct contextGeometryOptions {
   int occWriteParametricCurves, occWriteSTEPNonManifold;
   int occBooleanCheckInverted, occBooleanGlue, occBooleanNonDestructive;
   int occBooleanPreserveNumbering, occBooleanSimplify;
-  int occThruSectionsDegree, occUseGenericClosestPoint;
+  int occThruSectionsDegree, occUseGenericClosestPoint, occFastProjection;
   int occBrepFormatVersion;
   double occScaling;
   std::string occTargetUnit;

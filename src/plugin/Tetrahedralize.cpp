@@ -10,7 +10,8 @@
 #include "Tetrahedralize.h"
 
 #if defined(HAVE_MESH)
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
+#include "MTetrahedron.h"
 #endif
 
 StringXNumber TetrahedralizeOptions_Number[] = {

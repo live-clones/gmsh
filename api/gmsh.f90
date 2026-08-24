@@ -538,6 +538,8 @@ module gmsh
         gmshModelMeshGetPartitionEntities
     procedure, nopass :: getOverlapBoundary => &
         gmshModelMeshGetOverlapBoundary
+    procedure, nopass :: getOverlapInterfaceBoundary => &
+        gmshModelMeshGetOverlapInterfaceBoundary
     procedure, nopass :: getBoundaryOverlapParent => &
         gmshModelMeshGetBoundaryOverlapParent
     procedure, nopass :: unpartition => &
@@ -3430,7 +3432,10 @@ module gmsh
 
   !> Get the tags of the entities making up the overlap boundary of partition
   !! `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-  !! `tag'.
+  !! `tag'. Only the plain inner boundaries are returned: the inner boundaries
+  !! lying on an internal interface are a distinct class, queried with
+  !! `getOverlapInterfaceBoundary'. A solver imposing a transmission condition
+  !! on the whole rim of an overlap patch must therefore combine both.
   subroutine gmshModelMeshGetOverlapBoundary(dim, &
                                              tag, &
                                              partition, &
@@ -3469,6 +3474,53 @@ module gmsh
     entityTags = ovectorint_(api_entityTags_, &
       api_entityTags_n_)
   end subroutine gmshModelMeshGetOverlapBoundary
+
+  !> Get the tags of the overlap boundary entities of partition `partition' that
+  !! lie on the internal interface entity of dimension `dim' and tag `tag' (a
+  !! dim-1 entity of the model shared by two entities of dimension `dim'+1).
+  !! These boundaries are artificial (the domain continues on the other side of
+  !! the interface) and carry a transmission condition, but keep the interface
+  !! identity so an interface-aware condition can be imposed. Note that `dim' is
+  !! the dimension of the interface, one below the model dimension, unlike
+  !! `getOverlapBoundary' which takes the parent entity.
+  subroutine gmshModelMeshGetOverlapInterfaceBoundary(dim, &
+                                                      tag, &
+                                                      partition, &
+                                                      entityTags, &
+                                                      ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     partition, &
+                     api_entityTags_, &
+                     api_entityTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetOverlapInterfaceBoundary")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: partition
+      type(c_ptr), intent(out) :: api_entityTags_
+      integer(c_size_t), intent(out) :: api_entityTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: partition
+    integer(c_int), dimension(:), allocatable, intent(out) :: entityTags
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_entityTags_
+    integer(c_size_t) :: api_entityTags_n_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         partition=int(partition, c_int), &
+         api_entityTags_=api_entityTags_, &
+         api_entityTags_n_=api_entityTags_n_, &
+         ierr_=ierr)
+    entityTags = ovectorint_(api_entityTags_, &
+      api_entityTags_n_)
+  end subroutine gmshModelMeshGetOverlapInterfaceBoundary
 
   !> If the entity of dimension `dim' and tag `tag' is a boundary overlap, get
   !! the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on

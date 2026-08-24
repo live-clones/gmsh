@@ -67,14 +67,18 @@ private:
   std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>>
     _overlaps;
 
-  std::unordered_map<GFace *, std::vector<partitionEdge *>>
+  std::unordered_map<GFace *, std::vector<partitionEdge *>, GEntityPtrFullHash>
     _overlapInnerBoundaries2D;
-  std::unordered_map<GRegion *, std::vector<partitionFace *>>
+  std::unordered_map<GRegion *, std::vector<partitionFace *>, GEntityPtrFullHash>
     _overlapInnerBoundaries3D;
-  std::unordered_map<GEdge *, std::vector<partitionEdge *>>
+  std::unordered_map<GEdge *, std::vector<partitionEdge *>, GEntityPtrFullHash>
     _overlapOfBoundaries2D;
-  std::unordered_map<GFace *, std::vector<partitionFace *>>
+  std::unordered_map<GFace *, std::vector<partitionFace *>, GEntityPtrFullHash>
     _overlapOfBoundaries3D;
+  std::unordered_map<GEdge *, std::vector<partitionEdge *>, GEntityPtrFullHash>
+    _innerBoundariesOnInterface2D;
+  std::unordered_map<GFace *, std::vector<partitionFace *>, GEntityPtrFullHash>
+    _innerBoundariesOnInterface3D;
   std::tuple<std::unordered_map<partitionEdge *, GFace *>,
              std::unordered_map<partitionFace *, GRegion *>>
     _boundaryOfOverlapCreators;
@@ -448,6 +452,18 @@ public:
     _overlapOfBoundaries3D[f].push_back(pf);
     std::get<1>(_boundaryOfOverlapCreators)[pf] = parent;
   }
+  void addInnerBoundaryOnInterface(GEdge *iface, partitionEdge *pe,
+                                   GFace *parent)
+  {
+    _innerBoundariesOnInterface2D[iface].push_back(pe);
+    std::get<0>(_boundaryOfOverlapCreators)[pe] = parent;
+  }
+  void addInnerBoundaryOnInterface(GFace *iface, partitionFace *pf,
+                                   GRegion *parent)
+  {
+    _innerBoundariesOnInterface3D[iface].push_back(pf);
+    std::get<1>(_boundaryOfOverlapCreators)[pf] = parent;
+  }
 
 #ifndef SWIG
   const auto &getOverlapInnerBoundaries2D() const
@@ -465,6 +481,14 @@ public:
   const auto &getOverlapOfBoundaries3D() const
   {
     return _overlapOfBoundaries3D;
+  }
+  const auto &getInnerBoundariesOnInterface2D() const
+  {
+    return _innerBoundariesOnInterface2D;
+  }
+  const auto &getInnerBoundariesOnInterface3D() const
+  {
+    return _innerBoundariesOnInterface3D;
   }
   const auto &getBoundaryOfOverlapCreators() const
   {
