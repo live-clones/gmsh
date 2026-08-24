@@ -542,6 +542,8 @@ module gmsh
         gmshModelMeshGetOverlapInterfaceBoundary
     procedure, nopass :: getBoundaryOverlapParent => &
         gmshModelMeshGetBoundaryOverlapParent
+    procedure, nopass :: getOverlapOverlappedEntity => &
+        gmshModelMeshGetOverlapOverlappedEntity
     procedure, nopass :: unpartition => &
         gmshModelMeshUnpartition
     procedure, nopass :: writePartitions => &
@@ -3553,6 +3555,43 @@ module gmsh
          parentTag=parentTag, &
          ierr_=ierr)
   end subroutine gmshModelMeshGetBoundaryOverlapParent
+
+  !> If the entity of dimension `dim' and tag `overlapTag' is a highest-
+  !! dimensional overlap entity (OverlapSurface or OverlapVolume), set
+  !! `overlappedEntityTag' to the tag of the partition entity whose elements it
+  !! covers. This covered partition entity belongs to a partition different from
+  !! the partition owning the overlap. For a boundary overlap that extends an
+  !! existing model boundary, or an inner overlap boundary lying on an internal
+  !! interface, set `overlappedEntityTag' to the tag of the underlying boundary
+  !! or interface entity. A plain inner overlap boundary has no underlying same-
+  !! dimensional entity and returns -1. Set `overlappedEntityTag' to -1 if the
+  !! entity is not an overlap.
+  subroutine gmshModelMeshGetOverlapOverlappedEntity(dim, &
+                                                     overlapTag, &
+                                                     overlappedEntityTag, &
+                                                     ierr)
+    interface
+    subroutine C_API(dim, &
+                     overlapTag, &
+                     overlappedEntityTag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetOverlapOverlappedEntity")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: overlapTag
+      integer(c_int) :: overlappedEntityTag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: overlapTag
+    integer(c_int) :: overlappedEntityTag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(dim=int(dim, c_int), &
+         overlapTag=int(overlapTag, c_int), &
+         overlappedEntityTag=overlappedEntityTag, &
+         ierr_=ierr)
+  end subroutine gmshModelMeshGetOverlapOverlappedEntity
 
   !> Unpartition the mesh of the current model.
   subroutine gmshModelMeshUnpartition(ierr)
