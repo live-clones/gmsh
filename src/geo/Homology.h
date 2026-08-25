@@ -49,6 +49,9 @@ private:
   bool _smoothen;
   // corecution heuristic
   int _heuristic;
+  // identify periodically equivalent cells, i.e. compute the (co)homology of
+  // the periodic quotient of the domain instead of the domain itself
+  bool _periodic;
 
   // file name to store the results
   std::string _fileName;
@@ -100,6 +103,9 @@ public:
 
   GModel *getModel() const { return _model; }
   void setFileName(const std::string &fileName) { _fileName = fileName; }
+
+  // identify periodically equivalent cells before the computations
+  void setPeriodic(bool periodic) { _periodic = periodic; }
 
   // change the relative subdomain, keeping the domain: relabels the already
   // constructed cell complex if possible (much cheaper than the full

@@ -71,6 +71,9 @@ private:
   // is the cell complex at reduced state
   bool _reduced;
 
+  // have the periodically equivalent cells been identified
+  bool _periodic;
+
   int _numRelativeCells[4];
   int _numSubdomainCells[4];
 
@@ -269,6 +272,11 @@ public:
 
   // restore the cell complex to its original state before (co)reduction
   bool restoreComplex();
+
+  // replace each pair of periodically equivalent cells by a single cell, so
+  // that the complex becomes the periodic quotient of the domain. Must be
+  // called on an unreduced complex, and is a no-op if already done
+  void periodicComplex();
 
   // relabel the (restored) original cell complex for a new relative
   // subdomain, instead of constructing the same complex from scratch:

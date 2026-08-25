@@ -24,7 +24,8 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "ReductionOmit", nullptr, 1.},
   {GMSH_FULLRC, "ReductionCombine", nullptr, 3.},
   {GMSH_FULLRC, "PostProcessSimplify", nullptr, 1.},
-  {GMSH_FULLRC, "ReductionHeuristic", nullptr, 1.}};
+  {GMSH_FULLRC, "ReductionHeuristic", nullptr, 1.},
+  {GMSH_FULLRC, "PeriodicIdentification", nullptr, 0.}};
 
 StringXString HomologyComputationOptions_String[] = {
   {GMSH_FULLRC, "DomainPhysicalGroups", nullptr, ""},
@@ -109,6 +110,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   int combine = (int)HomologyComputationOptions_Number[6].def;
   bool smoothen = (bool)HomologyComputationOptions_Number[7].def;
   int heuristic = (int)HomologyComputationOptions_Number[8].def;
+  bool periodic = (bool)HomologyComputationOptions_Number[9].def;
 
   std::vector<int> domain;
   std::vector<int> subdomain;
@@ -123,6 +125,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   Homology *homology = new Homology(m, domain, subdomain, imdomain, true,
                                     combine, omit, smoothen, heuristic);
+  homology->setPeriodic(periodic);
   homology->setFileName(fileName);
 
   if(hom != 0) homology->findHomologyBasis(dimsave);

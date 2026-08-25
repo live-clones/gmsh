@@ -14,7 +14,7 @@ Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
                    int combine, bool omit, bool smoothen, int heuristic)
   : _model(model), _domain(physicalDomain), _subdomain(physicalSubdomain),
     _imdomain(physicalImdomain), _saveOrig(saveOrig), _combine(combine),
-    _omit(omit), _smoothen(smoothen), _heuristic(heuristic),
+    _omit(omit), _smoothen(smoothen), _heuristic(heuristic), _periodic(false),
     _cellComplex(nullptr)
 {
   _fileName = "";
@@ -192,6 +192,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
 
   if(_cellComplex == nullptr) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
+  if(_periodic) _cellComplex->periodicComplex();
 
   Msg::StatusBar(true, "Reducing cell complex...");
 
@@ -281,6 +282,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
 
   if(_cellComplex == nullptr) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
+  if(_periodic) _cellComplex->periodicComplex();
 
   Msg::StatusBar(true, "Reducing cell complex...");
 
@@ -555,6 +557,7 @@ void Homology::findBettiNumbers()
   if(!isBettiComputed()) {
     if(_cellComplex == nullptr) _createCellComplex();
     if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
+    if(_periodic) _cellComplex->periodicComplex();
 
     Msg::StatusBar(true, "Reducing cell complex...");
     double t1 = Cpu(), w1 = TimeOfDay();

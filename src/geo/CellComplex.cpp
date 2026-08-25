@@ -10,6 +10,7 @@
 #include "CellComplex.h"
 #include "Context.h"
 #include "MElement.h"
+#include "GEntity.h"
 #include "OS.h"
 
 double CellComplex::_patience = 10;
@@ -290,6 +291,7 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
   }
 
   _reduced = false;
+  _periodic = false;
 
   Msg::Debug("Cells in domain:");
   Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
@@ -1674,6 +1676,8 @@ bool CellComplex::restoreComplex()
     Msg::Info("%d volumes, %d faces, %d edges, and %d vertices", getSize(3),
               getSize(2), getSize(1), getSize(0));
     _reduced = false;
+    // the PeriodicCells were combined cells and have just been freed
+    _periodic = false;
     return true;
   }
   else {
@@ -1894,4 +1898,143 @@ int CellComplex::loadComplex(const std::string &filename)
   fclose(fp);
 */
   return 1;
+}
+
+// map the vertices of a cell through the periodic correspondence of their
+// entities. Returns false if any of them has no periodic counterpart, in
+// which case the cell cannot have a periodic image: only the cells with all
+// their vertices on a slave periodic entity are candidates
+static bool periodicImageVertices(Cell *cell, std::vector<MVertex *> &image)
+{
+  image.clear();
+  for(int i = 0; i < cell->getNumVertices(); i++) {
+    MVertex *v = cell->getMeshVertex(i);
+    GEntity *ge = v->onWhat();
+    if(!ge) return false;
+    auto it = ge->correspondingVertices.find(v);
+    if(it == ge->correspondingVertices.end() || !it->second) return false;
+    image.push_back(it->second);
+  }
+  return true;
+}
+
+// relative orientation of a cell and its periodic image, from the image
+// vertices (which are positionally aligned with the vertices of the cell
+// they came from) and the partner's own vertex order. Returns 0 if the two
+// do not have the same vertices at all.
+// Only cells of dimension lower than the domain's are identified, so this
+// only ever sees vertices, edges and 2D cells
+static int periodicOrientation(Cell *partner,
+                               const std::vector<MVertex *> &image)
+{
+  int n = partner->getNumVertices();
+  if((int)image.size() != n) return 0;
+
+  if(n == 1) return (image[0] == partner->getMeshVertex(0)) ? 1 : 0;
+
+  if(n == 2) {
+    if(image[0] == partner->getMeshVertex(0) &&
+       image[1] == partner->getMeshVertex(1))
+      return 1;
+    if(image[0] == partner->getMeshVertex(1) &&
+       image[1] == partner->getMeshVertex(0))
+      return -1;
+    return 0;
+  }
+
+  // 2D cells: the vertices of a cell are stored in cyclic order, so the two
+  // agree in orientation when the image runs around the partner the same
+  // way and disagree when it runs the other way. This is the rule for
+  // quadrangles as well as for triangles, unlike permutation parity
+  int k = -1;
+  for(int i = 0; i < n; i++) {
+    if(partner->getMeshVertex(i) == image[0]) {
+      k = i;
+      break;
+    }
+  }
+  if(k < 0) return 0;
+
+  bool forward = true, backward = true;
+  for(int i = 1; i < n; i++) {
+    if(partner->getMeshVertex((k + i) % n) != image[i]) forward = false;
+    if(partner->getMeshVertex((k - i + n) % n) != image[i]) backward = false;
+  }
+  if(forward) return 1;
+  if(backward) return -1;
+  return 0;
+}
+
+void CellComplex::periodicComplex()
+{
+  if(_periodic) return;
+  _periodic = true;
+
+  if(_reduced) {
+    Msg::Error("Cannot identify periodic cells of a reduced cell complex");
+    return;
+  }
+  Msg::StatusBar(true, "Identifying periodically equivalent cells...");
+  double t1 = Cpu(), w1 = TimeOfDay();
+
+  int numIdentified = 0;
+  // ascending dimension: the boundary cells of a cell are already identified
+  // when the cell itself is, so that PeriodicCell sees the (co)boundary
+  // cells the two sides have come to share. Only cells of dimension lower
+  // than the domain's can lie on a periodic boundary
+  for(int dim = 0; dim < getDim(); dim++) {
+    std::vector<Cell *> toRemove;
+    std::vector<Cell *> toAdd;
+    // the removals are deferred to the end of the pass, so inComplex() does
+    // not yet tell whether a cell has been taken over. Without this, a chain
+    // of images (a cell whose partner is itself the partner of a third cell,
+    // which happens as soon as the domain is periodic in more than one
+    // direction) would absorb the middle cell into two PeriodicCells and
+    // corrupt the complex
+    std::set<Cell *> consumed;
+
+    for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
+      Cell *cell = *cit;
+      if(consumed.count(cell)) continue;
+      std::vector<MVertex *> image;
+      if(!periodicImageVertices(cell, image)) continue;
+
+      // the cell made of the image vertices is the periodic partner. The
+      // binary search is valid here because the complex is unreduced, so
+      // its containers are still ordered by vertex as well as by number
+      Cell tmp(dim, image);
+      if(tmp.getNumSortedVertices() == 0) continue; // degenerate
+      Cell *partner = _findCellVertexOrder(&tmp);
+      if(!partner || partner == cell || !partner->inComplex()) continue;
+      if(consumed.count(partner)) continue;
+
+      int ori = periodicOrientation(partner, image);
+      if(ori == 0) continue;
+
+      toAdd.push_back(new PeriodicCell(cell, partner, ori == 1));
+      consumed.insert(cell);
+      consumed.insert(partner);
+      toRemove.push_back(cell);
+      toRemove.push_back(partner);
+      numIdentified++;
+    }
+
+    // deferred, so that the containers are not modified while iterated and
+    // stay vertex-ordered for the lookups above
+    for(std::size_t i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
+    _deleteCount += toRemove.size();
+    for(std::size_t i = 0; i < toAdd.size(); i++) insertCell(toAdd[i]);
+    _createCount += toAdd.size();
+  }
+
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true,
+                 "Done identifying periodically equivalent cells "
+                 "(Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
+  Msg::Info("Identified %d pairs of periodically equivalent cells",
+            numIdentified);
+  Msg::Info("Periodic Cell Complex:");
+  Msg::Info("%d volumes, %d faces, %d edges, and %d vertices", getSize(3),
+            getSize(2), getSize(1), getSize(0));
 }
