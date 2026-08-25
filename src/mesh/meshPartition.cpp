@@ -493,7 +493,6 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
     std::vector<GEntity *> entities;
     model->getEntities(entities);
 
-    std::set<MVertex *> vertices;
     for(std::size_t i = 0; i < entities.size(); i++) {
       if(entities[i]->dim() == selectDim) {
         switch(entities[i]->dim()) {
@@ -503,17 +502,10 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
         case 0: tmp->add(static_cast<GVertex *>(entities[i])); break;
         default: break;
         }
-        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-          for(std::size_t k = 0;
-              k < entities[i]->getMeshElement(j)->getNumVertices(); k++) {
-            vertices.insert(entities[i]->getMeshElement(j)->getVertex(k));
-          }
-        }
       }
     }
 
     graph.ne(tmp->getNumMeshElements());
-    graph.nn(vertices.size());
     graph.dim(tmp->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
@@ -521,6 +513,10 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
     graph.eptr(0, 0);
     eindSize = getSizeOfEind(tmp);
     graph.eindResize(eindSize);
+    // upper bound, only used for the emptiness check below (the model's
+    // mesh_vertices have been cleared by this point, so they cannot be
+    // counted); the exact value is set once the elements have been walked
+    graph.nn(eindSize);
 
     tmp->remove();
     delete tmp;
@@ -588,6 +584,12 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
                              v->points.begin(), v->points.end());
     }
   }
+
+  // the counts above were upper bounds on the number of distinct nodes: only
+  // primary vertices end up in the graph, so on a high-order mesh they
+  // overestimate badly. Use the exact count, which is what sizes the
+  // node-element adjacency in createDualGraph().
+  graph.nn(numVertex);
 
   return 0;
 }
