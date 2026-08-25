@@ -1908,13 +1908,16 @@ static void assignBrep(GModel *model,
                          &boundaryEntityAndRefElement,
                        GEntity *e)
 {
+  // a zero orientation means the entities are not incident, which cannot
+  // happen on a conformal mesh (see assignNewEntityBRep)
   if(e->dim() == 2) {
     partitionFace *entity = static_cast<partitionFace *>(e);
 
     for(auto it = boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
-      static_cast<GRegion *>(it->first)->setFace(
-        entity, computeOrientation(it->second, entity->getMeshElement(0)));
+      const int ori = computeOrientation(it->second, entity->getMeshElement(0));
+      if(!ori) continue;
+      static_cast<GRegion *>(it->first)->setFace(entity, ori);
       entity->addRegion(static_cast<GRegion *>(it->first));
     }
   }
@@ -1923,8 +1926,9 @@ static void assignBrep(GModel *model,
 
     for(auto it = boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
-      static_cast<GFace *>(it->first)->setEdge(
-        entity, computeOrientation(it->second, entity->getMeshElement(0)));
+      const int ori = computeOrientation(it->second, entity->getMeshElement(0));
+      if(!ori) continue;
+      static_cast<GFace *>(it->first)->setEdge(entity, ori);
       entity->addFace(static_cast<GFace *>(it->first));
     }
   }
@@ -1933,8 +1937,9 @@ static void assignBrep(GModel *model,
 
     for(auto it = boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it) {
-      static_cast<GEdge *>(it->first)->setVertex(
-        entity, computeOrientation(it->second, entity->getMeshElement(0)));
+      const int ori = computeOrientation(it->second, entity->getMeshElement(0));
+      if(!ori) continue;
+      static_cast<GEdge *>(it->first)->setVertex(entity, ori);
       entity->addEdge(static_cast<GEdge *>(it->first));
     }
   }
@@ -1954,6 +1959,13 @@ static void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
            brepWithoutOri.end()) {
           const int ori =
             computeOrientation(current, graph.element(graph.adjncy(j)));
+          // A zero orientation means the elements are neighbors in the
+          // node-based dual graph without one being a facet of the other,
+          // which cannot happen on a conformal mesh. Record nothing: MSH4
+          // encodes the orientation as the sign of the tag, so a 0 would read
+          // back as -1. Leave the pair unmarked, so another element pair can
+          // still establish the relation with a real orientation.
+          if(!ori) continue;
           brepWithoutOri.insert(std::make_pair(g1, g2));
           brep[g1].insert(std::make_pair(ori, g2));
         }
