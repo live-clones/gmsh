@@ -1992,6 +1992,157 @@ static void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
   }
 }
 
+// A curve must be bounded by its extremities and nothing else. Where several
+// partition curves meet, the one that runs *through* the junction is still a
+// single connected chain, so divideNonConnectedEntities() leaves it whole and
+// the partition point created at that junction ends up attached to the middle
+// of it. Cut such curves at their junction nodes, so that every node shared
+// between two partition curves is an extremity of both.
+static bool splitPartitionCurvesAtJunctions(GModel *model)
+{
+  std::set<GEdge *, GEntityPtrLessThan> edges = model->getEdges();
+
+  // nodes carried by more than one partition curve
+  std::unordered_map<MVertex *, GEdge *, MVertexPtrHash, MVertexPtrEqual> owner;
+  std::unordered_set<MVertex *, MVertexPtrHash, MVertexPtrEqual> junction;
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
+    if((*it)->geomType() != GEntity::PartitionCurve) continue;
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
+      for(int j = 0; j < 2; j++) {
+        MVertex *v = (*it)->lines[i]->getVertex(j);
+        auto res = owner.insert(std::make_pair(v, *it));
+        if(!res.second && res.first->second != *it) junction.insert(v);
+      }
+    }
+  }
+  if(junction.empty()) return false;
+
+  bool ret = false;
+  int elementaryNumber = model->getMaxElementaryNumber(1);
+
+  // as in divideNonConnectedEntities(), the new curves are created in a
+  // second pass so that the B-Rep of the original can be distributed among
+  // the pieces rather than copied to each of them
+  struct PendingCurveSplit {
+    partitionEdge *edge;
+    std::vector<GFace *> brep;
+    std::vector<int> orientations;
+    std::vector<std::size_t> components;
+    std::vector<std::vector<MElement *> > elements;
+  };
+  std::vector<PendingCurveSplit> pending;
+  BRepDistributor<MEdge, MEdgeHash, MEdgeEqual> distributor;
+
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
+    if((*it)->geomType() != GEntity::PartitionCurve) continue;
+    partitionEdge *edge = static_cast<partitionEdge *>(*it);
+    const std::size_t n = edge->lines.size();
+    if(n < 2) continue;
+
+    std::unordered_map<MVertex *, std::vector<std::size_t>, MVertexPtrHash,
+                       MVertexPtrEqual>
+      nodeLines;
+    for(std::size_t i = 0; i < n; i++) {
+      nodeLines[edge->lines[i]->getVertex(0)].push_back(i);
+      nodeLines[edge->lines[i]->getVertex(1)].push_back(i);
+    }
+    // cut where the chain runs through a node shared with another curve, and
+    // where it runs through a node of its own more than twice
+    std::unordered_set<MVertex *, MVertexPtrHash, MVertexPtrEqual> cut;
+    for(auto itN = nodeLines.begin(); itN != nodeLines.end(); ++itN) {
+      if(itN->second.size() < 2) continue;
+      if(itN->second.size() > 2 ||
+         junction.find(itN->first) != junction.end())
+        cut.insert(itN->first);
+    }
+    if(cut.empty()) continue;
+
+    // maximal sub-chains that do not run through a cut node
+    std::vector<char> visited(n, 0);
+    std::vector<std::vector<MElement *> > components;
+    std::vector<std::size_t> stack;
+    for(std::size_t seed = 0; seed < n; seed++) {
+      if(visited[seed]) continue;
+      std::vector<MElement *> comp;
+      stack.push_back(seed);
+      visited[seed] = 1;
+      while(!stack.empty()) {
+        const std::size_t l = stack.back();
+        stack.pop_back();
+        comp.push_back(edge->lines[l]);
+        for(int j = 0; j < 2; j++) {
+          MVertex *v = edge->lines[l]->getVertex(j);
+          if(cut.find(v) != cut.end()) continue;
+          const std::vector<std::size_t> &adj = nodeLines[v];
+          for(std::size_t k = 0; k < adj.size(); k++) {
+            if(visited[adj[k]]) continue;
+            visited[adj[k]] = 1;
+            stack.push_back(adj[k]);
+          }
+        }
+      }
+      std::sort(comp.begin(), comp.end(), MElementPtrLessThan());
+      components.push_back(std::vector<MElement *>());
+      components.back().swap(comp);
+    }
+    if(components.size() < 2) continue;
+
+    ret = true;
+    PendingCurveSplit split;
+    split.edge = edge;
+    split.brep = edge->faces();
+    split.orientations.reserve(split.brep.size());
+    for(std::size_t j = 0; j < split.brep.size(); j++)
+      split.orientations.push_back(split.brep[j]->delEdge(edge));
+    for(std::size_t i = 0; i < components.size(); i++) {
+      std::size_t comp = distributor.newComponent();
+      split.components.push_back(comp);
+      for(std::size_t j = 0; j < components[i].size(); j++)
+        distributor.claim(components[i][j]->getEdge(0), comp);
+      split.elements.push_back(std::vector<MElement *>());
+      split.elements.back().swap(components[i]);
+    }
+    pending.push_back(split);
+  }
+
+  if(pending.empty()) return ret;
+
+  std::set<GFace *, GEntityPtrFullLessThan> candidates;
+  for(std::size_t i = 0; i < pending.size(); i++)
+    candidates.insert(pending[i].brep.begin(), pending[i].brep.end());
+  for(auto itC = candidates.begin(); itC != candidates.end(); ++itC) {
+    for(std::size_t i = 0; i < (*itC)->getNumMeshElements(); i++) {
+      MElement *e = (*itC)->getMeshElement(i);
+      for(int j = 0; j < e->getNumEdges(); j++)
+        distributor.probe(e->getEdge(j), *itC);
+    }
+  }
+
+  for(std::size_t p = 0; p < pending.size(); p++) {
+    PendingCurveSplit &split = pending[p];
+    for(std::size_t i = 0; i < split.components.size(); i++) {
+      partitionEdge *pedge =
+        new partitionEdge(model, ++elementaryNumber, nullptr, nullptr,
+                          split.edge->getPartitions());
+      pedge->setParentEntity(split.edge->getParentEntity());
+      model->add(pedge);
+      for(std::size_t j = 0; j < split.elements[i].size(); j++)
+        pedge->addElement(split.elements[i][j]);
+      for(std::size_t j = 0; j < split.brep.size(); j++) {
+        if(!distributor.touches(split.components[i], split.brep[j])) continue;
+        split.brep[j]->setEdge(pedge, split.orientations[j]);
+        pedge->addFace(split.brep[j]);
+      }
+    }
+    model->remove(split.edge);
+    split.edge->lines.clear();
+    split.edge->mesh_vertices.clear();
+    delete split.edge;
+  }
+
+  return ret;
+}
+
 // Create the new entities between each partitions (sigma and bndSigma).
 static void createPartitionTopology(
   GModel *model,
@@ -2152,6 +2303,10 @@ static void createPartitionTopology(
 
     edges = model->getEdges();
     divideNonConnectedEntities(model, 1, regions, faces, edges, vertices);
+    // a partition point will be created at every junction of partition
+    // curves, so the curves running through those junctions have to be cut
+    // there first, or the point ends up bounding the middle of a curve
+    splitPartitionCurvesAtJunctions(model);
     elementToEntity.clear();
     fillElementToEntity(model, elementToEntity, 1);
   }
