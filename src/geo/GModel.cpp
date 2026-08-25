@@ -508,8 +508,14 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
 
 bool GModel::remove(GRegion *r)
 {
-  auto it = std::find(firstRegion(), lastRegion(), r);
-  if(it != (riter)regions.end()) {
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = regions.find(r);
+  if(it == regions.end() || *it != r)
+    it = std::find(regions.begin(), regions.end(), r);
+  if(it != regions.end()) {
     regions.erase(it);
     std::vector<GFace *> f = r->faces();
     for(auto it = f.begin(); it != f.end(); it++) (*it)->delRegion(r);
@@ -522,7 +528,13 @@ bool GModel::remove(GRegion *r)
 
 bool GModel::remove(GFace *f)
 {
-  auto it = std::find(firstFace(), lastFace(), f);
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = faces.find(f);
+  if(it == faces.end() || *it != f)
+    it = std::find(faces.begin(), faces.end(), f);
   if(it != faces.end()) {
     faces.erase(it);
     std::vector<GEdge *> const &e = f->edges();
@@ -536,7 +548,13 @@ bool GModel::remove(GFace *f)
 
 bool GModel::remove(GEdge *e)
 {
-  auto it = std::find(firstEdge(), lastEdge(), e);
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = edges.find(e);
+  if(it == edges.end() || *it != e)
+    it = std::find(edges.begin(), edges.end(), e);
   if(it != edges.end()) {
     edges.erase(it);
     if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
@@ -550,7 +568,13 @@ bool GModel::remove(GEdge *e)
 
 bool GModel::remove(GVertex *v)
 {
-  auto it = std::find(firstVertex(), lastVertex(), v);
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = vertices.find(v);
+  if(it == vertices.end() || *it != v)
+    it = std::find(vertices.begin(), vertices.end(), v);
   if(it != vertices.end()) {
     vertices.erase(it);
     return true;
@@ -907,12 +931,21 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int>> &inDimTags,
 
 int GModel::getMaxElementaryNumber(int dim)
 {
-  std::vector<GEntity *> entities;
-  getEntities(entities);
+  // scan the relevant containers directly, rather than materializing a vector
+  // of every entity in the model on each call
   int num = 0;
-  for(std::size_t i = 0; i < entities.size(); i++)
-    if(dim < 0 || entities[i]->dim() == dim)
-      num = std::max(num, std::abs(entities[i]->tag()));
+  if(dim < 0 || dim == 0)
+    for(auto it = vertices.begin(); it != vertices.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 1)
+    for(auto it = edges.begin(); it != edges.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 2)
+    for(auto it = faces.begin(); it != faces.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 3)
+    for(auto it = regions.begin(); it != regions.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
   return num;
 }
 

@@ -5253,7 +5253,7 @@ gmsh::model::mesh::getGhostElements(const int dim, const int tag,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     return;
   }
-  std::map<MElement *, int> ghostCells;
+  std::map<MElement *, int, MElementPtrLessThan> ghostCells;
   if(ge->geomType() == GEntity::GhostCurve)
     ghostCells = static_cast<ghostEdge *>(ge)->getGhostCells();
   else if(ge->geomType() == GEntity::GhostSurface)
