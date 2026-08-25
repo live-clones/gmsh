@@ -1904,16 +1904,29 @@ int CellComplex::loadComplex(const std::string &filename)
 // map the vertices of a cell through the periodic correspondence of their
 // entities. Returns false if any of them has no periodic counterpart, in
 // which case the cell cannot have a periodic image: only the cells with all
-// their vertices on a slave periodic entity are candidates
-static bool periodicImageVertices(Cell *cell, std::vector<MVertex *> &image)
+// their vertices on a slave periodic entity are candidates. The candidates
+// are further restricted to the cells whose vertices lie in slaveNodes and
+// whose images lie in masterNodes, an empty set meaning no restriction on
+// that side. rejected is set if the cell was discarded because of the master
+// restriction alone, i.e. it links to an image outside of the requested
+// master boundary
+static bool periodicImageVertices(Cell *cell, std::vector<MVertex *> &image,
+                                  const std::set<MVertex *> &slaveNodes,
+                                  const std::set<MVertex *> &masterNodes,
+                                  bool &rejected)
 {
   image.clear();
   for(int i = 0; i < cell->getNumVertices(); i++) {
     MVertex *v = cell->getMeshVertex(i);
     GEntity *ge = v->onWhat();
     if(!ge) return false;
+    if(!slaveNodes.empty() && !slaveNodes.count(v)) return false;
     auto it = ge->correspondingVertices.find(v);
     if(it == ge->correspondingVertices.end() || !it->second) return false;
+    if(!masterNodes.empty() && !masterNodes.count(it->second)) {
+      rejected = true;
+      return false;
+    }
     image.push_back(it->second);
   }
   return true;
@@ -1966,7 +1979,8 @@ static int periodicOrientation(Cell *partner,
   return 0;
 }
 
-void CellComplex::periodicComplex()
+void CellComplex::periodicComplex(const std::set<MVertex *> &slaveNodes,
+                                  const std::set<MVertex *> &masterNodes)
 {
   if(_periodic) return;
   _periodic = true;
@@ -1978,7 +1992,7 @@ void CellComplex::periodicComplex()
   Msg::StatusBar(true, "Identifying periodically equivalent cells...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
-  int numIdentified = 0;
+  int numIdentified = 0, numRejected = 0;
   // ascending dimension: the boundary cells of a cell are already identified
   // when the cell itself is, so that PeriodicCell sees the (co)boundary
   // cells the two sides have come to share. Only cells of dimension lower
@@ -1998,7 +2012,12 @@ void CellComplex::periodicComplex()
       Cell *cell = *cit;
       if(consumed.count(cell)) continue;
       std::vector<MVertex *> image;
-      if(!periodicImageVertices(cell, image)) continue;
+      bool rejected = false;
+      if(!periodicImageVertices(cell, image, slaveNodes, masterNodes,
+                                rejected)) {
+        if(rejected) numRejected++;
+        continue;
+      }
 
       // the cell made of the image vertices is the periodic partner. The
       // binary search is valid here because the complex is unreduced, so
@@ -2035,6 +2054,12 @@ void CellComplex::periodicComplex()
                  w2 - w1, t2 - t1);
   Msg::Info("Identified %d pairs of periodically equivalent cells",
             numIdentified);
+  if(numRejected)
+    Msg::Warning("%d cells of the periodic boundary link to a master outside "
+                 "the given master physical groups: the periodic gluing is "
+                 "partial and the computed basis is not that of the periodic "
+                 "quotient",
+                 numRejected);
   Msg::Info("Periodic Cell Complex:");
   Msg::Info("%d volumes, %d faces, %d edges, and %d vertices", getSize(3),
             getSize(2), getSize(1), getSize(0));

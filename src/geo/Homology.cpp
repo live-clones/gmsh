@@ -98,6 +98,22 @@ void Homology::_getEntities(const std::vector<int> &physicalGroups,
   }
 }
 
+void Homology::_periodicCellComplex()
+{
+  // the mesh nodes of the periodic boundaries, closure included, so that the
+  // nodes of the curves and points bounding a periodic surface are selected
+  // together with the surface
+  std::set<MVertex *> nodes[2];
+  const std::vector<int> *groups[2] = {&_periodicSlave, &_periodicMaster};
+  for(int i = 0; i < 2; i++) {
+    std::vector<GEntity *> entities;
+    _getEntities(*groups[i], entities);
+    for(std::size_t j = 0; j < entities.size(); j++)
+      entities[j]->addVerticesInSet(nodes[i], true);
+  }
+  _cellComplex->periodicComplex(nodes[0], nodes[1]);
+}
+
 void Homology::_getElements(const std::vector<GEntity *> &entities,
                             std::vector<MElement *> &elements)
 {
@@ -193,7 +209,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
 
   if(_cellComplex == nullptr) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
-  if(_periodic) _cellComplex->periodicComplex();
+  if(_periodic) _periodicCellComplex();
 
   Msg::StatusBar(true, "Reducing cell complex...");
 
@@ -283,7 +299,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
 
   if(_cellComplex == nullptr) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
-  if(_periodic) _cellComplex->periodicComplex();
+  if(_periodic) _periodicCellComplex();
 
   Msg::StatusBar(true, "Reducing cell complex...");
 
@@ -558,7 +574,7 @@ void Homology::findBettiNumbers()
   if(!isBettiComputed()) {
     if(_cellComplex == nullptr) _createCellComplex();
     if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
-    if(_periodic) _cellComplex->periodicComplex();
+    if(_periodic) _periodicCellComplex();
 
     Msg::StatusBar(true, "Reducing cell complex...");
     double t1 = Cpu(), w1 = TimeOfDay();

@@ -32,7 +32,9 @@ StringXString HomologyComputationOptions_String[] = {
   {GMSH_FULLRC, "SubdomainPhysicalGroups", nullptr, ""},
   {GMSH_FULLRC, "ReductionImmunePhysicalGroups", nullptr, ""},
   {GMSH_FULLRC, "DimensionOfChainsToSave", nullptr, "0, 1, 2, 3"},
-  {GMSH_FULLRC, "Filename", nullptr, ""}};
+  {GMSH_FULLRC, "Filename", nullptr, ""},
+  {GMSH_FULLRC, "PeriodicSlavePhysicalGroups", nullptr, ""},
+  {GMSH_FULLRC, "PeriodicMasterPhysicalGroups", nullptr, ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin()
@@ -116,16 +118,20 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   std::vector<int> subdomain;
   std::vector<int> imdomain;
   std::vector<int> dimsave;
+  std::vector<int> perslave;
+  std::vector<int> permaster;
   if(!parseStringOpt(0, domain)) return nullptr;
   if(!parseStringOpt(1, subdomain)) return nullptr;
   if(!parseStringOpt(2, imdomain)) return nullptr;
   if(!parseStringOpt(3, dimsave)) return nullptr;
+  if(!parseStringOpt(5, perslave)) return nullptr;
+  if(!parseStringOpt(6, permaster)) return nullptr;
 
   GModel *m = GModel::current();
 
   Homology *homology = new Homology(m, domain, subdomain, imdomain, true,
                                     combine, omit, smoothen, heuristic);
-  homology->setPeriodic(periodic);
+  homology->setPeriodic(periodic, perslave, permaster);
   homology->setFileName(fileName);
 
   if(hom != 0) homology->findHomologyBasis(dimsave);
