@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <cmath>
+#include <unordered_set>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GModel.h"
@@ -21,6 +22,38 @@
 #include "SmoothData.h"
 
 static const double curvedRepTol = 1.e-5;
+
+// Every interior edge of a volume mesh is shared by several elements, and each
+// of them emits it again: a tetrahedral mesh sends the same edge to the GPU
+// about five times over, as identical overlapping lines. Skipping the repeats
+// leaves the picture unchanged but divides the wireframe vertex count -- and
+// with it the per-frame vertex bandwidth, which is what actually limits a
+// large volume mesh on an integrated GPU -- by that same factor.
+// (VertexArray::add() has an unused `unique` flag and a disabled barycenter
+// based version of this; deduplicating on the topology instead is exact and
+// needs no tolerance.) Only done for straight-sided elements, where edge
+// representation j is exactly topological edge j -- the curved case emits
+// subdivided polylines whose indexing is not inverted here.
+// Which element's normal shades a shared edge (volume edges are lit when
+// Mesh.LightLines > 1) is decided by whichever one emitted it. Drawing the
+// copies on top of each other used to let a later one win wherever the
+// interpolated depths tied within a ULP, so a fraction of a percent of
+// wireframe pixels change shade; the pixels covered do not.
+namespace {
+struct EdgeKey {
+  MVertex *lo, *hi;
+  bool operator==(const EdgeKey &o) const { return lo == o.lo && hi == o.hi; }
+};
+struct EdgeKeyHash {
+  std::size_t operator()(const EdgeKey &k) const
+  {
+    std::size_t a = reinterpret_cast<std::size_t>(k.lo);
+    std::size_t b = reinterpret_cast<std::size_t>(k.hi);
+    return a ^ (b + 0x9e3779b97f4a7c15ULL + (a << 6) + (a >> 2));
+  }
+};
+} // namespace
+typedef std::unordered_set<EdgeKey, EdgeKeyHash> EdgeSet;
 
 unsigned int getColorByEntity(GEntity *e)
 {
@@ -192,7 +225,8 @@ static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
 
 template <class T>
 static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
-                                bool edges, bool faces)
+                                bool edges, bool faces,
+                                EdgeSet *seenEdges = nullptr)
 {
   int nthreads = CTX::instance()->numThreads;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
@@ -214,7 +248,21 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 
     if(edges) {
       bool unique = e->dim() > 1 && !CTX::instance()->pickElements;
+      bool dedup = (seenEdges && unique && !curved);
       for(int j = 0; j < ele->getNumEdgesRep(curved); j++) {
+        if(dedup) {
+          // claim the edge before doing any geometry work, so the elements
+          // that lose the race skip it entirely; same named critical section
+          // as the add below, so this is the one lock, not a second one
+          MEdge ed = ele->getEdge(j);
+          EdgeKey key{ed.getMinVertex(), ed.getMaxVertex()};
+          bool fresh;
+#pragma omp critical(addElementsInArrays1)
+          {
+            fresh = seenEdges->insert(key).second;
+          }
+          if(!fresh) continue;
+        }
         double x[2], y[2], z[2];
         SVector3 n[2];
         ele->getEdgeRep(curved, j, x, y, z, n);
@@ -342,11 +390,13 @@ public:
       f->va_lines = new VertexArray(2, edg ? _estimateNumLines(f) : 100);
       f->va_triangles =
         new VertexArray(3, fac ? _estimateNumTriangles(f) : 100);
+      EdgeSet seen;
+      if(edg) seen.reserve(3 * f->triangles.size() / 2 + 2 * f->quadrangles.size());
       if(CTX::instance()->mesh.triangles)
-        addElementsInArrays(f, f->triangles, edg, fac);
+        addElementsInArrays(f, f->triangles, edg, fac, &seen);
       if(CTX::instance()->mesh.quadrangles)
-        addElementsInArrays(f, f->quadrangles, edg, fac);
-      addElementsInArrays(f, f->polygons, edg, fac);
+        addElementsInArrays(f, f->quadrangles, edg, fac, &seen);
+      addElementsInArrays(f, f->polygons, edg, fac, &seen);
       f->va_lines->finalize();
       f->va_triangles->finalize();
     }
@@ -432,17 +482,20 @@ public:
       r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 100);
       r->va_triangles =
         new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
+      EdgeSet seen;
+      // same "shared by about four elements" guess _estimateNumLines() makes
+      if(edg) seen.reserve(_estimateNumLines(r));
       if(CTX::instance()->mesh.tetrahedra)
-        addElementsInArrays(r, r->tetrahedra, edg, fac);
+        addElementsInArrays(r, r->tetrahedra, edg, fac, &seen);
       if(CTX::instance()->mesh.hexahedra)
-        addElementsInArrays(r, r->hexahedra, edg, fac);
+        addElementsInArrays(r, r->hexahedra, edg, fac, &seen);
       if(CTX::instance()->mesh.prisms)
-        addElementsInArrays(r, r->prisms, edg, fac);
+        addElementsInArrays(r, r->prisms, edg, fac, &seen);
       if(CTX::instance()->mesh.pyramids)
-        addElementsInArrays(r, r->pyramids, edg, fac);
+        addElementsInArrays(r, r->pyramids, edg, fac, &seen);
       if(CTX::instance()->mesh.trihedra)
-        addElementsInArrays(r, r->trihedra, edg, fac);
-      addElementsInArrays(r, r->polyhedra, edg, fac);
+        addElementsInArrays(r, r->trihedra, edg, fac, &seen);
+      addElementsInArrays(r, r->polyhedra, edg, fac, &seen);
       r->va_lines->finalize();
       r->va_triangles->finalize();
     }
@@ -467,10 +520,21 @@ bool GModel::fillVertexArrays()
     delete _va_lines_batch_edges;
     _va_lines_batch_edges = nullptr;
     if(CTX::instance()->mesh.lines) {
-      int numVertices = 0;
+      int numVertices = 0, numArrays = 0;
       for(auto it = firstEdge(); it != lastEdge(); ++it)
-        if((*it)->va_lines) numVertices += (*it)->va_lines->getNumVertices();
-      if(numVertices) {
+        if((*it)->va_lines && (*it)->va_lines->getNumVertices()) {
+          numVertices += (*it)->va_lines->getNumVertices();
+          numArrays++;
+        }
+      // Only merge when it actually removes draw calls. With a single
+      // contributing entity the "batch" is an exact copy of that entity's
+      // array: it doubles the CPU-side memory and uploads a second identical
+      // VBO, for no fewer glDrawArrays calls. On a large single-region volume
+      // mesh that duplicate runs to more than a gigabyte, which is on its own
+      // enough to push the vertex buffers past the memory of an integrated
+      // GPU. The drawing code already falls back to the per-entity path when
+      // the batch is absent, which for one entity is the same single call.
+      if(numArrays > 1) {
         _va_lines_batch_edges = new VertexArray(2, numVertices / 2);
         for(auto it = firstEdge(); it != lastEdge(); ++it)
           if((*it)->va_lines) _va_lines_batch_edges->merge((*it)->va_lines);
@@ -490,10 +554,21 @@ bool GModel::fillVertexArrays()
     delete _va_lines_batch_faces;
     _va_lines_batch_faces = nullptr;
     if(CTX::instance()->mesh.surfaceEdges) {
-      int numVertices = 0;
+      int numVertices = 0, numArrays = 0;
       for(auto it = firstFace(); it != lastFace(); ++it)
-        if((*it)->va_lines) numVertices += (*it)->va_lines->getNumVertices();
-      if(numVertices) {
+        if((*it)->va_lines && (*it)->va_lines->getNumVertices()) {
+          numVertices += (*it)->va_lines->getNumVertices();
+          numArrays++;
+        }
+      // Only merge when it actually removes draw calls. With a single
+      // contributing entity the "batch" is an exact copy of that entity's
+      // array: it doubles the CPU-side memory and uploads a second identical
+      // VBO, for no fewer glDrawArrays calls. On a large single-region volume
+      // mesh that duplicate runs to more than a gigabyte, which is on its own
+      // enough to push the vertex buffers past the memory of an integrated
+      // GPU. The drawing code already falls back to the per-entity path when
+      // the batch is absent, which for one entity is the same single call.
+      if(numArrays > 1) {
         _va_lines_batch_faces = new VertexArray(2, numVertices / 2);
         for(auto it = firstFace(); it != lastFace(); ++it)
           if((*it)->va_lines) _va_lines_batch_faces->merge((*it)->va_lines);
@@ -504,11 +579,21 @@ bool GModel::fillVertexArrays()
     delete _va_triangles_batch_faces;
     _va_triangles_batch_faces = nullptr;
     if(CTX::instance()->mesh.surfaceFaces) {
-      int numVertices = 0;
+      int numVertices = 0, numArrays = 0;
       for(auto it = firstFace(); it != lastFace(); ++it)
-        if((*it)->va_triangles)
+        if((*it)->va_triangles && (*it)->va_triangles->getNumVertices()) {
           numVertices += (*it)->va_triangles->getNumVertices();
-      if(numVertices) {
+          numArrays++;
+        }
+      // Only merge when it actually removes draw calls. With a single
+      // contributing entity the "batch" is an exact copy of that entity's
+      // array: it doubles the CPU-side memory and uploads a second identical
+      // VBO, for no fewer glDrawArrays calls. On a large single-region volume
+      // mesh that duplicate runs to more than a gigabyte, which is on its own
+      // enough to push the vertex buffers past the memory of an integrated
+      // GPU. The drawing code already falls back to the per-entity path when
+      // the batch is absent, which for one entity is the same single call.
+      if(numArrays > 1) {
         _va_triangles_batch_faces = new VertexArray(3, numVertices / 3);
         for(auto it = firstFace(); it != lastFace(); ++it)
           if((*it)->va_triangles)
@@ -525,10 +610,21 @@ bool GModel::fillVertexArrays()
     delete _va_lines_batch_regions;
     _va_lines_batch_regions = nullptr;
     if(CTX::instance()->mesh.volumeEdges) {
-      int numVertices = 0;
+      int numVertices = 0, numArrays = 0;
       for(auto it = firstRegion(); it != lastRegion(); ++it)
-        if((*it)->va_lines) numVertices += (*it)->va_lines->getNumVertices();
-      if(numVertices) {
+        if((*it)->va_lines && (*it)->va_lines->getNumVertices()) {
+          numVertices += (*it)->va_lines->getNumVertices();
+          numArrays++;
+        }
+      // Only merge when it actually removes draw calls. With a single
+      // contributing entity the "batch" is an exact copy of that entity's
+      // array: it doubles the CPU-side memory and uploads a second identical
+      // VBO, for no fewer glDrawArrays calls. On a large single-region volume
+      // mesh that duplicate runs to more than a gigabyte, which is on its own
+      // enough to push the vertex buffers past the memory of an integrated
+      // GPU. The drawing code already falls back to the per-entity path when
+      // the batch is absent, which for one entity is the same single call.
+      if(numArrays > 1) {
         _va_lines_batch_regions = new VertexArray(2, numVertices / 2);
         for(auto it = firstRegion(); it != lastRegion(); ++it)
           if((*it)->va_lines) _va_lines_batch_regions->merge((*it)->va_lines);
@@ -540,11 +636,21 @@ bool GModel::fillVertexArrays()
     delete _va_triangles_batch_regions;
     _va_triangles_batch_regions = nullptr;
     if(CTX::instance()->mesh.volumeFaces) {
-      int numVertices = 0;
+      int numVertices = 0, numArrays = 0;
       for(auto it = firstRegion(); it != lastRegion(); ++it)
-        if((*it)->va_triangles)
+        if((*it)->va_triangles && (*it)->va_triangles->getNumVertices()) {
           numVertices += (*it)->va_triangles->getNumVertices();
-      if(numVertices) {
+          numArrays++;
+        }
+      // Only merge when it actually removes draw calls. With a single
+      // contributing entity the "batch" is an exact copy of that entity's
+      // array: it doubles the CPU-side memory and uploads a second identical
+      // VBO, for no fewer glDrawArrays calls. On a large single-region volume
+      // mesh that duplicate runs to more than a gigabyte, which is on its own
+      // enough to push the vertex buffers past the memory of an integrated
+      // GPU. The drawing code already falls back to the per-entity path when
+      // the batch is absent, which for one entity is the same single call.
+      if(numArrays > 1) {
         _va_triangles_batch_regions = new VertexArray(3, numVertices / 3);
         for(auto it = firstRegion(); it != lastRegion(); ++it)
           if((*it)->va_triangles)
