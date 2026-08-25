@@ -197,8 +197,8 @@ void GModel::destroy(bool keepName)
   vertices.clear();
   std::set<GVertex *, GEntityPtrLessThan>().swap(vertices);
 
-  // The overlap containers point into the entities deleted above
-  _clearOverlapData();
+  // The overlap managers point into the entities deleted above
+  clearOverlaps();
 
   destroyMeshCaches();
 
@@ -331,13 +331,44 @@ bool GModel::empty() const
 
 int GModel::overlapDim() const
 {
-  if(std::get<1>(_overlaps).size() > 0) {
-    return 3; // 3D overlap
+  int maxDim = 0;
+  for(const auto &mgr : _overlapManagers) {
+    maxDim = std::max(maxDim, mgr.overlapDim());
   }
-  else if(std::get<0>(_overlaps).size() > 0) {
-    return 2; // 2D overlap
+  return maxDim;
+}
+
+OverlapManager &GModel::createNewOverlapManager(int layers)
+{
+  _overlapManagers.emplace_back(_nextOverlapTag++, layers);
+  return _overlapManagers.back();
+}
+
+OverlapManager *GModel::createOverlapManagerWithTag(int tag, int layers)
+{
+  if(tag != (int)_overlapManagers.size()) {
+    Msg::Error("Overlap manager tag %d does not match expected position %zu. "
+               "Tags must be sequential.",
+               tag, _overlapManagers.size());
+    return nullptr;
   }
-  return 0; // no overlap
+  _overlapManagers.emplace_back(tag, layers);
+  _nextOverlapTag = tag + 1;
+  return &_overlapManagers.back();
+}
+
+OverlapManager *GModel::getOverlapManagerByTag(int tag)
+{
+  for(auto &mgr : _overlapManagers) {
+    if(mgr.tag() == tag) return &mgr;
+  }
+  return nullptr;
+}
+
+void GModel::clearOverlaps()
+{
+  _overlapManagers.clear();
+  _nextOverlapTag = 0;
 }
 
 GRegion *GModel::getRegionByTag(int n) const
@@ -653,19 +684,7 @@ void GModel::remove()
   faces.clear();
   edges.clear();
   vertices.clear();
-  _clearOverlapData();
-}
-
-void GModel::_clearOverlapData()
-{
-  std::get<0>(_overlaps).clear();
-  std::get<1>(_overlaps).clear();
-  _overlapInnerBoundaries2D.clear();
-  _overlapInnerBoundaries3D.clear();
-  _overlapOfBoundaries2D.clear();
-  _overlapOfBoundaries3D.clear();
-  std::get<0>(_boundaryOfOverlapCreators).clear();
-  std::get<1>(_boundaryOfOverlapCreators).clear();
+  clearOverlaps();
 }
 
 void GModel::snapVertices()
@@ -2460,12 +2479,13 @@ int GModel::convertOldPartitioningToNewOne()
 }
 
 template <int dim>
-static void _buildOverlapsForDim(const int layers, GModel *const m)
+static void _buildOverlapsForDim(const int layers, GModel *const m,
+                                  OverlapManager &mgr)
 {
   auto ovlps = quickOverlap<dim>(m);
   for(int i = 1; i < layers; ++i) extendOverlapCollection<dim>(m, ovlps);
-  buildOverlapEntities<dim>(m, ovlps);
-  overlapBuildBoundaries<dim>(m, ovlps);
+  buildOverlapEntities<dim>(m, mgr, ovlps);
+  overlapBuildBoundaries<dim>(m, mgr, ovlps);
 }
 
 int GModel::createOverlaps(int layers, bool createBoundaries)
@@ -2476,30 +2496,32 @@ int GModel::createOverlaps(int layers, bool createBoundaries)
   auto dim = getDim();
   if(dim < 2) {
     Msg::Error("Model dimension (%d) is too low for overlap creation", dim);
-    return 1;
+    return -1;
   }
 
   if(layers < 1) {
     Msg::Error("Number of layers %d in overlaps must be strictly positive",
                layers);
-    return 1;
+    return -1;
   }
 
   if(getNumPartitions() == 0) {
     Msg::Error("Model is not partitioned: cannot create overlaps");
-    return 1;
+    return -1;
   }
 
   Msg::StatusBar(true, "Building overlaps...");
 
+  auto &mgr = createNewOverlapManager(layers);
+
   double t1 = Cpu(), w1 = TimeOfDay();
   if(dim == 2)
-    _buildOverlapsForDim<2>(layers, this);
+    _buildOverlapsForDim<2>(layers, this, mgr);
   else
-    _buildOverlapsForDim<3>(layers, this);
+    _buildOverlapsForDim<3>(layers, this, mgr);
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
-  return 0;
+  return mgr.tag();
 }
 
 void GModel::storeChain(int dim,
