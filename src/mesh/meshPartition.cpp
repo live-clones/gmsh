@@ -2575,10 +2575,6 @@ int PartitionMesh(GModel *model, int numPart)
 
   createNewEntities(model);
 
-  double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done partitioning mesh (Wall %gs, CPU %gs)", w2 - w1,
-                 t2 - t1);
-
   for(std::size_t i = 0; i < TYPE_MAX_NUM + 1; i++) {
     std::vector<std::size_t> &count = elmCount[i];
     std::size_t minCount = std::numeric_limits<std::size_t>::max();
@@ -2596,6 +2592,10 @@ int PartitionMesh(GModel *model, int numPart)
     }
   }
 
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true, "Done partitioning mesh (Wall %gs, CPU %gs)", w2 - w1,
+                 t2 - t1);
+  
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector<std::vector<MElement *> > boundaryElements =
