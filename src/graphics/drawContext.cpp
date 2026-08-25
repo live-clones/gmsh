@@ -263,6 +263,7 @@ drawContext::~drawContext()
 {
   invalidateQuadricsAndDisplayLists();
   _invalidatePickFBO();
+  _invalidateLowResFBO();
 }
 
 double drawContext::highResolutionPixelFactor()
@@ -1343,6 +1344,152 @@ void drawContext::invalidatePickCache()
   _pickCacheValid = false;
   _pickCacheMode = -1;
   _pickCacheWidth = _pickCacheHeight = 0;
+}
+
+void drawContext::_invalidateLowResFBO()
+{
+#if defined(HAVE_GLEW)
+  if(_lowResFBO) {
+    glDeleteFramebuffers(1, &_lowResFBO);
+    _lowResFBO = 0;
+  }
+  if(_lowResColor) {
+    glDeleteTextures(1, &_lowResColor);
+    _lowResColor = 0;
+  }
+  if(_lowResDepth) {
+    glDeleteRenderbuffers(1, &_lowResDepth);
+    _lowResDepth = 0;
+  }
+#endif
+  _lowResWidth = _lowResHeight = 0;
+}
+
+bool drawContext::_ensureLowResFBO(int w, int h)
+{
+#if defined(HAVE_GLEW)
+  if(!vboSupported) return false;
+  if(w <= 0 || h <= 0) return false;
+  if(_lowResFBO && _lowResWidth == w && _lowResHeight == h) return true;
+
+  _invalidateLowResFBO();
+
+  GLint prevFBO = 0, prevRB = 0;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFBO);
+  glGetIntegerv(GL_RENDERBUFFER_BINDING, &prevRB);
+
+  glGenFramebuffers(1, &_lowResFBO);
+  glGenTextures(1, &_lowResColor);
+  glGenRenderbuffers(1, &_lowResDepth);
+
+  // colour goes to a texture, not a renderbuffer, so the result can be drawn
+  // back as a textured quad -- see endLowResPass() for why blitting is not an
+  // option
+  GLint prevTex = 0;
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &prevTex);
+  glBindTexture(GL_TEXTURE_2D, _lowResColor);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+               nullptr);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glBindTexture(GL_TEXTURE_2D, (GLuint)prevTex);
+
+  glBindRenderbuffer(GL_RENDERBUFFER, _lowResDepth);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, _lowResFBO);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         _lowResColor, 0);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                            GL_RENDERBUFFER, _lowResDepth);
+
+  bool ok =
+    (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+  glBindRenderbuffer(GL_RENDERBUFFER, (GLuint)prevRB);
+  glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)prevFBO);
+
+  if(!ok) {
+    _invalidateLowResFBO();
+    return false;
+  }
+  _lowResWidth = w;
+  _lowResHeight = h;
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool drawContext::beginLowResPass(int pixelW, int pixelH, int divisor)
+{
+#if defined(HAVE_GLEW)
+  if(divisor <= 1) return false;
+  int w = pixelW / divisor, h = pixelH / divisor;
+  if(w < 1 || h < 1) return false;
+  if(!_ensureLowResFBO(w, h)) return false;
+  glBindFramebuffer(GL_FRAMEBUFFER, _lowResFBO);
+  // viewport[] deliberately keeps the full logical size: the projection, the
+  // 2d overlays and everything measured in pixel_equiv stay exactly as they
+  // are, and only the raster grid underneath them gets coarser
+  glViewport(0, 0, w, h);
+  // the caller cleared the window, not this buffer; clear it too, or the pass
+  // draws against an undefined colour buffer and, worse, an undefined depth
+  // buffer that rejects most of the scene. The clear colour set by the caller
+  // is still current, so the background matches exactly.
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  return true;
+#else
+  return false;
+#endif
+}
+
+void drawContext::endLowResPass(int pixelW, int pixelH)
+{
+#if defined(HAVE_GLEW)
+  if(!_lowResFBO) return;
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, pixelW, pixelH);
+
+  // Drawn back as a textured quad rather than with glBlitFramebuffer(): with
+  // General.Antialiasing on, FLTK gives the window a multisampled visual, and
+  // blitting from a single-sample buffer into a multisample one is
+  // GL_INVALID_OPERATION -- the frame is silently dropped and the model looks
+  // like it disappeared while dragging. A textured quad works whatever the
+  // window's sample count is.
+  glPushAttrib(GL_ALL_ATTRIB_BITS);
+  for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_LIGHTING);
+  glDisable(GL_BLEND);
+  glColor4f(1.f, 1.f, 1.f, 1.f);
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, _lowResColor);
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(0., 1., 0., 1., -1., 1.);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+
+  glBegin(GL_QUADS);
+  glTexCoord2f(0.f, 0.f); glVertex2f(0.f, 0.f);
+  glTexCoord2f(1.f, 0.f); glVertex2f(1.f, 0.f);
+  glTexCoord2f(1.f, 1.f); glVertex2f(1.f, 1.f);
+  glTexCoord2f(0.f, 1.f); glVertex2f(0.f, 1.f);
+  glEnd();
+
+  glPopMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  glPopAttrib();
+#endif
 }
 
 bool drawContext::_ensurePickFBO()

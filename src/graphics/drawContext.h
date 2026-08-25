@@ -151,6 +151,13 @@ private:
   // queries which screen the window is on. It has to stay dynamic (dragging
   // the window to another display changes it) but it need only be answered
   // once per frame, so cache it and let openglWindow::draw() invalidate it
+  // offscreen colour+depth buffer used to render a frame at reduced
+  // resolution and scale it up, while the view is being dragged
+  GLuint _lowResFBO = 0, _lowResColor = 0, _lowResDepth = 0;
+  int _lowResWidth = 0, _lowResHeight = 0;
+  bool _ensureLowResFBO(int w, int h);
+  void _invalidateLowResFBO();
+
   double _hiResFactor = -1.;
   std::vector<unsigned char> _pickCache;
   // depths of the same image, so that several entities inside the pick box
@@ -277,6 +284,16 @@ public:
   // drop the cached pick image; must be called whenever anything that would
   // change what selectFast() renders changes -- openglWindow::draw() does it
   // for every redraw, which covers camera moves, visibility and mesh changes
+  // Render the frame into a smaller buffer and stretch it back over the
+  // window. The scene is drawn at exactly the same size and position -- only
+  // the sampling gets coarser -- so every line is still there, unlike
+  // dropping elements, which on a wireframe reads as holes. Worth it because
+  // a big volume mesh is rasterisation bound: a fully drawn frame costs about
+  // what its covered pixels cost, so halving each axis roughly quarters the
+  // fragment work. begin() returns false (and changes nothing) if the buffer
+  // can't be had, in which case just draw normally and don't call end().
+  bool beginLowResPass(int pixelW, int pixelH, int divisor);
+  void endLowResPass(int pixelW, int pixelH);
   void invalidatePickCache();
   // forget the cached high-resolution factor; called once per redraw
   void invalidateHighResolutionPixelFactor() { _hiResFactor = -1.; }

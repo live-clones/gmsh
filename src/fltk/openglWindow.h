@@ -87,6 +87,10 @@ private:
   int _selection, _trySelection, _trySelectionXYWH[4];
   double _lassoXY[2];
   int _hoverX, _hoverY; // last pointer position, for the deferred hover query
+  // >1 while the view is being dragged: render the frame that small and
+  // stretch it back over the window (see drawContext::beginLowResPass)
+  int _lowResDivisor;
+  static const int _lowResDragDivisor;
   void _drawScreenMessage();
   void _drawBorder();
   // Hover picking (the tooltip / status-bar "what is under the cursor?"

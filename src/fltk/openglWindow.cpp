@@ -74,7 +74,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
 openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
     _selection(ENT_NONE), _trySelection(0), _hoverX(0), _hoverY(0),
-    Nautilus(nullptr)
+    _lowResDivisor(1), Nautilus(nullptr)
 {
   _ctx = new drawContext(this);
 
@@ -362,13 +362,22 @@ void openglWindow::draw()
       _drawBorder();
     }
     else {
+      // Only the 3d pass goes through the reduced-resolution buffer: that is
+      // where the fragment work is. The overlays that follow are cheap and
+      // are drawn straight into the window at full size, so the axes, the
+      // scale and every label stay crisp -- and FLTK's text drawing, which
+      // does not reach an offscreen buffer, keeps working.
+      bool lowRes =
+        _ctx->beginLowResPass(pixel_w(), pixel_h(), _lowResDivisor);
       _ctx->draw3d();
+      if(lowRes) _ctx->endLowResPass(pixel_w(), pixel_h());
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
     }
   }
   drawContext::global()->flushString();
+
   _lock = false;
 }
 
@@ -564,6 +573,7 @@ int openglWindow::handle(int event)
     if(!lassoMode) {
       CTX::instance()->mesh.draw = 1;
       CTX::instance()->post.draw = 1;
+      _lowResDivisor = 1; // back to full resolution now the drag is over
       redraw();
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
@@ -670,10 +680,10 @@ int openglWindow::handle(int event)
           }
         }
         CTX::instance()->drawRotationCenter = 1;
-        if(CTX::instance()->fastRedraw) {
-          CTX::instance()->mesh.draw = 0;
-          CTX::instance()->post.draw = 0;
-        }
+        // fastRedraw used to blank the mesh and the views outright while
+        // dragging; render them at reduced resolution instead, so you can
+        // still see what you are aiming at
+        if(CTX::instance()->fastRedraw) _lowResDivisor = _lowResDragDivisor;
         redraw();
       }
     }
@@ -752,6 +762,12 @@ int openglWindow::pixel_h()
 // enough that sweeping the mouse across the window costs nothing, short
 // enough to still feel immediate once you stop on something.
 const double openglWindow::_hoverDelay = 0.1;
+
+// Halving each axis quarters the fragment work, which on a rasterisation
+// bound scene is most of the frame, while the image stays recognisable enough
+// to aim with. Going further buys little: the vertex and primitive work below
+// it does not shrink.
+const int openglWindow::_lowResDragDivisor = 2;
 
 void openglWindow::_hoverTimeout(void *data)
 {
