@@ -71,7 +71,7 @@ windows_msvc_ci:
     - md build_msvc
     - cd build_msvc
     - cmake -DENABLE_OPENMP=0 ..
-    - msbuild package.vcxproj
+    - cmake --build . --target package
   tags:
     - windows64
     - shared
