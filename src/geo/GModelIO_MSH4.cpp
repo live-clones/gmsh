@@ -1758,14 +1758,36 @@ int GModel::_readMSH4(const std::string &name)
         return false;
       }
       if(hadNodesBefore) {
-        // assume numbering is not dense, and fill map cache with previous
-        // vertices in the vector cache (if any)
-        dense = false;
-        for(std::size_t i = 0; i < _vertexVectorCache.size(); i++) {
-          MVertex *v = _vertexVectorCache[i];
-          if(v) _vertexMapCache[v->getNum()] = v;
+        // merging into a model that already has nodes: keep the O(1) vector
+        // cache as long as the *combined* numbering is still (fairly) dense.
+        // Falling back to the map unconditionally turns every subsequent
+        // getMeshVertexByTag() into an O(log N) red-black tree descent, which
+        // dominates the read when several large mesh files are merged one
+        // after the other -- e.g. the per-rank files of a partitioned mesh,
+        // whose tags all come from a single dense global numbering, so the
+        // combined numbering is dense too.
+        std::size_t prevMax =
+          _vertexVectorCache.empty() ? 0 : _vertexVectorCache.size() - 1;
+        std::size_t combinedMax = std::max(maxNodeNum, prevMax);
+        std::size_t combinedNum = getNumMeshVertices() + totalNumRead;
+        if(_vertexMapCache.empty() && combinedNum &&
+           combinedMax < 10 * combinedNum) {
+          dense = true;
+          // the dense branch below resize()s to maxNodeNum + 1, which would
+          // otherwise shrink the cache when this file's tags top out lower
+          // than what we already cached
+          maxNodeNum = combinedMax;
         }
-        _vertexVectorCache.clear();
+        else {
+          // numbering is not dense: fill map cache with previous vertices in
+          // the vector cache (if any)
+          dense = false;
+          for(std::size_t i = 0; i < _vertexVectorCache.size(); i++) {
+            MVertex *v = _vertexVectorCache[i];
+            if(v) _vertexMapCache[v->getNum()] = v;
+          }
+          _vertexVectorCache.clear();
+        }
       }
       // populate map cache with just-read nodes, and put them in entity if not
       // already in cache
@@ -1781,8 +1803,10 @@ int GModel::_readMSH4(const std::string &name)
               Msg::Error("Node %zu not classified on any entity", v->getNum());
           }
           else {
-            // should not happen
-            Msg::Warning("Skipping duplicate node %zu", v->getNum());
+            // expected when merging files that share nodes (partition
+            // interfaces); only suspicious within a single file
+            if(!hadNodesBefore)
+              Msg::Warning("Skipping duplicate node %zu", v->getNum());
             delete v;
           }
         }

@@ -142,6 +142,23 @@ private:
   int _pickFBOWidth, _pickFBOHeight;
   bool _ensurePickFBO();
   void _invalidatePickFBO();
+  // last ID image read back out of the pick framebuffer, so that repeated
+  // picks against an unchanged scene (mouse hover) cost a lookup instead of a
+  // full re-render of every entity. _pickCacheMode records which selection
+  // type it was built for, since the different types need different
+  // compositing rules
+  // highResolutionPixelFactor() asks FLTK, which walks the widget parents and
+  // queries which screen the window is on. It has to stay dynamic (dragging
+  // the window to another display changes it) but it need only be answered
+  // once per frame, so cache it and let openglWindow::draw() invalidate it
+  double _hiResFactor = -1.;
+  std::vector<unsigned char> _pickCache;
+  // depths of the same image, so that several entities inside the pick box
+  // can be resolved front-most-first exactly the way select() does
+  std::vector<float> _pickCacheDepth;
+  bool _pickCacheValid = false;
+  int _pickCacheMode = -1;
+  int _pickCacheWidth = 0, _pickCacheHeight = 0;
 
 public:
   Camera camera;
@@ -257,6 +274,12 @@ public:
                   std::vector<GVertex *> &vertices,
                   std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
                   std::vector<GRegion *> &regions, bool &ranOk);
+  // drop the cached pick image; must be called whenever anything that would
+  // change what selectFast() renders changes -- openglWindow::draw() does it
+  // for every redraw, which covers camera moves, visibility and mesh changes
+  void invalidatePickCache();
+  // forget the cached high-resolution factor; called once per redraw
+  void invalidateHighResolutionPixelFactor() { _hiResFactor = -1.; }
   void recenterForRotationCenterChange(SPoint3 newRotationCenter);
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
@@ -359,6 +382,11 @@ void drawGRegionID(drawContext *ctx, GRegion *r, const unsigned char color[4]);
 // time a window is drawn) to enable VBO-backed vertex array rendering; a
 // no-op if built without GLEW, in which case the functions above always use
 // the legacy client-side array path.
+const std::vector<GVertex *> &flatVertices(GModel *m);
+const std::vector<GEdge *> &flatEdges(GModel *m);
+const std::vector<GFace *> &flatFaces(GModel *m);
+const std::vector<GRegion *> &flatRegions(GModel *m);
+
 void initVertexArrayVBOSupport();
 
 // Frees any GPU buffer objects that were queued for deletion by a

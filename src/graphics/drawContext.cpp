@@ -172,6 +172,61 @@ void unbindVertexArrayBuffers()
 #endif
 }
 
+// PROTOTYPE: flat entity lists.
+// GModel keeps its entities in std::set<G*, GEntityPtrLessThan>, so every
+// std::for_each(m->firstFace(), m->lastFace(), ...) is a red-black tree walk:
+// one cache-missing pointer chase per entity. drawGeom() and drawMesh() do
+// eight such walks per frame, which on a model with ~200k entities costs more
+// than every glDrawArrays() in the frame put together. Cache a flat vector
+// and iterate that instead.
+#include "GModel.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
+namespace {
+template <class T, class It>
+const std::vector<T *> &cachedList(GModel *m, std::size_t n, It first, It last,
+                                   std::vector<T *> &cache, GModel *&cm,
+                                   std::size_t &cn)
+{
+  if(cm != m || cn != n) {
+    cache.assign(first, last);
+    cm = m;
+    cn = n;
+  }
+  return cache;
+}
+} // namespace
+const std::vector<GVertex *> &flatVertices(GModel *m)
+{
+  static std::vector<GVertex *> c; static GModel *cm = nullptr;
+  static std::size_t cn = (std::size_t)-1;
+  return cachedList(m, m->getNumVertices(), m->firstVertex(), m->lastVertex(),
+                    c, cm, cn);
+}
+const std::vector<GEdge *> &flatEdges(GModel *m)
+{
+  static std::vector<GEdge *> c; static GModel *cm = nullptr;
+  static std::size_t cn = (std::size_t)-1;
+  return cachedList(m, m->getNumEdges(), m->firstEdge(), m->lastEdge(), c, cm,
+                    cn);
+}
+const std::vector<GFace *> &flatFaces(GModel *m)
+{
+  static std::vector<GFace *> c; static GModel *cm = nullptr;
+  static std::size_t cn = (std::size_t)-1;
+  return cachedList(m, m->getNumFaces(), m->firstFace(), m->lastFace(), c, cm,
+                    cn);
+}
+const std::vector<GRegion *> &flatRegions(GModel *m)
+{
+  static std::vector<GRegion *> c; static GModel *cm = nullptr;
+  static std::size_t cn = (std::size_t)-1;
+  return cachedList(m, m->getNumRegions(), m->firstRegion(), m->lastRegion(), c,
+                    cm, cn);
+}
+
 extern SPoint2 getGraph2dDataPointForTag(unsigned int);
 
 drawContext::drawContext(openglWindow *window, drawTransform *transform)
@@ -201,6 +256,7 @@ drawContext::drawContext(openglWindow *window, drawTransform *transform)
 
   _pickFBO = _pickColorRenderbuffer = _pickDepthRenderbuffer = 0;
   _pickFBOWidth = _pickFBOHeight = 0;
+  invalidatePickCache();
 }
 
 drawContext::~drawContext()
@@ -211,14 +267,20 @@ drawContext::~drawContext()
 
 double drawContext::highResolutionPixelFactor()
 {
-  // this must be dynamic: the high resolution can change when a window is moved
-  // across displays
+  // still dynamic -- the factor changes when a window is moved across
+  // displays -- but answered from a per-frame cache, because the FLTK call
+  // below is not cheap and this used to be called once per geometry entity
+  if(_hiResFactor > 0.) return _hiResFactor;
 #if defined(HAVE_FLTK)
-  if(_openglWindow && _openglWindow->w()) {
-    return (double)_openglWindow->pixel_w() / (double)_openglWindow->w();
-  }
+  if(_openglWindow && _openglWindow->w())
+    _hiResFactor =
+      (double)_openglWindow->pixel_w() / (double)_openglWindow->w();
+  else
+    _hiResFactor = 1.0;
+#else
+  _hiResFactor = 1.0;
 #endif
-  return 1.0;
+  return _hiResFactor;
 }
 
 drawContextGlobal *drawContext::global()
@@ -1273,6 +1335,14 @@ void drawContext::_invalidatePickFBO()
   }
 #endif
   _pickFBOWidth = _pickFBOHeight = 0;
+  invalidatePickCache();
+}
+
+void drawContext::invalidatePickCache()
+{
+  _pickCacheValid = false;
+  _pickCacheMode = -1;
+  _pickCacheWidth = _pickCacheHeight = 0;
 }
 
 bool drawContext::_ensurePickFBO()
@@ -1342,163 +1412,182 @@ bool drawContext::selectFast(int type, int x, int y, int w, int h,
   if(!m) return false;
 
   bool wantFaces = (type == ENT_ALL || type == ENT_NONE || type == ENT_SURFACE);
-  // conservative bail-out: with Geometry.SurfaceType == 0 there's no
-  // va_geom_triangles to color-ID render, so a "no hit" result here could
-  // be a false negative -- let the caller fall back to the accurate
-  // (if potentially slower) select() instead. Same for a pick region bigger
-  // than the FBO, or no usable FBO at all: ranOk stays false in every case
-  // below up to the point rendering actually starts.
-  if(wantFaces && CTX::instance()->geom.surfaceType == 0) return false;
+  // (drawGFaceID() handles both Geometry.SurfaceType modes, so there is no
+  // longer a reason to bail out on SurfaceType == 0.) A pick region bigger
+  // than the FBO, or no usable FBO at all, still leaves ranOk false so the
+  // caller falls back to the accurate select().
 
   if(!_ensurePickFBO()) return false;
   if(w <= 0 || h <= 0 || w > _pickFBOWidth || h > _pickFBOHeight) return false;
 
   ranOk = true;
 
-  GLint prevFBO = 0;
-  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFBO);
-  glBindFramebuffer(GL_FRAMEBUFFER, _pickFBO);
-  glPushAttrib(GL_ALL_ATTRIB_BITS);
+  // Rebuild the ID image only when it is actually stale. A pick renders every
+  // entity in the model, so on a large model that render -- not the readback
+  // -- is the whole cost; while the camera and the scene hold still, every
+  // subsequent pick can be answered from the cached image without touching
+  // the GPU at all. invalidatePickCache() is called from openglWindow::draw(),
+  // so any real redraw (camera move, visibility change, new mesh) drops it.
+  bool cacheUsable =
+    _pickCacheValid && _pickCacheMode == type &&
+    _pickCacheWidth == _pickFBOWidth && _pickCacheHeight == _pickFBOHeight &&
+    _pickCache.size() == (std::size_t)_pickFBOWidth * _pickFBOHeight * 4;
 
-  glViewport(0, 0, _pickFBOWidth, _pickFBOHeight);
-  glDisable(GL_DITHER);
-  glDisable(GL_BLEND);
-  glDisable(GL_LINE_SMOOTH);
-  glDisable(GL_POINT_SMOOTH);
-  glDisable(GL_POLYGON_SMOOTH);
-  glDisable(GL_LIGHTING);
-  glEnable(GL_DEPTH_TEST);
-  glShadeModel(GL_FLAT);
+  if(!cacheUsable) {
+    GLint prevFBO = 0;
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, _pickFBO);
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
 
-  // reuse the exact narrow-pick-region projection select() uses
-  int savedRenderMode = render_mode;
-  render_mode = drawContext::GMSH_SELECT;
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  initProjection(x, y, w, h);
-  initPosition(false);
+    glViewport(0, 0, _pickFBOWidth, _pickFBOHeight);
+    glDisable(GL_DITHER);
+    glDisable(GL_BLEND);
+    glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_POINT_SMOOTH);
+    glDisable(GL_POLYGON_SMOOTH);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    glShadeModel(GL_FLAT);
 
-  int readX = x - w / 2;
-  int readY = (viewport[3] - y) - h / 2;
-  std::vector<unsigned char> pixels((std::size_t)w * h * 4);
+    int savedRenderMode = render_mode;
+    render_mode = drawContext::GMSH_SELECT;
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    // the whole viewport, not a pick box around the cursor: one image serves
+    // every cursor position until something actually changes. Passing the
+    // viewport centre and full extent makes initProjection()'s gluPickMatrix
+    // the identity.
+    initProjection(viewport[2] / 2, viewport[3] / 2, viewport[2], viewport[3]);
+    initPosition(false);
 
-  auto clearBuffers = [&]() {
-    glClearColor(idColorClear[0] / 255.f, idColorClear[1] / 255.f,
-                idColorClear[2] / 255.f, idColorClear[3] / 255.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  };
-
-  auto renderType = [&](int t) {
     unsigned char col[4];
-    switch(t) {
-    case 0:
-      for(auto it = m->firstVertex(); it != m->lastVertex(); ++it) {
-        idColorPack(0, (*it)->tag(), col);
-        drawGVertexID(this, *it, col);
-      }
-      break;
-    case 1:
-      for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
-        idColorPack(1, (*it)->tag(), col);
-        drawGEdgeID(this, *it, col);
-      }
-      break;
-    case 2:
-      for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
-        idColorPack(2, (*it)->tag(), col);
-        drawGFaceID(this, *it, col);
-      }
-      break;
-    case 3:
-      for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
-        idColorPack(3, (*it)->tag(), col);
-        drawGRegionID(this, *it, col);
-      }
-      break;
-    }
-  };
-
-  // read back the pick box and decode the nearest-to-center non-background
-  // pixel, mirroring the forgiving tolerance the old 5x5 GL_SELECT pick box
-  // had (any hit touching the box could win, not just the exact center)
-  auto readAndDecode = [&](int &outType, int &outTag) -> bool {
-    glReadPixels(readX, readY, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
-    int cx = w / 2, cy = h / 2;
-    int bestDist = -1, bestType = -1, bestTag = -1;
-    for(int j = 0; j < h; j++) {
-      for(int i = 0; i < w; i++) {
-        const unsigned char *p = &pixels[((std::size_t)j * w + i) * 4];
-        int tp, tg;
-        if(!idColorUnpack(p, tp, tg)) continue;
-        int dx = i - cx, dy = j - cy;
-        int dist = dx * dx + dy * dy;
-        if(bestDist < 0 || dist < bestDist) {
-          bestDist = dist;
-          bestType = tp;
-          bestTag = tg;
+    auto renderType = [&](int t) {
+      switch(t) {
+      case 0:
+        for(auto it = m->firstVertex(); it != m->lastVertex(); ++it) {
+          idColorPack(0, (*it)->tag(), col);
+          drawGVertexID(this, *it, col);
         }
+        break;
+      case 1:
+        for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
+          idColorPack(1, (*it)->tag(), col);
+          drawGEdgeID(this, *it, col);
+        }
+        break;
+      case 2:
+        for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
+          idColorPack(2, (*it)->tag(), col);
+          drawGFaceID(this, *it, col);
+        }
+        break;
+      case 3:
+        for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+          idColorPack(3, (*it)->tag(), col);
+          drawGRegionID(this, *it, col);
+        }
+        break;
+      }
+    };
+
+    glClearColor(idColorClear[0] / 255.f, idColorClear[1] / 255.f,
+                 idColorClear[2] / 255.f, idColorClear[3] / 255.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if(type == ENT_NONE) {
+      // lowest dimension present wins, whatever the depth: draw high to low
+      // and clear depth between passes so a lower-dimension entity always
+      // overwrites a higher-dimension one it happens to sit behind. Which of
+      // several same-dimension hits wins is then settled by depth, and the
+      // decode below applies the same "lowest type first" preference across
+      // the pick box that select()'s typmin logic does.
+      for(int t = 3; t >= 0; t--) {
+        if(t == 2 && !wantFaces) continue;
+        if(t != 3) glClear(GL_DEPTH_BUFFER_BIT);
+        renderType(t);
       }
     }
-    if(bestDist < 0) return false;
-    outType = bestType;
-    outTag = bestTag;
-    return true;
-  };
+    else if(type == ENT_ALL) {
+      // any type, closest wins: one ordinary depth-tested pass
+      for(int t = 0; t < 4; t++) renderType(t);
+    }
+    else {
+      renderType((type == ENT_POINT)   ? 0 :
+                 (type == ENT_CURVE)   ? 1 :
+                 (type == ENT_SURFACE) ? 2 : 3);
+    }
 
-  auto resolve = [&](int t, int tag) {
-    switch(t) {
+    _pickCache.resize((std::size_t)_pickFBOWidth * _pickFBOHeight * 4);
+    glReadPixels(0, 0, _pickFBOWidth, _pickFBOHeight, GL_RGBA,
+                 GL_UNSIGNED_BYTE, &_pickCache[0]);
+    _pickCacheDepth.resize((std::size_t)_pickFBOWidth * _pickFBOHeight);
+    glReadPixels(0, 0, _pickFBOWidth, _pickFBOHeight, GL_DEPTH_COMPONENT,
+                 GL_FLOAT, &_pickCacheDepth[0]);
+    _pickCacheValid = true;
+    _pickCacheMode = type;
+    _pickCacheWidth = _pickFBOWidth;
+    _pickCacheHeight = _pickFBOHeight;
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glPopAttrib();
+    glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)prevFBO);
+    render_mode = savedRenderMode;
+  }
+
+  // decode the pick box straight out of the cached image
+  int cx = x, cy = viewport[3] - y;
+  int bestType = -1, bestTag = -1, bestDist = -1;
+  float bestDepth = 0.f;
+  for(int j = cy - h / 2; j <= cy + h / 2; j++) {
+    if(j < 0 || j >= _pickCacheHeight) continue;
+    for(int i = cx - w / 2; i <= cx + w / 2; i++) {
+      if(i < 0 || i >= _pickCacheWidth) continue;
+      std::size_t idx = (std::size_t)j * _pickCacheWidth + i;
+      int tp, tg;
+      if(!idColorUnpack(&_pickCache[idx * 4], tp, tg)) continue;
+      float depth = _pickCacheDepth[idx];
+      int dx = i - cx, dy = j - cy, dist = dx * dx + dy * dy;
+      // same ordering select() applies to the GL_SELECT hit records: for
+      // ENT_NONE the lowest dimension wins outright, then the front-most
+      // candidate, and only exact depth ties fall back to proximity
+      bool better;
+      if(bestDist < 0)
+        better = true;
+      else if(type == ENT_NONE && tp != bestType)
+        better = (tp < bestType);
+      else if(depth != bestDepth)
+        better = (depth < bestDepth);
+      else
+        better = (dist < bestDist);
+      if(better) {
+        bestDist = dist;
+        bestDepth = depth;
+        bestType = tp;
+        bestTag = tg;
+      }
+    }
+  }
+
+  bool found = (bestDist >= 0);
+  if(found) {
+    switch(bestType) {
     case 0:
-      if(GVertex *v = m->getVertexByTag(tag)) vertices.push_back(v);
+      if(GVertex *v = m->getVertexByTag(bestTag)) vertices.push_back(v);
       break;
     case 1:
-      if(GEdge *e = m->getEdgeByTag(tag)) edges.push_back(e);
+      if(GEdge *e = m->getEdgeByTag(bestTag)) edges.push_back(e);
       break;
     case 2:
-      if(GFace *f = m->getFaceByTag(tag)) faces.push_back(f);
+      if(GFace *f = m->getFaceByTag(bestTag)) faces.push_back(f);
       break;
     case 3:
-      if(GRegion *r = m->getRegionByTag(tag)) regions.push_back(r);
+      if(GRegion *r = m->getRegionByTag(bestTag)) regions.push_back(r);
       break;
-    }
-  };
-
-  bool found = false;
-  int hitType = -1, hitTag = -1;
-
-  if(type == ENT_NONE) {
-    // lowest-dimension type present wins (point < curve < surface < volume),
-    // matching select()'s typmin logic -- render/read one type at a time so
-    // a farther point still beats a nearer curve, etc.
-    for(int t = 0; t < 4 && !found; t++) {
-      if(t == 2 && !wantFaces) continue; // already bailed out above if so
-      clearBuffers();
-      renderType(t);
-      found = readAndDecode(hitType, hitTag);
+    default: found = false; break;
     }
   }
-  else if(type == ENT_ALL) {
-    // any type, closest wins -- render together in one depth-tested pass
-    clearBuffers();
-    for(int t = 0; t < 4; t++) renderType(t);
-    found = readAndDecode(hitType, hitTag);
-  }
-  else {
-    int t = (type == ENT_POINT) ? 0 :
-            (type == ENT_CURVE) ? 1 :
-            (type == ENT_SURFACE) ? 2 : 3;
-    clearBuffers();
-    renderType(t);
-    found = readAndDecode(hitType, hitTag);
-  }
-
-  if(found) resolve(hitType, hitTag);
-
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glPopAttrib();
-  glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)prevFBO);
-  render_mode = savedRenderMode;
 
   return found;
 #endif

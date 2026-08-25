@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
 #include "openglWindow.h"
 #include "graphicWindow.h"
@@ -72,7 +73,8 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
 
 openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
-    _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
+    _selection(ENT_NONE), _trySelection(0), _hoverX(0), _hoverY(0),
+    Nautilus(nullptr)
 {
   _ctx = new drawContext(this);
 
@@ -96,6 +98,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
 openglWindow::~openglWindow()
 {
+  _cancelHover();
   delete _ctx;
 #if defined(NEW_TOOLTIPS)
   delete _tooltip;
@@ -187,6 +190,11 @@ void openglWindow::draw()
 
   initVertexArrayVBOSupport();
   flushDeletedVertexArrayVBOs();
+
+  // anything that makes us redraw (camera move, visibility toggle, new mesh)
+  // also makes any cached pick image stale
+  _ctx->invalidatePickCache();
+  _ctx->invalidateHighResolutionPixelFactor();
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
@@ -385,6 +393,7 @@ int openglWindow::handle(int event)
     return Fl_Gl_Window::handle(event);
 
   case FL_PUSH:
+    _cancelHover();
     if(Fl::event_clicks() == 1 && !selectionMode &&
        CTX::instance()->mouseSelection) {
       // double-click and not in selection mode, but with mouse selection enabled
@@ -702,81 +711,16 @@ int openglWindow::handle(int event)
       redraw();
     }
     else { // hover mode
-      if(_curr.win[0] != _prev.win[0] || _curr.win[1] != _prev.win[1]) {
-        std::vector<GVertex *> vertices;
-        std::vector<GEdge *> edges;
-        std::vector<GFace *> faces;
-        std::vector<GRegion *> regions;
-        std::vector<MElement *> elements;
-        std::vector<SPoint2> points;
-        std::vector<PView *> views;
-        bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
-                           CTX::instance()->mouseHoverMeshes, (int)_curr.win[0],
-                           (int)_curr.win[1], 5, 5, vertices, edges, faces,
-                           regions, elements, points, views);
-        if((_selection == ENT_ALL && res) ||
-           (_selection == ENT_POINT && vertices.size()) ||
-           (_selection == ENT_CURVE && edges.size()) ||
-           (_selection == ENT_SURFACE && faces.size()) ||
-           (_selection == ENT_VOLUME && regions.size()))
-          cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
-        else
-          cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-        std::string text, cmd;
-        bool multiline = CTX::instance()->tooltips;
-        if(vertices.size()) {
-          text = vertices[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedPointCommand;
-        }
-        else if(edges.size()) {
-          text = edges[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedCurveCommand;
-        }
-        else if(faces.size()) {
-          text = faces[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
-        }
-        else if(regions.size()) {
-          text = regions[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
-        }
-        else if(elements.size()) {
-          text = elements[0]->getInfoString(multiline);
-        }
-        else if(points.size()) {
-          char tmp[256];
-          sprintf(tmp, "Point (%g, %g)", points[0].x(), points[0].y());
-          text = tmp;
-          cmd = CTX::instance()->post.doubleClickedGraphPointCommand;
-        }
-        else if(views.size()) {
-          char tmp[256];
-          sprintf(tmp, "View[%d]", views[0]->getIndex());
-          text = tmp;
-          cmd = views[0]->getOptions()->doubleClickedCommand;
-        }
-        if(cmd.size()) {
-          if(multiline) text += "\n\n";
-          else text += " ";
-          if(cmd == "ONELAB") {
-            text += std::string("Double-click to edit parameters");
-          }
-          else {
-            text += std::string("Double-click to execute\n\n");
-            std::replace(cmd.begin(), cmd.end(), '\r', ' ');
-            text += cmd;
-          }
-        }
-        if(CTX::instance()->tooltips)
-          drawTooltip(text);
-        else
-          Msg::StatusBar(false, text.c_str());
-        if(Msg::GetVerbosity() == 99)
-          Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
-      }
+      // don't pick here: just (re)arm the deferred hover query
+      if(_curr.win[0] != _prev.win[0] || _curr.win[1] != _prev.win[1])
+        _armHover((int)_curr.win[0], (int)_curr.win[1]);
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
     return 1;
+
+  case FL_LEAVE:
+    _cancelHover();
+    return Fl_Gl_Window::handle(event);
 
   default: return Fl_Gl_Window::handle(event);
   }
@@ -802,6 +746,100 @@ int openglWindow::pixel_h()
 #else
   return h();
 #endif
+}
+
+// How long the pointer must sit still before the hover query runs. Long
+// enough that sweeping the mouse across the window costs nothing, short
+// enough to still feel immediate once you stop on something.
+const double openglWindow::_hoverDelay = 0.1;
+
+void openglWindow::_hoverTimeout(void *data)
+{
+  static_cast<openglWindow *>(data)->_doHover();
+}
+
+void openglWindow::_armHover(int x, int y)
+{
+  _hoverX = x;
+  _hoverY = y;
+  // restart the clock: while the pointer keeps moving we never pick
+  Fl::remove_timeout(_hoverTimeout, this);
+  Fl::add_timeout(_hoverDelay, _hoverTimeout, this);
+}
+
+void openglWindow::_cancelHover() { Fl::remove_timeout(_hoverTimeout, this); }
+
+void openglWindow::_doHover()
+{
+  std::vector<GVertex *> vertices;
+  std::vector<GEdge *> edges;
+  std::vector<GFace *> faces;
+  std::vector<GRegion *> regions;
+  std::vector<MElement *> elements;
+  std::vector<SPoint2> points;
+  std::vector<PView *> views;
+  bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
+                     CTX::instance()->mouseHoverMeshes, _hoverX, _hoverY, 5, 5,
+                     vertices, edges, faces, regions, elements, points, views);
+  if((_selection == ENT_ALL && res) ||
+     (_selection == ENT_POINT && vertices.size()) ||
+     (_selection == ENT_CURVE && edges.size()) ||
+     (_selection == ENT_SURFACE && faces.size()) ||
+     (_selection == ENT_VOLUME && regions.size()))
+    cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
+  else
+    cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+  std::string text, cmd;
+  bool multiline = CTX::instance()->tooltips;
+  if(vertices.size()) {
+    text = vertices[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedPointCommand;
+  }
+  else if(edges.size()) {
+    text = edges[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedCurveCommand;
+  }
+  else if(faces.size()) {
+    text = faces[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
+  }
+  else if(regions.size()) {
+    text = regions[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
+  }
+  else if(elements.size()) {
+    text = elements[0]->getInfoString(multiline);
+  }
+  else if(points.size()) {
+    char tmp[256];
+    sprintf(tmp, "Point (%g, %g)", points[0].x(), points[0].y());
+    text = tmp;
+    cmd = CTX::instance()->post.doubleClickedGraphPointCommand;
+  }
+  else if(views.size()) {
+    char tmp[256];
+    sprintf(tmp, "View[%d]", views[0]->getIndex());
+    text = tmp;
+    cmd = views[0]->getOptions()->doubleClickedCommand;
+  }
+  if(cmd.size()) {
+    if(multiline) text += "\n\n";
+    else text += " ";
+    if(cmd == "ONELAB") {
+      text += std::string("Double-click to edit parameters");
+    }
+    else {
+      text += std::string("Double-click to execute\n\n");
+      std::replace(cmd.begin(), cmd.end(), '\r', ' ');
+      text += cmd;
+    }
+  }
+  if(CTX::instance()->tooltips)
+    drawTooltip(text);
+  else
+    Msg::StatusBar(false, text.c_str());
+  if(Msg::GetVerbosity() == 99)
+    Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
 }
 
 bool openglWindow::_select(

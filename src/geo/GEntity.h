@@ -329,7 +329,15 @@ public:
 
   // get/set the selection flag
   virtual char getSelection() { return _selection; }
-  virtual void setSelection(char val) { _selection = val; }
+  virtual void setSelection(char val)
+  {
+    if(!_selection != !val) numSelected += val ? 1 : -1;
+    _selection = val;
+  }
+  // how many entities are currently selected, so that the drawing code can
+  // tell in O(1) whether it has to visit entities individually to paint
+  // selection highlights on top of the batched draw calls
+  static int numSelected;
 
   // get/set the color
   virtual unsigned int getColor() { return _color; }

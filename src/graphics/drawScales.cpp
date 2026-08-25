@@ -276,7 +276,7 @@ void drawContext::drawScales()
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
     if(!data->getDirty() && opt->visible && opt->showScale &&
-       opt->type == PViewOptions::Plot3D && data->getNumElements() &&
+       opt->type == PViewOptions::Plot3D && data->hasElements() &&
        isVisible(PView::list[i]))
       scales.push_back(PView::list[i]);
   }

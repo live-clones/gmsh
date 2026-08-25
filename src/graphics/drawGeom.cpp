@@ -40,8 +40,15 @@ void drawGVertexID(drawContext *ctx, GVertex *v, const unsigned char color[4])
   double x = v->x(), y = v->y(), z = v->z();
   ctx->transform(x, y, z);
   glColor4ubv(color);
-  glPointSize((float)std::max(CTX::instance()->geom.pointSize,
-                              CTX::instance()->geom.selectedPointSize));
+  // the size the point is actually drawn at on screen: selectFast() renders
+  // the ID image over the whole viewport, so this directly sets how far from
+  // a point you may click and still hit it. Using the larger of the two sizes
+  // unconditionally (which the narrow pick frustum used to need to make
+  // points hittable at all) now just makes picking sloppier than what the
+  // user sees.
+  glPointSize((float)(v->getSelection() ?
+                        CTX::instance()->geom.selectedPointSize :
+                        CTX::instance()->geom.pointSize));
   glBegin(GL_POINTS);
   glVertex3d(x, y, z);
   glEnd();
@@ -77,17 +84,42 @@ bool drawGFaceID(drawContext *ctx, GFace *f, const unsigned char color[4])
   if(f->geomType() == GEntity::PartitionSurface) return true;
   if(f->geomType() == GEntity::BoundaryLayerSurface) return true;
   if(!(CTX::instance()->geom.surfaces || f->getSelection() > 1)) return true;
-  if(CTX::instance()->geom.surfaceType > 0) f->fillVertexArray();
-  if(!f->va_geom_triangles || !f->va_geom_triangles->getNumVertices())
-    return false;
-  bindVertexArrayVertices(f->va_geom_triangles);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
   glColor4ubv(color);
-  glDrawArrays(GL_TRIANGLES, 0, f->va_geom_triangles->getNumVertices());
-  unbindVertexArrayBuffers();
-  glDisableClientState(GL_VERTEX_ARRAY);
+
+  if(CTX::instance()->geom.surfaceType > 0) {
+    f->fillVertexArray();
+    if(!f->va_geom_triangles || !f->va_geom_triangles->getNumVertices())
+      return false;
+    bindVertexArrayVertices(f->va_geom_triangles);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDrawArrays(GL_TRIANGLES, 0, f->va_geom_triangles->getNumVertices());
+    unbindVertexArrayBuffers();
+    glDisableClientState(GL_VERTEX_ARRAY);
+    return true;
+  }
+
+  // Geometry.SurfaceType == 0: there are no va_geom_triangles, the surface is
+  // shown -- and so must be picked -- as its representation cross, the same
+  // geometry drawGFace() draws in that mode. Drawn unstippled on purpose:
+  // GL_SELECT ignores the stipple pattern, so select() effectively picks
+  // against the solid line and we have to match that to agree with it.
+  f->buildRepresentationCross();
+  for(int dim = 0; dim < 2; dim++) {
+    for(std::size_t i = 0; i < f->cross[dim].size(); i++) {
+      if(f->cross[dim][i].size() < 2) continue;
+      glBegin(GL_LINE_STRIP);
+      for(std::size_t j = 0; j < f->cross[dim][i].size(); j++) {
+        double x = f->cross[dim][i][j].x();
+        double y = f->cross[dim][i][j].y();
+        double z = f->cross[dim][i][j].z();
+        ctx->transform(x, y, z);
+        glVertex3d(x, y, z);
+      }
+      glEnd();
+    }
+  }
   return true;
 }
 
@@ -158,16 +190,85 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
   ctx->drawString(str, xx, yy, zz);
 }
 
+// Draw every plain, unselected geometry point in one glDrawArrays instead of
+// a glBegin/glVertex3d/glEnd block each. On a partitioned model that is tens
+// of thousands of single-vertex primitive blocks per frame; besides the call
+// overhead, Mesa allocates and frees per block, which showed up as ~a quarter
+// of the frame spent inside free(). Returns true when it has taken care of
+// the points, so the per-entity pass below can skip drawing them; selected
+// points are deliberately left out of the batch so the per-entity pass still
+// paints their highlight colour and larger point size on top.
+static std::vector<float> _geomPointVerts;
+static std::vector<unsigned char> _geomPointCols;
+
+static bool drawGeomPointsBatched(drawContext *ctx,
+                                  const std::vector<GVertex *> &verts)
+{
+  CTX *c = CTX::instance();
+  if(ctx->render_mode == drawContext::GMSH_SELECT) return false;
+  if(!c->geom.points) return false; // selection-only drawing stays per-entity
+  if(c->geom.pointType > 0) return false; // spheres, not GL_POINTS
+  if(c->geom.highlightOrphans) return false; // needs per-entity colour logic
+
+  _geomPointVerts.clear();
+  _geomPointCols.clear();
+  for(std::size_t i = 0; i < verts.size(); i++) {
+    GVertex *v = verts[i];
+    if(!v->getVisibility()) continue;
+    if(v->geomType() == GEntity::BoundaryLayerPoint) continue;
+    if(v->getSelection()) continue;
+    double x = v->x(), y = v->y(), z = v->z();
+    ctx->transform(x, y, z);
+    _geomPointVerts.push_back((float)x);
+    _geomPointVerts.push_back((float)y);
+    _geomPointVerts.push_back((float)z);
+    unsigned int col = v->useColor() ? v->getColor() : c->color.geom.point;
+    const unsigned char *cc = (const unsigned char *)&col;
+    _geomPointCols.push_back(cc[0]);
+    _geomPointCols.push_back(cc[1]);
+    _geomPointCols.push_back(cc[2]);
+    _geomPointCols.push_back(cc[3]);
+  }
+  if(_geomPointVerts.empty()) return true;
+
+  double ps = c->geom.pointSize * ctx->highResolutionPixelFactor();
+  glPointSize((float)ps);
+  gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
+  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+  glDisable(GL_LIGHTING);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_COLOR_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  glVertexPointer(3, GL_FLOAT, 0, &_geomPointVerts[0]);
+  glColorPointer(4, GL_UNSIGNED_BYTE, 0, &_geomPointCols[0]);
+  glDrawArrays(GL_POINTS, 0, (GLsizei)(_geomPointVerts.size() / 3));
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+  return true;
+}
+
 class drawGVertex {
 private:
   drawContext *_ctx;
 
 public:
-  drawGVertex(drawContext *ctx) : _ctx(ctx) {}
+  bool _batched;
+  drawGVertex(drawContext *ctx, bool batched = false)
+    : _ctx(ctx), _batched(batched)
+  {
+  }
   void operator()(GVertex *v)
   {
     if(!v->getVisibility()) return;
     if(v->geomType() == GEntity::BoundaryLayerPoint) return;
+
+    // nothing left to do: the point is already in the batched draw call, it
+    // carries no highlight, and no label is wanted. Bail before the point
+    // size / colour / coordinate work below, which is the bulk of the cost
+    // once the drawing itself has been batched away
+    if(_batched && !v->getSelection() &&
+       !CTX::instance()->geom.pointLabels)
+      return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    v->model() == GModel::current());
@@ -207,7 +308,11 @@ public:
     double x = v->x(), y = v->y(), z = v->z();
     _ctx->transform(x, y, z);
 
-    if(CTX::instance()->geom.points || v->getSelection() > 1) {
+    // an unselected point is already in the batched draw call issued before
+    // this loop; a selected one never is, and still needs its highlight
+    bool drawPoint = (CTX::instance()->geom.points || v->getSelection() > 1);
+    if(_batched && !v->getSelection()) drawPoint = false;
+    if(drawPoint) {
       if(CTX::instance()->geom.pointType > 0) {
         if(v->getSelection())
           _ctx->drawSphere(sps, x, y, z, CTX::instance()->geom.light);
@@ -626,10 +731,14 @@ void drawContext::drawGeom()
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     if(m->getVisibility() && isVisible(m)) {
-      std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));
-      std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
-      std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
-      std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
+      {
+        const auto &l = flatVertices(m);
+        bool batched = drawGeomPointsBatched(this, l);
+        std::for_each(l.begin(), l.end(), drawGVertex(this, batched));
+      }
+      { const auto &l = flatEdges(m); std::for_each(l.begin(), l.end(), drawGEdge(this)); }
+      { const auto &l = flatFaces(m); std::for_each(l.begin(), l.end(), drawGFace(this)); }
+      { const auto &l = flatRegions(m); std::for_each(l.begin(), l.end(), drawGRegion(this)); }
     }
   }
 

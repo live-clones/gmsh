@@ -86,8 +86,20 @@ private:
   double _point[3];
   int _selection, _trySelection, _trySelectionXYWH[4];
   double _lassoXY[2];
+  int _hoverX, _hoverY; // last pointer position, for the deferred hover query
   void _drawScreenMessage();
   void _drawBorder();
+  // Hover picking (the tooltip / status-bar "what is under the cursor?"
+  // query) is deferred instead of run on every FL_MOVE: a pick is a full
+  // extra render pass over every entity in the model, so on a large model
+  // running one per motion event queues up seconds of work behind the next
+  // redraw. Each motion event (re)arms a short timeout; only when the
+  // pointer actually settles does _doHover() run the query.
+  static const double _hoverDelay; // seconds
+  static void _hoverTimeout(void *data);
+  void _armHover(int x, int y);
+  void _cancelHover();
+  void _doHover();
   bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
                int w, int h, std::vector<GVertex *> &vertices,
                std::vector<GEdge *> &edges, std::vector<GFace *> &faces,

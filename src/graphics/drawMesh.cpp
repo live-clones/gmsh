@@ -787,6 +787,39 @@ static void endFakeTransparency()
   glEnable(GL_DEPTH_TEST);
 }
 
+// The batched draw calls issued in drawMesh() already cover the wireframe and
+// filled arrays of every unselected entity, so the per-entity loops that
+// follow them only have something left to do when a per-entity feature is on
+// (labels, nodes, normals, duals, tangents), when an entity is selected and
+// wants its highlight colour painted on top of the batch, or when we are
+// rendering for picking. Everything else is pure overhead -- and on a
+// partitioned mesh that is one virtual call plus several cold cache lines
+// per entity, hundreds of thousands of times per frame, for no pixels. Decide
+// once per frame instead of rediscovering it inside every functor.
+static bool needPerEntityPass(drawContext *ctx, GModel *m, int dim)
+{
+  if(ctx->render_mode != drawContext::GMSH_RENDER) return true;
+  if(GEntity::numSelected) return true;
+  CTX *c = CTX::instance();
+  if(c->mesh.nodes || c->mesh.nodeLabels) return true;
+  switch(dim) {
+  case 0: return false;
+  case 1:
+    return (c->mesh.lines && !m->getEdgeLinesBatch()) || c->mesh.lineLabels ||
+           c->mesh.tangents;
+  case 2:
+    return (c->mesh.surfaceEdges && !m->getFaceLinesBatch()) ||
+           (c->mesh.surfaceFaces && !m->getFaceTrianglesBatch()) ||
+           c->mesh.surfaceLabels || c->mesh.normals || c->mesh.dual ||
+           c->mesh.voronoi;
+  case 3:
+    return (c->mesh.volumeEdges && !m->getRegionLinesBatch()) ||
+           (c->mesh.volumeFaces && !m->getRegionTrianglesBatch()) ||
+           c->mesh.volumeLabels || c->mesh.dual || c->mesh.voronoi;
+  default: return true;
+  }
+}
+
 // Main drawing routine
 
 void drawContext::drawMesh()
@@ -830,11 +863,11 @@ void drawContext::drawMesh()
     if(m->getVisibility() && isVisible(m)) {
       int status = m->getMeshStatus();
       if(status >= 0)
-        std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
+        if(needPerEntityPass(this, m, 0)) { const auto &l = flatVertices(m); std::for_each(l.begin(), l.end(), drawMeshGVertex(this)); }
       if(status >= 1) {
         if(CTX::instance()->mesh.lines && render_mode == GMSH_RENDER)
           drawBatchedArrays(m->getEdgeLinesBatch(), GL_LINES, false, 0, 0);
-        std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
+        if(needPerEntityPass(this, m, 1)) { const auto &l = flatEdges(m); std::for_each(l.begin(), l.end(), drawMeshGEdge(this)); }
       }
       if(status >= 2) {
         beginFakeTransparency();
@@ -852,7 +885,7 @@ void drawContext::drawMesh()
           drawBatchedArrays(m->getFaceTrianglesBatch(), GL_TRIANGLES,
                             CTX::instance()->mesh.light, 0, 0);
         }
-        std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
+        if(needPerEntityPass(this, m, 2)) { const auto &l = flatFaces(m); std::for_each(l.begin(), l.end(), drawMeshGFace(this)); }
         endFakeTransparency();
       }
       if(status >= 3) {
@@ -870,7 +903,7 @@ void drawContext::drawMesh()
           drawBatchedArrays(m->getRegionTrianglesBatch(), GL_TRIANGLES,
                             CTX::instance()->mesh.light, 0, 0);
         }
-        std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
+        if(needPerEntityPass(this, m, 3)) { const auto &l = flatRegions(m); std::for_each(l.begin(), l.end(), drawMeshGRegion(this)); }
       }
     }
   }

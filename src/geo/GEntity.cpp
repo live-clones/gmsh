@@ -16,6 +16,9 @@
 #include "GRegion.h"
 #include "closestVertex.h"
 
+
+int GEntity::numSelected = 0;
+
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _meshMaster(this), _visible(1), _selection(0),
     _onlySomeElementsVisible(1), _obb(nullptr), va_lines(nullptr),
@@ -45,10 +48,12 @@ char GEntity::getVisibility()
 
 bool GEntity::useColor()
 {
-  int r = CTX::instance()->unpackRed(_color);
-  int g = CTX::instance()->unpackGreen(_color);
-  int b = CTX::instance()->unpackBlue(_color);
-  int a = CTX::instance()->unpackAlpha(_color);
+  // one singleton lookup, not four: this is called per entity per frame
+  CTX *c = CTX::instance();
+  int r = c->unpackRed(_color);
+  int g = c->unpackGreen(_color);
+  int b = c->unpackBlue(_color);
+  int a = c->unpackAlpha(_color);
   if(r == 0 && g == 0 && b == 255 && a == 0) return false;
   return true;
 }

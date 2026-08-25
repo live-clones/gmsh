@@ -238,6 +238,11 @@ public:
   int getNumPolyhedra(int step = -1);
   int getNumEntities(int step = -1);
   int getNumElements(int step = -1, int ent = -1);
+  // answer without counting elements: a step with entities has elements
+  bool hasElements() override
+  {
+    return !_steps.empty() && _steps[0]->getNumEntities() > 0;
+  }
   int getDimension(int step, int ent, int ele);
   int getNumNodes(int step, int ent, int ele);
   int getNode(int step, int ent, int ele, int nod, double &x, double &y,

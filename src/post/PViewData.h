@@ -129,6 +129,11 @@ public:
   // return the number of elements in the ent-th entity, or the total number of
   // elements if ent < 0
   virtual int getNumElements(int step = -1, int ent = -1) { return 0; }
+  // cheap "does this view have any elements?" test. The default answers by
+  // counting, which for PViewDataGModel means walking every entity of the
+  // model; callers that only need the yes/no answer (e.g. drawScales(), once
+  // per frame) should use this instead
+  virtual bool hasElements() { return getNumElements() > 0; }
 
   // return the geometrical dimension of the ele-th element in the ent-th entity
   virtual int getDimension(int step, int ent, int ele) { return 0; }
