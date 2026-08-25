@@ -744,6 +744,16 @@ static int partitionGraph(Graph &graph, bool verbose)
     default: Msg::Error("METIS error"); return 1;
     }
 
+    // Check that all partitions have at least one element
+    std::vector<int> partitionCount(numPart, 0);
+    for(std::size_t i = 0; i < epart.size(); i++) { partitionCount[epart[i]]++; }
+    for(std::size_t i = 0; i < partitionCount.size(); i++) {
+      if(partitionCount[i] == 0) {
+        Msg::Error("METIS produced an empty partition");
+        return 1;
+      }
+    }
+
     // Check and correct the topology
     correctTopology(graph, epart);
     graph.partition(epart);
@@ -2549,6 +2559,11 @@ int UnpartitionMesh(GModel *model)
       model->remove(face);
       delete face;
     }
+    else if(face->geomType() == GEntity::OverlapSurface) {
+      face->deleteMesh();
+      model->remove(face);
+      delete face;
+    }
   }
 
   // Loop over volumes
@@ -2597,9 +2612,15 @@ int UnpartitionMesh(GModel *model)
       model->remove(region);
       delete region;
     }
+    else if(region->geomType() == GEntity::OverlapVolume) {
+      region->deleteMesh();
+      model->remove(region);
+      delete region;
+    }
   }
 
   model->setNumPartitions(0);
+  model->clearOverlaps();
 
   std::map<std::pair<int, int>, std::string> physicalNames =
     model->getPhysicalNames();

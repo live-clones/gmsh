@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <limits>
 #include <stdlib.h>
 #include <sstream>
@@ -196,6 +197,9 @@ void GModel::destroy(bool keepName)
   vertices.clear();
   std::set<GVertex *, GEntityPtrLessThan>().swap(vertices);
 
+  // The overlap managers point into the entities deleted above
+  clearOverlaps();
+
   destroyMeshCaches();
 
   resetOCCInternals();
@@ -327,13 +331,44 @@ bool GModel::empty() const
 
 int GModel::overlapDim() const
 {
-  if(std::get<1>(_overlaps).size() > 0) {
-    return 3; // 3D overlap
+  int maxDim = 0;
+  for(const auto &mgr : _overlapManagers) {
+    maxDim = std::max(maxDim, mgr.overlapDim());
   }
-  else if(std::get<0>(_overlaps).size() > 0) {
-    return 2; // 2D overlap
+  return maxDim;
+}
+
+OverlapManager &GModel::createNewOverlapManager(int layers)
+{
+  _overlapManagers.emplace_back(_nextOverlapTag++, layers);
+  return _overlapManagers.back();
+}
+
+OverlapManager *GModel::createOverlapManagerWithTag(int tag, int layers)
+{
+  if(tag != (int)_overlapManagers.size()) {
+    Msg::Error("Overlap manager tag %d does not match expected position %zu. "
+               "Tags must be sequential.",
+               tag, _overlapManagers.size());
+    return nullptr;
   }
-  return 0; // no overlap
+  _overlapManagers.emplace_back(tag, layers);
+  _nextOverlapTag = tag + 1;
+  return &_overlapManagers.back();
+}
+
+OverlapManager *GModel::getOverlapManagerByTag(int tag)
+{
+  for(auto &mgr : _overlapManagers) {
+    if(mgr.tag() == tag) return &mgr;
+  }
+  return nullptr;
+}
+
+void GModel::clearOverlaps()
+{
+  _overlapManagers.clear();
+  _nextOverlapTag = 0;
 }
 
 GRegion *GModel::getRegionByTag(int n) const
@@ -649,8 +684,7 @@ void GModel::remove()
   faces.clear();
   edges.clear();
   vertices.clear();
-  std::get<0>(_overlaps).clear();
-  std::get<1>(_overlaps).clear();
+  clearOverlaps();
 }
 
 void GModel::snapVertices()
@@ -2445,12 +2479,13 @@ int GModel::convertOldPartitioningToNewOne()
 }
 
 template <int dim>
-static void _buildOverlapsForDim(const int layers, GModel *const m)
+static void _buildOverlapsForDim(const int layers, GModel *const m,
+                                  OverlapManager &mgr)
 {
   auto ovlps = quickOverlap<dim>(m);
   for(int i = 1; i < layers; ++i) extendOverlapCollection<dim>(m, ovlps);
-  buildOverlapEntities<dim>(m, ovlps);
-  overlapBuildBoundaries<dim>(m, ovlps);
+  buildOverlapEntities<dim>(m, mgr, ovlps);
+  overlapBuildBoundaries<dim>(m, mgr, ovlps);
 }
 
 int GModel::createOverlaps(int layers, bool createBoundaries)
@@ -2461,25 +2496,32 @@ int GModel::createOverlaps(int layers, bool createBoundaries)
   auto dim = getDim();
   if(dim < 2) {
     Msg::Error("Model dimension (%d) is too low for overlap creation", dim);
-    return 1;
+    return -1;
   }
 
   if(layers < 1) {
     Msg::Error("Number of layers %d in overlaps must be strictly positive",
                layers);
-    return 1;
+    return -1;
+  }
+
+  if(getNumPartitions() == 0) {
+    Msg::Error("Model is not partitioned: cannot create overlaps");
+    return -1;
   }
 
   Msg::StatusBar(true, "Building overlaps...");
 
+  auto &mgr = createNewOverlapManager(layers);
+
   double t1 = Cpu(), w1 = TimeOfDay();
   if(dim == 2)
-    _buildOverlapsForDim<2>(layers, this);
+    _buildOverlapsForDim<2>(layers, this, mgr);
   else
-    _buildOverlapsForDim<3>(layers, this);
+    _buildOverlapsForDim<3>(layers, this, mgr);
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
-  return 0;
+  return mgr.tag();
 }
 
 void GModel::storeChain(int dim,
@@ -2766,20 +2808,48 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex *> &vertices)
 void GModel::pruneMeshVertexAssociations()
 {
   std::vector<GEntity *> entities;
-  std::set<MVertex *, MVertexPtrLessThan> vertSet;
+  std::vector<MVertex *> vertices;
   getEntities(entities);
+  std::size_t maxNum = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       MElement *e = entities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
         v->setEntity(nullptr);
-        vertSet.insert(v);
+        if(v->getNum() > maxNum) maxNum = v->getNum();
+        vertices.push_back(v);
       }
     }
     entities[i]->mesh_vertices.clear();
   }
-  std::vector<MVertex *> vertices(vertSet.begin(), vertSet.end());
+
+  // sort the nodes by increasing number and remove the duplicates; if the
+  // numbering is dense enough, bucketing the nodes by number does this in
+  // linear time, using no more memory than the list of nodes we just built -
+  // otherwise (sparse numbering, e.g. after reading a mesh with arbitrary node
+  // tags) fall back on a sort
+  if(vertices.size() && maxNum < vertices.size()) {
+    std::vector<MVertex *> slots(maxNum + 1, nullptr);
+    std::size_t nVert = 0;
+    for(std::size_t i = 0; i < vertices.size(); i++) {
+      std::size_t num = vertices[i]->getNum();
+      if(!slots[num]) { // as with a set, the first node with a given number wins
+        slots[num] = vertices[i];
+        nVert++;
+      }
+    }
+    std::vector<MVertex *>().swap(vertices);
+    vertices.reserve(nVert);
+    for(std::size_t n = 0; n <= maxNum; n++)
+      if(slots[n]) vertices.push_back(slots[n]);
+  }
+  else {
+    std::stable_sort(vertices.begin(), vertices.end(), MVertexPtrLessThan());
+    vertices.erase(
+      std::unique(vertices.begin(), vertices.end(), MVertexPtrEqual()),
+      vertices.end());
+  }
   _associateEntityWithMeshVertices();
   // associate mesh nodes primarily with chain entities
   for(auto it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {

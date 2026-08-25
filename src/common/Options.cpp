@@ -4854,6 +4854,12 @@ double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM)
   return CTX::instance()->geom.occUseGenericClosestPoint;
 }
 
+double opt_geometry_occ_fast_projection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occFastProjection = (int)val;
+  return CTX::instance()->geom.occFastProjection;
+}
+
 double opt_geometry_old_circle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.oldCircle = (int)val;

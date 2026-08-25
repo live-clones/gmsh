@@ -333,7 +333,9 @@ if(NOT HAVE_64BIT_SIZE_T AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 if(ENABLE_OPENMP)
-  # special cases handled first:
+  find_package(OpenMP)
+  # special cases on macOS are handled first; then the general case; then the
+  # specific static linking for our official builds on Linux:
   if(APPLE AND EXISTS "/opt/local/lib/libomp")
     # official Apple compiler with macports' libomp
     set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
@@ -356,6 +358,12 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/homebrew/opt/libomp/lib -lomp")
+  elseif(OpenMP_FOUND OR OPENMP_FOUND)
+    # general case
+    set_config_option(HAVE_OPENMP "OpenMP")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND EXISTS "/usr/local/lib64/libgomp.a")
     # custom static openmp for official linux builds
     set_config_option(HAVE_OPENMP "OpenMP[static]")
@@ -363,14 +371,7 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
     list(APPEND EXTERNAL_LIBRARIES "/usr/local/lib64/libgomp.a")
   else()
-    # general case:
-    find_package(OpenMP)
-    if(OpenMP_FOUND OR OPENMP_FOUND)
-      set_config_option(HAVE_OPENMP "OpenMP")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-      list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
-    endif()
+    message(WARNING "Could not find suitable OpenMP configuration")
   endif()
 endif()
 
@@ -398,7 +399,7 @@ if(ENABLE_COVERAGE)
     message(FATAL_ERROR "ENABLE_COVERAGE requires GCC or Clang")
   endif()
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(STATUS "Warning: CMAKE_BUILD_TYPE=Debug is recommended for "
+    message(WARNING "CMAKE_BUILD_TYPE=Debug is recommended for "
             "accurate counters when ENABLE_COVERAGE is on")
   endif()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
@@ -1676,11 +1677,11 @@ if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
          GMSH_LONG_DESCRIPTION)
   else()
     if ("${GMSH_EXTRA_VERSION}" MATCHES "-nox")
-      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1+nox")
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev${DATE}+nox")
       file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst
            GMSH_LONG_DESCRIPTION)
     else ()
-      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1")
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev${DATE}")
       file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst
            GMSH_LONG_DESCRIPTION)
     endif()
@@ -1867,6 +1868,16 @@ elseif(APPLE)
   # breaks exception handling
   # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind")
   # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-no_compact_unwind")
+elseif(EMSCRIPTEN)
+  # WebAssembly build: enable the virtual filesystem and export the runtime
+  # methods needed to drive Gmsh from JavaScript; memory limits are increased
+  # to handle OpenCASCADE models
+  set(FLAGS "-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456")
+  set(FLAGS "${FLAGS} -sMAXIMUM_MEMORY=4294967296 -sSTACK_SIZE=5242880")
+  set(FLAGS "${FLAGS} -sFILESYSTEM=1 -sLINKABLE=1 -sEXPORT_ALL=1")
+  set(FLAGS "${FLAGS} -sEXPORTED_RUNTIME_METHODS=FS,callMain,cwrap,ccall")
+  set(FLAGS "${FLAGS} -sENVIRONMENT=web,node")
+  set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS}")
 endif()
 
 # android target
