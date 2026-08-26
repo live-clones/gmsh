@@ -184,12 +184,22 @@ public:
   int _revision = 0;
   int _vboVerticesRevision = -1, _vboNormalsRevision = -1,
       _vboColorsRevision = -1;
+  // GPU buffer objects belong to one GL context. FLTK destroys and recreates
+  // the context whenever the visual changes -- toggling General.Antialiasing
+  // at runtime does exactly that -- and every name above becomes invalid,
+  // possibly reused by an unrelated object. Rather than hunt down every
+  // VertexArray in the model, the graphics layer bumps this counter on
+  // context loss; an array carrying an older generation forgets its ids and
+  // re-uploads on next use, and does not try to delete them.
+  static unsigned int vboGeneration;
+  unsigned int _vboGeneration = 0;
   static void (*deleteVBOCallback)(unsigned int vbo[3]);
 
   VertexArray(int numVerticesPerElement, int numElements);
   ~VertexArray()
   {
-    if(deleteVBOCallback && (_vboVertices || _vboNormals || _vboColors)) {
+    if(deleteVBOCallback && _vboGeneration == vboGeneration &&
+       (_vboVertices || _vboNormals || _vboColors)) {
       unsigned int vbo[3] = {_vboVertices, _vboNormals, _vboColors};
       deleteVBOCallback(vbo);
     }

@@ -15,6 +15,9 @@
 template<int N> float ElementDataLessThan<N>::tolerance = 0.0F;
 float BarycenterLessThan::tolerance = 0.0F;
 void (*VertexArray::deleteVBOCallback)(unsigned int vbo[3]) = nullptr;
+// starts at 1 so a freshly built array (generation 0) adopts the current
+// generation the first time it is bound
+unsigned int VertexArray::vboGeneration = 1;
 
 VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   : _numVerticesPerElement(numVerticesPerElement)

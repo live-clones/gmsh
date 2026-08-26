@@ -294,6 +294,8 @@ public:
   // can't be had, in which case just draw normally and don't call end().
   bool beginLowResPass(int pixelW, int pixelH, int divisor);
   void endLowResPass(int pixelW, int pixelH);
+  // drop GL object names belonging to a context that has been destroyed
+  void forgetGLObjects();
   void invalidatePickCache();
   // forget the cached high-resolution factor; called once per redraw
   void invalidateHighResolutionPixelFactor() { _hiResFactor = -1.; }
@@ -403,6 +405,12 @@ const std::vector<GVertex *> &flatVertices(GModel *m);
 const std::vector<GEdge *> &flatEdges(GModel *m);
 const std::vector<GFace *> &flatFaces(GModel *m);
 const std::vector<GRegion *> &flatRegions(GModel *m);
+
+// Forget every VertexArray's GPU buffer ids after the GL context has been
+// recreated (FLTK does that whenever the visual changes, e.g. when
+// General.Antialiasing is toggled at runtime); they are re-uploaded on next
+// use. Without this every mesh draw binds buffers that no longer exist.
+void forgetVertexArrayVBOs();
 
 void initVertexArrayVBOSupport();
 

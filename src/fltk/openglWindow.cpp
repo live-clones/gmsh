@@ -186,7 +186,14 @@ void openglWindow::draw()
 
   Msg::Debug("openglWindow::draw()");
 
-  if(!context_valid()) { _ctx->invalidateQuadricsAndDisplayLists(); }
+  if(!context_valid()) {
+    // the GL context was just (re)created: everything the old one owned is
+    // gone, so drop the names first -- deleting them would hit unrelated
+    // objects in the new context -- then rebuild what invalidate...() rebuilds
+    _ctx->forgetGLObjects();
+    forgetVertexArrayVBOs();
+    _ctx->invalidateQuadricsAndDisplayLists();
+  }
 
   initVertexArrayVBOSupport();
   flushDeletedVertexArrayVBOs();

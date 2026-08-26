@@ -87,10 +87,36 @@ void flushDeletedVertexArrayVBOs()
 #endif
 }
 
+#if defined(HAVE_GLEW)
+// Drop buffer ids left over from a GL context that no longer exists, so the
+// bind functions below allocate fresh ones instead of pointing the GPU at
+// names that now mean nothing (or, worse, something else).
+static void discardStaleVBOs(VertexArray *va)
+{
+  if(va->_vboGeneration == VertexArray::vboGeneration) return;
+  va->_vboVertices = va->_vboNormals = va->_vboColors = 0;
+  va->_vboVerticesRevision = va->_vboNormalsRevision = va->_vboColorsRevision =
+    -1;
+  va->_vboGeneration = VertexArray::vboGeneration;
+}
+#endif
+
+void forgetVertexArrayVBOs()
+{
+#if defined(HAVE_GLEW)
+  // the objects died with the context; bump the generation so every array
+  // re-uploads, and drop the pending-deletion queue rather than asking the
+  // new context to delete names it never issued
+  VertexArray::vboGeneration++;
+  vboPendingDeletion.clear();
+#endif
+}
+
 void bindVertexArrayVertices(VertexArray *va)
 {
 #if defined(HAVE_GLEW)
   if(vboSupported) {
+    discardStaleVBOs(va);
     GLsizeiptr bytes = va->getNumVertices() * 3 * sizeof(float);
     if(va->_vboVertices == 0) {
       glGenBuffers(1, &va->_vboVertices);
@@ -117,6 +143,7 @@ void bindVertexArrayNormals(VertexArray *va)
 {
 #if defined(HAVE_GLEW)
   if(vboSupported) {
+    discardStaleVBOs(va);
     GLsizeiptr bytes = va->getNumVertices() * 3 * sizeof(normal_type);
     if(va->_vboNormals == 0) {
       glGenBuffers(1, &va->_vboNormals);
@@ -143,6 +170,7 @@ void bindVertexArrayColors(VertexArray *va)
 {
 #if defined(HAVE_GLEW)
   if(vboSupported) {
+    discardStaleVBOs(va);
     GLsizeiptr bytes = va->getNumVertices() * 4 * sizeof(unsigned char);
     if(va->_vboColors == 0) {
       glGenBuffers(1, &va->_vboColors);
@@ -1336,6 +1364,20 @@ void drawContext::_invalidatePickFBO()
   }
 #endif
   _pickFBOWidth = _pickFBOHeight = 0;
+  invalidatePickCache();
+}
+
+void drawContext::forgetGLObjects()
+{
+  // Called when the GL context has been recreated. The framebuffers, their
+  // attachments and the display lists are already gone with it, so the names
+  // must simply be dropped: deleting them now would target whatever the new
+  // context has since given those same names to.
+  _pickFBO = _pickColorRenderbuffer = _pickDepthRenderbuffer = 0;
+  _pickFBOWidth = _pickFBOHeight = 0;
+  _lowResFBO = _lowResColor = _lowResDepth = 0;
+  _lowResWidth = _lowResHeight = 0;
+  _displayLists = 0;
   invalidatePickCache();
 }
 
