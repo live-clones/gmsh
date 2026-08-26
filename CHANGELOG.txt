@@ -1,8 +1,9 @@
-(Work-in-progress): improved performance of default 2D and 3D meshing
-algorithms; new optimized homology solver; added support for partition overlaps;
-added IO of edges and faces in MSH4 file format; added ability to save only
-local partitioned Brep in MSH4 files; the Extend mesh size field is now applied
-per entity and takes an element growth rate as input; new Curvature
+(Work-in-progress): improved performance of default 2D and 3D meshing algorithms
+and high-order element generation; new faster homology solver; improved
+performance of mesh partitioning pipeline and added support for partition
+overlaps; added IO of edges and faces in MSH4 file format; added ability to save
+only local partitioned Brep in MSH4 files; the Extend mesh size field is now
+applied per entity and takes an element growth rate as input; new Curvature
 Curve|Surface parser functions; new Plugin(DuplicateNodes), Gmsh now requires
 C++17 and CMake 3.10, and uses Eigen 5.0 by default; fixed mangled output of
 wavefront obj exporter.

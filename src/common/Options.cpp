@@ -6774,11 +6774,7 @@ double opt_mesh_avg_quality(OPT_ARGS_NUM)
 
 double opt_mesh_partition_num(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    const int ival = std::max(0, (int)val);
-    CTX::instance()->mesh.numPartitions = ival;
-    CTX::instance()->mesh.metisAlgorithm = (ival <= 8) ? 1 : 2;
-  }
+  if(action & GMSH_SET) CTX::instance()->mesh.numPartitions = (int)val;
   return CTX::instance()->mesh.numPartitions;
 }
 
