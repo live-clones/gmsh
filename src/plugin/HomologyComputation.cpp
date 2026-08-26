@@ -25,16 +25,16 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "ReductionCombine", nullptr, 3.},
   {GMSH_FULLRC, "PostProcessSimplify", nullptr, 1.},
   {GMSH_FULLRC, "ReductionHeuristic", nullptr, 1.},
-  {GMSH_FULLRC, "PeriodicIdentification", nullptr, 0.}};
+  {GMSH_FULLRC, "PeriodicIdentification", nullptr, 0.},
+  {GMSH_FULLRC, "PeriodicSlavePhysicalGroup", nullptr, -1.},
+  {GMSH_FULLRC, "PeriodicMasterPhysicalGroup", nullptr, -1.}};
 
 StringXString HomologyComputationOptions_String[] = {
   {GMSH_FULLRC, "DomainPhysicalGroups", nullptr, ""},
   {GMSH_FULLRC, "SubdomainPhysicalGroups", nullptr, ""},
   {GMSH_FULLRC, "ReductionImmunePhysicalGroups", nullptr, ""},
   {GMSH_FULLRC, "DimensionOfChainsToSave", nullptr, "0, 1, 2, 3"},
-  {GMSH_FULLRC, "Filename", nullptr, ""},
-  {GMSH_FULLRC, "PeriodicSlavePhysicalGroups", nullptr, ""},
-  {GMSH_FULLRC, "PeriodicMasterPhysicalGroups", nullptr, ""}};
+  {GMSH_FULLRC, "Filename", nullptr, ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin()
@@ -113,25 +113,29 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   bool smoothen = (bool)HomologyComputationOptions_Number[7].def;
   int heuristic = (int)HomologyComputationOptions_Number[8].def;
   bool periodic = (bool)HomologyComputationOptions_Number[9].def;
+  int perslave = (int)HomologyComputationOptions_Number[10].def;
+  int permaster = (int)HomologyComputationOptions_Number[11].def;
 
   std::vector<int> domain;
   std::vector<int> subdomain;
   std::vector<int> imdomain;
   std::vector<int> dimsave;
-  std::vector<int> perslave;
-  std::vector<int> permaster;
   if(!parseStringOpt(0, domain)) return nullptr;
   if(!parseStringOpt(1, subdomain)) return nullptr;
   if(!parseStringOpt(2, imdomain)) return nullptr;
   if(!parseStringOpt(3, dimsave)) return nullptr;
-  if(!parseStringOpt(5, perslave)) return nullptr;
-  if(!parseStringOpt(6, permaster)) return nullptr;
+
+  // a negative physical group means no restriction on that side
+  std::vector<int> perslaves;
+  std::vector<int> permasters;
+  if(perslave > 0) perslaves.push_back(perslave);
+  if(permaster > 0) permasters.push_back(permaster);
 
   GModel *m = GModel::current();
 
   Homology *homology = new Homology(m, domain, subdomain, imdomain, true,
                                     combine, omit, smoothen, heuristic);
-  homology->setPeriodic(periodic, perslave, permaster);
+  homology->setPeriodic(periodic, perslaves, permasters);
   homology->setFileName(fileName);
 
   if(hom != 0) homology->findHomologyBasis(dimsave);

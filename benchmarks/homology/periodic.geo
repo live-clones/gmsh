@@ -16,8 +16,8 @@ Plugin(HomologyComputation).CreatePostProcessingViews = 1;
 // from the "Top" surface to the "Bottom" surface are used, so that any other
 // periodicity the mesh may carry is ignored
 Plugin(HomologyComputation).PeriodicIdentification = 1;
-Plugin(HomologyComputation).PeriodicSlavePhysicalGroups = "3000";
-Plugin(HomologyComputation).PeriodicMasterPhysicalGroups = "3001";
+Plugin(HomologyComputation).PeriodicSlavePhysicalGroup = 3000;
+Plugin(HomologyComputation).PeriodicMasterPhysicalGroup = 3001;
 Plugin(HomologyComputation).Run;
 
 Save "periodic_cohomology.msh";
