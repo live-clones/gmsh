@@ -2,15 +2,16 @@ import gmsh
 l = 8.e-2
 gmsh.initialize()
 gmsh.merge('bl3d_5.brep')
-gmsh.option.setNumber('Mesh.MeshSizeFactor',.15);
+gmsh.option.setNumber('Mesh.MeshSizeFactor',.35);
 gmsh.model.mesh.generate(3)
 
 
-gmsh.plugin.setString('BoundaryLayer','IntersectEdges','22,23,24,27')
 gmsh.plugin.setString('BoundaryLayer','Surfaces','7,8,9,10,23,12,13,11')
 gmsh.plugin.setString('BoundaryLayer','Volumes','1')
-gmsh.plugin.setNumber('BoundaryLayer','Thickness',1/160.)
-gmsh.plugin.setNumber('BoundaryLayer','Size',1/1600.)
+gmsh.plugin.setNumber('BoundaryLayer','Thickness',1/6.)
+gmsh.plugin.setNumber('BoundaryLayer','Size',1/160.)
+gmsh.plugin.setNumber('BoundaryLayer','HighOrder',2.)
+gmsh.plugin.setNumber('BoundaryLayer','SmoothingLayers',4)
 
 gmsh.plugin.run('BoundaryLayer')
 

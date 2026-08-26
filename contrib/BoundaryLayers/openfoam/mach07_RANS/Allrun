@@ -1,0 +1,24 @@
+#!/bin/sh
+cd "${0%/*}" || exit 1
+
+if [ -z "$WM_PROJECT_DIR" ]; then
+  echo "OpenFOAM environment is not loaded. Source etc/bashrc first."
+  exit 1
+fi
+
+MESH="${1:-mesh.msh}"
+
+if [ -f "$MESH" ]; then
+  gmshToFoam "$MESH" | tee log.gmshToFoam
+else
+  echo "No mesh file '$MESH' found; assuming constant/polyMesh already exists."
+fi
+
+checkMesh -allTopology -allGeometry | tee log.checkMesh
+
+if command -v rhoSimpleFoam >/dev/null 2>&1; then
+  rhoSimpleFoam | tee log.rhoSimpleFoam
+else
+  echo "rhoSimpleFoam not found. For OpenFOAM Foundation v13 try:"
+  echo "  foamRun -solver compressibleFluid"
+fi

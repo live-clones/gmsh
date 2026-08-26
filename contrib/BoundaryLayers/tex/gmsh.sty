@@ -1,0 +1,68 @@
+\RequirePackage{amsmath,amsfonts,amssymb} % ams math and fonts
+\RequirePackage{graphicx} % for \includegraphics
+\RequirePackage{tikz} % for pictures
+\RequirePackage{hyperref} % links
+\RequirePackage{listings} % colored syntax listings
+\RequirePackage{adjustbox} % for adustable size of listings
+\RequirePackage{changepage} % \adjustwidth for wide slides
+\RequirePackage{xcolor} % custom colors
+\RequirePackage{lmodern} % modern tt fonts, supporting bold for listings
+\RequirePackage{media9} % for videos (requires Flash for Adobe Reader)
+
+\definecolor{myblue}{rgb}{0,0,.7}
+\definecolor{myred}{rgb}{0.85,0,0}
+\definecolor{mypurple}{rgb}{0.5,0,0.5}
+
+\hypersetup{colorlinks,urlcolor=myblue,linkcolor=myblue,filecolor=myblue}
+
+\setbeamercolor{structure}{fg=black}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{\hfill\insertframenumber\kern1em\vskip4pt}
+\setbeamertemplate{headline}{\includegraphics[height=5em]{data_common/uliege.png}%
+\hfill\includegraphics[height=5em]{data_common/uclouvain.png}\kern1em\vspace*{-5em}}
+\setbeamertemplate{frametitle}{\begin{center}\bfseries\insertframetitle%
+\vspace{-1em}\end{center}}
+\setbeamertemplate{itemize items}{\footnotesize$\bullet$}
+\setbeamerfont{title}{series=\bfseries}
+\setbeamerfont{institute}{size=\footnotesize}
+\setbeamerfont{date}{size=\scriptsize}
+
+\lstdefinelanguage{geo}{
+  language=C++,
+  morekeywords={Point, Curve, Surface, Volume, Line, Plane, Circle, Ellipse,
+    Extrude, Translate, Rotate, SetFactory, DefineNumber, Min, Max, Step, Name,
+    Box, Sphere, BooleanIntersection, Delete, Cylinder, BooleanUnion,
+    BooleanDifference},
+  basicstyle=\ttfamily\bfseries,
+  commentstyle=\color{myred},
+  keywordstyle=\color{mypurple},
+  stringstyle=\color{myblue},
+  captionpos=,
+  frame=, %tb for top/bottom lines
+  showstringspaces=false,
+  breaklines=false
+}
+
+\lstdefinelanguage{py}{
+  language=Python,
+  basicstyle=\ttfamily\bfseries,
+  commentstyle=\color{myred},
+  keywordstyle=\color{mypurple},
+  stringstyle=\color{myblue},
+  captionpos=,
+  frame=, %tb for top/bottom lines
+  showstringspaces=false,
+  breaklines=false
+}
+
+\lstdefinelanguage{cpp}{
+  language=C++,
+  basicstyle=\ttfamily\bfseries,
+  commentstyle=\color{myred},
+  keywordstyle=\color{mypurple},
+  stringstyle=\color{myblue},
+  captionpos=,
+  frame=, %tb for top/bottom lines
+  showstringspaces=false,
+  breaklines=false
+}

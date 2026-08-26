@@ -1,7 +1,7 @@
 import gmsh
 l = 8.e-2
 gmsh.initialize()
-gmsh.merge('dlr_f6.geo')
+gmsh.merge('dlr_f6_coarse.geo')
 #gmsh.option.setNumber('Mesh.MeshSizeFactor',.05);
 gmsh.model.mesh.generate(3)
 
@@ -11,11 +11,9 @@ gmsh.plugin.setString('BoundaryLayer','Surfaces','88, 74, 104, 105, 120, 119, 10
  18, 22, 28, 24, 29, 19, 20')
 gmsh.plugin.setString('BoundaryLayer','Volumes','1')
 gmsh.plugin.setNumber('BoundaryLayer','Thickness', 10.)
-gmsh.plugin.setNumber('BoundaryLayer','Size',.1)
-gmsh.plugin.setNumber('BoundaryLayer','SmoothingLayers',8)
-#gmsh.plugin.setNumber("BoundaryLayer", "HighOrder", 2)
-gmsh.plugin.setNumber("BoundaryLayer", "SurfaceUntangler", 3)
-
+gmsh.plugin.setNumber('BoundaryLayer','Size',10)
+gmsh.plugin.setNumber('BoundaryLayer','SmoothingLayers',4)
+gmsh.plugin.setNumber("BoundaryLayer", "HighOrder", 2)
 
 gmsh.plugin.run('BoundaryLayer')
 
