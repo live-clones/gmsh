@@ -519,6 +519,222 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
 #endif
 }
 
+void classifyFacesFromDiscrete(GModel *gm)
+{
+#if defined(HAVE_MESH)
+  Msg::StatusBar(true, "Classifying surfaces from discrete...");
+  double t1 = Cpu(), w1 = TimeOfDay();
+
+  size_t MAX0 = gm->getMaxElementaryNumber(0);
+  size_t MAX1 = gm->getMaxElementaryNumber(1);
+
+  // Remove curves from the model
+  std::vector<GEdge *> edgesToRemove;
+  for(auto it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+    edgesToRemove.push_back(*it);
+  }
+  for(auto ge : edgesToRemove) {
+    gm->remove(ge);
+  }
+ 
+  // Remove points from the model
+  std::vector<GVertex *> pointsToRemove;
+  for(auto it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
+    pointsToRemove.push_back(*it);
+  }
+  for(auto gv : pointsToRemove) {
+    gm->remove(gv);
+  }
+
+  // Build a map from edges to triangle face pairs
+  std::map<MEdge, std::vector<std::pair<MTriangle *, GFace *>>, MEdgeLessThan> edgeToFace;
+  for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    GFace *gf = *it;
+    for(auto t : gf->triangles) {
+      for(int i = 0; i < 3; i++) {
+        edgeToFace[t->getEdge(i)].emplace_back(t, gf);
+      }
+    }
+  }
+
+  std::vector<std::pair<GEdge *, std::vector<GFace *>>> newEdges;
+
+  for(auto &ef : edgeToFace) {
+    auto &adjList = ef.second;
+
+    // Interior edge: all adjacent triangles belong to the same face
+    GFace *firstFace = adjList[0].second;
+    bool allSameFace = true;
+    for (auto &face : adjList) {
+      if (face.second != firstFace) {
+        allSameFace = false;
+        break;
+      }
+    }
+
+    // Open boundary (only one adjacent triangle) or inter-face edge
+    // create boundary MLine
+    if (adjList.size() == 1 || !allSameFace) {
+      std::vector<GFace *> faces;
+      for (auto &face : adjList) {
+        faces.push_back(face.second);
+      }
+
+      GEdge *ge = getModelEdge(gm, faces, newEdges, MAX1);
+      if (ge) {
+        auto line = new MLine(ef.first.getVertex(0), ef.first.getVertex(1));
+        ge->lines.push_back(line);
+      }
+    }
+  }
+
+  Msg::Info("Found %d model surfaces", gm->getNumFaces());
+  Msg::Info("Found %d model curves", newEdges.size());
+
+  // check if an edge is embedded in a face
+  std::map<GEdge *, GFace *> embedded;
+  for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
+    GEdge *ge = ite->first;
+    for(size_t i = 0; i < ite->second.size(); ++i) {
+      for(size_t j = i + 1; j < ite->second.size(); ++j) {
+        if(ite->second[i] == ite->second[j]) {
+          embedded.insert({ge, ite->second[i]});
+        }
+      }
+    }
+  }
+
+  std::map<discreteFace *, std::vector<int>, GEntityPtrLessThan>
+    newFaceTopology;
+  std::map<MVertex *, GVertex *> modelVertices;
+
+  std::map<int, int> embedded_new;
+  for (auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
+    std::vector<MEdge> allEdges;
+    
+    GFace *emb = embedded.find(ite->first) != embedded.end() ?
+                   embedded[ite->first] :
+                   nullptr;
+
+    for (std::size_t i = 0; i < ite->first->lines.size(); i++) {
+      allEdges.emplace_back(ite->first->lines[i]->getVertex(0),
+                            ite->first->lines[i]->getVertex(1));
+      delete ite->first->lines[i];                            
+    }
+    ite->first->lines.clear();
+    std::vector<std::vector<MVertex *>> vs;
+
+    SortEdgeConsecutive(allEdges, vs);
+
+    for (size_t i = 0; i < vs.size(); i++) {
+      MVertex *vB = vs[i][0];
+      MVertex *vE = vs[i][vs[i].size() - 1];
+
+      auto itMV = modelVertices.find(vB);
+      if (itMV == modelVertices.end()) {
+        GVertex *newGv =
+          new discreteVertex(gm, (MAX0++) + 1, vB->x(), vB->y(), vB->z());
+        newGv->mesh_vertices.push_back(vB);
+        vB->setEntity(newGv);
+        newGv->points.push_back(new MPoint(vB));
+        gm->add(newGv);
+        modelVertices[vB] = newGv;
+      }
+      itMV = modelVertices.find(vE);
+      if(itMV == modelVertices.end()) {
+        GVertex *newGv =
+          new discreteVertex(gm, (MAX0++) + 1, vE->x(), vE->y(), vE->z());
+        newGv->mesh_vertices.push_back(vE);
+        newGv->points.push_back(new MPoint(vE));
+        vE->setEntity(newGv);
+        gm->add(newGv);
+        modelVertices[vE] = newGv;
+      }
+      GEdge *newGe = new discreteEdge(gm, (MAX1++) + 1, modelVertices[vB],
+                                      modelVertices[vE]);
+
+      if(emb) embedded_new.insert({newGe->tag(), emb->tag()});
+      
+      for(size_t j = 1; j < vs[i].size(); j++) {
+        MVertex *v1 = vs[i][j - 1];
+        MVertex *v2 = vs[i][j];
+        newGe->lines.push_back(new MLine(v1, v2));
+      }
+
+      for(size_t j = 0; j < newGe->lines.size(); j++) {
+        MLine *l = newGe->lines[j];
+        if(l->getVertex(0)->onWhat()) {
+          newGe->mesh_vertices.push_back(l->getVertex(0));
+          l->getVertex(0)->setEntity(newGe);
+        }
+      }
+
+      gm->add(newGe);
+      for(size_t K = 0; K < ite->second.size(); K++) {
+        discreteFace *gf1 = dynamic_cast<discreteFace *>(ite->second[K]);
+        if(gf1) newFaceTopology[gf1].push_back(newGe->tag());
+      }
+    }
+  }
+
+  for(auto itFT = newFaceTopology.begin(); itFT != newFaceTopology.end();
+      ++itFT) {
+    std::vector<int> bndEdges, embEdges;
+    for(auto e : itFT->second) {
+      if(embedded_new.find(e) != embedded_new.end() &&
+         embedded_new[e] == itFT->first->tag())
+        embEdges.push_back(e);
+      else
+        bndEdges.push_back(e);
+    }
+    itFT->first->setBoundEdges(bndEdges);
+    for(auto e : embEdges) itFT->first->addEmbeddedEdge(gm->getEdgeByTag(e));
+  }
+
+  for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
+    GEdge *ge = ite->first;
+    gm->remove(ge);
+    // delete ge;
+  }
+
+  // delete empty mesh faces and reclasssify
+  std::set<GFace *, GEntityPtrLessThan> fac = gm->getFaces();
+  for(auto fit = fac.begin(); fit != fac.end(); ++fit) {
+    std::set<MVertex *, MVertexPtrLessThan> verts;
+    (*fit)->mesh_vertices.clear();
+    for(std::size_t i = 0; i < (*fit)->triangles.size(); i++) {
+      for(int j = 0; j < 3; j++) {
+        if(!(*fit)->triangles[i]->getVertex(j)->onWhat()) {
+          (*fit)->triangles[i]->getVertex(j)->setEntity(*fit);
+          verts.insert((*fit)->triangles[i]->getVertex(j));
+        }
+      }
+    }
+    if((*fit)->triangles.size())
+      (*fit)->mesh_vertices.insert((*fit)->mesh_vertices.begin(), verts.begin(),
+                                   verts.end());
+    else
+      gm->remove(*fit);
+  }
+
+  gm->pruneMeshVertexAssociations();
+  gm->destroyMeshCaches();
+  gm->deleteVertexArrays();
+
+  // we have created and deleted discrete entities; call this to reset the
+  // handles in the old GEO database (without this, empty discrete entities will
+  // show up at the next sync between the GEO database and the GModel).
+  gm->exportDiscreteGEOInternals();
+
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::StatusBar(true,
+                 "Done classifying surfaces from discrete (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
+#else
+  Msg::Error("Surface classification requires the mesh module");
+#endif
+}
+
 int computeDiscreteCurvatures(GModel *gm)
 {
   std::map<MVertex *, std::pair<SVector3, SVector3>> &C = gm->getCurvatures();
