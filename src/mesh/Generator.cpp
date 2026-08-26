@@ -739,6 +739,28 @@ static void Mesh2D(GModel *m)
       OptimizeMesh(m, "OptimizeQuads");
     else if(CTX::instance()->mesh.quadqsCleanupMethod == 1)
       OptimizeMesh(m, "OptimizeQuadsFast");
+
+    // Recombination deliberately keeps low-quality quads in the PACK path so
+    // that local Winslow smoothing and cavity optimization can repair them.
+    // Only split the remaining concave or poor quads after that optimization.
+    const double minQuality =
+      CTX::instance()->mesh.recombineMinimumQuality;
+    if(minQuality > 0.) {
+      std::size_t quadsBefore = 0, trianglesBefore = 0;
+      for(GFace *gf : m->getFaces()) {
+        quadsBefore += gf->quadrangles.size();
+        trianglesBefore += gf->triangles.size();
+        quadsToTriangles(gf, minQuality);
+      }
+      std::size_t quadsAfter = 0, trianglesAfter = 0;
+      for(GFace *gf : m->getFaces()) {
+        quadsAfter += gf->quadrangles.size();
+        trianglesAfter += gf->triangles.size();
+      }
+      Msg::Info("PACK post-optimization quality filter (%g): split %zu "
+                "quads into %zu triangles", minQuality,
+                quadsBefore - quadsAfter, trianglesAfter - trianglesBefore);
+    }
     if(debug) m->writeMSH("opti4.msh");
 
     for(GFace *gf : m->getFaces()) {
@@ -1032,8 +1054,16 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
 #if defined(HAVE_QUADOPTIMIZER)
     QuadOptimizer::SmallCavityOptimizerOptions options;
     options.fastInteractiveCleanUp = how == "OptimizeQuadsFast";
-    if(options.fastInteractiveCleanUp)
+    options.pillowNeighborLayers = CTX::instance()->mesh.quadqsPillowLayers;
+    // Finish both cleanup variants with mesh-wide Winslow sweeps. This is
+    // deliberately controlled by Mesh.Smoothing: zero keeps the optimized
+    // connectivity untouched, while a positive value performs that many
+    // geometry-only passes after the local topology operations.
+    options.finalSmoothingPasses =
+      std::max(0, CTX::instance()->mesh.nbSmoothing);
+    if(options.fastInteractiveCleanUp) {
       options.postTopologyNeighborSmoothingPasses = 1;
+    }
     options.verbose = Msg::GetVerbosity() > 4 ? 1 : 0;
     const QuadOptimizer::AllFacesOptimizerResult result =
       QuadOptimizer::optimizeSmallQuadCavitiesAllFaces(options);
@@ -1041,11 +1071,13 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
       Msg::Error("%s failed", how.c_str());
     }
     else {
-      Msg::Info("%s: %zu faces, %zu topology changes, bad "
+      Msg::Info("%s: %zu faces, %zu topology changes, %zu pillows "
+                "(%zu quads), bad "
                 "elements %zu -> %zu, absolute violations %zu -> %zu, "
                 "preferred violations %zu -> %zu",
                 how.c_str(),
                 result.facesWithQuadrangles, result.acceptedCavities,
+                result.acceptedPillows, result.insertedPillowQuadrangles,
                 result.initialObjective.absoluteBadElementCount,
                 result.finalObjective.absoluteBadElementCount,
                 result.initialObjective.absoluteViolationCount,

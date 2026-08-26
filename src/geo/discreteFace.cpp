@@ -4,7 +4,10 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <array>
+#include <map>
 #include <queue>
+#include <unordered_set>
 #include "GmshMessage.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
@@ -1031,6 +1034,7 @@ bool discreteFace::writeParametrization(FILE *fp, bool binary)
 
 bool discreteFace::readParametrization(FILE *fp, bool binary)
 {
+  _coincidentVertexParameters.clear();
   stl_vertices_xyz.clear();
   stl_vertices_uv.clear();
   stl_curvatures.clear();
@@ -1084,6 +1088,85 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
 
   _computeSTLNormals();
   _createGeometryFromSTL();
+  _buildCoincidentVertexParameters();
+  return true;
+}
+
+void discreteFace::_buildCoincidentVertexParameters()
+{
+  _coincidentVertexParameters.clear();
+  const std::size_t n = std::min(triangles.size(), stl_triangles.size() / 3);
+  if(!n || stl_vertices_xyz.size() != stl_vertices_uv.size()) return;
+
+  std::unordered_map<std::size_t, SPoint2> candidate;
+  std::unordered_map<std::size_t, std::array<double, 3>> coordinates;
+  std::unordered_set<std::size_t> inconsistent;
+  for(std::size_t triangle = 0; triangle < n; ++triangle) {
+    for(int corner = 0; corner < 3; ++corner) {
+      MVertex *vertex = triangles[triangle]->getVertex(corner);
+      if(!vertex->onWhat() || vertex->onWhat()->dim() >= 2) continue;
+      const int local = stl_triangles[3 * triangle + corner];
+      if(local < 0 || static_cast<std::size_t>(local) >= stl_vertices_xyz.size())
+        continue;
+      const SPoint3 &point = stl_vertices_xyz[local];
+      const double dx = vertex->x() - point.x();
+      const double dy = vertex->y() - point.y();
+      const double dz = vertex->z() - point.z();
+      const double scale = 1.0 + vertex->x() * vertex->x() +
+                           vertex->y() * vertex->y() +
+                           vertex->z() * vertex->z();
+      // The element and parametrization triangle orders normally coincide.
+      // If they do not, leave the generic closest-point path untouched.
+      if(dx * dx + dy * dy + dz * dz > 1.e-24 * scale) continue;
+
+      const std::size_t tag = vertex->getNum();
+      if(inconsistent.count(tag)) continue;
+      const SPoint2 uv = stl_vertices_uv[local];
+      const auto inserted = candidate.emplace(tag, uv);
+      if(!inserted.second) {
+        const double du = inserted.first->second.x() - uv.x();
+        const double dv = inserted.first->second.y() - uv.y();
+        if(du * du + dv * dv > 1.e-18) {
+          candidate.erase(inserted.first);
+          inconsistent.insert(tag);
+        }
+      }
+      coordinates[tag] = {{vertex->x(), vertex->y(), vertex->z()}};
+    }
+  }
+
+  std::map<std::array<double, 3>, std::vector<std::size_t>> tagsByPoint;
+  for(const auto &entry : coordinates)
+    if(candidate.count(entry.first))
+      tagsByPoint[entry.second].push_back(entry.first);
+  for(const auto &entry : tagsByPoint) {
+    if(entry.second.size() < 2) continue;
+    bool distinctUv = false;
+    for(std::size_t i = 0; i < entry.second.size() && !distinctUv; ++i) {
+      const SPoint2 &first = candidate.at(entry.second[i]);
+      for(std::size_t j = i + 1; j < entry.second.size(); ++j) {
+        const SPoint2 &second = candidate.at(entry.second[j]);
+        const double du = first.x() - second.x();
+        const double dv = first.y() - second.y();
+        if(du * du + dv * dv > 1.e-18) {
+          distinctUv = true;
+          break;
+        }
+      }
+    }
+    if(distinctUv)
+      for(const std::size_t tag : entry.second)
+        _coincidentVertexParameters.emplace(tag, candidate.at(tag));
+  }
+}
+
+bool discreteFace::parFromCoincidentMeshVertex(const MVertex *vertex,
+                                               SPoint2 &param) const
+{
+  if(!vertex) return false;
+  const auto found = _coincidentVertexParameters.find(vertex->getNum());
+  if(found == _coincidentVertexParameters.end()) return false;
+  param = found->second;
   return true;
 }
 

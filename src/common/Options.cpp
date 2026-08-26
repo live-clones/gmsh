@@ -6925,6 +6925,25 @@ double opt_mesh_quadqs_cleanup_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.quadqsCleanupMethod;
 }
 
+double opt_mesh_quadqs_pillow_layers(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsPillowLayers = (int)val;
+  return CTX::instance()->mesh.quadqsPillowLayers;
+}
+
+double opt_mesh_quadqs_packing_3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsPacking3D = (int)val;
+  return CTX::instance()->mesh.quadqsPacking3D;
+}
+
+double opt_mesh_quadqs_packing_3d_force_all_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.quadqsPacking3DForceAllPoints = (int)val;
+  return CTX::instance()->mesh.quadqsPacking3DForceAllPoints;
+}
+
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

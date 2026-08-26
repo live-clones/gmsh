@@ -36,6 +36,10 @@ namespace QuadOptimizer {
     // accepted edit.
     bool fastInteractiveCleanUp = false;
     bool topologyOnlyIfCavityHasSpecificationFailure = true;
+    // Optional post-processing: insert one infinitesimal quad ring around
+    // every hole, then open it with the local Winslow solver. Zero disables
+    // the operator; a positive value selects the number of optimized rows.
+    int pillowNeighborLayers = 0;
     int smoothingPasses = 2;
     int finalSmoothingPasses = 2;
     int postTopologyNeighborSmoothingPasses = 2;
@@ -94,6 +98,9 @@ namespace QuadOptimizer {
     std::size_t cleanUpBoundaryAccepted = 0;
     std::size_t cleanUpShapeAccepted = 0;
     std::size_t cleanUpSizeAccepted = 0;
+    std::size_t pillowHolesVisited = 0;
+    std::size_t pillowHolesAccepted = 0;
+    std::size_t pillowQuadranglesInserted = 0;
     double cleanUpCriticalSeconds = 0.;
     double cleanUpConnectivitySeconds = 0.;
     double cleanUpBoundarySeconds = 0.;
@@ -128,6 +135,8 @@ namespace QuadOptimizer {
     std::size_t facesVisited = 0;
     std::size_t facesWithQuadrangles = 0;
     std::size_t acceptedCavities = 0;
+    std::size_t acceptedPillows = 0;
+    std::size_t insertedPillowQuadrangles = 0;
     SpecificationObjective initialObjective;
     SpecificationObjective finalObjective;
     std::vector<FaceOptimizerResult> faces;

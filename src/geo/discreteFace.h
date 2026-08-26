@@ -7,6 +7,7 @@
 #define DISCRETE_FACE_H
 
 #include <algorithm>
+#include <unordered_map>
 #include "GModel.h"
 #include "GFace.h"
 #include "MTriangle.h"
@@ -36,7 +37,12 @@ private:
     bool checkPlanar();
   };
   param _param;
+  // Face-local UV values are only needed by node tag when distinct boundary
+  // nodes are exactly coincident in 3D. In that case parFromPoint() is
+  // necessarily ambiguous even though the discrete topology is not.
+  std::unordered_map<std::size_t, SPoint2> _coincidentVertexParameters;
   void _createGeometryFromSTL();
+  void _buildCoincidentVertexParameters();
   void _computeSTLNormals();
   void _debugParametrization(bool uv);
 
@@ -48,6 +54,8 @@ public:
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true,
                        bool convTestXYZ = false) const;
+  bool parFromCoincidentMeshVertex(const MVertex *vertex,
+                                   SPoint2 &param) const;
   Range<double> parBounds(int i) const;
   bool containsParam(const SPoint2 &pt);
   SBoundingBox3d bounds(bool fast = false);

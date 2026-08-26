@@ -53,4 +53,17 @@ namespace QuadOptimizer {
     const std::vector<std::array<std::size_t, 4> > &quadrangles,
     const SmallCavityWinslowOptions &options = SmallCavityWinslowOptions());
 
+  // Optimize an arbitrary local mixed triangle/quad patch. ``fixed`` marks
+  // vertices that must remain unchanged; every other point is a Winslow
+  // unknown. The explicit orientation is the sign (+1 or -1) of coherently
+  // oriented surface elements in parameter space. This is used by annular
+  // patches, for which the fixed vertices do not form one disk boundary.
+  GMSH_API SmallCavityWinslowResult optimizeLocalSurfacePatchWinslow(
+    std::vector<std::array<double, 2> > &parametricPoints,
+    const std::vector<bool> &fixed,
+    const std::vector<std::array<std::size_t, 3> > &triangles,
+    const std::vector<std::array<std::size_t, 4> > &quadrangles,
+    double orientationSign,
+    const SmallCavityWinslowOptions &options = SmallCavityWinslowOptions());
+
 } // namespace QuadOptimizer

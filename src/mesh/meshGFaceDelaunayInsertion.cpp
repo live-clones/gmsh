@@ -560,6 +560,212 @@ void connectTriangles(std::set<MTri3 *, compareTri3Ptr> &l)
   connectTris(l.begin(), l.end(), conn);
 }
 
+static MVertex *oppositeVertex(MTriangle *triangle, MVertex *a, MVertex *b)
+{
+  for(int i = 0; i < 3; ++i) {
+    MVertex *v = triangle->getVertex(i);
+    if(v != a && v != b) return v;
+  }
+  return nullptr;
+}
+
+static double orientationUV(MVertex *a, MVertex *b, MVertex *c,
+                            bidimMeshData &data)
+{
+  const int ia = data.getIndex(a);
+  const int ib = data.getIndex(b);
+  const int ic = data.getIndex(c);
+  double pa[2] = {data.Us[ia], data.Vs[ia]};
+  double pb[2] = {data.Us[ib], data.Vs[ib]};
+  double pc[2] = {data.Us[ic], data.Vs[ic]};
+  return robustPredicates::orient2d(pa, pb, pc);
+}
+
+static double intrinsicAngle(double adjacent0, double adjacent1,
+                             double opposite)
+{
+  const double denominator = 2. * adjacent0 * adjacent1;
+  if(denominator <= std::numeric_limits<double>::min()) return 0.;
+  double cosine = (adjacent0 * adjacent0 + adjacent1 * adjacent1 -
+                   opposite * opposite) /
+                  denominator;
+  cosine = std::max(-1., std::min(1., cosine));
+  return std::acos(cosine);
+}
+
+static double unfoldedDiagonal(double ab, double ac, double bc, double ad,
+                               double bd)
+{
+  if(ab <= std::numeric_limits<double>::min()) return -1.;
+  const double xc = (ac * ac + ab * ab - bc * bc) / (2. * ab);
+  const double xd = (ad * ad + ab * ab - bd * bd) / (2. * ab);
+  const double yc2 = ac * ac - xc * xc;
+  const double yd2 = ad * ad - xd * xd;
+  const double scale = std::max({ab, ac, bc, ad, bd, 1.});
+  const double tolerance = 1.e-12 * scale * scale;
+  if(yc2 < -tolerance || yd2 < -tolerance) return -1.;
+  const double yc = std::sqrt(std::max(0., yc2));
+  const double yd = std::sqrt(std::max(0., yd2));
+  return std::hypot(xc - xd, yc + yd);
+}
+
+static void orientTriangleUV(MTriangle *triangle, MVertex *a, MVertex *b,
+                             MVertex *c, double referenceOrientation,
+                             bidimMeshData &data)
+{
+  triangle->setVertex(0, a);
+  triangle->setVertex(1, b);
+  triangle->setVertex(2, c);
+  if(referenceOrientation * orientationUV(a, b, c, data) < 0.) {
+    triangle->setVertex(1, c);
+    triangle->setVertex(2, b);
+  }
+}
+
+// Convert the UV Delaunay connectivity into an intrinsic Delaunay
+// triangulation of the piecewise-flat surface. Edge lengths are kept in the
+// intrinsic metric: after a flip, the new diagonal is measured in the two
+// incident triangles unfolded in the plane, not as a chord in R^3.
+//
+// Gmsh still stores straight triangles, so a flip is accepted only when its
+// new diagonal is also valid in the injective surface parametrization. This
+// preserves boundaries, holes and embedded curves for the downstream Blossom
+// graph while removing connectivity caused solely by UV distortion.
+static std::size_t intrinsicDelaunayizePackedSurface(GFace *gf,
+                                                      bidimMeshData &data)
+{
+  using TriangleAdjacency =
+    std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>;
+  std::map<MEdge, double, MEdgeLessThan> lengths;
+  for(MTriangle *triangle : gf->triangles) {
+    for(int i = 0; i < 3; ++i) {
+      const MEdge edge = triangle->getEdge(i);
+      if(lengths.find(edge) == lengths.end()) lengths[edge] = edge.length();
+    }
+  }
+
+  double referenceOrientation = 0.;
+  for(MTriangle *triangle : gf->triangles) {
+    referenceOrientation =
+      orientationUV(triangle->getVertex(0), triangle->getVertex(1),
+                    triangle->getVertex(2), data);
+    if(referenceOrientation != 0.) break;
+  }
+  if(referenceOrientation == 0.) {
+    Msg::Warning("- Face %d: cannot build intrinsic triangulation from a "
+                 "collapsed UV map", gf->tag());
+    return 0;
+  }
+
+  const double pi = std::acos(-1.);
+  const std::size_t maxPasses = 100;
+  const std::size_t maxFlips =
+    std::max<std::size_t>(1000, 100 * gf->triangles.size());
+  std::size_t totalFlips = 0;
+
+  for(std::size_t pass = 0; pass < maxPasses && totalFlips < maxFlips;
+      ++pass) {
+    TriangleAdjacency adjacency;
+    for(MTriangle *triangle : gf->triangles) {
+      for(int i = 0; i < 3; ++i)
+        adjacency[triangle->getEdge(i)].push_back(triangle);
+    }
+
+    std::set<MTriangle *> touched;
+    std::set<MEdge, MEdgeLessThan> newEdges;
+    std::size_t passFlips = 0;
+    for(const auto &entry : adjacency) {
+      const MEdge &abEdge = entry.first;
+      const std::vector<MTriangle *> &incident = entry.second;
+      if(incident.size() != 2 ||
+         data.internalEdges.find(abEdge) != data.internalEdges.end() ||
+         touched.find(incident[0]) != touched.end() ||
+         touched.find(incident[1]) != touched.end())
+        continue;
+
+      MVertex *a = abEdge.getMinVertex();
+      MVertex *b = abEdge.getMaxVertex();
+      MVertex *c = oppositeVertex(incident[0], a, b);
+      MVertex *d = oppositeVertex(incident[1], a, b);
+      if(!c || !d || c == d) continue;
+
+      const MEdge cdEdge(c, d);
+      if(adjacency.find(cdEdge) != adjacency.end() ||
+         newEdges.find(cdEdge) != newEdges.end())
+        continue;
+
+      // The straight representation used downstream must remain a valid
+      // triangulation of the MVC/progressive chart.
+      const double ab_c = orientationUV(a, b, c, data);
+      const double ab_d = orientationUV(a, b, d, data);
+      const double cd_a = orientationUV(c, d, a, data);
+      const double cd_b = orientationUV(c, d, b, data);
+      if(!((ab_c > 0. && ab_d < 0.) || (ab_c < 0. && ab_d > 0.)) ||
+         !((cd_a > 0. && cd_b < 0.) || (cd_a < 0. && cd_b > 0.)))
+        continue;
+
+      const auto edgeLength = [&lengths](MVertex *v0, MVertex *v1) {
+        const MEdge edge(v0, v1);
+        const auto it = lengths.find(edge);
+        return it == lengths.end() ? edge.length() : it->second;
+      };
+      const double ab = edgeLength(a, b);
+      const double ac = edgeLength(a, c);
+      const double bc = edgeLength(b, c);
+      const double ad = edgeLength(a, d);
+      const double bd = edgeLength(b, d);
+      const double oppositeAngles =
+        intrinsicAngle(ac, bc, ab) + intrinsicAngle(ad, bd, ab);
+      if(oppositeAngles <= pi + 1.e-10) continue;
+
+      const double cd = unfoldedDiagonal(ab, ac, bc, ad, bd);
+      if(!(cd > 0.) || !std::isfinite(cd)) continue;
+
+      orientTriangleUV(incident[0], c, d, a, referenceOrientation, data);
+      orientTriangleUV(incident[1], d, c, b, referenceOrientation, data);
+      lengths.erase(abEdge);
+      lengths[cdEdge] = cd;
+      touched.insert(incident[0]);
+      touched.insert(incident[1]);
+      newEdges.insert(cdEdge);
+      ++passFlips;
+      ++totalFlips;
+      if(totalFlips >= maxFlips) break;
+    }
+    if(!passFlips) break;
+  }
+
+  if(totalFlips >= maxFlips)
+    Msg::Warning("- Face %d: intrinsic Delaunay flip budget reached (%zu)",
+                 gf->tag(), totalFlips);
+  Msg::Info("- Face %d: intrinsic Delaunay triangulation, %zu edge flips",
+            gf->tag(), totalFlips);
+  return totalFlips;
+}
+
+static void printTrianglesXYZ(const char *name,
+                              const std::vector<MTriangle *> &triangles)
+{
+  FILE *file = Fopen(name, "w");
+  if(!file) {
+    Msg::Error("Could not open file '%s'", name);
+    return;
+  }
+  fprintf(file, "View\"test\"{\n");
+  for(MTriangle *triangle : triangles) {
+    fprintf(file, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu};\n",
+            triangle->getVertex(0)->x(), triangle->getVertex(0)->y(),
+            triangle->getVertex(0)->z(), triangle->getVertex(1)->x(),
+            triangle->getVertex(1)->y(), triangle->getVertex(1)->z(),
+            triangle->getVertex(2)->x(), triangle->getVertex(2)->y(),
+            triangle->getVertex(2)->z(), triangle->getVertex(0)->getNum(),
+            triangle->getVertex(1)->getNum(),
+            triangle->getVertex(2)->getNum());
+  }
+  fprintf(file, "};\n");
+  fclose(file);
+}
+
 static int inCircumCircleXY(MTriangle *t, MVertex *v)
 {
   MVertex *v1 = t->getVertex(0);
@@ -692,7 +898,7 @@ static int insertVertexB(std::list<edgeXface> &shell,
                          MTri3 **oneNewTriangle,
                          bool verifyStarShapeness = true)
 {
-  if(cavity.size() == 1) return -1;
+  if(cavity.size() == 1 && !force) return -1;
 
   if(shell.size() != cavity.size() + 2) return -2;
 
@@ -927,7 +1133,7 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
              std::set<MTri3 *, compareTri3Ptr> &AllTris,
              std::set<MTri3 *, compareTri3Ptr> *ActiveTris = nullptr,
              MTri3 *worst = nullptr, MTri3 **oneNewTriangle = nullptr,
-             bool testStarShapeness = false)
+             bool testStarShapeness = false, bool forceInsertion = false)
 {
   if(worst) {
     it = AllTris.find(worst);
@@ -962,6 +1168,29 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
     }
   }
 
+  if(!ptin && forceInsertion) {
+    // A cavity grown from the heap's current worst triangle need not contain
+    // the candidate, even though the candidate is inside another live
+    // triangle. Restore that speculative cavity and perform a global,
+    // tolerance-controlled location before declaring the point lost.
+    for(MTri3 *triangle : cavity) triangle->setDeleted(false);
+    cavity.clear();
+    shell.clear();
+    const double tolerances[2] = {1.e-8, 1.e-6};
+    for(double tolerance : tolerances) {
+      for(MTri3 *triangle : AllTris) {
+        if(!triangle->isDeleted() &&
+           invMapUV(triangle->tri(), center, data, uv, tolerance)) {
+          ptin = triangle;
+          break;
+        }
+      }
+      if(ptin) break;
+    }
+    if(ptin)
+      recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, data);
+  }
+
   if(ptin) {
     // we use here local coordinates as real coordinates x,y and z will be
     // computed hereafter
@@ -984,8 +1213,9 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
 
     int result = -9;
     if(p.succeeded()) {
-      result = insertVertexB(shell, cavity, false, gf, v, center, ptin, AllTris,
-                             ActiveTris, data, metric, oneNewTriangle,
+      result = insertVertexB(shell, cavity, forceInsertion, gf, v, center,
+                             ptin, AllTris, ActiveTris, data, metric,
+                             oneNewTriangle,
                              testStarShapeness);
     }
     if(result != 1) {
@@ -1674,6 +1904,10 @@ void bowyerWatsonParallelograms(
              packed.size());
 
   MTri3 *oneNewTriangle = nullptr;
+  const bool forceAllPackedPoints =
+    CTX::instance()->mesh.quadqsPacking3D &&
+    CTX::instance()->mesh.quadqsPacking3DForceAllPoints;
+  std::size_t rejectedPackedPoints = 0;
   for(std::size_t i = 0; i < packed.size();) {
     MTri3 *worst = *AllTris.begin();
     if(worst->isDeleted()) {
@@ -1691,8 +1925,12 @@ void bowyerWatsonParallelograms(
 
       bool success =
         insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA, AllTris,
-                     nullptr, oneNewTriangle, &oneNewTriangle);
-      if(!success) oneNewTriangle = nullptr;
+                     nullptr, oneNewTriangle, &oneNewTriangle, false,
+                     forceAllPackedPoints);
+      if(!success) {
+        oneNewTriangle = nullptr;
+        ++rejectedPackedPoints;
+      }
       i++;
     }
 
@@ -1709,13 +1947,32 @@ void bowyerWatsonParallelograms(
     }
   }
 
-#if 0
-   char name[256];
-   sprintf(name,"RawTriangulation%d.pos",gf->tag());
-   _printTris (name, AllTris.begin(), AllTris.end(),nullptr);
-#endif
+  if(forceAllPackedPoints && rejectedPackedPoints) {
+    Msg::Error("3D packing lost %zu of %zu points during triangulation of "
+               "face %d", rejectedPackedPoints, packed.size(), gf->tag());
+  }
+
+  if(Msg::GetVerbosity() == 99) {
+    char name[256];
+    sprintf(name, "ParametricTriangulation3D%d.pos", gf->tag());
+    // Keep the UV-Delaunay connectivity for direct comparison with the
+    // intrinsic result produced below.
+    _printTris(name, AllTris.begin(), AllTris.end(), nullptr);
+  }
 
   transferDataStructure(gf, AllTris, DATA);
+
+  if(CTX::instance()->mesh.quadqsPacking3D)
+    intrinsicDelaunayizePackedSurface(gf, DATA);
+
+  if(Msg::GetVerbosity() == 99) {
+    char name[256];
+    sprintf(name, "RawTriangulation3D%d.pos", gf->tag());
+    // This is the actual 3D triangulation sent to Blossom, after intrinsic
+    // Delaunay flips and before any recombination or quad cleanup.
+    printTrianglesXYZ(name, gf->triangles);
+  }
+
   backgroundMesh::unset();
 
   Msg::Debug(

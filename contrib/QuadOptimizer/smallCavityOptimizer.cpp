@@ -114,6 +114,11 @@ namespace QuadOptimizer {
       ValenceObjective valence;
     };
 
+    struct BoundaryLoop {
+      std::vector<MVertex *> vertices;
+      double perimeter = 0.;
+    };
+
     std::vector<MElement *> surfaceElements(GFace *face)
     {
       std::vector<MElement *> elements;
@@ -1354,6 +1359,85 @@ namespace QuadOptimizer {
                        std::pow(a[2] - b[2], 2));
     }
 
+    bool meanPlaneChart(const std::vector<Point> &xyz,
+                        const Pattern &quadrangles, Point &origin,
+                        Point &firstAxis, Point &secondAxis,
+                        std::vector<UV> &planePoints)
+    {
+      if(xyz.size() < 3 || quadrangles.empty()) return false;
+      origin = {0., 0., 0.};
+      for(const Point &point : xyz)
+        for(std::size_t coordinate = 0; coordinate < 3; ++coordinate)
+          origin[coordinate] += point[coordinate];
+      for(double &coordinate : origin)
+        coordinate /= static_cast<double>(xyz.size());
+
+      // Area-weighted Newell normal of all local quadrangles. Computing it
+      // from the physical MAT points keeps the Winslow metric independent of
+      // the (possibly very distorted) MVC chart.
+      Point normal = {0., 0., 0.};
+      for(const auto &quadrangle : quadrangles)
+        for(std::size_t i = 0; i < quadrangle.size(); ++i) {
+          if(quadrangle[i] >= xyz.size() ||
+             quadrangle[(i + 1) % quadrangle.size()] >= xyz.size())
+            return false;
+          const Point &a = xyz[quadrangle[i]];
+          const Point &b = xyz[quadrangle[(i + 1) % quadrangle.size()]];
+          const Point ac = {a[0] - origin[0], a[1] - origin[1],
+                            a[2] - origin[2]};
+          const Point bc = {b[0] - origin[0], b[1] - origin[1],
+                            b[2] - origin[2]};
+          normal[0] += ac[1] * bc[2] - ac[2] * bc[1];
+          normal[1] += ac[2] * bc[0] - ac[0] * bc[2];
+          normal[2] += ac[0] * bc[1] - ac[1] * bc[0];
+        }
+      const double normalNorm = std::sqrt(normal[0] * normal[0] +
+                                          normal[1] * normal[1] +
+                                          normal[2] * normal[2]);
+      if(!(normalNorm > 1.e-14)) return false;
+      for(double &coordinate : normal) coordinate /= normalNorm;
+
+      firstAxis = {0., 0., 0.};
+      double firstAxisNorm = 0.;
+      for(const auto &quadrangle : quadrangles)
+        for(std::size_t i = 0; i < quadrangle.size(); ++i) {
+          const Point &a = xyz[quadrangle[i]];
+          const Point &b = xyz[quadrangle[(i + 1) % quadrangle.size()]];
+          Point edge = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+          const double normalPart = edge[0] * normal[0] +
+                                    edge[1] * normal[1] +
+                                    edge[2] * normal[2];
+          for(std::size_t coordinate = 0; coordinate < 3; ++coordinate)
+            edge[coordinate] -= normalPart * normal[coordinate];
+          const double edgeNorm = std::sqrt(edge[0] * edge[0] +
+                                            edge[1] * edge[1] +
+                                            edge[2] * edge[2]);
+          if(edgeNorm > firstAxisNorm) {
+            firstAxis = edge;
+            firstAxisNorm = edgeNorm;
+          }
+        }
+      if(!(firstAxisNorm > 1.e-14)) return false;
+      for(double &coordinate : firstAxis) coordinate /= firstAxisNorm;
+      secondAxis = {
+        normal[1] * firstAxis[2] - normal[2] * firstAxis[1],
+        normal[2] * firstAxis[0] - normal[0] * firstAxis[2],
+        normal[0] * firstAxis[1] - normal[1] * firstAxis[0]};
+
+      planePoints.resize(xyz.size());
+      for(std::size_t i = 0; i < xyz.size(); ++i) {
+        const Point delta = {xyz[i][0] - origin[0],
+                             xyz[i][1] - origin[1],
+                             xyz[i][2] - origin[2]};
+        planePoints[i] = {
+          delta[0] * firstAxis[0] + delta[1] * firstAxis[1] +
+            delta[2] * firstAxis[2],
+          delta[0] * secondAxis[0] + delta[1] * secondAxis[1] +
+            delta[2] * secondAxis[2]};
+      }
+      return true;
+    }
+
     double targetSize(GFace *face, const UV &uv, const Point &xyz,
                       const SmallCavityOptimizerOptions &options)
     {
@@ -2103,38 +2187,87 @@ namespace QuadOptimizer {
       Pattern pattern;
       if(!existingPatternAndParametrization(seed, uv, pattern))
         return ExistingSmoothingStatus::Invalid;
+
+      const std::vector<MVertex *> &boundary =
+        seed.patch.bdrVertices.front();
+      const std::size_t boundaryCount = boundary.size();
+      std::vector<Point> initialXyz;
+      initialXyz.reserve(boundaryCount + seed.patch.intVertices.size());
+      for(MVertex *vertex : boundary)
+        initialXyz.push_back({vertex->x(), vertex->y(), vertex->z()});
+      for(MVertex *vertex : seed.patch.intVertices)
+        initialXyz.push_back({vertex->x(), vertex->y(), vertex->z()});
+
+      Point origin, firstAxis, secondAxis;
+      std::vector<UV> planePoints;
+      if(!meanPlaneChart(initialXyz, pattern, origin, firstAxis, secondAxis,
+                         planePoints))
+        return ExistingSmoothingStatus::RejectedWinslow;
+      const std::vector<UV> initialPlanePoints = planePoints;
       SmallCavityWinslowOptions winslowOptions = options.winslow;
       winslowOptions.harmonicInitialization = false;
-      const std::size_t boundaryCount =
-        seed.patch.bdrVertices.front().size();
       const SmallCavityWinslowResult winslow =
-        optimizeSmallQuadCavityWinslow(uv, boundaryCount, pattern,
+        optimizeSmallQuadCavityWinslow(planePoints, boundaryCount, pattern,
                                        winslowOptions);
       if(!winslow.success || !winslow.untangled)
         return ExistingSmoothingStatus::RejectedWinslow;
-      std::vector<Point> xyz;
-      if(!mapCandidate(face, boundaryCount,
-                       seed.patch.bdrVertices.front(), uv, xyz))
-        return ExistingSmoothingStatus::RejectedWinslow;
-      if(options.enforceSizeMap) {
-        const SizeScore beforeSize = existingSizeScore(seed.patch, options);
-        const SizeScore afterSize =
-          candidateSizeScore(face, uv, xyz, pattern, options);
-        const double allowedSizeError = beforeSize.meanSquaredLogRatio *
-          (1. + options.maximumRelativeSizeErrorIncrease) + 1.e-14;
-        if(!afterSize.admissible ||
-           (options.enforceRelativeSizeErrorIncrease &&
-            std::isfinite(beforeSize.meanSquaredLogRatio) &&
-            afterSize.meanSquaredLogRatio > allowedSizeError))
-          return ExistingSmoothingStatus::RejectedSize;
+
+      // The Winslow unknowns live only in the local physical mean plane.
+      // Project the optimized targets back onto the MAT surface with a
+      // closest-point query, using the stored UV solely as an initial guess
+      // and as Gmsh's required surface-coordinate bookkeeping.
+      const SizeScore beforeSize = existingSizeScore(seed.patch, options);
+      for(const double fraction : {1., .8, .6, .4, .25, .1}) {
+        std::vector<UV> trialUv = uv;
+        std::vector<Point> trialXyz = initialXyz;
+        bool valid = true;
+        for(std::size_t i = boundaryCount; i < planePoints.size(); ++i) {
+          const UV trialPlane = {
+            initialPlanePoints[i][0] + fraction *
+              (planePoints[i][0] - initialPlanePoints[i][0]),
+            initialPlanePoints[i][1] + fraction *
+              (planePoints[i][1] - initialPlanePoints[i][1])};
+          const SPoint3 target(
+            origin[0] + trialPlane[0] * firstAxis[0] +
+              trialPlane[1] * secondAxis[0],
+            origin[1] + trialPlane[0] * firstAxis[1] +
+              trialPlane[1] * secondAxis[1],
+            origin[2] + trialPlane[0] * firstAxis[2] +
+              trialPlane[1] * secondAxis[2]);
+          const double initialGuess[2] = {uv[i][0], uv[i][1]};
+          const GPoint projected = face->closestPoint(target, initialGuess);
+          if(!projected.succeeded() || !std::isfinite(projected.x()) ||
+             !std::isfinite(projected.y()) ||
+             !std::isfinite(projected.z()) ||
+             !std::isfinite(projected.u()) ||
+             !std::isfinite(projected.v())) {
+            valid = false;
+            break;
+          }
+          trialUv[i] = {projected.u(), projected.v()};
+          trialXyz[i] = {projected.x(), projected.y(), projected.z()};
+        }
+        if(!valid) continue;
+        if(options.enforceSizeMap) {
+          const SizeScore afterSize =
+            candidateSizeScore(face, trialUv, trialXyz, pattern, options);
+          const double allowedSizeError = beforeSize.meanSquaredLogRatio *
+            (1. + options.maximumRelativeSizeErrorIncrease) + 1.e-14;
+          if(!afterSize.admissible ||
+             (options.enforceRelativeSizeErrorIncrease &&
+              std::isfinite(beforeSize.meanSquaredLogRatio) &&
+              afterSize.meanSquaredLogRatio > allowedSizeError))
+            continue;
+        }
+        const SpecificationObjective objective =
+          candidateObjective(pattern, trialXyz);
+        if(!improvesSpecificationObjective(
+             objective, seed.objective, options.objectiveRelativeTolerance))
+          continue;
+        applySmoothedGeometry(seed, trialUv, trialXyz);
+        return ExistingSmoothingStatus::Accepted;
       }
-      const SpecificationObjective objective =
-        candidateObjective(pattern, xyz);
-      if(!improvesSpecificationObjective(
-           objective, seed.objective, options.objectiveRelativeTolerance))
-        return ExistingSmoothingStatus::RejectedQuality;
-      applySmoothedGeometry(seed, uv, xyz);
-      return ExistingSmoothingStatus::Accepted;
+      return ExistingSmoothingStatus::RejectedQuality;
     }
 
     void smoothTopologyNeighborhood(
@@ -2981,6 +3114,641 @@ namespace QuadOptimizer {
       return true;
     }
 
+    bool vertexParameter(GFace *face, MVertex *vertex, UV &parameter)
+    {
+      if(!face || !vertex) return false;
+      double u = 0., v = 0.;
+      if(vertex->onWhat() == face && vertex->getParameter(0, u) &&
+         vertex->getParameter(1, v) && std::isfinite(u) &&
+         std::isfinite(v)) {
+        parameter = {u, v};
+        return true;
+      }
+      SPoint2 uv;
+      if(!reparamMeshVertexOnFace(vertex, face, uv, true) ||
+         !std::isfinite(uv.x()) || !std::isfinite(uv.y()))
+        return false;
+      parameter = {uv.x(), uv.y()};
+      return true;
+    }
+
+    bool collectBoundaryLoops(GFace *face,
+                              const FaceHalfEdgeTopology &topology,
+                              std::vector<BoundaryLoop> &loops)
+    {
+      std::map<MVertex *, std::vector<MVertex *> > adjacency;
+      for(const auto &entry : topology.edges()) {
+        if(entry.second.size() != 1) continue;
+        adjacency[entry.first.first].push_back(entry.first.second);
+        adjacency[entry.first.second].push_back(entry.first.first);
+      }
+      if(adjacency.empty()) return true;
+      for(const auto &entry : adjacency)
+        if(entry.second.size() != 2) return false;
+
+      std::set<MVertex *> unseen;
+      for(const auto &entry : adjacency) unseen.insert(entry.first);
+      loops.clear();
+      while(!unseen.empty()) {
+        MVertex *start = *std::min_element(
+          unseen.begin(), unseen.end(), [](MVertex *a, MVertex *b) {
+            return a->getNum() < b->getNum();
+          });
+        BoundaryLoop loop;
+        MVertex *previous = nullptr;
+        MVertex *current = start;
+        do {
+          if(!unseen.erase(current) && current != start) return false;
+          loop.vertices.push_back(current);
+          const std::vector<MVertex *> &neighbors = adjacency[current];
+          MVertex *next = neighbors[0] == previous ? neighbors[1] :
+                                                    neighbors[0];
+          if(previous == nullptr && neighbors[1]->getNum() < next->getNum())
+            next = neighbors[1];
+          previous = current;
+          current = next;
+          if(loop.vertices.size() > adjacency.size()) return false;
+        } while(current != start);
+        if(loop.vertices.size() < 3) return false;
+        for(std::size_t i = 0; i < loop.vertices.size(); ++i) {
+          MVertex *a = loop.vertices[i];
+          MVertex *b = loop.vertices[(i + 1) % loop.vertices.size()];
+          loop.perimeter += std::sqrt(
+            std::pow(a->x() - b->x(), 2) +
+            std::pow(a->y() - b->y(), 2) +
+            std::pow(a->z() - b->z(), 2));
+        }
+        loops.push_back(std::move(loop));
+      }
+      std::sort(loops.begin(), loops.end(),
+                [](const BoundaryLoop &a, const BoundaryLoop &b) {
+                  return a.perimeter > b.perimeter;
+                });
+      return true;
+    }
+
+    double parametricElementArea(
+      MElement *element,
+      const std::unordered_map<MVertex *, UV> &parameters)
+    {
+      if(!element) return 0.;
+      const std::size_t count = element->getNumPrimaryVertices();
+      if(count != 3 && count != 4) return 0.;
+      double twiceArea = 0.;
+      for(std::size_t i = 0; i < count; ++i) {
+        const auto a = parameters.find(element->getVertex(static_cast<int>(i)));
+        const auto b = parameters.find(
+          element->getVertex(static_cast<int>((i + 1) % count)));
+        if(a == parameters.end() || b == parameters.end()) return 0.;
+        twiceArea += a->second[0] * b->second[1] -
+                     a->second[1] * b->second[0];
+      }
+      return .5 * twiceArea;
+    }
+
+    bool orientLoopWithDomainOnLeft(
+      GFace *face, std::vector<MVertex *> &loop,
+      const std::map<Edge, std::vector<MElement *> > &edgeElements,
+      std::unordered_map<MVertex *, UV> &parameters)
+    {
+      auto parameter = [&](MVertex *vertex, UV &uv) {
+        const auto found = parameters.find(vertex);
+        if(found != parameters.end()) {
+          uv = found->second;
+          return true;
+        }
+        if(!vertexParameter(face, vertex, uv)) return false;
+        parameters[vertex] = uv;
+        return true;
+      };
+      double side = 0.;
+      for(std::size_t i = 0; i < loop.size(); ++i) {
+        MVertex *a = loop[i];
+        MVertex *b = loop[(i + 1) % loop.size()];
+        const auto found = edgeElements.find(canonicalEdge(a, b));
+        if(found == edgeElements.end() || found->second.size() != 1)
+          return false;
+        UV auv, buv;
+        if(!parameter(a, auv) || !parameter(b, buv)) return false;
+        UV centroid = {0., 0.};
+        const std::size_t count =
+          found->second.front()->getNumPrimaryVertices();
+        for(std::size_t k = 0; k < count; ++k) {
+          UV uv;
+          if(!parameter(found->second.front()->getVertex(
+                          static_cast<int>(k)), uv))
+            return false;
+          centroid[0] += uv[0];
+          centroid[1] += uv[1];
+        }
+        centroid[0] /= static_cast<double>(count);
+        centroid[1] /= static_cast<double>(count);
+        side += (buv[0] - auv[0]) *
+                  (centroid[1] - .5 * (auv[1] + buv[1])) -
+                (buv[1] - auv[1]) *
+                  (centroid[0] - .5 * (auv[0] + buv[0]));
+      }
+      if(!std::isfinite(side) || std::abs(side) <= 1.e-14) return false;
+      if(side < 0.) std::reverse(loop.begin(), loop.end());
+      return true;
+    }
+
+    bool tryPillowHole(GFace *face, const BoundaryLoop &boundary,
+                       int neighborLayers,
+                       const SmallCavityOptimizerOptions &options,
+                       std::size_t &insertedQuadrangles)
+    {
+      insertedQuadrangles = 0;
+      if(!face || boundary.vertices.size() < 3 || neighborLayers <= 0)
+        return false;
+      FaceHalfEdgeTopology topology(surfaceElements(face));
+      if(!topology.manifold()) return false;
+      std::map<Edge, std::vector<MElement *> > edgeElements;
+      for(const auto &entry : topology.edges())
+        edgeElements[entry.first] = entry.second;
+
+      std::vector<MVertex *> loop = boundary.vertices;
+      std::unordered_map<MVertex *, UV> parameters;
+      if(!orientLoopWithDomainOnLeft(face, loop, edgeElements, parameters))
+        return false;
+
+      std::set<MElement *> selected;
+      std::set<MElement *> frontier;
+      for(std::size_t i = 0; i < loop.size(); ++i) {
+        const auto found = edgeElements.find(
+          canonicalEdge(loop[i], loop[(i + 1) % loop.size()]));
+        if(found == edgeElements.end() || found->second.size() != 1)
+          return false;
+        selected.insert(found->second.front());
+        frontier.insert(found->second.front());
+      }
+      for(int layer = 1; layer < neighborLayers; ++layer) {
+        std::set<MElement *> next;
+        for(MElement *element : frontier)
+          for(MElement *neighbor : topology.neighbors(element))
+            if(selected.find(neighbor) == selected.end())
+              next.insert(neighbor);
+        selected.insert(next.begin(), next.end());
+        frontier = std::move(next);
+        if(frontier.empty()) break;
+      }
+
+      std::vector<MVertex *> localVertices;
+      std::unordered_map<MVertex *, std::size_t> localIndex;
+      auto addVertex = [&](MVertex *vertex) {
+        const auto inserted = localIndex.emplace(vertex, localVertices.size());
+        if(inserted.second) localVertices.push_back(vertex);
+        return inserted.first->second;
+      };
+      for(MElement *element : selected) {
+        const std::size_t count = element->getNumPrimaryVertices();
+        if(count != 3 && count != 4) return false;
+        for(std::size_t i = 0; i < count; ++i)
+          addVertex(element->getVertex(static_cast<int>(i)));
+      }
+      for(MVertex *vertex : loop) addVertex(vertex);
+      const std::size_t existingVertexCount = localVertices.size();
+      std::vector<UV> points(existingVertexCount);
+      for(std::size_t i = 0; i < existingVertexCount; ++i) {
+        UV uv;
+        const auto found = parameters.find(localVertices[i]);
+        if(found != parameters.end()) uv = found->second;
+        else if(!vertexParameter(face, localVertices[i], uv)) return false;
+        parameters[localVertices[i]] = uv;
+        points[i] = uv;
+      }
+
+      std::unordered_map<MVertex *, std::size_t> duplicateIndex;
+      for(std::size_t i = 0; i < loop.size(); ++i) {
+        MVertex *vertex = loop[i];
+        const UV &base = parameters[vertex];
+        const UV &previous = parameters[loop[(i + loop.size() - 1) % loop.size()]];
+        const UV &next = parameters[loop[(i + 1) % loop.size()]];
+        const UV incoming = {base[0] - previous[0], base[1] - previous[1]};
+        const UV outgoing = {next[0] - base[0], next[1] - base[1]};
+        const double inLength = std::hypot(incoming[0], incoming[1]);
+        const double outLength = std::hypot(outgoing[0], outgoing[1]);
+        if(!(inLength > 0.) || !(outLength > 0.)) return false;
+        UV direction = {
+          -incoming[1] / inLength - outgoing[1] / outLength,
+           incoming[0] / inLength + outgoing[0] / outLength};
+        double norm = std::hypot(direction[0], direction[1]);
+        if(!(norm > 1.e-12)) {
+          direction = {-outgoing[1] / outLength,
+                        outgoing[0] / outLength};
+          norm = 1.;
+        }
+        direction[0] /= norm;
+        direction[1] /= norm;
+        double step = 1.e-4 * std::min(inLength, outLength);
+        UV duplicate = {base[0] + step * direction[0],
+                        base[1] + step * direction[1]};
+        bool mapped = false;
+        for(int trial = 0; trial < 12; ++trial) {
+          const GPoint point = face->point(SPoint2(duplicate[0], duplicate[1]));
+          if(point.succeeded() && std::isfinite(point.x()) &&
+             std::isfinite(point.y()) && std::isfinite(point.z())) {
+            mapped = true;
+            break;
+          }
+          step *= .5;
+          duplicate = {base[0] + step * direction[0],
+                       base[1] + step * direction[1]};
+        }
+        if(!mapped) return false;
+        duplicateIndex[vertex] = points.size();
+        points.push_back(duplicate);
+      }
+
+      double orientation = 0.;
+      for(MElement *element : selected) {
+        orientation = parametricElementArea(element, parameters);
+        if(std::abs(orientation) > 1.e-14) break;
+      }
+      if(std::abs(orientation) <= 1.e-14) return false;
+      orientation = orientation > 0. ? 1. : -1.;
+
+      std::vector<std::array<std::size_t, 3> > triangles;
+      std::vector<std::array<std::size_t, 4> > quadrangles;
+      for(MElement *element : selected) {
+        const std::size_t count = element->getNumPrimaryVertices();
+        if(count == 3) {
+          std::array<std::size_t, 3> triangle;
+          for(std::size_t i = 0; i < 3; ++i) {
+            MVertex *vertex = element->getVertex(static_cast<int>(i));
+            const auto duplicate = duplicateIndex.find(vertex);
+            triangle[i] = duplicate == duplicateIndex.end() ?
+                            localIndex[vertex] : duplicate->second;
+          }
+          triangles.push_back(triangle);
+        }
+        else {
+          std::array<std::size_t, 4> quadrangle;
+          for(std::size_t i = 0; i < 4; ++i) {
+            MVertex *vertex = element->getVertex(static_cast<int>(i));
+            const auto duplicate = duplicateIndex.find(vertex);
+            quadrangle[i] = duplicate == duplicateIndex.end() ?
+                              localIndex[vertex] : duplicate->second;
+          }
+          quadrangles.push_back(quadrangle);
+        }
+      }
+      const std::size_t existingQuadrangleCount = quadrangles.size();
+      for(std::size_t i = 0; i < loop.size(); ++i) {
+        const std::size_t oldA = localIndex[loop[i]];
+        const std::size_t oldB = localIndex[loop[(i + 1) % loop.size()]];
+        const std::size_t newA = duplicateIndex[loop[i]];
+        const std::size_t newB = duplicateIndex[loop[(i + 1) % loop.size()]];
+        quadrangles.push_back(orientation > 0. ?
+          std::array<std::size_t, 4>{oldA, oldB, newB, newA} :
+          std::array<std::size_t, 4>{oldA, newA, newB, oldB});
+      }
+
+      std::map<std::pair<std::size_t, std::size_t>, std::size_t> edgeCount;
+      auto countEdges = [&](const auto &elements) {
+        for(const auto &element : elements)
+          for(std::size_t i = 0; i < element.size(); ++i) {
+            std::size_t a = element[i];
+            std::size_t b = element[(i + 1) % element.size()];
+            if(b < a) std::swap(a, b);
+            ++edgeCount[{a, b}];
+          }
+      };
+      countEdges(triangles);
+      countEdges(quadrangles);
+      std::vector<bool> fixed(points.size(), false);
+      for(const auto &entry : edgeCount)
+        if(entry.second == 1) {
+          fixed[entry.first.first] = true;
+          fixed[entry.first.second] = true;
+        }
+      for(std::size_t i = 0; i < existingVertexCount; ++i)
+        if(localVertices[i]->onWhat() != face) fixed[i] = true;
+
+      // Winslow must see physical lengths: the progressive UV map of a
+      // discrete MAT face can be strongly anisotropic. Build a mean-plane
+      // chart for this tiny patch, optimize there, then project the candidate
+      // back through the existing surface parametrization.
+      std::vector<Point> initialXyz(points.size());
+      for(std::size_t i = 0; i < points.size(); ++i) {
+        if(i < existingVertexCount) {
+          initialXyz[i] = {localVertices[i]->x(), localVertices[i]->y(),
+                           localVertices[i]->z()};
+          continue;
+        }
+        const GPoint mapped = face->point(SPoint2(points[i][0], points[i][1]));
+        if(!mapped.succeeded() || !std::isfinite(mapped.x()) ||
+           !std::isfinite(mapped.y()) || !std::isfinite(mapped.z()))
+          return false;
+        initialXyz[i] = {mapped.x(), mapped.y(), mapped.z()};
+      }
+      Point origin = {0., 0., 0.};
+      for(const Point &point : initialXyz)
+        for(std::size_t coordinate = 0; coordinate < 3; ++coordinate)
+          origin[coordinate] += point[coordinate];
+      for(double &coordinate : origin)
+        coordinate /= static_cast<double>(initialXyz.size());
+      Point normal = {0., 0., 0.};
+      auto accumulateNormal = [&](const auto &elements) {
+        for(const auto &element : elements) {
+          const Point &a = initialXyz[element[0]];
+          const Point &b = initialXyz[element[1]];
+          const Point &c = initialXyz[element[2]];
+          const Point ab = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+          const Point ac = {c[0] - a[0], c[1] - a[1], c[2] - a[2]};
+          normal[0] += ab[1] * ac[2] - ab[2] * ac[1];
+          normal[1] += ab[2] * ac[0] - ab[0] * ac[2];
+          normal[2] += ab[0] * ac[1] - ab[1] * ac[0];
+        }
+      };
+      accumulateNormal(triangles);
+      accumulateNormal(quadrangles);
+      double normalNorm = std::sqrt(normal[0] * normal[0] +
+                                    normal[1] * normal[1] +
+                                    normal[2] * normal[2]);
+      if(!(normalNorm > 1.e-14)) return false;
+      for(double &coordinate : normal) coordinate /= normalNorm;
+      Point firstAxis = {0., 0., 0.};
+      double firstAxisNorm = 0.;
+      for(std::size_t i = 0; i < loop.size(); ++i) {
+        const Point &a = initialXyz[localIndex[loop[i]]];
+        const Point &b =
+          initialXyz[localIndex[loop[(i + 1) % loop.size()]]];
+        Point edge = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+        const double normalPart = edge[0] * normal[0] +
+                                  edge[1] * normal[1] +
+                                  edge[2] * normal[2];
+        for(std::size_t coordinate = 0; coordinate < 3; ++coordinate)
+          edge[coordinate] -= normalPart * normal[coordinate];
+        const double edgeNorm = std::sqrt(edge[0] * edge[0] +
+                                          edge[1] * edge[1] +
+                                          edge[2] * edge[2]);
+        if(edgeNorm > firstAxisNorm) {
+          firstAxis = edge;
+          firstAxisNorm = edgeNorm;
+        }
+      }
+      if(!(firstAxisNorm > 1.e-14)) return false;
+      for(double &coordinate : firstAxis) coordinate /= firstAxisNorm;
+      const Point secondAxis = {
+        normal[1] * firstAxis[2] - normal[2] * firstAxis[1],
+        normal[2] * firstAxis[0] - normal[0] * firstAxis[2],
+        normal[0] * firstAxis[1] - normal[1] * firstAxis[0]};
+      std::vector<UV> planePoints(points.size());
+      for(std::size_t i = 0; i < initialXyz.size(); ++i) {
+        const Point delta = {initialXyz[i][0] - origin[0],
+                             initialXyz[i][1] - origin[1],
+                             initialXyz[i][2] - origin[2]};
+        planePoints[i] = {
+          delta[0] * firstAxis[0] + delta[1] * firstAxis[1] +
+            delta[2] * firstAxis[2],
+          delta[0] * secondAxis[0] + delta[1] * secondAxis[1] +
+            delta[2] * secondAxis[2]};
+      }
+      auto signedPlaneArea = [&](const auto &element) {
+        double twiceArea = 0.;
+        for(std::size_t i = 0; i < element.size(); ++i) {
+          const UV &a = planePoints[element[i]];
+          const UV &b = planePoints[element[(i + 1) % element.size()]];
+          twiceArea += a[0] * b[1] - a[1] * b[0];
+        }
+        return .5 * twiceArea;
+      };
+      double planeOrientation = 0.;
+      for(const auto &triangle : triangles) {
+        planeOrientation = signedPlaneArea(triangle);
+        if(std::abs(planeOrientation) > 1.e-14) break;
+      }
+      if(std::abs(planeOrientation) <= 1.e-14)
+        for(const auto &quadrangle : quadrangles) {
+          planeOrientation = signedPlaneArea(quadrangle);
+          if(std::abs(planeOrientation) > 1.e-14) break;
+        }
+      if(std::abs(planeOrientation) <= 1.e-14) return false;
+
+      SmallCavityWinslowOptions winslowOptions = options.winslow;
+      winslowOptions.harmonicInitialization = true;
+      SmallCavityWinslowResult winslow;
+      try {
+        winslow = optimizeLocalSurfacePatchWinslow(
+          planePoints, fixed, triangles, quadrangles,
+          planeOrientation > 0. ? 1. : -1., winslowOptions);
+      }
+      catch(const std::exception &) { return false; }
+      if(!winslow.success || !winslow.untangled) return false;
+      const std::vector<UV> initialSurfacePoints = points;
+      for(std::size_t i = 0; i < points.size(); ++i) {
+        if(fixed[i]) continue;
+        const SPoint3 target(
+          origin[0] + planePoints[i][0] * firstAxis[0] +
+            planePoints[i][1] * secondAxis[0],
+          origin[1] + planePoints[i][0] * firstAxis[1] +
+            planePoints[i][1] * secondAxis[1],
+          origin[2] + planePoints[i][0] * firstAxis[2] +
+            planePoints[i][1] * secondAxis[2]);
+        const SPoint2 parameter = face->parFromPoint(target, true, true);
+        if(!std::isfinite(parameter.x()) || !std::isfinite(parameter.y()))
+          return false;
+        points[i] = {parameter.x(), parameter.y()};
+      }
+
+      const std::vector<UV> targetSurfacePoints = points;
+      const SpecificationObjective referenceObjective =
+        specificationObjective(
+          std::vector<MElement *>(selected.begin(), selected.end()));
+      double meanBoundaryEdge = 0.;
+      for(std::size_t i = 0; i < loop.size(); ++i) {
+        const std::size_t old = localIndex[loop[i]];
+        const std::size_t next =
+          localIndex[loop[(i + 1) % loop.size()]];
+        meanBoundaryEdge += distance(initialXyz[old], initialXyz[next]);
+      }
+      meanBoundaryEdge /= static_cast<double>(loop.size());
+
+      std::vector<Point> xyz;
+      bool acceptedGeometry = false;
+      for(const double fraction :
+          {1., .85, .7, .55, .4, .3, .2, .15, .1, .075, .05}) {
+        std::vector<UV> trialPoints = initialSurfacePoints;
+        for(std::size_t i = 0; i < trialPoints.size(); ++i)
+          if(!fixed[i])
+            for(std::size_t coordinate = 0; coordinate < 2; ++coordinate)
+              trialPoints[i][coordinate] += fraction *
+                (targetSurfacePoints[i][coordinate] -
+                 initialSurfacePoints[i][coordinate]);
+        std::vector<Point> trialXyz(trialPoints.size());
+        bool valid = true;
+        for(std::size_t i = 0; i < trialPoints.size(); ++i) {
+          if(i < existingVertexCount && fixed[i]) {
+            trialXyz[i] = {localVertices[i]->x(), localVertices[i]->y(),
+                           localVertices[i]->z()};
+            continue;
+          }
+          const GPoint mapped = face->point(
+            SPoint2(trialPoints[i][0], trialPoints[i][1]));
+          if(!mapped.succeeded() || !std::isfinite(mapped.x()) ||
+             !std::isfinite(mapped.y()) || !std::isfinite(mapped.z())) {
+            valid = false;
+            break;
+          }
+          trialXyz[i] = {mapped.x(), mapped.y(), mapped.z()};
+        }
+        if(!valid) continue;
+
+        SpecificationObjective candidateExistingObjective;
+        for(const auto &triangle : triangles) {
+          std::vector<Point> element(3);
+          for(std::size_t i = 0; i < 3; ++i)
+            element[i] = trialXyz[triangle[i]];
+          const ElementQuality quality = evaluateElementQuality(
+            SurfaceElementKind::Triangle, element);
+          if(!quality.topologicallyValid) {
+            valid = false;
+            break;
+          }
+          candidateExistingObjective += specificationObjective(quality);
+        }
+        std::size_t pillowSpecificationFailures = 0;
+        if(valid)
+          for(std::size_t q = 0; q < quadrangles.size(); ++q) {
+            const auto &quadrangle = quadrangles[q];
+            std::vector<Point> element(4);
+            for(std::size_t i = 0; i < 4; ++i)
+              element[i] = trialXyz[quadrangle[i]];
+            const ElementQuality quality = evaluateElementQuality(
+              SurfaceElementKind::Quadrangle, element);
+            if(!quality.topologicallyValid) {
+              valid = false;
+              break;
+            }
+            if(q < existingQuadrangleCount)
+              candidateExistingObjective += specificationObjective(quality);
+            else if(!quality.passesAbsoluteSpecifications)
+              ++pillowSpecificationFailures;
+          }
+        if(!valid || pillowSpecificationFailures != 0 ||
+           candidateExistingObjective.absoluteBadElementCount >
+             referenceObjective.absoluteBadElementCount ||
+           candidateExistingObjective.absoluteViolationCount >
+             referenceObjective.absoluteViolationCount)
+          continue;
+        double minimumRadial = std::numeric_limits<double>::infinity();
+        for(MVertex *oldVertex : loop) {
+          const std::size_t old = localIndex[oldVertex];
+          minimumRadial = std::min(
+            minimumRadial,
+            distance(trialXyz[old], trialXyz[duplicateIndex[oldVertex]]));
+        }
+        if(!(minimumRadial > .05 * meanBoundaryEdge)) continue;
+        points = std::move(trialPoints);
+        xyz = std::move(trialXyz);
+        acceptedGeometry = true;
+        break;
+      }
+      if(!acceptedGeometry) {
+        if(options.verbose)
+          Msg::Info("QuadOptimizer pillow face %d rejected by physical "
+                    "quality line search", face->tag());
+        return false;
+      }
+
+      std::unordered_map<MVertex *, MVertex *> duplicates;
+      std::vector<MVertex *> created;
+      created.reserve(loop.size());
+      for(MVertex *old : loop) {
+        const std::size_t local = duplicateIndex[old];
+        MVertex *vertex = new MFaceVertex(
+          xyz[local][0], xyz[local][1], xyz[local][2], face,
+          points[local][0], points[local][1]);
+        duplicates[old] = vertex;
+        created.push_back(vertex);
+      }
+
+      std::vector<MElement *> affected;
+      std::vector<MElement *> replacement;
+      for(MElement *element : surfaceElements(face)) {
+        const std::size_t count = element->getNumPrimaryVertices();
+        bool touches = false;
+        std::array<MVertex *, 4> vertices = {nullptr, nullptr, nullptr, nullptr};
+        for(std::size_t i = 0; i < count; ++i) {
+          MVertex *vertex = element->getVertex(static_cast<int>(i));
+          const auto found = duplicates.find(vertex);
+          vertices[i] = found == duplicates.end() ? vertex : found->second;
+          touches = touches || found != duplicates.end();
+        }
+        if(!touches) continue;
+        affected.push_back(element);
+        MElement *copy = count == 3 ?
+          static_cast<MElement *>(new MTriangle(vertices[0], vertices[1],
+                                                vertices[2])) :
+          static_cast<MElement *>(new MQuadrangle(
+            vertices[0], vertices[1], vertices[2], vertices[3]));
+        copy->setPartition(element->getPartition());
+        replacement.push_back(copy);
+      }
+      if(affected.empty()) {
+        for(MElement *element : replacement) delete element;
+        for(MVertex *vertex : created) delete vertex;
+        return false;
+      }
+      for(std::size_t i = 0; i < loop.size(); ++i) {
+        MVertex *oldA = loop[i];
+        MVertex *oldB = loop[(i + 1) % loop.size()];
+        replacement.push_back(orientation > 0. ?
+          static_cast<MElement *>(new MQuadrangle(
+            oldA, oldB, duplicates[oldB], duplicates[oldA])) :
+          static_cast<MElement *>(new MQuadrangle(
+            oldA, duplicates[oldA], duplicates[oldB], oldB)));
+      }
+
+      GFaceMeshDiff diff;
+      diff.gf = face;
+      diff.before.gf = face;
+      diff.before.elements = affected;
+      diff.after.gf = face;
+      diff.after.intVertices = created;
+      diff.after.elements = replacement;
+      if(!diff.execute(true)) return false;
+      for(std::size_t i = 0; i < existingVertexCount; ++i) {
+        if(fixed[i] || localVertices[i]->onWhat() != face) continue;
+        localVertices[i]->setXYZ(xyz[i][0], xyz[i][1], xyz[i][2]);
+        localVertices[i]->setParameter(0, points[i][0]);
+        localVertices[i]->setParameter(1, points[i][1]);
+      }
+      insertedQuadrangles = loop.size();
+      return true;
+    }
+
+    void pillowFaceHoles(GFace *face,
+                         const SmallCavityOptimizerOptions &options,
+                         SmallCavityOptimizerResult &result)
+    {
+      FaceHalfEdgeTopology topology(surfaceElements(face));
+      if(!topology.manifold()) return;
+      std::vector<BoundaryLoop> loops;
+      if(!collectBoundaryLoops(face, topology, loops) || loops.size() < 2)
+        return;
+      // The largest component is the outer boundary. The packed MAT faces
+      // are connected; all remaining components are holes.
+      for(std::size_t i = 1; i < loops.size(); ++i) {
+        ++result.pillowHolesVisited;
+        std::size_t inserted = 0;
+        if(!tryPillowHole(face, loops[i], options.pillowNeighborLayers,
+                          options, inserted)) {
+          if(options.verbose)
+            Msg::Warning("QuadOptimizer: rejected pillow on face %d "
+                         "boundary with %zu vertices",
+                         face->tag(), loops[i].vertices.size());
+          continue;
+        }
+        ++result.pillowHolesAccepted;
+        result.pillowQuadranglesInserted += inserted;
+        if(options.verbose)
+          Msg::Info("QuadOptimizer: inserted pillow on face %d: %zu quads",
+                    face->tag(), inserted);
+      }
+    }
+
   } // namespace
 
   SmallCavityOptimizerResult optimizeSmallQuadCavities(
@@ -3000,6 +3768,7 @@ namespace QuadOptimizer {
        options.maximumCleanUpInteriorVertices < 0 ||
        options.maximumCleanUpInteriorVertices > 4 ||
        !(options.cleanUpLongEdgeRatio > 1.) ||
+       options.pillowNeighborLayers < 0 ||
        !(options.minimumEdgeSizeRatio > 0.) ||
        !(options.maximumEdgeSizeRatio > options.minimumEdgeSizeRatio) ||
        options.maximumRelativeSizeErrorIncrease < 0.) {
@@ -3274,25 +4043,27 @@ namespace QuadOptimizer {
         CavityKind::CleanUpSize, options.cleanUpSize, false,
         result.cleanUpSizeSeconds);
 
-      if(!options.fastInteractiveCleanUp &&
-         options.finalSmoothingPasses > 0) {
-        SmallCavityOptimizerOptions smoothingOptions = options;
-        smoothingOptions.smoothingPasses = options.finalSmoothingPasses;
-        const ExistingTopologyWinslowResult smoothing =
-          smoothAllInteriorVertexCavities(face, smoothingOptions);
-        if(!smoothing.success) {
-          result.success = false;
-          return result;
-        }
-        result.acceptedFinalSmoothingCavities +=
-          smoothing.acceptedCavities;
-        if(options.verbose)
-          Msg::Info("QuadOptimizer: pass=%d topology changes=%zu smoothing "
-                    "passes=%zu accepted=%zu",
-                    pass + 1, topologyChanges, smoothing.passes,
-                    smoothing.acceptedCavities);
-      }
       if(topologyChanges == 0) break;
+    }
+    if(options.pillowNeighborLayers > 0)
+      pillowFaceHoles(face, options, result);
+    if(options.finalSmoothingPasses > 0) {
+      SmallCavityOptimizerOptions smoothingOptions = options;
+      smoothingOptions.smoothingPasses = options.finalSmoothingPasses;
+      // This is a genuine mesh-wide geometry pass: conforming quads are also
+      // allowed to move when Winslow reduces their physical shape energy.
+      smoothingOptions.topologyOnlyIfCavityHasSpecificationFailure = false;
+      const ExistingTopologyWinslowResult smoothing =
+        smoothAllInteriorVertexCavities(face, smoothingOptions);
+      if(!smoothing.success) {
+        result.success = false;
+        return result;
+      }
+      result.acceptedFinalSmoothingCavities += smoothing.acceptedCavities;
+      if(options.verbose)
+        Msg::Info("QuadOptimizer: final mean-plane Winslow passes=%zu "
+                  "accepted=%zu",
+                  smoothing.passes, smoothing.acceptedCavities);
     }
     result.finalObjective = specificationObjective(surfaceElements(face));
     if(options.invalidateVertexArrays) face->model()->deleteVertexArrays();
@@ -3426,7 +4197,7 @@ namespace QuadOptimizer {
       if(options.verbose)
         Msg::Info("QuadOptimizer face %d timing(s): critical=%.6g "
                   "connectivity=%.6g boundary=%.6g shape=%.6g size=%.6g; "
-                  "accepted=%zu/%zu/%zu/%zu",
+                  "accepted=%zu/%zu/%zu/%zu pillow=%zu/%zu(%zu quads)",
                   face.faceTag,
                   face.optimizer.cleanUpCriticalSeconds,
                   face.optimizer.cleanUpConnectivitySeconds,
@@ -3436,7 +4207,13 @@ namespace QuadOptimizer {
                   face.optimizer.cleanUpConnectivityAccepted,
                   face.optimizer.cleanUpBoundaryAccepted,
                   face.optimizer.cleanUpShapeAccepted,
-                  face.optimizer.cleanUpSizeAccepted);
+                  face.optimizer.cleanUpSizeAccepted,
+                  face.optimizer.pillowHolesAccepted,
+                  face.optimizer.pillowHolesVisited,
+                  face.optimizer.pillowQuadranglesInserted);
+      result.acceptedPillows += face.optimizer.pillowHolesAccepted;
+      result.insertedPillowQuadrangles +=
+        face.optimizer.pillowQuadranglesInserted;
       result.success = result.success && face.optimizer.success;
       result.acceptedCavities +=
         face.optimizer.acceptedDiamonds +

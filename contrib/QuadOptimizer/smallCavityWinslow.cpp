@@ -155,10 +155,21 @@ namespace QuadOptimizer {
 
     void harmonicInitialize(
       std::vector<Point> &points, std::size_t boundaryVertexCount,
+      const std::vector<std::array<std::size_t, 3> > &triangles,
       const std::vector<std::array<std::size_t, 4> > &quadrangles)
     {
       const std::size_t vertexCount = points.size();
       std::vector<std::set<std::size_t> > neighbors(vertexCount);
+      for(const auto &triangle : triangles) {
+        for(std::size_t k = 0; k < 3; ++k) {
+          const std::size_t a = triangle[k], b = triangle[(k + 1) % 3];
+          if(a >= vertexCount || b >= vertexCount)
+            throw std::invalid_argument(
+              "Small-cavity triangle references an invalid vertex");
+          neighbors[a].insert(b);
+          neighbors[b].insert(a);
+        }
+      }
       for(const auto &quad : quadrangles) {
         for(std::size_t k = 0; k < 4; ++k) {
           const std::size_t a = quad[k], b = quad[(k + 1) % 4];
@@ -227,23 +238,23 @@ namespace QuadOptimizer {
 
     WinslowData prepareData(
       const std::vector<Point> &points, std::size_t boundaryVertexCount,
+      const std::vector<std::array<std::size_t, 3> > &triangles,
       const std::vector<std::array<std::size_t, 4> > &quadrangles,
-      double lambda)
+      double lambda, double orientation)
     {
-      if(boundaryVertexCount < 4 || boundaryVertexCount >= points.size())
+      if(boundaryVertexCount < 3 || boundaryVertexCount >= points.size())
         throw std::invalid_argument(
           "Small-cavity Winslow requires a boundary and interior vertices");
-      if(quadrangles.empty())
+      if(triangles.empty() && quadrangles.empty())
         throw std::invalid_argument(
-          "Small-cavity Winslow requires at least one quadrangle");
+          "Small-cavity Winslow requires at least one surface element");
       if(!std::isfinite(lambda) || lambda < 0.)
         throw std::invalid_argument("Invalid Winslow lambda");
 
-      const double orientation =
-        boundarySignedArea(points, boundaryVertexCount);
-      if(std::abs(orientation) <= std::numeric_limits<double>::epsilon())
+      if(!std::isfinite(orientation) ||
+         std::abs(orientation) <= std::numeric_limits<double>::epsilon())
         throw std::invalid_argument(
-          "Small-cavity Winslow boundary has zero signed area");
+          "Small-cavity Winslow orientation is zero");
 
       WinslowData data;
       data.points = points;
@@ -251,7 +262,22 @@ namespace QuadOptimizer {
       data.lambda = lambda;
       const std::array<Point, 4> target = {
         Point{0., 0.}, Point{1., 0.}, Point{1., 1.}, Point{0., 1.}};
-      data.triangles.reserve(4 * quadrangles.size());
+      data.triangles.reserve(triangles.size() + 4 * quadrangles.size());
+      const std::array<Point, 3> targetTriangle = {
+        Point{0., 0.}, Point{1., 0.}, Point{0., 1.}};
+      for(const auto &source : triangles) {
+        TriangleContribution triangle;
+        for(std::size_t k = 0; k < 3; ++k) {
+          if(source[k] >= points.size())
+            throw std::invalid_argument(
+              "Small-cavity triangle references an invalid vertex");
+          triangle.vertices[k] = source[k];
+        }
+        if(orientation < 0.)
+          std::swap(triangle.vertices[1], triangle.vertices[2]);
+        triangle.shapeGradients = shapeGradients(targetTriangle);
+        data.triangles.push_back(triangle);
+      }
       for(const auto &quad : quadrangles) {
         for(const std::size_t vertex : quad) {
           if(vertex >= points.size())
@@ -276,6 +302,92 @@ namespace QuadOptimizer {
       return data;
     }
 
+    SmallCavityWinslowResult optimizeContiguousPatch(
+      std::vector<Point> &parametricPoints,
+      std::size_t boundaryVertexCount,
+      const std::vector<std::array<std::size_t, 3> > &triangles,
+      const std::vector<std::array<std::size_t, 4> > &quadrangles,
+      double orientation,
+      const SmallCavityWinslowOptions &options)
+    {
+      if(options.maxInnerIterations <= 0 || options.maxOuterIterations <= 0 ||
+         options.maxLineSearchSteps <= 0)
+        throw std::invalid_argument(
+          "Small-cavity Winslow iteration limits must be positive");
+
+      std::vector<Point> candidate = parametricPoints;
+      if(options.harmonicInitialization)
+        harmonicInitialize(candidate, boundaryVertexCount, triangles,
+                           quadrangles);
+      WinslowData data = prepareData(candidate, boundaryVertexCount,
+                                     triangles, quadrangles,
+                                     options.lambda, orientation);
+
+      const std::size_t interiorVertexCount =
+        candidate.size() - boundaryVertexCount;
+      std::vector<double> x(2 * interiorVertexCount);
+      for(std::size_t i = 0; i < interiorVertexCount; ++i) {
+        x[2 * i] = candidate[boundaryVertexCount + i][0];
+        x[2 * i + 1] = candidate[boundaryVertexCount + i][1];
+      }
+      std::vector<double> gradient(x.size(), 0.);
+
+      data.minimumJacobian = 0.;
+      data.epsilon = 1.e-6;
+      const double initialEnergy = energyAndGradient(data, x, gradient);
+      const double initialMinimumJacobian = data.minimumJacobian;
+
+      SmallCavityWinslowResult output;
+      output.initialEnergy = initialEnergy;
+      double previousEnergy = initialEnergy;
+      for(int outer = 0; outer < options.maxOuterIterations; ++outer) {
+        data.epsilon = std::sqrt(
+          1.e-12 + .04 * std::pow(std::min(data.minimumJacobian, 0.), 2));
+
+        GmshLBFGS::Options lbfgs;
+        lbfgs.maxIterations = options.maxInnerIterations;
+        lbfgs.memory = static_cast<int>(std::min<std::size_t>(15, x.size()));
+        lbfgs.gradientTolerance = options.gradientTolerance;
+        lbfgs.functionTolerance = options.functionTolerance;
+        lbfgs.stepTolerance = options.stepTolerance;
+        lbfgs.maxLineSearchSteps = options.maxLineSearchSteps;
+        lbfgs.verbose = options.verbose;
+        auto fg = [&data](const std::vector<double> &coordinates,
+                          std::vector<double> &g) {
+          return energyAndGradient(data, coordinates, g);
+        };
+        const GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, lbfgs);
+        output.lbfgsIterations += result.iterations;
+        output.functionEvaluations += result.functionEvaluations;
+        output.outerIterations = outer + 1;
+
+        energyAndGradient(data, x, gradient);
+        const double relativeChange =
+          std::abs(data.energy - previousEnergy) /
+          std::max(1., std::abs(data.energy));
+        previousEnergy = data.energy;
+        if(data.minimumJacobian > 0. && relativeChange < 1.e-5) break;
+      }
+
+      output.finalEnergy = data.energy;
+      output.minimumJacobian = data.minimumJacobian;
+      output.untangled = data.minimumJacobian > 0.;
+      output.success = output.untangled && std::isfinite(data.energy);
+      if(output.success) {
+        for(std::size_t i = 0; i < interiorVertexCount; ++i)
+          parametricPoints[boundaryVertexCount + i] =
+            {x[2 * i], x[2 * i + 1]};
+      }
+      else if(initialMinimumJacobian > 0. && std::isfinite(initialEnergy)) {
+        output.success = true;
+        output.untangled = true;
+        output.finalEnergy = initialEnergy;
+        output.minimumJacobian = initialMinimumJacobian;
+        parametricPoints = candidate;
+      }
+      return output;
+    }
+
   } // namespace
 
   bool initializeSmallQuadCavityHarmonic(
@@ -288,7 +400,7 @@ namespace QuadOptimizer {
        quadrangles.empty())
       return false;
     try {
-      harmonicInitialize(parametricPoints, boundaryVertexCount,
+      harmonicInitialize(parametricPoints, boundaryVertexCount, {},
                          quadrangles);
     }
     catch(const std::invalid_argument &) { return false; }
@@ -319,82 +431,62 @@ namespace QuadOptimizer {
     const std::vector<std::array<std::size_t, 4> > &quadrangles,
     const SmallCavityWinslowOptions &options)
   {
-    if(options.maxInnerIterations <= 0 || options.maxOuterIterations <= 0 ||
-       options.maxLineSearchSteps <= 0)
+    const double orientation =
+      boundarySignedArea(parametricPoints, boundaryVertexCount);
+    return optimizeContiguousPatch(parametricPoints, boundaryVertexCount, {},
+                                   quadrangles, orientation, options);
+  }
+
+  SmallCavityWinslowResult optimizeLocalSurfacePatchWinslow(
+    std::vector<std::array<double, 2> > &parametricPoints,
+    const std::vector<bool> &fixed,
+    const std::vector<std::array<std::size_t, 3> > &triangles,
+    const std::vector<std::array<std::size_t, 4> > &quadrangles,
+    double orientationSign, const SmallCavityWinslowOptions &options)
+  {
+    if(fixed.size() != parametricPoints.size())
+      throw std::invalid_argument("Winslow fixed mask has invalid size");
+    const std::size_t fixedCount = static_cast<std::size_t>(
+      std::count(fixed.begin(), fixed.end(), true));
+    if(fixedCount < 3 || fixedCount >= parametricPoints.size())
       throw std::invalid_argument(
-        "Small-cavity Winslow iteration limits must be positive");
+        "Local Winslow patch needs fixed and movable vertices");
 
-    std::vector<Point> candidate = parametricPoints;
-    if(options.harmonicInitialization)
-      harmonicInitialize(candidate, boundaryVertexCount, quadrangles);
-    WinslowData data =
-      prepareData(candidate, boundaryVertexCount, quadrangles, options.lambda);
-
-    const std::size_t interiorVertexCount =
-      candidate.size() - boundaryVertexCount;
-    std::vector<double> x(2 * interiorVertexCount);
-    for(std::size_t i = 0; i < interiorVertexCount; ++i) {
-      x[2 * i] = candidate[boundaryVertexCount + i][0];
-      x[2 * i + 1] = candidate[boundaryVertexCount + i][1];
-    }
-    std::vector<double> gradient(x.size(), 0.);
-
-    data.minimumJacobian = 0.;
-    data.epsilon = 1.e-6;
-    const double initialEnergy = energyAndGradient(data, x, gradient);
-    const double initialMinimumJacobian = data.minimumJacobian;
-
-    SmallCavityWinslowResult output;
-    output.initialEnergy = initialEnergy;
-    double previousEnergy = initialEnergy;
-    for(int outer = 0; outer < options.maxOuterIterations; ++outer) {
-      data.epsilon = std::sqrt(
-        1.e-12 + .04 * std::pow(std::min(data.minimumJacobian, 0.), 2));
-
-      GmshLBFGS::Options lbfgs;
-      lbfgs.maxIterations = options.maxInnerIterations;
-      lbfgs.memory = static_cast<int>(std::min<std::size_t>(15, x.size()));
-      lbfgs.gradientTolerance = options.gradientTolerance;
-      lbfgs.functionTolerance = options.functionTolerance;
-      lbfgs.stepTolerance = options.stepTolerance;
-      lbfgs.maxLineSearchSteps = options.maxLineSearchSteps;
-      lbfgs.verbose = options.verbose;
-      auto fg = [&data](const std::vector<double> &coordinates,
-                        std::vector<double> &g) {
-        return energyAndGradient(data, coordinates, g);
-      };
-      const GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, lbfgs);
-      output.lbfgsIterations += result.iterations;
-      output.functionEvaluations += result.functionEvaluations;
-      output.outerIterations = outer + 1;
-
-      energyAndGradient(data, x, gradient);
-      const double relativeChange =
-        std::abs(data.energy - previousEnergy) /
-        std::max(1., std::abs(data.energy));
-      previousEnergy = data.energy;
-      if(data.minimumJacobian > 0. && relativeChange < 1.e-5) break;
-    }
-
-    output.finalEnergy = data.energy;
-    output.minimumJacobian = data.minimumJacobian;
-    output.untangled = data.minimumJacobian > 0.;
-    output.success = output.untangled && std::isfinite(data.energy);
-    if(output.success) {
-      for(std::size_t i = 0; i < interiorVertexCount; ++i) {
-        parametricPoints[boundaryVertexCount + i] =
-          {x[2 * i], x[2 * i + 1]};
+    std::vector<std::size_t> oldToNew(parametricPoints.size());
+    std::vector<std::size_t> newToOld;
+    newToOld.reserve(parametricPoints.size());
+    for(int pass = 0; pass < 2; ++pass)
+      for(std::size_t old = 0; old < fixed.size(); ++old)
+        if(fixed[old] == (pass == 0)) {
+          oldToNew[old] = newToOld.size();
+          newToOld.push_back(old);
+        }
+    std::vector<Point> reordered(parametricPoints.size());
+    for(std::size_t i = 0; i < reordered.size(); ++i)
+      reordered[i] = parametricPoints[newToOld[i]];
+    auto remapTriangles = triangles;
+    for(auto &triangle : remapTriangles)
+      for(std::size_t &vertex : triangle) {
+        if(vertex >= oldToNew.size())
+          throw std::invalid_argument(
+            "Local Winslow triangle references an invalid vertex");
+        vertex = oldToNew[vertex];
       }
-    }
-    else if(initialMinimumJacobian > 0. && std::isfinite(initialEnergy)) {
-      // A failed line search must never destroy an already valid cavity.
-      output.success = true;
-      output.untangled = true;
-      output.finalEnergy = initialEnergy;
-      output.minimumJacobian = initialMinimumJacobian;
-      parametricPoints = candidate;
-    }
-    return output;
+    auto remapQuadrangles = quadrangles;
+    for(auto &quadrangle : remapQuadrangles)
+      for(std::size_t &vertex : quadrangle) {
+        if(vertex >= oldToNew.size())
+          throw std::invalid_argument(
+            "Local Winslow quadrangle references an invalid vertex");
+        vertex = oldToNew[vertex];
+      }
+    const SmallCavityWinslowResult result = optimizeContiguousPatch(
+      reordered, fixedCount, remapTriangles, remapQuadrangles,
+      orientationSign, options);
+    if(result.success)
+      for(std::size_t i = fixedCount; i < reordered.size(); ++i)
+        parametricPoints[newToOld[i]] = reordered[i];
+    return result;
   }
 
 } // namespace QuadOptimizer

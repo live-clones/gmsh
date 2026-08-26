@@ -517,6 +517,11 @@ static void recombineSurfaceMesh(GFace *gf)
       int topo = CTX::instance()->mesh.recombineOptimizeTopology;
       int repos = CTX::instance()->mesh.recombineNodeRepositioning;
       double minqual = CTX::instance()->mesh.recombineMinimumQuality;
+      // PACK performs its Winslow/cavity cleanup after all faces have been
+      // recombined. Keep every quad until that optimization has had a chance
+      // to repair it; Generator.cpp applies the requested quality threshold
+      // at the end of the PACK pipeline.
+      if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) minqual = 0.;
       recombineIntoQuads(gf, blossom, topo, repos, minqual);
     }
   }
