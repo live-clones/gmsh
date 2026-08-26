@@ -32,6 +32,12 @@ bool untangleHighOrderBoundaryLayerPN(
   const std::set<MVertex *, MVertexPtrLessThan> &fixed, int order,
   std::map<MElement *, double> *layers = nullptr,
   const std::vector<double> *widths = nullptr, int strategy = 1,
-  bool postSplitUntangle = false);
+  bool postSplitUntangle = false, bool postSplitSurfaceUntangle = false,
+  int surfaceUntangler = 1,
+  double meanPlaneTolerance = 1.e-1,
+  double meanPlaneExtensionTolerance = 1.e-3, int meanPlanePatchRings = 2,
+  int meanPlaneSweeps = 5, double meanPlaneMoveTolerance = 1.e-4,
+  bool meanPlaneDebugPatches = false,
+  int parametricQuadraturePoints = 3);
 
 #endif

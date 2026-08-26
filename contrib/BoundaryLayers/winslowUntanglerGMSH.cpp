@@ -20,8 +20,10 @@
 #include "gmshLBFGS.h"
 
 #include <algorithm>
+#include <array>
 #include <cfloat>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 
@@ -33,48 +35,57 @@ namespace {
   using vec2 = std::array<double, 2>;
   using vec3 = std::array<double, 3>;
 
-  static double triArea(const vec2 &a, const vec2 &b, const vec2 &c)
+  static inline double triArea(const vec2 &a, const vec2 &b, const vec2 &c)
   {
     return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
                  (a[1] - c[1]) * (a[0] + c[0]));
   }
 
-  static vec3 cross(const vec3 &a, const vec3 &b)
+  static inline vec3 cross(const vec3 &a, const vec3 &b)
   {
     return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
             a[0] * b[1] - a[1] * b[0]};
   }
 
-  static double dot(const vec3 &a, const vec3 &b)
+  static inline double dot(const vec3 &a, const vec3 &b)
   {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   }
 
-  static vec3 sub(const vec3 &a, const vec3 &b)
+  static inline vec3 sub(const vec3 &a, const vec3 &b)
   {
     return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
   }
 
-  static vec3 scale(const vec3 &a, double s)
+  static inline vec3 scale(const vec3 &a, double s)
   {
     return {s * a[0], s * a[1], s * a[2]};
   }
 
-  static double tetVolume(const vec3 &a, const vec3 &b, const vec3 &c,
+  static inline double tetVolume(const vec3 &a, const vec3 &b, const vec3 &c,
                           const vec3 &d)
   {
     return dot(sub(a, d), cross(sub(b, d), sub(c, d))) / 6.;
   }
 
-  static double coefChi(double D, double eps)
+  static inline void coefChiAndChip(double D, double eps2, double &chi,
+                                    double &chip)
   {
-    return 0.5 * (D + std::sqrt(eps * eps + D * D));
+    const double s = std::sqrt(eps2 + D * D);
+    chi = 0.5 * (D + s);
+    chip = 0.5 + D / (2. * s);
   }
 
-  static double coefChip(double D, double eps)
+  static inline double coefChi(double D, double eps2)
   {
-    return 0.5 + D / (2. * std::sqrt(eps * eps + D * D));
+    return 0.5 * (D + std::sqrt(eps2 + D * D));
   }
+
+  struct alignas(64) TetKernelGMSH {
+    uint32_t v[4];
+    size_t o[4];
+    double n[12];
+  };
 
   struct UntanglerDataGMSH {
     int dim = 0;
@@ -88,6 +99,7 @@ namespace {
     std::vector<std::array<uint32_t, 4>> tetrahedra;
     std::vector<std::array<std::array<double, 2>, 3>> triNormals;
     std::vector<std::array<std::array<double, 3>, 4>> tetNormals;
+    std::vector<TetKernelGMSH> tetKernels;
     std::vector<double> JDet;
     std::vector<double> gradThreadBuffers;
     std::vector<double> elementEnergy;
@@ -118,6 +130,92 @@ namespace {
     return (n > 1024) ? 1024 : (int)n;
   }
 
+  static int requestedLBFGSMemory()
+  {
+    const int defaultMemory = 5;
+    const char *env = std::getenv("GMSH_WINSLOW_LBFGS_MEMORY");
+    if(!env || !env[0]) return defaultMemory;
+    char *end = nullptr;
+    const long n = std::strtol(env, &end, 10);
+    if(end == env || n < 1) {
+      Msg::Warning("Ignoring invalid GMSH_WINSLOW_LBFGS_MEMORY='%s'", env);
+      return defaultMemory;
+    }
+    return (n > 1000) ? 1000 : (int)n;
+  }
+
+  static double requestedStopRmsMove()
+  {
+    const double defaultStopMove = 5.e-4;
+    const char *env = std::getenv("GMSH_WINSLOW_STOP_RMS_MOVE");
+    if(!env || !env[0]) return defaultStopMove;
+    char *end = nullptr;
+    const double val = std::strtod(env, &end);
+    if(end == env || val < 0.) {
+      Msg::Warning("Ignoring invalid GMSH_WINSLOW_STOP_RMS_MOVE='%s'", env);
+      return defaultStopMove;
+    }
+    return val;
+  }
+
+  static double requestedStopQ95Move()
+  {
+    const double defaultStopMove = 5.e-3;
+    const char *env = std::getenv("GMSH_WINSLOW_STOP_Q95_MOVE");
+    if(!env || !env[0]) env = std::getenv("GMSH_WINSLOW_STOP_MOVE");
+    if(!env || !env[0]) return defaultStopMove;
+    char *end = nullptr;
+    const double val = std::strtod(env, &end);
+    if(end == env || val < 0.) {
+      Msg::Warning("Ignoring invalid GMSH_WINSLOW_STOP_Q95_MOVE='%s'", env);
+      return defaultStopMove;
+    }
+    return val;
+  }
+
+  static double requestedStopDetMinDelta()
+  {
+    const double defaultStopDetMinDelta = 1.e-4;
+    const char *env = std::getenv("GMSH_WINSLOW_STOP_DETMIN_DELTA");
+    if(!env || !env[0]) return defaultStopDetMinDelta;
+    char *end = nullptr;
+    const double val = std::strtod(env, &end);
+    if(end == env || val < 0.) {
+      Msg::Warning("Ignoring invalid GMSH_WINSLOW_STOP_DETMIN_DELTA='%s'",
+                   env);
+      return defaultStopDetMinDelta;
+    }
+    return val;
+  }
+
+  static int requestedStopOuters()
+  {
+    const int defaultStopOuters = 2;
+    const char *env = std::getenv("GMSH_WINSLOW_STOP_OUTERS");
+    if(!env || !env[0]) return defaultStopOuters;
+    char *end = nullptr;
+    const long n = std::strtol(env, &end, 10);
+    if(end == env || n < 1) {
+      Msg::Warning("Ignoring invalid GMSH_WINSLOW_STOP_OUTERS='%s'", env);
+      return defaultStopOuters;
+    }
+    return (n > 1000) ? 1000 : (int)n;
+  }
+
+  static double requestedDetMinTarget()
+  {
+    const double defaultDetMinTarget = 0.04;
+    const char *env = std::getenv("GMSH_WINSLOW_DETMIN_TARGET");
+    if(!env || !env[0]) return defaultDetMinTarget;
+    char *end = nullptr;
+    const double val = std::strtod(env, &end);
+    if(end == env) {
+      Msg::Warning("Ignoring invalid GMSH_WINSLOW_DETMIN_TARGET='%s'", env);
+      return defaultDetMinTarget;
+    }
+    return val;
+  }
+
   static int numElementThreads(size_t nElements)
   {
     int nthreads = requestedNumThreads();
@@ -129,6 +227,107 @@ namespace {
     nthreads = 1;
 #endif
     return nthreads;
+  }
+
+  static double bboxDiag(const std::vector<double> &x, int dim)
+  {
+    if(x.empty()) return 1.;
+    double xmin[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
+    double xmax[3] = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
+    const size_t n = x.size() / (size_t)dim;
+    for(size_t i = 0; i < n; ++i) {
+      for(int d = 0; d < dim; ++d) {
+        const double v = x[(size_t)dim * i + d];
+        xmin[d] = std::min(xmin[d], v);
+        xmax[d] = std::max(xmax[d], v);
+      }
+    }
+    double d2 = 0.;
+    for(int d = 0; d < dim; ++d) {
+      const double dd = xmax[d] - xmin[d];
+      d2 += dd * dd;
+    }
+    const double d = std::sqrt(d2);
+    return d > 0. ? d : 1.;
+  }
+
+  static std::vector<double>
+  computeMoveScales(const std::vector<double> &x, const UntanglerDataGMSH &data)
+  {
+    const size_t n = data.locked.size();
+    std::vector<double> scales(n, 0.);
+
+    auto addEdge = [&x, &scales, dim = data.dim](uint32_t a, uint32_t b) {
+      double l2 = 0.;
+      for(int d = 0; d < dim; ++d) {
+        const double dd = x[(size_t)dim * a + d] - x[(size_t)dim * b + d];
+        l2 += dd * dd;
+      }
+      if(l2 <= 0.) return;
+      const double l = std::sqrt(l2);
+      scales[a] = std::max(scales[a], l);
+      scales[b] = std::max(scales[b], l);
+    };
+
+    if(data.dim == 2) {
+      for(const auto &t : data.triangles) {
+        addEdge(t[0], t[1]);
+        addEdge(t[1], t[2]);
+        addEdge(t[2], t[0]);
+      }
+    }
+    else {
+      for(const auto &t : data.tetrahedra) {
+        addEdge(t[0], t[1]);
+        addEdge(t[0], t[2]);
+        addEdge(t[0], t[3]);
+        addEdge(t[1], t[2]);
+        addEdge(t[1], t[3]);
+        addEdge(t[2], t[3]);
+      }
+    }
+
+    const double fallback = bboxDiag(x, data.dim);
+    const double minScale = std::max(fallback * 1.e-12, 1.e-300);
+    for(double &s : scales) {
+      if(!std::isfinite(s) || s < minScale) s = fallback;
+    }
+    return scales;
+  }
+
+  static void computeRelativeMove(const std::vector<double> &x0,
+                                  const std::vector<double> &x1,
+                                  const std::vector<bool> &locked, int dim,
+                                  const std::vector<double> &scales,
+                                  double &relMaxMove, double &relRmsMove,
+                                  double &relQ95Move)
+  {
+    double maxMove = 0., sumMove2 = 0.;
+    size_t nFree = 0;
+    std::vector<double> moves;
+    moves.reserve(locked.size());
+    for(size_t i = 0; i < locked.size(); ++i) {
+      if(locked[i]) continue;
+      double d2 = 0.;
+      for(int d = 0; d < dim; ++d) {
+        const double dd = x1[(size_t)dim * i + d] - x0[(size_t)dim * i + d];
+        d2 += dd * dd;
+      }
+      const double s = (i < scales.size() && scales[i] > 0.) ? scales[i] : 1.;
+      const double move = std::sqrt(d2) / s;
+      maxMove = std::max(maxMove, move);
+      sumMove2 += move * move;
+      moves.push_back(move);
+      nFree++;
+    }
+    relMaxMove = maxMove;
+    relRmsMove = nFree ? std::sqrt(sumMove2 / (double)nFree) : 0.;
+    relQ95Move = 0.;
+    if(!moves.empty()) {
+      const size_t k = (size_t)std::floor(0.95 * (double)(moves.size() - 1));
+      std::nth_element(moves.begin(), moves.begin() + k, moves.end());
+      relQ95Move = moves[k];
+    }
   }
 
   static double area(const std::vector<vec2> &points,
@@ -169,34 +368,34 @@ namespace {
   static double updateJacobian3D(size_t t, UntanglerDataGMSH &w,
                                  const std::vector<double> &X)
   {
-    const auto &tet = w.tetrahedra[t];
-    const auto &N = w.tetNormals[t];
-    const double x0 = X[3 * tet[0] + 0], y0 = X[3 * tet[0] + 1],
-                 z0 = X[3 * tet[0] + 2];
-    const double x1 = X[3 * tet[1] + 0], y1 = X[3 * tet[1] + 1],
-                 z1 = X[3 * tet[1] + 2];
-    const double x2 = X[3 * tet[2] + 0], y2 = X[3 * tet[2] + 1],
-                 z2 = X[3 * tet[2] + 2];
-    const double x3 = X[3 * tet[3] + 0], y3 = X[3 * tet[3] + 1],
-                 z3 = X[3 * tet[3] + 2];
+    const TetKernelGMSH &K = w.tetKernels[t];
+    const double *N = K.n;
+    const double x0 = X[K.o[0] + 0], y0 = X[K.o[0] + 1],
+                 z0 = X[K.o[0] + 2];
+    const double x1 = X[K.o[1] + 0], y1 = X[K.o[1] + 1],
+                 z1 = X[K.o[1] + 2];
+    const double x2 = X[K.o[2] + 0], y2 = X[K.o[2] + 1],
+                 z2 = X[K.o[2] + 2];
+    const double x3 = X[K.o[3] + 0], y3 = X[K.o[3] + 1],
+                 z3 = X[K.o[3] + 2];
     const double J00 =
-      x0 * N[0][0] + x1 * N[1][0] + x2 * N[2][0] + x3 * N[3][0];
+      x0 * N[0] + x1 * N[3] + x2 * N[6] + x3 * N[9];
     const double J10 =
-      x0 * N[0][1] + x1 * N[1][1] + x2 * N[2][1] + x3 * N[3][1];
+      x0 * N[1] + x1 * N[4] + x2 * N[7] + x3 * N[10];
     const double J20 =
-      x0 * N[0][2] + x1 * N[1][2] + x2 * N[2][2] + x3 * N[3][2];
+      x0 * N[2] + x1 * N[5] + x2 * N[8] + x3 * N[11];
     const double J01 =
-      y0 * N[0][0] + y1 * N[1][0] + y2 * N[2][0] + y3 * N[3][0];
+      y0 * N[0] + y1 * N[3] + y2 * N[6] + y3 * N[9];
     const double J11 =
-      y0 * N[0][1] + y1 * N[1][1] + y2 * N[2][1] + y3 * N[3][1];
+      y0 * N[1] + y1 * N[4] + y2 * N[7] + y3 * N[10];
     const double J21 =
-      y0 * N[0][2] + y1 * N[1][2] + y2 * N[2][2] + y3 * N[3][2];
+      y0 * N[2] + y1 * N[5] + y2 * N[8] + y3 * N[11];
     const double J02 =
-      z0 * N[0][0] + z1 * N[1][0] + z2 * N[2][0] + z3 * N[3][0];
+      z0 * N[0] + z1 * N[3] + z2 * N[6] + z3 * N[9];
     const double J12 =
-      z0 * N[0][1] + z1 * N[1][1] + z2 * N[2][1] + z3 * N[3][1];
+      z0 * N[1] + z1 * N[4] + z2 * N[7] + z3 * N[10];
     const double J22 =
-      z0 * N[0][2] + z1 * N[1][2] + z2 * N[2][2] + z3 * N[3][2];
+      z0 * N[2] + z1 * N[5] + z2 * N[8] + z3 * N[11];
     const double det = J00 * (J11 * J22 - J12 * J21) -
                        J01 * (J10 * J22 - J12 * J20) +
                        J02 * (J10 * J21 - J11 * J20);
@@ -276,6 +475,7 @@ namespace {
     data.locked = locked;
     data.tetrahedra = tets;
     data.tetNormals.resize(tets.size());
+    data.tetKernels.resize(tets.size());
     data.JDet.assign(tets.size(), 0.);
     const double avgVol = volume(points, tets) / double(tets.size());
     if(avgVol <= 0.)
@@ -322,6 +522,14 @@ namespace {
         const vec3 n = scale(cross(e1, e0), 0.5 / (3. * v));
         data.tetNormals[t][lf] = n;
       }
+      TetKernelGMSH &kernel = data.tetKernels[t];
+      for(size_t k = 0; k < 4; ++k) {
+        kernel.v[k] = tets[t][k];
+        kernel.o[k] = 3 * (size_t)tets[t][k];
+        kernel.n[3 * k + 0] = data.tetNormals[t][k][0];
+        kernel.n[3 * k + 1] = data.tetNormals[t][k][1];
+        kernel.n[3 * k + 2] = data.tetNormals[t][k][2];
+      }
     }
     return true;
   }
@@ -336,6 +544,7 @@ namespace {
 
     const size_t nElements = w.triangles.size();
     const size_t gradLength = grad.size();
+    const double eps2 = w.eps * w.eps;
     const int nthreads = numElementThreads(nElements);
     if(w.gradThreadBuffers.size() != (size_t)nthreads * gradLength)
       w.gradThreadBuffers.assign((size_t)nthreads * gradLength, 0.);
@@ -372,17 +581,18 @@ namespace {
         const double det = J00 * J11 - J01 * J10;
         w.JDet[t] = det;
 
-        const double chi = coefChi(det, w.eps);
-        const double chip = coefChip(det, w.eps);
+        double chi, chip;
+        coefChiAndChip(det, eps2, chi, chip);
+        const double invChi = 1. / chi;
         const double traceJtJ = J00 * J00 + J10 * J10 + J01 * J01 + J11 * J11;
-        const double fEps = traceJtJ / chi;
-        const double gEps = (det * det + 1.) / chi;
+        const double fEps = traceJtJ * invChi;
+        const double gEps = (det * det + 1.) * invChi;
         w.elementEnergy[t] = fEps + w.lambda * gEps;
 
         const double coeff =
           fEps * chip - 2. * w.lambda * det + w.lambda * gEps * chip;
-        const double scaleA = 2. / chi;
-        const double scaleB = coeff / chi;
+        const double scaleA = 2. * invChi;
+        const double scaleB = coeff * invChi;
         const double d00 = scaleA * J00 - scaleB * J11;
         const double d10 = scaleA * J10 + scaleB * J01;
         const double d01 = scaleA * J01 + scaleB * J10;
@@ -434,6 +644,7 @@ namespace {
 
     const size_t nElements = w.tetrahedra.size();
     const size_t gradLength = grad.size();
+    const double eps2 = w.eps * w.eps;
     const int nthreads = numElementThreads(nElements);
     if(w.gradThreadBuffers.size() != (size_t)nthreads * gradLength)
       w.gradThreadBuffers.assign((size_t)nthreads * gradLength, 0.);
@@ -458,54 +669,55 @@ namespace {
       const size_t tEnd =
         nElements * (size_t)(threadNum + 1) / (size_t)actualThreads;
       for(size_t t = tBegin; t < tEnd; ++t) {
-        const auto &tet = w.tetrahedra[t];
-        const auto &N = w.tetNormals[t];
-        const double x0 = X[3 * tet[0] + 0], y0 = X[3 * tet[0] + 1],
-                     z0 = X[3 * tet[0] + 2];
-        const double x1 = X[3 * tet[1] + 0], y1 = X[3 * tet[1] + 1],
-                     z1 = X[3 * tet[1] + 2];
-        const double x2 = X[3 * tet[2] + 0], y2 = X[3 * tet[2] + 1],
-                     z2 = X[3 * tet[2] + 2];
-        const double x3 = X[3 * tet[3] + 0], y3 = X[3 * tet[3] + 1],
-                     z3 = X[3 * tet[3] + 2];
+        const TetKernelGMSH &K = w.tetKernels[t];
+        const double *N = K.n;
+        const double x0 = X[K.o[0] + 0], y0 = X[K.o[0] + 1],
+                     z0 = X[K.o[0] + 2];
+        const double x1 = X[K.o[1] + 0], y1 = X[K.o[1] + 1],
+                     z1 = X[K.o[1] + 2];
+        const double x2 = X[K.o[2] + 0], y2 = X[K.o[2] + 1],
+                     z2 = X[K.o[2] + 2];
+        const double x3 = X[K.o[3] + 0], y3 = X[K.o[3] + 1],
+                     z3 = X[K.o[3] + 2];
         const double J00 =
-          x0 * N[0][0] + x1 * N[1][0] + x2 * N[2][0] + x3 * N[3][0];
+          x0 * N[0] + x1 * N[3] + x2 * N[6] + x3 * N[9];
         const double J10 =
-          x0 * N[0][1] + x1 * N[1][1] + x2 * N[2][1] + x3 * N[3][1];
+          x0 * N[1] + x1 * N[4] + x2 * N[7] + x3 * N[10];
         const double J20 =
-          x0 * N[0][2] + x1 * N[1][2] + x2 * N[2][2] + x3 * N[3][2];
+          x0 * N[2] + x1 * N[5] + x2 * N[8] + x3 * N[11];
         const double J01 =
-          y0 * N[0][0] + y1 * N[1][0] + y2 * N[2][0] + y3 * N[3][0];
+          y0 * N[0] + y1 * N[3] + y2 * N[6] + y3 * N[9];
         const double J11 =
-          y0 * N[0][1] + y1 * N[1][1] + y2 * N[2][1] + y3 * N[3][1];
+          y0 * N[1] + y1 * N[4] + y2 * N[7] + y3 * N[10];
         const double J21 =
-          y0 * N[0][2] + y1 * N[1][2] + y2 * N[2][2] + y3 * N[3][2];
+          y0 * N[2] + y1 * N[5] + y2 * N[8] + y3 * N[11];
         const double J02 =
-          z0 * N[0][0] + z1 * N[1][0] + z2 * N[2][0] + z3 * N[3][0];
+          z0 * N[0] + z1 * N[3] + z2 * N[6] + z3 * N[9];
         const double J12 =
-          z0 * N[0][1] + z1 * N[1][1] + z2 * N[2][1] + z3 * N[3][1];
+          z0 * N[1] + z1 * N[4] + z2 * N[7] + z3 * N[10];
         const double J22 =
-          z0 * N[0][2] + z1 * N[1][2] + z2 * N[2][2] + z3 * N[3][2];
+          z0 * N[2] + z1 * N[5] + z2 * N[8] + z3 * N[11];
         const double det = J00 * (J11 * J22 - J12 * J21) -
                            J01 * (J10 * J22 - J12 * J20) +
                            J02 * (J10 * J21 - J11 * J20);
         w.JDet[t] = det;
 
-        const double chi = coefChi(det, w.eps);
-        const double chip = coefChip(det, w.eps);
+        double chi, chip;
+        coefChiAndChip(det, eps2, chi, chip);
+        const double invChi = 1. / chi;
         const double chi13 = std::cbrt(chi);
-        const double chi23 = chi13 * chi13;
+        const double invChi23 = 1. / (chi13 * chi13);
         const double traceJtJ = J00 * J00 + J10 * J10 + J20 * J20 + J01 * J01 +
                                 J11 * J11 + J21 * J21 + J02 * J02 + J12 * J12 +
                                 J22 * J22;
-        const double fEps = traceJtJ / chi23;
-        const double gEps = (det * det + 1.) / chi;
+        const double fEps = traceJtJ * invChi23;
+        const double gEps = (det * det + 1.) * invChi;
         w.elementEnergy[t] = fEps + w.lambda * gEps;
 
         const double coeff =
           2. / 3. * fEps * chip - 2. * w.lambda * det + w.lambda * gEps * chip;
-        const double scaleA = 2. / chi23;
-        const double scaleB = coeff / chi;
+        const double scaleA = 2. * invChi23;
+        const double scaleB = coeff * invChi;
 
         const double b00 = J11 * J22 - J21 * J12;
         const double b10 = J21 * J02 - J01 * J22;
@@ -529,12 +741,14 @@ namespace {
         const double d22 = scaleA * J22 - scaleB * b22;
 
         for(size_t k = 0; k < 4; ++k) {
-          const uint32_t v = tet[k];
+          const uint32_t v = K.v[k];
           if(w.locked[v]) continue;
-          const double n0 = N[k][0], n1 = N[k][1], n2 = N[k][2];
-          gradLocal[3 * v + 0] += d00 * n0 + d10 * n1 + d20 * n2;
-          gradLocal[3 * v + 1] += d01 * n0 + d11 * n1 + d21 * n2;
-          gradLocal[3 * v + 2] += d02 * n0 + d12 * n1 + d22 * n2;
+          const size_t o = K.o[k];
+          const double n0 = N[3 * k + 0], n1 = N[3 * k + 1],
+                       n2 = N[3 * k + 2];
+          gradLocal[o + 0] += d00 * n0 + d10 * n1 + d20 * n2;
+          gradLocal[o + 1] += d01 * n0 + d11 * n1 + d21 * n2;
+          gradLocal[o + 2] += d02 * n0 + d12 * n1 + d22 * n2;
         }
       }
 
@@ -564,6 +778,137 @@ namespace {
     if(std::isnan(energy)) energy = std::numeric_limits<double>::max();
     w.energy = energy;
     return w.energy;
+  }
+
+  static double computeEnergyOnly2D(UntanglerDataGMSH &w,
+                                    const std::vector<double> &X)
+  {
+    const size_t nElements = w.triangles.size();
+    const double eps2 = w.eps * w.eps;
+    const int nthreads = numElementThreads(nElements);
+    std::vector<double> threadEnergy(nthreads, 0.);
+
+#if defined(_OPENMP)
+#pragma omp parallel num_threads(nthreads)
+#endif
+    {
+      int threadNum = 0;
+      int actualThreads = 1;
+#if defined(_OPENMP)
+      threadNum = omp_get_thread_num();
+      actualThreads = omp_get_num_threads();
+#endif
+      const size_t tBegin =
+        nElements * (size_t)threadNum / (size_t)actualThreads;
+      const size_t tEnd =
+        nElements * (size_t)(threadNum + 1) / (size_t)actualThreads;
+      double energyLocal = 0.;
+      for(size_t t = tBegin; t < tEnd; ++t) {
+        const auto &tri = w.triangles[t];
+        const auto &N = w.triNormals[t];
+        const double x0 = X[2 * tri[0] + 0], y0 = X[2 * tri[0] + 1];
+        const double x1 = X[2 * tri[1] + 0], y1 = X[2 * tri[1] + 1];
+        const double x2 = X[2 * tri[2] + 0], y2 = X[2 * tri[2] + 1];
+        const double J00 = x0 * N[0][0] + x1 * N[1][0] + x2 * N[2][0];
+        const double J10 = x0 * N[0][1] + x1 * N[1][1] + x2 * N[2][1];
+        const double J01 = y0 * N[0][0] + y1 * N[1][0] + y2 * N[2][0];
+        const double J11 = y0 * N[0][1] + y1 * N[1][1] + y2 * N[2][1];
+        const double det = J00 * J11 - J01 * J10;
+
+        const double chi = coefChi(det, eps2);
+        const double invChi = 1. / chi;
+        const double traceJtJ = J00 * J00 + J10 * J10 + J01 * J01 + J11 * J11;
+        const double fEps = traceJtJ * invChi;
+        const double gEps = (det * det + 1.) * invChi;
+        energyLocal += fEps + w.lambda * gEps;
+      }
+      threadEnergy[threadNum] = energyLocal;
+    }
+    w.profileThreadsMin = std::min(w.profileThreadsMin, nthreads);
+    w.profileThreadsMax = std::max(w.profileThreadsMax, nthreads);
+
+    double energy = 0.;
+    for(double e : threadEnergy) energy += e;
+    if(std::isnan(energy)) energy = std::numeric_limits<double>::max();
+    return energy;
+  }
+
+  static double computeEnergyOnly3D(UntanglerDataGMSH &w,
+                                    const std::vector<double> &X)
+  {
+    const size_t nElements = w.tetrahedra.size();
+    const double eps2 = w.eps * w.eps;
+    const int nthreads = numElementThreads(nElements);
+    std::vector<double> threadEnergy(nthreads, 0.);
+
+#if defined(_OPENMP)
+#pragma omp parallel num_threads(nthreads)
+#endif
+    {
+      int threadNum = 0;
+      int actualThreads = 1;
+#if defined(_OPENMP)
+      threadNum = omp_get_thread_num();
+      actualThreads = omp_get_num_threads();
+#endif
+      const size_t tBegin =
+        nElements * (size_t)threadNum / (size_t)actualThreads;
+      const size_t tEnd =
+        nElements * (size_t)(threadNum + 1) / (size_t)actualThreads;
+      double energyLocal = 0.;
+      for(size_t t = tBegin; t < tEnd; ++t) {
+        const TetKernelGMSH &K = w.tetKernels[t];
+        const double *N = K.n;
+        const double x0 = X[K.o[0] + 0], y0 = X[K.o[0] + 1],
+                     z0 = X[K.o[0] + 2];
+        const double x1 = X[K.o[1] + 0], y1 = X[K.o[1] + 1],
+                     z1 = X[K.o[1] + 2];
+        const double x2 = X[K.o[2] + 0], y2 = X[K.o[2] + 1],
+                     z2 = X[K.o[2] + 2];
+        const double x3 = X[K.o[3] + 0], y3 = X[K.o[3] + 1],
+                     z3 = X[K.o[3] + 2];
+        const double J00 =
+          x0 * N[0] + x1 * N[3] + x2 * N[6] + x3 * N[9];
+        const double J10 =
+          x0 * N[1] + x1 * N[4] + x2 * N[7] + x3 * N[10];
+        const double J20 =
+          x0 * N[2] + x1 * N[5] + x2 * N[8] + x3 * N[11];
+        const double J01 =
+          y0 * N[0] + y1 * N[3] + y2 * N[6] + y3 * N[9];
+        const double J11 =
+          y0 * N[1] + y1 * N[4] + y2 * N[7] + y3 * N[10];
+        const double J21 =
+          y0 * N[2] + y1 * N[5] + y2 * N[8] + y3 * N[11];
+        const double J02 =
+          z0 * N[0] + z1 * N[3] + z2 * N[6] + z3 * N[9];
+        const double J12 =
+          z0 * N[1] + z1 * N[4] + z2 * N[7] + z3 * N[10];
+        const double J22 =
+          z0 * N[2] + z1 * N[5] + z2 * N[8] + z3 * N[11];
+        const double det = J00 * (J11 * J22 - J12 * J21) -
+                           J01 * (J10 * J22 - J12 * J20) +
+                           J02 * (J10 * J21 - J11 * J20);
+
+        const double chi = coefChi(det, eps2);
+        const double invChi = 1. / chi;
+        const double chi13 = std::cbrt(chi);
+        const double invChi23 = 1. / (chi13 * chi13);
+        const double traceJtJ = J00 * J00 + J10 * J10 + J20 * J20 + J01 * J01 +
+                                J11 * J11 + J21 * J21 + J02 * J02 + J12 * J12 +
+                                J22 * J22;
+        const double fEps = traceJtJ * invChi23;
+        const double gEps = (det * det + 1.) * invChi;
+        energyLocal += fEps + w.lambda * gEps;
+      }
+      threadEnergy[threadNum] = energyLocal;
+    }
+    w.profileThreadsMin = std::min(w.profileThreadsMin, nthreads);
+    w.profileThreadsMax = std::max(w.profileThreadsMax, nthreads);
+
+    double energy = 0.;
+    for(double e : threadEnergy) energy += e;
+    if(std::isnan(energy)) energy = std::numeric_limits<double>::max();
+    return energy;
   }
 
   static bool initializeEnergy(UntanglerDataGMSH &data,
@@ -641,14 +986,26 @@ namespace {
     int nFail = 0;
     double t0 = Cpu();
     double EPrev = data.energy;
+    int nSmallMove = 0;
+    int nQualityPlateau = 0;
+    const double stopRmsMove = requestedStopRmsMove();
+    const double stopQ95Move = requestedStopQ95Move();
+    const double stopDetMinDelta = requestedStopDetMinDelta();
+    const int stopOuters = requestedStopOuters();
+    const double detMinTarget = requestedDetMinTarget();
+    const double epsMin = 1.e-6;
+    const std::vector<double> moveScales = computeMoveScales(x, data);
+    double detMinPrev = data.JDetMin;
+    double bestDetMin = data.JDetMin;
 
     for(int iter = 0; iter < iterMaxOuter; ++iter) {
+      const std::vector<double> xBeforeOuter = x;
       data.eps =
         std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.JDetMin, 0.), 2));
 
       GmshLBFGS::Options options;
       options.maxIterations = iterMaxInner;
-      options.memory = (int)std::min<size_t>(15, x.size());
+      options.memory = (int)std::min<size_t>(requestedLBFGSMemory(), x.size());
       options.gradientTolerance = 1.e-4;
       options.functionTolerance = 1.e-12;
       options.stepTolerance = 1.e-12;
@@ -678,9 +1035,17 @@ namespace {
         data.profileCallbackCalls++;
         return f;
       };
+      auto fOnly = [&data](const std::vector<double> &xin) {
+        const double t1 = TimeOfDay();
+        const double f = (data.dim == 2) ? computeEnergyOnly2D(data, xin) :
+                                           computeEnergyOnly3D(data, xin);
+        data.profileCallback += TimeOfDay() - t1;
+        data.profileCallbackCalls++;
+        return f;
+      };
 
       const double tLBFGS = TimeOfDay();
-      GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, options);
+      GmshLBFGS::Result result = GmshLBFGS::minimize(x, fg, fOnly, options);
       data.profileLBFGS += TimeOfDay() - tLBFGS;
       data.profileLBFGSFunction += result.timeFunction;
       data.profileLBFGSDirection += result.timeDirection;
@@ -690,22 +1055,70 @@ namespace {
 
       const double dErel =
         data.energy > 0 ? std::abs(data.energy - EPrev) / data.energy : 0.;
+      const double detMinDelta = std::abs(data.JDetMin - detMinPrev);
+      double relMaxMove = 0., relRmsMove = 0., relQ95Move = 0.;
+      computeRelativeMove(xBeforeOuter, x, data.locked, data.dim, moveScales,
+                          relMaxMove, relRmsMove, relQ95Move);
       for(size_t i = 0; i < data.dim * NV; ++i) points[i] = x[i];
       if(data.dim == 3) {
         Msg::Info("GMSH Winslow 3D outer %d: eps %.6g, E %.6e, detmin "
-                  "%.6g, invalid %d, |g| %.6g, step %.6g, inner %d, "
-                  "term %d",
-                  iter, data.eps, data.energy, data.JDetMin, data.nbInvalid,
-                  lastGradNorm, lastStep, lastInner, result.terminationType);
+                  "%.6g, ddet %.3e, invalid %d, |g| %.6g, step %.6g, move "
+                  "%.3e/%.3e/%.3e, inner %d, term %d",
+                  iter, data.eps, data.energy, data.JDetMin, detMinDelta,
+                  data.nbInvalid, lastGradNorm, lastStep, relMaxMove, relRmsMove,
+                  relQ95Move, lastInner, result.terminationType);
       }
       if(result.terminationType != 4 &&
          !(result.terminationType == 5 && dErel > 1.e-5))
         nFail++;
 
       Msg::Debug("GMSH Winslow iter %d: eps=%g E=%.3e dE/E=%.3e "
-                 "min(detJ)=%g inner=%d term=%d",
-                 iter, data.eps, data.energy, dErel, data.JDetMin,
-                 result.iterations, result.terminationType);
+                 "min(detJ)=%g ddet=%.3e move=%.3e/%.3e/%.3e inner=%d term=%d",
+                 iter, data.eps, data.energy, dErel, data.JDetMin, detMinDelta,
+                 relMaxMove, relRmsMove, relQ95Move, result.iterations,
+                 result.terminationType);
+      const double detScale = std::max(1., std::abs(data.JDetMin));
+      const bool atFinalEps = data.eps <= epsMin * (1. + 1.e-8);
+      const double detImprovement = data.JDetMin - bestDetMin;
+      if(detImprovement > stopDetMinDelta * detScale) {
+        bestDetMin = data.JDetMin;
+        nQualityPlateau = 0;
+      }
+      else if(atFinalEps && data.nbInvalid == 0 &&
+              bestDetMin > detMinTarget && data.JDetMin > detMinTarget)
+        nQualityPlateau++;
+      else
+        nQualityPlateau = 0;
+      const bool meshStoppedMoving =
+        relRmsMove < stopRmsMove && relQ95Move < stopQ95Move;
+      const bool qualityStoppedImproving =
+        detMinDelta < stopDetMinDelta * detScale;
+      if(nQualityPlateau >= stopOuters) {
+        converged = true;
+        Msg::Info("GMSH Winslow %dD stopped: detmin plateau %.6g "
+                  "(best %.6g, target %.3e), invalid=0 for %d outer loops",
+                  data.dim, data.JDetMin, bestDetMin, detMinTarget,
+                  nQualityPlateau);
+        break;
+      }
+      if(stopRmsMove > 0. && stopQ95Move > 0. && atFinalEps &&
+         data.nbInvalid == 0 && data.JDetMin > detMinTarget &&
+         meshStoppedMoving && qualityStoppedImproving) {
+        nSmallMove++;
+        if(nSmallMove >= stopOuters) {
+          converged = true;
+          Msg::Info("GMSH Winslow %dD stopped: invalid=0, detmin %.6g > %.3e, "
+                    "move rms/q95 %.3e/%.3e < %.3e/%.3e, ddet %.3e < %.3e "
+                    "for %d outer loops",
+                    data.dim, data.JDetMin, detMinTarget, relRmsMove,
+                    relQ95Move, stopRmsMove, stopQ95Move, detMinDelta,
+                    stopDetMinDelta * detScale,
+                     nSmallMove);
+          break;
+        }
+      }
+      else
+        nSmallMove = 0;
       if(data.JDetMin > 0. && dErel < 1.e-5) {
         converged = true;
         Msg::Debug("GMSH Winslow iter %d: converged |E-E_prev|/E = %.3e < "
@@ -716,6 +1129,7 @@ namespace {
       if(nFail > iterFailMax) break;
       if(Cpu() - t0 > timeMax) break;
       EPrev = data.energy;
+      detMinPrev = data.JDetMin;
     }
     return converged;
   }
@@ -726,7 +1140,7 @@ bool untangle_triangles_2D_GMSH(
   const std::vector<std::array<uint32_t, 3>> &triangles,
   const std::vector<std::array<std::array<double, 2>, 3>> &triIdealShapes,
   double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
-  double timeMax)
+  double timeMax, bool printProfiling)
 {
   if(points.empty() || triangles.empty()) {
     Msg::Warning("Wrong input sizes (%li vertices, %li triangles) in GMSH 2D "
@@ -751,19 +1165,21 @@ bool untangle_triangles_2D_GMSH(
     optimize(data, x, points.front().data(), points.size(), iterMaxInner,
              iterMaxOuter, iterFailMax, timeMax);
   data.profileTotal = TimeOfDay() - data.profileTotal;
-  Msg::Info("GMSH Winslow 2D profiling: total %g s, LBFGS %g s, "
-            "energy/gradient %g s in %zu calls, threads %d..%d",
-            data.profileTotal, data.profileLBFGS, data.profileCallback,
-            data.profileCallbackCalls, data.profileThreadsMin,
-            data.profileThreadsMax);
-  Msg::Info("GMSH LBFGS 2D profiling: function %g s, direction %g s, "
-            "line-search %g s, update %g s, other %g s, evaluations %d",
-            data.profileLBFGSFunction, data.profileLBFGSDirection,
-            data.profileLBFGSLineSearch, data.profileLBFGSUpdate,
-            data.profileLBFGS - data.profileLBFGSFunction -
-              data.profileLBFGSDirection - data.profileLBFGSLineSearch -
-              data.profileLBFGSUpdate,
-            data.profileLBFGSEvaluations);
+  if(printProfiling) {
+    Msg::Info("GMSH Winslow 2D profiling: total %g s, LBFGS %g s, "
+              "energy/gradient %g s in %zu calls, threads %d..%d",
+              data.profileTotal, data.profileLBFGS, data.profileCallback,
+              data.profileCallbackCalls, data.profileThreadsMin,
+              data.profileThreadsMax);
+    Msg::Info("GMSH LBFGS 2D profiling: function %g s, direction %g s, "
+              "line-search %g s, update %g s, other %g s, evaluations %d",
+              data.profileLBFGSFunction, data.profileLBFGSDirection,
+              data.profileLBFGSLineSearch, data.profileLBFGSUpdate,
+              data.profileLBFGS - data.profileLBFGSFunction -
+                data.profileLBFGSDirection - data.profileLBFGSLineSearch -
+                data.profileLBFGSUpdate,
+              data.profileLBFGSEvaluations);
+  }
   return converged;
 }
 
@@ -772,7 +1188,7 @@ bool untangle_tetrahedra_GMSH(
   const std::vector<std::array<uint32_t, 4>> &tets,
   const std::vector<std::array<std::array<double, 3>, 4>> &tetIdealShapes,
   double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
-  double timeMax)
+  double timeMax, bool printProfiling)
 {
   if(points.empty() || tets.empty()) {
     Msg::Warning("Wrong input sizes (%li vertices, %li tetrahedra) in GMSH 3D "
@@ -803,18 +1219,20 @@ bool untangle_tetrahedra_GMSH(
     optimize(data, x, points.front().data(), points.size(), iterMaxInner,
              iterMaxOuter, iterFailMax, timeMax);
   data.profileTotal = TimeOfDay() - data.profileTotal;
-  Msg::Info("GMSH Winslow 3D profiling: total %g s, LBFGS %g s, "
-            "energy/gradient %g s in %zu calls, threads %d..%d",
-            data.profileTotal, data.profileLBFGS, data.profileCallback,
-            data.profileCallbackCalls, data.profileThreadsMin,
-            data.profileThreadsMax);
-  Msg::Info("GMSH LBFGS 3D profiling: function %g s, direction %g s, "
-            "line-search %g s, update %g s, other %g s, evaluations %d",
-            data.profileLBFGSFunction, data.profileLBFGSDirection,
-            data.profileLBFGSLineSearch, data.profileLBFGSUpdate,
-            data.profileLBFGS - data.profileLBFGSFunction -
-              data.profileLBFGSDirection - data.profileLBFGSLineSearch -
-              data.profileLBFGSUpdate,
-            data.profileLBFGSEvaluations);
+  if(printProfiling) {
+    Msg::Info("GMSH Winslow 3D profiling: total %g s, LBFGS %g s, "
+              "energy/gradient %g s in %zu calls, threads %d..%d",
+              data.profileTotal, data.profileLBFGS, data.profileCallback,
+              data.profileCallbackCalls, data.profileThreadsMin,
+              data.profileThreadsMax);
+    Msg::Info("GMSH LBFGS 3D profiling: function %g s, direction %g s, "
+              "line-search %g s, update %g s, other %g s, evaluations %d",
+              data.profileLBFGSFunction, data.profileLBFGSDirection,
+              data.profileLBFGSLineSearch, data.profileLBFGSUpdate,
+              data.profileLBFGS - data.profileLBFGSFunction -
+                data.profileLBFGSDirection - data.profileLBFGSLineSearch -
+                data.profileLBFGSUpdate,
+              data.profileLBFGSEvaluations);
+  }
   return converged;
 }

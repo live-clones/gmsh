@@ -54,8 +54,11 @@ namespace GmshLBFGS {
 
   using FunctionGradient =
     std::function<double(const std::vector<double> &x, std::vector<double> &g)>;
+  using Function = std::function<double(const std::vector<double> &x)>;
 
   Result minimize(std::vector<double> &x, const FunctionGradient &fg,
                   const Options &options = Options());
+  Result minimize(std::vector<double> &x, const FunctionGradient &fg,
+                  const Function &f, const Options &options = Options());
 
 } // namespace GmshLBFGS

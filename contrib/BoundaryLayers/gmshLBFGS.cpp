@@ -31,7 +31,7 @@
 #define F77NAME(x) (x##_)
 #endif
 
-#if defined(HAVE_BLAS) && !defined(HAVE_EIGEN)
+#if defined(HAVE_BLAS)
 extern "C" {
 double F77NAME(ddot)(int *n, double *x, int *incx, double *y, int *incy);
 void F77NAME(daxpy)(int *n, double *alpha, double *x, int *incx, double *y,
@@ -43,28 +43,28 @@ void F77NAME(dscal)(int *n, double *alpha, double *x, int *incx);
 
 namespace GmshLBFGS {
   namespace {
-#if defined(HAVE_EIGEN)
-    typedef Eigen::Map<Eigen::VectorXd> EigenVec;
-    typedef Eigen::Map<const Eigen::VectorXd> ConstEigenVec;
-#elif defined(HAVE_BLAS)
+#if defined(HAVE_BLAS)
     static int blasSize(size_t n)
     {
       return (n > (size_t)std::numeric_limits<int>::max()) ?
                std::numeric_limits<int>::max() :
                (int)n;
     }
+#elif defined(HAVE_EIGEN)
+    typedef Eigen::Map<Eigen::VectorXd> EigenVec;
+    typedef Eigen::Map<const Eigen::VectorXd> ConstEigenVec;
 #endif
 
     static double dot(const std::vector<double> &a,
                       const std::vector<double> &b)
     {
-#if defined(HAVE_EIGEN)
-      return ConstEigenVec(a.data(), a.size()).dot(
-        ConstEigenVec(b.data(), b.size()));
-#elif defined(HAVE_BLAS)
+#if defined(HAVE_BLAS)
       int n = blasSize(a.size()), inc = 1;
       return F77NAME(ddot)(&n, const_cast<double *>(a.data()), &inc,
                            const_cast<double *>(b.data()), &inc);
+#elif defined(HAVE_EIGEN)
+      return ConstEigenVec(a.data(), a.size()).dot(
+        ConstEigenVec(b.data(), b.size()));
 #else
       double val = 0.0;
       for(size_t i = 0; i < a.size(); ++i) val += a[i] * b[i];
@@ -80,12 +80,12 @@ namespace GmshLBFGS {
     static void axpy(double a, const std::vector<double> &x,
                      std::vector<double> &y)
     {
-#if defined(HAVE_EIGEN)
-      EigenVec(y.data(), y.size()) += a * ConstEigenVec(x.data(), x.size());
-#elif defined(HAVE_BLAS)
+#if defined(HAVE_BLAS)
       int n = blasSize(x.size()), inc = 1;
       F77NAME(daxpy)(&n, &a, const_cast<double *>(x.data()), &inc, y.data(),
                      &inc);
+#elif defined(HAVE_EIGEN)
+      EigenVec(y.data(), y.size()) += a * ConstEigenVec(x.data(), x.size());
 #else
       for(size_t i = 0; i < x.size(); ++i) y[i] += a * x[i];
 #endif
@@ -96,16 +96,16 @@ namespace GmshLBFGS {
                                  std::vector<double> &out)
     {
       out.resize(a.size());
-#if defined(HAVE_EIGEN)
-      EigenVec(out.data(), out.size()) =
-        ConstEigenVec(a.data(), a.size()) - ConstEigenVec(b.data(), b.size());
-#elif defined(HAVE_BLAS)
+#if defined(HAVE_BLAS)
       int n = blasSize(a.size()), inc = 1;
       double minusOne = -1.;
       F77NAME(dcopy)(&n, const_cast<double *>(a.data()), &inc, out.data(),
                      &inc);
       F77NAME(daxpy)(&n, &minusOne, const_cast<double *>(b.data()), &inc,
                      out.data(), &inc);
+#elif defined(HAVE_EIGEN)
+      EigenVec(out.data(), out.size()) =
+        ConstEigenVec(a.data(), a.size()) - ConstEigenVec(b.data(), b.size());
 #else
       for(size_t i = 0; i < a.size(); ++i) out[i] = a[i] - b[i];
 #endif
@@ -116,16 +116,16 @@ namespace GmshLBFGS {
                            std::vector<double> &out)
     {
       out.resize(x.size());
-#if defined(HAVE_EIGEN)
-      EigenVec(out.data(), out.size()) =
-        ConstEigenVec(x.data(), x.size()) +
-        step * ConstEigenVec(direction.data(), direction.size());
-#elif defined(HAVE_BLAS)
+#if defined(HAVE_BLAS)
       int n = blasSize(x.size()), inc = 1;
       F77NAME(dcopy)(&n, const_cast<double *>(x.data()), &inc, out.data(),
                      &inc);
       F77NAME(daxpy)(&n, &step, const_cast<double *>(direction.data()), &inc,
                      out.data(), &inc);
+#elif defined(HAVE_EIGEN)
+      EigenVec(out.data(), out.size()) =
+        ConstEigenVec(x.data(), x.size()) +
+        step * ConstEigenVec(direction.data(), direction.size());
 #else
       for(size_t i = 0; i < x.size(); ++i) out[i] = x[i] + step * direction[i];
 #endif
@@ -135,14 +135,14 @@ namespace GmshLBFGS {
                              std::vector<double> &out)
     {
       out.resize(x.size());
-#if defined(HAVE_EIGEN)
-      EigenVec(out.data(), out.size()) =
-        scale * ConstEigenVec(x.data(), x.size());
-#elif defined(HAVE_BLAS)
+#if defined(HAVE_BLAS)
       int n = blasSize(x.size()), inc = 1;
       F77NAME(dcopy)(&n, const_cast<double *>(x.data()), &inc, out.data(),
                      &inc);
       F77NAME(dscal)(&n, &scale, out.data(), &inc);
+#elif defined(HAVE_EIGEN)
+      EigenVec(out.data(), out.size()) =
+        scale * ConstEigenVec(x.data(), x.size());
 #else
       for(size_t i = 0; i < x.size(); ++i) out[i] = scale * x[i];
 #endif
@@ -150,11 +150,11 @@ namespace GmshLBFGS {
 
     static void scale(std::vector<double> &x, double scale)
     {
-#if defined(HAVE_EIGEN)
-      EigenVec(x.data(), x.size()) *= scale;
-#elif defined(HAVE_BLAS)
+#if defined(HAVE_BLAS)
       int n = blasSize(x.size()), inc = 1;
       F77NAME(dscal)(&n, &scale, x.data(), &inc);
+#elif defined(HAVE_EIGEN)
+      EigenVec(x.data(), x.size()) *= scale;
 #else
       for(size_t i = 0; i < x.size(); ++i) x[i] *= scale;
 #endif
@@ -164,6 +164,12 @@ namespace GmshLBFGS {
 
   Result minimize(std::vector<double> &x, const FunctionGradient &fg,
                   const Options &options)
+  {
+    return minimize(x, fg, Function(), options);
+  }
+
+  Result minimize(std::vector<double> &x, const FunctionGradient &fg,
+                  const Function &fOnly, const Options &options)
   {
     Result result;
     if(!fg || x.empty()) {
@@ -254,7 +260,7 @@ namespace GmshLBFGS {
         assignStep(x, direction, step, xNew);
         result.timeLineSearch += TimeOfDay() - t;
         t = TimeOfDay();
-        const double fNew = fg(xNew, gNew);
+        double fNew = fOnly ? fOnly(xNew) : fg(xNew, gNew);
         result.timeFunction += TimeOfDay() - t;
         result.functionEvaluations++;
 
@@ -265,6 +271,13 @@ namespace GmshLBFGS {
         }
 
         if(std::isfinite(fNew) && fNew <= f + options.armijo * step * descent) {
+          t = TimeOfDay();
+          if(fOnly) {
+            const double tg = TimeOfDay();
+            fNew = fg(xNew, gNew);
+            result.timeFunction += TimeOfDay() - tg;
+            result.functionEvaluations++;
+          }
           t = TimeOfDay();
           assignDifference(xNew, x, s);
           assignDifference(gNew, g, y);

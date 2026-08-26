@@ -34,12 +34,15 @@
 #include "bezierBasis.h"
 #include "fullMatrix.h"
 #include "qualityMeasuresJacobian.h"
+#include "meanPlaneSurfaceUntangler.h"
+#include "winslowParametric.h"
 #include "winslowUntanglerGMSH.h"
 
 #include <array>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <limits>
 #include <map>
@@ -1167,7 +1170,12 @@ namespace {
     }
 
     SPoint2 p;
-    if(!reparamMeshVertexOnFace(v, gf, p)) p = gf->parFromPoint(v->point());
+    double u = 0., vv = 0.;
+    if(v->onWhat() == gf && v->getParameter(0, u) &&
+       v->getParameter(1, vv))
+      p = SPoint2(u, vv);
+    else if(!reparamMeshVertexOnFace(v, gf, p))
+      p = gf->parFromPoint(v->point(), false);
     const uint32_t index = (uint32_t)points.size();
     indices[v] = index;
     points.push_back({p.x(), p.y()});
@@ -1207,7 +1215,7 @@ namespace {
     }
 
     SPoint3 xyz(bez(i, 0), bez(i, 1), bez(i, 2));
-    SPoint2 p = gf->parFromPoint(xyz);
+    SPoint2 p = gf->parFromPoint(xyz, false);
     const uint32_t index = (uint32_t)points.size();
     points.push_back({p.x(), p.y()});
     locked.push_back(lock);
@@ -1376,9 +1384,16 @@ namespace {
   static void classifyHighOrderVertexOnFace(GFace *gf, MVertex *v)
   {
     if(!gf || !v) return;
-    SPoint3 p = v->point();
-    double guess[2] = {0., 0.};
-    GPoint gp = gf->closestPoint(p, guess);
+    GPoint gp;
+    double u = 0., vv = 0.;
+    if(v->onWhat() == gf && v->getParameter(0, u) &&
+       v->getParameter(1, vv))
+      gp = gf->point(u, vv);
+    else {
+      SPoint3 p = v->point();
+      double guess[2] = {0., 0.};
+      gp = gf->closestPoint(p, guess);
+    }
     v->x() = gp.x();
     v->y() = gp.y();
     v->z() = gp.z();
@@ -1965,6 +1980,12 @@ namespace {
     const std::vector<std::array<uint32_t, 3>> &triangles,
     const std::vector<std::array<std::array<double, 2>, 3>> &sh)
   {
+    static const bool enabled = []() {
+      const char *env = std::getenv("GMSH_HIGH_ORDER_BL_BEZIER_POS");
+      return env && env[0] && std::atoi(env) != 0;
+    }();
+    if(!enabled) return;
+
     char name[256];
     std::snprintf(name, sizeof(name), "highOrderBL_bezier_face_%d_%s.pos",
                   gf->tag(), stage);
@@ -2435,17 +2456,19 @@ namespace {
               gr->tag(), numUpdated, maxUpdate);
   }
 
-  static void prepareFaceUntanglerP2(
+  static bool prepareFaceUntanglerP2(
     GFace *gf, const std::set<MElement *, MElementPtrLessThan> &toProcess,
     const std::set<MVertex *, MVertexPtrLessThan> &fixed,
-    bool useCurrentBezierAsIdeal)
+    bool useCurrentBezierAsIdeal, bool useMetricParametric,
+    int parametricQuadraturePoints,
+    const std::map<MElement *, double> *layers)
   {
     std::vector<MElement *> elements;
     for(auto e : gf->triangles)
       if(toProcess.find(e) != toProcess.end()) elements.push_back(e);
     for(auto e : gf->quadrangles)
       if(toProcess.find(e) != toProcess.end()) elements.push_back(e);
-    if(elements.empty()) return;
+    if(elements.empty()) return false;
 
     std::map<MEdge, int, MEdgeLessThan> edgeCount;
     for(auto e : elements)
@@ -2482,7 +2505,12 @@ namespace {
 
     auto vertexParam = [&](MVertex *v) {
       SPoint2 p;
-      if(!reparamMeshVertexOnFace(v, gf, p)) p = gf->parFromPoint(v->point());
+      double u = 0., vv = 0.;
+      if(v->onWhat() == gf && v->getParameter(0, u) &&
+         v->getParameter(1, vv))
+        p = SPoint2(u, vv);
+      else if(!reparamMeshVertexOnFace(v, gf, p))
+        p = gf->parFromPoint(v->point(), false);
       return std::array<double, 2>{p.x(), p.y()};
     };
     auto mid = [](const std::array<double, 2> &a,
@@ -2499,6 +2527,7 @@ namespace {
     };
 
     std::size_t numDegenerateBezierTriangles = 0;
+    std::size_t numLayerIdealQuads = 0;
     auto addPositiveTriangle =
       [&](uint32_t a, uint32_t b, uint32_t c,
           const std::array<std::array<double, 2>, 3> &ideal) {
@@ -2592,13 +2621,45 @@ namespace {
           std::array<double, 2>{},
           std::array<double, 2>{},
           std::array<double, 2>{}};
-        ideal[4] = mid(ideal[0], ideal[1]);
-        ideal[5] = mid(ideal[1], ideal[2]);
-        ideal[6] = mid(ideal[2], ideal[3]);
-        ideal[7] = mid(ideal[3], ideal[0]);
-        ideal[8] = avg4(ideal[0], ideal[1], ideal[2], ideal[3]);
+
+        bool useLayerIdeal = false;
+        if(useCurrentBezierAsIdeal && layers) {
+          auto itLayer = layers->find(e);
+          if(itLayer != layers->end() && itLayer->second > 0.) {
+            MVertex *v0 = e->getVertex(0);
+            MVertex *v1 = e->getVertex(1);
+            const double dx = v1->x() - v0->x();
+            const double dy = v1->y() - v0->y();
+            const double dz = v1->z() - v0->z();
+            const double edgeLength = std::sqrt(dx * dx + dy * dy + dz * dz);
+            const double layerWidth = itLayer->second;
+            if(edgeLength > 0. && layerWidth > 0.) {
+              ideal = {std::array<double, 2>{0., 0.},
+                       std::array<double, 2>{edgeLength, 0.},
+                       std::array<double, 2>{edgeLength, layerWidth},
+                       std::array<double, 2>{0., layerWidth},
+                       std::array<double, 2>{0.5 * edgeLength, 0.},
+                       std::array<double, 2>{edgeLength, 0.5 * layerWidth},
+                       std::array<double, 2>{0.5 * edgeLength, layerWidth},
+                       std::array<double, 2>{0., 0.5 * layerWidth},
+                       std::array<double, 2>{0.5 * edgeLength,
+                                             0.5 * layerWidth}};
+              useLayerIdeal = true;
+              numLayerIdealQuads++;
+            }
+          }
+        }
+
+        if(!useLayerIdeal) {
+          ideal[4] = mid(ideal[0], ideal[1]);
+          ideal[5] = mid(ideal[1], ideal[2]);
+          ideal[6] = mid(ideal[2], ideal[3]);
+          ideal[7] = mid(ideal[3], ideal[0]);
+          ideal[8] = avg4(ideal[0], ideal[1], ideal[2], ideal[3]);
+        }
+
         for(const auto &tri : quadBezierTriangles) {
-          if(useCurrentBezierAsIdeal)
+          if(useCurrentBezierAsIdeal && !useLayerIdeal)
             addPositiveTriangle(v[tri[0]], v[tri[1]], v[tri[2]],
                                 {points[v[tri[0]]], points[v[tri[1]]],
                                  points[v[tri[2]]]});
@@ -2615,9 +2676,29 @@ namespace {
     if(!patchElements.empty())
       putLagrangeNodesAtBezierControlPoints(gf, patchElements, points);
 
+    bool metricParametricOk = false;
     if(!triangles.empty()) {
+      Msg::Info("High-order boundary layer: untangling face %d (%s, "
+                "geomType %d) with %zu P2 elements, %zu Bezier triangles "
+                "and %zu points%s",
+                gf->tag(), gf->getTypeString().c_str(), (int)gf->geomType(),
+                elements.size(), triangles.size(), points.size(),
+                useMetricParametric ? " using metric-parametric Winslow" :
+                                      "");
       writeBezierFaceUntanglerPos(gf, "before", points, locked, triangles, sh);
-      untangle_triangles_2D_GMSH(points, locked, triangles, sh, 1.e+0);
+      if(useMetricParametric) {
+        metricParametricOk =
+          untangle_triangles_parametric_GMSH(gf, points, locked, triangles, sh,
+                                             1.e+0, 300, 9999.,
+                                             parametricQuadraturePoints);
+        if(!metricParametricOk)
+          Msg::Warning("Metric-parametric P2 surface untangler failed on face "
+                       "%d; falling back to standard parametric surface "
+                       "untangler",
+                       gf ? gf->tag() : 0);
+      }
+      if(!useMetricParametric || !metricParametricOk)
+        untangle_triangles_2D_GMSH(points, locked, triangles, sh, 1.e+0);
       writeBezierFaceUntanglerPos(gf, "after", points, locked, triangles, sh);
     }
 
@@ -2630,16 +2711,96 @@ namespace {
     if(numDegenerateBezierTriangles)
       Msg::Info("High-order boundary layer face %d: prepared %zu P2 elements "
                 "as %zu low-order triangles, %zu points, %zu locked, skipped "
-                "%zu degenerate triangles",
+                "%zu degenerate triangles%s",
                 gf->tag(), elements.size(), triangles.size(), points.size(),
-                nLocked, numDegenerateBezierTriangles);
+                nLocked, numDegenerateBezierTriangles,
+                numLayerIdealQuads ? " (layer ideal quads)" : "");
     else
     Msg::Info("High-order boundary layer face %d: prepared %zu P2 elements "
-              "as %zu low-order triangles, %zu points, %zu locked%s",
+              "as %zu low-order triangles, %zu points, %zu locked%s%s",
               gf->tag(), elements.size(), triangles.size(), points.size(),
               nLocked,
               useCurrentBezierAsIdeal ? " (current Bezier ideal shapes)" :
-                                        "");
+                                        "",
+              numLayerIdealQuads ? " (layer ideal quads)" : "");
+    return !useMetricParametric || metricParametricOk;
+  }
+
+  struct FaceUntanglerSelectionStats {
+    std::size_t empty = 0;
+    std::size_t meanPlane = 0;
+    std::size_t metricParametric = 0;
+    std::size_t fallbackParametric = 0;
+    std::size_t parametric = 0;
+  };
+
+  static std::size_t countFaceP2Elements(
+    GFace *gf, const std::set<MElement *, MElementPtrLessThan> &toProcess)
+  {
+    if(!gf) return 0;
+    std::size_t n = 0;
+    for(auto e : gf->triangles)
+      if(toProcess.find(e) != toProcess.end() &&
+         e->getTypeForMSH() == MSH_TRI_6)
+        n++;
+    for(auto e : gf->quadrangles)
+      if(toProcess.find(e) != toProcess.end() &&
+         e->getTypeForMSH() == MSH_QUA_9)
+        n++;
+    return n;
+  }
+
+  static void prepareFaceUntanglerP2Selected(
+    GFace *gf, const std::set<MElement *, MElementPtrLessThan> &toProcess,
+    const std::set<MVertex *, MVertexPtrLessThan> &fixed,
+    bool useCurrentBezierAsIdeal, int surfaceUntangler,
+    double meanPlaneTolerance, double meanPlaneExtensionTolerance,
+    int meanPlanePatchRings, int meanPlaneSweeps,
+    double meanPlaneMoveTolerance, bool meanPlaneDebugPatches,
+    int parametricQuadraturePoints,
+    const std::map<MElement *, double> *layers,
+    FaceUntanglerSelectionStats *stats)
+  {
+    if(!countFaceP2Elements(gf, toProcess)) {
+      if(stats) stats->empty++;
+      return;
+    }
+
+    if(surfaceUntangler == 3) {
+      MeanPlaneSurfaceUntanglerOptions options;
+      options.distanceTolerance = meanPlaneTolerance;
+      options.extensionDistanceTolerance = meanPlaneExtensionTolerance;
+      options.maxPatchRings = meanPlanePatchRings;
+      options.numSweeps = meanPlaneSweeps;
+      options.moveTolerance = meanPlaneMoveTolerance;
+      options.writePatchDebugPos = meanPlaneDebugPatches;
+      bool ok = untangleSurfaceMeanPlanePatches(gf, toProcess, fixed, options);
+      if(stats) {
+        if(ok)
+          stats->meanPlane++;
+        else
+          stats->fallbackParametric++;
+      }
+      if(ok) return;
+      Msg::Warning("Mean-plane P2 surface untangler failed on face %d; "
+                   "falling back to standard parametric surface untangler",
+                   gf ? gf->tag() : 0);
+    }
+
+    bool ok =
+      prepareFaceUntanglerP2(gf, toProcess, fixed, useCurrentBezierAsIdeal,
+                             surfaceUntangler == 2,
+                             parametricQuadraturePoints, layers);
+    if(surfaceUntangler == 2) {
+      if(stats) {
+        if(ok)
+          stats->metricParametric++;
+        else
+          stats->fallbackParametric++;
+      }
+    }
+    else if(stats)
+      stats->parametric++;
   }
 
   static void collectElements(GModel *m, std::vector<MElement *> &elements)
@@ -2883,7 +3044,12 @@ bool untangleHighOrderBoundaryLayerPN(
   GModel *m, const std::set<MElement *, MElementPtrLessThan> &toProcess,
   const std::set<MVertex *, MVertexPtrLessThan> &fixed, int order,
   std::map<MElement *, double> *layers, const std::vector<double> *widths,
-  int strategy, bool postSplitUntangle)
+  int strategy, bool postSplitUntangle, bool postSplitSurfaceUntangle,
+  int surfaceUntangler, double meanPlaneTolerance,
+  double meanPlaneExtensionTolerance, int meanPlanePatchRings,
+  int meanPlaneSweeps, double meanPlaneMoveTolerance,
+  bool meanPlaneDebugPatches,
+  int parametricQuadraturePoints)
 {
   if(order <= 1) return true;
 
@@ -2899,6 +3065,7 @@ bool untangleHighOrderBoundaryLayerPN(
   std::set<MElement *, MElementPtrLessThan> toProcessP2;
   if(order == 2) {
     validateP2PrismSubdivisionTables();
+    FaceUntanglerSelectionStats faceUntanglerStats;
 
     std::set<ElementKey> toProcessKeys;
     std::map<ElementKey, double> layerKeys;
@@ -2929,7 +3096,15 @@ bool untangleHighOrderBoundaryLayerPN(
       Msg::Info("High-order boundary layer: untangling large P2 elements "
                 "before parametric layer splitting");
       for(auto it = m->firstFace(); it != m->lastFace(); ++it)
-        prepareFaceUntanglerP2(*it, toProcessP2, fixed, false);
+        prepareFaceUntanglerP2Selected(*it, toProcessP2, fixed, false,
+                                       surfaceUntangler,
+                                       meanPlaneTolerance,
+                                       meanPlaneExtensionTolerance,
+                                       meanPlanePatchRings, meanPlaneSweeps,
+                                       meanPlaneMoveTolerance,
+                                       meanPlaneDebugPatches,
+                                       parametricQuadraturePoints, layers,
+                                       &faceUntanglerStats);
       checkHighOrderBoundaryFaceSharingP2(m, "after face untangling");
       const bool hasRegions = m->firstRegion() != m->lastRegion();
       if(hasRegions) {
@@ -2960,14 +3135,40 @@ bool untangleHighOrderBoundaryLayerPN(
       }
       else {
         splitHighOrderQuadsParametricP2(m, *layers, *widths, toProcessP2);
-        for(auto it = m->firstFace(); it != m->lastFace(); ++it)
-          prepareFaceUntanglerP2(*it, toProcessP2, fixed, true);
+        stitchHighOrderMeshNodes(m);
+        if(postSplitSurfaceUntangle) {
+          Msg::Info("High-order boundary layer: post-split surface untangling "
+                    "enabled");
+          for(auto it = m->firstFace(); it != m->lastFace(); ++it)
+            prepareFaceUntanglerP2Selected(*it, toProcessP2, fixed, true,
+                                           surfaceUntangler,
+                                           meanPlaneTolerance,
+                                           meanPlaneExtensionTolerance,
+                                           meanPlanePatchRings, meanPlaneSweeps,
+                                           meanPlaneMoveTolerance,
+                                           meanPlaneDebugPatches,
+                                           parametricQuadraturePoints, layers,
+                                           &faceUntanglerStats);
+        }
+        else {
+          Msg::Info("High-order boundary layer: using reference-space split "
+                    "of large P2 surface elements without post-split surface "
+                    "untangling");
+        }
         checkHighOrderBoundaryFaceSharingP2(m, "after parametric splitting");
       }
     }
     else {
       for(auto it = m->firstFace(); it != m->lastFace(); ++it)
-        prepareFaceUntanglerP2(*it, toProcessP2, fixed, false);
+        prepareFaceUntanglerP2Selected(*it, toProcessP2, fixed, false,
+                                       surfaceUntangler,
+                                       meanPlaneTolerance,
+                                       meanPlaneExtensionTolerance,
+                                       meanPlanePatchRings, meanPlaneSweeps,
+                                       meanPlaneMoveTolerance,
+                                       meanPlaneDebugPatches,
+                                       parametricQuadraturePoints, layers,
+                                       &faceUntanglerStats);
       checkHighOrderBoundaryFaceSharingP2(m, "after face untangling");
       writeDebugMesh(m, "highOrderBL_before_volume_untangle.msh",
                      "before P2 volume untangling");
@@ -2975,7 +3176,19 @@ bool untangleHighOrderBoundaryLayerPN(
         prepareRegionUntanglerP2(*it, toProcessP2, fixedRegionP2);
       checkHighOrderBoundaryFaceSharingP2(m, "after volume untangling");
     }
+
+    Msg::Info("High-order boundary layer P2 face untangler summary: "
+              "mean-plane %zu, metric-parametric %zu, fallback parametric %zu, "
+              "parametric %zu, empty %zu",
+              faceUntanglerStats.meanPlane,
+              faceUntanglerStats.metricParametric,
+              faceUntanglerStats.fallbackParametric,
+              faceUntanglerStats.parametric, faceUntanglerStats.empty);
   }
+  else
+    Msg::Info("High-order boundary layer: order %d is not wired to the "
+              "metric-parametric surface untangler (currently P2 only)",
+              order);
 
   const int modelDim = m->getDim();
   if(modelDim >= 2)

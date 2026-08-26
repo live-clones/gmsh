@@ -19,18 +19,12 @@
 #include <cstdint>
 #include <vector>
 
-bool untangle_triangles_2D_GMSH(
-  std::vector<std::array<double, 2>> &points, const std::vector<bool> &locked,
+class GFace;
+
+bool untangle_triangles_parametric_GMSH(
+  GFace *gf, std::vector<std::array<double, 2>> &parametricPoints,
+  const std::vector<bool> &locked,
   const std::vector<std::array<uint32_t, 3>> &triangles,
   const std::vector<std::array<std::array<double, 2>, 3>> &triIdealShapes,
-  double lambda = 1., int iterMaxInner = 300, int iterMaxOuter = 100,
-  int iterFailMax = 10, double timeMax = 9999.,
-  bool printProfiling = true);
-
-bool untangle_tetrahedra_GMSH(
-  std::vector<std::array<double, 3>> &points, const std::vector<bool> &locked,
-  const std::vector<std::array<uint32_t, 4>> &tets,
-  const std::vector<std::array<std::array<double, 3>, 4>> &tetIdealShapes,
-  double lambda = 1., int iterMaxInner = 300, int iterMaxOuter = 100,
-  int iterFailMax = 10, double timeMax = 9999.,
-  bool printProfiling = true);
+  double lambda = 1., int iterMax = 300, double timeMax = 9999.,
+  int quadraturePoints = 3);

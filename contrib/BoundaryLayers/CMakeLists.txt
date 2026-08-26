@@ -2,6 +2,8 @@ set(SRC
   BoundaryLayer.cpp
   gmshLBFGS.cpp
   highOrderBoundaryLayerUntangler.cpp
+  meanPlaneSurfaceUntangler.cpp
+  winslowParametric.cpp
   winslowUntanglerGMSH.cpp
 )
 
