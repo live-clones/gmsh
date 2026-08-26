@@ -1370,7 +1370,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MeshSizeFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
     "Compute mesh element sizes from values given at geometry points defining "
     "parametric curves"},
-  { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
+  { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 2. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
     "METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)" },
