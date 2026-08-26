@@ -69,7 +69,7 @@ Thierry Thomas, Joonas Haapsaari, Jani V"alimaa, Erik Schaubelt, Louis Denis,
 Francis Franklin, Florian Blachère, Aleksandr Artemyev, Carlos Ballesteros,
 Theodore Chang, Tom Gillam, Francisco Orlandini, Simon Février, Jules Zaleski,
 Valentin Boettcher, Lukas Hoghoj, Leo Lahti, Alex Hill, Hugh Carson, Jiri
-Szotkowski, Antoine Quiriny, Bert-Uwe Koehler.
+Szotkowski, Antoine Quiriny, Bert-Uwe Koehler, David F. Meretzki.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See

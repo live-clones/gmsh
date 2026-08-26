@@ -7728,13 +7728,19 @@ module gmsh
 
   !> Classify ("color") the surface mesh based on the angle threshold `angle'
   !! (in radians), and create new discrete surfaces, curves and points
-  !! accordingly. If `boundary' is set, also create discrete curves on the
-  !! boundary if the surface is open. If `forReparametrization' is set, create
-  !! curves and surfaces that can be reparametrized using a single map. If
-  !! `curveAngle' is less than Pi, also force curves to be split according to
-  !! `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
-  !! entities and export the discrete entities in the built-in CAD kernel.
+  !! accordingly. The `oldSurfaceTags' and `newSurfaceTags' vectors map the old
+  !! surface tags to the new surface tags, ie. `oldSurfaceTags[i]' corresponds
+  !! to `newSurfaceTags[i]'. Removed surface tags are not returned, only old
+  !! surfaces that map to one or more new surfaces are returned. If `boundary'
+  !! is set, also create discrete curves on the boundary if the surface is open.
+  !! If `forReparametrization' is set, create curves and surfaces that can be
+  !! reparametrized using a single map. If `curveAngle' is less than Pi, also
+  !! force curves to be split according to `curveAngle'. If `exportDiscrete' is
+  !! set, clear any built-in CAD kernel entities and export the discrete
+  !! entities in the built-in CAD kernel.
   subroutine gmshModelMeshClassifySurfaces(angle, &
+                                           oldSurfaceTags, &
+                                           newSurfaceTags, &
                                            boundary, &
                                            forReparametrization, &
                                            curveAngle, &
@@ -7742,6 +7748,10 @@ module gmsh
                                            ierr)
     interface
     subroutine C_API(angle, &
+                     api_oldSurfaceTags_, &
+                     api_oldSurfaceTags_n_, &
+                     api_newSurfaceTags_, &
+                     api_newSurfaceTags_n_, &
                      boundary, &
                      forReparametrization, &
                      curveAngle, &
@@ -7750,6 +7760,10 @@ module gmsh
       bind(C, name="gmshModelMeshClassifySurfaces")
       use, intrinsic :: iso_c_binding
       real(c_double), value, intent(in) :: angle
+      type(c_ptr), intent(out) :: api_oldSurfaceTags_
+      integer(c_size_t), intent(out) :: api_oldSurfaceTags_n_
+      type(c_ptr), intent(out) :: api_newSurfaceTags_
+      integer(c_size_t), intent(out) :: api_newSurfaceTags_n_
       integer(c_int), value, intent(in) :: boundary
       integer(c_int), value, intent(in) :: forReparametrization
       real(c_double), value, intent(in) :: curveAngle
@@ -7758,17 +7772,31 @@ module gmsh
     end subroutine C_API
     end interface
     real(c_double), intent(in) :: angle
+    integer(c_int), dimension(:), allocatable, intent(out) :: oldSurfaceTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: newSurfaceTags
     logical, intent(in), optional :: boundary
     logical, intent(in), optional :: forReparametrization
     real(c_double), intent(in), optional :: curveAngle
     logical, intent(in), optional :: exportDiscrete
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_oldSurfaceTags_
+    integer(c_size_t) :: api_oldSurfaceTags_n_
+    type(c_ptr) :: api_newSurfaceTags_
+    integer(c_size_t) :: api_newSurfaceTags_n_
     call C_API(angle=real(angle, c_double), &
+         api_oldSurfaceTags_=api_oldSurfaceTags_, &
+         api_oldSurfaceTags_n_=api_oldSurfaceTags_n_, &
+         api_newSurfaceTags_=api_newSurfaceTags_, &
+         api_newSurfaceTags_n_=api_newSurfaceTags_n_, &
          boundary=optval_c_bool(.true., boundary), &
          forReparametrization=optval_c_bool(.false., forReparametrization), &
          curveAngle=optval_c_double(M_PI, curveAngle), &
          exportDiscrete=optval_c_bool(.true., exportDiscrete), &
          ierr_=ierr)
+    oldSurfaceTags = ovectorint_(api_oldSurfaceTags_, &
+      api_oldSurfaceTags_n_)
+    newSurfaceTags = ovectorint_(api_newSurfaceTags_, &
+      api_newSurfaceTags_n_)
   end subroutine gmshModelMeshClassifySurfaces
 
   !> Create a geometry for the discrete entities `dimTags' (given as a vector of
