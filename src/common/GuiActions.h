@@ -42,6 +42,10 @@ void optionsSave(bool toProjectFile);
 
 // reset every option to its default value, after confirmation
 void optionsRestoreDefaults();
+// the buttons the option window holds, which do rather than set: picking the
+// rotation centre, fitting the axes to what is visible, stepping a view
+// through its time steps
+void optionsAction(const std::string &what);
 
 // --- solver / ONELAB
 

@@ -1000,6 +1000,109 @@ void optionsSave(bool toProjectFile)
   Msg::StatusBar(true, "Done writing '%s'", fileName.c_str());
 }
 
+// What each view the option window is editing is: the one it shows.
+static void _forEachEditedView(std::function<void(int)> what)
+{
+#if defined(HAVE_POST)
+  int i = Dialog::optionsView();
+  if(i >= 0 && i < (int)PView::list.size()) what(i);
+#endif
+}
+
+void optionsAction(const std::string &what)
+{
+  if(what == "rotation_center_select") {
+    Msg::StatusGl("Select geometrical entity, mesh element or post-processing "
+                  "view\n[Press 'q' to abort]");
+    CTX::instance()->pickElements = 1;
+    CTX::instance()->mesh.changed = ENT_ALL;
+    drawContext::global()->draw();
+    if(Gui::selectEntity(ENT_ALL) == 'l') {
+      SPoint3 pc(0., 0., 0.);
+      if(Gui::selectedVertices().size())
+        pc.setPosition(Gui::selectedVertices()[0]->x(),
+                       Gui::selectedVertices()[0]->y(),
+                       Gui::selectedVertices()[0]->z());
+      else if(Gui::selectedElements().size())
+        pc = Gui::selectedElements()[0]->barycenter();
+      else if(Gui::selectedEdges().size())
+        pc = Gui::selectedEdges()[0]->bounds().center();
+      else if(Gui::selectedFaces().size())
+        pc = Gui::selectedFaces()[0]->bounds().center();
+      else if(Gui::selectedRegions().size())
+        pc = Gui::selectedRegions()[0]->bounds().center();
+#if defined(HAVE_POST)
+      else if(Gui::selectedViews().size() && Gui::selectedViews()[0]->getData())
+        pc = Gui::selectedViews()[0]->getData()->getBoundingBox().center();
+#endif
+      opt_general_rotation_center0(0, GMSH_SET | GMSH_GUI, pc.x());
+      opt_general_rotation_center1(0, GMSH_SET | GMSH_GUI, pc.y());
+      opt_general_rotation_center2(0, GMSH_SET | GMSH_GUI, pc.z());
+      if(drawContext *ctx = Gui::getCurrentDrawContext())
+        ctx->recenterForRotationCenterChange(pc);
+      Gui::refreshDialog(Dialog::Manipulator);
+    }
+    CTX::instance()->pickElements = 0;
+    CTX::instance()->mesh.changed = ENT_ALL;
+    Msg::StatusGl("");
+    drawContext::global()->draw();
+  }
+  else if(what == "axes_fit") {
+    SBoundingBox3d bbox = GModel::current()->bounds(true);
+#if defined(HAVE_POST)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(PView::list[i]->getOptions()->visible &&
+         !PView::list[i]->getData()->getBoundingBox().empty())
+        bbox += PView::list[i]->getData()->getBoundingBox();
+#endif
+    if(bbox.empty())
+      bbox = SBoundingBox3d(CTX::instance()->min[0], CTX::instance()->min[1],
+                            CTX::instance()->min[2], CTX::instance()->max[0],
+                            CTX::instance()->max[1], CTX::instance()->max[2]);
+    opt_general_axes_xmin(0, GMSH_SET | GMSH_GUI, bbox.min().x());
+    opt_general_axes_ymin(0, GMSH_SET | GMSH_GUI, bbox.min().y());
+    opt_general_axes_zmin(0, GMSH_SET | GMSH_GUI, bbox.min().z());
+    opt_general_axes_xmax(0, GMSH_SET | GMSH_GUI, bbox.max().x());
+    opt_general_axes_ymax(0, GMSH_SET | GMSH_GUI, bbox.max().y());
+    opt_general_axes_zmax(0, GMSH_SET | GMSH_GUI, bbox.max().z());
+    drawContext::global()->draw();
+  }
+#if defined(HAVE_POST)
+  else if(what == "view_timestep_down" || what == "view_timestep_up") {
+    double step = (what == "view_timestep_up") ? 1. : -1.;
+    _forEachEditedView([step](int i) {
+      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                        opt_view_timestep(i, GMSH_GET, 0) + step);
+    });
+    drawContext::global()->draw();
+  }
+  else if(what == "view_range_min") {
+    _forEachEditedView([](int i) {
+      opt_view_custom_min(i, GMSH_SET | GMSH_GUI,
+                          opt_view_min_visible(i, GMSH_GET, 0));
+    });
+    drawContext::global()->draw();
+  }
+  else if(what == "view_range_max") {
+    _forEachEditedView([](int i) {
+      opt_view_custom_max(i, GMSH_SET | GMSH_GUI,
+                          opt_view_max_visible(i, GMSH_GET, 0));
+    });
+    drawContext::global()->draw();
+  }
+  else if(what == "view_recursion_down" || what == "view_recursion_up") {
+    double step = (what == "view_recursion_up") ? 1. : -1.;
+    _forEachEditedView([step](int i) {
+      double v = opt_view_max_recursion_level(i, GMSH_GET, 0) + step;
+      if(v >= 0.) opt_view_max_recursion_level(i, GMSH_SET | GMSH_GUI, v);
+    });
+    drawContext::global()->draw();
+  }
+#endif
+  else
+    Msg::Debug("No option window action '%s'", what.c_str());
+}
+
 void optionsRestoreDefaults()
 {
   if(!Msg::GetAnswer("Do you really want to reset all the options to their "

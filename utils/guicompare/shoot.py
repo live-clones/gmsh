@@ -469,11 +469,57 @@ def stop_driver(proc):
         proc.wait()
 
 
+def grab_window(dpy, win, x, y):
+    """Photograph a whole window off the screen itself.
+
+    A window of its own that Dear ImGui gives a dialog is an OpenGL drawable
+    whose front buffer the X server will not hand back; what the screen shows
+    of it, it will.
+    """
+    try:
+        g = win.get_geometry()
+        root = dpy.screen().root
+        # a rectangle that runs off the screen is refused, and a window wider
+        # than the screen is worth seeing anyway, cut off or not
+        w = min(g.width, dpy.screen().width_in_pixels - x)
+        h = min(g.height, dpy.screen().height_in_pixels - y)
+        raw = root.get_image(x, y, w, h, X.ZPixmap, 0xffffffff).data
+        if isinstance(raw, str):
+            raw = raw.encode("latin-1")
+        return Image.frombytes("RGB", (w, h), bytes(raw), "raw", "BGRX")
+    except Exception:
+        return None
+
+
+def detached(dpy, dialog, main):
+    """The window of its own Dear ImGui gives a dialog too large to fit inside
+    the application window, if there is one."""
+    want = re.compile(dialog_title(dialog))
+    for name, w, x, y, dw, dh in named_windows(dpy):
+        if main is not None and w.id == main.id:
+            continue
+        if not want.search(name):
+            continue
+        # only one that can be photographed: a window still being mapped, or
+        # the frame a window manager wraps it in, cannot
+        try:
+            if w.get_attributes().map_state != X.IsViewable:
+                continue
+        except Exception:
+            continue
+        return (name, w, x, y, dw, dh)
+    return None
+
+
 def press_inside(dpy, build, point, dialog, wx, wy):
     """Click a point of the dialog itself. In Dear ImGui the dialog sits at a
     known place inside the one window; in FLTK it is a window of its own and
     the X server says where it is."""
     if build == "imgui":
+        apart = detached(dpy, dialog, None)
+        if apart:
+            click(dpy, apart[2] + point[0], apart[3] + point[1])
+            return True
         click(dpy, wx + DIALOG_POS[0] + point[0], wy + DIALOG_POS[1] + point[1])
         return True
     found = wait_for(dpy, lambda n: re.search(dialog_title(dialog), n),
@@ -572,9 +618,20 @@ def main():
                         time.sleep(0.5)
 
                     if args.build == "imgui":
+                        # Dear ImGui gives a window of its own to a dialog that
+                        # does not fit inside the application window, and the X
+                        # server then hands it over by name, as in FLTK
+                        out = "%s-%s.png" % (args.build, name)
+                        apart = detached(dpy, spec["dialog"], win)
+                        if apart:
+                            picture = grab_window(dpy, apart[1], apart[2], apart[3])
+                            if picture:
+                                picture.save(os.path.join(args.out, out))
+                                print("SHOT %s  %dx%d" % (out, picture.width,
+                                                          picture.height))
+                                continue
                         after = grab(dpy, win, ww, wh)
                         box = imgui_box(after, DIALOG_POS)
-                        out = "%s-%s.png" % (args.build, name)
                         if not box:
                             failures.append("%s: no dialog at %s" % (name, DIALOG_POS))
                             after.save(os.path.join(
@@ -651,6 +708,14 @@ def main():
 
                 out = "%s-%s.png" % (args.build, name)
                 if args.build == "imgui":
+                    apart = detached(dpy, spec["dialog"], win)
+                    if apart:
+                        picture = grab_window(dpy, apart[1], apart[2], apart[3])
+                        if picture:
+                            picture.save(os.path.join(args.out, out))
+                            print("SHOT %s  %dx%d" % (out, picture.width,
+                                                      picture.height))
+                            continue
                     # Here a dialog is a window of Dear ImGui inside the one
                     # window of the application, so there is nothing for the X
                     # server to hand over. Its position is known -- it was

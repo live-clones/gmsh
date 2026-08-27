@@ -34,6 +34,7 @@ namespace Dialog {
 
   double Field::getNumber() const
   {
+    if(readNumber) return readNumber();
     if(optionName.size()) {
       double v = 0.;
       NumberOption(GMSH_GET, optionCategory.c_str(), optionIndex,
@@ -48,6 +49,10 @@ namespace Dialog {
 
   void Field::setNumber(double v)
   {
+    if(writeNumber) {
+      writeNumber(v);
+      return;
+    }
     if(optionName.size()) {
       NumberOption(GMSH_SET | GMSH_GUI, optionCategory.c_str(), optionIndex,
                    optionName.c_str(), v, false);

@@ -52,6 +52,11 @@ namespace Dialog {
     double *number;
     bool *flag;
     unsigned int *colour;
+    // Or a pair of functions, for what is reached neither by a variable nor by
+    // name: a few options of the option window are accessors with a side
+    // effect and no entry in the option table.
+    std::function<double()> readNumber;
+    std::function<void(double)> writeNumber;
     // Instead of a variable, the field can edit a Gmsh option, addressed the
     // way the option file does. The interfaces never see the difference: they
     // go through the accessors below.
