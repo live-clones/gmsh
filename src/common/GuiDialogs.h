@@ -118,6 +118,10 @@ namespace Dialog {
     // happens -- and the description says the weight rather than the colour,
     // which is the interface's to choose.
     bool alert;
+    // A rule across the pane at the top of this line, as the window this
+    // reproduces draws between two groups of options inside one tab. It is
+    // not a line of its own: the text of the field is written under it.
+    bool rule;
     // A check that folds a part of the dialog away rather than holding a
     // setting: it is drawn as a disclosure toggle, with an arrow saying which
     // way it goes.
@@ -148,7 +152,7 @@ namespace Dialog {
     Field()
       : kind(Text), text(nullptr), integer(nullptr), number(nullptr),
         flag(nullptr), colour(nullptr), optionIndex(0), list(nullptr), rows(5), multiple(false),
-        alert(false), disclosure(false), minimum(0.),
+        alert(false), rule(false), disclosure(false), minimum(0.),
         maximum(0.), step(0.), sameRow(false), packed(false), widthEm(0.),
         widthShare(0.)
     {
@@ -240,7 +244,12 @@ namespace Dialog {
     // them the room, which the panel that asks for it knows and the builders
     // do not.
     bool buttonsInFooter;
-    Panel() : tabbed(true), buttonsInFooter(false) {}
+    // The least a pane is worth, in lines: a window whose height follows
+    // whichever pane is showing is one that will not sit still, and the
+    // option window this reproduces is twelve lines tall whatever category it
+    // is on. Zero lets the panes decide.
+    int leastRows;
+    Panel() : tabbed(true), buttonsInFooter(false), leastRows(0) {}
   };
 
   // which dialog: the numbering Gui::showDialog() uses

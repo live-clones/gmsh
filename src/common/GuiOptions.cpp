@@ -124,6 +124,9 @@ namespace Dialog {
 #define MULTI(label, names) {RowMulti, nullptr, label, names, nullptr, 0., 0., nullptr, false}
 #define CHECKFN(label, fn) {RowFunction, nullptr, label, nullptr, nullptr, 0., 0., fn, false}
 #define CAPTION(text) {RowCaption, nullptr, text, nullptr, nullptr, 0., 0., nullptr, false}
+// one with a rule over it: what follows it is a group of its own
+#define SECTION(text) \
+  {RowCaption, nullptr, text, nullptr, nullptr, 1., 0., nullptr, false}
 // a button at the right end of the line above it
 #define ACTION_RIGHT(id, label) \
   {RowAction, id, label, nullptr, nullptr, 1., 0., nullptr, false}
@@ -179,6 +182,9 @@ namespace Dialog {
   const char *const _c_colorScheme[] = {"Light", "Default", "Grayscale", "Dark",  nullptr};
   const char *const _c_backgroundGradient[] = {"None", "Vertical", "Horizontal", "Radial",  nullptr};
   const char *const _c_labelType[] = {"Node/element tag", "Elementary entity tag", "Physical group tag(s)", "Mesh partition", "Coordinates",  nullptr};
+  // what a geometrical entity can be labelled with, which is not what a mesh
+  // entity can be labelled with
+  const char *const _c_geoLabelType[] = {"Description", "Elementary tag", "Physical tag(s)", "Elementary name", "Physical name(s)", "Coordinates",  nullptr};
   const char *const _c_transform[] = {"None", "Scaling",  nullptr};
   const char *const _c_pointType[] = {"Color dot", "3D sphere",  nullptr};
   const char *const _c_curveType[] = {"Color segment", "3D cylinder",  nullptr};
@@ -244,9 +250,11 @@ namespace Dialog {
   const char *const _r_light0X[] = {"Light0X", "Light0Y", "Light0Z",  nullptr};
   const char *const _r_shininess[] = {"Shininess", "ShininessExponent",  nullptr};
   const char *const _r_normals[] = {"Normals", "Tangents",  nullptr};
-  const char *const _r_transformXX[] = {"TransformXX", "TransformXY", "TransformXZ",  nullptr};
-  const char *const _r_offsetX[] = {"OffsetX", "TransformYX", "TransformYY", "TransformYZ",  nullptr};
-  const char *const _r_offsetY[] = {"OffsetY", "TransformZX", "TransformZY", "TransformZZ",  nullptr};
+  // a line of the matrix the main window is transformed by, the offset that
+  // goes with it standing apart from the three, as that window has them
+  const char *const _r_geoTransformX[] = {"TransformXX", "TransformXY", "TransformXZ",  nullptr};
+  const char *const _r_geoTransformY[] = {"TransformYX", "TransformYY", "TransformYZ",  nullptr};
+  const char *const _r_geoTransformZ[] = {"TransformZX", "TransformZY", "TransformZZ",  nullptr};
   const char *const _r_meshSize[] = {"MeshSizeMin", "MeshSizeMax", nullptr};
   const char *const _r_quality[] = {"QualityInf", "QualitySup", nullptr};
   const char *const _r_radiusInf[] = {"RadiusInf", "RadiusSup",  nullptr};
@@ -341,7 +349,7 @@ namespace Dialog {
   const optionRow _geometryGeneral[] = {
     NUMBER("Tolerance", "Geometry tolerance"),
     CHECK("AutoCoherence", "Remove duplicate entities in GEO model transforms"),
-    CAPTION("Open CASCADE model healing options:"),
+    SECTION("Open CASCADE model healing options:"),
     CHECK("OCCFixDegenerated", "Remove degenerated edges and faces"),
     CHECK("OCCFixSmallEdges", "Remove small edges"),
     CHECK("OCCFixSmallFaces", "Remove small faces"),
@@ -359,16 +367,18 @@ namespace Dialog {
     CHECK_BESIDE("SurfaceLabels", "Surface labels"),
     CHECK("Volumes", "Volumes"),
     CHECK_BESIDE("VolumeLabels", "Volume labels"),
-    COMBO("LabelType", "Label type", _c_labelType),
+    COMBO("LabelType", "Label type", _c_geoLabelType),
     ROW("Normals and tangents", _r_normals),
     END};
 
   const optionRow _geometryTransfo[] = {
     COMBO("Transform", "Main window transform", _c_transform),
-    ROW("X", _r_transformXX),
-    ROW("Y +", _r_offsetX),
-    ROW("Z", _r_offsetY),
-    NUMBER("OffsetZ", ""),
+    ROW_OF(" X", _r_geoTransformX, .75),
+    NUMBER_BESIDE_OF("OffsetX", "", .7),
+    ROW_OF(" Y +", _r_geoTransformY, .75),
+    NUMBER_BESIDE_OF("OffsetY", "", .7),
+    ROW_OF(" Z", _r_geoTransformZ, .75),
+    NUMBER_BESIDE_OF("OffsetZ", "", .7),
     END};
 
   const optionRow _geometryAspect[] = {
@@ -1108,6 +1118,7 @@ namespace Dialog {
           f.kind = Label;
           std::string text = row.label;
           f.readText = [text]() { return text; };
+          if(row.vmin == 1.) f.rule = true;
           pane.fields.push_back(f);
         } break;
         case RowFunction: {
@@ -1172,6 +1183,11 @@ namespace Dialog {
   {
     Panel p;
     p.tabbed = true;
+    // The same height whatever category it is showing, as the window this
+    // reproduces has: it is built once there, twelve lines tall, of which the
+    // row of tabs is one -- and one that grew and shrank as one went down the
+    // list would not sit still.
+    p.leastRows = 11;
 
     // a line that is no longer there -- a view that has been closed -- falls
     // back to the first

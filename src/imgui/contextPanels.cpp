@@ -111,6 +111,15 @@ namespace {
 
     switch(f.kind) {
     case Dialog::Label:
+      // a rule across the pane, and the line written under it: it takes no
+      // line of its own, as it takes none in the window this reproduces
+      if(f.rule) {
+        ImVec2 at = ImGui::GetCursorScreenPos();
+        ImGui::GetWindowDrawList()->AddLine(
+          ImVec2(at.x, at.y), ImVec2(at.x + ImGui::GetContentRegionAvail().x,
+                                     at.y),
+          ImGui::GetColorU32(ImGuiCol_Separator));
+      }
       ImGui::TextUnformatted(f.getText().c_str());
       break;
     case Dialog::Output: {
@@ -772,21 +781,32 @@ namespace {
         // still measures exactly one field but the eye can tell its halves
         // apart. FLTK draws a border around each and needs no such thing.
         if(_sharesCell(fields, k, last)) here -= style.ItemSpacing.x;
-        if(!first) ImGui::SameLine(at);
-        first = false;
+        // On a grid, a cell is a field and whatever is packed against it;
+        // the first field of a line begins one, and every field after it
+        // that is not packed begins the next. A field that begins a cell
+        // goes where its column starts, wherever what precedes it on the
+        // line happened to end -- except what a spacer has pushed to the
+        // right end, which is where the spacer left it.
+        bool loose = k > i && fields[k - 1].kind == Dialog::Spacer;
         if(grid > 0) {
-          if(f.packed)
-            at += _packedStep(fields, k, last, item);
-          else if(k + 1 < last && fields[k + 1].kind == Dialog::Spacer)
-            // the spacer takes it from here, not from the next column
-            at += _packedWidth(f, item) + style.ItemSpacing.x;
-          else {
+          if(k == i)
+            gridColumn = 0;
+          else if(!f.packed)
             gridColumn++;
-            at = start;
-            for(int c = 0; c < gridColumn && c < grid; c++)
-              at += gridW[(std::size_t)c];
-          }
+          if(gridColumn >= grid) gridColumn = grid - 1;
         }
+        float fx = at;
+        if(grid > 0 && !loose && (k == i || !f.packed)) {
+          fx = start;
+          for(int c = 0; c < gridColumn && c < grid; c++)
+            fx += gridW[(std::size_t)c];
+        }
+        if(!first) ImGui::SameLine(fx);
+        first = false;
+        // and what follows it on the line goes on from where it ends
+        if(grid > 0)
+          at = fx + (f.packed ? _packedStep(fields, k, last, item) :
+                                _packedWidth(f, item) + style.ItemSpacing.x);
         else
           at += f.packed ? _packedStep(fields, k, last, item) : columnW;
         // Dear ImGui builds a widget's identity from its label, so the nine
@@ -834,7 +854,7 @@ void appWindow::_drawDialog(int which)
   float width = 150.f * _styleScale;
   // how many lines the tallest pane that does not scroll takes: the ones that
   // do are given as many, and scroll the rest
-  int most = 0;
+  int most = panel.leastRows;
   for(const auto &q : panel.panes) {
     if(q.scrolling) continue;
     int n = _rows(q.fields);
@@ -842,10 +862,10 @@ void appWindow::_drawDialog(int which)
       n += (section.label.size() ? 1 : 0) + _rows(section.fields);
     if(n > most) most = n;
   }
-  if(most < 12) most = 12;
-  // ...unless one of its panes scrolls, which says the opposite: there is more
-  // in it than a window should be tall, so it is given a size and keeps it
-  bool scrolls = false;
+  if(most < 1) most = 12;
+  // ...unless it says how tall it is to be, or one of its panes scrolls: both
+  // say the opposite -- it is given a size and keeps it, whichever pane is up
+  bool scrolls = panel.leastRows > 0;
   for(const auto &q : panel.panes)
     if(q.scrolling) scrolls = true;
   // The dialog keeps the width its widest row needs, whichever pane is up and

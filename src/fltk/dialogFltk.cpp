@@ -311,7 +311,7 @@ namespace {
 
   int _paneHeight(const Dialog::Panel &p)
   {
-    std::size_t most = 0;
+    std::size_t most = (std::size_t)(p.leastRows > 0 ? p.leastRows : 0);
     for(const auto &q : p.panes) {
       // a scrolling pane is not what makes the window tall: it is given what
       // the others need and scrolls the rest
@@ -549,21 +549,31 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // leave it. Given the width of an ordinary button it would overlap the
       // one after it, and the last of a row would be cut off by the edge.
       if(f.packed && f.kind == Dialog::Action) fieldW = _packedWidth(f);
+      // On a grid, a cell is a field and whatever is packed against it; the
+      // first field of a line begins one, and every field after it that is
+      // not packed begins the next. A field that begins a cell goes where its
+      // column starts, wherever what precedes it on the line happened to end
+      // -- except what a spacer has pushed to the right end of the line,
+      // which is where the spacer left it.
+      bool loose = k > i && fields[k - 1].kind == Dialog::Spacer;
+      if(grid > 0) {
+        if(k == i)
+          gridColumn = 0;
+        else if(!f.packed)
+          gridColumn++;
+        if(gridColumn >= grid) gridColumn = grid - 1;
+      }
       int fx = at;
+      if(grid > 0 && !loose && (k == i || !f.packed)) {
+        fx = x;
+        for(int c = 0; c < gridColumn && c < grid; c++) fx += gridW[(std::size_t)c];
+      }
       // a field of the column down the side is as wide as that column
       if(pane == -2) fieldW = w - fx - WB;
-      if(grid > 0) {
-        if(f.packed)
-          at += _packedStep(fields, k, last);
-        else if(k + 1 < last && fields[k + 1].kind == Dialog::Spacer)
-          // the spacer takes it from here, not from the next column
-          at = fx + _packedWidth(f) + WB;
-        else {
-          gridColumn++;
-          at = x;
-          for(int c = 0; c < gridColumn && c < grid; c++) at += gridW[(std::size_t)c];
-        }
-      }
+      // and what follows it on the line goes on from where it ends
+      if(grid > 0)
+        at = fx + (f.packed ? _packedStep(fields, k, last) :
+                              _packedWidth(f) + WB);
       else if(f.packed)
         at += _packedStep(fields, k, last);
       else
@@ -617,9 +627,16 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
           widget = new Fl_Choice(fx, y, fieldW, BH);
         break;
       case Dialog::Label: {
+        // a rule across the pane, and the line written under it
+        if(f.rule) {
+          Fl_Box *line = new Fl_Box(fx, y, w - fx - WB, 2);
+          line->box(FL_ENGRAVED_FRAME);
+          line->labeltype(FL_NO_LABEL);
+        }
         // it says what it says and no more, on a grid where a column follows
         // it; on its own line it runs to the edge, as a caption does
-        Fl_Box *b = new Fl_Box(fx, y, grid > 0 ? fieldW : w - fx - WB, BH);
+        Fl_Box *b = new Fl_Box(fx, y + (f.rule ? 1 : 0),
+                               grid > 0 ? fieldW : w - fx - WB, BH);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         widget = b;
       } break;

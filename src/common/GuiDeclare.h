@@ -189,6 +189,13 @@ namespace Dialog {
     return f;
   }
 
+  // the same line, with a rule over it: what follows is a group of its own
+  inline Field ruledOver(Field f)
+  {
+    f.rule = true;
+    return f;
+  }
+
   // a check that folds a part of the dialog away
   inline Field disclosure(const std::string &label, bool *value)
   {
