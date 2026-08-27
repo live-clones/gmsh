@@ -677,9 +677,7 @@ void appWindow::_drawDialog(int which)
   // follows its contents, so that folding a part away shrinks it instead of
   // leaving a hole. Docked, Dear ImGui gives it the size of the node and
   // ignores this, which is what one wants there.
-  // as wide as a field is, which is eight times the font size: the windows
-  // this reproduces use ten, which reads wider than it needs to
-  float width = 8.f * ImGui::GetFontSize();
+  float width = 150.f * _styleScale;
   // ...unless one of its panes scrolls, which says the opposite: there is more
   // in it than a window should be tall, so it is given a size and keeps it
   bool scrolls = false;
