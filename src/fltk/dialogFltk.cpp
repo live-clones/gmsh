@@ -51,6 +51,11 @@ namespace {
     return rows;
   }
 
+  // How wide a field is when nothing says otherwise. The windows this replaces
+  // use IW, ten times the font size; eight reads better and still holds what
+  // these fields hold.
+#define FIELD_WIDTH (8 * FL_NORMAL_SIZE)
+
   // FLTK reads "&" in a label as the mark of a keyboard shortcut and does not
   // draw it. A label is text here, so an ampersand has to be doubled to come
   // out as one -- "Colours & light" is a tab, not a shortcut.
@@ -99,7 +104,7 @@ namespace {
     if(f.kind == Dialog::Check) return (int)(1.5 * FL_NORMAL_SIZE);
     // a swatch says what it is by its colour; it needs no room for text
     if(f.kind == Dialog::Color) return (int)(3. * FL_NORMAL_SIZE);
-    return (columns == 1) ? IW : IW / 2;
+    return (columns == 1) ? FIELD_WIDTH : FIELD_WIDTH / 2;
   }
 
   // What a packed field needs: its own text and no more. It takes the width it
@@ -117,7 +122,7 @@ namespace {
     if(f.kind == Dialog::Check)
       return (int)fl_width(_escaped(f.label).c_str()) + (int)(1.8 * FL_NORMAL_SIZE);
     // a declared width, or the usual one, plus the label it carries
-    int w = f.widthShare > 0. ? (int)(f.widthShare * IW) :
+    int w = f.widthShare > 0. ? (int)(f.widthShare * FIELD_WIDTH) :
             f.widthEm > 0.    ? (int)(f.widthEm * FL_NORMAL_SIZE) :
                                 _fieldWidth(f, 1);
     return w + (int)fl_width(_escaped(f.label).c_str()) + 2 * WB;
@@ -138,7 +143,7 @@ namespace {
   int _packedStep(const std::vector<Dialog::Field> &fields, std::size_t k,
                   std::size_t to)
   {
-    if(_sharesCell(fields, k, to)) return (int)(fields[k].widthShare * IW);
+    if(_sharesCell(fields, k, to)) return (int)(fields[k].widthShare * FIELD_WIDTH);
     return _packedWidth(fields[k]) + WB;
   }
 
@@ -486,7 +491,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       }
       int fieldW = _fieldWidth(f, (grid > 0) ? 1 : (columns ? columns : 1));
       if(f.widthEm > 0.) fieldW = (int)(f.widthEm * FL_NORMAL_SIZE);
-      if(f.widthShare > 0.) fieldW = (int)(f.widthShare * IW);
+      if(f.widthShare > 0.) fieldW = (int)(f.widthShare * FIELD_WIDTH);
       // A button carries its text inside, so a packed one is as wide as that
       // text and no wider -- which is also the room the line was measured to
       // leave it. Given the width of an ordinary button it would overlap the
