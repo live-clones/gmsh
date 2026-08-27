@@ -131,13 +131,13 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   : _window(nullptr), _quitShouldExit(quitShouldExit), _inFrame(false),
     _lastRefresh(0.), _currentPane(nullptr), _console(nullptr),
     _statusColor(Gui::StatusColorDefault), _progressValue(0.),
-    _progressMin(0.), _progressMax(0.), _showConsole(true), _showOptions(false),
+    _progressMin(0.), _progressMax(0.), _showConsole(true),
     _showVisibility(false), _showColormap(false), _showModules(true), _showPlugins(false), _showFields(false), _showHelpBasic(false),
     _showHelpOptions(false), _showAbout(false), _showClassify(false),
     _showOnelabContext(false), _contextDim(-1), _contextTag(0),
     _contextChoice(0),
     _paneRoot(nullptr), _uiScale(0.f),
-    _uiScaleOverride(0.f), _styleScale(0.f), _reportedDetachable(false), _optionsCategory(0),
+    _uiScaleOverride(0.f), _styleScale(0.f), _reportedDetachable(false),
     _animating(false), _animLastStep(0.), _zoomed(false), _fullscreen(false), _savedX(0), _savedY(0), _savedW(0), _savedH(0), _captureW(0), _captureH(0), _captureComposite(false), _modalDepth(0),
     _browser(nullptr), _exportActive(false), _exportDone(false),
     _exportAccepted(false), _exportFormat(-1)
@@ -989,7 +989,6 @@ void appWindow::_drawPanels(int &sceneX, int &sceneY, int &sceneW, int &sceneH)
 
   _drawTooltip();
   _drawMenuBar();
-  _drawOptionsPanel();
   _drawVisibilityPanel();
   _drawColormapPanel();
   _drawModulesPanel();

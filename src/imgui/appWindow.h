@@ -114,7 +114,6 @@ private:
   double _progressValue, _progressMin, _progressMax;
 
   bool _showConsole;
-  bool _showOptions;
   bool _showVisibility;
   bool _showColormap;
   bool _showModules;
@@ -197,7 +196,6 @@ private:
   bool _reportedDetachable;
   // category the options panel opens on, so that the quick access menu can
   // jump straight to the right one
-  int _optionsCategory;
   // the animation runs from the frame loop, see _stepAnimation()
   bool _animating;
   double _animLastStep;
@@ -206,7 +204,6 @@ private:
   void _loadFont();
   // the TrueType file the interface font came from, empty for the built-in one
   std::string _fontFile;
-  void _drawOptionsPanel();
   void _drawVisibilityPanel();
   void _drawColormapPanel();
   void _drawModulesPanel();

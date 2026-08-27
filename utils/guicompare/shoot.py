@@ -181,6 +181,13 @@ shot("partition", "advanced", [M], 14, 2,
 
 # and the ones the Tools menu raises
 keyed("manipulator", ["ctrl", "shift", "m"])
+keyed("options", ["ctrl", "shift", "n"])
+# and the same window on another category, since picking one in the list on the
+# left is what changes the tabs on the right
+SHOTS.append(dict(name="options-mesh", dialog="options", branches=[],
+                  keys=["ctrl", "shift", "n"],
+                  press={"released": (45, 44), "fltk": (45, 44),
+                         "imgui": (45, 71)}))
 keyed("clipping", ["ctrl", "shift", "c"])
 keyed("statistics", ["ctrl", "i"],
       tabs=[("geometry", 55, 40), ("mesh", 112, 100), ("post", 187, 165)])
@@ -210,6 +217,7 @@ TITLES = {
     "manipulator": "^Manipulator$",
     "statistics": "^Statistics$",
     "clipping": "^Clipping$",
+    "options": "^Options",
 }
 
 # every branch any shot unfolds, deepest first: closing a parent would hide the
@@ -549,6 +557,16 @@ def main():
                                                 % name)
                                 continue
                             click(dpy, found[2] + tx, found[3] + ty)
+                        time.sleep(0.5)
+                        wiggle(dpy, wx + 120, wy + wh - 60)
+                        time.sleep(0.5)
+
+                    point = spec.get("press", {}).get(args.build)
+                    if point:
+                        if not press_inside(dpy, args.build, point,
+                                            spec["dialog"], wx, wy):
+                            failures.append("%s: no dialog to press in" % name)
+                            continue
                         time.sleep(0.5)
                         wiggle(dpy, wx + 120, wy + wh - 60)
                         time.sleep(0.5)

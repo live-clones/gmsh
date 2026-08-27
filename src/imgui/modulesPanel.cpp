@@ -24,6 +24,7 @@
 
 #include "appWindow.h"
 #include "Gui.h"
+#include "GuiDialogs.h"
 #include "GuiActions.h"
 #include "GuiMenus.h"
 #include "GmshMessage.h"
@@ -357,7 +358,7 @@ void appWindow::_drawModulesPanel()
         _showColormap = true; // a click opens the colour map of that view
       }
       if(ImGui::BeginPopupContextItem("##viewmenu")) {
-        if(ImGui::MenuItem("Options...")) _showOptions = true;
+        if(ImGui::MenuItem("Options...")) _showDialog[Dialog::Options] = true;
         if(ImGui::MenuItem("Colour map...")) _showColormap = true;
         ImGui::Separator();
         if(ImGui::MenuItem("Remove")) {

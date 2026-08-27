@@ -16,6 +16,7 @@
 #include "appWindow.h"
 #include "scenePane.h"
 #include "Gui.h"
+#include "GuiDialogs.h"
 #include "GuiActions.h"
 #include "GmshMessage.h"
 #include "Context.h"
@@ -108,8 +109,8 @@ void appWindow::_drawQuickAccessMenu()
     ImGui::EndMenu();
   }
   if(ImGui::MenuItem("All general options...")) {
-    _showOptions = true;
-    _optionsCategory = 0;
+    _showDialog[Dialog::Options] = true;
+    Dialog::optionsCategory() = 0;
   }
 
   ImGui::Separator();
@@ -118,8 +119,8 @@ void appWindow::_drawQuickAccessMenu()
   _toggle("Geometry surfaces", "Geometry", 0, "Surfaces");
   _toggle("Geometry volumes", "Geometry", 0, "Volumes");
   if(ImGui::MenuItem("All geometry options...")) {
-    _showOptions = true;
-    _optionsCategory = 1;
+    _showDialog[Dialog::Options] = true;
+    Dialog::optionsCategory() = 1;
   }
 
   ImGui::Separator();
@@ -139,8 +140,8 @@ void appWindow::_drawQuickAccessMenu()
     }
   }
   if(ImGui::MenuItem("All mesh options...")) {
-    _showOptions = true;
-    _optionsCategory = 2;
+    _showDialog[Dialog::Options] = true;
+    Dialog::optionsCategory() = 2;
   }
 
 #if defined(HAVE_POST)
@@ -156,8 +157,8 @@ void appWindow::_drawQuickAccessMenu()
       ImGui::EndMenu();
     }
     if(ImGui::MenuItem("All view options...")) {
-      _showOptions = true;
-      _optionsCategory = 5;
+      _showDialog[Dialog::Options] = true;
+      Dialog::optionsCategory() = 5;
     }
   }
 #endif

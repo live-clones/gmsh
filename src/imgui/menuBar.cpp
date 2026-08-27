@@ -293,7 +293,7 @@ void appWindow::_windowFullScreen()
 bool appWindow::panelVisible(int panel) const
 {
   switch(panel) {
-  case Gui::PanelOptions: return _showOptions;
+  case Gui::PanelOptions: return _showDialog[Dialog::Options];
   case Gui::PanelPlugins: return _showPlugins;
   case Gui::PanelVisibility: return _showVisibility;
   case Gui::PanelMessageConsole: return _showConsole;
@@ -309,7 +309,7 @@ bool appWindow::panelVisible(int panel) const
 void appWindow::showPanel(int panel, bool show)
 {
   switch(panel) {
-  case Gui::PanelOptions: _showOptions = show; break;
+  case Gui::PanelOptions: _showDialog[Dialog::Options] = show; break;
   case Gui::PanelPlugins: _showPlugins = show; break;
   case Gui::PanelVisibility: _showVisibility = show; break;
   case Gui::PanelMessageConsole: _showConsole = show; break;

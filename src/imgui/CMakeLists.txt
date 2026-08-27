@@ -12,7 +12,6 @@ set(SRC
   statusBar.cpp
   menuBar.cpp
   shortcuts.cpp
-  optionsPanel.cpp
   panels.cpp
   visibilityPanel.cpp
   colormapPanel.cpp

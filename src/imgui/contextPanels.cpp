@@ -192,6 +192,21 @@ namespace {
         changed = true;
       }
     } break;
+    case Dialog::Color: {
+      unsigned int packed = f.getColour();
+      float col[4] = {CTX::instance()->unpackRed(packed) / 255.f,
+                      CTX::instance()->unpackGreen(packed) / 255.f,
+                      CTX::instance()->unpackBlue(packed) / 255.f,
+                      CTX::instance()->unpackAlpha(packed) / 255.f};
+      if(ImGui::ColorEdit4(f.label.c_str(), col,
+                           ImGuiColorEditFlags_NoInputs |
+                             ImGuiColorEditFlags_AlphaPreviewHalf)) {
+        const_cast<Dialog::Field &>(f).setColour(CTX::instance()->packColor(
+          (int)(col[0] * 255.f + .5f), (int)(col[1] * 255.f + .5f),
+          (int)(col[2] * 255.f + .5f), (int)(col[3] * 255.f + .5f)));
+        changed = true;
+      }
+    } break;
     case Dialog::Check: {
       bool value = f.getFlag();
       if(!f.disclosure) {
@@ -286,6 +301,10 @@ namespace {
     if(f.kind == Dialog::Action)
       return ImGui::CalcTextSize(f.label.c_str()).x +
              2.f * style.FramePadding.x;
+    // a swatch says what it is by its colour; it needs no room for text
+    if(f.kind == Dialog::Color)
+      return ImGui::GetFrameHeight() * 1.6f + style.ItemInnerSpacing.x +
+             ImGui::CalcTextSize(f.label.c_str()).x;
     if(f.kind == Dialog::Check) {
       float w = ImGui::GetFrameHeight() + style.ItemInnerSpacing.x +
                 ImGui::CalcTextSize(f.label.c_str()).x;
@@ -411,6 +430,30 @@ namespace {
     return widest;
   }
 
+  void _fields(const std::vector<Dialog::Field> &fields, float item);
+
+  // What a pane holds: its own fields, then the sections under them, each with
+  // its label as a heading. A long one scrolls rather than making the window as
+  // tall as it is.
+  void _paneBody(const Dialog::Pane &q, float width)
+  {
+    if(q.scrolling && !ImGui::BeginChild("##scroll", ImVec2(0.f, 0.f),
+                                         ImGuiChildFlags_None)) {
+      ImGui::EndChild();
+      return;
+    }
+    _fields(q.fields, width);
+    for(std::size_t i = 0; i < q.sections.size(); i++) {
+      const Dialog::Pane &section = q.sections[i];
+      if(section.visible && !section.visible()) continue;
+      if(section.label.size()) ImGui::SeparatorText(section.label.c_str());
+      ImGui::PushID((int)i + 1000);
+      _fields(section.fields, width);
+      ImGui::PopID();
+    }
+    if(q.scrolling) ImGui::EndChild();
+  }
+
   // A list of fields, laid out in rows: those that ask to share the line of the
   // one before them do, and the row is divided evenly between them. Placing
   // each one at the start of its column is what turns a row of three values
@@ -514,6 +557,11 @@ void appWindow::_drawDialog(int which)
   // leaving a hole. Docked, Dear ImGui gives it the size of the node and
   // ignores this, which is what one wants there.
   float width = 150.f * _styleScale;
+  // ...unless one of its panes scrolls, which says the opposite: there is more
+  // in it than a window should be tall, so it is given a size and keeps it
+  bool scrolls = false;
+  for(const auto &q : panel.panes)
+    if(q.scrolling) scrolls = true;
   // The dialog keeps the width its widest row needs, whichever pane is up and
   // whichever section is folded away: a window that grows sideways as one uses
   // it is a window that will not sit still.
@@ -524,8 +572,12 @@ void appWindow::_drawDialog(int which)
     ImGui::SetNextWindowSizeConstraints(ImVec2(need, 0.f),
                                         ImVec2(FLT_MAX, FLT_MAX));
   }
+  if(scrolls)
+    ImGui::SetNextWindowSize(ImVec2(0.f, 34.f * ImGui::GetFontSize()),
+                             ImGuiCond_FirstUseEver);
   if(!ImGui::Begin(title.c_str(), &_showDialog[which],
-                   ImGuiWindowFlags_AlwaysAutoResize)) {
+                   scrolls ? ImGuiWindowFlags_None :
+                             ImGuiWindowFlags_AlwaysAutoResize)) {
     ImGui::End();
     return;
   }
@@ -550,7 +602,7 @@ void appWindow::_drawDialog(int which)
       if(q.visible && !q.visible()) continue;
       if(q.label.size()) ImGui::SeparatorText(q.label.c_str());
       ImGui::PushID((int)i);
-      _fields(q.fields, width);
+      _paneBody(q, width);
       ImGui::PopID();
       if(q.buttonLabel.size()) {
         // against the right edge, where the window this replaces puts it
@@ -596,7 +648,7 @@ void appWindow::_drawDialog(int which)
       Dialog::currentPane(which) = (int)i;
       if((int)i == wanted) _wantedPane[which] = -1;
       ImGui::PushID((int)i);
-      _fields(panel.panes[i].fields, width);
+      _paneBody(panel.panes[i], width);
       ImGui::PopID();
       // The pane is padded to the height of the tallest one, so that its
       // button lands at the bottom right and the window does not change size

@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "GuiDialogs.h"
+#include "GuiDeclare.h"
 #include "GuiActions.h"
 #include "Gui.h"
 #include "GmshDefines.h"
@@ -86,6 +87,27 @@ namespace Dialog {
   bool Field::getFlag() const { return getNumber() != 0.; }
   void Field::setFlag(bool v) { setNumber(v ? 1. : 0.); }
 
+  unsigned int Field::getColour() const
+  {
+    if(optionName.size()) {
+      unsigned int v = 0;
+      ColorOption(GMSH_GET, optionCategory.c_str(), optionIndex,
+                  optionName.c_str(), v, false);
+      return v;
+    }
+    return colour ? *colour : 0;
+  }
+
+  void Field::setColour(unsigned int v)
+  {
+    if(optionName.size()) {
+      ColorOption(GMSH_SET | GMSH_GUI, optionCategory.c_str(), optionIndex,
+                  optionName.c_str(), v, false);
+      return;
+    }
+    if(colour) *colour = v;
+  }
+
   // --- what each dialog is showing
 
   int &currentPane(int dialog)
@@ -153,221 +175,6 @@ namespace Dialog {
   }
 
   namespace {
-
-    // --- little builders, so that the descriptions below are only description
-
-    Field text(const std::string &label, std::string *value,
-               const std::string &tooltip = "")
-    {
-      Field f;
-      f.kind = Text;
-      f.label = label;
-      f.tooltip = tooltip;
-      f.text = value;
-      return f;
-    }
-
-    Field check(const std::string &label, bool *value)
-    {
-      Field f;
-      f.kind = Check;
-      f.label = label;
-      f.flag = value;
-      return f;
-    }
-
-    Field integer(const std::string &label, int *value)
-    {
-      Field f;
-      f.kind = Integer;
-      f.label = label;
-      f.integer = value;
-      return f;
-    }
-
-    Field choice(const std::string &label, std::string *value,
-                 const std::vector<std::string> &choices)
-    {
-      Field f;
-      f.kind = Choice;
-      f.label = label;
-      f.text = value;
-      f.choices = choices;
-      return f;
-    }
-
-    // a choice that stands for something other than its own text
-    Field choice(const std::string &label, int *value,
-                 const std::vector<std::string> &choices,
-                 const std::vector<int> &values)
-    {
-      Field f;
-      f.kind = Choice;
-      f.label = label;
-      f.integer = value;
-      f.choices = choices;
-      f.values = values;
-      return f;
-    }
-
-    Field number(const std::string &label, double *value,
-                 const std::string &tooltip = "")
-    {
-      Field f;
-      f.kind = Number;
-      f.label = label;
-      f.tooltip = tooltip;
-      f.number = value;
-      return f;
-    }
-
-    // a field that edits a Gmsh option rather than a variable of ours
-    // The way in to the other half of the accessors: a field that stands for a
-    // Gmsh option rather than for a variable of ours.
-    Field option(FieldKind kind, const std::string &label,
-                 const std::string &category, const std::string &name)
-    {
-      Field f;
-      f.kind = kind;
-      f.label = label;
-      f.optionCategory = category;
-      f.optionName = name;
-      return f;
-    }
-
-    // the same field, bounded
-    Field within(Field f, double lo, double hi, double step = 0.)
-    {
-      f.minimum = lo;
-      f.maximum = hi;
-      f.step = step;
-      return f;
-    }
-
-    // a value one reads and cannot edit
-    Field reads(const std::string &label, std::function<std::string()> what)
-    {
-      Field f;
-      f.kind = Output;
-      f.label = label;
-      f.readText = what;
-      return f;
-    }
-
-    // a button in the flow of the fields
-    Field does(const std::string &label, std::function<void()> what)
-    {
-      Field f;
-      f.kind = Action;
-      f.label = label;
-      f.changed = what;
-      return f;
-    }
-
-    // what has been picked so far, which one may correct
-    Field picked(const std::string &label, const std::vector<int> *what,
-                 std::function<std::string(int)> name,
-                 std::function<void(int)> drop)
-    {
-      Field f;
-      f.kind = List;
-      f.label = label;
-      f.list = what;
-      f.itemLabel = name;
-      f.removeItem = drop;
-      return f;
-    }
-
-    // a list one chooses from, rather than one that only shows
-    Field chooseFrom(std::function<void(std::vector<std::string> &,
-                                        std::vector<int> &)> what,
-                     std::function<bool(int)> isChosen,
-                     std::function<void(int, bool)> setChosen, bool several)
-    {
-      Field f;
-      f.kind = List;
-      f.dynamicChoices = what;
-      f.chosen = isChosen;
-      f.choose = setChosen;
-      f.multiple = several;
-      return f;
-    }
-
-    // a line the dialog says, rather than a value it holds
-    Field says(std::function<std::string()> what)
-    {
-      Field f;
-      f.kind = Label;
-      f.readText = what;
-      return f;
-    }
-
-    // a check that folds a part of the dialog away
-    Field disclosure(const std::string &label, bool *value)
-    {
-      Field f = check(label, value);
-      f.disclosure = true;
-      f.packed = true;
-      return f;
-    }
-
-    // the same field, taking only the width it needs rather than a share of
-    // the line
-    Field tight(Field f)
-    {
-      f.packed = true;
-      return f;
-    }
-
-    // the same field, that wide, in multiples of the font size
-    Field sized(Field f, double em)
-    {
-      f.widthEm = em;
-      return f;
-    }
-
-    // the same field, taking that fraction of the room one field is given.
-    // Two halves fill exactly one, so the label that follows the pair lines up
-    // with the labels above and below it
-    Field shared(Field f, double part)
-    {
-      f.widthShare = part;
-      f.packed = true;
-      return f;
-    }
-
-    // nothing: it eats what is left of the line, so that what follows it ends
-    // up against the right edge
-    Field stretch(double least = 2.)
-    {
-      Field f;
-      f.kind = Spacer;
-      f.widthEm = least;
-      f.sameRow = true;
-      return f;
-    }
-
-    // a pane with a rule under it
-    Pane ruled(Pane q)
-    {
-      q.separatorAfter = true;
-      return q;
-    }
-
-    // the same field, but sharing the line of the one before it
-    Field beside(Field f)
-    {
-      f.sameRow = true;
-      return f;
-    }
-
-    Pane pane(const std::string &label, const std::vector<Field> &fields)
-    {
-      Pane p;
-      p.label = label;
-      p.fields = fields;
-      return p;
-    }
 
     // the fields that only make sense when the mesh is extruded along with the
     // geometry, which is decided by the action that opened the dialog
@@ -1435,6 +1242,7 @@ namespace Dialog {
     case Manipulator: return manipulator();
     case Statistics: return statistics();
     case Clipping: return clipping();
+    case Options: return options();
     default: return Panel();
     }
   }

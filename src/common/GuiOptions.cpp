@@ -3,50 +3,47 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// The option editor.
+// The option window, described the way the other dialogs are.
 //
 // What an option looks like cannot be deduced from the option tables of
 // DefaultOptions.h: they do not say which numbers are switches, which ones are
 // enumerations and what their values mean, which ones belong together, or how
 // to name them for a human ("General.FastRedraw" is really "draw a simplified
-// model while the mouse is down"). The layout of the panels is therefore
-// written by hand below, exactly as the FLTK option window does it, and only
-// the *mechanism* is generic: a row says which option it edits and how, and the
-// reading and writing go through NumberOption()/StringOption()/ColorOption(),
-// so there is no per-option callback and no widget to keep in sync.
+// model while the mouse is down"). The panels are therefore laid out by hand,
+// in the tables below, and only the mechanism is generic.
 //
-// The help string shown in the tooltip is still taken from the option table, so
-// it never gets out of date.
+// The tables are their own little language -- CHECK(), COMBO(), COLOR() -- kept
+// because 260 options in Dialog::Field form would be unreadable. They are not a
+// second description of a dialog: _paneFor() turns a table into the panes and
+// fields of GuiDialogs.h, which is what both interfaces build.
 //
-// Whatever is not laid out by hand is still reachable: the "All" tab lists
-// every option of the category, alphabetically and searchable.
+// The help string of the tooltip is taken from the option table, so it cannot
+// drift from the option itself. Whatever is not laid out by hand is still
+// reachable: the "All" pane lists every option of the category, searchable.
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
-
 #include <cstring>
-#include <map>
 #include <string>
+#include <vector>
 
-#include "imgui.h"
-#include "imgui_stdlib.h"
-
-#include "appWindow.h"
+#include "GuiDialogs.h"
+#include "GuiDeclare.h"
+#include "GuiActions.h"
 #include "Gui.h"
-#include "GmshMessage.h"
 #include "Context.h"
 #include "Options.h"
-#include "GuiActions.h"
+#include "GmshMessage.h"
 #include "drawContext.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
 #endif
 
-namespace {
+namespace Dialog {
 
-  // ------------------------------------------------------------------ layout
+  namespace {
+
 
   enum rowKind {
     RowCheck, // on/off switch
@@ -765,403 +762,303 @@ namespace {
     if(!strcmp(category, "Print")) return _printTabs;
     return nullptr;
   }
+    // ---------------------------------------------------------- the option
 
-  // ------------------------------------------------------------- the machinery
-
-  StringXNumber *_findNumber(const char *category, const char *name)
-  {
-    StringXNumber *o = GetNumberOptionCategory(category);
-    if(!o) return nullptr;
-    for(int i = 0; o[i].str; i++)
-      if(!strcmp(o[i].str, name)) return &o[i];
-    return nullptr;
-  }
-
-  StringXString *_findString(const char *category, const char *name)
-  {
-    StringXString *o = GetStringOptionCategory(category);
-    if(!o) return nullptr;
-    for(int i = 0; o[i].str; i++)
-      if(!strcmp(o[i].str, name)) return &o[i];
-    return nullptr;
-  }
-
-  StringXColor *_findColor(const char *category, const char *name)
-  {
-    StringXColor *o = GetColorOptionCategory(category);
-    if(!o) return nullptr;
-    for(int i = 0; o[i].str; i++)
-      if(!strcmp(o[i].str, name)) return &o[i];
-    return nullptr;
-  }
-
-  // the tooltip always shows the fully qualified name and the help string of
-  // the option table, so that it cannot drift from the actual option
-  void _tooltip(const char *category, const char *name, const char *help)
-  {
-    if(!ImGui::BeginItemTooltip()) return;
-    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 30.f);
-    ImGui::Text("%s.%s", category, name);
-    if(help && help[0]) {
-      ImGui::Separator();
-      ImGui::TextUnformatted(help);
-    }
-    ImGui::PopTextWrapPos();
-    ImGui::EndTooltip();
-  }
-
-  void _missing(const char *category, const char *name)
-  {
-    ImGui::TextDisabled("%s.%s is not available in this build", category, name);
-  }
-
-  // buffers of the string fields being edited, so that typing is not fought by
-  // the value being read back at every frame
-  std::map<std::string, std::string> _stringEdits;
-
-  bool _drawString(const char *category, StringXString *o, int num,
-                   const char *label)
-  {
-    std::string current = o->function(num, GMSH_GET, "");
-    std::string key = std::string(category) + "." + o->str;
-    auto it = _stringEdits.find(key);
-    if(it == _stringEdits.end())
-      it = _stringEdits.insert(std::make_pair(key, current)).first;
-
-    bool changed = false;
-    ImGui::SetNextItemWidth(240.f);
-    ImGui::InputText(label ? label : o->str, &it->second);
-    if(ImGui::IsItemDeactivatedAfterEdit()) {
-      o->function(num, GMSH_SET | GMSH_GUI, it->second);
-      changed = true;
-    }
-    else if(!ImGui::IsItemActive() && it->second != current) {
-      it->second = current;
-    }
-    _tooltip(category, o->str, o->help);
-    return changed;
-  }
-
-  bool _drawColor(const char *category, StringXColor *o, int num,
-                  const char *label)
-  {
-    unsigned int packed = o->function(num, GMSH_GET, 0);
-    float col[4] = {CTX::instance()->unpackRed(packed) / 255.f,
-                    CTX::instance()->unpackGreen(packed) / 255.f,
-                    CTX::instance()->unpackBlue(packed) / 255.f,
-                    CTX::instance()->unpackAlpha(packed) / 255.f};
-    bool changed = false;
-    if(ImGui::ColorEdit4(label ? label : o->str, col,
-                         ImGuiColorEditFlags_NoInputs |
-                           ImGuiColorEditFlags_AlphaPreviewHalf)) {
-      o->function(num, GMSH_SET | GMSH_GUI,
-                  CTX::instance()->packColor((int)(col[0] * 255.f + 0.5f),
-                                             (int)(col[1] * 255.f + 0.5f),
-                                             (int)(col[2] * 255.f + 0.5f),
-                                             (int)(col[3] * 255.f + 0.5f)));
-      changed = true;
-    }
-    _tooltip(category, o->str, o->help);
-    return changed;
-  }
-
-  // draw one hand-written row
-  bool _drawRow(const char *category, const optionRow &row, int num)
-  {
-    if(row.kind == RowHeading) {
-      ImGui::SeparatorText(row.name);
-      return false;
+    StringXNumber *_findNumber(const char *category, const char *name)
+    {
+      StringXNumber *o = GetNumberOptionCategory(category);
+      if(!o) return nullptr;
+      for(int i = 0; o[i].str; i++)
+        if(!strcmp(o[i].str, name)) return &o[i];
+      return nullptr;
     }
 
-    bool changed = false;
-    ImGui::PushID(row.name);
+    StringXString *_findString(const char *category, const char *name)
+    {
+      StringXString *o = GetStringOptionCategory(category);
+      if(!o) return nullptr;
+      for(int i = 0; o[i].str; i++)
+        if(!strcmp(o[i].str, name)) return &o[i];
+      return nullptr;
+    }
 
-    if(row.kind == RowString) {
-      StringXString *o = _findString(category, row.name);
-      if(!o)
-        _missing(category, row.name);
-      else
-        changed = _drawString(category, o, num, row.label);
+    StringXColor *_findColor(const char *category, const char *name)
+    {
+      StringXColor *o = GetColorOptionCategory(category);
+      if(!o) return nullptr;
+      for(int i = 0; o[i].str; i++)
+        if(!strcmp(o[i].str, name)) return &o[i];
+      return nullptr;
     }
-    else if(row.kind == RowStringCombo) {
-      StringXString *o = _findString(category, row.name);
-      if(!o) { _missing(category, row.name); }
-      else {
-        std::string current = o->function(num, GMSH_GET, "");
-        ImGui::SetNextItemWidth(240.f);
-        if(ImGui::BeginCombo(row.label ? row.label : o->str, current.c_str())) {
-          for(int k = 0; row.choices[k]; k++)
-            if(ImGui::Selectable(row.choices[k], current == row.choices[k])) {
-              o->function(num, GMSH_SET | GMSH_GUI, row.choices[k]);
-              changed = true;
-            }
-          ImGui::EndCombo();
-        }
-        _tooltip(category, o->str, o->help);
-      }
+
+    // What the option window is showing: which category, which view its View
+    // options apply to. Kept here because nothing else has any use for it.
+    struct optionsState {
+      int category;
+      int view;
+      optionsState() : category(0), view(0) {}
+    };
+
+    optionsState &_state()
+    {
+      static optionsState s;
+      return s;
     }
-    else if(row.kind == RowFont) {
-      // the list of fonts is whatever the current graphics backend offers
-      StringXString *o = _findString(category, row.name);
-      if(!o) { _missing(category, row.name); }
-      else {
-        std::string current = o->function(num, GMSH_GET, "");
-        ImGui::SetNextItemWidth(240.f);
-        if(ImGui::BeginCombo(row.label ? row.label : o->str, current.c_str())) {
+
+    const char *_categoryName(int i)
+    {
+      const char **all = GetOptionCategories();
+      for(int k = 0; all[k]; k++)
+        if(k == i) return all[k];
+      return all[0];
+    }
+
+    int _categoryCount()
+    {
+      const char **all = GetOptionCategories();
+      int n = 0;
+      while(all[n]) n++;
+      return n;
+    }
+
+    // the fully qualified name and the help string of the option table, so
+    // that a tooltip cannot drift from the option it describes
+    std::string _tooltipFor(const char *category, const optionRow &row)
+    {
+      std::string tip = std::string(category) + "." + row.name;
+      const char *help = nullptr;
+      if(StringXNumber *n = _findNumber(category, row.name)) help = n->help;
+      else if(StringXString *t = _findString(category, row.name)) help = t->help;
+      else if(StringXColor *c = _findColor(category, row.name)) help = c->help;
+      if(help && help[0]) tip += "\n\n" + std::string(help);
+      return tip;
+    }
+
+    // one row of a table, as a field bound to the option it edits
+    Field _fieldFor(const optionRow &row, const char *category, int num)
+    {
+      Field f;
+      f.optionCategory = category;
+      f.optionName = row.name;
+      f.optionIndex = num;
+      f.label = row.label ? row.label : row.name;
+      f.tooltip = _tooltipFor(category, row);
+      f.changed = []() { drawContext::global()->draw(); };
+
+      switch(row.kind) {
+      case RowCheck: f.kind = Check; break;
+      case RowNumber: f.kind = Number; break;
+      case RowSlider:
+        f.kind = Number;
+        f.minimum = row.vmin;
+        f.maximum = row.vmax;
+        break;
+      case RowString: f.kind = Text; break;
+      case RowColor: f.kind = Color; break;
+      case RowStringCombo:
+        // a choice that stands for its own text
+        f.kind = Choice;
+        for(int k = 0; row.choices && row.choices[k]; k++)
+          f.choices.push_back(row.choices[k]);
+        break;
+      case RowFont:
+        // whatever the graphics backend offers, which is not known here
+        f.kind = Choice;
+        f.dynamicChoices = [](std::vector<std::string> &labels,
+                              std::vector<int> &values) {
+          (void)values;
           int n = drawContext::global()->getNumFonts();
-          for(int k = 0; k < n; k++) {
-            const char *f = drawContext::global()->getFontName(k);
-            if(ImGui::Selectable(f, current == f)) {
-              o->function(num, GMSH_SET | GMSH_GUI, f);
-              changed = true;
-            }
-          }
-          ImGui::EndCombo();
+          for(int k = 0; k < n; k++)
+            labels.push_back(drawContext::global()->getFontName(k));
+        };
+        break;
+      case RowCombo:
+        // an enumeration: the value each choice stands for is either listed,
+        // or counted from vmin by vmax -- the values of an enumeration do not
+        // always start at zero and do not always go up
+        f.kind = Choice;
+        for(int k = 0; row.choices && row.choices[k]; k++) {
+          f.choices.push_back(row.choices[k]);
+          f.values.push_back(row.values ? (int)row.values[k] :
+                                          (int)(row.vmin + row.vmax * k));
         }
-        _tooltip(category, o->str, o->help);
+        break;
+      default: break;
       }
+      return f;
     }
-    else if(row.kind == RowAction) {
-      if(ImGui::Button(row.label)) {
-        if(!strcmp(row.name, "restoreDefaults"))
-          appWindow::instance()->postAction(optionsRestoreDefaults);
-      }
-    }
-    else if(row.kind == RowColor) {
-      StringXColor *o = _findColor(category, row.name);
-      if(!o)
-        _missing(category, row.name);
-      else
-        changed = _drawColor(category, o, num, row.label);
-    }
-    else if(row.kind == RowVec3) {
-      const char *suffix[3] = {"X", "Y", "Z"};
-      StringXNumber *o[3];
-      bool ok = true;
+
+    // three numbers named <name>X, <name>Y and <name>Z, on one line under one
+    // label, the way a point or a direction is given everywhere else
+    void _addVector(std::vector<Field> &into, const optionRow &row,
+                    const char *category, int num)
+    {
       for(int k = 0; k < 3; k++) {
-        std::string n = std::string(row.name) + suffix[k];
-        o[k] = _findNumber(category, n.c_str());
-        if(!o[k]) ok = false;
-      }
-      if(!ok) { _missing(category, row.name); }
-      else {
-        double v[3];
-        for(int k = 0; k < 3; k++) v[k] = o[k]->function(num, GMSH_GET, 0.);
-        ImGui::SetNextItemWidth(240.f);
-        if(ImGui::InputScalarN(row.label ? row.label : row.name,
-                               ImGuiDataType_Double, v, 3, nullptr, nullptr,
-                               "%g", ImGuiInputTextFlags_EnterReturnsTrue)) {
-          for(int k = 0; k < 3; k++)
-            o[k]->function(num, GMSH_SET | GMSH_GUI, v[k]);
-          changed = true;
-        }
-        _tooltip(category, row.name, o[0]->help);
+        optionRow one = row;
+        std::string name = std::string(row.name) + (char)('X' + k);
+        one.kind = RowNumber;
+        one.name = name.c_str();
+        Field f = _fieldFor(one, category, num);
+        f.optionName = name;
+        f.label = (k == 2) ? (row.label ? row.label : row.name) : "";
+        f.widthShare = 1. / 3.;
+        f.packed = true;
+        if(k) f.sameRow = true;
+        into.push_back(f);
       }
     }
-    else {
-      StringXNumber *o = _findNumber(category, row.name);
-      if(!o) { _missing(category, row.name); }
-      else {
-        double value = o->function(num, GMSH_GET, 0.);
-        const char *label = row.label ? row.label : o->str;
-        if(row.kind == RowCheck) {
-          bool b = (value != 0.);
-          if(ImGui::Checkbox(label, &b)) {
-            o->function(num, GMSH_SET | GMSH_GUI, b ? 1. : 0.);
-            changed = true;
+
+    // A table, as a pane: the rows before the first heading are the pane's
+    // own, and every heading opens a section under them.
+    Pane _paneFor(const optionTab &tab, const char *category, int num)
+    {
+      Pane pane;
+      pane.label = tab.label;
+      pane.scrolling = true;
+      std::vector<Field> *into = &pane.fields;
+      for(int i = 0; tab.rows[i].name || tab.rows[i].kind != RowHeading; i++) {
+        const optionRow &row = tab.rows[i];
+        if(row.kind == RowHeading) {
+          Pane section;
+          section.label = row.name;
+          pane.sections.push_back(section);
+          into = &pane.sections.back().fields;
+          continue;
+        }
+        if(row.kind == RowVec3) {
+          _addVector(*into, row, category, num);
+          continue;
+        }
+        if(row.kind == RowAction) {
+          Field f;
+          f.kind = Action;
+          f.label = row.label ? row.label : row.name;
+          f.changed = []() { optionsRestoreDefaults(); };
+          into->push_back(f);
+          continue;
+        }
+        into->push_back(_fieldFor(row, category, num));
+      }
+      return pane;
+    }
+
+    // Everything the category holds, laid out or not: what the hand-written
+    // panes leave out has to stay reachable.
+    Pane _everythingPane(const char *category, int num)
+    {
+      Pane pane;
+      pane.label = "All";
+      pane.scrolling = true;
+      struct group {
+        const char *label;
+        rowKind kind;
+      };
+      const group groups[] = {{"Numbers", RowNumber},
+                              {"Strings", RowString},
+                              {"Colours", RowColor}};
+      for(const auto &g : groups) {
+        Pane section;
+        section.label = g.label;
+        if(g.kind == RowNumber) {
+          StringXNumber *o = GetNumberOptionCategory(category);
+          for(int i = 0; o && o[i].str; i++) {
+            if(o[i].level & GMSH_DEPRECATED) continue;
+            optionRow row = {g.kind, o[i].str, nullptr, nullptr, nullptr, 0., 0.};
+            section.fields.push_back(_fieldFor(row, category, num));
           }
         }
-        else if(row.kind == RowCombo) {
-          int n = 0;
-          while(row.choices[n]) n++;
-          double first = row.vmin, step = (row.vmax != 0.) ? row.vmax : 1.;
-          int index = -1;
-          if(row.values) {
-            for(int k = 0; k < n; k++)
-              if(row.values[k] == value) { index = k; break; }
-          }
-          else {
-            index = (int)((value - first) / step);
-          }
-          const char *preview =
-            (index >= 0 && index < n) ? row.choices[index] : "?";
-          ImGui::SetNextItemWidth(240.f);
-          if(ImGui::BeginCombo(label, preview)) {
-            for(int k = 0; k < n; k++)
-              if(ImGui::Selectable(row.choices[k], k == index)) {
-                o->function(num, GMSH_SET | GMSH_GUI,
-                            row.values ? row.values[k] : (first + step * k));
-                changed = true;
-              }
-            ImGui::EndCombo();
-          }
-        }
-        else if(row.kind == RowSlider) {
-          ImGui::SetNextItemWidth(240.f);
-          if(ImGui::SliderScalar(label, ImGuiDataType_Double, &value, &row.vmin,
-                                 &row.vmax, "%g")) {
-            o->function(num, GMSH_SET | GMSH_GUI, value);
-            changed = true;
+        else if(g.kind == RowString) {
+          StringXString *o = GetStringOptionCategory(category);
+          for(int i = 0; o && o[i].str; i++) {
+            if(o[i].level & GMSH_DEPRECATED) continue;
+            optionRow row = {g.kind, o[i].str, nullptr, nullptr, nullptr, 0., 0.};
+            section.fields.push_back(_fieldFor(row, category, num));
           }
         }
         else {
-          ImGui::SetNextItemWidth(240.f);
-          if(ImGui::InputDouble(label, &value, 0., 0., "%g",
-                                ImGuiInputTextFlags_EnterReturnsTrue)) {
-            o->function(num, GMSH_SET | GMSH_GUI, value);
-            changed = true;
+          StringXColor *o = GetColorOptionCategory(category);
+          for(int i = 0; o && o[i].str; i++) {
+            if(o[i].level & GMSH_DEPRECATED) continue;
+            optionRow row = {g.kind, o[i].str, nullptr, nullptr, nullptr, 0., 0.};
+            section.fields.push_back(_fieldFor(row, category, num));
           }
         }
-        _tooltip(category, o->str, o->help);
+        if(section.fields.size()) pane.sections.push_back(section);
       }
+      return pane;
     }
 
-    ImGui::PopID();
-    return changed;
-  }
+  } // namespace
 
-  bool _drawTab(const char *category, const optionRow *rows, int num)
+  int &optionsCategory() { return _state().category; }
+
+  Panel options()
   {
-    bool changed = false;
-    for(int i = 0; rows[i].name || rows[i].kind != RowHeading; i++) {
-      if(!rows[i].name && rows[i].kind == RowHeading) break;
-      changed |= _drawRow(category, rows[i], num);
-    }
-    return changed;
-  }
+    Panel p;
+    p.tabbed = true;
 
-  // ------------------------------------------------- the generated "All" list
+    const char *category = _categoryName(_state().category);
+    // the window says which category it is showing, as the one it replaces does
+    p.title = std::string("Options - ") + category;
 
-  bool _matchesFilter(const char *name, const char *help, const char *filter)
-  {
-    if(!filter || !filter[0]) return true;
-    std::string f(filter), n(name ? name : ""), h(help ? help : "");
-    auto lower = [](std::string &s) {
-      for(auto &c : s) c = (char)tolower((unsigned char)c);
-    };
-    lower(f);
-    lower(n);
-    lower(h);
-    return n.find(f) != std::string::npos || h.find(f) != std::string::npos;
-  }
+    // which category is being edited, down the left side, as the window this
+    // replaces has it
+    p.side.push_back(chooseFrom(
+      [](std::vector<std::string> &labels, std::vector<int> &values) {
+        for(int i = 0; i < _categoryCount(); i++) {
+          labels.push_back(_categoryName(i));
+          values.push_back(i);
+        }
+      },
+      [](int i) { return i == _state().category; },
+      [](int i, bool on) {
+        if(on) {
+          _state().category = i;
+          // a category has its own tabs: the window is not the same one any
+          // more, and has to be built again rather than refreshed
+          show(Options, -1);
+        }
+      },
+      false));
+    p.side.back().rows = 10;
 
-  bool _drawAll(const char *category, int num, const char *filter)
-  {
-    bool changed = false;
-    StringXNumber *numbers = GetNumberOptionCategory(category);
-    if(numbers) {
-      bool any = false;
-      for(int i = 0; numbers[i].str; i++) {
-        if(numbers[i].level & GMSH_DEPRECATED) continue;
-        if(!_matchesFilter(numbers[i].str, numbers[i].help, filter)) continue;
-        if(!any) { ImGui::SeparatorText("Numbers"); any = true; }
-        optionRow row = {RowNumber, numbers[i].str, nullptr, nullptr, nullptr, 0., 0.};
-        changed |= _drawRow(category, row, num);
-      }
-    }
-    StringXString *strings = GetStringOptionCategory(category);
-    if(strings) {
-      bool any = false;
-      for(int i = 0; strings[i].str; i++) {
-        if(strings[i].level & GMSH_DEPRECATED) continue;
-        if(!_matchesFilter(strings[i].str, strings[i].help, filter)) continue;
-        if(!any) { ImGui::SeparatorText("Strings"); any = true; }
-        optionRow row = {RowString, strings[i].str, nullptr, nullptr, nullptr, 0., 0.};
-        changed |= _drawRow(category, row, num);
-      }
-    }
-    StringXColor *colors = GetColorOptionCategory(category);
-    if(colors) {
-      bool any = false;
-      for(int i = 0; colors[i].str; i++) {
-        if(colors[i].level & GMSH_DEPRECATED) continue;
-        if(!_matchesFilter(colors[i].str, colors[i].help, filter)) continue;
-        if(!any) { ImGui::SeparatorText("Colours"); any = true; }
-        optionRow row = {RowColor, colors[i].str, nullptr, nullptr, nullptr, 0., 0.};
-        changed |= _drawRow(category, row, num);
-      }
-    }
-    return changed;
-  }
-
-} // namespace
-
-void appWindow::_drawOptionsPanel()
-{
-  if(!_showOptions) return;
-
-  ImGui::SetNextWindowSize(ImVec2(620, 660), ImGuiCond_FirstUseEver);
-  if(!ImGui::Begin("Options", &_showOptions)) {
-    ImGui::End();
-    return;
-  }
-
-  static char filter[128] = "";
-  int &category = _optionsCategory; // the quick access menu may preselect it
-  static int viewIndex = 0;
-  const char **categories = GetOptionCategories();
-  int numCategories = 0;
-  while(categories[numCategories]) numCategories++;
-  if(category >= numCategories) category = 0;
-
-  ImGui::SetNextItemWidth(150.f);
-  if(ImGui::BeginCombo("##category", categories[category])) {
-    for(int i = 0; i < numCategories; i++)
-      if(ImGui::Selectable(categories[i], category == i)) category = i;
-    ImGui::EndCombo();
-  }
-
-  int num = 0;
-  if(!strcmp(categories[category], "View")) {
+    int num = 0;
 #if defined(HAVE_POST)
-    int numViews = (int)PView::list.size();
-    if(!numViews) {
-      ImGui::TextDisabled("No post-processing view loaded");
-      ImGui::End();
-      return;
+    // the View options are those of one view; which one is chosen below the
+    // panes, and only there, since the other categories have but one subject
+    if(!strcmp(category, "View")) {
+      int views = (int)PView::list.size();
+      if(_state().view >= views) _state().view = 0;
+      num = _state().view;
+      Field which = choice("View", &_state().view, {}, {});
+      which.dynamicChoices = [](std::vector<std::string> &labels,
+                                std::vector<int> &values) {
+        for(int i = 0; i < (int)PView::list.size(); i++) {
+          labels.push_back("View [" + std::to_string(i) + "]");
+          values.push_back(i);
+        }
+      };
+      p.footer.push_back(which);
     }
-    if(viewIndex >= numViews) viewIndex = 0;
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(150.f);
-    ImGui::SliderInt("View", &viewIndex, 0, numViews - 1);
-    num = viewIndex;
-#else
-    ImGui::TextDisabled("Gmsh was compiled without post-processing support");
-    ImGui::End();
-    return;
 #endif
+
+    const optionTab *tabs = _tabsForCategory(category);
+    for(int i = 0; tabs && tabs[i].label; i++)
+      p.panes.push_back(_paneFor(tabs[i], category, num));
+    p.panes.push_back(_everythingPane(category, num));
+
+    Button defaults;
+    defaults.label = "Defaults";
+    defaults.apart = true;
+    defaults.action = []() { optionsRestoreDefaults(); };
+    p.buttons.push_back(defaults);
+
+    Button redraw;
+    redraw.label = "Redraw";
+    redraw.isDefault = true;
+    redraw.action = []() { drawContext::global()->draw(); };
+    p.buttons.push_back(redraw);
+    return p;
   }
 
-  bool changed = false;
-  if(ImGui::BeginTabBar("##tabs")) {
-    const optionTab *tabs = _tabsForCategory(categories[category]);
-    for(int i = 0; tabs && tabs[i].label; i++) {
-      if(ImGui::BeginTabItem(tabs[i].label)) {
-        if(ImGui::BeginChild("##rows"))
-          changed |= _drawTab(categories[category], tabs[i].rows, num);
-        ImGui::EndChild();
-        ImGui::EndTabItem();
-      }
-    }
-    if(ImGui::BeginTabItem("All")) {
-      ImGui::SetNextItemWidth(-1.f);
-      ImGui::InputTextWithHint("##filter",
-                               "Search an option by name or by help", filter,
-                               sizeof(filter));
-      if(!tabs)
-        ImGui::TextDisabled("This category does not have hand-written panels "
-                            "yet: every option is listed below.");
-      if(ImGui::BeginChild("##allrows"))
-        changed |= _drawAll(categories[category], num, filter);
-      ImGui::EndChild();
-      ImGui::EndTabItem();
-    }
-    ImGui::EndTabBar();
-  }
-
-  if(changed) drawContext::global()->draw();
-
-  ImGui::End();
-}
-
-#endif
+} // namespace Dialog

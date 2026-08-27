@@ -34,6 +34,7 @@ namespace Dialog {
     Label, // not a value at all: a line the dialog says, recomputed as it shows
     Output, // the same, but with a label, for a value one reads and cannot edit
     Action, // not a value either: a button in the flow of the fields
+    Color, // a colour, shown as a swatch one clicks to change
     List, // what has been picked so far, which one may correct
     Spacer // nothing at all: it eats what is left of the line, and never less
            // than widthEm, so that it still separates in a window that fits
@@ -50,6 +51,7 @@ namespace Dialog {
     int *integer;
     double *number;
     bool *flag;
+    unsigned int *colour;
     // Instead of a variable, the field can edit a Gmsh option, addressed the
     // way the option file does. The interfaces never see the difference: they
     // go through the accessors below.
@@ -116,7 +118,7 @@ namespace Dialog {
     double widthShare;
     Field()
       : kind(Text), text(nullptr), integer(nullptr), number(nullptr),
-        flag(nullptr), optionIndex(0), list(nullptr), rows(5), multiple(false),
+        flag(nullptr), colour(nullptr), optionIndex(0), list(nullptr), rows(5), multiple(false),
         disclosure(false), minimum(0.),
         maximum(0.), step(0.), sameRow(false), packed(false), widthEm(0.),
         widthShare(0.)
@@ -131,6 +133,9 @@ namespace Dialog {
     void setText(const std::string &v);
     bool getFlag() const;
     void setFlag(bool v);
+    // packed the way Gmsh packs a colour, see CTX::packColor()
+    unsigned int getColour() const;
+    void setColour(unsigned int v);
   };
 
   struct Pane {
@@ -146,6 +151,14 @@ namespace Dialog {
     // part away
     std::function<bool()> visible;
     std::vector<Field> fields;
+    // Panes shown one under another inside this one, each with its label as a
+    // heading and its own visible(). A tab of the option window is a column of
+    // titled sections, which is the one place where a pane is not flat; the
+    // fields above them, if any, come first.
+    std::vector<Pane> sections;
+    // the fields of a long pane scroll rather than making the window as tall
+    // as they are
+    bool scrolling;
     // the button at the bottom of the pane, when it has one
     std::string buttonLabel;
     std::function<void()> button;
@@ -153,7 +166,7 @@ namespace Dialog {
     // told to show it. Picking the tab of a tool has to change the tool, the
     // same as picking it in the tree does.
     std::function<void()> chosen;
-    Pane() : separatorAfter(false) {}
+    Pane() : separatorAfter(false), scrolling(false) {}
   };
 
   struct Button {
@@ -203,6 +216,7 @@ namespace Dialog {
     Manipulator,
     Statistics,
     Clipping,
+    Options,
     NumDialogs
   };
 
@@ -219,6 +233,11 @@ namespace Dialog {
   Panel manipulator();
   // what the model is made of, and how good the mesh is
   Panel statistics();
+  // every option there is, laid out by hand in GuiOptions.cpp
+  Panel options();
+  // which category it is showing, so that a menu can open it on the one it is
+  // about rather than on whichever was last looked at
+  int &optionsCategory();
   // the six planes that cut what is drawn
   Panel clipping();
 

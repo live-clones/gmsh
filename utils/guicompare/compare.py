@@ -31,6 +31,7 @@ DIALOG_TITLES = {
     "manipulator": "Manipulator",
     "statistics": "Statistics",
     "clipping": "Clipping",
+    "options": "Options",
 }
 
 

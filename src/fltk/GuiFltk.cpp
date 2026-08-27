@@ -223,7 +223,6 @@ namespace Gui {
   {
     FlGui *g = FlGui::instance();
     switch(panel) {
-    case PanelOptions: return g->options->win;
     case PanelPlugins: return g->plugins->win;
     case PanelVisibility: return g->visibility->win;
     case PanelKeyboardAndMouse: return g->help->basic;
@@ -241,6 +240,7 @@ namespace Gui {
       graphicWindow *g = FlGui::instance()->graph[0];
       return g->getMessageHeight() >= FL_NORMAL_SIZE;
     }
+    if(panel == PanelOptions) return dialogVisible(Dialog::Options);
     // a dialog and an editor: they are shown, never asked about
     if(panel == PanelClassify) return false;
     Fl_Window *w = _panelWindow(panel);
@@ -257,6 +257,11 @@ namespace Gui {
       else
         g->hideMessages();
       FlGui::check();
+      return;
+    }
+    // the option window is described like the other dialogs now, so it is one
+    if(panel == PanelOptions) {
+      showDialog(Dialog::Options, show);
       return;
     }
     // these two are not plain windows: one is a dialog, the other an editor
