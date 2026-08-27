@@ -132,6 +132,8 @@ namespace Dialog {
 // takes a third of one there
 #define NUMBER_BESIDE_OF(name, label, share) \
   {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, true, share}
+#define NUMBER_OF(name, label, share) \
+  {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, false, share}
 #define COMBO_BESIDE(name, label, choices) \
   {RowCombo, name, label, choices, nullptr, 0., 1., nullptr, true}
 // and one that follows them inside the same column
@@ -368,8 +370,8 @@ namespace Dialog {
     NUMBER("Smoothing", "Smoothing steps"),
     NUMBER("MeshSizeFactor", "Element size factor"),
     ROW("Min/Max element size", _r_meshSize),
-    NUMBER("ElementOrder", "Element order"),
-    CHECK_RIGHT("SecondOrderIncomplete", "Use incomplete elements"),
+    NUMBER_OF("ElementOrder", "Element order", 1. / 3.),
+    CHECK_BESIDE("SecondOrderIncomplete", "Use incomplete elements"),
     END};
 
   const optionRow _meshAdvanced[] = {
