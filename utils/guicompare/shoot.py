@@ -186,8 +186,8 @@ keyed("options", ["ctrl", "shift", "n"])
 # left is what changes the tabs on the right
 SHOTS.append(dict(name="options-mesh", dialog="options", branches=[],
                   keys=["ctrl", "shift", "n"],
-                  press={"released": (45, 44), "fltk": (45, 44),
-                         "imgui": (45, 71)}))
+                  press={"released": (45, 37), "fltk": (45, 40),
+                         "imgui": (45, 67)}))
 keyed("clipping", ["ctrl", "shift", "c"])
 keyed("statistics", ["ctrl", "i"],
       tabs=[("geometry", 55, 40), ("mesh", 112, 100), ("post", 187, 165)])
@@ -572,9 +572,13 @@ OPTION_TABS = [
     ("Post", ["General"]),
 ]
 
-# where the rows of the list of categories are, per interface: the first one
-# and the step from one to the next
-CATEGORY_ROWS = {"released": (10, 14), "fltk": (10, 14), "imgui": (33, 17)}
+# Where the rows of the list of categories are, per interface: the first one
+# and the step from one to the next. Measured off a picture, like the rows of
+# the modules tree -- FLTK 1.4 gives a browser taller rows than 1.3, so the
+# same numbers cannot serve both, and clicking a row and a half off lands on
+# the wrong category without saying so.
+CATEGORY_ROWS = {"released": (10, 13.7), "fltk": (10, 15.3),
+                 "imgui": (33, 17)}
 
 
 def press_inside(dpy, build, point, dialog, wx, wy):
@@ -613,7 +617,7 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
             failures.append("options: no window to sweep")
             return failures
         dx, dy, dw, dh = where
-        click(dpy, dx + 45, dy + first + k * step)
+        click(dpy, dx + 45, dy + int(round(first + k * step)))
         time.sleep(0.6)
         picture = _dialog_picture(dpy, "options", build, win, ww, wh)
         if picture is None:
