@@ -249,6 +249,13 @@ void drawTooltip(const std::string &text);
   const std::vector<SPoint2> &selectedPoints();
   const std::vector<PView *> &selectedViews();
 
+  // --- small editors the interface owns
+
+  // The three numbers that shape an arrow, edited in a window of the
+  // interface's own: it draws the arrow it is describing, which no
+  // description of fields could. Returns false when nothing was changed.
+  bool editArrow(double &headRadius, double &stemLength, double &stemRadius);
+
   // --- miscellaneous
 
   void setFinishedProcessingCommandLine();

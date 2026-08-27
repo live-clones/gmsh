@@ -1047,6 +1047,23 @@ void optionsAction(const std::string &what)
     Msg::StatusGl("");
     drawContext::global()->draw();
   }
+  else if(what == "restoreDefaults") {
+    optionsRestoreDefaults();
+  }
+  else if(what == "arrow_edit") {
+    // the shape of an arrow is edited in a window of the interface's own,
+    // which draws the arrow as it is described
+    double a = opt_general_arrow_head_radius(0, GMSH_GET, 0);
+    double b = opt_general_arrow_stem_length(0, GMSH_GET, 0);
+    double c = opt_general_arrow_stem_radius(0, GMSH_GET, 0);
+    while(Gui::editArrow(a, b, c)) {
+      opt_general_arrow_head_radius(0, GMSH_SET, a);
+      opt_general_arrow_stem_length(0, GMSH_SET, b);
+      opt_general_arrow_stem_radius(0, GMSH_SET, c);
+      CTX::instance()->mesh.changed = ENT_ALL;
+      drawContext::global()->draw();
+    }
+  }
   else if(what == "axes_fit") {
     SBoundingBox3d bbox = GModel::current()->bounds(true);
 #if defined(HAVE_POST)

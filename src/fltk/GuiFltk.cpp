@@ -17,6 +17,7 @@
 
 #include "Gui.h"
 #include "FlGui.h"
+#include "extraDialogs.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "dialogFltk.h"
@@ -245,6 +246,14 @@ namespace Gui {
     if(panel == PanelClassify) return false;
     Fl_Window *w = _panelWindow(panel);
     return w ? (w->shown() ? true : false) : false;
+  }
+
+  bool editArrow(double &headRadius, double &stemLength, double &stemRadius)
+  {
+    if(!available()) return false;
+    return arrowEditor("Arrow Editor", headRadius, stemLength, stemRadius) ?
+             true :
+             false;
   }
 
   void showPanel(int panel, bool show)

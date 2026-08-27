@@ -277,6 +277,7 @@ namespace Dialog {
     NUMBER("PointSize", "Point size"),
     NUMBER("PointSize", "Line width"),
     COMBOV("VectorType", "Vector display", _c_vectorType, 1., 1.),
+    ACTION_RIGHT("arrow_edit", "Edit arrow"),
     STRCOMBO("GraphicsFontEngine", "Font rendering engine", _c_graphicsFontEngine),
     STRCOMBO("GraphicsFont", "", _c_graphicsFont),
     NUMBER_BESIDE("GraphicsFontSize", "Default font"),
@@ -305,6 +306,7 @@ namespace Dialog {
   const optionRow _geometryGeneral[] = {
     NUMBER("Tolerance", "Geometry tolerance"),
     CHECK("AutoCoherence", "Remove duplicate entities in GEO model transforms"),
+    CAPTION("Open CASCADE model healing options:"),
     CHECK("OCCFixDegenerated", "Remove degenerated edges and faces"),
     CHECK("OCCFixSmallEdges", "Remove small edges"),
     CHECK("OCCFixSmallFaces", "Remove small faces"),
@@ -1005,17 +1007,21 @@ namespace Dialog {
     for(int i = 0; tabs && tabs[i].label; i++)
       p.panes.push_back(_paneFor(tabs[i], category, num));
 
-    Button defaults;
-    defaults.label = "Restore defaults";
-    defaults.apart = true;
-    defaults.action = []() { optionsRestoreDefaults(); };
-    p.buttons.push_back(defaults);
-
-    Button redraw;
-    redraw.label = "Redraw";
-    redraw.isDefault = true;
-    redraw.action = _redraw;
-    p.buttons.push_back(redraw);
+    // Redraw sits under the list of categories, and only when the model drawn
+    // while one interacts is a simplified one: there is nothing to redraw
+    // otherwise. The window this reproduces hides it then; here it is greyed.
+    // Restoring the defaults is not a button of the window at all -- it is the
+    // last row of the general options, where that window keeps it.
+    Field again;
+    again.kind = Action;
+    again.label = "Redraw";
+    again.changed = _redraw;
+    again.enabled = []() {
+      double v = 0.;
+      NumberOption(GMSH_GET, "General", 0, "FastRedraw", v, false);
+      return v != 0.;
+    };
+    p.side.push_back(again);
     return p;
   }
 

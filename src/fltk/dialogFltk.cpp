@@ -605,8 +605,14 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       b.row = row;
       _fields.push_back(b);
     }
-    y += BH;
-    row++;
+    // a list is as tall as the lines it shows, and what follows it comes
+    // under it rather than over it
+    int tall = 1;
+    for(std::size_t k = i; k < last; k++)
+      if(fields[k].kind == Dialog::List && fields[k].rows > tall)
+        tall = fields[k].rows;
+    y += tall * BH;
+    row += tall;
     i = last;
   }
 }
