@@ -29,6 +29,7 @@
 #include "GmshDefines.h"
 #include "Context.h"
 #include "drawContext.h"
+#include "ColorTable.h"
 
 namespace {
 
@@ -71,6 +72,71 @@ namespace {
     if(turn == 0.f) return false;
     value += (double)turn * f.step;
     return true;
+  }
+
+  // What a channel of a colour map is worth at one entry, and what setting it
+  // does to that entry: red, green and blue, or hue, saturation and value,
+  // and the alpha over both -- the same four the widget of the window this
+  // reproduces draws.
+  int _mapChannel(GmshColorTable *table, int i, int channel, bool hsv)
+  {
+    unsigned int colour = table->table[i];
+    int red = CTX::instance()->unpackRed(colour);
+    int green = CTX::instance()->unpackGreen(colour);
+    int blue = CTX::instance()->unpackBlue(colour);
+    if(channel == 3) return CTX::instance()->unpackAlpha(colour);
+    if(!hsv) return channel == 0 ? red : (channel == 1 ? green : blue);
+    double h, s, v;
+    RGB_to_HSV(red / 255., green / 255., blue / 255., &h, &s, &v);
+    if(channel == 0) return (int)(h / 6. * 255.);
+    return (int)((channel == 1 ? s : v) * 255.);
+  }
+
+  void _setMapChannel(GmshColorTable *table, int i, int channel, int value,
+                      bool hsv)
+  {
+    unsigned int colour = table->table[i];
+    int red = CTX::instance()->unpackRed(colour);
+    int green = CTX::instance()->unpackGreen(colour);
+    int blue = CTX::instance()->unpackBlue(colour);
+    int alpha = CTX::instance()->unpackAlpha(colour);
+    if(channel == 3)
+      alpha = value;
+    else if(!hsv) {
+      if(channel == 0) red = value;
+      else if(channel == 1) green = value;
+      else blue = value;
+    }
+    else {
+      double h, s, v, r, g, b;
+      RGB_to_HSV(red / 255., green / 255., blue / 255., &h, &s, &v);
+      if(channel == 0) h = 6. * value / 255.;
+      else if(channel == 1) s = value / 255.;
+      else v = value / 255.;
+      HSV_to_RGB(h, s, v, &r, &g, &b);
+      red = (int)(255 * r);
+      green = (int)(255 * g);
+      blue = (int)(255 * b);
+    }
+    table->table[i] = CTX::instance()->packColor(red, green, blue, alpha);
+  }
+
+  // whether the map is still showing what it answers to, which it stops doing
+  // at the first click, as that widget does
+  bool _mapHelp = true;
+
+  // where the last stroke left off, so that a drag fills in the entries it
+  // passed over rather than only the one it is on
+  int _mapFrom(int now)
+  {
+    static int was = -1;
+    if(now < 0) {
+      was = -1;
+      return -1;
+    }
+    int from = (was < 0) ? now : was;
+    was = now;
+    return from;
   }
 
   // How wide the disc of a direction is: as tall as the lines it hangs over,
@@ -269,6 +335,154 @@ namespace {
         changed = true;
       }
     } break;
+    case Dialog::ColorMap: {
+      // The colour map of a view, drawn as the widget of the window this
+      // reproduces draws it: the four channels over the whole height, the
+      // wedge of colours under them, and the value of the marker below that.
+      // What is drawn on it is drawn into the table itself.
+      std::string name;
+      double least = 0., most = 0.;
+      GmshColorTable *table = f.colourMap ? f.colourMap(name, least, most) :
+                                            nullptr;
+      if(!table || table->size < 2) break;
+      ImVec2 avail = ImGui::GetContentRegionAvail();
+      float wide = (width > 0.f) ? width : avail.x;
+      float tall = (f.rows > 0) ? (float)f.rows *
+                                    ImGui::GetFrameHeightWithSpacing() :
+                                 avail.y;
+      if(tall < 4.f * ImGui::GetTextLineHeight()) tall = 4.f * ImGui::GetTextLineHeight();
+      ImVec2 at = ImGui::GetCursorScreenPos();
+      ImGui::InvisibleButton("##map", ImVec2(wide, tall));
+      bool active = ImGui::IsItemActive(), hovered = ImGui::IsItemHovered();
+      float lineHeight = ImGui::GetTextLineHeight();
+      float labelY = tall - 5.f;
+      float markerY = labelY - 2.f * lineHeight;
+      float wedgeY = markerY - lineHeight;
+      int size = table->size;
+      // where an entry of the table is, and what an ordinate is worth
+      auto indexToX = [&](int i) {
+        return at.x + wide * (float)i / (float)(size - 1);
+      };
+      auto xToIndex = [&](float x) {
+        int i = (int)((x - at.x) * (float)size / wide);
+        return i < 0 ? 0 : (i >= size ? size - 1 : i);
+      };
+      auto valueToY = [&](int v) { return at.y + wedgeY * (1.f - v / 255.f); };
+      ImDrawList *into = ImGui::GetWindowDrawList();
+      into->AddRectFilled(at, ImVec2(at.x + wide, at.y + tall),
+                          ImGui::GetColorU32(ImGuiCol_FrameBg));
+      // the four channels, in their own colours
+      const ImU32 inks[4] = {IM_COL32(255, 0, 0, 255), IM_COL32(0, 255, 0, 255),
+                             IM_COL32(0, 0, 255, 255),
+                             ImGui::GetColorU32(ImGuiCol_Text)};
+      bool hsv = table->ipar[COLORTABLE_MODE] == COLORTABLE_HSV;
+      for(int channel = 0; channel < 4; channel++) {
+        for(int i = 1; i < size; i++) {
+          int was = _mapChannel(table, i - 1, channel, hsv);
+          int now = _mapChannel(table, i, channel, hsv);
+          into->AddLine(ImVec2(indexToX(i - 1), valueToY(was)),
+                        ImVec2(indexToX(i), valueToY(now)), inks[channel]);
+        }
+      }
+      // the wedge of colours
+      for(float x = 0.f; x < wide; x += 1.f) {
+        unsigned int colour = table->table[xToIndex(at.x + x)];
+        into->AddRectFilled(
+          ImVec2(at.x + x, at.y + wedgeY),
+          ImVec2(at.x + x + 1.f, at.y + wedgeY + lineHeight),
+          IM_COL32(CTX::instance()->unpackRed(colour),
+                   CTX::instance()->unpackGreen(colour),
+                   CTX::instance()->unpackBlue(colour), 255));
+      }
+      // What it answers to, until it is drawn on -- the widget of the window
+      // this reproduces shows it and forgets it at the first click, and so
+      // does this one.
+      if(_mapHelp) {
+        static const char *const keys[][2] = {
+          {"0, 1, 2, 3, ..., 9", "Select predefined colormap 0...9"},
+          {"Ctrl+0, ..., Ctrl+9", "Select predefined colormap 10...19"},
+          {"F1, ..., F5", "Select predefined colormap 20...24"},
+          {"mouse1", "Draw red or hue channel"},
+          {"mouse2", "Draw green or saturation channel"},
+          {"mouse3", "Draw blue or value channel"},
+          {"Ctrl+mouse1", "Draw alpha channel"},
+          {"Ctrl+c, Ctrl+v, r", "Copy, paste or reset colormap"},
+          {"m", "Toggle RGB/HSV mode"},
+          {"left, right", "Translate abscissa"},
+          {"Ctrl+left, Ctrl+right", "Rotate abscissa"},
+          {"i, Ctrl+i", "Invert abscissa or ordinate"},
+          {"up, down", "Modify color channel curvature"},
+          {"a, Ctrl+a", "Modify alpha coefficient"},
+          {"p, Ctrl+p", "Modify alpha channel power law"},
+          {"b, Ctrl+b", "Modify gamma correction"},
+          {"h", "Show this help message"}};
+        // in a slightly smaller hand than the rest, as that widget writes
+        // it, and small enough that the seventeen lines stand clear of the
+        // wedge whatever the pane is worth
+        ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
+        float small = std::min(ImGui::GetFontSize() * .85f,
+                               (wedgeY - 12.f) / 18.f);
+        float step = small + 1.f;
+        for(int i = 0; i < 17; i++) {
+          into->AddText(ImGui::GetFont(), small,
+                        ImVec2(at.x + 6.f, at.y + 8.f + i * step), ink,
+                        keys[i][0]);
+          into->AddText(ImGui::GetFont(), small,
+                        ImVec2(at.x + 12.f * step, at.y + 8.f + i * step), ink,
+                        keys[i][1]);
+        }
+      }
+      // and what the value under the marker is
+      char says[64];
+      snprintf(says, sizeof(says), "%g", least);
+      into->AddText(ImVec2(at.x + 10.f, at.y + labelY - lineHeight),
+                    ImGui::GetColorU32(ImGuiCol_Text), says);
+      snprintf(says, sizeof(says), "%g", most);
+      ImVec2 wide2 = ImGui::CalcTextSize(says);
+      into->AddText(ImVec2(at.x + wide - wide2.x - 10.f,
+                           at.y + labelY - lineHeight),
+                    ImGui::GetColorU32(ImGuiCol_Text), says);
+      // Drawing on it: a button per channel, as that widget has it, and the
+      // entries between the last one and this one are all given the value.
+      if(active) {
+        _mapHelp = false;
+        ImVec2 mouse = ImGui::GetIO().MousePos;
+        int channel = ImGui::GetIO().KeyCtrl ? 3 :
+                      ImGui::IsMouseDown(ImGuiMouseButton_Right) ? 2 :
+                      ImGui::IsMouseDown(ImGuiMouseButton_Middle) ? 1 : 0;
+        int value = (int)((wedgeY - (mouse.y - at.y)) * 255.f / wedgeY);
+        value = value < 0 ? 0 : (value > 255 ? 255 : value);
+        if(mouse.y - at.y < wedgeY) {
+          int to = xToIndex(mouse.x);
+          int from = _mapFrom(to);
+          for(int i = std::min(from, to); i <= std::max(from, to); i++)
+            _setMapChannel(table, i, channel, value, hsv);
+          changed = true;
+        }
+      }
+      else
+        _mapFrom(-1);
+      // and the keys that widget answers to, while the pointer is over it
+      if(hovered) {
+        for(int i = 0; i <= 9; i++)
+          if(ImGui::IsKeyPressed((ImGuiKey)(ImGuiKey_0 + i))) {
+            ColorTable_InitParam(ImGui::GetIO().KeyCtrl ? i + 10 : i, table);
+            ColorTable_Recompute(table);
+            changed = true;
+          }
+        if(ImGui::IsKeyPressed(ImGuiKey_M)) {
+          table->ipar[COLORTABLE_MODE] =
+            hsv ? COLORTABLE_RGB : COLORTABLE_HSV;
+          changed = true;
+        }
+        if(ImGui::IsKeyPressed(ImGuiKey_H)) _mapHelp = !_mapHelp;
+        if(ImGui::IsKeyPressed(ImGuiKey_R)) {
+          ColorTable_InitParam(2, table);
+          ColorTable_Recompute(table);
+          changed = true;
+        }
+      }
+    } break;
     case Dialog::Direction: {
       // The disc the FLTK spherePositionWidget draws: a circle, and the point
       // one drags over it. Dear ImGui has nothing of the sort, so the panel
@@ -451,6 +665,11 @@ namespace {
       if(f.disclosure) w += 2.f * style.FramePadding.x;
       return w;
     }
+    // a menu of switches carries its label inside, as a button does
+    if(f.kind == Dialog::Choice && f.multiple)
+      return f.widthShare > 0. ? (float)f.widthShare * item :
+             f.widthEm > 0.    ? (float)f.widthEm * ImGui::GetFontSize() :
+                                 item;
     float w = f.widthShare > 0. ? (float)f.widthShare * item :
               f.widthEm > 0.      ? (float)f.widthEm * ImGui::GetFontSize() :
                                     item;
@@ -495,11 +714,18 @@ namespace {
         column++;
       if(column >= grid) column = grid - 1;
       if(f.kind == Dialog::Spacer) continue;
+      // where the line this field is on ends, so that the cells packed
+      // against it can be stepped over the way they are placed
+      std::size_t end = k + 1;
+      while(end < fields.size() && fields[end].sameRow) end++;
       float need = 0.f;
       std::size_t j = k;
       while(j < fields.size() &&
             (j == k || (fields[j].sameRow && fields[j].packed))) {
-        need += _packedWidth(fields[j], item) + style.ItemSpacing.x;
+        bool last = !(j + 1 < fields.size() && fields[j + 1].sameRow &&
+                      fields[j + 1].packed);
+        need += last ? _packedWidth(fields[j], item) + style.ItemSpacing.x :
+                       _packedStep(fields, j, end, item);
         j++;
       }
       if(!(j < fields.size() && fields[j].sameRow)) {
@@ -758,9 +984,12 @@ namespace {
           continue;
         }
         float here = item;
+        // a colour map is not a field either: it takes the whole of its pane
+        if(f.kind == Dialog::ColorMap)
+          here = 0.f;
         // a list is not a field with a label beside it: it takes its whole
         // share of the line, or its contents are cut off
-        if(f.kind == Dialog::List)
+        else if(f.kind == Dialog::List)
           here = columns ? columnW - style.ItemSpacing.x : -FLT_MIN;
         else if(f.widthShare > 0.)
           here = (float)f.widthShare * item;

@@ -41,6 +41,8 @@
 
 #if defined(HAVE_POST)
 #include "PView.h"
+#include "PViewData.h"
+#include "PViewOptions.h"
 #endif
 
 namespace Dialog {
@@ -62,6 +64,8 @@ namespace Dialog {
       RowRow, // several options on one line under one label, names[] naming them
       RowMulti, // several switches behind one button, names[] naming them
       RowFunction, // an option reached by its accessor, having no table entry
+      RowViewList, // a choice of "Self" or one of the views there are
+      RowColorMap, // the colour map of a view, which is a widget of its own
       RowCaption // not an option: a line of text over the rows under it
     };
 
@@ -127,6 +131,37 @@ namespace Dialog {
 // one with a rule over it: what follows it is a group of its own
 #define SECTION(text) \
   {RowCaption, nullptr, text, nullptr, nullptr, 1., 0., nullptr, false}
+// a button packed against what follows it, taking that share of a field's
+// width: the little "-" and "+" of a stepper, and the "Min" and "Max" of a
+// range, are drawn against their value there
+#define ACTION_PACK(id, label, share) \
+  {RowAction, id, label, nullptr, nullptr, 4., 0., nullptr, false, share}
+// and the same, following the field before it on the line
+#define ACTION_PACK_AFTER(id, label, share) \
+  {RowAction, id, label, nullptr, nullptr, 4., 0., nullptr, true, share}
+// a line of text beside the field before it, for a stepper whose label cannot
+// sit on any one of its three pieces
+#define LABEL_AFTER(text) \
+  {RowCaption, nullptr, text, nullptr, nullptr, 2., 0., nullptr, false}
+// and one that starts a column of its own, to head it
+#define LABEL_COLUMN(text) \
+  {RowCaption, nullptr, text, nullptr, nullptr, 3., 0., nullptr, false}
+// a value, a word or a choice at the right end of the line above it
+#define NUMBER_RIGHT(name, label, share) \
+  {RowNumber, name, label, nullptr, nullptr, 2., 0., nullptr, true, share}
+#define STRING_RIGHT(name, label, share) \
+  {RowString, name, label, nullptr, nullptr, 2., 0., nullptr, true, share}
+// the colour map of a view, filling its tab
+#define COLORMAP \
+  {RowColorMap, nullptr, nullptr, nullptr, nullptr, 0., 0., nullptr, false}
+// a choice of which view a value is taken from: itself, or another
+#define VIEWLIST(name, label) \
+  {RowViewList, name, label, nullptr, nullptr, 0., 0., nullptr, false}
+// a choice at the right end of the line above it, numbered from zero
+#define COMBO_RIGHT(name, choices, share) \
+  {RowCombo, name, "", choices, nullptr, 2., 1., nullptr, true, share}
+#define COMBOL_RIGHT(name, choices, values, share) \
+  {RowCombo, name, "", choices, values, 2., 1., nullptr, true, share}
 // a button at the right end of the line above it
 #define ACTION_RIGHT(id, label) \
   {RowAction, id, label, nullptr, nullptr, 1., 0., nullptr, false}
@@ -142,6 +177,10 @@ namespace Dialog {
 // and a switch sharing that line
 #define CHECK_RIGHT(name, label) \
   {RowCheck, name, label, nullptr, nullptr, 1., 0., nullptr, false}
+// a row of values beside the field before them rather than on a line of their
+// own: the nine components of a field follow the choice that maps them
+#define ROW_BESIDE(names, share) \
+  {RowRow, nullptr, "", names, nullptr, 0., 0., nullptr, true, share}
 // how much of a field's width a row of values, or a choice after them, takes
 #define ROW_OF(label, names, share) \
   {RowRow, nullptr, label, names, nullptr, 0., 0., nullptr, false, share}
@@ -224,6 +263,8 @@ namespace Dialog {
   // the values of an enumeration neither start at zero nor go up in order:
   // Mesh.Algorithm is 2 for "Automatic" and 12 for the last entry.
   const double _v_orthographic[] = {1., 0.};
+  // the scale of a view is one, two or three, not zero, one or two
+  const double _v_scaleType[] = {1., 2., 3.};
   const double _v_algorithm[] = {2., 1., 5., 6., 7., 8., 9., 11., 3., 12.};
   const double _v_algorithm3D[] = {1., 4., 10., 7., 3.};
 
@@ -258,9 +299,13 @@ namespace Dialog {
   const char *const _r_meshSize[] = {"MeshSizeMin", "MeshSizeMax", nullptr};
   const char *const _r_quality[] = {"QualityInf", "QualitySup", nullptr};
   const char *const _r_radiusInf[] = {"RadiusInf", "RadiusSup",  nullptr};
-  const char *const _r_timeStep[] = {"TimeStep", "NbIso",  nullptr};
-  const char *const _r_maxRecursionLevel[] = {"MaxRecursionLevel", "TargetError",  nullptr};
   const char *const _r_viewSize[] = {"Width", "Height", nullptr};
+  // which component of a field goes where, nine boxes beside the choice that
+  // says how many there are
+  const char *const _r_componentMap[] = {
+    "ComponentMap0", "ComponentMap1", "ComponentMap2", "ComponentMap3",
+    "ComponentMap4", "ComponentMap5", "ComponentMap6", "ComponentMap7",
+    "ComponentMap8", nullptr};
   const char *const _r_arrowSizeMin[] = {"ArrowSizeMin", "ArrowSizeMax",  nullptr};
 
   const optionRow _generalGeneral[] = {
@@ -484,22 +529,27 @@ namespace Dialog {
   const optionRow _viewGeneral[] = {
     COMBOV("Type", "Plot type", _c_type, 1., 1.),
     STRING("Name", "View name"),
-    ACTION("view_timestep_down", "-"),
-    ACTION("view_timestep_up", "+"),
-    ROW("Intervals", _r_timeStep),
-    STRING("Format", "Format"),
+    // the step one is looking at, between the two buttons that walk it
+    ACTION_PACK("view_timestep_down", "-", .15),
+    NUMBER_AFTER("TimeStep", "", .7),
+    ACTION_PACK_AFTER("view_timestep_up", "+", .15),
+    LABEL_AFTER("Step"),
+    NUMBER("NbIso", "Intervals"),
+    STRING_RIGHT("Format", "Format", .425),
     COMBOV("IntervalsType", "Intervals type", _c_intervalsType, 1., 1.),
-    COMBOV("ScaleType", "", _c_scaleType, 1., 1.),
+    COMBOL_RIGHT("ScaleType", _c_scaleType, _v_scaleType, .85),
     COMBOV("RangeType", "Range mode", _c_rangeType, 1., 1.),
-    CHECK("SaturateValues", "Saturate"),
-    ACTION("view_range_min", "Min"),
-    NUMBER("CustomMin", "Custom min"),
-    ACTION("view_range_max", "Max"),
-    NUMBER("CustomMax", "Custom max"),
+    CHECK_RIGHT("SaturateValues", "Saturate"),
+    ACTION_PACK("view_range_min", "Min", .25),
+    NUMBER_AFTER("CustomMin", "Custom min", .75),
+    ACTION_PACK("view_range_max", "Max", .25),
+    NUMBER_AFTER("CustomMax", "Custom max", .75),
     CHECK("AdaptVisualizationGrid", "Adapt visualization grid"),
-    ACTION("view_recursion_down", "-"),
-    ACTION("view_recursion_up", "+"),
-    ROW("Target visualization error", _r_maxRecursionLevel),
+    ACTION_PACK("view_recursion_down", "-", .15),
+    NUMBER_AFTER("MaxRecursionLevel", "", .7),
+    ACTION_PACK_AFTER("view_recursion_up", "+", .15),
+    LABEL_AFTER("Maximum recursion level"),
+    NUMBER("TargetError", "Target visualization error"),
     END};
 
   const optionRow _viewAxes[] = {
@@ -523,34 +573,37 @@ namespace Dialog {
     CHECK("ShowElement", "Draw element outlines"),
     CHECK("DrawSkinOnly", "Draw only skin of 3D views"),
     MULTI("Elements", _m_viewElements),
-    NUMBER("Sampling", "Sampling"),
+    NUMBER_BESIDE_OF("Sampling", "Sampling", 1. / 4.),
     COMBO("Boundary", "Element boundary mode", _c_boundary),
     ROW("Normals and tangents", _r_normals),
-    // TODO no option: menu "Fields"
+    MULTI("Fields", _m_viewFields),
     COMBO("ForceNumComponents", "", _c_forceNumComponents),
+    ROW_BESIDE(_r_componentMap, 1.2),
     END};
 
   // Three rows of a matrix, each followed by an offset and a raise, under two
-  // captions -- the one tab of the window this reproduces that is a grid
-  // rather than a column.
-  const char *const _r_transformX[] = {
-    "TransformXX", "TransformXY", "TransformXZ| X", "OffsetX", "RaiseX",
-    nullptr};
-  const char *const _r_transformY[] = {
-    "TransformYX", "TransformYY", "TransformYZ| Y +", "OffsetY", "RaiseY",
-    nullptr};
-  const char *const _r_transformZ[] = {
-    "TransformZX", "TransformZY", "TransformZZ| Z", "OffsetZ", "RaiseZ",
-    nullptr};
+  // captions -- the one tab of the window this reproduces that is three
+  // columns wide rather than two.
+  const char *const _r_transformX[] = {"TransformXX", "TransformXY", "TransformXZ",  nullptr};
+  const char *const _r_transformY[] = {"TransformYX", "TransformYY", "TransformYZ",  nullptr};
+  const char *const _r_transformZ[] = {"TransformZX", "TransformZY", "TransformZZ",  nullptr};
 
   const optionRow _viewTransfo[] = {
-    CAPTION("Transform:                                        Raise:"),
-    ROW("", _r_transformX),
-    ROW("", _r_transformY),
-    ROW("", _r_transformZ),
-    NUMBER("NormalRaise", "Normal raise"),
+    CAPTION("Coordinate transformation:"),
+    LABEL_COLUMN(""),
+    LABEL_COLUMN("Raise:"),
+    ROW_OF(" X", _r_transformX, .75),
+    NUMBER_BESIDE_OF("OffsetX", "", .7),
+    NUMBER_BESIDE_OF("RaiseX", "", .7),
+    ROW_OF(" Y +", _r_transformY, .75),
+    NUMBER_BESIDE_OF("OffsetY", "", .7),
+    NUMBER_BESIDE_OF("RaiseY", "", .7),
+    ROW_OF(" Z", _r_transformZ, .75),
+    NUMBER_BESIDE_OF("OffsetZ", "", .7),
+    NUMBER_BESIDE_OF("RaiseZ", "", .7),
+    NUMBER_OF("NormalRaise", "Normal raise", .75),
     CHECK("UseGeneralizedRaise", "Use general transformation expressions"),
-    COMBOV("GeneralizedRaiseView", "Data source", _c_generalizedRaiseView, -1., 1.),
+    VIEWLIST("GeneralizedRaiseView", "Data source"),
     NUMBER("GeneralizedRaiseFactor", "Factor"),
     STRING("GeneralizedRaiseX", "X expression"),
     STRING("GeneralizedRaiseY", "Y expression"),
@@ -562,14 +615,14 @@ namespace Dialog {
     COMBO("PointType", "Point display", _c_viewPointType),
     NUMBER("PointSize", "Point size"),
     COMBO("LineType", "Line display", _c_lineType),
-    CHECK("Stipple", "Stipple"),
+    CHECK_RIGHT("Stipple", "Stipple"),
     NUMBER("LineWidth", "Line width"),
     COMBOV("VectorType", "Vector display", _c_viewVectorType, 1., 1.),
     ROW("Arrow size", _r_arrowSizeMin),
-    NUMBER("DisplacementFactor", "Data source for vector fields"),
-    COMBOV("ExternalView", "Data source for vector fields", _c_showTime, -1., 1.),
+    NUMBER("DisplacementFactor", "Displacement factor"),
+    VIEWLIST("ExternalView", "Data source for vector fields"),
     COMBOV("GlyphLocation", "Glyph location", _c_glyphLocation, 1., 1.),
-    COMBO("CenterGlyphs", "", _c_centerGlyphs),
+    COMBO_RIGHT("CenterGlyphs", _c_centerGlyphs, .85),
     COMBOV("TensorType", "Tensor display", _c_tensorType, 1., 1.),
     END};
 
@@ -587,6 +640,7 @@ namespace Dialog {
   // yet; the tab is here so that the window keeps the shape of the one it
   // reproduces.
   const optionRow _viewMap[] = {
+    COLORMAP,
     END};
 
   const optionTab _generalTabs[] = {
@@ -728,6 +782,19 @@ namespace Dialog {
     // What the window this reproduces keeps in its activate(): a field that
     // only makes sense when another option is set is greyed rather than
     // hidden. A name ending in "*" stands for every option that begins with it.
+    // whether a view has more than one step, which is what decides whether one
+    // can be stepped through
+    bool _viewHasSteps(int num)
+    {
+#if defined(HAVE_POST)
+      if(num >= 0 && num < (int)PView::list.size())
+        return PView::list[num]->getData()->getNumTimeSteps() > 1;
+#else
+      (void)num;
+#endif
+      return false;
+    }
+
     struct enableRule {
       const char *category;
       const char *name;
@@ -735,6 +802,11 @@ namespace Dialog {
       bool whenOff; // the field is live when that option is off, not on
       // or its accessor, for the few that have no entry in the option table
       double (*fn)(int, int, double);
+      // The values that option may have, for the few that are not switches:
+      // the custom range of a view is live when its range mode is Custom, and
+      // not when it is Default or Per step, and its two-dimensional axes are
+      // live at two of the thirteen positions. Empty asks for on or off.
+      const char *is;
     };
 
     const enableRule _rules[] = {
@@ -761,11 +833,25 @@ namespace Dialog {
       {"View", "LightLines", "Light", false},
       {"View", "LightTwoSide", "Light", false},
       {"View", "SmoothNormals", "Light", false},
-      // custom_range
-      {"View", "CustomMin", "RangeType", false},
-      {"View", "CustomMax", "RangeType", false},
-      {"View", "view_range_min", "RangeType", false},
-      {"View", "view_range_max", "RangeType", false},
+      // custom_range: Default, Custom, Per step -- and Custom is the second
+      {"View", "CustomMin", "RangeType", false, nullptr, "2"},
+      {"View", "CustomMax", "RangeType", false, nullptr, "2"},
+      {"View", "view_range_min", "RangeType", false, nullptr, "2"},
+      {"View", "view_range_max", "RangeType", false, nullptr, "2"},
+      {"View", "SaturateValues", "RangeType", false, nullptr, "2"},
+      // view_axes
+      {"View", "AxesTics*", "Axes", false},
+      {"View", "AxesFormat*", "Axes", false},
+      {"View", "AxesLabel*", "Axes", false},
+      // view_axes_auto_3d
+      {"View", "AxesMin*", "AxesAutoPosition", true},
+      {"View", "AxesMax*", "AxesAutoPosition", true},
+      // view_axes_auto_2d: manual, or in the coordinates of the model
+      {"View", "PositionX", "AutoPosition", false, nullptr, "0 12"},
+      {"View", "PositionY", "AutoPosition", false, nullptr, "0 12"},
+      {"View", "Width", "AutoPosition", false, nullptr, "0 12"},
+      {"View", "Height", "AutoPosition", false, nullptr, "0 12"},
+
       // view_adaptive
       {"View", "MaxRecursionLevel", "AdaptVisualizationGrid", false},
       {"View", "TargetError", "AdaptVisualizationGrid", false},
@@ -879,6 +965,11 @@ namespace Dialog {
                                      int num)
     {
       if(!name) return nullptr;
+      // The step of a view can be walked only when it has more than one, and
+      // no option says how many it has -- the view itself does.
+      if(!strcmp(category, "View") &&
+         (!strcmp(name, "TimeStep") || !strncmp(name, "view_timestep_", 14)))
+        return [num]() { return _viewHasSteps(num); };
       for(int i = 0; _rules[i].category; i++) {
         const enableRule &r = _rules[i];
         if(strcmp(r.category, category)) continue;
@@ -901,9 +992,19 @@ namespace Dialog {
         if(!matches) continue;
         std::string cat = category, on = r.when;
         bool off = r.whenOff;
-        return [cat, on, off, num]() {
+        std::string is = r.is ? r.is : "";
+        return [cat, on, off, is, num]() {
           double v = 0.;
           NumberOption(GMSH_GET, cat.c_str(), num, on.c_str(), v, false);
+          if(is.size()) {
+            for(std::size_t at = 0; at < is.size();) {
+              std::size_t end = is.find(' ', at);
+              if(v == atof(is.substr(at, end - at).c_str())) return true;
+              if(end == std::string::npos) break;
+              at = end + 1;
+            }
+            return false;
+          }
           return off ? (v == 0.) : (v != 0.);
         };
       }
@@ -980,8 +1081,11 @@ namespace Dialog {
         Field f = _fieldFor(strings ? RowString : RowNumber, category,
                             name.c_str(), label, num, nullptr);
         f.widthShare = whole / (double)names.size();
-        f.packed = true;
-        if(k) f.sameRow = true;
+        // packed against one another, but the first of a row that follows
+        // another field starts a column of its own rather than being packed
+        // against what is there
+        f.packed = (k > 0) || !row.beside;
+        if(k || row.beside) f.sameRow = true;
         into.push_back(f);
       }
     }
@@ -1028,9 +1132,10 @@ namespace Dialog {
     {
       Pane pane;
       pane.label = tab.label;
-      // the window this reproduces places its widgets on two columns, the
-      // same for every row of a tab
-      pane.columns = 2;
+      // The window this reproduces places its widgets on columns, the same
+      // for every row of a tab: two of them, and three where a view has its
+      // transformation matrix, its offsets and its raises side by side.
+      pane.columns = 3;
       for(int i = 0; tab.rows[i].name || tab.rows[i].label ||
                      tab.rows[i].kind != RowCheck;
           i++) {
@@ -1061,6 +1166,10 @@ namespace Dialog {
           if(row.share > 0.) f.widthShare = row.share;
           if(row.vmin == 2.) f.alert = true;
           if(row.vmin == 3.) f.sameRow = true; // the next column of that line
+          if(row.vmin == 4.) { // packed against what it belongs to
+            f.packed = true;
+            f.sameRow = row.beside;
+          }
           if(row.vmin == 1.) {
             // at the right end of the line above, where the window this
             // reproduces puts it
@@ -1113,12 +1222,75 @@ namespace Dialog {
           f.packed = true;
           pane.fields.push_back(f);
         } break;
+        case RowColorMap: {
+          // the map itself, filling the tab, as the window this reproduces
+          // gives it the whole of one
+          Field f;
+          f.kind = ColorMap;
+          f.rows = 0;
+          int index = num;
+          f.colourMap = [index](std::string &name, double &least,
+                                double &most) -> GmshColorTable * {
+#if defined(HAVE_POST)
+            if(index >= 0 && index < (int)PView::list.size()) {
+              PView *v = PView::list[index];
+              name = v->getData()->getName();
+              least = v->getData()->getMin();
+              most = v->getData()->getMax();
+              return &v->getOptions()->colorTable;
+            }
+#else
+            (void)index;
+            (void)name;
+            (void)least;
+            (void)most;
+#endif
+            return nullptr;
+          };
+          f.changed = [index]() {
+#if defined(HAVE_POST)
+            if(index >= 0 && index < (int)PView::list.size())
+              PView::list[index]->setChanged(true);
+#endif
+            drawContext::global()->draw();
+          };
+          pane.fields.push_back(f);
+        } break;
+        case RowViewList: {
+          // "Self", then a line per view: which view a vector field or a
+          // raise takes its values from. The list is not fixed, and the
+          // value is the index of the view, or -1 for itself.
+          Field f = _fieldFor(RowNumber, category, row.name,
+                              row.label ? row.label : row.name, num, nullptr);
+          f.kind = Choice;
+          f.dynamicChoices = [](std::vector<std::string> &labels,
+                                std::vector<int> &values) {
+            labels.push_back("Self");
+            values.push_back(-1);
+#if defined(HAVE_POST)
+            for(std::size_t i = 0; i < PView::list.size(); i++) {
+              labels.push_back("View [" + std::to_string(i) + "]");
+              values.push_back((int)i);
+            }
+#endif
+          };
+          pane.fields.push_back(f);
+        } break;
         case RowCaption: {
           Field f;
           f.kind = Label;
           std::string text = row.label;
           f.readText = [text]() { return text; };
           if(row.vmin == 1.) f.rule = true;
+          if(row.vmin == 3.) f.sameRow = true; // heading the next column
+          if(row.vmin == 2.) {
+            // beside the field before it, against it, and as live as it is:
+            // it is that field's label, kept apart only because the field is
+            // three pieces and the label belongs to none of them
+            f.sameRow = true;
+            f.packed = true;
+            if(!pane.fields.empty()) f.enabled = pane.fields.back().enabled;
+          }
           pane.fields.push_back(f);
         } break;
         case RowFunction: {
@@ -1155,6 +1327,15 @@ namespace Dialog {
             // vmin says it follows inside the same column rather than
             // starting the next one
             if(row.vmin == 1.) f.packed = true;
+            // or that it is set apart at the right end of the line
+            if(row.vmin == 2.) {
+              Field gap;
+              gap.kind = Spacer;
+              gap.widthEm = 1.;
+              gap.sameRow = true;
+              pane.fields.push_back(gap);
+              f.packed = true;
+            }
           }
           // a switch the window this reproduces puts at the right of the line
           // above rather than on one of its own

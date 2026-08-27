@@ -54,6 +54,9 @@ private:
     Fl_Widget *widget;
     int pane; // -1 for the footer
     int row; // within its pane
+    // the colour map widget sets this when it has been drawn on, which is
+    // how it says the view has to be drawn again
+    bool changed = false;
   };
   std::vector<bound> _fields;
   // the title of each section of a form that is not tabbed
@@ -67,6 +70,8 @@ private:
   bool _mergedButtons = false;
   // how tall the column of side fields may be, for the list that fills it
   int _sideHeight = 0;
+  // the bottom of the pane being laid out, for a field that fills it
+  int _paneBottom = 0;
   // the widest this dialog has ever needed to be, see build()
   int _widestSeen = 0;
   // the button a section of a long form carries, and where it sits

@@ -570,6 +570,10 @@ OPTION_TABS = [
     ("Mesh", ["General", "Advanced", "Visibility", "Aspect", "Color"]),
     ("Solver", ["General"]),
     ("Post", ["General"]),
+    # the last category exists only when a view is loaded, which is why the
+    # sweep opens one; there is a line per view, and one view is enough
+    ("View", ["General", "Axes", "Visibility", "Transfo", "Aspect", "Color",
+              "Map"]),
 ]
 
 # Where the rows of the list of categories are, per interface: the first one
@@ -928,7 +932,11 @@ def main():
     with Xserver(args.display):
         dpy = display.Display()
         if args.sweep_options:
-            proc = start_driver(args.lib, args.home, [])
+            # the View category is a view: without one the list stops at
+            # Post-processing
+            wants_view = not args.only or args.only.startswith("view")
+            proc = start_driver(args.lib, args.home, [],
+                                model("view.pos") if wants_view else None)
             try:
                 main_win = wait_for(dpy, lambda n: "Gmsh" in n)
                 if not main_win:

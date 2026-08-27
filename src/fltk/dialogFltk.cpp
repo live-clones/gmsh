@@ -32,6 +32,7 @@
 #include <FL/fl_draw.H> // fl_font, fl_width
 
 #include "spherePositionWidget.h"
+#include "colorbarWindow.h"
 #include "dialogFltk.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
@@ -47,8 +48,11 @@ namespace {
     for(std::size_t i = 0; i < fields.size(); i++) {
       if(fields[i].sameRow && i) continue;
       if(fields[i].visible && !fields[i].visible()) continue;
-      // a list is worth as many lines as it shows
-      rows += (fields[i].kind == Dialog::List) ? fields[i].rows : 1;
+      // a list, and a colour map, are worth as many lines as they show
+      rows += (fields[i].kind == Dialog::List ||
+               fields[i].kind == Dialog::ColorMap) ?
+                fields[i].rows :
+                1;
     }
     return rows;
   }
@@ -109,6 +113,8 @@ namespace {
     if(f.kind == Dialog::Color) return (int)(3. * FL_NORMAL_SIZE);
     // the disc of a direction is square, as tall as the lines it hangs over
     if(f.kind == Dialog::Direction) return f.rows * BH;
+    // a colour map takes the pane it is in
+    if(f.kind == Dialog::ColorMap) return IW;
     return (columns == 1) ? IW : IW / 2;
   }
 
@@ -131,6 +137,8 @@ namespace {
     if(f.kind == Dialog::Check)
       return (int)fl_width(_escaped(f.label).c_str()) + (int)(1.8 * FL_NORMAL_SIZE);
     if(f.kind == Dialog::Direction) return f.rows * BH;
+    // a menu of switches carries its label inside, as a button does
+    if(f.kind == Dialog::Choice && f.multiple) return _fieldWidth(f, 1);
     // a declared width, or the usual one, plus the label it carries
     int w = f.widthShare > 0. ? (int)(f.widthShare * IW) :
             f.widthEm > 0.    ? (int)(f.widthEm * FL_NORMAL_SIZE) :
@@ -178,11 +186,17 @@ namespace {
       // the last field of a row runs on into the space no one else uses,
       // which is what keeps the columns as narrow as the window this
       // replaces has them.
+      // where the line this field is on ends, so that the cells packed
+      // against it can be stepped over the way they are placed
+      std::size_t end = k + 1;
+      while(end < fields.size() && fields[end].sameRow) end++;
       int need = 0;
       std::size_t j = k;
       bool more = false;
       while(j < fields.size() && (j == k || (fields[j].sameRow && fields[j].packed))) {
-        need += _packedWidth(fields[j]);
+        bool last = !(j + 1 < fields.size() && fields[j + 1].sameRow &&
+                      fields[j + 1].packed);
+        need += last ? _packedWidth(fields[j]) : _packedStep(fields, j, end);
         j++;
       }
       if(j < fields.size() && fields[j].sameRow) more = true;
@@ -384,6 +398,7 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       ((spherePositionWidget *)w)->getValue(x, y, z);
       f.setVector(x, y, z);
     } break;
+    case Dialog::ColorMap: break; // it edits the table itself
     case Dialog::Label:
     case Dialog::Output:
     case Dialog::Action:
@@ -688,6 +703,16 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
         // reproduces has the disc beside them.
         widget = new spherePositionWidget(fx, y, f.rows * BH);
         break;
+      case Dialog::ColorMap: {
+        // the widget the window this reproduces already has, given the whole
+        // of its pane
+        int tall = f.rows ? f.rows * BH : _paneBottom - y - WB;
+        if(tall < BH) tall = BH;
+        colorbarWindow *bar =
+          new colorbarWindow(fx, y, w - fx - WB, tall);
+        bar->end();
+        widget = bar;
+      } break;
       }
       if(!widget) continue;
       // A widget keeps the pointer it is given rather than the text, so the
@@ -703,6 +728,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // a menu of switches carries its label inside, as a button does
       if(f.kind != Dialog::Check && f.kind != Dialog::Label &&
          f.kind != Dialog::Action && f.kind != Dialog::Direction &&
+         f.kind != Dialog::ColorMap &&
          !(f.kind == Dialog::Choice && f.multiple))
         widget->align(FL_ALIGN_RIGHT);
       // A field to be looked at twice, in red. On a button whose face is dark
@@ -727,7 +753,9 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     // under it rather than over it
     int tall = 1;
     for(std::size_t k = i; k < last; k++) {
-      if(fields[k].kind != Dialog::List) continue;
+      if(fields[k].kind != Dialog::List &&
+         fields[k].kind != Dialog::ColorMap)
+        continue;
       if(fields[k].rows > tall) tall = fields[k].rows;
       if(!fields[k].rows) {
         // one that fills its column: what follows it is at the bottom
@@ -960,6 +988,8 @@ void dialogFltk::build(int dialog)
       // one that scrolls ends before its scrollbar, or what it puts at its
       // right edge is drawn under it
       int right = width - 2 * WB - (q.scrolling ? Fl::scrollbar_size() : 0);
+      // and where it ends, for a field that fills what is left of it
+      _paneBottom = top + height;
       _addFields(q.fields, _sideWidth + 2 * WB, fy, right, (int)i, q.columns);
       // the titled sections under them
       for(const auto &section : q.sections) {
@@ -1146,6 +1176,15 @@ void dialogFltk::refresh()
       double x = 0., y = 0., z = 0.;
       f.getVector(x, y, z);
       ((spherePositionWidget *)b.widget)->setValue(x, y, z);
+    } break;
+    case Dialog::ColorMap: {
+      std::string name;
+      double least = 0., most = 0.;
+      GmshColorTable *table = f.colourMap ? f.colourMap(name, least, most) :
+                                            nullptr;
+      if(table)
+        ((colorbarWindow *)b.widget)
+          ->update(name.c_str(), least, most, table, &b.changed);
     } break;
     case Dialog::Action:
     case Dialog::Spacer: break;

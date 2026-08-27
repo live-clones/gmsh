@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "GmshConfig.h"
+#include "ColorTable.h"
 
 // The dialogs of the graphical user interface, declared once and built by both
 // interfaces, in the same spirit as the menus of GuiMenus.h. This one describes
@@ -45,6 +46,10 @@ namespace Dialog {
     // what follows it rather than making its own line that tall, which is
     // where the window this reproduces puts it.
     Direction,
+    // The colour map of a view: the wedge, the four channels drawn over it,
+    // and the keys and clicks that change them. It is a widget of its own in
+    // the window this reproduces, and there is no describing it as fields.
+    ColorMap,
     List, // what has been picked so far, which one may correct
     Spacer // nothing at all: it eats what is left of the line, and never less
            // than widthEm, so that it still separates in a window that fits
@@ -67,6 +72,12 @@ namespace Dialog {
     // effect and no entry in the option table.
     std::function<double()> readNumber;
     std::function<void(double)> writeNumber;
+    // ColorMap: the table it edits, and what it says over it -- the name of
+    // the view and the range of its values. Null when there is nothing to
+    // show.
+    std::function<GmshColorTable *(std::string &name, double &least,
+                                   double &most)>
+      colourMap;
     // Direction: the three components, read and written together. They are
     // three options here rather than one, and what the field holds is the
     // direction they make.
