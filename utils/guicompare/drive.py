@@ -26,6 +26,10 @@ if plan.get("geo"):
     copy = os.path.join(os.environ["HOME"], os.path.basename(plan["geo"]))
     shutil.copyfile(plan["geo"], copy)
     gmsh.merge(copy)
+# The same font in the three, or nothing can be compared: FLTK 1.3 works out
+# 12 points where 1.4 works out 13, and every width of a window follows from
+# it -- IW, the width of an input, is ten times the font size.
+gmsh.option.setNumber("General.FontSize", 12)
 gmsh.option.setNumber("General.GraphicsWidth", plan["width"])
 gmsh.option.setNumber("General.GraphicsHeight", plan["height"])
 gmsh.fltk.initialize()

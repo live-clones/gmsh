@@ -570,7 +570,7 @@ OPTION_TABS = [
 
 # where the rows of the list of categories are, per interface: the first one
 # and the step from one to the next
-CATEGORY_ROWS = {"released": (12, 14), "fltk": (12, 16), "imgui": (33, 17)}
+CATEGORY_ROWS = {"released": (10, 14), "fltk": (10, 14), "imgui": (33, 17)}
 
 
 def press_inside(dpy, build, point, dialog, wx, wy):
