@@ -201,9 +201,16 @@ namespace {
     int widest = 0, at = 0, which = 0;
     for(std::size_t k = 0; k < fields.size(); k++) {
       const Dialog::Field &f = fields[k];
+      // what a spacer pushes to the right end of a line does not start at a
+      // column: the line only has to be as wide as what is really on it
+      bool loose = k && fields[k].sameRow &&
+                   fields[k - 1].kind == Dialog::Spacer;
       if(!f.sameRow) {
         which = 0;
         at = 0;
+      }
+      else if(loose) {
+        // it goes on from where the field before the spacer ended
       }
       else if(!f.packed) {
         which++;
@@ -218,7 +225,11 @@ namespace {
       }
       int end = at + _packedWidth(f);
       if(end > widest) widest = end;
-      if(f.packed && f.sameRow) at += _packedWidth(f) + WB;
+      // what follows it on the same line starts where it ends, whether it is
+      // packed against it or pushed to the right end by a spacer
+      bool more = k + 1 < fields.size() && fields[k + 1].sameRow;
+      if(more && (f.packed || fields[k + 1].kind == Dialog::Spacer))
+        at += _packedWidth(f) + WB;
     }
     return widest;
   }
@@ -495,36 +506,28 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     if(grid > 0) {
       gridW = _gridColumns(fields, grid);
       columns = grid;
-      // what a spacer of this row has to eat, the columns not being shares of
-      // the line here but widths of their own
-      if(spacers) {
-        int used = 0, which = 0;
-        for(std::size_t k = i; k < last; k++) {
-          if(fields[k].kind == Dialog::Spacer) {
-            // the least it takes, which comes out of the slack rather than
-            // being added to it: what follows a spacer ends at the right edge
-            used += _packedWidth(fields[k]) + WB;
-            continue;
-          }
-          if(fields[k].packed)
-            used += _packedStep(fields, k, last);
-          else {
-            used = 0;
-            for(int c = 0; c <= which && c < grid; c++)
-              used += gridW[(std::size_t)c];
-            which++;
-          }
-        }
-        spacerW = (w - x - WB - used) / spacers;
-        if(spacerW < 0) spacerW = 0;
-      }
     }
 
     for(std::size_t k = i; k < last; k++) {
       const Dialog::Field &f = fields[k];
       if(f.visible && !f.visible()) continue;
       if(f.kind == Dialog::Spacer) {
-        at += _packedWidth(f) + WB + spacerW;
+        if(grid > 0) {
+          // What a spacer pushes to the right end of a line is not in a
+          // column: it is against the right edge, which is where the window
+          // this reproduces puts the buttons and switches it sets apart. The
+          // columns are for what comes before it.
+          int tail = -WB;
+          for(std::size_t j = k + 1; j < last; j++) {
+            if(fields[j].kind == Dialog::Spacer) continue;
+            if(fields[j].visible && !fields[j].visible()) continue;
+            tail += _packedWidth(fields[j]) + WB;
+          }
+          int least = at + _packedWidth(f) + WB;
+          at = std::max(w - WB - tail, least);
+        }
+        else
+          at += _packedWidth(f) + WB + spacerW;
         continue;
       }
       int fieldW = _fieldWidth(f, (grid > 0) ? 1 : (columns ? columns : 1));
@@ -541,6 +544,9 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       if(grid > 0) {
         if(f.packed)
           at += _packedStep(fields, k, last);
+        else if(k + 1 < last && fields[k + 1].kind == Dialog::Spacer)
+          // the spacer takes it from here, not from the next column
+          at = fx + _packedWidth(f) + WB;
         else {
           gridColumn++;
           at = x;

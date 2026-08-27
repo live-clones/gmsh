@@ -576,7 +576,14 @@ namespace {
         int which = 0;
         for(std::size_t k = 0; k < fields->size(); k++) {
           const Dialog::Field &f = (*fields)[k];
+          // what a spacer pushes to the right end of a line does not start at
+          // a column: the line only has to be as wide as what is on it
+          bool loose = k && f.sameRow &&
+                       (*fields)[k - 1].kind == Dialog::Spacer;
           if(!f.sameRow) { which = 0; at = 0.f; }
+          else if(loose) {
+            // it goes on from where the field before the spacer ended
+          }
           else if(!f.packed) {
             which++;
             at = 0.f;
@@ -587,7 +594,8 @@ namespace {
           // the same spacing the placement leaves after each of them
           float end = at + _packedWidth(f, item) + ImGui::GetStyle().ItemSpacing.x;
           if(end > total) total = end;
-          if(f.packed && f.sameRow)
+          bool more = k + 1 < fields->size() && (*fields)[k + 1].sameRow;
+          if(more && (f.packed || (*fields)[k + 1].kind == Dialog::Spacer))
             at += _packedWidth(f, item) + ImGui::GetStyle().ItemSpacing.x;
         }
         if(total > widest) widest = total;
@@ -666,29 +674,6 @@ namespace {
       if(grid > 0) {
         columns = grid;
         gridW = _gridColumns(fields, grid, item);
-        // What a spacer of this row has to eat: the columns are widths of
-        // their own here rather than shares of the line, so the slack is what
-        // the row leaves once every field is where its column puts it.
-        if(spacers) {
-          float used = 0.f;
-          int which = 0;
-          for(std::size_t k = i; k < last; k++) {
-            if(fields[k].kind == Dialog::Spacer) {
-              used += _packedWidth(fields[k], item) + style.ItemSpacing.x;
-              continue;
-            }
-            if(fields[k].packed)
-              used += _packedStep(fields, k, last, item);
-            else {
-              used = 0.f;
-              for(int c = 0; c <= which && c < grid; c++)
-                used += gridW[(std::size_t)c];
-              which++;
-            }
-          }
-          spacerW = (total - ImGui::GetCursorPosX() - used) / (float)spacers;
-          if(spacerW < 0.f) spacerW = 0.f;
-        }
       }
       // SameLine() counts from the edge of the window, not from where the
       // content starts, so the row begins where the cursor already is: an `at`
@@ -699,8 +684,8 @@ namespace {
       // the group the fields may be inside -- the one that holds the panes
       // beside the column of side fields. Counting that offset here too would
       // put every field after the first one a side column further right.
-      float at = ImGui::GetCursorPosX() -
-                 ImGui::GetCurrentWindow()->DC.GroupOffset.x;
+      const float inset = ImGui::GetCurrentWindow()->DC.GroupOffset.x;
+      float at = ImGui::GetCursorPosX() - inset;
       const float start = at;
       int gridColumn = 0; // the column the next field goes in, on this row
       bool first = true;
@@ -711,7 +696,24 @@ namespace {
         const Dialog::Field &f = fields[k];
         if(f.visible && !f.visible()) continue;
         if(f.kind == Dialog::Spacer) {
-          at += _packedWidth(f, item) + style.ItemSpacing.x + spacerW;
+          if(grid > 0) {
+            // What a spacer pushes to the right end of a line is not in a
+            // column: it is against the right edge, which is where the window
+            // this reproduces puts the buttons and switches it sets apart.
+            float tail = -style.ItemSpacing.x;
+            for(std::size_t j = k + 1; j < last; j++) {
+              if(fields[j].kind == Dialog::Spacer) continue;
+              if(fields[j].visible && !fields[j].visible()) continue;
+              tail += _packedWidth(fields[j], item) + style.ItemSpacing.x;
+            }
+            float least = at + _packedWidth(f, item) + style.ItemSpacing.x;
+            // SameLine() counts from the edge of the window and adds the
+            // offset of the group the fields are inside; the right edge is
+            // where the content region ends
+            at = std::max(total - inset - tail, least);
+          }
+          else
+            at += _packedWidth(f, item) + style.ItemSpacing.x + spacerW;
           continue;
         }
         float here = item;
@@ -743,6 +745,9 @@ namespace {
         if(grid > 0) {
           if(f.packed)
             at += _packedStep(fields, k, last, item);
+          else if(k + 1 < last && fields[k + 1].kind == Dialog::Spacer)
+            // the spacer takes it from here, not from the next column
+            at += _packedWidth(f, item) + style.ItemSpacing.x;
           else {
             gridColumn++;
             at = start;
