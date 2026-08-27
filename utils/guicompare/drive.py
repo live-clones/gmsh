@@ -8,6 +8,7 @@ back, so the clicking and the photographing are done from the outside.
 
 import json
 import os
+import shutil
 import sys
 
 libdir = os.environ.get("GMSH_LIB_DIR")
@@ -20,7 +21,11 @@ plan = json.loads(os.environ["GMSH_SHOT_PLAN"])
 
 gmsh.initialize(["gmsh"], run=False)
 if plan.get("geo"):
-    gmsh.merge(plan["geo"])
+    # on a copy: adding an entity through the interface writes it back to the
+    # file the model came from, and the fixture would grow at every run
+    copy = os.path.join(os.environ["HOME"], os.path.basename(plan["geo"]))
+    shutil.copyfile(plan["geo"], copy)
+    gmsh.merge(copy)
 gmsh.option.setNumber("General.GraphicsWidth", plan["width"])
 gmsh.option.setNumber("General.GraphicsHeight", plan["height"])
 gmsh.fltk.initialize()
