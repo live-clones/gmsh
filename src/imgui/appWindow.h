@@ -124,10 +124,9 @@ private:
   bool _showDialog[Dialog::NumDialogs], _focusDialog[Dialog::NumDialogs];
   // whether it has been given its size since it was last opened
   bool _sizedDialog[Dialog::NumDialogs];
-  // The height its rows say it needs, and the one a frame turned out to take:
-  // a dialog that is given a size rather than following its contents has to
-  // be told a height, and only Dear ImGui knows what a frame really took.
-  float _estimatedHeight[Dialog::NumDialogs], _measuredHeight[Dialog::NumDialogs];
+  // the height its rows say it needs, which changes when a dialog is shown
+  // another set of panes -- the option window, on another category
+  float _estimatedHeight[Dialog::NumDialogs];
   // the pane a dialog has just been asked to show, -1 once it has been
   int _wantedPane[Dialog::NumDialogs];
   // the pane each dialog was showing at the end of the last frame, to tell a

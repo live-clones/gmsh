@@ -989,10 +989,18 @@ namespace Dialog {
         drawContext::global()->draw();
       };
       f.sameRow = true;
+      // three narrow boxes across, as the window this replaces has them:
+      // seven times the font size is what it gives them, and it is what the
+      // two interfaces should give them whatever they call an ordinary field
+      f.widthEm = 7.;
       return f;
     };
 
     Pane grid;
+    // A grid, and not three lines that each share themselves out: the columns
+    // of one row have to line up with the columns of the next, and "Rotation"
+    // is not as wide as "Translation".
+    grid.columns = 4;
     // the heading of each column, over nothing in the first
     grid.fields.push_back(says([]() { return std::string(""); }));
     for(int i = 0; i < 3; i++) {
@@ -1081,6 +1089,11 @@ namespace Dialog {
     {
       Pane mesh;
       mesh.label = "Mesh";
+      // A grid, so that the three buttons of a quality line stand under one
+      // another: their line begins with a value whose label is "SICN" on one
+      // and "Gamma" on the next, and packing them against it would stagger
+      // them by the difference.
+      mesh.columns = 4;
       const char *counts[] = {"Nodes",      "Points",   "Lines",
                               "Triangles",  "Quadrangles", "Tetrahedra",
                               "Hexahedra",  "Prisms",   "Pyramids",
@@ -1102,15 +1115,15 @@ namespace Dialog {
       for(int i = 0; i < 3; i++) {
         mesh.fields.push_back(
           quality(measures[i].label, measures[i].tip, measures[i].index, i));
-        // the three of them belong together at the right of the line, as wide
-        // as their labels and no wider
+        // the three of them belong together at the right of the line, each in
+        // a column of its own, as wide as its own text and no wider
         mesh.fields.push_back(
-          tight(beside(says([]() { return std::string("Plot"); }))));
+          beside(says([]() { return std::string("Plot"); })));
         Field xy = does("X-Y", [i]() { statisticsHistogram(i, false); });
         xy.enabled = statisticsQuality;
-        mesh.fields.push_back(tight(beside(xy)));
-        mesh.fields.push_back(tight(
-          beside(does("3D", [i]() { statisticsHistogram(i, true); }))));
+        mesh.fields.push_back(sized(beside(xy), 3.));
+        mesh.fields.push_back(sized(
+          beside(does("3D", [i]() { statisticsHistogram(i, true); })), 3.));
       }
       mesh.fields.push_back(check("Compute statistics for visible entities only",
                                   &statisticsVisibleOnly()));

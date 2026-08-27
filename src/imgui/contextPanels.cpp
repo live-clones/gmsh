@@ -88,13 +88,26 @@ namespace {
     bool enabled = f.enabled ? f.enabled() : true;
     ImGui::BeginDisabled(!enabled);
     bool changed = false;
-    // A field to be looked at twice: its text in red, which is what the
-    // window this reproduces does to the one button that undoes everything.
-    // The face of the button is left alone -- it is drawn light here, and a
-    // red face would take the label with it.
-    bool painted = f.alert;
-    if(painted)
-      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.78f, .16f, .16f, 1.f));
+    // A field to be looked at twice: red, as the window this reproduces has
+    // the one button that undoes everything. A button is red in the face,
+    // with its text turned pale so that it can still be read; anything else
+    // has only its text to say it with.
+    int painted = 0;
+    if(f.alert) {
+      if(f.kind == Dialog::Action) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.62f, .13f, .13f, 1.f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+                              ImVec4(.74f, .18f, .18f, 1.f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+                              ImVec4(.86f, .24f, .24f, 1.f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.98f, .94f, .94f, 1.f));
+        painted = 4;
+      }
+      else {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.78f, .16f, .16f, 1.f));
+        painted = 1;
+      }
+    }
 
     switch(f.kind) {
     case Dialog::Label:
@@ -380,7 +393,7 @@ namespace {
     } break;
     }
 
-    if(painted) ImGui::PopStyleColor();
+    if(painted) ImGui::PopStyleColor(painted);
     ImGui::EndDisabled();
     if(f.tooltip.size() &&
        ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
@@ -481,10 +494,14 @@ namespace {
         j++;
       }
       if(!(j < fields.size() && fields[j].sameRow)) {
+        // the last of them runs on into the space no one else uses, and one
+        // that carries its text inside comes off whole
         const Dialog::Field &l = fields[j - 1];
-        if(l.kind != Dialog::Check && l.kind != Dialog::Action &&
-           l.kind != Dialog::Label && l.kind != Dialog::Direction &&
-           !(l.kind == Dialog::Choice && l.multiple))
+        if(l.kind == Dialog::Check || l.kind == Dialog::Action ||
+           l.kind == Dialog::Label || l.kind == Dialog::Direction ||
+           (l.kind == Dialog::Choice && l.multiple))
+          need -= _packedWidth(l, item) + style.ItemSpacing.x;
+        else
           need -= ImGui::CalcTextSize(l.label.c_str()).x +
                   style.ItemInnerSpacing.x;
       }
@@ -629,10 +646,18 @@ namespace {
   // What a pane holds: its own fields, then the sections under them, each with
   // its label as a heading. A long one scrolls rather than making the window as
   // tall as it is.
-  void _paneBody(const Dialog::Pane &q, float width)
+  void _paneBody(const Dialog::Pane &q, float width, int lines)
   {
-    if(q.scrolling && !ImGui::BeginChild("##scroll", ImVec2(0.f, 0.f),
-                                         ImGuiChildFlags_None)) {
+    // A pane that scrolls is as tall as the panes that do not, and its list
+    // scrolls inside it: it is not the list that says how tall the window is.
+    // Asking for what is left of the window instead would be asking the
+    // window how tall it is while it is working that out, and sixty colours
+    // would answer for it.
+    if(q.scrolling &&
+       !ImGui::BeginChild("##scroll",
+                          ImVec2(0.f, (float)lines *
+                                        ImGui::GetFrameHeightWithSpacing()),
+                          ImGuiChildFlags_None)) {
       ImGui::EndChild();
       return;
     }
@@ -810,6 +835,17 @@ void appWindow::_drawDialog(int which)
   // leaving a hole. Docked, Dear ImGui gives it the size of the node and
   // ignores this, which is what one wants there.
   float width = 150.f * _styleScale;
+  // how many lines the tallest pane that does not scroll takes: the ones that
+  // do are given as many, and scroll the rest
+  int most = 0;
+  for(const auto &q : panel.panes) {
+    if(q.scrolling) continue;
+    int n = _rows(q.fields);
+    for(const auto &section : q.sections)
+      n += (section.label.size() ? 1 : 0) + _rows(section.fields);
+    if(n > most) most = n;
+  }
+  if(most < 12) most = 12;
   // ...unless one of its panes scrolls, which says the opposite: there is more
   // in it than a window should be tall, so it is given a size and keeps it
   bool scrolls = false;
@@ -837,29 +873,19 @@ void appWindow::_drawDialog(int which)
   }
   float tall = 0.f;
   if(scrolls) {
-    // as tall as the tallest pane that does not scroll, the ones that do
-    // being given what is left
-    int most = 0;
-    for(const auto &q : panel.panes) {
-      if(q.scrolling) continue;
-      int n = _rows(q.fields);
-      for(const auto &section : q.sections)
-        n += (section.label.size() ? 1 : 0) + _rows(section.fields);
-      if(n > most) most = n;
-    }
-    if(most < 12) most = 12;
-    // its rows, and what stands around them: the row of tabs, the title, and
-    // the padding above and below
-    tall = (float)(most + 3) * ImGui::GetFrameHeightWithSpacing();
+    // The rows of the tallest pane, and what stands around them: the row of
+    // tabs, the title bar, the padding above and below, and a line of slack
+    // -- a window that is a pixel short of its contents shows a scrollbar,
+    // and one that is a line too tall shows nothing at all.
+    const ImGuiStyle &style = ImGui::GetStyle();
+    tall = (float)(most + 2) * ImGui::GetFrameHeightWithSpacing() +
+           ImGui::GetFrameHeight() + 2.f * style.WindowPadding.y;
     // A category with fewer rows than the last is a shorter window, as it is
-    // in the window this reproduces: the height it was found to need is for
-    // the panes it was found on, and is given back with them.
+    // in the window this reproduces, which builds itself again for it.
     if(tall != _estimatedHeight[which]) {
       _estimatedHeight[which] = tall;
-      _measuredHeight[which] = 0.f;
       _sizedDialog[which] = false;
     }
-    if(_measuredHeight[which] > tall) tall = _measuredHeight[which];
     // Given when it opens, and not again: left to itself Dear ImGui fits a
     // window to what its first frame draws, which is one tab of one category
     // and tells nothing about the rest -- and a row ending in a spacer, one
@@ -911,7 +937,7 @@ void appWindow::_drawDialog(int which)
       if(q.visible && !q.visible()) continue;
       if(q.label.size()) ImGui::SeparatorText(q.label.c_str());
       ImGui::PushID((int)i);
-      _paneBody(q, width);
+      _paneBody(q, width, most);
       ImGui::PopID();
       if(q.buttonLabel.size()) {
         // against the right edge, where the window this replaces puts it
@@ -957,7 +983,7 @@ void appWindow::_drawDialog(int which)
       Dialog::currentPane(which) = (int)i;
       if((int)i == wanted) _wantedPane[which] = -1;
       ImGui::PushID((int)i);
-      _paneBody(panel.panes[i], width);
+      _paneBody(panel.panes[i], width, most);
       ImGui::PopID();
       // The pane is padded to the height of the tallest one, so that its
       // button lands at the bottom right and the window does not change size
@@ -1100,15 +1126,6 @@ void appWindow::_drawDialog(int which)
     }
   }
 
-  if(scrolls) {
-    // How tall it turned out to have to be. Counting rows says what to open it
-    // at, but only Dear ImGui knows what a frame really took, and a window
-    // given a size shows a scrollbar as soon as it is a pixel short -- on the
-    // tab one is looking at, which may need nothing of the sort. It therefore
-    // keeps the height the tallest of its tabs asked for.
-    float fit = ImGui::CalcWindowNextAutoFitSize(ImGui::GetCurrentWindow()).y;
-    if(fit > _measuredHeight[which]) _measuredHeight[which] = fit;
-  }
   ImGui::End();
 }
 

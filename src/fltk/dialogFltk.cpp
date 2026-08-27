@@ -8,6 +8,7 @@
 #if defined(HAVE_FLTK)
 
 #include <algorithm>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -186,12 +187,18 @@ namespace {
       }
       if(j < fields.size() && fields[j].sameRow) more = true;
       if(!more) {
-        // take the label back off the last of them
+        // Take the last of them back off: its label runs on into the space no
+        // one else uses. One that carries its text inside comes off whole --
+        // a line of a pane that is nothing but a switch is as wide as the
+        // switch says, and that is no reason to push the second column of
+        // every other line across.
         const Dialog::Field &l = fields[j - 1];
         fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
-        if(l.kind != Dialog::Check && l.kind != Dialog::Action &&
-           l.kind != Dialog::Label && l.kind != Dialog::Direction &&
-           !(l.kind == Dialog::Choice && l.multiple))
+        if(l.kind == Dialog::Check || l.kind == Dialog::Action ||
+           l.kind == Dialog::Label || l.kind == Dialog::Direction ||
+           (l.kind == Dialog::Choice && l.multiple))
+          need -= _packedWidth(l);
+        else
           need -= (int)fl_width(_escaped(l.label).c_str()) + 2 * WB;
       }
       if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
@@ -610,7 +617,9 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
           widget = new Fl_Choice(fx, y, fieldW, BH);
         break;
       case Dialog::Label: {
-        Fl_Box *b = new Fl_Box(fx, y, w - fx - WB, BH);
+        // it says what it says and no more, on a grid where a column follows
+        // it; on its own line it runs to the edge, as a caption does
+        Fl_Box *b = new Fl_Box(fx, y, grid > 0 ? fieldW : w - fx - WB, BH);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         widget = b;
       } break;
@@ -666,7 +675,10 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       if(!widget) continue;
       // A widget keeps the pointer it is given rather than the text, so the
       // label cannot be a temporary: copy_label() takes a copy of its own.
-      if(f.label.size() && f.kind != Dialog::Label && f.kind != Dialog::Output)
+      // A line the dialog says carries its text in the label, which refresh()
+      // rewrites at every turn; every other kind keeps the one it declares --
+      // a value one only reads has a label like any other field.
+      if(f.label.size() && f.kind != Dialog::Label)
         widget->copy_label(_escaped(f.label).c_str());
       // The inputs and the choices carry their label to their right, as every
       // Gmsh window does. A check button is different: it draws its label
@@ -779,6 +791,23 @@ void dialogFltk::build(int dialog)
   {
     int need = _neededWidth(_panel.footer) + 2 * WB + aside;
     if(need > width) width = need;
+  }
+  // and wide enough for the row of tabs itself: a window that fits what its
+  // panes hold but not their names hides the last of them behind a pulldown
+  {
+    fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+    std::map<std::string, int> rows;
+    for(const auto &q : _panel.panes) {
+      if(q.visible && !q.visible()) continue;
+      rows[q.group] += (int)fl_width(_escaped(q.label).c_str()) +
+                       (int)(1.2 * FL_NORMAL_SIZE);
+    }
+    for(const auto &row : rows) {
+      // and the room FLTK keeps at the end of the row for the arrow it offers
+      // when the tabs do not fit, which is exactly what is being avoided here
+      int need = row.second + aside + 2 * WB + 2 * FL_NORMAL_SIZE;
+      if(need > width) width = need;
+    }
   }
   // A dialog whose panes change -- the option window shows another category --
   // keeps the width the widest of them asked for: one that grows and shrinks
@@ -932,8 +961,11 @@ void dialogFltk::build(int dialog)
       if(q.buttonLabel.size()) {
         // at the bottom right of the pane, with the same margin under it as
         // around everything else
-        Fl_Button *b = new Fl_Button(width - BB - 2 * WB, top + height - BH - WB,
-                                     BB, BH, _escaped(q.buttonLabel).c_str());
+        Fl_Button *b =
+          new Fl_Button(width - BB - 2 * WB, top + height - BH - WB, BB, BH);
+        // a widget keeps the pointer it is given rather than the text, so the
+        // label cannot be a temporary
+        b->copy_label(_escaped(q.buttonLabel).c_str());
         // the description owns the action; the window owns a copy of it
         b->callback(_buttonCallback, new std::function<void()>(q.button));
       }
