@@ -34,7 +34,11 @@ namespace Dialog {
     Label, // not a value at all: a line the dialog says, recomputed as it shows
     Output, // the same, but with a label, for a value one reads and cannot edit
     Action, // not a value either: a button in the flow of the fields
-    Color, // a colour, shown as a swatch one clicks to change
+    // A colour, shown as a swatch one clicks to change, its name beside it.
+    // The option window this reproduces fills a whole button with the colour
+    // and writes the name inside it; the swatch was preferred and is a
+    // deliberate departure.
+    Color,
     List, // what has been picked so far, which one may correct
     Spacer // nothing at all: it eats what is left of the line, and never less
            // than widthEm, so that it still separates in a window that fits
