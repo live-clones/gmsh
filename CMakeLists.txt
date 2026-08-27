@@ -660,6 +660,16 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
                       OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
       string(STRIP ${FLTK_INCLUDE_DIR} FLTK_INCLUDE_DIR)
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
+      # --includedir only gives the prefix; since 1.4 the fltk headers include
+      # those of the libraries fltk was itself built against (Fl.H pulls in
+      # <cairo.h>), which live in the other -I of --cxxflags
+      execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --cxxflags
+                      OUTPUT_VARIABLE FLTK_CXX_FLAGS)
+      string(REGEX MATCHALL "-I[^ ]+" FLTK_INCLUDE_FLAGS "${FLTK_CXX_FLAGS}")
+      foreach(flag ${FLTK_INCLUDE_FLAGS})
+        string(SUBSTRING ${flag} 2 -1 dir)
+        list(APPEND EXTERNAL_INCLUDES ${dir})
+      endforeach()
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
                       OUTPUT_VARIABLE FLTK_LIBRARIES)
       string(STRIP ${FLTK_LIBRARIES} FLTK_LIBRARIES)
@@ -2058,6 +2068,34 @@ endif()
 
 if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
   install(FILES ${ONELAB_PY} DESTINATION ${GMSH_BIN})
+endif()
+
+# Desktop integration. This is what lets the desktop tell which application a
+# Gmsh window belongs to: it matches the Wayland app id, or the X11 WM_CLASS
+# against StartupWMClass, against the entries it has installed. Window rules key
+# on that, and a tiling extension typically skips a window it cannot resolve --
+# so without this the windows behave as if they belonged to no application.
+if(HAVE_FLTK AND UNIX AND NOT APPLE)
+  set(GMSH_DESKTOP_ENTRY
+      ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/info.gmsh.gmsh.desktop)
+  install(FILES ${GMSH_DESKTOP_ENTRY}
+          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+  install(FILES
+          ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/info.gmsh.gmsh.metainfo.xml
+          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/utils/icons/gmsh.svg
+          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps)
+
+  # Gmsh is usually run straight from the build tree, where none of the above
+  # has happened: "make desktop-entry" installs a hidden copy of the entry for
+  # the current user, pointing at the binary just built, so that its windows are
+  # recognized too. Deleting the file it writes undoes it.
+  add_custom_target(desktop-entry
+    COMMAND ${CMAKE_COMMAND} -DENTRY=${GMSH_DESKTOP_ENTRY}
+            -DEXECUTABLE=$<TARGET_FILE:gmsh>
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/InstallUserDesktopEntry.cmake
+    COMMENT "Registering ${CMAKE_PROJECT_NAME} with the desktop for this user"
+    VERBATIM)
 endif()
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
