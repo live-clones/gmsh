@@ -192,11 +192,15 @@ keyed("clipping", ["ctrl", "shift", "c"])
 keyed("statistics", ["ctrl", "i"],
       tabs=[("geometry", 55, 40), ("mesh", 112, 100), ("post", 187, 165)])
 
-# What a row number is worth, per interface. The FLTK tree starts with its
-# "Modules" root; the Dear ImGui one starts at "Geometry", so its rows are
-# counted from one further in.
-GEOMETRY = {"released": (37, 18.0, 0), "fltk": (37, 18.0, 0),
-            "imgui": (52, 17.32, 1)}
+# What a row number is worth, per interface: where the first row is and how
+# far apart two of them are. The FLTK tree starts with its "Modules" root; the
+# Dear ImGui one starts at "Geometry", so its rows are counted from one further
+# in. Measured off a --probe picture, and worth measuring again whenever the
+# font changes: a pitch that is a pixel out is half a row out by the twentieth,
+# and a click that lands between two rows opens nothing -- or, worse, leaves
+# the dialog of the shot before it up, and that is what gets photographed.
+GEOMETRY = {"released": (35, 17.0, 0), "fltk": (34, 17.0, 0),
+            "imgui": (51.5, 16.0, 1)}
 INDENT = {"released": {2: 75, 3: 95, 4: 100},
           "fltk": {2: 75, 3: 95, 4: 100},
           "imgui": {2: 50, 3: 85, 4: 90}}
@@ -623,7 +627,9 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
                 out, "%s-options-%s-STRIP.png" % (build, category.lower())))
         for i, x in enumerate(found):
             name = tabs[i] if i < len(tabs) else "tab%d" % (i + 1)
-            if only and only != "%s-%s" % (category.lower(), name.lower()):
+            # a category on its own means every tab of it
+            if only and "-" in only and \
+               only != "%s-%s" % (category.lower(), name.lower()):
                 continue
             where = _dialog_geometry(dpy, "options", build, win, wx, wy)
             if not where: break
@@ -668,6 +674,222 @@ def _dialog_picture(dpy, dialog, build, win, ww, wh):
     if not found:
         return None
     return grab(dpy, found[1], found[4], found[5])
+
+
+def photograph(dpy, args, specs):
+    """Take every shot of the list, in an X server that is already up.
+
+    Returns what it could not take. A shot misses now and then -- a window that
+    is a moment late, a click that lands as the tree is still drawing -- and
+    the caller gives those another go rather than leaving a hole in the sheet.
+    """
+    failures = []
+    # One interface for as many shots as it can take. Starting Gmsh is
+    # most of what a shot costs, and shots that want the same model, the
+    # same unfolded branches and the same dialog want the same interface:
+    # the twelve shapes of the elementary dialog are twelve panes of one
+    # window. A shot that clicks in the scene keeps one to itself -- what
+    # it picks is added to the model, and the next shot would not find the
+    # model it asked for.
+    held = None  # what is up: its key, its process, where its window is
+    for spec in specs:
+        name = spec["name"]
+        # a pane the conversion added: the released build has no window for
+        # it, so there is nothing to photograph there
+        if spec.get("added") and args.build == "released":
+            continue
+        key = (spec["dialog"], spec.get("geo"), tuple(spec["branches"]),
+               name if spec.get("scene") else "")
+        if held and held[0] != key:
+            stop_driver(held[1])
+            held = None
+        if not held:
+            proc = start_driver(args.lib, args.home, spec["branches"],
+                                spec.get("geo"))
+            main_win = wait_for(dpy, lambda n: "Gmsh" in n)
+            if not main_win:
+                err = proc.stderr.read().decode(errors="replace")[-400:]
+                failures.append("%s: no main window. %s" % (name, err))
+                stop_driver(proc)
+                continue
+            held = (key, proc, main_win)
+            time.sleep(1.0)
+        _, win, wx, wy, ww, wh = held[2]
+
+        if spec.get("keys"):
+            # the pointer has to be over the window for the key to
+            # reach it
+            xtest.fake_input(dpy, X.MotionNotify, x=wx + 120,
+                             y=wy + wh - 60)
+            dpy.sync()
+            time.sleep(0.3)
+            press(dpy, spec["keys"])
+            time.sleep(0.6)
+            wiggle(dpy, wx + 120, wy + wh - 60)
+            time.sleep(0.6)
+
+            if spec.get("tab"):
+                # the dialog is up: pick the tab this shot is about
+                tx = spec["tab"][1 if args.build == "imgui" else 0]
+                ty = TAB_ROW[args.build]
+                if args.build == "imgui":
+                    click(dpy, wx + DIALOG_POS[0] + tx,
+                          wy + DIALOG_POS[1] + ty)
+                else:
+                    found = wait_for(
+                        dpy,
+                        lambda n: re.search(dialog_title(spec["dialog"]), n),
+                        seconds=8)
+                    if not found:
+                        failures.append("%s: no dialog to pick a tab in"
+                                        % name)
+                        continue
+                    click(dpy, found[2] + tx, found[3] + ty)
+                time.sleep(0.5)
+                wiggle(dpy, wx + 120, wy + wh - 60)
+                time.sleep(0.5)
+
+            point = spec.get("press", {}).get(args.build)
+            if point:
+                if not press_inside(dpy, args.build, point,
+                                    spec["dialog"], wx, wy):
+                    failures.append("%s: no dialog to press in" % name)
+                    continue
+                time.sleep(0.5)
+                wiggle(dpy, wx + 120, wy + wh - 60)
+                time.sleep(0.5)
+
+            if args.build == "imgui":
+                # Dear ImGui gives a window of its own to a dialog that
+                # does not fit inside the application window, and the X
+                # server then hands it over by name, as in FLTK
+                out = "%s-%s.png" % (args.build, name)
+                apart = detached(dpy, spec["dialog"], win)
+                if apart:
+                    picture = grab_window(dpy, apart[1], apart[2], apart[3])
+                    if picture:
+                        picture.save(os.path.join(args.out, out))
+                        print("SHOT %s  %dx%d" % (out, picture.width,
+                                                  picture.height))
+                        continue
+                after = grab(dpy, win, ww, wh)
+                box = imgui_box(after, DIALOG_POS)
+                if not box:
+                    failures.append("%s: no dialog at %s" % (name, DIALOG_POS))
+                    after.save(os.path.join(
+                        args.out, "%s-%s-MISS.png" % (args.build, name)))
+                    continue
+                after.crop(box).save(os.path.join(args.out, out))
+                print("SHOT %s  %dx%d" % (out, box[2] - box[0],
+                                          box[3] - box[1]))
+                continue
+            want = re.compile(dialog_title(spec["dialog"]))
+            found = wait_for(dpy, lambda n: want.search(n), seconds=8)
+            out = "%s-%s.png" % (args.build, name)
+            if not found:
+                failures.append("%s: nothing titled %r" % (name, want.pattern))
+                grab(dpy, win, ww, wh).save(os.path.join(
+                    args.out, "%s-%s-MISS.png" % (args.build, name)))
+                continue
+            _, dwin, _, _, dw, dh = found
+            grab(dpy, dwin, dw, dh).save(os.path.join(args.out, out))
+            print("SHOT %s  %dx%d" % (out, dw, dh))
+            continue
+
+        cx, cy = where(args.build, spec["row"], spec["depth"])
+        if args.probe:
+            out = "%s-probe-%s.png" % (args.build, name)
+            picture = grab(dpy, win, ww, wh)
+            mark(picture, cx, cy)
+            picture.save(os.path.join(args.out, out))
+            print("PROBE %s  click at %d,%d" % (out, cx, cy))
+            continue
+
+        click(dpy, wx + cx, wy + cy)
+        time.sleep(0.6)
+        wiggle(dpy, wx + 120, wy + wh - 60)
+        time.sleep(0.6)
+
+        # and what to pick in the view, now that the dialog is up
+        for _ in spec.get("scene", []):
+            picture = grab(dpy, win, ww, wh)
+            if args.build == "imgui":
+                # it floats over the scene inside the one window
+                avoid = imgui_box(picture, DIALOG_POS)
+            else:
+                # a window of its own, but it still hides part of the
+                # scene, and what it hides comes back black
+                avoid = None
+                over = wait_for(
+                    dpy,
+                    lambda n: re.search(dialog_title(spec["dialog"]), n),
+                    seconds=2)
+                if over:
+                    _, _, dx, dy, dw, dh = over
+                    avoid = (dx - wx, dy - wy, dx - wx + dw,
+                             dy - wy + dh)
+            target = find_target(picture, args.build, avoid)
+            if not target:
+                failures.append("%s: nothing drawn to pick" % name)
+                break
+            print("PICK %s at %d,%d" % (name, target[0], target[1]))
+            click(dpy, wx + target[0], wy + target[1])
+            time.sleep(0.5)
+            wiggle(dpy, wx + 120, wy + wh - 60)
+            time.sleep(0.5)
+
+        point = spec.get("press", {}).get(args.build)
+        if point:
+            if not press_inside(dpy, args.build, point, spec["dialog"],
+                                wx, wy):
+                failures.append("%s: no dialog to press in" % name)
+                continue
+            time.sleep(0.5)
+            wiggle(dpy, wx + 120, wy + wh - 60)
+            time.sleep(0.5)
+
+        out = "%s-%s.png" % (args.build, name)
+        if args.build == "imgui":
+            apart = detached(dpy, spec["dialog"], win)
+            if apart:
+                picture = grab_window(dpy, apart[1], apart[2], apart[3])
+                if picture:
+                    picture.save(os.path.join(args.out, out))
+                    print("SHOT %s  %dx%d" % (out, picture.width,
+                                              picture.height))
+                    continue
+            # Here a dialog is a window of Dear ImGui inside the one
+            # window of the application, so there is nothing for the X
+            # server to hand over. Its position is known -- it was
+            # written into the layout file -- so the rectangle is
+            # walked out from there.
+            after = grab(dpy, win, ww, wh)
+            box = imgui_box(after, DIALOG_POS)
+            if not box:
+                failures.append("%s: no dialog at %s" % (name, DIALOG_POS))
+                after.save(os.path.join(args.out,
+                                        "%s-%s-MISS.png" % (args.build, name)))
+                continue
+            after.crop(box).save(os.path.join(args.out, out))
+            print("SHOT %s  %dx%d" % (out, box[2] - box[0], box[3] - box[1]))
+            continue
+
+        want = re.compile(dialog_title(spec["dialog"]))
+        found = wait_for(dpy, lambda n: want.search(n), seconds=8)
+        if not found:
+            failures.append(
+                "%s: nothing titled %r; on screen: %s"
+                % (name, want.pattern,
+                   sorted(set(e[0] for e in named_windows(dpy)))))
+            grab(dpy, win, ww, wh).save(
+                os.path.join(args.out, "%s-%s-MISS.png" % (args.build, name)))
+            continue
+        _, dwin, _, _, dw, dh = found
+        grab(dpy, dwin, dw, dh).save(os.path.join(args.out, out))
+        print("SHOT %s  %dx%d" % (out, dw, dh))
+    if held:
+        stop_driver(held[1])
+    return failures
 
 
 def main():
@@ -724,198 +946,24 @@ def main():
             return 0
 
         wanted = args.shot or [s["name"] for s in SHOTS]
-        for spec in SHOTS:
-            name = spec["name"]
-            if name not in wanted and spec["dialog"] not in wanted:
-                continue
-            # a pane the conversion added: the released build has no window for
-            # it, so there is nothing to photograph there
-            if spec.get("added") and args.build == "released":
-                continue
-            proc = start_driver(args.lib, args.home, spec["branches"],
-                                spec.get("geo"))
-            try:
-                main_win = wait_for(dpy, lambda n: "Gmsh" in n)
-                if not main_win:
-                    err = proc.stderr.read().decode(errors="replace")[-400:]
-                    failures.append("%s: no main window. %s" % (name, err))
-                    continue
-                _, win, wx, wy, ww, wh = main_win
-                time.sleep(1.0)
-
-                if spec.get("keys"):
-                    # the pointer has to be over the window for the key to
-                    # reach it
-                    xtest.fake_input(dpy, X.MotionNotify, x=wx + 120,
-                                     y=wy + wh - 60)
-                    dpy.sync()
-                    time.sleep(0.3)
-                    press(dpy, spec["keys"])
-                    time.sleep(0.6)
-                    wiggle(dpy, wx + 120, wy + wh - 60)
-                    time.sleep(0.6)
-
-                    if spec.get("tab"):
-                        # the dialog is up: pick the tab this shot is about
-                        tx = spec["tab"][1 if args.build == "imgui" else 0]
-                        ty = TAB_ROW[args.build]
-                        if args.build == "imgui":
-                            click(dpy, wx + DIALOG_POS[0] + tx,
-                                  wy + DIALOG_POS[1] + ty)
-                        else:
-                            found = wait_for(
-                                dpy,
-                                lambda n: re.search(dialog_title(spec["dialog"]), n),
-                                seconds=8)
-                            if not found:
-                                failures.append("%s: no dialog to pick a tab in"
-                                                % name)
-                                continue
-                            click(dpy, found[2] + tx, found[3] + ty)
-                        time.sleep(0.5)
-                        wiggle(dpy, wx + 120, wy + wh - 60)
-                        time.sleep(0.5)
-
-                    point = spec.get("press", {}).get(args.build)
-                    if point:
-                        if not press_inside(dpy, args.build, point,
-                                            spec["dialog"], wx, wy):
-                            failures.append("%s: no dialog to press in" % name)
-                            continue
-                        time.sleep(0.5)
-                        wiggle(dpy, wx + 120, wy + wh - 60)
-                        time.sleep(0.5)
-
-                    if args.build == "imgui":
-                        # Dear ImGui gives a window of its own to a dialog that
-                        # does not fit inside the application window, and the X
-                        # server then hands it over by name, as in FLTK
-                        out = "%s-%s.png" % (args.build, name)
-                        apart = detached(dpy, spec["dialog"], win)
-                        if apart:
-                            picture = grab_window(dpy, apart[1], apart[2], apart[3])
-                            if picture:
-                                picture.save(os.path.join(args.out, out))
-                                print("SHOT %s  %dx%d" % (out, picture.width,
-                                                          picture.height))
-                                continue
-                        after = grab(dpy, win, ww, wh)
-                        box = imgui_box(after, DIALOG_POS)
-                        if not box:
-                            failures.append("%s: no dialog at %s" % (name, DIALOG_POS))
-                            after.save(os.path.join(
-                                args.out, "%s-%s-MISS.png" % (args.build, name)))
-                            continue
-                        after.crop(box).save(os.path.join(args.out, out))
-                        print("SHOT %s  %dx%d" % (out, box[2] - box[0],
-                                                  box[3] - box[1]))
-                        continue
-                    want = re.compile(dialog_title(spec["dialog"]))
-                    found = wait_for(dpy, lambda n: want.search(n), seconds=8)
-                    out = "%s-%s.png" % (args.build, name)
-                    if not found:
-                        failures.append("%s: nothing titled %r" % (name, want.pattern))
-                        grab(dpy, win, ww, wh).save(os.path.join(
-                            args.out, "%s-%s-MISS.png" % (args.build, name)))
-                        continue
-                    _, dwin, _, _, dw, dh = found
-                    grab(dpy, dwin, dw, dh).save(os.path.join(args.out, out))
-                    print("SHOT %s  %dx%d" % (out, dw, dh))
-                    continue
-
-                cx, cy = where(args.build, spec["row"], spec["depth"])
-                if args.probe:
-                    out = "%s-probe-%s.png" % (args.build, name)
-                    picture = grab(dpy, win, ww, wh)
-                    mark(picture, cx, cy)
-                    picture.save(os.path.join(args.out, out))
-                    print("PROBE %s  click at %d,%d" % (out, cx, cy))
-                    continue
-
-                click(dpy, wx + cx, wy + cy)
-                time.sleep(0.6)
-                wiggle(dpy, wx + 120, wy + wh - 60)
-                time.sleep(0.6)
-
-                # and what to pick in the view, now that the dialog is up
-                for _ in spec.get("scene", []):
-                    picture = grab(dpy, win, ww, wh)
-                    if args.build == "imgui":
-                        # it floats over the scene inside the one window
-                        avoid = imgui_box(picture, DIALOG_POS)
-                    else:
-                        # a window of its own, but it still hides part of the
-                        # scene, and what it hides comes back black
-                        avoid = None
-                        over = wait_for(
-                            dpy,
-                            lambda n: re.search(dialog_title(spec["dialog"]), n),
-                            seconds=2)
-                        if over:
-                            _, _, dx, dy, dw, dh = over
-                            avoid = (dx - wx, dy - wy, dx - wx + dw,
-                                     dy - wy + dh)
-                    target = find_target(picture, args.build, avoid)
-                    if not target:
-                        failures.append("%s: nothing drawn to pick" % name)
-                        break
-                    print("PICK %s at %d,%d" % (name, target[0], target[1]))
-                    click(dpy, wx + target[0], wy + target[1])
-                    time.sleep(0.5)
-                    wiggle(dpy, wx + 120, wy + wh - 60)
-                    time.sleep(0.5)
-
-                point = spec.get("press", {}).get(args.build)
-                if point:
-                    if not press_inside(dpy, args.build, point, spec["dialog"],
-                                        wx, wy):
-                        failures.append("%s: no dialog to press in" % name)
-                        continue
-                    time.sleep(0.5)
-                    wiggle(dpy, wx + 120, wy + wh - 60)
-                    time.sleep(0.5)
-
-                out = "%s-%s.png" % (args.build, name)
-                if args.build == "imgui":
-                    apart = detached(dpy, spec["dialog"], win)
-                    if apart:
-                        picture = grab_window(dpy, apart[1], apart[2], apart[3])
-                        if picture:
-                            picture.save(os.path.join(args.out, out))
-                            print("SHOT %s  %dx%d" % (out, picture.width,
-                                                      picture.height))
-                            continue
-                    # Here a dialog is a window of Dear ImGui inside the one
-                    # window of the application, so there is nothing for the X
-                    # server to hand over. Its position is known -- it was
-                    # written into the layout file -- so the rectangle is
-                    # walked out from there.
-                    after = grab(dpy, win, ww, wh)
-                    box = imgui_box(after, DIALOG_POS)
-                    if not box:
-                        failures.append("%s: no dialog at %s" % (name, DIALOG_POS))
-                        after.save(os.path.join(args.out,
-                                                "%s-%s-MISS.png" % (args.build, name)))
-                        continue
-                    after.crop(box).save(os.path.join(args.out, out))
-                    print("SHOT %s  %dx%d" % (out, box[2] - box[0], box[3] - box[1]))
-                    continue
-
-                want = re.compile(dialog_title(spec["dialog"]))
-                found = wait_for(dpy, lambda n: want.search(n), seconds=8)
-                if not found:
-                    failures.append(
-                        "%s: nothing titled %r; on screen: %s"
-                        % (name, want.pattern,
-                           sorted(set(e[0] for e in named_windows(dpy)))))
-                    grab(dpy, win, ww, wh).save(
-                        os.path.join(args.out, "%s-%s-MISS.png" % (args.build, name)))
-                    continue
-                _, dwin, _, _, dw, dh = found
-                grab(dpy, dwin, dw, dh).save(os.path.join(args.out, out))
-                print("SHOT %s  %dx%d" % (out, dw, dh))
-            finally:
-                stop_driver(proc)
+        specs = [s for s in SHOTS
+                 if s["name"] in wanted or s["dialog"] in wanted]
+        failures = photograph(dpy, args, specs)
+        # A shot that missed is taken again, once, on its own interface: they
+        # miss one at a time and never twice for the same reason.
+        if failures and not args.probe:
+            missed = set(f.split(":")[0] for f in failures)
+            print("RETRY " + " ".join(sorted(missed)))
+            # what the first try left behind: a picture of what was on screen
+            # instead of the dialog, which is only of use while it is the
+            # latest word on that shot
+            for name in missed:
+                miss = os.path.join(args.out,
+                                    "%s-%s-MISS.png" % (args.build, name))
+                if os.path.exists(miss):
+                    os.remove(miss)
+            again = [s for s in specs if s["name"] in missed]
+            failures = photograph(dpy, args, again)
 
     for f in failures:
         print("FAIL " + f)
