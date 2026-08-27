@@ -1098,6 +1098,17 @@ void dialogFltk::build(int dialog)
   if(wasShown) _win->show();
 }
 
+// A dialog that watches something rather than holding it -- the gamepad,
+// whose lights follow the pad -- asks to be refreshed on a timer. FLTK draws
+// only when something happens, so something has to happen.
+void dialogFltk::_tick(void *data)
+{
+  dialogFltk *d = (dialogFltk *)data;
+  if(!d->shown()) return; // it stops with the window and starts with it again
+  d->refresh();
+  Fl::repeat_timeout(d->_panel.refreshEvery, _tick, data);
+}
+
 void dialogFltk::refresh()
 {
   if(!_panel.tabbed) _relayout();
@@ -1351,6 +1362,10 @@ void dialogFltk::show()
   _forcePane = true;
   refresh();
   _win->show();
+  if(_panel.refreshEvery > 0.) {
+    Fl::remove_timeout(_tick, this);
+    Fl::add_timeout(_panel.refreshEvery, _tick, this);
+  }
 }
 
 void dialogFltk::hide()

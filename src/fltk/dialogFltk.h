@@ -95,6 +95,8 @@ private:
   static void _tabCallback(Fl_Widget *w, void *data);
   static void _fieldCallback(Fl_Widget *w, void *data);
   static void _buttonCallback(Fl_Widget *w, void *data);
+  // for a dialog that watches something and has to be refreshed on a timer
+  static void _tick(void *data);
 };
 
 // The dialogs, indexed as Dialog::Elementary and friends. A dialog is built the

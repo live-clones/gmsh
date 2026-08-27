@@ -249,6 +249,11 @@ namespace Dialog {
     std::vector<Field> footer;
     // buttons at the very bottom, for the panels that act rather than only hold
     std::vector<Button> buttons;
+    // How often the dialog is to be built again from the values it shows,
+    // in seconds: a dialog that watches something -- the gamepad, whose
+    // buttons light up as they are pressed -- rather than only holding
+    // settings. Zero for the ones that change only when one changes them.
+    double refreshEvery;
     // The buttons share the last line of the footer instead of taking one of
     // their own: "Memory usage: ..." and Update sit on one line in the window
     // the statistics panel replaces. Only for a footer short enough to leave
@@ -260,7 +265,10 @@ namespace Dialog {
     // option window this reproduces is twelve lines tall whatever category it
     // is on. Zero lets the panes decide.
     int leastRows;
-    Panel() : tabbed(true), buttonsInFooter(false), leastRows(0) {}
+    Panel()
+      : tabbed(true), refreshEvery(0.), buttonsInFooter(false), leastRows(0)
+    {
+    }
   };
 
   // which dialog: the numbering Gui::showDialog() uses
@@ -275,6 +283,7 @@ namespace Dialog {
     Statistics,
     Clipping,
     Options,
+    Gamepad,
     NumDialogs
   };
 
@@ -300,6 +309,8 @@ namespace Dialog {
   int &optionsView();
   // the six planes that cut what is drawn
   Panel clipping();
+  // what the gamepad is doing and what each of its buttons and axes is for
+  Panel gamepad();
 
   // the one of the given index
   Panel panel(int dialog);

@@ -19,7 +19,6 @@
 #include "FlGui.h"
 #include <FL/fl_draw.H>
 #include "extraDialogs.h"
-#include "gamepadWindow.h"
 #include "optionWindow.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
@@ -261,8 +260,8 @@ namespace Gui {
 
   void configureGamepad()
   {
-    if(!available()) return;
-    FlGui::instance()->options->gmpdoption = new gamepadWindow;
+    // described once, like every other dialog; show() raises it
+    Dialog::show(Dialog::Gamepad, 0);
   }
 
   void showPanel(int panel, bool show)

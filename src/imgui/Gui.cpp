@@ -270,8 +270,7 @@ namespace Gui {
 
   void configureGamepad()
   {
-    // TODO: a window of its own, as the FLTK interface has
-    Msg::Warning("The gamepad configuration window is not there yet");
+    Dialog::show(Dialog::Gamepad, 0);
   }
 
   void showPanel(int panel, bool show)
