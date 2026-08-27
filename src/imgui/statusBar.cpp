@@ -156,10 +156,9 @@ void appWindow::_drawQuickAccessMenu()
       _choice("Numeric values", "View", -1, "IntervalsType", 4.);
       ImGui::EndMenu();
     }
-    if(ImGui::MenuItem("All view options...")) {
-      _showDialog[Dialog::Options] = true;
-      Dialog::optionsCategory() = 5;
-    }
+    if(ImGui::MenuItem("All view options..."))
+      // the view being looked at, whichever line of the list that is
+      Dialog::showOptionsForView(-1);
   }
 #endif
 }
