@@ -511,6 +511,66 @@ def detached(dpy, dialog, main):
     return None
 
 
+# where the tabs of a dialog sit, read off the picture rather than written
+# down: a tab moves as soon as a label changes, and there are 25 of them here
+def tab_boundaries(img, build):
+    """The x of the middle of each tab of the strip along the top.
+
+    Read off the picture rather than written down: a tab moves as soon as a
+    label changes, and the option window has twenty-five of them.
+    """
+    im = img.convert("RGB")
+    px = im.load()
+    if build == "imgui":
+        # a tab is drawn in one of two colours, selected or not, with the
+        # window background showing between them
+        y = 30
+        selected, plain = (152, 186, 225), (198, 206, 215)
+        runs, start = [], None
+        for x in range(im.width):
+            on = px[x, y] in (selected, plain)
+            if on and start is None: start = x
+            if not on and start is not None:
+                if x - start >= 16: runs.append((start, x - 1))
+                start = None
+        return [(a + b) // 2 for a, b in runs]
+    # FLTK draws a dark line between two tabs
+    y = 8
+    grey, line = (192, 192, 192), (83, 83, 83)
+    cuts = [x for x in range(im.width) if px[x, y] == line]
+    cuts = [x for x in cuts if x > 20]
+    if not cuts: return []
+    # the strip starts where its grey does, left of the first line
+    left = cuts[0]
+    while left > 0 and px[left - 1, y] == grey: left -= 1
+    out, previous = [], left
+    for x in cuts:
+        if x - previous >= 16: out.append((previous + x) // 2)
+        previous = x
+    if not out and im.width - left >= 16:
+        # a lone tab has no line beside it
+        right = left
+        while right + 1 < im.width and px[right + 1, y] == grey: right += 1
+        out.append((left + min(right, left + 120)) // 2)
+    return out
+
+
+# The categories of the option window, and the tabs each of them has, as the
+# window this reproduces has them. Only the names are written here: where a tab
+# is, is read off the picture.
+OPTION_TABS = [
+    ("General", ["General", "Advanced", "Axes", "Aspect", "Color", "Camera"]),
+    ("Geometry", ["General", "Visibility", "Transfo", "Aspect", "Color"]),
+    ("Mesh", ["General", "Advanced", "Visibility", "Aspect", "Color"]),
+    ("Solver", ["General"]),
+    ("Post", ["General"]),
+]
+
+# where the rows of the list of categories are, per interface: the first one
+# and the step from one to the next
+CATEGORY_ROWS = {"released": (12, 14), "fltk": (12, 16), "imgui": (33, 17)}
+
+
 def press_inside(dpy, build, point, dialog, wx, wy):
     """Click a point of the dialog itself. In Dear ImGui the dialog sits at a
     known place inside the one window; in FLTK it is a window of its own and
@@ -530,6 +590,80 @@ def press_inside(dpy, build, point, dialog, wx, wy):
     return True
 
 
+def sweep_options(dpy, build, out, win, wx, wy, ww, wh):
+    """Photograph every tab of every category of the option window.
+
+    One picture per tab is more than one can look at, but not more than one can
+    compare: what this is for is telling whether the two interfaces still show
+    the same thing as the window they reproduce.
+    """
+    failures = []
+    first, step = CATEGORY_ROWS[build]
+    for k, (category, tabs) in enumerate(OPTION_TABS):
+        where = _dialog_geometry(dpy, "options", build, win, wx, wy)
+        if not where:
+            failures.append("options: no window to sweep")
+            return failures
+        dx, dy, dw, dh = where
+        click(dpy, dx + 45, dy + first + k * step)
+        time.sleep(0.6)
+        picture = _dialog_picture(dpy, "options", build, win, ww, wh)
+        if picture is None:
+            failures.append("options-%s: nothing to photograph" % category)
+            continue
+        found = tab_boundaries(picture, build)
+        if len(found) != len(tabs):
+            print("NOTE %s %s: %d tabs seen, %d expected"
+                  % (build, category, len(found), len(tabs)))
+            picture.save(os.path.join(
+                out, "%s-options-%s-STRIP.png" % (build, category.lower())))
+        for i, x in enumerate(found):
+            name = tabs[i] if i < len(tabs) else "tab%d" % (i + 1)
+            where = _dialog_geometry(dpy, "options", build, win, wx, wy)
+            if not where: break
+            dx, dy = where[0], where[1]
+            click(dpy, dx + x, dy + TAB_ROW[build])
+            time.sleep(0.4)
+            shot = _dialog_picture(dpy, "options", build, win, ww, wh)
+            if shot is None:
+                failures.append("options-%s-%s: nothing to photograph"
+                                % (category, name))
+                continue
+            f = "%s-options-%s-%s.png" % (build, category.lower(), name.lower())
+            shot.save(os.path.join(out, f))
+            print("SHOT %s  %dx%d" % (f, shot.width, shot.height))
+    return failures
+
+
+def _dialog_geometry(dpy, dialog, build, win, wx, wy):
+    """Where the dialog is on the screen, whichever kind of window it is."""
+    if build == "imgui":
+        apart = detached(dpy, dialog, win)
+        if apart:
+            return (apart[2], apart[3], apart[4], apart[5])
+        return (wx + DIALOG_POS[0], wy + DIALOG_POS[1], 0, 0)
+    found = wait_for(dpy, lambda n: re.search(dialog_title(dialog), n),
+                     seconds=4)
+    if not found:
+        return None
+    return (found[2], found[3], found[4], found[5])
+
+
+def _dialog_picture(dpy, dialog, build, win, ww, wh):
+    if build == "imgui":
+        apart = detached(dpy, dialog, win)
+        if apart:
+            return grab_window(dpy, apart[1], apart[2], apart[3])
+        after = grab(dpy, win, ww, wh)
+        box = imgui_box(after, DIALOG_POS)
+        return after.crop(box) if box else None
+    found = wait_for(dpy, lambda n: re.search(dialog_title(dialog), n),
+                     seconds=4)
+    if not found:
+        return None
+    return grab(dpy, found[1], found[4], found[5])
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--lib", help="directory holding gmsh.py and libgmsh")
@@ -541,6 +675,9 @@ def main():
     ap.add_argument("--probe", action="store_true",
                     help="photograph the tree instead, to read the "
                          "coordinates of the leaves off it")
+    ap.add_argument("--sweep-options", action="store_true",
+                    help="photograph every tab of every category of the "
+                         "option window, in one go")
     ap.add_argument("--shot", action="append", default=[],
                     help="a shot or a dialog by name; all of them by default")
     args = ap.parse_args()
@@ -554,6 +691,28 @@ def main():
 
     with Xserver(args.display):
         dpy = display.Display()
+        if args.sweep_options:
+            proc = start_driver(args.lib, args.home, [])
+            try:
+                main_win = wait_for(dpy, lambda n: "Gmsh" in n)
+                if not main_win:
+                    print("FAIL sweep: no main window")
+                    return 1
+                _, win, wx, wy, ww, wh = main_win
+                time.sleep(1.0)
+                xtest.fake_input(dpy, X.MotionNotify, x=wx + 120,
+                                 y=wy + wh - 60)
+                dpy.sync()
+                time.sleep(0.3)
+                press(dpy, ["ctrl", "shift", "n"])
+                time.sleep(1.0)
+                for f in sweep_options(dpy, args.build, args.out, win, wx, wy,
+                                       ww, wh):
+                    print("FAIL " + f)
+            finally:
+                stop_driver(proc)
+            return 0
+
         wanted = args.shot or [s["name"] for s in SHOTS]
         for spec in SHOTS:
             name = spec["name"]

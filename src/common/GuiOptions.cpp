@@ -77,34 +77,47 @@ namespace Dialog {
       double vmin, vmax;
       // RowFunction: the accessor, since the option has no name to reach it by
       double (*fn)(int, int, double);
+      // it shares the line of the row before it, as its second column: the
+      // window this reproduces puts the labels of an entity beside the entity
+      bool beside;
     };
 
-#define CHECK(name, label) {RowCheck, name, label, nullptr, nullptr, 0., 0., nullptr}
-#define NUMBER(name, label) {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr}
-#define STRING(name, label) {RowString, name, label, nullptr, nullptr, 0., 0., nullptr}
+#define CHECK(name, label) {RowCheck, name, label, nullptr, nullptr, 0., 0., nullptr, false}
+#define NUMBER(name, label) {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, false}
+#define STRING(name, label) {RowString, name, label, nullptr, nullptr, 0., 0., nullptr, false}
 #define COMBO(name, label, choices) \
-  {RowCombo, name, label, choices, nullptr, 0., 1., nullptr}
+  {RowCombo, name, label, choices, nullptr, 0., 1., nullptr, false}
 #define COMBOV(name, label, choices, first, step) \
-  {RowCombo, name, label, choices, nullptr, first, step, nullptr}
+  {RowCombo, name, label, choices, nullptr, first, step, nullptr, false}
 #define COMBOL(name, label, choices, values) \
-  {RowCombo, name, label, choices, values, 0., 1., nullptr}
+  {RowCombo, name, label, choices, values, 0., 1., nullptr, false}
 #define STRCOMBO(name, label, choices) \
-  {RowStringCombo, name, label, choices, nullptr, 0., 0., nullptr}
-#define COLOR(name, label) {RowColor, name, label, nullptr, nullptr, 0., 0., nullptr}
-#define COLORS {RowAllColors, nullptr, nullptr, nullptr, nullptr, 0., 0., nullptr}
-#define ACTION(id, label) {RowAction, id, label, nullptr, nullptr, 0., 0., nullptr}
-#define ROW(label, names) {RowRow, nullptr, label, names, nullptr, 0., 0., nullptr}
-#define VEC2(name, label) {RowRow, name, label, nullptr, nullptr, 2., 0., nullptr}
-#define VEC3(name, label) {RowRow, name, label, nullptr, nullptr, 3., 0., nullptr}
-#define VEC2S(name, label) {RowRow, name, label, nullptr, nullptr, 2., 1., nullptr}
-#define VEC3S(name, label) {RowRow, name, label, nullptr, nullptr, 3., 1., nullptr}
-#define MULTI(label, names) {RowMulti, nullptr, label, names, nullptr, 0., 0., nullptr}
-#define CHECKFN(label, fn) {RowFunction, nullptr, label, nullptr, nullptr, 0., 0., fn}
-#define CAPTION(text) {RowCaption, nullptr, text, nullptr, nullptr, 0., 0., nullptr}
+  {RowStringCombo, name, label, choices, nullptr, 0., 0., nullptr, false}
+#define COLOR(name, label) {RowColor, name, label, nullptr, nullptr, 0., 0., nullptr, false}
+#define COLORS {RowAllColors, nullptr, nullptr, nullptr, nullptr, 0., 0., nullptr, false}
+#define ACTION(id, label) {RowAction, id, label, nullptr, nullptr, 0., 0., nullptr, false}
+#define ROW(label, names) {RowRow, nullptr, label, names, nullptr, 0., 0., nullptr, false}
+#define VEC2(name, label) {RowRow, name, label, nullptr, nullptr, 2., 0., nullptr, false}
+#define VEC3(name, label) {RowRow, name, label, nullptr, nullptr, 3., 0., nullptr, false}
+#define VEC2S(name, label) {RowRow, name, label, nullptr, nullptr, 2., 1., nullptr, false}
+#define VEC3S(name, label) {RowRow, name, label, nullptr, nullptr, 3., 1., nullptr, false}
+#define MULTI(label, names) {RowMulti, nullptr, label, names, nullptr, 0., 0., nullptr, false}
+#define CHECKFN(label, fn) {RowFunction, nullptr, label, nullptr, nullptr, 0., 0., fn, false}
+#define CAPTION(text) {RowCaption, nullptr, text, nullptr, nullptr, 0., 0., nullptr, false}
 // a button at the right end of the line above it
 #define ACTION_RIGHT(id, label) \
-  {RowAction, id, label, nullptr, nullptr, 1., 0., nullptr}
-#define END {RowCheck, nullptr, nullptr, nullptr, nullptr, 0., 0., nullptr}
+  {RowAction, id, label, nullptr, nullptr, 1., 0., nullptr, false}
+// and a switch sharing that line
+#define CHECK_RIGHT(name, label) \
+  {RowCheck, name, label, nullptr, nullptr, 1., 0., nullptr, false}
+// a second column on the line of the row before it
+#define CHECK_BESIDE(name, label) \
+  {RowCheck, name, label, nullptr, nullptr, 0., 0., nullptr, true}
+#define NUMBER_BESIDE(name, label) \
+  {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, true}
+#define COMBO_BESIDE(name, label, choices) \
+  {RowCombo, name, label, choices, nullptr, 0., 1., nullptr, true}
+#define END {RowCheck, nullptr, nullptr, nullptr, nullptr, 0., 0., nullptr, false}
 
     struct optionTab {
       const char *label;
@@ -188,7 +201,8 @@ namespace Dialog {
   const char *const _r_transformXX[] = {"TransformXX", "TransformXY", "TransformXZ",  nullptr};
   const char *const _r_offsetX[] = {"OffsetX", "TransformYX", "TransformYY", "TransformYZ",  nullptr};
   const char *const _r_offsetY[] = {"OffsetY", "TransformZX", "TransformZY", "TransformZZ",  nullptr};
-  const char *const _r_meshSizeFactor[] = {"MeshSizeFactor", "MeshSizeMin", "MeshSizeMax",  nullptr};
+  const char *const _r_meshSize[] = {"MeshSizeMin", "MeshSizeMax", nullptr};
+  const char *const _r_quality[] = {"QualityInf", "QualitySup", nullptr};
   const char *const _r_radiusInf[] = {"RadiusInf", "RadiusSup",  nullptr};
   const char *const _r_timeStep[] = {"TimeStep", "NbIso",  nullptr};
   const char *const _r_maxRecursionLevel[] = {"MaxRecursionLevel", "TargetError",  nullptr};
@@ -249,9 +263,9 @@ namespace Dialog {
     COMBOV("VectorType", "Vector display", _c_vectorType, 1., 1.),
     STRCOMBO("GraphicsFontEngine", "Font rendering engine", _c_graphicsFontEngine),
     STRCOMBO("GraphicsFont", "", _c_graphicsFont),
-    NUMBER("GraphicsFontSize", "Default font"),
+    NUMBER_BESIDE("GraphicsFontSize", "Default font"),
     STRCOMBO("GraphicsFontTitle", "", _c_graphicsFont),
-    NUMBER("GraphicsFontSizeTitle", "Title font"),
+    NUMBER_BESIDE("GraphicsFontSizeTitle", "Title font"),
     END};
 
   const optionRow _generalColor[] = {
@@ -260,6 +274,7 @@ namespace Dialog {
     ROW("Material shininess/exponent", _r_shininess),
     COMBO("ColorScheme", "Predefined color scheme", _c_colorScheme),
     COMBO("BackgroundGradient", "Background gradient", _c_backgroundGradient),
+    COLORS,
     END};
 
   const optionRow _generalCamera[] = {
@@ -284,13 +299,13 @@ namespace Dialog {
 
   const optionRow _geometryVisibility[] = {
     CHECK("Points", "Points"),
+    CHECK_BESIDE("PointLabels", "Point labels"),
     CHECK("Curves", "Curves"),
+    CHECK_BESIDE("CurveLabels", "Curve labels"),
     CHECK("Surfaces", "Surfaces"),
+    CHECK_BESIDE("SurfaceLabels", "Surface labels"),
     CHECK("Volumes", "Volumes"),
-    CHECK("PointLabels", "Point labels"),
-    CHECK("CurveLabels", "Curve labels"),
-    CHECK("SurfaceLabels", "Surface labels"),
-    CHECK("VolumeLabels", "Volume labels"),
+    CHECK_BESIDE("VolumeLabels", "Volume labels"),
     COMBO("LabelType", "Label type", _c_labelType),
     ROW("Normals and tangents", _r_normals),
     END};
@@ -319,6 +334,7 @@ namespace Dialog {
     CHECK("Light", "Enable lighting"),
     CHECK("LightTwoSide", "Use two-side lighting"),
     CHECK("HighlightOrphans", "Highlight orphan and boundary entities"),
+    COLORS,
     END};
 
   const optionRow _meshGeneral[] = {
@@ -328,9 +344,10 @@ namespace Dialog {
     CHECK("RecombineAll", "Recombine all triangular meshes"),
     COMBO("SubdivisionAlgorithm", "Subdivision algorithm", _c_subdivisionAlgorithm),
     NUMBER("Smoothing", "Smoothing steps"),
-    ROW("Min/Max element size", _r_meshSizeFactor),
+    NUMBER("MeshSizeFactor", "Element size factor"),
+    ROW("Min/Max element size", _r_meshSize),
     NUMBER("ElementOrder", "Element order"),
-    CHECK("SecondOrderIncomplete", "Use incomplete elements"),
+    CHECK_RIGHT("SecondOrderIncomplete", "Use incomplete elements"),
     END};
 
   const optionRow _meshAdvanced[] = {
@@ -345,20 +362,20 @@ namespace Dialog {
 
   const optionRow _meshVisibility[] = {
     CHECK("Nodes", "Nodes"),
+    CHECK_BESIDE("NodeLabels", "Node labels"),
     CHECK("Lines", "1D elements"),
+    CHECK_BESIDE("LineLabels", "1D element labels"),
     CHECK("SurfaceEdges", "2D element edges"),
+    CHECK_BESIDE("SurfaceLabels", "2D element labels"),
     CHECK("SurfaceFaces", "2D element faces"),
+    CHECK_BESIDE("VolumeLabels", "3D element labels"),
     CHECK("VolumeEdges", "3D element edges"),
     CHECK("VolumeFaces", "3D element faces"),
-    CHECK("NodeLabels", "Node labels"),
-    CHECK("LineLabels", "1D element labels"),
-    CHECK("SurfaceLabels", "2D element labels"),
-    CHECK("VolumeLabels", "3D element labels"),
     COMBO("LabelType", "Label type", _c_labelType),
-    NUMBER("LabelSampling", "Sampling"),
-    NUMBER("QualityInf", ""),
-    NUMBER("QualitySup", ""),
-    COMBO("QualityType", "Quality range", _c_qualityType),
+    NUMBER_BESIDE("LabelSampling", "Sampling"),
+    MULTI("Elements", _m_meshElements),
+    ROW("", _r_quality),
+    COMBO_BESIDE("QualityType", "Quality range", _c_qualityType),
     ROW("Size range", _r_radiusInf),
     ROW("Normals and tangents", _r_normals),
     END};
@@ -378,6 +395,7 @@ namespace Dialog {
     CHECK("SmoothNormals", "Smooth normals"),
     NUMBER("AngleSmoothNormals", "Smoothing threshold angle"),
     COMBO("ColorCarousel", "Coloring mode", _c_colorCarousel),
+    COLORS,
     END};
 
   const optionRow _solverGeneral[] = {
@@ -496,6 +514,7 @@ namespace Dialog {
     CHECK("SmoothNormals", "Smooth normals"),
     NUMBER("AngleSmoothNormals", "Smoothing threshold angle"),
     CHECK("FakeTransparency", "Use fake transparency mode"),
+    COLORS,
     END};
 
   // The colour map editor is a widget of its own, which this does not have
@@ -599,20 +618,29 @@ namespace Dialog {
       return s;
     }
 
-    const char *_categoryName(int i)
+    // The list down the left of the window this reproduces: five categories
+    // and then one line per view, since the View options are those of one
+    // view and that is how one says which.
+    const char *const _categories[] = {"General", "Geometry", "Mesh", "Solver",
+                                       "PostProcessing"};
+    const char *const _categoryLabels[] = {"General", "Geometry", "Mesh",
+                                           "Solver", "Post-pro"};
+    const int _numCategories = 5;
+
+    int _views()
     {
-      const char **all = GetOptionCategories();
-      for(int k = 0; all[k]; k++)
-        if(k == i) return all[k];
-      return all[0];
+#if defined(HAVE_POST)
+      return (int)PView::list.size();
+#else
+      return 0;
+#endif
     }
 
-    int _categoryCount()
+    // which line of that list is picked, and what it means
+    const char *_categoryName(int row)
     {
-      const char **all = GetOptionCategories();
-      int n = 0;
-      while(all[n]) n++;
-      return n;
+      if(row < 0) return _categories[0];
+      return (row < _numCategories) ? _categories[row] : "View";
     }
 
     // the fully qualified name and the help string of the option table, so that
@@ -874,11 +902,23 @@ namespace Dialog {
           f.changed = _redraw;
           pane.fields.push_back(f);
         } break;
-        default:
-          pane.fields.push_back(_fieldFor(row.kind, category, row.name,
-                                          row.label ? row.label : row.name, num,
-                                          &row));
-          break;
+        default: {
+          Field f = _fieldFor(row.kind, category, row.name,
+                              row.label ? row.label : row.name, num, &row);
+          if(row.beside) f.sameRow = true;
+          // a switch the window this reproduces puts at the right of the line
+          // above rather than on one of its own
+          if(row.kind == RowCheck && row.vmin == 1.) {
+            Field gap;
+            gap.kind = Spacer;
+            gap.widthEm = 1.;
+            gap.sameRow = true;
+            pane.fields.push_back(gap);
+            f.sameRow = true;
+            f.packed = true;
+          }
+          pane.fields.push_back(f);
+        } break;
         }
       }
       return pane;
@@ -894,49 +934,44 @@ namespace Dialog {
     Panel p;
     p.tabbed = true;
 
+    // a line that is no longer there -- a view that has been closed -- falls
+    // back to the first
+    if(_state().category >= _numCategories + _views())
+      _state().category = 0;
     const char *category = _categoryName(_state().category);
     // the window says which category it is showing, as the one it reproduces
-    p.title = std::string("Options - ") + category;
+    p.title = std::string("Options - ") +
+              ((_state().category < _numCategories) ?
+                 _categoryLabels[_state().category] :
+                 ("View [" + std::to_string(_state().category - _numCategories) +
+                  "]"));
 
-    // which category is being edited, down the left side
     p.side.push_back(chooseFrom(
       [](std::vector<std::string> &labels, std::vector<int> &values) {
-        for(int i = 0; i < _categoryCount(); i++) {
-          labels.push_back(_categoryName(i));
+        for(int i = 0; i < _numCategories; i++) {
+          labels.push_back(_categoryLabels[i]);
           values.push_back(i);
+        }
+        for(int i = 0; i < _views(); i++) {
+          labels.push_back("View [" + std::to_string(i) + "]");
+          values.push_back(_numCategories + i);
         }
       },
       [](int i) { return i == _state().category; },
       [](int i, bool on) {
         if(on) {
           _state().category = i;
-          // another category is another set of tabs: the window is not the
-          // same one any more, and has to be built again rather than refreshed
+          if(i >= _numCategories) _state().view = i - _numCategories;
+          // another line is another set of tabs: the window is not the same
+          // one any more, and has to be built again rather than refreshed
           show(Options, -1);
         }
       },
       false));
     p.side.back().rows = 10;
 
-    int num = 0;
-#if defined(HAVE_POST)
-    // the View options are those of one view, chosen below the panes
-    if(!strcmp(category, "View")) {
-      int views = (int)PView::list.size();
-      if(_state().view >= views) _state().view = 0;
-      num = _state().view;
-      Field which = choice("View", &_state().view, {}, {});
-      which.dynamicChoices = [](std::vector<std::string> &labels,
-                                std::vector<int> &values) {
-        for(int i = 0; i < (int)PView::list.size(); i++) {
-          labels.push_back("View [" + std::to_string(i) + "]");
-          values.push_back(i);
-        }
-      };
-      which.changed = []() { show(Options, -1); };
-      p.footer.push_back(which);
-    }
-#endif
+    // the View options are those of the view whose line is picked
+    int num = (_state().category >= _numCategories) ? _state().view : 0;
 
     const optionTab *tabs = _tabsForCategory(category);
     for(int i = 0; tabs && tabs[i].label; i++)

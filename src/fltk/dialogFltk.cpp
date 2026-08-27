@@ -204,12 +204,13 @@ namespace {
   {
     std::size_t most = 0;
     for(const auto &q : p.panes) {
-      std::size_t n = _paneRows(q);
       // a scrolling pane is not what makes the window tall: it is given what
-      // is left and scrolls the rest
-      if(q.scrolling) n = std::min(n, (std::size_t)18);
+      // the others need and scrolls the rest
+      if(q.scrolling) continue;
+      std::size_t n = _paneRows(q);
       if(n > most) most = n;
     }
+    if(!most) most = 12;
     return (int)most * BH + 2 * WB;
   }
 
