@@ -22,7 +22,6 @@
 
 class graphicWindow;
 class openglWindow;
-class optionWindow;
 class onelabWindow;
 class fieldWindow;
 class pluginWindow;
@@ -60,7 +59,6 @@ public:
 
 public:
   std::vector<graphicWindow *> graph;
-  optionWindow *options;
   fieldWindow *fields;
   pluginWindow *plugins;
   visibilityWindow *visibility;

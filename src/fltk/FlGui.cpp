@@ -16,7 +16,6 @@
 #include "drawContextFltk.h"
 #include "drawContextFltkCairo.h"
 #include "graphicWindow.h"
-#include "optionWindow.h"
 #include "fieldWindow.h"
 #include "pluginWindow.h"
 #include "visibilityWindow.h"
@@ -609,7 +608,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fullscreen->end();
 
   // create all other windows
-  options = new optionWindow(CTX::instance()->deltaFontSize);
   fields = new fieldWindow(CTX::instance()->deltaFontSize);
   plugins = new pluginWindow(CTX::instance()->deltaFontSize);
   visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
@@ -646,7 +644,6 @@ FlGui::~FlGui()
   }
 
   for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
-  delete options;
   delete fields;
   delete plugins;
   delete visibility;
@@ -902,13 +899,12 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'p')) {
-    Dialog::optionsCategory() = 6;
+    Dialog::optionsCategory() = 4;
     Dialog::show(Dialog::Options, -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    Dialog::optionsCategory() = 5;
-    Dialog::show(Dialog::Options, -1);
+    Dialog::showOptionsForView(-1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
@@ -1172,8 +1168,9 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
   if(numberOfViewsHasChanged) {
     if(onelab) onelab->rebuildTree(deleteWidgets);
     if(onelabContext) onelabContext->rebuild(deleteWidgets);
-    options->resetBrowser();
-    options->resetExternalViewList();
+    // the option window is described once and reads what it shows, views
+    // included: it wants nothing when their number changes
+    Gui::refreshDialog(Dialog::Options);
     fields->loadFieldViewList();
     plugins->resetViewBrowser();
     Gui::refreshDialog(Dialog::Clipping);
@@ -1390,8 +1387,6 @@ void FlGui::storeCurrentWindowsInfo()
   }
   else
     CTX::instance()->detachedMenu = 0;
-  CTX::instance()->optPosition[0] = options->win->x();
-  CTX::instance()->optPosition[1] = options->win->y();
   CTX::instance()->pluginPosition[0] = plugins->win->x();
   CTX::instance()->pluginPosition[1] = plugins->win->y();
   CTX::instance()->pluginSize[0] = plugins->win->w();
@@ -1438,8 +1433,6 @@ void window_cb(Fl_Widget *w, void *data)
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       if(FlGui::instance()->graph[i]->getWindow()->shown())
         FlGui::instance()->graph[i]->getWindow()->iconize();
-    if(FlGui::instance()->options->win->shown())
-      FlGui::instance()->options->win->iconize();
     if(FlGui::instance()->plugins->win->shown())
       FlGui::instance()->plugins->win->iconize();
     if(FlGui::instance()->fields->win->shown())
@@ -1502,8 +1495,6 @@ void window_cb(Fl_Widget *w, void *data)
     // the order is important!
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->getWindow()->show();
-    if(FlGui::instance()->options->win->shown())
-      FlGui::instance()->options->win->show();
     if(FlGui::instance()->plugins->win->shown())
       FlGui::instance()->plugins->win->show();
     if(FlGui::instance()->fields->win->shown())

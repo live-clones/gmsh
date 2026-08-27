@@ -29,7 +29,7 @@
 #include "GmshDefines.h"
 #include "StringUtils.h"
 #include "FlGui.h"
-#include "optionWindow.h"
+#include "GuiDialogs.h"
 #include "fileDialogs.h"
 #include "CreateFile.h"
 #include "Options.h"
@@ -1806,7 +1806,7 @@ static void _saveViews(const std::string &name, int which, int format,
 {
   if(PView::list.empty()) { Msg::Error("No views to save"); }
   else if(which == 0) {
-    int iview = FlGui::instance()->options->view.index;
+    int iview = Dialog::optionsView();
     if(iview < 0 || iview >= (int)PView::list.size()) {
       Msg::Info("No or invalid current view: saving View[0]");
       iview = 0;
@@ -1927,7 +1927,7 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
 {
   if(PView::list.empty()) { Msg::Error("No views to save"); }
   else if(which == 0) {
-    int iview = FlGui::instance()->options->view.index;
+    int iview = Dialog::optionsView();
     if(iview < 0 || iview >= (int)PView::list.size()) {
       Msg::Info("No or invalid current view: saving View[0]");
       iview = 0;

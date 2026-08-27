@@ -1357,6 +1357,14 @@ namespace Dialog {
   int &optionsCategory() { return _state().category; }
   int &optionsView() { return _state().view; }
 
+  void showOptionsForView(int view)
+  {
+    if(view < 0) view = _state().view;
+    if(view < 0 || view >= _views()) view = 0;
+    if(_views()) _state().category = _numCategories + view;
+    show(Options, -1);
+  }
+
   Panel options()
   {
     Panel p;

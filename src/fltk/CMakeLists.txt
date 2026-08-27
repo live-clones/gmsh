@@ -8,12 +8,11 @@ set(SRC
   GuiFltk.cpp
   CreateFileFltk.cpp
     graphicWindow.cpp menuFltk.cpp dialogFltk.cpp
+    graphicsFonts.cpp
       openglWindow.cpp
-    optionWindow.cpp
       colorbarWindow.cpp
     drawContextFltkCairo.cpp
     drawContextFltkStringTexture.cpp
-    gamepadWindow.cpp
     fieldWindow.cpp
     pluginWindow.cpp
     visibilityWindow.cpp

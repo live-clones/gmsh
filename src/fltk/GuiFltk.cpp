@@ -19,7 +19,6 @@
 #include "FlGui.h"
 #include <FL/fl_draw.H>
 #include "extraDialogs.h"
-#include "optionWindow.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "dialogFltk.h"
@@ -28,7 +27,6 @@
 #include "helpWindow.h"
 #include "visibilityWindow.h"
 #include "pluginWindow.h"
-#include "optionWindow.h"
 #include "onelabGroup.h"
 #include "fileDialogs.h"
 #include "Context.h"

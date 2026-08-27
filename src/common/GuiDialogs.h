@@ -307,6 +307,9 @@ namespace Dialog {
   int &optionsCategory();
   // and which post-processing view its View options are editing
   int &optionsView();
+  // Show it on a view: the one given, or the one it is already on when that
+  // is -1. The categories before the views are not for anyone else to count.
+  void showOptionsForView(int view);
   // the six planes that cut what is drawn
   Panel clipping();
   // what the gamepad is doing and what each of its buttons and axes is for

@@ -11,9 +11,9 @@ typedef unsigned long intptr_t;
 #endif
 #include <FL/fl_ask.H>
 #include "FlGui.h"
+#include "GuiDialogs.h"
 #include "drawContext.h"
 #include "fileDialogs.h"
-#include "optionWindow.h"
 #include "pluginWindow.h"
 #include "Context.h"
 #include "GModel.h"
@@ -272,6 +272,12 @@ static void view_applybgmesh_cb(Fl_Widget *w, void *data)
 #endif
 }
 
+// the option window, on this view
+static void _view_options_cb(Fl_Widget *w, void *data)
+{
+  Dialog::showOptionsForView((int)(intptr_t)data);
+}
+
 viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   : Fl_Group(x, y, w, h)
 {
@@ -302,7 +308,7 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _popup = new Fl_Menu_Button(x + w - popw, y, popw, h);
   _popup->type(Fl_Menu_Button::POPUP123);
 
-  _popup->add("Options", 'o', (Fl_Callback *)view_options_cb,
+  _popup->add("Options", 'o', (Fl_Callback *)_view_options_cb,
               (void *)(intptr_t)num, 0);
   _popup->add("_Plugins", 'p', (Fl_Callback *)plugin_cb, (void *)(intptr_t)num,
               0);

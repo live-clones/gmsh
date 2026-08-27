@@ -27,8 +27,6 @@ typedef unsigned long intptr_t;
 #include "mainWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
-#include "optionWindow.h"
-#include "gamepadWindow.h"
 #include "visibilityWindow.h"
 #include "GuiActions.h"
 #include "GuiDialogs.h"
@@ -786,13 +784,14 @@ void quick_access_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string what((const char *)data);
-  if(what == "general" || what == "geometry" || what == "mesh" ||
-     what == "view") {
-    Dialog::optionsCategory() = (what == "general") ? 0 :
+  if(what == "general" || what == "geometry" || what == "mesh") {
+    Dialog::optionsCategory() = (what == "general")  ? 0 :
                                 (what == "geometry") ? 1 :
-                                (what == "mesh")     ? 2 :
-                                                       5;
+                                                       2;
     Dialog::show(Dialog::Options, -1);
+  }
+  else if(what == "view") {
+    Dialog::showOptionsForView(-1);
   }
   else if(what == "reset_viewport") {
     status_xyz1p_cb(nullptr, (void *)"1:1");
@@ -800,7 +799,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
   }
   else if(what == "select_center") {
     opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
-    general_options_rotation_center_select_cb(nullptr, nullptr);
+    optionsAction("rotation_center_select");
   }
   else if(what == "hover_meshes") {
     opt_general_mouse_hover_meshes(
@@ -820,7 +819,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
     opt_general_axes(0, GMSH_SET | GMSH_GUI, old ? 0 : 3);
     if(!old) {
       opt_general_axes_auto_position(0, GMSH_SET | GMSH_GUI, 0);
-      general_options_axes_fit_cb(nullptr, nullptr);
+      optionsAction("axes_fit");
     }
   }
   else if(what == "orthographic")
