@@ -1047,6 +1047,16 @@ void optionsAction(const std::string &what)
     Msg::StatusGl("");
     drawContext::global()->draw();
   }
+  else if(what == "show_session_file" || what == "show_options_file") {
+    // where the file it writes is, which is not obvious and is asked often
+    std::string file = CTX::instance()->homeDir;
+    file += (what == "show_session_file") ? CTX::instance()->sessionFileName :
+                                            CTX::instance()->optionsFileName;
+    Msg::GetAnswer(("File path: " + file).c_str(), 0, "OK", nullptr);
+  }
+  else if(what == "gamepad_configure") {
+    Gui::configureGamepad();
+  }
   else if(what == "restoreDefaults") {
     optionsRestoreDefaults();
   }

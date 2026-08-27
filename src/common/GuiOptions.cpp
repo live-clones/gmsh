@@ -134,6 +134,9 @@ namespace Dialog {
   {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, true, share}
 #define NUMBER_OF(name, label, share) \
   {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, false, share}
+// one that follows the field before it on the same line, inside its column
+#define NUMBER_AFTER(name, label, share) \
+  {RowNumber, name, label, nullptr, nullptr, 1., 0., nullptr, true, share}
 #define COMBO_BESIDE(name, label, choices) \
   {RowCombo, name, label, choices, nullptr, 0., 1., nullptr, true}
 // and one that follows them inside the same column
@@ -253,16 +256,19 @@ namespace Dialog {
     STRING("DefaultFileName", "Default file name"),
     CHECK("ConfirmOverwrite", "Ask confirmation before overwriting files"),
     CHECK("SaveSession", "Save session information on exit"),
+    ACTION_RIGHT("show_session_file", "Show file path"),
     CHECK("SaveOptions", "Save options on exit"),
+    ACTION_RIGHT("show_options_file", "Show file path"),
     CHECK("ExpertMode", "Enable expert mode"),
     NUMBER("NumThreads", "Maximum number of threads"),
     CHECKFN("Enable heavy visualization capabilities",
             opt_general_heavy_visualization),
+    ACTION("restoreDefaults", "Restore all options to default settings"),
     END};
 
   const optionRow _generalAxes[] = {
     COMBO("Axes", "Axes mode", _c_axes),
-    CHECK("AxesMikado", "Mikado style"),
+    CHECK_RIGHT("AxesMikado", "Mikado style"),
     ROW("Axes tics", _r_axesTicsX),
     VEC3S("AxesFormat", "Axes format"),
     VEC3S("AxesLabel", "Axes labels"),
@@ -286,9 +292,9 @@ namespace Dialog {
     ACTION_RIGHT("arrow_edit", "Edit arrow"),
     STRCOMBO("GraphicsFontEngine", "Font rendering engine", _c_graphicsFontEngine),
     STRCOMBO("GraphicsFont", "", _c_graphicsFont),
-    NUMBER_BESIDE("GraphicsFontSize", "Default font"),
+    NUMBER_AFTER("GraphicsFontSize", "Default font", 1. / 4.),
     STRCOMBO("GraphicsFontTitle", "", _c_graphicsFont),
-    NUMBER_BESIDE("GraphicsFontSizeTitle", "Title font"),
+    NUMBER_AFTER("GraphicsFontSizeTitle", "Title font", 1. / 4.),
     END};
 
   const optionRow _generalColor[] = {
@@ -307,6 +313,7 @@ namespace Dialog {
     NUMBER("CameraFocalLengthRatio", "Focal length ratio (%)"),
     NUMBER("CameraAperture", "Camera Aperture (degrees)"),
     CHECKFN("Enable gamepad (experimental)", opt_general_gamepad),
+    ACTION("gamepad_configure", "Configure Gamepad"),
     END};
 
   const optionRow _geometryGeneral[] = {
@@ -465,7 +472,7 @@ namespace Dialog {
 
   const optionRow _viewAxes[] = {
     COMBO("Axes", "Axes mode", _c_axes),
-    CHECK("AxesMikado", "Mikado style"),
+    CHECK_RIGHT("AxesMikado", "Mikado style"),
     ROW("Axes tics", _r_axesTicsX),
     VEC3S("AxesFormat", "Axes format"),
     VEC3S("AxesLabel", "Axes labels"),
@@ -694,6 +701,8 @@ namespace Dialog {
       const char *name;
       const char *when; // the option it depends on
       bool whenOff; // the field is live when that option is off, not on
+      // or its accessor, for the few that have no entry in the option table
+      double (*fn)(int, int, double);
     };
 
     const enableRule _rules[] = {
@@ -732,7 +741,13 @@ namespace Dialog {
       {"View", "view_recursion_up", "AdaptVisualizationGrid", false},
       // view_general_transform
       {"View", "GeneralizedRaise*", "UseGeneralizedRaise", false},
-      {nullptr, nullptr, nullptr, false}};
+      // general_camera
+      {"General", "CameraEyeSeparationRatio", "Stereo", false},
+      {"General", "CameraFocalLengthRatio", "Camera", false},
+      {"General", "CameraAperture", "Camera", false},
+      {"General", "gamepad_configure", nullptr, false,
+       opt_general_gamepad},
+      {nullptr, nullptr, nullptr, false, nullptr}};
 
     // What each value may be dragged by, taken from the window this
     // reproduces: a step there means the value can be slid with the mouse, and
@@ -759,6 +774,11 @@ namespace Dialog {
       {"General", "Light0Z", 0.01},
       {"General", "NumThreads", 1.},
       {"General", "PointSize", 0.1},
+      // the tooltips of that window name the wrong widget here, so these three
+      // come from what its callbacks write rather than from what they say
+      {"General", "LineWidth", 0.1},
+      {"View", "Width", 0.5},
+      {"View", "Height", 0.5},
       {"General", "PolygonOffsetFactor", 0.01},
       {"General", "PolygonOffsetUnits", 0.01},
       {"General", "QuadricSubdivisions", 1.},
@@ -831,9 +851,21 @@ namespace Dialog {
         const enableRule &r = _rules[i];
         if(strcmp(r.category, category)) continue;
         std::string want = r.name;
+        if(r.fn) {
+          double (*fn)(int, int, double) = r.fn;
+          bool off = r.whenOff;
+          if(strcmp(name, r.name)) continue;
+          return [fn, off]() {
+            double v = fn(0, GMSH_GET, 0.);
+            return off ? (v == 0.) : (v != 0.);
+          };
+        }
         bool matches = (want.back() == '*') ?
                          !strncmp(name, want.c_str(), want.size() - 1) :
                          !strcmp(name, want.c_str());
+        // the option a rule depends on is never greyed by that rule, however
+        // its name reads: it is what decides
+        if(r.when && !strcmp(name, r.when)) continue;
         if(!matches) continue;
         std::string cat = category, on = r.when;
         bool off = r.whenOff;
@@ -1022,6 +1054,12 @@ namespace Dialog {
           f.readNumber = [fn]() { return fn(0, GMSH_GET, 0.); };
           f.writeNumber = [fn](double v) { fn(0, GMSH_SET | GMSH_GUI, v); };
           f.changed = _redraw;
+#if !defined(HAVE_VISUDEV)
+          // the heavy visualization is not in this build, as the window this
+          // reproduces also says by greying it
+          if(row.fn == opt_general_heavy_visualization)
+            f.enabled = []() { return false; };
+#endif
           pane.fields.push_back(f);
         } break;
         default: {
@@ -1038,7 +1076,7 @@ namespace Dialog {
             f.sameRow = true;
             // vmin says it follows inside the same column rather than
             // starting the next one
-            if(row.kind == RowCombo && row.vmin == 1.) f.packed = true;
+            if(row.vmin == 1.) f.packed = true;
           }
           // a switch the window this reproduces puts at the right of the line
           // above rather than on one of its own

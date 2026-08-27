@@ -17,7 +17,10 @@
 
 #include "Gui.h"
 #include "FlGui.h"
+#include <FL/fl_draw.H>
 #include "extraDialogs.h"
+#include "gamepadWindow.h"
+#include "optionWindow.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "dialogFltk.h"
@@ -254,6 +257,12 @@ namespace Gui {
     return arrowEditor("Arrow Editor", headRadius, stemLength, stemRadius) ?
              true :
              false;
+  }
+
+  void configureGamepad()
+  {
+    if(!available()) return;
+    FlGui::instance()->options->gmpdoption = new gamepadWindow;
   }
 
   void showPanel(int panel, bool show)

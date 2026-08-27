@@ -268,6 +268,12 @@ namespace Gui {
     return false;
   }
 
+  void configureGamepad()
+  {
+    // TODO: a window of its own, as the FLTK interface has
+    Msg::Warning("The gamepad configuration window is not there yet");
+  }
+
   void showPanel(int panel, bool show)
   {
     if(available()) appWindow::instance()->showPanel(panel, show);

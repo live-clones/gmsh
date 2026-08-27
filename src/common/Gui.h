@@ -255,6 +255,9 @@ void drawTooltip(const std::string &text);
   // interface's own: it draws the arrow it is describing, which no
   // description of fields could. Returns false when nothing was changed.
   bool editArrow(double &headRadius, double &stemLength, double &stemRadius);
+  // the window that says what each button of a gamepad does, which the
+  // interface owns for the same reason
+  void configureGamepad();
 
   // --- miscellaneous
 

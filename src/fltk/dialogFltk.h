@@ -67,6 +67,8 @@ private:
   bool _mergedButtons = false;
   // how tall the column of side fields may be, for the list that fills it
   int _sideHeight = 0;
+  // the widest this dialog has ever needed to be, see build()
+  int _widestSeen = 0;
   // the button a section of a long form carries, and where it sits
   struct paneButton {
     Fl_Widget *widget;

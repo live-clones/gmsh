@@ -91,7 +91,13 @@ namespace {
   {
     if(f.disclosure) return BB;
     if(f.kind == Dialog::Spacer) return 0;
-    if(f.kind == Dialog::Action) return BB;
+    if(f.kind == Dialog::Action) {
+      // a button is as wide as the text it carries inside, never narrower
+      // than an ordinary one
+      fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+      int need = (int)fl_width(_escaped(f.label).c_str()) + 2 * FL_NORMAL_SIZE;
+      return (need > BB) ? need : BB;
+    }
     if(f.kind == Dialog::Label) {
       fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
       return (int)fl_width(f.getText().c_str()) + FL_NORMAL_SIZE;
@@ -199,11 +205,15 @@ namespace {
         at = 0;
         for(int c = 0; c < which && c < grid; c++) at += column[(std::size_t)c];
       }
-      if(f.kind == Dialog::Spacer) continue;
+      // a spacer takes at least what it asks for, and what follows it comes
+      // after that: a row ending in one is as wide as all of them together
+      if(f.kind == Dialog::Spacer) {
+        at += _packedWidth(f) + WB;
+        continue;
+      }
       int end = at + _packedWidth(f);
-      if(f.packed && f.sameRow) end = at + _packedWidth(f);
       if(end > widest) widest = end;
-      if(f.packed && f.sameRow) at += _packedWidth(f);
+      if(f.packed && f.sameRow) at += _packedWidth(f) + WB;
     }
     return widest;
   }
@@ -380,7 +390,7 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
         values = f.values;
       }
       if(i >= 0 && i < (int)labels.size()) {
-        if(values.empty() && f.text)
+        if(values.empty())
           f.setText(labels[i]);
         else if(i < (int)values.size())
           f.setNumber(values[i]);
@@ -475,6 +485,24 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     if(grid > 0) {
       gridW = _gridColumns(fields, grid);
       columns = grid;
+      // what a spacer of this row has to eat, the columns not being shares of
+      // the line here but widths of their own
+      if(spacers) {
+        int used = 0, which = 0;
+        for(std::size_t k = i; k < last; k++) {
+          if(fields[k].kind == Dialog::Spacer) continue;
+          if(fields[k].packed)
+            used += _packedStep(fields, k, last);
+          else {
+            used = 0;
+            for(int c = 0; c <= which && c < grid; c++)
+              used += gridW[(std::size_t)c];
+            which++;
+          }
+        }
+        spacerW = (w - x - WB - used) / spacers;
+        if(spacerW < 0) spacerW = 0;
+      }
     }
 
     for(std::size_t k = i; k < last; k++) {
@@ -711,6 +739,13 @@ void dialogFltk::build(int dialog)
     int need = _neededWidth(_panel.footer) + 2 * WB + aside;
     if(need > width) width = need;
   }
+  // A dialog whose panes change -- the option window shows another category --
+  // keeps the width the widest of them asked for: one that grows and shrinks
+  // sideways as one goes through it is one that will not sit still.
+  if(width > _widestSeen)
+    _widestSeen = width;
+  else
+    width = _widestSeen;
   int paneH = _paneHeight(_panel);
   int footerH = _rows(_panel.footer) * BH;
   if(_panel.footer.size()) footerH += WB;
@@ -834,7 +869,9 @@ void dialogFltk::build(int dialog)
         scroll->type(Fl_Scroll::VERTICAL);
         scroll->box(FL_FLAT_BOX);
       }
-      _addFields(q.fields, _sideWidth + 2 * WB, fy, width, (int)i, q.columns);
+      // the pane ends where its group does, not where the window does
+      _addFields(q.fields, _sideWidth + 2 * WB, fy, width - 2 * WB, (int)i,
+                 q.columns);
       // the titled sections under them
       for(const auto &section : q.sections) {
         if(section.label.size()) {
@@ -845,8 +882,8 @@ void dialogFltk::build(int dialog)
           b->labelfont(FL_HELVETICA_BOLD);
           fy += BH;
         }
-        _addFields(section.fields, _sideWidth + 2 * WB, fy, width, (int)i,
-                   section.columns);
+        _addFields(section.fields, _sideWidth + 2 * WB, fy, width - 2 * WB,
+                   (int)i, section.columns);
       }
       if(scroll) scroll->end();
       if(q.buttonLabel.size()) {
@@ -1072,7 +1109,7 @@ void dialogFltk::refresh()
       c->clear();
       for(auto &l : labels) c->add(_escapedMenu(l).c_str());
       int which = 0;
-      bool byText = f.text && values.empty();
+      bool byText = values.empty();
       std::string current = byText ? f.getText() : "";
       for(std::size_t k = 0; k < labels.size(); k++) {
         if(byText) {

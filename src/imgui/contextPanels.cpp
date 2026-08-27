@@ -56,9 +56,16 @@ namespace {
   // declared by the same fields that can be slid with the mouse in FLTK.
   // Claiming the wheel for the hovered field also keeps it from reaching the
   // window under it, and has to be done on every frame it is hovered.
+  // whether a value may be slid at all: the option that says so in FLTK, where
+  // it decides both the dragging and the decimals a value is shown to
+  bool _sliding()
+  {
+    return CTX::instance()->inputScrolling ? true : false;
+  }
+
   bool _wheeled(const Dialog::Field &f, double &value)
   {
-    if(f.step <= 0. || !ImGui::IsItemHovered()) return false;
+    if(f.step <= 0. || !_sliding() || !ImGui::IsItemHovered()) return false;
     ImGui::SetItemKeyOwner(ImGuiKey_MouseWheelY, ImGuiInputFlags_CondHovered);
     float turn = ImGui::GetIO().MouseWheel;
     if(turn == 0.f) return false;
@@ -186,8 +193,10 @@ namespace {
       // As many decimals as the step it is dragged by, which is what FLTK
       // works out from that step: a length that moves by hundredths is shown
       // to hundredths, whatever it happens to hold.
+      // FLTK writes a plain "0" for nothing, whatever the step says, and what
+      // the two interfaces show has to be the same thing
       char how[8] = "%g";
-      if(f.step > 0. && f.step < 1.) {
+      if(value != 0. && f.step > 0. && f.step < 1. && _sliding()) {
         int digits = 0;
         for(double d = f.step; d < 1. && digits < 6; d *= 10.) digits++;
         snprintf(how, sizeof(how), "%%.%df", digits);
@@ -275,7 +284,7 @@ namespace {
       std::vector<int> values;
       _dynamic(f, labels, values);
       // a choice stands either for its own text or for a number
-      bool byText = f.text && values.empty();
+      bool byText = values.empty();
       std::string current = byText ? f.getText() : "";
       double value = byText ? 0. : f.getNumber();
       int which = -1;
@@ -695,12 +704,19 @@ void appWindow::_drawDialog(int which)
   // The dialog keeps the width its widest row needs, whichever pane is up and
   // whichever section is folded away: a window that grows sideways as one uses
   // it is a window that will not sit still.
+  // the widest each dialog has ever needed to be: one that grows and shrinks
+  // sideways as one goes through its categories is one that will not sit still
+  static float widestSeen[Dialog::NumDialogs] = {0.f};
   float need = 0.f;
   {
     need = _neededWidth(panel, width) +
            2.f * ImGui::GetStyle().WindowPadding.x;
     if(panel.side.size())
       need += 8.f * ImGui::GetFontSize() + 2.f * ImGui::GetStyle().ItemSpacing.x;
+    if(need > widestSeen[which])
+      widestSeen[which] = need;
+    else
+      need = widestSeen[which];
     // a window that is given a size rather than following its contents shows
     // a scrollbar as soon as they are taller, and that takes width too
     if(scrolls) need += ImGui::GetStyle().ScrollbarSize;
