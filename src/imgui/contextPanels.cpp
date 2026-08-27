@@ -92,7 +92,8 @@ namespace {
     case Dialog::List: {
       std::string id = "##list" + f.label;
       ImVec2 size(width > 0.f ? width : -FLT_MIN,
-                  f.rows * ImGui::GetTextLineHeightWithSpacing());
+                  f.rows ? f.rows * ImGui::GetTextLineHeightWithSpacing() :
+                           -FLT_MIN);
       if(ImGui::BeginListBox(id.c_str(), size)) {
         if(f.dynamicChoices) {
           // a list one chooses from
@@ -307,6 +308,7 @@ namespace {
     for(std::size_t i = 0; i < fields.size(); i++) {
       if(fields[i].sameRow && i) continue;
       // a list is worth as many lines as it shows
+      if(fields[i].visible && !fields[i].visible()) continue;
       rows += (fields[i].kind == Dialog::List) ? fields[i].rows : 1;
     }
     return rows;
@@ -597,6 +599,7 @@ namespace {
       bool first = true;
       for(std::size_t k = i; k < last; k++) {
         const Dialog::Field &f = fields[k];
+        if(f.visible && !f.visible()) continue;
         if(f.kind == Dialog::Spacer) {
           at += _packedWidth(f, item) + style.ItemSpacing.x + spacerW;
           continue;
@@ -694,9 +697,22 @@ void appWindow::_drawDialog(int which)
     ImGui::SetNextWindowSizeConstraints(ImVec2(need, 0.f),
                                         ImVec2(FLT_MAX, FLT_MAX));
   }
-  if(scrolls)
-    ImGui::SetNextWindowSize(ImVec2(0.f, 34.f * ImGui::GetFontSize()),
-                             ImGuiCond_FirstUseEver);
+  if(scrolls) {
+    // as tall as the tallest pane that does not scroll, the ones that do
+    // being given what is left
+    int most = 0;
+    for(const auto &q : panel.panes) {
+      if(q.scrolling) continue;
+      int n = _rows(q.fields);
+      for(const auto &section : q.sections)
+        n += (section.label.size() ? 1 : 0) + _rows(section.fields);
+      if(n > most) most = n;
+    }
+    if(most < 12) most = 12;
+    float tall = (float)most * ImGui::GetFrameHeightWithSpacing() +
+                 6.f * ImGui::GetFrameHeightWithSpacing();
+    ImGui::SetNextWindowSize(ImVec2(0.f, tall), ImGuiCond_FirstUseEver);
+  }
   if(!ImGui::Begin(title.c_str(), &_showDialog[which],
                    scrolls ? ImGuiWindowFlags_None :
                              ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -707,8 +723,21 @@ void appWindow::_drawDialog(int which)
   // the column of side fields, down the left of everything else
   if(panel.side.size()) {
     float w = 9.f * ImGui::GetFontSize();
-    if(ImGui::BeginChild("##side", ImVec2(w, 0.f),
-                         ImGuiChildFlags_AutoResizeY))
+    // as tall as what is beside it, so that a list can fill it; the fields
+    // under such a list keep their own line at the bottom
+    float tall = 0.f;
+    for(const auto &f : panel.side)
+      if(f.kind == Dialog::List && !f.rows) {
+        tall = ImGui::GetContentRegionAvail().y;
+        for(const auto &g : panel.side) {
+          if(&g == &f) continue;
+          if(g.visible && !g.visible()) continue;
+          tall -= ImGui::GetFrameHeightWithSpacing();
+        }
+      }
+    if(ImGui::BeginChild("##side", ImVec2(w, tall),
+                         tall > 0.f ? ImGuiChildFlags_None :
+                                      ImGuiChildFlags_AutoResizeY))
       ImGui::PushID("side");
       _fields(panel.side, w);
       ImGui::PopID();

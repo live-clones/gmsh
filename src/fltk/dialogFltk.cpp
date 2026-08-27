@@ -44,6 +44,7 @@ namespace {
     int rows = 0;
     for(std::size_t i = 0; i < fields.size(); i++) {
       if(fields[i].sameRow && i) continue;
+      if(fields[i].visible && !fields[i].visible()) continue;
       // a list is worth as many lines as it shows
       rows += (fields[i].kind == Dialog::List) ? fields[i].rows : 1;
     }
@@ -291,10 +292,13 @@ namespace {
   std::string _signature(const Dialog::Panel &p)
   {
     std::string s = p.title + (p.tabbed ? "|t" : "|f");
+    for(const auto &f : p.side)
+      s += "|s" + f.label + ((f.visible && !f.visible()) ? "-" : "");
     for(const auto &q : p.panes) {
       s += "|" + q.label + (q.separatorAfter ? "-" : "") + ":" + q.buttonLabel;
       for(const auto &f : q.fields)
-        s += "/" + f.label + (char)('0' + f.kind) + (f.sameRow ? "=" : "");
+        s += "/" + f.label + (char)('0' + f.kind) + (f.sameRow ? "=" : "") +
+             ((f.visible && !f.visible()) ? "-" : "");
     }
     for(const auto &f : p.footer)
       s += "//" + f.label + (char)('0' + f.kind) + (f.sameRow ? "=" : "");
@@ -475,6 +479,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
 
     for(std::size_t k = i; k < last; k++) {
       const Dialog::Field &f = fields[k];
+      if(f.visible && !f.visible()) continue;
       if(f.kind == Dialog::Spacer) {
         at += _packedWidth(f) + WB + spacerW;
         continue;
@@ -488,6 +493,8 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // one after it, and the last of a row would be cut off by the edge.
       if(f.packed && f.kind == Dialog::Action) fieldW = _packedWidth(f);
       int fx = at;
+      // a field of the column down the side is as wide as that column
+      if(pane == -2) fieldW = w - fx - WB;
       if(grid > 0) {
         if(f.packed)
           at += _packedStep(fields, k, last);
@@ -561,13 +568,26 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       case Dialog::Spacer: break;
       case Dialog::List: {
         // one it only shows, one it chooses from, one or several at a time
+        int tall = f.rows * BH;
+        if(!f.rows) {
+          // as tall as there is room for, which is the whole of a side column
+          // less whatever comes under it
+          int under = 0;
+          for(std::size_t j = last; j < fields.size(); j++) {
+            if(fields[j].sameRow) continue;
+            if(fields[j].visible && !fields[j].visible()) continue;
+            under++;
+          }
+          tall = _sideHeight - (y - WB) - under * BH;
+          if(tall < BH) tall = BH;
+        }
         Fl_Browser_ *br;
         if(!f.choose)
-          br = new Fl_Select_Browser(fx, y, w - fx - WB, f.rows * BH);
+          br = new Fl_Select_Browser(fx, y, w - fx - WB, tall);
         else if(f.multiple)
-          br = new Fl_Multi_Browser(fx, y, w - fx - WB, f.rows * BH);
+          br = new Fl_Multi_Browser(fx, y, w - fx - WB, tall);
         else
-          br = new Fl_Hold_Browser(fx, y, w - fx - WB, f.rows * BH);
+          br = new Fl_Hold_Browser(fx, y, w - fx - WB, tall);
         br->callback(_fieldCallback, this);
         widget = br;
       } break;
@@ -608,9 +628,21 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     // a list is as tall as the lines it shows, and what follows it comes
     // under it rather than over it
     int tall = 1;
-    for(std::size_t k = i; k < last; k++)
-      if(fields[k].kind == Dialog::List && fields[k].rows > tall)
-        tall = fields[k].rows;
+    for(std::size_t k = i; k < last; k++) {
+      if(fields[k].kind != Dialog::List) continue;
+      if(fields[k].rows > tall) tall = fields[k].rows;
+      if(!fields[k].rows) {
+        // one that fills its column: what follows it is at the bottom
+        int under = 0;
+        for(std::size_t j = last; j < fields.size(); j++) {
+          if(fields[j].sameRow) continue;
+          if(fields[j].visible && !fields[j].visible()) continue;
+          under++;
+        }
+        int fill = _sideHeight - (y - WB) - under * BH;
+        if(fill > tall * BH) tall = fill / BH;
+      }
+    }
     y += tall * BH;
     row += tall;
     i = last;
@@ -709,6 +741,7 @@ void dialogFltk::build(int dialog)
   _sideWidth = _panel.side.empty() ? 0 : 8 * FL_NORMAL_SIZE;
   if(_sideWidth) {
     int sy = WB;
+    _sideHeight = height - 2 * WB;
     _addFields(_panel.side, WB, sy, _sideWidth, -2);
   }
 

@@ -236,8 +236,10 @@ WIDTH, HEIGHT = 900, 700
 # layout on what follows "###", so the visible part of the name does not matter
 # -- which is just as well, since the physical dialog renames itself.
 DIALOG_POS = (260, 60)
+# Only where they are: a size would override the one the dialog asks for, and
+# what a dialog is worth is part of what is being compared.
 IMGUI_INI = "".join(
-    "[Window][shot###gmshDialog%d]\nPos=%d,%d\nSize=400,300\nCollapsed=0\n\n"
+    "[Window][shot###gmshDialog%d]\nPos=%d,%d\nCollapsed=0\n\n"
     % (i, DIALOG_POS[0], DIALOG_POS[1]) for i in range(12))
 
 

@@ -78,7 +78,7 @@ namespace Dialog {
     const std::vector<int> *list;
     std::function<std::string(int index)> itemLabel;
     std::function<void(int index)> removeItem;
-    // how many lines a List takes
+    // how many lines a List takes, or zero for as many as there is room for
     int rows;
     // List: which entries are chosen and how to change that. Without them the
     // list is only read; `multiple` says whether more than one may be chosen.
@@ -94,6 +94,10 @@ namespace Dialog {
     std::function<void()> changed;
     // false greys the field out
     std::function<bool()> enabled;
+    // false leaves it out altogether: a field that only makes sense sometimes
+    // is not there rather than dead, which is what the windows this replaces
+    // do with the Redraw button of the option window
+    std::function<bool()> visible;
     // A check that folds a part of the dialog away rather than holding a
     // setting: it is drawn as a disclosure toggle, with an arrow saying which
     // way it goes.

@@ -87,6 +87,10 @@ namespace Dialog {
     };
 
 #define CHECK(name, label) {RowCheck, name, label, nullptr, nullptr, 0., 0., nullptr, false}
+// a switch that decides whether another field is there at all, so that the
+// window has to be built again rather than refreshed
+#define CHECK_SHOWS(name, label) \
+  {RowCheck, name, label, nullptr, nullptr, 2., 0., nullptr, false}
 #define NUMBER(name, label) {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, false}
 #define STRING(name, label) {RowString, name, label, nullptr, nullptr, 0., 0., nullptr, false}
 #define COMBO(name, label, choices) \
@@ -229,7 +233,7 @@ namespace Dialog {
     CHECK("FltkColorScheme", "Use dark interface"),
     CHECK("Tooltips", "Show tooltips"),
     CHECK("DrawBoundingBoxes", "Show bounding boxes"),
-    CHECK("FastRedraw", "Draw simplified model during user interaction"),
+    CHECK_SHOWS("FastRedraw", "Draw simplified model during user interaction"),
     CHECK("MouseHoverMeshes", "Enable mouse hover over meshes and views"),
     CHECK("DoubleBuffer", "Enable double buffering"),
     CHECK("Antialiasing", "Enable antialiasing"),
@@ -930,6 +934,12 @@ namespace Dialog {
           Field f = _fieldFor(row.kind, category, row.name,
                               row.label ? row.label : row.name, num, &row);
           if(row.share > 0.) f.widthShare = row.share;
+          // what it decides is not only a value but what the window holds
+          if(row.kind == RowCheck && row.vmin == 2.)
+            f.changed = []() {
+              drawContext::global()->draw();
+              show(Options, -1);
+            };
           if(row.beside) {
             f.sameRow = true;
             // vmin says it follows inside the same column rather than
@@ -998,7 +1008,7 @@ namespace Dialog {
         }
       },
       false));
-    p.side.back().rows = 10;
+    p.side.back().rows = 0; // as tall as the window
 
     // the View options are those of the view whose line is picked
     int num = (_state().category >= _numCategories) ? _state().view : 0;
@@ -1009,14 +1019,14 @@ namespace Dialog {
 
     // Redraw sits under the list of categories, and only when the model drawn
     // while one interacts is a simplified one: there is nothing to redraw
-    // otherwise. The window this reproduces hides it then; here it is greyed.
+    // otherwise, and the window this reproduces leaves it out then.
     // Restoring the defaults is not a button of the window at all -- it is the
     // last row of the general options, where that window keeps it.
     Field again;
     again.kind = Action;
     again.label = "Redraw";
     again.changed = _redraw;
-    again.enabled = []() {
+    again.visible = []() {
       double v = 0.;
       NumberOption(GMSH_GET, "General", 0, "FastRedraw", v, false);
       return v != 0.;
