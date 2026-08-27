@@ -108,7 +108,13 @@ namespace {
                        ImGuiInputTextFlags_ReadOnly);
     } break;
     case Dialog::Action:
-      if(ImGui::Button(f.label.c_str())) changed = true;
+      // as wide as its text, unless the description says how wide it is: a
+      // button that lines up with the values above it says so
+      if(ImGui::Button(f.label.c_str(),
+                       ImVec2((f.widthShare > 0. || f.widthEm > 0.) ? width :
+                                                                     0.f,
+                              0.f)))
+        changed = true;
       break;
     case Dialog::Spacer: break;
     case Dialog::List: {
@@ -405,9 +411,13 @@ namespace {
     if(f.kind == Dialog::Spacer)
       return (float)(f.widthEm > 0. ? f.widthEm : 2.) * ImGui::GetFontSize();
     if(f.kind == Dialog::Label) return ImGui::CalcTextSize(f.getText().c_str()).x;
-    if(f.kind == Dialog::Action)
+    if(f.kind == Dialog::Action) {
+      // one that says how wide it is takes that, the text being inside it
+      if(f.widthShare > 0.) return (float)f.widthShare * item;
+      if(f.widthEm > 0.) return (float)f.widthEm * ImGui::GetFontSize();
       return ImGui::CalcTextSize(f.label.c_str()).x +
              2.f * style.FramePadding.x;
+    }
     // a swatch says what it is by its colour; it needs no room for text
     if(f.kind == Dialog::Color)
       return ImGui::GetFrameHeight() * 1.6f + style.ItemInnerSpacing.x +
@@ -824,9 +834,8 @@ void appWindow::_drawDialog(int which)
     // a window that is given a size rather than following its contents shows
     // a scrollbar as soon as they are taller, and that takes width too
     if(scrolls) need += ImGui::GetStyle().ScrollbarSize;
-    ImGui::SetNextWindowSizeConstraints(ImVec2(need, 0.f),
-                                        ImVec2(FLT_MAX, FLT_MAX));
   }
+  float tall = 0.f;
   if(scrolls) {
     // as tall as the tallest pane that does not scroll, the ones that do
     // being given what is left
@@ -841,7 +850,16 @@ void appWindow::_drawDialog(int which)
     if(most < 12) most = 12;
     // its rows, and what stands around them: the row of tabs, the title, and
     // the padding above and below
-    float tall = (float)(most + 3) * ImGui::GetFrameHeightWithSpacing();
+    tall = (float)(most + 3) * ImGui::GetFrameHeightWithSpacing();
+    // A category with fewer rows than the last is a shorter window, as it is
+    // in the window this reproduces: the height it was found to need is for
+    // the panes it was found on, and is given back with them.
+    if(tall != _estimatedHeight[which]) {
+      _estimatedHeight[which] = tall;
+      _measuredHeight[which] = 0.f;
+      _sizedDialog[which] = false;
+    }
+    if(_measuredHeight[which] > tall) tall = _measuredHeight[which];
     // Given when it opens, and not again: left to itself Dear ImGui fits a
     // window to what its first frame draws, which is one tab of one category
     // and tells nothing about the rest -- and a row ending in a spacer, one
@@ -851,6 +869,8 @@ void appWindow::_drawDialog(int which)
       _sizedDialog[which] = true;
     }
   }
+  ImGui::SetNextWindowSizeConstraints(ImVec2(need, scrolls ? tall : 0.f),
+                                      ImVec2(FLT_MAX, FLT_MAX));
   if(!ImGui::Begin(title.c_str(), &_showDialog[which],
                    scrolls ? ImGuiWindowFlags_None :
                              ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -1080,6 +1100,15 @@ void appWindow::_drawDialog(int which)
     }
   }
 
+  if(scrolls) {
+    // How tall it turned out to have to be. Counting rows says what to open it
+    // at, but only Dear ImGui knows what a frame really took, and a window
+    // given a size shows a scrollbar as soon as it is a pixel short -- on the
+    // tab one is looking at, which may need nothing of the sort. It therefore
+    // keeps the height the tallest of its tabs asked for.
+    float fit = ImGui::CalcWindowNextAutoFitSize(ImGui::GetCurrentWindow()).y;
+    if(fit > _measuredHeight[which]) _measuredHeight[which] = fit;
+  }
   ImGui::End();
 }
 

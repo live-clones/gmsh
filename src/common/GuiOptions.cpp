@@ -127,6 +127,11 @@ namespace Dialog {
 // a button at the right end of the line above it
 #define ACTION_RIGHT(id, label) \
   {RowAction, id, label, nullptr, nullptr, 1., 0., nullptr, false}
+// one as wide as a field, which is how the window this reproduces draws the
+// button that fits the axes to what is visible: it lines up with the values
+// above it rather than being as wide as its own text
+#define ACTION_OF(id, label, share) \
+  {RowAction, id, label, nullptr, nullptr, 0., 0., nullptr, false, share}
 // and one that starts the second column of that line rather than ending it,
 // which is where the window this reproduces puts the two that pick something
 #define ACTION_COLUMN(id, label) \
@@ -291,7 +296,7 @@ namespace Dialog {
     CHECK("AxesAutoPosition", "Set position and size of axes automatically"),
     ROW("Axes minimum", _r_axesMinX),
     ROW("Axes maximum", _r_axesMaxX),
-    ACTION("axes_fit", "Fit to visible"),
+    ACTION_OF("axes_fit", "Fit to visible", 1.),
     CHECK("SmallAxes", "Show small axes"),
     ROW("Small axes position", _r_smallAxesPositionX),
     END};
@@ -1043,6 +1048,7 @@ namespace Dialog {
           std::string what = row.name;
           f.changed = [what]() { optionsAction(what); };
           f.enabled = _enabledBy(category, row.name, num);
+          if(row.share > 0.) f.widthShare = row.share;
           if(row.vmin == 2.) f.alert = true;
           if(row.vmin == 3.) f.sameRow = true; // the next column of that line
           if(row.vmin == 1.) {

@@ -121,8 +121,12 @@ namespace {
     if(f.disclosure) return BB;
     if(f.kind == Dialog::Label)
       return (int)fl_width(f.getText().c_str()) + WB;
-    if(f.kind == Dialog::Action)
+    if(f.kind == Dialog::Action) {
+      // one that says how wide it is takes that, the text being inside it
+      if(f.widthShare > 0.) return (int)(f.widthShare * IW);
+      if(f.widthEm > 0.) return (int)(f.widthEm * FL_NORMAL_SIZE);
       return (int)fl_width(_escaped(f.label).c_str()) + 2 * FL_NORMAL_SIZE;
+    }
     if(f.kind == Dialog::Check)
       return (int)fl_width(_escaped(f.label).c_str()) + (int)(1.8 * FL_NORMAL_SIZE);
     if(f.kind == Dialog::Direction) return f.rows * BH;
