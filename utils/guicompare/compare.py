@@ -7,8 +7,12 @@ it; then the Dear ImGui one, which cannot be identical -- a different toolkit
 draws differently -- but should hold the same fields, in the same order, in
 the same grouping.
 
-The pictures are pasted at their own size, never scaled: a dialog that came
-out twice as tall as the one it replaces has to look twice as tall.
+The pictures are pasted at the same size as each other, never one scaled
+against another: a dialog that came out twice as tall as the one it replaces
+has to look twice as tall. The sheet as a whole is enlarged by --scale, every
+pixel repeated as it is -- a window of 449 pixels is small on a screen of four
+thousand, and blurring it to make it bigger would hide the very thing one is
+looking at. The size written under each picture is the real one.
 """
 
 import argparse
@@ -59,6 +63,9 @@ def title_of(name):
     title = DIALOG_TITLES.get(dialog, dialog)
     return title + (" -- " + pane.replace("-", " ") if pane else "")
 
+# how many screen pixels one pixel of a picture is worth, see --scale
+SCALE = 2
+
 BG = (56, 56, 60)
 INK = (238, 238, 238)
 DIM = (150, 150, 155)
@@ -80,49 +87,62 @@ def sheet(shots, name, out):
     have = []
     for key, caption in COLUMNS:
         path = os.path.join(shots, "%s-%s.png" % (key, name))
-        have.append((caption, Image.open(path) if os.path.exists(path) else None))
+        im = Image.open(path) if os.path.exists(path) else None
+        # what it really measures, before it is enlarged
+        size = (im.width, im.height) if im else None
+        if im and SCALE != 1:
+            im = im.resize((im.width * SCALE, im.height * SCALE), Image.NEAREST)
+        have.append((caption, im, size))
 
-    big = font(20, bold=True)
-    med = font(14)
-    small = font(12)
+    pad = PAD * SCALE
+    head = HEAD * SCALE
+    big = font(20 * SCALE, bold=True)
+    med = font(14 * SCALE)
+    small = font(12 * SCALE)
 
-    widths = [max(260, (im.width if im else 0)) for _, im in have]
-    height = max((im.height if im else 0) for _, im in have)
-    W = sum(widths) + PAD * (len(have) + 1)
-    H = HEAD + PAD + height + PAD + 22
+    widths = [max(260 * SCALE, (im.width if im else 0)) for _, im, _ in have]
+    height = max((im.height if im else 0) for _, im, _ in have)
+    W = sum(widths) + pad * (len(have) + 1)
+    H = head + pad + height + pad + 22 * SCALE
 
     card = Image.new("RGB", (W, H), BG)
     draw = ImageDraw.Draw(card)
-    draw.text((PAD, 14), title_of(name), font=big, fill=INK)
+    draw.text((pad, 14 * SCALE), title_of(name), font=big, fill=INK)
 
-    x = PAD
-    for column, ((caption, im), w) in enumerate(zip(have, widths)):
-        draw.text((x, HEAD - 18), caption, font=med, fill=DIM)
+    x = pad
+    for column, ((caption, im, size), w) in enumerate(zip(have, widths)):
+        draw.text((x, head - 18 * SCALE), caption, font=med, fill=DIM)
         if im:
-            card.paste(im, (x, HEAD + PAD))
-            draw.rectangle((x - 1, HEAD + PAD - 1, x + im.width, HEAD + PAD + im.height),
-                           outline=(96, 96, 102))
-            draw.text((x, HEAD + PAD + height + 4),
-                      "%d x %d" % (im.width, im.height), font=small, fill=DIM)
+            card.paste(im, (x, head + pad))
+            draw.rectangle((x - 1, head + pad - 1, x + im.width,
+                            head + pad + im.height), outline=(96, 96, 102))
+            draw.text((x, head + pad + height + 4 * SCALE),
+                      "%d x %d" % size, font=small, fill=DIM)
         else:
             # a pane the conversion added has nothing to compare itself to,
             # which is not the same thing as a picture that failed to be taken
             missing = ("(pas dans la version publiée)"
-                       if column == 0 and all(i for _, i in have[1:])
+                       if column == 0 and all(i for _, i, _ in have[1:])
                        else "(pas de capture)")
-            draw.text((x, HEAD + PAD), missing, font=med, fill=(200, 120, 120))
-        x += w + PAD
+            draw.text((x, head + pad), missing, font=med, fill=(200, 120, 120))
+        x += w + pad
 
     card.save(out)
     return card.size
 
 
 def main():
+    global SCALE
     ap = argparse.ArgumentParser()
     ap.add_argument("--shots", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--dialog", action="append", default=[])
+    ap.add_argument("--scale", type=int, default=SCALE,
+                    help="how many screen pixels one pixel of a picture is "
+                         "worth (default %d); the pixels are repeated, not "
+                         "smoothed" % SCALE)
     args = ap.parse_args()
+    SCALE = max(1, args.scale)
     os.makedirs(args.out, exist_ok=True)
     # a dialog names every one of its shots; a shot names only itself
     every = shot_names(args.shots)

@@ -646,18 +646,15 @@ namespace {
   // What a pane holds: its own fields, then the sections under them, each with
   // its label as a heading. A long one scrolls rather than making the window as
   // tall as it is.
-  void _paneBody(const Dialog::Pane &q, float width, int lines)
+  void _paneBody(const Dialog::Pane &q, float width, bool boxed)
   {
-    // A pane that scrolls is as tall as the panes that do not, and its list
-    // scrolls inside it: it is not the list that says how tall the window is.
-    // Asking for what is left of the window instead would be asking the
-    // window how tall it is while it is working that out, and sixty colours
-    // would answer for it.
-    if(q.scrolling &&
-       !ImGui::BeginChild("##scroll",
-                          ImVec2(0.f, (float)lines *
-                                        ImGui::GetFrameHeightWithSpacing()),
-                          ImGuiChildFlags_None)) {
+    // In a dialog that is given a size rather than following its contents,
+    // every pane is a box of the same height, and what does not fit in it
+    // scrolls inside it -- the tab one is looking at, not the window, and not
+    // the tallest tab there is. It is how the window this reproduces has it:
+    // a group per tab, an Fl_Scroll for the one that holds the colours.
+    if(boxed && !ImGui::BeginChild("##pane", ImVec2(0.f, 0.f),
+                                   ImGuiChildFlags_None)) {
       ImGui::EndChild();
       return;
     }
@@ -670,7 +667,7 @@ namespace {
       _fields(section.fields, width, section.columns);
       ImGui::PopID();
     }
-    if(q.scrolling) ImGui::EndChild();
+    if(boxed) ImGui::EndChild();
   }
 
   // A list of fields, laid out in rows: those that ask to share the line of the
@@ -898,7 +895,8 @@ void appWindow::_drawDialog(int which)
   ImGui::SetNextWindowSizeConstraints(ImVec2(need, scrolls ? tall : 0.f),
                                       ImVec2(FLT_MAX, FLT_MAX));
   if(!ImGui::Begin(title.c_str(), &_showDialog[which],
-                   scrolls ? ImGuiWindowFlags_None :
+                   scrolls ? (ImGuiWindowFlags_NoScrollbar |
+                              ImGuiWindowFlags_NoScrollWithMouse) :
                              ImGuiWindowFlags_AlwaysAutoResize)) {
     ImGui::End();
     return;
@@ -937,7 +935,7 @@ void appWindow::_drawDialog(int which)
       if(q.visible && !q.visible()) continue;
       if(q.label.size()) ImGui::SeparatorText(q.label.c_str());
       ImGui::PushID((int)i);
-      _paneBody(q, width, most);
+      _paneBody(q, width, scrolls);
       ImGui::PopID();
       if(q.buttonLabel.size()) {
         // against the right edge, where the window this replaces puts it
@@ -983,7 +981,7 @@ void appWindow::_drawDialog(int which)
       Dialog::currentPane(which) = (int)i;
       if((int)i == wanted) _wantedPane[which] = -1;
       ImGui::PushID((int)i);
-      _paneBody(panel.panes[i], width, most);
+      _paneBody(panel.panes[i], width, scrolls);
       ImGui::PopID();
       // The pane is padded to the height of the tallest one, so that its
       // button lands at the bottom right and the window does not change size
