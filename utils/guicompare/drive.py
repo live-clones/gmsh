@@ -29,7 +29,14 @@ if plan.get("geo"):
 # The same font in the three, or nothing can be compared: FLTK 1.3 works out
 # 12 points where 1.4 works out 13, and every width of a window follows from
 # it -- IW, the width of an input, is ten times the font size.
-gmsh.option.setNumber("General.FontSize", 12)
+#
+# It is also the only way of drawing these windows larger that the three
+# builds share: FLTK 1.3, which the released one is built on, has no screen
+# scaling at all. But every coordinate shoot.py clicks is measured at twelve
+# points, so raising it means measuring them all again -- see the head of
+# shoot.py.
+gmsh.option.setNumber("General.FontSize",
+                      int(os.environ.get("GUICOMPARE_FONT", 12)))
 gmsh.option.setNumber("General.GraphicsWidth", plan["width"])
 gmsh.option.setNumber("General.GraphicsHeight", plan["height"])
 gmsh.fltk.initialize()
