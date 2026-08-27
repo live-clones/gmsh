@@ -117,6 +117,9 @@ namespace Dialog {
   {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, true}
 #define COMBO_BESIDE(name, label, choices) \
   {RowCombo, name, label, choices, nullptr, 0., 1., nullptr, true}
+// and one that follows them inside the same column
+#define COMBO_AFTER(name, label, choices) \
+  {RowCombo, name, label, choices, nullptr, 1., 1., nullptr, true}
 #define END {RowCheck, nullptr, nullptr, nullptr, nullptr, 0., 0., nullptr, false}
 
     struct optionTab {
@@ -375,7 +378,7 @@ namespace Dialog {
     NUMBER_BESIDE("LabelSampling", "Sampling"),
     MULTI("Elements", _m_meshElements),
     ROW("", _r_quality),
-    COMBO_BESIDE("QualityType", "Quality range", _c_qualityType),
+    COMBO_AFTER("QualityType", "Quality range", _c_qualityType),
     ROW("Size range", _r_radiusInf),
     ROW("Normals and tangents", _r_normals),
     END};
@@ -758,9 +761,11 @@ namespace Dialog {
         f.kind = Choice;
         for(int k = 0; row && row->choices && row->choices[k]; k++) {
           f.choices.push_back(row->choices[k]);
-          f.values.push_back(row->values ?
-                               (int)row->values[k] :
-                               (int)(row->vmin + row->vmax * k));
+          // beside() borrows vmin to say where the choice goes, not what it
+          // writes: such a choice always writes the index of its entry
+          double first = row->beside ? 0. : row->vmin;
+          f.values.push_back(row->values ? (int)row->values[k] :
+                                           (int)(first + row->vmax * k));
         }
         break;
       default: break;
@@ -845,6 +850,9 @@ namespace Dialog {
     {
       Pane pane;
       pane.label = tab.label;
+      // the window this reproduces places its widgets on two columns, the
+      // same for every row of a tab
+      pane.columns = 2;
       for(int i = 0; tab.rows[i].name || tab.rows[i].label ||
                      tab.rows[i].kind != RowCheck;
           i++) {
@@ -905,7 +913,12 @@ namespace Dialog {
         default: {
           Field f = _fieldFor(row.kind, category, row.name,
                               row.label ? row.label : row.name, num, &row);
-          if(row.beside) f.sameRow = true;
+          if(row.beside) {
+            f.sameRow = true;
+            // vmin says it follows inside the same column rather than
+            // starting the next one
+            if(row.kind == RowCombo && row.vmin == 1.) f.packed = true;
+          }
           // a switch the window this reproduces puts at the right of the line
           // above rather than on one of its own
           if(row.kind == RowCheck && row.vmin == 1.) {

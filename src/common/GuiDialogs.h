@@ -164,6 +164,12 @@ namespace Dialog {
     // the fields of a long pane scroll rather than making the window as tall
     // as they are
     bool scrolling;
+    // The pane is laid out on that many columns of equal width, the same for
+    // every one of its rows: a field starts at the left of its column and
+    // takes the width it needs, its label running on as far as it must. It is
+    // how the option window is drawn, and the difference with sharing a line
+    // is that the columns of two rows line up. Zero shares the line instead.
+    int columns;
     // the button at the bottom of the pane, when it has one
     std::string buttonLabel;
     std::function<void()> button;
@@ -171,7 +177,7 @@ namespace Dialog {
     // told to show it. Picking the tab of a tool has to change the tool, the
     // same as picking it in the tree does.
     std::function<void()> chosen;
-    Pane() : separatorAfter(false), scrolling(false) {}
+    Pane() : separatorAfter(false), scrolling(false), columns(0) {}
   };
 
   struct Button {

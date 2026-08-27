@@ -23,6 +23,7 @@
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Choice.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Toggle_Button.H>
@@ -74,6 +75,10 @@ namespace {
     }
     return out;
   }
+
+  // What a pane on a grid needs to show everything, trailing labels included:
+  // they run past their column, but not past the window.
+  int _gridWidth(const std::vector<Dialog::Field> &fields, int grid);
 
   // How wide a field's widget has to be. Alone on its line an input gets the
   // usual width, otherwise a narrower one so that several fit. A choice gets
@@ -134,6 +139,72 @@ namespace {
   {
     if(_sharesCell(fields, k, to)) return (int)(fields[k].widthShare * IW);
     return _packedWidth(fields[k]) + WB;
+  }
+
+  // Where the columns of a pane laid out on a grid start, and how wide each
+  // of them is: a column is as wide as the widest thing in it, its label
+  // included, and not as wide as the widest thing in the pane.
+  std::vector<int> _gridColumns(const std::vector<Dialog::Field> &fields,
+                                int grid)
+  {
+    std::vector<int> width((std::size_t)grid, 0);
+    int column = 0;
+    for(std::size_t k = 0; k < fields.size(); k++) {
+      const Dialog::Field &f = fields[k];
+      if(!f.sameRow)
+        column = 0;
+      else if(!f.packed)
+        column++;
+      if(column >= grid) column = grid - 1;
+      if(f.kind == Dialog::Spacer) continue;
+      // What follows it inside the same column adds to it. Its label only
+      // needs room if another column follows on the same row: the label of
+      // the last field of a row runs on into the space no one else uses,
+      // which is what keeps the columns as narrow as the window this
+      // replaces has them.
+      int need = 0;
+      std::size_t j = k;
+      bool more = false;
+      while(j < fields.size() && (j == k || (fields[j].sameRow && fields[j].packed))) {
+        need += _packedWidth(fields[j]);
+        j++;
+      }
+      if(j < fields.size() && fields[j].sameRow) more = true;
+      if(!more) {
+        // take the label back off the last of them
+        const Dialog::Field &l = fields[j - 1];
+        fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+        if(l.kind != Dialog::Check && l.kind != Dialog::Action &&
+           l.kind != Dialog::Label && !(l.kind == Dialog::Choice && l.multiple))
+          need -= (int)fl_width(_escaped(l.label).c_str()) + 2 * WB;
+      }
+      if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
+    }
+    return width;
+  }
+
+  int _gridWidth(const std::vector<Dialog::Field> &fields, int grid)
+  {
+    std::vector<int> column = _gridColumns(fields, grid);
+    int widest = 0, at = 0, which = 0;
+    for(std::size_t k = 0; k < fields.size(); k++) {
+      const Dialog::Field &f = fields[k];
+      if(!f.sameRow) {
+        which = 0;
+        at = 0;
+      }
+      else if(!f.packed) {
+        which++;
+        at = 0;
+        for(int c = 0; c < which && c < grid; c++) at += column[(std::size_t)c];
+      }
+      if(f.kind == Dialog::Spacer) continue;
+      int end = at + _packedWidth(f);
+      if(f.packed && f.sameRow) end = at + _packedWidth(f);
+      if(end > widest) widest = end;
+      if(f.packed && f.sameRow) at += _packedWidth(f);
+    }
+    return widest;
   }
 
   // how much of a line the packed fields take, spacing included
@@ -285,6 +356,16 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       }
     } break;
     case Dialog::Choice: {
+      if(f.multiple) {
+        // a menu of switches: the one that was picked has just been toggled
+        Fl_Menu_Button *m = (Fl_Menu_Button *)w;
+        const Fl_Menu_Item *item = m->mvalue();
+        if(item && f.choose) {
+          for(int k = 0; k < m->size() - 1; k++)
+            if(&m->menu()[k] == item) f.choose(k, item->value() ? true : false);
+        }
+        break;
+      }
       int i = ((Fl_Choice *)w)->value();
       std::vector<std::string> labels;
       std::vector<int> values;
@@ -351,7 +432,7 @@ void dialogFltk::_buttonCallback(Fl_Widget *w, void *data)
 }
 
 void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
-                            int &y, int w, int pane)
+                            int &y, int w, int pane, int grid)
 {
   int row = 0;
   // The fields are laid out in rows: a field that asks to share the line of the
@@ -371,6 +452,10 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     }
     int columnW = 0;
     _rowWidth(fields, i, last, columnW);
+    // A pane laid out on a grid puts every field at the left of its column,
+    // the same columns for every row, and lets it take the width it needs.
+    // That is what the windows this replaces do, and it is what makes the
+    // rows of one pane line up with each other.
     // A packed field takes the width it needs, from where it stands; a spacer
     // eats what is left, which is what pushes whatever follows it to the right.
     // With no spacer, the columns share the slack, as they always have.
@@ -380,6 +465,13 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     if(!spacers && columns) columnW += slack / columns;
     int spacerW = spacers ? slack / spacers : 0;
     int at = x;
+    // on a grid, where a field goes is where its column starts
+    std::vector<int> gridW;
+    int gridColumn = 0; // the column the next field goes in, on this row
+    if(grid > 0) {
+      gridW = _gridColumns(fields, grid);
+      columns = grid;
+    }
 
     for(std::size_t k = i; k < last; k++) {
       const Dialog::Field &f = fields[k];
@@ -387,7 +479,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
         at += _packedWidth(f) + WB + spacerW;
         continue;
       }
-      int fieldW = _fieldWidth(f, columns ? columns : 1);
+      int fieldW = _fieldWidth(f, (grid > 0) ? 1 : (columns ? columns : 1));
       if(f.widthEm > 0.) fieldW = (int)(f.widthEm * FL_NORMAL_SIZE);
       if(f.widthShare > 0.) fieldW = (int)(f.widthShare * IW);
       // A button carries its text inside, so a packed one is as wide as that
@@ -396,7 +488,16 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // one after it, and the last of a row would be cut off by the edge.
       if(f.packed && f.kind == Dialog::Action) fieldW = _packedWidth(f);
       int fx = at;
-      if(f.packed)
+      if(grid > 0) {
+        if(f.packed)
+          at += _packedStep(fields, k, last);
+        else {
+          gridColumn++;
+          at = x;
+          for(int c = 0; c < gridColumn && c < grid; c++) at += gridW[(std::size_t)c];
+        }
+      }
+      else if(f.packed)
         at += _packedStep(fields, k, last);
       else
         at += columnW;
@@ -439,7 +540,14 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
             nullptr);
         break;
       case Dialog::Choice:
-        widget = new Fl_Choice(fx, y, fieldW, BH);
+        if(f.multiple) {
+          // several switches behind one button, which is how the window this
+          // replaces offers the element and field types
+          Fl_Menu_Button *m = new Fl_Menu_Button(fx, y, fieldW, BH);
+          widget = m;
+        }
+        else
+          widget = new Fl_Choice(fx, y, fieldW, BH);
         break;
       case Dialog::Label: {
         Fl_Box *b = new Fl_Box(fx, y, w - fx - WB, BH);
@@ -484,8 +592,9 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // The inputs and the choices carry their label to their right, as every
       // Gmsh window does. A check button is different: it draws its label
       // inside, next to the box, and FL_ALIGN_RIGHT would throw it off.
+      // a menu of switches carries its label inside, as a button does
       if(f.kind != Dialog::Check && f.kind != Dialog::Label &&
-         f.kind != Dialog::Action)
+         f.kind != Dialog::Action && !(f.kind == Dialog::Choice && f.multiple))
         widget->align(FL_ALIGN_RIGHT);
       if(f.tooltip.size()) widget->copy_tooltip(f.tooltip.c_str());
       widget->callback(_fieldCallback, this);
@@ -548,13 +657,19 @@ void dialogFltk::build(int dialog)
   // wide enough for the busiest row of every pane, and never narrower than the
   // windows this replaces used to be
   int width = 34 * FL_NORMAL_SIZE;
-  if(!_panel.side.empty()) width += 8 * FL_NORMAL_SIZE;
+  // the column of side fields is beside the panes, not part of what they need
+  int aside = _panel.side.empty() ? 0 : 8 * FL_NORMAL_SIZE;
+  width += aside;
   for(const auto &q : _panel.panes) {
-    int need = _neededWidth(q.fields) + 2 * WB;
-    if(need > width) width = need;
+    int need = 0;
+    if(q.columns > 0)
+      need = _gridWidth(q.fields, q.columns) + 2 * WB;
+    else
+      need = _neededWidth(q.fields) + 2 * WB;
+    if(need + aside > width) width = need + aside;
   }
   {
-    int need = _neededWidth(_panel.footer) + 2 * WB;
+    int need = _neededWidth(_panel.footer) + 2 * WB + aside;
     if(need > width) width = need;
   }
   int paneH = _paneHeight(_panel);
@@ -607,7 +722,7 @@ void dialogFltk::build(int dialog)
       }
       _sections.push_back(b);
       int rows = _rows(q.fields);
-      _addFields(q.fields, 2 * WB, y, width, (int)i);
+      _addFields(q.fields, 2 * WB, y, width, (int)i, q.columns);
       if(q.buttonLabel.size()) {
         Fl_Button *pb = new Fl_Button(width - BB - 2 * WB, y, BB, BH);
         pb->copy_label(_escaped(q.buttonLabel).c_str());
@@ -679,7 +794,7 @@ void dialogFltk::build(int dialog)
         scroll->type(Fl_Scroll::VERTICAL);
         scroll->box(FL_FLAT_BOX);
       }
-      _addFields(q.fields, _sideWidth + 2 * WB, fy, width, (int)i);
+      _addFields(q.fields, _sideWidth + 2 * WB, fy, width, (int)i, q.columns);
       // the titled sections under them
       for(const auto &section : q.sections) {
         if(section.label.size()) {
@@ -690,7 +805,8 @@ void dialogFltk::build(int dialog)
           b->labelfont(FL_HELVETICA_BOLD);
           fy += BH;
         }
-        _addFields(section.fields, _sideWidth + 2 * WB, fy, width, (int)i);
+        _addFields(section.fields, _sideWidth + 2 * WB, fy, width, (int)i,
+                   section.columns);
       }
       if(scroll) scroll->end();
       if(q.buttonLabel.size()) {
@@ -889,6 +1005,21 @@ void dialogFltk::refresh()
       }
     } break;
     case Dialog::Choice: {
+      if(f.multiple) {
+        // a menu of switches, each showing whether it is on
+        Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
+        std::vector<std::string> labels;
+        std::vector<int> values;
+        if(f.dynamicChoices) f.dynamicChoices(labels, values);
+        m->clear();
+        for(std::size_t k = 0; k < labels.size(); k++) {
+          int index = m->add(_escapedMenu(labels[k]).c_str(), 0, nullptr,
+                             nullptr, FL_MENU_TOGGLE);
+          if(f.chosen && f.chosen((int)k))
+            ((Fl_Menu_Item *)&m->menu()[index])->set();
+        }
+        break;
+      }
       Fl_Choice *c = (Fl_Choice *)b.widget;
       std::vector<std::string> labels;
       std::vector<int> values;

@@ -82,7 +82,7 @@ private:
   // at every refresh would undo the tab the user just clicked
   bool _forcePane;
   void _addFields(const std::vector<Dialog::Field> &fields, int x, int &y,
-                  int w, int pane);
+                  int w, int pane, int grid = 0);
   static void _tabCallback(Fl_Widget *w, void *data);
   static void _fieldCallback(Fl_Widget *w, void *data);
   static void _buttonCallback(Fl_Widget *w, void *data);

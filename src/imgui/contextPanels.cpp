@@ -238,6 +238,26 @@ namespace {
       }
     } break;
     case Dialog::Choice: {
+      if(f.multiple) {
+        // several switches behind one button, which is how the window this
+        // reproduces offers the element and field types
+        std::vector<std::string> labels;
+        std::vector<int> values;
+        _dynamic(f, labels, values);
+        ImGui::SetNextItemWidth(width);
+        if(ImGui::BeginCombo(f.label.c_str(), f.label.c_str(),
+                             ImGuiComboFlags_NoPreview)) {
+          for(std::size_t k = 0; k < labels.size(); k++) {
+            bool on = f.chosen ? f.chosen((int)k) : false;
+            if(ImGui::Checkbox(labels[k].c_str(), &on) && f.choose) {
+              f.choose((int)k, on);
+              changed = true;
+            }
+          }
+          ImGui::EndCombo();
+        }
+        break;
+      }
       std::vector<std::string> labels;
       std::vector<int> values;
       _dynamic(f, labels, values);
@@ -337,6 +357,43 @@ namespace {
     return _packedWidth(fields[k], item) + ImGui::GetStyle().ItemSpacing.x;
   }
 
+  // Where the columns of a pane laid out on a grid start: a column is as wide
+  // as the widest thing in it, and the label of the last field of a row runs
+  // on past its column into the space no one else uses -- which is what keeps
+  // the columns as narrow as the window this reproduces has them.
+  std::vector<float> _gridColumns(const std::vector<Dialog::Field> &fields,
+                                  int grid, float item)
+  {
+    const ImGuiStyle &style = ImGui::GetStyle();
+    std::vector<float> width((std::size_t)grid, 0.f);
+    int column = 0;
+    for(std::size_t k = 0; k < fields.size(); k++) {
+      const Dialog::Field &f = fields[k];
+      if(!f.sameRow)
+        column = 0;
+      else if(!f.packed)
+        column++;
+      if(column >= grid) column = grid - 1;
+      if(f.kind == Dialog::Spacer) continue;
+      float need = 0.f;
+      std::size_t j = k;
+      while(j < fields.size() &&
+            (j == k || (fields[j].sameRow && fields[j].packed))) {
+        need += _packedWidth(fields[j], item) + style.ItemSpacing.x;
+        j++;
+      }
+      if(!(j < fields.size() && fields[j].sameRow)) {
+        const Dialog::Field &l = fields[j - 1];
+        if(l.kind != Dialog::Check && l.kind != Dialog::Action &&
+           l.kind != Dialog::Label && !(l.kind == Dialog::Choice && l.multiple))
+          need -= ImGui::CalcTextSize(l.label.c_str()).x +
+                  style.ItemInnerSpacing.x;
+      }
+      if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
+    }
+    return width;
+  }
+
   float _packedTotal(const std::vector<Dialog::Field> &fields, std::size_t from,
                      std::size_t to, float item)
   {
@@ -414,10 +471,39 @@ namespace {
   float _neededWidth(const Dialog::Panel &panel, float item)
   {
     float widest = 0.f;
-    std::vector<const std::vector<Dialog::Field> *> lists;
-    for(const auto &q : panel.panes) lists.push_back(&q.fields);
-    lists.push_back(&panel.footer);
-    for(const auto *fields : lists) {
+    std::vector<std::pair<const std::vector<Dialog::Field> *, int> > lists;
+    for(const auto &q : panel.panes) {
+      lists.push_back(std::make_pair(&q.fields, q.columns));
+      for(const auto &section : q.sections)
+        lists.push_back(std::make_pair(&section.fields, section.columns));
+    }
+    lists.push_back(std::make_pair(&panel.footer, 0));
+    for(const auto &entry : lists) {
+      const std::vector<Dialog::Field> *fields = entry.first;
+      if(entry.second > 0) {
+        // the columns together, and whatever the last label of a row adds
+        std::vector<float> column = _gridColumns(*fields, entry.second, item);
+        float total = 0.f, at = 0.f;
+        int which = 0;
+        for(std::size_t k = 0; k < fields->size(); k++) {
+          const Dialog::Field &f = (*fields)[k];
+          if(!f.sameRow) { which = 0; at = 0.f; }
+          else if(!f.packed) {
+            which++;
+            at = 0.f;
+            for(int c = 0; c < which && c < entry.second; c++)
+              at += column[(std::size_t)c];
+          }
+          if(f.kind == Dialog::Spacer) continue;
+          // the same spacing the placement leaves after each of them
+          float end = at + _packedWidth(f, item) + ImGui::GetStyle().ItemSpacing.x;
+          if(end > total) total = end;
+          if(f.packed && f.sameRow)
+            at += _packedWidth(f, item) + ImGui::GetStyle().ItemSpacing.x;
+        }
+        if(total > widest) widest = total;
+        continue;
+      }
       std::size_t i = 0;
       while(i < fields->size()) {
         std::size_t last = i + 1;
@@ -430,7 +516,8 @@ namespace {
     return widest;
   }
 
-  void _fields(const std::vector<Dialog::Field> &fields, float item);
+  void _fields(const std::vector<Dialog::Field> &fields, float item,
+               int grid = 0);
 
   // What a pane holds: its own fields, then the sections under them, each with
   // its label as a heading. A long one scrolls rather than making the window as
@@ -442,13 +529,13 @@ namespace {
       ImGui::EndChild();
       return;
     }
-    _fields(q.fields, width);
+    _fields(q.fields, width, q.columns);
     for(std::size_t i = 0; i < q.sections.size(); i++) {
       const Dialog::Pane &section = q.sections[i];
       if(section.visible && !section.visible()) continue;
       if(section.label.size()) ImGui::SeparatorText(section.label.c_str());
       ImGui::PushID((int)i + 1000);
-      _fields(section.fields, width);
+      _fields(section.fields, width, section.columns);
       ImGui::PopID();
     }
     if(q.scrolling) ImGui::EndChild();
@@ -459,7 +546,7 @@ namespace {
   // each one at the start of its column is what turns a row of three values
   // into a column of a grid -- letting Dear ImGui put them one after another
   // leaves the headings of a table nowhere near what they head.
-  void _fields(const std::vector<Dialog::Field> &fields, float item)
+  void _fields(const std::vector<Dialog::Field> &fields, float item, int grid)
   {
     std::size_t i = 0;
     while(i < fields.size()) {
@@ -483,12 +570,27 @@ namespace {
       if(slack < 0.f) slack = 0.f;
       if(!spacers && columns) columnW += slack / (float)columns;
       float spacerW = spacers ? slack / (float)spacers : 0.f;
+      // A pane laid out on a grid puts every field at the left of its column,
+      // the same columns for every row, and lets it take the width it needs:
+      // it is what makes the rows of one pane line up with each other.
+      std::vector<float> gridW;
+      if(grid > 0) {
+        columns = grid;
+        gridW = _gridColumns(fields, grid, item);
+      }
       // SameLine() counts from the edge of the window, not from where the
       // content starts, so the row begins where the cursor already is: an `at`
       // starting at zero puts every field after the first one padding-width
       // too far left, and the labels of a row no longer line up with those of
       // the rows around it
-      float at = ImGui::GetCursorPosX();
+      // SameLine() counts from the edge of the window and adds the offset of
+      // the group the fields may be inside -- the one that holds the panes
+      // beside the column of side fields. Counting that offset here too would
+      // put every field after the first one a side column further right.
+      float at = ImGui::GetCursorPosX() -
+                 ImGui::GetCurrentWindow()->DC.GroupOffset.x;
+      const float start = at;
+      int gridColumn = 0; // the column the next field goes in, on this row
       bool first = true;
       for(std::size_t k = i; k < last; k++) {
         const Dialog::Field &f = fields[k];
@@ -505,6 +607,8 @@ namespace {
           here = (float)f.widthShare * item;
         else if(f.widthEm > 0.)
           here = (float)f.widthEm * ImGui::GetFontSize();
+        else if(grid > 0)
+          here = item; // its own width; the column only says where it starts
         else if(!f.packed && columns > 1) {
           // A widget carries its label to its right, so on a crowded row it has
           // to give the label room or the two columns overlap.
@@ -520,7 +624,18 @@ namespace {
         if(_sharesCell(fields, k, last)) here -= style.ItemSpacing.x;
         if(!first) ImGui::SameLine(at);
         first = false;
-        at += f.packed ? _packedStep(fields, k, last, item) : columnW;
+        if(grid > 0) {
+          if(f.packed)
+            at += _packedStep(fields, k, last, item);
+          else {
+            gridColumn++;
+            at = start;
+            for(int c = 0; c < gridColumn && c < grid; c++)
+              at += gridW[(std::size_t)c];
+          }
+        }
+        else
+          at += f.packed ? _packedStep(fields, k, last, item) : columnW;
         // Dear ImGui builds a widget's identity from its label, so the nine
         // unlabelled boxes of a grid would all be the same widget: hovering
         // and typing would go to whichever it saw first. Where the field
@@ -568,7 +683,11 @@ void appWindow::_drawDialog(int which)
   {
     float need = _neededWidth(panel, width) +
                  2.f * ImGui::GetStyle().WindowPadding.x;
-    if(panel.side.size()) need += 10.f * ImGui::GetFontSize();
+    if(panel.side.size())
+      need += 9.f * ImGui::GetFontSize() + 2.f * ImGui::GetStyle().ItemSpacing.x;
+    // a window that is given a size rather than following its contents shows
+    // a scrollbar as soon as they are taller, and that takes width too
+    if(scrolls) need += ImGui::GetStyle().ScrollbarSize;
     ImGui::SetNextWindowSizeConstraints(ImVec2(need, 0.f),
                                         ImVec2(FLT_MAX, FLT_MAX));
   }

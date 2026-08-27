@@ -590,7 +590,7 @@ def press_inside(dpy, build, point, dialog, wx, wy):
     return True
 
 
-def sweep_options(dpy, build, out, win, wx, wy, ww, wh):
+def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
     """Photograph every tab of every category of the option window.
 
     One picture per tab is more than one can look at, but not more than one can
@@ -600,6 +600,8 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh):
     failures = []
     first, step = CATEGORY_ROWS[build]
     for k, (category, tabs) in enumerate(OPTION_TABS):
+        if only and not only.startswith(category.lower()):
+            continue
         where = _dialog_geometry(dpy, "options", build, win, wx, wy)
         if not where:
             failures.append("options: no window to sweep")
@@ -619,6 +621,8 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh):
                 out, "%s-options-%s-STRIP.png" % (build, category.lower())))
         for i, x in enumerate(found):
             name = tabs[i] if i < len(tabs) else "tab%d" % (i + 1)
+            if only and only != "%s-%s" % (category.lower(), name.lower()):
+                continue
             where = _dialog_geometry(dpy, "options", build, win, wx, wy)
             if not where: break
             dx, dy = where[0], where[1]
@@ -678,6 +682,10 @@ def main():
     ap.add_argument("--sweep-options", action="store_true",
                     help="photograph every tab of every category of the "
                          "option window, in one go")
+    ap.add_argument("--only", default=None,
+                    help="with --sweep-options, the one tab to photograph, "
+                         "as <category>-<tab>: iterating on a single page is "
+                         "a great deal quicker than sweeping all of them")
     ap.add_argument("--shot", action="append", default=[],
                     help="a shot or a dialog by name; all of them by default")
     args = ap.parse_args()
@@ -707,7 +715,7 @@ def main():
                 press(dpy, ["ctrl", "shift", "n"])
                 time.sleep(1.0)
                 for f in sweep_options(dpy, args.build, args.out, win, wx, wy,
-                                       ww, wh):
+                                       ww, wh, args.only):
                     print("FAIL " + f)
             finally:
                 stop_driver(proc)
