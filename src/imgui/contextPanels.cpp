@@ -1080,7 +1080,10 @@ void appWindow::_drawDialog(int which)
   // follows its contents, so that folding a part away shrinks it instead of
   // leaving a hole. Docked, Dear ImGui gives it the size of the node and
   // ignores this, which is what one wants there.
-  float width = 150.f * _styleScale;
+  // What one ordinary field is worth: ten times the font size, which is what
+  // the windows this reproduces call IW. A field of a fixed number of pixels
+  // would be a different field at every size of type.
+  float width = 10.f * ImGui::GetFontSize();
   // how many lines the tallest pane that does not scroll takes: the ones that
   // do are given as many, and scroll the rest
   int most = panel.leastRows;
