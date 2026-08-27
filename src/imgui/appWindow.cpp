@@ -144,6 +144,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
 {
   for(int i = 0; i < Dialog::NumDialogs; i++) {
     _showDialog[i] = _focusDialog[i] = false;
+    _sizedDialog[i] = false;
     _wantedPane[i] = -1;
     _lastPane[i] = -1;
   }

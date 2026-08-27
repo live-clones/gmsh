@@ -122,6 +122,8 @@ private:
   // the four context dialogs of GuiDialogs.h, and which of them has just been
   // asked for and must be brought forward
   bool _showDialog[Dialog::NumDialogs], _focusDialog[Dialog::NumDialogs];
+  // whether it has been given its size since it was last opened
+  bool _sizedDialog[Dialog::NumDialogs];
   // the pane a dialog has just been asked to show, -1 once it has been
   int _wantedPane[Dialog::NumDialogs];
   // the pane each dialog was showing at the end of the last frame, to tell a

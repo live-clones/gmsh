@@ -686,11 +686,12 @@ void appWindow::_drawDialog(int which)
   // The dialog keeps the width its widest row needs, whichever pane is up and
   // whichever section is folded away: a window that grows sideways as one uses
   // it is a window that will not sit still.
+  float need = 0.f;
   {
-    float need = _neededWidth(panel, width) +
-                 2.f * ImGui::GetStyle().WindowPadding.x;
+    need = _neededWidth(panel, width) +
+           2.f * ImGui::GetStyle().WindowPadding.x;
     if(panel.side.size())
-      need += 9.f * ImGui::GetFontSize() + 2.f * ImGui::GetStyle().ItemSpacing.x;
+      need += 8.f * ImGui::GetFontSize() + 2.f * ImGui::GetStyle().ItemSpacing.x;
     // a window that is given a size rather than following its contents shows
     // a scrollbar as soon as they are taller, and that takes width too
     if(scrolls) need += ImGui::GetStyle().ScrollbarSize;
@@ -709,9 +710,17 @@ void appWindow::_drawDialog(int which)
       if(n > most) most = n;
     }
     if(most < 12) most = 12;
-    float tall = (float)most * ImGui::GetFrameHeightWithSpacing() +
-                 6.f * ImGui::GetFrameHeightWithSpacing();
-    ImGui::SetNextWindowSize(ImVec2(0.f, tall), ImGuiCond_FirstUseEver);
+    // its rows, and what stands around them: the row of tabs, the title, and
+    // the padding above and below
+    float tall = (float)(most + 3) * ImGui::GetFrameHeightWithSpacing();
+    // Given when it opens, and not again: left to itself Dear ImGui fits a
+    // window to what its first frame draws, which is one tab of one category
+    // and tells nothing about the rest -- and a row ending in a spacer, one
+    // that eats what is left of the line, has no width of its own to fit to.
+    if(!_sizedDialog[which]) {
+      ImGui::SetNextWindowSize(ImVec2(need, tall));
+      _sizedDialog[which] = true;
+    }
   }
   if(!ImGui::Begin(title.c_str(), &_showDialog[which],
                    scrolls ? ImGuiWindowFlags_None :
@@ -722,7 +731,7 @@ void appWindow::_drawDialog(int which)
 
   // the column of side fields, down the left of everything else
   if(panel.side.size()) {
-    float w = 9.f * ImGui::GetFontSize();
+    float w = 8.f * ImGui::GetFontSize();
     // as tall as what is beside it, so that a list can fill it; the fields
     // under such a list keep their own line at the bottom
     float tall = 0.f;
@@ -949,6 +958,7 @@ void appWindow::hideDialog(int which)
 {
   if(which < 0 || which >= Dialog::NumDialogs) return;
   _showDialog[which] = false;
+  _sizedDialog[which] = false;
 }
 
 bool appWindow::dialogVisible(int which) const
