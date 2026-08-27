@@ -228,7 +228,7 @@ namespace Dialog {
   const char *const _r_radiusInf[] = {"RadiusInf", "RadiusSup",  nullptr};
   const char *const _r_timeStep[] = {"TimeStep", "NbIso",  nullptr};
   const char *const _r_maxRecursionLevel[] = {"MaxRecursionLevel", "TargetError",  nullptr};
-  const char *const _r_positionX[] = {"PositionX", "PositionY",  nullptr};
+  const char *const _r_viewSize[] = {"Width", "Height", nullptr};
   const char *const _r_arrowSizeMin[] = {"ArrowSizeMin", "ArrowSizeMax",  nullptr};
 
   const optionRow _generalGeneral[] = {
@@ -281,7 +281,7 @@ namespace Dialog {
     CHECK("PolygonOffsetAlwaysOn", "Always apply polygon offset"),
     NUMBER("QuadricSubdivisions", "Quadric subdivisions"),
     NUMBER("PointSize", "Point size"),
-    NUMBER("PointSize", "Line width"),
+    NUMBER("LineWidth", "Line width"),
     COMBOV("VectorType", "Vector display", _c_vectorType, 1., 1.),
     ACTION_RIGHT("arrow_edit", "Edit arrow"),
     STRCOMBO("GraphicsFontEngine", "Font rendering engine", _c_graphicsFontEngine),
@@ -377,7 +377,8 @@ namespace Dialog {
   const optionRow _meshAdvanced[] = {
     CHECK("MeshSizeFromPoints", "Compute element sizes using point values"),
     CHECK("MeshSizeFromParametricPoints", "Compute element sizes using parametric point values"),
-    NUMBER("MeshSizeExtendFromBoundary", "Compute element sizes from curvature"),
+    NUMBER_OF("MeshSizeFromCurvature", "Compute element sizes from curvature",
+              .5),
     CHECK("MeshSizeExtendFromBoundary", "Extend element sizes from boundary"),
     CHECK("Optimize", "Optimize quality of tetrahedra"),
     CHECK("OptimizeNetgen", "Optimize quality of tetrahedra with Netgen"),
@@ -471,7 +472,7 @@ namespace Dialog {
     ROW("3D axes maximum", _r_axesMaxX),
     COMBO("AutoPosition", "2D axes/value scale position", _c_autoPosition),
     ROW("2D axes/value scale position", _r_viewPosition),
-    ROW("2D axes/value scale size", _r_positionX),
+    ROW("2D axes/value scale size", _r_viewSize),
     END};
 
   const optionRow _viewVisibility[] = {
