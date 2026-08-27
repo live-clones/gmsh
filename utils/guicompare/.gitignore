@@ -1,0 +1,3 @@
+# what the bench produces: the captures and the sheets built from them
+out/
+__pycache__/
