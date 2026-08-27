@@ -1361,6 +1361,12 @@ namespace Dialog {
   {
     Panel p;
     p.tabbed = true;
+    // An option can be changed from anywhere -- a shortcut, the tree, a
+    // script -- and the window shows it. The window this reproduces had every
+    // option accessor push its value into the right widget; here the fields
+    // read the options they name, so all that is wanted is an excuse to read
+    // them again. Dear ImGui reads them every frame and needs none.
+    p.refreshEvery = .25;
     // The same height whatever category it is showing, as the window this
     // reproduces has: it is built once there, twelve lines tall, of which the
     // row of tabs is one -- and one that grew and shrank as one went down the
