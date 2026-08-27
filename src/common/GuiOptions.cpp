@@ -377,8 +377,10 @@ namespace Dialog {
   const optionRow _meshAdvanced[] = {
     CHECK("MeshSizeFromPoints", "Compute element sizes using point values"),
     CHECK("MeshSizeFromParametricPoints", "Compute element sizes using parametric point values"),
+    // a third of a field: it holds a count of elements, and the half the
+    // window this reproduces gives it reads wider than it needs to
     NUMBER_OF("MeshSizeFromCurvature", "Compute element sizes from curvature",
-              .5),
+              1. / 3.),
     CHECK("MeshSizeExtendFromBoundary", "Extend element sizes from boundary"),
     CHECK("Optimize", "Optimize quality of tetrahedra"),
     CHECK("OptimizeNetgen", "Optimize quality of tetrahedra with Netgen"),
