@@ -53,9 +53,12 @@ opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
+opt(GLFW_WAYLAND "Enable the native Wayland backend of GLFW (Linux only, used by ENABLE_IMGUI)" ${DEFAULT})
+opt(GLFW_X11 "Enable the X11 backend of GLFW (Linux only, used by ENABLE_IMGUI)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
 opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
+opt(IMGUI "Enable Dear ImGui/GLFW graphical user interface (requires mesh/post)" OFF)
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module" ${DEFAULT})
@@ -644,6 +647,13 @@ if(ENABLE_VISUDEV)
   set_config_option(HAVE_VISUDEV "VisuDev")
 endif()
 
+# the FLTK and the Dear ImGui interfaces are mutually exclusive: only one GUI
+# is compiled in a given build
+if(ENABLE_IMGUI AND ENABLE_FLTK)
+  message(STATUS "ENABLE_IMGUI is set: disabling the FLTK interface")
+  set(ENABLE_FLTK OFF)
+endif()
+
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
   # where e.g. xft and xinerama options are not dealt with)
@@ -699,8 +709,81 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   endif()
 endif()
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui AND ENABLE_IMGUI)
+  # GLFW provides the window and the OpenGL context; use the upstream
+  # CMakeLists, which selects the platform backend (X11, Wayland, Cocoa, Win32)
+  # and sets the corresponding _GLFW_* definitions
+  # (only look for a system GLFW when explicitly asked: find_package() imports a
+  # target named "glfw", which would clash with the one from contrib/glfw)
+  if(ENABLE_SYSTEM_CONTRIB)
+    find_package(glfw3 3.3 QUIET)
+  endif()
+  if(ENABLE_SYSTEM_CONTRIB AND glfw3_FOUND)
+    message(STATUS "Using system version of GLFW")
+    list(APPEND GMSH_PRIVATE_LIBRARIES glfw)
+    set(HAVE_GLFW TRUE)
+  elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/glfw)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+    if(UNIX AND NOT APPLE)
+      # GLFW can build the native Wayland backend and/or the X11 backend. When
+      # both are built the backend is selected at runtime (Wayland if a Wayland
+      # display is available, X11 otherwise), and can be forced with the
+      # GLFW_PLATFORM window hint. Building the Wayland backend requires
+      # wayland-scanner, the wayland protocol files and libxkbcommon.
+      if(NOT ENABLE_GLFW_WAYLAND AND NOT ENABLE_GLFW_X11)
+        message(SEND_ERROR "ENABLE_IMGUI needs at least one of ENABLE_GLFW_WAYLAND "
+                "and ENABLE_GLFW_X11")
+      endif()
+      set(GLFW_BUILD_WAYLAND ${ENABLE_GLFW_WAYLAND} CACHE BOOL "" FORCE)
+      set(GLFW_BUILD_X11 ${ENABLE_GLFW_X11} CACHE BOOL "" FORCE)
+      if(ENABLE_GLFW_WAYLAND)
+        set_config_option(HAVE_GLFW_WAYLAND "Wayland")
+      endif()
+    endif()
+    add_subdirectory(contrib/glfw)
+    list(APPEND GMSH_PRIVATE_LIBRARIES glfw)
+    list(APPEND EXTERNAL_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/contrib/glfw/include)
+    set(HAVE_GLFW TRUE)
+    if(GLFW_BUILD_WAYLAND)
+      # GLFW deliberately dlopen()s the Wayland client libraries, so that a
+      # binary built with Wayland support still runs where they are absent. The
+      # dynamic loader resolves a dlopen() through the RUNPATH of the caller, so
+      # remember where they were found: on the distributions that keep their
+      # libraries out of the default search path, Gmsh would otherwise always
+      # fall back to X11. They are not linked, so they stay optional.
+      include(FindPkgConfig)
+      pkg_check_modules(GMSH_WAYLAND QUIET wayland-client wayland-cursor
+                                           xkbcommon)
+      if(GMSH_WAYLAND_FOUND)
+        list(APPEND GMSH_DLOPEN_RPATH_DIRS ${GMSH_WAYLAND_LIBRARY_DIRS})
+      endif()
+      # libdecor draws the window frames on the compositors that leave that to
+      # the client, which is most of them; GLFW falls back to plain coloured
+      # borders without it, and the windows then have no title bar to grab
+      pkg_check_modules(GMSH_LIBDECOR QUIET libdecor-0)
+      if(GMSH_LIBDECOR_FOUND)
+        list(APPEND GMSH_DLOPEN_RPATH_DIRS ${GMSH_LIBDECOR_LIBRARY_DIRS})
+      endif()
+    endif()
+  endif()
+  if(NOT HAVE_GLFW)
+    message(SEND_ERROR "Could not find GLFW: disabling the Dear ImGui interface")
+  elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/imgui)
+    add_subdirectory(contrib/imgui)
+    add_subdirectory(src/imgui)
+    include_directories(contrib/imgui contrib/imgui/backends
+                        contrib/imgui/misc/cpp)
+    set_config_option(HAVE_IMGUI "ImGui[contrib]")
+  else()
+    message(SEND_ERROR "Could not find Dear ImGui in contrib/imgui")
+  endif()
+endif()
+
 # HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in
-if(HAVE_FLTK)
+if(HAVE_FLTK OR HAVE_IMGUI)
   set(HAVE_GUI TRUE)
 endif()
 
@@ -1731,6 +1814,18 @@ if(EXTERNAL_INCLUDES)
   list(REMOVE_DUPLICATES EXTERNAL_INCLUDES)
 endif()
 
+# GMSH_PRIVATE_LIBRARIES holds what is linked into Gmsh but never handed on:
+# CMake targets of this very build, as opposed to the paths and flags of
+# EXTERNAL_LIBRARIES. They cannot travel with the rest, for two reasons. A name
+# such as "glfw" means nothing outside this build tree, so it has no business in
+# the GMSH_EXTERNAL_LIBRARIES other projects are given; and a target named in
+# the interface of an installed library must itself be installed and exported,
+# which a vendored dependency is not -- install(EXPORT) refuses the whole export
+# set over it. Linking them PRIVATE keeps them out of both.
+if(GMSH_PRIVATE_LIBRARIES)
+  list(REMOVE_DUPLICATES GMSH_PRIVATE_LIBRARIES)
+endif()
+
 if(HAVE_FLTK)
   set(LINK_LIBRARIES ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES}
                      ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
@@ -1770,8 +1865,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(src/common src/fltk src/geo src/graphics src/mesh src/solver
-                    src/numeric src/parser src/plugin src/post api
+include_directories(src/common src/fltk src/imgui src/geo src/graphics src/mesh
+                    src/solver src/numeric src/parser src/plugin src/post api
                     contrib/stb
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
 
@@ -1822,7 +1917,10 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
       list(APPEND LINK_LIBRARIES "-Wl,--exclude-libs,ALL")
     endif()
   endif()
-  target_link_libraries(shared ${LINK_LIBRARIES})
+  # PUBLIC is what the plain signature used to mean; the private ones are baked
+  # into the shared library and stop there
+  target_link_libraries(shared PUBLIC ${LINK_LIBRARIES}
+                               PRIVATE ${GMSH_PRIVATE_LIBRARIES})
   # don't define LC_RPATH in dylib for development, to not get endless warnings
   # about code signing
   if(APPLE AND NOT GMSH_RELEASE)
@@ -1838,7 +1936,7 @@ endif()
 if(HAVE_GUI)
   if(ENABLE_BUILD_DYNAMIC)
     add_executable(gmsh WIN32 src/common/Main.cpp)
-    target_link_libraries(gmsh shared)
+    target_link_libraries(gmsh PRIVATE shared)
   else()
     add_executable(gmsh WIN32 src/common/Main.cpp ${GMSH_SRC})
   endif()
@@ -1850,12 +1948,30 @@ if(HAVE_GUI)
 else()
   if(ENABLE_BUILD_DYNAMIC)
     add_executable(gmsh src/common/Main.cpp)
-    target_link_libraries(gmsh shared)
+    target_link_libraries(gmsh PRIVATE shared)
   else()
     add_executable(gmsh src/common/Main.cpp ${GMSH_SRC})
   endif()
 endif()
-target_link_libraries(gmsh ${LINK_LIBRARIES})
+target_link_libraries(gmsh PRIVATE ${LINK_LIBRARIES})
+if(NOT ENABLE_BUILD_DYNAMIC)
+  # a dynamic build gets them through the shared library
+  target_link_libraries(gmsh PRIVATE ${GMSH_PRIVATE_LIBRARIES})
+endif()
+
+# directories that must stay reachable for the libraries Gmsh (or the libraries
+# it embeds) load with dlopen()
+if(GMSH_DLOPEN_RPATH_DIRS AND ENABLE_RPATH)
+  list(REMOVE_DUPLICATES GMSH_DLOPEN_RPATH_DIRS)
+  foreach(TARGET_NAME gmsh lib shared)
+    if(TARGET ${TARGET_NAME})
+      set_property(TARGET ${TARGET_NAME} APPEND PROPERTY
+                   BUILD_RPATH ${GMSH_DLOPEN_RPATH_DIRS})
+      set_property(TARGET ${TARGET_NAME} APPEND PROPERTY
+                   INSTALL_RPATH ${GMSH_DLOPEN_RPATH_DIRS})
+    endif()
+  endforeach()
+endif()
 
 # OS specific linker options
 if(WIN32 AND NOT MSVC)

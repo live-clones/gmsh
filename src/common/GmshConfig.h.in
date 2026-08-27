@@ -22,9 +22,12 @@
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FLTK
 #cmakedefine HAVE_GEOMETRYCENTRAL
+#cmakedefine HAVE_GLFW
+#cmakedefine HAVE_GLFW_WAYLAND
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GUI
 #cmakedefine HAVE_HXT
+#cmakedefine HAVE_IMGUI
 #cmakedefine HAVE_LAPACK
 #cmakedefine HAVE_LIBCGNS
 #cmakedefine HAVE_LIBCGNS_CPEX0045

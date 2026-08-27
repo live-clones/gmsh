@@ -20,9 +20,11 @@ their own respective license:
 * blossom: Gmsh License
 * domhex: Gmsh License
 * eigen: BSD License
+* glfw: Zlib/libpng License
 * gmm: GNU Lesser General Public License (LGPL), v. 3 or later
 * hxt: GNU General Public License (GPL) v. 2 or later, with exception for
   linking with Gmsh under Gmsh license
+* imgui: MIT License
 * metis: Apache License (APL), v. 2.0
 * mobile: GNU General Public License (GPL), v. 2 or later
 * mpeg_encode: freely distributed, but patents are held by several companies on
@@ -40,3 +42,9 @@ See each subdirectory for the detailed license terms.
 
 Set the ENABLE_SYSTEM_CONTRIB cmake option to use system versions of these
 libraries, when possible.
+
+One of these copies carries a local change, marked with a "[GMSH]" comment so it
+can be found again when the library is updated:
+
+* glfw: cmake_minimum_required() raised, the version shipped upstream being
+  refused by recent CMake.
