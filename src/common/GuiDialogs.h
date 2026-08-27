@@ -39,6 +39,12 @@ namespace Dialog {
     // and writes the name inside it; the swatch was preferred and is a
     // deliberate departure.
     Color,
+    // A direction, given by dragging a point over a disc: the option window
+    // has one for the light, and there is no arrangement of ordinary fields
+    // that says the same thing. It is drawn `rows` lines tall and hangs over
+    // what follows it rather than making its own line that tall, which is
+    // where the window this reproduces puts it.
+    Direction,
     List, // what has been picked so far, which one may correct
     Spacer // nothing at all: it eats what is left of the line, and never less
            // than widthEm, so that it still separates in a window that fits
@@ -61,6 +67,11 @@ namespace Dialog {
     // effect and no entry in the option table.
     std::function<double()> readNumber;
     std::function<void(double)> writeNumber;
+    // Direction: the three components, read and written together. They are
+    // three options here rather than one, and what the field holds is the
+    // direction they make.
+    std::function<void(double &x, double &y, double &z)> readVector;
+    std::function<void(double x, double y, double z)> writeVector;
     // Instead of a variable, the field can edit a Gmsh option, addressed the
     // way the option file does. The interfaces never see the difference: they
     // go through the accessors below.
@@ -102,6 +113,11 @@ namespace Dialog {
     // is not there rather than dead, which is what the windows this replaces
     // do with the Redraw button of the option window
     std::function<bool()> visible;
+    // The field is to be looked at twice: what it does cannot be taken back.
+    // Both interfaces draw such a field the way they warn -- in red, as it
+    // happens -- and the description says the weight rather than the colour,
+    // which is the interface's to choose.
+    bool alert;
     // A check that folds a part of the dialog away rather than holding a
     // setting: it is drawn as a disclosure toggle, with an arrow saying which
     // way it goes.
@@ -132,7 +148,7 @@ namespace Dialog {
     Field()
       : kind(Text), text(nullptr), integer(nullptr), number(nullptr),
         flag(nullptr), colour(nullptr), optionIndex(0), list(nullptr), rows(5), multiple(false),
-        disclosure(false), minimum(0.),
+        alert(false), disclosure(false), minimum(0.),
         maximum(0.), step(0.), sameRow(false), packed(false), widthEm(0.),
         widthShare(0.)
     {
@@ -149,6 +165,9 @@ namespace Dialog {
     // packed the way Gmsh packs a colour, see CTX::packColor()
     unsigned int getColour() const;
     void setColour(unsigned int v);
+    // the three components of a Direction, as a unit vector
+    void getVector(double &x, double &y, double &z) const;
+    void setVector(double x, double y, double z);
   };
 
   struct Pane {

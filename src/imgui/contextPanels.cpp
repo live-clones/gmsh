@@ -73,6 +73,14 @@ namespace {
     return true;
   }
 
+  // How wide the disc of a direction is: as tall as the lines it hangs over,
+  // and square.
+  float _discSide(const Dialog::Field &f)
+  {
+    return (float)f.rows * ImGui::GetFrameHeightWithSpacing() -
+           ImGui::GetStyle().ItemSpacing.y;
+  }
+
   // one field of a pane, bound to whatever the description points at: a
   // variable of ours or a Gmsh option, which the accessors hide
   void _field(const Dialog::Field &f, float width)
@@ -80,6 +88,13 @@ namespace {
     bool enabled = f.enabled ? f.enabled() : true;
     ImGui::BeginDisabled(!enabled);
     bool changed = false;
+    // A field to be looked at twice: its text in red, which is what the
+    // window this reproduces does to the one button that undoes everything.
+    // The face of the button is left alone -- it is drawn light here, and a
+    // red face would take the label with it.
+    bool painted = f.alert;
+    if(painted)
+      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.78f, .16f, .16f, 1.f));
 
     switch(f.kind) {
     case Dialog::Label:
@@ -226,6 +241,54 @@ namespace {
         changed = true;
       }
     } break;
+    case Dialog::Direction: {
+      // The disc the FLTK spherePositionWidget draws: a circle, and the point
+      // one drags over it. Dear ImGui has nothing of the sort, so the panel
+      // draws it -- and works out the same direction from the same drag,
+      // including the way that widget derives the third component.
+      double x = 0., y = 0., z = 0.;
+      f.getVector(x, y, z);
+      // what is drawn is the direction, not the three numbers: the widget
+      // this reproduces normalises them as it takes them
+      double length = sqrt(x * x + y * y + z * z);
+      if(length) {
+        x /= length;
+        y /= length;
+        z /= length;
+      }
+      float side = _discSide(f);
+      ImVec2 at = ImGui::GetCursorScreenPos();
+      ImGui::InvisibleButton("##disc", ImVec2(side, side));
+      float radius = .5f * side - 3.f;
+      ImVec2 middle(at.x + .5f * side, at.y + .5f * side);
+      if(enabled && ImGui::IsItemActive()) {
+        ImVec2 mouse = ImGui::GetIO().MousePos;
+        double xx = (mouse.x - middle.x) / radius;
+        double yy = -(mouse.y - middle.y) / radius;
+        double norm = sqrt(xx * xx + yy * yy);
+        if(norm > 1.) {
+          xx /= norm;
+          yy /= norm;
+          norm = 1.;
+        }
+        if(xx != x || yy != y) {
+          const_cast<Dialog::Field &>(f).setVector(xx, yy, sqrt(1. - norm));
+          changed = true;
+          x = xx;
+          y = yy;
+        }
+      }
+      ImDrawList *into = ImGui::GetWindowDrawList();
+      ImU32 ink = ImGui::GetColorU32(enabled ? ImGuiCol_Text :
+                                               ImGuiCol_TextDisabled);
+      // no box around it: the widget this reproduces is flat and the colour
+      // of what is behind it, so what one sees is the circle alone
+      into->AddCircle(middle, radius, ink);
+      ImVec2 point((float)(middle.x + radius * x),
+                   (float)(middle.y - radius * y));
+      into->AddRectFilled(ImVec2(point.x - 3.f, point.y - 3.f),
+                          ImVec2(point.x + 3.f, point.y + 3.f), ink);
+    } break;
     case Dialog::Check: {
       bool value = f.getFlag();
       if(!f.disclosure) {
@@ -311,6 +374,7 @@ namespace {
     } break;
     }
 
+    if(painted) ImGui::PopStyleColor();
     ImGui::EndDisabled();
     if(f.tooltip.size() &&
        ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
@@ -348,6 +412,7 @@ namespace {
     if(f.kind == Dialog::Color)
       return ImGui::GetFrameHeight() * 1.6f + style.ItemInnerSpacing.x +
              ImGui::CalcTextSize(f.label.c_str()).x;
+    if(f.kind == Dialog::Direction) return _discSide(f);
     if(f.kind == Dialog::Check) {
       float w = ImGui::GetFrameHeight() + style.ItemInnerSpacing.x +
                 ImGui::CalcTextSize(f.label.c_str()).x;
@@ -408,7 +473,8 @@ namespace {
       if(!(j < fields.size() && fields[j].sameRow)) {
         const Dialog::Field &l = fields[j - 1];
         if(l.kind != Dialog::Check && l.kind != Dialog::Action &&
-           l.kind != Dialog::Label && !(l.kind == Dialog::Choice && l.multiple))
+           l.kind != Dialog::Label && l.kind != Dialog::Direction &&
+           !(l.kind == Dialog::Choice && l.multiple))
           need -= ImGui::CalcTextSize(l.label.c_str()).x +
                   style.ItemInnerSpacing.x;
       }
@@ -600,6 +666,29 @@ namespace {
       if(grid > 0) {
         columns = grid;
         gridW = _gridColumns(fields, grid, item);
+        // What a spacer of this row has to eat: the columns are widths of
+        // their own here rather than shares of the line, so the slack is what
+        // the row leaves once every field is where its column puts it.
+        if(spacers) {
+          float used = 0.f;
+          int which = 0;
+          for(std::size_t k = i; k < last; k++) {
+            if(fields[k].kind == Dialog::Spacer) {
+              used += _packedWidth(fields[k], item) + style.ItemSpacing.x;
+              continue;
+            }
+            if(fields[k].packed)
+              used += _packedStep(fields, k, last, item);
+            else {
+              used = 0.f;
+              for(int c = 0; c <= which && c < grid; c++)
+                used += gridW[(std::size_t)c];
+              which++;
+            }
+          }
+          spacerW = (total - ImGui::GetCursorPosX() - used) / (float)spacers;
+          if(spacerW < 0.f) spacerW = 0.f;
+        }
       }
       // SameLine() counts from the edge of the window, not from where the
       // content starts, so the row begins where the cursor already is: an `at`
@@ -615,6 +704,9 @@ namespace {
       const float start = at;
       int gridColumn = 0; // the column the next field goes in, on this row
       bool first = true;
+      // where the row ends once the fields that hang over the ones under it
+      // are left out of the reckoning
+      float bottom = -1.f;
       for(std::size_t k = i; k < last; k++) {
         const Dialog::Field &f = fields[k];
         if(f.visible && !f.visible()) continue;
@@ -667,6 +759,13 @@ namespace {
         ImGui::PushID((int)k);
         _field(f, here);
         ImGui::PopID();
+        // A direction is drawn over the lines that follow it rather than
+        // making its own line that tall: the cursor goes back to where the
+        // rest of the row left it.
+        if(f.kind != Dialog::Direction)
+          bottom = ImGui::GetCursorPosY();
+        else if(bottom >= 0.f)
+          ImGui::SetCursorPosY(bottom);
       }
       i = last;
     }

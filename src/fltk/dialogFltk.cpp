@@ -30,6 +30,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/fl_draw.H> // fl_font, fl_width
 
+#include "spherePositionWidget.h"
 #include "dialogFltk.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
@@ -105,6 +106,8 @@ namespace {
     if(f.kind == Dialog::Check) return (int)(1.5 * FL_NORMAL_SIZE);
     // a swatch says what it is by its colour; it needs no room for text
     if(f.kind == Dialog::Color) return (int)(3. * FL_NORMAL_SIZE);
+    // the disc of a direction is square, as tall as the lines it hangs over
+    if(f.kind == Dialog::Direction) return f.rows * BH;
     return (columns == 1) ? IW : IW / 2;
   }
 
@@ -122,6 +125,7 @@ namespace {
       return (int)fl_width(_escaped(f.label).c_str()) + 2 * FL_NORMAL_SIZE;
     if(f.kind == Dialog::Check)
       return (int)fl_width(_escaped(f.label).c_str()) + (int)(1.8 * FL_NORMAL_SIZE);
+    if(f.kind == Dialog::Direction) return f.rows * BH;
     // a declared width, or the usual one, plus the label it carries
     int w = f.widthShare > 0. ? (int)(f.widthShare * IW) :
             f.widthEm > 0.    ? (int)(f.widthEm * FL_NORMAL_SIZE) :
@@ -182,7 +186,8 @@ namespace {
         const Dialog::Field &l = fields[j - 1];
         fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
         if(l.kind != Dialog::Check && l.kind != Dialog::Action &&
-           l.kind != Dialog::Label && !(l.kind == Dialog::Choice && l.multiple))
+           l.kind != Dialog::Label && l.kind != Dialog::Direction &&
+           !(l.kind == Dialog::Choice && l.multiple))
           need -= (int)fl_width(_escaped(l.label).c_str()) + 2 * WB;
       }
       if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
@@ -352,6 +357,11 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       if(fl_color_chooser("Color Chooser", r, g, b))
         f.setColour(CTX::instance()->packColor(r, g, b, a));
     } break;
+    case Dialog::Direction: {
+      double x = 0., y = 0., z = 0.;
+      ((spherePositionWidget *)w)->getValue(x, y, z);
+      f.setVector(x, y, z);
+    } break;
     case Dialog::Label:
     case Dialog::Output:
     case Dialog::Action:
@@ -490,7 +500,12 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       if(spacers) {
         int used = 0, which = 0;
         for(std::size_t k = i; k < last; k++) {
-          if(fields[k].kind == Dialog::Spacer) continue;
+          if(fields[k].kind == Dialog::Spacer) {
+            // the least it takes, which comes out of the slack rather than
+            // being added to it: what follows a spacer ends at the right edge
+            used += _packedWidth(fields[k]) + WB;
+            continue;
+          }
           if(fields[k].packed)
             used += _packedStep(fields, k, last);
           else {
@@ -631,6 +646,12 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
         b->callback(_buttonCallback, new std::function<void()>(f.changed));
         widget = b;
       } break;
+      case Dialog::Direction:
+        // It is drawn over the lines that follow it rather than pushing them
+        // down: the rows under it are half a pane wide, and the window this
+        // reproduces has the disc beside them.
+        widget = new spherePositionWidget(fx, y, f.rows * BH);
+        break;
       }
       if(!widget) continue;
       // A widget keeps the pointer it is given rather than the text, so the
@@ -642,8 +663,18 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // inside, next to the box, and FL_ALIGN_RIGHT would throw it off.
       // a menu of switches carries its label inside, as a button does
       if(f.kind != Dialog::Check && f.kind != Dialog::Label &&
-         f.kind != Dialog::Action && !(f.kind == Dialog::Choice && f.multiple))
+         f.kind != Dialog::Action && f.kind != Dialog::Direction &&
+         !(f.kind == Dialog::Choice && f.multiple))
         widget->align(FL_ALIGN_RIGHT);
+      // A field to be looked at twice, in red. On a button whose face is dark
+      // it is the face that is coloured, as red text on it would not be read;
+      // on a light one it is the text, which is what Gmsh has always done.
+      if(f.alert) {
+        if(f.kind == Dialog::Action && CTX::instance()->guiColorScheme)
+          widget->color(FL_DARK_RED);
+        else
+          widget->labelcolor(FL_DARK_RED);
+      }
       if(f.tooltip.size()) widget->copy_tooltip(f.tooltip.c_str());
       widget->callback(_fieldCallback, this);
       bound b;
@@ -869,9 +900,11 @@ void dialogFltk::build(int dialog)
         scroll->type(Fl_Scroll::VERTICAL);
         scroll->box(FL_FLAT_BOX);
       }
-      // the pane ends where its group does, not where the window does
-      _addFields(q.fields, _sideWidth + 2 * WB, fy, width - 2 * WB, (int)i,
-                 q.columns);
+      // the pane ends where its group does, not where the window does -- and
+      // one that scrolls ends before its scrollbar, or what it puts at its
+      // right edge is drawn under it
+      int right = width - 2 * WB - (q.scrolling ? Fl::scrollbar_size() : 0);
+      _addFields(q.fields, _sideWidth + 2 * WB, fy, right, (int)i, q.columns);
       // the titled sections under them
       for(const auto &section : q.sections) {
         if(section.label.size()) {
@@ -882,8 +915,8 @@ void dialogFltk::build(int dialog)
           b->labelfont(FL_HELVETICA_BOLD);
           fy += BH;
         }
-        _addFields(section.fields, _sideWidth + 2 * WB, fy, width - 2 * WB,
-                   (int)i, section.columns);
+        _addFields(section.fields, _sideWidth + 2 * WB, fy, right, (int)i,
+                   section.columns);
       }
       if(scroll) scroll->end();
       if(q.buttonLabel.size()) {
@@ -1049,6 +1082,11 @@ void dialogFltk::refresh()
         b.widget->color(shown);
         b.widget->redraw();
       }
+    } break;
+    case Dialog::Direction: {
+      double x = 0., y = 0., z = 0.;
+      f.getVector(x, y, z);
+      ((spherePositionWidget *)b.widget)->setValue(x, y, z);
     } break;
     case Dialog::Action:
     case Dialog::Spacer: break;

@@ -57,6 +57,8 @@ namespace Dialog {
       RowAllColors, // every colour of the category, as the window this
                     // reproduces lists them in a scrolling pane
       RowAction, // not an option: a button running a GuiActions function
+      RowSphere, // the disc one drags to give a direction, names[] naming the
+                 // three options it writes
       RowRow, // several options on one line under one label, names[] naming them
       RowMulti, // several switches behind one button, names[] naming them
       RowFunction, // an option reached by its accessor, having no table entry
@@ -101,9 +103,19 @@ namespace Dialog {
   {RowCombo, name, label, choices, values, 0., 1., nullptr, false}
 #define STRCOMBO(name, label, choices) \
   {RowStringCombo, name, label, choices, nullptr, 0., 0., nullptr, false}
+// one taking part of a field's width, the value after it filling the rest:
+// the window this reproduces puts a font and its size inside one field
+#define STRCOMBO_OF(name, label, choices, share) \
+  {RowStringCombo, name, label, choices, nullptr, 1., 0., nullptr, false, share}
 #define COLOR(name, label) {RowColor, name, label, nullptr, nullptr, 0., 0., nullptr, false}
 #define COLORS {RowAllColors, nullptr, nullptr, nullptr, nullptr, 0., 0., nullptr, false}
 #define ACTION(id, label) {RowAction, id, label, nullptr, nullptr, 0., 0., nullptr, false}
+// a button one is meant to think twice about, drawn as the warning it is
+#define ACTION_ALERT(id, label) \
+  {RowAction, id, label, nullptr, nullptr, 2., 0., nullptr, false}
+// the disc one drags to give a direction, at the right end of the line above
+#define SPHERE(names) \
+  {RowSphere, nullptr, nullptr, names, nullptr, 0., 0., nullptr, false}
 #define ROW(label, names) {RowRow, nullptr, label, names, nullptr, 0., 0., nullptr, false}
 #define VEC2(name, label) {RowRow, name, label, nullptr, nullptr, 2., 0., nullptr, false}
 #define VEC3(name, label) {RowRow, name, label, nullptr, nullptr, 3., 0., nullptr, false}
@@ -115,6 +127,10 @@ namespace Dialog {
 // a button at the right end of the line above it
 #define ACTION_RIGHT(id, label) \
   {RowAction, id, label, nullptr, nullptr, 1., 0., nullptr, false}
+// and one that starts the second column of that line rather than ending it,
+// which is where the window this reproduces puts the two that pick something
+#define ACTION_COLUMN(id, label) \
+  {RowAction, id, label, nullptr, nullptr, 3., 0., nullptr, false}
 // and a switch sharing that line
 #define CHECK_RIGHT(name, label) \
   {RowCheck, name, label, nullptr, nullptr, 1., 0., nullptr, false}
@@ -245,7 +261,7 @@ namespace Dialog {
     CHECK("Trackball", "Use trackball rotation instead of Euler angles"),
     CHECK("RotationCenterGravity", "Rotate around pseudo center of mass"),
     ROW("Rotation center", _r_rotationCenterX),
-    ACTION_RIGHT("rotation_center_select", "Select"),
+    ACTION_COLUMN("rotation_center_select", "Select"),
     CHECK("MouseInvertZoom", "Invert mouse wheel zoom direction"),
     END};
 
@@ -263,7 +279,7 @@ namespace Dialog {
     NUMBER("NumThreads", "Maximum number of threads"),
     CHECKFN("Enable heavy visualization capabilities",
             opt_general_heavy_visualization),
-    ACTION("restoreDefaults", "Restore all options to default settings"),
+    ACTION_ALERT("restoreDefaults", "Restore all options to default settings"),
     END};
 
   const optionRow _generalAxes[] = {
@@ -275,7 +291,7 @@ namespace Dialog {
     CHECK("AxesAutoPosition", "Set position and size of axes automatically"),
     ROW("Axes minimum", _r_axesMinX),
     ROW("Axes maximum", _r_axesMaxX),
-    ACTION_RIGHT("axes_fit", "Fit to visible"),
+    ACTION("axes_fit", "Fit to visible"),
     CHECK("SmallAxes", "Show small axes"),
     ROW("Small axes position", _r_smallAxesPositionX),
     END};
@@ -289,16 +305,17 @@ namespace Dialog {
     NUMBER("PointSize", "Point size"),
     NUMBER("LineWidth", "Line width"),
     COMBOV("VectorType", "Vector display", _c_vectorType, 1., 1.),
-    ACTION_RIGHT("arrow_edit", "Edit arrow"),
+    ACTION_COLUMN("arrow_edit", "Edit arrow"),
     STRCOMBO("GraphicsFontEngine", "Font rendering engine", _c_graphicsFontEngine),
-    STRCOMBO("GraphicsFont", "", _c_graphicsFont),
-    NUMBER_AFTER("GraphicsFontSize", "Default font", 1. / 4.),
-    STRCOMBO("GraphicsFontTitle", "", _c_graphicsFont),
-    NUMBER_AFTER("GraphicsFontSizeTitle", "Title font", 1. / 4.),
+    STRCOMBO_OF("GraphicsFont", "", _c_graphicsFont, 4. / 5.),
+    NUMBER_AFTER("GraphicsFontSize", "Default font", 1. / 5.),
+    STRCOMBO_OF("GraphicsFontTitle", "", _c_graphicsFont, 4. / 5.),
+    NUMBER_AFTER("GraphicsFontSizeTitle", "Title font", 1. / 5.),
     END};
 
   const optionRow _generalColor[] = {
     ROW("Light position", _r_light0X),
+    SPHERE(_r_light0X),
     NUMBER("Light0W", "Light position divisor"),
     ROW("Material shininess/exponent", _r_shininess),
     COMBO("ColorScheme", "Predefined color scheme", _c_colorScheme),
@@ -1026,6 +1043,8 @@ namespace Dialog {
           std::string what = row.name;
           f.changed = [what]() { optionsAction(what); };
           f.enabled = _enabledBy(category, row.name, num);
+          if(row.vmin == 2.) f.alert = true;
+          if(row.vmin == 3.) f.sameRow = true; // the next column of that line
           if(row.vmin == 1.) {
             // at the right end of the line above, where the window this
             // reproduces puts it
@@ -1037,6 +1056,45 @@ namespace Dialog {
             f.sameRow = true;
             f.packed = true;
           }
+          pane.fields.push_back(f);
+        } break;
+        case RowSphere: {
+          // The one widget of the window this reproduces that is not a field:
+          // a disc one drags to say where the light comes from. It writes the
+          // same three options the row above it holds, and sits at the right
+          // end of that row, hanging over the line under it.
+          std::vector<std::string> names;
+          for(int k = 0; row.choices && row.choices[k]; k++)
+            names.push_back(row.choices[k]);
+          std::string cat = category;
+          Field f;
+          f.kind = Direction;
+          f.rows = 2;
+          f.readVector = [cat, names, num](double &x, double &y, double &z) {
+            double v[3] = {0., 0., 0.};
+            for(std::size_t k = 0; k < names.size() && k < 3; k++)
+              NumberOption(GMSH_GET, cat.c_str(), num, names[k].c_str(), v[k],
+                           false);
+            x = v[0];
+            y = v[1];
+            z = v[2];
+          };
+          f.writeVector = [cat, names, num](double x, double y, double z) {
+            double v[3] = {x, y, z};
+            for(std::size_t k = 0; k < names.size() && k < 3; k++)
+              NumberOption(GMSH_SET | GMSH_GUI, cat.c_str(), num,
+                           names[k].c_str(), v[k], false);
+          };
+          f.changed = _redraw;
+          f.enabled = _enabledBy(category, names.size() ? names[0].c_str() : "",
+                                 num);
+          Field gap;
+          gap.kind = Spacer;
+          gap.widthEm = 1.;
+          gap.sameRow = true;
+          pane.fields.push_back(gap);
+          f.sameRow = true;
+          f.packed = true;
           pane.fields.push_back(f);
         } break;
         case RowCaption: {
@@ -1066,6 +1124,9 @@ namespace Dialog {
           Field f = _fieldFor(row.kind, category, row.name,
                               row.label ? row.label : row.name, num, &row);
           if(row.share > 0.) f.widthShare = row.share;
+          // a choice sharing a field's width with the value after it stands
+          // against it, so that the two together measure one field
+          if(row.kind == RowStringCombo && row.vmin == 1.) f.packed = true;
           // what it decides is not only a value but what the window holds
           if(row.kind == RowCheck && row.vmin == 2.)
             f.changed = []() {

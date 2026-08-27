@@ -113,6 +113,17 @@ namespace Dialog {
     if(colour) *colour = v;
   }
 
+  void Field::getVector(double &x, double &y, double &z) const
+  {
+    x = y = z = 0.;
+    if(readVector) readVector(x, y, z);
+  }
+
+  void Field::setVector(double x, double y, double z)
+  {
+    if(writeVector) writeVector(x, y, z);
+  }
+
   // --- what each dialog is showing
 
   int &currentPane(int dialog)

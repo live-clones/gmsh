@@ -128,6 +128,29 @@ namespace Dialog {
     return f;
   }
 
+  // A direction one gives by dragging a point over a disc, `lines` lines
+  // tall. It hangs over what follows it rather than making its own line that
+  // tall.
+  inline Field direction(std::function<void(double &, double &, double &)> read,
+                         std::function<void(double, double, double)> write,
+                         int lines = 2)
+  {
+    Field f;
+    f.kind = Direction;
+    f.readVector = read;
+    f.writeVector = write;
+    f.rows = lines;
+    f.packed = true;
+    return f;
+  }
+
+  // the same field, to be looked at twice: what it does cannot be taken back
+  inline Field warns(Field f)
+  {
+    f.alert = true;
+    return f;
+  }
+
   // what has been picked so far, which one may correct
   inline Field picked(const std::string &label, const std::vector<int> *what,
                       std::function<std::string(int)> name,
