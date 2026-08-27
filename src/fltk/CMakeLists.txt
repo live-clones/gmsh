@@ -5,7 +5,9 @@
 
 set(SRC
   FlGui.cpp
-    graphicWindow.cpp
+  GuiFltk.cpp
+  CreateFileFltk.cpp
+    graphicWindow.cpp menuFltk.cpp dialogFltk.cpp
       openglWindow.cpp
     optionWindow.cpp
       colorbarWindow.cpp
@@ -14,19 +16,15 @@ set(SRC
     gamepadWindow.cpp
     fieldWindow.cpp
     pluginWindow.cpp
-    statisticsWindow.cpp
     visibilityWindow.cpp
-    highOrderToolsWindow.cpp
-    clippingWindow.cpp
-    manipWindow.cpp
-    contextWindow.cpp
+
     onelabContextWindow.cpp
     onelabGroup.cpp
     helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp
     classificationEditor.cpp
-    partitionDialog.cpp
+
     inputValue.cpp
     viewButton.cpp solverButton.cpp
     Navigator.cpp

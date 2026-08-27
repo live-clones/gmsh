@@ -14,6 +14,7 @@
 #include "drawContext.h"
 #include "Options.h"
 #include "Context.h"
+#include "GuiActions.h"
 #include "GmshMessage.h"
 #include "MLine.h"
 #include "MQuadrangle.h"
@@ -274,36 +275,16 @@ static void classify_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
 
-  if(!e->selected) {
-    e->selected = new discreteEdge(
-      GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1,
-      nullptr, nullptr);
-    GModel::current()->add(e->selected);
-  }
-
-  computeDiscreteCurvatures(GModel::current());
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
-    computeEdgeCut(GModel::current(), e->selected->lines,  CTX::instance()->mesh.reparamMaxTriangles);
-  computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
-  double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
-  classifyFaces(GModel::current(), threshold);
-
-  // remove selected, but do not delete its elements
-  if(e->selected) {
-    GModel::current()->remove(e->selected);
-    e->selected->lines.clear();
-    delete e->selected;
-    e->selected = nullptr;
-  }
-
-  GModel::current()->pruneMeshVertexAssociations();
+  // hand over the curve where the editor collected the edges the user picked;
+  // the shared implementation adds the ones it finds, then disposes of it
+  meshClassifySurfaces(
+    e->inputs[CLASS_VALUE_ANGLE]->value(),
+    e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value() ? true :
+                                                                       false,
+    &e->selected);
 
   e->elements.clear();
   e->edges_detected.clear();
-
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
-    GModel::current()->createGeometryOfDiscreteEntities();
-
   NoElementsSelectedMode(e);
 }
 

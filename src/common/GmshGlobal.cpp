@@ -52,12 +52,9 @@ typedef unsigned long intptr_t;
 #include "PluginManager.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#include "graphicWindow.h"
+#if defined(HAVE_GUI)
+#include "Gui.h"
 #include "drawContext.h"
-#include "onelabGroup.h"
-
 #endif
 
 static bool isInitialized = false;
@@ -68,7 +65,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
   if(isInitialized) return 1;
   isInitialized = true;
 
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   RedirectIOToConsole();
 #endif
 
@@ -396,20 +393,20 @@ int GmshBatch()
   return 1;
 }
 
-int GmshFLTK(int argc, char **argv)
+int GmshGUI(int argc, char **argv)
 {
-#if defined(HAVE_FLTK) && defined(HAVE_POST)
+#if defined(HAVE_GUI) && defined(HAVE_POST)
   // create the GUI
-  FlGui::instance(argc, argv);
+  Gui::create(argc, argv);
 
   StartupMessage();
 
   // display GUI immediately for quick launch time
-  FlGui::check();
+  Gui::check();
 
-  if(FlGui::getOpenedThroughMacFinder().size() &&
+  if(Gui::getOpenedThroughMacFinder().size() &&
      CTX::instance()->files.empty()) {
-    OpenProject(FlGui::getOpenedThroughMacFinder());
+    OpenProject(Gui::getOpenedThroughMacFinder());
   }
   else {
     OpenProject(GModel::current()->getFileName());
@@ -431,22 +428,22 @@ int GmshFLTK(int argc, char **argv)
     }
   }
 
-  FlGui::instance()->setFinishedProcessingCommandLine();
+  Gui::setFinishedProcessingCommandLine();
 
   if(CTX::instance()->post.combineTime) {
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
                    CTX::instance()->post.combineCopyOptions);
-    FlGui::instance()->updateViews(true, true);
+    Gui::updateViews(true, true);
   }
 
   // init first context
   switch(CTX::instance()->initialContext) {
-  case 1: FlGui::instance()->openModule("Geometry"); break;
-  case 2: FlGui::instance()->openModule("Mesh"); break;
-  case 3: FlGui::instance()->openModule("Solver"); break;
-  case 4: FlGui::instance()->openModule("Post-processing"); break;
+  case 1: Gui::openModule("Geometry"); break;
+  case 2: Gui::openModule("Mesh"); break;
+  case 3: Gui::openModule("Solver"); break;
+  case 4: Gui::openModule("Post-processing"); break;
   default: // automatic
-    if(PView::list.size()) FlGui::instance()->openModule("Post-processing");
+    if(PView::list.size()) Gui::openModule("Post-processing");
     break;
   }
 
@@ -482,13 +479,13 @@ int GmshFLTK(int argc, char **argv)
   }
 
   // launch solver (if requested) and fill onelab tree
-  solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+  Gui::startSolver(CTX::instance()->launchSolverAtStartup);
 
   // loop
-  return FlGui::instance()->run();
+  return Gui::run();
 
 #else
-  Msg::Error("GmshFLTK unavailable: please recompile with FLTK support");
+  Msg::Error("GmshGUI unavailable: please recompile with FLTK or ImGui support");
   return 0;
 #endif
 }
@@ -515,6 +512,12 @@ GMSH_API int GmshMainBatch(int argc, char **argv)
 
 GMSH_API int GmshMainFLTK(int argc, char **argv)
 {
+  // deprecated name kept for compatibility
+  return GmshMainGUI(argc, argv);
+}
+
+GMSH_API int GmshMainGUI(int argc, char **argv)
+{
   // Create a new model
   new GModel();
 
@@ -540,6 +543,6 @@ GMSH_API int GmshMainFLTK(int argc, char **argv)
     Msg::Exit(0);
   }
 
-  // Interactive Gmsh with FLTK GUI
-  return GmshFLTK(argc, argv);
+  // Interactive Gmsh with the graphical user interface
+  return GmshGUI(argc, argv);
 }

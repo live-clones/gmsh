@@ -968,6 +968,15 @@ typedef struct {
   const char *help;
 } StringXColor;
 
+// Access to the option description tables of DefaultOptions.h, so that a
+// graphical interface can build an option editor generically. The returned
+// array is terminated by an entry whose "str" member is null; GetOptionCategories()
+// returns a null-terminated list of the valid category names.
+const char **GetOptionCategories();
+StringXString *GetStringOptionCategory(const char *category);
+StringXNumber *GetNumberOptionCategory(const char *category);
+StringXColor *GetColorOptionCategory(const char *category);
+
 void InitOptions(int num);
 void InitOptionsGUI(int num);
 void ReInitOptions(int num);

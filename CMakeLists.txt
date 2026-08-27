@@ -699,6 +699,11 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   endif()
 endif()
 
+# HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in
+if(HAVE_FLTK)
+  set(HAVE_GUI TRUE)
+endif()
+
 if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
   STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
   if(OSX_SDK_VERSION)
@@ -729,7 +734,7 @@ if(ENABLE_BUILD_IOS)
   add_definitions(-DBUILD_IOS)
 endif()
 
-if(HAVE_FLTK OR ENABLE_GRAPHICS)
+if(HAVE_GUI OR ENABLE_GRAPHICS)
   if(NOT HAVE_POST OR NOT HAVE_PLUGINS OR NOT HAVE_ONELAB)
     message(SEND_ERROR "Cannot compile GUI without Post, Plugin and ONELAB")
   endif()
@@ -1767,6 +1772,7 @@ endif()
 # we could specify include dirs more selectively, but this is simpler
 include_directories(src/common src/fltk src/geo src/graphics src/mesh src/solver
                     src/numeric src/parser src/plugin src/post api
+                    contrib/stb
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
 
 # set this for external codes that might include this CMakeList file
@@ -1829,7 +1835,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 endif()
 
 # binary targets
-if(HAVE_FLTK)
+if(HAVE_GUI)
   if(ENABLE_BUILD_DYNAMIC)
     add_executable(gmsh WIN32 src/common/Main.cpp)
     target_link_libraries(gmsh shared)
@@ -1854,11 +1860,11 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 # OS specific linker options
 if(WIN32 AND NOT MSVC)
   set(FLAGS "-Wl,--stack,16777216 -Wl,--image-base -Wl,0x10000000 -static")
-  if(HAVE_FLTK)
+  if(HAVE_GUI)
     set(APPFLAGS "${FLAGS} -municode -mwindows")
-    if(HAVE_64BIT_SIZE_T)
+    if(HAVE_FLTK AND HAVE_64BIT_SIZE_T)
       set(APPFLAGS "${APPFLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/Win64Icon.res\"")
-    else()
+    elseif(HAVE_FLTK)
       set(APPFLAGS "${APPFLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/Win32Icon.res\"")
     endif()
   else()
@@ -2075,7 +2081,7 @@ endif()
 # against StartupWMClass, against the entries it has installed. Window rules key
 # on that, and a tiling extension typically skips a window it cannot resolve --
 # so without this the windows behave as if they belonged to no application.
-if(HAVE_FLTK AND UNIX AND NOT APPLE)
+if(HAVE_GUI AND UNIX AND NOT APPLE)
   set(GMSH_DESKTOP_ENTRY
       ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/info.gmsh.gmsh.desktop)
   install(FILES ${GMSH_DESKTOP_ENTRY}
@@ -2276,7 +2282,7 @@ if(UNIX)
   set(CPACK_INSTALL_COMMANDS "rm -rf ${CMAKE_CURRENT_BINARY_DIR}/_CPack_Packages")
 endif()
 
-if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL AND HAVE_FLTK)
+if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL AND HAVE_GUI)
   set(CPACK_GENERATOR Bundle)
   set(CPACK_BUNDLE_NAME Gmsh)
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_app.plist F0)
@@ -2366,7 +2372,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       target_link_libraries(${TEST} shared)
       if(WIN32 AND NOT MSVC)
         set(FLAGS "-static")
-        if(HAVE_FLTK)
+        if(HAVE_GUI)
           set(FLAGS "${FLAGS} -mwindows")
         else()
           set(FLAGS "${FLAGS} -mconsole")

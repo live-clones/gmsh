@@ -18,10 +18,6 @@
 #include "Context.h"
 #include "gl2ps.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/Fl.H>
-#include <FL/gl.h>
-#endif
 
 static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
                        bool useNormalArray)
@@ -345,7 +341,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
   Msg::Debug("drawing extra glyphs (this is slow...)");
 
   // speedup drawing of textured fonts on cocoa mac version
-#if defined(HAVE_FLTK) && defined(__APPLE__)
+#if defined(HAVE_GUI) && defined(__APPLE__)
   if(opt->intervalsType == PViewOptions::Numeric) {
     int numStrings = 0;
     for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++)
@@ -631,7 +627,7 @@ void drawContext::drawPost()
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     bool changed = PView::list[i]->fillVertexArrays();
     if(changed) Msg::Debug("post-pro vertex arrays have changed");
-#if defined(HAVE_FLTK) && defined(__APPLE__)
+#if defined(HAVE_GUI) && defined(__APPLE__)
     // FIXME: resetting texture pile fixes bug with recent macOS versions
     if(changed) gl_texture_pile_height(gl_texture_pile_height());
 #endif

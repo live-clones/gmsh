@@ -43,42 +43,84 @@
 #include "Plugin.h"
 #endif
 
+#if defined(HAVE_GUI)
+#include "Gui.h"
+#include "GuiDialogs.h"
+// the view options reach the draw context of the window that has the focus
+#include "drawContext.h"
+#endif
+
 #if defined(HAVE_FLTK)
 #include <FL/Fl_Tooltip.H>
 #include "FlGui.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
-#include "manipWindow.h"
-#include "contextWindow.h"
-#include "clippingWindow.h"
 #include "onelabGroup.h"
 #include "viewButton.h"
 #include "drawContextFltkCairo.h"
 #include "drawContextFltkStringTexture.h"
 #endif
 
+// The tables of DefaultOptions.h, indexed by category name. They describe every
+// option (name, setter, default value, level and help string), which is what
+// allows a graphical interface to build an option editor without knowing any
+// option in particular.
+
+const char **GetOptionCategories()
+{
+  static const char *categories[] = {"General",        "Geometry", "Mesh",
+                                     "Solver",         "View",     "Print",
+                                     "PostProcessing", nullptr};
+  return categories;
+}
+
+StringXString *GetStringOptionCategory(const char *category)
+{
+  if(!category) return nullptr;
+  if(!strcmp(category, "General")) return GeneralOptions_String;
+  if(!strcmp(category, "Geometry")) return GeometryOptions_String;
+  if(!strcmp(category, "Mesh")) return MeshOptions_String;
+  if(!strcmp(category, "Solver")) return SolverOptions_String;
+  if(!strcmp(category, "PostProcessing")) return PostProcessingOptions_String;
+  if(!strcmp(category, "View")) return ViewOptions_String;
+  if(!strcmp(category, "Print")) return PrintOptions_String;
+  return nullptr;
+}
+
+StringXNumber *GetNumberOptionCategory(const char *category)
+{
+  if(!category) return nullptr;
+  if(!strcmp(category, "General")) return GeneralOptions_Number;
+  if(!strcmp(category, "Geometry")) return GeometryOptions_Number;
+  if(!strcmp(category, "Mesh")) return MeshOptions_Number;
+  if(!strcmp(category, "Solver")) return SolverOptions_Number;
+  if(!strcmp(category, "PostProcessing")) return PostProcessingOptions_Number;
+  if(!strcmp(category, "View")) return ViewOptions_Number;
+  if(!strcmp(category, "Print")) return PrintOptions_Number;
+  return nullptr;
+}
+
+StringXColor *GetColorOptionCategory(const char *category)
+{
+  if(!category) return nullptr;
+  if(!strcmp(category, "General")) return GeneralOptions_Color;
+  if(!strcmp(category, "Geometry")) return GeometryOptions_Color;
+  if(!strcmp(category, "Mesh")) return MeshOptions_Color;
+  if(!strcmp(category, "Solver")) return SolverOptions_Color;
+  if(!strcmp(category, "PostProcessing")) return PostProcessingOptions_Color;
+  if(!strcmp(category, "View")) return ViewOptions_Color;
+  if(!strcmp(category, "Print")) return PrintOptions_Color;
+  return nullptr;
+}
+
 // General routines for string options
 
 bool StringOption(int action, const char *category, int num, const char *name,
                   std::string &val, bool warnIfUnknown)
 {
-  StringXString *s = nullptr;
-  if(!strcmp(category, "General"))
-    s = GeneralOptions_String;
-  else if(!strcmp(category, "Geometry"))
-    s = GeometryOptions_String;
-  else if(!strcmp(category, "Mesh"))
-    s = MeshOptions_String;
-  else if(!strcmp(category, "Solver"))
-    s = SolverOptions_String;
-  else if(!strcmp(category, "PostProcessing"))
-    s = PostProcessingOptions_String;
-  else if(!strcmp(category, "View"))
-    s = ViewOptions_String;
-  else if(!strcmp(category, "Print"))
-    s = PrintOptions_String;
-  else {
+  StringXString *s = GetStringOptionCategory(category);
+  if(!s) {
     if(warnIfUnknown)
       Msg::Error("Unknown string option category '%s'", category);
     return false;
@@ -186,22 +228,8 @@ static void PrintStringOptionsDoc(StringXString s[], const char *prefix,
 bool NumberOption(int action, const char *category, int num, const char *name,
                   double &val, bool warnIfUnknown)
 {
-  StringXNumber *s = nullptr;
-  if(!strcmp(category, "General"))
-    s = GeneralOptions_Number;
-  else if(!strcmp(category, "Geometry"))
-    s = GeometryOptions_Number;
-  else if(!strcmp(category, "Mesh"))
-    s = MeshOptions_Number;
-  else if(!strcmp(category, "Solver"))
-    s = SolverOptions_Number;
-  else if(!strcmp(category, "PostProcessing"))
-    s = PostProcessingOptions_Number;
-  else if(!strcmp(category, "View"))
-    s = ViewOptions_Number;
-  else if(!strcmp(category, "Print"))
-    s = PrintOptions_Number;
-  else {
+  StringXNumber *s = GetNumberOptionCategory(category);
+  if(!s) {
     if(warnIfUnknown)
       Msg::Error("Unknown number option category '%s'", category);
     return false;
@@ -289,22 +317,8 @@ static void PrintNumberOptionsDoc(StringXNumber s[], const char *prefix,
 bool ColorOption(int action, const char *category, int num, const char *name,
                  unsigned int &val, bool warnIfUnknown)
 {
-  StringXColor *s = nullptr;
-  if(!strcmp(category, "General"))
-    s = GeneralOptions_Color;
-  else if(!strcmp(category, "Geometry"))
-    s = GeometryOptions_Color;
-  else if(!strcmp(category, "Mesh"))
-    s = MeshOptions_Color;
-  else if(!strcmp(category, "Solver"))
-    s = SolverOptions_Color;
-  else if(!strcmp(category, "PostProcessing"))
-    s = PostProcessingOptions_Color;
-  else if(!strcmp(category, "View"))
-    s = ViewOptions_Color;
-  else if(!strcmp(category, "Print"))
-    s = PrintOptions_Color;
-  else {
+  StringXColor *s = GetColorOptionCategory(category);
+  if(!s) {
     if(warnIfUnknown)
       Msg::Error("Unknown color option category '%s'", category);
     return false;
@@ -2262,9 +2276,9 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
     FlGui::instance()->options->general.butt[21]->value(
       CTX::instance()->guiColorScheme);
   }
-  if(action & GMSH_SET && FlGui::available()) {
-    FlGui::instance()->applyColorScheme(true);
-  }
+#endif
+#if defined(HAVE_GUI)
+  if(action & GMSH_SET && Gui::available()) { Gui::applyColorScheme(true); }
 #endif
   return CTX::instance()->guiColorScheme;
 }
@@ -2684,11 +2698,12 @@ double opt_general_confirm_overwrite(OPT_ARGS_NUM)
 double opt_general_rotation0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpRotation[0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->r[0] = val;
-    return gl->getDrawContext()->r[0];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->r[0] = val;
+      return ctx->r[0];
+    }
   }
 #endif
   return CTX::instance()->tmpRotation[0];
@@ -2697,11 +2712,12 @@ double opt_general_rotation0(OPT_ARGS_NUM)
 double opt_general_rotation1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpRotation[1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->r[1] = val;
-    return gl->getDrawContext()->r[1];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->r[1] = val;
+      return ctx->r[1];
+    }
   }
 #endif
   return CTX::instance()->tmpRotation[1];
@@ -2710,11 +2726,12 @@ double opt_general_rotation1(OPT_ARGS_NUM)
 double opt_general_rotation2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpRotation[2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->r[2] = val;
-    return gl->getDrawContext()->r[2];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->r[2] = val;
+      return ctx->r[2];
+    }
   }
 #endif
   return CTX::instance()->tmpRotation[2];
@@ -2756,12 +2773,12 @@ double opt_general_rotation_center2(OPT_ARGS_NUM)
 double opt_general_quaternion0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->quaternion[0] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->quaternion[0];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->quaternion[0] = val;
+      return ctx->quaternion[0];
+    }
   }
 #endif
   return CTX::instance()->tmpQuaternion[0];
@@ -2770,12 +2787,12 @@ double opt_general_quaternion0(OPT_ARGS_NUM)
 double opt_general_quaternion1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->quaternion[1] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->quaternion[1];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->quaternion[1] = val;
+      return ctx->quaternion[1];
+    }
   }
 #endif
   return CTX::instance()->tmpQuaternion[1];
@@ -2784,12 +2801,12 @@ double opt_general_quaternion1(OPT_ARGS_NUM)
 double opt_general_quaternion2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->quaternion[2] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->quaternion[2];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->quaternion[2] = val;
+      return ctx->quaternion[2];
+    }
   }
 #endif
   return CTX::instance()->tmpQuaternion[2];
@@ -2798,12 +2815,12 @@ double opt_general_quaternion2(OPT_ARGS_NUM)
 double opt_general_quaternion3(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->quaternion[3] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->quaternion[3];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->quaternion[3] = val;
+      return ctx->quaternion[3];
+    }
   }
 #endif
   return CTX::instance()->tmpQuaternion[3];
@@ -2812,12 +2829,12 @@ double opt_general_quaternion3(OPT_ARGS_NUM)
 double opt_general_translation0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->t[0] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->t[0];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->t[0] = val;
+      return ctx->t[0];
+    }
   }
 #endif
   return CTX::instance()->tmpTranslation[0];
@@ -2826,12 +2843,12 @@ double opt_general_translation0(OPT_ARGS_NUM)
 double opt_general_translation1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->t[1] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->t[1];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->t[1] = val;
+      return ctx->t[1];
+    }
   }
 #endif
   return CTX::instance()->tmpTranslation[1];
@@ -2840,12 +2857,12 @@ double opt_general_translation1(OPT_ARGS_NUM)
 double opt_general_translation2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->t[2] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->t[2];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->t[2] = val;
+      return ctx->t[2];
+    }
   }
 #endif
   return CTX::instance()->tmpTranslation[2];
@@ -2854,12 +2871,12 @@ double opt_general_translation2(OPT_ARGS_NUM)
 double opt_general_scale0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpScale[0] = val ? val : 1.0;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->s[0] = val ? val : 1.0;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->s[0];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->s[0] = val ? val : 1.0;
+      return ctx->s[0];
+    }
   }
 #endif
   return CTX::instance()->tmpScale[0];
@@ -2868,12 +2885,12 @@ double opt_general_scale0(OPT_ARGS_NUM)
 double opt_general_scale1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpScale[1] = val ? val : 1.0;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->s[1] = val ? val : 1.0;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->s[1];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->s[1] = val ? val : 1.0;
+      return ctx->s[1];
+    }
   }
 #endif
   return CTX::instance()->tmpScale[1];
@@ -2882,12 +2899,12 @@ double opt_general_scale1(OPT_ARGS_NUM)
 double opt_general_scale2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpScale[2] = val ? val : 1.0;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->s[2] = val ? val : 1.0;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->s[2];
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      if(action & GMSH_SET) ctx->s[2] = val ? val : 1.0;
+      return ctx->s[2];
+    }
   }
 #endif
   return CTX::instance()->tmpScale[2];
@@ -3725,9 +3742,12 @@ double opt_general_camera_mode(OPT_ARGS_NUM)
 double opt_general_clip0a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[0][0];
 }
@@ -3735,9 +3755,12 @@ double opt_general_clip0a(OPT_ARGS_NUM)
 double opt_general_clip0b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[0][1];
 }
@@ -3745,9 +3768,12 @@ double opt_general_clip0b(OPT_ARGS_NUM)
 double opt_general_clip0c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[0][2];
 }
@@ -3755,9 +3781,12 @@ double opt_general_clip0c(OPT_ARGS_NUM)
 double opt_general_clip0d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[0][3];
 }
@@ -3765,9 +3794,12 @@ double opt_general_clip0d(OPT_ARGS_NUM)
 double opt_general_clip1a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[1][0];
 }
@@ -3775,9 +3807,12 @@ double opt_general_clip1a(OPT_ARGS_NUM)
 double opt_general_clip1b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[1][1];
 }
@@ -3785,9 +3820,12 @@ double opt_general_clip1b(OPT_ARGS_NUM)
 double opt_general_clip1c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[1][2];
 }
@@ -3795,9 +3833,12 @@ double opt_general_clip1c(OPT_ARGS_NUM)
 double opt_general_clip1d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[1][3];
 }
@@ -3805,9 +3846,12 @@ double opt_general_clip1d(OPT_ARGS_NUM)
 double opt_general_clip2a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[2][0];
 }
@@ -3815,9 +3859,12 @@ double opt_general_clip2a(OPT_ARGS_NUM)
 double opt_general_clip2b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[2][1];
 }
@@ -3825,9 +3872,12 @@ double opt_general_clip2b(OPT_ARGS_NUM)
 double opt_general_clip2c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[2][2];
 }
@@ -3835,9 +3885,12 @@ double opt_general_clip2c(OPT_ARGS_NUM)
 double opt_general_clip2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[2][3];
 }
@@ -3845,9 +3898,12 @@ double opt_general_clip2d(OPT_ARGS_NUM)
 double opt_general_clip3a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[3][0];
 }
@@ -3855,9 +3911,12 @@ double opt_general_clip3a(OPT_ARGS_NUM)
 double opt_general_clip3b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[3][1];
 }
@@ -3865,9 +3924,12 @@ double opt_general_clip3b(OPT_ARGS_NUM)
 double opt_general_clip3c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[3][2];
 }
@@ -3875,9 +3937,12 @@ double opt_general_clip3c(OPT_ARGS_NUM)
 double opt_general_clip3d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[3][3];
 }
@@ -3885,9 +3950,12 @@ double opt_general_clip3d(OPT_ARGS_NUM)
 double opt_general_clip4a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[4][0];
 }
@@ -3895,9 +3963,12 @@ double opt_general_clip4a(OPT_ARGS_NUM)
 double opt_general_clip4b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[4][1];
 }
@@ -3905,9 +3976,12 @@ double opt_general_clip4b(OPT_ARGS_NUM)
 double opt_general_clip4c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[4][2];
 }
@@ -3915,9 +3989,12 @@ double opt_general_clip4c(OPT_ARGS_NUM)
 double opt_general_clip4d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[4][3];
 }
@@ -3925,9 +4002,12 @@ double opt_general_clip4d(OPT_ARGS_NUM)
 double opt_general_clip5a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[5][0];
 }
@@ -3935,9 +4015,12 @@ double opt_general_clip5a(OPT_ARGS_NUM)
 double opt_general_clip5b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[5][1];
 }
@@ -3945,9 +4028,12 @@ double opt_general_clip5b(OPT_ARGS_NUM)
 double opt_general_clip5c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[5][2];
 }
@@ -3955,9 +4041,12 @@ double opt_general_clip5c(OPT_ARGS_NUM)
 double opt_general_clip5d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    // the dialog is showing one of these planes: bring it up to date
+    clippingRead();
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipPlane[5][3];
 }
@@ -3965,12 +4054,15 @@ double opt_general_clip5d(OPT_ARGS_NUM)
 double opt_general_clip_whole_elements(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipWholeElements = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->clipping->butt[0]->value(
-      CTX::instance()->clipWholeElements);
-    FlGui::instance()->options->activate("clip_whole_elements");
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    clippingStore().wholeElements = CTX::instance()->clipWholeElements != 0;
+    Gui::refreshDialog(Dialog::Clipping);
   }
+#endif
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->activate("clip_whole_elements");
 #endif
   return CTX::instance()->clipWholeElements;
 }
@@ -3979,10 +4071,12 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->clipOnlyDrawIntersectingVolume = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->butt[1]->value(
-      CTX::instance()->clipOnlyDrawIntersectingVolume);
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    clippingStore().onlyDrawIntersecting =
+      CTX::instance()->clipOnlyDrawIntersectingVolume != 0;
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipOnlyDrawIntersectingVolume;
 }
@@ -3990,10 +4084,11 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
 double opt_general_clip_only_volume(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipOnlyVolume = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->butt[2]->value(
-      CTX::instance()->clipOnlyVolume);
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
+    clippingStore().onlyVolume = CTX::instance()->clipOnlyVolume != 0;
+    Gui::refreshDialog(Dialog::Clipping);
+  }
 #endif
   return CTX::instance()->clipOnlyVolume;
 }
@@ -4238,15 +4333,15 @@ double opt_geometry_transform(OPT_ARGS_NUM)
       FlGui::instance()->options->geo.choice[3]->value(
         CTX::instance()->geom.useTransform);
     if(action & GMSH_SET) {
-      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+      drawContext *ctx = Gui::getCurrentDrawContext();
       if(CTX::instance()->geom.useTransform == 1) {
         drawTransform *tr = new drawTransformScaled(
           CTX::instance()->geom.transform, CTX::instance()->geom.offset);
-        gl->getDrawContext()->setTransform(tr);
+        ctx->setTransform(tr);
       }
       else {
-        drawTransform *tr = gl->getDrawContext()->getTransform();
-        gl->getDrawContext()->setTransform(nullptr);
+        drawTransform *tr = ctx->getTransform();
+        ctx->setTransform(nullptr);
         if(tr) delete tr;
       }
     }
@@ -4265,8 +4360,8 @@ static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
       FlGui::instance()->options->geo.value[nn]->value(
         CTX::instance()->geom.transform[ii][jj]);
     if(action & GMSH_SET) {
-      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-      drawTransform *tr = gl->getDrawContext()->getTransform();
+      drawContext *ctx = Gui::getCurrentDrawContext();
+      drawTransform *tr = ctx->getTransform();
       if(tr)
         tr->setMatrix(CTX::instance()->geom.transform,
                       CTX::instance()->geom.offset);
@@ -4330,8 +4425,8 @@ static double _opt_geometry_offset(OPT_ARGS_NUM, int ii, int nn)
       FlGui::instance()->options->geo.value[nn]->value(
         CTX::instance()->geom.offset[ii]);
     if(action & GMSH_SET) {
-      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-      drawTransform *tr = gl->getDrawContext()->getTransform();
+      drawContext *ctx = Gui::getCurrentDrawContext();
+      drawTransform *tr = ctx->getTransform();
       if(tr)
         tr->setMatrix(CTX::instance()->geom.transform,
                       CTX::instance()->geom.offset);
@@ -4921,42 +5016,27 @@ double opt_geometry_snap_points(OPT_ARGS_NUM)
 double opt_geometry_snap0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.snap[0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->elementaryContext->value[0]->value(
-      CTX::instance()->geom.snap[0]);
-#endif
   return CTX::instance()->geom.snap[0];
 }
 
 double opt_geometry_snap1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.snap[1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->elementaryContext->value[1]->value(
-      CTX::instance()->geom.snap[1]);
-#endif
   return CTX::instance()->geom.snap[1];
 }
 
 double opt_geometry_snap2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.snap[2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->elementaryContext->value[2]->value(
-      CTX::instance()->geom.snap[2]);
-#endif
   return CTX::instance()->geom.snap[2];
 }
 
 double opt_geometry_clip(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.clip = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI))
+    Gui::refreshDialog(Dialog::Clipping);
 #endif
   return CTX::instance()->geom.clip;
 }
@@ -6822,9 +6902,9 @@ double opt_mesh_partition_metis_min_conn(OPT_ARGS_NUM)
 double opt_mesh_clip(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.clip = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI))
+    Gui::refreshDialog(Dialog::Clipping);
 #endif
   return CTX::instance()->mesh.clip;
 }
@@ -9305,7 +9385,6 @@ double opt_view_clip(OPT_ARGS_NUM)
   if(action & GMSH_SET) { opt->clip = (int)val; }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->clipping->resetBrowser();
   }
 #endif
   return opt->clip;

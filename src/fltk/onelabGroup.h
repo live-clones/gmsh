@@ -73,8 +73,10 @@ public:
                  const std::string &hostName, int index);
   void removeSolver(const std::string &name);
   void checkForErrors(const std::string &client);
-  bool stop() { return _stop; }
-  void stop(bool val) { _stop = val; }
+  // the stop flag is shared with GuiActions.cpp, so that the interface and the
+  // run loop cannot disagree
+  bool stop();
+  void stop(bool val);
 };
 
 bool getParameterColor(const std::string &str, Fl_Color &c);

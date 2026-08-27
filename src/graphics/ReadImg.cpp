@@ -4,42 +4,34 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
+#include <vector>
 #include "ReadImg.h"
 #include "GmshMessage.h"
+#include "ImageIO.h"
 #include "PView.h"
 #include "PViewDataList.h"
 #include "GmshConfig.h"
 
-#if defined(HAVE_FLTK)
+// from an image, we create a post-processing view
 
-#include <FL/Fl_JPEG_Image.H>
-#include <FL/Fl_PNM_Image.H>
-#include <FL/Fl_PNG_Image.H>
-#include <FL/Fl_BMP_Image.H>
-
-// from an image, we create a post-procession view
-
-static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads = 1,
+static PViewDataList *Img2Data(const std::string &fileName, int quads = 1,
                                int resizex = 0, int resizey = 0)
 {
-  img_init.desaturate(); // convert to grayscale
+  int width = 0, height = 0, dim = 0;
+  std::vector<unsigned char> pixels;
+  // read as greyscale
+  if(!ImageIO::read(fileName, width, height, dim, pixels, 1)) return nullptr;
 
-  // resize if necessary
-  Fl_RGB_Image *img;
-  if(!resizex || !resizey)
-    img = (Fl_RGB_Image *)img_init.copy();
-  else
-    img = (Fl_RGB_Image *)img_init.copy(resizex, resizey);
-
-  const unsigned char *data = img->array;
-  int height = img->h();
-  int width = img->w();
-  int dim = img->d();
-
-  if(dim != 1 && dim != 2) {
-    Msg::Error("Unable to obtain one-channel image");
-    return nullptr;
+  if(resizex && resizey) {
+    std::vector<unsigned char> resized;
+    if(!ImageIO::resize(pixels, width, height, dim, resized, resizex, resizey))
+      return nullptr;
+    pixels.swap(resized);
+    width = resizex;
+    height = resizey;
   }
+
+  const unsigned char *data = &pixels[0];
 
   PViewDataList *d = new PViewDataList();
 
@@ -105,7 +97,6 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads = 1,
       }
     }
   }
-  delete img;
   return d;
 }
 
@@ -137,33 +128,20 @@ static int EndPos(const char *name, PViewData *d)
 
 int read_pnm(const std::string &fileName)
 {
-  Fl_PNM_Image img(fileName.c_str());
-  return EndPos(fileName.c_str(), Img2Data(img));
+  return EndPos(fileName.c_str(), Img2Data(fileName));
 }
 
 int read_jpeg(const std::string &fileName)
 {
-  Fl_JPEG_Image img(fileName.c_str());
-  return EndPos(fileName.c_str(), Img2Data(img));
+  return EndPos(fileName.c_str(), Img2Data(fileName));
 }
 
 int read_png(const std::string &fileName)
 {
-  Fl_PNG_Image img(fileName.c_str());
-  return EndPos(fileName.c_str(), Img2Data(img));
+  return EndPos(fileName.c_str(), Img2Data(fileName));
 }
 
 int read_bmp(const std::string &fileName)
 {
-  Fl_BMP_Image img(fileName.c_str());
-  return EndPos(fileName.c_str(), Img2Data(img));
+  return EndPos(fileName.c_str(), Img2Data(fileName));
 }
-
-#else
-
-int read_pnm(std::string fileName) { return 0; }
-int read_jpeg(std::string fileName) { return 0; }
-int read_png(std::string fileName) { return 0; }
-int read_bmp(std::string fileName) { return 0; }
-
-#endif

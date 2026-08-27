@@ -15,6 +15,8 @@
 #include <FL/Fl_Tile.H>
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Progress.H>
+
+#include "GuiActions.h"
 #if defined(__APPLE__)
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
@@ -109,10 +111,14 @@ void mesh_3d_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
 void status_xyz1p_cb(Fl_Widget *w, void *data);
 void status_options_cb(Fl_Widget *w, void *data);
-void status_play_manual(int time, int incr, bool redraw = true);
 void quick_access_cb(Fl_Widget *w, void *data);
 void show_hide_message_cb(Fl_Widget *w, void *data);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
+
+// The actions the shared menu description names: the file chooser and the
+// windows are the one part of a menu entry that is genuinely toolkit business.
+void fltkFileAction(const std::string &what);
+void fltkWindowAction(const std::string &what);
 
 #endif

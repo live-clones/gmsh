@@ -19,12 +19,12 @@
 #include "optionWindow.h"
 #include "fieldWindow.h"
 #include "pluginWindow.h"
-#include "statisticsWindow.h"
 #include "visibilityWindow.h"
-#include "highOrderToolsWindow.h"
-#include "clippingWindow.h"
-#include "manipWindow.h"
-#include "contextWindow.h"
+#include "Gui.h"
+#include "GuiActions.h"
+#include "GuiDialogs.h"
+#include "dialogFltk.h"
+#include "GuiActions.h"
 #include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "helpWindow.h"
@@ -481,6 +481,13 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   Fl_Mac_App_Menu::print = ""; // this sometimes crashes
 #endif
 
+  // Identify the windows to the desktop. Left alone FLTK announces its own name
+  // as the X11 class, so the desktop cannot tell which application a window
+  // belongs to -- and window rules (tiling extensions, "always on this
+  // workspace", ...) key on exactly that. The name matches the StartupWMClass
+  // of utils/freedesktop/info.gmsh.gmsh.desktop.
+  Fl_Window::default_xclass("Gmsh");
+
   // tell fltk we're (potentially) in multi-threaded mode
   Fl::lock();
 
@@ -605,16 +612,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   options = new optionWindow(CTX::instance()->deltaFontSize);
   fields = new fieldWindow(CTX::instance()->deltaFontSize);
   plugins = new pluginWindow(CTX::instance()->deltaFontSize);
-  stats = new statisticsWindow(CTX::instance()->deltaFontSize);
   visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
-  highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
-  clipping = new clippingWindow(CTX::instance()->deltaFontSize);
-  manip = new manipWindow(CTX::instance()->deltaFontSize);
-  elementaryContext =
-    new elementaryContextWindow(CTX::instance()->deltaFontSize);
-  transformContext = new transformContextWindow(CTX::instance()->deltaFontSize);
-  meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
-  physicalContext = new physicalContextWindow(CTX::instance()->deltaFontSize);
   onelabContext = new onelabContextWindow(CTX::instance()->deltaFontSize);
   help = new helpWindow();
 
@@ -651,16 +649,8 @@ FlGui::~FlGui()
   delete options;
   delete fields;
   delete plugins;
-  delete stats;
   delete visibility;
-  delete highordertools;
-  delete clipping;
-  delete manip;
-  delete elementaryContext;
-  delete transformContext;
-  delete physicalContext;
   delete onelabContext;
-  delete meshContext;
   delete help;
   delete fullscreen;
 }
@@ -832,33 +822,33 @@ int FlGui::testGlobalShortcuts(int event)
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('x')) {
-    elementaryContext->butt[0]->value(!elementaryContext->butt[0]->value());
+    elementaryFrozen(0) = !elementaryFrozen(0);
     status = 1;
   }
   else if(Fl::test_shortcut('y')) {
-    elementaryContext->butt[1]->value(!elementaryContext->butt[1]->value());
+    elementaryFrozen(1) = !elementaryFrozen(1);
     status = 1;
   }
   else if(Fl::test_shortcut('z')) {
-    elementaryContext->butt[2]->value(!elementaryContext->butt[2]->value());
+    elementaryFrozen(2) = !elementaryFrozen(2);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'x')) {
-    elementaryContext->butt[0]->value(0);
-    elementaryContext->butt[1]->value(1);
-    elementaryContext->butt[2]->value(1);
+    elementaryFrozen(0) = false;
+    elementaryFrozen(1) = true;
+    elementaryFrozen(2) = true;
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'y')) {
-    elementaryContext->butt[0]->value(1);
-    elementaryContext->butt[1]->value(0);
-    elementaryContext->butt[2]->value(1);
+    elementaryFrozen(0) = true;
+    elementaryFrozen(1) = false;
+    elementaryFrozen(2) = true;
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'z')) {
-    elementaryContext->butt[0]->value(1);
-    elementaryContext->butt[1]->value(1);
-    elementaryContext->butt[2]->value(0);
+    elementaryFrozen(0) = true;
+    elementaryFrozen(1) = true;
+    elementaryFrozen(2) = false;
     status = 1;
   }
   else if(Fl::test_shortcut(FL_Escape) ||
@@ -1126,19 +1116,19 @@ int FlGui::testGlobalShortcuts(int event)
 int FlGui::testArrowShortcuts()
 {
   if(Fl::test_shortcut(FL_Left)) {
-    status_play_manual(1, -CTX::instance()->post.animStep);
+    animationStep(1, -CTX::instance()->post.animStep);
     return 1;
   }
   else if(Fl::test_shortcut(FL_Right)) {
-    status_play_manual(1, CTX::instance()->post.animStep);
+    animationStep(1, CTX::instance()->post.animStep);
     return 1;
   }
   else if(Fl::test_shortcut(FL_Up)) {
-    status_play_manual(0, -CTX::instance()->post.animStep);
+    animationStep(0, -CTX::instance()->post.animStep);
     return 1;
   }
   else if(Fl::test_shortcut(FL_Down)) {
-    status_play_manual(0, CTX::instance()->post.animStep);
+    animationStep(0, CTX::instance()->post.animStep);
     return 1;
   }
 #if defined(HAVE_POPPLER)
@@ -1180,8 +1170,8 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
     options->resetExternalViewList();
     fields->loadFieldViewList();
     plugins->resetViewBrowser();
-    clipping->resetBrowser();
-    updateStatistics(false);
+    Gui::refreshDialog(Dialog::Clipping);
+    statisticsRefresh(false);
   }
 }
 
@@ -1196,12 +1186,7 @@ void FlGui::resetVisibility()
 {
   if(visibility->win->shown()) visibility_cb(nullptr, nullptr);
   if(help->options->shown()) help_options_cb(nullptr, nullptr);
-  updateStatistics(false);
-}
-
-void FlGui::updateStatistics(bool qualities)
-{
-  if(stats->win->shown()) stats->compute(qualities);
+  statisticsRefresh(false);
 }
 
 openglWindow *FlGui::getCurrentOpenglWindow()
@@ -1409,35 +1394,21 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->fieldPosition[1] = fields->win->y();
   CTX::instance()->fieldSize[0] = fields->win->w();
   CTX::instance()->fieldSize[1] = fields->win->h();
-  CTX::instance()->statPosition[0] = stats->win->x();
-  CTX::instance()->statPosition[1] = stats->win->y();
   CTX::instance()->visPosition[0] = visibility->win->x();
   CTX::instance()->visPosition[1] = visibility->win->y();
-  CTX::instance()->hotPosition[0] = highordertools->win->x();
-  CTX::instance()->hotPosition[1] = highordertools->win->y();
-  CTX::instance()->clipPosition[0] = clipping->win->x();
-  CTX::instance()->clipPosition[1] = clipping->win->y();
-  CTX::instance()->manipPosition[0] = manip->win->x();
-  CTX::instance()->manipPosition[1] = manip->win->y();
   if(lastContextWindow == 4) {
     CTX::instance()->ctxPosition[0] = onelabContext->win->x();
     CTX::instance()->ctxPosition[1] = onelabContext->win->y();
   }
-  else if(lastContextWindow == 3) {
-    CTX::instance()->ctxPosition[0] = physicalContext->win->x();
-    CTX::instance()->ctxPosition[1] = physicalContext->win->y();
-  }
-  else if(lastContextWindow == 2) {
-    CTX::instance()->ctxPosition[0] = meshContext->win->x();
-    CTX::instance()->ctxPosition[1] = meshContext->win->y();
-  }
-  else if(lastContextWindow == 1) {
-    CTX::instance()->ctxPosition[0] = transformContext->win->x();
-    CTX::instance()->ctxPosition[1] = transformContext->win->y();
-  }
   else {
-    CTX::instance()->ctxPosition[0] = elementaryContext->win->x();
-    CTX::instance()->ctxPosition[1] = elementaryContext->win->y();
+    // the context dialogs share one remembered position, as they always have
+    for(int i = 0; i < Dialog::NumDialogs; i++) {
+      dialogFltk *d = fltkDialog(i);
+      if(!d || !d->shown()) continue;
+      CTX::instance()->ctxPosition[0] = d->window()->x();
+      CTX::instance()->ctxPosition[1] = d->window()->y();
+      break;
+    }
   }
 #if defined(HAVE_3M)
   storeWindowPosition3M();
@@ -1469,14 +1440,6 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fields->win->iconize();
     if(FlGui::instance()->visibility->win->shown())
       FlGui::instance()->visibility->win->iconize();
-    if(FlGui::instance()->highordertools->win->shown())
-      FlGui::instance()->highordertools->win->iconize();
-    if(FlGui::instance()->clipping->win->shown())
-      FlGui::instance()->clipping->win->iconize();
-    if(FlGui::instance()->manip->win->shown())
-      FlGui::instance()->manip->win->iconize();
-    if(FlGui::instance()->stats->win->shown())
-      FlGui::instance()->stats->win->iconize();
   }
   else if(str == "zoom") {
     if(!zoom) {
@@ -1539,26 +1502,14 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->plugins->win->show();
     if(FlGui::instance()->fields->win->shown())
       FlGui::instance()->fields->win->show();
-    if(FlGui::instance()->elementaryContext->win->shown())
-      FlGui::instance()->elementaryContext->win->show();
-    if(FlGui::instance()->transformContext->win->shown())
-      FlGui::instance()->transformContext->win->show();
-    if(FlGui::instance()->physicalContext->win->shown())
-      FlGui::instance()->physicalContext->win->show();
+    for(int i = 0; i < Dialog::NumDialogs; i++) {
+      dialogFltk *d = fltkDialog(i);
+      if(d && d->shown()) d->window()->show();
+    }
     if(FlGui::instance()->onelabContext->win->shown())
       FlGui::instance()->onelabContext->win->show();
-    if(FlGui::instance()->meshContext->win->shown())
-      FlGui::instance()->meshContext->win->show();
     if(FlGui::instance()->visibility->win->shown())
       FlGui::instance()->visibility->win->show();
-    if(FlGui::instance()->highordertools->win->shown())
-      FlGui::instance()->highordertools->win->show();
-    if(FlGui::instance()->clipping->win->shown())
-      FlGui::instance()->clipping->win->show();
-    if(FlGui::instance()->manip->win->shown())
-      FlGui::instance()->manip->win->show();
-    if(FlGui::instance()->stats->win->shown())
-      FlGui::instance()->stats->win->show();
   }
 }
 

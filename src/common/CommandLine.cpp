@@ -33,6 +33,10 @@
 #endif
 #endif
 
+#if defined(HAVE_GUI)
+#include "Gui.h"
+#endif
+
 #if defined(HAVE_PETSC)
 #include "petsc.h"
 #endif
@@ -150,7 +154,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-check", "Perform various consistency checks on mesh"));
   s.push_back(mp("-ignore_periocity", "Ignore periodic boundaries "
                  "(Mesh.IgnorePeriodicity)"));
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   s.push_back(mp("Post-processing:", ""));
   s.push_back(mp("-link int", "Select link mode between views "
                  "(PostProcessing.Link)"));
@@ -188,7 +192,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-merge", "Merge next files"));
   s.push_back(mp("-open", "Open next files"));
   s.push_back(mp("-log filename", "Log all messages to filename"));
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, "
                  "solver or post-processing mode (General.InitialModule)"));
 #endif
@@ -375,13 +379,8 @@ std::vector<std::string> GetBuildInfo()
   s.push_back(std::string("Build date    : ") + GMSH_DATE);
   s.push_back(std::string("Build host    : ") + GMSH_HOST);
   s.push_back(std::string("Build options :") + GMSH_CONFIG_OPTIONS);
-#if defined(HAVE_FLTK)
-  {
-    char tmp[256];
-    sprintf(tmp, "%d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION,
-            FL_PATCH_VERSION);
-    s.push_back(std::string("FLTK version  : ") + tmp);
-  }
+#if defined(HAVE_GUI)
+  s.push_back(std::string("GUI toolkit   : ") + Gui::toolkitVersion());
 #endif
 #if defined(HAVE_PETSC)
   {

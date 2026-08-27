@@ -24,9 +24,8 @@
 #include "PViewOptions.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#include "onelabGroup.h"
+#if defined(HAVE_GUI)
+#include "Gui.h"
 #include "drawContext.h"
 #endif
 
@@ -656,9 +655,9 @@ namespace onelabUtils {
     onelabUtils::initializeLoop("2");
     onelabUtils::initializeLoop("3");
 
-#if defined(HAVE_FLTK)
-    if(FlGui::available() && onelab::server::instance()->getChanged())
-      FlGui::instance()->rebuildTree(false);
+#if defined(HAVE_GUI)
+    if(Gui::available() && onelab::server::instance()->getChanged())
+      Gui::rebuildTree(false);
 #endif
   }
 
@@ -677,9 +676,9 @@ namespace onelabUtils {
     n.setVisible(false);
     onelab::server::instance()->set(n);
 
-#if defined(HAVE_FLTK)
-    if(FlGui::available() && onelab::server::instance()->getChanged())
-      FlGui::instance()->rebuildTree(false);
+#if defined(HAVE_GUI)
+    if(Gui::available() && onelab::server::instance()->getChanged())
+      Gui::rebuildTree(false);
 #endif
     return ret;
   }
@@ -695,8 +694,8 @@ namespace onelabUtils {
     }
     if(redraw) {
     // don't delete the widgets, as this is called in widget callbacks
-#if defined(HAVE_FLTK)
-      FlGui::instance()->updateViews(true, false);
+#if defined(HAVE_GUI)
+      Gui::updateViews(true, false);
       drawContext::global()->draw();
 #endif
     }
@@ -782,8 +781,8 @@ namespace onelabUtils {
       saveDb(split[0] + "archive/" + split[1] + stamp + split[2]);
     }
 
-#if defined(HAVE_FLTK)
-    FlGui::instance()->rebuildTree(true);
+#if defined(HAVE_GUI)
+    Gui::rebuildTree(true);
 #endif
   }
 
@@ -813,8 +812,8 @@ namespace onelabUtils {
         strings[0].setValue(names[0]);
         strings[0].setChoices(names);
         onelab::server::instance()->set(strings[0]);
-#if defined(HAVE_FLTK)
-        FlGui::instance()->rebuildTree(true);
+#if defined(HAVE_GUI)
+        Gui::rebuildTree(true);
 #endif
       }
     }

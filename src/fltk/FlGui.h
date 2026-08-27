@@ -26,15 +26,7 @@ class optionWindow;
 class onelabWindow;
 class fieldWindow;
 class pluginWindow;
-class statisticsWindow;
 class visibilityWindow;
-class highOrderToolsWindow;
-class clippingWindow;
-class manipWindow;
-class elementaryContextWindow;
-class transformContextWindow;
-class meshContextWindow;
-class physicalContextWindow;
 class onelabContextWindow;
 class onelabGroup;
 class helpWindow;
@@ -71,15 +63,7 @@ public:
   optionWindow *options;
   fieldWindow *fields;
   pluginWindow *plugins;
-  statisticsWindow *stats;
   visibilityWindow *visibility;
-  highOrderToolsWindow *highordertools;
-  clippingWindow *clipping;
-  manipWindow *manip;
-  elementaryContextWindow *elementaryContext;
-  transformContextWindow *transformContext;
-  meshContextWindow *meshContext;
-  physicalContextWindow *physicalContext;
   onelabContextWindow *onelabContext;
   int lastContextWindow;
   helpWindow *help;
@@ -134,8 +118,6 @@ public:
   void updateFields();
   // reset the visibility window
   void resetVisibility();
-  // update the statistics window
-  void updateStatistics(bool qualities = false);
   // store current window positions and sizes in CTX
   void storeCurrentWindowsInfo();
   // get the last opengl window that received an event

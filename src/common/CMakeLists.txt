@@ -13,6 +13,9 @@ set(SRC
   OS.cpp
   OpenFile.cpp
   CreateFile.cpp
+  GuiActions.cpp GuiActionsGeo.cpp GuiMenus.cpp GuiDialogs.cpp
+  ImageIO.cpp
+  VisibilityList.cpp
   VertexArray.cpp
   SmoothData.cpp
   Octree.cpp

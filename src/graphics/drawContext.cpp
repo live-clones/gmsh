@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
+#include <cstring>
 #include <stdio.h>
 #include "GmshGlobal.h"
 #include "GmshConfig.h"
@@ -21,12 +22,7 @@
 #include "OS.h"
 #include "gl2ps.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/Fl_JPEG_Image.H>
-#include <FL/Fl_PNG_Image.H>
-#include <FL/gl.h>
-#include "openglWindow.h"
-#endif
+#include "ImageIO.h"
 
 #if defined(HAVE_POPPLER)
 #include "gmshPopplerWrapper.h"
@@ -42,8 +38,8 @@ void drawContext::setDrawGeomTransientFunction(void (*fct)(void *))
 
 extern SPoint2 getGraph2dDataPointForTag(unsigned int);
 
-drawContext::drawContext(openglWindow *window, drawTransform *transform)
-  : _transform(transform), _openglWindow(window)
+drawContext::drawContext(drawTransform *transform)
+  : _transform(transform), _highResolutionPixelFactor(1.)
 {
   // initialize from temp values in global context
   for(int i = 0; i < 3; i++) {
@@ -73,13 +69,47 @@ drawContext::~drawContext() { invalidateQuadricsAndDisplayLists(); }
 double drawContext::highResolutionPixelFactor()
 {
   // this must be dynamic: the high resolution can change when a window is moved
-  // across displays
-#if defined(HAVE_FLTK)
-  if(_openglWindow && _openglWindow->w()) {
-    return (double)_openglWindow->pixel_w() / (double)_openglWindow->w();
+  // across displays, so it is refreshed by the GUI before each draw
+  return _highResolutionPixelFactor;
+}
+
+int drawContextGlobal::getFontAlign(const char *alignstr)
+{
+  if(alignstr) {
+    if(!strcmp(alignstr, "BottomLeft") || !strcmp(alignstr, "Left") ||
+       !strcmp(alignstr, "left"))
+      return 0;
+    else if(!strcmp(alignstr, "BottomCenter") || !strcmp(alignstr, "Center") ||
+            !strcmp(alignstr, "center"))
+      return 1;
+    else if(!strcmp(alignstr, "BottomRight") || !strcmp(alignstr, "Right") ||
+            !strcmp(alignstr, "right"))
+      return 2;
+    else if(!strcmp(alignstr, "TopLeft"))
+      return 3;
+    else if(!strcmp(alignstr, "TopCenter"))
+      return 4;
+    else if(!strcmp(alignstr, "TopRight"))
+      return 5;
+    else if(!strcmp(alignstr, "CenterLeft"))
+      return 6;
+    else if(!strcmp(alignstr, "CenterCenter"))
+      return 7;
+    else if(!strcmp(alignstr, "CenterRight"))
+      return 8;
   }
-#endif
-  return 1.0;
+  Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)", alignstr);
+  Msg::Info("Available font alignments:");
+  Msg::Info("  \"Left\" (or \"BottomLeft\")");
+  Msg::Info("  \"Center\" (or \"BottomCenter\")");
+  Msg::Info("  \"Right\" (or \"BottomRight\")");
+  Msg::Info("  \"TopLeft\"");
+  Msg::Info("  \"TopCenter\"");
+  Msg::Info("  \"TopRight\"");
+  Msg::Info("  \"CenterLeft\"");
+  Msg::Info("  \"CenterCenter\"");
+  Msg::Info("  \"CenterRight\"");
+  return 0;
 }
 
 drawContextGlobal *drawContext::global()
@@ -300,7 +330,7 @@ void drawContext::draw3d()
     CTX::instance()->polygonOffset = 0;
 
     // speedup drawing of textured fonts on cocoa mac version
-#if defined(HAVE_FLTK) && defined(__APPLE__)
+#if defined(HAVE_GUI) && defined(__APPLE__)
   std::size_t numStrings = GModel::current()->getNumVertices();
   if(CTX::instance()->mesh.nodeLabels)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
@@ -427,36 +457,32 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
 #endif
   }
   else {
-#if defined(HAVE_FLTK)
     if(!imageTexture) {
-      Fl_RGB_Image *img = nullptr;
-      if(ext == ".jpg" || ext == ".JPG" || ext == ".jpeg" || ext == ".JPEG")
-        img = new Fl_JPEG_Image(name.c_str());
-      else if(ext == ".png" || ext == ".PNG")
-        img = new Fl_PNG_Image(name.c_str());
-      if(!img) {
-        Msg::Error("Could not load background image '%s'", name.c_str());
+      int w = 0, h = 0, comp = 0;
+      std::vector<unsigned char> pixels;
+      if(!ImageIO::read(name, w, h, comp, pixels)) return false;
+      // resample to a fixed power-of-two size, as the original image can have
+      // dimensions that old OpenGL implementations do not accept for textures
+      const int texSize = 2048;
+      std::vector<unsigned char> scaled;
+      if(!ImageIO::resize(pixels, w, h, comp, scaled, texSize, texSize))
         return false;
-      }
-      Fl_RGB_Image *img2 = (Fl_RGB_Image *)img->copy(2048, 2048);
-      glPixelStorei(GL_UNPACK_ROW_LENGTH, img2->w());
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, texSize);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
       glGenTextures(1, &imageTexture);
       glBindTexture(GL_TEXTURE_2D, imageTexture);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img2->w(), img2->h(), 0,
-                   (img2->d() == 4) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE,
-                   img2->array);
+      GLenum format = (comp == 4) ? GL_RGBA :
+                      (comp == 3) ? GL_RGB :
+                      (comp == 2) ? GL_LUMINANCE_ALPHA : GL_LUMINANCE;
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texSize, texSize, 0, format,
+                   GL_UNSIGNED_BYTE, &scaled[0]);
       glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-      imageW = img->w();
-      imageH = img->h();
-      delete img;
-      delete img2;
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+      imageW = w;
+      imageH = h;
     }
-#else
-    Msg::Error("Gmsh must be compiled with FLTK support to load JPEGs or PNGs");
-    return false;
-#endif
   }
   return true;
 }
@@ -831,8 +857,12 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   winx *= fact;
   winy *= fact;
 
-  GLint vp[4];
-  glGetIntegerv(GL_VIEWPORT, vp);
+  // The viewport of this view, not the one OpenGL happens to have set: the
+  // pointer moves outside of any drawing, and in an interface where several
+  // views share one context -- src/imgui -- what is left in the OpenGL state is
+  // whoever drew last, or the whole window. The stored viewport is also what
+  // the model and projection matrices below were computed for.
+  GLint vp[4] = {0, 0, (GLint)(viewport[2] * fact), (GLint)(viewport[3] * fact)};
 
   winy = vp[3] - winy;
 

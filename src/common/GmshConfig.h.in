@@ -23,6 +23,7 @@
 #cmakedefine HAVE_FLTK
 #cmakedefine HAVE_GEOMETRYCENTRAL
 #cmakedefine HAVE_GMM
+#cmakedefine HAVE_GUI
 #cmakedefine HAVE_HXT
 #cmakedefine HAVE_LAPACK
 #cmakedefine HAVE_LIBCGNS

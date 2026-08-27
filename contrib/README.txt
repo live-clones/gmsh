@@ -29,6 +29,7 @@ their own respective license:
   various aspects of the MPEG video standard
 * nii2mesh: BSD License
 * onelab: MIT/X11 License
+* stb: MIT License / public domain
 * tinyobjloader: MIT License
 * tinyxml2: Zlib License
 * untangle: No license, freely available for non-commercial purposes

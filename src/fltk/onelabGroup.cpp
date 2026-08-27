@@ -32,6 +32,7 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "fileDialogs.h"
 #include "onelabGroup.h"
+#include "GuiActions.h"
 #include "GmshGlobal.h"
 #include "FlGui.h"
 #include "Context.h"
@@ -55,230 +56,19 @@ typedef unsigned long intptr_t;
 void solver_cb(Fl_Widget *w, void *data)
 {
   if(!FlGui::instance()->onelab) return;
-
   int num = (intptr_t)data;
-  if(num >= 0) {
-    std::string name = opt_solver_name(num, GMSH_GET, "");
-    std::string exe = opt_solver_executable(num, GMSH_GET, "");
-    std::string host = opt_solver_remote_login(num, GMSH_GET, "");
-    FlGui::instance()->onelab->addSolver(name, exe, host, num);
-  }
-  else {
-    FlGui::instance()->onelab->rebuildSolverList();
-  }
-
-  if(CTX::instance()->solver.autoLoadDatabase) {
-    std::vector<std::string> split =
-      SplitFileName(GModel::current()->getFileName());
-    std::string db = split[0] + split[1] + ".db";
-    if(!StatFile(db)) {
-      onelabUtils::loadDb(db);
-      CTX::instance()->launchSolverAtStartup = -1;
-    }
-  }
-
-  if(FlGui::instance()->onelab->isBusy())
-    FlGui::instance()->onelab->show();
-  else {
-    if(CTX::instance()->launchSolverAtStartup >= 0) {
-      onelab_cb(nullptr, (void *)"reset");
-      onelabUtils::setFirstComputationFlag(true);
-    }
-    else if(num >= 0)
-      onelab_cb(nullptr, (void *)"check");
-    else
-      onelab_cb(nullptr, (void *)"refresh");
-    FlGui::instance()->onelab->updateGearMenu();
-  }
-
-  CTX::instance()->launchSolverAtStartup = -1;
+  solverStart(num); // compacts the solver list itself
+  if(solverIsRunning()) FlGui::instance()->onelab->show();
+  FlGui::instance()->onelab->updateGearMenu();
 }
 
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-
-  std::string action((const char *)data);
-
-  onelab::string o("ONELAB/Action", action);
-  o.setVisible(false);
-  o.setNeverChanged(true);
-  o.setAttribute("Persistent", "1");
-  onelab::server::instance()->set(o);
-
-  if(action == "reload") {
-    // for outside code that will want to rebuild the geometry
-    return;
-  }
-
-  if(action == "refresh") {
-    onelabUtils::updateGraphs();
-    FlGui::instance()->rebuildTree(true);
-    return;
-  }
-
-  if(action == "stop") {
-    FlGui::instance()->onelab->stop(true);
-    FlGui::instance()->onelab->setButtonMode("", "kill");
-    for(auto it = onelab::server::instance()->firstClient();
-        it != onelab::server::instance()->lastClient(); it++) {
-      onelab::string o((*it)->getName() + "/Action", "stop");
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      onelab::server::instance()->set(o);
-    }
-    return;
-  }
-
-  if(action == "kill") {
-    FlGui::instance()->onelab->stop(true);
-    for(auto it = onelab::server::instance()->firstClient();
-        it != onelab::server::instance()->lastClient(); it++)
-      (*it)->kill();
-    return;
-  }
-
-  if(action == "save") {
-    std::string fileName = "onelab.db";
-
-    // special handling for metamodels: add user defined tag, if any
-    std::vector<onelab::string> ps;
-    onelab::server::instance()->get(ps, "0Metamodel/9Tag");
-    if(ps.size() && ps[0].getValue().size()) {
-      fileName.assign("onelab_" + ps[0].getValue() + ".db");
-    }
-
-    // special handling for metamodels: save db in "restore" mode"
-    double restoreMode = 0.;
-    std::vector<onelab::number> pn;
-    onelab::server::instance()->get(pn, "0Metamodel/9Use restored solution");
-    if(pn.size()) {
-      restoreMode = pn[0].getValue();
-      pn[0].setValue(2); // special value
-      onelab::server::instance()->set(pn[0]);
-    }
-
-    std::string db;
-    db.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
-    if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", db.c_str())) {
-      if(!restoreMode) onelabUtils::archiveSolutionFiles(fileChooserGetName(1));
-      onelabUtils::saveDb(fileChooserGetName(1));
-    }
-
-    // special handling for metamodels: switch back to normal "run" mode"
-    onelab::server::instance()->get(pn, "0Metamodel/9Use restored solution");
-    if(pn.size()) {
-      pn[0].setValue(0);
-      onelab::server::instance()->set(pn[0]);
-    }
-    action = "check";
-    // return;
-  }
-
-  if(FlGui::instance()->onelab->isBusy()) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
-  }
-
-  if(action == "load") {
-    std::string db =
-      SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-    if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
-      onelabUtils::loadDb(fileChooserGetName(1));
-    action = "check";
-  }
-
-  if(action == "reset") {
-    onelabUtils::resetDb(true);
-    action = "check";
-  }
-
-  // custom button behavior
-  std::vector<onelab::string> ps;
-  onelab::server::instance()->get(ps, "ONELAB/Button");
-  if(ps.size() && ps[0].getValues().size() == 2) {
-    // we have a custom onelab "Run" button, we're done
-    return;
-  }
-
-  Msg::ResetErrorCounter();
-
-  FlGui::instance()->onelab->setButtonMode("", "stop");
-
-  if(action == "compute") onelabUtils::initializeLoops();
-
-  do { // enter loop
-
-    // run Gmsh client for non-metamodels
-    if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
-      drawContext::global()->draw();
-
-    if(action == "compute") FlGui::instance()->onelab->checkForErrors("Gmsh");
-    if(FlGui::instance()->onelab->stop()) break;
-
-    // iterate over all other clients (there should normally only be one)
-    for(auto it = onelab::server::instance()->firstClient();
-        it != onelab::server::instance()->lastClient(); it++) {
-      onelab::client *c = *it;
-      if(c->getName() == "Gmsh" || // local Gmsh client
-         c->getName() ==
-           "Listen" || // unknown client connecting through "-listen"
-         c->getName() == "GmshRemote" || // distant post-processing Gmsh client
-         c->getName().find("NoAutoRun") !=
-           std::string::npos) // client name contains "NoAutoRun"
-        continue;
-      if(action != "initialize") onelabUtils::guessModelName(c);
-      onelab::string o(c->getName() + "/Action", action);
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      onelab::server::instance()->set(o);
-      // we should skip the computation here if no parameter has changed for the
-      // solver:
-      //
-      // if(action != "compute" ||
-      // onelab::server::instance()->getChanged(c->getName()))
-      c->run();
-      if(action == "compute") {
-        // after computing with this solver, mark the parameters as unchanged
-        // for this solver
-        onelab::server::instance()->setChanged(0, c->getName());
-        FlGui::instance()->onelab->checkForErrors(c->getName());
-      }
-      if(FlGui::instance()->onelab->stop()) break;
-    }
-
-    if(action != "initialize") {
-      onelabUtils::updateGraphs();
-      FlGui::instance()->rebuildTree(action == "compute");
-    }
-
-  } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
-          onelabUtils::incrementLoops());
-
-  if(action == "compute" && (CTX::instance()->solver.autoSaveDatabase ||
-                             CTX::instance()->solver.autoArchiveOutputFiles)) {
-    std::string db;
-    std::vector<onelab::string> ps;
-    onelab::server::instance()->get(ps, "Gmsh/DatabaseFileName");
-    if(ps.size() && ps[0].getValue().size()) {
-      db = ps[0].getValue();
-    }
-    else {
-      std::vector<std::string> split =
-        SplitFileName(GModel::current()->getFileName());
-      db = split[0] + split[1] + ".db";
-    }
-    if(CTX::instance()->solver.autoArchiveOutputFiles)
-      onelabUtils::archiveOutputFiles(db);
-    if(CTX::instance()->solver.autoSaveDatabase) onelabUtils::saveDb(db);
-  }
-
-  FlGui::instance()->onelab->stop(false);
-  FlGui::instance()->onelab->setButtonMode("check", "compute");
-
-  Msg::StatusBar(true, "Done");
-
-  if(action != "initialize") FlGui::instance()->onelab->show();
+  // the whole logic lives in GuiActions.cpp, shared with the other interfaces
+  onelabRun(std::string((const char *)data));
+  if(std::string((const char *)data) != "initialize")
+    FlGui::instance()->onelab->show();
 }
 
 void onelab_option_cb(Fl_Widget *w, void *data)
@@ -310,63 +100,6 @@ void onelab_option_cb(Fl_Widget *w, void *data)
   }
 }
 
-static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
-{
-  onelab::localNetworkClient *c = (onelab::localNetworkClient *)data;
-  std::string pattern = "*";
-#if defined(WIN32)
-  pattern += ".exe";
-#endif
-
-  std::string exe = "";
-
-  if(!w) { // we entered here automatically because no executable is given
-
-    // try to find an executable automatically (this is really useful for
-    // beginners)
-    std::string gmshPath = SplitFileName(CTX::instance()->exeFileName)[0];
-    if(gmshPath.size()) {
-      std::string name = c->getName();
-      for(std::size_t i = 0; i < name.size(); i++) name[i] = tolower(name[i]);
-      std::string path1 = gmshPath + name;
-      std::string path2 = gmshPath + "data/" + name;
-#if defined(WIN32)
-      path1 += ".exe";
-      path2 += ".exe";
-#endif
-      if(!StatFile(path1))
-        exe = path1;
-      else if(!StatFile(path2))
-        exe = path2;
-      if(exe.size())
-        Msg::Info("Automatically found %s executable: %s", c->getName().c_str(),
-                  exe.c_str());
-    }
-
-    if(exe.empty()) {
-      const char *o = fl_close;
-      fl_close = "OK";
-      fl_message(
-        "This appears to be the first time you are trying to run %s.\n\n"
-        "Please select the path to the executable.",
-        c->getName().c_str());
-      fl_close = o;
-    }
-  }
-
-  if(exe.empty()) {
-    const char *old = nullptr;
-    if(c->getExecutable().size()) old = c->getExecutable().c_str();
-    std::string title = "Choose location of " + c->getName() + " executable";
-    if(fileChooser(FILE_CHOOSER_SINGLE, title.c_str(), pattern.c_str(), old))
-      exe = fileChooserGetName(1);
-  }
-
-  if(exe.size()) {
-    c->setExecutable(exe);
-    opt_solver_executable(c->getIndex(), GMSH_SET, exe);
-  }
-}
 
 static void onelab_add_solver_cb(Fl_Widget *w, void *data)
 {
@@ -1593,6 +1326,9 @@ bool onelabGroup::isTreeItemOpen(const std::string &name) {
   return false;
 }
 
+bool onelabGroup::stop() { return solverStopRequested(); }
+void onelabGroup::stop(bool val) { solverRequestStop(val); }
+
 void onelabGroup::checkForErrors(const std::string &client)
 {
   if(Msg::GetErrorCount() > 0 && !CTX::instance()->expertMode) {
@@ -1759,79 +1495,16 @@ void onelabGroup::updateGearMenu()
 void onelabGroup::rebuildSolverList()
 {
   updateGearMenu();
-
-  std::vector<std::string> names, exes, hosts;
-  for(int i = 0; i < NUM_SOLVERS; i++) {
-    if(opt_solver_name(i, GMSH_GET, "").size()) {
-      names.push_back(opt_solver_name(i, GMSH_GET, ""));
-      exes.push_back(opt_solver_executable(i, GMSH_GET, ""));
-      hosts.push_back(opt_solver_remote_login(i, GMSH_GET, ""));
-    }
-  }
-  for(std::size_t i = 0; i < NUM_SOLVERS; i++) {
-    if(i < names.size()) {
-      auto it = onelab::server::instance()->findClient(names[i]);
-      if(it != onelab::server::instance()->lastClient()) (*it)->setIndex(i);
-      opt_solver_name(i, GMSH_SET, names[i]);
-      opt_solver_executable(i, GMSH_SET, exes[i]);
-      opt_solver_remote_login(i, GMSH_SET, hosts[i]);
-    }
-    else {
-      opt_solver_name(i, GMSH_SET, "");
-      opt_solver_executable(i, GMSH_SET, "");
-      opt_solver_remote_login(i, GMSH_SET, "");
-    }
-  }
-
+  // the option bookkeeping is shared with the other interfaces
+  solverListCompact();
   rebuildTree(true);
 }
 
-static bool needToChooseExe(const std::string &exe)
-{
-  // no exe given
-  if(exe.empty()) return true;
-
-  // exe is given with absolute path to non-existing file
-  if(exe[0] == '/' || exe[0] == '\\' || (exe.size() > 2 && exe[1] == ':')) {
-    if(StatFile(exe)) return true;
-  }
-
-  return false;
-}
 
 void onelabGroup::addSolver(const std::string &name,
                             const std::string &executable,
                             const std::string &remoteLogin, int index)
 {
-  auto it = onelab::server::instance()->findClient(name);
-  if(it != onelab::server::instance()->lastClient()) {
-    if(needToChooseExe(executable))
-      onelab_choose_executable_cb(nullptr, (void *)(*it));
-    return; // solver already exists
-  }
-
-  // delete the other non-local clients so we keep only the new one
-  std::vector<onelab::client *> networkClients;
-  for(auto it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++)
-    if((*it)->isNetworkClient()) networkClients.push_back(*it);
-  for(std::size_t i = 0; i < networkClients.size(); i++) {
-    delete networkClients[i];
-  }
-
-  // create and register the new client
-  onelab::localNetworkClient *c =
-    new gmshLocalNetworkClient(name, executable, remoteLogin);
-  c->setIndex(index);
-  opt_solver_name(index, GMSH_SET, name);
-  if(needToChooseExe(executable))
-    onelab_choose_executable_cb(nullptr, (void *)c);
-  else
-    opt_solver_executable(index, GMSH_SET, executable);
-  opt_solver_remote_login(index, GMSH_SET, remoteLogin);
-
-  FlGui::instance()->onelab->rebuildSolverList();
-
-  // initialize the client
-  onelab_cb(nullptr, (void *)"initialize");
+  solverAdd(name, executable, remoteLogin, index);
+  rebuildSolverList();
 }

@@ -24,7 +24,8 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "paletteWindow.h"
-#include "manipWindow.h"
+#include "Gui.h"
+#include "GuiDialogs.h"
 #include "extraDialogs.h"
 #include "drawContext.h"
 #include "Options.h"
@@ -241,7 +242,7 @@ void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
     drawContext *ctx =
       FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
     ctx->recenterForRotationCenterChange(pc);
-    FlGui::instance()->manip->update();
+    Gui::refreshDialog(Dialog::Manipulator);
   }
   CTX::instance()->pickElements = 0;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -293,7 +294,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
       drawContext *ctx =
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
       ctx->recenterForRotationCenterChange(p);
-      FlGui::instance()->manip->update();
+      Gui::refreshDialog(Dialog::Manipulator);
     }
     else if(!strcmp(name, "rotation_center")) {
       // pre-fill with cg
@@ -304,7 +305,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
       drawContext *ctx =
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
       ctx->recenterForRotationCenterChange(p);
-      FlGui::instance()->manip->update();
+      Gui::refreshDialog(Dialog::Manipulator);
     }
     else if(!strcmp(name, "light_value")) {
       double x, y, z;

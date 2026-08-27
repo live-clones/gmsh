@@ -8,8 +8,9 @@
 #include <FL/Fl_Tooltip.H>
 #include "openglWindow.h"
 #include "graphicWindow.h"
-#include "manipWindow.h"
-#include "contextWindow.h"
+#include "Gui.h"
+#include "GuiDialogs.h"
+#include "dialogFltk.h"
 #include "visibilityWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -67,14 +68,14 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
 
   ctx->initPosition(false);
   drawContext::global()->draw();
-  FlGui::instance()->manip->update();
+  Gui::refreshDialog(Dialog::Manipulator);
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
-  _ctx = new drawContext(this);
+  _ctx = new drawContext();
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
@@ -189,6 +190,9 @@ void openglWindow::draw()
   _ctx->viewport[1] = 0;
   _ctx->viewport[2] = w();
   _ctx->viewport[3] = h();
+  // the high resolution factor can change when the window is moved across
+  // displays, so refresh it before each draw
+  _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() : 1.);
   glViewport(0, 0, pixel_w(), pixel_h());
 
   if(lassoMode) {
@@ -543,7 +547,7 @@ int openglWindow::handle(int event)
     }
     _click.set(_ctx, Fl::event_x(), Fl::event_y());
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
-    FlGui::instance()->manip->update();
+    Gui::refreshDialog(Dialog::Manipulator);
     return 1;
 
   case FL_RELEASE:
@@ -577,7 +581,7 @@ int openglWindow::handle(int event)
       redraw();
     }
   }
-    FlGui::instance()->manip->update();
+    Gui::refreshDialog(Dialog::Manipulator);
     return 1;
 
   case FL_DRAG:
@@ -666,7 +670,7 @@ int openglWindow::handle(int event)
       }
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
-    FlGui::instance()->manip->update();
+    Gui::refreshDialog(Dialog::Manipulator);
     return 1;
 
   case FL_MOVE:
@@ -674,28 +678,21 @@ int openglWindow::handle(int event)
     if(lassoMode) { redraw(); }
     else if(addPointMode && !Fl::event_state(FL_SHIFT)) {
       cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
-      // find line in real space corresponding to current cursor position
-      double p[3], d[3];
-      _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
-      // find closest point to the center of gravity
-      double r[3] = {CTX::instance()->cg[0] - p[0],
-                     CTX::instance()->cg[1] - p[1],
-                     CTX::instance()->cg[2] - p[2]},
-             t;
-      t = prosca(r, d);
+      bool frozen[3];
+      for(int i = 0; i < 3; i++) frozen[i] = elementaryFrozen(i);
+      geometryPointUnderCursor(_ctx, _curr.win[0], _curr.win[1], frozen,
+                               _point);
+      // the coordinates of the entity being placed live in the shared store,
+      // which is what the dialog edits
       for(int i = 0; i < 3; i++) {
-        if(!FlGui::instance()->elementaryContext->frozenPointCoord(i)) {
-          _point[i] = p[i] + t * d[i];
-          if(CTX::instance()->geom.snap[i]) {
-            double d = _point[i] / CTX::instance()->geom.snap[i];
-            double f = floor(d);
-            double c = ceil(d);
-            double n = (d - f < c - d) ? f : c;
-            _point[i] = n * CTX::instance()->geom.snap[i];
-          }
-        }
+        if(frozen[i]) continue;
+        char str[32];
+        snprintf(str, sizeof(str), "%g", _point[i]);
+        int pane = elementaryPaneStore();
+        if(pane >= 1 && pane <= 11) elementaryStore(pane, i) = str;
       }
-      FlGui::instance()->elementaryContext->updatePoint(_point, addPointMode);
+      dialogFltk *d = fltkDialog(Dialog::Elementary);
+      if(d) d->refresh();
       redraw();
     }
     else { // hover mode
