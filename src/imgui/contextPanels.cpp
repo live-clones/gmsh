@@ -295,11 +295,27 @@ namespace {
     float w = f.widthShare > 0. ? (float)f.widthShare * item :
               f.widthEm > 0.      ? (float)f.widthEm * ImGui::GetFontSize() :
                                     item;
-    // an unlabelled field has nothing to keep at arm's length: it sits flush
-    // against whatever follows, the way the two ends of a range do
-    if(f.label.empty()) return w;
     return w + style.ItemInnerSpacing.x +
            ImGui::CalcTextSize(f.label.c_str()).x;
+  }
+
+  // Whether the field at k shares its cell with the one after it: consecutive
+  // fields that declare a share of a field's width are one cell, and all but
+  // the last of them sit flush against the next, so that the cell measures
+  // exactly what one field would.
+  bool _sharesCell(const std::vector<Dialog::Field> &fields, std::size_t k,
+                   std::size_t to)
+  {
+    return fields[k].widthShare > 0. && k + 1 < to &&
+           fields[k + 1].widthShare > 0.;
+  }
+
+  // how far the next field starts from this one, when this one is packed
+  float _packedStep(const std::vector<Dialog::Field> &fields, std::size_t k,
+                    std::size_t to, float item)
+  {
+    if(_sharesCell(fields, k, to)) return (float)fields[k].widthShare * item;
+    return _packedWidth(fields[k], item) + ImGui::GetStyle().ItemSpacing.x;
   }
 
   float _packedTotal(const std::vector<Dialog::Field> &fields, std::size_t from,
@@ -308,9 +324,7 @@ namespace {
     float total = 0.f;
     for(std::size_t k = from; k < to; k++)
       if(fields[k].packed || fields[k].kind == Dialog::Spacer)
-        total += _packedWidth(fields[k], item) +
-                 (fields[k].label.empty() && fields[k].kind != Dialog::Spacer ?
-                    0.f : ImGui::GetStyle().ItemSpacing.x);
+        total += _packedStep(fields, k, to, item);
     return total;
   }
 
@@ -453,19 +467,17 @@ namespace {
           // to give the label room or the two columns overlap.
           float label = ImGui::CalcTextSize(f.label.c_str()).x +
                         2.f * style.ItemInnerSpacing.x;
-          here = std::min(item * 0.5f, std::max(40.f, columnW - label));
+          here = std::min(item * 0.5f,
+                          std::max(3.f * ImGui::GetFontSize(), columnW - label));
         }
-        // Two frames that touch read as one box: an unlabelled packed field
-        // gives the gap back out of its own width, so that the pair still
-        // measures exactly one field but the eye can tell them apart. FLTK
-        // draws a border around each and needs no such thing.
-        if(f.packed && f.label.empty() && k + 1 < last)
-          here -= style.ItemSpacing.x;
+        // Two frames that touch read as one box: a field that shares its
+        // cell gives the gap back out of its own width, so that the cell
+        // still measures exactly one field but the eye can tell its halves
+        // apart. FLTK draws a border around each and needs no such thing.
+        if(_sharesCell(fields, k, last)) here -= style.ItemSpacing.x;
         if(!first) ImGui::SameLine(at);
         first = false;
-        at += f.packed ? _packedWidth(f, item) +
-                           (f.label.empty() ? 0.f : style.ItemSpacing.x) :
-                         columnW;
+        at += f.packed ? _packedStep(fields, k, last, item) : columnW;
         // Dear ImGui builds a widget's identity from its label, so the nine
         // unlabelled boxes of a grid would all be the same widget: hovering
         // and typing would go to whichever it saw first. Where the field
@@ -676,20 +688,10 @@ void appWindow::_drawDialog(int which)
     }
   }
 
-  // whether the buttons will share the last line of the footer -- decided
-  // before it is drawn, since after it the cursor has already moved on
-  bool merged = false;
+  bool merged = panel.buttonsInFooter && panel.footer.size() &&
+                panel.buttons.size();
   if(panel.footer.size()) {
     ImGui::Separator();
-    if(panel.buttons.size() && _rows(panel.footer) == 1) {
-      float need = _rowWidth(panel.footer, 0, panel.footer.size(), width);
-      float room = 0.f;
-      for(const auto &b : panel.buttons)
-        room += ImGui::CalcTextSize(b.label.c_str()).x +
-                2.f * ImGui::GetStyle().FramePadding.x +
-                ImGui::GetStyle().ItemSpacing.x;
-      merged = need + room <= ImGui::GetContentRegionMax().x;
-    }
     ImGui::PushID("footer");
     _fields(panel.footer, width);
     ImGui::PopID();

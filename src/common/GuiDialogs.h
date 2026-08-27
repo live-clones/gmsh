@@ -183,7 +183,13 @@ namespace Dialog {
     std::vector<Field> footer;
     // buttons at the very bottom, for the panels that act rather than only hold
     std::vector<Button> buttons;
-    Panel() : tabbed(true) {}
+    // The buttons share the last line of the footer instead of taking one of
+    // their own: "Memory usage: ..." and Update sit on one line in the window
+    // the statistics panel replaces. Only for a footer short enough to leave
+    // them the room, which the panel that asks for it knows and the builders
+    // do not.
+    bool buttonsInFooter;
+    Panel() : tabbed(true), buttonsInFooter(false) {}
   };
 
   // which dialog: the numbering Gui::showDialog() uses

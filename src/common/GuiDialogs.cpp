@@ -1312,6 +1312,10 @@ namespace Dialog {
       return std::string(tmp);
     }));
 
+    // the memory usage and Update share the last line, as they do in the
+    // window this replaces
+    p.buttonsInFooter = true;
+
     Button update;
     update.label = "Update";
     update.isDefault = true;

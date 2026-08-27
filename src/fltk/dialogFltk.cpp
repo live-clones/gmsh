@@ -84,10 +84,26 @@ namespace {
     int w = f.widthShare > 0. ? (int)(f.widthShare * IW) :
             f.widthEm > 0.    ? (int)(f.widthEm * FL_NORMAL_SIZE) :
                                 _fieldWidth(f, 1);
-    // an unlabelled field has nothing to keep at arm's length: it sits flush
-    // against whatever follows, the way the two ends of a range do
-    if(f.label.empty()) return w;
     return w + (int)fl_width(f.label.c_str()) + 2 * WB;
+  }
+
+  // Whether the field at k shares its cell with the one after it: consecutive
+  // fields that declare a share of a field's width are one cell, and all but
+  // the last of them sit flush against the next, so that the cell measures
+  // exactly what one field would.
+  bool _sharesCell(const std::vector<Dialog::Field> &fields, std::size_t k,
+                   std::size_t to)
+  {
+    return fields[k].widthShare > 0. && k + 1 < to &&
+           fields[k + 1].widthShare > 0.;
+  }
+
+  // how far the next field starts from this one, when this one is packed
+  int _packedStep(const std::vector<Dialog::Field> &fields, std::size_t k,
+                  std::size_t to)
+  {
+    if(_sharesCell(fields, k, to)) return (int)(fields[k].widthShare * IW);
+    return _packedWidth(fields[k]) + WB;
   }
 
   // how much of a line the packed fields take, spacing included
@@ -97,9 +113,7 @@ namespace {
     int total = 0;
     for(std::size_t k = from; k < to; k++)
       if(fields[k].packed || fields[k].kind == Dialog::Spacer)
-        total += _packedWidth(fields[k]) +
-                 (fields[k].label.empty() && fields[k].kind != Dialog::Spacer ?
-                    0 : WB);
+        total += _packedStep(fields, k, to);
     return total;
   }
 
@@ -331,7 +345,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       if(f.packed && f.kind == Dialog::Action) fieldW = _packedWidth(f);
       int fx = at;
       if(f.packed)
-        at += _packedWidth(f) + (f.label.empty() ? 0 : WB);
+        at += _packedStep(fields, k, last);
       else
         at += columnW;
       Fl_Widget *widget = nullptr;
@@ -487,16 +501,8 @@ void dialogFltk::build(int dialog)
   int gathered = 0;
   for(const auto &b : _panel.buttons)
     if(!b.apart) gathered++;
-  // A one-line footer shares its line with the buttons if it leaves room for
-  // them: "Memory usage: ..." and Update sit on one line in the window this
-  // replaces, and giving each its own makes the dialog taller for nothing.
-  _mergedButtons = false;
-  if(_panel.footer.size() && _panel.buttons.size() &&
-     _rows(_panel.footer) == 1) {
-    int columnW = 0;
-    int need = _rowWidth(_panel.footer, 0, _panel.footer.size(), columnW);
-    _mergedButtons = need + gathered * (BB + WB) <= width - 2 * WB;
-  }
+  _mergedButtons = _panel.buttonsInFooter && _panel.footer.size() &&
+                   _panel.buttons.size();
   int buttonH = (_panel.buttons.size() && !_mergedButtons) ? BH + WB : 0;
   int tabRows = 1;
   for(const auto &q : _panel.panes)
