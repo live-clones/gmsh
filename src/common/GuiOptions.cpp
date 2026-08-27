@@ -80,6 +80,10 @@ namespace Dialog {
       // it shares the line of the row before it, as its second column: the
       // window this reproduces puts the labels of an entity beside the entity
       bool beside;
+      // How much of one field's width it takes, when it is not the whole of
+      // it: the three boxes of a quality range are a quarter, a quarter and a
+      // half there. Last, so that the rows that do not say leave it at zero.
+      double share;
     };
 
 #define CHECK(name, label) {RowCheck, name, label, nullptr, nullptr, 0., 0., nullptr, false}
@@ -110,11 +114,20 @@ namespace Dialog {
 // and a switch sharing that line
 #define CHECK_RIGHT(name, label) \
   {RowCheck, name, label, nullptr, nullptr, 1., 0., nullptr, false}
+// how much of a field's width a row of values, or a choice after them, takes
+#define ROW_OF(label, names, share) \
+  {RowRow, nullptr, label, names, nullptr, 0., 0., nullptr, false, share}
+#define COMBO_AFTER_OF(name, label, choices, share) \
+  {RowCombo, name, label, choices, nullptr, 1., 1., nullptr, true, share}
 // a second column on the line of the row before it
 #define CHECK_BESIDE(name, label) \
   {RowCheck, name, label, nullptr, nullptr, 0., 0., nullptr, true}
 #define NUMBER_BESIDE(name, label) \
   {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, true}
+// and one that takes only part of a field's width, as the sampling of a label
+// takes a third of one there
+#define NUMBER_BESIDE_OF(name, label, share) \
+  {RowNumber, name, label, nullptr, nullptr, 0., 0., nullptr, true, share}
 #define COMBO_BESIDE(name, label, choices) \
   {RowCombo, name, label, choices, nullptr, 0., 1., nullptr, true}
 // and one that follows them inside the same column
@@ -375,10 +388,10 @@ namespace Dialog {
     CHECK("VolumeEdges", "3D element edges"),
     CHECK("VolumeFaces", "3D element faces"),
     COMBO("LabelType", "Label type", _c_labelType),
-    NUMBER_BESIDE("LabelSampling", "Sampling"),
+    NUMBER_BESIDE_OF("LabelSampling", "Sampling", 1. / 3.),
     MULTI("Elements", _m_meshElements),
-    ROW("", _r_quality),
-    COMBO_AFTER("QualityType", "Quality range", _c_qualityType),
+    ROW_OF("", _r_quality, .5),
+    COMBO_AFTER_OF("QualityType", "Quality range", _c_qualityType, .5),
     ROW("Size range", _r_radiusInf),
     ROW("Normals and tangents", _r_normals),
     END};
@@ -788,6 +801,7 @@ namespace Dialog {
           names.push_back(std::string(row.name) + (char)('X' + k));
       }
       bool strings = (row.choices == nullptr) && (row.vmax == 1.);
+      double whole = (row.share > 0.) ? row.share : 1.;
       for(std::size_t k = 0; k < names.size(); k++) {
         // an entry may carry a label of its own, written after a "|": the
         // matrix of a view has one in the middle of its rows
@@ -801,7 +815,7 @@ namespace Dialog {
           label = row.label ? row.label : "";
         Field f = _fieldFor(strings ? RowString : RowNumber, category,
                             name.c_str(), label, num, nullptr);
-        f.widthShare = 1. / (double)names.size();
+        f.widthShare = whole / (double)names.size();
         f.packed = true;
         if(k) f.sameRow = true;
         into.push_back(f);
@@ -913,6 +927,7 @@ namespace Dialog {
         default: {
           Field f = _fieldFor(row.kind, category, row.name,
                               row.label ? row.label : row.name, num, &row);
+          if(row.share > 0.) f.widthShare = row.share;
           if(row.beside) {
             f.sameRow = true;
             // vmin says it follows inside the same column rather than

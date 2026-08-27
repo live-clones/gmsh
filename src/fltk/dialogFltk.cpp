@@ -654,9 +654,10 @@ void dialogFltk::build(int dialog)
     formH += WB;
   }
 
-  // wide enough for the busiest row of every pane, and never narrower than the
-  // windows this replaces used to be
-  int width = 34 * FL_NORMAL_SIZE;
+  // wide enough for the busiest row of every pane, and never so narrow that a
+  // dialog with little in it looks starved. It used to be the width of the
+  // widest window this replaces, which made every one of them that wide.
+  int width = 20 * FL_NORMAL_SIZE;
   // the column of side fields is beside the panes, not part of what they need
   int aside = _panel.side.empty() ? 0 : 8 * FL_NORMAL_SIZE;
   width += aside;

@@ -239,14 +239,17 @@ namespace {
     } break;
     case Dialog::Choice: {
       if(f.multiple) {
-        // several switches behind one button, which is how the window this
-        // reproduces offers the element and field types
+        // Several switches behind one button, which is how the window this
+        // reproduces offers the element and field types. A button and a popup
+        // rather than a combo: a combo would draw an arrow for a value it does
+        // not have.
         std::vector<std::string> labels;
         std::vector<int> values;
         _dynamic(f, labels, values);
-        ImGui::SetNextItemWidth(width);
-        if(ImGui::BeginCombo(f.label.c_str(), f.label.c_str(),
-                             ImGuiComboFlags_NoPreview)) {
+        std::string id = "##menu" + f.label;
+        if(ImGui::Button(f.label.c_str(), ImVec2(width, 0.f)))
+          ImGui::OpenPopup(id.c_str());
+        if(ImGui::BeginPopup(id.c_str())) {
           for(std::size_t k = 0; k < labels.size(); k++) {
             bool on = f.chosen ? f.chosen((int)k) : false;
             if(ImGui::Checkbox(labels[k].c_str(), &on) && f.choose) {
@@ -254,7 +257,7 @@ namespace {
               changed = true;
             }
           }
-          ImGui::EndCombo();
+          ImGui::EndPopup();
         }
         break;
       }
