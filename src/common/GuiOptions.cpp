@@ -246,9 +246,6 @@ namespace Dialog {
     "None",           "Time series",       "Harmonic data",
     "Automatic",      "Step data",         "Multi-step data",
     "Real eigenvalues", "Complex eigenvalues", nullptr};
-  // the views a value or a raise takes its data from, which is not a fixed
-  // list: "Self" is the view itself, then every view there is
-  const char *const _c_generalizedRaiseView[] = {"Self", nullptr};
   const char *const _c_boundary[] = {"None", "Dimension - 1", "Dimension - 2", "Dimension - 3",  nullptr};
   const char *const _c_forceNumComponents[] = {"Original Field", "Force Scalar", "Force Vector", "Force Tensor",  nullptr};
   const char *const _c_viewPointType[] = {"Color dot", "3D sphere", "Scaled dot", "Scaled sphere",  nullptr};
