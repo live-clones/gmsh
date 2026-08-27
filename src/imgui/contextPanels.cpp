@@ -183,8 +183,17 @@ namespace {
       // a rotation that has been turned back to nothing comes out as negative
       // zero, which "%g" prints as "-0"; FLTK shows it as the nothing it is
       if(value == 0.) value = 0.;
+      // As many decimals as the step it is dragged by, which is what FLTK
+      // works out from that step: a length that moves by hundredths is shown
+      // to hundredths, whatever it happens to hold.
+      char how[8] = "%g";
+      if(f.step > 0. && f.step < 1.) {
+        int digits = 0;
+        for(double d = f.step; d < 1. && digits < 6; d *= 10.) digits++;
+        snprintf(how, sizeof(how), "%%.%df", digits);
+      }
       ImGui::SetNextItemWidth(width);
-      if(ImGui::InputDouble(f.label.c_str(), &value, 0., 0., "%g")) {
+      if(ImGui::InputDouble(f.label.c_str(), &value, 0., 0., how)) {
         const_cast<Dialog::Field &>(f).setNumber(clamped(f, value));
         changed = true;
       }

@@ -734,6 +734,94 @@ namespace Dialog {
       {"View", "GeneralizedRaise*", "UseGeneralizedRaise", false},
       {nullptr, nullptr, nullptr, false}};
 
+    // What each value may be dragged by, taken from the window this
+    // reproduces: a step there means the value can be slid with the mouse, and
+    // it is also what decides how many decimals it shows.
+    struct stepRule {
+      const char *category;
+      const char *name;
+      double step;
+    };
+
+    const stepRule _steps[] = {
+      {"General", "AxesTicsX", 1.},
+      {"General", "AxesTicsY", 1.},
+      {"General", "AxesTicsZ", 1.},
+      {"General", "CameraAperture", 1.},
+      {"General", "CameraEyeSeparationRatio", .1},
+      {"General", "CameraFocalLengthRatio", .1},
+      {"General", "ClipFactor", 0.1},
+      {"General", "GraphicsFontSize", 1.},
+      {"General", "GraphicsFontSizeTitle", 1.},
+      {"General", "Light0W", 0.01},
+      {"General", "Light0X", 0.01},
+      {"General", "Light0Y", 0.01},
+      {"General", "Light0Z", 0.01},
+      {"General", "NumThreads", 1.},
+      {"General", "PointSize", 0.1},
+      {"General", "PolygonOffsetFactor", 0.01},
+      {"General", "PolygonOffsetUnits", 0.01},
+      {"General", "QuadricSubdivisions", 1.},
+      {"General", "Shininess", 0.1},
+      {"General", "ShininessExponent", 1.},
+      {"General", "SmallAxesPositionX", 1.},
+      {"General", "SmallAxesPositionY", 1.},
+      {"General", "Verbosity", 1.},
+      {"Geometry", "CurveSelectWidth", 0.1},
+      {"Geometry", "CurveWidth", 0.1},
+      {"Geometry", "Normals", 1.},
+      {"Geometry", "NumSubEdges", 1.},
+      {"Geometry", "PointSelectSize", 0.1},
+      {"Geometry", "PointSize", 0.1},
+      {"Geometry", "Tangents", 1.},
+      {"Mesh", "AngleSmoothNormals", 1.},
+      {"Mesh", "ElementOrder", 1.},
+      {"Mesh", "Explode", 0.01},
+      {"Mesh", "LabelSampling", 1.},
+      {"Mesh", "LineWidth", 0.1},
+      {"Mesh", "MeshSizeFactor", 0.01},
+      {"Mesh", "MeshSizeFromCurvature", 1.},
+      {"Mesh", "Normals", 1.},
+      {"Mesh", "NumSubEdges", 1.},
+      {"Mesh", "PointSize", 0.1},
+      {"Mesh", "QualityInf", 0.01},
+      {"Mesh", "QualitySup", 0.01},
+      {"Mesh", "Smoothing", 1.},
+      {"Mesh", "Tangents", 1.0},
+      {"PostProcessing", "AnimationDelay", 0.01},
+      {"PostProcessing", "AnimationStep", 1.},
+      {"View", "AngleSmoothNormals", 1.},
+      {"View", "ArrowSizeMax", 1.},
+      {"View", "ArrowSizeMin", 1.},
+      {"View", "AxesTicsX", 1.},
+      {"View", "AxesTicsY", 1.},
+      {"View", "AxesTicsZ", 1.},
+      {"View", "DisplacementFactor", 0.01},
+      {"View", "Explode", 0.01},
+      {"View", "LineWidth", 0.1},
+      {"View", "MaxRecursionLevel", 1.},
+      {"View", "NbIso", 1.},
+      {"View", "Normals", 1.},
+      {"View", "PointSize", 0.1},
+      {"View", "PositionX", 0.5},
+      {"View", "PositionY", 0.5},
+      {"View", "Sampling", 1.},
+      {"View", "Tangents", 1.},
+      {"View", "TargetError", 1.e-4},
+      {"View", "TimeStep", 1.},
+      {nullptr, nullptr, 0.}};
+
+    // what it may be dragged by, if anything
+    double _stepOf(const char *category, const char *name)
+    {
+      if(!name) return 0.;
+      for(int i = 0; _steps[i].category; i++)
+        if(!strcmp(_steps[i].category, category) &&
+           !strcmp(_steps[i].name, name))
+          return _steps[i].step;
+      return 0.;
+    }
+
     // what makes this field live, if anything does
     std::function<bool()> _enabledBy(const char *category, const char *name,
                                      int num)
@@ -770,6 +858,7 @@ namespace Dialog {
       f.tooltip = _tooltipFor(category, name);
       f.changed = _redraw;
       f.enabled = _enabledBy(category, name, num);
+      f.step = _stepOf(category, name);
 
       switch(kind) {
       case RowCheck: f.kind = Check; break;
