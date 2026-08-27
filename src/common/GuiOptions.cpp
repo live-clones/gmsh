@@ -991,6 +991,7 @@ namespace Dialog {
   } // namespace
 
   int &optionsCategory() { return _state().category; }
+  int &optionsView() { return _state().view; }
 
   Panel options()
   {

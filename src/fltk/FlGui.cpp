@@ -621,7 +621,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
-  if(CTX::instance()->showOptionsOnStartup) options->win->show();
+  if(CTX::instance()->showOptionsOnStartup) Dialog::show(Dialog::Options, -1);
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
 
 #if defined(HAVE_TOUCHBAR)
@@ -882,34 +882,40 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'o')) {
-    general_options_cb(nullptr, nullptr);
+    Dialog::optionsCategory() = 0;
+    Dialog::show(Dialog::Options, -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'g')) {
-    geometry_options_cb(nullptr, nullptr);
+    Dialog::optionsCategory() = 1;
+    Dialog::show(Dialog::Options, -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'm')) {
-    mesh_options_cb(nullptr, nullptr);
+    Dialog::optionsCategory() = 2;
+    Dialog::show(Dialog::Options, -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 's')) {
-    solver_options_cb(nullptr, nullptr);
+    Dialog::optionsCategory() = 3;
+    Dialog::show(Dialog::Options, -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'p')) {
-    post_options_cb(nullptr, nullptr);
+    Dialog::optionsCategory() = 6;
+    Dialog::show(Dialog::Options, -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    view_options_cb(nullptr, (void *)-1);
+    Dialog::optionsCategory() = 5;
+    Dialog::show(Dialog::Options, -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
     if(PView::list.size()) {
-      if(options->view.index >= 0 &&
-         options->view.index < (int)PView::list.size())
-        plugins->show(options->view.index);
+      if(Dialog::optionsView() >= 0 &&
+         Dialog::optionsView() < (int)PView::list.size())
+        plugins->show(Dialog::optionsView());
       else
         plugins->show(0);
     }

@@ -238,6 +238,8 @@ namespace Dialog {
   // which category it is showing, so that a menu can open it on the one it is
   // about rather than on whichever was last looked at
   int &optionsCategory();
+  // and which post-processing view its View options are editing
+  int &optionsView();
   // the six planes that cut what is drawn
   Panel clipping();
 

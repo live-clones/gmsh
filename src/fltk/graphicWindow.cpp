@@ -31,6 +31,7 @@ typedef unsigned long intptr_t;
 #include "gamepadWindow.h"
 #include "visibilityWindow.h"
 #include "GuiActions.h"
+#include "GuiDialogs.h"
 #include "GuiMenus.h"
 #include "menuFltk.h"
 #include "fieldWindow.h"
@@ -785,21 +786,20 @@ void quick_access_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string what((const char *)data);
-  if(what == "general")
-    general_options_cb(nullptr, nullptr);
-  else if(what == "geometry")
-    geometry_options_cb(nullptr, nullptr);
-  else if(what == "mesh")
-    mesh_options_cb(nullptr, nullptr);
-  else if(what == "view")
-    view_options_cb(nullptr, (void *)-1);
+  if(what == "general" || what == "geometry" || what == "mesh" ||
+     what == "view") {
+    Dialog::optionsCategory() = (what == "general") ? 0 :
+                                (what == "geometry") ? 1 :
+                                (what == "mesh")     ? 2 :
+                                                       5;
+    Dialog::show(Dialog::Options, -1);
+  }
   else if(what == "reset_viewport") {
     status_xyz1p_cb(nullptr, (void *)"1:1");
     status_xyz1p_cb(nullptr, (void *)"z");
   }
   else if(what == "select_center") {
     opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
-    general_options_ok_cb(nullptr, (void *)"rotation_center");
     general_options_rotation_center_select_cb(nullptr, nullptr);
   }
   else if(what == "hover_meshes") {
