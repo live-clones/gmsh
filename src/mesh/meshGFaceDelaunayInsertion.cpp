@@ -2123,7 +2123,12 @@ void bowyerWatsonParallelograms(
 
   transferDataStructure(gf, AllTris, DATA);
 
-  if(CTX::instance()->mesh.quadqsPacking3D)
+  // The intrinsic metric belongs to the progressive/MVC chart of a discrete
+  // face. Native CAD faces already have their own valid parametrization: a
+  // UV midpoint there is generally not the geometric midpoint of an edge and
+  // repeatedly splitting it can refine away from the intended location.
+  if(CTX::instance()->mesh.quadqsPacking3D &&
+     gf->geomType() == GEntity::DiscreteSurface)
     intrinsicDelaunayizePackedSurface(gf, DATA);
 
   if(Msg::GetVerbosity() == 99) {

@@ -34,6 +34,9 @@ endif()
 if(NOT log MATCHES "3D oriented-cube packing created [0-9]+ points on face 1")
   message(FATAL_ERROR "PACK did not use 3D packing on the CAD face:\n${log}")
 endif()
+if(log MATCHES "intrinsic Delaunay triangulation")
+  message(FATAL_ERROR "PACK applied discrete intrinsic refinement to CAD:\n${log}")
+endif()
 
 # Preserve the historical uniform-size command-line spelling. It must enter
 # the exact same bounded CAD pipeline without requiring QuadqsTargetSize.
@@ -56,4 +59,7 @@ endif()
 if(NOT legacy_log MATCHES
    "3D oriented-cube packing created [0-9]+ points on face 1")
   message(FATAL_ERROR "Legacy uniform sizing did not use CAD 3D packing:\n${legacy_log}")
+endif()
+if(legacy_log MATCHES "intrinsic Delaunay triangulation")
+  message(FATAL_ERROR "Legacy PACK applied intrinsic refinement to CAD:\n${legacy_log}")
 endif()

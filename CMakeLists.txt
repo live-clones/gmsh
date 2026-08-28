@@ -2371,7 +2371,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       add_test(
         NAME quadIntrinsicLongEdgeSplit
         COMMAND gmsh
-          ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/2d/recombine.geo
+          ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadIntrinsicLongEdgeSplit.geo
           -2 -algo pack
           -setnumber Mesh.QuadqsPacking3D 1
           -setnumber Mesh.QuadqsPacking3DForceAllPoints 1
