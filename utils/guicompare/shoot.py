@@ -103,6 +103,9 @@ def keyed(dialog, keys, tabs=()):
 
 # where the row of tabs sits inside a dialog, per interface
 TAB_ROW = {"released": 14, "fltk": 14, "imgui": 30}
+# and where the strip is looked for: the row that tells one tab from the next,
+# which in FLTK is above the labels rather than through them
+TAB_SCAN = {"released": 8, "fltk": 8, "imgui": 30}
 
 
 # the twelve shapes of the elementary dialog
@@ -177,7 +180,7 @@ shot("highorder", "", [M], 12, 2)
 shot("partition", "", [M], 14, 2)
 # and the same dialog with its advanced half unfolded
 shot("partition", "advanced", [M], 14, 2,
-     press={"released": (368, 120), "fltk": (398, 104), "imgui": (407, 110)})
+     press={"released": (368, 120), "fltk": (398, 104), "imgui": (352, 104)})
 
 # and the ones the Tools menu raises
 keyed("manipulator", ["ctrl", "shift", "m"])
@@ -189,6 +192,12 @@ SHOTS.append(dict(name="options-mesh", dialog="options", branches=[],
                   press={"released": (45, 37), "fltk": (45, 40),
                          "imgui": (45, 67)}))
 keyed("clipping", ["ctrl", "shift", "c"])
+# the plugins, on a model with a view to run them on
+SHOTS.append(dict(name="plugins", dialog="plugins", branches=[],
+                  keys=["ctrl", "shift", "u"], geo=model("view.pos"),
+                  everyTab={"released": ["options", "help"],
+                            "fltk": ["options", "help"],
+                            "imgui": ["options", "help"]}))
 # The visibility window, on a model that has something to hide. Every one of
 # its tabs is photographed, and where each tab is, is read off the picture --
 # the released build has one more of them than the converted ones, so they are
@@ -201,6 +210,19 @@ SHOTS.append(dict(name="visibility", dialog="visibility", branches=[],
                                      "interactive", "per-window"],
                             "imgui": ["list", "tree", "numeric",
                                       "interactive", "per-window"]}))
+# The size fields, on a model that already has one. As it opens, the window
+# says to pick a field or make one; the field is picked by clicking the first
+# line of its list, which is not in the same place in the three interfaces.
+_FIELD = model("field.geo")
+shot("fields", "", [M, M + "/Define"], 5, 3, geo=_FIELD)
+shot("fields", "box", [M, M + "/Define"], 5, 3, geo=_FIELD,
+     press={"released": (60, 40), "fltk": (60, 45), "imgui": (60, 58)})
+# and the same, on its help
+shot("fields", "help", [M, M + "/Define"], 5, 3, geo=_FIELD,
+     press={"released": [(60, 40), (207, 47)],
+            "fltk": [(60, 45), (233, 42)],
+            "imgui": [(60, 58), (234, 51)]})
+
 keyed("statistics", ["ctrl", "i"],
       tabs=[("geometry", 55, 40), ("mesh", 112, 100), ("post", 187, 165)])
 
@@ -235,6 +257,8 @@ TITLES = {
     "clipping": "^Clipping$",
     "options": "^Options",
     "visibility": "^Visibility$",
+    "plugins": "^Plugins$",
+    "fields": "^Size fields$",
 }
 
 # every branch any shot unfolds, deepest first: closing a parent would hide the
@@ -257,7 +281,10 @@ DIALOG_POS = (260, 60)
 # what a dialog is worth is part of what is being compared.
 IMGUI_INI = "".join(
     "[Window][shot###gmshDialog%d]\nPos=%d,%d\nCollapsed=0\n\n"
-    % (i, DIALOG_POS[0], DIALOG_POS[1]) for i in range(12))
+    # one line per dialog there is, and a few to spare: a dialog with no entry
+    # of its own is put wherever Dear ImGui likes, and the picture is then
+    # taken of whatever happens to be at the place this expects
+    % (i, DIALOG_POS[0], DIALOG_POS[1]) for i in range(20))
 
 
 def dialog_title(dialog):
@@ -532,18 +559,11 @@ def detached(dpy, dialog, main):
 
 # where the tabs of a dialog sit, read off the picture rather than written
 # down: a tab moves as soon as a label changes, and there are 25 of them here
-def tab_boundaries(img, build):
-    """The x of the middle of each tab of the strip along the top.
-
-    Read off the picture rather than written down: a tab moves as soon as a
-    label changes, and the option window has twenty-five of them.
-    """
-    im = img.convert("RGB")
-    px = im.load()
+def _tabs_at(im, px, build, y):
+    """The tabs of the strip drawn at that height, if there is one there."""
     if build == "imgui":
         # a tab is drawn in one of two colours, selected or not, with the
         # window background showing between them
-        y = 30
         selected, plain = (152, 186, 225), (198, 206, 215)
         runs, start = [], None
         for x in range(im.width):
@@ -554,7 +574,6 @@ def tab_boundaries(img, build):
                 start = None
         return [(a + b) // 2 for a, b in runs]
     # FLTK draws a dark line between two tabs
-    y = 8
     grey, line = (192, 192, 192), (83, 83, 83)
     cuts = [x for x in range(im.width) if px[x, y] == line]
     cuts = [x for x in cuts if x > 20]
@@ -572,6 +591,38 @@ def tab_boundaries(img, build):
         while right + 1 < im.width and px[right + 1, y] == grey: right += 1
         out.append((left + min(right, left + 120)) // 2)
     return out
+
+
+def tab_boundaries(img, build, want=0):
+    """The middle of each tab of the strip, and how high up the strip is.
+
+    Read off the picture rather than written down: a tab moves as soon as a
+    label changes, the option window has twenty-five of them, and a dialog
+    that says what its panes are about above them -- the plugins, the size
+    fields -- has its strip further down than one that does not. `want` is how
+    many tabs the caller is expecting, which is what tells a strip from a row
+    of something else that happens to be striped.
+    """
+    im = img.convert("RGB")
+    px = im.load()
+    # what the caller wants is where to click, which is a few pixels under the
+    # row that tells one tab from the next
+    below = TAB_ROW[build] - TAB_SCAN[build]
+    first = TAB_SCAN[build]
+    # Where the strip usually is, and further down for a dialog that says what
+    # its panes are about above them. The row that holds the most tabs is the
+    # strip; the usual row wins a tie, so a dialog with a single tab -- the
+    # Solver options -- keeps it.
+    best = _tabs_at(im, px, build, first)
+    if len(best) == want or not want: return best, first + below
+    # not there: a dialog that says what its panes are about has pushed the
+    # strip down, and the first row that holds as many tabs as are expected is
+    # it -- a row of something else rarely holds exactly that many
+    for y in range(4, min(im.height, 120), 2):
+        if y == first: continue
+        found = _tabs_at(im, px, build, y)
+        if len(found) == want: return found, y + below
+    return best, first + below
 
 
 # The categories of the option window, and the tabs each of them has, as the
@@ -596,6 +647,16 @@ OPTION_TABS = [
 # the wrong category without saying so.
 CATEGORY_ROWS = {"released": (10, 13.7), "fltk": (10, 15.3),
                  "imgui": (33, 17)}
+
+
+def _points(spec, build):
+    """Where a shot clicks inside the dialog before it is taken: one place, or
+    several in the order they are to be clicked -- the size-field window wants
+    a field picked before its help means anything."""
+    point = spec.get("press", {}).get(build)
+    if not point:
+        return []
+    return point if isinstance(point[0], (list, tuple)) else [point]
 
 
 def press_inside(dpy, build, point, dialog, wx, wy):
@@ -640,7 +701,7 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
         if picture is None:
             failures.append("options-%s: nothing to photograph" % category)
             continue
-        found = tab_boundaries(picture, build)
+        found, tabRow = tab_boundaries(picture, build, len(tabs))
         if len(found) != len(tabs):
             print("NOTE %s %s: %d tabs seen, %d expected"
                   % (build, category, len(found), len(tabs)))
@@ -655,7 +716,7 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
             where = _dialog_geometry(dpy, "options", build, win, wx, wy)
             if not where: break
             dx, dy = where[0], where[1]
-            click(dpy, dx + x, dy + TAB_ROW[build])
+            click(dpy, dx + x, dy + tabRow)
             time.sleep(0.4)
             shot = _dialog_picture(dpy, "options", build, win, ww, wh)
             if shot is None:
@@ -719,8 +780,12 @@ def photograph(dpy, args, specs):
         # it, so there is nothing to photograph there
         if spec.get("added") and args.build == "released":
             continue
+        # A shot that types the accelerator of a window keeps an interface to
+        # itself. The menu entry is a toggle -- it says with a check mark
+        # whether the window is up -- so typing the chord a second time in the
+        # same interface would close the window the shot came to photograph.
         key = (spec["dialog"], spec.get("geo"), tuple(spec["branches"]),
-               name if spec.get("scene") else "")
+               name if spec.get("scene") or spec.get("keys") else "")
         if held and held[0] != key:
             stop_driver(held[1])
             held = None
@@ -754,7 +819,9 @@ def photograph(dpy, args, specs):
                 names = spec["everyTab"].get(args.build, [])
                 picture = _dialog_picture(dpy, spec["dialog"], args.build, win,
                                           ww, wh)
-                found = tab_boundaries(picture, args.build) if picture else []
+                found, tabRow = (tab_boundaries(picture, args.build,
+                                                len(names))
+                                 if picture else ([], TAB_ROW[args.build]))
                 if len(found) != len(names):
                     print("NOTE %s %s: %d tabs seen, %d expected"
                           % (args.build, name, len(found), len(names)))
@@ -765,7 +832,7 @@ def photograph(dpy, args, specs):
                     place = _dialog_geometry(dpy, spec["dialog"], args.build,
                                              win, wx, wy)
                     if not place: break
-                    click(dpy, place[0] + x, place[1] + TAB_ROW[args.build])
+                    click(dpy, place[0] + x, place[1] + tabRow)
                     time.sleep(0.4)
                     shot = _dialog_picture(dpy, spec["dialog"], args.build, win,
                                            ww, wh)
@@ -799,15 +866,17 @@ def photograph(dpy, args, specs):
                 wiggle(dpy, wx + 120, wy + wh - 60)
                 time.sleep(0.5)
 
-            point = spec.get("press", {}).get(args.build)
-            if point:
+            missed = False
+            for point in _points(spec, args.build):
                 if not press_inside(dpy, args.build, point,
                                     spec["dialog"], wx, wy):
                     failures.append("%s: no dialog to press in" % name)
-                    continue
+                    missed = True
+                    break
                 time.sleep(0.5)
                 wiggle(dpy, wx + 120, wy + wh - 60)
                 time.sleep(0.5)
+            if missed: continue
 
             if args.build == "imgui":
                 # Dear ImGui gives a window of its own to a dialog that
@@ -888,15 +957,17 @@ def photograph(dpy, args, specs):
             wiggle(dpy, wx + 120, wy + wh - 60)
             time.sleep(0.5)
 
-        point = spec.get("press", {}).get(args.build)
-        if point:
+        missed = False
+        for point in _points(spec, args.build):
             if not press_inside(dpy, args.build, point, spec["dialog"],
                                 wx, wy):
                 failures.append("%s: no dialog to press in" % name)
-                continue
+                missed = True
+                break
             time.sleep(0.5)
             wiggle(dpy, wx + 120, wy + wh - 60)
             time.sleep(0.5)
+        if missed: continue
 
         out = "%s-%s.png" % (args.build, name)
         if args.build == "imgui":

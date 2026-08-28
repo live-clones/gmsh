@@ -37,6 +37,8 @@ DIALOG_TITLES = {
     "clipping": "Clipping",
     "options": "Options",
     "visibility": "Visibility",
+    "plugins": "Plugins",
+    "fields": "Size fields",
 }
 
 
