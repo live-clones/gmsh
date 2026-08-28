@@ -13,6 +13,8 @@
 #include <cstring>
 #include <set>
 #include <algorithm>
+#include <cmath>
+#include <functional>
 #include <filesystem>
 #if !defined(WIN32) || defined(__CYGWIN__)
 #include <fnmatch.h>
@@ -1061,18 +1063,9 @@ void optionsAction(const std::string &what)
     optionsRestoreDefaults();
   }
   else if(what == "arrow_edit") {
-    // the shape of an arrow is edited in a window of the interface's own,
-    // which draws the arrow as it is described
-    double a = opt_general_arrow_head_radius(0, GMSH_GET, 0);
-    double b = opt_general_arrow_stem_length(0, GMSH_GET, 0);
-    double c = opt_general_arrow_stem_radius(0, GMSH_GET, 0);
-    while(Gui::editArrow(a, b, c)) {
-      opt_general_arrow_head_radius(0, GMSH_SET, a);
-      opt_general_arrow_stem_length(0, GMSH_SET, b);
-      opt_general_arrow_stem_radius(0, GMSH_SET, c);
-      CTX::instance()->mesh.changed = ENT_ALL;
-      drawContext::global()->draw();
-    }
+    // the shape of an arrow, described once like every other dialog: it stays
+    // up while one tries a shape, looks at it, and tries another
+    Dialog::show(Dialog::Arrow, -1);
   }
   else if(what == "axes_fit") {
     SBoundingBox3d bbox = GModel::current()->bounds(true);
@@ -1128,6 +1121,234 @@ void optionsAction(const std::string &what)
 #endif
   else
     Msg::Debug("No option window action '%s'", what.c_str());
+}
+
+// --- the quick access menu of the status bar
+
+namespace {
+
+  // Every view that is drawn, which is what the quick access menu acts upon:
+  // it has no notion of which view one means, so it means all of them.
+  void _forEachVisibleView(const std::function<void(int)> &what)
+  {
+#if defined(HAVE_POST)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) what((int)i);
+#endif
+  }
+
+  // the first of them, which is the one the little chooser is opened on
+  int _firstVisibleView()
+  {
+#if defined(HAVE_POST)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) return (int)i;
+#endif
+    return -1;
+  }
+
+#if defined(HAVE_POST)
+  // how far a view may be raised or displaced before it says nothing: the
+  // window this reproduces works it out from the range of the view and the
+  // size of the model
+  double _viewSpan(int i)
+  {
+    double most = std::max(fabs(opt_view_min(i, GMSH_GET, 0)),
+                           fabs(opt_view_max(i, GMSH_GET, 0)));
+    if(!most) most = 1.;
+    return 2. * CTX::instance()->lc / most;
+  }
+#endif
+
+  // The entries of the menu that are a switch, and the option each of them
+  // stands for. Named here rather than only in the description because the
+  // touch bar of macOS reaches for the same entries by name.
+  struct optionSwitch {
+    const char *what, *category, *name;
+  };
+
+  const optionSwitch _switches[] = {
+    {"hover_meshes", "General", "MouseHoverMeshes"},
+    {"geometry_points", "Geometry", "Points"},
+    {"geometry_curves", "Geometry", "Curves"},
+    {"geometry_surfaces", "Geometry", "Surfaces"},
+    {"geometry_volumes", "Geometry", "Volumes"},
+    {"mesh_nodes", "Mesh", "Nodes"},
+    {"mesh_lines", "Mesh", "Lines"},
+    {"mesh_surface_edges", "Mesh", "SurfaceEdges"},
+    {"mesh_surface_faces", "Mesh", "SurfaceFaces"},
+    {"mesh_volume_edges", "Mesh", "VolumeEdges"},
+    {"mesh_volume_faces", "Mesh", "VolumeFaces"},
+  };
+
+  const optionSwitch *_switchFor(const std::string &what)
+  {
+    for(const auto &s : _switches)
+      if(what == s.what) return &s;
+    return nullptr;
+  }
+
+} // namespace
+
+bool quickAccessChecked(const std::string &what)
+{
+  if(const optionSwitch *s = _switchFor(what)) {
+    double v = 0.;
+    NumberOption(GMSH_GET, s->category, 0, s->name, v, false);
+    return v != 0.;
+  }
+  if(what == "axes") return opt_general_axes(0, GMSH_GET, 0) != 0.;
+#if defined(HAVE_POST)
+  if(what == "view_element_outlines") {
+    bool on = false;
+    _forEachVisibleView([&on](int i) {
+      if(opt_view_show_element(i, GMSH_GET, 0) != 0.) on = true;
+    });
+    return on;
+  }
+#endif
+  return false;
+}
+
+void quickAccessAction(const std::string &what)
+{
+  if(const optionSwitch *s = _switchFor(what)) {
+    double v = 0.;
+    NumberOption(GMSH_GET, s->category, 0, s->name, v, false);
+    v = v ? 0. : 1.;
+    NumberOption(GMSH_SET | GMSH_GUI, s->category, 0, s->name, v, false);
+    drawContext::global()->draw();
+    return;
+  }
+  if(what == "reset_viewport") {
+    // as the button of the status bar does it: back to a 1:1 view down z
+    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+      viewSetOrientation(ctx, "1:1", false);
+      viewSetOrientation(ctx, "z", false);
+    }
+    drawContext::global()->draw();
+  }
+  else if(what == "select_center") {
+    opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
+    optionsAction("rotation_center_select");
+  }
+  else if(what == "split_hor")
+    Gui::windowAction("split_h");
+  else if(what == "split_ver")
+    Gui::windowAction("split_v");
+  else if(what == "unsplit")
+    Gui::windowAction("split_u");
+  else if(what == "axes") {
+    // it comes back where it was, fitted to what is drawn
+    int old = (int)opt_general_axes(0, GMSH_GET, 0);
+    opt_general_axes(0, GMSH_SET | GMSH_GUI, old ? 0 : 3);
+    if(!old) {
+      opt_general_axes_auto_position(0, GMSH_SET | GMSH_GUI, 0);
+      optionsAction("axes_fit");
+    }
+  }
+  else if(what == "orthographic")
+    opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 1);
+  else if(what == "perspective") {
+    opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 0);
+    drawContext::global()->draw();
+    // how far the eye is, which is what makes a perspective view look right
+    Dialog::showOptionValue("General", 0, "ClipFactor", "Factor", 0.1, 20.,
+                            0.1);
+  }
+  else if(what == "mesh_size")
+    Dialog::showOptionValue("Mesh", 0, "MeshSizeFactor", "Factor", 0.01, 100.,
+                            0.01);
+  else if(what == "mesh_toggle") {
+    // The whole mesh display off, and back on as it was. What "as it was" is
+    // has to be remembered here: the six options are all off in between.
+    static int off = 0;
+    static int was[6] = {0, 0, 0, 0, 0, 0};
+    double (*const opts[6])(int, int, double) = {
+      opt_mesh_nodes,         opt_mesh_lines,
+      opt_mesh_surface_edges, opt_mesh_surface_faces,
+      opt_mesh_volume_edges,  opt_mesh_volume_faces};
+    if(off) {
+      Msg::StatusBar(false, "Mesh display restored");
+      off = 0;
+      for(int i = 0; i < 6; i++) opts[i](0, GMSH_SET | GMSH_GUI, was[i]);
+    }
+    else {
+      Msg::StatusBar(false, "Mesh display OFF");
+      off = 1;
+      for(int i = 0; i < 6; i++) {
+        was[i] = (int)opts[i](0, GMSH_GET, 0.);
+        opts[i](0, GMSH_SET | GMSH_GUI, 0);
+      }
+    }
+  }
+#if defined(HAVE_POST)
+  else if(what == "view_element_outlines") {
+    // on when none of them has it on, off when any of them has
+    int set = 0;
+    _forEachVisibleView([&set](int i) {
+      if(!set) set = (int)opt_view_show_element(i, GMSH_GET, 0);
+    });
+    _forEachVisibleView([set](int i) {
+      opt_view_show_element(i, GMSH_SET | GMSH_GUI, !set);
+    });
+  }
+  else if(what == "view_normal_raise") {
+    int first = _firstVisibleView();
+    if(first >= 0) {
+      double span = _viewSpan(first);
+      Dialog::showOptionValue("View", first, "NormalRaise", "Raise", -span,
+                              span, span / 200., "view");
+    }
+  }
+  else if(what == "view_displacement") {
+    _forEachVisibleView(
+      [](int i) { opt_view_vector_type(i, GMSH_SET | GMSH_GUI, 5); });
+    drawContext::global()->draw();
+    int first = _firstVisibleView();
+    if(first >= 0) {
+      double span = _viewSpan(first);
+      Dialog::showOptionValue("View", first, "DisplacementFactor", "Factor", 0.,
+                              span, span / 100., "view");
+    }
+  }
+  else if(what == "view_iso" || what == "view_filled") {
+    _forEachVisibleView([&what](int i) {
+      opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
+                              (what == "view_iso") ? 1 : 3);
+    });
+    drawContext::global()->draw();
+    int first = _firstVisibleView();
+    if(first >= 0)
+      Dialog::showOptionValue("View", first, "NbIso", "Intervals", 1., 100., 1.,
+                              "view");
+  }
+  else if(what == "view_continous" || what == "view_numeric") {
+    int type = (what == "view_continous") ? 2 : 4;
+    _forEachVisibleView(
+      [type](int i) { opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, type); });
+  }
+  else if(what == "view_line" || what == "view_3d_arrow") {
+    int type = (what == "view_line") ? 1 : 4;
+    _forEachVisibleView(
+      [type](int i) { opt_view_vector_type(i, GMSH_SET | GMSH_GUI, type); });
+  }
+  else if(what == "view_glyph_barycenter" || what == "view_glyph_node") {
+    int where = (what == "view_glyph_barycenter") ? 1 : 2;
+    _forEachVisibleView([where](int i) {
+      opt_view_glyph_location(i, GMSH_SET | GMSH_GUI, where);
+    });
+  }
+  else if(what == "view_range_default" || what == "view_range_per_step") {
+    int type = (what == "view_range_default") ? 1 : 3;
+    _forEachVisibleView(
+      [type](int i) { opt_view_range_type(i, GMSH_SET | GMSH_GUI, type); });
+  }
+#endif
+  else
+    Msg::Debug("No quick access action '%s'", what.c_str());
+
+  drawContext::global()->draw();
 }
 
 void optionsRestoreDefaults()

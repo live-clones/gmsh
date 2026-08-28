@@ -264,6 +264,37 @@ the file. Both belong to the metamodel and solver workflow of the module tree,
 which keeps its own widgets and still has them; the per-entity window shows the
 value, the range and the choices, and no more.
 
+The quick access menu the status bar drops is described once too, in
+GuiMenus.cpp beside the menu bar. It was a fifty-four entry Fl_Menu_Item[] on
+one side, with the places of the entries whose check mark had to be set written
+out as `const int gen = 7, geo = 14, msh = 21, pos = 32, end = 54` -- five
+numbers to count again whenever an entry moved -- and a shorter, differently
+worded menu on the other. What an entry does and what its check mark says are
+now both asked of quickAccessAction()/quickAccessChecked(), so neither can
+drift from the other; the macOS touch bar reaches the same entries by the same
+names. FLTK builds a popup out of the description (fltkMenuPopup) as it builds
+its bar out of Menu::bar(), and one thing had to be said for that: the entry a
+popup opens under before the user has picked one (Menu::Item::preferred), which
+is how the window this reproduces opens under "Toggle mesh display".
+
+The three little windows that ask for one thing -- one option, the shape of an
+arrow, and a command with the ones given before it -- are described in
+GuiPrompts.cpp. They were modal windows the FLTK interface pumped its own event
+loop in, which is exactly why the Dear ImGui interface had none of them: the
+arrow editor was a TODO, and the watch pattern and the remote command were
+plain text prompts with no memory. They are ordinary dialogs here, not modal
+ones: the value applies as it is given, so there is nothing to wait for. The
+history of commands moved out of Fl_Preferences, which is FLTK's, into a file
+beside the session file, which both interfaces can read.
+
+What is left of src/fltk/extraDialogs.cpp is the two text windows the ONELAB
+range widgets of the FLTK module tree open, which is FLTK's own and has nobody
+to share them with. The CGNS import dialog went with the rest: nothing had
+called it for some time.
+
+The arrow editor is three value inputs where the window it reproduces has three
+sliders, as every bounded option of the option window is a value input here.
+
 FLTK reads "&" in a label as the mark of a keyboard shortcut in menus, buttons
 and inputs -- and only there. A label that is text has to double it for those,
 and must not for a box, a group, a tab or a line of a tree, which draw what they

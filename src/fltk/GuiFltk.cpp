@@ -260,14 +260,6 @@ namespace Gui {
     return w ? (w->shown() ? true : false) : false;
   }
 
-  bool editArrow(double &headRadius, double &stemLength, double &stemRadius)
-  {
-    if(!available()) return false;
-    return arrowEditor("Arrow Editor", headRadius, stemLength, stemRadius) ?
-             true :
-             false;
-  }
-
   void configureGamepad()
   {
     // described once, like every other dialog; show() raises it

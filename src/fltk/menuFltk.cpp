@@ -154,6 +154,84 @@ void fltkModulesBuild(
   _walkModules(_modules.tree, "0Modules", add);
 }
 
+namespace {
+
+  // The popup has a store of its own too: it is built while the menu bar is
+  // alive, and it must not walk over what the bar points at.
+  struct fltkPopup {
+    std::vector<Menu::Item> tree;
+    std::deque<std::string> labels;
+    std::vector<Fl_Menu_Item> items;
+    std::vector<const Menu::Item *> byId;
+    // where it opened last time, so that it opens there again
+    std::string last;
+  };
+
+  fltkPopup _popup;
+
+  void _appendPopup(const std::vector<Menu::Item> &items)
+  {
+    for(const auto &it : items) {
+      Fl_Menu_Item m;
+      _blank(m);
+      _popup.labels.push_back(it.label);
+      m.text = _popup.labels.back().c_str();
+      m.shortcut_ = _shortcut(it.shortcut);
+      if(it.dividerAfter) m.flags |= FL_MENU_DIVIDER;
+      if(it.kind == Menu::Submenu) {
+        m.flags |= FL_SUBMENU;
+        _popup.items.push_back(m);
+        _appendPopup(it.children);
+        Fl_Menu_Item end;
+        _blank(end);
+        _popup.items.push_back(end);
+        continue;
+      }
+      if(it.kind == Menu::Toggle) {
+        m.flags |= FL_MENU_TOGGLE;
+        if(it.checked && it.checked()) m.flags |= FL_MENU_VALUE;
+      }
+      if(it.enabled && !it.enabled()) m.flags |= FL_MENU_INACTIVE;
+      if(it.preferred && _popup.last.empty()) _popup.last = it.label;
+      _popup.byId.push_back(&it);
+      m.user_data_ = (void *)(intptr_t)_popup.byId.size();
+      _popup.items.push_back(m);
+    }
+  }
+
+} // namespace
+
+void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y)
+{
+  _popup.labels.clear();
+  _popup.items.clear();
+  _popup.byId.clear();
+  // moved in first: what follows takes pointers into it
+  _popup.tree = tree;
+  _appendPopup(_popup.tree);
+  Fl_Menu_Item end;
+  _blank(end);
+  _popup.items.push_back(end);
+
+  // the entry it opened on last time, if it is still there
+  Fl_Menu_Item *at = nullptr;
+  for(std::size_t i = 0; i < _popup.items.size(); i++) {
+    if(!_popup.items[i].text) continue;
+    if(_popup.last == _popup.items[i].text) {
+      at = &_popup.items[i];
+      break;
+    }
+  }
+
+  const Fl_Menu_Item *picked = _popup.items[0].popup(x, y, nullptr, at, nullptr);
+  if(!picked || !picked->user_data_) return;
+  _popup.last = picked->text ? picked->text : "";
+  std::size_t id = (std::size_t)(intptr_t)picked->user_data_;
+  if(!id || id > _popup.byId.size()) return;
+  const Menu::Item *item = _popup.byId[id - 1];
+  if(item && item->action) item->action();
+}
+
 Fl_Menu_Item *fltkMenuBuild(bool systemBar)
 {
   _menu.labels.clear();

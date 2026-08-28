@@ -19,6 +19,7 @@
 
 #if defined(HAVE_IMGUI)
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -173,33 +174,33 @@ namespace {
   // Walk the shared description. An entry is a Dear ImGui menu item of the
   // matching kind; the actions it triggers are queued, like every other action
   // of the interface, because a Dear ImGui frame is not re-entrant.
-  void _walk(const std::vector<Menu::Item> &items, appWindow *app)
-  {
-    for(const auto &it : items) {
-      bool enabled = it.enabled ? it.enabled() : true;
-
-      if(it.kind == Menu::Submenu) {
-        if(ImGui::BeginMenu(it.label.c_str(), enabled && !it.children.empty())) {
-          _walk(it.children, app);
-          ImGui::EndMenu();
-        }
-      }
-      else {
-        bool checked = (it.kind == Menu::Toggle && it.checked) ? it.checked() :
-                                                                 false;
-        std::string shortcut = it.shortcut.label();
-        if(ImGui::MenuItem(it.label.c_str(),
-                           shortcut.empty() ? nullptr : shortcut.c_str(),
-                           checked, enabled)) {
-          std::function<void()> what = it.action;
-          if(what) app->postAction(what);
-        }
-      }
-      if(it.dividerAfter) ImGui::Separator();
-    }
-  }
-
 } // namespace
+
+void menuWalk(const std::vector<Menu::Item> &items, appWindow *app)
+{
+  for(const auto &it : items) {
+    bool enabled = it.enabled ? it.enabled() : true;
+
+    if(it.kind == Menu::Submenu) {
+      if(ImGui::BeginMenu(it.label.c_str(), enabled && !it.children.empty())) {
+        menuWalk(it.children, app);
+        ImGui::EndMenu();
+      }
+    }
+    else {
+      bool checked = (it.kind == Menu::Toggle && it.checked) ? it.checked() :
+                                                               false;
+      std::string shortcut = it.shortcut.label();
+      if(ImGui::MenuItem(it.label.c_str(),
+                         shortcut.empty() ? nullptr : shortcut.c_str(),
+                         checked, enabled)) {
+        std::function<void()> what = it.action;
+        if(what) app->postAction(what);
+      }
+    }
+    if(it.dividerAfter) ImGui::Separator();
+  }
+}
 
 void appWindow::_drawMenuBar()
 {
@@ -229,7 +230,7 @@ void appWindow::_drawMenuBar()
     return;
   }
 
-  _walk(menus, this);
+  menuWalk(menus, this);
 
   ImGui::EndMenuBar();
   ImGui::End();

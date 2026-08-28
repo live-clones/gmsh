@@ -8,6 +8,9 @@
 
 #include <functional>
 #include <string>
+#include <vector>
+
+#include "GuiMenus.h"
 
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Item.H>
@@ -25,6 +28,12 @@ Fl_Menu_Item *fltkMenuBuild(bool systemBar);
 // Bring the check marks and the greying up to date. Cheap, and only needed just
 // before the menu is shown, which is what menuBarFltk does.
 void fltkMenuRefresh();
+
+// Pop up a menu built from a shared description at the given place on the
+// screen, and run whatever the user picked. This is what the option button of
+// the status bar drops. The menu opens under the entry that was picked last
+// time, as the hand-written one did.
+void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y);
 
 // Walk the shared description of the modules tree and hand each leaf to add(),
 // with the "0Modules/..." path the FLTK tree wants. The entries stay valid

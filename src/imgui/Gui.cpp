@@ -260,19 +260,6 @@ namespace Gui {
     return appWindow::instance()->panelVisible(panel);
   }
 
-  bool editArrow(double &headRadius, double &stemLength, double &stemRadius)
-  {
-    // TODO: a window of its own, drawing the arrow it describes, as the FLTK
-    // interface has. Until then the three numbers are reachable in the "All"
-    // list of the general options.
-    (void)headRadius;
-    (void)stemLength;
-    (void)stemRadius;
-    Msg::Warning("The arrow editor is not there yet: set "
-                 "General.ArrowHeadRadius, ArrowStemLength and ArrowStemRadius");
-    return false;
-  }
-
   void configureGamepad()
   {
     Dialog::show(Dialog::Gamepad, 0);

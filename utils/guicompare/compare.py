@@ -44,6 +44,10 @@ DIALOG_TITLES = {
     "listing": "Current Options and Workspace",
     "about": "About Gmsh",
     "parameters": "Parameters",
+    "quickaccess": "Quick access menu",
+    "watch": "Watch Pattern",
+    "arrow": "Arrow Editor",
+    "factor": "Factor",
 }
 
 

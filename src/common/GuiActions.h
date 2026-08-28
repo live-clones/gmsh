@@ -47,6 +47,14 @@ void optionsRestoreDefaults();
 // through its time steps
 void optionsAction(const std::string &what);
 
+// One entry of the quick access menu of the status bar, by the name the menu
+// gives it. See Menu::quickAccess() for the menu itself; the names are here
+// rather than only there because the macOS touch bar drives the same entries.
+void quickAccessAction(const std::string &what);
+// Whether that entry is on, for the ones that are a switch: it is what the
+// check mark beside it says, and it asks the option rather than remembering.
+bool quickAccessChecked(const std::string &what);
+
 // --- solver / ONELAB
 
 // Run one of the actions of the ONELAB tree: "check", "check_always",

@@ -361,6 +361,9 @@ namespace Dialog {
     CurrentOptions,
     About,
     OnelabContext,
+    OptionValue,
+    Arrow,
+    History,
     NumDialogs
   };
 
@@ -415,6 +418,27 @@ namespace Dialog {
   Panel onelabContext();
   // show it on that entity, highlighting what it is about
   void showOnelabContext(int dim, int tag);
+
+  // One option, asked for on its own: the quick access menu of the status bar
+  // opens it on the entries that take a value rather than a switch -- the
+  // clipping factor, the mesh size factor, the number of intervals of a view.
+  Panel optionValue();
+  // Show it on that option, between those bounds. `title` is what the window
+  // is called; the value applies as it is typed, and `applyTo` "view" copies
+  // it to every visible view, which is what the menu entries that act on the
+  // views mean.
+  void showOptionValue(const std::string &category, int index,
+                       const std::string &name, const std::string &title,
+                       double minimum, double maximum, double step,
+                       const std::string &applyTo = "");
+  // the shape of the arrows a vector view is drawn with
+  Panel arrow();
+  // A command, with the ones given before it: the remote solver to start and
+  // the pattern of the files to watch are both asked for that way. Which of
+  // the two it is showing is set by the two calls below.
+  Panel history();
+  void showRemoteCommand();
+  void showWatchPattern();
   // show that window with a view picked, as the button of a view does
   void showPluginsForView(int view);
   // what the gamepad is doing and what each of its buttons and axes is for

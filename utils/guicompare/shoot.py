@@ -70,6 +70,14 @@ M = "0Modules/Mesh"
 
 SHOTS = []
 
+# Where a dialog that is opened from inside another one goes instead: the arrow
+# editor is reached through a button of the option window, and stacked at the
+# same place the two would be cut out as one -- the walk that finds the edges of
+# a Dear ImGui window would run out of the top one into the one below it, which
+# is the same colour.
+STACKED_POS = (260, 460)
+STACKED = {20}  # Dialog::Arrow
+
 
 def shot(dialog, pane, branches, row, depth, geo=None, scene=(), added=False,
          press=None):
@@ -255,6 +263,29 @@ SHOTS.append(dict(name="about-", dialog="about", branches=[],
 SHOTS.append(dict(name="parameters-", dialog="parameters", branches=[],
                   geo=model("onelab.geo"), context=[2, 1]))
 
+# The quick access menu of the status bar, which both interfaces now build
+# from one description. A menu that has popped up is not a window the X server
+# will name, so the picture is of the whole window it opened over.
+SHOTS.append(dict(name="quickaccess-", dialog="quickaccess", branches=[],
+                  geo=model("view.pos"), whole=True,
+                  menu={"released": [(22, 735)], "fltk": [(22, 735)],
+                        "imgui": [(41, 987)]}))
+
+# The three little windows that ask for one thing. The pattern of the files to
+# watch is reached through the File menu, and the arrow editor through the
+# button the option window carries on its General/Aspect tab -- neither has an
+# accelerator, and both are where they have always been.
+SHOTS.append(dict(name="watch-", dialog="watch", branches=[],
+                  menu={"released": [(18, 11), (50, 100)],
+                        "fltk": [(18, 11), (50, 107)],
+                        "imgui": [(14, 9), (50, 96)]}))
+SHOTS.append(dict(name="arrow-", dialog="arrow", branches=[],
+                  keys=["ctrl", "shift", "n"], pressIn="options",
+                  at=STACKED_POS,
+                  press={"released": [(270, 14), (360, 220)],
+                         "fltk": [(287, 14), (360, 220)],
+                         "imgui": [(287, 32), (345, 211)]}))
+
 keyed("statistics", ["ctrl", "i"],
       tabs=[("geometry", 55, 40), ("mesh", 112, 100), ("post", 187, 165)])
 
@@ -296,6 +327,9 @@ TITLES = {
     "listing": "^Current Options and Workspace$",
     "about": "^About Gmsh$",
     "parameters": "^Parameters$",
+    "watch": "^Watch Pattern$",
+    "arrow": "^Arrow Editor$",
+    "factor": "^Factor$",
 }
 
 # every branch any shot unfolds, deepest first: closing a parent would hide the
@@ -321,7 +355,8 @@ IMGUI_INI = "".join(
     # one line per dialog there is, and a few to spare: a dialog with no entry
     # of its own is put wherever Dear ImGui likes, and the picture is then
     # taken of whatever happens to be at the place this expects
-    % (i, DIALOG_POS[0], DIALOG_POS[1]) for i in range(20))
+    % ((i,) + (STACKED_POS if i in STACKED else DIALOG_POS))
+    for i in range(24))
 
 
 def dialog_title(dialog):
@@ -916,8 +951,12 @@ def photograph(dpy, args, specs):
 
             missed = False
             for point in _points(spec, args.build):
+                # the button to press may be in another window than the one
+                # the shot is of: the arrow editor is opened from the option
+                # window
                 if not press_inside(dpy, args.build, point,
-                                    spec["dialog"], wx, wy):
+                                    spec.get("pressIn", spec["dialog"]),
+                                    wx, wy):
                     failures.append("%s: no dialog to press in" % name)
                     missed = True
                     break
@@ -925,6 +964,21 @@ def photograph(dpy, args, specs):
                 wiggle(dpy, wx + 120, wy + wh - 60)
                 time.sleep(0.5)
             if missed: continue
+
+            if spec.get("whole"):
+                # A menu that has popped up is not a window anyone can ask the
+                # server for by name, and what it is worth comparing against
+                # is the window it opened over anyway.
+                out = "%s-%s.png" % (args.build, name)
+                picture = grab_window(dpy, dpy.screen().root, wx, wy)
+                if picture:
+                    picture = picture.crop((0, 0, ww, wh))
+                    picture.save(os.path.join(args.out, out))
+                    print("SHOT %s  %dx%d" % (out, picture.width,
+                                              picture.height))
+                else:
+                    failures.append("%s: nothing to photograph" % name)
+                continue
 
             if args.build == "imgui":
                 # Dear ImGui gives a window of its own to a dialog that
@@ -940,9 +994,10 @@ def photograph(dpy, args, specs):
                                                   picture.height))
                         continue
                 after = grab(dpy, win, ww, wh)
-                box = imgui_box(after, DIALOG_POS)
+                at = spec.get("at", DIALOG_POS)
+                box = imgui_box(after, at)
                 if not box:
-                    failures.append("%s: no dialog at %s" % (name, DIALOG_POS))
+                    failures.append("%s: no dialog at %s" % (name, at))
                     after.save(os.path.join(
                         args.out, "%s-%s-MISS.png" % (args.build, name)))
                     continue
@@ -1007,8 +1062,8 @@ def photograph(dpy, args, specs):
 
         missed = False
         for point in _points(spec, args.build):
-            if not press_inside(dpy, args.build, point, spec["dialog"],
-                                wx, wy):
+            if not press_inside(dpy, args.build, point,
+                                spec.get("pressIn", spec["dialog"]), wx, wy):
                 failures.append("%s: no dialog to press in" % name)
                 missed = True
                 break

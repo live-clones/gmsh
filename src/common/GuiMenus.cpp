@@ -17,8 +17,14 @@
 #include "GuiActions.h"
 #include "GuiDialogs.h"
 #include "Gui.h"
+#include "Options.h"
+#include "drawContext.h"
 #include "Context.h"
 #include "GmshMessage.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
 
 namespace Menu {
 
@@ -204,7 +210,8 @@ static bool check_utf8(const std::string &string)
       file_.push_back(submenu("Open Recent", 0, recentFiles()));
       file_.push_back(
         file("Merge...", 'e', "merge", Shortcut('O', ModCommand | ModShift)));
-      file_.push_back(divide(file("Watch Pattern...", 0, "watch")));
+      file_.push_back(
+        divide(action("Watch Pattern...", 0, Dialog::showWatchPattern)));
       file_.push_back(action("Clear", 'C', projectClear));
       file_.push_back(
         file("Rename...", 'R', "rename", Shortcut('R', ModCommand)));
@@ -212,7 +219,7 @@ static bool check_utf8(const std::string &string)
 #if defined(HAVE_ONELAB)
       file_.push_back(divide(submenu(
         "Remote", 0,
-        {file("Start...", 0, "remote_start"),
+        {action("Start...", 0, Dialog::showRemoteCommand),
          file("Merge...", 0, "remote_merge"),
          file("Clear", 0, "remote_clear"), file("Stop", 0, "remote_stop")})));
 #endif
@@ -304,6 +311,148 @@ static bool check_utf8(const std::string &string)
 
     return menus;
   }
+
+// --- the quick access menu of the status bar
+//
+// This is the fifty-four entry Fl_Menu_Item[] that status_options_cb() of
+// src/fltk/graphicWindow.cpp declared, with the places of the entries whose
+// check mark had to be set written out as `const int gen = 7, geo = 14, msh =
+// 21, pos = 32, end = 54` -- five numbers that had to be counted again every
+// time an entry moved. Here each entry says for itself what it shows.
+
+namespace {
+
+  // one of the entries of quickAccessAction()
+  Item quick(const std::string &label, const std::string &what,
+             const Shortcut &shortcut = Shortcut())
+  {
+    return action(label, 0, [what]() { quickAccessAction(what); }, shortcut);
+  }
+
+  // The same, for an entry that is a switch: what it does and what its check
+  // mark says are both asked of the shared action, so neither can drift from
+  // the other, which is what the table of hand-counted indices could not
+  // promise.
+  Item quickToggle(const std::string &label, const std::string &what,
+                   const Shortcut &shortcut = Shortcut())
+  {
+    Item i;
+    i.kind = Toggle;
+    i.label = label;
+    i.shortcut = shortcut;
+    i.checked = [what]() { return quickAccessChecked(what); };
+    i.action = [what]() { quickAccessAction(what); };
+    return i;
+  }
+
+  // "All ... options...", which opens the option window on that category
+  Item allOptions(const std::string &label, int category)
+  {
+    Item i = action(label, 0, [category]() {
+      Dialog::optionsCategory() = category;
+      Dialog::show(Dialog::Options, -1);
+    });
+    i.dividerAfter = true;
+    return i;
+  }
+
+  bool _haveViews()
+  {
+#if defined(HAVE_POST)
+    return !PView::list.empty();
+#else
+    return false;
+#endif
+  }
+
+} // namespace
+
+std::vector<Item> quickAccess()
+{
+  std::vector<Item> items;
+
+  items.push_back(quick("Reset viewport", "reset_viewport"));
+  items.push_back(quick("Select rotation center", "select_center"));
+  items.push_back(divide(submenu("Split window", 0,
+                                 {quick("Horizontally", "split_hor"),
+                                  quick("Vertically", "split_ver"),
+                                  quick("Unsplit", "unsplit")})));
+
+  // turning the axes on fits them to what is drawn, which is why this one is
+  // not simply the option
+  items.push_back(quickToggle("Axes", "axes", Shortcut('A', ModAlt)));
+  items.push_back(quickToggle("Mouse hover over meshes", "hover_meshes"));
+  // perspective asks for the distance to the eye once it is on, which is what
+  // makes the difference visible at all
+  items.push_back(submenu(
+    "Projection mode", 0,
+    {quick("Orthographic", "orthographic", Shortcut('O', ModAlt)),
+     quick("Perspective", "perspective")}));
+  items.push_back(allOptions("All general options...", 0));
+
+  items.push_back(submenu(
+    "Geometry visibility", 0,
+    {quickToggle("Points", "geometry_points", Shortcut('P', ModAlt)),
+     quickToggle("Curves", "geometry_curves", Shortcut('L', ModAlt)),
+     quickToggle("Surfaces ", "geometry_surfaces", Shortcut('S', ModAlt)),
+     quickToggle("Volumes", "geometry_volumes", Shortcut('V', ModAlt))}));
+  items.push_back(allOptions("All geometry options...", 1));
+
+  items.push_back(submenu(
+    "Mesh visibility", 0,
+    {quickToggle("Nodes", "mesh_nodes", Shortcut('P', ModAlt | ModShift)),
+     quickToggle("1D elements", "mesh_lines", Shortcut('L', ModAlt | ModShift)),
+     quickToggle("2D element edges ", "mesh_surface_edges",
+                 Shortcut('S', ModAlt | ModShift)),
+     quickToggle("2D element faces", "mesh_surface_faces",
+                 Shortcut('D', ModAlt | ModShift)),
+     quickToggle("3D element edges", "mesh_volume_edges",
+                 Shortcut('V', ModAlt | ModShift)),
+     quickToggle("3D element faces", "mesh_volume_faces",
+                 Shortcut('B', ModAlt | ModShift))}));
+  {
+    // the one the menu opens under: it is what one comes here for
+    Item toggle =
+      quick("Toggle mesh display", "mesh_toggle", Shortcut('M', ModAlt));
+    toggle.preferred = true;
+    items.push_back(toggle);
+  }
+  items.push_back(quick("Global mesh size factor", "mesh_size"));
+  items.push_back(allOptions("All mesh options...", 2));
+
+  // and what only means something with a view to say it of
+  if(_haveViews()) {
+    items.push_back(quickToggle("View element outlines ",
+                                "view_element_outlines",
+                                Shortcut('E', ModAlt)));
+    items.push_back(quick("View normal raise", "view_normal_raise"));
+    items.push_back(
+      submenu("View intervals", 0,
+              {quick("Iso-values", "view_iso", Shortcut('T', ModAlt)),
+               quick("Continuous map", "view_continous"),
+               quick("Filled iso-values", "view_filled"),
+               quick("Numeric values", "view_numeric")}));
+    items.push_back(submenu("View range", 0,
+                            {quick("Default", "view_range_default"),
+                             quick("Per time step", "view_range_per_step")}));
+    items.push_back(submenu("View vector display", 0,
+                            {quick("Line", "view_line"),
+                             quick("3D arrow", "view_3d_arrow"),
+                             quick("Displacement", "view_displacement")}));
+    items.push_back(submenu("View glyph location", 0,
+                            {quick("Barycenter", "view_glyph_barycenter"),
+                             quick("Node", "view_glyph_node")}));
+    Item all = action("All view options...", 0,
+                      []() { Dialog::showOptionsForView(-1); });
+    items.push_back(all);
+  }
+  else
+    // nothing follows it: the divider under the mesh options would be a rule
+    // along the bottom of the menu
+    items.back().dividerAfter = false;
+
+  return items;
+}
 
 // --- the modules tree
 //

@@ -1034,7 +1034,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    quick_access_cb(nullptr, (void *)"mesh_toggle");
+    quickAccessAction("mesh_toggle");
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {

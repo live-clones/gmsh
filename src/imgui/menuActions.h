@@ -11,6 +11,16 @@
 #if defined(HAVE_IMGUI)
 
 #include <string>
+#include <vector>
+
+#include "GuiMenus.h"
+
+class appWindow;
+
+// Draw a shared menu description: the menu bar itself, and the quick access
+// menu the status bar drops. Every entry queues its action with
+// appWindow::postAction(), so that it runs outside of the frame.
+void menuWalk(const std::vector<Menu::Item> &items, appWindow *app);
 
 // The entries of the menu bar that need a dialog of their own, and are
 // therefore neither a plain toolkit-independent action of GuiActions.h nor a

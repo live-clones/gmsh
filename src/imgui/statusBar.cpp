@@ -18,6 +18,8 @@
 #include "Gui.h"
 #include "GuiDialogs.h"
 #include "GuiActions.h"
+#include "GuiMenus.h"
+#include "menuActions.h"
 #include "GmshMessage.h"
 #include "Context.h"
 #include "Options.h"
@@ -47,26 +49,6 @@ namespace {
     NumberOption(GMSH_SET | GMSH_GUI, category, num, name, val, false);
   }
 
-  // a menu entry showing and flipping a boolean option
-  void _toggle(const char *label, const char *category, int num,
-               const char *name)
-  {
-    double v = 0.;
-    if(!_number(category, num, name, v)) return;
-    bool b = (v != 0.);
-    if(ImGui::MenuItem(label, nullptr, &b)) _setNumber(category, num, name, b);
-  }
-
-  // a menu entry setting a numeric option to one of its values
-  void _choice(const char *label, const char *category, int num,
-               const char *name, double value)
-  {
-    double v = 0.;
-    if(!_number(category, num, name, v)) return;
-    if(ImGui::MenuItem(label, nullptr, v == value))
-      _setNumber(category, num, name, value);
-  }
-
   // a small square button, the size of the bar
   bool _button(const char *label, const char *tip)
   {
@@ -80,87 +62,14 @@ namespace {
 
 void appWindow::_drawQuickAccessMenu()
 {
-  if(ImGui::MenuItem("Reset viewport")) {
-    postAction([this]() {
-      if(scenePane *p = currentPane()) {
-        viewSetOrientation(p->getDrawContext(), "1:1", false);
-        viewSetOrientation(p->getDrawContext(), "z", false);
-        drawContext::global()->draw();
-      }
-    });
-  }
-  if(ImGui::BeginMenu("Split window")) {
-    if(ImGui::MenuItem("Horizontally"))
-      postAction([this]() { splitCurrentPane('h', 0.5); });
-    if(ImGui::MenuItem("Vertically"))
-      postAction([this]() { splitCurrentPane('v', 0.5); });
-    if(ImGui::MenuItem("Unsplit"))
-      postAction([this]() { splitCurrentPane('u', 0.); });
-    ImGui::EndMenu();
-  }
-
-  ImGui::Separator();
-  _toggle("Axes", "General", 0, "Axes");
-  _toggle("Small axes", "General", 0, "SmallAxes");
-  _toggle("Mouse hover over meshes", "General", 0, "MouseHoverMeshes");
-  if(ImGui::BeginMenu("Projection mode")) {
-    _choice("Orthographic", "General", 0, "Orthographic", 1.);
-    _choice("Perspective", "General", 0, "Orthographic", 0.);
-    ImGui::EndMenu();
-  }
-  if(ImGui::MenuItem("All general options...")) {
-    _showDialog[Dialog::Options] = true;
-    Dialog::optionsCategory() = 0;
-  }
-
-  ImGui::Separator();
-  _toggle("Geometry points", "Geometry", 0, "Points");
-  _toggle("Geometry curves", "Geometry", 0, "Curves");
-  _toggle("Geometry surfaces", "Geometry", 0, "Surfaces");
-  _toggle("Geometry volumes", "Geometry", 0, "Volumes");
-  if(ImGui::MenuItem("All geometry options...")) {
-    _showDialog[Dialog::Options] = true;
-    Dialog::optionsCategory() = 1;
-  }
-
-  ImGui::Separator();
-  _toggle("Mesh nodes", "Mesh", 0, "Nodes");
-  _toggle("Mesh 1D elements", "Mesh", 0, "Lines");
-  _toggle("Mesh 2D element edges", "Mesh", 0, "SurfaceEdges");
-  _toggle("Mesh 2D element faces", "Mesh", 0, "SurfaceFaces");
-  _toggle("Mesh 3D element edges", "Mesh", 0, "VolumeEdges");
-  _toggle("Mesh 3D element faces", "Mesh", 0, "VolumeFaces");
-  {
-    double v = 1.;
-    if(_number("Mesh", 0, "MeshSizeFactor", v)) {
-      float f = (float)v;
-      ImGui::SetNextItemWidth(120.f);
-      if(ImGui::DragFloat("Global mesh size factor", &f, 0.01f, 0.001f, 1000.f))
-        _setNumber("Mesh", 0, "MeshSizeFactor", f);
-    }
-  }
-  if(ImGui::MenuItem("All mesh options...")) {
-    _showDialog[Dialog::Options] = true;
-    Dialog::optionsCategory() = 2;
-  }
-
-#if defined(HAVE_POST)
-  if(PView::list.size()) {
-    ImGui::Separator();
-    _toggle("View element outlines", "View", -1, "ShowElement");
-    _toggle("View normal raise", "View", -1, "Normals");
-    if(ImGui::BeginMenu("View interval type")) {
-      _choice("Iso-values", "View", -1, "IntervalsType", 1.);
-      _choice("Continuous map", "View", -1, "IntervalsType", 2.);
-      _choice("Filled iso-values", "View", -1, "IntervalsType", 3.);
-      _choice("Numeric values", "View", -1, "IntervalsType", 4.);
-      ImGui::EndMenu();
-    }
-    if(ImGui::MenuItem("All view options..."))
-      // the view being looked at, whichever line of the list that is
-      Dialog::showOptionsForView(-1);
-  }
-#endif
+  // described once in src/common/GuiMenus.cpp, as the menu bar is: the FLTK
+  // interface pops the same entries up on the same button
+  // It says what the options are worth, and which entries are worth showing at
+  // all, so it is built afresh every frame it is open rather than kept: the
+  // FLTK popup is built afresh every time it opens, for the same reason.
+  static std::vector<Menu::Item> menu;
+  menu = Menu::quickAccess();
+  menuWalk(menu, this);
 }
 
 void appWindow::_drawStatusBar()

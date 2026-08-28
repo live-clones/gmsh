@@ -8,21 +8,12 @@
 
 #include <string>
 
-// ask for one option in a window of its own: the toolbar of the graphic window
-// opens it on the buttons that take a value
-double numberOrStringOptionChooser(const std::string &category, int index,
-                                   const std::string &name, bool isNumber,
-                                   const std::string &title = "",
-                                   bool isInteractive = false,
-                                   double minimum = 0., double maximum = 0.,
-                                   double step = 0.);
-
-int arrowEditor(const char *title, double &a, double &b, double &c);
-
-std::string connectionChooser();
-std::string patternChooser();
-
-int cgnsImport();
+// What is left of the little windows this file used to hold: the ones that
+// belong to a widget rather than to the application. The chooser of one
+// option, the arrow editor and the two command choosers are described once in
+// src/common/GuiPrompts.cpp now and built by both interfaces; these two are
+// opened by the ONELAB range widgets of the FLTK module tree, which is FLTK's
+// own and has no counterpart to share them with.
 
 int simpleTextDisplay(const char *title, const std::string &text);
 int simpleTextEditor(const char *title, const std::string &help,

@@ -1212,6 +1212,10 @@ void dialogFltk::build(int dialog)
       form->end();
       y = form->y() + form->h();
     }
+    // A field that fills the form ends at the bottom of the form, whatever the
+    // rows above it came to; what follows the form has to start under that and
+    // not under the rows, or the buttons are drawn over the last of it.
+    if(_formFills && y < _paneBottom) y = _paneBottom;
     y += WB;
   }
 

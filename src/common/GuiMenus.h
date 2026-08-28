@@ -64,11 +64,16 @@ namespace Menu {
     // to be shown
     std::function<bool()> enabled;
     bool dividerAfter;
+    // The entry a popup menu opens under until the user has picked another:
+    // the quick access menu of the status bar opens under the one it is most
+    // often reached for, so that it takes one click and no aim.
+    bool preferred;
     // the macOS system menu bar provides its own Quit
     bool hideInSystemBar;
     std::vector<Item> children;
     Item()
-      : kind(Action), mnemonic(0), dividerAfter(false), hideInSystemBar(false)
+      : kind(Action), mnemonic(0), dividerAfter(false), preferred(false),
+        hideInSystemBar(false)
     {
     }
   };
@@ -78,6 +83,13 @@ namespace Menu {
   // bring to the front, and one that cannot reach the clipboard should not
   // offer to.
   std::vector<Item> bar();
+
+  // The menu the status bar drops on its option button: what one reaches for
+  // most often, gathered in one place. It is rebuilt every time it opens, so
+  // the entries that only make sense with a post-processing view are simply
+  // not there when there is none, which is what the FLTK menu did by hiding
+  // them -- with the indices of the entries to hide written out by hand.
+  std::vector<Item> quickAccess();
 
   // The modules tree: the geometry and mesh commands, in the order the FLTK
   // tree has always shown them. It stops where the ONELAB parameters begin --
