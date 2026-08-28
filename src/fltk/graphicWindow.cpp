@@ -29,6 +29,7 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "GuiActions.h"
 #include "GuiDialogs.h"
+#include "Gui.h"
 #include "GuiMenus.h"
 #include "menuFltk.h"
 #include "openglWindow.h"
@@ -953,19 +954,44 @@ public:
   }
 };
 
+// The rest of the status bar: the last message and the progress of whatever is
+// running, both read from src/common/GuiStatus.h as it draws rather than
+// pushed into the widget -- which is what keeps the two bars saying the same
+// thing.
 class mainWindowProgress : public Fl_Progress {
 public:
   mainWindowProgress(int x, int y, int w, int h, const char *l = nullptr)
     : Fl_Progress(x, y, w, h, l)
   {
   }
+  void draw() override
+  {
+    StatusBar::Message m = StatusBar::message();
+    if(!label() || m.text != label()) copy_label(m.text.c_str());
+    minimum(0.);
+    maximum(m.running ? 1. : 0.);
+    value(m.running ? (float)m.fraction : 0.f);
+    int col = (m.colour == Gui::StatusColorError) ?
+                (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED) :
+              (m.colour == Gui::StatusColorWarning) ?
+                (CTX::instance()->guiColorScheme ? FL_DARK_YELLOW : FL_YELLOW) :
+                -1;
+    if(col >= 0) {
+      if(CTX::instance()->guiColorScheme)
+        color(col);
+      else
+        labelcolor(col);
+    }
+    else {
+      color(FL_BACKGROUND_COLOR);
+      labelcolor(FL_FOREGROUND_COLOR);
+    }
+    Fl_Progress::draw();
+  }
   int handle(int event)
   {
     if(event == FL_PUSH) {
-      if(FlGui::available()) {
-        for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-          FlGui::instance()->graph[i]->showHideMessages();
-      }
+      StatusBar::messagePressed();
       return 1;
     }
     return Fl_Progress::handle(event);

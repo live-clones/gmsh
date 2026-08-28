@@ -108,10 +108,9 @@ private:
   messageConsole *_console;
 
   // status bar
-  std::string _status, _lastStatus, _statusGl;
-  int _statusColor;
-  std::string _progressMsg;
-  double _progressValue, _progressMin, _progressMax;
+  // the message and the progress live in src/common/GuiStatus.h, which both
+  // bars read; only what is written into the 3D view is ours
+  std::string _statusGl;
 
   bool _showConsole;
   bool _showModules;

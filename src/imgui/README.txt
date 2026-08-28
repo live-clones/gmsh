@@ -317,9 +317,19 @@ orients (Gui::orientViews -- and the Dear ImGui bar gained the Control-sync it
 never had), the pointers that change when picking is turned off
 (Gui::setMouseSelection), and playing the animation (Gui::toggleAnimation),
 which FLTK does in a loop of its own and Dear ImGui from the frame loop, an
-immediate-mode frame not being re-entrant. The message and the progress that
-take what is left of the bar are each interface's too: one region, not a row of
-things.
+immediate-mode frame not being re-entrant.
+
+What takes the rest of the bar -- the last message and the progress of whatever
+is running -- is shared as well. It was held in the widgets on one side
+(Fl_Progress carries a label, a value and a range) and in members of appWindow
+on the other, and that is why the sentence the FLTK bar appends when something
+has gone wrong, "1 Error : Click to show messages [ ... ]", was in one bar and
+not the other. There is one copy of it now, worked out in StatusBar::message()
+from Msg::GetErrorCount() and friends, appended only while the console is
+hidden -- with it open the errors are already there to read. Both bars draw it,
+in red, and clicking either shows the console. The Dear ImGui bar also says
+which Gmsh this is when it comes up, as the FLTK one always has; it used to
+start empty, which is hard to tell from a bar with nothing to say.
 
 The two menus the modules tree carries -- the one on a post-processing view and
 the one on a solver -- are described the same way (Menu::viewActions,

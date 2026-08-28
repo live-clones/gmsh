@@ -27,6 +27,7 @@
 #include "fileBrowser.h"
 #include "drawContextImGui.h"
 #include "Gui.h"
+#include "GuiStatus.h"
 #include "GmshMessage.h"
 #include "GmshGlobal.h"
 #include "Context.h"
@@ -130,8 +131,7 @@ static bool _initGlfw()
 appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   : _window(nullptr), _quitShouldExit(quitShouldExit), _inFrame(false),
     _lastRefresh(0.), _currentPane(nullptr), _console(nullptr),
-    _statusColor(Gui::StatusColorDefault), _progressValue(0.),
-    _progressMin(0.), _progressMax(0.), _showConsole(true),
+    _showConsole(true),
     _showModules(true),
     _paneRoot(nullptr), _uiScale(0.f),
     _uiScaleOverride(0.f), _styleScale(0.f), _reportedDetachable(false),
@@ -699,27 +699,22 @@ void appWindow::setStatus(const std::string &msg, bool graphics)
     }
     drawContext::global()->draw();
   }
-  else {
-    _status = msg;
-    _lastStatus = msg;
-  }
+  else
+    StatusBar::setMessage(msg);
 }
 
 void appWindow::setLastStatus(int color)
 {
   if(Msg::GetThreadNum() > 0) return;
-  _statusColor = color;
-  _status = _lastStatus;
+  StatusBar::setColour(color);
 }
 
 void appWindow::setProgress(const std::string &msg, double val, double min,
                             double max)
 {
   if(Msg::GetThreadNum() > 0) return;
-  _progressMsg = msg;
-  _progressValue = val;
-  _progressMin = min;
-  _progressMax = max;
+  StatusBar::setProgress(val, min, max);
+  StatusBar::setMessage(msg);
 }
 
 void appWindow::setGraphicTitle(const std::string &title)

@@ -124,38 +124,40 @@ void appWindow::_drawStatusBar()
 
       ImGui::Separator();
 
-      // --- last message, then the progress of whatever is running.
-      // Clicking the message shows or hides the console, as the FLTK bar does;
-      // the target is the whole strip left of the progress bar, not just the
-      // text, so that it can be hit when the message is short or empty.
+      // --- What is left of the bar: the message and the progress, both
+      // read from src/common/GuiStatus.h. Clicking shows or hides the console,
+      // as the FLTK bar does; the target is the whole strip left of the
+      // progress, not just the text, so that it can be hit when the message is
+      // short or empty.
+      StatusBar::Message m = StatusBar::message();
       ImVec2 textPos = ImGui::GetCursorScreenPos();
       float avail = ImGui::GetContentRegionAvail().x;
-      if(_progressMax > _progressMin) avail -= 200.f * _styleScale;
+      if(m.running) avail -= 200.f * _styleScale;
       if(avail < 1.f) avail = 1.f;
       if(ImGui::InvisibleButton("##statusMessage",
                                 ImVec2(avail, ImGui::GetFrameHeight())))
-        _showConsole = !_showConsole;
+        postAction(StatusBar::messagePressed);
       if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        ImGui::SetTooltip("Show or hide the message console");
+        ImGui::SetTooltip("%s", StatusBar::messageTooltip().c_str());
       ImGui::SetCursorScreenPos(textPos);
 
-      if(_statusColor == Gui::StatusColorError)
+      if(m.colour == Gui::StatusColorError)
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.90f, 0.30f, 0.30f, 1.f));
-      else if(_statusColor == Gui::StatusColorWarning)
+      else if(m.colour == Gui::StatusColorWarning)
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.95f, 0.75f, 0.25f, 1.f));
       else
         ImGui::PushStyleColor(ImGuiCol_Text,
                               ImGui::GetStyleColorVec4(ImGuiCol_Text));
       ImGui::AlignTextToFramePadding();
-      ImGui::TextUnformatted(_status.c_str());
+      ImGui::TextUnformatted(m.text.c_str());
       ImGui::PopStyleColor();
 
-      if(_progressMax > _progressMin) {
-        float frac = (float)((_progressValue - _progressMin) /
-                             (_progressMax - _progressMin));
+      if(m.running) {
         float w = 200.f * _styleScale;
-        ImGui::SameLine(ImGui::GetWindowWidth() - w - ImGui::GetStyle().ItemSpacing.x);
-        ImGui::ProgressBar(frac, ImVec2(w, 0.f), _progressMsg.c_str());
+        ImGui::SameLine(ImGui::GetWindowWidth() - w -
+                        ImGui::GetStyle().ItemSpacing.x);
+        ImGui::ProgressBar((float)m.fraction, ImVec2(w, 0.f),
+                           m.progressText.c_str());
       }
       ImGui::EndMenuBar();
     }

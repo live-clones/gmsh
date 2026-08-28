@@ -151,6 +151,89 @@ namespace StatusBar {
     return buttons;
   }
 
+  // --- what takes the rest of the bar
+
+  namespace {
+
+    struct messageState {
+      std::string text;
+      int colour = 0;
+      std::string progressText;
+      double value = 0., least = 0., most = 0.;
+    };
+
+    messageState &_message()
+    {
+      static messageState state;
+      return state;
+    }
+
+  } // namespace
+
+  void setMessage(const std::string &text)
+  {
+    // Only the thread that draws may touch it. The mesher calls Msg::StatusBar
+    // from its OpenMP threads, and neither toolkit is re-entrant.
+    if(Msg::GetThreadNum() > 0) return;
+    _message().text = text;
+  }
+
+  void setColour(int colour)
+  {
+    if(Msg::GetThreadNum() > 0) return;
+    _message().colour = colour;
+  }
+
+  void setProgress(double value, double least, double most)
+  {
+    if(Msg::GetThreadNum() > 0) return;
+    messageState &m = _message();
+    m.value = value;
+    m.least = least;
+    m.most = most;
+  }
+
+  Message message()
+  {
+    const messageState &m = _message();
+    Message out;
+    out.text = " " + m.text;
+    out.colour = m.colour;
+    out.running = (m.most > m.least);
+    out.fraction = out.running ? (m.value - m.least) / (m.most - m.least) : 0.;
+    out.progressText = m.text;
+
+    // What went wrong, said where one is looking. Only while the console is
+    // hidden: with it open the errors are already there to read, and the bar
+    // saying so as well would be saying it twice.
+    if(Gui::panelVisible(Gui::PanelMessageConsole)) {
+      out.colour = Gui::StatusColorDefault;
+      return out;
+    }
+    int errors = Msg::GetErrorCount(), warnings = Msg::GetWarningCount();
+    if(!errors && !warnings) return out;
+    out.text += "  -  " + std::to_string(errors ? errors : warnings);
+    out.text += (errors > 1)     ? " Errors" :
+                errors           ? " Error" :
+                (warnings > 1)   ? " Warnings" :
+                                   " Warning";
+    out.text += " : Click to show messages [ ... ";
+    out.text += errors ? Msg::GetFirstError() : Msg::GetFirstWarning();
+    out.text += " ... ]";
+    return out;
+  }
+
+  void messagePressed()
+  {
+    Gui::showPanel(Gui::PanelMessageConsole,
+                   !Gui::panelVisible(Gui::PanelMessageConsole));
+  }
+
+  std::string messageTooltip()
+  {
+    return "Show or hide the message console";
+  }
+
 } // namespace StatusBar
 
 #endif

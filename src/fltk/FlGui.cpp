@@ -19,6 +19,7 @@
 #include "Gui.h"
 #include "GuiActions.h"
 #include "GuiDialogs.h"
+#include "GuiStatus.h"
 #include "dialogFltk.h"
 #include "GuiActions.h"
 #include "onelabGroup.h"
@@ -1284,75 +1285,36 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 {
   if(Msg::GetThreadNum() > 0) return;
   if(!opengl) {
-    _lastStatus = msg;
-    static char buff[1024];
-    std::string tmp = std::string(" ") + msg;
-    int ne = Msg::GetErrorCount(), nw = Msg::GetWarningCount();
-    if((ne || nw) && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
-      tmp += "  -  ";
-      char n[128];
-      sprintf(n, "%d", ne ? ne : nw);
-      tmp += n;
-      tmp += (ne > 1) ? " Errors" :
-             ne       ? " Error" :
-             (nw > 1) ? " Warnings" :
-                        " Warning";
-      tmp += " : Click to show messages [ ... ";
-      tmp += (ne ? Msg::GetFirstError() : Msg::GetFirstWarning());
-      tmp += " ... ]";
-    }
-    strncpy(buff, tmp.c_str(), sizeof(buff) - 1);
-    buff[sizeof(buff) - 1] = '\0';
-    for(std::size_t i = 0; i < graph.size(); i++) {
-      graph[i]->getProgress()->label(buff);
+    // the text, and what is appended to it when something has gone wrong, are
+    // worked out once in src/common/GuiStatus.cpp and read by both bars
+    StatusBar::setMessage(msg);
+    for(std::size_t i = 0; i < graph.size(); i++)
       graph[i]->getProgress()->redraw();
-    }
   }
   else {
     openglWindow *gl = getCurrentOpenglWindow();
     std::vector<std::string> m = SplitString(msg, '\n');
-    if(m.size() > 0)
-      gl->screenMessage[0] = m[0];
-    else
-      gl->screenMessage[0].clear();
-    if(m.size() > 1)
-      gl->screenMessage[1] = m[1];
-    else
-      gl->screenMessage[1].clear();
+    if(m.size() > 0) gl->screenMessage[0] = m[0];
+    if(m.size() > 1) gl->screenMessage[1] = m[1];
+    if(m.size() > 2)
+      Msg::Debug("Ignoring extra lines of status message: %s", msg.c_str());
     drawContext::global()->draw();
   }
 }
 
-void FlGui::setLastStatus(int col)
+void FlGui::setLastStatus(int color)
 {
   if(Msg::GetThreadNum() > 0) return;
-  for(std::size_t i = 0; i < graph.size(); i++) {
-    if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
-      if(CTX::instance()->guiColorScheme) // dark
-        graph[i]->getProgress()->color(col);
-      else
-        graph[i]->getProgress()->labelcolor(col);
-    }
-    else {
-      graph[i]->getProgress()->color(FL_BACKGROUND_COLOR);
-      graph[i]->getProgress()->labelcolor(FL_FOREGROUND_COLOR);
-    }
-  }
-  setStatus(_lastStatus);
+  StatusBar::setColour(color);
+  for(std::size_t i = 0; i < graph.size(); i++)
+    graph[i]->getProgress()->redraw();
 }
 
 void FlGui::setProgress(const std::string &msg, double val, double min,
                         double max)
 {
   if(Msg::GetThreadNum() > 0) return;
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-    if(FlGui::instance()->graph[i]->getProgress()->value() != val)
-      FlGui::instance()->graph[i]->getProgress()->value(val);
-    if(FlGui::instance()->graph[i]->getProgress()->minimum() != min)
-      FlGui::instance()->graph[i]->getProgress()->minimum(min);
-    if(FlGui::instance()->graph[i]->getProgress()->maximum() != max)
-      FlGui::instance()->graph[i]->getProgress()->maximum(max);
-  }
+  StatusBar::setProgress(val, min, max);
   setStatus(msg);
 }
 

@@ -59,6 +59,37 @@ namespace StatusBar {
   // the buttons, in the order they are drawn
   std::vector<Button> bar();
 
+  // --- and what takes the rest of the bar: the last message, and the progress
+  // of whatever is running
+  //
+  // It was held in the widgets on one side and in members of appWindow on the
+  // other, which is why the sentence the FLTK bar adds when something has gone
+  // wrong -- "3 Errors : Click to show messages [ ... ]" -- was in one bar and
+  // not the other. There is one copy of it now, and both bars draw it.
+
+  // what Gui::setStatus(), setLastStatus() and setProgress() come down to
+  void setMessage(const std::string &text);
+  void setColour(int colour); // one of Gui::StatusColor
+  void setProgress(double value, double least, double most);
+
+  struct Message {
+    // the message, with what went wrong appended when the console is hidden
+    std::string text;
+    int colour;
+    // is something running? and how far along, between 0 and 1
+    bool running;
+    double fraction;
+    // it says the file it is working on, or how many are done
+    std::string progressText;
+  };
+
+  // what the bar is to draw right now
+  Message message();
+  // and what clicking it does, which is to show the messages it is telling one
+  // to look at
+  void messagePressed();
+  std::string messageTooltip();
+
 } // namespace StatusBar
 
 #endif

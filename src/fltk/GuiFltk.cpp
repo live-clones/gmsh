@@ -115,12 +115,9 @@ namespace Gui {
 
   void setLastStatus(int color)
   {
-    int col = -1;
-    if(color == StatusColorError)
-      col = CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED;
-    else if(color == StatusColorWarning)
-      col = CTX::instance()->guiColorScheme ? FL_DARK_YELLOW : FL_YELLOW;
-    FlGui::instance()->setLastStatus(col);
+    // the colour it is worth, not the colour it is: which colour that comes
+    // out as is the toolkit's, and mainWindowProgress::draw() chooses it
+    FlGui::instance()->setLastStatus(color);
   }
 
   void setProgress(const std::string &msg, double val, double min, double max)

@@ -40,7 +40,6 @@ private:
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
   static std::atomic<int> _locked;
-  std::string _lastStatus;
   bool _quitShouldExit;
 
 public:

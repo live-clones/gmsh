@@ -35,6 +35,7 @@
 #include "PixelBuffer.h"
 #include "OS.h"
 #include "Options.h"
+#include "CommandLine.h"
 #include "StringUtils.h"
 
 #if defined(HAVE_POST)
@@ -72,7 +73,14 @@ namespace Gui {
   void create(int argc, char **argv, bool quitShouldExit,
               void (*errorHandler)(const char *fmt, ...))
   {
-    if(!appWindow::available()) appWindow::instance(argc, argv, quitShouldExit);
+    if(appWindow::available()) return;
+    appWindow::instance(argc, argv, quitShouldExit);
+    // What the bar says until something else needs saying, as the FLTK
+    // interface says it when it comes up. It had nothing there at all, which
+    // was hard to see for what it was: an empty bar looks like a bar with
+    // nothing to say.
+    if(appWindow::available())
+      Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
   }
 
   void destroy() { appWindow::destroy(); }
