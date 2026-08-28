@@ -3,7 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
+// Contributor(s): Matti Pellikka (initial implementation), Bruno de Sousa Alves
+// (periodicity)
 
 #include "Cell.h"
 #include "MTriangle.h"
@@ -107,6 +108,21 @@ Cell::Cell(Cell *parent, int i)
   parent->findBdElement(i, vertices);
   _nv = vertices.size();
   for(std::size_t j = 0; j < vertices.size(); j++) _v[j] = vertices[j];
+
+  _sortVertexIndices();
+}
+
+Cell::Cell(int dim, const std::vector<MVertex *> &vertices)
+{
+  _dim = dim;
+  _domain = 0;
+  _combined = false;
+  _immune = false;
+  _num = 0;
+
+  if(vertices.size() > 8) return; // not a cell handled by the homology solver
+  _nv = vertices.size();
+  for(std::size_t i = 0; i < vertices.size(); i++) _v[i] = vertices[i];
 
   _sortVertexIndices();
 }
@@ -864,5 +880,60 @@ CombinedCell::CombinedCell(std::vector<Cell *> &cells)
     Cell *c = cells.at(i);
     if(c->getImmune()) _immune = true;
     _cells[c] = 1;
+  }
+}
+
+PeriodicCell::PeriodicCell(Cell *c1, Cell *c2, bool orMatch)
+{
+  _num = ++_globalNum;
+  _domain = c1->getDomain();
+  _combined = true;
+  _immune = (c1->getImmune() || c2->getImmune());
+  _dim = c1->getDim();
+
+  // constituent cells
+  std::map<Cell *, int, CellPtrLessThan> cells;
+  c1->getCells(cells);
+  for(auto cit = cells.begin(); cit != cells.end(); cit++)
+    _cells.insert(*cit);
+  c2->getCells(cells);
+  for(auto cit = cells.begin(); cit != cells.end(); cit++)
+    _cells.insert(std::make_pair(cit->first,
+                                 orMatch ? cit->second : -1 * cit->second));
+
+  // boundary cells: unlike a reduction-combined cell, the two cells are
+  // glued rather than summed, so a boundary cell that both already share
+  // (the lower-dimensional cells are identified first) is taken over once
+  for(auto it = c1->firstBoundary(); it != c1->lastBoundary(); it++) {
+    Cell *cell = it->first;
+    int ori = it->second.get();
+    if(ori == 0) continue;
+    cell->removeCoboundaryCell(c1, false);
+    if(!this->hasBoundary(cell)) this->addBoundaryCell(ori, cell, true);
+  }
+  for(auto it = c2->firstBoundary(); it != c2->lastBoundary(); it++) {
+    Cell *cell = it->first;
+    if(!orMatch) it->second.set(-1 * it->second.get());
+    int ori = it->second.get();
+    if(ori == 0) continue;
+    cell->removeCoboundaryCell(c2, false);
+    if(!this->hasBoundary(cell)) this->addBoundaryCell(ori, cell, true);
+  }
+
+  // coboundary cells
+  for(auto it = c1->firstCoboundary(); it != c1->lastCoboundary(); it++) {
+    Cell *cell = it->first;
+    int ori = it->second.get();
+    if(ori == 0) continue;
+    cell->removeBoundaryCell(c1, false);
+    if(!this->hasCoboundary(cell)) this->addCoboundaryCell(ori, cell, true);
+  }
+  for(auto it = c2->firstCoboundary(); it != c2->lastCoboundary(); it++) {
+    Cell *cell = it->first;
+    if(!orMatch) it->second.set(-1 * it->second.get());
+    int ori = it->second.get();
+    if(ori == 0) continue;
+    cell->removeBoundaryCell(c2, false);
+    if(!this->hasCoboundary(cell)) this->addCoboundaryCell(ori, cell, true);
   }
 }

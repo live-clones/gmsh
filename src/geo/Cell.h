@@ -3,7 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
+// Contributor(s): Matti Pellikka (initial implementation), Bruno de Sousa Alves
+// (periodicity)
 
 #ifndef CELL_H
 #define CELL_H
@@ -110,6 +111,9 @@ public:
 
   Cell(MElement *element, int domain);
   Cell(Cell *parent, int i);
+  // a cell of the given dimension with the given vertices, not tied to
+  // any mesh element: used to look up a cell by its vertices
+  Cell(int dim, const std::vector<MVertex *> &vertices);
 
   virtual ~Cell() {}
 
@@ -209,13 +213,16 @@ public:
 
 // A cell that is a combination of cells of same dimension
 class CombinedCell : public Cell {
-private:
+protected:
   // list of cells this cell is a combination of
   std::map<Cell *, int, CellPtrLessThan> _cells;
   // dimension of the combined cells: cached, since when this cell is
   // merged into another combined cell its list is stolen (small-to-large
   // merging), while the removed cell may still be asked for its dimension
   int _dim;
+
+  // for derived cells that fill in the members themselves
+  CombinedCell() {}
 
 public:
   CombinedCell(Cell *c1, Cell *c2, bool orMatch, bool co = false);
@@ -233,6 +240,12 @@ public:
   {
     return (this->getNum() == c2.getNum());
   }
+};
+
+class PeriodicCell : public CombinedCell {
+public:
+  PeriodicCell(Cell *c1, Cell *c2, bool orMatch);
+  ~PeriodicCell() {}
 };
 
 #endif
