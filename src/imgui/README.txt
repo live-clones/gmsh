@@ -203,6 +203,28 @@ the room that needs, but it keeps the width of its widest row and the height of
 its tallest pane whatever is folded or whichever tab is up. A window that grows
 sideways as one uses it is a window that will not sit still.
 
+Everything that used to be a window of its own is described that way now -- the
+options, the visibility, the plugins, the size fields -- so neither interface
+builds a dialog by hand any more. The last two brought their own vocabulary:
+what the panes are about, written above the row of tabs (Panel::header) and
+named in bold (Field::heading); what stands on the line of a pane's button and
+outside what scrolls above it (Pane::beside); and a button that drops things to
+do rather than things to be (FieldKind::Menu), which is how one asks for a new
+size field or for the view to draw one on.
+
+What a dialog offers can change with what one picks in it: another plugin has
+other options, a size field deleted is one line fewer. Dear ImGui builds the
+description afresh every frame and follows by itself; the FLTK one compares the
+shape of the description with the shape it was built for and builds again only
+when they differ, keeping the window where the user put it. Anything a field
+callback still needs after that must be a copy: building again is the end of the
+list it was walking.
+
+FLTK reads "&" in a label as the mark of a keyboard shortcut in menus, buttons
+and inputs -- and only there. A label that is text has to double it for those,
+and must not for a box, a group, a tab or a line of a tree, which draw what they
+are given.
+
 GLFW is not like the other bundled libraries. They are compiled straight into
 Gmsh, source by source; GLFW keeps its own CMakeLists and produces a target of
 its own, which is what selects the platform backend for us. A target of this
