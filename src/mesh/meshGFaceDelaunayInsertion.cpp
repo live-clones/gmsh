@@ -2109,8 +2109,12 @@ void bowyerWatsonParallelograms(
   }
 
   if(forceAllPackedPoints && rejectedPackedPoints) {
-    Msg::Error("3D packing lost %zu of %zu points during triangulation of "
-               "face %d", rejectedPackedPoints, packed.size(), gf->tag());
+    // Rejection of a packed candidate does not invalidate the triangulation:
+    // insertion is transactional and the remaining mesh is still usable.
+    // Report the loss, but do not make the complete meshing operation fail.
+    Msg::Warning("3D packing lost %zu of %zu points during triangulation of "
+                 "face %d; continuing with the resulting triangulation",
+                 rejectedPackedPoints, packed.size(), gf->tag());
   }
 
   if(Msg::GetVerbosity() == 99) {
