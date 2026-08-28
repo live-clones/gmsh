@@ -85,6 +85,10 @@ void solverChooseExecutable(onelabClientHandle client);
 // beyond an error message, when the client is not in the expected state.
 void remoteAction(const std::string &what, const std::string &arg = "");
 
+// One entry of the menu a solver carries in the modules tree, by the name the
+// menu gives it: "rename", "executable" or "remove". See Menu::solverActions().
+void solverAction(const std::string &what, int index);
+
 // is a solver currently running, and has the user asked it to stop?
 bool solverIsRunning();
 bool solverStopRequested();
@@ -459,6 +463,14 @@ void viewSetOrientation(drawContext *ctx, const std::string &what,
 // Whether there is anything to animate: several time steps in a view, or
 // General/View cycling turned on.
 bool viewIsAnimatable();
+
+// --- post-processing
+
+// One entry of the menu a view carries in the modules tree, by the name the
+// menu gives it, on the view of the given index. See Menu::viewActions() for
+// the menu itself. Everything it does is toolkit-independent but "export",
+// which needs a file chooser and goes through Gui::exportView().
+void viewAction(const std::string &what, int index);
 
 // --- post-processing animation
 

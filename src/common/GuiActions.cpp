@@ -46,6 +46,7 @@
 #endif
 
 #if defined(HAVE_MESH)
+#include "Field.h"
 #include "gmshCrossFields.h"
 #include "Generator.h"
 #include "HighOrder.h"
@@ -1350,6 +1351,215 @@ void quickAccessAction(const std::string &what)
 
   drawContext::global()->draw();
 }
+
+// --- the menu a view carries in the modules tree
+
+#if defined(HAVE_POST)
+
+namespace {
+
+  // Read the view again from the file it came from, keeping the options it has
+  // been given: what is reloaded is the data, not the view.
+  void _viewReload(int index)
+  {
+    if(index < 0 || index >= (int)PView::list.size()) return;
+    PView *p = PView::list[index];
+    if(StatFile(p->getData()->getFileName())) {
+      Msg::Error("File '%s' does not exist",
+                 p->getData()->getFileName().c_str());
+      return;
+    }
+    std::size_t before = PView::list.size();
+    MergeFile(p->getData()->getFileName());
+    if(PView::list.size() <= before) return; // nothing came of it
+    // the data that was just read takes the place of the old, and the view it
+    // arrived in goes
+    delete p->getData();
+    p->setData(PView::list.back()->getData());
+    PView::list.back()->setData(nullptr);
+    delete PView::list.back();
+    // the file may have fewer time steps than it had
+    if(p->getOptions()->timeStep > p->getData()->getNumTimeSteps() - 1)
+      p->getOptions()->timeStep = 0;
+    p->setChanged(true);
+    Gui::updateViews(true, true);
+  }
+
+  void _viewCombine(bool time, int how)
+  {
+    PView::combine(time, how, CTX::instance()->post.combineRemoveOrig,
+                   CTX::instance()->post.combineCopyOptions);
+    Gui::updateViews(true, true);
+    drawContext::global()->draw();
+  }
+
+} // namespace
+
+void viewAction(const std::string &what, int index)
+{
+  bool have = (index >= 0 && index < (int)PView::list.size());
+
+  if(what == "options") {
+    Dialog::showOptionsForView(index);
+    return;
+  }
+  if(what == "plugins") {
+    Dialog::showPluginsForView(index);
+    return;
+  }
+  if(what == "export") {
+    Gui::exportView(index);
+    return;
+  }
+  if(what == "reload")
+    _viewReload(index);
+  else if(what == "reload_all") {
+    for(std::size_t i = 0; i < PView::list.size(); i++) _viewReload((int)i);
+  }
+  else if(what == "reload_visible") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) _viewReload((int)i);
+  }
+  else if(what == "alias") {
+    if(have) new PView(PView::list[index], true /* copy the options */);
+    Gui::updateViews(true, true);
+  }
+  else if(what == "remove") {
+    if(have) delete PView::list[index];
+    Gui::updateViews(true, true);
+  }
+  else if(what == "remove_all") {
+    while(PView::list.size()) delete PView::list[0];
+    Gui::updateViews(true, true);
+  }
+  else if(what == "remove_visible" || what == "remove_invisible") {
+    bool want = (what == "remove_visible");
+    for(int i = (int)PView::list.size() - 1; i >= 0; i--)
+      if((opt_view_visible(i, GMSH_GET, 0) != 0.) == want)
+        delete PView::list[i];
+    Gui::updateViews(true, true);
+  }
+  else if(what == "remove_other") {
+    for(int i = (int)PView::list.size() - 1; i >= 0; i--)
+      if(i != index) delete PView::list[i];
+    Gui::updateViews(true, true);
+  }
+  else if(what == "remove_empty") {
+    for(int i = (int)PView::list.size() - 1; i >= 0; i--)
+      if(PView::list[i]->getData()->empty()) delete PView::list[i];
+    Gui::updateViews(true, true);
+  }
+  else if(what == "remove_same_name") {
+    if(!have) return;
+    std::string name = PView::list[index]->getData()->getName();
+    for(int i = (int)PView::list.size() - 1; i >= 0; i--)
+      if(PView::list[i]->getData()->getName() == name) delete PView::list[i];
+    Gui::updateViews(true, true);
+  }
+  else if(what == "sort_by_name") {
+    PView::sortByName();
+    Gui::updateViews(true, true);
+  }
+  else if(what == "all_on" || what == "all_off" || what == "invert" ||
+          what == "same_name_on") {
+    std::string name;
+    if(what == "same_name_on" && have)
+      name = PView::list[index]->getData()->getName();
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      double on = (what == "all_on")  ? 1. :
+                  (what == "all_off") ? 0. :
+                  (what == "invert")  ? !opt_view_visible(i, GMSH_GET, 0) :
+                  (name == PView::list[i]->getData()->getName()) ? 1. :
+                                                                   0.;
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, on);
+    }
+  }
+  else if(what == "combine_elements_all")
+    _viewCombine(false, 1);
+  else if(what == "combine_elements_visible")
+    _viewCombine(false, 0);
+  else if(what == "combine_elements_same_name")
+    _viewCombine(false, 2);
+  else if(what == "combine_steps_all")
+    _viewCombine(true, 1);
+  else if(what == "combine_steps_visible")
+    _viewCombine(true, 0);
+  else if(what == "combine_steps_same_name")
+    _viewCombine(true, 2);
+  else if(what == "background_mesh") {
+#if defined(HAVE_MESH)
+    if(have) GModel::current()->getFields()->setBackgroundMesh(index);
+#else
+    Msg::Error("Background mesh requires the mesh module");
+#endif
+    return;
+  }
+  else {
+    Msg::Debug("No view action '%s'", what.c_str());
+    return;
+  }
+  drawContext::global()->draw();
+}
+
+#else
+
+void viewAction(const std::string &what, int index) {}
+
+#endif
+
+// --- and the menu a solver carries
+
+#if defined(HAVE_ONELAB)
+
+void solverAction(const std::string &what, int index)
+{
+  if(solverIsRunning()) {
+    Msg::Warning("Cannot change a client while a solver is running");
+    return;
+  }
+  std::string name = opt_solver_name(index, GMSH_GET, "");
+  std::string exe = opt_solver_executable(index, GMSH_GET, "");
+  std::string host = opt_solver_remote_login(index, GMSH_GET, "");
+
+  if(what == "rename") {
+    std::string given = name;
+    if(!Gui::inputDialog("Solver name:", given)) return;
+    // renaming is adding it again under the new name, which drops the old
+    solverAdd(given, exe, host, index);
+    Gui::onelabAction("reset");
+  }
+  else if(what == "executable") {
+    std::string title = "Choose location of " + name + " executable";
+#if defined(WIN32)
+    std::string pattern = "*.exe";
+#else
+    std::string pattern = "*";
+#endif
+    std::string given = exe;
+    if(!Gui::fileDialog(0, title, pattern, given) || given.empty()) return;
+    auto it = onelab::server::instance()->findClient(name);
+    if(it != onelab::server::instance()->lastClient()) delete *it;
+    solverAdd(name, given, host, index);
+    Gui::onelabAction("reset");
+  }
+  else if(what == "remove") {
+    opt_solver_name(index, GMSH_SET, "");
+    opt_solver_executable(index, GMSH_SET, "");
+    opt_solver_remote_login(index, GMSH_SET, "");
+    auto it = onelab::server::instance()->findClient(name);
+    if(it != onelab::server::instance()->lastClient()) delete *it;
+    solverListCompact();
+    Gui::rebuildTree(true);
+  }
+  else
+    Msg::Debug("No solver action '%s'", what.c_str());
+}
+
+#else
+
+void solverAction(const std::string &what, int index) {}
+
+#endif
 
 void optionsRestoreDefaults()
 {

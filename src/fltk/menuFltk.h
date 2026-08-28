@@ -12,6 +12,8 @@
 
 #include "GuiMenus.h"
 
+#include <FL/Fl.H>
+#include <FL/Fl_Button.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Item.H>
 
@@ -33,7 +35,32 @@ void fltkMenuRefresh();
 // screen, and run whatever the user picked. This is what the option button of
 // the status bar drops. The menu opens under the entry that was picked last
 // time, as the hand-written one did.
-void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y);
+// `key` names which menu it is, so that two of them do not share the memory of
+// where they were left.
+void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y,
+                   const std::string &key = "");
+
+// A button that drops a menu built from a shared description. It replaces the
+// Fl_Menu_Button the view and solver buttons of the modules tree carried, whose
+// entries were written out here rather than described.
+class popupButtonFltk : public Fl_Button {
+public:
+  std::function<std::vector<Menu::Item>()> what;
+  std::string key;
+  popupButtonFltk(int x, int y, int w, int h, const char *l = nullptr)
+    : Fl_Button(x, y, w, h, l)
+  {
+  }
+  int handle(int event) override
+  {
+    // any of the three buttons, as Fl_Menu_Button::POPUP123 has it
+    if(event == FL_PUSH && what) {
+      fltkMenuPopup(what(), Fl::event_x(), Fl::event_y(), key);
+      return 1;
+    }
+    return Fl_Button::handle(event);
+  }
+};
 
 // Walk the shared description of the modules tree and hand each leaf to add(),
 // with the "0Modules/..." path the FLTK tree wants. The entries stay valid

@@ -295,6 +295,19 @@ called it for some time.
 The arrow editor is three value inputs where the window it reproduces has three
 sliders, as every bounded option of the option window is a value input here.
 
+The two menus the modules tree carries -- the one on a post-processing view and
+the one on a solver -- are described the same way (Menu::viewActions,
+Menu::solverActions), and their work is viewAction()/solverAction() in
+GuiActions.cpp. The view menu was twenty-six entries written out in
+src/fltk/viewButton.cpp and three in the Dear ImGui tree; that is the kind of
+gap a description settles at once, and the Dear ImGui tree now has all
+twenty-six, with the same submenus, dividers and accelerators. The registered
+solvers were not listed in it at all, and are now. FLTK drops both through
+popupButtonFltk, which is the arrow beside the entry; Dear ImGui on a right
+click. Only "Export..." stays behind the facade (Gui::exportView): which format
+a view is written in is read off the file chooser, and the choosers are the one
+thing each interface still owns.
+
 FLTK reads "&" in a label as the mark of a keyboard shortcut in menus, buttons
 and inputs -- and only there. A label that is text has to double it for those,
 and must not for a box, a group, a tab or a line of a tree, which draw what they

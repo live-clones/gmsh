@@ -33,6 +33,13 @@
 #include "drawContext.h"
 #include "GuiActions.h"
 #include "PixelBuffer.h"
+#include "OS.h"
+#include "StringUtils.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#endif
 
 namespace {
 
@@ -258,6 +265,31 @@ namespace Gui {
   {
     if(!available()) return false;
     return appWindow::instance()->panelVisible(panel);
+  }
+
+  void exportView(int index)
+  {
+#if defined(HAVE_POST)
+    if(index < 0 || index >= (int)PView::list.size()) return;
+    PView *view = PView::list[index];
+    std::string name = view->getData()->getFileName();
+    if(!appWindow::instance()->fileDialog(1, "Export view",
+                                          "*.pos *.rmed *.stl *.txt", name))
+      return;
+    if(CTX::instance()->confirmOverwrite && !StatFile(name)) {
+      std::string q = "File '" + name + "' already exists.\n\nDo you want to "
+                      "replace it?";
+      if(!Msg::GetAnswer(q.c_str(), 0, "Cancel", "Replace")) return;
+    }
+    // What PView::write() numbers the formats as. The window this reproduces
+    // offers the four flavours of ".pos" as separate filters and reads the
+    // one that was used; the file chooser here answers with a name, so the
+    // extension is what says the format, and ".pos" means the parsed one.
+    std::string ext = SplitFileName(name)[2];
+    int format = (ext == ".rmed") ? 6 : (ext == ".stl") ? 3 :
+                 (ext == ".txt")  ? 4 : 2;
+    view->write(name, format);
+#endif
   }
 
   void configureGamepad()

@@ -34,7 +34,7 @@ namespace Menu {
 
   // The key of a shortcut: an upper case letter or a digit for the printable
   // ones, or one of these.
-  enum { KeyNone = 0, KeyF1 = 0x1000 /* .. KeyF1 + 11 */ };
+  enum { KeyNone = 0, KeyF1 = 0x1000 /* .. KeyF1 + 11 */, KeyDelete = 0x1100 };
 
   struct Shortcut {
     int key;
@@ -90,6 +90,14 @@ namespace Menu {
   // not there when there is none, which is what the FLTK menu did by hiding
   // them -- with the indices of the entries to hide written out by hand.
   std::vector<Item> quickAccess();
+
+  // The menu a post-processing view carries in the modules tree, on the view
+  // of the given index: what to do to it, and what to do to every view at
+  // once. The FLTK interface pops it up on the little arrow beside the view;
+  // the Dear ImGui one on a right click.
+  std::vector<Item> viewActions(int index);
+  // and the one a solver carries, in the same place
+  std::vector<Item> solverActions(int index);
 
   // The modules tree: the geometry and mesh commands, in the order the FLTK
   // tree has always shown them. It stops where the ONELAB parameters begin --

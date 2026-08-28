@@ -43,6 +43,8 @@ namespace Menu {
     if(mods & ModAlt) s += "Alt+";
     if(key >= KeyF1 && key < KeyF1 + 12)
       s += "F" + std::to_string(key - KeyF1 + 1);
+    else if(key == KeyDelete)
+      s += "Del";
     else
       s += (char)key;
     return s;
@@ -451,6 +453,87 @@ std::vector<Item> quickAccess()
     // along the bottom of the menu
     items.back().dividerAfter = false;
 
+  return items;
+}
+
+// --- the menu a view carries, and the one a solver carries
+//
+// These were the Fl_Menu_Button of src/fltk/viewButton.cpp -- twenty-six
+// entries -- and of src/fltk/solverButton.cpp. The Dear ImGui tree offered
+// three of the twenty-six, which is the kind of gap a description settles at
+// once.
+
+namespace {
+
+  // one of the entries of viewAction(), on this view
+  Item onView(const std::string &label, int index, const std::string &what,
+              const Shortcut &shortcut = Shortcut())
+  {
+    return action(label, 0, [what, index]() { viewAction(what, index); },
+                  shortcut);
+  }
+
+} // namespace
+
+std::vector<Item> viewActions(int index)
+{
+  std::vector<Item> items;
+
+  items.push_back(onView("Options", index, "options", Shortcut('O')));
+  items.push_back(divide(onView("Plugins", index, "plugins", Shortcut('P'))));
+
+  items.push_back(onView("Reload", index, "reload", Shortcut('R')));
+  items.push_back(submenu("Reload Views", 0,
+                          {onView("All", index, "reload_all"),
+                           onView("Visible", index, "reload_visible")}));
+  items.push_back(divide(onView("Create Alias", index, "alias")));
+
+  items.push_back(
+    onView("Remove", index, "remove", Shortcut(KeyDelete)));
+  items.push_back(divide(
+    submenu("Remove Views", 0,
+            {onView("All", index, "remove_all"),
+             onView("Visible", index, "remove_visible"),
+             onView("Invisible", index, "remove_invisible"),
+             onView("Other", index, "remove_other"),
+             onView("Empty", index, "remove_empty"),
+             onView("With Same Name", index, "remove_same_name")})));
+
+  items.push_back(onView("Sort By Name", index, "sort_by_name"));
+  items.push_back(submenu("Set Visibility", 0,
+                          {onView("All On", index, "all_on"),
+                           onView("All Off", index, "all_off"),
+                           onView("Invert", index, "invert"),
+                           onView("Same Name On", index, "same_name_on")}));
+  items.push_back(
+    submenu("Combine Elements", 0,
+            {onView("From All Views", index, "combine_elements_all"),
+             onView("From Visible Views", index, "combine_elements_visible"),
+             onView("From All Views With Same Name", index,
+                    "combine_elements_same_name")}));
+  items.push_back(divide(
+    submenu("Combine Time Steps", 0,
+            {onView("From All Views", index, "combine_steps_all"),
+             onView("From Visible Views", index, "combine_steps_visible"),
+             onView("From All Views With Same Name", index,
+                    "combine_steps_same_name")})));
+
+  items.push_back(
+    onView("Apply As Background Mesh", index, "background_mesh"));
+  items.push_back(onView("Export...", index, "export"));
+  return items;
+}
+
+std::vector<Item> solverActions(int index)
+{
+  std::vector<Item> items;
+  items.push_back(action("Rename...", 0,
+                         [index]() { solverAction("rename", index); }));
+  items.push_back(divide(
+    action("Change Executable Location...", 0,
+           [index]() { solverAction("executable", index); })));
+  items.push_back(action("Remove", 0,
+                         [index]() { solverAction("remove", index); }));
   return items;
 }
 

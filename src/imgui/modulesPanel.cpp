@@ -27,6 +27,7 @@
 #include "GuiDialogs.h"
 #include "GuiActions.h"
 #include "GuiMenus.h"
+#include "menuActions.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "Context.h"
@@ -282,6 +283,29 @@ void appWindow::_drawModulesPanel()
     ImGui::SameLine();
     if(ImGui::SmallButton("Load database")) postAction([]() { onelabRun("load"); });
 
+    // The solvers that are registered, one line each, as the FLTK tree shows
+    // them: clicking one runs it, and what else one may do to it is the menu
+    // described in src/common/GuiMenus.cpp.
+    for(int i = 0; i < NUM_SOLVERS; i++) {
+      std::string name = opt_solver_name(i, GMSH_GET, "");
+      if(name.empty()) continue;
+      ImGui::PushID(1000 + i);
+      if(ImGui::Selectable(name.c_str())) {
+        int index = i;
+        postAction([index]() { solverStart(index); });
+      }
+      std::string exe = opt_solver_executable(i, GMSH_GET, "");
+      if(exe.size() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        ImGui::SetTooltip("%s", exe.c_str());
+      if(ImGui::BeginPopupContextItem("##solvermenu")) {
+        static std::vector<Menu::Item> menu;
+        menu = Menu::solverActions(i);
+        menuWalk(menu, this);
+        ImGui::EndPopup();
+      }
+      ImGui::PopID();
+    }
+
     // the parameters of the clients, grouped by their path
     static std::map<std::string, std::string> edits;
     std::vector<onelab::number> numbers;
@@ -358,26 +382,12 @@ void appWindow::_drawModulesPanel()
         int index = (int)i;
         postAction([index]() { Dialog::showOptionsForView(index, "Map"); });
       }
+      // what it carries is described once in src/common/GuiMenus.cpp: the
+      // FLTK tree drops the same entries on the little arrow beside the view
       if(ImGui::BeginPopupContextItem("##viewmenu")) {
-        if(ImGui::MenuItem("Options...")) {
-          int index = (int)i;
-          postAction([index]() { Dialog::showOptionsForView(index); });
-        }
-        if(ImGui::MenuItem("Colour map...")) {
-          int index = (int)i;
-          postAction([index]() { Dialog::showOptionsForView(index, "Map"); });
-        }
-        ImGui::Separator();
-        if(ImGui::MenuItem("Remove")) {
-          int index = (int)i;
-          postAction([index]() {
-            if(index < (int)PView::list.size()) {
-              delete PView::list[index];
-              Gui::updateViews(true, true);
-              drawContext::global()->draw();
-            }
-          });
-        }
+        static std::vector<Menu::Item> menu;
+        menu = Menu::viewActions((int)i);
+        menuWalk(menu, this);
         ImGui::EndPopup();
       }
       ImGui::PopID();

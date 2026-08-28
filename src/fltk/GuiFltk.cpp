@@ -27,6 +27,12 @@
 #include "Context.h"
 #include "drawContext.h"
 #include "PixelBuffer.h"
+#include "OS.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#endif
 
 // defined in CreateFileFltk.cpp
 PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type);
@@ -258,6 +264,38 @@ namespace Gui {
     if(panel == PanelClassify) return dialogVisible(Dialog::Classify);
     Fl_Window *w = _panelWindow(panel);
     return w ? (w->shown() ? true : false) : false;
+  }
+
+  void exportView(int index)
+  {
+#if defined(HAVE_POST)
+    if(index < 0 || index >= (int)PView::list.size()) return;
+    static const char *formats =
+      "Gmsh Parsed\t*.pos\nGmsh Mesh-based\t*.pos\n"
+      "Gmsh Legacy ASCII\t*.pos\nGmsh Legacy Binary\t*.pos\n"
+      "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n";
+    PView *view = PView::list[index];
+  again:
+    if(!fileChooser(FILE_CHOOSER_CREATE, "Export", formats,
+                    view->getData()->getFileName().c_str()))
+      return;
+    std::string name = fileChooserGetName(1);
+    bool confirmOverwrite = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+    // handled directly by the native macOS file chooser
+    if(CTX::instance()->nativeFileChooser) confirmOverwrite = false;
+#endif
+    if(confirmOverwrite && !StatFile(name)) {
+      if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
+                    "Cancel", "Replace", nullptr, name.c_str()))
+        goto again;
+    }
+    // the place of the filter in the list above, in the order PView::write()
+    // numbers the formats
+    static const int format[] = {2, 5, 0, 1, 6, 3, 4};
+    int which = fileChooserGetFilter();
+    view->write(name, (which >= 0 && which < 7) ? format[which] : 2);
+#endif
   }
 
   void configureGamepad()

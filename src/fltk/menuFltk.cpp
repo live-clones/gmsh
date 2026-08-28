@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstring>
 #include <deque>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -60,6 +61,8 @@ namespace {
     int key;
     if(s.key >= Menu::KeyF1 && s.key < Menu::KeyF1 + 12)
       key = FL_F + (s.key - Menu::KeyF1 + 1);
+    else if(s.key == Menu::KeyDelete)
+      key = FL_Delete;
     else
       key = tolower(s.key);
     int mods = 0;
@@ -163,11 +166,14 @@ namespace {
     std::deque<std::string> labels;
     std::vector<Fl_Menu_Item> items;
     std::vector<const Menu::Item *> byId;
-    // where it opened last time, so that it opens there again
-    std::string last;
+    // where each of them opened last time, so that it opens there again; a
+    // menu is named by the key its caller gives it
+    std::map<std::string, std::string> last;
   };
 
   fltkPopup _popup;
+  // the entry the description prefers, found while the table is built
+  std::string _preferred;
 
   void _appendPopup(const std::vector<Menu::Item> &items)
   {
@@ -192,7 +198,7 @@ namespace {
         if(it.checked && it.checked()) m.flags |= FL_MENU_VALUE;
       }
       if(it.enabled && !it.enabled()) m.flags |= FL_MENU_INACTIVE;
-      if(it.preferred && _popup.last.empty()) _popup.last = it.label;
+      if(it.preferred && _preferred.empty()) _preferred = it.label;
       _popup.byId.push_back(&it);
       m.user_data_ = (void *)(intptr_t)_popup.byId.size();
       _popup.items.push_back(m);
@@ -201,11 +207,14 @@ namespace {
 
 } // namespace
 
-void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y)
+void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y,
+                   const std::string &key)
 {
+  std::string &last = _popup.last[key];
   _popup.labels.clear();
   _popup.items.clear();
   _popup.byId.clear();
+  _preferred.clear();
   // moved in first: what follows takes pointers into it
   _popup.tree = tree;
   _appendPopup(_popup.tree);
@@ -213,11 +222,12 @@ void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y)
   _blank(end);
   _popup.items.push_back(end);
 
-  // the entry it opened on last time, if it is still there
+  // the entry it opened on last time, or the one the description prefers
+  if(last.empty()) last = _preferred;
   Fl_Menu_Item *at = nullptr;
   for(std::size_t i = 0; i < _popup.items.size(); i++) {
     if(!_popup.items[i].text) continue;
-    if(_popup.last == _popup.items[i].text) {
+    if(last == _popup.items[i].text) {
       at = &_popup.items[i];
       break;
     }
@@ -225,7 +235,7 @@ void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y)
 
   const Fl_Menu_Item *picked = _popup.items[0].popup(x, y, nullptr, at, nullptr);
   if(!picked || !picked->user_data_) return;
-  _popup.last = picked->text ? picked->text : "";
+  last = picked->text ? picked->text : "";
   std::size_t id = (std::size_t)(intptr_t)picked->user_data_;
   if(!id || id > _popup.byId.size()) return;
   const Menu::Item *item = _popup.byId[id - 1];
