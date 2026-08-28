@@ -345,6 +345,7 @@ namespace Dialog {
     Visibility,
     Plugins,
     Fields,
+    Classify,
     Shortcuts,
     CurrentOptions,
     About,
@@ -385,6 +386,11 @@ namespace Dialog {
   Panel plugins();
   // the mesh size fields, what each of them takes, and which is the background
   Panel fields();
+  // turning a triangulation into a model: what to detect the edges on, which
+  // of them to keep, and the reclassification itself
+  Panel classify();
+  // show it, with the lines drawn: it is what one is about to work on
+  void startClassify();
   // what the keyboard and the mouse do, and what the command line takes
   Panel shortcuts();
   // what every option is worth right now, and what one may change it to

@@ -175,8 +175,14 @@ shot("mesh", "size", [M, M + "/Define"], 4, 3)
 shot("mesh", "transfinite-curve", [M, M + "/Define", M + "/Define/Transfinite"], 8, 4)
 shot("mesh", "transfinite-surface", [M, M + "/Define", M + "/Define/Transfinite"], 9, 4)
 
-# the high order tools and the partitioner, which have no tabs
+# the high order tools, the partitioner and the reclassification, which have
+# no tabs
 shot("highorder", "", [M], 12, 2)
+shot("classify", "", [M], 18, 2)
+# and the same after "All", which detects the edges of a triangulation: what
+# one may do next is no longer greyed out
+shot("classify", "detected", [M], 18, 2, geo=model("facets.stl"),
+     press={"released": (155, 41), "fltk": (146, 41), "imgui": (116, 57)})
 shot("partition", "", [M], 14, 2)
 # and the same dialog with its advanced half unfolded
 shot("partition", "advanced", [M], 14, 2,
@@ -278,6 +284,7 @@ TITLES = {
     "visibility": "^Visibility$",
     "plugins": "^Plugins$",
     "fields": "^Size fields$",
+    "classify": "^Reclassify 2D$",
     "shortcuts": "^Keyboard and Mouse Usage$",
     "listing": "^Current Options and Workspace$",
     "about": "^About Gmsh$",

@@ -38,7 +38,6 @@ typedef unsigned long intptr_t;
 #include "gmshLocalNetworkClient.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
-#include "classificationEditor.h"
 #include "GModel.h"
 #include "PView.h"
 #include "PViewData.h"

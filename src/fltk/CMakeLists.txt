@@ -18,7 +18,6 @@ set(SRC
     onelabGroup.cpp
     fileDialogs.cpp
     extraDialogs.cpp
-    classificationEditor.cpp
 
     inputValue.cpp
     viewButton.cpp solverButton.cpp

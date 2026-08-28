@@ -743,7 +743,16 @@ namespace {
     if(f.tooltip.size() &&
        ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
       ImGui::SetTooltip("%s", f.tooltip.c_str());
-    if(changed && f.changed) f.changed();
+    if(changed && f.changed) {
+      // A button is not a value: what it does may pick in the 3D view, which
+      // pumps events of its own, and that cannot happen inside the frame that
+      // is being drawn. It waits for the end of it, as everything the menus do
+      // waits.
+      if(f.kind == Dialog::Action || f.kind == Dialog::Menu)
+        appWindow::instance()->postAction(f.changed);
+      else
+        f.changed();
+    }
   }
 
   // how many lines a list of fields takes, once those that share one are put

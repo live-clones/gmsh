@@ -302,7 +302,7 @@ bool appWindow::panelVisible(int panel) const
   case Gui::PanelCurrentOptions: return dialogVisible(Dialog::CurrentOptions);
   case Gui::PanelAbout: return dialogVisible(Dialog::About);
   case Gui::PanelFields: return dialogVisible(Dialog::Fields);
-  case Gui::PanelClassify: return _showClassify;
+  case Gui::PanelClassify: return dialogVisible(Dialog::Classify);
   default: return false;
   }
 }
@@ -344,7 +344,13 @@ void appWindow::showPanel(int panel, bool show)
     else
       hideDialog(Dialog::Fields);
     break;
-  case Gui::PanelClassify: _showClassify = show; break;
+  case Gui::PanelClassify:
+    // described like the other dialogs now
+    if(show)
+      Dialog::startClassify();
+    else
+      hideDialog(Dialog::Classify);
+    break;
   default: break;
   }
 }

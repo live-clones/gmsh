@@ -22,7 +22,6 @@
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "dialogFltk.h"
-#include "classificationEditor.h"
 #include "onelabGroup.h"
 #include "fileDialogs.h"
 #include "Context.h"
@@ -256,8 +255,7 @@ namespace Gui {
     if(panel == PanelCurrentOptions)
       return dialogVisible(Dialog::CurrentOptions);
     if(panel == PanelAbout) return dialogVisible(Dialog::About);
-    // a dialog and an editor: they are shown, never asked about
-    if(panel == PanelClassify) return false;
+    if(panel == PanelClassify) return dialogVisible(Dialog::Classify);
     Fl_Window *w = _panelWindow(panel);
     return w ? (w->shown() ? true : false) : false;
   }
@@ -327,9 +325,11 @@ namespace Gui {
         return;
       }
     }
-    // these two are not plain windows: one is a dialog, the other an editor
     if(panel == PanelClassify) {
-      if(show) mesh_classify_cb(nullptr, nullptr);
+      if(show)
+        Dialog::startClassify();
+      else
+        showDialog(Dialog::Classify, false);
       return;
     }
     Fl_Window *w = _panelWindow(panel);

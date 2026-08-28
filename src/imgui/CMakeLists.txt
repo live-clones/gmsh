@@ -17,7 +17,6 @@ set(SRC
   exportDialog.cpp
   contextPanels.cpp
   fonts.cpp
-  meshToolPanels.cpp
   onelabContextPanel.cpp
   fileBrowser.cpp
 )

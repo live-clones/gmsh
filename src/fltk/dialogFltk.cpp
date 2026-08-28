@@ -1036,9 +1036,20 @@ void dialogFltk::build(int dialog)
       need += (int)_panel.buttons.size() * (BB + WB);
     if(need > width) width = need;
   }
+  // and wide enough for the names of the panes: a form writes each of them as
+  // a heading over its pane, so the widest of them has to fit
+  if(!_panel.tabbed) {
+    fl_font(FL_HELVETICA_BOLD, FL_NORMAL_SIZE);
+    for(const auto &q : _panel.panes) {
+      if(q.visible && !q.visible()) continue;
+      int need = (int)fl_width(q.label.c_str()) + 4 * WB + aside;
+      if(need > width) width = need;
+    }
+  }
   // and wide enough for the row of tabs itself: a window that fits what its
-  // panes hold but not their names hides the last of them behind a pulldown
-  {
+  // panes hold but not their names hides the last of them behind a pulldown.
+  // They are one row there, so it is their total that has to fit.
+  if(_panel.tabbed) {
     fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
     std::map<std::string, int> rows;
     for(const auto &q : _panel.panes) {
