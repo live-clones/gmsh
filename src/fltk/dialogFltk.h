@@ -57,6 +57,9 @@ private:
     // the colour map widget sets this when it has been drawn on, which is
     // how it says the view has to be drawn again
     bool changed = false;
+    // what a tree was last built from, so that it is only built again when
+    // its lines really changed
+    std::string was;
   };
   std::vector<bound> _fields;
   // the title of each section of a form that is not tabbed

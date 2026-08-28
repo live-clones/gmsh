@@ -33,6 +33,7 @@
 
 #include "spherePositionWidget.h"
 #include "colorbarWindow.h"
+#include <FL/Fl_Tree.H>
 #include "dialogFltk.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
@@ -48,8 +49,9 @@ namespace {
     for(std::size_t i = 0; i < fields.size(); i++) {
       if(fields[i].sameRow && i) continue;
       if(fields[i].visible && !fields[i].visible()) continue;
-      // a list, and a colour map, are worth as many lines as they show
+      // a list, a tree and a colour map are worth as many lines as they show
       rows += (fields[i].kind == Dialog::List ||
+               fields[i].kind == Dialog::Tree ||
                fields[i].kind == Dialog::ColorMap) ?
                 fields[i].rows :
                 1;
@@ -181,6 +183,7 @@ namespace {
         column++;
       if(column >= grid) column = grid - 1;
       if(f.kind == Dialog::Spacer) continue;
+      if(f.visible && !f.visible()) continue;
       // What follows it inside the same column adds to it. Its label only
       // needs room if another column follows on the same row: the label of
       // the last field of a row runs on into the space no one else uses,
@@ -304,6 +307,7 @@ namespace {
     columnW = 0;
     for(std::size_t k = from; k < to; k++) {
       if(fields[k].packed || fields[k].kind == Dialog::Spacer) continue;
+      if(fields[k].visible && !fields[k].visible()) continue;
       // a plain line and a button carry their text inside
       int label = (fields[k].kind == Dialog::Label ||
                    fields[k].kind == Dialog::Action) ?
@@ -420,6 +424,17 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       double x = 0., y = 0., z = 0.;
       ((spherePositionWidget *)w)->getValue(x, y, z);
       f.setVector(x, y, z);
+    } break;
+    case Dialog::Tree: {
+      // A line has just been picked or let go: say which, by where it is in
+      // the list the description gave. The item carries that place.
+      Fl_Tree *tree = (Fl_Tree *)w;
+      Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
+      if(item && f.choose && tree->callback_reason() == FL_TREE_REASON_SELECTED)
+        f.choose((int)(intptr_t)item->user_data(), true);
+      else if(item && f.choose &&
+              tree->callback_reason() == FL_TREE_REASON_DESELECTED)
+        f.choose((int)(intptr_t)item->user_data(), false);
     } break;
     case Dialog::ColorMap: break; // it edits the table itself
     case Dialog::Label:
@@ -743,6 +758,25 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
         // reproduces has the disc beside them.
         widget = new spherePositionWidget(fx, y, f.rows * BH);
         break;
+      case Dialog::Tree: {
+        // as tall as there is room for, like a list that fills its pane
+        int tall = f.rows * BH;
+        if(!f.rows) {
+          int under = 0;
+          for(std::size_t j = last; j < fields.size(); j++) {
+            if(fields[j].sameRow) continue;
+            if(fields[j].visible && !fields[j].visible()) continue;
+            under++;
+          }
+          tall = _paneBottom - y - WB - under * BH;
+          if(tall < BH) tall = BH;
+        }
+        Fl_Tree *tree = new Fl_Tree(fx, y, w - fx - WB, tall);
+        tree->selectmode(FL_TREE_SELECT_MULTI);
+        tree->callback(_fieldCallback, this);
+        tree->when(FL_WHEN_CHANGED);
+        widget = tree;
+      } break;
       case Dialog::ColorMap: {
         // the widget the window this reproduces already has, given the whole
         // of its pane
@@ -768,7 +802,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // a menu of switches carries its label inside, as a button does
       if(f.kind != Dialog::Check && f.kind != Dialog::Label &&
          f.kind != Dialog::Action && f.kind != Dialog::Direction &&
-         f.kind != Dialog::ColorMap &&
+         f.kind != Dialog::ColorMap && f.kind != Dialog::Tree &&
          !(f.kind == Dialog::Choice && f.multiple))
         widget->align(f.labelBefore ? FL_ALIGN_LEFT : FL_ALIGN_RIGHT);
       // A field to be looked at twice, in red. On a button whose face is dark
@@ -793,7 +827,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     // under it rather than over it
     int tall = 1;
     for(std::size_t k = i; k < last; k++) {
-      if(fields[k].kind != Dialog::List &&
+      if(fields[k].kind != Dialog::List && fields[k].kind != Dialog::Tree &&
          fields[k].kind != Dialog::ColorMap)
         continue;
       if(fields[k].rows > tall) tall = fields[k].rows;
@@ -1232,6 +1266,51 @@ void dialogFltk::refresh()
       double x = 0., y = 0., z = 0.;
       f.getVector(x, y, z);
       ((spherePositionWidget *)b.widget)->setValue(x, y, z);
+    } break;
+    case Dialog::Tree: {
+      // The lines, in order, each one a child of the last line shallower than
+      // it. Rebuilt only when they have changed: an Fl_Tree that is built
+      // again forgets what was open.
+      Fl_Tree *tree = (Fl_Tree *)b.widget;
+      std::vector<Dialog::TreeLine> lines;
+      if(f.treeLines) f.treeLines(lines);
+      std::string signature;
+      for(const auto &l : lines)
+        signature += std::to_string(l.depth) + l.label + "\n";
+      if(signature != b.was) {
+        b.was = signature;
+        // clear() takes the root with it, and everything hangs from the root
+        tree->clear();
+        Fl_Tree_Item *root = new Fl_Tree_Item(tree);
+        root->label(_escaped(f.label.size() ? f.label : "Gmsh").c_str());
+        tree->root(root);
+        std::vector<Fl_Tree_Item *> parents(1, root);
+        for(std::size_t i = 0; i < lines.size(); i++) {
+          std::size_t depth = (std::size_t)lines[i].depth;
+          if(depth + 1 > parents.size()) depth = parents.size() - 1;
+          Fl_Tree_Item *item =
+            tree->add(parents[depth], _escaped(lines[i].label).c_str());
+          if(!item) continue;
+          item->user_data((void *)(intptr_t)i);
+          item->close();
+          parents.resize(depth + 1);
+          parents.push_back(item);
+        }
+      }
+      // and what of it is picked, which changes without the lines changing
+      for(std::size_t i = 0; i < lines.size(); i++) {
+        Fl_Tree_Item *item = tree->root();
+        // walk to the item whose user data is i: the tree keeps them in the
+        // order they were added, so a walk finds it
+        for(item = tree->first(); item; item = tree->next(item))
+          if((std::size_t)(intptr_t)item->user_data() == i && item->parent())
+            break;
+        if(!item) continue;
+        bool on = f.chosen ? f.chosen((int)i) : false;
+        if(on != (item->is_selected() ? true : false))
+          item->select(on ? 1 : 0);
+      }
+      tree->redraw();
     } break;
     case Dialog::ColorMap: {
       std::string name;

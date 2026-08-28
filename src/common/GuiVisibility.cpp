@@ -52,15 +52,235 @@ namespace {
     return state;
   }
 
+  // What is picked in the list and in the tree. The window this replaces keeps
+  // it in its browsers and only puts it into the model when one presses Apply;
+  // here the description keeps it, for the same reason -- picking a line in a
+  // browser unpicks every other, and applying that at once would hide the
+  // whole model at the first click.
+  struct picking {
+    std::vector<char> what;
+    std::string of; // what the list was of when it was last read
+  };
+
+  picking &_picked()
+  {
+    static picking state;
+    return state;
+  }
+
+  picking &_pickedTree()
+  {
+    static picking state;
+    return state;
+  }
+
   VisibilityList::VisibilityType _type()
   {
     return (VisibilityList::VisibilityType)_state().type;
   }
 
-  // the list, as it is now: the window asks for it again whenever it draws
+  // One line of the tree: what it says, how deep it is, and what it stands
+  // for -- an entity, a model, or nothing at all for the headings that only
+  // gather what is under them.
+  struct treeNode {
+    int depth;
+    std::string label;
+    GEntity *entity;
+    GModel *model;
+  };
+
+  std::vector<treeNode> &_tree()
+  {
+    static std::vector<treeNode> lines;
+    return lines;
+  }
+
+  // whether the tree has been asked for: a model of more than ten thousand
+  // entities is not put in one unless one insists, as that window has it
+  bool &_treeWanted()
+  {
+    static bool wanted = false;
+    return wanted;
+  }
+
+  int _numEntities()
+  {
+    int n = 0;
+    for(std::size_t i = 0; i < GModel::list.size(); i++)
+      n += GModel::list[i]->getNumRegions() + GModel::list[i]->getNumFaces() +
+           GModel::list[i]->getNumEdges() + GModel::list[i]->getNumVertices();
+    return n;
+  }
+
+  void _addLine(int depth, const std::string &label, GEntity *e = nullptr,
+                GModel *m = nullptr)
+  {
+    treeNode line;
+    line.depth = depth;
+    line.label = label;
+    line.entity = e;
+    line.model = m;
+    _tree().push_back(line);
+  }
+
+  std::string _named(GEntity *e)
+  {
+    const char *const kind[4] = {"Point", "Curve", "Surface", "Volume"};
+    std::string out = std::string(kind[e->dim()]) + " " +
+                      std::to_string(e->tag());
+    std::string name = e->model()->getElementaryName(e->dim(), e->tag());
+    if(name.size()) out += " - " + name;
+    return out;
+  }
+
+  void _addVertex(GVertex *v, int depth);
+  void _addEdge(GEdge *e, int depth);
+  void _addFace(GFace *f, int depth);
+
+  void _addVertex(GVertex *v, int depth) { _addLine(depth, _named(v), v); }
+
+  void _addEdge(GEdge *e, int depth)
+  {
+    _addLine(depth, _named(e), e);
+    if(e->getBeginVertex()) _addVertex(e->getBeginVertex(), depth + 1);
+    if(e->getEndVertex()) _addVertex(e->getEndVertex(), depth + 1);
+  }
+
+  void _addFace(GFace *f, int depth)
+  {
+    _addLine(depth, _named(f), f);
+    for(auto e : f->edges()) _addEdge(e, depth + 1);
+  }
+
+  void _addRegion(GRegion *r, int depth)
+  {
+    _addLine(depth, _named(r), r);
+    for(auto f : r->faces()) _addFace(f, depth + 1);
+  }
+
+  // the whole hierarchy: a model, what it is made of, and what its physical
+  // groups gather
+  void _refreshTree()
+  {
+    std::size_t was = _tree().size();
+    _tree().clear();
+    if(!_treeWanted() && _numEntities() > 10000) return;
+    for(std::size_t i = 0; i < GModel::list.size(); i++) {
+      GModel *m = GModel::list[i];
+      std::string label = "Model " + std::to_string(i);
+      if(m->getName().size()) label += " - " + m->getName();
+      if(m == GModel::current()) label += " (Current Model)";
+      _addLine(0, label, nullptr, m);
+
+      _addLine(1, "Elementary entities");
+      for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
+        _addRegion(*it, 2);
+      for(auto it = m->firstFace(); it != m->lastFace(); it++)
+        _addFace(*it, 2);
+      for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
+        _addEdge(*it, 2);
+      for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
+        _addVertex(*it, 2);
+
+      _addLine(1, "Physical groups");
+      std::map<int, std::vector<GEntity *> > groups[4];
+      m->getPhysicalGroups(groups);
+      const char *const kind[4] = {"Physical Point", "Physical Curve",
+                                   "Physical Surface", "Physical Volume"};
+      for(int dim = 3; dim >= 0; dim--) {
+        for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+          if(it->second.empty()) continue;
+          std::string name = m->getPhysicalName(dim, it->first);
+          std::string label = std::string(kind[dim]) + " " +
+                              std::to_string(it->first);
+          if(name.size()) label += " - " + name;
+          _addLine(2, label);
+          for(std::size_t j = 0; j < it->second.size(); j++) {
+            GEntity *e = it->second[j];
+            if(dim == 3)
+              _addRegion((GRegion *)e, 3);
+            else if(dim == 2)
+              _addFace((GFace *)e, 3);
+            else if(dim == 1)
+              _addEdge((GEdge *)e, 3);
+            else
+              _addVertex((GVertex *)e, 3);
+          }
+        }
+      }
+    }
+    // what is picked is read from the model only when the tree is not the
+    // same tree any more, so that a pick survives until it is applied
+    if(_pickedTree().what.size() != _tree().size() || was != _tree().size()) {
+      _pickedTree().what.assign(_tree().size(), 0);
+      for(std::size_t i = 0; i < _tree().size(); i++) {
+        const treeNode &line = _tree()[i];
+        if(line.entity)
+          _pickedTree().what[i] = line.entity->getVisibility() ? 1 : 0;
+        else if(line.model)
+          _pickedTree().what[i] = line.model->getVisibility() ? 1 : 0;
+      }
+    }
+  }
+
+  // and what the tree says is to be seen, once one asks for it
+  void _applyTree()
+  {
+    const std::vector<treeNode> &all = _tree();
+    if(all.empty()) return;
+    CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+    bool recursive = _state().recursive;
+    // nothing is seen but what is picked, as that window has it
+    for(std::size_t m = 0; m < GModel::list.size(); m++) {
+      std::vector<GEntity *> entities;
+      GModel::list[m]->getEntities(entities);
+      for(std::size_t i = 0; i < entities.size(); i++)
+        entities[i]->setVisibility(0);
+    }
+    for(std::size_t i = 0; i < all.size() && i < _pickedTree().what.size();
+        i++) {
+      if(!_pickedTree().what[i]) continue;
+      if(all[i].model) all[i].model->setVisibility(1);
+      if(!all[i].entity) continue;
+      all[i].entity->setVisibility(1, recursive);
+      // asking to see something means the model it is in is seen too
+      all[i].entity->model()->setVisibility(1);
+    }
+    drawContext::global()->draw();
+  }
+
+  // The list, as it is now: the window asks for it again whenever it draws.
+  // What is picked is read from the model only when the list is not the same
+  // list any more -- another kind of entity, another filter, another model --
+  // so that a pick survives until it is applied.
   void _refreshList()
   {
-    VisibilityList::instance()->update(_type(), _state().search);
+    VisibilityList *v = VisibilityList::instance();
+    v->update(_type(), _state().search);
+    std::string of = std::to_string(_state().type) + "/" + _state().search +
+                     "/" + std::to_string(v->getNumEntities()) + "/" +
+                     GModel::current()->getName();
+    if(_picked().of != of) {
+      _picked().of = of;
+      _picked().what.assign(v->getNumEntities(), 0);
+      for(int i = 0; i < v->getNumEntities(); i++)
+        _picked().what[i] = v->getVisibility(i) ? 1 : 0;
+    }
+    _picked().what.resize(v->getNumEntities(), 0);
+  }
+
+  // and what the list says is to be seen, once one asks for it
+  void _applyList()
+  {
+    VisibilityList *v = VisibilityList::instance();
+    if(!v->getNumEntities()) return;
+    CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+    v->setAllInvisible(_type(), _state().allModels);
+    for(int i = 0; i < v->getNumEntities() && i < (int)_picked().what.size();
+        i++)
+      if(_picked().what[i])
+        v->setVisibility(i, 1, _state().recursive, _state().allModels);
+    drawContext::global()->draw();
   }
 
   void _redraw()
@@ -333,25 +553,19 @@ namespace Dialog {
       // half of it, and three that sort it -- by type, by number and by name,
       // each the other way round when pressed again.
       Field all = does("*", []() {
-        VisibilityList *v = VisibilityList::instance();
         bool none = true;
-        for(int i = 0; i < v->getNumEntities(); i++)
-          if(v->getVisibility(i)) none = false;
-        for(int i = 0; i < v->getNumEntities(); i++)
-          v->setVisibility(i, none ? 1 : 0, _state().recursive,
-                           _state().allModels);
-        _redraw();
+        for(std::size_t i = 0; i < _picked().what.size(); i++)
+          if(_picked().what[i]) none = false;
+        for(std::size_t i = 0; i < _picked().what.size(); i++)
+          _picked().what[i] = none ? 1 : 0;
       });
       all.tooltip = "Select/unselect all";
       all.widthEm = 1.25;
       all.packed = true;
       list.fields.push_back(all);
       Field invert = does("-", []() {
-        VisibilityList *v = VisibilityList::instance();
-        for(int i = 0; i < v->getNumEntities(); i++)
-          v->setVisibility(i, v->getVisibility(i) ? 0 : 1, _state().recursive,
-                           _state().allModels);
-        _redraw();
+        for(std::size_t i = 0; i < _picked().what.size(); i++)
+          _picked().what[i] = _picked().what[i] ? 0 : 1;
       });
       invert.tooltip = "Invert selection";
       invert.widthEm = 1.25;
@@ -381,15 +595,12 @@ namespace Dialog {
           }
         },
         [](int i) {
-          VisibilityList *v = VisibilityList::instance();
-          return i >= 0 && i < v->getNumEntities() && v->getVisibility(i);
+          return i >= 0 && i < (int)_picked().what.size() &&
+                 _picked().what[i] != 0;
         },
         [](int i, bool on) {
-          VisibilityList *v = VisibilityList::instance();
-          if(i >= 0 && i < v->getNumEntities())
-            v->setVisibility(i, on ? 1 : 0, _state().recursive,
-                             _state().allModels);
-          _redraw();
+          if(i >= 0 && i < (int)_picked().what.size())
+            _picked().what[i] = on ? 1 : 0;
         },
         true);
       entities.rows = 0; // as tall as the pane
@@ -413,14 +624,59 @@ namespace Dialog {
                           "Filter list using regular expression");
       search.sameRow = true;
       list.fields.push_back(search);
-      Field apply = does("Apply", []() {
-        VisibilityList *v = VisibilityList::instance();
-        _redraw();
-      });
+      Field apply = does("Apply", _applyList);
       apply.sameRow = true;
       apply.packed = true;
       list.fields.push_back(apply);
       p.panes.push_back(list);
+    }
+
+    // --- the same, as the hierarchy it is
+    {
+      Pane tree;
+      tree.label = "Tree";
+      Field lines;
+      lines.kind = Tree;
+      lines.rows = 0;
+      lines.visible = []() {
+        return _treeWanted() || _numEntities() <= 10000;
+      };
+      lines.treeLines = [](std::vector<TreeLine> &into) {
+        _refreshTree();
+        for(const auto &line : _tree())
+          into.push_back(TreeLine(line.depth, line.label,
+                                  line.entity || line.model));
+      };
+      lines.chosen = [](int i) {
+        return i >= 0 && i < (int)_pickedTree().what.size() &&
+               _pickedTree().what[i] != 0;
+      };
+      lines.choose = [](int i, bool on) {
+        const std::vector<treeNode> &all = _tree();
+        if(i < 0 || i >= (int)all.size()) return;
+        if(i < (int)_pickedTree().what.size())
+          _pickedTree().what[i] = on ? 1 : 0;
+        // a line stands for itself and, if it gathers others, for them too
+        for(std::size_t j = i + 1;
+            j < all.size() && all[j].depth > all[i].depth; j++)
+          if(j < _pickedTree().what.size())
+            _pickedTree().what[j] = on ? 1 : 0;
+      };
+      lines.multiple = true;
+      tree.fields.push_back(lines);
+      // a model of more than ten thousand entities is not put in a tree
+      // unless one insists, as that window has it
+      Field anyway = does("The model contains more than 10 thousand entities,"
+                          " which might slow down the tree browser.\n\n"
+                          "Create tree browser anyway?",
+                          []() { _treeWanted() = true; });
+      anyway.visible = []() {
+        return !(_treeWanted() || _numEntities() <= 10000);
+      };
+      tree.fields.push_back(anyway);
+      tree.buttonLabel = "Apply";
+      tree.button = _applyTree;
+      p.panes.push_back(tree);
     }
 
     // --- by number

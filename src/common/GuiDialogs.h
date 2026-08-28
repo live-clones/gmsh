@@ -50,10 +50,26 @@ namespace Dialog {
     // and the keys and clicks that change them. It is a widget of its own in
     // the window this reproduces, and there is no describing it as fields.
     ColorMap,
+    // A hierarchy one folds and unfolds, each line of which may be picked:
+    // the visibility panel shows the model that way, entity under entity.
+    Tree,
     List, // what has been picked so far, which one may correct
     Spacer // nothing at all: it eats what is left of the line, and never less
            // than widthEm, so that it still separates in a window that fits
            // its contents exactly
+  };
+
+  // One line of a Tree: how deep it is in the hierarchy, what it says, and
+  // whether it stands for something one can pick -- the headings of a tree do
+  // not, they are only there to gather what is under them.
+  struct TreeLine {
+    int depth;
+    std::string label;
+    bool pickable;
+    TreeLine(int d = 0, const std::string &l = "", bool p = true)
+      : depth(d), label(l), pickable(p)
+    {
+    }
   };
 
   struct Field {
@@ -111,6 +127,10 @@ namespace Dialog {
     // of the visibility panel are a type, a number and a name. Empty for a
     // list of plain lines.
     std::vector<double> columnsEm;
+    // Tree: its lines, in the order they are drawn, deepest last. Which of
+    // them are picked is asked and set through chosen() and choose(), by the
+    // place of the line in that list, as for a List.
+    std::function<void(std::vector<TreeLine> &lines)> treeLines;
     // List: which entries are chosen and how to change that. Without them the
     // list is only read; `multiple` says whether more than one may be chosen.
     std::function<bool(int index)> chosen;

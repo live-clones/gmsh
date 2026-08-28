@@ -197,10 +197,10 @@ SHOTS.append(dict(name="visibility", dialog="visibility", branches=[],
                   keys=["ctrl", "shift", "v"], geo=_GEO3,
                   everyTab={"released": ["list", "tree", "numeric",
                                          "interactive", "per-window"],
-                            "fltk": ["list", "numeric", "interactive",
-                                     "per-window"],
-                            "imgui": ["list", "numeric", "interactive",
-                                      "per-window"]}))
+                            "fltk": ["list", "tree", "numeric",
+                                     "interactive", "per-window"],
+                            "imgui": ["list", "tree", "numeric",
+                                      "interactive", "per-window"]}))
 keyed("statistics", ["ctrl", "i"],
       tabs=[("geometry", 55, 40), ("mesh", 112, 100), ("post", 187, 165)])
 

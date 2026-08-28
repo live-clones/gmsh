@@ -521,6 +521,49 @@ namespace {
         }
       }
     } break;
+    case Dialog::Tree: {
+      // The lines of a hierarchy, deepest last: a line with something under it
+      // folds, a line with nothing under it is picked, and picking a line that
+      // folds picks everything under it, as the window this reproduces has it.
+      std::vector<Dialog::TreeLine> lines;
+      if(f.treeLines) f.treeLines(lines);
+      ImVec2 size(width > 0.f ? width : -FLT_MIN,
+                  f.rows ? f.rows * ImGui::GetTextLineHeightWithSpacing() :
+                  tall > 0.f ? tall : -FLT_MIN);
+      if(ImGui::BeginChild("##tree", size, ImGuiChildFlags_Borders)) {
+        int open = 0; // how many levels are unfolded and drawn
+        for(std::size_t i = 0; i < lines.size(); i++) {
+          int depth = lines[i].depth;
+          // a line deeper than what is unfolded is not drawn at all
+          if(depth > open) continue;
+          while(open > depth) {
+            ImGui::TreePop();
+            open--;
+          }
+          bool branch = (i + 1 < lines.size() &&
+                         lines[i + 1].depth > depth);
+          bool on = f.chosen ? f.chosen((int)i) : false;
+          ImGuiTreeNodeFlags flags =
+            ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+          if(on) flags |= ImGuiTreeNodeFlags_Selected;
+          if(!branch) flags |= ImGuiTreeNodeFlags_Leaf |
+                               ImGuiTreeNodeFlags_NoTreePushOnOpen;
+          ImGui::PushID((int)i);
+          bool unfolded = ImGui::TreeNodeEx(lines[i].label.c_str(), flags);
+          if(ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen() && f.choose) {
+            f.choose((int)i, !on);
+            changed = true;
+          }
+          ImGui::PopID();
+          if(branch && unfolded) open++;
+        }
+        while(open > 0) {
+          ImGui::TreePop();
+          open--;
+        }
+      }
+      ImGui::EndChild();
+    } break;
     case Dialog::Direction: {
       // The disc the FLTK spherePositionWidget draws: a circle, and the point
       // one drags over it. Dear ImGui has nothing of the sort, so the panel
@@ -671,7 +714,10 @@ namespace {
       if(fields[i].sameRow && i) continue;
       // a list is worth as many lines as it shows
       if(fields[i].visible && !fields[i].visible()) continue;
-      rows += (fields[i].kind == Dialog::List) ? fields[i].rows : 1;
+      rows += (fields[i].kind == Dialog::List ||
+               fields[i].kind == Dialog::Tree) ?
+                fields[i].rows :
+                1;
     }
     return rows;
   }
@@ -978,7 +1024,8 @@ namespace {
       // it can be: there is nothing to pad
       bool fills = false;
       for(const auto &f : q.fields)
-        if(f.kind == Dialog::List && !f.rows) fills = true;
+        if((f.kind == Dialog::List || f.kind == Dialog::Tree) && !f.rows)
+          fills = true;
       int mine = _rows(q.fields);
       int pad = fills ? 0 : lines - mine - (q.buttonLabel.size() ? 1 : 0);
       if(pad > 0)
@@ -1084,9 +1131,9 @@ namespace {
         // a colour map is not a field either: it takes the whole of its pane
         if(f.kind == Dialog::ColorMap)
           here = 0.f;
-        // a list is not a field with a label beside it: it takes its whole
-        // share of the line, or its contents are cut off
-        else if(f.kind == Dialog::List)
+        // a list or a tree is not a field with a label beside it: it takes
+        // its whole share of the line, or its contents are cut off
+        else if(f.kind == Dialog::List || f.kind == Dialog::Tree)
           here = columns ? columnW - style.ItemSpacing.x : -FLT_MIN;
         else if(f.widthShare > 0.)
           here = (float)f.widthShare * item;
@@ -1141,7 +1188,7 @@ namespace {
         // stands in its list says which one it is.
         // a list that fills what it is in leaves room for the lines under it
         float tall = 0.f;
-        if(f.kind == Dialog::List && !f.rows) {
+        if((f.kind == Dialog::List || f.kind == Dialog::Tree) && !f.rows) {
           int below = 0;
           for(std::size_t j = last; j < fields.size(); j++) {
             if(fields[j].sameRow) continue;
