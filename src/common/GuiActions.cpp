@@ -1523,6 +1523,67 @@ void viewAction(const std::string &what, int index) {}
 
 #endif
 
+// --- the gear menu of the modules tree
+
+namespace {
+
+  // The switches it offers, and the option each of them stands for. They are
+  // all in CTX::solver; two of them are counted rather than switched, which is
+  // why what is written is not always one.
+  int *_solverSwitch(const std::string &what)
+  {
+    if(what == "save") return &CTX::instance()->solver.autoSaveDatabase;
+    if(what == "load") return &CTX::instance()->solver.autoLoadDatabase;
+    if(what == "archive") return &CTX::instance()->solver.autoArchiveOutputFiles;
+    if(what == "check") return &CTX::instance()->solver.autoCheck;
+    if(what == "mesh") return &CTX::instance()->solver.autoMesh;
+    if(what == "merge") return &CTX::instance()->solver.autoMergeFile;
+    if(what == "show") return &CTX::instance()->solver.autoShowViews;
+    if(what == "step") return &CTX::instance()->solver.autoShowLastStep;
+    if(what == "invisible")
+      return &CTX::instance()->solver.showInvisibleParameters;
+    return nullptr;
+  }
+
+} // namespace
+
+bool solverOptionSet(const std::string &what)
+{
+  const int *v = _solverSwitch(what);
+  return v && *v;
+}
+
+void solverOptionAction(const std::string &what)
+{
+  if(what == "add") {
+#if defined(HAVE_ONELAB)
+    // the first slot that is free, or the last one when they are all taken
+    for(int i = 0; i < NUM_SOLVERS; i++) {
+      if(!opt_solver_name(i, GMSH_GET, "").empty() && i != NUM_SOLVERS - 1)
+        continue;
+      std::string name;
+      if(Gui::inputDialog("Solver name:", name) && name.size())
+        solverAdd(name, "", "", i);
+      return;
+    }
+#endif
+    return;
+  }
+  int *v = _solverSwitch(what);
+  if(!v) {
+    Msg::Debug("No solver option '%s'", what.c_str());
+    return;
+  }
+  bool on = !*v;
+  // "Remesh automatically" and "Show new views" are not switches but counts:
+  // two is what the window this replaces writes for on
+  *v = on ? ((what == "mesh" || what == "show") ? 2 : 1) : 0;
+  // which of the two solver buttons shows follows this one, and what the tree
+  // holds follows that one; rebuilding it works both out
+  if(what == "check") Gui::rebuildTree(false);
+  if(what == "invisible") Gui::rebuildTree(true);
+}
+
 // --- and the menu a solver carries
 
 #if defined(HAVE_ONELAB)

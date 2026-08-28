@@ -10,7 +10,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Tree.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_Menu_Button.H>
+#include "menuFltk.h"
 #include <FL/Fl_Input.H>
 #include "onelab.h"
 
@@ -20,8 +20,7 @@ class onelabGroup : public Fl_Group {
 private:
   Fl_Tree *_tree;
   Fl_Button *_butt[2];
-  Fl_Menu_Button *_gear;
-  int _gearOptionsStart, _gearOptionsEnd;
+  popupButtonFltk *_gear;
   std::vector<Fl_Widget *> _treeWidgets;
   std::vector<char *> _treeStrings;
   bool _stop;
@@ -41,7 +40,6 @@ private:
 
 public:
   onelabGroup(int x, int y, int w, int h, const char *l = nullptr);
-  void updateGearMenu();
   void rebuildSolverList();
   void rebuildTree(bool deleteWidgets);
   void enableTreeWidgetResize(bool value) { _enableTreeWidgetResize = value; }

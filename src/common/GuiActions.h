@@ -93,6 +93,13 @@ void remoteAction(const std::string &what, const std::string &arg = "");
 // menu gives it: "rename", "executable" or "remove". See Menu::solverActions().
 void solverAction(const std::string &what, int index);
 
+// One entry of the gear menu of the modules tree, by the name the menu gives
+// it. The switches -- "save", "load", "archive", "check", "mesh", "merge",
+// "show", "step", "invisible" -- say what they are worth through
+// solverOptionSet(); "add" asks for another solver. See Menu::solverOptions().
+void solverOptionAction(const std::string &what);
+bool solverOptionSet(const std::string &what);
+
 // is a solver currently running, and has the user asked it to stop?
 bool solverIsRunning();
 bool solverStopRequested();

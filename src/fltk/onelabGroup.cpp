@@ -34,6 +34,8 @@ typedef unsigned long intptr_t;
 #include "onelabGroup.h"
 #include "GuiActions.h"
 #include "GuiOnelab.h"
+#include "GuiMenus.h"
+#include "menuFltk.h"
 #include "GmshGlobal.h"
 #include "FlGui.h"
 #include "Context.h"
@@ -60,7 +62,6 @@ void solver_cb(Fl_Widget *w, void *data)
   int num = (intptr_t)data;
   solverStart(num); // compacts the solver list itself
   if(solverIsRunning()) FlGui::instance()->onelab->show();
-  FlGui::instance()->onelab->updateGearMenu();
 }
 
 void onelab_cb(Fl_Widget *w, void *data)
@@ -70,47 +71,6 @@ void onelab_cb(Fl_Widget *w, void *data)
   onelabRun(std::string((const char *)data));
   if(std::string((const char *)data) != "initialize")
     FlGui::instance()->onelab->show();
-}
-
-void onelab_option_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string what((const char *)data);
-  double val = ((Fl_Menu_ *)w)->mvalue()->value() ? 1. : 0.;
-  if(what == "save")
-    CTX::instance()->solver.autoSaveDatabase = val;
-  else if(what == "load")
-    CTX::instance()->solver.autoLoadDatabase = val;
-  else if(what == "archive")
-    CTX::instance()->solver.autoArchiveOutputFiles = val;
-  else if(what == "check") {
-    CTX::instance()->solver.autoCheck = val;
-    FlGui::instance()->onelab->setButtonVisibility();
-  }
-  else if(what == "mesh")
-    CTX::instance()->solver.autoMesh = val ? 2 : 0;
-  else if(what == "merge")
-    CTX::instance()->solver.autoMergeFile = val;
-  else if(what == "show")
-    CTX::instance()->solver.autoShowViews = val ? 2 : 0;
-  else if(what == "step")
-    CTX::instance()->solver.autoShowLastStep = val;
-  else if(what == "invisible") {
-    CTX::instance()->solver.showInvisibleParameters = val;
-    FlGui::instance()->onelab->rebuildTree(true);
-  }
-}
-
-
-static void onelab_add_solver_cb(Fl_Widget *w, void *data)
-{
-  for(int i = 0; i < NUM_SOLVERS; i++) {
-    if(opt_solver_name(i, GMSH_GET, "").empty() || i == (NUM_SOLVERS - 1)) {
-      const char *name = fl_input("Solver name:", "");
-      if(name) { FlGui::instance()->onelab->addSolver(name, "", "", i); }
-      return;
-    }
-  }
 }
 
 template <class T>
@@ -255,44 +215,22 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
     new Fl_Button(x + w - 2 * WB - 2 * BB2, y + h - WB - BH, BB2, BH, "Run");
   _butt[1]->callback(onelab_cb, (void *)"compute");
 
-  _gear = new Fl_Menu_Button(x + w - WB - BB2, y + h - WB - BH, BB2, BH);
+  // What it drops is described once in src/common/GuiMenus.cpp: the thirteen
+  // entries used to be written out here, with the places of the nine that are
+  // switches kept in two indices so that their check marks could be set again
+  // by hand at every rebuild.
+  _gear = new popupButtonFltk(x + w - WB - BB2, y + h - WB - BH, BB2, BH);
 #if defined(__APPLE__)
   _gear->label("@-1gmsh_gear");
 #else
   _gear->image(new Fl_Bitmap(gear_bits, gear_width, gear_height));
 #endif
   _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  _gear->add("Reset database", 0, onelab_cb, (void *)"reset");
-  _gear->add("Save database...", 0, onelab_cb, (void *)"save");
-  _gear->add("_Load database...", 0, onelab_cb, (void *)"load");
+  _gear->key = "gear";
+  _gear->what = Menu::solverOptions;
 
   _minWindowWidth = 3 * BB2 + 4 * WB;
   _minWindowHeight = 2 * BH + 3 * WB;
-
-  _gearOptionsStart = _gear->menu()->size();
-
-  _gear->add("Save database automatically", 0, onelab_option_cb, (void *)"save",
-             FL_MENU_TOGGLE);
-  _gear->add("Load database automatically", 0, onelab_option_cb, (void *)"load",
-             FL_MENU_TOGGLE);
-  _gear->add("Archive output files automatically", 0, onelab_option_cb,
-             (void *)"archive", FL_MENU_TOGGLE);
-  _gear->add("Check model after each change", 0, onelab_option_cb,
-             (void *)"check", FL_MENU_TOGGLE);
-  _gear->add("Remesh automatically", 0, onelab_option_cb, (void *)"mesh",
-             FL_MENU_TOGGLE);
-  _gear->add("Merge results automatically", 0, onelab_option_cb,
-             (void *)"merge", FL_MENU_TOGGLE);
-  _gear->add("Show new views", 0, onelab_option_cb, (void *)"show",
-             FL_MENU_TOGGLE);
-  _gear->add("Always show last step", 0, onelab_option_cb, (void *)"step",
-             FL_MENU_TOGGLE);
-  _gear->add("_Show hidden parameters", 0, onelab_option_cb,
-             (void *)"invisible", FL_MENU_TOGGLE);
-
-  _gearOptionsEnd = _gear->menu()->size();
-
-  _gear->add("Add new solver...", 0, onelab_add_solver_cb);
 
   end();
 
@@ -1185,30 +1123,19 @@ void onelabGroup::setButtonMode(const std::string &butt0,
     _butt[1]->activate();
     _butt[1]->label("Run");
     _butt[1]->callback(onelab_cb, (void *)"compute");
-    for(int i = 0; i < _gear->menu()->size(); i++)
-      ((Fl_Menu_Item *)_gear->menu())[i].activate();
   }
   else if(butt1 == "stop") {
     _butt[1]->activate();
     _butt[1]->label("Stop");
     _butt[1]->callback(onelab_cb, (void *)"stop");
-    for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
-        ((Fl_Menu_Item *)_gear->menu())[i].deactivate();
   }
   else if(butt1 == "kill") {
     _butt[1]->activate();
     _butt[1]->label("Kill");
     _butt[1]->callback(onelab_cb, (void *)"kill");
-    for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
-        ((Fl_Menu_Item *)_gear->menu())[i].deactivate();
   }
   else {
     _butt[1]->deactivate();
-    for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
-        ((Fl_Menu_Item *)_gear->menu())[i].deactivate();
   }
 }
 
@@ -1233,30 +1160,8 @@ std::string onelabGroup::getPath(Fl_Tree_Item *item)
   return std::string(path);
 }
 
-void onelabGroup::updateGearMenu()
-{
-  Fl_Menu_Item *menu = (Fl_Menu_Item *)_gear->menu();
-  int values[9] = {CTX::instance()->solver.autoSaveDatabase,
-                   CTX::instance()->solver.autoLoadDatabase,
-                   CTX::instance()->solver.autoArchiveOutputFiles,
-                   CTX::instance()->solver.autoCheck,
-                   CTX::instance()->solver.autoMesh,
-                   CTX::instance()->solver.autoMergeFile,
-                   CTX::instance()->solver.autoShowViews,
-                   CTX::instance()->solver.autoShowLastStep,
-                   CTX::instance()->solver.showInvisibleParameters};
-  for(int i = 0; i < 9; i++) {
-    int idx = _gearOptionsStart - 1 + i;
-    if(values[i])
-      menu[idx].set();
-    else
-      menu[idx].clear();
-  }
-}
-
 void onelabGroup::rebuildSolverList()
 {
-  updateGearMenu();
   // the option bookkeeping is shared with the other interfaces
   solverListCompact();
   rebuildTree(true);

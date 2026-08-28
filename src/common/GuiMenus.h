@@ -103,6 +103,13 @@ namespace Menu {
   // and the one a solver carries, in the same place
   std::vector<Item> solverActions(int index);
 
+  // The gear menu of the modules tree: the database, the eight things the
+  // solver may do by itself, and adding another solver. The FLTK tree had all
+  // thirteen and kept their check marks in step by hand, with the places of
+  // the switchable ones written out as two indices; the Dear ImGui tree had
+  // three of them, as buttons.
+  std::vector<Item> solverOptions();
+
   // The modules tree: the geometry and mesh commands, in the order the FLTK
   // tree has always shown them. It stops where the ONELAB parameters begin --
   // those are widgets, not entries, and each interface builds them itself.

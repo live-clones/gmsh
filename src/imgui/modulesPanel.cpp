@@ -279,9 +279,17 @@ void appWindow::_drawModulesPanel()
     ImGui::SameLine();
     if(ImGui::Button("Reset")) postAction([]() { onelabRun("reset"); });
 
-    if(ImGui::SmallButton("Save database")) postAction([]() { onelabRun("save"); });
     ImGui::SameLine();
-    if(ImGui::SmallButton("Load database")) postAction([]() { onelabRun("load"); });
+    // The gear menu, described once in src/common/GuiMenus.cpp: the database,
+    // the eight things the solver may do by itself, and adding another solver.
+    // This panel offered three of the thirteen, as buttons.
+    if(ImGui::SmallButton("Options")) ImGui::OpenPopup("##gear");
+    if(ImGui::BeginPopup("##gear")) {
+      static std::vector<Menu::Item> gear;
+      gear = Menu::solverOptions();
+      menuWalk(gear, this);
+      ImGui::EndPopup();
+    }
 
     // The solvers that are registered, one line each, as the FLTK tree shows
     // them: clicking one runs it, and what else one may do to it is the menu

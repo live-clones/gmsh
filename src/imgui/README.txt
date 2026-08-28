@@ -331,6 +331,17 @@ in red, and clicking either shows the console. The Dear ImGui bar also says
 which Gmsh this is when it comes up, as the FLTK one always has; it used to
 start empty, which is hard to tell from a bar with nothing to say.
 
+The gear menu of the modules tree is described too (Menu::solverOptions): the
+database, the eight things the solver may do by itself, and adding another
+solver. The FLTK tree had all thirteen entries and kept their check marks in
+step by hand, with the places of the nine that are switches written out as two
+indices -- `_gearOptionsStart` and `_gearOptionsEnd` -- so that the greying
+while a solver runs could be done by comparing against them. The Dear ImGui
+tree had three of them, as buttons, and none of the eight switches at all. What
+an entry does and what its check mark says now both go through
+solverOptionAction()/solverOptionSet(), and "not while a solver is running" is
+a predicate on the entry rather than a range of indices.
+
 The two menus the modules tree carries -- the one on a post-processing view and
 the one on a solver -- are described the same way (Menu::viewActions,
 Menu::solverActions), and their work is viewAction()/solverAction() in

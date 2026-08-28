@@ -547,6 +547,50 @@ std::vector<Item> viewActions(int index)
   return items;
 }
 
+std::vector<Item> solverOptions()
+{
+  // a switch of the gear menu: what it does and what its check mark says both
+  // go through the shared action, so neither can drift from the other
+  auto option = [](const std::string &label, const std::string &what) {
+    Item i;
+    i.kind = Toggle;
+    i.label = label;
+    i.checked = [what]() { return solverOptionSet(what); };
+    i.action = [what]() { solverOptionAction(what); };
+    return i;
+  };
+
+  // the database is not to be touched while a solver is running, which the
+  // tree used to say by greying the entries outside the block of switches --
+  // by their places in the table
+  auto idle = [](Item i) {
+    i.enabled = []() { return !solverIsRunning(); };
+    return i;
+  };
+
+  std::vector<Item> items;
+  items.push_back(idle(action("Reset database", 0,
+                              []() { Gui::onelabAction("reset"); })));
+  items.push_back(idle(action("Save database...", 0,
+                              []() { Gui::onelabAction("save"); })));
+  items.push_back(divide(idle(
+    action("Load database...", 0, []() { Gui::onelabAction("load"); }))));
+
+  items.push_back(option("Save database automatically", "save"));
+  items.push_back(option("Load database automatically", "load"));
+  items.push_back(option("Archive output files automatically", "archive"));
+  items.push_back(option("Check model after each change", "check"));
+  items.push_back(option("Remesh automatically", "mesh"));
+  items.push_back(option("Merge results automatically", "merge"));
+  items.push_back(option("Show new views", "show"));
+  items.push_back(option("Always show last step", "step"));
+  items.push_back(divide(option("Show hidden parameters", "invisible")));
+
+  items.push_back(idle(
+    action("Add new solver...", 0, []() { solverOptionAction("add"); })));
+  return items;
+}
+
 std::vector<Item> solverActions(int index)
 {
   std::vector<Item> items;
