@@ -129,8 +129,6 @@ private:
   // tab the user picked from one that came up because it was asked for
   int _lastPane[Dialog::NumDialogs];
   // the FLTK interface has three separate help windows, and so does this one
-  bool _showOnelabContext;
-  int _contextDim, _contextTag, _contextChoice;
   std::string _solverButton0, _solverButton1;
 
   // scale factor of the display, so that the interface has the same physical
@@ -218,7 +216,6 @@ public:
 
 private:
   void _drawDialog(int which);
-  void _drawOnelabContextPanel();
   void _handleShortcuts();
 
   void _buildDockSpace(int &sceneX, int &sceneY, int &sceneW, int &sceneH);
@@ -280,6 +277,9 @@ public:
   void wait(bool force);
   void wait(double time, bool force);
   void awake(const std::string &action);
+  // is a frame being drawn? what cannot happen inside one -- a blocking
+  // dialog, a solver run -- has to be posted instead
+  bool inFrame() const { return _inFrame; }
   // queue an action to be run outside of the Dear ImGui frame; this is what
   // menu items and buttons must use
   void postAction(const std::function<void()> &action)
@@ -358,7 +358,6 @@ public:
   bool exportOptionsDialog(int format, const std::string &fileName);
 
   // not implemented yet, kept so that the rest of Gmsh has something to call
-  void showContextWindow(int dim, int tag);
 
   // raise one of the context dialogs, see Gui::showDialog()
   void showDialog(int which);

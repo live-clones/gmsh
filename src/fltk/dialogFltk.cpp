@@ -39,6 +39,31 @@
 #include "paletteWindow.h"
 #include "Context.h"
 
+// While the interface is being taken down every window is hidden in turn, and
+// a dialog that undoes something when it closes must not undo it then: there
+// is no view left to draw the undoing into.
+static bool _closingDown = false;
+
+void fltkDialogsClosingDown() { _closingDown = true; }
+
+// A window that tells the description it has gone. FLTK calls the callback of
+// a window only when the user closes it; a dialog that leaves something
+// behind -- the ONELAB context window highlights the entity it is about --
+// has to hear about every way of hiding it.
+class dialogWindow : public paletteWindow {
+public:
+  std::function<void()> closed;
+  dialogWindow(int w, int h, bool nonModal, const char *l = nullptr)
+    : paletteWindow(w, h, nonModal, l)
+  {
+  }
+  int handle(int event) override
+  {
+    if(event == FL_HIDE && closed && !_closingDown) closed();
+    return paletteWindow::handle(event);
+  }
+};
+
 namespace {
 
   // how many lines a list of fields takes, once those that share one are put
@@ -124,10 +149,11 @@ namespace {
       return (int)fl_width(f.getText().c_str()) + FL_NORMAL_SIZE;
     }
     if(f.kind == Dialog::Check) return (int)(1.5 * FL_NORMAL_SIZE);
-    // a list that says how wide it is takes that: what it holds is lines of
-    // text, and nothing about a line says how wide the list should be
-    if((f.kind == Dialog::List || f.kind == Dialog::Tree) && f.widthEm > 0.)
-      return (int)(f.widthEm * FL_NORMAL_SIZE);
+    // A field that says how wide it is takes that, whatever kind it is:
+    // nothing about a line of text says how wide the list holding it should
+    // be, and the menu of a window that is one menu wide is as wide as the
+    // window.
+    if(f.widthEm > 0.) return (int)(f.widthEm * FL_NORMAL_SIZE);
     // a swatch says what it is by its colour; it needs no room for text
     if(f.kind == Dialog::Color) return (int)(3. * FL_NORMAL_SIZE);
     // the disc of a direction is square, as tall as the lines it hangs over
@@ -694,12 +720,19 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
           // what one may want to type, without being held to it
           Fl_Input_Choice *c =
             new Fl_Input_Choice(fx, y, fieldW, BH);
-          c->when(FL_WHEN_CHANGED);
+          // The group has to answer to everything, since picking from the
+          // menu goes through it; it is the input inside it that is told to
+          // wait until one has finished typing.
+          c->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+          if(f.commitsWhenDone)
+            c->input()->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
           widget = c;
         }
         else {
           Fl_Input *in = new Fl_Input(fx, y, fieldW, BH);
-          in->when(FL_WHEN_CHANGED);
+          in->when(f.commitsWhenDone ?
+                     (FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY) :
+                     FL_WHEN_CHANGED);
           widget = in;
         }
         break;
@@ -707,7 +740,11 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       case Dialog::Number: {
         Fl_Value_Input *v =
           new Fl_Value_Input(fx, y, fieldW, BH);
-        v->when(FL_WHEN_CHANGED);
+        v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+        // a value the solver may act upon: the input inside the widget waits
+        // until one has finished typing before it says so
+        if(f.commitsWhenDone)
+          v->input.when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
         if(f.maximum > f.minimum) {
           v->minimum(f.minimum);
           v->maximum(f.maximum);
@@ -941,6 +978,9 @@ void dialogFltk::build(int dialog)
 {
   bool wasShown = shown();
   if(_win) {
+    // it is not going away, it is being built again: what it undoes when it
+    // closes must not be undone here
+    if(dialogWindow *w = dynamic_cast<dialogWindow *>(_win)) w->closed = nullptr;
     Fl::delete_widget(_win);
     _win = nullptr;
   }
@@ -1093,9 +1133,11 @@ void dialogFltk::build(int dialog)
   Fl_Group *previous = Fl_Group::current();
   Fl_Group::current(nullptr);
 
-  _win = new paletteWindow(width, height,
-                           CTX::instance()->nonModalWindows ? true : false,
-                           _panel.title.c_str());
+  dialogWindow *win = new dialogWindow(
+    width, height, CTX::instance()->nonModalWindows ? true : false,
+    _panel.title.c_str());
+  win->closed = _panel.closed;
+  _win = win;
   _win->box(GMSH_WINDOW_BOX);
 
   // the column of side fields, down the whole left edge, as wide as the panel

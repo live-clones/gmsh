@@ -16,6 +16,7 @@
 #include "scenePane.h"
 #include "appWindow.h"
 #include "GuiActions.h"
+#include "GuiDialogs.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "Context.h"
@@ -592,7 +593,7 @@ void scenePane::_handleDoubleClick(double lx, double ly)
     if(!hits[i].hit || hits[i].command->empty()) continue;
     CTX::instance()->geom.doubleClickedEntityTag = hits[i].tag;
     if(*hits[i].command == "ONELAB")
-      appWindow::instance()->showContextWindow(hits[i].dim, hits[i].tag);
+      Dialog::showOnelabContext(hits[i].dim, hits[i].tag);
     else
       ParseString(*hits[i].command, true);
     return;

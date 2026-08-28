@@ -248,6 +248,13 @@ SHOTS.append(dict(name="about-", dialog="about", branches=[],
                         "fltk": [(162, 12), (180, 109)],
                         "imgui": [(154, 9), (172, 111)]}))
 
+# The parameters a solver attaches to one entity, which a double click on that
+# entity raises. It is opened through the API rather than by clicking in the
+# view: all three builds have gmsh.fltk.showContextWindow(), and a double click
+# that has to land on the right surface would be one more thing to measure.
+SHOTS.append(dict(name="parameters-", dialog="parameters", branches=[],
+                  geo=model("onelab.geo"), context=[2, 1]))
+
 keyed("statistics", ["ctrl", "i"],
       tabs=[("geometry", 55, 40), ("mesh", 112, 100), ("post", 187, 165)])
 
@@ -288,6 +295,7 @@ TITLES = {
     "shortcuts": "^Keyboard and Mouse Usage$",
     "listing": "^Current Options and Workspace$",
     "about": "^About Gmsh$",
+    "parameters": "^Parameters$",
 }
 
 # every branch any shot unfolds, deepest first: closing a parent would hide the
@@ -516,7 +524,7 @@ def find_target(picture, build, avoid=None):
     return (best[1], best[2]) if best else None
 
 
-def start_driver(libdir, home, opened, geo=None):
+def start_driver(libdir, home, opened, geo=None, context=None):
     env = dict(os.environ)
     env["HOME"] = home
     # fltk 1.4 and GLFW both prefer Wayland when they can have it, and would
@@ -529,7 +537,7 @@ def start_driver(libdir, home, opened, geo=None):
         env["GMSH_LIB_DIR"] = libdir
     env["GMSH_SHOT_PLAN"] = json.dumps(
         dict(close=CLOSE_ORDER, open=opened, width=WIDTH, height=HEIGHT,
-             geo=geo))
+             geo=geo, context=context))
     return subprocess.Popen([sys.executable, os.path.join(HERE, "drive.py")],
                             env=env, stdout=subprocess.DEVNULL,
                             stderr=subprocess.PIPE)
@@ -814,14 +822,14 @@ def photograph(dpy, args, specs):
         # whether the window is up -- so typing the chord a second time in the
         # same interface would close the window the shot came to photograph.
         key = (spec["dialog"], spec.get("geo"), tuple(spec["branches"]),
-               name if spec.get("scene") or spec.get("keys") or spec.get("menu")
-               else "")
+               name if spec.get("scene") or spec.get("keys")
+               or spec.get("menu") or spec.get("context") else "")
         if held and held[0] != key:
             stop_driver(held[1])
             held = None
         if not held:
             proc = start_driver(args.lib, args.home, spec["branches"],
-                                spec.get("geo"))
+                                spec.get("geo"), spec.get("context"))
             main_win = wait_for(dpy, lambda n: "Gmsh" in n)
             if not main_win:
                 err = proc.stderr.read().decode(errors="replace")[-400:]
@@ -832,14 +840,17 @@ def photograph(dpy, args, specs):
             time.sleep(1.0)
         _, win, wx, wy, ww, wh = held[2]
 
-        if spec.get("keys") or spec.get("menu"):
+        if spec.get("keys") or spec.get("menu") or spec.get("context"):
             # the pointer has to be over the window for the key to
             # reach it
             xtest.fake_input(dpy, X.MotionNotify, x=wx + 120,
                              y=wy + wh - 60)
             dpy.sync()
             time.sleep(0.3)
-            if spec.get("keys"):
+            if spec.get("context"):
+                # already up: the interface was started with it open
+                pass
+            elif spec.get("keys"):
                 press(dpy, spec["keys"])
             else:
                 # through the menu bar: one click to open the menu, one on the

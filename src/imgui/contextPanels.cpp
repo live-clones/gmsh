@@ -9,6 +9,7 @@
 // into the windows contextWindow.cpp used to hold.
 
 #include <algorithm>
+#include <map>
 
 #include "GmshConfig.h"
 
@@ -330,7 +331,21 @@ namespace {
       // has to sit against the input, where a Choice draws its own, so the
       // label is written afterwards by hand rather than by InputText.
       std::string shown = f.dynamicChoices ? "##" + f.label : name;
-      if(ImGui::InputText(shown.c_str(), &value)) {
+      if(f.commitsWhenDone) {
+        // What is being typed has to live somewhere until it is taken: read
+        // afresh at every frame, the value the field is bound to would write
+        // over the keyboard between two letters.
+        static std::map<ImGuiID, std::string> typing;
+        std::string &buffer = typing[ImGui::GetID(shown.c_str())];
+        ImGui::InputText(shown.c_str(), &buffer);
+        if(ImGui::IsItemDeactivatedAfterEdit()) {
+          const_cast<Dialog::Field &>(f).setText(buffer);
+          changed = true;
+        }
+        else if(!ImGui::IsItemActive() && buffer != value)
+          buffer = value;
+      }
+      else if(ImGui::InputText(shown.c_str(), &value)) {
         const_cast<Dialog::Field &>(f).setText(value);
         changed = true;
       }
@@ -390,6 +405,24 @@ namespace {
         snprintf(how, sizeof(how), "%%.%df", digits);
       }
       ImGui::SetNextItemWidth(width);
+      if(f.commitsWhenDone) {
+        // The same as above, for a value: it is worth acting upon once one
+        // has said what it is, not once per digit.
+        static std::map<ImGuiID, double> typing;
+        ImGuiID id = ImGui::GetID(name.c_str());
+        auto it = typing.find(id);
+        double typed = (it != typing.end()) ? it->second : value;
+        if(ImGui::InputDouble(name.c_str(), &typed, 0., 0., how))
+          typing[id] = typed;
+        if(ImGui::IsItemDeactivatedAfterEdit()) {
+          const_cast<Dialog::Field &>(f).setNumber(clamped(f, typed));
+          typing.erase(id);
+          changed = true;
+        }
+        else if(!ImGui::IsItemActive())
+          typing.erase(id);
+        break;
+      }
       if(ImGui::InputDouble(name.c_str(), &value, 0., 0., how)) {
         const_cast<Dialog::Field &>(f).setNumber(clamped(f, value));
         changed = true;
@@ -961,9 +994,13 @@ namespace {
                ImGui::CalcTextSize(f.label.c_str()).x;
       }
       else {
-        // a field sharing its line gets half the usual width, as in the FLTK
-        // dialogs, or three columns of full-width inputs would be absurd
-        here = (columns > 1 ? item * 0.5f : item) + style.ItemInnerSpacing.x +
+        // One that says how wide it is takes that; otherwise a field sharing
+        // its line gets half the usual width, as in the FLTK dialogs, or
+        // three columns of full-width inputs would be absurd.
+        here = (f.widthEm > 0. ? (float)f.widthEm * ImGui::GetFontSize() :
+                columns > 1    ? item * 0.5f :
+                                 item) +
+               style.ItemInnerSpacing.x +
                ImGui::CalcTextSize(f.label.c_str()).x;
         // the button that offers what one may type
         if(f.kind == Dialog::Text && f.dynamicChoices)
@@ -1406,6 +1443,9 @@ void appWindow::_drawDialog(int which)
                                    ImGuiWindowFlags_NoScrollWithMouse) :
                                   ImGuiWindowFlags_AlwaysAutoResize)) {
     ImGui::End();
+    // the user clicked the cross on a collapsed window: it is gone all the
+    // same, and what it undoes when it goes has to be undone
+    if(!_showDialog[which] && panel.closed) postAction(panel.closed);
     return;
   }
 
@@ -1630,13 +1670,25 @@ void appWindow::_drawDialog(int which)
   }
 
   ImGui::End();
+
+  // Begin() cleared it: the user closed the window, and a dialog that leaves
+  // something behind -- the ONELAB context one highlights the entity it is
+  // about -- has to take it back
+  if(!_showDialog[which] && panel.closed) postAction(panel.closed);
 }
 
 void appWindow::hideDialog(int which)
 {
   if(which < 0 || which >= Dialog::NumDialogs) return;
+  bool was = _showDialog[which];
   _showDialog[which] = false;
   _sizedDialog[which] = false;
+  // hidden from a menu rather than by its cross, which is the same thing to
+  // whatever the dialog undoes when it goes
+  if(was) {
+    Dialog::Panel panel = Dialog::panel(which);
+    if(panel.closed) postAction(panel.closed);
+  }
 }
 
 bool appWindow::dialogVisible(int which) const

@@ -43,6 +43,7 @@ DIALOG_TITLES = {
     "shortcuts": "Keyboard and Mouse Usage",
     "listing": "Current Options and Workspace",
     "about": "About Gmsh",
+    "parameters": "Parameters",
 }
 
 

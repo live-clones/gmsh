@@ -21,7 +21,6 @@
 #include "GuiDialogs.h"
 #include "dialogFltk.h"
 #include "GuiActions.h"
-#include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"
@@ -457,7 +456,7 @@ static void default_fatal_error_handler(const char *fmt, ...)
 
 FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
              void (*error_handler)(const char *fmt, ...))
-  : _quitShouldExit(quitShouldExit), lastContextWindow(0)
+  : _quitShouldExit(quitShouldExit)
 {
   if(error_handler) {
     Fl::error = error_handler;
@@ -603,9 +602,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fullscreen->mode(mode);
   fullscreen->end();
 
-  // create all other windows
-  onelabContext = new onelabContextWindow(CTX::instance()->deltaFontSize);
-
   // draw
   for(std::size_t i = 0; i < graph.size(); i++)
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
@@ -636,7 +632,6 @@ FlGui::~FlGui()
   }
 
   for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
-  delete onelabContext;
   delete fullscreen;
 }
 
@@ -669,7 +664,9 @@ void FlGui::destroy()
 {
   if(!_instance) return;
 
-  _instance->onelabContext->disableRedraw();
+  // from now on, hiding a dialog is the interface going away rather than
+  // the user closing it
+  fltkDialogsClosingDown();
 
   // hide all windows (in case they are not tracked by FlGui)...
   std::vector<Fl_Window *> wins;
@@ -1155,7 +1152,11 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
   for(std::size_t i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
   if(numberOfViewsHasChanged) {
     if(onelab) onelab->rebuildTree(deleteWidgets);
-    if(onelabContext) onelabContext->rebuild(deleteWidgets);
+    // and the per-entity parameters, which are described once and read what
+    // the server holds: a parameter the solver added is a field more, so the
+    // window may have to be built again and not only read again
+    if(dialogFltk *d = fltkDialog(Dialog::OnelabContext, false))
+      if(d->shown()) d->reshape();
     // the option window is described once and reads what it shows, views
     // included: it wants nothing when their number changes
     Gui::refreshDialog(Dialog::Options);
@@ -1368,19 +1369,13 @@ void FlGui::storeCurrentWindowsInfo()
   }
   else
     CTX::instance()->detachedMenu = 0;
-  if(lastContextWindow == 4) {
-    CTX::instance()->ctxPosition[0] = onelabContext->win->x();
-    CTX::instance()->ctxPosition[1] = onelabContext->win->y();
-  }
-  else {
-    // the context dialogs share one remembered position, as they always have
-    for(int i = 0; i < Dialog::NumDialogs; i++) {
-      dialogFltk *d = fltkDialog(i);
-      if(!d || !d->shown()) continue;
-      CTX::instance()->ctxPosition[0] = d->window()->x();
-      CTX::instance()->ctxPosition[1] = d->window()->y();
-      break;
-    }
+  // the context dialogs share one remembered position, as they always have
+  for(int i = 0; i < Dialog::NumDialogs; i++) {
+    dialogFltk *d = fltkDialog(i);
+    if(!d || !d->shown()) continue;
+    CTX::instance()->ctxPosition[0] = d->window()->x();
+    CTX::instance()->ctxPosition[1] = d->window()->y();
+    break;
   }
 #if defined(HAVE_3M)
   storeWindowPosition3M();
@@ -1464,8 +1459,6 @@ void window_cb(Fl_Widget *w, void *data)
       dialogFltk *d = fltkDialog(i);
       if(d && d->shown()) d->window()->show();
     }
-    if(FlGui::instance()->onelabContext->win->shown())
-      FlGui::instance()->onelabContext->win->show();
   }
 }
 
@@ -1484,7 +1477,8 @@ void FlGui::saveMessages(const char *fileName)
 void FlGui::rebuildTree(bool deleteWidgets)
 {
   if(onelab) onelab->rebuildTree(deleteWidgets);
-  if(onelabContext) onelabContext->rebuild(deleteWidgets);
+  if(dialogFltk *d = fltkDialog(Dialog::OnelabContext, false))
+    if(d->shown()) d->reshape();
 }
 
 void FlGui::toggleModule(const std::string &name)
@@ -1517,8 +1511,4 @@ void FlGui::closeTreeItem(const std::string &name)
   onelab->closeTreeItem(name);
 }
 
-void FlGui::showOnelabContext(int dim, int tag)
-{
-  if(!onelabContext) return;
-  onelabContext->show(dim, tag);
-}
+

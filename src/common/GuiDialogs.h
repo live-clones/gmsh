@@ -198,6 +198,13 @@ namespace Dialog {
     // its natural width is not what is wanted. Three little numbers side by
     // side are not three of anything else.
     double widthEm;
+    // The value is taken when the user has finished with the field -- left it,
+    // or pressed Return -- rather than at every letter typed. Every other
+    // field of these dialogs follows the keyboard, which is what one wants
+    // when the value drives a preview; a ONELAB parameter may have the solver
+    // run again when it changes, and running it once per letter is not what
+    // anyone means.
+    bool commitsWhenDone;
     // How wide the field should be as a fraction of one ordinary field, gaps
     // included: two halves take exactly the room one would, so whatever
     // follows them stays in line with the rows above and below. An absolute
@@ -210,7 +217,7 @@ namespace Dialog {
         rows(5), multiple(false), alert(false), heading(false), wraps(false),
         rule(false), disclosure(false), minimum(0.), maximum(0.), step(0.),
         labelBefore(false), sameRow(false), packed(false), widthEm(0.),
-        widthShare(0.)
+        commitsWhenDone(false), widthShare(0.)
     {
     }
 
@@ -317,6 +324,10 @@ namespace Dialog {
     // them the room, which the panel that asks for it knows and the builders
     // do not.
     bool buttonsInFooter;
+    // What to do when the dialog is closed, for the ones that leave something
+    // behind: the ONELAB context dialog highlights the entity it is about,
+    // and has to stop highlighting it. Most dialogs have nothing to undo.
+    std::function<void()> closed;
     // The least a pane is worth, in lines: a window whose height follows
     // whichever pane is showing is one that will not sit still, and the
     // option window this reproduces is twelve lines tall whatever category it
@@ -349,6 +360,7 @@ namespace Dialog {
     Shortcuts,
     CurrentOptions,
     About,
+    OnelabContext,
     NumDialogs
   };
 
@@ -397,6 +409,12 @@ namespace Dialog {
   Panel currentOptions();
   // what this Gmsh is
   Panel about();
+  // The parameters a solver attached to one entity, instantiated from the
+  // "ONELAB Context/<Dim> Template/..." parameters: what a double-click on an
+  // entity opens when its double-click command is "ONELAB".
+  Panel onelabContext();
+  // show it on that entity, highlighting what it is about
+  void showOnelabContext(int dim, int tag);
   // show that window with a view picked, as the button of a view does
   void showPluginsForView(int view);
   // what the gamepad is doing and what each of its buttons and axes is for

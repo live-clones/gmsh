@@ -1385,6 +1385,7 @@ namespace Dialog {
     case Shortcuts: return shortcuts();
     case CurrentOptions: return currentOptions();
     case About: return about();
+    case OnelabContext: return onelabContext();
     default: return Panel();
     }
   }

@@ -233,7 +233,7 @@ namespace Gui {
 
   void showContextWindow(int dim, int tag)
   {
-    if(available()) appWindow::instance()->showContextWindow(dim, tag);
+    Dialog::showOnelabContext(dim, tag);
   }
 
   bool dialogVisible(int dialog)
@@ -356,7 +356,19 @@ namespace Gui {
       if(app->pane(i)) app->pane(i)->addPointMode = on;
   }
 
-  void onelabAction(const std::string &action) { onelabRun(action); }
+  void onelabAction(const std::string &action)
+  {
+    // A solver run cannot happen while a frame is being drawn: it meshes, it
+    // draws, and it may ask a question, which would mean nesting frames.
+    // Asked for from a widget -- a ONELAB parameter that has just changed --
+    // it waits for the frame to be over; asked for from anywhere else it runs
+    // at once, as it does in FLTK.
+    appWindow *a = appWindow::instance();
+    if(a && a->inFrame())
+      a->postAction([action]() { onelabRun(action); });
+    else
+      onelabRun(action);
+  }
 
   bool solverBusy() { return solverIsRunning(); }
 

@@ -203,7 +203,7 @@ namespace Gui {
 
   void showContextWindow(int dim, int tag)
   {
-    FlGui::instance()->showOnelabContext(dim, tag);
+    Dialog::showOnelabContext(dim, tag);
   }
 
   bool dialogVisible(int dialog)

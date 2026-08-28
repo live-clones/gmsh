@@ -44,4 +44,10 @@ for branch in plan["close"]:
     gmsh.fltk.closeTreeItem(branch)
 for branch in plan["open"]:
     gmsh.fltk.openTreeItem(branch)
+# The per-entity ONELAB window is raised by double-clicking the entity in the
+# 3D view. It is opened here instead, through the API the three builds share:
+# a double click that has to land on the right surface is one more thing to
+# measure, and what is being photographed is the window, not the picking.
+if plan.get("context"):
+    gmsh.fltk.showContextWindow(*plan["context"])
 gmsh.fltk.run()

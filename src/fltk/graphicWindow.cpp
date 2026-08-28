@@ -32,7 +32,6 @@ typedef unsigned long intptr_t;
 #include "GuiMenus.h"
 #include "menuFltk.h"
 #include "openglWindow.h"
-#include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "messageBrowser.h"
 #include "gmshLocalNetworkClient.h"

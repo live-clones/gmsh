@@ -14,7 +14,6 @@ set(SRC
     drawContextFltkCairo.cpp
     drawContextFltkStringTexture.cpp
 
-    onelabContextWindow.cpp
     onelabGroup.cpp
     fileDialogs.cpp
     extraDialogs.cpp

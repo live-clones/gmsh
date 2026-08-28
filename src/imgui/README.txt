@@ -204,8 +204,9 @@ its tallest pane whatever is folded or whichever tab is up. A window that grows
 sideways as one uses it is a window that will not sit still.
 
 Everything that used to be a window of its own is described that way now -- the
-options, the visibility, the plugins, the size fields, and the three windows of
-the Help menu -- so neither interface builds a dialog by hand any more. The last two brought their own vocabulary:
+options, the visibility, the plugins, the size fields, the three windows of the
+Help menu, and the parameters a solver attaches to one entity -- so neither
+interface builds a dialog by hand any more. The last two brought their own vocabulary:
 what the panes are about, written above the row of tabs (Panel::header) and
 named in bold (Field::heading); what stands on the line of a pane's button and
 outside what scrolls above it (Pane::beside); and a button that drops things to
@@ -226,6 +227,42 @@ an Fl_Scroll as tall as the panel says it is worth while Dear ImGui lets the
 window itself scroll. A panel of a single pane is a box that scrolls instead, so
 that a list filling it -- the listing of the current options -- stops above the
 footer rather than pushing it out of the window.
+
+The per-entity ONELAB window (src/common/GuiOnelab.cpp) holds no fields of its
+own either: it makes one per parameter instantiated from the "ONELAB
+Context/<Dim> Template/..." templates, for whichever entity was double-clicked.
+Its fields are bound to a place in that list rather than to a name, so that
+opening the window on a second entity made from the same template -- the same
+fields, with the same labels -- shows the second entity without the FLTK window
+having to be built again.
+
+It brought two things the model could not say. A field can ask for its value to
+be taken once one has finished typing it rather than at every letter
+(Field::commitsWhenDone): a ONELAB parameter may have the solver run again when
+it changes, and running it once per letter is not what anyone means. FLTK says
+that by giving the input inside the widget FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY,
+Dear ImGui by holding what is being typed in a buffer of its own until the item
+is deactivated -- read afresh at every frame, the value would write over the
+keyboard between two letters. And a panel can say what to do when it is closed
+(Panel::closed), which is how the window stops highlighting the entity it was
+about; FLTK hears every way of hiding a window through FL_HIDE, so the builder
+gives its dialogs a window that reports it, and takes care not to report the
+window it destroys when it builds one again.
+
+What a ONELAB parameter *does* when someone changes it moved with the window,
+from the widget callbacks of the FLTK module tree into GuiOnelab.cpp: the Gmsh
+option its "GmshOption" attribute names, the hiding, resetting and rewriting its
+"ServerAction..." attributes ask of the server, and the check the solver wants
+when Solver.AutoCheck is on. The tree calls the same code, so the two agree; the
+Dear ImGui panel used to write the value back and quietly do none of the rest.
+
+Two things of that window are deliberately not described. A ONELAB number is
+drawn by the FLTK tree as an inputRange, which carries two small buttons -- the
+loop level of a parametric sweep, and which graph to plot the parameter in --
+and a string of kind "file" gets menu entries for choosing, editing and merging
+the file. Both belong to the metamodel and solver workflow of the module tree,
+which keeps its own widgets and still has them; the per-entity window shows the
+value, the range and the choices, and no more.
 
 FLTK reads "&" in a label as the mark of a keyboard shortcut in menus, buttons
 and inputs -- and only there. A label that is text has to double it for those,
@@ -465,8 +502,7 @@ per-format export options, the keyboard and mouse reference, and the vector
 output formats (PS, PDF, SVG, TeX, PGF).
 
 Also implemented: the high order tools, the mesh partitioning, the surface
-reclassification, the per-entity ONELAB context panel (opened by double-clicking
-an entity whose double-click command is "ONELAB"), the interactive inspection of
+reclassification, the interactive inspection of
 the mesh elements, the mesh constraints (size at points, transfinite, recombine,
 compound) and the registration and start-up of the solvers.
 

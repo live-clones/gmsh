@@ -19,7 +19,6 @@
 #include "PViewOptions.h"
 #include "Numeric.h"
 #include "FlGui.h"
-#include "onelabContextWindow.h"
 #include "OpenFile.h"
 #include "drawContext.h"
 #include "Context.h"
@@ -403,7 +402,7 @@ int openglWindow::handle(int event)
          CTX::instance()->geom.doubleClickedPointCommand.size()) {
         CTX::instance()->geom.doubleClickedEntityTag = vertices[0]->tag();
         if(CTX::instance()->geom.doubleClickedPointCommand == "ONELAB")
-          FlGui::instance()->onelabContext->show(0, vertices[0]->tag());
+          Dialog::showOnelabContext(0, vertices[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedPointCommand, true);
       }
@@ -411,7 +410,7 @@ int openglWindow::handle(int event)
               CTX::instance()->geom.doubleClickedCurveCommand.size()) {
         CTX::instance()->geom.doubleClickedEntityTag = edges[0]->tag();
         if(CTX::instance()->geom.doubleClickedCurveCommand == "ONELAB")
-          FlGui::instance()->onelabContext->show(1, edges[0]->tag());
+          Dialog::showOnelabContext(1, edges[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedCurveCommand, true);
       }
@@ -419,7 +418,7 @@ int openglWindow::handle(int event)
               CTX::instance()->geom.doubleClickedSurfaceCommand.size()) {
         CTX::instance()->geom.doubleClickedEntityTag = faces[0]->tag();
         if(CTX::instance()->geom.doubleClickedSurfaceCommand == "ONELAB")
-          FlGui::instance()->onelabContext->show(2, faces[0]->tag());
+          Dialog::showOnelabContext(2, faces[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedSurfaceCommand, true);
       }
@@ -427,7 +426,7 @@ int openglWindow::handle(int event)
               CTX::instance()->geom.doubleClickedVolumeCommand.size()) {
         CTX::instance()->geom.doubleClickedEntityTag = regions[0]->tag();
         if(CTX::instance()->geom.doubleClickedVolumeCommand == "ONELAB")
-          FlGui::instance()->onelabContext->show(3, regions[0]->tag());
+          Dialog::showOnelabContext(3, regions[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedVolumeCommand, true);
       }

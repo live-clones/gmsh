@@ -41,6 +41,7 @@
 #endif
 
 #include "onelabWidgets.h"
+#include "GuiOnelab.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -308,29 +309,26 @@ void appWindow::_drawModulesPanel()
       if(!numbersByPath.count(kv.first)) paths.push_back(kv.first);
     std::sort(paths.begin(), paths.end());
 
-    bool changed = false;
     for(auto &path : paths) {
       std::string label = _strip(path);
       if(label.empty()) label = "Parameters";
       if(!ImGui::TreeNodeEx(label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         continue;
       for(int i : numbersByPath[path]) {
-        if(drawOnelabNumber(numbers[i])) {
-          onelab::server::instance()->set(numbers[i]);
-          changed = true;
-        }
+        onelab::number before = numbers[i];
+        // what a parameter does when it changes -- the Gmsh option it may
+        // stand for, the server actions its attributes ask for, and the check
+        // the solver wants -- is shared with the FLTK tree and with the
+        // per-entity window, see src/common/GuiOnelab.h
+        if(drawOnelabNumber(numbers[i])) GuiOnelab::changed(before, numbers[i]);
       }
       for(int i : stringsByPath[path]) {
-        if(drawOnelabString(strings[i], edits)) {
-          onelab::server::instance()->set(strings[i]);
-          changed = true;
-        }
+        onelab::string before = strings[i];
+        if(drawOnelabString(strings[i], edits)) GuiOnelab::changed(before,
+                                                                  strings[i]);
       }
       ImGui::TreePop();
     }
-
-    if(changed && CTX::instance()->solver.autoCheck)
-      postAction([]() { onelabRun("check"); });
 
     ImGui::TreePop();
   }

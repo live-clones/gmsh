@@ -251,6 +251,14 @@ namespace Dialog {
     return f;
   }
 
+  // The same field, whose value is taken once one has finished typing it
+  // rather than at every letter: what it does is worth doing once.
+  inline Field whenDone(Field f)
+  {
+    f.commitsWhenDone = true;
+    return f;
+  }
+
   // the same field, that wide, in multiples of the font size
   inline Field sized(Field f, double em)
   {

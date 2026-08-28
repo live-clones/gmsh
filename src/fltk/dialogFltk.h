@@ -118,4 +118,9 @@ private:
 // group.
 dialogFltk *fltkDialog(int which, bool create = true);
 
+// The interface is being taken down: from now on, hiding a dialog is not the
+// user closing it, and whatever a dialog undoes when it closes is not to be
+// undone -- there is no view left to draw it into.
+void fltkDialogsClosingDown();
+
 #endif

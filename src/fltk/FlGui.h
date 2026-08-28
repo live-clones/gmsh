@@ -23,7 +23,6 @@
 class graphicWindow;
 class openglWindow;
 class onelabWindow;
-class onelabContextWindow;
 class onelabGroup;
 class Fl_Widget;
 class drawContext;
@@ -55,8 +54,6 @@ public:
 
 public:
   std::vector<graphicWindow *> graph;
-  onelabContextWindow *onelabContext;
-  int lastContextWindow;
   onelabGroup *onelab;
   openglWindow *fullscreen;
 
@@ -146,7 +143,6 @@ public:
   // should the quit callback exit the app, or just close all windows?
   bool quitShouldExit() { return _quitShouldExit; }
   // show onelab context window for the given entity
-  void showOnelabContext(int dim, int tag);
 };
 
 void redraw_cb(Fl_Widget *w, void *data);
