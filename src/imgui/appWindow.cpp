@@ -22,13 +22,13 @@
 #include <GLFW/glfw3.h>
 
 #include "appWindow.h"
+#include "toolkit.h"
 #include "scenePane.h"
 #include "messageConsole.h"
 #include "fileBrowser.h"
 #include "drawContextImGui.h"
 #include "Gui.h"
 #include "GuiStatus.h"
-#include "GmshMessage.h"
 #include "GmshGlobal.h"
 #include "Context.h"
 #include "StringUtils.h"
@@ -44,7 +44,7 @@ bool appWindow::_finishedProcessingCommandLine = false;
 std::atomic<int> appWindow::_locked(0);
 
 // While we are probing the windowing systems, a backend failing to initialize
-// is expected and must not be reported as an error: Msg::Error() records the
+// is expected and must not be reported as an error: Toolkit::report(Toolkit::Error, ) records the
 // last error, which makes the public API throw. Only a failure once a backend
 // has been chosen is a real error.
 static bool _glfwProbing = false;
@@ -56,11 +56,11 @@ static std::string _glfwProbeError;
 static void _glfwErrorCallback(int error, const char *description)
 {
   if(_glfwProbing) {
-    Msg::Debug("GLFW: %s (error %d)", description, error);
+    Toolkit::report(Toolkit::Debug, "GLFW: %s (error %d)", description, error);
     _glfwProbeError = description;
   }
   else
-    Msg::Error("GLFW error %d: %s", error, description);
+    Toolkit::report(Toolkit::Error, "GLFW error %d: %s", error, description);
 }
 
 static void _glfwDropCallback(GLFWwindow *window, int count, const char **paths)
@@ -98,7 +98,7 @@ static bool _initGlfw()
 #endif
   }
   else if(want && strcmp(want, "any")) {
-    Msg::Warning("Unknown GMSH_GUI_PLATFORM '%s': expected 'wayland', 'x11' or "
+    Toolkit::report(Toolkit::Warning, "Unknown GMSH_GUI_PLATFORM '%s': expected 'wayland', 'x11' or "
                  "'any'", want);
   }
 
@@ -114,17 +114,17 @@ static bool _initGlfw()
     if(glfwInit()) {
       _glfwProbing = false;
       if(i > 0)
-        Msg::Info("Using the %s backend for the graphical interface",
+        Toolkit::report(Toolkit::Info, "Using the %s backend for the graphical interface",
                   platforms[i].name);
       return true;
     }
     if(i + 1 < num)
-      Msg::Info("Could not initialize the %s backend, trying %s",
+      Toolkit::report(Toolkit::Info, "Could not initialize the %s backend, trying %s",
                 platforms[i].name, platforms[i + 1].name);
   }
   _glfwProbing = false;
 
-  Msg::Error("Could not initialize GLFW: no graphical interface available");
+  Toolkit::report(Toolkit::Error, "Could not initialize GLFW: no graphical interface available");
   return false;
 }
 
@@ -175,7 +175,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
 
   _window = glfwCreateWindow(w, h, "Gmsh", nullptr, nullptr);
   if(!_window) {
-    Msg::Error("Could not create a window: no graphical interface available");
+    Toolkit::report(Toolkit::Error, "Could not create a window: no graphical interface available");
     glfwTerminate();
     return;
   }
@@ -206,7 +206,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     if(v > 0.1 && v < 10.)
       _uiScaleOverride = (float)v;
     else
-      Msg::Warning("Ignoring GMSH_GUI_SCALE='%s': expected a factor between "
+      Toolkit::report(Toolkit::Warning, "Ignoring GMSH_GUI_SCALE='%s': expected a factor between "
                    "0.1 and 10", env);
   }
   _loadFont();
@@ -219,6 +219,8 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
      drawContext::global()->getName() != "ImGui")
     drawContext::setGlobal(new drawContextImGui);
 
+  // from here on, what does not come from this thread is not drawn
+  Toolkit::claimThread();
   _console = new messageConsole();
   _browser = new fileBrowser();
   fileBrowser::setHome(CTX::instance()->homeDir);
@@ -228,14 +230,14 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
 
   _instance = this;
 
-  // Only now can messages reach the console: Msg::Info() checks
+  // Only now can messages reach the console: Toolkit::report(Toolkit::Info, ) checks
   // Gui::available(), which tests _instance, and in a GUI build nothing goes to
   // the terminal. Everything the interface wants to say about how it started up
   // is therefore said here.
   switch(glfwGetPlatform()) {
-  case GLFW_PLATFORM_WAYLAND: Msg::Info("Running natively on Wayland"); break;
+  case GLFW_PLATFORM_WAYLAND: Toolkit::report(Toolkit::Info, "Running natively on Wayland"); break;
   case GLFW_PLATFORM_X11:
-    Msg::Info("Running on X11");
+    Toolkit::report(Toolkit::Info, "Running on X11");
     // Falling back to X11 inside a Wayland session is silent otherwise: GLFW
     // loads the Wayland client libraries with dlopen(), so a session that has
     // them somewhere the dynamic loader does not look ends up on XWayland
@@ -243,11 +245,11 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     {
     const char *forced = getenv("GMSH_GUI_PLATFORM");
     if(getenv("WAYLAND_DISPLAY") && !(forced && !strcmp(forced, "x11"))) {
-      Msg::Warning("This is a Wayland session, but the native Wayland backend "
+      Toolkit::report(Toolkit::Warning, "This is a Wayland session, but the native Wayland backend "
                    "could not be used%s%s",
                    _glfwProbeError.size() ? ": " : "",
                    _glfwProbeError.size() ? _glfwProbeError.c_str() : "");
-      Msg::Warning("Gmsh is therefore going through XWayland; make sure "
+      Toolkit::report(Toolkit::Warning, "Gmsh is therefore going through XWayland; make sure "
                    "libwayland-client, libxkbcommon and libdecor are reachable "
                    "by the dynamic loader (LD_LIBRARY_PATH) to get a native "
                    "window");
@@ -256,12 +258,12 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     break;
   default: break;
   }
-  Msg::Info("Scaling the interface by %g (override it with the GMSH_GUI_SCALE "
+  Toolkit::report(Toolkit::Info, "Scaling the interface by %g (override it with the GMSH_GUI_SCALE "
             "environment variable)", _uiScale);
   if(_fontFile.size())
-    Msg::Info("Interface font: %s", _fontFile.c_str());
+    Toolkit::report(Toolkit::Info, "Interface font: %s", _fontFile.c_str());
   else
-    Msg::Info("Interface font: the one embedded in Dear ImGui (no TrueType "
+    Toolkit::report(Toolkit::Info, "Interface font: the one embedded in Dear ImGui (no TrueType "
               "font found; set GMSH_GUI_FONT to choose one)");
 }
 
@@ -534,7 +536,7 @@ void appWindow::newGraphicWindow()
   glfwDefaultWindowHints();
   GLFWwindow *w = glfwCreateWindow(600, 500, "Gmsh", nullptr, _window);
   if(!w) {
-    Msg::Error("Could not open a new graphic window");
+    Toolkit::report(Toolkit::Error, "Could not open a new graphic window");
     return;
   }
 
@@ -606,12 +608,12 @@ void appWindow::splitCurrentPane(char how, double ratio)
   }
 
   if(!current) {
-    Msg::Error("Only the graphic windows of the main window can be split");
+    Toolkit::report(Toolkit::Error, "Only the graphic windows of the main window can be split");
     return;
   }
 
   if(how != 'h' && how != 'v') {
-    Msg::Error("Unknown window splitting method '%c'", how);
+    Toolkit::report(Toolkit::Error, "Unknown window splitting method '%c'", how);
     return;
   }
 
@@ -689,7 +691,7 @@ void appWindow::addMessage(const std::string &msg, int level)
 
 void appWindow::setStatus(const std::string &msg, bool graphics)
 {
-  if(Msg::GetThreadNum() > 0) return;
+  if(!Toolkit::onThread()) return;
   if(graphics) {
     // the message is written on two lines in the view, as in the FLTK backend:
     // what to do, then which keys end or abort it
@@ -706,14 +708,14 @@ void appWindow::setStatus(const std::string &msg, bool graphics)
 
 void appWindow::setLastStatus(int color)
 {
-  if(Msg::GetThreadNum() > 0) return;
+  if(!Toolkit::onThread()) return;
   StatusBar::setColour(color);
 }
 
 void appWindow::setProgress(const std::string &msg, double val, double min,
                             double max)
 {
-  if(Msg::GetThreadNum() > 0) return;
+  if(!Toolkit::onThread()) return;
   StatusBar::setProgress(val, min, max);
   StatusBar::setMessage(msg);
 }
@@ -765,13 +767,13 @@ bool appWindow::_detachablePanels()
 void appWindow::_applyStyle(float scale)
 {
   if(_uiScale > 0.f && fabs(scale - _uiScale) > 0.01f)
-    Msg::Debug("Interface scale factor changed from %g to %g", _uiScale, scale);
+    Toolkit::report(Toolkit::Debug, "Interface scale factor changed from %g to %g", _uiScale, scale);
   _uiScale = scale;
   // what is left for Dear ImGui to apply once the backend has had its share;
   // this is where a Wayland session would otherwise be scaled twice
   float fb = _framebufferScale();
   _styleScale = (fb > 0.f) ? scale / fb : scale;
-  Msg::Debug("Interface scale %g: %g from the framebuffer, %g from Dear ImGui",
+  Toolkit::report(Toolkit::Debug, "Interface scale %g: %g from the framebuffer, %g from Dear ImGui",
              scale, fb, _styleScale);
 
   ImGuiStyle fresh;
@@ -822,7 +824,7 @@ void appWindow::_processAwakeActions()
     if(a == "update" || a.empty())
       Gui::updateViews(true, false);
     else
-      Msg::Debug("Unknown awake action '%s'", a.c_str());
+      Toolkit::report(Toolkit::Debug, "Unknown awake action '%s'", a.c_str());
   }
 }
 
@@ -1011,7 +1013,7 @@ void appWindow::frame()
     glfwSetWindowShouldClose(_window, GLFW_FALSE);
     _inFrame = false;
     if(_quitShouldExit)
-      Msg::Exit(0);
+      Toolkit::quit();
     else
       destroy();
     return;
@@ -1116,9 +1118,9 @@ void appWindow::frame()
   if(!_reportedDetachable) {
     _reportedDetachable = true;
     if(_detachablePanels())
-      Msg::Debug("Panels can be dragged out of the main window");
+      Toolkit::report(Toolkit::Debug, "Panels can be dragged out of the main window");
     else
-      Msg::Info("Panels can only be moved inside the main window: this "
+      Toolkit::report(Toolkit::Info, "Panels can only be moved inside the main window: this "
                 "windowing system does not let an application place its own "
                 "windows");
   }
@@ -1204,7 +1206,7 @@ bool appWindow::inputDialog(const std::string &question, std::string &value)
   if(_inFrame) {
     // a dialog cannot be opened from within a frame: this would mean nesting
     // Dear ImGui frames. Widgets must post their actions through postAction().
-    Msg::Debug("Ignoring input dialog requested from within a frame");
+    Toolkit::report(Toolkit::Debug, "Ignoring input dialog requested from within a frame");
     return false;
   }
   _modal = modalState();
@@ -1225,7 +1227,7 @@ int appWindow::questionDialog(const std::string &question,
 {
   if(!_window) return 0;
   if(_inFrame) {
-    Msg::Debug("Ignoring question dialog requested from within a frame");
+    Toolkit::report(Toolkit::Debug, "Ignoring question dialog requested from within a frame");
     return 0;
   }
   _modal = modalState();
@@ -1244,7 +1246,7 @@ bool appWindow::fileDialog(int mode, const std::string &title,
 {
   if(!_window) return false;
   if(_inFrame) {
-    Msg::Debug("Ignoring file dialog requested from within a frame");
+    Toolkit::report(Toolkit::Debug, "Ignoring file dialog requested from within a frame");
     return false;
   }
   _browser->begin(mode ? fileBrowser::Save : fileBrowser::Open, title, filter,
@@ -1266,7 +1268,7 @@ void appWindow::check(bool rateLimited)
 {
   // never pump events from a worker thread: GLFW and OpenGL are only valid on
   // the thread that created the window
-  if(Msg::GetThreadNum() > 0 || _locked > 0) return;
+  if(!Toolkit::onThread() || _locked > 0) return;
   double start = TimeOfDay();
   if(rateLimited && CTX::instance()->guiRefreshRate > 0) {
     if(start - _lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
@@ -1287,7 +1289,7 @@ bool appWindow::ready()
 
 void appWindow::wait(bool force)
 {
-  if(!force && (Msg::GetThreadNum() > 0 || _locked > 0)) return;
+  if(!force && (!Toolkit::onThread() || _locked > 0)) return;
   if(!_window) return;
   glfwWaitEvents();
   frame();
@@ -1295,7 +1297,7 @@ void appWindow::wait(bool force)
 
 void appWindow::wait(double time, bool force)
 {
-  if(!force && (Msg::GetThreadNum() > 0 || _locked > 0)) return;
+  if(!force && (!Toolkit::onThread() || _locked > 0)) return;
   if(!_window) return;
   if(time > 0.)
     glfwWaitEventsTimeout(time);
@@ -1357,7 +1359,7 @@ void appWindow::beginCapture(int &width, int &height, bool composite)
   int fw = 0, fh = 0;
   if(_window) glfwGetFramebufferSize(_window, &fw, &fh);
   if(width > fw || height > fh) {
-    Msg::Warning("The ImGui interface cannot render a picture larger than the "
+    Toolkit::report(Toolkit::Warning, "The ImGui interface cannot render a picture larger than the "
                  "window (%d x %d): clamping", fw, fh);
     width = std::min(width, fw);
     height = std::min(height, fh);

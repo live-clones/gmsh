@@ -23,6 +23,7 @@
 
 #include "Gui.h"
 #include "appWindow.h"
+#include "toolkit.h"
 #include "menuActions.h"
 #include "GuiMenus.h"
 #include "scenePane.h"
@@ -141,6 +142,19 @@ namespace Gui {
               void (*errorHandler)(const char *fmt, ...))
   {
     if(appWindow::available()) return;
+    // Where what the interface says goes, and what quitting means. The rest of
+    // src/imgui/ knows neither: it reports facts about the toolkit -- GLFW
+    // would not start, a font is missing -- and this is what makes them Gmsh
+    // messages.
+    Toolkit::reportTo([](int level, const std::string &text) {
+      switch(level) {
+      case Toolkit::Error: Msg::Error("%s", text.c_str()); break;
+      case Toolkit::Warning: Msg::Warning("%s", text.c_str()); break;
+      case Toolkit::Info: Msg::Info("%s", text.c_str()); break;
+      default: Msg::Debug("%s", text.c_str()); break;
+      }
+    });
+    Toolkit::quitWith([]() { Msg::Exit(0); });
     appWindow::instance(argc, argv, quitShouldExit);
     // What the bar says until something else needs saying, as the FLTK
     // interface says it when it comes up. It had nothing there at all, which

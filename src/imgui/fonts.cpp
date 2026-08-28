@@ -28,7 +28,7 @@
 #include "imgui.h"
 
 #include "appWindow.h"
-#include "GmshMessage.h"
+#include "toolkit.h"
 #include "OS.h"
 
 namespace {
@@ -166,7 +166,7 @@ namespace {
   {
     if(const char *env = getenv("GMSH_GUI_FONT")) {
       if(!StatFile(env)) return env;
-      Msg::Warning("GMSH_GUI_FONT='%s' does not exist: ignoring it", env);
+      Toolkit::report(Toolkit::Warning, "GMSH_GUI_FONT='%s' does not exist: ignoring it", env);
     }
     for(int i = 0; _fontFiles[i]; i++)
       if(!StatFile(_fontFiles[i])) return _fontFiles[i];
@@ -191,7 +191,7 @@ void appWindow::_loadFont()
       _fontFile = file;
       return;
     }
-    Msg::Warning("Could not load the font '%s'", file.c_str());
+    Toolkit::report(Toolkit::Warning, "Could not load the font '%s'", file.c_str());
   }
 
   io.Fonts->AddFontDefault();

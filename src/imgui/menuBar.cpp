@@ -29,10 +29,10 @@
 #include "imgui_internal.h" // BeginViewportSideBar
 
 #include "appWindow.h"
+#include "toolkit.h"
 #include "menuActions.h"
 #include "GuiMenus.h"
 // the one Gmsh header left here: reporting that the window manager refused
-#include "GmshMessage.h"
 
 // Walk the shared description. An entry is a Dear ImGui menu item of the
 // matching kind; the actions it triggers are queued, like every other action
@@ -125,12 +125,12 @@ void appWindow::_windowFullScreen()
     glfwGetWindowSize(_window, &_savedW, &_savedH);
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     if(!monitor) {
-      Msg::Error("Cannot go full screen: no monitor found");
+      Toolkit::report(Toolkit::Error, "Cannot go full screen: no monitor found");
       return;
     }
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
     if(!mode) {
-      Msg::Error("Cannot go full screen: no video mode found");
+      Toolkit::report(Toolkit::Error, "Cannot go full screen: no video mode found");
       return;
     }
     glfwSetWindowMonitor(_window, monitor, 0, 0, mode->width, mode->height,
@@ -160,7 +160,7 @@ void appWindow::windowAction(const std::string &what)
   else if(what == "fullscreen")
     _windowFullScreen();
   else
-    Msg::Error("Unknown window action '%s'", what.c_str());
+    Toolkit::report(Toolkit::Error, "Unknown window action '%s'", what.c_str());
 }
 
 #endif

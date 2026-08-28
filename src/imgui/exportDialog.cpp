@@ -20,8 +20,8 @@
 #include <GLFW/glfw3.h>
 
 #include "appWindow.h"
+#include "toolkit.h"
 #include "Gui.h"
-#include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "Context.h"
 #include "Options.h"
@@ -215,7 +215,7 @@ bool appWindow::exportOptionsDialog(int format, const std::string &fileName)
   if(!options) return true; // nothing to ask
 
   if(_inFrame) {
-    Msg::Debug("Ignoring export dialog requested from within a frame");
+    Toolkit::report(Toolkit::Debug, "Ignoring export dialog requested from within a frame");
     return true;
   }
 

@@ -15,7 +15,6 @@
 #include "imgui.h"
 
 #include "fileBrowser.h"
-#include "GmshMessage.h"
 
 namespace fs = std::filesystem;
 

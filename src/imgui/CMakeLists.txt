@@ -16,6 +16,7 @@ set(SRC
   exportDialog.cpp
   contextPanels.cpp
   fonts.cpp
+  toolkit.cpp
   fileBrowser.cpp
 )
 
