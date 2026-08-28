@@ -3,6 +3,11 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <limits>
+#include <set>
 #include <stack>
 #include "GmshConfig.h"
 #include "meshGFaceOptimize.h"
@@ -21,6 +26,7 @@
 #include "Context.h"
 #include "OS.h"
 #include "SVector3.h"
+#include "SPoint2.h"
 #include "SPoint3.h"
 #include "meshRelocateVertex.h"
 #include "Field.h"
@@ -1635,13 +1641,75 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   if(debug) gf->model()->writeMSH("recombine_5final.msh");
 }
 
-void quadsToTriangles(GFace *gf, double minqual)
+static void updateBoundaryLayerColumnsAfterQuadSplits(
+  GFace *gf,
+  const std::map<MElement *, std::pair<MElement *, MElement *> > &change)
+{
+  BoundaryLayerColumns *columns = gf->getColumns();
+  if(!columns || change.empty()) return;
+
+  // The historical column representation accepts both children in place of
+  // the quad. It does not encode which one actually touches the wall, so keep
+  // the first child as the column key, consistently with quadsToTriangles().
+  blElemColumns newElemColumns;
+  for(auto it = columns->_elemColumns.begin();
+      it != columns->_elemColumns.end(); ++it) {
+    MElement *firstElement = it->first;
+    auto replacement = change.find(firstElement);
+    if(replacement != change.end())
+      firstElement = replacement->second.first;
+
+    std::vector<MElement *> &newColumn = newElemColumns[firstElement];
+    for(MElement *oldElement : it->second) {
+      replacement = change.find(oldElement);
+      if(replacement == change.end()) {
+        newColumn.push_back(oldElement);
+        columns->_toFirst[oldElement] = firstElement;
+      }
+      else {
+        newColumn.push_back(replacement->second.first);
+        newColumn.push_back(replacement->second.second);
+        columns->_toFirst.erase(oldElement);
+        columns->_toFirst[replacement->second.first] = firstElement;
+        columns->_toFirst[replacement->second.second] = firstElement;
+      }
+    }
+  }
+  columns->_elemColumns = std::move(newElemColumns);
+}
+
+void quadsToTriangles(GFace *gf, double minqual,
+                      double minimumDiagonalLength,
+                      double maximumDiagonalLength)
 {
   std::vector<MQuadrangle *> qds;
   std::map<MElement *, std::pair<MElement *, MElement *>> change;
+  auto diagonalAllowed = [&](MVertex *a, MVertex *b) {
+    const double dx = a->x() - b->x();
+    const double dy = a->y() - b->y();
+    const double dz = a->z() - b->z();
+    const double length = std::sqrt(dx * dx + dy * dy + dz * dz);
+    double scale = std::max({1., length, minimumDiagonalLength});
+    if(maximumDiagonalLength > 0.)
+      scale = std::max(scale, maximumDiagonalLength);
+    const double tolerance = 1.e-10 * scale;
+    return std::isfinite(length) && length > 0. &&
+           (minimumDiagonalLength <= 0. ||
+            length >= minimumDiagonalLength - tolerance) &&
+           (maximumDiagonalLength <= 0. ||
+            length <= maximumDiagonalLength + tolerance);
+  };
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
     if(q->etaShapeMeasure() < minqual + 1e-12) {
+      const bool diagonal1Allowed =
+        diagonalAllowed(q->getVertex(0), q->getVertex(2));
+      const bool diagonal2Allowed =
+        diagonalAllowed(q->getVertex(1), q->getVertex(3));
+      if(!diagonal1Allowed && !diagonal2Allowed) {
+        qds.push_back(q);
+        continue;
+      }
       MTriangle *t11 =
         new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
       MTriangle *t12 =
@@ -1657,19 +1725,28 @@ void quadsToTriangles(GFace *gf, double minqual)
       double ori2 = dot(t21->getFace(0).normal(), t22->getFace(0).normal());
       // choose (t11, t12) if it leads to the best quality OR if choosing (t21,
       // t22) would revert the orientation (which can happen if q is not convex)
-      if(qual1 > qual2 || ori2 < 0) {
+      if(diagonal1Allowed &&
+         (!diagonal2Allowed || qual1 > qual2 || ori2 < 0)) {
         gf->triangles.push_back(t11);
         gf->triangles.push_back(t12);
         change[q] = std::make_pair(t11, t12);
         delete t21;
         delete t22;
       }
-      else {
+      else if(diagonal2Allowed && ori2 >= 0.) {
         gf->triangles.push_back(t21);
         gf->triangles.push_back(t22);
         change[q] = std::make_pair(t21, t22);
         delete t11;
         delete t12;
+      }
+      else {
+        qds.push_back(q);
+        delete t11;
+        delete t12;
+        delete t21;
+        delete t22;
+        continue;
       }
       delete q;
     }
@@ -1678,43 +1755,299 @@ void quadsToTriangles(GFace *gf, double minqual)
     }
   }
   gf->quadrangles = qds;
+  updateBoundaryLayerColumnsAfterQuadSplits(gf, change);
+}
 
-  BoundaryLayerColumns *_columns = gf->getColumns();
-  if(!_columns) return;
+namespace {
+  struct TrianglePairPlanarity {
+    double angleDegrees = std::numeric_limits<double>::infinity();
+    double minimumGamma = -std::numeric_limits<double>::infinity();
+    bool valid = false;
+  };
 
-  // Update the data struture for boundary layers
-  // WARNING: First quad element is replaced by one of the two triangles,
-  // without taking care of if it is the truly the first one or not.
+  using QuadrangleVertices = std::array<MVertex *, 4>;
+  using QuadrangleParameters = std::array<SPoint2, 4>;
+  using TriangleCorners = std::array<std::size_t, 3>;
 
-  blElemColumns newElemColumns;
+  SVector3 cornerTriangleNormal(MVertex *a, MVertex *b, MVertex *c)
+  {
+    const SVector3 ab(b->x() - a->x(), b->y() - a->y(), b->z() - a->z());
+    const SVector3 ac(c->x() - a->x(), c->y() - a->y(), c->z() - a->z());
+    return crossprod(ab, ac);
+  }
 
-  for(auto it = _columns->_elemColumns.begin();
-      it != _columns->_elemColumns.end(); it++) {
-    MElement *firstEl = it->first;
-    auto it2 = change.find(firstEl);
-    if(it2 != change.end()) firstEl = it2->second.first;
-    // it2->second.first may be the one that touch boundary or not...
+  double squaredDistance(MVertex *a, MVertex *b)
+  {
+    const double dx = a->x() - b->x();
+    const double dy = a->y() - b->y();
+    const double dz = a->z() - b->z();
+    return dx * dx + dy * dy + dz * dz;
+  }
 
-    std::vector<MElement *> &newColumn = newElemColumns[firstEl];
-    std::vector<MElement *> &oldColumn = it->second;
+  double orientation2d(const SPoint2 &a, const SPoint2 &b,
+                       const SPoint2 &c)
+  {
+    return (b.x() - a.x()) * (c.y() - a.y()) -
+           (b.y() - a.y()) * (c.x() - a.x());
+  }
 
-    for(std::size_t i = 0; i < oldColumn.size(); i++) {
-      MElement *oldEl = oldColumn[i];
-      it2 = change.find(oldEl);
-      if(it2 == change.end()) {
-        newColumn.push_back(oldEl);
-        _columns->_toFirst[oldEl] = firstEl;
-      }
-      else {
-        newColumn.push_back(it2->second.first);
-        newColumn.push_back(it2->second.second);
-        _columns->_toFirst.erase(oldEl);
-        _columns->_toFirst[it2->second.first] = firstEl;
-        _columns->_toFirst[it2->second.second] = firstEl;
+  double parametricAreaTolerance(const QuadrangleParameters &parameters)
+  {
+    double minimum[2] = {parameters[0].x(), parameters[0].y()};
+    double maximum[2] = {parameters[0].x(), parameters[0].y()};
+    for(const SPoint2 &parameter : parameters) {
+      minimum[0] = std::min(minimum[0], parameter.x());
+      minimum[1] = std::min(minimum[1], parameter.y());
+      maximum[0] = std::max(maximum[0], parameter.x());
+      maximum[1] = std::max(maximum[1], parameter.y());
+    }
+    const double scale2 = std::pow(maximum[0] - minimum[0], 2) +
+                          std::pow(maximum[1] - minimum[1], 2);
+    return 1.e-12 *
+      std::max(scale2, std::numeric_limits<double>::min());
+  }
+
+  bool quadrangleParameters(GFace *face, const QuadrangleVertices &vertices,
+                            QuadrangleParameters &parameters)
+  {
+    if(!face) return false;
+    for(std::size_t i = 0; i < vertices.size(); ++i) {
+      if(!vertices[i] ||
+         !reparamMeshVertexOnFace(vertices[i], face, parameters[i], true,
+                                  false) ||
+         !std::isfinite(parameters[i].x()) ||
+         !std::isfinite(parameters[i].y()))
+        return false;
+    }
+
+    // Keep a small quadrangle contiguous when it straddles a periodic seam.
+    // reparamMeshVertexOnFace() can return either equivalent branch when seam
+    // failure is disabled; choose the branch closest to the preceding corner.
+    for(int direction = 0; direction < 2; ++direction) {
+      if(!face->periodic(direction)) continue;
+      const double period = std::abs(face->period(direction));
+      if(!std::isfinite(period) || !(period > 0.)) return false;
+      for(std::size_t i = 1; i < parameters.size(); ++i) {
+        const double previous = parameters[i - 1][direction];
+        double &current = parameters[i][direction];
+        current += std::round((previous - current) / period) * period;
       }
     }
+    return true;
   }
-  _columns->_elemColumns = newElemColumns;
+
+  bool parametricallyStrictlyConvex(
+    const QuadrangleParameters &parameters)
+  {
+    const double tolerance = parametricAreaTolerance(parameters);
+    double referenceTurn = 0.;
+    for(std::size_t i = 0; i < parameters.size(); ++i) {
+      const double turn = orientation2d(
+        parameters[i], parameters[(i + 1) % parameters.size()],
+        parameters[(i + 2) % parameters.size()]);
+      if(!std::isfinite(turn) || std::abs(turn) <= tolerance) return false;
+      if(referenceTurn == 0.)
+        referenceTurn = turn;
+      else if((referenceTurn > 0.) != (turn > 0.))
+        return false;
+    }
+    return true;
+  }
+
+  double trianglePairNormalAngle(
+    const QuadrangleVertices &vertices, const TriangleCorners &firstCorners,
+    const TriangleCorners &secondCorners)
+  {
+    const SVector3 first = cornerTriangleNormal(
+      vertices[firstCorners[0]], vertices[firstCorners[1]],
+      vertices[firstCorners[2]]);
+    const SVector3 second = cornerTriangleNormal(
+      vertices[secondCorners[0]], vertices[secondCorners[1]],
+      vertices[secondCorners[2]]);
+    const double firstNorm = first.norm();
+    const double secondNorm = second.norm();
+    if(!std::isfinite(firstNorm) || !std::isfinite(secondNorm) ||
+       !(firstNorm > 0.) || !(secondNorm > 0.))
+      return std::numeric_limits<double>::infinity();
+    const double normalAngle = angle(first, second) * 180. / M_PI;
+    return std::isfinite(normalAngle) ? normalAngle :
+      std::numeric_limits<double>::infinity();
+  }
+
+  TrianglePairPlanarity trianglePairPlanarity(
+    const QuadrangleVertices &vertices,
+    const QuadrangleParameters &parameters, const TriangleCorners &firstCorners,
+    const TriangleCorners &secondCorners)
+  {
+    const double parameterTolerance = parametricAreaTolerance(parameters);
+    const double firstArea = orientation2d(
+      parameters[firstCorners[0]], parameters[firstCorners[1]],
+      parameters[firstCorners[2]]);
+    const double secondArea = orientation2d(
+      parameters[secondCorners[0]], parameters[secondCorners[1]],
+      parameters[secondCorners[2]]);
+    const bool parametricallyValid =
+      std::isfinite(firstArea) && std::isfinite(secondArea) &&
+      ((firstArea > parameterTolerance && secondArea > parameterTolerance) ||
+       (firstArea < -parameterTolerance &&
+        secondArea < -parameterTolerance));
+    if(!parametricallyValid) return {};
+
+    const SVector3 first = cornerTriangleNormal(
+      vertices[firstCorners[0]], vertices[firstCorners[1]],
+      vertices[firstCorners[2]]);
+    const SVector3 second = cornerTriangleNormal(
+      vertices[secondCorners[0]], vertices[secondCorners[1]],
+      vertices[secondCorners[2]]);
+    const double firstNorm = first.norm();
+    const double secondNorm = second.norm();
+    double physicalScale2 = 0.;
+    for(std::size_t i = 0; i < vertices.size(); ++i)
+      for(std::size_t j = i + 1; j < vertices.size(); ++j)
+        physicalScale2 = std::max(
+          physicalScale2, squaredDistance(vertices[i], vertices[j]));
+    const double normalTolerance = 1.e-12 *
+      std::max(physicalScale2, std::numeric_limits<double>::min());
+    if(!std::isfinite(firstNorm) || !std::isfinite(secondNorm) ||
+       !(firstNorm > normalTolerance) || !(secondNorm > normalTolerance))
+      return {};
+
+    const double normalAngle = angle(first, second) * 180. / M_PI;
+    if(!std::isfinite(normalAngle)) return {};
+
+    MTriangle firstTriangle(
+      vertices[firstCorners[0]], vertices[firstCorners[1]],
+      vertices[firstCorners[2]]);
+    MTriangle secondTriangle(
+      vertices[secondCorners[0]], vertices[secondCorners[1]],
+      vertices[secondCorners[2]]);
+    const double firstGamma = firstTriangle.gammaShapeMeasure();
+    const double secondGamma = secondTriangle.gammaShapeMeasure();
+    if(!std::isfinite(firstGamma) || !std::isfinite(secondGamma) ||
+       !(firstGamma > 0.) || !(secondGamma > 0.))
+      return {};
+    return {normalAngle, std::min(firstGamma, secondGamma), true};
+  }
+
+  void addPrimaryEdges(MElement *element,
+                       std::set<MEdge, MEdgeLessThan> &edges)
+  {
+    if(!element) return;
+    const std::size_t count = element->getNumPrimaryVertices();
+    for(std::size_t i = 0; i < count; ++i)
+      edges.insert(MEdge(element->getVertex(static_cast<int>(i)),
+                         element->getVertex(
+                           static_cast<int>((i + 1) % count))));
+  }
+}
+
+WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
+  GFace *gf, double maximumWarpingDegrees,
+  const QuadrangleDiagonalAdmissibility &diagonalAdmissible)
+{
+  WarpedQuadrangleSplitResult result;
+  if(!gf || !std::isfinite(maximumWarpingDegrees) ||
+     !(maximumWarpingDegrees > 0.))
+    return result;
+
+  std::set<MEdge, MEdgeLessThan> existingEdges;
+  for(MTriangle *triangle : gf->triangles)
+    addPrimaryEdges(triangle, existingEdges);
+  for(MQuadrangle *quad : gf->quadrangles)
+    addPrimaryEdges(quad, existingEdges);
+
+  std::vector<MQuadrangle *> retained;
+  retained.reserve(gf->quadrangles.size());
+  std::map<MElement *, std::pair<MElement *, MElement *> > change;
+  for(MQuadrangle *quad : gf->quadrangles) {
+    const QuadrangleVertices vertices = {
+      quad->getVertex(0), quad->getVertex(1),
+      quad->getVertex(2), quad->getVertex(3)};
+    MVertex *v0 = vertices[0];
+    MVertex *v1 = vertices[1];
+    MVertex *v2 = vertices[2];
+    MVertex *v3 = vertices[3];
+    QuadrangleParameters parameters;
+    const bool parametrized = quadrangleParameters(gf, vertices, parameters);
+    TrianglePairPlanarity diagonal02, diagonal13;
+    if(parametrized) {
+      diagonal02 = trianglePairPlanarity(
+        vertices, parameters, {0, 1, 2}, {2, 3, 0});
+      diagonal13 = trianglePairPlanarity(
+        vertices, parameters, {1, 2, 3}, {3, 0, 1});
+    }
+    const double warping = std::max(
+      trianglePairNormalAngle(vertices, {0, 1, 2}, {2, 3, 0}),
+      trianglePairNormalAngle(vertices, {1, 2, 3}, {3, 0, 1}));
+    const bool excessiveWarping = !(warping < maximumWarpingDegrees);
+    if(excessiveWarping) ++result.excessiveWarping;
+    const double eta = quad->etaShapeMeasure();
+    const bool nonConvexOrInvalid = !parametrized ||
+      !parametricallyStrictlyConvex(parameters) || !std::isfinite(eta) ||
+      !(eta > 0.);
+    if(nonConvexOrInvalid) ++result.nonConvexOrInvalid;
+    if(!excessiveWarping && !nonConvexOrInvalid) {
+      retained.push_back(quad);
+      continue;
+    }
+
+    if(quad->getNumVertices() != 4) {
+      ++result.rejectedUnsupportedOrder;
+      retained.push_back(quad);
+      continue;
+    }
+
+    const bool geometry02 = diagonal02.valid &&
+      existingEdges.find(MEdge(v0, v2)) == existingEdges.end();
+    const bool geometry13 = diagonal13.valid &&
+      existingEdges.find(MEdge(v1, v3)) == existingEdges.end();
+    if(!geometry02 && !geometry13) {
+      ++result.rejectedInvalid;
+      retained.push_back(quad);
+      continue;
+    }
+
+    const bool admissible02 = geometry02 &&
+      (!diagonalAdmissible || diagonalAdmissible(gf, v0, v2));
+    const bool admissible13 = geometry13 &&
+      (!diagonalAdmissible || diagonalAdmissible(gf, v1, v3));
+    if(!admissible02 && !admissible13) {
+      ++result.rejectedBySize;
+      retained.push_back(quad);
+      continue;
+    }
+
+    bool useDiagonal02 = admissible02 && !admissible13;
+    if(admissible02 && admissible13) {
+      const double angleTolerance = 1.e-12 * std::max(
+        {1., diagonal02.angleDegrees, diagonal13.angleDegrees});
+      if(diagonal02.angleDegrees < diagonal13.angleDegrees - angleTolerance)
+        useDiagonal02 = true;
+      else if(diagonal13.angleDegrees <
+              diagonal02.angleDegrees - angleTolerance)
+        useDiagonal02 = false;
+      else
+        useDiagonal02 = diagonal02.minimumGamma >= diagonal13.minimumGamma;
+    }
+
+    MTriangle *first = useDiagonal02 ?
+      new MTriangle(v0, v1, v2) : new MTriangle(v1, v2, v3);
+    MTriangle *second = useDiagonal02 ?
+      new MTriangle(v2, v3, v0) : new MTriangle(v3, v0, v1);
+    first->setPartition(quad->getPartition());
+    second->setPartition(quad->getPartition());
+    first->setVisibility(quad->getVisibility());
+    second->setVisibility(quad->getVisibility());
+    gf->triangles.push_back(first);
+    gf->triangles.push_back(second);
+    change[quad] = {first, second};
+    existingEdges.insert(useDiagonal02 ? MEdge(v0, v2) : MEdge(v1, v3));
+    delete quad;
+    ++result.split;
+  }
+  gf->quadrangles = std::move(retained);
+  updateBoundaryLayerColumnsAfterQuadSplits(gf, change);
+  return result;
 }
 
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf)

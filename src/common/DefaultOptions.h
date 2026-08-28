@@ -1519,13 +1519,29 @@ StringXNumber MeshOptions_Number[] = {
       "2: cross-field + CAD small features adaptation,"
       "3: from background mesh (e.g. sizes in current triangulation),"
       "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
-  { F|O, "QuadqsCleanupMethod" , opt_mesh_quadqs_cleanup_method, 0 ,
+  { F|O, "QuadqsCleanupMethod" , opt_mesh_quadqs_cleanup_method, 1 ,
     "Cleanup after packing of parallelograms. 0: exhaustive OptimizeQuads, "
-      "1: paper-style interactive OptimizeQuadsFast, 2: disabled" },
+      "1: bounded fast Quad Cleanup with local Winslow and a strict global "
+      "shape, size, valence and CAD-distance score, 2: disabled" },
+  { F|O, "QuadqsTargetSize" , opt_mesh_quadqs_target_size, 0. ,
+    "Constant target edge length used by quad cleanup (non-positive: use "
+      "the active mesh size map)" },
+  { F|O, "QuadqsMinimumEdgeLength" , opt_mesh_quadqs_minimum_edge_length, 0. ,
+    "Hard minimum edge length accepted by quad cleanup (non-positive: "
+      "disabled)" },
+  { F|O, "QuadqsMaximumEdgeLength" , opt_mesh_quadqs_maximum_edge_length, 0. ,
+    "Hard maximum edge length accepted by quad cleanup (non-positive: "
+      "disabled)" },
+  { F|O, "QuadqsIntrinsicEdgeLengthFactor" ,
+    opt_mesh_quadqs_intrinsic_edge_length_factor, 1.4142135623730951 ,
+    "Maximum intrinsic triangulation edge length divided by the local target "
+      "size before local splitting and Delaunay legalization (non-positive: "
+      "disable intrinsic long-edge splitting)" },
   { F|O, "QuadqsPillowLayers" , opt_mesh_quadqs_pillow_layers, 0 ,
-    "Insert a quadrilateral pillow around holes after quad optimization and "
-      "open it with local Winslow smoothing over this many element rows "
-      "(0: disabled)" },
+    "Attempt a complete quadrilateral ring around holes after quad "
+      "optimization and open an admissible new ring with local Winslow "
+      "smoothing; 1 optimizes the complete affected stars and larger values "
+      "add neighboring element layers (0: disabled)" },
   { F|O, "QuadqsPacking3D" , opt_mesh_quadqs_packing_3d, 0 ,
     "Use tangent-frame propagation and oriented exclusion cubes in 3D for "
       "packing points on discrete surfaces (0: UV parallelograms, 1: 3D "

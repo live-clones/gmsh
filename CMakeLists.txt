@@ -2310,6 +2310,144 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   if(TARGET testSmallCavityWinslow)
     add_test(NAME testSmallCavityWinslow COMMAND testSmallCavityWinslow)
   endif()
+  if(HAVE_QUADOPTIMIZER)
+    add_test(
+      NAME quadOptimizerSizeConstraints
+      COMMAND gmsh
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testSizeConstraints.geo
+        -parse_and_exit -nopopup -v 5)
+    set_tests_properties(quadOptimizerSizeConstraints PROPERTIES
+      PASS_REGULAR_EXPRESSION
+        "QuadOptimizer size: target=4 minimum=2 maximum=8 topologyChanges=0 rejectedBySize=0 initialBelow=0 initialAbove=0 initialInvalid=0 finalBelow=0 finalAbove=0 finalInvalid=0 finalMin=2 finalMax=8"
+      FAIL_REGULAR_EXPRESSION
+        "Unknown number option;edge-length requirements are not met")
+
+    add_test(
+      NAME quadOptimizerSizeConstraintViolation
+      COMMAND gmsh
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testSizeConstraintViolation.geo
+        -parse_and_exit -nopopup -v 5)
+    set_tests_properties(quadOptimizerSizeConstraintViolation PROPERTIES
+      PASS_REGULAR_EXPRESSION
+        "QuadOptimizer size: target=4 minimum=2 maximum=8 topologyChanges=0 rejectedBySize=0 initialBelow=2 initialAbove=2 initialInvalid=0 finalBelow=2 finalAbove=2 finalInvalid=0"
+      FAIL_REGULAR_EXPRESSION "Unknown number option")
+
+    if(HAVE_QUADMESHINGTOOLS)
+      add_test(
+        NAME quadOptimizerSizeAllowsTopology
+        COMMAND gmsh
+          ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/2d/recombine.geo
+          -2 -algo pack
+          -setnumber Mesh.QuadqsCleanupMethod 0
+          -setnumber Mesh.QuadqsTargetSize 0.01
+          -setnumber Mesh.QuadqsMinimumEdgeLength 0.001
+          -setnumber Mesh.QuadqsMaximumEdgeLength 0.1
+          -nopopup -v 5
+          -o ${CMAKE_CURRENT_BINARY_DIR}/quadOptimizerSizeAllowsTopology.msh)
+      set_tests_properties(quadOptimizerSizeAllowsTopology PROPERTIES
+        PASS_REGULAR_EXPRESSION
+          "QuadOptimizer size: target=0.01 minimum=0.001 maximum=0.1 topologyChanges=[1-9][0-9]* rejectedBySize=[0-9][0-9]* initialBelow=0 initialAbove=0 initialInvalid=0 finalBelow=0 finalAbove=0 finalInvalid=0"
+        FAIL_REGULAR_EXPRESSION
+          "Unknown number option;edge-length requirements are not met")
+
+      add_test(
+        NAME quadOptimizerSizeRejectsTopology
+        COMMAND gmsh
+          ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/2d/recombine.geo
+          -2 -algo pack
+          -setnumber Mesh.QuadqsCleanupMethod 0
+          -setnumber Mesh.QuadqsTargetSize 0.01
+          -setnumber Mesh.QuadqsMinimumEdgeLength 0.000001
+          -setnumber Mesh.QuadqsMaximumEdgeLength 0.0001
+          -setnumber Mesh.RecombineMinimumQuality 1
+          -nopopup -v 5
+          -o ${CMAKE_CURRENT_BINARY_DIR}/quadOptimizerSizeRejectsTopology.msh)
+      set_tests_properties(quadOptimizerSizeRejectsTopology PROPERTIES
+        PASS_REGULAR_EXPRESSION
+          "QuadOptimizer size: target=0.01 minimum=1e-06 maximum=0.0001 topologyChanges=0 rejectedBySize=[1-9][0-9]* initialBelow=0 initialAbove=[1-9][0-9]* initialInvalid=0 finalBelow=0 finalAbove=[1-9][0-9]* finalInvalid=0"
+        FAIL_REGULAR_EXPRESSION
+          "Unknown number option;PACK post-optimization quality filter \\(1\\): split [1-9]")
+
+      add_test(
+        NAME quadIntrinsicLongEdgeSplit
+        COMMAND gmsh
+          ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/2d/recombine.geo
+          -2 -algo pack
+          -setnumber Mesh.QuadqsPacking3D 1
+          -setnumber Mesh.QuadqsPacking3DForceAllPoints 1
+          -setnumber Mesh.QuadqsIntrinsicEdgeLengthFactor 1.2
+          -setnumber Mesh.QuadqsCleanupMethod 2
+          -setnumber Mesh.RecombineMinimumQuality 0
+          -nopopup -v 5
+          -o ${CMAKE_CURRENT_BINARY_DIR}/quadIntrinsicLongEdgeSplit.msh)
+      set_tests_properties(quadIntrinsicLongEdgeSplit PROPERTIES
+        TIMEOUT 10
+        PASS_REGULAR_EXPRESSION
+          "intrinsic Delaunay triangulation, [0-9][0-9]* edge flips, [1-9][0-9]* long-edge splits"
+        FAIL_REGULAR_EXPRESSION
+          "Unknown number option;intrinsic long-edge split budget reached")
+
+      add_test(
+        NAME optimizeQuadsFastMixedSwap
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastMixedSwap.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastMixedSwap.cmake)
+      set_tests_properties(optimizeQuadsFastMixedSwap PROPERTIES TIMEOUT 10)
+
+      add_test(
+        NAME quadCleanUpFixedPoint
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpFixedPoint.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpFixedPoint.cmake)
+      set_tests_properties(quadCleanUpFixedPoint PROPERTIES TIMEOUT 30)
+
+      add_test(
+        NAME quadCleanUpSizeRepair
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpSizeRepair.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpSizeRepair.cmake)
+      set_tests_properties(quadCleanUpSizeRepair PROPERTIES TIMEOUT 30)
+
+      add_test(
+        NAME quadCleanUpMixedSizeRepair
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpMixedSizeRepair.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpMixedSizeRepair.cmake)
+      set_tests_properties(quadCleanUpMixedSizeRepair PROPERTIES TIMEOUT 30)
+
+      add_test(
+        NAME quadCleanUpPillow
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpPillow.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpPillow.cmake)
+      set_tests_properties(quadCleanUpPillow PROPERTIES TIMEOUT 30)
+
+      add_test(
+        NAME quadOptimizerFastGlobalQualityPlan
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastPlan.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFast.cmake)
+      set_tests_properties(quadOptimizerFastGlobalQualityPlan PROPERTIES
+        TIMEOUT 10)
+
+      if(HAVE_OCC)
+        add_test(
+          NAME quadOptimizerFastGlobalQualityCurved
+          COMMAND ${CMAKE_COMMAND}
+            -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+            -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastCurved.geo
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFast.cmake)
+        set_tests_properties(quadOptimizerFastGlobalQualityCurved PROPERTIES
+          TIMEOUT 10)
+      endif()
+    endif()
+  endif()
   file(GLOB_RECURSE ALLFILES
        tutorials/*.geo examples/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
        benchmarks/occ/*.geo)

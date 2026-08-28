@@ -6925,6 +6925,31 @@ double opt_mesh_quadqs_cleanup_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.quadqsCleanupMethod;
 }
 
+double opt_mesh_quadqs_target_size(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsTargetSize = val;
+  return CTX::instance()->mesh.quadqsTargetSize;
+}
+
+double opt_mesh_quadqs_minimum_edge_length(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsMinimumEdgeLength = val;
+  return CTX::instance()->mesh.quadqsMinimumEdgeLength;
+}
+
+double opt_mesh_quadqs_maximum_edge_length(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsMaximumEdgeLength = val;
+  return CTX::instance()->mesh.quadqsMaximumEdgeLength;
+}
+
+double opt_mesh_quadqs_intrinsic_edge_length_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.quadqsIntrinsicEdgeLengthFactor = val;
+  return CTX::instance()->mesh.quadqsIntrinsicEdgeLengthFactor;
+}
+
 double opt_mesh_quadqs_pillow_layers(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.quadqsPillowLayers = (int)val;

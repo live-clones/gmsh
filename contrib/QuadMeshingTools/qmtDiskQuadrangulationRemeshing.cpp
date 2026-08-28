@@ -456,6 +456,10 @@ using namespace QMT;
 
 int initDiskQuadrangulations()
 {
+  // Initialization is intentionally idempotent: OptimizeMesh can be invoked
+  // repeatedly in one process (in particular to verify a cleanup fixed
+  // point), while the immutable database only needs to be decoded once.
+  if(!QMT::B_disk_quadrangulations.empty()) return 0;
   bool ok = load_disk_quadrangulations_from_raw_data();
   if(!ok) return -1;
   return 0;

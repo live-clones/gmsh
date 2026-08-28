@@ -55,7 +55,9 @@ struct contextMeshOptions {
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods, quadqsCleanupMethod,
     quadqsPillowLayers, quadqsPacking3D, quadqsPacking3DForceAllPoints;
-  double quadqsRemeshingBoldness, quadqsScalingOnTriangulation;
+  double quadqsRemeshingBoldness, quadqsScalingOnTriangulation,
+    quadqsTargetSize, quadqsMinimumEdgeLength, quadqsMaximumEdgeLength,
+    quadqsIntrinsicEdgeLengthFactor;
   int oldInitialDelaunay2D;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;

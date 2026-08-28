@@ -9,11 +9,26 @@
 #include "smallCavityWinslow.h"
 
 #include <cstddef>
+#include <functional>
+#include <limits>
 #include <vector>
 
 class GFace;
 
 namespace QuadOptimizer {
+
+  // Physical edge-length requirements at one point of a face. Keeping the
+  // target separate from the hard bounds lets callers express e.g. the
+  // constant {target, minimum, maximum} triplets {10, 2, 20}, {6, 2, 12}
+  // and {4, 2, 8}, as well as spatially varying requirements later on.
+  struct EdgeLengthCriteria {
+    double target = -1.;
+    double minimum = 0.;
+    double maximum = std::numeric_limits<double>::infinity();
+  };
+
+  using EdgeLengthCriteriaAt = std::function<EdgeLengthCriteria(
+    GFace *, double, double, double, double, double)>;
 
   struct SmallCavityOptimizerOptions {
     bool optimizeOneInteriorVertexCavities = true;
@@ -30,15 +45,23 @@ namespace QuadOptimizer {
     bool cleanUpBoundary = true;
     bool cleanUpShape = true;
     bool cleanUpSize = true;
+    // Full Kinney CleanUp path: connectivity, boundary, shape and size
+    // cleanup (including the specialized simple cavities), with guarded local
+    // smoothing after every accepted action, until a complete sweep is idle.
+    // If pillowNeighborLayers is positive, admissible hole pillowing is
+    // included in the same smoothed, validated fixed-point transaction.
+    bool quadCleanUp = false;
     // Experimental paper-style path used by OptimizeQuadsFast. It keeps the
     // exhaustive API unchanged while using constant-size local decisions,
     // harmonic candidate placement and local Winslow relaxation after every
     // accepted edit.
     bool fastInteractiveCleanUp = false;
     bool topologyOnlyIfCavityHasSpecificationFailure = true;
-    // Optional post-processing: insert one infinitesimal quad ring around
-    // every hole, then open it with the local Winslow solver. Zero disables
-    // the operator; a positive value selects the number of optimized rows.
+    // Optional post-processing: attempt to establish one complete quad ring
+    // around every hole, opening a newly inserted infinitesimal ring with
+    // local Winslow when all quality and size gates accept it. Zero disables
+    // the operator. One optimizes the complete affected vertex stars; larger
+    // values add neighboring element layers to that patch.
     int pillowNeighborLayers = 0;
     int smoothingPasses = 2;
     int finalSmoothingPasses = 2;
@@ -58,8 +81,17 @@ namespace QuadOptimizer {
     // Optional size-map filter. It is disabled by default: cavity boundaries
     // are fixed, so size variations remain local.
     bool enforceSizeMap = false;
-    // Positive: constant target size. Non-positive: query BGM_MeshSize.
+    // If set, this callback supplies the complete physical specification and
+    // takes precedence over the scalar settings below. It must be thread-safe
+    // when optimizeSmallQuadCavitiesAllFaces() is used.
+    EdgeLengthCriteriaAt edgeLengthCriteriaAt;
+    // Positive: constant target size. Non-positive: use the active Quadqs
+    // vector field when enforcing constraints, then fall back to BGM_MeshSize.
     double targetSize = -1.;
+    // Absolute physical bounds; non-positive values disable the corresponding
+    // bound. Active absolute and relative bounds are intersected.
+    double minimumEdgeLength = 0.;
+    double maximumEdgeLength = 0.;
     double minimumEdgeSizeRatio = .35;
     double maximumEdgeSizeRatio = 2.5;
     bool enforceRelativeSizeErrorIncrease = false;
@@ -88,6 +120,14 @@ namespace QuadOptimizer {
     std::size_t acceptedBoundaryTriangleQuadTriangleFans = 0;
     std::size_t acceptedFinalSmoothingCavities = 0;
     std::size_t acceptedEdgeSwaps = 0;
+    // Accepted topology transactions, classified by the first branch of the
+    // QuadCleanUp decision path that justified them.
+    std::size_t acceptedFewerUnacceptableElements = 0;
+    std::size_t acceptedBetterGeometry = 0;
+    std::size_t acceptedOtherImprovements = 0;
+    // Subset of acceptedEdgeSwaps found by the generic CleanUp cavity stage;
+    // these are already included in one of the four CleanUp family counters.
+    std::size_t acceptedCleanUpEdgeSwaps = 0;
     std::size_t rejectedEdgeSwapsNoIntersection = 0;
     std::size_t rejectedEdgeSwapsNonConvex = 0;
     std::size_t acceptedOneInteriorVertexCavities = 0;
@@ -98,14 +138,34 @@ namespace QuadOptimizer {
     std::size_t cleanUpBoundaryAccepted = 0;
     std::size_t cleanUpShapeAccepted = 0;
     std::size_t cleanUpSizeAccepted = 0;
+    // Per-round attempts; a successful hole is visited again to confirm the
+    // composed pillow/CleanUp fixed point.
     std::size_t pillowHolesVisited = 0;
+    std::size_t pillowHolesAlreadyPresent = 0;
     std::size_t pillowHolesAccepted = 0;
     std::size_t pillowQuadranglesInserted = 0;
+    std::size_t excessiveWarpingQuadrangles = 0;
+    std::size_t nonConvexOrInvalidQuadrangles = 0;
+    std::size_t warpedQuadranglesSplit = 0;
+    std::size_t warpedQuadranglesRejected = 0;
     double cleanUpCriticalSeconds = 0.;
     double cleanUpConnectivitySeconds = 0.;
     double cleanUpBoundarySeconds = 0.;
     double cleanUpShapeSeconds = 0.;
     double cleanUpSizeSeconds = 0.;
+    bool sizeRequirementsMet = true;
+    std::size_t initialEdgesBelowMinimum = 0;
+    std::size_t initialEdgesAboveMaximum = 0;
+    std::size_t initialInvalidSizeEdges = 0;
+    std::size_t finalEdgesBelowMinimum = 0;
+    std::size_t finalEdgesAboveMaximum = 0;
+    std::size_t finalInvalidSizeEdges = 0;
+    double initialMinimumEdgeLength =
+      std::numeric_limits<double>::infinity();
+    double initialMaximumEdgeLength = 0.;
+    double finalMinimumEdgeLength =
+      std::numeric_limits<double>::infinity();
+    double finalMaximumEdgeLength = 0.;
     SpecificationObjective initialObjective;
     SpecificationObjective finalObjective;
   };
@@ -135,8 +195,36 @@ namespace QuadOptimizer {
     std::size_t facesVisited = 0;
     std::size_t facesWithQuadrangles = 0;
     std::size_t acceptedCavities = 0;
+    std::size_t acceptedEdgeSwaps = 0;
+    std::size_t acceptedDiamonds = 0;
+    std::size_t acceptedSmoothingCavities = 0;
+    std::size_t acceptedFewerUnacceptableElements = 0;
+    std::size_t acceptedBetterGeometry = 0;
+    std::size_t acceptedOtherImprovements = 0;
+    std::size_t rejectedByWinslow = 0;
+    std::size_t rejectedBySize = 0;
+    std::size_t rejectedByQuality = 0;
+    std::size_t pillowHolesVisited = 0;
+    std::size_t pillowHolesAlreadyPresent = 0;
     std::size_t acceptedPillows = 0;
     std::size_t insertedPillowQuadrangles = 0;
+    std::size_t excessiveWarpingQuadrangles = 0;
+    std::size_t nonConvexOrInvalidQuadrangles = 0;
+    std::size_t warpedQuadranglesSplit = 0;
+    std::size_t warpedQuadranglesRejected = 0;
+    bool sizeRequirementsMet = true;
+    std::size_t initialEdgesBelowMinimum = 0;
+    std::size_t initialEdgesAboveMaximum = 0;
+    std::size_t initialInvalidSizeEdges = 0;
+    std::size_t finalEdgesBelowMinimum = 0;
+    std::size_t finalEdgesAboveMaximum = 0;
+    std::size_t finalInvalidSizeEdges = 0;
+    double initialMinimumEdgeLength =
+      std::numeric_limits<double>::infinity();
+    double initialMaximumEdgeLength = 0.;
+    double finalMinimumEdgeLength =
+      std::numeric_limits<double>::infinity();
+    double finalMaximumEdgeLength = 0.;
     SpecificationObjective initialObjective;
     SpecificationObjective finalObjective;
     std::vector<FaceOptimizerResult> faces;

@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <cstdio>
 #include <stack>
 #include <stdexcept>
 
@@ -750,7 +751,10 @@ static void Mesh2D(GModel *m)
       for(GFace *gf : m->getFaces()) {
         quadsBefore += gf->quadrangles.size();
         trianglesBefore += gf->triangles.size();
-        quadsToTriangles(gf, minQuality);
+        quadsToTriangles(
+          gf, minQuality,
+          CTX::instance()->mesh.quadqsMinimumEdgeLength,
+          CTX::instance()->mesh.quadqsMaximumEdgeLength);
       }
       std::size_t quadsAfter = 0, trianglesAfter = 0;
       for(GFace *gf : m->getFaces()) {
@@ -989,6 +993,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
      how != "OptimizeQuads" && how != "OptimizeQuadsFast" &&
+     how != "QuadCleanUp" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
      how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
@@ -1050,19 +1055,40 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
     }
 #endif
   }
-  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast") {
+  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast" ||
+          how == "QuadCleanUp") {
 #if defined(HAVE_QUADOPTIMIZER)
     QuadOptimizer::SmallCavityOptimizerOptions options;
+    options.quadCleanUp = how == "QuadCleanUp";
     options.fastInteractiveCleanUp = how == "OptimizeQuadsFast";
-    options.pillowNeighborLayers = CTX::instance()->mesh.quadqsPillowLayers;
-    // Finish both cleanup variants with mesh-wide Winslow sweeps. This is
-    // deliberately controlled by Mesh.Smoothing: zero keeps the optimized
-    // connectivity untouched, while a positive value performs that many
-    // geometry-only passes after the local topology operations.
-    options.finalSmoothingPasses =
+    options.pillowNeighborLayers =
+      CTX::instance()->mesh.quadqsPillowLayers;
+    if(CTX::instance()->mesh.quadqsTargetSize > 0. ||
+       CTX::instance()->mesh.quadqsMinimumEdgeLength > 0. ||
+       CTX::instance()->mesh.quadqsMaximumEdgeLength > 0.) {
+      options.enforceSizeMap = true;
+      options.targetSize = CTX::instance()->mesh.quadqsTargetSize;
+      options.minimumEdgeLength =
+        CTX::instance()->mesh.quadqsMinimumEdgeLength;
+      options.maximumEdgeLength =
+        CTX::instance()->mesh.quadqsMaximumEdgeLength;
+      options.minimumEdgeSizeRatio = 0.;
+      options.maximumEdgeSizeRatio = 0.;
+    }
+    // Full QuadCleanUp owns its fixed-point smoothing. The historical Fast
+    // path keeps the requested number of cheap, geometry-only Winslow passes.
+    options.finalSmoothingPasses = options.quadCleanUp ? 0 :
       std::max(0, CTX::instance()->mesh.nbSmoothing);
+    if(options.quadCleanUp) {
+      options.smoothingPasses = 1;
+      options.postTopologyNeighborSmoothingPasses =
+        std::max(1, CTX::instance()->mesh.nbSmoothing);
+    }
     if(options.fastInteractiveCleanUp) {
       options.postTopologyNeighborSmoothingPasses = 1;
+      // Pillow is a separate structural operator and does not yet use the
+      // same strict Fast global-quality transaction.
+      options.pillowNeighborLayers = 0;
     }
     options.verbose = Msg::GetVerbosity() > 4 ? 1 : 0;
     const QuadOptimizer::AllFacesOptimizerResult result =
@@ -1084,6 +1110,77 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
                 result.finalObjective.absoluteViolationCount,
                 result.initialObjective.preferredViolationCount,
                 result.finalObjective.preferredViolationCount);
+      if(options.quadCleanUp)
+        Msg::Info("QuadCleanUp fixed point: swaps=%zu diamonds=%zu, "
+                  "smoothed=%zu rejected(winslow=%zu,size=%zu,quality=%zu)",
+                  result.acceptedEdgeSwaps, result.acceptedDiamonds,
+                  result.acceptedSmoothingCavities,
+                  result.rejectedByWinslow, result.rejectedBySize,
+                  result.rejectedByQuality);
+      if(options.quadCleanUp)
+        Msg::Info("QuadCleanUp decisions: fewerUnacceptable=%zu "
+                  "betterGeometry=%zu other=%zu",
+                  result.acceptedFewerUnacceptableElements,
+                  result.acceptedBetterGeometry,
+                  result.acceptedOtherImprovements);
+      if(options.quadCleanUp)
+        Msg::Info("QuadCleanUp terminal split: excessiveWarping=%zu "
+                  "nonConvexOrInvalid=%zu split=%zu rejected=%zu",
+                  result.excessiveWarpingQuadrangles,
+                  result.nonConvexOrInvalidQuadrangles,
+                  result.warpedQuadranglesSplit,
+                  result.warpedQuadranglesRejected);
+      if(options.quadCleanUp && options.pillowNeighborLayers > 0)
+        Msg::Info("QuadCleanUp pillow audit: visited=%zu accepted=%zu "
+                  "alreadyPresent=%zu insertedQuads=%zu",
+                  result.pillowHolesVisited, result.acceptedPillows,
+                  result.pillowHolesAlreadyPresent,
+                  result.insertedPillowQuadrangles);
+      if(options.enforceSizeMap && result.facesWithQuadrangles == 0) {
+        Msg::Warning("QuadOptimizer: no quadrilateral face was found; "
+                     "edge-length requirements were not audited");
+      }
+      else if(options.enforceSizeMap) {
+        char targetLabel[64], minimumLabel[64], maximumLabel[64];
+        if(options.targetSize > 0.)
+          snprintf(targetLabel, sizeof(targetLabel), "%.16g",
+                   options.targetSize);
+        else
+          snprintf(targetLabel, sizeof(targetLabel), "size-map");
+        if(options.minimumEdgeLength > 0.)
+          snprintf(minimumLabel, sizeof(minimumLabel), "%.16g",
+                   options.minimumEdgeLength);
+        else
+          snprintf(minimumLabel, sizeof(minimumLabel), "disabled");
+        if(options.maximumEdgeLength > 0.)
+          snprintf(maximumLabel, sizeof(maximumLabel), "%.16g",
+                   options.maximumEdgeLength);
+        else
+          snprintf(maximumLabel, sizeof(maximumLabel), "disabled");
+        Msg::Info("QuadOptimizer size: target=%s minimum=%s maximum=%s "
+                  "topologyChanges=%zu rejectedBySize=%zu "
+                  "initialBelow=%zu initialAbove=%zu "
+                  "initialInvalid=%zu finalBelow=%zu finalAbove=%zu "
+                  "finalInvalid=%zu finalMin=%.16g finalMax=%.16g",
+                  targetLabel, minimumLabel, maximumLabel,
+                  result.acceptedCavities,
+                  result.rejectedBySize,
+                  result.initialEdgesBelowMinimum,
+                  result.initialEdgesAboveMaximum,
+                  result.initialInvalidSizeEdges,
+                  result.finalEdgesBelowMinimum,
+                  result.finalEdgesAboveMaximum,
+                  result.finalInvalidSizeEdges,
+                  result.finalMinimumEdgeLength,
+                  result.finalMaximumEdgeLength);
+        if(!result.sizeRequirementsMet)
+          Msg::Warning("QuadOptimizer: edge-length requirements are not met "
+                       "after optimization (%zu below, %zu above, %zu "
+                       "invalid)",
+                       result.finalEdgesBelowMinimum,
+                       result.finalEdgesAboveMaximum,
+                       result.finalInvalidSizeEdges);
+      }
     }
 #else
     Msg::Error("%s requires QUADOPTIMIZER", how.c_str());

@@ -15,6 +15,8 @@ class MElement;
 
 namespace QuadOptimizer {
 
+  constexpr double absoluteMaximumQuadWarpingDegrees = 25.;
+
   enum class SurfaceElementKind { Triangle, Quadrangle };
 
   struct ElementQuality {

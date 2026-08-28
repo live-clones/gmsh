@@ -622,6 +622,128 @@ static void orientTriangleUV(MTriangle *triangle, MVertex *a, MVertex *b,
   }
 }
 
+static bool splitLongestIntrinsicEdge(
+  GFace *gf, bidimMeshData &data,
+  std::map<MEdge, double, MEdgeLessThan> &lengths,
+  double referenceOrientation, double &thresholdRatio,
+  MVertex *&splitVertex)
+{
+  splitVertex = nullptr;
+  using TriangleAdjacency =
+    std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>;
+  TriangleAdjacency adjacency;
+  for(MTriangle *triangle : gf->triangles) {
+    for(int i = 0; i < 3; ++i)
+      adjacency[triangle->getEdge(i)].push_back(triangle);
+  }
+
+  MVertex *bestA = nullptr, *bestB = nullptr;
+  MTriangle *bestT0 = nullptr, *bestT1 = nullptr;
+  double bestU = 0., bestV = 0., bestLocalSize = 0.;
+  GPoint bestPoint;
+  thresholdRatio = 1.;
+
+  for(const auto &entry : adjacency) {
+    const MEdge &edge = entry.first;
+    const std::vector<MTriangle *> &incident = entry.second;
+    if(incident.size() != 2 ||
+       data.internalEdges.find(edge) != data.internalEdges.end())
+      continue;
+    const auto lengthIt = lengths.find(edge);
+    if(lengthIt == lengths.end() || !(lengthIt->second > 0.) ||
+       !std::isfinite(lengthIt->second))
+      continue;
+
+    MVertex *a = edge.getVertex(0);
+    MVertex *b = edge.getVertex(1);
+    if(!a || !b || a == data.equivalent(b) || b == data.equivalent(a))
+      continue;
+    const int ia = data.getIndex(a);
+    const int ib = data.getIndex(b);
+    if(ia < 0 || ib < 0 || static_cast<std::size_t>(ia) >= data.Us.size() ||
+       static_cast<std::size_t>(ib) >= data.Us.size())
+      continue;
+    const double u = .5 * (data.Us[static_cast<std::size_t>(ia)] +
+                           data.Us[static_cast<std::size_t>(ib)]);
+    const double v = .5 * (data.Vs[static_cast<std::size_t>(ia)] +
+                           data.Vs[static_cast<std::size_t>(ib)]);
+    GPoint point = gf->point(u, v);
+    if(!point.succeeded() || !std::isfinite(point.x()) ||
+       !std::isfinite(point.y()) || !std::isfinite(point.z()))
+      continue;
+
+    double localSize = CTX::instance()->mesh.quadqsTargetSize;
+    if(!(localSize > 0.))
+      localSize = BGM_MeshSize(gf, u, v, point.x(), point.y(), point.z());
+    if(!(localSize > 0.) || !std::isfinite(localSize)) continue;
+    const double intrinsicFactor =
+      CTX::instance()->mesh.quadqsIntrinsicEdgeLengthFactor;
+    if(!(intrinsicFactor > 0.) || !std::isfinite(intrinsicFactor)) continue;
+    // In a size-h quad layout the natural default is the diagonal of a
+    // square, sqrt(2) h. A hard user maximum remains an upper bound but can no
+    // longer silently relax the intrinsic threshold.
+    double maximumLength = intrinsicFactor * localSize;
+    const double hardMaximum =
+      CTX::instance()->mesh.quadqsMaximumEdgeLength;
+    if(hardMaximum > 0.) maximumLength = std::min(maximumLength, hardMaximum);
+    const double ratio = lengthIt->second / maximumLength;
+    if(!(ratio > thresholdRatio)) continue;
+
+    bestA = a;
+    bestB = b;
+    bestT0 = incident[0];
+    bestT1 = incident[1];
+    bestU = u;
+    bestV = v;
+    bestLocalSize = localSize;
+    bestPoint = point;
+    thresholdRatio = ratio;
+  }
+
+  if(!bestA || !bestB || !bestT0 || !bestT1) return false;
+  MVertex *c = oppositeVertex(bestT0, bestA, bestB);
+  MVertex *d = oppositeVertex(bestT1, bestA, bestB);
+  if(!c || !d || c == d) return false;
+
+  MVertex *midpoint = new MFaceVertex(bestPoint.x(), bestPoint.y(),
+                                      bestPoint.z(), gf, bestU, bestV);
+  const int ia = data.getIndex(bestA);
+  const int ib = data.getIndex(bestB);
+  const double interpolatedSize =
+    .5 * (data.vSizes[static_cast<std::size_t>(ia)] +
+          data.vSizes[static_cast<std::size_t>(ib)]);
+  data.addVertex(midpoint, bestU, bestV, interpolatedSize, bestLocalSize);
+  gf->mesh_vertices.push_back(midpoint);
+  splitVertex = midpoint;
+
+  std::vector<MTriangle *> refined;
+  refined.reserve(gf->triangles.size() + 2);
+  for(MTriangle *triangle : gf->triangles) {
+    if(triangle != bestT0 && triangle != bestT1) refined.push_back(triangle);
+  }
+  auto addTriangle = [&](MVertex *v0, MVertex *v1, MVertex *v2) {
+    MTriangle *triangle = new MTriangle(v0, v1, v2);
+    orientTriangleUV(triangle, v0, v1, v2, referenceOrientation, data);
+    refined.push_back(triangle);
+  };
+  addTriangle(bestA, midpoint, c);
+  addTriangle(midpoint, bestB, c);
+  addTriangle(bestB, midpoint, d);
+  addTriangle(midpoint, bestA, d);
+  // Keep the intrinsic metric accumulated by the preceding flips. Only the
+  // split edge disappears; the four new edges belong to the newly sampled
+  // CAD triangulation and therefore start with their straight 3D lengths.
+  lengths.erase(MEdge(bestA, bestB));
+  lengths[MEdge(bestA, midpoint)] = MEdge(bestA, midpoint).length();
+  lengths[MEdge(midpoint, bestB)] = MEdge(midpoint, bestB).length();
+  lengths[MEdge(midpoint, c)] = MEdge(midpoint, c).length();
+  lengths[MEdge(midpoint, d)] = MEdge(midpoint, d).length();
+  delete bestT0;
+  delete bestT1;
+  gf->triangles.swap(refined);
+  return true;
+}
+
 // Convert the UV Delaunay connectivity into an intrinsic Delaunay
 // triangulation of the piecewise-flat surface. Edge lengths are kept in the
 // intrinsic metric: after a flip, the new diagonal is measured in the two
@@ -631,19 +753,14 @@ static void orientTriangleUV(MTriangle *triangle, MVertex *a, MVertex *b,
 // new diagonal is also valid in the injective surface parametrization. This
 // preserves boundaries, holes and embedded curves for the downstream Blossom
 // graph while removing connectivity caused solely by UV distortion.
-static std::size_t intrinsicDelaunayizePackedSurface(GFace *gf,
-                                                      bidimMeshData &data)
+static std::size_t intrinsicDelaunayizePackedSurfacePass(
+  GFace *gf, bidimMeshData &data,
+  std::map<MEdge, double, MEdgeLessThan> &lengths,
+  MVertex *localVertex, bool &split, double &thresholdRatio,
+  MVertex *&splitVertex)
 {
   using TriangleAdjacency =
     std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>;
-  std::map<MEdge, double, MEdgeLessThan> lengths;
-  for(MTriangle *triangle : gf->triangles) {
-    for(int i = 0; i < 3; ++i) {
-      const MEdge edge = triangle->getEdge(i);
-      if(lengths.find(edge) == lengths.end()) lengths[edge] = edge.length();
-    }
-  }
-
   double referenceOrientation = 0.;
   for(MTriangle *triangle : gf->triangles) {
     referenceOrientation =
@@ -688,6 +805,14 @@ static std::size_t intrinsicDelaunayizePackedSurface(GFace *gf,
       MVertex *c = oppositeVertex(incident[0], a, b);
       MVertex *d = oppositeVertex(incident[1], a, b);
       if(!c || !d || c == d) continue;
+      // After an edge split, legalize only edges opposite the inserted
+      // vertex. This is the usual local Delaunay insertion front: accepted
+      // flips can propagate away from the original cavity without revisiting
+      // unrelated connectivity on the rest of the face.
+      if(localVertex &&
+         (a == localVertex || b == localVertex ||
+          (c != localVertex && d != localVertex)))
+        continue;
 
       const MEdge cdEdge(c, d);
       if(adjacency.find(cdEdge) != adjacency.end() ||
@@ -738,8 +863,44 @@ static std::size_t intrinsicDelaunayizePackedSurface(GFace *gf,
   if(totalFlips >= maxFlips)
     Msg::Warning("- Face %d: intrinsic Delaunay flip budget reached (%zu)",
                  gf->tag(), totalFlips);
-  Msg::Info("- Face %d: intrinsic Delaunay triangulation, %zu edge flips",
-            gf->tag(), totalFlips);
+  split = splitLongestIntrinsicEdge(gf, data, lengths, referenceOrientation,
+                                   thresholdRatio, splitVertex);
+  return totalFlips;
+}
+
+static std::size_t intrinsicDelaunayizePackedSurface(GFace *gf,
+                                                      bidimMeshData &data)
+{
+  std::map<MEdge, double, MEdgeLessThan> lengths;
+  for(MTriangle *triangle : gf->triangles) {
+    for(int i = 0; i < 3; ++i) {
+      const MEdge edge = triangle->getEdge(i);
+      if(lengths.find(edge) == lengths.end()) lengths[edge] = edge.length();
+    }
+  }
+  const std::size_t splitBudget =
+    std::max<std::size_t>(16, gf->triangles.size() / 2);
+  std::size_t totalFlips = 0;
+  std::size_t totalSplits = 0;
+  double worstThresholdRatio = 1.;
+  MVertex *localVertex = nullptr;
+  while(totalSplits < splitBudget) {
+    bool split = false;
+    double thresholdRatio = 1.;
+    MVertex *splitVertex = nullptr;
+    totalFlips += intrinsicDelaunayizePackedSurfacePass(
+      gf, data, lengths, localVertex, split, thresholdRatio, splitVertex);
+    if(!split) break;
+    ++totalSplits;
+    worstThresholdRatio = std::max(worstThresholdRatio, thresholdRatio);
+    localVertex = splitVertex;
+  }
+  if(totalSplits == splitBudget)
+    Msg::Warning("- Face %d: intrinsic long-edge split budget reached (%zu)",
+                 gf->tag(), totalSplits);
+  Msg::Info("- Face %d: intrinsic Delaunay triangulation, %zu edge flips, "
+            "%zu long-edge splits (worst threshold ratio %.6g)",
+            gf->tag(), totalFlips, totalSplits, worstThresholdRatio);
   return totalFlips;
 }
 

@@ -6,6 +6,7 @@
 #ifndef MESH_GFACE_OPTIMIZE_H
 #define MESH_GFACE_OPTIMIZE_H
 
+#include <functional>
 #include <map>
 //#include <unordered_map>
 #include <vector>
@@ -124,7 +125,33 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
                         bool nodeRepositioning, double minqual);
 
 // used for meshGFaceRecombine development
-void quadsToTriangles(GFace *gf, double minqual);
+void quadsToTriangles(GFace *gf, double minqual,
+                      double minimumDiagonalLength = 0.,
+                      double maximumDiagonalLength = 0.);
+
+struct WarpedQuadrangleSplitResult {
+  std::size_t excessiveWarping = 0;
+  std::size_t nonConvexOrInvalid = 0;
+  std::size_t split = 0;
+  std::size_t rejectedInvalid = 0;
+  std::size_t rejectedBySize = 0;
+  std::size_t rejectedUnsupportedOrder = 0;
+};
+
+// Optional hard admissibility test for the only new edge introduced by a
+// terminal split. An empty predicate accepts every geometrically valid
+// diagonal. A false result is reported as rejectedBySize.
+using QuadrangleDiagonalAdmissibility =
+  std::function<bool(GFace *, MVertex *, MVertex *)>;
+
+// Terminal quad-dominant fallback: split every linear quad whose warping is
+// not strictly below maximumWarpingDegrees, or whose corner topology is not a
+// strictly convex quadrangle in the face parametrization. Among the admissible
+// diagonals, choose the one minimizing the angle between the two triangle
+// normals, then maximize the minimum triangle gamma quality.
+WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
+  GFace *gf, double maximumWarpingDegrees,
+  const QuadrangleDiagonalAdmissibility &diagonalAdmissible = {});
 
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf);
 

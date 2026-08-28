@@ -320,7 +320,8 @@ namespace QuadOptimizer {
     else {
       quality.passesAbsoluteSpecifications = finite &&
         quality.topologicallyValid &&
-        quality.warpingDegrees < 25. && quality.edgeRatio < 10. &&
+        quality.warpingDegrees < absoluteMaximumQuadWarpingDegrees &&
+        quality.edgeRatio < 10. &&
         quality.minimumAngleDegrees > 25. &&
         quality.maximumAngleDegrees < 160. && quality.skewingDegrees < 160.;
     }
@@ -353,7 +354,8 @@ namespace QuadOptimizer {
         std::pow(quality.skewingDegrees / 125., 2);
     }
     else {
-      addUpper(objective, quality.warpingDegrees, 15., 25.);
+      addUpper(objective, quality.warpingDegrees, 15.,
+               absoluteMaximumQuadWarpingDegrees);
       addLower(objective, quality.minimumAngleDegrees, 45., 25.);
       addUpper(objective, quality.maximumAngleDegrees, 135., 160.);
       objective.shapePenalty =
