@@ -758,6 +758,22 @@ static void Mesh2D(GModel *m)
       }
       std::size_t quadsAfter = 0, trianglesAfter = 0;
       for(GFace *gf : m->getFaces()) {
+#if defined(HAVE_QUADOPTIMIZER)
+        // Shape measures alone can miss a concave or folded bilinear quad on
+        // a curved CAD face. Validity is non-negotiable: split such terminal
+        // quads with a parametrically and physically consistent diagonal,
+        // even when that diagonal falls outside the requested size interval.
+        // A size violation is preferable to returning a negative Jacobian.
+        const WarpedQuadrangleSplitResult terminalSplit =
+          splitExcessivelyWarpedQuadrangles(
+            gf, QuadOptimizer::absoluteMaximumQuadWarpingDegrees);
+        const std::size_t terminalRejected = terminalSplit.rejectedInvalid +
+          terminalSplit.rejectedUnsupportedOrder;
+        if(terminalRejected)
+          Msg::Warning("PACK face %d retained %zu invalid or unsupported "
+                       "terminal quadrangles with no valid diagonal",
+                       gf->tag(), terminalRejected);
+#endif
         quadsAfter += gf->quadrangles.size();
         trianglesAfter += gf->triangles.size();
       }

@@ -874,6 +874,8 @@ namespace QuadOptimizer {
       const SpecificationObjective &candidate,
       const SpecificationObjective &reference, double tolerance)
     {
+      if(candidate.invalidElementCount > reference.invalidElementCount)
+        return false;
       if(candidate.absoluteBadElementCount > reference.absoluteBadElementCount)
         return false;
       if(candidate.worstAbsoluteViolation >
@@ -904,7 +906,9 @@ namespace QuadOptimizer {
       // Absolute quality requirements are the first priority. As the
       // component-wise no-worse gate above is already satisfied, any strict
       // decrease in one of them is globally monotone.
-      if(candidateQuality.absoluteBadElementCount <
+      if(candidateQuality.invalidElementCount <
+           referenceQuality.invalidElementCount ||
+         candidateQuality.absoluteBadElementCount <
            referenceQuality.absoluteBadElementCount ||
          candidateQuality.worstAbsoluteViolation + tolerance * std::max(
            {1., candidateQuality.worstAbsoluteViolation,
@@ -989,7 +993,9 @@ namespace QuadOptimizer {
                   referenceQuality.shapePenalty))
         return false;
 
-      if(candidateQuality.absoluteBadElementCount <
+      if(candidateQuality.invalidElementCount <
+           referenceQuality.invalidElementCount ||
+         candidateQuality.absoluteBadElementCount <
            referenceQuality.absoluteBadElementCount ||
          candidateQuality.absoluteViolationCount <
            referenceQuality.absoluteViolationCount ||
@@ -1110,6 +1116,15 @@ namespace QuadOptimizer {
       double referenceSizeError, double tolerance,
       bool geometryImprovementRequiresValence = false)
     {
+      // A negative or degenerate Jacobian is never exchangeable for shape,
+      // size, valence or CAD-distance gains.
+      if(candidateQuality.invalidElementCount !=
+         referenceQuality.invalidElementCount)
+        return candidateQuality.invalidElementCount <
+                 referenceQuality.invalidElementCount ?
+          CleanUpDecisionReason::FewerUnacceptableElements :
+          CleanUpDecisionReason::Rejected;
+
       // Size bounds are hard requirements: reducing bad-element count never
       // authorizes introducing an additional size violation.
       if(candidateSizeViolations > referenceSizeViolations)
@@ -1197,6 +1212,12 @@ namespace QuadOptimizer {
       std::size_t referenceSizeViolations, double candidateSizeError,
       double referenceSizeError, double tolerance)
     {
+      if(candidateQuality.invalidElementCount !=
+         referenceQuality.invalidElementCount)
+        return candidateQuality.invalidElementCount <
+                 referenceQuality.invalidElementCount ?
+          CleanUpDecisionReason::FewerUnacceptableElements :
+          CleanUpDecisionReason::Rejected;
       if(candidateSizeViolations > referenceSizeViolations)
         return CleanUpDecisionReason::Rejected;
       if(candidateQuality.absoluteBadElementCount !=
@@ -1236,6 +1257,10 @@ namespace QuadOptimizer {
         comparisonObjective(candidate);
       const SpecificationObjective referenceQuality =
         comparisonObjective(reference);
+      if(candidateQuality.invalidElementCount !=
+         referenceQuality.invalidElementCount)
+        return candidateQuality.invalidElementCount <
+               referenceQuality.invalidElementCount;
       if(candidateQuality.absoluteBadElementCount !=
          referenceQuality.absoluteBadElementCount)
         return candidateQuality.absoluteBadElementCount <
@@ -1289,7 +1314,8 @@ namespace QuadOptimizer {
 
     double objectivePriority(const SpecificationObjective &objective)
     {
-      return 1.e18 * static_cast<double>(objective.absoluteBadElementCount) +
+      return 1.e21 * static_cast<double>(objective.invalidElementCount) +
+             1.e18 * static_cast<double>(objective.absoluteBadElementCount) +
              1.e15 * objective.worstAbsoluteViolation +
              1.e12 * static_cast<double>(objective.absoluteViolationCount) +
              1.e9 * objective.absolutePenalty +

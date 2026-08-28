@@ -262,12 +262,12 @@ namespace QuadOptimizer {
     }
 
     Point normal = {0., 0., 0.};
+    double scale = 0.;
+    for(std::size_t i = 0; i < count; ++i)
+      scale = std::max(
+        scale, norm(subtract(vertices[(i + 1) % count], vertices[i])));
     if(kind == SurfaceElementKind::Quadrangle) {
       normal = polygonNormal(vertices);
-      double scale = 0.;
-      for(std::size_t i = 0; i < count; ++i)
-        scale = std::max(
-          scale, norm(subtract(vertices[(i + 1) % count], vertices[i])));
       quality.topologicallyValid =
         norm(normal) > 1.e-12 * std::max(scale * scale,
                                         std::numeric_limits<double>::min()) &&
@@ -276,10 +276,19 @@ namespace QuadOptimizer {
         std::max(normalAngle(vertices[0], vertices[1], vertices[2], vertices[3]),
                  normalAngle(vertices[1], vertices[2], vertices[3], vertices[0]));
     }
+    else {
+      normal = cross(subtract(vertices[1], vertices[0]),
+                     subtract(vertices[2], vertices[0]));
+      quality.topologicallyValid =
+        norm(normal) > 1.e-12 * std::max(
+          scale * scale, std::numeric_limits<double>::min());
+    }
 
     double minimumEdge = std::numeric_limits<double>::infinity();
     double maximumEdge = 0.;
     std::vector<double> angles(count);
+    const double orientationTolerance = 1.e-12 * std::max(
+      std::pow(scale, 4), std::numeric_limits<double>::min());
     for(std::size_t i = 0; i < count; ++i) {
       const std::size_t previous = (i + count - 1) % count;
       const std::size_t next = (i + 1) % count;
@@ -290,10 +299,17 @@ namespace QuadOptimizer {
       const Point previousDirection = subtract(vertices[previous], vertices[i]);
       const Point nextDirection = subtract(vertices[next], vertices[i]);
       angles[i] = angleDegrees(previousDirection, nextDirection);
-      if(kind == SurfaceElementKind::Quadrangle &&
-         quality.topologicallyValid &&
-         dot(cross(nextDirection, previousDirection), normal) < 0.)
-        angles[i] = 360. - angles[i];
+      if(kind == SurfaceElementKind::Quadrangle) {
+        // A non-zero polygon normal and the absence of a projected bow-tie
+        // are insufficient in 3D: a concave or folded bilinear quad can still
+        // have a negative corner Jacobian. All four corner normals must have
+        // the same strict orientation as the polygon normal.
+        const double orientation =
+          dot(cross(nextDirection, previousDirection), normal);
+        if(!(orientation > orientationTolerance))
+          quality.topologicallyValid = false;
+        if(orientation < 0.) angles[i] = 360. - angles[i];
+      }
     }
     quality.edgeRatio = minimumEdge > 0. ?
                           maximumEdge / minimumEdge :
@@ -342,6 +358,7 @@ namespace QuadOptimizer {
   SpecificationObjective specificationObjective(const ElementQuality &quality)
   {
     SpecificationObjective objective;
+    objective.invalidElementCount = quality.topologicallyValid ? 0 : 1;
     addUpper(objective, quality.edgeRatio, 5., 10.);
     addUpper(objective, quality.skewingDegrees, 125., 160.);
     const double edgeShape = std::log(std::max(quality.edgeRatio, 1.));
@@ -381,6 +398,7 @@ namespace QuadOptimizer {
   SpecificationObjective &operator+=(SpecificationObjective &left,
                                       const SpecificationObjective &right)
   {
+    left.invalidElementCount += right.invalidElementCount;
     left.absoluteBadElementCount += right.absoluteBadElementCount;
     left.absoluteViolationCount += right.absoluteViolationCount;
     left.worstAbsoluteViolation =
@@ -398,6 +416,8 @@ namespace QuadOptimizer {
                                       const SpecificationObjective &reference,
                                       double tolerance)
   {
+    if(candidate.invalidElementCount != reference.invalidElementCount)
+      return candidate.invalidElementCount < reference.invalidElementCount;
     if(candidate.absoluteBadElementCount != reference.absoluteBadElementCount)
       return candidate.absoluteBadElementCount <
              reference.absoluteBadElementCount;
