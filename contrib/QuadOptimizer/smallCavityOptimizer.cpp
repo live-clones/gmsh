@@ -4831,6 +4831,7 @@ namespace QuadOptimizer {
     {
       ++result.diamondsVisited;
       const CavitySeed &seed = diamond.cavity;
+      const bool fastInteractive = useFastInteractiveCleanUp(options);
       if(options.quadCleanUp) {
         const std::set<MVertex *> protectedVertices =
           protectedFaceVertices(face);
@@ -4912,8 +4913,9 @@ namespace QuadOptimizer {
         ++result.rejectedBySize;
         return false;
       }
-      const SpecificationObjective objective =
-        candidateObjective(quadrangles, xyz);
+      std::size_t candidateInvalidElementCount = 0;
+      const SpecificationObjective objective = candidateObjective(
+        quadrangles, xyz, &candidateInvalidElementCount);
       GeometryDeviation referenceGeometry;
       GeometryDeviation geometry;
       if(options.quadCleanUp &&
@@ -4932,10 +4934,11 @@ namespace QuadOptimizer {
       candidateComparison += unchanged;
       SpecificationObjective referenceComparison = seed.objective;
       referenceComparison += unchanged;
-      if(options.quadCleanUp &&
-         candidateComparison.absoluteBadElementCount ==
-           referenceComparison.absoluteBadElementCount &&
-         objective.absoluteBadElementCount == 0) {
+      if(fastInteractive ||
+         (options.quadCleanUp &&
+          candidateComparison.absoluteBadElementCount ==
+            referenceComparison.absoluteBadElementCount &&
+          objective.absoluteBadElementCount == 0)) {
         referenceGeometry = existingGeometryDeviation(
           face, seed.patch.elements);
         geometry = candidateGeometryDeviation(face, uv, xyz, quadrangles);
@@ -4944,19 +4947,53 @@ namespace QuadOptimizer {
         beforeSize.belowMinimum + beforeSize.aboveMaximum + beforeSize.invalid;
       const std::size_t afterSizeViolations =
         afterSize.belowMinimum + afterSize.aboveMaximum + afterSize.invalid;
-      const CleanUpDecisionReason decision = options.quadCleanUp ?
-        cleanUpDecision(
+      CleanUpDecisionReason decision = CleanUpDecisionReason::Rejected;
+      if(fastInteractive) {
+        if(!referenceGeometry.valid || !geometry.valid) {
+          ++result.rejectedByQuality;
+          return false;
+        }
+        const double target = options.targetSize > 0. ?
+          options.targetSize :
+          std::sqrt(std::max(
+            referenceGeometry.sampledArea /
+              static_cast<double>(
+                std::max<std::size_t>(1, referenceGeometry.elementCount)),
+            std::numeric_limits<double>::min()));
+        const double normalization = std::max(
+          std::max(referenceGeometry.sampledArea, geometry.sampledArea) *
+            target * target,
+          std::numeric_limits<double>::min());
+        const double normalizedCadChange =
+          (geometry.squaredDistanceIntegral -
+           referenceGeometry.squaredDistanceIntegral) /
+          normalization;
+        const FastGlobalQuality candidateQuality = fastGlobalQuality(
+          objective, candidateValence, candidateInvalidElementCount,
+          afterSizeViolations, afterSize.meanSquaredLogRatio,
+          afterSize.edgeCount, normalizedCadChange);
+        const FastGlobalQuality referenceQuality = fastGlobalQuality(
+          seed.objective, seed.valence,
+          topologicallyInvalidElementCount(seed.patch.elements),
+          beforeSizeViolations, beforeSize.meanSquaredLogRatio,
+          beforeSize.edgeCount, 0.);
+        if(improvesFastGlobalQuality(candidateQuality, referenceQuality))
+          decision = CleanUpDecisionReason::OtherImprovement;
+      }
+      else if(options.quadCleanUp) {
+        decision = cleanUpDecision(
           candidateComparison, referenceComparison, geometry,
           referenceGeometry, objective.absoluteBadElementCount == 0,
           candidateValence, seed.valence,
           afterSizeViolations, beforeSizeViolations,
           afterSize.meanSquaredLogRatio, beforeSize.meanSquaredLogRatio,
-          options.objectiveRelativeTolerance) :
-        (noWorseAbsoluteSpecifications(
-           objective, seed.objective,
-           options.objectiveRelativeTolerance) ?
-           CleanUpDecisionReason::OtherImprovement :
-           CleanUpDecisionReason::Rejected);
+          options.objectiveRelativeTolerance);
+      }
+      else if(noWorseAbsoluteSpecifications(
+                objective, seed.objective,
+                options.objectiveRelativeTolerance)) {
+        decision = CleanUpDecisionReason::OtherImprovement;
+      }
       if(!decisionAllowed(decision, phase)) {
         ++result.rejectedByQuality;
         return false;
@@ -4972,7 +5009,9 @@ namespace QuadOptimizer {
       candidate.geometry = geometry;
       candidate.referenceGeometry = referenceGeometry;
       candidate.valence = candidateValence;
+      candidate.invalidElementCount = candidateInvalidElementCount;
       candidate.sizeError = afterSize.meanSquaredLogRatio;
+      candidate.sizeEdgeCount = afterSize.edgeCount;
       candidate.sizeViolationCount = afterSizeViolations;
       candidate.unchangedObjective = unchanged;
       candidate.decisionReason = decision;
@@ -4983,7 +5022,7 @@ namespace QuadOptimizer {
         recordAcceptedCleanUpDecision(result, candidate.decisionReason);
       if(options.quadCleanUp)
         applyCandidateSmoothing(candidate);
-      else
+      else if(!fastInteractive)
         smoothTopologyNeighborhood(face, retainedInterior, options);
       return true;
     }
@@ -7894,10 +7933,10 @@ namespace QuadOptimizer {
         stageChanges += timedCleanUpStage(
           CavityKind::CleanUpConnectivity, options.cleanUpConnectivity,
           false, result.cleanUpConnectivitySeconds, phase);
-        if(useSpecializedCavities) {
+        if(useSpecializedCavities)
           stageChanges += optimizeCavityStage(CavityKind::Node, phase);
+        if(useSpecializedCavities || useFastInteractiveCleanUp(options))
           stageChanges += eliminateAllDiamonds(phase);
-        }
         topologyChanges += stageChanges;
         if(fixedPointCleanUp && stageChanges)
           smoothCleanUpToFixedPoint();
@@ -8251,7 +8290,8 @@ namespace QuadOptimizer {
       else if(options.verbose)
         Msg::Info("QuadOptimizer face %d timing(s): critical=%.6g "
                   "connectivity=%.6g boundary=%.6g shape=%.6g size=%.6g; "
-                  "accepted=%zu/%zu/%zu/%zu pillow=%zu/%zu(%zu quads)",
+                  "accepted=%zu/%zu/%zu/%zu diamonds=%zu "
+                  "pillow=%zu/%zu(%zu quads)",
                   face.faceTag,
                   face.optimizer.cleanUpCriticalSeconds,
                   face.optimizer.cleanUpConnectivitySeconds,
@@ -8262,6 +8302,7 @@ namespace QuadOptimizer {
                   face.optimizer.cleanUpBoundaryAccepted,
                   face.optimizer.cleanUpShapeAccepted,
                   face.optimizer.cleanUpSizeAccepted,
+                  face.optimizer.acceptedDiamonds,
                   face.optimizer.pillowHolesAccepted,
                   face.optimizer.pillowHolesVisited,
                   face.optimizer.pillowQuadranglesInserted);
