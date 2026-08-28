@@ -25,7 +25,6 @@ class openglWindow;
 class onelabWindow;
 class onelabContextWindow;
 class onelabGroup;
-class helpWindow;
 class Fl_Widget;
 class drawContext;
 
@@ -58,7 +57,6 @@ public:
   std::vector<graphicWindow *> graph;
   onelabContextWindow *onelabContext;
   int lastContextWindow;
-  helpWindow *help;
   onelabGroup *onelab;
   openglWindow *fullscreen;
 

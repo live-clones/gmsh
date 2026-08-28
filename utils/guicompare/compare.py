@@ -39,6 +39,9 @@ DIALOG_TITLES = {
     "visibility": "Visibility",
     "plugins": "Plugins",
     "fields": "Size fields",
+    "shortcuts": "Keyboard and Mouse Usage",
+    "listing": "Current Options and Workspace",
+    "about": "About Gmsh",
 }
 
 

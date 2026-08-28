@@ -26,6 +26,7 @@
 #include <FL/fl_ask.H>
 #include <FL/Fl_Preferences.H>
 #include "FlGui.h"
+#include "inputValue.h"
 #include "paletteWindow.h"
 #include "GmshDefines.h"
 #include "OpenFile.h"
@@ -35,6 +36,132 @@
 #include "GModel.h"
 #include "Context.h"
 #include "PView.h"
+
+// The little window that asks for one option, which the toolbar of the graphic
+// window opens on the buttons that take a value -- the clipping factor, the
+// mesh size factor, the number of intervals of a view. It lived in
+// helpWindow.cpp, where the listing of the current options opened it on a
+// double click; that listing is a described dialog now and edits its option in
+// place, but the toolbar still wants this.
+
+struct opt_data {
+  std::string category;
+  int index;
+  std::string name;
+};
+
+static void interactive_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  inputValueFloat *v = (inputValueFloat *)w;
+  opt_data *d = (opt_data *)data;
+  double val = v->value();
+  NumberOption(GMSH_SET | GMSH_GUI, d->category.c_str(), d->index,
+               d->name.c_str(), val);
+  drawContext::global()->draw();
+}
+
+double numberOrStringOptionChooser(const std::string &category, int index,
+                                   const std::string &name, bool isNumber,
+                                   const std::string &title, bool isInteractive,
+                                   double minimum, double maximum, double step)
+{
+  double valn = 0.;
+  std::string vals = "";
+  if(isNumber)
+    NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), valn);
+  else
+    StringOption(GMSH_GET, category.c_str(), index, name.c_str(), vals);
+
+  int nn = (isInteractive ? 2 : 3);
+  int width = nn * BB + (nn + 1) * WB, height = 2 * BH + 3 * WB;
+  std::string t = title;
+  if(t.empty()) t = (isNumber ? "Number Chooser" : "String Chooser");
+  Fl_Window *win = new paletteWindow(width, height, false, t.c_str());
+  win->set_modal();
+  win->hotspot(win);
+  inputValueFloat *number = nullptr;
+  Fl_Input *string = nullptr;
+  if(isNumber) {
+    number = new inputValueFloat(WB, WB, width - 2 * WB, BH);
+    number->value(valn);
+    if(isInteractive) {
+      static opt_data d;
+      d.category = category;
+      d.index = index;
+      d.name = name;
+      number->minimum(minimum);
+      number->maximum(maximum);
+      if(CTX::instance()->inputScrolling) number->step(step, 1);
+      number->callback(interactive_cb, (void *)&d);
+      number->when(FL_WHEN_RELEASE);
+    }
+  }
+  else {
+    string = new Fl_Input(WB, WB, width - 2 * WB, BH);
+    string->value(vals.c_str());
+  }
+  Fl_Button *ok =
+    new Fl_Return_Button(width - nn * BB - nn * WB, 2 * WB + BH, BB, BH, "OK");
+  Fl_Button *def = new Fl_Button(width - (nn - 1) * BB - (nn - 1) * WB,
+                                 2 * WB + BH, BB, BH, "Default");
+  Fl_Button *cancel = nullptr;
+  if(!isInteractive)
+    cancel = new Fl_Button(width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
+  win->end();
+  win->show();
+  if(number) number->take_focus();
+  if(string) string->take_focus();
+  bool done = false;
+  while(win->shown()) {
+    if(done) break;
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == win || o == cancel) {
+        done = true;
+        break;
+      }
+      if(o == ok) {
+        if(isNumber) {
+          valn = number->value();
+          NumberOption(GMSH_SET | GMSH_GUI, category.c_str(), index,
+                       name.c_str(), valn);
+        }
+        else {
+          vals = string->value();
+          StringOption(GMSH_SET | GMSH_GUI, category.c_str(), index,
+                       name.c_str(), vals);
+        }
+        done = true;
+        break;
+      }
+      if(o == def) {
+        if(isNumber) {
+          NumberOption(GMSH_GET_DEFAULT, category.c_str(), index, name.c_str(),
+                       valn);
+          number->value(valn);
+          if(isInteractive) number->do_callback();
+        }
+        else {
+          StringOption(GMSH_GET_DEFAULT, category.c_str(), index, name.c_str(),
+                       vals);
+          string->value(vals.c_str());
+        }
+        break;
+      }
+    }
+  }
+  delete win;
+
+  if(isNumber) {
+    NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), valn);
+    return valn;
+  }
+  else
+    return 0.;
+}
 
 // Arrow editor
 

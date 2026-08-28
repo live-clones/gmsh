@@ -16,7 +16,6 @@ set(SRC
 
     onelabContextWindow.cpp
     onelabGroup.cpp
-    helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp
     classificationEditor.cpp

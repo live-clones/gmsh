@@ -23,7 +23,6 @@
 #include "openglWindow.h"
 #include "dialogFltk.h"
 #include "classificationEditor.h"
-#include "helpWindow.h"
 #include "onelabGroup.h"
 #include "fileDialogs.h"
 #include "Context.h"
@@ -50,6 +49,14 @@ namespace Gui {
   int run(const std::string &optionFileName)
   {
     return FlGui::instance()->run(optionFileName);
+  }
+
+  void copyText(const std::string &text)
+  {
+    // both of them: the selection buffer and the clipboard proper, as the
+    // window this replaces does
+    Fl::copy(text.c_str(), (int)text.size(), 0);
+    Fl::copy(text.c_str(), (int)text.size(), 1);
   }
 
   std::string toolkitVersion()
@@ -227,9 +234,6 @@ namespace Gui {
   {
     FlGui *g = FlGui::instance();
     switch(panel) {
-    case PanelKeyboardAndMouse: return g->help->basic;
-    case PanelCurrentOptions: return g->help->options;
-    case PanelAbout: return g->help->about;
     default: return nullptr;
     }
   }
@@ -247,6 +251,11 @@ namespace Gui {
     if(panel == PanelVisibility) return dialogVisible(Dialog::Visibility);
     if(panel == PanelPlugins) return dialogVisible(Dialog::Plugins);
     if(panel == PanelFields) return dialogVisible(Dialog::Fields);
+    // and so are the three windows of the Help menu
+    if(panel == PanelKeyboardAndMouse) return dialogVisible(Dialog::Shortcuts);
+    if(panel == PanelCurrentOptions)
+      return dialogVisible(Dialog::CurrentOptions);
+    if(panel == PanelAbout) return dialogVisible(Dialog::About);
     // a dialog and an editor: they are shown, never asked about
     if(panel == PanelClassify) return false;
     Fl_Window *w = _panelWindow(panel);
@@ -305,6 +314,19 @@ namespace Gui {
         showDialog(Dialog::Fields, false);
       return;
     }
+    {
+      int dialog = (panel == PanelKeyboardAndMouse) ? Dialog::Shortcuts :
+                   (panel == PanelCurrentOptions)   ? Dialog::CurrentOptions :
+                   (panel == PanelAbout)            ? Dialog::About :
+                                                      -1;
+      if(dialog >= 0) {
+        if(show)
+          Dialog::show(dialog, -1);
+        else
+          showDialog(dialog, false);
+        return;
+      }
+    }
     // these two are not plain windows: one is a dialog, the other an editor
     if(panel == PanelClassify) {
       if(show) mesh_classify_cb(nullptr, nullptr);
@@ -316,9 +338,6 @@ namespace Gui {
       w->hide();
       return;
     }
-    // some of them have something to bring up to date before they are shown
-    if(panel == PanelCurrentOptions)
-      help_options_cb(nullptr, nullptr);
     w->show();
   }
 

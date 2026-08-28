@@ -116,12 +116,18 @@ namespace {
       return (need > BB) ? need : BB;
     }
     if(f.kind == Dialog::Label) {
-      // one that wraps takes the width it is given, whatever it says
+      // one that says how wide it is takes that; one that wraps and does not
+      // takes the width of an ordinary field, whatever it says
+      if(f.widthEm > 0.) return (int)(f.widthEm * FL_NORMAL_SIZE);
       if(f.wraps) return IW;
       fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
       return (int)fl_width(f.getText().c_str()) + FL_NORMAL_SIZE;
     }
     if(f.kind == Dialog::Check) return (int)(1.5 * FL_NORMAL_SIZE);
+    // a list that says how wide it is takes that: what it holds is lines of
+    // text, and nothing about a line says how wide the list should be
+    if((f.kind == Dialog::List || f.kind == Dialog::Tree) && f.widthEm > 0.)
+      return (int)(f.widthEm * FL_NORMAL_SIZE);
     // a swatch says what it is by its colour; it needs no room for text
     if(f.kind == Dialog::Color) return (int)(3. * FL_NORMAL_SIZE);
     // the disc of a direction is square, as tall as the lines it hangs over
@@ -139,8 +145,11 @@ namespace {
     if(f.kind == Dialog::Spacer)
       return (int)((f.widthEm > 0. ? f.widthEm : 2.) * FL_NORMAL_SIZE);
     if(f.disclosure) return BB;
-    if(f.kind == Dialog::Label)
+    if(f.kind == Dialog::Label) {
+      // one that says how wide it is takes that: a column of keys is a column
+      if(f.widthEm > 0.) return (int)(f.widthEm * FL_NORMAL_SIZE);
       return f.wraps ? IW : (int)fl_width(f.getText().c_str()) + WB;
+    }
     if(f.kind == Dialog::Action || f.kind == Dialog::Menu) {
       // one that says how wide it is takes that, the text being inside it
       if(f.widthShare > 0.) return (int)(f.widthShare * IW);
@@ -960,8 +969,18 @@ void dialogFltk::build(int dialog)
     visible.push_back(!q.visible || q.visible());
 
   int formH = 0;
+  // A form longer than a window is worth scrolls, as a pane of a tabbed dialog
+  // does: the keyboard and mouse reference is a page, not a form one fills.
+  _formScrolls = false;
+  _formFills = false;
   if(!_panel.tabbed) {
     for(std::size_t i = 0; i < _panel.panes.size(); i++) {
+      if(_panel.panes[i].scrolling) _formScrolls = true;
+      // and one that holds a field taking whatever is left of it -- a listing
+      // -- has a height of its own rather than one counted in rows
+      for(const auto &f : _panel.panes[i].fields)
+        if((f.kind == Dialog::List || f.kind == Dialog::Tree) && !f.rows)
+          _formFills = true;
       if(!visible[i]) continue;
       formH += (_panel.panes[i].label.size() ? BH : 0) +
                _rows(_panel.panes[i].fields) * BH +
@@ -970,6 +989,16 @@ void dialogFltk::build(int dialog)
     }
     formH += WB;
   }
+  // What it is worth at least: a field that fills what is left of the form --
+  // the listing of the current options is one long list -- counts for no rows
+  // at all, so without this the window would be as tall as its two checks.
+  if(!_panel.tabbed && _panel.leastRows > 0 && formH < _panel.leastRows * BH)
+    formH = _panel.leastRows * BH;
+  // and what of it is shown at once, when it is longer than that
+  int formShown = formH;
+  if(_formScrolls && _panel.leastRows > 0 &&
+     formShown > _panel.leastRows * BH)
+    formShown = _panel.leastRows * BH;
 
   // wide enough for the busiest row of every pane, and never so narrow that a
   // dialog with little in it looks starved. It used to be the width of the
@@ -1044,7 +1073,7 @@ void dialogFltk::build(int dialog)
   int tabRows = 1;
   for(const auto &q : _panel.panes)
     if(q.group.size()) tabRows = 2;
-  int height = (_panel.tabbed ? paneH + tabRows * BH : formH) + headerH +
+  int height = (_panel.tabbed ? paneH + tabRows * BH : formShown) + headerH +
                footerH + buttonH + 2 * WB;
 
   // A window created while a group is open becomes a child of that group, and
@@ -1077,6 +1106,17 @@ void dialogFltk::build(int dialog)
     _addFields(_panel.header, _sideWidth + 2 * WB, y, width, -1);
 
   if(!_panel.tabbed) {
+    // a form that scrolls: its panes are laid out as they always are, and what
+    // does not fit is under the bottom of the box rather than under the bottom
+    // of the window
+    Fl_Scroll *form = nullptr;
+    if(_formScrolls) {
+      form = new Fl_Scroll(WB, y, width - 2 * WB, formShown);
+      form->type(Fl_Scroll::VERTICAL);
+      form->box(FL_FLAT_BOX);
+    }
+    // where a field that fills what is left of the form ends
+    _paneBottom = y + formShown;
     // every pane is built, whether it shows or not: folding one away is then
     // only a matter of moving what is left
     for(std::size_t i = 0; i < _panel.panes.size(); i++) {
@@ -1091,7 +1131,10 @@ void dialogFltk::build(int dialog)
       }
       _sections.push_back(b);
       int rows = _rows(q.fields);
-      _addFields(q.fields, 2 * WB, y, width, (int)i, q.columns);
+      // a form that scrolls ends before its scrollbar, or what it puts at its
+      // right edge is drawn under it
+      _addFields(q.fields, 2 * WB, y,
+                 width - (form ? Fl::scrollbar_size() : 0), (int)i, q.columns);
       if(q.buttonLabel.size()) {
         Fl_Button *pb = new Fl_Button(width - BB - 2 * WB, y, BB, BH);
         pb->copy_label(_escaped(q.buttonLabel).c_str());
@@ -1111,6 +1154,10 @@ void dialogFltk::build(int dialog)
         y += 2 + WB;
       }
       _separators.push_back(line);
+    }
+    if(form) {
+      form->end();
+      y = form->y() + form->h();
     }
     y += WB;
   }
@@ -1524,7 +1571,11 @@ void dialogFltk::refresh()
 
 void dialogFltk::_relayout()
 {
-  if(!_win || _panel.tabbed) return;
+  // A form that scrolls has nothing that folds: moving its panes about inside
+  // the box it scrolls in would only fight with the box. Neither has one whose
+  // fields are as tall as the window is: what is laid out in rows here is not
+  // what says how tall it is.
+  if(!_win || _panel.tabbed || _formScrolls || _formFills) return;
 
   std::vector<bool> visible;
   for(const auto &q : _panel.panes)

@@ -297,9 +297,10 @@ bool appWindow::panelVisible(int panel) const
   case Gui::PanelPlugins: return dialogVisible(Dialog::Plugins);
   case Gui::PanelVisibility: return dialogVisible(Dialog::Visibility);
   case Gui::PanelMessageConsole: return _showConsole;
-  case Gui::PanelKeyboardAndMouse: return _showHelpBasic;
-  case Gui::PanelCurrentOptions: return _showHelpOptions;
-  case Gui::PanelAbout: return _showAbout;
+  // the three windows of the Help menu are described like the other dialogs
+  case Gui::PanelKeyboardAndMouse: return dialogVisible(Dialog::Shortcuts);
+  case Gui::PanelCurrentOptions: return dialogVisible(Dialog::CurrentOptions);
+  case Gui::PanelAbout: return dialogVisible(Dialog::About);
   case Gui::PanelFields: return dialogVisible(Dialog::Fields);
   case Gui::PanelClassify: return _showClassify;
   default: return false;
@@ -325,9 +326,17 @@ void appWindow::showPanel(int panel, bool show)
       hideDialog(Dialog::Visibility);
     break;
   case Gui::PanelMessageConsole: _showConsole = show; break;
-  case Gui::PanelKeyboardAndMouse: _showHelpBasic = show; break;
-  case Gui::PanelCurrentOptions: _showHelpOptions = show; break;
-  case Gui::PanelAbout: _showAbout = show; break;
+  case Gui::PanelKeyboardAndMouse:
+  case Gui::PanelCurrentOptions:
+  case Gui::PanelAbout: {
+    int dialog = (panel == Gui::PanelKeyboardAndMouse) ? Dialog::Shortcuts :
+                 (panel == Gui::PanelCurrentOptions)   ? Dialog::CurrentOptions :
+                                                         Dialog::About;
+    if(show)
+      Dialog::show(dialog, -1);
+    else
+      hideDialog(dialog);
+  } break;
   case Gui::PanelFields:
     // described like the other dialogs now
     if(show)

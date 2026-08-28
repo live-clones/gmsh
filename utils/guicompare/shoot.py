@@ -223,6 +223,25 @@ shot("fields", "help", [M, M + "/Define"], 5, 3, geo=_FIELD,
             "fltk": [(60, 45), (233, 42)],
             "imgui": [(60, 58), (234, 51)]})
 
+# the three windows of the Help menu; About has no accelerator, so it is
+# reached through the menu itself
+keyed("shortcuts", ["ctrl", "h"])
+keyed("listing", ["ctrl", "shift", "h"])
+# and the same listing with a line picked: the converted windows then offer
+# what that option is worth, where one can change it
+SHOTS.append(dict(name="listing-picked", dialog="listing", branches=[],
+                  keys=["ctrl", "shift", "h"],
+                  press={"released": (100, 40), "fltk": (100, 40),
+                         "imgui": (100, 58)}))
+# About has no accelerator: it is reached through the Help menu, whose entries
+# are not in the same place in the three interfaces -- the converted menu
+# writes a check mark beside the entries that show a window, which makes its
+# rows taller. Measured on a picture of the open menu, as everything else here.
+SHOTS.append(dict(name="about-", dialog="about", branches=[],
+                  menu={"released": [(162, 12), (179, 101)],
+                        "fltk": [(162, 12), (180, 109)],
+                        "imgui": [(154, 9), (172, 111)]}))
+
 keyed("statistics", ["ctrl", "i"],
       tabs=[("geometry", 55, 40), ("mesh", 112, 100), ("post", 187, 165)])
 
@@ -259,6 +278,9 @@ TITLES = {
     "visibility": "^Visibility$",
     "plugins": "^Plugins$",
     "fields": "^Size fields$",
+    "shortcuts": "^Keyboard and Mouse Usage$",
+    "listing": "^Current Options and Workspace$",
+    "about": "^About Gmsh$",
 }
 
 # every branch any shot unfolds, deepest first: closing a parent would hide the
@@ -785,7 +807,8 @@ def photograph(dpy, args, specs):
         # whether the window is up -- so typing the chord a second time in the
         # same interface would close the window the shot came to photograph.
         key = (spec["dialog"], spec.get("geo"), tuple(spec["branches"]),
-               name if spec.get("scene") or spec.get("keys") else "")
+               name if spec.get("scene") or spec.get("keys") or spec.get("menu")
+               else "")
         if held and held[0] != key:
             stop_driver(held[1])
             held = None
@@ -802,14 +825,21 @@ def photograph(dpy, args, specs):
             time.sleep(1.0)
         _, win, wx, wy, ww, wh = held[2]
 
-        if spec.get("keys"):
+        if spec.get("keys") or spec.get("menu"):
             # the pointer has to be over the window for the key to
             # reach it
             xtest.fake_input(dpy, X.MotionNotify, x=wx + 120,
                              y=wy + wh - 60)
             dpy.sync()
             time.sleep(0.3)
-            press(dpy, spec["keys"])
+            if spec.get("keys"):
+                press(dpy, spec["keys"])
+            else:
+                # through the menu bar: one click to open the menu, one on the
+                # entry, both given for this interface
+                for mx, my in spec["menu"].get(args.build, []):
+                    click(dpy, wx + mx, wy + my)
+                    time.sleep(0.5)
             time.sleep(0.6)
             wiggle(dpy, wx + 120, wy + wh - 60)
             time.sleep(0.6)

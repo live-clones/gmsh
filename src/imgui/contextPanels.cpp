@@ -772,9 +772,12 @@ namespace {
     const ImGuiStyle &style = ImGui::GetStyle();
     if(f.kind == Dialog::Spacer)
       return (float)(f.widthEm > 0. ? f.widthEm : 2.) * ImGui::GetFontSize();
-    // a line that wraps takes the width it is given, whatever it says
-    if(f.kind == Dialog::Label)
+    // a line that wraps takes the width it is given, whatever it says; one
+    // that says how wide it is takes that, so that a column of keys is one
+    if(f.kind == Dialog::Label) {
+      if(f.widthEm > 0.) return (float)f.widthEm * ImGui::GetFontSize();
       return f.wraps ? item : ImGui::CalcTextSize(f.getText().c_str()).x;
+    }
     if(f.kind == Dialog::Action || f.kind == Dialog::Menu) {
       // one that says how wide it is takes that, the text being inside it
       if(f.widthShare > 0.) return (float)f.widthShare * item;
@@ -934,8 +937,11 @@ namespace {
                                 item * 2.5f;
       }
       else if(f.kind == Dialog::Label) {
-        // one that wraps takes the width it is given, whatever it says
-        here = f.wraps ? item : ImGui::CalcTextSize(f.getText().c_str()).x;
+        // one that says how wide it is takes that; one that wraps and does
+        // not takes the width it is given, whatever it says
+        here = f.widthEm > 0. ? (float)f.widthEm * ImGui::GetFontSize() :
+               f.wraps        ? item :
+                                ImGui::CalcTextSize(f.getText().c_str()).x;
       }
       else if(f.kind == Dialog::Action || f.kind == Dialog::Menu) {
         here = ImGui::CalcTextSize(f.label.c_str()).x +
@@ -1041,7 +1047,7 @@ namespace {
   // `lines` is what the tallest pane is worth, so that a pane that is shorter
   // can be padded and its button land at the bottom right like the others'
   void _paneBody(const Dialog::Pane &q, float width, bool boxed, int lines = 0,
-                 appWindow *window = nullptr)
+                 appWindow *window = nullptr, float reserve = 0.f)
   {
     // In a dialog that is given a size rather than following its contents,
     // every pane is a box of the same height, and what does not fit in it
@@ -1052,6 +1058,8 @@ namespace {
     // line of the box: they belong to the pane, not to what scrolls in it
     float foot = (boxed && (q.buttonLabel.size() || q.beside.size())) ?
                    ImGui::GetFrameHeightWithSpacing() : 0.f;
+    // and what the panel keeps under the pane: its footer, its buttons
+    foot += reserve;
     if(boxed && !ImGui::BeginChild("##pane", ImVec2(0.f, -foot),
                                    ImGuiChildFlags_None)) {
       ImGui::EndChild();
@@ -1330,6 +1338,10 @@ void appWindow::_drawDialog(int which)
   bool scrolls = panel.leastRows > 0;
   for(const auto &q : panel.panes)
     if(q.scrolling) scrolls = true;
+  // A form of several panes -- the keyboard and mouse reference is three --
+  // is one long page: the window itself scrolls it. One of a single pane is a
+  // box that scrolls, so that what fills it stops above the footer.
+  bool wholeScrolls = scrolls && !panel.tabbed && panel.panes.size() != 1;
   // The dialog keeps the width its widest row needs, whichever pane is up and
   // whichever section is folded away: a window that grows sideways as one uses
   // it is a window that will not sit still.
@@ -1380,9 +1392,10 @@ void appWindow::_drawDialog(int which)
   ImGui::SetNextWindowSizeConstraints(ImVec2(need, scrolls ? tall : 0.f),
                                       ImVec2(FLT_MAX, FLT_MAX));
   if(!ImGui::Begin(title.c_str(), &_showDialog[which],
-                   scrolls ? (ImGuiWindowFlags_NoScrollbar |
-                              ImGuiWindowFlags_NoScrollWithMouse) :
-                             ImGuiWindowFlags_AlwaysAutoResize)) {
+                   wholeScrolls ? ImGuiWindowFlags_None :
+                   scrolls      ? (ImGuiWindowFlags_NoScrollbar |
+                                   ImGuiWindowFlags_NoScrollWithMouse) :
+                                  ImGuiWindowFlags_AlwaysAutoResize)) {
     ImGui::End();
     return;
   }
@@ -1428,7 +1441,16 @@ void appWindow::_drawDialog(int which)
       if(q.visible && !q.visible()) continue;
       if(q.label.size()) ImGui::SeparatorText(q.label.c_str());
       ImGui::PushID((int)i);
-      _paneBody(q, width, scrolls);
+      // what has to be left under the last pane: the footer of the panel and
+      // its buttons, which do not scroll with it
+      float reserve = 0.f;
+      if(!wholeScrolls) {
+        if(panel.footer.size())
+          reserve += (float)_rows(panel.footer) *
+                     ImGui::GetFrameHeightWithSpacing();
+        if(panel.buttons.size()) reserve += ImGui::GetFrameHeightWithSpacing();
+      }
+      _paneBody(q, width, scrolls && !wholeScrolls, 0, nullptr, reserve);
       ImGui::PopID();
       if(q.buttonLabel.size()) {
         // against the right edge, where the window this replaces puts it

@@ -129,7 +129,6 @@ private:
   // tab the user picked from one that came up because it was asked for
   int _lastPane[Dialog::NumDialogs];
   // the FLTK interface has three separate help windows, and so does this one
-  bool _showHelpBasic, _showHelpOptions, _showAbout;
   bool _showClassify;
   bool _showOnelabContext;
   int _contextDim, _contextTag, _contextChoice;
@@ -220,8 +219,6 @@ public:
 
 private:
   void _drawDialog(int which);
-  void _drawHelpPanel();
-  void _drawAboutPanel();
   void _drawClassifyPanel();
   void _drawOnelabContextPanel();
   void _handleShortcuts();

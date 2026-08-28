@@ -345,6 +345,9 @@ namespace Dialog {
     Visibility,
     Plugins,
     Fields,
+    Shortcuts,
+    CurrentOptions,
+    About,
     NumDialogs
   };
 
@@ -382,6 +385,12 @@ namespace Dialog {
   Panel plugins();
   // the mesh size fields, what each of them takes, and which is the background
   Panel fields();
+  // what the keyboard and the mouse do, and what the command line takes
+  Panel shortcuts();
+  // what every option is worth right now, and what one may change it to
+  Panel currentOptions();
+  // what this Gmsh is
+  Panel about();
   // show that window with a view picked, as the button of a view does
   void showPluginsForView(int view);
   // what the gamepad is doing and what each of its buttons and axes is for

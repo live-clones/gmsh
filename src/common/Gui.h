@@ -85,6 +85,9 @@ namespace Gui {
   void addMessage(const std::string &msg, int level = MessageDirect);
   // save the contents of the message console
   void saveMessages(const std::string &fileName);
+  // put text on the clipboard: the listing of the current options is read by
+  // picking lines in it and taking a copy of them
+  void copyText(const std::string &text);
   // display a status message ("graphics" prints it in the graphic window
   // instead of the status bar)
   void setStatus(const std::string &msg, bool graphics = false);

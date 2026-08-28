@@ -75,6 +75,11 @@ namespace Gui {
     return appWindow::instance()->run(optionFileName);
   }
 
+  void copyText(const std::string &text)
+  {
+    ImGui::SetClipboardText(text.c_str());
+  }
+
   std::string toolkitVersion()
   {
     std::string s = "Dear ImGui ";

@@ -31,7 +31,6 @@ typedef unsigned long intptr_t;
 #include "GuiDialogs.h"
 #include "GuiMenus.h"
 #include "menuFltk.h"
-#include "helpWindow.h"
 #include "openglWindow.h"
 #include "onelabContextWindow.h"
 #include "onelabGroup.h"
@@ -631,7 +630,7 @@ void file_watch_cb(Fl_Widget *w, void *data)
 
 void help_about_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->help->about->show();
+  Dialog::show(Dialog::About, -1);
 }
 
 void onelab_reload_cb(Fl_Widget *w, void *data)
@@ -1070,8 +1069,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     drawContext::global()->draw();
   }
   else if(what == "?") { // display options
-    help_options_cb(nullptr, nullptr);
-    FlGui::instance()->help->options->show();
+    Dialog::show(Dialog::CurrentOptions, -1);
   }
   else if(what == "p") { // toggle projection mode
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI,

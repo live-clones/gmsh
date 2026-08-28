@@ -44,6 +44,11 @@ private:
   Dialog::Panel _panel;
   // the shape the window was built for; see _signature()
   std::string _signatureBuilt;
+  // the panes of this one are not tabbed and are longer than the window: they
+  // are laid out inside a box that scrolls
+  bool _formScrolls = false;
+  // one of them holds a field that takes whatever is left of the form
+  bool _formFills = false;
   Fl_Window *_win;
   // the row of tabs, one per group of panes when the dialog has groups
   std::vector<Fl_Tabs *> _tabs;

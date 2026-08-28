@@ -23,7 +23,6 @@
 #include "GuiActions.h"
 #include "onelabContextWindow.h"
 #include "onelabGroup.h"
-#include "helpWindow.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"
 #include "GmshDefines.h"
@@ -606,7 +605,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
   // create all other windows
   onelabContext = new onelabContextWindow(CTX::instance()->deltaFontSize);
-  help = new helpWindow();
 
   // draw
   for(std::size_t i = 0; i < graph.size(); i++)
@@ -639,7 +637,6 @@ FlGui::~FlGui()
 
   for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
   delete onelabContext;
-  delete help;
   delete fullscreen;
 }
 
@@ -1172,7 +1169,7 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
 void FlGui::resetVisibility()
 {
   Gui::refreshDialog(Dialog::Visibility);
-  if(help->options->shown()) help_options_cb(nullptr, nullptr);
+  Gui::refreshDialog(Dialog::CurrentOptions);
   statisticsRefresh(false);
 }
 

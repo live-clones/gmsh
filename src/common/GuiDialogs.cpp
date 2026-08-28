@@ -1381,6 +1381,9 @@ namespace Dialog {
     case Visibility: return visibility();
     case Plugins: return plugins();
     case Fields: return fields();
+    case Shortcuts: return shortcuts();
+    case CurrentOptions: return currentOptions();
+    case About: return about();
     default: return Panel();
     }
   }

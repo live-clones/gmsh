@@ -16,7 +16,6 @@ set(SRC
   modulesPanel.cpp
   exportDialog.cpp
   contextPanels.cpp
-  helpPanel.cpp
   fonts.cpp
   meshToolPanels.cpp
   onelabContextPanel.cpp
