@@ -204,8 +204,8 @@ its tallest pane whatever is folded or whichever tab is up. A window that grows
 sideways as one uses it is a window that will not sit still.
 
 Everything that used to be a window of its own is described that way now -- the
-options, the visibility, the plugins, the size fields -- so neither interface
-builds a dialog by hand any more. The last two brought their own vocabulary:
+options, the visibility, the plugins, the size fields, and the three windows of
+the Help menu -- so neither interface builds a dialog by hand any more. The last two brought their own vocabulary:
 what the panes are about, written above the row of tabs (Panel::header) and
 named in bold (Field::heading); what stands on the line of a pane's button and
 outside what scrolls above it (Pane::beside); and a button that drops things to
@@ -219,6 +219,13 @@ shape of the description with the shape it was built for and builds again only
 when they differ, keeping the window where the user put it. Anything a field
 callback still needs after that must be a copy: building again is the end of the
 list it was walking.
+
+A dialog that is one long page rather than a form one fills -- the keyboard and
+mouse reference -- scrolls: its panes are not tabbed, and FLTK puts them inside
+an Fl_Scroll as tall as the panel says it is worth while Dear ImGui lets the
+window itself scroll. A panel of a single pane is a box that scrolls instead, so
+that a list filling it -- the listing of the current options -- stops above the
+footer rather than pushing it out of the window.
 
 FLTK reads "&" in a label as the mark of a keyboard shortcut in menus, buttons
 and inputs -- and only there. A label that is text has to double it for those,
