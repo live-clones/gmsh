@@ -394,6 +394,14 @@ namespace Gui {
     if(available()) appWindow::instance()->setCurrentPane(which);
   }
 
+  void showAllInEveryWindow()
+  {
+    if(!available()) return;
+    for(int i = 0; i < appWindow::instance()->numPanes(); i++)
+      if(scenePane *pane = appWindow::instance()->pane(i))
+        if(drawContext *ctx = pane->getDrawContext()) ctx->showAll();
+  }
+
   void splitCurrentOpenglWindow(char how, double ratio)
   {
     if(available()) appWindow::instance()->splitCurrentPane(how, ratio);

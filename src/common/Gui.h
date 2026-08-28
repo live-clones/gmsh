@@ -215,6 +215,9 @@ void drawTooltip(const std::string &text);
   // override which graphic window should be considered as current, by giving an
   // absolute index amongst all the existing graphic windows
   void setCurrentOpenglWindow(int which);
+  // show every model and every view in every graphic window, undoing what the
+  // visibility panel hid in one of them
+  void showAllInEveryWindow();
   // split the current graphic window ('h', 'v' or 'u')
   void splitCurrentOpenglWindow(char how, double ratio = 0.5);
   // copy the current graphic window to the clipboard

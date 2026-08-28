@@ -464,6 +464,14 @@ void animationRewind();
 
 // append the current visibility information, in .geo format, to the given file
 void visibility_save(const std::string &fileName);
+
+// Hide or show what carries the given number, or every one of them when the
+// number is "*": 0 for nodes, 1 for elements, 2 to 5 for points, curves,
+// surfaces and volumes, 6 to 9 for the physical groups of each.
+void visibilityByNumber(int what, const std::string &value, bool show);
+// Hide or show what one picks in the scene, until one presses 'q': "points to
+// hide", "physical surfaces to show", "show all", and so on.
+void visibilityInteractive(const std::string &what);
 // merge the files matching General.WatchFilePattern that are not loaded yet
 void watchFiles();
 // open a URL in the web browser of the system

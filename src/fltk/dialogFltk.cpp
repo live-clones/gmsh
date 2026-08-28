@@ -220,6 +220,29 @@ namespace {
     return width;
   }
 
+  // How much room the labels that come before their field take, column by
+  // column: they are written to the left of the field, and the fields of a
+  // column line up when every one of them starts after the widest of them.
+  std::vector<int> _gridLabelsBefore(const std::vector<Dialog::Field> &fields,
+                                     int grid)
+  {
+    std::vector<int> width((std::size_t)(grid > 0 ? grid : 1), 0);
+    int column = 0;
+    fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+    for(std::size_t k = 0; k < fields.size(); k++) {
+      const Dialog::Field &f = fields[k];
+      if(!f.sameRow)
+        column = 0;
+      else if(!f.packed)
+        column++;
+      if(column >= (int)width.size()) column = (int)width.size() - 1;
+      if(!f.labelBefore || f.label.empty()) continue;
+      int need = (int)fl_width(_escaped(f.label).c_str()) + WB;
+      if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
+    }
+    return width;
+  }
+
   int _gridWidth(const std::vector<Dialog::Field> &fields, int grid)
   {
     std::vector<int> column = _gridColumns(fields, grid);
@@ -528,6 +551,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     int at = x;
     // on a grid, where a field goes is where its column starts
     std::vector<int> gridW;
+    std::vector<int> before = _gridLabelsBefore(fields, grid);
     int gridColumn = 0; // the column the next field goes in, on this row
     if(grid > 0) {
       gridW = _gridColumns(fields, grid);
@@ -583,6 +607,11 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
         fx = x;
         for(int c = 0; c < gridColumn && c < grid; c++) fx += gridW[(std::size_t)c];
       }
+      // A label that comes before its field is written outside it, to its
+      // left: the field starts after the widest such label of its column, so
+      // that the fields line up and the labels end against them.
+      if(f.labelBefore && f.label.size())
+        fx += before[(std::size_t)(grid > 0 ? gridColumn : 0)];
       // a field of the column down the side is as wide as that column
       if(pane == -2) fieldW = w - fx - WB;
       // and what follows it on the line goes on from where it ends
@@ -664,15 +693,16 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
         // one it only shows, one it chooses from, one or several at a time
         int tall = f.rows * BH;
         if(!f.rows) {
-          // as tall as there is room for, which is the whole of a side column
-          // less whatever comes under it
+          // As tall as there is room for: the whole of the column or of the
+          // pane it is in, less whatever comes under it.
           int under = 0;
           for(std::size_t j = last; j < fields.size(); j++) {
             if(fields[j].sameRow) continue;
             if(fields[j].visible && !fields[j].visible()) continue;
             under++;
           }
-          tall = _sideHeight - (y - WB) - under * BH;
+          tall = (pane == -2) ? _sideHeight - (y - WB) - under * BH :
+                                _paneBottom - y - WB - under * BH;
           if(tall < BH) tall = BH;
         }
         Fl_Browser_ *br;
@@ -682,6 +712,16 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
           br = new Fl_Multi_Browser(fx, y, w - fx - WB, tall);
         else
           br = new Fl_Hold_Browser(fx, y, w - fx - WB, tall);
+        // a list whose lines are columns says how wide each of them is; the
+        // widths have to outlive this call, as the browser keeps the array
+        if(f.columnsEm.size()) {
+          std::vector<int> *widths = new std::vector<int>;
+          for(double em : f.columnsEm)
+            widths->push_back((int)(em * FL_NORMAL_SIZE));
+          widths->push_back(0); // the last column takes what is left
+          ((Fl_Browser *)br)->column_widths(widths->data());
+          ((Fl_Browser *)br)->column_char('\t');
+        }
         br->callback(_fieldCallback, this);
         widget = br;
       } break;
@@ -730,7 +770,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
          f.kind != Dialog::Action && f.kind != Dialog::Direction &&
          f.kind != Dialog::ColorMap &&
          !(f.kind == Dialog::Choice && f.multiple))
-        widget->align(FL_ALIGN_RIGHT);
+        widget->align(f.labelBefore ? FL_ALIGN_LEFT : FL_ALIGN_RIGHT);
       // A field to be looked at twice, in red. On a button whose face is dark
       // it is the face that is coloured, as red text on it would not be read;
       // on a light one it is the text, which is what Gmsh has always done.
@@ -758,14 +798,15 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
         continue;
       if(fields[k].rows > tall) tall = fields[k].rows;
       if(!fields[k].rows) {
-        // one that fills its column: what follows it is at the bottom
+        // one that fills what it is in: what follows it is at the bottom
         int under = 0;
         for(std::size_t j = last; j < fields.size(); j++) {
           if(fields[j].sameRow) continue;
           if(fields[j].visible && !fields[j].visible()) continue;
           under++;
         }
-        int fill = _sideHeight - (y - WB) - under * BH;
+        int fill = (pane == -2) ? _sideHeight - (y - WB) - under * BH :
+                                  _paneBottom - y - WB - under * BH;
         if(fill > tall * BH) tall = fill / BH;
       }
     }
@@ -835,6 +876,10 @@ void dialogFltk::build(int dialog)
   }
   {
     int need = _neededWidth(_panel.footer) + 2 * WB + aside;
+    // when the buttons share the last line of the footer, they need their room
+    // on it too
+    if(_panel.buttonsInFooter)
+      need += (int)_panel.buttons.size() * (BB + WB);
     if(need > width) width = need;
   }
   // and wide enough for the row of tabs itself: a window that fits what its

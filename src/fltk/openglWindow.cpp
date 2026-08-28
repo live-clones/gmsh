@@ -11,7 +11,6 @@
 #include "Gui.h"
 #include "GuiDialogs.h"
 #include "dialogFltk.h"
-#include "visibilityWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -370,7 +369,8 @@ openglWindow *openglWindow::_lastHandled = nullptr;
 void openglWindow::_setLastHandled(openglWindow *w)
 {
   _lastHandled = w;
-  FlGui::instance()->visibility->updatePerWindow();
+  // the panel says what this window shows: it reads it again
+  Gui::refreshDialog(Dialog::Visibility);
 }
 
 int openglWindow::handle(int event)

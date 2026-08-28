@@ -25,7 +25,6 @@ class openglWindow;
 class onelabWindow;
 class fieldWindow;
 class pluginWindow;
-class visibilityWindow;
 class onelabContextWindow;
 class onelabGroup;
 class helpWindow;
@@ -61,7 +60,6 @@ public:
   std::vector<graphicWindow *> graph;
   fieldWindow *fields;
   pluginWindow *plugins;
-  visibilityWindow *visibility;
   onelabContextWindow *onelabContext;
   int lastContextWindow;
   helpWindow *help;

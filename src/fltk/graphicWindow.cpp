@@ -27,7 +27,6 @@ typedef unsigned long intptr_t;
 #include "mainWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
-#include "visibilityWindow.h"
 #include "GuiActions.h"
 #include "GuiDialogs.h"
 #include "GuiMenus.h"

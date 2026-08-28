@@ -9,6 +9,8 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Browser.H>
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Check_Button.H>
 
 class helpWindow {
 public:

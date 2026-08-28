@@ -18,7 +18,6 @@
 #include "graphicWindow.h"
 #include "fieldWindow.h"
 #include "pluginWindow.h"
-#include "visibilityWindow.h"
 #include "Gui.h"
 #include "GuiActions.h"
 #include "GuiDialogs.h"
@@ -610,7 +609,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // create all other windows
   fields = new fieldWindow(CTX::instance()->deltaFontSize);
   plugins = new pluginWindow(CTX::instance()->deltaFontSize);
-  visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
   onelabContext = new onelabContextWindow(CTX::instance()->deltaFontSize);
   help = new helpWindow();
 
@@ -646,7 +644,6 @@ FlGui::~FlGui()
   for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
   delete fields;
   delete plugins;
-  delete visibility;
   delete onelabContext;
   delete help;
   delete fullscreen;
@@ -1187,7 +1184,7 @@ void FlGui::updateFields()
 
 void FlGui::resetVisibility()
 {
-  if(visibility->win->shown()) visibility_cb(nullptr, nullptr);
+  Gui::refreshDialog(Dialog::Visibility);
   if(help->options->shown()) help_options_cb(nullptr, nullptr);
   statisticsRefresh(false);
 }
@@ -1395,8 +1392,6 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->fieldPosition[1] = fields->win->y();
   CTX::instance()->fieldSize[0] = fields->win->w();
   CTX::instance()->fieldSize[1] = fields->win->h();
-  CTX::instance()->visPosition[0] = visibility->win->x();
-  CTX::instance()->visPosition[1] = visibility->win->y();
   if(lastContextWindow == 4) {
     CTX::instance()->ctxPosition[0] = onelabContext->win->x();
     CTX::instance()->ctxPosition[1] = onelabContext->win->y();
@@ -1437,8 +1432,6 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->plugins->win->iconize();
     if(FlGui::instance()->fields->win->shown())
       FlGui::instance()->fields->win->iconize();
-    if(FlGui::instance()->visibility->win->shown())
-      FlGui::instance()->visibility->win->iconize();
   }
   else if(str == "zoom") {
     if(!zoom) {
@@ -1505,8 +1498,6 @@ void window_cb(Fl_Widget *w, void *data)
     }
     if(FlGui::instance()->onelabContext->win->shown())
       FlGui::instance()->onelabContext->win->show();
-    if(FlGui::instance()->visibility->win->shown())
-      FlGui::instance()->visibility->win->show();
   }
 }
 

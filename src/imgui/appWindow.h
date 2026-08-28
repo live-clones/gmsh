@@ -114,7 +114,6 @@ private:
   double _progressValue, _progressMin, _progressMax;
 
   bool _showConsole;
-  bool _showVisibility;
   bool _showColormap;
   bool _showModules;
   bool _showPlugins;
@@ -209,7 +208,6 @@ private:
   void _loadFont();
   // the TrueType file the interface font came from, empty for the built-in one
   std::string _fontFile;
-  void _drawVisibilityPanel();
   void _drawColormapPanel();
   void _drawModulesPanel();
   void _walkModules(const std::vector<Menu::Item> &items, int depth,

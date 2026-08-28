@@ -13,8 +13,7 @@ set(SRC
   menuBar.cpp
   shortcuts.cpp
   panels.cpp
-  visibilityPanel.cpp
-  colormapPanel.cpp
+    colormapPanel.cpp
   modulesPanel.cpp
   exportDialog.cpp
   toolPanels.cpp

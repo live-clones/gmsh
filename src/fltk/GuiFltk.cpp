@@ -25,7 +25,6 @@
 #include "classificationEditor.h"
 #include "fieldWindow.h"
 #include "helpWindow.h"
-#include "visibilityWindow.h"
 #include "pluginWindow.h"
 #include "onelabGroup.h"
 #include "fileDialogs.h"
@@ -225,7 +224,6 @@ namespace Gui {
     FlGui *g = FlGui::instance();
     switch(panel) {
     case PanelPlugins: return g->plugins->win;
-    case PanelVisibility: return g->visibility->win;
     case PanelKeyboardAndMouse: return g->help->basic;
     case PanelCurrentOptions: return g->help->options;
     case PanelAbout: return g->help->about;
@@ -241,7 +239,10 @@ namespace Gui {
       graphicWindow *g = FlGui::instance()->graph[0];
       return g->getMessageHeight() >= FL_NORMAL_SIZE;
     }
+    // the option and visibility windows are described like the other
+    // dialogs now, so they are dialogs
     if(panel == PanelOptions) return dialogVisible(Dialog::Options);
+    if(panel == PanelVisibility) return dialogVisible(Dialog::Visibility);
     // a dialog and an editor: they are shown, never asked about
     if(panel == PanelClassify) return false;
     Fl_Window *w = _panelWindow(panel);
@@ -279,6 +280,13 @@ namespace Gui {
       showDialog(Dialog::Options, show);
       return;
     }
+    if(panel == PanelVisibility) {
+      if(show)
+        Dialog::show(Dialog::Visibility, -1);
+      else
+        showDialog(Dialog::Visibility, false);
+      return;
+    }
     // these two are not plain windows: one is a dialog, the other an editor
     if(panel == PanelClassify) {
       if(show) mesh_classify_cb(nullptr, nullptr);
@@ -291,9 +299,7 @@ namespace Gui {
       return;
     }
     // some of them have something to bring up to date before they are shown
-    if(panel == PanelVisibility)
-      visibility_cb(nullptr, nullptr);
-    else if(panel == PanelCurrentOptions)
+    if(panel == PanelCurrentOptions)
       help_options_cb(nullptr, nullptr);
     w->show();
   }
@@ -385,6 +391,14 @@ namespace Gui {
   void setCurrentOpenglWindow(int which)
   {
     FlGui::instance()->setCurrentOpenglWindow(which);
+  }
+
+  void showAllInEveryWindow()
+  {
+    if(!available()) return;
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+        FlGui::instance()->graph[i]->gl[j]->getDrawContext()->showAll();
   }
 
   void splitCurrentOpenglWindow(char how, double ratio)

@@ -189,6 +189,18 @@ SHOTS.append(dict(name="options-mesh", dialog="options", branches=[],
                   press={"released": (45, 37), "fltk": (45, 40),
                          "imgui": (45, 67)}))
 keyed("clipping", ["ctrl", "shift", "c"])
+# The visibility window, on a model that has something to hide. Every one of
+# its tabs is photographed, and where each tab is, is read off the picture --
+# the released build has one more of them than the converted ones, so they are
+# named per interface.
+SHOTS.append(dict(name="visibility", dialog="visibility", branches=[],
+                  keys=["ctrl", "shift", "v"], geo=_GEO3,
+                  everyTab={"released": ["list", "tree", "numeric",
+                                         "interactive", "per-window"],
+                            "fltk": ["list", "numeric", "interactive",
+                                     "per-window"],
+                            "imgui": ["list", "numeric", "interactive",
+                                      "per-window"]}))
 keyed("statistics", ["ctrl", "i"],
       tabs=[("geometry", 55, 40), ("mesh", 112, 100), ("post", 187, 165)])
 
@@ -222,6 +234,7 @@ TITLES = {
     "statistics": "^Statistics$",
     "clipping": "^Clipping$",
     "options": "^Options",
+    "visibility": "^Visibility$",
 }
 
 # every branch any shot unfolds, deepest first: closing a parent would hide the
@@ -735,6 +748,35 @@ def photograph(dpy, args, specs):
             time.sleep(0.6)
             wiggle(dpy, wx + 120, wy + wh - 60)
             time.sleep(0.6)
+
+            if spec.get("everyTab"):
+                # one picture per tab, whichever interface this is
+                names = spec["everyTab"].get(args.build, [])
+                picture = _dialog_picture(dpy, spec["dialog"], args.build, win,
+                                          ww, wh)
+                found = tab_boundaries(picture, args.build) if picture else []
+                if len(found) != len(names):
+                    print("NOTE %s %s: %d tabs seen, %d expected"
+                          % (args.build, name, len(found), len(names)))
+                for i, x in enumerate(found):
+                    if i >= len(names): break
+                    # not "where": that is the function which says where a row
+                    # of the tree is, and assigning it here would shadow it
+                    place = _dialog_geometry(dpy, spec["dialog"], args.build,
+                                             win, wx, wy)
+                    if not place: break
+                    click(dpy, place[0] + x, place[1] + TAB_ROW[args.build])
+                    time.sleep(0.4)
+                    shot = _dialog_picture(dpy, spec["dialog"], args.build, win,
+                                           ww, wh)
+                    if shot is None:
+                        failures.append("%s-%s: nothing to photograph"
+                                        % (name, names[i]))
+                        continue
+                    out = "%s-%s-%s.png" % (args.build, name, names[i])
+                    shot.save(os.path.join(args.out, out))
+                    print("SHOT %s  %dx%d" % (out, shot.width, shot.height))
+                continue
 
             if spec.get("tab"):
                 # the dialog is up: pick the tab this shot is about

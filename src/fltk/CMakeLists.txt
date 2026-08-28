@@ -15,7 +15,6 @@ set(SRC
     drawContextFltkStringTexture.cpp
     fieldWindow.cpp
     pluginWindow.cpp
-    visibilityWindow.cpp
 
     onelabContextWindow.cpp
     onelabGroup.cpp

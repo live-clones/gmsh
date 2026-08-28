@@ -106,6 +106,11 @@ namespace Dialog {
     std::function<void(int index)> removeItem;
     // how many lines a List takes, or zero for as many as there is room for
     int rows;
+    // The widths of the columns of a List, in multiples of the font size, when
+    // its lines are tab-separated columns rather than plain text: the entities
+    // of the visibility panel are a type, a number and a name. Empty for a
+    // list of plain lines.
+    std::vector<double> columnsEm;
     // List: which entries are chosen and how to change that. Without them the
     // list is only read; `multiple` says whether more than one may be chosen.
     std::function<bool(int index)> chosen;
@@ -140,6 +145,10 @@ namespace Dialog {
     // Integer and Number: what the value may be, and what one step of the
     // arrows is worth. maximum greater than minimum means it is bounded.
     double minimum, maximum, step;
+    // The label comes before the field rather than after it. Every window of
+    // Gmsh writes it after, except the one that hides entities by number,
+    // where the name of what is being hidden reads better in front of it.
+    bool labelBefore;
     // Put this field on the same line as the one before it. That is most of
     // the layout the description carries: the windows it replaces are two or
     // three columns wide in places, and stacking everything in one column
@@ -163,7 +172,8 @@ namespace Dialog {
     Field()
       : kind(Text), text(nullptr), integer(nullptr), number(nullptr),
         flag(nullptr), colour(nullptr), optionIndex(0), list(nullptr), rows(5), multiple(false),
-        alert(false), rule(false), disclosure(false), minimum(0.),
+        alert(false), rule(false), labelBefore(false), disclosure(false),
+        minimum(0.),
         maximum(0.), step(0.), sameRow(false), packed(false), widthEm(0.),
         widthShare(0.)
     {
@@ -284,6 +294,7 @@ namespace Dialog {
     Clipping,
     Options,
     Gamepad,
+    Visibility,
     NumDialogs
   };
 
@@ -312,6 +323,9 @@ namespace Dialog {
   void showOptionsForView(int view);
   // the six planes that cut what is drawn
   Panel clipping();
+  // what of the model is drawn: the list of entities, by number, by picking,
+  // and per graphic window
+  Panel visibility();
   // what the gamepad is doing and what each of its buttons and axes is for
   Panel gamepad();
 

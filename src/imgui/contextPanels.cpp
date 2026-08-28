@@ -149,10 +149,25 @@ namespace {
 
   // one field of a pane, bound to whatever the description points at: a
   // variable of ours or a Gmsh option, which the accessors hide
-  void _field(const Dialog::Field &f, float width)
+  void _field(const Dialog::Field &f, float width, float tall = 0.f,
+              float indent = 0.f)
   {
     bool enabled = f.enabled ? f.enabled() : true;
     ImGui::BeginDisabled(!enabled);
+    // A label that comes before its field rather than after it: it is written
+    // here and hidden from the widget, which keeps it as its identity -- that
+    // is what Dear ImGui reads a name beginning with two hashes as.
+    std::string name = f.labelBefore ? "##" + f.label : f.label;
+    if(f.labelBefore && f.label.size()) {
+      // written to the left of the field, which starts after the widest such
+      // label of its column so that the fields line up
+      float x = ImGui::GetCursorPosX();
+      ImGui::TextUnformatted(f.label.c_str());
+      ImGui::SameLine(x + (indent > 0.f ?
+                             indent :
+                             ImGui::CalcTextSize(f.label.c_str()).x +
+                               ImGui::GetStyle().ItemSpacing.x));
+    }
     bool changed = false;
     // A field to be looked at twice: red, as the window this reproduces has
     // the one button that undoes everything. A button is red in the face,
@@ -192,13 +207,13 @@ namespace {
       // a value one reads: an input that will not take anything
       std::string value = f.getText();
       ImGui::SetNextItemWidth(width);
-      ImGui::InputText(f.label.c_str(), &value,
+      ImGui::InputText(name.c_str(), &value,
                        ImGuiInputTextFlags_ReadOnly);
     } break;
     case Dialog::Action:
       // as wide as its text, unless the description says how wide it is: a
       // button that lines up with the values above it says so
-      if(ImGui::Button(f.label.c_str(),
+      if(ImGui::Button(name.c_str(),
                        ImVec2((f.widthShare > 0. || f.widthEm > 0.) ? width :
                                                                      0.f,
                               0.f)))
@@ -209,7 +224,7 @@ namespace {
       std::string id = "##list" + f.label;
       ImVec2 size(width > 0.f ? width : -FLT_MIN,
                   f.rows ? f.rows * ImGui::GetTextLineHeightWithSpacing() :
-                           -FLT_MIN);
+                  tall > 0.f ? tall : -FLT_MIN);
       if(ImGui::BeginListBox(id.c_str(), size)) {
         if(f.dynamicChoices) {
           // a list one chooses from
@@ -219,13 +234,36 @@ namespace {
           for(std::size_t i = 0; i < labels.size(); i++) {
             bool on = f.chosen ? f.chosen((int)i) : false;
             ImGui::PushID((int)i);
-            if(ImGui::Selectable(labels[i].c_str(), on) && f.choose) {
+            // a line that is columns is picked as one line and written as
+            // several, each where its column starts
+            std::string shown = labels[i];
+            if(f.columnsEm.size()) shown = "##" + std::to_string(i);
+            if(ImGui::Selectable(shown.c_str(), on) && f.choose) {
               if(f.multiple)
                 f.choose((int)i, !on);
               else
                 for(std::size_t k = 0; k < labels.size(); k++)
                   f.choose((int)k, k == i);
               changed = true;
+            }
+            if(f.columnsEm.size()) {
+              ImVec2 at = ImGui::GetItemRectMin();
+              ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
+              float x = at.x;
+              std::size_t start = 0;
+              for(std::size_t c = 0; c <= f.columnsEm.size(); c++) {
+                std::size_t end = labels[i].find('\t', start);
+                std::string cell =
+                  labels[i].substr(start, end == std::string::npos ?
+                                            std::string::npos : end - start);
+                if(cell.size())
+                  ImGui::GetWindowDrawList()->AddText(ImVec2(x, at.y), ink,
+                                                      cell.c_str());
+                if(c < f.columnsEm.size())
+                  x += (float)f.columnsEm[c] * ImGui::GetFontSize();
+                if(end == std::string::npos) break;
+                start = end + 1;
+              }
             }
             ImGui::PopID();
           }
@@ -250,7 +288,7 @@ namespace {
       // A field one may also choose from is two widgets, not one: the arrow
       // has to sit against the input, where a Choice draws its own, so the
       // label is written afterwards by hand rather than by InputText.
-      std::string shown = f.dynamicChoices ? "##" + f.label : f.label;
+      std::string shown = f.dynamicChoices ? "##" + f.label : name;
       if(ImGui::InputText(shown.c_str(), &value)) {
         const_cast<Dialog::Field &>(f).setText(value);
         changed = true;
@@ -274,7 +312,7 @@ namespace {
         }
         if(f.label.size()) {
           ImGui::SameLine(0.f, ImGui::GetStyle().ItemInnerSpacing.x);
-          ImGui::TextUnformatted(f.label.c_str());
+          ImGui::TextUnformatted(name.c_str());
         }
       }
     } break;
@@ -284,7 +322,7 @@ namespace {
       // no arrows: Dear ImGui draws them inside the field, where they take
       // two thirds of a narrow one, and every value in these dialogs is
       // narrow. The step is turned with the wheel instead -- see _wheeled()
-      if(ImGui::InputInt(f.label.c_str(), &value, 0)) {
+      if(ImGui::InputInt(name.c_str(), &value, 0)) {
         const_cast<Dialog::Field &>(f).setNumber(clamped(f, value));
         changed = true;
       }
@@ -311,7 +349,7 @@ namespace {
         snprintf(how, sizeof(how), "%%.%df", digits);
       }
       ImGui::SetNextItemWidth(width);
-      if(ImGui::InputDouble(f.label.c_str(), &value, 0., 0., how)) {
+      if(ImGui::InputDouble(name.c_str(), &value, 0., 0., how)) {
         const_cast<Dialog::Field &>(f).setNumber(clamped(f, value));
         changed = true;
       }
@@ -326,7 +364,7 @@ namespace {
                       CTX::instance()->unpackGreen(packed) / 255.f,
                       CTX::instance()->unpackBlue(packed) / 255.f,
                       CTX::instance()->unpackAlpha(packed) / 255.f};
-      if(ImGui::ColorEdit4(f.label.c_str(), col,
+      if(ImGui::ColorEdit4(name.c_str(), col,
                            ImGuiColorEditFlags_NoInputs |
                              ImGuiColorEditFlags_AlphaPreviewHalf)) {
         const_cast<Dialog::Field &>(f).setColour(CTX::instance()->packColor(
@@ -534,7 +572,7 @@ namespace {
     case Dialog::Check: {
       bool value = f.getFlag();
       if(!f.disclosure) {
-        if(ImGui::Checkbox(f.label.c_str(), &value)) {
+        if(ImGui::Checkbox(name.c_str(), &value)) {
           const_cast<Dialog::Field &>(f).setFlag(value);
           changed = true;
         }
@@ -544,12 +582,12 @@ namespace {
         // it goes, as the window this replaces draws it. Dear ImGui has no
         // arrow in its font, so it draws the triangle itself.
         const ImGuiStyle &style = ImGui::GetStyle();
-        ImVec2 text = ImGui::CalcTextSize(f.label.c_str());
+        ImVec2 text = ImGui::CalcTextSize(name.c_str());
         float arrow = ImGui::GetFrameHeight() * 0.6f;
         float bw = text.x + arrow + style.ItemInnerSpacing.x +
                    2.f * style.FramePadding.x;
         ImVec2 at = ImGui::GetCursorScreenPos();
-        if(ImGui::Button(f.label.c_str(), ImVec2(bw, 0.f))) {
+        if(ImGui::Button(name.c_str(), ImVec2(bw, 0.f))) {
           const_cast<Dialog::Field &>(f).setFlag(!value);
           changed = true;
         }
@@ -571,7 +609,7 @@ namespace {
         std::vector<int> values;
         _dynamic(f, labels, values);
         std::string id = "##menu" + f.label;
-        if(ImGui::Button(f.label.c_str(), ImVec2(width, 0.f)))
+        if(ImGui::Button(name.c_str(), ImVec2(width, 0.f)))
           ImGui::OpenPopup(id.c_str());
         if(ImGui::BeginPopup(id.c_str())) {
           for(std::size_t k = 0; k < labels.size(); k++) {
@@ -602,7 +640,7 @@ namespace {
       }
       const char *preview = (which >= 0) ? labels[which].c_str() : "";
       ImGui::SetNextItemWidth(width);
-      if(ImGui::BeginCombo(f.label.c_str(), preview)) {
+      if(ImGui::BeginCombo(name.c_str(), preview)) {
         for(std::size_t i = 0; i < labels.size(); i++) {
           if(!ImGui::Selectable(labels[i].c_str(), (int)i == which)) continue;
           if(byText)
@@ -694,6 +732,29 @@ namespace {
   {
     if(_sharesCell(fields, k, to)) return (float)fields[k].widthShare * item;
     return _packedWidth(fields[k], item) + ImGui::GetStyle().ItemSpacing.x;
+  }
+
+  // How much room the labels that come before their field take, column by
+  // column: the fields of a column line up when every one of them starts
+  // after the widest of those labels.
+  std::vector<float> _labelsBefore(const std::vector<Dialog::Field> &fields,
+                                   int grid)
+  {
+    std::vector<float> width((std::size_t)(grid > 0 ? grid : 1), 0.f);
+    int column = 0;
+    for(std::size_t k = 0; k < fields.size(); k++) {
+      const Dialog::Field &f = fields[k];
+      if(!f.sameRow)
+        column = 0;
+      else if(!f.packed)
+        column++;
+      if(column >= (int)width.size()) column = (int)width.size() - 1;
+      if(!f.labelBefore || f.label.empty()) continue;
+      float need = ImGui::CalcTextSize(f.label.c_str()).x +
+                   ImGui::GetStyle().ItemSpacing.x;
+      if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
+    }
+    return width;
   }
 
   // Where the columns of a pane laid out on a grid start: a column is as wide
@@ -876,12 +937,15 @@ namespace {
   }
 
   void _fields(const std::vector<Dialog::Field> &fields, float item,
-               int grid = 0);
+               int grid = 0, float reserve = 0.f);
 
   // What a pane holds: its own fields, then the sections under them, each with
   // its label as a heading. A long one scrolls rather than making the window as
   // tall as it is.
-  void _paneBody(const Dialog::Pane &q, float width, bool boxed)
+  // `lines` is what the tallest pane is worth, so that a pane that is shorter
+  // can be padded and its button land at the bottom right like the others'
+  void _paneBody(const Dialog::Pane &q, float width, bool boxed, int lines = 0,
+                 appWindow *window = nullptr)
   {
     // In a dialog that is given a size rather than following its contents,
     // every pane is a box of the same height, and what does not fit in it
@@ -893,7 +957,9 @@ namespace {
       ImGui::EndChild();
       return;
     }
-    _fields(q.fields, width, q.columns);
+    // a pane with a button at its foot leaves it a line of its own
+    _fields(q.fields, width, q.columns,
+            q.buttonLabel.size() ? ImGui::GetFrameHeightWithSpacing() : 0.f);
     for(std::size_t i = 0; i < q.sections.size(); i++) {
       const Dialog::Pane &section = q.sections[i];
       if(section.visible && !section.visible()) continue;
@@ -901,6 +967,35 @@ namespace {
       ImGui::PushID((int)i + 1000);
       _fields(section.fields, width, section.columns);
       ImGui::PopID();
+    }
+    // The pane is padded to the height of the tallest one, so that its button
+    // lands at the bottom right and the window does not change size from one
+    // tab to the next. The button is not given a line of its own: in a pane
+    // that is already as tall as the tallest, it shares the last. It is drawn
+    // inside the box the pane is in, or it would fall out of it.
+    if(lines > 0) {
+      // a pane that holds a list filling what is left is already as tall as
+      // it can be: there is nothing to pad
+      bool fills = false;
+      for(const auto &f : q.fields)
+        if(f.kind == Dialog::List && !f.rows) fills = true;
+      int mine = _rows(q.fields);
+      int pad = fills ? 0 : lines - mine - (q.buttonLabel.size() ? 1 : 0);
+      if(pad > 0)
+        ImGui::Dummy(ImVec2(0.f, pad * ImGui::GetFrameHeightWithSpacing()));
+      if(q.buttonLabel.size()) {
+        const char *label = q.buttonLabel.c_str();
+        float w = ImGui::CalcTextSize(label).x +
+                  2.f * ImGui::GetStyle().FramePadding.x;
+        if(pad < 0) ImGui::SameLine();
+        ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - w);
+        if(ImGui::Button(label, ImVec2(w, 0.f))) {
+          std::function<void()> what = q.button;
+          // an action that may open a dialog of its own has to wait for the
+          // frame to end, as everything else the panels do
+          if(what && window) window->postAction(what);
+        }
+      }
     }
     if(boxed) ImGui::EndChild();
   }
@@ -910,7 +1005,8 @@ namespace {
   // each one at the start of its column is what turns a row of three values
   // into a column of a grid -- letting Dear ImGui put them one after another
   // leaves the headings of a table nowhere near what they head.
-  void _fields(const std::vector<Dialog::Field> &fields, float item, int grid)
+  void _fields(const std::vector<Dialog::Field> &fields, float item, int grid,
+               float reserve)
   {
     std::size_t i = 0;
     while(i < fields.size()) {
@@ -938,6 +1034,7 @@ namespace {
       // the same columns for every row, and lets it take the width it needs:
       // it is what makes the rows of one pane line up with each other.
       std::vector<float> gridW;
+      std::vector<float> before = _labelsBefore(fields, grid);
       if(grid > 0) {
         columns = grid;
         gridW = _gridColumns(fields, grid, item);
@@ -1042,8 +1139,22 @@ namespace {
         // unlabelled boxes of a grid would all be the same widget: hovering
         // and typing would go to whichever it saw first. Where the field
         // stands in its list says which one it is.
+        // a list that fills what it is in leaves room for the lines under it
+        float tall = 0.f;
+        if(f.kind == Dialog::List && !f.rows) {
+          int below = 0;
+          for(std::size_t j = last; j < fields.size(); j++) {
+            if(fields[j].sameRow) continue;
+            if(fields[j].visible && !fields[j].visible()) continue;
+            below++;
+          }
+          tall = ImGui::GetContentRegionAvail().y - reserve -
+                 (float)below * ImGui::GetFrameHeightWithSpacing();
+          if(tall < ImGui::GetFrameHeight()) tall = ImGui::GetFrameHeight();
+        }
         ImGui::PushID((int)k);
-        _field(f, here);
+        _field(f, here, tall,
+               before[(std::size_t)(grid > 0 ? gridColumn : 0)]);
         ImGui::PopID();
         // A direction is drawn over the lines that follow it rather than
         // making its own line that tall: the cursor goes back to where the
@@ -1233,27 +1344,8 @@ void appWindow::_drawDialog(int which)
       Dialog::currentPane(which) = (int)i;
       if((int)i == wanted) _wantedPane[which] = -1;
       ImGui::PushID((int)i);
-      _paneBody(panel.panes[i], width, scrolls);
+      _paneBody(panel.panes[i], width, scrolls, most, this);
       ImGui::PopID();
-      // The pane is padded to the height of the tallest one, so that its
-      // button lands at the bottom right and the window does not change size
-      // from one tab to the next. The button is not given a line of its own:
-      // in a pane that is already as tall as the tallest, it shares the last.
-      int mine = _rows(panel.panes[i].fields);
-      int pad = most - mine - (panel.panes[i].buttonLabel.size() ? 1 : 0);
-      if(pad > 0)
-        ImGui::Dummy(ImVec2(0.f, pad * ImGui::GetFrameHeightWithSpacing()));
-      if(panel.panes[i].buttonLabel.size()) {
-        const char *label = panel.panes[i].buttonLabel.c_str();
-        float w = ImGui::CalcTextSize(label).x +
-                  2.f * ImGui::GetStyle().FramePadding.x;
-        if(pad < 0) ImGui::SameLine();
-        ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - w);
-        if(ImGui::Button(label, ImVec2(w, 0.f))) {
-          std::function<void()> what = panel.panes[i].button;
-          if(what) postAction(what);
-        }
-      }
     };
 
     // The panes of a dialog with more of them than fit across one row are

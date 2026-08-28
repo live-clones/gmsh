@@ -1374,6 +1374,7 @@ namespace Dialog {
     case Clipping: return clipping();
     case Options: return options();
     case Gamepad: return gamepad();
+    case Visibility: return visibility();
     default: return Panel();
     }
   }

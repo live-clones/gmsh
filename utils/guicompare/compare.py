@@ -36,6 +36,7 @@ DIALOG_TITLES = {
     "statistics": "Statistics",
     "clipping": "Clipping",
     "options": "Options",
+    "visibility": "Visibility",
 }
 
 

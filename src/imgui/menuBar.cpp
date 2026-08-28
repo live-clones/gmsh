@@ -295,7 +295,7 @@ bool appWindow::panelVisible(int panel) const
   switch(panel) {
   case Gui::PanelOptions: return _showDialog[Dialog::Options];
   case Gui::PanelPlugins: return _showPlugins;
-  case Gui::PanelVisibility: return _showVisibility;
+  case Gui::PanelVisibility: return dialogVisible(Dialog::Visibility);
   case Gui::PanelMessageConsole: return _showConsole;
   case Gui::PanelKeyboardAndMouse: return _showHelpBasic;
   case Gui::PanelCurrentOptions: return _showHelpOptions;
@@ -311,7 +311,13 @@ void appWindow::showPanel(int panel, bool show)
   switch(panel) {
   case Gui::PanelOptions: _showDialog[Dialog::Options] = show; break;
   case Gui::PanelPlugins: _showPlugins = show; break;
-  case Gui::PanelVisibility: _showVisibility = show; break;
+  case Gui::PanelVisibility:
+    // described like the other dialogs now
+    if(show)
+      Dialog::show(Dialog::Visibility, -1);
+    else
+      hideDialog(Dialog::Visibility);
+    break;
   case Gui::PanelMessageConsole: _showConsole = show; break;
   case Gui::PanelKeyboardAndMouse: _showHelpBasic = show; break;
   case Gui::PanelCurrentOptions: _showHelpOptions = show; break;
