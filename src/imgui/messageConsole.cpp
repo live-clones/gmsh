@@ -14,8 +14,6 @@
 
 #include "messageConsole.h"
 #include "Gui.h"
-#include "GmshMessage.h"
-#include "OS.h"
 
 messageConsole::messageConsole()
   : _maxLines(50000), _autoScroll(true), _scrollToBottom(false)
@@ -35,16 +33,10 @@ void messageConsole::clear()
   _lines.clear();
 }
 
-void messageConsole::save(const std::string &fileName)
+void messageConsole::lines(std::vector<std::string> &out) const
 {
-  FILE *fp = Fopen(fileName.c_str(), "w");
-  if(!fp) {
-    Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return;
-  }
-  for(auto &l : _lines) fprintf(fp, "%s\n", l.text.c_str());
-  fclose(fp);
-  Msg::StatusBar(true, "Wrote '%s'", fileName.c_str());
+  out.clear();
+  for(const auto &l : _lines) out.push_back(l.text);
 }
 
 static ImVec4 _colorForLevel(int level)

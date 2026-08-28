@@ -140,9 +140,10 @@ namespace Gui {
     if(available()) appWindow::instance()->addMessage(msg, level);
   }
 
-  void saveMessages(const std::string &fileName)
+  void messageLines(std::vector<std::string> &lines)
   {
-    if(available()) appWindow::instance()->console()->save(fileName);
+    lines.clear();
+    if(available()) appWindow::instance()->console()->lines(lines);
   }
 
   void setStatus(const std::string &msg, bool graphics)

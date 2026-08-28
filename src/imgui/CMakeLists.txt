@@ -12,7 +12,6 @@ set(SRC
   statusBar.cpp
   menuBar.cpp
   shortcuts.cpp
-  panels.cpp
   modulesPanel.cpp
   exportDialog.cpp
   contextPanels.cpp

@@ -12,6 +12,7 @@
 
 #include <deque>
 #include <string>
+#include <vector>
 
 // The message console, i.e. the Dear ImGui counterpart of messageBrowser: the
 // lines that Msg::Info(), Msg::Warning() etc. send to the GUI, with a regular
@@ -34,7 +35,9 @@ public:
   messageConsole();
   void add(const std::string &msg, int level);
   void clear();
-  void save(const std::string &fileName);
+  // what it holds, in the order it holds it: writing it to a file is the
+  // caller's, which is what keeps this a console and not a part of Gmsh
+  void lines(std::vector<std::string> &out) const;
   std::size_t size() const { return _lines.size(); }
   // draw the contents of the console; the caller owns the Dear ImGui window
   void draw();

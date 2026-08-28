@@ -20,7 +20,6 @@
 #include "menuActions.h"
 #include "GuiMenus.h"
 #include "Gui.h"
-#include "Context.h"
 #include "GmshMessage.h"
 
 // The key of a shortcut, as Dear ImGui names it.
@@ -127,22 +126,20 @@ void appWindow::_handleShortcuts()
   }
 
   // arrows step through the post-processing animation
-  int step = CTX::instance()->post.animStep;
-  int time = !CTX::instance()->post.animCycle;
   if(pressed(ImGuiKey_LeftArrow)) {
-    postAction([time, step]() { animationStep(time, -step); });
+    postAction([]() { animationStepBy(false); });
     return;
   }
   if(pressed(ImGuiKey_RightArrow)) {
-    postAction([time, step]() { animationStep(time, step); });
+    postAction([]() { animationStepBy(true); });
     return;
   }
   if(pressed(ImGuiKey_UpArrow)) {
-    postAction([step]() { animationStep(0, -step); });
+    postAction([]() { animationStepBy(false, true); });
     return;
   }
   if(pressed(ImGuiKey_DownArrow)) {
-    postAction([step]() { animationStep(0, step); });
+    postAction([]() { animationStepBy(true, true); });
     return;
   }
   if(pressed(ImGuiKey_Home)) {

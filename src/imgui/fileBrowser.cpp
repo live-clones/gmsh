@@ -16,11 +16,17 @@
 
 #include "fileBrowser.h"
 #include "GmshMessage.h"
-#include "Context.h"
-#include "GModel.h"
-#include "StringUtils.h"
 
 namespace fs = std::filesystem;
+
+// Where the "Home" button goes. Told to the browser once rather than asked of
+// anyone: a file browser is a file browser.
+static std::string _home = ".";
+
+void fileBrowser::setHome(const std::string &directory)
+{
+  if(directory.size()) _home = directory;
+}
 
 fileBrowser::fileBrowser()
   : _mode(Open), _selected(-1), _active(false), _done(false), _accepted(false),
@@ -46,9 +52,9 @@ void fileBrowser::begin(Mode mode, const std::string &title,
   strncpy(_filter, filter.c_str(), sizeof(_filter) - 1);
   _filter[sizeof(_filter) - 1] = '\0';
 
-  // start in the directory of the given name, or of the current model
+  // start in the directory of the given name, or where the process is: what
+  // file is meant is the caller's to say
   std::string name = initialName;
-  if(name.empty()) name = GModel::current()->getFileName();
   std::error_code ec;
   fs::path p(name);
   fs::path dir = p.has_parent_path() ? p.parent_path() : fs::current_path(ec);
@@ -74,7 +80,12 @@ std::string fileBrowser::result() const
 static bool _matches(const std::string &name, const char *filter)
 {
   if(!filter || !filter[0]) return true;
-  std::string ext = SplitFileName(name)[2];
+  std::size_t dot = name.find_last_of('.');
+  std::size_t slash = name.find_last_of("/\\");
+  std::string ext = (dot != std::string::npos &&
+                     (slash == std::string::npos || dot > slash)) ?
+                      name.substr(dot) :
+                      std::string();
   std::string f(filter);
   std::size_t pos = 0;
   while(pos < f.size()) {
@@ -160,7 +171,7 @@ void fileBrowser::draw()
     }
     ImGui::SameLine();
     if(ImGui::SmallButton("Home")) {
-      _directory = CTX::instance()->homeDir;
+      _directory = _home;
       _needRescan = true;
     }
   }

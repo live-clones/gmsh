@@ -1436,9 +1436,9 @@ void FlGui::addMessage(const char *msg)
   }
 }
 
-void FlGui::saveMessages(const char *fileName)
+void FlGui::messageLines(std::vector<std::string> &lines)
 {
-  FlGui::instance()->graph[0]->saveMessages(fileName);
+  FlGui::instance()->graph[0]->messageLines(lines);
 }
 
 void FlGui::rebuildTree(bool deleteWidgets)

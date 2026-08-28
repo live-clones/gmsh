@@ -221,6 +221,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
 
   _console = new messageConsole();
   _browser = new fileBrowser();
+  fileBrowser::setHome(CTX::instance()->homeDir);
   _panes.push_back(new scenePane());
   _currentPane = _panes[0];
   _paneRoot = new paneNode(_panes[0]);

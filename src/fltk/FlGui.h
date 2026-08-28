@@ -126,7 +126,7 @@ public:
   // add line in message console
   void addMessage(const char *msg);
   // save messages to file
-  void saveMessages(const char *fileName);
+  void messageLines(std::vector<std::string> &lines);
   // rebuild the tree
   void rebuildTree(bool deleteWidgets);
   // toggles the module open or closed based on its current state

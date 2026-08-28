@@ -103,9 +103,10 @@ namespace Gui {
     FlGui::instance()->addMessage((_colorPrefix(level) + msg).c_str());
   }
 
-  void saveMessages(const std::string &fileName)
+  void messageLines(std::vector<std::string> &lines)
   {
-    FlGui::instance()->saveMessages(fileName.c_str());
+    lines.clear();
+    if(available()) FlGui::instance()->messageLines(lines);
   }
 
   void setStatus(const std::string &msg, bool graphics)

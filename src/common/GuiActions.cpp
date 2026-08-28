@@ -897,6 +897,13 @@ void animationStep(int time, int incr, bool redraw)
   busy = false;
 }
 
+void animationStepBy(bool forward, bool views)
+{
+  int step = CTX::instance()->post.animStep;
+  animationStep(views ? 0 : !CTX::instance()->post.animCycle,
+                forward ? step : -step);
+}
+
 void animationRewind()
 {
   if(!CTX::instance()->post.animCycle) {
@@ -1637,6 +1644,20 @@ void solverAction(const std::string &what, int index)
 void solverAction(const std::string &what, int index) {}
 
 #endif
+
+void messagesSave(const std::string &fileName)
+{
+  std::vector<std::string> lines;
+  Gui::messageLines(lines);
+  FILE *fp = Fopen(fileName.c_str(), "w");
+  if(!fp) {
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
+    return;
+  }
+  for(const auto &l : lines) fprintf(fp, "%s\n", l.c_str());
+  fclose(fp);
+  Msg::StatusBar(true, "Wrote '%s'", fileName.c_str());
+}
 
 void optionsRestoreDefaults()
 {

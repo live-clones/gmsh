@@ -40,6 +40,11 @@ void projectQuit();
 // into the per-user option file
 void optionsSave(bool toProjectFile);
 
+// Write what the message console holds to a file. The console hands over its
+// lines through Gui::messageLines(); everything else about it -- opening the
+// file, saying that it was written -- is the same whichever interface is up.
+void messagesSave(const std::string &fileName);
+
 // reset every option to its default value, after confirmation
 void optionsRestoreDefaults();
 // the buttons the option window holds, which do rather than set: picking the
@@ -488,6 +493,11 @@ void viewAction(const std::string &what, int index);
 // advance the animation by incr steps; if time is set the time steps of the
 // visible views are cycled, otherwise the views themselves are
 void animationStep(int time, int incr, bool redraw = true);
+// The same, the way the status bar and the arrow keys ask for it: `forward`
+// says which way, and `views` steps through the views rather than through the
+// time steps. How big a step is, and whether the time steps are cycled, are
+// read from the options here so that nobody outside has to.
+void animationStepBy(bool forward, bool views = false);
 // rewind the animation to its first step (or first view)
 void animationRewind();
 

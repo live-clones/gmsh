@@ -83,8 +83,9 @@ namespace Gui {
 
   // add a line to the message console
   void addMessage(const std::string &msg, int level = MessageDirect);
-  // save the contents of the message console
-  void saveMessages(const std::string &fileName);
+  // What the message console holds, in the order it holds it. Writing it to a
+  // file is done once, in messagesSave(), rather than by each console.
+  void messageLines(std::vector<std::string> &lines);
   // put text on the clipboard: the listing of the current options is read by
   // picking lines in it and taking a copy of them
   void copyText(const std::string &text);

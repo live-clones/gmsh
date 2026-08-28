@@ -895,7 +895,7 @@ static void message_menu_save_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow *)data;
   if(fileChooser(FILE_CHOOSER_CREATE, "Save Messages", ""))
-    g->saveMessages(fileChooserGetName(1).c_str());
+    messagesSave(fileChooserGetName(1));
 }
 
 static void message_browser_cb(Fl_Widget *w, void *data)
@@ -1584,27 +1584,16 @@ void graphicWindow::clearMessages()
   _browser->clear();
 }
 
-void graphicWindow::saveMessages(const char *filename)
+void graphicWindow::messageLines(std::vector<std::string> &lines)
 {
+  lines.clear();
   if(!_browser) return;
-
-  FILE *fp = Fopen(filename, "w");
-
-  if(!fp) {
-    Msg::Error("Unable to open file '%s'", filename);
-    return;
-  }
-
-  Msg::StatusBar(true, "Writing '%s'...", filename);
   for(int i = 1; i <= _browser->size(); i++) {
     const char *c = _browser->text(i);
-    if(c[0] == '@')
-      fprintf(fp, "%s\n", &c[5]);
-    else
-      fprintf(fp, "%s\n", c);
+    // a line the browser colours carries its colour in the first five
+    // characters, which are none of the message
+    lines.push_back((c[0] == '@') ? &c[5] : c);
   }
-  Msg::StatusBar(true, "Done writing '%s'", filename);
-  fclose(fp);
 }
 
 void graphicWindow::copySelectedMessagesToClipboard()

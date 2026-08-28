@@ -126,7 +126,9 @@ public:
   void showHideMessages();
   void addMessage(const char *msg);
   void clearMessages();
-  void saveMessages(const char *filename);
+  // what the browser holds, in the order it holds it: writing it to a file is
+  // done once, in messagesSave()
+  void messageLines(std::vector<std::string> &lines);
   void copySelectedMessagesToClipboard();
   void setMessageFontSize(int size);
   void changeMessageFontSize(int incr);

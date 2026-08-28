@@ -129,11 +129,9 @@ namespace StatusBar {
       rewind.gapBefore = true;
       buttons.push_back(rewind);
     }
-    buttons.push_back(animates(
-      does("<", "gmsh_back", "Step backward (Left arrow)", []() {
-        animationStep(!CTX::instance()->post.animCycle,
-                      -CTX::instance()->post.animStep);
-      })));
+    buttons.push_back(animates(does("<", "gmsh_back",
+                                    "Step backward (Left arrow)",
+                                    []() { animationStepBy(false); })));
     {
       Button play = animates(does(">", "gmsh_play", "Play/pause animation",
                                   Gui::toggleAnimation));
@@ -142,11 +140,9 @@ namespace StatusBar {
       play.on = []() { return Gui::animating(); };
       buttons.push_back(play);
     }
-    buttons.push_back(animates(
-      does(">|", "gmsh_forward", "Step forward (Right arrow)", []() {
-        animationStep(!CTX::instance()->post.animCycle,
-                      CTX::instance()->post.animStep);
-      })));
+    buttons.push_back(animates(does(">|", "gmsh_forward",
+                                    "Step forward (Right arrow)",
+                                    []() { animationStepBy(true); })));
 
     return buttons;
   }

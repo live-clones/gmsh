@@ -22,6 +22,11 @@
 
 class fileBrowser {
 public:
+  // where the "Home" button goes; the caller says once, so that the browser
+  // has nothing to ask anyone
+  static void setHome(const std::string &directory);
+
+public:
   enum Mode { Open, Save };
 
 private:
