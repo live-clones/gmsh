@@ -31,8 +31,6 @@ typedef unsigned long intptr_t;
 #include "GuiDialogs.h"
 #include "GuiMenus.h"
 #include "menuFltk.h"
-#include "fieldWindow.h"
-#include "pluginWindow.h"
 #include "helpWindow.h"
 #include "openglWindow.h"
 #include "onelabContextWindow.h"

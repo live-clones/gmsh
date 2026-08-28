@@ -132,7 +132,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     _lastRefresh(0.), _currentPane(nullptr), _console(nullptr),
     _statusColor(Gui::StatusColorDefault), _progressValue(0.),
     _progressMin(0.), _progressMax(0.), _showConsole(true),
-    _showColormap(false), _showModules(true), _showPlugins(false), _showFields(false), _showHelpBasic(false),
+    _showModules(true), _showHelpBasic(false),
     _showHelpOptions(false), _showAbout(false), _showClassify(false),
     _showOnelabContext(false), _contextDim(-1), _contextTag(0),
     _contextChoice(0),
@@ -991,10 +991,7 @@ void appWindow::_drawPanels(int &sceneX, int &sceneY, int &sceneW, int &sceneH)
 
   _drawTooltip();
   _drawMenuBar();
-  _drawColormapPanel();
   _drawModulesPanel();
-  _drawPluginPanel();
-  _drawFieldPanel();
   for(int i = 0; i < Dialog::NumDialogs; i++) _drawDialog(i);
   _drawHelpPanel();
   _drawAboutPanel();

@@ -53,6 +53,11 @@ namespace Dialog {
     // A hierarchy one folds and unfolds, each line of which may be picked:
     // the visibility panel shows the model that way, entity under entity.
     Tree,
+    // A button that drops a list of things to do rather than of things to
+    // be: the size-field window offers every kind of field it can make, and
+    // every view a field may be drawn on, that way. The list is made when the
+    // button is opened, and picking a line runs it.
+    Menu,
     List, // what has been picked so far, which one may correct
     Spacer // nothing at all: it eats what is left of the line, and never less
            // than widthEm, so that it still separates in a window that fits
@@ -88,6 +93,9 @@ namespace Dialog {
     // effect and no entry in the option table.
     std::function<double()> readNumber;
     std::function<void(double)> writeNumber;
+    // the same for a value that reads and writes as words: readText below says
+    // what it holds, and this is what changing it does
+    std::function<void(const std::string &)> writeText;
     // ColorMap: the table it edits, and what it says over it -- the name of
     // the view and the range of its values. Null when there is nothing to
     // show.
@@ -154,6 +162,13 @@ namespace Dialog {
     // happens -- and the description says the weight rather than the colour,
     // which is the interface's to choose.
     bool alert;
+    // A line that names what is under it rather than saying something about
+    // it: the windows this replaces write the name of the plugin, and of the
+    // size field, in bold over their row of tabs.
+    bool heading;
+    // The line runs on over several lines rather than being cut off: the help
+    // of a plugin is a paragraph, not a label. It is worth `rows` lines.
+    bool wraps;
     // A rule across the pane at the top of this line, as the window this
     // reproduces draws between two groups of options inside one tab. It is
     // not a line of its own: the text of the field is written under it.
@@ -191,10 +206,10 @@ namespace Dialog {
     double widthShare;
     Field()
       : kind(Text), text(nullptr), integer(nullptr), number(nullptr),
-        flag(nullptr), colour(nullptr), optionIndex(0), list(nullptr), rows(5), multiple(false),
-        alert(false), rule(false), labelBefore(false), disclosure(false),
-        minimum(0.),
-        maximum(0.), step(0.), sameRow(false), packed(false), widthEm(0.),
+        flag(nullptr), colour(nullptr), optionIndex(0), list(nullptr),
+        rows(5), multiple(false), alert(false), heading(false), wraps(false),
+        rule(false), disclosure(false), minimum(0.), maximum(0.), step(0.),
+        labelBefore(false), sameRow(false), packed(false), widthEm(0.),
         widthShare(0.)
     {
     }
@@ -242,6 +257,10 @@ namespace Dialog {
     // how the option window is drawn, and the difference with sharing a line
     // is that the columns of two rows line up. Zero shares the line instead.
     int columns;
+    // Fields on the line of that button, to its left, outside whatever
+    // scrolls above them: the window this reproduces puts "Set as background
+    // field" beside Apply, and Record beside Run.
+    std::vector<Field> beside;
     // the button at the bottom of the pane, when it has one
     std::string buttonLabel;
     std::function<void()> button;
@@ -275,6 +294,14 @@ namespace Dialog {
     // selected. It is where a list that says what the panes act upon goes: the
     // clipping window puts what each plane cuts there.
     std::vector<Field> side;
+    // how wide that column is, in multiples of the font size; zero for the
+    // usual width, which is enough for one list of names
+    double sideEm;
+    // Fields shown above the panes, whichever one is selected, and across the
+    // whole width: what the panes are about rather than what they hold. The
+    // plugin and size-field windows write the name of the plugin, or of the
+    // field, over the row of tabs that way.
+    std::vector<Field> header;
     // fields shown below the panes, whichever one is selected
     std::vector<Field> footer;
     // buttons at the very bottom, for the panels that act rather than only hold
@@ -296,7 +323,8 @@ namespace Dialog {
     // is on. Zero lets the panes decide.
     int leastRows;
     Panel()
-      : tabbed(true), refreshEvery(0.), buttonsInFooter(false), leastRows(0)
+      : tabbed(true), sideEm(0.), refreshEvery(0.), buttonsInFooter(false),
+        leastRows(0)
     {
     }
   };
@@ -315,6 +343,8 @@ namespace Dialog {
     Options,
     Gamepad,
     Visibility,
+    Plugins,
+    Fields,
     NumDialogs
   };
 
@@ -340,12 +370,20 @@ namespace Dialog {
   int &optionsView();
   // Show it on a view: the one given, or the one it is already on when that
   // is -1. The categories before the views are not for anyone else to count.
-  void showOptionsForView(int view);
+  // `pane` names the tab to open it on -- "Map" for the colour map of a view
+  // -- and shows whichever was last looked at when it is empty.
+  void showOptionsForView(int view, const std::string &pane = "");
   // the six planes that cut what is drawn
   Panel clipping();
   // what of the model is drawn: the list of entities, by number, by picking,
   // and per graphic window
   Panel visibility();
+  // the plugins, what each of them takes, and what it is run on
+  Panel plugins();
+  // the mesh size fields, what each of them takes, and which is the background
+  Panel fields();
+  // show that window with a view picked, as the button of a view does
+  void showPluginsForView(int view);
   // what the gamepad is doing and what each of its buttons and axes is for
   Panel gamepad();
 

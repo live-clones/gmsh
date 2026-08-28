@@ -34,6 +34,10 @@ public:
   Fl_Window *window() { return _win; }
   // push the values and the enabling into the widgets
   void refresh();
+  // The same, but building the window again first when what it offers has
+  // changed shape rather than only value: the plugin window shows the options
+  // of the plugin one picks, the size-field window those of the field.
+  void reshape();
 
 private:
   int _which;

@@ -1357,12 +1357,17 @@ namespace Dialog {
   int &optionsCategory() { return _state().category; }
   int &optionsView() { return _state().view; }
 
-  void showOptionsForView(int view)
+  void showOptionsForView(int view, const std::string &pane)
   {
     if(view < 0) view = _state().view;
     if(view < 0 || view >= _views()) view = 0;
     if(_views()) _state().category = _numCategories + view;
-    show(Options, -1);
+    // the tab it is to open on, when the caller has one in mind: the colour
+    // map of a view is a tab of this window, not a window of its own
+    int which = -1;
+    for(int i = 0; pane.size() && _viewTabs[i].label; i++)
+      if(pane == _viewTabs[i].label) which = i;
+    show(Options, which);
   }
 
   Panel options()

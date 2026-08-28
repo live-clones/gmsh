@@ -14,7 +14,6 @@ typedef unsigned long intptr_t;
 #include "GuiDialogs.h"
 #include "drawContext.h"
 #include "fileDialogs.h"
-#include "pluginWindow.h"
 #include "Context.h"
 #include "GModel.h"
 #include "PView.h"
@@ -272,6 +271,12 @@ static void view_applybgmesh_cb(Fl_Widget *w, void *data)
 #endif
 }
 
+// the plugins, on this view
+static void _view_plugins_cb(Fl_Widget *w, void *data)
+{
+  Dialog::showPluginsForView((int)(intptr_t)data);
+}
+
 // the option window, on this view
 static void _view_options_cb(Fl_Widget *w, void *data)
 {
@@ -310,8 +315,8 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
 
   _popup->add("Options", 'o', (Fl_Callback *)_view_options_cb,
               (void *)(intptr_t)num, 0);
-  _popup->add("_Plugins", 'p', (Fl_Callback *)plugin_cb, (void *)(intptr_t)num,
-              0);
+  _popup->add("_Plugins", 'p', (Fl_Callback *)_view_plugins_cb,
+              (void *)(intptr_t)num, 0);
 
   _popup->add("Reload", 'r', (Fl_Callback *)view_reload_cb,
               (void *)(intptr_t)num, 0);

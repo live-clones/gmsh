@@ -294,13 +294,13 @@ bool appWindow::panelVisible(int panel) const
 {
   switch(panel) {
   case Gui::PanelOptions: return _showDialog[Dialog::Options];
-  case Gui::PanelPlugins: return _showPlugins;
+  case Gui::PanelPlugins: return dialogVisible(Dialog::Plugins);
   case Gui::PanelVisibility: return dialogVisible(Dialog::Visibility);
   case Gui::PanelMessageConsole: return _showConsole;
   case Gui::PanelKeyboardAndMouse: return _showHelpBasic;
   case Gui::PanelCurrentOptions: return _showHelpOptions;
   case Gui::PanelAbout: return _showAbout;
-  case Gui::PanelFields: return _showFields;
+  case Gui::PanelFields: return dialogVisible(Dialog::Fields);
   case Gui::PanelClassify: return _showClassify;
   default: return false;
   }
@@ -310,7 +310,13 @@ void appWindow::showPanel(int panel, bool show)
 {
   switch(panel) {
   case Gui::PanelOptions: _showDialog[Dialog::Options] = show; break;
-  case Gui::PanelPlugins: _showPlugins = show; break;
+  case Gui::PanelPlugins:
+    // described like the other dialogs now
+    if(show)
+      Dialog::show(Dialog::Plugins, -1);
+    else
+      hideDialog(Dialog::Plugins);
+    break;
   case Gui::PanelVisibility:
     // described like the other dialogs now
     if(show)
@@ -322,7 +328,13 @@ void appWindow::showPanel(int panel, bool show)
   case Gui::PanelKeyboardAndMouse: _showHelpBasic = show; break;
   case Gui::PanelCurrentOptions: _showHelpOptions = show; break;
   case Gui::PanelAbout: _showAbout = show; break;
-  case Gui::PanelFields: _showFields = show; break;
+  case Gui::PanelFields:
+    // described like the other dialogs now
+    if(show)
+      Dialog::show(Dialog::Fields, -1);
+    else
+      hideDialog(Dialog::Fields);
+    break;
   case Gui::PanelClassify: _showClassify = show; break;
   default: break;
   }

@@ -23,9 +23,7 @@
 #include "openglWindow.h"
 #include "dialogFltk.h"
 #include "classificationEditor.h"
-#include "fieldWindow.h"
 #include "helpWindow.h"
-#include "pluginWindow.h"
 #include "onelabGroup.h"
 #include "fileDialogs.h"
 #include "Context.h"
@@ -147,7 +145,13 @@ namespace Gui {
     FlGui::instance()->updateViews(numberOfViewsHasChanged, deleteWidgets);
   }
 
-  void updateFields() { FlGui::instance()->updateFields(); }
+  void updateFields()
+  {
+    // the fields of the model have changed: the window that shows them has
+    // one line more or one option fewer, which is a matter of shape
+    dialogFltk *d = fltkDialog(Dialog::Fields, false);
+    if(d && d->shown()) d->reshape();
+  }
 
 
   void rebuildTree(bool deleteWidgets)
@@ -223,11 +227,9 @@ namespace Gui {
   {
     FlGui *g = FlGui::instance();
     switch(panel) {
-    case PanelPlugins: return g->plugins->win;
     case PanelKeyboardAndMouse: return g->help->basic;
     case PanelCurrentOptions: return g->help->options;
     case PanelAbout: return g->help->about;
-    case PanelFields: return g->fields->win;
     default: return nullptr;
     }
   }
@@ -243,6 +245,8 @@ namespace Gui {
     // dialogs now, so they are dialogs
     if(panel == PanelOptions) return dialogVisible(Dialog::Options);
     if(panel == PanelVisibility) return dialogVisible(Dialog::Visibility);
+    if(panel == PanelPlugins) return dialogVisible(Dialog::Plugins);
+    if(panel == PanelFields) return dialogVisible(Dialog::Fields);
     // a dialog and an editor: they are shown, never asked about
     if(panel == PanelClassify) return false;
     Fl_Window *w = _panelWindow(panel);
@@ -285,6 +289,20 @@ namespace Gui {
         Dialog::show(Dialog::Visibility, -1);
       else
         showDialog(Dialog::Visibility, false);
+      return;
+    }
+    if(panel == PanelPlugins) {
+      if(show)
+        Dialog::show(Dialog::Plugins, -1);
+      else
+        showDialog(Dialog::Plugins, false);
+      return;
+    }
+    if(panel == PanelFields) {
+      if(show)
+        Dialog::show(Dialog::Fields, -1);
+      else
+        showDialog(Dialog::Fields, false);
       return;
     }
     // these two are not plain windows: one is a dialog, the other an editor

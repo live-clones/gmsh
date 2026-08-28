@@ -118,6 +118,36 @@ namespace Dialog {
     return f;
   }
 
+  // Words that live somewhere the description cannot point at: what the field
+  // shows and what changing it does are given as a pair of functions, the way
+  // a number can be.
+  inline Field edits(const std::string &label,
+                     std::function<std::string()> read,
+                     std::function<void(const std::string &)> write)
+  {
+    Field f;
+    f.kind = Text;
+    f.label = label;
+    f.readText = read;
+    f.writeText = write;
+    return f;
+  }
+
+  // A button that drops a list of things to do: `what` fills the list when it
+  // is opened, and picking the line of index i runs `pick(i)`.
+  inline Field menu(const std::string &label,
+                    std::function<void(std::vector<std::string> &,
+                                       std::vector<int> &)> what,
+                    std::function<void(int)> pick)
+  {
+    Field f;
+    f.kind = Menu;
+    f.label = label;
+    f.dynamicChoices = what;
+    f.choose = [pick](int i, bool) { pick(i); };
+    return f;
+  }
+
   // a button in the flow of the fields
   inline Field does(const std::string &label, std::function<void()> what)
   {
@@ -186,6 +216,14 @@ namespace Dialog {
     Field f;
     f.kind = Label;
     f.readText = what;
+    return f;
+  }
+
+  // a line that names what is under it, rather than saying something about it
+  inline Field names(std::function<std::string()> what)
+  {
+    Field f = says(what);
+    f.heading = true;
     return f;
   }
 

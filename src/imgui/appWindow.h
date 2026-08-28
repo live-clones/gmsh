@@ -114,10 +114,7 @@ private:
   double _progressValue, _progressMin, _progressMax;
 
   bool _showConsole;
-  bool _showColormap;
   bool _showModules;
-  bool _showPlugins;
-  bool _showFields;
   // the four context dialogs of GuiDialogs.h, and which of them has just been
   // asked for and must be brought forward
   bool _showDialog[Dialog::NumDialogs], _focusDialog[Dialog::NumDialogs];
@@ -208,7 +205,6 @@ private:
   void _loadFont();
   // the TrueType file the interface font came from, empty for the built-in one
   std::string _fontFile;
-  void _drawColormapPanel();
   void _drawModulesPanel();
   void _walkModules(const std::vector<Menu::Item> &items, int depth,
                     const std::string &path);
@@ -223,8 +219,6 @@ public:
   void closeTreeItem(const std::string &name) { _treeWanted[name] = false; }
 
 private:
-  void _drawPluginPanel();
-  void _drawFieldPanel();
   void _drawDialog(int which);
   void _drawHelpPanel();
   void _drawAboutPanel();

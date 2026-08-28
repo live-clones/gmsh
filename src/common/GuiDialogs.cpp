@@ -87,6 +87,10 @@ namespace Dialog {
                    optionName.c_str(), s, false);
       return;
     }
+    if(writeText) {
+      writeText(v);
+      return;
+    }
     if(text) *text = v;
   }
 
@@ -1375,6 +1379,8 @@ namespace Dialog {
     case Options: return options();
     case Gamepad: return gamepad();
     case Visibility: return visibility();
+    case Plugins: return plugins();
+    case Fields: return fields();
     default: return Panel();
     }
   }

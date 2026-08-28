@@ -13,8 +13,6 @@ set(SRC
       colorbarWindow.cpp
     drawContextFltkCairo.cpp
     drawContextFltkStringTexture.cpp
-    fieldWindow.cpp
-    pluginWindow.cpp
 
     onelabContextWindow.cpp
     onelabGroup.cpp

@@ -355,11 +355,20 @@ void appWindow::_drawModulesPanel()
       snprintf(label, sizeof(label), "[%d] %s", (int)i,
                PView::list[i]->getData()->getName().c_str());
       if(ImGui::Selectable(label)) {
-        _showColormap = true; // a click opens the colour map of that view
+        // a click opens the colour map of that view, which is a tab of the
+        // option window and not a window of its own
+        int index = (int)i;
+        postAction([index]() { Dialog::showOptionsForView(index, "Map"); });
       }
       if(ImGui::BeginPopupContextItem("##viewmenu")) {
-        if(ImGui::MenuItem("Options...")) _showDialog[Dialog::Options] = true;
-        if(ImGui::MenuItem("Colour map...")) _showColormap = true;
+        if(ImGui::MenuItem("Options...")) {
+          int index = (int)i;
+          postAction([index]() { Dialog::showOptionsForView(index); });
+        }
+        if(ImGui::MenuItem("Colour map...")) {
+          int index = (int)i;
+          postAction([index]() { Dialog::showOptionsForView(index, "Map"); });
+        }
         ImGui::Separator();
         if(ImGui::MenuItem("Remove")) {
           int index = (int)i;

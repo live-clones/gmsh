@@ -23,8 +23,6 @@
 class graphicWindow;
 class openglWindow;
 class onelabWindow;
-class fieldWindow;
-class pluginWindow;
 class onelabContextWindow;
 class onelabGroup;
 class helpWindow;
@@ -58,8 +56,6 @@ public:
 
 public:
   std::vector<graphicWindow *> graph;
-  fieldWindow *fields;
-  pluginWindow *plugins;
   onelabContextWindow *onelabContext;
   int lastContextWindow;
   helpWindow *help;
@@ -110,8 +106,6 @@ public:
   void setGraphicTitle(const std::string &title);
   // update the GUI when views get modified, added or deleted
   void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets);
-  // update the GUI when fields change
-  void updateFields();
   // reset the visibility window
   void resetVisibility();
   // store current window positions and sizes in CTX

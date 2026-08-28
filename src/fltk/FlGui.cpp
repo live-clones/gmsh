@@ -16,8 +16,6 @@
 #include "drawContextFltk.h"
 #include "drawContextFltkCairo.h"
 #include "graphicWindow.h"
-#include "fieldWindow.h"
-#include "pluginWindow.h"
 #include "Gui.h"
 #include "GuiActions.h"
 #include "GuiDialogs.h"
@@ -607,8 +605,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fullscreen->end();
 
   // create all other windows
-  fields = new fieldWindow(CTX::instance()->deltaFontSize);
-  plugins = new pluginWindow(CTX::instance()->deltaFontSize);
   onelabContext = new onelabContextWindow(CTX::instance()->deltaFontSize);
   help = new helpWindow();
 
@@ -642,8 +638,6 @@ FlGui::~FlGui()
   }
 
   for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
-  delete fields;
-  delete plugins;
   delete onelabContext;
   delete help;
   delete fullscreen;
@@ -908,9 +902,9 @@ int FlGui::testGlobalShortcuts(int event)
     if(PView::list.size()) {
       if(Dialog::optionsView() >= 0 &&
          Dialog::optionsView() < (int)PView::list.size())
-        plugins->show(Dialog::optionsView());
+        Dialog::showPluginsForView(Dialog::optionsView());
       else
-        plugins->show(0);
+        Dialog::showPluginsForView(0);
     }
     status = 1;
   }
@@ -1168,18 +1162,11 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
     // the option window is described once and reads what it shows, views
     // included: it wants nothing when their number changes
     Gui::refreshDialog(Dialog::Options);
-    fields->loadFieldViewList();
-    plugins->resetViewBrowser();
+    // and the size-field window offers the views a field may be drawn on
+    Gui::updateFields();
     Gui::refreshDialog(Dialog::Clipping);
     statisticsRefresh(false);
   }
-}
-
-void FlGui::updateFields()
-{
-#if defined(HAVE_MESH)
-  fields->editField(GModel::current()->getFields()->get(fields->selected_id));
-#endif
 }
 
 void FlGui::resetVisibility()
@@ -1384,14 +1371,6 @@ void FlGui::storeCurrentWindowsInfo()
   }
   else
     CTX::instance()->detachedMenu = 0;
-  CTX::instance()->pluginPosition[0] = plugins->win->x();
-  CTX::instance()->pluginPosition[1] = plugins->win->y();
-  CTX::instance()->pluginSize[0] = plugins->win->w();
-  CTX::instance()->pluginSize[1] = plugins->win->h();
-  CTX::instance()->fieldPosition[0] = fields->win->x();
-  CTX::instance()->fieldPosition[1] = fields->win->y();
-  CTX::instance()->fieldSize[0] = fields->win->w();
-  CTX::instance()->fieldSize[1] = fields->win->h();
   if(lastContextWindow == 4) {
     CTX::instance()->ctxPosition[0] = onelabContext->win->x();
     CTX::instance()->ctxPosition[1] = onelabContext->win->y();
@@ -1428,10 +1407,6 @@ void window_cb(Fl_Widget *w, void *data)
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       if(FlGui::instance()->graph[i]->getWindow()->shown())
         FlGui::instance()->graph[i]->getWindow()->iconize();
-    if(FlGui::instance()->plugins->win->shown())
-      FlGui::instance()->plugins->win->iconize();
-    if(FlGui::instance()->fields->win->shown())
-      FlGui::instance()->fields->win->iconize();
   }
   else if(str == "zoom") {
     if(!zoom) {
@@ -1488,10 +1463,6 @@ void window_cb(Fl_Widget *w, void *data)
     // the order is important!
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->getWindow()->show();
-    if(FlGui::instance()->plugins->win->shown())
-      FlGui::instance()->plugins->win->show();
-    if(FlGui::instance()->fields->win->shown())
-      FlGui::instance()->fields->win->show();
     for(int i = 0; i < Dialog::NumDialogs; i++) {
       dialogFltk *d = fltkDialog(i);
       if(d && d->shown()) d->window()->show();

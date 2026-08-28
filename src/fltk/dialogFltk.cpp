@@ -49,10 +49,12 @@ namespace {
     for(std::size_t i = 0; i < fields.size(); i++) {
       if(fields[i].sameRow && i) continue;
       if(fields[i].visible && !fields[i].visible()) continue;
-      // a list, a tree and a colour map are worth as many lines as they show
+      // a list, a tree, a colour map and a line that wraps are worth as many
+      // lines as they show
       rows += (fields[i].kind == Dialog::List ||
                fields[i].kind == Dialog::Tree ||
-               fields[i].kind == Dialog::ColorMap) ?
+               fields[i].kind == Dialog::ColorMap ||
+               (fields[i].kind == Dialog::Label && fields[i].wraps)) ?
                 fields[i].rows :
                 1;
     }
@@ -62,6 +64,13 @@ namespace {
   // FLTK reads "&" in a label as the mark of a keyboard shortcut and does not
   // draw it. A label is text here, so an ampersand has to be doubled to come
   // out as one -- "Colours & light" is a tab, not a shortcut.
+  // ...and only those widgets: a plain box, a group, a tab and a line of a
+  // tree draw what they are given. FLTK says which -- the menus, the buttons
+  // and the inputs read the ampersand; nothing else does -- and doubling it
+  // for the others would put two of them on the screen.
+  std::string _escaped(const std::string &label);
+  const std::string &_plain(const std::string &label) { return label; }
+
   std::string _escaped(const std::string &label)
   {
     std::string out;
@@ -99,7 +108,7 @@ namespace {
   {
     if(f.disclosure) return BB;
     if(f.kind == Dialog::Spacer) return 0;
-    if(f.kind == Dialog::Action) {
+    if(f.kind == Dialog::Action || f.kind == Dialog::Menu) {
       // a button is as wide as the text it carries inside, never narrower
       // than an ordinary one
       fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
@@ -107,6 +116,8 @@ namespace {
       return (need > BB) ? need : BB;
     }
     if(f.kind == Dialog::Label) {
+      // one that wraps takes the width it is given, whatever it says
+      if(f.wraps) return IW;
       fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
       return (int)fl_width(f.getText().c_str()) + FL_NORMAL_SIZE;
     }
@@ -129,8 +140,8 @@ namespace {
       return (int)((f.widthEm > 0. ? f.widthEm : 2.) * FL_NORMAL_SIZE);
     if(f.disclosure) return BB;
     if(f.kind == Dialog::Label)
-      return (int)fl_width(f.getText().c_str()) + WB;
-    if(f.kind == Dialog::Action) {
+      return f.wraps ? IW : (int)fl_width(f.getText().c_str()) + WB;
+    if(f.kind == Dialog::Action || f.kind == Dialog::Menu) {
       // one that says how wide it is takes that, the text being inside it
       if(f.widthShare > 0.) return (int)(f.widthShare * IW);
       if(f.widthEm > 0.) return (int)(f.widthEm * FL_NORMAL_SIZE);
@@ -212,7 +223,8 @@ namespace {
         const Dialog::Field &l = fields[j - 1];
         fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
         if(l.kind == Dialog::Check || l.kind == Dialog::Action ||
-           l.kind == Dialog::Label || l.kind == Dialog::Direction ||
+           l.kind == Dialog::Menu || l.kind == Dialog::Label ||
+           l.kind == Dialog::Direction ||
            (l.kind == Dialog::Choice && l.multiple))
           need -= _packedWidth(l);
         else
@@ -310,6 +322,7 @@ namespace {
       if(fields[k].visible && !fields[k].visible()) continue;
       // a plain line and a button carry their text inside
       int label = (fields[k].kind == Dialog::Label ||
+                   fields[k].kind == Dialog::Menu ||
                    fields[k].kind == Dialog::Action) ?
                     0 :
                     (int)fl_width(fields[k].label.c_str());
@@ -396,7 +409,10 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
   dialogFltk *d = (dialogFltk *)data;
   for(auto &b : d->_fields) {
     if(b.widget != w) continue;
-    Dialog::Field &f = b.field;
+    // A copy, not the field itself: what the field does may build the dialog
+    // again -- picking a plugin changes the options shown -- and that is the
+    // end of the list this is walking.
+    Dialog::Field f = b.field;
     switch(f.kind) {
     case Dialog::Text:
       if(Fl_Input_Choice *c = dynamic_cast<Fl_Input_Choice *>(w))
@@ -437,6 +453,14 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
         f.choose((int)(intptr_t)item->user_data(), false);
     } break;
     case Dialog::ColorMap: break; // it edits the table itself
+    case Dialog::Menu: {
+      // the line that was picked is the thing to do
+      Fl_Menu_Button *m = (Fl_Menu_Button *)w;
+      const Fl_Menu_Item *item = m->mvalue();
+      if(item && f.choose)
+        for(int k = 0; k < m->size() - 1; k++)
+          if(&m->menu()[k] == item) f.choose(k, true);
+    } break;
     case Dialog::Label:
     case Dialog::Output:
     case Dialog::Action:
@@ -485,7 +509,9 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
     if(f.changed) f.changed();
     break;
   }
-  d->refresh();
+  // picking in one field can change what the others are: the plugin window
+  // shows the options of the plugin one picks
+  d->reshape();
 }
 
 // the user clicked a tab: the description must follow, or the next refresh
@@ -524,10 +550,22 @@ void dialogFltk::_tabCallback(Fl_Widget *w, void *data)
   d->refresh();
 }
 
+// What a button of a dialog carries: the dialog it belongs to, so that it can
+// be built again when what it did changed its shape, and the thing to do. The
+// description owns the action; the window owns a copy of it.
+struct buttonAction {
+  dialogFltk *dialog;
+  std::function<void()> what;
+};
+
 void dialogFltk::_buttonCallback(Fl_Widget *w, void *data)
 {
-  std::function<void()> *what = (std::function<void()> *)data;
-  if(what && *what) (*what)();
+  buttonAction *a = (buttonAction *)data;
+  if(!a) return;
+  if(a->what) a->what();
+  // what it did may have changed the shape of the dialog: a field deleted is
+  // one option fewer to show
+  if(a->dialog) a->dialog->reshape();
 }
 
 void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
@@ -602,7 +640,8 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // text and no wider -- which is also the room the line was measured to
       // leave it. Given the width of an ordinary button it would overlap the
       // one after it, and the last of a row would be cut off by the edge.
-      if(f.packed && f.kind == Dialog::Action) fieldW = _packedWidth(f);
+      if(f.packed && (f.kind == Dialog::Action || f.kind == Dialog::Menu))
+        fieldW = _packedWidth(f);
       // On a grid, a cell is a field and whatever is packed against it; the
       // first field of a line begins one, and every field after it that is
       // not packed begins the next. A field that begins a cell goes where its
@@ -627,8 +666,10 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // that the fields line up and the labels end against them.
       if(f.labelBefore && f.label.size())
         fx += before[(std::size_t)(grid > 0 ? gridColumn : 0)];
-      // a field of the column down the side is as wide as that column
-      if(pane == -2) fieldW = w - fx - WB;
+      // a field of the column down the side is as wide as that column,
+      // unless it says how wide it is: the plugins are a list of names and a
+      // list of views side by side there
+      if(pane == -2 && f.widthEm <= 0.) fieldW = w - fx - WB;
       // and what follows it on the line goes on from where it ends
       if(grid > 0)
         at = fx + (f.packed ? _packedStep(fields, k, last) :
@@ -687,6 +728,7 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
         break;
       case Dialog::Label: {
         // a rule across the pane, and the line written under it
+        // (a line that wraps is worth as many lines as it says)
         if(f.rule) {
           Fl_Box *line = new Fl_Box(fx, y, w - fx - WB, 2);
           line->box(FL_ENGRAVED_FRAME);
@@ -695,8 +737,14 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
         // it says what it says and no more, on a grid where a column follows
         // it; on its own line it runs to the edge, as a caption does
         Fl_Box *b = new Fl_Box(fx, y + (f.rule ? 1 : 0),
-                               grid > 0 ? fieldW : w - fx - WB, BH);
-        b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+                               (grid > 0 && !f.wraps) ? fieldW : w - fx - WB,
+                               (f.wraps && f.rows > 1) ? f.rows * BH : BH);
+        b->align((f.heading ? FL_ALIGN_CENTER : FL_ALIGN_LEFT) |
+                 FL_ALIGN_INSIDE |
+                 (f.wraps ? FL_ALIGN_WRAP | FL_ALIGN_TOP : 0));
+        // the name of what the panes are about, as the window this replaces
+        // writes it
+        if(f.heading) b->labelfont(FL_HELVETICA_BOLD);
         widget = b;
       } break;
       case Dialog::Output: {
@@ -720,13 +768,16 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
                                 _paneBottom - y - WB - under * BH;
           if(tall < BH) tall = BH;
         }
+        // as wide as it says, or as what is left of the line
+        int wide = (f.widthEm > 0. || f.widthShare > 0.) ? fieldW :
+                                                           w - fx - WB;
         Fl_Browser_ *br;
         if(!f.choose)
-          br = new Fl_Select_Browser(fx, y, w - fx - WB, tall);
+          br = new Fl_Select_Browser(fx, y, wide, tall);
         else if(f.multiple)
-          br = new Fl_Multi_Browser(fx, y, w - fx - WB, tall);
+          br = new Fl_Multi_Browser(fx, y, wide, tall);
         else
-          br = new Fl_Hold_Browser(fx, y, w - fx - WB, tall);
+          br = new Fl_Hold_Browser(fx, y, wide, tall);
         // a list whose lines are columns says how wide each of them is; the
         // widths have to outlive this call, as the browser keeps the array
         if(f.columnsEm.size()) {
@@ -749,8 +800,14 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       case Dialog::Action: {
         Fl_Button *b = new Fl_Button(fx, y, fieldW, BH);
         // the description owns the action; the window owns a copy of it
-        b->callback(_buttonCallback, new std::function<void()>(f.changed));
+        b->callback(_buttonCallback, new buttonAction{this, f.changed});
         widget = b;
+      } break;
+      case Dialog::Menu: {
+        // a button that drops what one may do; the items are put in when the
+        // dialog is refreshed, as they are made then
+        Fl_Menu_Button *m = new Fl_Menu_Button(fx, y, fieldW, BH);
+        widget = m;
       } break;
       case Dialog::Direction:
         // It is drawn over the lines that follow it rather than pushing them
@@ -801,7 +858,8 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
       // inside, next to the box, and FL_ALIGN_RIGHT would throw it off.
       // a menu of switches carries its label inside, as a button does
       if(f.kind != Dialog::Check && f.kind != Dialog::Label &&
-         f.kind != Dialog::Action && f.kind != Dialog::Direction &&
+         f.kind != Dialog::Action && f.kind != Dialog::Menu &&
+         f.kind != Dialog::Direction &&
          f.kind != Dialog::ColorMap && f.kind != Dialog::Tree &&
          !(f.kind == Dialog::Choice && f.multiple))
         widget->align(f.labelBefore ? FL_ALIGN_LEFT : FL_ALIGN_RIGHT);
@@ -828,7 +886,8 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     int tall = 1;
     for(std::size_t k = i; k < last; k++) {
       if(fields[k].kind != Dialog::List && fields[k].kind != Dialog::Tree &&
-         fields[k].kind != Dialog::ColorMap)
+         fields[k].kind != Dialog::ColorMap &&
+         !(fields[k].kind == Dialog::Label && fields[k].wraps))
         continue;
       if(fields[k].rows > tall) tall = fields[k].rows;
       if(!fields[k].rows) {
@@ -848,6 +907,25 @@ void dialogFltk::_addFields(const std::vector<Dialog::Field> &fields, int x,
     row += tall;
     i = last;
   }
+}
+
+// What a dialog offers can change with what one picks in it. Rebuild it when
+// its shape has really changed -- and only then: rebuilding a window that is
+// already up makes it blink -- keeping it where the user left it rather than
+// where a window of that dialog opens.
+void dialogFltk::reshape()
+{
+  if(_which < 0) return;
+  Dialog::Panel now = Dialog::panel(_which);
+  if(_win && _signature(now) == _signatureBuilt) {
+    _panel = now;
+    refresh();
+    return;
+  }
+  int x = _win ? _win->x() : -1, y = _win ? _win->y() : -1;
+  build(_which);
+  if(_win && x >= 0) _win->position(x, y);
+  refresh();
 }
 
 void dialogFltk::build(int dialog)
@@ -898,7 +976,10 @@ void dialogFltk::build(int dialog)
   // widest window this replaces, which made every one of them that wide.
   int width = 20 * FL_NORMAL_SIZE;
   // the column of side fields is beside the panes, not part of what they need
-  int aside = _panel.side.empty() ? 0 : 8 * FL_NORMAL_SIZE;
+  int aside = _panel.side.empty() ?
+                0 :
+                (int)((_panel.sideEm > 0. ? _panel.sideEm : 8.) *
+                      FL_NORMAL_SIZE);
   width += aside;
   for(const auto &q : _panel.panes) {
     int need = 0;
@@ -907,6 +988,16 @@ void dialogFltk::build(int dialog)
     else
       need = _neededWidth(q.fields) + 2 * WB;
     if(need + aside > width) width = need + aside;
+    // and for what stands beside its button
+    if(q.beside.size()) {
+      int line = _neededWidth(q.beside) + 2 * WB + aside +
+                 (q.buttonLabel.size() ? BB + WB : 0);
+      if(line > width) width = line;
+    }
+  }
+  {
+    int need = _neededWidth(_panel.header) + 2 * WB + aside;
+    if(need > width) width = need;
   }
   {
     int need = _neededWidth(_panel.footer) + 2 * WB + aside;
@@ -941,6 +1032,7 @@ void dialogFltk::build(int dialog)
   else
     width = _widestSeen;
   int paneH = _paneHeight(_panel);
+  int headerH = _rows(_panel.header) * BH;
   int footerH = _rows(_panel.footer) * BH;
   if(_panel.footer.size()) footerH += WB;
   int gathered = 0;
@@ -952,8 +1044,8 @@ void dialogFltk::build(int dialog)
   int tabRows = 1;
   for(const auto &q : _panel.panes)
     if(q.group.size()) tabRows = 2;
-  int height = (_panel.tabbed ? paneH + tabRows * BH : formH) + footerH +
-               buttonH + 2 * WB;
+  int height = (_panel.tabbed ? paneH + tabRows * BH : formH) + headerH +
+               footerH + buttonH + 2 * WB;
 
   // A window created while a group is open becomes a child of that group, and
   // the window that was being built is wrecked. Nothing says a dialog is only
@@ -966,8 +1058,12 @@ void dialogFltk::build(int dialog)
                            _panel.title.c_str());
   _win->box(GMSH_WINDOW_BOX);
 
-  // the column of side fields, down the whole left edge
-  _sideWidth = _panel.side.empty() ? 0 : 8 * FL_NORMAL_SIZE;
+  // the column of side fields, down the whole left edge, as wide as the panel
+  // says it has to be
+  _sideWidth = _panel.side.empty() ?
+                 0 :
+                 (int)((_panel.sideEm > 0. ? _panel.sideEm : 8.) *
+                       FL_NORMAL_SIZE);
   if(_sideWidth) {
     int sy = WB;
     _sideHeight = height - 2 * WB;
@@ -975,6 +1071,10 @@ void dialogFltk::build(int dialog)
   }
 
   int y = WB;
+
+  // what the panes are about, over the whole width of them
+  if(_panel.header.size())
+    _addFields(_panel.header, _sideWidth + 2 * WB, y, width, -1);
 
   if(!_panel.tabbed) {
     // every pane is built, whether it shows or not: folding one away is then
@@ -984,7 +1084,7 @@ void dialogFltk::build(int dialog)
       Fl_Box *b = nullptr;
       if(q.label.size()) {
         b = new Fl_Box(2 * WB, y, width - 4 * WB, BH);
-        b->copy_label(_escaped(q.label).c_str());
+        b->copy_label(_plain(q.label).c_str());
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         b->labelfont(FL_HELVETICA_BOLD);
         y += BH;
@@ -995,7 +1095,7 @@ void dialogFltk::build(int dialog)
       if(q.buttonLabel.size()) {
         Fl_Button *pb = new Fl_Button(width - BB - 2 * WB, y, BB, BH);
         pb->copy_label(_escaped(q.buttonLabel).c_str());
-        pb->callback(_buttonCallback, new std::function<void()>(q.button));
+        pb->callback(_buttonCallback, new buttonAction{this, q.button});
         _paneButtons.push_back({pb, (int)i, rows});
         y += BH;
       }
@@ -1053,13 +1153,16 @@ void dialogFltk::build(int dialog)
       const Dialog::Pane &q = _panel.panes[i];
       Fl_Group *pg =
         new Fl_Group(_sideWidth + WB, top, width - _sideWidth - 2 * WB, height);
-      pg->copy_label(_escaped(q.label).c_str());
+      pg->copy_label(_plain(q.label).c_str());
       int fy = top + WB;
+      // the button of the pane keeps the last line to itself: the fields have
+      // what is above it
+      int room = height - (q.buttonLabel.size() ? BH + WB : 0);
       // a long pane scrolls rather than making the window as tall as it is
       Fl_Scroll *scroll = nullptr;
       if(q.scrolling) {
         scroll = new Fl_Scroll(_sideWidth + WB, top, width - _sideWidth - 2 * WB,
-                               height);
+                               room);
         scroll->type(Fl_Scroll::VERTICAL);
         scroll->box(FL_FLAT_BOX);
       }
@@ -1068,14 +1171,14 @@ void dialogFltk::build(int dialog)
       // right edge is drawn under it
       int right = width - 2 * WB - (q.scrolling ? Fl::scrollbar_size() : 0);
       // and where it ends, for a field that fills what is left of it
-      _paneBottom = top + height;
+      _paneBottom = top + room;
       _addFields(q.fields, _sideWidth + 2 * WB, fy, right, (int)i, q.columns);
       // the titled sections under them
       for(const auto &section : q.sections) {
         if(section.label.size()) {
           Fl_Box *b = new Fl_Box(_sideWidth + 2 * WB, fy,
                                  width - _sideWidth - 4 * WB, BH);
-          b->copy_label(_escaped(section.label).c_str());
+          b->copy_label(_plain(section.label).c_str());
           b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
           b->labelfont(FL_HELVETICA_BOLD);
           fy += BH;
@@ -1084,6 +1187,13 @@ void dialogFltk::build(int dialog)
                    section.columns);
       }
       if(scroll) scroll->end();
+      // what stands on the line of the button, to its left and outside what
+      // scrolls above it
+      if(q.beside.size()) {
+        int by = top + height - BH - WB;
+        _addFields(q.beside, _sideWidth + 2 * WB, by,
+                   width - (q.buttonLabel.size() ? BB + WB : 0), (int)i);
+      }
       if(q.buttonLabel.size()) {
         // at the bottom right of the pane, with the same margin under it as
         // around everything else
@@ -1093,7 +1203,7 @@ void dialogFltk::build(int dialog)
         // label cannot be a temporary
         b->copy_label(_escaped(q.buttonLabel).c_str());
         // the description owns the action; the window owns a copy of it
-        b->callback(_buttonCallback, new std::function<void()>(q.button));
+        b->callback(_buttonCallback, new buttonAction{this, q.button});
       }
       pg->end();
       _groups[i] = pg;
@@ -1122,7 +1232,7 @@ void dialogFltk::build(int dialog)
         Fl_Group *og = new Fl_Group(WB, y + BH, width - 2 * WB, paneH + BH);
         // copy_label: fltk keeps the pointer it is given, and the names are
         // built here
-        og->copy_label(_escaped(e.family).c_str());
+        og->copy_label(_plain(e.family).c_str());
         _outerGroups.push_back(og);
         _firstOfGroup.push_back((int)e.panes[0]);
         Fl_Tabs *tabs = new Fl_Tabs(WB, y + BH, width - 2 * WB, paneH + BH);
@@ -1162,7 +1272,7 @@ void dialogFltk::build(int dialog)
       else
         w = new Fl_Button(at, y, BB, BH);
       w->copy_label(_escaped(b.label).c_str());
-      w->callback(_buttonCallback, new std::function<void()>(b.action));
+      w->callback(_buttonCallback, new buttonAction{this, b.action});
       _buttons.push_back(w);
     }
     y += BH + WB;
@@ -1226,7 +1336,7 @@ void dialogFltk::refresh()
     case Dialog::Label: {
       std::string value = f.getText();
       if(!b.widget->label() || value != b.widget->label())
-        b.widget->copy_label(_escaped(value).c_str());
+        b.widget->copy_label(_plain(value).c_str());
     } break;
     case Dialog::Output: {
       std::string value = f.getText();
@@ -1282,14 +1392,14 @@ void dialogFltk::refresh()
         // clear() takes the root with it, and everything hangs from the root
         tree->clear();
         Fl_Tree_Item *root = new Fl_Tree_Item(tree);
-        root->label(_escaped(f.label.size() ? f.label : "Gmsh").c_str());
+        root->label(_plain(f.label.size() ? f.label : "Gmsh").c_str());
         tree->root(root);
         std::vector<Fl_Tree_Item *> parents(1, root);
         for(std::size_t i = 0; i < lines.size(); i++) {
           std::size_t depth = (std::size_t)lines[i].depth;
           if(depth + 1 > parents.size()) depth = parents.size() - 1;
           Fl_Tree_Item *item =
-            tree->add(parents[depth], _escaped(lines[i].label).c_str());
+            tree->add(parents[depth], _plain(lines[i].label).c_str());
           if(!item) continue;
           item->user_data((void *)(intptr_t)i);
           item->close();
@@ -1320,6 +1430,16 @@ void dialogFltk::refresh()
       if(table)
         ((colorbarWindow *)b.widget)
           ->update(name.c_str(), least, most, table, &b.changed);
+    } break;
+    case Dialog::Menu: {
+      Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;
+      std::vector<std::string> labels;
+      std::vector<int> values;
+      if(f.dynamicChoices) f.dynamicChoices(labels, values);
+      m->clear();
+      for(auto &l : labels) m->add(_escapedMenu(l).c_str());
+      if(!m->label() || f.label != m->label())
+        m->copy_label(_escaped(f.label).c_str());
     } break;
     case Dialog::Action:
     case Dialog::Spacer: break;

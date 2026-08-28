@@ -192,6 +192,16 @@ namespace {
 
     switch(f.kind) {
     case Dialog::Label:
+      // a line that runs on over several lines rather than being cut off
+      if(f.wraps) {
+        ImGui::PushTextWrapPos(ImGui::GetCursorPosX() +
+                               (width > 0.f ?
+                                  width :
+                                  ImGui::GetContentRegionAvail().x));
+        ImGui::TextUnformatted(f.getText().c_str());
+        ImGui::PopTextWrapPos();
+        break;
+      }
       // a rule across the pane, and the line written under it: it takes no
       // line of its own, as it takes none in the window this reproduces
       if(f.rule) {
@@ -200,6 +210,17 @@ namespace {
           ImVec2(at.x, at.y), ImVec2(at.x + ImGui::GetContentRegionAvail().x,
                                      at.y),
           ImGui::GetColorU32(ImGuiCol_Separator));
+      }
+      // the name of what the panes are about is written across them; Dear
+      // ImGui has the one font, so it says it by where it stands
+      if(f.heading) {
+        std::string text = f.getText();
+        float room = ImGui::GetContentRegionAvail().x;
+        float need = ImGui::CalcTextSize(text.c_str()).x;
+        if(need < room)
+          ImGui::SetCursorPosX(ImGui::GetCursorPosX() + .5f * (room - need));
+        ImGui::TextUnformatted(text.c_str());
+        break;
       }
       ImGui::TextUnformatted(f.getText().c_str());
       break;
@@ -219,6 +240,26 @@ namespace {
                               0.f)))
         changed = true;
       break;
+    case Dialog::Menu: {
+      // a button that drops what one may do, made when it is opened
+      float w = (f.widthShare > 0. || f.widthEm > 0.) ? width :
+                  ImGui::CalcTextSize(f.label.c_str()).x +
+                    2.f * ImGui::GetStyle().FramePadding.x;
+      std::string id = "##menu" + f.label;
+      if(ImGui::Button(name.c_str(), ImVec2(w, 0.f)))
+        ImGui::OpenPopup(id.c_str());
+      if(ImGui::BeginPopup(id.c_str())) {
+        std::vector<std::string> labels;
+        std::vector<int> values;
+        if(f.dynamicChoices) f.dynamicChoices(labels, values);
+        for(std::size_t k = 0; k < labels.size(); k++)
+          if(ImGui::Selectable(labels[k].c_str())) {
+            if(f.choose) f.choose((int)k, true);
+            changed = true;
+          }
+        ImGui::EndPopup();
+      }
+    } break;
     case Dialog::Spacer: break;
     case Dialog::List: {
       std::string id = "##list" + f.label;
@@ -715,7 +756,8 @@ namespace {
       // a list is worth as many lines as it shows
       if(fields[i].visible && !fields[i].visible()) continue;
       rows += (fields[i].kind == Dialog::List ||
-               fields[i].kind == Dialog::Tree) ?
+               fields[i].kind == Dialog::Tree ||
+               (fields[i].kind == Dialog::Label && fields[i].wraps)) ?
                 fields[i].rows :
                 1;
     }
@@ -730,8 +772,10 @@ namespace {
     const ImGuiStyle &style = ImGui::GetStyle();
     if(f.kind == Dialog::Spacer)
       return (float)(f.widthEm > 0. ? f.widthEm : 2.) * ImGui::GetFontSize();
-    if(f.kind == Dialog::Label) return ImGui::CalcTextSize(f.getText().c_str()).x;
-    if(f.kind == Dialog::Action) {
+    // a line that wraps takes the width it is given, whatever it says
+    if(f.kind == Dialog::Label)
+      return f.wraps ? item : ImGui::CalcTextSize(f.getText().c_str()).x;
+    if(f.kind == Dialog::Action || f.kind == Dialog::Menu) {
       // one that says how wide it is takes that, the text being inside it
       if(f.widthShare > 0.) return (float)f.widthShare * item;
       if(f.widthEm > 0.) return (float)f.widthEm * ImGui::GetFontSize();
@@ -840,7 +884,8 @@ namespace {
         // that carries its text inside comes off whole
         const Dialog::Field &l = fields[j - 1];
         if(l.kind == Dialog::Check || l.kind == Dialog::Action ||
-           l.kind == Dialog::Label || l.kind == Dialog::Direction ||
+           l.kind == Dialog::Menu || l.kind == Dialog::Label ||
+           l.kind == Dialog::Direction ||
            (l.kind == Dialog::Choice && l.multiple))
           need -= _packedWidth(l, item) + style.ItemSpacing.x;
         else
@@ -882,14 +927,17 @@ namespace {
       const Dialog::Field &f = fields[k];
       if(f.packed || f.kind == Dialog::Spacer) continue;
       float here = 0.f;
-      if(f.kind == Dialog::List) {
-        // wide enough for a loop of a few entities spelled out
-        here = item * 2.5f;
+      if(f.kind == Dialog::List || f.kind == Dialog::Tree) {
+        // one that says how wide it is takes that; otherwise wide enough for
+        // a loop of a few entities spelled out
+        here = f.widthEm > 0. ? (float)f.widthEm * ImGui::GetFontSize() :
+                                item * 2.5f;
       }
       else if(f.kind == Dialog::Label) {
-        here = ImGui::CalcTextSize(f.getText().c_str()).x;
+        // one that wraps takes the width it is given, whatever it says
+        here = f.wraps ? item : ImGui::CalcTextSize(f.getText().c_str()).x;
       }
-      else if(f.kind == Dialog::Action) {
+      else if(f.kind == Dialog::Action || f.kind == Dialog::Menu) {
         here = ImGui::CalcTextSize(f.label.c_str()).x +
                2.f * style.FramePadding.x;
       }
@@ -932,9 +980,11 @@ namespace {
     std::vector<std::pair<const std::vector<Dialog::Field> *, int> > lists;
     for(const auto &q : panel.panes) {
       lists.push_back(std::make_pair(&q.fields, q.columns));
+      lists.push_back(std::make_pair(&q.beside, 0));
       for(const auto &section : q.sections)
         lists.push_back(std::make_pair(&section.fields, section.columns));
     }
+    lists.push_back(std::make_pair(&panel.header, 0));
     lists.push_back(std::make_pair(&panel.footer, 0));
     for(const auto &entry : lists) {
       const std::vector<Dialog::Field> *fields = entry.first;
@@ -998,7 +1048,11 @@ namespace {
     // scrolls inside it -- the tab one is looking at, not the window, and not
     // the tallest tab there is. It is how the window this reproduces has it:
     // a group per tab, an Fl_Scroll for the one that holds the colours.
-    if(boxed && !ImGui::BeginChild("##pane", ImVec2(0.f, 0.f),
+    // the button of the pane, and whatever stands beside it, keep the last
+    // line of the box: they belong to the pane, not to what scrolls in it
+    float foot = (boxed && (q.buttonLabel.size() || q.beside.size())) ?
+                   ImGui::GetFrameHeightWithSpacing() : 0.f;
+    if(boxed && !ImGui::BeginChild("##pane", ImVec2(0.f, -foot),
                                    ImGuiChildFlags_None)) {
       ImGui::EndChild();
       return;
@@ -1014,11 +1068,13 @@ namespace {
       _fields(section.fields, width, section.columns);
       ImGui::PopID();
     }
+    // what scrolls ends here; the line below it does not
+    if(boxed) ImGui::EndChild();
     // The pane is padded to the height of the tallest one, so that its button
     // lands at the bottom right and the window does not change size from one
-    // tab to the next. The button is not given a line of its own: in a pane
-    // that is already as tall as the tallest, it shares the last. It is drawn
-    // inside the box the pane is in, or it would fall out of it.
+    // tab to the next. In a box that line is already kept for it, above; in a
+    // pane that follows its contents the button shares the last line when the
+    // pane is already as tall as the tallest.
     if(lines > 0) {
       // a pane that holds a list filling what is left is already as tall as
       // it can be: there is nothing to pad
@@ -1027,14 +1083,27 @@ namespace {
         if((f.kind == Dialog::List || f.kind == Dialog::Tree) && !f.rows)
           fills = true;
       int mine = _rows(q.fields);
-      int pad = fills ? 0 : lines - mine - (q.buttonLabel.size() ? 1 : 0);
+      int pad = (fills || boxed) ? 0 :
+                lines - mine -
+                  ((q.buttonLabel.size() || q.beside.size()) ? 1 : 0);
       if(pad > 0)
         ImGui::Dummy(ImVec2(0.f, pad * ImGui::GetFrameHeightWithSpacing()));
+      // what stands on that line to the left of the button
+      bool started = false;
+      if(q.beside.size()) {
+        ImGui::PushID("beside");
+        _fields(q.beside, width);
+        ImGui::PopID();
+        ImGui::SameLine();
+        started = true;
+      }
       if(q.buttonLabel.size()) {
         const char *label = q.buttonLabel.c_str();
         float w = ImGui::CalcTextSize(label).x +
                   2.f * ImGui::GetStyle().FramePadding.x;
-        if(pad < 0) ImGui::SameLine();
+        // on the last line of the pane when there is room for it there, on
+        // one of its own when the pane is already full
+        if(pad == 0 && !started) ImGui::SameLine();
         ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - w);
         if(ImGui::Button(label, ImVec2(w, 0.f))) {
           std::function<void()> what = q.button;
@@ -1044,7 +1113,6 @@ namespace {
         }
       }
     }
-    if(boxed) ImGui::EndChild();
   }
 
   // A list of fields, laid out in rows: those that ask to share the line of the
@@ -1134,7 +1202,11 @@ namespace {
         // a list or a tree is not a field with a label beside it: it takes
         // its whole share of the line, or its contents are cut off
         else if(f.kind == Dialog::List || f.kind == Dialog::Tree)
-          here = columns ? columnW - style.ItemSpacing.x : -FLT_MIN;
+          // one that says how wide it is takes that: the plugins are a list
+          // of names and a list of views side by side
+          here = f.widthEm > 0. ?
+                   (float)f.widthEm * ImGui::GetFontSize() :
+                   (columns ? columnW - style.ItemSpacing.x : -FLT_MIN);
         else if(f.widthShare > 0.)
           here = (float)f.widthShare * item;
         else if(f.widthEm > 0.)
@@ -1269,7 +1341,9 @@ void appWindow::_drawDialog(int which)
     need = _neededWidth(panel, width) +
            2.f * ImGui::GetStyle().WindowPadding.x;
     if(panel.side.size())
-      need += 8.f * ImGui::GetFontSize() + 2.f * ImGui::GetStyle().ItemSpacing.x;
+      need += (float)(panel.sideEm > 0. ? panel.sideEm : 8.) *
+                ImGui::GetFontSize() +
+              2.f * ImGui::GetStyle().ItemSpacing.x;
     if(need > widestSeen[which])
       widestSeen[which] = need;
     else
@@ -1285,7 +1359,8 @@ void appWindow::_drawDialog(int which)
     // -- a window that is a pixel short of its contents shows a scrollbar,
     // and one that is a line too tall shows nothing at all.
     const ImGuiStyle &style = ImGui::GetStyle();
-    tall = (float)(most + 2) * ImGui::GetFrameHeightWithSpacing() +
+    tall = (float)(most + 2 + _rows(panel.header)) *
+             ImGui::GetFrameHeightWithSpacing() +
            ImGui::GetFrameHeight() + 2.f * style.WindowPadding.y;
     // A category with fewer rows than the last is a shorter window, as it is
     // in the window this reproduces, which builds itself again for it.
@@ -1314,7 +1389,8 @@ void appWindow::_drawDialog(int which)
 
   // the column of side fields, down the left of everything else
   if(panel.side.size()) {
-    float w = 8.f * ImGui::GetFontSize();
+    float w = (float)(panel.sideEm > 0. ? panel.sideEm : 8.) *
+              ImGui::GetFontSize();
     // as tall as what is beside it, so that a list can fill it; the fields
     // under such a list keep their own line at the bottom
     float tall = 0.f;
@@ -1336,6 +1412,13 @@ void appWindow::_drawDialog(int which)
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginGroup();
+  }
+
+  // what the panes are about, over the whole width of them
+  if(panel.header.size()) {
+    ImGui::PushID("header");
+    _fields(panel.header, width);
+    ImGui::PopID();
   }
 
   if(!panel.tabbed) {

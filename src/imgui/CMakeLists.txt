@@ -13,10 +13,8 @@ set(SRC
   menuBar.cpp
   shortcuts.cpp
   panels.cpp
-    colormapPanel.cpp
   modulesPanel.cpp
   exportDialog.cpp
-  toolPanels.cpp
   contextPanels.cpp
   helpPanel.cpp
   fonts.cpp
