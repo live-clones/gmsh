@@ -40,6 +40,21 @@ void projectQuit();
 // into the per-user option file
 void optionsSave(bool toProjectFile);
 
+// --- what the File menu does, once for whichever interface is up (GuiFiles.cpp)
+
+// open a project, or merge a file into the one that is open
+void fileOpen(bool merge);
+// open the file of the given place in CTX::recentFiles
+void fileOpenRecent(int index);
+// ask for a name, write a .geo with a header, and open it
+void fileNew();
+// rename the file the model came from
+void fileRename();
+// write the model out, in the format the name asks for
+void fileExport();
+// act on the second Gmsh the "File > Remote" menu drives; see remoteAction()
+void fileRemote(const std::string &what);
+
 // Write what the message console holds to a file. The console hands over its
 // lines through Gui::messageLines(); everything else about it -- opening the
 // file, saying that it was written -- is the same whichever interface is up.

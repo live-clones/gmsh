@@ -203,6 +203,10 @@ void drawTooltip(const std::string &text);
   // file and 1 to save one, filter is a space separated list of extensions
   bool fileDialog(int mode, const std::string &title, const std::string &filter,
                   std::string &fileName);
+  // Ask for the options of that output format, in a window of the interface's
+  // own; false if the user gave up. The FLTK interface offers them inside its
+  // export chooser instead, and answers true.
+  bool exportOptionsDialog(int format, const std::string &fileName);
   // Write one post-processing view to a file the user picks. Which format it
   // is written in is read off the chooser, which is why this is the
   // interface's: the FLTK one offers the formats as filters and asks which

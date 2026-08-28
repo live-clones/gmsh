@@ -13,7 +13,7 @@ set(SRC
   OS.cpp
   OpenFile.cpp
   CreateFile.cpp
-  GuiActions.cpp GuiActionsGeo.cpp GuiMenus.cpp GuiDialogs.cpp GuiOptions.cpp GuiVisibility.cpp GuiPlugins.cpp GuiFields.cpp GuiHelp.cpp GuiClassify.cpp GuiOnelab.cpp GuiPrompts.cpp GuiStatus.cpp
+  GuiActions.cpp GuiActionsGeo.cpp GuiMenus.cpp GuiDialogs.cpp GuiOptions.cpp GuiVisibility.cpp GuiPlugins.cpp GuiFields.cpp GuiHelp.cpp GuiClassify.cpp GuiOnelab.cpp GuiPrompts.cpp GuiStatus.cpp GuiFiles.cpp
   ImageIO.cpp
   VisibilityList.cpp
   VertexArray.cpp

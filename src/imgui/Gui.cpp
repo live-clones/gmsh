@@ -64,6 +64,73 @@ namespace {
 
 } // namespace
 
+// --- the panels the menus show and hide
+
+bool appWindow::panelVisible(int panel) const
+{
+  switch(panel) {
+  case Gui::PanelOptions: return _showDialog[Dialog::Options];
+  case Gui::PanelPlugins: return dialogVisible(Dialog::Plugins);
+  case Gui::PanelVisibility: return dialogVisible(Dialog::Visibility);
+  case Gui::PanelMessageConsole: return _showConsole;
+  // the three windows of the Help menu are described like the other dialogs
+  case Gui::PanelKeyboardAndMouse: return dialogVisible(Dialog::Shortcuts);
+  case Gui::PanelCurrentOptions: return dialogVisible(Dialog::CurrentOptions);
+  case Gui::PanelAbout: return dialogVisible(Dialog::About);
+  case Gui::PanelFields: return dialogVisible(Dialog::Fields);
+  case Gui::PanelClassify: return dialogVisible(Dialog::Classify);
+  default: return false;
+  }
+}
+
+void appWindow::showPanel(int panel, bool show)
+{
+  switch(panel) {
+  case Gui::PanelOptions: _showDialog[Dialog::Options] = show; break;
+  case Gui::PanelPlugins:
+    // described like the other dialogs now
+    if(show)
+      Dialog::show(Dialog::Plugins, -1);
+    else
+      hideDialog(Dialog::Plugins);
+    break;
+  case Gui::PanelVisibility:
+    // described like the other dialogs now
+    if(show)
+      Dialog::show(Dialog::Visibility, -1);
+    else
+      hideDialog(Dialog::Visibility);
+    break;
+  case Gui::PanelMessageConsole: _showConsole = show; break;
+  case Gui::PanelKeyboardAndMouse:
+  case Gui::PanelCurrentOptions:
+  case Gui::PanelAbout: {
+    int dialog = (panel == Gui::PanelKeyboardAndMouse) ? Dialog::Shortcuts :
+                 (panel == Gui::PanelCurrentOptions)   ? Dialog::CurrentOptions :
+                                                         Dialog::About;
+    if(show)
+      Dialog::show(dialog, -1);
+    else
+      hideDialog(dialog);
+  } break;
+  case Gui::PanelFields:
+    // described like the other dialogs now
+    if(show)
+      Dialog::show(Dialog::Fields, -1);
+    else
+      hideDialog(Dialog::Fields);
+    break;
+  case Gui::PanelClassify:
+    // described like the other dialogs now
+    if(show)
+      Dialog::startClassify();
+    else
+      hideDialog(Dialog::Classify);
+    break;
+  default: break;
+  }
+}
+
 namespace Gui {
 
   // --- life cycle
@@ -369,23 +436,21 @@ namespace Gui {
     appWindow *app = appWindow::instance();
     // they all open a dialog, so they run outside of the frame
     if(what == "new")
-      app->postAction(menuNew);
+      app->postAction(fileNew);
     else if(what == "open")
-      app->postAction(menuOpen);
+      app->postAction([]() { fileOpen(false); });
     else if(what == "merge")
-      app->postAction(menuMerge);
+      app->postAction([]() { fileOpen(true); });
     else if(what == "rename")
-      app->postAction(menuRename);
+      app->postAction(fileRename);
     else if(what == "export")
-      app->postAction(menuExport);
+      app->postAction(fileExport);
     else if(what == "watch")
-      app->postAction(menuWatchPattern);
-#if defined(HAVE_ONELAB)
+      app->postAction(Dialog::showWatchPattern);
     else if(what.compare(0, 7, "remote_") == 0) {
       std::string arg = what.substr(7);
-      app->postAction([arg]() { menuRemote(arg); });
+      app->postAction([arg]() { fileRemote(arg); });
     }
-#endif
     else
       Msg::Error("Unknown file action '%s'", what.c_str());
   }
@@ -428,6 +493,12 @@ namespace Gui {
                            const std::string &button1)
   {
     if(available()) appWindow::instance()->setSolverButtonMode(button0, button1);
+  }
+
+  bool exportOptionsDialog(int format, const std::string &fileName)
+  {
+    if(!available()) return false;
+    return appWindow::instance()->exportOptionsDialog(format, fileName);
   }
 
   bool fileDialog(int mode, const std::string &title, const std::string &filter,

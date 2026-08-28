@@ -281,6 +281,13 @@ namespace Gui {
 
   bool animating() { return available() && fltkAnimating(); }
 
+  bool exportOptionsDialog(int format, const std::string &fileName)
+  {
+    // this interface asks for them inside its export chooser, which offers the
+    // formats as filters; there is nothing more to ask here
+    return true;
+  }
+
   void exportView(int index)
   {
 #if defined(HAVE_POST)
