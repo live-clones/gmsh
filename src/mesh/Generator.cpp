@@ -1704,6 +1704,79 @@ void GenerateMesh(GModel *m, int ask)
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
 
+  // Mesh.QuadqsTargetSize alone is the single physical-size control for PACK.
+  // Keep the legacy behavior when no target, or explicit edge bounds, are
+  // supplied; otherwise make the complete fast pipeline coherent without a
+  // long list of coupled command-line options. The scope restores the public
+  // context after generation so a subsequent operation can use other settings.
+  struct PackTargetSizeScope {
+    bool active = false;
+    int recombineAll = 0;
+    int minCurveNodes = 0;
+    int smoothingPasses = 0;
+    int packing3D = 0;
+    int forceAllPackedPoints = 0;
+    double sizeFactor = 1.;
+    double minimumSize = 0.;
+    double maximumSize = 0.;
+    double minimumEdgeLength = 0.;
+    double maximumEdgeLength = 0.;
+
+    PackTargetSizeScope()
+    {
+      contextMeshOptions &mesh = CTX::instance()->mesh;
+      active = mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
+               mesh.quadqsTargetSize > 0. &&
+               !(mesh.quadqsMinimumEdgeLength > 0.) &&
+               !(mesh.quadqsMaximumEdgeLength > 0.);
+      if(!active) return;
+
+      recombineAll = mesh.recombineAll;
+      minCurveNodes = mesh.minCurveNodes;
+      smoothingPasses = mesh.nbSmoothing;
+      packing3D = mesh.quadqsPacking3D;
+      forceAllPackedPoints = mesh.quadqsPacking3DForceAllPoints;
+      sizeFactor = mesh.lcFactor;
+      minimumSize = mesh.lcMin;
+      maximumSize = mesh.lcMax;
+      minimumEdgeLength = mesh.quadqsMinimumEdgeLength;
+      maximumEdgeLength = mesh.quadqsMaximumEdgeLength;
+
+      const double h = mesh.quadqsTargetSize;
+      mesh.recombineAll = 1;
+      mesh.minCurveNodes = 1;
+      mesh.nbSmoothing = std::max(mesh.nbSmoothing, 5);
+      mesh.quadqsPacking3D = 1;
+      mesh.quadqsPacking3DForceAllPoints = 1;
+      mesh.lcFactor = 1.;
+      mesh.lcMin = h;
+      mesh.lcMax = h;
+      mesh.quadqsMinimumEdgeLength = .5 * h;
+      mesh.quadqsMaximumEdgeLength = 2. * h;
+
+      Msg::Info("PACK master target size: h=%g, admissible edges=[%g,%g], "
+                "3D packing forced",
+                h, mesh.quadqsMinimumEdgeLength,
+                mesh.quadqsMaximumEdgeLength);
+    }
+
+    ~PackTargetSizeScope()
+    {
+      if(!active) return;
+      contextMeshOptions &mesh = CTX::instance()->mesh;
+      mesh.recombineAll = recombineAll;
+      mesh.minCurveNodes = minCurveNodes;
+      mesh.nbSmoothing = smoothingPasses;
+      mesh.quadqsPacking3D = packing3D;
+      mesh.quadqsPacking3DForceAllPoints = forceAllPackedPoints;
+      mesh.lcFactor = sizeFactor;
+      mesh.lcMin = minimumSize;
+      mesh.lcMax = maximumSize;
+      mesh.quadqsMinimumEdgeLength = minimumEdgeLength;
+      mesh.quadqsMaximumEdgeLength = maximumEdgeLength;
+    }
+  } packTargetSizeScope;
+
   // Change any high order elements back into first order ones (but skip
   // discrete entities)
   SetOrder1(m, false, true);
