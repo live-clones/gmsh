@@ -670,8 +670,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                              std::vector<SMetric3> &metrics)
 {
 
-  if(gf->geomType() == GEntity::DiscreteSurface &&
-     CTX::instance()->mesh.quadqsPacking3D) {
+  if(CTX::instance()->mesh.quadqsPacking3D) {
     packingOfOrientedCubes3D(gf, packed, metrics);
     return;
   }

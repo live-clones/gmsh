@@ -1704,11 +1704,11 @@ void GenerateMesh(GModel *m, int ask)
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
 
-  // Mesh.QuadqsTargetSize alone is the single physical-size control for PACK.
-  // Keep the legacy behavior when no target, or explicit edge bounds, are
-  // supplied; otherwise make the complete fast pipeline coherent without a
-  // long list of coupled command-line options. The scope restores the public
-  // context after generation so a subsequent operation can use other settings.
+  // Mesh.QuadqsTargetSize is the single physical-size control for PACK. Also
+  // recognize the historical uniform `-clmin h -clmax h` spelling: it must
+  // drive the same bounded 3D pipeline on native CAD faces. Keep legacy
+  // variable-size behavior otherwise. The scope restores the public context
+  // after generation so a subsequent operation can use other settings.
   struct PackTargetSizeScope {
     bool active = false;
     int recombineAll = 0;
@@ -1719,14 +1719,21 @@ void GenerateMesh(GModel *m, int ask)
     double sizeFactor = 1.;
     double minimumSize = 0.;
     double maximumSize = 0.;
+    double targetSize = 0.;
     double minimumEdgeLength = 0.;
     double maximumEdgeLength = 0.;
 
     PackTargetSizeScope()
     {
       contextMeshOptions &mesh = CTX::instance()->mesh;
+      const bool uniformLegacySize =
+        !(mesh.quadqsTargetSize > 0.) && mesh.lcMin > 0. &&
+        mesh.lcMax > 0. && std::isfinite(mesh.lcMin) &&
+        std::isfinite(mesh.lcMax) &&
+        std::abs(mesh.lcMax - mesh.lcMin) <=
+          1.e-12 * std::max({1., mesh.lcMin, mesh.lcMax});
       active = mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
-               mesh.quadqsTargetSize > 0. &&
+               (mesh.quadqsTargetSize > 0. || uniformLegacySize) &&
                !(mesh.quadqsMinimumEdgeLength > 0.) &&
                !(mesh.quadqsMaximumEdgeLength > 0.);
       if(!active) return;
@@ -1739,10 +1746,12 @@ void GenerateMesh(GModel *m, int ask)
       sizeFactor = mesh.lcFactor;
       minimumSize = mesh.lcMin;
       maximumSize = mesh.lcMax;
+      targetSize = mesh.quadqsTargetSize;
       minimumEdgeLength = mesh.quadqsMinimumEdgeLength;
       maximumEdgeLength = mesh.quadqsMaximumEdgeLength;
 
-      const double h = mesh.quadqsTargetSize;
+      const double h = mesh.quadqsTargetSize > 0. ?
+        mesh.quadqsTargetSize : .5 * (mesh.lcMin + mesh.lcMax);
       mesh.recombineAll = 1;
       mesh.minCurveNodes = 1;
       mesh.nbSmoothing = std::max(mesh.nbSmoothing, 5);
@@ -1751,6 +1760,7 @@ void GenerateMesh(GModel *m, int ask)
       mesh.lcFactor = 1.;
       mesh.lcMin = h;
       mesh.lcMax = h;
+      mesh.quadqsTargetSize = h;
       mesh.quadqsMinimumEdgeLength = .5 * h;
       mesh.quadqsMaximumEdgeLength = 2. * h;
 
@@ -1772,6 +1782,7 @@ void GenerateMesh(GModel *m, int ask)
       mesh.lcFactor = sizeFactor;
       mesh.lcMin = minimumSize;
       mesh.lcMax = maximumSize;
+      mesh.quadqsTargetSize = targetSize;
       mesh.quadqsMinimumEdgeLength = minimumEdgeLength;
       mesh.quadqsMaximumEdgeLength = maximumEdgeLength;
     }
