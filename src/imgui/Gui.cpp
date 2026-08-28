@@ -34,6 +34,7 @@
 #include "GuiActions.h"
 #include "PixelBuffer.h"
 #include "OS.h"
+#include "Options.h"
 #include "StringUtils.h"
 
 #if defined(HAVE_POST)
@@ -265,6 +266,29 @@ namespace Gui {
   {
     if(!available()) return false;
     return appWindow::instance()->panelVisible(panel);
+  }
+
+  void orientViews(const std::string &what, bool reverse, bool sync)
+  {
+    appWindow *a = appWindow::instance();
+    if(!a) return;
+    a->orientPanes(what, reverse, sync);
+  }
+
+  void setMouseSelection(bool on)
+  {
+    double v = on ? 1. : 0.;
+    NumberOption(GMSH_SET | GMSH_GUI, "General", 0, "MouseSelection", v, false);
+  }
+
+  void toggleAnimation()
+  {
+    if(appWindow::instance()) appWindow::instance()->toggleAnimation();
+  }
+
+  bool animating()
+  {
+    return appWindow::instance() && appWindow::instance()->animating();
   }
 
   void exportView(int index)

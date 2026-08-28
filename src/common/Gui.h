@@ -215,6 +215,24 @@ void drawTooltip(const std::string &text);
 
   // --- graphic windows
 
+  // Orient the views the status bar acts upon: "x", "y" or "z" to point that
+  // axis out of the screen, "r" for a quarter turn, "1:1" to drop the
+  // translation and the zoom. `reverse` is what Shift asks for -- the opposite
+  // direction -- and `sync` what Control asks for: the other views follow the
+  // first instead of being oriented themselves. Which views there are is the
+  // interface's, which is why this is here rather than beside
+  // viewSetOrientation().
+  void orientViews(const std::string &what, bool reverse, bool sync);
+  // Turn picking with the mouse on or off. It is an option, but the interface
+  // has the pointers to change.
+  void setMouseSelection(bool on);
+  // Play or pause the animation of the post-processing views, and say whether
+  // it is running. The FLTK interface runs a loop of its own while it plays;
+  // the Dear ImGui one steps it from the frame loop, an immediate-mode frame
+  // not being re-entrant.
+  void toggleAnimation();
+  bool animating();
+
   // draw context of the last graphic window that received an event
   drawContext *getCurrentDrawContext();
   // size in pixels (i.e. taking the high resolution factor into account) of the

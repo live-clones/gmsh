@@ -277,6 +277,13 @@ public:
   void wait(bool force);
   void wait(double time, bool force);
   void awake(const std::string &action);
+  // Orient the panes the status bar acts upon: the ones of the current
+  // graphic view. `sync` makes the others follow the first instead.
+  void orientPanes(const std::string &what, bool reverse, bool sync);
+  // play or pause the animation of the post-processing views
+  void toggleAnimation() { _animating = !_animating; }
+  bool animating() const { return _animating; }
+
   // is a frame being drawn? what cannot happen inside one -- a blocking
   // dialog, a solver run -- has to be posted instead
   bool inFrame() const { return _inFrame; }

@@ -741,33 +741,32 @@ static graphicWindow *getGraphicWindow(Fl_Widget *w)
   return FlGui::instance()->graph[0];
 }
 
-void status_xyz1p_cb(Fl_Widget *w, void *data)
+// The views the status bar acts upon are the panes of the graphic window the
+// pointer is over, which is what makes this the interface's.
+void fltkOrientViews(const std::string &what, bool reverse, bool sync)
 {
-  std::string what((const char *)data);
-
   std::vector<openglWindow *> gls;
-  if(w)
-    gls = getGraphicWindow(w)->gl;
-  else
-    gls.push_back(FlGui::instance()->getCurrentOpenglWindow());
-
-  bool sync = Fl::event_state(FL_CTRL) || Fl::event_state(FL_META);
-  bool reverse = Fl::event_state(FL_SHIFT) ? true : false;
+  openglWindow *last = FlGui::instance()->getCurrentOpenglWindow();
+  if(last && last->parent())
+    gls = getGraphicWindow(last->parent())->gl;
+  else if(last)
+    gls.push_back(last);
 
   for(std::size_t i = 0; i < gls.size(); i++) {
     drawContext *ctx = gls[i]->getDrawContext();
-    // Ctrl syncs the other views with the first one instead; that part stays
-    // here because it is about the list of views, which is ours
+    // Control makes the other views follow the first instead of being
+    // oriented themselves; that part stays here, being about the list of
+    // views, which is ours
     if(sync && (what == "r" || what == "1:1")) {
       if(i == 0) continue;
-      drawContext *ctx0 = gls[0]->getDrawContext();
+      drawContext *first = gls[0]->getDrawContext();
       if(what == "r")
-        ctx->setQuaternion(ctx0->quaternion[0], ctx0->quaternion[1],
-                           ctx0->quaternion[2], ctx0->quaternion[3]);
+        ctx->setQuaternion(first->quaternion[0], first->quaternion[1],
+                           first->quaternion[2], first->quaternion[3]);
       else if(!CTX::instance()->camera) {
         for(int j = 0; j < 3; j++) {
-          ctx->t[j] = ctx0->t[j];
-          ctx->s[j] = ctx0->s[j];
+          ctx->t[j] = first->t[j];
+          ctx->s[j] = first->s[j];
         }
       }
       continue;
@@ -777,54 +776,12 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void model_switch_cb(Fl_Widget *w, void *data)
-{
-  int index = (intptr_t)data;
-  GModel::current(index);
-  SetBoundingBox();
-  for(std::size_t i = 0; i < GModel::list.size(); i++)
-    GModel::list[i]->setVisibility(0);
-  GModel::current()->setVisibility(1);
-  CTX::instance()->mesh.changed = ENT_ALL;
-  Msg::SetWindowTitle(GModel::current()->getFileName());
-  FlGui::instance()->resetVisibility();
-  drawContext::global()->draw();
-}
-
 void status_options_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string what((const char *)data);
 
-  if(what == "model") { // model selection
-    std::vector<char *> tofree;
-    std::vector<Fl_Menu_Item> menu;
-    int selected = 0;
-    for(std::size_t i = 0; i < GModel::list.size(); i++) {
-      std::ostringstream sstream;
-      sstream << "Model " << i;
-      if(GModel::list[i]->getName().size())
-        sstream << " - " << GModel::list[i]->getName();
-      sstream << " ";
-      char *str = strdup(sstream.str().c_str());
-      Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void *)(intptr_t)i,
-                               FL_MENU_RADIO};
-      if(GModel::list[i] == GModel::current()) {
-        selected = i;
-        menuItem.flags |= FL_MENU_VALUE;
-      }
-      menu.push_back(menuItem);
-      tofree.push_back(str);
-    }
-    Fl_Menu_Item it = {nullptr};
-    menu.push_back(it);
-    Fl_Menu_Item *m = (Fl_Menu_Item *)(&menu[0])->popup(
-      Fl::event_x(), Fl::event_y(), nullptr, &menu[selected], nullptr);
-    if(m) m->do_callback(nullptr);
-    for(std::size_t i = 0; i < tofree.size(); i++) free(tofree[i]);
-    drawContext::global()->draw();
-  }
-  else if(what == "?") { // display options
+  if(what == "?") { // display options
     Dialog::show(Dialog::CurrentOptions, -1);
   }
   else if(what == "p") { // toggle projection mode
@@ -832,66 +789,52 @@ void status_options_cb(Fl_Widget *w, void *data)
                              !opt_general_orthographic(0, GMSH_GET, 0));
     drawContext::global()->draw();
   }
-  else if(what == "quick_access") { // quick access menu
-    // described once in src/common/GuiMenus.cpp, as the menu bar is
-    fltkMenuPopup(Menu::quickAccess(), Fl::event_x(), Fl::event_y());
-    drawContext::global()->draw();
-  }
-  else if(what == "S") { // mouse selection
-    if(CTX::instance()->mouseSelection) {
-      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->cursor(FL_CURSOR_DEFAULT,
-                                                     FL_BLACK, FL_WHITE);
-    }
-    else
-      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
-  }
 }
 
-static bool stop_anim = false;
-
-static void status_play_cb(Fl_Widget *w, void *data)
+// Picking with the mouse, on or off. Turning it off puts the pointer back to
+// what it was: it is the interface that has the pointers, which is why
+// Gui::setMouseSelection() comes here.
+void fltkSetMouseSelection(bool on)
 {
-  static double anim_time;
-  getGraphicWindow(w)->setAnimButtons(0);
+  opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, on ? 1 : 0);
+  if(!on)
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+        FlGui::instance()->graph[i]->gl[j]->cursor(FL_CURSOR_DEFAULT, FL_BLACK,
+                                                   FL_WHITE);
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+    FlGui::instance()->graph[i]->refreshStatusButtons();
+}
+
+// While the animation plays, the FLTK interface runs a loop of its own and
+// pumps the events itself; Gui::toggleAnimation() starts and stops it.
+static bool stop_anim = false;
+static bool playing_anim = false;
+
+bool fltkAnimating() { return playing_anim; }
+
+void fltkToggleAnimation()
+{
+  if(playing_anim) {
+    stop_anim = true;
+    return;
+  }
+  playing_anim = true;
   stop_anim = false;
-  anim_time = TimeOfDay();
+  double last = TimeOfDay();
   while(1) {
     if(!FlGui::available()) return;
-
     if(stop_anim) break;
-    if(TimeOfDay() - anim_time > CTX::instance()->post.animDelay) {
-      anim_time = TimeOfDay();
+    if(TimeOfDay() - last > CTX::instance()->post.animDelay) {
+      last = TimeOfDay();
       animationStep(!CTX::instance()->post.animCycle,
                     CTX::instance()->post.animStep);
     }
     FlGui::check();
   }
-}
-
-static void status_pause_cb(Fl_Widget *w, void *data)
-{
-  stop_anim = true;
-  getGraphicWindow(w)->setAnimButtons(1);
-}
-
-static void status_rewind_cb(Fl_Widget *w, void *data)
-{
-  animationRewind();
-}
-
-static void status_stepbackward_cb(Fl_Widget *w, void *data)
-{
-  animationStep(!CTX::instance()->post.animCycle,
-                -CTX::instance()->post.animStep);
-}
-
-static void status_stepforward_cb(Fl_Widget *w, void *data)
-{
-  animationStep(!CTX::instance()->post.animCycle,
-                CTX::instance()->post.animStep);
+  playing_anim = false;
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+    FlGui::instance()->graph[i]->refreshStatusButtons();
 }
 
 static void remove_graphic_window_cb(Fl_Widget *w, void *data)
@@ -1195,75 +1138,39 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
 
-  _butt[5] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
-  _butt[5]->callback(status_options_cb, (void *)"model");
-  _butt[5]->tooltip("Set current (active) model");
-  x += sw;
-  _butt[8] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "O");
-  _butt[8]->callback(status_options_cb, (void *)"quick_access");
-  _butt[8]->tooltip("Open quick access menu (also available by double-clicking "
-                    "in the graphic window)");
-  x += sw;
-  _butt[0] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "X");
-  _butt[0]->callback(status_xyz1p_cb, (void *)"x");
-  _butt[0]->tooltip("Set +X or -X (Shift) view (Alt+x or Alt+Shift+x)");
-  x += sw;
-  _butt[1] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Y");
-  _butt[1]->callback(status_xyz1p_cb, (void *)"y");
-  _butt[1]->tooltip("Set +Y or -Y (Shift) view (Alt+y or Alt+Shift+y)");
-  x += sw;
-  _butt[2] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Z");
-  _butt[2]->callback(status_xyz1p_cb, (void *)"z");
-  _butt[2]->tooltip("Set +Z or -Z (Shift) view (Alt+z or Alt+Shift+z)");
-  x += sw;
-  _butt[4] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
-  _butt[4]->callback(status_xyz1p_cb, (void *)"r");
-  _butt[4]->tooltip(
-    "Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)");
-  x += sw;
-  _butt[3] = new Fl_Button(x, mh + glheight + mheight + 2, 2 * FL_NORMAL_SIZE,
-                           sht, "1:1");
-  _butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
-  _butt[3]->tooltip("Set unit scale, sync scale between viewports (Ctrl), "
-                    "or reset bounding box around visible entities (Shift) "
-                    "(Alt+1, Alt+Ctrl+1, Alt+Shift+1)");
-  x += 1.75 * FL_NORMAL_SIZE;
-  _butt[9] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "S");
-  _butt[9]->callback(status_options_cb, (void *)"S");
-  _butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
-  x += sw;
-  x += 4;
-  _butt[6] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
-  _butt[6]->callback(status_rewind_cb);
-  _butt[6]->tooltip("Rewind animation");
-  _butt[6]->deactivate();
-  x += sw;
-  _butt[10] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_back");
-  _butt[10]->callback(status_stepbackward_cb);
-  _butt[10]->tooltip("Step backward (Left arrow)");
-  _butt[10]->deactivate();
-  x += sw;
-  _butt[7] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_play");
-  _butt[7]->callback(status_play_cb);
-  _butt[7]->tooltip("Play/pause animation");
-  _butt[7]->deactivate();
-  x += sw;
-  _butt[11] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
-  _butt[11]->callback(status_stepforward_cb);
-  _butt[11]->tooltip("Step forward (Right arrow)");
-  _butt[11]->deactivate();
-  x += sw;
-
-  for(int i = 0; i < 12; i++) {
-    _butt[i]->box(FL_FLAT_BOX);
-    _butt[i]->selection_color(FL_WHITE);
-    _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+  // The buttons, as src/common/GuiStatus.h describes them: what they say,
+  // what they do, and what they say about themselves. They used to be twelve
+  // of them built here by hand, indexed in the order they happened to be
+  // declared rather than the order they are drawn in.
+  {
+    std::vector<StatusBar::Button> wanted = StatusBar::bar();
+    for(const auto &b : wanted) {
+      if(b.gapBefore) x += 4;
+      int bw = b.widthEm > 0. ? (int)(b.widthEm * FL_NORMAL_SIZE) : sw;
+      statusButtonFltk *button =
+        new statusButtonFltk(x, mh + glheight + mheight + 2, bw, sht);
+      button->what = b;
+      button->copy_label(button->shown().c_str());
+      button->copy_tooltip(b.tooltip.c_str());
+      if(b.action) {
+        // Shift and Control are read when it is pressed, not described: what
+        // they mean is the button's business
+        button->callback(
+          [](Fl_Widget *w, void *) {
+            statusButtonFltk *b = (statusButtonFltk *)w;
+            if(b->what.action)
+              b->what.action(Fl::event_state(FL_SHIFT) ? true : false,
+                             Fl::event_state(FL_CTRL) ||
+                               Fl::event_state(FL_META));
+          },
+          nullptr);
+      }
+      button->box(FL_FLAT_BOX);
+      button->selection_color(FL_WHITE);
+      button->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+      _butt.push_back(button);
+      x += bw;
+    }
   }
 
   x += 4;
@@ -1505,32 +1412,29 @@ void graphicWindow::setStereo(bool st)
   Msg::Info("new gl window for stereo vision!");
 }
 
-void graphicWindow::setAnimButtons(int mode)
+void graphicWindow::refreshStatusButtons()
 {
-  if(mode) {
-    _butt[7]->callback(status_play_cb);
-    _butt[7]->label("@-1gmsh_play");
-  }
-  else {
-    _butt[7]->callback(status_pause_cb);
-    _butt[7]->label("@-1gmsh_pause");
-  }
+  for(auto *b : _butt) b->refresh();
 }
 
-void graphicWindow::checkAnimButtons()
+// What a button of the status bar is worth right now, asked of the description
+// rather than remembered: an option changed from a script cannot leave it
+// showing the wrong thing.
+void statusButtonFltk::refresh()
 {
-  if(viewIsAnimatable()) {
-    _butt[6]->activate();
-    _butt[7]->activate();
-    _butt[10]->activate();
-    _butt[11]->activate();
+  std::string text = shown();
+  if(!label() || text != label()) copy_label(text.c_str());
+  bool enabled = what.enabled ? what.enabled() : true;
+  if(enabled != (active() ? true : false)) {
+    if(enabled)
+      activate();
+    else
+      deactivate();
   }
-  else {
-    _butt[6]->deactivate();
-    _butt[7]->deactivate();
-    _butt[10]->deactivate();
-    _butt[11]->deactivate();
-  }
+  // it is worth looking at: red, as the bar this reproduces paints the one
+  // that says the mouse does not pick
+  Fl_Color want = (what.alert && what.alert()) ? FL_RED : FL_BACKGROUND_COLOR;
+  if(color() != want) color(want);
 }
 
 void graphicWindow::setMenuWidth(int w)

@@ -942,24 +942,28 @@ int FlGui::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 'x') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
-    status_xyz1p_cb(nullptr, (void *)"x");
+    Gui::orientViews("x", Fl::event_state(FL_SHIFT) ? true : false,
+                    Fl::event_state(FL_CTRL) || Fl::event_state(FL_META));
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'y') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'y')) {
-    status_xyz1p_cb(nullptr, (void *)"y");
+    Gui::orientViews("y", Fl::event_state(FL_SHIFT) ? true : false,
+                    Fl::event_state(FL_CTRL) || Fl::event_state(FL_META));
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'z') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
-    status_xyz1p_cb(nullptr, (void *)"z");
+    Gui::orientViews("z", Fl::event_state(FL_SHIFT) ? true : false,
+                    Fl::event_state(FL_CTRL) || Fl::event_state(FL_META));
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + '1') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + '1') ||
           Fl::test_shortcut(FL_ALT + FL_CTRL + '1') ||
           Fl::test_shortcut(FL_ALT + FL_META + '1')) {
-    status_xyz1p_cb(nullptr, (void *)"1:1");
+    Gui::orientViews("1:1", Fl::event_state(FL_SHIFT) ? true : false,
+                    Fl::event_state(FL_CTRL) || Fl::event_state(FL_META));
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'o')) {
@@ -1149,7 +1153,8 @@ void FlGui::setGraphicTitle(const std::string &title)
 
 void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
 {
-  for(std::size_t i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
+  for(std::size_t i = 0; i < graph.size(); i++)
+    graph[i]->refreshStatusButtons();
   if(numberOfViewsHasChanged) {
     if(onelab) onelab->rebuildTree(deleteWidgets);
     // and the per-entity parameters, which are described once and read what

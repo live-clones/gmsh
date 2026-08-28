@@ -19,6 +19,7 @@
 #include "Gui.h"
 #include "Options.h"
 #include "drawContext.h"
+#include "GModel.h"
 #include "Context.h"
 #include "GmshMessage.h"
 
@@ -313,6 +314,28 @@ static bool check_utf8(const std::string &string)
 
     return menus;
   }
+
+// --- the models that are loaded, which the first button of the status bar
+// drops
+
+std::vector<Item> models()
+{
+  std::vector<Item> items;
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
+    std::string label = "Model " + std::to_string(i);
+    if(GModel::list[i]->getName().size())
+      label += " - " + GModel::list[i]->getName();
+    Item m;
+    m.kind = Toggle;
+    m.label = label;
+    m.checked = [i]() {
+      return i < GModel::list.size() && GModel::list[i] == GModel::current();
+    };
+    m.action = [i]() { modelSetCurrent((int)i); };
+    items.push_back(m);
+  }
+  return items;
+}
 
 // --- the quick access menu of the status bar
 //

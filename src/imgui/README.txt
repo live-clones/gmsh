@@ -295,6 +295,32 @@ called it for some time.
 The arrow editor is three value inputs where the window it reproduces has three
 sliders, as every bounded option of the option window is a value input here.
 
+The bar along the bottom is described in GuiStatus.cpp. It was twelve buttons
+built by hand in src/fltk/graphicWindow.cpp, indexed in the order they happened
+to be declared rather than the order they are drawn in (`_butt[5]` first,
+`_butt[3]` seventh), and a second row written out again in statusBar.cpp -- with
+different labels, different tooltips, and, for the button that says whether the
+mouse picks, the opposite meaning: FLTK paints it red when picking is *off*, and
+the Dear ImGui bar was highlighting it when it was on.
+
+A button says what it is (its text, and the name of a picture for the interface
+that has one -- FLTK draws the stack of models and the arrows of the animation
+with symbols of its own, and Dear ImGui falls back on "M", "|<", ">"), what it
+does, what it drops if it drops a menu, and what it says about itself: greyed
+out, pressed, or worth looking at. The FLTK button asks the description again at
+every draw rather than being told, so an option changed from a script cannot
+leave it showing the wrong thing -- which is what the hand-written colouring in
+opt_general_mouse_selection() was for.
+
+Three things stayed the interface's, behind the facade: which views a button
+orients (Gui::orientViews -- and the Dear ImGui bar gained the Control-sync it
+never had), the pointers that change when picking is turned off
+(Gui::setMouseSelection), and playing the animation (Gui::toggleAnimation),
+which FLTK does in a loop of its own and Dear ImGui from the frame loop, an
+immediate-mode frame not being re-entrant. The message and the progress that
+take what is left of the bar are each interface's too: one region, not a row of
+things.
+
 The two menus the modules tree carries -- the one on a post-processing view and
 the one on a solver -- are described the same way (Menu::viewActions,
 Menu::solverActions), and their work is viewAction()/solverAction() in

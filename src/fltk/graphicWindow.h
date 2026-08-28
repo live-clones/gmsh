@@ -17,6 +17,41 @@
 #include <FL/Fl_Progress.H>
 
 #include "GuiActions.h"
+#include "GuiStatus.h"
+#include "menuFltk.h"
+
+// One button of the status bar, bound to what src/common/GuiStatus.h says it
+// is. It reads the description at every draw rather than being told, so a
+// button that says whether the mouse picks cannot be left showing the wrong
+// thing by an option changed from a script.
+class statusButtonFltk : public Fl_Button {
+public:
+  StatusBar::Button what;
+  statusButtonFltk(int x, int y, int w, int h) : Fl_Button(x, y, w, h) {}
+  // the label it carries now: the play button says pause while it plays
+  std::string shown() const
+  {
+    bool on = what.on && what.on();
+    const std::string &glyph = (on && what.glyphOn.size()) ? what.glyphOn :
+                                                             what.glyph;
+    if(glyph.size()) return "@-1" + glyph;
+    return (on && what.labelOn.size()) ? what.labelOn : what.label;
+  }
+  void refresh();
+  void draw() override
+  {
+    refresh();
+    Fl_Button::draw();
+  }
+  int handle(int event) override
+  {
+    if(event == FL_PUSH && what.menu) {
+      fltkMenuPopup(what.menu(), Fl::event_x(), Fl::event_y(), what.label);
+      return 1;
+    }
+    return Fl_Button::handle(event);
+  }
+};
 #if defined(__APPLE__)
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
@@ -38,7 +73,9 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[12];
+  // the buttons of the status bar, in the order src/common/GuiStatus.h
+  // describes them
+  std::vector<statusButtonFltk *> _butt;
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;
@@ -53,7 +90,7 @@ public:
   Fl_Window *getMenuWindow() { return _menuwin; }
   onelabGroup *getMenu() { return _onelab; }
   Fl_Progress *getProgress() { return _label; }
-  Fl_Button *getSelectionButton() { return _butt[9]; }
+
   messageBrowser *getMessageBrowser() { return _browser; }
   std::vector<std::string> &getMessages() { return _messages; }
   int getMinWidth() { return _minWidth; }
@@ -79,8 +116,9 @@ public:
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
   bool split(openglWindow *g, char how, double ratio);
-  void setAnimButtons(int mode);
-  void checkAnimButtons();
+  // bring the buttons of the status bar up to date: what is greyed out, what
+  // is pressed, what is worth looking at
+  void refreshStatusButtons();
   int getMessageHeight();
   void setMessageHeight(int h);
   void showMessages();
@@ -109,7 +147,13 @@ void mesh_1d_cb(Fl_Widget *w, void *data);
 void mesh_2d_cb(Fl_Widget *w, void *data);
 void mesh_3d_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
-void status_xyz1p_cb(Fl_Widget *w, void *data);
+// what Gui::orientViews() and Gui::setMouseSelection() come down to here: the
+// views the status bar acts upon, and the pointers it changes, are the
+// interface's
+void fltkOrientViews(const std::string &what, bool reverse, bool sync);
+void fltkSetMouseSelection(bool on);
+bool fltkAnimating();
+void fltkToggleAnimation();
 void status_options_cb(Fl_Widget *w, void *data);
 void show_hide_message_cb(Fl_Widget *w, void *data);
 void show_hide_menu_cb(Fl_Widget *w, void *data);

@@ -2842,19 +2842,13 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->mouseSelection = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mouseSelection) {
-      if(FlGui::available()) Msg::StatusBar(false, "Mouse selection ON");
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->getSelectionButton()->color(
-          FL_BACKGROUND_COLOR);
-    }
-    else {
-      if(FlGui::available()) Msg::StatusBar(false, "Mouse selection OFF");
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->getSelectionButton()->color(FL_RED);
-    }
+    Msg::StatusBar(false, CTX::instance()->mouseSelection ?
+                            "Mouse selection ON" :
+                            "Mouse selection OFF");
+    // the button that says so asks this option at every draw, see
+    // statusButtonFltk::refresh()
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->getSelectionButton()->redraw();
+      FlGui::instance()->graph[i]->refreshStatusButtons();
   }
 #endif
   return CTX::instance()->mouseSelection;
@@ -6155,7 +6149,7 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available())
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->checkAnimButtons();
+      FlGui::instance()->graph[i]->refreshStatusButtons();
 #endif
   return CTX::instance()->post.animCycle;
 }
@@ -6253,7 +6247,7 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available())
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->checkAnimButtons();
+      FlGui::instance()->graph[i]->refreshStatusButtons();
 #endif
   return data->getNumTimeSteps();
 #else

@@ -1124,6 +1124,22 @@ void optionsAction(const std::string &what)
     Msg::Debug("No option window action '%s'", what.c_str());
 }
 
+void modelSetCurrent(int index)
+{
+  if(index < 0 || index >= (int)GModel::list.size()) return;
+  GModel::current(index);
+  SetBoundingBox();
+  for(std::size_t i = 0; i < GModel::list.size(); i++)
+    GModel::list[i]->setVisibility(0);
+  GModel::current()->setVisibility(1);
+  CTX::instance()->mesh.changed = ENT_ALL;
+  Msg::SetWindowTitle(GModel::current()->getFileName());
+  Gui::resetVisibility();
+  Gui::updateViews(true, true);
+  Gui::rebuildTree(true);
+  drawContext::global()->draw();
+}
+
 // --- the quick access menu of the status bar
 
 namespace {

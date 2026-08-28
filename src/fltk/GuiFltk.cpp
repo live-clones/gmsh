@@ -266,6 +266,23 @@ namespace Gui {
     return w ? (w->shown() ? true : false) : false;
   }
 
+  void orientViews(const std::string &what, bool reverse, bool sync)
+  {
+    if(available()) fltkOrientViews(what, reverse, sync);
+  }
+
+  void setMouseSelection(bool on)
+  {
+    if(available()) fltkSetMouseSelection(on);
+  }
+
+  void toggleAnimation()
+  {
+    if(available()) fltkToggleAnimation();
+  }
+
+  bool animating() { return available() && fltkAnimating(); }
+
   void exportView(int index)
   {
 #if defined(HAVE_POST)

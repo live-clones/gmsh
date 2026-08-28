@@ -84,6 +84,10 @@ namespace Menu {
   // offer to.
   std::vector<Item> bar();
 
+  // The models that are loaded, which the status bar drops on its first
+  // button: picking one makes it the current model.
+  std::vector<Item> models();
+
   // The menu the status bar drops on its option button: what one reaches for
   // most often, gathered in one place. It is rebuilt every time it opens, so
   // the entries that only make sense with a post-processing view are simply

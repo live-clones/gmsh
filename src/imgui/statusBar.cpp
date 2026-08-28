@@ -19,6 +19,7 @@
 #include "GuiDialogs.h"
 #include "GuiActions.h"
 #include "GuiMenus.h"
+#include "GuiStatus.h"
 #include "menuActions.h"
 #include "GmshMessage.h"
 #include "Context.h"
@@ -49,15 +50,6 @@ namespace {
     NumberOption(GMSH_SET | GMSH_GUI, category, num, name, val, false);
   }
 
-  // a small square button, the size of the bar
-  bool _button(const char *label, const char *tip)
-  {
-    bool clicked = ImGui::Button(label);
-    if(tip && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-      ImGui::SetTooltip("%s", tip);
-    return clicked;
-  }
-
 } // namespace
 
 void appWindow::_drawQuickAccessMenu()
@@ -85,92 +77,50 @@ void appWindow::_drawStatusBar()
   if(ImGui::BeginViewportSideBar("##gmshStatusBar", (ImGuiViewport *)viewport,
                                  ImGuiDir_Down, height, flags)) {
     if(ImGui::BeginMenuBar()) {
-      // --- current model
-      if(ImGui::BeginMenu("M")) {
-        for(std::size_t i = 0; i < GModel::list.size(); i++) {
-          std::string label = "Model " + std::to_string(i);
-          if(GModel::list[i]->getName().size())
-            label += " - " + GModel::list[i]->getName();
-          bool current = (GModel::list[i] == GModel::current());
-          if(ImGui::MenuItem(label.c_str(), nullptr, current) && !current) {
-            std::size_t index = i;
-            postAction([index]() {
-              if(index < GModel::list.size()) {
-                GModel::current(index);
-                Gui::resetVisibility();
-                Gui::updateViews(true, true);
-                Gui::rebuildTree(true);
-                drawContext::global()->draw();
-              }
-            });
+      // The buttons, as src/common/GuiStatus.h describes them. They used
+      // to be written out here and again in src/fltk/graphicWindow.cpp, with
+      // different labels, different tooltips, and the button that says
+      // whether the mouse picks meaning the opposite thing.
+      static std::vector<StatusBar::Button> bar;
+      bar = StatusBar::bar();
+      for(std::size_t i = 0; i < bar.size(); i++) {
+        const StatusBar::Button &b = bar[i];
+        if(b.gapBefore) ImGui::Separator();
+        bool enabled = b.enabled ? b.enabled() : true;
+        ImGui::BeginDisabled(!enabled);
+        bool on = b.on && b.on();
+        std::string label = (on && b.labelOn.size()) ? b.labelOn : b.label;
+        int painted = 0;
+        // it is worth looking at: red, as the bar this reproduces paints the
+        // one that says the mouse does not pick
+        if(b.alert && b.alert()) {
+          ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.62f, .13f, .13f, 1.f));
+          ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.98f, .94f, .94f, 1.f));
+          painted = 2;
+        }
+        ImGui::PushID((int)i);
+        if(b.menu) {
+          if(ImGui::BeginMenu(label.c_str(), enabled)) {
+            static std::vector<Menu::Item> menu;
+            menu = b.menu();
+            menuWalk(menu, this);
+            ImGui::EndMenu();
           }
         }
-        ImGui::EndMenu();
-      }
-      if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        ImGui::SetTooltip("Set the current (active) model");
-
-      // --- quick access
-      if(ImGui::BeginMenu("O")) {
-        _drawQuickAccessMenu();
-        ImGui::EndMenu();
-      }
-      if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        ImGui::SetTooltip("Open the quick access menu");
-
-      ImGui::Separator();
-
-      // --- view orientation; Shift gives the opposite direction, as in FLTK
-      struct { const char *label, *what, *tip; } orient[] = {
-        {"X", "x", "Set the +X or, with Shift, the -X view"},
-        {"Y", "y", "Set the +Y or, with Shift, the -Y view"},
-        {"Z", "z", "Set the +Z or, with Shift, the -Z view"},
-        {"R", "r", "Turn a quarter turn, the other way with Shift"},
-        {"1:1", "1:1", "Reset the zoom, and with Shift the bounding box too"},
-      };
-      for(auto &o : orient) {
-        if(_button(o.label, o.tip)) {
-          std::string what = o.what;
+        else if(ImGui::Button(label.c_str())) {
+          std::function<void(bool, bool)> what = b.action;
           bool reverse = ImGui::GetIO().KeyShift;
-          postAction([this, what, reverse]() {
-            if(scenePane *p = currentPane())
-              viewSetOrientation(p->getDrawContext(), what, reverse);
-            drawContext::global()->draw();
-          });
+          bool sync = ImGui::GetIO().KeyCtrl;
+          if(what) postAction([what, reverse, sync]() { what(reverse, sync); });
         }
+        ImGui::PopID();
+        if(painted) ImGui::PopStyleColor(painted);
+        ImGui::EndDisabled();
+        if(b.tooltip.size() &&
+           ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal |
+                                ImGuiHoveredFlags_AllowWhenDisabled))
+          ImGui::SetTooltip("%s", b.tooltip.c_str());
       }
-
-      // --- mouse selection
-      {
-        bool on = CTX::instance()->mouseSelection ? true : false;
-        if(on) ImGui::PushStyleColor(ImGuiCol_Button,
-                                     ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-        if(_button("S", "Toggle mouse selection on and off (Escape)"))
-          _setNumber("General", 0, "MouseSelection", on ? 0. : 1.);
-        if(on) ImGui::PopStyleColor();
-      }
-
-      ImGui::Separator();
-
-      // --- animation
-      bool animatable = viewIsAnimatable();
-      ImGui::BeginDisabled(!animatable);
-      if(_button("|<", "Rewind the animation"))
-        postAction([]() { animationRewind(); });
-      if(_button("<", "Step backward (Left arrow)"))
-        postAction([]() {
-          animationStep(!CTX::instance()->post.animCycle,
-                        -CTX::instance()->post.animStep);
-        });
-      if(_button(_animating ? "||" : ">", "Play or pause the animation"))
-        _animating = !_animating;
-      if(_button(">|", "Step forward (Right arrow)"))
-        postAction([]() {
-          animationStep(!CTX::instance()->post.animCycle,
-                        CTX::instance()->post.animStep);
-        });
-      ImGui::EndDisabled();
-      if(!animatable) _animating = false;
 
       ImGui::Separator();
 
@@ -211,6 +161,41 @@ void appWindow::_drawStatusBar()
     }
   }
   ImGui::End();
+}
+
+// The views the status bar acts upon are the panes of the graphic window, which
+// is what makes this the interface's rather than the description's.
+void appWindow::orientPanes(const std::string &what, bool reverse, bool sync)
+{
+  std::vector<scenePane *> panes;
+  for(auto *p : _panes)
+    if(_isTiled(p)) panes.push_back(p);
+  if(panes.empty()) {
+    if(scenePane *p = currentPane()) panes.push_back(p);
+  }
+  for(std::size_t i = 0; i < panes.size(); i++) {
+    drawContext *ctx = panes[i]->getDrawContext();
+    if(!ctx) continue;
+    // Control makes the others follow the first instead of being oriented
+    // themselves, as the bar this reproduces has it
+    if(sync && (what == "r" || what == "1:1")) {
+      if(i == 0) continue;
+      drawContext *first = panes[0]->getDrawContext();
+      if(!first) continue;
+      if(what == "r")
+        ctx->setQuaternion(first->quaternion[0], first->quaternion[1],
+                           first->quaternion[2], first->quaternion[3]);
+      else if(!CTX::instance()->camera) {
+        for(int j = 0; j < 3; j++) {
+          ctx->t[j] = first->t[j];
+          ctx->s[j] = first->s[j];
+        }
+      }
+      continue;
+    }
+    viewSetOrientation(ctx, what, reverse);
+  }
+  drawContext::global()->draw();
 }
 
 // Stepping the animation from the frame loop rather than from a blocking loop

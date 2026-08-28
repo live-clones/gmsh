@@ -47,6 +47,10 @@ void optionsRestoreDefaults();
 // through its time steps
 void optionsAction(const std::string &what);
 
+// Make the model of that index the current one, showing it and hiding the
+// others, as picking it on the first button of the status bar does.
+void modelSetCurrent(int index);
+
 // One entry of the quick access menu of the status bar, by the name the menu
 // gives it. See Menu::quickAccess() for the menu itself; the names are here
 // rather than only there because the macOS touch bar drives the same entries.
