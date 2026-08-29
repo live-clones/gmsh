@@ -6239,6 +6239,7 @@ namespace QuadOptimizer {
       std::array<MVertex *, 4> quadrangle = {
         nullptr, nullptr, nullptr, nullptr};
       SpecificationObjective objective;
+      FastGlobalQuality globalQuality;
       GeometryDeviation geometry;
       GeometryDeviation referenceGeometry;
       double sizeError = std::numeric_limits<double>::infinity();
@@ -6304,8 +6305,10 @@ namespace QuadOptimizer {
         return false;
       if(phase != CleanUpDecisionPhase::FewerUnacceptableElements &&
          phase != CleanUpDecisionPhase::BetterGeometry &&
+         phase != CleanUpDecisionPhase::OtherImprovement &&
          phase != CleanUpDecisionPhase::Any)
         return false;
+      const bool fastInteractive = useFastInteractiveCleanUp(options);
 
       const std::vector<MElement *> faceElements = surfaceElements(face);
       const FaceHalfEdgeTopology topology(faceElements);
@@ -6315,20 +6318,23 @@ namespace QuadOptimizer {
       const std::vector<MVertex *> &pentagon =
         seed.core.bdrVertices.front();
 
-      // The post-topology validation patch is the complete one-ring of every
-      // movable vertex of the B=5 core. This makes every displacement caused
-      // by the mixed Winslow solve part of the same in-memory transaction.
+      // Full QuadCleanUp couples the swap to a local Winslow solve, so its
+      // transaction contains the complete one-ring of every movable core
+      // vertex. Fast moves no vertex while screening the four diagonals: its
+      // exact affected support is only the T+Q core, and the requested final
+      // Winslow sweeps are validated later as separate one-ring actions.
       std::set<MElement *> selected(seed.core.elements.begin(),
                                     seed.core.elements.end());
-      for(MVertex *vertex : pentagon) {
-        if(!vertex || vertex->onWhat() != face ||
-           protectedVertices.find(vertex) != protectedVertices.end())
-          continue;
-        const std::vector<MElement *> incident =
-          topology.incidentElements(vertex);
-        if(incident.empty()) return false;
-        selected.insert(incident.begin(), incident.end());
-      }
+      if(!fastInteractive)
+        for(MVertex *vertex : pentagon) {
+          if(!vertex || vertex->onWhat() != face ||
+             protectedVertices.find(vertex) != protectedVertices.end())
+            continue;
+          const std::vector<MElement *> incident =
+            topology.incidentElements(vertex);
+          if(incident.empty()) return false;
+          selected.insert(incident.begin(), incident.end());
+        }
       std::set<MElement *> outside = selected;
       outside.erase(seed.triangle);
       outside.erase(seed.quadrangle);
@@ -6344,8 +6350,27 @@ namespace QuadOptimizer {
       const std::size_t beforeSizeViolations =
         beforeSize.belowMinimum + beforeSize.aboveMaximum +
         beforeSize.invalid;
-      const GeometryDeviation referenceGeometry =
-        existingGeometryDeviation(face, beforeElements);
+      GeometryDeviation referenceGeometry;
+      if(!fastInteractive)
+        referenceGeometry = existingGeometryDeviation(face, beforeElements);
+
+      // A mixed swap changes the quad degree of pentagon vertices even though
+      // it preserves the numbers of triangles and quadrangles. Keep those
+      // changed vertex contributions in the same additive transaction as the
+      // affected element support below.
+      auto mixedValence = [&](const FaceHalfEdgeTopology &candidateTopology) {
+        ValenceObjective valence;
+        for(MVertex *vertex : pentagon)
+          addValence(valence, candidateTopology.quadDegree(vertex),
+                     idealQuadDegree(face, vertex, candidateTopology),
+                     vertex->onWhat() == face);
+        return valence;
+      };
+      const ValenceObjective referenceValence = mixedValence(topology);
+      const FastGlobalQuality referenceGlobalQuality = fastGlobalQuality(
+        referenceObjective, referenceValence,
+        referenceObjective.invalidElementCount, beforeSizeViolations,
+        beforeSize.meanSquaredLogRatio, beforeSize.edgeCount, 0.);
 
       std::set<MVertex *> oldTriangleVertices;
       std::set<MVertex *> oldQuadrangleVertices;
@@ -6353,6 +6378,15 @@ namespace QuadOptimizer {
         oldTriangleVertices.insert(seed.triangle->getVertex(i));
       for(int i = 0; i < 4; ++i)
         oldQuadrangleVertices.insert(seed.quadrangle->getVertex(i));
+      std::array<MVertex *, 2> oldDiagonalVertices = {nullptr, nullptr};
+      std::size_t oldDiagonalSize = 0;
+      for(MVertex *vertex : oldTriangleVertices)
+        if(oldQuadrangleVertices.find(vertex) !=
+           oldQuadrangleVertices.end()) {
+          if(oldDiagonalSize >= oldDiagonalVertices.size()) return false;
+          oldDiagonalVertices[oldDiagonalSize++] = vertex;
+        }
+      if(oldDiagonalSize != oldDiagonalVertices.size()) return false;
 
       MixedTriangleQuadSwapCandidate best;
       for(std::size_t diagonal = 0; diagonal < pentagon.size();
@@ -6387,6 +6421,8 @@ namespace QuadOptimizer {
         FaceHalfEdgeTopology validatedTopology = topology;
         if(!validatedTopology.replace(seed.core.elements, replacement))
           continue;
+        const ValenceObjective candidateValence =
+          mixedValence(validatedTopology);
 
         std::vector<MElement *> afterElements(outside.begin(), outside.end());
         afterElements.insert(afterElements.end(), replacement.begin(),
@@ -6429,6 +6465,15 @@ namespace QuadOptimizer {
           if(!localVertices[i] ||
              !localIndex.emplace(localVertices[i], i).second)
             return false;
+        const auto oldDiagonalAFound =
+          localIndex.find(oldDiagonalVertices[0]);
+        const auto oldDiagonalBFound =
+          localIndex.find(oldDiagonalVertices[1]);
+        if(oldDiagonalAFound == localIndex.end() ||
+           oldDiagonalBFound == localIndex.end())
+          continue;
+        const std::array<std::size_t, 2> oldDiagonal = {
+          oldDiagonalAFound->second, oldDiagonalBFound->second};
 
         std::vector<std::array<std::size_t, 3> > triangles;
         Pattern quadrangles;
@@ -6509,31 +6554,38 @@ namespace QuadOptimizer {
         std::vector<UV> target = initial;
         const bool hasMovable =
           std::find(fixed.begin(), fixed.end(), false) != fixed.end();
-        if(hasMovable) {
+        bool useSmoothedTrial = false;
+        // Fast screens the four connectivities without moving a vertex. Its
+        // requested final Winslow sweeps then relax the accepted topology as a
+        // separate globally monotone action. Full QuadCleanUp retains the
+        // coupled topology-and-Winslow transaction.
+        if(hasMovable && !fastInteractive) {
           SmallCavityWinslowOptions winslowOptions = options.winslow;
           winslowOptions.harmonicInitialization = true;
           SmallCavityWinslowResult winslow;
+          bool winslowThrew = false;
           try {
             winslow = optimizeLocalSurfacePatchWinslow(
               target, fixed, triangles, quadrangles, orientation,
               winslowOptions);
           }
           catch(const std::exception &) {
-            ++result.rejectedByWinslow;
-            continue;
+            winslowThrew = true;
           }
-          if(!winslow.success || !winslow.untangled) {
+          if(winslow.success && winslow.untangled)
+            useSmoothedTrial = true;
+          else if(winslowThrew || !winslow.success || !winslow.untangled)
             ++result.rejectedByWinslow;
-            continue;
-          }
         }
 
         ++result.topologyCandidatesOptimized;
         constexpr std::size_t smoothingLineSearchSteps = 32;
-        const std::size_t trialCount = hasMovable ?
-          smoothingLineSearchSteps : 1;
+        // Include scale=0: a valid connectivity improvement must not depend on
+        // Winslow moving a vertex, and remains available if that solve fails.
+        const std::size_t trialCount = useSmoothedTrial ?
+          smoothingLineSearchSteps + 1 : 1;
         for(std::size_t step = 0; step < trialCount; ++step) {
-          const double scale = hasMovable ?
+          const double scale = useSmoothedTrial ?
             1. - static_cast<double>(step) /
                    static_cast<double>(smoothingLineSearchSteps) : 0.;
           std::vector<UV> trial = initial;
@@ -6620,28 +6672,134 @@ namespace QuadOptimizer {
             afterSize.belowMinimum + afterSize.aboveMaximum +
             afterSize.invalid;
           GeometryDeviation geometry;
-          if(objective.absoluteBadElementCount == 0 &&
+          if(!fastInteractive && objective.absoluteBadElementCount == 0 &&
              objective.absoluteBadElementCount ==
                referenceObjective.absoluteBadElementCount)
             geometry = candidateMixedGeometryDeviation(
               face, trial, trialXyz, triangles, quadrangles);
-          const CleanUpDecisionReason decision = cleanUpDecision(
+          const bool rawSwap = scale == 0.;
+          bool rawCadValid = false;
+          double normalizedCadChange = 0.;
+          if(rawSwap) {
+            double oldCadDistance = 0., newCadDistance = 0.;
+            if(edgeMidpointCadDistance(
+                 face, trial[oldDiagonal[0]], trial[oldDiagonal[1]],
+                 trialXyz[oldDiagonal[0]], trialXyz[oldDiagonal[1]],
+                 oldCadDistance) &&
+               edgeMidpointCadDistance(
+                 face, trial[newDiagonal[0]], trial[newDiagonal[1]],
+                 trialXyz[newDiagonal[0]], trialXyz[newDiagonal[1]],
+                 newCadDistance)) {
+              const UV oldMidpointUv = {
+                .5 * (trial[oldDiagonal[0]][0] +
+                      trial[oldDiagonal[1]][0]),
+                .5 * (trial[oldDiagonal[0]][1] +
+                      trial[oldDiagonal[1]][1])};
+              const UV newMidpointUv = {
+                .5 * (trial[newDiagonal[0]][0] +
+                      trial[newDiagonal[1]][0]),
+                .5 * (trial[newDiagonal[0]][1] +
+                      trial[newDiagonal[1]][1])};
+              const Point oldMidpointXyz = {
+                .5 * (trialXyz[oldDiagonal[0]][0] +
+                      trialXyz[oldDiagonal[1]][0]),
+                .5 * (trialXyz[oldDiagonal[0]][1] +
+                      trialXyz[oldDiagonal[1]][1]),
+                .5 * (trialXyz[oldDiagonal[0]][2] +
+                      trialXyz[oldDiagonal[1]][2])};
+              const Point newMidpointXyz = {
+                .5 * (trialXyz[newDiagonal[0]][0] +
+                      trialXyz[newDiagonal[1]][0]),
+                .5 * (trialXyz[newDiagonal[0]][1] +
+                      trialXyz[newDiagonal[1]][1]),
+                .5 * (trialXyz[newDiagonal[0]][2] +
+                      trialXyz[newDiagonal[1]][2])};
+              const EdgeLengthCriteria oldCriteria = edgeLengthCriteria(
+                face, oldMidpointUv, oldMidpointXyz, options);
+              const EdgeLengthCriteria newCriteria = edgeLengthCriteria(
+                face, newMidpointUv, newMidpointXyz, options);
+              if(validEdgeLengthCriteria(oldCriteria) &&
+                 validEdgeLengthCriteria(newCriteria)) {
+                normalizedCadChange =
+                  std::pow(newCadDistance / newCriteria.target, 2) -
+                  std::pow(oldCadDistance / oldCriteria.target, 2);
+                rawCadValid = std::isfinite(normalizedCadChange);
+              }
+            }
+          }
+          else if(geometry.valid && referenceGeometry.valid) {
+            const double target = options.targetSize > 0. ?
+              options.targetSize :
+              std::sqrt(std::max(
+                referenceGeometry.sampledArea /
+                  static_cast<double>(std::max<std::size_t>(
+                    1, referenceGeometry.elementCount)),
+                std::numeric_limits<double>::min()));
+            const double normalization = std::max(
+              std::max(referenceGeometry.sampledArea,
+                       geometry.sampledArea) *
+                target * target,
+              std::numeric_limits<double>::min());
+            normalizedCadChange =
+              (geometry.squaredDistanceIntegral -
+               referenceGeometry.squaredDistanceIntegral) /
+              normalization;
+          }
+          const FastGlobalQuality globalQuality = fastGlobalQuality(
+            objective, candidateValence, objective.invalidElementCount,
+            afterSizeViolations, afterSize.meanSquaredLogRatio,
+            afterSize.edgeCount, normalizedCadChange);
+          CleanUpDecisionReason decision = cleanUpDecision(
             objective, referenceObjective, geometry, referenceGeometry,
-            objective.absoluteBadElementCount == 0, ValenceObjective(),
-            ValenceObjective(), afterSizeViolations, beforeSizeViolations,
+            objective.absoluteBadElementCount == 0, candidateValence,
+            referenceValence, afterSizeViolations, beforeSizeViolations,
             afterSize.meanSquaredLogRatio, beforeSize.meanSquaredLogRatio,
             options.objectiveRelativeTolerance);
-          if((decision !=
-                CleanUpDecisionReason::FewerUnacceptableElements &&
-              decision != CleanUpDecisionReason::BetterGeometry) ||
+
+          // cleanUpDecision intentionally reserves a CAD tie for published
+          // connectivity actions. A pentagon diagonal is also a finite
+          // Cleanup action: accept a pure shape/size improvement when the
+          // complete affected support strictly lowers the additive global
+          // potential. Absolute specifications and hard size bounds remain
+          // one-sided vetoes. For a raw swap, the only changed CAD chord is
+          // the diagonal, so its midpoint departure enters the same additive
+          // compromise; a simultaneous Winslow move uses the full patch CAD
+          // integral. Both are state potentials, so overlapping swaps cannot
+          // recreate an earlier state.
+          const bool fullGeometryTie = !rawSwap && geometry.valid &&
+            referenceGeometry.valid &&
+            compareGeometryDeviation(
+              geometry, referenceGeometry,
+              options.objectiveRelativeTolerance) == 0 &&
+            geometryDoesNotRegressBeyondRoundoff(
+              geometry, referenceGeometry);
+          if(decision == CleanUpDecisionReason::Rejected &&
+             objective.absoluteBadElementCount == 0 &&
+             referenceObjective.absoluteBadElementCount == 0 &&
+             noWorseAbsoluteSpecifications(
+               objective, referenceObjective,
+               options.objectiveRelativeTolerance) &&
+             afterSizeViolations <= beforeSizeViolations &&
+             ((rawSwap && rawCadValid) || fullGeometryTie) &&
+             improvesFastGlobalQuality(
+               globalQuality, referenceGlobalQuality))
+            decision = CleanUpDecisionReason::OtherImprovement;
+
+          // Every accepted mixed swap, including the primary bad-count and
+          // CAD branches, must lower the same affected-support potential.
+          if((rawSwap && !rawCadValid) ||
+             !improvesFastGlobalQuality(
+               globalQuality, referenceGlobalQuality) ||
              !decisionAllowed(decision, phase))
             continue;
 
           bool better = !best.valid;
-          if(best.valid && objective.absoluteBadElementCount !=
-                             best.objective.absoluteBadElementCount)
-            better = objective.absoluteBadElementCount <
-                     best.objective.absoluteBadElementCount;
+          if(best.valid && improvesFastGlobalQuality(
+                           globalQuality, best.globalQuality))
+            better = true;
+          else if(best.valid && improvesFastGlobalQuality(
+                                best.globalQuality, globalQuality))
+            better = false;
           else if(best.valid && decision ==
                                   CleanUpDecisionReason::BetterGeometry &&
                   best.decisionReason ==
@@ -6669,6 +6827,7 @@ namespace QuadOptimizer {
             best.quadrangle[i] = temporaryQuadrangle->getVertex(
               static_cast<int>(i));
           best.objective = objective;
+          best.globalQuality = globalQuality;
           best.geometry = geometry;
           best.referenceGeometry = referenceGeometry;
           best.sizeError = afterSize.meanSquaredLogRatio;
@@ -7837,6 +7996,7 @@ namespace QuadOptimizer {
       if((!options.quadCleanUp && !fast) ||
          (phase != CleanUpDecisionPhase::FewerUnacceptableElements &&
           phase != CleanUpDecisionPhase::BetterGeometry &&
+          phase != CleanUpDecisionPhase::OtherImprovement &&
           !(fast && phase == CleanUpDecisionPhase::Any)))
         return 0;
       std::size_t accepted = 0;
@@ -8078,26 +8238,33 @@ namespace QuadOptimizer {
       return result.success;
     };
 
-    auto runDecisionHierarchy = [&]() {
+    auto runDecisionHierarchy = [&](std::size_t *acceptedDuringHierarchy) {
+      if(acceptedDuringHierarchy) *acceptedDuringHierarchy = 0;
       if(!options.quadCleanUp) {
         std::size_t accepted = 0;
-        return runCleanUpPasses(CleanUpDecisionPhase::Any, accepted);
+        const bool success =
+          runCleanUpPasses(CleanUpDecisionPhase::Any, accepted);
+        if(acceptedDuringHierarchy) *acceptedDuringHierarchy = accepted;
+        return success;
       }
       for(;;) {
         std::size_t fewer = 0;
         if(!runCleanUpPasses(
              CleanUpDecisionPhase::FewerUnacceptableElements, fewer))
           return false;
+        if(acceptedDuringHierarchy) *acceptedDuringHierarchy += fewer;
         std::size_t geometry = 0;
         if(!runCleanUpPasses(
              CleanUpDecisionPhase::BetterGeometry, geometry))
           return false;
+        if(acceptedDuringHierarchy) *acceptedDuringHierarchy += geometry;
         // Re-enter the primary phase after every batch of geometric swaps.
         if(geometry != 0) continue;
         std::size_t other = 0;
         if(!runCleanUpPasses(
              CleanUpDecisionPhase::OtherImprovement, other))
           return false;
+        if(acceptedDuringHierarchy) *acceptedDuringHierarchy += other;
         // A structural edit can expose a bad-element repair or a new true
         // swap, so restart the complete lexicographic path immediately.
         if(other != 0) continue;
@@ -8114,7 +8281,7 @@ namespace QuadOptimizer {
     // potential, rebuilding the seeds after each commit and stopping on a
     // complete idle hierarchy is both the convergence test and invariant
     // under save/reload.
-    if(!runDecisionHierarchy()) return result;
+    if(!runDecisionHierarchy(nullptr)) return result;
 
     auto closePillowAndCleanUp = [&]() -> bool {
       if(!options.quadCleanUp || options.pillowNeighborLayers <= 0)
@@ -8144,7 +8311,7 @@ namespace QuadOptimizer {
         // in-memory transaction. Re-enter every CleanUp family afterwards so
         // the topology created by the pillow belongs to the same fixed point.
         smoothCleanUpToFixedPoint();
-        if(!result.success || !runDecisionHierarchy())
+        if(!result.success || !runDecisionHierarchy(nullptr))
           return false;
       }
       return result.success;
@@ -8155,7 +8322,7 @@ namespace QuadOptimizer {
     }
     else if(options.pillowNeighborLayers > 0)
       pillowFaceHoles(face, options, result);
-    if(!options.quadCleanUp && options.finalSmoothingPasses > 0) {
+    auto smoothFastOrLegacyOnce = [&]() {
       SmallCavityOptimizerOptions smoothingOptions = options;
       smoothingOptions.smoothingPasses = options.finalSmoothingPasses;
       smoothingOptions.topologyOnlyIfCavityHasSpecificationFailure = false;
@@ -8164,14 +8331,49 @@ namespace QuadOptimizer {
           face, smoothingOptions, &fastCadProtectedVertices);
       if(!smoothing.success) {
         result.success = false;
-        return result;
+        return false;
       }
       result.acceptedFinalSmoothingCavities += smoothing.acceptedCavities;
+      result.rejectedByWinslow += smoothing.rejectedByWinslow;
       result.rejectedBySize += smoothing.rejectedBySize;
+      result.rejectedByQuality += smoothing.rejectedByQuality;
       if(options.verbose)
         Msg::Info("QuadOptimizer: final mean-plane Winslow passes=%zu "
                   "accepted=%zu",
                   smoothing.passes, smoothing.acceptedCavities);
+      return true;
+    };
+    if(!options.quadCleanUp && options.finalSmoothingPasses > 0) {
+      if(useFastInteractiveCleanUp(options)) {
+        // A terminal Winslow batch can make another connectivity transaction
+        // admissible. Close Fast as T;{S;T} until T is idle, while preserving
+        // Mesh.Smoothing as the number of passes after each changed topology.
+        // The explicit round bound is a final guard in addition to the
+        // strictly decreasing additive quality potential.
+        constexpr std::size_t maximumFastClosureRounds = 8;
+        bool closed = false;
+        for(std::size_t round = 0; round < maximumFastClosureRounds;
+            ++round) {
+          if(!smoothFastOrLegacyOnce()) return result;
+          std::size_t topologyChanges = 0;
+          if(!runDecisionHierarchy(&topologyChanges)) return result;
+          if(topologyChanges == 0) {
+            closed = true;
+            break;
+          }
+        }
+        if(!closed) {
+          // Never leave the last accepted connectivity batch without the
+          // requested Winslow relaxation, even on the guarded failure path.
+          if(!smoothFastOrLegacyOnce()) return result;
+          result.success = false;
+          Msg::Error("OptimizeQuadsFast: topology/smoothing did not reach a "
+                     "fixed point on face %d after %zu closure rounds",
+                     face->tag(), maximumFastClosureRounds);
+        }
+      }
+      else if(!smoothFastOrLegacyOnce())
+        return result;
     }
     if(options.quadCleanUp) {
       // Close the decision path after terminal splits as well. A split can
@@ -8212,7 +8414,7 @@ namespace QuadOptimizer {
           break;
         }
         smoothCleanUpToFixedPoint();
-        if(!result.success || !runDecisionHierarchy() ||
+        if(!result.success || !runDecisionHierarchy(nullptr) ||
            !closePillowAndCleanUp())
           break;
       }
