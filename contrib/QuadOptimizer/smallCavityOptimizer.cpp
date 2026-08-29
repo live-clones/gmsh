@@ -404,6 +404,10 @@ namespace QuadOptimizer {
       std::unordered_map<MVertex *, std::vector<std::size_t> > _outgoing;
       std::map<Edge, std::vector<std::size_t> > _edgeHalfEdges;
       std::set<MElement *> _elements;
+      // This flag denotes a regular oriented surface cell complex, not only
+      // the weaker "at most two elements per edge" condition. In
+      // particular, two distinct cells may share at most one edge and the
+      // two incidences of an interior edge must have opposite directions.
       bool _manifold = true;
 
       void compactEdge(const Edge &edge)
@@ -451,6 +455,14 @@ namespace QuadOptimizer {
           return false;
         const std::size_t count = element->getNumPrimaryVertices();
         if(count != 3 && count != 4) return false;
+        std::set<MVertex *> elementVertices;
+        for(std::size_t i = 0; i < count; ++i) {
+          MVertex *vertex = element->getVertex(static_cast<int>(i));
+          if(!vertex || !elementVertices.insert(vertex).second) {
+            _manifold = false;
+            return false;
+          }
+        }
         const std::size_t first = _halfEdges.size();
         std::vector<std::size_t> indices(count);
         for(std::size_t i = 0; i < count; ++i) {
@@ -468,6 +480,7 @@ namespace QuadOptimizer {
         }
         _elementHalfEdges[element] = indices;
         _elements.insert(element);
+        std::set<MElement *> adjacentElements;
         for(const std::size_t index : indices) {
           HalfEdge &halfEdge = _halfEdges[index];
           _outgoing[halfEdge.origin].push_back(index);
@@ -476,8 +489,21 @@ namespace QuadOptimizer {
           compactEdge(edge);
           auto &incidences = _edgeHalfEdges[edge];
           if(incidences.size() == 1) {
-            halfEdge.twin = incidences.front();
-            _halfEdges[incidences.front()].twin = index;
+            const std::size_t twin = incidences.front();
+            const HalfEdge &other = _halfEdges[twin];
+            // Cells on the two sides of an oriented surface edge traverse it
+            // in opposite directions. Same-direction incidences are an
+            // overlap, even though the edge still has only two incidences.
+            if(other.origin != halfEdge.destination ||
+               other.destination != halfEdge.origin)
+              _manifold = false;
+            // A pair of distinct polygonal cells cannot share two different
+            // edges. Such a triangle wrapped inside a quadrangle was the
+            // Doghouse failure that the old incidence-only test accepted.
+            if(!adjacentElements.insert(other.element).second)
+              _manifold = false;
+            halfEdge.twin = twin;
+            _halfEdges[twin].twin = index;
           }
           else if(!incidences.empty()) {
             // More than two incident surface elements: CleanUp assumes and
@@ -1908,6 +1934,7 @@ namespace QuadOptimizer {
         std::pow(umax - umin, 2) + std::pow(vmax - vmin, 2),
         std::numeric_limits<double>::min());
       const double tolerance = 1.e-12 * scale2;
+      double commonSign = 0.;
       for(const auto &quad : quadrangles) {
         double sign = 0.;
         for(std::size_t i = 0; i < 4; ++i) {
@@ -1923,6 +1950,10 @@ namespace QuadOptimizer {
           else if(sign * turn < 0.)
             return false;
         }
+        if(commonSign == 0.)
+          commonSign = sign;
+        else if(commonSign * sign < 0.)
+          return false;
       }
       return true;
     }
@@ -3276,6 +3307,12 @@ namespace QuadOptimizer {
         for(MElement *element : newElements) delete element;
         return false;
       }
+      FaceHalfEdgeTopology validatedTopology(surfaceElements(face));
+      if(!validatedTopology.manifold() ||
+         !validatedTopology.replace(seed.patch.elements, newElements)) {
+        for(MElement *element : newElements) delete element;
+        return false;
+      }
 
       GFaceMeshDiff diff;
       diff.gf = face;
@@ -3344,6 +3381,13 @@ namespace QuadOptimizer {
         delete created;
         return false;
       }
+      FaceHalfEdgeTopology validatedTopology(surfaceElements(face));
+      if(!validatedTopology.manifold() ||
+         !validatedTopology.replace(seed.patch.elements, newElements)) {
+        for(MElement *element : newElements) delete element;
+        delete created;
+        return false;
+      }
 
       GFaceMeshDiff diff;
       diff.gf = face;
@@ -3395,6 +3439,13 @@ namespace QuadOptimizer {
       if(!orientElementsAccordingToBoundarySegment(
            seed.patch.bdrVertices.front()[0],
            seed.patch.bdrVertices.front()[1], newElements)) {
+        for(MElement *element : newElements) delete element;
+        delete created;
+        return false;
+      }
+      FaceHalfEdgeTopology validatedTopology(surfaceElements(face));
+      if(!validatedTopology.manifold() ||
+         !validatedTopology.replace(seed.patch.elements, newElements)) {
         for(MElement *element : newElements) delete element;
         delete created;
         return false;
@@ -3481,14 +3532,13 @@ namespace QuadOptimizer {
       // deletes any old element or vertex. In particular, a duplicate quad
       // would otherwise create four third edge incidences and leave both the
       // mesh and the side-car half-edge index partially modified.
-      FaceHalfEdgeTopology validatedTopology;
-      if(topology) {
-        validatedTopology = *topology;
-        if(!validatedTopology.replace(seed.patch.elements, newElements)) {
-          for(MElement *element : newElements) delete element;
-          for(MVertex *vertex : created) delete vertex;
-          return false;
-        }
+      FaceHalfEdgeTopology validatedTopology = topology ?
+        *topology : FaceHalfEdgeTopology(surfaceElements(face));
+      if(!validatedTopology.manifold() ||
+         !validatedTopology.replace(seed.patch.elements, newElements)) {
+        for(MElement *element : newElements) delete element;
+        for(MVertex *vertex : created) delete vertex;
+        return false;
       }
 
       GFaceMeshDiff diff;
@@ -4480,7 +4530,7 @@ namespace QuadOptimizer {
           rejectedBySize = true;
           return false;
         }
-        if(options.quadCleanUp &&
+        if((options.quadCleanUp || fastInteractive) &&
            !candidateQuadranglesAreNonConcave(
              pattern, trialUv, trialXyz))
           return false;
@@ -4944,7 +4994,7 @@ namespace QuadOptimizer {
         quadrangles, xyz, &candidateInvalidElementCount);
       GeometryDeviation referenceGeometry;
       GeometryDeviation geometry;
-      if(options.quadCleanUp &&
+      if((options.quadCleanUp || fastInteractive) &&
          !candidateQuadranglesAreNonConcave(quadrangles, uv, xyz)) {
         ++result.rejectedByQuality;
         return false;
@@ -5937,7 +5987,7 @@ namespace QuadOptimizer {
           candidate.objective = candidateObjective(
             candidate.quadrangles, candidate.xyz,
             &candidate.invalidElementCount);
-          if(options.quadCleanUp && interior > 0 &&
+          if((options.quadCleanUp || fastInteractive) &&
              !candidateQuadranglesAreNonConcave(
                candidate.quadrangles, candidate.uv, candidate.xyz)) {
             ++result.rejectedByQuality;
@@ -6068,7 +6118,7 @@ namespace QuadOptimizer {
                                              result)) {
           continue;
         }
-        if(options.quadCleanUp &&
+        if((options.quadCleanUp || fastInteractive) &&
            !candidateQuadranglesAreNonConcave(
              candidate.quadrangles, candidate.uv, candidate.xyz)) {
           ++result.rejectedByQuality;
@@ -7501,6 +7551,14 @@ namespace QuadOptimizer {
             oldA, duplicates[oldA], duplicates[oldB], oldB)));
       }
 
+      FaceHalfEdgeTopology validatedTopology(surfaceElements(face));
+      if(!validatedTopology.manifold() ||
+         !validatedTopology.replace(affected, replacement)) {
+        for(MElement *element : replacement) delete element;
+        for(MVertex *vertex : created) delete vertex;
+        return false;
+      }
+
       GFaceMeshDiff diff;
       diff.gf = face;
       diff.before.gf = face;
@@ -7610,6 +7668,13 @@ namespace QuadOptimizer {
        !validSizeOptions(options)) {
       result.success = false;
       Msg::Error("QuadOptimizer: invalid small-cavity optimizer options");
+      return result;
+    }
+    const FaceHalfEdgeTopology initialTopology(surfaceElements(face));
+    if(!initialTopology.manifold()) {
+      result.success = false;
+      Msg::Error("QuadOptimizer: face %d is not a regular oriented surface "
+                 "cell complex", face->tag());
       return result;
     }
     result.initialObjective = specificationObjective(surfaceElements(face));
@@ -8157,7 +8222,14 @@ namespace QuadOptimizer {
                    "fixed point on face %d", face->tag());
       }
     }
-    result.finalObjective = specificationObjective(surfaceElements(face));
+    const std::vector<MElement *> finalElements = surfaceElements(face);
+    const FaceHalfEdgeTopology finalTopology(finalElements);
+    if(!finalTopology.manifold()) {
+      result.success = false;
+      Msg::Error("QuadOptimizer: optimization produced an invalid surface "
+                 "cell complex on face %d", face->tag());
+    }
+    result.finalObjective = specificationObjective(finalElements);
     if(options.enforceSizeMap)
       setFinalSizeStatistics(result, faceSizeScore(face, options));
     if(options.invalidateVertexArrays) face->model()->deleteVertexArrays();

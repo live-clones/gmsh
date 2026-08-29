@@ -15,7 +15,9 @@
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
+#include <map>
 #include <queue>
+#include <set>
 
 /* Gmsh includes */
 #include "GmshMessage.h"
@@ -391,28 +393,69 @@ struct as2Hash {
 
 bool patchIsTopologicallyValid(const GFaceMeshPatch &patch)
 {
-  std::unordered_map<std::array<size_t, 2>, size_t, as2Hash> edgeVal;
-  for(MElement *f : patch.elements) {
-    size_t n = f->getNumVertices();
+  struct EdgeIncidence {
+    size_t element = 0;
+    bool increasing = false;
+  };
+  std::unordered_map<std::array<size_t, 2>,
+                     std::vector<EdgeIncidence>, as2Hash> edgeIncidences;
+  std::set<std::vector<size_t> > elementConnectivities;
+  for(size_t elementIndex = 0; elementIndex < patch.elements.size();
+      ++elementIndex) {
+    MElement *f = patch.elements[elementIndex];
+    if(!f) return false;
+    const size_t n = f->getNumPrimaryVertices();
+    if(n < 3) return false;
+    std::set<MVertex *> uniqueVertices;
+    std::vector<size_t> connectivity;
+    connectivity.reserve(n);
     for(size_t lv = 0; lv < n; ++lv) {
       MVertex *v = f->getVertex(lv);
       MVertex *v2 = f->getVertex((lv + 1) % n);
+      if(!v || !v2 || !uniqueVertices.insert(v).second) {
+        Msg::Debug("patchIsTopologicallyValid | element %zu has a null or "
+                   "repeated primary vertex", elementIndex);
+        return false;
+      }
+      connectivity.push_back(v->getNum());
       if(v->getNum() < v2->getNum()) {
         std::array<size_t, 2> vpair = {v->getNum(), v2->getNum()};
-        edgeVal[vpair] += 1;
+        edgeIncidences[vpair].push_back({elementIndex, true});
       }
       else {
         std::array<size_t, 2> vpair = {v2->getNum(), v->getNum()};
-        edgeVal[vpair] += 1;
+        edgeIncidences[vpair].push_back({elementIndex, false});
       }
+    }
+    std::sort(connectivity.begin(), connectivity.end());
+    if(!elementConnectivities.insert(connectivity).second) {
+      Msg::Debug("patchIsTopologicallyValid | duplicate element "
+                 "connectivity");
+      return false;
     }
   }
 
-  for(auto &kv : edgeVal) {
-    if(kv.second > 2) {
+  std::map<std::pair<size_t, size_t>, size_t> sharedEdges;
+  for(const auto &kv : edgeIncidences) {
+    if(kv.second.size() > 2) {
       Msg::Debug(
-        "patchIsTopologicallyValid | edge (%i,%i) non manifold, valence =  %i",
-        kv.first[0], kv.first[1], kv.second);
+        "patchIsTopologicallyValid | edge (%zu,%zu) non manifold, "
+        "valence = %zu", kv.first[0], kv.first[1], kv.second.size());
+      return false;
+    }
+    if(kv.second.size() != 2) continue;
+    if(kv.second[0].increasing == kv.second[1].increasing) {
+      Msg::Debug("patchIsTopologicallyValid | edge (%zu,%zu) has two "
+                 "incidences with the same orientation",
+                 kv.first[0], kv.first[1]);
+      return false;
+    }
+    size_t first = kv.second[0].element;
+    size_t second = kv.second[1].element;
+    if(second < first) std::swap(first, second);
+    if(++sharedEdges[{first, second}] > 1) {
+      Msg::Debug("patchIsTopologicallyValid | elements %zu and %zu share "
+                 "more than one edge", first, second);
       return false;
     }
   }

@@ -2396,6 +2396,16 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       set_tests_properties(optimizeQuadsFastMixedSwap PROPERTIES TIMEOUT 10)
 
       add_test(
+        NAME optimizeQuadsFastTopologyGuard
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastTopologyGuard.geo
+          -DTEST_MSH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastTopologyGuard.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastTopologyGuard.cmake)
+      set_tests_properties(optimizeQuadsFastTopologyGuard PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
         NAME quadPackMasterTargetSize
         COMMAND ${CMAKE_COMMAND}
           -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
