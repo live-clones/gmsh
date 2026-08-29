@@ -97,6 +97,9 @@ namespace QuadOptimizer {
     bool enforceRelativeSizeErrorIncrease = false;
     double maximumRelativeSizeErrorIncrease = .02;
     double objectiveRelativeTolerance = 1.e-12;
+    // A terminal T+T -> Q merge must not recreate a quadrangle that the
+    // caller's optional eta-quality filter would immediately split again.
+    double minimumRecombinationQuality = 0.;
 
     SmallCavityWinslowOptions winslow;
     bool invalidateVertexArrays = true;
@@ -148,6 +151,13 @@ namespace QuadOptimizer {
     std::size_t nonConvexOrInvalidQuadrangles = 0;
     std::size_t warpedQuadranglesSplit = 0;
     std::size_t warpedQuadranglesRejected = 0;
+    std::size_t terminalTrianglePairsVisited = 0;
+    std::size_t terminalTrianglePairsAccepted = 0;
+    std::size_t terminalTrianglePairsRejectedInvalid = 0;
+    std::size_t terminalTrianglePairsRejectedTopology = 0;
+    std::size_t terminalTrianglePairsRejectedQuality = 0;
+    std::size_t terminalTrianglePairsRejectedSize = 0;
+    std::size_t terminalTrianglePairsRejectedGeometry = 0;
     double cleanUpCriticalSeconds = 0.;
     double cleanUpConnectivitySeconds = 0.;
     double cleanUpBoundarySeconds = 0.;
@@ -190,6 +200,17 @@ namespace QuadOptimizer {
     SmallCavityOptimizerResult optimizer;
   };
 
+  struct TerminalTriangleRecombinationResult {
+    bool success = true;
+    std::size_t pairsVisited = 0;
+    std::size_t accepted = 0;
+    std::size_t rejectedInvalid = 0;
+    std::size_t rejectedTopology = 0;
+    std::size_t rejectedQuality = 0;
+    std::size_t rejectedSize = 0;
+    std::size_t rejectedGeometry = 0;
+  };
+
   struct AllFacesOptimizerResult {
     bool success = true;
     std::size_t facesVisited = 0;
@@ -212,6 +233,13 @@ namespace QuadOptimizer {
     std::size_t nonConvexOrInvalidQuadrangles = 0;
     std::size_t warpedQuadranglesSplit = 0;
     std::size_t warpedQuadranglesRejected = 0;
+    std::size_t terminalTrianglePairsVisited = 0;
+    std::size_t terminalTrianglePairsAccepted = 0;
+    std::size_t terminalTrianglePairsRejectedInvalid = 0;
+    std::size_t terminalTrianglePairsRejectedTopology = 0;
+    std::size_t terminalTrianglePairsRejectedQuality = 0;
+    std::size_t terminalTrianglePairsRejectedSize = 0;
+    std::size_t terminalTrianglePairsRejectedGeometry = 0;
     bool sizeRequirementsMet = true;
     std::size_t initialEdgesBelowMinimum = 0;
     std::size_t initialEdgesAboveMaximum = 0;
@@ -229,6 +257,18 @@ namespace QuadOptimizer {
     SpecificationObjective finalObjective;
     std::vector<FaceOptimizerResult> faces;
   };
+
+  // Replace adjacent triangle pairs by quadrangles only when the complete
+  // local transaction strictly improves the same additive global quality as
+  // Fast cleanup. Candidates must satisfy every absolute shape
+  // specification, remain strictly convex in UV and physical space, preserve
+  // the surface cell complex and not increase hard edge-size violations. The
+  // integrated distance to the CAD participates in the compromise.
+  GMSH_API TerminalTriangleRecombinationResult
+  recombineRemainingTrianglePairs(
+    GFace *face,
+    const SmallCavityOptimizerOptions &options =
+      SmallCavityOptimizerOptions());
 
   // Maintain a half-edge index of the manifold face, rank local cavities, try
   // the best disk-quadrangulation patterns and execute improving mesh diffs in

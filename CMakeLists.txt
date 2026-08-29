@@ -2432,6 +2432,24 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       set_tests_properties(quadPackMasterTargetSize PROPERTIES TIMEOUT 10)
 
       add_test(
+        NAME quadPackTerminalConcaveSplit
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadPackTerminalConcaveSplit.geo
+          -DTEST_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/quadPackTerminalConcaveSplit.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadPackTerminalConcaveSplit.cmake)
+      set_tests_properties(quadPackTerminalConcaveSplit PROPERTIES TIMEOUT 10)
+
+      add_test(
+        NAME quadPackTerminalTriangleRecombine
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadPackTerminalTriangleRecombine.geo
+          -DTEST_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/quadPackTerminalTriangleRecombine.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadPackTerminalTriangleRecombine.cmake)
+      set_tests_properties(quadPackTerminalTriangleRecombine PROPERTIES TIMEOUT 10)
+
+      add_test(
         NAME optimizeQuadsFastDiamond
         COMMAND ${CMAKE_COMMAND}
           -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
