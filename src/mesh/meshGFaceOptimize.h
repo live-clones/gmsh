@@ -144,11 +144,12 @@ struct WarpedQuadrangleSplitResult {
 using QuadrangleDiagonalAdmissibility =
   std::function<bool(GFace *, MVertex *, MVertex *)>;
 
-// Terminal quad-dominant fallback: split every linear quad whose warping is
-// not strictly below maximumWarpingDegrees, or whose corner topology is not a
-// strictly convex quadrangle in the face parametrization. Among the admissible
-// diagonals, choose the one minimizing the angle between the two triangle
-// normals, then maximize the minimum triangle gamma quality.
+// Atomic terminal quad-dominant fallback: split every linear quad whose
+// warping is not strictly below maximumWarpingDegrees, or whose corner
+// topology is not a strictly convex quadrangle in the face parametrization.
+// Among the admissible diagonals, choose the one minimizing the angle between
+// the two triangle normals, then maximize the minimum triangle gamma quality.
+// If any required split is rejected, leave the complete face unchanged.
 WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
   GFace *gf, double maximumWarpingDegrees,
   const QuadrangleDiagonalAdmissibility &diagonalAdmissible = {});

@@ -26,6 +26,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <exception>
 #include <limits>
 #include <map>
 #include <memory>
@@ -482,6 +483,287 @@ namespace QuadOptimizer {
       for(MQuadrangle *quadrangle : face->quadrangles)
         elements.push_back(quadrangle);
       return elements;
+    }
+
+    struct SurfaceOrientationRepairResult {
+      bool structurallyRegular = true;
+      bool orientable = true;
+      std::size_t reorientedElements = 0;
+    };
+
+    // Validate the orientation-independent part of the surface cell complex,
+    // then solve the element-orientation constraints on the dual graph. No
+    // element is touched until all components have been proved orientable.
+    // Among the two solutions of each component, retain the one that reverses
+    // the fewest elements.
+    SurfaceOrientationRepairResult repairSurfaceElementOrientation(
+      GFace *face, const std::vector<MElement *> &elements,
+      bool allowConsistentTwoQuadChains = false,
+      bool applyRepair = true)
+    {
+      struct Incidence {
+        MElement *element = nullptr;
+        MVertex *origin = nullptr;
+        MVertex *destination = nullptr;
+      };
+      struct Constraint {
+        MElement *neighbor = nullptr;
+        bool oppositeFlip = false;
+      };
+
+      SurfaceOrientationRepairResult result;
+      std::map<Edge, std::vector<Incidence> > incidences;
+      std::set<MElement *> uniqueElements;
+      std::map<MElement *, std::size_t, std::less<MElement *> > elementIndex;
+      for(std::size_t elementNumber = 0;
+          elementNumber < elements.size(); ++elementNumber) {
+        MElement *element = elements[elementNumber];
+        if(!element || !uniqueElements.insert(element).second) {
+          result.structurallyRegular = false;
+          return result;
+        }
+        const std::size_t count = element->getNumPrimaryVertices();
+        if(count != 3 && count != 4) {
+          result.structurallyRegular = false;
+          return result;
+        }
+        std::set<MVertex *> uniqueVertices;
+        for(std::size_t i = 0; i < count; ++i) {
+          MVertex *origin = element->getVertex(static_cast<int>(i));
+          MVertex *destination = element->getVertex(
+            static_cast<int>((i + 1) % count));
+          if(!origin || !destination ||
+             !uniqueVertices.insert(origin).second) {
+            result.structurallyRegular = false;
+            return result;
+          }
+          incidences[canonicalEdge(origin, destination)].push_back(
+            {element, origin, destination});
+        }
+        elementIndex[element] = elementNumber;
+      }
+
+      std::map<MElement *, std::vector<Constraint> > constraints;
+      struct SharedEdge {
+        Edge edge = {nullptr, nullptr};
+        Incidence first;
+        Incidence second;
+      };
+      std::map<std::pair<std::size_t, std::size_t>,
+               std::vector<SharedEdge> > sharedEdges;
+      for(const auto &entry : incidences) {
+        if(entry.second.size() > 2) {
+          result.structurallyRegular = false;
+          return result;
+        }
+        if(entry.second.size() != 2) continue;
+        const Incidence &first = entry.second[0];
+        const Incidence &second = entry.second[1];
+        if(first.element == second.element) {
+          result.structurallyRegular = false;
+          return result;
+        }
+        std::size_t a = elementIndex[first.element];
+        std::size_t b = elementIndex[second.element];
+        if(b < a) std::swap(a, b);
+        sharedEdges[{a, b}].push_back(
+          {entry.first, first, second});
+        const bool sameDirection =
+          first.origin == second.origin &&
+          first.destination == second.destination;
+        constraints[first.element].push_back(
+          {second.element, sameDirection});
+        constraints[second.element].push_back(
+          {first.element, sameDirection});
+      }
+
+      for(const auto &entry : sharedEdges) {
+        if(entry.second.size() <= 1) continue;
+        if(!allowConsistentTwoQuadChains || entry.second.size() != 2) {
+          result.structurallyRegular = false;
+          return result;
+        }
+        MElement *firstElement = elements[entry.first.first];
+        MElement *secondElement = elements[entry.first.second];
+        if(firstElement->getNumPrimaryVertices() != 4 ||
+           secondElement->getNumPrimaryVertices() != 4) {
+          // In particular, never turn a triangle wrapped in a quadrangle
+          // into an apparently regular triangulation by splitting the quad.
+          result.structurallyRegular = false;
+          return result;
+        }
+        const Edge &firstEdge = entry.second[0].edge;
+        const Edge &secondEdge = entry.second[1].edge;
+        const std::size_t commonVertices =
+          static_cast<std::size_t>(firstEdge.first == secondEdge.first) +
+          static_cast<std::size_t>(firstEdge.first == secondEdge.second) +
+          static_cast<std::size_t>(firstEdge.second == secondEdge.first) +
+          static_cast<std::size_t>(firstEdge.second == secondEdge.second);
+        if(commonVertices != 1) {
+          result.structurallyRegular = false;
+          return result;
+        }
+
+        const bool firstSameDirection =
+          entry.second[0].first.origin == entry.second[0].second.origin &&
+          entry.second[0].first.destination ==
+            entry.second[0].second.destination;
+        const bool secondSameDirection =
+          entry.second[1].first.origin == entry.second[1].second.origin &&
+          entry.second[1].first.destination ==
+            entry.second[1].second.destination;
+        if(firstSameDirection != secondSameDirection) {
+          result.structurallyRegular = false;
+          return result;
+        }
+
+        // Incidence alone cannot distinguish Blossom's legitimate
+        // opposite-side chain from two overlapping quads. Prove in the face
+        // chart that the two private corners lie strictly on opposite sides
+        // of both shared segments. This test is independent of either quad's
+        // current ordering, so a consistently reversed quad remains
+        // repairable by the XOR pass below.
+        MVertex *middle = nullptr;
+        for(MVertex *candidate : {firstEdge.first, firstEdge.second})
+          if(candidate == secondEdge.first ||
+             candidate == secondEdge.second) {
+            middle = candidate;
+            break;
+          }
+        if(!face || !middle) {
+          result.structurallyRegular = false;
+          return result;
+        }
+        MVertex *firstEnd = firstEdge.first == middle ?
+          firstEdge.second : firstEdge.first;
+        MVertex *secondEnd = secondEdge.first == middle ?
+          secondEdge.second : secondEdge.first;
+        const std::set<MVertex *> chain = {firstEnd, middle, secondEnd};
+        auto privateCorner = [&](MElement *element) -> MVertex * {
+          MVertex *corner = nullptr;
+          for(int i = 0; i < 4; ++i) {
+            MVertex *vertex = element->getVertex(i);
+            if(chain.find(vertex) != chain.end()) continue;
+            if(corner) return nullptr;
+            corner = vertex;
+          }
+          return corner;
+        };
+        MVertex *firstPrivate = privateCorner(firstElement);
+        MVertex *secondPrivate = privateCorner(secondElement);
+        if(!firstPrivate || !secondPrivate) {
+          result.structurallyRegular = false;
+          return result;
+        }
+        std::array<MVertex *, 5> vertices = {
+          firstEnd, middle, secondEnd, firstPrivate, secondPrivate};
+        std::array<SPoint2, 5> parameters;
+        auto chainParameter = [&](MVertex *vertex, SPoint2 &parameter) {
+          if(face->geomType() == GEntity::DiscreteSurface)
+            return persistentFaceParameter(face, vertex, parameter);
+          return reparamMeshVertexOnFace(
+                   vertex, face, parameter, true, false) &&
+            std::isfinite(parameter.x()) &&
+            std::isfinite(parameter.y());
+        };
+        bool parametrized = true;
+        for(std::size_t i = 0; i < vertices.size(); ++i)
+          if(!chainParameter(vertices[i], parameters[i])) {
+            parametrized = false;
+            break;
+          }
+        if(!parametrized) {
+          result.structurallyRegular = false;
+          return result;
+        }
+        for(int direction = 0; direction < 2; ++direction) {
+          if(!face->periodic(direction)) continue;
+          const double period = std::abs(face->period(direction));
+          if(!std::isfinite(period) || !(period > 0.)) {
+            result.structurallyRegular = false;
+            return result;
+          }
+          const double reference = parameters[1][direction];
+          for(SPoint2 &parameter : parameters)
+            parameter[direction] +=
+              std::round((reference - parameter[direction]) / period) *
+              period;
+        }
+        auto orientation2d = [](const SPoint2 &a, const SPoint2 &b,
+                                const SPoint2 &c) {
+          return (b.x() - a.x()) * (c.y() - a.y()) -
+                 (b.y() - a.y()) * (c.x() - a.x());
+        };
+        double scale2 = 0.;
+        for(std::size_t i = 0; i < parameters.size(); ++i)
+          for(std::size_t j = i + 1; j < parameters.size(); ++j)
+            scale2 = std::max(
+              scale2,
+              std::pow(parameters[i].x() - parameters[j].x(), 2) +
+                std::pow(parameters[i].y() - parameters[j].y(), 2));
+        const double tolerance = 1.e-12 *
+          std::max(scale2, std::numeric_limits<double>::min());
+        const double firstSideA = orientation2d(
+          parameters[0], parameters[1], parameters[3]);
+        const double firstSideB = orientation2d(
+          parameters[0], parameters[1], parameters[4]);
+        const double secondSideA = orientation2d(
+          parameters[1], parameters[2], parameters[3]);
+        const double secondSideB = orientation2d(
+          parameters[1], parameters[2], parameters[4]);
+        if(!std::isfinite(firstSideA) || !std::isfinite(firstSideB) ||
+           !std::isfinite(secondSideA) || !std::isfinite(secondSideB) ||
+           std::abs(firstSideA) <= tolerance ||
+           std::abs(firstSideB) <= tolerance ||
+           std::abs(secondSideA) <= tolerance ||
+           std::abs(secondSideB) <= tolerance ||
+           (firstSideA > 0.) == (firstSideB > 0.) ||
+           (secondSideA > 0.) == (secondSideB > 0.)) {
+          result.structurallyRegular = false;
+          return result;
+        }
+      }
+
+      std::map<MElement *, bool> flip;
+      std::vector<MElement *> elementsToReverse;
+      for(MElement *root : elements) {
+        if(flip.find(root) != flip.end()) continue;
+        std::queue<MElement *> pending;
+        std::vector<MElement *> component;
+        flip[root] = false;
+        pending.push(root);
+        std::size_t flipped = 0;
+        while(!pending.empty()) {
+          MElement *element = pending.front();
+          pending.pop();
+          component.push_back(element);
+          if(flip[element]) ++flipped;
+          const auto found = constraints.find(element);
+          if(found == constraints.end()) continue;
+          for(const Constraint &constraint : found->second) {
+            const bool expected =
+              flip[element] != constraint.oppositeFlip;
+            const auto known = flip.find(constraint.neighbor);
+            if(known == flip.end()) {
+              flip[constraint.neighbor] = expected;
+              pending.push(constraint.neighbor);
+            }
+            else if(known->second != expected) {
+              result.orientable = false;
+              return result;
+            }
+          }
+        }
+        const bool complement = flipped > component.size() - flipped;
+        for(MElement *element : component)
+          if(flip[element] != complement)
+            elementsToReverse.push_back(element);
+      }
+
+      if(applyRepair)
+        for(MElement *element : elementsToReverse) element->reverse();
+      result.reorientedElements = elementsToReverse.size();
+      return result;
     }
 
     // Mutable side-car half-edge topology for a single manifold GFace. Gmsh
@@ -8376,16 +8658,79 @@ namespace QuadOptimizer {
       Msg::Error("QuadOptimizer: invalid small-cavity optimizer options");
       return result;
     }
-    const FaceHalfEdgeTopology initialTopology(surfaceElements(face));
-    if(!initialTopology.manifold()) {
+    std::vector<MElement *> initialElements = surfaceElements(face);
+    const SurfaceOrientationRepairResult preflightStructure =
+      repairSurfaceElementOrientation(face, initialElements, true, false);
+    if(!preflightStructure.structurallyRegular) {
       result.success = false;
       Msg::Error("QuadOptimizer: face %d is not a regular oriented surface "
                  "cell complex", face->tag());
       return result;
     }
-    result.initialObjective = specificationObjective(surfaceElements(face));
+    if(!preflightStructure.orientable) {
+      result.success = false;
+      Msg::Error("QuadOptimizer: face %d has a non-orientable surface cell "
+                 "complex", face->tag());
+      return result;
+    }
+
+    result.initialObjective = specificationObjective(initialElements);
     if(options.enforceSizeMap)
       setInitialSizeStatistics(result, faceSizeScore(face, options));
+
+    // Blossom can match four regular triangles into two quads whose
+    // intersection is a two-edge chain. On an oriented surface, one of these
+    // two quads is necessarily concave (or degenerate). Restore its safe
+    // diagonal before asking the strict half-edge cell-complex index to
+    // accept the face. This is a validity repair only: finite warped-but-
+    // convex quads remain available to the optimizer.
+    const WarpedQuadrangleSplitResult preflightSplit =
+      splitExcessivelyWarpedQuadrangles(
+        face, std::numeric_limits<double>::max());
+    result.excessiveWarpingQuadrangles += preflightSplit.excessiveWarping;
+    result.nonConvexOrInvalidQuadrangles +=
+      preflightSplit.nonConvexOrInvalid;
+    result.warpedQuadranglesSplit += preflightSplit.split;
+    const std::size_t preflightRejected = preflightSplit.rejectedInvalid +
+      preflightSplit.rejectedUnsupportedOrder;
+    result.warpedQuadranglesRejected += preflightRejected;
+    if(preflightSplit.split && options.invalidateVertexArrays)
+      face->model()->deleteVertexArrays();
+    if(preflightRejected != 0) {
+      result.success = false;
+      Msg::Error("QuadOptimizer: face %d retains %zu prohibited concave or "
+                 "invalid input quads because no geometrically valid "
+                 "diagonal exists", face->tag(), preflightRejected);
+      return result;
+    }
+
+    initialElements = surfaceElements(face);
+    const SurfaceOrientationRepairResult orientation =
+      repairSurfaceElementOrientation(face, initialElements);
+    if(!orientation.structurallyRegular) {
+      result.success = false;
+      Msg::Error("QuadOptimizer: face %d is not a regular oriented surface "
+                 "cell complex", face->tag());
+      return result;
+    }
+    if(!orientation.orientable) {
+      result.success = false;
+      Msg::Error("QuadOptimizer: face %d has a non-orientable surface cell "
+                 "complex", face->tag());
+      return result;
+    }
+    result.reorientedElements = orientation.reorientedElements;
+    if(result.reorientedElements && options.invalidateVertexArrays)
+      face->model()->deleteVertexArrays();
+
+    const FaceHalfEdgeTopology initialTopology(initialElements);
+    if(!initialTopology.manifold()) {
+      result.success = false;
+      Msg::Error("QuadOptimizer: face %d is not a regular oriented surface "
+                 "cell complex after repairing element orientations and "
+                 "concave input quads", face->tag());
+      return result;
+    }
     // On curved faces, a Fast 2Q swap is accepted from the CAD gap at the
     // midpoint of its new diagonal. Keep both endpoints fixed during every
     // later Fast Winslow move so the checked chord is the committed chord.
@@ -9162,6 +9507,7 @@ namespace QuadOptimizer {
     }
     result.facesWithQuadrangles = faces.size();
     result.faces.resize(faces.size());
+    std::vector<std::exception_ptr> faceExceptions(faces.size());
     if(faces.empty()) return result;
 
     // Load the shared immutable topology database before entering the
@@ -9202,8 +9548,15 @@ namespace QuadOptimizer {
         i < static_cast<std::ptrdiff_t>(faces.size()); ++i) {
       FaceOptimizerResult faceResult;
       faceResult.faceTag = faces[static_cast<std::size_t>(i)]->tag();
-      faceResult.optimizer = optimizeSmallQuadCavities(
-        faces[static_cast<std::size_t>(i)], parallelOptions);
+      try {
+        faceResult.optimizer = optimizeSmallQuadCavities(
+          faces[static_cast<std::size_t>(i)], parallelOptions);
+      }
+      catch(...) {
+        faceResult.optimizer.success = false;
+        faceExceptions[static_cast<std::size_t>(i)] =
+          std::current_exception();
+      }
       result.faces[static_cast<std::size_t>(i)] = std::move(faceResult);
     }
 
@@ -9227,6 +9580,7 @@ namespace QuadOptimizer {
       result.rejectedByWinslow += face.optimizer.rejectedByWinslow;
       result.rejectedBySize += face.optimizer.rejectedBySize;
       result.rejectedByQuality += face.optimizer.rejectedByQuality;
+      result.reorientedElements += face.optimizer.reorientedElements;
       result.excessiveWarpingQuadrangles +=
         face.optimizer.excessiveWarpingQuadrangles;
       result.nonConvexOrInvalidQuadrangles +=
@@ -9296,6 +9650,12 @@ namespace QuadOptimizer {
       result.finalObjective += face.optimizer.finalObjective;
     }
     model->deleteVertexArrays();
+    // Msg::Error can throw when the API keeps General.AbortOnError at its
+    // default value. Never let that exception escape an OpenMP worker (which
+    // would call std::terminate); rethrow it on the caller thread only after
+    // every face has left the parallel region and model caches are clean.
+    for(const std::exception_ptr &exception : faceExceptions)
+      if(exception) std::rethrow_exception(exception);
     return result;
   }
 

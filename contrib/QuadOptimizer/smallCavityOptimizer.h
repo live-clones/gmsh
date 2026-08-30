@@ -119,6 +119,7 @@ namespace QuadOptimizer {
     std::size_t rejectedByWinslow = 0;
     std::size_t rejectedBySize = 0;
     std::size_t rejectedByQuality = 0;
+    std::size_t reorientedElements = 0;
     std::size_t skippedSpecificationCompliant = 0;
     std::size_t diamondsVisited = 0;
     std::size_t acceptedDiamonds = 0;
@@ -230,6 +231,7 @@ namespace QuadOptimizer {
     std::size_t rejectedByWinslow = 0;
     std::size_t rejectedBySize = 0;
     std::size_t rejectedByQuality = 0;
+    std::size_t reorientedElements = 0;
     std::size_t pillowHolesVisited = 0;
     std::size_t pillowHolesAlreadyPresent = 0;
     std::size_t acceptedPillows = 0;

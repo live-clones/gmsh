@@ -1956,10 +1956,30 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
   for(MQuadrangle *quad : gf->quadrangles)
     addPrimaryEdges(quad, existingEdges);
 
-  std::vector<MQuadrangle *> retained;
-  retained.reserve(gf->quadrangles.size());
-  std::map<MElement *, std::pair<MElement *, MElement *> > change;
+  struct PlannedQuadrangleSplit {
+    MQuadrangle *quadrangle = nullptr;
+    MTriangle *first = nullptr;
+    MTriangle *second = nullptr;
+  };
+  std::vector<PlannedQuadrangleSplit> plans;
   for(MQuadrangle *quad : gf->quadrangles) {
+    if(!quad || quad->getNumPrimaryVertices() != 4) {
+      ++result.rejectedInvalid;
+      continue;
+    }
+    std::set<MVertex *> primaryVertices;
+    bool validPrimaryVertices = true;
+    for(int i = 0; i < 4; ++i) {
+      MVertex *vertex = quad->getVertex(i);
+      if(!vertex || !primaryVertices.insert(vertex).second) {
+        validPrimaryVertices = false;
+        break;
+      }
+    }
+    if(!validPrimaryVertices) {
+      ++result.rejectedInvalid;
+      continue;
+    }
     const QuadrangleVertices vertices = {
       quad->getVertex(0), quad->getVertex(1),
       quad->getVertex(2), quad->getVertex(3)};
@@ -1986,14 +2006,10 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
       !parametricallyStrictlyConvex(parameters) || !std::isfinite(eta) ||
       !(eta > 0.);
     if(nonConvexOrInvalid) ++result.nonConvexOrInvalid;
-    if(!excessiveWarping && !nonConvexOrInvalid) {
-      retained.push_back(quad);
-      continue;
-    }
+    if(!excessiveWarping && !nonConvexOrInvalid) continue;
 
     if(quad->getNumVertices() != 4) {
       ++result.rejectedUnsupportedOrder;
-      retained.push_back(quad);
       continue;
     }
 
@@ -2003,7 +2019,6 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
       existingEdges.find(MEdge(v1, v3)) == existingEdges.end();
     if(!geometry02 && !geometry13) {
       ++result.rejectedInvalid;
-      retained.push_back(quad);
       continue;
     }
 
@@ -2013,7 +2028,6 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
       (!diagonalAdmissible || diagonalAdmissible(gf, v1, v3));
     if(!admissible02 && !admissible13) {
       ++result.rejectedBySize;
-      retained.push_back(quad);
       continue;
     }
 
@@ -2038,13 +2052,41 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
     second->setPartition(quad->getPartition());
     first->setVisibility(quad->getVisibility());
     second->setVisibility(quad->getVisibility());
-    gf->triangles.push_back(first);
-    gf->triangles.push_back(second);
-    change[quad] = {first, second};
+    plans.push_back({quad, first, second});
     existingEdges.insert(useDiagonal02 ? MEdge(v0, v2) : MEdge(v1, v3));
-    delete quad;
-    ++result.split;
   }
+
+  // Splitting is a mesh-topology transaction. If any prohibited quad cannot
+  // be replaced, keep the complete input face unchanged instead of leaving a
+  // partially repaired mesh on the caller's failure path.
+  if(result.rejectedInvalid || result.rejectedBySize ||
+     result.rejectedUnsupportedOrder) {
+    for(const PlannedQuadrangleSplit &plan : plans) {
+      delete plan.first;
+      delete plan.second;
+    }
+    return result;
+  }
+
+  std::vector<MQuadrangle *> retained;
+  retained.reserve(gf->quadrangles.size() - plans.size());
+  std::map<MElement *, std::pair<MElement *, MElement *> > change;
+  std::map<MQuadrangle *, std::size_t, std::less<MQuadrangle *> > planIndex;
+  for(std::size_t i = 0; i < plans.size(); ++i)
+    planIndex[plans[i].quadrangle] = i;
+  for(MQuadrangle *quad : gf->quadrangles) {
+    const auto found = planIndex.find(quad);
+    if(found == planIndex.end()) {
+      retained.push_back(quad);
+      continue;
+    }
+    PlannedQuadrangleSplit &plan = plans[found->second];
+    gf->triangles.push_back(plan.first);
+    gf->triangles.push_back(plan.second);
+    change[quad] = {plan.first, plan.second};
+    delete quad;
+  }
+  result.split = plans.size();
   gf->quadrangles = std::move(retained);
   updateBoundaryLayerColumnsAfterQuadSplits(gf, change);
   return result;

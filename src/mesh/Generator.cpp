@@ -1349,7 +1349,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
       Msg::Info("%s: %zu faces, %zu topology changes, %zu pillows "
                 "(%zu quads), bad "
                 "elements %zu -> %zu, absolute violations %zu -> %zu, "
-                "preferred violations %zu -> %zu, rejected(size=%zu)",
+                "preferred violations %zu -> %zu, reoriented=%zu, "
+                "rejected(size=%zu)",
                 how.c_str(),
                 result.facesWithQuadrangles, result.acceptedCavities,
                 result.acceptedPillows, result.insertedPillowQuadrangles,
@@ -1359,6 +1360,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
                 result.finalObjective.absoluteViolationCount,
                 result.initialObjective.preferredViolationCount,
                 result.finalObjective.preferredViolationCount,
+                result.reorientedElements,
                 result.rejectedBySize);
       if(options.quadCleanUp)
         Msg::Info("QuadCleanUp fixed point: swaps=%zu diamonds=%zu, "

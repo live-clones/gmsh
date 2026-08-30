@@ -2424,6 +2424,36 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
         TIMEOUT 10)
 
       add_test(
+        NAME optimizeQuadsFastOrientationRepair
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastOrientationRepair.geo
+          -DTEST_MSH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastOrientationRepair.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastOrientationRepair.cmake)
+      set_tests_properties(optimizeQuadsFastOrientationRepair PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastPreflightConcaveSplit
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastPreflightConcaveSplit.geo
+          -DTEST_MSH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastPreflightConcaveSplit.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastPreflightConcaveSplit.cmake)
+      set_tests_properties(optimizeQuadsFastPreflightConcaveSplit PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastOverlappingQuadsGuard
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastOverlappingQuadsGuard.geo
+          -DTEST_MSH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastOverlappingQuadsGuard.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastOverlappingQuadsGuard.cmake)
+      set_tests_properties(optimizeQuadsFastOverlappingQuadsGuard PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
         NAME quadPackMasterTargetSize
         COMMAND ${CMAKE_COMMAND}
           -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
