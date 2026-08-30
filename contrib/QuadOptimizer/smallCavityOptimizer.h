@@ -14,6 +14,7 @@
 #include <vector>
 
 class GFace;
+class GModel;
 
 namespace QuadOptimizer {
 
@@ -81,6 +82,10 @@ namespace QuadOptimizer {
     // Optional size-map filter. It is disabled by default: cavity boundaries
     // are fixed, so size variations remain local.
     bool enforceSizeMap = false;
+    // Read the active target field for the final report without turning its
+    // values into hard optimization bounds. This is used by PACK when a
+    // spatially varying guiding field is active.
+    bool auditSizeMap = false;
     // If set, this callback supplies the complete physical specification and
     // takes precedence over the scalar settings below. It must be thread-safe
     // when optimizeSmallQuadCavitiesAllFaces() is used.
@@ -257,6 +262,75 @@ namespace QuadOptimizer {
     SpecificationObjective finalObjective;
     std::vector<FaceOptimizerResult> faces;
   };
+
+  // Read-only, model-wide audit of the final linear triangle/quad surface
+  // mesh. Averages are weighted by elements (shape) or sampled physical area
+  // (CAD distance), never averaged face by face. Size ratios are measured
+  // against the active target field when enforceSizeMap or auditSizeMap is
+  // enabled; only enforceSizeMap activates normative size bounds.
+  struct QualityCriterionPassSummary {
+    std::size_t applicable = 0;
+    std::size_t preferredPass = 0;
+    std::size_t absolutePass = 0;
+  };
+
+  struct QuadMeshQualitySummary {
+    bool success = true;
+    std::size_t facesWithElements = 0;
+    std::size_t nonManifoldFaces = 0;
+    std::size_t triangles = 0;
+    std::size_t quadrangles = 0;
+    std::size_t invalidTriangles = 0;
+    std::size_t invalidQuadrangles = 0;
+    std::size_t absolutePassElements = 0;
+    std::size_t badTriangles = 0;
+    std::size_t badQuadrangles = 0;
+    std::size_t absoluteQuadrangleViolations = 0;
+    std::size_t preferredQuadrangleViolations = 0;
+    std::size_t severeValenceVertices = 0;
+    std::size_t irregularValenceVertices = 0;
+    QualityCriterionPassSummary warping;
+    QualityCriterionPassSummary edgeRatio;
+    QualityCriterionPassSummary quadrangleMinimumAngle;
+    QualityCriterionPassSummary quadrangleMaximumAngle;
+    QualityCriterionPassSummary triangleMinimumAngle;
+    QualityCriterionPassSummary triangleMaximumAngle;
+    QualityCriterionPassSummary skewing;
+    bool passesShapeSpecifications = false;
+    double minimumQuadrangleSICN = 0.;
+    double averageQuadrangleSICN = 0.;
+    double minimumQuadrangleAngleDegrees = 0.;
+    double maximumQuadrangleAngleDegrees = 0.;
+    double maximumQuadrangleEdgeRatio = 0.;
+    double averageQuadrangleEdgeRatio = 0.;
+    double maximumQuadrangleSkewingDegrees = 0.;
+    double averageQuadrangleSkewingDegrees = 0.;
+    double maximumQuadrangleWarpingDegrees = 0.;
+    double averageQuadrangleWarpingDegrees = 0.;
+    bool sizeAudited = false;
+    bool sizeSpecificationsActive = false;
+    std::size_t sizeEdges = 0;
+    std::size_t edgesBelowMinimum = 0;
+    std::size_t edgesAboveMaximum = 0;
+    std::size_t invalidSizeEdges = 0;
+    double minimumEdgeLength = 0.;
+    double maximumEdgeLength = 0.;
+    double minimumTargetSizeRatio = 0.;
+    double maximumTargetSizeRatio = 0.;
+    double rmsLogTargetSizeRatio = 0.;
+    bool cadAudited = false;
+    std::size_t cadElementsRequested = 0;
+    std::size_t cadElements = 0;
+    std::size_t invalidCadElements = 0;
+    std::size_t invalidCadSamples = 0;
+    double maximumCadDistance = 0.;
+    double rmsCadDistance = 0.;
+  };
+
+  GMSH_API QuadMeshQualitySummary summarizeQuadMeshQuality(
+    GModel *model,
+    const SmallCavityOptimizerOptions &options =
+      SmallCavityOptimizerOptions());
 
   // Replace adjacent triangle pairs by quadrangles only when the complete
   // local transaction strictly improves the same additive global quality as

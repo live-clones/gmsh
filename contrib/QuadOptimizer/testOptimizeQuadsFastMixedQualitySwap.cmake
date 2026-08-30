@@ -42,18 +42,37 @@ if(NOT second_summary MATCHES "0 topology changes" OR
     "The quality-only mixed T+Q result is not a fixed point:\n${log}")
 endif()
 
-string(REGEX MATCHALL "QuadOptimizer size: [^\n\r]*" size_summaries
+string(REGEX MATCHALL "OptimizeQuadsFast fit: [^\n\r]*" fit_summaries
        "${log}")
-list(LENGTH size_summaries size_summary_count)
-if(NOT size_summary_count EQUAL 2)
-  message(FATAL_ERROR "Expected two size summaries:\n${log}")
+list(LENGTH fit_summaries fit_summary_count)
+if(NOT fit_summary_count EQUAL 2)
+  message(FATAL_ERROR "Expected two OptimizeQuadsFast fit summaries:\n${log}")
 endif()
-list(GET size_summaries 0 first_size_summary)
-if(NOT first_size_summary MATCHES "topologyChanges=1" OR
-   NOT first_size_summary MATCHES "rejectedBySize=0" OR
-   NOT first_size_summary MATCHES "initialBelow=0" OR
-   NOT first_size_summary MATCHES "initialAbove=0" OR
-   NOT first_size_summary MATCHES "finalBelow=0" OR
-   NOT first_size_summary MATCHES "finalAbove=0")
-  message(FATAL_ERROR "The mixed T+Q swap violated size bounds:\n${log}")
+list(GET fit_summaries 0 first_fit_summary)
+list(GET fit_summaries 1 second_fit_summary)
+foreach(fit_summary IN LISTS fit_summaries)
+  if(NOT fit_summary MATCHES
+     "sizeBad\\[below/above/invalid\\]=0/0/0")
+    message(FATAL_ERROR "The mixed T+Q swap violated size bounds:\n${log}")
+  endif()
+endforeach()
+if(NOT first_fit_summary STREQUAL second_fit_summary)
+  message(FATAL_ERROR
+    "The mixed T+Q size result is not a fixed point:\n${log}")
+endif()
+
+foreach(report_label IN ITEMS
+    "quality"
+    "specifications pass\\(preferred/total\\|absolute/total\\)"
+    "quad metrics")
+  string(REGEX MATCHALL "OptimizeQuadsFast ${report_label}: [^\n\r]*"
+         report_lines "${log}")
+  list(LENGTH report_lines report_count)
+  if(NOT report_count EQUAL 2)
+    message(FATAL_ERROR
+      "Expected two OptimizeQuadsFast ${report_label} summaries:\n${log}")
+  endif()
+endforeach()
+if(log MATCHES "QuadOptimizer face [0-9]+ timing\\(s\\):")
+  message(FATAL_ERROR "Per-face optimizer timings leaked:\n${log}")
 endif()

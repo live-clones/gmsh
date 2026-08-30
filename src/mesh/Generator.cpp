@@ -92,6 +92,107 @@
 
 #include "meshDuplicateVertices.h"
 
+#if defined(HAVE_QUADOPTIMIZER)
+static void PrintQuadMeshQualitySummary(
+  const char *label,
+  const QuadOptimizer::QuadMeshQualitySummary &quality)
+{
+  if(!quality.success) {
+    Msg::Warning("%s quality summary could not be computed", label);
+    return;
+  }
+  const std::size_t elements = quality.triangles + quality.quadrangles;
+  const bool validityPass = quality.nonManifoldFaces == 0 &&
+    quality.invalidTriangles == 0 &&
+    quality.invalidQuadrangles == 0;
+  const bool sizePass = quality.sizeSpecificationsActive &&
+    quality.sizeAudited && quality.sizeEdges > 0 &&
+    quality.edgesBelowMinimum == 0 &&
+    quality.edgesAboveMaximum == 0 && quality.invalidSizeEdges == 0;
+  Msg::Info("%s quality: faces=%zu triangles=%zu quads=%zu "
+            "absolutePass=%zu/%zu validity=%s invalid[T/Q]=%zu/%zu "
+            "nonManifoldFaces=%zu shapeSpecs=%s sizeSpecs=%s",
+            label, quality.facesWithElements, quality.triangles,
+            quality.quadrangles, quality.absolutePassElements, elements,
+            validityPass ? "PASS" : "FAIL",
+            quality.invalidTriangles, quality.invalidQuadrangles,
+            quality.nonManifoldFaces,
+            quality.passesShapeSpecifications ? "PASS" : "FAIL",
+            quality.sizeSpecificationsActive ?
+              (sizePass ? "PASS" : "FAIL") : "off");
+  Msg::Info("%s specifications pass(preferred/total|absolute/total): "
+            "warp=%zu/%zu|%zu/%zu edgeRatio=%zu/%zu|%zu/%zu "
+            "quadAngleMin=%zu/%zu|%zu/%zu "
+            "quadAngleMax=%zu/%zu|%zu/%zu "
+            "triAngleMin=%zu/%zu|%zu/%zu "
+            "triAngleMax=%zu/%zu|%zu/%zu skew=%zu/%zu|%zu/%zu",
+            label,
+            quality.warping.preferredPass, quality.warping.applicable,
+            quality.warping.absolutePass, quality.warping.applicable,
+            quality.edgeRatio.preferredPass, quality.edgeRatio.applicable,
+            quality.edgeRatio.absolutePass, quality.edgeRatio.applicable,
+            quality.quadrangleMinimumAngle.preferredPass,
+            quality.quadrangleMinimumAngle.applicable,
+            quality.quadrangleMinimumAngle.absolutePass,
+            quality.quadrangleMinimumAngle.applicable,
+            quality.quadrangleMaximumAngle.preferredPass,
+            quality.quadrangleMaximumAngle.applicable,
+            quality.quadrangleMaximumAngle.absolutePass,
+            quality.quadrangleMaximumAngle.applicable,
+            quality.triangleMinimumAngle.preferredPass,
+            quality.triangleMinimumAngle.applicable,
+            quality.triangleMinimumAngle.absolutePass,
+            quality.triangleMinimumAngle.applicable,
+            quality.triangleMaximumAngle.preferredPass,
+            quality.triangleMaximumAngle.applicable,
+            quality.triangleMaximumAngle.absolutePass,
+            quality.triangleMaximumAngle.applicable,
+            quality.skewing.preferredPass, quality.skewing.applicable,
+            quality.skewing.absolutePass, quality.skewing.applicable);
+  Msg::Info("%s quad metrics: SICN[min/avg]=%.6g/%.6g "
+            "angle[min/max]=%.6g/%.6gdeg "
+            "edgeRatio[max/avg]=%.6g/%.6g "
+            "skew[max/avg]=%.6g/%.6gdeg "
+            "warp[max/avg]=%.6g/%.6gdeg bad=%zu invalid=%zu "
+            "valence[severe/irregular]=%zu/%zu",
+            label, quality.minimumQuadrangleSICN,
+            quality.averageQuadrangleSICN,
+            quality.minimumQuadrangleAngleDegrees,
+            quality.maximumQuadrangleAngleDegrees,
+            quality.maximumQuadrangleEdgeRatio,
+            quality.averageQuadrangleEdgeRatio,
+            quality.maximumQuadrangleSkewingDegrees,
+            quality.averageQuadrangleSkewingDegrees,
+            quality.maximumQuadrangleWarpingDegrees,
+            quality.averageQuadrangleWarpingDegrees,
+            quality.badQuadrangles, quality.invalidQuadrangles,
+            quality.severeValenceVertices,
+            quality.irregularValenceVertices);
+  if(quality.sizeAudited)
+    Msg::Info("%s fit: sizeEdges=%zu length[min/max]=%.6g/%.6g "
+              "targetRatio[min/max/rmsLog]=%.6g/%.6g/%.6g "
+              "sizeBad[below/above/invalid]=%zu/%zu/%zu "
+              "CAD[max/rms]=%.6g/%.6g "
+              "CADcoverage=%zu/%zu invalidElements=%zu invalidSamples=%zu",
+              label, quality.sizeEdges, quality.minimumEdgeLength,
+              quality.maximumEdgeLength, quality.minimumTargetSizeRatio,
+              quality.maximumTargetSizeRatio,
+              quality.rmsLogTargetSizeRatio,
+              quality.edgesBelowMinimum, quality.edgesAboveMaximum,
+              quality.invalidSizeEdges, quality.maximumCadDistance,
+              quality.rmsCadDistance, quality.cadElements,
+              quality.cadElementsRequested, quality.invalidCadElements,
+              quality.invalidCadSamples);
+  else
+    Msg::Info("%s fit: size=off CAD[max/rms]=%.6g/%.6g "
+              "CADcoverage=%zu/%zu invalidElements=%zu invalidSamples=%zu",
+              label, quality.maximumCadDistance,
+              quality.rmsCadDistance, quality.cadElements,
+              quality.cadElementsRequested, quality.invalidCadElements,
+              quality.invalidCadSamples);
+}
+#endif
+
 class EmbeddedCompatibilityTest {
 public:
   void operator()(GRegion *gr)
@@ -738,9 +839,9 @@ static void Mesh2D(GModel *m)
     }
 
     if(CTX::instance()->mesh.quadqsCleanupMethod == 0)
-      OptimizeMesh(m, "OptimizeQuads");
+      OptimizeMesh(m, "OptimizeQuads", false, 1, 0., false);
     else if(CTX::instance()->mesh.quadqsCleanupMethod == 1)
-      OptimizeMesh(m, "OptimizeQuadsFast");
+      OptimizeMesh(m, "OptimizeQuadsFast", false, 1, 0., false);
 
     // This is a validity invariant, not an optional quality filter. Shape
     // measures alone can miss a concave or folded bilinear quad on a curved
@@ -899,6 +1000,17 @@ static void Mesh2D(GModel *m)
               "excessiveWarping=%zu split=%zu rejected=%zu",
               finalNonConvexOrInvalid, finalExcessiveWarping,
               finalSplitCount, finalRejected);
+#if defined(HAVE_QUADOPTIMIZER)
+    if(Msg::GetVerbosity() >= 4) {
+      QuadOptimizer::SmallCavityOptimizerOptions auditOptions =
+        terminalOptions;
+      if(!auditOptions.enforceSizeMap)
+        auditOptions.auditSizeMap = true;
+      const QuadOptimizer::QuadMeshQualitySummary finalQuality =
+        QuadOptimizer::summarizeQuadMeshQuality(m, auditOptions);
+      PrintQuadMeshQualitySummary("PACK final", finalQuality);
+    }
+#endif
     if(debug) m->writeMSH("opti4.msh");
 
     for(GFace *gf : m->getFaces()) {
@@ -1116,7 +1228,8 @@ static void Mesh3D(GModel *m)
                  CTX::instance()->mesh.timer[2], t2 - t1);
 }
 
-void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, double quality)
+void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
+                  double quality, bool reportQuadQuality)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
@@ -1236,7 +1349,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
       Msg::Info("%s: %zu faces, %zu topology changes, %zu pillows "
                 "(%zu quads), bad "
                 "elements %zu -> %zu, absolute violations %zu -> %zu, "
-                "preferred violations %zu -> %zu",
+                "preferred violations %zu -> %zu, rejected(size=%zu)",
                 how.c_str(),
                 result.facesWithQuadrangles, result.acceptedCavities,
                 result.acceptedPillows, result.insertedPillowQuadrangles,
@@ -1245,7 +1358,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
                 result.initialObjective.absoluteViolationCount,
                 result.finalObjective.absoluteViolationCount,
                 result.initialObjective.preferredViolationCount,
-                result.finalObjective.preferredViolationCount);
+                result.finalObjective.preferredViolationCount,
+                result.rejectedBySize);
       if(options.quadCleanUp)
         Msg::Info("QuadCleanUp fixed point: swaps=%zu diamonds=%zu, "
                   "smoothed=%zu rejected(winslow=%zu,size=%zu,quality=%zu)",
@@ -1289,46 +1403,17 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
         Msg::Warning("QuadOptimizer: no quadrilateral face was found; "
                      "edge-length requirements were not audited");
       }
-      else if(options.enforceSizeMap) {
-        char targetLabel[64], minimumLabel[64], maximumLabel[64];
-        if(options.targetSize > 0.)
-          snprintf(targetLabel, sizeof(targetLabel), "%.16g",
-                   options.targetSize);
-        else
-          snprintf(targetLabel, sizeof(targetLabel), "size-map");
-        if(options.minimumEdgeLength > 0.)
-          snprintf(minimumLabel, sizeof(minimumLabel), "%.16g",
-                   options.minimumEdgeLength);
-        else
-          snprintf(minimumLabel, sizeof(minimumLabel), "disabled");
-        if(options.maximumEdgeLength > 0.)
-          snprintf(maximumLabel, sizeof(maximumLabel), "%.16g",
-                   options.maximumEdgeLength);
-        else
-          snprintf(maximumLabel, sizeof(maximumLabel), "disabled");
-        Msg::Info("QuadOptimizer size: target=%s minimum=%s maximum=%s "
-                  "topologyChanges=%zu rejectedBySize=%zu "
-                  "initialBelow=%zu initialAbove=%zu "
-                  "initialInvalid=%zu finalBelow=%zu finalAbove=%zu "
-                  "finalInvalid=%zu finalMin=%.16g finalMax=%.16g",
-                  targetLabel, minimumLabel, maximumLabel,
-                  result.acceptedCavities,
-                  result.rejectedBySize,
-                  result.initialEdgesBelowMinimum,
-                  result.initialEdgesAboveMaximum,
-                  result.initialInvalidSizeEdges,
-                  result.finalEdgesBelowMinimum,
-                  result.finalEdgesAboveMaximum,
-                  result.finalInvalidSizeEdges,
-                  result.finalMinimumEdgeLength,
-                  result.finalMaximumEdgeLength);
-        if(!result.sizeRequirementsMet)
-          Msg::Warning("QuadOptimizer: edge-length requirements are not met "
-                       "after optimization (%zu below, %zu above, %zu "
-                       "invalid)",
-                       result.finalEdgesBelowMinimum,
-                       result.finalEdgesAboveMaximum,
-                       result.finalInvalidSizeEdges);
+      else if(options.enforceSizeMap && !result.sizeRequirementsMet)
+        Msg::Warning("QuadOptimizer: edge-length requirements are not met "
+                     "after optimization (%zu below, %zu above, %zu "
+                     "invalid)",
+                     result.finalEdgesBelowMinimum,
+                     result.finalEdgesAboveMaximum,
+                     result.finalInvalidSizeEdges);
+      if(reportQuadQuality && Msg::GetVerbosity() >= 4) {
+        const QuadOptimizer::QuadMeshQualitySummary finalQuality =
+          QuadOptimizer::summarizeQuadMeshQuality(m, options);
+        PrintQuadMeshQualitySummary(how.c_str(), finalQuality);
       }
     }
 #else

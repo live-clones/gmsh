@@ -10,6 +10,7 @@
 #include <limits>
 #include <numeric>
 #include <unordered_map>
+#include "GmshMessage.h"
 #include "gmsh.h"
 
 using namespace std;
@@ -312,8 +313,8 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   //  }
 
   auto sol = compute_weighted_even_faces(N, faces);
-  std::cout << "Flips: " << sol.flips << "\n";
-  std::cout << "Weighted cost: " << sol.cost << "\n";
+  Msg::Debug("Curve quantization: flips=%d, weighted cost=%g",
+             sol.flips, sol.cost);
   N = sol.n;
 }
 /*

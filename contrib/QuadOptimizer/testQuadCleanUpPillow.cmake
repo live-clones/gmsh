@@ -63,7 +63,7 @@ if(NOT second_pillow_audit MATCHES
   message(FATAL_ERROR "The existing pillow topology was not recognized:\n${log}")
 endif()
 
-string(REGEX MATCHALL "QuadOptimizer size: [^\n\r]*" size_audits "${log}")
+string(REGEX MATCHALL "QuadCleanUp fit: [^\n\r]*" size_audits "${log}")
 list(LENGTH size_audits size_audit_count)
 if(NOT size_audit_count EQUAL 2)
   message(FATAL_ERROR "Expected two pillow size audits:\n${log}")
@@ -71,17 +71,47 @@ endif()
 list(GET size_audits 0 first_size)
 list(GET size_audits 1 second_size)
 # The duplicate rim starts at about 2e-4 from the hole. Thus an accepted
-# pillow with finalBelow=0 proves that the post-Winslow candidate, rather than
-# the infinitesimal construction, was audited and committed.
+# pillow with no final size violation proves that the post-Winslow candidate,
+# rather than the infinitesimal construction, was audited and committed.
 foreach(size_audit IN ITEMS "${first_size}" "${second_size}")
   if(NOT size_audit MATCHES
-     "^QuadOptimizer size: target=4 minimum=1 maximum=10 ")
-    message(FATAL_ERROR "Pillow size criteria were not propagated:\n${log}")
+     "^QuadCleanUp fit: sizeEdges=[1-9][0-9]* " OR
+     NOT size_audit MATCHES
+     "targetRatio\\[min/max/rmsLog\\]=[^ ]+ " OR
+     NOT size_audit MATCHES
+     "sizeBad\\[below/above/invalid\\]=0/0/0([ ]|$)" OR
+     NOT size_audit MATCHES
+     "CADcoverage=32/32 invalidElements=0 invalidSamples=0$")
+    message(FATAL_ERROR "Pillow size criteria were not satisfied:\n${log}")
   endif()
-  foreach(field IN ITEMS initialBelow initialAbove initialInvalid
-                         finalBelow finalAbove finalInvalid)
-    if(NOT size_audit MATCHES "${field}=0([ ]|$)")
-      message(FATAL_ERROR "Pillow size requirement ${field}=0 is missing:\n${log}")
-    endif()
-  endforeach()
 endforeach()
+
+string(REGEX MATCHALL "QuadCleanUp quality: [^\n\r]*" quality_summaries
+       "${log}")
+list(LENGTH quality_summaries quality_summary_count)
+if(NOT quality_summary_count EQUAL 2)
+  message(FATAL_ERROR "Expected two pillow quality summaries:\n${log}")
+endif()
+foreach(quality_summary IN LISTS quality_summaries)
+  if(NOT quality_summary MATCHES
+     "validity=PASS invalid\\[T/Q\\]=0/0 nonManifoldFaces=0")
+    message(FATAL_ERROR "Pillow result failed final validity:\n${log}")
+  endif()
+endforeach()
+if(log MATCHES "Could not orient normal of surface")
+  message(FATAL_ERROR "The quality report emitted normal warnings:\n${log}")
+endif()
+foreach(report_label IN ITEMS
+    "specifications pass\\(preferred/total\\|absolute/total\\)"
+    "quad metrics")
+  string(REGEX MATCHALL "QuadCleanUp ${report_label}: [^\n\r]*"
+         report_lines "${log}")
+  list(LENGTH report_lines report_count)
+  if(NOT report_count EQUAL 2)
+    message(FATAL_ERROR
+      "Expected two QuadCleanUp ${report_label} summaries:\n${log}")
+  endif()
+endforeach()
+if(log MATCHES "QuadCleanUp face [0-9]+:")
+  message(FATAL_ERROR "Per-face cleanup diagnostics leaked:\n${log}")
+endif()

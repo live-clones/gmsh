@@ -31,16 +31,21 @@ if(NOT second_summary MATCHES "0 topology changes" OR
   message(FATAL_ERROR "The second CleanUp was not a fixed point:\n${log}")
 endif()
 
-string(REGEX MATCHALL "QuadOptimizer size: [^\n\r]*" size_audits "${log}")
-list(LENGTH size_audits size_audit_count)
-if(NOT size_audit_count EQUAL 2)
-  message(FATAL_ERROR "Expected two size audits, got ${size_audit_count}:\n${log}")
+string(REGEX MATCHALL "QuadCleanUp fit: [^\n\r]*" fit_summaries "${log}")
+list(LENGTH fit_summaries fit_summary_count)
+if(NOT fit_summary_count EQUAL 2)
+  message(FATAL_ERROR
+    "Expected two QuadCleanUp fit summaries, got ${fit_summary_count}:\n${log}")
 endif()
-foreach(size_audit IN LISTS size_audits)
-  foreach(field IN ITEMS initialBelow initialAbove initialInvalid
-                         finalBelow finalAbove finalInvalid)
-    if(NOT size_audit MATCHES "${field}=0")
-      message(FATAL_ERROR "Size requirement ${field}=0 is missing:\n${log}")
-    endif()
-  endforeach()
+list(GET fit_summaries 0 first_fit_summary)
+list(GET fit_summaries 1 second_fit_summary)
+foreach(fit_summary IN LISTS fit_summaries)
+  if(NOT fit_summary MATCHES
+     "sizeBad\\[below/above/invalid\\]=0/0/0")
+    message(FATAL_ERROR "A size requirement is not met:\n${log}")
+  endif()
 endforeach()
+if(NOT first_fit_summary STREQUAL second_fit_summary)
+  message(FATAL_ERROR
+    "The QuadCleanUp size result is not a fixed point:\n${log}")
+endif()

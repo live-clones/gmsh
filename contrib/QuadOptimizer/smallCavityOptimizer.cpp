@@ -10,6 +10,7 @@
 #include "GFace.h"
 #include "GPoint.h"
 #include "GModel.h"
+#include "GVertex.h"
 #include "GmshMessage.h"
 #include "MElement.h"
 #include "MLine.h"
@@ -82,6 +83,70 @@ namespace QuadOptimizer {
         if(!persistentFaceParameter(
              face, element->getVertex(static_cast<int>(i)), parameters[i]))
           return {};
+      return parameters;
+    }
+
+    // Quiet parameter recovery for the reporting path. paramOnElement() is
+    // useful to the mesher, but it can emit Msg::Error when its center
+    // projection fails; a read-only quality query must report that element as
+    // unauditable without changing the process-wide error count.
+    std::vector<SPoint2> auditElementParameters(
+      GFace *face, MElement *element)
+    {
+      if(!face || !element) return {};
+      const std::size_t count = element->getNumPrimaryVertices();
+      if(count != 3 && count != 4) return {};
+      std::vector<SPoint2> parameters(count);
+      if(face->geomType() == GEntity::DiscreteSurface) {
+        for(std::size_t i = 0; i < count; ++i)
+          if(!persistentFaceParameter(
+               face, element->getVertex(static_cast<int>(i)), parameters[i]))
+            return {};
+        return parameters;
+      }
+
+      std::size_t anchor = count;
+      for(std::size_t i = 0; i < count; ++i) {
+        MVertex *vertex = element->getVertex(static_cast<int>(i));
+        if(vertex && vertex->onWhat() == face) {
+          double u = 0., v = 0.;
+          vertex->getParameter(0, u);
+          vertex->getParameter(1, v);
+          if(std::isfinite(u) && std::isfinite(v)) {
+            anchor = i;
+            parameters[i] = SPoint2(u, v);
+            break;
+          }
+        }
+      }
+
+      SPoint2 reference;
+      if(anchor < count)
+        reference = parameters[anchor];
+      else {
+        const double initialGuess[2] = {0., 0.};
+        const GPoint projection = face->closestPoint(
+          element->barycenter(), initialGuess);
+        if(!projection.succeeded() || !std::isfinite(projection.u()) ||
+           !std::isfinite(projection.v()))
+          return {};
+        reference = SPoint2(projection.u(), projection.v());
+        anchor = 0;
+        if(!reparamMeshVertexOnFaceWithRef(
+             face, element->getVertex(0), reference, parameters[0]))
+          return {};
+        reference = parameters[0];
+      }
+
+      for(std::size_t offset = 1; offset < count; ++offset) {
+        const std::size_t i = (anchor + offset) % count;
+        if(!reparamMeshVertexOnFaceWithRef(
+             face, element->getVertex(static_cast<int>(i)), reference,
+             parameters[i]) || !std::isfinite(parameters[i].x()) ||
+           !std::isfinite(parameters[i].y()))
+          return {};
+        reference = parameters[i];
+      }
       return parameters;
     }
 
@@ -210,6 +275,7 @@ namespace QuadOptimizer {
       double minimumLength = std::numeric_limits<double>::infinity();
       double maximumLength = 0.;
       std::size_t edgeCount = 0;
+      std::size_t validEdgeCount = 0;
       std::size_t belowMinimum = 0;
       std::size_t aboveMaximum = 0;
       std::size_t invalid = 0;
@@ -229,6 +295,43 @@ namespace QuadOptimizer {
       double sampledArea = 0.;
       double meanSquaredDistance = std::numeric_limits<double>::infinity();
     };
+
+    struct SupportingPlane {
+      Point origin = {0., 0., 0.};
+      Point unitNormal = {0., 0., 0.};
+    };
+
+    bool auditedSupportingPlane(GFace *face, SupportingPlane &plane)
+    {
+      if(!face || face->geomType() != GEntity::Plane) return false;
+      const std::vector<GVertex *> vertices = face->vertices();
+      for(std::size_t i = 0; i < vertices.size(); ++i) {
+        if(!vertices[i]) continue;
+        const SPoint3 origin(vertices[i]->x(), vertices[i]->y(),
+                             vertices[i]->z());
+        for(std::size_t j = i + 1; j < vertices.size(); ++j) {
+          if(!vertices[j]) continue;
+          const SPoint3 firstPoint(vertices[j]->x(), vertices[j]->y(),
+                                   vertices[j]->z());
+          const SVector3 first(origin, firstPoint);
+          for(std::size_t k = j + 1; k < vertices.size(); ++k) {
+            if(!vertices[k]) continue;
+            const SPoint3 secondPoint(vertices[k]->x(), vertices[k]->y(),
+                                      vertices[k]->z());
+            const SVector3 normal = crossprod(
+              first, SVector3(origin, secondPoint));
+            const double normalNorm = normal.norm();
+            if(!(normalNorm > 1.e-14)) continue;
+            plane.origin = {origin.x(), origin.y(), origin.z()};
+            plane.unitNormal = {normal.x() / normalNorm,
+                                normal.y() / normalNorm,
+                                normal.z() / normalNorm};
+            return true;
+          }
+        }
+      }
+      return false;
+    }
 
     enum class CleanUpDecisionReason {
       Rejected,
@@ -2241,7 +2344,8 @@ namespace QuadOptimizer {
       // field. Query that field directly when it is still available: the
       // generic BGM_MeshSize path can apply additional clamps and factors and
       // thus need not reproduce the length used during packing exactly.
-      if(options.enforceSizeMap && face && face->model()) {
+      if((options.enforceSizeMap || options.auditSizeMap) && face &&
+         face->model()) {
         FieldManager *fields = face->model()->getFields();
         if(fields) {
           Field *field = fields->get(fields->getBackgroundField());
@@ -2253,6 +2357,10 @@ namespace QuadOptimizer {
           }
         }
       }
+      // An audit-only request is deliberately model-local: do not fall back
+      // to BGM_MeshSize(), whose legacy callback is taken from
+      // GModel::current() and could belong to a different model.
+      if(options.auditSizeMap && !options.enforceSizeMap) return -1.;
       return BGM_MeshSize(face, uv[0], uv[1], xyz[0], xyz[1], xyz[2]);
     }
 
@@ -2266,11 +2374,14 @@ namespace QuadOptimizer {
 
       EdgeLengthCriteria criteria;
       criteria.target = prescribedTargetSize(face, uv, xyz, options);
-      criteria.minimum = options.minimumEdgeLength > 0. ?
+      criteria.minimum = options.enforceSizeMap &&
+                           options.minimumEdgeLength > 0. ?
         options.minimumEdgeLength : 0.;
-      criteria.maximum = options.maximumEdgeLength > 0. ?
+      criteria.maximum = options.enforceSizeMap &&
+                           options.maximumEdgeLength > 0. ?
         options.maximumEdgeLength : std::numeric_limits<double>::infinity();
-      if(std::isfinite(criteria.target) && criteria.target > 0.) {
+      if(options.enforceSizeMap && std::isfinite(criteria.target) &&
+         criteria.target > 0.) {
         if(options.minimumEdgeSizeRatio > 0.)
           criteria.minimum = std::max(
             criteria.minimum,
@@ -2345,6 +2456,7 @@ namespace QuadOptimizer {
         if(enforceBounds) score.admissible = false;
         return;
       }
+      ++score.validEdgeCount;
       score.minimumRatio = std::min(score.minimumRatio, ratio);
       score.maximumRatio = std::max(score.maximumRatio, ratio);
       score.minimumLength = std::min(score.minimumLength, length);
@@ -2589,6 +2701,105 @@ namespace QuadOptimizer {
       patch.gf = face;
       patch.elements = surfaceElements(face);
       return existingSizeScore(patch, options);
+    }
+
+    SizeScore auditedFaceSizeScore(
+      GFace *face, const std::vector<MElement *> &elements,
+      const std::map<MElement *, std::vector<SPoint2> > &parametersByElement,
+      const SmallCavityOptimizerOptions &options)
+    {
+      std::map<Edge, std::pair<UV, UV> > edges;
+      std::set<Edge> edgesWithParameters;
+      SizeScore score;
+      double error = 0.;
+      bool targetNeedsParameters = true;
+      if(options.targetSize > 0.)
+        targetNeedsParameters = false;
+      else if((options.enforceSizeMap || options.auditSizeMap) && face &&
+              face->model()) {
+        FieldManager *fields = face->model()->getFields();
+        Field *field = fields ?
+          fields->get(fields->getBackgroundField()) : nullptr;
+        if(field && field->numComponents() == 3)
+          targetNeedsParameters = false;
+      }
+      for(MElement *element : elements) {
+        if(!element) {
+          ++score.invalid;
+          continue;
+        }
+        const std::size_t count = element->getNumPrimaryVertices();
+        const auto foundParameters = parametersByElement.find(element);
+        if(count != 3 && count != 4) {
+          ++score.invalid;
+          continue;
+        }
+        const bool hasParameters =
+          foundParameters != parametersByElement.end() &&
+          foundParameters->second.size() >= count;
+        for(std::size_t i = 0; i < count; ++i) {
+          MVertex *a = element->getVertex(static_cast<int>(i));
+          MVertex *b = element->getVertex(
+            static_cast<int>((i + 1) % count));
+          if(!a || !b) {
+            ++score.invalid;
+            continue;
+          }
+          UV auv = {0., 0.}, buv = {0., 0.};
+          if(hasParameters) {
+            const std::vector<SPoint2> &parameters =
+              foundParameters->second;
+            auv = {parameters[i].x(), parameters[i].y()};
+            buv = {parameters[(i + 1) % count].x(),
+                   parameters[(i + 1) % count].y()};
+          }
+          const Edge edge = canonicalEdge(a, b);
+          if(edge.first != a) {
+            std::swap(a, b);
+            std::swap(auv, buv);
+          }
+          const auto inserted = edges.emplace(
+            edge, std::make_pair(auv, buv));
+          if(hasParameters) {
+            if(!inserted.second) inserted.first->second = {auv, buv};
+            edgesWithParameters.insert(edge);
+          }
+        }
+      }
+
+      score.admissible = !edges.empty() && score.invalid == 0;
+      for(const auto &entry : edges) {
+        MVertex *a = entry.first.first;
+        MVertex *b = entry.first.second;
+        if(!a || !b) {
+          ++score.invalid;
+          continue;
+        }
+        if(targetNeedsParameters &&
+           edgesWithParameters.find(entry.first) ==
+             edgesWithParameters.end()) {
+          ++score.invalid;
+          continue;
+        }
+        const UV &auv = entry.second.first;
+        const UV &buv = entry.second.second;
+        const UV midpointUv = {.5 * (auv[0] + buv[0]),
+                               .5 * (auv[1] + buv[1])};
+        const Point midpointXyz = {.5 * (a->x() + b->x()),
+                                   .5 * (a->y() + b->y()),
+                                   .5 * (a->z() + b->z())};
+        const Point ax = {a->x(), a->y(), a->z()};
+        const Point bx = {b->x(), b->y(), b->z()};
+        const EdgeLengthCriteria criteria = edgeLengthCriteria(
+          face, midpointUv, midpointXyz, options);
+        accumulateSizeEdge(score, error, criteria, distance(ax, bx), true);
+      }
+      // Preserve useful statistics for the valid subset even if another
+      // element or target-field query was unauditable.
+      if(score.validEdgeCount)
+        score.meanSquaredLogRatio =
+          error / static_cast<double>(score.validEdgeCount);
+      return score;
     }
 
     std::vector<CavitySeed> collectCleanUpCavities(
@@ -2939,7 +3150,8 @@ namespace QuadOptimizer {
 
     bool accumulateGeometrySample(GFace *face, const UV &parameter,
                                   const Point &meshPoint, double areaWeight,
-                                  GeometryDeviation &deviation)
+                                  GeometryDeviation &deviation,
+                                  const SupportingPlane *supportingPlane)
     {
       if(!face || !std::isfinite(parameter[0]) ||
          !std::isfinite(parameter[1]) || !std::isfinite(areaWeight) ||
@@ -2951,18 +3163,33 @@ namespace QuadOptimizer {
       // the GFace. The interpolated parameter is only the deterministic seed
       // of the closest-point solve; using face->point(parameter) instead would
       // measure parametrization distortion and can rank two quad diagonals in
-      // the opposite order from their physical CAD distance.
-      const SPoint3 query(meshPoint[0], meshPoint[1], meshPoint[2]);
-      const double initialGuess[2] = {parameter[0], parameter[1]};
-      const GPoint geometry = face->closestPoint(query, initialGuess);
-      if(!geometry.succeeded() || !std::isfinite(geometry.x()) ||
-         !std::isfinite(geometry.y()) || !std::isfinite(geometry.z())) {
-        ++deviation.invalidSampleCount;
-        return false;
+      // the opposite order from their physical CAD distance. The optional
+      // supporting plane is used only by the final report and is computed
+      // once per face; optimizer candidates retain the historical CAD query.
+      double chordDistance = -1.;
+      if(supportingPlane) {
+        const Point offset = {
+          meshPoint[0] - supportingPlane->origin[0],
+          meshPoint[1] - supportingPlane->origin[1],
+          meshPoint[2] - supportingPlane->origin[2]};
+        chordDistance = std::abs(
+          offset[0] * supportingPlane->unitNormal[0] +
+          offset[1] * supportingPlane->unitNormal[1] +
+          offset[2] * supportingPlane->unitNormal[2]);
       }
-      const Point geometryPoint = {
-        geometry.x(), geometry.y(), geometry.z()};
-      const double chordDistance = distance(meshPoint, geometryPoint);
+      else {
+        const SPoint3 query(meshPoint[0], meshPoint[1], meshPoint[2]);
+        const double initialGuess[2] = {parameter[0], parameter[1]};
+        const GPoint geometry = face->closestPoint(query, initialGuess);
+        if(!geometry.succeeded() || !std::isfinite(geometry.x()) ||
+           !std::isfinite(geometry.y()) || !std::isfinite(geometry.z())) {
+          ++deviation.invalidSampleCount;
+          return false;
+        }
+        const Point geometryPoint = {
+          geometry.x(), geometry.y(), geometry.z()};
+        chordDistance = distance(meshPoint, geometryPoint);
+      }
       if(!std::isfinite(chordDistance)) {
         ++deviation.invalidSampleCount;
         return false;
@@ -2978,7 +3205,8 @@ namespace QuadOptimizer {
     bool accumulateQuadrangleGeometryDeviation(
       GFace *face, const std::array<UV, 4> &parameters,
       const std::array<Point, 4> &vertices,
-      GeometryDeviation &deviation)
+      GeometryDeviation &deviation,
+      const SupportingPlane *supportingPlane = nullptr)
     {
       // Tensor Gauss integration of squared closest-point distance over the
       // physical bilinear quad. This score is additive, so two alternative
@@ -3028,7 +3256,8 @@ namespace QuadOptimizer {
             jacobian[2] * jacobian[2]);
         if(!accumulateGeometrySample(
                face, parameter, meshPoint,
-               weights[ir] * weights[is] * differentialArea, deviation))
+               weights[ir] * weights[is] * differentialArea, deviation,
+               supportingPlane))
           return false;
         }
       }
@@ -3039,7 +3268,8 @@ namespace QuadOptimizer {
     bool accumulateTriangleGeometryDeviation(
       GFace *face, const std::array<UV, 3> &parameters,
       const std::array<Point, 3> &vertices,
-      GeometryDeviation &deviation)
+      GeometryDeviation &deviation,
+      const SupportingPlane *supportingPlane = nullptr)
     {
       // Symmetric second-order rule on the reference triangle. The weights
       // sum to one half, i.e. its reference area.
@@ -3073,7 +3303,8 @@ namespace QuadOptimizer {
             meshPoint[d] += shape[i] * vertices[i][d];
         }
         if(!accumulateGeometrySample(
-             face, parameter, meshPoint, differentialArea / 6., deviation))
+             face, parameter, meshPoint, differentialArea / 6., deviation,
+             supportingPlane))
           return false;
       }
       ++deviation.elementCount;
@@ -3192,6 +3423,65 @@ namespace QuadOptimizer {
                face, uv, xyz, deviation))
             return deviation;
         }
+      }
+      if(!deviation.elementCount || !(deviation.sampledArea > 0.))
+        return deviation;
+      deviation.meanSquaredDistance = deviation.squaredDistanceIntegral /
+        deviation.sampledArea;
+      deviation.valid = deviation.invalidSampleCount == 0 &&
+        std::isfinite(deviation.maximumDistance) &&
+        std::isfinite(deviation.squaredDistanceIntegral) &&
+        std::isfinite(deviation.meanSquaredDistance);
+      return deviation;
+    }
+
+    GeometryDeviation auditedElementGeometryDeviation(
+      GFace *face, MElement *element,
+      const std::vector<SPoint2> &parameters,
+      const SupportingPlane *supportingPlane)
+    {
+      GeometryDeviation deviation;
+      deviation.maximumDistance = 0.;
+      deviation.squaredDistanceIntegral = 0.;
+      if(!face || !element) return deviation;
+      const std::size_t count = element->getNumPrimaryVertices();
+      const bool haveParameters = parameters.size() >= count;
+      // The UV values seed every closest-point query on curved CAD. Falling
+      // back to (0, 0) can converge to another branch and falsely report full
+      // CAD coverage. A plane is the only safe exception: its distance is
+      // evaluated analytically from the supporting geometric plane.
+      if(!haveParameters && !supportingPlane)
+        return deviation;
+      if(count == 4) {
+        std::array<UV, 4> uv;
+        std::array<Point, 4> xyz;
+        for(std::size_t i = 0; i < 4; ++i) {
+          MVertex *vertex = element->getVertex(static_cast<int>(i));
+          if(!vertex) return deviation;
+          uv[i] = haveParameters ?
+            UV{parameters[i].x(), parameters[i].y()} : UV{0., 0.};
+          xyz[i] = {vertex->x(), vertex->y(), vertex->z()};
+        }
+        if(!accumulateQuadrangleGeometryDeviation(
+             face, uv, xyz, deviation, supportingPlane))
+          return deviation;
+      }
+      else if(count == 3) {
+        std::array<UV, 3> uv;
+        std::array<Point, 3> xyz;
+        for(std::size_t i = 0; i < 3; ++i) {
+          MVertex *vertex = element->getVertex(static_cast<int>(i));
+          if(!vertex) return deviation;
+          uv[i] = haveParameters ?
+            UV{parameters[i].x(), parameters[i].y()} : UV{0., 0.};
+          xyz[i] = {vertex->x(), vertex->y(), vertex->z()};
+        }
+        if(!accumulateTriangleGeometryDeviation(
+             face, uv, xyz, deviation, supportingPlane))
+          return deviation;
+      }
+      else {
+        return deviation;
       }
       if(!deviation.elementCount || !(deviation.sampledArea > 0.))
         return deviation;
@@ -8918,32 +9208,6 @@ namespace QuadOptimizer {
     }
 
     for(const FaceOptimizerResult &face : result.faces) {
-      if(options.verbose && options.quadCleanUp)
-        Msg::Info("QuadCleanUp face %d: sweeps=%zu swaps=%zu diamonds=%zu "
-                  "localSmooth=%zu (final sweep accepted 0)",
-                  face.faceTag, face.optimizer.passes,
-                  face.optimizer.acceptedEdgeSwaps,
-                  face.optimizer.acceptedDiamonds,
-                  face.optimizer.acceptedFinalSmoothingCavities);
-      else if(options.verbose)
-        Msg::Info("QuadOptimizer face %d timing(s): critical=%.6g "
-                  "connectivity=%.6g boundary=%.6g shape=%.6g size=%.6g; "
-                  "accepted=%zu/%zu/%zu/%zu diamonds=%zu "
-                  "pillow=%zu/%zu(%zu quads)",
-                  face.faceTag,
-                  face.optimizer.cleanUpCriticalSeconds,
-                  face.optimizer.cleanUpConnectivitySeconds,
-                  face.optimizer.cleanUpBoundarySeconds,
-                  face.optimizer.cleanUpShapeSeconds,
-                  face.optimizer.cleanUpSizeSeconds,
-                  face.optimizer.cleanUpConnectivityAccepted,
-                  face.optimizer.cleanUpBoundaryAccepted,
-                  face.optimizer.cleanUpShapeAccepted,
-                  face.optimizer.cleanUpSizeAccepted,
-                  face.optimizer.acceptedDiamonds,
-                  face.optimizer.pillowHolesAccepted,
-                  face.optimizer.pillowHolesVisited,
-                  face.optimizer.pillowQuadranglesInserted);
       result.acceptedPillows += face.optimizer.pillowHolesAccepted;
       result.pillowHolesVisited += face.optimizer.pillowHolesVisited;
       result.pillowHolesAlreadyPresent +=
@@ -9033,6 +9297,290 @@ namespace QuadOptimizer {
     }
     model->deleteVertexArrays();
     return result;
+  }
+
+  QuadMeshQualitySummary summarizeQuadMeshQuality(
+    GModel *model, const SmallCavityOptimizerOptions &options)
+  {
+    QuadMeshQualitySummary summary;
+    if(!model || !validSizeOptions(options)) {
+      summary.success = false;
+      return summary;
+    }
+
+    auto addUpper = [](QualityCriterionPassSummary &criterion, double value,
+                       double preferred, double absolute) {
+      ++criterion.applicable;
+      if(std::isfinite(value) && value < preferred)
+        ++criterion.preferredPass;
+      if(std::isfinite(value) && value < absolute)
+        ++criterion.absolutePass;
+    };
+    auto addLower = [](QualityCriterionPassSummary &criterion, double value,
+                       double preferred, double absolute) {
+      ++criterion.applicable;
+      if(std::isfinite(value) && value > preferred)
+        ++criterion.preferredPass;
+      if(std::isfinite(value) && value > absolute)
+        ++criterion.absolutePass;
+    };
+    auto criterionPasses = [](const QualityCriterionPassSummary &criterion) {
+      if(!criterion.applicable) return true;
+      const long double fraction =
+        static_cast<long double>(criterion.preferredPass) /
+        static_cast<long double>(criterion.applicable);
+      return fraction >= .99L &&
+        criterion.absolutePass == criterion.applicable;
+    };
+
+    double sicnSum = 0.;
+    std::size_t sicnCount = 0;
+    double edgeRatioSum = 0.;
+    std::size_t edgeRatioCount = 0;
+    double skewingSum = 0.;
+    std::size_t skewingCount = 0;
+    double warpingSum = 0.;
+    std::size_t warpingCount = 0;
+    double minimumAngle = std::numeric_limits<double>::infinity();
+    double minimumSicn = std::numeric_limits<double>::infinity();
+    double minimumLength = std::numeric_limits<double>::infinity();
+    double minimumRatio = std::numeric_limits<double>::infinity();
+    double squaredLogRatioSum = 0.;
+    double cadSquaredDistanceIntegral = 0.;
+    double cadSampledArea = 0.;
+
+    for(GFace *face : model->getFaces()) {
+      if(!face) continue;
+      const std::vector<MElement *> elements = surfaceElements(face);
+      if(elements.empty()) continue;
+      ++summary.facesWithElements;
+      std::map<MElement *, std::vector<SPoint2> > parametersByElement;
+      for(MElement *element : elements)
+        if(element)
+          parametersByElement.emplace(
+            element, auditElementParameters(face, element));
+      SupportingPlane supportingPlane;
+      const SupportingPlane *supportingPlanePointer =
+        auditedSupportingPlane(face, supportingPlane) ?
+          &supportingPlane : nullptr;
+
+      const FaceHalfEdgeTopology topology(elements);
+      if(!topology.manifold()) {
+        ++summary.nonManifoldFaces;
+      }
+      else {
+        ValenceObjective valence;
+        std::set<MVertex *> vertices;
+        // quadDegree has no useful interpretation for a vertex incident only
+        // to triangles in a mixed mesh.
+        for(MQuadrangle *quadrangle : face->quadrangles)
+          if(quadrangle)
+            for(std::size_t i = 0; i < 4; ++i)
+              vertices.insert(
+                quadrangle->getVertex(static_cast<int>(i)));
+        for(MVertex *vertex : vertices)
+          addValence(valence, topology.quadDegree(vertex),
+                     idealQuadDegree(face, vertex, topology),
+                     vertex && vertex->onWhat() == face);
+        summary.severeValenceVertices += valence.severeCount;
+        summary.irregularValenceVertices += valence.irregularCount;
+      }
+
+      for(MTriangle *triangle : face->triangles) {
+        if(!triangle) continue;
+        ++summary.triangles;
+        const ElementQuality quality = evaluateElementQuality(triangle);
+        const double sicn = triangle->minSICNShapeMeasure();
+        const bool validTriangle = quality.topologicallyValid &&
+          std::isfinite(sicn) && sicn > 0.;
+        if(!validTriangle) ++summary.invalidTriangles;
+        if(validTriangle && quality.passesAbsoluteSpecifications)
+          ++summary.absolutePassElements;
+        else
+          ++summary.badTriangles;
+        addUpper(summary.edgeRatio, quality.edgeRatio, 5., 10.);
+        addLower(summary.triangleMinimumAngle,
+                 quality.minimumAngleDegrees, 20., 10.);
+        addUpper(summary.triangleMaximumAngle,
+                 quality.maximumAngleDegrees, 120., 150.);
+        addUpper(summary.skewing, quality.skewingDegrees, 125., 160.);
+      }
+      for(MQuadrangle *quadrangle : face->quadrangles) {
+        if(!quadrangle) continue;
+        ++summary.quadrangles;
+        const ElementQuality quality = evaluateElementQuality(quadrangle);
+        const SpecificationObjective objective =
+          specificationObjective(quality);
+        const auto foundParameters = parametersByElement.find(quadrangle);
+        const std::vector<SPoint2> noParameters;
+        const std::vector<SPoint2> &parameters =
+          foundParameters == parametersByElement.end() ?
+            noParameters : foundParameters->second;
+        std::vector<UV> uv;
+        std::vector<Point> xyz(4);
+        for(std::size_t i = 0; i < 4; ++i) {
+          MVertex *vertex = quadrangle->getVertex(static_cast<int>(i));
+          xyz[i] = {vertex->x(), vertex->y(), vertex->z()};
+        }
+        if(parameters.size() >= 4) {
+          uv.resize(4);
+          for(std::size_t i = 0; i < 4; ++i) {
+            uv[i] = {parameters[i].x(), parameters[i].y()};
+          }
+        }
+        const Pattern singleQuadrangle = {{{0, 1, 2, 3}}};
+        const double eta = quadrangle->etaShapeMeasure();
+        const double sicn = quadrangle->minSICNShapeMeasure();
+        const bool validQuadrangle = quality.topologicallyValid &&
+          candidateQuadranglesArePhysicallyNonConcave(
+            singleQuadrangle, xyz) &&
+          (face->geomType() == GEntity::Plane ||
+           !face->haveParametrization() ||
+           (parameters.size() >= 4 &&
+            candidateQuadsAreStrictlyConvex(singleQuadrangle, uv))) &&
+          std::isfinite(sicn) && sicn > 0. &&
+          std::isfinite(eta) && eta > 0.;
+        if(!validQuadrangle)
+          ++summary.invalidQuadrangles;
+        if(validQuadrangle && quality.passesAbsoluteSpecifications)
+          ++summary.absolutePassElements;
+        else
+          ++summary.badQuadrangles;
+        summary.absoluteQuadrangleViolations +=
+          objective.absoluteViolationCount;
+        summary.preferredQuadrangleViolations +=
+          objective.preferredViolationCount;
+
+        if(std::isfinite(sicn)) {
+          minimumSicn = std::min(minimumSicn, sicn);
+          sicnSum += sicn;
+          ++sicnCount;
+        }
+        if(std::isfinite(quality.minimumAngleDegrees))
+          minimumAngle = std::min(
+            minimumAngle, quality.minimumAngleDegrees);
+        if(std::isfinite(quality.maximumAngleDegrees))
+          summary.maximumQuadrangleAngleDegrees = std::max(
+            summary.maximumQuadrangleAngleDegrees,
+            quality.maximumAngleDegrees);
+        if(std::isfinite(quality.edgeRatio)) {
+          summary.maximumQuadrangleEdgeRatio = std::max(
+            summary.maximumQuadrangleEdgeRatio, quality.edgeRatio);
+          edgeRatioSum += quality.edgeRatio;
+          ++edgeRatioCount;
+        }
+        if(std::isfinite(quality.skewingDegrees)) {
+          summary.maximumQuadrangleSkewingDegrees = std::max(
+            summary.maximumQuadrangleSkewingDegrees,
+            quality.skewingDegrees);
+          skewingSum += quality.skewingDegrees;
+          ++skewingCount;
+        }
+        if(std::isfinite(quality.warpingDegrees)) {
+          summary.maximumQuadrangleWarpingDegrees = std::max(
+            summary.maximumQuadrangleWarpingDegrees,
+            quality.warpingDegrees);
+          warpingSum += quality.warpingDegrees;
+          ++warpingCount;
+        }
+
+        addUpper(summary.warping, quality.warpingDegrees, 15.,
+                 absoluteMaximumQuadWarpingDegrees);
+        addUpper(summary.edgeRatio, quality.edgeRatio, 5., 10.);
+        addLower(summary.quadrangleMinimumAngle,
+                 quality.minimumAngleDegrees, 45., 25.);
+        addUpper(summary.quadrangleMaximumAngle,
+                 quality.maximumAngleDegrees, 135., 160.);
+        addUpper(summary.skewing, quality.skewingDegrees, 125., 160.);
+      }
+
+      if(options.enforceSizeMap || options.auditSizeMap) {
+        summary.sizeAudited = true;
+        summary.sizeSpecificationsActive = options.enforceSizeMap;
+        const SizeScore size = auditedFaceSizeScore(
+          face, elements, parametersByElement, options);
+        summary.sizeEdges += size.validEdgeCount;
+        summary.edgesBelowMinimum += size.belowMinimum;
+        summary.edgesAboveMaximum += size.aboveMaximum;
+        summary.invalidSizeEdges += size.invalid;
+        if(std::isfinite(size.minimumLength))
+          minimumLength = std::min(minimumLength, size.minimumLength);
+        if(std::isfinite(size.maximumLength))
+          summary.maximumEdgeLength = std::max(
+            summary.maximumEdgeLength, size.maximumLength);
+        if(std::isfinite(size.minimumRatio))
+          minimumRatio = std::min(minimumRatio, size.minimumRatio);
+        if(std::isfinite(size.maximumRatio))
+          summary.maximumTargetSizeRatio = std::max(
+            summary.maximumTargetSizeRatio, size.maximumRatio);
+        if(size.validEdgeCount && std::isfinite(size.meanSquaredLogRatio))
+          squaredLogRatioSum += size.meanSquaredLogRatio *
+            static_cast<double>(size.validEdgeCount);
+      }
+
+      summary.cadAudited = true;
+      for(MElement *element : elements) {
+        ++summary.cadElementsRequested;
+        const auto foundParameters = parametersByElement.find(element);
+        const std::vector<SPoint2> noParameters;
+        const std::vector<SPoint2> &parameters =
+          foundParameters == parametersByElement.end() ?
+            noParameters : foundParameters->second;
+        const GeometryDeviation geometry =
+          auditedElementGeometryDeviation(
+            face, element, parameters, supportingPlanePointer);
+        summary.invalidCadSamples += geometry.invalidSampleCount;
+        if(geometry.valid) {
+          summary.cadElements += geometry.elementCount;
+          summary.maximumCadDistance = std::max(
+            summary.maximumCadDistance, geometry.maximumDistance);
+          cadSquaredDistanceIntegral += geometry.squaredDistanceIntegral;
+          cadSampledArea += geometry.sampledArea;
+        }
+        else {
+          ++summary.invalidCadElements;
+        }
+      }
+    }
+
+    if(sicnCount) {
+      summary.minimumQuadrangleSICN = minimumSicn;
+      summary.averageQuadrangleSICN =
+        sicnSum / static_cast<double>(sicnCount);
+    }
+    if(std::isfinite(minimumAngle))
+      summary.minimumQuadrangleAngleDegrees = minimumAngle;
+    if(edgeRatioCount)
+      summary.averageQuadrangleEdgeRatio =
+        edgeRatioSum / static_cast<double>(edgeRatioCount);
+    if(skewingCount)
+      summary.averageQuadrangleSkewingDegrees =
+        skewingSum / static_cast<double>(skewingCount);
+    if(warpingCount)
+      summary.averageQuadrangleWarpingDegrees =
+        warpingSum / static_cast<double>(warpingCount);
+    if(summary.sizeAudited && summary.sizeEdges) {
+      if(std::isfinite(minimumLength))
+        summary.minimumEdgeLength = minimumLength;
+      if(std::isfinite(minimumRatio))
+        summary.minimumTargetSizeRatio = minimumRatio;
+      summary.rmsLogTargetSizeRatio = std::sqrt(
+        squaredLogRatioSum / static_cast<double>(summary.sizeEdges));
+    }
+    if(cadSampledArea > 0. &&
+       std::isfinite(cadSquaredDistanceIntegral))
+      summary.rmsCadDistance = std::sqrt(
+        cadSquaredDistanceIntegral / cadSampledArea);
+
+    summary.passesShapeSpecifications =
+      criterionPasses(summary.warping) &&
+      criterionPasses(summary.edgeRatio) &&
+      criterionPasses(summary.quadrangleMinimumAngle) &&
+      criterionPasses(summary.quadrangleMaximumAngle) &&
+      criterionPasses(summary.triangleMinimumAngle) &&
+      criterionPasses(summary.triangleMaximumAngle) &&
+      criterionPasses(summary.skewing);
+    return summary;
   }
 
 } // namespace QuadOptimizer

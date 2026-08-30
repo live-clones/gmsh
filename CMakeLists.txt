@@ -2318,9 +2318,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
         -parse_and_exit -nopopup -v 5)
     set_tests_properties(quadOptimizerSizeConstraints PROPERTIES
       PASS_REGULAR_EXPRESSION
-        "QuadOptimizer size: target=4 minimum=2 maximum=8 topologyChanges=0 rejectedBySize=0 initialBelow=0 initialAbove=0 initialInvalid=0 finalBelow=0 finalAbove=0 finalInvalid=0 finalMin=2 finalMax=8"
+        "OptimizeQuads fit: sizeEdges=4 length\\[min/max\\]=2/8 .*sizeBad\\[below/above/invalid\\]=0/0/0 CAD\\[max/rms\\]=0/0 CADcoverage=1/1 invalidElements=0 invalidSamples=0"
       FAIL_REGULAR_EXPRESSION
-        "Unknown number option;edge-length requirements are not met")
+        "Unknown number option;edge-length requirements are not met;OptimizeQuads: .* [1-9][0-9]* topology changes")
 
     add_test(
       NAME quadOptimizerSizeConstraintViolation
@@ -2329,8 +2329,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
         -parse_and_exit -nopopup -v 5)
     set_tests_properties(quadOptimizerSizeConstraintViolation PROPERTIES
       PASS_REGULAR_EXPRESSION
-        "QuadOptimizer size: target=4 minimum=2 maximum=8 topologyChanges=0 rejectedBySize=0 initialBelow=2 initialAbove=2 initialInvalid=0 finalBelow=2 finalAbove=2 finalInvalid=0"
-      FAIL_REGULAR_EXPRESSION "Unknown number option")
+        "OptimizeQuads fit: sizeEdges=4 length\\[min/max\\]=1.9/8.1 .*sizeBad\\[below/above/invalid\\]=2/2/0 CAD\\[max/rms\\]=0/0 CADcoverage=1/1 invalidElements=0 invalidSamples=0"
+      FAIL_REGULAR_EXPRESSION
+        "Unknown number option;OptimizeQuads: .* [1-9][0-9]* topology changes")
 
     if(HAVE_QUADMESHINGTOOLS)
       add_test(
@@ -2346,9 +2347,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           -o ${CMAKE_CURRENT_BINARY_DIR}/quadOptimizerSizeAllowsTopology.msh)
       set_tests_properties(quadOptimizerSizeAllowsTopology PROPERTIES
         PASS_REGULAR_EXPRESSION
-          "QuadOptimizer size: target=0.01 minimum=0.001 maximum=0.1 topologyChanges=[1-9][0-9]* rejectedBySize=[0-9][0-9]* initialBelow=0 initialAbove=0 initialInvalid=0 finalBelow=0 finalAbove=0 finalInvalid=0"
+          "OptimizeQuads: [0-9]+ faces, [1-9][0-9]* topology changes, .*rejected\\(size=[0-9]+\\)"
         FAIL_REGULAR_EXPRESSION
-          "Unknown number option;edge-length requirements are not met")
+          "Unknown number option;edge-length requirements are not met;OptimizeQuads: .* 0 topology changes")
 
       add_test(
         NAME quadOptimizerSizeRejectsTopology
@@ -2364,9 +2365,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           -o ${CMAKE_CURRENT_BINARY_DIR}/quadOptimizerSizeRejectsTopology.msh)
       set_tests_properties(quadOptimizerSizeRejectsTopology PROPERTIES
         PASS_REGULAR_EXPRESSION
-          "QuadOptimizer size: target=0.01 minimum=1e-06 maximum=0.0001 topologyChanges=0 rejectedBySize=[1-9][0-9]* initialBelow=0 initialAbove=[1-9][0-9]* initialInvalid=0 finalBelow=0 finalAbove=[1-9][0-9]* finalInvalid=0"
+          "OptimizeQuads: [0-9]+ faces, 0 topology changes, .*rejected\\(size=[1-9][0-9]*\\)"
         FAIL_REGULAR_EXPRESSION
-          "Unknown number option;PACK post-optimization quality filter \\(1\\): split [1-9]")
+          "Unknown number option;OptimizeQuads: .* [1-9][0-9]* topology changes;PACK post-optimization quality filter \\(1\\): split [1-9]")
 
       add_test(
         NAME quadIntrinsicLongEdgeSplit

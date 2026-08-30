@@ -41,22 +41,18 @@ if(NOT second_fixed_point MATCHES "smoothed=0")
   message(FATAL_ERROR "The mixed one-ring was not a fixed point:\n${log}")
 endif()
 
-string(REGEX MATCHALL "QuadOptimizer size: [^\n\r]*" size_audits "${log}")
+string(REGEX MATCHALL "QuadCleanUp fit: [^\n\r]*" size_audits "${log}")
 list(LENGTH size_audits size_audit_count)
 if(NOT size_audit_count EQUAL 2)
   message(FATAL_ERROR "Expected two size audits:\n${log}")
 endif()
 list(GET size_audits 0 first_size)
 list(GET size_audits 1 second_size)
-if(NOT first_size MATCHES "initialBelow=1" OR
-   NOT first_size MATCHES "finalBelow=0" OR
-   NOT first_size MATCHES "finalAbove=0" OR
-   NOT first_size MATCHES "finalInvalid=0")
+if(NOT first_size MATCHES
+   "sizeBad\\[below/above/invalid\\]=0/0/0([ ]|$)")
   message(FATAL_ERROR "The mixed short edge was not repaired:\n${log}")
 endif()
-if(NOT second_size MATCHES "initialBelow=0" OR
-   NOT second_size MATCHES "finalBelow=0" OR
-   NOT second_size MATCHES "finalAbove=0" OR
-   NOT second_size MATCHES "finalInvalid=0")
+if(NOT second_size MATCHES
+   "sizeBad\\[below/above/invalid\\]=0/0/0([ ]|$)")
   message(FATAL_ERROR "The mixed repaired sizes were not stable:\n${log}")
 endif()

@@ -31,22 +31,33 @@ if(NOT second_summary MATCHES "0 topology changes" OR
   message(FATAL_ERROR "The second size repair was not a fixed point:\n${log}")
 endif()
 
-string(REGEX MATCHALL "QuadOptimizer size: [^\n\r]*" size_audits "${log}")
-list(LENGTH size_audits size_audit_count)
-if(NOT size_audit_count EQUAL 2)
-  message(FATAL_ERROR "Expected two size audits:\n${log}")
+string(REGEX MATCHALL "QuadCleanUp fit: [^\n\r]*" fit_summaries "${log}")
+list(LENGTH fit_summaries fit_summary_count)
+if(NOT fit_summary_count EQUAL 2)
+  message(FATAL_ERROR "Expected two QuadCleanUp fit summaries:\n${log}")
 endif()
-list(GET size_audits 0 first_size)
-list(GET size_audits 1 second_size)
-if(NOT first_size MATCHES "initialBelow=1" OR
-   NOT first_size MATCHES "finalBelow=0" OR
-   NOT first_size MATCHES "finalAbove=0" OR
-   NOT first_size MATCHES "finalInvalid=0")
-  message(FATAL_ERROR "The short edge was not repaired:\n${log}")
-endif()
-if(NOT second_size MATCHES "initialBelow=0" OR
-   NOT second_size MATCHES "finalBelow=0" OR
-   NOT second_size MATCHES "finalAbove=0" OR
-   NOT second_size MATCHES "finalInvalid=0")
+list(GET fit_summaries 0 first_fit_summary)
+list(GET fit_summaries 1 second_fit_summary)
+foreach(fit_summary IN LISTS fit_summaries)
+  if(NOT fit_summary MATCHES
+     "sizeBad\\[below/above/invalid\\]=0/0/0")
+    message(FATAL_ERROR "The short edge was not repaired:\n${log}")
+  endif()
+endforeach()
+if(NOT first_fit_summary STREQUAL second_fit_summary)
   message(FATAL_ERROR "The repaired sizes were not stable:\n${log}")
+endif()
+
+string(REGEX MATCHALL "QuadCleanUp fixed point: [^\n\r]*"
+       fixed_points "${log}")
+list(LENGTH fixed_points fixed_point_count)
+if(NOT fixed_point_count EQUAL 2)
+  message(FATAL_ERROR "Expected two QuadCleanUp fixed-point reports:\n${log}")
+endif()
+list(GET fixed_points 0 first_fixed_point)
+list(GET fixed_points 1 second_fixed_point)
+if(NOT first_fixed_point MATCHES "smoothed=1" OR
+   NOT second_fixed_point MATCHES "smoothed=0")
+  message(FATAL_ERROR
+    "The guarded size smoothing did not reach a fixed point:\n${log}")
 endif()
