@@ -50,7 +50,7 @@ function(assert_pack_log_contract log_variable run_label)
   endif()
   list(GET final_audits 0 final_audit)
   if(NOT final_audit MATCHES
-     "^PACK final quad audit: concaveOrInvalid=[0-9]+ excessiveWarping=[0-9]+ split=[0-9]+ rejected=0$")
+     "^PACK final quad audit: concaveOrInvalid=[0-9]+ excessiveWarping=[0-9]+ split=[0-9]+ rejected=0 skippedFaces=0$")
     message(FATAL_ERROR
       "${run_label} failed its terminal validity audit:\n${final_audit}")
   endif()

@@ -25,7 +25,7 @@ if(NOT log MATCHES
     "The fixture no longer creates exactly one invalid PACK quad:\n${log}")
 endif()
 if(NOT log MATCHES
-   "PACK terminal quad validity: concaveOrInvalid=1 [^\n\r]*split=1 rejected=0")
+   "PACK terminal quad validity: concaveOrInvalid=1 [^\n\r]*split=1 rejected=0 skippedFaces=0")
   message(FATAL_ERROR
     "PACK did not report the unconditional terminal split:\n${log}")
 endif()
@@ -35,7 +35,7 @@ if(NOT log MATCHES
     "PACK recreated the concave quad from its split siblings:\n${log}")
 endif()
 if(NOT log MATCHES
-   "PACK final quad audit: concaveOrInvalid=0 [^\n\r]*split=0 rejected=0")
+   "PACK final quad audit: concaveOrInvalid=0 [^\n\r]*split=0 rejected=0 skippedFaces=0")
   message(FATAL_ERROR "PACK final quad audit failed:\n${log}")
 endif()
 
@@ -83,7 +83,7 @@ if(NOT fast_log MATCHES
     "OptimizeQuadsFast recreated its concave split quad:\n${fast_log}")
 endif()
 if(NOT fast_log MATCHES
-   "PACK terminal quad validity: concaveOrInvalid=0 [^\n\r]*split=0 rejected=0")
+   "PACK terminal quad validity: concaveOrInvalid=0 [^\n\r]*split=0 rejected=0 skippedFaces=0")
   message(FATAL_ERROR
     "PACK found a prohibited quad after the Fast terminal pass:\n${fast_log}")
 endif()

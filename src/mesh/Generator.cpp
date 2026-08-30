@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <cstdio>
 #include <limits>
+#include <set>
 #include <stack>
 #include <stdexcept>
 
@@ -843,6 +844,25 @@ static void Mesh2D(GModel *m)
     else if(CTX::instance()->mesh.quadqsCleanupMethod == 1)
       OptimizeMesh(m, "OptimizeQuadsFast", false, 1, 0., false);
 
+    // Cleanup can deliberately leave a malformed input face unchanged after
+    // warning about it. No later PACK operation may then split/recombine that
+    // face and accidentally hide an overlap in an apparently regular mesh.
+    std::set<GFace *> terminalSkippedFaces;
+#if defined(HAVE_QUADOPTIMIZER)
+    if(CTX::instance()->mesh.quadqsCleanupMethod == 0 ||
+       CTX::instance()->mesh.quadqsCleanupMethod == 1) {
+      for(GFace *gf : m->getFaces()) {
+        if(!QuadOptimizer::isRegularOrientedSurfaceCellComplex(gf))
+          terminalSkippedFaces.insert(gf);
+      }
+    }
+    if(!terminalSkippedFaces.empty())
+      Msg::Warning("PACK: skipping terminal operations on %zu face%s with "
+                   "an invalid surface cell complex",
+                   terminalSkippedFaces.size(),
+                   terminalSkippedFaces.size() == 1 ? "" : "s");
+#endif
+
     // This is a validity invariant, not an optional quality filter. Shape
     // measures alone can miss a concave or folded bilinear quad on a curved
     // CAD face, and RecombineMinimumQuality=0 must not disable the terminal
@@ -854,6 +874,8 @@ static void Mesh2D(GModel *m)
     std::size_t terminalSplitCount = 0;
     std::size_t terminalRejected = 0;
     for(GFace *gf : m->getFaces()) {
+      if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
+        continue;
 #if defined(HAVE_QUADOPTIMIZER)
       const double maximumWarpingDegrees =
         QuadOptimizer::absoluteMaximumQuadWarpingDegrees;
@@ -872,16 +894,18 @@ static void Mesh2D(GModel *m)
         split.rejectedUnsupportedOrder;
       terminalRejected += rejected;
       if(rejected) {
-        gf->meshStatistics.status = GFace::FAILED;
-        Msg::Error("PACK face %d retains %zu prohibited concave, invalid or "
-                   "unsupported terminal quadrangles with no valid "
-                   "diagonal", gf->tag(), rejected);
+        terminalSkippedFaces.insert(gf);
+        Msg::Warning("PACK face %d retains %zu prohibited concave, invalid "
+                     "or unsupported terminal quadrangles with no valid "
+                     "diagonal; skipping subsequent terminal operations",
+                     gf->tag(), rejected);
       }
     }
     Msg::Info("PACK terminal quad validity: concaveOrInvalid=%zu "
-              "excessiveWarping=%zu split=%zu rejected=%zu",
+              "excessiveWarping=%zu split=%zu rejected=%zu skippedFaces=%zu",
               terminalNonConvexOrInvalid, terminalExcessiveWarping,
-              terminalSplitCount, terminalRejected);
+              terminalSplitCount, terminalRejected,
+              terminalSkippedFaces.size());
 
     // Recombination deliberately keeps low-quality valid quads in the PACK
     // path so that Winslow and cavity optimization can repair them. Once the
@@ -894,6 +918,8 @@ static void Mesh2D(GModel *m)
       for(GFace *gf : m->getFaces()) {
         quadsBefore += gf->quadrangles.size();
         trianglesBefore += gf->triangles.size();
+        if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
+          continue;
         quadsToTriangles(
           gf, minQuality,
           CTX::instance()->mesh.quadqsMinimumEdgeLength,
@@ -940,6 +966,8 @@ static void Mesh2D(GModel *m)
     std::size_t terminalPairsRejectedSize = 0;
     std::size_t terminalPairsRejectedGeometry = 0;
     for(GFace *gf : m->getFaces()) {
+      if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
+        continue;
       const QuadOptimizer::TerminalTriangleRecombinationResult recombination =
         QuadOptimizer::recombineRemainingTrianglePairs(
           gf, terminalOptions);
@@ -975,6 +1003,8 @@ static void Mesh2D(GModel *m)
     std::size_t finalSplitCount = 0;
     std::size_t finalRejected = 0;
     for(GFace *gf : m->getFaces()) {
+      if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
+        continue;
 #if defined(HAVE_QUADOPTIMIZER)
       const double maximumWarpingDegrees =
         QuadOptimizer::absoluteMaximumQuadWarpingDegrees;
@@ -997,9 +1027,10 @@ static void Mesh2D(GModel *m)
       }
     }
     Msg::Info("PACK final quad audit: concaveOrInvalid=%zu "
-              "excessiveWarping=%zu split=%zu rejected=%zu",
+              "excessiveWarping=%zu split=%zu rejected=%zu skippedFaces=%zu",
               finalNonConvexOrInvalid, finalExcessiveWarping,
-              finalSplitCount, finalRejected);
+              finalSplitCount, finalRejected,
+              terminalSkippedFaces.size());
 #if defined(HAVE_QUADOPTIMIZER)
     if(Msg::GetVerbosity() >= 4) {
       QuadOptimizer::SmallCavityOptimizerOptions auditOptions =
@@ -1350,6 +1381,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
                 "(%zu quads), bad "
                 "elements %zu -> %zu, absolute violations %zu -> %zu, "
                 "preferred violations %zu -> %zu, reoriented=%zu, "
+                "skipped(inputCellComplex=%zu), "
                 "rejected(size=%zu)",
                 how.c_str(),
                 result.facesWithQuadrangles, result.acceptedCavities,
@@ -1361,6 +1393,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
                 result.initialObjective.preferredViolationCount,
                 result.finalObjective.preferredViolationCount,
                 result.reorientedElements,
+                result.facesSkippedInvalidInputCellComplex,
                 result.rejectedBySize);
       if(options.quadCleanUp)
         Msg::Info("QuadCleanUp fixed point: swaps=%zu diamonds=%zu, "

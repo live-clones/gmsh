@@ -1,6 +1,6 @@
 // Both quads share 1-2-3 and put their private corner on the same side of
 // each shared segment. One quad is concave, but splitting it would merely
-// hide the overlap. The non-mutating UV preflight must reject it first.
+// hide the overlap. The non-mutating UV preflight must skip it first.
 General.Terminal = 1;
 General.AbortOnError = 1;
 General.NumThreads = 2;

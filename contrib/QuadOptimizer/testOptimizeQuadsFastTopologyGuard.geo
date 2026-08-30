@@ -1,6 +1,6 @@
 // A triangle embedded in a quadrangle is not a regular surface cell complex:
 // both cells traverse edges 1->2 and 2->3 in the same direction. Fast must
-// reject the face before trying any cavity or collapse.
+// skip the face with a warning before trying any cavity or collapse.
 General.Terminal = 1;
 General.NumThreads = 1;
 

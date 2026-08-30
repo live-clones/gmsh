@@ -113,6 +113,7 @@ namespace QuadOptimizer {
 
   struct SmallCavityOptimizerResult {
     bool success = true;
+    bool skippedInvalidInputCellComplex = false;
     std::size_t passes = 0;
     std::size_t cavitiesVisited = 0;
     std::size_t topologyCandidatesOptimized = 0;
@@ -221,6 +222,7 @@ namespace QuadOptimizer {
     bool success = true;
     std::size_t facesVisited = 0;
     std::size_t facesWithQuadrangles = 0;
+    std::size_t facesSkippedInvalidInputCellComplex = 0;
     std::size_t acceptedCavities = 0;
     std::size_t acceptedEdgeSwaps = 0;
     std::size_t acceptedDiamonds = 0;
@@ -333,6 +335,12 @@ namespace QuadOptimizer {
     GModel *model,
     const SmallCavityOptimizerOptions &options =
       SmallCavityOptimizerOptions());
+
+  // Read-only guard for callers that perform additional model-wide topology
+  // operations after cleanup. False means the face must be left untouched:
+  // its triangle/quad cells cannot form a regular, currently oriented
+  // half-edge complex.
+  GMSH_API bool isRegularOrientedSurfaceCellComplex(GFace *face);
 
   // Replace adjacent triangle pairs by quadrangles only when the complete
   // local transaction strictly improves the same additive global quality as

@@ -8662,21 +8662,32 @@ namespace QuadOptimizer {
     const SurfaceOrientationRepairResult preflightStructure =
       repairSurfaceElementOrientation(face, initialElements, true, false);
     if(!preflightStructure.structurallyRegular) {
-      result.success = false;
-      Msg::Error("QuadOptimizer: face %d is not a regular oriented surface "
-                 "cell complex", face->tag());
-      return result;
-    }
-    if(!preflightStructure.orientable) {
-      result.success = false;
-      Msg::Error("QuadOptimizer: face %d has a non-orientable surface cell "
-                 "complex", face->tag());
+      result.skippedInvalidInputCellComplex = true;
+      Msg::Warning("QuadOptimizer: face %d is not a regular oriented "
+                   "surface cell complex; skipping optimization",
+                   face->tag());
       return result;
     }
 
     result.initialObjective = specificationObjective(initialElements);
     if(options.enforceSizeMap)
       setInitialSizeStatistics(result, faceSizeScore(face, options));
+    auto finishSkippedInputFace = [&]() {
+      result.skippedInvalidInputCellComplex = true;
+      result.finalObjective =
+        specificationObjective(surfaceElements(face));
+      if(options.enforceSizeMap)
+        setFinalSizeStatistics(result, faceSizeScore(face, options));
+      if(options.invalidateVertexArrays)
+        face->model()->deleteVertexArrays();
+    };
+
+    if(!preflightStructure.orientable) {
+      Msg::Warning("QuadOptimizer: face %d has a non-orientable surface "
+                   "cell complex; skipping optimization", face->tag());
+      finishSkippedInputFace();
+      return result;
+    }
 
     // Blossom can match four regular triangles into two quads whose
     // intersection is a two-edge chain. On an oriented surface, one of these
@@ -8697,10 +8708,11 @@ namespace QuadOptimizer {
     if(preflightSplit.split && options.invalidateVertexArrays)
       face->model()->deleteVertexArrays();
     if(preflightRejected != 0) {
-      result.success = false;
-      Msg::Error("QuadOptimizer: face %d retains %zu prohibited concave or "
-                 "invalid input quads because no geometrically valid "
-                 "diagonal exists", face->tag(), preflightRejected);
+      Msg::Warning("QuadOptimizer: face %d retains %zu prohibited concave "
+                   "or invalid input quads because no geometrically valid "
+                   "diagonal exists; skipping optimization", face->tag(),
+                   preflightRejected);
+      finishSkippedInputFace();
       return result;
     }
 
@@ -8708,15 +8720,16 @@ namespace QuadOptimizer {
     const SurfaceOrientationRepairResult orientation =
       repairSurfaceElementOrientation(face, initialElements);
     if(!orientation.structurallyRegular) {
-      result.success = false;
-      Msg::Error("QuadOptimizer: face %d is not a regular oriented surface "
-                 "cell complex", face->tag());
+      Msg::Warning("QuadOptimizer: face %d is not a regular oriented "
+                   "surface cell complex; skipping optimization",
+                   face->tag());
+      finishSkippedInputFace();
       return result;
     }
     if(!orientation.orientable) {
-      result.success = false;
-      Msg::Error("QuadOptimizer: face %d has a non-orientable surface cell "
-                 "complex", face->tag());
+      Msg::Warning("QuadOptimizer: face %d has a non-orientable surface "
+                   "cell complex; skipping optimization", face->tag());
+      finishSkippedInputFace();
       return result;
     }
     result.reorientedElements = orientation.reorientedElements;
@@ -8725,10 +8738,11 @@ namespace QuadOptimizer {
 
     const FaceHalfEdgeTopology initialTopology(initialElements);
     if(!initialTopology.manifold()) {
-      result.success = false;
-      Msg::Error("QuadOptimizer: face %d is not a regular oriented surface "
-                 "cell complex after repairing element orientations and "
-                 "concave input quads", face->tag());
+      Msg::Warning("QuadOptimizer: face %d is not a regular oriented "
+                   "surface cell complex after repairing element "
+                   "orientations and concave input quads; skipping "
+                   "optimization", face->tag());
+      finishSkippedInputFace();
       return result;
     }
     // On curved faces, a Fast 2Q swap is accepted from the CAD gap at the
@@ -9491,6 +9505,17 @@ namespace QuadOptimizer {
       GModel::current()->getFaceByTag(faceTag), options);
   }
 
+  bool isRegularOrientedSurfaceCellComplex(GFace *face)
+  {
+    if(!face) return false;
+    const std::vector<MElement *> elements = surfaceElements(face);
+    if(elements.empty()) return true;
+    const SurfaceOrientationRepairResult structure =
+      repairSurfaceElementOrientation(face, elements, false, false);
+    return structure.structurallyRegular && structure.orientable &&
+      FaceHalfEdgeTopology(elements).manifold();
+  }
+
   AllFacesOptimizerResult optimizeSmallQuadCavitiesAllFaces(
     const SmallCavityOptimizerOptions &options, int maximumThreads)
   {
@@ -9522,14 +9547,28 @@ namespace QuadOptimizer {
     // enter the barriers used by PViewData with only a subset of the team.
     if(options.enforceSizeMap && options.targetSize <= 0. &&
        !options.edgeLengthCriteriaAt) {
+      GFace *sampleFace = nullptr;
+      MVertex *sampleVertex = nullptr;
       for(GFace *face : faces) {
-        if(face->quadrangles.empty()) continue;
-        MVertex *vertex = face->quadrangles.front()->getVertex(0);
-        UV uv;
-        if(!vertexParameter(face, vertex, uv)) continue;
-        const Point xyz = {vertex->x(), vertex->y(), vertex->z()};
-        (void)prescribedTargetSize(face, uv, xyz, options);
-        break;
+        for(MQuadrangle *quadrangle : face->quadrangles) {
+          if(!quadrangle) continue;
+          for(std::size_t i = 0; i < 4; ++i) {
+            MVertex *vertex = quadrangle->getVertex(static_cast<int>(i));
+            if(!vertex) continue;
+            sampleFace = face;
+            sampleVertex = vertex;
+            break;
+          }
+          if(sampleVertex) break;
+        }
+        if(sampleVertex) break;
+      }
+      UV uv;
+      if(sampleFace && sampleVertex &&
+         vertexParameter(sampleFace, sampleVertex, uv)) {
+        const Point xyz = {sampleVertex->x(), sampleVertex->y(),
+                           sampleVertex->z()};
+        (void)prescribedTargetSize(sampleFace, uv, xyz, options);
       }
     }
     SmallCavityOptimizerOptions parallelOptions = options;
@@ -9561,6 +9600,8 @@ namespace QuadOptimizer {
     }
 
     for(const FaceOptimizerResult &face : result.faces) {
+      if(face.optimizer.skippedInvalidInputCellComplex)
+        ++result.facesSkippedInvalidInputCellComplex;
       result.acceptedPillows += face.optimizer.pillowHolesAccepted;
       result.pillowHolesVisited += face.optimizer.pillowHolesVisited;
       result.pillowHolesAlreadyPresent +=
@@ -9714,6 +9755,36 @@ namespace QuadOptimizer {
       const std::vector<MElement *> elements = surfaceElements(face);
       if(elements.empty()) continue;
       ++summary.facesWithElements;
+
+      // The quality report is also run after a malformed input face has been
+      // deliberately skipped by the optimizer. Do not feed null/repeated
+      // vertices or invalid incidences to geometric evaluators: record the
+      // complete face as invalid and continue auditing the other faces.
+      const SurfaceOrientationRepairResult readable =
+        repairSurfaceElementOrientation(face, elements, false, false);
+      if(!readable.structurallyRegular) {
+        const std::size_t triangles = face->triangles.size();
+        const std::size_t quadrangles = face->quadrangles.size();
+        ++summary.nonManifoldFaces;
+        summary.triangles += triangles;
+        summary.quadrangles += quadrangles;
+        summary.invalidTriangles += triangles;
+        summary.invalidQuadrangles += quadrangles;
+        summary.badTriangles += triangles;
+        summary.badQuadrangles += quadrangles;
+        if(options.enforceSizeMap || options.auditSizeMap) {
+          summary.sizeAudited = true;
+          summary.sizeSpecificationsActive = options.enforceSizeMap;
+          // The individual edges cannot be inspected safely. A sentinel per
+          // unreadable face keeps the model-wide size verdict conservative.
+          ++summary.invalidSizeEdges;
+        }
+        summary.cadAudited = true;
+        summary.cadElementsRequested += triangles + quadrangles;
+        summary.invalidCadElements += triangles + quadrangles;
+        continue;
+      }
+
       std::map<MElement *, std::vector<SPoint2> > parametersByElement;
       for(MElement *element : elements)
         if(element)
@@ -9933,6 +10004,9 @@ namespace QuadOptimizer {
         cadSquaredDistanceIntegral / cadSampledArea);
 
     summary.passesShapeSpecifications =
+      summary.nonManifoldFaces == 0 &&
+      summary.invalidTriangles == 0 &&
+      summary.invalidQuadrangles == 0 &&
       criterionPasses(summary.warping) &&
       criterionPasses(summary.edgeRatio) &&
       criterionPasses(summary.quadrangleMinimumAngle) &&
