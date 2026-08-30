@@ -945,6 +945,89 @@ namespace QuadOptimizer {
         return ok && _manifold;
       }
 
+      // Check a prospective local transaction without copying the complete
+      // face index. Only edges of inserted cells can acquire a new incidence;
+      // start those edge stars from the active, non-removed incidences and
+      // replay addElement's oriented-cell-complex guards locally. The full
+      // topology is still copied and replaced once for an accepted action
+      // before GFaceMeshDiff commits it.
+      bool validReplacement(const std::vector<MElement *> &removed,
+                            const std::vector<MElement *> &inserted) const
+      {
+        if(!_manifold) return false;
+
+        std::set<MElement *> removedElements;
+        for(MElement *element : removed)
+          if(!element || !removedElements.insert(element).second ||
+             _elementHalfEdges.find(element) == _elementHalfEdges.end())
+            return false;
+
+        struct LocalIncidence {
+          MVertex *origin = nullptr;
+          MVertex *destination = nullptr;
+          MElement *element = nullptr;
+        };
+        std::set<MElement *> insertedElements;
+        std::set<Edge> insertedEdges;
+        for(MElement *element : inserted) {
+          if(!element || !insertedElements.insert(element).second ||
+             (_elementHalfEdges.find(element) != _elementHalfEdges.end() &&
+              removedElements.find(element) == removedElements.end()))
+            return false;
+          const std::size_t count = element->getNumPrimaryVertices();
+          if(count != 3 && count != 4) return false;
+          std::set<MVertex *> vertices;
+          for(std::size_t i = 0; i < count; ++i) {
+            MVertex *origin = element->getVertex(static_cast<int>(i));
+            MVertex *destination = element->getVertex(
+              static_cast<int>((i + 1) % count));
+            if(!origin || !destination || !vertices.insert(origin).second)
+              return false;
+            insertedEdges.insert(canonicalEdge(origin, destination));
+          }
+        }
+
+        std::map<Edge, std::vector<LocalIncidence> > incidences;
+        for(const Edge &edge : insertedEdges) {
+          const auto found = _edgeHalfEdges.find(edge);
+          if(found == _edgeHalfEdges.end()) continue;
+          for(const std::size_t index : found->second) {
+            if(index >= _halfEdges.size() || !_halfEdges[index].active)
+              continue;
+            const HalfEdge &halfEdge = _halfEdges[index];
+            if(removedElements.find(halfEdge.element) !=
+               removedElements.end())
+              continue;
+            incidences[edge].push_back(
+              {halfEdge.origin, halfEdge.destination, halfEdge.element});
+          }
+        }
+
+        for(MElement *element : inserted) {
+          const std::size_t count = element->getNumPrimaryVertices();
+          std::set<MElement *> adjacentElements;
+          for(std::size_t i = 0; i < count; ++i) {
+            MVertex *origin = element->getVertex(static_cast<int>(i));
+            MVertex *destination = element->getVertex(
+              static_cast<int>((i + 1) % count));
+            std::vector<LocalIncidence> &edge =
+              incidences[canonicalEdge(origin, destination)];
+            if(edge.size() == 1) {
+              const LocalIncidence &other = edge.front();
+              if(other.origin != destination ||
+                 other.destination != origin ||
+                 !adjacentElements.insert(other.element).second)
+                return false;
+            }
+            else if(!edge.empty()) {
+              return false;
+            }
+            edge.push_back({origin, destination, element});
+          }
+        }
+        return true;
+      }
+
       std::vector<MElement *> elements() const
       {
         return {_elements.begin(), _elements.end()};
@@ -1124,17 +1207,25 @@ namespace QuadOptimizer {
       return 4;
     }
 
-    std::size_t idealQuadDegree(GFace *face, MVertex *vertex,
-                                const FaceHalfEdgeTopology &topology)
+    std::size_t idealQuadDegree(
+      GFace *face, MVertex *vertex,
+      const std::vector<MElement *> &incidentElements)
     {
       if(vertex && vertex->onWhat() == face) return 4;
       const double angle = boundaryDomainAngleDegrees(
-        face, vertex, topology.incidentElements(vertex));
+        face, vertex, incidentElements);
       if(angle < 25.) return 0;
       if(angle < 115.) return 1;
       if(angle < 205.) return 2;
       if(angle < 295.) return 3;
       return 4;
+    }
+
+    std::size_t idealQuadDegree(GFace *face, MVertex *vertex,
+                                const FaceHalfEdgeTopology &topology)
+    {
+      return idealQuadDegree(face, vertex,
+                             topology.incidentElements(vertex));
     }
 
     void addValence(ValenceObjective &objective, std::size_t actual,
@@ -2166,12 +2257,35 @@ namespace QuadOptimizer {
     {
       const std::vector<MVertex *> &boundary = patch.bdrVertices.front();
       points.assign(boundary.size() + patch.intVertices.size(), {0., 0.});
-      SPoint2 previous = patch.gf->parFromPoint(boundary.front()->point(),
-                                                true, true);
+      std::size_t anchor = boundary.size();
+      SPoint2 previous;
+      // Parameters on discrete faces are optional cache data and are not
+      // guaranteed to survive save/reload. Keep using the persistent XYZ
+      // inversion there; native CAD faces can safely reuse their stored UV.
+      if(patch.gf->geomType() != GEntity::DiscreteSurface) {
+        for(std::size_t i = 0; i < boundary.size(); ++i) {
+          double u = 0., v = 0.;
+          if(boundary[i] && boundary[i]->onWhat() == patch.gf &&
+             boundary[i]->getParameter(0, u) &&
+             boundary[i]->getParameter(1, v) &&
+             std::isfinite(u) && std::isfinite(v)) {
+            anchor = i;
+            previous = SPoint2(u, v);
+            break;
+          }
+        }
+      }
+      if(anchor == boundary.size()) {
+        anchor = 0;
+        if(!persistentFaceParameter(patch.gf, boundary.front(), previous))
+          previous = patch.gf->parFromPoint(boundary.front()->point(),
+                                            true, true);
+      }
       if(!std::isfinite(previous.x()) || !std::isfinite(previous.y()))
         return false;
-      points[0] = {previous.x(), previous.y()};
-      for(std::size_t i = 1; i < boundary.size(); ++i) {
+      points[anchor] = {previous.x(), previous.y()};
+      for(std::size_t offset = 1; offset < boundary.size(); ++offset) {
+        const std::size_t i = (anchor + offset) % boundary.size();
         SPoint2 current;
         if(!reparamMeshVertexOnFaceWithRef(
              patch.gf, boundary[i], previous, current) ||
@@ -4931,7 +5045,8 @@ namespace QuadOptimizer {
           xyz[0][1] + scale * displacement[1],
           xyz[0][2] + scale * displacement[2]);
         const double initialGuess[2] = {uv[0][0], uv[0][1]};
-        const GPoint projected = face->closestPoint(target, initialGuess);
+        const GPoint projected =
+          face->closestPointFromTrustedGuess(target, initialGuess);
         if(!projected.succeeded() || !std::isfinite(projected.x()) ||
            !std::isfinite(projected.y()) ||
            !std::isfinite(projected.z()) ||
@@ -5214,7 +5329,8 @@ namespace QuadOptimizer {
               initialXyz[center][1] + scale * correction[1],
               initialXyz[center][2] + scale * correction[2]);
             const double initialGuess[2] = {uv[center][0], uv[center][1]};
-            const GPoint projected = face->closestPoint(target, initialGuess);
+            const GPoint projected =
+              face->closestPointFromTrustedGuess(target, initialGuess);
             if(!projected.succeeded() || !std::isfinite(projected.x()) ||
                !std::isfinite(projected.y()) ||
                !std::isfinite(projected.z()) ||
@@ -5236,7 +5352,8 @@ namespace QuadOptimizer {
               initialXyz[center][1] + scale * displacement[1],
               initialXyz[center][2] + scale * displacement[2]);
             const double initialGuess[2] = {uv[center][0], uv[center][1]};
-            const GPoint projected = face->closestPoint(target, initialGuess);
+            const GPoint projected =
+              face->closestPointFromTrustedGuess(target, initialGuess);
             if(!projected.succeeded() || !std::isfinite(projected.x()) ||
                !std::isfinite(projected.y()) ||
                !std::isfinite(projected.z()) ||
@@ -5290,7 +5407,8 @@ namespace QuadOptimizer {
             origin[2] + trialPlane[0] * firstAxis[2] +
               trialPlane[1] * secondAxis[2]);
           const double initialGuess[2] = {uv[i][0], uv[i][1]};
-          const GPoint projected = face->closestPoint(target, initialGuess);
+          const GPoint projected =
+            face->closestPointFromTrustedGuess(target, initialGuess);
           if(!projected.succeeded() || !std::isfinite(projected.x()) ||
              !std::isfinite(projected.y()) ||
              !std::isfinite(projected.z()) ||
@@ -6808,10 +6926,8 @@ namespace QuadOptimizer {
     };
 
     std::vector<MixedTriangleQuadSwapSeed> collectMixedTriangleQuadSwaps(
-      GFace *face)
+      GFace *face, const FaceHalfEdgeTopology &topology)
     {
-      const std::vector<MElement *> elements = surfaceElements(face);
-      const FaceHalfEdgeTopology topology(elements);
       if(!topology.manifold()) return {};
       std::vector<MixedTriangleQuadSwapSeed> seeds;
       for(const auto &entry : topology.edges()) {
@@ -6854,6 +6970,7 @@ namespace QuadOptimizer {
 
     bool tryMixedTriangleQuadSwap(
       GFace *face, const MixedTriangleQuadSwapSeed &seed,
+      const FaceHalfEdgeTopology &topology,
       const SmallCavityOptimizerOptions &options,
       SmallCavityOptimizerResult &result, CleanUpDecisionPhase phase)
     {
@@ -6869,8 +6986,6 @@ namespace QuadOptimizer {
         return false;
       const bool fastInteractive = useFastInteractiveCleanUp(options);
 
-      const std::vector<MElement *> faceElements = surfaceElements(face);
-      const FaceHalfEdgeTopology topology(faceElements);
       if(!topology.manifold()) return false;
       const std::set<MVertex *> protectedVertices =
         protectedFaceVertices(face);
@@ -6917,15 +7032,47 @@ namespace QuadOptimizer {
       // it preserves the numbers of triangles and quadrangles. Keep those
       // changed vertex contributions in the same additive transaction as the
       // affected element support below.
-      auto mixedValence = [&](const FaceHalfEdgeTopology &candidateTopology) {
+      const std::set<MElement *> removedElements(
+        seed.core.elements.begin(), seed.core.elements.end());
+      auto hasVertex = [](MElement *element, MVertex *vertex) {
+        if(!element || !vertex) return false;
+        const std::size_t count = element->getNumPrimaryVertices();
+        for(std::size_t i = 0; i < count; ++i)
+          if(element->getVertex(static_cast<int>(i)) == vertex) return true;
+        return false;
+      };
+      auto mixedValence =
+        [&](const std::vector<MElement *> *replacement) {
         ValenceObjective valence;
-        for(MVertex *vertex : pentagon)
-          addValence(valence, candidateTopology.quadDegree(vertex),
-                     idealQuadDegree(face, vertex, candidateTopology),
+        for(MVertex *vertex : pentagon) {
+          if(!replacement) {
+            addValence(valence, topology.quadDegree(vertex),
+                       idealQuadDegree(face, vertex, topology),
+                       vertex->onWhat() == face);
+            continue;
+          }
+          std::vector<MElement *> incident =
+            topology.incidentElements(vertex);
+          incident.erase(
+            std::remove_if(incident.begin(), incident.end(),
+                           [&](MElement *element) {
+                             return removedElements.find(element) !=
+                                    removedElements.end();
+                           }),
+            incident.end());
+          for(MElement *element : *replacement)
+            if(hasVertex(element, vertex)) incident.push_back(element);
+          const std::size_t degree = static_cast<std::size_t>(std::count_if(
+            incident.begin(), incident.end(), [](MElement *element) {
+              return element && element->getNumPrimaryVertices() == 4;
+            }));
+          addValence(valence, degree,
+                     idealQuadDegree(face, vertex, incident),
                      vertex->onWhat() == face);
+        }
         return valence;
       };
-      const ValenceObjective referenceValence = mixedValence(topology);
+      const ValenceObjective referenceValence = mixedValence(nullptr);
       const FastGlobalQuality referenceGlobalQuality = fastGlobalQuality(
         referenceObjective, referenceValence,
         referenceObjective.invalidElementCount, beforeSizeViolations,
@@ -6977,11 +7124,10 @@ namespace QuadOptimizer {
         if(!orientElementsAccordingToBoundarySegment(
              pentagon[0], pentagon[1], replacement))
           continue;
-        FaceHalfEdgeTopology validatedTopology = topology;
-        if(!validatedTopology.replace(seed.core.elements, replacement))
+        if(!topology.validReplacement(seed.core.elements, replacement))
           continue;
         const ValenceObjective candidateValence =
-          mixedValence(validatedTopology);
+          mixedValence(&replacement);
 
         std::vector<MElement *> afterElements(outside.begin(), outside.end());
         afterElements.insert(afterElements.end(), replacement.begin(),
@@ -8943,12 +9089,19 @@ namespace QuadOptimizer {
       std::size_t accepted = 0;
       while(accepted <
             static_cast<std::size_t>(options.maximumAcceptedCavities)) {
+        // All rejected mixed swaps below see the same mesh state. Build the
+        // face topology once for that state instead of rebuilding the full
+        // half-edge index for every triangle/quad candidate. An accepted
+        // swap invalidates element pointers and returns here immediately, so
+        // the next iteration reconstructs the index from the updated mesh.
+        const FaceHalfEdgeTopology topology(surfaceElements(face));
+        if(!topology.manifold()) break;
         const std::vector<MixedTriangleQuadSwapSeed> swaps =
-          collectMixedTriangleQuadSwaps(face);
+          collectMixedTriangleQuadSwaps(face, topology);
         bool changed = false;
         for(const MixedTriangleQuadSwapSeed &swap : swaps) {
           if(!tryMixedTriangleQuadSwap(
-               face, swap, options, result, phase))
+               face, swap, topology, options, result, phase))
             continue;
           changed = true;
           ++accepted;

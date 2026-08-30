@@ -201,6 +201,13 @@ public:
   virtual GPoint closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
 
+  // Same operation when the caller knows that initialGuess is the parameter
+  // of a nearby point on this very face. Kernels can use a local projection
+  // first; the default implementation preserves the regular closest-point
+  // behaviour.
+  virtual GPoint closestPointFromTrustedGuess(
+    const SPoint3 &queryPoint, const double initialGuess[2]) const;
+
   // return the normal to the face at the given parameter location
   virtual SVector3 normal(const SPoint2 &param) const;
 

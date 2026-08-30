@@ -554,11 +554,11 @@ static MFaceVertex *projectSurfaceCandidate3D(
   const SPoint3 center = parent->_v->point();
   const SPoint3 target = center + direction * parent->_size;
   const double initialGuess[2] = {parent->_uv.x(), parent->_uv.y()};
-  const GPoint projected = gf->closestPoint(target, initialGuess);
+  const GPoint projected =
+    gf->closestPointFromTrustedGuess(target, initialGuess);
   if(!projected.succeeded()) return nullptr;
 
   const SPoint2 uv(projected.u(), projected.v());
-  if(!inParametricDomain(gf, uv)) return nullptr;
   const SPoint3 point(projected.x(), projected.y(), projected.z());
   const SVector3 displacement = point - center;
   const double length = displacement.norm();
@@ -623,6 +623,13 @@ static void packingOfOrientedCubes3D(GFace *gf,
       if(!candidate) continue;
       const SPoint3 candidatePoint = candidate->point();
       if(inExclusionCube3D(parent->_v, candidatePoint, rtree)) {
+        delete candidate;
+        continue;
+      }
+      double u = 0., v = 0.;
+      if(!candidate->getParameter(0, u) ||
+         !candidate->getParameter(1, v) ||
+         !inParametricDomain(gf, SPoint2(u, v))) {
         delete candidate;
         continue;
       }
@@ -803,9 +810,9 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     fifo.pop();
     for(int i = 0; i < 4; i++) {
       if(!outBounds(parent->_p[i], minu, maxu, minv, maxv) &&
-	 inParametricDomain(gf, parent->_p[i]) &&
-	 !close2sing(singularities, gf, parent->_p[i], cross_field) &&
-	 !inExclusionZone(parent->_v, parent->_p[i], rtree))
+		 !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
+		 inParametricDomain(gf, parent->_p[i]) &&
+		 !close2sing(singularities, gf, parent->_p[i], cross_field))
 	{
 	  GPoint gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =

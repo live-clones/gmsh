@@ -32,6 +32,7 @@
 #include <Geom_SphericalSurface.hxx>
 #include <Geom_SurfaceOfRevolution.hxx>
 #include <Geom_ToroidalSurface.hxx>
+#include <IntTools_FClass2d.hxx>
 #include <IntTools_Context.hxx>
 #include <ShapeAnalysis.hxx>
 #include <BRep_Tool.hxx>
@@ -55,8 +56,24 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
     writeBREP("debugSurface.brep");
 }
 
+OCCFace::~OCCFace()
+{
+  _clearClassifiers();
+  for(std::size_t i = 0; i < _projectors.size(); i++) delete _projectors[i];
+}
+
+void OCCFace::_clearClassifiers()
+{
+  for(std::size_t i = 0; i < _classifiers.size(); i++)
+    delete _classifiers[i];
+  _classifiers.clear();
+  _classifierFaces.clear();
+  _classifierTolerances.clear();
+}
+
 void OCCFace::_setup()
 {
+  _clearClassifiers();
   edgeLoops.clear();
   l_edges.clear();
   l_dirs.clear();
@@ -186,6 +203,9 @@ void OCCFace::_setup()
   _projectorBounds[3] = vmax;
   _projectors.resize(std::max(1, Msg::GetMaxThreads()), nullptr);
   _localProjectors.resize(_projectors.size());
+  _classifiers.resize(_projectors.size(), nullptr);
+  _classifierFaces.resize(_projectors.size());
+  _classifierTolerances.resize(_projectors.size(), -1.);
   _tolerance = BRep_Tool::Tolerance(_s);
 
   if(OCCFace::geomType() == GEntity::Sphere) {
@@ -327,8 +347,44 @@ const Handle(ShapeAnalysis_Surface) & OCCFace::_localProjector() const
   return _localProjectors[t];
 }
 
+IntTools_FClass2d *OCCFace::_classifier(double tolerance) const
+{
+  const std::size_t t = (std::size_t)Msg::GetThreadNum();
+  if(t >= _classifiers.size()) return nullptr;
+
+  // A member cache already prevents reuse across OCCFace instances. Keep the
+  // explicit shape/tolerance check as well so that a future replacement of
+  // _s, or an update of its tolerance, cannot leave a stale OCCT classifier
+  // behind.
+  if(_classifiers[t] &&
+     (!_classifierFaces[t].IsEqual(_s) ||
+      _classifierTolerances[t] != tolerance)) {
+    delete _classifiers[t];
+    _classifiers[t] = nullptr;
+    _classifierFaces[t].Nullify();
+    _classifierTolerances[t] = -1.;
+  }
+
+  if(!_classifiers[t]) {
+    try {
+      _classifiers[t] = new IntTools_FClass2d(_s, tolerance);
+      _classifierFaces[t] = _s;
+      _classifierTolerances[t] = tolerance;
+    } catch(Standard_Failure &err) {
+      delete _classifiers[t];
+      _classifiers[t] = nullptr;
+      _classifierFaces[t].Nullify();
+      _classifierTolerances[t] = -1.;
+      Msg::Debug("Could not initialize OpenCASCADE 2D classifier for surface "
+                 "%d: %s",
+                 tag(), err.GetMessageString());
+    }
+  }
+  return _classifiers[t];
+}
+
 bool OCCFace::_project(const double p[3], double uv[2], double xyz[3],
-                       const double *initialGuess) const
+                       const double *initialGuess, bool trustedGuess) const
 {
   gp_Pnt pnt(p[0], p[1], p[2]);
 
@@ -338,7 +394,8 @@ bool OCCFace::_project(const double p[3], double uv[2], double xyz[3],
   // is very slow on B-splines. NextValueOfUV() falls back on the global search
   // by itself if the local search does not converge.
   const Handle(ShapeAnalysis_Surface) &localProjector = _localProjector();
-  if(initialGuess && CTX::instance()->geom.occFastProjection &&
+  if(initialGuess &&
+     (trustedGuess || CTX::instance()->geom.occFastProjection) &&
      !localProjector.IsNull()) {
     try {
       gp_Pnt2d uvGuess(initialGuess[0], initialGuess[1]);
@@ -405,6 +462,19 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   else {
     return GFace::closestPoint(qp, initialGuess);
   }
+}
+
+GPoint OCCFace::closestPointFromTrustedGuess(
+  const SPoint3 &qp, const double initialGuess[2]) const
+{
+#if defined(HAVE_ALGLIB)
+  if(CTX::instance()->geom.occUseGenericClosestPoint)
+    return GFace::closestPoint(qp, initialGuess);
+#endif
+  double uv[2], xyz[3];
+  if(_project(qp.data(), uv, xyz, initialGuess, true))
+    return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
+  return GFace::closestPoint(qp, initialGuess);
 }
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface,
@@ -565,6 +635,25 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
 bool OCCFace::containsParam(const SPoint2 &pt)
 {
   const double tolerance = BRep_Tool::Tolerance(_s);
+  if(IntTools_FClass2d *classifier = _classifier(tolerance)) {
+    try {
+      const TopAbs_State state =
+        classifier->Perform(gp_Pnt2d{pt.x(), pt.y()});
+      if(state != TopAbs_UNKNOWN)
+        return (state == TopAbs_IN || state == TopAbs_ON);
+    } catch(Standard_Failure &err) {
+      const std::size_t t = (std::size_t)Msg::GetThreadNum();
+      if(t < _classifiers.size()) {
+        delete _classifiers[t];
+        _classifiers[t] = nullptr;
+        _classifierFaces[t].Nullify();
+        _classifierTolerances[t] = -1.;
+      }
+      Msg::Debug("OpenCASCADE 2D classifier failed on surface %d: %s; using "
+                 "the face classifier",
+                 tag(), err.GetMessageString());
+    }
+  }
   BRepClass_FaceClassifier faceClassifier;
   faceClassifier.Perform(_s, gp_Pnt2d{pt.x(), pt.y()}, tolerance);
   const TopAbs_State state = faceClassifier.State();
