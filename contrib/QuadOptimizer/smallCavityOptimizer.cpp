@@ -92,17 +92,25 @@ namespace QuadOptimizer {
     // projection fails; a read-only quality query must report that element as
     // unauditable without changing the process-wide error count.
     std::vector<SPoint2> auditElementParameters(
-      GFace *face, MElement *element)
+      GFace *face, MElement *element,
+      std::unordered_map<MVertex *, SPoint2> &discreteParameterCache)
     {
       if(!face || !element) return {};
       const std::size_t count = element->getNumPrimaryVertices();
       if(count != 3 && count != 4) return {};
       std::vector<SPoint2> parameters(count);
       if(face->geomType() == GEntity::DiscreteSurface) {
-        for(std::size_t i = 0; i < count; ++i)
-          if(!persistentFaceParameter(
-               face, element->getVertex(static_cast<int>(i)), parameters[i]))
+        for(std::size_t i = 0; i < count; ++i) {
+          MVertex *vertex = element->getVertex(static_cast<int>(i));
+          const auto cached = discreteParameterCache.find(vertex);
+          if(cached != discreteParameterCache.end()) {
+            parameters[i] = cached->second;
+            continue;
+          }
+          if(!persistentFaceParameter(face, vertex, parameters[i]))
             return {};
+          discreteParameterCache.emplace(vertex, parameters[i]);
+        }
         return parameters;
       }
 
@@ -3433,7 +3441,8 @@ namespace QuadOptimizer {
     bool accumulateGeometrySample(GFace *face, const UV &parameter,
                                   const Point &meshPoint, double areaWeight,
                                   GeometryDeviation &deviation,
-                                  const SupportingPlane *supportingPlane)
+                                  const SupportingPlane *supportingPlane,
+                                  bool useParametricChord)
     {
       if(!face || !std::isfinite(parameter[0]) ||
          !std::isfinite(parameter[1]) || !std::isfinite(areaWeight) ||
@@ -3441,20 +3450,20 @@ namespace QuadOptimizer {
         ++deviation.invalidSampleCount;
         return false;
       }
-      // Measure the actual distance from the bilinear/linear mesh sample to
-      // the GFace. The interpolated parameter is only the deterministic seed
-      // of the closest-point solve; using face->point(parameter) instead would
-      // measure parametrization distortion and can rank two quad diagonals in
-      // the opposite order from their physical CAD distance. The optional
-      // supporting plane is used only by the final report and is computed
-      // once per face; optimizer candidates retain the historical CAD query.
-      double chordDistance = -1.;
+      // Optimizer candidates use the closest-point distance: the interpolated
+      // parameter is only the deterministic seed of that solve. The final
+      // model-wide report uses the chord to the CAD point at the same
+      // parameter instead. This conservative, deterministic metric keeps the
+      // full quadrature while avoiding hundreds of thousands of nonlinear
+      // projections. The optional supporting plane makes the planar report
+      // exact and is computed only once per face.
+      double sampleDistance = -1.;
       if(supportingPlane) {
         const Point offset = {
           meshPoint[0] - supportingPlane->origin[0],
           meshPoint[1] - supportingPlane->origin[1],
           meshPoint[2] - supportingPlane->origin[2]};
-        chordDistance = std::abs(
+        sampleDistance = std::abs(
           offset[0] * supportingPlane->unitNormal[0] +
           offset[1] * supportingPlane->unitNormal[1] +
           offset[2] * supportingPlane->unitNormal[2]);
@@ -3462,7 +3471,9 @@ namespace QuadOptimizer {
       else {
         const SPoint3 query(meshPoint[0], meshPoint[1], meshPoint[2]);
         const double initialGuess[2] = {parameter[0], parameter[1]};
-        const GPoint geometry = face->closestPoint(query, initialGuess);
+        const GPoint geometry = useParametricChord ?
+          face->point(SPoint2(parameter[0], parameter[1])) :
+          face->closestPoint(query, initialGuess);
         if(!geometry.succeeded() || !std::isfinite(geometry.x()) ||
            !std::isfinite(geometry.y()) || !std::isfinite(geometry.z())) {
           ++deviation.invalidSampleCount;
@@ -3470,16 +3481,16 @@ namespace QuadOptimizer {
         }
         const Point geometryPoint = {
           geometry.x(), geometry.y(), geometry.z()};
-        chordDistance = distance(meshPoint, geometryPoint);
+        sampleDistance = distance(meshPoint, geometryPoint);
       }
-      if(!std::isfinite(chordDistance)) {
+      if(!std::isfinite(sampleDistance)) {
         ++deviation.invalidSampleCount;
         return false;
       }
       deviation.maximumDistance =
-        std::max(deviation.maximumDistance, chordDistance);
+        std::max(deviation.maximumDistance, sampleDistance);
       deviation.squaredDistanceIntegral +=
-        areaWeight * chordDistance * chordDistance;
+        areaWeight * sampleDistance * sampleDistance;
       deviation.sampledArea += areaWeight;
       return true;
     }
@@ -3488,12 +3499,14 @@ namespace QuadOptimizer {
       GFace *face, const std::array<UV, 4> &parameters,
       const std::array<Point, 4> &vertices,
       GeometryDeviation &deviation,
-      const SupportingPlane *supportingPlane = nullptr)
+      const SupportingPlane *supportingPlane = nullptr,
+      bool useParametricChord = false)
     {
-      // Tensor Gauss integration of squared closest-point distance over the
-      // physical bilinear quad. This score is additive, so two alternative
-      // fillings of the same cavity can be compared without an element-count
-      // bias.
+      // Tensor Gauss integration of squared CAD deviation over the physical
+      // bilinear quad. Optimizer candidates use closest-point distance; the
+      // final report uses the parametric chord. This score is additive, so two
+      // alternative fillings of the same cavity can be compared without an
+      // element-count bias.
       static constexpr std::array<double, 3> abscissae = {
         .11270166537925831148, .5, .88729833462074168852};
       static constexpr std::array<double, 3> weights = {
@@ -3539,7 +3552,7 @@ namespace QuadOptimizer {
         if(!accumulateGeometrySample(
                face, parameter, meshPoint,
                weights[ir] * weights[is] * differentialArea, deviation,
-               supportingPlane))
+               supportingPlane, useParametricChord))
           return false;
         }
       }
@@ -3551,7 +3564,8 @@ namespace QuadOptimizer {
       GFace *face, const std::array<UV, 3> &parameters,
       const std::array<Point, 3> &vertices,
       GeometryDeviation &deviation,
-      const SupportingPlane *supportingPlane = nullptr)
+      const SupportingPlane *supportingPlane = nullptr,
+      bool useParametricChord = false)
     {
       // Symmetric second-order rule on the reference triangle. The weights
       // sum to one half, i.e. its reference area.
@@ -3586,7 +3600,7 @@ namespace QuadOptimizer {
         }
         if(!accumulateGeometrySample(
              face, parameter, meshPoint, differentialArea / 6., deviation,
-             supportingPlane))
+             supportingPlane, useParametricChord))
           return false;
       }
       ++deviation.elementCount;
@@ -3728,10 +3742,10 @@ namespace QuadOptimizer {
       if(!face || !element) return deviation;
       const std::size_t count = element->getNumPrimaryVertices();
       const bool haveParameters = parameters.size() >= count;
-      // The UV values seed every closest-point query on curved CAD. Falling
-      // back to (0, 0) can converge to another branch and falsely report full
-      // CAD coverage. A plane is the only safe exception: its distance is
-      // evaluated analytically from the supporting geometric plane.
+      // The report evaluates a chord to the CAD at every quadrature point, so
+      // curved faces require valid, element-local UV values. A plane is the
+      // only safe exception: its distance is evaluated analytically from the
+      // supporting geometric plane.
       if(!haveParameters && !supportingPlane)
         return deviation;
       if(count == 4) {
@@ -3745,7 +3759,7 @@ namespace QuadOptimizer {
           xyz[i] = {vertex->x(), vertex->y(), vertex->z()};
         }
         if(!accumulateQuadrangleGeometryDeviation(
-             face, uv, xyz, deviation, supportingPlane))
+             face, uv, xyz, deviation, supportingPlane, true))
           return deviation;
       }
       else if(count == 3) {
@@ -3759,7 +3773,7 @@ namespace QuadOptimizer {
           xyz[i] = {vertex->x(), vertex->y(), vertex->z()};
         }
         if(!accumulateTriangleGeometryDeviation(
-             face, uv, xyz, deviation, supportingPlane))
+             face, uv, xyz, deviation, supportingPlane, true))
           return deviation;
       }
       else {
@@ -9708,7 +9722,6 @@ namespace QuadOptimizer {
       summary.success = false;
       return summary;
     }
-
     auto addUpper = [](QualityCriterionPassSummary &criterion, double value,
                        double preferred, double absolute) {
       ++criterion.applicable;
@@ -9786,10 +9799,14 @@ namespace QuadOptimizer {
       }
 
       std::map<MElement *, std::vector<SPoint2> > parametersByElement;
+      std::unordered_map<MVertex *, SPoint2> discreteParameterCache;
+      if(face->geomType() == GEntity::DiscreteSurface)
+        discreteParameterCache.reserve(2 * elements.size());
       for(MElement *element : elements)
         if(element)
           parametersByElement.emplace(
-            element, auditElementParameters(face, element));
+            element, auditElementParameters(
+              face, element, discreteParameterCache));
       SupportingPlane supportingPlane;
       const SupportingPlane *supportingPlanePointer =
         auditedSupportingPlane(face, supportingPlane) ?
@@ -9963,8 +9980,9 @@ namespace QuadOptimizer {
         summary.invalidCadSamples += geometry.invalidSampleCount;
         if(geometry.valid) {
           summary.cadElements += geometry.elementCount;
-          summary.maximumCadDistance = std::max(
-            summary.maximumCadDistance, geometry.maximumDistance);
+          summary.maximumSampledCadChordDistance = std::max(
+            summary.maximumSampledCadChordDistance,
+            geometry.maximumDistance);
           cadSquaredDistanceIntegral += geometry.squaredDistanceIntegral;
           cadSampledArea += geometry.sampledArea;
         }
@@ -10000,7 +10018,7 @@ namespace QuadOptimizer {
     }
     if(cadSampledArea > 0. &&
        std::isfinite(cadSquaredDistanceIntegral))
-      summary.rmsCadDistance = std::sqrt(
+      summary.rmsCadChordDistance = std::sqrt(
         cadSquaredDistanceIntegral / cadSampledArea);
 
     summary.passesShapeSpecifications =

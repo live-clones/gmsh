@@ -173,22 +173,23 @@ static void PrintQuadMeshQualitySummary(
     Msg::Info("%s fit: sizeEdges=%zu length[min/max]=%.6g/%.6g "
               "targetRatio[min/max/rmsLog]=%.6g/%.6g/%.6g "
               "sizeBad[below/above/invalid]=%zu/%zu/%zu "
-              "CAD[max/rms]=%.6g/%.6g "
+              "CADchord[max/rms]=%.6g/%.6g "
               "CADcoverage=%zu/%zu invalidElements=%zu invalidSamples=%zu",
               label, quality.sizeEdges, quality.minimumEdgeLength,
               quality.maximumEdgeLength, quality.minimumTargetSizeRatio,
               quality.maximumTargetSizeRatio,
               quality.rmsLogTargetSizeRatio,
               quality.edgesBelowMinimum, quality.edgesAboveMaximum,
-              quality.invalidSizeEdges, quality.maximumCadDistance,
-              quality.rmsCadDistance, quality.cadElements,
+              quality.invalidSizeEdges,
+              quality.maximumSampledCadChordDistance,
+              quality.rmsCadChordDistance, quality.cadElements,
               quality.cadElementsRequested, quality.invalidCadElements,
               quality.invalidCadSamples);
   else
-    Msg::Info("%s fit: size=off CAD[max/rms]=%.6g/%.6g "
+    Msg::Info("%s fit: size=off CADchord[max/rms]=%.6g/%.6g "
               "CADcoverage=%zu/%zu invalidElements=%zu invalidSamples=%zu",
-              label, quality.maximumCadDistance,
-              quality.rmsCadDistance, quality.cadElements,
+              label, quality.maximumSampledCadChordDistance,
+              quality.rmsCadChordDistance, quality.cadElements,
               quality.cadElementsRequested, quality.invalidCadElements,
               quality.invalidCadSamples);
 }

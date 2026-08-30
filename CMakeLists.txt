@@ -2318,7 +2318,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
         -parse_and_exit -nopopup -v 5)
     set_tests_properties(quadOptimizerSizeConstraints PROPERTIES
       PASS_REGULAR_EXPRESSION
-        "OptimizeQuads fit: sizeEdges=4 length\\[min/max\\]=2/8 .*sizeBad\\[below/above/invalid\\]=0/0/0 CAD\\[max/rms\\]=0/0 CADcoverage=1/1 invalidElements=0 invalidSamples=0"
+        "OptimizeQuads fit: sizeEdges=4 length\\[min/max\\]=2/8 .*sizeBad\\[below/above/invalid\\]=0/0/0 CADchord\\[max/rms\\]=0/0 CADcoverage=1/1 invalidElements=0 invalidSamples=0"
       FAIL_REGULAR_EXPRESSION
         "Unknown number option;edge-length requirements are not met;OptimizeQuads: .* [1-9][0-9]* topology changes")
 
@@ -2329,7 +2329,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
         -parse_and_exit -nopopup -v 5)
     set_tests_properties(quadOptimizerSizeConstraintViolation PROPERTIES
       PASS_REGULAR_EXPRESSION
-        "OptimizeQuads fit: sizeEdges=4 length\\[min/max\\]=1.9/8.1 .*sizeBad\\[below/above/invalid\\]=2/2/0 CAD\\[max/rms\\]=0/0 CADcoverage=1/1 invalidElements=0 invalidSamples=0"
+        "OptimizeQuads fit: sizeEdges=4 length\\[min/max\\]=1.9/8.1 .*sizeBad\\[below/above/invalid\\]=2/2/0 CADchord\\[max/rms\\]=0/0 CADcoverage=1/1 invalidElements=0 invalidSamples=0"
       FAIL_REGULAR_EXPRESSION
         "Unknown number option;OptimizeQuads: .* [1-9][0-9]* topology changes")
 

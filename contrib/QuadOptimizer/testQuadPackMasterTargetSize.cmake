@@ -122,7 +122,7 @@ function(assert_pack_log_contract log_variable run_label)
   endif()
   list(GET final_fit_lines 0 final_fit_line)
   if(NOT final_fit_line MATCHES
-     "^PACK final fit: sizeEdges=[0-9]+ length\\[min/max\\]=${number_re}/${number_re} targetRatio\\[min/max/rmsLog\\]=${number_re}/${number_re}/${number_re} sizeBad\\[below/above/invalid\\]=[0-9]+/[0-9]+/[0-9]+ CAD\\[max/rms\\]=${number_re}/${number_re} CADcoverage=[0-9]+/[0-9]+ invalidElements=[0-9]+ invalidSamples=[0-9]+$")
+     "^PACK final fit: sizeEdges=[0-9]+ length\\[min/max\\]=${number_re}/${number_re} targetRatio\\[min/max/rmsLog\\]=${number_re}/${number_re}/${number_re} sizeBad\\[below/above/invalid\\]=[0-9]+/[0-9]+/[0-9]+ CADchord\\[max/rms\\]=${number_re}/${number_re} CADcoverage=[0-9]+/[0-9]+ invalidElements=[0-9]+ invalidSamples=[0-9]+$")
     message(FATAL_ERROR
       "${run_label} malformed final fit line:\n${final_fit_line}")
   endif()

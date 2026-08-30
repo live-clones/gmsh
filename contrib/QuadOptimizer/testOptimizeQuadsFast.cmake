@@ -36,3 +36,24 @@ if(NOT second_summary MATCHES
    NOT second_summary MATCHES "absolute violations 0 -> 0")
   message(FATAL_ERROR "The second Fast cleanup was not a fixed point:\n${log}")
 endif()
+
+# The OCC regression also exercises the report-only chordal CAD path. It must
+# remain independent of closest-point projection and cover every curved quad.
+if(TEST_GEO MATCHES "Curved")
+  set(number_re "[-+]?[0-9]+(\\.[0-9]+)?([eE][-+]?[0-9]+)?")
+  string(REGEX MATCHALL "OptimizeQuadsFast fit: [^\n\r]*"
+         fit_summaries "${log}")
+  list(LENGTH fit_summaries fit_summary_count)
+  if(NOT fit_summary_count EQUAL 2)
+    message(FATAL_ERROR
+      "Expected two curved CAD quality reports:\n${log}")
+  endif()
+  foreach(fit_summary IN LISTS fit_summaries)
+    if(NOT fit_summary MATCHES
+       "^OptimizeQuadsFast fit: size=off CADchord\\[max/rms\\]=${number_re}/${number_re} CADcoverage=2/2 invalidElements=0 invalidSamples=0$" OR
+       fit_summary MATCHES "CADchord\\[max/rms\\]=0/0")
+      message(FATAL_ERROR
+        "Curved CAD chord audit is missing or invalid:\n${fit_summary}")
+    endif()
+  endforeach()
+endif()

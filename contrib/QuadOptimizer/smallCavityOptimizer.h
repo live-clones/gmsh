@@ -269,9 +269,10 @@ namespace QuadOptimizer {
 
   // Read-only, model-wide audit of the final linear triangle/quad surface
   // mesh. Averages are weighted by elements (shape) or sampled physical area
-  // (CAD distance), never averaged face by face. Size ratios are measured
-  // against the active target field when enforceSizeMap or auditSizeMap is
-  // enabled; only enforceSizeMap activates normative size bounds.
+  // (parametric chord from the linear mesh to the CAD), never averaged face
+  // by face. Size ratios are measured against the active target field when
+  // enforceSizeMap or auditSizeMap is enabled; only enforceSizeMap activates
+  // normative size bounds.
   struct QualityCriterionPassSummary {
     std::size_t applicable = 0;
     std::size_t preferredPass = 0;
@@ -327,8 +328,8 @@ namespace QuadOptimizer {
     std::size_t cadElements = 0;
     std::size_t invalidCadElements = 0;
     std::size_t invalidCadSamples = 0;
-    double maximumCadDistance = 0.;
-    double rmsCadDistance = 0.;
+    double maximumSampledCadChordDistance = 0.;
+    double rmsCadChordDistance = 0.;
   };
 
   GMSH_API QuadMeshQualitySummary summarizeQuadMeshQuality(
