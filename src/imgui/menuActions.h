@@ -13,14 +13,14 @@
 #include <string>
 #include <vector>
 
-#include "GuiMenus.h"
+#include "Menu.h"
 
 class appWindow;
 
 // Draw a shared menu description: the menu bar itself, and the quick access
 // menu the status bar drops. Every entry queues its action with
 // appWindow::postAction(), so that it runs outside of the frame.
-void menuWalk(const std::vector<Menu::Item> &items, appWindow *app);
+void menuWalk(const std::vector<Ui::MenuItem> &items, appWindow *app);
 
 #endif
 

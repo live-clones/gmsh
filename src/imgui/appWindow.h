@@ -205,7 +205,7 @@ private:
   // the TrueType file the interface font came from, empty for the built-in one
   std::string _fontFile;
   void _drawModulesPanel();
-  void _walkModules(const std::vector<Menu::Item> &items, int depth,
+  void _walkModules(const std::vector<Ui::MenuItem> &items, int depth,
                     const std::string &path);
   // Branches the API has asked to unfold or fold, by the path the FLTK tree
   // names them with ("0Modules/Geometry/..."). A request waits until the

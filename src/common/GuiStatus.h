@@ -25,10 +25,15 @@
 
 namespace StatusBar {
 
-  using Button = Ui::BarButton;
+  // The vocabulary a form, a menu and a bar are said in belongs to
+  // src/gui and to neither side; what is left here is the catalogue of
+  // the ones Gmsh has.
+  using namespace Ui;
+
+
 
   // the buttons, in the order they are drawn
-  std::vector<Button> bar();
+  std::vector<BarButton> bar();
 
   // --- and what takes the rest of the bar: the last message, and the progress
   // of whatever is running
@@ -43,10 +48,9 @@ namespace StatusBar {
   void setColour(int colour); // one of Gui::StatusColor
   void setProgress(double value, double least, double most);
 
-  using Message = Ui::BarMessage;
 
   // what the bar is to draw right now
-  Message message();
+  BarMessage message();
   // and what clicking it does, which is to show the messages it is telling one
   // to look at
   void messagePressed();

@@ -21,7 +21,7 @@
 // three different ways today, and are one widget in the interface that has
 // them:
 //
-//   the modules tree, whose upper half is written as a list of Menu::Item,
+//   the modules tree, whose upper half is written as a list of Ui::MenuItem,
 //   which is an abuse: they are not menus, they only happened to look like
 //   entries with an action;
 //

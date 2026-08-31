@@ -37,7 +37,7 @@ void fltkMenuRefresh();
 // time, as the hand-written one did.
 // `key` names which menu it is, so that two of them do not share the memory of
 // where they were left.
-void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y,
+void fltkMenuPopup(const std::vector<Ui::MenuItem> &tree, int x, int y,
                    const std::string &key = "");
 
 // A button that drops a menu built from a shared description. It replaces the
@@ -45,7 +45,7 @@ void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y,
 // entries were written out here rather than described.
 class popupButtonFltk : public Fl_Button {
 public:
-  std::function<std::vector<Menu::Item>()> what;
+  std::function<std::vector<Ui::MenuItem>()> what;
   std::string key;
   popupButtonFltk(int x, int y, int w, int h, const char *l = nullptr)
     : Fl_Button(x, y, w, h, l)

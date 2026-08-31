@@ -41,7 +41,7 @@ public:
 
 private:
   int _which;
-  Dialog::Panel _panel;
+  Ui::Form _panel;
   // the shape the window was built for; see _signature()
   std::string _signatureBuilt;
   // the panes of this one are not tabbed and are longer than the window: they
@@ -59,7 +59,7 @@ private:
   std::vector<int> _firstOfGroup;
   // a widget, the field it edits, and where it sits in the form
   struct bound {
-    Dialog::Field field;
+    Ui::Field field;
     Fl_Widget *widget;
     int pane; // -1 for the footer
     int row; // within its pane
@@ -102,7 +102,7 @@ private:
   // the pane must only be forced when it has just been asked for: forcing it
   // at every refresh would undo the tab the user just clicked
   bool _forcePane;
-  void _addFields(const std::vector<Dialog::Field> &fields, int x, int &y,
+  void _addFields(const std::vector<Ui::Field> &fields, int x, int &y,
                   int w, int pane, int grid = 0);
   static void _tabCallback(Fl_Widget *w, void *data);
   static void _fieldCallback(Fl_Widget *w, void *data);

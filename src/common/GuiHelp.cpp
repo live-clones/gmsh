@@ -59,14 +59,14 @@ namespace {
 
   // one line of a table: what one presses on the left, what it does on the
   // right, running on over as many lines as it needs
-  void _row(Dialog::Pane &pane, const std::string &keys,
+  void _row(Ui::Pane &pane, const std::string &keys,
             const std::string &what)
   {
-    Dialog::Field key = Dialog::says([keys]() { return keys; });
+    Ui::Field key = Dialog::says([keys]() { return keys; });
     key.packed = true;
     key.widthEm = _keysEm;
     pane.fields.push_back(key);
-    Dialog::Field says = Dialog::says([what]() { return what; });
+    Ui::Field says = Dialog::says([what]() { return what; });
     says.sameRow = true;
     says.wraps = true;
     says.widthEm = _saysEm;
@@ -210,9 +210,9 @@ namespace {
 
 namespace Dialog {
 
-  Panel shortcuts()
+  Form shortcuts()
   {
-    Panel p;
+    Form p;
     p.title = "Keyboard and Mouse Usage";
     // one long page, as the window this replaces is
     p.tabbed = false;
@@ -273,9 +273,9 @@ namespace Dialog {
     return p;
   }
 
-  Panel currentOptions()
+  Form currentOptions()
   {
-    Panel p;
+    Form p;
     p.title = "Current Options and Workspace";
     p.tabbed = false;
     p.leastRows = 18;
@@ -384,9 +384,9 @@ namespace Dialog {
     return p;
   }
 
-  Panel about()
+  Form about()
   {
-    Panel p;
+    Form p;
     p.title = "About Gmsh";
     p.tabbed = false;
     // as tall as the window this replaces, which is what it takes to say all

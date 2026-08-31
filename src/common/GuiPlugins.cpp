@@ -189,9 +189,9 @@ namespace Dialog {
     show(Plugins, -1);
   }
 
-  Panel plugins()
+  Form plugins()
   {
-    Panel p;
+    Form p;
     p.title = "Plugins";
     p.tabbed = true;
     // the two lists beside the panes take more room than a column of names

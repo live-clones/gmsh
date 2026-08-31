@@ -535,9 +535,9 @@ namespace Dialog {
 
   } // namespace
 
-  Panel visibility()
+  Form visibility()
   {
-    Panel p;
+    Form p;
     p.title = "Visibility";
     p.tabbed = true;
     // The window this replaces is eighteen lines tall whatever tab it is on,
@@ -636,7 +636,7 @@ namespace Dialog {
       Pane tree;
       tree.label = "Tree";
       Field lines;
-      lines.kind = Tree;
+      lines.kind = Hierarchy;
       lines.rows = 0;
       lines.visible = []() {
         return _treeWanted() || _numEntities() <= 10000;

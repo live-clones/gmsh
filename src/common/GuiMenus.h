@@ -28,59 +28,50 @@
 
 namespace Menu {
 
-  // The vocabulary of a menu now lives in src/gui, which belongs to neither
-  // Gmsh nor a toolkit; what is left here is the catalogue of the menus Gmsh
-  // has. The names below are what the rest of Gmsh calls them, kept so that
-  // the move costs no call site; they are to go, one file at a time.
-  using Shortcut = Ui::Shortcut;
-  using Item = Ui::MenuItem;
-  using Ui::ModCommand;
-  using Ui::ModShift;
-  using Ui::ModAlt;
-  using Ui::KeyNone;
-  using Ui::KeyF1;
-  using Ui::KeyDelete;
-  const Item::Kind Action = Item::Action;
-  const Item::Kind Toggle = Item::Toggle;
-  const Item::Kind Submenu = Item::Submenu;
+  // The vocabulary a form, a menu and a bar are said in belongs to
+  // src/gui and to neither side; what is left here is the catalogue of
+  // the ones Gmsh has.
+  using namespace Ui;
+
+
 
 
   // The menu bar. Whatever the running interface cannot honour is left out
   // rather than shown greyed: an interface with a single window has nothing to
   // bring to the front, and one that cannot reach the clipboard should not
   // offer to.
-  std::vector<Item> bar();
+  std::vector<MenuItem> bar();
 
   // The models that are loaded, which the status bar drops on its first
   // button: picking one makes it the current model.
-  std::vector<Item> models();
+  std::vector<MenuItem> models();
 
   // The menu the status bar drops on its option button: what one reaches for
   // most often, gathered in one place. It is rebuilt every time it opens, so
   // the entries that only make sense with a post-processing view are simply
   // not there when there is none, which is what the FLTK menu did by hiding
   // them -- with the indices of the entries to hide written out by hand.
-  std::vector<Item> quickAccess();
+  std::vector<MenuItem> quickAccess();
 
   // The menu a post-processing view carries in the modules tree, on the view
   // of the given index: what to do to it, and what to do to every view at
   // once. The FLTK interface pops it up on the little arrow beside the view;
   // the Dear ImGui one on a right click.
-  std::vector<Item> viewActions(int index);
+  std::vector<MenuItem> viewActions(int index);
   // and the one a solver carries, in the same place
-  std::vector<Item> solverActions(int index);
+  std::vector<MenuItem> solverActions(int index);
 
   // The gear menu of the modules tree: the database, the eight things the
   // solver may do by itself, and adding another solver. The FLTK tree had all
   // thirteen and kept their check marks in step by hand, with the places of
   // the switchable ones written out as two indices; the Dear ImGui tree had
   // three of them, as buttons.
-  std::vector<Item> solverOptions();
+  std::vector<MenuItem> solverOptions();
 
   // The modules tree: the geometry and mesh commands, in the order the FLTK
   // tree has always shown them. It stops where the ONELAB parameters begin --
   // those are widgets, not entries, and each interface builds them itself.
-  std::vector<Item> modules();
+  std::vector<MenuItem> modules();
 
   // Say that what the menus show has changed -- a file was opened, a model was
   // added -- so that the interfaces build them again.

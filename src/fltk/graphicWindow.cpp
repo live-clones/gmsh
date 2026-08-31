@@ -966,7 +966,7 @@ public:
   }
   void draw() override
   {
-    StatusBar::Message m = StatusBar::message();
+    Ui::BarMessage m = StatusBar::message();
     if(!label() || m.text != label()) copy_label(m.text.c_str());
     minimum(0.);
     maximum(m.running ? 1. : 0.);
@@ -1169,7 +1169,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // of them built here by hand, indexed in the order they happened to be
   // declared rather than the order they are drawn in.
   {
-    std::vector<StatusBar::Button> wanted = StatusBar::bar();
+    std::vector<Ui::BarButton> wanted = StatusBar::bar();
     for(const auto &b : wanted) {
       if(b.gapBefore) x += 4;
       int bw = b.widthEm > 0. ? (int)(b.widthEm * FL_NORMAL_SIZE) : sw;

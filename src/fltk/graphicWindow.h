@@ -17,6 +17,7 @@
 #include <FL/Fl_Progress.H>
 
 #include "GuiActions.h"
+#include "Bar.h"
 #include "GuiStatus.h"
 #include "menuFltk.h"
 
@@ -26,7 +27,7 @@
 // thing by an option changed from a script.
 class statusButtonFltk : public Fl_Button {
 public:
-  StatusBar::Button what;
+  Ui::BarButton what;
   statusButtonFltk(int x, int y, int w, int h) : Fl_Button(x, y, w, h) {}
   // the label it carries now: the play button says pause while it plays
   std::string shown() const

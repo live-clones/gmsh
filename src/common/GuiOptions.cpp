@@ -15,7 +15,7 @@
 // same tabs, the same rows in the same order, with the same labels. What a
 // choice writes is what that window writes, which is not always the index of
 // the entry picked. They are their own little language -- CHECK(), COMBO(),
-// COLOR() -- kept because 260 options in Dialog::Field form would be
+// COLOR() -- kept because 260 options in Ui::Field form would be
 // unreadable, but they are not a second description of a dialog: _paneFor()
 // turns a table into the panes and fields of GuiDialogs.h, which is what both
 // interfaces build.
@@ -1505,9 +1505,9 @@ namespace Dialog {
     show(Options, which);
   }
 
-  Panel options()
+  Form options()
   {
-    Panel p;
+    Form p;
     p.tabbed = true;
     // An option can be changed from anywhere -- a shortcut, the tree, a
     // script -- and the window shows it. The window this reproduces had every

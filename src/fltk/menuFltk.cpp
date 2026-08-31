@@ -27,13 +27,13 @@ namespace {
   // why the caller must hand the new table to menu() before anything else runs.
   struct fltkMenu {
     // the description, kept alive because the entries below point into it
-    std::vector<Menu::Item> tree;
+    std::vector<Ui::MenuItem> tree;
     // the labels, in a deque so that the pointers Fl_Menu_Item holds stay valid
     // as more are added
     std::deque<std::string> labels;
     std::vector<Fl_Menu_Item> items;
     // the entry each Fl_Menu_Item stands for, found through its user_data_
-    std::vector<const Menu::Item *> byId;
+    std::vector<const Ui::MenuItem *> byId;
   };
 
   fltkMenu _menu;
@@ -42,7 +42,7 @@ namespace {
   {
     std::size_t id = (std::size_t)(intptr_t)data;
     if(!id || id > _menu.byId.size()) return;
-    const Menu::Item *item = _menu.byId[id - 1];
+    const Ui::MenuItem *item = _menu.byId[id - 1];
     if(item && item->action) item->action();
   }
 
@@ -55,28 +55,28 @@ namespace {
     return label.substr(0, i) + "&" + label.substr(i);
   }
 
-  int _shortcut(const Menu::Shortcut &s)
+  int _shortcut(const Ui::Shortcut &s)
   {
     if(s.empty()) return 0;
     int key;
-    if(s.key >= Menu::KeyF1 && s.key < Menu::KeyF1 + 12)
-      key = FL_F + (s.key - Menu::KeyF1 + 1);
-    else if(s.key == Menu::KeyDelete)
+    if(s.key >= Ui::KeyF1 && s.key < Ui::KeyF1 + 12)
+      key = FL_F + (s.key - Ui::KeyF1 + 1);
+    else if(s.key == Ui::KeyDelete)
       key = FL_Delete;
     else
       key = tolower(s.key);
     int mods = 0;
     // FL_COMMAND is FL_CTRL everywhere but on macOS, where it is the Command
     // key: the pair of tables this replaces spelled that out twice
-    if(s.mods & Menu::ModCommand) mods |= FL_COMMAND;
-    if(s.mods & Menu::ModShift) mods |= FL_SHIFT;
-    if(s.mods & Menu::ModAlt) mods |= FL_ALT;
+    if(s.mods & Ui::ModCommand) mods |= FL_COMMAND;
+    if(s.mods & Ui::ModShift) mods |= FL_SHIFT;
+    if(s.mods & Ui::ModAlt) mods |= FL_ALT;
     return mods + key;
   }
 
   void _blank(Fl_Menu_Item &m) { memset(&m, 0, sizeof(Fl_Menu_Item)); }
 
-  void _append(const std::vector<Menu::Item> &items, bool systemBar)
+  void _append(const std::vector<Ui::MenuItem> &items, bool systemBar)
   {
     for(const auto &it : items) {
       if(systemBar && it.hideInSystemBar) continue;
@@ -89,7 +89,7 @@ namespace {
       m.shortcut_ = _shortcut(it.shortcut);
       if(it.dividerAfter) m.flags |= FL_MENU_DIVIDER;
 
-      if(it.kind == Menu::Submenu) {
+      if(it.kind == Ui::MenuItem::Submenu) {
         m.flags |= FL_SUBMENU;
         _menu.items.push_back(m);
         _append(it.children, systemBar);
@@ -99,7 +99,7 @@ namespace {
         continue;
       }
 
-      if(it.kind == Menu::Toggle) m.flags |= FL_MENU_TOGGLE;
+      if(it.kind == Ui::MenuItem::Toggle) m.flags |= FL_MENU_TOGGLE;
       m.callback_ = (Fl_Callback *)_dispatch;
       _menu.byId.push_back(&it);
       // zero would be indistinguishable from "no data"
@@ -115,8 +115,8 @@ namespace {
   // The modules tree has a store of its own: both it and the menu bar are alive
   // at the same time.
   struct fltkModules {
-    std::vector<Menu::Item> tree;
-    std::vector<const Menu::Item *> byId;
+    std::vector<Ui::MenuItem> tree;
+    std::vector<const Ui::MenuItem *> byId;
   };
 
   fltkModules _modules;
@@ -125,17 +125,17 @@ namespace {
   {
     std::size_t id = (std::size_t)(intptr_t)data;
     if(!id || id > _modules.byId.size()) return;
-    const Menu::Item *item = _modules.byId[id - 1];
+    const Ui::MenuItem *item = _modules.byId[id - 1];
     if(item && item->action) item->action();
   }
 
   void _walkModules(
-    const std::vector<Menu::Item> &items, const std::string &path,
+    const std::vector<Ui::MenuItem> &items, const std::string &path,
     const std::function<void(const std::string &, Fl_Callback *, void *)> &add)
   {
     for(const auto &it : items) {
       std::string here = path + "/" + it.label;
-      if(it.kind == Menu::Submenu) {
+      if(it.kind == Ui::MenuItem::Submenu) {
         _walkModules(it.children, here, add);
         continue;
       }
@@ -162,10 +162,10 @@ namespace {
   // The popup has a store of its own too: it is built while the menu bar is
   // alive, and it must not walk over what the bar points at.
   struct fltkPopup {
-    std::vector<Menu::Item> tree;
+    std::vector<Ui::MenuItem> tree;
     std::deque<std::string> labels;
     std::vector<Fl_Menu_Item> items;
-    std::vector<const Menu::Item *> byId;
+    std::vector<const Ui::MenuItem *> byId;
     // where each of them opened last time, so that it opens there again; a
     // menu is named by the key its caller gives it
     std::map<std::string, std::string> last;
@@ -175,7 +175,7 @@ namespace {
   // the entry the description prefers, found while the table is built
   std::string _preferred;
 
-  void _appendPopup(const std::vector<Menu::Item> &items)
+  void _appendPopup(const std::vector<Ui::MenuItem> &items)
   {
     for(const auto &it : items) {
       Fl_Menu_Item m;
@@ -184,7 +184,7 @@ namespace {
       m.text = _popup.labels.back().c_str();
       m.shortcut_ = _shortcut(it.shortcut);
       if(it.dividerAfter) m.flags |= FL_MENU_DIVIDER;
-      if(it.kind == Menu::Submenu) {
+      if(it.kind == Ui::MenuItem::Submenu) {
         m.flags |= FL_SUBMENU;
         _popup.items.push_back(m);
         _appendPopup(it.children);
@@ -193,7 +193,7 @@ namespace {
         _popup.items.push_back(end);
         continue;
       }
-      if(it.kind == Menu::Toggle) {
+      if(it.kind == Ui::MenuItem::Toggle) {
         m.flags |= FL_MENU_TOGGLE;
         if(it.checked && it.checked()) m.flags |= FL_MENU_VALUE;
       }
@@ -207,7 +207,7 @@ namespace {
 
 } // namespace
 
-void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y,
+void fltkMenuPopup(const std::vector<Ui::MenuItem> &tree, int x, int y,
                    const std::string &key)
 {
   std::string &last = _popup.last[key];
@@ -238,7 +238,7 @@ void fltkMenuPopup(const std::vector<Menu::Item> &tree, int x, int y,
   last = picked->text ? picked->text : "";
   std::size_t id = (std::size_t)(intptr_t)picked->user_data_;
   if(!id || id > _popup.byId.size()) return;
-  const Menu::Item *item = _popup.byId[id - 1];
+  const Ui::MenuItem *item = _popup.byId[id - 1];
   if(item && item->action) item->action();
 }
 
@@ -266,9 +266,9 @@ void fltkMenuRefresh()
     if(!m.user_data_) continue;
     std::size_t id = (std::size_t)(intptr_t)m.user_data_;
     if(!id || id > _menu.byId.size()) continue;
-    const Menu::Item *it = _menu.byId[id - 1];
+    const Ui::MenuItem *it = _menu.byId[id - 1];
     if(!it) continue;
-    if(it->kind == Menu::Toggle && it->checked) {
+    if(it->kind == Ui::MenuItem::Toggle && it->checked) {
       if(it->checked())
         m.flags |= FL_MENU_VALUE;
       else

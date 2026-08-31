@@ -203,11 +203,11 @@ std::string onelabLabel(const onelab::parameter &p)
 
 // Walk the shared description. The modules are open and everything below them
 // closed, as the FLTK tree leaves it after its first build.
-void appWindow::_walkModules(const std::vector<Menu::Item> &items, int depth,
+void appWindow::_walkModules(const std::vector<Ui::MenuItem> &items, int depth,
                              const std::string &path)
 {
   for(const auto &it : items) {
-    if(it.kind == Menu::Submenu) {
+    if(it.kind == Ui::MenuItem::Submenu) {
       std::string here = path + "/" + it.label;
       // what the API asked for, if this is one of the branches it named; the
       // request is only spent once the branch has been drawn, so a chain of
@@ -251,7 +251,7 @@ void appWindow::_drawModulesPanel()
   // -- the parameters of the solvers and the views -- is widgets rather than
   // entries, so each interface builds that part itself.
   {
-    static std::vector<Menu::Item> tree;
+    static std::vector<Ui::MenuItem> tree;
     static unsigned built = 0;
     if(built != Menu::generation()) {
       built = Menu::generation();
@@ -285,7 +285,7 @@ void appWindow::_drawModulesPanel()
     // This panel offered three of the thirteen, as buttons.
     if(ImGui::SmallButton("Options")) ImGui::OpenPopup("##gear");
     if(ImGui::BeginPopup("##gear")) {
-      static std::vector<Menu::Item> gear;
+      static std::vector<Ui::MenuItem> gear;
       gear = Menu::solverOptions();
       menuWalk(gear, this);
       ImGui::EndPopup();
@@ -306,7 +306,7 @@ void appWindow::_drawModulesPanel()
       if(exe.size() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
         ImGui::SetTooltip("%s", exe.c_str());
       if(ImGui::BeginPopupContextItem("##solvermenu")) {
-        static std::vector<Menu::Item> menu;
+        static std::vector<Ui::MenuItem> menu;
         menu = Menu::solverActions(i);
         menuWalk(menu, this);
         ImGui::EndPopup();
@@ -393,7 +393,7 @@ void appWindow::_drawModulesPanel()
       // what it carries is described once in src/common/GuiMenus.cpp: the
       // FLTK tree drops the same entries on the little arrow beside the view
       if(ImGui::BeginPopupContextItem("##viewmenu")) {
-        static std::vector<Menu::Item> menu;
+        static std::vector<Ui::MenuItem> menu;
         menu = Menu::viewActions((int)i);
         menuWalk(menu, this);
         ImGui::EndPopup();

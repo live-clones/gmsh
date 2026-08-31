@@ -30,10 +30,10 @@ namespace StatusBar {
 
     // --- little builders, so that the description below is only description
 
-    Button turns(const std::string &label, const std::string &what,
+    BarButton turns(const std::string &label, const std::string &what,
                  const std::string &tooltip, const std::string &glyph = "")
     {
-      Button b;
+      BarButton b;
       b.label = label;
       b.glyph = glyph;
       b.tooltip = tooltip;
@@ -43,11 +43,11 @@ namespace StatusBar {
       return b;
     }
 
-    Button drops(const std::string &label, const std::string &tooltip,
-                 const std::function<std::vector<Menu::Item>()> &what,
+    BarButton drops(const std::string &label, const std::string &tooltip,
+                 const std::function<std::vector<Ui::MenuItem>()> &what,
                  const std::string &glyph = "")
     {
-      Button b;
+      BarButton b;
       b.label = label;
       b.glyph = glyph;
       b.tooltip = tooltip;
@@ -55,11 +55,11 @@ namespace StatusBar {
       return b;
     }
 
-    Button does(const std::string &label, const std::string &glyph,
+    BarButton does(const std::string &label, const std::string &glyph,
                 const std::string &tooltip,
                 const std::function<void()> &what)
     {
-      Button b;
+      BarButton b;
       b.label = label;
       b.glyph = glyph;
       b.tooltip = tooltip;
@@ -69,7 +69,7 @@ namespace StatusBar {
 
     // the four buttons of the animation, which mean nothing until there is
     // something to animate
-    Button animates(Button b)
+    BarButton animates(BarButton b)
     {
       b.enabled = []() { return viewIsAnimatable(); };
       return b;
@@ -77,9 +77,9 @@ namespace StatusBar {
 
   } // namespace
 
-  std::vector<Button> bar()
+  std::vector<BarButton> bar()
   {
-    std::vector<Button> buttons;
+    std::vector<BarButton> buttons;
 
     buttons.push_back(drops("M", "Set the current (active) model",
                             Menu::models, "gmsh_models"));
@@ -100,7 +100,7 @@ namespace StatusBar {
             "Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)",
             "gmsh_rotate"));
     {
-      Button unit =
+      BarButton unit =
         turns("1:1", "1:1",
               "Set unit scale, sync scale between viewports (Ctrl), or reset "
               "bounding box around visible entities (Shift) (Alt+1, Alt+Ctrl+1, "
@@ -114,7 +114,7 @@ namespace StatusBar {
       // It says so when picking is *off*, which is the state one does not
       // expect: the bar this reproduces paints it red then, and leaves it
       // plain the rest of the time.
-      Button select = does("S", "", "Toggle mouse selection ON/OFF (Escape)",
+      BarButton select = does("S", "", "Toggle mouse selection ON/OFF (Escape)",
                            []() {
                              Gui::setMouseSelection(
                                !CTX::instance()->mouseSelection);
@@ -124,7 +124,7 @@ namespace StatusBar {
     }
 
     {
-      Button rewind = animates(does("|<", "gmsh_rewind", "Rewind animation",
+      BarButton rewind = animates(does("|<", "gmsh_rewind", "Rewind animation",
                                     animationRewind));
       rewind.gapBefore = true;
       buttons.push_back(rewind);
@@ -133,7 +133,7 @@ namespace StatusBar {
                                     "Step backward (Left arrow)",
                                     []() { animationStepBy(false); })));
     {
-      Button play = animates(does(">", "gmsh_play", "Play/pause animation",
+      BarButton play = animates(does(">", "gmsh_play", "Play/pause animation",
                                   Gui::toggleAnimation));
       play.labelOn = "||";
       play.glyphOn = "gmsh_pause";
@@ -189,10 +189,10 @@ namespace StatusBar {
     m.most = most;
   }
 
-  Message message()
+  BarMessage message()
   {
     const messageState &m = _message();
-    Message out;
+    BarMessage out;
     out.text = " " + m.text;
     out.colour = m.colour;
     out.running = (m.most > m.least);

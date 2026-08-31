@@ -26,36 +26,12 @@
 
 namespace Dialog {
 
-  // The vocabulary of a form now lives in src/gui, which belongs to neither
-  // Gmsh nor a toolkit; what is left here is the catalogue -- which dialogs
-  // there are, and what each of them says. These names are what the rest of
-  // Gmsh has always called them, kept so that the move costs no call site.
-  // They are to go, one file at a time.
-  using Ui::Field;
-  using Ui::Pane;
-  using Ui::Button;
-  using Ui::TreeLine;
-  using Ui::Colour;
-  using Ui::ColourMap;
-  using Panel = Ui::Form;
+  // The vocabulary a form, a menu and a bar are said in belongs to
+  // src/gui and to neither side; what is left here is the catalogue of
+  // the ones Gmsh has.
+  using namespace Ui;
 
-  using Ui::FieldKind;
-  using Ui::Text;
-  using Ui::Integer;
-  using Ui::Number;
-  using Ui::Check;
-  using Ui::Choice;
-  using Ui::Label;
-  using Ui::Output;
-  using Ui::Action;
-  using Ui::Color;
-  using Ui::Direction;
-  using Ui::ColorMap;
-  using Ui::Menu;
-  using Ui::List;
-  using Ui::Spacer;
-  // it is Hierarchy over there: Tree is the container it is one day to hold
-  const FieldKind Tree = Ui::Hierarchy;
+
 
 
   // which dialog: the numbering Gui::showDialog() uses
@@ -86,20 +62,20 @@ namespace Dialog {
   };
 
   // The four context dialogs, the counterparts of src/fltk/contextWindow.cpp.
-  Panel elementaryContext();
-  Panel physicalContext();
-  Panel transformContext();
-  Panel meshContext();
+  Form elementaryContext();
+  Form physicalContext();
+  Form transformContext();
+  Form meshContext();
   // the mesh partitioner, which is all options
-  Panel partition();
+  Form partition();
   // the high order tools, two sections one under the other
-  Panel highOrder();
+  Form highOrder();
   // the rotation, translation and scale of the view
-  Panel manipulator();
+  Form manipulator();
   // what the model is made of, and how good the mesh is
-  Panel statistics();
+  Form statistics();
   // every option there is, laid out by hand in GuiOptions.cpp
-  Panel options();
+  Form options();
   // which category it is showing, so that a menu can open it on the one it is
   // about rather than on whichever was last looked at
   int &optionsCategory();
@@ -111,36 +87,36 @@ namespace Dialog {
   // -- and shows whichever was last looked at when it is empty.
   void showOptionsForView(int view, const std::string &pane = "");
   // the six planes that cut what is drawn
-  Panel clipping();
+  Form clipping();
   // what of the model is drawn: the list of entities, by number, by picking,
   // and per graphic window
-  Panel visibility();
+  Form visibility();
   // the plugins, what each of them takes, and what it is run on
-  Panel plugins();
+  Form plugins();
   // the mesh size fields, what each of them takes, and which is the background
-  Panel fields();
+  Form fields();
   // turning a triangulation into a model: what to detect the edges on, which
   // of them to keep, and the reclassification itself
-  Panel classify();
+  Form classify();
   // show it, with the lines drawn: it is what one is about to work on
   void startClassify();
   // what the keyboard and the mouse do, and what the command line takes
-  Panel shortcuts();
+  Form shortcuts();
   // what every option is worth right now, and what one may change it to
-  Panel currentOptions();
+  Form currentOptions();
   // what this Gmsh is
-  Panel about();
+  Form about();
   // The parameters a solver attached to one entity, instantiated from the
   // "ONELAB Context/<Dim> Template/..." parameters: what a double-click on an
   // entity opens when its double-click command is "ONELAB".
-  Panel onelabContext();
+  Form onelabContext();
   // show it on that entity, highlighting what it is about
   void showOnelabContext(int dim, int tag);
 
   // One option, asked for on its own: the quick access menu of the status bar
   // opens it on the entries that take a value rather than a switch -- the
   // clipping factor, the mesh size factor, the number of intervals of a view.
-  Panel optionValue();
+  Form optionValue();
   // Show it on that option, between those bounds. `title` is what the window
   // is called; the value applies as it is typed, and `applyTo` "view" copies
   // it to every visible view, which is what the menu entries that act on the
@@ -150,20 +126,20 @@ namespace Dialog {
                        double minimum, double maximum, double step,
                        const std::string &applyTo = "");
   // the shape of the arrows a vector view is drawn with
-  Panel arrow();
+  Form arrow();
   // A command, with the ones given before it: the remote solver to start and
   // the pattern of the files to watch are both asked for that way. Which of
   // the two it is showing is set by the two calls below.
-  Panel history();
+  Form history();
   void showRemoteCommand();
   void showWatchPattern();
   // show that window with a view picked, as the button of a view does
   void showPluginsForView(int view);
   // what the gamepad is doing and what each of its buttons and axes is for
-  Panel gamepad();
+  Form gamepad();
 
   // the one of the given index
-  Panel panel(int dialog);
+  Form panel(int dialog);
 
   // The pane each dialog shows, shared so that the description and both
   // interfaces agree on it without anyone having to be told.

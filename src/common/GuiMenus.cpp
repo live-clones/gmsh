@@ -37,12 +37,12 @@ namespace Menu {
 
     // --- little builders, so that the description below is only description
 
-    Item action(const std::string &label, char mnemonic,
+    MenuItem action(const std::string &label, char mnemonic,
                 const std::function<void()> &what,
                 const Shortcut &shortcut = Shortcut())
     {
-      Item i;
-      i.kind = Action;
+      MenuItem i;
+      i.kind = MenuItem::Action;
       i.label = label;
       i.mnemonic = mnemonic;
       i.shortcut = shortcut;
@@ -53,11 +53,11 @@ namespace Menu {
     // An entry that shows and hides one of the panels. Both interfaces show a
     // check mark next to it: the FLTK menu never did, which meant its "Message
     // Console" entry was less telling than the panel it drove.
-    Item panel(const std::string &label, char mnemonic, int which,
+    MenuItem panel(const std::string &label, char mnemonic, int which,
                const Shortcut &shortcut = Shortcut())
     {
-      Item i;
-      i.kind = Toggle;
+      MenuItem i;
+      i.kind = MenuItem::Toggle;
       i.label = label;
       i.mnemonic = mnemonic;
       i.shortcut = shortcut;
@@ -69,11 +69,11 @@ namespace Menu {
     }
 
     // the same, for the windows that have become dialogs of GuiDialogs.h
-    Item dialog(const std::string &label, char mnemonic, int which,
+    MenuItem dialog(const std::string &label, char mnemonic, int which,
                 const Shortcut &shortcut = Shortcut())
     {
-      Item i;
-      i.kind = Toggle;
+      MenuItem i;
+      i.kind = MenuItem::Toggle;
       i.label = label;
       i.mnemonic = mnemonic;
       i.shortcut = shortcut;
@@ -89,11 +89,11 @@ namespace Menu {
       return i;
     }
 
-    Item submenu(const std::string &label, char mnemonic,
-                 const std::vector<Item> &children)
+    MenuItem submenu(const std::string &label, char mnemonic,
+                 const std::vector<MenuItem> &children)
     {
-      Item i;
-      i.kind = Submenu;
+      MenuItem i;
+      i.kind = MenuItem::Submenu;
       i.label = label;
       i.mnemonic = mnemonic;
       i.children = children;
@@ -104,14 +104,14 @@ namespace Menu {
       return i;
     }
 
-    Item window(const std::string &label, char mnemonic,
+    MenuItem window(const std::string &label, char mnemonic,
                 const std::string &what, const Shortcut &shortcut = Shortcut())
     {
       return action(label, mnemonic, [what]() { Gui::windowAction(what); },
                     shortcut);
     }
 
-    Item file(const std::string &label, char mnemonic, const std::string &what,
+    MenuItem file(const std::string &label, char mnemonic, const std::string &what,
               const Shortcut &shortcut = Shortcut())
     {
       return action(label, mnemonic, [what]() { Gui::fileAction(what); },
@@ -119,7 +119,7 @@ namespace Menu {
     }
 
     // divider after the entry, as FL_MENU_DIVIDER has always meant
-    Item divide(Item i)
+    MenuItem divide(MenuItem i)
     {
       i.dividerAfter = true;
       return i;
@@ -157,9 +157,9 @@ static bool check_utf8(const std::string &string)
 }
 
     // the entries of "File > Open Recent", read while the menu is built
-    std::vector<Item> recentFiles()
+    std::vector<MenuItem> recentFiles()
     {
-      std::vector<Item> items;
+      std::vector<MenuItem> items;
       const std::vector<std::string> &recent = CTX::instance()->recentFiles;
       for(std::size_t i = 0; i < recent.size(); i++) {
         if(recent[i].empty()) continue;
@@ -179,13 +179,13 @@ static bool check_utf8(const std::string &string)
 
   } // namespace
 
-  std::vector<Item> bar()
+  std::vector<MenuItem> bar()
   {
-    std::vector<Item> menus;
+    std::vector<MenuItem> menus;
 
     // --- File
     {
-      std::vector<Item> file_;
+      std::vector<MenuItem> file_;
       file_.push_back(file("New...", 'N', "new", Shortcut('N', ModCommand)));
       file_.push_back(file("Open...", 'O', "open", Shortcut('O', ModCommand)));
       file_.push_back(submenu("Open Recent", 0, recentFiles()));
@@ -214,7 +214,7 @@ static bool check_utf8(const std::string &string)
                                     Shortcut('J', ModCommand | ModShift))));
       file_.push_back(
         divide(file("Export...", 'E', "export", Shortcut('E', ModCommand))));
-      Item quit = action("Quit", 'Q', projectQuit, Shortcut('Q', ModCommand));
+      MenuItem quit = action("Quit", 'Q', projectQuit, Shortcut('Q', ModCommand));
       quit.hideInSystemBar = true;
       file_.push_back(quit);
       menus.push_back(submenu("File", 'F', file_));
@@ -222,7 +222,7 @@ static bool check_utf8(const std::string &string)
 
     // --- Tools
     {
-      std::vector<Item> tools;
+      std::vector<MenuItem> tools;
       tools.push_back(panel("Options", 'O', Gui::PanelOptions,
                             Shortcut('N', ModCommand | ModShift)));
       tools.push_back(panel("Plugins", 'u', Gui::PanelPlugins,
@@ -248,7 +248,7 @@ static bool check_utf8(const std::string &string)
 
     // --- Window
     {
-      std::vector<Item> win;
+      std::vector<MenuItem> win;
       if(Gui::supportsWindowAction("new"))
         win.push_back(divide(window("New Window", 0, "new")));
       if(Gui::supportsWindowAction("copy"))
@@ -272,7 +272,7 @@ static bool check_utf8(const std::string &string)
 
     // --- Help
     {
-      std::vector<Item> help;
+      std::vector<MenuItem> help;
       help.push_back(
         divide(action("Online Documentation", 'l', helpOnline)));
       help.push_back(divide(panel("Keyboard and Mouse Usage", 'K',
@@ -284,7 +284,7 @@ static bool check_utf8(const std::string &string)
       help.push_back(divide(action("Restore all Options to Default Settings",
                                    'R', optionsRestoreDefaults)));
       // macOS puts About in the application menu itself
-      Item about = panel("About Gmsh", 'A', Gui::PanelAbout);
+      MenuItem about = panel("About Gmsh", 'A', Gui::PanelAbout);
       about.hideInSystemBar = true;
       help.push_back(about);
       menus.push_back(submenu("Help", 'H', help));
@@ -296,15 +296,15 @@ static bool check_utf8(const std::string &string)
 // --- the models that are loaded, which the first button of the status bar
 // drops
 
-std::vector<Item> models()
+std::vector<MenuItem> models()
 {
-  std::vector<Item> items;
+  std::vector<MenuItem> items;
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     std::string label = "Model " + std::to_string(i);
     if(GModel::list[i]->getName().size())
       label += " - " + GModel::list[i]->getName();
-    Item m;
-    m.kind = Toggle;
+    MenuItem m;
+    m.kind = MenuItem::Toggle;
     m.label = label;
     m.checked = [i]() {
       return i < GModel::list.size() && GModel::list[i] == GModel::current();
@@ -326,7 +326,7 @@ std::vector<Item> models()
 namespace {
 
   // one of the entries of quickAccessAction()
-  Item quick(const std::string &label, const std::string &what,
+  MenuItem quick(const std::string &label, const std::string &what,
              const Shortcut &shortcut = Shortcut())
   {
     return action(label, 0, [what]() { quickAccessAction(what); }, shortcut);
@@ -336,11 +336,11 @@ namespace {
   // mark says are both asked of the shared action, so neither can drift from
   // the other, which is what the table of hand-counted indices could not
   // promise.
-  Item quickToggle(const std::string &label, const std::string &what,
+  MenuItem quickToggle(const std::string &label, const std::string &what,
                    const Shortcut &shortcut = Shortcut())
   {
-    Item i;
-    i.kind = Toggle;
+    MenuItem i;
+    i.kind = MenuItem::Toggle;
     i.label = label;
     i.shortcut = shortcut;
     i.checked = [what]() { return quickAccessChecked(what); };
@@ -349,9 +349,9 @@ namespace {
   }
 
   // "All ... options...", which opens the option window on that category
-  Item allOptions(const std::string &label, int category)
+  MenuItem allOptions(const std::string &label, int category)
   {
-    Item i = action(label, 0, [category]() {
+    MenuItem i = action(label, 0, [category]() {
       Dialog::optionsCategory() = category;
       Dialog::show(Dialog::Options, -1);
     });
@@ -370,9 +370,9 @@ namespace {
 
 } // namespace
 
-std::vector<Item> quickAccess()
+std::vector<MenuItem> quickAccess()
 {
-  std::vector<Item> items;
+  std::vector<MenuItem> items;
 
   items.push_back(quick("Reset viewport", "reset_viewport"));
   items.push_back(quick("Select rotation center", "select_center"));
@@ -415,7 +415,7 @@ std::vector<Item> quickAccess()
                  Shortcut('B', ModAlt | ModShift))}));
   {
     // the one the menu opens under: it is what one comes here for
-    Item toggle =
+    MenuItem toggle =
       quick("Toggle mesh display", "mesh_toggle", Shortcut('M', ModAlt));
     toggle.preferred = true;
     items.push_back(toggle);
@@ -445,7 +445,7 @@ std::vector<Item> quickAccess()
     items.push_back(submenu("View glyph location", 0,
                             {quick("Barycenter", "view_glyph_barycenter"),
                              quick("Node", "view_glyph_node")}));
-    Item all = action("All view options...", 0,
+    MenuItem all = action("All view options...", 0,
                       []() { Dialog::showOptionsForView(-1); });
     items.push_back(all);
   }
@@ -467,7 +467,7 @@ std::vector<Item> quickAccess()
 namespace {
 
   // one of the entries of viewAction(), on this view
-  Item onView(const std::string &label, int index, const std::string &what,
+  MenuItem onView(const std::string &label, int index, const std::string &what,
               const Shortcut &shortcut = Shortcut())
   {
     return action(label, 0, [what, index]() { viewAction(what, index); },
@@ -476,9 +476,9 @@ namespace {
 
 } // namespace
 
-std::vector<Item> viewActions(int index)
+std::vector<MenuItem> viewActions(int index)
 {
-  std::vector<Item> items;
+  std::vector<MenuItem> items;
 
   items.push_back(onView("Options", index, "options", Shortcut('O')));
   items.push_back(divide(onView("Plugins", index, "plugins", Shortcut('P'))));
@@ -525,13 +525,13 @@ std::vector<Item> viewActions(int index)
   return items;
 }
 
-std::vector<Item> solverOptions()
+std::vector<MenuItem> solverOptions()
 {
   // a switch of the gear menu: what it does and what its check mark says both
   // go through the shared action, so neither can drift from the other
   auto option = [](const std::string &label, const std::string &what) {
-    Item i;
-    i.kind = Toggle;
+    MenuItem i;
+    i.kind = MenuItem::Toggle;
     i.label = label;
     i.checked = [what]() { return solverOptionSet(what); };
     i.action = [what]() { solverOptionAction(what); };
@@ -541,12 +541,12 @@ std::vector<Item> solverOptions()
   // the database is not to be touched while a solver is running, which the
   // tree used to say by greying the entries outside the block of switches --
   // by their places in the table
-  auto idle = [](Item i) {
+  auto idle = [](MenuItem i) {
     i.enabled = []() { return !solverIsRunning(); };
     return i;
   };
 
-  std::vector<Item> items;
+  std::vector<MenuItem> items;
   items.push_back(idle(action("Reset database", 0,
                               []() { Gui::onelabAction("reset"); })));
   items.push_back(idle(action("Save database...", 0,
@@ -569,9 +569,9 @@ std::vector<Item> solverOptions()
   return items;
 }
 
-std::vector<Item> solverActions(int index)
+std::vector<MenuItem> solverActions(int index)
 {
-  std::vector<Item> items;
+  std::vector<MenuItem> items;
   items.push_back(action("Rename...", 0,
                          [index]() { solverAction("rename", index); }));
   items.push_back(divide(
@@ -591,20 +591,20 @@ std::vector<Item> solverActions(int index)
 
 namespace {
 
-  Item act(const std::string &label, const std::function<void()> &what)
+  MenuItem act(const std::string &label, const std::function<void()> &what)
   {
     return action(label, 0, what);
   }
 
   // an entry that shows a panel and leaves it at that
-  Item show(const std::string &label, int panel)
+  MenuItem show(const std::string &label, int panel)
   {
     return action(label, 0, [panel]() { Gui::showPanel(panel, true); });
   }
 
   // pick entities and do something to them, with the parameters of the pane the
   // entry opens
-  Item onSelection(const std::string &label, int what, int pane, bool extrude,
+  MenuItem onSelection(const std::string &label, int what, int pane, bool extrude,
                    const std::string &restrict_ = "")
   {
     return action(label, 0, [what, pane, extrude, restrict_]() {
@@ -613,7 +613,7 @@ namespace {
     });
   }
 
-  std::vector<Item> addEntities()
+  std::vector<MenuItem> addEntities()
   {
     // the shapes whose parameters are typed in the context panel, with the pane
     // that holds them
@@ -631,7 +631,7 @@ namespace {
       return action(label, 0, [pane]() { geometryElementary(pane); });
     };
 
-    std::vector<Item> items;
+    std::vector<MenuItem> items;
     // "Parameter" has nothing to place: it is written from the panel alone
     items.push_back(
       action("Parameter", 0, []() { Dialog::show(Dialog::Elementary, 0); }));
@@ -660,9 +660,9 @@ namespace {
     return items;
   }
 
-  std::vector<Item> physicalGroups(bool remove)
+  std::vector<MenuItem> physicalGroups(bool remove)
   {
-    std::vector<Item> items;
+    std::vector<MenuItem> items;
     static const char *const kinds[] = {"Point", "Curve", "Surface", "Volume"};
     for(auto k : kinds) {
       std::string type = k;
@@ -675,9 +675,9 @@ namespace {
     return items;
   }
 
-  std::vector<Item> meshParts(const std::string &how)
+  std::vector<MenuItem> meshParts(const std::string &how)
   {
-    std::vector<Item> items;
+    std::vector<MenuItem> items;
     static const char *const labels[] = {"Elements", "Curves", "Surfaces",
                                          "Volumes"};
     static const char *const args[] = {"elements", "curves", "surfaces",
@@ -693,13 +693,13 @@ namespace {
 
 } // namespace
 
-std::vector<Item> modules()
+std::vector<MenuItem> modules()
 {
-  std::vector<Item> tree;
+  std::vector<MenuItem> tree;
 
   // --- Geometry
   {
-    std::vector<Item> elementary;
+    std::vector<MenuItem> elementary;
     elementary.push_back(submenu(
       "Set geometry kernel", 0,
       {act("Built-in", []() { geometrySetFactory("Built-in"); }),
@@ -717,7 +717,7 @@ std::vector<Item> modules()
        onSelection("Rotate", GEO_ACTION_EXTRUDE_ROTATE, 1, true),
        onSelection("Pipe", GEO_ACTION_PIPE, -1, true)}));
     {
-      std::vector<Item> boolean;
+      std::vector<MenuItem> boolean;
       static const char *const ops[][2] = {
         {"Intersection", "BooleanIntersection"},
         {"Union", "BooleanUnion"},
@@ -741,7 +741,7 @@ std::vector<Item> modules()
       onSelection("Delete", GEO_ACTION_DELETE, 6, false));
     elementary.push_back(act("Coherence", geometryCoherence));
 
-    std::vector<Item> geometry;
+    std::vector<MenuItem> geometry;
     geometry.push_back(submenu("Elementary entities", 0, elementary));
     geometry.push_back(submenu("Physical groups", 0,
                                {submenu("Add", 0, physicalGroups(false)),
@@ -756,14 +756,14 @@ std::vector<Item> modules()
 #if defined(HAVE_MESH)
   // --- Mesh
   {
-    std::vector<Item> define;
+    std::vector<MenuItem> define;
     define.push_back(action("Size at points", 0, []() {
       Dialog::show(Dialog::Mesh, 0);
       geometryActOnSelection(GEO_ACTION_MESH_SIZE, "Point");
     }));
     define.push_back(show("Size fields", Gui::PanelFields));
     {
-      std::vector<Item> embedded;
+      std::vector<MenuItem> embedded;
       static const char *const kinds[] = {"Point", "Curve", "Surface"};
       for(auto k : kinds) {
         std::string type = k;
@@ -775,7 +775,7 @@ std::vector<Item> modules()
       define.push_back(submenu("Embedded", 0, embedded));
     }
     {
-      std::vector<Item> transfinite;
+      std::vector<MenuItem> transfinite;
       for(int dim = 1; dim <= 3; dim++) {
         static const char *const labels[] = {"Curve", "Surface", "Volume"};
         transfinite.push_back(action(labels[dim - 1], 0, [dim]() {
@@ -794,7 +794,7 @@ std::vector<Item> modules()
       geometryActOnSelection(GEO_ACTION_RECOMBINE, "Surface");
     }));
 
-    std::vector<Item> mesh;
+    std::vector<MenuItem> mesh;
     mesh.push_back(submenu("Define", 0, define));
     mesh.push_back(act("1D", []() { meshDimension(1); }));
     mesh.push_back(act("2D", []() { meshDimension(2); }));
@@ -819,7 +819,7 @@ std::vector<Item> modules()
     mesh.push_back(act("Recombine 2D", meshRecombine));
     mesh.push_back(show("Reclassify 2D", Gui::PanelClassify));
     {
-      std::vector<Item> experimental;
+      std::vector<MenuItem> experimental;
       experimental.push_back(act("Compute quad layout", meshComputeCrossField));
 #if defined(HAVE_METIS)
       experimental.push_back(

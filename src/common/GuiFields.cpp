@@ -312,9 +312,9 @@ namespace {
 
 namespace Dialog {
 
-  Panel fields()
+  Form fields()
   {
-    Panel p;
+    Form p;
     p.title = "Size fields";
     p.tabbed = true;
     // the list of fields, and the two buttons under it, want more room than a
@@ -339,7 +339,7 @@ namespace Dialog {
     {
       p.side.push_back(menu("New", _types, _create));
 
-      Field which = chooseFrom(
+      Ui::Field which = chooseFrom(
         [](std::vector<std::string> &labels, std::vector<int> &values) {
           FieldManager *m = _manager();
           if(!m) return;
@@ -375,11 +375,11 @@ namespace Dialog {
       which.rows = 0;
       p.side.push_back(which);
 
-      Field remove = does("Delete", _remove);
+      Ui::Field remove = does("Delete", _remove);
       remove.enabled = []() { return _current() != nullptr; };
       p.side.push_back(remove);
 
-      Field draw = menu("Visualize", _views, _visualize);
+      Ui::Field draw = menu("Visualize", _views, _visualize);
       draw.enabled = []() { return _current() != nullptr; };
       p.side.push_back(draw);
     }
@@ -407,7 +407,7 @@ namespace Dialog {
       for(const auto &kv : _options(field)) {
         FieldOption *o = kv.second;
         std::string name = kv.first;
-        Field f;
+        Ui::Field f;
         switch(o->getType()) {
         case FIELD_OPTION_BOOL:
           f = check(name, nullptr);
@@ -430,7 +430,7 @@ namespace Dialog {
         options.fields.push_back(f);
         // a path is chosen rather than typed, as it is there
         if(o->getType() == FIELD_OPTION_PATH) {
-          Field choose = does("Choose", [name]() {
+          Ui::Field choose = does("Choose", [name]() {
             std::string file = _state().words[name];
             if(Gui::fileDialog(0, "Choose", "", file))
               _state().words[name] = file;
@@ -445,7 +445,7 @@ namespace Dialog {
         for(auto &kv : field->callbacks) {
           FieldCallback *cb = kv.second;
           if(!cb) continue;
-          Field act = does(kv.first, [cb]() {
+          Ui::Field act = does(kv.first, [cb]() {
             cb->run();
             Gui::updateFields();
             drawContext::global()->draw();
@@ -455,7 +455,7 @@ namespace Dialog {
         }
       // the one field the mesh is really built from
       if(field) {
-        Field background = check("Set as background field", &_state().background);
+        Ui::Field background = check("Set as background field", &_state().background);
         // the boundary layer fields are not assigned that way, and the window
         // this replaces says so rather than letting one try
         bool layer = field->getName() &&
@@ -482,7 +482,7 @@ namespace Dialog {
       Pane help;
       help.label = "Help";
       std::string text = _help();
-      Field says_ = says([text]() { return text; });
+      Ui::Field says_ = says([text]() { return text; });
       says_.wraps = true;
       says_.rows = 10;
       help.fields.push_back(says_);

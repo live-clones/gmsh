@@ -27,21 +27,21 @@ static ImGuiKey _imguiKey(int key)
 {
   if(key >= 'A' && key <= 'Z') return (ImGuiKey)(ImGuiKey_A + (key - 'A'));
   if(key >= '0' && key <= '9') return (ImGuiKey)(ImGuiKey_0 + (key - '0'));
-  if(key >= Menu::KeyF1 && key < Menu::KeyF1 + 12)
-    return (ImGuiKey)(ImGuiKey_F1 + (key - Menu::KeyF1));
+  if(key >= Ui::KeyF1 && key < Ui::KeyF1 + 12)
+    return (ImGuiKey)(ImGuiKey_F1 + (key - Ui::KeyF1));
   return ImGuiKey_None;
 }
 
 // Run the first entry whose shortcut is being typed, submenus included.
-static bool _runMenuShortcut(const std::vector<Menu::Item> &items, bool ctrl,
+static bool _runMenuShortcut(const std::vector<Ui::MenuItem> &items, bool ctrl,
                              bool shift, bool alt)
 {
   for(const auto &it : items) {
     if(_runMenuShortcut(it.children, ctrl, shift, alt)) return true;
     if(it.shortcut.empty() || !it.action) continue;
-    if(ctrl != ((it.shortcut.mods & Menu::ModCommand) != 0)) continue;
-    if(shift != ((it.shortcut.mods & Menu::ModShift) != 0)) continue;
-    if(alt != ((it.shortcut.mods & Menu::ModAlt) != 0)) continue;
+    if(ctrl != ((it.shortcut.mods & Ui::ModCommand) != 0)) continue;
+    if(shift != ((it.shortcut.mods & Ui::ModShift) != 0)) continue;
+    if(alt != ((it.shortcut.mods & Ui::ModAlt) != 0)) continue;
     ImGuiKey key = _imguiKey(it.shortcut.key);
     if(key == ImGuiKey_None || !ImGui::IsKeyPressed(key, false)) continue;
     if(it.enabled && !it.enabled()) continue;
@@ -85,7 +85,7 @@ void appWindow::_handleShortcuts()
   // a label saying "Ctrl+H" and a handler doing something else was a kind of
   // drift nothing could catch as long as the two were written separately.
   {
-    static std::vector<Menu::Item> menus;
+    static std::vector<Ui::MenuItem> menus;
     static unsigned built = 0;
     if(built != Menu::generation()) {
       built = Menu::generation();

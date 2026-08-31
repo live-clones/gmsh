@@ -270,10 +270,10 @@ namespace Dialog {
     show(OptionValue, -1);
   }
 
-  Panel optionValue()
+  Form optionValue()
   {
     optionState &s = _option();
-    Panel p;
+    Form p;
     p.title = s.title.size() ? s.title : "Number Chooser";
     p.tabbed = false;
 
@@ -306,7 +306,7 @@ namespace Dialog {
     return p;
   }
 
-  Panel arrow()
+  Form arrow()
   {
     arrowState &a = _arrow();
     // Seeded from the options every time the window opens: it edits a copy,
@@ -314,7 +314,7 @@ namespace Dialog {
     // again, or the numbers one is typing would be written over.
     if(!a.read || !Gui::dialogVisible(Arrow)) _arrowRead();
 
-    Panel p;
+    Form p;
     p.title = "Arrow Editor";
     p.tabbed = false;
 
@@ -354,12 +354,12 @@ namespace Dialog {
                  "output/*.msh");
   }
 
-  Panel history()
+  Form history()
   {
     historyState &h = _history();
     if(!h.read) _historyRead();
 
-    Panel p;
+    Form p;
     p.title = h.title.size() ? h.title : "Command";
     p.tabbed = false;
     p.leastRows = 9;

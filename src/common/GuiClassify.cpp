@@ -320,9 +320,9 @@ namespace Dialog {
     show(Classify, -1);
   }
 
-  Panel classify()
+  Form classify()
   {
-    Panel p;
+    Form p;
     p.title = "Reclassify 2D";
     // three steps one after another, not three tabs: they are done in order
     p.tabbed = false;
@@ -330,16 +330,16 @@ namespace Dialog {
     {
       Pane first;
       first.label = "1. Select mesh elements on which to perform edge detection";
-      Field some = does("Select elements", []() { _selectElements(false); });
+      Ui::Field some = does("Select elements", []() { _selectElements(false); });
       some.packed = true;
       first.fields.push_back(some);
-      Field all = does("All", []() { _selectElements(true); });
+      Ui::Field all = does("All", []() { _selectElements(true); });
       all.packed = true;
       all.sameRow = true;
       first.fields.push_back(all);
       // it is not an option of Gmsh, only a flag of the interface, so the
       // field reaches it through a pair of functions
-      Field hide = check("Hide unselected elements", nullptr);
+      Ui::Field hide = check("Hide unselected elements", nullptr);
       hide.readNumber = []() {
         return CTX::instance()->hideUnselected ? 1. : 0.;
       };
@@ -357,7 +357,7 @@ namespace Dialog {
     {
       Pane second;
       second.label = "2. Fine-tune edge selection";
-      Field threshold = within(number("Threshold angle", &_state().angle),
+      Ui::Field threshold = within(number("Threshold angle", &_state().angle),
                                0., 180., 1.);
       threshold.widthEm = 5.;
       threshold.packed = true;
@@ -365,25 +365,25 @@ namespace Dialog {
       threshold.changed = _updateEdges;
       second.fields.push_back(threshold);
 
-      Field only = check("Show only edges", &_state().onlyEdges);
+      Ui::Field only = check("Show only edges", &_state().onlyEdges);
       only.packed = true;
       only.sameRow = true;
       only.changed = _showOnlyEdges;
       second.fields.push_back(only);
 
-      Field closure = check("Include edges on boundary (closure)",
+      Ui::Field closure = check("Include edges on boundary (closure)",
                             &_state().boundary);
       closure.packed = true;
       closure.enabled = _selecting;
       closure.changed = _updateEdges;
       second.fields.push_back(closure);
 
-      Field drop = does("Delete edges from selection", _deleteEdges);
+      Ui::Field drop = does("Delete edges from selection", _deleteEdges);
       drop.packed = true;
       drop.enabled = _selecting;
       second.fields.push_back(drop);
 
-      Field again = does("Reset selection", _reset);
+      Ui::Field again = does("Reset selection", _reset);
       again.packed = true;
       again.sameRow = true;
       again.enabled = _selecting;
@@ -396,7 +396,7 @@ namespace Dialog {
     {
       Pane third;
       third.label = "3. Reclassify surfaces using selected edges";
-      Field parametrized = check("Create parametrized discrete model",
+      Ui::Field parametrized = check("Create parametrized discrete model",
                                  &_state().parametrizable);
       parametrized.packed = true;
       parametrized.tooltip =
@@ -404,7 +404,7 @@ namespace Dialog {
         "and build the geometry of the discrete entities";
       third.fields.push_back(parametrized);
 
-      Field run = does("Reclassify", _classify);
+      Ui::Field run = does("Reclassify", _classify);
       run.packed = true;
       run.enabled = _selecting;
       third.fields.push_back(run);

@@ -465,7 +465,7 @@ namespace {
   // A number: an enumeration when it names its values, a check box when it is
   // a yes or no, something one reads when it is read-only, and a value one
   // types otherwise.
-  Dialog::Field _numberField(int i, const onelab::number &p)
+  Ui::Field _numberField(int i, const onelab::number &p)
   {
     using namespace Dialog;
     std::string label = p.getShortName();
@@ -561,7 +561,7 @@ namespace {
   // Words: a button when the parameter is a macro, something one reads when it
   // is read-only, and a value one types -- with what one may want to type
   // behind a little arrow, when it says what that is -- otherwise.
-  Dialog::Field _stringField(int i, const onelab::string &p)
+  Ui::Field _stringField(int i, const onelab::string &p)
   {
     using namespace Dialog;
     std::string label = p.getShortName();
@@ -635,9 +635,9 @@ namespace Dialog {
     show(OnelabContext, -1);
   }
 
-  Panel onelabContext()
+  Form onelabContext()
   {
-    Panel p;
+    Form p;
     p.title = "Parameters";
     p.tabbed = false;
 

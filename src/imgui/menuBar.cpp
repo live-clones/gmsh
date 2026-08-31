@@ -37,19 +37,19 @@
 // Walk the shared description. An entry is a Dear ImGui menu item of the
 // matching kind; the actions it triggers are queued, like every other action
 // of the interface, because a Dear ImGui frame is not re-entrant.
-void menuWalk(const std::vector<Menu::Item> &items, appWindow *app)
+void menuWalk(const std::vector<Ui::MenuItem> &items, appWindow *app)
 {
   for(const auto &it : items) {
     bool enabled = it.enabled ? it.enabled() : true;
 
-    if(it.kind == Menu::Submenu) {
+    if(it.kind == Ui::MenuItem::Submenu) {
       if(ImGui::BeginMenu(it.label.c_str(), enabled && !it.children.empty())) {
         menuWalk(it.children, app);
         ImGui::EndMenu();
       }
     }
     else {
-      bool checked = (it.kind == Menu::Toggle && it.checked) ? it.checked() :
+      bool checked = (it.kind == Ui::MenuItem::Toggle && it.checked) ? it.checked() :
                                                                false;
       std::string shortcut = it.shortcut.label();
       if(ImGui::MenuItem(it.label.c_str(),
@@ -66,7 +66,7 @@ void menuWalk(const std::vector<Menu::Item> &items, appWindow *app)
 void appWindow::_drawMenuBar()
 {
   // rebuilt only when what it shows has changed, not at every frame
-  static std::vector<Menu::Item> menus;
+  static std::vector<Ui::MenuItem> menus;
   static unsigned built = 0;
   if(built != Menu::generation()) {
     built = Menu::generation();

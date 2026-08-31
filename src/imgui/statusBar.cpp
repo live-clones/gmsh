@@ -59,7 +59,7 @@ void appWindow::_drawQuickAccessMenu()
   // It says what the options are worth, and which entries are worth showing at
   // all, so it is built afresh every frame it is open rather than kept: the
   // FLTK popup is built afresh every time it opens, for the same reason.
-  static std::vector<Menu::Item> menu;
+  static std::vector<Ui::MenuItem> menu;
   menu = Menu::quickAccess();
   menuWalk(menu, this);
 }
@@ -81,10 +81,10 @@ void appWindow::_drawStatusBar()
       // to be written out here and again in src/fltk/graphicWindow.cpp, with
       // different labels, different tooltips, and the button that says
       // whether the mouse picks meaning the opposite thing.
-      static std::vector<StatusBar::Button> bar;
+      static std::vector<Ui::BarButton> bar;
       bar = StatusBar::bar();
       for(std::size_t i = 0; i < bar.size(); i++) {
-        const StatusBar::Button &b = bar[i];
+        const Ui::BarButton &b = bar[i];
         if(b.gapBefore) ImGui::Separator();
         bool enabled = b.enabled ? b.enabled() : true;
         ImGui::BeginDisabled(!enabled);
@@ -101,7 +101,7 @@ void appWindow::_drawStatusBar()
         ImGui::PushID((int)i);
         if(b.menu) {
           if(ImGui::BeginMenu(label.c_str(), enabled)) {
-            static std::vector<Menu::Item> menu;
+            static std::vector<Ui::MenuItem> menu;
             menu = b.menu();
             menuWalk(menu, this);
             ImGui::EndMenu();
@@ -129,7 +129,7 @@ void appWindow::_drawStatusBar()
       // as the FLTK bar does; the target is the whole strip left of the
       // progress, not just the text, so that it can be hit when the message is
       // short or empty.
-      StatusBar::Message m = StatusBar::message();
+      Ui::BarMessage m = StatusBar::message();
       ImVec2 textPos = ImGui::GetCursorScreenPos();
       float avail = ImGui::GetContentRegionAvail().x;
       if(m.running) avail -= 200.f * _styleScale;

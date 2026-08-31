@@ -199,10 +199,10 @@ namespace Dialog {
 
   // --- "Mesh Context"
 
-  Panel meshContext()
+  Form meshContext()
   {
     geometryParameters &g = geometryStore();
-    Panel p;
+    Form p;
     p.title = "Mesh Context";
     p.panes.push_back(pane("Element size", {text("Value", &g.meshSize)}));
     p.panes.push_back(
@@ -221,10 +221,10 @@ namespace Dialog {
 
   // --- "Elementary Operation Context"
 
-  Panel transformContext()
+  Form transformContext()
   {
     geometryParameters &g = geometryStore();
-    Panel p;
+    Form p;
     p.title = "Elementary Operation Context";
 
     p.panes.push_back(pane(
@@ -416,11 +416,11 @@ namespace Dialog {
       return q;
     }
 
-  Panel elementaryContext()
+  Form elementaryContext()
   {
     fillElementaryDefaults();
 
-    Panel p;
+    Form p;
     p.title = "Elementary Entity Context";
 
     for(int i = 0; i < 12; i++) {
@@ -564,10 +564,10 @@ namespace Dialog {
     return s;
   }
 
-  Panel physicalContext()
+  Form physicalContext()
   {
     geometryParameters &g = geometryStore();
-    Panel p;
+    Form p;
     p.title = "Physical Group Context";
 
     {
@@ -716,10 +716,10 @@ namespace Dialog {
     m.partitionHexWeight = v.hexWeight;
   }
 
-  Panel partition()
+  Form partition()
   {
     partitionValues &v = partitionStore();
-    Panel p;
+    Form p;
     p.title = "Partition";
     p.tabbed = false;
 
@@ -819,10 +819,10 @@ namespace Dialog {
     v.boundaryNodes = cad ? 1 : 0;
   }
 
-  Panel highOrder()
+  Form highOrder()
   {
     highOrderParameters &v = hoStore();
-    Panel p;
+    Form p;
     p.title = "High-order tools";
     p.tabbed = false;
 
@@ -939,9 +939,9 @@ namespace Dialog {
   // setting one reaches the draw context of the window that has the focus, so
   // there is nothing of our own to hold.
 
-  Panel manipulator()
+  Form manipulator()
   {
-    Panel p;
+    Form p;
     p.title = "Manipulator";
     p.tabbed = false;
 
@@ -1047,9 +1047,9 @@ namespace Dialog {
 
   } // namespace
 
-  Panel statistics()
+  Form statistics()
   {
-    Panel p;
+    Form p;
     p.title = "Statistics";
 
     p.panes.push_back(pane("Geometry", {stat("Points", 0), stat("Curves", 1),
@@ -1136,10 +1136,10 @@ namespace Dialog {
   // plane being edited is read when it is chosen and written back at every
   // change.
 
-  Panel clipping()
+  Form clipping()
   {
     clippingParameters &v = clippingStore();
-    Panel p;
+    Form p;
     p.title = "Clipping";
 
     // what the planes cut: the geometry, the mesh, and each view
@@ -1264,9 +1264,9 @@ namespace Dialog {
 
   } // namespace
 
-  Panel gamepad()
+  Form gamepad()
   {
-    Panel p;
+    Form p;
     p.title = "Gamepad Configuration Tool (in work)";
     p.tabbed = false;
     GamePad *pad = CTX::instance()->gamepad;
@@ -1328,7 +1328,7 @@ namespace Dialog {
     return p;
   }
 
-  Panel panel(int dialog)
+  Form panel(int dialog)
   {
     switch(dialog) {
     case Elementary: return elementaryContext();
@@ -1353,7 +1353,7 @@ namespace Dialog {
     case OptionValue: return optionValue();
     case Arrow: return arrow();
     case History: return history();
-    default: return Panel();
+    default: return Form();
     }
   }
 
