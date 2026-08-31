@@ -62,6 +62,13 @@
 // showForm() takes a number and not a list of widgets: the backend fetches
 // the description itself, through Sources::form, as often as it needs it.
 //
+// The methods that are not yet reached through this do nothing rather than
+// being pure: the two interfaces are moved behind it one group at a time, and
+// a group that has not moved yet is still answered by the adapter it has
+// always been answered by. Each default goes as its group arrives, and when
+// the last one has gone every method here is pure, which is the point at
+// which there is one Gui.cpp and no adapters.
+//
 // What is NOT here: the 3D scene. Picking answers with model entities, the
 // capture with a pixel buffer, and both are Gmsh through and through. It is
 // its own chantier, to be started once the chrome is done and to be rewritten
@@ -102,7 +109,7 @@ namespace Ui {
       std::function<std::string()> barTooltip;
       std::function<void()> barPressed;
     };
-    virtual void setSources(const Sources &sources) = 0;
+    virtual void setSources(const Sources &sources) {}
 
     // --- what the toolkit is
 
@@ -117,11 +124,16 @@ namespace Ui {
 
     // --- life cycle and the event loop
 
-    virtual bool create(int argc, char **argv) = 0;
+    // quitShouldExit says whether quitting is to leave the process or only to
+    // close the windows, which is what the API wants
+    virtual bool create(int argc, char **argv, bool quitShouldExit) = 0;
     virtual void destroy() = 0;
-    // run until there is no window left; merging and saving the option file
-    // around it is not the toolkit's business and is done by the caller
-    virtual int run() = 0;
+    // Run until there is no window left. Only the loop: merging the option
+    // file before it and writing it after is Gmsh's, and is done once by the
+    // caller rather than by each toolkit -- which is how one of them came to
+    // write the whole file where the other writes what differs from the
+    // defaults, and to forget the visibilities altogether.
+    virtual int runLoop() = 0;
 
     // process the pending events, if any; rateLimited asks to do nothing when
     // a check was made less than one refresh period ago
@@ -148,8 +160,8 @@ namespace Ui {
     // One call per described thing. The backend builds it from Sources, keeps
     // whatever it has to keep, and is told when to look again.
 
-    virtual void showForm(int form, bool show) = 0;
-    virtual bool formVisible(int form) = 0;
+    virtual void showForm(int form, bool show) {}
+    virtual bool formVisible(int form) { return false; }
     // Its values changed but not its shape: push them into the widgets. An
     // interface that draws the description afresh at every frame has nothing
     // to do here, which is why this is not pure.
@@ -166,27 +178,27 @@ namespace Ui {
     // interface can reopen it under the entry that was picked last time,
     // which is what the popup menus of the bar do.
     virtual void popupMenu(const std::vector<MenuItem> &items,
-                           const std::string &key) = 0;
+                           const std::string &key) {}
 
     // the modules tree: what it says changed, or what it is made of did
-    virtual void refreshTree(bool rebuild) = 0;
-    virtual void openTreeItem(const std::string &name, bool open) = 0;
+    virtual void refreshTree(bool rebuild) {}
+    virtual void openTreeItem(const std::string &name, bool open) {}
     // the two buttons under it, whose labels are ("check", "compute") when the
     // solver is idle and ("", "stop") while it runs
     virtual void setSolverButtonMode(const std::string &button0,
-                                     const std::string &button1) = 0;
+                                     const std::string &button1) {}
 
     // the last message or the progress changed: the bar is to draw again
     virtual void refreshBar() {}
 
     // The message console. It is the one part that is not a form: a window in
     // one interface and a strip under the scene in the other.
-    virtual void showConsole(bool show) = 0;
-    virtual bool consoleVisible() = 0;
-    virtual void addMessage(const std::string &text, int level) = 0;
+    virtual void showConsole(bool show) {}
+    virtual bool consoleVisible() { return false; }
+    virtual void addMessage(const std::string &text, int level) {}
     // what it holds, in the order it holds it; writing it to a file is done
     // once, by the caller
-    virtual void messageLines(std::vector<std::string> &lines) = 0;
+    virtual void messageLines(std::vector<std::string> &lines) {}
 
     // --- asking the user
     //
@@ -194,11 +206,11 @@ namespace Ui {
     // why none of them can be shared: it is the toolkit that owns the loop.
 
     virtual bool inputDialog(const std::string &question,
-                             std::string &value) = 0;
+                             std::string &value) { return false; }
     // two or three answers, of which the last two may be empty; returns which
     virtual int questionDialog(const std::string &question,
                                const std::string &zero, const std::string &one,
-                               const std::string &two) = 0;
+                               const std::string &two) { return 0; }
     // Pick a file: mode is 0 to open an existing one and 1 to create one,
     // filter a space separated list of patterns. This is the poorest thing in
     // this file and it is known: naming the formats is what would let the
@@ -208,7 +220,7 @@ namespace Ui {
     // then.
     virtual bool fileDialog(int mode, const std::string &title,
                             const std::string &filter,
-                            std::string &fileName) = 0;
+                            std::string &fileName) { return false; }
     // Ask for the options of an output format, if this interface asks for them
     // in a window of its own. The FLTK chooser offers them inside itself and
     // has nothing more to ask, which is what the default answers.
@@ -225,7 +237,7 @@ namespace Ui {
     // "new", "split_h", "split_v", "split_u", "minimize", "zoom",
     // "fullscreen", "front", "attach_detach", "copy": what supports() answers
     // about
-    virtual void windowAction(const std::string &what) = 0;
+    virtual void windowAction(const std::string &what) {}
     // where the windows are and how big they are, for the option file, in the
     // order the caller wrote them
     virtual void storeWindowLayout() {}
@@ -251,7 +263,7 @@ namespace Ui {
       // the last window is gone: run() is about to return
       std::function<void()> quitting;
     };
-    virtual void setHost(const Host &host) = 0;
+    virtual void setHost(const Host &host) {}
   };
 
 } // namespace Ui

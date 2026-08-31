@@ -727,15 +727,6 @@ void appWindow::setGraphicTitle(const std::string &title)
   glfwSetWindowTitle(_window, t.c_str());
 }
 
-void appWindow::awake(const std::string &action)
-{
-  {
-    std::lock_guard<std::mutex> lock(_awakeMutex);
-    _awakeActions.push_back(action);
-  }
-  if(_window) glfwPostEmptyEvent();
-}
-
 // Dear ImGui expresses everything it draws in logical pixels and lets the
 // backend multiply them by io.DisplayFramebufferScale. Its GLFW backend only
 // fills that in on Wayland, where the compositor hands out a framebuffer
@@ -815,17 +806,9 @@ void appWindow::applyStyle()
 
 void appWindow::_processAwakeActions()
 {
-  std::vector<std::string> actions;
-  {
-    std::lock_guard<std::mutex> lock(_awakeMutex);
-    actions.swap(_awakeActions);
-  }
-  for(auto &a : actions) {
-    if(a == "update" || a.empty())
-      Gui::updateViews(true, false);
-    else
-      Toolkit::report(Toolkit::Debug, "Unknown awake action '%s'", a.c_str());
-  }
+  // what came in from a thread that is not the one drawing; what it means is
+  // the caller's, and is said once in src/common/Gui.cpp
+  drainPostedFromThread();
 }
 
 void appWindow::_buildDockSpace(int &sceneX, int &sceneY, int &sceneW,
@@ -1376,20 +1359,19 @@ void appWindow::endCapture()
   _captureComposite = false;
 }
 
-int appWindow::run(const std::string &optionFileName)
+int appWindow::runLoop()
 {
   if(!_window) return 0;
-
-  if(optionFileName.size()) MergeFile(optionFileName, false);
-
+  // the scene is drawn once before the loop, which is what makes a window
+  // that has just come up show something
   drawContext::global()->draw(false);
-
   while(_instance && _window && !glfwWindowShouldClose(_window)) frame();
-
-  if(optionFileName.size()) {
-    PrintOptions(0, GMSH_FULLRC, 0, 0, optionFileName.c_str());
-  }
   return 0;
+}
+
+void appWindow::wake()
+{
+  if(_instance && _instance->_window) glfwPostEmptyEvent();
 }
 
 #endif

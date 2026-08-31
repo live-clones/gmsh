@@ -38,6 +38,10 @@ class drawContext;
 // which keeps the whole rendering path in plain OpenGL 1.x + GLU, exactly as in
 // the FLTK backend.
 
+// what came in from another thread, drained by the frame loop; the backend
+// holds it, since it is the backend that was asked to carry it
+void drainPostedFromThread();
+
 class appWindow {
 private:
   static appWindow *_instance;
@@ -266,7 +270,8 @@ public:
   // draw one frame
   void frame();
   // main loop
-  int run(const std::string &optionFileName);
+  int runLoop();
+  static void wake();
   // pump the events, at most once every 1 / General.GuiRefreshRate seconds when
   // rateLimited is set
   void check(bool rateLimited);
@@ -275,7 +280,6 @@ public:
   // wait for events (at most time seconds if time > 0), then process them
   void wait(bool force);
   void wait(double time, bool force);
-  void awake(const std::string &action);
   // Orient the panes the status bar acts upon: the ones of the current
   // graphic view. `sync` makes the others follow the first instead.
   void orientPanes(const std::string &what, bool reverse, bool sync);

@@ -134,86 +134,6 @@ void appWindow::showPanel(int panel, bool show)
 
 namespace Gui {
 
-  // --- life cycle
-
-  bool available() { return appWindow::available(); }
-
-  void create(int argc, char **argv, bool quitShouldExit,
-              void (*errorHandler)(const char *fmt, ...))
-  {
-    if(appWindow::available()) return;
-    // Where what the interface says goes, and what quitting means. The rest of
-    // src/imgui/ knows neither: it reports facts about the toolkit -- GLFW
-    // would not start, a font is missing -- and this is what makes them Gmsh
-    // messages.
-    Toolkit::reportTo([](int level, const std::string &text) {
-      switch(level) {
-      case Toolkit::Error: Msg::Error("%s", text.c_str()); break;
-      case Toolkit::Warning: Msg::Warning("%s", text.c_str()); break;
-      case Toolkit::Info: Msg::Info("%s", text.c_str()); break;
-      default: Msg::Debug("%s", text.c_str()); break;
-      }
-    });
-    Toolkit::quitWith([]() { Msg::Exit(0); });
-    appWindow::instance(argc, argv, quitShouldExit);
-    // What the bar says until something else needs saying, as the FLTK
-    // interface says it when it comes up. It had nothing there at all, which
-    // was hard to see for what it was: an empty bar looks like a bar with
-    // nothing to say.
-    if(appWindow::available())
-      Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
-  }
-
-  void destroy() { appWindow::destroy(); }
-
-  int run(const std::string &optionFileName)
-  {
-    if(!available()) return 0;
-    return appWindow::instance()->run(optionFileName);
-  }
-
-  void copyText(const std::string &text)
-  {
-    ImGui::SetClipboardText(text.c_str());
-  }
-
-  std::string toolkitVersion()
-  {
-    std::string s = "Dear ImGui ";
-    s += IMGUI_VERSION;
-    s += ", GLFW ";
-    s += glfwGetVersionString();
-    return s;
-  }
-
-  // --- event pumping
-
-  void check(bool rateLimited)
-  {
-    if(available()) appWindow::instance()->check(rateLimited);
-  }
-
-  bool ready() { return available() && appWindow::instance()->ready(); }
-
-  void wait(bool force)
-  {
-    if(available()) appWindow::instance()->wait(force);
-  }
-
-  void wait(double time, bool force)
-  {
-    if(available()) appWindow::instance()->wait(time, force);
-  }
-
-  void lock() { appWindow::lock(); }
-  void unlock() { appWindow::unlock(); }
-  int locked() { return appWindow::locked(); }
-
-  void awake(const std::string &action)
-  {
-    if(available()) appWindow::instance()->awake(action);
-  }
-
   // --- messages, status bar and modal dialogs
 
   void addMessage(const std::string &msg, int level)
@@ -245,13 +165,6 @@ namespace Gui {
   void setGraphicTitle(const std::string &title)
   {
     if(available()) appWindow::instance()->setGraphicTitle(title);
-  }
-
-  void beep()
-  {
-    // no portable bell in GLFW; the terminal one is the best we can do
-    fputc('\a', stderr);
-    fflush(stderr);
   }
 
   bool inputDialog(const std::string &question, std::string &value)
@@ -522,11 +435,6 @@ namespace Gui {
     return appWindow::instance()->fileDialog(mode, title, filter, fileName);
   }
 
-  bool quitShouldExit()
-  {
-    return available() ? appWindow::instance()->quitShouldExit() : true;
-  }
-
   void startSolver(int index) { solverStart(index); }
 
   // --- graphic windows
@@ -638,28 +546,6 @@ namespace Gui {
   const std::vector<MElement *> &selectedElements() { return _selectedElements; }
   const std::vector<SPoint2> &selectedPoints() { return _selectedPoints; }
   const std::vector<PView *> &selectedViews() { return _selectedViews; }
-
-  // --- miscellaneous
-
-  void setFinishedProcessingCommandLine()
-  {
-    appWindow::setFinishedProcessingCommandLine();
-  }
-
-  bool getFinishedProcessingCommandLine()
-  {
-    return appWindow::getFinishedProcessingCommandLine();
-  }
-
-  void setOpenedThroughMacFinder(const std::string &name)
-  {
-    appWindow::setOpenedThroughMacFinder(name);
-  }
-
-  std::string getOpenedThroughMacFinder()
-  {
-    return appWindow::getOpenedThroughMacFinder();
-  }
 
 } // namespace Gui
 

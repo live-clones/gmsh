@@ -39,50 +39,6 @@ PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type);
 
 namespace Gui {
 
-  // --- life cycle
-
-  bool available() { return FlGui::available(); }
-
-  void create(int argc, char **argv, bool quitShouldExit,
-              void (*errorHandler)(const char *fmt, ...))
-  {
-    if(!FlGui::available()) FlGui::instance(argc, argv, quitShouldExit, errorHandler);
-  }
-
-  void destroy() { FlGui::destroy(); }
-
-  int run(const std::string &optionFileName)
-  {
-    return FlGui::instance()->run(optionFileName);
-  }
-
-  void copyText(const std::string &text)
-  {
-    // both of them: the selection buffer and the clipboard proper, as the
-    // window this replaces does
-    Fl::copy(text.c_str(), (int)text.size(), 0);
-    Fl::copy(text.c_str(), (int)text.size(), 1);
-  }
-
-  std::string toolkitVersion()
-  {
-    char tmp[256];
-    sprintf(tmp, "FLTK %d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION,
-            FL_PATCH_VERSION);
-    return std::string(tmp);
-  }
-
-  // --- event pumping
-
-  void check(bool rateLimited) { FlGui::check(rateLimited); }
-  bool ready() { return Fl::ready() ? true : false; }
-  void wait(bool force) { FlGui::wait(force); }
-  void wait(double time, bool force) { FlGui::wait(time, force); }
-  void lock() { FlGui::lock(); }
-  void unlock() { FlGui::unlock(); }
-  int locked() { return FlGui::locked(); }
-  void awake(const std::string &action) { FlGui::awake(action); }
-
   // --- messages, status bar and modal dialogs
 
   static std::string _colorPrefix(int level)
@@ -130,8 +86,6 @@ namespace Gui {
   {
     FlGui::instance()->setGraphicTitle(title);
   }
-
-  void beep() { fl_beep(); }
 
   bool inputDialog(const std::string &question, std::string &value)
   {
@@ -439,8 +393,6 @@ namespace Gui {
     return FlGui::instance()->onelab && FlGui::instance()->onelab->isBusy();
   }
 
-  bool quitShouldExit() { return FlGui::instance()->quitShouldExit(); }
-
   void setSolverButtonMode(const std::string &button0,
                            const std::string &button1)
   {
@@ -544,28 +496,6 @@ namespace Gui {
   const std::vector<PView *> &selectedViews()
   {
     return FlGui::instance()->selectedViews;
-  }
-
-  // --- miscellaneous
-
-  void setFinishedProcessingCommandLine()
-  {
-    FlGui::setFinishedProcessingCommandLine();
-  }
-
-  bool getFinishedProcessingCommandLine()
-  {
-    return FlGui::getFinishedProcessingCommandLine();
-  }
-
-  void setOpenedThroughMacFinder(const std::string &name)
-  {
-    FlGui::setOpenedThroughMacFinder(name);
-  }
-
-  std::string getOpenedThroughMacFinder()
-  {
-    return FlGui::getOpenedThroughMacFinder();
   }
 
 } // namespace Gui

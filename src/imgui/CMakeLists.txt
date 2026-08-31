@@ -5,6 +5,7 @@
 
 set(SRC
   Gui.cpp
+  BackendImGui.cpp
   appWindow.cpp
   scenePane.cpp
   drawContextImGui.cpp

@@ -6,6 +6,7 @@
 set(SRC
   FlGui.cpp
   GuiFltk.cpp
+  BackendFltk.cpp
   CreateFileFltk.cpp
     graphicWindow.cpp menuFltk.cpp dialogFltk.cpp
     graphicsFonts.cpp
