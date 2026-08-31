@@ -1225,14 +1225,15 @@ int appWindow::questionDialog(const std::string &question,
 }
 
 bool appWindow::fileDialog(int mode, const std::string &title,
-                           const std::string &filter, std::string &fileName)
+                           const std::vector<fileBrowser::format> &formats,
+                           std::string &fileName, int *chosenFormat)
 {
   if(!_window) return false;
   if(_inFrame) {
     Toolkit::report(Toolkit::Debug, "Ignoring file dialog requested from within a frame");
     return false;
   }
-  _browser->begin(mode ? fileBrowser::Save : fileBrowser::Open, title, filter,
+  _browser->begin(mode ? fileBrowser::Save : fileBrowser::Open, title, formats,
                   fileName);
   _modalDepth++;
   while(!_browser->done() && _instance && _window &&
@@ -1243,6 +1244,7 @@ bool appWindow::fileDialog(int mode, const std::string &title,
   _modalDepth--;
   bool ok = _browser->accepted();
   if(ok) fileName = _browser->result();
+  if(chosenFormat) *chosenFormat = _browser->chosen();
   _browser->finish();
   return ok && !fileName.empty();
 }

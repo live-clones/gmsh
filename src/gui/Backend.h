@@ -250,16 +250,23 @@ namespace Ui {
     virtual int questionDialog(const std::string &question,
                                const std::string &zero, const std::string &one,
                                const std::string &two) = 0;
-    // Pick a file: mode is 0 to open an existing one and 1 to create one,
-    // filter a space separated list of patterns. This is the poorest thing in
-    // this file and it is known: naming the formats is what would let the
-    // export of a view be written once instead of twice, since the four
-    // flavours of ".pos" cannot be told apart by an extension. Making a good
-    // chooser is a chantier of its own; the signature stays as it is until
-    // then.
+    // One of the formats a chooser offers: what it is called, and what it
+    // matches. Naming them is what lets the export of a view be written once:
+    // the four flavours of ".pos" cannot be told apart by an extension, so a
+    // chooser that cannot say which one was picked leaves the caller guessing.
+    struct FileFormat {
+      std::string name, pattern;
+      FileFormat(const std::string &n = "", const std::string &p = "")
+        : name(n), pattern(p)
+      {
+      }
+    };
+    // Pick a file: mode is 0 to open an existing one and 1 to create one.
+    // `chosenFormat`, when given, is set to the place in `formats` of the one
+    // that was used, or to -1 by a chooser that cannot say.
     virtual bool fileDialog(int mode, const std::string &title,
-                            const std::string &filter,
-                            std::string &fileName) = 0;
+                            const std::vector<FileFormat> &formats,
+                            std::string &fileName, int *chosenFormat) = 0;
     // Ask for the options of an output format, if this interface asks for them
     // in a window of its own. The FLTK chooser offers them inside itself and
     // has nothing more to ask, which is what the default answers.

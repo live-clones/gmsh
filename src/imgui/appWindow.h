@@ -20,6 +20,7 @@
 #include "GuiActions.h"
 #include "GuiMenus.h"
 #include "GuiDialogs.h"
+#include "fileBrowser.h"
 #include "scenePane.h"
 
 struct GLFWwindow;
@@ -365,8 +366,9 @@ public:
   // show the file chooser and wait for the user; mode is 0 to open an existing
   // file and 1 to save one. Like the other blocking dialogs, this must be
   // called from an action posted with postAction()
-  bool fileDialog(int mode, const std::string &title, const std::string &filter,
-                  std::string &fileName);
+  bool fileDialog(int mode, const std::string &title,
+                  const std::vector<fileBrowser::format> &formats,
+                  std::string &fileName, int *chosenFormat);
   // ask for the options of the given output format; returns false if the user
   // cancelled. Like the other blocking dialogs, only from a posted action
   bool exportOptionsDialog(int format, const std::string &fileName);

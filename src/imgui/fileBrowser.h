@@ -28,6 +28,12 @@ public:
 
 public:
   enum Mode { Open, Save };
+  // One of the formats offered: what it is called and what it matches. A
+  // chooser that names them can say which one was meant, which is what tells
+  // an exported view which flavour of a shared extension was wanted.
+  struct format {
+    std::string name, pattern;
+  };
 
 private:
   struct entry {
@@ -41,6 +47,8 @@ private:
   std::string _directory;
   char _fileName[1024];
   char _filter[256];
+  std::vector<format> _formats;
+  int _chosen;
   std::vector<entry> _entries;
   int _selected;
   bool _active, _done, _accepted;
@@ -51,10 +59,13 @@ private:
 
 public:
   fileBrowser();
-  // start showing the browser; filter is a space-separated list of extensions
-  // ("*.geo *.msh"), empty for all the files
-  void begin(Mode mode, const std::string &title, const std::string &filter,
+  // start showing the browser; a pattern is a space separated list of
+  // extensions ("*.geo *.msh"), empty for all the files
+  void begin(Mode mode, const std::string &title,
+             const std::vector<format> &formats,
              const std::string &initialName);
+  // which of them was in force when the name was given, or -1
+  int chosen() const { return _formats.size() > 1 ? _chosen : -1; }
   bool active() const { return _active; }
   bool done() const { return _done; }
   bool accepted() const { return _accepted; }

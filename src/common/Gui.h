@@ -192,10 +192,24 @@ namespace Gui {
                            const std::string &button1);
   // and what they say, which the description of the tree reads
   void solverButtons(std::string &button0, std::string &button1);
-  // show the file chooser and wait for the user: mode is 0 to open an existing
-  // file and 1 to save one, filter is a space separated list of extensions
+  // One of the formats the chooser offers: what it is called and what it
+  // matches, as "Gmsh Parsed" and "*.pos".
+  struct FileFormat {
+    std::string name, pattern;
+    FileFormat(const std::string &n = "", const std::string &p = "")
+      : name(n), pattern(p)
+    {
+    }
+  };
+  // Show the file chooser and wait: mode is 0 to open an existing file and 1
+  // to create one. The second form names the formats and says which was used,
+  // or -1 when the chooser cannot say -- which is what tells an exported view
+  // which flavour of ".pos" was meant.
   bool fileDialog(int mode, const std::string &title, const std::string &filter,
                   std::string &fileName);
+  bool fileDialog(int mode, const std::string &title,
+                  const std::vector<FileFormat> &formats,
+                  std::string &fileName, int &chosenFormat);
   // Ask for the options of that output format, in a window of the interface's
   // own; false if the user gave up. The FLTK interface offers them inside its
   // export chooser instead, and answers true.

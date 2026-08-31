@@ -18,6 +18,13 @@
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "GModel.h"
+#include "StringUtils.h"
+#include "OS.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#endif
 #include "GuiStatus.h"
 #include "StringUtils.h"
 #include "drawContext.h"
@@ -289,8 +296,22 @@ namespace Gui {
   bool fileDialog(int mode, const std::string &title,
                   const std::string &filter, std::string &fileName)
   {
-    return _backend ? _backend->fileDialog(mode, title, filter, fileName) :
-                      false;
+    if(!_backend) return false;
+    std::vector<Ui::Backend::FileFormat> formats;
+    if(filter.size()) formats.push_back(Ui::Backend::FileFormat("", filter));
+    return _backend->fileDialog(mode, title, formats, fileName, nullptr);
+  }
+
+  bool fileDialog(int mode, const std::string &title,
+                  const std::vector<FileFormat> &formats,
+                  std::string &fileName, int &chosenFormat)
+  {
+    if(!_backend) return false;
+    std::vector<Ui::Backend::FileFormat> say;
+    for(const auto &f : formats)
+      say.push_back(Ui::Backend::FileFormat(f.name, f.pattern));
+    chosenFormat = -1;
+    return _backend->fileDialog(mode, title, say, fileName, &chosenFormat);
   }
 
   bool exportOptionsDialog(int format, const std::string &fileName)
@@ -475,6 +496,60 @@ namespace Gui {
   {
     solverStart(index); // it compacts the solver list itself
     if(solverIsRunning() && _backend) _backend->showTree();
+  }
+
+  void exportView(int index)
+  {
+#if defined(HAVE_POST)
+    if(index < 0 || index >= (int)PView::list.size()) return;
+    PView *view = PView::list[index];
+    // The seven the window this reproduces offers, and what PView::write()
+    // numbers each of them. Four of them are ".pos": which one is meant is
+    // what the chooser is asked, and is why it names its formats.
+    static const struct {
+      const char *name;
+      const char *pattern;
+      int format;
+    } offered[] = {{"Gmsh Parsed", "*.pos", 2},
+                   {"Gmsh Mesh-based", "*.pos", 5},
+                   {"Gmsh Legacy ASCII", "*.pos", 0},
+                   {"Gmsh Legacy Binary", "*.pos", 1},
+                   {"MED", "*.rmed", 6},
+                   {"STL Surface", "*.stl", 3},
+                   {"Generic TXT", "*.txt", 4}};
+    std::vector<FileFormat> formats;
+    for(auto &o : offered) formats.push_back(FileFormat(o.name, o.pattern));
+
+    std::string name = view->getData()->getFileName();
+    while(true) {
+      int which = -1;
+      if(!fileDialog(1, "Export", formats, name, which)) return;
+      bool confirm = CTX::instance()->confirmOverwrite;
+#if defined(__APPLE__)
+      // handled directly by the native macOS file chooser
+      if(CTX::instance()->nativeFileChooser) confirm = false;
+#endif
+      if(confirm && !StatFile(name)) {
+        std::string q = "File \'" + name +
+                        "\' already exists.\n\nDo you want to replace it?";
+        if(!Msg::GetAnswer(q.c_str(), 0, "Cancel", "Replace")) continue;
+      }
+      int format = 2;
+      if(which >= 0 && which < (int)(sizeof(offered) / sizeof(offered[0])))
+        format = offered[which].format;
+      else {
+        // a chooser that cannot say which was picked leaves the extension to
+        // say it, and ".pos" means the parsed one
+        std::string ext = SplitFileName(name)[2];
+        format = (ext == ".rmed") ? 6 :
+                 (ext == ".stl")  ? 3 :
+                 (ext == ".txt")  ? 4 :
+                                    2;
+      }
+      view->write(name, format);
+      return;
+    }
+#endif
   }
 
   void watchFile()

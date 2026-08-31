@@ -36,7 +36,7 @@ fileBrowser::fileBrowser()
 }
 
 void fileBrowser::begin(Mode mode, const std::string &title,
-                        const std::string &filter,
+                        const std::vector<format> &formats,
                         const std::string &initialName)
 {
   _mode = mode;
@@ -48,6 +48,9 @@ void fileBrowser::begin(Mode mode, const std::string &title,
   _selected = -1;
   _message.clear();
 
+  _formats = formats;
+  _chosen = 0;
+  std::string filter = _formats.empty() ? std::string() : _formats[0].pattern;
   strncpy(_filter, filter.c_str(), sizeof(_filter) - 1);
   _filter[sizeof(_filter) - 1] = '\0';
 
@@ -232,7 +235,28 @@ void fileBrowser::draw()
     _accepted = false;
   }
 
-  if(_filter[0]) {
+  // The formats offered, when there is more than one to choose from: picking
+  // one narrows what is listed, and is what the caller is told was meant.
+  if(_formats.size() > 1) {
+    std::string say = _formats[_chosen].name.size() ?
+                        _formats[_chosen].name : _formats[_chosen].pattern;
+    ImGui::SetNextItemWidth(220.f);
+    if(ImGui::BeginCombo("Format", say.c_str())) {
+      for(std::size_t i = 0; i < _formats.size(); i++) {
+        std::string one = _formats[i].name.size() ? _formats[i].name :
+                                                    _formats[i].pattern;
+        if(ImGui::Selectable(one.c_str(), (int)i == _chosen)) {
+          _chosen = (int)i;
+          strncpy(_filter, _formats[i].pattern.c_str(), sizeof(_filter) - 1);
+          _filter[sizeof(_filter) - 1] = '\0';
+          _needRescan = true;
+        }
+      }
+      ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+  }
+  else if(_filter[0]) {
     ImGui::TextDisabled("Filter: %s", _filter);
     ImGui::SameLine();
   }

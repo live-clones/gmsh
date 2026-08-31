@@ -183,11 +183,19 @@ namespace {
     }
 
     bool fileDialog(int mode, const std::string &title,
-                    const std::string &filter,
-                    std::string &fileName) override
+                    const std::vector<FileFormat> &formats,
+                    std::string &fileName, int *chosenFormat) override
     {
       if(!appWindow::available()) return false;
-      return appWindow::instance()->fileDialog(mode, title, filter, fileName);
+      std::vector<fileBrowser::format> say;
+      for(const auto &f : formats) {
+        fileBrowser::format one;
+        one.name = f.name;
+        one.pattern = f.pattern;
+        say.push_back(one);
+      }
+      return appWindow::instance()->fileDialog(mode, title, say, fileName,
+                                               chosenFormat);
     }
 
     bool formatOptionsDialog(int format,

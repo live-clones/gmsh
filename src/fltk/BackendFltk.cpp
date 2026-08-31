@@ -171,13 +171,21 @@ namespace {
     }
 
     bool fileDialog(int mode, const std::string &title,
-                    const std::string &filter,
-                    std::string &fileName) override
+                    const std::vector<FileFormat> &formats,
+                    std::string &fileName, int *chosenFormat) override
     {
+      // this chooser offers them as filters, one per line, and says which of
+      // them was in force when the name was given
+      std::string filter;
+      for(const auto &f : formats) {
+        if(f.name.size()) filter += f.name + "\t";
+        filter += f.pattern + "\n";
+      }
       if(!fileChooser(mode ? FILE_CHOOSER_CREATE : FILE_CHOOSER_SINGLE,
                       title.c_str(), filter.c_str(), fileName.c_str()))
         return false;
       fileName = fileChooserGetName(1);
+      if(chosenFormat) *chosenFormat = fileChooserGetFilter();
       return true;
     }
 
