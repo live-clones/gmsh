@@ -205,11 +205,14 @@ namespace {
       return true;
     }
 
-    bool formatOptionsDialog(int format,
-                             const std::string &fileName) override
+    int formatOptionsDialog(int format,
+                            const std::string &fileName) override
     {
-      if(!appWindow::available()) return false;
-      return appWindow::instance()->exportOptionsDialog(format, fileName);
+      if(!appWindow::available()) return Cancelled;
+      // this interface asks in a window of its own and writes nothing
+      return appWindow::instance()->exportOptionsDialog(format, fileName) ?
+               GoAhead :
+               Cancelled;
     }
 
     void applyColorScheme(bool dark) override
@@ -288,13 +291,6 @@ namespace {
     void drawTooltip(const std::string &text) override
     {
       if(appWindow::available()) appWindow::instance()->setTooltip(text);
-    }
-
-    void fileAction(const std::string &what) override
-    {
-      // only the export: everything else the File menu asks for is done once
-      if(what == "export" && appWindow::available())
-        appWindow::instance()->postAction(fileExport);
     }
 
     void windowAction(const std::string &what) override

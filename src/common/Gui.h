@@ -196,8 +196,11 @@ namespace Gui {
   // matches, as "Gmsh Parsed" and "*.pos".
   struct FileFormat {
     std::string name, pattern;
+    // what it is written as, for the formats that are offered for writing;
+    // -1 for the one that lets the name of the file decide
+    int format;
     FileFormat(const std::string &n = "", const std::string &p = "")
-      : name(n), pattern(p)
+      : name(n), pattern(p), format(-1)
     {
     }
   };
@@ -206,6 +209,8 @@ namespace Gui {
   // what may be opened, by name; declared here rather than beside the actions
   // because that header is read before this one
   std::vector<FileFormat> inputFormats();
+  // and what it may be written as
+  std::vector<FileFormat> outputFormats();
   // Show the file chooser and wait: mode is one of those. The second form names the formats and says which was used,
   // or -1 when the chooser cannot say -- which is what tells an exported view
   // which flavour of ".pos" was meant.
@@ -218,10 +223,11 @@ namespace Gui {
   bool fileDialog(int mode, const std::string &title,
                   const std::vector<FileFormat> &formats,
                   std::vector<std::string> &names, int &chosenFormat);
-  // Ask for the options of that output format, in a window of the interface's
-  // own; false if the user gave up. The FLTK interface offers them inside its
-  // export chooser instead, and answers true.
-  bool exportOptionsDialog(int format, const std::string &fileName);
+  // What asking for the options of an output format came to. Three answers
+  // and not two: three of the forty windows that ask make a choice that *is*
+  // the writing -- which views, in which flavour -- so they write and say so.
+  enum { ExportCancelled = 0, ExportGoAhead, ExportDone };
+  int exportOptionsDialog(int format, const std::string &fileName);
   // Write one post-processing view to a file the user picks. Which format it
   // is written in is read off the chooser, which is why this is the
   // interface's: the FLTK one offers the formats as filters and asks which

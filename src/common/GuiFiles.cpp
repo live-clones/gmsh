@@ -118,6 +118,93 @@ std::vector<Gui::FileFormat> Gui::inputFormats()
   return formats;
 }
 
+// What a model may be written as, by name. The window this reproduces offers
+// them all, and which was picked is what says the format -- "Guess From
+// Extension" being the one that says nothing and lets the name decide.
+std::vector<Gui::FileFormat> Gui::outputFormats()
+{
+  std::vector<Gui::FileFormat> formats;
+  auto say = [&formats](const char *name, const char *pattern, int format) {
+    Gui::FileFormat f(name, pattern);
+    f.format = format;
+    formats.push_back(f);
+  };
+    say("Guess From Extension", "*.*", -1);
+    say("Geometry - Gmsh Options", "*.opt", FORMAT_OPT);
+    say("Geometry - Gmsh Unrolled GEO", "*.geo_unrolled", FORMAT_GEO);
+    say("Geometry - Gmsh Visibility", "*.vis", FORMAT_VIS);
+#if defined(HAVE_OCC)
+    say("Geometry - OpenCASCADE BRep", "*.brep", FORMAT_BREP);
+    say("Geometry - OpenCASCADE XAO", "*.xao", FORMAT_XAO);
+#endif
+#if defined(HAVE_PARASOLID)
+    say("Geometry - Parasolid XMT", "*.xmt_txt", FORMAT_XMT);
+#endif
+#if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
+    say("Geometry - STEP", "*.step", FORMAT_STEP);
+#endif
+#if defined(HAVE_OCC)
+    say("Geometry - IGES", "*.iges", FORMAT_IGES);
+#endif
+    say("Mesh - Gmsh MSH", "*.msh", FORMAT_MSH);
+    say("Mesh - Abaqus INP", "*.inp", FORMAT_INP);
+    say("Mesh - LSDYNA KEY", "*.key", FORMAT_KEY);
+    say("Mesh - RADIOSS BLOCK", "*_0000.rad", FORMAT_RAD);
+    say("Mesh - CELUM", "*.celum", FORMAT_CELUM);
+#if defined(HAVE_LIBCGNS)
+    say("Mesh - CGNS (Experimental)", "*.cgns", FORMAT_CGNS);
+#endif
+    say("Mesh - Diffpack 3D", "*.diff", FORMAT_DIFF);
+    say("Mesh - I-deas Universal", "*.unv", FORMAT_UNV);
+    say("Mesh - Iridum", "*.ir3", FORMAT_IR3);
+#if defined(HAVE_MED)
+    say("Mesh - MED", "*.med", FORMAT_MED);
+#endif
+    say("Mesh - INRIA Medit", "*.mesh", FORMAT_MESH);
+    say("Mesh - CEA Triangulation", "*.mail", FORMAT_MAIL);
+    say("Mesh - Matlab", "*.m", FORMAT_MATLAB);
+    say("Mesh - Nastran Bulk Data File", "*.bdf", FORMAT_BDF);
+    say("Mesh - Object File Format", "*.off", FORMAT_OFF);
+    say("Mesh - Wavefront File Format", "*.obj", FORMAT_OBJ);
+    say("Mesh - Plot3D Structured Mesh", "*.p3d", FORMAT_P3D);
+    say("Mesh - STL Surface", "*.stl", FORMAT_STL);
+    say("Mesh - VRML Surface", "*.wrl", FORMAT_VRML);
+    say("Mesh - VTK", "*.vtk", FORMAT_VTK);
+    say("Mesh - Tochnog", "*.dat", FORMAT_TOCHNOG);
+    say("Mesh - PLY2 Surface", "*.ply2", FORMAT_PLY2);
+    say("Mesh - SU2", "*.su2", FORMAT_SU2);
+    say("Mesh - GAMBIT Neutral File", "*.neu", FORMAT_NEU);
+    say("Mesh - X3D", "*.x3d", FORMAT_X3D);
+    say("Post-processing - Gmsh POS", "*.pos", FORMAT_POS);
+    say("Post-processing - X3D", "*.x3d", FORMAT_X3D);
+#if defined(HAVE_MED)
+    say("Post-processing - MED", "*.rmed", FORMAT_RMED);
+#endif
+    say("Post-processing - Generic TXT", "*.txt", FORMAT_TXT);
+    say("Post-processing - Mesh Statistics", "*.pos", FORMAT_POS);
+    say("Post-processing - Adapted data", "*.pvtu", FORMAT_PVTU);
+    say("Image - Encapsulated PostScript", "*.eps", FORMAT_EPS);
+    say("Image - GIF", "*.gif", FORMAT_GIF);
+#if defined(HAVE_LIBJPEG)
+    say("Image - JPEG", "*.jpg", FORMAT_JPEG);
+#endif
+    say("Image - LaTeX", "*.tex", FORMAT_TEX);
+    say("Image - PDF", "*.pdf", FORMAT_PDF);
+#if defined(HAVE_LIBPNG)
+    say("Image - PNG", "*.png", FORMAT_PNG);
+    say("Image - PGF", "*.pgf", FORMAT_PGF);
+#endif
+    say("Image - PostScript", "*.ps", FORMAT_PS);
+    say("Image - PPM", "*.ppm", FORMAT_PPM);
+    say("Image - SVG", "*.svg", FORMAT_SVG);
+    say("Image - TIKZ", "*.tikz", FORMAT_TIKZ);
+    say("Image - YUV", "*.yuv", FORMAT_YUV);
+#if defined(HAVE_MPEG_ENCODE)
+    say("Movie - MPEG", "*.mpg", FORMAT_MPEG_PREVIEW);
+#endif
+  return formats;
+}
+
 void fileOpen(bool merge)
 {
   // several at once, as the window this reproduces takes them
@@ -208,19 +295,30 @@ void fileRename()
 void fileExport()
 {
   std::string name = GModel::current()->getFileName();
-  if(!Gui::fileDialog(1, "Export", "", name)) return;
+  std::vector<Gui::FileFormat> formats = Gui::outputFormats();
+  int which = -1;
+  if(!Gui::fileDialog(Gui::Create, "Export", formats, name, which)) return;
   if(!_mayOverwrite(name)) return;
-  double version = 0.;
-  int format = GetFileFormatFromExtension(SplitFileName(name)[2], &version);
+
+  // which format was picked; the first of them, and a chooser that cannot
+  // say, both leave it to the name of the file
+  int format = -1;
+  if(which > 0 && which < (int)formats.size()) format = formats[which].format;
   if(format < 0) {
-    Msg::Error("Unknown output file format for '%s'", name.c_str());
-    return;
+    double version = 0.;
+    format = GetFileFormatFromExtension(SplitFileName(name)[2], &version);
+    if(format < 0) {
+      Msg::Error("Unknown output file format for \'%s\'", name.c_str());
+      return;
+    }
+    if(version > 0.)
+      NumberOption(GMSH_SET, "Mesh", 0, "MshFileVersion", version, false);
   }
-  if(version > 0.)
-    NumberOption(GMSH_SET, "Mesh", 0, "MshFileVersion", version, false);
-  // what that format takes, which the interface asks for in a window of its own
-  if(!Gui::exportOptionsDialog(format, name)) return;
-  CreateOutputFile(name, format);
+
+  // what that format takes, which each interface asks for in its own way
+  int answer = Gui::exportOptionsDialog(format, name);
+  if(answer == Gui::ExportCancelled) return;
+  if(answer == Gui::ExportGoAhead) CreateOutputFile(name, format);
 }
 
 #if defined(HAVE_ONELAB)

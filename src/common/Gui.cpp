@@ -328,9 +328,10 @@ namespace Gui {
     return _backend->fileDialog(mode, title, say, names, &chosenFormat);
   }
 
-  bool exportOptionsDialog(int format, const std::string &fileName)
+  int exportOptionsDialog(int format, const std::string &fileName)
   {
-    return _backend ? _backend->formatOptionsDialog(format, fileName) : false;
+    return _backend ? _backend->formatOptionsDialog(format, fileName) :
+                      ExportCancelled;
   }
 
   void applyColorScheme(bool redraw)
@@ -586,10 +587,7 @@ namespace Gui {
       _backend->post([which]() { fileRemote(which); });
     }
     else if(what == "export")
-      // the only one still written twice: the formats it offers are a table
-      // of forty, each with the little window that asks what that format
-      // takes, and those windows write the file themselves
-      _backend->fileAction(what);
+      _backend->post(fileExport);
     else
       Msg::Error("Unknown file action '%s'", what.c_str());
   }

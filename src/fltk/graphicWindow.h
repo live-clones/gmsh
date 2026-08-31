@@ -164,7 +164,6 @@ void attach_detach_menu_cb(Fl_Widget *w, void *data);
 
 // The actions the shared menu description names: the file chooser and the
 // windows are the one part of a menu entry that is genuinely toolkit business.
-void fltkFileAction(const std::string &what);
 void fltkWindowAction(const std::string &what);
 
 #endif

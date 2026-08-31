@@ -196,11 +196,12 @@ namespace {
       return true;
     }
 
-    bool formatOptionsDialog(int format, const std::string &fileName) override
+    int formatOptionsDialog(int format, const std::string &fileName) override
     {
-      // this interface asks for them inside its export chooser, which offers
-      // the formats as filters; there is nothing more to ask here
-      return true;
+      // each format has a little window of its own saying what it takes; the
+      // three that choose *which* file to write rather than how write it
+      // themselves and say so
+      return fltkFormatOptions(format, fileName);
     }
 
     void applyColorScheme(bool dark) override
@@ -306,12 +307,6 @@ namespace {
       if(!FlGui::available()) return;
       if(openglWindow *w = FlGui::instance()->getCurrentOpenglWindow())
         w->drawTooltip(text);
-    }
-
-    void fileAction(const std::string &what) override
-    {
-      // only the export: everything else the File menu asks for is done once
-      fltkFileAction(what);
     }
 
     void windowAction(const std::string &what) override

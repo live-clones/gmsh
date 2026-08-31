@@ -271,12 +271,14 @@ namespace Ui {
                             const std::vector<FileFormat> &formats,
                             std::vector<std::string> &names,
                             int *chosenFormat) = 0;
-    // Ask for the options of an output format, if this interface asks for them
-    // in a window of its own. The FLTK chooser offers them inside itself and
-    // has nothing more to ask, which is what the default answers.
-    virtual bool formatOptionsDialog(int format, const std::string &fileName)
+    // Ask for the options of an output format. Three answers and not two:
+    // 0 the user gave up, 1 go ahead and write it, 2 it has been written
+    // already -- which is what a window says when the choice it offers is
+    // *which* file to write rather than how, as choosing between views is.
+    enum { Cancelled = 0, GoAhead, Written };
+    virtual int formatOptionsDialog(int format, const std::string &fileName)
     {
-      return true;
+      return GoAhead;
     }
 
     virtual void beep() {}
@@ -284,10 +286,6 @@ namespace Ui {
 
     // --- the interface as a whole
 
-    // The one entry of the File menu that is still the interface's: exporting
-    // a model, whose formats are a table of forty, each with a little window
-    // that asks what that format takes and then writes the file itself.
-    virtual void fileAction(const std::string &what) {}
     // "new", "split_h", "split_v", "split_u", "minimize", "zoom",
     // "fullscreen", "front", "attach_detach", "copy": what supports() answers
     // about
