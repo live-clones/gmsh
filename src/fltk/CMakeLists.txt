@@ -8,7 +8,7 @@ set(SRC
   GuiFltk.cpp
   BackendFltk.cpp
   CreateFileFltk.cpp
-    graphicWindow.cpp menuFltk.cpp dialogFltk.cpp
+    graphicWindow.cpp menuFltk.cpp treeFltk.cpp dialogFltk.cpp
     graphicsFonts.cpp
       openglWindow.cpp
       colorbarWindow.cpp

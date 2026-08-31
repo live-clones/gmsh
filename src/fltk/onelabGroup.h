@@ -10,6 +10,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Tree.H>
 #include <FL/Fl_Button.H>
+#include "Tree.h"
 #include "menuFltk.h"
 #include <FL/Fl_Input.H>
 #include "onelab.h"
@@ -31,7 +32,7 @@ private:
   bool _enableTreeWidgetResize;
   bool _firstBuild;
   void _computeWidths();
-  template <class T> void _addParameter(T &p);
+  void _addField(const std::string &path, const Ui::Node &node);
   void _addMenu(const std::string &path, Fl_Callback *callback, void *data);
   void _addSolverMenu(int num);
   void _addViewMenu(int num);
@@ -77,15 +78,6 @@ public:
   void stop(bool val);
 };
 
-bool getParameterColor(const std::string &str, Fl_Color &c);
-Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
-                              double labelRatio, const std::string &ppath,
-                              bool highlight, Fl_Color c, Fl_Color bgc,
-                              std::vector<char *> &stringsToFree);
-Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
-                              double labelRatio, const std::string &ppath,
-                              bool highlight, Fl_Color c, Fl_Color bgc,
-                              std::vector<char *> &stringsToFree);
 void solver_cb(Fl_Widget *w, void *data);
 void onelab_cb(Fl_Widget *w, void *data);
 
