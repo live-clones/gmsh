@@ -16,6 +16,9 @@
 #include "Backend.h"
 #include "FlGui.h"
 #include <mutex>
+#include "graphicWindow.h"
+#include "openglWindow.h"
+#include "fileDialogs.h"
 #include "drawContext.h"
 
 // FLTK, as the interface asks for it. Nothing here says anything about Gmsh.
@@ -89,6 +92,87 @@ namespace {
 
     void beep() override { fl_beep(); }
 
+    // --- messages, the bar, and the questions that stop everything
+
+    void addMessage(const std::string &text, int level) override
+    {
+      FlGui::instance()->addMessage((_colourPrefix(level) + text).c_str());
+    }
+
+    void messageLines(std::vector<std::string> &lines) override
+    {
+      if(FlGui::available()) FlGui::instance()->messageLines(lines);
+    }
+
+    void refreshBar() override
+    {
+      if(!FlGui::available()) return;
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+        FlGui::instance()->graph[i]->getProgress()->redraw();
+    }
+
+    void sceneMessage(const std::string &first,
+                      const std::string &second) override
+    {
+      if(!FlGui::available()) return;
+      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+      if(!gl) return;
+      if(first.size()) gl->screenMessage[0] = first;
+      if(second.size()) gl->screenMessage[1] = second;
+    }
+
+    int numWindows() override
+    {
+      return FlGui::available() ? (int)FlGui::instance()->graph.size() : 0;
+    }
+
+    void setWindowTitle(int which, const std::string &title) override
+    {
+      if(!FlGui::available()) return;
+      if(which < 0 || which >= (int)FlGui::instance()->graph.size()) return;
+      FlGui::instance()->graph[which]->setTitle(title);
+    }
+
+    bool inputDialog(const std::string &question, std::string &value) override
+    {
+      const char *ret = fl_input("%s", value.c_str(), question.c_str());
+      if(!ret) return false;
+      value = ret;
+      return true;
+    }
+
+    int questionDialog(const std::string &question, const std::string &zero,
+                       const std::string &one,
+                       const std::string &two) override
+    {
+      return fl_choice("%s", zero.c_str(), one.c_str(),
+                       two.empty() ? nullptr : two.c_str(), question.c_str());
+    }
+
+    bool fileDialog(int mode, const std::string &title,
+                    const std::string &filter,
+                    std::string &fileName) override
+    {
+      if(!fileChooser(mode ? FILE_CHOOSER_CREATE : FILE_CHOOSER_SINGLE,
+                      title.c_str(), filter.c_str(), fileName.c_str()))
+        return false;
+      fileName = fileChooserGetName(1);
+      return true;
+    }
+
+    bool formatOptionsDialog(int format, const std::string &fileName) override
+    {
+      // this interface asks for them inside its export chooser, which offers
+      // the formats as filters; there is nothing more to ask here
+      return true;
+    }
+
+    void applyColorScheme(bool dark) override
+    {
+      _dark = dark;
+      if(FlGui::available()) FlGui::instance()->applyColorScheme(false);
+    }
+
     bool supports(const std::string &what) override
     {
 #if !defined(WIN32)
@@ -99,7 +183,19 @@ namespace {
     }
 
   private:
+    // colour codes understood by Fl_Browser; a dark scheme wants lighter ones
+    std::string _colourPrefix(int level) const
+    {
+      switch(level) {
+      case Direct: return _dark ? "@B136@." : "@C4@.";
+      case Error: return _dark ? "@B72@." : "@C1@.";
+      case Warning: return _dark ? "@B152@." : "@C5@.";
+      default: return "";
+      }
+    }
+
     Host _host;
+    bool _dark = false;
     std::mutex _mutex;
     std::vector<std::function<void()> > _posted;
 

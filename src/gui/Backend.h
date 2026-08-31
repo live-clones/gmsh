@@ -82,6 +82,10 @@ namespace Ui {
   public:
     virtual ~Backend() {}
 
+    // How loud a message is. The text already carries what it is called --
+    // "Error   : " and the rest -- so this is only what to colour it.
+    enum Level { Direct = 0, Info, Warning, Error, Debug };
+
     // --- what the interface is given
     //
     // Everything the backend may know, handed to it once, before create(). A
@@ -189,16 +193,26 @@ namespace Ui {
                                      const std::string &button1) {}
 
     // the last message or the progress changed: the bar is to draw again
-    virtual void refreshBar() {}
+    virtual void refreshBar() = 0;
+    // Two lines said over the 3D view rather than in the bar: what to do, and
+    // which keys end or abort it, which is what a picking says while it runs.
+    // A line that is empty is a line that is not to be touched.
+    virtual void sceneMessage(const std::string &first,
+                              const std::string &second) = 0;
+    // The windows the interface has, and what each is called. One interface
+    // has a single window and the other as many as have been opened, which is
+    // the only reason this is a count and not a title.
+    virtual int numWindows() { return 1; }
+    virtual void setWindowTitle(int which, const std::string &title) {}
 
     // The message console. It is the one part that is not a form: a window in
     // one interface and a strip under the scene in the other.
     virtual void showConsole(bool show) {}
     virtual bool consoleVisible() { return false; }
-    virtual void addMessage(const std::string &text, int level) {}
+    virtual void addMessage(const std::string &text, int level) = 0;
     // what it holds, in the order it holds it; writing it to a file is done
     // once, by the caller
-    virtual void messageLines(std::vector<std::string> &lines) {}
+    virtual void messageLines(std::vector<std::string> &lines) = 0;
 
     // --- asking the user
     //
@@ -206,11 +220,11 @@ namespace Ui {
     // why none of them can be shared: it is the toolkit that owns the loop.
 
     virtual bool inputDialog(const std::string &question,
-                             std::string &value) { return false; }
+                             std::string &value) = 0;
     // two or three answers, of which the last two may be empty; returns which
     virtual int questionDialog(const std::string &question,
                                const std::string &zero, const std::string &one,
-                               const std::string &two) { return 0; }
+                               const std::string &two) = 0;
     // Pick a file: mode is 0 to open an existing one and 1 to create one,
     // filter a space separated list of patterns. This is the poorest thing in
     // this file and it is known: naming the formats is what would let the
@@ -220,7 +234,7 @@ namespace Ui {
     // then.
     virtual bool fileDialog(int mode, const std::string &title,
                             const std::string &filter,
-                            std::string &fileName) { return false; }
+                            std::string &fileName) = 0;
     // Ask for the options of an output format, if this interface asks for them
     // in a window of its own. The FLTK chooser offers them inside itself and
     // has nothing more to ask, which is what the default answers.
@@ -241,7 +255,9 @@ namespace Ui {
     // where the windows are and how big they are, for the option file, in the
     // order the caller wrote them
     virtual void storeWindowLayout() {}
-    virtual void applyColorScheme(bool dark, bool redraw) {}
+    // dark or light. Redrawing the scene afterwards is not the toolkit's
+    // and is done by the caller.
+    virtual void applyColorScheme(bool dark) {}
 
     // --- what the backend may call back
     //

@@ -18,6 +18,9 @@
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "GModel.h"
+#include "GuiStatus.h"
+#include "StringUtils.h"
+#include "drawContext.h"
 
 // The graphical user interface, written once.
 //
@@ -175,6 +178,106 @@ namespace Gui {
   void beep()
   {
     if(_backend) _backend->beep();
+  }
+
+  // --- messages, the bar, and the questions that stop everything
+  //
+  // What the bar says is worked out once in src/common/GuiStatus.cpp and read
+  // by whichever bar is drawing it; all that is left here is to say that it
+  // changed. It used to be written twice, and a message set from a child
+  // thread was guarded against in two different ways.
+
+  void addMessage(const std::string &msg, int level)
+  {
+    if(_backend) _backend->addMessage(msg, level);
+  }
+
+  void messageLines(std::vector<std::string> &lines)
+  {
+    lines.clear();
+    if(_backend) _backend->messageLines(lines);
+  }
+
+  void setStatus(const std::string &msg, bool graphics)
+  {
+    if(!_backend || Msg::GetThreadNum() > 0) return;
+    if(!graphics) {
+      StatusBar::setMessage(msg);
+      _backend->refreshBar();
+      return;
+    }
+    // said over the view instead, on two lines: what to do, then which keys
+    // end or abort it
+    std::vector<std::string> m = SplitString(msg, '\n');
+    if(m.size() > 2)
+      Msg::Debug("Ignoring extra lines of status message: %s", msg.c_str());
+    _backend->sceneMessage(m.size() > 0 ? m[0] : "",
+                           m.size() > 1 ? m[1] : "");
+    drawContext::global()->draw();
+  }
+
+  void setLastStatus(int color)
+  {
+    if(!_backend || Msg::GetThreadNum() > 0) return;
+    // the colour it is worth, not the colour it is: which colour that comes
+    // out as is the toolkit's
+    StatusBar::setColour(color);
+    _backend->refreshBar();
+  }
+
+  void setProgress(const std::string &msg, double val, double min, double max)
+  {
+    if(!_backend || Msg::GetThreadNum() > 0) return;
+    StatusBar::setProgress(val, min, max);
+    setStatus(msg);
+  }
+
+  void setGraphicTitle(const std::string &title)
+  {
+    if(!_backend) return;
+    // The second window and the ones after it are numbered, and all of them
+    // say what they are showing. The interface that has one window said only
+    // the name, without even the "Gmsh - " in front of it.
+    for(int i = 0; i < _backend->numWindows(); i++) {
+      std::string say = "Gmsh";
+      if(title.size()) {
+        say += " - " + title;
+        if(i) say += " [" + std::to_string(i) + "]";
+      }
+      _backend->setWindowTitle(i, say);
+    }
+  }
+
+  bool inputDialog(const std::string &question, std::string &value)
+  {
+    return _backend ? _backend->inputDialog(question, value) : false;
+  }
+
+  int questionDialog(const std::string &question, const std::string &zero,
+                     const std::string &one, const std::string &two)
+  {
+    return _backend ? _backend->questionDialog(question, zero, one, two) : 0;
+  }
+
+  bool fileDialog(int mode, const std::string &title,
+                  const std::string &filter, std::string &fileName)
+  {
+    return _backend ? _backend->fileDialog(mode, title, filter, fileName) :
+                      false;
+  }
+
+  bool exportOptionsDialog(int format, const std::string &fileName)
+  {
+    return _backend ? _backend->formatOptionsDialog(format, fileName) : false;
+  }
+
+  void applyColorScheme(bool redraw)
+  {
+    if(!_backend) return;
+    // General.FltkColorScheme keeps its historical name, but what it says is
+    // "use a dark interface"; which colours that means is the toolkit's.
+    _backend->applyColorScheme(CTX::instance()->guiColorScheme ? true : false);
+    if(redraw) drawContext::global()->draw();
   }
 
   // --- what the interface remembers for the rest of Gmsh

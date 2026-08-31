@@ -16,6 +16,8 @@
 #include "Backend.h"
 #include "appWindow.h"
 #include "toolkit.h"
+#include "messageConsole.h"
+#include "scenePane.h"
 
 // Dear ImGui and GLFW, as the interface asks for them. Nothing here says
 // anything about Gmsh.
@@ -110,6 +112,80 @@ namespace {
       // GLFW has no bell; the terminal one is what there is
       fputc('\a', stderr);
       fflush(stderr);
+    }
+
+    // --- messages, the bar, and the questions that stop everything
+
+    void addMessage(const std::string &text, int level) override
+    {
+      if(appWindow::available())
+        appWindow::instance()->addMessage(text, level);
+    }
+
+    void messageLines(std::vector<std::string> &lines) override
+    {
+      if(appWindow::available() && appWindow::instance()->console())
+        appWindow::instance()->console()->lines(lines);
+    }
+
+    void refreshBar() override
+    {
+      // the bar is drawn again at every frame, from what it is told to say;
+      // all there is to do is ask for a frame
+      if(appWindow::available()) appWindow::instance()->requestRedraw();
+    }
+
+    void sceneMessage(const std::string &first,
+                      const std::string &second) override
+    {
+      if(!appWindow::available()) return;
+      scenePane *p = appWindow::instance()->currentPane();
+      if(!p) return;
+      if(first.size()) p->screenMessage[0] = first;
+      if(second.size()) p->screenMessage[1] = second;
+    }
+
+    int numWindows() override { return appWindow::available() ? 1 : 0; }
+
+    void setWindowTitle(int which, const std::string &title) override
+    {
+      if(appWindow::available())
+        appWindow::instance()->setGraphicTitle(title);
+    }
+
+    bool inputDialog(const std::string &question,
+                     std::string &value) override
+    {
+      if(!appWindow::available()) return false;
+      return appWindow::instance()->inputDialog(question, value);
+    }
+
+    int questionDialog(const std::string &question, const std::string &zero,
+                       const std::string &one,
+                       const std::string &two) override
+    {
+      if(!appWindow::available()) return 0;
+      return appWindow::instance()->questionDialog(question, zero, one, two);
+    }
+
+    bool fileDialog(int mode, const std::string &title,
+                    const std::string &filter,
+                    std::string &fileName) override
+    {
+      if(!appWindow::available()) return false;
+      return appWindow::instance()->fileDialog(mode, title, filter, fileName);
+    }
+
+    bool formatOptionsDialog(int format,
+                             const std::string &fileName) override
+    {
+      if(!appWindow::available()) return false;
+      return appWindow::instance()->exportOptionsDialog(format, fileName);
+    }
+
+    void applyColorScheme(bool dark) override
+    {
+      if(appWindow::available()) appWindow::instance()->applyStyle();
     }
 
     bool supports(const std::string &what) override

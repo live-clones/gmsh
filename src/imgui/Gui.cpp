@@ -136,50 +136,6 @@ namespace Gui {
 
   // --- messages, status bar and modal dialogs
 
-  void addMessage(const std::string &msg, int level)
-  {
-    if(available()) appWindow::instance()->addMessage(msg, level);
-  }
-
-  void messageLines(std::vector<std::string> &lines)
-  {
-    lines.clear();
-    if(available()) appWindow::instance()->console()->lines(lines);
-  }
-
-  void setStatus(const std::string &msg, bool graphics)
-  {
-    if(available()) appWindow::instance()->setStatus(msg, graphics);
-  }
-
-  void setLastStatus(int color)
-  {
-    if(available()) appWindow::instance()->setLastStatus(color);
-  }
-
-  void setProgress(const std::string &msg, double val, double min, double max)
-  {
-    if(available()) appWindow::instance()->setProgress(msg, val, min, max);
-  }
-
-  void setGraphicTitle(const std::string &title)
-  {
-    if(available()) appWindow::instance()->setGraphicTitle(title);
-  }
-
-  bool inputDialog(const std::string &question, std::string &value)
-  {
-    if(!available()) return false;
-    return appWindow::instance()->inputDialog(question, value);
-  }
-
-  int questionDialog(const std::string &question, const std::string &zero,
-                     const std::string &one, const std::string &two)
-  {
-    if(!available()) return 0;
-    return appWindow::instance()->questionDialog(question, zero, one, two);
-  }
-
   // --- refreshing the GUI when the model changes
 
   void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
@@ -201,15 +157,6 @@ namespace Gui {
   }
 
   void resetVisibility() {}
-
-  void applyColorScheme(bool redraw)
-  {
-    if(!available()) return;
-    // General.FltkColorScheme keeps its historical name, but it is really "use
-    // a dark interface", and it drives the Dear ImGui style here
-    appWindow::instance()->applyStyle();
-    if(redraw) drawContext::global()->draw();
-  }
 
   void storeCurrentWindowsInfo()
   {
@@ -420,19 +367,6 @@ namespace Gui {
                            const std::string &button1)
   {
     if(available()) appWindow::instance()->setSolverButtonMode(button0, button1);
-  }
-
-  bool exportOptionsDialog(int format, const std::string &fileName)
-  {
-    if(!available()) return false;
-    return appWindow::instance()->exportOptionsDialog(format, fileName);
-  }
-
-  bool fileDialog(int mode, const std::string &title, const std::string &filter,
-                  std::string &fileName)
-  {
-    if(!available()) return false;
-    return appWindow::instance()->fileDialog(mode, title, filter, fileName);
   }
 
   void startSolver(int index) { solverStart(index); }

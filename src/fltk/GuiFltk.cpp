@@ -54,54 +54,6 @@ namespace Gui {
     }
   }
 
-  void addMessage(const std::string &msg, int level)
-  {
-    FlGui::instance()->addMessage((_colorPrefix(level) + msg).c_str());
-  }
-
-  void messageLines(std::vector<std::string> &lines)
-  {
-    lines.clear();
-    if(available()) FlGui::instance()->messageLines(lines);
-  }
-
-  void setStatus(const std::string &msg, bool graphics)
-  {
-    FlGui::instance()->setStatus(msg, graphics);
-  }
-
-  void setLastStatus(int color)
-  {
-    // the colour it is worth, not the colour it is: which colour that comes
-    // out as is the toolkit's, and mainWindowProgress::draw() chooses it
-    FlGui::instance()->setLastStatus(color);
-  }
-
-  void setProgress(const std::string &msg, double val, double min, double max)
-  {
-    FlGui::instance()->setProgress(msg, val, min, max);
-  }
-
-  void setGraphicTitle(const std::string &title)
-  {
-    FlGui::instance()->setGraphicTitle(title);
-  }
-
-  bool inputDialog(const std::string &question, std::string &value)
-  {
-    const char *ret = fl_input("%s", value.c_str(), question.c_str());
-    if(!ret) return false;
-    value = ret;
-    return true;
-  }
-
-  int questionDialog(const std::string &question, const std::string &zero,
-                     const std::string &one, const std::string &two)
-  {
-    return fl_choice("%s", zero.c_str(), one.c_str(),
-                     two.empty() ? nullptr : two.c_str(), question.c_str());
-  }
-
   // --- refreshing the GUI when the model changes
 
   void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
@@ -124,11 +76,6 @@ namespace Gui {
   }
 
   void resetVisibility() { FlGui::instance()->resetVisibility(); }
-
-  void applyColorScheme(bool redraw)
-  {
-    FlGui::instance()->applyColorScheme(redraw);
-  }
 
   void storeCurrentWindowsInfo()
   {
@@ -234,13 +181,6 @@ namespace Gui {
   }
 
   bool animating() { return available() && fltkAnimating(); }
-
-  bool exportOptionsDialog(int format, const std::string &fileName)
-  {
-    // this interface asks for them inside its export chooser, which offers the
-    // formats as filters; there is nothing more to ask here
-    return true;
-  }
 
   void exportView(int index)
   {
@@ -398,16 +338,6 @@ namespace Gui {
   {
     if(FlGui::instance()->onelab)
       FlGui::instance()->onelab->setButtonMode(button0, button1);
-  }
-
-  bool fileDialog(int mode, const std::string &title, const std::string &filter,
-                  std::string &fileName)
-  {
-    if(!fileChooser(mode ? FILE_CHOOSER_CREATE : FILE_CHOOSER_SINGLE,
-                    title.c_str(), filter.c_str(), fileName.c_str()))
-      return false;
-    fileName = fileChooserGetName(1);
-    return true;
   }
 
   void startSolver(int index)
