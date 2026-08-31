@@ -34,6 +34,10 @@
 #include "StringUtils.h"
 #include "drawContext.h"
 
+#if defined(HAVE_ONELAB)
+#include "onelabUtils.h"
+#endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #endif
@@ -53,20 +57,94 @@ namespace {
 
 } // namespace
 
+// What may be opened, by name. The chooser of the window this reproduces
+// offers them all and narrows what it lists to the one that is picked; the
+// list was written out in the interface, where the entry that uses it is not.
+std::vector<Gui::FileFormat> Gui::inputFormats()
+{
+  std::vector<Gui::FileFormat> formats;
+  auto say = [&formats](const char *name, const char *pattern) {
+    formats.push_back(Gui::FileFormat(name, pattern));
+  };
+    say("All Files", "*.*");
+    say("Geometry - Gmsh GEO", "*.geo");
+#if defined(HAVE_ACIS)
+    say("Geometry - ACIS", "*.sat");
+#endif
+#if defined(HAVE_OCC)
+    say("Geometry - OpenCASCADE BRep", "*.brep");
+    say("Geometry - OpenCASCADE XAO", "*.xao");
+#endif
+#if defined(HAVE_PARASOLID)
+    say("Geometry - Parasolid XMT", "*.xmt_txt");
+#endif
+#if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
+    say("Geometry - STEP", "*.{stp,step}");
+#endif
+#if defined(HAVE_OCC)
+    say("Geometry - IGES", "*.{igs,iges}");
+#endif
+    say("Mesh - Gmsh MSH", "*.msh");
+    say("Mesh - Diffpack 3D", "*.diff");
+    say("Mesh - I-deas Universal", "*.unv");
+#if defined(HAVE_MED)
+    say("Mesh - MED", "*.{med,mmed}");
+#endif
+    say("Mesh - INRIA Medit", "*.mesh");
+    say("Mesh - Nastran Bulk Data File", "*.{bdf,nas}");
+    say("Mesh - GAMBIT Neutral File", "*.neu");
+    say("Mesh - Object File Format", "*.off");
+    say("Mesh - Wavefront File Format", "*.obj");
+    say("Mesh - Plot3D Structured Mesh", "*.p3d");
+    say("Mesh - STL Surface", "*.stl");
+    say("Mesh - VTK", "*.vtk");
+    say("Mesh - VRML Surface", "*.{wrl,vrml}");
+    say("Mesh - PLY2 Surface", "*.ply2");
+    say("Post-processing - Gmsh POS", "*.pos");
+#if defined(HAVE_MED)
+    say("Post-processing - MED", "*.rmed");
+#endif
+    say("Image - BMP", "*.bmp");
+#if defined(HAVE_LIBJPEG)
+    say("Image - JPEG", "*.{jpg,jpeg}");
+#endif
+    say("Image - PBM", "*.pbm");
+    say("Image - PGM", "*.pgm");
+#if defined(HAVE_LIBPNG)
+    say("Image - PNG", "*.png");
+#endif
+    say("Image - PNM", "*.pnm");
+    say("Image - PPM", "*.ppm");
+  return formats;
+}
+
 void fileOpen(bool merge)
 {
-  std::string name;
-  if(!Gui::fileDialog(0, merge ? "Merge file" : "Open file", "", name)) return;
+  // several at once, as the window this reproduces takes them
+  std::vector<std::string> names;
+  int which = -1;
+  if(!Gui::fileDialog(Gui::OpenSeveral, merge ? "Merge" : "Open",
+                      Gui::inputFormats(), names, which))
+    return;
 #if defined(HAVE_POST)
   std::size_t views = PView::list.size();
 #endif
-  if(merge)
-    MergeFile(name);
-  else
-    OpenProject(name);
+  for(const auto &name : names) {
+    if(merge)
+      MergeFile(name);
+    else
+      OpenProject(name);
+  }
 #if defined(HAVE_POST)
   // a file that brought views along has something to show, so show it
   if(PView::list.size() != views) Gui::openModule("Post-processing");
+#endif
+  // and a file that brought a solver with it may be meant to be run
+  if(CTX::instance()->launchSolverAtStartup >= 0)
+    Gui::startSolver(CTX::instance()->launchSolverAtStartup);
+#if defined(HAVE_ONELAB)
+  else if(onelabUtils::haveSolverToRun())
+    Gui::onelabAction("check");
 #endif
   drawContext::global()->draw();
 }

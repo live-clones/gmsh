@@ -201,8 +201,12 @@ namespace Gui {
     {
     }
   };
-  // Show the file chooser and wait: mode is 0 to open an existing file and 1
-  // to create one. The second form names the formats and says which was used,
+  // how the chooser is opened
+  enum { Open = 0, Create, OpenSeveral };
+  // what may be opened, by name; declared here rather than beside the actions
+  // because that header is read before this one
+  std::vector<FileFormat> inputFormats();
+  // Show the file chooser and wait: mode is one of those. The second form names the formats and says which was used,
   // or -1 when the chooser cannot say -- which is what tells an exported view
   // which flavour of ".pos" was meant.
   bool fileDialog(int mode, const std::string &title, const std::string &filter,
@@ -210,6 +214,10 @@ namespace Gui {
   bool fileDialog(int mode, const std::string &title,
                   const std::vector<FileFormat> &formats,
                   std::string &fileName, int &chosenFormat);
+  // and the same asking for several at once, which is what opening files does
+  bool fileDialog(int mode, const std::string &title,
+                  const std::vector<FileFormat> &formats,
+                  std::vector<std::string> &names, int &chosenFormat);
   // Ask for the options of that output format, in a window of the interface's
   // own; false if the user gave up. The FLTK interface offers them inside its
   // export chooser instead, and answers true.

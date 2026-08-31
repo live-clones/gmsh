@@ -172,7 +172,8 @@ namespace {
 
     bool fileDialog(int mode, const std::string &title,
                     const std::vector<FileFormat> &formats,
-                    std::string &fileName, int *chosenFormat) override
+                    std::vector<std::string> &names,
+                    int *chosenFormat) override
     {
       // this chooser offers them as filters, one per line, and says which of
       // them was in force when the name was given
@@ -181,10 +182,16 @@ namespace {
         if(f.name.size()) filter += f.name + "\t";
         filter += f.pattern + "\n";
       }
-      if(!fileChooser(mode ? FILE_CHOOSER_CREATE : FILE_CHOOSER_SINGLE,
-                      title.c_str(), filter.c_str(), fileName.c_str()))
-        return false;
-      fileName = fileChooserGetName(1);
+      FILE_CHOOSER_TYPE how = mode == OpenSeveral ? FILE_CHOOSER_MULTI :
+                              mode == Create      ? FILE_CHOOSER_CREATE :
+                                                    FILE_CHOOSER_SINGLE;
+      std::string from = names.empty() ? "" : names[0];
+      int picked = fileChooser(how, title.c_str(), filter.c_str(),
+                               from.c_str());
+      if(!picked) return false;
+      names.clear();
+      for(int i = 1; i <= picked; i++)
+        names.push_back(fileChooserGetName(i));
       if(chosenFormat) *chosenFormat = fileChooserGetFilter();
       return true;
     }
@@ -299,6 +306,12 @@ namespace {
       if(!FlGui::available()) return;
       if(openglWindow *w = FlGui::instance()->getCurrentOpenglWindow())
         w->drawTooltip(text);
+    }
+
+    void fileAction(const std::string &what) override
+    {
+      // only the export: everything else the File menu asks for is done once
+      fltkFileAction(what);
     }
 
     void windowAction(const std::string &what) override

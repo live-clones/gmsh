@@ -78,8 +78,6 @@ namespace Gui {
 
   bool animating() { return available() && fltkAnimating(); }
 
-  void fileAction(const std::string &what) { fltkFileAction(what); }
-
   void abortSelection()
   {
     openglWindow *w = FlGui::instance()->getCurrentOpenglWindow();

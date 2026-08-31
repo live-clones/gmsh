@@ -15,6 +15,7 @@
 
 #include "Backend.h"
 #include "uiSources.h"
+#include "GuiActions.h"
 #include "appWindow.h"
 #include "toolkit.h"
 #include "messageConsole.h"
@@ -184,9 +185,12 @@ namespace {
 
     bool fileDialog(int mode, const std::string &title,
                     const std::vector<FileFormat> &formats,
-                    std::string &fileName, int *chosenFormat) override
+                    std::vector<std::string> &names,
+                    int *chosenFormat) override
     {
       if(!appWindow::available()) return false;
+      // this browser picks one at a time
+      std::string fileName = names.empty() ? "" : names[0];
       std::vector<fileBrowser::format> say;
       for(const auto &f : formats) {
         fileBrowser::format one;
@@ -194,8 +198,11 @@ namespace {
         one.pattern = f.pattern;
         say.push_back(one);
       }
-      return appWindow::instance()->fileDialog(mode, title, say, fileName,
-                                               chosenFormat);
+      if(!appWindow::instance()->fileDialog(mode == Create ? 1 : 0, title, say,
+                                            fileName, chosenFormat))
+        return false;
+      names.assign(1, fileName);
+      return true;
     }
 
     bool formatOptionsDialog(int format,
@@ -281,6 +288,13 @@ namespace {
     void drawTooltip(const std::string &text) override
     {
       if(appWindow::available()) appWindow::instance()->setTooltip(text);
+    }
+
+    void fileAction(const std::string &what) override
+    {
+      // only the export: everything else the File menu asks for is done once
+      if(what == "export" && appWindow::available())
+        appWindow::instance()->postAction(fileExport);
     }
 
     void windowAction(const std::string &what) override

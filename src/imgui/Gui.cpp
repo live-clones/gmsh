@@ -179,31 +179,6 @@ namespace Gui {
     return appWindow::instance() && appWindow::instance()->animating();
   }
 
-  void fileAction(const std::string &what)
-  {
-    if(!available()) return;
-    appWindow *app = appWindow::instance();
-    // they all open a dialog, so they run outside of the frame
-    if(what == "new")
-      app->postAction(fileNew);
-    else if(what == "open")
-      app->postAction([]() { fileOpen(false); });
-    else if(what == "merge")
-      app->postAction([]() { fileOpen(true); });
-    else if(what == "rename")
-      app->postAction(fileRename);
-    else if(what == "export")
-      app->postAction(fileExport);
-    else if(what == "watch")
-      app->postAction(Dialog::showWatchPattern);
-    else if(what.compare(0, 7, "remote_") == 0) {
-      std::string arg = what.substr(7);
-      app->postAction([arg]() { fileRemote(arg); });
-    }
-    else
-      Msg::Error("Unknown file action '%s'", what.c_str());
-  }
-
   void abortSelection()
   {
     if(!available()) return;

@@ -299,19 +299,33 @@ namespace Gui {
     if(!_backend) return false;
     std::vector<Ui::Backend::FileFormat> formats;
     if(filter.size()) formats.push_back(Ui::Backend::FileFormat("", filter));
-    return _backend->fileDialog(mode, title, formats, fileName, nullptr);
+    std::vector<std::string> names(1, fileName);
+    if(!_backend->fileDialog(mode, title, formats, names, nullptr))
+      return false;
+    fileName = names.empty() ? "" : names[0];
+    return true;
   }
 
   bool fileDialog(int mode, const std::string &title,
                   const std::vector<FileFormat> &formats,
                   std::string &fileName, int &chosenFormat)
   {
+    std::vector<std::string> names(1, fileName);
+    if(!fileDialog(mode, title, formats, names, chosenFormat)) return false;
+    fileName = names.empty() ? "" : names[0];
+    return true;
+  }
+
+  bool fileDialog(int mode, const std::string &title,
+                  const std::vector<FileFormat> &formats,
+                  std::vector<std::string> &names, int &chosenFormat)
+  {
     if(!_backend) return false;
     std::vector<Ui::Backend::FileFormat> say;
     for(const auto &f : formats)
       say.push_back(Ui::Backend::FileFormat(f.name, f.pattern));
     chosenFormat = -1;
-    return _backend->fileDialog(mode, title, say, fileName, &chosenFormat);
+    return _backend->fileDialog(mode, title, say, names, &chosenFormat);
   }
 
   bool exportOptionsDialog(int format, const std::string &fileName)
@@ -550,6 +564,34 @@ namespace Gui {
       return;
     }
 #endif
+  }
+
+  void fileAction(const std::string &what)
+  {
+    if(!_backend) return;
+    // Each of them opens a chooser, so none of them can run inside a frame
+    // that is being drawn; post() is what knows whether that matters.
+    if(what == "new")
+      _backend->post(fileNew);
+    else if(what == "open")
+      _backend->post([]() { fileOpen(false); });
+    else if(what == "merge")
+      _backend->post([]() { fileOpen(true); });
+    else if(what == "rename")
+      _backend->post(fileRename);
+    else if(what == "watch")
+      _backend->post(Dialog::showWatchPattern);
+    else if(what.compare(0, 7, "remote_") == 0) {
+      std::string which = what.substr(7);
+      _backend->post([which]() { fileRemote(which); });
+    }
+    else if(what == "export")
+      // the only one still written twice: the formats it offers are a table
+      // of forty, each with the little window that asks what that format
+      // takes, and those windows write the file themselves
+      _backend->fileAction(what);
+    else
+      Msg::Error("Unknown file action '%s'", what.c_str());
   }
 
   void watchFile()
