@@ -495,7 +495,8 @@ def wiggle(dpy, x, y, times=4):
         time.sleep(0.2)
 
 
-KEYSYM = {"ctrl": 0xffe3, "shift": 0xffe1, "alt": 0xffe9}
+KEYSYM = {"ctrl": 0xffe3, "shift": 0xffe1, "alt": 0xffe9,
+          "left": 0xff51, "up": 0xff52, "right": 0xff53, "down": 0xff54}
 
 
 def press(dpy, keys):
@@ -750,6 +751,34 @@ def press_inside(dpy, build, point, dialog, wx, wy):
     return True
 
 
+
+# The keys of the colour map editor, and what pressing them is supposed to do.
+# Photographing the tab shows what the map looks like at rest, which says
+# nothing about whether the keys still work -- and this interface once
+# advertised eight of them in its help without having any. So the map is
+# photographed a second time, after being pressed on: swapped, rotated twice,
+# bent three times and brightened twice. What each key does is not checked
+# here; that the three builds end up with the same picture is.
+COLORMAP_KEYS = [["i"], ["ctrl", "left"], ["ctrl", "left"], ["up"], ["up"],
+                 ["up"], ["b"], ["b"]]
+
+
+def _colormap_keys(dpy, build, win, ww, wh, dx, dy, dw, dh):
+    """Press them, on the map that is showing, and photograph what is left."""
+    # the middle of the pane, which is the map itself: FLTK gives its widget
+    # the keyboard when the pointer enters it, so the pointer has to be there
+    x, y = dx + dw // 2, dy + dh // 2
+    xtest.fake_input(dpy, X.MotionNotify, x=x, y=y)
+    dpy.sync()
+    time.sleep(0.3)
+    for chord in COLORMAP_KEYS:
+        press(dpy, chord)
+        time.sleep(0.15)
+    time.sleep(0.5)
+    wiggle(dpy, x, y)
+    time.sleep(0.3)
+    return _dialog_picture(dpy, "options", build, win, ww, wh)
+
 def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
     """Photograph every tab of every category of the option window.
 
@@ -798,6 +827,21 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
             f = "%s-options-%s-%s.png" % (build, category.lower(), name.lower())
             shot.save(os.path.join(out, f))
             print("SHOT %s  %dx%d" % (f, shot.width, shot.height))
+            if name == "Map":
+                # a dialog that is a window of Dear ImGui rather than one of
+                # its own has no size to give, and _dialog_geometry says zero;
+                # the picture that has just been taken is that size
+                dw = where[2] or shot.width
+                dh = where[3] or shot.height
+                second = _colormap_keys(dpy, build, win, ww, wh, dx, dy,
+                                        dw, dh)
+                if second is None:
+                    failures.append("options-view-map-keys: nothing to "
+                                    "photograph")
+                    continue
+                f = "%s-options-view-map-keys.png" % build
+                second.save(os.path.join(out, f))
+                print("SHOT %s  %dx%d" % (f, second.width, second.height))
     return failures
 
 
