@@ -427,6 +427,32 @@ namespace Gui {
     if(_backend) _backend->refreshMenus();
   }
 
+  // --- the solver
+  //
+  // Both interfaces went through their own callback to reach what is already
+  // written once in GuiActions.cpp, and added the same thing after it: the
+  // modules tree is brought in front, since what it is about to say is there.
+  // Only one of them added it.
+
+  void onelabAction(const std::string &action)
+  {
+    if(!_backend) return;
+    // A run cannot happen while a frame is being drawn: it meshes, it draws,
+    // and it may ask a question. post() is what knows whether that matters.
+    _backend->post([action]() {
+      onelabRun(action);
+      if(action != "initialize" && _backend) _backend->showTree();
+    });
+  }
+
+  bool solverBusy() { return solverIsRunning(); }
+
+  void startSolver(int index)
+  {
+    solverStart(index); // it compacts the solver list itself
+    if(solverIsRunning() && _backend) _backend->showTree();
+  }
+
   void watchFile()
   {
     // rescan General.WatchFilePattern and merge what it matches; one of the

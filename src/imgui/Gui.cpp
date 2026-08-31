@@ -132,6 +132,22 @@ void appWindow::showPanel(int panel, bool show)
   }
 }
 
+// What is left of the Dear ImGui adapter.
+//
+// Everything that is not a toolkit's is in src/common/Gui.cpp now, and what
+// is goes through Ui::Backend. Two things are still here:
+//
+//   the 3D scene -- picking, the draw context, the capture, the windows the
+//   views are drawn in -- which speaks Gmsh and is a chantier of its own,
+//   declared in GuiScene.h;
+//
+//   and the two calls that wait on a file chooser that can name its formats:
+//   exporting a view has to know which of the four flavours of ".pos" was
+//   picked, and the entries of the File menu each open a chooser of their
+//   own. Until the chooser can answer, both are written twice.
+//
+// When those two are done this file goes.
+
 namespace Gui {
 
   // --- messages, status bar and modal dialogs
@@ -230,24 +246,6 @@ namespace Gui {
     for(int i = 0; i < app->numPanes(); i++)
       if(app->pane(i)) app->pane(i)->addPointMode = on;
   }
-
-  void onelabAction(const std::string &action)
-  {
-    // A solver run cannot happen while a frame is being drawn: it meshes, it
-    // draws, and it may ask a question, which would mean nesting frames.
-    // Asked for from a widget -- a ONELAB parameter that has just changed --
-    // it waits for the frame to be over; asked for from anywhere else it runs
-    // at once, as it does in FLTK.
-    appWindow *a = appWindow::instance();
-    if(a && a->inFrame())
-      a->postAction([action]() { onelabRun(action); });
-    else
-      onelabRun(action);
-  }
-
-  bool solverBusy() { return solverIsRunning(); }
-
-  void startSolver(int index) { solverStart(index); }
 
   // --- graphic windows
 

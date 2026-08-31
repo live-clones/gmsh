@@ -9,24 +9,18 @@
 #include <string>
 #include <vector>
 #include "GmshConfig.h"
-#include "SPoint2.h"
 #include "GuiActions.h"
+#include "GuiScene.h"
 
 // Toolkit-independent interface to the graphical user interface. Everything
-// outside of the GUI directories (src/fltk, src/imgui) should go through this
-// namespace instead of talking to a specific widget toolkit: exactly one
-// implementation is compiled in a given build, either src/fltk/GuiFltk.cpp when
-// HAVE_FLTK is defined, or src/imgui/Gui.cpp when HAVE_IMGUI is defined. When
-// neither is defined, HAVE_GUI is undefined and none of this is available.
-
-class drawContext;
-class PixelBuffer;
-class GVertex;
-class GEdge;
-class GFace;
-class GRegion;
-class MElement;
-class PView;
+// outside of the GUI directories (src/fltk, src/imgui) goes through this
+// namespace instead of talking to a specific widget toolkit.
+//
+// It is implemented once, in src/common/Gui.cpp, which drives whichever
+// Ui::Backend of src/gui/Backend.h was linked. What is not implemented there
+// is declared in GuiScene.h, included below: the 3D scene, which speaks Gmsh
+// and is a chantier of its own, and the two calls that wait on a file chooser
+// able to name its formats. Those are still written once per interface.
 
 namespace Gui {
 
@@ -95,10 +89,10 @@ namespace Gui {
   // redisplay the last status message, with the given status bar color
   void setLastStatus(int color = StatusColorDefault);
 
-// Show a transient tooltip next to the pointer, over the current 3D view; an
-// empty text hides it. Used while picking, to put what was picked where the
-// user is already looking.
-void drawTooltip(const std::string &text);
+  // Show a transient tooltip next to the pointer, over the current 3D view; an
+  // empty text hides it. Used while picking, to put what was picked where the
+  // user is already looking.
+  void drawTooltip(const std::string &text);
   // display a status message and update the progress bar
   void setProgress(const std::string &msg, double val, double min, double max);
   // set the title of the graphic windows
@@ -183,13 +177,6 @@ void drawTooltip(const std::string &text);
   // the FLTK one holds them in widgets, so a view rotated with the mouse has
   // to be told to the manipulator.
   void refreshDialog(int dialog);
-  // stop the interactive selection that is running, as if the user had pressed
-  // 'q'
-  void abortSelection();
-  // Turn the "add point mode" of the 3D views on or off: while it is on, the
-  // pointer drives the coordinates of the entity being placed instead of
-  // highlighting what it hovers.
-  void setAddPointMode(bool on);
   // run one of the actions of the onelab tree: "check", "check_always",
   // "reload", "reset", "refresh", "compute" or "stop"
   void onelabAction(const std::string &action);
@@ -217,71 +204,6 @@ void drawTooltip(const std::string &text);
   // should quitting the application exit the process, or only close the
   // windows? (the API sets the latter)
   bool quitShouldExit();
-
-  // --- graphic windows
-
-  // Orient the views the status bar acts upon: "x", "y" or "z" to point that
-  // axis out of the screen, "r" for a quarter turn, "1:1" to drop the
-  // translation and the zoom. `reverse` is what Shift asks for -- the opposite
-  // direction -- and `sync` what Control asks for: the other views follow the
-  // first instead of being oriented themselves. Which views there are is the
-  // interface's, which is why this is here rather than beside
-  // viewSetOrientation().
-  void orientViews(const std::string &what, bool reverse, bool sync);
-  // Turn picking with the mouse on or off. It is an option, but the interface
-  // has the pointers to change.
-  void setMouseSelection(bool on);
-  // Play or pause the animation of the post-processing views, and say whether
-  // it is running. The FLTK interface runs a loop of its own while it plays;
-  // the Dear ImGui one steps it from the frame loop, an immediate-mode frame
-  // not being re-entrant.
-  void toggleAnimation();
-  bool animating();
-
-  // draw context of the last graphic window that received an event
-  drawContext *getCurrentDrawContext();
-  // size in pixels (i.e. taking the high resolution factor into account) of the
-  // last graphic window that received an event
-  void getCurrentPixelSize(int &width, int &height);
-  // override which graphic window should be considered as current, by giving an
-  // absolute index amongst all the existing graphic windows
-  void setCurrentOpenglWindow(int which);
-  // show every model and every view in every graphic window, undoing what the
-  // visibility panel hid in one of them
-  void showAllInEveryWindow();
-  // split the current graphic window ('h', 'v' or 'u')
-  void splitCurrentOpenglWindow(char how, double ratio = 0.5);
-  // copy the current graphic window to the clipboard
-  void copyCurrentOpenglWindowToClipboard();
-  // create a pixel buffer with the contents of the current graphic window, or
-  // of all the graphic windows composited together when
-  // General.PrintCompositeWindows is set; the caller owns the returned buffer,
-  // which is null if it could not be created
-  PixelBuffer *createCompositePixelBuffer(unsigned int format,
-                                          unsigned int type);
-  // Make the scene occupy the bottom-left corner of the frame buffer at the
-  // given size, which is where glReadPixels() reads and where gl2ps expects the
-  // viewport to be. width and height are updated with the size that could
-  // actually be used. In the FLTK interface the graphic window is a window of
-  // its own, so this does nothing; in the ImGui one the scene is only a part of
-  // the frame buffer, so it has to be redrawn.
-  void beginGraphicCapture(int &width, int &height, bool composite = false);
-  void endGraphicCapture();
-
-  // --- interactive selection
-
-  // select entities of the given type (ENT_POINT, ENT_CURVE, ...) in the most
-  // recent graphic window; returns 'q' (abort), 'l' (selected), 'r'
-  // (deselected), 'u' (undone) or 'e' (ended)
-  char selectEntity(int type);
-  // results of the last selectEntity() call
-  const std::vector<GVertex *> &selectedVertices();
-  const std::vector<GEdge *> &selectedEdges();
-  const std::vector<GFace *> &selectedFaces();
-  const std::vector<GRegion *> &selectedRegions();
-  const std::vector<MElement *> &selectedElements();
-  const std::vector<SPoint2> &selectedPoints();
-  const std::vector<PView *> &selectedViews();
 
   // --- small editors the interface owns
   // the window that says what each button of a gamepad does, which the

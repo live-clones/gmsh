@@ -234,6 +234,11 @@ namespace {
         appWindow::instance()->closeTreeItem(name);
     }
 
+    void showTree() override
+    {
+      if(appWindow::available()) appWindow::instance()->showModulesPanel();
+    }
+
     void refreshMenus() override
     {
       if(appWindow::available()) appWindow::instance()->requestRedraw();

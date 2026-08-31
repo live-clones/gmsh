@@ -37,6 +37,22 @@
 // defined in CreateFileFltk.cpp
 PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type);
 
+// What is left of the FLTK adapter.
+//
+// Everything that is not a toolkit's is in src/common/Gui.cpp now, and what
+// is goes through Ui::Backend. Two things are still here:
+//
+//   the 3D scene -- picking, the draw context, the capture, the windows the
+//   views are drawn in -- which speaks Gmsh and is a chantier of its own,
+//   declared in GuiScene.h;
+//
+//   and the two calls that wait on a file chooser that can name its formats:
+//   exporting a view has to know which of the four flavours of ".pos" was
+//   picked, and the entries of the File menu each open a chooser of their
+//   own. Until the chooser can answer, both are written twice.
+//
+// When those two are done this file goes.
+
 namespace Gui {
 
   // --- messages, status bar and modal dialogs
@@ -110,21 +126,6 @@ namespace Gui {
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
         FlGui::instance()->graph[i]->gl[j]->addPointMode = on ? 1 : 0;
-  }
-
-  void onelabAction(const std::string &action)
-  {
-    onelab_cb(nullptr, (void *)action.c_str());
-  }
-
-  bool solverBusy()
-  {
-    return FlGui::instance()->onelab && FlGui::instance()->onelab->isBusy();
-  }
-
-  void startSolver(int index)
-  {
-    solver_cb(nullptr, (void *)(intptr_t)index);
   }
 
   // --- graphic windows

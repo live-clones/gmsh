@@ -302,6 +302,8 @@ public:
   // described form: a strip under the scene
   void showConsole(bool show) { _showConsole = show; }
   bool consoleVisible() const { return _showConsole; }
+  // the modules tree, which starting a solver brings in front
+  void showModulesPanel() { _showModules = true; }
   // draw the current pane immediately (used for vector output and for grabbing
   // the pixels of the scene)
   void drawCurrentPane();

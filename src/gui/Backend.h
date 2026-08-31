@@ -191,6 +191,9 @@ namespace Ui {
     // it has never been opened. A module is opened when what it is about
     // happens -- a mesh was made, so Mesh opens -- but not one the user has
     // folded away by hand.
+    // bring the modules tree in front, which is what starting a solver does:
+    // what it is about to say is there
+    virtual void showTree() {}
     virtual bool treeItemClosedByHand(const std::string &name)
     {
       return false;

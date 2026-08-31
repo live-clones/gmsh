@@ -238,6 +238,12 @@ namespace {
         FlGui::instance()->onelab->closeTreeItem(name);
     }
 
+    void showTree() override
+    {
+      if(FlGui::available() && FlGui::instance()->onelab)
+        FlGui::instance()->onelab->show();
+    }
+
     bool treeItemClosedByHand(const std::string &name) override
     {
       if(!FlGui::available() || !FlGui::instance()->onelab) return false;
