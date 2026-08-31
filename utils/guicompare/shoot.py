@@ -280,6 +280,23 @@ SHOTS.append(dict(name="quickaccess-", dialog="quickaccess", branches=[],
 SHOTS.append(dict(name="tree-", dialog="tree", branches=[],
                   geo=model("parameters.geo"), whole=True))
 
+# The file choosers, which nothing photographed: they are what every entry of
+# the File menu opens, and what says which format an exported view is written
+# in. A chooser is a window of its own in one interface and a panel inside the
+# one window in the other, so the picture is of the whole window; it is left
+# open, which is why each of these keeps an interface to itself.
+SHOTS.append(dict(name="open-", dialog="open", branches=[], whole=True,
+                  menu={"released": [(18, 11), (50, 49)],
+                        "fltk": [(18, 11), (50, 51)],
+                        "imgui": [(14, 9), (50, 48)]}))
+# the one that offers the formats by name, which is what the export of a view
+# is asked and what one of the two interfaces could not answer
+SHOTS.append(dict(name="export-", dialog="export", branches=[], whole=True,
+                  geo=model("view.pos"),
+                  menu={"released": [(18, 11), (50, 236)],
+                        "fltk": [(18, 11), (50, 260)],
+                        "imgui": [(14, 9), (50, 244)]}))
+
 # The three little windows that ask for one thing. The pattern of the files to
 # watch is reached through the File menu, and the arrow editor through the
 # button the option window carries on its General/Aspect tab -- neither has an
