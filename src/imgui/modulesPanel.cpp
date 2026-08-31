@@ -22,6 +22,9 @@
 #include "imgui.h"
 #include "imgui_stdlib.h"
 
+#include "Tree.h"
+#include "uiSources.h"
+
 #include "appWindow.h"
 #include "Gui.h"
 #include "GuiDialogs.h"
@@ -201,34 +204,38 @@ std::string onelabLabel(const onelab::parameter &p)
 
 #endif
 
-// Walk the shared description. The modules are open and everything below them
+// Down the model, asking for the children of what is open rather than being
+// handed the whole tree. The modules are open and everything below them
 // closed, as the FLTK tree leaves it after its first build.
-void appWindow::_walkModules(const std::vector<Ui::MenuItem> &items, int depth,
-                             const std::string &path)
+void appWindow::_walkModules(const std::string &path, int depth)
 {
-  for(const auto &it : items) {
-    if(it.kind == Ui::MenuItem::Submenu) {
-      std::string here = path + "/" + it.label;
+  const Ui::Tree &tree = uiSources().tree;
+  for(const auto &child : tree.children(path)) {
+    Ui::Node node = tree.node(child);
+    std::string label = node.label.size() ?
+                          node.label :
+                          child.substr(child.find_last_of('/') + 1);
+    if(!tree.children(child).empty()) {
       // what the API asked for, if this is one of the branches it named; the
       // request is only spent once the branch has been drawn, so a chain of
       // them unfolds in a single frame
-      auto wanted = _treeWanted.find(here);
+      auto wanted = _treeWanted.find(child);
       if(wanted != _treeWanted.end()) {
         ImGui::SetNextItemOpen(wanted->second);
         _treeWanted.erase(wanted);
       }
       ImGuiTreeNodeFlags flags =
         depth ? ImGuiTreeNodeFlags_None : ImGuiTreeNodeFlags_DefaultOpen;
-      if(ImGui::TreeNodeEx(it.label.c_str(), flags)) {
-        _walkModules(it.children, depth + 1, here);
+      if(ImGui::TreeNodeEx(label.c_str(), flags)) {
+        _walkModules(child, depth + 1);
         ImGui::TreePop();
       }
       continue;
     }
-    bool enabled = it.enabled ? it.enabled() : true;
+    bool enabled = node.enabled ? node.enabled() : true;
     ImGui::BeginDisabled(!enabled);
-    if(ImGui::Selectable(it.label.c_str())) {
-      std::function<void()> what = it.action;
+    if(ImGui::Selectable(label.c_str())) {
+      std::function<void()> what = node.pressed;
       // like every other action of the interface, it runs outside the frame
       if(what) postAction(what);
     }
@@ -246,19 +253,10 @@ void appWindow::_drawModulesPanel()
     return;
   }
 
-  // The Geometry and Mesh branches come from the shared description of
-  // src/common/GuiMenus.h, which the FLTK tree is built from too. What follows
-  // -- the parameters of the solvers and the views -- is widgets rather than
-  // entries, so each interface builds that part itself.
-  {
-    static std::vector<Ui::MenuItem> tree;
-    static unsigned built = 0;
-    if(built != Menu::generation()) {
-      built = Menu::generation();
-      tree = Menu::modules();
-    }
-    _walkModules(tree, 0, "0Modules");
-  }
+  // The commands come from the described tree, which the FLTK one is built
+  // from too. What follows -- the parameters of the solvers and the views --
+  // is widgets rather than entries, and is still built here.
+  _walkModules("0Modules", 0);
 
   // ---- Solver
 #if defined(HAVE_ONELAB)

@@ -23,6 +23,7 @@
 #include "drawContext.h"
 #include "GuiDialogs.h"
 #include "GuiMenus.h"
+#include "GuiModules.h"
 #include "GuiActions.h"
 
 // The graphical user interface, written once.
@@ -85,7 +86,7 @@ namespace Gui {
     };
     sources.menuBar = []() { return Menu::bar(); };
     sources.menuGeneration = []() { return Menu::generation(); };
-    sources.treeItems = []() { return Menu::modules(); };
+    sources.tree = Modules::tree();
     sources.barButtons = []() { return StatusBar::bar(); };
     sources.barMessage = []() { return StatusBar::message(); };
     sources.barTooltip = []() { return StatusBar::messageTooltip(); };

@@ -57,6 +57,9 @@ namespace Ui {
     bool hasField;
     Field field;
     std::function<void()> pressed;
+    // false greys the line out: a command that does not apply to what is
+    // loaded is there and cannot be run, as it is in a menu
+    std::function<bool()> enabled;
     // A menu it drops: on a right click, or on the little arrow the FLTK tree
     // draws at the end of its line. A post-processing view carries what to do
     // to it that way, and a solver what to run.

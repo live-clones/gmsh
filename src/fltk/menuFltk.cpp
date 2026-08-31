@@ -115,9 +115,10 @@ namespace {
 
   // The modules tree has a store of its own: both it and the menu bar are alive
   // at the same time.
+  // What the tree holds, kept while its widgets are alive: Fl_Tree carries a
+  // void* to each line, so the thing it points at has to outlive the walk.
   struct fltkModules {
-    std::vector<Ui::MenuItem> tree;
-    std::vector<const Ui::MenuItem *> byId;
+    std::vector<Ui::Node> byId;
   };
 
   fltkModules _modules;
@@ -126,22 +127,24 @@ namespace {
   {
     std::size_t id = (std::size_t)(intptr_t)data;
     if(!id || id > _modules.byId.size()) return;
-    const Ui::MenuItem *item = _modules.byId[id - 1];
-    if(item && item->action) item->action();
+    const Ui::Node &node = _modules.byId[id - 1];
+    if(node.pressed) node.pressed();
   }
 
+  // Down the model, asking for the children of what is open rather than being
+  // handed the whole of it. A line with children is a branch and Fl_Tree makes
+  // it as the path of a child names it; a line without is one to press.
   void _walkModules(
-    const std::vector<Ui::MenuItem> &items, const std::string &path,
+    const Ui::Tree &tree, const std::string &path,
     const std::function<void(const std::string &, Fl_Callback *, void *)> &add)
   {
-    for(const auto &it : items) {
-      std::string here = path + "/" + it.label;
-      if(it.kind == Ui::MenuItem::Submenu) {
-        _walkModules(it.children, here, add);
+    for(const auto &child : tree.children(path)) {
+      if(!tree.children(child).empty()) {
+        _walkModules(tree, child, add);
         continue;
       }
-      _modules.byId.push_back(&it);
-      add(here, (Fl_Callback *)_dispatchModule,
+      _modules.byId.push_back(tree.node(child));
+      add(child, (Fl_Callback *)_dispatchModule,
           (void *)(intptr_t)_modules.byId.size());
     }
   }
@@ -152,10 +155,8 @@ void fltkModulesBuild(
   const std::function<void(const std::string &path, Fl_Callback *cb,
                            void *data)> &add)
 {
-  // moved in first: what follows takes pointers into it
-  _modules.tree = uiSources().treeItems();
   _modules.byId.clear();
-  _walkModules(_modules.tree, "0Modules", add);
+  _walkModules(uiSources().tree, "0Modules", add);
 }
 
 namespace {

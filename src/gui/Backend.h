@@ -13,6 +13,7 @@
 #include "Form.h"
 #include "Menu.h"
 #include "Bar.h"
+#include "Tree.h"
 
 // What a widget toolkit has to provide for Gmsh to have an interface, and
 // nothing else.
@@ -111,9 +112,9 @@ namespace Ui {
       // to build them again instead of doing it at every frame
       std::function<std::vector<MenuItem>()> menuBar;
       std::function<unsigned()> menuGeneration;
-      // the modules tree: the entries down to where the parameters of the
-      // solver begin, which are widgets and are described as a form
-      std::function<std::vector<MenuItem>()> treeItems;
+      // the tree down the left side, as one thing: the commands and, under
+      // them, whatever a solver has published
+      Tree tree;
       // the row of little buttons along the bottom, and what fills the rest of
       // it: the last message and the progress of what is running
       std::function<std::vector<BarButton>()> barButtons;
