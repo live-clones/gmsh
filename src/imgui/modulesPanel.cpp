@@ -28,25 +28,6 @@
 
 #include "appWindow.h"
 #include "menuActions.h"
-#include "Context.h"
-#include "Options.h"
-
-#if defined(HAVE_ONELAB)
-#endif
-
-
-#if defined(HAVE_POST)
-#include "PView.h"
-#include "PViewData.h"
-#endif
-
-namespace {
-
-#if defined(HAVE_ONELAB)
-
-#endif
-
-} // namespace
 
 #if defined(HAVE_ONELAB)
 
@@ -83,27 +64,37 @@ void appWindow::_walkModules(const std::string &path, int depth)
       }
       continue;
     }
-    if(node.hasField) {
-      // A line the description gives a widget to. Half the width is the
-      // widget and the rest is its name, as the tree this reproduces splits
-      // them.
-      ImGui::PushID(child.c_str());
-      drawField(node.field, ImGui::GetContentRegionAvail().x * .5f);
-      if(node.tooltip.size() && ImGui::BeginItemTooltip()) {
-        ImGui::TextUnformatted(node.tooltip.c_str());
-        ImGui::EndTooltip();
-      }
-      ImGui::PopID();
-      continue;
-    }
+    ImGui::PushID(child.c_str());
     bool enabled = node.enabled ? node.enabled() : true;
     ImGui::BeginDisabled(!enabled);
-    if(ImGui::Selectable(label.c_str())) {
-      std::function<void()> what = node.pressed;
-      // like every other action of the interface, it runs outside the frame
-      if(what) postAction(what);
+    // A line the description gives a widget to. Half the width is the widget
+    // and the rest is its name, as the tree this reproduces splits them.
+    if(node.hasField) {
+      drawField(node.field, ImGui::GetContentRegionAvail().x * .5f);
+      // a switch that says nothing itself is followed by the line's own name,
+      // which is what one presses: that is how a view offers both
+      if(node.label.size()) ImGui::SameLine();
+    }
+    if(!node.hasField || node.label.size()) {
+      if(ImGui::Selectable(label.c_str())) {
+        std::function<void()> what = node.pressed;
+        // like every other action of the interface, it runs outside the frame
+        if(what) postAction(what);
+      }
+    }
+    if(node.tooltip.size() &&
+       ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+      ImGui::SetTooltip("%s", node.tooltip.c_str());
+    // what the line carries, which the FLTK tree drops on the little arrow
+    // beside it and this one on a right click
+    if(node.menu && ImGui::BeginPopupContextItem("##line")) {
+      static std::vector<Ui::MenuItem> menu;
+      menu = node.menu();
+      menuWalk(menu, this);
+      ImGui::EndPopup();
     }
     ImGui::EndDisabled();
+    ImGui::PopID();
   }
 }
 
@@ -117,69 +108,20 @@ void appWindow::_drawModulesPanel()
     return;
   }
 
-  // The commands come from the described tree, which the FLTK one is built
-  // from too. What follows -- the parameters of the solvers and the views --
-  // is widgets rather than entries, and is still built here.
-  _walkModules("0Modules", 0);
-
-  // ---- Solver
-#if defined(HAVE_ONELAB)
-  if(ImGui::TreeNodeEx("Solver", ImGuiTreeNodeFlags_DefaultOpen)) {
-    const char *b0 = _solverButton0.size() ? _solverButton0.c_str() : "check";
-    const char *b1 = _solverButton1.size() ? _solverButton1.c_str() : "compute";
-    if(_solverButton0.size()) {
-      if(ImGui::Button(b0)) {
-        std::string a = b0;
-        postAction([a]() { onelabRun(a); });
-      }
-      ImGui::SameLine();
-    }
-    if(ImGui::Button(b1)) {
-      std::string a = b1;
-      postAction([a]() { onelabRun(a); });
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Reset")) postAction([]() { onelabRun("reset"); });
-
-    ImGui::SameLine();
-    // The gear menu, described once in src/common/GuiMenus.cpp: the database,
-    // the eight things the solver may do by itself, and adding another solver.
-    // This panel offered three of the thirteen, as buttons.
-    if(ImGui::SmallButton("Options")) ImGui::OpenPopup("##gear");
-    if(ImGui::BeginPopup("##gear")) {
-      static std::vector<Ui::MenuItem> gear;
-      gear = Menu::solverOptions();
-      menuWalk(gear, this);
-      ImGui::EndPopup();
-    }
-
-    // The solvers that are registered, one line each, as the FLTK tree shows
-    // them: clicking one runs it, and what else one may do to it is the menu
-    // described in src/common/GuiMenus.cpp.
-    for(int i = 0; i < NUM_SOLVERS; i++) {
-      std::string name = opt_solver_name(i, GMSH_GET, "");
-      if(name.empty()) continue;
-      ImGui::PushID(1000 + i);
-      if(ImGui::Selectable(name.c_str())) {
-        int index = i;
-        postAction([index]() { solverStart(index); });
-      }
-      std::string exe = opt_solver_executable(i, GMSH_GET, "");
-      if(exe.size() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        ImGui::SetTooltip("%s", exe.c_str());
-      if(ImGui::BeginPopupContextItem("##solvermenu")) {
-        static std::vector<Ui::MenuItem> menu;
-        menu = Menu::solverActions(i);
-        menuWalk(menu, this);
-        ImGui::EndPopup();
-      }
-      ImGui::PopID();
-    }
-
-    // What a solver has published, which the described tree holds beside
-    // the commands: every root of it that is not the commands themselves.
+  // Everything the tree holds comes from the description now: the commands,
+  // the solvers, the views, and what a solver has published. The parameters
+  // sit beside the commands rather than under them, which is where the tree
+  // this reproduces puts them.
+  {
+    // the buttons at the bottom take a line, and the tree has the rest
+    float footer = ImGui::GetFrameHeightWithSpacing() +
+                   ImGui::GetStyle().ItemSpacing.y;
+    ImGui::BeginChild("##tree", ImVec2(0.f, -footer));
     for(const auto &root : uiSources().tree.children("")) {
-      if(root == "0Modules") continue;
+      if(root == "0Modules") {
+        _walkModules(root, 0);
+        continue;
+      }
       Ui::Node node = uiSources().tree.node(root);
       std::string label = node.label.size() ?
                             node.label :
@@ -189,48 +131,36 @@ void appWindow::_drawModulesPanel()
         ImGui::TreePop();
       }
     }
-
-    ImGui::TreePop();
+    ImGui::EndChild();
   }
-#endif
 
-  // ---- Post-processing
-#if defined(HAVE_POST)
-  if(ImGui::TreeNodeEx("Post-processing", ImGuiTreeNodeFlags_DefaultOpen)) {
-    if(PView::list.empty()) ImGui::TextDisabled("No view loaded");
-    for(std::size_t i = 0; i < PView::list.size(); i++) {
+  // And under it, the row the description hangs there.
+  {
+    std::vector<Ui::Button> row = uiSources().tree.footer ?
+                                    uiSources().tree.footer() :
+                                    std::vector<Ui::Button>();
+    for(std::size_t i = 0; i < row.size(); i++) {
+      if(i) ImGui::SameLine();
       ImGui::PushID((int)i);
-      double v = 0.;
-      NumberOption(GMSH_GET, "View", (int)i, "Visible", v, false);
-      bool visible = (v != 0.);
-      if(ImGui::Checkbox("##visible", &visible)) {
-        double nv = visible ? 1. : 0.;
-        NumberOption(GMSH_SET | GMSH_GUI, "View", (int)i, "Visible", nv, false);
-        drawContext::global()->draw();
+      if(row[i].menu) {
+        if(ImGui::Button(row[i].label.c_str())) ImGui::OpenPopup("##drop");
+        if(ImGui::BeginPopup("##drop")) {
+          static std::vector<Ui::MenuItem> menu;
+          menu = row[i].menu();
+          menuWalk(menu, this);
+          ImGui::EndPopup();
+        }
       }
-      ImGui::SameLine();
-      char label[256];
-      snprintf(label, sizeof(label), "[%d] %s", (int)i,
-               PView::list[i]->getData()->getName().c_str());
-      if(ImGui::Selectable(label)) {
-        // a click opens the colour map of that view, which is a tab of the
-        // option window and not a window of its own
-        int index = (int)i;
-        postAction([index]() { Dialog::showOptionsForView(index, "Map"); });
+      else if(ImGui::Button(row[i].label.c_str())) {
+        std::function<void()> what = row[i].action;
+        if(what) postAction(what);
       }
-      // what it carries is described once in src/common/GuiMenus.cpp: the
-      // FLTK tree drops the same entries on the little arrow beside the view
-      if(ImGui::BeginPopupContextItem("##viewmenu")) {
-        static std::vector<Ui::MenuItem> menu;
-        menu = Menu::viewActions((int)i);
-        menuWalk(menu, this);
-        ImGui::EndPopup();
-      }
+      if(row[i].tooltip.size() &&
+         ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        ImGui::SetTooltip("%s", row[i].tooltip.c_str());
       ImGui::PopID();
     }
-    ImGui::TreePop();
   }
-#endif
 
   ImGui::End();
 }

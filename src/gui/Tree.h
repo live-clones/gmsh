@@ -94,6 +94,10 @@ namespace Ui {
     // may arrive asking for it.
     std::function<bool(const std::string &path)> closed;
     std::function<void(const std::string &path, bool closed)> setClosed;
+    // The buttons under it. The tree this describes has a row of them along
+    // its bottom -- what to run, and a gear saying what may be run by itself
+    // -- and they belong to the tree rather than to whatever panel holds it.
+    std::function<std::vector<Button>()> footer;
   };
 
   // What Form.h has to gain for a node to be able to carry a ONELAB

@@ -186,6 +186,8 @@ namespace Gui {
   // are ("check", "compute") when idle and ("", "stop") while running
   void setSolverButtonMode(const std::string &button0,
                            const std::string &button1);
+  // and what they say, which the description of the tree reads
+  void solverButtons(std::string &button0, std::string &button1);
   // show the file chooser and wait for the user: mode is 0 to open an existing
   // file and 1 to save one, filter is a space separated list of extensions
   bool fileDialog(int mode, const std::string &title, const std::string &filter,

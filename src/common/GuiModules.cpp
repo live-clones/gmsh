@@ -16,6 +16,17 @@
 #include "GuiModules.h"
 #include "GuiMenus.h"
 #include "GuiOnelab.h"
+#include "GuiDialogs.h"
+#include "GuiActions.h"
+#include "Gui.h"
+#include "GmshDefines.h"
+#include "drawContext.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#include "PViewOptions.h"
+#endif
 #include "Context.h"
 #include "Options.h"
 
@@ -133,6 +144,76 @@ namespace Modules {
       s.nodes[name] = n;
     }
 
+    // A line under a branch the commands already made, which is where the
+    // tree this reproduces puts them: the solvers under Solver and the views
+    // under Post-processing.
+    void _put(const std::string &path, const Ui::Node &n, store &s)
+    {
+      std::string::size_type cut = path.find_last_of('/');
+      s.under[cut == std::string::npos ? "" : path.substr(0, cut)]
+        .push_back(path);
+      s.nodes[path] = n;
+    }
+
+    // The solvers that are registered: pressing one runs it, and what else
+    // one may do to it is described beside the menus.
+    void _solvers(store &s)
+    {
+#if defined(HAVE_ONELAB)
+      // the branch is there even with no solver registered, as it is in the
+      // tree this reproduces, and it is there before Post-processing
+      _makeBranches("0Modules/Solver/x", s);
+      for(int i = 0; i < NUM_SOLVERS; i++) {
+        std::string name = opt_solver_name(i, GMSH_GET, "");
+        if(name.empty()) continue;
+        Ui::Node n;
+        n.path = "0Modules/Solver/Solver" + std::to_string(i);
+        n.label = name;
+        n.tooltip = opt_solver_executable(i, GMSH_GET, "");
+        n.pressed = [i]() { solverStart(i); };
+        n.menu = [i]() { return Menu::solverActions(i); };
+        _makeBranches(n.path, s);
+        _put(n.path, n, s);
+      }
+#endif
+    }
+
+    // The post-processing views: a switch that shows or hides one, its name
+    // beside it, and the menu of what to do to it. A view may say which group
+    // it belongs to, which is a branch of its own.
+    void _views(store &s)
+    {
+#if defined(HAVE_POST)
+      _makeBranches("0Modules/Post-processing/x", s);
+      for(std::size_t i = 0; i < PView::list.size(); i++) {
+        PViewOptions *opt = PView::list[i]->getOptions();
+        std::string path = "0Modules/Post-processing/";
+        if(opt->group.size()) path += opt->group + "/";
+        path += "View" + std::to_string(i);
+        _makeBranches(path, s);
+
+        int index = (int)i;
+        Ui::Node n;
+        n.path = path;
+        n.hasField = true;
+        n.field.kind = Ui::Check;
+        // the switch says nothing itself: the name beside it is the line,
+        // and pressing the name is what opens the colour map
+        n.label = "[" + std::to_string(index) + "] " +
+                  PView::list[i]->getData()->getName();
+        n.field.storeCategory = "View";
+        n.field.storeName = "Visible";
+        n.field.storeIndex = index;
+        n.field.changed = []() { drawContext::global()->draw(); };
+        // clicking the name opens the colour map of that view, which is a tab
+        // of the option window rather than a window of its own
+        n.pressed = [index]() { Dialog::showOptionsForView(index, "Map"); };
+        n.menu = [index]() { return Menu::viewActions(index); };
+        _put(path, n, s);
+      }
+#endif
+    }
+
     // What a solver has published, under the commands: the tree of the
     // interface this reproduces holds both, and only one of them was ever
     // described.
@@ -206,6 +287,8 @@ namespace Modules {
       s.nodes[root.path] = root;
 
       _flatten(Menu::modules(), root.path, s);
+      _solvers(s);
+      _views(s);
       _parameters(s);
       for(const auto &parent : s.sorted) {
         auto &lines = s.under[parent];
@@ -232,6 +315,39 @@ namespace Modules {
       return it == _store().nodes.end() ? Ui::Node() : it->second;
     };
     t.generation = []() { return Menu::generation() + _generation; };
+    // The row under it: what to run, what to forget, and the gear that says
+    // what the solver may do by itself. The tree this reproduces has them at
+    // the bottom, and one interface had three of the gear's thirteen entries
+    // as buttons of its own instead.
+    t.footer = []() {
+      std::vector<Ui::Button> row;
+#if defined(HAVE_ONELAB)
+      std::string b0, b1;
+      Gui::solverButtons(b0, b1);
+      if(b1.empty()) b1 = "compute";
+      if(b0.size()) {
+        Ui::Button check;
+        check.label = b0;
+        check.action = [b0]() { onelabRun(b0); };
+        row.push_back(check);
+      }
+      Ui::Button run;
+      run.label = b1;
+      run.action = [b1]() { onelabRun(b1); };
+      row.push_back(run);
+      Ui::Button reset;
+      reset.label = "Reset";
+      reset.tooltip = "Forget what the solver has published";
+      reset.action = []() { onelabRun("reset"); };
+      row.push_back(reset);
+      Ui::Button gear;
+      gear.label = "Options";
+      gear.tooltip = "What the solver may do by itself";
+      gear.menu = []() { return Menu::solverOptions(); };
+      row.push_back(gear);
+#endif
+      return row;
+    };
     return t;
   }
 

@@ -143,7 +143,12 @@ namespace {
         _walkModules(tree, child, add);
         continue;
       }
-      _modules.byId.push_back(tree.node(child));
+      Ui::Node node = tree.node(child);
+      // A line that carries a widget or a menu of its own -- a solver, a view,
+      // a parameter -- is one this interface still builds itself: it cannot
+      // put a described field on a line of its tree yet.
+      if(node.hasField || node.menu) continue;
+      _modules.byId.push_back(node);
       add(child, (Fl_Callback *)_dispatchModule,
           (void *)(intptr_t)_modules.byId.size());
     }

@@ -44,6 +44,7 @@ namespace Gui {
     bool _quitShouldExit = true;
     bool _finishedProcessingCommandLine = false;
     std::string _openedThroughMacFinder;
+    std::string _solverButton0, _solverButton1 = "compute";
 
   } // namespace
 
@@ -489,7 +490,17 @@ namespace Gui {
   void setSolverButtonMode(const std::string &button0,
                            const std::string &button1)
   {
+    // What they say is not a toolkit's to keep: the row of them under the
+    // tree is described, and this is what the description reads.
+    _solverButton0 = button0;
+    _solverButton1 = button1;
     if(_backend) _backend->setSolverButtonMode(button0, button1);
+  }
+
+  void solverButtons(std::string &button0, std::string &button1)
+  {
+    button0 = _solverButton0;
+    button1 = _solverButton1;
   }
 
   void drawTooltip(const std::string &text)
