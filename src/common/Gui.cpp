@@ -272,9 +272,12 @@ namespace Gui {
     }
   }
 
-  bool inputDialog(const std::string &question, std::string &value)
+  bool inputDialog(const std::string &question, std::string &value,
+                   const std::string &hint, bool readOnly)
   {
-    return _backend ? _backend->inputDialog(question, value) : false;
+    return _backend ?
+             _backend->inputDialog(question, value, hint, readOnly) :
+             false;
   }
 
   int questionDialog(const std::string &question, const std::string &zero,

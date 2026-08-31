@@ -160,9 +160,6 @@ namespace Modules {
     void _solvers(store &s)
     {
 #if defined(HAVE_ONELAB)
-      // the branch is there even with no solver registered, as it is in the
-      // tree this reproduces, and it is there before Post-processing
-      _makeBranches("0Modules/Solver/x", s);
       for(int i = 0; i < NUM_SOLVERS; i++) {
         std::string name = opt_solver_name(i, GMSH_GET, "");
         if(name.empty()) continue;
@@ -184,7 +181,6 @@ namespace Modules {
     void _views(store &s)
     {
 #if defined(HAVE_POST)
-      _makeBranches("0Modules/Post-processing/x", s);
       for(std::size_t i = 0; i < PView::list.size(); i++) {
         PViewOptions *opt = PView::list[i]->getOptions();
         std::string path = "0Modules/Post-processing/";

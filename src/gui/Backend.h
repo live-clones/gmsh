@@ -242,8 +242,10 @@ namespace Ui {
     // Each of these runs a loop of its own until there is an answer, which is
     // why none of them can be shared: it is the toolkit that owns the loop.
 
-    virtual bool inputDialog(const std::string &question,
-                             std::string &value) = 0;
+    // `hint` is a line under the question saying what shape the answer takes;
+    // `readOnly` shows the value instead of asking for it
+    virtual bool inputDialog(const std::string &question, std::string &value,
+                             const std::string &hint, bool readOnly) = 0;
     // two or three answers, of which the last two may be empty; returns which
     virtual int questionDialog(const std::string &question,
                                const std::string &zero, const std::string &one,

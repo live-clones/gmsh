@@ -99,8 +99,12 @@ namespace Gui {
   void setGraphicTitle(const std::string &title);
   // emit an audible bell
   void beep();
-  // ask the user for a string; returns false if the dialog was cancelled
-  bool inputDialog(const std::string &question, std::string &value);
+  // Ask the user for a string; false if it was cancelled. `hint` is a line
+  // under the question saying what shape the answer takes -- the range of a
+  // parameter says "[min : max : step]" that way -- and `readOnly` shows the
+  // value instead of asking for it.
+  bool inputDialog(const std::string &question, std::string &value,
+                   const std::string &hint = "", bool readOnly = false);
   // ask the user a question with 2 or 3 possible answers (two may be empty);
   // returns the index of the chosen answer
   int questionDialog(const std::string &question, const std::string &zero,

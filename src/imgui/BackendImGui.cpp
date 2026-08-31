@@ -161,11 +161,17 @@ namespace {
         appWindow::instance()->setGraphicTitle(title);
     }
 
-    bool inputDialog(const std::string &question,
-                     std::string &value) override
+    bool inputDialog(const std::string &question, std::string &value,
+                     const std::string &hint, bool readOnly) override
     {
       if(!appWindow::available()) return false;
-      return appWindow::instance()->inputDialog(question, value);
+      std::string ask = question;
+      if(hint.size()) ask += "\n" + hint;
+      if(readOnly) {
+        appWindow::instance()->inputDialog(ask + "\n\n" + value, value);
+        return false;
+      }
+      return appWindow::instance()->inputDialog(ask, value);
     }
 
     int questionDialog(const std::string &question, const std::string &zero,

@@ -23,6 +23,7 @@
 #include "menuFltk.h"
 #include "openglWindow.h"
 #include "fileDialogs.h"
+#include "extraDialogs.h"
 #include "drawContext.h"
 
 // FLTK, as the interface asks for it. Nothing here says anything about Gmsh.
@@ -144,8 +145,17 @@ namespace {
       FlGui::instance()->graph[which]->setTitle(title);
     }
 
-    bool inputDialog(const std::string &question, std::string &value) override
+    bool inputDialog(const std::string &question, std::string &value,
+                     const std::string &hint, bool readOnly) override
     {
+      if(readOnly) {
+        simpleTextDisplay(question.c_str(), value);
+        return false;
+      }
+      // a question with a shape to its answer gets the little editor that
+      // says the shape, which is what the window this reproduces uses
+      if(hint.size())
+        return simpleTextEditor(question.c_str(), hint.c_str(), value);
       const char *ret = fl_input("%s", value.c_str(), question.c_str());
       if(!ret) return false;
       value = ret;

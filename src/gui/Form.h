@@ -174,6 +174,10 @@ namespace Ui {
   // A button: at the bottom of a form, or hung after a field.
   struct Button {
     std::string label;
+    // A picture, for the interfaces that have one: the loop of a value is an
+    // arrow going round and its graph a little plot, and an interface without
+    // them falls back on the label. Same rule as a button of the bar.
+    std::string glyph;
     std::string tooltip;
     std::function<void()> action;
     // It drops a menu instead of acting. The graph of a ONELAB number picks

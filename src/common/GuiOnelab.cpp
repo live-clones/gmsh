@@ -18,6 +18,7 @@
 #include "GmshConfig.h"
 
 #include <algorithm>
+#include <sstream>
 #include <cstdlib>
 #include <map>
 #include <string>
@@ -464,6 +465,12 @@ namespace {
     return help;
   }
 
+  // the little buttons a line carries after its value, said below
+  void _trailing(const GuiOnelab::getNumber &get, const onelab::number &p,
+                 Ui::Field &f);
+  void _trailing(const GuiOnelab::getString &get, const onelab::string &p,
+                 Ui::Field &f);
+
   // A number: an enumeration when it names its values, a check box when it is
   // a yes or no, something one reads when it is read-only, and a value one
   // types otherwise.
@@ -557,8 +564,159 @@ namespace {
       // a value the solver may act upon: it is worth acting upon once, not
       // once per letter typed
       f.commitsWhenDone = true;
+      _trailing(get, p, f);
     }
     return f;
+  }
+
+  // What the range of a number reads as, and what reading one back means:
+  // "min : max", "min : max : step", or a list of the values it may take.
+  std::string _rangeSays(const onelab::number &p)
+  {
+    std::ostringstream say;
+    say.precision(12);
+    const std::vector<double> &choices = p.getChoices();
+    if(choices.size()) {
+      for(std::size_t i = 0; i < choices.size(); i++) {
+        if(i) say << ", ";
+        say << choices[i];
+      }
+    }
+    else if(p.getMin() != -onelab::parameter::maxNumber() &&
+            p.getMax() != onelab::parameter::maxNumber()) {
+      say << p.getMin() << " : " << p.getMax();
+      if(p.getStep()) say << " : " << p.getStep();
+    }
+    return say.str();
+  }
+
+  void _rangeHeard(const std::string &said, onelab::number &p)
+  {
+    if(said.find(',') != std::string::npos) {
+      std::vector<double> choices;
+      for(auto &v : onelab::parameter::split(said, ','))
+        choices.push_back(atof(v.c_str()));
+      p.setChoices(choices);
+      p.setStep(0.);
+      return;
+    }
+    std::vector<std::string> part = onelab::parameter::split(said, ':');
+    if(part.size() < 2) return;
+    p.setChoices(std::vector<double>());
+    p.setMin(atof(part[0].c_str()));
+    p.setMax(atof(part[1].c_str()));
+    p.setStep(part.size() > 2 ? atof(part[2].c_str()) : 0.);
+  }
+
+  // The nine places a value may be plotted, each with four slots. What is on
+  // is a string of thirty-six characters, one per slot.
+  const char *const _graphPlaces[] = {"Top Left",    "Top Right", "Bottom Left",
+                                      "Bottom Right", "Top",      "Bottom",
+                                      "Left",         "Right",    "Full"};
+  const char *const _graphSlots[] = {"X ", "Y ", "X ' ", "Y ' "};
+
+  // The three little buttons a number carries: its range, its loop, and the
+  // plots it is reported in. The tree this reproduces hangs them off the
+  // widget; here they are said, so that any interface can draw them.
+  void _trailing(const GuiOnelab::getNumber &get, const onelab::number &p,
+                 Ui::Field &f)
+  {
+    bool readOnlyRange = p.getAttribute("ReadOnlyRange") == "1";
+
+    Ui::Button range;
+    range.label = ":";
+    range.tooltip = readOnlyRange ? "Show range or choices" :
+                                    "Edit range or choices";
+    range.action = [get, readOnlyRange]() {
+      onelab::number q;
+      if(!get(q)) return;
+      std::string said = _rangeSays(q);
+      if(readOnlyRange) {
+        Gui::inputDialog("Range or choices", said,
+                         "", true);
+        return;
+      }
+      if(!Gui::inputDialog(
+           "Edit range or choices", said,
+           "[min : max], [min : max : step], or [val1, val2, ...]"))
+        return;
+      onelab::number before = q;
+      _rangeHeard(said, q);
+      GuiOnelab::changed(before, q);
+    };
+    f.trailing.push_back(range);
+
+    Ui::Button loop;
+    loop.glyph = "rotate";
+    loop.tooltip = "Loop over range or choices (loop level 1, 2 or 3)";
+    loop.on = [get]() {
+      onelab::number q;
+      if(!get(q)) return 0;
+      return atoi(q.getAttribute("Loop").c_str());
+    };
+    loop.action = [get]() {
+      onelab::number q;
+      if(!get(q)) return;
+      int level = atoi(q.getAttribute("Loop").c_str());
+      onelab::number before = q;
+      q.setAttribute("Loop", std::to_string(level >= 3 ? 0 : level + 1));
+      GuiOnelab::changed(before, q);
+    };
+    f.trailing.push_back(loop);
+
+    Ui::Button graph;
+    graph.glyph = "graph";
+    graph.tooltip = "Draw range or choices on X-Y graph(s)";
+    graph.menu = [get]() {
+      std::vector<Ui::MenuItem> menu;
+      onelab::number q;
+      if(!get(q)) return menu;
+      std::string on = q.getAttribute("Graph");
+      on.resize(36, '0');
+      auto flip = [get](int slot) {
+        onelab::number q;
+        if(!get(q)) return;
+        std::string on = q.getAttribute("Graph");
+        on.resize(36, '0');
+        on[slot] = on[slot] == '0' ? '3' : '0';
+        onelab::number before = q;
+        q.setAttribute("Graph", on);
+        GuiOnelab::changed(before, q);
+      };
+      for(int place = 0; place < 9; place++) {
+        Ui::MenuItem where;
+        where.kind = Ui::MenuItem::Submenu;
+        where.label = _graphPlaces[place];
+        for(int slot = 0; slot < 4; slot++) {
+          int which = place * 4 + slot;
+          Ui::MenuItem it;
+          it.kind = Ui::MenuItem::Toggle;
+          it.label = _graphSlots[slot];
+          it.checked = [get, which]() {
+            onelab::number q;
+            if(!get(q)) return false;
+            std::string on = q.getAttribute("Graph");
+            on.resize(36, '0');
+            return on[which] != '0';
+          };
+          it.action = [flip, which]() { flip(which); };
+          where.children.push_back(it);
+        }
+        menu.push_back(where);
+      }
+      Ui::MenuItem none;
+      none.label = "None";
+      none.action = [get]() {
+        onelab::number q;
+        if(!get(q)) return;
+        onelab::number before = q;
+        q.setAttribute("Graph", std::string(36, '0'));
+        GuiOnelab::changed(before, q);
+      };
+      menu.push_back(none);
+      return menu;
+    };
+    f.trailing.push_back(graph);
   }
 
   // What a value writes back, whatever it holds it in
