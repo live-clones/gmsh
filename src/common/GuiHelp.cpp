@@ -353,9 +353,9 @@ namespace Dialog {
         value.label = category + (index ? "[" + std::to_string(index) + "]" : "") +
                       "." + (type == "color" ? "Color." : "") + name;
         value.labelBefore = true;
-        value.optionCategory = category;
-        value.optionIndex = index;
-        value.optionName = type == "color" ? "Color." + name : name;
+        value.storeCategory = category;
+        value.storeIndex = index;
+        value.storeName = type == "color" ? "Color." + name : name;
         value.changed = []() {
           drawContext::global()->draw();
           _wanted();

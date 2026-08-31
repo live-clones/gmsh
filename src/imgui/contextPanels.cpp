@@ -30,7 +30,6 @@
 #include "GmshDefines.h"
 #include "Context.h"
 #include "drawContext.h"
-#include "ColorTable.h"
 
 namespace {
 
@@ -79,47 +78,72 @@ namespace {
   // does to that entry: red, green and blue, or hue, saturation and value,
   // and the alpha over both -- the same four the widget of the window this
   // reproduces draws.
-  int _mapChannel(GmshColorTable *table, int i, int channel, bool hsv)
+  // Whether one of the shortcuts a description gives is being pressed. It is
+  // how the keys of the colour map are reached: the window this reproduces
+  // has eight numbers on eight keys, and writing them out again here is what
+  // let this interface advertise them in its help without having any of them.
+  bool _pressed(const Ui::Shortcut &s)
   {
-    unsigned int colour = table->table[i];
-    int red = CTX::instance()->unpackRed(colour);
-    int green = CTX::instance()->unpackGreen(colour);
-    int blue = CTX::instance()->unpackBlue(colour);
-    if(channel == 3) return CTX::instance()->unpackAlpha(colour);
-    if(!hsv) return channel == 0 ? red : (channel == 1 ? green : blue);
-    double h, s, v;
-    RGB_to_HSV(red / 255., green / 255., blue / 255., &h, &s, &v);
-    if(channel == 0) return (int)(h / 6. * 255.);
-    return (int)((channel == 1 ? s : v) * 255.);
+    if(s.empty()) return false;
+    ImGuiKey key;
+    switch(s.key) {
+    case Ui::KeyLeft: key = ImGuiKey_LeftArrow; break;
+    case Ui::KeyRight: key = ImGuiKey_RightArrow; break;
+    case Ui::KeyUp: key = ImGuiKey_UpArrow; break;
+    case Ui::KeyDown: key = ImGuiKey_DownArrow; break;
+    default:
+      if(s.key >= 'A' && s.key <= 'Z')
+        key = (ImGuiKey)(ImGuiKey_A + s.key - 'A');
+      else if(s.key >= '0' && s.key <= '9')
+        key = (ImGuiKey)(ImGuiKey_0 + s.key - '0');
+      else
+        return false;
+      break;
+    }
+    ImGuiIO &io = ImGui::GetIO();
+    if(io.KeyCtrl != ((s.mods & Ui::ModCommand) != 0)) return false;
+    if(io.KeyShift != ((s.mods & Ui::ModShift) != 0)) return false;
+    if(io.KeyAlt != ((s.mods & Ui::ModAlt) != 0)) return false;
+    return ImGui::IsKeyPressed(key);
   }
 
-  void _setMapChannel(GmshColorTable *table, int i, int channel, int value,
-                      bool hsv)
+  int _mapChannel(const Dialog::ColourMap &map, int i, int channel, bool hsv)
   {
-    unsigned int colour = table->table[i];
-    int red = CTX::instance()->unpackRed(colour);
-    int green = CTX::instance()->unpackGreen(colour);
-    int blue = CTX::instance()->unpackBlue(colour);
-    int alpha = CTX::instance()->unpackAlpha(colour);
-    if(channel == 3)
-      alpha = value;
+    Dialog::Colour c = map.colour(i);
+    if(channel == 3) return c.a;
+    if(!hsv) return channel == 0 ? c.r : (channel == 1 ? c.g : c.b);
+    int h, s, v;
+    Ui::toHsv(c, h, s, v);
+    return channel == 0 ? h : (channel == 1 ? s : v);
+  }
+
+  void _setMapChannel(const Dialog::ColourMap &map, int i, int channel,
+                      int value, bool hsv)
+  {
+    Dialog::Colour c = map.colour(i);
+    if(channel == 3) {
+      c.a = (unsigned char)value;
+    }
     else if(!hsv) {
-      if(channel == 0) red = value;
-      else if(channel == 1) green = value;
-      else blue = value;
+      if(channel == 0)
+        c.r = (unsigned char)value;
+      else if(channel == 1)
+        c.g = (unsigned char)value;
+      else
+        c.b = (unsigned char)value;
     }
     else {
-      double h, s, v, r, g, b;
-      RGB_to_HSV(red / 255., green / 255., blue / 255., &h, &s, &v);
-      if(channel == 0) h = 6. * value / 255.;
-      else if(channel == 1) s = value / 255.;
-      else v = value / 255.;
-      HSV_to_RGB(h, s, v, &r, &g, &b);
-      red = (int)(255 * r);
-      green = (int)(255 * g);
-      blue = (int)(255 * b);
+      int h, s, v;
+      Ui::toHsv(c, h, s, v);
+      if(channel == 0)
+        h = value;
+      else if(channel == 1)
+        s = value;
+      else
+        v = value;
+      c = Ui::fromHsv(h, s, v, c.a);
     }
-    table->table[i] = CTX::instance()->packColor(red, green, blue, alpha);
+    map.setColour(i, c);
   }
 
   // whether the map is still showing what it answers to, which it stops doing
@@ -433,17 +457,17 @@ namespace {
       }
     } break;
     case Dialog::Color: {
-      unsigned int packed = f.getColour();
-      float col[4] = {CTX::instance()->unpackRed(packed) / 255.f,
-                      CTX::instance()->unpackGreen(packed) / 255.f,
-                      CTX::instance()->unpackBlue(packed) / 255.f,
-                      CTX::instance()->unpackAlpha(packed) / 255.f};
+      Dialog::Colour was = f.getColour();
+      float col[4] = {was.r / 255.f, was.g / 255.f, was.b / 255.f,
+                      was.a / 255.f};
       if(ImGui::ColorEdit4(name.c_str(), col,
                            ImGuiColorEditFlags_NoInputs |
                              ImGuiColorEditFlags_AlphaPreviewHalf)) {
-        const_cast<Dialog::Field &>(f).setColour(CTX::instance()->packColor(
-          (int)(col[0] * 255.f + .5f), (int)(col[1] * 255.f + .5f),
-          (int)(col[2] * 255.f + .5f), (int)(col[3] * 255.f + .5f)));
+        const_cast<Dialog::Field &>(f).setColour(Dialog::Colour(
+          (unsigned char)(col[0] * 255.f + .5f),
+          (unsigned char)(col[1] * 255.f + .5f),
+          (unsigned char)(col[2] * 255.f + .5f),
+          (unsigned char)(col[3] * 255.f + .5f)));
         changed = true;
       }
     } break;
@@ -454,9 +478,11 @@ namespace {
       // What is drawn on it is drawn into the table itself.
       std::string name;
       double least = 0., most = 0.;
-      GmshColorTable *table = f.colourMap ? f.colourMap(name, least, most) :
-                                            nullptr;
-      if(!table || table->size < 2) break;
+      const Dialog::ColourMap &map = f.map;
+      if(map.empty()) break;
+      map.about(name, least, most);
+      int entries = map.size();
+      if(entries < 2) break;
       ImVec2 avail = ImGui::GetContentRegionAvail();
       float wide = (width > 0.f) ? width : avail.x;
       float tall = (f.rows > 0) ? (float)f.rows *
@@ -470,7 +496,7 @@ namespace {
       float labelY = tall - 5.f;
       float markerY = labelY - 2.f * lineHeight;
       float wedgeY = markerY - lineHeight;
-      int size = table->size;
+      int size = entries;
       // where an entry of the table is, and what an ordinate is worth
       auto indexToX = [&](int i) {
         return at.x + wide * (float)i / (float)(size - 1);
@@ -487,24 +513,21 @@ namespace {
       const ImU32 inks[4] = {IM_COL32(255, 0, 0, 255), IM_COL32(0, 255, 0, 255),
                              IM_COL32(0, 0, 255, 255),
                              ImGui::GetColorU32(ImGuiCol_Text)};
-      bool hsv = table->ipar[COLORTABLE_MODE] == COLORTABLE_HSV;
+      bool hsv = map.hsv();
       for(int channel = 0; channel < 4; channel++) {
         for(int i = 1; i < size; i++) {
-          int was = _mapChannel(table, i - 1, channel, hsv);
-          int now = _mapChannel(table, i, channel, hsv);
+          int was = _mapChannel(map, i - 1, channel, hsv);
+          int now = _mapChannel(map, i, channel, hsv);
           into->AddLine(ImVec2(indexToX(i - 1), valueToY(was)),
                         ImVec2(indexToX(i), valueToY(now)), inks[channel]);
         }
       }
       // the wedge of colours
       for(float x = 0.f; x < wide; x += 1.f) {
-        unsigned int colour = table->table[xToIndex(at.x + x)];
-        into->AddRectFilled(
-          ImVec2(at.x + x, at.y + wedgeY),
-          ImVec2(at.x + x + 1.f, at.y + wedgeY + lineHeight),
-          IM_COL32(CTX::instance()->unpackRed(colour),
-                   CTX::instance()->unpackGreen(colour),
-                   CTX::instance()->unpackBlue(colour), 255));
+        Dialog::Colour c = map.colour(xToIndex(at.x + x));
+        into->AddRectFilled(ImVec2(at.x + x, at.y + wedgeY),
+                            ImVec2(at.x + x + 1.f, at.y + wedgeY + lineHeight),
+                            IM_COL32(c.r, c.g, c.b, 255));
       }
       // What it answers to, until it is drawn on -- the widget of the window
       // this reproduces shows it and forgets it at the first click, and so
@@ -568,7 +591,7 @@ namespace {
           int to = xToIndex(mouse.x);
           int from = _mapFrom(to);
           for(int i = std::min(from, to); i <= std::max(from, to); i++)
-            _setMapChannel(table, i, channel, value, hsv);
+            _setMapChannel(map, i, channel, value, hsv);
           changed = true;
         }
       }
@@ -576,22 +599,62 @@ namespace {
         _mapFrom(-1);
       // and the keys that widget answers to, while the pointer is over it
       if(hovered) {
+        // the presets: the digits, the digits with Control, then the first
+        // five function keys, which is the order they are numbered in
+        int presets = map.numPresets ? map.numPresets() : 0;
+        int preset = -1;
         for(int i = 0; i <= 9; i++)
-          if(ImGui::IsKeyPressed((ImGuiKey)(ImGuiKey_0 + i))) {
-            ColorTable_InitParam(ImGui::GetIO().KeyCtrl ? i + 10 : i, table);
-            ColorTable_Recompute(table);
-            changed = true;
-          }
+          if(ImGui::IsKeyPressed((ImGuiKey)(ImGuiKey_0 + i)))
+            preset = ImGui::GetIO().KeyCtrl ? i + 10 : i;
+        for(int i = 0; i < 5; i++)
+          if(ImGui::IsKeyPressed((ImGuiKey)(ImGuiKey_F1 + i)))
+            preset = i + 20;
+        if(preset >= 0 && preset < presets) {
+          map.choosePreset(preset);
+          changed = true;
+        }
         if(ImGui::IsKeyPressed(ImGuiKey_M)) {
-          table->ipar[COLORTABLE_MODE] =
-            hsv ? COLORTABLE_RGB : COLORTABLE_HSV;
+          map.setHsv(!hsv);
           changed = true;
         }
         if(ImGui::IsKeyPressed(ImGuiKey_H)) _mapHelp = !_mapHelp;
         if(ImGui::IsKeyPressed(ImGuiKey_R)) {
-          ColorTable_InitParam(2, table);
-          ColorTable_Recompute(table);
+          // back to the one it is on, not to the first
+          if(map.preset) map.choosePreset(map.preset());
           changed = true;
+        }
+        if(ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C)) {
+          if(map.copy) map.copy();
+        }
+        if(ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V)) {
+          if(map.paste) map.paste();
+          changed = true;
+        }
+        // and the eight numbers the map is computed from, on the keys the
+        // description gives them, which is how this interface comes to have
+        // the ones its help has always advertised.
+        //
+        // The map owns the arrows while the pointer is over it: without this
+        // Dear ImGui also walks its own keyboard focus with them, so pressing
+        // Left both translates the map and lights up whatever tab happens to
+        // be next. The window this reproduces moves nothing.
+        ImGuiID owner = ImGui::GetItemID();
+        ImGui::SetKeyOwner(ImGuiKey_LeftArrow, owner);
+        ImGui::SetKeyOwner(ImGuiKey_RightArrow, owner);
+        ImGui::SetKeyOwner(ImGuiKey_UpArrow, owner);
+        ImGui::SetKeyOwner(ImGuiKey_DownArrow, owner);
+        if(map.parameters) {
+          std::vector<Dialog::ColourMap::Parameter> ps = map.parameters();
+          for(std::size_t i = 0; i < ps.size(); i++) {
+            if(_pressed(ps[i].up)) {
+              map.adjust(ps[i], true);
+              changed = true;
+            }
+            else if(_pressed(ps[i].down)) {
+              map.adjust(ps[i], false);
+              changed = true;
+            }
+          }
         }
       }
     } break;

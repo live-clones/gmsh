@@ -615,6 +615,7 @@ if(ENABLE_TCMALLOC)
   endif()
 endif()
 
+add_subdirectory(src/gui)
 add_subdirectory(src/common)
 add_subdirectory(src/numeric)
 add_subdirectory(src/geo)
@@ -1865,7 +1866,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(src/common src/fltk src/imgui src/geo src/graphics src/mesh
+include_directories(src/gui src/common src/fltk src/imgui src/geo src/graphics src/mesh
                     src/solver src/numeric src/parser src/plugin src/post api
                     contrib/stb
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)

@@ -38,12 +38,160 @@
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "drawContext.h"
+#include "ColorTable.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
 #endif
+
+namespace {
+
+  // What a colour map field is bound to: the map of the view of that index.
+  Ui::ColourMap _colourMapOf(int index)
+  {
+    Ui::ColourMap map;
+#if defined(HAVE_POST)
+    auto table = [index]() -> GmshColorTable * {
+      if(index < 0 || index >= (int)PView::list.size()) return nullptr;
+      return &PView::list[index]->getOptions()->colorTable;
+    };
+    map.about = [index](std::string &name, double &least, double &most) {
+      if(index < 0 || index >= (int)PView::list.size()) return;
+      PView *v = PView::list[index];
+      name = v->getData()->getName();
+      least = v->getData()->getMin();
+      most = v->getData()->getMax();
+    };
+    map.size = [table]() {
+      GmshColorTable *t = table();
+      return t ? t->size : 0;
+    };
+    map.colour = [table](int i) {
+      GmshColorTable *t = table();
+      if(!t || i < 0 || i >= t->size) return Ui::Colour();
+      unsigned int c = t->table[i];
+      CTX *x = CTX::instance();
+      return Ui::Colour((unsigned char)x->unpackRed(c),
+                        (unsigned char)x->unpackGreen(c),
+                        (unsigned char)x->unpackBlue(c),
+                        (unsigned char)x->unpackAlpha(c));
+    };
+    map.setColour = [table](int i, const Ui::Colour &c) {
+      GmshColorTable *t = table();
+      if(!t || i < 0 || i >= t->size) return;
+      t->table[i] = CTX::instance()->packColor(c.r, c.g, c.b, c.a);
+    };
+    map.numPresets = []() { return 25; };
+    map.preset = [table]() {
+      GmshColorTable *t = table();
+      return t ? t->ipar[COLORTABLE_NUMBER] : 0;
+    };
+    map.choosePreset = [table](int preset) {
+      GmshColorTable *t = table();
+      if(!t) return;
+      ColorTable_InitParam(preset, t);
+      ColorTable_Recompute(t);
+    };
+    map.copy = [table]() {
+      GmshColorTable *t = table();
+      if(t) ColorTable_Copy(t);
+    };
+    map.paste = [table]() {
+      GmshColorTable *t = table();
+      if(t) ColorTable_Paste(t);
+    };
+    // The eight numbers the map is computed from, each with the keys the
+    // window this reproduces changes it with. Which of ipar and dpar a
+    // parameter lives in, and what its place in them is, stops here.
+    map.parameters = [table]() {
+      std::vector<Ui::ColourMap::Parameter> ps;
+      GmshColorTable *t = table();
+      int span = t ? t->size - 1 : 0;
+      auto add = [&ps](const std::string &name, Ui::Shortcut up,
+                       Ui::Shortcut down, double least, double most,
+                       double step, double period = 0.) {
+        Ui::ColourMap::Parameter p;
+        p.name = name;
+        p.up = up;
+        p.down = down;
+        p.least = least;
+        p.most = most;
+        p.step = step;
+        p.wraps = period != 0.;
+        p.period = period;
+        p.toggle = down.empty() && step == 0.;
+        ps.push_back(p);
+      };
+      add("Invert", Ui::Shortcut('I', Ui::ModCommand), Ui::Shortcut(), 0., 0.,
+          0.);
+      add("Swap", Ui::Shortcut('I'), Ui::Shortcut(), 0., 0., 0.);
+      add("Rotation", Ui::Shortcut(Ui::KeyLeft, Ui::ModCommand),
+          Ui::Shortcut(Ui::KeyRight, Ui::ModCommand), -span, span, 5., span);
+      add("Curvature", Ui::Shortcut(Ui::KeyDown), Ui::Shortcut(Ui::KeyUp), 0.,
+          0., .05);
+      add("Offset", Ui::Shortcut(Ui::KeyRight), Ui::Shortcut(Ui::KeyLeft), 0.,
+          0., .05);
+      add("Alpha", Ui::Shortcut('A', Ui::ModCommand), Ui::Shortcut('A'), 0.,
+          1., .05);
+      add("Beta", Ui::Shortcut('B'), Ui::Shortcut('B', Ui::ModCommand), -1.,
+          1., .05);
+      add("Alpha power", Ui::Shortcut('P'),
+          Ui::Shortcut('P', Ui::ModCommand), 0., 0., .05);
+      return ps;
+    };
+    map.parameter = [table](const std::string &name) -> double {
+      GmshColorTable *t = table();
+      if(!t) return 0.;
+      if(name == "Invert") return t->ipar[COLORTABLE_INVERT];
+      if(name == "Swap") return t->ipar[COLORTABLE_SWAP];
+      if(name == "Rotation") return t->ipar[COLORTABLE_ROTATION];
+      if(name == "Curvature") return t->dpar[COLORTABLE_CURVATURE];
+      if(name == "Offset") return t->dpar[COLORTABLE_BIAS];
+      if(name == "Alpha") return t->dpar[COLORTABLE_ALPHA];
+      if(name == "Beta") return t->dpar[COLORTABLE_BETA];
+      if(name == "Alpha power") return t->dpar[COLORTABLE_ALPHAPOW];
+      return 0.;
+    };
+    map.setParameter = [table](const std::string &name, double v) {
+      GmshColorTable *t = table();
+      if(!t) return;
+      if(name == "Invert")
+        t->ipar[COLORTABLE_INVERT] = (int)v;
+      else if(name == "Swap")
+        t->ipar[COLORTABLE_SWAP] = (int)v;
+      else if(name == "Rotation")
+        t->ipar[COLORTABLE_ROTATION] = (int)v;
+      else if(name == "Curvature")
+        t->dpar[COLORTABLE_CURVATURE] = v;
+      else if(name == "Offset")
+        t->dpar[COLORTABLE_BIAS] = v;
+      else if(name == "Alpha")
+        t->dpar[COLORTABLE_ALPHA] = v;
+      else if(name == "Beta")
+        t->dpar[COLORTABLE_BETA] = v;
+      else if(name == "Alpha power")
+        t->dpar[COLORTABLE_ALPHAPOW] = v;
+      else
+        return;
+      ColorTable_Recompute(t);
+    };
+    map.hsv = [table]() {
+      GmshColorTable *t = table();
+      return t && t->ipar[COLORTABLE_MODE] == COLORTABLE_HSV;
+    };
+    map.setHsv = [table](bool on) {
+      GmshColorTable *t = table();
+      if(t) t->ipar[COLORTABLE_MODE] = on ? COLORTABLE_HSV : COLORTABLE_RGB;
+    };
+#else
+    (void)index;
+#endif
+    return map;
+  }
+
+} // namespace
 
 namespace Dialog {
 
@@ -1013,9 +1161,9 @@ namespace Dialog {
                     const std::string &label, int num, const optionRow *row)
     {
       Field f;
-      f.optionCategory = category;
-      f.optionName = name;
-      f.optionIndex = num;
+      f.storeCategory = category;
+      f.storeName = name;
+      f.storeIndex = num;
       f.label = label;
       f.tooltip = _tooltipFor(category, name);
       f.changed = _redraw;
@@ -1226,24 +1374,11 @@ namespace Dialog {
           f.kind = ColorMap;
           f.rows = 0;
           int index = num;
-          f.colourMap = [index](std::string &name, double &least,
-                                double &most) -> GmshColorTable * {
-#if defined(HAVE_POST)
-            if(index >= 0 && index < (int)PView::list.size()) {
-              PView *v = PView::list[index];
-              name = v->getData()->getName();
-              least = v->getData()->getMin();
-              most = v->getData()->getMax();
-              return &v->getOptions()->colorTable;
-            }
-#else
-            (void)index;
-            (void)name;
-            (void)least;
-            (void)most;
-#endif
-            return nullptr;
-          };
+          // The interfaces are given what to read and what to write, and
+          // never the table: GmshColorTable is a Gmsh type, and handing it
+          // over is how a widget toolkit starts calling ColorTable_Recompute()
+          // for itself, which is what src/gui exists to prevent.
+          f.map = _colourMapOf(index);
           f.changed = [index]() {
 #if defined(HAVE_POST)
             if(index >= 0 && index < (int)PView::list.size())

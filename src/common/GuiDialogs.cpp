@@ -31,103 +31,67 @@
 
 namespace Dialog {
 
-  // --- reading and writing a field, whatever it is bound to
+  // --- where a field's value lives when it says a store address
+  //
+  // The vocabulary of src/gui knows that a field may name a place rather than
+  // point at a variable, and nothing more: what the three parts of the name
+  // mean is said here, once, and it is the only thing that ties the option
+  // system of Gmsh to the description of a form.
 
-  double Field::getNumber() const
+  void installStore()
   {
-    if(readNumber) return readNumber();
-    if(optionName.size()) {
+    Ui::Store store;
+    store.getNumber = [](const std::string &category, const std::string &name,
+                         int index) {
       double v = 0.;
-      NumberOption(GMSH_GET, optionCategory.c_str(), optionIndex,
-                   optionName.c_str(), v, false);
+      NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), v, false);
       return v;
-    }
-    if(number) return *number;
-    if(integer) return *integer;
-    if(flag) return *flag ? 1. : 0.;
-    return 0.;
-  }
-
-  void Field::setNumber(double v)
-  {
-    if(writeNumber) {
-      writeNumber(v);
-      return;
-    }
-    if(optionName.size()) {
-      NumberOption(GMSH_SET | GMSH_GUI, optionCategory.c_str(), optionIndex,
-                   optionName.c_str(), v, false);
-      return;
-    }
-    if(number)
-      *number = v;
-    else if(integer)
-      *integer = (int)v;
-    else if(flag)
-      *flag = (v != 0.);
-  }
-
-  std::string Field::getText() const
-  {
-    if(readText) return readText();
-    if(optionName.size()) {
+    };
+    store.setNumber = [](const std::string &category, const std::string &name,
+                         int index, double v) {
+      NumberOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(),
+                   v, false);
+    };
+    store.getText = [](const std::string &category, const std::string &name,
+                       int index) {
       std::string v;
-      StringOption(GMSH_GET, optionCategory.c_str(), optionIndex,
-                   optionName.c_str(), v, false);
+      StringOption(GMSH_GET, category.c_str(), index, name.c_str(), v, false);
       return v;
-    }
-    return text ? *text : "";
-  }
-
-  void Field::setText(const std::string &v)
-  {
-    if(optionName.size()) {
+    };
+    store.setText = [](const std::string &category, const std::string &name,
+                       int index, const std::string &v) {
       std::string s(v);
-      StringOption(GMSH_SET | GMSH_GUI, optionCategory.c_str(), optionIndex,
-                   optionName.c_str(), s, false);
-      return;
-    }
-    if(writeText) {
-      writeText(v);
-      return;
-    }
-    if(text) *text = v;
-  }
-
-  bool Field::getFlag() const { return getNumber() != 0.; }
-  void Field::setFlag(bool v) { setNumber(v ? 1. : 0.); }
-
-  unsigned int Field::getColour() const
-  {
-    if(optionName.size()) {
+      StringOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(),
+                   s, false);
+    };
+    store.getColour = [](const std::string &category, const std::string &name,
+                         int index) {
       unsigned int v = 0;
-      ColorOption(GMSH_GET, optionCategory.c_str(), optionIndex,
-                  optionName.c_str(), v, false);
-      return v;
-    }
-    return colour ? *colour : 0;
+      ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), v, false);
+      CTX *c = CTX::instance();
+      return Ui::Colour((unsigned char)c->unpackRed(v),
+                        (unsigned char)c->unpackGreen(v),
+                        (unsigned char)c->unpackBlue(v),
+                        (unsigned char)c->unpackAlpha(v));
+    };
+    store.setColour = [](const std::string &category, const std::string &name,
+                         int index, const Ui::Colour &c) {
+      unsigned int v = CTX::instance()->packColor(c.r, c.g, c.b, c.a);
+      ColorOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(),
+                  v, false);
+    };
+    Ui::setStore(store);
   }
 
-  void Field::setColour(unsigned int v)
-  {
-    if(optionName.size()) {
-      ColorOption(GMSH_SET | GMSH_GUI, optionCategory.c_str(), optionIndex,
-                  optionName.c_str(), v, false);
-      return;
-    }
-    if(colour) *colour = v;
-  }
-
-  void Field::getVector(double &x, double &y, double &z) const
-  {
-    x = y = z = 0.;
-    if(readVector) readVector(x, y, z);
-  }
-
-  void Field::setVector(double x, double y, double z)
-  {
-    if(writeVector) writeVector(x, y, z);
-  }
+  namespace {
+    // Installed before anything can ask a field for its value. It captures
+    // nothing and touches CTX only when a field is actually read, so there is
+    // no order to get wrong here.
+    struct _installer {
+      _installer() { installStore(); }
+    };
+    _installer _install;
+  } // namespace
 
   // --- what each dialog is showing
 

@@ -94,8 +94,8 @@ namespace Dialog {
     Field f;
     f.kind = kind;
     f.label = label;
-    f.optionCategory = category;
-    f.optionName = name;
+    f.storeCategory = category;
+    f.storeName = name;
     return f;
   }
 

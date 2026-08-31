@@ -279,7 +279,7 @@ namespace Dialog {
 
     Pane q;
     Field value = option(Number, "", s.category, s.name);
-    value.optionIndex = s.index;
+    value.storeIndex = s.index;
     if(s.maximum > s.minimum) {
       value.minimum = s.minimum;
       value.maximum = s.maximum;

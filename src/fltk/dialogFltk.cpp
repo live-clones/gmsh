@@ -463,13 +463,10 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       f.setFlag(((Fl_Button *)w)->value() ? true : false);
       break;
     case Dialog::Color: {
-      unsigned int packed = f.getColour();
-      uchar r = CTX::instance()->unpackRed(packed);
-      uchar g = CTX::instance()->unpackGreen(packed);
-      uchar b = CTX::instance()->unpackBlue(packed);
-      uchar a = CTX::instance()->unpackAlpha(packed);
+      Dialog::Colour c = f.getColour();
+      uchar r = c.r, g = c.g, b = c.b;
       if(fl_color_chooser("Color Chooser", r, g, b))
-        f.setColour(CTX::instance()->packColor(r, g, b, a));
+        f.setColour(Dialog::Colour(r, g, b, c.a));
     } break;
     case Dialog::Direction: {
       double x = 0., y = 0., z = 0.;
@@ -1467,10 +1464,8 @@ void dialogFltk::refresh()
       }
     } break;
     case Dialog::Color: {
-      unsigned int packed = f.getColour();
-      Fl_Color shown = fl_rgb_color(CTX::instance()->unpackRed(packed),
-                                    CTX::instance()->unpackGreen(packed),
-                                    CTX::instance()->unpackBlue(packed));
+      Dialog::Colour c = f.getColour();
+      Fl_Color shown = fl_rgb_color(c.r, c.g, c.b);
       if(b.widget->color() != shown) {
         b.widget->color(shown);
         b.widget->redraw();
@@ -1529,11 +1524,10 @@ void dialogFltk::refresh()
     case Dialog::ColorMap: {
       std::string name;
       double least = 0., most = 0.;
-      GmshColorTable *table = f.colourMap ? f.colourMap(name, least, most) :
-                                            nullptr;
-      if(table)
-        ((colorbarWindow *)b.widget)
-          ->update(name.c_str(), least, most, table, &b.changed);
+      if(f.map.empty()) break;
+      f.map.about(name, least, most);
+      ((colorbarWindow *)b.widget)
+        ->update(name.c_str(), least, most, f.map, &b.changed);
     } break;
     case Dialog::Menu: {
       Fl_Menu_Button *m = (Fl_Menu_Button *)b.widget;

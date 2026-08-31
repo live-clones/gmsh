@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "GmshConfig.h"
+#include "Menu.h"
 
 // The menus of the graphical user interface, declared once and built by both
 // interfaces. What used to be bar_table[] in src/fltk/graphicWindow.cpp on one
@@ -27,56 +28,22 @@
 
 namespace Menu {
 
-  // Modifiers of a shortcut. Command is the Control key on X11 and Windows and
-  // the Command key on macOS, which is what both toolkits expect and what the
-  // FLTK bar_table[]/sysbar_table[] pair used to spell out twice.
-  enum { ModCommand = 1 << 0, ModShift = 1 << 1, ModAlt = 1 << 2 };
+  // The vocabulary of a menu now lives in src/gui, which belongs to neither
+  // Gmsh nor a toolkit; what is left here is the catalogue of the menus Gmsh
+  // has. The names below are what the rest of Gmsh calls them, kept so that
+  // the move costs no call site; they are to go, one file at a time.
+  using Shortcut = Ui::Shortcut;
+  using Item = Ui::MenuItem;
+  using Ui::ModCommand;
+  using Ui::ModShift;
+  using Ui::ModAlt;
+  using Ui::KeyNone;
+  using Ui::KeyF1;
+  using Ui::KeyDelete;
+  const Item::Kind Action = Item::Action;
+  const Item::Kind Toggle = Item::Toggle;
+  const Item::Kind Submenu = Item::Submenu;
 
-  // The key of a shortcut: an upper case letter or a digit for the printable
-  // ones, or one of these.
-  enum { KeyNone = 0, KeyF1 = 0x1000 /* .. KeyF1 + 11 */, KeyDelete = 0x1100 };
-
-  struct Shortcut {
-    int key;
-    unsigned mods;
-    Shortcut(int k = KeyNone, unsigned m = 0) : key(k), mods(m) {}
-    bool empty() const { return key == KeyNone; }
-    // "Ctrl+Shift+O", for the interface that has to draw it itself
-    std::string label() const;
-  };
-
-  enum Kind {
-    Action, // run action()
-    Toggle, // action() flips what checked() reports
-    Submenu // has children, and does nothing of its own
-  };
-
-  struct Item {
-    Kind kind;
-    std::string label;
-    // The letter FLTK underlines and binds to Alt, 0 for none. It cannot be
-    // 'g', 'm', 's' or 'p': those are global shortcuts of the 3D view.
-    char mnemonic;
-    Shortcut shortcut;
-    std::function<void()> action;
-    std::function<bool()> checked; // Toggle only
-    // null means always enabled; it is asked again every time the menu is about
-    // to be shown
-    std::function<bool()> enabled;
-    bool dividerAfter;
-    // The entry a popup menu opens under until the user has picked another:
-    // the quick access menu of the status bar opens under the one it is most
-    // often reached for, so that it takes one click and no aim.
-    bool preferred;
-    // the macOS system menu bar provides its own Quit
-    bool hideInSystemBar;
-    std::vector<Item> children;
-    Item()
-      : kind(Action), mnemonic(0), dividerAfter(false), preferred(false),
-        hideInSystemBar(false)
-    {
-    }
-  };
 
   // The menu bar. Whatever the running interface cannot honour is left out
   // rather than shown greyed: an interface with a single window has nothing to
