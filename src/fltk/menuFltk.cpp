@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "uiSources.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_FLTK)
@@ -152,7 +153,7 @@ void fltkModulesBuild(
                            void *data)> &add)
 {
   // moved in first: what follows takes pointers into it
-  _modules.tree = Menu::modules();
+  _modules.tree = uiSources().treeItems();
   _modules.byId.clear();
   _walkModules(_modules.tree, "0Modules", add);
 }
@@ -248,7 +249,7 @@ Fl_Menu_Item *fltkMenuBuild(bool systemBar)
   _menu.items.clear();
   _menu.byId.clear();
   // moved in first: what follows takes pointers into it
-  _menu.tree = Menu::bar();
+  _menu.tree = uiSources().menuBar();
 
   _append(_menu.tree, systemBar);
   Fl_Menu_Item end;

@@ -14,6 +14,7 @@
 #include <FL/Fl_Window.H>
 
 #include "Backend.h"
+#include "uiSources.h"
 #include "FlGui.h"
 #include <mutex>
 #include "graphicWindow.h"
@@ -37,6 +38,13 @@ namespace {
               FL_PATCH_VERSION);
       return std::string(tmp);
     }
+
+    void setSources(const Sources &sources) override
+    {
+      _sources = sources;
+    }
+
+    const Sources &sources() const { return _sources; }
 
     void setHost(const Host &host) override { _host = host; }
 
@@ -301,6 +309,7 @@ namespace {
       }
     }
 
+    Sources _sources;
     Host _host;
     bool _dark = false;
     std::mutex _mutex;
@@ -318,8 +327,21 @@ namespace {
     }
   };
 
+  backendFltk *_the = nullptr;
+
 } // namespace
 
-Ui::Backend *makeUiBackend() { return new backendFltk(); }
+// what the interface was given, for the files that build from it
+const Ui::Backend::Sources &uiSources()
+{
+  static Ui::Backend::Sources none;
+  return _the ? _the->sources() : none;
+}
+
+Ui::Backend *makeUiBackend()
+{
+  if(!_the) _the = new backendFltk();
+  return _the;
+}
 
 #endif

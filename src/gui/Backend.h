@@ -96,8 +96,16 @@ namespace Ui {
     // changed, which is what the refresh calls below are for.
 
     struct Sources {
-      // the description of one form, by the number the shared side gave it
+      // the description of one form, by the number the shared side gave it,
+      // and how many numbers there are
       std::function<Form(int form)> form;
+      std::function<int()> numForms;
+      // Which pane of it is showing. It is here and not in the Form because
+      // the description and the interface have to agree on it without either
+      // telling the other: a menu opens a form on the pane it is about, and a
+      // user picking a tab moves it.
+      std::function<int(int form)> formPane;
+      std::function<void(int form, int pane)> setFormPane;
       // the menu bar, and a counter that changes when it would come out
       // different, so that an interface holding real menu widgets knows when
       // to build them again instead of doing it at every frame

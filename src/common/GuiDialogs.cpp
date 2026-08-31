@@ -568,7 +568,9 @@ namespace Dialog {
   {
     geometryParameters &g = geometryStore();
     Form p;
-    p.title = "Physical Group Context";
+    // it says which kind of entity it is naming, as the window it reproduces
+    // does; one of the interfaces was working that out for itself
+    p.title = "Physical " + physicalType() + " Context";
 
     {
       Pane add;

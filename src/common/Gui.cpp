@@ -73,6 +73,25 @@ namespace Gui {
       };
     made->setHost(host);
 
+    // And everything it is allowed to know of Gmsh: the descriptions, asked
+    // for again rather than handed over, since what they say is only true at
+    // the moment they are drawn.
+    Ui::Backend::Sources sources;
+    sources.form = [](int form) { return Dialog::panel(form); };
+    sources.numForms = []() { return (int)Dialog::NumDialogs; };
+    sources.formPane = [](int form) { return Dialog::currentPane(form); };
+    sources.setFormPane = [](int form, int pane) {
+      Dialog::currentPane(form) = pane;
+    };
+    sources.menuBar = []() { return Menu::bar(); };
+    sources.menuGeneration = []() { return Menu::generation(); };
+    sources.treeItems = []() { return Menu::modules(); };
+    sources.barButtons = []() { return StatusBar::bar(); };
+    sources.barMessage = []() { return StatusBar::message(); };
+    sources.barTooltip = []() { return StatusBar::messageTooltip(); };
+    sources.barPressed = []() { StatusBar::messagePressed(); };
+    made->setSources(sources);
+
     if(!made->create(argc, argv, quitShouldExit)) {
       delete made;
       return;

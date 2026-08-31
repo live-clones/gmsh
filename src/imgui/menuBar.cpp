@@ -15,6 +15,7 @@
 // frame, which is what allows it to open a blocking dialog, ask a question or
 // start an interactive selection.
 
+#include "uiSources.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_IMGUI)
@@ -68,9 +69,9 @@ void appWindow::_drawMenuBar()
   // rebuilt only when what it shows has changed, not at every frame
   static std::vector<Ui::MenuItem> menus;
   static unsigned built = 0;
-  if(built != Menu::generation()) {
-    built = Menu::generation();
-    menus = Menu::bar();
+  if(built != uiSources().menuGeneration()) {
+    built = uiSources().menuGeneration();
+    menus = uiSources().menuBar();
   }
 
   const ImGuiViewport *viewport = ImGui::GetMainViewport();

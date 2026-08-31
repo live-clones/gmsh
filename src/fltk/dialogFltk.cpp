@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "uiSources.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_FLTK)
@@ -554,8 +555,8 @@ void dialogFltk::_tabCallback(Fl_Widget *w, void *data)
   Fl_Widget *shown = ((Fl_Tabs *)w)->value();
   for(std::size_t i = 0; i < d->_groups.size(); i++) {
     if(d->_groups[i] != shown) continue;
-    bool moved = Dialog::currentPane(d->_which) != (int)i;
-    Dialog::currentPane(d->_which) = (int)i;
+    bool moved = uiSources().formPane(d->_which) != (int)i;
+    uiSources().setFormPane(d->_which, (int)i);
     d->refresh();
     // the user picked this pane: it may have something to start
     if(moved && i < d->_panel.panes.size() && d->_panel.panes[i].chosen)
@@ -567,8 +568,8 @@ void dialogFltk::_tabCallback(Fl_Widget *w, void *data)
     if(d->_outerGroups[g] != shown) continue;
     if(g < d->_firstOfGroup.size() && d->_firstOfGroup[g] >= 0) {
       int first = d->_firstOfGroup[g];
-      bool moved = Dialog::currentPane(d->_which) != first;
-      Dialog::currentPane(d->_which) = first;
+      bool moved = uiSources().formPane(d->_which) != first;
+      uiSources().setFormPane(d->_which, first);
       d->_forcePane = true;
       d->refresh();
       // picking a family shows its first member, and starts it
@@ -959,7 +960,7 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
 void dialogFltk::reshape()
 {
   if(_which < 0) return;
-  Ui::Form now = Dialog::panel(_which);
+  Ui::Form now = uiSources().form(_which);
   if(_win && _signature(now) == _signatureBuilt) {
     _panel = now;
     refresh();
@@ -993,7 +994,7 @@ void dialogFltk::build(int dialog)
   _paneButtons.clear();
 
   _which = dialog;
-  _panel = Dialog::panel(dialog);
+  _panel = uiSources().form(dialog);
   _signatureBuilt = _signature(_panel);
   // a window that has just been built has no tab of its own yet
   _forcePane = true;
@@ -1403,7 +1404,7 @@ void dialogFltk::refresh()
 {
   if(!_panel.tabbed) _relayout();
 
-  int shownPane = Dialog::currentPane(_which);
+  int shownPane = uiSources().formPane(_which);
   for(std::size_t i = 0; _panel.tabbed && i < _groups.size(); i++) {
     if((int)i == shownPane) {
       _groups[i]->show();
@@ -1699,7 +1700,7 @@ void dialogFltk::show()
   // What the dialog offers can depend on the model, so it may have to be built
   // again -- but only when its shape really changed: rebuilding a window that
   // is already up makes it blink and come back somewhere else.
-  Ui::Form now = Dialog::panel(_which);
+  Ui::Form now = uiSources().form(_which);
   if(!_win || _signature(now) != _signatureBuilt)
     build(_which);
   else
@@ -1723,15 +1724,18 @@ bool dialogFltk::shown() const { return _win && _win->shown(); }
 
 dialogFltk *fltkDialog(int which, bool create)
 {
-  static dialogFltk dialogs[Dialog::NumDialogs];
-  static bool built[Dialog::NumDialogs] = {false};
-  if(which < 0 || which >= Dialog::NumDialogs) return nullptr;
-  if(!built[which]) {
+  // how many forms there are is the application's to say, so this cannot be
+  // an array of that size any more; a map keeps the addresses steady, which
+  // the widgets that were built for one of them rely on
+  static std::map<int, dialogFltk> dialogs;
+  if(which < 0 || which >= uiSources().numForms()) return nullptr;
+  auto it = dialogs.find(which);
+  if(it == dialogs.end()) {
     if(!create) return nullptr;
-    built[which] = true;
-    dialogs[which].build(which);
+    it = dialogs.emplace(which, dialogFltk()).first;
+    it->second.build(which);
   }
-  return &dialogs[which];
+  return &it->second;
 }
 
 #endif

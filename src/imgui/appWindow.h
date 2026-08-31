@@ -231,7 +231,6 @@ private:
   void _windowFullScreen();
   bool _zoomed, _fullscreen;
   int _savedX, _savedY, _savedW, _savedH;
-  void _drawQuickAccessMenu();
   void _stepAnimation();
   void _drawScene();
   void _handleInput();

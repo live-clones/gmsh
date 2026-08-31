@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <map>
 
+#include "uiSources.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_IMGUI)
@@ -1410,11 +1411,8 @@ void appWindow::_drawDialog(int which)
 {
   if(!_showDialog[which]) return;
 
-  Ui::Form panel = Dialog::panel(which);
+  Ui::Form panel = uiSources().form(which);
   std::string title = panel.title;
-  // the physical dialog says which kind of entity it is naming
-  if(which == Dialog::Physical)
-    title = "Physical " + Dialog::physicalType() + " Context";
   // the title is the identity of the window, so it must not change under Dear
   // ImGui: the dialog index keeps it stable
   title += "###gmshDialog" + std::to_string(which);
@@ -1456,7 +1454,8 @@ void appWindow::_drawDialog(int which)
   // it is a window that will not sit still.
   // the widest each dialog has ever needed to be: one that grows and shrinks
   // sideways as one goes through its categories is one that will not sit still
-  static float widestSeen[Dialog::NumDialogs] = {0.f};
+  static std::vector<float> widestSeen(uiSources().numForms(), 0.f);
+  if(which >= (int)widestSeen.size()) widestSeen.resize(which + 1, 0.f);
   float need = 0.f;
   {
     need = _neededWidth(panel, width) +
@@ -1605,7 +1604,7 @@ void appWindow::_drawDialog(int which)
     }
     // one pane of a family, wherever the rows of tabs put it
     auto drawPane = [&](std::size_t i) {
-      Dialog::currentPane(which) = (int)i;
+      uiSources().setFormPane(which, (int)i);
       if((int)i == wanted) _wantedPane[which] = -1;
       ImGui::PushID((int)i);
       _paneBody(panel.panes[i], width, scrolls, most, this);
@@ -1742,31 +1741,31 @@ void appWindow::_drawDialog(int which)
 
 void appWindow::hideDialog(int which)
 {
-  if(which < 0 || which >= Dialog::NumDialogs) return;
+  if(which < 0 || which >= uiSources().numForms()) return;
   bool was = _showDialog[which];
   _showDialog[which] = false;
   _sizedDialog[which] = false;
   // hidden from a menu rather than by its cross, which is the same thing to
   // whatever the dialog undoes when it goes
   if(was) {
-    Ui::Form panel = Dialog::panel(which);
+    Ui::Form panel = uiSources().form(which);
     if(panel.closed) postAction(panel.closed);
   }
 }
 
 bool appWindow::dialogVisible(int which) const
 {
-  if(which < 0 || which >= Dialog::NumDialogs) return false;
+  if(which < 0 || which >= uiSources().numForms()) return false;
   return _showDialog[which];
 }
 
 void appWindow::showDialog(int which)
 {
-  if(which < 0 || which >= Dialog::NumDialogs) return;
+  if(which < 0 || which >= uiSources().numForms()) return;
   _showDialog[which] = true;
   _focusDialog[which] = true;
   // the pane the description asks for, to be forced once
-  _wantedPane[which] = Dialog::currentPane(which);
+  _wantedPane[which] = uiSources().formPane(which);
 }
 
 #endif

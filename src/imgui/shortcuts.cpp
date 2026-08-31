@@ -8,6 +8,7 @@
 // items, the ones that trigger an action queue it with postAction() so that it
 // runs outside of the Dear ImGui frame.
 
+#include "uiSources.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_IMGUI)
@@ -87,9 +88,9 @@ void appWindow::_handleShortcuts()
   {
     static std::vector<Ui::MenuItem> menus;
     static unsigned built = 0;
-    if(built != Menu::generation()) {
-      built = Menu::generation();
-      menus = Menu::bar();
+    if(built != uiSources().menuGeneration()) {
+      built = uiSources().menuGeneration();
+      menus = uiSources().menuBar();
     }
     if(_runMenuShortcut(menus, ctrl, shift, io.KeyAlt)) return;
   }

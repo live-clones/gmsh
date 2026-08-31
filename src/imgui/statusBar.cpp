@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "uiSources.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_IMGUI)
@@ -52,17 +53,6 @@ namespace {
 
 } // namespace
 
-void appWindow::_drawQuickAccessMenu()
-{
-  // described once in src/common/GuiMenus.cpp, as the menu bar is: the FLTK
-  // interface pops the same entries up on the same button
-  // It says what the options are worth, and which entries are worth showing at
-  // all, so it is built afresh every frame it is open rather than kept: the
-  // FLTK popup is built afresh every time it opens, for the same reason.
-  static std::vector<Ui::MenuItem> menu;
-  menu = Menu::quickAccess();
-  menuWalk(menu, this);
-}
 
 void appWindow::_drawStatusBar()
 {
@@ -82,7 +72,7 @@ void appWindow::_drawStatusBar()
       // different labels, different tooltips, and the button that says
       // whether the mouse picks meaning the opposite thing.
       static std::vector<Ui::BarButton> bar;
-      bar = StatusBar::bar();
+      bar = uiSources().barButtons();
       for(std::size_t i = 0; i < bar.size(); i++) {
         const Ui::BarButton &b = bar[i];
         if(b.gapBefore) ImGui::Separator();
@@ -129,16 +119,16 @@ void appWindow::_drawStatusBar()
       // as the FLTK bar does; the target is the whole strip left of the
       // progress, not just the text, so that it can be hit when the message is
       // short or empty.
-      Ui::BarMessage m = StatusBar::message();
+      Ui::BarMessage m = uiSources().barMessage();
       ImVec2 textPos = ImGui::GetCursorScreenPos();
       float avail = ImGui::GetContentRegionAvail().x;
       if(m.running) avail -= 200.f * _styleScale;
       if(avail < 1.f) avail = 1.f;
       if(ImGui::InvisibleButton("##statusMessage",
                                 ImVec2(avail, ImGui::GetFrameHeight())))
-        postAction(StatusBar::messagePressed);
+        postAction(uiSources().barPressed);
       if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        ImGui::SetTooltip("%s", StatusBar::messageTooltip().c_str());
+        ImGui::SetTooltip("%s", uiSources().barTooltip().c_str());
       ImGui::SetCursorScreenPos(textPos);
 
       if(m.colour == Gui::StatusColorError)

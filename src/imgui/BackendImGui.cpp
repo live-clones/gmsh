@@ -14,6 +14,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Backend.h"
+#include "uiSources.h"
 #include "appWindow.h"
 #include "toolkit.h"
 #include "messageConsole.h"
@@ -34,6 +35,13 @@ namespace {
       s += glfwGetVersionString();
       return s;
     }
+
+    void setSources(const Sources &sources) override
+    {
+      _sources = sources;
+    }
+
+    const Sources &sources() const { return _sources; }
 
     void setHost(const Host &host) override
     {
@@ -301,6 +309,7 @@ namespace {
     }
 
   private:
+    Sources _sources;
     Host _host;
     std::mutex _mutex;
     std::vector<std::function<void()> > _posted;
@@ -314,6 +323,13 @@ namespace {
 void drainPostedFromThread()
 {
   if(_the) _the->drain();
+}
+
+// what the interface was given, for the files that build from it
+const Ui::Backend::Sources &uiSources()
+{
+  static Ui::Backend::Sources none;
+  return _the ? _the->sources() : none;
 }
 
 Ui::Backend *makeUiBackend()
