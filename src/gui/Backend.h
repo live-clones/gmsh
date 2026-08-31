@@ -164,8 +164,8 @@ namespace Ui {
     // One call per described thing. The backend builds it from Sources, keeps
     // whatever it has to keep, and is told when to look again.
 
-    virtual void showForm(int form, bool show) {}
-    virtual bool formVisible(int form) { return false; }
+    virtual void showForm(int form, bool show) = 0;
+    virtual bool formVisible(int form) = 0;
     // Its values changed but not its shape: push them into the widgets. An
     // interface that draws the description afresh at every frame has nothing
     // to do here, which is why this is not pure.
@@ -185,12 +185,20 @@ namespace Ui {
                            const std::string &key) {}
 
     // the modules tree: what it says changed, or what it is made of did
-    virtual void refreshTree(bool rebuild) {}
-    virtual void openTreeItem(const std::string &name, bool open) {}
+    virtual void refreshTree(bool rebuild) = 0;
+    virtual void openTreeItem(const std::string &name, bool open) = 0;
+    // Whether it is closed because the user closed it, as opposed to because
+    // it has never been opened. A module is opened when what it is about
+    // happens -- a mesh was made, so Mesh opens -- but not one the user has
+    // folded away by hand.
+    virtual bool treeItemClosedByHand(const std::string &name)
+    {
+      return false;
+    }
     // the two buttons under it, whose labels are ("check", "compute") when the
     // solver is idle and ("", "stop") while it runs
     virtual void setSolverButtonMode(const std::string &button0,
-                                     const std::string &button1) {}
+                                     const std::string &button1) = 0;
 
     // the last message or the progress changed: the bar is to draw again
     virtual void refreshBar() = 0;
@@ -199,6 +207,9 @@ namespace Ui {
     // A line that is empty is a line that is not to be touched.
     virtual void sceneMessage(const std::string &first,
                               const std::string &second) = 0;
+    // A transient note next to the pointer, over the 3D view: what was picked,
+    // put where the user is already looking. An empty text takes it away.
+    virtual void drawTooltip(const std::string &text) {}
     // The windows the interface has, and what each is called. One interface
     // has a single window and the other as many as have been opened, which is
     // the only reason this is a count and not a title.
@@ -207,8 +218,8 @@ namespace Ui {
 
     // The message console. It is the one part that is not a form: a window in
     // one interface and a strip under the scene in the other.
-    virtual void showConsole(bool show) {}
-    virtual bool consoleVisible() { return false; }
+    virtual void showConsole(bool show) = 0;
+    virtual bool consoleVisible() = 0;
     virtual void addMessage(const std::string &text, int level) = 0;
     // what it holds, in the order it holds it; writing it to a file is done
     // once, by the caller
@@ -251,7 +262,7 @@ namespace Ui {
     // "new", "split_h", "split_v", "split_u", "minimize", "zoom",
     // "fullscreen", "front", "attach_detach", "copy": what supports() answers
     // about
-    virtual void windowAction(const std::string &what) {}
+    virtual void windowAction(const std::string &what) = 0;
     // where the windows are and how big they are, for the option file, in the
     // order the caller wrote them
     virtual void storeWindowLayout() {}

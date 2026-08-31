@@ -21,6 +21,9 @@
 #include "GuiStatus.h"
 #include "StringUtils.h"
 #include "drawContext.h"
+#include "GuiDialogs.h"
+#include "GuiMenus.h"
+#include "GuiActions.h"
 
 // The graphical user interface, written once.
 //
@@ -278,6 +281,184 @@ namespace Gui {
     // "use a dark interface"; which colours that means is the toolkit's.
     _backend->applyColorScheme(CTX::instance()->guiColorScheme ? true : false);
     if(redraw) drawContext::global()->draw();
+  }
+
+  // --- the things that are described
+  //
+  // A dialog is described once in GuiDialogs.h and built by whichever
+  // interface is running; all that is left here is which one, and when.
+
+  void showDialog(int dialog, bool show)
+  {
+    if(_backend) _backend->showForm(dialog, show);
+  }
+
+  bool dialogVisible(int dialog)
+  {
+    return _backend && _backend->formVisible(dialog);
+  }
+
+  void refreshDialog(int dialog)
+  {
+    if(_backend) _backend->refreshForm(dialog);
+  }
+
+  void showContextWindow(int dim, int tag) { Dialog::showOnelabContext(dim, tag); }
+
+  void configureGamepad() { Dialog::show(Dialog::Gamepad, 0); }
+
+  void updateFields()
+  {
+    // the fields of the model have changed: the window that shows them has one
+    // line more or one option fewer, which is a matter of shape and not of
+    // value
+    if(_backend) _backend->rebuildForm(Dialog::Fields);
+  }
+
+  // The panels the menus show and hide. Every one of them is a described
+  // dialog except the message console, which is a window in one interface and
+  // a strip under the scene in the other; the table saying which was written
+  // out twice, once per interface, and was the same table both times.
+
+  namespace {
+
+    int _panelDialog(int panel)
+    {
+      switch(panel) {
+      case PanelOptions: return Dialog::Options;
+      case PanelVisibility: return Dialog::Visibility;
+      case PanelPlugins: return Dialog::Plugins;
+      case PanelFields: return Dialog::Fields;
+      case PanelKeyboardAndMouse: return Dialog::Shortcuts;
+      case PanelCurrentOptions: return Dialog::CurrentOptions;
+      case PanelAbout: return Dialog::About;
+      case PanelClassify: return Dialog::Classify;
+      default: return -1;
+      }
+    }
+
+  } // namespace
+
+  bool panelVisible(int panel)
+  {
+    if(!_backend) return false;
+    if(panel == PanelMessageConsole) return _backend->consoleVisible();
+    int dialog = _panelDialog(panel);
+    return dialog >= 0 && dialogVisible(dialog);
+  }
+
+  void showPanel(int panel, bool show)
+  {
+    if(!_backend) return;
+    if(panel == PanelMessageConsole) {
+      _backend->showConsole(show);
+      return;
+    }
+    int dialog = _panelDialog(panel);
+    if(dialog < 0) return;
+    if(!show) {
+      showDialog(dialog, false);
+      return;
+    }
+    // showing one is not only raising it: a dialog that works on something
+    // takes it as it opens, which is what Dialog::show() is for. The one that
+    // turns a triangulation into a model draws the edges it has detected as
+    // well, which is why it has a call of its own.
+    if(dialog == Dialog::Classify)
+      Dialog::startClassify();
+    else
+      Dialog::show(dialog, -1);
+  }
+
+  // --- the modules tree, and what has to be looked at again
+
+  void rebuildTree(bool deleteWidgets)
+  {
+    if(_backend) _backend->refreshTree(deleteWidgets);
+  }
+
+  void openModule(const std::string &name)
+  {
+    if(_backend) _backend->openTreeItem("0Modules/" + name, true);
+  }
+
+  void openTreeItem(const std::string &name)
+  {
+    if(_backend) _backend->openTreeItem(name, true);
+  }
+
+  void closeTreeItem(const std::string &name)
+  {
+    if(_backend) _backend->openTreeItem(name, false);
+  }
+
+  void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
+  {
+    if(!_backend) return;
+    // the bar has a button that only makes sense with a view that has several
+    // time steps
+    _backend->refreshBar();
+    if(!numberOfViewsHasChanged) return;
+    _backend->refreshTree(deleteWidgets);
+    // The per-entity parameters are described once and read what the server
+    // holds: a parameter a solver added is a field more, so the window may
+    // have to be built again and not only read again.
+    _backend->rebuildForm(Dialog::OnelabContext);
+    // the option window reads what it shows, views included
+    refreshDialog(Dialog::Options);
+    // the size-field window offers the views a field may be drawn on
+    updateFields();
+    refreshDialog(Dialog::Clipping);
+    statisticsRefresh(false);
+  }
+
+  void resetVisibility()
+  {
+    refreshDialog(Dialog::Visibility);
+    refreshDialog(Dialog::CurrentOptions);
+    statisticsRefresh(false);
+  }
+
+  void fillRecentHistoryMenu()
+  {
+    // the recent files are part of the menu description, so the menus simply
+    // have to be built again
+    Menu::invalidate();
+    if(_backend) _backend->refreshMenus();
+  }
+
+  void watchFile()
+  {
+    // rescan General.WatchFilePattern and merge what it matches; one of the
+    // two interfaces reached it through the callback of the menu entry that
+    // asks for the pattern, which is why it looked like a toolkit's
+    watchFiles();
+  }
+
+  void storeCurrentWindowsInfo()
+  {
+    if(_backend) _backend->storeWindowLayout();
+  }
+
+  void setSolverButtonMode(const std::string &button0,
+                           const std::string &button1)
+  {
+    if(_backend) _backend->setSolverButtonMode(button0, button1);
+  }
+
+  void drawTooltip(const std::string &text)
+  {
+    if(_backend) _backend->drawTooltip(text);
+  }
+
+  void windowAction(const std::string &what)
+  {
+    if(_backend) _backend->windowAction(what);
+  }
+
+  bool supportsWindowAction(const std::string &what)
+  {
+    return _backend && _backend->supports(what);
   }
 
   // --- what the interface remembers for the rest of Gmsh

@@ -17,6 +17,9 @@
 #include "FlGui.h"
 #include <mutex>
 #include "graphicWindow.h"
+#include "dialogFltk.h"
+#include "onelabGroup.h"
+#include "menuFltk.h"
 #include "openglWindow.h"
 #include "fileDialogs.h"
 #include "drawContext.h"
@@ -173,11 +176,109 @@ namespace {
       if(FlGui::available()) FlGui::instance()->applyColorScheme(false);
     }
 
+    // --- the things that are described
+
+    void showForm(int form, bool show) override
+    {
+      dialogFltk *d = fltkDialog(form);
+      if(!d) return;
+      if(show)
+        d->show();
+      else
+        d->hide();
+    }
+
+    bool formVisible(int form) override
+    {
+      // only if it is already there: asking is not a reason to build it
+      dialogFltk *d = fltkDialog(form, false);
+      return d && d->shown();
+    }
+
+    void refreshForm(int form) override
+    {
+      dialogFltk *d = fltkDialog(form, false);
+      if(d && d->shown()) d->refresh();
+    }
+
+    void rebuildForm(int form) override
+    {
+      dialogFltk *d = fltkDialog(form, false);
+      if(d && d->shown()) d->reshape();
+    }
+
+    void showConsole(bool show) override
+    {
+      if(!FlGui::available()) return;
+      graphicWindow *g = FlGui::instance()->graph[0];
+      if(show)
+        g->showMessages();
+      else
+        g->hideMessages();
+      FlGui::check();
+    }
+
+    bool consoleVisible() override
+    {
+      if(!FlGui::available()) return false;
+      return FlGui::instance()->graph[0]->getMessageHeight() >= FL_NORMAL_SIZE;
+    }
+
+    void refreshTree(bool rebuild) override
+    {
+      if(FlGui::available()) FlGui::instance()->rebuildTree(rebuild);
+    }
+
+    void openTreeItem(const std::string &name, bool open) override
+    {
+      if(!FlGui::available() || !FlGui::instance()->onelab) return;
+      if(open)
+        FlGui::instance()->onelab->openTreeItem(name);
+      else
+        FlGui::instance()->onelab->closeTreeItem(name);
+    }
+
+    bool treeItemClosedByHand(const std::string &name) override
+    {
+      if(!FlGui::available() || !FlGui::instance()->onelab) return false;
+      return FlGui::instance()->onelab->isManuallyClosed(name);
+    }
+
+    void refreshMenus() override
+    {
+      if(FlGui::available())
+        FlGui::instance()->graph[0]->fillRecentHistoryMenu();
+    }
+
+    void storeWindowLayout() override
+    {
+      if(FlGui::available()) FlGui::instance()->storeCurrentWindowsInfo();
+    }
+
+    void setSolverButtonMode(const std::string &button0,
+                             const std::string &button1) override
+    {
+      if(FlGui::available() && FlGui::instance()->onelab)
+        FlGui::instance()->onelab->setButtonMode(button0, button1);
+    }
+
+    void drawTooltip(const std::string &text) override
+    {
+      if(!FlGui::available()) return;
+      if(openglWindow *w = FlGui::instance()->getCurrentOpenglWindow())
+        w->drawTooltip(text);
+    }
+
+    void windowAction(const std::string &what) override
+    {
+      fltkWindowAction(what);
+    }
+
     bool supports(const std::string &what) override
     {
 #if !defined(WIN32)
-      // the proprietary extension has a window only in this interface
-      if(what == "3m") return true;
+      // this interface only copies the view to the clipboard on Windows
+      if(what == "copy") return false;
 #endif
       return true;
     }

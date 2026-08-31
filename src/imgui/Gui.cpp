@@ -138,85 +138,7 @@ namespace Gui {
 
   // --- refreshing the GUI when the model changes
 
-  void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
-  {
-    // the panels are rebuilt from CTX and from the model at every frame, so
-    // there is nothing to refresh; only a redraw is needed
-    if(available()) appWindow::instance()->requestRedraw();
-  }
-
-  void updateFields()
-  {
-    if(available()) appWindow::instance()->requestRedraw();
-  }
-
-
-  void rebuildTree(bool deleteWidgets)
-  {
-    if(available()) appWindow::instance()->requestRedraw();
-  }
-
-  void resetVisibility() {}
-
-  void storeCurrentWindowsInfo()
-  {
-    // the layout is saved by Dear ImGui itself, in .gmsh-imgui.ini
-  }
-
-  void fillRecentHistoryMenu()
-  {
-    // the recent files are part of the menu description, so the menu simply
-    // has to be built again
-    Menu::invalidate();
-  }
-
-  void watchFile() { watchFiles(); }
-
   // --- modules, tree and context windows
-
-  void drawTooltip(const std::string &text)
-  {
-    if(available()) appWindow::instance()->setTooltip(text);
-  }
-
-  void openModule(const std::string &name) {}
-  void openTreeItem(const std::string &name)
-  {
-    if(appWindow *a = appWindow::instance()) a->openTreeItem(name);
-  }
-  void closeTreeItem(const std::string &name)
-  {
-    if(appWindow *a = appWindow::instance()) a->closeTreeItem(name);
-  }
-
-  void showContextWindow(int dim, int tag)
-  {
-    Dialog::showOnelabContext(dim, tag);
-  }
-
-  bool dialogVisible(int dialog)
-  {
-    appWindow *a = appWindow::instance();
-    return a && a->dialogVisible(dialog);
-  }
-
-  // nothing to do: a dialog is drawn from the description at every frame
-  void refreshDialog(int dialog) {}
-
-  void showDialog(int dialog, bool show)
-  {
-    if(!available()) return;
-    if(show)
-      appWindow::instance()->showDialog(dialog);
-    else
-      appWindow::instance()->hideDialog(dialog);
-  }
-
-  bool panelVisible(int panel)
-  {
-    if(!available()) return false;
-    return appWindow::instance()->panelVisible(panel);
-  }
 
   void orientViews(const std::string &what, bool reverse, bool sync)
   {
@@ -264,44 +186,6 @@ namespace Gui {
                  (ext == ".txt")  ? 4 : 2;
     view->write(name, format);
 #endif
-  }
-
-  void configureGamepad()
-  {
-    Dialog::show(Dialog::Gamepad, 0);
-  }
-
-  void showPanel(int panel, bool show)
-  {
-    if(available()) appWindow::instance()->showPanel(panel, show);
-  }
-
-  void windowAction(const std::string &what)
-  {
-    if(!available()) return;
-    appWindow *app = appWindow::instance();
-    if(what == "new")
-      app->newGraphicWindow();
-    else if(what == "split_h")
-      app->splitCurrentPane('h', 0.5);
-    else if(what == "split_v")
-      app->splitCurrentPane('v', 0.5);
-    else if(what == "split_u")
-      app->splitCurrentPane('u', 0.);
-    else
-      app->windowAction(what);
-  }
-
-  bool supportsWindowAction(const std::string &what)
-  {
-    // Nothing to bring to the front, since the panels are not windows of their
-    // own; no image clipboard in GLFW; nothing to attach or detach, since every
-    // panel is already dragged in and out of the dock space by hand; and the
-    // proprietary 3M extension only has a window in the FLTK interface.
-    if(what == "front" || what == "copy" || what == "attach_detach" ||
-       what == "3m")
-      return false;
-    return true;
   }
 
   void fileAction(const std::string &what)
@@ -362,12 +246,6 @@ namespace Gui {
   }
 
   bool solverBusy() { return solverIsRunning(); }
-
-  void setSolverButtonMode(const std::string &button0,
-                           const std::string &button1)
-  {
-    if(available()) appWindow::instance()->setSolverButtonMode(button0, button1);
-  }
 
   void startSolver(int index) { solverStart(index); }
 

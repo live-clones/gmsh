@@ -188,6 +188,90 @@ namespace {
       if(appWindow::available()) appWindow::instance()->applyStyle();
     }
 
+    // --- the things that are described
+    //
+    // A panel is drawn from its description at every frame, so almost nothing
+    // has to be kept in step: what is here is what to show and what is
+    // showing, and a request for a frame.
+
+    void showForm(int form, bool show) override
+    {
+      if(!appWindow::available()) return;
+      if(show)
+        appWindow::instance()->showDialog(form);
+      else
+        appWindow::instance()->hideDialog(form);
+    }
+
+    bool formVisible(int form) override
+    {
+      return appWindow::available() &&
+             appWindow::instance()->dialogVisible(form);
+    }
+
+    void showConsole(bool show) override
+    {
+      if(appWindow::available()) appWindow::instance()->showConsole(show);
+    }
+
+    bool consoleVisible() override
+    {
+      return appWindow::available() &&
+             appWindow::instance()->consoleVisible();
+    }
+
+    void refreshTree(bool rebuild) override
+    {
+      if(appWindow::available()) appWindow::instance()->requestRedraw();
+    }
+
+    void openTreeItem(const std::string &name, bool open) override
+    {
+      if(!appWindow::available()) return;
+      if(open)
+        appWindow::instance()->openTreeItem(name);
+      else
+        appWindow::instance()->closeTreeItem(name);
+    }
+
+    void refreshMenus() override
+    {
+      if(appWindow::available()) appWindow::instance()->requestRedraw();
+    }
+
+    void storeWindowLayout() override
+    {
+      // the layout is saved by Dear ImGui itself, in .gmsh-imgui.ini
+    }
+
+    void setSolverButtonMode(const std::string &button0,
+                             const std::string &button1) override
+    {
+      if(appWindow::available())
+        appWindow::instance()->setSolverButtonMode(button0, button1);
+    }
+
+    void drawTooltip(const std::string &text) override
+    {
+      if(appWindow::available()) appWindow::instance()->setTooltip(text);
+    }
+
+    void windowAction(const std::string &what) override
+    {
+      if(!appWindow::available()) return;
+      appWindow *a = appWindow::instance();
+      if(what == "new")
+        a->newGraphicWindow();
+      else if(what == "split_h")
+        a->splitCurrentPane('h', 0.5);
+      else if(what == "split_v")
+        a->splitCurrentPane('v', 0.5);
+      else if(what == "split_u")
+        a->splitCurrentPane('u', 0.);
+      else
+        a->windowAction(what);
+    }
+
     bool supports(const std::string &what) override
     {
       // Nothing to bring to the front, since the panels are not windows of

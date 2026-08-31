@@ -41,129 +41,9 @@ namespace Gui {
 
   // --- messages, status bar and modal dialogs
 
-  static std::string _colorPrefix(int level)
-  {
-    // color codes understood by Fl_Browser; the dark color scheme needs
-    // different (lighter) colors than the light one
-    bool dark = CTX::instance()->guiColorScheme ? true : false;
-    switch(level) {
-    case MessageDirect: return dark ? "@B136@." : "@C4@.";
-    case MessageWarning: return dark ? "@B152@." : "@C5@.";
-    case MessageError: return dark ? "@B72@." : "@C1@.";
-    default: return "";
-    }
-  }
-
   // --- refreshing the GUI when the model changes
 
-  void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
-  {
-    FlGui::instance()->updateViews(numberOfViewsHasChanged, deleteWidgets);
-  }
-
-  void updateFields()
-  {
-    // the fields of the model have changed: the window that shows them has
-    // one line more or one option fewer, which is a matter of shape
-    dialogFltk *d = fltkDialog(Dialog::Fields, false);
-    if(d && d->shown()) d->reshape();
-  }
-
-
-  void rebuildTree(bool deleteWidgets)
-  {
-    FlGui::instance()->rebuildTree(deleteWidgets);
-  }
-
-  void resetVisibility() { FlGui::instance()->resetVisibility(); }
-
-  void storeCurrentWindowsInfo()
-  {
-    FlGui::instance()->storeCurrentWindowsInfo();
-  }
-
-  void fillRecentHistoryMenu()
-  {
-    FlGui::instance()->graph[0]->fillRecentHistoryMenu();
-  }
-
-  void watchFile() { file_watch_cb(nullptr, nullptr); }
-
   // --- modules, tree and context windows
-
-  void openModule(const std::string &name)
-  {
-    FlGui::instance()->openModule(name);
-  }
-
-  void openTreeItem(const std::string &name)
-  {
-    FlGui::instance()->openTreeItem(name);
-  }
-
-  void closeTreeItem(const std::string &name)
-  {
-    FlGui::instance()->closeTreeItem(name);
-  }
-
-  void showContextWindow(int dim, int tag)
-  {
-    Dialog::showOnelabContext(dim, tag);
-  }
-
-  bool dialogVisible(int dialog)
-  {
-    // only if it is already there: asking is not a reason to build it
-    dialogFltk *d = fltkDialog(dialog, false);
-    return d && d->shown();
-  }
-
-  void refreshDialog(int dialog)
-  {
-    dialogFltk *d = fltkDialog(dialog, false);
-    if(d && d->shown()) d->refresh();
-  }
-
-  void showDialog(int dialog, bool show)
-  {
-    dialogFltk *d = fltkDialog(dialog);
-    if(!d) return;
-    if(show)
-      d->show();
-    else
-      d->hide();
-  }
-
-  static Fl_Window *_panelWindow(int panel)
-  {
-    FlGui *g = FlGui::instance();
-    switch(panel) {
-    default: return nullptr;
-    }
-  }
-
-  bool panelVisible(int panel)
-  {
-    if(!available()) return false;
-    if(panel == PanelMessageConsole) {
-      graphicWindow *g = FlGui::instance()->graph[0];
-      return g->getMessageHeight() >= FL_NORMAL_SIZE;
-    }
-    // the option and visibility windows are described like the other
-    // dialogs now, so they are dialogs
-    if(panel == PanelOptions) return dialogVisible(Dialog::Options);
-    if(panel == PanelVisibility) return dialogVisible(Dialog::Visibility);
-    if(panel == PanelPlugins) return dialogVisible(Dialog::Plugins);
-    if(panel == PanelFields) return dialogVisible(Dialog::Fields);
-    // and so are the three windows of the Help menu
-    if(panel == PanelKeyboardAndMouse) return dialogVisible(Dialog::Shortcuts);
-    if(panel == PanelCurrentOptions)
-      return dialogVisible(Dialog::CurrentOptions);
-    if(panel == PanelAbout) return dialogVisible(Dialog::About);
-    if(panel == PanelClassify) return dialogVisible(Dialog::Classify);
-    Fl_Window *w = _panelWindow(panel);
-    return w ? (w->shown() ? true : false) : false;
-  }
 
   void orientViews(const std::string &what, bool reverse, bool sync)
   {
@@ -214,90 +94,6 @@ namespace Gui {
 #endif
   }
 
-  void configureGamepad()
-  {
-    // described once, like every other dialog; show() raises it
-    Dialog::show(Dialog::Gamepad, 0);
-  }
-
-  void showPanel(int panel, bool show)
-  {
-    if(!available()) return;
-    if(panel == PanelMessageConsole) {
-      graphicWindow *g = FlGui::instance()->graph[0];
-      if(show)
-        g->showMessages();
-      else
-        g->hideMessages();
-      FlGui::check();
-      return;
-    }
-    // the option window is described like the other dialogs now, so it is one
-    if(panel == PanelOptions) {
-      showDialog(Dialog::Options, show);
-      return;
-    }
-    if(panel == PanelVisibility) {
-      if(show)
-        Dialog::show(Dialog::Visibility, -1);
-      else
-        showDialog(Dialog::Visibility, false);
-      return;
-    }
-    if(panel == PanelPlugins) {
-      if(show)
-        Dialog::show(Dialog::Plugins, -1);
-      else
-        showDialog(Dialog::Plugins, false);
-      return;
-    }
-    if(panel == PanelFields) {
-      if(show)
-        Dialog::show(Dialog::Fields, -1);
-      else
-        showDialog(Dialog::Fields, false);
-      return;
-    }
-    {
-      int dialog = (panel == PanelKeyboardAndMouse) ? Dialog::Shortcuts :
-                   (panel == PanelCurrentOptions)   ? Dialog::CurrentOptions :
-                   (panel == PanelAbout)            ? Dialog::About :
-                                                      -1;
-      if(dialog >= 0) {
-        if(show)
-          Dialog::show(dialog, -1);
-        else
-          showDialog(dialog, false);
-        return;
-      }
-    }
-    if(panel == PanelClassify) {
-      if(show)
-        Dialog::startClassify();
-      else
-        showDialog(Dialog::Classify, false);
-      return;
-    }
-    Fl_Window *w = _panelWindow(panel);
-    if(!w) return;
-    if(!show) {
-      w->hide();
-      return;
-    }
-    w->show();
-  }
-
-  void windowAction(const std::string &what) { fltkWindowAction(what); }
-
-  bool supportsWindowAction(const std::string &what)
-  {
-#if !defined(WIN32)
-    // the FLTK interface only copies the view to the clipboard on Windows
-    if(what == "copy") return false;
-#endif
-    return true;
-  }
-
   void fileAction(const std::string &what) { fltkFileAction(what); }
 
   void abortSelection()
@@ -321,23 +117,9 @@ namespace Gui {
     onelab_cb(nullptr, (void *)action.c_str());
   }
 
-  void drawTooltip(const std::string &text)
-  {
-    if(!available()) return;
-    if(openglWindow *w = FlGui::instance()->getCurrentOpenglWindow())
-      w->drawTooltip(text);
-  }
-
   bool solverBusy()
   {
     return FlGui::instance()->onelab && FlGui::instance()->onelab->isBusy();
-  }
-
-  void setSolverButtonMode(const std::string &button0,
-                           const std::string &button1)
-  {
-    if(FlGui::instance()->onelab)
-      FlGui::instance()->onelab->setButtonMode(button0, button1);
   }
 
   void startSolver(int index)

@@ -298,6 +298,10 @@ public:
   }
   // ask for a new frame to be drawn
   void requestRedraw();
+  // the message console, which is the one part of the interface that is not a
+  // described form: a strip under the scene
+  void showConsole(bool show) { _showConsole = show; }
+  bool consoleVisible() const { return _showConsole; }
   // draw the current pane immediately (used for vector output and for grabbing
   // the pixels of the scene)
   void drawCurrentPane();
