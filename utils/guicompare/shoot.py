@@ -271,6 +271,15 @@ SHOTS.append(dict(name="quickaccess-", dialog="quickaccess", branches=[],
                   menu={"released": [(22, 735)], "fltk": [(22, 735)],
                         "imgui": [(41, 987)]}))
 
+# The tree down the left side, with what a solver has published under its
+# commands. Nothing else photographs those: the parameters of onelab.geo are
+# "ONELAB Context/" templates, which belong to the per-entity window and are
+# kept out of the tree on purpose, so a change to how a parameter is drawn
+# could pass unseen. The picture is of the whole window, the tree being a part
+# of it rather than a window the X server would name.
+SHOTS.append(dict(name="tree-", dialog="tree", branches=[],
+                  geo=model("parameters.geo"), whole=True))
+
 # The three little windows that ask for one thing. The pattern of the files to
 # watch is reached through the File menu, and the arrow editor through the
 # button the option window carries on its General/Aspect tab -- neither has an
@@ -919,15 +928,19 @@ def photograph(dpy, args, specs):
             time.sleep(1.0)
         _, win, wx, wy, ww, wh = held[2]
 
-        if spec.get("keys") or spec.get("menu") or spec.get("context"):
+        # a shot of the whole window needs nothing opened first, but takes its
+        # picture the same way
+        if spec.get("keys") or spec.get("menu") or spec.get("context") or \
+           spec.get("whole"):
             # the pointer has to be over the window for the key to
             # reach it
             xtest.fake_input(dpy, X.MotionNotify, x=wx + 120,
                              y=wy + wh - 60)
             dpy.sync()
             time.sleep(0.3)
-            if spec.get("context"):
-                # already up: the interface was started with it open
+            if spec.get("context") or (spec.get("whole") and
+                                       not spec.get("menu")):
+                # nothing to open: it is already there
                 pass
             elif spec.get("keys"):
                 press(dpy, spec["keys"])
