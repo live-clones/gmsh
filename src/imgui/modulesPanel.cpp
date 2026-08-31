@@ -27,61 +27,22 @@
 #include "fieldWidget.h"
 
 #include "appWindow.h"
-#include "Gui.h"
-#include "GuiDialogs.h"
-#include "GuiActions.h"
-#include "GuiMenus.h"
 #include "menuActions.h"
-#include "GmshMessage.h"
-#include "GmshDefines.h"
 #include "Context.h"
 #include "Options.h"
-#include "GModel.h"
-#include "OpenFile.h"
-#include "drawContext.h"
 
 #if defined(HAVE_ONELAB)
-#include "onelab.h"
-#include "onelabUtils.h"
 #endif
 
-#include "onelabWidgets.h"
-#include "GuiOnelab.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
-#include "PViewOptions.h"
 #endif
 
 namespace {
 
 #if defined(HAVE_ONELAB)
-
-  // ONELAB names are paths: "Solver/Group/Parameter". Split off the leading
-  // path so that the parameters can be nested under collapsing headers.
-  void _splitPath(const std::string &name, std::string &path,
-                  std::string &leaf)
-  {
-    std::size_t sep = name.find_last_of('/');
-    if(sep == std::string::npos) {
-      path.clear();
-      leaf = name;
-    }
-    else {
-      path = name.substr(0, sep);
-      leaf = name.substr(sep + 1);
-    }
-  }
-
-  // ONELAB sorts its parameters by prefixing them with digits, which are not
-  // meant to be shown
-  std::string _strip(const std::string &s)
-  {
-    std::size_t i = 0;
-    while(i < s.size() && isdigit((unsigned char)s[i])) i++;
-    return (i < s.size()) ? s.substr(i) : s;
-  }
 
 #endif
 
@@ -89,119 +50,8 @@ namespace {
 
 #if defined(HAVE_ONELAB)
 
-bool drawOnelabNumber(onelab::number &p)
-{
-  double v = p.getValue();
-  std::string label = onelabLabel(p);
 
-    bool changed = false;
-    ImGui::PushID(p.getName().c_str());
-    ImGui::BeginDisabled(p.getReadOnly());
 
-    const std::vector<double> &choices = p.getChoices();
-    if(p.getChoices().size() && p.getValueLabels().size()) {
-      // an enumeration with named values
-      std::string preview;
-      for(auto &vl : p.getValueLabels())
-        if(vl.first == v) preview = vl.second;
-      ImGui::SetNextItemWidth(180.f);
-      if(ImGui::BeginCombo(label.c_str(), preview.c_str())) {
-        for(auto &vl : p.getValueLabels())
-          if(ImGui::Selectable(vl.second.c_str(), vl.first == v)) {
-            p.setValue(vl.first);
-            changed = true;
-          }
-        ImGui::EndCombo();
-      }
-    }
-    else if(choices.size() == 2 && choices[0] == 0. && choices[1] == 1.) {
-      bool b = (v != 0.);
-      if(ImGui::Checkbox(label.c_str(), &b)) {
-        p.setValue(b ? 1. : 0.);
-        changed = true;
-      }
-    }
-    else if(p.getMin() != -onelab::parameter::maxNumber() &&
-            p.getMax() != onelab::parameter::maxNumber() &&
-            p.getMax() > p.getMin()) {
-      double lo = p.getMin(), hi = p.getMax();
-      ImGui::SetNextItemWidth(180.f);
-      if(ImGui::SliderScalar(label.c_str(), ImGuiDataType_Double, &v, &lo, &hi,
-                             "%.6g")) {
-        p.setValue(v);
-        changed = true;
-      }
-    }
-    else {
-      ImGui::SetNextItemWidth(180.f);
-      if(ImGui::InputDouble(label.c_str(), &v, 0., 0., "%.6g",
-                            ImGuiInputTextFlags_EnterReturnsTrue)) {
-        p.setValue(v);
-        changed = true;
-      }
-    }
-
-    ImGui::EndDisabled();
-    if(p.getHelp().size() && ImGui::BeginItemTooltip()) {
-      ImGui::TextUnformatted(p.getHelp().c_str());
-      ImGui::EndTooltip();
-    }
-    ImGui::PopID();
-    return changed;
-  }
-
-bool drawOnelabString(onelab::string &p,
-                      std::map<std::string, std::string> &edits)
-{
-  std::string label = onelabLabel(p);
-  std::string current = p.getValue();
-    auto it = edits.find(p.getName());
-    if(it == edits.end())
-      it = edits.insert(std::make_pair(p.getName(), current)).first;
-
-    bool changed = false;
-    ImGui::PushID(p.getName().c_str());
-    ImGui::BeginDisabled(p.getReadOnly());
-
-    if(p.getChoices().size()) {
-      ImGui::SetNextItemWidth(220.f);
-      if(ImGui::BeginCombo(label.c_str(), current.c_str())) {
-        for(auto &c : p.getChoices())
-          if(ImGui::Selectable(c.c_str(), c == current)) {
-            p.setValue(c);
-            changed = true;
-          }
-        ImGui::EndCombo();
-      }
-    }
-    else {
-      ImGui::SetNextItemWidth(220.f);
-      ImGui::InputText(label.c_str(), &it->second);
-      if(ImGui::IsItemDeactivatedAfterEdit()) {
-        p.setValue(it->second);
-        changed = true;
-      }
-      else if(!ImGui::IsItemActive() && it->second != current) {
-        it->second = current;
-      }
-    }
-
-    ImGui::EndDisabled();
-    if(p.getHelp().size() && ImGui::BeginItemTooltip()) {
-      ImGui::TextUnformatted(p.getHelp().c_str());
-      ImGui::EndTooltip();
-    }
-  ImGui::PopID();
-  return changed;
-}
-
-std::string onelabLabel(const onelab::parameter &p)
-{
-  std::string label = p.getLabel().size() ? p.getLabel() : _strip(p.getName());
-  std::size_t sep = label.find_last_of('/');
-  if(sep != std::string::npos) label = label.substr(sep + 1);
-  return label;
-}
 
 #endif
 
