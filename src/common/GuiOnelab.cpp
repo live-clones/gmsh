@@ -36,6 +36,8 @@
 #include "OpenFile.h"
 #include "StringUtils.h"
 #include "drawContext.h"
+#include "OS.h"
+#include "CreateFile.h"
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
@@ -559,6 +561,121 @@ namespace {
     return f;
   }
 
+  // What a value writes back, whatever it holds it in
+  void _write(const GuiOnelab::getString &get, const std::string &v)
+  {
+    onelab::string q;
+    if(!get(q)) return;
+    onelab::string before = q;
+    q.setValue(v);
+    GuiOnelab::changed(before, q);
+  }
+
+  // The little buttons a line carries after its value. The tree this
+  // reproduces hangs them off the widget itself; here they are said, so that
+  // an interface that has never drawn them can.
+  void _trailing(const GuiOnelab::getString &get, const onelab::string &p,
+                 Ui::Field &f)
+  {
+    std::string many = p.getAttribute("MultipleSelection");
+    if(p.getKind() == "file") {
+      Ui::Button b;
+      bool readOnly = p.getReadOnly();
+      b.tooltip = "What to do with this file";
+      b.menu = [get, readOnly]() {
+        std::vector<Ui::MenuItem> menu;
+        onelab::string q;
+        if(!get(q)) return menu;
+        std::string name = q.getValue();
+        if(!readOnly) {
+          Ui::MenuItem choose;
+          choose.label = "Choose File...";
+          choose.action = [get]() {
+            onelab::string q;
+            if(!get(q)) return;
+            std::string name = q.getValue();
+            if(Gui::fileDialog(0, "Choose", "", name)) _write(get, name);
+          };
+          menu.push_back(choose);
+        }
+        Ui::MenuItem edit;
+        edit.label = "Edit Selected File...";
+        edit.action = [name]() {
+          std::string prog = FixWindowsPath(CTX::instance()->editor);
+          SystemCall(ReplaceSubString("%s", FixWindowsPath(name), prog));
+        };
+        menu.push_back(edit);
+        if(GuessFileFormatFromFileName(name) >= 0) {
+          Ui::MenuItem merge;
+          merge.label = "Merge Selected File...";
+          merge.action = [name]() {
+            MergeFile(FixWindowsPath(name));
+            drawContext::global()->draw();
+          };
+          menu.push_back(merge);
+        }
+        return menu;
+      };
+      f.trailing.push_back(b);
+      return;
+    }
+    if(many.size()) {
+      // Several of the choices at once, kept as the list of what is on: the
+      // value of the parameter is what it says, comma separated.
+      Ui::Button b;
+      b.tooltip = "Which of them are on";
+      b.menu = [get]() {
+        std::vector<Ui::MenuItem> menu;
+        onelab::string q;
+        if(!get(q)) return menu;
+        std::vector<std::string> on =
+          onelab::parameter::split(q.getValue(), ',');
+        auto isOn = [on](const std::string &c) {
+          for(auto &o : on) {
+            std::string t = o;
+            while(t.size() && t[0] == ' ') t.erase(0, 1);
+            while(t.size() && t[t.size() - 1] == ' ') t.erase(t.size() - 1);
+            if(t == c) return true;
+          }
+          return false;
+        };
+        auto say = [get](const std::vector<std::string> &chosen) {
+          std::string v;
+          for(auto &c : chosen) {
+            if(v.size()) v += ", ";
+            v += c;
+          }
+          _write(get, v);
+        };
+        std::vector<std::string> choices = q.getChoices();
+        for(auto &c : choices) {
+          Ui::MenuItem it;
+          it.kind = Ui::MenuItem::Toggle;
+          it.label = c;
+          it.checked = [isOn, c]() { return isOn(c); };
+          it.action = [get, choices, isOn, say, c]() {
+            std::vector<std::string> chosen;
+            for(auto &other : choices)
+              if(other == c ? !isOn(c) : isOn(other)) chosen.push_back(other);
+            say(chosen);
+          };
+          menu.push_back(it);
+        }
+        if(menu.size()) menu.back().dividerAfter = true;
+        Ui::MenuItem all;
+        all.label = "Select All";
+        all.action = [choices, say]() { say(choices); };
+        menu.push_back(all);
+        Ui::MenuItem none;
+        none.label = "Select None";
+        none.action = [say]() { say(std::vector<std::string>()); };
+        menu.push_back(none);
+        return menu;
+      };
+      f.trailing.push_back(b);
+    }
+  }
+
   // Words: a button when the parameter is a macro, something one reads when it
   // is read-only, and a value one types -- with what one may want to type
   // behind a little arrow, when it says what that is -- otherwise.
@@ -602,6 +719,7 @@ namespace {
         for(auto &c : q.getChoices()) labels.push_back(c);
       };
     f.commitsWhenDone = true;
+    _trailing(get, p, f);
     return f;
   }
 

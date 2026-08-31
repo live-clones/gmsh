@@ -13,6 +13,7 @@
 
 #include "uiSources.h"
 #include "fieldWidget.h"
+#include "menuActions.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_IMGUI)
@@ -184,7 +185,12 @@ namespace {
     // A label that comes before its field rather than after it: it is written
     // here and hidden from the widget, which keeps it as its identity -- that
     // is what Dear ImGui reads a name beginning with two hashes as.
-    std::string name = f.labelBefore ? "##" + f.label : f.label;
+    // A field that carries little buttons after it keeps its name for itself
+    // too: the buttons go between the value and the name, as the tree this
+    // reproduces places them, so the name is written once they are drawn.
+    bool nameAfterButtons = !f.trailing.empty() && !f.labelBefore;
+    std::string name =
+      (f.labelBefore || nameAfterButtons) ? "##" + f.label : f.label;
     if(f.labelBefore && f.label.size()) {
       // written to the left of the field, which starts after the widest such
       // label of its column so that the fields line up
@@ -834,6 +840,41 @@ namespace {
         ImGui::EndCombo();
       }
     } break;
+    }
+
+    // The little buttons the description hangs after the value: the menu of a
+    // file, the toggles of a multiple selection, the loop of a number. They
+    // sit on the same line, between the field and its name.
+    for(std::size_t t = 0; t < f.trailing.size(); t++) {
+      const Ui::Button &b = f.trailing[t];
+      ImGui::SameLine(0.f, ImGui::GetStyle().ItemInnerSpacing.x);
+      ImGui::PushID((int)t + 1);
+      if(b.menu) {
+        // a button that drops a list rather than doing something
+        if(ImGui::ArrowButton("##drop", ImGuiDir_Down)) ImGui::OpenPopup("##m");
+        if(ImGui::BeginPopup("##m")) {
+          std::vector<Ui::MenuItem> menu = b.menu();
+          menuWalk(menu, appWindow::instance());
+          ImGui::EndPopup();
+        }
+      }
+      else {
+        int on = b.on ? b.on() : 0;
+        if(on) ImGui::PushStyleColor(ImGuiCol_Button,
+                                     ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
+        if(ImGui::SmallButton(b.label.size() ? b.label.c_str() : "##b")) {
+          std::function<void()> what = b.action;
+          if(what) appWindow::instance()->postAction(what);
+        }
+        if(on) ImGui::PopStyleColor();
+      }
+      if(b.tooltip.size() && ImGui::IsItemHovered())
+        ImGui::SetTooltip("%s", b.tooltip.c_str());
+      ImGui::PopID();
+    }
+    if(nameAfterButtons && f.label.size()) {
+      ImGui::SameLine(0.f, ImGui::GetStyle().ItemInnerSpacing.x);
+      ImGui::TextUnformatted(f.label.c_str());
     }
 
     if(painted) ImGui::PopStyleColor(painted);
