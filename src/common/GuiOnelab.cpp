@@ -465,7 +465,8 @@ namespace {
   // A number: an enumeration when it names its values, a check box when it is
   // a yes or no, something one reads when it is read-only, and a value one
   // types otherwise.
-  Ui::Field _numberField(int i, const onelab::number &p)
+  Ui::Field _numberField(const GuiOnelab::getNumber &get,
+                         const onelab::number &p)
   {
     using namespace Dialog;
     std::string label = p.getShortName();
@@ -473,9 +474,9 @@ namespace {
     Field f;
 
     if(p.getReadOnly()) {
-      f = reads(label, [i]() {
+      f = reads(label, [get]() {
         onelab::number q;
-        return _number(i, q) ? q.getValueAsString() : std::string();
+        return get(q) ? q.getValueAsString() : std::string();
       });
     }
     else if(choices.size() && choices.size() == p.getValueLabels().size()) {
@@ -484,10 +485,10 @@ namespace {
       // whole number would not survive being carried as one.
       f.kind = Choice;
       f.label = label;
-      f.dynamicChoices = [i](std::vector<std::string> &labels,
+      f.dynamicChoices = [get](std::vector<std::string> &labels,
                              std::vector<int> &values) {
         onelab::number q;
-        if(!_number(i, q)) return;
+        if(!get(q)) return;
         const std::map<double, std::string> &named = q.getValueLabels();
         const std::vector<double> &c = q.getChoices();
         for(std::size_t k = 0; k < c.size(); k++) {
@@ -497,17 +498,17 @@ namespace {
           values.push_back((int)k);
         }
       };
-      f.readNumber = [i]() -> double {
+      f.readNumber = [get]() -> double {
         onelab::number q;
-        if(!_number(i, q)) return 0.;
+        if(!get(q)) return 0.;
         const std::vector<double> &c = q.getChoices();
         for(std::size_t k = 0; k < c.size(); k++)
           if(c[k] == q.getValue()) return (double)k;
         return 0.;
       };
-      f.writeNumber = [i](double v) {
+      f.writeNumber = [get](double v) {
         onelab::number q;
-        if(!_number(i, q)) return;
+        if(!get(q)) return;
         const std::vector<double> &c = q.getChoices();
         int k = (int)v;
         if(k < 0 || k >= (int)c.size()) return;
@@ -519,13 +520,13 @@ namespace {
     else if(choices.size() == 2 && choices[0] == 0. && choices[1] == 1.) {
       f.kind = Check;
       f.label = label;
-      f.readNumber = [i]() -> double {
+      f.readNumber = [get]() -> double {
         onelab::number q;
-        return _number(i, q) ? q.getValue() : 0.;
+        return get(q) ? q.getValue() : 0.;
       };
-      f.writeNumber = [i](double v) {
+      f.writeNumber = [get](double v) {
         onelab::number q;
-        if(!_number(i, q)) return;
+        if(!get(q)) return;
         onelab::number before = q;
         q.setValue(v);
         GuiOnelab::changed(before, q);
@@ -534,13 +535,13 @@ namespace {
     else {
       f.kind = Number;
       f.label = label;
-      f.readNumber = [i]() -> double {
+      f.readNumber = [get]() -> double {
         onelab::number q;
-        return _number(i, q) ? q.getValue() : 0.;
+        return get(q) ? q.getValue() : 0.;
       };
-      f.writeNumber = [i](double v) {
+      f.writeNumber = [get](double v) {
         onelab::number q;
-        if(!_number(i, q)) return;
+        if(!get(q)) return;
         onelab::number before = q;
         q.setValue(v);
         GuiOnelab::changed(before, q);
@@ -561,42 +562,43 @@ namespace {
   // Words: a button when the parameter is a macro, something one reads when it
   // is read-only, and a value one types -- with what one may want to type
   // behind a little arrow, when it says what that is -- otherwise.
-  Ui::Field _stringField(int i, const onelab::string &p)
+  Ui::Field _stringField(const GuiOnelab::getString &get,
+                         const onelab::string &p)
   {
     using namespace Dialog;
     std::string label = p.getShortName();
     std::string macro = p.getAttribute("Macro");
     if(macro == "Gmsh" || macro == "GmshMergeFile" ||
        macro == "GmshParseString" || macro == "Action") {
-      return does(label, [i]() {
+      return does(label, [get]() {
         onelab::string q;
-        if(_string(i, q)) GuiOnelab::runMacro(q);
+        if(get(q)) GuiOnelab::runMacro(q);
       });
     }
     if(p.getReadOnly() && p.getKind() != "file") {
-      return reads(label, [i]() {
+      return reads(label, [get]() {
         onelab::string q;
-        return _string(i, q) ? q.getValue() : std::string();
+        return get(q) ? q.getValue() : std::string();
       });
     }
     Field f = edits(
       label,
-      [i]() {
+      [get]() {
         onelab::string q;
-        return _string(i, q) ? q.getValue() : std::string();
+        return get(q) ? q.getValue() : std::string();
       },
-      [i](const std::string &v) {
+      [get](const std::string &v) {
         onelab::string q;
-        if(!_string(i, q)) return;
+        if(!get(q)) return;
         onelab::string before = q;
         q.setValue(v);
         GuiOnelab::changed(before, q);
       });
     if(p.getChoices().size())
-      f.dynamicChoices = [i](std::vector<std::string> &labels,
+      f.dynamicChoices = [get](std::vector<std::string> &labels,
                              std::vector<int> &values) {
         onelab::string q;
-        if(!_string(i, q)) return;
+        if(!get(q)) return;
         for(auto &c : q.getChoices()) labels.push_back(c);
       };
     f.commitsWhenDone = true;
@@ -616,6 +618,28 @@ namespace {
 #endif
 
 } // namespace
+
+namespace GuiOnelab {
+
+  Ui::Field numberField(const getNumber &get, const onelab::number &p)
+  {
+#if defined(HAVE_ONELAB)
+    return _numberField(get, p);
+#else
+    return Ui::Field();
+#endif
+  }
+
+  Ui::Field stringField(const getString &get, const onelab::string &p)
+  {
+#if defined(HAVE_ONELAB)
+    return _stringField(get, p);
+#else
+    return Ui::Field();
+#endif
+  }
+
+} // namespace GuiOnelab
 
 namespace Dialog {
 
@@ -680,7 +704,8 @@ namespace Dialog {
         onelab::string ps;
         if(_number((int)i, pn)) {
           if(!pn.getVisible()) continue;
-          f = _numberField((int)i, pn);
+          f = _numberField([i](onelab::number &q) { return _number((int)i, q); },
+                           pn);
           f.tooltip = _help(pn);
           if(pn.getAttribute("Highlight").size()) f.alert = true;
           f.sameRow = !_startsRow(pn);
@@ -688,7 +713,8 @@ namespace Dialog {
         }
         else if(_string((int)i, ps)) {
           if(!ps.getVisible()) continue;
-          f = _stringField((int)i, ps);
+          f = _stringField([i](onelab::string &q) { return _string((int)i, q); },
+                           ps);
           f.tooltip = _help(ps);
           if(ps.getAttribute("Highlight").size()) f.alert = true;
           f.sameRow = !_startsRow(ps);

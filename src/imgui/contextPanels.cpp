@@ -12,6 +12,7 @@
 #include <map>
 
 #include "uiSources.h"
+#include "fieldWidget.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_IMGUI)
@@ -1406,6 +1407,9 @@ namespace {
   }
 
 } // namespace
+
+// what a line of the tree draws, when the line carries a value
+void drawField(const Ui::Field &f, float width) { _field(f, width); }
 
 void appWindow::_drawDialog(int which)
 {

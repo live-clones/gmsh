@@ -7,6 +7,9 @@
 #define GMSH_GUI_ONELAB_H
 
 #include "GmshConfig.h"
+#include "Form.h"
+
+#include <functional>
 
 #if defined(HAVE_ONELAB)
 
@@ -23,6 +26,21 @@
 // of the rest.
 
 namespace GuiOnelab {
+
+  // What a ONELAB parameter comes out as: an enumeration when it names its
+  // values, a switch when it is a yes or no, a button when it is a macro,
+  // something one reads when it is read-only, and a value one types otherwise.
+  //
+  // It is said once and used twice, which is why it takes a way of fetching
+  // the parameter rather than knowing where it lives: the per-entity window
+  // holds its parameters by place, since a second entity of the same template
+  // wants the same fields against other values, and the tree holds them by
+  // name.
+  typedef std::function<bool(onelab::number &)> getNumber;
+  typedef std::function<bool(onelab::string &)> getString;
+  Ui::Field numberField(const getNumber &get, const onelab::number &p);
+  Ui::Field stringField(const getString &get, const onelab::string &p);
+
 
   // A "ServerAction" attribute: reset the database, the models and the views,
   // or a list of parameters. Returns whether the action was one it knows.

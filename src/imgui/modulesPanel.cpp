@@ -24,6 +24,7 @@
 
 #include "Tree.h"
 #include "uiSources.h"
+#include "fieldWidget.h"
 
 #include "appWindow.h"
 #include "Gui.h"
@@ -232,6 +233,19 @@ void appWindow::_walkModules(const std::string &path, int depth)
       }
       continue;
     }
+    if(node.hasField) {
+      // A line the description gives a widget to. Half the width is the
+      // widget and the rest is its name, as the tree this reproduces splits
+      // them.
+      ImGui::PushID(child.c_str());
+      drawField(node.field, ImGui::GetContentRegionAvail().x * .5f);
+      if(node.tooltip.size() && ImGui::BeginItemTooltip()) {
+        ImGui::TextUnformatted(node.tooltip.c_str());
+        ImGui::EndTooltip();
+      }
+      ImGui::PopID();
+      continue;
+    }
     bool enabled = node.enabled ? node.enabled() : true;
     ImGui::BeginDisabled(!enabled);
     if(ImGui::Selectable(label.c_str())) {
@@ -312,52 +326,18 @@ void appWindow::_drawModulesPanel()
       ImGui::PopID();
     }
 
-    // the parameters of the clients, grouped by their path
-    static std::map<std::string, std::string> edits;
-    std::vector<onelab::number> numbers;
-    std::vector<onelab::string> strings;
-    onelab::server::instance()->get(numbers);
-    onelab::server::instance()->get(strings);
-
-    std::map<std::string, std::vector<int> > numbersByPath, stringsByPath;
-    for(std::size_t i = 0; i < numbers.size(); i++) {
-      if(!numbers[i].getVisible()) continue;
-      std::string path, leaf;
-      _splitPath(numbers[i].getName(), path, leaf);
-      numbersByPath[path].push_back((int)i);
-    }
-    for(std::size_t i = 0; i < strings.size(); i++) {
-      if(!strings[i].getVisible()) continue;
-      std::string path, leaf;
-      _splitPath(strings[i].getName(), path, leaf);
-      stringsByPath[path].push_back((int)i);
-    }
-
-    std::vector<std::string> paths;
-    for(auto &kv : numbersByPath) paths.push_back(kv.first);
-    for(auto &kv : stringsByPath)
-      if(!numbersByPath.count(kv.first)) paths.push_back(kv.first);
-    std::sort(paths.begin(), paths.end());
-
-    for(auto &path : paths) {
-      std::string label = _strip(path);
-      if(label.empty()) label = "Parameters";
-      if(!ImGui::TreeNodeEx(label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
-        continue;
-      for(int i : numbersByPath[path]) {
-        onelab::number before = numbers[i];
-        // what a parameter does when it changes -- the Gmsh option it may
-        // stand for, the server actions its attributes ask for, and the check
-        // the solver wants -- is shared with the FLTK tree and with the
-        // per-entity window, see src/common/GuiOnelab.h
-        if(drawOnelabNumber(numbers[i])) GuiOnelab::changed(before, numbers[i]);
+    // What a solver has published, which the described tree holds beside
+    // the commands: every root of it that is not the commands themselves.
+    for(const auto &root : uiSources().tree.children("")) {
+      if(root == "0Modules") continue;
+      Ui::Node node = uiSources().tree.node(root);
+      std::string label = node.label.size() ?
+                            node.label :
+                            root.substr(root.find_last_of('/') + 1);
+      if(ImGui::TreeNodeEx(label.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+        _walkModules(root, 1);
+        ImGui::TreePop();
       }
-      for(int i : stringsByPath[path]) {
-        onelab::string before = strings[i];
-        if(drawOnelabString(strings[i], edits)) GuiOnelab::changed(before,
-                                                                  strings[i]);
-      }
-      ImGui::TreePop();
     }
 
     ImGui::TreePop();
