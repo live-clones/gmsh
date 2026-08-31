@@ -335,8 +335,6 @@ public:
   // open another graphic window, as "Window > New Window" does in FLTK
   void newGraphicWindow();
   // the panels the menus show and hide, see Gui::Panel
-  bool panelVisible(int panel) const;
-  void showPanel(int panel, bool show);
   // "minimize", "zoom" or "fullscreen"
   void windowAction(const std::string &what);
   int numPanes() const { return (int)_panes.size(); }

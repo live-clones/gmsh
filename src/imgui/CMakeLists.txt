@@ -4,7 +4,7 @@
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
-  Gui.cpp
+  SceneImGui.cpp
   BackendImGui.cpp
   appWindow.cpp
   scenePane.cpp

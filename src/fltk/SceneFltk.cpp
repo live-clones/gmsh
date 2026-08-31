@@ -3,10 +3,16 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// FLTK implementation of the toolkit-independent GUI interface declared in
-// src/common/Gui.h. This is the only file of src/fltk that the rest of Gmsh
-// links against; everything else in this directory is FLTK-specific and is
-// reached exclusively through the functions below.
+// The 3D scene of the FLTK interface: what draws the model, and what one
+// picks in it.
+//
+// It is the whole of what is left outside src/common/Gui.cpp, and it is the
+// only thing either interface still answers for itself. GuiScene.h says why:
+// every one of these speaks Gmsh -- picking answers with model entities, the
+// capture with a pixel buffer, the draw context is the drawing itself -- so
+// none of it belongs in the toolkit contract of src/gui/Backend.h. It is a
+// chantier of its own, to be rewritten rather than adapted, and until then it
+// keeps the shape it has always had.
 
 #include "GmshConfig.h"
 
@@ -37,21 +43,16 @@
 // defined in CreateFileFltk.cpp
 PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type);
 
-// What is left of the FLTK adapter.
+// The 3D scene of the FLTK interface: what draws the model, and what one
+// picks in it.
 //
-// Everything that is not a toolkit's is in src/common/Gui.cpp now, and what
-// is goes through Ui::Backend. Two things are still here:
-//
-//   the 3D scene -- picking, the draw context, the capture, the windows the
-//   views are drawn in -- which speaks Gmsh and is a chantier of its own,
-//   declared in GuiScene.h;
-//
-//   and the two calls that wait on a file chooser that can name its formats:
-//   exporting a view has to know which of the four flavours of ".pos" was
-//   picked, and the entries of the File menu each open a chooser of their
-//   own. Until the chooser can answer, both are written twice.
-//
-// When those two are done this file goes.
+// It is the whole of what is left outside src/common/Gui.cpp, and it is the
+// only thing either interface still answers for itself. GuiScene.h says why:
+// every one of these speaks Gmsh -- picking answers with model entities, the
+// capture with a pixel buffer, the draw context is the drawing itself -- so
+// none of it belongs in the toolkit contract of src/gui/Backend.h. It is a
+// chantier of its own, to be rewritten rather than adapted, and until then it
+// keeps the shape it has always had.
 
 namespace Gui {
 

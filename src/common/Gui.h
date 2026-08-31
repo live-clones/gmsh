@@ -17,10 +17,11 @@
 // namespace instead of talking to a specific widget toolkit.
 //
 // It is implemented once, in src/common/Gui.cpp, which drives whichever
-// Ui::Backend of src/gui/Backend.h was linked. What is not implemented there
-// is declared in GuiScene.h, included below: the 3D scene, which speaks Gmsh
-// and is a chantier of its own, and the two calls that wait on a file chooser
-// able to name its formats. Those are still written once per interface.
+// Ui::Backend of src/gui/Backend.h was linked. The one thing not implemented
+// there is declared in GuiScene.h, included below: the 3D scene, which speaks
+// Gmsh through and through and is a chantier of its own. That is written once
+// per interface, in src/fltk/SceneFltk.cpp and src/imgui/SceneImGui.cpp, and
+// it is all either of them still answers for itself.
 
 namespace Gui {
 
