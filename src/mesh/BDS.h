@@ -113,10 +113,18 @@ public:
   int numTriangles() const;
   inline BDS_Point *commonvertex(const BDS_Edge *other) const
   {
+    BDS_Point *v = commonvertexQuiet(other);
+    if(!v)
+      Msg::Error("Edge %d %d has no common node with edge %d %d", p1->iD,
+                 p2->iD, other->p1->iD, other->p2->iD);
+    return v;
+  }
+  // same, without the error message: used to fill BDS_Face's node cache, where
+  // a failure must still be reported by getNodes() and not at construction
+  inline BDS_Point *commonvertexQuiet(const BDS_Edge *other) const
+  {
     if(p1 == other->p1 || p1 == other->p2) return p1;
     if(p2 == other->p1 || p2 == other->p2) return p2;
-    Msg::Error("Edge %d %d has no common node with edge %d %d", p1->iD, p2->iD,
-               other->p1->iD, other->p2->iD);
     return nullptr;
   }
   BDS_Point *othervertex(const BDS_Point *p) const
@@ -172,6 +180,22 @@ public:
     e2->addface(this);
     e3->addface(this);
     if(e4) e4->addface(this);
+    // the edges of a face never change once it is built, so its nodes can be
+    // computed once here instead of on every getNodes() call
+    if(!e4) {
+      _n[0] = e1->commonvertexQuiet(e3);
+      _n[1] = e1->commonvertexQuiet(e2);
+      _n[2] = e2->commonvertexQuiet(e3);
+      _n[3] = nullptr;
+      _nodes = _n[0] && _n[1] && _n[2];
+    }
+    else {
+      _n[0] = e1->commonvertexQuiet(e4);
+      _n[1] = e1->commonvertexQuiet(e2);
+      _n[2] = e2->commonvertexQuiet(e3);
+      _n[3] = e3->commonvertexQuiet(e4);
+      _nodes = _n[0] && _n[1] && _n[2] && _n[3];
+    }
   }
   int numEdges() const { return e4 ? 4 : 3; }
   BDS_Edge *oppositeEdge(BDS_Point *p)
@@ -200,30 +224,45 @@ public:
                e->p2->iD);
     return nullptr;
   }
-  inline bool getNodes(BDS_Point *_n[4]) const
+  inline bool getNodes(BDS_Point *n[4]) const
   {
-    if(!e4) {
-      _n[0] = e1->commonvertex(e3);
-      _n[1] = e1->commonvertex(e2);
-      _n[2] = e2->commonvertex(e3);
-      _n[3] = nullptr;
-      if(_n[0] && _n[1] && _n[2]) return true;
+    if(_nodes) {
+      n[0] = _n[0];
+      n[1] = _n[1];
+      n[2] = _n[2];
+      n[3] = _n[3];
+      return true;
     }
-    else {
-      _n[0] = e1->commonvertex(e4);
-      _n[1] = e1->commonvertex(e2);
-      _n[2] = e2->commonvertex(e3);
-      _n[3] = e3->commonvertex(e4);
-      if(_n[0] && _n[1] && _n[2] && _n[3]) return true;
-    }
-    Msg::Error("Invalid points in face");
-    return false;
+    return _reportInvalidNodes(n);
   }
 
 public:
   bool deleted;
   BDS_Edge *e1, *e2, *e3, *e4;
   BDS_GeomEntity *g;
+
+private:
+  BDS_Point *_n[4];
+  bool _nodes;
+  // only reached for a malformed face: redo the lookups so that the same
+  // diagnostics come out as before the nodes were cached
+  bool _reportInvalidNodes(BDS_Point *n[4]) const
+  {
+    if(!e4) {
+      n[0] = e1->commonvertex(e3);
+      n[1] = e1->commonvertex(e2);
+      n[2] = e2->commonvertex(e3);
+      n[3] = nullptr;
+    }
+    else {
+      n[0] = e1->commonvertex(e4);
+      n[1] = e1->commonvertex(e2);
+      n[2] = e2->commonvertex(e3);
+      n[3] = e3->commonvertex(e4);
+    }
+    Msg::Error("Invalid points in face");
+    return false;
+  }
 };
 
 struct GeomLessThan {
