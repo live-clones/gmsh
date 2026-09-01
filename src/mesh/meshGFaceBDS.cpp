@@ -129,6 +129,19 @@ static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f,
   return l;
 }
 
+// Length ratio of the (possibly virtual) edge p1-p2. The points are ordered by
+// id the way BDS_Edge's constructor orders them, so that this gives exactly the
+// same value as the edge based version below.
+static double NewGetLc(BDS_Point *p1, BDS_Point *p2, GFace *const face,
+                       const BDSSizeContext &ctx)
+{
+  if(!(*p1 < *p2)) std::swap(p1, p2);
+  double len = face->geomType() == GEntity::Plane ?
+                 computeEdgeLinearLength(p1, p2) :
+                 computeEdgeLinearLength(p1, p2, face);
+  return len / correctLC_(p1, p2, face, ctx);
+}
+
 static double NewGetLc(BDS_Edge *const edge, GFace *const face,
                        const BDSSizeContext &ctx)
 {
@@ -516,30 +529,27 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   t += (Cpu() - t1);
 }
 
-double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e,
-                                  BDS_Point *p, const BDSSizeContext &ctx)
+static double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Edge *e, BDS_Point *p,
+                                         const BDSSizeContext &ctx)
 {
   BDS_Point *o = e->othervertex(p);
 
   double maxLc = 0.0;
-  std::vector<BDS_Edge *> edges(p->edges);
-  auto eit = edges.begin();
-  while(eit != edges.end()) {
+  // this used to build a real BDS_Edge for each candidate, which registered
+  // itself in the two endpoints' edge lists and then had to be unregistered
+  for(std::size_t i = 0; i < p->edges.size(); i++) {
+    BDS_Edge *pe = p->edges[i];
     BDS_Point *newP1 = nullptr, *newP2 = nullptr;
-    if((*eit)->p1 == p) {
+    if(pe->p1 == p) {
       newP1 = o;
-      newP2 = (*eit)->p2;
+      newP2 = pe->p2;
     }
-    else if((*eit)->p2 == p) {
-      newP1 = (*eit)->p1;
+    else if(pe->p2 == p) {
+      newP1 = pe->p1;
       newP2 = o;
     }
     if(!newP1 || !newP2) break; // error
-    BDS_Edge collapsedEdge = BDS_Edge(newP1, newP2);
-    maxLc = std::max(maxLc, NewGetLc(&collapsedEdge, gf, ctx));
-    newP1->del(&collapsedEdge);
-    newP2->del(&collapsedEdge);
-    ++eit;
+    maxLc = std::max(maxLc, NewGetLc(newP1, newP2, gf, ctx));
   }
 
   return maxLc;
@@ -570,7 +580,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
       double lone1 = 0.;
       bool collapseP1Allowed = false;
       if(e->p1->iD > MAXNP) {
-        lone1 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p1, ctx);
+        lone1 = getMaxLcWhenCollapsingEdge(gf, e, e->p1, ctx);
         collapseP1Allowed =
           std::abs(lone1 - 1.0) < std::abs(edges[i].first - 1.0);
       }
@@ -578,7 +588,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
       double lone2 = 0.;
       bool collapseP2Allowed = false;
       if(e->p2->iD > MAXNP) {
-        lone2 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p2, ctx);
+        lone2 = getMaxLcWhenCollapsingEdge(gf, e, e->p2, ctx);
         collapseP2Allowed =
           std::abs(lone2 - 1.0) < std::abs(edges[i].first - 1.0);
       }
