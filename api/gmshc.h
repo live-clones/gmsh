@@ -844,6 +844,21 @@ GMSH_API void gmshModelMeshSetNode(const size_t nodeTag,
                                    const double * parametricCoord, const size_t parametricCoord_n,
                                    int * ierr);
 
+/* Set the coordinates and the parametric coordinates (if any) of the nodes
+ * with tags `nodeTags'. `coord' is a vector of length 3 times the length of
+ * `nodeTags' that contains the x, y, z coordinates of the nodes,
+ * concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, the nodes must be
+ * classified on an entity of dimension `dim' (and of tag `tag' if `tag' >=
+ * 0), and the length of `parametricCoord' can be 0 or `dim' times the length
+ * of `nodeTags'. If `dim' < 0 the nodes can be classified anywhere, and
+ * `parametricCoord' must be empty. */
+GMSH_API void gmshModelMeshSetNodes(const size_t * nodeTags, const size_t nodeTags_n,
+                                    const double * coord, const size_t coord_n,
+                                    const double * parametricCoord, const size_t parametricCoord_n,
+                                    const int dim,
+                                    const int tag,
+                                    int * ierr);
+
 /* Rebuild the node cache. */
 GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary,
                                             int * ierr);

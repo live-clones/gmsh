@@ -2468,6 +2468,34 @@ end
 const set_node = setNode
 
 """
+    gmsh.model.mesh.setNodes(nodeTags, coord, parametricCoord, dim = -1, tag = -1)
+
+Set the coordinates and the parametric coordinates (if any) of the nodes with
+tags `nodeTags`. `coord` is a vector of length 3 times the length of `nodeTags`
+that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y,
+n1z, n2x, ...]. If `dim` >= 0, the nodes must be classified on an entity of
+dimension `dim` (and of tag `tag` if `tag` >= 0), and the length of
+`parametricCoord` can be 0 or `dim` times the length of `nodeTags`. If `dim` < 0
+the nodes can be classified anywhere, and `parametricCoord` must be empty.
+
+Types:
+ - `nodeTags`: vector of sizes
+ - `coord`: vector of doubles
+ - `parametricCoord`: vector of doubles
+ - `dim`: integer
+ - `tag`: integer
+"""
+function setNodes(nodeTags, coord, parametricCoord, dim = -1, tag = -1)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetNodes, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), dim, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_nodes = setNodes
+
+"""
     gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary = true)
 
 Rebuild the node cache.

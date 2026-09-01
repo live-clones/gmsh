@@ -578,6 +578,8 @@ module gmsh
         gmshModelMeshGetNode
     procedure, nopass :: setNode => &
         gmshModelMeshSetNode
+    procedure, nopass :: setNodes => &
+        gmshModelMeshSetNodes
     procedure, nopass :: rebuildNodeCache => &
         gmshModelMeshRebuildNodeCache
     procedure, nopass :: rebuildElementCache => &
@@ -4191,6 +4193,60 @@ module gmsh
          api_parametricCoord_n_=size_gmsh_double(parametricCoord), &
          ierr_=ierr)
   end subroutine gmshModelMeshSetNode
+
+  !> Set the coordinates and the parametric coordinates (if any) of the nodes
+  !! with tags `nodeTags'. `coord' is a vector of length 3 times the length of
+  !! `nodeTags' that contains the x, y, z coordinates of the nodes,
+  !! concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, the nodes must be
+  !! classified on an entity of dimension `dim' (and of tag `tag' if `tag' >=
+  !! 0), and the length of `parametricCoord' can be 0 or `dim' times the length
+  !! of `nodeTags'. If `dim' < 0 the nodes can be classified anywhere, and
+  !! `parametricCoord' must be empty.
+  subroutine gmshModelMeshSetNodes(nodeTags, &
+                                   coord, &
+                                   parametricCoord, &
+                                   dim, &
+                                   tag, &
+                                   ierr)
+    interface
+    subroutine C_API(api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_coord_, &
+                     api_coord_n_, &
+                     api_parametricCoord_, &
+                     api_parametricCoord_n_, &
+                     dim, &
+                     tag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSetNodes")
+      use, intrinsic :: iso_c_binding
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      real(c_double), dimension(*) :: api_coord_
+      integer(c_size_t), value, intent(in) :: api_coord_n_
+      real(c_double), dimension(*) :: api_parametricCoord_
+      integer(c_size_t), value, intent(in) :: api_parametricCoord_n_
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    real(c_double), dimension(:), intent(in) :: coord
+    real(c_double), dimension(:), intent(in) :: parametricCoord
+    integer, intent(in), optional :: dim
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_coord_=coord, &
+         api_coord_n_=size_gmsh_double(coord), &
+         api_parametricCoord_=parametricCoord, &
+         api_parametricCoord_n_=size_gmsh_double(parametricCoord), &
+         dim=optval_c_int(-1, dim), &
+         tag=optval_c_int(-1, tag), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshSetNodes
 
   !> Rebuild the node cache.
   subroutine gmshModelMeshRebuildNodeCache(onlyIfNecessary, &
