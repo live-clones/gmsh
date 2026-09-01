@@ -968,6 +968,22 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & coord,
                             const std::vector<double> & parametricCoord);
 
+      // gmsh::model::mesh::setNodes
+      //
+      // Set the coordinates and the parametric coordinates (if any) of the nodes
+      // with tags `nodeTags'. `coord' is a vector of length 3 times the length of
+      // `nodeTags' that contains the x, y, z coordinates of the nodes,
+      // concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, the nodes must be
+      // classified on an entity of dimension `dim' (and of tag `tag' if `tag' >=
+      // 0), and the length of `parametricCoord' can be 0 or `dim' times the length
+      // of `nodeTags'. If `dim' < 0 the nodes can be classified anywhere, and
+      // `parametricCoord' must be empty.
+      GMSH_API void setNodes(const std::vector<std::size_t> & nodeTags,
+                             const std::vector<double> & coord,
+                             const std::vector<double> & parametricCoord,
+                             const int dim = -1,
+                             const int tag = -1);
+
       // gmsh::model::mesh::rebuildNodeCache
       //
       // Rebuild the node cache.

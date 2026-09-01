@@ -344,6 +344,9 @@ mesh.add('getNode', doc, None, isize('nodeTag'), ovectordouble('coord'), ovector
 doc = '''Set the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This function relies on an internal cache (a vector in case of dense node numbering, a map otherwise); for large meshes accessing nodes in bulk is often preferable.'''
 mesh.add('setNode', doc, None, isize('nodeTag'), ivectordouble('coord'), ivectordouble('parametricCoord'))
 
+doc = '''Set the coordinates and the parametric coordinates (if any) of the nodes with tags `nodeTags'. `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, the nodes must be classified on an entity of dimension `dim' (and of tag `tag' if `tag' >= 0), and the length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `dim' < 0 the nodes can be classified anywhere, and `parametricCoord' must be empty.'''
+mesh.add('setNodes', doc, None, ivectorsize('nodeTags'), ivectordouble('coord'), ivectordouble('parametricCoord'), iint('dim', '-1'), iint('tag', '-1'))
+
 doc = '''Rebuild the node cache.'''
 mesh.add('rebuildNodeCache', doc, None, ibool('onlyIfNecessary', 'true', 'True'))
 

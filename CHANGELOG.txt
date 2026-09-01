@@ -9,7 +9,7 @@ C++17 and CMake 3.10, and uses Eigen 5.0 by default; fixed mangled output of
 wavefront obj exporter.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
-  mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent,
+  mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent, mesh/setNodes,
   algorithm/refineTetrahedra
 
 * Incompatible API changes: new optional argument to mesh/optimize and
