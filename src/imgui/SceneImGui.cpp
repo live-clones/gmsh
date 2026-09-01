@@ -71,6 +71,11 @@ namespace {
 
 namespace Gui {
 
+  // this interface holds the scene inside its own windows and draws it in its
+  // own loop; there is nothing to pump from outside
+  void pumpScene(bool rateLimited) {}
+
+
   // --- messages, status bar and modal dialogs
 
   // --- refreshing the GUI when the model changes

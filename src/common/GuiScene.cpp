@@ -5,7 +5,8 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GUI) && !defined(HAVE_GUI_SCENE)
+#if defined(HAVE_GUI) && !defined(HAVE_GUI_SCENE) && \
+  !defined(HAVE_GL_SCENE)
 
 #include "GuiScene.h"
 
@@ -23,6 +24,8 @@
 // provides its own, in src/fltk/SceneFltk.cpp or src/imgui/SceneImGui.cpp.
 
 namespace Gui {
+
+  void pumpScene(bool rateLimited) {}
 
   drawContext *getCurrentDrawContext() { return nullptr; }
 

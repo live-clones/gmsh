@@ -117,6 +117,8 @@ namespace Gui {
     Msg::Direct("-------------------------------------------------------");
     PrintBuildInfo();
     Msg::Direct("-------------------------------------------------------");
+    // a scene of its own, for a chrome that holds none: it comes up here
+    pumpScene(false);
     // in case the interface is created after some data has been loaded
     updateViews(true, true);
     // so that there is a bounding box even with no model and no data
@@ -161,14 +163,20 @@ namespace Gui {
 
   void check(bool rateLimited)
   {
-    if(_backend) _backend->check(rateLimited);
+    if(!_backend) return;
+    _backend->check(rateLimited);
+    // a scene in a window of its own is pumped from here, since the loop
+    // belongs to the chrome
+    pumpScene(rateLimited);
   }
 
   bool ready() { return _backend && _backend->ready(); }
 
   void wait(bool force)
   {
-    if(_backend) _backend->wait(-1., force);
+    if(!_backend) return;
+    _backend->wait(-1., force);
+    pumpScene(false);
   }
 
   void wait(double time, bool force)

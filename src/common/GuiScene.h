@@ -42,6 +42,14 @@ class PView;
 
 namespace Gui {
 
+  // Bring the scene up if it is not already, and give it a chance to draw and
+  // to answer the pointer. An interface that holds the scene inside its own
+  // windows does this in its own loop and has nothing to do here; a scene in
+  // a window of its own is pumped from whatever loop the chrome is running,
+  // which is what lets a chrome that knows nothing of OpenGL still show the
+  // model.
+  void pumpScene(bool rateLimited);
+
   // --- the graphic windows
 
   // draw context of the last graphic window that received an event

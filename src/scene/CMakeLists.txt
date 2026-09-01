@@ -7,6 +7,7 @@ set(SRC
   sceneHost.cpp
   sceneView.cpp
   drawContextGL.cpp
+  sceneWindow.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
