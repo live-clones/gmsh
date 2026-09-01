@@ -701,10 +701,25 @@ void BDS_Mesh::cleanup()
   }
 }
 
+void BDS_Mesh::removeOrphanPoints()
+{
+  auto it = points.begin();
+  while(it != points.end()) {
+    if((*it)->edges.empty()) {
+      orphanPoints.push_back(*it);
+      it = points.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+}
+
 BDS_Mesh::~BDS_Mesh()
 {
   DESTROOOY(geom.begin(), geom.end());
   DESTROOOY(points.begin(), points.end());
+  DESTROOOY(orphanPoints.begin(), orphanPoints.end());
   cleanup();
   DESTROOOY(edges.begin(), edges.end());
   DESTROOOY(triangles.begin(), triangles.end());

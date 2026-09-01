@@ -423,6 +423,7 @@ public:
   BDS_Mesh(const BDS_Mesh &other);
   std::set<BDS_GeomEntity *, GeomLessThan> geom;
   std::set<BDS_Point *, PointLessThan> points;
+  std::vector<BDS_Point *> orphanPoints;
   std::vector<BDS_Edge *> edges;
   std::vector<BDS_Face *> triangles;
   // Points
@@ -466,6 +467,10 @@ public:
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
   // Global operators
   void cleanup();
+  // Drop the points that edge collapses left without any edge from the point
+  // set, so that the passes iterating it do not have to walk them. The points
+  // themselves are kept alive because callers key external maps on them.
+  void removeOrphanPoints();
 };
 
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);

@@ -884,6 +884,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     // CHECK_STRANGE("smmooth", m);
 
     m.cleanup();
+    m.removeOrphanPoints();
 
     double minL = 1.e22, maxL = 0;
     auto it = m.edges.begin();
