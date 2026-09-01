@@ -85,10 +85,17 @@ public:
 };
 
 class BDS_Edge {
-  std::vector<BDS_Face *> _faces;
+  // An edge of a surface mesh has two faces, so they are stored inline: a
+  // std::vector here meant one extra heap block, and one extra cache miss on
+  // every faces() call, for every edge of the mesh. The overflow list is only
+  // ever allocated on a non manifold configuration.
+  BDS_Face *_f[2];
+  int _nf;
+  std::vector<BDS_Face *> *_moreFaces;
 
 public:
-  BDS_Edge(BDS_Point *A, BDS_Point *B) : deleted(false), g(nullptr)
+  BDS_Edge(BDS_Point *A, BDS_Point *B)
+    : _nf(0), _moreFaces(nullptr), deleted(false), g(nullptr)
   {
     if(*A < *B) {
       p1 = A;
@@ -102,14 +109,18 @@ public:
     p2->edges.push_back(this);
   }
 
-  BDS_Face *faces(std::size_t const i) const { return _faces[i]; }
+  ~BDS_Edge() { delete _moreFaces; }
+  BDS_Face *faces(std::size_t const i) const
+  {
+    return i < 2 ? _f[i] : (*_moreFaces)[i - 2];
+  }
   double length() const
   {
     return std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
                      (p1->Y - p2->Y) * (p1->Y - p2->Y) +
                      (p1->Z - p2->Z) * (p1->Z - p2->Z));
   }
-  int numfaces() const { return static_cast<int>(_faces.size()); }
+  int numfaces() const { return _nf; }
   int numTriangles() const;
   inline BDS_Point *commonvertex(const BDS_Edge *other) const
   {
@@ -134,7 +145,15 @@ public:
     Msg::Error("Edge %d %d does not contain node %d", p1->iD, p2->iD, p->iD);
     return nullptr;
   }
-  void addface(BDS_Face *f) { _faces.push_back(f); }
+  void addface(BDS_Face *f)
+  {
+    if(_nf < 2) { _f[_nf] = f; }
+    else {
+      if(!_moreFaces) _moreFaces = new std::vector<BDS_Face *>();
+      _moreFaces->push_back(f);
+    }
+    _nf++;
+  }
   bool operator<(const BDS_Edge &other) const
   {
     if(*other.p1 < *p1) return true;
@@ -149,17 +168,27 @@ public:
                  p2->iD);
       return nullptr;
     }
-    if(f == _faces[0]) return _faces[1];
-    if(f == _faces[1]) return _faces[0];
+    if(f == _f[0]) return _f[1];
+    if(f == _f[1]) return _f[0];
     Msg::Error("Edge %d %d does not belong to the face", p1->iD, p2->iD);
     return nullptr;
   }
+  // removes every occurrence of t, keeping the order of the others, as the
+  // std::remove_if this used to do
   void del(BDS_Face *t)
   {
-    if(_faces.empty()) return;
-    _faces.erase(std::remove_if(_faces.begin(), _faces.end(),
-                                [t](BDS_Face *ptr){ return ptr == t; }),
-                 _faces.end());
+    if(!_nf) return;
+    int n = _nf;
+    _nf = 0;
+    for(int i = 0; i < n; i++) {
+      BDS_Face *f = i < 2 ? _f[i] : (*_moreFaces)[i - 2];
+      if(f == t) continue;
+      if(_nf < 2) { _f[_nf] = f; }
+      else { (*_moreFaces)[_nf - 2] = f; }
+      _nf++;
+    }
+    if(_moreFaces && _nf <= 2) _moreFaces->clear();
+    else if(_moreFaces) _moreFaces->resize(_nf - 2);
   }
   void oppositeof(BDS_Point *oface[2]) const;
   void computeNeighborhood(BDS_Point *t1[4], BDS_Point *t2[4],

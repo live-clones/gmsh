@@ -1089,9 +1089,10 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
 
 int BDS_Edge::numTriangles() const
 {
-  return std::count_if(
-    begin(_faces), end(_faces),
-    [](const BDS_Face *const face) { return face->numEdges() == 3; });
+  int n = 0;
+  for(int i = 0; i < numfaces(); i++)
+    if(faces(i)->numEdges() == 3) n++;
+  return n;
 }
 
 /*
