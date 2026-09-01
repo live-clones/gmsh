@@ -1188,10 +1188,27 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
   std::vector<BDS_Face *> t = p->getTriangles();
   BDS_Point *o = e->othervertex(p);
 
-  BDS_Point *pt[3][1024];
-  BDS_GeomEntity *gs[1024];
-  BDS_Point *ept[2][1024];
-  BDS_GeomEntity *egs[1024];
+  // these used to be four 1024-entry stack arrays, indexed by the number of
+  // triangles and of edges around p with no bound check at all
+  struct Cavity {
+    std::vector<BDS_Point *> pt[3], ept[2];
+    std::vector<BDS_GeomEntity *> gs, egs;
+    void resize(std::size_t n)
+    {
+      for(int i = 0; i < 3; i++)
+        if(pt[i].size() < n) pt[i].resize(n);
+      for(int i = 0; i < 2; i++)
+        if(ept[i].size() < n) ept[i].resize(n);
+      if(gs.size() < n) gs.resize(n);
+      if(egs.size() < n) egs.resize(n);
+    }
+  };
+  static thread_local Cavity c;
+  c.resize(std::max(t.size(), p->edges.size()));
+  auto &pt = c.pt;
+  auto &gs = c.gs;
+  auto &ept = c.ept;
+  auto &egs = c.egs;
   int nt = 0;
   double area_old = 0.0;
   double area_new = 0.0;
