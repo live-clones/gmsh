@@ -38,6 +38,7 @@
 #include <FL/Fl_Tree.H>
 #include "Tree.h"
 #include "dialogFltk.h"
+#include "menuFltk.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "Context.h"
@@ -607,6 +608,32 @@ void dialogFltk::_buttonCallback(Fl_Widget *w, void *data)
   if(a->dialog) a->dialog->reshape();
 }
 
+namespace {
+
+  // The little buttons of the fields, kept while the widgets that point at
+  // them are alive: FLTK hands a widget a void* when it calls back.
+  std::deque<Ui::Button> &_kept()
+  {
+    static std::deque<Ui::Button> kept;
+    return kept;
+  }
+
+  void _trailingPressed(Fl_Widget *w, void *data)
+  {
+    Ui::Button *b = (Ui::Button *)data;
+    if(b->action) b->action();
+  }
+
+  void _trailingMenu(Fl_Widget *w, void *data)
+  {
+    Ui::Button *b = (Ui::Button *)data;
+    if(b->menu)
+      fltkMenuPopup(b->menu(), Fl::event_x_root(), Fl::event_y_root(),
+                    "field");
+  }
+
+} // namespace
+
 void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
                             int &y, int w, int pane, int grid)
 {
@@ -717,6 +744,18 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
         at += _packedStep(fields, k, last);
       else
         at += columnW;
+      // The little buttons a field hangs after it -- the range of a value,
+      // its loop, the plots it is reported in, the menu of a file. They take
+      // their width from the font, as the compound widget this reproduces
+      // gives them, and the field gives up the room.
+      std::vector<int> trailingW;
+      for(const auto &t : f.trailing) {
+        int wide = t.label == ":" ? FL_NORMAL_SIZE - 2 : FL_NORMAL_SIZE + 6;
+        trailingW.push_back(wide);
+        fieldW -= wide;
+      }
+      if(fieldW < FL_NORMAL_SIZE) fieldW = FL_NORMAL_SIZE;
+
       Fl_Widget *widget = nullptr;
       switch(f.kind) {
       case Ui::Text:
@@ -924,6 +963,37 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
       }
       if(f.tooltip.size()) widget->copy_tooltip(f.tooltip.c_str());
       widget->callback(_fieldCallback, this);
+      // and the little buttons after it, which the label then follows
+      int at = fx + fieldW;
+      for(std::size_t t = 0; t < f.trailing.size(); t++) {
+        _kept().push_back(f.trailing[t]);
+        Ui::Button *button = &_kept().back();
+        Fl_Button *made = new Fl_Button(at, y, trailingW[t], BH);
+        at += trailingW[t];
+        if(button->glyph.size())
+          made->copy_label(("@-1gmsh_" + button->glyph).c_str());
+        else if(button->label.size())
+          made->copy_label(button->label.c_str());
+        else if(button->menu)
+          made->copy_label("@2>");
+        if(button->tooltip.size())
+          made->copy_tooltip(button->tooltip.c_str());
+        made->callback(button->menu ? _trailingMenu : _trailingPressed,
+                       button);
+        if(button->on && button->on()) made->color(FL_GREEN);
+      }
+      // A field that carries buttons gives up its name to them: FLTK draws a
+      // name to the right of the widget it belongs to, which is where they
+      // are. It goes on a box of its own after them, as the compound widget
+      // this reproduces places it.
+      if(f.trailing.size() && f.label.size() && !f.labelBefore) {
+        widget->label(nullptr);
+        fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+        int labelW = (int)fl_width(_escaped(f.label).c_str()) + WB;
+        Fl_Box *say = new Fl_Box(at, y, labelW, BH);
+        say->copy_label(_escaped(f.label).c_str());
+        say->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+      }
       bound b;
       b.field = f;
       b.widget = widget;

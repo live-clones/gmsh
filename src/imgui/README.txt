@@ -256,13 +256,18 @@ option its "GmshOption" attribute names, the hiding, resetting and rewriting its
 when Solver.AutoCheck is on. The tree calls the same code, so the two agree; the
 Dear ImGui panel used to write the value back and quietly do none of the rest.
 
-Two things of that window are deliberately not described. A ONELAB number is
-drawn by the FLTK tree as an inputRange, which carries two small buttons -- the
-loop level of a parametric sweep, and which graph to plot the parameter in --
-and a string of kind "file" gets menu entries for choosing, editing and merging
-the file. Both belong to the metamodel and solver workflow of the module tree,
-which keeps its own widgets and still has them; the per-entity window shows the
-value, the range and the choices, and no more.
+Two things of that window were once said to be deliberately left out, and that
+was a misreading of the window being reproduced. A ONELAB number carries three
+small buttons -- its range, the loop level of a parametric sweep, and which
+graph it is plotted in -- and a string of kind "file" carries a menu for
+choosing, editing and merging it. The published per-entity window has them,
+and the conversion had lost them.
+
+They are described now, as Field::trailing, and every interface that draws a
+field draws them: the two module trees, and the per-entity window of both
+interfaces. What it took was a picture of that window beside the published
+one -- the bench had been photographing it for weeks without anyone noticing
+that three buttons were missing from a row.
 
 The quick access menu the status bar drops is described once too, in
 GuiMenus.cpp beside the menu bar. It was a fifty-four entry Fl_Menu_Item[] on

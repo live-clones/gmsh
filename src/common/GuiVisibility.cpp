@@ -98,8 +98,17 @@ namespace {
     return lines;
   }
 
-  // whether the tree has been asked for: a model of more than ten thousand
-  // entities is not put in one unless one insists, as that window has it
+  // Whether the tree has been asked for. A model of more than ten thousand
+  // entities is not put in one unless one insists, as the window this
+  // reproduces has it -- the threshold, the sentence and the button are its
+  // own.
+  //
+  // One thing is deliberately not reproduced. There, insisting was a
+  // parameter passed to one rebuild and never kept, so the tree one had just
+  // asked for was taken away again by the next ordinary refresh of the window
+  // -- reopening it was enough. That reads as an oversight rather than a
+  // decision: a button whose effect the next redraw undoes is not something
+  // anyone designed. Here it is remembered.
   bool &_treeWanted()
   {
     static bool wanted = false;
