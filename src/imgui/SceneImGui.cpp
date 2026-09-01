@@ -30,7 +30,7 @@
 #include "toolkit.h"
 #include "menuActions.h"
 #include "GuiMenus.h"
-#include "scenePane.h"
+#include "sceneView.h"
 #include "messageConsole.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -103,7 +103,7 @@ namespace Gui {
   void abortSelection()
   {
     if(!available()) return;
-    scenePane *p = appWindow::instance()->currentPane();
+    sceneView *p = appWindow::instance()->currentPane();
     if(p) {
       p->quitSelection = 1;
       p->selectionMode = false;
@@ -141,7 +141,7 @@ namespace Gui {
   {
     if(!available()) return;
     for(int i = 0; i < appWindow::instance()->numPanes(); i++)
-      if(scenePane *pane = appWindow::instance()->pane(i))
+      if(sceneView *pane = appWindow::instance()->pane(i))
         if(drawContext *ctx = pane->getDrawContext()) ctx->showAll();
   }
 
@@ -213,7 +213,7 @@ namespace Gui {
     _selectedPoints.clear();
     _selectedViews.clear();
     if(!available()) return 'q';
-    scenePane *p = appWindow::instance()->currentPane();
+    sceneView *p = appWindow::instance()->currentPane();
     if(!p) return 'q';
     return p->selectEntity(type, _selectedVertices, _selectedEdges,
                            _selectedFaces, _selectedRegions, _selectedElements,

@@ -27,6 +27,7 @@
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GUI
 #cmakedefine HAVE_GUI_SCENE
+#cmakedefine HAVE_GL_SCENE
 #cmakedefine HAVE_HXT
 #cmakedefine HAVE_IMGUI
 #cmakedefine HAVE_LAPACK

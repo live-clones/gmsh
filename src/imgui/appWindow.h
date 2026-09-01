@@ -21,7 +21,7 @@
 #include "GuiMenus.h"
 #include "GuiDialogs.h"
 #include "fileBrowser.h"
-#include "scenePane.h"
+#include "sceneView.h"
 
 struct GLFWwindow;
 class messageConsole;
@@ -61,20 +61,20 @@ private:
   // flat list, in creation order, which is what SetCurrentWindow of the .geo
   // files and gmsh::fltk::setCurrentWindow index into; _paneRoot is the binary
   // tree that says how they share the rectangle.
-  std::vector<scenePane *> _panes;
+  std::vector<sceneView *> _panes;
   struct paneNode {
-    scenePane *pane; // non-null for a leaf
+    sceneView *pane; // non-null for a leaf
     char split; // 'h' (side by side) or 'v' (one above the other)
     double ratio;
     paneNode *child[2];
-    paneNode(scenePane *p)
+    paneNode(sceneView *p)
       : pane(p), split(0), ratio(0.5)
     {
       child[0] = child[1] = nullptr;
     }
   };
   paneNode *_paneRoot;
-  scenePane *_currentPane;
+  sceneView *_currentPane;
 
   // The extra graphic windows of "Window > New Window". Each one is a real
   // window of its own -- a GLFW window sharing the OpenGL context of the main
@@ -89,7 +89,7 @@ private:
 public:
   struct extraView {
     GLFWwindow *window;
-    scenePane *pane;
+    sceneView *pane;
     int number;
     // the pointer state of that window, kept between the GLFW callbacks
     paneInput input;
@@ -103,11 +103,11 @@ private:
   std::vector<extraView> _extraViews;
   void _drawExtraViews();
   void _closeExtraView(std::size_t i);
-  bool _isTiled(scenePane *p) const;
+  bool _isTiled(sceneView *p) const;
   // the single view shown while full screen
-  scenePane *_fullScreenPane();
+  sceneView *_fullScreenPane();
 
-  paneNode *_findPaneNode(paneNode *node, scenePane *pane);
+  paneNode *_findPaneNode(paneNode *node, sceneView *pane);
   void _layoutPanes(paneNode *node, int x, int y, int w, int h);
   void _deletePaneTree(paneNode *node);
   messageConsole *_console;
@@ -326,8 +326,8 @@ public:
   void applyStyle();
 
   // panes
-  scenePane *currentPane() { return _currentPane; }
-  void setCurrentPane(scenePane *p);
+  sceneView *currentPane() { return _currentPane; }
+  void setCurrentPane(sceneView *p);
   void setCurrentPane(int index);
   // split the current pane in two ('h' or 'v'), or bring everything back to a
   // single pane ('u')
@@ -338,7 +338,7 @@ public:
   // "minimize", "zoom" or "fullscreen"
   void windowAction(const std::string &what);
   int numPanes() const { return (int)_panes.size(); }
-  scenePane *pane(int i);
+  sceneView *pane(int i);
   drawContext *currentDrawContext();
   void currentPixelSize(int &w, int &h);
   double pixelFactor();

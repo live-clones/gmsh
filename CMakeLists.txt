@@ -774,6 +774,11 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui AND ENABLE_IMGUI)
     message(SEND_ERROR "Could not find GLFW: disabling the Dear ImGui interface")
   elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/imgui)
     add_subdirectory(contrib/imgui)
+    # the 3D scene, which draws with OpenGL and takes its text from the Dear
+    # ImGui font atlas: it belongs to neither chrome, and an interface that
+    # holds it says so with HAVE_GL_SCENE
+    add_subdirectory(src/scene)
+    set(HAVE_GL_SCENE TRUE)
     add_subdirectory(src/imgui)
     include_directories(contrib/imgui contrib/imgui/backends
                         contrib/imgui/misc/cpp)
@@ -1875,7 +1880,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(src/gui src/common src/fltk src/imgui src/geo src/graphics src/mesh
+include_directories(src/gui src/scene src/common src/fltk src/imgui src/geo src/graphics src/mesh
                     src/solver src/numeric src/parser src/plugin src/post api
                     contrib/stb
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)

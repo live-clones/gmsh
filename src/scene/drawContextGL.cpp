@@ -5,7 +5,7 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
+#if defined(HAVE_GL_SCENE)
 
 #include <cstring>
 #include <algorithm>
@@ -14,8 +14,8 @@
 #include "imgui_impl_opengl2.h"
 #include <GLFW/glfw3.h>
 
-#include "drawContextImGui.h"
-#include "appWindow.h"
+#include "drawContextGL.h"
+#include "sceneHost.h"
 #include "GmshMessage.h"
 #include "Context.h"
 
@@ -32,24 +32,22 @@ static const char *_fontNames[] = {
 static const int _numFonts = sizeof(_fontNames) / sizeof(_fontNames[0]);
 static const int _defaultFont = 4; // Helvetica
 
-drawContextImGui::drawContextImGui() : _fontIndex(_defaultFont), _fontSize(12)
+drawContextGL::drawContextGL() : _fontIndex(_defaultFont), _fontSize(12)
 {
 }
 
-void drawContextImGui::draw(bool rateLimited)
+void drawContextGL::draw(bool rateLimited)
 {
-  if(!appWindow::available()) return;
-  appWindow::instance()->requestRedraw();
-  appWindow::instance()->check(rateLimited);
+  if(Scene::host().redraw) Scene::host().redraw();
+  if(Scene::host().check) Scene::host().check(rateLimited);
 }
 
-void drawContextImGui::drawCurrentOpenglWindow(bool make_current)
+void drawContextGL::drawCurrentOpenglWindow(bool make_current)
 {
-  if(!appWindow::available()) return;
-  appWindow::instance()->drawCurrentPane();
+  if(Scene::host().drawCurrent) Scene::host().drawCurrent();
 }
 
-int drawContextImGui::getFontIndex(const char *fontname)
+int drawContextGL::getFontIndex(const char *fontname)
 {
   if(fontname) {
     for(int i = 0; i < _numFonts; i++)
@@ -61,22 +59,22 @@ int drawContextImGui::getFontIndex(const char *fontname)
   return _defaultFont;
 }
 
-int drawContextImGui::getFontEnum(int index)
+int drawContextGL::getFontEnum(int index)
 {
   // there is no toolkit-level font enum here: the index is the enum
   if(index >= 0 && index < _numFonts) return index;
   return _defaultFont;
 }
 
-const char *drawContextImGui::getFontName(int index)
+const char *drawContextGL::getFontName(int index)
 {
   if(index >= 0 && index < _numFonts) return _fontNames[index];
   return _fontNames[_defaultFont];
 }
 
-int drawContextImGui::getNumFonts() { return _numFonts; }
+int drawContextGL::getNumFonts() { return _numFonts; }
 
-int drawContextImGui::getFontSize()
+int drawContextGL::getFontSize()
 {
   if(CTX::instance()->fontSize > 0) return CTX::instance()->fontSize;
 
@@ -100,15 +98,15 @@ int drawContextImGui::getFontSize()
   return std::max(16, (int)(96. * sx / 10.));
 }
 
-void drawContextImGui::setFont(int fontid, int fontsize)
+void drawContextGL::setFont(int fontid, int fontsize)
 {
   _fontIndex = (fontid >= 0 && fontid < _numFonts) ? fontid : _defaultFont;
   int size = (fontsize > 0) ? fontsize : 12;
   // General.GraphicsFontSize is a size in points: turn it into pixels using the
   // scale factor of the display, so that the labels of the scene keep the same
   // physical size whatever the resolution
-  if(appWindow::available()) {
-    float scale = appWindow::instance()->uiScale();
+  if(Scene::host().uiScale) {
+    float scale = Scene::host().uiScale();
     if(scale > 0.f) size = (int)(size * scale + 0.5f);
   }
   _fontSize = (size > 0) ? size : 12;
@@ -126,7 +124,7 @@ static ImFontBaked *_baked(int fontSize)
   return font->GetFontBaked((float)fontSize);
 }
 
-double drawContextImGui::getStringWidth(const char *str)
+double drawContextGL::getStringWidth(const char *str)
 {
   ImFontBaked *baked = _baked(_fontSize);
   if(!baked || !str) return 1.;
@@ -138,21 +136,21 @@ double drawContextImGui::getStringWidth(const char *str)
   return w;
 }
 
-int drawContextImGui::getStringHeight()
+int drawContextGL::getStringHeight()
 {
   ImFontBaked *baked = _baked(_fontSize);
   if(!baked) return _fontSize;
   return (int)(baked->Ascent - baked->Descent + 0.5f);
 }
 
-int drawContextImGui::getStringDescent()
+int drawContextGL::getStringDescent()
 {
   ImFontBaked *baked = _baked(_fontSize);
   if(!baked) return _fontSize / 4;
   return (int)(-baked->Descent + 0.5f);
 }
 
-void drawContextImGui::drawString(const char *str)
+void drawContextGL::drawString(const char *str)
 {
   if(!str || !*str) return;
 
@@ -233,7 +231,7 @@ void drawContextImGui::drawString(const char *str)
   glPopAttrib();
 }
 
-void drawContextImGui::resetFontTextures()
+void drawContextGL::resetFontTextures()
 {
   // the Dear ImGui atlas rebuilds itself on demand: nothing to do
 }

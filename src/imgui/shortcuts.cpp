@@ -16,7 +16,7 @@
 #include "imgui.h"
 
 #include "appWindow.h"
-#include "scenePane.h"
+#include "sceneView.h"
 #include "GuiActions.h"
 #include "menuActions.h"
 #include "GuiMenus.h"

@@ -5,7 +5,7 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
+#if defined(HAVE_GL_SCENE)
 
 #include <cmath>
 #include <cstdlib>
@@ -13,8 +13,8 @@
 
 #include "imgui.h"
 
-#include "scenePane.h"
-#include "appWindow.h"
+#include "sceneView.h"
+#include "sceneHost.h"
 #include "GuiActions.h"
 #include "GuiDialogs.h"
 #include "GmshMessage.h"
@@ -35,7 +35,7 @@
 #include "PViewOptions.h"
 #endif
 
-scenePane::scenePane()
+sceneView::sceneView()
   : _x(0), _y(0), _w(1), _h(1), _lassoMode(false), _trySelection(0),
     _selection(ENT_NONE), selectionMode(false), endSelection(0),
     undoSelection(0), invertSelection(0), quitSelection(0), changeSelection(0)
@@ -50,9 +50,9 @@ scenePane::scenePane()
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
 }
 
-scenePane::~scenePane() { delete _ctx; }
+sceneView::~sceneView() { delete _ctx; }
 
-void scenePane::setRect(int x, int y, int w, int h)
+void sceneView::setRect(int x, int y, int w, int h)
 {
   _x = x;
   _y = y;
@@ -60,7 +60,7 @@ void scenePane::setRect(int x, int y, int w, int h)
   _h = (h > 1) ? h : 1;
 }
 
-void scenePane::setOrigin(double x, double y, int height, double pixelFactor)
+void sceneView::setOrigin(double x, double y, int height, double pixelFactor)
 {
   _originX = x;
   _originY = y;
@@ -68,7 +68,7 @@ void scenePane::setOrigin(double x, double y, int height, double pixelFactor)
   _pixelFactor = pixelFactor;
 }
 
-void scenePane::_drawScreenMessage()
+void sceneView::_drawScreenMessage()
 {
   if(screenMessage[0].empty() && screenMessage[1].empty()) return;
 
@@ -87,7 +87,7 @@ void scenePane::_drawScreenMessage()
   }
 }
 
-void scenePane::_drawLasso()
+void sceneView::_drawLasso()
 {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -119,10 +119,10 @@ void scenePane::_drawLasso()
 
 // when the view is split, outline the pane so that it is clear which one the
 // keyboard and the .geo commands act on
-void scenePane::_drawBorder()
+void sceneView::_drawBorder()
 {
-  if(appWindow::instance()->numPanes() < 2) return;
-  bool current = (appWindow::instance()->currentPane() == this);
+  if(Scene::host().numViews && Scene::host().numViews() < 2) return;
+  bool current = ((Scene::host().current ? Scene::host().current() : nullptr) == this);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -146,7 +146,7 @@ void scenePane::_drawBorder()
   glEnable(GL_DEPTH_TEST);
 }
 
-void scenePane::draw(double pixelFactor, int windowHeight)
+void sceneView::draw(double pixelFactor, int windowHeight)
 {
   // the scene is rendered directly into the rectangle of the central dock node,
   // so both the viewport and the scissor box are needed: the scissor box keeps
@@ -219,7 +219,7 @@ void scenePane::draw(double pixelFactor, int windowHeight)
   _ctx->camera.update();
 }
 
-bool scenePane::_select(int type, bool multiple, bool mesh, bool post, int x,
+bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
                         int y, int w, int h, std::vector<GVertex *> &vertices,
                         std::vector<GEdge *> &edges,
                         std::vector<GFace *> &faces,
@@ -235,7 +235,7 @@ bool scenePane::_select(int type, bool multiple, bool mesh, bool post, int x,
                       faces, regions, elements, points, views);
 }
 
-void scenePane::_lassoZoom()
+void sceneView::_lassoZoom()
 {
   if(_click.win[0] == _curr.win[0] || _click.win[1] == _curr.win[1]) return;
 
@@ -256,7 +256,7 @@ void scenePane::_lassoZoom()
 // What is under the pointer: the same query the FLTK interface runs on FL_MOVE.
 // It says what the entity is, and what a double click on it would do, either in
 // a tooltip or in the status bar depending on General.Tooltips.
-void scenePane::_hover()
+void sceneView::_hover()
 {
   std::vector<GVertex *> vertices;
   std::vector<GEdge *> edges;
@@ -330,12 +330,12 @@ void scenePane::_hover()
   }
 
   if(CTX::instance()->tooltips)
-    appWindow::instance()->setTooltip(text);
+    if(Scene::host().tooltip) Scene::host().tooltip(text);
   else
     Msg::StatusBar(false, "%s", text.c_str());
 }
 
-void scenePane::handleMouse(const paneInput &in)
+void sceneView::handleMouse(const paneInput &in)
 {
   double mx = in.x, my = in.y;
 
@@ -364,7 +364,7 @@ void scenePane::handleMouse(const paneInput &in)
       _ctx->s[2] = _ctx->s[0];
       _prev.recenter(_ctx);
     }
-    appWindow::instance()->requestRedraw();
+    if(Scene::host().redraw) Scene::host().redraw();
   }
 
   // --- placing a new entity: the pointer drives its coordinates, unless the
@@ -385,7 +385,7 @@ void scenePane::handleMouse(const paneInput &in)
         int pane = elementaryPaneStore();
         if(pane >= 1 && pane <= 11) elementaryStore(pane, i) = str;
       }
-      appWindow::instance()->requestRedraw();
+      if(Scene::host().redraw) Scene::host().redraw();
     }
     return;
   }
@@ -398,7 +398,7 @@ void scenePane::handleMouse(const paneInput &in)
     _curr.set(_ctx, (int)lx, (int)ly);
     _hover();
     _prev.set(_ctx, (int)lx, (int)ly);
-    appWindow::instance()->requestRedraw();
+    if(Scene::host().redraw) Scene::host().redraw();
     return;
   }
 
@@ -408,7 +408,7 @@ void scenePane::handleMouse(const paneInput &in)
     if(in.clicked[b]) button = b;
 
   if(button >= 0 && contains(mx, my)) {
-    appWindow::instance()->setCurrentPane(this);
+    if(Scene::host().setCurrent) Scene::host().setCurrent(this);
     _curr.set(_ctx, (int)lx, (int)ly);
 
     if(in.doubleClicked && !selectionMode &&
@@ -451,7 +451,7 @@ void scenePane::handleMouse(const paneInput &in)
       if(!CTX::instance()->camera) {
         _ctx->t[0] = _ctx->t[1] = _ctx->t[2] = 0.;
         _ctx->s[0] = _ctx->s[1] = _ctx->s[2] = 1.;
-        appWindow::instance()->requestRedraw();
+        if(Scene::host().redraw) Scene::host().redraw();
       }
       _lassoMode = false;
     }
@@ -463,13 +463,13 @@ void scenePane::handleMouse(const paneInput &in)
 
   // --- release
   if(in.released[0] || in.released[1] || in.released[2]) {
-    if(appWindow::instance()->currentPane() != this) return;
+    if((Scene::host().current ? Scene::host().current() : nullptr) != this) return;
     _curr.set(_ctx, (int)lx, (int)ly);
     CTX::instance()->drawRotationCenter = 0;
     if(!_lassoMode) {
       CTX::instance()->mesh.draw = 1;
       CTX::instance()->post.draw = 1;
-      appWindow::instance()->requestRedraw();
+      if(Scene::host().redraw) Scene::host().redraw();
     }
     _prev.set(_ctx, (int)lx, (int)ly);
     return;
@@ -480,14 +480,14 @@ void scenePane::handleMouse(const paneInput &in)
   for(int b = 0; b < 3; b++)
     if(in.dragging[b]) dragButton = b;
   if(dragButton < 0) return;
-  if(appWindow::instance()->currentPane() != this) return;
+  if((Scene::host().current ? Scene::host().current() : nullptr) != this) return;
 
   _curr.set(_ctx, (int)lx, (int)ly);
   double dx = _curr.win[0] - _prev.win[0];
   double dy = _curr.win[1] - _prev.win[1];
 
   if(_lassoMode) {
-    appWindow::instance()->requestRedraw();
+    if(Scene::host().redraw) Scene::host().redraw();
     _prev.set(_ctx, (int)lx, (int)ly);
     return;
   }
@@ -558,11 +558,11 @@ void scenePane::handleMouse(const paneInput &in)
     CTX::instance()->mesh.draw = 0;
     CTX::instance()->post.draw = 0;
   }
-  appWindow::instance()->requestRedraw();
+  if(Scene::host().redraw) Scene::host().redraw();
   _prev.set(_ctx, (int)lx, (int)ly);
 }
 
-void scenePane::_handleDoubleClick(double lx, double ly)
+void sceneView::_handleDoubleClick(double lx, double ly)
 {
   std::vector<GVertex *> vertices;
   std::vector<GEdge *> edges;
@@ -612,7 +612,7 @@ void scenePane::_handleDoubleClick(double lx, double ly)
   }
 }
 
-char scenePane::selectEntity(int type, std::vector<GVertex *> &vertices,
+char sceneView::selectEntity(int type, std::vector<GVertex *> &vertices,
                              std::vector<GEdge *> &edges,
                              std::vector<GFace *> &faces,
                              std::vector<GRegion *> &regions,
@@ -620,7 +620,7 @@ char scenePane::selectEntity(int type, std::vector<GVertex *> &vertices,
                              std::vector<SPoint2> &points,
                              std::vector<PView *> &views)
 {
-  if(!appWindow::available()) return 'q';
+  
 
   _selection = type;
   _trySelection = 0;
@@ -632,14 +632,14 @@ char scenePane::selectEntity(int type, std::vector<GVertex *> &vertices,
   invertSelection = 0;
 
   while(1) {
-    if(!appWindow::available()) return 'q';
+    
     vertices.clear();
     edges.clear();
     faces.clear();
     regions.clear();
     elements.clear();
-    appWindow::instance()->wait(false);
-    if(!appWindow::available()) return 'q';
+    if(Scene::host().wait) Scene::host().wait(-1., false);
+    
     if(changeSelection) {
       Msg::Debug("Changing selection mode to %d", changeSelection);
       _selection = changeSelection;

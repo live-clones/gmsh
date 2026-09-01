@@ -19,7 +19,7 @@
 #include "appWindow.h"
 #include "toolkit.h"
 #include "messageConsole.h"
-#include "scenePane.h"
+#include "sceneView.h"
 
 // Dear ImGui and GLFW, as the interface asks for them. Nothing here says
 // anything about Gmsh.
@@ -148,7 +148,7 @@ namespace {
                       const std::string &second) override
     {
       if(!appWindow::available()) return;
-      scenePane *p = appWindow::instance()->currentPane();
+      sceneView *p = appWindow::instance()->currentPane();
       if(!p) return;
       if(first.size()) p->screenMessage[0] = first;
       if(second.size()) p->screenMessage[1] = second;

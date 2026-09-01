@@ -12,7 +12,7 @@
 // nothing. Set GMSH_GUI_FONT to a .ttf file to choose explicitly.
 //
 // This also fixes the text drawn in the 3D scene, which is rendered from the
-// same atlas by drawContextImGui.
+// same atlas by drawContextGL.
 
 #include "GmshConfig.h"
 

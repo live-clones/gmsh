@@ -23,10 +23,11 @@
 
 #include "appWindow.h"
 #include "toolkit.h"
-#include "scenePane.h"
+#include "sceneView.h"
+#include "sceneHost.h"
 #include "messageConsole.h"
 #include "fileBrowser.h"
-#include "drawContextImGui.h"
+#include "drawContextGL.h"
 #include "Gui.h"
 #include "GuiStatus.h"
 #include "GmshGlobal.h"
@@ -215,16 +216,57 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   ImGui_ImplGlfw_InitForOpenGL(_window, true);
   ImGui_ImplOpenGL2_Init();
 
+  // What the scene of src/scene needs of whoever holds it. This interface
+  // holds it inside panes of its own dock space; a chrome running somewhere
+  // else pairs it with a window that holds nothing but the scene, and fills
+  // the same nine in.
+  {
+    Scene::Host held;
+    held.redraw = []() {
+      if(appWindow::available()) appWindow::instance()->requestRedraw();
+    };
+    held.check = [](bool rateLimited) {
+      if(appWindow::available()) appWindow::instance()->check(rateLimited);
+    };
+    held.wait = [](double seconds, bool force) {
+      if(!appWindow::available()) return;
+      if(seconds < 0.)
+        appWindow::instance()->wait(force);
+      else
+        appWindow::instance()->wait(seconds, force);
+    };
+    held.drawCurrent = []() {
+      if(appWindow::available()) appWindow::instance()->drawCurrentPane();
+    };
+    held.uiScale = []() {
+      return appWindow::available() ? appWindow::instance()->uiScale() : 1.f;
+    };
+    held.numViews = []() {
+      return appWindow::available() ? appWindow::instance()->numPanes() : 0;
+    };
+    held.tooltip = [](const std::string &text) {
+      if(appWindow::available()) appWindow::instance()->setTooltip(text);
+    };
+    held.current = []() -> sceneView * {
+      return appWindow::available() ? appWindow::instance()->currentPane() :
+                                      nullptr;
+    };
+    held.setCurrent = [](sceneView *view) {
+      if(appWindow::available()) appWindow::instance()->setCurrentPane(view);
+    };
+    Scene::setHost(held);
+  }
+
   if(!drawContext::global() ||
      drawContext::global()->getName() != "ImGui")
-    drawContext::setGlobal(new drawContextImGui);
+    drawContext::setGlobal(new drawContextGL);
 
   // from here on, what does not come from this thread is not drawn
   Toolkit::claimThread();
   _console = new messageConsole();
   _browser = new fileBrowser();
   fileBrowser::setHome(CTX::instance()->homeDir);
-  _panes.push_back(new scenePane());
+  _panes.push_back(new sceneView());
   _currentPane = _panes[0];
   _paneRoot = new paneNode(_panes[0]);
 
@@ -314,7 +356,7 @@ void appWindow::_deletePaneTree(paneNode *node)
   delete node;
 }
 
-appWindow::paneNode *appWindow::_findPaneNode(paneNode *node, scenePane *pane)
+appWindow::paneNode *appWindow::_findPaneNode(paneNode *node, sceneView *pane)
 {
   if(!node) return nullptr;
   if(node->pane == pane) return node;
@@ -344,7 +386,7 @@ void appWindow::_layoutPanes(paneNode *node, int x, int y, int w, int h)
   }
 }
 
-bool appWindow::_isTiled(scenePane *p) const
+bool appWindow::_isTiled(sceneView *p) const
 {
   return p && _paneRoot &&
          const_cast<appWindow *>(this)->_findPaneNode(_paneRoot, p) != nullptr;
@@ -475,7 +517,7 @@ static void _extraKey(GLFWwindow *w, int key, int, int action, int mods)
 
 void appWindow::_closeExtraView(std::size_t i)
 {
-  scenePane *dead = _extraViews[i].pane;
+  sceneView *dead = _extraViews[i].pane;
   GLFWwindow *w = _extraViews[i].window;
   _extraViews.erase(_extraViews.begin() + i);
   for(auto it = _panes.begin(); it != _panes.end(); it++)
@@ -540,7 +582,7 @@ void appWindow::newGraphicWindow()
     return;
   }
 
-  scenePane *fresh = new scenePane();
+  sceneView *fresh = new sceneView();
   if(_currentPane)
     fresh->getDrawContext()->copyViewAttributes(_currentPane->getDrawContext());
   _panes.push_back(fresh);
@@ -574,10 +616,10 @@ void appWindow::splitCurrentPane(char how, double ratio)
   // The extra graphic windows are not part of the tiling, so they are neither
   // split nor swallowed by "Unsplit": splitting acts on the panes of the main
   // window, whichever one is current.
-  scenePane *current = _isTiled(_currentPane) ? _currentPane : nullptr;
+  sceneView *current = _isTiled(_currentPane) ? _currentPane : nullptr;
 
   if(how == 'u') {
-    scenePane *keep = current;
+    sceneView *keep = current;
     if(!keep) { // find any tiled pane to keep
       for(auto p : _panes)
         if(_isTiled(p)) {
@@ -587,11 +629,11 @@ void appWindow::splitCurrentPane(char how, double ratio)
     }
     if(!keep) return;
     // which panes are tiled has to be known before the tree goes away
-    std::vector<scenePane *> tiled;
+    std::vector<sceneView *> tiled;
     for(auto p : _panes)
       if(_isTiled(p)) tiled.push_back(p);
     _deletePaneTree(_paneRoot);
-    std::vector<scenePane *> left;
+    std::vector<sceneView *> left;
     for(auto p : _panes) {
       bool isTiled =
         std::find(tiled.begin(), tiled.end(), p) != tiled.end();
@@ -620,7 +662,7 @@ void appWindow::splitCurrentPane(char how, double ratio)
   paneNode *node = _findPaneNode(_paneRoot, current);
   if(!node) return;
 
-  scenePane *fresh = new scenePane();
+  sceneView *fresh = new sceneView();
   // the new pane looks at the same thing as the one it was split from
   fresh->getDrawContext()->copyViewAttributes(current->getDrawContext());
   _panes.push_back(fresh);
@@ -635,13 +677,13 @@ void appWindow::splitCurrentPane(char how, double ratio)
   requestRedraw();
 }
 
-scenePane *appWindow::pane(int i)
+sceneView *appWindow::pane(int i)
 {
   if(i >= 0 && i < (int)_panes.size()) return _panes[i];
   return nullptr;
 }
 
-void appWindow::setCurrentPane(scenePane *p)
+void appWindow::setCurrentPane(sceneView *p)
 {
   if(p) _currentPane = p;
 }
@@ -888,7 +930,7 @@ void appWindow::_drawScene()
   int wh = 0, ww = 0;
   glfwGetWindowSize(_window, &ww, &wh);
   if(_fullscreen) {
-    scenePane *p = _fullScreenPane();
+    sceneView *p = _fullScreenPane();
     if(p) p->draw(f, wh);
     return;
   }
@@ -900,7 +942,7 @@ void appWindow::_drawScene()
 
 // The view that is shown full screen: the current one, unless it belongs to an
 // extra graphic window, which is a window of its own and stays as it is.
-scenePane *appWindow::_fullScreenPane()
+sceneView *appWindow::_fullScreenPane()
 {
   if(_isTiled(_currentPane)) return _currentPane;
   for(auto p : _panes)
@@ -1051,7 +1093,7 @@ void appWindow::frame()
 
   if(_fullscreen) {
     // one view, filling the window
-    scenePane *p = _fullScreenPane();
+    sceneView *p = _fullScreenPane();
     if(p) p->setRect(sx, sy, sw, sh);
   }
   else

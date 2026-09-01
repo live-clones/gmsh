@@ -3,12 +3,12 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef SCENE_PANE_H
-#define SCENE_PANE_H
+#ifndef SCENE_VIEW_H
+#define SCENE_VIEW_H
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_IMGUI)
+#if defined(HAVE_GL_SCENE)
 
 #include <string>
 #include <vector>
@@ -55,7 +55,7 @@ struct paneInput {
   }
 };
 
-class scenePane {
+class sceneView {
 private:
   drawContext *_ctx;
   // rectangle in logical (not framebuffer) pixels, top-left origin, relative to
@@ -101,8 +101,8 @@ public:
   std::string screenMessage[2];
 
 public:
-  scenePane();
-  ~scenePane();
+  sceneView();
+  ~sceneView();
 
   drawContext *getDrawContext() { return _ctx; }
 

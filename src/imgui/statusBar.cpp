@@ -15,7 +15,7 @@
 #include "imgui_internal.h" // BeginViewportSideBar()
 
 #include "appWindow.h"
-#include "scenePane.h"
+#include "sceneView.h"
 #include "Gui.h"
 #include "GuiDialogs.h"
 #include "GuiActions.h"
@@ -159,11 +159,11 @@ void appWindow::_drawStatusBar()
 // is what makes this the interface's rather than the description's.
 void appWindow::orientPanes(const std::string &what, bool reverse, bool sync)
 {
-  std::vector<scenePane *> panes;
+  std::vector<sceneView *> panes;
   for(auto *p : _panes)
     if(_isTiled(p)) panes.push_back(p);
   if(panes.empty()) {
-    if(scenePane *p = currentPane()) panes.push_back(p);
+    if(sceneView *p = currentPane()) panes.push_back(p);
   }
   for(std::size_t i = 0; i < panes.size(); i++) {
     drawContext *ctx = panes[i]->getDrawContext();
