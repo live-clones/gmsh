@@ -12,6 +12,7 @@
 #include <map>
 
 #include "uiSources.h"
+#include "Tree.h"
 #include "fieldWidget.h"
 #include "menuActions.h"
 #include "GmshConfig.h"
@@ -173,6 +174,35 @@ namespace {
   {
     return (float)f.rows * ImGui::GetFrameHeightWithSpacing() -
            ImGui::GetStyle().ItemSpacing.y;
+  }
+
+  // Down a described tree, drawing what is unfolded. It asks for the children
+  // of a line only when that line is open, which is what the model is for.
+  bool _branch(const Ui::Tree &said, const std::string &path, bool &changed)
+  {
+    if(!said.children) return false;
+    for(const auto &child : said.children(path)) {
+      Ui::Node node = said.node(child);
+      bool branch = !said.children(child).empty();
+      bool on = node.picked ? node.picked() : false;
+      ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
+                                 ImGuiTreeNodeFlags_OpenOnDoubleClick;
+      if(on) flags |= ImGuiTreeNodeFlags_Selected;
+      if(!branch)
+        flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+      ImGui::PushID(child.c_str());
+      bool unfolded = ImGui::TreeNodeEx(node.label.c_str(), flags);
+      if(ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen() && node.pick) {
+        node.pick(!on);
+        changed = true;
+      }
+      ImGui::PopID();
+      if(branch && unfolded) {
+        _branch(said, child, changed);
+        ImGui::TreePop();
+      }
+    }
+    return changed;
   }
 
   // one field of a pane, bound to whatever the description points at: a
@@ -667,46 +697,16 @@ namespace {
       }
     } break;
     case Ui::Hierarchy: {
-      // The lines of a hierarchy, deepest last: a line with something under it
-      // folds, a line with nothing under it is picked, and picking a line that
-      // folds picks everything under it, as the window this reproduces has it.
-      std::vector<Ui::TreeLine> lines;
-      if(f.treeLines) f.treeLines(lines);
+      // The tree it shows, walked as it is unfolded: a line with children
+      // folds, one without is picked, and picking a line that folds picks
+      // everything under it, which the description says rather than this.
+      if(!f.hierarchy) break;
+      const Ui::Tree &said = *f.hierarchy;
       ImVec2 size(width > 0.f ? width : -FLT_MIN,
                   f.rows ? f.rows * ImGui::GetTextLineHeightWithSpacing() :
                   tall > 0.f ? tall : -FLT_MIN);
-      if(ImGui::BeginChild("##tree", size, ImGuiChildFlags_Borders)) {
-        int open = 0; // how many levels are unfolded and drawn
-        for(std::size_t i = 0; i < lines.size(); i++) {
-          int depth = lines[i].depth;
-          // a line deeper than what is unfolded is not drawn at all
-          if(depth > open) continue;
-          while(open > depth) {
-            ImGui::TreePop();
-            open--;
-          }
-          bool branch = (i + 1 < lines.size() &&
-                         lines[i + 1].depth > depth);
-          bool on = f.chosen ? f.chosen((int)i) : false;
-          ImGuiTreeNodeFlags flags =
-            ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-          if(on) flags |= ImGuiTreeNodeFlags_Selected;
-          if(!branch) flags |= ImGuiTreeNodeFlags_Leaf |
-                               ImGuiTreeNodeFlags_NoTreePushOnOpen;
-          ImGui::PushID((int)i);
-          bool unfolded = ImGui::TreeNodeEx(lines[i].label.c_str(), flags);
-          if(ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen() && f.choose) {
-            f.choose((int)i, !on);
-            changed = true;
-          }
-          ImGui::PopID();
-          if(branch && unfolded) open++;
-        }
-        while(open > 0) {
-          ImGui::TreePop();
-          open--;
-        }
-      }
+      if(ImGui::BeginChild("##tree", size, ImGuiChildFlags_Borders))
+        if(_branch(said, "", changed)) changed = true;
       ImGui::EndChild();
     } break;
     case Ui::Direction: {

@@ -7,6 +7,7 @@
 #define UI_FORM_H
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,10 @@
 // back afterwards.
 
 namespace Ui {
+
+  // said in Tree.h, which is written in terms of a Field and so cannot be
+  // included here
+  struct Tree;
 
   // A colour, as four bytes. It is four bytes rather than one packed number
   // because there is no packing everyone agrees on -- the one Gmsh uses
@@ -158,19 +163,6 @@ namespace Ui {
            // its contents exactly
   };
 
-  // One line of a Tree: how deep it is in the hierarchy, what it says, and
-  // whether it stands for something one can pick -- the headings of a tree do
-  // not, they are only there to gather what is under them.
-  struct TreeLine {
-    int depth;
-    std::string label;
-    bool pickable;
-    TreeLine(int d = 0, const std::string &l = "", bool p = true)
-      : depth(d), label(l), pickable(p)
-    {
-    }
-  };
-
   // A button: at the bottom of a form, or hung after a field.
   struct Button {
     std::string label;
@@ -253,10 +245,11 @@ namespace Ui {
     // of the visibility panel are a type, a number and a name. Empty for a
     // list of plain lines.
     std::vector<double> columnsEm;
-    // Tree: its lines, in the order they are drawn, deepest last. Which of
-    // them are picked is asked and set through chosen() and choose(), by the
-    // place of the line in that list, as for a List.
-    std::function<void(std::vector<TreeLine> &lines)> treeLines;
+    // Hierarchy: the tree it shows, said as Tree.h says one -- a model
+    // rather than a list, so that what is asked for is what is unfolded. It
+    // is held by pointer because a tree is made of fields and a field cannot
+    // hold one of itself.
+    std::shared_ptr<Tree> hierarchy;
     // List: which entries are chosen and how to change that. Without them the
     // list is only read; `multiple` says whether more than one may be chosen.
     std::function<bool(int index)> chosen;

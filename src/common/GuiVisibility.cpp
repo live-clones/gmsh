@@ -11,9 +11,12 @@
 
 #include "GmshConfig.h"
 
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "Tree.h"
 #include "GuiDialogs.h"
 #include "GuiDeclare.h"
 #include "GuiActions.h"
@@ -222,6 +225,88 @@ namespace {
       }
     }
   }
+  // The entities of the models, as the hierarchy they are. It was said as a
+  // list of lines each carrying how deep it was, which is a tree with its
+  // shape thrown away and left to whoever draws it to put back; it is said as
+  // a tree now, the same one the modules panel is.
+  //
+  // A line is named by where it sits -- "0/1/4" -- rather than by what it
+  // says, since two entities of two models may say the same thing.
+
+  std::map<std::string, std::vector<std::string> > &_under()
+  {
+    static std::map<std::string, std::vector<std::string> > under;
+    return under;
+  }
+
+  std::map<std::string, int> &_atPath()
+  {
+    static std::map<std::string, int> at;
+    return at;
+  }
+
+  void _makePaths()
+  {
+    _under().clear();
+    _atPath().clear();
+    std::vector<std::string> stack; // the path of the last line at each depth
+    const std::vector<treeNode> &all = _tree();
+    for(std::size_t i = 0; i < all.size(); i++) {
+      int depth = all[i].depth;
+      if((int)stack.size() > depth) stack.resize(depth);
+      std::string parent = stack.empty() ? std::string() : stack.back();
+      std::string here = parent + "/" + std::to_string(i);
+      _under()[parent].push_back(here);
+      _atPath()[here] = (int)i;
+      stack.push_back(here);
+    }
+  }
+
+  Ui::Tree _entityTree()
+  {
+    Ui::Tree t;
+    t.children = [](const std::string &parent) {
+      _refreshTree();
+      _makePaths();
+      auto it = _under().find(parent);
+      return it == _under().end() ? std::vector<std::string>() : it->second;
+    };
+    t.node = [](const std::string &path) {
+      Ui::Node n;
+      auto it = _atPath().find(path);
+      if(it == _atPath().end()) return n;
+      int i = it->second;
+      const std::vector<treeNode> &all = _tree();
+      if(i < 0 || i >= (int)all.size()) return n;
+      n.path = path;
+      n.label = all[i].label;
+      // a heading gathers what is under it and is not itself picked
+      if(!all[i].entity && !all[i].model) return n;
+      n.picked = [i]() {
+        return i < (int)_pickedTree().what.size() &&
+               _pickedTree().what[i] != 0;
+      };
+      n.pick = [i](bool on) {
+        const std::vector<treeNode> &all = _tree();
+        if(i < 0 || i >= (int)all.size()) return;
+        if(i < (int)_pickedTree().what.size())
+          _pickedTree().what[i] = on ? 1 : 0;
+        // a line stands for itself and, if it gathers others, for them too
+        for(std::size_t j = i + 1;
+            j < all.size() && all[j].depth > all[i].depth; j++)
+          if(j < _pickedTree().what.size())
+            _pickedTree().what[j] = on ? 1 : 0;
+      };
+      return n;
+    };
+    t.generation = []() {
+      _refreshTree();
+      return (unsigned)_tree().size();
+    };
+    return t;
+  }
+
+
 
   // and what the tree says is to be seen, once one asks for it
   void _applyTree()
@@ -641,28 +726,7 @@ namespace Dialog {
       lines.visible = []() {
         return _treeWanted() || _numEntities() <= 10000;
       };
-      lines.treeLines = [](std::vector<TreeLine> &into) {
-        _refreshTree();
-        for(const auto &line : _tree())
-          into.push_back(TreeLine(line.depth, line.label,
-                                  line.entity || line.model));
-      };
-      lines.chosen = [](int i) {
-        return i >= 0 && i < (int)_pickedTree().what.size() &&
-               _pickedTree().what[i] != 0;
-      };
-      lines.choose = [](int i, bool on) {
-        const std::vector<treeNode> &all = _tree();
-        if(i < 0 || i >= (int)all.size()) return;
-        if(i < (int)_pickedTree().what.size())
-          _pickedTree().what[i] = on ? 1 : 0;
-        // a line stands for itself and, if it gathers others, for them too
-        for(std::size_t j = i + 1;
-            j < all.size() && all[j].depth > all[i].depth; j++)
-          if(j < _pickedTree().what.size())
-            _pickedTree().what[j] = on ? 1 : 0;
-      };
-      lines.multiple = true;
+      lines.hierarchy = std::make_shared<Ui::Tree>(_entityTree());
       tree.fields.push_back(lines);
       // a model of more than ten thousand entities is not put in a tree
       // unless one insists, as that window has it

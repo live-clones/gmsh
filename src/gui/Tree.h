@@ -57,6 +57,11 @@ namespace Ui {
     bool hasField;
     Field field;
     std::function<void()> pressed;
+    // A line one may pick, and whether it is picked. A heading is not
+    // pickable, so this is empty on one. Picking a line that gathers others
+    // picks them too, which is the tree's to say and not the interface's.
+    std::function<bool()> picked;
+    std::function<void(bool)> pick;
     // false greys the line out: a command that does not apply to what is
     // loaded is there and cannot be run, as it is in a menu
     std::function<bool()> enabled;

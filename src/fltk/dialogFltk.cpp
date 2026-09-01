@@ -9,6 +9,7 @@
 #if defined(HAVE_FLTK)
 
 #include <algorithm>
+#include <deque>
 #include <map>
 #include <string>
 #include <vector>
@@ -35,6 +36,7 @@
 #include "spherePositionWidget.h"
 #include "colorbarWindow.h"
 #include <FL/Fl_Tree.H>
+#include "Tree.h"
 #include "dialogFltk.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
@@ -479,11 +481,15 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       // the list the description gave. The item carries that place.
       Fl_Tree *tree = (Fl_Tree *)w;
       Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
-      if(item && f.choose && tree->callback_reason() == FL_TREE_REASON_SELECTED)
-        f.choose((int)(intptr_t)item->user_data(), true);
-      else if(item && f.choose &&
-              tree->callback_reason() == FL_TREE_REASON_DESELECTED)
-        f.choose((int)(intptr_t)item->user_data(), false);
+      if(!item || !f.hierarchy) break;
+      const std::string *path = (const std::string *)item->user_data();
+      if(!path) break;
+      Ui::Node node = f.hierarchy->node(*path);
+      if(!node.pick) break;
+      if(tree->callback_reason() == FL_TREE_REASON_SELECTED)
+        node.pick(true);
+      else if(tree->callback_reason() == FL_TREE_REASON_DESELECTED)
+        node.pick(false);
     } break;
     case Ui::ColorMap: break; // it edits the table itself
     case Ui::Menu: {
@@ -1400,6 +1406,32 @@ void dialogFltk::_tick(void *data)
   Fl::repeat_timeout(d->_panel.refreshEvery, _tick, data);
 }
 
+namespace {
+
+  // The paths of the lines, kept while the tree that points at them is alive:
+  // an Fl_Tree item carries a void*, so what it points at has to outlive it.
+  std::deque<std::string> _treePaths;
+
+  // Down the model, unfolding as it goes: each child of a line becomes an
+  // item under it, and the item remembers which line of the description it
+  // stands for.
+  void _addBranch(Fl_Tree *tree, Fl_Tree_Item *parent, const Ui::Tree &said,
+                  const std::string &path)
+  {
+    if(!said.children) return;
+    for(const auto &child : said.children(path)) {
+      Ui::Node node = said.node(child);
+      Fl_Tree_Item *item = tree->add(parent, _plain(node.label).c_str());
+      if(!item) continue;
+      _treePaths.push_back(child);
+      item->user_data((void *)&_treePaths.back());
+      item->close();
+      _addBranch(tree, item, said, child);
+    }
+  }
+
+} // namespace
+
 void dialogFltk::refresh()
 {
   if(!_panel.tabbed) _relayout();
@@ -1482,11 +1514,12 @@ void dialogFltk::refresh()
       // it. Rebuilt only when they have changed: an Fl_Tree that is built
       // again forgets what was open.
       Fl_Tree *tree = (Fl_Tree *)b.widget;
-      std::vector<Ui::TreeLine> lines;
-      if(f.treeLines) f.treeLines(lines);
-      std::string signature;
-      for(const auto &l : lines)
-        signature += std::to_string(l.depth) + l.label + "\n";
+      if(!f.hierarchy) break;
+      const Ui::Tree &said = *f.hierarchy;
+      // Rebuilt only when the shape has changed: an Fl_Tree that is built
+      // again forgets what was open.
+      std::string signature = std::to_string(said.generation ?
+                                               said.generation() : 0);
       if(signature != b.was) {
         b.was = signature;
         // clear() takes the root with it, and everything hangs from the root
@@ -1494,29 +1527,14 @@ void dialogFltk::refresh()
         Fl_Tree_Item *root = new Fl_Tree_Item(tree);
         root->label(_plain(f.label.size() ? f.label : "Gmsh").c_str());
         tree->root(root);
-        std::vector<Fl_Tree_Item *> parents(1, root);
-        for(std::size_t i = 0; i < lines.size(); i++) {
-          std::size_t depth = (std::size_t)lines[i].depth;
-          if(depth + 1 > parents.size()) depth = parents.size() - 1;
-          Fl_Tree_Item *item =
-            tree->add(parents[depth], _plain(lines[i].label).c_str());
-          if(!item) continue;
-          item->user_data((void *)(intptr_t)i);
-          item->close();
-          parents.resize(depth + 1);
-          parents.push_back(item);
-        }
+        _addBranch(tree, root, said, "");
       }
-      // and what of it is picked, which changes without the lines changing
-      for(std::size_t i = 0; i < lines.size(); i++) {
-        Fl_Tree_Item *item = tree->root();
-        // walk to the item whose user data is i: the tree keeps them in the
-        // order they were added, so a walk finds it
-        for(item = tree->first(); item; item = tree->next(item))
-          if((std::size_t)(intptr_t)item->user_data() == i && item->parent())
-            break;
-        if(!item) continue;
-        bool on = f.chosen ? f.chosen((int)i) : false;
+      // and what of it is picked, which changes without the shape changing
+      for(Fl_Tree_Item *item = tree->first(); item; item = tree->next(item)) {
+        const std::string *path = (const std::string *)item->user_data();
+        if(!path) continue;
+        Ui::Node node = said.node(*path);
+        bool on = node.picked ? node.picked() : false;
         if(on != (item->is_selected() ? true : false))
           item->select(on ? 1 : 0);
       }
