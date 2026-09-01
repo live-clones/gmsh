@@ -25,6 +25,11 @@
 //
 // Gui.h includes this, so nothing outside has to know that the line is here.
 // What is on this side of it is what remains to be done.
+//
+// An interface that has a scene says HAVE_GUI_SCENE and writes these itself;
+// one that has not -- a backend being tried out, which only has to say whether
+// the chrome works -- says nothing, and GuiScene.cpp answers for it. The scene
+// must not be the thing that stops a new interface from linking.
 
 class drawContext;
 class PixelBuffer;

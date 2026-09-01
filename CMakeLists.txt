@@ -788,6 +788,15 @@ if(HAVE_FLTK OR HAVE_IMGUI)
   set(HAVE_GUI TRUE)
 endif()
 
+# and HAVE_GUI_SCENE when the one that is compiled in draws the 3D scene. An
+# interface being tried out -- one that only has to say whether the chrome
+# works -- says nothing, and src/common/GuiScene.cpp answers for it. The scene
+# is a chantier of its own and must not be the thing that stops a new backend
+# from linking.
+if(HAVE_FLTK OR HAVE_IMGUI)
+  set(HAVE_GUI_SCENE TRUE)
+endif()
+
 if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
   STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
   if(OSX_SDK_VERSION)
