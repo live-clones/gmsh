@@ -453,12 +453,14 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
 BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const
 {
-  BDS_Point P1(p1->iD);
-  BDS_Point P2(p2->iD);
-  BDS_Edge E(&P1, &P2);
-  if(t->e1->p1->iD == E.p1->iD && t->e1->p2->iD == E.p2->iD) return t->e1;
-  if(t->e2->p1->iD == E.p1->iD && t->e2->p2->iD == E.p2->iD) return t->e2;
-  if(t->e3->p1->iD == E.p1->iD && t->e3->p2->iD == E.p2->iD) return t->e3;
+  // this only needs the two ids in the order BDS_Edge would store them; it
+  // used to build two BDS_Points and a BDS_Edge on the stack to get them,
+  // which allocated the two points' edge lists on every call
+  const int a = std::min(p1->iD, p2->iD);
+  const int b = std::max(p1->iD, p2->iD);
+  if(t->e1->p1->iD == a && t->e1->p2->iD == b) return t->e1;
+  if(t->e2->p1->iD == a && t->e2->p2->iD == b) return t->e2;
+  if(t->e3->p1->iD == a && t->e3->p2->iD == b) return t->e3;
   return nullptr;
 }
 
