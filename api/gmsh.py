@@ -2861,6 +2861,47 @@ class model:
         set_node = setNode
 
         @staticmethod
+        def setNodes(nodeTags, coord, parametricCoord, dim=-1, tag=-1):
+            """
+            gmsh.model.mesh.setNodes(nodeTags, coord, parametricCoord, dim=-1, tag=-1)
+
+            Set the coordinates and the parametric coordinates (if any) of the nodes
+            with tags `nodeTags'. This is the bulk counterpart of `setNode', and the
+            inverse of `getNodes': the nodes are looked up through the same internal
+            cache, but the cost of crossing the API boundary is paid once instead of
+            once per node, which matters when moving a whole mesh (reprojecting it, for
+            instance). `coord' is a vector of length 3 times the length of `nodeTags'
+            that contains the x, y, z coordinates of the nodes, concatenated: [n1x,
+            n1y, n1z, n2x, ...]. If `dim' >= 0, the nodes must be classified on an
+            entity of dimension `dim' (and of tag `tag' if `tag' >= 0), and
+            `parametricCoord' can be of length 0 or `dim' times the length of
+            `nodeTags'. If `dim' < 0 the nodes can be classified anywhere, and
+            `parametricCoord' must be empty, since a flat array cannot describe
+            parametric coordinates of mixed dimensions.
+
+            Types:
+            - `nodeTags': vector of sizes
+            - `coord': vector of doubles
+            - `parametricCoord': vector of doubles
+            - `dim': integer
+            - `tag': integer
+            """
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+            ierr = c_int()
+            lib.gmshModelMeshSetNodes(
+                api_nodeTags_, api_nodeTags_n_,
+                api_coord_, api_coord_n_,
+                api_parametricCoord_, api_parametricCoord_n_,
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_nodes = setNodes
+
+        @staticmethod
         def rebuildNodeCache(onlyIfNecessary=True):
             """
             gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary=True)

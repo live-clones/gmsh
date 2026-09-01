@@ -2275,6 +2275,59 @@ gmsh::model::mesh::setNode(const std::size_t nodeTag,
   if(parametricCoord.size() >= 2) v->setParameter(1, parametricCoord[1]);
 }
 
+GMSH_API void
+gmsh::model::mesh::setNodes(const std::vector<std::size_t> &nodeTags,
+                            const std::vector<double> &coord,
+                            const std::vector<double> &parametricCoord,
+                            const int dim, const int tag)
+{
+  if(!_checkInit()) return;
+  if(coord.size() != 3 * nodeTags.size()) {
+    Msg::Error("Wrong number of coordinates (%d, expected 3 x %d)",
+               coord.size(), nodeTags.size());
+    return;
+  }
+  // The nodes are designated by tag, so `dim' and `tag' do not select
+  // anything: they state which entity the nodes are classified on, which is
+  // what gives `parametricCoord' its meaning. Without them the parametric
+  // dimension would vary from node to node and a flat array could not
+  // express it, hence the restriction below.
+  std::size_t numPar = 0;
+  if(dim < 0) {
+    if(parametricCoord.size()) {
+      Msg::Error("Parametric coordinates require an entity dimension");
+      return;
+    }
+  }
+  else if(parametricCoord.size()) {
+    if(parametricCoord.size() != (std::size_t)dim * nodeTags.size()) {
+      Msg::Error("Wrong number of parametric coordinates (%d, expected 0 or "
+                 "%d x %d)", parametricCoord.size(), dim, nodeTags.size());
+      return;
+    }
+    numPar = dim;
+  }
+  GModel *m = GModel::current();
+  for(std::size_t i = 0; i < nodeTags.size(); i++) {
+    MVertex *v = m->getMeshVertexByTag(nodeTags[i]);
+    if(!v) {
+      Msg::Error("Unknown node %d", nodeTags[i]);
+      return;
+    }
+    if(dim >= 0) {
+      GEntity *ge = v->onWhat();
+      if(!ge || ge->dim() != dim || (tag >= 0 && ge->tag() != tag)) {
+        Msg::Error("Node %d is not classified on entity of dimension %d",
+                   nodeTags[i], dim);
+        return;
+      }
+    }
+    v->setXYZ(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
+    for(std::size_t j = 0; j < numPar; j++)
+      v->setParameter(j, parametricCoord[numPar * i + j]);
+  }
+}
+
 GMSH_API void gmsh::model::mesh::rebuildNodeCache(bool onlyIfNecessary)
 {
   if(!_checkInit()) return;
