@@ -364,6 +364,7 @@ public:
   BDS_Point *find_point(int num);
   // Edges
   BDS_Edge *add_edge(int p1, int p2);
+  BDS_Edge *add_edge(BDS_Point *p1, BDS_Point *p2);
   void del_edge(BDS_Edge *e);
   BDS_Edge *find_edge(int p1, int p2);
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2);
@@ -371,6 +372,7 @@ public:
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const;
   // Triangles
   BDS_Face *add_triangle(int p1, int p2, int p3);
+  BDS_Face *add_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
   BDS_Face *add_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
   void del_face(BDS_Face *t);
   BDS_Face *find_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);

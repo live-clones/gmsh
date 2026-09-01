@@ -509,7 +509,30 @@ BDS_Edge *BDS_Mesh::add_edge(int const p1, int const p2)
   return edges.back();
 }
 
+// Same as above for callers that already hold the two points, sparing them the
+// two find_point() lookups in the points set
+BDS_Edge *BDS_Mesh::add_edge(BDS_Point *p1, BDS_Point *p2)
+{
+  if(!p1 || !p2) {
+    Msg::Error("Could not find points in edge creation");
+    return nullptr;
+  }
+  BDS_Edge *efound = find_edge(p1, p2->iD);
+  if(efound) return efound;
+  edges.push_back(new BDS_Edge(p1, p2));
+  return edges.back();
+}
+
 BDS_Face *BDS_Mesh::add_triangle(int p1, int p2, int p3)
+{
+  BDS_Edge *e1 = add_edge(p1, p2);
+  BDS_Edge *e2 = add_edge(p2, p3);
+  BDS_Edge *e3 = add_edge(p3, p1);
+  if(e1 && e2 && e3) return add_triangle(e1, e2, e3);
+  return nullptr;
+}
+
+BDS_Face *BDS_Mesh::add_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
 {
   BDS_Edge *e1 = add_edge(p1, p2);
   BDS_Edge *e2 = add_edge(p2, p3);
@@ -1151,7 +1174,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
 
   BDS_Point *pt[3][1024];
   BDS_GeomEntity *gs[1024];
-  int ept[2][1024];
+  BDS_Point *ept[2][1024];
   BDS_GeomEntity *egs[1024];
   int nt = 0;
   double area_old = 0.0;
@@ -1205,9 +1228,9 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
     auto eit = edges.begin();
     while(eit != edges.end()) {
       (*eit)->p1->config_modified = (*eit)->p2->config_modified = true;
-      ept[0][kk] = ((*eit)->p1 == p) ? (o ? o->iD : -1) : (*eit)->p1->iD;
-      ept[1][kk] = ((*eit)->p2 == p) ? (o ? o->iD : -1) : (*eit)->p2->iD;
-      if(ept[0][kk] < 0 || ept[1][kk] < 0) {
+      ept[0][kk] = ((*eit)->p1 == p) ? o : (*eit)->p1;
+      ept[1][kk] = ((*eit)->p2 == p) ? o : (*eit)->p2;
+      if(!ept[0][kk] || !ept[1][kk]) {
         Msg::Error("Something wrong in edge collapse");
         return false;
       }
@@ -1222,13 +1245,13 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
 
   {
     for(int k = 0; k < nt; k++) {
-      BDS_Face *t = add_triangle(pt[0][k]->iD, pt[1][k]->iD, pt[2][k]->iD);
+      BDS_Face *t = add_triangle(pt[0][k], pt[1][k], pt[2][k]);
       t->g = gs[k];
     }
   }
 
   for(int i = 0; i < kk; ++i) {
-    BDS_Edge *e = find_edge(ept[0][i], ept[1][i]);
+    BDS_Edge *e = find_edge(ept[0][i], ept[1][i]->iD);
     if(e && !e->g) e->g = egs[i];
   }
 
