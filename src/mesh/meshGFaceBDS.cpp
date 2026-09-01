@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <memory>
 #include "GmshMessage.h"
 #include "meshGFace.h"
 #include "meshGFaceParamBoundary.h"
@@ -439,6 +440,9 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
 
   SPoint2 out(gf->parBounds(0).high() + 1.21982512,
               gf->parBounds(1).high() + 1.8635436432);
+  std::unique_ptr<ParametricDomainChecker> insideChecker;
+  if(true_boundary)
+    insideChecker.reset(new ParametricDomainChecker(*true_boundary, out));
 
   for(auto it = m.points.begin(); it != m.points.end(); ++it) {
     BDS_Point *p = *it;
@@ -498,9 +502,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
       if(true_boundary) {
         SPoint2 pp(U, V);
         int N;
-        if(!pointInsideParametricDomain(*true_boundary, pp, out, N)) {
-          inside = false;
-        }
+        if(!insideChecker->inside(pp, N)) { inside = false; }
       }
       if(inside && gpp.succeeded()) {
         mid = m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
