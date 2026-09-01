@@ -1272,24 +1272,33 @@ static inline bool getOrderedNeighboringVertices(BDS_Point *p,
   }
 
   if(ts.empty()) return false;
+
+  // the two nodes of each triangle that are not p do not change while we walk
+  // around p, but the loop below used to recompute them - i.e. call getNodes()
+  // - once per triangle and per turn, making the walk quadratic
+  std::vector<BDS_Point *> opp(2 * ts.size(), nullptr);
+  for(size_t i = 0; i < ts.size(); i++) {
+    BDS_Point *pts[4];
+    if(!ts[i]->getNodes(pts)) continue;
+    if(pts[0] == p) {
+      opp[2 * i] = pts[1];
+      opp[2 * i + 1] = pts[2];
+    }
+    else if(pts[1] == p) {
+      opp[2 * i] = pts[0];
+      opp[2 * i + 1] = pts[2];
+    }
+    else {
+      opp[2 * i] = pts[0];
+      opp[2 * i + 1] = pts[1];
+    }
+  }
+
   while(1) {
     bool found = false;
     for(size_t i = 0; i < ts.size(); i++) {
-      BDS_Point *pts[4];
-      if(!ts[i]->getNodes(pts)) continue;
-      BDS_Point *pp[2];
-      if(pts[0] == p) {
-        pp[0] = pts[1];
-        pp[1] = pts[2];
-      }
-      else if(pts[1] == p) {
-        pp[0] = pts[0];
-        pp[1] = pts[2];
-      }
-      else {
-        pp[0] = pts[0];
-        pp[1] = pts[1];
-      }
+      if(!opp[2 * i]) continue;
+      BDS_Point *pp[2] = {opp[2 * i], opp[2 * i + 1]};
       if(nbg.empty()) {
         nbg.push_back(pp[0]);
         nbg.push_back(pp[1]);
