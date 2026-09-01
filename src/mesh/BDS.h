@@ -18,6 +18,7 @@
 #include <cmath>
 
 #include "GmshMessage.h"
+#include "SPoint2.h"
 
 class BDS_Edge;
 class BDS_Face;
@@ -74,6 +75,7 @@ public:
     edges.erase(std::remove(edges.begin(), edges.end(), e), edges.end());
   }
   std::vector<BDS_Face *> getTriangles() const;
+  void getTriangles(std::vector<BDS_Face *> &t) const;
   BDS_Point(int id, double x = 0, double y = 0, double z = 0)
     : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
       config_modified(true), degenerated(0), _periodicCounterpart(nullptr),
@@ -336,6 +338,14 @@ struct EdgeToRecover {
   }
 };
 
+// Scratch buffers reused by BDS_Mesh::smooth_point_centroid()
+struct BDS_SmoothScratch {
+  std::vector<BDS_Point *> nbg;
+  std::vector<double> lc;
+  std::vector<SPoint2> kernel;
+  std::vector<BDS_Face *> ts;
+};
+
 class BDS_Mesh {
 public:
   int MAXPOINTNUMBER;
@@ -378,6 +388,10 @@ public:
                  bool force = false);
   bool collapse_edge_parametric(BDS_Edge *, BDS_Point *, bool = false);
   bool smooth_point_centroid(BDS_Point *p, GFace *gf, double thresh);
+  // same, reusing the caller's scratch buffers instead of allocating four
+  // vectors for every point of every smoothing pass
+  bool smooth_point_centroid(BDS_Point *p, GFace *gf, double thresh,
+                             BDS_SmoothScratch &scratch);
   bool split_edge(BDS_Edge *, BDS_Point *, bool check_area_param = false);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
   // Global operators

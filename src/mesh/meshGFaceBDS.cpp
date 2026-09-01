@@ -617,14 +617,13 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
                       double threshold, double &t)
 {
   double t1 = Cpu();
-  for(int i = 0; i < 1; i++) {
-    auto itp = m.points.begin();
-    while(itp != m.points.end()) {
-      if(neighboringModified(*itp)) {
-        if(m.smooth_point_centroid(*itp, gf, threshold)) nb_smooth++;
-      }
-      ++itp;
+  BDS_SmoothScratch scratch;
+  auto itp = m.points.begin();
+  while(itp != m.points.end()) {
+    if(neighboringModified(*itp)) {
+      if(m.smooth_point_centroid(*itp, gf, threshold, scratch)) nb_smooth++;
     }
+    ++itp;
   }
   t += (Cpu() - t1);
 }

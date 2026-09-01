@@ -245,6 +245,13 @@ static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2,
 std::vector<BDS_Face *> BDS_Point::getTriangles() const
 {
   std::vector<BDS_Face *> t;
+  getTriangles(t);
+  return t;
+}
+
+void BDS_Point::getTriangles(std::vector<BDS_Face *> &t) const
+{
+  t.clear();
   t.reserve(edges.size());
 
   auto it = edges.begin();
@@ -259,7 +266,6 @@ std::vector<BDS_Face *> BDS_Point::getTriangles() const
     }
     ++it;
   }
-  return t;
 }
 
 BDS_Point *BDS_Mesh::add_point(int const num, double const x, double const y,
@@ -1631,6 +1637,13 @@ static inline bool minimizeTutteEnergyParam(BDS_Point *p, double E_unmoved,
 
 bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
 {
+  BDS_SmoothScratch scratch;
+  return smooth_point_centroid(p, gf, threshold, scratch);
+}
+
+bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold,
+                                     BDS_SmoothScratch &scratch)
+{
   if(p->degenerated) return false;
   if(p->g && p->g->classif_degree <= 1) return false;
   if(p->g && p->g->classif_tag < 0) {
@@ -1644,10 +1657,14 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
     printf("VERTEX %d TRYING TO MOVE from its initial position %g %g\n", CHECK,
            p->u, p->v);
 
-  std::vector<BDS_Point *> nbg;
-  std::vector<double> lc;
-  std::vector<SPoint2> kernel;
-  std::vector<BDS_Face *> ts = p->getTriangles();
+  std::vector<BDS_Point *> &nbg = scratch.nbg;
+  std::vector<double> &lc = scratch.lc;
+  std::vector<SPoint2> &kernel = scratch.kernel;
+  std::vector<BDS_Face *> &ts = scratch.ts;
+  nbg.clear();
+  lc.clear();
+  kernel.clear();
+  p->getTriangles(ts);
 
   if(p->iD == CHECK) printf("%d adjacent triangles\n", (int)ts.size());
 
