@@ -591,6 +591,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[2]->value() == 7) ? ALGO_2D_QUAD_QUASI_STRUCT :
                   (o->mesh.choice[2]->value() == 8) ? ALGO_2D_INITIAL_ONLY :
                   (o->mesh.choice[2]->value() == 9) ? ALGO_2D_FRONTAL_OPT :
+                  (o->mesh.choice[2]->value() == 10) ? ALGO_2D_DELAUNAY_OPT :
                   ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
@@ -2437,6 +2438,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Quasi-Structured Quad (experimental)", 0, nullptr, nullptr},
         {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
         {"Frontal-Delaunay Optimized (experimental)", 0, nullptr, nullptr},
+        {"Delaunay Optimized (experimental)", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, nullptr, nullptr},

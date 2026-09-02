@@ -272,6 +272,7 @@ static bool algoDelaunay2D(GFace *gf)
      gf->getMeshingAlgo() == ALGO_2D_BAMG ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT ||
+     gf->getMeshingAlgo() == ALGO_2D_DELAUNAY_OPT ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR ||
@@ -587,6 +588,9 @@ runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
   else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT) {
     bowyerWatsonFrontalOptimized(gf, equivalence, parametricCoordinates,
                                  true_boundary);
+  }
+  else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY_OPT) {
+    bowyerWatsonOptimized(gf, 1000000000, equivalence, parametricCoordinates);
   }
   else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
     bowyerWatsonFrontalLayers(gf, true, equivalence, parametricCoordinates);
@@ -2301,6 +2305,7 @@ void meshGFace::operator()(GFace *gf, bool print)
   case ALGO_2D_DELAUNAY: algo = "Delaunay"; break;
   case ALGO_2D_FRONTAL: algo = "Frontal-Delaunay"; break;
   case ALGO_2D_FRONTAL_OPT: algo = "Frontal-Delaunay Optimized"; break;
+  case ALGO_2D_DELAUNAY_OPT: algo = "Delaunay Optimized"; break;
   case ALGO_2D_BAMG: algo = "Bamg"; break;
   case ALGO_2D_FRONTAL_QUAD: algo = "Frontal-Delaunay for Quads"; break;
   case ALGO_2D_PACK_PRLGRMS: algo = "Packing of Parallelograms"; break;

@@ -148,6 +148,10 @@ void bowyerWatsonFrontalOptimized(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
   std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr,
   std::vector<SPoint2> *true_boundary = nullptr);
+void bowyerWatsonOptimized(
+  GFace *gf, int MAXPNT = 1000000000,
+  std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonFrontalLayers(
   GFace *gf, bool quad, std::map<MVertex *, MVertex *> *equivalence = nullptr,
   std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);

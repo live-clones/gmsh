@@ -3,29 +3,37 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// Mesh.Algorithm = 12, "Frontal-Delaunay Optimized": a performance-oriented
-// variant of the 2D Frontal-Delaunay algorithm (Mesh.Algorithm = 6,
-// bowyerWatsonFrontal in meshGFaceDelaunayInsertion.cpp). The algorithm is
-// the same - same in-circle and optimal-point formulas, same insertion
-// checks, same active-front priority - but it runs on an indexed
-// structure-of-arrays backend instead of algo 6's std::set<MTri3*> of
+// Performance-oriented variants of the two Bowyer-Watson surface meshers of
+// meshGFaceDelaunayInsertion.cpp, sharing one backend:
+//
+//  - Mesh.Algorithm = 12, "Frontal-Delaunay Optimized", the variant of the
+//    Frontal-Delaunay algorithm (Mesh.Algorithm = 6, bowyerWatsonFrontal):
+//    the queue is the active front and the point goes on the Voronoi edge of
+//    an active edge;
+//  - Mesh.Algorithm = 13, "Delaunay Optimized", the variant of the plain
+//    Delaunay algorithm (Mesh.Algorithm = 5, bowyerWatson): the queue holds
+//    every triangle and the point goes at the circumcenter of the worst one.
+//
+// Each is the same algorithm as its counterpart - same in-circle and
+// optimal-point formulas, same insertion checks, same priority - but runs on
+// an indexed structure-of-arrays backend instead of the std::set<MTri3*> of
 // individually allocated triangles:
 //  - vertices are plain parallel arrays (parametric coordinates, sizes, xyz,
 //    dimension) indexed by a vertex id, kept sorted by MVertex::getNum();
 //  - triangles are vertex-id triplets in parallel arrays (neighbors, metric
 //    circumradius, flags) indexed by a triangle slot, with deleted slots
 //    recycled through a free-list;
-//  - the active front is a binary heap of (radius, slot) entries instead of
-//    a std::set ordered by radius;
+//  - the queue is a binary heap of (radius, slot) entries instead of a
+//    std::set ordered by radius;
 //  - the cavity is grown with an explicit stack instead of recursion.
-// The in-circle and optimal-point computations follow algo 6's formulas.
+// The in-circle and optimal-point computations follow the original formulas.
 // For isotropic metrics (and planar surfaces) they use a circumcircle
 // cached per triangle: the same quantity, computed once in closed form
 // instead of per test, whose different floating-point route can flip the
 // rare near-cocircular decisions. The mesh can therefore differ from
 // algo 6 at rounding class on isotropic/planar cases (node counts within
 // ~0.1%, no bias); anisotropic metrics and curved-surface optimal points
-// keep algo 6's exact code paths. The algorithm remains fully
+// keep the original exact code paths. The algorithms remain fully
 // deterministic for a given input, and the final triangles are emitted in
 // slot order instead of radius order.
 
@@ -341,14 +349,21 @@ struct IndexedActiveCompare {
   }
 };
 
-// The active front as a contiguous binary heap (std::push_heap/pop_heap)
-// instead of algo 6's std::set<MTri3*>: same top element at every pop, no
-// per-node allocation. The TRI_IN_QUEUE flag gives the O(1) membership test
-// that the set gave for free.
+// The refinement queue as a contiguous binary heap (std::push_heap /
+// std::pop_heap) instead of the std::set<MTri3*>: same top element at every
+// pop, no per-node allocation. The TRI_IN_QUEUE flag gives the O(1)
+// membership test that the set gave for free.
+//
+// What the queue holds depends on the algorithm: the frontal one keeps only
+// the active front (a triangle enters when it has an edge on the front),
+// while the plain Delaunay one keeps every triangle of the mesh, exactly as
+// its std::set counterpart does.
 struct IndexedActiveQueue {
   IndexedMeshData *data;
   IndexedActiveCompare compare;
   std::vector<IndexedActiveEntry> heap;
+  // false = hold every triangle (plain Delaunay), true = hold the front only
+  bool frontOnly = true;
 
   explicit IndexedActiveQueue(IndexedMeshData *d) : data(d), compare{d} {}
 
@@ -1152,6 +1167,9 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
       const std::size_t otherSide = data.neigh[it->t1][it->i1];
       const std::size_t nt = addTriangle(data, {{i0, i1, iv}}, radiusLc, gf);
       new_cavity.push_back(nt);
+      // plain Delaunay: every triangle is a candidate, so queue it right
+      // away (the front filter below is for the frontal algorithm only)
+      if(!activeTets.frontOnly) activeTets.push(nt);
 
       data.neigh[nt][1] = otherSide;
       if(otherSide != INVALID_TRIANGLE) {
@@ -1180,11 +1198,13 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
         data.releaseTriangleSlot(triangle);
     }
 
-    for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
-      int active_edge;
-      if(isActive(data, *i, LIMIT_, active_edge) &&
-         data.circumRadius[*i] > LIMIT_) {
-        activeTets.push(*i);
+    if(activeTets.frontOnly) {
+      for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
+        int active_edge;
+        if(isActive(data, *i, LIMIT_, active_edge) &&
+           data.circumRadius[*i] > LIMIT_) {
+          activeTets.push(*i);
+        }
       }
     }
     return 1;
@@ -1547,6 +1567,83 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
       mt->reverse();
   }
   computeEquivalences(gf, equivalence);
+}
+
+// Insertion point of the plain Delaunay refinement: the circumcenter of the
+// worst triangle in the metric taken at its centroid. Same computation as
+// the corresponding lines of algo 5's bowyerWatson loop.
+static void optimalPointDelaunay(GFace *gf, std::size_t worst,
+                                 const IndexedMeshData &data,
+                                 double newPoint[2], double metric[3])
+{
+  if(data.planar) {
+    // a plane's parametrization is isometric: identity metric, and the
+    // circumcenter is the one cached at triangle creation
+    metric[0] = 1.;
+    metric[1] = 0.;
+    metric[2] = 1.;
+    newPoint[0] = data.circumCircle[worst][0];
+    newPoint[1] = data.circumCircle[worst][1];
+    return;
+  }
+  const std::array<std::size_t, 3> &base = data.triangles[worst];
+  double pa[2] = {
+    (data.Us[base[0]] + data.Us[base[1]] + data.Us[base[2]]) * ONE_THIRD,
+    (data.Vs[base[0]] + data.Vs[base[1]] + data.Vs[base[2]]) * ONE_THIRD};
+  buildMetric(gf, pa, metric);
+  double r2;
+  circumCenterMetric(worst, metric, data, newPoint, r2);
+}
+
+void bowyerWatsonOptimized(GFace *gf, int MAXPNT,
+                           std::map<MVertex *, MVertex *> *equivalence,
+                           std::map<MVertex *, SPoint2> *parametricCoordinates)
+{
+  IndexedMeshData DATA;
+  IndexedActiveQueue AllTris(&DATA);
+  // unlike the frontal algorithm, the queue is the whole mesh ordered by
+  // decreasing circumradius, and refinement stops when its top is small
+  AllTris.frontOnly = false;
+  if(!buildMeshGenerationDataStructures(gf, DATA, equivalence,
+                                        parametricCoordinates)) {
+    Msg::Error("Invalid meshing data structure");
+    return;
+  }
+
+  if(DATA.triangles.empty()) {
+    Msg::Error("No triangles in initial mesh");
+    return;
+  }
+
+  for(std::size_t t = 0; t < DATA.triangles.size(); t++)
+    AllTris.pushUnordered(t);
+  AllTris.makeHeap();
+
+  int ITER = 0;
+  while(!AllTris.empty()) {
+    // pop() releases the slot of a triangle that was deleted while queued,
+    // which the std::set version can only do when it reaches the front
+    std::size_t worst = AllTris.pop();
+    if(DATA.flags[worst] & TRI_DELETED) continue;
+
+    if(ITER++ % 5000 == 0)
+      Msg::Debug("%7zu points created -- Worst tri radius is %8.3f",
+                 DATA.vertices.size(), DATA.circumRadius[worst]);
+
+    if(DATA.circumRadius[worst] < LIMIT_ ||
+       (int)DATA.vertices.size() > MAXPNT)
+      break;
+
+    double newPoint[2], metric[3];
+    optimalPointDelaunay(gf, worst, DATA, newPoint, metric);
+    insertAPoint(gf, newPoint, metric, DATA, AllTris, worst);
+  }
+
+  releaseVector(AllTris.heap);
+
+  transferDataStructure(gf, DATA, equivalence);
+
+  splitElementsInBoundaryLayerIfNeeded(gf);
 }
 
 void bowyerWatsonFrontalOptimized(
