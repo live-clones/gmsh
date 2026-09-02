@@ -197,11 +197,50 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 {
   int nthreads = CTX::instance()->numThreads;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
-#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+  // the skin filter drops the faces that appear twice, which requires a global
+  // view of all the elements: keep it serial
+  if(faces && e->dim() > 2 && CTX::instance()->mesh.drawSkinOnly) nthreads = 1;
+  if(elements.size() < 1000) nthreads = 1;
+
+  // each thread fills its own vertex arrays, which are merged below: this
+  // avoids the critical sections that used to serialize the whole loop
+  std::vector<VertexArray *> vaLines(nthreads, nullptr);
+  std::vector<VertexArray *> vaTriangles(nthreads, nullptr);
+  if(nthreads == 1) {
+    vaLines[0] = e->va_lines;
+    vaTriangles[0] = e->va_triangles;
+  }
+  else {
+    int n = (int)(elements.size() / nthreads) + 100;
+    // the threads share the filter of the entity's own arrays, so that an
+    // element is dropped whichever thread sees it first, and so that the filter
+    // survives across the successive calls made for each element type
+    UniqueElementFilter *fl =
+      e->va_lines ? e->va_lines->getUniqueFilter(true) : nullptr;
+    UniqueElementFilter *ft =
+      e->va_triangles ? e->va_triangles->getUniqueFilter(true) : nullptr;
+    for(int t = 0; t < nthreads; t++) {
+      if(edges) {
+        vaLines[t] = new VertexArray(2, 6 * n);
+        vaLines[t]->setUniqueFilter(fl);
+      }
+      if(faces) {
+        vaTriangles[t] = new VertexArray(3, 4 * n);
+        vaTriangles[t]->setUniqueFilter(ft);
+      }
+    }
+  }
+
+  // static scheduling, merged in thread order, keeps the arrays in the same
+  // order as in a serial run
+#pragma omp parallel for schedule(static) num_threads(nthreads)
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
 
     if(!isElementVisible(ele) || ele->getDim() < 1) continue;
+
+    VertexArray *vaLine = vaLines[Msg::GetThreadNum()];
+    VertexArray *vaTriangle = vaTriangles[Msg::GetThreadNum()];
 
     unsigned int c = getColorByElement(ele);
     unsigned int col[4] = {c, c, c, c};
@@ -230,10 +269,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 2; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-#pragma omp critical(addElementsInArrays1)
-        {
-          e->va_lines->add(x, y, z, n, col, ele, unique);
-        }
+        vaLine->add(x, y, z, n, col, ele, unique);
       }
     }
 
@@ -255,11 +291,21 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-#pragma omp critical(addElementsInArrays2)
-        {
-          e->va_triangles->add(x, y, z, n, col, ele, unique, skin);
-        }
+        vaTriangle->add(x, y, z, n, col, ele, unique, skin);
       }
+    }
+  }
+
+  if(nthreads == 1) return;
+
+  for(int t = 0; t < nthreads; t++) {
+    if(vaLines[t]) {
+      e->va_lines->merge(vaLines[t]);
+      delete vaLines[t];
+    }
+    if(vaTriangles[t]) {
+      e->va_triangles->merge(vaTriangles[t]);
+      delete vaTriangles[t];
     }
   }
 }

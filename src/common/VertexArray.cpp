@@ -100,26 +100,55 @@ static void fillCornerKey(CornerKey<N> &k, double *x, double *y, double *z,
   }
 }
 
-bool VertexArray::_isDuplicate(double *x, double *y, double *z,
-                               unsigned char *r, unsigned char *g,
-                               unsigned char *b, unsigned char *a)
+bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
+                                     unsigned char *r, unsigned char *g,
+                                     unsigned char *b, unsigned char *a)
 {
-  int npe = getNumVerticesPerElement();
   if(npe == 2) {
     CornerKey<2> k;
     fillCornerKey<2>(k, x, y, z, r, g, b, a);
-    return !_uni2.insert(k).second;
+    std::size_t sh = CornerKeyHash<2>()(k) % NUM_SHARDS;
+    if(!_threaded) return !_s2[sh].insert(k).second;
+    std::lock_guard<std::mutex> lock(_mutex[sh]);
+    return !_s2[sh].insert(k).second;
   }
   if(npe == 3) {
     CornerKey<3> k;
     fillCornerKey<3>(k, x, y, z, r, g, b, a);
-    return !_uni3.insert(k).second;
+    std::size_t sh = CornerKeyHash<3>()(k) % NUM_SHARDS;
+    if(!_threaded) return !_s3[sh].insert(k).second;
+    std::lock_guard<std::mutex> lock(_mutex[sh]);
+    return !_s3[sh].insert(k).second;
   }
   return false;
 }
 
+VertexArray::~VertexArray()
+{
+  if(_ownsFilter) delete _filter;
+}
+
+UniqueElementFilter *VertexArray::getUniqueFilter(bool threaded)
+{
+  if(!_filter) {
+    _filter = new UniqueElementFilter(threaded);
+    _ownsFilter = true;
+  }
+  else if(threaded)
+    _filter->setThreaded();
+  return _filter;
+}
+
+void VertexArray::setUniqueFilter(UniqueElementFilter *f)
+{
+  if(_ownsFilter) delete _filter;
+  _filter = f;
+  _ownsFilter = false;
+}
+
 VertexArray::VertexArray(int numVerticesPerElement, int numElements)
-  : _numVerticesPerElement(numVerticesPerElement)
+  : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
+    _ownsFilter(false), _statUniqueIn(0), _statUniqueKept(0)
 {
   int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
 
@@ -222,9 +251,9 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
   // several elements is only drawn once. This reduces both the memory and the
   // rendering time, at the price of a hash table lookup per element.
   if(unique && getUniqueMode() && (npe == 2 || npe == 3)) {
-    statUniqueIn += npe;
-    if(_isDuplicate(x, y, z, r, g, b, a)) return;
-    statUniqueKept += npe;
+    _statUniqueIn += npe;
+    if(getUniqueFilter(false)->isDuplicate(npe, x, y, z, r, g, b, a)) return;
+    _statUniqueKept += npe;
   }
 
   for(int i = 0; i < npe; i++){
@@ -449,10 +478,14 @@ void VertexArray::finalize()
     _data3.clear();
   }
   _barycenters.clear();
-  std::unordered_set<CornerKey<2>, CornerKeyHash<2>, CornerKeyEqual<2> >().swap(
-    _uni2);
-  std::unordered_set<CornerKey<3>, CornerKeyHash<3>, CornerKeyEqual<3> >().swap(
-    _uni3);
+  statUniqueIn += _statUniqueIn;
+  statUniqueKept += _statUniqueKept;
+  _statUniqueIn = _statUniqueKept = 0;
+  if(_ownsFilter) {
+    delete _filter;
+    _filter = nullptr;
+    _ownsFilter = false;
+  }
   _buildIndex();
 }
 
@@ -692,6 +725,8 @@ void VertexArray::merge(VertexArray* va)
 {
   _deindex();
   va->_deindex();
+  _statUniqueIn += va->_statUniqueIn;
+  _statUniqueKept += va->_statUniqueKept;
   if(va->getNumVertices() != 0) {
     _vertices.insert(_vertices.end(), va->firstVertex(), va->lastVertex());
     _normals.insert(_normals.end(), va->firstNormal(), va->lastNormal());

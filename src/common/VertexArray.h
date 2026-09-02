@@ -11,6 +11,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <mutex>
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
 
@@ -130,6 +131,30 @@ public:
   }
 };
 
+// filter used to detect elements that are drawn several times. The keys are
+// spread over several shards, each with its own lock, so that the filter can be
+// shared by the threads that fill the vertex arrays of a given entity.
+class UniqueElementFilter {
+private:
+  enum { NUM_SHARDS = 256 };
+  std::unordered_set<CornerKey<2>, CornerKeyHash<2>, CornerKeyEqual<2> >
+    _s2[NUM_SHARDS];
+  std::unordered_set<CornerKey<3>, CornerKeyHash<3>, CornerKeyEqual<3> >
+    _s3[NUM_SHARDS];
+  std::mutex _mutex[NUM_SHARDS];
+  bool _threaded;
+
+public:
+  UniqueElementFilter(bool threaded) : _threaded(threaded) {}
+  // switch on the locks: this must be called before the filter is shared, e.g.
+  // when a first, small batch of elements has been treated serially
+  void setThreaded() { _threaded = true; }
+  // return true if an element with the same corners and the same color has
+  // already been seen
+  bool isDuplicate(int npe, double *x, double *y, double *z, unsigned char *r,
+                   unsigned char *g, unsigned char *b, unsigned char *a);
+};
+
 class Barycenter {
 private:
   float _x, _y, _z;
@@ -195,9 +220,11 @@ private:
   // unique vertices only, and _indices lists the vertices of each drawn corner
   std::vector<unsigned int> _indices;
   std::set<ElementData<3>, ElementDataLessThan<3> > _data3;
-  // elements already added, when the "unique" filter is on
-  std::unordered_set<CornerKey<2>, CornerKeyHash<2>, CornerKeyEqual<2> > _uni2;
-  std::unordered_set<CornerKey<3>, CornerKeyHash<3>, CornerKeyEqual<3> > _uni3;
+  // elements already added, when the "unique" filter is on: the filter can be
+  // shared with other vertex arrays, in which case it is not owned
+  UniqueElementFilter *_filter;
+  bool _ownsFilter;
+  long int _statUniqueIn, _statUniqueKept;
   std::set<Barycenter, BarycenterLessThan> _barycenters;
   // std::tr1::unordered_set<Barycenter, BarycenterHash, BarycenterEqual>
   // _barycenters;
@@ -211,13 +238,15 @@ private:
   // build (resp. undo) the index array by merging identical vertices
   void _buildIndex();
   void _deindex();
-  // return true if the element has already been added
-  bool _isDuplicate(double *x, double *y, double *z, unsigned char *r,
-                    unsigned char *g, unsigned char *b, unsigned char *a);
 
 public:
   VertexArray(int numVerticesPerElement, int numElements);
-  ~VertexArray() {}
+  ~VertexArray();
+  // return the filter used to drop elements that are drawn several times,
+  // creating it if necessary
+  UniqueElementFilter *getUniqueFilter(bool threaded);
+  // use a filter owned by somebody else
+  void setUniqueFilter(UniqueElementFilter *f);
   // return the number of vertices in the array
   int getNumVertices() { return (int)_vertices.size() / 3; }
   // return the number of vertices per element
