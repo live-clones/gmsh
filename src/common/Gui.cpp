@@ -80,6 +80,9 @@ namespace Gui {
       host.error = [](const std::string &text) {
         Msg::Error("%s (GUI internal error)", text.c_str());
       };
+    // the last window is gone: the interface was the process, so the process
+    // goes with it
+    host.quitting = []() { Msg::Exit(0); };
     // what the application does when the loop comes round: draw the scene, if
     // it is in a window of its own
     host.tick = []() { pumpScene(true); };
