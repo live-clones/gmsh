@@ -1520,7 +1520,7 @@ StringXNumber MeshOptions_Number[] = {
       "3: from background mesh (e.g. sizes in current triangulation),"
       "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
   { F|O, "QuadqsCleanupMethod" , opt_mesh_quadqs_cleanup_method, 1 ,
-    "Cleanup after packing of parallelograms. 0: exhaustive OptimizeQuads, "
+    "Cleanup after packing of parallelograms. 0: legacy OptimizeQuads, "
       "1: bounded fast Quad Cleanup with local Winslow and a strict global "
       "shape, size, valence and CAD-distance score, 2: disabled" },
   { F|O, "QuadqsTargetSize" , opt_mesh_quadqs_target_size, 0. ,

@@ -132,9 +132,11 @@ void quadsToTriangles(GFace *gf, double minqual,
 struct WarpedQuadrangleSplitResult {
   std::size_t excessiveWarping = 0;
   std::size_t nonConvexOrInvalid = 0;
+  std::size_t selectedByRequirement = 0;
   std::size_t split = 0;
   std::size_t rejectedInvalid = 0;
   std::size_t rejectedBySize = 0;
+  std::size_t rejectedByGeometry = 0;
   std::size_t rejectedUnsupportedOrder = 0;
 };
 
@@ -144,15 +146,46 @@ struct WarpedQuadrangleSplitResult {
 using QuadrangleDiagonalAdmissibility =
   std::function<bool(GFace *, MVertex *, MVertex *)>;
 
+// Optional atomic cell-complex validation for the complete split batch.
+// The callback is invoked after every replacement triangle has been planned
+// but before the GFace is mutated or any input quadrangle is destroyed.
+using QuadrangleSplitTransactionAdmissibility = std::function<bool(
+  GFace *, const std::vector<MElement *> &,
+  const std::vector<MElement *> &)>;
+
+// Optional selector used by repair preflights that own only a precisely
+// identified subset of quadrangles. An empty predicate audits every quad.
+using QuadrangleSplitSelection =
+  std::function<bool(GFace *, MQuadrangle *)>;
+
+// Optional additional trigger for a geometrically valid quadrangle. This is
+// used by callers that own quality requirements beyond warping and
+// parametric convexity (for example absolute angle, edge-ratio or skewing
+// specifications).
+using QuadrangleSplitRequirement =
+  std::function<bool(GFace *, MQuadrangle *)>;
+
+// Optional CAD admissibility test for one candidate diagonal, represented by
+// its two oriented replacement triangles. It is evaluated independently for
+// both diagonals before the planarity/gamma tie-break; a rejected candidate
+// is never selected merely because the other diagonal is worse.
+using QuadrangleSplitGeometryAdmissibility = std::function<bool(
+  GFace *, MQuadrangle *, MElement *, MElement *)>;
+
 // Atomic terminal quad-dominant fallback: split every linear quad whose
-// warping is not strictly below maximumWarpingDegrees, or whose corner
-// topology is not a strictly convex quadrangle in the face parametrization.
-// Among the admissible diagonals, choose the one minimizing the angle between
-// the two triangle normals, then maximize the minimum triangle gamma quality.
-// If any required split is rejected, leave the complete face unchanged.
+// warping is not strictly below maximumWarpingDegrees, whose corner topology
+// is not a strictly convex quadrangle in the face parametrization, or which
+// is selected by additionalRequirement. Among the size- and CAD-admissible
+// diagonals, choose the one minimizing the angle between the two triangle
+// normals, then maximize the minimum triangle gamma quality. If any required
+// split is rejected, leave the complete face unchanged.
 WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
   GFace *gf, double maximumWarpingDegrees,
-  const QuadrangleDiagonalAdmissibility &diagonalAdmissible = {});
+  const QuadrangleDiagonalAdmissibility &diagonalAdmissible = {},
+  const QuadrangleSplitTransactionAdmissibility &transactionAdmissible = {},
+  const QuadrangleSplitSelection &selection = {},
+  const QuadrangleSplitRequirement &additionalRequirement = {},
+  const QuadrangleSplitGeometryAdmissibility &geometryAdmissible = {});
 
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf);
 

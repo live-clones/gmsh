@@ -1272,7 +1272,6 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
      how != "OptimizeQuads" && how != "OptimizeQuadsFast" &&
-     how != "QuadCleanUp" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
      how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
@@ -1334,11 +1333,9 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
     }
 #endif
   }
-  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast" ||
-          how == "QuadCleanUp") {
+  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast") {
 #if defined(HAVE_QUADOPTIMIZER)
     QuadOptimizer::SmallCavityOptimizerOptions options;
-    options.quadCleanUp = how == "QuadCleanUp";
     options.fastInteractiveCleanUp = how == "OptimizeQuadsFast";
     options.minimumRecombinationQuality =
       std::max(0., CTX::instance()->mesh.recombineMinimumQuality);
@@ -1356,22 +1353,17 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
       options.minimumEdgeSizeRatio = 0.;
       options.maximumEdgeSizeRatio = 0.;
     }
-    // Full QuadCleanUp owns its fixed-point smoothing. The historical Fast
-    // path keeps the requested number of cheap, geometry-only Winslow passes.
-    options.finalSmoothingPasses = options.quadCleanUp ? 0 :
+    options.finalSmoothingPasses =
       std::max(0, CTX::instance()->mesh.nbSmoothing);
-    if(options.quadCleanUp) {
-      options.smoothingPasses = 1;
-      options.postTopologyNeighborSmoothingPasses =
-        std::max(1, CTX::instance()->mesh.nbSmoothing);
-    }
     if(options.fastInteractiveCleanUp) {
       options.postTopologyNeighborSmoothingPasses = 1;
       // Pillow is a separate structural operator and does not yet use the
       // same strict Fast global-quality transaction.
       options.pillowNeighborLayers = 0;
     }
-    options.verbose = Msg::GetVerbosity() > 4 ? 1 : 0;
+    // Keep -v5 output unchanged while reserving -v6 and above for compact
+    // per-pattern diagnostics inside the half-edge optimizer.
+    options.verbose = std::max(0, Msg::GetVerbosity() - 4);
     const QuadOptimizer::AllFacesOptimizerResult result =
       QuadOptimizer::optimizeSmallQuadCavitiesAllFaces(options);
     if(!result.success) {
@@ -1396,20 +1388,19 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
                 result.reorientedElements,
                 result.facesSkippedInvalidInputCellComplex,
                 result.rejectedBySize);
-      if(options.quadCleanUp)
-        Msg::Info("QuadCleanUp fixed point: swaps=%zu diamonds=%zu, "
-                  "smoothed=%zu rejected(winslow=%zu,size=%zu,quality=%zu)",
-                  result.acceptedEdgeSwaps, result.acceptedDiamonds,
-                  result.acceptedSmoothingCavities,
-                  result.rejectedByWinslow, result.rejectedBySize,
-                  result.rejectedByQuality);
-      if(options.quadCleanUp)
-        Msg::Info("QuadCleanUp decisions: fewerUnacceptable=%zu "
-                  "betterGeometry=%zu other=%zu",
-                  result.acceptedFewerUnacceptableElements,
-                  result.acceptedBetterGeometry,
-                  result.acceptedOtherImprovements);
-      if(options.quadCleanUp || options.fastInteractiveCleanUp)
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s half-edge rule triangle_triangle_swap: "
+                  "visited=%zu accepted=%zu",
+                  how.c_str(), result.triangleTriangleSwapsVisited,
+                  result.acceptedTriangleTriangleSwaps);
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s Q+T+T triangle reduction: accepted=%zu",
+                  how.c_str(), result.acceptedQuadTwoTriangleReductions);
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s half-edge rule boundary_t_qn_t: accepted=%zu",
+                  how.c_str(),
+                  result.acceptedBoundaryTriangleQuadTriangleFans);
+      if(options.fastInteractiveCleanUp)
         Msg::Info("%s terminal split: excessiveWarping=%zu "
                   "nonConvexOrInvalid=%zu split=%zu rejected=%zu",
                   how.c_str(),
@@ -1417,7 +1408,18 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
                   result.nonConvexOrInvalidQuadrangles,
                   result.warpedQuadranglesSplit,
                   result.warpedQuadranglesRejected);
-      if(options.quadCleanUp || options.fastInteractiveCleanUp)
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s final catastrophic-angle quad fallback: selected=%zu "
+                  "split=%zu "
+                  "rejectedSize=%zu rejectedGeometry=%zu "
+                  "rejectedOther=%zu",
+                  how.c_str(),
+                  result.catastrophicAngleQuadranglesSelectedForSplit,
+                  result.catastrophicAngleQuadranglesSplit,
+                  result.catastrophicAngleQuadranglesRejectedBySize,
+                  result.catastrophicAngleQuadranglesRejectedByGeometry,
+                  result.catastrophicAngleQuadranglesRejectedOther);
+      if(options.fastInteractiveCleanUp)
         Msg::Info("%s terminal triangle recombination: visited=%zu "
                   "accepted=%zu rejectedInvalid=%zu rejectedTopology=%zu "
                   "rejectedQuality=%zu rejectedSize=%zu "
@@ -1429,12 +1431,6 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
                   result.terminalTrianglePairsRejectedQuality,
                   result.terminalTrianglePairsRejectedSize,
                   result.terminalTrianglePairsRejectedGeometry);
-      if(options.quadCleanUp && options.pillowNeighborLayers > 0)
-        Msg::Info("QuadCleanUp pillow audit: visited=%zu accepted=%zu "
-                  "alreadyPresent=%zu insertedQuads=%zu",
-                  result.pillowHolesVisited, result.acceptedPillows,
-                  result.pillowHolesAlreadyPresent,
-                  result.insertedPillowQuadrangles);
       if(options.enforceSizeMap && result.facesWithQuadrangles == 0) {
         Msg::Warning("QuadOptimizer: no quadrilateral face was found; "
                      "edge-length requirements were not audited");

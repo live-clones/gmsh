@@ -1943,7 +1943,11 @@ namespace {
 
 WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
   GFace *gf, double maximumWarpingDegrees,
-  const QuadrangleDiagonalAdmissibility &diagonalAdmissible)
+  const QuadrangleDiagonalAdmissibility &diagonalAdmissible,
+  const QuadrangleSplitTransactionAdmissibility &transactionAdmissible,
+  const QuadrangleSplitSelection &selection,
+  const QuadrangleSplitRequirement &additionalRequirement,
+  const QuadrangleSplitGeometryAdmissibility &geometryAdmissible)
 {
   WarpedQuadrangleSplitResult result;
   if(!gf || !std::isfinite(maximumWarpingDegrees) ||
@@ -1963,6 +1967,7 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
   };
   std::vector<PlannedQuadrangleSplit> plans;
   for(MQuadrangle *quad : gf->quadrangles) {
+    if(selection && !selection(gf, quad)) continue;
     if(!quad || quad->getNumPrimaryVertices() != 4) {
       ++result.rejectedInvalid;
       continue;
@@ -2006,7 +2011,12 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
       !parametricallyStrictlyConvex(parameters) || !std::isfinite(eta) ||
       !(eta > 0.);
     if(nonConvexOrInvalid) ++result.nonConvexOrInvalid;
-    if(!excessiveWarping && !nonConvexOrInvalid) continue;
+    const bool additionallyRequired =
+      additionalRequirement && additionalRequirement(gf, quad);
+    if(additionallyRequired) ++result.selectedByRequirement;
+    if(!excessiveWarping && !nonConvexOrInvalid &&
+       !additionallyRequired)
+      continue;
 
     if(quad->getNumVertices() != 4) {
       ++result.rejectedUnsupportedOrder;
@@ -2031,8 +2041,34 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
       continue;
     }
 
-    bool useDiagonal02 = admissible02 && !admissible13;
-    if(admissible02 && admissible13) {
+    auto geometryAccepts = [&](bool useDiagonal02) {
+      if(!geometryAdmissible) return true;
+      if(useDiagonal02) {
+        MTriangle first(v0, v1, v2);
+        MTriangle second(v2, v3, v0);
+        first.setPartition(quad->getPartition());
+        second.setPartition(quad->getPartition());
+        first.setVisibility(quad->getVisibility());
+        second.setVisibility(quad->getVisibility());
+        return geometryAdmissible(gf, quad, &first, &second);
+      }
+      MTriangle first(v1, v2, v3);
+      MTriangle second(v3, v0, v1);
+      first.setPartition(quad->getPartition());
+      second.setPartition(quad->getPartition());
+      first.setVisibility(quad->getVisibility());
+      second.setVisibility(quad->getVisibility());
+      return geometryAdmissible(gf, quad, &first, &second);
+    };
+    const bool cadAdmissible02 = admissible02 && geometryAccepts(true);
+    const bool cadAdmissible13 = admissible13 && geometryAccepts(false);
+    if(!cadAdmissible02 && !cadAdmissible13) {
+      ++result.rejectedByGeometry;
+      continue;
+    }
+
+    bool useDiagonal02 = cadAdmissible02 && !cadAdmissible13;
+    if(cadAdmissible02 && cadAdmissible13) {
       const double angleTolerance = 1.e-12 * std::max(
         {1., diagonal02.angleDegrees, diagonal13.angleDegrees});
       if(diagonal02.angleDegrees < diagonal13.angleDegrees - angleTolerance)
@@ -2060,12 +2096,35 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
   // be replaced, keep the complete input face unchanged instead of leaving a
   // partially repaired mesh on the caller's failure path.
   if(result.rejectedInvalid || result.rejectedBySize ||
+     result.rejectedByGeometry ||
      result.rejectedUnsupportedOrder) {
     for(const PlannedQuadrangleSplit &plan : plans) {
       delete plan.first;
       delete plan.second;
     }
     return result;
+  }
+
+  if(transactionAdmissible && !plans.empty()) {
+    std::vector<MElement *> removed;
+    std::vector<MElement *> inserted;
+    removed.reserve(plans.size());
+    inserted.reserve(2 * plans.size());
+    for(const PlannedQuadrangleSplit &plan : plans) {
+      removed.push_back(plan.quadrangle);
+      inserted.push_back(plan.first);
+      inserted.push_back(plan.second);
+    }
+    if(!transactionAdmissible(gf, removed, inserted)) {
+      for(const PlannedQuadrangleSplit &plan : plans) {
+        delete plan.first;
+        delete plan.second;
+      }
+      // The public result has no separate topological-transaction bucket;
+      // report this as an invalid replacement while preserving atomicity.
+      ++result.rejectedInvalid;
+      return result;
+    }
   }
 
   std::vector<MQuadrangle *> retained;

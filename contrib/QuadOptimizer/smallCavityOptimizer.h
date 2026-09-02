@@ -40,22 +40,15 @@ namespace QuadOptimizer {
     bool convertBoundaryTriangleQuadTriangleFans = true;
     // Kinney CleanUp stages. The implementation detects generic cavities
     // around the configurations described in the paper and enumerates all
-    // stored disk quadrangulations instead of relying on the unpublished
-    // table of 64 proprietary valence patterns.
+    // stored disk quadrangulations instead of relying on the paper's
+    // non-enumerated set of 64 implementation cases.
     bool cleanUpConnectivity = true;
     bool cleanUpBoundary = true;
     bool cleanUpShape = true;
     bool cleanUpSize = true;
-    // Full Kinney CleanUp path: connectivity, boundary, shape and size
-    // cleanup (including the specialized simple cavities), with guarded local
-    // smoothing after every accepted action, until a complete sweep is idle.
-    // If pillowNeighborLayers is positive, admissible hole pillowing is
-    // included in the same smoothed, validated fixed-point transaction.
-    bool quadCleanUp = false;
-    // Experimental paper-style path used by OptimizeQuadsFast. It keeps the
-    // exhaustive API unchanged while using constant-size local decisions,
-    // harmonic candidate placement and local Winslow relaxation after every
-    // accepted edit.
+    // Paper-style path used by OptimizeQuadsFast: constant-size local
+    // decisions, harmonic candidate placement and bounded local Winslow
+    // relaxation.
     bool fastInteractiveCleanUp = false;
     bool topologyOnlyIfCavityHasSpecificationFailure = true;
     // Optional post-processing: attempt to establish one complete quad ring
@@ -126,15 +119,21 @@ namespace QuadOptimizer {
     std::size_t acceptedDiamonds = 0;
     std::size_t valenceSixVerticesVisited = 0;
     std::size_t acceptedValenceSixSplits = 0;
+    // Complete interior star T-Q-Q-T-Q-Q (up to D10 symmetry) rewritten as
+    // six quads with one additional interior vertex.
+    std::size_t interiorQQTQQTStarsVisited = 0;
+    std::size_t acceptedInteriorQQTQQTReductions = 0;
     std::size_t boundaryTriangleQuadTriangleFansVisited = 0;
     std::size_t acceptedBoundaryTriangleQuadTriangleFans = 0;
+    std::size_t triangleTriangleSwapsVisited = 0;
+    std::size_t acceptedTriangleTriangleSwaps = 0;
+    // Fast Q+T+T -> Q+Q reduction: a six-vertex disk containing one quad
+    // and two adjacent triangles is replaced by the best valid pair of
+    // quads. Triangle count is the strict improvement for this operator.
+    std::size_t quadTwoTriangleCavitiesVisited = 0;
+    std::size_t acceptedQuadTwoTriangleReductions = 0;
     std::size_t acceptedFinalSmoothingCavities = 0;
     std::size_t acceptedEdgeSwaps = 0;
-    // Accepted topology transactions, classified by the first branch of the
-    // QuadCleanUp decision path that justified them.
-    std::size_t acceptedFewerUnacceptableElements = 0;
-    std::size_t acceptedBetterGeometry = 0;
-    std::size_t acceptedOtherImprovements = 0;
     // Subset of acceptedEdgeSwaps found by the generic CleanUp cavity stage;
     // these are already included in one of the four CleanUp family counters.
     std::size_t acceptedCleanUpEdgeSwaps = 0;
@@ -158,6 +157,11 @@ namespace QuadOptimizer {
     std::size_t nonConvexOrInvalidQuadrangles = 0;
     std::size_t warpedQuadranglesSplit = 0;
     std::size_t warpedQuadranglesRejected = 0;
+    std::size_t catastrophicAngleQuadranglesSelectedForSplit = 0;
+    std::size_t catastrophicAngleQuadranglesSplit = 0;
+    std::size_t catastrophicAngleQuadranglesRejectedBySize = 0;
+    std::size_t catastrophicAngleQuadranglesRejectedByGeometry = 0;
+    std::size_t catastrophicAngleQuadranglesRejectedOther = 0;
     std::size_t terminalTrianglePairsVisited = 0;
     std::size_t terminalTrianglePairsAccepted = 0;
     std::size_t terminalTrianglePairsRejectedInvalid = 0;
@@ -226,10 +230,12 @@ namespace QuadOptimizer {
     std::size_t acceptedCavities = 0;
     std::size_t acceptedEdgeSwaps = 0;
     std::size_t acceptedDiamonds = 0;
+    std::size_t acceptedQuadTwoTriangleReductions = 0;
+    std::size_t acceptedInteriorQQTQQTReductions = 0;
+    std::size_t acceptedBoundaryTriangleQuadTriangleFans = 0;
+    std::size_t triangleTriangleSwapsVisited = 0;
+    std::size_t acceptedTriangleTriangleSwaps = 0;
     std::size_t acceptedSmoothingCavities = 0;
-    std::size_t acceptedFewerUnacceptableElements = 0;
-    std::size_t acceptedBetterGeometry = 0;
-    std::size_t acceptedOtherImprovements = 0;
     std::size_t rejectedByWinslow = 0;
     std::size_t rejectedBySize = 0;
     std::size_t rejectedByQuality = 0;
@@ -242,6 +248,11 @@ namespace QuadOptimizer {
     std::size_t nonConvexOrInvalidQuadrangles = 0;
     std::size_t warpedQuadranglesSplit = 0;
     std::size_t warpedQuadranglesRejected = 0;
+    std::size_t catastrophicAngleQuadranglesSelectedForSplit = 0;
+    std::size_t catastrophicAngleQuadranglesSplit = 0;
+    std::size_t catastrophicAngleQuadranglesRejectedBySize = 0;
+    std::size_t catastrophicAngleQuadranglesRejectedByGeometry = 0;
+    std::size_t catastrophicAngleQuadranglesRejectedOther = 0;
     std::size_t terminalTrianglePairsVisited = 0;
     std::size_t terminalTrianglePairsAccepted = 0;
     std::size_t terminalTrianglePairsRejectedInvalid = 0;
