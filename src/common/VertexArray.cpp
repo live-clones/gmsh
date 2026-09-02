@@ -69,28 +69,33 @@ static int getUniqueMode()
 // fill a corner key with the N corners sorted lexicographically, so that an
 // element added with its corners in any order maps to the same key
 template <int N>
-static void fillCornerKey(CornerKey<N> &k, double *x, double *y, double *z,
-                          unsigned char *r, unsigned char *g, unsigned char *b,
-                          unsigned char *a)
+static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
+                                 double *z, unsigned char *r, unsigned char *g,
+                                 unsigned char *b, unsigned char *a)
 {
   memset(&k, 0, sizeof(CornerKey<N>));
-  int o[N];
-  for(int i = 0; i < N; i++) o[i] = i;
+  float px[N], py[N], pz[N];
+  for(int i = 0; i < N; i++) {
+    px[i] = (float)x[i];
+    py[i] = (float)y[i];
+    pz[i] = (float)z[i];
+  }
+  // sorting network: one comparison for a line, three for a triangle
   for(int i = 1; i < N; i++) {
     for(int j = i; j > 0; j--) {
-      float xj = (float)x[o[j]], xp = (float)x[o[j - 1]];
-      float yj = (float)y[o[j]], yp = (float)y[o[j - 1]];
-      float zj = (float)z[o[j]], zp = (float)z[o[j - 1]];
-      bool less = (xj < xp) || (xj == xp && (yj < yp ||
-                                             (yj == yp && zj < zp)));
-      if(!less) break;
-      std::swap(o[j], o[j - 1]);
+      if(px[j] > px[j - 1] ||
+         (px[j] == px[j - 1] &&
+          (py[j] > py[j - 1] || (py[j] == py[j - 1] && pz[j] >= pz[j - 1]))))
+        break;
+      std::swap(px[j], px[j - 1]);
+      std::swap(py[j], py[j - 1]);
+      std::swap(pz[j], pz[j - 1]);
     }
   }
   for(int i = 0; i < N; i++) {
-    k.p[3 * i] = (float)x[o[i]];
-    k.p[3 * i + 1] = (float)y[o[i]];
-    k.p[3 * i + 2] = (float)z[o[i]];
+    k.p[3 * i] = px[i];
+    k.p[3 * i + 1] = py[i];
+    k.p[3 * i + 2] = pz[i];
   }
   if(r && g && b && a) {
     k.c[0] = r[0];
@@ -100,27 +105,82 @@ static void fillCornerKey(CornerKey<N> &k, double *x, double *y, double *z,
   }
 }
 
+// hash a key word by word; never returns 0, which marks an empty slot
+static inline std::uint64_t hashKey(const void *p, std::size_t bytes)
+{
+  const std::uint64_t *w = (const std::uint64_t *)p;
+  std::uint64_t h = 0x9e3779b97f4a7c15ULL;
+  for(std::size_t i = 0; i < bytes / 8; i++) {
+    h ^= w[i];
+    h *= 0xff51afd7ed558ccdULL;
+    h = (h << 31) | (h >> 33);
+  }
+  h ^= h >> 33;
+  h *= 0xff51afd7ed558ccdULL;
+  h ^= h >> 29;
+  h *= 0xc4ceb9fe1a85ec53ULL;
+  h ^= h >> 32;
+  return h ? h : 1;
+}
+
+void UniqueElementFilter::Shard::reserve(std::size_t n)
+{
+  std::size_t want = 16;
+  while(want < 2 * n) want *= 2;
+  if(want <= table.size()) return;
+  std::vector<std::uint64_t> old;
+  old.swap(table);
+  table.assign(want, 0);
+  std::size_t mask = want - 1;
+  for(std::size_t i = 0; i < old.size(); i++) {
+    if(!old[i]) continue;
+    std::size_t j = old[i] & mask;
+    while(table[j]) j = (j + 1) & mask;
+    table[j] = old[i];
+  }
+}
+
+bool UniqueElementFilter::Shard::insert(std::uint64_t h)
+{
+  if(2 * (num + 1) > table.size()) reserve(num + 1);
+  std::size_t mask = table.size() - 1, i = h & mask;
+  while(table[i]) {
+    if(table[i] == h) return false;
+    i = (i + 1) & mask;
+  }
+  table[i] = h;
+  num++;
+  return true;
+}
+
+void UniqueElementFilter::reserve(std::size_t n)
+{
+  for(int i = 0; i < NUM_SHARDS; i++) _shard[i].reserve(n / NUM_SHARDS + 16);
+}
+
 bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
                                      unsigned char *r, unsigned char *g,
                                      unsigned char *b, unsigned char *a)
 {
+  std::uint64_t h;
   if(npe == 2) {
     CornerKey<2> k;
     fillCornerKey<2>(k, x, y, z, r, g, b, a);
-    std::size_t sh = CornerKeyHash<2>()(k) % NUM_SHARDS;
-    if(!_threaded) return !_s2[sh].insert(k).second;
-    std::lock_guard<std::mutex> lock(_mutex[sh]);
-    return !_s2[sh].insert(k).second;
+    h = hashKey(&k, sizeof(CornerKey<2>));
   }
-  if(npe == 3) {
+  else if(npe == 3) {
     CornerKey<3> k;
     fillCornerKey<3>(k, x, y, z, r, g, b, a);
-    std::size_t sh = CornerKeyHash<3>()(k) % NUM_SHARDS;
-    if(!_threaded) return !_s3[sh].insert(k).second;
-    std::lock_guard<std::mutex> lock(_mutex[sh]);
-    return !_s3[sh].insert(k).second;
+    h = hashKey(&k, sizeof(CornerKey<3>));
   }
-  return false;
+  else
+    return false;
+
+  // the top bits pick the shard, the low bits index inside it
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) return !_shard[sh].insert(h);
+  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  return !_shard[sh].insert(h);
 }
 
 VertexArray::~VertexArray()
@@ -218,11 +278,12 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
   if(col){
     unsigned char r[100], g[100], b[100], a[100];
     int npe = getNumVerticesPerElement();
+    CTX *ctx = CTX::instance();
     for(int i = 0; i < npe; i++){
-      r[i] = CTX::instance()->unpackRed(col[i]);
-      g[i] = CTX::instance()->unpackGreen(col[i]);
-      b[i] = CTX::instance()->unpackBlue(col[i]);
-      a[i] = CTX::instance()->unpackAlpha(col[i]);
+      r[i] = ctx->unpackRed(col[i]);
+      g[i] = ctx->unpackGreen(col[i]);
+      b[i] = ctx->unpackBlue(col[i]);
+      a[i] = ctx->unpackAlpha(col[i]);
     }
     add(x, y, z, n, r, g, b, a, ele, unique, boundary);
   }

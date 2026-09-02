@@ -10,8 +10,8 @@
 #include <vector>
 #include <set>
 #include <unordered_map>
-#include <unordered_set>
 #include <mutex>
+#include <cstdint>
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
 
@@ -102,33 +102,13 @@ public:
 // key used by the "unique" filter to detect elements that are drawn several
 // times, e.g. an edge shared by several tetrahedra: the N corners are stored in
 // canonical (sorted) order, together with the color, so that an element added
-// twice with the same geometry and the same color is only kept once
-template <int N> class CornerKey {
+// twice with the same geometry and the same color maps to the same key. The
+// size is padded to a multiple of 8 bytes so that it can be hashed word by word
+template <int N> class alignas(8) CornerKey {
 public:
   float p[3 * N];
   unsigned char c[4];
-};
-
-template <int N> class CornerKeyHash {
-public:
-  std::size_t operator()(const CornerKey<N> &k) const
-  {
-    const unsigned char *b = (const unsigned char *)&k;
-    std::size_t h = 14695981039346656037ULL;
-    for(std::size_t i = 0; i < sizeof(CornerKey<N>); i++) {
-      h ^= b[i];
-      h *= 1099511628211ULL;
-    }
-    return h;
-  }
-};
-
-template <int N> class CornerKeyEqual {
-public:
-  bool operator()(const CornerKey<N> &a, const CornerKey<N> &b) const
-  {
-    return !memcmp(&a, &b, sizeof(CornerKey<N>));
-  }
+  unsigned char pad[8 - ((12 * N + 4) % 8)];
 };
 
 // filter used to detect elements that are drawn several times. The keys are
@@ -137,15 +117,26 @@ public:
 class UniqueElementFilter {
 private:
   enum { NUM_SHARDS = 256 };
-  std::unordered_set<CornerKey<2>, CornerKeyHash<2>, CornerKeyEqual<2> >
-    _s2[NUM_SHARDS];
-  std::unordered_set<CornerKey<3>, CornerKeyHash<3>, CornerKeyEqual<3> >
-    _s3[NUM_SHARDS];
+  // open addressing table of 64 bit hashes, with 0 marking an empty slot: only
+  // the hash is stored, so two elements whose keys collide on 64 bits are
+  // wrongly merged. With 20 million elements this happens with probability
+  // ~1e-5, i.e. much less often than one dropped edge per mesh
+  class Shard {
+  public:
+    std::vector<std::uint64_t> table;
+    std::size_t num;
+    Shard() : num(0) {}
+    void reserve(std::size_t n);
+    bool insert(std::uint64_t h);
+  };
+  Shard _shard[NUM_SHARDS];
   std::mutex _mutex[NUM_SHARDS];
   bool _threaded;
 
 public:
   UniqueElementFilter(bool threaded) : _threaded(threaded) {}
+  // hint at the total number of elements that will be filtered
+  void reserve(std::size_t n);
   // switch on the locks: this must be called before the filter is shared, e.g.
   // when a first, small batch of elements has been treated serially
   void setThreaded() { _threaded = true; }
