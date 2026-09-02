@@ -22,6 +22,8 @@
 #include "OS.h"
 #include "Context.h"
 #include "meshGFaceOptimize.h"
+#include "meshGFaceDelaunay.h"
+#include "MQuadrangle.h"
 
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"

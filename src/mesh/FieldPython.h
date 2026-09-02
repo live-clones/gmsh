@@ -7,6 +7,7 @@
 #define FIELD_PYTHON_H
 
 #include "Field.h"
+#include "GEntity.h"
 #include "Python.h"
 
 class FieldPython : public Field {

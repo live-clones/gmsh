@@ -3,31 +3,37 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// Mesh.Algorithm = 12, "Frontal-Delaunay Optimized": a performance-oriented
-// variant of the 2D Frontal-Delaunay algorithm (Mesh.Algorithm = 6,
-// bowyerWatsonFrontal in meshGFaceDelaunayInsertion.cpp). The algorithm is
-// the same - same in-circle and optimal-point formulas, same insertion
-// checks, same active-front priority - but it runs on an indexed
-// structure-of-arrays backend instead of algo 6's std::set<MTri3*> of
-// individually allocated triangles:
+// Flat-array kernels of the two Bowyer-Watson surface meshers of
+// meshGFaceDelaunay.cpp - the plain Delaunay one (Mesh.Algorithm = 5,
+// bowyerWatson) and the Frontal-Delaunay one (Mesh.Algorithm = 6,
+// bowyerWatsonFrontal) - sharing one backend.
+//
+// These are not different algorithms: same in-circle and optimal-point
+// formulas, same insertion checks, same queue order, and they produce the
+// same mesh, element for element and node for node. What changes is the
+// representation, which replaces the std::set<MTri3 *> of individually
+// allocated triangles by index-based parallel arrays:
 //  - vertices are plain parallel arrays (parametric coordinates, sizes, xyz,
 //    dimension) indexed by a vertex id, kept sorted by MVertex::getNum();
 //  - triangles are vertex-id triplets in parallel arrays (neighbors, metric
 //    circumradius, flags) indexed by a triangle slot, with deleted slots
 //    recycled through a free-list;
-//  - the active front is a binary heap of (radius, slot) entries instead of
-//    a std::set ordered by radius;
-//  - the cavity is grown with an explicit stack instead of recursion.
-// The in-circle and optimal-point computations follow algo 6's formulas.
-// For isotropic metrics (and planar surfaces) they use a circumcircle
-// cached per triangle: the same quantity, computed once in closed form
-// instead of per test, whose different floating-point route can flip the
-// rare near-cocircular decisions. The mesh can therefore differ from
-// algo 6 at rounding class on isotropic/planar cases (node counts within
-// ~0.1%, no bias); anisotropic metrics and curved-surface optimal points
-// keep algo 6's exact code paths. The algorithm remains fully
-// deterministic for a given input, and the final triangles are emitted in
-// slot order instead of radius order.
+//  - the queue is a binary heap of (radius, slot) entries instead of a
+//    std::set ordered by radius;
+//  - the cavity is grown with an explicit stack instead of recursion;
+//  - MVertex and MTriangle are created once, at the transfer, in the order
+//    the std::set would have been drained in.
+//
+// Everything that could round differently is off by default, so that the
+// kernel is a switch (Mesh.FlatRefine2D = 1) and not a separate
+// algorithm. Setting the option to 2 turns those shortcuts back on - a
+// circumcircle cached per triangle instead of a metric solve per in-circle
+// test, a closed-form circumradius on planar faces, and no curve/surface
+// projection of the optimal point on a plane. They compute the same
+// quantities by a cheaper floating-point route, so the rare near-cocircular
+// decisions can flip and the mesh is then only equivalent, not identical
+// (measured: worth ~14% on a planar case, nothing on curved ones, node counts
+// within 0.01%).
 
 #include <set>
 #include <array>
@@ -38,7 +44,8 @@
 #include "GmshMessage.h"
 #include "robustPredicates.h"
 #include "BackgroundMesh.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
+#include "meshGFaceTri3.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
 #include "meshGFaceParamBoundary.h"
@@ -49,13 +56,15 @@
 #include "discreteFace.h"
 #include "intersectCurveSurface.h"
 
-static constexpr double ONE_THIRD = 1.0 / 3.0;
+namespace {
+
+constexpr double ONE_THIRD = 1.0 / 3.0;
 // radius threshold (in metric units) below which a triangle is small enough
 // and does not need to be refined
-static const double LIMIT_ = 0.5 * std::sqrt(2.0);
+const double LIMIT_ = 0.5 * std::sqrt(2.0);
 
-static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
-                                           double *q2)
+inline bool intersection_segments_2(double *p1, double *p2, double *q1,
+                                    double *q2)
 {
   double a = robustPredicates::orient2d(p1, p2, q1);
   double b = robustPredicates::orient2d(p1, p2, q2);
@@ -70,9 +79,9 @@ static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
 // in the metric (a b; b d): x is equidistant from the three points, i.e.
 // (x-pb) M (x-pb) = (x-pa) M (x-pa) and the same for pc, a linear 2x2 system.
 // Same formulas as algo 6 (circumCenterMetric in
-// meshGFaceDelaunayInsertion.cpp); x is (0,0) if the system is singular.
-static void circumCenterMetric(double *pa, double *pb, double *pc,
-                               const double *metric, double *x, double &Radius2)
+// meshGFaceDelaunay.cpp); x is (0,0) if the system is singular.
+void circumCenterMetric(double *pa, double *pb, double *pc,
+                        const double *metric, double *x, double &Radius2)
 {
   double sys[2][2];
   double rhs[2];
@@ -127,20 +136,20 @@ static void circumCenterMetric(double *pa, double *pb, double *pc,
   if(b != 0.0) Radius2 += 2. * (x[0] - pa[0]) * (x[1] - pa[1]) * b;
 }
 
-static double lengthMetric(const double p[2], const double q[2],
-                           const double metric[3])
+double lengthMetric(const double p[2], const double q[2],
+                    const double metric[3])
 {
   return std::sqrt((p[0] - q[0]) * metric[0] * (p[0] - q[0]) +
                    2 * (p[0] - q[0]) * metric[1] * (p[1] - q[1]) +
                    (p[1] - q[1]) * metric[2] * (p[1] - q[1]));
 }
 
-static constexpr std::size_t INVALID_TRIANGLE =
+constexpr std::size_t FLAT_NONE =
   std::numeric_limits<std::size_t>::max();
 
-struct IndexedMeshData;
+struct flatMeshData;
 
-// Per-triangle state, packed in one byte per slot (IndexedMeshData::flags)
+// Per-triangle state, packed in one byte per slot (flatMeshData::flags)
 enum TriangleFlag : unsigned char {
   TRI_NONE = 0,
   TRI_DELETED = 1, // removed from the mesh (cavity), pending slot release
@@ -148,46 +157,46 @@ enum TriangleFlag : unsigned char {
   TRI_FREE_SLOT = 4 // slot is in the free-list, ready for reuse
 };
 
-static inline TriangleFlag operator|(TriangleFlag a, TriangleFlag b)
+inline TriangleFlag operator|(TriangleFlag a, TriangleFlag b)
 {
   return TriangleFlag((unsigned char)a | (unsigned char)b);
 }
-static inline TriangleFlag operator&(TriangleFlag a, TriangleFlag b)
+inline TriangleFlag operator&(TriangleFlag a, TriangleFlag b)
 {
   return TriangleFlag((unsigned char)a & (unsigned char)b);
 }
-static inline TriangleFlag operator~(TriangleFlag a)
+inline TriangleFlag operator~(TriangleFlag a)
 {
   return TriangleFlag(~(unsigned char)a);
 }
-static inline TriangleFlag &operator|=(TriangleFlag &a, TriangleFlag b)
+inline TriangleFlag &operator|=(TriangleFlag &a, TriangleFlag b)
 {
   return a = a | b;
 }
-static inline TriangleFlag &operator&=(TriangleFlag &a, TriangleFlag b)
+inline TriangleFlag &operator&=(TriangleFlag &a, TriangleFlag b)
 {
   return a = a & b;
 }
 
 // Oriented edge iFac of triangle t1, with its vertex ids stored sorted
-// (ori records whether they were swapped) - the indexed counterpart of
-// edgeXface (meshGFaceDelaunayInsertion.h).
-struct IndexedEdgeFace {
+// (ori records whether they were swapped) - the flat counterpart of
+// edgeXface (meshGFaceDelaunay.h).
+struct flatEdgeFace {
   std::size_t v[2];
   std::size_t t1;
   int i1;
   int ori;
 
-  IndexedEdgeFace(const IndexedMeshData &data, std::size_t t, int iFac);
+  flatEdgeFace(const flatMeshData &data, std::size_t t, int iFac);
 
-  inline bool operator<(const IndexedEdgeFace &other) const
+  inline bool operator<(const flatEdgeFace &other) const
   {
     if(v[0] < other.v[0]) return true;
     if(v[0] > other.v[0]) return false;
     return v[1] < other.v[1];
   }
 
-  inline bool operator==(const IndexedEdgeFace &other) const
+  inline bool operator==(const flatEdgeFace &other) const
   {
     return v[0] == other.v[0] && v[1] == other.v[1];
   }
@@ -209,8 +218,8 @@ struct IndexedEdgeFace {
 // slots are recycled through a free-list, with one invariant: a slot that
 // is still referenced by an active-queue entry is not released until that
 // entry is popped (see releaseTriangleSlot callers and
-// IndexedActiveQueue::pop), so a queue entry never designates a reused slot.
-struct IndexedMeshData {
+// flatQueue::pop), so a queue entry never designates a reused slot.
+struct flatMeshData {
   // per-vertex arrays
   std::vector<double> Us, Vs, vSizes, vSizesBGM;
   // MVertex backing per vertex id. Filled for the imported block; interior
@@ -231,17 +240,18 @@ struct IndexedMeshData {
   discreteFace *discrete = nullptr;
   bool planar = false;
   bool extend1d = false;
+  // Mesh.FlatRefine2D = 2: take the cheaper floating-point route
+  // wherever an isotropic metric or a planar face allows it. Same quantities,
+  // computed differently, so the rare near-cocircular decisions can flip and
+  // the mesh is no longer identical to the one the classic kernel produces.
+  bool fastCircles = false;
   // per-triangle arrays
   std::vector<std::array<std::size_t, 3>> triangles;
   std::vector<std::array<std::size_t, 3>> neigh;
   std::vector<double> circumRadius;
-  // Per-triangle parametric circumcircle {cx, cy, r^2}, computed once
-  // (closed form) at creation and used by the in-circle test for isotropic
-  // metrics. For M = lambda*I the metric circumcircle equals the parametric
-  // one (lambda cancels), so this is the same quantity as algo 6's per-test
-  // metric solve; only the floating-point route differs, flipping the rare
-  // near-cocircular decisions (rounding-class divergence from algo 6).
-  // Anisotropic metrics keep the exact per-test solve.
+  // Per-triangle parametric circumcircle {cx, cy, r^2}, computed once in
+  // closed form at creation. Only filled, and only used, in the fast mode
+  // (Mesh.FlatRefine2D = 2): see fastCircles.
   std::vector<std::array<double, 3>> circumCircle;
   std::vector<TriangleFlag> flags;
   std::vector<std::size_t> freeTriangleSlots;
@@ -249,7 +259,7 @@ struct IndexedMeshData {
   // triangles created by the refinement (materialized at transfer).
   std::vector<MTriangle *> sourceTriangles;
   // Scratch buffers reused across insertions.
-  std::vector<IndexedEdgeFace> shellBuffer;
+  std::vector<flatEdgeFace> shellBuffer;
   std::vector<std::size_t> cavityBuffer;
   std::vector<std::size_t> cavityStack;
   std::vector<std::size_t> newCavityBuffer;
@@ -318,18 +328,18 @@ struct IndexedMeshData {
 // just-popped "worst", after removal; in-queue deleted triangles keep their
 // slot until popped), so the packed value always equals circumRadius[idx] and
 // the ordering is identical.
-struct IndexedActiveEntry {
+struct flatQueueEntry {
   double radius;
   std::size_t t;
 };
 
 // Same priority as algo 6's compareTri3Ptr: largest circumradius first, ties
-// broken on the sorted vertex triplet (see IndexedMeshData::faceKey).
-struct IndexedActiveCompare {
-  const IndexedMeshData *data;
+// broken on the sorted vertex triplet (see flatMeshData::faceKey).
+struct flatQueueCompare {
+  const flatMeshData *data;
 
-  bool operator()(const IndexedActiveEntry &a,
-                  const IndexedActiveEntry &b) const
+  bool operator()(const flatQueueEntry &a,
+                  const flatQueueEntry &b) const
   {
     if(a.radius < b.radius) return true;
     if(a.radius > b.radius) return false;
@@ -341,16 +351,23 @@ struct IndexedActiveCompare {
   }
 };
 
-// The active front as a contiguous binary heap (std::push_heap/pop_heap)
-// instead of algo 6's std::set<MTri3*>: same top element at every pop, no
-// per-node allocation. The TRI_IN_QUEUE flag gives the O(1) membership test
-// that the set gave for free.
-struct IndexedActiveQueue {
-  IndexedMeshData *data;
-  IndexedActiveCompare compare;
-  std::vector<IndexedActiveEntry> heap;
+// The refinement queue as a contiguous binary heap (std::push_heap /
+// std::pop_heap) instead of the std::set<MTri3*>: same top element at every
+// pop, no per-node allocation. The TRI_IN_QUEUE flag gives the O(1)
+// membership test that the set gave for free.
+//
+// What the queue holds depends on the algorithm: the frontal one keeps only
+// the active front (a triangle enters when it has an edge on the front),
+// while the plain Delaunay one keeps every triangle of the mesh, exactly as
+// its std::set counterpart does.
+struct flatQueue {
+  flatMeshData *data;
+  flatQueueCompare compare;
+  std::vector<flatQueueEntry> heap;
+  // false = hold every triangle (plain Delaunay), true = hold the front only
+  bool frontOnly = true;
 
-  explicit IndexedActiveQueue(IndexedMeshData *d) : data(d), compare{d} {}
+  explicit flatQueue(flatMeshData *d) : data(d), compare{d} {}
 
   inline bool empty() const { return heap.empty(); }
 
@@ -383,11 +400,11 @@ struct IndexedActiveQueue {
 };
 
 // Queue radius of a triangle - the same quantity, computed with the same
-// formulas, as the MTri3 constructor (meshGFaceDelaunayInsertion.cpp), for
+// formulas, as the MTri3 constructor (meshGFaceDelaunay.cpp), for
 // each of the three MTri3::radiusNorm conventions.
-static double computeRadius(const IndexedMeshData &data,
-                            const std::array<std::size_t, 3> &tri, double lc,
-                            GFace *gf, MTriangle *source = nullptr)
+double computeRadius(const flatMeshData &data,
+                     const std::array<std::size_t, 3> &tri, double lc,
+                     GFace *gf, MTriangle *source = nullptr)
 {
   double center[3];
   double pa[3] = {data.vxyz[tri[0]][0], data.vxyz[tri[0]][1],
@@ -453,8 +470,8 @@ static double computeRadius(const IndexedMeshData &data,
 }
 
 // Closed-form parametric circumcircle {cx, cy, r^2} of triangle tri.
-static std::array<double, 3>
-computeParamCircumCircle(const IndexedMeshData &data,
+std::array<double, 3>
+computeParamCircumCircle(const flatMeshData &data,
                          const std::array<std::size_t, 3> &tri)
 {
   const double x1 = data.Us[tri[0]], y1 = data.Vs[tri[0]];
@@ -469,15 +486,13 @@ computeParamCircumCircle(const IndexedMeshData &data,
   return {{cx, cy, (cx - x1) * (cx - x1) + (cy - y1) * (cy - y1)}};
 }
 
-static std::size_t storeTriangle(IndexedMeshData &data,
-                                 const std::array<std::size_t, 3> &tri,
-                                 double radius, MTriangle *source,
-                                 const std::array<double, 3> *circle = nullptr)
+std::size_t storeTriangle(flatMeshData &data,
+                          const std::array<std::size_t, 3> &tri,
+                          double radius, MTriangle *source,
+                          const std::array<double, 3> *circle = nullptr)
 {
   std::array<std::size_t, 3> invalid = {
-    {INVALID_TRIANGLE, INVALID_TRIANGLE, INVALID_TRIANGLE}};
-  const std::array<double, 3> cc =
-    circle ? *circle : computeParamCircumCircle(data, tri);
+    {FLAT_NONE, FLAT_NONE, FLAT_NONE}};
 
   std::size_t idx;
   if(!data.freeTriangleSlots.empty()) {
@@ -487,7 +502,9 @@ static std::size_t storeTriangle(IndexedMeshData &data,
     data.triangles[idx] = tri;
     data.neigh[idx] = invalid;
     data.circumRadius[idx] = radius;
-    data.circumCircle[idx] = cc;
+    if(data.fastCircles)
+      data.circumCircle[idx] =
+        circle ? *circle : computeParamCircumCircle(data, tri);
     data.flags[idx] = TRI_NONE;
     data.sourceTriangles[idx] = source;
   }
@@ -496,23 +513,23 @@ static std::size_t storeTriangle(IndexedMeshData &data,
     data.triangles.push_back(tri);
     data.neigh.push_back(invalid);
     data.circumRadius.push_back(radius);
-    data.circumCircle.push_back(cc);
+    if(data.fastCircles)
+      data.circumCircle.push_back(circle ? *circle :
+                                           computeParamCircumCircle(data, tri));
     data.flags.push_back(TRI_NONE);
     data.sourceTriangles.push_back(source);
   }
   return idx;
 }
 
-static std::size_t addTriangle(IndexedMeshData &data,
-                               const std::array<std::size_t, 3> &tri, double lc,
-                               GFace *gf, MTriangle *source = nullptr)
+std::size_t addTriangle(flatMeshData &data,
+                        const std::array<std::size_t, 3> &tri, double lc,
+                        GFace *gf, MTriangle *source = nullptr)
 {
-  // On a plane the parametric circumradius equals the 3D one, so derive the
-  // queue radius from the circumcircle that storeTriangle caches anyway
-  // (sqrt(r2)/lc), skipping the separate 3D circumCenterXYZ solve. Rounds
-  // differently than the 3D path, so the heap order can flip on near-ties
-  // (rounding-class divergence from algo 6).
-  if(MTri3::radiusNorm == 2 && data.planar) {
+  // fast mode: on a plane the parametric circumradius equals the 3D one, so
+  // derive the queue radius from the circumcircle (sqrt(r2)/lc) instead of
+  // solving circumCenterXYZ separately
+  if(data.fastCircles && MTri3::radiusNorm == 2 && data.planar) {
     const std::array<double, 3> cc = computeParamCircumCircle(data, tri);
     double radius = std::sqrt(cc[2]) / lc;
     if(source) {
@@ -526,7 +543,7 @@ static std::size_t addTriangle(IndexedMeshData &data,
                        source);
 }
 
-IndexedEdgeFace::IndexedEdgeFace(const IndexedMeshData &data, std::size_t t,
+flatEdgeFace::flatEdgeFace(const flatMeshData &data, std::size_t t,
                                  int iFac)
   : t1(t), i1(iFac), ori(1)
 {
@@ -543,7 +560,7 @@ IndexedEdgeFace::IndexedEdgeFace(const IndexedMeshData &data, std::size_t t,
 // mesh edge, skipping edges that connect a vertex to its periodic
 // counterpart. Same computation (and same FP operations) as setLcsInit and
 // setLcs in meshGFaceOptimize.cpp, which fill the algo-6 structures.
-static void setLcsInit(MTriangle *t, std::map<MVertex *, double> &vSizes)
+void setLcsInit(MTriangle *t, std::map<MVertex *, double> &vSizes)
 {
   for(int i = 0; i < 3; i++) {
     for(int j = i + 1; j < 3; j++) {
@@ -555,8 +572,8 @@ static void setLcsInit(MTriangle *t, std::map<MVertex *, double> &vSizes)
   }
 }
 
-static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
-                   std::map<MVertex *, MVertex *> *equivalence)
+void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
+            std::map<MVertex *, MVertex *> *equivalence)
 {
   // a vertex's periodic counterpart, or null (as bidimMeshData::equivalent)
   auto equivalent = [equivalence](MVertex *v) -> MVertex * {
@@ -585,18 +602,18 @@ static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
 // Pair up the triangle edges to fill neigh[][]: sort all edges (their vertex
 // ids are stored sorted), equal consecutive entries are the two sides of one
 // interior edge. Same pairing as algo 6's connectTriangles.
-static void connectTriangles(IndexedMeshData &data)
+void connectTriangles(flatMeshData &data)
 {
-  std::vector<IndexedEdgeFace> conn;
+  std::vector<flatEdgeFace> conn;
   conn.reserve(3 * data.triangles.size());
   for(std::size_t t = 0; t < data.triangles.size(); t++)
-    for(int j = 0; j < 3; j++) conn.push_back(IndexedEdgeFace(data, t, j));
+    for(int j = 0; j < 3; j++) conn.push_back(flatEdgeFace(data, t, j));
 
   std::sort(conn.begin(), conn.end());
 
   for(std::size_t i = 0; i + 1 < conn.size(); i++) {
-    IndexedEdgeFace &f1 = conn[i];
-    IndexedEdgeFace &f2 = conn[i + 1];
+    flatEdgeFace &f1 = conn[i];
+    flatEdgeFace &f2 = conn[i + 1];
     if(f1 == f2 && f1.t1 != f2.t1) {
       data.neigh[f1.t1][f1.i1] = f2.t1;
       data.neigh[f2.t1][f2.i1] = f1.t1;
@@ -605,20 +622,20 @@ static void connectTriangles(IndexedMeshData &data)
   }
 }
 
-// Import the initial mesh into the indexed representation. This performs the
+// Import the initial mesh into the flat representation. This performs the
 // same computations as the shared buildMeshGenerationDataStructures
 // (meshGFaceOptimize.cpp) - per-vertex sizes, embedded vertices and edges,
 // per-triangle queue radii - without going through the algo-6 structures
-// (bidimMeshData, MTri3), so the optimized algorithm does not depend on
+// (bidimMeshData, MTri3), so the flat kernel does not depend on
 // them. One deliberate difference: the vertices are laid out in
 // MVertex::getNum() order (the shared builder iterates a pointer-keyed map,
 // so its vertex order is not even deterministic across runs). Interior
 // vertices are appended later in creation order with strictly larger nums,
 // so "index order == num order" holds for every vertex pair, and the
 // active-front tie-break can compare sorted vertex-index triplets - exactly
-// algo 6's sorted getNum() triplets (see IndexedMeshData::faceKey).
-static bool buildMeshGenerationDataStructures(
-  GFace *gf, IndexedMeshData &data, std::map<MVertex *, MVertex *> *equivalence,
+// algo 6's sorted getNum() triplets (see flatMeshData::faceKey).
+bool buildMeshGenerationDataStructures(
+  GFace *gf, flatMeshData &data, std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
   std::map<MVertex *, double> vSizesMap;
@@ -711,6 +728,7 @@ static bool buildMeshGenerationDataStructures(
     data.discrete = dynamic_cast<discreteFace *>(gf);
   data.planar = gf->geomType() == GEntity::Plane;
   data.extend1d = Extend1dMeshIn2dSurfaces(gf);
+  data.fastCircles = (CTX::instance()->mesh.flatRefine2D == 2);
 
   // index the internal (embedded) edges by vertex ids so the cavity walk
   // needs no MEdge/MVertex
@@ -752,22 +770,22 @@ static bool buildMeshGenerationDataStructures(
 
 // a triangle is "active" when it has at least one edge on the front, i.e.
 // shared with a triangle that is either outside the domain or small enough
-static bool isActive(const IndexedMeshData &data, std::size_t t, double limit_,
-                     int &active)
+bool isActive(const flatMeshData &data, std::size_t t, double limit_,
+              int &active)
 {
   if(data.flags[t] & TRI_DELETED) return false;
   for(active = 0; active < 3; active++) {
     std::size_t neigh = data.neigh[t][active];
-    if(neigh == INVALID_TRIANGLE ||
+    if(neigh == FLAT_NONE ||
        (data.circumRadius[neigh] < limit_ && data.circumRadius[neigh] > 0))
       return true;
   }
   return false;
 }
 
-static void circumCenterMetric(std::size_t base, const double *metric,
-                               const IndexedMeshData &data, double *x,
-                               double &Radius2)
+void circumCenterMetric(std::size_t base, const double *metric,
+                        const flatMeshData &data, double *x,
+                        double &Radius2)
 {
   const std::array<std::size_t, 3> &tri = data.triangles[base];
   double pa[2] = {data.Us[tri[0]], data.Vs[tri[0]]};
@@ -778,16 +796,16 @@ static void circumCenterMetric(std::size_t base, const double *metric,
 
 // Is uv inside the metric circumcircle of triangle base? Same computation as
 // algo 6's inCircumCircleAniso(GFace*, MTriangle*, ...).
-static int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
-                               const double *metricb,
-                               const IndexedMeshData &data)
+int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
+                        const double *metricb,
+                        const flatMeshData &data)
 {
-  // For an isotropic metric M = lambda*I the metric circumcircle equals the
-  // parametric one and lambda cancels in the comparison, so use the
-  // circumcircle cached at triangle creation - a single distance test -
-  // instead of rebuilding and solving the 2x2 metric system on every test.
-  // Genuine anisotropic metrics keep the exact solve below.
-  if(metricb && metricb[1] == 0.0 && metricb[0] == metricb[2]) {
+  // fast mode: for an isotropic metric M = lambda*I the metric circumcircle
+  // is the parametric one (lambda cancels in the comparison), so one distance
+  // test against the cached circle replaces rebuilding and solving the 2x2
+  // metric system on every call. Anisotropic metrics always take the solve.
+  if(data.fastCircles && metricb && metricb[1] == 0.0 &&
+     metricb[0] == metricb[2]) {
     const std::array<double, 3> &cc = data.circumCircle[base];
     const double d0 = cc[0] - uv[0];
     const double d1 = cc[1] - uv[1];
@@ -830,17 +848,18 @@ static int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
 // explicit stack of triangle ids; only the order in which entries are
 // collected differs, which permutes triangle slot reuse and therefore the
 // element order of the final export.
-static void findCavityAniso(GFace *gf, std::vector<IndexedEdgeFace> &shell,
-                            std::vector<std::size_t> &cavity, double *metric,
-                            double *param, std::size_t t, IndexedMeshData &data)
+void findCavityAniso(GFace *gf, std::vector<flatEdgeFace> &shell,
+                     std::vector<std::size_t> &cavity, double *metric,
+                     double *param, std::size_t t, flatMeshData &data)
 {
   shell.clear();
   cavity.clear();
 
-  // the isotropic cached-circle in-circle test is hoisted out of the walk
-  // and inlined: one branch per cavity instead of one call per edge
-  const bool iso = metric && metric[1] == 0.0 && metric[0] == metric[2];
   const bool noInternal = data.internalEdgeIds.empty();
+  // in fast mode the isotropic circle test is hoisted out of the walk and
+  // inlined: one branch per cavity instead of one call per edge
+  const bool iso = data.fastCircles && metric && metric[1] == 0.0 &&
+                   metric[0] == metric[2];
   const double pu = param[0], pv = param[1];
 
   std::vector<std::size_t> &stack = data.cavityStack;
@@ -856,14 +875,14 @@ static void findCavityAniso(GFace *gf, std::vector<IndexedEdgeFace> &shell,
 
     for(int i = 0; i < 3; i++) {
       const std::size_t neigh = data.neigh[current][i];
-      IndexedEdgeFace exf(data, current, i);
+      flatEdgeFace exf(data, current, i);
       // take care of untouchable internal edges; exf.v is sorted and
       // internalEdgeIds stores sorted id pairs
       const bool internal =
         !noInternal && std::binary_search(data.internalEdgeIds.begin(),
                                           data.internalEdgeIds.end(),
                                           std::make_pair(exf.v[0], exf.v[1]));
-      if(neigh == INVALID_TRIANGLE || internal) { shell.push_back(exf); }
+      if(neigh == FLAT_NONE || internal) { shell.push_back(exf); }
       else if(!(data.flags[neigh] & TRI_DELETED)) {
         bool circ;
         if(iso) {
@@ -883,8 +902,8 @@ static void findCavityAniso(GFace *gf, std::vector<IndexedEdgeFace> &shell,
   }
 }
 
-static bool invMapUV(std::size_t t, double *p, const IndexedMeshData &data,
-                     double *uv, double tol)
+bool invMapUV(std::size_t t, double *p, const flatMeshData &data,
+              double *uv, double tol)
 {
   double mat[2][2];
   double b[2];
@@ -911,8 +930,8 @@ static bool invMapUV(std::size_t t, double *p, const IndexedMeshData &data,
          uv[1] <= 1. + tol && 1. - uv[0] - uv[1] > -tol;
 }
 
-static inline double getSurfUV(const std::array<std::size_t, 3> &tri,
-                               const IndexedMeshData &data)
+inline double getSurfUV(const std::array<std::size_t, 3> &tri,
+                        const flatMeshData &data)
 {
   double u1 = data.Us[tri[0]];
   double v1 = data.Vs[tri[0]];
@@ -927,18 +946,17 @@ static inline double getSurfUV(const std::array<std::size_t, 3> &tri,
   return 0.5 * (vv1[0] * vv2[1] - vv1[1] * vv2[0]);
 }
 
-static inline double getSurfUV(std::size_t t, const IndexedMeshData &data)
+inline double getSurfUV(std::size_t t, const flatMeshData &data)
 {
   return getSurfUV(data.triangles[t], data);
 }
 
 // walk from t towards pt, crossing the edge whose supporting line separates
 // the current triangle's barycenter from pt
-static std::size_t search4Triangle(std::size_t t, double pt[2],
-                                   const IndexedMeshData &data, double uv[2])
+std::size_t search4Triangle(std::size_t t, double pt[2],
+                            const flatMeshData &data, double uv[2])
 {
-  if(t == INVALID_TRIANGLE || (data.flags[t] & TRI_DELETED))
-    return INVALID_TRIANGLE;
+  if(t == FLAT_NONE) return FLAT_NONE;
 
   bool inside = invMapUV(t, pt, data, uv, 1.e-8);
 
@@ -963,21 +981,20 @@ static std::size_t search4Triangle(std::size_t t, double pt[2],
       break;
     }
     t = data.neigh[t][i];
-    if(t == INVALID_TRIANGLE) break;
-    if(data.flags[t] & TRI_DELETED) break;
+    if(t == FLAT_NONE) break;
     inside = invMapUV(t, pt, data, uv, 1.e-8);
     if(inside) return t;
   }
 
-  return INVALID_TRIANGLE;
+  return FLAT_NONE;
 }
 
-static inline std::size_t shellStart(const IndexedEdgeFace &edge)
+inline std::size_t shellStart(const flatEdgeFace &edge)
 {
   return edge.ori > 0 ? edge.v[0] : edge.v[1];
 }
 
-static inline std::size_t shellEnd(const IndexedEdgeFace &edge)
+inline std::size_t shellEnd(const flatEdgeFace &edge)
 {
   return edge.ori > 0 ? edge.v[1] : edge.v[0];
 }
@@ -986,7 +1003,7 @@ static inline std::size_t shellEnd(const IndexedEdgeFace &edge)
 // end vertex is the next edge's start vertex), so the new triangles can be
 // wired to their ring neighbors by position. Returns false if the shell is
 // not a single closed loop, in which case the cavity is invalid.
-static bool orderShell(std::vector<IndexedEdgeFace> &shell)
+bool orderShell(std::vector<flatEdgeFace> &shell)
 {
   if(shell.empty()) return false;
 
@@ -997,7 +1014,7 @@ static bool orderShell(std::vector<IndexedEdgeFace> &shell)
     if(it2 == shell.end()) break;
 
     auto found =
-      std::find_if(it2, shell.end(), [next_v](const IndexedEdgeFace &edge) {
+      std::find_if(it2, shell.end(), [next_v](const flatEdgeFace &edge) {
         return shellStart(edge) == next_v;
       });
     if(found == shell.end()) return false;
@@ -1010,10 +1027,10 @@ static bool orderShell(std::vector<IndexedEdgeFace> &shell)
 
 // In which of otherSide's three neighbor slots is deletedTriangle? -1 if
 // otherSide is invalid, deleted, or inconsistent.
-static int findOtherSideSlot(const IndexedMeshData &data, std::size_t otherSide,
-                             std::size_t deletedTriangle)
+int findOtherSideSlot(const flatMeshData &data, std::size_t otherSide,
+                      std::size_t deletedTriangle)
 {
-  if(otherSide == INVALID_TRIANGLE || (data.flags[otherSide] & TRI_DELETED))
+  if(otherSide == FLAT_NONE || (data.flags[otherSide] & TRI_DELETED))
     return -1;
   for(int f = 0; f < 3; f++) {
     if(data.neigh[otherSide][f] == deletedTriangle) return f;
@@ -1035,10 +1052,10 @@ static int findOtherSideSlot(const IndexedMeshData &data, std::size_t otherSide,
 // cos < -0.9999  <=>  num < 0 && num^2 > (2*0.9999)^2 d1^2 d2^2 with
 // num = d1^2 + d2^2 - d3^2. Decisions can differ from the sqrt forms only
 // within a rounding error of the thresholds.
-static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
-                         std::vector<std::size_t> &cavity, GFace *gf,
-                         std::size_t iv, IndexedActiveQueue &activeTets,
-                         IndexedMeshData &data)
+int insertVertexB(std::vector<flatEdgeFace> &shell,
+                  std::vector<std::size_t> &cavity, GFace *gf,
+                  std::size_t iv, flatQueue &activeTets,
+                  flatMeshData &data)
 {
   if(cavity.size() == 1) return -1;
 
@@ -1119,7 +1136,7 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
     newArea += ss;
 
     const std::size_t otherSide = data.neigh[it->t1][it->i1];
-    if(otherSide != INVALID_TRIANGLE &&
+    if(otherSide != FLAT_NONE &&
        findOtherSideSlot(data, otherSide, it->t1) < 0)
       return -7;
   }
@@ -1137,8 +1154,8 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
     new_cavity.clear();
     new_cavity.reserve(shell.size() * 2);
 
-    std::size_t first = INVALID_TRIANGLE;
-    std::size_t prev = INVALID_TRIANGLE;
+    std::size_t first = FLAT_NONE;
+    std::size_t prev = FLAT_NONE;
     for(auto it = shell.begin(); it != shell.end(); ++it) {
       const std::size_t i0 = shellStart(*it);
       const std::size_t i1 = shellEnd(*it);
@@ -1152,9 +1169,12 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
       const std::size_t otherSide = data.neigh[it->t1][it->i1];
       const std::size_t nt = addTriangle(data, {{i0, i1, iv}}, radiusLc, gf);
       new_cavity.push_back(nt);
+      // plain Delaunay: every triangle is a candidate, so queue it right
+      // away (the front filter below is for the frontal algorithm only)
+      if(!activeTets.frontOnly) activeTets.push(nt);
 
       data.neigh[nt][1] = otherSide;
-      if(otherSide != INVALID_TRIANGLE) {
+      if(otherSide != FLAT_NONE) {
         new_cavity.push_back(otherSide);
         for(int f = 0; f < 3; f++) {
           if(data.neigh[otherSide][f] == it->t1) {
@@ -1163,7 +1183,7 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
           }
         }
       }
-      if(prev != INVALID_TRIANGLE) {
+      if(prev != FLAT_NONE) {
         data.neigh[nt][0] = prev;
         data.neigh[prev][2] = nt;
       }
@@ -1180,11 +1200,13 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
         data.releaseTriangleSlot(triangle);
     }
 
-    for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
-      int active_edge;
-      if(isActive(data, *i, LIMIT_, active_edge) &&
-         data.circumRadius[*i] > LIMIT_) {
-        activeTets.push(*i);
+    if(activeTets.frontOnly) {
+      for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
+        int active_edge;
+        if(isActive(data, *i, LIMIT_, active_edge) &&
+           data.circumRadius[*i] > LIMIT_) {
+          activeTets.push(*i);
+        }
       }
     }
     return 1;
@@ -1200,17 +1222,17 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
   }
 }
 
-static bool insertAPoint(GFace *gf, double center[2], double metric[3],
-                         IndexedMeshData &data, IndexedActiveQueue &activeTris,
-                         std::size_t worst)
+bool insertAPoint(GFace *gf, double center[2], double metric[3],
+                  flatMeshData &data, flatQueue &activeTris,
+                  std::size_t worst)
 {
-  if(worst == INVALID_TRIANGLE || (data.flags[worst] & TRI_DELETED)) {
+  if(worst == FLAT_NONE || (data.flags[worst] & TRI_DELETED)) {
     Msg::Error("Could not insert point");
     return false;
   }
 
-  std::size_t ptin = INVALID_TRIANGLE;
-  std::vector<IndexedEdgeFace> &shell = data.shellBuffer;
+  std::size_t ptin = FLAT_NONE;
+  std::vector<flatEdgeFace> &shell = data.shellBuffer;
   std::vector<std::size_t> &cavity = data.cavityBuffer;
   shell.clear();
   cavity.clear();
@@ -1228,12 +1250,12 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
   }
   else {
     ptin = search4Triangle(worst, center, data, uv);
-    if(ptin != INVALID_TRIANGLE) {
+    if(ptin != FLAT_NONE) {
       findCavityAniso(gf, shell, cavity, metric, center, ptin, data);
     }
   }
 
-  if(ptin != INVALID_TRIANGLE) {
+  if(ptin != FLAT_NONE) {
     // we use here local coordinates as real coordinates x,y and z will be
     // computed hereafter
     GPoint p = gf->point(center[0], center[1]);
@@ -1309,16 +1331,16 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
   }
 }
 
-static double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
-                                  const IndexedMeshData &data,
-                                  double newPoint[2], double metric[3])
+double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
+                           const flatMeshData &data,
+                           double newPoint[2], double metric[3])
 {
   double center[2], r2;
   const std::array<std::size_t, 3> &base = data.triangles[worst];
-  if(data.planar) {
-    // A plane's parametrization is isometric: the metric is the identity
-    // and the circumcenter is the one cached at triangle creation - no
-    // buildMetric (virtual firstDer) and no per-insertion metric solve.
+  if(data.fastCircles && data.planar) {
+    // fast mode: a plane's parametrization is isometric, so the metric is the
+    // identity and the circumcenter is the cached one - no buildMetric
+    // (a virtual firstDer) and no per-insertion metric solve
     metric[0] = 1.;
     metric[1] = 0.;
     metric[2] = 1.;
@@ -1384,18 +1406,17 @@ static double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
    and the edge length
 */
 
-static bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
-                                 const IndexedMeshData &data,
-                                 double newPoint[2], double metric[3])
+bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
+                          const flatMeshData &data,
+                          double newPoint[2], double metric[3])
 {
   // as a starting point, let us use the "fast algo"
   double d =
     optimalPointFrontal(gf, worst, active_edge, data, newPoint, metric);
 
-  // On a plane the parametric optimal point IS the surface point: skip the
-  // 3D frame construction and the circle/surface Newton projection (which
-  // converges immediately on a plane).
-  if(data.planar) return true;
+  // fast mode: on a plane the parametric optimal point IS the surface point,
+  // so skip the 3D frame and the circle/surface Newton projection
+  if(data.fastCircles && data.planar) return true;
 
   const std::array<std::size_t, 3> &base = data.triangles[worst];
   int ip1 = (active_edge + 2) % 3;
@@ -1442,8 +1463,8 @@ static bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
 
 // Same as computeEquivalences (meshGFaceOptimize.cpp), which takes the shared
 // bidimMeshData; only the equivalence map is actually used.
-static void computeEquivalences(GFace *gf,
-                                std::map<MVertex *, MVertex *> *equivalence)
+void computeEquivalences(GFace *gf,
+                         std::map<MVertex *, MVertex *> *equivalence)
 {
   if(equivalence) {
     std::vector<MTriangle *> newT;
@@ -1465,16 +1486,16 @@ static void computeEquivalences(GFace *gf,
 
 template <class V> static void releaseVector(V &v) { V().swap(v); }
 
-static void transferDataStructure(GFace *gf, IndexedMeshData &data,
-                                  std::map<MVertex *, MVertex *> *equivalence)
+void transferDataStructure(GFace *gf, flatMeshData &data,
+                           std::map<MVertex *, MVertex *> *equivalence)
 {
   // Refinement is over: release everything the transfer does not need
   // before materializing the final mesh (MVertex + MTriangle), so the dead
   // refinement structures do not coexist with it at the memory peak. The
   // transfer still needs Us/Vs (orientation), vertices, triangles,
-  // sourceTriangles and the TRI_DELETED bit of flags.
+  // sourceTriangles, the TRI_DELETED bit of flags, and circumRadius for the
+  // emission order (released right after the order is fixed).
   releaseVector(data.neigh);
-  releaseVector(data.circumRadius);
   releaseVector(data.circumCircle);
   releaseVector(data.freeTriangleSlots);
   releaseVector(data.shellBuffer);
@@ -1513,11 +1534,31 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
   double n1[3];
   bool haveRef = false;
 
+  // Emit in queue order - decreasing circumradius, ties on the sorted vertex
+  // triplet - which is the order the std::set of the classic kernel is
+  // drained in, so the elements land in the mesh in the same order and the
+  // reference triangle the orientation pass picks is the same one.
+  std::vector<std::size_t> order;
+  order.reserve(data.triangles.size());
   for(std::size_t t = 0; t < data.triangles.size(); t++) {
     if(data.flags[t] & TRI_DELETED) {
       if(data.sourceTriangles[t]) delete data.sourceTriangles[t];
       continue;
     }
+    order.push_back(t);
+  }
+  {
+    flatQueueCompare cmp{&data};
+    std::sort(order.begin(), order.end(),
+              [&](std::size_t a, std::size_t b) {
+                return cmp({data.circumRadius[b], b},
+                           {data.circumRadius[a], a});
+              });
+  }
+  releaseVector(data.circumRadius);
+
+  for(std::size_t k = 0; k < order.size(); k++) {
+    const std::size_t t = order[k];
     const std::array<std::size_t, 3> &tri = data.triangles[t];
     MTriangle *mt = data.sourceTriangles[t] ?
                       data.sourceTriangles[t] :
@@ -1549,13 +1590,91 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
   computeEquivalences(gf, equivalence);
 }
 
-void bowyerWatsonFrontalOptimized(
+// Insertion point of the plain Delaunay refinement: the circumcenter of the
+// worst triangle in the metric taken at its centroid. Same computation as
+// the corresponding lines of algo 5's bowyerWatson loop.
+void optimalPointDelaunay(GFace *gf, std::size_t worst,
+                          const flatMeshData &data,
+                          double newPoint[2], double metric[3])
+{
+  if(data.fastCircles && data.planar) {
+    // fast mode: identity metric on a plane, and the circumcenter is cached
+    metric[0] = 1.;
+    metric[1] = 0.;
+    metric[2] = 1.;
+    newPoint[0] = data.circumCircle[worst][0];
+    newPoint[1] = data.circumCircle[worst][1];
+    return;
+  }
+  const std::array<std::size_t, 3> &base = data.triangles[worst];
+  double pa[2] = {
+    (data.Us[base[0]] + data.Us[base[1]] + data.Us[base[2]]) * ONE_THIRD,
+    (data.Vs[base[0]] + data.Vs[base[1]] + data.Vs[base[2]]) * ONE_THIRD};
+  buildMetric(gf, pa, metric);
+  double r2;
+  circumCenterMetric(worst, metric, data, newPoint, r2);
+}
+
+} // namespace
+
+void bowyerWatsonFlat(GFace *gf, int MAXPNT,
+                      std::map<MVertex *, MVertex *> *equivalence,
+                      std::map<MVertex *, SPoint2> *parametricCoordinates)
+{
+  flatMeshData DATA;
+  flatQueue AllTris(&DATA);
+  // unlike the frontal algorithm, the queue is the whole mesh ordered by
+  // decreasing circumradius, and refinement stops when its top is small
+  AllTris.frontOnly = false;
+  if(!buildMeshGenerationDataStructures(gf, DATA, equivalence,
+                                        parametricCoordinates)) {
+    Msg::Error("Invalid meshing data structure");
+    return;
+  }
+
+  if(DATA.triangles.empty()) {
+    Msg::Error("No triangles in initial mesh");
+    return;
+  }
+
+  for(std::size_t t = 0; t < DATA.triangles.size(); t++)
+    AllTris.pushUnordered(t);
+  AllTris.makeHeap();
+
+  int ITER = 0;
+  while(!AllTris.empty()) {
+    // pop() releases the slot of a triangle that was deleted while queued,
+    // which the std::set version can only do when it reaches the front
+    std::size_t worst = AllTris.pop();
+    if(DATA.flags[worst] & TRI_DELETED) continue;
+
+    if(ITER++ % 5000 == 0)
+      Msg::Debug("%7zu points created -- Worst tri radius is %8.3f",
+                 DATA.vertices.size(), DATA.circumRadius[worst]);
+
+    if(DATA.circumRadius[worst] < LIMIT_ ||
+       (int)DATA.vertices.size() > MAXPNT)
+      break;
+
+    double newPoint[2], metric[3];
+    optimalPointDelaunay(gf, worst, DATA, newPoint, metric);
+    insertAPoint(gf, newPoint, metric, DATA, AllTris, worst);
+  }
+
+  releaseVector(AllTris.heap);
+
+  transferDataStructure(gf, DATA, equivalence);
+
+  splitElementsInBoundaryLayerIfNeeded(gf);
+}
+
+void bowyerWatsonFrontalFlat(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates,
   std::vector<SPoint2> *true_boundary)
 {
-  IndexedMeshData DATA;
-  IndexedActiveQueue ActiveTris(&DATA);
+  flatMeshData DATA;
+  flatQueue ActiveTris(&DATA);
   if(!buildMeshGenerationDataStructures(gf, DATA, equivalence,
                                         parametricCoordinates)) {
     Msg::Error("Invalid meshing data structure");

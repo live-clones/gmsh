@@ -631,6 +631,12 @@ Default value: @code{3}
 Default value: @code{1}
 @item ReductionHeuristic
 Default value: @code{1}
+@item PeriodicIdentification
+Default value: @code{0}
+@item PeriodicSlavePhysicalGroup
+Default value: @code{-1}
+@item PeriodicMasterPhysicalGroup
+Default value: @code{-1}
 @end table
 
 @item Plugin(HomologyPostProcessing)

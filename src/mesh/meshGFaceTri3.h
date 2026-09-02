@@ -3,22 +3,27 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef MESH_GFACE_DELAUNAY_INSERTIONFACE_H
-#define MESH_GFACE_DELAUNAY_INSERTIONFACE_H
+#ifndef MESH_GFACE_TRI3_H
+#define MESH_GFACE_TRI3_H
 
-#include "MTriangle.h"
-#include "MQuadrangle.h"
-#include "STensor3.h"
-#include "GEntity.h"
-#include "MFace.h"
+// Data structures of the classic 2D Delaunay kernel: the per-node arrays the
+// mesher works on (bidimMeshData) and the MTri3 wrapper that carries a
+// triangle's circumradius and its three neighbors. Internal to the mesher -
+// the entry points the rest of Gmsh uses are in meshGFaceDelaunay.h. The
+// counterpart of meshGRegionTet4.h in 3D; the flat kernel
+// (meshGFaceDelaunayFlat.cpp) replaces all of this by index-based arrays.
+
 #include <list>
-#include <set>
 #include <map>
+#include <set>
+#include <vector>
+#include "MTriangle.h"
+#include "MFace.h"
+#include "GEntity.h"
+#include "STensor3.h"
+#include "SPoint2.h"
 
-class GModel;
 class GFace;
-class BDS_Mesh;
-class BDS_Point;
 
 struct bidimMeshData {
   std::map<MVertex *, int> indices;
@@ -69,9 +74,6 @@ struct bidimMeshData {
   }
 };
 
-void buildMetric(GFace *gf, double *uv, double *metric);
-int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
-                        double *p4, double *metric);
 int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv,
                         const double *metric, bidimMeshData &data);
 
@@ -99,22 +101,12 @@ public:
         return n->tri()->getVertex(j);
     return nullptr;
   }
-  MTri3(MTriangle *t, double lc, SMetric3 *m = nullptr,
-        bidimMeshData *data = nullptr, GFace *gf = nullptr);
+  MTri3(MTriangle *t, double lc, bidimMeshData *data = nullptr,
+        GFace *gf = nullptr);
   inline void setTri(MTriangle *t) { base = t; }
   inline MTriangle *tri() const { return base; }
   inline void setNeigh(int iN, MTri3 *n) { neigh[iN] = n; }
   inline MTri3 *getNeigh(int iN) const { return neigh[iN]; }
-  int inCircumCircle(const double *p) const;
-  inline int inCircumCircle(double x, double y) const
-  {
-    const double p[2] = {x, y};
-    return inCircumCircle(p);
-  }
-  inline int inCircumCircle(const MVertex *v) const
-  {
-    return inCircumCircle(v->x(), v->y());
-  }
   inline void setDeleted(bool d) { deleted = d; }
   inline bool assertNeigh() const
   {
@@ -146,37 +138,6 @@ public:
 void connectTriangles(std::list<MTri3 *> &);
 void connectTriangles(std::vector<MTri3 *> &);
 void connectTriangles(std::set<MTri3 *, compareTri3Ptr> &AllTris);
-void bowyerWatson(
-  GFace *gf, int MAXPNT = 1000000000,
-  std::map<MVertex *, MVertex *> *equivalence = nullptr,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
-void bowyerWatsonFrontal(
-  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr,
-  std::vector<SPoint2> *true_boundary = nullptr);
-void bowyerWatsonFrontalOptimized(
-  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr,
-  std::vector<SPoint2> *true_boundary = nullptr);
-void bowyerWatsonFrontalLayers(
-  GFace *gf, bool quad, std::map<MVertex *, MVertex *> *equivalence = nullptr,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
-void bowyerWatsonParallelograms(
-  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
-void bowyerWatsonParallelogramsConstrained(
-  GFace *gf, const std::set<MVertex *> &constr_vertices,
-  std::map<MVertex *, MVertex *> *equivalence = nullptr,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
-void buildBackgroundMesh(
-  GFace *gf, bool crossFieldClosestPoint = false,
-  std::map<MVertex *, MVertex *> *equivalence = nullptr,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
-
-void delaunayMeshIn2D(std::vector<MVertex *> &, std::vector<MTriangle *> &,
-                      bool removeBox = true,
-                      std::vector<MEdge> *edgesToRecover = nullptr,
-                      bool hilbertSort = true);
 
 struct edgeXface {
   MVertex *v[2];

@@ -111,8 +111,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "coordinates (Mesh.SaveParametric)"));
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, "
-                 "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, hxt, "
-                 "initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
+                 "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, "
+                 "hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
   s.push_back(mp("-smooth int", "Set number of mesh smoothing steps "
                  "(Mesh.Smoothing)"));
   s.push_back(mp("-order int", "Set mesh order (Mesh.ElementOrder)"));
@@ -989,9 +989,6 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
       else if(argv[i] == "FrontalDelaunay2D" || argv[i] == "front2d" ||
               argv[i] == "frontal")
         opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL);
-      else if(argv[i] == "FrontalDelaunayOptimized2D" ||
-              argv[i] == "frontopt2d" || argv[i] == "frontalopt")
-        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL_OPT);
       else if(argv[i] == "bamg")
         opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_BAMG);
       else if(argv[i] == "DelaunayFrontalForQuads" || argv[i] == "delquad")

@@ -6109,9 +6109,6 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
     case ALGO_2D_INITIAL_ONLY:
       FlGui::instance()->options->mesh.choice[2]->value(8);
       break;
-    case ALGO_2D_FRONTAL_OPT:
-      FlGui::instance()->options->mesh.choice[2]->value(9);
-      break;
     case ALGO_2D_AUTO:
     default: FlGui::instance()->options->mesh.choice[2]->value(0); break;
     }
@@ -6217,12 +6214,20 @@ double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombine3DConformity;
 }
 
-double opt_mesh_flat_refine_delaunay3d(OPT_ARGS_NUM)
+double opt_mesh_flat_refine_2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    CTX::instance()->mesh.flatRefineDelaunay3D = (int)val;
+    CTX::instance()->mesh.flatRefine2D = (int)val;
   }
-  return CTX::instance()->mesh.flatRefineDelaunay3D;
+  return CTX::instance()->mesh.flatRefine2D;
+}
+
+double opt_mesh_flat_refine_3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.flatRefine3D = (int)val;
+  }
+  return CTX::instance()->mesh.flatRefine3D;
 }
 
 double opt_mesh_flat_optimize_3d(OPT_ARGS_NUM)

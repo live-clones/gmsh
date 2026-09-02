@@ -9,6 +9,7 @@
 #include "meshGFace.h"
 #include "meshGFaceParamBoundary.h"
 #include "meshGFaceOptimize.h"
+#include "meshGFaceDelaunay.h"
 #include "BackgroundMesh.h"
 #include "GVertex.h"
 #include "GEdge.h"
