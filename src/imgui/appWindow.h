@@ -56,6 +56,12 @@ private:
   // called from deep inside the mesher
   bool _inFrame;
   double _lastRefresh;
+  // How many more frames to draw whatever happens, and whether the last one
+  // said it wanted another. An immediate mode interface draws everything
+  // every frame: that is right while something is moving, and sixty times
+  // too often when nothing is.
+  int _frames;
+  bool _keepDrawing;
 
   // The graphic panes tile the central node of the dock space. _panes is the
   // flat list, in creation order, which is what SetCurrentWindow of the .geo

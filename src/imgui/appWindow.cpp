@@ -131,6 +131,7 @@ static bool _initGlfw()
 
 appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   : _window(nullptr), _quitShouldExit(quitShouldExit), _inFrame(false),
+    _frames(3), _keepDrawing(false),
     _lastRefresh(0.), _currentPane(nullptr), _console(nullptr),
     _showConsole(true),
     _showModules(true),
@@ -721,14 +722,22 @@ void appWindow::currentPixelSize(int &w, int &h)
 
 void appWindow::requestRedraw()
 {
-  // rendering is done every frame, so there is nothing to mark dirty; waking up
-  // the event loop is however needed when it is blocked in glfwWaitEvents()
+  // A few frames rather than one: what has changed often takes another to
+  // settle, and one frame too many costs nothing where sixty a second cost
+  // everything. The empty event is what wakes the loop when it is asleep in
+  // glfwWaitEventsTimeout(), including when the ask comes from another
+  // thread.
+  _frames = 3;
   if(_window) glfwPostEmptyEvent();
 }
 
 void appWindow::addMessage(const std::string &msg, int level)
 {
   if(_console) _console->add(msg, level);
+  // a message may come from a mesher running with nobody touching the
+  // interface: without this it would be shown at the next frame, which may be
+  // a whole second away
+  requestRedraw();
 }
 
 void appWindow::setStatus(const std::string &msg, bool graphics)
@@ -1110,6 +1119,19 @@ void appWindow::frame()
   _handleInput();
   _handleShortcuts();
 
+  // Whether the loop may go to sleep after this frame, or has to draw
+  // another at once. Anything the user is in the middle of -- typing,
+  // dragging, hovering something that answers to it -- needs the next frame
+  // now; a window sitting still needs nothing until something happens.
+  {
+    ImGuiIO &io = ImGui::GetIO();
+    _keepDrawing = io.WantTextInput || ImGui::IsAnyItemActive() ||
+                   ImGui::IsAnyItemHovered() || io.MouseDown[0] ||
+                   io.MouseDown[1] || io.MouseDown[2] || _modal.active ||
+                   _tooltip.size() > 0;
+  }
+  if(_frames > 0) _frames--;
+
   ImGui::Render();
 
   int fw = 0, fh = 0;
@@ -1409,7 +1431,16 @@ int appWindow::runLoop()
   // the scene is drawn once before the loop, which is what makes a window
   // that has just come up show something
   drawContext::global()->draw(false);
-  while(_instance && _window && !glfwWindowShouldClose(_window)) frame();
+  while(_instance && _window && !glfwWindowShouldClose(_window)) {
+    // Wait for something to happen rather than redrawing a picture nobody
+    // asked for. Every event wakes this by itself -- a key, the pointer, a
+    // message from a worker thread through requestRedraw() -- and what is
+    // still moving says so through _keepDrawing. The timeout is what draws
+    // the one frame a second that catches anything nobody thought to
+    // announce.
+    if(!_keepDrawing && _frames <= 0) glfwWaitEventsTimeout(1.);
+    frame();
+  }
   return 0;
 }
 
