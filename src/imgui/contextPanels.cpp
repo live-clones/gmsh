@@ -309,8 +309,27 @@ namespace {
                   ImGui::CalcTextSize(f.label.c_str()).x +
                     2.f * ImGui::GetStyle().FramePadding.x;
       std::string id = "##menu" + f.label;
+      // room for the arrow that says it drops something, which is what the
+      // button this reproduces draws at its right end
+      float arrow = ImGui::GetFontSize() * 1.2f;
+      if(w > 0.f)
+        w += arrow;
+      else
+        w = ImGui::CalcTextSize(name.c_str()).x +
+            2.f * ImGui::GetStyle().FramePadding.x + arrow;
       if(ImGui::Button(name.c_str(), ImVec2(w, 0.f)))
         ImGui::OpenPopup(id.c_str());
+      {
+        // the arrow itself: a small filled triangle inside the right end
+        ImVec2 lo = ImGui::GetItemRectMin(), hi = ImGui::GetItemRectMax();
+        float mid = (lo.y + hi.y) * 0.5f;
+        float x = hi.x - arrow * 0.55f - ImGui::GetStyle().FramePadding.x;
+        float r = ImGui::GetFontSize() * 0.22f;
+        ImGui::GetWindowDrawList()->AddTriangleFilled(
+          ImVec2(x - r, mid - r * 0.6f), ImVec2(x + r, mid - r * 0.6f),
+          ImVec2(x, mid + r * 0.8f),
+          ImGui::GetColorU32(ImGuiCol_Text));
+      }
       if(ImGui::BeginPopup(id.c_str())) {
         std::vector<std::string> labels;
         std::vector<int> values;
@@ -1565,12 +1584,11 @@ void appWindow::_drawDialog(int which)
     float tall = 0.f;
     for(const auto &f : panel.side)
       if(f.kind == Ui::List && !f.rows) {
-        tall = ImGui::GetContentRegionAvail().y;
-        for(const auto &g : panel.side) {
-          if(&g == &f) continue;
-          if(g.visible && !g.visible()) continue;
-          tall -= ImGui::GetFrameHeightWithSpacing();
-        }
+        // As tall as the panes beside it. What is left of the window cannot
+        // say: a window that follows its contents has not been given a height
+        // yet at this point, so the height is taken from the same count of
+        // lines the panes are measured in.
+        tall = most * ImGui::GetFrameHeightWithSpacing();
       }
     if(ImGui::BeginChild("##side", ImVec2(w, tall),
                          tall > 0.f ? ImGuiChildFlags_None :

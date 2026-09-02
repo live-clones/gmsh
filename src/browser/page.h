@@ -37,6 +37,8 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  /* A button of the bar that drops a menu opens it by being pressed, and the
     menu goes up: the bar is at the bottom of the page. */
  .drops{position:relative;display:inline-block}
+ /* the arrow that says it drops something */
+ button.menu::after{content:' \25be';font-size:.85em}
  .drops>.drop{bottom:100%;top:auto}
  .drops.open>.drop{display:block}
  .item{padding:3px 10px;white-space:nowrap;display:flex;justify-content:space-between;
@@ -86,15 +88,17 @@ static const char *const browserPage = R"PAGE(<!doctype html>
                  border:1px solid #bbb;background:#f7f7f7;cursor:default}
  #dock .form h2{cursor:default}
  .form .body{display:flex;align-items:stretch;min-height:0;overflow:hidden}
- .form .main{flex:1;min-width:0;overflow:auto;padding-bottom:5px}
+ .form .main{flex:1;min-width:0;overflow:auto;padding-bottom:5px;
+             display:flex;flex-direction:column}
  .form .main.scrolls{max-height:26em}
  .form .aside{flex:none;overflow:hidden;border-right:1px solid #ddd;
               padding:3px 0;display:flex;flex-direction:column;
               max-height:26em}
+ .form .body{align-items:stretch}
  .form .aside .line{padding:2px 4px}
  .form .aside .cell{flex:1 1 auto}
  .list{border:1px solid #ccc;background:#fff;overflow:auto;flex:1 1 auto;
-       min-width:0;min-height:8em;max-height:26em}
+       min-width:0;min-height:5em;max-height:26em}
  .aside .list{max-height:none}
  .pick{padding:1px 8px;white-space:nowrap;cursor:default}
  .pick:hover{background:#eef1ff}
@@ -119,6 +123,10 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .cell{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0}
  .cell.packed{flex:0 0 auto}
  .cell.run{gap:0}
+ /* what fills the height it is given, down to the list itself */
+ .line.grows{flex:1 1 auto;min-height:0}
+ .line.grows>.cell{min-height:0;align-self:stretch}
+ .line.grows .list{height:100%;max-height:none}
  .cell.run>.cell{gap:0}
  .cell.packed label{flex:0 0 auto}
  /* a row of values with a button after them is not columns of equal width:
@@ -286,20 +294,33 @@ function field(f) {
     return box;
   }
   if(f.kind === 'menu') {
-    const pick = document.createElement('select');
-    const head = document.createElement('option');
-    head.textContent = f.label; head.value = '';
-    pick.appendChild(head);
-    for(const label of f.items || []) {
-      const o = document.createElement('option');
-      o.textContent = label; pick.appendChild(o);
-    }
-    pick.onchange = () => {
-      const at = pick.selectedIndex - 1;
-      pick.selectedIndex = 0;
-      if(at >= 0) post('/choose', which(f) + '&i=' + at + '&v=1');
+    // A button that drops what one may do, not a choice of what a value is:
+    // it is as wide as the word on it, and it says so with an arrow, which is
+    // what the button this reproduces looks like.
+    const holder = document.createElement('span');
+    holder.className = 'drops';
+    const button = document.createElement('button');
+    button.className = 'menu';
+    button.textContent = f.label;
+    const drop = document.createElement('div');
+    drop.className = 'drop';
+    (f.items || []).forEach((label, i) => {
+      const row = document.createElement('div');
+      row.className = 'item';
+      row.textContent = label;
+      row.onclick = () => post('/choose', which(f) + '&i=' + i + '&v=1');
+      drop.appendChild(row);
+    });
+    button.onclick = e => {
+      e.stopPropagation();
+      const was = holder.classList.contains('open');
+      for(const other of document.querySelectorAll('.drops.open'))
+        other.classList.remove('open');
+      if(!was) holder.classList.add('open');
     };
-    return pick;
+    holder.appendChild(button);
+    holder.appendChild(drop);
+    return holder;
   }
   if(f.kind === 'list') {
     const box = document.createElement('div');
@@ -412,8 +433,12 @@ function lines(fields, into, columns) {
   for(const row of rows) {
     const line = document.createElement('div');
     const packed = row.some(f => f.packed);
+    // a line holding a list that says it is as tall as the window takes what
+    // is left of the height, and gives it to the list
+    const fills = row.some(f => (f.kind === 'list' || f.kind === 'hierarchy') &&
+                                !f.rows);
     line.className = 'line' + (row[0].rule ? ' ruled' : '') +
-                     (packed ? ' packed' : '');
+                     (packed ? ' packed' : '') + (fills ? ' grows' : '');
     // A field that takes the width it needs follows the one before it; the
     // rest share the line in columns of equal width, which is how the option
     // window lines two rows up with one another.
@@ -673,6 +698,12 @@ function drawForms(forms) {
       }
     }
     const body = document.createElement('div'); body.className = 'body';
+    // A window that says how many lines tall it is at least gets them: it is
+    // what a list said to fill the window is measured against, since nothing
+    // else in the window is tall enough to say.
+    // a line of one of these windows is a little over two of its own font
+    if(form.leastRows > 0)
+      body.style.minHeight = (form.leastRows * 2.1) + 'em';
     if(form.side && form.side.length) {
       // the column down the left: what the panes act upon, which for the
       // option window is the category it is showing

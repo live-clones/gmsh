@@ -812,6 +812,9 @@ namespace {
       out += "],\"side\":" + _fieldList(form.side);
       out += ",\"sideEm\":" + std::to_string(form.sideEm > 0. ? form.sideEm
                                                               : 8.);
+      // how many lines tall the window is at least: what a list that fills it
+      // is measured against, since nothing else in the window says
+      out += ",\"leastRows\":" + std::to_string(form.leastRows);
       out += ",\"header\":" + _fieldList(form.header);
       // The panes to show: the one that is picked, or all of them one under
       // another for a window that is one long form rather than a set of tabs.
