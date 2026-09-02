@@ -154,6 +154,34 @@ namespace {
 
   void _drawFrame(bool swap = true);
 
+  // How big the picture is really drawn, in logical pixels, and by how much
+  // that falls short of what was asked for.
+  //
+  // The window nobody looks at is made large, but not without end, and a
+  // browser on a wide screen can ask for more than it. What is asked for
+  // beyond it is drawn smaller -- both sides by the same amount, so that the
+  // picture keeps the shape of the box it is going into -- and the pointer is
+  // brought back through the same number. Cutting one side off instead is
+  // what a horizontal offset is made of: the asker goes on believing the
+  // scene is as wide as it asked.
+  double _drawnSize(int &w, int &h)
+  {
+    standalone &it = _it();
+    int ww = 0, wh = 0;
+    glfwGetWindowSize(it.window, &ww, &wh);
+    if(ww <= 0 || wh <= 0) { w = h = 0; return 1.; }
+    w = it.wantW > 0 ? it.wantW : ww;
+    h = it.wantH > 0 ? it.wantH : wh;
+    double k = 1.;
+    if(w > ww) k = ww / (double)w;
+    if(h > wh && wh / (double)h < k) k = wh / (double)h;
+    w = (int)(w * k);
+    h = (int)(h * k);
+    if(w < 1) w = 1;
+    if(h < 1) h = 1;
+    return k;
+  }
+
   // Bring it up, once. Failing is not fatal: a chrome that has no scene is
   // still a chrome, and it says so and carries on.
   bool _open()
@@ -172,10 +200,19 @@ namespace {
     int high = CTX::instance()->glSize[1] > 0 ? CTX::instance()->glSize[1] : 600;
     if(it.elsewhere) {
       glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-      // room for whatever size the picture is asked at, since the window
-      // itself will not be resized
+      // Room for whatever size the picture is asked at, since the window
+      // itself will not be resized: as big as the screen, which is as big as
+      // whoever is asking can be, up to what is reasonable to read back.
       wide = 2048;
       high = 1536;
+      GLFWmonitor *screen = glfwGetPrimaryMonitor();
+      const GLFWvidmode *mode = screen ? glfwGetVideoMode(screen) : nullptr;
+      if(mode) {
+        if(mode->width > wide) wide = mode->width;
+        if(mode->height > high) high = mode->height;
+      }
+      if(wide > 4096) wide = 4096;
+      if(high > 3072) high = 3072;
     }
     it.window = glfwCreateWindow(wide, high, "Gmsh", nullptr, nullptr);
     if(!it.window) {
@@ -238,10 +275,8 @@ namespace {
     double f = (double)fw / (double)ww;
     // the picture is drawn at the size that was asked for, in the corner of a
     // window that is at least that big
-    if(it.wantW > 0 && it.wantH > 0) {
-      ww = it.wantW < ww ? it.wantW : ww;
-      wh = it.wantH < wh ? it.wantH : wh;
-    }
+    _drawnSize(ww, wh);
+    if(ww <= 0 || wh <= 0) return;
 
     // the atlas is dynamic: a frame has to be open for a glyph to be added
     ImGuiIO &io = ImGui::GetIO();
@@ -305,18 +340,16 @@ namespace Gui {
     width = height = 0;
     standalone &it = _it();
     if(!it.window) return;
-    glfwGetFramebufferSize(it.window, &width, &height);
     // what is drawn is the size that was asked for, not the whole of a window
     // nobody looks at
-    if(it.wantW > 0 && it.wantH > 0) {
-      int ww = 0, wh = 0, fw = 0, fh = 0;
-      glfwGetWindowSize(it.window, &ww, &wh);
-      glfwGetFramebufferSize(it.window, &fw, &fh);
-      double f = ww > 0 ? (double)fw / (double)ww : 1.;
-      int wide = (int)(it.wantW * f), high = (int)(it.wantH * f);
-      if(wide < width) width = wide;
-      if(high < height) height = high;
-    }
+    int ww = 0, wh = 0, fw = 0, fh = 0;
+    glfwGetWindowSize(it.window, &ww, &wh);
+    glfwGetFramebufferSize(it.window, &fw, &fh);
+    double f = ww > 0 ? (double)fw / (double)ww : 1.;
+    int wide = 0, high = 0;
+    _drawnSize(wide, high);
+    width = (int)(wide * f);
+    height = (int)(high * f);
   }
 
   void setCurrentOpenglWindow(int which) {}
@@ -348,11 +381,16 @@ namespace Gui {
   {
     standalone &it = _it();
     if(width < 16 || height < 16) return;
+    if(width == it.wantW && height == it.wantH) return;
     it.wantW = width;
     it.wantH = height;
     // a window one can see follows; one nobody looks at is left as it is and
     // the picture is drawn in a corner of it
     if(it.window && !it.elsewhere) glfwSetWindowSize(it.window, width, height);
+    // A frame at the new size straight away. What answers where the pointer
+    // is are the matrices the last frame left behind, so a pointer arriving
+    // before the first frame of a new size would be answered in the old one.
+    if(it.window && it.elsewhere) _drawFrame(false);
   }
 
   // A bitmap, which needs nothing to write and nothing to read: the rows go
@@ -430,6 +468,13 @@ namespace Gui {
     standalone &it = _it();
     if(!_open() || !it.view) return;
     if(button < 0 || button > 2) button = 0;
+    // What comes in is where the pointer is in the picture as it was asked
+    // for; what the scene works in is the picture as it could be drawn.
+    {
+      int wide = 0, high = 0;
+      double k = _drawnSize(wide, high);
+      if(k != 1.) { x *= k; y *= k; }
+    }
     it.input.dx = it.everMoved ? x - it.lastX : 0.;
     it.input.dy = it.everMoved ? y - it.lastY : 0.;
     it.lastX = x;
