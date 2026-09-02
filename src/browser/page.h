@@ -166,6 +166,10 @@ function to(where) {
   return where + (where.indexOf('?') < 0 ? '?' : '&') + 'k=' +
          encodeURIComponent(KEY);
 }
+// What a number the page was given stands for, sent back with it: between
+// being given one and using it, what it pointed at may have moved.
+function which(x) { return 'id=' + x.id + '&h=' + x.h; }
+
 function say(where, what) {
   return fetch(to(where), {method: 'POST',
                            body: what + '&k=' + encodeURIComponent(KEY)});
@@ -215,7 +219,7 @@ function menu(items) {
     }
     if(it.children) row.appendChild(menu(it.children));
     else if(it.enabled && it.id >= 0)
-      row.onclick = () => post('/do', 'id=' + it.id);
+      row.onclick = () => post('/do', which(it));
     box.appendChild(row);
     if(it.divider) {
       const hr = document.createElement('div'); hr.className = 'hr';
@@ -240,7 +244,7 @@ function field(f) {
   if(f.kind === 'action') {
     const b = document.createElement('button');
     b.textContent = f.label;
-    b.onclick = () => post('/do', 'id=' + f.id);
+    b.onclick = () => post('/do', which(f));
     return b;
   }
   if(f.kind === 'hierarchy') {
@@ -262,7 +266,7 @@ function field(f) {
     pick.onchange = () => {
       const at = pick.selectedIndex - 1;
       pick.selectedIndex = 0;
-      if(at >= 0) post('/choose', 'id=' + f.id + '&i=' + at + '&v=1');
+      if(at >= 0) post('/choose', which(f) + '&i=' + at + '&v=1');
     };
     return pick;
   }
@@ -276,7 +280,7 @@ function field(f) {
       const line = document.createElement('div');
       line.className = 'pick' + ((f.on || []).indexOf(i) >= 0 ? ' on' : '');
       line.textContent = label;
-      line.onclick = () => post('/choose', 'id=' + f.id + '&i=' + i + '&v=1');
+      line.onclick = () => post('/choose', which(f) + '&i=' + i + '&v=1');
       box.appendChild(line);
     });
     return box;
@@ -286,7 +290,7 @@ function field(f) {
     input = document.createElement('input');
     input.type = 'checkbox'; input.checked = f.value === '1';
     input.style.width = 'auto';
-    input.onchange = () => post('/set', 'id=' + f.id + '&v=' +
+    input.onchange = () => post('/set', which(f) + '&v=' +
                                  (input.checked ? 1 : 0));
   }
   else if(f.kind === 'choice' && f.choices) {
@@ -296,14 +300,14 @@ function field(f) {
       o.textContent = c; input.appendChild(o);
     }
     input.value = f.value;
-    input.onchange = () => post('/set', 'id=' + f.id + '&v=' +
+    input.onchange = () => post('/set', which(f) + '&v=' +
                                  encodeURIComponent(input.value));
   }
   else {
     input = document.createElement('input');
     input.value = f.value;
     if(f.kind === 'output') input.disabled = true;
-    input.onchange = () => post('/set', 'id=' + f.id + '&v=' +
+    input.onchange = () => post('/set', which(f) + '&v=' +
                                  encodeURIComponent(input.value));
   }
   return input;
@@ -431,7 +435,7 @@ function treeLines(lines, box) {
     name.textContent = n.field ? n.field.label : n.label;
     if(n.id >= 0) {
       name.className = 'leaf';
-      name.onclick = () => post('/do', 'id=' + n.id);
+      name.onclick = () => post('/do', which(n));
     }
     else if(n.branch) {
       name.style.cursor = 'default';
@@ -607,7 +611,7 @@ function drawForms(forms) {
       if(pane && pane.button) {
         const b = document.createElement('button');
         b.textContent = pane.button;
-        b.onclick = () => post('/do', 'id=' + pane.buttonId);
+        b.onclick = () => post('/do', 'id=' + pane.buttonId + '&h=' + pane.buttonH);
         bar.appendChild(b);
       }
       card.appendChild(bar);
@@ -622,7 +626,7 @@ function drawForms(forms) {
       for(const b of form.buttons) {
         const button = document.createElement('button');
         button.textContent = b.label;
-        button.onclick = () => post('/do', 'id=' + b.id);
+        button.onclick = () => post('/do', which(b));
         bar.appendChild(button);
       }
       card.appendChild(bar);
@@ -652,7 +656,7 @@ function drawButtons(buttons) {
     if(b.help) button.title = b.help;
     if(b.on) button.className = 'on';
     button.disabled = !b.enabled;
-    if(b.id >= 0) button.onclick = () => post('/do', 'id=' + b.id);
+    if(b.id >= 0) button.onclick = () => post('/do', which(b));
     box.appendChild(button);
   }
 }
@@ -814,6 +818,10 @@ function listen() {
   news.addEventListener('scene', () => frame(true));
   news.onopen = () => {
     document.getElementById('status').textContent = '';
+    // A fresh connection may be a fresh Gmsh, which knows nothing of this
+    // page -- not even how big to draw the scene. Everything it has to be
+    // told again, it is told again.
+    sceneSize = '';
     frame(true);
   };
   news.onerror = () => {

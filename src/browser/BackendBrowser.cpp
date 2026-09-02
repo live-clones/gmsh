@@ -226,10 +226,20 @@ namespace {
     double _lastAsked = 0.;
     std::map<int, bool> _shown;
     std::vector<std::string> _messages;
-    // what the page may ask for, by number: rebuilt every time the state is
-    // written, since a description is only true at the moment it is drawn
+    // What the page may ask for, by number: rebuilt every time the state is
+    // written, since a description is only true at the moment it is drawn.
+    //
+    // A number alone would not do. It is a place in these lists, and the
+    // lists are made again at every state: between the moment the page reads
+    // one and the moment it sends it back, a view may have been added or a
+    // window opened, and the same number would then be a different field --
+    // a value typed into one would land in another. So each one carries what
+    // it stood for, and a number that no longer stands for that is refused
+    // rather than obeyed.
     std::vector<std::function<void()> > _actions;
+    std::vector<unsigned> _actionNames;
     std::vector<Ui::Field> _fields;
+    std::vector<unsigned> _fieldNames;
     std::vector<std::string> _saidCannot;
     // Which branches of the tree are unfolded. It is the chrome's to keep --
     // it is what the user did, not what the model says -- and it is what lets
@@ -317,6 +327,60 @@ namespace {
       return out;
     }
 
+    // Short, stable, and enough to tell one field from another: FNV-1a over
+    // what the thing is called.
+    static unsigned _nameOf(const std::string &what)
+    {
+      unsigned h = 2166136261u;
+      for(std::size_t i = 0; i < what.size(); i++) {
+        h ^= (unsigned char)what[i];
+        h *= 16777619u;
+      }
+      return h;
+    }
+
+    // hand out a number for something to do, with what it was
+    std::string _actionId(const std::function<void()> &what,
+                          const std::string &called)
+    {
+      _actions.push_back(what);
+      _actionNames.push_back(_nameOf(called));
+      return ",\"id\":" + std::to_string((int)_actions.size() - 1) +
+             ",\"h\":" + std::to_string(_actionNames.back());
+    }
+
+    std::string _fieldId(const Ui::Field &f)
+    {
+      _fields.push_back(f);
+      _fieldNames.push_back(_nameOf(_kindOf(f) + std::string(":") + f.label));
+      return ",\"id\":" + std::to_string((int)_fields.size() - 1) +
+             ",\"h\":" + std::to_string(_fieldNames.back());
+    }
+
+    // and what the page sent back: the same thing, or nothing at all
+    std::function<void()> *_actionAsked(const Browser::Ask &ask)
+    {
+      int id = atoi(_valueOf(ask.body, "id").c_str());
+      if(id < 0 || id >= (int)_actions.size() ||
+         id >= (int)_actionNames.size())
+        return nullptr;
+      unsigned said = (unsigned)strtoul(_valueOf(ask.body, "h").c_str(),
+                                        nullptr, 10);
+      if(said != _actionNames[id]) return nullptr;
+      return &_actions[id];
+    }
+
+    Ui::Field *_fieldAsked(const Browser::Ask &ask)
+    {
+      int id = atoi(_valueOf(ask.body, "id").c_str());
+      if(id < 0 || id >= (int)_fields.size() || id >= (int)_fieldNames.size())
+        return nullptr;
+      unsigned said = (unsigned)strtoul(_valueOf(ask.body, "h").c_str(),
+                                        nullptr, 10);
+      if(said != _fieldNames[id]) return nullptr;
+      return &_fields[id];
+    }
+
     // a word nobody else can guess, for the address the user is given
     static std::string _madeUp()
     {
@@ -391,12 +455,11 @@ namespace {
         return "{}";
       }
       if(path == "/choose") {
-        int id = atoi(_valueOf(ask.body, "id").c_str());
         int at = atoi(_valueOf(ask.body, "i").c_str());
-        if(id >= 0 && id < (int)_fields.size()) {
-          Ui::Field &f = _fields[id];
-          if(f.choose) f.choose(at, _valueOf(ask.body, "v") != "0");
-          if(f.changed) f.changed();
+        Ui::Field *f = _fieldAsked(ask);
+        if(f) {
+          if(f->choose) f->choose(at, _valueOf(ask.body, "v") != "0");
+          if(f->changed) f->changed();
         }
         return "{}";
       }
@@ -436,15 +499,14 @@ namespace {
       }
       if(path == "/state") return _state();
       if(path == "/do") {
-        int id = atoi(_valueOf(ask.body, "id").c_str());
-        if(id >= 0 && id < (int)_actions.size() && _actions[id])
-          _actions[id]();
-        return "{}";
+        std::function<void()> *what = _actionAsked(ask);
+        if(!what) return "{\"did\":false}";
+        if(*what) (*what)();
+        return "{\"did\":true}";
       }
       if(path == "/set") {
-        int id = atoi(_valueOf(ask.body, "id").c_str());
-        std::string said = _valueOf(ask.body, "v");
-        if(id >= 0 && id < (int)_fields.size()) _write(_fields[id], said);
+        Ui::Field *f = _fieldAsked(ask);
+        if(f) _write(*f, _valueOf(ask.body, "v"));
         return "{}";
       }
       if(path == "/open") {
@@ -533,8 +595,7 @@ namespace {
           out += ",\"id\":-1";
         }
         else {
-          _actions.push_back(it.action);
-          out += ",\"id\":" + std::to_string((int)_actions.size() - 1);
+          out += _actionId(it.action, "menu:" + it.label);
         }
         out += "}";
       }
@@ -561,8 +622,7 @@ namespace {
       std::string out = "{\"label\":" + _quoted(f.label);
       out += ",\"kind\":\"" + std::string(_kindOf(f)) + "\"";
       if(f.kind == Ui::Action) {
-        _actions.push_back(f.changed);
-        out += ",\"id\":" + std::to_string((int)_actions.size() - 1);
+        out += _actionId(f.changed, "action:" + f.label);
         return out + "}";
       }
       if(f.kind == Ui::Hierarchy) {
@@ -571,8 +631,7 @@ namespace {
         // said, since it is the same kind of thing.
         out += ",\"lines\":";
         out += f.hierarchy ? _treeOf(*f.hierarchy) : "[]";
-        _fields.push_back(f);
-        out += ",\"id\":" + std::to_string((int)_fields.size() - 1);
+        out += _fieldId(f);
         return out + "}";
       }
       if(f.kind == Ui::List || f.kind == Ui::Menu) {
@@ -600,8 +659,7 @@ namespace {
             first = false;
           }
         out += "]";
-        _fields.push_back(f);
-        out += ",\"id\":" + std::to_string((int)_fields.size() - 1);
+        out += _fieldId(f);
         return out + "}";
       }
       std::string said;
@@ -639,8 +697,7 @@ namespace {
         out += "]";
       }
       out += ",\"value\":" + _quoted(said);
-      _fields.push_back(f);
-      out += ",\"id\":" + std::to_string((int)_fields.size() - 1);
+      out += _fieldId(f);
       return out + "}";
     }
 
@@ -707,7 +764,9 @@ namespace {
       out += ",\"button\":" + _quoted(p.buttonLabel);
       if(p.button) {
         _actions.push_back(p.button);
+        _actionNames.push_back(_nameOf("pane:" + p.label));
         out += ",\"buttonId\":" + std::to_string((int)_actions.size() - 1);
+        out += ",\"buttonH\":" + std::to_string(_actionNames.back());
       }
       return out + "}";
     }
@@ -758,9 +817,8 @@ namespace {
       for(std::size_t i = 0; i < form.buttons.size(); i++) {
         const auto &b = form.buttons[i];
         if(i) out += ",";
-        _actions.push_back(b.action);
         out += "{\"label\":" + _quoted(b.label);
-        out += ",\"id\":" + std::to_string((int)_actions.size() - 1) + "}";
+        out += _actionId(b.action, "button:" + b.label) + "}";
       }
       return out + "]}";
     }
@@ -789,10 +847,7 @@ namespace {
       if(node.picked)
         out += ",\"picked\":" + std::string(node.picked() ? "true" : "false");
       if(node.hasField) out += ",\"field\":" + _field(node.field);
-      if(node.pressed) {
-        _actions.push_back(node.pressed);
-        out += ",\"id\":" + std::to_string((int)_actions.size() - 1);
-      }
+      if(node.pressed) out += _actionId(node.pressed, "tree:" + path);
       out += "}";
       if(branch && open)
         for(const auto &child : tree.children(path))
@@ -836,10 +891,8 @@ namespace {
         }
         else {
           std::function<void(bool, bool)> what = b.action;
-          _actions.push_back([what]() {
-            if(what) what(false, false);
-          });
-          out += ",\"id\":" + std::to_string((int)_actions.size() - 1);
+          out += _actionId([what]() { if(what) what(false, false); },
+                           "bar:" + (b.label.size() ? b.label : b.glyph));
         }
         out += "}";
       }
@@ -850,6 +903,8 @@ namespace {
     {
       _actions.clear();
       _fields.clear();
+      _actionNames.clear();
+      _fieldNames.clear();
       std::string out = "{\"menuGen\":";
       out += std::to_string(_sources.menuGeneration ? _sources.menuGeneration() :
                                                       0);

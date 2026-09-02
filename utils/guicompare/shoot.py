@@ -953,6 +953,13 @@ def browser_ask(port, path, body=None, timeout=6):
         return ""
 
 
+def which(item):
+    """A number the page was given, with what it stood for. Gmsh refuses one
+    that no longer stands for the same thing rather than doing it to whatever
+    has taken its place."""
+    return "id=%d&h=%d" % (item["id"], item["h"])
+
+
 def browser_state(port):
     said = browser_ask(port, "/state", "")
     try:
@@ -1093,9 +1100,9 @@ def browser_press(port, form, want):
         if f.get("label") != want:
             continue
         if f.get("kind") == "action":
-            browser_ask(port, "/do", "id=%d" % f["id"], timeout=3)
+            browser_ask(port, "/do", which(f), timeout=3)
         else:
-            browser_ask(port, "/set", "id=%d&v=1" % f["id"], timeout=3)
+            browser_ask(port, "/set", which(f) + "&v=1", timeout=3)
         return True
     # or a line of a list. "list:2" is the third line of the first list there
     # is, which is what a shot means by clicking a row of a browser: the names
@@ -1104,14 +1111,14 @@ def browser_press(port, form, want):
     if want.startswith("list:") and lists:
         at = int(want[5:])
         if at < len(lists[0].get("items", [])):
-            browser_ask(port, "/choose", "id=%d&i=%d&v=1" % (lists[0]["id"], at),
+            browser_ask(port, "/choose", which(lists[0]) + "&i=%d&v=1" % at,
                         timeout=3)
             return True
         return False
     for f in lists:
         for i, item in enumerate(f.get("items", [])):
             if item == want:
-                browser_ask(port, "/choose", "id=%d&i=%d&v=1" % (f["id"], i),
+                browser_ask(port, "/choose", which(f) + "&i=%d&v=1" % i,
                             timeout=3)
                 return True
     return False
@@ -1223,7 +1230,7 @@ def photograph_browser(dpy, args, specs):
                     missing("%s: no menu entry for %s"
                                     % (name, browser_shortcut(spec["keys"])))
                     continue
-                browser_ask(port, "/do", "id=%d" % item["id"], timeout=3)
+                browser_ask(port, "/do", which(item), timeout=3)
             elif spec.get("menuPath"):
                 state = browser_state(port) or {}
                 item = browser_menu(state, spec["menuPath"])
@@ -1231,7 +1238,7 @@ def photograph_browser(dpy, args, specs):
                     missing("%s: no menu entry %s"
                                     % (name, spec["menuPath"]))
                     continue
-                browser_ask(port, "/do", "id=%d" % item["id"], timeout=3)
+                browser_ask(port, "/do", which(item), timeout=3)
             elif spec.get("menu"):
                 print("NOTE browser %s: the page has no menu to pop up" % name)
                 continue
@@ -1245,7 +1252,7 @@ def photograph_browser(dpy, args, specs):
                     missing("%s: no tree line %d of %d"
                                     % (name, row, len(tree)))
                     continue
-                browser_ask(port, "/do", "id=%d" % tree[row]["id"], timeout=3)
+                browser_ask(port, "/do", which(tree[row]), timeout=3)
             time.sleep(0.8)
 
             if spec.get("whole"):
@@ -1379,8 +1386,10 @@ def photograph_browser(dpy, args, specs):
 def browser_scene(port, home):
     """The 3D view as the page has it, to look for something to pick in."""
     said = None
+    # "force": a picture only comes back when the scene has changed since the
+    # last one, and what this wants is the picture, not the news
     try:
-        with urllib.request.urlopen(keyed_url("/scene"), timeout=20) as r:
+        with urllib.request.urlopen(keyed_url("/scene?force"), timeout=20) as r:
             said = r.read()
     except Exception:
         return None
