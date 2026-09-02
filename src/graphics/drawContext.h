@@ -28,11 +28,23 @@
 #endif
 
 #include "GmshConfig.h"
+#include "VertexArray.h"
+
 #if defined(HAVE_VISUDEV)
 #define NORMAL_GLTYPE GL_FLOAT
 #else
 #define NORMAL_GLTYPE GL_BYTE
 #endif
+
+// draw a vertex array, using its index array if it has one
+inline void drawVertexArray(VertexArray *va, GLenum type)
+{
+  if(va->isIndexed())
+    glDrawElements(type, va->getNumIndices(), GL_UNSIGNED_INT,
+                   va->getIndexArray());
+  else
+    glDrawArrays(type, 0, va->getNumVertices());
+}
 
 class PView;
 class GModel;

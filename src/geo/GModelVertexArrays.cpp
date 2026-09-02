@@ -470,5 +470,7 @@ bool GModel::fillVertexArrays()
 
   if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
     std::for_each(firstRegion(), lastRegion(), initMeshGRegion());
+
+  VertexArray::printStats();
   return true;
 }

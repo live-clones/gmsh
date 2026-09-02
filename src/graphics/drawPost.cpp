@@ -122,7 +122,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       glDisableClientState(GL_NORMAL_ARRAY);
     glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
     glEnableClientState(GL_COLOR_ARRAY);
-    glDrawArrays(type, 0, va->getNumVertices());
+    drawVertexArray(va, type);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);

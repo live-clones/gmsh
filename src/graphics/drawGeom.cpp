@@ -298,7 +298,7 @@ private:
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
-    glDrawArrays(GL_TRIANGLES, 0, va->getNumVertices());
+    drawVertexArray(va, GL_TRIANGLES);
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

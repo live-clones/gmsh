@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <set>
+#include <unordered_map>
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
 
@@ -156,6 +157,9 @@ private:
   std::vector<normal_type> _normals;
   std::vector<unsigned char> _colors;
   std::vector<MElement *> _elements;
+  // optional index array: when non-empty, the vertex/normal/color arrays hold
+  // unique vertices only, and _indices lists the vertices of each drawn corner
+  std::vector<unsigned int> _indices;
   std::set<ElementData<3>, ElementDataLessThan<3> > _data3;
   std::set<Barycenter, BarycenterLessThan> _barycenters;
   // std::tr1::unordered_set<Barycenter, BarycenterHash, BarycenterEqual>
@@ -167,6 +171,9 @@ private:
   void _addColor(unsigned char r, unsigned char g, unsigned char b,
                  unsigned char a);
   void _addElement(MElement *ele);
+  // build (resp. undo) the index array by merging identical vertices
+  void _buildIndex();
+  void _deindex();
 
 public:
   VertexArray(int numVerticesPerElement, int numElements);
@@ -175,6 +182,19 @@ public:
   int getNumVertices() { return (int)_vertices.size() / 3; }
   // return the number of vertices per element
   int getNumVerticesPerElement() { return _numVerticesPerElement; }
+  // return true if the array is indexed
+  bool isIndexed() { return !_indices.empty(); }
+  // return the number of drawn corners: this is the number of indices if the
+  // array is indexed, and the number of vertices otherwise
+  int getNumCorners()
+  {
+    return isIndexed() ? (int)_indices.size() : getNumVertices();
+  }
+  // return the position, in the vertex arrays, of the i-th drawn corner
+  int getCornerIndex(int i) { return isIndexed() ? (int)_indices[i] : i; }
+  // return the number of indices, and a pointer to the raw index array
+  int getNumIndices() { return (int)_indices.size(); }
+  unsigned int *getIndexArray(int i = 0) { return &_indices[i]; }
   // return the number of element pointers
   int getNumElementPointers() { return (int)_elements.size(); }
   // return a pointer to the raw vertex array (warning: 1) we don't
@@ -232,6 +252,13 @@ public:
                           double &xmax, double &ymax, double &zmax);
   // merge another vertex array into this one
   void merge(VertexArray *va);
+
+  // index the arrays in finalize() (set from the GMSH_INDEXED_VA env variable)
+  static int indexing;
+  // statistics gathered while indexing
+  static long int statCorners, statVertices, statVerticesNoNormal;
+  static double statTime;
+  static void printStats();
 };
 
 #endif

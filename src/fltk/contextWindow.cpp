@@ -86,7 +86,7 @@ static void draw_stl(std::vector<SPoint3> &vertices,
   glNormalPointer(NORMAL_GLTYPE, 0, va.getNormalArray());
   glEnableClientState(GL_NORMAL_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
-  glDrawArrays(GL_TRIANGLES, 0, va.getNumVertices());
+  drawVertexArray(&va, GL_TRIANGLES);
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
 

@@ -362,14 +362,14 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     (ctx->render_mode == drawContext::GMSH_SELECT &&
      CTX::instance()->pickElements && e->model() == GModel::current());
   if(select) {
-    if(va->getNumElementPointers() == va->getNumVertices()) {
-      for(int i = 0; i < va->getNumVertices();
+    if(va->getNumElementPointers() == va->getNumCorners()) {
+      for(int i = 0; i < va->getNumCorners();
           i += va->getNumVerticesPerElement()) {
         glPushName(va->getNumVerticesPerElement());
         glPushName(i);
         glBegin(type);
         for(int j = 0; j < va->getNumVerticesPerElement(); j++)
-          glVertex3fv(va->getVertexArray(3 * (i + j)));
+          glVertex3fv(va->getVertexArray(3 * va->getCornerIndex(i + j)));
         glEnd();
         glPopName();
         glPopName();
@@ -408,7 +408,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)
     glEnable(GL_POLYGON_OFFSET_FILL);
 
-  glDrawArrays(type, 0, va->getNumVertices());
+  drawVertexArray(va, type);
 
   glDisable(GL_POLYGON_OFFSET_FILL);
   glDisable(GL_LIGHTING);
