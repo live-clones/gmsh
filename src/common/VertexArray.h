@@ -6,9 +6,11 @@
 #ifndef VERTEX_ARRAY_H
 #define VERTEX_ARRAY_H
 
+#include <string.h>
 #include <vector>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
 
@@ -96,6 +98,38 @@ public:
   }
 };
 
+// key used by the "unique" filter to detect elements that are drawn several
+// times, e.g. an edge shared by several tetrahedra: the N corners are stored in
+// canonical (sorted) order, together with the color, so that an element added
+// twice with the same geometry and the same color is only kept once
+template <int N> class CornerKey {
+public:
+  float p[3 * N];
+  unsigned char c[4];
+};
+
+template <int N> class CornerKeyHash {
+public:
+  std::size_t operator()(const CornerKey<N> &k) const
+  {
+    const unsigned char *b = (const unsigned char *)&k;
+    std::size_t h = 14695981039346656037ULL;
+    for(std::size_t i = 0; i < sizeof(CornerKey<N>); i++) {
+      h ^= b[i];
+      h *= 1099511628211ULL;
+    }
+    return h;
+  }
+};
+
+template <int N> class CornerKeyEqual {
+public:
+  bool operator()(const CornerKey<N> &a, const CornerKey<N> &b) const
+  {
+    return !memcmp(&a, &b, sizeof(CornerKey<N>));
+  }
+};
+
 class Barycenter {
 private:
   float _x, _y, _z;
@@ -161,6 +195,9 @@ private:
   // unique vertices only, and _indices lists the vertices of each drawn corner
   std::vector<unsigned int> _indices;
   std::set<ElementData<3>, ElementDataLessThan<3> > _data3;
+  // elements already added, when the "unique" filter is on
+  std::unordered_set<CornerKey<2>, CornerKeyHash<2>, CornerKeyEqual<2> > _uni2;
+  std::unordered_set<CornerKey<3>, CornerKeyHash<3>, CornerKeyEqual<3> > _uni3;
   std::set<Barycenter, BarycenterLessThan> _barycenters;
   // std::tr1::unordered_set<Barycenter, BarycenterHash, BarycenterEqual>
   // _barycenters;
@@ -174,6 +211,9 @@ private:
   // build (resp. undo) the index array by merging identical vertices
   void _buildIndex();
   void _deindex();
+  // return true if the element has already been added
+  bool _isDuplicate(double *x, double *y, double *z, unsigned char *r,
+                    unsigned char *g, unsigned char *b, unsigned char *a);
 
 public:
   VertexArray(int numVerticesPerElement, int numElements);
@@ -257,9 +297,12 @@ public:
 
   // index the arrays in finalize() (set from the GMSH_INDEXED_VA env variable)
   static int indexing;
+  // drop elements that are drawn several times (GMSH_UNIQUE_VA env variable)
+  static int unique;
   // statistics gathered while indexing
   static long int statCorners, statVertices, statVerticesNoNormal;
-  static double statTime;
+  static long int statUniqueIn, statUniqueKept;
+  static double statTime, statUniqueTime;
   static void printStats();
 };
 

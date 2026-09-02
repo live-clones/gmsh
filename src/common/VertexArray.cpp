@@ -17,6 +17,10 @@ template<int N> float ElementDataLessThan<N>::tolerance = 0.0F;
 float BarycenterLessThan::tolerance = 0.0F;
 
 int VertexArray::indexing = -1;
+int VertexArray::unique = -1;
+long int VertexArray::statUniqueIn = 0;
+long int VertexArray::statUniqueKept = 0;
+double VertexArray::statUniqueTime = 0.;
 long int VertexArray::statCorners = 0;
 long int VertexArray::statVertices = 0;
 long int VertexArray::statVerticesNoNormal = 0;
@@ -51,6 +55,67 @@ namespace {
   };
   typedef std::unordered_map<VertexKey, unsigned int, VertexKeyHash,
                              VertexKeyEqual> VertexKeyMap;
+}
+
+static int getUniqueMode()
+{
+  if(VertexArray::unique < 0) {
+    const char *s = getenv("GMSH_UNIQUE_VA");
+    VertexArray::unique = s ? atoi(s) : 0;
+  }
+  return VertexArray::unique;
+}
+
+// fill a corner key with the N corners sorted lexicographically, so that an
+// element added with its corners in any order maps to the same key
+template <int N>
+static void fillCornerKey(CornerKey<N> &k, double *x, double *y, double *z,
+                          unsigned char *r, unsigned char *g, unsigned char *b,
+                          unsigned char *a)
+{
+  memset(&k, 0, sizeof(CornerKey<N>));
+  int o[N];
+  for(int i = 0; i < N; i++) o[i] = i;
+  for(int i = 1; i < N; i++) {
+    for(int j = i; j > 0; j--) {
+      float xj = (float)x[o[j]], xp = (float)x[o[j - 1]];
+      float yj = (float)y[o[j]], yp = (float)y[o[j - 1]];
+      float zj = (float)z[o[j]], zp = (float)z[o[j - 1]];
+      bool less = (xj < xp) || (xj == xp && (yj < yp ||
+                                             (yj == yp && zj < zp)));
+      if(!less) break;
+      std::swap(o[j], o[j - 1]);
+    }
+  }
+  for(int i = 0; i < N; i++) {
+    k.p[3 * i] = (float)x[o[i]];
+    k.p[3 * i + 1] = (float)y[o[i]];
+    k.p[3 * i + 2] = (float)z[o[i]];
+  }
+  if(r && g && b && a) {
+    k.c[0] = r[0];
+    k.c[1] = g[0];
+    k.c[2] = b[0];
+    k.c[3] = a[0];
+  }
+}
+
+bool VertexArray::_isDuplicate(double *x, double *y, double *z,
+                               unsigned char *r, unsigned char *g,
+                               unsigned char *b, unsigned char *a)
+{
+  int npe = getNumVerticesPerElement();
+  if(npe == 2) {
+    CornerKey<2> k;
+    fillCornerKey<2>(k, x, y, z, r, g, b, a);
+    return !_uni2.insert(k).second;
+  }
+  if(npe == 3) {
+    CornerKey<3> k;
+    fillCornerKey<3>(k, x, y, z, r, g, b, a);
+    return !_uni3.insert(k).second;
+  }
+  return false;
 }
 
 VertexArray::VertexArray(int numVerticesPerElement, int numElements)
@@ -153,19 +218,14 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
     return;
   }
 
-  // enabling this will reduce memory and rendering time; but will increase the
-  // time it takes to create the vertex array
-#if 0
-  if(unique){
-    Barycenter pc(0.0F, 0.0F, 0.0F);
-    for(int i = 0; i < npe; i++)
-      pc += Barycenter(x[i], y[i], z[i]);
-    BarycenterLessThan::tolerance = (float)(CTX::instance()->lc * 1.e-12);
-    if(_barycenters.find(pc) != _barycenters.end())
-      return;
-    _barycenters.insert(pc);
+  // drop elements that have already been added: an edge or a face shared by
+  // several elements is only drawn once. This reduces both the memory and the
+  // rendering time, at the price of a hash table lookup per element.
+  if(unique && getUniqueMode() && (npe == 2 || npe == 3)) {
+    statUniqueIn += npe;
+    if(_isDuplicate(x, y, z, r, g, b, a)) return;
+    statUniqueKept += npe;
   }
-#endif
 
   for(int i = 0; i < npe; i++){
     _addVertex((float)x[i], (float)y[i], (float)z[i]);
@@ -348,6 +408,13 @@ void VertexArray::_deindex()
 
 void VertexArray::printStats()
 {
+  if(statUniqueIn) {
+    Msg::Info("Vertex array unique filter: %ld -> %ld corners (%.2fx)",
+              statUniqueIn, statUniqueKept,
+              (double)statUniqueIn / statUniqueKept);
+    statUniqueIn = statUniqueKept = 0;
+    statUniqueTime = 0.;
+  }
   if(!statCorners) return;
   double bpc = 3. * sizeof(float) + 3. * sizeof(normal_type) +
                4. * sizeof(unsigned char);
@@ -382,6 +449,10 @@ void VertexArray::finalize()
     _data3.clear();
   }
   _barycenters.clear();
+  std::unordered_set<CornerKey<2>, CornerKeyHash<2>, CornerKeyEqual<2> >().swap(
+    _uni2);
+  std::unordered_set<CornerKey<3>, CornerKeyHash<3>, CornerKeyEqual<3> >().swap(
+    _uni3);
   _buildIndex();
 }
 
