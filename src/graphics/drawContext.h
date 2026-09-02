@@ -36,15 +36,19 @@
 #define NORMAL_GLTYPE GL_BYTE
 #endif
 
+// Bind the vertex, normal and color arrays and return the pointer to be passed
+// to glVertexPointer(), glNormalPointer() and glColorPointer(). When buffer
+// objects are enabled the arrays are uploaded to the GPU on first use, the
+// corresponding buffer is bound and the returned offset is null; otherwise the
+// client-side pointer is returned.
+const GLvoid *vaVertexPointer(VertexArray *va);
+const GLvoid *vaNormalPointer(VertexArray *va);
+const GLvoid *vaColorPointer(VertexArray *va);
 // draw a vertex array, using its index array if it has one
-inline void drawVertexArray(VertexArray *va, GLenum type)
-{
-  if(va->isIndexed())
-    glDrawElements(type, va->getNumIndices(), GL_UNSIGNED_INT,
-                   va->getIndexArray());
-  else
-    glDrawArrays(type, 0, va->getNumVertices());
-}
+void drawVertexArray(VertexArray *va, GLenum type);
+// delete the buffer objects of the vertex arrays that have been destroyed since
+// the last frame: this requires a current GL context
+void deleteOrphanVertexArrayBuffers();
 
 class PView;
 class GModel;

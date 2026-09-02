@@ -16,6 +16,7 @@
 template<int N> float ElementDataLessThan<N>::tolerance = 0.0F;
 float BarycenterLessThan::tolerance = 0.0F;
 
+std::vector<unsigned int> VertexArray::vboToDelete;
 int VertexArray::indexing = -1;
 int VertexArray::unique = -1;
 long int VertexArray::statUniqueIn = 0;
@@ -186,6 +187,8 @@ bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
 VertexArray::~VertexArray()
 {
   if(_ownsFilter) delete _filter;
+  for(int i = 0; i < 4; i++)
+    if(_vbo[i]) vboToDelete.push_back(_vbo[i]);
 }
 
 UniqueElementFilter *VertexArray::getUniqueFilter(bool threaded)
@@ -208,8 +211,10 @@ void VertexArray::setUniqueFilter(UniqueElementFilter *f)
 
 VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
-    _ownsFilter(false), _statUniqueIn(0), _statUniqueKept(0)
+    _ownsFilter(false), _statUniqueIn(0), _statUniqueKept(0), _vboDirty(true)
 {
+  _vbo[0] = _vbo[1] = _vbo[2] = _vbo[3] = 0;
+
   int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
 
   double memv = (nb * 3. * sizeof(float)) / 1024. / 1024.;
@@ -582,6 +587,9 @@ double AlphaElementLessThan::eye[3] = {0., 0., 0.};
 
 void VertexArray::sort(double x, double y, double z)
 {
+  // the arrays are rewritten: they will have to be uploaded again
+  _vboDirty = true;
+
   // This simplementation is pretty bad: it copies the whole data
   // twice. We should think about a more efficient way to sort the
   // three arrays in place.

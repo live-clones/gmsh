@@ -378,12 +378,12 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     }
   }
 
-  glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
+  glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
   glEnableClientState(GL_VERTEX_ARRAY);
 
   if(useNormalArray && va->hasNormals()) {
     glEnable(GL_LIGHTING);
-    glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
+    glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
     glEnableClientState(GL_NORMAL_ARRAY);
   }
   else
@@ -393,10 +393,11 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     glDisableClientState(GL_COLOR_ARRAY);
     glColor4ubv((GLubyte *)&color);
   }
-  else if(CTX::instance()->pickElements ||
-          (!e->getSelection() && (CTX::instance()->mesh.colorCarousel == 0 ||
-                                  CTX::instance()->mesh.colorCarousel == 3))) {
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
+  else if(va->hasColors() &&
+          (CTX::instance()->pickElements ||
+           (!e->getSelection() && (CTX::instance()->mesh.colorCarousel == 0 ||
+                                   CTX::instance()->mesh.colorCarousel == 3)))) {
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
     glEnableClientState(GL_COLOR_ARRAY);
   }
   else {

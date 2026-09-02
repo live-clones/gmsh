@@ -274,8 +274,122 @@ static int needPolygonOffset()
   return 0;
 }
 
+// buffer objects are enabled with the GMSH_VBO environment variable
+static int getVboMode()
+{
+  static int mode = -1;
+  if(mode < 0) {
+    const char *s = getenv("GMSH_VBO");
+    mode = s ? atoi(s) : 0;
+  }
+  return mode;
+}
+
+// statistics on the data uploaded to the GPU since the last frame
+static double vboBytes = 0., vboTime = 0.;
+
+void deleteOrphanVertexArrayBuffers()
+{
+  if(vboBytes > 0.) {
+    Msg::Info("Uploaded %.1f Mb to buffer objects in %g s",
+              vboBytes / 1024. / 1024., vboTime);
+    vboBytes = vboTime = 0.;
+  }
+
+  if(VertexArray::vboToDelete.empty()) return;
+  glDeleteBuffers((GLsizei)VertexArray::vboToDelete.size(),
+                  &VertexArray::vboToDelete[0]);
+  VertexArray::vboToDelete.clear();
+}
+
+// copy the arrays into buffer objects, if this has not been done yet or if the
+// arrays have changed since
+static void uploadVertexArray(VertexArray *va)
+{
+  unsigned int *id = va->getVboIds();
+  if(!id[0]) {
+    glGenBuffers(4, id);
+    va->setVboDirty(true);
+  }
+  if(!va->getVboDirty()) return;
+
+  double t1 = TimeOfDay();
+  int n = va->getNumVertices();
+  glBindBuffer(GL_ARRAY_BUFFER, id[0]);
+  glBufferData(GL_ARRAY_BUFFER, n * 3 * sizeof(float),
+               n ? va->getVertexArray() : nullptr, GL_STATIC_DRAW);
+  if(va->hasNormals()) {
+    glBindBuffer(GL_ARRAY_BUFFER, id[1]);
+    glBufferData(GL_ARRAY_BUFFER, n * 3 * sizeof(normal_type),
+                 va->getNormalArray(), GL_STATIC_DRAW);
+  }
+  if(va->hasColors()) {
+    glBindBuffer(GL_ARRAY_BUFFER, id[2]);
+    glBufferData(GL_ARRAY_BUFFER, n * 4 * sizeof(unsigned char),
+                 va->getColorArray(), GL_STATIC_DRAW);
+  }
+  if(va->isIndexed()) {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id[3]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 va->getNumIndices() * sizeof(unsigned int),
+                 va->getIndexArray(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  }
+  va->setVboDirty(false);
+
+  vboBytes += n * 3. * sizeof(float) +
+              (va->hasNormals() ? n * 3. * sizeof(normal_type) : 0.) +
+              (va->hasColors() ? n * 4. : 0.) +
+              (va->isIndexed() ? va->getNumIndices() * 4. : 0.);
+  vboTime += TimeOfDay() - t1;
+}
+
+const GLvoid *vaVertexPointer(VertexArray *va)
+{
+  if(!getVboMode()) return va->getVertexArray();
+  uploadVertexArray(va);
+  glBindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[0]);
+  return nullptr;
+}
+
+const GLvoid *vaNormalPointer(VertexArray *va)
+{
+  if(!getVboMode()) return va->getNormalArray();
+  uploadVertexArray(va);
+  glBindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[1]);
+  return nullptr;
+}
+
+const GLvoid *vaColorPointer(VertexArray *va)
+{
+  if(!getVboMode()) return va->getColorArray();
+  uploadVertexArray(va);
+  glBindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[2]);
+  return nullptr;
+}
+
+void drawVertexArray(VertexArray *va, GLenum type)
+{
+  if(va->isIndexed()) {
+    if(getVboMode()) {
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, va->getVboIds()[3]);
+      glDrawElements(type, va->getNumIndices(), GL_UNSIGNED_INT, nullptr);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+    else
+      glDrawElements(type, va->getNumIndices(), GL_UNSIGNED_INT,
+                     va->getIndexArray());
+  }
+  else
+    glDrawArrays(type, 0, va->getNumVertices());
+
+  if(getVboMode()) glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 void drawContext::draw3d()
 {
+  deleteOrphanVertexArrayBuffers();
+
   // We can only create this when a valid opengl context exists. (It's cheap to
   // create so we just do it at each redraw: this makes it much simpler to deal
   // with option changes, e.g. arrow shape changes)

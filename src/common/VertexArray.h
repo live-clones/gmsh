@@ -215,6 +215,11 @@ private:
   // shared with other vertex arrays, in which case it is not owned
   UniqueElementFilter *_filter;
   bool _ownsFilter;
+  // OpenGL buffer objects holding a copy of the arrays (vertices, normals,
+  // colors, indices). They are created and filled by the graphics code, which
+  // is the only place where a GL context is current
+  unsigned int _vbo[4];
+  bool _vboDirty;
   long int _statUniqueIn, _statUniqueKept;
   std::set<Barycenter, BarycenterLessThan> _barycenters;
   // std::tr1::unordered_set<Barycenter, BarycenterHash, BarycenterEqual>
@@ -264,8 +269,13 @@ public:
   std::vector<float>::iterator firstVertex() { return _vertices.begin(); }
   std::vector<float>::iterator lastVertex() { return _vertices.end(); }
 
-  // return true if the array stores normals
+  // return true if the array stores normals (resp. colors)
   bool hasNormals() { return (int)_normals.size() == 3 * getNumVertices(); }
+  bool hasColors() { return (int)_colors.size() == 4 * getNumVertices(); }
+  // buffer objects: the ids are 0 as long as nothing has been uploaded
+  unsigned int *getVboIds() { return _vbo; }
+  bool getVboDirty() { return _vboDirty; }
+  void setVboDirty(bool dirty) { _vboDirty = dirty; }
   // return a pointer to the raw normal array
   normal_type *getNormalArray(int i = 0) { return &_normals[i]; }
   std::vector<normal_type>::iterator firstNormal() { return _normals.begin(); }
@@ -314,6 +324,10 @@ public:
                           double &xmax, double &ymax, double &zmax);
   // merge another vertex array into this one
   void merge(VertexArray *va);
+
+  // buffer objects whose vertex array has been deleted: they can only be freed
+  // when a GL context is current, i.e. at the beginning of the next frame
+  static std::vector<unsigned int> vboToDelete;
 
   // index the arrays in finalize() (set from the GMSH_INDEXED_VA env variable)
   static int indexing;

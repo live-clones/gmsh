@@ -111,17 +111,21 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       gl2psEnable(GL2PS_LINE_STIPPLE);
     }
 
-    glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
+    glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
     glEnableClientState(GL_VERTEX_ARRAY);
     if(useNormalArray && va->hasNormals()) {
       glEnable(GL_LIGHTING);
-      glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
+      glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
       glEnableClientState(GL_NORMAL_ARRAY);
     }
     else
       glDisableClientState(GL_NORMAL_ARRAY);
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
-    glEnableClientState(GL_COLOR_ARRAY);
+    if(va->hasColors()) {
+      glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
+      glEnableClientState(GL_COLOR_ARRAY);
+    }
+    else
+      glDisableClientState(GL_COLOR_ARRAY);
     drawVertexArray(va, type);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
