@@ -245,6 +245,13 @@ static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2,
 std::vector<BDS_Face *> BDS_Point::getTriangles() const
 {
   std::vector<BDS_Face *> t;
+  getTriangles(t);
+  return t;
+}
+
+void BDS_Point::getTriangles(std::vector<BDS_Face *> &t) const
+{
+  t.clear();
   t.reserve(edges.size());
 
   auto it = edges.begin();
@@ -259,7 +266,6 @@ std::vector<BDS_Face *> BDS_Point::getTriangles() const
     }
     ++it;
   }
-  return t;
 }
 
 BDS_Point *BDS_Mesh::add_point(int const num, double const x, double const y,
@@ -447,12 +453,14 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
 BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const
 {
-  BDS_Point P1(p1->iD);
-  BDS_Point P2(p2->iD);
-  BDS_Edge E(&P1, &P2);
-  if(t->e1->p1->iD == E.p1->iD && t->e1->p2->iD == E.p2->iD) return t->e1;
-  if(t->e2->p1->iD == E.p1->iD && t->e2->p2->iD == E.p2->iD) return t->e2;
-  if(t->e3->p1->iD == E.p1->iD && t->e3->p2->iD == E.p2->iD) return t->e3;
+  // this only needs the two ids in the order BDS_Edge would store them; it
+  // used to build two BDS_Points and a BDS_Edge on the stack to get them,
+  // which allocated the two points' edge lists on every call
+  const int a = std::min(p1->iD, p2->iD);
+  const int b = std::max(p1->iD, p2->iD);
+  if(t->e1->p1->iD == a && t->e1->p2->iD == b) return t->e1;
+  if(t->e2->p1->iD == a && t->e2->p2->iD == b) return t->e2;
+  if(t->e3->p1->iD == a && t->e3->p2->iD == b) return t->e3;
   return nullptr;
 }
 
@@ -501,7 +509,30 @@ BDS_Edge *BDS_Mesh::add_edge(int const p1, int const p2)
   return edges.back();
 }
 
+// Same as above for callers that already hold the two points, sparing them the
+// two find_point() lookups in the points set
+BDS_Edge *BDS_Mesh::add_edge(BDS_Point *p1, BDS_Point *p2)
+{
+  if(!p1 || !p2) {
+    Msg::Error("Could not find points in edge creation");
+    return nullptr;
+  }
+  BDS_Edge *efound = find_edge(p1, p2->iD);
+  if(efound) return efound;
+  edges.push_back(new BDS_Edge(p1, p2));
+  return edges.back();
+}
+
 BDS_Face *BDS_Mesh::add_triangle(int p1, int p2, int p3)
+{
+  BDS_Edge *e1 = add_edge(p1, p2);
+  BDS_Edge *e2 = add_edge(p2, p3);
+  BDS_Edge *e3 = add_edge(p3, p1);
+  if(e1 && e2 && e3) return add_triangle(e1, e2, e3);
+  return nullptr;
+}
+
+BDS_Face *BDS_Mesh::add_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
 {
   BDS_Edge *e1 = add_edge(p1, p2);
   BDS_Edge *e2 = add_edge(p2, p3);
@@ -670,10 +701,25 @@ void BDS_Mesh::cleanup()
   }
 }
 
+void BDS_Mesh::removeOrphanPoints()
+{
+  auto it = points.begin();
+  while(it != points.end()) {
+    if((*it)->edges.empty()) {
+      orphanPoints.push_back(*it);
+      it = points.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+}
+
 BDS_Mesh::~BDS_Mesh()
 {
   DESTROOOY(geom.begin(), geom.end());
   DESTROOOY(points.begin(), points.end());
+  DESTROOOY(orphanPoints.begin(), orphanPoints.end());
   cleanup();
   DESTROOOY(edges.begin(), edges.end());
   DESTROOOY(triangles.begin(), triangles.end());
@@ -1058,9 +1104,10 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
 
 int BDS_Edge::numTriangles() const
 {
-  return std::count_if(
-    begin(_faces), end(_faces),
-    [](const BDS_Face *const face) { return face->numEdges() == 3; });
+  int n = 0;
+  for(int i = 0; i < numfaces(); i++)
+    if(faces(i)->numEdges() == 3) n++;
+  return n;
 }
 
 /*
@@ -1141,10 +1188,27 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
   std::vector<BDS_Face *> t = p->getTriangles();
   BDS_Point *o = e->othervertex(p);
 
-  BDS_Point *pt[3][1024];
-  BDS_GeomEntity *gs[1024];
-  int ept[2][1024];
-  BDS_GeomEntity *egs[1024];
+  // these used to be four 1024-entry stack arrays, indexed by the number of
+  // triangles and of edges around p with no bound check at all
+  struct Cavity {
+    std::vector<BDS_Point *> pt[3], ept[2];
+    std::vector<BDS_GeomEntity *> gs, egs;
+    void resize(std::size_t n)
+    {
+      for(int i = 0; i < 3; i++)
+        if(pt[i].size() < n) pt[i].resize(n);
+      for(int i = 0; i < 2; i++)
+        if(ept[i].size() < n) ept[i].resize(n);
+      if(gs.size() < n) gs.resize(n);
+      if(egs.size() < n) egs.resize(n);
+    }
+  };
+  static thread_local Cavity c;
+  c.resize(std::max(t.size(), p->edges.size()));
+  auto &pt = c.pt;
+  auto &gs = c.gs;
+  auto &ept = c.ept;
+  auto &egs = c.egs;
   int nt = 0;
   double area_old = 0.0;
   double area_new = 0.0;
@@ -1197,9 +1261,9 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
     auto eit = edges.begin();
     while(eit != edges.end()) {
       (*eit)->p1->config_modified = (*eit)->p2->config_modified = true;
-      ept[0][kk] = ((*eit)->p1 == p) ? (o ? o->iD : -1) : (*eit)->p1->iD;
-      ept[1][kk] = ((*eit)->p2 == p) ? (o ? o->iD : -1) : (*eit)->p2->iD;
-      if(ept[0][kk] < 0 || ept[1][kk] < 0) {
+      ept[0][kk] = ((*eit)->p1 == p) ? o : (*eit)->p1;
+      ept[1][kk] = ((*eit)->p2 == p) ? o : (*eit)->p2;
+      if(!ept[0][kk] || !ept[1][kk]) {
         Msg::Error("Something wrong in edge collapse");
         return false;
       }
@@ -1214,13 +1278,13 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
 
   {
     for(int k = 0; k < nt; k++) {
-      BDS_Face *t = add_triangle(pt[0][k]->iD, pt[1][k]->iD, pt[2][k]->iD);
+      BDS_Face *t = add_triangle(pt[0][k], pt[1][k], pt[2][k]);
       t->g = gs[k];
     }
   }
 
   for(int i = 0; i < kk; ++i) {
-    BDS_Edge *e = find_edge(ept[0][i], ept[1][i]);
+    BDS_Edge *e = find_edge(ept[0][i], ept[1][i]->iD);
     if(e && !e->g) e->g = egs[i];
   }
 
@@ -1272,24 +1336,33 @@ static inline bool getOrderedNeighboringVertices(BDS_Point *p,
   }
 
   if(ts.empty()) return false;
+
+  // the two nodes of each triangle that are not p do not change while we walk
+  // around p, but the loop below used to recompute them - i.e. call getNodes()
+  // - once per triangle and per turn, making the walk quadratic
+  std::vector<BDS_Point *> opp(2 * ts.size(), nullptr);
+  for(size_t i = 0; i < ts.size(); i++) {
+    BDS_Point *pts[4];
+    if(!ts[i]->getNodes(pts)) continue;
+    if(pts[0] == p) {
+      opp[2 * i] = pts[1];
+      opp[2 * i + 1] = pts[2];
+    }
+    else if(pts[1] == p) {
+      opp[2 * i] = pts[0];
+      opp[2 * i + 1] = pts[2];
+    }
+    else {
+      opp[2 * i] = pts[0];
+      opp[2 * i + 1] = pts[1];
+    }
+  }
+
   while(1) {
     bool found = false;
     for(size_t i = 0; i < ts.size(); i++) {
-      BDS_Point *pts[4];
-      if(!ts[i]->getNodes(pts)) continue;
-      BDS_Point *pp[2];
-      if(pts[0] == p) {
-        pp[0] = pts[1];
-        pp[1] = pts[2];
-      }
-      else if(pts[1] == p) {
-        pp[0] = pts[0];
-        pp[1] = pts[2];
-      }
-      else {
-        pp[0] = pts[0];
-        pp[1] = pts[1];
-      }
+      if(!opp[2 * i]) continue;
+      BDS_Point *pp[2] = {opp[2 * i], opp[2 * i + 1]};
       if(nbg.empty()) {
         nbg.push_back(pp[0]);
         nbg.push_back(pp[1]);
@@ -1622,6 +1695,13 @@ static inline bool minimizeTutteEnergyParam(BDS_Point *p, double E_unmoved,
 
 bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
 {
+  BDS_SmoothScratch scratch;
+  return smooth_point_centroid(p, gf, threshold, scratch);
+}
+
+bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold,
+                                     BDS_SmoothScratch &scratch)
+{
   if(p->degenerated) return false;
   if(p->g && p->g->classif_degree <= 1) return false;
   if(p->g && p->g->classif_tag < 0) {
@@ -1635,10 +1715,14 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
     printf("VERTEX %d TRYING TO MOVE from its initial position %g %g\n", CHECK,
            p->u, p->v);
 
-  std::vector<BDS_Point *> nbg;
-  std::vector<double> lc;
-  std::vector<SPoint2> kernel;
-  std::vector<BDS_Face *> ts = p->getTriangles();
+  std::vector<BDS_Point *> &nbg = scratch.nbg;
+  std::vector<double> &lc = scratch.lc;
+  std::vector<SPoint2> &kernel = scratch.kernel;
+  std::vector<BDS_Face *> &ts = scratch.ts;
+  nbg.clear();
+  lc.clear();
+  kernel.clear();
+  p->getTriangles(ts);
 
   if(p->iD == CHECK) printf("%d adjacent triangles\n", (int)ts.size());
 
