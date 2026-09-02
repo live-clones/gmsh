@@ -1046,7 +1046,8 @@ def browser_quiet(port):
         forms = state.get("forms", [])
         if not forms:
             return True
-        browser_ask(port, "/key", "k=q", timeout=3)
+        # "j", not "k": "k" is the word that says a request may be asked
+        browser_ask(port, "/key", "j=q", timeout=3)
         for form in forms:
             browser_ask(port, "/close", "form=%d" % form["id"], timeout=3)
         time.sleep(0.3)

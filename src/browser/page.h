@@ -78,13 +78,15 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  #dock .form h2{cursor:default}
  .form .body{display:flex;align-items:stretch;min-height:0;overflow:hidden}
  .form .main{flex:1;min-width:0;overflow:auto;padding-bottom:5px}
- .form .aside{flex:none;overflow:auto;border-right:1px solid #ddd;
-              padding:3px 0;display:flex;flex-direction:column}
+ .form .main.scrolls{max-height:26em}
+ .form .aside{flex:none;overflow:hidden;border-right:1px solid #ddd;
+              padding:3px 0;display:flex;flex-direction:column;
+              max-height:26em}
  .form .aside .line{padding:2px 4px}
  .form .aside .cell{flex:1 1 auto}
- .list{border:1px solid #ccc;background:#fff;overflow:auto;max-height:240px;
-       flex:1;min-width:0}
- .aside .list{border:none;max-height:none}
+ .list{border:1px solid #ccc;background:#fff;overflow:auto;flex:1 1 auto;
+       min-width:0;min-height:8em;max-height:26em}
+ .aside .list{max-height:none}
  .pick{padding:1px 8px;white-space:nowrap;cursor:default}
  .pick:hover{background:#eef1ff}
  .pick.on{background:#cfd8ff}
@@ -112,22 +114,29 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     the button goes to the end of the line, as these windows draw it */
  .line.packed .cell.act{margin-left:auto}
  .cell.gap{flex:1 1 auto;min-width:8px}
- .cell input,.cell select{width:135px;min-width:0}
+ /* What shares a line shares the width of one field, rather than each
+    taking a whole one: two little numbers under one label are two halves of
+    a value, not two values. It is the rule the windows this reproduces are
+    laid out by. */
+ .cell input,.cell select{width:calc(135px / var(--n, 1));min-width:0}
  /* the label runs on rather than wrapping: a window grows to hold what it
     says, as the ones this reproduces do */
  .cell label{flex:0 1 auto;min-width:0;white-space:nowrap}
  .cell.act{flex:0 0 auto}
- .cell.wide{flex:1 1 100%}
- /* a line that runs on over several lines: the help of a plugin is a
-    paragraph, not a label */
- /* and a paragraph wraps at something one can read, rather than making the
-    window as wide as its longest line */
- .cell.wide>div{white-space:pre-line;max-width:520px}
+ /* A list takes a line of its own. A line of text that runs on over several
+    lines takes what is left of the one it is on -- the whole of it when it is
+    alone there, half when it is the second of a pair, which is what the list
+    of keyboard shortcuts is made of. And it wraps at something one can read
+    rather than making the window as wide as its longest line. */
+ .cell.whole{flex:1 1 100%}
+ .cell.runs>div{white-space:pre-line;max-width:520px}
  .section{margin:6px 8px 2px;border-top:1px solid #ddd;padding-top:4px}
  .section h3{font-size:12px;margin:0 0 2px;color:#444;font-weight:600}
  .section .line{padding-left:0;padding-right:0}
- .foot{border-top:1px solid #ccc;padding:5px 8px;display:flex;gap:8px;
-       align-items:center;flex-wrap:wrap;background:#f7f7f7}
+ /* What a window says under its panes. Its lines are lines, one under
+    another: three switches are three of them, not one long one. */
+ .foot{border-top:1px solid #ccc;padding:3px 0;background:#f7f7f7}
+ .foot .line{padding:2px 8px}
  .foot button{min-width:70px}
  .fold{cursor:default;user-select:none;color:#444}
  #console{flex:none;height:150px;overflow:auto;margin:0;padding:6px 8px;
@@ -274,8 +283,9 @@ function field(f) {
     const box = document.createElement('div');
     box.className = 'list';
     // as tall as it says: zero means as tall as the window will allow
+    // As tall as it says. Nought means as tall as the window allows, which
+    // is what is left of it rather than a height the window grows to.
     if(f.rows) box.style.height = (f.rows * 1.45) + 'em';
-    else box.style.minHeight = '9em';
     (f.items || []).forEach((label, i) => {
       const line = document.createElement('div');
       line.className = 'pick' + ((f.on || []).indexOf(i) >= 0 ? ' on' : '');
@@ -317,8 +327,8 @@ function cell(f) {
   const box = document.createElement('div');
   box.className = 'cell' + (f.kind === 'action' ? ' act' : '') +
                   (f.packed ? ' packed' : '') +
-                  (f.kind === 'list' || f.kind === 'hierarchy' || f.wraps ?
-                     ' wide' : '');
+                  (f.kind === 'list' || f.kind === 'hierarchy' ? ' whole' :
+                     '') + (f.wraps ? ' runs' : '');
   if(f.help) box.title = f.help;
   if(f.kind === 'gap') { box.className = 'cell gap'; return box; }
   if(f.kind === 'label') {
@@ -377,12 +387,28 @@ function lines(fields, into, columns) {
       line.style.display = 'grid';
       line.style.gridTemplateColumns = 'repeat(' + columns + ',max-content)';
     }
+    // how many of them hold a value, so that they may share the width of one
+    const holds = row.filter(f => f.kind !== 'label' && f.kind !== 'gap' &&
+                                  f.kind !== 'action' && f.kind !== 'list' &&
+                                  f.kind !== 'hierarchy' && f.kind !== 'check' &&
+                                  !f.em).length;
+    if(holds > 1) line.style.setProperty('--n', holds);
     for(const f of row) line.appendChild(cell(f));
     into.appendChild(line);
   }
 }
 
+// the button a pane or a section carries, at the end of its own line
+function does(label, what) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  b.onclick = () => post('/do', 'id=' + what.buttonId + '&h=' + what.buttonH);
+  return b;
+}
+
 function paneBody(pane, into) {
+  // a pane that says it scrolls is a pane the window does not grow for
+  if(pane.scrolls) into.classList.add('scrolls');
   lines(pane.fields, into, pane.columns);
   for(const section of pane.sections) {
     const box = document.createElement('div');
@@ -393,6 +419,14 @@ function paneBody(pane, into) {
       box.appendChild(h);
     }
     lines(section.fields, box, section.columns);
+    // a section acts as well as holds, and its button goes at the end of it
+    if(section.button) {
+      const row = document.createElement('div'); row.className = 'line act';
+      const gap = document.createElement('div');
+      gap.className = 'cell gap'; row.appendChild(gap);
+      row.appendChild(does(section.button, section));
+      box.appendChild(row);
+    }
     into.appendChild(box);
   }
 }
@@ -605,29 +639,25 @@ function drawForms(forms) {
     const beside = pane ? pane.beside : [];
     if(beside.length || (pane && pane.button)) {
       const bar = document.createElement('div'); bar.className = 'foot';
-      for(const f of beside) bar.appendChild(cell(f));
+      lines(beside, bar, 0);
+      const row = document.createElement('div'); row.className = 'line act';
       const gap = document.createElement('div');
-      gap.className = 'cell gap'; bar.appendChild(gap);
-      if(pane && pane.button) {
-        const b = document.createElement('button');
-        b.textContent = pane.button;
-        b.onclick = () => post('/do', 'id=' + pane.buttonId + '&h=' + pane.buttonH);
-        bar.appendChild(b);
-      }
+      gap.className = 'cell gap'; row.appendChild(gap);
+      if(pane && pane.button) row.appendChild(does(pane.button, pane));
+      bar.appendChild(row);
       card.appendChild(bar);
     }
     if(form.footer.length || form.buttons.length) {
       const bar = document.createElement('div'); bar.className = 'foot';
-      for(const f of form.footer) bar.appendChild(cell(f));
+      // A line of the footer is a line, as everywhere else: three switches one
+      // under another are three lines, not one long one.
+      lines(form.footer, bar, 0);
       if(form.buttons.length) {
+        const row = document.createElement('div'); row.className = 'line act';
         const gap = document.createElement('div');
-        gap.className = 'cell gap'; bar.appendChild(gap);
-      }
-      for(const b of form.buttons) {
-        const button = document.createElement('button');
-        button.textContent = b.label;
-        button.onclick = () => post('/do', which(b));
-        bar.appendChild(button);
+        gap.className = 'cell gap'; row.appendChild(gap);
+        for(const b of form.buttons) row.appendChild(does(b.label, b));
+        bar.appendChild(row);
       }
       card.appendChild(bar);
     }

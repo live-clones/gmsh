@@ -749,6 +749,9 @@ namespace {
     {
       std::string out = "{\"label\":" + _quoted(p.label);
       out += ",\"columns\":" + std::to_string(p.columns);
+      // a long pane scrolls rather than making the window as tall as it is
+      out += ",\"scrolls\":";
+      out += p.scrolling ? "true" : "false";
       out += ",\"fields\":" + _fieldList(p.fields);
       out += ",\"sections\":[";
       bool first = true;
@@ -758,7 +761,17 @@ namespace {
         first = false;
         out += "{\"label\":" + _quoted(section.label);
         out += ",\"columns\":" + std::to_string(section.columns);
-        out += ",\"fields\":" + _fieldList(section.fields) + "}";
+        out += ",\"fields\":" + _fieldList(section.fields);
+        // a section acts as well as holds: the high-order window generates
+        // from one of its sections and regularizes from the other
+        out += ",\"button\":" + _quoted(section.buttonLabel);
+        if(section.button) {
+          _actions.push_back(section.button);
+          _actionNames.push_back(_nameOf("pane:" + section.label));
+          out += ",\"buttonId\":" + std::to_string((int)_actions.size() - 1);
+          out += ",\"buttonH\":" + std::to_string(_actionNames.back());
+        }
+        out += "}";
       }
       out += "],\"beside\":" + _fieldList(p.beside);
       out += ",\"button\":" + _quoted(p.buttonLabel);
