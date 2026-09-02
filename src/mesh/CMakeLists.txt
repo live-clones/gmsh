@@ -21,7 +21,7 @@ set(SRC
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
     meshGRegionDelaunay.cpp meshGRegionTet4.cpp
-    meshGRegionRefine.cpp meshGRegionOptimize.cpp meshGRegionAdapt.cpp
+    meshGRegionDelaunayFlat.cpp meshGRegionOptimize.cpp meshGRegionAdapt.cpp
     meshGRegionTransfinite.cpp
     meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp
