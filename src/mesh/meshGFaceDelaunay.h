@@ -3,8 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef MESH_GFACE_DELAUNAY_INSERTIONFACE_H
-#define MESH_GFACE_DELAUNAY_INSERTIONFACE_H
+#ifndef MESH_GFACE_DELAUNAY_H
+#define MESH_GFACE_DELAUNAY_H
 
 #include "MTriangle.h"
 #include "MQuadrangle.h"

@@ -14,7 +14,7 @@
 #include "BDS.h"
 #include "GFace.h"
 #include "discreteFace.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "Numeric.h"
 #include "qualityMeasures.h"
 

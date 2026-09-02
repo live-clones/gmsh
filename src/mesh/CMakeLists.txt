@@ -11,7 +11,7 @@ set(SRC
   meshGFace.cpp
   meshGFacePack.cpp
     meshGFaceTransfinite.cpp meshGFaceExtruded.cpp
-    meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp
+    meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunay.cpp
     meshGFaceDelaunayFlat.cpp meshGFaceOptimize.cpp
     meshGFaceBipartiteLabelling.cpp
     meshGFaceOrient.cpp meshGFaceQuadHalf.cpp meshGFaceCopy.cpp

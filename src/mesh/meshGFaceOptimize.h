@@ -11,7 +11,7 @@
 #include <vector>
 #include "MElement.h"
 #include "MEdge.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "STensor3.h"
 
 class GFace;

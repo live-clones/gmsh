@@ -4,7 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 // Flat-array kernels of the two Bowyer-Watson surface meshers of
-// meshGFaceDelaunayInsertion.cpp - the plain Delaunay one (Mesh.Algorithm = 5,
+// meshGFaceDelaunay.cpp - the plain Delaunay one (Mesh.Algorithm = 5,
 // bowyerWatson) and the Frontal-Delaunay one (Mesh.Algorithm = 6,
 // bowyerWatsonFrontal) - sharing one backend.
 //
@@ -40,7 +40,7 @@
 #include "GmshMessage.h"
 #include "robustPredicates.h"
 #include "BackgroundMesh.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
 #include "meshGFaceParamBoundary.h"
@@ -72,7 +72,7 @@ static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
 // in the metric (a b; b d): x is equidistant from the three points, i.e.
 // (x-pb) M (x-pb) = (x-pa) M (x-pa) and the same for pc, a linear 2x2 system.
 // Same formulas as algo 6 (circumCenterMetric in
-// meshGFaceDelaunayInsertion.cpp); x is (0,0) if the system is singular.
+// meshGFaceDelaunay.cpp); x is (0,0) if the system is singular.
 static void circumCenterMetric(double *pa, double *pb, double *pc,
                                const double *metric, double *x, double &Radius2)
 {
@@ -173,7 +173,7 @@ static inline TriangleFlag &operator&=(TriangleFlag &a, TriangleFlag b)
 
 // Oriented edge iFac of triangle t1, with its vertex ids stored sorted
 // (ori records whether they were swapped) - the flat counterpart of
-// edgeXface (meshGFaceDelaunayInsertion.h).
+// edgeXface (meshGFaceDelaunay.h).
 struct flatEdgeFace {
   std::size_t v[2];
   std::size_t t1;
@@ -384,7 +384,7 @@ struct flatQueue {
 };
 
 // Queue radius of a triangle - the same quantity, computed with the same
-// formulas, as the MTri3 constructor (meshGFaceDelaunayInsertion.cpp), for
+// formulas, as the MTri3 constructor (meshGFaceDelaunay.cpp), for
 // each of the three MTri3::radiusNorm conventions.
 static double computeRadius(const flatMeshData &data,
                             const std::array<std::size_t, 3> &tri, double lc,

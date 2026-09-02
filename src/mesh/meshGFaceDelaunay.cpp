@@ -13,7 +13,7 @@
 #include "OS.h"
 #include "robustPredicates.h"
 #include "BackgroundMesh.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
 #include "meshGFaceParamBoundary.h"

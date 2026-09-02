@@ -26,7 +26,7 @@
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGFaceBDS.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "meshGFaceBamg.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFaceQuadHalf.h"
