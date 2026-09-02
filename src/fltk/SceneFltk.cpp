@@ -54,7 +54,7 @@ PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type);
 // chantier of its own, to be rewritten rather than adapted, and until then it
 // keeps the shape it has always had.
 
-namespace Gui {
+namespace FltkScene {
 
   // this interface holds the scene inside its own windows and draws it in its
   // own loop; there is nothing to pump from outside, and nothing to send
@@ -90,20 +90,20 @@ namespace Gui {
 
   void orientViews(const std::string &what, bool reverse, bool sync)
   {
-    if(available()) fltkOrientViews(what, reverse, sync);
+    if(Gui::available()) fltkOrientViews(what, reverse, sync);
   }
 
   void setMouseSelection(bool on)
   {
-    if(available()) fltkSetMouseSelection(on);
+    if(Gui::available()) fltkSetMouseSelection(on);
   }
 
   void toggleAnimation()
   {
-    if(available()) fltkToggleAnimation();
+    if(Gui::available()) fltkToggleAnimation();
   }
 
-  bool animating() { return available() && fltkAnimating(); }
+  bool animating() { return Gui::available() && fltkAnimating(); }
 
   void abortSelection()
   {
@@ -142,7 +142,7 @@ namespace Gui {
 
   void showAllInEveryWindow()
   {
-    if(!available()) return;
+    if(!Gui::available()) return;
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
         FlGui::instance()->graph[i]->gl[j]->getDrawContext()->showAll();
@@ -204,6 +204,29 @@ namespace Gui {
     return FlGui::instance()->selectedViews;
   }
 
-} // namespace Gui
+
+// what this file answers for, said once and filled from the list in
+// GuiSceneOps.h so that nothing here can be forgotten
+namespace {
+  struct offering {
+    offering()
+    {
+      Gui::SceneOps ops;
+#define GUI_SCENE_TAKE(name, args, call) ops.name = name;
+      GUI_SCENE_VOID(GUI_SCENE_TAKE)
+#undef GUI_SCENE_TAKE
+#define GUI_SCENE_TAKE(ret, name, args, call, none) ops.name = name;
+      GUI_SCENE_VALUE(GUI_SCENE_TAKE)
+#undef GUI_SCENE_TAKE
+#define GUI_SCENE_TAKE(type, name) ops.name = name;
+      GUI_SCENE_LIST(GUI_SCENE_TAKE)
+#undef GUI_SCENE_TAKE
+      Gui::offerScene("fltk", ops);
+    }
+  };
+  offering _offering;
+}
+} // namespace FltkScene
+
 
 #endif

@@ -41,7 +41,7 @@
 // closed, as the FLTK tree leaves it after its first build.
 void appWindow::_walkModules(const std::string &path, int depth)
 {
-  const Ui::Tree &tree = uiSources().tree;
+  const Ui::Tree &tree = imguiSources().tree;
   for(const auto &child : tree.children(path)) {
     Ui::Node node = tree.node(child);
     std::string label = node.label.size() ?
@@ -117,12 +117,12 @@ void appWindow::_drawModulesPanel()
     float footer = ImGui::GetFrameHeightWithSpacing() +
                    ImGui::GetStyle().ItemSpacing.y;
     ImGui::BeginChild("##tree", ImVec2(0.f, -footer));
-    for(const auto &root : uiSources().tree.children("")) {
+    for(const auto &root : imguiSources().tree.children("")) {
       if(root == "0Modules") {
         _walkModules(root, 0);
         continue;
       }
-      Ui::Node node = uiSources().tree.node(root);
+      Ui::Node node = imguiSources().tree.node(root);
       std::string label = node.label.size() ?
                             node.label :
                             root.substr(root.find_last_of('/') + 1);
@@ -136,8 +136,8 @@ void appWindow::_drawModulesPanel()
 
   // And under it, the row the description hangs there.
   {
-    std::vector<Ui::Button> row = uiSources().tree.footer ?
-                                    uiSources().tree.footer() :
+    std::vector<Ui::Button> row = imguiSources().tree.footer ?
+                                    imguiSources().tree.footer() :
                                     std::vector<Ui::Button>();
     for(std::size_t i = 0; i < row.size(); i++) {
       if(i) ImGui::SameLine();

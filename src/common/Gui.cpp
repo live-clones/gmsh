@@ -65,7 +65,25 @@ namespace Gui {
               void (*errorHandler)(const char *fmt, ...))
   {
     if(_backend) return;
-    Ui::Backend *made = makeUiBackend();
+    // Which interface. Every one that was built says so at start-up; this
+    // says which of them to use -- what was asked for on the command line,
+    // then what the environment says, then whichever was offered first. A
+    // name nobody offered is worth a word rather than a silent fallback:
+    // asking for an interface that is not there is a mistake, not a wish.
+    std::string want = CTX::instance()->guiToolkit;
+    if(want.empty() && getenv("GMSH_GUI")) want = getenv("GMSH_GUI");
+    Ui::Backend *made = Ui::make(want);
+    // and the scene that goes with it: the one offered under that name, or
+    // the one in a window of its own for a chrome that draws none
+    if(made) useScene(Ui::chosen());
+    if(!made && want.size()) {
+      std::string said;
+      for(const auto &name : Ui::offered()) said += (said.size() ? ", " : "") + name;
+      Msg::Error("No interface called '%s'%s%s", want.c_str(),
+                 said.size() ? "; this build has " : " in this build",
+                 said.c_str());
+      return;
+    }
     if(!made) return;
 
     // What the toolkit is to say when something inside it goes wrong, and

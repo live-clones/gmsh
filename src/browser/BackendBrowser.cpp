@@ -941,10 +941,21 @@ namespace {
 
 } // namespace
 
-Ui::Backend *makeUiBackend()
-{
-  if(!_the) _the = new browserBackend();
-  return _the;
+// The one this file offers, made once. Saying so here rather than being asked
+// for by name from the shared side is what lets every chrome that was compiled
+// in be there at once, and lets the choice be a word one types.
+namespace {
+  struct offeringBrowser {
+    offeringBrowser()
+    {
+      Ui::offer("browser", []() -> Ui::Backend * {
+        if(!_the) _the = new browserBackend();
+        return _the;
+      });
+    }
+  };
+  offeringBrowser _offeringBrowser;
 }
+
 
 #endif

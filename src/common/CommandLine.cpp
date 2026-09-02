@@ -179,6 +179,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "(General.FontSize)"));
   s.push_back(mp("-theme string", "Specify FLTK GUI theme (General.FltkTheme)"));
   s.push_back(mp("-display string", "Specify display (General.Display)"));
+  s.push_back(mp("-gui string", "Which interface to use when the build has "
+                 "more than one (fltk, imgui, browser)"));
   s.push_back(mp("-camera", "Use camera mode view (General.CameraMode)"));
   s.push_back(mp("-stereo", "OpenGL quad-buffered stereo rendering "
                  "(General.Stereo)"));
@@ -1488,6 +1490,15 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
     i++;
     if(i < argv.size())
       opt_general_display(0, GMSH_SET, argv[i++]);
+    else {
+      Msg::Error("Missing argument");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-gui") {
+    i++;
+    if(i < argv.size())
+      CTX::instance()->guiToolkit = argv[i++];
     else {
       Msg::Error("Missing argument");
       if(exitOnError) Msg::Exit(1);

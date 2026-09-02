@@ -348,16 +348,27 @@ namespace {
 } // namespace
 
 // what the interface was given, for the files that build from it
-const Ui::Backend::Sources &uiSources()
+const Ui::Backend::Sources &fltkSources()
 {
   static Ui::Backend::Sources none;
   return _the ? _the->sources() : none;
 }
 
-Ui::Backend *makeUiBackend()
-{
-  if(!_the) _the = new backendFltk();
-  return _the;
+// The one this file offers, made once. Saying so here rather than being asked
+// for by name from the shared side is what lets every chrome that was compiled
+// in be there at once, and lets the choice be a word one types.
+namespace {
+  struct offeringFltk {
+    offeringFltk()
+    {
+      Ui::offer("fltk", []() -> Ui::Backend * {
+        if(!_the) _the = new backendFltk();
+        return _the;
+      });
+    }
+  };
+  offeringFltk _offeringFltk;
 }
+
 
 #endif

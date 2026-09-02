@@ -4,6 +4,7 @@
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
+  Backend.cpp
   Form.cpp
   Menu.cpp
 )

@@ -33,10 +33,15 @@ figures=$work/figures
 [ -x "$py" ] || { echo "no virtualenv at $venv; see the head of this file" >&2; exit 1; }
 command -v Xvfb >/dev/null || { echo "Xvfb is not installed" >&2; exit 1; }
 
+# One build holding every interface if there is one, since which of them comes
+# up is decided when it does; otherwise the one dedicated to each.
+one=""
+[ -d "$root/build-all" ] && one="$root/build-all"
+
 # gmsh.py looks for the library next to itself
-cp "$root/api/gmsh.py" "$root/build/gmsh.py"
-cp "$root/api/gmsh.py" "$root/build-imgui/gmsh.py"
-[ -d "$root/build-browser" ] && cp "$root/api/gmsh.py" "$root/build-browser/gmsh.py"
+for d in build build-imgui build-browser build-all; do
+  [ -d "$root/$d" ] && cp "$root/api/gmsh.py" "$root/$d/gmsh.py"
+done
 
 mkdir -p "$shots" "$figures"
 if [ $# -eq 0 ]; then
@@ -64,13 +69,13 @@ photograph() {
 }
 
 photograph released 95 "" &
-photograph fltk 96 "$root/build" &
-photograph imgui 97 "$root/build-imgui" &
-# the page in a browser, if that build is there: it is driven over the socket
-# it answers on rather than by clicking, and photographed inside one browser
+photograph fltk 96 "${one:-$root/build}" &
+photograph imgui 97 "${one:-$root/build-imgui}" &
+# the page in a browser, if it was built: it is driven over the socket it
+# answers on rather than by clicking, and photographed inside one browser
 # window
-if [ -d "$root/build-browser" ]; then
-  photograph browser 98 "$root/build-browser" &
+if [ -n "$one" ] || [ -d "$root/build-browser" ]; then
+  photograph browser 98 "${one:-$root/build-browser}" &
 fi
 wait
 

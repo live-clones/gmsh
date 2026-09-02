@@ -69,7 +69,7 @@ namespace {
 
 } // namespace
 
-namespace Gui {
+namespace ImGuiScene {
 
   // this interface holds the scene inside its own windows and draws it in its
   // own loop; there is nothing to pump from outside, and nothing to send
@@ -128,7 +128,7 @@ namespace Gui {
 
   void abortSelection()
   {
-    if(!available()) return;
+    if(!Gui::available()) return;
     sceneView *p = appWindow::instance()->currentPane();
     if(p) {
       p->quitSelection = 1;
@@ -138,7 +138,7 @@ namespace Gui {
 
   void setAddPointMode(bool on)
   {
-    if(!available()) return;
+    if(!Gui::available()) return;
     appWindow *app = appWindow::instance();
     for(int i = 0; i < app->numPanes(); i++)
       if(app->pane(i)) app->pane(i)->addPointMode = on;
@@ -148,24 +148,24 @@ namespace Gui {
 
   drawContext *getCurrentDrawContext()
   {
-    if(!available()) return nullptr;
+    if(!Gui::available()) return nullptr;
     return appWindow::instance()->currentDrawContext();
   }
 
   void getCurrentPixelSize(int &width, int &height)
   {
     width = height = 0;
-    if(available()) appWindow::instance()->currentPixelSize(width, height);
+    if(Gui::available()) appWindow::instance()->currentPixelSize(width, height);
   }
 
   void setCurrentOpenglWindow(int which)
   {
-    if(available()) appWindow::instance()->setCurrentPane(which);
+    if(Gui::available()) appWindow::instance()->setCurrentPane(which);
   }
 
   void showAllInEveryWindow()
   {
-    if(!available()) return;
+    if(!Gui::available()) return;
     for(int i = 0; i < appWindow::instance()->numPanes(); i++)
       if(sceneView *pane = appWindow::instance()->pane(i))
         if(drawContext *ctx = pane->getDrawContext()) ctx->showAll();
@@ -173,7 +173,7 @@ namespace Gui {
 
   void splitCurrentOpenglWindow(char how, double ratio)
   {
-    if(available()) appWindow::instance()->splitCurrentPane(how, ratio);
+    if(Gui::available()) appWindow::instance()->splitCurrentPane(how, ratio);
   }
 
   void copyCurrentOpenglWindowToClipboard()
@@ -184,7 +184,7 @@ namespace Gui {
   PixelBuffer *createCompositePixelBuffer(unsigned int format,
                                           unsigned int type)
   {
-    if(!available()) return nullptr;
+    if(!Gui::available()) return nullptr;
     appWindow *app = appWindow::instance();
 
     int width = 0, height = 0;
@@ -219,12 +219,12 @@ namespace Gui {
 
   void beginGraphicCapture(int &width, int &height, bool composite)
   {
-    if(available()) appWindow::instance()->beginCapture(width, height, composite);
+    if(Gui::available()) appWindow::instance()->beginCapture(width, height, composite);
   }
 
   void endGraphicCapture()
   {
-    if(available()) appWindow::instance()->endCapture();
+    if(Gui::available()) appWindow::instance()->endCapture();
   }
 
   // --- interactive selection
@@ -238,7 +238,7 @@ namespace Gui {
     _selectedElements.clear();
     _selectedPoints.clear();
     _selectedViews.clear();
-    if(!available()) return 'q';
+    if(!Gui::available()) return 'q';
     sceneView *p = appWindow::instance()->currentPane();
     if(!p) return 'q';
     return p->selectEntity(type, _selectedVertices, _selectedEdges,
@@ -254,6 +254,29 @@ namespace Gui {
   const std::vector<SPoint2> &selectedPoints() { return _selectedPoints; }
   const std::vector<PView *> &selectedViews() { return _selectedViews; }
 
-} // namespace Gui
+
+// what this file answers for, said once and filled from the list in
+// GuiSceneOps.h so that nothing here can be forgotten
+namespace {
+  struct offering {
+    offering()
+    {
+      Gui::SceneOps ops;
+#define GUI_SCENE_TAKE(name, args, call) ops.name = name;
+      GUI_SCENE_VOID(GUI_SCENE_TAKE)
+#undef GUI_SCENE_TAKE
+#define GUI_SCENE_TAKE(ret, name, args, call, none) ops.name = name;
+      GUI_SCENE_VALUE(GUI_SCENE_TAKE)
+#undef GUI_SCENE_TAKE
+#define GUI_SCENE_TAKE(type, name) ops.name = name;
+      GUI_SCENE_LIST(GUI_SCENE_TAKE)
+#undef GUI_SCENE_TAKE
+      Gui::offerScene("imgui", ops);
+    }
+  };
+  offering _offering;
+}
+} // namespace ImGuiScene
+
 
 #endif

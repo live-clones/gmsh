@@ -161,7 +161,7 @@ void fltkModulesBuild(
                            void *data)> &add)
 {
   _modules.byId.clear();
-  _walkModules(uiSources().tree, "0Modules", add);
+  _walkModules(fltkSources().tree, "0Modules", add);
 }
 
 namespace {
@@ -255,7 +255,7 @@ Fl_Menu_Item *fltkMenuBuild(bool systemBar)
   _menu.items.clear();
   _menu.byId.clear();
   // moved in first: what follows takes pointers into it
-  _menu.tree = uiSources().menuBar();
+  _menu.tree = fltkSources().menuBar();
 
   _append(_menu.tree, systemBar);
   Fl_Menu_Item end;

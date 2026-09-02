@@ -5,120 +5,83 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GUI) && !defined(HAVE_GUI_SCENE) && \
-  !defined(HAVE_GL_SCENE)
+#if defined(HAVE_GUI)
+
+#include <map>
 
 #include "GuiScene.h"
 
-// A 3D scene for an interface that has none.
+// Which 3D scene, and what happens when there is none.
 //
-// The scene is a chantier of its own, to be rewritten rather than adapted, and
-// it must not be the thing that stops a new interface from being tried. One
-// that only has to say whether the chrome works -- a backend over a socket, a
-// page in a browser, a recorder that draws nothing -- says HAVE_GUI without
-// saying HAVE_GUI_SCENE, and these answer for it: nothing is drawn, nothing is
-// picked, and nothing crashes.
+// There is one of these per interface, and they are all compiled in: the FLTK
+// windows, the Dear ImGui panes, a window of its own for a chrome that draws
+// nothing. Which one runs is decided when the interface comes up -- beside
+// which chrome -- so what the rest of Gmsh calls cannot be any of them. It is
+// this, which hands the call on to whichever was chosen.
 //
-// Every one of them is what the caller gets when there is no scene, and none
-// of them is a stub waiting to be filled: the interface that has a scene
-// provides its own, in src/fltk/SceneFltk.cpp or src/imgui/SceneImGui.cpp.
+// And when none was, it answers. That is not a courtesy: it is what lets an
+// interface be tried before anyone has written it a scene, which is how the
+// page in a browser came to exist at all. Nothing is drawn, nothing is picked,
+// and nothing crashes.
 
 namespace Gui {
 
-  void pumpScene(bool rateLimited) {}
-  void sceneShownElsewhere() {}
-  std::string scenePicture(int &width, int &height, bool always)
+  namespace {
+
+    // Filled before main() by whichever scenes were built, so it has to exist
+    // the first time it is used and not a moment later.
+    std::map<std::string, SceneOps> &_offered()
+    {
+      static std::map<std::string, SceneOps> it;
+      return it;
+    }
+
+    SceneOps &_ops()
+    {
+      static SceneOps it;
+      return it;
+    }
+
+  } // namespace
+
+  void offerScene(const char *chrome, const SceneOps &ops)
   {
-    return "";
-  }
-  bool sceneMoved() { return false; }
-  void sceneResize(int width, int height) {}
-  void sceneKey(char key) {}
-  void sceneMessage(const std::string &, const std::string &) {}
-  void scenePointer(double x, double y, int button, int what, double wheel,
-                    bool shift, bool ctrl, bool alt)
-  {
-  }
-
-  drawContext *getCurrentDrawContext() { return nullptr; }
-
-  void getCurrentPixelSize(int &width, int &height) { width = height = 0; }
-
-  void setCurrentOpenglWindow(int which) {}
-
-  void showAllInEveryWindow() {}
-
-  void splitCurrentOpenglWindow(char how, double ratio) {}
-
-  void copyCurrentOpenglWindowToClipboard() {}
-
-  PixelBuffer *createCompositePixelBuffer(unsigned int format,
-                                          unsigned int type)
-  {
-    return nullptr;
+    if(chrome) _offered()[chrome] = ops;
   }
 
-  void beginGraphicCapture(int &width, int &height, bool composite) {}
-
-  void endGraphicCapture() {}
-
-  void orientViews(const std::string &what, bool reverse, bool sync) {}
-
-  void setMouseSelection(bool on) {}
-
-  void toggleAnimation() {}
-
-  bool animating() { return false; }
-
-  // 'q' is what a picking says when it was given up, which is what a picking
-  // that never began has to say
-  char selectEntity(int type) { return 'q'; }
-
-  void abortSelection() {}
-
-  void setAddPointMode(bool on) {}
-
-  const std::vector<GVertex *> &selectedVertices()
+  void useScene(const std::string &chrome)
   {
-    static std::vector<GVertex *> none;
-    return none;
+    // the one that belongs to this chrome, or the one that serves any chrome
+    // having none of its own, or nothing at all
+    auto it = _offered().find(chrome);
+    if(it == _offered().end()) it = _offered().find("*");
+    _ops() = (it != _offered().end()) ? it->second : SceneOps();
   }
 
-  const std::vector<GEdge *> &selectedEdges()
-  {
-    static std::vector<GEdge *> none;
-    return none;
-  }
+  // and now the functions GuiScene.h promises, each handing on to whatever
+  // was chosen, each answering for itself when nothing was
 
-  const std::vector<GFace *> &selectedFaces()
-  {
-    static std::vector<GFace *> none;
-    return none;
+#define GUI_SCENE_FORWARD(name, args, call)                                    \
+  void name args                                                               \
+  {                                                                            \
+    if(_ops().name) _ops().name call;                                          \
   }
+  GUI_SCENE_VOID(GUI_SCENE_FORWARD)
+#undef GUI_SCENE_FORWARD
 
-  const std::vector<GRegion *> &selectedRegions()
-  {
-    static std::vector<GRegion *> none;
-    return none;
-  }
+#define GUI_SCENE_FORWARD(ret, name, args, call, none)                         \
+  ret name args { return _ops().name ? _ops().name call : (none); }
+  GUI_SCENE_VALUE(GUI_SCENE_FORWARD)
+#undef GUI_SCENE_FORWARD
 
-  const std::vector<MElement *> &selectedElements()
-  {
-    static std::vector<MElement *> none;
-    return none;
+#define GUI_SCENE_FORWARD(type, name)                                          \
+  const std::vector<type> &name()                                              \
+  {                                                                            \
+    static const std::vector<type> none;                                       \
+    return _ops().name ? _ops().name() : none;                                 \
   }
-
-  const std::vector<SPoint2> &selectedPoints()
-  {
-    static std::vector<SPoint2> none;
-    return none;
-  }
-
-  const std::vector<PView *> &selectedViews()
-  {
-    static std::vector<PView *> none;
-    return none;
-  }
+  GUI_SCENE_LIST(GUI_SCENE_FORWARD)
+#undef GUI_SCENE_FORWARD
 
 } // namespace Gui
 

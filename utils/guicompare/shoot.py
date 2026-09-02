@@ -599,6 +599,10 @@ def find_target(picture, build, avoid=None):
     return (best[1], best[2]) if best else None
 
 
+# which interface the driver is to put up, set once from --build
+BUILD = ""
+
+
 def start_driver(libdir, home, opened, geo=None, context=None):
     env = dict(os.environ)
     env["HOME"] = home
@@ -608,6 +612,10 @@ def start_driver(libdir, home, opened, geo=None, context=None):
     env.pop("WAYLAND_DISPLAY", None)
     env["FLTK_BACKEND"] = "x11"
     env["GMSH_GUI_PLATFORM"] = "x11"
+    # which interface, for a build that holds more than one; a build that
+    # holds only this one pays it no mind
+    if BUILD:
+        env["GMSH_GUI"] = BUILD
     if libdir:
         env["GMSH_LIB_DIR"] = libdir
     env["GMSH_SHOT_PLAN"] = json.dumps(
@@ -1716,6 +1724,8 @@ def main():
                     help="a shot or a dialog by name; all of them by default")
     args = ap.parse_args()
 
+    global BUILD
+    BUILD = "" if args.build == "released" else args.build
     os.makedirs(args.out, exist_ok=True)
     os.makedirs(args.home, exist_ok=True)
     if args.build == "imgui":

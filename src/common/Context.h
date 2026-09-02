@@ -192,6 +192,11 @@ public:
   std::string display;
   // FLTK theme
   std::string guiTheme;
+  // Which interface to put up, when the build has more than one: "fltk",
+  // "imgui", "browser". Empty means the first there is. It is not an option
+  // -- it cannot be changed once a window is up -- so it is set from the
+  // command line or from GMSH_GUI and read once.
+  std::string guiToolkit;
   // FLTK color scheme and max refresh rate
   int guiColorScheme, guiRefreshRate;
   // print messages on to the terminal?

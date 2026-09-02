@@ -649,17 +649,10 @@ if(ENABLE_VISUDEV)
   set_config_option(HAVE_VISUDEV "VisuDev")
 endif()
 
-# the interfaces are mutually exclusive: only one chrome is compiled in a given
-# build, since exactly one makeUiBackend() is linked
-if(ENABLE_BROWSER AND (ENABLE_FLTK OR ENABLE_IMGUI))
-  message(STATUS "ENABLE_BROWSER is set: disabling the other interfaces")
-  set(ENABLE_FLTK OFF)
-  set(ENABLE_IMGUI OFF)
-endif()
-if(ENABLE_IMGUI AND ENABLE_FLTK)
-  message(STATUS "ENABLE_IMGUI is set: disabling the FLTK interface")
-  set(ENABLE_FLTK OFF)
-endif()
+# The interfaces are not exclusive: every one that is enabled is compiled in,
+# and which of them comes up is decided when it does -- "gmsh -gui imgui", or
+# GMSH_GUI, or the first there is. Each says it is there at start-up, and each
+# brings the 3D scene that goes with it.
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
@@ -808,14 +801,12 @@ if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER)
   set(HAVE_GUI TRUE)
 endif()
 
-# and HAVE_GUI_SCENE when the one that is compiled in draws the 3D scene. An
-# interface being tried out -- one that only has to say whether the chrome
-# works -- says nothing, and src/common/GuiScene.cpp answers for it. The scene
-# is a chantier of its own and must not be the thing that stops a new backend
-# from linking.
-if(HAVE_FLTK OR HAVE_IMGUI)
-  set(HAVE_GUI_SCENE TRUE)
-endif()
+# Which 3D scene runs is decided at the same time as which interface does:
+# each says it is there under the name of the chrome it belongs to, and the one
+# in a window of its own serves whichever chrome has none. When none of them is
+# compiled in, src/common/GuiScene.cpp answers for them -- the scene is a
+# chantier of its own and must not be the thing that stops a new interface from
+# linking.
 
 if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
   STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")

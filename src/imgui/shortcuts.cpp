@@ -88,9 +88,9 @@ void appWindow::_handleShortcuts()
   {
     static std::vector<Ui::MenuItem> menus;
     static unsigned built = 0;
-    if(built != uiSources().menuGeneration()) {
-      built = uiSources().menuGeneration();
-      menus = uiSources().menuBar();
+    if(built != imguiSources().menuGeneration()) {
+      built = imguiSources().menuGeneration();
+      menus = imguiSources().menuBar();
     }
     if(_runMenuShortcut(menus, ctrl, shift, io.KeyAlt)) return;
   }

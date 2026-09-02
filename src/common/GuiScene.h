@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "GmshConfig.h"
+#include "GuiSceneOps.h"
 #include "SPoint2.h"
 
 // The 3D scene: what draws the model, and what one picks in it.
@@ -26,10 +27,14 @@
 // Gui.h includes this, so nothing outside has to know that the line is here.
 // What is on this side of it is what remains to be done.
 //
-// An interface that has a scene says HAVE_GUI_SCENE and writes these itself;
-// one that has not -- a backend being tried out, which only has to say whether
-// the chrome works -- says nothing, and GuiScene.cpp answers for it. The scene
-// must not be the thing that stops a new interface from linking.
+// There is more than one scene -- the FLTK windows, the Dear ImGui panes, a
+// window of its own for a chrome that draws none -- and which one runs is
+// decided when the interface comes up, beside which chrome. Each says it is
+// there under the name of the chrome it belongs to; the one offered as "*"
+// serves any chrome that has no scene of its own. When none is there at all,
+// these answer with nothing, which is what lets a new interface be tried
+// before anyone has written it a scene: the scene must not be the thing that
+// stops one from linking.
 
 class drawContext;
 class PixelBuffer;
@@ -41,6 +46,27 @@ class MElement;
 class PView;
 
 namespace Gui {
+
+  // What a scene answers, filled in by whichever one it is. GuiSceneOps.h
+  // says what is in it; there is nothing to write here but the shape.
+  struct SceneOps {
+#define GUI_SCENE_AS_MEMBER(name, args, call) void (*name) args = nullptr;
+    GUI_SCENE_VOID(GUI_SCENE_AS_MEMBER)
+#undef GUI_SCENE_AS_MEMBER
+#define GUI_SCENE_AS_MEMBER(ret, name, args, call, none) ret(*name) args = nullptr;
+    GUI_SCENE_VALUE(GUI_SCENE_AS_MEMBER)
+#undef GUI_SCENE_AS_MEMBER
+#define GUI_SCENE_AS_MEMBER(type, name)                                        \
+  const std::vector<type> &(*name)() = nullptr;
+    GUI_SCENE_LIST(GUI_SCENE_AS_MEMBER)
+#undef GUI_SCENE_AS_MEMBER
+  };
+
+  // A scene says it is there, under the name of the chrome it belongs to;
+  // "*" is the one that serves a chrome having none of its own.
+  void offerScene(const char *chrome, const SceneOps &ops);
+  // and this is which one runs, said once as the interface comes up
+  void useScene(const std::string &chrome);
 
   // Bring the scene up if it is not already, and give it a chance to draw and
   // to answer the pointer. An interface that holds the scene inside its own

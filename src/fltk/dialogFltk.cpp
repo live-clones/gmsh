@@ -562,8 +562,8 @@ void dialogFltk::_tabCallback(Fl_Widget *w, void *data)
   Fl_Widget *shown = ((Fl_Tabs *)w)->value();
   for(std::size_t i = 0; i < d->_groups.size(); i++) {
     if(d->_groups[i] != shown) continue;
-    bool moved = uiSources().formPane(d->_which) != (int)i;
-    uiSources().setFormPane(d->_which, (int)i);
+    bool moved = fltkSources().formPane(d->_which) != (int)i;
+    fltkSources().setFormPane(d->_which, (int)i);
     d->refresh();
     // the user picked this pane: it may have something to start
     if(moved && i < d->_panel.panes.size() && d->_panel.panes[i].chosen)
@@ -575,8 +575,8 @@ void dialogFltk::_tabCallback(Fl_Widget *w, void *data)
     if(d->_outerGroups[g] != shown) continue;
     if(g < d->_firstOfGroup.size() && d->_firstOfGroup[g] >= 0) {
       int first = d->_firstOfGroup[g];
-      bool moved = uiSources().formPane(d->_which) != first;
-      uiSources().setFormPane(d->_which, first);
+      bool moved = fltkSources().formPane(d->_which) != first;
+      fltkSources().setFormPane(d->_which, first);
       d->_forcePane = true;
       d->refresh();
       // picking a family shows its first member, and starts it
@@ -1036,7 +1036,7 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
 void dialogFltk::reshape()
 {
   if(_which < 0) return;
-  Ui::Form now = uiSources().form(_which);
+  Ui::Form now = fltkSources().form(_which);
   if(_win && _signature(now) == _signatureBuilt) {
     _panel = now;
     refresh();
@@ -1070,7 +1070,7 @@ void dialogFltk::build(int dialog)
   _paneButtons.clear();
 
   _which = dialog;
-  _panel = uiSources().form(dialog);
+  _panel = fltkSources().form(dialog);
   _signatureBuilt = _signature(_panel);
   // a window that has just been built has no tab of its own yet
   _forcePane = true;
@@ -1506,7 +1506,7 @@ void dialogFltk::refresh()
 {
   if(!_panel.tabbed) _relayout();
 
-  int shownPane = uiSources().formPane(_which);
+  int shownPane = fltkSources().formPane(_which);
   for(std::size_t i = 0; _panel.tabbed && i < _groups.size(); i++) {
     if((int)i == shownPane) {
       _groups[i]->show();
@@ -1788,7 +1788,7 @@ void dialogFltk::show()
   // What the dialog offers can depend on the model, so it may have to be built
   // again -- but only when its shape really changed: rebuilding a window that
   // is already up makes it blink and come back somewhere else.
-  Ui::Form now = uiSources().form(_which);
+  Ui::Form now = fltkSources().form(_which);
   if(!_win || _signature(now) != _signatureBuilt)
     build(_which);
   else
@@ -1816,7 +1816,7 @@ dialogFltk *fltkDialog(int which, bool create)
   // an array of that size any more; a map keeps the addresses steady, which
   // the widgets that were built for one of them rely on
   static std::map<int, dialogFltk> dialogs;
-  if(which < 0 || which >= uiSources().numForms()) return nullptr;
+  if(which < 0 || which >= fltkSources().numForms()) return nullptr;
   auto it = dialogs.find(which);
   if(it == dialogs.end()) {
     if(!create) return nullptr;

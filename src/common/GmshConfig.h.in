@@ -26,7 +26,6 @@
 #cmakedefine HAVE_GLFW_WAYLAND
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GUI
-#cmakedefine HAVE_GUI_SCENE
 #cmakedefine HAVE_GL_SCENE
 #cmakedefine HAVE_BROWSER
 #cmakedefine HAVE_HXT

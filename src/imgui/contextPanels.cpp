@@ -1456,7 +1456,7 @@ void appWindow::_drawDialog(int which)
 {
   if(!_showDialog[which]) return;
 
-  Ui::Form panel = uiSources().form(which);
+  Ui::Form panel = imguiSources().form(which);
   std::string title = panel.title;
   // the title is the identity of the window, so it must not change under Dear
   // ImGui: the dialog index keeps it stable
@@ -1499,7 +1499,7 @@ void appWindow::_drawDialog(int which)
   // it is a window that will not sit still.
   // the widest each dialog has ever needed to be: one that grows and shrinks
   // sideways as one goes through its categories is one that will not sit still
-  static std::vector<float> widestSeen(uiSources().numForms(), 0.f);
+  static std::vector<float> widestSeen(imguiSources().numForms(), 0.f);
   if(which >= (int)widestSeen.size()) widestSeen.resize(which + 1, 0.f);
   float need = 0.f;
   {
@@ -1658,8 +1658,8 @@ void appWindow::_drawDialog(int which)
       // before its member can -- and the pane drawn in between is not one
       // anybody picked. Starting its tool would answer the request with the
       // wrong window and then make that the right answer.
-      bool moved = wanted < 0 && uiSources().formPane(which) != (int)i;
-      uiSources().setFormPane(which, (int)i);
+      bool moved = wanted < 0 && imguiSources().formPane(which) != (int)i;
+      imguiSources().setFormPane(which, (int)i);
       if((int)i == wanted) _wantedPane[which] = -1;
       if(moved && panel.panes[i].chosen) panel.panes[i].chosen();
       ImGui::PushID((int)i);
@@ -1797,31 +1797,31 @@ void appWindow::_drawDialog(int which)
 
 void appWindow::hideDialog(int which)
 {
-  if(which < 0 || which >= uiSources().numForms()) return;
+  if(which < 0 || which >= imguiSources().numForms()) return;
   bool was = _showDialog[which];
   _showDialog[which] = false;
   _sizedDialog[which] = false;
   // hidden from a menu rather than by its cross, which is the same thing to
   // whatever the dialog undoes when it goes
   if(was) {
-    Ui::Form panel = uiSources().form(which);
+    Ui::Form panel = imguiSources().form(which);
     if(panel.closed) postAction(panel.closed);
   }
 }
 
 bool appWindow::dialogVisible(int which) const
 {
-  if(which < 0 || which >= uiSources().numForms()) return false;
+  if(which < 0 || which >= imguiSources().numForms()) return false;
   return _showDialog[which];
 }
 
 void appWindow::showDialog(int which)
 {
-  if(which < 0 || which >= uiSources().numForms()) return;
+  if(which < 0 || which >= imguiSources().numForms()) return;
   _showDialog[which] = true;
   _focusDialog[which] = true;
   // the pane the description asks for, to be forced once
-  _wantedPane[which] = uiSources().formPane(which);
+  _wantedPane[which] = imguiSources().formPane(which);
 }
 
 #endif

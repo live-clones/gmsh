@@ -350,10 +350,28 @@ namespace Ui {
 
 } // namespace Ui
 
-// The one that was compiled in. Exactly one GUI directory is built -- FLTK or
-// Dear ImGui, never both -- and it defines this; there is no #if left in the
-// shared side as a result. A build with no interface defines it to return
-// null, which is what Gui::available() comes down to.
-Ui::Backend *makeUiBackend();
+namespace Ui {
+
+  // Which chrome, decided when the interface comes up rather than when the
+  // library was built.
+  //
+  // Every one that was compiled in says so at start-up, under a name, and
+  // hands over a way of making one. Nothing here knows what the names are:
+  // they are whatever was built, and what picks between them is Gmsh -- the
+  // command line, or an environment variable, or the first there is. A build
+  // with no interface at all offers nothing, which is what Gui::available()
+  // comes down to.
+  //
+  // The names are the shape of a word one types: "fltk", "imgui", "browser".
+  void offer(const char *name, Backend *(*make)());
+  // what there is, in the order it was offered
+  const std::vector<std::string> &offered();
+  // Make one, by name. An empty name means the first there is; a name that
+  // was never offered makes nothing, and says so by returning null.
+  Backend *make(const std::string &name);
+  // which one that was, as it was offered rather than as it calls itself
+  const std::string &chosen();
+
+} // namespace Ui
 
 #endif

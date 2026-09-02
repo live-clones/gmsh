@@ -5,7 +5,7 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GL_SCENE) && !defined(HAVE_GUI_SCENE)
+#if defined(HAVE_GL_SCENE)
 
 #include <string>
 #include <vector>
@@ -318,7 +318,7 @@ namespace {
 
 } // namespace
 
-namespace Gui {
+namespace WindowScene {
 
   void sceneShownElsewhere() { _it().elsewhere = true; }
 
@@ -419,7 +419,7 @@ namespace Gui {
     // nothing while it sits there and one that costs an eighth of a core.
     if(!always && !_it().changed) return "";
     _it().changed = false;
-    PixelBuffer *shot = Gui::createCompositePixelBuffer(GL_RGB,
+    PixelBuffer *shot = createCompositePixelBuffer(GL_RGB,
                                                         GL_UNSIGNED_BYTE);
     if(!shot) return "";
     width = shot->getWidth();
@@ -613,6 +613,29 @@ namespace Gui {
     return _it().views;
   }
 
-} // namespace Gui
+
+// what this file answers for, said once and filled from the list in
+// GuiSceneOps.h so that nothing here can be forgotten
+namespace {
+  struct offering {
+    offering()
+    {
+      Gui::SceneOps ops;
+#define GUI_SCENE_TAKE(name, args, call) ops.name = name;
+      GUI_SCENE_VOID(GUI_SCENE_TAKE)
+#undef GUI_SCENE_TAKE
+#define GUI_SCENE_TAKE(ret, name, args, call, none) ops.name = name;
+      GUI_SCENE_VALUE(GUI_SCENE_TAKE)
+#undef GUI_SCENE_TAKE
+#define GUI_SCENE_TAKE(type, name) ops.name = name;
+      GUI_SCENE_LIST(GUI_SCENE_TAKE)
+#undef GUI_SCENE_TAKE
+      Gui::offerScene("*", ops);
+    }
+  };
+  offering _offering;
+}
+} // namespace WindowScene
+
 
 #endif

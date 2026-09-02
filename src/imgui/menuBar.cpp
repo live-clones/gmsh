@@ -69,9 +69,9 @@ void appWindow::_drawMenuBar()
   // rebuilt only when what it shows has changed, not at every frame
   static std::vector<Ui::MenuItem> menus;
   static unsigned built = 0;
-  if(built != uiSources().menuGeneration()) {
-    built = uiSources().menuGeneration();
-    menus = uiSources().menuBar();
+  if(built != imguiSources().menuGeneration()) {
+    built = imguiSources().menuGeneration();
+    menus = imguiSources().menuBar();
   }
 
   const ImGuiViewport *viewport = ImGui::GetMainViewport();

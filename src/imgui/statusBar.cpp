@@ -72,7 +72,7 @@ void appWindow::_drawStatusBar()
       // different labels, different tooltips, and the button that says
       // whether the mouse picks meaning the opposite thing.
       static std::vector<Ui::BarButton> bar;
-      bar = uiSources().barButtons();
+      bar = imguiSources().barButtons();
       for(std::size_t i = 0; i < bar.size(); i++) {
         const Ui::BarButton &b = bar[i];
         if(b.gapBefore) ImGui::Separator();
@@ -119,16 +119,16 @@ void appWindow::_drawStatusBar()
       // as the FLTK bar does; the target is the whole strip left of the
       // progress, not just the text, so that it can be hit when the message is
       // short or empty.
-      Ui::BarMessage m = uiSources().barMessage();
+      Ui::BarMessage m = imguiSources().barMessage();
       ImVec2 textPos = ImGui::GetCursorScreenPos();
       float avail = ImGui::GetContentRegionAvail().x;
       if(m.running) avail -= 200.f * _styleScale;
       if(avail < 1.f) avail = 1.f;
       if(ImGui::InvisibleButton("##statusMessage",
                                 ImVec2(avail, ImGui::GetFrameHeight())))
-        postAction(uiSources().barPressed);
+        postAction(imguiSources().barPressed);
       if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        ImGui::SetTooltip("%s", uiSources().barTooltip().c_str());
+        ImGui::SetTooltip("%s", imguiSources().barTooltip().c_str());
       ImGui::SetCursorScreenPos(textPos);
 
       if(m.colour == Gui::StatusColorError)
