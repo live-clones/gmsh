@@ -33,9 +33,16 @@ versions side by side at their true size: a dialog that came out twice as tall
 as the one it replaces has to look twice as tall.
 
 utils/guicompare/out/bench.html is the lot in one page -- every dialog, every
-interface, a box to filter by name and a switch to double the pixels. It points
-at the shots where they lie rather than carrying them, so it is opened from the
-disk, next to them.
+interface, a box to filter by name and a control for how big to draw them. It
+points at the shots where they lie rather than carrying them, so it is opened
+from the disk, next to them.
+
+That control is in screen pixels per picture pixel rather than in a zoom, and
+on purpose: a screenshot looks like itself only while each of its pixels covers
+a whole number of the screen's, and what a browser does when they do not is its
+own business -- the same page came out right in one and broken in another. Said
+this way there is nothing to interpolate. It opens at whatever makes a window
+as big as it was on the server it was photographed on.
 
 How it works, and why it is built this way
 ------------------------------------------

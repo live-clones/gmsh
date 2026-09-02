@@ -1651,9 +1651,14 @@ void appWindow::_drawDialog(int which)
     auto drawPane = [&](std::size_t i) {
       // The user moved to this pane: it may have something to start, which is
       // how moving to the Line tab of the elementary window asks for a start
-      // point rather than leaving the tool that was running. A pane that was
-      // asked for is not the user moving, and starts nothing.
-      bool moved = (int)i != wanted && uiSources().formPane(which) != (int)i;
+      // point rather than leaving the tool that was running.
+      //
+      // Nothing of the sort while a pane is still being asked for. Two rows
+      // of tabs take more than one frame to settle -- the family has to open
+      // before its member can -- and the pane drawn in between is not one
+      // anybody picked. Starting its tool would answer the request with the
+      // wrong window and then make that the right answer.
+      bool moved = wanted < 0 && uiSources().formPane(which) != (int)i;
       uiSources().setFormPane(which, (int)i);
       if((int)i == wanted) _wantedPane[which] = -1;
       if(moved && panel.panes[i].chosen) panel.panes[i].chosen();

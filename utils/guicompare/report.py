@@ -203,7 +203,16 @@ figcaption {
 }
 figcaption b { font-weight: 600; }
 figcaption .why { color: var(--ink-faint); }
-figure img { display: block; image-rendering: pixelated; }
+/* How the pictures are drawn.
+   A screenshot has the pixels it has, and it looks like itself only while
+   each of them covers a whole number of the screen's. Otherwise some rows of
+   a letter come out twice as thick as others -- and how badly depends on the
+   browser, which is why the same page can look right in one and broken in
+   another. So the size is never asked for in the abstract: it is said in
+   screen pixels per picture pixel, and the width in CSS is worked out from
+   that and from what the screen says it is worth. That leaves nothing to
+   interpolate, and nothing for a browser to have an opinion about. */
+figure img { display: block; height: auto; }
 figure .num {
   display: block;
   padding: 5px 10px 7px;
@@ -225,7 +234,7 @@ figure.none .said {
   font-size: 13px;
   text-align: center;
 }
-body.big figure img { zoom: 2; }
+
 """
 
 SCRIPT = """
@@ -244,9 +253,34 @@ function sift() {
   said.textContent = shown + ' / ' + sections.length + ' fenêtres';
 }
 box.addEventListener('input', sift);
-document.getElementById('big').addEventListener('change', e => {
-  document.body.classList.toggle('big', e.target.checked);
-});
+
+// How big a picture is drawn, said in screen pixels per picture pixel so
+// that one of its pixels always covers a whole number of the screen's and
+// there is nothing to interpolate. What that comes to in the units a page is
+// laid out in depends on what the screen says it is worth, which is why it is
+// worked out here rather than written into the style sheet.
+//
+// The default is what makes a window as big on this screen as it was on the
+// one it was photographed on, which is the size the bench is about.
+const zoom = document.getElementById('zoom');
+const how = document.getElementById('how');
+const shots = [...document.querySelectorAll('figure img')];
+function scale() {
+  const k = Number(zoom.value);
+  const dpr = window.devicePixelRatio || 1;
+  for(const im of shots)
+    im.style.width = (Number(im.dataset.w) * k / dpr) + 'px';
+  how.textContent = dpr === 1 ? 'pixel pour pixel'
+    : '\u00e9cran \u00d7' + dpr + ', donc ' + (k / dpr) +
+      ' pixel de page par pixel de capture';
+}
+zoom.addEventListener('change', scale);
+// the ratio changes when the window is dragged to another screen
+matchMedia('(resolution: 1dppx)').addEventListener('change', scale);
+window.addEventListener('resize', scale);
+zoom.value = String(Math.max(1, Math.min(3,
+                    Math.round(window.devicePixelRatio || 1))));
+scale();
 sift();
 """
 
@@ -268,9 +302,11 @@ def write(shots, out, title):
                 size = size_of(path)
                 rows.append(
                     '<figure><figcaption><b>%s</b><span class="why">%s</span>'
-                    '</figcaption><img src="%s/%s" alt="%s, %s" loading="lazy">'
+                    '</figcaption><img src="%s/%s" alt="%s, %s" '
+                    'data-w="%d" loading="lazy">'
                     '<span class="num">%s</span></figure>'
                     % (caption, NOTE.get(key, ""), where, f, name, caption,
+                       size[0] if size else 0,
                        "%d &times; %d" % size if size else "&nbsp;"))
             else:
                 rows.append(
@@ -306,7 +342,13 @@ avoir l'air deux fois plus haute.</p>
 <div class="bar">
 <input type="search" id="filter" placeholder="filtrer&nbsp;: options, elementary, visibility…"
        aria-label="filtrer les fenêtres">
-<label><input type="checkbox" id="big"> pixels doublés</label>
+<label for="zoom">pixels d'écran par pixel de capture</label>
+<select id="zoom">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+</select>
+<span class="said" id="how"></span>
 <span class="said" id="said"></span>
 </div>
 <main>
