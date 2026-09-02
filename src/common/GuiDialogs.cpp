@@ -235,9 +235,15 @@ namespace Dialog {
     p.panes.push_back(pane(
       "Rotate",
       std::vector<Field>{
-        text("Axis point X", &g.px), beside(text("Axis direction DX", &g.ax)),
-        text("Axis point Y", &g.py), beside(text("Axis direction DY", &g.ay)),
-        text("Axis point Z", &g.pz), beside(text("Axis direction DZ", &g.az)),
+        // the three components of the direction are half a field wide, as
+        // the window this reproduces draws them: what they hold is a
+        // component and not a coordinate
+        sized(text("Axis point X", &g.px), 10.),
+        beside(sized(text("Axis direction DX", &g.ax), 5.)),
+        sized(text("Axis point Y", &g.py), 10.),
+        beside(sized(text("Axis direction DY", &g.ay), 5.)),
+        sized(text("Axis point Z", &g.pz), 10.),
+        beside(sized(text("Axis direction DZ", &g.az), 5.)),
         text("Angle", &g.angle), onCopy("Apply rotation on copy")} +
         extrudeFields()));
     p.panes.push_back(pane(

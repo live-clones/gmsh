@@ -714,6 +714,10 @@ namespace {
       if(f.disclosure) out += ",\"fold\":true";
       if(f.packed) out += ",\"packed\":true";
       if(f.widthEm > 0.) out += ",\"em\":" + std::to_string(f.widthEm);
+      // the fraction of one field it takes: two halves fill exactly one, so
+      // that the label after the pair lines up with those above and below
+      if(f.widthShare > 0.)
+        out += ",\"share\":" + std::to_string(f.widthShare);
       if(f.rows > 1) out += ",\"rows\":" + std::to_string(f.rows);
       if(f.tooltip.size()) out += ",\"help\":" + _quoted(f.tooltip);
       if(f.enabled && !f.enabled()) out += ",\"off\":true";

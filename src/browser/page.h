@@ -23,6 +23,10 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  html,body{height:100%;margin:0}
  body{font:13px system-ui,sans-serif;background:#f4f4f4;color:#111;
       display:flex;flex-direction:column}
+ /* A form control does not inherit the font it sits in: left alone it draws
+    at whatever the browser likes, and a width said in ems then comes out
+    wrong by that much. */
+ input,select,button,textarea{font:inherit}
  #bar{background:#e3e3e3;border-bottom:1px solid #bbb;padding:2px 6px;
       display:flex;gap:2px;flex:none}
  .top{padding:3px 9px;cursor:default;position:relative}
@@ -114,6 +118,8 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     of a pane laid out on columns is for. */
  .cell{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0}
  .cell.packed{flex:0 0 auto}
+ .cell.run{gap:0}
+ .cell.run>.cell{gap:0}
  .cell.packed label{flex:0 0 auto}
  /* a row of values with a button after them is not columns of equal width:
     the button goes to the end of the line, as these windows draw it */
@@ -359,7 +365,10 @@ function cell(f) {
   const say = document.createElement('label');
   say.textContent = f.label;
   const what = field(f);
+  // how wide it says it is: in its own units, or as a fraction of the one
+  // field a line is divided into
   if(f.em) what.style.width = f.em + 'em';
+  else if(f.share) what.style.width = (f.share * 10) + 'em';
   if(f.off) what.disabled = true;
   if(f.kind === 'action' || f.kind === 'menu') {
     box.appendChild(what);
@@ -377,10 +386,16 @@ function cell(f) {
     // starts at the same place on every line, as it does in the windows this
     // reproduces
     box.classList.add('before');
-    box.appendChild(say);
+    if(f.label) box.appendChild(say);
     box.appendChild(what);
   }
-  else { box.appendChild(what); box.appendChild(say); }
+  else {
+    box.appendChild(what);
+    // A field with nothing to say beside it says nothing: an empty label
+    // would still take the space between itself and the field, which is
+    // what separates two halves of a value that are meant to touch.
+    if(f.label) box.appendChild(say);
+  }
   return box;
 }
 
@@ -414,9 +429,27 @@ function lines(fields, into, columns) {
     const holds = row.filter(f => f.kind !== 'label' && f.kind !== 'gap' &&
                                   f.kind !== 'action' && f.kind !== 'list' &&
                                   f.kind !== 'hierarchy' && f.kind !== 'check' &&
-                                  !f.em).length;
+                                  !f.em && !f.share).length;
     if(holds > 1) line.style.setProperty('--n', holds);
-    for(const f of row) line.appendChild(cell(f));
+    // Fields that take the width they need follow one another with nothing
+    // between them: two halves of a value are drawn as one box split in two,
+    // not as two boxes with a gap. So a run of them is put in a cell of its
+    // own, and only what is around the run is spaced.
+    let run = null;
+    for(const f of row) {
+      const one = cell(f);
+      if(f.packed && f.kind !== 'gap') {
+        if(!run) {
+          run = document.createElement('div');
+          run.className = 'cell packed run';
+          line.appendChild(run);
+        }
+        run.appendChild(one);
+        continue;
+      }
+      run = null;
+      line.appendChild(one);
+    }
     into.appendChild(line);
   }
 }

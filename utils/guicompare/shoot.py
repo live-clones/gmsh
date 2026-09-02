@@ -578,9 +578,11 @@ def click(dpy, x, y):
 # bottom right corner. Either would be more conspicuous than the model.
 SCENE_BOX = {"released": (210, 95, 130, 110), "fltk": (210, 95, 130, 110),
              "imgui": (250, 110, 130, 300),
-             # the page hands over a picture of the scene and nothing else, so
-             # there is nothing to keep away from but its own edge
-             "browser": (10, 10, 10, 10)}
+             # The page hands over a picture of the scene and nothing else,
+             # so there is no dialog to keep away from -- but the axes and
+             # the little triad Gmsh draws in the corners are darker than any
+             # curve, and clicking one picks nothing.
+             "browser": (60, 60, 150, 120)}
 
 
 def find_target(picture, build, avoid=None):
@@ -1389,7 +1391,10 @@ def photograph_browser(dpy, args, specs):
                                     % name)
                     break
                 print("PICK %s at %d,%d" % (name, target[0], target[1]))
-                for what in (1, 2):
+                # moved, pressed, released: a scene is told what the pointer
+                # did, and a press it never saw arrive is a press on a place
+                # it does not know the pointer to be
+                for what in (0, 1, 2):
                     browser_ask(port, "/pointer",
                                 "x=%d&y=%d&b=0&w=%d&d=0&s=0&c=0&a=0"
                                 % (target[0], target[1], what), timeout=3)
