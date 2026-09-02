@@ -288,63 +288,6 @@ void computeEquivalences(GFace *gf, bidimMeshData &data)
   }
 }
 
-struct equivalentTriangle {
-  MTriangle *_t;
-  MVertex *_v[3];
-  equivalentTriangle(MTriangle *t, std::map<MVertex *, MVertex *> *equivalence)
-    : _t(t)
-  {
-    for(int i = 0; i < 3; i++) {
-      MVertex *v = t->getVertex(i);
-      auto it = equivalence->find(v);
-      if(it == equivalence->end())
-        _v[i] = v;
-      else
-        _v[i] = it->second;
-    }
-    std::sort(_v, _v + 3);
-  }
-  bool operator<(const equivalentTriangle &other) const
-  {
-    for(int i = 0; i < 3; i++) {
-      if(other._v[i] > _v[i]) return true;
-      if(other._v[i] < _v[i]) return false;
-    }
-    return false;
-  }
-};
-
-bool computeEquivalentTriangles(GFace *gf,
-                                std::map<MVertex *, MVertex *> *equivalence)
-{
-  if(!equivalence) return false;
-  std::vector<MTriangle *> WTF;
-  if(!equivalence) return false;
-  std::set<equivalentTriangle> eqTs;
-  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-    equivalentTriangle et(gf->triangles[i], equivalence);
-    auto iteq = eqTs.find(et);
-    if(iteq == eqTs.end())
-      eqTs.insert(et);
-    else {
-      WTF.push_back(iteq->_t);
-      WTF.push_back(gf->triangles[i]);
-    }
-  }
-
-  if(WTF.size()) {
-    Msg::Info("%d triangles are equivalent", WTF.size());
-    for(std::size_t i = 0; i < WTF.size(); i++) {}
-    return true;
-  }
-  return false;
-}
-
-void splitEquivalentTriangles(GFace *gf, bidimMeshData &data)
-{
-  computeEquivalentTriangles(gf, data.equivalence);
-}
-
 void transferDataStructure(GFace *gf,
                            std::set<MTri3 *, compareTri3Ptr> &AllTris,
                            bidimMeshData &data)
@@ -409,7 +352,6 @@ void transferDataStructure(GFace *gf,
       if(prosca(n1, n2) < 0.0) t->reverse();
     }
   }
-  splitEquivalentTriangles(gf, data);
   computeEquivalences(gf, data);
 }
 

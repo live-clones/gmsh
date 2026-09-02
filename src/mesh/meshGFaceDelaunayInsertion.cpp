@@ -622,18 +622,6 @@ static void recurFindCavityAniso(GFace *gf, std::list<edgeXface> &shell,
   }
 }
 
-static bool circUV(MTriangle *t, bidimMeshData &data, double *res, GFace *gf)
-{
-  int index0 = data.getIndex(t->getVertex(0));
-  int index1 = data.getIndex(t->getVertex(1));
-  int index2 = data.getIndex(t->getVertex(2));
-  double u1[3] = {data.Us[index0], data.Vs[index0], 0};
-  double u2[3] = {data.Us[index1], data.Vs[index1], 0};
-  double u3[3] = {data.Us[index2], data.Vs[index2], 0};
-  circumCenterXY(u1, u2, u3, res);
-  return true;
-}
-
 static bool invMapUV(MTriangle *t, double *p, bidimMeshData &data, double *uv,
                      double tol)
 {
@@ -1070,8 +1058,9 @@ void bowyerWatson(GFace *gf, int MAXPNT,
         break;
       }
 
+      // the circumcenter is computed below by circumCenterMetric(), which
+      // overwrites center: no need for the Euclidean circUV() first
       double center[2], metric[3], r2;
-      circUV(worst->tri(), DATA, center, gf);
       MTriangle *base = worst->tri();
       int index0 = DATA.getIndex(base->getVertex(0));
       int index1 = DATA.getIndex(base->getVertex(1));
@@ -1166,9 +1155,9 @@ static double optimalPointFrontal(GFace *gf, MTri3 *worst, int active_edge,
                                   bidimMeshData &data, double newPoint[2],
                                   double metric[3])
 {
+  // circumCenterMetric() below computes center; no need for circUV() first
   double center[2], r2;
   MTriangle *base = worst->tri();
-  circUV(base, data, center, gf);
   int index0 = data.getIndex(base->getVertex(0));
   int index1 = data.getIndex(base->getVertex(1));
   int index2 = data.getIndex(base->getVertex(2));
