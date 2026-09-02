@@ -11,7 +11,7 @@
 #include <vector>
 #include "MElement.h"
 #include "MEdge.h"
-#include "meshGFaceDelaunay.h"
+#include "MTriangle.h"
 #include "STensor3.h"
 
 class GFace;
@@ -110,12 +110,6 @@ void buildEdgeToElements(std::vector<MElement *> &tris, e2t_cont &adj);
 
 void laplaceSmoothing(GFace *gf, int niter = 1, bool infinity_norm = false);
 
-bool buildMeshGenerationDataStructures(
-  GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data);
-void transferDataStructure(GFace *gf,
-                           std::set<MTri3 *, compareTri3Ptr> &AllTris,
-                           bidimMeshData &DATA);
-void computeEquivalences(GFace *gf, bidimMeshData &DATA);
 // compute the gamma quality statistics of the triangles and quadrangles of a
 // surface mesh
 void computeElementShapes(GFace *gf, double &worst, double &avg, double &best,

@@ -14,6 +14,7 @@
 #include "robustPredicates.h"
 #include "BackgroundMesh.h"
 #include "meshGFaceDelaunay.h"
+#include "meshGFaceTri3.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
 #include "meshGFaceParamBoundary.h"

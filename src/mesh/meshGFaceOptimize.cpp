@@ -6,6 +6,8 @@
 #include <stack>
 #include "GmshConfig.h"
 #include "meshGFaceOptimize.h"
+#include "meshGFaceDelaunay.h"
+#include "meshGFaceTri3.h"
 #include "qualityMeasures.h"
 #include "GFace.h"
 #include "GEdge.h"

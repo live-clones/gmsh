@@ -16,6 +16,7 @@
 #include "discreteEdge.h"
 #include "discreteVertex.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MEdge.h"
 #include "GEdge.h"
 #include "MLine.h"
