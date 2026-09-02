@@ -137,12 +137,12 @@ static double lengthMetric(const double p[2], const double q[2],
                    (p[1] - q[1]) * metric[2] * (p[1] - q[1]));
 }
 
-static constexpr std::size_t INVALID_TRIANGLE =
+static constexpr std::size_t FLAT_NONE =
   std::numeric_limits<std::size_t>::max();
 
-struct IndexedMeshData;
+struct flatMeshData;
 
-// Per-triangle state, packed in one byte per slot (IndexedMeshData::flags)
+// Per-triangle state, packed in one byte per slot (flatMeshData::flags)
 enum TriangleFlag : unsigned char {
   TRI_NONE = 0,
   TRI_DELETED = 1, // removed from the mesh (cavity), pending slot release
@@ -172,24 +172,24 @@ static inline TriangleFlag &operator&=(TriangleFlag &a, TriangleFlag b)
 }
 
 // Oriented edge iFac of triangle t1, with its vertex ids stored sorted
-// (ori records whether they were swapped) - the indexed counterpart of
+// (ori records whether they were swapped) - the flat counterpart of
 // edgeXface (meshGFaceDelaunayInsertion.h).
-struct IndexedEdgeFace {
+struct flatEdgeFace {
   std::size_t v[2];
   std::size_t t1;
   int i1;
   int ori;
 
-  IndexedEdgeFace(const IndexedMeshData &data, std::size_t t, int iFac);
+  flatEdgeFace(const flatMeshData &data, std::size_t t, int iFac);
 
-  inline bool operator<(const IndexedEdgeFace &other) const
+  inline bool operator<(const flatEdgeFace &other) const
   {
     if(v[0] < other.v[0]) return true;
     if(v[0] > other.v[0]) return false;
     return v[1] < other.v[1];
   }
 
-  inline bool operator==(const IndexedEdgeFace &other) const
+  inline bool operator==(const flatEdgeFace &other) const
   {
     return v[0] == other.v[0] && v[1] == other.v[1];
   }
@@ -211,8 +211,8 @@ struct IndexedEdgeFace {
 // slots are recycled through a free-list, with one invariant: a slot that
 // is still referenced by an active-queue entry is not released until that
 // entry is popped (see releaseTriangleSlot callers and
-// IndexedActiveQueue::pop), so a queue entry never designates a reused slot.
-struct IndexedMeshData {
+// flatQueue::pop), so a queue entry never designates a reused slot.
+struct flatMeshData {
   // per-vertex arrays
   std::vector<double> Us, Vs, vSizes, vSizesBGM;
   // MVertex backing per vertex id. Filled for the imported block; interior
@@ -243,7 +243,7 @@ struct IndexedMeshData {
   // triangles created by the refinement (materialized at transfer).
   std::vector<MTriangle *> sourceTriangles;
   // Scratch buffers reused across insertions.
-  std::vector<IndexedEdgeFace> shellBuffer;
+  std::vector<flatEdgeFace> shellBuffer;
   std::vector<std::size_t> cavityBuffer;
   std::vector<std::size_t> cavityStack;
   std::vector<std::size_t> newCavityBuffer;
@@ -312,18 +312,18 @@ struct IndexedMeshData {
 // just-popped "worst", after removal; in-queue deleted triangles keep their
 // slot until popped), so the packed value always equals circumRadius[idx] and
 // the ordering is identical.
-struct IndexedActiveEntry {
+struct flatQueueEntry {
   double radius;
   std::size_t t;
 };
 
 // Same priority as algo 6's compareTri3Ptr: largest circumradius first, ties
-// broken on the sorted vertex triplet (see IndexedMeshData::faceKey).
-struct IndexedActiveCompare {
-  const IndexedMeshData *data;
+// broken on the sorted vertex triplet (see flatMeshData::faceKey).
+struct flatQueueCompare {
+  const flatMeshData *data;
 
-  bool operator()(const IndexedActiveEntry &a,
-                  const IndexedActiveEntry &b) const
+  bool operator()(const flatQueueEntry &a,
+                  const flatQueueEntry &b) const
   {
     if(a.radius < b.radius) return true;
     if(a.radius > b.radius) return false;
@@ -344,14 +344,14 @@ struct IndexedActiveCompare {
 // the active front (a triangle enters when it has an edge on the front),
 // while the plain Delaunay one keeps every triangle of the mesh, exactly as
 // its std::set counterpart does.
-struct IndexedActiveQueue {
-  IndexedMeshData *data;
-  IndexedActiveCompare compare;
-  std::vector<IndexedActiveEntry> heap;
+struct flatQueue {
+  flatMeshData *data;
+  flatQueueCompare compare;
+  std::vector<flatQueueEntry> heap;
   // false = hold every triangle (plain Delaunay), true = hold the front only
   bool frontOnly = true;
 
-  explicit IndexedActiveQueue(IndexedMeshData *d) : data(d), compare{d} {}
+  explicit flatQueue(flatMeshData *d) : data(d), compare{d} {}
 
   inline bool empty() const { return heap.empty(); }
 
@@ -386,7 +386,7 @@ struct IndexedActiveQueue {
 // Queue radius of a triangle - the same quantity, computed with the same
 // formulas, as the MTri3 constructor (meshGFaceDelaunayInsertion.cpp), for
 // each of the three MTri3::radiusNorm conventions.
-static double computeRadius(const IndexedMeshData &data,
+static double computeRadius(const flatMeshData &data,
                             const std::array<std::size_t, 3> &tri, double lc,
                             GFace *gf, MTriangle *source = nullptr)
 {
@@ -453,12 +453,12 @@ static double computeRadius(const IndexedMeshData &data,
   return radius;
 }
 
-static std::size_t storeTriangle(IndexedMeshData &data,
+static std::size_t storeTriangle(flatMeshData &data,
                                  const std::array<std::size_t, 3> &tri,
                                  double radius, MTriangle *source)
 {
   std::array<std::size_t, 3> invalid = {
-    {INVALID_TRIANGLE, INVALID_TRIANGLE, INVALID_TRIANGLE}};
+    {FLAT_NONE, FLAT_NONE, FLAT_NONE}};
 
   std::size_t idx;
   if(!data.freeTriangleSlots.empty()) {
@@ -482,7 +482,7 @@ static std::size_t storeTriangle(IndexedMeshData &data,
   return idx;
 }
 
-static std::size_t addTriangle(IndexedMeshData &data,
+static std::size_t addTriangle(flatMeshData &data,
                                const std::array<std::size_t, 3> &tri, double lc,
                                GFace *gf, MTriangle *source = nullptr)
 {
@@ -490,7 +490,7 @@ static std::size_t addTriangle(IndexedMeshData &data,
                        source);
 }
 
-IndexedEdgeFace::IndexedEdgeFace(const IndexedMeshData &data, std::size_t t,
+flatEdgeFace::flatEdgeFace(const flatMeshData &data, std::size_t t,
                                  int iFac)
   : t1(t), i1(iFac), ori(1)
 {
@@ -549,18 +549,18 @@ static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
 // Pair up the triangle edges to fill neigh[][]: sort all edges (their vertex
 // ids are stored sorted), equal consecutive entries are the two sides of one
 // interior edge. Same pairing as algo 6's connectTriangles.
-static void connectTriangles(IndexedMeshData &data)
+static void connectTriangles(flatMeshData &data)
 {
-  std::vector<IndexedEdgeFace> conn;
+  std::vector<flatEdgeFace> conn;
   conn.reserve(3 * data.triangles.size());
   for(std::size_t t = 0; t < data.triangles.size(); t++)
-    for(int j = 0; j < 3; j++) conn.push_back(IndexedEdgeFace(data, t, j));
+    for(int j = 0; j < 3; j++) conn.push_back(flatEdgeFace(data, t, j));
 
   std::sort(conn.begin(), conn.end());
 
   for(std::size_t i = 0; i + 1 < conn.size(); i++) {
-    IndexedEdgeFace &f1 = conn[i];
-    IndexedEdgeFace &f2 = conn[i + 1];
+    flatEdgeFace &f1 = conn[i];
+    flatEdgeFace &f2 = conn[i + 1];
     if(f1 == f2 && f1.t1 != f2.t1) {
       data.neigh[f1.t1][f1.i1] = f2.t1;
       data.neigh[f2.t1][f2.i1] = f1.t1;
@@ -569,20 +569,20 @@ static void connectTriangles(IndexedMeshData &data)
   }
 }
 
-// Import the initial mesh into the indexed representation. This performs the
+// Import the initial mesh into the flat representation. This performs the
 // same computations as the shared buildMeshGenerationDataStructures
 // (meshGFaceOptimize.cpp) - per-vertex sizes, embedded vertices and edges,
 // per-triangle queue radii - without going through the algo-6 structures
-// (bidimMeshData, MTri3), so the optimized algorithm does not depend on
+// (bidimMeshData, MTri3), so the flat kernel does not depend on
 // them. One deliberate difference: the vertices are laid out in
 // MVertex::getNum() order (the shared builder iterates a pointer-keyed map,
 // so its vertex order is not even deterministic across runs). Interior
 // vertices are appended later in creation order with strictly larger nums,
 // so "index order == num order" holds for every vertex pair, and the
 // active-front tie-break can compare sorted vertex-index triplets - exactly
-// algo 6's sorted getNum() triplets (see IndexedMeshData::faceKey).
+// algo 6's sorted getNum() triplets (see flatMeshData::faceKey).
 static bool buildMeshGenerationDataStructures(
-  GFace *gf, IndexedMeshData &data, std::map<MVertex *, MVertex *> *equivalence,
+  GFace *gf, flatMeshData &data, std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
   std::map<MVertex *, double> vSizesMap;
@@ -716,13 +716,13 @@ static bool buildMeshGenerationDataStructures(
 
 // a triangle is "active" when it has at least one edge on the front, i.e.
 // shared with a triangle that is either outside the domain or small enough
-static bool isActive(const IndexedMeshData &data, std::size_t t, double limit_,
+static bool isActive(const flatMeshData &data, std::size_t t, double limit_,
                      int &active)
 {
   if(data.flags[t] & TRI_DELETED) return false;
   for(active = 0; active < 3; active++) {
     std::size_t neigh = data.neigh[t][active];
-    if(neigh == INVALID_TRIANGLE ||
+    if(neigh == FLAT_NONE ||
        (data.circumRadius[neigh] < limit_ && data.circumRadius[neigh] > 0))
       return true;
   }
@@ -730,7 +730,7 @@ static bool isActive(const IndexedMeshData &data, std::size_t t, double limit_,
 }
 
 static void circumCenterMetric(std::size_t base, const double *metric,
-                               const IndexedMeshData &data, double *x,
+                               const flatMeshData &data, double *x,
                                double &Radius2)
 {
   const std::array<std::size_t, 3> &tri = data.triangles[base];
@@ -744,7 +744,7 @@ static void circumCenterMetric(std::size_t base, const double *metric,
 // algo 6's inCircumCircleAniso(GFace*, MTriangle*, ...).
 static int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
                                const double *metricb,
-                               const IndexedMeshData &data)
+                               const flatMeshData &data)
 {
   double x[2], Radius2;
   double metric[3];
@@ -782,9 +782,9 @@ static int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
 // explicit stack of triangle ids; only the order in which entries are
 // collected differs, which permutes triangle slot reuse and therefore the
 // element order of the final export.
-static void findCavityAniso(GFace *gf, std::vector<IndexedEdgeFace> &shell,
+static void findCavityAniso(GFace *gf, std::vector<flatEdgeFace> &shell,
                             std::vector<std::size_t> &cavity, double *metric,
-                            double *param, std::size_t t, IndexedMeshData &data)
+                            double *param, std::size_t t, flatMeshData &data)
 {
   shell.clear();
   cavity.clear();
@@ -804,14 +804,14 @@ static void findCavityAniso(GFace *gf, std::vector<IndexedEdgeFace> &shell,
 
     for(int i = 0; i < 3; i++) {
       const std::size_t neigh = data.neigh[current][i];
-      IndexedEdgeFace exf(data, current, i);
+      flatEdgeFace exf(data, current, i);
       // take care of untouchable internal edges; exf.v is sorted and
       // internalEdgeIds stores sorted id pairs
       const bool internal =
         !noInternal && std::binary_search(data.internalEdgeIds.begin(),
                                           data.internalEdgeIds.end(),
                                           std::make_pair(exf.v[0], exf.v[1]));
-      if(neigh == INVALID_TRIANGLE || internal) { shell.push_back(exf); }
+      if(neigh == FLAT_NONE || internal) { shell.push_back(exf); }
       else if(!(data.flags[neigh] & TRI_DELETED)) {
         if(inCircumCircleAniso(gf, neigh, param, metric, data))
           stack.push_back(neigh);
@@ -822,7 +822,7 @@ static void findCavityAniso(GFace *gf, std::vector<IndexedEdgeFace> &shell,
   }
 }
 
-static bool invMapUV(std::size_t t, double *p, const IndexedMeshData &data,
+static bool invMapUV(std::size_t t, double *p, const flatMeshData &data,
                      double *uv, double tol)
 {
   double mat[2][2];
@@ -851,7 +851,7 @@ static bool invMapUV(std::size_t t, double *p, const IndexedMeshData &data,
 }
 
 static inline double getSurfUV(const std::array<std::size_t, 3> &tri,
-                               const IndexedMeshData &data)
+                               const flatMeshData &data)
 {
   double u1 = data.Us[tri[0]];
   double v1 = data.Vs[tri[0]];
@@ -866,7 +866,7 @@ static inline double getSurfUV(const std::array<std::size_t, 3> &tri,
   return 0.5 * (vv1[0] * vv2[1] - vv1[1] * vv2[0]);
 }
 
-static inline double getSurfUV(std::size_t t, const IndexedMeshData &data)
+static inline double getSurfUV(std::size_t t, const flatMeshData &data)
 {
   return getSurfUV(data.triangles[t], data);
 }
@@ -874,9 +874,9 @@ static inline double getSurfUV(std::size_t t, const IndexedMeshData &data)
 // walk from t towards pt, crossing the edge whose supporting line separates
 // the current triangle's barycenter from pt
 static std::size_t search4Triangle(std::size_t t, double pt[2],
-                                   const IndexedMeshData &data, double uv[2])
+                                   const flatMeshData &data, double uv[2])
 {
-  if(t == INVALID_TRIANGLE) return INVALID_TRIANGLE;
+  if(t == FLAT_NONE) return FLAT_NONE;
 
   bool inside = invMapUV(t, pt, data, uv, 1.e-8);
 
@@ -901,20 +901,20 @@ static std::size_t search4Triangle(std::size_t t, double pt[2],
       break;
     }
     t = data.neigh[t][i];
-    if(t == INVALID_TRIANGLE) break;
+    if(t == FLAT_NONE) break;
     inside = invMapUV(t, pt, data, uv, 1.e-8);
     if(inside) return t;
   }
 
-  return INVALID_TRIANGLE;
+  return FLAT_NONE;
 }
 
-static inline std::size_t shellStart(const IndexedEdgeFace &edge)
+static inline std::size_t shellStart(const flatEdgeFace &edge)
 {
   return edge.ori > 0 ? edge.v[0] : edge.v[1];
 }
 
-static inline std::size_t shellEnd(const IndexedEdgeFace &edge)
+static inline std::size_t shellEnd(const flatEdgeFace &edge)
 {
   return edge.ori > 0 ? edge.v[1] : edge.v[0];
 }
@@ -923,7 +923,7 @@ static inline std::size_t shellEnd(const IndexedEdgeFace &edge)
 // end vertex is the next edge's start vertex), so the new triangles can be
 // wired to their ring neighbors by position. Returns false if the shell is
 // not a single closed loop, in which case the cavity is invalid.
-static bool orderShell(std::vector<IndexedEdgeFace> &shell)
+static bool orderShell(std::vector<flatEdgeFace> &shell)
 {
   if(shell.empty()) return false;
 
@@ -934,7 +934,7 @@ static bool orderShell(std::vector<IndexedEdgeFace> &shell)
     if(it2 == shell.end()) break;
 
     auto found =
-      std::find_if(it2, shell.end(), [next_v](const IndexedEdgeFace &edge) {
+      std::find_if(it2, shell.end(), [next_v](const flatEdgeFace &edge) {
         return shellStart(edge) == next_v;
       });
     if(found == shell.end()) return false;
@@ -947,10 +947,10 @@ static bool orderShell(std::vector<IndexedEdgeFace> &shell)
 
 // In which of otherSide's three neighbor slots is deletedTriangle? -1 if
 // otherSide is invalid, deleted, or inconsistent.
-static int findOtherSideSlot(const IndexedMeshData &data, std::size_t otherSide,
+static int findOtherSideSlot(const flatMeshData &data, std::size_t otherSide,
                              std::size_t deletedTriangle)
 {
-  if(otherSide == INVALID_TRIANGLE || (data.flags[otherSide] & TRI_DELETED))
+  if(otherSide == FLAT_NONE || (data.flags[otherSide] & TRI_DELETED))
     return -1;
   for(int f = 0; f < 3; f++) {
     if(data.neigh[otherSide][f] == deletedTriangle) return f;
@@ -972,10 +972,10 @@ static int findOtherSideSlot(const IndexedMeshData &data, std::size_t otherSide,
 // cos < -0.9999  <=>  num < 0 && num^2 > (2*0.9999)^2 d1^2 d2^2 with
 // num = d1^2 + d2^2 - d3^2. Decisions can differ from the sqrt forms only
 // within a rounding error of the thresholds.
-static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
+static int insertVertexB(std::vector<flatEdgeFace> &shell,
                          std::vector<std::size_t> &cavity, GFace *gf,
-                         std::size_t iv, IndexedActiveQueue &activeTets,
-                         IndexedMeshData &data)
+                         std::size_t iv, flatQueue &activeTets,
+                         flatMeshData &data)
 {
   if(cavity.size() == 1) return -1;
 
@@ -1056,7 +1056,7 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
     newArea += ss;
 
     const std::size_t otherSide = data.neigh[it->t1][it->i1];
-    if(otherSide != INVALID_TRIANGLE &&
+    if(otherSide != FLAT_NONE &&
        findOtherSideSlot(data, otherSide, it->t1) < 0)
       return -7;
   }
@@ -1074,8 +1074,8 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
     new_cavity.clear();
     new_cavity.reserve(shell.size() * 2);
 
-    std::size_t first = INVALID_TRIANGLE;
-    std::size_t prev = INVALID_TRIANGLE;
+    std::size_t first = FLAT_NONE;
+    std::size_t prev = FLAT_NONE;
     for(auto it = shell.begin(); it != shell.end(); ++it) {
       const std::size_t i0 = shellStart(*it);
       const std::size_t i1 = shellEnd(*it);
@@ -1094,7 +1094,7 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
       if(!activeTets.frontOnly) activeTets.push(nt);
 
       data.neigh[nt][1] = otherSide;
-      if(otherSide != INVALID_TRIANGLE) {
+      if(otherSide != FLAT_NONE) {
         new_cavity.push_back(otherSide);
         for(int f = 0; f < 3; f++) {
           if(data.neigh[otherSide][f] == it->t1) {
@@ -1103,7 +1103,7 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
           }
         }
       }
-      if(prev != INVALID_TRIANGLE) {
+      if(prev != FLAT_NONE) {
         data.neigh[nt][0] = prev;
         data.neigh[prev][2] = nt;
       }
@@ -1143,16 +1143,16 @@ static int insertVertexB(std::vector<IndexedEdgeFace> &shell,
 }
 
 static bool insertAPoint(GFace *gf, double center[2], double metric[3],
-                         IndexedMeshData &data, IndexedActiveQueue &activeTris,
+                         flatMeshData &data, flatQueue &activeTris,
                          std::size_t worst)
 {
-  if(worst == INVALID_TRIANGLE || (data.flags[worst] & TRI_DELETED)) {
+  if(worst == FLAT_NONE || (data.flags[worst] & TRI_DELETED)) {
     Msg::Error("Could not insert point");
     return false;
   }
 
-  std::size_t ptin = INVALID_TRIANGLE;
-  std::vector<IndexedEdgeFace> &shell = data.shellBuffer;
+  std::size_t ptin = FLAT_NONE;
+  std::vector<flatEdgeFace> &shell = data.shellBuffer;
   std::vector<std::size_t> &cavity = data.cavityBuffer;
   shell.clear();
   cavity.clear();
@@ -1170,12 +1170,12 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
   }
   else {
     ptin = search4Triangle(worst, center, data, uv);
-    if(ptin != INVALID_TRIANGLE) {
+    if(ptin != FLAT_NONE) {
       findCavityAniso(gf, shell, cavity, metric, center, ptin, data);
     }
   }
 
-  if(ptin != INVALID_TRIANGLE) {
+  if(ptin != FLAT_NONE) {
     // we use here local coordinates as real coordinates x,y and z will be
     // computed hereafter
     GPoint p = gf->point(center[0], center[1]);
@@ -1252,7 +1252,7 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
 }
 
 static double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
-                                  const IndexedMeshData &data,
+                                  const flatMeshData &data,
                                   double newPoint[2], double metric[3])
 {
   double center[2], r2;
@@ -1315,7 +1315,7 @@ static double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
 */
 
 static bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
-                                 const IndexedMeshData &data,
+                                 const flatMeshData &data,
                                  double newPoint[2], double metric[3])
 {
   // as a starting point, let us use the "fast algo"
@@ -1390,7 +1390,7 @@ static void computeEquivalences(GFace *gf,
 
 template <class V> static void releaseVector(V &v) { V().swap(v); }
 
-static void transferDataStructure(GFace *gf, IndexedMeshData &data,
+static void transferDataStructure(GFace *gf, flatMeshData &data,
                                   std::map<MVertex *, MVertex *> *equivalence)
 {
   // Refinement is over: release everything the transfer does not need
@@ -1451,7 +1451,7 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
     order.push_back(t);
   }
   {
-    IndexedActiveCompare cmp{&data};
+    flatQueueCompare cmp{&data};
     std::sort(order.begin(), order.end(),
               [&](std::size_t a, std::size_t b) {
                 return cmp({data.circumRadius[b], b},
@@ -1497,7 +1497,7 @@ static void transferDataStructure(GFace *gf, IndexedMeshData &data,
 // worst triangle in the metric taken at its centroid. Same computation as
 // the corresponding lines of algo 5's bowyerWatson loop.
 static void optimalPointDelaunay(GFace *gf, std::size_t worst,
-                                 const IndexedMeshData &data,
+                                 const flatMeshData &data,
                                  double newPoint[2], double metric[3])
 {
   const std::array<std::size_t, 3> &base = data.triangles[worst];
@@ -1509,12 +1509,12 @@ static void optimalPointDelaunay(GFace *gf, std::size_t worst,
   circumCenterMetric(worst, metric, data, newPoint, r2);
 }
 
-void bowyerWatsonOptimized(GFace *gf, int MAXPNT,
+void bowyerWatsonFlat(GFace *gf, int MAXPNT,
                            std::map<MVertex *, MVertex *> *equivalence,
                            std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
-  IndexedMeshData DATA;
-  IndexedActiveQueue AllTris(&DATA);
+  flatMeshData DATA;
+  flatQueue AllTris(&DATA);
   // unlike the frontal algorithm, the queue is the whole mesh ordered by
   // decreasing circumradius, and refinement stops when its top is small
   AllTris.frontOnly = false;
@@ -1560,13 +1560,13 @@ void bowyerWatsonOptimized(GFace *gf, int MAXPNT,
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
 
-void bowyerWatsonFrontalOptimized(
+void bowyerWatsonFrontalFlat(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates,
   std::vector<SPoint2> *true_boundary)
 {
-  IndexedMeshData DATA;
-  IndexedActiveQueue ActiveTris(&DATA);
+  flatMeshData DATA;
+  flatQueue ActiveTris(&DATA);
   if(!buildMeshGenerationDataStructures(gf, DATA, equivalence,
                                         parametricCoordinates)) {
     Msg::Error("Invalid meshing data structure");

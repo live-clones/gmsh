@@ -582,13 +582,13 @@ runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
 {
   // Mesh.FlatRefineDelaunay2D picks the kernel, not the algorithm: the flat
   // one runs on index-based arrays and produces the very same mesh (see
-  // meshGFaceDelaunayInsertionOptimized.cpp)
+  // meshGFaceDelaunayFlat.cpp)
   const bool flat = CTX::instance()->mesh.flatRefineDelaunay2D;
 
   if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) {
     if(flat)
-      bowyerWatsonFrontalOptimized(gf, equivalence, parametricCoordinates,
-                                   true_boundary);
+      bowyerWatsonFrontalFlat(gf, equivalence, parametricCoordinates,
+                              true_boundary);
     else
       bowyerWatsonFrontal(gf, equivalence, parametricCoordinates,
                           true_boundary);
@@ -605,15 +605,14 @@ runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
   else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
           gf->getMeshingAlgo() == ALGO_2D_AUTO) {
     if(flat)
-      bowyerWatsonOptimized(gf, 1000000000, equivalence,
-                            parametricCoordinates);
+      bowyerWatsonFlat(gf, 1000000000, equivalence, parametricCoordinates);
     else
       bowyerWatson(gf, 1000000000, equivalence, parametricCoordinates);
   }
   else {
     if(seedBamgWithBowyerWatson) {
       if(flat)
-        bowyerWatsonOptimized(gf, 15000, equivalence, parametricCoordinates);
+        bowyerWatsonFlat(gf, 15000, equivalence, parametricCoordinates);
       else
         bowyerWatson(gf, 15000, equivalence, parametricCoordinates);
     }
