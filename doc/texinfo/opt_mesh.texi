@@ -161,6 +161,11 @@ First tag (>= 1) of mesh nodes when generating or renumbering a mesh@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.FlatOptimize3D
+Use the flat-array kernel to optimize 3D meshes (set to 0 to use the original object-based kernel, which performs the same operations and gives meshes of the same quality)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.FlatRefine2D
 Kernel used for 2D Delaunay point insertion (0: original object-based kernel; 1: flat-array kernel, which produces the same meshes; 2: flat-array kernel with faster floating-point shortcuts on planar faces and isotropic metrics, which give equivalent but not identical meshes)@*
 Default value: @code{1}@*
@@ -168,11 +173,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.FlatRefine3D
 Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to use the original object-based kernel, which produces the same meshes)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.FlatOptimize3D
-Use the flat-array kernel to optimize 3D meshes (set to 0 to use the original object-based kernel, which performs the same operations and gives meshes of the same quality)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -418,7 +418,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisAlgorithm
 METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)@*
-Default value: @code{1}@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisEdgeMatching
