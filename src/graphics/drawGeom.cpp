@@ -270,7 +270,7 @@ private:
     if(!va || !va->getNumVertices()) return;
     glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
     glEnableClientState(GL_VERTEX_ARRAY);
-    if(useNormalArray) {
+    if(useNormalArray && va->hasNormals()) {
       glEnable(GL_LIGHTING);
       glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
       glEnableClientState(GL_NORMAL_ARRAY);

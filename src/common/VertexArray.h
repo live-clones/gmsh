@@ -204,6 +204,8 @@ public:
   std::vector<float>::iterator firstVertex() { return _vertices.begin(); }
   std::vector<float>::iterator lastVertex() { return _vertices.end(); }
 
+  // return true if the array stores normals
+  bool hasNormals() { return (int)_normals.size() == 3 * getNumVertices(); }
   // return a pointer to the raw normal array
   normal_type *getNormalArray(int i = 0) { return &_normals[i]; }
   std::vector<normal_type>::iterator firstNormal() { return _normals.begin(); }
