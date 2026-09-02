@@ -202,6 +202,21 @@ void VertexArray::_buildIndex()
   bool hasN = ((int)_normals.size() == 3 * n);
   bool hasC = ((int)_colors.size() == 4 * n);
 
+  if(mode == 4) {
+    // measurement only: index the arrays with the identity permutation, which
+    // isolates the cost of glDrawElements from the cost of sharing vertices
+    _indices.resize(n);
+    for(int i = 0; i < n; i++) _indices[i] = (unsigned int)i;
+    return;
+  }
+
+  // measurement only: mode 5 drops the normals altogether and merges vertices
+  // on position and color alone, which is what a shader computing the normal
+  // from screen-space derivatives would allow. It only leaves the rendering
+  // unchanged for arrays that are not lit.
+  bool dropNormals = (mode == 5);
+  if(dropNormals) hasN = false;
+
   double t1 = TimeOfDay();
 
   VertexKeyMap map;
@@ -282,7 +297,7 @@ void VertexArray::_buildIndex()
     return;
   }
 
-  if(mode == 1) {
+  if(mode == 1 && !dropNormals) {
     // only keep the index array if it actually saves memory: each corner costs
     // an extra 4-byte index, which is not paid back unless enough vertices are
     // shared
@@ -297,6 +312,7 @@ void VertexArray::_buildIndex()
   _normals.swap(nor);
   _colors.swap(col);
   _indices.swap(ind);
+  if(dropNormals) _normals.clear();
 }
 
 void VertexArray::_deindex()
