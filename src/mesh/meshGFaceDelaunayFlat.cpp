@@ -56,13 +56,15 @@
 #include "discreteFace.h"
 #include "intersectCurveSurface.h"
 
-static constexpr double ONE_THIRD = 1.0 / 3.0;
+namespace {
+
+constexpr double ONE_THIRD = 1.0 / 3.0;
 // radius threshold (in metric units) below which a triangle is small enough
 // and does not need to be refined
-static const double LIMIT_ = 0.5 * std::sqrt(2.0);
+const double LIMIT_ = 0.5 * std::sqrt(2.0);
 
-static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
-                                           double *q2)
+inline bool intersection_segments_2(double *p1, double *p2, double *q1,
+                                    double *q2)
 {
   double a = robustPredicates::orient2d(p1, p2, q1);
   double b = robustPredicates::orient2d(p1, p2, q2);
@@ -78,8 +80,8 @@ static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
 // (x-pb) M (x-pb) = (x-pa) M (x-pa) and the same for pc, a linear 2x2 system.
 // Same formulas as algo 6 (circumCenterMetric in
 // meshGFaceDelaunay.cpp); x is (0,0) if the system is singular.
-static void circumCenterMetric(double *pa, double *pb, double *pc,
-                               const double *metric, double *x, double &Radius2)
+void circumCenterMetric(double *pa, double *pb, double *pc,
+                        const double *metric, double *x, double &Radius2)
 {
   double sys[2][2];
   double rhs[2];
@@ -134,15 +136,15 @@ static void circumCenterMetric(double *pa, double *pb, double *pc,
   if(b != 0.0) Radius2 += 2. * (x[0] - pa[0]) * (x[1] - pa[1]) * b;
 }
 
-static double lengthMetric(const double p[2], const double q[2],
-                           const double metric[3])
+double lengthMetric(const double p[2], const double q[2],
+                    const double metric[3])
 {
   return std::sqrt((p[0] - q[0]) * metric[0] * (p[0] - q[0]) +
                    2 * (p[0] - q[0]) * metric[1] * (p[1] - q[1]) +
                    (p[1] - q[1]) * metric[2] * (p[1] - q[1]));
 }
 
-static constexpr std::size_t FLAT_NONE =
+constexpr std::size_t FLAT_NONE =
   std::numeric_limits<std::size_t>::max();
 
 struct flatMeshData;
@@ -155,23 +157,23 @@ enum TriangleFlag : unsigned char {
   TRI_FREE_SLOT = 4 // slot is in the free-list, ready for reuse
 };
 
-static inline TriangleFlag operator|(TriangleFlag a, TriangleFlag b)
+inline TriangleFlag operator|(TriangleFlag a, TriangleFlag b)
 {
   return TriangleFlag((unsigned char)a | (unsigned char)b);
 }
-static inline TriangleFlag operator&(TriangleFlag a, TriangleFlag b)
+inline TriangleFlag operator&(TriangleFlag a, TriangleFlag b)
 {
   return TriangleFlag((unsigned char)a & (unsigned char)b);
 }
-static inline TriangleFlag operator~(TriangleFlag a)
+inline TriangleFlag operator~(TriangleFlag a)
 {
   return TriangleFlag(~(unsigned char)a);
 }
-static inline TriangleFlag &operator|=(TriangleFlag &a, TriangleFlag b)
+inline TriangleFlag &operator|=(TriangleFlag &a, TriangleFlag b)
 {
   return a = a | b;
 }
-static inline TriangleFlag &operator&=(TriangleFlag &a, TriangleFlag b)
+inline TriangleFlag &operator&=(TriangleFlag &a, TriangleFlag b)
 {
   return a = a & b;
 }
@@ -400,9 +402,9 @@ struct flatQueue {
 // Queue radius of a triangle - the same quantity, computed with the same
 // formulas, as the MTri3 constructor (meshGFaceDelaunay.cpp), for
 // each of the three MTri3::radiusNorm conventions.
-static double computeRadius(const flatMeshData &data,
-                            const std::array<std::size_t, 3> &tri, double lc,
-                            GFace *gf, MTriangle *source = nullptr)
+double computeRadius(const flatMeshData &data,
+                     const std::array<std::size_t, 3> &tri, double lc,
+                     GFace *gf, MTriangle *source = nullptr)
 {
   double center[3];
   double pa[3] = {data.vxyz[tri[0]][0], data.vxyz[tri[0]][1],
@@ -468,7 +470,7 @@ static double computeRadius(const flatMeshData &data,
 }
 
 // Closed-form parametric circumcircle {cx, cy, r^2} of triangle tri.
-static std::array<double, 3>
+std::array<double, 3>
 computeParamCircumCircle(const flatMeshData &data,
                          const std::array<std::size_t, 3> &tri)
 {
@@ -484,10 +486,10 @@ computeParamCircumCircle(const flatMeshData &data,
   return {{cx, cy, (cx - x1) * (cx - x1) + (cy - y1) * (cy - y1)}};
 }
 
-static std::size_t storeTriangle(flatMeshData &data,
-                                 const std::array<std::size_t, 3> &tri,
-                                 double radius, MTriangle *source,
-                                 const std::array<double, 3> *circle = nullptr)
+std::size_t storeTriangle(flatMeshData &data,
+                          const std::array<std::size_t, 3> &tri,
+                          double radius, MTriangle *source,
+                          const std::array<double, 3> *circle = nullptr)
 {
   std::array<std::size_t, 3> invalid = {
     {FLAT_NONE, FLAT_NONE, FLAT_NONE}};
@@ -520,9 +522,9 @@ static std::size_t storeTriangle(flatMeshData &data,
   return idx;
 }
 
-static std::size_t addTriangle(flatMeshData &data,
-                               const std::array<std::size_t, 3> &tri, double lc,
-                               GFace *gf, MTriangle *source = nullptr)
+std::size_t addTriangle(flatMeshData &data,
+                        const std::array<std::size_t, 3> &tri, double lc,
+                        GFace *gf, MTriangle *source = nullptr)
 {
   // fast mode: on a plane the parametric circumradius equals the 3D one, so
   // derive the queue radius from the circumcircle (sqrt(r2)/lc) instead of
@@ -558,7 +560,7 @@ flatEdgeFace::flatEdgeFace(const flatMeshData &data, std::size_t t,
 // mesh edge, skipping edges that connect a vertex to its periodic
 // counterpart. Same computation (and same FP operations) as setLcsInit and
 // setLcs in meshGFaceOptimize.cpp, which fill the algo-6 structures.
-static void setLcsInit(MTriangle *t, std::map<MVertex *, double> &vSizes)
+void setLcsInit(MTriangle *t, std::map<MVertex *, double> &vSizes)
 {
   for(int i = 0; i < 3; i++) {
     for(int j = i + 1; j < 3; j++) {
@@ -570,8 +572,8 @@ static void setLcsInit(MTriangle *t, std::map<MVertex *, double> &vSizes)
   }
 }
 
-static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
-                   std::map<MVertex *, MVertex *> *equivalence)
+void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
+            std::map<MVertex *, MVertex *> *equivalence)
 {
   // a vertex's periodic counterpart, or null (as bidimMeshData::equivalent)
   auto equivalent = [equivalence](MVertex *v) -> MVertex * {
@@ -600,7 +602,7 @@ static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
 // Pair up the triangle edges to fill neigh[][]: sort all edges (their vertex
 // ids are stored sorted), equal consecutive entries are the two sides of one
 // interior edge. Same pairing as algo 6's connectTriangles.
-static void connectTriangles(flatMeshData &data)
+void connectTriangles(flatMeshData &data)
 {
   std::vector<flatEdgeFace> conn;
   conn.reserve(3 * data.triangles.size());
@@ -632,7 +634,7 @@ static void connectTriangles(flatMeshData &data)
 // so "index order == num order" holds for every vertex pair, and the
 // active-front tie-break can compare sorted vertex-index triplets - exactly
 // algo 6's sorted getNum() triplets (see flatMeshData::faceKey).
-static bool buildMeshGenerationDataStructures(
+bool buildMeshGenerationDataStructures(
   GFace *gf, flatMeshData &data, std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
@@ -768,8 +770,8 @@ static bool buildMeshGenerationDataStructures(
 
 // a triangle is "active" when it has at least one edge on the front, i.e.
 // shared with a triangle that is either outside the domain or small enough
-static bool isActive(const flatMeshData &data, std::size_t t, double limit_,
-                     int &active)
+bool isActive(const flatMeshData &data, std::size_t t, double limit_,
+              int &active)
 {
   if(data.flags[t] & TRI_DELETED) return false;
   for(active = 0; active < 3; active++) {
@@ -781,9 +783,9 @@ static bool isActive(const flatMeshData &data, std::size_t t, double limit_,
   return false;
 }
 
-static void circumCenterMetric(std::size_t base, const double *metric,
-                               const flatMeshData &data, double *x,
-                               double &Radius2)
+void circumCenterMetric(std::size_t base, const double *metric,
+                        const flatMeshData &data, double *x,
+                        double &Radius2)
 {
   const std::array<std::size_t, 3> &tri = data.triangles[base];
   double pa[2] = {data.Us[tri[0]], data.Vs[tri[0]]};
@@ -794,9 +796,9 @@ static void circumCenterMetric(std::size_t base, const double *metric,
 
 // Is uv inside the metric circumcircle of triangle base? Same computation as
 // algo 6's inCircumCircleAniso(GFace*, MTriangle*, ...).
-static int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
-                               const double *metricb,
-                               const flatMeshData &data)
+int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
+                        const double *metricb,
+                        const flatMeshData &data)
 {
   // fast mode: for an isotropic metric M = lambda*I the metric circumcircle
   // is the parametric one (lambda cancels in the comparison), so one distance
@@ -846,9 +848,9 @@ static int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
 // explicit stack of triangle ids; only the order in which entries are
 // collected differs, which permutes triangle slot reuse and therefore the
 // element order of the final export.
-static void findCavityAniso(GFace *gf, std::vector<flatEdgeFace> &shell,
-                            std::vector<std::size_t> &cavity, double *metric,
-                            double *param, std::size_t t, flatMeshData &data)
+void findCavityAniso(GFace *gf, std::vector<flatEdgeFace> &shell,
+                     std::vector<std::size_t> &cavity, double *metric,
+                     double *param, std::size_t t, flatMeshData &data)
 {
   shell.clear();
   cavity.clear();
@@ -900,8 +902,8 @@ static void findCavityAniso(GFace *gf, std::vector<flatEdgeFace> &shell,
   }
 }
 
-static bool invMapUV(std::size_t t, double *p, const flatMeshData &data,
-                     double *uv, double tol)
+bool invMapUV(std::size_t t, double *p, const flatMeshData &data,
+              double *uv, double tol)
 {
   double mat[2][2];
   double b[2];
@@ -928,8 +930,8 @@ static bool invMapUV(std::size_t t, double *p, const flatMeshData &data,
          uv[1] <= 1. + tol && 1. - uv[0] - uv[1] > -tol;
 }
 
-static inline double getSurfUV(const std::array<std::size_t, 3> &tri,
-                               const flatMeshData &data)
+inline double getSurfUV(const std::array<std::size_t, 3> &tri,
+                        const flatMeshData &data)
 {
   double u1 = data.Us[tri[0]];
   double v1 = data.Vs[tri[0]];
@@ -944,15 +946,15 @@ static inline double getSurfUV(const std::array<std::size_t, 3> &tri,
   return 0.5 * (vv1[0] * vv2[1] - vv1[1] * vv2[0]);
 }
 
-static inline double getSurfUV(std::size_t t, const flatMeshData &data)
+inline double getSurfUV(std::size_t t, const flatMeshData &data)
 {
   return getSurfUV(data.triangles[t], data);
 }
 
 // walk from t towards pt, crossing the edge whose supporting line separates
 // the current triangle's barycenter from pt
-static std::size_t search4Triangle(std::size_t t, double pt[2],
-                                   const flatMeshData &data, double uv[2])
+std::size_t search4Triangle(std::size_t t, double pt[2],
+                            const flatMeshData &data, double uv[2])
 {
   if(t == FLAT_NONE) return FLAT_NONE;
 
@@ -987,12 +989,12 @@ static std::size_t search4Triangle(std::size_t t, double pt[2],
   return FLAT_NONE;
 }
 
-static inline std::size_t shellStart(const flatEdgeFace &edge)
+inline std::size_t shellStart(const flatEdgeFace &edge)
 {
   return edge.ori > 0 ? edge.v[0] : edge.v[1];
 }
 
-static inline std::size_t shellEnd(const flatEdgeFace &edge)
+inline std::size_t shellEnd(const flatEdgeFace &edge)
 {
   return edge.ori > 0 ? edge.v[1] : edge.v[0];
 }
@@ -1001,7 +1003,7 @@ static inline std::size_t shellEnd(const flatEdgeFace &edge)
 // end vertex is the next edge's start vertex), so the new triangles can be
 // wired to their ring neighbors by position. Returns false if the shell is
 // not a single closed loop, in which case the cavity is invalid.
-static bool orderShell(std::vector<flatEdgeFace> &shell)
+bool orderShell(std::vector<flatEdgeFace> &shell)
 {
   if(shell.empty()) return false;
 
@@ -1025,8 +1027,8 @@ static bool orderShell(std::vector<flatEdgeFace> &shell)
 
 // In which of otherSide's three neighbor slots is deletedTriangle? -1 if
 // otherSide is invalid, deleted, or inconsistent.
-static int findOtherSideSlot(const flatMeshData &data, std::size_t otherSide,
-                             std::size_t deletedTriangle)
+int findOtherSideSlot(const flatMeshData &data, std::size_t otherSide,
+                      std::size_t deletedTriangle)
 {
   if(otherSide == FLAT_NONE || (data.flags[otherSide] & TRI_DELETED))
     return -1;
@@ -1050,10 +1052,10 @@ static int findOtherSideSlot(const flatMeshData &data, std::size_t otherSide,
 // cos < -0.9999  <=>  num < 0 && num^2 > (2*0.9999)^2 d1^2 d2^2 with
 // num = d1^2 + d2^2 - d3^2. Decisions can differ from the sqrt forms only
 // within a rounding error of the thresholds.
-static int insertVertexB(std::vector<flatEdgeFace> &shell,
-                         std::vector<std::size_t> &cavity, GFace *gf,
-                         std::size_t iv, flatQueue &activeTets,
-                         flatMeshData &data)
+int insertVertexB(std::vector<flatEdgeFace> &shell,
+                  std::vector<std::size_t> &cavity, GFace *gf,
+                  std::size_t iv, flatQueue &activeTets,
+                  flatMeshData &data)
 {
   if(cavity.size() == 1) return -1;
 
@@ -1220,9 +1222,9 @@ static int insertVertexB(std::vector<flatEdgeFace> &shell,
   }
 }
 
-static bool insertAPoint(GFace *gf, double center[2], double metric[3],
-                         flatMeshData &data, flatQueue &activeTris,
-                         std::size_t worst)
+bool insertAPoint(GFace *gf, double center[2], double metric[3],
+                  flatMeshData &data, flatQueue &activeTris,
+                  std::size_t worst)
 {
   if(worst == FLAT_NONE || (data.flags[worst] & TRI_DELETED)) {
     Msg::Error("Could not insert point");
@@ -1329,9 +1331,9 @@ static bool insertAPoint(GFace *gf, double center[2], double metric[3],
   }
 }
 
-static double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
-                                  const flatMeshData &data,
-                                  double newPoint[2], double metric[3])
+double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
+                           const flatMeshData &data,
+                           double newPoint[2], double metric[3])
 {
   double center[2], r2;
   const std::array<std::size_t, 3> &base = data.triangles[worst];
@@ -1404,9 +1406,9 @@ static double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
    and the edge length
 */
 
-static bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
-                                 const flatMeshData &data,
-                                 double newPoint[2], double metric[3])
+bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
+                          const flatMeshData &data,
+                          double newPoint[2], double metric[3])
 {
   // as a starting point, let us use the "fast algo"
   double d =
@@ -1461,8 +1463,8 @@ static bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
 
 // Same as computeEquivalences (meshGFaceOptimize.cpp), which takes the shared
 // bidimMeshData; only the equivalence map is actually used.
-static void computeEquivalences(GFace *gf,
-                                std::map<MVertex *, MVertex *> *equivalence)
+void computeEquivalences(GFace *gf,
+                         std::map<MVertex *, MVertex *> *equivalence)
 {
   if(equivalence) {
     std::vector<MTriangle *> newT;
@@ -1484,8 +1486,8 @@ static void computeEquivalences(GFace *gf,
 
 template <class V> static void releaseVector(V &v) { V().swap(v); }
 
-static void transferDataStructure(GFace *gf, flatMeshData &data,
-                                  std::map<MVertex *, MVertex *> *equivalence)
+void transferDataStructure(GFace *gf, flatMeshData &data,
+                           std::map<MVertex *, MVertex *> *equivalence)
 {
   // Refinement is over: release everything the transfer does not need
   // before materializing the final mesh (MVertex + MTriangle), so the dead
@@ -1591,9 +1593,9 @@ static void transferDataStructure(GFace *gf, flatMeshData &data,
 // Insertion point of the plain Delaunay refinement: the circumcenter of the
 // worst triangle in the metric taken at its centroid. Same computation as
 // the corresponding lines of algo 5's bowyerWatson loop.
-static void optimalPointDelaunay(GFace *gf, std::size_t worst,
-                                 const flatMeshData &data,
-                                 double newPoint[2], double metric[3])
+void optimalPointDelaunay(GFace *gf, std::size_t worst,
+                          const flatMeshData &data,
+                          double newPoint[2], double metric[3])
 {
   if(data.fastCircles && data.planar) {
     // fast mode: identity metric on a plane, and the circumcenter is cached
@@ -1613,9 +1615,11 @@ static void optimalPointDelaunay(GFace *gf, std::size_t worst,
   circumCenterMetric(worst, metric, data, newPoint, r2);
 }
 
+} // namespace
+
 void bowyerWatsonFlat(GFace *gf, int MAXPNT,
-                           std::map<MVertex *, MVertex *> *equivalence,
-                           std::map<MVertex *, SPoint2> *parametricCoordinates)
+                      std::map<MVertex *, MVertex *> *equivalence,
+                      std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
   flatMeshData DATA;
   flatQueue AllTris(&DATA);
