@@ -91,10 +91,14 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .form .main{flex:1;min-width:0;overflow:auto;padding-bottom:5px;
              display:flex;flex-direction:column}
  .form .main.scrolls{max-height:26em}
- .form .aside{flex:none;overflow:hidden;border-right:1px solid #ddd;
-              padding:3px 0;display:flex;flex-direction:column;
-              max-height:26em}
+ .form .aside{flex:none;overflow:hidden;border-right:1px solid #ccc;
+              padding:3px 0;display:flex;flex-direction:column}
+ /* what is beside the column: the tabs, the panes and what the window says
+    under them */
+ .form .rest{flex:1;min-width:0;display:flex;flex-direction:column}
  .form .body{align-items:stretch}
+ /* a list down the side is not a box inside the window: it is the column */
+ .aside .list{border:none}
  .form .aside .line{padding:2px 4px}
  .form .aside .cell{flex:1 1 auto}
  .list{border:1px solid #ccc;background:#fff;overflow:auto;flex:1 1 auto;
@@ -656,6 +660,22 @@ function drawForms(forms) {
     // The tabs. A window with more panes than fit across one row wears two
     // rows of them: which family first, then which member of it -- the same
     // grouping the description gives the other interfaces.
+    // The column down the side runs the whole height of the window, beside
+    // the tabs rather than inside them -- which is where the windows this
+    // reproduces put it: a browser at (0, 0), the width of the column and the
+    // height of the whole thing, with a rule down its right.
+    const body = document.createElement('div'); body.className = 'body';
+    if(form.leastRows > 0)
+      body.style.minHeight = (form.leastRows * 2.1) + 'em';
+    if(form.side && form.side.length) {
+      const aside = document.createElement('div'); aside.className = 'aside';
+      aside.style.width = (form.sideEm || 8) + 'em';
+      lines(form.side, aside, 0);
+      body.appendChild(aside);
+    }
+    const rest = document.createElement('div'); rest.className = 'rest';
+    body.appendChild(rest);
+    card.appendChild(body);
     if(form.tabbed && form.tabs.length > 1) {
       const families = [];
       form.tabs.forEach((t, i) => {
@@ -678,7 +698,7 @@ function drawForms(forms) {
                                             '&i=' + f.panes[0]);
           row.appendChild(tab);
         }
-        card.appendChild(row);
+        rest.appendChild(row);
       }
       const shown = grouped && openFamily ? openFamily.panes
                                           : form.tabs.map((t, i) => i);
@@ -694,23 +714,8 @@ function drawForms(forms) {
         tab.onclick = () => post('/pane', 'form=' + form.id + '&i=' + i);
         row.appendChild(tab);
       }
-      card.appendChild(row);
+      rest.appendChild(row);
       }
-    }
-    const body = document.createElement('div'); body.className = 'body';
-    // A window that says how many lines tall it is at least gets them: it is
-    // what a list said to fill the window is measured against, since nothing
-    // else in the window is tall enough to say.
-    // a line of one of these windows is a little over two of its own font
-    if(form.leastRows > 0)
-      body.style.minHeight = (form.leastRows * 2.1) + 'em';
-    if(form.side && form.side.length) {
-      // the column down the left: what the panes act upon, which for the
-      // option window is the category it is showing
-      const aside = document.createElement('div'); aside.className = 'aside';
-      aside.style.width = (form.sideEm || 8) + 'em';
-      lines(form.side, aside, 0);
-      body.appendChild(aside);
     }
     const main = document.createElement('div'); main.className = 'main';
     lines(form.header, main, 0);
@@ -722,8 +727,7 @@ function drawForms(forms) {
       }
       paneBody(pane, main);
     }
-    body.appendChild(main);
-    card.appendChild(body);
+    rest.appendChild(main);
     // what the window says under its panes, and what it does: the fields on
     // the line of the button come before it, as the windows this reproduces
     // put them
@@ -737,7 +741,7 @@ function drawForms(forms) {
       gap.className = 'cell gap'; row.appendChild(gap);
       if(pane && pane.button) row.appendChild(does(pane.button, pane));
       bar.appendChild(row);
-      card.appendChild(bar);
+      rest.appendChild(bar);
     }
     if(form.footer.length || form.buttons.length) {
       const bar = document.createElement('div'); bar.className = 'foot';
@@ -751,7 +755,7 @@ function drawForms(forms) {
         for(const b of form.buttons) row.appendChild(does(b.label, b));
         bar.appendChild(row);
       }
-      card.appendChild(bar);
+      rest.appendChild(bar);
     }
     told.push([form.id, card]);
     if(at.docked) { dock.appendChild(card); }

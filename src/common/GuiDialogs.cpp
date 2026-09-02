@@ -1157,7 +1157,9 @@ namespace Dialog {
         for(std::size_t i = 0; i < labels.size(); i++) values.push_back((int)i);
       },
       clippingCuts, clippingSetCuts, true));
-    p.side.back().rows = 8;
+    // as tall as the window, which is how the one it reproduces is drawn: a
+    // browser the height of the whole thing, down its left edge
+    p.side.back().rows = 0;
 
     {
       Pane planes;

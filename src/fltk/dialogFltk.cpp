@@ -643,9 +643,20 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
   // the pixel arithmetic the windows this replaces used, but it keeps the
   // grouping they expressed.
   std::size_t i = 0;
+  bool wasValues = false;
   while(i < fields.size()) {
     std::size_t last = i + 1;
     while(last < fields.size() && fields[last].sameRow) last++;
+    // A line that only does something is set apart from the values above it:
+    // pressed by mistake it acts, where a value typed by mistake is only
+    // typed, and the windows this reproduces leave that much room.
+    bool acts = true;
+    for(std::size_t k = i; k < last; k++)
+      if(fields[k].kind != Ui::Action && fields[k].kind != Ui::Menu &&
+         fields[k].kind != Ui::Spacer)
+        acts = false;
+    if(acts && wasValues) y += WB;
+    wasValues = !acts;
     int columns = 0, spacers = 0;
     for(std::size_t k = i; k < last; k++) {
       if(fields[k].kind == Ui::Spacer)
@@ -876,6 +887,13 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
           widths->push_back(0); // the last column takes what is left
           ((Fl_Browser *)br)->column_widths(widths->data());
           ((Fl_Browser *)br)->column_char('\t');
+        }
+        // A list down the side of a window is not a box inside it: the
+        // windows this reproduces draw it with nothing but a rule on its
+        // right, running the whole height of the window.
+        if(pane == -2) {
+          br->box(GMSH_SIMPLE_RIGHT_BOX);
+          br->color(FL_BACKGROUND_COLOR);
         }
         br->callback(_fieldCallback, this);
         widget = br;
