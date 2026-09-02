@@ -460,6 +460,8 @@ namespace Gui {
     return out;
   }
 
+  bool sceneMoved() { return _it().changed; }
+
   void sceneKey(char key)
   {
     standalone &it = _it();

@@ -33,6 +33,20 @@ namespace Browser {
   namespace {
 
     SOCKET _listening = INVALID_SOCKET;
+    // the connections that are never answered: one per page, written to
+    // whenever there is news
+    std::vector<SOCKET> _listening_to;
+
+    // Never let a page that has gone away take the process with it: a write
+    // to a closed socket raises SIGPIPE, whose default is to end everything.
+    int _send(SOCKET s, const char *what, std::size_t much)
+    {
+#if defined(MSG_NOSIGNAL)
+      return (int)send(s, what, much, MSG_NOSIGNAL);
+#else
+      return (int)send(s, what, much, 0);
+#endif
+    }
 
     void _dontBlock(SOCKET s)
     {
@@ -71,6 +85,14 @@ namespace Browser {
             if(a == std::string::npos || b == std::string::npos) return false;
             ask.path = first.substr(a + 1, b - a - 1);
             ask.body = got.substr(head + 4, want);
+            // who says they are asking, if anyone does
+            std::string::size_type from = got.find("Origin:");
+            if(from != std::string::npos && from < head) {
+              std::string::size_type end = got.find("\r\n", from);
+              ask.origin = got.substr(from + 7, end - from - 7);
+              while(ask.origin.size() && ask.origin[0] == ' ')
+                ask.origin.erase(0, 1);
+            }
             return true;
           }
           continue;
@@ -100,7 +122,7 @@ namespace Browser {
       out += body;
       std::size_t sent = 0;
       while(sent < out.size()) {
-        int n = (int)send(s, out.c_str() + sent, (int)(out.size() - sent), 0);
+        int n = _send(s, out.c_str() + sent, out.size() - sent);
         if(n <= 0) break;
         sent += n;
       }
@@ -139,8 +161,45 @@ namespace Browser {
 
   void stop()
   {
+    for(auto s : _listening_to) CLOSE_SOCKET(s);
+    _listening_to.clear();
     if(_listening != INVALID_SOCKET) CLOSE_SOCKET(_listening);
     _listening = INVALID_SOCKET;
+  }
+
+  bool listeners() { return !_listening_to.empty(); }
+
+  void push(const char *name, const std::string &data)
+  {
+    if(_listening_to.empty()) return;
+    // One event, as an event stream says one: which kind it is, then the
+    // line, then a blank line to end it. A line of the data that held a
+    // newline would end the event early, so each one is given its own
+    // "data:".
+    std::string out = std::string("event: ") + name + "\n";
+    std::string::size_type at = 0;
+    while(at <= data.size()) {
+      std::string::size_type end = data.find('\n', at);
+      if(end == std::string::npos) end = data.size();
+      out += "data: " + data.substr(at, end - at) + "\n";
+      at = end + 1;
+    }
+    out += "\n";
+    std::vector<SOCKET> still;
+    for(auto s : _listening_to) {
+      std::size_t sent = 0;
+      bool alive = true;
+      while(sent < out.size()) {
+        int n = _send(s, out.c_str() + sent, out.size() - sent);
+        if(n <= 0) { alive = false; break; }
+        sent += (std::size_t)n;
+      }
+      if(alive)
+        still.push_back(s);
+      else
+        CLOSE_SOCKET(s);
+    }
+    _listening_to.swap(still);
   }
 
   void serve(const std::function<std::string(const Ask &, std::string &type)>
@@ -151,12 +210,28 @@ namespace Browser {
       SOCKET talking = accept(_listening, nullptr, nullptr);
       if(talking == INVALID_SOCKET) return; // nothing waiting
       Ask ask;
+      bool keep = false;
       if(_read(talking, ask)) {
         std::string type = "application/json";
         std::string body = answer(ask, type);
-        _write(talking, body, type.c_str());
+        if(type == "text/event-stream") {
+          // handed over: the page holds this open and is written to whenever
+          // there is news, until it goes away
+          std::string head =
+            "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n"
+            "Cache-Control: no-store\r\nConnection: keep-alive\r\n"
+            "X-Accel-Buffering: no\r\n\r\n";
+          if(_send(talking, head.c_str(), head.size()) > 0) {
+            _listening_to.push_back(talking);
+            keep = true;
+            if(body.size()) push("state", body);
+          }
+        }
+        else {
+          _write(talking, body, type.c_str());
+        }
       }
-      CLOSE_SOCKET(talking);
+      if(!keep) CLOSE_SOCKET(talking);
     }
   }
 

@@ -1435,10 +1435,13 @@ int appWindow::runLoop()
     // Wait for something to happen rather than redrawing a picture nobody
     // asked for. Every event wakes this by itself -- a key, the pointer, a
     // message from a worker thread through requestRedraw() -- and what is
-    // still moving says so through _keepDrawing. The timeout is what draws
-    // the one frame a second that catches anything nobody thought to
-    // announce.
-    if(!_keepDrawing && _frames <= 0) glfwWaitEventsTimeout(1.);
+    // still moving says so through _keepDrawing. The timeout is the belt to
+    // that pair of braces: a frame every couple of seconds catches anything
+    // nobody thought to announce. It is not free -- a frame draws the whole
+    // interface and the scene with it, which on a machine with no graphics
+    // card is a good sixtieth of a second -- so it is as rare as it can be
+    // without a stale window lasting long enough to notice.
+    if(!_keepDrawing && _frames <= 0) glfwWaitEventsTimeout(2.);
     frame();
   }
   return 0;

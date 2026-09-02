@@ -79,6 +79,7 @@ namespace Gui {
   {
     return "";
   }
+  bool sceneMoved() { return false; }
   void sceneResize(int width, int height) {}
   void sceneKey(char key) {}
 

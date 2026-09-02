@@ -159,6 +159,18 @@ static const char *const browserPage = R"PAGE(<!doctype html>
 // changed, and each part remembers what it was last given. A chrome that was
 // pushed to would be told what changed; this one has to work it out, which is
 // the price of asking rather than being told.
+// The word that came in the address. Everything asked of Gmsh carries it:
+// without it, any page anyone happens to visit could drive this one.
+const KEY = new URLSearchParams(location.search).get('k') || '';
+function to(where) {
+  return where + (where.indexOf('?') < 0 ? '?' : '&') + 'k=' +
+         encodeURIComponent(KEY);
+}
+function say(where, what) {
+  return fetch(to(where), {method: 'POST',
+                           body: what + '&k=' + encodeURIComponent(KEY)});
+}
+
 let busy = false, overBar = false;
 const was = {};                       // what each part was last drawn from
 function fresh(part, said) {          // has this part changed since last time?
@@ -179,7 +191,7 @@ async function post(where, what) {
   // is the only way left to give it up.
   busy = true;
   const letGo = setTimeout(() => { busy = false; refresh(); }, 300);
-  try { await fetch(where, {method:'POST', body:what}); } catch(e) {}
+  try { await say(where, what); } catch(e) {}
   clearTimeout(letGo);
   busy = false;
   refresh();                          // what was done changed something
@@ -488,7 +500,7 @@ function sayWhere(cards) {
   put('scene', document.getElementById('scene'));
   put('console', document.getElementById('console'));
   for(const at of cards) put('form' + at[0], at[1]);
-  fetch('/where', {method:'POST', body: parts.join('&')}).catch(() => {});
+  say('/where', parts.join('&')).catch(() => {});
 }
 
 function drawForms(forms) {
@@ -694,21 +706,19 @@ async function frame(force) {
     if(want !== sceneSize && box.width > 32) {
       sceneSize = want;
       sceneW = Math.round(box.width); sceneH = Math.round(box.height);
-      await fetch('/size', {method:'POST', body:'w=' + Math.round(box.width) +
-                                                '&h=' + Math.round(box.height)});
+      await say('/size', 'w=' + Math.round(box.width) +
+                         '&h=' + Math.round(box.height));
     }
     // Nothing comes back when the scene has not moved, and what is showing
     // stays. Asking for it whatever it thinks is for right after something
     // was done: what an action changed is not the scene's business.
-    const r = await fetch('/scene?' + Date.now() + (force ? '&force' : ''));
+    const r = await fetch(to('/scene?' + Date.now() + (force ? '&force' : '')));
     const blob = await r.blob();
     if(blob.size) {
       const old = view.src;
       view.src = URL.createObjectURL(blob);
       if(old.startsWith('blob:')) URL.revokeObjectURL(old);
-      sceneStill = 0;
     }
-    else sceneStill++;
   } catch(e) {}
   sceneBusy = false;
   if(sceneAgain) { sceneAgain = false; frame(force); }
@@ -745,9 +755,7 @@ async function pointer(e, what, wheel) {
     moving = true;
   }
   try {
-    await fetch('/pointer', {method:'POST',
-                             body: where(e) + '&w=' + what +
-                                   '&d=' + (wheel || 0)});
+    await say('/pointer', where(e) + '&w=' + what + '&d=' + (wheel || 0));
   } catch(err) {}
   if(what === 0) moving = false;
   frame();
@@ -766,7 +774,7 @@ let wasSaid = '';
 async function refresh() {
   if(busy) return false;
   try {
-    const said = await (await fetch('/state')).text();
+    const said = await (await say('/state', '')).text();
     if(said === wasSaid) return false;
     wasSaid = said;
     draw(JSON.parse(said));
@@ -782,37 +790,44 @@ async function refresh() {
 window.addEventListener('keydown', e => {
   if(typing() || e.ctrlKey || e.altKey || e.metaKey) return;
   if(e.key.length !== 1) return;
-  fetch('/key', {method:'POST', body:'k=' + encodeURIComponent(e.key)});
+  say('/key', 'j=' + encodeURIComponent(e.key));
 });
 document.getElementById('bar').onmouseenter = () => { overBar = true; };
 document.getElementById('bar').onmouseleave = () => { overBar = false; };
 frame();
-// A page in a tab nobody is looking at asks for nothing: what it would draw,
-// it would draw for no one.
-function watching() { return document.visibilityState !== 'hidden'; }
+// --- being told, rather than asking
+//
+// One connection that is never answered and never closed: Gmsh writes a line
+// into it whenever it has something new to say, and the browser hands that to
+// us as events. Nothing is polled -- a page sitting there costs nothing at
+// all -- and what the page does still goes up as plain requests.
+//
+// EventSource reconnects by itself when the connection drops, so a Gmsh that
+// went away and came back is picked up again without anything here noticing.
+function listen() {
+  const news = new EventSource(to('/events'));
+  news.addEventListener('state', e => {
+    if(e.data === wasSaid) return;
+    wasSaid = e.data;
+    try { draw(JSON.parse(e.data)); } catch(err) {}
+  });
+  news.addEventListener('scene', () => frame(true));
+  news.onopen = () => {
+    document.getElementById('status').textContent = '';
+    frame(true);
+  };
+  news.onerror = () => {
+    document.getElementById('status').textContent = 'Gmsh has gone away.';
+    wasSaid = '';
+  };
+}
+listen();
 
-// How often to ask. Quickly while something is going on, since that is when
-// one is waiting for an answer; slowly once nothing has changed for a couple
-// of seconds, since then one is not.
-let still = 0;
-async function pump() {
-  if(watching()) still = (await refresh()) ? 0 : still + 1;
-  setTimeout(pump, still > 16 ? 500 : 120);
-}
-pump();
-// the model may be redrawn by something other than the pointer -- a mesh
-// finishing, an option changing -- so the picture is asked for as well
-// and the same for the picture: often while it is moving, which is when one
-// is turning the model over, rarely once it has stopped
-let sceneStill = 0;
-async function watch() {
-  if(watching()) await frame();
-  setTimeout(watch, sceneStill > 12 ? 800 : 400);
-}
-watch();
-// and it catches up as soon as anyone looks again
+// The picture is fetched when Gmsh says it has changed, and once more when a
+// tab is looked at again -- what happened while it was hidden was drawn for
+// no one.
 document.addEventListener('visibilitychange', () => {
-  if(watching()) { refresh(); frame(true); }
+  if(document.visibilityState !== 'hidden') frame(true);
 });
 </script>
 )PAGE";

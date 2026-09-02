@@ -334,6 +334,10 @@ namespace Ui {
       // after something was done to the model, say.
       std::function<std::string(int &width, int &height, bool always)>
         sceneImage;
+      // whether that picture has changed since the last one was taken, asked
+      // without drawing anything: it is what a chrome tells its page to come
+      // and fetch another
+      std::function<bool()> sceneMoved;
       std::function<void(int width, int height)> sceneResize;
       std::function<void(double x, double y, int button, int what,
                          double wheel, bool shift, bool ctrl, bool alt)>

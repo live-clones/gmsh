@@ -89,6 +89,7 @@ namespace Gui {
     host.sceneImage = [](int &w, int &h, bool always) {
       return scenePicture(w, h, always);
     };
+    host.sceneMoved = []() { return sceneMoved(); };
     host.sceneResize = [](int w, int h) { sceneResize(w, h); };
     host.sceneKey = [](char key) { sceneKey(key); };
     host.scenePointer = [](double x, double y, int button, int what,

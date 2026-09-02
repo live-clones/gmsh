@@ -8,7 +8,9 @@
 #if defined(HAVE_BROWSER)
 
 #include <cstdio>
+#include <cstdlib>
 #include <map>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -82,9 +84,16 @@ namespace {
         int n = atoi(said);
         if(n > 0 && n < 65536) wanted = n;
       }
+      // And the word that has to come with every request. Without one, any
+      // page anyone visits could drive this: a plain POST goes out to another
+      // origin without asking permission first, and the port is a short list
+      // to try. The word is in the address the user is given, so their page
+      // has it and nobody else's does.
+      _token = getenv("GMSH_BROWSER_TOKEN") ? getenv("GMSH_BROWSER_TOKEN") :
+                                              _madeUp();
       _port = Browser::listen(wanted);
       if(!_port) return false;
-      printf("Gmsh is at http://127.0.0.1:%d/\n", _port);
+      printf("Gmsh is at http://127.0.0.1:%d/?k=%s\n", _port, _token.c_str());
       fflush(stdout);
       return true;
     }
@@ -206,6 +215,15 @@ namespace {
     std::string _tip;
     // and where the page says it has put its windows
     std::string _where;
+    // the word that has to come with every request
+    std::string _token;
+    // what was last said down the event stream, and when; and when the page
+    // last asked for something, which is what says whether anything is going
+    // on at all
+    std::string _told;
+    bool _toldScene = false;
+    double _lastTold = 0.;
+    double _lastAsked = 0.;
     std::map<int, bool> _shown;
     std::vector<std::string> _messages;
     // what the page may ask for, by number: rebuilt every time the state is
@@ -236,14 +254,50 @@ namespace {
       Browser::serve([this](const Browser::Ask &ask, std::string &type) {
         return _answer(ask, type);
       });
+      _tell();
       if(_host.tick) _host.tick();
+    }
+
+    // What the page is told, and when.
+    //
+    // Nothing is worked out while nobody is listening. Whether anything has
+    // changed can only be found out by writing the state down and looking at
+    // it -- a description is asked, it does not announce itself -- so that is
+    // done ten times a second while something is going on and twice when
+    // nothing is, rather than every turn of the loop. What it costs is a
+    // fortieth of what asking the page to ask cost, and the page itself is
+    // left alone entirely.
+    void _tell()
+    {
+      if(!Browser::listeners()) return;
+      double now = TimeOfDay();
+      double every = (now - _lastAsked < 2.) ? 0.1 : 0.5;
+      if(now - _lastTold < every) return;
+      _lastTold = now;
+      std::string said = _state();
+      if(said != _told) {
+        _told = said;
+        Browser::push("state", said);
+      }
+      // and whether the picture is worth coming for. It stays worth it until
+      // the page has been to fetch it, so it is only said once.
+      bool moved = _host.sceneMoved && _host.sceneMoved();
+      if(moved && !_toldScene) Browser::push("scene", "1");
+      _toldScene = moved;
     }
 
     static std::string _valueOf(const std::string &body, const std::string &key)
     {
+      // At the start of a field and nowhere else: a key looked for anywhere
+      // in the text finds itself inside the value of another one.
       std::string want = key + "=";
-      std::string::size_type at = body.find(want);
-      if(at == std::string::npos) return "";
+      std::string::size_type at = 0;
+      while(true) {
+        at = body.find(want, at);
+        if(at == std::string::npos) return "";
+        if(at == 0 || body[at - 1] == '&' || body[at - 1] == '?') break;
+        at += want.size();
+      }
       at += want.size();
       std::string::size_type end = body.find('&', at);
       std::string raw = body.substr(at, end == std::string::npos ?
@@ -263,9 +317,49 @@ namespace {
       return out;
     }
 
+    // a word nobody else can guess, for the address the user is given
+    static std::string _madeUp()
+    {
+      std::random_device chance;
+      std::string out;
+      for(int i = 0; i < 24; i++) out += "0123456789abcdef"[chance() & 0xf];
+      return out;
+    }
+
+    // Whether this request may be answered at all.
+    //
+    // Two things are asked of it. It has to carry the word that was in the
+    // address, which a page that was not given that address does not have.
+    // And if it says which page it comes from -- a browser says so whenever
+    // one origin asks something of another -- that page has to be this one.
+    // Either alone would do; both cost nothing.
+    bool _mayAsk(const Browser::Ask &ask)
+    {
+      if(ask.origin.size()) {
+        std::string mine = "http://127.0.0.1:" + std::to_string(_port);
+        std::string also = "http://localhost:" + std::to_string(_port);
+        if(ask.origin != mine && ask.origin != also) return false;
+      }
+      if(_token.empty()) return true;
+      std::string said = _valueOf(ask.body, "k");
+      if(said.empty()) said = _valueOf(ask.path, "k");
+      return said == _token;
+    }
+
     std::string _answer(const Browser::Ask &ask, std::string &type)
     {
-      if(ask.path == "/") {
+      if(!_mayAsk(ask)) {
+        type = "text/plain";
+        return "no";
+      }
+      // something is going on: look more often for a while
+      if(ask.path != "/scene" && ask.path.compare(0, 6, "/scene") != 0 &&
+         ask.path.compare(0, 7, "/events") != 0)
+        _lastAsked = TimeOfDay();
+      // what comes before the question mark: the page and the pictures are
+      // asked for with the word in the address, so the path carries a query
+      std::string path = ask.path.substr(0, ask.path.find('?'));
+      if(path == "/") {
         type = "text/html; charset=utf-8";
         return browserPage;
       }
@@ -284,7 +378,7 @@ namespace {
         type = "image/bmp";
         return picture;
       }
-      if(ask.path == "/pointer") {
+      if(path == "/pointer") {
         if(_host.scenePointer)
           _host.scenePointer(atof(_valueOf(ask.body, "x").c_str()),
                              atof(_valueOf(ask.body, "y").c_str()),
@@ -296,7 +390,7 @@ namespace {
                              _valueOf(ask.body, "a") == "1");
         return "{}";
       }
-      if(ask.path == "/choose") {
+      if(path == "/choose") {
         int id = atoi(_valueOf(ask.body, "id").c_str());
         int at = atoi(_valueOf(ask.body, "i").c_str());
         if(id >= 0 && id < (int)_fields.size()) {
@@ -306,49 +400,59 @@ namespace {
         }
         return "{}";
       }
-      if(ask.path == "/where") {
+      // The one connection that is never answered: what Gmsh has to say goes
+      // down it, from _tell(), for as long as the page holds it open.
+      if(ask.path.compare(0, 7, "/events") == 0) {
+        type = "text/event-stream";
+        _told = _state();
+        _toldScene = false;
+        return _told;
+      }
+      if(path == "/where") {
         // Where the page put things. Nothing outside a page can know that,
         // and something photographing one window of it -- the bench that puts
         // the interfaces side by side -- has to be told where to cut.
         if(ask.body.size()) { _where = ask.body; return "{}"; }
         return _where;
       }
-      if(ask.path == "/close") {
+      if(path == "/close") {
         int form = atoi(_valueOf(ask.body, "form").c_str());
         _shown[form] = false;
         if(_host.formWasClosed) _host.formWasClosed(form);
         return "{}";
       }
-      if(ask.path == "/key") {
-        std::string said = _valueOf(ask.body, "k");
+      if(path == "/key") {
+        // "j", not "k": "k" is the word that says the request may be asked
+        // at all
+        std::string said = _valueOf(ask.body, "j");
         if(_host.sceneKey && said.size()) _host.sceneKey(said[0]);
         return "{}";
       }
-      if(ask.path == "/size") {
+      if(path == "/size") {
         if(_host.sceneResize)
           _host.sceneResize(atoi(_valueOf(ask.body, "w").c_str()),
                             atoi(_valueOf(ask.body, "h").c_str()));
         return "{}";
       }
-      if(ask.path == "/state") return _state();
-      if(ask.path == "/do") {
+      if(path == "/state") return _state();
+      if(path == "/do") {
         int id = atoi(_valueOf(ask.body, "id").c_str());
         if(id >= 0 && id < (int)_actions.size() && _actions[id])
           _actions[id]();
         return "{}";
       }
-      if(ask.path == "/set") {
+      if(path == "/set") {
         int id = atoi(_valueOf(ask.body, "id").c_str());
         std::string said = _valueOf(ask.body, "v");
         if(id >= 0 && id < (int)_fields.size()) _write(_fields[id], said);
         return "{}";
       }
-      if(ask.path == "/open") {
+      if(path == "/open") {
         std::string path = _valueOf(ask.body, "path");
         _open[path] = _valueOf(ask.body, "v") == "1";
         return "{}";
       }
-      if(ask.path == "/pick") {
+      if(path == "/pick") {
         std::string path = _valueOf(ask.body, "path");
         if(_sources.tree.node) {
           Ui::Node node = _sources.tree.node(path);
@@ -356,7 +460,7 @@ namespace {
         }
         return "{}";
       }
-      if(ask.path == "/pane") {
+      if(path == "/pane") {
         int form = atoi(_valueOf(ask.body, "form").c_str());
         int pane = atoi(_valueOf(ask.body, "i").c_str());
         bool moved = _sources.formPane && _sources.formPane(form) != pane;

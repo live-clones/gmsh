@@ -925,6 +925,15 @@ def _dialog_picture(dpy, dialog, build, win, ww, wh):
 # and no popped-up menu, so those shots come out blank and the sheet says so.
 
 BROWSER_PORT = 8130
+# The word every request has to carry, so that no page anyone visits can drive
+# a Gmsh listening on this machine. Gmsh makes one up when nothing says which;
+# here it is said, so that both sides of the bench know it.
+BROWSER_TOKEN = "guicompare"
+
+
+def keyed_url(path):
+    return "http://127.0.0.1:%d%s%sk=%s" % (
+        BROWSER_PORT, path, "&" if "?" in path else "?", BROWSER_TOKEN)
 # the browser window, which holds the tree, the scene and the dialogs at once,
 # so it is larger than the 900x700 the other interfaces are photographed at
 PAGE = (1500, 1000)
@@ -934,8 +943,9 @@ def browser_ask(port, path, body=None, timeout=6):
     """Ask the page's server something. A tool that picks does not answer
     until something has been picked, so a request that times out is not a
     failure -- it is the interface waiting, as it would for a click."""
-    url = "http://127.0.0.1:%d%s" % (port, path)
-    data = body.encode() if body is not None else None
+    url = "http://127.0.0.1:%d%s%sk=%s" % (port, path, "&" if "?" in path
+                                           else "?", BROWSER_TOKEN)
+    data = (body + "&k=" + BROWSER_TOKEN).encode() if body is not None else None
     try:
         with urllib.request.urlopen(url, data, timeout=timeout) as r:
             return r.read().decode("utf-8", "replace")
@@ -981,7 +991,7 @@ def start_browser(home, port):
     env.pop("WAYLAND_DISPLAY", None)
     return subprocess.Popen(
         [BROWSER, "--ozone-platform=x11",
-         "--app=http://127.0.0.1:%d/" % port,
+         "--app=" + keyed_url("/"),
          "--user-data-dir=" + profile,
          "--no-first-run", "--no-default-browser-check",
          "--disable-session-crashed-bubble", "--disable-background-networking",
@@ -1115,6 +1125,21 @@ def browser_form(state, dialog):
     return None
 
 
+def browser_rect(port, form, seconds=3.0):
+    """Where the page has put that window, waited for rather than assumed:
+    Gmsh tells the page what to show and the page says back where it put it,
+    so there are two hops between opening a window and being able to cut it
+    out of a picture."""
+    want = "form%d" % form
+    end = time.time() + seconds
+    while time.time() < end:
+        rect = browser_where(port).get(want)
+        if rect and rect[2] > 4 and rect[3] > 4:
+            return rect
+        time.sleep(0.1)
+    return None
+
+
 def browser_cut(dpy, win, rect):
     picture = grab_window(dpy, dpy.screen().root, 0, 0)
     if picture is None:
@@ -1156,6 +1181,7 @@ def photograph_browser(dpy, args, specs):
                 # which port to answer on
                 old = os.environ.get("GMSH_BROWSER_PORT")
                 os.environ["GMSH_BROWSER_PORT"] = str(port)
+                os.environ["GMSH_BROWSER_TOKEN"] = BROWSER_TOKEN
                 proc = start_driver(args.lib, args.home, spec["branches"],
                                     spec.get("geo"), spec.get("context"))
                 if old is None:
@@ -1318,7 +1344,7 @@ def photograph_browser(dpy, args, specs):
                     out = ("%s-%s.png" % (args.build, name)
                            if spec.get("tab")
                            else "%s-%s-%s.png" % (args.build, name, want))
-                    rect = browser_where(port).get("form%d" % form["id"])
+                    rect = browser_rect(port, form["id"])
                     picture = browser_cut(dpy, win, rect) if rect else None
                     if picture is None:
                         missing("%s: the page never said where %s is"
@@ -1330,7 +1356,7 @@ def photograph_browser(dpy, args, specs):
                 continue
 
             out = "%s-%s.png" % (args.build, name)
-            rect = browser_where(port).get("form%d" % form["id"])
+            rect = browser_rect(port, form["id"])
             picture = browser_cut(dpy, win, rect) if rect else None
             if picture is None:
                 missing("%s: the page never said where its window is"
@@ -1354,8 +1380,7 @@ def browser_scene(port, home):
     """The 3D view as the page has it, to look for something to pick in."""
     said = None
     try:
-        with urllib.request.urlopen("http://127.0.0.1:%d/scene" % port,
-                                    timeout=20) as r:
+        with urllib.request.urlopen(keyed_url("/scene"), timeout=20) as r:
             said = r.read()
     except Exception:
         return None
