@@ -1605,6 +1605,8 @@ public:
         p->va_triangles->getMemoryInMB() + p->va_vectors->getMemoryInMB() +
         p->va_ellipses->getMemoryInMB());
 
+    VertexArray::printStats();
+
     p->setChanged(false);
     return true;
   }

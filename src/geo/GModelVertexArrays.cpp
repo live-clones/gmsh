@@ -18,6 +18,7 @@
 #include "MElementCut.h"
 #include "Context.h"
 #include "VertexArray.h"
+#include "OS.h"
 #include "SmoothData.h"
 
 static const double curvedRepTol = 1.e-5;
@@ -455,6 +456,7 @@ bool GModel::fillVertexArrays()
 
   Msg::Debug("Mesh has changed: reinitializing vertex arrays");
 
+  double tStart = TimeOfDay();
   int status = getMeshStatus();
 
   if(status >= 1 && CTX::instance()->mesh.changed & ENT_CURVE)
@@ -471,6 +473,7 @@ bool GModel::fillVertexArrays()
   if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
     std::for_each(firstRegion(), lastRegion(), initMeshGRegion());
 
+  Msg::Info("Vertex arrays built in %g s", TimeOfDay() - tStart);
   VertexArray::printStats();
   return true;
 }
