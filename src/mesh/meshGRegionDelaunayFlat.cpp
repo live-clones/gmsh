@@ -27,9 +27,7 @@
 #include "MEdge.h"
 #include "BackgroundMeshTools.h"
 
-// ---------------------------------------------------------------------------
-// Flat-array refinement kernel (selected with Mesh.FlatRefine3D):
-// the same
+// Flat-array refinement kernel (selected with Mesh.FlatRefine3D): the same
 // algorithm and floating-point operations as refineRegionMTet4, but operating
 // on index-based arrays instead of MTet4/MTetrahedron/MVertex objects, which
 // are only materialized when the refinement is done. The meshes produced are
@@ -1173,5 +1171,3 @@ void refineRegionFlat(GRegion *gr, int maxIter,
     K.regions[K.tetRegion[s]]->tetrahedra.push_back(mt);
   }
 }
-
-// do a 3D delaunay mesh assuming a set of vertices
