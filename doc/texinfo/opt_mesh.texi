@@ -162,7 +162,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.FlatRefineDelaunay2D
-Use the flat-array kernel for 2D Delaunay point insertion (set to 0 to use the original object-based kernel, which produces the same meshes)@*
+Kernel used for 2D Delaunay point insertion (0: original object-based kernel; 1: flat-array kernel, which produces the same meshes; 2: flat-array kernel with faster floating-point shortcuts on planar faces and isotropic metrics, which give equivalent but not identical meshes)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

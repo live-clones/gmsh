@@ -1235,8 +1235,10 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
     "First tag (>= 1) of mesh nodes when generating or renumbering a mesh" },
   { F|O, "FlatRefineDelaunay2D" , opt_mesh_flat_refine_delaunay2d , 1. ,
-    "Use the flat-array kernel for 2D Delaunay point insertion (set to 0 to "
-    "use the original object-based kernel, which produces the same meshes)" },
+    "Kernel used for 2D Delaunay point insertion (0: original object-based "
+    "kernel; 1: flat-array kernel, which produces the same meshes; 2: "
+    "flat-array kernel with faster floating-point shortcuts on planar faces "
+    "and isotropic metrics, which give equivalent but not identical meshes)" },
   { F|O, "FlatRefineDelaunay3D" , opt_mesh_flat_refine_delaunay3d , 1. ,
     "Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to "
     "use the original object-based kernel, which produces the same meshes)" },

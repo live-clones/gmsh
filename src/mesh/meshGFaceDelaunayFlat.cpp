@@ -24,12 +24,16 @@
 //  - MVertex and MTriangle are created once, at the transfer, in the order
 //    the std::set would have been drained in.
 //
-// Everything that could round differently - a cached circumcircle in the
-// in-circle test, a closed-form circumradius on planar faces, skipping the
-// curve/surface projection of the optimal point on a plane - was measured
-// (worth ~14% on a planar case, nothing on curved ones) and removed, so that
-// the kernel can be a switch (Mesh.FlatRefineDelaunay2D) rather than a
-// separate algorithm.
+// Everything that could round differently is off by default, so that the
+// kernel is a switch (Mesh.FlatRefineDelaunay2D = 1) and not a separate
+// algorithm. Setting the option to 2 turns those shortcuts back on - a
+// circumcircle cached per triangle instead of a metric solve per in-circle
+// test, a closed-form circumradius on planar faces, and no curve/surface
+// projection of the optimal point on a plane. They compute the same
+// quantities by a cheaper floating-point route, so the rare near-cocircular
+// decisions can flip and the mesh is then only equivalent, not identical
+// (measured: worth ~14% on a planar case, nothing on curved ones, node counts
+// within 0.01%).
 
 #include <set>
 #include <array>
@@ -233,10 +237,19 @@ struct flatMeshData {
   discreteFace *discrete = nullptr;
   bool planar = false;
   bool extend1d = false;
+  // Mesh.FlatRefineDelaunay2D = 2: take the cheaper floating-point route
+  // wherever an isotropic metric or a planar face allows it. Same quantities,
+  // computed differently, so the rare near-cocircular decisions can flip and
+  // the mesh is no longer identical to the one the classic kernel produces.
+  bool fastCircles = false;
   // per-triangle arrays
   std::vector<std::array<std::size_t, 3>> triangles;
   std::vector<std::array<std::size_t, 3>> neigh;
   std::vector<double> circumRadius;
+  // Per-triangle parametric circumcircle {cx, cy, r^2}, computed once in
+  // closed form at creation. Only filled, and only used, in the fast mode
+  // (Mesh.FlatRefineDelaunay2D = 2): see fastCircles.
+  std::vector<std::array<double, 3>> circumCircle;
   std::vector<TriangleFlag> flags;
   std::vector<std::size_t> freeTriangleSlots;
   // Original MTriangle of imported triangles (reused at transfer), null for
@@ -453,9 +466,27 @@ static double computeRadius(const flatMeshData &data,
   return radius;
 }
 
+// Closed-form parametric circumcircle {cx, cy, r^2} of triangle tri.
+static std::array<double, 3>
+computeParamCircumCircle(const flatMeshData &data,
+                         const std::array<std::size_t, 3> &tri)
+{
+  const double x1 = data.Us[tri[0]], y1 = data.Vs[tri[0]];
+  const double x2 = data.Us[tri[1]], y2 = data.Vs[tri[1]];
+  const double x3 = data.Us[tri[2]], y3 = data.Vs[tri[2]];
+  const double d = 2. * (y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
+  const double a1 = x1 * x1 + y1 * y1;
+  const double a2 = x2 * x2 + y2 * y2;
+  const double a3 = x3 * x3 + y3 * y3;
+  const double cx = (a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d;
+  const double cy = (a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d;
+  return {{cx, cy, (cx - x1) * (cx - x1) + (cy - y1) * (cy - y1)}};
+}
+
 static std::size_t storeTriangle(flatMeshData &data,
                                  const std::array<std::size_t, 3> &tri,
-                                 double radius, MTriangle *source)
+                                 double radius, MTriangle *source,
+                                 const std::array<double, 3> *circle = nullptr)
 {
   std::array<std::size_t, 3> invalid = {
     {FLAT_NONE, FLAT_NONE, FLAT_NONE}};
@@ -468,6 +499,9 @@ static std::size_t storeTriangle(flatMeshData &data,
     data.triangles[idx] = tri;
     data.neigh[idx] = invalid;
     data.circumRadius[idx] = radius;
+    if(data.fastCircles)
+      data.circumCircle[idx] =
+        circle ? *circle : computeParamCircumCircle(data, tri);
     data.flags[idx] = TRI_NONE;
     data.sourceTriangles[idx] = source;
   }
@@ -476,6 +510,9 @@ static std::size_t storeTriangle(flatMeshData &data,
     data.triangles.push_back(tri);
     data.neigh.push_back(invalid);
     data.circumRadius.push_back(radius);
+    if(data.fastCircles)
+      data.circumCircle.push_back(circle ? *circle :
+                                           computeParamCircumCircle(data, tri));
     data.flags.push_back(TRI_NONE);
     data.sourceTriangles.push_back(source);
   }
@@ -486,6 +523,19 @@ static std::size_t addTriangle(flatMeshData &data,
                                const std::array<std::size_t, 3> &tri, double lc,
                                GFace *gf, MTriangle *source = nullptr)
 {
+  // fast mode: on a plane the parametric circumradius equals the 3D one, so
+  // derive the queue radius from the circumcircle (sqrt(r2)/lc) instead of
+  // solving circumCenterXYZ separately
+  if(data.fastCircles && MTri3::radiusNorm == 2 && data.planar) {
+    const std::array<double, 3> cc = computeParamCircumCircle(data, tri);
+    double radius = std::sqrt(cc[2]) / lc;
+    if(source) {
+      BoundaryLayerColumns *columns = gf->getColumns();
+      if(columns && columns->_toFirst.find(source) != columns->_toFirst.end())
+        radius = 0;
+    }
+    return storeTriangle(data, tri, radius, source, &cc);
+  }
   return storeTriangle(data, tri, computeRadius(data, tri, lc, gf, source),
                        source);
 }
@@ -675,6 +725,7 @@ static bool buildMeshGenerationDataStructures(
     data.discrete = dynamic_cast<discreteFace *>(gf);
   data.planar = gf->geomType() == GEntity::Plane;
   data.extend1d = Extend1dMeshIn2dSurfaces(gf);
+  data.fastCircles = (CTX::instance()->mesh.flatRefineDelaunay2D == 2);
 
   // index the internal (embedded) edges by vertex ids so the cavity walk
   // needs no MEdge/MVertex
@@ -746,6 +797,18 @@ static int inCircumCircleAniso(GFace *gf, std::size_t base, const double *uv,
                                const double *metricb,
                                const flatMeshData &data)
 {
+  // fast mode: for an isotropic metric M = lambda*I the metric circumcircle
+  // is the parametric one (lambda cancels in the comparison), so one distance
+  // test against the cached circle replaces rebuilding and solving the 2x2
+  // metric system on every call. Anisotropic metrics always take the solve.
+  if(data.fastCircles && metricb && metricb[1] == 0.0 &&
+     metricb[0] == metricb[2]) {
+    const std::array<double, 3> &cc = data.circumCircle[base];
+    const double d0 = cc[0] - uv[0];
+    const double d1 = cc[1] - uv[1];
+    return d0 * d0 + d1 * d1 < cc[2];
+  }
+
   double x[2], Radius2;
   double metric[3];
   if(!metricb) {
@@ -790,6 +853,11 @@ static void findCavityAniso(GFace *gf, std::vector<flatEdgeFace> &shell,
   cavity.clear();
 
   const bool noInternal = data.internalEdgeIds.empty();
+  // in fast mode the isotropic circle test is hoisted out of the walk and
+  // inlined: one branch per cavity instead of one call per edge
+  const bool iso = data.fastCircles && metric && metric[1] == 0.0 &&
+                   metric[0] == metric[2];
+  const double pu = param[0], pv = param[1];
 
   std::vector<std::size_t> &stack = data.cavityStack;
   stack.clear();
@@ -813,7 +881,16 @@ static void findCavityAniso(GFace *gf, std::vector<flatEdgeFace> &shell,
                                           std::make_pair(exf.v[0], exf.v[1]));
       if(neigh == FLAT_NONE || internal) { shell.push_back(exf); }
       else if(!(data.flags[neigh] & TRI_DELETED)) {
-        if(inCircumCircleAniso(gf, neigh, param, metric, data))
+        bool circ;
+        if(iso) {
+          const std::array<double, 3> &cc = data.circumCircle[neigh];
+          const double d0 = cc[0] - pu;
+          const double d1 = cc[1] - pv;
+          circ = d0 * d0 + d1 * d1 < cc[2];
+        }
+        else
+          circ = inCircumCircleAniso(gf, neigh, param, metric, data);
+        if(circ)
           stack.push_back(neigh);
         else
           shell.push_back(exf);
@@ -1257,11 +1334,23 @@ static double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
 {
   double center[2], r2;
   const std::array<std::size_t, 3> &base = data.triangles[worst];
-  double pa[2] = {
-    (data.Us[base[0]] + data.Us[base[1]] + data.Us[base[2]]) * ONE_THIRD,
-    (data.Vs[base[0]] + data.Vs[base[1]] + data.Vs[base[2]]) * ONE_THIRD};
-  buildMetric(gf, pa, metric);
-  circumCenterMetric(worst, metric, data, center, r2);
+  if(data.fastCircles && data.planar) {
+    // fast mode: a plane's parametrization is isometric, so the metric is the
+    // identity and the circumcenter is the cached one - no buildMetric
+    // (a virtual firstDer) and no per-insertion metric solve
+    metric[0] = 1.;
+    metric[1] = 0.;
+    metric[2] = 1.;
+    center[0] = data.circumCircle[worst][0];
+    center[1] = data.circumCircle[worst][1];
+  }
+  else {
+    double pa[2] = {
+      (data.Us[base[0]] + data.Us[base[1]] + data.Us[base[2]]) * ONE_THIRD,
+      (data.Vs[base[0]] + data.Vs[base[1]] + data.Vs[base[2]]) * ONE_THIRD};
+    buildMetric(gf, pa, metric);
+    circumCenterMetric(worst, metric, data, center, r2);
+  }
   // compute the middle point of the edge
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
   int ip2 = active_edge;
@@ -1321,6 +1410,10 @@ static bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
   // as a starting point, let us use the "fast algo"
   double d =
     optimalPointFrontal(gf, worst, active_edge, data, newPoint, metric);
+
+  // fast mode: on a plane the parametric optimal point IS the surface point,
+  // so skip the 3D frame and the circle/surface Newton projection
+  if(data.fastCircles && data.planar) return true;
 
   const std::array<std::size_t, 3> &base = data.triangles[worst];
   int ip1 = (active_edge + 2) % 3;
@@ -1400,6 +1493,7 @@ static void transferDataStructure(GFace *gf, flatMeshData &data,
   // sourceTriangles, the TRI_DELETED bit of flags, and circumRadius for the
   // emission order (released right after the order is fixed).
   releaseVector(data.neigh);
+  releaseVector(data.circumCircle);
   releaseVector(data.freeTriangleSlots);
   releaseVector(data.shellBuffer);
   releaseVector(data.cavityBuffer);
@@ -1500,6 +1594,15 @@ static void optimalPointDelaunay(GFace *gf, std::size_t worst,
                                  const flatMeshData &data,
                                  double newPoint[2], double metric[3])
 {
+  if(data.fastCircles && data.planar) {
+    // fast mode: identity metric on a plane, and the circumcenter is cached
+    metric[0] = 1.;
+    metric[1] = 0.;
+    metric[2] = 1.;
+    newPoint[0] = data.circumCircle[worst][0];
+    newPoint[1] = data.circumCircle[worst][1];
+    return;
+  }
   const std::array<std::size_t, 3> &base = data.triangles[worst];
   double pa[2] = {
     (data.Us[base[0]] + data.Us[base[1]] + data.Us[base[2]]) * ONE_THIRD,

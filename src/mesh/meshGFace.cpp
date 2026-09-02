@@ -581,9 +581,10 @@ runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
                      std::vector<SPoint2> *true_boundary)
 {
   // Mesh.FlatRefineDelaunay2D picks the kernel, not the algorithm: the flat
-  // one runs on index-based arrays and produces the very same mesh (see
-  // meshGFaceDelaunayFlat.cpp)
-  const bool flat = CTX::instance()->mesh.flatRefineDelaunay2D;
+  // one runs on index-based arrays and produces the very same mesh (1), or
+  // trades that for a cheaper floating-point route (2). See
+  // meshGFaceDelaunayFlat.cpp
+  const bool flat = CTX::instance()->mesh.flatRefineDelaunay2D != 0;
 
   if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) {
     if(flat)
