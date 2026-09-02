@@ -63,6 +63,15 @@ namespace Gui {
   std::string scenePicture(int &width, int &height) { return ""; }
   void sceneResize(int width, int height) {}
   void sceneKey(char key) {}
+
+  void sceneMessage(const std::string &first, const std::string &second)
+  {
+    if(!FlGui::available()) return;
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    if(!gl) return;
+    gl->screenMessage[0] = first;
+    gl->screenMessage[1] = second;
+  }
   void scenePointer(double x, double y, int button, int what, double wheel,
                     bool shift, bool ctrl, bool alt)
   {

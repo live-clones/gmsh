@@ -84,6 +84,14 @@ namespace Gui {
   // 'i' inverts
   void sceneKey(char key);
 
+  // Two lines said over the scene rather than in the bar: what to do, and
+  // which keys end or abort it, which is what a picking says while it runs.
+  // It belongs to whatever draws the scene and not to the chrome around it --
+  // a chrome showing pictures of a scene it does not draw could not write on
+  // them. Both lines are said every time: a line that is empty is a line that
+  // goes away, which is how a picking clears its prompt when it ends.
+  void sceneMessage(const std::string &first, const std::string &second);
+
   // --- the graphic windows
 
   // draw context of the last graphic window that received an event

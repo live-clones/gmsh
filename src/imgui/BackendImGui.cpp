@@ -144,16 +144,6 @@ namespace {
       if(appWindow::available()) appWindow::instance()->requestRedraw();
     }
 
-    void sceneMessage(const std::string &first,
-                      const std::string &second) override
-    {
-      if(!appWindow::available()) return;
-      sceneView *p = appWindow::instance()->currentPane();
-      if(!p) return;
-      if(first.size()) p->screenMessage[0] = first;
-      if(second.size()) p->screenMessage[1] = second;
-    }
-
     int numWindows() override { return appWindow::available() ? 1 : 0; }
 
     void setWindowTitle(int which, const std::string &title) override

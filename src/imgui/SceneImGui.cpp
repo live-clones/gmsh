@@ -78,6 +78,15 @@ namespace Gui {
   std::string scenePicture(int &width, int &height) { return ""; }
   void sceneResize(int width, int height) {}
   void sceneKey(char key) {}
+
+  void sceneMessage(const std::string &first, const std::string &second)
+  {
+    if(!appWindow::available()) return;
+    sceneView *p = appWindow::instance()->currentPane();
+    if(!p) return;
+    p->screenMessage[0] = first;
+    p->screenMessage[1] = second;
+  }
   void scenePointer(double x, double y, int button, int what, double wheel,
                     bool shift, bool ctrl, bool alt)
   {

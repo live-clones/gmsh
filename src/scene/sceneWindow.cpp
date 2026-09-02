@@ -294,6 +294,9 @@ namespace Gui {
 
   drawContext *getCurrentDrawContext()
   {
+    // the window is made when it is first wanted, and this is one of the
+    // ways it is: a mode set on a scene that does not exist yet is lost
+    if(!_open()) return nullptr;
     return _it().view ? _it().view->getDrawContext() : nullptr;
   }
 
@@ -403,7 +406,7 @@ namespace Gui {
   void sceneKey(char key)
   {
     standalone &it = _it();
-    if(!it.view || !it.view->selectionMode) return;
+    if(!_open() || !it.view || !it.view->selectionMode) return;
     switch(key) {
     case 'e': it.view->endSelection = 1; break;
     case 'u': it.view->undoSelection = 1; break;
@@ -411,6 +414,14 @@ namespace Gui {
     case 'q': it.view->quitSelection = 1; break;
     default: break;
     }
+  }
+
+  void sceneMessage(const std::string &first, const std::string &second)
+  {
+    standalone &it = _it();
+    if(!_open() || !it.view) return;
+    it.view->screenMessage[0] = first;
+    it.view->screenMessage[1] = second;
   }
 
   void scenePointer(double x, double y, int button, int what, double wheel,
@@ -456,7 +467,7 @@ namespace Gui {
 
   void orientViews(const std::string &what, bool reverse, bool sync)
   {
-    if(_it().view) viewSetOrientation(_it().view->getDrawContext(), what,
+    if(_open() && _it().view) viewSetOrientation(_it().view->getDrawContext(), what,
                                       reverse);
     pumpScene(false);
   }
@@ -488,14 +499,14 @@ namespace Gui {
 
   void abortSelection()
   {
-    if(!_it().view) return;
+    if(!_open() || !_it().view) return;
     _it().view->quitSelection = 1;
     _it().view->selectionMode = false;
   }
 
   void setAddPointMode(bool on)
   {
-    if(_it().view) _it().view->addPointMode = on;
+    if(_open() && _it().view) _it().view->addPointMode = on;
   }
 
   const std::vector<GVertex *> &selectedVertices()

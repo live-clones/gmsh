@@ -220,11 +220,6 @@ namespace Ui {
 
     // the last message or the progress changed: the bar is to draw again
     virtual void refreshBar() = 0;
-    // Two lines said over the 3D view rather than in the bar: what to do, and
-    // which keys end or abort it, which is what a picking says while it runs.
-    // A line that is empty is a line that is not to be touched.
-    virtual void sceneMessage(const std::string &first,
-                              const std::string &second) = 0;
     // A transient note next to the pointer, over the 3D view: what was picked,
     // put where the user is already looking. An empty text takes it away.
     virtual void drawTooltip(const std::string &text) {}

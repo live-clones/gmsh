@@ -264,8 +264,7 @@ namespace Gui {
     std::vector<std::string> m = SplitString(msg, '\n');
     if(m.size() > 2)
       Msg::Debug("Ignoring extra lines of status message: %s", msg.c_str());
-    _backend->sceneMessage(m.size() > 0 ? m[0] : "",
-                           m.size() > 1 ? m[1] : "");
+    sceneMessage(m.size() > 0 ? m[0] : "", m.size() > 1 ? m[1] : "");
     drawContext::global()->draw();
   }
 

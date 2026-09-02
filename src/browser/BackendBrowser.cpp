@@ -153,7 +153,6 @@ namespace {
     }
 
     void refreshBar() override {}
-    void sceneMessage(const std::string &, const std::string &) override {}
     void showForm(int form, bool show) override { _shown[form] = show; }
     bool formVisible(int form) override
     {

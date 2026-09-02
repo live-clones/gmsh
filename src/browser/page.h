@@ -438,6 +438,7 @@ function draw(state) {
 // tolerable is a thing worth knowing, which is why it is here.
 const view = document.getElementById('view');
 let sceneBusy = false, sceneAgain = false, sceneSize = '';
+let sceneW = 1, sceneH = 1;   // the size the scene was last asked at
 async function frame() {
   if(sceneBusy) { sceneAgain = true; return; }
   sceneBusy = true;
@@ -446,6 +447,7 @@ async function frame() {
     const want = Math.round(box.width) + 'x' + Math.round(box.height);
     if(want !== sceneSize && box.width > 32) {
       sceneSize = want;
+      sceneW = Math.round(box.width); sceneH = Math.round(box.height);
       await fetch('/size', {method:'POST', body:'w=' + Math.round(box.width) +
                                                 '&h=' + Math.round(box.height)});
     }
@@ -461,22 +463,44 @@ async function frame() {
   if(sceneAgain) { sceneAgain = false; frame(); }
 }
 function where(e) {
+  // The picture fits the box it is drawn in and may be a moment behind it, so
+  // where the pointer is is worked out as a fraction of the picture and given
+  // back in the size the scene was last asked at -- which is the size the
+  // scene itself is working in.
   const box = view.getBoundingClientRect();
-  return 'x=' + Math.round(e.clientX - box.left) +
-         '&y=' + Math.round(e.clientY - box.top) +
+  const nw = view.naturalWidth || 1, nh = view.naturalHeight || 1;
+  const k = Math.min(box.width / nw, box.height / nh);
+  const w = nw * k || 1, h = nh * k || 1;
+  const fx = (e.clientX - box.left - (box.width - w) / 2) / w;
+  const fy = (e.clientY - box.top - (box.height - h) / 2) / h;
+  return 'x=' + Math.round(fx * sceneW) +
+         '&y=' + Math.round(fy * sceneH) +
          '&b=' + (e.button === 1 ? 2 : e.button === 2 ? 1 : 0) +
          '&s=' + (e.shiftKey ? 1 : 0) + '&c=' + (e.ctrlKey ? 1 : 0) +
          '&a=' + (e.altKey ? 1 : 0);
 }
+// A move may be dropped -- there is always another one coming -- but a press
+// or a release may not: the modes that place an entity follow the pointer
+// without any button held, so plain moves have to be reported too, and one at
+// a time is enough to keep up.
+let moving = false;
 async function pointer(e, what, wheel) {
-  await fetch('/pointer', {method:'POST',
-                           body: where(e) + '&w=' + what + '&d=' + (wheel || 0)});
+  if(what === 0) {
+    if(moving) return;
+    moving = true;
+  }
+  try {
+    await fetch('/pointer', {method:'POST',
+                             body: where(e) + '&w=' + what +
+                                   '&d=' + (wheel || 0)});
+  } catch(err) {}
+  if(what === 0) moving = false;
   frame();
 }
 view.oncontextmenu = e => e.preventDefault();
 view.onmousedown = e => { e.preventDefault(); pointer(e, 1); };
 view.onmouseup = e => pointer(e, 2);
-view.onmousemove = e => { if(e.buttons) pointer(e, 0); };
+view.onmousemove = e => pointer(e, 0);
 view.onwheel = e => { e.preventDefault(); pointer(e, 3, e.deltaY > 0 ? -1 : 1); };
 
 async function refresh() {

@@ -123,16 +123,6 @@ namespace {
         FlGui::instance()->graph[i]->getProgress()->redraw();
     }
 
-    void sceneMessage(const std::string &first,
-                      const std::string &second) override
-    {
-      if(!FlGui::available()) return;
-      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-      if(!gl) return;
-      if(first.size()) gl->screenMessage[0] = first;
-      if(second.size()) gl->screenMessage[1] = second;
-    }
-
     int numWindows() override
     {
       return FlGui::available() ? (int)FlGui::instance()->graph.size() : 0;
