@@ -352,8 +352,8 @@ static void recurFindCavity(std::vector<edgeXface> &shell,
   }
 }
 
-static void recurFindCavityAniso(GFace *gf, std::list<edgeXface> &shell,
-                                 std::list<MTri3 *> &cavity, double *metric,
+static void recurFindCavityAniso(GFace *gf, std::vector<edgeXface> &shell,
+                                 std::vector<MTri3 *> &cavity, double *metric,
                                  double *param, MTri3 *t, bidimMeshData &data)
 {
   t->setDeleted(true);
@@ -427,8 +427,8 @@ inline double getSurfUV(MTriangle *t, bidimMeshData &data)
   return 0.5 * (vv1[0] * vv2[1] - vv1[1] * vv2[0]);
 }
 
-static int insertVertexB(std::list<edgeXface> &shell,
-                         std::list<MTri3 *> &cavity, bool force, GFace *gf,
+static int insertVertexB(std::vector<edgeXface> &shell,
+                         std::vector<MTri3 *> &cavity, bool force, GFace *gf,
                          MVertex *v, double *param, MTri3 *t,
                          std::set<MTri3 *, compareTri3Ptr> &allTets,
                          std::set<MTri3 *, compareTri3Ptr> *activeTets,
@@ -451,11 +451,11 @@ static int insertVertexB(std::list<edgeXface> &shell,
       return volume + std::abs(getSurfUV(triangle->tri(), data));
     });
 
-  MTri3 **newTris = new MTri3 *[shell.size()];
+  std::vector<MTri3 *> newTris;
+  newTris.reserve(shell.size());
 
   std::vector<MTri3 *> new_cavity;
-
-  int k = 0;
+  new_cavity.reserve(2 * shell.size());
 
   auto it = shell.begin();
 
@@ -510,7 +510,7 @@ static int insertVertexB(std::list<edgeXface> &shell,
       onePointIsTooClose = true;
     }
 
-    newTris[k++] = t4;
+    newTris.push_back(t4);
     // all new triangles are pushed front in order to be able to destroy them if
     // the cavity is not star shaped around the new vertex.
     new_cavity.push_back(t4);
@@ -534,7 +534,7 @@ static int insertVertexB(std::list<edgeXface> &shell,
   if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose) {
     connectTris(new_cavity.begin(), new_cavity.end(), conn);
     // 30 % of the time is spent here!
-    allTets.insert(newTris, newTris + shell.size());
+    allTets.insert(newTris.begin(), newTris.end());
     if(activeTets) {
       for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
         int active_edge;
@@ -544,7 +544,6 @@ static int insertVertexB(std::list<edgeXface> &shell,
         }
       }
     }
-    delete[] newTris;
     return 1;
   }
   else {
@@ -556,11 +555,10 @@ static int insertVertexB(std::list<edgeXface> &shell,
     // Vs, false); _printTris("newTris.pos", &newTris[0], newTris+shell.size(),
     // Us, Vs, false); _printTris("allTris.pos", allTets.begin(),allTets.end(),
     // Us, Vs, false);
-    for(std::size_t i = 0; i < shell.size(); i++) {
+    for(std::size_t i = 0; i < newTris.size(); i++) {
       delete newTris[i]->tri();
       delete newTris[i];
     }
-    delete[] newTris;
 
     if(std::abs(oldVolume - newVolume) > EPS * oldVolume) return -3;
     if(onePointIsTooClose) return -4;
@@ -684,8 +682,13 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
     worst = *it;
 
   MTri3 *ptin = nullptr;
-  std::list<edgeXface> shell;
-  std::list<MTri3 *> cavity;
+  // reused across insertions: the cavity walk used to allocate one list node
+  // per shell edge and per cavity triangle. One buffer pair per thread, as
+  // faces are meshed in parallel.
+  static thread_local std::vector<edgeXface> shell;
+  static thread_local std::vector<MTri3 *> cavity;
+  shell.clear();
+  cavity.clear();
   double uv[2];
 
   // if the point is able to break the bad triangle "worst"
