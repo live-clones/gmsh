@@ -118,7 +118,9 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     taking a whole one: two little numbers under one label are two halves of
     a value, not two values. It is the rule the windows this reproduces are
     laid out by. */
- .cell input,.cell select{width:calc(135px / var(--n, 1));min-width:0}
+ /* Ten of the font's own size, which is how wide a field is in the windows
+    this reproduces, divided by however many share the line. */
+ .cell input,.cell select{width:calc(10em / var(--n, 1));min-width:0}
  /* the label runs on rather than wrapping: a window grows to hold what it
     says, as the ones this reproduces do */
  .cell label{flex:0 1 auto;min-width:0;white-space:nowrap}
@@ -129,7 +131,7 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     of keyboard shortcuts is made of. And it wraps at something one can read
     rather than making the window as wide as its longest line. */
  .cell.whole{flex:1 1 100%}
- .cell.runs>div{white-space:pre-line;max-width:520px}
+ .cell.runs>div{white-space:pre-line;max-width:26em}
  .section{margin:6px 8px 2px;border-top:1px solid #ddd;padding-top:4px}
  .section h3{font-size:12px;margin:0 0 2px;color:#444;font-weight:600}
  .section .line{padding-left:0;padding-right:0}
@@ -704,6 +706,9 @@ function draw(state) {
     log.textContent = state.messages.join('\n');
     if(atEnd) log.scrollTop = log.scrollHeight;
   }
+  // how big to draw, which is the application's setting and not the page's
+  if(fresh('font', state.font))
+    document.body.style.fontSize = state.font + 'px';
   if(fresh('status', state.status))
     document.getElementById('status').textContent = state.status;
   if(fresh('tip', state.tip)) {

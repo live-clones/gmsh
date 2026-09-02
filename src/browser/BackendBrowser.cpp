@@ -923,6 +923,8 @@ namespace {
                                                       0);
       out += ",\"menus\":";
       out += _sources.menuBar ? _menu(_sources.menuBar()) : "[]";
+      out += ",\"font\":";
+      out += std::to_string(_sources.fontSize ? _sources.fontSize() : 13);
       out += ",\"tip\":" + _quoted(_tip);
       out += ",\"tree\":" + _tree();
       out += ",\"bar\":" + _bar();

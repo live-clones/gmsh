@@ -120,6 +120,9 @@ namespace Gui {
     // for again rather than handed over, since what they say is only true at
     // the moment they are drawn.
     Ui::Backend::Sources sources;
+    sources.fontSize = []() {
+      return CTX::instance()->fontSize > 0 ? CTX::instance()->fontSize : 13;
+    };
     sources.form = [](int form) { return Dialog::panel(form); };
     sources.numForms = []() { return (int)Dialog::NumDialogs; };
     sources.formPane = [](int form) { return Dialog::currentPane(form); };

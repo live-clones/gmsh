@@ -97,6 +97,11 @@ namespace Ui {
     // changed, which is what the refresh calls below are for.
 
     struct Sources {
+      // How big to draw. It is a setting of the application and not of the
+      // toolkit -- the same number for every interface, so that a window is
+      // the size it is meant to be whichever one draws it -- and everything
+      // else is measured against it: a field is ten of them wide.
+      std::function<int()> fontSize;
       // the description of one form, by the number the shared side gave it,
       // and how many numbers there are
       std::function<Form(int form)> form;
