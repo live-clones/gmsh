@@ -101,7 +101,11 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     three columns wide in places. */
  .line{display:flex;align-items:center;gap:8px;padding:2px 8px;flex-wrap:wrap}
  .line.ruled{border-top:1px solid #ddd;margin-top:4px;padding-top:5px}
- .cell{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+ /* A cell takes the width it needs and no more, its label running on as far
+    as it must: a window is then as wide as its widest line, which is how the
+    ones this reproduces are sized. Sharing the line evenly is what the grid
+    of a pane laid out on columns is for. */
+ .cell{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0}
  .cell.packed{flex:0 0 auto}
  .cell.packed label{flex:0 0 auto}
  /* a row of values with a button after them is not columns of equal width:
@@ -111,12 +115,14 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .cell input,.cell select{width:135px;min-width:0}
  /* the label runs on rather than wrapping: a window grows to hold what it
     says, as the ones this reproduces do */
- .cell label{flex:1;min-width:0;white-space:nowrap}
+ .cell label{flex:0 1 auto;min-width:0;white-space:nowrap}
  .cell.act{flex:0 0 auto}
  .cell.wide{flex:1 1 100%}
  /* a line that runs on over several lines: the help of a plugin is a
     paragraph, not a label */
- .cell.wide>div{white-space:pre-line}
+ /* and a paragraph wraps at something one can read, rather than making the
+    window as wide as its longest line */
+ .cell.wide>div{white-space:pre-line;max-width:520px}
  .section{margin:6px 8px 2px;border-top:1px solid #ddd;padding-top:4px}
  .section h3{font-size:12px;margin:0 0 2px;color:#444;font-weight:600}
  .section .line{padding-left:0;padding-right:0}
@@ -347,8 +353,12 @@ function lines(fields, into, columns) {
     // rest share the line in columns of equal width, which is how the option
     // window lines two rows up with one another.
     if(columns > 1 && !packed) {
+      // The columns of two rows line up, which is the whole point of laying a
+      // pane out on columns; but a column is only as wide as what is in it,
+      // or a window with one long line in its first column would come out
+      // that many times too wide.
       line.style.display = 'grid';
-      line.style.gridTemplateColumns = 'repeat(' + columns + ',1fr)';
+      line.style.gridTemplateColumns = 'repeat(' + columns + ',max-content)';
     }
     for(const f of row) line.appendChild(cell(f));
     into.appendChild(line);
