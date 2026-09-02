@@ -36,20 +36,6 @@ static constexpr double ONE_THIRD = 1.0 / 3.0;
 static double LIMIT_ = 0.5 * std::sqrt(2.0) * 1;
 int MTri3::radiusNorm = 2;
 
-static void getDegeneratedVertices(GFace *gf, std::set<GEntity *> &degenerated)
-{
-  degenerated.clear();
-  const std::vector<GEdge *> &ed = gf->edges();
-  for(size_t i = 0; i < ed.size(); i++) {
-    GEdge *e = ed[i];
-    if(e->getBeginVertex() && e->getBeginVertex() == e->getEndVertex()) {
-      if(e->geomType() == GEntity::Unknown) {
-        degenerated.insert(e->getBeginVertex());
-      }
-    }
-  }
-}
-
 static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
                                            double *q2)
 {
@@ -60,142 +46,6 @@ static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
   b = robustPredicates::orient2d(q1, q2, p2);
   if(a * b > 0) return 0;
   return 1;
-}
-
-template <class ITERATOR>
-void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
-                GFace *gf = nullptr, std::set<GEntity *> *degenerated = nullptr)
-{
-  FILE *ff = Fopen(name, "w");
-  if(!ff) {
-    Msg::Error("Could not open file '%s'", name);
-    return;
-  }
-  fprintf(ff, "View\"test\"{\n");
-
-  if(data && gf && degenerated) {
-    const int N = 100;
-    while(it != end) {
-      MTri3 *worst = *it;
-      if(!worst->isDeleted()) {
-        for(int i = 0; i < 3; i++) {
-          int whatever =
-            (degenerated->find((worst)->tri()->getVertex(i)->onWhat()) !=
-             degenerated->end()) +
-            (degenerated->find(
-               (worst)->tri()->getVertex((i + 1) % 3)->onWhat()) !=
-             degenerated->end());
-          if(whatever == 1) {
-            double u1 = data->Us[data->getIndex((worst)->tri()->getVertex(i))];
-            double u2 =
-              data->Us[data->getIndex((worst)->tri()->getVertex((i + 1) % 3))];
-            double v1 = data->Vs[data->getIndex((worst)->tri()->getVertex(i))];
-            double v2 =
-              data->Vs[data->getIndex((worst)->tri()->getVertex((i + 1) % 3))];
-            GPoint p_prec;
-            for(int j = 0; j < N; j++) {
-              double t = (double)j / (N - 1);
-              double u = u1 + t * (u2 - u1);
-              double v = v1 + t * (v2 - v1);
-              GPoint p = gf->point(SPoint2(u, v));
-              if(j) {
-                fprintf(ff, "SL(%g,%g,%g,%g,%g,%g){1,1};\n", p_prec.x(),
-                        p_prec.y(), p_prec.z(), p.x(), p.y(), p.z());
-              }
-              p_prec = p;
-            }
-          }
-        }
-      }
-      ++it;
-    }
-  }
-  else {
-    while(it != end) {
-      MTri3 *worst = *it;
-      if(!worst->isDeleted()) {
-        if(data) {
-          double u1 = data->Us[data->getIndex((worst)->tri()->getVertex(0))];
-          double v1 = data->Vs[data->getIndex((worst)->tri()->getVertex(0))];
-          double u2 = data->Us[data->getIndex((worst)->tri()->getVertex(1))];
-          double v2 = data->Vs[data->getIndex((worst)->tri()->getVertex(1))];
-          double u3 = data->Us[data->getIndex((worst)->tri()->getVertex(2))];
-          double v3 = data->Vs[data->getIndex((worst)->tri()->getVertex(2))];
-
-          if(degenerated) {
-            bool deg[3];
-            deg[0] =
-              degenerated->find((worst)->tri()->getVertex(0)->onWhat()) !=
-              degenerated->end();
-            deg[1] =
-              degenerated->find((worst)->tri()->getVertex(1)->onWhat()) !=
-              degenerated->end();
-            deg[2] =
-              degenerated->find((worst)->tri()->getVertex(2)->onWhat()) !=
-              degenerated->end();
-            if(deg[0] && !deg[1] && !deg[2]) {
-              fprintf(
-                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu,%zu};\n",
-                u3, v1, 0., u2, v1, 0., u2, v2, 0., u3, v3, 0.,
-                (worst)->tri()->getVertex(0)->getNum(),
-                (worst)->tri()->getVertex(0)->getNum(),
-                (worst)->tri()->getVertex(1)->getNum(),
-                (worst)->tri()->getVertex(2)->getNum());
-            }
-            else if(!deg[0] && deg[1] && !deg[2]) {
-              fprintf(
-                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu,%zu};\n",
-                u1, v2, 0., u3, v2, 0., u3, v3, 0., u1, v1, 0.,
-                (worst)->tri()->getVertex(1)->getNum(),
-                (worst)->tri()->getVertex(1)->getNum(),
-                (worst)->tri()->getVertex(2)->getNum(),
-                (worst)->tri()->getVertex(0)->getNum());
-            }
-            else if(!deg[0] && !deg[1] && deg[2]) {
-              fprintf(
-                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu,%zu};\n",
-                u2, v3, 0., u1, v3, 0., u1, v1, 0., u2, v2, 0.,
-                (worst)->tri()->getVertex(2)->getNum(),
-                (worst)->tri()->getVertex(2)->getNum(),
-                (worst)->tri()->getVertex(0)->getNum(),
-                (worst)->tri()->getVertex(1)->getNum());
-            }
-            else if(!deg[0] && !deg[1] && !deg[2]) {
-              fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu};\n", u1,
-                      v1, 0., u2, v2, 0., u3, v3, 0.,
-                      (worst)->tri()->getVertex(0)->getNum(),
-                      (worst)->tri()->getVertex(1)->getNum(),
-                      (worst)->tri()->getVertex(2)->getNum());
-            }
-          }
-          else {
-            fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu};\n", u1, v1,
-                    0., u2, v2, 0., u3, v3, 0.,
-                    (worst)->tri()->getVertex(0)->getNum(),
-                    (worst)->tri()->getVertex(1)->getNum(),
-                    (worst)->tri()->getVertex(2)->getNum());
-          }
-        }
-        else
-          fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%zu,%zu,%zu};\n",
-                  (worst)->tri()->getVertex(0)->x(),
-                  (worst)->tri()->getVertex(0)->y(),
-                  (worst)->tri()->getVertex(0)->z(),
-                  (worst)->tri()->getVertex(1)->x(),
-                  (worst)->tri()->getVertex(1)->y(),
-                  (worst)->tri()->getVertex(1)->z(),
-                  (worst)->tri()->getVertex(2)->x(),
-                  (worst)->tri()->getVertex(2)->y(),
-                  (worst)->tri()->getVertex(2)->z(),
-                  (worst)->tri()->getVertex(0)->getNum(),
-                  (worst)->tri()->getVertex(1)->getNum(),
-                  (worst)->tri()->getVertex(2)->getNum());
-      }
-      ++it;
-    }
-  }
-  fprintf(ff, "};\n");
-  fclose(ff);
 }
 
 static bool isActive(MTri3 *t, double limit_, int &active)
@@ -277,47 +127,6 @@ static void circumCenterMetric(double *pa, double *pb, double *pc,
             2. * (x[0] - pa[0]) * (x[1] - pa[1]) * b;
 }
 
-static void circumCenterMetricXYZ(double *p1, double *p2, double *p3,
-                                  SMetric3 &metric, double *res, double *uv,
-                                  double &radius)
-{
-  double v1[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-  double v2[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
-  double vx[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-  double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
-  double vz[3];
-  prodve(vx, vy, vz);
-  prodve(vz, vx, vy);
-  norme(vx);
-  norme(vy);
-  norme(vz);
-  double p1P[2] = {0.0, 0.0};
-  double p2P[2] = {prosca(v1, vx), prosca(v1, vy)};
-  double p3P[2] = {prosca(v2, vx), prosca(v2, vy)};
-
-  double resP[2];
-
-  fullMatrix<double> T(3, 3);
-  for(int i = 0; i < 3; i++) T(0, i) = vx[i];
-  for(int i = 0; i < 3; i++) T(1, i) = vy[i];
-  for(int i = 0; i < 3; i++) T(2, i) = vz[i];
-  SMetric3 tra = metric.transform(T);
-  double mm[3] = {tra(0, 0), tra(0, 1), tra(1, 1)};
-
-  circumCenterMetric(p1P, p2P, p3P, mm, resP, radius);
-
-  if(uv) {
-    double mat[2][2] = {{p2P[0] - p1P[0], p3P[0] - p1P[0]},
-                        {p2P[1] - p1P[1], p3P[1] - p1P[1]}};
-    double rhs[2] = {resP[0] - p1P[0], resP[1] - p1P[1]};
-    sys2x2(mat, rhs, uv);
-  }
-
-  res[0] = p1[0] + resP[0] * vx[0] + resP[1] * vy[0];
-  res[1] = p1[1] + resP[0] * vx[1] + resP[1] * vy[1];
-  res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
-}
-
 static void circumCenterMetric(MTriangle *base, const double *metric,
                                bidimMeshData &data, double *x, double &Radius2)
 {
@@ -393,25 +202,7 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv,
   return d3 < Radius2;
 }
 
-static void fourthPoint(double *p1, double *p2, double *p3, double *p4)
-{
-  double c[3];
-  circumCenterXYZ(p1, p2, p3, c);
-  double vx[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-  double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
-  double vz[3];
-  prodve(vx, vy, vz);
-  norme(vz);
-  double R =
-    sqrt((p1[0] - c[0]) * (p1[0] - c[0]) + (p1[1] - c[1]) * (p1[1] - c[1]) +
-         (p1[2] - c[2]) * (p1[2] - c[2]));
-  p4[0] = c[0] + R * vz[0];
-  p4[1] = c[1] + R * vz[1];
-  p4[2] = c[2] + R * vz[2];
-}
-
-MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData *data,
-             GFace *gf)
+MTri3::MTri3(MTriangle *t, double lc, bidimMeshData *data, GFace *gf)
   : deleted(false), base(t)
 {
   neigh[0] = neigh[1] = neigh[2] = nullptr;
@@ -423,7 +214,7 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData *data,
   double pc[3] = {base->getVertex(2)->x(), base->getVertex(2)->y(),
                   base->getVertex(2)->z()};
 
-  if(!metric) {
+  {
     if(radiusNorm == 3) { circum_radius = 1. / base->gammaShapeMeasure(); }
     else if(radiusNorm == 2) {
       circumCenterXYZ(pa, pb, pc, center);
@@ -467,10 +258,6 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData *data,
       circum_radius = std::max(xmax - xmin, ymax - ymin) / (RATIO * lc);
     }
   }
-  else {
-    double uv[2];
-    circumCenterMetricXYZ(pa, pb, pc, *metric, center, uv, circum_radius);
-  }
 
   if(gf) {
     BoundaryLayerColumns *_columns = gf->getColumns();
@@ -480,37 +267,6 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData *data,
       }
     }
   }
-}
-
-int MTri3::inCircumCircle(const double *p) const
-{
-  double pa[3] = {base->getVertex(0)->x(), base->getVertex(0)->y(),
-                  base->getVertex(0)->z()};
-  double pb[3] = {base->getVertex(1)->x(), base->getVertex(1)->y(),
-                  base->getVertex(1)->z()};
-  double pc[3] = {base->getVertex(2)->x(), base->getVertex(2)->y(),
-                  base->getVertex(2)->z()};
-  double fourth[3];
-  fourthPoint(pa, pb, pc, fourth);
-
-  double result = robustPredicates::insphere(pa, pb, pc, fourth, (double *)p) *
-                  robustPredicates::orient3d(pa, pb, pc, fourth);
-  return (result > 0) ? 1 : 0;
-}
-
-int inCircumCircle(MTriangle *base, const double *p, const double *param,
-                   bidimMeshData &data)
-{
-  int index0 = data.getIndex(base->getVertex(0));
-  int index1 = data.getIndex(base->getVertex(1));
-  int index2 = data.getIndex(base->getVertex(2));
-  double pa[2] = {data.Us[index0], data.Vs[index0]};
-  double pb[2] = {data.Us[index1], data.Vs[index1]};
-  double pc[2] = {data.Us[index2], data.Vs[index2]};
-
-  double result = robustPredicates::incircle(pa, pb, pc, (double *)param) *
-                  robustPredicates::orient2d(pa, pb, pc);
-  return (result > 0) ? 1 : 0;
 }
 
 template <class Iterator>
@@ -726,8 +482,8 @@ static int insertVertexB(std::list<edgeXface> &shell,
                    data.vSizesBGM[index2]);
     double LL = std::min(lc, lcBGM);
 
-    MTri3 *t4 = new MTri3(t, Extend1dMeshIn2dSurfaces(gf) ? LL : lcBGM, nullptr,
-                          &data, gf);
+    MTri3 *t4 =
+      new MTri3(t, Extend1dMeshIn2dSurfaces(gf) ? LL : lcBGM, &data, gf);
 
     if(oneNewTriangle) {
       force = true;
@@ -1286,9 +1042,6 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   std::set<MTri3 *, compareTri3Ptr> ActiveTris;
   bidimMeshData DATA(equivalence, parametricCoordinates);
   bool testStarShapeness = true;
-  SPoint3 c;
-  std::set<GEntity *> degenerated;
-  getDegeneratedVertices(gf, degenerated);
 
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)) {
     Msg::Error("Invalid meshing data structure");
@@ -1710,81 +1463,6 @@ void bowyerWatsonParallelograms(
   Msg::Debug(
     "bowyerWatsonParallelograms: %li candidate points -> %li inserted vertices",
     packed.size(), gf->mesh_vertices.size());
-
-  splitElementsInBoundaryLayerIfNeeded(gf);
-}
-
-void bowyerWatsonParallelogramsConstrained(
-  GFace *gf, const std::set<MVertex *> &constr_vertices,
-  std::map<MVertex *, MVertex *> *equivalence,
-  std::map<MVertex *, SPoint2> *parametricCoordinates)
-{
-  Msg::Error("bowyerWatsonParallelogramsConstrained deprecated");
-  return;
-
-  std::set<MTri3 *, compareTri3Ptr> AllTris;
-  bidimMeshData DATA(equivalence, parametricCoordinates);
-  std::vector<MVertex *> packed;
-  std::vector<SMetric3> metrics;
-
-#if defined(HAVE_DOMHEX)
-  // packingOfParallelogramsConstrained no longer exists
-  // packingOfParallelogramsConstrained(gf, constr_vertices, packed, metrics);
-#else
-  Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
-#endif
-
-  if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)) {
-    Msg::Error("Invalid meshing data structure");
-    return;
-  }
-
-  std::sort(packed.begin(), packed.end(), MVertexPtrLessThanLexicographic());
-
-  MTri3 *oneNewTriangle = nullptr;
-  for(std::size_t i = 0; i < packed.size();) {
-    MTri3 *worst = *AllTris.begin();
-    if(worst->isDeleted()) {
-      delete worst->tri();
-      delete worst;
-      AllTris.erase(AllTris.begin());
-    }
-    else {
-      double newPoint[2];
-      packed[i]->getParameter(0, newPoint[0]);
-      packed[i]->getParameter(1, newPoint[1]);
-      delete packed[i];
-      double metric[3];
-      buildMetric(gf, newPoint, metric);
-
-      bool success =
-        insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA, AllTris,
-                     nullptr, oneNewTriangle, &oneNewTriangle);
-      if(!success) oneNewTriangle = nullptr;
-      i++;
-    }
-
-    if(1.0 * AllTris.size() > 2.5 * DATA.vSizes.size()) {
-      auto itd = AllTris.begin();
-      while(itd != AllTris.end()) {
-        if((*itd)->isDeleted()) {
-          delete *itd;
-          AllTris.erase(itd++);
-        }
-        else
-          itd++;
-      }
-    }
-  }
-
-  transferDataStructure(gf, AllTris, DATA);
-  for(std::size_t i = 0; i < gf->getNumMeshVertices(); i++) {
-    MVertex *vtest = gf->getMeshVertex(i);
-    double para0, para1;
-    vtest->getParameter(0, para0);
-    vtest->getParameter(1, para1);
-  }
-  backgroundMesh::unset();
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 }

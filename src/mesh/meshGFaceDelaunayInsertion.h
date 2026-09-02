@@ -99,22 +99,12 @@ public:
         return n->tri()->getVertex(j);
     return nullptr;
   }
-  MTri3(MTriangle *t, double lc, SMetric3 *m = nullptr,
-        bidimMeshData *data = nullptr, GFace *gf = nullptr);
+  MTri3(MTriangle *t, double lc, bidimMeshData *data = nullptr,
+        GFace *gf = nullptr);
   inline void setTri(MTriangle *t) { base = t; }
   inline MTriangle *tri() const { return base; }
   inline void setNeigh(int iN, MTri3 *n) { neigh[iN] = n; }
   inline MTri3 *getNeigh(int iN) const { return neigh[iN]; }
-  int inCircumCircle(const double *p) const;
-  inline int inCircumCircle(double x, double y) const
-  {
-    const double p[2] = {x, y};
-    return inCircumCircle(p);
-  }
-  inline int inCircumCircle(const MVertex *v) const
-  {
-    return inCircumCircle(v->x(), v->y());
-  }
   inline void setDeleted(bool d) { deleted = d; }
   inline bool assertNeigh() const
   {
@@ -163,10 +153,6 @@ void bowyerWatsonFrontalLayers(
   std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonParallelograms(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
-void bowyerWatsonParallelogramsConstrained(
-  GFace *gf, const std::set<MVertex *> &constr_vertices,
-  std::map<MVertex *, MVertex *> *equivalence = nullptr,
   std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void buildBackgroundMesh(
   GFace *gf, bool crossFieldClosestPoint = false,
