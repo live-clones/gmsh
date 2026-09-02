@@ -18,6 +18,7 @@
 #include "sceneHost.h"
 #include "drawContextGL.h"
 #include "GuiScene.h"
+#include "Gui.h"
 #include "Context.h"
 #include "Options.h"
 #include "GmshDefines.h"
@@ -25,7 +26,6 @@
 #include "GmshMessage.h"
 #include "OS.h"
 #include "PixelBuffer.h"
-#include "GuiScene.h"
 
 // The 3D scene in a window of its own.
 //
@@ -253,7 +253,14 @@ namespace {
     held.drawCurrent = []() { _drawFrame(false); };
     held.uiScale = []() { return 1.f; };
     held.numViews = []() { return 1; };
-    held.tooltip = [](const std::string &text) { _it().tooltip = text; };
+    // There is no widget here to say it in. It goes to whoever is showing
+    // the scene, which is the one place it can be put next to the pointer:
+    // without it there is no telling what is under the cursor, and picking a
+    // point five pixels wide is guesswork.
+    held.tooltip = [](const std::string &text) {
+      _it().tooltip = text;
+      Gui::drawTooltip(text);
+    };
     held.current = []() { return _it().view; };
     held.setCurrent = [](sceneView *) {};
     Scene::setHost(held);

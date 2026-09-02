@@ -329,10 +329,12 @@ void sceneView::_hover()
     }
   }
 
-  if(CTX::instance()->tooltips)
+  if(CTX::instance()->tooltips) {
     if(Scene::host().tooltip) Scene::host().tooltip(text);
-  else
+  }
+  else {
     Msg::StatusBar(false, "%s", text.c_str());
+  }
 }
 
 void sceneView::handleMouse(const paneInput &in)

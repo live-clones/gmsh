@@ -1649,8 +1649,14 @@ void appWindow::_drawDialog(int which)
     }
     // one pane of a family, wherever the rows of tabs put it
     auto drawPane = [&](std::size_t i) {
+      // The user moved to this pane: it may have something to start, which is
+      // how moving to the Line tab of the elementary window asks for a start
+      // point rather than leaving the tool that was running. A pane that was
+      // asked for is not the user moving, and starts nothing.
+      bool moved = (int)i != wanted && uiSources().formPane(which) != (int)i;
       uiSources().setFormPane(which, (int)i);
       if((int)i == wanted) _wantedPane[which] = -1;
+      if(moved && panel.panes[i].chosen) panel.panes[i].chosen();
       ImGui::PushID((int)i);
       _paneBody(panel.panes[i], width, scrolls, most, this);
       ImGui::PopID();

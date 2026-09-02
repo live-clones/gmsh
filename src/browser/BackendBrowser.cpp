@@ -159,6 +159,7 @@ namespace {
       auto it = _shown.find(form);
       return it != _shown.end() && it->second;
     }
+    void drawTooltip(const std::string &text) override { _tip = text; }
     void showConsole(bool show) override { _console = show; }
     bool consoleVisible() override { return _console; }
     void refreshTree(bool rebuild) override {}
@@ -187,6 +188,8 @@ namespace {
     int _port = 0;
     bool _going = true;
     bool _console = false;
+    // what the scene says is under the pointer, said next to it
+    std::string _tip;
     std::map<int, bool> _shown;
     std::vector<std::string> _messages;
     // what the page may ask for, by number: rebuilt every time the state is
@@ -328,7 +331,17 @@ namespace {
       if(ask.path == "/pane") {
         int form = atoi(_valueOf(ask.body, "form").c_str());
         int pane = atoi(_valueOf(ask.body, "i").c_str());
+        bool moved = _sources.formPane && _sources.formPane(form) != pane;
         if(_sources.setFormPane) _sources.setFormPane(form, pane);
+        // the user picked this pane: it may have something to start, which is
+        // how moving to the Line tab of the elementary window asks for a start
+        // point rather than leaving the tool that was running
+        if(moved && _sources.form) {
+          Ui::Form said = _sources.form(form);
+          if(pane >= 0 && pane < (int)said.panes.size() &&
+             said.panes[pane].chosen)
+            said.panes[pane].chosen();
+        }
         return "{}";
       }
       return "{}";
@@ -613,6 +626,7 @@ namespace {
                                                       0);
       out += ",\"menus\":";
       out += _sources.menuBar ? _menu(_sources.menuBar()) : "[]";
+      out += ",\"tip\":" + _quoted(_tip);
       out += ",\"tree\":" + _tree();
       out += ",\"bar\":" + _bar();
       out += ",\"forms\":[";

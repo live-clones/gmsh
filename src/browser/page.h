@@ -100,9 +100,14 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  #foot button.on{background:#cfd8ff}
  #status{margin-left:8px;font-size:12px;color:#333}
  .note{padding:10px;color:#666}
+ /* what the scene says is under the pointer, said where the pointer is */
+ #tip{position:absolute;z-index:6;pointer-events:none;max-width:340px;
+      background:#ffffe1;color:#111;border:1px solid #999;padding:2px 5px;
+      font:11px system-ui;white-space:pre-line;box-shadow:0 2px 6px #0004}
+ #tip:empty{display:none}
 </style>
 <div id="bar"></div>
-<div id="middle"><div id="tree"></div><div id="scene"><img id="view"></div>
+<div id="middle"><div id="tree"></div><div id="scene"><img id="view"><div id="tip"></div></div>
  <div id="dock"></div><div id="desk"></div></div>
 <pre id="console"></pre>
 <div id="foot"><span id="buttons"></span><span id="status"></span></div>
@@ -428,6 +433,20 @@ function draw(state) {
   }
   if(fresh('status', state.status))
     document.getElementById('status').textContent = state.status;
+  if(fresh('tip', state.tip)) {
+    // it says what is under the pointer, which is how one knows a point five
+    // pixels wide is about to be picked
+    const tip = document.getElementById('tip');
+    tip.textContent = state.tip || '';
+    if(state.tip) {
+      const box = document.getElementById('scene').getBoundingClientRect();
+      let x = lastPointer[0] + 16, y = lastPointer[1] + 18;
+      if(x + tip.offsetWidth > box.width) x = box.width - tip.offsetWidth - 4;
+      if(y + tip.offsetHeight > box.height) y = lastPointer[1] - tip.offsetHeight - 6;
+      tip.style.left = Math.max(0, x) + 'px';
+      tip.style.top = Math.max(0, y) + 'px';
+    }
+  }
 }
 
 // --- the 3D scene, as a picture
@@ -462,17 +481,21 @@ async function frame() {
   sceneBusy = false;
   if(sceneAgain) { sceneAgain = false; frame(); }
 }
+let lastPointer = [0, 0];   // where the pointer is over the scene
 function where(e) {
   // The picture fits the box it is drawn in and may be a moment behind it, so
   // where the pointer is is worked out as a fraction of the picture and given
   // back in the size the scene was last asked at -- which is the size the
   // scene itself is working in.
   const box = view.getBoundingClientRect();
-  const nw = view.naturalWidth || 1, nh = view.naturalHeight || 1;
+  // before the first picture has come there is nothing to measure against
+  // but the size that was asked for, which is the shape it will have
+  const nw = view.naturalWidth || sceneW, nh = view.naturalHeight || sceneH;
   const k = Math.min(box.width / nw, box.height / nh);
   const w = nw * k || 1, h = nh * k || 1;
   const fx = (e.clientX - box.left - (box.width - w) / 2) / w;
   const fy = (e.clientY - box.top - (box.height - h) / 2) / h;
+  lastPointer = [e.clientX - box.left, e.clientY - box.top];
   return 'x=' + Math.round(fx * sceneW) +
          '&y=' + Math.round(fy * sceneH) +
          '&b=' + (e.button === 1 ? 2 : e.button === 2 ? 1 : 0) +
