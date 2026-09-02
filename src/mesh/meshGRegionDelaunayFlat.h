@@ -7,7 +7,7 @@
 #define MESH_GREGION_DELAUNAY_FLAT_H
 
 // Flat-array refinement kernel of the 3D Delaunay mesher, selected with
-// Mesh.FlatRefineDelaunay3D. Same algorithm and same floating-point
+// Mesh.FlatRefine3D. Same algorithm and same floating-point
 // operations as the MTet4 kernel in meshGRegionDelaunay.cpp, on index-based
 // arrays instead of objects; the meshes are bit-for-bit identical, node and
 // element numbering included. Internal to the mesher - the entry points the

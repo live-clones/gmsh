@@ -161,12 +161,12 @@ First tag (>= 1) of mesh nodes when generating or renumbering a mesh@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.FlatRefineDelaunay2D
+@item Mesh.FlatRefine2D
 Kernel used for 2D Delaunay point insertion (0: original object-based kernel; 1: flat-array kernel, which produces the same meshes; 2: flat-array kernel with faster floating-point shortcuts on planar faces and isotropic metrics, which give equivalent but not identical meshes)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.FlatRefineDelaunay3D
+@item Mesh.FlatRefine3D
 Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to use the original object-based kernel, which produces the same meshes)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}

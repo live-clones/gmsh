@@ -25,7 +25,7 @@
 //    the std::set would have been drained in.
 //
 // Everything that could round differently is off by default, so that the
-// kernel is a switch (Mesh.FlatRefineDelaunay2D = 1) and not a separate
+// kernel is a switch (Mesh.FlatRefine2D = 1) and not a separate
 // algorithm. Setting the option to 2 turns those shortcuts back on - a
 // circumcircle cached per triangle instead of a metric solve per in-circle
 // test, a closed-form circumradius on planar faces, and no curve/surface
@@ -238,7 +238,7 @@ struct flatMeshData {
   discreteFace *discrete = nullptr;
   bool planar = false;
   bool extend1d = false;
-  // Mesh.FlatRefineDelaunay2D = 2: take the cheaper floating-point route
+  // Mesh.FlatRefine2D = 2: take the cheaper floating-point route
   // wherever an isotropic metric or a planar face allows it. Same quantities,
   // computed differently, so the rare near-cocircular decisions can flip and
   // the mesh is no longer identical to the one the classic kernel produces.
@@ -249,7 +249,7 @@ struct flatMeshData {
   std::vector<double> circumRadius;
   // Per-triangle parametric circumcircle {cx, cy, r^2}, computed once in
   // closed form at creation. Only filled, and only used, in the fast mode
-  // (Mesh.FlatRefineDelaunay2D = 2): see fastCircles.
+  // (Mesh.FlatRefine2D = 2): see fastCircles.
   std::vector<std::array<double, 3>> circumCircle;
   std::vector<TriangleFlag> flags;
   std::vector<std::size_t> freeTriangleSlots;
@@ -726,7 +726,7 @@ static bool buildMeshGenerationDataStructures(
     data.discrete = dynamic_cast<discreteFace *>(gf);
   data.planar = gf->geomType() == GEntity::Plane;
   data.extend1d = Extend1dMeshIn2dSurfaces(gf);
-  data.fastCircles = (CTX::instance()->mesh.flatRefineDelaunay2D == 2);
+  data.fastCircles = (CTX::instance()->mesh.flatRefine2D == 2);
 
   // index the internal (embedded) edges by vertex ids so the cavity walk
   // needs no MEdge/MVertex

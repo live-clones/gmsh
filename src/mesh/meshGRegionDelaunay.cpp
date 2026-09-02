@@ -8,7 +8,7 @@
 // tetrahedra - the boundary mesh is recovered and classified, then points are
 // inserted at the circumcenters of the tets that are too large. Two kernels
 // do the insertion: the flat one, on index-based arrays, which is the default
-// (Mesh.FlatRefineDelaunay3D) and lives in meshGRegionDelaunayFlat.cpp, and
+// (Mesh.FlatRefine3D) and lives in meshGRegionDelaunayFlat.cpp, and
 // the original one, on the MTet4 objects, which it is meant to replace and
 // which is below. Optimizing a region is in meshGRegionOptimize.cpp.
 
@@ -1060,7 +1060,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
   }
   Msg::Debug("All %d tets were connected", tets0.size());
 
-  if(CTX::instance()->mesh.flatRefineDelaunay3D)
+  if(CTX::instance()->mesh.flatRefine3D)
     refineRegionFlat(gr, maxIter, worstTetRadiusTarget, tets0, myFactory,
                      vSizes, vSizesBGM, NUM, allEmbeddedFaces,
                      allEmbeddedEdges);
