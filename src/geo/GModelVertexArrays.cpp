@@ -233,6 +233,13 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 
   // static scheduling, merged in thread order, keeps the arrays in the same
   // order as in a serial run
+  const double explode = CTX::instance()->mesh.explode;
+  const bool smooth = CTX::instance()->mesh.smoothNormals;
+  const bool pick = CTX::instance()->pickElements;
+  const bool uniqueEdges = (e->dim() > 1 && !pick);
+  const bool uniqueFaces = (e->dim() > 2 && !pick);
+  const bool skinFaces = (e->dim() > 2 && CTX::instance()->mesh.drawSkinOnly);
+
 #pragma omp parallel for schedule(static) num_threads(nthreads)
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
@@ -250,22 +257,22 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
       (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
 
     SPoint3 pc(0., 0., 0.);
-    if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
+    if(explode != 1.) pc = ele->barycenter();
 
     if(edges) {
-      bool unique = e->dim() > 1 && !CTX::instance()->pickElements;
+      bool unique = uniqueEdges;
       for(int j = 0; j < ele->getNumEdgesRep(curved); j++) {
         double x[2], y[2], z[2];
         SVector3 n[2];
         ele->getEdgeRep(curved, j, x, y, z, n);
-        if(CTX::instance()->mesh.explode != 1.) {
+        if(explode != 1.) {
           for(int k = 0; k < 2; k++) {
-            x[k] = pc[0] + CTX::instance()->mesh.explode * (x[k] - pc[0]);
-            y[k] = pc[1] + CTX::instance()->mesh.explode * (y[k] - pc[1]);
-            z[k] = pc[2] + CTX::instance()->mesh.explode * (z[k] - pc[2]);
+            x[k] = pc[0] + explode * (x[k] - pc[0]);
+            y[k] = pc[1] + explode * (y[k] - pc[1]);
+            z[k] = pc[2] + explode * (z[k] - pc[2]);
           }
         }
-        if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
+        if(e->dim() == 2 && smooth)
           for(int k = 0; k < 2; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
@@ -274,20 +281,20 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
     }
 
     if(faces) {
-      bool unique = e->dim() > 2 && !CTX::instance()->pickElements;
-      bool skin = e->dim() > 2 && CTX::instance()->mesh.drawSkinOnly;
+      bool unique = uniqueFaces;
+      bool skin = skinFaces;
       for(int j = 0; j < ele->getNumFacesRep(curved); j++) {
         double x[3], y[3], z[3];
         SVector3 n[3];
         ele->getFaceRep(curved, j, x, y, z, n);
-        if(CTX::instance()->mesh.explode != 1.) {
+        if(explode != 1.) {
           for(int k = 0; k < 3; k++) {
-            x[k] = pc[0] + CTX::instance()->mesh.explode * (x[k] - pc[0]);
-            y[k] = pc[1] + CTX::instance()->mesh.explode * (y[k] - pc[1]);
-            z[k] = pc[2] + CTX::instance()->mesh.explode * (z[k] - pc[2]);
+            x[k] = pc[0] + explode * (x[k] - pc[0]);
+            y[k] = pc[1] + explode * (y[k] - pc[1]);
+            z[k] = pc[2] + explode * (z[k] - pc[2]);
           }
         }
-        if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
+        if(e->dim() == 2 && smooth)
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
