@@ -30,6 +30,11 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .drop{display:none;position:absolute;left:0;top:100%;background:#fff;
        border:1px solid #bbb;box-shadow:0 2px 8px #0003;min-width:230px;z-index:9}
  .top:hover>.drop,.item:hover>.drop{display:block}
+ /* A button of the bar that drops a menu opens it by being pressed, and the
+    menu goes up: the bar is at the bottom of the page. */
+ .drops{position:relative;display:inline-block}
+ .drops>.drop{bottom:100%;top:auto}
+ .drops.open>.drop{display:block}
  .item{padding:3px 10px;white-space:nowrap;display:flex;justify-content:space-between;
        gap:24px;position:relative}
  .item:hover{background:#cfd8ff}
@@ -538,6 +543,10 @@ window.addEventListener('mousemove', e => {
 });
 window.addEventListener('mouseup', () => { dragging = null; });
 
+// the buttons of the bar, in the order they are drawn, so that what is
+// outside the page can say which one it means
+const bars = [];
+
 let showing = [];                     // the forms as they were last drawn
 // Where the page has put things, said back to Gmsh. Nothing outside a page
 // can know that: the bench that photographs the interfaces side by side has
@@ -555,6 +564,7 @@ function sayWhere(cards) {
   put('tree', document.getElementById('tree'));
   put('scene', document.getElementById('scene'));
   put('console', document.getElementById('console'));
+  bars.forEach((b, i) => put('bar' + i, b));
   for(const at of cards) put('form' + at[0], at[1]);
   say('/where', parts.join('&')).catch(() => {});
 }
@@ -715,6 +725,7 @@ function square(card) {
 function drawButtons(buttons) {
   const box = document.getElementById('buttons');
   box.textContent = '';
+  bars.length = 0;
   for(const b of buttons) {
     const button = document.createElement('button');
     button.textContent = b.label;
@@ -722,7 +733,29 @@ function drawButtons(buttons) {
     if(b.on) button.className = 'on';
     button.disabled = !b.enabled;
     if(b.id >= 0) button.onclick = () => post('/do', which(b));
+    if(b.children) {
+      // A button that drops a menu rather than doing something: the models
+      // and the quick access. It opens where it is, which is at the bottom of
+      // the page, so the menu goes up from it.
+      const holder = document.createElement('span');
+      holder.className = 'drops';
+      const drop = menu(b.children);
+      drop.classList.add('up');
+      button.onclick = e => {
+        e.stopPropagation();
+        const was = holder.classList.contains('open');
+        for(const other of document.querySelectorAll('.drops.open'))
+          other.classList.remove('open');
+        if(!was) holder.classList.add('open');
+      };
+      holder.appendChild(button);
+      holder.appendChild(drop);
+      box.appendChild(holder);
+      bars.push(holder);
+      continue;
+    }
     box.appendChild(button);
+    bars.push(button);
   }
 }
 
@@ -863,6 +896,10 @@ window.addEventListener('keydown', e => {
   if(typing() || e.ctrlKey || e.altKey || e.metaKey) return;
   if(e.key.length !== 1) return;
   say('/key', 'j=' + encodeURIComponent(e.key));
+});
+document.addEventListener('click', () => {
+  for(const open of document.querySelectorAll('.drops.open'))
+    open.classList.remove('open');
 });
 document.getElementById('bar').onmouseenter = () => { overBar = true; };
 document.getElementById('bar').onmouseleave = () => { overBar = false; };

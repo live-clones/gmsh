@@ -19,14 +19,19 @@
 # The builds run at the same time. They share nothing: each has its own X
 # server, its own HOME and its own name for every picture, and photographing
 # one interface is mostly waiting for it, so three at once cost little more
-# than one. GUICOMPARE_OPTIONS names the categories of the option window to
-# sweep as well, each in the same interface that has just been photographed.
+# than one. The categories of the option window are swept as well, each in the
+# same interface that has just been photographed.
 
 root=$(cd "$(dirname "$0")/../.." && pwd)
 here=$root/utils/guicompare
 venv=${GUICOMPARE_VENV:-$root/.venv}
 py=$venv/bin/python
 work=${GUICOMPARE_WORK:-$here/out}
+# The categories of the option window to sweep as well. Every one of them by
+# default: it is the window with the most in it by far, and one tab of it says
+# nothing about the other twenty-four. GUICOMPARE_OPTIONS names which, and an
+# empty one skips them.
+options=${GUICOMPARE_OPTIONS-general geometry mesh solver post view}
 shots=$work/shots
 figures=$work/figures
 
@@ -61,7 +66,7 @@ photograph() {
   shift 2
   $py "$here/shoot.py" --build "$build" ${1:+--lib "$1"} --out "$shots" \
       --home "$home" --display "$display" $only 2>&1 | sed "s/^/$build: /"
-  for category in $GUICOMPARE_OPTIONS; do
+  for category in $options; do
     $py "$here/shoot.py" --build "$build" ${1:+--lib "$1"} --out "$shots" \
         --home "$home" --display "$display" --sweep-options --only "$category" \
         2>&1 | sed "s/^/$build: /"

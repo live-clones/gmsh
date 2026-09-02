@@ -216,7 +216,12 @@ SHOTS.append(dict(name="plugins", dialog="plugins", branches=[],
                   keys=["ctrl", "shift", "u"], geo=model("view.pos"),
                   everyTab={"released": ["options", "help"],
                             "fltk": ["options", "help"],
-                            "imgui": ["options", "help"]}))
+                            "imgui": ["options", "help"]},
+                  # measured on a picture of the open window: FLTK 1.4 draws
+                  # this strip beside two list boxes whose borders read as tab
+                  # separators, so it is the one dialog whose tabs are written
+                  # down rather than found
+                  tabsAt={"fltk": [(261, 94), (306, 94)]}))
 # The visibility window, on a model that has something to hide. Every one of
 # its tabs is photographed, and where each tab is, is read off the picture --
 # the released build has one more of them than the converted ones, so they are
@@ -276,6 +281,9 @@ SHOTS.append(dict(name="parameters-", dialog="parameters", branches=[],
 # will name, so the picture is of the whole window it opened over.
 SHOTS.append(dict(name="quickaccess-", dialog="quickaccess", branches=[],
                   geo=model("view.pos"), whole=True,
+                  # the second button of the bar, which is what the page calls
+                  # it: a menu lives in the page, so it is pressed there
+                  barButton=1,
                   menu={"released": [(22, 735)], "fltk": [(22, 735)],
                         "imgui": [(41, 987)]}))
 
@@ -680,7 +688,8 @@ def detached(dpy, dialog, main):
 # where the tabs of a dialog sit, read off the picture rather than written
 # down: a tab moves as soon as a label changes, and there are 25 of them here
 def _tabs_at(im, px, build, y):
-    """The tabs of the strip drawn at that height, if there is one there."""
+    """Where each tab of the strip drawn at that height starts and ends, if
+    there is a strip there at all."""
     if build == "imgui":
         # a tab is drawn in one of two colours, selected or not, with the
         # window background showing between them
@@ -692,7 +701,7 @@ def _tabs_at(im, px, build, y):
             if not on and start is not None:
                 if x - start >= 16: runs.append((start, x - 1))
                 start = None
-        return [(a + b) // 2 for a, b in runs]
+        return runs
     # FLTK draws a dark line between two tabs
     grey, line = (192, 192, 192), (83, 83, 83)
     cuts = [x for x in range(im.width) if px[x, y] == line]
@@ -703,13 +712,13 @@ def _tabs_at(im, px, build, y):
     while left > 0 and px[left - 1, y] == grey: left -= 1
     out, previous = [], left
     for x in cuts:
-        if x - previous >= 16: out.append((previous + x) // 2)
+        if x - previous >= 16: out.append((previous, x))
         previous = x
     if not out and im.width - left >= 16:
         # a lone tab has no line beside it
         right = left
         while right + 1 < im.width and px[right + 1, y] == grey: right += 1
-        out.append((left + min(right, left + 120)) // 2)
+        out.append((left, min(right, left + 120)))
     return out
 
 
@@ -730,19 +739,28 @@ def tab_boundaries(img, build, want=0):
     below = TAB_ROW[build] - TAB_SCAN[build]
     first = TAB_SCAN[build]
     # Where the strip usually is, and further down for a dialog that says what
-    # its panes are about above them. The row that holds the most tabs is the
-    # strip; the usual row wins a tie, so a dialog with a single tab -- the
-    # Solver options -- keeps it.
-    best = _tabs_at(im, px, build, first)
-    if len(best) == want or not want: return best, first + below
-    # not there: a dialog that says what its panes are about has pushed the
-    # strip down, and the first row that holds as many tabs as are expected is
-    # it -- a row of something else rarely holds exactly that many
-    for y in range(4, min(im.height, 120), 2):
-        if y == first: continue
-        found = _tabs_at(im, px, build, y)
-        if len(found) == want: return found, y + below
-    return best, first + below
+    # its panes are about above them -- the plugins, the size fields.
+    #
+    # Counting is not enough to tell a strip from something else that happens
+    # to be striped: the tops of two list boxes are two dark lines and look
+    # like two tabs. A strip is also made of wide pieces that follow one
+    # another, so the row whose pieces cover the most, none of them narrow,
+    # is the one. The usual row wins a tie, which is what keeps a dialog with
+    # a single tab -- the Solver options -- where it has always been.
+    rows = [first] + [y for y in range(4, min(im.height, 160), 2) if y != first]
+    best, most = None, None
+    for y in rows:
+        runs = _tabs_at(im, px, build, y)
+        if not runs: continue
+        if want and len(runs) != want: continue
+        if min(b - a for a, b in runs) < 20: continue
+        span = sum(b - a for a, b in runs)
+        if most is None or span > most:
+            most, best = span, (runs, y)
+    if best is None:
+        runs = _tabs_at(im, px, build, first)
+        return [(a + b) // 2 for a, b in runs], first + below
+    return [(a + b) // 2 for a, b in best[0]], best[1] + below
 
 
 # The categories of the option window, and the tabs each of them has, as the
@@ -889,6 +907,67 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
                 f = "%s-options-view-map-keys.png" % build
                 second.save(os.path.join(out, f))
                 print("SHOT %s  %dx%d" % (f, second.width, second.height))
+    return failures
+
+
+def browser_sweep(dpy, args, port, win, only=None):
+    """Every tab of every category of the option window, over the socket.
+
+    The page is not clicked at a measured row: the category is picked by its
+    name in the list the window puts down its side, and the tab by its name.
+    That is the whole difference between this and the one above.
+    """
+    failures = []
+    for category, tabs in OPTION_TABS:
+        if only and not only.startswith(category.lower()):
+            continue
+        browser_quiet(port)
+        state = browser_state(port) or {}
+        item = browser_menu(state, browser_shortcut(["ctrl", "shift", "n"]))
+        if not item:
+            failures.append("options: no way to open the window")
+            return failures
+        browser_ask(port, "/do", which(item), timeout=3)
+        time.sleep(0.6)
+        form = browser_form(browser_state(port) or {}, "options")
+        # the categories are named as the window names them, which is not
+        # always how the bench calls them
+        said = {"post": "Post-pro", "view": "View ["}
+        want = said.get(category.lower(), category)
+        if not browser_press(port, form, want):
+            lists = [f for f in form.get("side", []) if f.get("kind") == "list"]
+            at = None
+            for f in lists:
+                for i, label in enumerate(f.get("items", [])):
+                    if label.startswith(want): at = (f, i)
+            if not at:
+                failures.append("options-%s: no such category" % category)
+                continue
+            browser_ask(port, "/choose", which(at[0]) + "&i=%d&v=1" % at[1],
+                        timeout=3)
+        time.sleep(0.8)
+        form = browser_form(browser_state(port) or {}, "options")
+        if form is None:
+            failures.append("options-%s: the window went away" % category)
+            continue
+        for name in tabs:
+            if only and "-" in only and \
+               only != "%s-%s" % (category.lower(), name.lower()):
+                continue
+            if not browser_pane(port, form, name.lower()):
+                failures.append("options-%s-%s: no such tab" % (category, name))
+                continue
+            time.sleep(0.5)
+            rect = browser_rect(port, form["id"])
+            shot = browser_cut(dpy, win, rect) if rect else None
+            if shot is None:
+                failures.append("options-%s-%s: nothing to photograph"
+                                % (category, name))
+                continue
+            f = "%s-options-%s-%s.png" % (args.build, category.lower(),
+                                          name.lower())
+            shot.save(os.path.join(args.out, f))
+            print("SHOT %s  %dx%d" % (f, shot.width, shot.height))
     return failures
 
 
@@ -1248,6 +1327,18 @@ def photograph_browser(dpy, args, specs):
                                     % (name, spec["menuPath"]))
                     continue
                 browser_ask(port, "/do", which(item), timeout=3)
+            elif spec.get("barButton") is not None:
+                # A menu dropped by a button of the status bar. The page says
+                # where it put that button, and it is pressed the way anyone
+                # would press it -- a menu lives in the page and cannot be
+                # opened over the socket.
+                at = browser_where(port).get("bar%d" % spec["barButton"])
+                if not at:
+                    missing("%s: the page never said where its buttons are"
+                            % name)
+                    continue
+                click(dpy, at[0] + at[2] // 2, at[1] + at[3] // 2)
+                time.sleep(0.8)
             elif spec.get("menu"):
                 print("NOTE browser %s: the page has no menu to pop up" % name)
                 continue
@@ -1487,14 +1578,24 @@ def photograph(dpy, args, specs):
             if spec.get("everyTab"):
                 # one picture per tab, whichever interface this is
                 names = spec["everyTab"].get(args.build, [])
+                # Where the tabs are is read off the picture, which is what
+                # keeps this working as labels change. One dialog defeats it:
+                # FLTK 1.4 draws the strip of the plugins window right of two
+                # list boxes whose borders look exactly like tab separators.
+                # For that one the places are measured and written down, the
+                # way the menu entries are.
+                said = spec.get("tabsAt", {}).get(args.build)
                 picture = _dialog_picture(dpy, spec["dialog"], args.build, win,
                                           ww, wh)
-                found, tabRow = (tab_boundaries(picture, args.build,
-                                                len(names))
-                                 if picture else ([], TAB_ROW[args.build]))
-                if len(found) != len(names):
-                    print("NOTE %s %s: %d tabs seen, %d expected"
-                          % (args.build, name, len(found), len(names)))
+                if said:
+                    found, tabRow = [x for x, _ in said], said[0][1]
+                else:
+                    found, tabRow = (tab_boundaries(picture, args.build,
+                                                    len(names))
+                                     if picture else ([], TAB_ROW[args.build]))
+                    if len(found) != len(names):
+                        print("NOTE %s %s: %d tabs seen, %d expected"
+                              % (args.build, name, len(found), len(names)))
                 for i, x in enumerate(found):
                     if i >= len(names): break
                     # not "where": that is the function which says where a row
@@ -1741,7 +1842,29 @@ def main():
                  else "1400x1000x24"):
         dpy = display.Display()
         if args.sweep_options and args.build == "browser":
-            print("NOTE browser: sweeping the option window is not written yet")
+            port = BROWSER_PORT
+            os.environ["GMSH_BROWSER_PORT"] = str(port)
+            os.environ["GMSH_BROWSER_TOKEN"] = BROWSER_TOKEN
+            proc = start_driver(args.lib, args.home, [], model("view.pos"))
+            chrome = None
+            try:
+                if not browser_wait(port):
+                    print("FAIL sweep: the page never answered")
+                    return 1
+                chrome = start_browser(args.home, port)
+                win = browser_window(dpy)
+                if win is None:
+                    print("FAIL sweep: no browser window")
+                    return 1
+                time.sleep(1.5)
+                for f in browser_sweep(dpy, args, port, win, args.only):
+                    print("FAIL " + f)
+            finally:
+                stop_driver(proc)
+                if chrome:
+                    chrome.terminate()
+                    try: chrome.wait(timeout=10)
+                    except subprocess.TimeoutExpired: chrome.kill()
             return 0
         if args.sweep_options:
             # the View category is a view: without one the list stops at
