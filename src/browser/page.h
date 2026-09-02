@@ -124,7 +124,16 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  /* the label runs on rather than wrapping: a window grows to hold what it
     says, as the ones this reproduces do */
  .cell label{flex:0 1 auto;min-width:0;white-space:nowrap}
+ /* A button in the flow of the fields starts where its share of the line
+    starts, so that two columns of them line up; one on a line of its own --
+    what a window does rather than what it holds -- keeps to its own width
+    and goes to the end. */
+ .line:not(.act)>.cell.act{flex:1 1 0;justify-content:flex-start}
+ .line.act>.cell.act{flex:0 0 auto}
  .cell.act{flex:0 0 auto}
+ /* a label written before its field is right against it, and as wide as the
+    widest of the ones it lines up with -- see square() */
+ .cell.before>label{text-align:right;flex:0 0 auto}
  /* A list takes a line of its own. A line of text that runs on over several
     lines takes what is left of the one it is on -- the whole of it when it is
     alone there, half when it is the second of a pair, which is what the list
@@ -358,7 +367,14 @@ function cell(f) {
     if(f.label) { say.style.flex = '0 0 auto'; box.appendChild(say); }
     return box;
   }
-  if(f.before) { box.appendChild(say); box.appendChild(what); }
+  if(f.before) {
+    // its label comes first, and those of a pane line up: what follows them
+    // starts at the same place on every line, as it does in the windows this
+    // reproduces
+    box.classList.add('before');
+    box.appendChild(say);
+    box.appendChild(what);
+  }
   else { box.appendChild(what); box.appendChild(say); }
   return box;
 }
@@ -675,7 +691,24 @@ function drawForms(forms) {
   }
   // a window that is gone forgets where it was
   for(const id in placed) if(!up[id]) delete placed[id];
+  // now that they are in the page and have a width, the labels that come
+  // before their fields are squared up
+  for(const at of told) square(at[1]);
   sayWhere(told);
+}
+
+// Labels written before their field line up: the column is as wide as the
+// widest of them, so that what follows starts at the same place on every
+// line. Nothing but the page can work that out -- it is the width of a word
+// once it is drawn -- so it is done here, once the window is in the page.
+function square(card) {
+  for(const body of card.querySelectorAll('.main, .aside, .foot')) {
+    const labels = [...body.querySelectorAll('.cell.before>label')];
+    if(labels.length < 2) continue;
+    for(const l of labels) l.style.width = '';
+    const widest = Math.max(...labels.map(l => l.offsetWidth));
+    for(const l of labels) l.style.width = widest + 'px';
+  }
 }
 
 // --- the row of little buttons along the bottom
