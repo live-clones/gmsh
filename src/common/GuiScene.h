@@ -73,7 +73,9 @@ namespace Gui {
   void sceneShownElsewhere();
   // the scene as a picture, and the size it was drawn at; empty when there is
   // none to send
-  std::string scenePicture(int &width, int &height);
+  // Nothing comes back when the scene has not changed since the last one was
+  // asked for, unless `always` says to draw it anyway.
+  std::string scenePicture(int &width, int &height, bool always = false);
   // how big the picture is wanted
   void sceneResize(int width, int height);
   // What the pointer did over it. `what` is 0 moved, 1 pressed, 2 released,

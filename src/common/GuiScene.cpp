@@ -27,7 +27,10 @@ namespace Gui {
 
   void pumpScene(bool rateLimited) {}
   void sceneShownElsewhere() {}
-  std::string scenePicture(int &width, int &height) { return ""; }
+  std::string scenePicture(int &width, int &height, bool always)
+  {
+    return "";
+  }
   void sceneResize(int width, int height) {}
   void sceneKey(char key) {}
   void sceneMessage(const std::string &, const std::string &) {}

@@ -275,7 +275,12 @@ namespace {
       if(ask.path.compare(0, 6, "/scene") == 0) {
         if(!_host.sceneImage) return "";
         int w = 0, h = 0;
-        std::string picture = _host.sceneImage(w, h);
+        // An empty answer means "you already have this one"; the page keeps
+        // the picture it is showing. It asks with "force" when it has just
+        // done something, since what an action changes is its business and
+        // not the scene's.
+        bool always = ask.path.find("force") != std::string::npos;
+        std::string picture = _host.sceneImage(w, h, always);
         type = "image/bmp";
         return picture;
       }

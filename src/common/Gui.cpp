@@ -86,7 +86,9 @@ namespace Gui {
     // what the application does when the loop comes round: draw the scene, if
     // it is in a window of its own
     host.tick = []() { pumpScene(true); };
-    host.sceneImage = [](int &w, int &h) { return scenePicture(w, h); };
+    host.sceneImage = [](int &w, int &h, bool always) {
+      return scenePicture(w, h, always);
+    };
     host.sceneResize = [](int w, int h) { sceneResize(w, h); };
     host.sceneKey = [](char key) { sceneKey(key); };
     host.scenePointer = [](double x, double y, int button, int what,

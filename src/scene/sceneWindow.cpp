@@ -57,6 +57,11 @@ namespace {
     // made all the same, since a picture has to be drawn somewhere, but it is
     // never put on the screen
     bool elsewhere = false;
+    // Whether the picture is worth drawing again. Reading a framebuffer back
+    // and turning it into a bitmap is by far the most expensive thing this
+    // file does, and asking for it two and a half times a second when nothing
+    // has moved is the whole of what a chrome showing pictures costs.
+    bool changed = true;
     // How big the picture is wanted. A window nobody looks at cannot be
     // relied on to change size -- there is no compositor to ask -- so the
     // picture is drawn at the wanted size inside a window made large enough,
@@ -242,7 +247,8 @@ namespace {
 
     // and what the scene needs of whoever holds it, which here is this file
     Scene::Host held;
-    held.redraw = []() {};
+    // what everything in Gmsh calls when the picture is out of date
+    held.redraw = []() { _it().changed = true; };
     // A picking waits here, so this is what keeps the interface answering
     // while it does: the chrome is pumped, not the scene -- pumping the scene
     // would be pumping the loop one is already inside.
@@ -391,6 +397,7 @@ namespace Gui {
     if(width == it.wantW && height == it.wantH) return;
     it.wantW = width;
     it.wantH = height;
+    it.changed = true;
     // a window one can see follows; one nobody looks at is left as it is and
     // the picture is drawn in a corner of it
     if(it.window && !it.elsewhere) glfwSetWindowSize(it.window, width, height);
@@ -404,9 +411,14 @@ namespace Gui {
   // bottom up, which is the order glReadPixels() gives them in, so there is
   // nothing to turn over either. It is bigger on the wire than a PNG would be
   // and this is a local connection.
-  std::string scenePicture(int &width, int &height)
+  std::string scenePicture(int &width, int &height, bool always)
   {
     if(!_open()) return "";
+    // Nothing to say when nothing has moved: whoever is showing the picture
+    // already has this one. It is the difference between a chrome that costs
+    // nothing while it sits there and one that costs an eighth of a core.
+    if(!always && !_it().changed) return "";
+    _it().changed = false;
     PixelBuffer *shot = Gui::createCompositePixelBuffer(GL_RGB,
                                                         GL_UNSIGNED_BYTE);
     if(!shot) return "";
@@ -452,6 +464,7 @@ namespace Gui {
   {
     standalone &it = _it();
     if(!_open() || !it.view || !it.view->selectionMode) return;
+    it.changed = true;
     switch(key) {
     case 'e': it.view->endSelection = 1; break;
     case 'u': it.view->undoSelection = 1; break;
@@ -465,6 +478,7 @@ namespace Gui {
   {
     standalone &it = _it();
     if(!_open() || !it.view) return;
+    it.changed = true;
     it.view->screenMessage[0] = first;
     it.view->screenMessage[1] = second;
   }
@@ -474,6 +488,7 @@ namespace Gui {
   {
     standalone &it = _it();
     if(!_open() || !it.view) return;
+    it.changed = true;
     if(button < 0 || button > 2) button = 0;
     // What comes in is where the pointer is in the picture as it was asked
     // for; what the scene works in is the picture as it could be drawn.

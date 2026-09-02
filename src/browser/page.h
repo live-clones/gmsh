@@ -183,6 +183,7 @@ async function post(where, what) {
   clearTimeout(letGo);
   busy = false;
   refresh();                          // what was done changed something
+  frame(true);                        // and it may have changed the picture
 }
 
 // --- the menu bar
@@ -684,7 +685,7 @@ function draw(state) {
 const view = document.getElementById('view');
 let sceneBusy = false, sceneAgain = false, sceneSize = '';
 let sceneW = 1, sceneH = 1;   // the size the scene was last asked at
-async function frame() {
+async function frame(force) {
   if(sceneBusy) { sceneAgain = true; return; }
   sceneBusy = true;
   try {
@@ -696,16 +697,21 @@ async function frame() {
       await fetch('/size', {method:'POST', body:'w=' + Math.round(box.width) +
                                                 '&h=' + Math.round(box.height)});
     }
-    const r = await fetch('/scene?' + Date.now());
+    // Nothing comes back when the scene has not moved, and what is showing
+    // stays. Asking for it whatever it thinks is for right after something
+    // was done: what an action changed is not the scene's business.
+    const r = await fetch('/scene?' + Date.now() + (force ? '&force' : ''));
     const blob = await r.blob();
     if(blob.size) {
       const old = view.src;
       view.src = URL.createObjectURL(blob);
       if(old.startsWith('blob:')) URL.revokeObjectURL(old);
+      sceneStill = 0;
     }
+    else sceneStill++;
   } catch(e) {}
   sceneBusy = false;
-  if(sceneAgain) { sceneAgain = false; frame(); }
+  if(sceneAgain) { sceneAgain = false; frame(force); }
 }
 let lastPointer = [0, 0];   // where the pointer is over the scene
 function where(e) {
@@ -752,12 +758,23 @@ view.onmouseup = e => pointer(e, 2);
 view.onmousemove = e => pointer(e, 0);
 view.onwheel = e => { e.preventDefault(); pointer(e, 3, e.deltaY > 0 ? -1 : 1); };
 
+// What Gmsh is showing, drawn again only if it is not what is already drawn.
+// The whole answer is compared as it arrived, before anything is made of it:
+// an interface sitting still says exactly the same thing every time, and
+// reading it is most of what a page costs while nobody is touching it.
+let wasSaid = '';
 async function refresh() {
-  if(busy) return;
+  if(busy) return false;
   try {
-    draw(await (await fetch('/state')).json());
+    const said = await (await fetch('/state')).text();
+    if(said === wasSaid) return false;
+    wasSaid = said;
+    draw(JSON.parse(said));
+    return true;
   } catch(e) {
     document.getElementById('status').textContent = 'Gmsh has gone away.';
+    wasSaid = '';
+    return false;
   }
 }
 // A picking listens for a key: 'e' ends it, 'u' undoes the last one, 'q'
@@ -769,12 +786,34 @@ window.addEventListener('keydown', e => {
 });
 document.getElementById('bar').onmouseenter = () => { overBar = true; };
 document.getElementById('bar').onmouseleave = () => { overBar = false; };
-refresh();
 frame();
-setInterval(refresh, 120);
+// A page in a tab nobody is looking at asks for nothing: what it would draw,
+// it would draw for no one.
+function watching() { return document.visibilityState !== 'hidden'; }
+
+// How often to ask. Quickly while something is going on, since that is when
+// one is waiting for an answer; slowly once nothing has changed for a couple
+// of seconds, since then one is not.
+let still = 0;
+async function pump() {
+  if(watching()) still = (await refresh()) ? 0 : still + 1;
+  setTimeout(pump, still > 16 ? 500 : 120);
+}
+pump();
 // the model may be redrawn by something other than the pointer -- a mesh
 // finishing, an option changing -- so the picture is asked for as well
-setInterval(frame, 400);
+// and the same for the picture: often while it is moving, which is when one
+// is turning the model over, rarely once it has stopped
+let sceneStill = 0;
+async function watch() {
+  if(watching()) await frame();
+  setTimeout(watch, sceneStill > 12 ? 800 : 400);
+}
+watch();
+// and it catches up as soon as anyone looks again
+document.addEventListener('visibilitychange', () => {
+  if(watching()) { refresh(); frame(true); }
+});
 </script>
 )PAGE";
 

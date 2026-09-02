@@ -326,7 +326,14 @@ namespace Ui {
       // one -- a page in a browser cannot be handed an OpenGL context. What
       // comes back is an image and the size it was drawn at; what goes the
       // other way is what the pointer did over it.
-      std::function<std::string(int &width, int &height)> sceneImage;
+      //
+      // Nothing comes back when the scene has not changed since the last
+      // picture: whoever is showing it already has that one, and drawing it
+      // again is what an idle chrome would otherwise spend its time on. Ask
+      // with `always` when the picture is wanted whatever the scene thinks --
+      // after something was done to the model, say.
+      std::function<std::string(int &width, int &height, bool always)>
+        sceneImage;
       std::function<void(int width, int height)> sceneResize;
       std::function<void(double x, double y, int button, int what,
                          double wheel, bool shift, bool ctrl, bool alt)>

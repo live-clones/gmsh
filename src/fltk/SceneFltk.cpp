@@ -60,7 +60,10 @@ namespace Gui {
   // own loop; there is nothing to pump from outside, and nothing to send
   void pumpScene(bool rateLimited) {}
   void sceneShownElsewhere() {}
-  std::string scenePicture(int &width, int &height) { return ""; }
+  std::string scenePicture(int &width, int &height, bool always)
+  {
+    return "";
+  }
   void sceneResize(int width, int height) {}
   void sceneKey(char key) {}
 
