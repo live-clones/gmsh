@@ -427,6 +427,61 @@ inline double getSurfUV(MTriangle *t, bidimMeshData &data)
   return 0.5 * (vv1[0] * vv2[1] - vv1[1] * vv2[0]);
 }
 
+// Connect the fan of triangles that a point insertion creates, in O(k)
+// instead of sorting the 3k edges of the whole patch.
+//
+// The new triangles are (v0, v1, v) over the k shell edges, so they form a
+// fan around the new vertex v. A triangle's local edge i is
+// (vertex[i-1], vertex[i]), hence for (v0, v1, v):
+//   edge 0 = (v, v0)   fan edge, shared with the neighbour fan triangle at v0
+//   edge 1 = (v0, v1)  shell edge, shared with the triangle outside the cavity
+//   edge 2 = (v1, v)   fan edge, shared with the neighbour fan triangle at v1
+// Across a shell edge the outside triangle is known from the shell entry, and
+// it still points at the cavity triangle that is about to disappear, so its
+// link is redirected here. The fan edges pair k's edge 0 with the j whose v1
+// is k's v0; the shell of a star-shaped cavity visits every fan vertex once
+// as a v0 and once as a v1, so the pairing is a lookup on that vertex.
+//
+// newTris[k] is the triangle built on shell[k].
+static void connectNewTriangles(const std::vector<edgeXface> &shell,
+                                const std::vector<MTri3 *> &newTris,
+                                std::vector<std::pair<MVertex *, std::size_t>>
+                                  &fanEnds)
+{
+  const std::size_t n = newTris.size();
+
+  fanEnds.clear();
+  fanEnds.reserve(n);
+
+  for(std::size_t k = 0; k < n; k++) {
+    MTri3 *nt = newTris[k];
+    MTri3 *outside = shell[k].t1->getNeigh(shell[k].i1);
+    nt->setNeigh(1, outside);
+    if(outside) {
+      for(int f = 0; f < 3; f++) {
+        if(outside->getNeigh(f) == shell[k].t1) {
+          outside->setNeigh(f, nt);
+          break;
+        }
+      }
+    }
+    // v1 of the new triangle, i.e. the vertex of its edge 2
+    fanEnds.push_back(std::make_pair(nt->tri()->getVertex(1), k));
+  }
+
+  std::sort(fanEnds.begin(), fanEnds.end());
+
+  for(std::size_t k = 0; k < n; k++) {
+    MVertex *v0 = newTris[k]->tri()->getVertex(0);
+    auto it = std::lower_bound(fanEnds.begin(), fanEnds.end(),
+                               std::make_pair(v0, (std::size_t)0));
+    if(it == fanEnds.end() || it->first != v0) continue;
+    MTri3 *nj = newTris[it->second];
+    newTris[k]->setNeigh(0, nj);
+    nj->setNeigh(2, newTris[k]);
+  }
+}
+
 static int insertVertexB(std::vector<edgeXface> &shell,
                          std::vector<MTri3 *> &cavity, bool force, GFace *gf,
                          MVertex *v, double *param, MTri3 *t,
@@ -527,13 +582,11 @@ static int insertVertexB(std::vector<edgeXface> &shell,
     ++it;
   }
 
-  std::vector<edgeXface> conn;
-
   // for adding a point we require that the area remains the same after addition
   // of the point, and that the point is not too close to an edge
   if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose) {
-    connectTris(new_cavity.begin(), new_cavity.end(), conn);
-    // 30 % of the time is spent here!
+    static thread_local std::vector<std::pair<MVertex *, std::size_t>> fanEnds;
+    connectNewTriangles(shell, newTris, fanEnds);
     allTets.insert(newTris.begin(), newTris.end());
     if(activeTets) {
       for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
