@@ -51,6 +51,7 @@ opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT}
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
+opt(BROWSER "Enable the browser chrome: the panels in a web page, the model in a\n     window of its own (a demonstration, and a way of trying the structure)" OFF)
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GLFW_WAYLAND "Enable the native Wayland backend of GLFW (Linux only, used by ENABLE_IMGUI)" ${DEFAULT})
@@ -648,8 +649,13 @@ if(ENABLE_VISUDEV)
   set_config_option(HAVE_VISUDEV "VisuDev")
 endif()
 
-# the FLTK and the Dear ImGui interfaces are mutually exclusive: only one GUI
-# is compiled in a given build
+# the interfaces are mutually exclusive: only one chrome is compiled in a given
+# build, since exactly one makeUiBackend() is linked
+if(ENABLE_BROWSER AND (ENABLE_FLTK OR ENABLE_IMGUI))
+  message(STATUS "ENABLE_BROWSER is set: disabling the other interfaces")
+  set(ENABLE_FLTK OFF)
+  set(ENABLE_IMGUI OFF)
+endif()
 if(ENABLE_IMGUI AND ENABLE_FLTK)
   message(STATUS "ENABLE_IMGUI is set: disabling the FLTK interface")
   set(ENABLE_FLTK OFF)
@@ -710,7 +716,10 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   endif()
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui AND ENABLE_IMGUI)
+# GLFW, Dear ImGui and the 3D scene, wanted by the Dear ImGui interface and by
+# anything else that shows the model in a window of its own -- the browser
+# chrome does, since it has no way of drawing one itself
+if(ENABLE_IMGUI OR ENABLE_BROWSER)
   # GLFW provides the window and the OpenGL context; use the upstream
   # CMakeLists, which selects the platform backend (X11, Wayland, Cocoa, Win32)
   # and sets the corresponding _GLFW_* definitions
@@ -779,17 +788,23 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui AND ENABLE_IMGUI)
     # holds it says so with HAVE_GL_SCENE
     add_subdirectory(src/scene)
     set(HAVE_GL_SCENE TRUE)
-    add_subdirectory(src/imgui)
     include_directories(contrib/imgui contrib/imgui/backends
                         contrib/imgui/misc/cpp)
-    set_config_option(HAVE_IMGUI "ImGui[contrib]")
+    if(ENABLE_IMGUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui)
+      add_subdirectory(src/imgui)
+      set_config_option(HAVE_IMGUI "ImGui[contrib]")
+    endif()
+    if(ENABLE_BROWSER AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/browser)
+      add_subdirectory(src/browser)
+      set_config_option(HAVE_BROWSER "Browser")
+    endif()
   else()
     message(SEND_ERROR "Could not find Dear ImGui in contrib/imgui")
   endif()
 endif()
 
 # HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in
-if(HAVE_FLTK OR HAVE_IMGUI)
+if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER)
   set(HAVE_GUI TRUE)
 endif()
 
@@ -1880,7 +1895,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(src/gui src/scene src/common src/fltk src/imgui src/geo src/graphics src/mesh
+include_directories(src/gui src/scene src/browser src/common src/fltk src/imgui src/geo src/graphics src/mesh
                     src/solver src/numeric src/parser src/plugin src/post api
                     contrib/stb
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)

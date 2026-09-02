@@ -80,6 +80,16 @@ namespace Gui {
       host.error = [](const std::string &text) {
         Msg::Error("%s (GUI internal error)", text.c_str());
       };
+    // what the application does when the loop comes round: draw the scene, if
+    // it is in a window of its own
+    host.tick = []() { pumpScene(true); };
+    host.sceneImage = [](int &w, int &h) { return scenePicture(w, h); };
+    host.sceneResize = [](int w, int h) { sceneResize(w, h); };
+    host.sceneKey = [](char key) { sceneKey(key); };
+    host.scenePointer = [](double x, double y, int button, int what,
+                           double wheel, bool shift, bool ctrl, bool alt) {
+      scenePointer(x, y, button, what, wheel, shift, ctrl, alt);
+    };
     made->setHost(host);
 
     // And everything it is allowed to know of Gmsh: the descriptions, asked
@@ -107,6 +117,10 @@ namespace Gui {
     }
     _backend = made;
     _quitShouldExit = quitShouldExit;
+    // Whether this chrome shows the scene itself has to be said before
+    // anything else: what puts a window up is the loop being pumped, and a
+    // message reported while the options are being set pumps it.
+    if(made->showsScene()) sceneShownElsewhere();
 
     // And the welcome, which is Gmsh's rather than the toolkit's. One of the
     // two interfaces did all of this and the other only the first line of it,
@@ -117,7 +131,7 @@ namespace Gui {
     Msg::Direct("-------------------------------------------------------");
     PrintBuildInfo();
     Msg::Direct("-------------------------------------------------------");
-    // a scene of its own, for a chrome that holds none: it comes up here
+    // and a scene of its own, for a chrome that holds none
     pumpScene(false);
     // in case the interface is created after some data has been loaded
     updateViews(true, true);
@@ -598,6 +612,11 @@ namespace Gui {
       _backend->post(fileExport);
     else
       Msg::Error("Unknown file action '%s'", what.c_str());
+  }
+
+  void pumpChrome(bool rateLimited)
+  {
+    if(_backend) _backend->check(rateLimited);
   }
 
   void watchFile()

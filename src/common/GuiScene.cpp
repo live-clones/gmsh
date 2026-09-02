@@ -26,6 +26,14 @@
 namespace Gui {
 
   void pumpScene(bool rateLimited) {}
+  void sceneShownElsewhere() {}
+  std::string scenePicture(int &width, int &height) { return ""; }
+  void sceneResize(int width, int height) {}
+  void sceneKey(char key) {}
+  void scenePointer(double x, double y, int button, int what, double wheel,
+                    bool shift, bool ctrl, bool alt)
+  {
+  }
 
   drawContext *getCurrentDrawContext() { return nullptr; }
 

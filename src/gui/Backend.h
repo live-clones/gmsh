@@ -128,6 +128,12 @@ namespace Ui {
 
     // name and version, for "gmsh -info"
     virtual std::string name() = 0;
+    // Whether this chrome shows the 3D scene itself, by asking for a picture
+    // of it and drawing that. One that does not gets a window of its own, put
+    // up by whichever scene is linked; one that does gets no window, since two
+    // of them would be one too many.
+    virtual bool showsScene() { return false; }
+
     // Whether this interface has anything to do for that action, so that the
     // menus can leave out what would do nothing rather than grey it: an
     // interface with a single window has nothing to bring to the front, and
@@ -316,6 +322,22 @@ namespace Ui {
       std::function<void(const std::string &text)> error;
       // the last window is gone: run() is about to return
       std::function<void()> quitting;
+      // One turn of the loop has come round: whatever the application has to
+      // do on its own, it does here. A chrome that has no 3D scene of its own
+      // is what this is for -- the scene is in a window of its own and has to
+      // be drawn from whatever loop is running.
+      std::function<void()> tick;
+      // A picture of the 3D scene, for a chrome that has no way of drawing
+      // one -- a page in a browser cannot be handed an OpenGL context. What
+      // comes back is an image and the size it was drawn at; what goes the
+      // other way is what the pointer did over it.
+      std::function<std::string(int &width, int &height)> sceneImage;
+      std::function<void(int width, int height)> sceneResize;
+      std::function<void(double x, double y, int button, int what,
+                         double wheel, bool shift, bool ctrl, bool alt)>
+        scenePointer;
+      // the keys a picking answers to: 'q' gives up, 'e' ends, 'u' undoes
+      std::function<void(char key)> sceneKey;
     };
     virtual void setHost(const Host &host) {}
   };

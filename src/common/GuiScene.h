@@ -50,6 +50,40 @@ namespace Gui {
   // model.
   void pumpScene(bool rateLimited);
 
+  // --- a picture of the scene, for a chrome that cannot draw one
+  //
+  // A page in a browser has no way of being handed an OpenGL context: one
+  // lives in the browser's process and nothing can draw into it from outside.
+  // So the scene is drawn here and the picture is sent, and what the pointer
+  // did over that picture comes back. It is what a remote view has always
+  // been, and it is honest about its cost: a frame crosses on every move.
+  //
+  // The interfaces that draw the scene themselves have nothing to send and
+  // answer with nothing.
+
+  // Give the chrome a turn. A picking runs a loop of its own -- it waits for
+  // the user to click something -- and that loop must not be the end of the
+  // interface: whatever is showing the panels has to keep answering, or there
+  // is no way left to give up. It pumps the chrome and not the scene, which
+  // would be pumping the loop one is already inside.
+  void pumpChrome(bool rateLimited);
+
+  // The chrome draws the scene itself, from the pictures below: there is to be
+  // no window of its own. Said once, as the interface comes up.
+  void sceneShownElsewhere();
+  // the scene as a picture, and the size it was drawn at; empty when there is
+  // none to send
+  std::string scenePicture(int &width, int &height);
+  // how big the picture is wanted
+  void sceneResize(int width, int height);
+  // What the pointer did over it. `what` is 0 moved, 1 pressed, 2 released,
+  // 3 turned the wheel; `button` is 0 left, 1 right, 2 middle.
+  void scenePointer(double x, double y, int button, int what, double wheel,
+                    bool shift, bool ctrl, bool alt);
+  // and the keys a picking answers to: 'q' gives up, 'e' ends, 'u' undoes,
+  // 'i' inverts
+  void sceneKey(char key);
+
   // --- the graphic windows
 
   // draw context of the last graphic window that received an event

@@ -57,8 +57,16 @@ PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type);
 namespace Gui {
 
   // this interface holds the scene inside its own windows and draws it in its
-  // own loop; there is nothing to pump from outside
+  // own loop; there is nothing to pump from outside, and nothing to send
   void pumpScene(bool rateLimited) {}
+  void sceneShownElsewhere() {}
+  std::string scenePicture(int &width, int &height) { return ""; }
+  void sceneResize(int width, int height) {}
+  void sceneKey(char key) {}
+  void scenePointer(double x, double y, int button, int what, double wheel,
+                    bool shift, bool ctrl, bool alt)
+  {
+  }
 
 
   // --- messages, status bar and modal dialogs
