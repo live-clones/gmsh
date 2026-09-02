@@ -29,8 +29,13 @@ Running it
   utils/guicompare/run.sh
 
 The pictures land in utils/guicompare/out/figures, one sheet per dialog, the
-three versions side by side at their true size: a dialog that came out twice as
-tall as the one it replaces has to look twice as tall.
+versions side by side at their true size: a dialog that came out twice as tall
+as the one it replaces has to look twice as tall.
+
+utils/guicompare/out/bench.html is the lot in one page -- every dialog, every
+interface, a box to filter by name and a switch to double the pixels. It points
+at the shots where they lie rather than carrying them, so it is opened from the
+disk, next to them.
 
 How it works, and why it is built this way
 ------------------------------------------

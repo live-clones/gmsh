@@ -76,4 +76,6 @@ wait
 
 echo "== planches"
 $py "$here/compare.py" --shots "$shots" --out "$figures"
+# and one page holding the lot, which is what one actually looks at
+$py "$here/report.py" --shots "$shots" --out "$work/bench.html"
 echo "-> $figures"
