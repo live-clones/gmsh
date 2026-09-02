@@ -27,9 +27,11 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
+import urllib.request
 
 from Xlib import display, X
 from Xlib.ext import xtest
@@ -80,7 +82,7 @@ STACKED = {20}  # Dialog::Arrow
 
 
 def shot(dialog, pane, branches, row, depth, geo=None, scene=(), added=False,
-         press=None):
+         press=None, pressName=None, paneName=None):
     """A shot. `geo` is a model to open first, `scene` clicks in the 3D view
     once the dialog is up -- which is how a picking dialog is shown doing
     anything at all, `press` clicks a button of the dialog itself -- which is
@@ -88,7 +90,8 @@ def shot(dialog, pane, branches, row, depth, geo=None, scene=(), added=False,
     since the three do not put the button in the same place."""
     SHOTS.append(dict(name="%s-%s" % (dialog, pane), dialog=dialog,
                       branches=branches, row=row, depth=depth, geo=geo,
-                      scene=list(scene), added=added, press=press or {}))
+                      scene=list(scene), added=added, press=press or {},
+                      pressName=pressName or [], paneName=paneName))
 
 
 def keyed(dialog, keys, tabs=()):
@@ -190,11 +193,13 @@ shot("classify", "", [M], 18, 2)
 # and the same after "All", which detects the edges of a triangulation: what
 # one may do next is no longer greyed out
 shot("classify", "detected", [M], 18, 2, geo=model("facets.stl"),
-     press={"released": (155, 41), "fltk": (146, 41), "imgui": (116, 57)})
+     press={"released": (155, 41), "fltk": (146, 41), "imgui": (116, 57)},
+     pressName=["All"])
 shot("partition", "", [M], 14, 2)
 # and the same dialog with its advanced half unfolded
 shot("partition", "advanced", [M], 14, 2,
-     press={"released": (368, 120), "fltk": (398, 104), "imgui": (352, 104)})
+     press={"released": (368, 120), "fltk": (398, 104), "imgui": (352, 104)},
+     pressName=["Advanced"])
 
 # and the ones the Tools menu raises
 keyed("manipulator", ["ctrl", "shift", "m"])
@@ -202,7 +207,7 @@ keyed("options", ["ctrl", "shift", "n"])
 # and the same window on another category, since picking one in the list on the
 # left is what changes the tabs on the right
 SHOTS.append(dict(name="options-mesh", dialog="options", branches=[],
-                  keys=["ctrl", "shift", "n"],
+                  keys=["ctrl", "shift", "n"], pressName=["Mesh"],
                   press={"released": (45, 37), "fltk": (45, 40),
                          "imgui": (45, 67)}))
 keyed("clipping", ["ctrl", "shift", "c"])
@@ -230,12 +235,14 @@ SHOTS.append(dict(name="visibility", dialog="visibility", branches=[],
 _FIELD = model("field.geo")
 shot("fields", "", [M, M + "/Define"], 5, 3, geo=_FIELD)
 shot("fields", "box", [M, M + "/Define"], 5, 3, geo=_FIELD,
-     press={"released": (60, 40), "fltk": (60, 45), "imgui": (60, 58)})
+     press={"released": (60, 40), "fltk": (60, 45), "imgui": (60, 58)},
+     pressName=["list:0"])
 # and the same, on its help
 shot("fields", "help", [M, M + "/Define"], 5, 3, geo=_FIELD,
      press={"released": [(60, 40), (207, 47)],
             "fltk": [(60, 45), (233, 42)],
-            "imgui": [(60, 58), (234, 51)]})
+            "imgui": [(60, 58), (234, 51)]},
+     pressName=["list:0"], paneName="help")
 
 # the three windows of the Help menu; About has no accelerator, so it is
 # reached through the menu itself
@@ -244,7 +251,7 @@ keyed("listing", ["ctrl", "shift", "h"])
 # and the same listing with a line picked: the converted windows then offer
 # what that option is worth, where one can change it
 SHOTS.append(dict(name="listing-picked", dialog="listing", branches=[],
-                  keys=["ctrl", "shift", "h"],
+                  keys=["ctrl", "shift", "h"], pressName=["list:0"],
                   press={"released": (100, 40), "fltk": (100, 40),
                          "imgui": (100, 58)}))
 # About has no accelerator: it is reached through the Help menu, whose entries
@@ -252,6 +259,7 @@ SHOTS.append(dict(name="listing-picked", dialog="listing", branches=[],
 # writes a check mark beside the entries that show a window, which makes its
 # rows taller. Measured on a picture of the open menu, as everything else here.
 SHOTS.append(dict(name="about-", dialog="about", branches=[],
+                  menuPath=["Help", "About Gmsh"],
                   menu={"released": [(162, 12), (179, 101)],
                         "fltk": [(162, 12), (180, 109)],
                         "imgui": [(154, 9), (172, 111)]}))
@@ -302,12 +310,14 @@ SHOTS.append(dict(name="export-", dialog="export", branches=[], whole=True,
 # button the option window carries on its General/Aspect tab -- neither has an
 # accelerator, and both are where they have always been.
 SHOTS.append(dict(name="watch-", dialog="watch", branches=[],
+                  menuPath=["File", "Watch Pattern..."],
                   menu={"released": [(18, 11), (50, 100)],
                         "fltk": [(18, 11), (50, 107)],
                         "imgui": [(14, 9), (50, 96)]}))
 SHOTS.append(dict(name="arrow-", dialog="arrow", branches=[],
                   keys=["ctrl", "shift", "n"], pressIn="options",
-                  at=STACKED_POS,
+                  at=STACKED_POS, paneName="aspect",
+                  pressName=["Edit arrow"],
                   press={"released": [(270, 14), (360, 220)],
                          "fltk": [(287, 14), (360, 220)],
                          "imgui": [(287, 32), (345, 211)]}))
@@ -559,7 +569,10 @@ def click(dpy, x, y):
 # area itself: the status message across the top, and the axis triad in the
 # bottom right corner. Either would be more conspicuous than the model.
 SCENE_BOX = {"released": (210, 95, 130, 110), "fltk": (210, 95, 130, 110),
-             "imgui": (250, 110, 130, 300)}
+             "imgui": (250, 110, 130, 300),
+             # the page hands over a picture of the scene and nothing else, so
+             # there is nothing to keep away from but its own edge
+             "browser": (10, 10, 10, 10)}
 
 
 def find_target(picture, build, avoid=None):
@@ -900,6 +913,463 @@ def _dialog_picture(dpy, dialog, build, win, ww, wh):
     return grab(dpy, found[1], found[4], found[5])
 
 
+# --- the interface that is a page in a browser
+#
+# There are no windows to find here. What the X server holds is one browser
+# window, and every dialog is inside the page; so nothing below is clicked at a
+# measured coordinate. The page is driven the way anything outside it would
+# drive it -- over the socket it answers on -- and it says back where it put
+# each window, which is what is cut out of the picture.
+#
+# What the page cannot do yet it does not pretend to: there is no file chooser
+# and no popped-up menu, so those shots come out blank and the sheet says so.
+
+BROWSER_PORT = 8130
+# the browser window, which holds the tree, the scene and the dialogs at once,
+# so it is larger than the 900x700 the other interfaces are photographed at
+PAGE = (1500, 1000)
+
+
+def browser_ask(port, path, body=None, timeout=6):
+    """Ask the page's server something. A tool that picks does not answer
+    until something has been picked, so a request that times out is not a
+    failure -- it is the interface waiting, as it would for a click."""
+    url = "http://127.0.0.1:%d%s" % (port, path)
+    data = body.encode() if body is not None else None
+    try:
+        with urllib.request.urlopen(url, data, timeout=timeout) as r:
+            return r.read().decode("utf-8", "replace")
+    except Exception:
+        return ""
+
+
+def browser_state(port):
+    said = browser_ask(port, "/state", "")
+    try:
+        return json.loads(said)
+    except Exception:
+        return None
+
+
+def browser_wait(port, seconds=40):
+    end = time.time() + seconds
+    while time.time() < end:
+        if browser_state(port):
+            return True
+        time.sleep(0.3)
+    return False
+
+
+def browser_where(port):
+    """Where the page says it has put things, as name -> (x, y, w, h)."""
+    out = {}
+    for part in browser_ask(port, "/where").split("&"):
+        if "=" not in part:
+            continue
+        name, said = part.split("=", 1)
+        try:
+            x, y, w, h = (int(v) for v in said.split(","))
+        except ValueError:
+            continue
+        out[name] = (x, y, w, h)
+    return out
+
+
+def start_browser(home, port):
+    profile = os.path.join(home, "chrome")
+    env = dict(os.environ)
+    env.pop("WAYLAND_DISPLAY", None)
+    return subprocess.Popen(
+        [BROWSER, "--ozone-platform=x11",
+         "--app=http://127.0.0.1:%d/" % port,
+         "--user-data-dir=" + profile,
+         "--no-first-run", "--no-default-browser-check",
+         "--disable-session-crashed-bubble", "--disable-background-networking",
+         "--disable-component-update", "--disable-sync", "--disable-gpu",
+         "--window-position=0,0", "--window-size=%d,%d" % PAGE],
+        env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+BROWSER = (shutil.which("chromium") or shutil.which("chromium-browser") or
+           shutil.which("google-chrome-stable") or shutil.which("google-chrome"))
+
+
+def browser_window(dpy, seconds=30):
+    """The one window the browser has, which is the whole page."""
+    end = time.time() + seconds
+    while time.time() < end:
+        for win in dpy.screen().root.query_tree().children:
+            try:
+                g = win.get_geometry()
+            except Exception:
+                continue
+            if g.width == PAGE[0] and g.height == PAGE[1]:
+                return win
+        time.sleep(0.3)
+    return None
+
+
+def browser_quiet(port):
+    """Put the page back as it was: every window closed and no tool running.
+
+    Waited for rather than asked once: a tool that is still starting has not
+    reached the point where 'q' means anything to it, and the next shot would
+    then open its dialog into whatever was left over.
+    """
+    for _ in range(8):
+        state = browser_state(port) or {}
+        forms = state.get("forms", [])
+        if not forms:
+            return True
+        browser_ask(port, "/key", "k=q", timeout=3)
+        for form in forms:
+            browser_ask(port, "/close", "form=%d" % form["id"], timeout=3)
+        time.sleep(0.3)
+    return False
+
+
+def browser_menu(state, want):
+    """A menu entry, by the keys it says or by the labels leading to it."""
+    def walk(items, path):
+        for item in items:
+            here = path + [item.get("label", "")]
+            yield here, item
+            for child in item.get("children") or []:
+                yield from walk([child], here)
+    for path, item in walk(state.get("menus", []), []):
+        if "id" not in item:
+            continue
+        if isinstance(want, str):
+            if item.get("key", "") == want:
+                return item
+        elif [p.lower() for p in path[-len(want):]] == \
+             [w.lower() for w in want]:
+            return item
+    return None
+
+
+def browser_shortcut(keys):
+    """The keys a shot presses, written the way a menu says them."""
+    said = {"ctrl": "Ctrl", "shift": "Shift", "alt": "Alt"}
+    return "+".join(said.get(k, k.upper()) for k in keys)
+
+
+def browser_pane(port, form, want):
+    """Pick the pane whose label the shot names, by name and not by pixel."""
+    def like(label):
+        flat = label.lower().replace(" ", "-")
+        return flat == want or flat.startswith(want) or want.startswith(flat)
+    for i, tab in enumerate(form.get("tabs", [])):
+        if like(tab.get("label", "")):
+            browser_ask(port, "/pane", "form=%d&i=%d" % (form["id"], i),
+                        timeout=3)
+            return True
+    return False
+
+
+def browser_press(port, form, want):
+    """Press a button, or turn on a check, by the name the description gives
+    it. What the other interfaces do by clicking a measured point."""
+    def every(pane):
+        yield from pane.get("fields", [])
+        for section in pane.get("sections", []):
+            yield from section.get("fields", [])
+        yield from pane.get("beside", [])
+    fields = list(form.get("header", [])) + list(form.get("footer", [])) + \
+             list(form.get("side", []))
+    for pane in form.get("panes", []):
+        fields += list(every(pane))
+    for f in fields:
+        if f.get("label") != want:
+            continue
+        if f.get("kind") == "action":
+            browser_ask(port, "/do", "id=%d" % f["id"], timeout=3)
+        else:
+            browser_ask(port, "/set", "id=%d&v=1" % f["id"], timeout=3)
+        return True
+    # or a line of a list. "list:2" is the third line of the first list there
+    # is, which is what a shot means by clicking a row of a browser: the names
+    # in it come from the model and are not worth writing down.
+    lists = [f for f in fields if f.get("kind") == "list"]
+    if want.startswith("list:") and lists:
+        at = int(want[5:])
+        if at < len(lists[0].get("items", [])):
+            browser_ask(port, "/choose", "id=%d&i=%d&v=1" % (lists[0]["id"], at),
+                        timeout=3)
+            return True
+        return False
+    for f in lists:
+        for i, item in enumerate(f.get("items", [])):
+            if item == want:
+                browser_ask(port, "/choose", "id=%d&i=%d&v=1" % (f["id"], i),
+                            timeout=3)
+                return True
+    return False
+
+
+def browser_form(state, dialog):
+    want = re.compile(dialog_title(dialog))
+    for form in state.get("forms", []):
+        if want.search(form.get("title", "")):
+            return form
+    return None
+
+
+def browser_cut(dpy, win, rect):
+    picture = grab_window(dpy, dpy.screen().root, 0, 0)
+    if picture is None:
+        return None
+    x, y, w, h = rect
+    x, y = max(0, x), max(0, y)
+    w = min(w, picture.width - x)
+    h = min(h, picture.height - y)
+    if w < 4 or h < 4:
+        return None
+    return picture.crop((x, y, x + w, y + h))
+
+
+def photograph_browser(dpy, args, specs):
+    """Take every shot of the list against the page in a browser."""
+    if not BROWSER:
+        return ["no browser installed to photograph the page with"]
+    failures = []
+
+    def missing(why):
+        print("MISS " + why)
+        failures.append(why)
+
+    port = BROWSER_PORT
+    chrome = None
+    held = None
+    try:
+        for spec in specs:
+            name = spec["name"]
+            key = (spec["dialog"], spec.get("geo"), tuple(spec["branches"]),
+                   name if spec.get("scene") or spec.get("keys")
+                   or spec.get("menu") or spec.get("context") else "")
+            reused = True
+            if held and held[0] != key:
+                stop_driver(held[1])
+                held = None
+            if not held:
+                # the driver inherits the environment, which is how it is told
+                # which port to answer on
+                old = os.environ.get("GMSH_BROWSER_PORT")
+                os.environ["GMSH_BROWSER_PORT"] = str(port)
+                proc = start_driver(args.lib, args.home, spec["branches"],
+                                    spec.get("geo"), spec.get("context"))
+                if old is None:
+                    os.environ.pop("GMSH_BROWSER_PORT")
+                else:
+                    os.environ["GMSH_BROWSER_PORT"] = old
+                if not browser_wait(port):
+                    err = proc.stderr.read().decode(errors="replace")[-400:]
+                    missing("%s: the page never answered. %s"
+                                    % (name, err))
+                    stop_driver(proc)
+                    continue
+                if chrome is None:
+                    chrome = start_browser(args.home, port)
+                reused = False
+                held = (key, proc, browser_window(dpy))
+                if held[2] is None:
+                    missing("%s: no browser window" % name)
+                    stop_driver(proc)
+                    held = None
+                    continue
+                time.sleep(1.5)
+            win = held[2]
+            # Only what the shot before left behind: a window that was up
+            # before anything was clicked is what this shot came for -- the
+            # per-entity ONELAB window is opened by the driver itself.
+            if reused:
+                browser_quiet(port)
+                time.sleep(0.4)
+
+            # what opens the dialog: an entry of the menu bar, a line of the
+            # tree, or nothing at all when it is already up
+            if spec.get("context"):
+                pass
+            elif spec.get("keys"):
+                state = browser_state(port) or {}
+                item = browser_menu(state, browser_shortcut(spec["keys"]))
+                if not item:
+                    missing("%s: no menu entry for %s"
+                                    % (name, browser_shortcut(spec["keys"])))
+                    continue
+                browser_ask(port, "/do", "id=%d" % item["id"], timeout=3)
+            elif spec.get("menuPath"):
+                state = browser_state(port) or {}
+                item = browser_menu(state, spec["menuPath"])
+                if not item:
+                    missing("%s: no menu entry %s"
+                                    % (name, spec["menuPath"]))
+                    continue
+                browser_ask(port, "/do", "id=%d" % item["id"], timeout=3)
+            elif spec.get("menu"):
+                print("NOTE browser %s: the page has no menu to pop up" % name)
+                continue
+            elif spec.get("whole"):
+                pass
+            else:
+                state = browser_state(port) or {}
+                tree = state.get("tree", [])
+                row = spec["row"]
+                if row >= len(tree) or "id" not in tree[row]:
+                    missing("%s: no tree line %d of %d"
+                                    % (name, row, len(tree)))
+                    continue
+                browser_ask(port, "/do", "id=%d" % tree[row]["id"], timeout=3)
+            time.sleep(0.8)
+
+            if spec.get("whole"):
+                out = "%s-%s.png" % (args.build, name)
+                picture = browser_cut(dpy, win, (0, 0) + PAGE)
+                if picture is None:
+                    missing("%s: nothing to photograph" % name)
+                    continue
+                picture.save(os.path.join(args.out, out))
+                print("SHOT %s  %dx%d" % (out, picture.width, picture.height))
+                continue
+
+            # The window that is acted on is not always the one the shot is
+            # of: the arrow editor is opened by a button of the option window.
+            acting = spec.get("pressIn", spec["dialog"])
+            state = browser_state(port) or {}
+            form = browser_form(state, acting)
+            if form is None:
+                missing("%s: no window titled %r; up: %s"
+                                % (name, dialog_title(acting),
+                                   [f["title"] for f in state.get("forms", [])]))
+                continue
+
+            # what to pick in the scene, now that the dialog is up
+            for _ in spec.get("scene", []):
+                shot = browser_scene(port, args.home)
+                target = find_target(shot, "browser") if shot else None
+                if not target:
+                    missing("%s: nothing drawn to pick" % name)
+                    break
+                where = browser_where(port).get("scene")
+                if not where:
+                    missing("%s: the page never said where the scene is"
+                                    % name)
+                    break
+                print("PICK %s at %d,%d" % (name, target[0], target[1]))
+                for what in (1, 2):
+                    browser_ask(port, "/pointer",
+                                "x=%d&y=%d&b=0&w=%d&d=0&s=0&c=0&a=0"
+                                % (target[0], target[1], what), timeout=3)
+                time.sleep(0.6)
+
+            if spec.get("paneName"):
+                if not browser_pane(port, form, spec["paneName"]):
+                    missing("%s: no tab called %r"
+                            % (name, spec["paneName"]))
+                    continue
+                time.sleep(0.6)
+                form = browser_form(browser_state(port) or {}, acting)
+                if form is None:
+                    missing("%s: the window went away with its tab" % name)
+                    continue
+            missed = False
+            for want in spec.get("pressName", []):
+                if not browser_press(port, form, want):
+                    missing("%s: no field called %r to press"
+                                    % (name, want))
+                    missed = True
+                    break
+                time.sleep(0.8)
+                form = browser_form(browser_state(port) or {}, acting)
+                if form is None:
+                    missing("%s: the window went away when %r was "
+                                    "pressed" % (name, want))
+                    missed = True
+                    break
+            if missed:
+                continue
+            if spec.get("press") and not spec.get("pressName"):
+                print("NOTE browser %s: what to press is given as a point in "
+                      "each interface, and the page has no such point" % name)
+                continue
+            # and now the window the shot is really of
+            if acting != spec["dialog"]:
+                state = browser_state(port) or {}
+                form = browser_form(state, spec["dialog"])
+                if form is None:
+                    missing("%s: no window titled %r; up: %s"
+                            % (name, dialog_title(spec["dialog"]),
+                               [f["title"] for f in state.get("forms", [])]))
+                    continue
+
+            names = []
+            if spec.get("everyTab"):
+                names = (spec["everyTab"].get("browser")
+                         or spec["everyTab"].get("fltk", []))
+            elif spec.get("tab"):
+                names = [name.split("-")[-1]]
+            if names:
+                for want in names:
+                    if not browser_pane(port, form, want):
+                        missing("%s: no tab like %r in %s"
+                                        % (name, want, form.get("tabs")))
+                        continue
+                    time.sleep(0.6)
+                    out = ("%s-%s.png" % (args.build, name)
+                           if spec.get("tab")
+                           else "%s-%s-%s.png" % (args.build, name, want))
+                    rect = browser_where(port).get("form%d" % form["id"])
+                    picture = browser_cut(dpy, win, rect) if rect else None
+                    if picture is None:
+                        missing("%s: the page never said where %s is"
+                                        % (name, out))
+                        continue
+                    picture.save(os.path.join(args.out, out))
+                    print("SHOT %s  %dx%d" % (out, picture.width,
+                                              picture.height))
+                continue
+
+            out = "%s-%s.png" % (args.build, name)
+            rect = browser_where(port).get("form%d" % form["id"])
+            picture = browser_cut(dpy, win, rect) if rect else None
+            if picture is None:
+                missing("%s: the page never said where its window is"
+                                % name)
+                continue
+            picture.save(os.path.join(args.out, out))
+            print("SHOT %s  %dx%d" % (out, picture.width, picture.height))
+    finally:
+        if held:
+            stop_driver(held[1])
+        if chrome:
+            chrome.terminate()
+            try:
+                chrome.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                chrome.kill()
+    return failures
+
+
+def browser_scene(port, home):
+    """The 3D view as the page has it, to look for something to pick in."""
+    said = None
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:%d/scene" % port,
+                                    timeout=20) as r:
+            said = r.read()
+    except Exception:
+        return None
+    if not said:
+        return None
+    path = os.path.join(home, "scene.bmp")
+    with open(path, "wb") as f:
+        f.write(said)
+    try:
+        return Image.open(path).convert("RGB")
+    except Exception:
+        return None
+
+
 def photograph(dpy, args, specs):
     """Take every shot of the list, in an X server that is already up.
 
@@ -1195,7 +1665,7 @@ def main():
     ap.add_argument("--lib", help="directory holding gmsh.py and libgmsh")
     ap.add_argument("--out", required=True)
     ap.add_argument("--build", required=True,
-                    choices=["released", "fltk", "imgui"])
+                    choices=["released", "fltk", "imgui", "browser"])
     ap.add_argument("--home", required=True, help="a HOME of its own")
     ap.add_argument("--display", type=int, default=99)
     ap.add_argument("--probe", action="store_true",
@@ -1219,8 +1689,15 @@ def main():
             f.write(IMGUI_INI)
     failures = []
 
-    with Xserver(args.display):
+    # the browser window holds the tree, the scene and the dialogs at once,
+    # so it wants a larger screen than the 900x700 the others are shot at
+    with Xserver(args.display,
+                 "1600x1100x24" if args.build == "browser"
+                 else "1400x1000x24"):
         dpy = display.Display()
+        if args.sweep_options and args.build == "browser":
+            print("NOTE browser: sweeping the option window is not written yet")
+            return 0
         if args.sweep_options:
             # the View category is a view: without one the list stops at
             # Post-processing
@@ -1250,7 +1727,8 @@ def main():
         wanted = args.shot or [s["name"] for s in SHOTS]
         specs = [s for s in SHOTS
                  if s["name"] in wanted or s["dialog"] in wanted]
-        failures = photograph(dpy, args, specs)
+        take = photograph_browser if args.build == "browser" else photograph
+        failures = take(dpy, args, specs)
         # A shot that missed is taken again, once, on its own interface: they
         # miss one at a time and never twice for the same reason.
         if failures and not args.probe:
@@ -1265,7 +1743,7 @@ def main():
                 if os.path.exists(miss):
                     os.remove(miss)
             again = [s for s in specs if s["name"] in missed]
-            failures = photograph(dpy, args, again)
+            failures = take(dpy, args, again)
 
     for f in failures:
         print("FAIL " + f)

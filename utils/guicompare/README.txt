@@ -1,10 +1,10 @@
-Comparing the dialogs, three ways
-=================================
+Comparing the dialogs, four ways
+================================
 
-The Dear ImGui interface and the rewritten FLTK one are both built from one
-declaration now (src/common/GuiDialogs.h). The question this answers is whether
-that declaration still says what the windows it replaced said, and the only
-honest way to ask it is to photograph all three and look.
+Every interface of this tree is built from one declaration now
+(src/common/GuiDialogs.h). The question this answers is whether that
+declaration still says what the windows it replaced said, and the only honest
+way to ask it is to photograph them all and look.
 
   released   the Gmsh installed with pip, untouched upstream. This is the
              reference: it is what the conversion has to reproduce.
@@ -14,6 +14,12 @@ honest way to ask it is to photograph all three and look.
              cannot be identical -- another toolkit draws differently -- but
              it must hold the same fields, in the same order and the same
              grouping, with the same labels.
+  browser    the same declaration again, drawn as a page in a browser. It was
+             written to find out what the contract still took for granted, and
+             it is the strictest of the three conversions: it shares no widget,
+             no toolkit and no process with the others. It needs chromium and
+             a build in build-browser/; without either, the column is simply
+             absent.
 
 Running it
 ----------
@@ -52,3 +58,16 @@ In Dear ImGui it is a window inside the one window of the application, so there
 is nothing to hand over: shoot.py writes a layout file beforehand that pins the
 dialogs to a known place clear of the modules panel, then walks the rectangle
 out from there.
+
+The page in a browser is photographed differently again, and on purpose.
+Nothing there is clicked at a measured coordinate: the page is driven the way
+anything outside it would drive it, over the socket it answers on, and it says
+back where it put each of its windows -- which is what is cut out of the one
+browser window the X server holds. A tree leaf is opened by its place in the
+tree, a tab by its name, a button by its label. That makes the browser column
+the one that says whether the description carries enough to build a window
+from, rather than whether a toolkit was clicked in the right place.
+
+What the page cannot do yet, it does not pretend to. It has no file chooser and
+no menu that pops up, so the sheets for those say "pas de capture" in its
+column rather than showing something that is not there.

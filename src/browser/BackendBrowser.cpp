@@ -74,7 +74,15 @@ namespace {
 
     bool create(int argc, char **argv, bool quitShouldExit) override
     {
-      _port = Browser::listen(8010);
+      // The port it answers on. It is looked for from 8010 up, so that two
+      // of these do not fight over one; something driving it from outside --
+      // the bench that photographs the interfaces -- says which it wants.
+      int wanted = 8010;
+      if(const char *said = getenv("GMSH_BROWSER_PORT")) {
+        int n = atoi(said);
+        if(n > 0 && n < 65536) wanted = n;
+      }
+      _port = Browser::listen(wanted);
       if(!_port) return false;
       printf("Gmsh is at http://127.0.0.1:%d/\n", _port);
       fflush(stdout);
@@ -163,7 +171,13 @@ namespace {
     void showConsole(bool show) override { _console = show; }
     bool consoleVisible() override { return _console; }
     void refreshTree(bool rebuild) override {}
-    void openTreeItem(const std::string &name, bool open) override {}
+    // which branches of the tree are unfolded is the page's own business --
+    // nothing else knows what it has drawn -- so this is where it is kept,
+    // and Gmsh asking for one is the same as the page asking
+    void openTreeItem(const std::string &name, bool open) override
+    {
+      _open[name] = open;
+    }
     void setSolverButtonMode(const std::string &, const std::string &) override
     {
     }
@@ -190,6 +204,8 @@ namespace {
     bool _console = false;
     // what the scene says is under the pointer, said next to it
     std::string _tip;
+    // and where the page says it has put its windows
+    std::string _where;
     std::map<int, bool> _shown;
     std::vector<std::string> _messages;
     // what the page may ask for, by number: rebuilt every time the state is
@@ -285,6 +301,13 @@ namespace {
         }
         return "{}";
       }
+      if(ask.path == "/where") {
+        // Where the page put things. Nothing outside a page can know that,
+        // and something photographing one window of it -- the bench that puts
+        // the interfaces side by side -- has to be told where to cut.
+        if(ask.body.size()) { _where = ask.body; return "{}"; }
+        return _where;
+      }
       if(ask.path == "/close") {
         int form = atoi(_valueOf(ask.body, "form").c_str());
         _shown[form] = false;
@@ -356,13 +379,17 @@ namespace {
       case Ui::Choice: {
         std::vector<std::string> labels;
         std::vector<int> values;
-        if(f.dynamicChoices) f.dynamicChoices(labels, values);
-        if(labels.empty()) labels = f.choices;
+        if(f.dynamicChoices)
+          f.dynamicChoices(labels, values);
+        else {
+          labels = f.choices;
+          values = f.values;
+        }
         int at = -1;
         for(std::size_t i = 0; i < labels.size(); i++)
           if(labels[i] == said) at = (int)i;
-        if(at >= 0 && f.getText().empty())
-          f.setNumber(at);
+        if(at >= 0 && at < (int)values.size())
+          f.setNumber(values[at]);
         else
           f.setText(said);
       } break;
@@ -414,6 +441,8 @@ namespace {
       case Ui::Label: return "label";
       case Ui::Output: return "output";
       case Ui::List: return "list";
+      case Ui::Menu: return "menu";
+      case Ui::Hierarchy: return "hierarchy";
       default: return "text";
       }
     }
@@ -427,10 +456,21 @@ namespace {
         out += ",\"id\":" + std::to_string((int)_actions.size() - 1);
         return out + "}";
       }
-      if(f.kind == Ui::List) {
+      if(f.kind == Ui::Hierarchy) {
+        // A field that is a tree of its own -- the visibility window shows
+        // the model entity under entity -- said the way the modules tree is
+        // said, since it is the same kind of thing.
+        out += ",\"lines\":";
+        out += f.hierarchy ? _treeOf(*f.hierarchy) : "[]";
+        _fields.push_back(f);
+        out += ",\"id\":" + std::to_string((int)_fields.size() - 1);
+        return out + "}";
+      }
+      if(f.kind == Ui::List || f.kind == Ui::Menu) {
         // What it holds and which of them are on. It is what the option
         // window puts down its left side -- the categories it is showing --
-        // and what the visibility panel lists.
+        // and what the visibility panel lists. A menu is the same thing shut:
+        // a list of what one may pick, none of it on.
         std::vector<std::string> labels;
         std::vector<int> values;
         if(f.dynamicChoices)
@@ -470,14 +510,20 @@ namespace {
         std::vector<int> values;
         if(f.dynamicChoices)
           f.dynamicChoices(labels, values);
-        else
+        else {
           labels = f.choices;
-        // A choice bound to a number says which of them it is on by its
-        // place and not by its text; what a page shows is the text, and it
-        // is read back the same way.
-        int at = (int)f.getNumber();
-        if(said.empty() && at >= 0 && at < (int)labels.size())
-          said = labels[at];
+          values = f.values;
+        }
+        // A choice that says what each of its entries stands for is on the
+        // one whose value it holds, and not on the one whose text it holds:
+        // what a page shows is the text either way, and it is read back the
+        // same way. This is the rule the other interfaces follow.
+        if(values.size()) {
+          int at = (int)f.getNumber();
+          said.clear();
+          for(std::size_t i = 0; i < values.size() && i < labels.size(); i++)
+            if(values[i] == at) said = labels[i];
+        }
         out += ",\"choices\":[";
         for(std::size_t i = 0; i < labels.size(); i++)
           out += (i ? "," : "") + _quoted(labels[i]);
@@ -489,6 +535,74 @@ namespace {
       return out + "}";
     }
 
+    // The layout a field carries, which is most of what a description says
+    // about how a window looks: what shares a line, what is written before
+    // rather than after, what has a rule over it.
+    std::string _layout(const Ui::Field &f)
+    {
+      std::string out;
+      if(f.sameRow) out += ",\"sameRow\":true";
+      if(f.labelBefore) out += ",\"before\":true";
+      if(f.rule) out += ",\"rule\":true";
+      if(f.wraps) out += ",\"wraps\":true";
+      if(f.disclosure) out += ",\"fold\":true";
+      if(f.packed) out += ",\"packed\":true";
+      if(f.widthEm > 0.) out += ",\"em\":" + std::to_string(f.widthEm);
+      if(f.rows > 1) out += ",\"rows\":" + std::to_string(f.rows);
+      if(f.tooltip.size()) out += ",\"help\":" + _quoted(f.tooltip);
+      if(f.enabled && !f.enabled()) out += ",\"off\":true";
+      return out;
+    }
+
+    std::string _fieldList(const std::vector<Ui::Field> &fields)
+    {
+      std::string out = "[";
+      bool first = true;
+      for(const auto &f : fields) {
+        if(f.visible && !f.visible()) continue;
+        if(!first) out += ",";
+        first = false;
+        // a spacer says where a run of packed fields ends, which a page can
+        // say with a gap that grows
+        if(f.kind == Ui::Spacer) {
+          out += "{\"kind\":\"gap\"";
+          out += _layout(f);
+          out += "}";
+          continue;
+        }
+        std::string one = _field(f);
+        one.insert(one.size() - 1, _layout(f));
+        out += one;
+      }
+      return out + "]";
+    }
+
+    // One pane, as it is laid out: its own fields, then the titled sections
+    // under them, then whatever sits on the line of its button.
+    std::string _pane(const Ui::Pane &p)
+    {
+      std::string out = "{\"label\":" + _quoted(p.label);
+      out += ",\"columns\":" + std::to_string(p.columns);
+      out += ",\"fields\":" + _fieldList(p.fields);
+      out += ",\"sections\":[";
+      bool first = true;
+      for(const auto &section : p.sections) {
+        if(section.visible && !section.visible()) continue;
+        if(!first) out += ",";
+        first = false;
+        out += "{\"label\":" + _quoted(section.label);
+        out += ",\"columns\":" + std::to_string(section.columns);
+        out += ",\"fields\":" + _fieldList(section.fields) + "}";
+      }
+      out += "],\"beside\":" + _fieldList(p.beside);
+      out += ",\"button\":" + _quoted(p.buttonLabel);
+      if(p.button) {
+        _actions.push_back(p.button);
+        out += ",\"buttonId\":" + std::to_string((int)_actions.size() - 1);
+      }
+      return out + "}";
+    }
+
     std::string _form(int which)
     {
       Ui::Form form = _sources.form(which);
@@ -496,42 +610,47 @@ namespace {
       std::string out = "{\"id\":" + std::to_string(which);
       out += ",\"title\":" + _quoted(form.title);
       out += ",\"pane\":" + std::to_string(pane);
+      out += ",\"tabbed\":";
+      out += form.tabbed ? "true" : "false";
+      // What the tabs are, and which family each belongs to: a window with
+      // more panes than fit across one row wears two rows of them.
       out += ",\"tabs\":[";
-      for(std::size_t i = 0; i < form.panes.size(); i++)
-        out += (i ? "," : "") + _quoted(form.panes[i].label);
-      out += "],\"side\":[";
-      {
-        bool one = true;
-        for(const auto &f : form.side) {
-          if(f.visible && !f.visible()) continue;
-          if(!one) out += ",";
-          one = false;
-          out += _field(f);
-        }
+      for(std::size_t i = 0; i < form.panes.size(); i++) {
+        if(i) out += ",";
+        out += "{\"label\":" + _quoted(form.panes[i].label);
+        out += ",\"group\":" + _quoted(form.panes[i].group);
+        out += ",\"on\":";
+        out += (form.panes[i].visible && !form.panes[i].visible()) ? "false" :
+                                                                     "true";
+        out += "}";
       }
-      out += "],\"fields\":[";
-      bool first = true;
-      auto say = [&](const std::vector<Ui::Field> &fields) {
-        for(const auto &f : fields) {
-          if(f.visible && !f.visible()) continue;
-          if(f.kind == Ui::Spacer) continue;
+      out += "],\"side\":" + _fieldList(form.side);
+      out += ",\"sideEm\":" + std::to_string(form.sideEm > 0. ? form.sideEm
+                                                              : 8.);
+      out += ",\"header\":" + _fieldList(form.header);
+      // The panes to show: the one that is picked, or all of them one under
+      // another for a window that is one long form rather than a set of tabs.
+      out += ",\"panes\":[";
+      if(form.tabbed) {
+        if(pane >= 0 && pane < (int)form.panes.size())
+          out += _pane(form.panes[pane]);
+      }
+      else {
+        bool first = true;
+        for(const auto &q : form.panes) {
+          if(q.visible && !q.visible()) continue;
           if(!first) out += ",";
           first = false;
-          out += _field(f);
+          out += _pane(q);
         }
-      };
-      say(form.header);
-      if(pane >= 0 && pane < (int)form.panes.size()) {
-        say(form.panes[pane].fields);
-        for(const auto &section : form.panes[pane].sections) say(section.fields);
-        say(form.panes[pane].beside);
       }
-      say(form.footer);
-      for(const auto &b : form.buttons) {
-        if(!first) out += ",";
-        first = false;
+      out += "],\"footer\":" + _fieldList(form.footer);
+      out += ",\"buttons\":[";
+      for(std::size_t i = 0; i < form.buttons.size(); i++) {
+        const auto &b = form.buttons[i];
+        if(i) out += ",";
         _actions.push_back(b.action);
-        out += "{\"label\":" + _quoted(b.label) + ",\"kind\":\"action\"";
+        out += "{\"label\":" + _quoted(b.label);
         out += ",\"id\":" + std::to_string((int)_actions.size() - 1) + "}";
       }
       return out + "]}";
@@ -572,9 +691,8 @@ namespace {
       return out;
     }
 
-    std::string _tree()
+    std::string _treeOf(const Ui::Tree &tree)
     {
-      const Ui::Tree &tree = _sources.tree;
       if(!tree.children) return "[]";
       std::string out = "[";
       bool first = true;
@@ -585,6 +703,8 @@ namespace {
       }
       return out + "]";
     }
+
+    std::string _tree() { return _treeOf(_sources.tree); }
 
     // the row of little buttons along the bottom
     std::string _bar()

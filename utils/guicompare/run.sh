@@ -1,5 +1,6 @@
 #!/bin/sh
-# Photograph the same dialogs in the three builds and put them side by side.
+# Photograph the same dialogs in every build there is and put them side by
+# side.
 #
 #   utils/guicompare/run.sh [dialog ...]
 #   GUICOMPARE_OPTIONS="general mesh" utils/guicompare/run.sh
@@ -9,11 +10,13 @@
 #
 #   python3 -m venv .venv && .venv/bin/pip install gmsh python-xlib pillow
 #
-# The FLTK build is expected in build/ and the Dear ImGui one in build-imgui/,
-# both with ENABLE_BUILD_DYNAMIC so that there is a libgmsh to drive. The
+# The FLTK build is expected in build/, the Dear ImGui one in build-imgui/ and
+# the page in build-browser/ if it is wanted, all with ENABLE_BUILD_DYNAMIC so
+# that there is a libgmsh to drive; the page also needs chromium, which is what
+# holds it. The
 # little models the dialogs are photographed against live in models/.
 #
-# The three builds run at the same time. They share nothing: each has its own X
+# The builds run at the same time. They share nothing: each has its own X
 # server, its own HOME and its own name for every picture, and photographing
 # one interface is mostly waiting for it, so three at once cost little more
 # than one. GUICOMPARE_OPTIONS names the categories of the option window to
@@ -33,10 +36,12 @@ command -v Xvfb >/dev/null || { echo "Xvfb is not installed" >&2; exit 1; }
 # gmsh.py looks for the library next to itself
 cp "$root/api/gmsh.py" "$root/build/gmsh.py"
 cp "$root/api/gmsh.py" "$root/build-imgui/gmsh.py"
+[ -d "$root/build-browser" ] && cp "$root/api/gmsh.py" "$root/build-browser/gmsh.py"
 
 mkdir -p "$shots" "$figures"
 if [ $# -eq 0 ]; then
-  rm -rf "$work/home-released" "$work/home-fltk" "$work/home-imgui"
+  rm -rf "$work/home-released" "$work/home-fltk" "$work/home-imgui" \
+         "$work/home-browser"
 fi
 
 # named on the command line, a dialog or a single shot is the only thing
@@ -61,6 +66,12 @@ photograph() {
 photograph released 95 "" &
 photograph fltk 96 "$root/build" &
 photograph imgui 97 "$root/build-imgui" &
+# the page in a browser, if that build is there: it is driven over the socket
+# it answers on rather than by clicking, and photographed inside one browser
+# window
+if [ -d "$root/build-browser" ]; then
+  photograph browser 98 "$root/build-browser" &
+fi
 wait
 
 echo "== planches"

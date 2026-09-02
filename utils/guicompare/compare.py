@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Put the three pictures of one dialog side by side.
+"""Put the pictures of one dialog side by side.
 
 Left is the released Gmsh, which is what the conversion has to reproduce;
 then the FLTK interface of this tree, which should be indistinguishable from
@@ -23,7 +23,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 COLUMNS = [("released", "publié — Gmsh 4.15.2, FLTK 1.3.11"),
            ("fltk", "converti — FLTK 1.4.5"),
-           ("imgui", "converti — Dear ImGui")]
+           ("imgui", "converti — Dear ImGui"),
+           ("browser", "converti — une page dans un navigateur")]
 
 DIALOG_TITLES = {
     "elementary": "Elementary Entity Context",
@@ -58,7 +59,7 @@ def shot_names(shots):
     leave them without a sheet."""
     seen = []
     for f in sorted(os.listdir(shots)):
-        m = re.match(r"(?:released|fltk|imgui)-(.*)\.png$", f)
+        m = re.match(r"(?:released|fltk|imgui|browser)-(.*)\.png$", f)
         if not m:
             continue
         name = m.group(1)

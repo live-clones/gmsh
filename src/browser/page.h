@@ -46,6 +46,10 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .leaf{cursor:default}
  .leaf:hover{text-decoration:underline}
  .picked{accent-color:#356}
+ /* a check on a line of a tree is a check, not a field taking its share of
+    the line */
+ .node input[type=checkbox]{width:auto;flex:none}
+ .node input,.node select{width:135px}
  #scene{flex:1;min-width:260px;background:#222;position:relative;overflow:hidden}
  #view{display:block;width:100%;height:100%;object-fit:contain;cursor:crosshair;
        user-select:none;-webkit-user-drag:none}
@@ -74,8 +78,10 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  #dock .form h2{cursor:default}
  .form .body{display:flex;align-items:stretch;min-height:0;overflow:hidden}
  .form .main{flex:1;min-width:0;overflow:auto;padding-bottom:5px}
- .form .aside{flex:none;width:150px;overflow:auto;border-right:1px solid #ddd;
-              padding:3px 0}
+ .form .aside{flex:none;overflow:auto;border-right:1px solid #ddd;
+              padding:3px 0;display:flex;flex-direction:column}
+ .form .aside .line{padding:2px 4px}
+ .form .aside .cell{flex:1 1 auto}
  .list{border:1px solid #ccc;background:#fff;overflow:auto;max-height:240px;
        flex:1;min-width:0}
  .aside .list{border:none;max-height:none}
@@ -84,13 +90,40 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .pick.on{background:#cfd8ff}
  .tabs{display:flex;gap:2px;padding:4px 6px 0;border-bottom:1px solid #ccc;
        flex-wrap:wrap}
+ .tabs.family{border-bottom:none;padding-bottom:0}
+ .tabs.family .tab{background:#e4e4e4}
+ .tabs.family .tab.on{background:#eee;font-weight:600}
  .tab{padding:3px 9px;border:1px solid #ccc;border-bottom:none;background:#eee;
       cursor:default}
  .tab.on{background:#fff;font-weight:600}
- .row{display:flex;align-items:center;gap:8px;padding:3px 8px}
- .row label{flex:1;order:2}
- .row input,.row select{order:1;width:135px}
- .row.act{justify-content:flex-start}
+ /* A line of a pane. What shares a line is what the description says shares
+    one, which is most of the layout it carries: these windows are two and
+    three columns wide in places. */
+ .line{display:flex;align-items:center;gap:8px;padding:2px 8px;flex-wrap:wrap}
+ .line.ruled{border-top:1px solid #ddd;margin-top:4px;padding-top:5px}
+ .cell{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+ .cell.packed{flex:0 0 auto}
+ .cell.packed label{flex:0 0 auto}
+ /* a row of values with a button after them is not columns of equal width:
+    the button goes to the end of the line, as these windows draw it */
+ .line.packed .cell.act{margin-left:auto}
+ .cell.gap{flex:1 1 auto;min-width:8px}
+ .cell input,.cell select{width:135px;min-width:0}
+ /* the label runs on rather than wrapping: a window grows to hold what it
+    says, as the ones this reproduces do */
+ .cell label{flex:1;min-width:0;white-space:nowrap}
+ .cell.act{flex:0 0 auto}
+ .cell.wide{flex:1 1 100%}
+ /* a line that runs on over several lines: the help of a plugin is a
+    paragraph, not a label */
+ .cell.wide>div{white-space:pre-line}
+ .section{margin:6px 8px 2px;border-top:1px solid #ddd;padding-top:4px}
+ .section h3{font-size:12px;margin:0 0 2px;color:#444;font-weight:600}
+ .section .line{padding-left:0;padding-right:0}
+ .foot{border-top:1px solid #ccc;padding:5px 8px;display:flex;gap:8px;
+       align-items:center;flex-wrap:wrap;background:#f7f7f7}
+ .foot button{min-width:70px}
+ .fold{cursor:default;user-select:none;color:#444}
  #console{flex:none;height:150px;overflow:auto;margin:0;padding:6px 8px;
           background:#fff;border-top:1px solid #ccc;
           font:11px ui-monospace,monospace;white-space:pre-wrap}
@@ -191,9 +224,35 @@ function field(f) {
     b.onclick = () => post('/do', 'id=' + f.id);
     return b;
   }
+  if(f.kind === 'hierarchy') {
+    const box = document.createElement('div');
+    box.className = 'list';
+    box.style.height = (f.rows ? f.rows * 1.45 : 16) + 'em';
+    treeLines(f.lines || [], box);
+    return box;
+  }
+  if(f.kind === 'menu') {
+    const pick = document.createElement('select');
+    const head = document.createElement('option');
+    head.textContent = f.label; head.value = '';
+    pick.appendChild(head);
+    for(const label of f.items || []) {
+      const o = document.createElement('option');
+      o.textContent = label; pick.appendChild(o);
+    }
+    pick.onchange = () => {
+      const at = pick.selectedIndex - 1;
+      pick.selectedIndex = 0;
+      if(at >= 0) post('/choose', 'id=' + f.id + '&i=' + at + '&v=1');
+    };
+    return pick;
+  }
   if(f.kind === 'list') {
     const box = document.createElement('div');
     box.className = 'list';
+    // as tall as it says: zero means as tall as the window will allow
+    if(f.rows) box.style.height = (f.rows * 1.45) + 'em';
+    else box.style.minHeight = '9em';
     (f.items || []).forEach((label, i) => {
       const line = document.createElement('div');
       line.className = 'pick' + ((f.on || []).indexOf(i) >= 0 ? ' on' : '');
@@ -230,36 +289,97 @@ function field(f) {
   }
   return input;
 }
-function row(f) {
+// One field in its cell, with its label where the description puts it
+function cell(f) {
   const box = document.createElement('div');
-  box.className = 'row' + (f.kind === 'action' ? ' act' : '');
+  box.className = 'cell' + (f.kind === 'action' ? ' act' : '') +
+                  (f.packed ? ' packed' : '') +
+                  (f.kind === 'list' || f.kind === 'hierarchy' || f.wraps ?
+                     ' wide' : '');
+  if(f.help) box.title = f.help;
+  if(f.kind === 'gap') { box.className = 'cell gap'; return box; }
   if(f.kind === 'label') {
-    const s = document.createElement('div');
-    s.textContent = f.label; s.style.order = 1; box.appendChild(s);
+    // What it says is worked out as the window is drawn -- the help of a
+    // size field is a paragraph the field itself writes -- so it is the
+    // value that is said, and the label only when there is no value.
+    const say = document.createElement('div');
+    say.textContent = f.value || f.label;
+    box.appendChild(say);
     return box;
   }
-  if(f.kind === 'list') {
-    box.style.flexWrap = 'wrap';
-    if(f.label) {
-      const say = document.createElement('label');
-      say.textContent = f.label; say.style.flex = '0 0 100%';
-      box.appendChild(say);
-    }
-    box.appendChild(field(f));
+  const say = document.createElement('label');
+  say.textContent = f.label;
+  const what = field(f);
+  if(f.em) what.style.width = f.em + 'em';
+  if(f.off) what.disabled = true;
+  if(f.kind === 'action' || f.kind === 'menu') {
+    box.appendChild(what);
     return box;
   }
-  box.appendChild(field(f));
-  if(f.kind !== 'action') {
-    const say = document.createElement('label');
-    say.textContent = f.label; box.appendChild(say);
+  if(f.kind === 'list' || f.kind === 'hierarchy') {
+    // a list takes the line it is on: what names it, if anything does, is
+    // written beside it and takes only what it needs
+    box.appendChild(what);
+    if(f.label) { say.style.flex = '0 0 auto'; box.appendChild(say); }
+    return box;
   }
+  if(f.before) { box.appendChild(say); box.appendChild(what); }
+  else { box.appendChild(what); box.appendChild(say); }
   return box;
+}
+
+// A run of fields laid out in lines: a field starts a new line unless it says
+// it shares the one before it.
+function lines(fields, into, columns) {
+  // what shares a line, worked out first: whether the line is laid out on
+  // equal columns depends on what is in it
+  const rows = [];
+  for(const f of fields) {
+    if(!rows.length || !f.sameRow) rows.push([]);
+    rows[rows.length - 1].push(f);
+  }
+  for(const row of rows) {
+    const line = document.createElement('div');
+    const packed = row.some(f => f.packed);
+    line.className = 'line' + (row[0].rule ? ' ruled' : '') +
+                     (packed ? ' packed' : '');
+    // A field that takes the width it needs follows the one before it; the
+    // rest share the line in columns of equal width, which is how the option
+    // window lines two rows up with one another.
+    if(columns > 1 && !packed) {
+      line.style.display = 'grid';
+      line.style.gridTemplateColumns = 'repeat(' + columns + ',1fr)';
+    }
+    for(const f of row) line.appendChild(cell(f));
+    into.appendChild(line);
+  }
+}
+
+function paneBody(pane, into) {
+  lines(pane.fields, into, pane.columns);
+  for(const section of pane.sections) {
+    const box = document.createElement('div');
+    box.className = 'section';
+    if(section.label) {
+      const h = document.createElement('h3');
+      h.textContent = section.label;
+      box.appendChild(h);
+    }
+    lines(section.fields, box, section.columns);
+    into.appendChild(box);
+  }
 }
 
 // --- the tree down the left side
 function drawTree(lines) {
   const box = document.getElementById('tree');
   box.textContent = '';
+  treeLines(lines, box);
+}
+
+// The lines of a tree, wherever it is drawn: down the left of the window, or
+// inside a window that shows the model that way.
+function treeLines(lines, box) {
   for(const n of lines) {
     const line = document.createElement('div');
     line.className = 'node';
@@ -340,12 +460,32 @@ window.addEventListener('mousemove', e => {
 window.addEventListener('mouseup', () => { dragging = null; });
 
 let showing = [];                     // the forms as they were last drawn
+// Where the page has put things, said back to Gmsh. Nothing outside a page
+// can know that: the bench that photographs the interfaces side by side has
+// to be told which part of the picture is the window it came for.
+function sayWhere(cards) {
+  const parts = [];
+  const put = (name, el) => {
+    if(!el) return;
+    const r = el.getBoundingClientRect();
+    parts.push(name + '=' + Math.round(r.left) + ',' + Math.round(r.top) +
+               ',' + Math.round(r.width) + ',' + Math.round(r.height));
+  };
+  put('page', document.body);
+  put('bar', document.getElementById('bar'));
+  put('tree', document.getElementById('tree'));
+  put('scene', document.getElementById('scene'));
+  put('console', document.getElementById('console'));
+  for(const at of cards) put('form' + at[0], at[1]);
+  fetch('/where', {method:'POST', body: parts.join('&')}).catch(() => {});
+}
+
 function drawForms(forms) {
   showing = forms;
   const desk = document.getElementById('desk');
   const dock = document.getElementById('dock');
   desk.textContent = ''; dock.textContent = '';
-  const up = {};
+  const up = {}, told = [];
   for(const form of forms) {
     up[form.id] = true;
     const at = place(form.id);
@@ -366,30 +506,105 @@ function drawForms(forms) {
     h.appendChild(shut);
     if(!at.docked) h.onmousedown = e => grab(e, card, at);
     card.appendChild(h);
-    if(form.tabs && form.tabs.length > 1) {
-      const tabs = document.createElement('div'); tabs.className = 'tabs';
-      form.tabs.forEach((label, i) => {
+    // The tabs. A window with more panes than fit across one row wears two
+    // rows of them: which family first, then which member of it -- the same
+    // grouping the description gives the other interfaces.
+    if(form.tabbed && form.tabs.length > 1) {
+      const families = [];
+      form.tabs.forEach((t, i) => {
+        if(!t.on) return;
+        const name = t.group || '';
+        let f = families.find(q => q.name === name && name);
+        if(!f) families.push(f = {name: name, panes: []});
+        f.panes.push(i);
+      });
+      const grouped = families.some(f => f.name);
+      const openFamily = families.find(f => f.panes.indexOf(form.pane) >= 0);
+      if(grouped) {
+        const row = document.createElement('div');
+        row.className = 'tabs family';
+        for(const f of families) {
+          const tab = document.createElement('div');
+          tab.className = 'tab' + (f === openFamily ? ' on' : '');
+          tab.textContent = f.name || form.tabs[f.panes[0]].label;
+          tab.onclick = () => post('/pane', 'form=' + form.id +
+                                            '&i=' + f.panes[0]);
+          row.appendChild(tab);
+        }
+        card.appendChild(row);
+      }
+      const shown = grouped && openFamily ? openFamily.panes
+                                          : form.tabs.map((t, i) => i);
+      // a pane that belongs to no family is named in the row above: a second
+      // row saying the same word again is not what these windows wear
+      if(!(grouped && openFamily && !openFamily.name)) {
+      const row = document.createElement('div'); row.className = 'tabs';
+      for(const i of shown) {
+        if(!form.tabs[i].on) continue;
         const tab = document.createElement('div');
         tab.className = 'tab' + (i === form.pane ? ' on' : '');
-        tab.textContent = label || '\u00b7';
+        tab.textContent = form.tabs[i].label || '\u00b7';
         tab.onclick = () => post('/pane', 'form=' + form.id + '&i=' + i);
-        tabs.appendChild(tab);
-      });
-      card.appendChild(tabs);
+        row.appendChild(tab);
+      }
+      card.appendChild(row);
+      }
     }
     const body = document.createElement('div'); body.className = 'body';
     if(form.side && form.side.length) {
       // the column down the left: what the panes act upon, which for the
       // option window is the category it is showing
       const aside = document.createElement('div'); aside.className = 'aside';
-      for(const f of form.side)
-        aside.appendChild(f.kind === 'list' ? field(f) : row(f));
+      aside.style.width = (form.sideEm || 8) + 'em';
+      lines(form.side, aside, 0);
       body.appendChild(aside);
     }
     const main = document.createElement('div'); main.className = 'main';
-    for(const f of form.fields) main.appendChild(row(f));
+    lines(form.header, main, 0);
+    for(const pane of form.panes) {
+      if(!form.tabbed && pane.label) {
+        const h = document.createElement('h3');
+        h.className = 'section'; h.textContent = pane.label;
+        main.appendChild(h);
+      }
+      paneBody(pane, main);
+    }
     body.appendChild(main);
     card.appendChild(body);
+    // what the window says under its panes, and what it does: the fields on
+    // the line of the button come before it, as the windows this reproduces
+    // put them
+    const pane = form.panes[form.panes.length - 1];
+    const beside = pane ? pane.beside : [];
+    if(beside.length || (pane && pane.button)) {
+      const bar = document.createElement('div'); bar.className = 'foot';
+      for(const f of beside) bar.appendChild(cell(f));
+      const gap = document.createElement('div');
+      gap.className = 'cell gap'; bar.appendChild(gap);
+      if(pane && pane.button) {
+        const b = document.createElement('button');
+        b.textContent = pane.button;
+        b.onclick = () => post('/do', 'id=' + pane.buttonId);
+        bar.appendChild(b);
+      }
+      card.appendChild(bar);
+    }
+    if(form.footer.length || form.buttons.length) {
+      const bar = document.createElement('div'); bar.className = 'foot';
+      for(const f of form.footer) bar.appendChild(cell(f));
+      if(form.buttons.length) {
+        const gap = document.createElement('div');
+        gap.className = 'cell gap'; bar.appendChild(gap);
+      }
+      for(const b of form.buttons) {
+        const button = document.createElement('button');
+        button.textContent = b.label;
+        button.onclick = () => post('/do', 'id=' + b.id);
+        bar.appendChild(button);
+      }
+      card.appendChild(bar);
+    }
+    told.push([form.id, card]);
     if(at.docked) { dock.appendChild(card); }
     else {
       card.style.left = at.x + 'px';
@@ -401,6 +616,7 @@ function drawForms(forms) {
   }
   // a window that is gone forgets where it was
   for(const id in placed) if(!up[id]) delete placed[id];
+  sayWhere(told);
 }
 
 // --- the row of little buttons along the bottom
