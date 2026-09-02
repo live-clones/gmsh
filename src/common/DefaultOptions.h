@@ -1137,8 +1137,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_FRONTAL ,
     "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 3: Initial mesh only, "
     "5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, "
-    "9: Packing of Parallelograms, 11: Quasi-structured Quad, "
-    "12: Frontal-Delaunay Optimized)" },
+    "9: Packing of Parallelograms, 11: Quasi-structured Quad)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
     "3D mesh algorithm (1: Delaunay, 3: Initial mesh only, 4: Frontal, "
     "7: MMG3D, 9: R-tree, 10: HXT)" },
@@ -1235,13 +1234,18 @@ StringXNumber MeshOptions_Number[] = {
     "First tag (>= 1) of mesh elements when generating or renumbering a mesh" },
   { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
     "First tag (>= 1) of mesh nodes when generating or renumbering a mesh" },
-  { F|O, "FlatRefineDelaunay3D" , opt_mesh_flat_refine_delaunay3d , 1. ,
-    "Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to "
-    "use the original object-based kernel, which produces the same meshes)" },
   { F|O, "FlatOptimize3D" , opt_mesh_flat_optimize_3d , 1. ,
     "Use the flat-array kernel to optimize 3D meshes (set to 0 to use the "
     "original object-based kernel, which performs the same operations and "
     "gives meshes of the same quality)" },
+  { F|O, "FlatRefine2D" , opt_mesh_flat_refine_2d , 1. ,
+    "Kernel used for 2D Delaunay point insertion (0: original object-based "
+    "kernel; 1: flat-array kernel, which produces the same meshes; 2: "
+    "flat-array kernel with faster floating-point shortcuts on planar faces "
+    "and isotropic metrics, which give equivalent but not identical meshes)" },
+  { F|O, "FlatRefine3D" , opt_mesh_flat_refine_3d , 1. ,
+    "Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to "
+    "use the original object-based kernel, which produces the same meshes)" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },

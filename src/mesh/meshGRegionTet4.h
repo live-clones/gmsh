@@ -458,4 +458,42 @@ void createAllEmbeddedFaces(GRegion *gr,
 void createAllEmbeddedEdges(GRegion *gr,
                             std::set<MEdge, MEdgeLessThan> &allEmbeddedEdges);
 
+// Set of mesh edges, hashed on the vertex numbers: used to hold the edges
+// that are embedded in a region, which no cavity may cross.
+struct edgeContainerB {
+  std::vector<std::vector<MEdge> > _hash;
+  std::size_t _size, _size_obj;
+
+  edgeContainerB(std::size_t N = 1000000)
+    : _hash(N > 0 ? N : 1), _size(0), _size_obj(sizeof(MEdge))
+  {
+  }
+
+  std::size_t H(const MEdge &e) const
+  {
+    const std::size_t h = ((std::size_t)e.getSortedVertex(0));
+    return (h / _size_obj) % _hash.size();
+  }
+
+  bool find(const MEdge &e) const
+  {
+    const std::vector<MEdge> &v = _hash[H(e)];
+    return std::find(v.begin(), v.end(), e) != v.end();
+  }
+
+  bool empty() const { return _size == 0; }
+
+  bool addNewEdge(const MEdge &e)
+  {
+    std::vector<MEdge> &v = _hash[H(e)];
+
+    if(std::find(v.begin(), v.end(), e) != v.end()) return false;
+
+    v.push_back(e);
+    _size++;
+
+    return true;
+  }
+};
+
 #endif

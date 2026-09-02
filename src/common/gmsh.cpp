@@ -66,7 +66,7 @@
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFace.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "meshGFaceOptimize.h"
 #include "meshGRegionDelaunay.h"
 #include "meshGRegionHxt.h"
