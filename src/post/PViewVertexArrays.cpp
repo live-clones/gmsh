@@ -1693,8 +1693,8 @@ public:
       // that pass may have fed the smooth normals: start over
       delete p->normals;
       p->normals = new smooth_normals(opt->angleSmoothNormals);
-      Msg::Info("Located the boundary faces of View[%d] in %g s",
-                p->getIndex(), TimeOfDay() - t1);
+      Msg::Debug("Located the boundary faces of View[%d] in %g s",
+                 p->getIndex(), TimeOfDay() - t1);
     }
 
     if(opt->smoothNormals) addElementsInArrays(p, true);

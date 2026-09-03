@@ -527,8 +527,8 @@ void PViewDataList::_buildNodeIndex()
   }
 
   _nodeIndexStatus = 1;
-  Msg::Info("Recreated %u nodes out of %lu list-based coordinates in %g s",
-            next, (unsigned long)total, TimeOfDay() - t1);
+  Msg::Debug("Recreated %u nodes out of %lu list-based coordinates in %g s",
+             next, (unsigned long)total, TimeOfDay() - t1);
 }
 
 std::size_t PViewDataList::getNodeId(int step, int ent, int ele, int nod)

@@ -406,7 +406,7 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
 void VertexArray::printStats()
 {
   if(!statUniqueIn) return;
-  Msg::Info("Vertex array unique filter: %ld -> %ld corners (%.2fx)",
+  Msg::Debug("Vertex array unique filter: %ld -> %ld corners (%.2fx)",
             statUniqueIn, statUniqueKept,
             (double)statUniqueIn / statUniqueKept);
   statUniqueIn = statUniqueKept = 0;

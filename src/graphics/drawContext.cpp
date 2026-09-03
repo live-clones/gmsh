@@ -296,8 +296,8 @@ static double vboBytes = 0., vboTime = 0.;
 void deleteOrphanVertexArrayBuffers()
 {
   if(vboBytes > 0.) {
-    Msg::Info("Uploaded %.1f Mb to buffer objects in %g s",
-              vboBytes / 1024. / 1024., vboTime);
+    Msg::Debug("Uploaded %.1f Mb to buffer objects in %g s",
+               vboBytes / 1024. / 1024., vboTime);
     vboBytes = vboTime = 0.;
   }
 

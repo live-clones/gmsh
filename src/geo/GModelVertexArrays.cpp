@@ -697,8 +697,8 @@ public:
         if(CTX::instance()->mesh.trihedra)
           markBoundaryFaces(r->trihedra, interior, nth);
         markBoundaryFaces(r->polyhedra, interior, nth);
-        Msg::Info("Located the boundary faces of volume %d in %g s", r->tag(),
-                  TimeOfDay() - t1);
+        Msg::Debug("Located the boundary faces of volume %d in %g s", r->tag(),
+                   TimeOfDay() - t1);
       }
 
       if(CTX::instance()->mesh.tetrahedra)
@@ -753,7 +753,7 @@ bool GModel::fillVertexArrays()
   if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
     std::for_each(firstRegion(), lastRegion(), initMeshGRegion());
 
-  Msg::Info("Vertex arrays built in %g s", TimeOfDay() - tStart);
+  Msg::Debug("Vertex arrays built in %g s", TimeOfDay() - tStart);
   VertexArray::printStats();
   return true;
 }

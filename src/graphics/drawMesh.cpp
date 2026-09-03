@@ -395,9 +395,7 @@ static VertexArray *buildMerged(IT first, IT last, bool lines, bool forceColor,
     VertexArray *va = lines ? (*it)->va_lines : (*it)->va_triangles;
     if(va && va->getNumVertices()) { n += va->getNumVertices(); num++; }
   }
-  static int off = -1;
-  if(off < 0) off = getenv("GMSH_NO_MERGE") ? 1 : 0;
-  if(off || num < mergeThreshold || !n) return nullptr;
+  if(num < mergeThreshold || !n) return nullptr;
 
   VertexArray *out = new VertexArray(lines ? 2 : 3, 1);
   for(IT it = first; it != last; it++) {
