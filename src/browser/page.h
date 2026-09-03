@@ -26,7 +26,11 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  /* A form control does not inherit the font it sits in: left alone it draws
     at whatever the browser likes, and a width said in ems then comes out
     wrong by that much. */
- input,select,button,textarea{font:inherit}
+ /* A field is as wide as it says, frame included -- which is what the width
+    of a widget means in the windows this reproduces. Without it two halves of
+    a value come out wider than the one field they are meant to fill, and
+    nothing lines up with the line above. */
+ input,select,button,textarea{font:inherit;box-sizing:border-box}
  #bar{background:#e3e3e3;border-bottom:1px solid #bbb;padding:2px 6px;
       display:flex;gap:2px;flex:none}
  .top{padding:3px 9px;cursor:default;position:relative}
@@ -101,6 +105,11 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .aside .list{border:none}
  .form .aside .line{padding:2px 4px}
  .form .aside .cell{flex:1 1 auto}
+ /* A button down the side column takes the column: what it says is not what
+    says how wide it is there, as the windows this reproduces have it. */
+ .form .aside .cell.act{flex:1 1 auto}
+ .form .aside .cell.act>button,.form .aside .drops,
+ .form .aside .drops>button{width:100%}
  .list{border:1px solid #ccc;background:#fff;overflow:auto;flex:1 1 auto;
        min-width:0;min-height:5em;max-height:26em}
  /* The column down the side is as tall as the window, and the window is as
@@ -168,9 +177,11 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  /* Ten of the font's own size, which is how wide a field is in the windows
     this reproduces, divided by however many share the line. */
  .cell input,.cell select{width:calc(10em / var(--n, 1));min-width:0}
- /* a dropdown keeps its arrow inside the box: it takes that on top of its
-    share of the line, rather than out of the text beside it */
- .cell select{width:calc(10em / var(--n, 1) + 1.8em)}
+ /* A dropdown keeps its arrow inside the box. Alone on its line it has a
+    whole field's width and room to spare for it; sharing one it takes the
+    arrow on top of its share, as the windows this reproduces do -- and only
+    then, or it would never line up with the fields above and below it. */
+ .cell select{width:calc(10em / var(--n, 1) + var(--arrow, 0em))}
  /* the number and the scale it is dragged along, as one thing */
  .slid{display:inline-flex;align-items:center;gap:0;width:10em}
  .slid input[type=text],.slid input:not([type]){width:2.9em;flex:0 0 auto}
@@ -604,7 +615,10 @@ function lines(fields, into, columns) {
                                   f.kind !== 'action' && f.kind !== 'list' &&
                                   f.kind !== 'hierarchy' && f.kind !== 'check' &&
                                   !f.em && !f.share).length;
-    if(holds > 1) line.style.setProperty('--n', holds);
+    if(holds > 1) {
+      line.style.setProperty('--n', holds);
+      line.style.setProperty('--arrow', '1.8em');
+    }
     // A line whose fields each take a column of the pane goes on the grid,
     // beside the lines before and after it rather than in a box of its own.
     if(columns > 1 && !packed && !fills && !row[0].rule) {
@@ -620,7 +634,10 @@ function lines(fields, into, columns) {
         // the first field of a line opens a line of the grid, whatever the
         // line before it left unfilled
         if(head) { one.style.gridColumnStart = '1'; head = false; }
-        if(holds > 1) one.style.setProperty('--n', holds);
+        if(holds > 1) {
+          one.style.setProperty('--n', holds);
+          one.style.setProperty('--arrow', '1.8em');
+        }
         grid.appendChild(one);
       }
       // The last field of a line runs on to the end of the grid: what is
@@ -636,6 +653,8 @@ function lines(fields, into, columns) {
     // not as two boxes with a gap. So a run of them is put in a cell of its
     // own, and only what is around the run is spaced.
     let run = null;
+    let said = false;                 // did the field before this one say what
+                                      // it was, inside the run being filled?
     for(const f of row) {
       const one = cell(f);
       // a switch that opens what is under it belongs at the end of the line,
@@ -646,9 +665,16 @@ function lines(fields, into, columns) {
           run.className = 'cell packed run';
           line.appendChild(run);
         }
+        // A run is flush only where it is one value split in two: what
+        // separates two halves of a size is nothing at all, but three snaps
+        // each named after its axis are three things, and each stands off
+        // from the name of the one before it.
+        if(said) one.style.marginLeft = '8px';
+        said = !!f.label;
         run.appendChild(one);
         continue;
       }
+      said = false;
       run = null;
       line.appendChild(one);
     }

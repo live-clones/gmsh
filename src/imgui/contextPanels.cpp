@@ -1690,11 +1690,21 @@ void appWindow::_drawDialog(int which)
     float tall = 0.f;
     for(const auto &f : panel.side)
       if(f.kind == Ui::List && !f.rows) {
-        // As tall as the panes beside it. What is left of the window cannot
-        // say: a window that follows its contents has not been given a height
-        // yet at this point, so the height is taken from the same count of
-        // lines the panes are measured in.
+        // As tall as the panes beside it, counted in the lines they are
+        // measured in -- which is all a window that follows its contents can
+        // be asked, since it has not been given a height yet at this point.
         tall = most * ImGui::GetFrameHeightWithSpacing();
+        // But a window that was given a height knows what is left of it, and
+        // what is left is what the column should have: counting lines was
+        // only ever a guess at the same thing, and it guessed short, which
+        // left the list stopping well above the foot of the window.
+        if(scrolls) {
+          float keep = (float)(_rows(panel.footer) +
+                               (panel.buttons.empty() ? 0 : 1)) *
+                       ImGui::GetFrameHeightWithSpacing();
+          float room = ImGui::GetContentRegionAvail().y - keep;
+          if(room > tall) tall = room;
+        }
       }
     if(ImGui::BeginChild("##side", ImVec2(w, tall),
                          tall > 0.f ? ImGuiChildFlags_None :
