@@ -40,7 +40,7 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
                               unsigned int color = 0)
 {
   unsigned col = forceColor ? color : getColorByEntity(e);
-  glColor4ubv((GLubyte *)&col);
+  gmshColor4ubv((const void *)&col);
 
   int labelStep = CTX::instance()->mesh.labelSampling;
   if(labelStep <= 0) labelStep = 1;
@@ -81,7 +81,7 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
 template <class T>
 static void drawNormals(drawContext *ctx, std::vector<T *> &elements)
 {
-  glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.normals);
+  gmshColor4ubv((const void *)&CTX::instance()->color.mesh.normals);
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
@@ -97,7 +97,7 @@ static void drawNormals(drawContext *ctx, std::vector<T *> &elements)
 template <class T>
 static void drawTangents(drawContext *ctx, std::vector<T *> &elements)
 {
-  glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.tangents);
+  gmshColor4ubv((const void *)&CTX::instance()->color.mesh.tangents);
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
@@ -148,13 +148,13 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
      CTX::instance()->mesh.volumeFaces ||
      CTX::instance()->mesh.surfaceFaces) { // by element type
     if(v->getPolynomialOrder() > 1)
-      glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.nodeSup);
+      gmshColor4ubv((const void *)&CTX::instance()->color.mesh.nodeSup);
     else
-      glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.node);
+      gmshColor4ubv((const void *)&CTX::instance()->color.mesh.node);
   }
   else {
     unsigned int col = getColorByEntity(e);
-    glColor4ubv((GLubyte *)&col);
+    gmshColor4ubv((const void *)&col);
   }
   double offset = (0.5 * CTX::instance()->mesh.nodeSize +
                    0.1 * CTX::instance()->glFontSize) *
@@ -174,13 +174,13 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
            CTX::instance()->mesh.volumeFaces ||
            CTX::instance()->mesh.surfaceFaces) { // by element type
           if(v->getPolynomialOrder() > 1)
-            glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.nodeSup);
+            gmshColor4ubv((const void *)&CTX::instance()->color.mesh.nodeSup);
           else
-            glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.node);
+            gmshColor4ubv((const void *)&CTX::instance()->color.mesh.node);
         }
         else {
           unsigned int col = getColorByEntity(e);
-          glColor4ubv((GLubyte *)&col);
+          gmshColor4ubv((const void *)&col);
         }
         ctx->drawSphere(CTX::instance()->mesh.nodeSize, v->x(), v->y(), v->z(),
                         CTX::instance()->mesh.light);
@@ -195,13 +195,13 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
            CTX::instance()->mesh.volumeFaces ||
            CTX::instance()->mesh.surfaceFaces) { // by element type
           if(v->getPolynomialOrder() > 1)
-            glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.nodeSup);
+            gmshColor4ubv((const void *)&CTX::instance()->color.mesh.nodeSup);
           else
-            glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.node);
+            gmshColor4ubv((const void *)&CTX::instance()->color.mesh.node);
         }
         else {
           unsigned int col = getColorByEntity(e);
-          glColor4ubv((GLubyte *)&col);
+          gmshColor4ubv((const void *)&col);
         }
         glVertex3d(v->x(), v->y(), v->z());
       }
@@ -232,13 +232,13 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
              CTX::instance()->mesh.volumeFaces ||
              CTX::instance()->mesh.surfaceFaces) { // by element type
             if(v->getPolynomialOrder() > 1)
-              glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.nodeSup);
+              gmshColor4ubv((const void *)&CTX::instance()->color.mesh.nodeSup);
             else
-              glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.node);
+              gmshColor4ubv((const void *)&CTX::instance()->color.mesh.node);
           }
           else {
             unsigned int col = getColorByEntity(e);
-            glColor4ubv((GLubyte *)&col);
+            gmshColor4ubv((const void *)&col);
           }
           if(CTX::instance()->mesh.nodeType)
             ctx->drawSphere(CTX::instance()->mesh.nodeSize, v->x(), v->y(),
@@ -258,7 +258,7 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
 
 template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
 {
-  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+  gmshColor4ubv((const void *)&CTX::instance()->color.fg);
   glEnable(GL_LINE_STIPPLE);
   glLineStipple(1, 0x0F0F);
   gl2psEnable(GL2PS_LINE_STIPPLE);
@@ -299,7 +299,7 @@ template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
 
 template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
 {
-  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+  gmshColor4ubv((const void *)&CTX::instance()->color.fg);
   glEnable(GL_LINE_STIPPLE);
   glLineStipple(1, 0x0F0F);
   gl2psEnable(GL2PS_LINE_STIPPLE);
@@ -393,7 +393,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   }
   else if(forceColor) {
     glDisableClientState(GL_COLOR_ARRAY);
-    glColor4ubv((GLubyte *)&color);
+    gmshColor4ubv((const void *)&color);
   }
   else if(va->hasColors() &&
           (CTX::instance()->pickElements ||
@@ -405,7 +405,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   else {
     glDisableClientState(GL_COLOR_ARRAY);
     color = getColorByEntity(e);
-    glColor4ubv((GLubyte *)&color);
+    gmshColor4ubv((const void *)&color);
   }
 
   if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)

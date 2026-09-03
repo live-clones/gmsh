@@ -94,7 +94,7 @@ public:
       glPointSize((float)sps);
       gl2psPointSize((float)(CTX::instance()->geom.selectedPointSize *
                              CTX::instance()->print.epsPointSizeFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.selection);
+      gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
     }
     else {
       glPointSize((float)ps);
@@ -102,14 +102,14 @@ public:
                              CTX::instance()->print.epsPointSizeFactor));
       unsigned int col = v->useColor() ? v->getColor() :
         CTX::instance()->color.geom.point;
-      glColor4ubv((GLubyte *)&col);
+      gmshColor4ubv((const void *)&col);
     }
 
     if(CTX::instance()->geom.highlightOrphans) {
       if(v->isOrphan())
-        glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[0]);
       else if(v->numEdges() == 1)
-        glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[1]);
+        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[1]);
     }
 
     double x = v->x(), y = v->y(), z = v->z();
@@ -133,7 +133,7 @@ public:
       double offset =
         (0.5 * ps + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       if(v->getSelection() > 1)
-        glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+        gmshColor4ubv((const void *)&CTX::instance()->color.fg);
       drawEntityLabel(_ctx, v, x, y, z, offset);
     }
 
@@ -167,7 +167,7 @@ public:
       glLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.selection);
+      gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
     }
     else {
       glLineWidth((float)CTX::instance()->geom.curveWidth);
@@ -175,14 +175,14 @@ public:
                              CTX::instance()->print.epsLineWidthFactor));
       unsigned int col = e->useColor() ? e->getColor() :
         CTX::instance()->color.geom.curve;
-      glColor4ubv((GLubyte *)&col);
+      gmshColor4ubv((const void *)&col);
     }
 
     if(CTX::instance()->geom.highlightOrphans) {
       if(e->isOrphan())
-        glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[0]);
       else if(e->numFaces() == 1)
-        glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[1]);
+        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[1]);
     }
 
     Range<double> t_bounds = e->parBounds(0);
@@ -230,7 +230,7 @@ public:
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       if(e->getSelection() > 1)
-        glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+        gmshColor4ubv((const void *)&CTX::instance()->color.fg);
       drawEntityLabel(_ctx, e, x, y, z, offset);
     }
 
@@ -242,7 +242,7 @@ public:
       for(int i = 0; i < 3; i++)
         der[i] *=
           CTX::instance()->geom.tangents * _ctx->pixel_equiv_x / _ctx->s[i];
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.tangents);
+      gmshColor4ubv((const void *)&CTX::instance()->color.geom.tangents);
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       _ctx->transformOneForm(der[0], der[1], der[2]);
@@ -277,7 +277,7 @@ private:
     }
     else if(forceColor) {
       glDisableClientState(GL_COLOR_ARRAY);
-      glColor4ubv((GLubyte *)&color);
+      gmshColor4ubv((const void *)&color);
     }
     else if(va->hasColors()) {
       glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
@@ -285,7 +285,7 @@ private:
     }
     else {
       glDisableClientState(GL_COLOR_ARRAY);
-      glColor4ubv((GLubyte *)&color);
+      gmshColor4ubv((const void *)&color);
     }
     if(CTX::instance()->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
     if(CTX::instance()->geom.surfaceType > 1) {
@@ -326,7 +326,7 @@ public:
       glLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2.));
       gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.selection);
+      gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
     }
     else {
       glLineWidth((float)(CTX::instance()->geom.curveWidth / 2.));
@@ -334,14 +334,14 @@ public:
                              CTX::instance()->print.epsLineWidthFactor));
       unsigned int col = f->useColor() ? f->getColor() :
         CTX::instance()->color.geom.surface;
-      glColor4ubv((GLubyte *)&col);
+      gmshColor4ubv((const void *)&col);
     }
 
     if(CTX::instance()->geom.highlightOrphans) {
       if(f->isOrphan())
-        glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[0]);
       else if(f->numRegions() == 1)
-        glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[1]);
+        gmshColor4ubv((const void *)&CTX::instance()->color.geom.highlight[1]);
     }
 
     if(CTX::instance()->geom.lightTwoSide)
@@ -398,7 +398,7 @@ public:
         double z = f->cross[0][0][idx].z();
         _ctx->transform(x, y, z);
         if(f->getSelection() > 1)
-          glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+          gmshColor4ubv((const void *)&CTX::instance()->color.fg);
         drawEntityLabel(_ctx, f, x, y, z, offset);
       }
 
@@ -410,7 +410,7 @@ public:
         for(int i = 0; i < 3; i++)
           n[i] *=
             CTX::instance()->geom.normals * _ctx->pixel_equiv_x / _ctx->s[i];
-        glColor4ubv((GLubyte *)&CTX::instance()->color.geom.normals);
+        gmshColor4ubv((const void *)&CTX::instance()->color.geom.normals);
         double x = p.x(), y = p.y(), z = p.z();
         _ctx->transform(x, y, z);
         _ctx->transformTwoForm(n[0], n[1], n[2]);
@@ -449,7 +449,7 @@ public:
       glLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.selection);
+      gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
     }
     else {
       glLineWidth((float)CTX::instance()->geom.curveWidth);
@@ -457,7 +457,7 @@ public:
                              CTX::instance()->print.epsLineWidthFactor));
       unsigned int col = r->useColor() ? r->getColor() :
         CTX::instance()->color.geom.volume;
-      glColor4ubv((GLubyte *)&col);
+      gmshColor4ubv((const void *)&col);
     }
 
     const double size = 8.;
@@ -504,7 +504,7 @@ public:
       double offset =
         (1. * size + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       if(r->getSelection() > 1)
-        glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+        gmshColor4ubv((const void *)&CTX::instance()->color.fg);
       drawEntityLabel(_ctx, r, x, y, z, offset);
     }
 

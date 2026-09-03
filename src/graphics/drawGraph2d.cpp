@@ -40,7 +40,7 @@ void drawContext::drawText2d()
       if(render_mode == drawContext::GMSH_SELECT)
         setPickColor(5, PView::list[i]->getIndex());
       else
-        glColor4ubv((GLubyte *)&opt->color.text2d);
+        gmshColor4ubv((const void *)&opt->color.text2d);
       for(int j = 0; j < data->getNumStrings2D(); j++) {
         double x, y, style;
         std::string str;
@@ -218,7 +218,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     if(alpha != 0) {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glEnable(GL_BLEND);
-      glColor4ubv((GLubyte *)&opt->color.background2d);
+      gmshColor4ubv((const void *)&opt->color.background2d);
       glBegin(GL_QUADS);
       glVertex2d(xleft, ytop);
       glVertex2d(xleft + width, ytop);
@@ -252,7 +252,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   gl2psLineWidth((float)(CTX::instance()->lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
 
-  glColor4ubv((GLubyte *)&opt->color.axes);
+  gmshColor4ubv((const void *)&opt->color.axes);
 
   // bare axes
   if(!overlay) {
@@ -433,7 +433,7 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
 
   if(y >= ymin && y <= ymax) {
     unsigned int col = opt->getColor(y, ymin, ymax, true);
-    glColor4ubv((GLubyte *)&col);
+    gmshColor4ubv((const void *)&col);
 
     if(singlePoint && ctx->render_mode == drawContext::GMSH_SELECT) {
       ctx->setPickColor(4, (int)getTagForGraph2dDataPoint(SPoint2(x, y)));

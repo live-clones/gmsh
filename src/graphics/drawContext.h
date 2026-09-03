@@ -55,6 +55,12 @@
 const GLvoid *vaVertexPointer(VertexArray *va);
 const GLvoid *vaNormalPointer(VertexArray *va);
 const GLvoid *vaColorPointer(VertexArray *va);
+// Set the current colour. During a colour picking pass the colour encodes the
+// object being drawn, and must not be overwritten by the colour it is normally
+// displayed with: everything that draws pickable geometry has to go through
+// this instead of calling glColor directly.
+void gmshColor4ubv(const void *col);
+
 // draw a vertex array, using its index array if it has one
 void drawVertexArray(VertexArray *va, GLenum type);
 // delete the buffer objects of the vertex arrays that have been destroyed since
@@ -186,6 +192,8 @@ public:
   };
   std::vector<pickObject> _pickObjects;
   bool _pickColor;
+  // same as _pickColor, but reachable from the free drawing functions
+  static bool _pickColorActive;
   bool _selectColor(int type, bool multiple, bool mesh, bool post, int x, int y,
                     int w, int h, std::vector<GVertex *> &vertices,
                     std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
@@ -199,6 +207,7 @@ public:
   bool inPickColorMode() const { return _pickColor; }
   // register a pickable object and set the colour that encodes it
   void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1);
+  static bool pickColorActive() { return _pickColorActive; }
   drawContext(openglWindow *window = nullptr, drawTransform *transform = nullptr);
   ~drawContext();
   // factor between the (true) size in pixels and the size reported by OSes

@@ -713,7 +713,7 @@ void drawContext::drawVector(int Type, int Fill, double x, double y, double z,
     glBegin(GL_LINES);
     glVertex3d(x + dx, y + dy, z + dz);
     // color gradient
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bg);
+    gmshColor4ubv((const void *)&CTX::instance()->color.bg);
     glVertex3d(x, y, z);
     glEnd();
     break;

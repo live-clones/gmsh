@@ -36,7 +36,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
   if(type == GL_POINTS && opt->pointType > 0) {
     for(int i = 0; i < va->getNumVertices(); i++) {
       float *p = va->getVertexArray(3 * i);
-      glColor4ubv((GLubyte *)va->getColorArray(4 * i));
+      gmshColor4ubv((const void *)va->getColorArray(4 * i));
       double f = 1.;
       if(opt->pointType > 1) {
 #if defined(HAVE_VISUDEV)
@@ -67,7 +67,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       float *p1 = va->getVertexArray(3 * (i + 1));
       double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]},
              z[2] = {p0[2], p1[2]};
-      glColor4ubv((GLubyte *)va->getColorArray(4 * i));
+      gmshColor4ubv((const void *)va->getColorArray(4 * i));
       if(opt->lineType == 2) {
 #if defined(HAVE_VISUDEV)
         double v0 = *va->getNormalArray(3 * i);
@@ -164,7 +164,7 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
       double l2 = std::min(1., l / lmax);
       for(int k = 0; k < 3; k++) { vv[j][k] = v[k] / l * (scale * l2 + lmin); }
     }
-    glColor4ubv((GLubyte *)va->getColorArray(4 * i));
+    gmshColor4ubv((const void *)va->getColorArray(4 * i));
 
     if(opt->tensorType == PViewOptions::Frame)
       ctx->drawCube(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
@@ -184,7 +184,7 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
   for(int i = 0; i < va->getNumVertices(); i += 2) {
     float *s = va->getVertexArray(3 * i);
     float *v = va->getVertexArray(3 * (i + 1));
-    glColor4ubv((GLubyte *)va->getColorArray(4 * i));
+    gmshColor4ubv((const void *)va->getColorArray(4 * i));
     double vv[3] = {v[0], v[1], v[2]};
     double l = sqrt(vv[0] * vv[0] + vv[1] * vv[1] + vv[2] * vv[2]);
     double lmax = opt->tmpMax;
@@ -262,7 +262,7 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
     double v = ComputeScalarRep(numComp, d);
     if(v >= vmin && v <= vmax) {
       unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
-      glColor4ubv((GLubyte *)&col);
+      gmshColor4ubv((const void *)&col);
       if(opt->centerGlyphs == 2)
         ctx->drawStringRight(stringValue(numComp, d, v, opt->format.c_str()),
                              pc.x(), pc.y(), pc.z());
@@ -279,7 +279,7 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
       double v = ComputeScalarRep(numComp, val[i]);
       if(v >= vmin && v <= vmax) {
         unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
-        glColor4ubv((GLubyte *)&col);
+        gmshColor4ubv((const void *)&col);
         if(opt->centerGlyphs == 2)
           ctx->drawStringRight(
             stringValue(numComp, val[i], v, opt->format.c_str()), xyz[i][0],
@@ -315,7 +315,7 @@ static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
 
   for(int i = 0; i < 3; i++)
     n[i] *= opt->normals * ctx->pixel_equiv_x / ctx->s[i];
-  glColor4ubv((GLubyte *)&opt->color.normals);
+  gmshColor4ubv((const void *)&opt->color.normals);
   ctx->drawVector(CTX::instance()->vectorType, 0, pc[0], pc[1], pc[2], n[0],
                   n[1], n[2], opt->light);
 }
@@ -332,7 +332,7 @@ static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
   t.normalize();
   for(int i = 0; i < 3; i++)
     t[i] *= opt->tangents * ctx->pixel_equiv_x / ctx->s[i];
-  glColor4ubv((GLubyte *)&opt->color.tangents);
+  gmshColor4ubv((const void *)&opt->color.tangents);
   ctx->drawVector(CTX::instance()->vectorType, 0, pc[0], pc[1], pc[2], t[0],
                   t[1], t[2], opt->light);
 }
@@ -483,7 +483,7 @@ public:
       (float)(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor));
 
     if(opt->axes && opt->type == PViewOptions::Plot3D) {
-      glColor4ubv((GLubyte *)&opt->color.axes);
+      gmshColor4ubv((const void *)&opt->color.axes);
       glLineWidth((float)CTX::instance()->lineWidth);
       gl2psLineWidth((float)(CTX::instance()->lineWidth *
                              CTX::instance()->print.epsLineWidthFactor));
@@ -564,7 +564,7 @@ public:
 
     // draw the 3D strings
     if(opt->drawStrings) {
-      glColor4ubv((GLubyte *)&opt->color.text3d);
+      gmshColor4ubv((const void *)&opt->color.text3d);
       for(int i = 0; i < data->getNumStrings3D(); i++) {
         double x, y, z, style;
         std::string str;
@@ -601,7 +601,7 @@ public:
     SBoundingBox3d bb = data->getBoundingBox(opt->timeStep);
     if(bb.empty()) return;
 
-    glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+    gmshColor4ubv((const void *)&CTX::instance()->color.fg);
     glLineWidth((float)CTX::instance()->lineWidth);
     gl2psLineWidth((float)(CTX::instance()->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));

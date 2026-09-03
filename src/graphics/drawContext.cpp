@@ -42,6 +42,13 @@ void drawContext::setDrawGeomTransientFunction(void (*fct)(void *))
 
 extern SPoint2 getGraph2dDataPointForTag(unsigned int);
 
+bool drawContext::_pickColorActive = false;
+
+void gmshColor4ubv(const void *col)
+{
+  if(!drawContext::pickColorActive()) glColor4ubv((const GLubyte *)col);
+}
+
 drawContext::drawContext(openglWindow *window, drawTransform *transform)
   : _transform(transform), _openglWindow(window), _pickColor(false)
 {
@@ -1054,6 +1061,14 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
                   (GLubyte)((id >> 16) & 0xff), 255};
   glDisableClientState(GL_COLOR_ARRAY);
   glColor4ubv(c);
+
+  // The selection buffer reported every primitive in the picking frustum, so a
+  // point or a curve hidden behind a surface could still be selected. Depth
+  // testing would hide them here, so give each dimension its own depth range,
+  // the lower ones in front: this keeps the depth order inside a dimension
+  // while letting a point be picked through a surface.
+  int d = (type < 0) ? 4 : (type > 4 ? 4 : type);
+  glDepthRange(0.2 * d, 0.2 * d + 0.2);
 }
 
 // Draw the scene once with every pickable object in the flat colour that
@@ -1081,7 +1096,7 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
 
   _pickObjects.clear();
   _pickObjects.push_back(pickObject()); // 0: background
-  _pickColor = true;
+  _pickColor = _pickColorActive = true;
   render_mode = drawContext::GMSH_SELECT;
 
   GLboolean oldLighting = glIsEnabled(GL_LIGHTING);
@@ -1090,6 +1105,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   glGetFloatv(GL_COLOR_CLEAR_VALUE, oldClear);
 
   glDrawBuffer(GL_BACK);
+  glDepthFunc(GL_LESS);
+  glEnable(GL_DEPTH_TEST);
   glDisable(GL_LIGHTING);
   glDisable(GL_BLEND);
   glShadeModel(GL_FLAT);
@@ -1134,11 +1151,12 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   glReadPixels(fx0, fy0, fw, fh, GL_DEPTH_COMPONENT, GL_FLOAT, &depths[0]);
 
   glDisable(GL_SCISSOR_TEST);
+  glDepthRange(0., 1.);
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) glEnable(GL_LIGHTING);
   if(oldBlend) glEnable(GL_BLEND);
   glShadeModel(GL_SMOOTH);
-  _pickColor = false;
+  _pickColor = _pickColorActive = false;
   render_mode = drawContext::GMSH_RENDER;
 
   // gather the objects that show up, keeping the smallest depth for each
