@@ -302,6 +302,7 @@ SHOTS.append(dict(name="tree-", dialog="tree", branches=[],
 # one window in the other, so the picture is of the whole window; it is left
 # open, which is why each of these keeps an interface to itself.
 SHOTS.append(dict(name="open-", dialog="open", branches=[], whole=True,
+                  menuPath=["File", "Open..."],
                   menu={"released": [(18, 11), (50, 49)],
                         "fltk": [(18, 11), (50, 51)],
                         "imgui": [(14, 9), (50, 48)]}))
@@ -309,6 +310,7 @@ SHOTS.append(dict(name="open-", dialog="open", branches=[], whole=True,
 # is asked and what one of the two interfaces could not answer
 SHOTS.append(dict(name="export-", dialog="export", branches=[], whole=True,
                   geo=model("view.pos"),
+                  menuPath=["File", "Export..."],
                   menu={"released": [(18, 11), (50, 236)],
                         "fltk": [(18, 11), (50, 260)],
                         "imgui": [(14, 9), (50, 244)]}))

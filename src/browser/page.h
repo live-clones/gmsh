@@ -224,12 +224,36 @@ static const char *const browserPage = R"PAGE(<!doctype html>
       background:#ffffe1;color:#111;border:1px solid #999;padding:2px 5px;
       font:11px system-ui;white-space:pre-line;box-shadow:0 2px 6px #0004}
  #tip:empty{display:none}
+ /* A window that must be answered before anything else goes on: it is drawn
+    over the whole page, and the page under it cannot be reached -- which is
+    what the windows this reproduces do by stopping Gmsh where it stands. */
+ #ask{position:fixed;top:0;left:0;right:0;bottom:0;background:#0006;
+      display:flex;align-items:center;justify-content:center;z-index:1000}
+ #ask:empty{display:none}
+ #ask .card{background:#fff;border:1px solid #999;box-shadow:0 8px 30px #0006;
+            min-width:34em;max-width:calc(100% - 40px);
+            max-height:calc(100% - 40px);display:flex;flex-direction:column}
+ #ask h2{font-size:13px;margin:0;padding:5px 8px;background:#ececec;
+         border-bottom:1px solid #ccc;font-weight:600}
+ #ask .body{display:flex;flex-direction:column;gap:6px;padding:8px;min-height:0}
+ #ask .where{display:flex;gap:4px;align-items:center}
+ #ask .where input{flex:1 1 auto;min-width:0}
+ #ask .files{border:1px solid #ccc;background:#fff;overflow:auto;
+             height:16em;min-height:6em}
+ #ask .files .pick.dir{font-weight:600}
+ #ask .row{display:flex;gap:6px;align-items:center}
+ #ask .row label{flex:0 0 auto}
+ #ask .row input,#ask .row select{flex:1 1 auto;min-width:0}
+ #ask .foot{display:flex;gap:8px;justify-content:flex-end;padding:6px 8px;
+            border-top:1px solid #ddd}
+ #ask .foot button{min-width:6em}
 </style>
 <div id="bar"></div>
 <div id="middle"><div id="tree"></div><div id="scene"><img id="view"><div id="tip"></div></div>
  <div id="dock"></div><div id="desk"></div></div>
 <pre id="console"></pre>
 <div id="foot"><span id="buttons"></span><span id="status"></span></div>
+<div id="ask"></div>
 <script>
 // The page draws what Gmsh says it is showing, and posts back what was done.
 //
@@ -956,7 +980,185 @@ function drawButtons(buttons) {
   }
 }
 
+// --- the windows that must be answered
+//
+// Gmsh has stopped and is waiting for one of these. The page draws it over
+// everything else and sends the answer back; until it does, nothing else it
+// posts is listened to.
+
+// What a chooser offers, matched the way the choosers of the other
+// interfaces match it: "*", "?" and a list in braces.
+function matches(name, pattern) {
+  if(!pattern) return true;
+  let rule = '';
+  for(let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if(c === '*') rule += '.*';
+    else if(c === '?') rule += '.';
+    else if(c === '{') rule += '(?:';
+    else if(c === '}') rule += ')';
+    else if(c === ',') rule += '|';
+    else rule += c.replace(/[.+^$()|[\]\\]/g, '\\$&');
+  }
+  try { return new RegExp('^' + rule + '$', 'i').test(name); }
+  catch(e) { return true; }
+}
+
+let asking = null;                    // what is being asked, as it was drawn
+async function askFiles(dir, into, state) {
+  const said = await fetch(to('/files'), {
+    method: 'POST', body: 'dir=' + encodeURIComponent(dir || '') +
+                          '&k=' + encodeURIComponent(KEY)});
+  const read = await said.json();
+  state.dir = read.dir;
+  state.where.value = read.dir;
+  into.textContent = '';
+  const up = document.createElement('div');
+  up.className = 'pick dir';
+  up.textContent = '..';
+  up.onclick = () => {
+    const cut = state.dir.replace(/\/+$/, '').lastIndexOf('/');
+    askFiles(cut > 0 ? state.dir.slice(0, cut) : '/', into, state);
+  };
+  into.appendChild(up);
+  for(const it of (read.entries || [])) {
+    if(!it.dir && !matches(it.name, state.pattern())) continue;
+    const line = document.createElement('div');
+    line.className = 'pick' + (it.dir ? ' dir' : '');
+    line.textContent = it.name + (it.dir ? '/' : '');
+    line.onclick = () => {
+      if(it.dir) { askFiles(state.dir + '/' + it.name, into, state); return; }
+      for(const other of into.querySelectorAll('.pick.on'))
+        other.classList.remove('on');
+      line.classList.add('on');
+      state.name.value = it.name;
+    };
+    line.ondblclick = () => { if(!it.dir) state.done(true); };
+    into.appendChild(line);
+  }
+}
+
+function drawAsk(ask) {
+  const box = document.getElementById('ask');
+  box.textContent = '';
+  asking = ask;
+  if(!ask) return;
+  const card = document.createElement('div'); card.className = 'card';
+  const head = document.createElement('h2'); head.textContent = ask.title;
+  card.appendChild(head);
+  const body = document.createElement('div'); body.className = 'body';
+  card.appendChild(body);
+  const foot = document.createElement('div'); foot.className = 'foot';
+  card.appendChild(foot);
+  const answer = what => say('/answer', what).catch(() => {});
+  const gaveUp = () => answer('ok=0');
+
+  if(ask.kind === 'question') {
+    const said = document.createElement('div');
+    said.textContent = ask.title;
+    said.style.whiteSpace = 'pre-line';
+    body.appendChild(said);
+    (ask.buttons || []).forEach((label, i) => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.onclick = () => answer('ok=1&chose=' + i);
+      foot.appendChild(b);
+    });
+  }
+  else if(ask.kind === 'value') {
+    const row = document.createElement('div'); row.className = 'row';
+    const name = document.createElement('label');
+    name.textContent = ask.hint || '';
+    const said = document.createElement('input');
+    said.value = ask.value || '';
+    said.disabled = !!ask.readOnly;
+    row.appendChild(name); row.appendChild(said);
+    body.appendChild(row);
+    const ok = document.createElement('button');
+    ok.textContent = 'OK';
+    ok.onclick = () => answer('ok=1&value=' + encodeURIComponent(said.value));
+    said.onkeydown = e => { if(e.key === 'Enter') ok.onclick(); };
+    const no = document.createElement('button');
+    no.textContent = 'Cancel'; no.onclick = gaveUp;
+    foot.appendChild(no); foot.appendChild(ok);
+    setTimeout(() => said.focus(), 0);
+  }
+  else {
+    // a file: where one is, what is there, what it is to be called, and in
+    // which of the formats the caller offered
+    const several = ask.mode === 2;
+    const where = document.createElement('div'); where.className = 'where';
+    const at = document.createElement('input');
+    const files = document.createElement('div'); files.className = 'files';
+    const nameRow = document.createElement('div'); nameRow.className = 'row';
+    const nameSaid = document.createElement('label');
+    nameSaid.textContent = several ? 'Files' : 'File';
+    const name = document.createElement('input');
+    const formats = document.createElement('select');
+    (ask.formats || []).forEach((f, i) => {
+      const o = document.createElement('option');
+      o.textContent = f.name || f.pattern;
+      o.value = i;
+      formats.appendChild(o);
+    });
+    const state = {
+      dir: '', where: at, name: name,
+      pattern: () => {
+        const f = (ask.formats || [])[formats.value | 0];
+        return f ? f.pattern : '';
+      },
+      done: null
+    };
+    state.done = ok => {
+      if(!ok) return gaveUp();
+      const said = name.value.trim();
+      if(!said) return;
+      const full = said.split(/\s*,\s*/).filter(x => x).map(
+        x => x[0] === '/' ? x : state.dir + '/' + x).join('\n');
+      answer('ok=1&chose=' + (formats.value | 0) +
+             '&names=' + encodeURIComponent(full));
+    };
+    at.value = '';
+    at.onkeydown = e => {
+      if(e.key === 'Enter') askFiles(at.value, files, state);
+    };
+    where.appendChild(at);
+    const go = document.createElement('button');
+    go.textContent = 'Go';
+    go.onclick = () => askFiles(at.value, files, state);
+    where.appendChild(go);
+    body.appendChild(where);
+    body.appendChild(files);
+    nameRow.appendChild(nameSaid); nameRow.appendChild(name);
+    body.appendChild(nameRow);
+    if((ask.formats || []).length) {
+      const kind = document.createElement('div'); kind.className = 'row';
+      const said = document.createElement('label');
+      said.textContent = 'Format';
+      kind.appendChild(said); kind.appendChild(formats);
+      body.appendChild(kind);
+      formats.onchange = () => askFiles(state.dir, files, state);
+    }
+    const no = document.createElement('button');
+    no.textContent = 'Cancel'; no.onclick = gaveUp;
+    const ok = document.createElement('button');
+    ok.textContent = ask.mode === 1 ? 'Save' : 'Open';
+    ok.onclick = () => state.done(true);
+    name.onkeydown = e => { if(e.key === 'Enter') state.done(true); };
+    foot.appendChild(no); foot.appendChild(ok);
+    // what it was started from: the directory it is in, and its name
+    const from = ask.start || '';
+    const cut = from.lastIndexOf('/');
+    name.value = cut >= 0 ? from.slice(cut + 1) : from;
+    askFiles(cut > 0 ? from.slice(0, cut) : '', files, state);
+    setTimeout(() => name.focus(), 0);
+  }
+  box.appendChild(card);
+}
+
 function draw(state) {
+  // what has stopped Gmsh to ask, over everything else
+  if(fresh('ask', state.ask)) drawAsk(state.ask);
   // a menu is held open by the pointer being on it: leave it alone
   if(!overBar && fresh('menus', state.menus)) drawMenus(state.menus);
   if(fresh('tree', state.tree)) drawTree(state.tree);

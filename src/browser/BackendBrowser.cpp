@@ -9,6 +9,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include <map>
 #include <random>
 #include <string>
@@ -18,6 +19,14 @@
 #include "httpServer.h"
 #include "page.h"
 #include "OS.h"
+
+#if defined(WIN32) && !defined(__CYGWIN__)
+#include <windows.h>
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 // The chrome in a web page.
 //
@@ -136,32 +145,55 @@ namespace {
       what();
     }
 
-    // --- what a page cannot do
+    // --- the windows that must be answered before anything else goes on
     //
-    // A question that stops everything needs a loop of its own, and this
-    // chrome has no way of holding one open across a request. They are
-    // answered as if the user had given up, and said so once.
+    // These stop Gmsh where it stands and wait. A page cannot be stopped, so
+    // the ask is put into the state, the page draws it over everything else,
+    // and _hold() keeps serving the page -- and nothing else -- until the
+    // answer comes back. That is the loop of its own such a window needs.
 
     bool inputDialog(const std::string &question, std::string &value,
                      const std::string &hint, bool readOnly) override
     {
-      _cannot("ask for a value");
-      return false;
+      _asking = Asking();
+      _asking.kind = "value";
+      _asking.title = question;
+      _asking.hint = hint;
+      _asking.readOnly = readOnly;
+      _asking.value = value;
+      if(!_hold()) return false;
+      value = _asking.value;
+      return true;
     }
 
     int questionDialog(const std::string &question, const std::string &zero,
                        const std::string &one, const std::string &two) override
     {
-      _cannot("ask a question");
-      return 0;
+      _asking = Asking();
+      _asking.kind = "question";
+      _asking.title = question;
+      _asking.zero = zero;
+      _asking.one = one;
+      _asking.two = two;
+      if(!_hold()) return 0;
+      return _asking.chose;
     }
 
     bool fileDialog(int mode, const std::string &title,
                     const std::vector<FileFormat> &formats,
                     std::vector<std::string> &names, int *chosen) override
     {
-      _cannot("choose a file");
-      return false;
+      _asking = Asking();
+      _asking.kind = "file";
+      _asking.title = title;
+      _asking.mode = mode;
+      _asking.formats = formats;
+      _asking.names = names;
+      if(!_hold()) return false;
+      names = _asking.names;
+      if(names.empty()) return false;
+      if(chosen) *chosen = _asking.chose;
+      return true;
     }
 
     // --- what it does do
@@ -248,21 +280,165 @@ namespace {
     std::vector<unsigned> _actionNames;
     std::vector<Ui::Field> _fields;
     std::vector<unsigned> _fieldNames;
-    std::vector<std::string> _saidCannot;
     // Which branches of the tree are unfolded. It is the chrome's to keep --
     // it is what the user did, not what the model says -- and it is what lets
     // the children of a branch be asked for only when they are wanted, which
     // is what a described tree is a model rather than a list for.
     std::map<std::string, bool> _open;
 
-    void _cannot(const std::string &what)
+    // What the page is being asked, when something has stopped Gmsh to ask
+    // it. Everything a modal window of the other interfaces holds fits here:
+    // which kind it is, what it says, what it starts from, and what came
+    // back.
+    struct Asking {
+      bool open = false;
+      std::string kind; // "file", "value" or "question"
+      std::string title, hint;
+      int mode = 0; // a file: Open, Create or OpenSeveral
+      bool readOnly = false;
+      std::vector<FileFormat> formats;
+      std::vector<std::string> names; // what to start from, then what was said
+      std::string value; // a value: the same
+      std::string zero, one, two; // a question: what its buttons say
+      bool answered = false;
+      bool said = false; // answered, rather than given up on
+      int chose = -1; // which format, or which button
+    };
+    Asking _asking;
+
+    // Put the ask up and keep the page served until it comes back.
+    //
+    // Only the page is served while this runs: the application is not ticked
+    // and nothing else of Gmsh happens, which is what the windows this stands
+    // in for do. Requests that would change something are refused meanwhile,
+    // so that a page which somehow got a click through cannot start a second
+    // ask under the first.
+    bool _hold()
     {
-      for(const auto &said : _saidCannot)
-        if(said == what) return;
-      _saidCannot.push_back(what);
-      if(_host.error)
-        _host.error("A page cannot " + what + " yet: it takes a loop of its "
-                    "own, and this chrome has none");
+      _asking.open = true;
+      _asking.answered = false;
+      double seen = TimeOfDay();
+      while(!_asking.answered) {
+        Browser::serve([this](const Browser::Ask &ask, std::string &type) {
+          return _answer(ask, type);
+        });
+        _lastTold = 0.;
+        _tell();
+        // Nobody is listening and nobody is coming: a page that was never
+        // opened, or one that has been closed while the window was up, must
+        // not stop Gmsh for ever. It counts as having been given up on.
+        if(Browser::listeners())
+          seen = TimeOfDay();
+        else if(TimeOfDay() - seen > 20.)
+          break;
+        SleepInSeconds(0.02);
+      }
+      _asking.open = false;
+      _lastTold = 0.;
+      _tell();
+      return _asking.said;
+    }
+
+    // What one may pick from, for the page: the directory read, its
+    // subdirectories first and its files after, each said once.
+    std::string _files(const std::string &where)
+    {
+      // always said in full, whatever it was asked as: what the page writes
+      // in its path bar is where one really is
+      std::string dir = where;
+      char here[4096];
+#if defined(WIN32) && !defined(__CYGWIN__)
+      std::string cwd = _getcwd(here, sizeof(here)) ? here : ".";
+      bool full = dir.size() > 1 && (dir[1] == ':' || dir[0] == '\\');
+#else
+      std::string cwd = getcwd(here, sizeof(here)) ? here : ".";
+      bool full = dir.size() && dir[0] == '/';
+#endif
+      if(dir.empty())
+        dir = cwd;
+      else if(!full)
+        dir = cwd + "/" + dir;
+      if(dir.size() > 1 && (dir[dir.size() - 1] == '/' ||
+                            dir[dir.size() - 1] == '\\'))
+        dir.resize(dir.size() - 1);
+      std::vector<std::string> dirs, files;
+#if defined(WIN32) && !defined(__CYGWIN__)
+      WIN32_FIND_DATAA found;
+      HANDLE h = FindFirstFileA((dir + "\\*").c_str(), &found);
+      if(h != INVALID_HANDLE_VALUE) {
+        do {
+          std::string name = found.cFileName;
+          if(name == "." || name == "..") continue;
+          if(found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            dirs.push_back(name);
+          else
+            files.push_back(name);
+        } while(FindNextFileA(h, &found));
+        FindClose(h);
+      }
+#else
+      if(DIR *d = opendir(dir.c_str())) {
+        while(struct dirent *it = readdir(d)) {
+          std::string name = it->d_name;
+          if(name == "." || name == "..") continue;
+          struct stat about;
+          if(stat((dir + "/" + name).c_str(), &about)) continue;
+          if(S_ISDIR(about.st_mode))
+            dirs.push_back(name);
+          else
+            files.push_back(name);
+        }
+        closedir(d);
+      }
+#endif
+      std::sort(dirs.begin(), dirs.end());
+      std::sort(files.begin(), files.end());
+      std::string out = "{\"dir\":" + _quoted(dir) + ",\"entries\":[";
+      bool first = true;
+      for(const auto &name : dirs) {
+        out += first ? "" : ",";
+        first = false;
+        out += "{\"name\":" + _quoted(name) + ",\"dir\":true}";
+      }
+      for(const auto &name : files) {
+        out += first ? "" : ",";
+        first = false;
+        out += "{\"name\":" + _quoted(name) + ",\"dir\":false}";
+      }
+      return out + "]}";
+    }
+
+    // what the page is being asked, written into the state
+    std::string _ask()
+    {
+      if(!_asking.open) return "null";
+      std::string out = "{\"kind\":" + _quoted(_asking.kind);
+      out += ",\"title\":" + _quoted(_asking.title);
+      if(_asking.kind == "file") {
+        out += ",\"mode\":" + std::to_string(_asking.mode);
+        out += ",\"start\":" +
+               _quoted(_asking.names.empty() ? std::string() : _asking.names[0]);
+        out += ",\"formats\":[";
+        for(std::size_t i = 0; i < _asking.formats.size(); i++) {
+          out += i ? "," : "";
+          out += "{\"name\":" + _quoted(_asking.formats[i].name);
+          out += ",\"pattern\":" + _quoted(_asking.formats[i].pattern) + "}";
+        }
+        out += "]";
+      }
+      else if(_asking.kind == "value") {
+        out += ",\"value\":" + _quoted(_asking.value);
+        out += ",\"hint\":" + _quoted(_asking.hint);
+        out += ",\"readOnly\":";
+        out += _asking.readOnly ? "true" : "false";
+      }
+      else {
+        out += ",\"buttons\":[" + _quoted(_asking.zero);
+        if(_asking.one.size()) out += "," + _quoted(_asking.one);
+        if(_asking.two.size()) out += "," + _quoted(_asking.two);
+        out += "]";
+      }
+      return out + "}";
     }
 
     // one turn: answer whatever has arrived, then let the application do what
@@ -506,6 +682,35 @@ namespace {
         return "{}";
       }
       if(path == "/state") return _state();
+      // What may be picked from, while a chooser is up: a directory read.
+      if(path == "/files") return _files(_valueOf(ask.body, "dir"));
+      // and the answer to whatever stopped Gmsh to ask
+      if(path == "/answer") {
+        if(!_asking.open) return "{}";
+        _asking.said = _valueOf(ask.body, "ok") == "1";
+        _asking.chose = atoi(_valueOf(ask.body, "chose").c_str());
+        if(_asking.said && _asking.kind == "file") {
+          _asking.names.clear();
+          std::string said = _valueOf(ask.body, "names");
+          std::string::size_type at = 0;
+          while(at <= said.size()) {
+            std::string::size_type end = said.find('\n', at);
+            std::string one =
+              said.substr(at, end == std::string::npos ? std::string::npos :
+                                                         end - at);
+            if(one.size()) _asking.names.push_back(one);
+            if(end == std::string::npos) break;
+            at = end + 1;
+          }
+        }
+        if(_asking.said && _asking.kind == "value")
+          _asking.value = _valueOf(ask.body, "value");
+        _asking.answered = true;
+        return "{}";
+      }
+      // Nothing else may happen while a window that must be answered is up:
+      // the page draws it over everything, and this is what makes sure of it.
+      if(_asking.open) return "{}";
       if(path == "/do") {
         std::function<void()> *what = _actionAsked(ask);
         if(!what) return "{\"did\":false}";
@@ -978,6 +1183,7 @@ namespace {
       out += ",\"font\":";
       out += std::to_string(_sources.fontSize ? _sources.fontSize() : 13);
       out += ",\"tip\":" + _quoted(_tip);
+      out += ",\"ask\":" + _ask();
       out += ",\"tree\":" + _tree();
       out += ",\"bar\":" + _bar();
       out += ",\"forms\":[";
