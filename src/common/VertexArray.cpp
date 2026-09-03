@@ -15,6 +15,7 @@
 
 
 std::vector<unsigned int> VertexArray::vboToDelete;
+unsigned int VertexArray::vboContext = 1;
 long int VertexArray::statUniqueIn = 0;
 long int VertexArray::statUniqueKept = 0;
 
@@ -296,7 +297,8 @@ void VertexArray::setUniqueFilter(UniqueElementFilter *f)
 
 VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
-    _ownsFilter(false), _statUniqueIn(0), _statUniqueKept(0), _vboDirty(true)
+    _ownsFilter(false), _statUniqueIn(0), _statUniqueKept(0), _vboDirty(true),
+    _vboContext(0)
 {
   _vbo[0] = _vbo[1] = _vbo[2] = 0;
 

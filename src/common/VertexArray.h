@@ -112,6 +112,9 @@ private:
   // only place where a GL context is current
   unsigned int _vbo[3];
   bool _vboDirty;
+  // buffer objects belong to a GL context: they all become invalid when it is
+  // recreated, e.g. when the antialiasing or the double buffering changes
+  unsigned int _vboContext;
   long int _statUniqueIn, _statUniqueKept;
 
   // add stuff in the arrays
@@ -149,6 +152,9 @@ public:
   unsigned int *getVboIds() { return _vbo; }
   bool getVboDirty() { return _vboDirty; }
   void setVboDirty(bool dirty) { _vboDirty = dirty; }
+  // were the buffers created in the GL context that is current?
+  bool getVboValid() { return _vboContext == vboContext; }
+  void setVboValid() { _vboContext = vboContext; }
   // return a pointer to the raw normal array
   normal_type *getNormalArray(int i = 0) { return &_normals[i]; }
   std::vector<normal_type>::iterator firstNormal() { return _normals.begin(); }
@@ -205,6 +211,16 @@ public:
   // buffer objects whose vertex array has been deleted: they can only be freed
   // when a GL context is current, i.e. at the beginning of the next frame
   static std::vector<unsigned int> vboToDelete;
+
+  // Identifies the GL context the buffer objects were created in. Call
+  // invalidateBuffers() when the context has been recreated: the buffer names
+  // then mean nothing any more and have to be created again.
+  static unsigned int vboContext;
+  static void invalidateBuffers()
+  {
+    vboContext++;
+    vboToDelete.clear();
+  }
 
   // statistics gathered by the unique element filter
   static long int statUniqueIn, statUniqueKept;

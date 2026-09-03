@@ -315,8 +315,14 @@ static void uploadVertexArray(VertexArray *va)
 {
 #if defined(HAVE_VERTEX_BUFFER_OBJECTS)
   unsigned int *id = va->getVboIds();
+  if(id[0] && !va->getVboValid()) {
+    // the context that owned these buffers is gone and took them with it: the
+    // names do not designate anything any more
+    id[0] = id[1] = id[2] = 0;
+  }
   if(!id[0]) {
     glGenBuffers(3, id);
+    va->setVboValid();
     va->setVboDirty(true);
   }
   if(!va->getVboDirty()) return;

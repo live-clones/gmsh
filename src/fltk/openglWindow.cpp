@@ -22,6 +22,7 @@
 #include "onelabContextWindow.h"
 #include "OpenFile.h"
 #include "drawContext.h"
+#include "VertexArray.h"
 #include "Context.h"
 #include "Trackball.h"
 #include "GamePad.h"
@@ -183,7 +184,11 @@ void openglWindow::draw()
 
   Msg::Debug("openglWindow::draw()");
 
-  if(!context_valid()) { _ctx->invalidateQuadricsAndDisplayLists(); }
+  if(!context_valid()) {
+    _ctx->invalidateQuadricsAndDisplayLists();
+    // the buffer objects were destroyed with the previous context
+    VertexArray::invalidateBuffers();
+  }
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
