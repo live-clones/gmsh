@@ -144,6 +144,16 @@ public:
   // already been seen
   bool isDuplicate(int npe, double *x, double *y, double *z, unsigned char *r,
                    unsigned char *g, unsigned char *b, unsigned char *a);
+  // same, for data that has a topology: the element is identified by its
+  // vertices (any opaque, stable pointer or index) instead of by the
+  // coordinates of its corners, which avoids building and hashing a large key.
+  // Pass the color as well, as two elements sharing an edge or a face can be
+  // drawn with different colors
+  bool isDuplicate(unsigned int col, const void *v0, const void *v1,
+                   const void *v2 = nullptr, const void *v3 = nullptr);
+  // most general form: the caller builds the key itself, e.g. from node
+  // identifiers paired with the color of each node
+  bool isDuplicate(const std::uint64_t *key, int n);
 };
 
 class Barycenter {
@@ -338,6 +348,8 @@ public:
   static long int statUniqueIn, statUniqueKept;
   static double statTime, statUniqueTime;
   static void printStats();
+  // true if the unique element filter is enabled
+  static bool uniqueFilterEnabled();
 };
 
 #endif

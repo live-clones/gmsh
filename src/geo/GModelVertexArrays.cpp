@@ -236,11 +236,37 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
   const double explode = CTX::instance()->mesh.explode;
   const bool smooth = CTX::instance()->mesh.smoothNormals;
   const bool pick = CTX::instance()->pickElements;
-  const bool uniqueEdges = (e->dim() > 1 && !pick);
-  const bool uniqueFaces = (e->dim() > 2 && !pick);
+  // the filter is only worth it on edges, which are shared by many elements; it
+  // finds nothing at all when the elements are exploded, since no two of them
+  // then share any coordinate
+  const bool filtering =
+    VertexArray::uniqueFilterEnabled() && (explode == 1.) && !pick;
+  // GMSH_UNIQUE_VA=2 also filters the faces, which are shared by at most two
+  // elements and thus give a smaller reduction than the edges
+  const bool filterF = (VertexArray::unique > 1);
+  const bool uniqueEdges = (e->dim() > 1 && filtering);
+  const bool uniqueFaces = (e->dim() > 2 && filtering && filterF);
   const bool skinFaces = (e->dim() > 2 && CTX::instance()->mesh.drawSkinOnly);
 
-#pragma omp parallel for schedule(static) num_threads(nthreads)
+  // when the elements have a topology, identify a duplicated edge by its two
+  // vertices rather than by the coordinates of its corners: this is both
+  // cheaper and exact, and it lets us skip getEdgeRep() altogether for the
+  // edges that have already been drawn
+  UniqueElementFilter *filter =
+    (uniqueEdges && e->va_lines) ?
+      e->va_lines->getUniqueFilter(nthreads > 1) : nullptr;
+  UniqueElementFilter *filterFaces =
+    (uniqueFaces && e->va_triangles) ?
+      e->va_triangles->getUniqueFilter(nthreads > 1) : nullptr;
+  // size the tables up front: growing them by successive doublings costs about
+  // as much as the lookups themselves
+  if(filter) filter->reserve(2 * elements.size());
+  if(filterFaces) filterFaces->reserve(2 * elements.size());
+
+  long int numIn = 0, numKept = 0;
+
+#pragma omp parallel for schedule(static) num_threads(nthreads) \
+  reduction(+ : numIn, numKept)
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
 
@@ -260,8 +286,19 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
     if(explode != 1.) pc = ele->barycenter();
 
     if(edges) {
-      bool unique = uniqueEdges;
-      for(int j = 0; j < ele->getNumEdgesRep(curved); j++) {
+      int numRep = ele->getNumEdgesRep(curved);
+      // the representation of a curved edge is subdivided, and does not map one
+      // to one onto the topological edges: fall back on the coordinates
+      bool topo = (filter && numRep == ele->getNumEdges());
+      bool unique = uniqueEdges && !topo;
+      for(int j = 0; j < numRep; j++) {
+        if(topo) {
+          MEdge ed = ele->getEdge(j);
+          numIn += 2;
+          if(filter->isDuplicate(c, ed.getMinVertex(), ed.getMaxVertex()))
+            continue;
+          numKept += 2;
+        }
         double x[2], y[2], z[2];
         SVector3 n[2];
         ele->getEdgeRep(curved, j, x, y, z, n);
@@ -281,9 +318,20 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
     }
 
     if(faces) {
-      bool unique = uniqueFaces;
+      int numRep = ele->getNumFacesRep(curved);
+      bool topo = (filterFaces && !skinFaces && numRep == ele->getNumFaces());
+      bool unique = uniqueFaces && !topo;
       bool skin = skinFaces;
-      for(int j = 0; j < ele->getNumFacesRep(curved); j++) {
+      for(int j = 0; j < numRep; j++) {
+        if(topo) {
+          MFace fa = ele->getFace(j);
+          numIn += 3;
+          if(filterFaces->isDuplicate(
+               c, fa.getVertex(0), fa.getVertex(1), fa.getVertex(2),
+               fa.getNumVertices() > 3 ? fa.getVertex(3) : nullptr))
+            continue;
+          numKept += 3;
+        }
         double x[3], y[3], z[3];
         SVector3 n[3];
         ele->getFaceRep(curved, j, x, y, z, n);
@@ -302,6 +350,9 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
       }
     }
   }
+
+  VertexArray::statUniqueIn += numIn;
+  VertexArray::statUniqueKept += numKept;
 
   if(nthreads == 1) return;
 

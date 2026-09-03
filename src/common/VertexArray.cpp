@@ -159,6 +159,32 @@ void UniqueElementFilter::reserve(std::size_t n)
   for(int i = 0; i < NUM_SHARDS; i++) _shard[i].reserve(n / NUM_SHARDS + 16);
 }
 
+bool UniqueElementFilter::isDuplicate(const std::uint64_t *key, int n)
+{
+  std::uint64_t h = hashKey(key, n * sizeof(std::uint64_t));
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) return !_shard[sh].insert(h);
+  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  return !_shard[sh].insert(h);
+}
+
+bool UniqueElementFilter::isDuplicate(unsigned int col, const void *v0,
+                                     const void *v1, const void *v2,
+                                     const void *v3)
+{
+  std::uint64_t k[5];
+  int n = 0;
+  k[n++] = (std::uint64_t)(std::uintptr_t)v0;
+  k[n++] = (std::uint64_t)(std::uintptr_t)v1;
+  if(v2) k[n++] = (std::uint64_t)(std::uintptr_t)v2;
+  if(v3) k[n++] = (std::uint64_t)(std::uintptr_t)v3;
+  // sort so that the vertices can be given in any order
+  for(int i = 1; i < n; i++)
+    for(int j = i; j > 0 && k[j] < k[j - 1]; j--) std::swap(k[j], k[j - 1]);
+  k[n++] = col;
+  return isDuplicate(k, n);
+}
+
 bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
                                      unsigned char *r, unsigned char *g,
                                      unsigned char *b, unsigned char *a)
@@ -500,6 +526,8 @@ void VertexArray::_deindex()
   _colors.swap(col);
   _indices.clear();
 }
+
+bool VertexArray::uniqueFilterEnabled() { return getUniqueMode() != 0; }
 
 void VertexArray::printStats()
 {
