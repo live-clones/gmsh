@@ -74,7 +74,7 @@ static const char *const browserPage = R"PAGE(<!doctype html>
        flex-direction:column;gap:10px;align-items:stretch}
  #dock:empty{display:none}
  .form{position:absolute;pointer-events:auto;background:#fff;
-       border:1px solid #999;box-shadow:0 6px 20px #0004;min-width:300px;
+       border:1px solid #999;box-shadow:0 6px 20px #0004;min-width:12em;
        max-width:calc(100% - 16px);max-height:calc(100% - 16px);
        display:flex;flex-direction:column}
  #dock .form{position:static;box-shadow:none;border-color:#ccc;
@@ -173,7 +173,7 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .cell select{width:calc(10em / var(--n, 1) + 1.8em)}
  /* the number and the scale it is dragged along, as one thing */
  .slid{display:inline-flex;align-items:center;gap:0;width:10em}
- .slid input[type=text],.slid input:not([type]){width:3.4em;flex:0 0 auto}
+ .slid input[type=text],.slid input:not([type]){width:2.9em;flex:0 0 auto}
  .slid input[type=range]{flex:1 1 auto;min-width:0;width:auto;margin:0 0 0 2px}
  /* the label runs on rather than wrapping: a window grows to hold what it
     says, as the ones this reproduces do */

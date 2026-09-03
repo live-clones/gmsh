@@ -319,18 +319,18 @@ namespace Dialog {
     p.tabbed = false;
 
     Pane q;
-    // each of them on a scale, as the window this replaces draws them: three
+    // Each of them on a scale, as the window this replaces draws them: three
     // proportions one sets by eye, looking at the arrows rather than at the
-    // numbers
-    q.fields.push_back(slid(
-      within(number("Head radius", &a.head,
-                    "General.ArrowHeadRadius"), 0., 1., .01)));
-    q.fields.push_back(slid(
-      within(number("Stem length", &a.stem,
-                    "General.ArrowStemLength"), 0., 1., .01)));
-    q.fields.push_back(slid(
-      within(number("Stem radius", &a.radius,
-                    "General.ArrowStemRadius"), 0., 1., .01)));
+    // numbers. A scale is as wide as that window makes it, which is narrower
+    // than a field: the number takes its left end and the rest is groove.
+    const char *said[3] = {"Head radius", "Stem length", "Stem radius"};
+    double *held[3] = {&a.head, &a.stem, &a.radius};
+    const char *option[3] = {"General.ArrowHeadRadius",
+                             "General.ArrowStemLength",
+                             "General.ArrowStemRadius"};
+    for(int i = 0; i < 3; i++)
+      q.fields.push_back(sized(
+        slid(within(number(said[i], held[i], option[i]), 0., 1., .01)), 7.));
     p.panes.push_back(q);
 
     Button apply;
