@@ -59,6 +59,14 @@ namespace {
       }
       else if(c == '\n')
         out += "\\n";
+      else if(c == '\t')
+        // What separates the columns of a line of a list. Dropping it, which
+        // is what came of leaving every control character out, turned "Curve
+        // <tab> 10" into "Curve10" and lost the columns on the way to the
+        // page.
+        out += "\\t";
+      else if(c == '\r')
+        out += "\\r";
       else if((unsigned char)c < 0x20)
         continue;
       else
@@ -687,6 +695,15 @@ namespace {
             first = false;
           }
         out += "]";
+        // the widths of its columns, when its lines are columns rather than
+        // plain text: the entities the visibility panel lists are a kind, a
+        // number and a name, and they line up under what names them
+        if(f.columnsEm.size()) {
+          out += ",\"cols\":[";
+          for(std::size_t i = 0; i < f.columnsEm.size(); i++)
+            out += (i ? "," : "") + std::to_string(f.columnsEm[i]);
+          out += "]";
+        }
         out += _fieldId(f);
         return out + "}";
       }

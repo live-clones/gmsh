@@ -21,6 +21,11 @@
 # one interface is mostly waiting for it, so three at once cost little more
 # than one. The categories of the option window are swept as well, each in the
 # same interface that has just been photographed.
+#
+# Each one holds an X server, a Gmsh with its model, and for the page a
+# browser besides -- the better part of a gigabyte apiece. On a machine with
+# little memory to spare, and none of it swap, GUICOMPARE_AT_ONCE says how
+# many may run together; the rest wait their turn.
 
 root=$(cd "$(dirname "$0")/../.." && pwd)
 here=$root/utils/guicompare
@@ -73,14 +78,28 @@ photograph() {
   done
 }
 
+# how many builds photograph at a time, see the head of this file
+atonce=${GUICOMPARE_AT_ONCE:-4}
+running=0
+breathe() {
+  running=$((running + 1))
+  [ "$running" -lt "$atonce" ] && return
+  wait
+  running=0
+}
+
 photograph released 95 "" &
+breathe
 photograph fltk 96 "${one:-$root/build}" &
+breathe
 photograph imgui 97 "${one:-$root/build-imgui}" &
+breathe
 # the page in a browser, if it was built: it is driven over the socket it
 # answers on rather than by clicking, and photographed inside one browser
 # window
 if [ -n "$one" ] || [ -d "$root/build-browser" ]; then
   photograph browser 98 "${one:-$root/build-browser}" &
+  breathe
 fi
 wait
 

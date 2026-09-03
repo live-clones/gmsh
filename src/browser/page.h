@@ -103,8 +103,22 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .form .aside .cell{flex:1 1 auto}
  .list{border:1px solid #ccc;background:#fff;overflow:auto;flex:1 1 auto;
        min-width:0;min-height:5em;max-height:26em}
- .aside .list{max-height:none}
+ /* The column down the side is as tall as the window, and the window is as
+    tall as what is beside it: what the column holds is taken out of the flow
+    so that a list of fifty plugins does not ask for a window fifty lines
+    tall, and given the height the column really has. */
+ .form .aside{position:relative;overflow:hidden}
+ .form .aside .inside{position:absolute;top:0;left:0;right:0;bottom:0;
+                      display:flex;flex-direction:column;min-height:0}
+ .form .aside .line.grows{flex:1 1 auto;min-height:0}
+ /* two lists side by side down the column -- which plugin, and which views to
+    run it on -- stay side by side: the column is theirs, and neither of them
+    is pushed under the other */
+ .form .aside .line{flex-wrap:nowrap}
+ .form .aside .cell,.form .aside .list{min-width:0}
+ .form .aside .list{max-height:none;height:100%}
  .pick{padding:1px 8px;white-space:nowrap;cursor:default}
+ .pick .col{display:inline-block;overflow:hidden;vertical-align:top}
  .pick:hover{background:#eef1ff}
  .pick.on{background:#cfd8ff}
  .tabs{display:flex;gap:2px;padding:4px 6px 0;border-bottom:1px solid #ccc;
@@ -112,7 +126,10 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .tabs.family{border-bottom:none;padding-bottom:0}
  .tabs.family .tab{background:#e4e4e4}
  .tabs.family .tab.on{background:#eee;font-weight:600}
- .tab{padding:3px 9px;border:1px solid #ccc;border-bottom:none;background:#eee;
+ /* as narrow as the tabs of the windows this reproduces: a row of eight of
+    them decides how wide the window is, and nine pixels of air apiece put a
+    third of a window between the first tab and the last */
+ .tab{padding:3px 5px;border:1px solid #ccc;border-bottom:none;background:#eee;
       cursor:default}
  .tab.on{background:#fff;font-weight:600}
  /* A line of a pane. What shares a line is what the description says shares
@@ -134,7 +151,10 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  /* what fills the height it is given, down to the list itself */
  .line.grows{flex:1 1 auto;min-height:0}
  .line.grows>.cell{min-height:0;align-self:stretch}
- .line.grows .list{height:100%;max-height:none}
+ /* and a list that fills its line takes the height the line was given --
+    which is what a window says with leastRows -- and no more: a list of two
+    hundred options is not a window two hundred lines tall */
+ .line.grows .list{height:100%}
  .cell.run>.cell{gap:0}
  .cell.packed label{flex:0 0 auto}
  /* a row of values with a button after them is not columns of equal width:
@@ -388,7 +408,20 @@ function field(f) {
     (f.items || []).forEach((label, i) => {
       const line = document.createElement('div');
       line.className = 'pick' + ((f.on || []).indexOf(i) >= 0 ? ' on' : '');
-      line.textContent = label;
+      // A line that is columns rather than plain text: the entities the
+      // visibility panel lists are a kind, a number and a name, and they line
+      // up under what names them. The description says how wide each is.
+      if(f.cols && label.indexOf('\t') >= 0) {
+        label.split('\t').forEach((part, c) => {
+          const cell = document.createElement('span');
+          cell.className = 'col';
+          if(c < f.cols.length && f.cols[c] > 0)
+            cell.style.width = f.cols[c] + 'em';
+          cell.textContent = part;
+          line.appendChild(cell);
+        });
+      }
+      else line.textContent = label;
       line.onclick = () => post('/choose', which(f) + '&i=' + i + '&v=1');
       box.appendChild(line);
     });
@@ -761,7 +794,12 @@ function drawForms(forms) {
     if(form.side && form.side.length) {
       const aside = document.createElement('div'); aside.className = 'aside';
       aside.style.width = (form.sideEm || 8) + 'em';
-      lines(form.side, aside, 0);
+      // what it holds sits in a box of its own, which is what the stylesheet
+      // takes out of the flow: see .aside there
+      const inside = document.createElement('div');
+      inside.className = 'inside';
+      lines(form.side, inside, 0);
+      aside.appendChild(inside);
       body.appendChild(aside);
     }
     const rest = document.createElement('div'); rest.className = 'rest';
