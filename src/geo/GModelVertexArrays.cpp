@@ -232,11 +232,15 @@ static void markBoundaryFaces(std::vector<T *> &elements,
       (ele->getPolynomialOrder() > 1) &&
       (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
     if(!repPerFace(ele, curved)) continue;
+    MVertex *fv[4];
     for(int j = 0; j < ele->getNumFaces(); j++) {
-      MFace fa = ele->getFace(j);
-      boundary->insertOrErase(
-        0, fa.getVertex(0), fa.getVertex(1), fa.getVertex(2),
-        fa.getNumVertices() > 3 ? fa.getVertex(3) : nullptr);
+      int nc = ele->getFaceCorners(j, fv);
+      if(!nc) { // no corner accessor: fall back on the sorted face
+        MFace fa = ele->getFace(j);
+        nc = (int)fa.getNumVertices();
+        for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
+      }
+      boundary->insertOrErase(0, fv[0], fv[1], fv[2], nc > 3 ? fv[3] : nullptr);
     }
   }
 }
@@ -372,18 +376,28 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
       for(int j = 0; j < numRep; j++) {
         if(perFace) {
           // only the faces that bound the mesh are drawn
-          MFace fa = ele->getFace(j / perFace);
-          if(!interior->contains(
-               0, fa.getVertex(0), fa.getVertex(1), fa.getVertex(2),
-               fa.getNumVertices() > 3 ? fa.getVertex(3) : nullptr))
+          MVertex *fv[4];
+          int nc = ele->getFaceCorners(j / perFace, fv);
+          if(!nc) {
+            MFace fa = ele->getFace(j / perFace);
+            nc = (int)fa.getNumVertices();
+            for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
+          }
+          if(!interior->contains(0, fv[0], fv[1], fv[2],
+                                 nc > 3 ? fv[3] : nullptr))
             continue;
         }
         if(topo) {
-          MFace fa = ele->getFace(j);
+          MVertex *fv[4];
+          int nc = ele->getFaceCorners(j, fv);
+          if(!nc) {
+            MFace fa = ele->getFace(j);
+            nc = (int)fa.getNumVertices();
+            for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
+          }
           numIn += 3;
-          if(filterFaces->isDuplicate(
-               c, fa.getVertex(0), fa.getVertex(1), fa.getVertex(2),
-               fa.getNumVertices() > 3 ? fa.getVertex(3) : nullptr))
+          if(filterFaces->isDuplicate(c, fv[0], fv[1], fv[2],
+                                      nc > 3 ? fv[3] : nullptr))
             continue;
           numKept += 3;
         }

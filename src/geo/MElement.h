@@ -193,6 +193,12 @@ public:
   // get the faces
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) const = 0;
+  // Fill v[] with the corner vertices of face `num' and return how many there
+  // are, or return 0 if the element does not implement it. Unlike getFace()
+  // this does not sort the vertices, which requires dereferencing them: use it
+  // when only the identity of the face is needed, e.g. to detect the faces
+  // shared by two elements.
+  virtual int getFaceCorners(int num, MVertex *v[4]) const { return 0; }
   virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   MFaceN getHighOrderFace(const MFace &face)
   {

@@ -100,6 +100,12 @@ public:
       return MFace(_v[faces_prism(num, 0)], _v[faces_prism(num, 1)],
                    _v[faces_prism(num, 2)], _v[faces_prism(num, 3)]);
   }
+  virtual int getFaceCorners(int num, MVertex *v[4]) const
+  {
+    int n = (num < 2) ? 3 : 4;
+    for(int i = 0; i < n; i++) v[i] = _v[faces_prism(num, i)];
+    return n;
+  }
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
