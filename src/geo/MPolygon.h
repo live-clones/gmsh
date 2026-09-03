@@ -110,9 +110,9 @@ public:
   void setTriangles(std::vector<MVertex *> &simplices)
   {
     std::unordered_map<MVertex *, int> indices;
-    for(int i = 0; i < _vertices.size(); ++i) indices[_vertices[i]] = i;
+    for(int i = 0; i < (int)_vertices.size(); ++i) indices[_vertices[i]] = i;
     _triangles.resize(simplices.size());
-    for(int i = 0; i < simplices.size(); ++i) {
+    for(int i = 0; i < (int)simplices.size(); ++i) {
       auto it = indices.find(simplices[i]);
       if(it == indices.end()) {
         _vertices.push_back(simplices[i]);

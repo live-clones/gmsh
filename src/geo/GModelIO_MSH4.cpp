@@ -786,9 +786,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
 
     if(elmType == MSH_POLYG_ && elmType == MSH_POLYH_) {
-      Msg::Error("Element type %d is a polytope. "
-                 "Define it in $Polytopes instead of $Elements.",
-                 elmType);
+      Msg::Error("Element type %d is a polytope: define it in $Polytopes "
+                 "instead of $Elements", elmType);
       delete[] elementsRead;
       return nullptr;
     }
@@ -1011,9 +1010,8 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
 
     if(elmType != MSH_POLYG_ && elmType != MSH_POLYH_) {
-      Msg::Error("Element type %d is not a polytope. "
-                 "Define it in $Elements instead of $Polytopes.",
-                 elmType);
+      Msg::Error("Element type %d is not a polytope: define it in $Elements "
+                 "instead of $Polytopes", elmType);
       delete[] elementsRead;
       return nullptr;
     }
@@ -3490,328 +3488,9 @@ writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   fprintf(fp, "$EndNodes\n");
 }
 
-static void writeMSH4Elements(
-  GModel *const model, FILE *fp, bool partitioned,
-  const std::vector<int> &partitionsToSave, bool binary, bool saveAll,
-  double version,
-  const std::variant<std::monostate, CoveredElementsMap<2>,
-                     CoveredElementsMap<3>> &overlapElements)
-{
-  /**
-   * If the mesh is partitioned and only one partition is saved, we save
-   * 1) elements on an entity belonging to (at least) this partition
-   * 2) overlap boundary elements if there is an overlap
-   * 3) overlapped entities, with only the subset of elements actually used by
-   * the overlaps
-   */
-
-  std::set<GRegion *, GEntityPtrLessThan> regions;
-  std::set<GFace *, GEntityPtrLessThan> faces;
-  std::set<GEdge *, GEntityPtrLessThan> edges;
-  std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, partitionsToSave, saveAll, regions,
-                    faces, edges, vertices);
-
-  const int overlapDim = model->overlapDim();
-  std::unordered_set<GEdge *> overlapBnd2D;
-  std::unordered_set<GFace *> overlapBnd3D;
-
-  auto addOverlapBoundaries = [&](const auto &map, auto &container) {
-    using ContainerType =
-      std::remove_cv_t<std::remove_reference_t<decltype(container)>>;
-    for(const auto &[parent, vecOfEntities] : map) {
-      for(const auto &entity : vecOfEntities) {
-        auto partitions = entity->getPartitions();
-        if(partitions.size() != 1)
-          Msg::Error("Overlap boundary with more than one partition.");
-        int partition = *partitions.begin();
-        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     partition) != partitionsToSave.end()) {
-          if constexpr(std::is_same_v<ContainerType,
-                                      std::unordered_set<GEdge *>>) {
-            auto cast = static_cast<GEdge *>(entity);
-            if(!cast) Msg::Error("Expected GEdge for 2D overlap boundary.");
-            edges.insert(cast);
-            overlapBnd2D.insert(cast);
-          }
-          else if constexpr(std::is_same_v<ContainerType,
-                                           std::unordered_set<GFace *>>) {
-            auto cast = static_cast<GFace *>(entity);
-            if(!cast) Msg::Error("Expected GFace for 3D overlap boundary.");
-            faces.insert(cast);
-            overlapBnd3D.insert(cast);
-          }
-          else {
-            Msg::Error("Unsupported overlap boundary type.");
-          }
-        }
-      }
-    }
-  };
-
-  for(const auto &mgr : model->getOverlapManagers()) {
-    addOverlapBoundaries(mgr.getOverlapInnerBoundaries2D(), overlapBnd2D);
-    addOverlapBoundaries(mgr.getOverlapOfBoundaries2D(), overlapBnd2D);
-    addOverlapBoundaries(mgr.getInnerBoundariesOnInterface2D(), overlapBnd2D);
-    addOverlapBoundaries(mgr.getOverlapInnerBoundaries3D(), overlapBnd3D);
-    addOverlapBoundaries(mgr.getOverlapOfBoundaries3D(), overlapBnd3D);
-    addOverlapBoundaries(mgr.getInnerBoundariesOnInterface3D(), overlapBnd3D);
-  }
-
-  elementsByType[0].clear();
-  elementsByType[1].clear();
-  elementsByType[2].clear();
-  elementsByType[3].clear();
-  numElements = 0;
-
-  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0) continue;
-
-    numElements += (*it)->points.size();
-    for(std::size_t i = 0; i < (*it)->points.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->points[i]->getTypeForMSH());
-      elementsByType[0][p].push_back((*it)->points[i]);
-    }
-  }
-
-  for(auto it = edges.begin(); it != edges.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostCurve && overlapBnd2D.count(*it) == 0)
-      continue;
-
-    numElements += (*it)->lines.size();
-    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->lines[i]->getTypeForMSH());
-      elementsByType[1][p].push_back((*it)->lines[i]);
-    }
-  }
-
-  for(auto it = faces.begin(); it != faces.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostSurface &&
-       overlapBnd3D.count(*it) == 0)
-      continue;
-
-    numElements += (*it)->triangles.size();
-    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->triangles[i]->getTypeForMSH());
-      elementsByType[2][p].push_back((*it)->triangles[i]);
-    }
-    numElements += (*it)->quadrangles.size();
-    for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
-      std::pair<int, int> p((*it)->tag(),
-                            (*it)->quadrangles[i]->getTypeForMSH());
-      elementsByType[2][p].push_back((*it)->quadrangles[i]);
-    }
-    numElements += (*it)->polygons.size();
-    for(std::size_t i = 0; i < (*it)->polygons.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->polygons[i]->getTypeForMSH());
-      elementsByType[2][p].push_back((*it)->polygons[i]);
-    }
-  }
-
-  // Overlap faces - TODO: ensure it's exported only if not all partitions are
-  // saved
-  if(overlapDim == 2) {
-    auto overlapFaces = std::get_if<CoveredElementsMap<2>>(&overlapElements);
-    if(overlapFaces) {
-      for(const auto &[pface, elements] : *overlapFaces) {
-        int tag = pface->tag();
-        // Skip only if the loop above actually wrote this entity's elements:
-        // elements are referenced by tag in $Overlaps2D and the reader has no
-        // tolerance for missing ones, so the physicals/saveAll filter must not
-        // drop them
-        if(faces.count(pface) &&
-           (saveAll || pface->physicals.size() ||
-            pface->geomType() == GEntity::GhostSurface))
-          continue; // already saved
-
-        numElements += elements.size();
-        for(const auto &element : elements) {
-          std::pair<int, int> p(tag, element->getTypeForMSH());
-          elementsByType[2][p].push_back(element);
-        }
-      }
-    }
-  }
-
-  for(auto it = regions.begin(); it != regions.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostVolume)
-      continue;
-
-    numElements += (*it)->tetrahedra.size();
-    for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++) {
-      std::pair<int, int> p((*it)->tag(),
-                            (*it)->tetrahedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->tetrahedra[i]);
-    }
-    numElements += (*it)->hexahedra.size();
-    for(std::size_t i = 0; i < (*it)->hexahedra.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->hexahedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->hexahedra[i]);
-    }
-    numElements += (*it)->prisms.size();
-    for(std::size_t i = 0; i < (*it)->prisms.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->prisms[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->prisms[i]);
-    }
-    numElements += (*it)->pyramids.size();
-    for(std::size_t i = 0; i < (*it)->pyramids.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->pyramids[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->pyramids[i]);
-    }
-    numElements += (*it)->trihedra.size();
-    for(std::size_t i = 0; i < (*it)->trihedra.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->trihedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->trihedra[i]);
-    }
-    numElements += (*it)->polyhedra.size();
-    for(std::size_t i = 0; i < (*it)->polyhedra.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->polyhedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->polyhedra[i]);
-    }
-  }
-
-  // Overlap regions - TODO: ensure it's exported only if not all partitions are
-  // saved
-  if(overlapDim == 3) {
-    auto overlapRegions = std::get_if<CoveredElementsMap<3>>(&overlapElements);
-    if(overlapRegions) {
-      for(const auto &[pregion, elements] : *overlapRegions) {
-        int tag = pregion->tag();
-        // Skip only if the loop above actually wrote this entity's elements:
-        // elements are referenced by tag in $Overlaps3D and the reader has no
-        // tolerance for missing ones, so the physicals/saveAll filter must not
-        // drop them
-        if(regions.count(pregion) &&
-           (saveAll || pregion->physicals.size() ||
-            pregion->geomType() == GEntity::GhostVolume))
-          continue; // already saved
-
-        numElements += elements.size();
-        for(const auto &element : elements) {
-          std::pair<int, int> p(tag, element->getTypeForMSH());
-          elementsByType[3][p].push_back(element);
-        }
-      }
-    }
-  }
-
-  // Separate Elements and Polytopes
-  polytopesByType[0].clear();
-  polytopesByType[1].clear();
-  polytopesByType[2].clear();
-  polytopesByType[3].clear();
-  numPolytopes = 0;
-
-  for(int dim = 0; dim < 4; ++dim) {
-    for(auto it = elementsByType[dim].begin();
-        it != elementsByType[dim].end();) {
-      int type = it->first.second;
-      if(type != MSH_POLYG_ && type != MSH_POLYH_) {
-        ++it;
-        continue;
-      }
-
-      numElements -= it->second.size();
-      numPolytopes += it->second.size();
-      polytopesByType[dim][it->first] = it->second;
-      it = elementsByType[dim].erase(it);
-    }
-  }
-}
-
-static void writeMSH4Elements(
-  FILE *fp, bool binary, double version,
-  std::map<std::pair<int, int>, std::vector<MElement *>> *elementsByType,
-  std::size_t &numElements)
-{
-  if(!numElements) return;
-
-  fprintf(fp, "$Elements\n");
-
-  std::size_t numSection = 0;
-  for(int dim = 0; dim <= 3; dim++) numSection += elementsByType[dim].size();
-
-  std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
-  for(int dim = 0; dim <= 3; dim++) {
-    for(auto it = elementsByType[dim].begin(); it != elementsByType[dim].end();
-        ++it) {
-      for(std::size_t i = 0; i < it->second.size(); i++) {
-        minTag = std::min(minTag, it->second[i]->getNum());
-        maxTag = std::max(maxTag, it->second[i]->getNum());
-      }
-    }
-  }
-
-  if(binary) {
-    fwrite(&numSection, sizeof(std::size_t), 1, fp);
-    fwrite(&numElements, sizeof(std::size_t), 1, fp);
-    fwrite(&minTag, sizeof(std::size_t), 1, fp);
-    fwrite(&maxTag, sizeof(std::size_t), 1, fp);
-  }
-  else {
-    if(version >= 4.1)
-      fprintf(fp, "%zu %zu %zu %zu\n", numSection, numElements, minTag, maxTag);
-    else
-      fprintf(fp, "%zu %zu\n", numSection, numElements);
-  }
-
-  for(int dim = 0; dim <= 3; dim++) {
-    for(auto it = elementsByType[dim].begin(); it != elementsByType[dim].end();
-        ++it) {
-      int entityTag = it->first.first;
-      int elmType = it->first.second;
-      std::size_t numElm = it->second.size();
-      if(binary) {
-        fwrite(&dim, sizeof(int), 1, fp);
-        fwrite(&entityTag, sizeof(int), 1, fp);
-        fwrite(&elmType, sizeof(int), 1, fp);
-        fwrite(&numElm, sizeof(std::size_t), 1, fp);
-      }
-      else {
-        fprintf(fp, "%d %d %d %zu\n", (version >= 4.1) ? dim : entityTag,
-                (version >= 4.1) ? entityTag : dim, elmType, numElm);
-      }
-
-      std::size_t N = it->second.size();
-      if(binary) {
-        const int numVertPerElm = MElement::getInfoMSH(elmType);
-        std::size_t n = 1 + numVertPerElm;
-        std::vector<std::size_t> tags(N * n);
-        std::size_t k = 0;
-        for(std::size_t i = 0; i < N; i++) {
-          MElement *e = it->second[i];
-          tags[k] = e->getNum();
-          for(int j = 0; j < numVertPerElm; j++) {
-            tags[k + 1 + j] = e->getVertex(j)->getNum();
-          }
-          k += n;
-        }
-        fwrite(&tags[0], sizeof(std::size_t), N * n, fp);
-      }
-      else {
-        for(std::size_t i = 0; i < N; i++) {
-          MElement *e = it->second[i];
-          fprintf(fp, "%zu ", e->getNum());
-          for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-            fprintf(fp, "%zu ", e->getVertex(i)->getNum());
-          }
-          fprintf(fp, "\n");
-        }
-      }
-    }
-  }
-
-  if(binary) fprintf(fp, "\n");
-
-  fprintf(fp, "$EndElements\n");
-}
-
 static void writeMSH4Polytopes(
   FILE *fp, bool binary, double version,
-  std::map<std::pair<int, int>, std::vector<MElement *>> *polytopesByType,
+  std::map<std::pair<int, int>, std::vector<MElement *>> polytopesByType[4],
   std::size_t &numPolytopes)
 {
   if(!numPolytopes) return;
@@ -3965,6 +3644,305 @@ static void writeMSH4Polytopes(
   if(binary) fprintf(fp, "\n");
 
   fprintf(fp, "$EndPolytopes\n");
+}
+
+static void writeMSH4Elements(
+  GModel *const model, FILE *fp, bool partitioned,
+  const std::vector<int> &partitionsToSave, bool binary, bool saveAll,
+  double version,
+  const std::variant<std::monostate, CoveredElementsMap<2>,
+                     CoveredElementsMap<3>> &overlapElements)
+{
+  /**
+   * If the mesh is partitioned and only one partition is saved, we save
+   * 1) elements on an entity belonging to (at least) this partition
+   * 2) overlap boundary elements if there is an overlap
+   * 3) overlapped entities, with only the subset of elements actually used by
+   * the overlaps
+   */
+
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  getEntitiesToSave(model, partitioned, partitionsToSave, saveAll, regions,
+                    faces, edges, vertices);
+
+  const int overlapDim = model->overlapDim();
+  std::unordered_set<GEdge *> overlapBnd2D;
+  std::unordered_set<GFace *> overlapBnd3D;
+
+  auto addOverlapBoundaries = [&](const auto &map, auto &container) {
+    using ContainerType =
+      std::remove_cv_t<std::remove_reference_t<decltype(container)>>;
+    for(const auto &[parent, vecOfEntities] : map) {
+      for(const auto &entity : vecOfEntities) {
+        auto partitions = entity->getPartitions();
+        if(partitions.size() != 1)
+          Msg::Error("Overlap boundary with more than one partition.");
+        int partition = *partitions.begin();
+        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
+                     partition) != partitionsToSave.end()) {
+          if constexpr(std::is_same_v<ContainerType,
+                                      std::unordered_set<GEdge *>>) {
+            auto cast = static_cast<GEdge *>(entity);
+            if(!cast) Msg::Error("Expected GEdge for 2D overlap boundary.");
+            edges.insert(cast);
+            overlapBnd2D.insert(cast);
+          }
+          else if constexpr(std::is_same_v<ContainerType,
+                                           std::unordered_set<GFace *>>) {
+            auto cast = static_cast<GFace *>(entity);
+            if(!cast) Msg::Error("Expected GFace for 3D overlap boundary.");
+            faces.insert(cast);
+            overlapBnd3D.insert(cast);
+          }
+          else {
+            Msg::Error("Unsupported overlap boundary type.");
+          }
+        }
+      }
+    }
+  };
+
+  for(const auto &mgr : model->getOverlapManagers()) {
+    addOverlapBoundaries(mgr.getOverlapInnerBoundaries2D(), overlapBnd2D);
+    addOverlapBoundaries(mgr.getOverlapOfBoundaries2D(), overlapBnd2D);
+    addOverlapBoundaries(mgr.getInnerBoundariesOnInterface2D(), overlapBnd2D);
+    addOverlapBoundaries(mgr.getOverlapInnerBoundaries3D(), overlapBnd3D);
+    addOverlapBoundaries(mgr.getOverlapOfBoundaries3D(), overlapBnd3D);
+    addOverlapBoundaries(mgr.getInnerBoundariesOnInterface3D(), overlapBnd3D);
+  }
+
+  std::map<std::pair<int, int>, std::vector<MElement *>> elementsByType[4];
+  std::size_t numElements = 0;
+
+  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
+    if(!saveAll && (*it)->physicals.size() == 0) continue;
+
+    numElements += (*it)->points.size();
+    for(std::size_t i = 0; i < (*it)->points.size(); i++) {
+      std::pair<int, int> p((*it)->tag(), (*it)->points[i]->getTypeForMSH());
+      elementsByType[0][p].push_back((*it)->points[i]);
+    }
+  }
+
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
+    if(!saveAll && (*it)->physicals.size() == 0 &&
+       (*it)->geomType() != GEntity::GhostCurve && overlapBnd2D.count(*it) == 0)
+      continue;
+
+    numElements += (*it)->lines.size();
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
+      std::pair<int, int> p((*it)->tag(), (*it)->lines[i]->getTypeForMSH());
+      elementsByType[1][p].push_back((*it)->lines[i]);
+    }
+  }
+
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
+    if(!saveAll && (*it)->physicals.size() == 0 &&
+       (*it)->geomType() != GEntity::GhostSurface &&
+       overlapBnd3D.count(*it) == 0)
+      continue;
+
+    numElements += (*it)->triangles.size();
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
+      std::pair<int, int> p((*it)->tag(), (*it)->triangles[i]->getTypeForMSH());
+      elementsByType[2][p].push_back((*it)->triangles[i]);
+    }
+    numElements += (*it)->quadrangles.size();
+    for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
+      std::pair<int, int> p((*it)->tag(),
+                            (*it)->quadrangles[i]->getTypeForMSH());
+      elementsByType[2][p].push_back((*it)->quadrangles[i]);
+    }
+  }
+
+  // Overlap faces - TODO: ensure it's exported only if not all partitions are
+  // saved
+  if(overlapDim == 2) {
+    auto overlapFaces = std::get_if<CoveredElementsMap<2>>(&overlapElements);
+    if(overlapFaces) {
+      for(const auto &[pface, elements] : *overlapFaces) {
+        int tag = pface->tag();
+        // Skip only if the loop above actually wrote this entity's elements:
+        // elements are referenced by tag in $Overlaps2D and the reader has no
+        // tolerance for missing ones, so the physicals/saveAll filter must not
+        // drop them
+        if(faces.count(pface) &&
+           (saveAll || pface->physicals.size() ||
+            pface->geomType() == GEntity::GhostSurface))
+          continue; // already saved
+
+        numElements += elements.size();
+        for(const auto &element : elements) {
+          std::pair<int, int> p(tag, element->getTypeForMSH());
+          elementsByType[2][p].push_back(element);
+        }
+      }
+    }
+  }
+
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
+    if(!saveAll && (*it)->physicals.size() == 0 &&
+       (*it)->geomType() != GEntity::GhostVolume)
+      continue;
+
+    numElements += (*it)->tetrahedra.size();
+    for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++) {
+      std::pair<int, int> p((*it)->tag(),
+                            (*it)->tetrahedra[i]->getTypeForMSH());
+      elementsByType[3][p].push_back((*it)->tetrahedra[i]);
+    }
+    numElements += (*it)->hexahedra.size();
+    for(std::size_t i = 0; i < (*it)->hexahedra.size(); i++) {
+      std::pair<int, int> p((*it)->tag(), (*it)->hexahedra[i]->getTypeForMSH());
+      elementsByType[3][p].push_back((*it)->hexahedra[i]);
+    }
+    numElements += (*it)->prisms.size();
+    for(std::size_t i = 0; i < (*it)->prisms.size(); i++) {
+      std::pair<int, int> p((*it)->tag(), (*it)->prisms[i]->getTypeForMSH());
+      elementsByType[3][p].push_back((*it)->prisms[i]);
+    }
+    numElements += (*it)->pyramids.size();
+    for(std::size_t i = 0; i < (*it)->pyramids.size(); i++) {
+      std::pair<int, int> p((*it)->tag(), (*it)->pyramids[i]->getTypeForMSH());
+      elementsByType[3][p].push_back((*it)->pyramids[i]);
+    }
+    numElements += (*it)->trihedra.size();
+    for(std::size_t i = 0; i < (*it)->trihedra.size(); i++) {
+      std::pair<int, int> p((*it)->tag(), (*it)->trihedra[i]->getTypeForMSH());
+      elementsByType[3][p].push_back((*it)->trihedra[i]);
+    }
+  }
+
+  // Overlap regions - TODO: ensure it's exported only if not all partitions are
+  // saved
+  if(overlapDim == 3) {
+    auto overlapRegions = std::get_if<CoveredElementsMap<3>>(&overlapElements);
+    if(overlapRegions) {
+      for(const auto &[pregion, elements] : *overlapRegions) {
+        int tag = pregion->tag();
+        // Skip only if the loop above actually wrote this entity's elements:
+        // elements are referenced by tag in $Overlaps3D and the reader has no
+        // tolerance for missing ones, so the physicals/saveAll filter must not
+        // drop them
+        if(regions.count(pregion) &&
+           (saveAll || pregion->physicals.size() ||
+            pregion->geomType() == GEntity::GhostVolume))
+          continue; // already saved
+
+        numElements += elements.size();
+        for(const auto &element : elements) {
+          std::pair<int, int> p(tag, element->getTypeForMSH());
+          elementsByType[3][p].push_back(element);
+        }
+      }
+    }
+  }
+
+  // Separate Elements and Polytopes
+  std::map<std::pair<int, int>, std::vector<MElement *>> polytopesByType[4];
+  std::size_t numPolytopes = 0;
+  for(int dim = 0; dim < 4; ++dim) {
+    for(auto it = elementsByType[dim].begin();
+        it != elementsByType[dim].end();) {
+      int type = it->first.second;
+      if(type != MSH_POLYG_ && type != MSH_POLYH_) {
+        ++it;
+        continue;
+      }
+
+      numElements -= it->second.size();
+      numPolytopes += it->second.size();
+      polytopesByType[dim][it->first] = it->second;
+      it = elementsByType[dim].erase(it);
+    }
+  }
+
+  if(!numElements) return;
+
+  fprintf(fp, "$Elements\n");
+
+  std::size_t numSection = 0;
+  for(int dim = 0; dim <= 3; dim++) numSection += elementsByType[dim].size();
+
+  std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
+  for(int dim = 0; dim <= 3; dim++) {
+    for(auto it = elementsByType[dim].begin(); it != elementsByType[dim].end();
+        ++it) {
+      for(std::size_t i = 0; i < it->second.size(); i++) {
+        minTag = std::min(minTag, it->second[i]->getNum());
+        maxTag = std::max(maxTag, it->second[i]->getNum());
+      }
+    }
+  }
+
+  if(binary) {
+    fwrite(&numSection, sizeof(std::size_t), 1, fp);
+    fwrite(&numElements, sizeof(std::size_t), 1, fp);
+    fwrite(&minTag, sizeof(std::size_t), 1, fp);
+    fwrite(&maxTag, sizeof(std::size_t), 1, fp);
+  }
+  else {
+    if(version >= 4.1)
+      fprintf(fp, "%zu %zu %zu %zu\n", numSection, numElements, minTag, maxTag);
+    else
+      fprintf(fp, "%zu %zu\n", numSection, numElements);
+  }
+
+  for(int dim = 0; dim <= 3; dim++) {
+    for(auto it = elementsByType[dim].begin(); it != elementsByType[dim].end();
+        ++it) {
+      int entityTag = it->first.first;
+      int elmType = it->first.second;
+      std::size_t numElm = it->second.size();
+      if(binary) {
+        fwrite(&dim, sizeof(int), 1, fp);
+        fwrite(&entityTag, sizeof(int), 1, fp);
+        fwrite(&elmType, sizeof(int), 1, fp);
+        fwrite(&numElm, sizeof(std::size_t), 1, fp);
+      }
+      else {
+        fprintf(fp, "%d %d %d %zu\n", (version >= 4.1) ? dim : entityTag,
+                (version >= 4.1) ? entityTag : dim, elmType, numElm);
+      }
+
+      std::size_t N = it->second.size();
+      if(binary) {
+        const int numVertPerElm = MElement::getInfoMSH(elmType);
+        std::size_t n = 1 + numVertPerElm;
+        std::vector<std::size_t> tags(N * n);
+        std::size_t k = 0;
+        for(std::size_t i = 0; i < N; i++) {
+          MElement *e = it->second[i];
+          tags[k] = e->getNum();
+          for(int j = 0; j < numVertPerElm; j++) {
+            tags[k + 1 + j] = e->getVertex(j)->getNum();
+          }
+          k += n;
+        }
+        fwrite(&tags[0], sizeof(std::size_t), N * n, fp);
+      }
+      else {
+        for(std::size_t i = 0; i < N; i++) {
+          MElement *e = it->second[i];
+          fprintf(fp, "%zu ", e->getNum());
+          for(std::size_t i = 0; i < e->getNumVertices(); i++) {
+            fprintf(fp, "%zu ", e->getVertex(i)->getNum());
+          }
+          fprintf(fp, "\n");
+        }
+      }
+    }
+  }
+
+  if(binary) fprintf(fp, "\n");
+
+  fprintf(fp, "$EndElements\n");
+
+  if(numPolytopes)
+    writeMSH4Polytopes(fp, binary, version, polytopesByType, numPolytopes);
 }
 
 static void writeMSH4Edges(GModel *const model, FILE *fp, bool binary,
