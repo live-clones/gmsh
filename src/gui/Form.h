@@ -123,6 +123,34 @@ namespace Ui {
     bool empty() const { return !size; }
   };
 
+  // A word, or a few of them, written as part of a line of prose: whether it
+  // is set apart, and what following it does if it is worth following.
+  struct Words {
+    std::string text;
+    bool italic;
+    // if it is a word one may follow -- an address, a document
+    std::function<void()> follow;
+    Words(const std::string &said = std::string(), bool slanted = false)
+      : text(said), italic(slanted)
+    {
+    }
+  };
+
+  // One line of prose: what is written on it, and how it is set.
+  //
+  // It holds no value and names no widget. A window that is a page one reads
+  // rather than a form one fills in -- the one that says what Gmsh is and
+  // what this build of it has -- is written as prose, and describing it as
+  // labelled rows is what made the interfaces disagree about it: one wrote a
+  // table, another a column of buttons, and none of them the page.
+  struct Line {
+    std::vector<Words> words;
+    bool centred; // written in the middle of the column
+    bool bullet; // an item of a list, indented under a dot
+    bool heading; // the name of what one is reading, larger and bold
+    Line() : centred(false), bullet(false), heading(false) {}
+  };
+
   enum FieldKind {
     Text, // an expression, evaluated by geometryEvaluate() when it is used
     Integer,
@@ -158,6 +186,10 @@ namespace Ui {
     // button is opened, and picking a line runs it.
     Menu,
     List, // what has been picked so far, which one may correct
+    // A page of written text: lines of words, some of them centred, some of
+    // them items of a list, some of them worth following. Nothing on it is a
+    // value.
+    Prose,
     Spacer // nothing at all: it eats what is left of the line, and never less
            // than widthEm, so that it still separates in a window that fits
            // its contents exactly
@@ -255,6 +287,9 @@ namespace Ui {
     std::function<bool(int index)> chosen;
     std::function<void(int index, bool on)> choose;
     bool multiple;
+    // Prose: the page, worked out as the window shows -- what a build of
+    // Gmsh has is read from the build, not stored anywhere
+    std::function<std::vector<Line>()> prose;
     // Label: what the line says. It is also what a field of any other kind
     // shows when it has one, which is how a value that is computed rather than
     // stored gets displayed.

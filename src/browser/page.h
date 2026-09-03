@@ -120,6 +120,10 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     three columns wide in places. */
  .line{display:flex;align-items:center;gap:8px;padding:2px 8px;flex-wrap:wrap}
  .line.ruled{border-top:1px solid #ddd;margin-top:4px;padding-top:5px}
+ /* the lines of a pane laid out on columns, all of them on one grid: a
+    column is as wide as the widest thing in it, over every line at once */
+ .line.grid{display:grid;align-items:center;column-gap:8px;row-gap:4px;
+            align-content:start}
  /* A cell takes the width it needs and no more, its label running on as far
     as it must: a window is then as wide as its widest line, which is how the
     ones this reproduces are sized. Sharing the line evenly is what the grid
@@ -144,6 +148,9 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  /* Ten of the font's own size, which is how wide a field is in the windows
     this reproduces, divided by however many share the line. */
  .cell input,.cell select{width:calc(10em / var(--n, 1));min-width:0}
+ /* a dropdown keeps its arrow inside the box: it takes that on top of its
+    share of the line, rather than out of the text beside it */
+ .cell select{width:calc(10em / var(--n, 1) + 1.8em)}
  /* the label runs on rather than wrapping: a window grows to hold what it
     says, as the ones this reproduces do */
  .cell label{flex:0 1 auto;min-width:0;white-space:nowrap}
@@ -154,6 +161,9 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .line:not(.act)>.cell.act{flex:1 1 0;justify-content:flex-start}
  .line.act>.cell.act{flex:0 0 auto}
  .cell.act{flex:0 0 auto}
+ /* a button in the flow of the fields is as small as the word on it: the
+    little ones a line of measurements ends with are two letters wide */
+ .cell button{padding:1px 5px;white-space:nowrap}
  /* a label written before its field is right against it, and as wide as the
     widest of the ones it lines up with -- see square() */
  .cell.before>label{text-align:right;flex:0 0 auto}
@@ -164,6 +174,13 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     rather than making the window as wide as its longest line. */
  .cell.whole{flex:1 1 100%}
  .cell.runs>div{white-space:pre-line;max-width:26em}
+ /* a page one reads: the window that says what Gmsh is */
+ .prose{padding:4px 2px;line-height:1.35}
+ .prose .middle{text-align:center}
+ .prose .head{font-size:1.6em;font-weight:600;margin-bottom:2px}
+ .prose ul{margin:4px 0;padding-left:1.4em}
+ .prose li{margin:1px 0}
+ .prose a{color:#0645ad}
  .section{margin:6px 8px 2px;border-top:1px solid #ddd;padding-top:4px}
  .section h3{font-size:12px;margin:0 0 2px;color:#444;font-weight:600}
  .section .line{padding-left:0;padding-right:0}
@@ -290,6 +307,41 @@ function field(f) {
     b.onclick = () => post('/do', which(f));
     return b;
   }
+  if(f.kind === 'prose') {
+    // A page one reads rather than a form one fills in: lines of words, some
+    // of them centred, some of them items of a list, some worth following.
+    const box = document.createElement('div');
+    box.className = 'prose';
+    let list = null;
+    for(const l of (f.page || [])) {
+      const line = document.createElement(l.bullet ? 'li' : 'div');
+      if(l.bullet) {
+        if(!list) { list = document.createElement('ul'); box.appendChild(list); }
+        list.appendChild(line);
+      }
+      else {
+        list = null;
+        if(l.centred) line.className = 'middle';
+        if(l.heading) line.className = (line.className + ' head').trim();
+        box.appendChild(line);
+      }
+      if(!(l.words || []).length) line.innerHTML = '&nbsp;';
+      for(const word of (l.words || [])) {
+        const said = document.createElement(word.id === undefined ? 'span' : 'a');
+        said.textContent = word.text;
+        if(word.italic) said.style.fontStyle = 'italic';
+        if(word.id !== undefined) {
+          said.href = '#';
+          said.onclick = e => {
+            e.preventDefault();
+            post('/do', 'id=' + word.id + '&h=' + word.h);
+          };
+        }
+        line.appendChild(said);
+      }
+    }
+    return box;
+  }
   if(f.kind === 'hierarchy') {
     const box = document.createElement('div');
     box.className = 'list';
@@ -374,7 +426,8 @@ function cell(f) {
   const box = document.createElement('div');
   box.className = 'cell' + (f.kind === 'action' ? ' act' : '') +
                   (f.packed ? ' packed' : '') +
-                  (f.kind === 'list' || f.kind === 'hierarchy' ? ' whole' :
+                  (f.kind === 'list' || f.kind === 'hierarchy' ||
+                   f.kind === 'prose' ? ' whole' :
                      '') + (f.wraps ? ' runs' : '');
   if(f.help) box.title = f.help;
   if(f.kind === 'gap') { box.className = 'cell gap'; return box; }
@@ -385,6 +438,21 @@ function cell(f) {
     const say = document.createElement('div');
     say.textContent = f.value || f.label;
     box.appendChild(say);
+    return box;
+  }
+  if(f.kind === 'check' && f.fold) {
+    // A switch that opens what is under it is not a check box: the windows
+    // this reproduces draw it as a button at the end of its line, carrying an
+    // arrow that points at what pressing it would do.
+    const b = document.createElement('button');
+    b.className = 'disclose';
+    b.textContent = f.label + (f.value === '1' ? ' \u25b4' : ' \u25be');
+    b.onclick = () => post('/set', which(f) + '&v=' +
+                            (f.value === '1' ? 0 : 1));
+    box.className += ' act';
+    box.style.marginLeft = 'auto';
+    box.style.flex = '0 0 auto';
+    box.appendChild(b);
     return box;
   }
   const say = document.createElement('label');
@@ -434,6 +502,12 @@ function lines(fields, into, columns) {
     if(!rows.length || !f.sameRow) rows.push([]);
     rows[rows.length - 1].push(f);
   }
+  // A pane laid out on columns is one grid, and not one grid per line: a
+  // column is as wide as the widest thing in it on every line at once, which
+  // is the whole of what lining two lines up means. A line that does not
+  // belong on the grid -- a run of packed fields, a list that fills the
+  // height, a line under a rule -- closes it, and the next one opens another.
+  let grid = null;
   for(const row of rows) {
     const line = document.createElement('div');
     const packed = row.some(f => f.packed);
@@ -443,23 +517,38 @@ function lines(fields, into, columns) {
                                 !f.rows);
     line.className = 'line' + (row[0].rule ? ' ruled' : '') +
                      (packed ? ' packed' : '') + (fills ? ' grows' : '');
-    // A field that takes the width it needs follows the one before it; the
-    // rest share the line in columns of equal width, which is how the option
-    // window lines two rows up with one another.
-    if(columns > 1 && !packed) {
-      // The columns of two rows line up, which is the whole point of laying a
-      // pane out on columns; but a column is only as wide as what is in it,
-      // or a window with one long line in its first column would come out
-      // that many times too wide.
-      line.style.display = 'grid';
-      line.style.gridTemplateColumns = 'repeat(' + columns + ',max-content)';
-    }
     // how many of them hold a value, so that they may share the width of one
     const holds = row.filter(f => f.kind !== 'label' && f.kind !== 'gap' &&
                                   f.kind !== 'action' && f.kind !== 'list' &&
                                   f.kind !== 'hierarchy' && f.kind !== 'check' &&
                                   !f.em && !f.share).length;
     if(holds > 1) line.style.setProperty('--n', holds);
+    // A line whose fields each take a column of the pane goes on the grid,
+    // beside the lines before and after it rather than in a box of its own.
+    if(columns > 1 && !packed && !fills && !row[0].rule) {
+      if(!grid) {
+        grid = document.createElement('div');
+        grid.className = 'line grid';
+        grid.style.gridTemplateColumns = 'repeat(' + columns + ',max-content)';
+        into.appendChild(grid);
+      }
+      let head = true;
+      for(const f of row) {
+        const one = cell(f);
+        // the first field of a line opens a line of the grid, whatever the
+        // line before it left unfilled
+        if(head) { one.style.gridColumnStart = '1'; head = false; }
+        if(holds > 1) one.style.setProperty('--n', holds);
+        grid.appendChild(one);
+      }
+      // The last field of a line runs on to the end of the grid: what is
+      // written beside it takes the room no other column uses, rather than
+      // making the column it sits in as wide as itself. It is what keeps the
+      // columns as narrow as the windows this reproduces have them.
+      grid.lastChild.style.gridColumnEnd = '-1';
+      continue;
+    }
+    grid = null;
     // Fields that take the width they need follow one another with nothing
     // between them: two halves of a value are drawn as one box split in two,
     // not as two boxes with a gap. So a run of them is put in a cell of its
@@ -467,7 +556,9 @@ function lines(fields, into, columns) {
     let run = null;
     for(const f of row) {
       const one = cell(f);
-      if(f.packed && f.kind !== 'gap') {
+      // a switch that opens what is under it belongs at the end of the line,
+      // not flush against the field before it
+      if(f.packed && f.kind !== 'gap' && !f.fold) {
         if(!run) {
           run = document.createElement('div');
           run.className = 'cell packed run';

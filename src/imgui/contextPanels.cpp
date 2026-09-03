@@ -205,6 +205,99 @@ namespace {
     return changed;
   }
 
+  // A page one reads rather than a form one fills in: lines of words, some of
+  // them centred, some of them items of a list, some of them worth following.
+  //
+  // Dear ImGui has the one font, so a heading is said by size and a label set
+  // apart keeps the words the description gives it; what is written is the
+  // same page in all three interfaces, which is the point of saying it once.
+  void _prose(const Ui::Field &f, float width)
+  {
+    if(!f.prose) return;
+    float room = width > 0.f ? width : ImGui::GetContentRegionAvail().x;
+    float left = ImGui::GetCursorPosX();
+    // one run of words as it is really written, once the line has been cut
+    // where it had to be
+    struct piece {
+      std::string text;
+      const Ui::Words *from;
+      float wide;
+    };
+    for(const Ui::Line &l : f.prose()) {
+      ImGui::SetWindowFontScale(l.heading ? 1.6f : 1.f);
+      float indent = l.bullet ? 1.5f * ImGui::GetFontSize() : 0.f;
+      if(l.words.empty()) {
+        ImGui::SetWindowFontScale(1.f);
+        ImGui::TextUnformatted(" ");
+        continue;
+      }
+      std::vector<std::vector<piece>> rows(1);
+      float have = 0.f;
+      for(const Ui::Words &word : l.words) {
+        std::string held;
+        std::size_t i = 0;
+        while(i <= word.text.size()) {
+          std::size_t j = word.text.find(' ', i);
+          std::string next =
+            word.text.substr(i, j == std::string::npos ? j : j - i + 1);
+          float wide = ImGui::CalcTextSize((held + next).c_str()).x;
+          if(have + wide > room - indent && (have > 0.f || held.size())) {
+            if(held.size()) {
+              float only = ImGui::CalcTextSize(held.c_str()).x;
+              rows.back().push_back({held, &word, only});
+              have += only;
+              held.clear();
+            }
+            rows.push_back(std::vector<piece>());
+            have = 0.f;
+            // a row never begins with a space
+            while(next.size() && next[0] == ' ') next = next.substr(1);
+          }
+          held += next;
+          if(j == std::string::npos) break;
+          i = j + 1;
+        }
+        if(held.size()) {
+          float only = ImGui::CalcTextSize(held.c_str()).x;
+          rows.back().push_back({held, &word, only});
+          have += only;
+        }
+      }
+      for(std::size_t r = 0; r < rows.size(); r++) {
+        float wide = 0.f;
+        for(const piece &q : rows[r]) wide += q.wide;
+        float at = left + indent;
+        if(l.centred && wide < room) at = left + .5f * (room - wide);
+        if(l.bullet && !r) {
+          ImGui::SetCursorPosX(left);
+          ImGui::TextUnformatted("\xe2\x80\xa2");
+          ImGui::SameLine(0.f, 0.f);
+        }
+        for(std::size_t k = 0; k < rows[r].size(); k++) {
+          const piece &q = rows[r][k];
+          if(k) ImGui::SameLine(0.f, 0.f);
+          else ImGui::SetCursorPosX(at);
+          bool goes = q.from->follow != nullptr;
+          if(goes)
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.02f, .27f, .68f, 1.f));
+          ImGui::TextUnformatted(q.text.c_str());
+          if(goes) {
+            ImVec2 least = ImGui::GetItemRectMin(), most = ImGui::GetItemRectMax();
+            ImGui::GetWindowDrawList()->AddLine(
+              ImVec2(least.x, most.y - 1.f), ImVec2(most.x, most.y - 1.f),
+              ImGui::GetColorU32(ImGuiCol_Text));
+            ImGui::PopStyleColor();
+            if(ImGui::IsItemHovered()) {
+              ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+              if(ImGui::IsMouseClicked(0)) q.from->follow();
+            }
+          }
+        }
+      }
+      ImGui::SetWindowFontScale(1.f);
+    }
+  }
+
   // one field of a pane, bound to whatever the description points at: a
   // variable of ours or a Gmsh option, which the accessors hide
   void _field(const Ui::Field &f, float width, float tall = 0.f,
@@ -254,6 +347,7 @@ namespace {
     }
 
     switch(f.kind) {
+    case Ui::Prose: _prose(f, width); break;
     case Ui::Label:
       // a line that runs on over several lines rather than being cut off
       if(f.wraps) {

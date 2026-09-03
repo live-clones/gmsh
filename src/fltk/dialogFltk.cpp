@@ -72,6 +72,8 @@ namespace {
 
   // how many lines a list of fields takes, once those that share one are put
   // together
+  int _proseRows(const Ui::Field &f);
+
   int _rows(const std::vector<Ui::Field> &fields)
   {
     int rows = 0;
@@ -80,12 +82,15 @@ namespace {
       if(fields[i].visible && !fields[i].visible()) continue;
       // a list, a tree, a colour map and a line that wraps are worth as many
       // lines as they show
-      rows += (fields[i].kind == Ui::List ||
-               fields[i].kind == Ui::Hierarchy ||
-               fields[i].kind == Ui::ColorMap ||
-               (fields[i].kind == Ui::Label && fields[i].wraps)) ?
-                fields[i].rows :
-                1;
+      // a page of prose is worth the lines it says, which are lines of text
+      if(fields[i].kind == Ui::Prose) rows += _proseRows(fields[i]);
+      else
+        rows += (fields[i].kind == Ui::List ||
+                 fields[i].kind == Ui::Hierarchy ||
+                 fields[i].kind == Ui::ColorMap ||
+                 (fields[i].kind == Ui::Label && fields[i].wraps)) ?
+                  fields[i].rows :
+                  1;
     }
     return rows;
   }
@@ -133,6 +138,160 @@ namespace {
   // wider than the fields above and below it, and their labels no longer line
   // up. The windows this replaces give a choice a plain IW too, and let a long
   // entry be clipped; one that really needs more says so with widthEm.
+  // Where a word one may follow was drawn, so that a click can find it again
+  struct proseSpot {
+    int x, y, w, h;
+    std::function<void()> follow;
+  };
+
+  // Lay a page of prose out in a column, and draw it if asked to. Measuring
+  // it and drawing it are the same walk, which is the only way the window can
+  // be exactly as tall as what it has to say.
+  //
+  // The window this replaces uses an Fl_Help_View and writes HTML into it.
+  // That is not done here: a page whose lines are words, some of them
+  // centred, some of them items of a list, is a dozen calls to draw, and
+  // FLTK cannot be given the page of a view whose window has not been shown
+  // -- do it and the windows made afterwards never open.
+  int _layProse(const std::vector<Ui::Line> &page, int x, int y, int w,
+                bool paint, std::vector<proseSpot> *spots)
+  {
+    if(spots) spots->clear();
+    const int margin = WB;
+    const int left = x + margin, right = x + w - margin;
+    int at = y + margin;
+    // one piece of a line as it is really drawn: a run of words in one font,
+    // as much of it as fits on the row being filled
+    struct piece {
+      std::string text;
+      Fl_Font font;
+      int size;
+      bool link;
+      int width;
+      std::function<void()> follow;
+    };
+    for(const Ui::Line &l : page) {
+      int size = l.heading ? FL_NORMAL_SIZE + 6 : FL_NORMAL_SIZE;
+      int indent = l.bullet ? 2 * WB : 0;
+      fl_font(FL_HELVETICA, size);
+      int lead = fl_height();
+      if(l.words.empty()) {
+        at += lead;
+        continue;
+      }
+      int room = right - left - indent;
+      std::vector<piece> row;
+      int rowWidth = 0;
+      bool first = true;
+      auto flush = [&]() {
+        if(row.empty()) return;
+        int put = l.centred ? left + indent + (room - rowWidth) / 2 :
+                              left + indent;
+        if(paint && first && l.bullet) {
+          fl_font(FL_HELVETICA, size);
+          fl_color(FL_FOREGROUND_COLOR);
+          fl_draw("\xe2\x80\xa2", left, at + fl_height() - fl_descent());
+        }
+        for(const piece &q : row) {
+          if(paint) {
+            fl_font(q.font, q.size);
+            fl_color(q.link ? FL_BLUE : FL_FOREGROUND_COLOR);
+            int base = at + fl_height() - fl_descent();
+            fl_draw(q.text.c_str(), put, base);
+            if(q.link) fl_line(put, base + 1, put + q.width, base + 1);
+          }
+          if(q.follow && spots)
+            spots->push_back({put, at, q.width, lead, q.follow});
+          put += q.width;
+        }
+        at += lead;
+        row.clear();
+        rowWidth = 0;
+        first = false;
+      };
+      for(const Ui::Words &word : l.words) {
+        Fl_Font font = l.heading ? FL_HELVETICA_BOLD :
+                       word.italic ? FL_HELVETICA_ITALIC :
+                                     FL_HELVETICA;
+        fl_font(font, size);
+        // word by word, so that a long line is broken where a space is
+        std::string held;
+        std::size_t i = 0;
+        while(i < word.text.size()) {
+          std::size_t j = word.text.find(' ', i);
+          std::string next =
+            word.text.substr(i, j == std::string::npos ? j : j - i + 1);
+          int wide = (int)fl_width((held + next).c_str());
+          if(rowWidth + wide > room && (rowWidth || held.size())) {
+            if(held.size()) {
+              row.push_back({held, font, size, (bool)word.follow,
+                             (int)fl_width(held.c_str()), word.follow});
+              rowWidth += (int)fl_width(held.c_str());
+              held.clear();
+            }
+            flush();
+            fl_font(font, size);
+            // a row never begins with a space
+            while(next.size() && next[0] == ' ') next = next.substr(1);
+          }
+          held += next;
+          if(j == std::string::npos) break;
+          i = j + 1;
+        }
+        if(held.size()) {
+          fl_font(font, size);
+          int wide = (int)fl_width(held.c_str());
+          row.push_back({held, font, size, (bool)word.follow, wide,
+                         word.follow});
+          rowWidth += wide;
+        }
+      }
+      flush();
+    }
+    return at - y + margin;
+  }
+
+  // The page one reads, drawn by hand: see _layProse().
+  class proseView : public Fl_Widget {
+  public:
+    std::vector<Ui::Line> page;
+    std::vector<proseSpot> spots;
+    proseView(int x, int y, int w, int h) : Fl_Widget(x, y, w, h)
+    {
+      box(FL_FLAT_BOX);
+      color(FL_BACKGROUND2_COLOR);
+    }
+    void draw() override
+    {
+      draw_box();
+      _layProse(page, x(), y(), w(), true, &spots);
+    }
+    int handle(int event) override
+    {
+      if(event == FL_PUSH) {
+        for(const auto &s : spots)
+          if(Fl::event_x() >= s.x && Fl::event_x() < s.x + s.w &&
+             Fl::event_y() >= s.y && Fl::event_y() < s.y + s.h) {
+            if(s.follow) s.follow();
+            return 1;
+          }
+      }
+      return Fl_Widget::handle(event);
+    }
+  };
+
+  // How tall a page of prose is, in the rows everything else is measured in:
+  // it is laid out, and what that comes to is turned into rows. Saying it in
+  // lines would be guessing -- how many rows a line takes depends on how wide
+  // the column is.
+  int _proseRows(const Ui::Field &f)
+  {
+    if(!f.prose) return 1;
+    int wide = f.widthEm > 0. ? (int)(f.widthEm * FL_NORMAL_SIZE) : IW;
+    int tall = _layProse(f.prose(), 0, 0, wide, false, nullptr);
+    return (tall + BH - 1) / BH;
+  }
+
   int _fieldWidth(const Ui::Field &f, int columns)
   {
     if(f.disclosure) return BB;
@@ -164,7 +323,14 @@ namespace {
     if(f.kind == Ui::Direction) return f.rows * BH;
     // a colour map takes the pane it is in
     if(f.kind == Ui::ColorMap) return IW;
-    return (columns == 1) ? IW : IW / 2;
+    int usual = (columns == 1) ? IW : IW / 2;
+    // A dropdown keeps its arrow inside the box, at the right end, and the
+    // text has to fit beside it. One sharing a line takes the arrow on top of
+    // its share rather than out of its text, which is what the windows this
+    // replaces do -- alone on its line it has room to spare already.
+    if(f.kind == Ui::Choice && !f.multiple && columns > 1)
+      usual += 2 * FL_NORMAL_SIZE;
+    return usual;
   }
 
   // What a packed field needs: its own text and no more. It takes the width it
@@ -765,6 +931,9 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
         trailingW.push_back(wide);
         fieldW -= wide;
       }
+      // nothing runs into the edge: the last column of a grid ends where
+      // every other line ends, not against the frame
+      if(fx + fieldW > w - WB) fieldW = w - WB - fx;
       if(fieldW < FL_NORMAL_SIZE) fieldW = FL_NORMAL_SIZE;
 
       Fl_Widget *widget = nullptr;
@@ -836,9 +1005,14 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
         }
         // it says what it says and no more, on a grid where a column follows
         // it; on its own line it runs to the edge, as a caption does
-        Fl_Box *b = new Fl_Box(fx, y + (f.rule ? 1 : 0),
+        // A paragraph is set in from the top of the box it is written in:
+        // laid against it, the first line touches the frame around it, which
+        // no window does.
+        int inset = (f.wraps && f.rows > 1) ? WB / 2 : 0;
+        Fl_Box *b = new Fl_Box(fx, y + (f.rule ? 1 : 0) + inset,
                                (grid > 0 && !f.wraps) ? fieldW : w - fx - WB,
-                               (f.wraps && f.rows > 1) ? f.rows * BH : BH);
+                               ((f.wraps && f.rows > 1) ? f.rows * BH : BH) -
+                                 inset);
         b->align((f.heading ? FL_ALIGN_CENTER : FL_ALIGN_LEFT) |
                  FL_ALIGN_INSIDE |
                  (f.wraps ? FL_ALIGN_WRAP | FL_ALIGN_TOP : 0));
@@ -851,8 +1025,11 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
         Fl_Output *o = new Fl_Output(fx, y, fieldW, BH);
         widget = o;
       } break;
-      case Ui::Spacer: break;
-      case Ui::List: {
+      case Ui::Prose: {
+        // the page one reads; what is written on it is set in refresh()
+        widget = new proseView(fx, y, fieldW, _proseRows(f) * BH);
+      } break;
+    case Ui::List: {
         // one it only shows, one it chooses from, one or several at a time
         int tall = f.rows * BH;
         if(!f.rows) {
@@ -1564,6 +1741,20 @@ void dialogFltk::refresh()
       std::string value = f.getText();
       Fl_Output *o = (Fl_Output *)b.widget;
       if(!o->value() || value != o->value()) o->value(value.c_str());
+    } break;
+    case Ui::Prose: {
+      // written again only when it really changed: writing it is drawing it
+      proseView *v = (proseView *)b.widget;
+      std::vector<Ui::Line> page =
+        f.prose ? f.prose() : std::vector<Ui::Line>();
+      std::string said;
+      for(const Ui::Line &l : page)
+        for(const Ui::Words &word : l.words) said += word.text + "\n";
+      if(said != b.was) {
+        b.was = said;
+        v->page = page;
+        v->redraw();
+      }
     } break;
     case Ui::List: {
       Fl_Browser *br = (Fl_Browser *)b.widget;

@@ -600,30 +600,39 @@ namespace Dialog {
       into.push_back(number);
       // in a column of its own, so that the buttons of every line stand
       // under one another whatever the line is called
+      // As wide as an ordinary button and side by side, which is how the
+      // window this reproduces draws the pair: what they do is the same on
+      // every line, so they are the same size on every line.
       Field show = does("Show", [what]() {
         visibilityByNumber(what, _state().number[what], true);
       });
       show.sameRow = true;
+      show.widthEm = 7.;
       into.push_back(show);
       Field hide = does("Hide", [what]() {
         visibilityByNumber(what, _state().number[what], false);
       });
       hide.sameRow = true;
       hide.packed = true;
+      hide.widthEm = 7.;
       into.push_back(hide);
     }
 
     // one line of the interactive tab: a pair of buttons that pick
     void _byPicking(std::vector<Field> &into, const std::string &what)
     {
+      // All of one width, whatever each says: a column of buttons of
+      // different lengths reads as a ragged edge rather than as a column.
       Field hide = does("Hide " + what,
                         [what]() { visibilityInteractive(what + " to hide"); });
       hide.packed = true;
+      hide.widthEm = 13.;
       into.push_back(hide);
       // in a column of its own, so that they stand under one another
       Field show = does("Show " + what,
                         [what]() { visibilityInteractive(what + " to show"); });
       show.sameRow = true;
+      show.widthEm = 13.;
       into.push_back(show);
     }
 

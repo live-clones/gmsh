@@ -389,47 +389,46 @@ namespace Dialog {
     Form p;
     p.title = "About Gmsh";
     p.tabbed = false;
-    // as tall as the window this replaces, which is what it takes to say all
-    // of this without scrolling
-    p.leastRows = 21;
 
     Pane what;
-    what.scrolling = true;
-
-    what.fields.push_back(names([]() { return std::string("Gmsh"); }));
-    what.fields.push_back(says([]() {
-      return std::string("version ") + GetGmshVersion();
-    }));
-    what.fields.push_back(says([]() {
-      return std::string("Copyright (C) 1997-2026 Christophe Geuzaine and "
-                         "Jean-Francois Remacle");
-    }));
-
-    {
-      Field credits = does("Credits", []() {
-        openURL("https://gmsh.info/CREDITS.txt");
-      });
-      credits.packed = true;
-      what.fields.push_back(credits);
-      Field licence = does("Licensing information", []() {
-        openURL("https://gmsh.info/LICENSE.txt");
-      });
-      licence.packed = true;
-      licence.sameRow = true;
-      what.fields.push_back(licence);
-      Field issues = does("Issue tracker", []() {
-        openURL("https://gitlab.onelab.info/gmsh/gmsh/issues");
-      });
-      issues.packed = true;
-      issues.sameRow = true;
-      what.fields.push_back(issues);
-    }
-
-    // What this build is: exactly what `gmsh -info` prints, which is where the
-    // versions of PETSc, OCC and MED are already worked out. The window this
-    // replaces had its own copy of those tests.
-    {
-      bool first = true;
+    // A page, not a form: the window this replaces is a document -- a heading,
+    // two paragraphs, the addresses one may follow, and a list of what this
+    // build has. Written as labelled rows it came out as a table in one
+    // interface and a column of buttons in another; written as prose all
+    // three say the same thing.
+    Field page = prose([]() {
+      std::vector<Ui::Line> lines;
+      lines.push_back(titled("Gmsh"));
+      lines.push_back(middled(said(std::string("version ") +
+                                   GetGmshVersion())));
+      lines.push_back(Ui::Line());
+      lines.push_back(middled(said("Copyright (C) 1997-2026")));
+      lines.push_back(middled(
+        said("Christophe Geuzaine and Jean-Francois Remacle")));
+      lines.push_back(Ui::Line());
+      {
+        Ui::Line l;
+        l.centred = true;
+        following(l, "Credits",
+                  []() { openURL("https://gmsh.info/CREDITS.txt"); });
+        l.words.push_back(Ui::Words(" and "));
+        following(l, "licensing information",
+                  []() { openURL("https://gmsh.info/LICENSE.txt"); });
+        lines.push_back(l);
+      }
+      lines.push_back(Ui::Line());
+      lines.push_back(middled(said("Please report all issues on")));
+      {
+        Ui::Line l;
+        l.centred = true;
+        following(l, "https://gitlab.onelab.info/gmsh/gmsh/issues", []() {
+          openURL("https://gitlab.onelab.info/gmsh/gmsh/issues");
+        });
+        lines.push_back(l);
+      }
+      lines.push_back(Ui::Line());
+      // What this build is: exactly what `gmsh -info` prints, which is where
+      // the versions of PETSc, OCC and MED are already worked out.
       for(const auto &line : GetBuildInfo()) {
         std::string::size_type colon = line.find(':');
         if(colon == std::string::npos) continue;
@@ -438,27 +437,29 @@ namespace Dialog {
           name.resize(name.size() - 1);
         std::string value = line.substr(colon + 1);
         while(value.size() && value[0] == ' ') value = value.substr(1);
-        // the version is written over these, and the two addresses are the
-        // buttons above
+        // the version is written over these, and the two addresses are said
+        // in the paragraphs above
         if(name == "Version" || name == "Web site" || name == "Issue tracker")
           continue;
-        // a rule between what Gmsh is and what this build of it is, on a
-        // line of its own: over a line of text it would be drawn through it
-        if(first) {
-          Field rule = says([]() { return std::string(); });
-          rule.rule = true;
-          what.fields.push_back(rule);
-          first = false;
-        }
-        _row(what, name, value);
+        lines.push_back(item(name, value));
       }
-    }
-
-    Field visit = does("Visit https://gmsh.info", []() {
-      openURL("https://gmsh.info");
+      lines.push_back(Ui::Line());
+      {
+        Ui::Line l;
+        l.centred = true;
+        l.words.push_back(Ui::Words("Visit "));
+        following(l, "https://gmsh.info",
+                  []() { openURL("https://gmsh.info"); });
+        l.words.push_back(Ui::Words(" for more information"));
+        lines.push_back(l);
+      }
+      return lines;
     });
-    visit.packed = true;
-    what.fields.push_back(visit);
+    // the column the window this replaces sets its text in, and the height it
+    // takes to read it without scrolling
+    page.widthEm = 24.;
+    page.rows = 30;
+    what.fields.push_back(page);
 
     p.panes.push_back(what);
     return p;

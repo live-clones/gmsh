@@ -234,6 +234,53 @@ namespace Dialog {
     return f;
   }
 
+  // A page of written text rather than a row of fields: the lines are worked
+  // out as the window shows, so that what a build has is read from the build.
+  inline Field prose(std::function<std::vector<Ui::Line>()> page)
+  {
+    Field f;
+    f.kind = Prose;
+    f.prose = page;
+    return f;
+  }
+
+  // the pieces a line of prose is made of, said briefly enough to write a
+  // page with them
+  inline Ui::Line said(const std::string &text)
+  {
+    Ui::Line l;
+    l.words.push_back(Ui::Words(text));
+    return l;
+  }
+  inline Ui::Line middled(Ui::Line l)
+  {
+    l.centred = true;
+    return l;
+  }
+  inline Ui::Line item(const std::string &name, const std::string &value)
+  {
+    Ui::Line l;
+    l.bullet = true;
+    l.words.push_back(Ui::Words(name + ":", true));
+    l.words.push_back(Ui::Words(" " + value));
+    return l;
+  }
+  inline Ui::Line titled(const std::string &text)
+  {
+    Ui::Line l = middled(said(text));
+    l.heading = true;
+    return l;
+  }
+  // a word one may follow, added to a line
+  inline Ui::Line &following(Ui::Line &l, const std::string &text,
+                             std::function<void()> go)
+  {
+    Ui::Words w(text);
+    w.follow = go;
+    l.words.push_back(w);
+    return l;
+  }
+
   // a check that folds a part of the dialog away
   inline Field disclosure(const std::string &label, bool *value)
   {

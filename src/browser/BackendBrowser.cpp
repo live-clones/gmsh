@@ -613,6 +613,7 @@ namespace {
       case Ui::List: return "list";
       case Ui::Menu: return "menu";
       case Ui::Hierarchy: return "hierarchy";
+      case Ui::Prose: return "prose";
       default: return "text";
       }
     }
@@ -623,6 +624,33 @@ namespace {
       out += ",\"kind\":\"" + std::string(_kindOf(f)) + "\"";
       if(f.kind == Ui::Action) {
         out += _actionId(f.changed, "action:" + f.label);
+        return out + "}";
+      }
+      if(f.kind == Ui::Prose) {
+        // A page one reads: lines of words, each word said with how it is set
+        // and, if it is one that may be followed, what following it does.
+        out += ",\"page\":[";
+        std::vector<Ui::Line> page = f.prose ? f.prose() : std::vector<Ui::Line>();
+        for(std::size_t i = 0; i < page.size(); i++) {
+          const Ui::Line &l = page[i];
+          out += i ? ",{" : "{";
+          if(l.centred) out += "\"centred\":true,";
+          if(l.bullet) out += "\"bullet\":true,";
+          if(l.heading) out += "\"heading\":true,";
+          out += "\"words\":[";
+          for(std::size_t j = 0; j < l.words.size(); j++) {
+            const Ui::Words &word = l.words[j];
+            out += j ? ",{" : "{";
+            out += "\"text\":" + _quoted(word.text);
+            if(word.italic) out += ",\"italic\":true";
+            if(word.follow)
+              out += _actionId(word.follow, "follow:" + word.text);
+            out += "}";
+          }
+          out += "]}";
+        }
+        out += "]";
+        out += _fieldId(f);
         return out + "}";
       }
       if(f.kind == Ui::Hierarchy) {
