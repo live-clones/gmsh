@@ -884,6 +884,9 @@ StringXNumber GeneralOptions_Number[] = {
     "Level of information printed on the terminal and the message console "
     "(0: silent except for fatal errors, 1: +errors, 2: +warnings, 3: +direct, "
     "4: +information, 5: +status, 99: +debug)" },
+  { F|O, "VertexBufferObjects" , opt_general_vertex_buffer_objects , 1. ,
+    "Keep the vertex arrays in OpenGL buffer objects instead of sending them "
+    "from client memory at each frame? (not available on all platforms)" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the visibility "
     "window" },
@@ -1221,6 +1224,9 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 0. ,
     "Draw only the skin of 3D meshes?" },
+  { F|O, "DrawUniqueEdges" , opt_mesh_draw_unique_edges , 1. ,
+    "Draw each mesh edge once, instead of once per element sharing it? (only "
+    "applies if Mesh.Explode is 1)" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 

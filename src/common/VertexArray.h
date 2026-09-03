@@ -222,15 +222,11 @@ public:
 
   // index the arrays in finalize() (set from the GMSH_INDEXED_VA env variable)
   static int indexing;
-  // drop elements that are drawn several times (GMSH_UNIQUE_VA env variable)
-  static int unique;
   // statistics gathered while indexing
   static long int statCorners, statVertices, statVerticesNoNormal;
   static long int statUniqueIn, statUniqueKept;
   static double statTime, statUniqueTime;
   static void printStats();
-  // true if the unique element filter is enabled
-  static bool uniqueFilterEnabled();
 };
 
 #endif

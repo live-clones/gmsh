@@ -16,7 +16,6 @@
 
 std::vector<unsigned int> VertexArray::vboToDelete;
 int VertexArray::indexing = -1;
-int VertexArray::unique = -1;
 long int VertexArray::statUniqueIn = 0;
 long int VertexArray::statUniqueKept = 0;
 double VertexArray::statUniqueTime = 0.;
@@ -54,15 +53,6 @@ namespace {
   };
   typedef std::unordered_map<VertexKey, unsigned int, VertexKeyHash,
                              VertexKeyEqual> VertexKeyMap;
-}
-
-static int getUniqueMode()
-{
-  if(VertexArray::unique < 0) {
-    const char *s = getenv("GMSH_UNIQUE_VA");
-    VertexArray::unique = s ? atoi(s) : 0;
-  }
-  return VertexArray::unique;
 }
 
 // fill a corner key with the N corners sorted lexicographically, so that an
@@ -437,7 +427,7 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
   // drop elements that have already been added: an edge or a face shared by
   // several elements is only drawn once. This reduces both the memory and the
   // rendering time, at the price of a hash table lookup per element.
-  if(unique && getUniqueMode() && (npe == 2 || npe == 3)) {
+  if(unique && (npe == 2 || npe == 3)) {
     _statUniqueIn += npe;
     if(getUniqueFilter(false)->isDuplicate(npe, x, y, z, r, g, b, a)) return;
     _statUniqueKept += npe;
@@ -621,8 +611,6 @@ void VertexArray::_deindex()
   _colors.swap(col);
   _indices.clear();
 }
-
-bool VertexArray::uniqueFilterEnabled() { return getUniqueMode() != 0; }
 
 void VertexArray::printStats()
 {

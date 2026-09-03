@@ -274,15 +274,13 @@ static int needPolygonOffset()
   return 0;
 }
 
-// buffer objects are enabled with the GMSH_VBO environment variable
-static int getVboMode()
+static bool useVertexBufferObjects()
 {
-  static int mode = -1;
-  if(mode < 0) {
-    const char *s = getenv("GMSH_VBO");
-    mode = s ? atoi(s) : 0;
-  }
-  return mode;
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
+  return CTX::instance()->vertexBufferObjects ? true : false;
+#else
+  return false;
+#endif
 }
 
 // statistics on the data uploaded to the GPU since the last frame
@@ -297,8 +295,10 @@ void deleteOrphanVertexArrayBuffers()
   }
 
   if(VertexArray::vboToDelete.empty()) return;
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
   glDeleteBuffers((GLsizei)VertexArray::vboToDelete.size(),
                   &VertexArray::vboToDelete[0]);
+#endif
   VertexArray::vboToDelete.clear();
 }
 
@@ -306,6 +306,7 @@ void deleteOrphanVertexArrayBuffers()
 // arrays have changed since
 static void uploadVertexArray(VertexArray *va)
 {
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
   unsigned int *id = va->getVboIds();
   if(!id[0]) {
     glGenBuffers(4, id);
@@ -342,48 +343,80 @@ static void uploadVertexArray(VertexArray *va)
               (va->hasColors() ? n * 4. : 0.) +
               (va->isIndexed() ? va->getNumIndices() * 4. : 0.);
   vboTime += TimeOfDay() - t1;
+#endif
 }
 
 const GLvoid *vaVertexPointer(VertexArray *va)
 {
-  if(!getVboMode()) return va->getVertexArray();
+  if(!useVertexBufferObjects()) {
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
+    // make sure a buffer left bound by a previous frame does not turn the
+    // client-side pointer below into an offset
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
+    return va->getVertexArray();
+  }
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
   uploadVertexArray(va);
   glBindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[0]);
+#endif
   return nullptr;
 }
 
 const GLvoid *vaNormalPointer(VertexArray *va)
 {
-  if(!getVboMode()) return va->getNormalArray();
+  if(!useVertexBufferObjects()) {
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
+    // make sure a buffer left bound by a previous frame does not turn the
+    // client-side pointer below into an offset
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
+    return va->getNormalArray();
+  }
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
   uploadVertexArray(va);
   glBindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[1]);
+#endif
   return nullptr;
 }
 
 const GLvoid *vaColorPointer(VertexArray *va)
 {
-  if(!getVboMode()) return va->getColorArray();
+  if(!useVertexBufferObjects()) {
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
+    // make sure a buffer left bound by a previous frame does not turn the
+    // client-side pointer below into an offset
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
+    return va->getColorArray();
+  }
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
   uploadVertexArray(va);
   glBindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[2]);
+#endif
   return nullptr;
 }
 
 void drawVertexArray(VertexArray *va, GLenum type)
 {
   if(va->isIndexed()) {
-    if(getVboMode()) {
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
+    if(useVertexBufferObjects()) {
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, va->getVboIds()[3]);
       glDrawElements(type, va->getNumIndices(), GL_UNSIGNED_INT, nullptr);
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
+#endif
       glDrawElements(type, va->getNumIndices(), GL_UNSIGNED_INT,
                      va->getIndexArray());
   }
   else
     glDrawArrays(type, 0, va->getNumVertices());
 
-  if(getVboMode()) glBindBuffer(GL_ARRAY_BUFFER, 0);
+#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
+  if(useVertexBufferObjects()) glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
 }
 
 void drawContext::draw3d()

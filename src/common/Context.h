@@ -92,6 +92,7 @@ struct contextMeshOptions {
   int labelType;
   double nodeSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
+  int drawUniqueEdges;
   int smoothNormals, clip;
   // records cpu times for 1D, 2D and 3D mesh generation
   double timer[3];
@@ -307,6 +308,8 @@ public:
   // clipping plane options
   double clipPlane[6][4];
   int clipWholeElements, clipOnlyDrawIntersectingVolume, clipOnlyVolume;
+  // draw the vertex arrays from OpenGL buffer objects instead of client memory
+  int vertexBufferObjects;
   // polygon offset options
   int polygonOffset, polygonOffsetAlways;
   double polygonOffsetFactor, polygonOffsetUnits;

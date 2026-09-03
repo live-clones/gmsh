@@ -2975,6 +2975,12 @@ double opt_general_verbosity(OPT_ARGS_NUM)
   return Msg::GetVerbosity();
 }
 
+double opt_general_vertex_buffer_objects(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->vertexBufferObjects = (int)val;
+  return CTX::instance()->vertexBufferObjects;
+}
+
 double opt_general_progress_meter_step(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { Msg::SetProgressMeterStep((int)val); }
@@ -6589,6 +6595,16 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->mesh.drawSkinOnly = (int)val; }
   return CTX::instance()->mesh.drawSkinOnly;
+}
+
+double opt_mesh_draw_unique_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->mesh.drawUniqueEdges != (int)val)
+      CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->mesh.drawUniqueEdges = (int)val;
+  }
+  return CTX::instance()->mesh.drawUniqueEdges;
 }
 
 double opt_mesh_save_all(OPT_ARGS_NUM)

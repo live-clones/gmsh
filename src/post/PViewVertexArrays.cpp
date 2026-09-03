@@ -356,8 +356,7 @@ static bool faceKey(const int *idx, std::uint64_t *k)
 static bool topoDuplicate(VertexArray *va, bool &unique, const int *idx, int n,
                           const unsigned int *col)
 {
-  if(!unique || !elementNodeIds || !VertexArray::uniqueFilterEnabled())
-    return false;
+  if(!unique || !elementNodeIds) return false;
 
   std::uint64_t k[8];
   for(int i = 0; i < n; i++) {

@@ -288,10 +288,7 @@ static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
 // exploded, and if no clip plane cuts through them and opens up the interior.
 static bool removeInteriorFaces()
 {
-  // make sure the mode has been read from the environment
-  VertexArray::uniqueFilterEnabled();
-  if(VertexArray::unique < 3 && !CTX::instance()->mesh.drawSkinOnly)
-    return false;
+  if(!CTX::instance()->mesh.drawSkinOnly) return false;
   if(CTX::instance()->mesh.explode != 1.) return false;
   if(CTX::instance()->mesh.clip && !CTX::instance()->clipWholeElements)
     return false;
@@ -384,12 +381,8 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
   // finds nothing at all when the elements are exploded, since no two of them
   // then share any coordinate
   const bool filtering =
-    VertexArray::uniqueFilterEnabled() && (explode == 1.) && !pick;
-  // GMSH_UNIQUE_VA=2 also filters the faces, which are shared by at most two
-  // elements and thus give a smaller reduction than the edges
-  const bool filterF = (VertexArray::unique > 1);
+    CTX::instance()->mesh.drawUniqueEdges && (explode == 1.) && !pick;
   const bool uniqueEdges = (e->dim() > 1 && filtering);
-  const bool uniqueFaces = (e->dim() > 2 && filtering && filterF);
 
   // when the elements have a topology, identify a duplicated edge by its two
   // vertices rather than by the coordinates of its corners: this is both
@@ -398,13 +391,9 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
   UniqueElementFilter *filter =
     (uniqueEdges && e->va_lines) ?
       e->va_lines->getUniqueFilter(nthreads > 1) : nullptr;
-  UniqueElementFilter *filterFaces =
-    (uniqueFaces && e->va_triangles) ?
-      e->va_triangles->getUniqueFilter(nthreads > 1) : nullptr;
   // size the tables up front: growing them by successive doublings costs about
   // as much as the lookups themselves
   if(filter) filter->reserve(2 * elements.size());
-  if(filterFaces) filterFaces->reserve(2 * elements.size());
 
   long int numIn = 0, numKept = 0;
 
@@ -462,8 +451,6 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 
     if(faces) {
       int numRep = ele->getNumFacesRep(curved);
-      bool topo = (filterFaces && numRep == ele->getNumFaces());
-      bool unique = uniqueFaces && !topo;
       int perFace = interior ? repPerFace(ele, curved) : 0;
       for(int j = 0; j < numRep; j++) {
         if(perFace) {
@@ -479,20 +466,6 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
                                  nc > 3 ? fv[3] : nullptr))
             continue;
         }
-        if(topo) {
-          MVertex *fv[4];
-          int nc = ele->getFaceCorners(j, fv);
-          if(!nc) {
-            MFace fa = ele->getFace(j);
-            nc = (int)fa.getNumVertices();
-            for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
-          }
-          numIn += 3;
-          if(filterFaces->isDuplicate(c, fv[0], fv[1], fv[2],
-                                      nc > 3 ? fv[3] : nullptr))
-            continue;
-          numKept += 3;
-        }
         double x[3], y[3], z[3];
         SVector3 n[3];
         ele->getFaceRep(curved, j, x, y, z, n);
@@ -507,7 +480,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-        vaTriangle->add(x, y, z, n, col, ele, unique);
+        vaTriangle->add(x, y, z, n, col, ele, false);
       }
     }
   }
