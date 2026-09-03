@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <map>
 #include <cmath>
 #include "drawContext.h"
 #include "GmshMessage.h"
@@ -350,6 +351,109 @@ template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
 
 // Routine for drawing the vertex arrays
 
+// Merged vertex arrays. On a model made of many entities the per-entity draw
+// calls dominate the frame: an assembly of 38000 entities spends about 8 of its
+// 13 ms in them, while a model of the same size held in a few entities spends
+// none. Concatenate the arrays of all the entities of a dimension into a single
+// one and draw that in one call. The entities keep their own arrays, which are
+// still used for picking and for the entities that are selected: those are
+// drawn again on top of the merged draw, so that selecting something does not
+// require the merged arrays to be rebuilt.
+class mergedArrays {
+public:
+  VertexArray *lines[4], *triangles[4];
+  bool built;
+  mergedArrays() : built(false)
+  {
+    for(int i = 0; i < 4; i++) lines[i] = triangles[i] = nullptr;
+  }
+  void clear()
+  {
+    for(int i = 0; i < 4; i++) {
+      delete lines[i];
+      delete triangles[i];
+      lines[i] = triangles[i] = nullptr;
+    }
+    built = false;
+  }
+};
+
+static std::map<GModel *, mergedArrays> _merged;
+// set while a merged array covers the entities being drawn, per primitive
+static bool _mergedLines = false, _mergedTriangles = false;
+
+// below this many entities the per-entity draw calls cost nothing, and merging
+// would only duplicate the arrays in memory
+static const std::size_t mergeThreshold = 200;
+
+template <class IT>
+static VertexArray *buildMerged(IT first, IT last, bool lines, bool forceColor,
+                                unsigned int flatColor)
+{
+  std::size_t num = 0, n = 0;
+  for(IT it = first; it != last; it++) {
+    VertexArray *va = lines ? (*it)->va_lines : (*it)->va_triangles;
+    if(va && va->getNumVertices()) { n += va->getNumVertices(); num++; }
+  }
+  static int off = -1;
+  if(off < 0) off = getenv("GMSH_NO_MERGE") ? 1 : 0;
+  if(off || num < mergeThreshold || !n) return nullptr;
+
+  VertexArray *out = new VertexArray(lines ? 2 : 3, 1);
+  for(IT it = first; it != last; it++) {
+    GEntity *e = *it;
+    VertexArray *va = lines ? e->va_lines : e->va_triangles;
+    if(!va || !va->getNumVertices()) continue;
+    // reproduce exactly the colour drawArrays() would have used
+    unsigned int col = 0;
+    const unsigned char *c = nullptr;
+    if(forceColor) {
+      col = flatColor;
+      c = (const unsigned char *)&col;
+    }
+    else if(!(va->hasColors() &&
+              (CTX::instance()->pickElements ||
+               (CTX::instance()->mesh.colorCarousel == 0 ||
+                CTX::instance()->mesh.colorCarousel == 3)))) {
+      col = getColorByEntity(e);
+      c = (const unsigned char *)&col;
+    }
+    out->merge(va, c);
+  }
+  out->clearElementPointers();
+  return out;
+}
+
+// draw one of the merged arrays: it always carries its own colours
+static void drawMergedArray(drawContext *ctx, VertexArray *va, GLenum type,
+                            bool useNormalArray)
+{
+  if(!va || !va->getNumVertices()) return;
+
+  glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
+  glEnableClientState(GL_VERTEX_ARRAY);
+  if(useNormalArray && va->hasNormals()) {
+    glEnable(GL_LIGHTING);
+    glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
+    glEnableClientState(GL_NORMAL_ARRAY);
+  }
+  else
+    glDisableClientState(GL_NORMAL_ARRAY);
+  glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
+  glEnableClientState(GL_COLOR_ARRAY);
+
+  if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)
+    glEnable(GL_POLYGON_OFFSET_FILL);
+
+  drawVertexArray(va, type);
+
+  glDisable(GL_POLYGON_OFFSET_FILL);
+  glDisable(GL_LIGHTING);
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+}
+
 static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
                        GLint type, bool useNormalArray, int forceColor = 0,
                        unsigned int color = 0)
@@ -374,6 +478,19 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
       }
       return;
     }
+  }
+
+  // already covered by the merged draw, unless it is selected and has to be
+  // drawn again on top of it
+  bool merged = (va->getNumVerticesPerElement() == 2) ? _mergedLines :
+                                                        _mergedTriangles;
+  bool overlay = false;
+  if(merged && !ctx->inPickColorMode()) {
+    if(!e->getSelection()) return;
+    // the entity is already in the merged draw, in its unselected colour: draw
+    // it again on top, which needs the depth test to accept equal depths
+    overlay = true;
+    glDepthFunc(GL_LEQUAL);
   }
 
   glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
@@ -413,6 +530,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
 
   drawVertexArray(va, type);
 
+  if(overlay) glDepthFunc(GL_LESS);
   glDisable(GL_POLYGON_OFFSET_FILL);
   glDisable(GL_LIGHTING);
 
@@ -730,17 +848,70 @@ void drawContext::drawMesh()
 #endif
     if(m->getVisibility() && isVisible(m)) {
       int status = m->getMeshStatus();
+
+      // concatenate the arrays of the dimensions that hold many entities, and
+      // draw each of them in a single call; the entities then only draw their
+      // labels and, if they are selected, themselves on top
+      mergedArrays &ma = _merged[m];
+      if(changed) ma.clear();
+      if(!ma.built && !inPickColorMode()) {
+        ma.built = true;
+        if(status >= 1)
+          ma.lines[1] =
+            buildMerged(m->firstEdge(), m->lastEdge(), true, false, 0);
+        if(status >= 2) {
+          ma.lines[2] = buildMerged(m->firstFace(), m->lastFace(), true,
+                                    CTX::instance()->mesh.surfaceFaces,
+                                    CTX::instance()->color.mesh.line);
+          ma.triangles[2] =
+            buildMerged(m->firstFace(), m->lastFace(), false, false, 0);
+        }
+        if(status >= 3) {
+          ma.lines[3] = buildMerged(m->firstRegion(), m->lastRegion(), true,
+                                    CTX::instance()->mesh.volumeFaces,
+                                    CTX::instance()->color.mesh.line);
+          ma.triangles[3] =
+            buildMerged(m->firstRegion(), m->lastRegion(), false, false, 0);
+        }
+      }
+      bool merge = !inPickColorMode();
+
       if(status >= 0)
         std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
-      if(status >= 1)
+      if(status >= 1) {
+        if(merge) drawMergedArray(this, ma.lines[1], GL_LINES, false);
+        _mergedLines = (merge && ma.lines[1]);
         std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
+        _mergedLines = false;
+      }
       if(status >= 2) {
         beginFakeTransparency();
+        if(merge) {
+          drawMergedArray(this, ma.lines[2], GL_LINES,
+                          CTX::instance()->mesh.light &&
+                            CTX::instance()->mesh.lightLines);
+          drawMergedArray(this, ma.triangles[2], GL_TRIANGLES,
+                          CTX::instance()->mesh.light);
+        }
+        _mergedLines = (merge && ma.lines[2]);
+        _mergedTriangles = (merge && ma.triangles[2]);
         std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
+        _mergedLines = _mergedTriangles = false;
         endFakeTransparency();
       }
-      if(status >= 3)
+      if(status >= 3) {
+        if(merge) {
+          drawMergedArray(this, ma.lines[3], GL_LINES,
+                          CTX::instance()->mesh.light &&
+                            (CTX::instance()->mesh.lightLines > 1));
+          drawMergedArray(this, ma.triangles[3], GL_TRIANGLES,
+                          CTX::instance()->mesh.light);
+        }
+        _mergedLines = (merge && ma.lines[3]);
+        _mergedTriangles = (merge && ma.triangles[3]);
         std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
+        _mergedLines = _mergedTriangles = false;
+      }
     }
   }
 

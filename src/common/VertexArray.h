@@ -213,8 +213,13 @@ public:
                           double &max, int &numSteps, double &time,
                           double &xmin, double &ymin, double &zmin,
                           double &xmax, double &ymax, double &zmax);
-  // merge another vertex array into this one
-  void merge(VertexArray *va);
+  // Merge another vertex array into this one. If a color is given it replaces
+  // the colors of the merged data, which is how the arrays of several entities
+  // drawn each in their own single color are concatenated.
+  void merge(VertexArray *va, const unsigned char *color = nullptr);
+  // the element pointers are only needed for picking, which uses the arrays of
+  // the entities themselves
+  void clearElementPointers() { std::vector<MElement *>().swap(_elements); }
 
   // buffer objects whose vertex array has been deleted: they can only be freed
   // when a GL context is current, i.e. at the beginning of the next frame

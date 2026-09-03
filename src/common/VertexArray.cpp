@@ -888,7 +888,7 @@ void VertexArray::fromChar(int length, const char *bytes, int swap)
   }
 }
 
-void VertexArray::merge(VertexArray* va)
+void VertexArray::merge(VertexArray* va, const unsigned char *color)
 {
   _deindex();
   va->_deindex();
@@ -897,8 +897,17 @@ void VertexArray::merge(VertexArray* va)
   if(va->getNumVertices() != 0) {
     _vertices.insert(_vertices.end(), va->firstVertex(), va->lastVertex());
     _normals.insert(_normals.end(), va->firstNormal(), va->lastNormal());
-    _colors.insert(_colors.end(), va->firstColor(), va->lastColor());
+    if(color) {
+      // the merged data is drawn in a single color: repeat it
+      std::size_t n = _colors.size() + 4 * va->getNumVertices();
+      _colors.reserve(n);
+      for(int i = 0; i < va->getNumVertices(); i++)
+        for(int j = 0; j < 4; j++) _colors.push_back(color[j]);
+    }
+    else
+      _colors.insert(_colors.end(), va->firstColor(), va->lastColor());
     _elements.insert(_elements.end(), va->firstElementPointer(),
                      va->lastElementPointer());
   }
+  _vboDirty = true;
 }
