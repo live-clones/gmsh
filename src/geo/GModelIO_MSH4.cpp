@@ -1034,7 +1034,7 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
 
     const int numVertPerSimplex = entityDim + 1;
     if(binary) {
-      for(int j = 0; j < numElements; ++j) {
+      for(std::size_t j = 0; j < numElements; ++j) {
         std::size_t tmp[2];
         if(fread(tmp, sizeof(std::size_t), 2, fp) != 2) {
           delete[] elementsRead;
@@ -1091,7 +1091,7 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
         }
         if(swap) SwapBytes((char *)&data[0], sizeof(std::size_t), n);
         std::vector<MVertex *> simplices(n);
-        for(int k = 0; k < n; k++) {
+        for(std::size_t k = 0; k < n; k++) {
           simplices[k] = model->getMeshVertexByTag(data[k]);
           if(!simplices[k]) {
             Msg::Error("Unknown node %zu in element %zu, for entity %d %d and "
@@ -1154,7 +1154,7 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
             delete[] elementsRead;
             return nullptr;
           }
-          for(int ii = 0; ii < polygonSize; ++ii) {
+          for(std::size_t ii = 0; ii < polygonSize; ++ii) {
             std::size_t vertexTag = 0;
             if(ii != polygonSize - 1) {
               if(sscanf(str, "%zu %[0-9- ]", &vertexTag, str) != 2) {
@@ -1202,7 +1202,7 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
           delete[] elementsRead;
           return nullptr;
         }
-        for(int k = 0; k < n; k++) {
+        for(std::size_t k = 0; k < n; k++) {
           std::size_t vertexTag = 0;
           if(k != n - 1) {
             if(sscanf(str, "%zu %[0-9- ]", &vertexTag, str) != 2) {
@@ -3553,7 +3553,7 @@ static void writeMSH4Polytopes(
             size_t polygonSize = polygon->getNumVertices();
             tags.push_back(1);
             tags.push_back(polygonSize);
-            for(int j = 0; j < polygonSize; j++) {
+            for(std::size_t j = 0; j < polygonSize; j++) {
               tags.push_back(polygon->getVertex(j)->getNum());
             }
 
@@ -3570,7 +3570,7 @@ static void writeMSH4Polytopes(
             MPolyhedron *polyhedron = static_cast<MPolyhedron *>(e);
             size_t numPolygons = polyhedron->getNumPolygons();
             tags.push_back(numPolygons);
-            for(int j = 0; j < numPolygons; j++) {
+            for(std::size_t j = 0; j < numPolygons; j++) {
               int i0 = polyhedron->getPolygonStart(j);
               int i1 = polyhedron->getPolygonStart(j + 1);
               tags.push_back(i1 - i0);
