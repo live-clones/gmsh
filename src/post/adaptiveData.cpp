@@ -1398,7 +1398,7 @@ bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
       std::unordered_map<std::pair<std::size_t, std::size_t>, size_t,
                          decltype(hasher)>
         mids(0, hasher);
-      for(int j = 0; j < simplices.size(); j += 3) {
+      for(std::size_t j = 0; j < simplices.size(); j += 3) {
         // create middles
         size_t *is = &simplices[j];
         size_t mid[3];
@@ -1433,7 +1433,7 @@ bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
       std::unordered_map<std::pair<std::size_t, std::size_t>, size_t,
                          decltype(hasher)>
         mids(0, hasher);
-      for(int j = 0; j < simplices.size(); j += 4) {
+      for(std::size_t j = 0; j < simplices.size(); j += 4) {
         // create middles
         size_t *is = &simplices[j];
         size_t mid[6];
@@ -1524,7 +1524,7 @@ bool adaptPolytope(int level, int numComp, MElement *e, int &numNodes,
 
   std::vector<PCoords> newCoords(simplices.size(), PCoords(0, 0, 0));
   std::vector<PValues> newValues(simplices.size(), PValues(numComp));
-  for(int j = 0; j < simplices.size(); ++j) {
+  for(std::size_t j = 0; j < simplices.size(); ++j) {
     newCoords[j] = coords[simplices[j]];
     newValues[j] = values[simplices[j]];
   }
