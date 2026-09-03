@@ -13,6 +13,7 @@
 #include "GmshDefines.h"
 #include "PView.h"
 #include "PViewOptions.h"
+#include "GModel.h"
 #include "Context.h"
 
 void clip_cb(Fl_Widget *w, void *data) { FlGui::instance()->clipping->show(); }
@@ -105,15 +106,26 @@ static void clip_update_cb(Fl_Widget *w, void *data)
         CTX::instance()->clipPlane[idx][j]);
   }
 
-  if(CTX::instance()->clipWholeElements ||
-     CTX::instance()->clipWholeElements !=
-       FlGui::instance()->clipping->butt[0]->value()) {
-    for(int clip = 0; clip < 6; clip++) {
-      if(CTX::instance()->mesh.clip)
+  // Changing one of the toggles changes the visibility rule itself, and every
+  // entity has to be rebuilt. Moving a plane only affects the entities it cuts,
+  // or that it moved in or out of: let the model work out which ones.
+  bool togglesChanged =
+    (CTX::instance()->clipWholeElements !=
+     FlGui::instance()->clipping->butt[0]->value()) ||
+    (CTX::instance()->clipOnlyDrawIntersectingVolume !=
+     FlGui::instance()->clipping->butt[1]->value()) ||
+    (CTX::instance()->clipOnlyVolume !=
+     FlGui::instance()->clipping->butt[2]->value());
+
+  if(CTX::instance()->clipWholeElements || togglesChanged) {
+    for(std::size_t index = 0; index < PView::list.size(); index++)
+      if(PView::list[index]->getOptions()->clip)
+        PView::list[index]->setChanged(true);
+    if(CTX::instance()->mesh.clip) {
+      if(togglesChanged)
         CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-      for(std::size_t index = 0; index < PView::list.size(); index++)
-        if(PView::list[index]->getOptions()->clip)
-          PView::list[index]->setChanged(true);
+      else
+        GModel::current()->clipPlanesChanged();
     }
   }
 

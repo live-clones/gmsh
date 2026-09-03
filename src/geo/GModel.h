@@ -737,6 +737,11 @@ public:
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
 
+  // Mark the entities whose mesh vertex arrays have to be rebuilt after the
+  // clipping planes moved: only those that the planes cut, or that they moved
+  // in or out of, actually change. Sets Mesh.Changed accordingly.
+  void clipPlanesChanged();
+
   // reclassify a surface mesh, using an angle threshold to tag edges and faces
   void classifySurfaces(double angleThreshold, bool includeBoundary,
                         bool forReparametrization, double curveAngleThreshold);
