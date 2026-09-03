@@ -242,6 +242,7 @@ public:
   int getNumNodes(int step, int ent, int ele);
   int getNode(int step, int ent, int ele, int nod, double &x, double &y,
               double &z);
+  std::size_t getNodeId(int step, int ent, int ele, int nod);
   void setNode(int step, int ent, int ele, int nod, double x, double y,
                double z);
   void tagNode(int step, int ent, int ele, int nod, int tag);

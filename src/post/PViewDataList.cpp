@@ -4,6 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <string.h>
+#include <unordered_map>
 #include "PView.h"
 #include "PViewDataList.h"
 #include "GmshMessage.h"
@@ -13,6 +15,7 @@
 #include "SmoothData.h"
 #include "Context.h"
 #include "polynomialBasis.h"
+#include "OS.h"
 
 PViewDataList::PViewDataList(bool isAdapted)
   : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF), NbSP(0), NbVP(0),
@@ -20,7 +23,8 @@ PViewDataList::PViewDataList(bool isAdapted)
     NbVQ(0), NbTQ(0), NbSG(0), NbVG(0), NbTG(0), NbSS(0), NbVS(0), NbTS(0),
     NbSH(0), NbVH(0), NbTH(0), NbSI(0), NbVI(0), NbTI(0), NbSY(0), NbVY(0),
     NbTY(0), NbSR(0), NbVR(0), NbTR(0), NbSD(0), NbVD(0), NbTD(0), NbT2(0),
-    NbT3(0), _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1),
+    NbT3(0), _nodeIndexStatus(0), _lastElement(-1), _lastDimension(-1),
+    _lastNumNodes(-1),
     _lastNumComponents(-1), _lastNumValues(-1), _lastNumEdges(-1),
     _lastType(-1), _lastXYZ(nullptr), _lastVal(nullptr), _isAdapted(isAdapted)
 {
@@ -445,6 +449,99 @@ int PViewDataList::getNumNodes(int step, int ent, int ele)
   return _lastNumNodes;
 }
 
+// list-based data stores raw coordinates and has no notion of a node shared by
+// several elements: recreate one by merging the nodes that have exactly the
+// same coordinates. The result is cached, so that it is only paid once and not
+// on every vertex array rebuild
+namespace {
+  struct NodeKey {
+    double x, y, z;
+  };
+  struct NodeKeyHash {
+    std::size_t operator()(const NodeKey &k) const
+    {
+      const unsigned char *p = (const unsigned char *)&k;
+      std::size_t h = 14695981039346656037ULL;
+      for(std::size_t i = 0; i < sizeof(NodeKey); i++) {
+        h ^= p[i];
+        h *= 1099511628211ULL;
+      }
+      return h;
+    }
+  };
+  struct NodeKeyEqual {
+    bool operator()(const NodeKey &a, const NodeKey &b) const
+    {
+      return !memcmp(&a, &b, sizeof(NodeKey));
+    }
+  };
+} // namespace
+
+void PViewDataList::_buildNodeIndex()
+{
+  if(_nodeIndexStatus) return;
+
+  int numEle = getNumElements(0, 0);
+  if(numEle <= 0) {
+    _nodeIndexStatus = -1;
+    return;
+  }
+
+  double t1 = TimeOfDay();
+
+  // one identifier per (element, node): bail out instead of allocating an
+  // unreasonable amount of memory on very large list-based views
+  const std::size_t maxNodes = 100000000;
+  std::size_t total = 0;
+  _nodeOffset.resize(numEle + 1);
+  _nodeOffset[0] = 0;
+  for(int i = 0; i < numEle; i++) {
+    total += getNumNodes(0, 0, i);
+    if(total > maxNodes) {
+      Msg::Info("Too many list-based nodes (> %lu) to recreate a topology",
+                (unsigned long)maxNodes);
+      _nodeOffset.clear();
+      _nodeIndexStatus = -1;
+      return;
+    }
+    _nodeOffset[i + 1] = (unsigned int)total;
+  }
+
+  _nodeId.resize(total);
+  std::unordered_map<NodeKey, unsigned int, NodeKeyHash, NodeKeyEqual> map;
+  map.reserve(total / 4 + 1);
+  unsigned int next = 0;
+  for(int i = 0; i < numEle; i++) {
+    int n = getNumNodes(0, 0, i);
+    for(int j = 0; j < n; j++) {
+      NodeKey k;
+      getNode(0, 0, i, j, k.x, k.y, k.z);
+      auto it = map.find(k);
+      if(it == map.end()) {
+        map[k] = next;
+        _nodeId[_nodeOffset[i] + j] = next++;
+      }
+      else
+        _nodeId[_nodeOffset[i] + j] = it->second;
+    }
+  }
+
+  _nodeIndexStatus = 1;
+  Msg::Info("Recreated %u nodes out of %lu list-based coordinates in %g s",
+            next, (unsigned long)total, TimeOfDay() - t1);
+}
+
+std::size_t PViewDataList::getNodeId(int step, int ent, int ele, int nod)
+{
+  _buildNodeIndex();
+  if(_nodeIndexStatus != 1) return 0;
+  if(ele < 0 || ele + 1 >= (int)_nodeOffset.size()) return 0;
+  std::size_t k = (std::size_t)_nodeOffset[ele] + nod;
+  if(k >= _nodeId.size()) return 0;
+  // 0 means "no topology", so shift the identifiers by one
+  return (std::size_t)_nodeId[k] + 1;
+}
+
 int PViewDataList::getNode(int step, int ent, int ele, int nod, double &x,
                            double &y, double &z)
 {
@@ -459,6 +556,10 @@ void PViewDataList::setNode(int step, int ent, int ele, int nod, double x,
                             double y, double z)
 {
   if(step) return;
+  // the coordinates change: the recreated topology is no longer valid
+  _nodeIndexStatus = 0;
+  _nodeId.clear();
+  _nodeOffset.clear();
   if(ele != _lastElement) _setLast(ele);
   _lastXYZ[nod] = x;
   _lastXYZ[_lastNumNodes + nod] = y;

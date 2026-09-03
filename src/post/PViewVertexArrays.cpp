@@ -321,6 +321,43 @@ static void addOutlinePoint(PView *p, double **xyz, unsigned int color,
                     true);
 }
 
+// Node identifiers of the element being drawn, or null when the data has no
+// topology and none could be recreated. The vertex arrays of a view are built
+// serially, so a file static is enough here.
+static std::size_t *elementNodeIds = nullptr;
+
+// Skip an element that has already been added, identifying it by its nodes
+// instead of by the coordinates of its corners. Returns true if the element
+// should be skipped, and clears `unique' when the check was done here, so that
+// it is not done a second time on the coordinates.
+static bool topoDuplicate(VertexArray *va, bool &unique, const int *idx, int n,
+                          const unsigned int *col)
+{
+  if(!unique || !elementNodeIds || !VertexArray::uniqueFilterEnabled())
+    return false;
+
+  std::uint64_t k[8];
+  for(int i = 0; i < n; i++) {
+    if(!elementNodeIds[idx[i]]) return false; // no topology for this node
+    k[2 * i] = elementNodeIds[idx[i]];
+    k[2 * i + 1] = col[i];
+  }
+  // sort the (node, color) pairs by node, so that an element added twice with
+  // its nodes in a different order gives the same key. The color is part of the
+  // key: two elements sharing a face are only merged if they draw it the same
+  for(int i = 1; i < n; i++)
+    for(int j = i; j > 0 && k[2 * j] < k[2 * (j - 1)]; j--) {
+      std::swap(k[2 * j], k[2 * (j - 1)]);
+      std::swap(k[2 * j + 1], k[2 * (j - 1) + 1]);
+    }
+
+  unique = false;
+  VertexArray::statUniqueIn += n;
+  if(va->getUniqueFilter(false)->isDuplicate(k, 2 * n)) return true;
+  VertexArray::statUniqueKept += n;
+  return false;
+}
+
 static void addScalarPoint(PView *p, double **xyz, double **val, bool pre,
                            int i0 = 0, bool unique = false)
 {
@@ -390,6 +427,8 @@ static void addScalarLine(PView *p, double **xyz, double **val, bool pre,
        val[i1][0] <= vmax) {
       unsigned int col[2];
       for(int i = 0; i < 2; i++) col[i] = opt->getColor(v[i], vmin, vmax);
+      const int ii[2] = {i0, i1};
+      if(topoDuplicate(p->va_lines, unique, ii, 2, col)) return;
       p->va_lines->add(x, y, z, n, col, nullptr, unique);
     }
     else {
@@ -505,6 +544,9 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
         }
         col[i] = opt->getColor(v[i], vmin, vmax);
       }
+      const int ii[3] = {i0, i1, i2};
+      if(!pre && !skin && topoDuplicate(p->va_triangles, unique, ii, 3, col))
+        return;
       if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique, skin);
     }
     else {
@@ -1338,10 +1380,12 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
   int NMAX = PVIEW_NMAX;
   double **xyz = new double *[NMAX];
   double **val = new double *[NMAX];
+  std::size_t *nodeIds = new std::size_t[NMAX];
   for(int i = 0; i < NMAX; i++) {
     xyz[i] = new double[3];
     val[i] = new double[9];
   }
+  elementNodeIds = nodeIds;
   for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++) {
     if(data->skipEntity(opt->timeStep, ent)) continue;
     for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++) {
@@ -1360,9 +1404,12 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
             }
             delete[] xyz;
             delete[] val;
+            delete[] nodeIds;
             NMAX = numNodes;
             xyz = new double *[NMAX];
             val = new double *[NMAX];
+            nodeIds = new std::size_t[NMAX];
+            elementNodeIds = nodeIds;
             for(int j = 0; j < NMAX; j++) {
               xyz[j] = new double[3];
               val[j] = new double[9];
@@ -1396,6 +1443,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       for(int j = 0; j < numNodes; j++) {
         data->getNode(opt->timeStep, ent, i, j, xyz[j][0], xyz[j][1],
                       xyz[j][2]);
+        nodeIds[j] = data->getNodeId(opt->timeStep, ent, i, j);
         if(opt->forceNumComponents) {
           for(int k = 0; k < opt->forceNumComponents; k++) {
             int comp = opt->componentMap[k];
@@ -1462,6 +1510,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
   }
   delete[] xyz;
   delete[] val;
+  delete[] nodeIds;
+  elementNodeIds = nullptr;
 }
 
 class initPView {

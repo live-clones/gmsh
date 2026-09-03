@@ -135,6 +135,14 @@ public:
 
   // return the number of nodes of the ele-th element in the ent-th entity
   virtual int getNumNodes(int step, int ent, int ele) { return 0; }
+  // Return a stable identifier for a node of an element, such that two elements
+  // sharing that node get the same identifier. Returns 0 if the data has no
+  // node topology, in which case the identifiers have to be recreated from the
+  // coordinates (see PViewDataList)
+  virtual std::size_t getNodeId(int step, int ent, int ele, int nod)
+  {
+    return 0;
+  }
 
   // get/set the coordinates and tag of the nod-th node from the ele-th element
   // in the ent-th entity (if the node has a tag, getNode returns it)

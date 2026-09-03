@@ -543,6 +543,16 @@ MVertex *PViewDataGModel::_getNode(MElement *e, int nod)
   return v;
 }
 
+std::size_t PViewDataGModel::getNodeId(int step, int ent, int ele, int nod)
+{
+  // the "nodes" of Gauss point data are not mesh vertices
+  if(_type == GaussPointData) return 0;
+  MElement *e = _getElement(step, ent, ele);
+  if(!e) return 0;
+  MVertex *v = _getNode(e, nod);
+  return v ? v->getNum() : 0;
+}
+
 int PViewDataGModel::getNode(int step, int ent, int ele, int nod, double &x,
                              double &y, double &z)
 {
