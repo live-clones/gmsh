@@ -969,6 +969,14 @@ namespace {
       if(f.widthShare > 0.)
         out += ",\"share\":" + std::to_string(f.widthShare);
       if(f.rows > 1) out += ",\"rows\":" + std::to_string(f.rows);
+      // a value one drags along a scale as well as types, and what the scale
+      // runs between
+      if(f.slider && f.maximum > f.minimum) {
+        out += ",\"slider\":true";
+        out += ",\"least\":" + std::to_string(f.minimum);
+        out += ",\"most\":" + std::to_string(f.maximum);
+        if(f.step > 0.) out += ",\"step\":" + std::to_string(f.step);
+      }
       if(f.tooltip.size()) out += ",\"help\":" + _quoted(f.tooltip);
       if(f.enabled && !f.enabled()) out += ",\"off\":true";
       return out;

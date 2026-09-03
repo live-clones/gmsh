@@ -326,6 +326,11 @@ namespace Ui {
     // Integer and Number: what the value may be, and what one step of the
     // arrows is worth. maximum greater than minimum means it is bounded.
     double minimum, maximum, step;
+    // A value one may also drag along a scale rather than only type: the
+    // window that shapes the arrows of a vector view draws the number and the
+    // scale as one widget, and a number one is looking for by eye rather than
+    // by name is quicker found that way. It says nothing without bounds.
+    bool slider;
     // The label comes before the field rather than after it. Every window of
     // Gmsh writes it after, except the one that hides entities by number,
     // where the name of what is being hidden reads better in front of it.
@@ -366,6 +371,7 @@ namespace Ui {
         flag(nullptr), storeIndex(0), list(nullptr),
         rows(5), multiple(false), alert(false), heading(false), wraps(false),
         rule(false), disclosure(false), minimum(0.), maximum(0.), step(0.),
+        slider(false),
         labelBefore(false), sameRow(false), packed(false), widthEm(0.),
         commitsWhenDone(false), widthShare(0.)
     {

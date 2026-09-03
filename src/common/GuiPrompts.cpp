@@ -319,15 +319,18 @@ namespace Dialog {
     p.tabbed = false;
 
     Pane q;
-    q.fields.push_back(
+    // each of them on a scale, as the window this replaces draws them: three
+    // proportions one sets by eye, looking at the arrows rather than at the
+    // numbers
+    q.fields.push_back(slid(
       within(number("Head radius", &a.head,
-                    "General.ArrowHeadRadius"), 0., 1., .01));
-    q.fields.push_back(
+                    "General.ArrowHeadRadius"), 0., 1., .01)));
+    q.fields.push_back(slid(
       within(number("Stem length", &a.stem,
-                    "General.ArrowStemLength"), 0., 1., .01));
-    q.fields.push_back(
+                    "General.ArrowStemLength"), 0., 1., .01)));
+    q.fields.push_back(slid(
       within(number("Stem radius", &a.radius,
-                    "General.ArrowStemRadius"), 0., 1., .01));
+                    "General.ArrowStemRadius"), 0., 1., .01)));
     p.panes.push_back(q);
 
     Button apply;

@@ -22,6 +22,7 @@
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/Fl_Scroll.H>
@@ -627,7 +628,9 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       break;
     case Ui::Integer:
     case Ui::Number:
-      f.setNumber(((Fl_Value_Input *)w)->value());
+      // an input and a slider are both valuators, which is all that is asked
+      // of them here
+      f.setNumber(((Fl_Valuator *)w)->value());
       break;
     case Ui::Check:
       f.setFlag(((Fl_Button *)w)->value() ? true : false);
@@ -961,6 +964,18 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
         break;
       case Ui::Integer:
       case Ui::Number: {
+        // one the description says is dragged as well as typed: the number
+        // and the scale are one widget, the number written at its left end
+        if(f.slider && f.maximum > f.minimum) {
+          Fl_Value_Slider *v = new Fl_Value_Slider(fx, y, fieldW, BH);
+          v->type(FL_HOR_SLIDER);
+          v->textsize(FL_NORMAL_SIZE);
+          v->bounds(f.minimum, f.maximum);
+          if(f.step > 0.) v->step(f.step);
+          v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+          widget = v;
+          break;
+        }
         Fl_Value_Input *v =
           new Fl_Value_Input(fx, y, fieldW, BH);
         v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
@@ -1856,7 +1871,7 @@ void dialogFltk::refresh()
     } break;
     case Ui::Integer:
     case Ui::Number:
-      ((Fl_Value_Input *)b.widget)->value(f.getNumber());
+      ((Fl_Valuator *)b.widget)->value(f.getNumber());
       break;
     case Ui::Check: {
       bool on = f.getFlag();

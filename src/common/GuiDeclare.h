@@ -281,6 +281,15 @@ namespace Dialog {
     return l;
   }
 
+  // The same value, draggable along a scale as well as typed: it is what the
+  // windows this replaces offer for a number one looks for by eye. It wants
+  // bounds, which within() gives.
+  inline Field slid(Field f)
+  {
+    f.slider = true;
+    return f;
+  }
+
   // a check that folds a part of the dialog away
   inline Field disclosure(const std::string &label, bool *value)
   {

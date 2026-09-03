@@ -565,6 +565,18 @@ namespace {
     } break;
     case Ui::Number: {
       double value = f.getNumber();
+      // one the description says is dragged as well as typed: the number is
+      // written inside the scale, as the window this reproduces writes it
+      if(f.slider && f.maximum > f.minimum) {
+        float said = (float)value;
+        ImGui::SetNextItemWidth(width);
+        if(ImGui::SliderFloat(name.c_str(), &said, (float)f.minimum,
+                              (float)f.maximum, "%.2f")) {
+          const_cast<Ui::Field &>(f).setNumber(said);
+          changed = true;
+        }
+        break;
+      }
       // a rotation that has been turned back to nothing comes out as negative
       // zero, which "%g" prints as "-0"; FLTK shows it as the nothing it is
       if(value == 0.) value = 0.;

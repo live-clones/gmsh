@@ -171,6 +171,10 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  /* a dropdown keeps its arrow inside the box: it takes that on top of its
     share of the line, rather than out of the text beside it */
  .cell select{width:calc(10em / var(--n, 1) + 1.8em)}
+ /* the number and the scale it is dragged along, as one thing */
+ .slid{display:inline-flex;align-items:center;gap:0;width:10em}
+ .slid input[type=text],.slid input:not([type]){width:3.4em;flex:0 0 auto}
+ .slid input[type=range]{flex:1 1 auto;min-width:0;width:auto;margin:0 0 0 2px}
  /* the label runs on rather than wrapping: a window grows to hold what it
     says, as the ones this reproduces do */
  .cell label{flex:0 1 auto;min-width:0;white-space:nowrap}
@@ -468,6 +472,27 @@ function field(f) {
     input.value = f.value;
     input.onchange = () => post('/set', which(f) + '&v=' +
                                  encodeURIComponent(input.value));
+  }
+  else if(f.slider) {
+    // A value one drags along a scale as well as types: the number at the
+    // left end and the scale beside it, as one thing, which is how the window
+    // this reproduces draws it.
+    const holder = document.createElement('span');
+    holder.className = 'slid';
+    const said = document.createElement('input');
+    said.value = f.value;
+    const scale = document.createElement('input');
+    scale.type = 'range';
+    scale.min = f.least; scale.max = f.most;
+    if(f.step) scale.step = f.step;
+    scale.value = f.value;
+    const tell = v => post('/set', which(f) + '&v=' + encodeURIComponent(v));
+    said.onchange = () => { scale.value = said.value; tell(said.value); };
+    scale.oninput = () => { said.value = scale.value; };
+    scale.onchange = () => tell(scale.value);
+    holder.appendChild(said);
+    holder.appendChild(scale);
+    return holder;
   }
   else {
     input = document.createElement('input');
