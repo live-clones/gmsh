@@ -1,8 +1,9 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <limits>
 #include <stdlib.h>
 #include <sstream>
@@ -44,6 +45,7 @@
 #include "Options.h"
 #include "GModelParametrize.h"
 #include "Overlap.h"
+#include "Homology.h"
 
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
@@ -62,10 +64,6 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewDataGModel.h"
-#endif
-
-#if defined(HAVE_KBIPACK)
-#include "Homology.h"
 #endif
 
 std::vector<GModel *> GModel::list;
@@ -200,6 +198,9 @@ void GModel::destroy(bool keepName)
   vertices.clear();
   std::set<GVertex *, GEntityPtrLessThan>().swap(vertices);
 
+  // The overlap managers point into the entities deleted above
+  clearOverlaps();
+
   destroyMeshCaches();
 
   resetOCCInternals();
@@ -331,13 +332,44 @@ bool GModel::empty() const
 
 int GModel::overlapDim() const
 {
-  if(std::get<1>(_overlaps).size() > 0) {
-    return 3; // 3D overlap
+  int maxDim = 0;
+  for(const auto &mgr : _overlapManagers) {
+    maxDim = std::max(maxDim, mgr.overlapDim());
   }
-  else if(std::get<0>(_overlaps).size() > 0) {
-    return 2; // 2D overlap
+  return maxDim;
+}
+
+OverlapManager &GModel::createNewOverlapManager(int layers)
+{
+  _overlapManagers.emplace_back(_nextOverlapTag++, layers);
+  return _overlapManagers.back();
+}
+
+OverlapManager *GModel::createOverlapManagerWithTag(int tag, int layers)
+{
+  if(tag != (int)_overlapManagers.size()) {
+    Msg::Error("Overlap manager tag %d does not match expected position %zu. "
+               "Tags must be sequential.",
+               tag, _overlapManagers.size());
+    return nullptr;
   }
-  return 0; // no overlap
+  _overlapManagers.emplace_back(tag, layers);
+  _nextOverlapTag = tag + 1;
+  return &_overlapManagers.back();
+}
+
+OverlapManager *GModel::getOverlapManagerByTag(int tag)
+{
+  for(auto &mgr : _overlapManagers) {
+    if(mgr.tag() == tag) return &mgr;
+  }
+  return nullptr;
+}
+
+void GModel::clearOverlaps()
+{
+  _overlapManagers.clear();
+  _nextOverlapTag = 0;
 }
 
 GRegion *GModel::getRegionByTag(int n) const
@@ -477,8 +509,14 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
 
 bool GModel::remove(GRegion *r)
 {
-  auto it = std::find(firstRegion(), lastRegion(), r);
-  if(it != (riter)regions.end()) {
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = regions.find(r);
+  if(it == regions.end() || *it != r)
+    it = std::find(regions.begin(), regions.end(), r);
+  if(it != regions.end()) {
     regions.erase(it);
     std::vector<GFace *> f = r->faces();
     for(auto it = f.begin(); it != f.end(); it++) (*it)->delRegion(r);
@@ -491,7 +529,13 @@ bool GModel::remove(GRegion *r)
 
 bool GModel::remove(GFace *f)
 {
-  auto it = std::find(firstFace(), lastFace(), f);
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = faces.find(f);
+  if(it == faces.end() || *it != f)
+    it = std::find(faces.begin(), faces.end(), f);
   if(it != faces.end()) {
     faces.erase(it);
     std::vector<GEdge *> const &e = f->edges();
@@ -505,7 +549,13 @@ bool GModel::remove(GFace *f)
 
 bool GModel::remove(GEdge *e)
 {
-  auto it = std::find(firstEdge(), lastEdge(), e);
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = edges.find(e);
+  if(it == edges.end() || *it != e)
+    it = std::find(edges.begin(), edges.end(), e);
   if(it != edges.end()) {
     edges.erase(it);
     if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
@@ -519,7 +569,13 @@ bool GModel::remove(GEdge *e)
 
 bool GModel::remove(GVertex *v)
 {
-  auto it = std::find(firstVertex(), lastVertex(), v);
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = vertices.find(v);
+  if(it == vertices.end() || *it != v)
+    it = std::find(vertices.begin(), vertices.end(), v);
   if(it != vertices.end()) {
     vertices.erase(it);
     return true;
@@ -653,8 +709,7 @@ void GModel::remove()
   faces.clear();
   edges.clear();
   vertices.clear();
-  std::get<0>(_overlaps).clear();
-  std::get<1>(_overlaps).clear();
+  clearOverlaps();
 }
 
 void GModel::snapVertices()
@@ -877,12 +932,21 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int>> &inDimTags,
 
 int GModel::getMaxElementaryNumber(int dim)
 {
-  std::vector<GEntity *> entities;
-  getEntities(entities);
+  // scan the relevant containers directly, rather than materializing a vector
+  // of every entity in the model on each call
   int num = 0;
-  for(std::size_t i = 0; i < entities.size(); i++)
-    if(dim < 0 || entities[i]->dim() == dim)
-      num = std::max(num, std::abs(entities[i]->tag()));
+  if(dim < 0 || dim == 0)
+    for(auto it = vertices.begin(); it != vertices.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 1)
+    for(auto it = edges.begin(); it != edges.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 2)
+    for(auto it = faces.begin(); it != faces.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 3)
+    for(auto it = regions.begin(); it != regions.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
   return num;
 }
 
@@ -1053,9 +1117,23 @@ void GModel::getInnerPhysicalNamesIterators(std::vector<piter> &iterators)
 
 int GModel::setPhysicalName(const std::string &name, int dim, int number)
 {
-  // check if the name is already used
-  int findPhy = getPhysicalNumber(dim, name);
-  if(findPhy != -1) return findPhy;
+  if (!number) {
+    // check if the name is already used
+    int findPhy = getPhysicalNumber(dim, name);
+    if(findPhy != -1) return findPhy;
+  }
+  else {
+    auto findName = getPhysicalName(dim, number);
+    if (findName == name) {
+      return number;
+    }
+    else if (findName != "") {
+      Msg::Warning("Discarding physical name '%s': name '%s' already assigned "
+                   "to entity of dimension %i and tag %i", name.c_str(),
+                   findName.c_str(), dim, number);
+      return number;
+    }
+  }
 
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
@@ -1548,10 +1626,10 @@ int GModel::recombineMesh()
 #endif
 }
 
-int GModel::optimizeMesh(const std::string &how, const bool force, int niter)
+int GModel::optimizeMesh(const std::string &how, const bool force, int niter, double quality)
 {
 #if defined(HAVE_MESH)
-  OptimizeMesh(this, how, force, niter);
+  OptimizeMesh(this, how, force, niter, quality);
   FixPeriodicMesh(this);
   if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
@@ -2435,12 +2513,13 @@ int GModel::convertOldPartitioningToNewOne()
 }
 
 template <int dim>
-static void _buildOverlapsForDim(const int layers, GModel *const m)
+static void _buildOverlapsForDim(const int layers, GModel *const m,
+                                  OverlapManager &mgr)
 {
   auto ovlps = quickOverlap<dim>(m);
   for(int i = 1; i < layers; ++i) extendOverlapCollection<dim>(m, ovlps);
-  buildOverlapEntities<dim>(m, ovlps);
-  overlapBuildBoundaries<dim>(m, ovlps);
+  buildOverlapEntities<dim>(m, mgr, ovlps);
+  overlapBuildBoundaries<dim>(m, mgr, ovlps);
 }
 
 int GModel::createOverlaps(int layers, bool createBoundaries)
@@ -2451,25 +2530,32 @@ int GModel::createOverlaps(int layers, bool createBoundaries)
   auto dim = getDim();
   if(dim < 2) {
     Msg::Error("Model dimension (%d) is too low for overlap creation", dim);
-    return 1;
+    return -1;
   }
 
   if(layers < 1) {
     Msg::Error("Number of layers %d in overlaps must be strictly positive",
                layers);
-    return 1;
+    return -1;
+  }
+
+  if(getNumPartitions() == 0) {
+    Msg::Error("Model is not partitioned: cannot create overlaps");
+    return -1;
   }
 
   Msg::StatusBar(true, "Building overlaps...");
 
+  auto &mgr = createNewOverlapManager(layers);
+
   double t1 = Cpu(), w1 = TimeOfDay();
   if(dim == 2)
-    _buildOverlapsForDim<2>(layers, this);
+    _buildOverlapsForDim<2>(layers, this, mgr);
   else
-    _buildOverlapsForDim<3>(layers, this);
+    _buildOverlapsForDim<3>(layers, this, mgr);
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
-  return 0;
+  return mgr.tag();
 }
 
 void GModel::storeChain(int dim,
@@ -2756,20 +2842,48 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex *> &vertices)
 void GModel::pruneMeshVertexAssociations()
 {
   std::vector<GEntity *> entities;
-  std::set<MVertex *, MVertexPtrLessThan> vertSet;
+  std::vector<MVertex *> vertices;
   getEntities(entities);
+  std::size_t maxNum = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       MElement *e = entities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
         v->setEntity(nullptr);
-        vertSet.insert(v);
+        if(v->getNum() > maxNum) maxNum = v->getNum();
+        vertices.push_back(v);
       }
     }
     entities[i]->mesh_vertices.clear();
   }
-  std::vector<MVertex *> vertices(vertSet.begin(), vertSet.end());
+
+  // sort the nodes by increasing number and remove the duplicates; if the
+  // numbering is dense enough, bucketing the nodes by number does this in
+  // linear time, using no more memory than the list of nodes we just built -
+  // otherwise (sparse numbering, e.g. after reading a mesh with arbitrary node
+  // tags) fall back on a sort
+  if(vertices.size() && maxNum < vertices.size()) {
+    std::vector<MVertex *> slots(maxNum + 1, nullptr);
+    std::size_t nVert = 0;
+    for(std::size_t i = 0; i < vertices.size(); i++) {
+      std::size_t num = vertices[i]->getNum();
+      if(!slots[num]) { // as with a set, the first node with a given number wins
+        slots[num] = vertices[i];
+        nVert++;
+      }
+    }
+    std::vector<MVertex *>().swap(vertices);
+    vertices.reserve(nVert);
+    for(std::size_t n = 0; n <= maxNum; n++)
+      if(slots[n]) vertices.push_back(slots[n]);
+  }
+  else {
+    std::stable_sort(vertices.begin(), vertices.end(), MVertexPtrLessThan());
+    vertices.erase(
+      std::unique(vertices.begin(), vertices.end(), MVertexPtrEqual()),
+      vertices.end());
+  }
   _associateEntityWithMeshVertices();
   // associate mesh nodes primarily with chain entities
   for(auto it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {
@@ -3488,8 +3602,18 @@ void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
                               bool forReparametrization,
                               double curveAngleThreshold)
 {
+  auto splitMap = std::map<int, std::vector<int>>();
   classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
-                curveAngleThreshold);
+                curveAngleThreshold, splitMap);
+}
+
+void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
+                              bool forReparametrization,
+                              double curveAngleThreshold,
+                              std::map<int, std::vector<int>> &splitMap)
+{
+  classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
+                curveAngleThreshold, splitMap);
 }
 
 void GModel::addHomologyRequest(const std::string &type,
@@ -3511,7 +3635,6 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
 
   if(_homologyRequests.empty()) return;
 
-#if defined(HAVE_KBIPACK)
   Msg::StatusBar(true, "Homology and cohomology computation...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
@@ -3521,18 +3644,35 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
   std::set<dpair> domains;
   for(auto it = _homologyRequests.begin(); it != _homologyRequests.end(); it++)
     domains.insert(it->first);
-  Msg::Info("Number of cell complexes to construct: %d", domains.size());
 
+  // requests on the same domain share one cell complex, which is relabeled
+  // for each new subdomain instead of being reconstructed from scratch
+  std::map<std::vector<int>, int> domainRequestCount;
+  for(auto it = _homologyRequests.begin(); it != _homologyRequests.end(); it++)
+    domainRequestCount[it->first.first]++;
+  Msg::Info("Number of cell complexes to construct: %d",
+            (int)domainRequestCount.size());
+
+  Homology *homology = nullptr;
+  std::vector<int> prevDomain;
+  // the domains set is ordered by (domain, subdomain): requests with the
+  // same domain are consecutive
   for(auto it = domains.begin(); it != domains.end(); it++) {
     std::pair<std::multimap<dpair, tpair>::iterator,
               std::multimap<dpair, tpair>::iterator>
       itp = _homologyRequests.equal_range(*it);
-    bool prepareToRestore = (itp.first != --itp.second);
-    itp.second++;
     std::vector<int> imdomain;
-    Homology *homology =
-      new Homology(this, itp.first->first.first, itp.first->first.second,
-                   imdomain, prepareToRestore);
+    if(homology != nullptr && it->first == prevDomain) {
+      // same domain as the previous requests, new subdomain
+      homology->setSubdomain(it->second);
+    }
+    else {
+      delete homology;
+      bool prepareToRestore = domainRequestCount[it->first] > 1;
+      homology =
+        new Homology(this, it->first, it->second, imdomain, prepareToRestore);
+      prevDomain = it->first;
+    }
 
     for(auto itt = itp.first; itt != itp.second; itt++) {
       std::string type = itt->second.first;
@@ -3584,8 +3724,8 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
       }
     }
     pruneMeshVertexAssociations();
-    delete homology;
   }
+  delete homology;
   Msg::Info("");
 
   double t2 = Cpu(), w2 = TimeOfDay();
@@ -3593,10 +3733,6 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
                  "Done homology and cohomology computation "
                  "(Wall %gs, CPU %gs)",
                  w2 - w1, t2 - t1);
-
-#else
-  Msg::Error("Homology computation requires KBIPACK");
-#endif
 }
 
 void GModel::computeSizeField()

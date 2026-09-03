@@ -11,7 +11,7 @@
 # dimensional ones (i.e. if points, curves or surfaces are part of the boundary
 # of volumes).
 
-# Embedding constraints allow to force a mesh to be conformal to other lower
+# Embedding constraints can force a mesh to be conformal to other lower
 # dimensional entities.
 
 import gmsh
@@ -88,7 +88,7 @@ gmsh.model.mesh.embed(2, [s], 3, 1)
 
 # Note that with the OpenCASCADE kernel (see `t16.py'), when the `fragment()'
 # function is applied to entities of different dimensions, the lower dimensional
-# entities will be autmatically embedded in the higher dimensional entities if
+# entities will be automatically embedded in the higher dimensional entities if
 # necessary.
 
 gmsh.model.mesh.generate(3)

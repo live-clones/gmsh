@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,8 +12,8 @@
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
-#include "meshGFaceDelaunayInsertion.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
+#include "meshGRegionDelaunay.h"
 #endif
 
 #define SQU(a) ((a) * (a))
@@ -49,9 +49,12 @@ void MTetrahedron::getEdgeRep(bool curved, int num, double *x, double *y,
 SPoint3 MTetrahedron::circumcenter()
 {
 #if defined(HAVE_MESH)
-  MTet4 t(this, 0);
+  double A[3] = {_v[0]->x(), _v[0]->y(), _v[0]->z()};
+  double B[3] = {_v[1]->x(), _v[1]->y(), _v[1]->z()};
+  double C[3] = {_v[2]->x(), _v[2]->y(), _v[2]->z()};
+  double D[3] = {_v[3]->x(), _v[3]->y(), _v[3]->z()};
   double res[3];
-  t.circumcenter(res);
+  tetcircumcenter(A, B, C, D, res, nullptr, nullptr, nullptr);
   return SPoint3(res[0], res[1], res[2]);
 #else
   return SPoint3(0., 0., 0.);

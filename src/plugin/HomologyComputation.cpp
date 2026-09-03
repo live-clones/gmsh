@@ -1,9 +1,9 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Matti Pellikka <matti.pellikka@microsoft.com>.
+// Contributor(s): Matti Pellikka (initial implementation)
 
 #include <stdlib.h>
 #include <string>
@@ -15,8 +15,6 @@
 #include "Homology.h"
 #include "HomologyComputation.h"
 
-#if defined(HAVE_KBIPACK)
-
 StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "ComputeHomology", nullptr, 1.},
   {GMSH_FULLRC, "ComputeCohomology", nullptr, 0.},
@@ -26,7 +24,10 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "ReductionOmit", nullptr, 1.},
   {GMSH_FULLRC, "ReductionCombine", nullptr, 3.},
   {GMSH_FULLRC, "PostProcessSimplify", nullptr, 1.},
-  {GMSH_FULLRC, "ReductionHeuristic", nullptr, 1.}};
+  {GMSH_FULLRC, "ReductionHeuristic", nullptr, 1.},
+  {GMSH_FULLRC, "PeriodicIdentification", nullptr, 0.},
+  {GMSH_FULLRC, "PeriodicSlavePhysicalGroup", nullptr, -1.},
+  {GMSH_FULLRC, "PeriodicMasterPhysicalGroup", nullptr, -1.}};
 
 StringXString HomologyComputationOptions_String[] = {
   {GMSH_FULLRC, "DomainPhysicalGroups", nullptr, ""},
@@ -111,6 +112,9 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   int combine = (int)HomologyComputationOptions_Number[6].def;
   bool smoothen = (bool)HomologyComputationOptions_Number[7].def;
   int heuristic = (int)HomologyComputationOptions_Number[8].def;
+  bool periodic = (bool)HomologyComputationOptions_Number[9].def;
+  int perslave = (int)HomologyComputationOptions_Number[10].def;
+  int permaster = (int)HomologyComputationOptions_Number[11].def;
 
   std::vector<int> domain;
   std::vector<int> subdomain;
@@ -121,10 +125,17 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   if(!parseStringOpt(2, imdomain)) return nullptr;
   if(!parseStringOpt(3, dimsave)) return nullptr;
 
+  // a negative physical group means no restriction on that side
+  std::vector<int> perslaves;
+  std::vector<int> permasters;
+  if(perslave > 0) perslaves.push_back(perslave);
+  if(permaster > 0) permasters.push_back(permaster);
+
   GModel *m = GModel::current();
 
   Homology *homology = new Homology(m, domain, subdomain, imdomain, true,
                                     combine, omit, smoothen, heuristic);
+  homology->setPeriodic(periodic, perslaves, permasters);
   homology->setFileName(fileName);
 
   if(hom != 0) homology->findHomologyBasis(dimsave);
@@ -149,5 +160,3 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   return nullptr;
 }
-
-#endif

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,7 +26,7 @@ GMSH_Plugin *GMSH_RegisterSkinPlugin() { return new GMSH_SkinPlugin(); }
 std::string GMSH_SkinPlugin::getHelp() const
 {
   return "Plugin(Skin) extracts the boundary (skin) of the current "
-         "mesh (if `FromMesh' = 1), or from the the view `View' (in which "
+         "mesh (if `FromMesh' = 1), or from the view `View' (in which "
          "case it creates a new view). If `View' < 0 and `FromMesh' = 0, "
          "the plugin is run on the current view.\n"
          "If `Visible' is set, the plugin only extracts the skin of visible "

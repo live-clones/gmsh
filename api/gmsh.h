@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -152,8 +152,8 @@ namespace gmsh { // Top-level functions
 
     // gmsh::option::setColor
     //
-    // Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
-    // `g', `b' and `a' should be integers between 0 and 255. `name' is of the form
+    // Set a color option to the RGBA value (`r', `g', `b', `a'), where `r', `g',
+    // `b' and `a' should be integers between 0 and 255. `name' is of the form
     // "Category.Color.Option" or "Category[num].Color.Option". Available
     // categories and options are listed in the "Gmsh options" chapter of the Gmsh
     // reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For
@@ -722,12 +722,15 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::createOverlaps
       //
       // Generate node-based overlaps (of highest dimension) for all partitions,
-      // with a number of layers equal to `layers'. If `createBoundaries' is set,
-      // build the overlaps for the entities bounding the highest-dimensional
-      // entities (i.e. "boundary overlaps"), as well as the inner boundaries of
-      // the overlaps (i.e. "overlap boundaries").
-      GMSH_API void createOverlaps(const int layers = 1,
-                                   const bool createBoundaries = true);
+      // with a number of layers equal to `layers'. The overlaps of the bounding
+      // entities (i.e. "boundary overlaps") and the inner boundaries of the
+      // overlaps (i.e. "overlap boundaries") are always built: the
+      // `createBoundaries' flag is currently ignored. Return the index of the
+      // newly created overlap group, which can be passed as `overlapIndex' to the
+      // query functions (indices are assigned sequentially from 0, so the index is
+      // also the position of the group).
+      GMSH_API int createOverlaps(const int layers = 1,
+                                  const bool createBoundaries = true);
 
       // gmsh::model::mesh::getPartitionEntities
       //
@@ -736,36 +739,87 @@ namespace gmsh { // Top-level functions
       // `partition'. If overlaps are present, fill `overlapEntities' with the tags
       // of the entities that are in the overlap of the partition. Works for
       // entities of the same dimension as the model as well as for entities one
-      // dimension below (boundary overlaps).
+      // dimension below (boundary overlaps). `overlapIndex' selects which overlap
+      // group to query (as returned by `createOverlaps').
       GMSH_API void getPartitionEntities(const int dim,
                                          const int tag,
                                          const int partition,
                                          std::vector<int> & entityTags,
-                                         std::vector<int> & overlapEntities);
+                                         std::vector<int> & overlapEntities,
+                                         const int overlapIndex = 0);
 
       // gmsh::model::mesh::getOverlapBoundary
       //
       // Get the tags of the entities making up the overlap boundary of partition
       // `partition' inside the (non-partitioned) entity of dimension `dim' and tag
-      // `tag'.
+      // `tag'. Only the plain inner boundaries are returned: the inner boundaries
+      // lying on an internal interface are a distinct class, queried with
+      // `getOverlapInterfaceBoundary'. A solver imposing a transmission condition
+      // on the whole rim of an overlap patch must therefore combine both.
+      // `overlapIndex' selects which overlap group to query.
       GMSH_API void getOverlapBoundary(const int dim,
                                        const int tag,
                                        const int partition,
-                                       std::vector<int> & entityTags);
+                                       std::vector<int> & entityTags,
+                                       const int overlapIndex = 0);
+
+      // gmsh::model::mesh::getOverlapInterfaceBoundary
+      //
+      // Get the tags of the overlap boundary entities of partition `partition'
+      // that lie on the internal interface entity of dimension `dim' and tag `tag'
+      // (a dim-1 entity of the model shared by two entities of dimension `dim'+1).
+      // These boundaries are artificial (the domain continues on the other side of
+      // the interface) and carry a transmission condition, but keep the interface
+      // identity so an interface-aware condition can be imposed. Note that `dim'
+      // is the dimension of the interface, one below the model dimension, unlike
+      // `getOverlapBoundary' which takes the parent entity. `overlapIndex' selects
+      // which overlap group to query.
+      GMSH_API void getOverlapInterfaceBoundary(const int dim,
+                                                const int tag,
+                                                const int partition,
+                                                std::vector<int> & entityTags,
+                                                const int overlapIndex = 0);
 
       // gmsh::model::mesh::getBoundaryOverlapParent
       //
       // If the entity of dimension `dim' and tag `tag' is a boundary overlap, get
       // the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on
-      // error.
+      // error. `overlapIndex' selects which overlap group to query.
       GMSH_API void getBoundaryOverlapParent(const int dim,
                                              const int tag,
-                                             int & parentTag);
+                                             int & parentTag,
+                                             const int overlapIndex = 0);
+
+      // gmsh::model::mesh::getOverlapOverlappedEntity
+      //
+      // If the entity of dimension `dim' and tag `overlapTag' is a highest-
+      // dimensional overlap entity (OverlapSurface or OverlapVolume), set
+      // `overlappedEntityTag' to the tag of the partition entity whose elements it
+      // covers. This covered partition entity belongs to a partition different
+      // from the partition owning the overlap. For a boundary overlap that extends
+      // an existing model boundary, or an inner overlap boundary lying on an
+      // internal interface, set `overlappedEntityTag' to the tag of the underlying
+      // boundary or interface entity. A plain inner overlap boundary has no
+      // underlying same-dimensional entity and returns -1. Set
+      // `overlappedEntityTag' to -1 if the entity is not an overlap.
+      // `overlapIndex' selects which overlap group to query.
+      GMSH_API void getOverlapOverlappedEntity(const int dim,
+                                               const int overlapTag,
+                                               int & overlappedEntityTag,
+                                               const int overlapIndex = 0);
 
       // gmsh::model::mesh::unpartition
       //
       // Unpartition the mesh of the current model.
       GMSH_API void unpartition();
+
+      // gmsh::model::mesh::writePartitions
+      //
+      // Write selected partitions of the mesh into a single file `fileName'. The
+      // export format is MSH4. The `partitions' vector specifies which partition
+      // numbers to include.
+      GMSH_API void writePartitions(const std::string & fileName,
+                                    const std::vector<int> & partitions);
 
       // gmsh::model::mesh::optimize
       //
@@ -775,14 +829,16 @@ namespace gmsh { // Top-level functions
       // elastic smoother, "HighOrderFastCurving" for fast curving algorithm,
       // "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node
       // relocation, "QuadQuasiStructured" for quad mesh optimization,
-      // "UntangleMeshGeometry" for untangling). If `force' is set apply the
-      // optimization also to discrete entities. If `dimTags' (given as a vector of
-      // (dim, tag) pairs) is given, only apply the optimizer to the given
-      // entities.
+      // "UntangleMeshGeometry" for untangling, "HXT" for tetrahedral
+      // optimisation). If `force' is set apply the optimization also to discrete
+      // entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
+      // only apply the optimizer to the given entities. For HXT optimizer, the
+      // `quality' argument should be specified
       GMSH_API void optimize(const std::string & method = "",
                              const bool force = false,
                              const int niter = 1,
-                             const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+                             const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
+                             const double quality = 0.0);
 
       // gmsh::model::mesh::recombine
       //
@@ -912,6 +968,22 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & coord,
                             const std::vector<double> & parametricCoord);
 
+      // gmsh::model::mesh::setNodes
+      //
+      // Set the coordinates and the parametric coordinates (if any) of the nodes
+      // with tags `nodeTags'. `coord' is a vector of length 3 times the length of
+      // `nodeTags' that contains the x, y, z coordinates of the nodes,
+      // concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, the nodes must be
+      // classified on an entity of dimension `dim' (and of tag `tag' if `tag' >=
+      // 0), and the length of `parametricCoord' can be 0 or `dim' times the length
+      // of `nodeTags'. If `dim' < 0 the nodes can be classified anywhere, and
+      // `parametricCoord' must be empty.
+      GMSH_API void setNodes(const std::vector<std::size_t> & nodeTags,
+                             const std::vector<double> & coord,
+                             const std::vector<double> & parametricCoord,
+                             const int dim = -1,
+                             const int tag = -1);
+
       // gmsh::model::mesh::rebuildNodeCache
       //
       // Rebuild the node cache.
@@ -968,9 +1040,13 @@ namespace gmsh { // Top-level functions
       // Relocate the nodes classified on the entity of dimension `dim' and tag
       // `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
       // for all entities of dimension `dim'. If `dim' and `tag' are negative,
-      // relocate all the nodes in the mesh.
+      // relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+      // length == `dim') can be provided to linearly rescale each parametric
+      // coordinate in the new parameter range, based on the provided one.
       GMSH_API void relocateNodes(const int dim = -1,
-                                  const int tag = -1);
+                                  const int tag = -1,
+                                  const std::vector<double> & min = std::vector<double>(),
+                                  const std::vector<double> & max = std::vector<double>());
 
       // gmsh::model::mesh::getElements
       //
@@ -1587,9 +1663,9 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setTransfiniteVolume
       //
-      // Set a transfinite meshing constraint on the surface `tag'. `cornerTags'
-      // can be used to specify the (6 or 8) corners of the transfinite
-      // interpolation explicitly.
+      // Set a transfinite meshing constraint on the volume `tag'. `cornerTags' can
+      // be used to specify the (6 or 8) corners of the transfinite interpolation
+      // explicitly.
       GMSH_API void setTransfiniteVolume(const int tag,
                                          const std::vector<int> & cornerTags = std::vector<int>());
 
@@ -1860,13 +1936,19 @@ namespace gmsh { // Top-level functions
       //
       // Classify ("color") the surface mesh based on the angle threshold `angle'
       // (in radians), and create new discrete surfaces, curves and points
-      // accordingly. If `boundary' is set, also create discrete curves on the
-      // boundary if the surface is open. If `forReparametrization' is set, create
-      // curves and surfaces that can be reparametrized using a single map. If
-      // `curveAngle' is less than Pi, also force curves to be split according to
-      // `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
-      // entities and export the discrete entities in the built-in CAD kernel.
+      // accordingly. The `oldSurfaceTags' and `newSurfaceTags' vectors map the old
+      // surface tags to the new surface tags, ie. `oldSurfaceTags[i]' corresponds
+      // to `newSurfaceTags[i]'. Removed surface tags are not returned, only old
+      // surfaces that map to one or more new surfaces are returned. If `boundary'
+      // is set, also create discrete curves on the boundary if the surface is
+      // open. If `forReparametrization' is set, create curves and surfaces that
+      // can be reparametrized using a single map. If `curveAngle' is less than Pi,
+      // also force curves to be split according to `curveAngle'. If
+      // `exportDiscrete' is set, clear any built-in CAD kernel entities and export
+      // the discrete entities in the built-in CAD kernel.
       GMSH_API void classifySurfaces(const double angle,
+                                     std::vector<int> & oldSurfaceTags,
+                                     std::vector<int> & newSurfaceTags,
                                      const bool boundary = true,
                                      const bool forReparametrization = false,
                                      const double curveAngle = M_PI,
@@ -2485,9 +2567,9 @@ namespace gmsh { // Top-level functions
 
         // gmsh::model::geo::mesh::setTransfiniteVolume
         //
-        // Set a transfinite meshing constraint on the surface `tag' in the built-
-        // in CAD kernel representation. `cornerTags' can be used to specify the (6
-        // or 8) corners of the transfinite interpolation explicitly.
+        // Set a transfinite meshing constraint on the volume `tag' in the built-in
+        // CAD kernel representation. `cornerTags' can be used to specify the (6 or
+        // 8) corners of the transfinite interpolation explicitly.
         GMSH_API void setTransfiniteVolume(const int tag,
                                            const std::vector<int> & cornerTags = std::vector<int>());
 
@@ -2998,8 +3080,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags' as a vector of (dim, tag) pairs. If the optional argument
       // `makeRuled' is set, the surfaces created on the boundary are forced to be
       // ruled surfaces. If `maxDegree' is positive, set the maximal degree of
-      // resulting surface. The optional argument `continuity' allows to specify
-      // the continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
+      // resulting surface. The optional argument `continuity' specifies the
+      // continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
       // "CN"). The optional argument `parametrization' sets the parametrization
       // type ("ChordLength", "Centripetal", "IsoParametric"). The optional
       // argument `smoothing' determines if smoothing is applied.
@@ -3253,12 +3335,13 @@ namespace gmsh { // Top-level functions
       // vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
       // all interfaces conformal. When applied to entities of different
       // dimensions, the lower dimensional entities will be automatically embedded
-      // in the higher dimensional entities if they are not on their boundary.
-      // Return the resulting entities in `outDimTags', and the correspondance
-      // between input and resulting entities in `outDimTagsMap'. If `tag' is
-      // positive, try to set the tag explicitly (only valid if the boolean
-      // operation results in a single entity). Remove the object if `removeObject'
-      // is set. Remove the tool if `removeTool' is set.
+      // in the higher dimensional entities if they are not on their boundary. In
+      // order to preserve entity tags, entities should be provided in ascending
+      // dimension order. Return the resulting entities in `outDimTags', and the
+      // correspondance between input and resulting entities in `outDimTagsMap'. If
+      // `tag' is positive, try to set the tag explicitly (only valid if the
+      // boolean operation results in a single entity). Remove the object if
+      // `removeObject' is set. Remove the tool if `removeTool' is set.
       GMSH_API void fragment(const gmsh::vectorpair & objectDimTags,
                              const gmsh::vectorpair & toolDimTags,
                              gmsh::vectorpair & outDimTags,
@@ -3808,7 +3891,7 @@ namespace gmsh { // Top-level functions
       // gmsh::view::option::setColor
       //
       // Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
-      // view with tag `tag', where where `r', `g', `b' and `a' should be integers
+      // view with tag `tag', where `r', `g', `b' and `a' should be integers
       // between 0 and 255.
       GMSH_API void setColor(const int tag,
                              const std::string & name,
@@ -3864,6 +3947,18 @@ namespace gmsh { // Top-level functions
                                  std::vector<std::size_t> & tetrahedra,
                                  std::vector<double> & steiner,
                                  const std::vector<std::size_t> & triangles = std::vector<std::size_t>());
+
+    // gmsh::algorithm::refineTetrahedra
+    //
+    // Refine the list of tetrahedra given in the vector `tetraIn', using point
+    // coordinates `coord' and nodal size field `sizeAtNode'. The new point
+    // coordinates are returned in the `steiner' vector, and the new tetrahedra in
+    // the `tetraOut' vector.
+    GMSH_API void refineTetrahedra(const std::vector<double> & coord,
+                                   const std::vector<double> & sizeAtNode,
+                                   const std::vector<std::size_t> & tetraIn,
+                                   std::vector<double> & steiner,
+                                   std::vector<std::size_t> & tetraOut);
 
   } // namespace algorithm
 
@@ -4193,12 +4288,12 @@ namespace gmsh { // Top-level functions
 
     // gmsh::logger::getMemory
     //
-    // Return memory usage (in Mb).
+    // Return memory usage (in MB).
     GMSH_API double getMemory();
 
     // gmsh::logger::getTotalMemory
     //
-    // Return total available memory (in Mb).
+    // Return total available memory (in MB).
     GMSH_API double getTotalMemory();
 
     // gmsh::logger::getLastError

@@ -250,7 +250,7 @@ bool localNetworkSolverClient::receiveMessage()
     // drawContext::global()->draw();
     break;
   case GmshSocket::GMSH_SPEED_TEST:
-    OLMsg::Info("got %d Mb message in %g seconds", length / 1024 / 1024,
+    OLMsg::Info("got %d MB message in %g seconds", length / 1024 / 1024,
                 TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {

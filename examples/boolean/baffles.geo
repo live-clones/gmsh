@@ -15,3 +15,5 @@ b() = BooleanFragments{ Volume{1, 2}; Delete; }{ Surface{17:20}; Delete; };
 
 p() = PointsOf{ Surface{b({2:7})}; };
 MeshSize{p()} = 0.04;
+
+Recursive Delete { Surface{:}; }

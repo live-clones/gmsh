@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -111,8 +111,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "coordinates (Mesh.SaveParametric)"));
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, "
-                 "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, hxt, "
-                 "initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
+                 "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, "
+                 "hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
   s.push_back(mp("-smooth int", "Set number of mesh smoothing steps "
                  "(Mesh.Smoothing)"));
   s.push_back(mp("-order int", "Set mesh order (Mesh.ElementOrder)"));
@@ -279,6 +279,7 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp(cc + "q", "Quit"));
   s.push_back(mp(cc + "r", "Rename project file"));
   s.push_back(mp(cc + "s", "Save mesh in default format"));
+  s.push_back(mp(cc + "t", "Run solver"));
   s.push_back(mp("Shift+" + cc + "c", "Show clipping plane window"));
   s.push_back(mp("Shift+" + cc + "h", "Show current options and workspace "
                  "window"));
@@ -1399,7 +1400,7 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   else if(argv[i] == "-help" || argv[i] == "--help") {
     Msg::Direct("Gmsh, a 3D mesh generator with pre- and post-processing "
                 "facilities");
-    Msg::Direct("Copyright (C) 1997-2025 C. Geuzaine and J.-F. Remacle");
+    Msg::Direct("Copyright (C) 1997-2026 C. Geuzaine and J.-F. Remacle");
     PrintUsage(argv[0]);
     Msg::Exit(0);
   }

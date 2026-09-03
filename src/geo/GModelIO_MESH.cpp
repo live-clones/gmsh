@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -418,7 +418,13 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
   }
 
   if(numEdges) {
-    int order = (*firstEdge())->lines[0]->getPolynomialOrder();
+    int order = 1;
+    for(auto it = firstEdge(); it != lastEdge(); ++it) {
+      if(!(*it)->lines.empty()) {
+        order = (*it)->lines[0]->getPolynomialOrder();
+        break;
+      }
+    }
     if(order == 4)
       fprintf(fp, " EdgesP4\n");
     else if(order == 3)

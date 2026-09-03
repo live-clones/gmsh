@@ -62,6 +62,8 @@ call gmsh%model%mesh%field%setNumber(1, "Sampling", 100d0)
 ! SizeMin -o----------------/
 !          |                |    |
 !        Point         DistMin  DistMax
+!
+! (y axis: element size; x axis: distance from the Distance field)
 ret = gmsh%model%mesh%field%add("Threshold", 2)
 call gmsh%model%mesh%field%setNumber(2, "InField", 1d0)
 call gmsh%model%mesh%field%setNumber(2, "SizeMin", lc / 30)
@@ -108,7 +110,7 @@ call gmsh%model%mesh%field%setNumbers(7, "FieldsList", [2d0, 3d0, 5d0, 6d0])
 
 call gmsh%model%mesh%field%setAsBackgroundMesh(7)
 
-! The API also allows to set a global mesh size callback, which is called each
+! The API can also set a global mesh size callback, which is called each
 ! time the mesh size is queried
 call gmsh%model%mesh%setSizeCallback(c_funloc(meshSizeCallback))
 

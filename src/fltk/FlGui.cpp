@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -773,6 +773,11 @@ int FlGui::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_CTRL + 't') ||
           Fl::test_shortcut(FL_META + 't')) {
+    onelab_cb(nullptr,  (void *)"compute");
+    status = 1;
+  }
+  else if(Fl::test_shortcut(FL_CTRL + FL_ALT + 't') ||
+          Fl::test_shortcut(FL_META + FL_ALT + 't')) {
     show_hide_menu_cb(nullptr, nullptr);
     status = 1;
   }

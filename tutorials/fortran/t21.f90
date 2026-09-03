@@ -16,7 +16,7 @@
 ! only difference is that they keep track of both a mesh partition index and
 ! their parent elementary entity.
 !
-! The major advantage of this approach is that it allows to maintain a full
+! The major advantage of this approach is that it can maintain a full
 ! boundary representation of the partition entities, which Gmsh creates
 ! automatically if `Mesh.PartitionCreateTopology' is set.
 

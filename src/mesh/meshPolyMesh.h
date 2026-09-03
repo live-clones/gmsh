@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,7 +32,8 @@ public:
   class HalfEdge {
   public:
     HalfEdge(Vertex *vv)
-      : v(vv), f(NULL), prev(NULL), next(NULL), opposite(NULL), data(-1)
+      : v(vv), f(NULL), prev(NULL), next(NULL), opposite(NULL), data(-1),
+        touched(0)
     {
     }
     Vertex *v; // origin
@@ -41,6 +42,9 @@ public:
     HalfEdge *next; // next half edge on the face
     HalfEdge *opposite; // opposite half edge (twin)
     int data;
+    // scratch flag for the flip cascade of split_triangle(); always 0
+    // outside of that function
+    char touched;
     SVector3 d() const
     {
       SVector3 t = next->v->position - v->position;
@@ -455,12 +459,9 @@ public:
       while(!_stack.empty()) {
         HalfEdge *he = _stack.top();
         _touched.push_back(he);
+        he->touched = 1;
         _stack.pop();
-        //	printf("do we swap %g %g --> %g %g ?\n",
-        //		       he->v->position.x(),he->v->position.y(),
-        //	he->next->v->position.x(),he->next->v->position.y());
         if(doSwap(he, data) == 1) {
-          //	  printf("YES\n");
           swap_edge(he);
 
           HalfEdge *H[2] = {he, he->opposite};
@@ -470,25 +471,16 @@ public:
             HalfEdge *heb = H[k]->next;
             HalfEdge *hebo = heb->opposite;
 
-            if(std::find(_touched.begin(), _touched.end(), heb) ==
-                 _touched.end() &&
-               std::find(_touched.begin(), _touched.end(), hebo) ==
-                 _touched.end()) {
-              _stack.push(heb);
-            }
+            if(!heb->touched && !(hebo && hebo->touched)) _stack.push(heb);
 
             HalfEdge *hec = heb->next;
             HalfEdge *heco = hec->opposite;
 
-            if(std::find(_touched.begin(), _touched.end(), hec) ==
-                 _touched.end() &&
-               std::find(_touched.begin(), _touched.end(), heco) ==
-                 _touched.end()) {
-              _stack.push(hec);
-            }
+            if(!hec->touched && !(heco && heco->touched)) _stack.push(hec);
           }
         }
       }
+      for(std::size_t i = 0; i < _touched.size(); i++) _touched[i]->touched = 0;
       if(_t) *_t = _touched;
     }
     return 0;

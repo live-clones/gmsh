@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,6 +9,7 @@
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "MVertex.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "OS.h"
@@ -27,6 +28,7 @@
 #include "meshGFaceOptimize.h"
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
+#include "meshGRegionHxt.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
@@ -315,6 +317,63 @@ void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
 #endif
 }
 
+// Same quantity as MElement::minSICNShapeMeasure() (signedInvCondNumRange
+// with no GEntity), specialized for a straight 3-node triangle: the Jacobian
+// is constant, so the generic machinery (basis lookup, fullMatrix
+// allocations, getNodesCoord, Eigen products) reduces to a handful of flops.
+// The gradients in the ideal (equilateral) frame are d/dX = p1 - p0 and
+// d/dY = (2 (p2 - p0) - (p1 - p0)) / sqrt(3) (see
+// GradientBasis::calcMapFromIdealElement), and the formula below is
+// calcInvCondNum2D (CondNumBasis.cpp) verbatim.
+static double sicnStraightTriangle(const MElement *e)
+{
+  const MVertex *v0 = e->getVertex(0), *v1 = e->getVertex(1),
+                *v2 = e->getVertex(2);
+  static const double c1 = -1. / std::sqrt(3.), c2 = 2. / std::sqrt(3.);
+  const double u1x = v1->x() - v0->x(), u1y = v1->y() - v0->y(),
+               u1z = v1->z() - v0->z();
+  const double u2x = v2->x() - v0->x(), u2y = v2->y() - v0->y(),
+               u2z = v2->z() - v0->z();
+  const double dxdX = u1x, dydX = u1y, dzdX = u1z;
+  const double dxdY = c2 * u2x + c1 * u1x, dydY = c2 * u2y + c1 * u1y,
+               dzdY = c2 * u2z + c1 * u1z;
+  // face normal (as MFace::normal, up to positive normalization, which does
+  // not affect the sign of the dot product below)
+  const double nx = u1y * u2z - u1z * u2y, ny = u1z * u2x - u1x * u2z,
+               nz = u1x * u2y - u1y * u2x;
+
+  const double dxdXSq = dxdX * dxdX, dydXSq = dydX * dydX,
+               dzdXSq = dzdX * dzdX;
+  const double dxdYSq = dxdY * dxdY, dydYSq = dydY * dydY,
+               dzdYSq = dzdY * dzdY;
+  const double Dx = dxdXSq - dxdYSq, Dy = dydXSq - dydYSq;
+  const double Cx = dxdX * dxdY, Cy = dydX * dydY;
+  const double S1 = dzdYSq * dzdYSq;
+  const double S2 = (dzdXSq - Dy - Dx) * dzdYSq;
+  const double S3 = (Cy + Cx) * dzdX * dzdY;
+  const double S4 = dzdXSq * dzdXSq;
+  const double S5 = (Dy + Dx) * dzdXSq;
+  const double S6 = Cx * Cy;
+  const double S7 = dydXSq * dydXSq;
+  const double S8 = Dy * dydXSq;
+  const double S9 = dxdXSq * dxdXSq;
+  const double S10 = Dx * dxdXSq;
+  const double S11 = Dy * Dy;
+  const double S12 = Dx * Dy;
+  const double S13 = Dx * Dx;
+  const double S = 2. * (S2 + S5 + S12) + 4. * (S7 - S8 + S9 - S10) +
+                   8. * (S3 + S6) + S1 + S4 + S11 + S13;
+  const double N = dxdXSq + dxdYSq + dydXSq + dydYSq + dzdXSq + dzdYSq;
+  const double sqrtS = (S > 0.0) ? sqrt(S) : 0.0;
+  const double sigma1Sq = 0.5 * (N + sqrtS), sigma2Sq = 0.5 * (N - sqrtS);
+  const double iCN = 2. * sqrt(sigma1Sq * sigma2Sq) / (sigma1Sq + sigma2Sq);
+  const double lnx = dydX * dzdY - dzdX * dydY,
+               lny = dzdX * dxdY - dxdX * dzdY,
+               lnz = dxdX * dydY - dydX * dxdY;
+  const double dp = lnx * nx + lny * ny + lnz * nz;
+  return (dp >= 0.) ? iCN : -iCN;
+}
+
 static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
 {
   int nthreads = CTX::instance()->numThreads;
@@ -332,7 +391,8 @@ static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
   reduction(+ : qa)
     for(std::size_t i = 0; i < ne; i++) {
       MElement *e = ge->getMeshElement(i);
-      double q = e->minSICNShapeMeasure();
+      double q = (e->getTypeForMSH() == MSH_TRI_3) ? sicnStraightTriangle(e) :
+                                                     e->minSICNShapeMeasure();
       qm = std::min(qm, q);
       qa += q;
     }
@@ -657,7 +717,7 @@ static void Mesh2D(GModel *m)
     bool debug = (Msg::GetVerbosity() == 99);
 
     transferSeamGEdgesVerticesToGFace(m);
-    quadMeshingOfSimpleFacesWithPatterns(m, .02);
+    //quadMeshingOfSimpleFacesWithPatterns(m, .02);
     if(debug) m->writeMSH("opti1.msh");
     //    if(debug) m->writeMSH("opti2.msh");
     //    optimizeTopologyWithCavityRemeshing(m);
@@ -889,7 +949,7 @@ static void Mesh3D(GModel *m)
                  CTX::instance()->mesh.timer[2], t2 - t1);
 }
 
-void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
+void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, double quality)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
@@ -900,7 +960,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
      how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
-     how != "UntangleMeshGeometry") {
+     how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
   }
@@ -1093,6 +1153,18 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
                "WinslowUntangler module");
 #endif
   }
+  else if(how == "HXT" || how =="HXT_FlipOnly") {
+#ifndef HAVE_HXT
+    Msg::Error("Optimizing using HXT requires the HXT module");
+    return;
+#else
+    if(how == "HXT_FlipOnly")
+      optimizeMeshHXT(m, quality, true);
+    else
+      optimizeMeshHXT(m, quality, false);
+#endif
+  }
+
 
   if(Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(),

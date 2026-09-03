@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -454,7 +454,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 #endif
     break;
   case GmshSocket::GMSH_SPEED_TEST:
-    Msg::Info("Got %d Mb message in %g seconds", length / 1024 / 1024,
+    Msg::Info("Got %d MB message in %g seconds", length / 1024 / 1024,
               TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {

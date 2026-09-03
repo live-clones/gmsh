@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -179,7 +179,7 @@ struct doubleXstring{
 %token <d> tDOUBLE
 %token <c> tSTRING tBIGSTR
 
-%token tEND tAFFECT tDOTS tSCOPE tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
+%token tEND tAFFECT tDOTS tSCOPE tPi tMPI_Rank tMPI_Size tEuclidean tCoordinates tTestLevel
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand tStep
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tAbs tFloor tCeil tRound tMin tMax
 %token tFmod tModulo tHypot tList tLinSpace tLogSpace tListFromFile tCatenary
@@ -1572,9 +1572,13 @@ PhysicalId_per_dim_entity :
     }
   | StringExpr
     {
-      int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
-      GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
-      $$ = GModel::current()->setPhysicalName(std::string($1), dim_entity, t + 1);
+      $$ = GModel::current()->getPhysicalNumber(dim_entity, std::string($1));
+
+      if ($$ < 0) {
+        int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
+        GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
+        $$ = GModel::current()->setPhysicalName(std::string($1), dim_entity, t + 1);
+      }
       Free($1);
     }
   | StringExpr ',' FExpr
@@ -2023,7 +2027,7 @@ Shape :
       $$.Type = MSH_SURF_REGL;
       $$.Num = num;
     }
-  | tEuclidian tCoordinates tEND
+  | tEuclidean tCoordinates tEND
     {
       myGmshSurface = 0;
       $$.Type = 0;
@@ -5745,7 +5749,7 @@ FExpr_Multi :
       int tag = (int)$4;
       GEdge *ge = GModel::current()->getEdgeByTag(tag);
       if(ge) {
-        double c = ge->curvature(8);
+        double c = ge->curvature($8);
         List_Add($$, &c);
       }
       else {

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,6 +18,7 @@
 #include <cmath>
 
 #include "GmshMessage.h"
+#include "SPoint2.h"
 
 class BDS_Edge;
 class BDS_Face;
@@ -74,6 +75,7 @@ public:
     edges.erase(std::remove(edges.begin(), edges.end(), e), edges.end());
   }
   std::vector<BDS_Face *> getTriangles() const;
+  void getTriangles(std::vector<BDS_Face *> &t) const;
   BDS_Point(int id, double x = 0, double y = 0, double z = 0)
     : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
       config_modified(true), degenerated(0), _periodicCounterpart(nullptr),
@@ -83,10 +85,17 @@ public:
 };
 
 class BDS_Edge {
-  std::vector<BDS_Face *> _faces;
+  // An edge of a surface mesh has two faces, so they are stored inline: a
+  // std::vector here meant one extra heap block, and one extra cache miss on
+  // every faces() call, for every edge of the mesh. The overflow list is only
+  // ever allocated on a non manifold configuration.
+  BDS_Face *_f[2];
+  int _nf;
+  std::vector<BDS_Face *> *_moreFaces;
 
 public:
-  BDS_Edge(BDS_Point *A, BDS_Point *B) : deleted(false), g(nullptr)
+  BDS_Edge(BDS_Point *A, BDS_Point *B)
+    : _nf(0), _moreFaces(nullptr), deleted(false), g(nullptr)
   {
     if(*A < *B) {
       p1 = A;
@@ -100,21 +109,33 @@ public:
     p2->edges.push_back(this);
   }
 
-  BDS_Face *faces(std::size_t const i) const { return _faces[i]; }
+  ~BDS_Edge() { delete _moreFaces; }
+  BDS_Face *faces(std::size_t const i) const
+  {
+    return i < 2 ? _f[i] : (*_moreFaces)[i - 2];
+  }
   double length() const
   {
     return std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
                      (p1->Y - p2->Y) * (p1->Y - p2->Y) +
                      (p1->Z - p2->Z) * (p1->Z - p2->Z));
   }
-  int numfaces() const { return static_cast<int>(_faces.size()); }
+  int numfaces() const { return _nf; }
   int numTriangles() const;
   inline BDS_Point *commonvertex(const BDS_Edge *other) const
   {
+    BDS_Point *v = commonvertexQuiet(other);
+    if(!v)
+      Msg::Error("Edge %d %d has no common node with edge %d %d", p1->iD,
+                 p2->iD, other->p1->iD, other->p2->iD);
+    return v;
+  }
+  // same, without the error message: used to fill BDS_Face's node cache, where
+  // a failure must still be reported by getNodes() and not at construction
+  inline BDS_Point *commonvertexQuiet(const BDS_Edge *other) const
+  {
     if(p1 == other->p1 || p1 == other->p2) return p1;
     if(p2 == other->p1 || p2 == other->p2) return p2;
-    Msg::Error("Edge %d %d has no common node with edge %d %d", p1->iD, p2->iD,
-               other->p1->iD, other->p2->iD);
     return nullptr;
   }
   BDS_Point *othervertex(const BDS_Point *p) const
@@ -124,7 +145,15 @@ public:
     Msg::Error("Edge %d %d does not contain node %d", p1->iD, p2->iD, p->iD);
     return nullptr;
   }
-  void addface(BDS_Face *f) { _faces.push_back(f); }
+  void addface(BDS_Face *f)
+  {
+    if(_nf < 2) { _f[_nf] = f; }
+    else {
+      if(!_moreFaces) _moreFaces = new std::vector<BDS_Face *>();
+      _moreFaces->push_back(f);
+    }
+    _nf++;
+  }
   bool operator<(const BDS_Edge &other) const
   {
     if(*other.p1 < *p1) return true;
@@ -139,17 +168,27 @@ public:
                  p2->iD);
       return nullptr;
     }
-    if(f == _faces[0]) return _faces[1];
-    if(f == _faces[1]) return _faces[0];
+    if(f == _f[0]) return _f[1];
+    if(f == _f[1]) return _f[0];
     Msg::Error("Edge %d %d does not belong to the face", p1->iD, p2->iD);
     return nullptr;
   }
+  // removes every occurrence of t, keeping the order of the others, as the
+  // std::remove_if this used to do
   void del(BDS_Face *t)
   {
-    if(_faces.empty()) return;
-    _faces.erase(std::remove_if(_faces.begin(), _faces.end(),
-                                [t](BDS_Face *ptr){ return ptr == t; }),
-                 _faces.end());
+    if(!_nf) return;
+    int n = _nf;
+    _nf = 0;
+    for(int i = 0; i < n; i++) {
+      BDS_Face *f = i < 2 ? _f[i] : (*_moreFaces)[i - 2];
+      if(f == t) continue;
+      if(_nf < 2) { _f[_nf] = f; }
+      else { (*_moreFaces)[_nf - 2] = f; }
+      _nf++;
+    }
+    if(_moreFaces && _nf <= 2) _moreFaces->clear();
+    else if(_moreFaces) _moreFaces->resize(_nf - 2);
   }
   void oppositeof(BDS_Point *oface[2]) const;
   void computeNeighborhood(BDS_Point *t1[4], BDS_Point *t2[4],
@@ -170,6 +209,22 @@ public:
     e2->addface(this);
     e3->addface(this);
     if(e4) e4->addface(this);
+    // the edges of a face never change once it is built, so its nodes can be
+    // computed once here instead of on every getNodes() call
+    if(!e4) {
+      _n[0] = e1->commonvertexQuiet(e3);
+      _n[1] = e1->commonvertexQuiet(e2);
+      _n[2] = e2->commonvertexQuiet(e3);
+      _n[3] = nullptr;
+      _nodes = _n[0] && _n[1] && _n[2];
+    }
+    else {
+      _n[0] = e1->commonvertexQuiet(e4);
+      _n[1] = e1->commonvertexQuiet(e2);
+      _n[2] = e2->commonvertexQuiet(e3);
+      _n[3] = e3->commonvertexQuiet(e4);
+      _nodes = _n[0] && _n[1] && _n[2] && _n[3];
+    }
   }
   int numEdges() const { return e4 ? 4 : 3; }
   BDS_Edge *oppositeEdge(BDS_Point *p)
@@ -198,30 +253,45 @@ public:
                e->p2->iD);
     return nullptr;
   }
-  inline bool getNodes(BDS_Point *_n[4]) const
+  inline bool getNodes(BDS_Point *n[4]) const
   {
-    if(!e4) {
-      _n[0] = e1->commonvertex(e3);
-      _n[1] = e1->commonvertex(e2);
-      _n[2] = e2->commonvertex(e3);
-      _n[3] = nullptr;
-      if(_n[0] && _n[1] && _n[2]) return true;
+    if(_nodes) {
+      n[0] = _n[0];
+      n[1] = _n[1];
+      n[2] = _n[2];
+      n[3] = _n[3];
+      return true;
     }
-    else {
-      _n[0] = e1->commonvertex(e4);
-      _n[1] = e1->commonvertex(e2);
-      _n[2] = e2->commonvertex(e3);
-      _n[3] = e3->commonvertex(e4);
-      if(_n[0] && _n[1] && _n[2] && _n[3]) return true;
-    }
-    Msg::Error("Invalid points in face");
-    return false;
+    return _reportInvalidNodes(n);
   }
 
 public:
   bool deleted;
   BDS_Edge *e1, *e2, *e3, *e4;
   BDS_GeomEntity *g;
+
+private:
+  BDS_Point *_n[4];
+  bool _nodes;
+  // only reached for a malformed face: redo the lookups so that the same
+  // diagnostics come out as before the nodes were cached
+  bool _reportInvalidNodes(BDS_Point *n[4]) const
+  {
+    if(!e4) {
+      n[0] = e1->commonvertex(e3);
+      n[1] = e1->commonvertex(e2);
+      n[2] = e2->commonvertex(e3);
+      n[3] = nullptr;
+    }
+    else {
+      n[0] = e1->commonvertex(e4);
+      n[1] = e1->commonvertex(e2);
+      n[2] = e2->commonvertex(e3);
+      n[3] = e3->commonvertex(e4);
+    }
+    Msg::Error("Invalid points in face");
+    return false;
+  }
 };
 
 struct GeomLessThan {
@@ -336,6 +406,14 @@ struct EdgeToRecover {
   }
 };
 
+// Scratch buffers reused by BDS_Mesh::smooth_point_centroid()
+struct BDS_SmoothScratch {
+  std::vector<BDS_Point *> nbg;
+  std::vector<double> lc;
+  std::vector<SPoint2> kernel;
+  std::vector<BDS_Face *> ts;
+};
+
 class BDS_Mesh {
 public:
   int MAXPOINTNUMBER;
@@ -345,6 +423,7 @@ public:
   BDS_Mesh(const BDS_Mesh &other);
   std::set<BDS_GeomEntity *, GeomLessThan> geom;
   std::set<BDS_Point *, PointLessThan> points;
+  std::vector<BDS_Point *> orphanPoints;
   std::vector<BDS_Edge *> edges;
   std::vector<BDS_Face *> triangles;
   // Points
@@ -354,6 +433,7 @@ public:
   BDS_Point *find_point(int num);
   // Edges
   BDS_Edge *add_edge(int p1, int p2);
+  BDS_Edge *add_edge(BDS_Point *p1, BDS_Point *p2);
   void del_edge(BDS_Edge *e);
   BDS_Edge *find_edge(int p1, int p2);
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2);
@@ -361,6 +441,7 @@ public:
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const;
   // Triangles
   BDS_Face *add_triangle(int p1, int p2, int p3);
+  BDS_Face *add_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
   BDS_Face *add_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
   void del_face(BDS_Face *t);
   BDS_Face *find_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
@@ -378,10 +459,18 @@ public:
                  bool force = false);
   bool collapse_edge_parametric(BDS_Edge *, BDS_Point *, bool = false);
   bool smooth_point_centroid(BDS_Point *p, GFace *gf, double thresh);
+  // same, reusing the caller's scratch buffers instead of allocating four
+  // vectors for every point of every smoothing pass
+  bool smooth_point_centroid(BDS_Point *p, GFace *gf, double thresh,
+                             BDS_SmoothScratch &scratch);
   bool split_edge(BDS_Edge *, BDS_Point *, bool check_area_param = false);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
   // Global operators
   void cleanup();
+  // Drop the points that edge collapses left without any edge from the point
+  // set, so that the passes iterating it do not have to walk them. The points
+  // themselves are kept alive because callers key external maps on them.
+  void removeOrphanPoints();
 };
 
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);

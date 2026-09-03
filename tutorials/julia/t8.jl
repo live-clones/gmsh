@@ -166,7 +166,7 @@ for num in 1:3
 
      if num == 3
         # Here we could make a system call to generate a movie. For example,
-        # with ffmeg:
+        # with ffmpeg:
 
         # run("ffmpeg -i t8-%d.jpg t8.mpg")
      end

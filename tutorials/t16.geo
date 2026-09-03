@@ -23,7 +23,7 @@ Box(2) = {0,0,0, 0.5,0.5,0.5};
 BooleanDifference(3) = { Volume{1}; Delete; }{ Volume{2}; Delete; };
 
 // Boolean operations with OpenCASCADE always create new entities. Adding
-// `Delete' in the arguments allows to automatically delete the original
+// `Delete' in the arguments automatically deletes the original
 // entities.
 
 // We then create the five spheres:

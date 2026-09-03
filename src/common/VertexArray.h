@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -218,7 +218,7 @@ public:
   // sort the arrays with elements back to front wrt the eye position
   void sort(double x, double y, double z);
   // estimate the size of the vertex array in megabytes
-  double getMemoryInMb();
+  double getMemoryInMB();
   // serialize the vertex array into a string (for sending over the
   // network)
   char *toChar(int num, const std::string &name, int type, double min,

@@ -14,3 +14,7 @@ Plane Surface(6) = {5};
 
 Extrude {0,0.0,2}{ Surface {6}; Layers{10}; Recombine; }
 Extrude {0,2,0.0}{ Surface {23}; }
+
+Mesh.OptimizePyramids = 0; // default optmizer
+//Mesh.OptimizePyramids = 1; // untangler
+//Mesh.OptimizePyramids = -0.05; // force pyram height = 0.05 * diam(base quad)

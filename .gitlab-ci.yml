@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -68,10 +68,10 @@ windows_ci:
 
 windows_msvc_ci:
   script:
-    - md build
-    - cd build
+    - md build_msvc
+    - cd build_msvc
     - cmake -DENABLE_OPENMP=0 ..
-    - msbuild package.vcxproj
+    - cmake --build . --target package
   tags:
     - windows64
     - shared
@@ -383,8 +383,9 @@ doc_official_snapshot:
     - cd build_doc
     - cmake ..
     - make doc
-    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/dev && tar zxvf ../doc.tgz"
+    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc/gmsh-git-doc.tgz
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/dev && tar zxvf ../doc/gmsh-git-doc.tgz"
+    - scp -r ../doc/news/* geuzaine@gmsh.info:.wwwgmsh/news/
   tags:
     - linux64
     - docker
@@ -402,8 +403,9 @@ doc_official_release:
     - cd build_doc
     - cmake -DGMSH_RELEASE=1 ..
     - make doc
-    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh && tar zxvf doc.tgz"
+    - PKG=`ls gmsh-*-doc.tgz`
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/doc/${PKG}
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh && tar zxvf doc/${PKG}"
     - scp ../doc/gmsh.html ../doc/gmsh.css geuzaine@gmsh.info:.wwwgmsh/
   tags:
     - linux64
@@ -451,8 +453,14 @@ pypi_official_snapshot:
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ win_amd64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ macosx_10_15_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSARM-sdk/ macosx_12_0_arm64
-    - scp gmsh-*.dev1+nox*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev-nox/gmsh/
-    - scp gmsh-*.dev1-*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev/gmsh/
+    - VERSION=`cat version.txt`
+    # upload the new dated dev wheels first, then prune old versions on the
+    # server, keeping the two most recent ones so an in-progress pip install of
+    # the version being replaced is not broken
+    - scp gmsh-*+nox*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev-nox/gmsh/
+    - scp $(ls gmsh-*.whl | grep -vF +nox) geuzaine@gmsh.info:.wwwgmsh/python-packages-dev/gmsh/
+    - 'ssh geuzaine@gmsh.info "cd .wwwgmsh/python-packages-dev-nox/gmsh && ls gmsh-${VERSION}.dev*.whl 2>/dev/null | sed -E ''s/.*\.dev([0-9]+).*/\1/'' | sort -u | head -n -2 | while read d; do rm -f gmsh-${VERSION}.dev\${d}*.whl; done"'
+    - 'ssh geuzaine@gmsh.info "cd .wwwgmsh/python-packages-dev/gmsh && ls gmsh-${VERSION}.dev*.whl 2>/dev/null | sed -E ''s/.*\.dev([0-9]+).*/\1/'' | sort -u | head -n -2 | while read d; do rm -f gmsh-${VERSION}.dev\${d}*.whl; done"'
   tags:
     - linux64
     - docker

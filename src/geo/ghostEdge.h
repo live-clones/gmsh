@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,7 +15,10 @@
 class ghostEdge : public discreteEdge {
 private:
   int _partition;
-  std::map<MElement *, int> _ghostCells;
+  // ordered by element number, not by pointer: ordering by pointer made the
+  // emitted ghost-cell list depend on the allocator, so two identical runs
+  // could produce different files
+  std::map<MElement *, int, MElementPtrLessThan> _ghostCells;
   bool _saveMesh;
   bool _haveMesh;
 
@@ -39,7 +42,10 @@ public:
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  virtual std::map<MElement *, int> &getGhostCells() { return _ghostCells; }
+  virtual std::map<MElement *, int, MElementPtrLessThan> &getGhostCells()
+  {
+    return _ghostCells;
+  }
 
   void addLine(MLine *l, int onWhichPartition)
   {

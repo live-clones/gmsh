@@ -95,7 +95,7 @@ call gmsh%model%occ%synchronize()
 ! (here with a target of 20 elements per 2*Pi radians):
 call gmsh%option%setNumber("Mesh.MeshSizeFromCurvature", 20d0)
 
-! We can constraint the min and max element sizes to stay within reasonnable
+! We can constraint the min and max element sizes to stay within reasonable
 ! values (see `t10.f90' for more details):
 call gmsh%option%setNumber("Mesh.MeshSizeMin", 0.001d0)
 call gmsh%option%setNumber("Mesh.MeshSizeMax", 0.3d0)

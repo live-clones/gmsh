@@ -1,12 +1,15 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <memory>
 #include "GmshMessage.h"
 #include "meshGFace.h"
+#include "meshGFaceParamBoundary.h"
 #include "meshGFaceOptimize.h"
+#include "meshGFaceDelaunay.h"
 #include "BackgroundMesh.h"
 #include "GVertex.h"
 #include "GEdge.h"
@@ -83,16 +86,30 @@ static double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
            computeEdgeLinearLength(e->p1, e->p2, f);
 }
 
-static double NewGetLc(BDS_Point *point, GFace *gf)
+// Extend1dMeshIn2dSurfaces() and Mesh.LcFromCurvature are constant for the
+// whole meshing of a face, but they used to be re-read from the (non inlined)
+// option structures for every single edge; they are now looked up once per
+// pass and threaded through.
+struct BDSSizeContext {
+  bool extend1d;
+  bool lcFromCurvature;
+  BDSSizeContext(GFace *gf)
+    : extend1d(Extend1dMeshIn2dSurfaces(gf)),
+      lcFromCurvature(CTX::instance()->mesh.lcFromCurvature)
+  {
+  }
+};
+
+static double NewGetLc(BDS_Point *point, const BDSSizeContext &ctx)
 {
-  return Extend1dMeshIn2dSurfaces(gf) ? std::min(point->lc(), point->lcBGM()) :
-                                        point->lcBGM();
+  return ctx.extend1d ? std::min(point->lc(), point->lcBGM()) : point->lcBGM();
 }
 
-static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
+static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f,
+                         const BDSSizeContext &ctx)
 {
-  double l1 = NewGetLc(p1, f);
-  double l2 = NewGetLc(p2, f);
+  double l1 = NewGetLc(p1, ctx);
+  double l2 = NewGetLc(p2, ctx);
   double l = .5 * (l1 + l2);
 
   const double coord = 0.5;
@@ -103,7 +120,7 @@ static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
   double lmid = BGM_MeshSize(f, U, V, gpp.x(), gpp.y(), gpp.z());
   l = std::min(l, lmid);
 
-  if(CTX::instance()->mesh.lcFromCurvature) {
+  if(ctx.lcFromCurvature) {
     double l3 = l;
     double const lcmin = std::min(std::min(l1, l2), l3);
     l1 = std::min(lcmin * 1.2, l1);
@@ -114,10 +131,24 @@ static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
   return l;
 }
 
-static double NewGetLc(BDS_Edge *const edge, GFace *const face)
+// Length ratio of the (possibly virtual) edge p1-p2. The points are ordered by
+// id the way BDS_Edge's constructor orders them, so that this gives exactly the
+// same value as the edge based version below.
+static double NewGetLc(BDS_Point *p1, BDS_Point *p2, GFace *const face,
+                       const BDSSizeContext &ctx)
+{
+  if(!(*p1 < *p2)) std::swap(p1, p2);
+  double len = face->geomType() == GEntity::Plane ?
+                 computeEdgeLinearLength(p1, p2) :
+                 computeEdgeLinearLength(p1, p2, face);
+  return len / correctLC_(p1, p2, face, ctx);
+}
+
+static double NewGetLc(BDS_Edge *const edge, GFace *const face,
+                       const BDSSizeContext &ctx)
 {
   return computeEdgeLinearLength(edge, face) /
-         correctLC_(edge->p1, edge->p2, face);
+         correctLC_(edge->p1, edge->p2, face, ctx);
 }
 
 // SWAP TESTS i.e. tell if swap should be done
@@ -137,13 +168,13 @@ static bool edgeSwapTestAngle(BDS_Edge *e, double min_cos)
   return prosca(norm1, norm2) > min_cos;
 }
 
-static int edgeSwapTest(GFace *gf, BDS_Edge *e)
+static int edgeSwapTest(GFace *gf, BDS_Edge *e, double THRESH)
 {
+  // the angle test does not depend on the four qualities below, so evaluate it
+  // first and skip them altogether when it fails
+  if(!edgeSwapTestAngle(e, THRESH)) return -1;
+
   BDS_Point *op[2];
-
-  const double THRESH =
-    cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.);
-
   e->oppositeof(op);
 
   double qa1 = qmTriangle::gamma(e->p1, e->p2, op[0]);
@@ -152,10 +183,6 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
   double qb2 = qmTriangle::gamma(e->p2, op[0], op[1]);
   double qa = std::min(qa1, qa2);
   double qb = std::min(qb1, qb2);
-
-  //  if(qb > 15*qa) return 1;
-
-  if(!edgeSwapTestAngle(e, THRESH)) return -1;
 
   if(qb > qa)
     return 1;
@@ -180,6 +207,8 @@ static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, double &t,
                          int FINALIZE = 0, double orientation = 1.0)
 {
   double t1 = Cpu();
+  const double THRESH =
+    cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.);
   BDS_SwapEdgeTest *qual;
   if(FINALIZE && gf->getNativeType() != GEntity::GmshModel)
     qual = new BDS_SwapEdgeTestNormals(gf, orientation);
@@ -193,7 +222,8 @@ static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, double &t,
     if(neighboringModified(m.edges.at(index)->p1) ||
        neighboringModified(m.edges.at(index)->p2)) {
       if(!m.edges.at(index)->deleted && m.edges.at(index)->numfaces() == 2) {
-        int const result = FINALIZE ? 1 : edgeSwapTest(gf, m.edges.at(index));
+        int const result =
+        FINALIZE ? 1 : edgeSwapTest(gf, m.edges.at(index), THRESH);
         if(result >= 0) {
           if(m.swap_edge(m.edges.at(index), *qual)) { ++nb_swap; }
         }
@@ -406,10 +436,14 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
                           std::vector<SPoint2> *true_boundary, double &t)
 {
   double t1 = Cpu();
+  const BDSSizeContext ctx(gf);
   std::vector<std::pair<double, BDS_Edge *> > edges;
 
   SPoint2 out(gf->parBounds(0).high() + 1.21982512,
               gf->parBounds(1).high() + 1.8635436432);
+  std::unique_ptr<ParametricDomainChecker> insideChecker;
+  if(true_boundary)
+    insideChecker.reset(new ParametricDomainChecker(*true_boundary, out));
 
   for(auto it = m.points.begin(); it != m.points.end(); ++it) {
     BDS_Point *p = *it;
@@ -434,7 +468,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g &&
        (*it)->g->classif_degree == 2) {
-      double lone = NewGetLc(*it, gf);
+      double lone = NewGetLc(*it, gf, ctx);
       if(lone > MAXE_) edges.push_back(std::make_pair(-lone, *it));
     }
     ++it;
@@ -469,9 +503,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
       if(true_boundary) {
         SPoint2 pp(U, V);
         int N;
-        if(!pointInsideParametricDomain(*true_boundary, pp, out, N)) {
-          inside = false;
-        }
+        if(!insideChecker->inside(pp, N)) { inside = false; }
       }
       if(inside && gpp.succeeded()) {
         mid = m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
@@ -500,30 +532,27 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   t += (Cpu() - t1);
 }
 
-double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e,
-                                  BDS_Point *p)
+static double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Edge *e, BDS_Point *p,
+                                         const BDSSizeContext &ctx)
 {
   BDS_Point *o = e->othervertex(p);
 
   double maxLc = 0.0;
-  std::vector<BDS_Edge *> edges(p->edges);
-  auto eit = edges.begin();
-  while(eit != edges.end()) {
+  // this used to build a real BDS_Edge for each candidate, which registered
+  // itself in the two endpoints' edge lists and then had to be unregistered
+  for(std::size_t i = 0; i < p->edges.size(); i++) {
+    BDS_Edge *pe = p->edges[i];
     BDS_Point *newP1 = nullptr, *newP2 = nullptr;
-    if((*eit)->p1 == p) {
+    if(pe->p1 == p) {
       newP1 = o;
-      newP2 = (*eit)->p2;
+      newP2 = pe->p2;
     }
-    else if((*eit)->p2 == p) {
-      newP1 = (*eit)->p1;
+    else if(pe->p2 == p) {
+      newP1 = pe->p1;
       newP2 = o;
     }
     if(!newP1 || !newP2) break; // error
-    BDS_Edge collapsedEdge = BDS_Edge(newP1, newP2);
-    maxLc = std::max(maxLc, NewGetLc(&collapsedEdge, gf));
-    newP1->del(&collapsedEdge);
-    newP2->del(&collapsedEdge);
-    ++eit;
+    maxLc = std::max(maxLc, NewGetLc(newP1, newP2, gf, ctx));
   }
 
   return maxLc;
@@ -533,12 +562,13 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
                       int &nb_collaps, double &t)
 {
   double t1 = Cpu();
+  const BDSSizeContext ctx(gf);
   std::vector<std::pair<double, BDS_Edge *> > edges;
   auto it = m.edges.begin();
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g &&
        (*it)->g->classif_degree == 2) {
-      double lone = NewGetLc(*it, gf);
+      double lone = NewGetLc(*it, gf, ctx);
       if(lone < MINE_) edges.push_back(std::make_pair(lone, *it));
     }
     ++it;
@@ -553,7 +583,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
       double lone1 = 0.;
       bool collapseP1Allowed = false;
       if(e->p1->iD > MAXNP) {
-        lone1 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p1);
+        lone1 = getMaxLcWhenCollapsingEdge(gf, e, e->p1, ctx);
         collapseP1Allowed =
           std::abs(lone1 - 1.0) < std::abs(edges[i].first - 1.0);
       }
@@ -561,7 +591,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
       double lone2 = 0.;
       bool collapseP2Allowed = false;
       if(e->p2->iD > MAXNP) {
-        lone2 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p2);
+        lone2 = getMaxLcWhenCollapsingEdge(gf, e, e->p2, ctx);
         collapseP2Allowed =
           std::abs(lone2 - 1.0) < std::abs(edges[i].first - 1.0);
       }
@@ -588,14 +618,13 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
                       double threshold, double &t)
 {
   double t1 = Cpu();
-  for(int i = 0; i < 1; i++) {
-    auto itp = m.points.begin();
-    while(itp != m.points.end()) {
-      if(neighboringModified(*itp)) {
-        if(m.smooth_point_centroid(*itp, gf, threshold)) nb_smooth++;
-      }
-      ++itp;
+  BDS_SmoothScratch scratch;
+  auto itp = m.points.begin();
+  while(itp != m.points.end()) {
+    if(neighboringModified(*itp)) {
+      if(m.smooth_point_centroid(*itp, gf, threshold, scratch)) nb_smooth++;
     }
+    ++itp;
   }
   t += (Cpu() - t1);
 }
@@ -758,6 +787,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   if(computeNodalSizeField) computeNodalSizes(gf, m, recoverMap);
 
   double t_spl = 0, t_sw = 0, t_col = 0, t_sm = 0;
+  const BDSSizeContext ctx(gf);
 
   const double MINE_ = 0.7, MAXE_ = 1.4;
 
@@ -855,6 +885,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     // CHECK_STRANGE("smmooth", m);
 
     m.cleanup();
+    m.removeOrphanPoints();
 
     double minL = 1.e22, maxL = 0;
     auto it = m.edges.begin();
@@ -862,7 +893,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     while(it != m.edges.end()) {
       if(!(*it)->deleted) {
         double lone = 2 * (*it)->length() /
-                      (NewGetLc((*it)->p1, gf) + NewGetLc((*it)->p2, gf));
+                      (NewGetLc((*it)->p1, ctx) + NewGetLc((*it)->p2, ctx));
         if(lone > maxE) LARGE++;
         if(lone < minE) SMALL++;
         TOTAL++;

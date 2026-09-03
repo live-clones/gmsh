@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -165,8 +165,12 @@ static double smoothPrimitive(GEdge *ge, double alpha,
     int count1 = 0;
     int count2 = 0;
 
-    // use a gauss-seidel iteration; iterate forward and then backward;
-    // convergence is usually very fast
+    // Gauss-Seidel iteration, forward then backward, until the mesh sizes reach
+    // their fixed point. A triggered relaxation may recompute the value lc
+    // already holds (the backward test compares the slope against xp[i-1] while
+    // the update scales by xp[i], so a point with xp[i] > 1.01*xp[i-1] keeps
+    // satisfying the trigger with an unchanged value); count only relaxations
+    // that actually change lc, so the loop stops once the sizes are stationary.
     for(std::size_t i = 1; i < Points.size(); i++) {
       double dh =
         (Points[i].xp / Points[i].lc - Points[i - 1].xp / Points[i - 1].lc);
@@ -175,8 +179,11 @@ static double smoothPrimitive(GEdge *ge, double alpha,
       if(dhdt / Points[i].xp > (alpha - 1.) * 1.01) {
         double hnew =
           Points[i - 1].xp / Points[i - 1].lc + dt * (alpha - 1) * Points[i].xp;
-        Points[i].lc = Points[i].xp / hnew;
-        count1++;
+        double lcnew = Points[i].xp / hnew;
+        if(lcnew != Points[i].lc) {
+          Points[i].lc = lcnew;
+          count1++;
+        }
       }
     }
 
@@ -188,8 +195,11 @@ static double smoothPrimitive(GEdge *ge, double alpha,
       if(dhdt / Points[i - 1].xp > (alpha - 1.) * 1.01) {
         double hnew =
           Points[i].xp / Points[i].lc + dt * (alpha - 1) * Points[i].xp;
-        Points[i - 1].lc = Points[i - 1].xp / hnew;
-        count2++;
+        double lcnew = Points[i - 1].xp / hnew;
+        if(lcnew != Points[i - 1].lc) {
+          Points[i - 1].lc = lcnew;
+          count2++;
+        }
       }
     }
 
@@ -602,7 +612,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
      CTX::instance()->mesh.algoRecombine != 0) {
     if(CTX::instance()->mesh.recombineAll) { forceOdd = true; }
   }
-  
+
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
   MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
@@ -639,7 +649,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   if(forceOdd) {
     while(last % 2 != 0) last--;
   }
-    
+
 
   bool filteringObservesMinimumN =
     (((int)ge->mesh_vertices.size() - last) >= nMinimumPoints);
@@ -1101,19 +1111,28 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   size_t start = 0;
   size_t end = ge->mesh_vertices.size() - 1;
 
+  // if(ge->tag() == 2) {
+  //   printf("GEdge %d -- end line lengths %12.5E %12.5E\n", ge->tag(),
+  //          l0->getLength(), ln->getLength());
+  //   for(std::size_t i = 0; i < ge->lines.size(); i++) {
+  //     MLine *l = ge->lines[i];
+  //     printf("  line %zu: %ld %ld\n", i, l->getVertex(0)->getNum(),
+  //            l->getVertex(1)->getNum());
+  //   }
+  // }
+
   if(l0->getLength() < 1.e-12) {
-    printf("GEdge %d -- end line lengths %12.5E %12.5E\n",ge->tag(),l0->getLength(),ln->getLength());
     for(auto v : ge->mesh_vertices) {
       double p;
       v->getParameter(0, p);
-      printf(" %12.5E ", p);
+      // printf(" %12.5E ", p);
     }
-    printf("\n");
+    // printf("\n");
 
     diff++;
     GPoint g_left = ge->point(t_left);
-    SPoint3 p0(g_left.x(), g_left.y(), g_left.z());
-    ;
+    SPoint3 p0(g_left.x(), g_left.y(), g_left.z()),p1;
+
     while(1) {
       t_left += dt;
       g_left = ge->point(t_left);
@@ -1124,15 +1143,18 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
     double t0 = t_left - dt;
     double t1 = t_left;
 
-    //    printf("--> first guess %12.5E %12.5E %12.5E\n",t_left,t0,t1);
+    // if(ge->tag() == 2) {
+    //   printf("dt %12.5E --> first guess %12.5E %12.5E %12.5E %12.5E %12.5E\n",
+    //          dt, t_left, t0, t1, p1.distance(p0), width);
+    // }
 
     while(1) {
       double t_mid = (t0 + t1) * .5;
       g_left = ge->point(t_mid);
       SPoint3 p1(g_left.x(), g_left.y(), g_left.z());
       double d = p1.distance(p0);
-      //      printf("%12.5E %12.5E %12.5E %12.5E %12.5E
-      //      \n",t0,t1,t_mid,d,width);
+      // printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",
+      //        t0, t1, t_mid, d, width);
       if(fabs(d - width) < eps) {
         t_left = t_mid;
         break;
@@ -1147,8 +1169,8 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   }
 
   if(ln->getLength() < 1.e-12) {
-    //    printf("GEdge %d -- end line lengths %12.5E %12.5E
-    //    \n",ge->tag(),l0->getLength(),ln->getLength());
+    // printf("GEdge %d -- end line lengths %12.5E %12.5E\n",
+    //        ge->tag(), l0->getLength(), ln->getLength());
     diff++;
     GPoint g_right = ge->point(t_right);
     SPoint3 p0(g_right.x(), g_right.y(), g_right.z());
@@ -1189,7 +1211,7 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
   N = ge->mesh_vertices.size() - diff + 2;
 
-  //  printf("--> (%12.5E %12.5E) a = %12.5E\n",t_left, t_right,a );
+  // printf("--> (%12.5E %12.5E) a = %12.5E\n", t_left, t_right, a);
 
   {
     int count = 1, NUMP = 1;
@@ -1197,8 +1219,8 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
     while(NUMP < N - 1) {
       auto P1 = Points[count - 1];
       auto P2 = Points[count];
-      //      printf("count %d %g -- (%12.5E %12.5E) (%12.5E %12.5E)
-      //      \n",count,b,P1.p,P1.t,P2.p,P2.t);
+      // printf("count %d %g -- (%12.5E %12.5E) (%12.5E %12.5E)\n",
+      //        count, b, P1.p, P1.t, P2.p, P2.t);
       const double d = (double)NUMP * b;
       if((std::abs(P2.p) >= std::abs(d)) && (std::abs(P1.p) < std::abs(d))) {
         double const dt = P2.t - P1.t;

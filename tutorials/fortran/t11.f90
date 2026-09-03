@@ -64,7 +64,7 @@ call gmsh%model%mesh%setRecombine(2, pl)
 
 ! For even better 2D (planar) quadrilateral meshes, you can try the
 ! experimental "Frontal-Delaunay for quads" meshing algorithm, which is a
-! triangulation algorithm that enables to create right triangles almost
+! triangulation algorithm that creates right triangles almost
 ! everywhere: J.-F. Remacle, F. Henrotte, T. Carrier-Baudouin, E. Bechet,
 ! E. Marchandise, C. Geuzaine and T. Mouton. A frontal Delaunay quad mesh
 ! generator using the L^inf norm. International Journal for Numerical Methods

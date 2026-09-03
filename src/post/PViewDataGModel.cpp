@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -754,11 +754,11 @@ void PViewDataGModel::smooth()
   finalize();
 }
 
-double PViewDataGModel::getMemoryInMb()
+double PViewDataGModel::getMemoryInMB()
 {
   double m = 0.;
   for(std::size_t i = 0; i < _steps.size(); i++)
-    m += _steps[i]->getMemoryInMb();
+    m += _steps[i]->getMemoryInMB();
   return m;
 }
 

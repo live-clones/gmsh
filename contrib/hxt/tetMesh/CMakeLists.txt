@@ -71,7 +71,10 @@ target_include_directories(hxt_tetMesh
                            PRIVATE src)
 target_link_libraries(hxt_tetMesh
                       PUBLIC hxt_core
-                      PRIVATE hxt_predicates hxt_tetBR m)
+                      PRIVATE hxt_predicates hxt_tetBR)
+if(NOT MSVC)
+    target_link_libraries(hxt_tetMesh PRIVATE m)
+endif()
 target_compile_features(hxt_tetMesh PRIVATE c_std_99)
 
 
@@ -90,4 +93,24 @@ if(HXT_TETMESH_BUILD_CLI)
     # tetOpti_CLI
     add_executable(tetOpti_CLI "${CMAKE_CURRENT_SOURCE_DIR}/exe/tetOpti_CLI.c")
     target_link_libraries(tetOpti_CLI hxt_core hxt_predicates hxt_tetBR hxt_tetMesh)
+endif()
+
+include(GNUInstallDirs)
+
+if(NOT HXT_TETMESH_OBJECT_ONLY)
+    install(TARGETS hxt_tetMesh DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    set(HXT_TETMESH_PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_tetDelaunay.h"
+                                   "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_tetFlag.h"
+                                   "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_tetMesh.h"
+                                   "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_tetNodalSize.h"
+                                   "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_tetOpti.h"
+                                   "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_tetRepair.h"
+                                   "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_vertices.h")
+    install(FILES ${HXT_TETMESH_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()
+
+if(HXT_TETMESH_BUILD_CLI)
+    install(TARGETS tetMesh_CLI DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(TARGETS Delaunay_CLI DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(TARGETS tetOpti_CLI DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

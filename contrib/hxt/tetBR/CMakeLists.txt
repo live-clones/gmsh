@@ -38,11 +38,23 @@ target_include_directories(hxt_tetBR
                            PRIVATE src)
 target_link_libraries(hxt_tetBR
                       PUBLIC hxt_core
-                      PRIVATE hxt_predicates m)
+                      PRIVATE hxt_predicates)
+
+if(NOT MSVC)
+  target_link_libraries(hxt_tetBR PRIVATE m)
+endif()
 
 if(HXT_ENABLE_OPENMP)
   find_package(OpenMP 4)
   if(OpenMP_CXX_FOUND)
       target_link_libraries(hxt_tetBR PUBLIC OpenMP::OpenMP_CXX)
   endif()
+endif()
+
+include(GNUInstallDirs)
+
+if(NOT HXT_TETBR_OBJECT_ONLY)
+  install(TARGETS hxt_tetBR DESTINATION ${CMAKE_INSTALL_LIBDIR}) 
+  set(HXT_TETBR_PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_boundary_recovery.h")    
+  install(FILES ${HXT_TETBR_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()

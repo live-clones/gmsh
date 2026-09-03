@@ -60,6 +60,8 @@ int main(int argc, char **argv)
   // SizeMin -o----------------/
   //          |                |    |
   //        Point         DistMin  DistMax
+  //
+  // (y axis: element size; x axis: distance from the Distance field)
   gmsh::model::mesh::field::add("Threshold", 2);
   gmsh::model::mesh::field::setNumber(2, "InField", 1);
   gmsh::model::mesh::field::setNumber(2, "SizeMin", lc / 30);
@@ -108,7 +110,7 @@ int main(int argc, char **argv)
 
   gmsh::model::mesh::field::setAsBackgroundMesh(7);
 
-  // The API also allows to set a global mesh size callback, which is called
+  // The API can also set a global mesh size callback, which is called
   // each time the mesh size is queried
   auto meshSizeCallback = [](int dim, int tag, double x, double y, double z,
                              double lc) {

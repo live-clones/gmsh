@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,8 +7,11 @@
 #define GMODEL_PARAMETRIZE_H
 
 void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
-                   bool forParametrization, double curveAngleThreshold);
+                   bool forParametrization, double curveAngleThreshold,
+                   std::map<int, std::vector<int>> &splitMap);
 void classifyFaces(GModel *gm, double curveAngleThreshold);
+void classifyFaces(GModel *gm, double curveAngleThreshold,
+                   std::map<int, std::vector<int>> &splitMap);
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut);
 void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,

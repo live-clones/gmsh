@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -374,7 +374,7 @@ void statisticsWindow::compute(bool elementQuality)
   static char mem[256];
   std::size_t m = GetMemoryUsage();
   if(m) {
-    sprintf(mem, "Memory usage: %gMb", m / 1024. / 1024.);
+    sprintf(mem, "Memory usage: %gMB", m / 1024. / 1024.);
     memUsage->label(mem);
   }
 }

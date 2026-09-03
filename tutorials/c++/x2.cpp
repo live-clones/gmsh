@@ -110,7 +110,7 @@ int main(int argc, char **argv)
   // remesh them later on:
   gmsh::model::mesh::createGeometry();
 
-  // Note that for more complicated meshes, e.g. for on input unstructured STL
+  // Note that for more complicated meshes, e.g. for an input unstructured STL
   // mesh, we could use `classifySurfaces()' to automatically create the
   // discrete entities and the topology; but we would then have to extract the
   // boundaries afterwards.

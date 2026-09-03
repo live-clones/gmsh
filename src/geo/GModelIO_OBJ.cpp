@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -39,7 +39,7 @@ namespace {
   template <typename T> void writeFace(std::ofstream &ofs, const T *elem)
   {
     ofs << "f";
-    for(size_t i = 0; i < elem->getNumVertices(); ++i) {
+    for(size_t i = 0; i < elem->getNumPrimaryVertices(); ++i) {
       ofs << " " << elem->getVertex(i)->getIndex();
     }
     ofs << "\n";
@@ -119,8 +119,7 @@ int GModel::writeOBJ(const std::string &name, bool saveAll,
     return 0;
   }
 
-  if(noPhysicalGroups()) saveAll = true;
-  indexMeshVertices(saveAll);
+  indexMeshVertices(true);
 
   // Write vertices
   std::vector<GEntity *> entities;
@@ -137,7 +136,6 @@ int GModel::writeOBJ(const std::string &name, bool saveAll,
   }
 
   for(const auto &face : faces) {
-    if(!saveAll && face->physicals.empty()) continue;
     for(const auto &t : face->triangles) writeFace(ofs, t);
     for(const auto &q : face->quadrangles) writeFace(ofs, q);
     for(const auto &p : face->polygons) writeFace(ofs, p);

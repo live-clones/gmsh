@@ -1,9 +1,9 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
+// Contributor(s): Matti Pellikka (initial implementation)
 
 #include "Chain.h"
 #include "MLine.h"
@@ -17,8 +17,6 @@
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #endif
-
-#if defined(HAVE_KBIPACK)
 
 void updateFltk()
 {
@@ -262,5 +260,3 @@ bool ElemChain::inEntity(GEntity *e) const
     if(!_vertexCache[e].count(this->getMeshVertex(i))) return false;
   return true;
 }
-
-#endif

@@ -116,7 +116,7 @@ View "comments" {
 // This post-processing view is in the "parsed" format, i.e. it is interpreted
 // using the same parser as the `.geo' file. For large post-processing datasets,
 // that contain actual field values defined on a mesh, you should use the MSH
-// file format instead, which allows to efficiently store continuous or
+// file format instead, which can efficiently store continuous or
 // discontinuous scalar, vector and tensor fields, or arbitrary polynomial
 // order.
 

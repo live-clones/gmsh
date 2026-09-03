@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 #include "GModelParametrize.h"
 
 #if defined(HAVE_MESH)
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #endif
 
 static void NoElementsSelectedMode(classificationEditor *e)
@@ -283,7 +283,7 @@ static void classify_cb(Fl_Widget *w, void *data)
 
   computeDiscreteCurvatures(GModel::current());
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
-    computeEdgeCut(GModel::current(), e->selected->lines, 100000);
+    computeEdgeCut(GModel::current(), e->selected->lines,  CTX::instance()->mesh.reparamMaxTriangles);
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
   double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
   classifyFaces(GModel::current(), threshold);

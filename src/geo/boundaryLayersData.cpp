@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -303,11 +303,11 @@ static bool isEdgeOfFaceBL(GFace *gf, GEdge *ge, BoundaryLayerField *blf)
   return false;
 }
 
-static void getEdgesData(GFace *gf, BoundaryLayerField *blf,
-                         BoundaryLayerColumns *_columns,
-                         std::set<MVertex *> &_vertices,
-                         std::set<MEdge, MEdgeLessThan> &allEdges,
-                         std::multimap<MVertex *, MVertex *> &tangents)
+static void
+getEdgesData(GFace *gf, BoundaryLayerField *blf, BoundaryLayerColumns *_columns,
+             std::set<MVertex *, MVertexPtrLessThan> &_vertices,
+             std::set<MEdge, MEdgeLessThan> &allEdges,
+             std::multimap<MVertex *, MVertex *, MVertexPtrLessThan> &tangents)
 {
   // get all model edges
   std::vector<GEdge *> edges = gf->edges();
@@ -442,9 +442,9 @@ bool buildAdditionalPoints2D(GFace *gf)
 
     if(!blf || !blf->setupFor2d(gf->tag())) continue;
 
-    std::set<MVertex *> _vertices;
+    std::set<MVertex *, MVertexPtrLessThan> _vertices;
     std::set<MEdge, MEdgeLessThan> allEdges;
-    std::multimap<MVertex *, MVertex *> tangents;
+    std::multimap<MVertex *, MVertex *, MVertexPtrLessThan> tangents;
 
     getEdgesData(gf, blf, _columns, _vertices, allEdges, tangents);
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,6 +12,7 @@
 #cmakedefine HAVE_ALGLIB
 #cmakedefine HAVE_ANN
 #cmakedefine HAVE_BAMG
+#cmakedefine HAVE_BOUNDARY_LAYERS
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_CAIRO
@@ -22,9 +23,7 @@
 #cmakedefine HAVE_FLTK
 #cmakedefine HAVE_GEOMETRYCENTRAL
 #cmakedefine HAVE_GMM
-#cmakedefine HAVE_GMP
 #cmakedefine HAVE_HXT
-#cmakedefine HAVE_KBIPACK
 #cmakedefine HAVE_LAPACK
 #cmakedefine HAVE_LIBCGNS
 #cmakedefine HAVE_LIBCGNS_CPEX0045

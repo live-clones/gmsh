@@ -6,7 +6,7 @@
 !
 ! ------------------------------------------------------------------------------
 
-! The OpenCASCADE CAD kernel allows to import STEP files and to modify them. In
+! The OpenCASCADE CAD kernel can import STEP files and modify them. In
 ! this tutorial we will load a STEP geometry and partition it into slices.
 
 program t20
@@ -29,7 +29,7 @@ call gmsh%initialize()
 
 call gmsh%model%add("t20")
 
-! Load a STEP file (using `importShapes' instead of `merge' allows to directly
+! Load a STEP file (using `importShapes' instead of `merge' can directly
 ! retrieve the tags of the highest dimensional imported entities):
 call gmsh%model%occ%importShapes('../t20_data.step', v)
 

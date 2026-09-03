@@ -4,6 +4,7 @@ their own respective license:
 
 * ALGLIB: GNU General Public License (GPL) v. 2 or later
 * ANN: GNU Lesser General Public License
+* BoundaryLayers: GNU Affero General Public License (AGPL) v. 3 or later
 * HighOrderMeshOptimizer: MIT/X11 License
 * MathEx: GNU Lesser General Public License (LGPL) v. 2.1 or later, with static
   linking exception
@@ -21,7 +22,6 @@ their own respective license:
 * gmm: GNU Lesser General Public License (LGPL), v. 3 or later
 * hxt: GNU General Public License (GPL) v. 2 or later, with exception for
   linking with Gmsh under Gmsh license
-* kbipack: GNU General Public License (GPL) v. 2 or later
 * metis: Apache License (APL), v. 2.0
 * mobile: GNU General Public License (GPL), v. 2 or later
 * mpeg_encode: freely distributed, but patents are held by several companies on

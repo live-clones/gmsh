@@ -61,7 +61,7 @@ Geometry.NumSubEdges = 1000;
 // (here with a target of 20 elements per 2*Pi radians):
 Mesh.MeshSizeFromCurvature = 20;
 
-// We can constraint the min and max element sizes to stay within reasonnable
+// We can constraint the min and max element sizes to stay within reasonable
 // values (see `t10.geo' for more details):
 Mesh.MeshSizeMin = 0.001;
 Mesh.MeshSizeMax = 0.3;

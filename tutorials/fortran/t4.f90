@@ -155,7 +155,7 @@ call gmsh%view%addListDataString(v, [150d0, -7d0], ["file://../t4_image.png@20x0
 ! These annotations are handled by a list-based post-processing view. For
 ! large post-processing datasets, that contain actual field values defined on
 ! a mesh, you should use model-based post-processing views instead, which
-! allow to efficiently store continuous or discontinuous scalar, vector and
+! can efficiently store continuous or discontinuous scalar, vector and
 ! tensor fields, or arbitrary polynomial order.
 
 ! Views and geometrical entities can be made to respond to double-click

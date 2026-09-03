@@ -110,7 +110,7 @@ For num In {1:3}
     If (num == 3)
       // Uncomment the following lines to save each frame to an image file (the
       // `Print' command saves the graphical window; the `Sprintf' function
-      // permits to create the file names on the fly):
+      // creates the file names on the fly):
 
       // Print Sprintf("t8-%g.gif", num2);
       // Print Sprintf("t8-%g.ppm", num2);

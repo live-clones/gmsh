@@ -9,7 +9,7 @@
 import gmsh
 import sys
 
-# "Compound" meshing constraints allow to generate meshes across surface
+# "Compound" meshing constraints can generate meshes across surface
 # boundaries, which can be useful e.g. for imported CAD models (e.g. STEP) with
 # undesired small features.
 

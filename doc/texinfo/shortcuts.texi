@@ -87,6 +87,8 @@ Quit
 Rename project file
 @item Ctrl+s
 Save mesh in default format
+@item Ctrl+t
+Run solver
 @item Shift+Ctrl+c
 Show clipping plane window
 @item Shift+Ctrl+h

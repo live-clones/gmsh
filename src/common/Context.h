@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -43,6 +43,7 @@ struct contextMeshOptions {
   int hoCurveOuterBL;
   double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
+  int flatRefine2D, flatRefine3D, flatOptimize3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, ignoreUnknownSections;
   int boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
@@ -110,9 +111,10 @@ struct contextGeometryOptions {
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
+  int occWriteParametricCurves, occWriteSTEPNonManifold;
   int occBooleanCheckInverted, occBooleanGlue, occBooleanNonDestructive;
   int occBooleanPreserveNumbering, occBooleanSimplify;
-  int occThruSectionsDegree, occUseGenericClosestPoint;
+  int occThruSectionsDegree, occUseGenericClosestPoint, occFastProjection;
   int occBrepFormatVersion;
   double occScaling;
   std::string occTargetUnit;

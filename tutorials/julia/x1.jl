@@ -6,7 +6,7 @@
 #
 # -----------------------------------------------------------------------------
 
-# The Julia API allows to do much more than what can be done in .geo
+# The Julia API can do much more than what can be done in .geo
 # files. These additional features are introduced gradually in the extended
 # tutorials, starting with `x1.jl'.
 

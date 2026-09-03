@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -104,8 +104,8 @@ public:
   void setEye(SPoint3 &p) { _eye = p; }
   //  void setDrawContext(drawContext *ctx){_ctx=ctx;}
 
-  // get (approx.) memory used by the view, in Mb
-  double getMemoryInMb();
+  // get (approx.) memory used by the view, in MB
+  double getMemoryInMB();
 
 #ifndef SWIG
   // the static list of all loaded views

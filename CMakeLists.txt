@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -35,6 +35,7 @@ opt(3M "Enable proprietary 3M extension" OFF)
 opt(ALGLIB "Enable ALGLIB (used by some mesh optimizers)" ${DEFAULT})
 opt(ANN "Enable ANN (used for fast point search in mesh/post)" ${DEFAULT})
 opt(BAMG "Enable Bamg 2D anisotropic mesh generator" ${DEFAULT})
+opt(BOUNDARY_LAYERS "Enable boundary layer plugin" ${DEFAULT})
 opt(BLAS_LAPACK "Enable BLAS/Lapack for linear algebra (if Eigen if disabled)" OFF)
 opt(BLOSSOM "Enable Blossom algorithm (needed for full quad meshing)" ${DEFAULT})
 opt(BUILD_LIB "Enable 'lib' target for building static Gmsh library" OFF)
@@ -45,17 +46,15 @@ opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
 opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
 opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
-opt(PROFILE "Enable profiling compiler flags" OFF)
+opt(COVERAGE "Enable code coverage instrumentation (GCC/Clang only)" OFF)
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
-opt(GMP "Enable GMP for Kbipack (advanced)" ON)
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
 opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
-opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module" ${DEFAULT})
@@ -90,6 +89,7 @@ opt(POST "Enable post-processing module (required by GUI)" ${DEFAULT})
 opt(POPPLER "Enable Poppler for displaying PDF documents (experimental)" OFF)
 opt(PRIVATE_API "Enable private API" OFF)
 opt(PRO "Enable PRO extensions" ${DEFAULT})
+opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
@@ -158,7 +158,7 @@ if(ENABLE_PRIVATE_API)
           "on the stable public API (gmsh/api) instead.")
   file(GLOB_RECURSE HEADERS src/common/*.h src/numeric/*.h src/numeric/*.hpp
        src/geo/*.h src/mesh/*.h src/solver/*.h src/post/*.h src/plugin/*.h
-       src/graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
+       src/graphics/*.h contrib/DiscreteIntegration/*.h
        contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
        contrib/MeshQualityOptimizer/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
@@ -333,12 +333,9 @@ endif()
 
 if(ENABLE_OPENMP)
   find_package(OpenMP)
-  if(OpenMP_FOUND OR OPENMP_FOUND)
-    set_config_option(HAVE_OPENMP "OpenMP")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
-  elseif(APPLE AND EXISTS "/opt/local/lib/libomp")
+  # special cases on macOS are handled first; then the general case; then the
+  # specific static linking for our official builds on Linux:
+  if(APPLE AND EXISTS "/opt/local/lib/libomp")
     # official Apple compiler with macports' libomp
     set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
     set(CMAKE_C_FLAGS
@@ -360,12 +357,20 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/homebrew/opt/libomp/lib -lomp")
+  elseif(OpenMP_FOUND OR OPENMP_FOUND)
+    # general case
+    set_config_option(HAVE_OPENMP "OpenMP")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND EXISTS "/usr/local/lib64/libgomp.a")
     # custom static openmp for official linux builds
     set_config_option(HAVE_OPENMP "OpenMP[static]")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
     list(APPEND EXTERNAL_LIBRARIES "/usr/local/lib64/libgomp.a")
+  else()
+    message(WARNING "Could not find suitable OpenMP configuration")
   endif()
 endif()
 
@@ -385,6 +390,24 @@ if(ENABLE_PROFILE)
     if(FNOFP)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
     endif()
+endif()
+
+if(ENABLE_COVERAGE)
+  if(NOT (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang" AND
+          CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang"))
+    message(FATAL_ERROR "ENABLE_COVERAGE requires GCC or Clang")
+  endif()
+  if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(WARNING "CMAKE_BUILD_TYPE=Debug is recommended for "
+            "accurate counters when ENABLE_COVERAGE is on")
+  endif()
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+  # Don't add --coverage to CMAKE_Fortran_FLAGS (on macOS the link driver is
+  # clang, but gfortran's --coverage instrumentation references gcc's libgcov)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} --coverage")
 endif()
 
 macro(append_gmsh_src DIRNAME FILES)
@@ -795,23 +818,6 @@ if(HAVE_FLTK AND ENABLE_CAIRO)
   endif()
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/kbipack AND ENABLE_KBIPACK)
-  set_config_option(HAVE_KBIPACK "Kbipack")
-  add_subdirectory(contrib/kbipack)
-  include_directories(contrib/kbipack)
-  if(ENABLE_GMP)
-    find_library(GMP_LIB gmp)
-    find_path(GMP_INC "gmp.h" PATH_SUFFIXES src include)
-  endif()
-  if(GMP_LIB AND GMP_INC)
-    set_config_option(HAVE_GMP "GMP")
-    list(APPEND EXTERNAL_LIBRARIES ${GMP_LIB})
-    list(APPEND EXTERNAL_INCLUDES ${GMP_INC})
-  else()
-    message(STATUS "GMP not found: Kbipack uses long int")
-  endif()
-endif()
-
 if(ENABLE_MATHEX)
   find_library(MATHEX_LIB mathex PATH_SUFFIXES lib)
   find_path(MATHEX_INC "mathex.h" PATH_SUFFIXES src include)
@@ -943,6 +949,13 @@ if(HAVE_MESH)
     add_subdirectory(contrib/MeshQualityOptimizer)
     include_directories(contrib/MeshQualityOptimizer)
     set_config_option(HAVE_OPTHOM "OptHom")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/BoundaryLayers
+     AND ENABLE_BOUNDARY_LAYERS)
+    add_subdirectory(contrib/BoundaryLayers)
+    include_directories(contrib/BoundaryLayers)
+    set_config_option(HAVE_BOUNDARY_LAYERS "BoundaryLayers")
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND ENABLE_DOMHEX)
@@ -1656,11 +1669,11 @@ if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
          GMSH_LONG_DESCRIPTION)
   else()
     if ("${GMSH_EXTRA_VERSION}" MATCHES "-nox")
-      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1+nox")
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev${DATE}+nox")
       file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst
            GMSH_LONG_DESCRIPTION)
     else ()
-      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1")
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev${DATE}")
       file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst
            GMSH_LONG_DESCRIPTION)
     endif()
@@ -1847,6 +1860,16 @@ elseif(APPLE)
   # breaks exception handling
   # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind")
   # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-no_compact_unwind")
+elseif(EMSCRIPTEN)
+  # WebAssembly build: enable the virtual filesystem and export the runtime
+  # methods needed to drive Gmsh from JavaScript; memory limits are increased
+  # to handle OpenCASCADE models
+  set(FLAGS "-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456")
+  set(FLAGS "${FLAGS} -sMAXIMUM_MEMORY=4294967296 -sSTACK_SIZE=5242880")
+  set(FLAGS "${FLAGS} -sFILESYSTEM=1 -sLINKABLE=1 -sEXPORT_ALL=1")
+  set(FLAGS "${FLAGS} -sEXPORTED_RUNTIME_METHODS=FS,callMain,cwrap,ccall")
+  set(FLAGS "${FLAGS} -sENVIRONMENT=web,node")
+  set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS}")
 endif()
 
 # android target
@@ -2326,6 +2349,53 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   endif()
 endif()
 
+if(ENABLE_COVERAGE)
+  # Workflow:
+  #   cmake -DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug ..
+  #   make
+  #   make coverage_reset   # optional, to start fresh
+  #   ctest                 # accumulates counters in .gcda files
+  #   make coverage         # produces <build>/coverage/index.html
+  find_program(LCOV lcov)
+  find_program(GENHTML genhtml)
+  if(LCOV AND GENHTML)
+    set(LCOV_IGNORE "")
+    set(GENHTML_IGNORE "")
+    execute_process(COMMAND ${LCOV} --version OUTPUT_VARIABLE LCOV_VERSION_STRING
+                    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    if(LCOV_VERSION_STRING MATCHES "LCOV version ([0-9]+)")
+      if(CMAKE_MATCH_1 GREATER_EQUAL 2)
+        set(LCOV_IGNORE --ignore-errors unused,source,source,inconsistent,inconsistent
+            --ignore-errors unsupported,unsupported,format)
+        set(GENHTML_IGNORE --ignore-errors unused,category,inconsistent,source
+            --synthesize-missing)
+      endif()
+    endif()
+    set(COV_RAW ${CMAKE_BINARY_DIR}/coverage.raw.info)
+    set(COV_FILTERED ${CMAKE_BINARY_DIR}/coverage.info)
+    set(COV_HTML ${CMAKE_BINARY_DIR}/coverage)
+    add_custom_target(coverage_reset
+      COMMAND ${LCOV} --quiet --directory ${CMAKE_BINARY_DIR} --zerocounters
+      COMMENT "Resetting code coverage counters")
+    add_custom_target(coverage
+      COMMAND ${LCOV} --quiet --directory ${CMAKE_BINARY_DIR}
+        --base-directory ${CMAKE_SOURCE_DIR} --capture --output-file ${COV_RAW}
+        ${LCOV_IGNORE}
+      COMMAND ${LCOV} --quiet --remove ${COV_RAW} "${CMAKE_SOURCE_DIR}/contrib/*"
+        "${CMAKE_BINARY_DIR}/*" "petsc/include/*" "/usr/*" "/opt/*" "/Library/*"
+        "/Applications/*" ${LCOV_IGNORE} --output-file ${COV_FILTERED}
+      COMMAND ${GENHTML} --quiet --legend
+        --title "Gmsh ${GMSH_VERSION} code coverage" --output-directory ${COV_HTML}
+        ${GENHTML_IGNORE} ${COV_FILTERED}
+      COMMAND ${CMAKE_COMMAND} -E echo "Coverage report: ${COV_HTML}/index.html"
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      COMMENT "Generating HTML coverage report")
+    add_dependencies(coverage gmsh)
+  else()
+    message(FATAL_ERROR "ENABLE_COVERAGE requires lcov/genhtml")
+  endif()
+endif()
+
 message(STATUS "")
 message(STATUS "Gmsh ${GMSH_VERSION} has been configured for ${GMSH_OS}")
 message(STATUS "")
@@ -2337,7 +2407,7 @@ message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
 mark_as_advanced(ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
-                 GMP_INC GMP_LIB MMG_INC MMG_LIB HDF5_LIB
+                 MMG_INC MMG_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB
                  BISON FLEX MAKEINFO TEXI2PDF FLTK_CONFIG_SCRIPT

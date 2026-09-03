@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -132,4 +132,21 @@ int GModel::writePartitionedMSH(const std::string &baseName, double version,
 
   Msg::Error("Unknown MSH file version %g", version);
   return 0;
+}
+
+int GModel::writeMSHPartitions(const std::string &name,
+                               const std::vector<int> &partitions,
+                               double version, bool binary, bool saveAll,
+                               bool saveParametric, double scalingFactor)
+{
+  if(version < 4.0) {
+    Msg::Error("Writing selected partitions requires MSH format >= 4.0");
+    return 0;
+  }
+
+  if(CTX::instance()->mesh.createEdges) createMEdges();
+  if(CTX::instance()->mesh.createFaces) createMFaces();
+
+  return _writeMSH4(name, version, binary, saveAll, saveParametric,
+                    scalingFactor, false, partitions);
 }

@@ -6,7 +6,7 @@
 #
 # ------------------------------------------------------------------------------
 
-# The OpenCASCADE CAD kernel allows to import STEP files and to modify them. In
+# The OpenCASCADE CAD kernel can import STEP files and modify them. In
 # this tutorial we will load a STEP geometry and partition it into slices.
 
 import gmsh
@@ -15,7 +15,7 @@ gmsh.initialize()
 
 gmsh.model.add("t20")
 
-# Load a STEP file (using `importShapes' instead of `merge' allows to directly
+# Load a STEP file (using `importShapes' instead of `merge' can directly
 # retrieve the tags of the highest dimensional imported entities):
 path = abspath(joinpath(@__DIR__, "..", "t20_data.step"))
 v = gmsh.model.occ.importShapes(path)

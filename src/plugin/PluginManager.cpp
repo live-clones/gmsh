@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -71,7 +71,11 @@
 #include "Summation.h"
 #include "BoundaryAngles.h"
 #include "MeshSizeFieldView.h"
+#include "DuplicateNodes.h"
+
+#if defined(HAVE_BOUNDARY_LAYERS)
 #include "BoundaryLayer.h"
+#endif
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -252,6 +256,7 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(
       std::make_pair("SimplePartition", GMSH_RegisterSimplePartitionPlugin()));
     allPlugins.insert(std::make_pair("Crack", GMSH_RegisterCrackPlugin()));
+    allPlugins.insert(std::make_pair("DuplicateNodes", GMSH_RegisterDuplicateNodesPlugin()));
     allPlugins.insert(std::make_pair(
       "ShowNeighborElements", GMSH_RegisterShowNeighborElementsPlugin()));
     allPlugins.insert(
@@ -266,6 +271,10 @@ void PluginManager::registerDefaultPlugins()
       std::make_pair("BoundaryAngles", GMSH_RegisterBoundaryAnglesPlugin()));
     allPlugins.insert(
       std::make_pair("Invisible", GMSH_RegisterInvisiblePlugin()));
+    allPlugins.insert(std::make_pair("HomologyComputation",
+                                     GMSH_RegisterHomologyComputationPlugin()));
+    allPlugins.insert(std::make_pair(
+      "HomologyPostProcessing", GMSH_RegisterHomologyPostProcessingPlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::make_pair("AnalyseMeshQuality",
                                      GMSH_RegisterAnalyseMeshQualityPlugin()));
@@ -275,16 +284,11 @@ void PluginManager::registerDefaultPlugins()
       std::make_pair("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
     allPlugins.insert(std::make_pair("MeshSizeFieldView",
                                      GMSH_RegisterMeshSizeFieldViewPlugin()));
+
 #endif
 #if defined(HAVE_REVOROPT)
     allPlugins.insert(
       std::make_pair("CVTRemesh", GMSH_RegisterCVTRemeshPlugin()));
-#endif
-#if defined(HAVE_KBIPACK)
-    allPlugins.insert(std::make_pair("HomologyComputation",
-                                     GMSH_RegisterHomologyComputationPlugin()));
-    allPlugins.insert(std::make_pair(
-      "HomologyPostProcessing", GMSH_RegisterHomologyPostProcessingPlugin()));
 #endif
 #if defined(HAVE_SOLVER)
     allPlugins.insert(
@@ -296,8 +300,10 @@ void PluginManager::registerDefaultPlugins()
 #endif
     allPlugins.insert(
       std::make_pair("SpanningTree", GMSH_RegisterSpanningTreePlugin()));
+#if defined(HAVE_BOUNDARY_LAYERS)
     allPlugins.insert(
       std::make_pair("BoundaryLayer", GMSH_RegisterBoundaryLayerPlugin()));
+#endif
   }
 
 #if defined(HAVE_FLTK)

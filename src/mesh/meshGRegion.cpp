@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,7 +14,7 @@
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "meshGRegionBoundaryRecovery.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
 #include "meshRelocateVertex.h"
 #include "meshUntangle.h"
 #include "GModel.h"
@@ -25,8 +25,10 @@
 #include "discreteEdge.h"
 #include "MLine.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "ExtrudeParams.h"
 #include "OS.h"
 #include "Context.h"
@@ -34,14 +36,36 @@
 void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 {
   _quad[f] = v;
-  MFace f0(f.getVertex(0), f.getVertex(1), v);
-  MFace f1(f.getVertex(1), f.getVertex(2), v);
-  MFace f2(f.getVertex(2), f.getVertex(3), v);
-  MFace f3(f.getVertex(3), f.getVertex(0), v);
-  _tri[f0] = gf;
-  _tri[f1] = gf;
-  _tri[f2] = gf;
-  _tri[f3] = gf;
+  if(v) {
+    MFace f0(f.getVertex(0), f.getVertex(1), v);
+    MFace f1(f.getVertex(1), f.getVertex(2), v);
+    MFace f2(f.getVertex(2), f.getVertex(3), v);
+    MFace f3(f.getVertex(3), f.getVertex(0), v);
+    _tri[f0] = gf;
+    _tri[f1] = gf;
+    _tri[f2] = gf;
+    _tri[f3] = gf;
+  }
+  else {
+    MTriangle t0(f.getVertex(0), f.getVertex(1), f.getVertex(2));
+    MTriangle t1(f.getVertex(0), f.getVertex(2), f.getVertex(3));
+    double qual01 = std::min(t0.gammaShapeMeasure(), t1.gammaShapeMeasure());
+    MTriangle t2(f.getVertex(1), f.getVertex(2), f.getVertex(3));
+    MTriangle t3(f.getVertex(0), f.getVertex(1), f.getVertex(3));
+    double qual23 = std::min(t2.gammaShapeMeasure(), t3.gammaShapeMeasure());
+    if (qual01 > qual23) {
+      MFace f0(f.getVertex(0), f.getVertex(1), f.getVertex(2));
+      MFace f1(f.getVertex(0), f.getVertex(2), f.getVertex(3));
+      _tri[f0] = gf;
+      _tri[f1] = gf;
+    }
+    else {
+      MFace f0(f.getVertex(1), f.getVertex(2), f.getVertex(3));
+      MFace f1(f.getVertex(0), f.getVertex(1), f.getVertex(3));
+      _tri[f0] = gf;
+      _tri[f1] = gf;
+    }
+  }
 }
 
 int splitQuadRecovery::buildPyramids(GModel *gm)
@@ -50,6 +74,7 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
 
   Msg::Info("Generating pyramids for hybrid mesh...");
   int npyram = 0;
+  int ntrihedra = 0;
   for(auto it = gm->firstRegion(); it != gm->lastRegion(); it++) {
     GRegion *gr = *it;
     if(gr->meshAttributes.method == MESH_TRANSFINITE) continue;
@@ -65,26 +90,81 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
       for(std::size_t j = 0; j < gf->quadrangles.size(); j++) {
         auto it2 = _quad.find(gf->quadrangles[j]->getFace(0));
         if(it2 != _quad.end()) {
-          npyram++;
-          gr->pyramids.push_back(new MPyramid(
-            it2->first.getVertex(0), it2->first.getVertex(1),
-            it2->first.getVertex(2), it2->first.getVertex(3), it2->second));
-          gr->mesh_vertices.push_back(it2->second);
-          if(it2->second->onWhat()->dim() == 3) {
-            Msg::Error(
-              "Pyramid top vertex already classified on volume %d (!= %d) - "
-              "non-manifold quad boundaries not supported yet",
-              it2->second->onWhat()->tag(), gr->tag());
+          if(it2->second) {
+            npyram++;
+            gr->pyramids.push_back(new MPyramid(
+              it2->first.getVertex(0), it2->first.getVertex(1),
+              it2->first.getVertex(2), it2->first.getVertex(3), it2->second));
+            gr->mesh_vertices.push_back(it2->second);
+            if(it2->second->onWhat()->dim() == 3) {
+              Msg::Error(
+                "Pyramid top vertex already classified on volume %d (!= %d) - "
+                "non-manifold quad boundaries not supported yet",
+                it2->second->onWhat()->tag(), gr->tag());
+            }
+            else {
+              it2->second->setEntity(gr);
+            }
           }
           else {
-            it2->second->setEntity(gr);
+            ntrihedra++;
+            gr->trihedra.push_back(new MTrihedron(
+              it2->first.getVertex(1), it2->first.getVertex(2),
+              it2->first.getVertex(3), it2->first.getVertex(0)));
           }
         }
       }
     }
   }
-  Msg::Info("Done generating %d pyramids for hybrid mesh", npyram);
-  return npyram;
+  Msg::Info("Done generating %d pyramids and %d trihedra for hybrid mesh",
+            npyram, ntrihedra);
+  return npyram + ntrihedra;
+}
+
+static void _deleteUnusedVertices(GRegion *gr)
+{
+  // deduplicate the tet corners first (through the vertex indices set by the
+  // refinement), so that only the unique vertices need to be sorted - on
+  // inline keys, as sorting pointers with MVertexPtrLessThan reads the
+  // vertex numbers through the pointers at each comparison
+  std::vector<std::pair<std::size_t, MVertex *> > allverts;
+  std::vector<std::uint8_t> seen;
+  bool haveIndices = true;
+  for(std::size_t i = 0; i < gr->tetrahedra.size() && haveIndices; i++) {
+    for(int j = 0; j < 4; j++) {
+      MVertex *v = gr->tetrahedra[i]->getVertex(j);
+      if(v->onWhat() != gr) continue;
+      const long idx = v->getIndex();
+      if(idx < 0) {
+        haveIndices = false;
+        break;
+      }
+      if((std::size_t)idx >= seen.size()) seen.resize(idx + 1, 0);
+      if(!seen[idx]) {
+        seen[idx] = 1;
+        allverts.push_back(std::make_pair(v->getNum(), v));
+      }
+    }
+  }
+  if(!haveIndices) {
+    allverts.clear();
+    allverts.reserve(4 * gr->tetrahedra.size());
+    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+      for(int j = 0; j < 4; j++) {
+        MVertex *v = gr->tetrahedra[i]->getVertex(j);
+        if(v->onWhat() == gr)
+          allverts.push_back(std::make_pair(v->getNum(), v));
+      }
+    }
+  }
+  std::sort(allverts.begin(), allverts.end());
+  allverts.erase(std::unique(allverts.begin(), allverts.end()),
+                 allverts.end());
+  // FIXME: investigate crash on exit if we delete the unused vertices
+  // (e.g. t16.geo)
+  gr->mesh_vertices.clear();
+  gr->mesh_vertices.reserve(allverts.size());
+  for(auto &p : allverts) gr->mesh_vertices.push_back(p.second);
 }
 
 void MeshDelaunayVolume(std::vector<GRegion *> &regions)
@@ -150,7 +230,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   std::vector<GVertex *> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
 
-  splitQuadRecovery sqr;
+  splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
   bool success = meshGRegionBoundaryRecovery(gr, &sqr);
 
   // sort triangles in all model faces in order to be able to search in vectors
@@ -192,8 +272,10 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 	  CTX::instance()->mesh.algo3d != ALGO_3D_RTREE) {
     insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D, 1.,
                            true, &sqr);
+    for(auto gr : regions) _deleteUnusedVertices(gr);
 
-    if(sqr.buildPyramids(gr->model())) {
+    int nHybrid = sqr.buildPyramids(gr->model());
+    if(nHybrid && sqr.doWeCreatePyramids()) {
       //      Msg::Info("Optimizing pyramids for hybrid mesh...");
       gr->model()->setAllVolumesPositive();
       RelocateVerticesOfPyramids(regions, 3);

@@ -30,7 +30,6 @@ Field[1].PointsList = {5};
 Field[1].CurvesList = {2};
 Field[1].Sampling = 100;
 
-
 // We then define a `Threshold' field, which uses the return value of the
 // `Distance' field 1 in order to define a simple change in element size
 // depending on the computed distances
@@ -42,6 +41,8 @@ Field[1].Sampling = 100;
 // SizeMin -o----------------/
 //          |                |    |
 //        Point         DistMin  DistMax
+//
+// (y axis: element size; x axis: distance from the Distance field)
 Field[2] = Threshold;
 Field[2].InField = 1;
 Field[2].SizeMin = lc / 30;

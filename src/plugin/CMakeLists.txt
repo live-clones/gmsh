@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,6 +33,7 @@ set(SRC
   SpanningTree.cpp
   NewView.cpp
   SimplePartition.cpp Crack.cpp
+  DuplicateNodes.cpp
   MeshSubEntities.cpp
   MeshVolume.cpp
   CVTRemesh.cpp
@@ -43,7 +44,6 @@ set(SRC
   BoundaryAngles.cpp
   MeshSizeFieldView.cpp
   Invisible.cpp
-  BoundaryLayer.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

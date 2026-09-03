@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -80,13 +80,15 @@ class splitQuadRecovery {
 private:
   std::map<MFace, MVertex *, MFaceLessThan> _quad;
   std::map<MFace, GFace *, MFaceLessThan> _tri;
+  bool _pyramids;
 
 public:
-  splitQuadRecovery() {}
+  splitQuadRecovery(bool pyramids = true) : _pyramids(pyramids) {}
   void add(const MFace &f, MVertex *v, GFace *gf);
   std::map<MFace, GFace *, MFaceLessThan> &getTri() { return _tri; }
   std::map<MFace, MVertex *, MFaceLessThan> &getQuad() { return _quad; }
   int buildPyramids(GModel *gm);
+  bool doWeCreatePyramids() const { return _pyramids; }
 };
 
 // adapt the mesh of a region

@@ -1,14 +1,13 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
+// Contributor(s): Matti Pellikka (initial implementation), Bruno de Sousa Alves
+// (periodicity)
 
 #include "Homology.h"
 #include "fullMatrix.h"
-
-#if defined(HAVE_KBIPACK)
 
 Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
                    const std::vector<int> &physicalSubdomain,
@@ -16,7 +15,7 @@ Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
                    int combine, bool omit, bool smoothen, int heuristic)
   : _model(model), _domain(physicalDomain), _subdomain(physicalSubdomain),
     _imdomain(physicalImdomain), _saveOrig(saveOrig), _combine(combine),
-    _omit(omit), _smoothen(smoothen), _heuristic(heuristic),
+    _omit(omit), _smoothen(smoothen), _heuristic(heuristic), _periodic(false),
     _cellComplex(nullptr)
 {
   _fileName = "";
@@ -55,6 +54,30 @@ std::vector<int> vecN0(int n)
   return v;
 }
 
+void Homology::setSubdomain(const std::vector<int> &physicalSubdomain)
+{
+  _subdomain = physicalSubdomain;
+  _getEntities(_subdomain, _subdomainEntities);
+
+  // the results of the previous subdomain no longer apply
+  _deleteChains();
+  _deleteCochains();
+  for(int i = 0; i < 4; i++) _betti[i] = -1;
+
+  if(_cellComplex != nullptr) {
+    std::vector<MElement *> subdomainElements;
+    std::vector<MElement *> immuneElements;
+    _getElements(_subdomainEntities, subdomainElements);
+    _getElements(_immuneEntities, immuneElements);
+    if(!_cellComplex->relabel(subdomainElements, immuneElements)) {
+      // the new subdomain is not contained in the cell complex: fall back
+      // to a full reconstruction on the next computation
+      delete _cellComplex;
+      _cellComplex = nullptr;
+    }
+  }
+}
+
 void Homology::_getEntities(const std::vector<int> &physicalGroups,
                             std::vector<GEntity *> &entities)
 {
@@ -73,6 +96,22 @@ void Homology::_getEntities(const std::vector<int> &physicalGroups,
       }
     }
   }
+}
+
+void Homology::_periodicCellComplex()
+{
+  // the mesh nodes of the periodic boundaries, closure included, so that the
+  // nodes of the curves and points bounding a periodic surface are selected
+  // together with the surface
+  std::set<MVertex *> nodes[2];
+  const std::vector<int> *groups[2] = {&_periodicSlave, &_periodicMaster};
+  for(int i = 0; i < 2; i++) {
+    std::vector<GEntity *> entities;
+    _getEntities(*groups[i], entities);
+    for(std::size_t j = 0; j < entities.size(); j++)
+      entities[j]->addVerticesInSet(nodes[i], true);
+  }
+  _cellComplex->periodicComplex(nodes[0], nodes[1]);
 }
 
 void Homology::_getElements(const std::vector<GEntity *> &entities,
@@ -170,6 +209,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
 
   if(_cellComplex == nullptr) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
+  if(_periodic) _periodicCellComplex();
 
   Msg::StatusBar(true, "Reducing cell complex...");
 
@@ -259,6 +299,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
 
   if(_cellComplex == nullptr) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
+  if(_periodic) _periodicCellComplex();
 
   Msg::StatusBar(true, "Reducing cell complex...");
 
@@ -533,6 +574,7 @@ void Homology::findBettiNumbers()
   if(!isBettiComputed()) {
     if(_cellComplex == nullptr) _createCellComplex();
     if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
+    if(_periodic) _periodicCellComplex();
 
     Msg::StatusBar(true, "Reducing cell complex...");
     double t1 = Cpu(), w1 = TimeOfDay();
@@ -683,5 +725,3 @@ void Homology::storeCells(CellComplex *cellComplex, int dim)
   _model->storeChain(dim, entityMap, physicalMap);
   _model->setPhysicalName("Cell Complex", dim, physicalNum);
 }
-
-#endif

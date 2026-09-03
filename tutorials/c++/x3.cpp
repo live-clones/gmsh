@@ -60,7 +60,7 @@ int main(int argc, char **argv)
   // independently of any mesh.
 
   // Vector or tensor fields can be imported in the same way, the only
-  // difference beeing the type (starting with "V" for vector fields and "T" for
+  // difference being the type (starting with "V" for vector fields and "T" for
   // tensor fields) and the number of components. For example a vector field on
   // a line element can be added as follows:
   std::vector<double> line = {0.,  1., // x coordinate of the 2 line nodes
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
   gmsh::view::option::setNumber(t2, "TargetError", 1e-2);
   gmsh::view::option::setNumber(t2, "MaxRecursionLevel", 5);
 
-  // Note that the adapted visualization data can be retrived by setting the
+  // Note that the adapted visualization data can be retrieved by setting the
   // `returnAdaptive' argument to the `gmsh::view::getListData()' function.
 
   // Launch the GUI to see the results:

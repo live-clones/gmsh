@@ -55,7 +55,7 @@ if len(sys.argv) > 1:
 #   etc. allows to construct a context window with the usual button layout for
 #   action dialogs.
 #
-# See https://gitlab.onelab.info/doc/tutorials/-/wikis/ONELAB-JSON-interface for
+# See https://gitlab.onelab.info/doc/models/wikis/ONELAB-JSON-interface for
 # more information about the ONELAB JSON database interface.
 
 parameters = """

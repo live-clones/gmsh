@@ -51,7 +51,7 @@ gmsh.view.addListData(t1, "ST", 2, triangle1 + triangle2)
 # mesh.
 
 # Vector or tensor fields can be imported in the same way, the only difference
-# beeing the type (starting with "V" for vector fields and "T" for tensor
+# being the type (starting with "V" for vector fields and "T" for tensor
 # fields) and the number of components. For example a vector field on a line
 # element can be added as follows:
 line = [
@@ -141,7 +141,7 @@ gmsh.view.option.setNumber(t2, "AdaptVisualizationGrid", 1)
 gmsh.view.option.setNumber(t2, "TargetError", 1e-2)
 gmsh.view.option.setNumber(t2, "MaxRecursionLevel", 5)
 
-# Note that the adapted visualization data can be retrived by setting the
+# Note that the adapted visualization data can be retrieved by setting the
 # `returnAdaptive' argument to the `gmsh.view.getListData()' function.
 
 # Launch the GUI to see the results:

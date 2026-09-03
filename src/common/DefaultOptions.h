@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -484,55 +484,55 @@ StringXNumber GeneralOptions_Number[] = {
     "Eye separation ratio in % for stereo rendering" },
   { F|O, "CameraFocalLengthRatio" , opt_general_focallength_ratio, 1.0 ,
     "Camera Focal length ratio" },
-  { F,   "Clip0A" , opt_general_clip0a , 1.0 ,
+  { F|O, "Clip0A" , opt_general_clip0a , 1.0 ,
     "First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')" },
-  { F,   "Clip0B" , opt_general_clip0b , 0.0 ,
+  { F|O, "Clip0B" , opt_general_clip0b , 0.0 ,
     "Second coefficient in equation for clipping plane 0 (`B' in `AX+BY+CZ+D=0')" },
-  { F,   "Clip0C" , opt_general_clip0c , 0.0 ,
+  { F|O, "Clip0C" , opt_general_clip0c , 0.0 ,
     "Third coefficient in equation for clipping plane 0 (`C' in `AX+BY+CZ+D=0')" },
-  { F,   "Clip0D" , opt_general_clip0d , 0.0 ,
+  { F|O, "Clip0D" , opt_general_clip0d , 0.0 ,
     "Fourth coefficient in equation for clipping plane 0 (`D' in `AX+BY+CZ+D=0')" },
-  { F,   "Clip1A" , opt_general_clip1a , 0.0 ,
+  { F|O, "Clip1A" , opt_general_clip1a , 0.0 ,
     "First coefficient in equation for clipping plane 1" },
-  { F,   "Clip1B" , opt_general_clip1b , 1.0 ,
+  { F|O, "Clip1B" , opt_general_clip1b , 1.0 ,
     "Second coefficient in equation for clipping plane 1" },
-  { F,   "Clip1C" , opt_general_clip1c , 0.0 ,
+  { F|O, "Clip1C" , opt_general_clip1c , 0.0 ,
     "Third coefficient in equation for clipping plane 1" },
-  { F,   "Clip1D" , opt_general_clip1d , 0.0 ,
+  { F|O, "Clip1D" , opt_general_clip1d , 0.0 ,
     "Fourth coefficient in equation for clipping plane 1" },
-  { F,   "Clip2A" , opt_general_clip2a , 0.0 ,
+  { F|O, "Clip2A" , opt_general_clip2a , 0.0 ,
     "First coefficient in equation for clipping plane 2" },
-  { F,   "Clip2B" , opt_general_clip2b , 0.0 ,
+  { F|O, "Clip2B" , opt_general_clip2b , 0.0 ,
     "Second coefficient in equation for clipping plane 2" },
-  { F,   "Clip2C" , opt_general_clip2c , 1.0 ,
+  { F|O, "Clip2C" , opt_general_clip2c , 1.0 ,
     "Third coefficient in equation for clipping plane 2" },
-  { F,   "Clip2D" , opt_general_clip2d , 0.0 ,
+  { F|O, "Clip2D" , opt_general_clip2d , 0.0 ,
     "Fourth coefficient in equation for clipping plane 2" },
-  { F,   "Clip3A" , opt_general_clip3a , -1.0 ,
+  { F|O, "Clip3A" , opt_general_clip3a , -1.0 ,
     "First coefficient in equation for clipping plane 3" },
-  { F,   "Clip3B" , opt_general_clip3b , 0.0 ,
+  { F|O, "Clip3B" , opt_general_clip3b , 0.0 ,
     "Second coefficient in equation for clipping plane 3" },
-  { F,   "Clip3C" , opt_general_clip3c , 0.0 ,
+  { F|O, "Clip3C" , opt_general_clip3c , 0.0 ,
     "Third coefficient in equation for clipping plane 3" },
-  { F,   "Clip3D" , opt_general_clip3d , 1.0 ,
+  { F|O, "Clip3D" , opt_general_clip3d , 1.0 ,
     "Fourth coefficient in equation for clipping plane 3" },
-  { F,   "Clip4A" , opt_general_clip4a , 0.0 ,
+  { F|O, "Clip4A" , opt_general_clip4a , 0.0 ,
     "First coefficient in equation for clipping plane 4" },
-  { F,   "Clip4B" , opt_general_clip4b , -1.0 ,
+  { F|O, "Clip4B" , opt_general_clip4b , -1.0 ,
     "Second coefficient in equation for clipping plane 4" },
-  { F,   "Clip4C" , opt_general_clip4c , 0.0 ,
+  { F|O, "Clip4C" , opt_general_clip4c , 0.0 ,
     "Third coefficient in equation for clipping plane 4" },
-  { F,   "Clip4D" , opt_general_clip4d , 1.0 ,
+  { F|O, "Clip4D" , opt_general_clip4d , 1.0 ,
     "Fourth coefficient in equation for clipping plane 4" },
-  { F,   "Clip5A" , opt_general_clip5a , 0.0 ,
+  { F|O, "Clip5A" , opt_general_clip5a , 0.0 ,
     "First coefficient in equation for clipping plane 5" },
-  { F,   "Clip5B" , opt_general_clip5b , 0.0 ,
+  { F|O, "Clip5B" , opt_general_clip5b , 0.0 ,
     "Second coefficient in equation for clipping plane 5" },
-  { F,   "Clip5C" , opt_general_clip5c , -1.0 ,
+  { F|O, "Clip5C" , opt_general_clip5c , -1.0 ,
     "Third coefficient in equation for clipping plane 5" },
-  { F,   "Clip5D" , opt_general_clip5d , 1.0 ,
+  { F|O, "Clip5D" , opt_general_clip5d , 1.0 ,
     "Fourth coefficient in equation for clipping plane 5" },
-  { F,   "ClipFactor" , opt_general_clip_factor , 5.0 ,
+  { F|O,   "ClipFactor" , opt_general_clip_factor , 5.0 ,
     "Near and far clipping plane distance factor (decrease value for better "
     "z-buffer resolution)" },
   { F|O, "ClipOnlyDrawIntersectingVolume" ,
@@ -805,11 +805,11 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "RotationCenterGravity" , opt_general_rotation_center_cg , 1. ,
     "Rotate around the (pseudo) center of mass instead of (RotationCenterX, "
     "RotationCenterY, RotationCenterZ)" },
-  { F,   "RotationCenterX" , opt_general_rotation_center0 , 0.0 ,
+  { F|O, "RotationCenterX" , opt_general_rotation_center0 , 0.0 ,
     "X coordinate of the center of rotation" },
-  { F,   "RotationCenterY" , opt_general_rotation_center1 , 0.0 ,
+  { F|O, "RotationCenterY" , opt_general_rotation_center1 , 0.0 ,
     "Y coordinate of the center of rotation" },
-  { F,   "RotationCenterZ" , opt_general_rotation_center2 , 0.0 ,
+  { F|O, "RotationCenterZ" , opt_general_rotation_center2 , 0.0 ,
     "Z coordinate of the center of rotation" },
 
   { F|S, "SaveOptions" , opt_general_options_save, 0. ,
@@ -903,7 +903,7 @@ StringXNumber GeometryOptions_Number[] = {
     "geometry kernel? If Geometry.AutoCoherence = 2, also remove degenerate "
     "entities. The option has no effect with the OpenCASCADE kernel"},
 
-  { F,   "Clip" , opt_geometry_clip , 0.,
+  { F|O,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "CopyMeshingMethod" , opt_geometry_copy_meshing_method, 0. ,
     "Copy meshing method (unstructured or transfinite) when duplicating geometrical "
@@ -1012,6 +1012,10 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
     "Import labels and colors when importing STEP models with the OpenCASCADE "
     "kernel (0: no, 1: yes, 2: use slow workaround for bad shape locations)" },
+  { F|O, "OCCWriteParametricCurves" , opt_geometry_occ_write_parametric_curves , 1. ,
+    "Write parametric curves in STEP exports with the OpenCASCADE kernel" },
+  { F|O, "OCCWriteSTEPNonManifold" , opt_geometry_occ_write_step_non_manifold , 1. ,
+    "Enable non-manifold STEP exports with the OpenCASCADE kernel" },
   { F|O, "OCCMakeSolids" , opt_geometry_occ_make_solids , 0. ,
     "Fix shells and make solids when importing STEP, IGES and BREP models with the "
     "OpenCASCADE kernel" },
@@ -1030,6 +1034,10 @@ StringXNumber GeometryOptions_Number[] = {
     "if not explicitly specified (default OCC value if negative)" },
   { F|O|D, "OCCUnionUnify" , opt_geometry_occ_boolean_simplify , 1. ,
     "[Deprecated]" },
+  { F|O, "OCCFastProjection" , opt_geometry_occ_fast_projection , 0. ,
+    "Start point projections in the OpenCASCADE kernel from the initial guess "
+    "provided by the caller (much faster, but only correct if the caller checks "
+    "the result)" },
   { F|O, "OCCUseGenericClosestPoint" , opt_geometry_occ_use_generic_closest_point , 0. ,
     "Use generic algrithm to compute point projections in the OpenCASCADE kernel "
     "(less robust, but significally faster in some configurations)" },
@@ -1189,7 +1197,7 @@ StringXNumber MeshOptions_Number[] = {
     "[Deprecated]"},
   { F|O, "CheckSurfaceNormalValidity" , opt_mesh_check_surface_normal_validity , 1. ,
     "Check surface mesh validity according to the geometry normal"},
-  { F,   "Clip" , opt_mesh_clip , 0.,
+  { F|O,   "Clip" , opt_mesh_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
     "Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical "
@@ -1226,6 +1234,18 @@ StringXNumber MeshOptions_Number[] = {
     "First tag (>= 1) of mesh elements when generating or renumbering a mesh" },
   { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
     "First tag (>= 1) of mesh nodes when generating or renumbering a mesh" },
+  { F|O, "FlatOptimize3D" , opt_mesh_flat_optimize_3d , 1. ,
+    "Use the flat-array kernel to optimize 3D meshes (set to 0 to use the "
+    "original object-based kernel, which performs the same operations and "
+    "gives meshes of the same quality)" },
+  { F|O, "FlatRefine2D" , opt_mesh_flat_refine_2d , 1. ,
+    "Kernel used for 2D Delaunay point insertion (0: original object-based "
+    "kernel; 1: flat-array kernel, which produces the same meshes; 2: "
+    "flat-array kernel with faster floating-point shortcuts on planar faces "
+    "and isotropic metrics, which give equivalent but not identical meshes)" },
+  { F|O, "FlatRefine3D" , opt_mesh_flat_refine_3d , 1. ,
+    "Use the flat-array kernel for 3D Delaunay point insertion (set to 0 to "
+    "use the original object-based kernel, which produces the same meshes)" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },
@@ -1354,7 +1374,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MeshSizeFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
     "Compute mesh element sizes from values given at geometry points defining "
     "parametric curves"},
-  { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
+  { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 2. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
     "METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)" },
@@ -1838,7 +1858,7 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "CenterGlyphs" , opt_view_center_glyphs , 0,
     "Center glyphs (arrows, numbers, etc.)? (0: left, 1: centered, 2: right)" },
-  { F,   "Clip" , opt_view_clip , 0.,
+  { F|O,   "Clip" , opt_view_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "Closed" , opt_view_closed , 0,
     "Close the subtree containing this view" },

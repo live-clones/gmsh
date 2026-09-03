@@ -73,6 +73,12 @@ Macro CheeseHole
   // one. By default, for backward compatibility, `Geometry.OldNewReg' is set
   // to 1, and only two categories are used: one for points and one for the
   // rest.
+  //
+  // In practice, with the default `OldNewReg = 1', points use one counter and
+  // all other categories share another, so a `newp' and a `newc' requested in
+  // sequence can return the same number; this is harmless because tags are
+  // unique per dimension. Set `OldNewReg = 0' for a separate counter per
+  // category.
 
   p1 = newp; Point(p1) = {x,  y,  z,  lcar3};
   p2 = newp; Point(p2) = {x+r,y,  z,  lcar3};

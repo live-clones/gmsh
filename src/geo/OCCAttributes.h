@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -100,7 +100,7 @@ private:
     if(dim < 0 || dim > 3) return;
     Bnd_Box box;
     try {
-      BRepBndLib::Add(shape, box, Standard_False);
+      BRepBndLib::Add(shape, box, false);
       if(box.IsVoid()) {
         Msg::Debug(
           "Searching for (null or degenerate) shape with void bounding box");
@@ -144,7 +144,7 @@ private:
       if(requireLabel && tmp[i]->getLabel().empty()) continue;
       if(requireColor && tmp[i]->getColor().empty()) continue;
       Bnd_Box box2;
-      BRepBndLib::Add(tmp[i]->getShape(), box2, Standard_False);
+      BRepBndLib::Add(tmp[i]->getShape(), box2, false);
       double xmin2, ymin2, zmin2, xmax2, ymax2, zmax2;
       box2.Get(xmin2, ymin2, zmin2, xmax2, ymax2, zmax2);
       if(std::abs(xmin - xmin2) < _tol && std::abs(xmax - xmax2) < _tol &&
@@ -202,7 +202,7 @@ public:
     if(v->getDim() < 0 || v->getDim() > 3) return;
     Bnd_Box box;
     try {
-      BRepBndLib::Add(v->getShape(), box, Standard_False);
+      BRepBndLib::Add(v->getShape(), box, false);
       if(box.IsVoid()) {
         Msg::Debug(
           "Inserting (null or degenerate) shape with void bounding box");
@@ -227,7 +227,7 @@ public:
     if(v->getDim() < 0 || v->getDim() > 3) return;
     Bnd_Box box;
     try {
-      BRepBndLib::Add(v->getShape(), box, Standard_False);
+      BRepBndLib::Add(v->getShape(), box, false);
       if(box.IsVoid()) {
         Msg::Debug(
           "Removing (null or degenerate) shape with void bounding box");

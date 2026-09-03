@@ -6,13 +6,13 @@
 //
 // -----------------------------------------------------------------------------
 
-// The OpenCASCADE geometry kernel allows to import STEP files and to modify
+// The OpenCASCADE geometry kernel can import STEP files and modify
 // them. In this tutorial we will load a STEP geometry and partition it into
 // slices.
 
 SetFactory("OpenCASCADE");
 
-// Load a STEP file (using `ShapeFromFile' instead of `Merge' allows to directly
+// Load a STEP file (using `ShapeFromFile' instead of `Merge' can directly
 // retrieve the tags of the highest dimensional imported entities):
 v() = ShapeFromFile("t20_data.step");
 

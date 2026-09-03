@@ -1,5 +1,5 @@
 /*
- * Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+ * Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
  *
  * See the LICENSE.txt file in the Gmsh root directory for license information.
  * Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -124,9 +124,9 @@ GMSH_API void gmshOptionGetString(const char * name,
                                   char ** value,
                                   int * ierr);
 
-/* Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
- * `g', `b' and `a' should be integers between 0 and 255. `name' is of the
- * form "Category.Color.Option" or "Category[num].Color.Option". Available
+/* Set a color option to the RGBA value (`r', `g', `b', `a'), where `r', `g',
+ * `b' and `a' should be integers between 0 and 255. `name' is of the form
+ * "Category.Color.Option" or "Category[num].Color.Option". Available
  * categories and options are listed in the "Gmsh options" chapter of the Gmsh
  * reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
  * For conciseness "Color." can be ommitted in `name'. */
@@ -623,46 +623,97 @@ GMSH_API void gmshModelMeshPartition(const int numPart,
                                      int * ierr);
 
 /* Generate node-based overlaps (of highest dimension) for all partitions,
- * with a number of layers equal to `layers'. If `createBoundaries' is set,
- * build the overlaps for the entities bounding the highest-dimensional
- * entities (i.e. "boundary overlaps"), as well as the inner boundaries of the
- * overlaps (i.e. "overlap boundaries"). */
-GMSH_API void gmshModelMeshCreateOverlaps(const int layers,
-                                          const int createBoundaries,
-                                          int * ierr);
+ * with a number of layers equal to `layers'. The overlaps of the bounding
+ * entities (i.e. "boundary overlaps") and the inner boundaries of the
+ * overlaps (i.e. "overlap boundaries") are always built: the
+ * `createBoundaries' flag is currently ignored. Return the index of the newly
+ * created overlap group, which can be passed as `overlapIndex' to the query
+ * functions (indices are assigned sequentially from 0, so the index is also
+ * the position of the group). */
+GMSH_API int gmshModelMeshCreateOverlaps(const int layers,
+                                         const int createBoundaries,
+                                         int * ierr);
 
 /* Get the tags of the partitioned entities of dimension `dim' whose parent
  * has dimension `dim' and tag `tag', and which belong to the partition
  * `partition'. If overlaps are present, fill `overlapEntities' with the tags
  * of the entities that are in the overlap of the partition. Works for
  * entities of the same dimension as the model as well as for entities one
- * dimension below (boundary overlaps). */
+ * dimension below (boundary overlaps). `overlapIndex' selects which overlap
+ * group to query (as returned by `createOverlaps'). */
 GMSH_API void gmshModelMeshGetPartitionEntities(const int dim,
                                                 const int tag,
                                                 const int partition,
                                                 int ** entityTags, size_t * entityTags_n,
                                                 int ** overlapEntities, size_t * overlapEntities_n,
+                                                const int overlapIndex,
                                                 int * ierr);
 
 /* Get the tags of the entities making up the overlap boundary of partition
  * `partition' inside the (non-partitioned) entity of dimension `dim' and tag
- * `tag'. */
+ * `tag'. Only the plain inner boundaries are returned: the inner boundaries
+ * lying on an internal interface are a distinct class, queried with
+ * `getOverlapInterfaceBoundary'. A solver imposing a transmission condition
+ * on the whole rim of an overlap patch must therefore combine both.
+ * `overlapIndex' selects which overlap group to query. */
 GMSH_API void gmshModelMeshGetOverlapBoundary(const int dim,
                                               const int tag,
                                               const int partition,
                                               int ** entityTags, size_t * entityTags_n,
+                                              const int overlapIndex,
                                               int * ierr);
+
+/* Get the tags of the overlap boundary entities of partition `partition' that
+ * lie on the internal interface entity of dimension `dim' and tag `tag' (a
+ * dim-1 entity of the model shared by two entities of dimension `dim'+1).
+ * These boundaries are artificial (the domain continues on the other side of
+ * the interface) and carry a transmission condition, but keep the interface
+ * identity so an interface-aware condition can be imposed. Note that `dim' is
+ * the dimension of the interface, one below the model dimension, unlike
+ * `getOverlapBoundary' which takes the parent entity. `overlapIndex' selects
+ * which overlap group to query. */
+GMSH_API void gmshModelMeshGetOverlapInterfaceBoundary(const int dim,
+                                                       const int tag,
+                                                       const int partition,
+                                                       int ** entityTags, size_t * entityTags_n,
+                                                       const int overlapIndex,
+                                                       int * ierr);
 
 /* If the entity of dimension `dim' and tag `tag' is a boundary overlap, get
  * the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on
- * error. */
+ * error. `overlapIndex' selects which overlap group to query. */
 GMSH_API void gmshModelMeshGetBoundaryOverlapParent(const int dim,
                                                     const int tag,
                                                     int * parentTag,
+                                                    const int overlapIndex,
                                                     int * ierr);
+
+/* If the entity of dimension `dim' and tag `overlapTag' is a highest-
+ * dimensional overlap entity (OverlapSurface or OverlapVolume), set
+ * `overlappedEntityTag' to the tag of the partition entity whose elements it
+ * covers. This covered partition entity belongs to a partition different from
+ * the partition owning the overlap. For a boundary overlap that extends an
+ * existing model boundary, or an inner overlap boundary lying on an internal
+ * interface, set `overlappedEntityTag' to the tag of the underlying boundary
+ * or interface entity. A plain inner overlap boundary has no underlying same-
+ * dimensional entity and returns -1. Set `overlappedEntityTag' to -1 if the
+ * entity is not an overlap. `overlapIndex' selects which overlap group to
+ * query. */
+GMSH_API void gmshModelMeshGetOverlapOverlappedEntity(const int dim,
+                                                      const int overlapTag,
+                                                      int * overlappedEntityTag,
+                                                      const int overlapIndex,
+                                                      int * ierr);
 
 /* Unpartition the mesh of the current model. */
 GMSH_API void gmshModelMeshUnpartition(int * ierr);
+
+/* Write selected partitions of the mesh into a single file `fileName'. The
+ * export format is MSH4. The `partitions' vector specifies which partition
+ * numbers to include. */
+GMSH_API void gmshModelMeshWritePartitions(const char * fileName,
+                                           const int * partitions, const size_t partitions_n,
+                                           int * ierr);
 
 /* Optimize the mesh of the current model using `method' (empty for default
  * tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
@@ -670,13 +721,15 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr);
  * smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
  * for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
  * "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry"
- * for untangling). If `force' is set apply the optimization also to discrete
- * entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
- * only apply the optimizer to the given entities. */
+ * for untangling, "HXT" for tetrahedral optimisation). If `force' is set
+ * apply the optimization also to discrete entities. If `dimTags' (given as a
+ * vector of (dim, tag) pairs) is given, only apply the optimizer to the given
+ * entities. For HXT optimizer, the `quality' argument should be specified */
 GMSH_API void gmshModelMeshOptimize(const char * method,
                                     const int force,
                                     const int niter,
                                     const int * dimTags, const size_t dimTags_n,
+                                    const double quality,
                                     int * ierr);
 
 /* Recombine the mesh of the current model. */
@@ -791,6 +844,21 @@ GMSH_API void gmshModelMeshSetNode(const size_t nodeTag,
                                    const double * parametricCoord, const size_t parametricCoord_n,
                                    int * ierr);
 
+/* Set the coordinates and the parametric coordinates (if any) of the nodes
+ * with tags `nodeTags'. `coord' is a vector of length 3 times the length of
+ * `nodeTags' that contains the x, y, z coordinates of the nodes,
+ * concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, the nodes must be
+ * classified on an entity of dimension `dim' (and of tag `tag' if `tag' >=
+ * 0), and the length of `parametricCoord' can be 0 or `dim' times the length
+ * of `nodeTags'. If `dim' < 0 the nodes can be classified anywhere, and
+ * `parametricCoord' must be empty. */
+GMSH_API void gmshModelMeshSetNodes(const size_t * nodeTags, const size_t nodeTags_n,
+                                    const double * coord, const size_t coord_n,
+                                    const double * parametricCoord, const size_t parametricCoord_n,
+                                    const int dim,
+                                    const int tag,
+                                    int * ierr);
+
 /* Rebuild the node cache. */
 GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary,
                                             int * ierr);
@@ -838,9 +906,13 @@ GMSH_API void gmshModelMeshReclassifyNodes(int * ierr);
 /* Relocate the nodes classified on the entity of dimension `dim' and tag
  * `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
  * for all entities of dimension `dim'. If `dim' and `tag' are negative,
- * relocate all the nodes in the mesh. */
+ * relocate all the nodes in the mesh. Optional `min' and `max' vectors (of
+ * length == `dim') can be provided to linearly rescale each parametric
+ * coordinate in the new parameter range, based on the provided one. */
 GMSH_API void gmshModelMeshRelocateNodes(const int dim,
                                          const int tag,
+                                         const double * min, const size_t min_n,
+                                         const double * max, const size_t max_n,
                                          int * ierr);
 
 /* Get the elements classified on the entity of dimension `dim' and tag `tag'.
@@ -1405,7 +1477,7 @@ GMSH_API void gmshModelMeshSetTransfiniteSurface(const int tag,
                                                  const int * cornerTags, const size_t cornerTags_n,
                                                  int * ierr);
 
-/* Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
+/* Set a transfinite meshing constraint on the volume `tag'. `cornerTags' can
  * be used to specify the (6 or 8) corners of the transfinite interpolation
  * explicitly. */
 GMSH_API void gmshModelMeshSetTransfiniteVolume(const int tag,
@@ -1646,13 +1718,19 @@ GMSH_API void gmshModelMeshGetVisibility(const size_t * elementTags, const size_
 
 /* Classify ("color") the surface mesh based on the angle threshold `angle'
  * (in radians), and create new discrete surfaces, curves and points
- * accordingly. If `boundary' is set, also create discrete curves on the
- * boundary if the surface is open. If `forReparametrization' is set, create
- * curves and surfaces that can be reparametrized using a single map. If
- * `curveAngle' is less than Pi, also force curves to be split according to
- * `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
- * entities and export the discrete entities in the built-in CAD kernel. */
+ * accordingly. The `oldSurfaceTags' and `newSurfaceTags' vectors map the old
+ * surface tags to the new surface tags, ie. `oldSurfaceTags[i]' corresponds
+ * to `newSurfaceTags[i]'. Removed surface tags are not returned, only old
+ * surfaces that map to one or more new surfaces are returned. If `boundary'
+ * is set, also create discrete curves on the boundary if the surface is open.
+ * If `forReparametrization' is set, create curves and surfaces that can be
+ * reparametrized using a single map. If `curveAngle' is less than Pi, also
+ * force curves to be split according to `curveAngle'. If `exportDiscrete' is
+ * set, clear any built-in CAD kernel entities and export the discrete
+ * entities in the built-in CAD kernel. */
 GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
+                                            int ** oldSurfaceTags, size_t * oldSurfaceTags_n,
+                                            int ** newSurfaceTags, size_t * newSurfaceTags_n,
                                             const int boundary,
                                             const int forReparametrization,
                                             const double curveAngle,
@@ -2195,7 +2273,7 @@ GMSH_API void gmshModelGeoMeshSetTransfiniteSurface(const int tag,
                                                     const int * cornerTags, const size_t cornerTags_n,
                                                     int * ierr);
 
-/* Set a transfinite meshing constraint on the surface `tag' in the built-in
+/* Set a transfinite meshing constraint on the volume `tag' in the built-in
  * CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
  * corners of the transfinite interpolation explicitly. */
 GMSH_API void gmshModelGeoMeshSetTransfiniteVolume(const int tag,
@@ -2665,7 +2743,7 @@ GMSH_API int gmshModelOccAddTorus(const double x,
  * `outDimTags' as a vector of (dim, tag) pairs. If the optional argument
  * `makeRuled' is set, the surfaces created on the boundary are forced to be
  * ruled surfaces. If `maxDegree' is positive, set the maximal degree of
- * resulting surface. The optional argument `continuity' allows to specify the
+ * resulting surface. The optional argument `continuity' specifies the
  * continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
  * "CN"). The optional argument `parametrization' sets the parametrization
  * type ("ChordLength", "Centripetal", "IsoParametric"). The optional argument
@@ -2904,12 +2982,13 @@ GMSH_API void gmshModelOccCut(const int * objectDimTags, const size_t objectDimT
  * vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
  * all interfaces conformal. When applied to entities of different dimensions,
  * the lower dimensional entities will be automatically embedded in the higher
- * dimensional entities if they are not on their boundary. Return the
- * resulting entities in `outDimTags', and the correspondance between input
- * and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
- * the tag explicitly (only valid if the boolean operation results in a single
- * entity). Remove the object if `removeObject' is set. Remove the tool if
- * `removeTool' is set. */
+ * dimensional entities if they are not on their boundary. In order to
+ * preserve entity tags, entities should be provided in ascending dimension
+ * order. Return the resulting entities in `outDimTags', and the
+ * correspondance between input and resulting entities in `outDimTagsMap'. If
+ * `tag' is positive, try to set the tag explicitly (only valid if the boolean
+ * operation results in a single entity). Remove the object if `removeObject'
+ * is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccFragment(const int * objectDimTags, const size_t objectDimTags_n,
                                    const int * toolDimTags, const size_t toolDimTags_n,
                                    int ** outDimTags, size_t * outDimTags_n,
@@ -3396,8 +3475,8 @@ GMSH_API void gmshViewOptionGetString(const int tag,
                                       int * ierr);
 
 /* Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
- * view with tag `tag', where where `r', `g', `b' and `a' should be integers
- * between 0 and 255. */
+ * view with tag `tag', where `r', `g', `b' and `a' should be integers between
+ * 0 and 255. */
 GMSH_API void gmshViewOptionSetColor(const int tag,
                                      const char * name,
                                      const int r,
@@ -3443,6 +3522,17 @@ GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size
                                           double ** steiner, size_t * steiner_n,
                                           const size_t * triangles, const size_t triangles_n,
                                           int * ierr);
+
+/* Refine the list of tetrahedra given in the vector `tetraIn', using point
+ * coordinates `coord' and nodal size field `sizeAtNode'. The new point
+ * coordinates are returned in the `steiner' vector, and the new tetrahedra in
+ * the `tetraOut' vector. */
+GMSH_API void gmshAlgorithmRefineTetrahedra(const double * coord, const size_t coord_n,
+                                            const double * sizeAtNode, const size_t sizeAtNode_n,
+                                            const size_t * tetraIn, const size_t tetraIn_n,
+                                            double ** steiner, size_t * steiner_n,
+                                            size_t ** tetraOut, size_t * tetraOut_n,
+                                            int * ierr);
 
 /* Set the numerical option `option' to the value `value' for plugin `name'.
  * Plugins available in the official Gmsh release are listed in the "Gmsh
@@ -3689,10 +3779,10 @@ GMSH_API double gmshLoggerGetWallTime(int * ierr);
 /* Return CPU time (in s). */
 GMSH_API double gmshLoggerGetCpuTime(int * ierr);
 
-/* Return memory usage (in Mb). */
+/* Return memory usage (in MB). */
 GMSH_API double gmshLoggerGetMemory(int * ierr);
 
-/* Return total available memory (in Mb). */
+/* Return total available memory (in MB). */
 GMSH_API double gmshLoggerGetTotalMemory(int * ierr);
 
 /* Return last error message, if any. */

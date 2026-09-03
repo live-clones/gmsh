@@ -17,10 +17,9 @@ BooleanDifference{ Surface{1}; Delete; }{ Surface{2:5}; Delete; }
 // sizes smoothly away from boundaries
 Mesh.MeshSizeExtendFromBoundary = 0;
 Field[1] = Extend;
-Field[1].CurvesList = {Curve{:}};
-Field[1].DistMax = 2;
+Field[1].SurfacesList = {Surface{:}};
 Field[1].SizeMax = fast ? 0.5 : 1;
-Field[1].Power = 1;
+Field[1].Ratio = 1.2;
 Background Field = 1;
 
 // recombine triangular mesh into quads

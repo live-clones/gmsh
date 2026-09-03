@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,19 +8,18 @@
 
 #include <map>
 #include <vector>
+#include "boundaryLayersData.h"
 
 class MElement;
 class MTriangle;
 class MQuadrangle;
 class MLine;
 
-void filterOverlappingElements(
-  std::vector<MLine *> &_lines, std::vector<MTriangle *> &blTris,
-  std::vector<MQuadrangle *> &blQuads,
-  std::map<MElement *, std::vector<MElement *> > &_elemColumns,
-  std::map<MElement *, MElement *> &_toFirst);
-void filterColumns(
-  std::vector<MElement *> &elem,
-  std::map<MElement *, std::vector<MElement *> > &_elemColumns);
+void filterOverlappingElements(std::vector<MLine *> &_lines,
+                               std::vector<MTriangle *> &blTris,
+                               std::vector<MQuadrangle *> &blQuads,
+                               blElemColumns &_elemColumns,
+                               blElemToFirst &_toFirst);
+void filterColumns(std::vector<MElement *> &elem, blElemColumns &_elemColumns);
 
 #endif

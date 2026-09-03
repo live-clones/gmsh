@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -284,8 +284,8 @@ public:
   // is the view a list-based dataset
   virtual bool isListBased() { return false; }
 
-  // get (approx) memry used by data in Mb
-  virtual double getMemoryInMb() { return 0; }
+  // get (approx) memry used by data in MB
+  virtual double getMemoryInMB() { return 0; }
 
   // get GModel (if view supports it)
   virtual GModel *getModel(int step);

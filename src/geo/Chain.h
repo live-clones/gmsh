@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,13 +12,12 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "Context.h"
+#include "GmshConfig.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewOptions.h"
 #endif
-
-#if defined(HAVE_KBIPACK)
 
 void updateFltk();
 std::string convertInt(int number);
@@ -518,7 +517,5 @@ int Chain<C>::addToModel(GModel *m, bool post, int physicalNumRequest) const
 
   return physicalNum;
 }
-
-#endif
 
 #endif

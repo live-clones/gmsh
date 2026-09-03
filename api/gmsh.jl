@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -269,8 +269,8 @@ const get_string = getString
 """
     gmsh.option.setColor(name, r, g, b, a = 255)
 
-Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
-`b` and `a` should be integers between 0 and 255. `name` is of the form
+Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where `r`, `g`, `b`
+and `a` should be integers between 0 and 255. `name` is of the form
 "Category.Color.Option" or "Category[num].Color.Option". Available categories
 and options are listed in the "Gmsh options" chapter of the Gmsh reference
 manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For conciseness
@@ -1868,10 +1868,14 @@ end
     gmsh.model.mesh.createOverlaps(layers = 1, createBoundaries = true)
 
 Generate node-based overlaps (of highest dimension) for all partitions, with a
-number of layers equal to `layers`. If `createBoundaries` is set, build the
-overlaps for the entities bounding the highest-dimensional entities (i.e.
-"boundary overlaps"), as well as the inner boundaries of the overlaps (i.e.
-"overlap boundaries").
+number of layers equal to `layers`. The overlaps of the bounding entities (i.e.
+"boundary overlaps") and the inner boundaries of the overlaps (i.e. "overlap
+boundaries") are always built: the `createBoundaries` flag is currently ignored.
+Return the index of the newly created overlap group, which can be passed as
+`overlapIndex` to the query functions (indices are assigned sequentially from 0,
+so the index is also the position of the group).
+
+Return an integer.
 
 Types:
  - `layers`: integer
@@ -1879,22 +1883,24 @@ Types:
 """
 function createOverlaps(layers = 1, createBoundaries = true)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshCreateOverlaps, gmsh.lib), Cvoid,
+    api_result_ = ccall((:gmshModelMeshCreateOverlaps, gmsh.lib), Cint,
           (Cint, Cint, Ptr{Cint}),
           layers, createBoundaries, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    return api_result_
 end
 const create_overlaps = createOverlaps
 
 """
-    gmsh.model.mesh.getPartitionEntities(dim, tag, partition)
+    gmsh.model.mesh.getPartitionEntities(dim, tag, partition, overlapIndex = 0)
 
 Get the tags of the partitioned entities of dimension `dim` whose parent has
 dimension `dim` and tag `tag`, and which belong to the partition `partition`. If
 overlaps are present, fill `overlapEntities` with the tags of the entities that
 are in the overlap of the partition. Works for entities of the same dimension as
 the model as well as for entities one dimension below (boundary overlaps).
+`overlapIndex` selects which overlap group to query (as returned by
+`createOverlaps`).
 
 Return `entityTags`, `overlapEntities`.
 
@@ -1904,16 +1910,17 @@ Types:
  - `partition`: integer
  - `entityTags`: vector of integers
  - `overlapEntities`: vector of integers
+ - `overlapIndex`: integer
 """
-function getPartitionEntities(dim, tag, partition)
+function getPartitionEntities(dim, tag, partition, overlapIndex = 0)
     api_entityTags_ = Ref{Ptr{Cint}}()
     api_entityTags_n_ = Ref{Csize_t}()
     api_overlapEntities_ = Ref{Ptr{Cint}}()
     api_overlapEntities_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPartitionEntities, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, partition, api_entityTags_, api_entityTags_n_, api_overlapEntities_, api_overlapEntities_n_, ierr)
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          dim, tag, partition, api_entityTags_, api_entityTags_n_, api_overlapEntities_, api_overlapEntities_n_, overlapIndex, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     entityTags = unsafe_wrap(Array, api_entityTags_[], api_entityTags_n_[], own = true)
     overlapEntities = unsafe_wrap(Array, api_overlapEntities_[], api_overlapEntities_n_[], own = true)
@@ -1922,11 +1929,15 @@ end
 const get_partition_entities = getPartitionEntities
 
 """
-    gmsh.model.mesh.getOverlapBoundary(dim, tag, partition)
+    gmsh.model.mesh.getOverlapBoundary(dim, tag, partition, overlapIndex = 0)
 
 Get the tags of the entities making up the overlap boundary of partition
 `partition` inside the (non-partitioned) entity of dimension `dim` and tag
-`tag`.
+`tag`. Only the plain inner boundaries are returned: the inner boundaries lying
+on an internal interface are a distinct class, queried with
+`getOverlapInterfaceBoundary`. A solver imposing a transmission condition on the
+whole rim of an overlap patch must therefore combine both. `overlapIndex`
+selects which overlap group to query.
 
 Return `entityTags`.
 
@@ -1935,14 +1946,15 @@ Types:
  - `tag`: integer
  - `partition`: integer
  - `entityTags`: vector of integers
+ - `overlapIndex`: integer
 """
-function getOverlapBoundary(dim, tag, partition)
+function getOverlapBoundary(dim, tag, partition, overlapIndex = 0)
     api_entityTags_ = Ref{Ptr{Cint}}()
     api_entityTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetOverlapBoundary, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, partition, api_entityTags_, api_entityTags_n_, ierr)
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          dim, tag, partition, api_entityTags_, api_entityTags_n_, overlapIndex, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     entityTags = unsafe_wrap(Array, api_entityTags_[], api_entityTags_n_[], own = true)
     return entityTags
@@ -1950,10 +1962,46 @@ end
 const get_overlap_boundary = getOverlapBoundary
 
 """
-    gmsh.model.mesh.getBoundaryOverlapParent(dim, tag)
+    gmsh.model.mesh.getOverlapInterfaceBoundary(dim, tag, partition, overlapIndex = 0)
+
+Get the tags of the overlap boundary entities of partition `partition` that lie
+on the internal interface entity of dimension `dim` and tag `tag` (a dim-1
+entity of the model shared by two entities of dimension `dim`+1). These
+boundaries are artificial (the domain continues on the other side of the
+interface) and carry a transmission condition, but keep the interface identity
+so an interface-aware condition can be imposed. Note that `dim` is the dimension
+of the interface, one below the model dimension, unlike `getOverlapBoundary`
+which takes the parent entity. `overlapIndex` selects which overlap group to
+query.
+
+Return `entityTags`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `partition`: integer
+ - `entityTags`: vector of integers
+ - `overlapIndex`: integer
+"""
+function getOverlapInterfaceBoundary(dim, tag, partition, overlapIndex = 0)
+    api_entityTags_ = Ref{Ptr{Cint}}()
+    api_entityTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetOverlapInterfaceBoundary, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          dim, tag, partition, api_entityTags_, api_entityTags_n_, overlapIndex, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    entityTags = unsafe_wrap(Array, api_entityTags_[], api_entityTags_n_[], own = true)
+    return entityTags
+end
+const get_overlap_interface_boundary = getOverlapInterfaceBoundary
+
+"""
+    gmsh.model.mesh.getBoundaryOverlapParent(dim, tag, overlapIndex = 0)
 
 If the entity of dimension `dim` and tag `tag` is a boundary overlap, get the
 entity of dimension `dim+1` that created it. Sets `parentTag` to -1 on error.
+`overlapIndex` selects which overlap group to query.
 
 Return `parentTag`.
 
@@ -1961,17 +2009,51 @@ Types:
  - `dim`: integer
  - `tag`: integer
  - `parentTag`: integer
+ - `overlapIndex`: integer
 """
-function getBoundaryOverlapParent(dim, tag)
+function getBoundaryOverlapParent(dim, tag, overlapIndex = 0)
     api_parentTag_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBoundaryOverlapParent, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}, Ptr{Cint}),
-          dim, tag, api_parentTag_, ierr)
+          (Cint, Cint, Ptr{Cint}, Cint, Ptr{Cint}),
+          dim, tag, api_parentTag_, overlapIndex, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_parentTag_[]
 end
 const get_boundary_overlap_parent = getBoundaryOverlapParent
+
+"""
+    gmsh.model.mesh.getOverlapOverlappedEntity(dim, overlapTag, overlapIndex = 0)
+
+If the entity of dimension `dim` and tag `overlapTag` is a highest-dimensional
+overlap entity (OverlapSurface or OverlapVolume), set `overlappedEntityTag` to
+the tag of the partition entity whose elements it covers. This covered partition
+entity belongs to a partition different from the partition owning the overlap.
+For a boundary overlap that extends an existing model boundary, or an inner
+overlap boundary lying on an internal interface, set `overlappedEntityTag` to
+the tag of the underlying boundary or interface entity. A plain inner overlap
+boundary has no underlying same-dimensional entity and returns -1. Set
+`overlappedEntityTag` to -1 if the entity is not an overlap. `overlapIndex`
+selects which overlap group to query.
+
+Return `overlappedEntityTag`.
+
+Types:
+ - `dim`: integer
+ - `overlapTag`: integer
+ - `overlappedEntityTag`: integer
+ - `overlapIndex`: integer
+"""
+function getOverlapOverlappedEntity(dim, overlapTag, overlapIndex = 0)
+    api_overlappedEntityTag_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetOverlapOverlappedEntity, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}, Cint, Ptr{Cint}),
+          dim, overlapTag, api_overlappedEntityTag_, overlapIndex, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_overlappedEntityTag_[]
+end
+const get_overlap_overlapped_entity = getOverlapOverlappedEntity
 
 """
     gmsh.model.mesh.unpartition()
@@ -1988,7 +2070,28 @@ function unpartition()
 end
 
 """
-    gmsh.model.mesh.optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+    gmsh.model.mesh.writePartitions(fileName, partitions)
+
+Write selected partitions of the mesh into a single file `fileName`. The export
+format is MSH4. The `partitions` vector specifies which partition numbers to
+include.
+
+Types:
+ - `fileName`: string
+ - `partitions`: vector of integers
+"""
+function writePartitions(fileName, partitions)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshWritePartitions, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          fileName, convert(Vector{Cint}, partitions), length(partitions), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const write_partitions = writePartitions
+
+"""
+    gmsh.model.mesh.optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[], quality = 0.0)
 
 Optimize the mesh of the current model using `method` (empty for default
 tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
@@ -1996,23 +2099,25 @@ direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
 smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
 Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
 "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry" for
-untangling). If `force` is set apply the optimization also to discrete entities.
-If `dimTags` (given as a vector of (dim, tag) pairs) is given, only apply the
-optimizer to the given entities.
+untangling, "HXT" for tetrahedral optimisation). If `force` is set apply the
+optimization also to discrete entities. If `dimTags` (given as a vector of (dim,
+tag) pairs) is given, only apply the optimizer to the given entities. For HXT
+optimizer, the `quality` argument should be specified
 
 Types:
  - `method`: string
  - `force`: boolean
  - `niter`: integer
  - `dimTags`: vector of pairs of integers
+ - `quality`: double
 """
-function optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
+function optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[], quality = 0.0)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshOptimize, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          method, force, niter, api_dimTags_, api_dimTags_n_, ierr)
+          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
+          method, force, niter, api_dimTags_, api_dimTags_n_, quality, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -2363,6 +2468,34 @@ end
 const set_node = setNode
 
 """
+    gmsh.model.mesh.setNodes(nodeTags, coord, parametricCoord, dim = -1, tag = -1)
+
+Set the coordinates and the parametric coordinates (if any) of the nodes with
+tags `nodeTags`. `coord` is a vector of length 3 times the length of `nodeTags`
+that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y,
+n1z, n2x, ...]. If `dim` >= 0, the nodes must be classified on an entity of
+dimension `dim` (and of tag `tag` if `tag` >= 0), and the length of
+`parametricCoord` can be 0 or `dim` times the length of `nodeTags`. If `dim` < 0
+the nodes can be classified anywhere, and `parametricCoord` must be empty.
+
+Types:
+ - `nodeTags`: vector of sizes
+ - `coord`: vector of doubles
+ - `parametricCoord`: vector of doubles
+ - `dim`: integer
+ - `tag`: integer
+"""
+function setNodes(nodeTags, coord, parametricCoord, dim = -1, tag = -1)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetNodes, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), dim, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_nodes = setNodes
+
+"""
     gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary = true)
 
 Rebuild the node cache.
@@ -2499,22 +2632,26 @@ end
 const reclassify_nodes = reclassifyNodes
 
 """
-    gmsh.model.mesh.relocateNodes(dim = -1, tag = -1)
+    gmsh.model.mesh.relocateNodes(dim = -1, tag = -1, min = Cdouble[], max = Cdouble[])
 
 Relocate the nodes classified on the entity of dimension `dim` and tag `tag`
 using their parametric coordinates. If `tag` < 0, relocate the nodes for all
 entities of dimension `dim`. If `dim` and `tag` are negative, relocate all the
-nodes in the mesh.
+nodes in the mesh. Optional `min` and `max` vectors (of length == `dim`) can be
+provided to linearly rescale each parametric coordinate in the new parameter
+range, based on the provided one.
 
 Types:
  - `dim`: integer
  - `tag`: integer
+ - `min`: vector of doubles
+ - `max`: vector of doubles
 """
-function relocateNodes(dim = -1, tag = -1)
+function relocateNodes(dim = -1, tag = -1, min = Cdouble[], max = Cdouble[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshRelocateNodes, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}),
-          dim, tag, ierr)
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, min), length(min), convert(Vector{Cdouble}, max), length(max), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -3861,7 +3998,7 @@ const set_transfinite_surface = setTransfiniteSurface
 """
     gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
 
-Set a transfinite meshing constraint on the surface `tag`. `cornerTags` can be
+Set a transfinite meshing constraint on the volume `tag`. `cornerTags` can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 
@@ -4558,28 +4695,41 @@ const get_visibility = getVisibility
     gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
-radians), and create new discrete surfaces, curves and points accordingly. If
-`boundary` is set, also create discrete curves on the boundary if the surface is
-open. If `forReparametrization` is set, create curves and surfaces that can be
-reparametrized using a single map. If `curveAngle` is less than Pi, also force
-curves to be split according to `curveAngle`. If `exportDiscrete` is set, clear
-any built-in CAD kernel entities and export the discrete entities in the built-
-in CAD kernel.
+radians), and create new discrete surfaces, curves and points accordingly. The
+`oldSurfaceTags` and `newSurfaceTags` vectors map the old surface tags to the
+new surface tags, ie. `oldSurfaceTags[i]` corresponds to `newSurfaceTags[i]`.
+Removed surface tags are not returned, only old surfaces that map to one or more
+new surfaces are returned. If `boundary` is set, also create discrete curves on
+the boundary if the surface is open. If `forReparametrization` is set, create
+curves and surfaces that can be reparametrized using a single map. If
+`curveAngle` is less than Pi, also force curves to be split according to
+`curveAngle`. If `exportDiscrete` is set, clear any built-in CAD kernel entities
+and export the discrete entities in the built-in CAD kernel.
+
+Return `oldSurfaceTags`, `newSurfaceTags`.
 
 Types:
  - `angle`: double
+ - `oldSurfaceTags`: vector of integers
+ - `newSurfaceTags`: vector of integers
  - `boundary`: boolean
  - `forReparametrization`: boolean
  - `curveAngle`: double
  - `exportDiscrete`: boolean
 """
 function classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
+    api_oldSurfaceTags_ = Ref{Ptr{Cint}}()
+    api_oldSurfaceTags_n_ = Ref{Csize_t}()
+    api_newSurfaceTags_ = Ref{Ptr{Cint}}()
+    api_newSurfaceTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Cint, Cdouble, Cint, Ptr{Cint}),
-          angle, boundary, forReparametrization, curveAngle, exportDiscrete, ierr)
+          (Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cdouble, Cint, Ptr{Cint}),
+          angle, api_oldSurfaceTags_, api_oldSurfaceTags_n_, api_newSurfaceTags_, api_newSurfaceTags_n_, boundary, forReparametrization, curveAngle, exportDiscrete, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    oldSurfaceTags = unsafe_wrap(Array, api_oldSurfaceTags_[], api_oldSurfaceTags_n_[], own = true)
+    newSurfaceTags = unsafe_wrap(Array, api_newSurfaceTags_[], api_newSurfaceTags_n_[], own = true)
+    return oldSurfaceTags, newSurfaceTags
 end
 const classify_surfaces = classifySurfaces
 
@@ -6057,7 +6207,7 @@ const set_transfinite_surface = setTransfiniteSurface
 """
     gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
 
-Set a transfinite meshing constraint on the surface `tag` in the built-in CAD
+Set a transfinite meshing constraint on the volume `tag` in the built-in CAD
 kernel representation. `cornerTags` can be used to specify the (6 or 8) corners
 of the transfinite interpolation explicitly.
 
@@ -7062,10 +7212,10 @@ selected automatically. The new entities are returned in `outDimTags` as a
 vector of (dim, tag) pairs. If the optional argument `makeRuled` is set, the
 surfaces created on the boundary are forced to be ruled surfaces. If `maxDegree`
 is positive, set the maximal degree of resulting surface. The optional argument
-`continuity` allows to specify the continuity of the resulting shape ("C0",
-"G1", "C1", "G2", "C2", "C3", "CN"). The optional argument `parametrization`
-sets the parametrization type ("ChordLength", "Centripetal", "IsoParametric").
-The optional argument `smoothing` determines if smoothing is applied.
+`continuity` specifies the continuity of the resulting shape ("C0", "G1", "C1",
+"G2", "C2", "C3", "CN"). The optional argument `parametrization` sets the
+parametrization type ("ChordLength", "Centripetal", "IsoParametric"). The
+optional argument `smoothing` determines if smoothing is applied.
 
 Return `outDimTags`.
 
@@ -7662,11 +7812,12 @@ the entities `objectDimTags` and `toolDimTags` (given as vectors of (dim, tag)
 pairs) in the OpenCASCADE CAD representation, making all interfaces conformal.
 When applied to entities of different dimensions, the lower dimensional entities
 will be automatically embedded in the higher dimensional entities if they are
-not on their boundary. Return the resulting entities in `outDimTags`, and the
-correspondance between input and resulting entities in `outDimTagsMap`. If `tag`
-is positive, try to set the tag explicitly (only valid if the boolean operation
-results in a single entity). Remove the object if `removeObject` is set. Remove
-the tool if `removeTool` is set.
+not on their boundary. In order to preserve entity tags, entities should be
+provided in ascending dimension order. Return the resulting entities in
+`outDimTags`, and the correspondance between input and resulting entities in
+`outDimTagsMap`. If `tag` is positive, try to set the tag explicitly (only valid
+if the boolean operation results in a single entity). Remove the object if
+`removeObject` is set. Remove the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
 
@@ -9033,8 +9184,8 @@ const get_string = getString
     gmsh.view.option.setColor(tag, name, r, g, b, a = 255)
 
 Set the color option `name` to the RGBA value (`r`, `g`, `b`, `a`) for the view
-with tag `tag`, where where `r`, `g`, `b` and `a` should be integers between 0
-and 255.
+with tag `tag`, where `r`, `g`, `b` and `a` should be integers between 0 and
+255.
 
 Types:
  - `tag`: integer
@@ -9175,6 +9326,39 @@ function tetrahedralize(coordinates, triangles = Csize_t[])
     steiner = unsafe_wrap(Array, api_steiner_[], api_steiner_n_[], own = true)
     return tetrahedra, steiner
 end
+
+"""
+    gmsh.algorithm.refineTetrahedra(coord, sizeAtNode, tetraIn)
+
+Refine the list of tetrahedra given in the vector `tetraIn`, using point
+coordinates `coord` and nodal size field `sizeAtNode`. The new point coordinates
+are returned in the `steiner` vector, and the new tetrahedra in the `tetraOut`
+vector.
+
+Return `steiner`, `tetraOut`.
+
+Types:
+ - `coord`: vector of doubles
+ - `sizeAtNode`: vector of doubles
+ - `tetraIn`: vector of sizes
+ - `steiner`: vector of doubles
+ - `tetraOut`: vector of sizes
+"""
+function refineTetrahedra(coord, sizeAtNode, tetraIn)
+    api_steiner_ = Ref{Ptr{Cdouble}}()
+    api_steiner_n_ = Ref{Csize_t}()
+    api_tetraOut_ = Ref{Ptr{Csize_t}}()
+    api_tetraOut_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlgorithmRefineTetrahedra, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, sizeAtNode), length(sizeAtNode), convert(Vector{Csize_t}, tetraIn), length(tetraIn), api_steiner_, api_steiner_n_, api_tetraOut_, api_tetraOut_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    steiner = unsafe_wrap(Array, api_steiner_[], api_steiner_n_[], own = true)
+    tetraOut = unsafe_wrap(Array, api_tetraOut_[], api_tetraOut_n_[], own = true)
+    return steiner, tetraOut
+end
+const refine_tetrahedra = refineTetrahedra
 
 end # end of module algorithm
 
@@ -10155,7 +10339,7 @@ const get_cpu_time = getCpuTime
 """
     gmsh.logger.getMemory()
 
-Return memory usage (in Mb).
+Return memory usage (in MB).
 
 Return a double.
 """
@@ -10172,7 +10356,7 @@ const get_memory = getMemory
 """
     gmsh.logger.getTotalMemory()
 
-Return total available memory (in Mb).
+Return total available memory (in MB).
 
 Return a double.
 """

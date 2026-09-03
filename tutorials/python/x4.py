@@ -35,8 +35,8 @@ for step in range(0, 10):
         [1, 2, 3, 4],  # tags of nodes
         [10., 10., 12. + step, 13. + step])  # data, per node
 
-# Besided node-based data, which result in continuous fields, one can also add
-# general discontinous fields defined at the nodes of each element, using
+# Besides node-based data, which result in continuous fields, one can also add
+# general discontinuous fields defined at the nodes of each element, using
 # "ElementNodeData":
 t2 = gmsh.view.add("Discontinuous")
 for step in range(0, 10):
@@ -64,13 +64,13 @@ for step in range(11, 20):
         t1, step, "another model", "NodeData", nodes,
         [step * coord[i] for i in range(0, len(coord), 3)])
 
-# This feature allows to create seamless animations for time-dependent datasets
+# This feature can create seamless animations for time-dependent datasets
 # on deforming or remeshed models.
 
 # High-order node-based datasets are supported without needing to supply the
 # interpolation matrices (iso-parametric Lagrange elements). Arbitrary
 # high-order datasets can be specified as "ElementNodeData", with the
-# interpolation matrices specified in the same as as for list-based views (see
+# interpolation matrices specified in the same way as for list-based views (see
 # `x3.py').
 
 # Model-based views can be saved to disk using `gmsh.view.write()'; note that
