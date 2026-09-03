@@ -13,8 +13,6 @@
 #include "Numeric.h"
 #include "OS.h"
 
-template<int N> float ElementDataLessThan<N>::tolerance = 0.0F;
-float BarycenterLessThan::tolerance = 0.0F;
 
 std::vector<unsigned int> VertexArray::vboToDelete;
 int VertexArray::indexing = -1;
@@ -218,6 +216,27 @@ bool UniqueElementFilter::isDuplicate(const std::uint64_t *key, int n)
   return !_shard[sh].insert(h);
 }
 
+bool UniqueElementFilter::contains(const std::uint64_t *key, int n)
+{
+  std::uint64_t h = hashKey(key, n * sizeof(std::uint64_t));
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) return _shard[sh].contains(h);
+  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  return _shard[sh].contains(h);
+}
+
+void UniqueElementFilter::insertOrErase(const std::uint64_t *key, int n)
+{
+  std::uint64_t h = hashKey(key, n * sizeof(std::uint64_t));
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) {
+    _shard[sh].insertOrErase(h);
+    return;
+  }
+  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  _shard[sh].insertOrErase(h);
+}
+
 // build the key of an element identified by its vertices and its color
 static int buildVertexKey(unsigned int col, const void *v0, const void *v1,
                           const void *v2, const void *v3, std::uint64_t *k)
@@ -391,7 +410,7 @@ void VertexArray::_addElement(MElement *ele)
 }
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
-                      unsigned int *col, MElement *ele, bool unique, bool boundary)
+                      unsigned int *col, MElement *ele, bool unique)
 {
   if(col){
     unsigned char r[100], g[100], b[100], a[100];
@@ -403,28 +422,17 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
       b[i] = ctx->unpackBlue(col[i]);
       a[i] = ctx->unpackAlpha(col[i]);
     }
-    add(x, y, z, n, r, g, b, a, ele, unique, boundary);
+    add(x, y, z, n, r, g, b, a, ele, unique);
   }
   else
-    add(x, y, z, n, nullptr, nullptr, nullptr, nullptr, ele, unique, boundary);
+    add(x, y, z, n, nullptr, nullptr, nullptr, nullptr, ele, unique);
 }
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned char *r,
                       unsigned char *g, unsigned char *b, unsigned char *a,
-                      MElement *ele, bool unique, bool boundary)
+                      MElement *ele, bool unique)
 {
   int npe = getNumVerticesPerElement();
-
-  if(boundary && npe == 3){
-    ElementData<3> e(x, y, z, n, r, g, b, a, ele);
-    ElementDataLessThan<3>::tolerance = (float)(CTX::instance()->lc * 1.e-12);
-    auto it = _data3.find(e);
-    if(it == _data3.end())
-      _data3.insert(e);
-    else
-      _data3.erase(it);
-    return;
-  }
 
   // drop elements that have already been added: an edge or a face shared by
   // several elements is only drawn once. This reduces both the memory and the
@@ -646,19 +654,6 @@ void VertexArray::printStats()
 
 void VertexArray::finalize()
 {
-  if(_data3.size()){
-    auto it = _data3.begin();
-    for(; it != _data3.end(); it++){
-      for(int i = 0; i < 3; i++){
-        _addVertex(it->x(i), it->y(i), it->z(i));
-        _addNormal(it->nx(i), it->ny(i), it->nz(i));
-        _addColor(it->r(i), it->g(i), it->b(i), it->a(i));
-        _addElement(it->ele());
-      }
-    }
-    _data3.clear();
-  }
-  _barycenters.clear();
   statUniqueIn += _statUniqueIn;
   statUniqueKept += _statUniqueKept;
   _statUniqueIn = _statUniqueKept = 0;

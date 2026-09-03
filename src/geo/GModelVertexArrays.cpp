@@ -198,7 +198,8 @@ static bool removeInteriorFaces()
 {
   // make sure the mode has been read from the environment
   VertexArray::uniqueFilterEnabled();
-  if(VertexArray::unique < 3) return false;
+  if(VertexArray::unique < 3 && !CTX::instance()->mesh.drawSkinOnly)
+    return false;
   if(CTX::instance()->mesh.explode != 1.) return false;
   if(CTX::instance()->mesh.clip && !CTX::instance()->clipWholeElements)
     return false;
@@ -247,9 +248,6 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 {
   int nthreads = CTX::instance()->numThreads;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
-  // the skin filter drops the faces that appear twice, which requires a global
-  // view of all the elements: keep it serial
-  if(faces && e->dim() > 2 && CTX::instance()->mesh.drawSkinOnly) nthreads = 1;
   if(elements.size() < 1000) nthreads = 1;
 
   // each thread fills its own vertex arrays, which are merged below: this
@@ -296,7 +294,6 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
   const bool filterF = (VertexArray::unique > 1);
   const bool uniqueEdges = (e->dim() > 1 && filtering);
   const bool uniqueFaces = (e->dim() > 2 && filtering && filterF);
-  const bool skinFaces = (e->dim() > 2 && CTX::instance()->mesh.drawSkinOnly);
 
   // when the elements have a topology, identify a duplicated edge by its two
   // vertices rather than by the coordinates of its corners: this is both
@@ -369,9 +366,8 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 
     if(faces) {
       int numRep = ele->getNumFacesRep(curved);
-      bool topo = (filterFaces && !skinFaces && numRep == ele->getNumFaces());
+      bool topo = (filterFaces && numRep == ele->getNumFaces());
       bool unique = uniqueFaces && !topo;
-      bool skin = skinFaces;
       int perFace = interior ? repPerFace(ele, curved) : 0;
       for(int j = 0; j < numRep; j++) {
         if(perFace) {
@@ -405,7 +401,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-        vaTriangle->add(x, y, z, n, col, ele, unique, skin);
+        vaTriangle->add(x, y, z, n, col, ele, unique);
       }
     }
   }

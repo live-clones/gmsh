@@ -19,6 +19,7 @@
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "Context.h"
+#include "OS.h"
 #include "OpenFile.h"
 #include "mathEvaluator.h"
 #include "Options.h"
@@ -326,6 +327,28 @@ static void addOutlinePoint(PView *p, double **xyz, unsigned int color,
 // serially, so a file static is enough here.
 static std::size_t *elementNodeIds = nullptr;
 
+// Faces of 3D elements that bound the mesh, when View.DrawSkinOnly is set: they
+// are found in a first pass by inserting every face and cancelling it when it
+// is seen a second time, so that only the faces seen once are left.
+static UniqueElementFilter *boundaryFaces = nullptr;
+static bool markingBoundaryFaces = false;
+static int noNodeIdWarning = 0;
+
+// build the key of a triangular face from the identifiers of its nodes, sorted
+// so that the two elements sharing it produce the same key. Returns false if
+// the data has no topology
+static bool faceKey(const int *idx, std::uint64_t *k)
+{
+  if(!elementNodeIds) return false;
+  for(int i = 0; i < 3; i++) {
+    if(!elementNodeIds[idx[i]]) return false;
+    k[i] = elementNodeIds[idx[i]];
+  }
+  for(int i = 1; i < 3; i++)
+    for(int j = i; j > 0 && k[j] < k[j - 1]; j--) std::swap(k[j], k[j - 1]);
+  return true;
+}
+
 // Skip an element that has already been added, identifying it by its nodes
 // instead of by the coordinates of its corners. Returns true if the element
 // should be skipped, and clears `unique' when the check was done here, so that
@@ -510,6 +533,29 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
 {
   PViewOptions *opt = p->getOptions();
 
+  if(skin || markingBoundaryFaces) {
+    const int ii[3] = {i0, i1, i2};
+    std::uint64_t k[3];
+    if(skin && faceKey(ii, k)) {
+      if(markingBoundaryFaces) {
+        boundaryFaces->insertOrErase(k, 3);
+        return;
+      }
+      // a face shared by two elements is interior, and hidden by the skin
+      if(!boundaryFaces->contains(k, 3)) return;
+      skin = false;
+    }
+    else if(markingBoundaryFaces)
+      return;
+    else if(skin && !noNodeIdWarning++) {
+      Msg::Warning("DrawSkinOnly needs node identifiers, which this data does "
+                   "not have: drawing all the faces");
+      skin = false;
+    }
+    else if(skin)
+      skin = false;
+  }
+
   const int il[3][2] = {{i0, i1}, {i1, i2}, {i2, i0}};
 
   if(opt->boundary > 0) {
@@ -547,7 +593,7 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
       const int ii[3] = {i0, i1, i2};
       if(!pre && !skin && topoDuplicate(p->va_triangles, unique, ii, 3, col))
         return;
-      if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique, skin);
+      if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique);
     }
     else {
       double x2[10], y2[10], z2[10], v2[10];
@@ -570,7 +616,7 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
             col[i] = opt->getColor(v3[i], vmin, vmax);
           }
           if(!pre)
-            p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique, skin);
+            p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique);
         }
       }
     }
@@ -600,7 +646,7 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
             }
           }
           if(!pre)
-            p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique, skin);
+            p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique);
         }
       }
       if(vmin == vmax) break;
@@ -794,7 +840,7 @@ static void addScalarTetrahedron(PView *p, double **xyz, double **val, bool pre,
             }
           }
           if(!pre)
-            p->va_triangles->add(x3, y3, z3, n, col, nullptr, false, false);
+            p->va_triangles->add(x3, y3, z3, n, col, nullptr, false);
         }
       }
       if(vmin == vmax) break;
@@ -1637,8 +1683,26 @@ public:
 
     p->normals = new smooth_normals(opt->angleSmoothNormals);
 
+    if(opt->drawSkinOnly) {
+      // first pass: locate the faces that bound the mesh
+      double t1 = TimeOfDay();
+      delete boundaryFaces;
+      boundaryFaces = new UniqueElementFilter(false);
+      markingBoundaryFaces = true;
+      addElementsInArrays(p, true);
+      markingBoundaryFaces = false;
+      // that pass may have fed the smooth normals: start over
+      delete p->normals;
+      p->normals = new smooth_normals(opt->angleSmoothNormals);
+      Msg::Info("Located the boundary faces of View[%d] in %g s",
+                p->getIndex(), TimeOfDay() - t1);
+    }
+
     if(opt->smoothNormals) addElementsInArrays(p, true);
     addElementsInArrays(p, false);
+
+    delete boundaryFaces;
+    boundaryFaces = nullptr;
 
     p->va_points->finalize();
     p->va_lines->finalize();
