@@ -128,6 +128,10 @@ private:
     Shard() : num(0) {}
     void reserve(std::size_t n);
     bool insert(std::uint64_t h);
+    bool contains(std::uint64_t h) const;
+    // insert the key, or erase it if it is already there
+    bool insertOrErase(std::uint64_t h);
+    void erase(std::size_t i);
   };
   Shard _shard[NUM_SHARDS];
   std::mutex _mutex[NUM_SHARDS];
@@ -154,6 +158,15 @@ public:
   // most general form: the caller builds the key itself, e.g. from node
   // identifiers paired with the color of each node
   bool isDuplicate(const std::uint64_t *key, int n);
+  // test without inserting: used to ask whether a face has been seen twice,
+  // i.e. whether it is interior to the mesh
+  bool contains(unsigned int col, const void *v0, const void *v1,
+                const void *v2 = nullptr, const void *v3 = nullptr);
+  // insert the element, or remove it if it has already been seen: after all the
+  // elements have been passed, the filter holds exactly those seen an odd
+  // number of times, i.e. the faces that bound the mesh
+  void insertOrErase(unsigned int col, const void *v0, const void *v1,
+                     const void *v2 = nullptr, const void *v3 = nullptr);
 };
 
 class Barycenter {

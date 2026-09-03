@@ -141,6 +141,56 @@ void UniqueElementFilter::Shard::reserve(std::size_t n)
   }
 }
 
+bool UniqueElementFilter::Shard::contains(std::uint64_t h) const
+{
+  if(table.empty()) return false;
+  std::size_t mask = table.size() - 1, i = h & mask;
+  while(table[i]) {
+    if(table[i] == h) return true;
+    i = (i + 1) & mask;
+  }
+  return false;
+}
+
+// Knuth's algorithm R: after removing the entry at i, shift back the following
+// entries that probed past it, so that the table stays free of tombstones
+void UniqueElementFilter::Shard::erase(std::size_t i)
+{
+  std::size_t mask = table.size() - 1, j = i;
+  table[i] = 0;
+  num--;
+  for(;;) {
+    j = (j + 1) & mask;
+    if(!table[j]) break;
+    std::size_t k = table[j] & mask;
+    if(i <= j) {
+      if(i < k && k <= j) continue;
+    }
+    else {
+      if(i < k || k <= j) continue;
+    }
+    table[i] = table[j];
+    table[j] = 0;
+    i = j;
+  }
+}
+
+bool UniqueElementFilter::Shard::insertOrErase(std::uint64_t h)
+{
+  if(2 * (num + 1) > table.size()) reserve(num + 1);
+  std::size_t mask = table.size() - 1, i = h & mask;
+  while(table[i]) {
+    if(table[i] == h) {
+      erase(i);
+      return false;
+    }
+    i = (i + 1) & mask;
+  }
+  table[i] = h;
+  num++;
+  return true;
+}
+
 bool UniqueElementFilter::Shard::insert(std::uint64_t h)
 {
   if(2 * (num + 1) > table.size()) reserve(num + 1);
@@ -168,11 +218,10 @@ bool UniqueElementFilter::isDuplicate(const std::uint64_t *key, int n)
   return !_shard[sh].insert(h);
 }
 
-bool UniqueElementFilter::isDuplicate(unsigned int col, const void *v0,
-                                     const void *v1, const void *v2,
-                                     const void *v3)
+// build the key of an element identified by its vertices and its color
+static int buildVertexKey(unsigned int col, const void *v0, const void *v1,
+                          const void *v2, const void *v3, std::uint64_t *k)
 {
-  std::uint64_t k[5];
   int n = 0;
   k[n++] = (std::uint64_t)(std::uintptr_t)v0;
   k[n++] = (std::uint64_t)(std::uintptr_t)v1;
@@ -182,7 +231,45 @@ bool UniqueElementFilter::isDuplicate(unsigned int col, const void *v0,
   for(int i = 1; i < n; i++)
     for(int j = i; j > 0 && k[j] < k[j - 1]; j--) std::swap(k[j], k[j - 1]);
   k[n++] = col;
+  return n;
+}
+
+bool UniqueElementFilter::isDuplicate(unsigned int col, const void *v0,
+                                      const void *v1, const void *v2,
+                                      const void *v3)
+{
+  std::uint64_t k[5];
+  int n = buildVertexKey(col, v0, v1, v2, v3, k);
   return isDuplicate(k, n);
+}
+
+void UniqueElementFilter::insertOrErase(unsigned int col, const void *v0,
+                                       const void *v1, const void *v2,
+                                       const void *v3)
+{
+  std::uint64_t k[5];
+  int n = buildVertexKey(col, v0, v1, v2, v3, k);
+  std::uint64_t h = hashKey(k, n * sizeof(std::uint64_t));
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) {
+    _shard[sh].insertOrErase(h);
+    return;
+  }
+  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  _shard[sh].insertOrErase(h);
+}
+
+bool UniqueElementFilter::contains(unsigned int col, const void *v0,
+                                    const void *v1, const void *v2,
+                                    const void *v3)
+{
+  std::uint64_t k[5];
+  int n = buildVertexKey(col, v0, v1, v2, v3, k);
+  std::uint64_t h = hashKey(k, n * sizeof(std::uint64_t));
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) return _shard[sh].contains(h);
+  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  return _shard[sh].contains(h);
 }
 
 bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
