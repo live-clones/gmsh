@@ -365,14 +365,12 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     if(va->getNumElementPointers() == va->getNumCorners()) {
       for(int i = 0; i < va->getNumCorners();
           i += va->getNumVerticesPerElement()) {
-        glPushName(va->getNumVerticesPerElement());
-        glPushName(i);
+        ctx->setPickColor(e->dim(), e->tag(),
+                          va->getNumVerticesPerElement(), i);
         glBegin(type);
         for(int j = 0; j < va->getNumVerticesPerElement(); j++)
           glVertex3fv(va->getVertexArray(3 * va->getCornerIndex(i + j)));
         glEnd();
-        glPopName();
-        glPopName();
       }
       return;
     }
@@ -381,7 +379,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
   glEnableClientState(GL_VERTEX_ARRAY);
 
-  if(useNormalArray && va->hasNormals()) {
+  if(!ctx->inPickColorMode() && useNormalArray && va->hasNormals()) {
     glEnable(GL_LIGHTING);
     glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -389,7 +387,11 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   else
     glDisableClientState(GL_NORMAL_ARRAY);
 
-  if(forceColor) {
+  if(ctx->inPickColorMode()) {
+    // the colour set by setPickColor() encodes the entity: keep it
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
+  else if(forceColor) {
     glDisableClientState(GL_COLOR_ARRAY);
     glColor4ubv((GLubyte *)&color);
   }
@@ -434,8 +436,7 @@ public:
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    v->model() == GModel::current());
     if(select) {
-      glPushName(0);
-      glPushName(v->tag());
+      _ctx->setPickColor(0, v->tag());
     }
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -444,8 +445,6 @@ public:
       drawVerticesPerEntity(_ctx, v);
 
     if(select) {
-      glPopName();
-      glPopName();
     }
   }
 };
@@ -467,8 +466,7 @@ public:
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    e->model() == GModel::current());
     if(select) {
-      glPushName(1);
-      glPushName(e->tag());
+      _ctx->setPickColor(1, e->tag());
     }
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -488,8 +486,6 @@ public:
     if(CTX::instance()->mesh.tangents) drawTangents(_ctx, e->lines);
 
     if(select) {
-      glPopName();
-      glPopName();
     }
   }
 };
@@ -511,8 +507,7 @@ public:
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    f->model() == GModel::current());
     if(select) {
-      glPushName(2);
-      glPushName(f->tag());
+      _ctx->setPickColor(2, f->tag());
     }
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -571,8 +566,6 @@ public:
     }
 
     if(select) {
-      glPopName();
-      glPopName();
     }
   }
 };
@@ -592,8 +585,7 @@ public:
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    r->model() == GModel::current());
     if(select) {
-      glPushName(3);
-      glPushName(r->tag());
+      _ctx->setPickColor(3, r->tag());
     }
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -674,8 +666,6 @@ public:
     }
 
     if(select) {
-      glPopName();
-      glPopName();
     }
   }
 };

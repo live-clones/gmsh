@@ -172,7 +172,33 @@ public:
               // at the time of the last InitPosition() call
   enum RenderMode { GMSH_RENDER = 1, GMSH_SELECT = 2, GMSH_FEEDBACK = 3 };
   int render_mode; // current rendering mode
+
+  // Colour buffer picking. During a selection pass every pickable object is
+  // drawn in a flat colour that encodes its position in _pickObjects, and the
+  // colours are then read back from the framebuffer. This replaces GL_SELECT,
+  // which current drivers implement on the CPU.
+  struct pickObject {
+    int type, ient, type2, ient2;
+    pickObject(int t = -1, int i = -1, int t2 = -1, int i2 = -1)
+      : type(t), ient(i), type2(t2), ient2(i2)
+    {
+    }
+  };
+  std::vector<pickObject> _pickObjects;
+  bool _pickColor;
+  bool _selectColor(int type, bool multiple, bool mesh, bool post, int x, int y,
+                    int w, int h, std::vector<GVertex *> &vertices,
+                    std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
+                    std::vector<GRegion *> &regions,
+                    std::vector<MElement *> &elements,
+                    std::vector<SPoint2> &points,
+                    std::vector<PView *> &views);
 public:
+  // true while drawing a colour buffer picking pass: the drawing code then has
+  // to use the flat colour set by setPickColor() instead of its own colours
+  bool inPickColorMode() const { return _pickColor; }
+  // register a pickable object and set the colour that encodes it
+  void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1);
   drawContext(openglWindow *window = nullptr, drawTransform *transform = nullptr);
   ~drawContext();
   // factor between the (true) size in pixels and the size reported by OSes

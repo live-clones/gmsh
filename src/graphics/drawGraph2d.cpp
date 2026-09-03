@@ -37,11 +37,10 @@ void drawContext::drawText2d()
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
     if(opt->visible && opt->drawStrings && isVisible(PView::list[i])) {
-      if(render_mode == drawContext::GMSH_SELECT) {
-        glPushName(5);
-        glPushName(PView::list[i]->getIndex());
-      }
-      glColor4ubv((GLubyte *)&opt->color.text2d);
+      if(render_mode == drawContext::GMSH_SELECT)
+        setPickColor(5, PView::list[i]->getIndex());
+      else
+        glColor4ubv((GLubyte *)&opt->color.text2d);
       for(int j = 0; j < data->getNumStrings2D(); j++) {
         double x, y, style;
         std::string str;
@@ -50,8 +49,6 @@ void drawContext::drawText2d()
         drawString(str, x, y, 0., style);
       }
       if(render_mode == drawContext::GMSH_SELECT) {
-        glPopName();
-        glPopName();
       }
     }
   }
@@ -439,8 +436,7 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
     glColor4ubv((GLubyte *)&col);
 
     if(singlePoint && ctx->render_mode == drawContext::GMSH_SELECT) {
-      glPushName(4);
-      glPushName(getTagForGraph2dDataPoint(SPoint2(x, y)));
+      ctx->setPickColor(4, (int)getTagForGraph2dDataPoint(SPoint2(x, y)));
     }
 
     if(numeric) {
@@ -464,8 +460,6 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
     }
 
     if(singlePoint && ctx->render_mode == drawContext::GMSH_SELECT) {
-      glPopName();
-      glPopName();
     }
   }
 }

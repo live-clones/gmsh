@@ -81,8 +81,7 @@ public:
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    v->model() == GModel::current());
     if(select) {
-      glPushName(0);
-      glPushName(v->tag());
+      _ctx->setPickColor(0, v->tag());
     }
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -139,8 +138,6 @@ public:
     }
 
     if(select) {
-      glPopName();
-      glPopName();
     }
   }
 };
@@ -161,8 +158,7 @@ public:
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    e->model() == GModel::current());
     if(select) {
-      glPushName(1);
-      glPushName(e->tag());
+      _ctx->setPickColor(1, e->tag());
     }
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -255,8 +251,6 @@ public:
     }
 
     if(select) {
-      glPopName();
-      glPopName();
     }
   }
 };
@@ -270,7 +264,7 @@ private:
     if(!va || !va->getNumVertices()) return;
     glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
     glEnableClientState(GL_VERTEX_ARRAY);
-    if(useNormalArray && va->hasNormals()) {
+    if(!_ctx->inPickColorMode() && useNormalArray && va->hasNormals()) {
       glEnable(GL_LIGHTING);
       glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
       glEnableClientState(GL_NORMAL_ARRAY);
@@ -278,7 +272,10 @@ private:
     else {
       glDisableClientState(GL_NORMAL_ARRAY);
     }
-    if(forceColor) {
+    if(_ctx->inPickColorMode()) {
+      glDisableClientState(GL_COLOR_ARRAY);
+    }
+    else if(forceColor) {
       glDisableClientState(GL_COLOR_ARRAY);
       glColor4ubv((GLubyte *)&color);
     }
@@ -322,8 +319,7 @@ public:
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    f->model() == GModel::current());
     if(select) {
-      glPushName(2);
-      glPushName(f->tag());
+      _ctx->setPickColor(2, f->tag());
     }
 
     if(f->getSelection()) {
@@ -424,8 +420,6 @@ public:
     }
 
     if(select) {
-      glPopName();
-      glPopName();
     }
   }
 };
@@ -443,8 +437,7 @@ public:
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    r->model() == GModel::current());
     if(select) {
-      glPushName(3);
-      glPushName(r->tag());
+      _ctx->setPickColor(3, r->tag());
     }
 
     if(CTX::instance()->geom.lightTwoSide)
@@ -516,8 +509,6 @@ public:
     }
 
     if(select) {
-      glPopName();
-      glPopName();
     }
   }
 };

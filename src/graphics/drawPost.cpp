@@ -113,14 +113,17 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
 
     glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
     glEnableClientState(GL_VERTEX_ARRAY);
-    if(useNormalArray && va->hasNormals()) {
+    if(!ctx->inPickColorMode() && useNormalArray && va->hasNormals()) {
       glEnable(GL_LIGHTING);
       glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
       glEnableClientState(GL_NORMAL_ARRAY);
     }
     else
       glDisableClientState(GL_NORMAL_ARRAY);
-    if(va->hasColors()) {
+    if(ctx->inPickColorMode()) {
+      glDisableClientState(GL_COLOR_ARRAY);
+    }
+    else if(va->hasColors()) {
       glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
       glEnableClientState(GL_COLOR_ARRAY);
     }
@@ -468,8 +471,7 @@ public:
     if(!_ctx->isVisible(p)) return;
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) {
-      glPushName(5);
-      glPushName(p->getIndex());
+      _ctx->setPickColor(5, p->getIndex());
     }
 
     glPointSize((float)opt->pointSize);
@@ -579,8 +581,6 @@ public:
     for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) {
-      glPopName();
-      glPopName();
     }
   }
 };
