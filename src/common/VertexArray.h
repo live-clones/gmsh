@@ -103,17 +103,14 @@ private:
   std::vector<normal_type> _normals;
   std::vector<unsigned char> _colors;
   std::vector<MElement *> _elements;
-  // optional index array: when non-empty, the vertex/normal/color arrays hold
-  // unique vertices only, and _indices lists the vertices of each drawn corner
-  std::vector<unsigned int> _indices;
   // elements already added, when the "unique" filter is on: the filter can be
   // shared with other vertex arrays, in which case it is not owned
   UniqueElementFilter *_filter;
   bool _ownsFilter;
   // OpenGL buffer objects holding a copy of the arrays (vertices, normals,
-  // colors, indices). They are created and filled by the graphics code, which
-  // is the only place where a GL context is current
-  unsigned int _vbo[4];
+  // colors). They are created and filled by the graphics code, which is the
+  // only place where a GL context is current
+  unsigned int _vbo[3];
   bool _vboDirty;
   long int _statUniqueIn, _statUniqueKept;
 
@@ -123,9 +120,6 @@ private:
   void _addColor(unsigned char r, unsigned char g, unsigned char b,
                  unsigned char a);
   void _addElement(MElement *ele);
-  // build (resp. undo) the index array by merging identical vertices
-  void _buildIndex();
-  void _deindex();
 
 public:
   VertexArray(int numVerticesPerElement, int numElements);
@@ -139,19 +133,6 @@ public:
   int getNumVertices() { return (int)_vertices.size() / 3; }
   // return the number of vertices per element
   int getNumVerticesPerElement() { return _numVerticesPerElement; }
-  // return true if the array is indexed
-  bool isIndexed() { return !_indices.empty(); }
-  // return the number of drawn corners: this is the number of indices if the
-  // array is indexed, and the number of vertices otherwise
-  int getNumCorners()
-  {
-    return isIndexed() ? (int)_indices.size() : getNumVertices();
-  }
-  // return the position, in the vertex arrays, of the i-th drawn corner
-  int getCornerIndex(int i) { return isIndexed() ? (int)_indices[i] : i; }
-  // return the number of indices, and a pointer to the raw index array
-  int getNumIndices() { return (int)_indices.size(); }
-  unsigned int *getIndexArray(int i = 0) { return &_indices[i]; }
   // return the number of element pointers
   int getNumElementPointers() { return (int)_elements.size(); }
   // return a pointer to the raw vertex array (warning: 1) we don't
@@ -225,12 +206,8 @@ public:
   // when a GL context is current, i.e. at the beginning of the next frame
   static std::vector<unsigned int> vboToDelete;
 
-  // index the arrays in finalize() (set from the GMSH_INDEXED_VA env variable)
-  static int indexing;
-  // statistics gathered while indexing
-  static long int statCorners, statVertices, statVerticesNoNormal;
+  // statistics gathered by the unique element filter
   static long int statUniqueIn, statUniqueKept;
-  static double statTime, statUniqueTime;
   static void printStats();
 };
 

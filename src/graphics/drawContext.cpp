@@ -316,7 +316,7 @@ static void uploadVertexArray(VertexArray *va)
 #if defined(HAVE_VERTEX_BUFFER_OBJECTS)
   unsigned int *id = va->getVboIds();
   if(!id[0]) {
-    glGenBuffers(4, id);
+    glGenBuffers(3, id);
     va->setVboDirty(true);
   }
   if(!va->getVboDirty()) return;
@@ -336,19 +336,11 @@ static void uploadVertexArray(VertexArray *va)
     glBufferData(GL_ARRAY_BUFFER, n * 4 * sizeof(unsigned char),
                  va->getColorArray(), GL_STATIC_DRAW);
   }
-  if(va->isIndexed()) {
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id[3]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 va->getNumIndices() * sizeof(unsigned int),
-                 va->getIndexArray(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-  }
   va->setVboDirty(false);
 
   vboBytes += n * 3. * sizeof(float) +
               (va->hasNormals() ? n * 3. * sizeof(normal_type) : 0.) +
-              (va->hasColors() ? n * 4. : 0.) +
-              (va->isIndexed() ? va->getNumIndices() * 4. : 0.);
+              (va->hasColors() ? n * 4. : 0.);
   vboTime += TimeOfDay() - t1;
 #endif
 }
@@ -406,20 +398,7 @@ const GLvoid *vaColorPointer(VertexArray *va)
 
 void drawVertexArray(VertexArray *va, GLenum type)
 {
-  if(va->isIndexed()) {
-#if defined(HAVE_VERTEX_BUFFER_OBJECTS)
-    if(useVertexBufferObjects()) {
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, va->getVboIds()[3]);
-      glDrawElements(type, va->getNumIndices(), GL_UNSIGNED_INT, nullptr);
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    }
-    else
-#endif
-      glDrawElements(type, va->getNumIndices(), GL_UNSIGNED_INT,
-                     va->getIndexArray());
-  }
-  else
-    glDrawArrays(type, 0, va->getNumVertices());
+  glDrawArrays(type, 0, va->getNumVertices());
 
 #if defined(HAVE_VERTEX_BUFFER_OBJECTS)
   if(useVertexBufferObjects()) glBindBuffer(GL_ARRAY_BUFFER, 0);

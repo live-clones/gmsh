@@ -15,45 +15,8 @@
 
 
 std::vector<unsigned int> VertexArray::vboToDelete;
-int VertexArray::indexing = -1;
 long int VertexArray::statUniqueIn = 0;
 long int VertexArray::statUniqueKept = 0;
-double VertexArray::statUniqueTime = 0.;
-long int VertexArray::statCorners = 0;
-long int VertexArray::statVertices = 0;
-long int VertexArray::statVerticesNoNormal = 0;
-double VertexArray::statTime = 0.;
-
-// key used to merge identical vertices: two corners are merged only if their
-// coordinates, normal and color are bit-for-bit identical, so that indexing
-// never changes what is drawn
-namespace {
-  struct VertexKey {
-    float x, y, z;
-    normal_type nx, ny, nz;
-    unsigned char r, g, b, a;
-  };
-  struct VertexKeyHash {
-    std::size_t operator()(const VertexKey &k) const
-    {
-      const unsigned char *p = (const unsigned char *)&k;
-      std::size_t h = 14695981039346656037ULL;
-      for(std::size_t i = 0; i < sizeof(VertexKey); i++) {
-        h ^= p[i];
-        h *= 1099511628211ULL;
-      }
-      return h;
-    }
-  };
-  struct VertexKeyEqual {
-    bool operator()(const VertexKey &a, const VertexKey &b) const
-    {
-      return !memcmp(&a, &b, sizeof(VertexKey));
-    }
-  };
-  typedef std::unordered_map<VertexKey, unsigned int, VertexKeyHash,
-                             VertexKeyEqual> VertexKeyMap;
-}
 
 // fill a corner key with the N corners sorted lexicographically, so that an
 // element added with its corners in any order maps to the same key
@@ -309,7 +272,7 @@ bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
 VertexArray::~VertexArray()
 {
   if(_ownsFilter) delete _filter;
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < 3; i++)
     if(_vbo[i]) vboToDelete.push_back(_vbo[i]);
 }
 
@@ -335,7 +298,7 @@ VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
     _ownsFilter(false), _statUniqueIn(0), _statUniqueKept(0), _vboDirty(true)
 {
-  _vbo[0] = _vbo[1] = _vbo[2] = _vbo[3] = 0;
+  _vbo[0] = _vbo[1] = _vbo[2] = 0;
 
   int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
 
@@ -355,8 +318,7 @@ double VertexArray::getMemoryInMB()
 {
   std::size_t bytes = _vertices.size() * sizeof(float) +
                       _normals.size() * sizeof(normal_type) +
-                      _colors.size() * sizeof(unsigned char) +
-                      _indices.size() * sizeof(unsigned int);
+                      _colors.size() * sizeof(unsigned char);
   return (double)bytes / 1024. / 1024.;
 }
 
@@ -441,203 +403,13 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
   }
 }
 
-static int getIndexingMode()
-{
-  if(VertexArray::indexing < 0) {
-    const char *s = getenv("GMSH_INDEXED_VA");
-    VertexArray::indexing = s ? atoi(s) : 0;
-  }
-  return VertexArray::indexing;
-}
-
-// number of bytes stored per vertex in the arrays
-static std::size_t bytesPerVertex(bool normals, bool colors)
-{
-  return 3 * sizeof(float) + (normals ? 3 * sizeof(normal_type) : 0) +
-         (colors ? 4 * sizeof(unsigned char) : 0);
-}
-
-void VertexArray::_buildIndex()
-{
-  int mode = getIndexingMode();
-  if(!mode || isIndexed()) return;
-
-  int n = getNumVertices();
-  if(!n) return;
-
-  bool hasN = ((int)_normals.size() == 3 * n);
-  bool hasC = ((int)_colors.size() == 4 * n);
-
-  if(mode == 4) {
-    // measurement only: index the arrays with the identity permutation, which
-    // isolates the cost of glDrawElements from the cost of sharing vertices
-    _indices.resize(n);
-    for(int i = 0; i < n; i++) _indices[i] = (unsigned int)i;
-    return;
-  }
-
-  // measurement only: mode 5 drops the normals altogether and merges vertices
-  // on position and color alone, which is what a shader computing the normal
-  // from screen-space derivatives would allow. It only leaves the rendering
-  // unchanged for arrays that are not lit.
-  bool dropNormals = (mode == 5);
-  if(dropNormals) hasN = false;
-
-  double t1 = TimeOfDay();
-
-  VertexKeyMap map;
-  map.reserve(n);
-  std::vector<unsigned int> ind(n);
-  std::vector<float> v;
-  std::vector<normal_type> nor;
-  std::vector<unsigned char> col;
-
-  for(int i = 0; i < n; i++) {
-    VertexKey k;
-    memset(&k, 0, sizeof(VertexKey));
-    k.x = _vertices[3 * i];
-    k.y = _vertices[3 * i + 1];
-    k.z = _vertices[3 * i + 2];
-    if(hasN) {
-      k.nx = _normals[3 * i];
-      k.ny = _normals[3 * i + 1];
-      k.nz = _normals[3 * i + 2];
-    }
-    if(hasC) {
-      k.r = _colors[4 * i];
-      k.g = _colors[4 * i + 1];
-      k.b = _colors[4 * i + 2];
-      k.a = _colors[4 * i + 3];
-    }
-    auto it = map.find(k);
-    if(it != map.end()) {
-      ind[i] = it->second;
-      continue;
-    }
-    unsigned int id = (unsigned int)(v.size() / 3);
-    map[k] = id;
-    ind[i] = id;
-    v.push_back(k.x);
-    v.push_back(k.y);
-    v.push_back(k.z);
-    if(hasN) {
-      nor.push_back(k.nx);
-      nor.push_back(k.ny);
-      nor.push_back(k.nz);
-    }
-    if(hasC) {
-      col.push_back(k.r);
-      col.push_back(k.g);
-      col.push_back(k.b);
-      col.push_back(k.a);
-    }
-  }
-
-  int nu = (int)(v.size() / 3);
-  statTime += TimeOfDay() - t1;
-  statCorners += n;
-  statVertices += nu;
-
-  if(mode == 3) {
-    // measurement only: also compute how many vertices would remain if the
-    // normals were not stored (i.e. computed in a shader), then leave the
-    // arrays untouched
-    VertexKeyMap map2;
-    map2.reserve(n);
-    int nu2 = 0;
-    for(int i = 0; i < n; i++) {
-      VertexKey k;
-      memset(&k, 0, sizeof(VertexKey));
-      k.x = _vertices[3 * i];
-      k.y = _vertices[3 * i + 1];
-      k.z = _vertices[3 * i + 2];
-      if(hasC) {
-        k.r = _colors[4 * i];
-        k.g = _colors[4 * i + 1];
-        k.b = _colors[4 * i + 2];
-        k.a = _colors[4 * i + 3];
-      }
-      if(map2.find(k) == map2.end()) map2[k] = nu2++;
-    }
-    statVerticesNoNormal += nu2;
-    return;
-  }
-
-  if(mode == 1 && !dropNormals) {
-    // only keep the index array if it actually saves memory: each corner costs
-    // an extra 4-byte index, which is not paid back unless enough vertices are
-    // shared
-    std::size_t bpv = bytesPerVertex(hasN, hasC);
-    std::size_t flat = (std::size_t)n * bpv;
-    std::size_t indexed =
-      (std::size_t)nu * bpv + (std::size_t)n * sizeof(unsigned int);
-    if(indexed >= flat) return;
-  }
-
-  _vertices.swap(v);
-  _normals.swap(nor);
-  _colors.swap(col);
-  _indices.swap(ind);
-  if(dropNormals) _normals.clear();
-}
-
-void VertexArray::_deindex()
-{
-  if(!isIndexed()) return;
-
-  int n = getNumVertices();
-  bool hasN = ((int)_normals.size() == 3 * n);
-  bool hasC = ((int)_colors.size() == 4 * n);
-  int nc = (int)_indices.size();
-
-  std::vector<float> v;
-  std::vector<normal_type> nor;
-  std::vector<unsigned char> col;
-  v.reserve(3 * nc);
-  if(hasN) nor.reserve(3 * nc);
-  if(hasC) col.reserve(4 * nc);
-
-  for(int i = 0; i < nc; i++) {
-    unsigned int j = _indices[i];
-    for(int k = 0; k < 3; k++) v.push_back(_vertices[3 * j + k]);
-    if(hasN)
-      for(int k = 0; k < 3; k++) nor.push_back(_normals[3 * j + k]);
-    if(hasC)
-      for(int k = 0; k < 4; k++) col.push_back(_colors[4 * j + k]);
-  }
-
-  _vertices.swap(v);
-  _normals.swap(nor);
-  _colors.swap(col);
-  _indices.clear();
-}
-
 void VertexArray::printStats()
 {
-  if(statUniqueIn) {
-    Msg::Info("Vertex array unique filter: %ld -> %ld corners (%.2fx)",
-              statUniqueIn, statUniqueKept,
-              (double)statUniqueIn / statUniqueKept);
-    statUniqueIn = statUniqueKept = 0;
-    statUniqueTime = 0.;
-  }
-  if(!statCorners) return;
-  double bpc = 3. * sizeof(float) + 3. * sizeof(normal_type) +
-               4. * sizeof(unsigned char);
-  double flat = statCorners * bpc / 1024. / 1024.;
-  double idx = (statVertices * bpc + statCorners * sizeof(unsigned int)) /
-               1024. / 1024.;
-  Msg::Info("Vertex array indexing: %ld corners -> %ld vertices (%.2fx), "
-            "%.1f -> %.1f Mb (%.2fx), %g s",
-            statCorners, statVertices, (double)statCorners / statVertices,
-            flat, idx, flat / idx, statTime);
-  if(statVerticesNoNormal)
-    Msg::Info("Vertex array indexing without normals: %ld corners -> %ld "
-              "vertices (%.2fx)",
-              statCorners, statVerticesNoNormal,
-              (double)statCorners / statVerticesNoNormal);
-  statCorners = statVertices = statVerticesNoNormal = 0;
-  statTime = 0.;
+  if(!statUniqueIn) return;
+  Msg::Info("Vertex array unique filter: %ld -> %ld corners (%.2fx)",
+            statUniqueIn, statUniqueKept,
+            (double)statUniqueIn / statUniqueKept);
+  statUniqueIn = statUniqueKept = 0;
 }
 
 void VertexArray::finalize()
@@ -650,7 +422,6 @@ void VertexArray::finalize()
     _filter = nullptr;
     _ownsFilter = false;
   }
-  _buildIndex();
 }
 
 class AlphaElement {
@@ -693,43 +464,6 @@ void VertexArray::sort(double x, double y, double z)
   // three arrays in place.
 
   int npe = getNumVerticesPerElement();
-
-  if(isIndexed()) {
-    // only the index array (and the element pointers) need to be permuted: the
-    // vertex, normal and color arrays are left untouched
-    int n = (int)_indices.size() / npe;
-    if(!n) return;
-    double eye[3] = {x, y, z};
-    std::vector<double> key(n);
-    std::vector<int> perm(n);
-    for(int i = 0; i < n; i++) {
-      perm[i] = i;
-      double cg[3] = {0., 0., 0.};
-      for(int j = 0; j < npe; j++) {
-        unsigned int k = _indices[npe * i + j];
-        cg[0] += _vertices[3 * k];
-        cg[1] += _vertices[3 * k + 1];
-        cg[2] += _vertices[3 * k + 2];
-      }
-      key[i] = prosca(eye, cg);
-    }
-    std::sort(perm.begin(), perm.end(),
-              [&key](int a, int b) { return key[a] < key[b]; });
-    std::vector<unsigned int> ind(_indices.size());
-    for(int i = 0; i < n; i++)
-      for(int j = 0; j < npe; j++)
-        ind[npe * i + j] = _indices[npe * perm[i] + j];
-    _indices.swap(ind);
-    if((int)_elements.size() == npe * n) {
-      std::vector<MElement *> ele(_elements.size());
-      for(int i = 0; i < n; i++)
-        for(int j = 0; j < npe; j++)
-          ele[npe * i + j] = _elements[npe * perm[i] + j];
-      _elements.swap(ele);
-    }
-    return;
-  }
-
   int n = getNumVertices() / npe;
 
   AlphaElementLessThan::numVertices = npe;
@@ -776,13 +510,6 @@ char *VertexArray::toChar(int num, const std::string &name, int type,
                           double min, double max, int numsteps, double time,
                           const SBoundingBox3d &bbox, int &len)
 {
-  if(isIndexed()) {
-    // the wire format does not carry an index array
-    VertexArray tmp(*this);
-    tmp._deindex();
-    return tmp.toChar(num, name, type, min, max, numsteps, time, bbox, len);
-  }
-
   int vn = _vertices.size(), nn = _normals.size(), cn = _colors.size();
   int vs = vn * sizeof(float),
       ns = nn * sizeof(normal_type),
@@ -890,8 +617,6 @@ void VertexArray::fromChar(int length, const char *bytes, int swap)
 
 void VertexArray::merge(VertexArray* va, const unsigned char *color)
 {
-  _deindex();
-  va->_deindex();
   _statUniqueIn += va->_statUniqueIn;
   _statUniqueKept += va->_statUniqueKept;
   if(va->getNumVertices() != 0) {
