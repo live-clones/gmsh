@@ -17,6 +17,13 @@
 #include "SBoundingBox3d.h"
 
 #include "GmshConfig.h"
+
+// only MSVC on x86 has an intrinsic for the prefetch below; the other Windows
+// targets do without it, which only costs a hint
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#include <xmmintrin.h>
+#endif
+
 #if defined(HAVE_VISUDEV)
 typedef float normal_type;
 #else
@@ -55,6 +62,20 @@ static inline std::uint64_t vaHashKey(const void *p, std::size_t bytes)
   h *= 0xc4ceb9fe1a85ec53ULL;
   h ^= h >> 32;
   return h ? h : 1;
+}
+
+// Ask for a cache line to be brought in, so that a lookup that will need it
+// later does not stall on it. This is only a hint: doing nothing at all is
+// always correct, and is what happens on compilers that cannot express it
+static inline void vaPrefetch(const void *p)
+{
+#if defined(__GNUC__) || defined(__clang__)
+  __builtin_prefetch(p, 1, 1);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+  _mm_prefetch((const char *)p, _MM_HINT_T0);
+#else
+  (void)p;
+#endif
 }
 
 // build the key of an element identified by its vertices and its color
@@ -228,7 +249,7 @@ public:
   void prefetch(std::uint64_t h)
   {
     const Shard &s = _shard[(h >> 56) & (NUM_SHARDS - 1)];
-    if(s.table) __builtin_prefetch(&s.table[h & s.mask], 1, 1);
+    if(s.table) vaPrefetch(&s.table[h & s.mask]);
   }
   bool isDuplicate(std::uint64_t h)
   {
