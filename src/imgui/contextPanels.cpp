@@ -1681,6 +1681,14 @@ void appWindow::_drawDialog(int which)
     return;
   }
 
+  // How tall the panes beside the column came out last time round. A window
+  // that follows its contents has not been given a height when the column is
+  // drawn, so counting lines is the only guess available there -- and it
+  // guesses short. What its neighbour actually measured on the frame before
+  // is the same quantity, told rather than guessed.
+  static std::vector<float> sideRoom(imguiSources().numForms(), 0.f);
+  if(which >= (int)sideRoom.size()) sideRoom.resize(which + 1, 0.f);
+
   // the column of side fields, down the left of everything else
   if(panel.side.size()) {
     float w = (float)(panel.sideEm > 0. ? panel.sideEm : 8.) *
@@ -1705,6 +1713,11 @@ void appWindow::_drawDialog(int which)
           float room = ImGui::GetContentRegionAvail().y - keep;
           if(room > tall) tall = room;
         }
+        // A window that follows its contents has none of that to go on, but
+        // it has what the panes beside the column came to last frame, which
+        // is what the column is meant to match.
+        else if(sideRoom[which] > tall)
+          tall = sideRoom[which];
       }
     if(ImGui::BeginChild("##side", ImVec2(w, tall),
                          tall > 0.f ? ImGuiChildFlags_None :
@@ -1879,7 +1892,15 @@ void appWindow::_drawDialog(int which)
     ImGui::PopID();
   }
 
-  if(panel.side.size()) ImGui::EndGroup();
+  if(panel.side.size()) {
+    ImGui::EndGroup();
+    // What everything beside the column came to, for the column to be given
+    // exactly that on the next frame. The whole group and not the panes
+    // alone: the three checks the clipping window puts under its tabs are its
+    // footer, and the browser it reproduces runs its column past them to the
+    // foot of the window.
+    sideRoom[which] = ImGui::GetItemRectSize().y;
+  }
 
   if(panel.buttons.size()) {
     // gathered at the right in the order they were declared, so that the last
