@@ -976,6 +976,37 @@ def browser_sweep(dpy, args, port, win, only=None):
                                           name.lower())
             shot.save(os.path.join(args.out, f))
             print("SHOT %s  %dx%d" % (f, shot.width, shot.height))
+            if name == "Map":
+                # The same keys the other three are given, pressed by their
+                # names rather than struck at a coordinate -- which is the
+                # whole difference between this column and the others. What
+                # each one is worth is decided where the description is.
+                spot = None
+                for chord in COLORMAP_KEYS:
+                    form = browser_form(browser_state(port) or {}, "options")
+                    spot = browser_colormap(form) if form else None
+                    if spot is None:
+                        break
+                    # the plus of a chord is a space in a form body, so it
+                    # goes down spelt out
+                    browser_ask(port, "/map",
+                                which(spot) + "&op=press&k=" +
+                                map_key(chord).replace("+", "%2B"),
+                                timeout=3)
+                    time.sleep(0.15)
+                if spot is None:
+                    failures.append("options-view-map-keys: no map in the page")
+                    continue
+                time.sleep(0.5)
+                rect = browser_rect(port, form["id"])
+                second = browser_cut(dpy, win, rect) if rect else None
+                if second is None:
+                    failures.append("options-view-map-keys: nothing to "
+                                    "photograph")
+                    continue
+                f = "%s-options-view-map-keys.png" % args.build
+                second.save(os.path.join(args.out, f))
+                print("SHOT %s  %dx%d" % (f, second.width, second.height))
     return failures
 
 
@@ -1165,6 +1196,40 @@ def browser_shortcut(keys):
     """The keys a shot presses, written the way a menu says them."""
     said = {"ctrl": "Ctrl", "shift": "Shift", "alt": "Alt"}
     return "+".join(said.get(k, k.upper()) for k in keys)
+
+
+def map_key(chord):
+    """One of COLORMAP_KEYS, said the way Ui::Shortcut::label() says it.
+
+    Not browser_shortcut(): that upper-cases whatever is not a modifier, which
+    is right for a letter and wrong for an arrow -- the description calls them
+    Left and Up, not LEFT and UP.
+    """
+    mods = {"ctrl": "Ctrl", "shift": "Shift", "alt": "Alt"}
+    named = {"left": "Left", "right": "Right", "up": "Up", "down": "Down",
+             "delete": "Del"}
+    said = ""
+    # in the order the label is written: Ctrl, then Shift, then Alt
+    for m in ("ctrl", "shift", "alt"):
+        if m in chord:
+            said += mods[m] + "+"
+    for k in chord:
+        if k not in mods:
+            said += named.get(k, k.upper())
+    return said
+
+
+def browser_colormap(form):
+    """The colour map field of the pane that is up, if there is one."""
+    for pane in form.get("panes", []):
+        for f in pane.get("fields", []):
+            if f.get("kind") == "colormap":
+                return f
+        for section in pane.get("sections", []):
+            for f in section.get("fields", []):
+                if f.get("kind") == "colormap":
+                    return f
+    return None
 
 
 def browser_pane(port, form, want):
