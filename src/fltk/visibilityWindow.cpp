@@ -190,6 +190,55 @@ public:
   }
 };
 
+// The partitions an entity belongs to, without copying the vector: this is
+// asked for every entity of the model, and an overlap entity stores a single
+// partition, so it needs somewhere to put it.
+static const std::vector<int> *partitionsOf(GEntity *ge, std::vector<int> &tmp)
+{
+  switch(ge->geomType()) {
+  case GEntity::PartitionPoint:
+    return &static_cast<partitionVertex *>(ge)->getPartitions();
+  case GEntity::PartitionCurve:
+    return &static_cast<partitionEdge *>(ge)->getPartitions();
+  case GEntity::PartitionSurface:
+    return &static_cast<partitionFace *>(ge)->getPartitions();
+  case GEntity::PartitionVolume:
+    return &static_cast<partitionRegion *>(ge)->getPartitions();
+  // overlap entities are not partition entities: they store the partition
+  // they belong to as a single tag
+  case GEntity::OverlapSurface:
+    tmp.assign(1, static_cast<overlapFace *>(ge)->owningPartition());
+    return &tmp;
+  case GEntity::OverlapVolume:
+    tmp.assign(1, static_cast<overlapRegion *>(ge)->owningPartition());
+    return &tmp;
+  default: return nullptr;
+  }
+}
+
+// Which entities belong to which partition, built once when the browser is
+// filled. Without it, showing or hiding one partition walks every entity of
+// the model, and applying a selection does that once per partition: with
+// 16000 partitions over 384000 entities that is six billion visits, each
+// copying a vector.
+static std::map<int, std::vector<GEntity *> > _partitionIndex;
+static GModel *_partitionIndexModel = nullptr;
+
+static void buildPartitionIndex(GModel *m)
+{
+  _partitionIndex.clear();
+  _partitionIndexModel = m;
+  std::vector<GEntity *> entities;
+  m->getEntities(entities);
+  std::vector<int> tmp;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    const std::vector<int> *ps = partitionsOf(entities[i], tmp);
+    if(!ps) continue;
+    for(std::size_t j = 0; j < ps->size(); j++)
+      _partitionIndex[(*ps)[j]].push_back(entities[i]);
+  }
+}
+
 class VisPartition : public Vis {
 private:
   int _tag;
@@ -201,35 +250,31 @@ public:
   int getTag() const { return _tag; }
   std::string getType() const { return "Partition"; }
   char getVisibility() const { return _visible; }
+  // only mark the partition as shown or hidden in the browser, without
+  // touching the entities: used when they have all just been hidden in one
+  // pass, where walking the model again for each partition is the whole cost
+  void setListVisibility(char val) { _visible = val; }
   void setVisibility(char val, bool recursive = false, bool allmodels = false)
   {
     _visible = val;
+    if(!allmodels && GModel::current() == _partitionIndexModel) {
+      auto it = _partitionIndex.find(_tag);
+      if(it != _partitionIndex.end())
+        for(std::size_t i = 0; i < it->second.size(); i++)
+          it->second[i]->setVisibility(val, recursive);
+      return;
+    }
     for(std::size_t i = 0; i < GModel::list.size(); i++) {
       GModel *m = GModel::list[i];
       if(allmodels || m == GModel::current()) {
         std::vector<GEntity *> entities;
         m->getEntities(entities);
+        std::vector<int> tmp;
         for(std::size_t j = 0; j < entities.size(); j++) {
-          std::vector<int> ps;
-          if(entities[j]->geomType() == GEntity::PartitionPoint)
-            ps = static_cast<partitionVertex *>(entities[j])->getPartitions();
-          else if(entities[j]->geomType() == GEntity::PartitionCurve)
-            ps = static_cast<partitionEdge *>(entities[j])->getPartitions();
-          else if(entities[j]->geomType() == GEntity::PartitionSurface)
-            ps = static_cast<partitionFace *>(entities[j])->getPartitions();
-          else if(entities[j]->geomType() == GEntity::PartitionVolume)
-            ps = static_cast<partitionRegion *>(entities[j])->getPartitions();
-          // overlap entities are not partition entities: they store the
-          // partition they belong to as a single tag
-          else if(entities[j]->geomType() == GEntity::OverlapSurface)
-            ps.push_back(
-              static_cast<overlapFace *>(entities[j])->owningPartition());
-          else if(entities[j]->geomType() == GEntity::OverlapVolume)
-            ps.push_back(
-              static_cast<overlapRegion *>(entities[j])->owningPartition());
-          for(auto p : ps) {
-            if(p == _tag) entities[j]->setVisibility(val, recursive);
-          }
+          const std::vector<int> *ps = partitionsOf(entities[j], tmp);
+          if(!ps) continue;
+          for(std::size_t k = 0; k < ps->size(); k++)
+            if((*ps)[k] == _tag) entities[j]->setVisibility(val, recursive);
         }
       }
     }
@@ -341,6 +386,7 @@ public:
       }
     }
     else if(type == MeshPartitions) {
+      buildPartitionIndex(m);
       for(std::size_t part = 0; part < m->getNumPartitions(); part++) {
         Vis *v = new VisPartition(part + 1);
         if(v->match(search))
@@ -382,8 +428,22 @@ public:
         }
       }
     }
-    // this is superfluous in elementary mode, but we don't care
-    for(int i = 0; i < getNumEntities(); i++) setVisibility(i, 0);
+    if(type == MeshPartitions && !allmodels &&
+       GModel::current() == _partitionIndexModel) {
+      // hide everything that belongs to a partition in one pass, and only
+      // mark the partitions themselves as hidden: asking each of them to walk
+      // the model in turn is what made applying a selection take minutes.
+      // Entities that belong to no partition are left alone, as before.
+      for(auto &p : _partitionIndex)
+        for(std::size_t i = 0; i < p.second.size(); i++)
+          p.second[i]->setVisibility(0);
+      for(int i = 0; i < getNumEntities(); i++)
+        static_cast<VisPartition *>(_entities[i])->setListVisibility(0);
+    }
+    else {
+      // this is superfluous in elementary mode, but we don't care
+      for(int i = 0; i < getNumEntities(); i++) setVisibility(i, 0);
+    }
   }
   // get the dim of the nth entity in the list
   int getDim(int n) { return _entities[n]->getDim(); }
