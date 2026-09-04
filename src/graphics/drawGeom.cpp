@@ -74,8 +74,7 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
 // of them up than drawing it. Returns true when it has drawn the points, so
 // that the per-entity pass can skip them; selected points and labels are left
 // to that pass, which paints them on top.
-static bool drawGeomPointsBatched(drawContext *ctx,
-                                  const std::vector<GVertex *> &verts)
+static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
 {
   CTX *c = CTX::instance();
   if(ctx->render_mode == drawContext::GMSH_SELECT) return false;
@@ -87,8 +86,8 @@ static bool drawGeomPointsBatched(drawContext *ctx,
   static std::vector<unsigned char> col;
   xyz.clear();
   col.clear();
-  for(std::size_t i = 0; i < verts.size(); i++) {
-    GVertex *v = verts[i];
+  for(auto it = m->firstVertex(); it != m->lastVertex(); it++) {
+    GVertex *v = *it;
     if(!v->getVisibility()) continue;
     if(v->geomType() == GEntity::BoundaryLayerPoint) continue;
     if(v->getSelection()) continue;
@@ -587,15 +586,18 @@ void drawContext::drawGeom()
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     if(m->getVisibility() && isVisible(m)) {
-      { const auto &l = m->getFlatVertices();
-        bool batched = drawGeomPointsBatched(this, l);
-        std::for_each(l.begin(), l.end(), drawGVertex(this, batched)); }
-      { const auto &l = m->getFlatEdges();
-        std::for_each(l.begin(), l.end(), drawGEdge(this)); }
-      { const auto &l = m->getFlatFaces();
-        std::for_each(l.begin(), l.end(), drawGFace(this)); }
-      { const auto &l = m->getFlatRegions();
-        std::for_each(l.begin(), l.end(), drawGRegion(this)); }
+      {
+        // when the batch drew every point there is, the pass below would walk
+        // the points only to return immediately for each of them
+        bool batched = drawGeomPointsBatched(this, m);
+        if(!batched || CTX::instance()->geom.pointLabels ||
+           GEntity::numSelected)
+          std::for_each(m->firstVertex(), m->lastVertex(),
+                        drawGVertex(this, batched));
+      }
+      std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
+      std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
+      std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
     }
   }
 

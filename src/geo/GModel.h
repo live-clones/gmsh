@@ -157,13 +157,6 @@ protected:
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
-  // see getFlatVertices() and friends
-  std::vector<GVertex *> _flatVertices;
-  std::vector<GEdge *> _flatEdges;
-  std::vector<GFace *> _flatFaces;
-  std::vector<GRegion *> _flatRegions;
-  bool _flatValid = false;
-
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name
   std::map<std::pair<int, int>, std::string> _physicalNames, _elementaryNames;
@@ -440,22 +433,10 @@ public:
   bool changeEntityTag(int dim, int tag, int newTag);
 
   // add/remove an entity in the model
-  bool add(GRegion *r) { _flatValid = false; return regions.insert(r).second; }
-  bool add(GFace *f) { _flatValid = false; return faces.insert(f).second; }
-  bool add(GEdge *e) { _flatValid = false; return edges.insert(e).second; }
-  bool add(GVertex *v) { _flatValid = false; return vertices.insert(v).second; }
-
-  // Flat copies of the sets above, for the drawing code: it walks the entities
-  // several times per frame, and a std::set of a few hundred thousand nodes
-  // costs more to walk than the work done per entity. Rebuilt whenever an
-  // entity is added or removed, or whenever a set no longer has the size the
-  // copy was made from, which also covers the code that touches the sets
-  // directly.
-  const std::vector<GVertex *> &getFlatVertices();
-  const std::vector<GEdge *> &getFlatEdges();
-  const std::vector<GFace *> &getFlatFaces();
-  const std::vector<GRegion *> &getFlatRegions();
-  void invalidateFlatEntities() { _flatValid = false; }
+  bool add(GRegion *r) { return regions.insert(r).second; }
+  bool add(GFace *f) { return faces.insert(f).second; }
+  bool add(GEdge *e) { return edges.insert(e).second; }
+  bool add(GVertex *v) { return vertices.insert(v).second; }
   bool remove(GRegion *r);
   bool remove(GFace *f);
   bool remove(GEdge *e);

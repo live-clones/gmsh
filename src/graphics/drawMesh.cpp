@@ -910,14 +910,13 @@ void drawContext::drawMesh()
       bool merge = !inPickColorMode();
 
       if(status >= 0 && needPerEntityPass(this, 0, false, false))
-        { const auto &l = m->getFlatVertices();
-          std::for_each(l.begin(), l.end(), drawMeshGVertex(this)); }
+        std::for_each(m->firstVertex(), m->lastVertex(),
+                      drawMeshGVertex(this));
       if(status >= 1) {
         if(merge) drawMergedArray(this, ma.lines[1], GL_LINES, false);
         _mergedLines = (merge && ma.lines[1]);
         if(needPerEntityPass(this, 1, _mergedLines, false))
-          { const auto &l = m->getFlatEdges();
-            std::for_each(l.begin(), l.end(), drawMeshGEdge(this)); }
+          std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
         _mergedLines = false;
       }
       if(status >= 2) {
@@ -932,8 +931,7 @@ void drawContext::drawMesh()
         _mergedLines = (merge && ma.lines[2]);
         _mergedTriangles = (merge && ma.triangles[2]);
         if(needPerEntityPass(this, 2, _mergedLines, _mergedTriangles))
-          { const auto &l = m->getFlatFaces();
-            std::for_each(l.begin(), l.end(), drawMeshGFace(this)); }
+          std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
         _mergedLines = _mergedTriangles = false;
         endFakeTransparency();
       }
@@ -948,8 +946,8 @@ void drawContext::drawMesh()
         _mergedLines = (merge && ma.lines[3]);
         _mergedTriangles = (merge && ma.triangles[3]);
         if(needPerEntityPass(this, 3, _mergedLines, _mergedTriangles))
-          { const auto &l = m->getFlatRegions();
-            std::for_each(l.begin(), l.end(), drawMeshGRegion(this)); }
+          std::for_each(m->firstRegion(), m->lastRegion(),
+                        drawMeshGRegion(this));
         _mergedLines = _mergedTriangles = false;
       }
     }
