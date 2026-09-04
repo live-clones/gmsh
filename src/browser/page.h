@@ -159,11 +159,24 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .cell.run{gap:0}
  /* what fills the height it is given, down to the list itself */
  .line.grows{flex:1 1 auto;min-height:0}
- .line.grows>.cell{min-height:0;align-self:stretch}
+ .line.grows>.cell{min-height:0;align-self:stretch;position:relative}
  /* and a list that fills its line takes the height the line was given --
     which is what a window says with leastRows -- and no more: a list of two
-    hundred options is not a window two hundred lines tall */
+    hundred options is not a window two hundred lines tall.
+    A list that has the line to itself is stretched over its cell rather than
+    given a height, the way the colour map is. Asked for a height of a hundred
+    percent it got none -- nothing above it has one to give -- and fell back
+    on the ceiling in ems, which is lower than the room it had been given: the
+    slack was then shared above and below it, an inch of nothing between the
+    buttons at the top of the workspace window and the listing under them.
+    Lifting the ceiling is no answer either, since the list then counts the
+    two hundred options it holds and takes the window with it. Out of the flow
+    it neither counts them nor stops short. A list with something written
+    beside it stays where it was: there the cell holds more than the list. */
  .line.grows .list{height:100%}
+ .line.grows>.cell>.list:only-child{position:absolute;top:0;left:0;right:0;
+                                    bottom:0;height:auto;max-height:none;
+                                    min-height:0}
  /* The colour map of a view: it fills the tab it is given, as the widget
     of the window this reproduces fills its own, and it is drawn rather than
     built out of elements -- four curves over two hundred and fifty entries
@@ -782,6 +795,11 @@ function cell(f) {
   if(f.kind === 'list' || f.kind === 'hierarchy') {
     // a list takes the line it is on: what names it, if anything does, is
     // written beside it and takes only what it needs
+    //
+    // How wide it says it is goes on the cell as well: a list that fills its
+    // line is stretched over the cell and out of the flow, so its own width
+    // is no longer what anything is measured from.
+    if(f.em) box.style.minWidth = f.em + 'em';
     box.appendChild(what);
     if(f.label) { say.style.flex = '0 0 auto'; box.appendChild(say); }
     return box;
