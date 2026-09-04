@@ -48,8 +48,7 @@ void drawContext::drawText2d()
         fix2dCoordinates(&x, &y);
         drawString(str, x, y, 0., style);
       }
-      if(render_mode == drawContext::GMSH_SELECT) {
-      }
+      if(render_mode == drawContext::GMSH_SELECT) unsetPickColor();
     }
   }
 }
@@ -459,8 +458,8 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       if(singlePoint) glEnd();
     }
 
-    if(singlePoint && ctx->render_mode == drawContext::GMSH_SELECT) {
-    }
+    if(singlePoint && ctx->render_mode == drawContext::GMSH_SELECT)
+      ctx->unsetPickColor();
   }
 }
 

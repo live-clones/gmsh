@@ -580,8 +580,7 @@ public:
 
     for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
-    if(_ctx->render_mode == drawContext::GMSH_SELECT) {
-    }
+    if(_ctx->render_mode == drawContext::GMSH_SELECT) _ctx->unsetPickColor();
   }
 };
 

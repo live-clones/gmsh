@@ -1060,6 +1060,15 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
   glDepthRange(0.2 * d, 0.2 * d + 0.2);
 }
 
+void drawContext::unsetPickColor()
+{
+  if(!_pickColor) return;
+  // 0 is the background: what is drawn now belongs to no pickable object
+  GLubyte c[4] = {0, 0, 0, 255};
+  glDisableClientState(GL_COLOR_ARRAY);
+  glColor4ubv(c);
+}
+
 // Draw the scene once with every pickable object in the flat colour that
 // encodes it, then read the colours back over the picking rectangle. The
 // closest object is the one whose colour sits on the smallest depth.
@@ -1122,6 +1131,12 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   drawGraph2d(true);
 
   // 2d stuff, drawn in pixel coordinates
+  // as in draw2d(): the 2D overlay is painted on top, in the order it is drawn,
+  // so the depth test has to go. Leaving it on would make the graph frame and
+  // the axes, drawn before the data points and in the depth range that was
+  // current at the time, hide the points from the picking pass.
+  glDisable(GL_DEPTH_TEST);
+  for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   glMatrixMode(GL_PROJECTION);
   double px2d[16];
   glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3], -100.,

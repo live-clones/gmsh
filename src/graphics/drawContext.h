@@ -188,6 +188,10 @@ public:
   bool inPickColorMode() const { return _pickColor; }
   // register a pickable object and set the colour that encodes it
   void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1);
+  // stop attributing what is drawn next to the object the last setPickColor()
+  // registered: the decorations drawn between two pickable objects (frames,
+  // axes, labels) would otherwise be picked as that object
+  void unsetPickColor();
   static bool pickColorActive() { return _pickColorActive; }
   drawContext(openglWindow *window = nullptr, drawTransform *transform = nullptr);
   ~drawContext();
