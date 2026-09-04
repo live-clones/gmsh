@@ -184,8 +184,12 @@ bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
 VertexArray::~VertexArray()
 {
   if(_ownsFilter) delete _filter;
-  for(int i = 0; i < 3; i++)
-    if(_vbo[i]) vboToDelete.push_back(_vbo[i]);
+  // only the names of the current context designate anything: the buffers of a
+  // context that has been recreated are already gone, and deleting their names
+  // would hit whatever the new context has since given them to
+  if(getVboValid())
+    for(int i = 0; i < 3; i++)
+      if(_vbo[i]) vboToDelete.push_back(_vbo[i]);
 }
 
 UniqueElementFilter *VertexArray::getUniqueFilter(bool threaded)
