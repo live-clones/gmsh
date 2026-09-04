@@ -3994,7 +3994,7 @@ void optionWindow::updateViewGroup(int index)
     view.value[i]->maximum(CTX::instance()->lc);
   }
 
-  if(data->getNumElements()) {
+  if(data->hasElements()) {
     view.range->activate();
     ((Fl_Menu_Item *)view.choice[13]->menu())[0].activate();
   }

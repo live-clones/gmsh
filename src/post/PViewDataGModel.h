@@ -238,6 +238,17 @@ public:
   int getNumPolyhedra(int step = -1);
   int getNumEntities(int step = -1);
   int getNumElements(int step = -1, int ent = -1);
+  // answer without counting the elements of the whole model: stop at the first
+  // entity that has any
+  bool hasElements()
+  {
+    if(_steps.empty()) return false;
+    // from the end: getEntities() lists the points first and the regions last,
+    // and it is the regions that carry the elements of a 3D mesh
+    for(int i = _steps[0]->getNumEntities() - 1; i >= 0; i--)
+      if(_steps[0]->getEntity(i)->getNumMeshElements()) return true;
+    return false;
+  }
   int getDimension(int step, int ent, int ele);
   int getNumNodes(int step, int ent, int ele);
   int getNode(int step, int ent, int ele, int nod, double &x, double &y,

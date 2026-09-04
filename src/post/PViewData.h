@@ -130,6 +130,12 @@ public:
   // elements if ent < 0
   virtual int getNumElements(int step = -1, int ent = -1) { return 0; }
 
+  // cheap "does this view have any elements?" test: the default answers by
+  // counting them, which for a view on a model means walking every entity of
+  // that model. Callers that only need the yes/no answer -- drawScales(), once
+  // per frame -- should ask for it here instead
+  virtual bool hasElements() { return getNumElements() > 0; }
+
   // return the geometrical dimension of the ele-th element in the ent-th entity
   virtual int getDimension(int step, int ent, int ele) { return 0; }
 
