@@ -170,6 +170,9 @@ public:
   };
   std::vector<pickObject> _pickObjects;
   bool _pickColor;
+  // the projection built by initProjection(), and the modelview it leaves for
+  // initPosition() to apply the position transform to
+  double _projection[16], _modelBase[16];
   // same as _pickColor, but reachable from the free drawing functions
   static bool _pickColorActive;
   bool _selectColor(int type, bool multiple, bool mesh, bool post, int x, int y,

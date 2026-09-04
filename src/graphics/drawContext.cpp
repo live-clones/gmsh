@@ -70,6 +70,9 @@ drawContext::drawContext(openglWindow *window, drawTransform *transform)
   vxmin = vymin = vxmax = vymax = 0.;
   pixel_equiv_x = pixel_equiv_y = 0.;
 
+  glMatrix::identity(_projection);
+  glMatrix::identity(_modelBase);
+
   _bgImageTexture = _bgImageW = _bgImageH = 0;
 
   _quadric = nullptr; // cannot create it here: needs valid opengl context
@@ -794,14 +797,15 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       glEnable(GL_DEPTH_TEST);
     }
 
-    double projection[16], withPick[16];
+    double projection[16];
     if(CTX::instance()->ortho) {
       glMatrix::ortho(vxmin, vxmax, vymin, vymax, clip_near, clip_far,
                       projection);
-      glMatrix::multiply(pick, projection, withPick);
-      glLoadMatrixd(withPick);
+      glMatrix::multiply(pick, projection, _projection);
+      glLoadMatrixd(_projection);
       glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
+      glMatrix::identity(_modelBase);
+      glLoadMatrixd(_modelBase);
     }
     else {
       // recenter the model such that the perspective is always at the center of
@@ -815,13 +819,16 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       vymax -= t_init[1];
       glMatrix::frustum(vxmin, vxmax, vymin, vymax, clip_near, clip_far,
                         projection);
-      glMatrix::multiply(pick, projection, withPick);
-      glLoadMatrixd(withPick);
+      glMatrix::multiply(pick, projection, _projection);
+      glLoadMatrixd(_projection);
       glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
       double coef = (clip_far / clip_near) / 3.;
-      glTranslated(-coef * t_init[0], -coef * t_init[1], -coef * clip_near);
-      glScaled(coef, coef, coef);
+      double tr[16], sc[16];
+      glMatrix::translate(-coef * t_init[0], -coef * t_init[1],
+                          -coef * clip_near, tr);
+      glMatrix::scale(coef, coef, coef, sc);
+      glMatrix::multiply(tr, sc, _modelBase);
+      glLoadMatrixd(_modelBase);
     }
   }
 }
@@ -919,35 +926,36 @@ void drawContext::initRenderModel()
 void drawContext::initPosition(bool saveMatrices)
 {
   // NB: Those operations are applied to the model in the view coordinates
-  // (in opposite order)
-  glScaled(s[0], s[1], s[2]);
-  glTranslated(t[0] - CTX::instance()->cg[0], t[1] - CTX::instance()->cg[1],
-               t[2] - CTX::instance()->cg[2]);
-  if(CTX::instance()->rotationCenterCg)
-    glTranslated(CTX::instance()->cg[0], CTX::instance()->cg[1],
-                 CTX::instance()->cg[2]);
-  else
-    glTranslated(CTX::instance()->rotationCenter[0],
-                 CTX::instance()->rotationCenter[1],
-                 CTX::instance()->rotationCenter[2]);
+  // (in opposite order), on top of the modelview left by initProjection()
+  const double *rc = CTX::instance()->rotationCenterCg ?
+                       CTX::instance()->cg :
+                       CTX::instance()->rotationCenter;
+  double sc[16], tr[16], toCenter[16], fromCenter[16], a[16], b[16];
+  glMatrix::scale(s[0], s[1], s[2], sc);
+  glMatrix::translate(t[0] - CTX::instance()->cg[0],
+                      t[1] - CTX::instance()->cg[1],
+                      t[2] - CTX::instance()->cg[2], tr);
+  glMatrix::translate(rc[0], rc[1], rc[2], toCenter);
+  glMatrix::translate(-rc[0], -rc[1], -rc[2], fromCenter);
 
   buildRotationMatrix();
-  glMultMatrixd(rot);
 
-  if(CTX::instance()->rotationCenterCg)
-    glTranslated(-CTX::instance()->cg[0], -CTX::instance()->cg[1],
-                 -CTX::instance()->cg[2]);
-  else
-    glTranslated(-CTX::instance()->rotationCenter[0],
-                 -CTX::instance()->rotationCenter[1],
-                 -CTX::instance()->rotationCenter[2]);
+  glMatrix::multiply(_modelBase, sc, a);
+  glMatrix::multiply(a, tr, b);
+  glMatrix::multiply(b, toCenter, a);
+  glMatrix::multiply(a, rot, b);
+  glMatrix::multiply(b, fromCenter, a);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadMatrixd(a);
 
   // store the projection and modelview matrices at this precise moment (so that
   // we can use them at any later time, even if the context has changed, i.e.,
   // even if we are out of draw())
   if(saveMatrices) {
-    glGetDoublev(GL_PROJECTION_MATRIX, proj);
-    glGetDoublev(GL_MODELVIEW_MATRIX, model);
+    for(int i = 0; i < 16; i++) {
+      proj[i] = _projection[i];
+      model[i] = a[i];
+    }
   }
 
   for(int i = 0; i < 6; i++)
