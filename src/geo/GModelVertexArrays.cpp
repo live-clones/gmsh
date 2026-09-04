@@ -21,6 +21,7 @@
 #include "VertexArray.h"
 #include "OS.h"
 #include "SmoothData.h"
+#include "Iso.h"
 
 // how many edges or faces of one element are hashed and prefetched together
 // before being looked up; elements with more than this fall back on looking
@@ -196,13 +197,17 @@ static SBoundingBox3d &entityBounds(GEntity *e)
 static char entityClipState(GEntity *e)
 {
   // without clipWholeElements the planes are applied by OpenGL, and the arrays
-  // do not depend on them at all
-  if(!CTX::instance()->clipWholeElements) return 1;
+  // only depend on them through the section they cut out of a 3D entity
+  if(!CTX::instance()->clipWholeElements) {
+    if(e->dim() < 3 || !CTX::instance()->meshClipCaps()) return 1;
+  }
   int mask = CTX::instance()->mesh.clip;
   if(!mask) return 1;
   // in this mode only the elements that the plane cuts are drawn, so moving it
   // changes the arrays everywhere
-  if(CTX::instance()->clipOnlyDrawIntersectingVolume) return 3;
+  if(CTX::instance()->clipWholeElements &&
+     CTX::instance()->clipOnlyDrawIntersectingVolume)
+    return 3;
   if(!e->getNumMeshElements()) return 1;
 
   SBoundingBox3d &b = entityBounds(e);
@@ -295,7 +300,8 @@ static bool removeInteriorFaces()
 {
   if(!CTX::instance()->mesh.drawSkinOnly) return false;
   if(CTX::instance()->mesh.explode != 1.) return false;
-  if(CTX::instance()->mesh.clip && !CTX::instance()->clipWholeElements)
+  if(CTX::instance()->mesh.clip && !CTX::instance()->clipWholeElements &&
+     !CTX::instance()->clipCapping)
     return false;
   return true;
 }
@@ -349,9 +355,85 @@ static void markBoundaryFaces(std::vector<T *> &elements,
   }
 }
 
+// Add the section a clipping plane cuts out of an element to the array. The
+// section is moved by a fraction of the model size towards the side the plane
+// keeps, so that the plane that produced it does not clip it away again; the
+// other planes still do, which is what makes several planes work together
+static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
+{
+  int nv = ele->getNumPrimaryVertices();
+  int ne = ele->getNumEdges();
+  if(nv < 4 || ne < 6 || ne > 12) return; // not a convex 3D element we can cut
+
+  for(int c = 0; c < 6; c++) {
+    if(!(CTX::instance()->mesh.clip & (1 << c))) continue;
+    double *pl = CTX::instance()->clipPlane[c];
+    int neg = 0, pos = 0;
+    for(int i = 0; i < nv; i++) {
+      MVertex *v = ele->getVertex(i);
+      if(evalClipPlane(c, v->x(), v->y(), v->z()) < 0.)
+        neg++;
+      else
+        pos++;
+    }
+    if(!neg || !pos) continue; // the plane does not cut this element
+
+    double n[3] = {pl[0], pl[1], pl[2]};
+    double len = sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+    if(len < 1.e-15) continue;
+    for(int i = 0; i < 3; i++) n[i] /= len;
+
+    double xp[12], yp[12], zp[12];
+    int nb = 0;
+    for(int j = 0; j < ne && nb < 12; j++) {
+      MEdge ed = ele->getEdge(j);
+      MVertex *a = ed.getVertex(0), *b = ed.getVertex(1);
+      double da = evalClipPlane(c, a->x(), a->y(), a->z());
+      double db = evalClipPlane(c, b->x(), b->y(), b->z());
+      if((da < 0. && db < 0.) || (da >= 0. && db >= 0.)) continue;
+      double t = (da == db) ? 0. : da / (da - db);
+      double x = a->x() + t * (b->x() - a->x());
+      double y = a->y() + t * (b->y() - a->y());
+      double z = a->z() + t * (b->z() - a->z());
+      // a plane through a corner crosses every edge that meets there
+      bool same = false;
+      for(int k = 0; k < nb; k++)
+        if(fabs(x - xp[k]) < 1.e-12 && fabs(y - yp[k]) < 1.e-12 &&
+           fabs(z - zp[k]) < 1.e-12) {
+          same = true;
+          break;
+        }
+      if(same) continue;
+      xp[nb] = x;
+      yp[nb] = y;
+      zp[nb] = z;
+      nb++;
+    }
+    if(nb < 3) continue;
+
+    OrderPolygonInPlane(nb, n, xp, yp, zp, nullptr);
+
+    double eps = 1.e-5 * CTX::instance()->lc;
+    for(int i = 0; i < nb; i++) {
+      xp[i] += eps * n[0];
+      yp[i] += eps * n[1];
+      zp[i] += eps * n[2];
+    }
+
+    SVector3 nn[3] = {SVector3(n[0], n[1], n[2]), SVector3(n[0], n[1], n[2]),
+                      SVector3(n[0], n[1], n[2])};
+    for(int j = 2; j < nb; j++) {
+      double x[3] = {xp[0], xp[j - 1], xp[j]};
+      double y[3] = {yp[0], yp[j - 1], yp[j]};
+      double z[3] = {zp[0], zp[j - 1], zp[j]};
+      va->add(x, y, z, nn, col, ele, false);
+    }
+  }
+}
+
 template <class T>
 static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
-                                bool edges, bool faces,
+                                bool edges, bool faces, bool caps,
                                 UniqueElementFilter *interior = nullptr)
 {
   int nthreads = CTX::instance()->numThreads;
@@ -380,8 +462,8 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
         vaLines[t] = new VertexArray(2, 6 * n);
         vaLines[t]->setUniqueFilter(fl);
       }
-      if(faces) {
-        vaTriangles[t] = new VertexArray(3, 4 * n);
+      if(faces || caps) {
+        vaTriangles[t] = new VertexArray(3, faces ? 4 * n : n / 4);
         vaTriangles[t]->setUniqueFilter(ft);
       }
     }
@@ -432,6 +514,8 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 
     SPoint3 pc(0., 0., 0.);
     if(explode != 1.) pc = ele->barycenter();
+
+    if(caps && ele->getDim() == 3) addCapInArray(vaTriangle, ele, col);
 
     if(edges) {
       int numRep = ele->getNumEdgesRep(curved);
@@ -573,7 +657,8 @@ public:
 
     if(CTX::instance()->mesh.lines) {
       e->va_lines = new VertexArray(2, _estimateNumLines(e));
-      addElementsInArrays(e, e->lines, CTX::instance()->mesh.lines, false);
+      addElementsInArrays(e, e->lines, CTX::instance()->mesh.lines, false,
+                          false);
       e->va_lines->finalize();
     }
   }
@@ -634,10 +719,10 @@ public:
       f->va_triangles =
         new VertexArray(3, fac ? _estimateNumTriangles(f) : 100);
       if(CTX::instance()->mesh.triangles)
-        addElementsInArrays(f, f->triangles, edg, fac);
+        addElementsInArrays(f, f->triangles, edg, fac, false);
       if(CTX::instance()->mesh.quadrangles)
-        addElementsInArrays(f, f->quadrangles, edg, fac);
-      addElementsInArrays(f, f->polygons, edg, fac);
+        addElementsInArrays(f, f->quadrangles, edg, fac, false);
+      addElementsInArrays(f, f->polygons, edg, fac, false);
       f->va_lines->finalize();
       f->va_triangles->finalize();
     }
@@ -702,6 +787,14 @@ private:
   }
 
 public:
+  int _estimateNumCaps(GRegion *r)
+  {
+    // the elements a plane cuts form a surface through the volume: there are
+    // about as many of them as the 2/3 power of the number of elements
+    std::size_t n = r->getNumMeshElements();
+    return (int)(2. * pow((double)n, 2. / 3.)) + 100;
+  }
+
   void operator()(GRegion *r)
   {
     if(!r->getVertexArraysDirty()) return;
@@ -716,15 +809,16 @@ public:
 
     bool edg = CTX::instance()->mesh.volumeEdges;
     bool fac = CTX::instance()->mesh.volumeFaces;
-    if(edg || fac) {
+    bool cap = CTX::instance()->meshClipCaps();
+    if(edg || fac || cap) {
       _curved = (areSomeElementsCurved(r->tetrahedra) ||
                  areSomeElementsCurved(r->hexahedra) ||
                  areSomeElementsCurved(r->prisms) ||
                  areSomeElementsCurved(r->pyramids) ||
                  areSomeElementsCurved(r->trihedra));
       r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 100);
-      r->va_triangles =
-        new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
+      r->va_triangles = new VertexArray(
+        3, fac ? _estimateNumTriangles(r) : (cap ? _estimateNumCaps(r) : 100));
 
       // locate the interior faces before filling the arrays: all the element
       // types have to be seen before any of them can be drawn
@@ -750,16 +844,16 @@ public:
       }
 
       if(CTX::instance()->mesh.tetrahedra)
-        addElementsInArrays(r, r->tetrahedra, edg, fac, interior);
+        addElementsInArrays(r, r->tetrahedra, edg, fac, cap, interior);
       if(CTX::instance()->mesh.hexahedra)
-        addElementsInArrays(r, r->hexahedra, edg, fac, interior);
+        addElementsInArrays(r, r->hexahedra, edg, fac, cap, interior);
       if(CTX::instance()->mesh.prisms)
-        addElementsInArrays(r, r->prisms, edg, fac, interior);
+        addElementsInArrays(r, r->prisms, edg, fac, cap, interior);
       if(CTX::instance()->mesh.pyramids)
-        addElementsInArrays(r, r->pyramids, edg, fac, interior);
+        addElementsInArrays(r, r->pyramids, edg, fac, cap, interior);
       if(CTX::instance()->mesh.trihedra)
-        addElementsInArrays(r, r->trihedra, edg, fac, interior);
-      addElementsInArrays(r, r->polyhedra, edg, fac, interior);
+        addElementsInArrays(r, r->trihedra, edg, fac, cap, interior);
+      addElementsInArrays(r, r->polyhedra, edg, fac, cap, interior);
       delete interior;
       r->va_lines->finalize();
       r->va_triangles->finalize();

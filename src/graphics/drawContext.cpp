@@ -434,7 +434,11 @@ static void checkClipPlanesChanged()
   if(!changed || !capping || whole) return;
   for(std::size_t i = 0; i < PView::list.size(); i++)
     if(PView::list[i]->getOptions()->clip) PView::list[i]->setChanged(true);
+#else
+  if(!changed || !capping || whole) return;
 #endif
+  if(CTX::instance()->mesh.clip && GModel::current())
+    GModel::current()->clipPlanesChanged();
 }
 
 void drawContext::draw3d()

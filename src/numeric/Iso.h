@@ -18,6 +18,12 @@ int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V,
 int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
                double *Xp, double *Yp, double *Zp, double n[3]);
 
+// Order the corners of a convex polygon that lies in the plane of normal n
+// around their centroid, so that it can be drawn as a fan, wound
+// counter-clockwise as seen from the side n points to. Vp may be null
+void OrderPolygonInPlane(int nb, const double n[3], double *Xp, double *Yp,
+                         double *Zp, double *Vp);
+
 // Cut a tetrahedron by the plane where the linear function D vanishes, with n
 // the normal of that plane. Returns the number of corners of the polygon of the
 // cut - a triangle or a quadrangle, ordered so that it can be drawn as a fan

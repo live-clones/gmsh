@@ -833,8 +833,8 @@ static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
            c->mesh.normals || c->mesh.dual || c->mesh.voronoi;
   case 3:
     return (c->mesh.volumeEdges && !mergedLines) ||
-           (c->mesh.volumeFaces && !mergedTriangles) || c->mesh.volumeLabels ||
-           c->mesh.dual || c->mesh.voronoi;
+           ((c->mesh.volumeFaces || c->meshClipCaps()) && !mergedTriangles) ||
+           c->mesh.volumeLabels || c->mesh.dual || c->mesh.voronoi;
   default: return true;
   }
 }

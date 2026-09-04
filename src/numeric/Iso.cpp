@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include "Numeric.h"
 
 static void affect(double *xi, double *yi, double *zi, int i, double *xp,
@@ -175,7 +176,47 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
   return nb;
 }
 
-// Compute the line between the two iso-points V1 and V2 in a line
+void OrderPolygonInPlane(int nb, const double n[3], double *Xp, double *Yp,
+                         double *Zp, double *Vp)
+{
+  if(nb < 3) return;
+
+  double c[3] = {0., 0., 0.};
+  for(int i = 0; i < nb; i++) {
+    c[0] += Xp[i];
+    c[1] += Yp[i];
+    c[2] += Zp[i];
+  }
+  for(int i = 0; i < 3; i++) c[i] /= nb;
+
+  // any two directions of the plane will do: the order they give only differs
+  // by where it starts and by its sense, and the sense is fixed below
+  double u[3] = {1., 0., 0.};
+  if(fabs(n[0]) > fabs(n[1])) {
+    u[0] = 0.;
+    u[1] = 1.;
+  }
+  double m[3] = {n[0], n[1], n[2]}, w[3];
+  prodve(m, u, w);
+  norme(w);
+  prodve(w, m, u);
+  norme(u);
+
+  double a[12];
+  for(int i = 0; i < nb && i < 12; i++) {
+    double d[3] = {Xp[i] - c[0], Yp[i] - c[1], Zp[i] - c[2]};
+    a[i] = atan2(prosca(d, w), prosca(d, u));
+  }
+
+  for(int i = 1; i < nb; i++)
+    for(int j = i; j > 0 && a[j] < a[j - 1]; j--) {
+      std::swap(a[j], a[j - 1]);
+      std::swap(Xp[j], Xp[j - 1]);
+      std::swap(Yp[j], Yp[j - 1]);
+      std::swap(Zp[j], Zp[j - 1]);
+      if(Vp) std::swap(Vp[j], Vp[j - 1]);
+    }
+}
 
 static int cutEdgeByPlane(double *X, double *Y, double *Z, double *Val,
                           double *D, int i1, int i2, double *Xp, double *Yp,
@@ -266,6 +307,8 @@ int CutSimplexByPlane(double *X, double *Y, double *Z, double *Val, double *D,
 
   return nb;
 }
+
+// Compute the line between the two iso-points V1 and V2 in a line
 
 int CutLine(double *X, double *Y, double *Z, double *Val, double V1, double V2,
             double *Xp2, double *Yp2, double *Zp2, double *Vp2)
