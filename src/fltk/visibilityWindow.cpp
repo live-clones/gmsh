@@ -257,25 +257,24 @@ public:
   void setVisibility(char val, bool recursive = false, bool allmodels = false)
   {
     _visible = val;
-    if(!allmodels && GModel::current() == _partitionIndexModel) {
-      auto it = _partitionIndex.find(_tag);
-      if(it != _partitionIndex.end())
-        for(std::size_t i = 0; i < it->second.size(); i++)
-          it->second[i]->setVisibility(val, recursive);
-      return;
-    }
     for(std::size_t i = 0; i < GModel::list.size(); i++) {
       GModel *m = GModel::list[i];
-      if(allmodels || m == GModel::current()) {
-        std::vector<GEntity *> entities;
-        m->getEntities(entities);
-        std::vector<int> tmp;
-        for(std::size_t j = 0; j < entities.size(); j++) {
-          const std::vector<int> *ps = partitionsOf(entities[j], tmp);
-          if(!ps) continue;
-          for(std::size_t k = 0; k < ps->size(); k++)
-            if((*ps)[k] == _tag) entities[j]->setVisibility(val, recursive);
-        }
+      if(!allmodels && m != GModel::current()) continue;
+      if(m == _partitionIndexModel) { // the entities are already known
+        auto it = _partitionIndex.find(_tag);
+        if(it != _partitionIndex.end())
+          for(std::size_t j = 0; j < it->second.size(); j++)
+            it->second[j]->setVisibility(val, recursive);
+        continue;
+      }
+      std::vector<GEntity *> entities;
+      m->getEntities(entities);
+      std::vector<int> tmp;
+      for(std::size_t j = 0; j < entities.size(); j++) {
+        const std::vector<int> *ps = partitionsOf(entities[j], tmp);
+        if(!ps) continue;
+        for(std::size_t k = 0; k < ps->size(); k++)
+          if((*ps)[k] == _tag) entities[j]->setVisibility(val, recursive);
       }
     }
   }
@@ -428,15 +427,27 @@ public:
         }
       }
     }
-    if(type == MeshPartitions && !allmodels &&
-       GModel::current() == _partitionIndexModel) {
+    if(type == MeshPartitions) {
       // hide everything that belongs to a partition in one pass, and only
       // mark the partitions themselves as hidden: asking each of them to walk
       // the model in turn is what made applying a selection take minutes.
       // Entities that belong to no partition are left alone, as before.
-      for(auto &p : _partitionIndex)
-        for(std::size_t i = 0; i < p.second.size(); i++)
-          p.second[i]->setVisibility(0);
+      for(std::size_t i = 0; i < GModel::list.size(); i++) {
+        GModel *m = GModel::list[i];
+        if(!allmodels && m != GModel::current()) continue;
+        if(m == _partitionIndexModel) {
+          for(auto &p : _partitionIndex)
+            for(std::size_t j = 0; j < p.second.size(); j++)
+              p.second[j]->setVisibility(0);
+        }
+        else {
+          std::vector<GEntity *> entities;
+          m->getEntities(entities);
+          std::vector<int> tmp;
+          for(std::size_t j = 0; j < entities.size(); j++)
+            if(partitionsOf(entities[j], tmp)) entities[j]->setVisibility(0);
+        }
+      }
       for(int i = 0; i < getNumEntities(); i++)
         static_cast<VisPartition *>(_entities[i])->setListVisibility(0);
     }
