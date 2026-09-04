@@ -426,11 +426,22 @@ namespace Ui {
     // the button at the bottom of the pane, when it has one
     std::string buttonLabel;
     std::function<void()> button;
+    // It stands at the far left of that line rather than at the right, which
+    // is where a pane's button goes. Same idea as Button::apart: "Show all",
+    // which undoes what the rest of the pane has been doing, does not belong
+    // among them. The window this replaces says it another way -- a tall thin
+    // button down the middle of the pane, between what hides and what shows --
+    // and that is a shape no description here can give.
+    bool buttonApart;
     // What to do when the user picks this pane, as opposed to the dialog being
     // told to show it. Picking the tab of a tool has to change the tool, the
     // same as picking it in the tree does.
     std::function<void()> chosen;
-    Pane() : separatorAfter(false), scrolling(false), columns(0) {}
+    Pane()
+      : separatorAfter(false), scrolling(false), columns(0),
+        buttonApart(false)
+    {
+    }
   };
 
   struct Form {

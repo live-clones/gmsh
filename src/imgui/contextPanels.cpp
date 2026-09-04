@@ -1335,6 +1335,12 @@ namespace {
     // line of the box: they belong to the pane, not to what scrolls in it
     float foot = (boxed && (q.buttonLabel.size() || q.beside.size())) ?
                    ImGui::GetFrameHeightWithSpacing() : 0.f;
+    // A button that stands apart cannot share the last line of the pane the
+    // way one at the right can: at the left it would land on the field there.
+    // It takes a line of its own, so the box gives up one more -- and what the
+    // panel puts under the pane keeps the line it had.
+    if(boxed && q.buttonApart && q.buttonLabel.size())
+      foot += ImGui::GetFrameHeightWithSpacing();
     // and what the panel keeps under the pane: its footer, its buttons
     foot += reserve;
     if(boxed && !ImGui::BeginChild("##pane", ImVec2(0.f, -foot),
@@ -1386,10 +1392,14 @@ namespace {
         const char *label = q.buttonLabel.c_str();
         float w = ImGui::CalcTextSize(label).x +
                   2.f * ImGui::GetStyle().FramePadding.x;
-        // on the last line of the pane when there is room for it there, on
-        // one of its own when the pane is already full
-        if(pad == 0 && !started) ImGui::SameLine();
-        ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - w);
+        // On the last line of the pane when there is room for it there, on
+        // one of its own when the pane is already full -- and always on one of
+        // its own when it stands apart, which is the line the box gave up for
+        // it above.
+        if(pad == 0 && !started && !q.buttonApart) ImGui::SameLine();
+        ImGui::SetCursorPosX(q.buttonApart ?
+                               ImGui::GetCursorStartPos().x :
+                               ImGui::GetContentRegionMax().x - w);
         if(ImGui::Button(label, ImVec2(w, 0.f))) {
           std::function<void()> what = q.button;
           // an action that may open a dialog of its own has to wait for the
@@ -1756,10 +1766,13 @@ void appWindow::_drawDialog(int which)
       _paneBody(q, width, scrolls && !wholeScrolls, 0, nullptr, reserve);
       ImGui::PopID();
       if(q.buttonLabel.size()) {
-        // against the right edge, where the window this replaces puts it
+        // against the right edge, where the window this replaces puts it --
+        // unless it is one that stands apart, which goes to the far left
         float w = ImGui::CalcTextSize(q.buttonLabel.c_str()).x +
                   2.f * ImGui::GetStyle().FramePadding.x;
-        ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - w);
+        ImGui::SetCursorPosX(q.buttonApart ?
+                               ImGui::GetCursorStartPos().x :
+                               ImGui::GetContentRegionMax().x - w);
         if(ImGui::Button(q.buttonLabel.c_str(), ImVec2(w, 0.f))) {
           std::function<void()> what = q.button;
           if(what) postAction(what);

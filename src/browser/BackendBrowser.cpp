@@ -1037,6 +1037,9 @@ namespace {
       }
       out += "],\"beside\":" + _fieldList(p.beside);
       out += ",\"button\":" + _quoted(p.buttonLabel);
+      // and whether that button stands apart from what the pane does, which
+      // is what puts it at the far left of its line instead of the right
+      if(p.buttonApart) out += ",\"buttonApart\":true";
       if(p.button) {
         _actions.push_back(p.button);
         _actionNames.push_back(_nameOf("pane:" + p.label));
