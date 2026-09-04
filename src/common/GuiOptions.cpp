@@ -1226,10 +1226,13 @@ namespace Dialog {
         Field f = _fieldFor(strings ? RowString : RowNumber, category,
                             name.c_str(), label, num, nullptr);
         f.widthShare = whole / (double)names.size();
-        // packed against one another, but the first of a row that follows
-        // another field starts a column of its own rather than being packed
-        // against what is there
-        f.packed = (k > 0) || !row.beside;
+        // A row is one run of fields, flush against one another, first entry
+        // included: the nine boxes that map the components of a field are
+        // nine boxes of one strip in the window this reproduces, not one box
+        // and then eight. What keeps such a run from joining whatever stands
+        // before it on the line is that the field before it is not packed --
+        // and where one ever is, a spacer is what says where the run begins.
+        f.packed = true;
         if(k || row.beside) f.sameRow = true;
         into.push_back(f);
       }
