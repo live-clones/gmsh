@@ -893,6 +893,17 @@ namespace {
       case Ui::Check: f.setFlag(said == "1"); break;
       case Ui::Integer:
       case Ui::Number: f.setNumber(atof(said.c_str())); break;
+      case Ui::Color: {
+        // "#rrggbb", as the page sends it; what it was keeps its alpha, which
+        // is not something the page can say
+        if(said.size() == 7 && said[0] == '#') {
+          unsigned long v = strtoul(said.c_str() + 1, nullptr, 16);
+          Ui::Colour was = f.getColour();
+          f.setColour(Ui::Colour((unsigned char)((v >> 16) & 0xff),
+                                 (unsigned char)((v >> 8) & 0xff),
+                                 (unsigned char)(v & 0xff), was.a));
+        }
+      } break;
       case Ui::Choice: {
         std::vector<std::string> labels;
         std::vector<int> values;
@@ -960,6 +971,7 @@ namespace {
       case Ui::Menu: return "menu";
       case Ui::Hierarchy: return "hierarchy";
       case Ui::Prose: return "prose";
+      case Ui::Color: return "colour";
       case Ui::ColorMap: return "colormap";
       default: return "text";
       }
@@ -1112,6 +1124,16 @@ namespace {
       std::string said;
       if(f.kind == Ui::Check)
         said = f.getFlag() ? "1" : "0";
+      else if(f.kind == Ui::Color) {
+        // What it is worth is a colour and not a word, so it goes down as one
+        // -- the page had been showing an empty box where the windows this
+        // reproduces show the colour itself.
+        Ui::Colour c = f.getColour();
+        char hex[16];
+        snprintf(hex, sizeof(hex), "#%02x%02x%02x", c.r, c.g, c.b);
+        said = hex;
+        out += ",\"alpha\":" + std::to_string((int)c.a);
+      }
       else if(f.kind == Ui::Integer || f.kind == Ui::Number) {
         char number[64];
         snprintf(number, sizeof(number), "%g", f.getNumber());
