@@ -5,6 +5,8 @@
 
 #include <string.h>
 #include <algorithm>
+#include <atomic>
+#include <vector>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "onelab.h"
@@ -73,9 +75,35 @@ static SVector3 normal3(double **xyz, int i0 = 0, int i1 = 1, int i2 = 2)
   return n;
 }
 
-static SVector3 getPointNormal(PView *p, double v)
+// Everything the functions that take an element apart read the options from and
+// write the primitives to. Each thread filling the vertex arrays of a view gets
+// its own, with its own copy of the options -- the boundary level is
+// decremented as an element is taken apart, and the range of a vector view is
+// set per element -- and its own arrays, merged in thread order once the loop
+// is over
+class drawTarget {
+public:
+  PView *view;
+  PViewOptions *opt;
+  VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
+  smooth_normals *normals;
+  // identifiers of the nodes of the element being drawn, or null when the data
+  // has no topology and none could be recreated
+  std::size_t *nodeIds;
+  // bounding box of the elements that were drawn
+  SBoundingBox3d bbox;
+  drawTarget(PView *p)
+    : view(p), opt(p->getOptions()), va_points(p->va_points),
+      va_lines(p->va_lines), va_triangles(p->va_triangles),
+      va_vectors(p->va_vectors), va_ellipses(p->va_ellipses),
+      normals(p->normals), nodeIds(nullptr)
+  {
+  }
+};
+
+static SVector3 getPointNormal(drawTarget *p, double v)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
   SVector3 n(0., 0., 0.);
   if(opt->pointType > 0) {
     // when we draw spheres, we use the normalized value (between 0
@@ -87,10 +115,10 @@ static SVector3 getPointNormal(PView *p, double v)
   return n;
 }
 
-static void getLineNormal(PView *p, double x[2], double y[2], double z[2],
+static void getLineNormal(drawTarget *p, double x[2], double y[2], double z[2],
                           double *v, SVector3 n[2], bool computeNormal)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   if(opt->lineType > 0) {
     if(v) {
@@ -107,7 +135,7 @@ static void getLineNormal(PView *p, double x[2], double y[2], double z[2],
     }
   }
   else if(computeNormal) {
-    SBoundingBox3d bb = p->getData()->getBoundingBox();
+    SBoundingBox3d bb = p->view->getData()->getBoundingBox();
     if(bb.min().z() == bb.max().z())
       n[0] = n[1] = SVector3(0., 0., 1.);
     else if(bb.min().y() == bb.max().y())
@@ -131,11 +159,11 @@ static void getLineNormal(PView *p, double x[2], double y[2], double z[2],
   }
 }
 
-static bool getExternalValues(PView *p, int index, int ient, int iele,
+static bool getExternalValues(drawTarget *p, int index, int ient, int iele,
                               int numNodes, int numComp, double **val,
                               int &numComp2, double **val2)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   // use self by default
   numComp2 = numComp;
@@ -174,27 +202,27 @@ static bool getExternalValues(PView *p, int index, int ient, int iele,
   return false;
 }
 
-static void applyGeneralRaise(PView *p, int numNodes, int numComp,
+static void applyGeneralRaise(drawTarget *p, int numNodes, int numComp,
                               double **vals, double **xyz)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
   if(!opt->genRaiseEvaluator) return;
 
   std::vector<double> values(14, 0.), res(3);
   for(int k = 0; k < numNodes; k++) {
     for(int i = 0; i < 3; i++) values[i] = xyz[k][i];
     for(int i = 0; i < std::min(numComp, 9); i++) values[3 + i] = vals[k][i];
-    values[12] = p->getOptions()->timeStep;
-    values[13] = p->getOptions()->currentTime;
+    values[12] = p->opt->timeStep;
+    values[13] = p->opt->currentTime;
     if(opt->genRaiseEvaluator->eval(values, res))
       for(int i = 0; i < 3; i++) xyz[k][i] += opt->genRaiseFactor * res[i];
   }
 }
 
-void changeCoordinates(PView *p, int ient, int iele, int numNodes, int type,
-                       int numComp, double **xyz, double **val)
+static void changeCoordinates(drawTarget *p, int ient, int iele, int numNodes,
+                              int type, int numComp, double **xyz, double **val)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   if(opt->explode != 1.) {
     double barycenter[3] = {0., 0., 0.};
@@ -313,7 +341,7 @@ bool isElementVisible(PViewOptions *opt, int dim, int numNodes, double **xyz)
   return !hidden;
 }
 
-static void addOutlinePoint(PView *p, double **xyz, unsigned int color,
+static void addOutlinePoint(drawTarget *p, double **xyz, unsigned int color,
                             bool pre, int i0 = 0)
 {
   if(pre) return;
@@ -322,27 +350,23 @@ static void addOutlinePoint(PView *p, double **xyz, unsigned int color,
                     true);
 }
 
-// Node identifiers of the element being drawn, or null when the data has no
-// topology and none could be recreated. The vertex arrays of a view are built
-// serially, so a file static is enough here.
-static std::size_t *elementNodeIds = nullptr;
-
 // Faces of 3D elements that bound the mesh, when View.DrawSkinOnly is set: they
 // are found in a first pass by inserting every face and cancelling it when it
 // is seen a second time, so that only the faces seen once are left.
 static UniqueElementFilter *boundaryFaces = nullptr;
 static bool markingBoundaryFaces = false;
-static int noNodeIdWarning = 0;
+static std::atomic<int> noNodeIdWarning(0);
 
 // build the key of a triangular face from the identifiers of its nodes, sorted
 // so that the two elements sharing it produce the same key. Returns false if
 // the data has no topology
-static bool faceKey(const int *idx, std::uint64_t *k)
+static bool faceKey(const std::size_t *nodeIds, const int *idx,
+                    std::uint64_t *k)
 {
-  if(!elementNodeIds) return false;
+  if(!nodeIds) return false;
   for(int i = 0; i < 3; i++) {
-    if(!elementNodeIds[idx[i]]) return false;
-    k[i] = elementNodeIds[idx[i]];
+    if(!nodeIds[idx[i]]) return false;
+    k[i] = nodeIds[idx[i]];
   }
   for(int i = 1; i < 3; i++)
     for(int j = i; j > 0 && k[j] < k[j - 1]; j--) std::swap(k[j], k[j - 1]);
@@ -353,15 +377,16 @@ static bool faceKey(const int *idx, std::uint64_t *k)
 // instead of by the coordinates of its corners. Returns true if the element
 // should be skipped, and clears `unique' when the check was done here, so that
 // it is not done a second time on the coordinates.
-static bool topoDuplicate(VertexArray *va, bool &unique, const int *idx, int n,
+static bool topoDuplicate(VertexArray *va, const std::size_t *nodeIds,
+                          bool &unique, const int *idx, int n,
                           const unsigned int *col)
 {
-  if(!unique || !elementNodeIds) return false;
+  if(!unique || !nodeIds) return false;
 
   std::uint64_t k[8];
   for(int i = 0; i < n; i++) {
-    if(!elementNodeIds[idx[i]]) return false; // no topology for this node
-    k[2 * i] = elementNodeIds[idx[i]];
+    if(!nodeIds[idx[i]]) return false; // no topology for this node
+    k[2 * i] = nodeIds[idx[i]];
     k[2 * i + 1] = col[i];
   }
   // sort the (node, color) pairs by node, so that an element added twice with
@@ -374,18 +399,20 @@ static bool topoDuplicate(VertexArray *va, bool &unique, const int *idx, int n,
     }
 
   unique = false;
-  VertexArray::statUniqueIn += n;
-  if(va->getUniqueFilter(false)->isDuplicate(k, 2 * n)) return true;
-  VertexArray::statUniqueKept += n;
+  if(va->getUniqueFilter(false)->isDuplicate(k, 2 * n)) {
+    va->addUniqueStats(n, 0);
+    return true;
+  }
+  va->addUniqueStats(n, n);
   return false;
 }
 
-static void addScalarPoint(PView *p, double **xyz, double **val, bool pre,
+static void addScalarPoint(drawTarget *p, double **xyz, double **val, bool pre,
                            int i0 = 0, bool unique = false)
 {
   if(pre) return;
 
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   double vmin = opt->tmpMin, vmax = opt->tmpMax;
   if(opt->saturateValues) saturate(1, val, vmin, vmax, i0);
@@ -400,8 +427,8 @@ static void addScalarPoint(PView *p, double **xyz, double **val, bool pre,
   }
 }
 
-static void addOutlineLine(PView *p, double **xyz, unsigned int color, bool pre,
-                           int i0 = 0, int i1 = 1)
+static void addOutlineLine(drawTarget *p, double **xyz, unsigned int color,
+                           bool pre, int i0 = 0, int i1 = 1)
 {
   if(pre) return;
 
@@ -419,12 +446,12 @@ static void addOutlineLine(PView *p, double **xyz, unsigned int color, bool pre,
   p->va_lines->add(x, y, z, n, col, nullptr, true);
 }
 
-static void addScalarLine(PView *p, double **xyz, double **val, bool pre,
+static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
                           int i0 = 0, int i1 = 1, bool unique = false)
 {
   if(pre) return;
 
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   if(opt->boundary > 0) {
     opt->boundary--;
@@ -450,7 +477,7 @@ static void addScalarLine(PView *p, double **xyz, double **val, bool pre,
       unsigned int col[2];
       for(int i = 0; i < 2; i++) col[i] = opt->getColor(v[i], vmin, vmax);
       const int ii[2] = {i0, i1};
-      if(topoDuplicate(p->va_lines, unique, ii, 2, col)) return;
+      if(topoDuplicate(p->va_lines, p->nodeIds, unique, ii, 2, col)) return;
       p->va_lines->add(x, y, z, n, col, nullptr, unique);
     }
     else {
@@ -498,10 +525,10 @@ static void addScalarLine(PView *p, double **xyz, double **val, bool pre,
   }
 }
 
-static void addOutlineTriangle(PView *p, double **xyz, unsigned int color,
+static void addOutlineTriangle(drawTarget *p, double **xyz, unsigned int color,
                                bool pre, int i0 = 0, int i1 = 1, int i2 = 2)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   const int il[3][2] = {{i0, i1}, {i1, i2}, {i2, i0}};
 
@@ -526,16 +553,16 @@ static void addOutlineTriangle(PView *p, double **xyz, unsigned int color,
   }
 }
 
-static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
-                              int i0 = 0, int i1 = 1, int i2 = 2,
+static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
+                              bool pre, int i0 = 0, int i1 = 1, int i2 = 2,
                               bool unique = false, bool skin = false)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   if(skin || markingBoundaryFaces) {
     const int ii[3] = {i0, i1, i2};
     std::uint64_t k[3];
-    if(skin && faceKey(ii, k)) {
+    if(skin && faceKey(p->nodeIds, ii, k)) {
       if(markingBoundaryFaces) {
         boundaryFaces->insertOrErase(k, 3);
         return;
@@ -590,7 +617,8 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
         col[i] = opt->getColor(v[i], vmin, vmax);
       }
       const int ii[3] = {i0, i1, i2};
-      if(!pre && !skin && topoDuplicate(p->va_triangles, unique, ii, 3, col))
+      if(!pre && !skin &&
+         topoDuplicate(p->va_triangles, p->nodeIds, unique, ii, 3, col))
         return;
       if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique);
     }
@@ -679,11 +707,11 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
   }
 }
 
-static void addOutlineQuadrangle(PView *p, double **xyz, unsigned int color,
-                                 bool pre, int i0 = 0, int i1 = 1, int i2 = 2,
-                                 int i3 = 3)
+static void addOutlineQuadrangle(drawTarget *p, double **xyz,
+                                 unsigned int color, bool pre, int i0 = 0,
+                                 int i1 = 1, int i2 = 2, int i3 = 3)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   const int il[4][2] = {{i0, i1}, {i1, i2}, {i2, i3}, {i3, i0}};
 
@@ -708,11 +736,11 @@ static void addOutlineQuadrangle(PView *p, double **xyz, unsigned int color,
   }
 }
 
-static void addScalarQuadrangle(PView *p, double **xyz, double **val, bool pre,
-                                int i0 = 0, int i1 = 1, int i2 = 2, int i3 = 3,
-                                bool unique = false)
+static void addScalarQuadrangle(drawTarget *p, double **xyz, double **val,
+                                bool pre, int i0 = 0, int i1 = 1, int i2 = 2,
+                                int i3 = 3, bool unique = false)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   const int il[4][2] = {{i0, i1}, {i1, i2}, {i2, i3}, {i3, i0}};
   const int it[2][3] = {{i0, i1, i2}, {i0, i2, i3}};
@@ -729,17 +757,17 @@ static void addScalarQuadrangle(PView *p, double **xyz, double **val, bool pre,
     addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], unique);
 }
 
-static void addOutlinePolygon(PView *p, double **xyz, unsigned int color,
+static void addOutlinePolygon(drawTarget *p, double **xyz, unsigned int color,
                               bool pre, int numNodes)
 {
   for(int i = 0; i < numNodes / 3; i++)
     addOutlineTriangle(p, xyz, color, pre, 3 * i, 3 * i + 1, 3 * i + 2);
 }
 
-static void addScalarPolygon(PView *p, double **xyz, double **val, bool pre,
-                             int numNodes)
+static void addScalarPolygon(drawTarget *p, double **xyz, double **val,
+                             bool pre, int numNodes)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   if(opt->boundary > 0) {
     const int il[3][2] = {{0, 1}, {1, 2}, {2, 0}};
@@ -779,18 +807,19 @@ static void addScalarPolygon(PView *p, double **xyz, double **val, bool pre,
     addScalarTriangle(p, xyz, val, pre, 3 * i, 3 * i + 1, 3 * i + 2);
 }
 
-static void addOutlineTetrahedron(PView *p, double **xyz, unsigned int color,
-                                  bool pre)
+static void addOutlineTetrahedron(drawTarget *p, double **xyz,
+                                  unsigned int color, bool pre)
 {
   const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
   for(int i = 0; i < 4; i++)
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
 
-static void addScalarTetrahedron(PView *p, double **xyz, double **val, bool pre,
-                                 int i0 = 0, int i1 = 1, int i2 = 2, int i3 = 3)
+static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
+                                 bool pre, int i0 = 0, int i1 = 1, int i2 = 2,
+                                 int i3 = 3)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   const int it[4][3] = {{i0, i2, i1}, {i0, i1, i3}, {i0, i3, i2}, {i3, i1, i2}};
 
@@ -847,8 +876,8 @@ static void addScalarTetrahedron(PView *p, double **xyz, double **val, bool pre,
   }
 }
 
-static void addOutlineHexahedron(PView *p, double **xyz, unsigned int color,
-                                 bool pre)
+static void addOutlineHexahedron(drawTarget *p, double **xyz,
+                                 unsigned int color, bool pre)
 {
   const int iq[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
                         {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
@@ -858,9 +887,10 @@ static void addOutlineHexahedron(PView *p, double **xyz, unsigned int color,
                          iq[i][3]);
 }
 
-static void addScalarHexahedron(PView *p, double **xyz, double **val, bool pre)
+static void addScalarHexahedron(drawTarget *p, double **xyz, double **val,
+                                bool pre)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   const int iq[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
                         {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
@@ -881,7 +911,7 @@ static void addScalarHexahedron(PView *p, double **xyz, double **val, bool pre)
                          is[i][3]);
 }
 
-static void addOutlinePrism(PView *p, double **xyz, unsigned int color,
+static void addOutlinePrism(drawTarget *p, double **xyz, unsigned int color,
                             bool pre)
 {
   const int iq[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
@@ -894,9 +924,9 @@ static void addOutlinePrism(PView *p, double **xyz, unsigned int color,
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
 
-static void addScalarPrism(PView *p, double **xyz, double **val, bool pre)
+static void addScalarPrism(drawTarget *p, double **xyz, double **val, bool pre)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
   const int iq[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
   const int it[2][3] = {{0, 2, 1}, {3, 4, 5}};
   const int is[3][4] = {{0, 1, 2, 4}, {0, 4, 2, 5}, {0, 3, 4, 5}};
@@ -917,7 +947,7 @@ static void addScalarPrism(PView *p, double **xyz, double **val, bool pre)
                          is[i][3]);
 }
 
-static void addOutlinePyramid(PView *p, double **xyz, unsigned int color,
+static void addOutlinePyramid(drawTarget *p, double **xyz, unsigned int color,
                               bool pre)
 {
   const int it[4][3] = {{0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
@@ -927,9 +957,10 @@ static void addOutlinePyramid(PView *p, double **xyz, unsigned int color,
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
 
-static void addScalarPyramid(PView *p, double **xyz, double **val, bool pre)
+static void addScalarPyramid(drawTarget *p, double **xyz, double **val,
+                             bool pre)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   const int it[4][3] = {{0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
   const int is[2][4] = {{0, 1, 3, 4}, {1, 2, 3, 4}};
@@ -948,21 +979,21 @@ static void addScalarPyramid(PView *p, double **xyz, double **val, bool pre)
                          is[i][3]);
 }
 
-static void addOutlineTrihedron(PView *p, double **xyz, unsigned int color,
+static void addOutlineTrihedron(drawTarget *p, double **xyz, unsigned int color,
                                 bool pre)
 {
   addOutlineQuadrangle(p, xyz, color, pre, 0, 1, 2, 3);
 }
 
-static void addScalarTrihedron(PView *p, double **xyz, double **val, bool pre,
-                               int i0 = 0, int i1 = 1, int i2 = 2, int i3 = 3,
-                               bool unique = false)
+static void addScalarTrihedron(drawTarget *p, double **xyz, double **val,
+                               bool pre, int i0 = 0, int i1 = 1, int i2 = 2,
+                               int i3 = 3, bool unique = false)
 {
   addScalarQuadrangle(p, xyz, val, pre, i0, i1, i2, i3, unique);
 }
 
-static void addOutlinePolyhedron(PView *p, double **xyz, unsigned int color,
-                                 bool pre, int numNodes)
+static void addOutlinePolyhedron(drawTarget *p, double **xyz,
+                                 unsigned int color, bool pre, int numNodes)
 {
   // FIXME: this code is horribly slow
   const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
@@ -994,10 +1025,10 @@ static void addOutlinePolyhedron(PView *p, double **xyz, unsigned int color,
   for(int i = 0; i < numNodes; i++) delete verts[i];
 }
 
-static void addScalarPolyhedron(PView *p, double **xyz, double **val, bool pre,
-                                int numNodes)
+static void addScalarPolyhedron(drawTarget *p, double **xyz, double **val,
+                                bool pre, int numNodes)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
 
   if(opt->boundary > 0) { return; }
 
@@ -1006,10 +1037,10 @@ static void addScalarPolyhedron(PView *p, double **xyz, double **val, bool pre,
                          4 * i + 3);
 }
 
-static void addOutlineElement(PView *p, int type, double **xyz, bool pre,
+static void addOutlineElement(drawTarget *p, int type, double **xyz, bool pre,
                               int numNodes)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
   switch(type) {
   case TYPE_PNT: addOutlinePoint(p, xyz, opt->color.point, pre); break;
   case TYPE_LIN: addOutlineLine(p, xyz, opt->color.line, pre); break;
@@ -1035,8 +1066,8 @@ static void addOutlineElement(PView *p, int type, double **xyz, bool pre,
   }
 }
 
-static void addScalarElement(PView *p, int type, double **xyz, double **val,
-                             bool pre, int numNodes)
+static void addScalarElement(drawTarget *p, int type, double **xyz,
+                             double **val, bool pre, int numNodes)
 {
   switch(type) {
   case TYPE_PNT: addScalarPoint(p, xyz, val, pre); break;
@@ -1053,12 +1084,12 @@ static void addScalarElement(PView *p, int type, double **xyz, double **val,
   }
 }
 
-static void addVectorElement(PView *p, int ient, int iele, int numNodes,
+static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
                              int type, double **xyz, double **val, bool pre)
 {
   // use adaptive data if available
-  PViewData *data = p->getData(true);
-  PViewOptions *opt = p->getOptions();
+  PViewData *data = p->view->getData(true);
+  PViewOptions *opt = p->opt;
 
   int numComp2;
   double **val2 = new double *[numNodes];
@@ -1182,8 +1213,8 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
   delete[] val2;
 }
 
-static void addTriangle(PView *p, PViewOptions *opt, double *x0, double *x1,
-                        double *x2, SPoint3 &xx, double val)
+static void addTriangle(drawTarget *p, PViewOptions *opt, double *x0,
+                        double *x1, double *x2, SPoint3 &xx, double val)
 {
   unsigned int color = opt->getColor(
     val, opt->tmpMin, opt->tmpMax, false,
@@ -1211,10 +1242,10 @@ static void addTriangle(PView *p, PViewOptions *opt, double *x0, double *x1,
   }
 }
 
-static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
+static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
                              int type, double **xyz, double **val, bool pre)
 {
-  PViewOptions *opt = p->getOptions();
+  PViewOptions *opt = p->opt;
   fullMatrix<double> tensor(3, 3);
   fullVector<double> S(3), imS(3);
   fullMatrix<double> leftV(3, 3), rightV(3, 3);
@@ -1412,15 +1443,25 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
   }
 }
 
-static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
+// fill the arrays of one target with the elements numbered [first, last) in the
+// flat index space built by addElementsInArrays below
+void changeCoordinates(PView *p, int ient, int iele, int numNodes, int type,
+                       int numComp, double **xyz, double **val)
 {
-  static int numNodesError = 0, numCompError = 0;
+  drawTarget t(p);
+  changeCoordinates(&t, ient, iele, numNodes, type, numComp, xyz, val);
+}
 
-  // use adaptive data if available
-  PViewData *data = p->getData(true);
-  PViewOptions *opt = p->getOptions();
+static void addElementRange(drawTarget *p, PViewData *data,
+                            bool preprocessNormalsOnly,
+                            const std::vector<int> &ents,
+                            const std::vector<std::size_t> &start,
+                            std::size_t first, std::size_t last)
+{
+  // only written when an element cannot be drawn, to warn about it once
+  static std::atomic<int> numNodesError(0), numCompError(0);
 
-  opt->tmpBBox.reset();
+  PViewOptions *opt = p->opt;
 
   int NMAX = PVIEW_NMAX;
   double **xyz = new double *[NMAX];
@@ -1430,10 +1471,16 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
     xyz[i] = new double[3];
     val[i] = new double[9];
   }
-  elementNodeIds = nodeIds;
-  for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++) {
-    if(data->skipEntity(opt->timeStep, ent)) continue;
-    for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++) {
+  p->nodeIds = nodeIds;
+
+  // the entity the range starts in
+  std::size_t e = 0;
+  while(e + 1 < ents.size() && start[e + 1] <= first) e++;
+  for(; e < ents.size() && start[e] < last; e++) {
+    int ent = ents[e];
+    int i0 = (int)(first > start[e] ? first - start[e] : 0);
+    int i1 = (int)std::min(last, start[e + 1]) - (int)start[e];
+    for(int i = i0; i < i1; i++) {
       if(data->skipElement(opt->timeStep, ent, i, true, opt->sampling))
         continue;
       int type = data->getType(opt->timeStep, ent, i);
@@ -1454,7 +1501,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
             xyz = new double *[NMAX];
             val = new double *[NMAX];
             nodeIds = new std::size_t[NMAX];
-            elementNodeIds = nodeIds;
+            p->nodeIds = nodeIds;
             for(int j = 0; j < NMAX; j++) {
               xyz[j] = new double[3];
               val[j] = new double[9];
@@ -1509,7 +1556,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       if(!isElementVisible(opt, dim, numNodes, xyz)) continue;
 
       for(int j = 0; j < numNodes; j++)
-        opt->tmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
+        p->bbox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
 
       if(opt->showElement && !data->useGaussPoints())
         addOutlineElement(p, type, xyz, preprocessNormalsOnly, numNodes);
@@ -1556,9 +1603,98 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
   delete[] xyz;
   delete[] val;
   delete[] nodeIds;
-  elementNodeIds = nullptr;
+  p->nodeIds = nullptr;
 }
 
+static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
+{
+  // use adaptive data if available
+  PViewData *data = p->getData(true);
+  PViewOptions *opt = p->getOptions();
+
+  opt->tmpBBox.reset();
+
+  // number the elements of the entities that are drawn in a single flat index
+  // space, so that the loop below can be split evenly between the threads
+  // whatever the size of each entity
+  std::vector<int> ents;
+  std::vector<std::size_t> start;
+  std::size_t num = 0;
+  int numEnt = data->getNumEntities(opt->timeStep);
+  for(int ent = 0; ent < numEnt; ent++) {
+    if(data->skipEntity(opt->timeStep, ent)) continue;
+    ents.push_back(ent);
+    start.push_back(num);
+    num += data->getNumElements(opt->timeStep, ent);
+  }
+  start.push_back(num);
+  if(!num) return;
+
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+  if(num < 10000) nthreads = 1;
+  // the options that make the drawing functions touch state shared with the
+  // rest of gmsh -- the smoothed normals, the evaluator of a general raise, the
+  // data of another view, the Gauss points of a step -- are handled serially
+  if(opt->smoothNormals || opt->useGenRaise || opt->externalViewIndex >= 0 ||
+     data->useGaussPoints() || !data->isThreadSafe())
+    nthreads = 1;
+
+  if(nthreads == 1) {
+    drawTarget t(p);
+    addElementRange(&t, data, preprocessNormalsOnly, ents, start, 0, num);
+    if(!t.bbox.empty()) opt->tmpBBox += t.bbox;
+    return;
+  }
+
+  // each thread fills its own arrays and works on its own copy of the options,
+  // which the drawing functions write to; the arrays are merged in thread order
+  // below, so that they come out as in a serial run
+  std::vector<drawTarget *> targets(nthreads, nullptr);
+  std::vector<PViewOptions *> opts(nthreads, nullptr);
+  int n = (int)(num / nthreads) + 100;
+  for(int t = 0; t < nthreads; t++) {
+    drawTarget *d = new drawTarget(p);
+    opts[t] = new PViewOptions(*opt);
+    // the copy shares the evaluator of a general raise, which the destructor
+    // would delete: that option is drawn serially, so drop it here
+    opts[t]->genRaiseEvaluator = nullptr;
+    d->opt = opts[t];
+    // the threads share the filters of the view's own arrays, so that an
+    // element is dropped whichever thread sees it first
+    d->va_points = new VertexArray(1, n / 4);
+    d->va_lines = new VertexArray(2, n / 4);
+    d->va_lines->setUniqueFilter(p->va_lines->getUniqueFilter(true));
+    d->va_triangles = new VertexArray(3, 4 * n);
+    d->va_triangles->setUniqueFilter(p->va_triangles->getUniqueFilter(true));
+    d->va_vectors = new VertexArray(2, n / 4);
+    d->va_ellipses = new VertexArray(4, n / 4);
+    targets[t] = d;
+  }
+  if(boundaryFaces) boundaryFaces->setThreaded();
+
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+  for(int t = 0; t < nthreads; t++)
+    addElementRange(targets[t], data, preprocessNormalsOnly, ents, start,
+                    num * t / nthreads, num * (t + 1) / nthreads);
+
+  for(int t = 0; t < nthreads; t++) {
+    p->va_points->merge(targets[t]->va_points);
+    p->va_lines->merge(targets[t]->va_lines);
+    p->va_triangles->merge(targets[t]->va_triangles);
+    p->va_vectors->merge(targets[t]->va_vectors);
+    p->va_ellipses->merge(targets[t]->va_ellipses);
+    // adding an empty box would stretch the bounding box to infinity
+    if(!targets[t]->bbox.empty()) opt->tmpBBox += targets[t]->bbox;
+    delete targets[t]->va_points;
+    delete targets[t]->va_lines;
+    delete targets[t]->va_triangles;
+    delete targets[t]->va_vectors;
+    delete targets[t]->va_ellipses;
+    delete targets[t];
+    delete opts[t];
+  }
+}
 class initPView {
 private:
   // we try to estimate how many primitives will end up in the vertex

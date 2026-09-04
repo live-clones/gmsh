@@ -355,6 +355,14 @@ public:
     vboToDelete.clear();
   }
 
+  // count elements offered to and kept by a filter used outside add(), so that
+  // merge() and finalize() reduce them like the ones counted there
+  void addUniqueStats(long int in, long int kept)
+  {
+    _statUniqueIn += in;
+    _statUniqueKept += kept;
+  }
+
   // statistics gathered by the unique element filter
   static long int statUniqueIn, statUniqueKept;
   static void printStats();

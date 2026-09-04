@@ -260,6 +260,7 @@ public:
   bool skipEntity(int step, int ent);
   bool skipElement(int step, int ent, int ele, bool checkVisibility = false,
                    int samplingRate = 1);
+  bool isThreadSafe() { return true; }
   bool hasTimeStep(int step);
   bool hasPartition(int step, int part);
   bool hasMultipleMeshes();

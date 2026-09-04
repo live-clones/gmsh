@@ -215,6 +215,10 @@ public:
   virtual bool skipElement(int step, int ent, int ele,
                            bool checkVisibility = false, int samplingRate = 1);
 
+  // can the accessors be called concurrently on different elements of the same
+  // data? They cannot when they go through a cache of the last element
+  virtual bool isThreadSafe() { return false; }
+
   // check if the data has the given step/partition/etc.
   virtual bool hasTimeStep(int step)
   {
