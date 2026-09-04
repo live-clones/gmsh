@@ -23,6 +23,7 @@
 #include "OpenFile.h"
 #include "drawContext.h"
 #include "VertexArray.h"
+#include "glMatrix.h"
 #include "Context.h"
 #include "Trackball.h"
 #include "GamePad.h"
@@ -30,6 +31,20 @@
 
 // Navigator handler (read gamepad event if gamepad exists or question presence
 // of gamepad)
+// the modelview matrix that looks at the camera target from the camera
+// position, both moved by the same offset (the half eye separation of a stereo
+// pair, or nothing at all)
+static void cameraView(Camera *cam, double dx, double dy, double dz,
+                       double view[16])
+{
+  double eye[3] = {cam->position.x + dx, cam->position.y + dy,
+                   cam->position.z + dz};
+  double target[3] = {cam->target.x + dx, cam->target.y + dy,
+                      cam->target.z + dz};
+  double up[3] = {cam->up.x, cam->up.y, cam->up.z};
+  glMatrix::lookAt(eye, target, up, view);
+}
+
 static void navigator_handler(void *data)
 {
   openglWindow *gl_win = (openglWindow *)data;
@@ -202,9 +217,10 @@ void openglWindow::draw()
     // draw the zoom or selection lasso on top of the current scene (without
     // using overlays!)
     glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho((double)_ctx->viewport[0], (double)_ctx->viewport[2],
-            (double)_ctx->viewport[1], (double)_ctx->viewport[3], -1., 1.);
+    double px[16];
+    glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
+                    _ctx->viewport[3], -1., 1., px);
+    glLoadMatrixd(px);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glColor3d(1., 1., 1.);
@@ -287,19 +303,17 @@ void openglWindow::draw()
       if(!cam->on) cam->init();
       cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
       glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-
-      glFrustum(cam->glFleft, cam->glFright, cam->glFbottom, cam->glFtop,
-                cam->glFnear, cam->glFfar * cam->Lc);
+      double frustum[16], view[16];
+      glMatrix::frustum(cam->glFleft, cam->glFright, cam->glFbottom,
+                        cam->glFtop, cam->glFnear, cam->glFfar * cam->Lc,
+                        frustum);
+      glLoadMatrixd(frustum);
 
       glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
       glDrawBuffer(GL_BACK);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glLoadIdentity();
-      gluLookAt(cam->position.x, cam->position.y, cam->position.z,
-                cam->target.x, cam->target.y, cam->target.z, cam->up.x,
-                cam->up.y, cam->up.z);
+      cameraView(cam, 0., 0., 0., view);
+      glLoadMatrixd(view);
       _ctx->draw3d();
       _ctx->draw2d();
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active &&
@@ -315,43 +329,40 @@ void openglWindow::draw()
       XYZ eye = cam->eyesep / 2.0 * cam->right;
       // right eye
       glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
+      double frustum[16], view[16];
       double left =
         -cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
       double right =
         cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
       double top = cam->wd2;
       double bottom = -cam->wd2;
-      glFrustum(left, right, bottom, top, cam->glFnear, cam->glFfar * cam->Lc);
+      glMatrix::frustum(left, right, bottom, top, cam->glFnear,
+                        cam->glFfar * cam->Lc, frustum);
+      glLoadMatrixd(frustum);
       glMatrixMode(GL_MODELVIEW);
       glDrawBuffer(GL_BACK_RIGHT);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glLoadIdentity();
-      gluLookAt(cam->position.x + eye.x, cam->position.y + eye.y,
-                cam->position.z + eye.z, cam->target.x + eye.x,
-                cam->target.y + eye.y, cam->target.z + eye.z, cam->up.x,
-                cam->up.y, cam->up.z);
+      cameraView(cam, eye.x, eye.y, eye.z, view);
+      glLoadMatrixd(view);
       _ctx->draw3d();
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
       // left eye
       glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
       left = -cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
       right = cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
       top = cam->wd2;
       bottom = -cam->wd2;
-      glFrustum(left, right, bottom, top, cam->glFnear, cam->glFfar * cam->Lc);
+      glMatrix::frustum(left, right, bottom, top, cam->glFnear,
+                        cam->glFfar * cam->Lc, frustum);
+      glLoadMatrixd(frustum);
 
       glMatrixMode(GL_MODELVIEW);
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glLoadIdentity();
-      gluLookAt(cam->position.x - eye.x, cam->position.y - eye.y,
-                cam->position.z - eye.z, cam->target.x - eye.x,
-                cam->target.y - eye.y, cam->target.z - eye.z, cam->up.x,
-                cam->up.y, cam->up.z);
+      cameraView(cam, -eye.x, -eye.y, -eye.z, view);
+      glLoadMatrixd(view);
       _ctx->draw3d();
       _ctx->draw2d();
       _drawScreenMessage();

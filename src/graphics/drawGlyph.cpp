@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include "drawContext.h"
+#include "glMatrix.h"
 #include "GmshDefines.h"
 #include "Numeric.h"
 #include "StringUtils.h"
@@ -246,8 +247,10 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     glPushMatrix();
     glLoadIdentity();
     double fact = highResolutionPixelFactor();
-    glOrtho((double)viewport[0], (double)viewport[2] * fact,
-            (double)viewport[1], (double)viewport[3] * fact, -1, 1);
+    double px[16];
+    glMatrix::ortho(viewport[0], viewport[2] * fact, viewport[1],
+                    viewport[3] * fact, -1., 1., px);
+    glLoadMatrixd(px);
     x = pos[0];
     y = pos[1];
     z = 0;

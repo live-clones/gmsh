@@ -8,6 +8,7 @@ set(SRC
   Trackball.cpp
   ReadImg.cpp
   glApi.cpp
+  glMatrix.cpp
   drawContext.cpp
   drawMesh.cpp
   drawGeom.cpp

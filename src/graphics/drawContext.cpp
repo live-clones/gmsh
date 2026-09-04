@@ -9,6 +9,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "drawContext.h"
+#include "glMatrix.h"
 #include "Trackball.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -450,17 +451,19 @@ void drawContext::draw2d()
   for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
   glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
 
-  glOrtho((double)viewport[0], (double)viewport[2], (double)viewport[1],
-          (double)viewport[3], -100.,
-          100.); // in pixels, so we can draw some 3D glyphs
-
-  // hack to make the 2D primitives appear "in front" in GL2PS
-  glTranslated(0., 0.,
-               CTX::instance()->clipFactor > 1. ?
-                 1. / CTX::instance()->clipFactor :
-                 CTX::instance()->clipFactor);
+  // in pixels, so we can draw some 3D glyphs, and with a shift that makes the
+  // 2D primitives appear "in front" in GL2PS
+  double px[16], front[16], m[16];
+  glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3], -100.,
+                  100., px);
+  glMatrix::translate(0., 0.,
+                      CTX::instance()->clipFactor > 1. ?
+                        1. / CTX::instance()->clipFactor :
+                        CTX::instance()->clipFactor,
+                      front);
+  glMatrix::multiply(px, front, m);
+  glLoadMatrixd(m);
   glMatrixMode(GL_MODELVIEW);
 
   glLoadIdentity();
@@ -756,12 +759,13 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     }
     // setup projection matrix
     glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
 
     // restrict picking to a rectangular region around xpick,ypick
+    double pick[16];
+    glMatrix::identity(pick);
     if(render_mode == GMSH_SELECT)
-      gluPickMatrix((GLdouble)xpick, (GLdouble)(viewport[3] - ypick),
-                    (GLdouble)wpick, (GLdouble)hpick, (GLint *)viewport);
+      glMatrix::pickRegion(xpick, viewport[3] - ypick, wpick, hpick, viewport,
+                           pick);
 
     // draw background if not in selection mode
     if(render_mode != GMSH_SELECT &&
@@ -770,24 +774,32 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
        (!CTX::instance()->printing || CTX::instance()->print.background)) {
       glDisable(GL_DEPTH_TEST);
       glPushMatrix();
-      glLoadIdentity();
       // the z values and the translation are only needed for GL2PS, which does
       // not understand "no depth test" (hence we must make sure that we draw
       // the background behind the rest of the scene)
-      glOrtho((double)viewport[0], (double)viewport[2], (double)viewport[1],
-              (double)viewport[3], clip_near, clip_far);
-      glTranslated(0., 0., -0.99 * clip_far);
+      double bg[16], back[16], m[16];
+      glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3],
+                      clip_near, clip_far, bg);
+      glMatrix::translate(0., 0., -0.99 * clip_far, back);
+      glMatrix::multiply(bg, back, m);
+      glLoadMatrixd(m);
       drawBackgroundGradient();
       // hack for GL2PS (to make sure that the image is in front of the
       // gradient)
-      glTranslated(0., 0., 0.01 * clip_far);
+      glMatrix::translate(0., 0., -0.98 * clip_far, back);
+      glMatrix::multiply(bg, back, m);
+      glLoadMatrixd(m);
       drawBackgroundImage(false);
       glPopMatrix();
       glEnable(GL_DEPTH_TEST);
     }
 
+    double projection[16], withPick[16];
     if(CTX::instance()->ortho) {
-      glOrtho(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
+      glMatrix::ortho(vxmin, vxmax, vymin, vymax, clip_near, clip_far,
+                      projection);
+      glMatrix::multiply(pick, projection, withPick);
+      glLoadMatrixd(withPick);
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
     }
@@ -801,7 +813,10 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       vxmax -= t_init[0];
       vymin -= t_init[1];
       vymax -= t_init[1];
-      glFrustum(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
+      glMatrix::frustum(vxmin, vxmax, vymin, vymax, clip_near, clip_far,
+                        projection);
+      glMatrix::multiply(pick, projection, withPick);
+      glLoadMatrixd(withPick);
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
       double coef = (clip_far / clip_near) / 3.;
@@ -949,27 +964,29 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   winx *= fact;
   winy *= fact;
 
-  GLint vp[4];
-  glGetIntegerv(GL_VIEWPORT, vp);
+  GLint glvp[4];
+  glGetIntegerv(GL_VIEWPORT, glvp);
+  int vp[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
 
   winy = vp[3] - winy;
-
-  GLdouble x0, y0, z0, x1, y1, z1;
 
   // we use the stored model and proj matrices instead of directly
   // getGetDouble'ing the matrices since unproject can be called in or after
   // draw2d
-  if(!gluUnProject(winx, winy, 0.0, model, proj, vp, &x0, &y0, &z0))
+  double onNear[3] = {0., 0., 0.}, onFar[3] = {0., 0., 0.};
+  double win[3] = {winx, winy, 0.};
+  if(!glMatrix::unProject(win, model, proj, vp, onNear))
     Msg::Warning("unproject1 failed");
-  if(!gluUnProject(winx, winy, 1.0, model, proj, vp, &x1, &y1, &z1))
+  win[2] = 1.;
+  if(!glMatrix::unProject(win, model, proj, vp, onFar))
     Msg::Warning("unproject2 failed");
 
-  p[0] = x0;
-  p[1] = y0;
-  p[2] = z0;
-  d[0] = x1 - x0;
-  d[1] = y1 - y0;
-  d[2] = z1 - z0;
+  p[0] = onNear[0];
+  p[1] = onNear[1];
+  p[2] = onNear[2];
+  d[0] = onFar[0] - onNear[0];
+  d[1] = onFar[1] - onNear[1];
+  d[2] = onFar[2] - onNear[2];
   double len = sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
   d[0] /= len;
   d[1] /= len;
@@ -978,24 +995,24 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
 
 void drawContext::viewport2World(double vp[3], double xyz[3])
 {
-  GLint viewport[4];
+  GLint glvp[4];
   GLdouble model[16], proj[16];
-  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetIntegerv(GL_VIEWPORT, glvp);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluUnProject(vp[0], vp[1], vp[2], model, proj, viewport, &xyz[0], &xyz[1],
-               &xyz[2]);
+  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  glMatrix::unProject(vp, model, proj, viewport, xyz);
 }
 
 void drawContext::world2Viewport(double xyz[3], double vp[3])
 {
-  GLint viewport[4];
+  GLint glvp[4];
   GLdouble model[16], proj[16];
-  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetIntegerv(GL_VIEWPORT, glvp);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluProject(xyz[0], xyz[1], xyz[2], model, proj, viewport, &vp[0], &vp[1],
-             &vp[2]);
+  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  glMatrix::project(xyz, model, proj, viewport, vp);
 }
 
 // returns the element at a given position in a vertex array (element pointers
@@ -1050,7 +1067,7 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
 {
   if(w < 1) w = 1;
   if(h < 1) h = 1;
-  // the rectangle is given by its centre, as gluPickMatrix() takes it
+  // the rectangle is given by its centre, as glMatrix::pickRegion() takes it
   int x0 = x - w / 2, y0 = (viewport[3] - y) - h / 2;
   if(x0 < viewport[0]) x0 = viewport[0];
   if(y0 < viewport[1]) y0 = viewport[1];
@@ -1098,9 +1115,10 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
 
   // 2d stuff, drawn in pixel coordinates
   glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho((double)viewport[0], (double)viewport[2], (double)viewport[1],
-          (double)viewport[3], -100., 100.);
+  double px2d[16];
+  glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3], -100.,
+                  100., px2d);
+  glLoadMatrixd(px2d);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   drawGraph2d(false);
@@ -1241,9 +1259,8 @@ void drawContext::recenterForRotationCenterChange(SPoint3 newRotationCenter)
 {
   // Recompute model translation so that the view is not changed
   SPoint3 &p = newRotationCenter;
-  double vp[3];
-  gluProject(p.x(), p.y(), p.z(), model, proj, viewport, &vp[0], &vp[1],
-             &vp[2]);
+  double vp[3], xyz[3] = {p.x(), p.y(), p.z()};
+  glMatrix::project(xyz, model, proj, viewport, vp);
   double wnr[3]; // look at mousePosition::recenter()
   const double &width = viewport[2];
   const double &height = viewport[3];

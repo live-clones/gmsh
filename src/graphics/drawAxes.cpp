@@ -8,6 +8,7 @@
 #include "GmshGlobal.h"
 #include <string.h>
 #include "drawContext.h"
+#include "glMatrix.h"
 #include "Trackball.h"
 #include "GModel.h"
 #include "Context.h"
@@ -375,14 +376,11 @@ void drawContext::drawSmallAxes()
   if(CTX::instance()->camera) {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(camera.position.x, camera.position.y, camera.position.z,
-              camera.target.x, camera.target.y, camera.target.z, camera.up.x,
-              camera.up.y, camera.up.z);
-    glPushMatrix();
-    glPopMatrix();
-    float fvViewMatrix[16];
-    glGetFloatv(GL_MODELVIEW_MATRIX, fvViewMatrix);
-    glLoadIdentity();
+    double eye[3] = {camera.position.x, camera.position.y, camera.position.z};
+    double target[3] = {camera.target.x, camera.target.y, camera.target.z};
+    double up[3] = {camera.up.x, camera.up.y, camera.up.z};
+    double fvViewMatrix[16];
+    glMatrix::lookAt(eye, target, up, fvViewMatrix);
     xx = l * fvViewMatrix[0];
     xy = l * fvViewMatrix[1];
     yx = l * fvViewMatrix[4];
