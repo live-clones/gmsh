@@ -189,7 +189,15 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  /* A colour fills its field rather than sitting in a corner of it: the
     windows this reproduces write the name of what it colours on the swatch
     itself, and the swatch is the width of a value. */
- .cell input.swatch{padding:1px;height:1.5em}
+ /* The swatch is the colour, edge to edge, the way the other two draw it --
+    not a colour band adrift in a box. What the browser wraps around the
+    colour of an <input type=color> is padding of its own, and it has to be
+    taken back before the field says what it is worth. */
+ .cell input.swatch{padding:0;height:1.55em;cursor:pointer;
+                    border:1px solid #767676;background:none}
+ .cell input.swatch::-webkit-color-swatch-wrapper{padding:0}
+ .cell input.swatch::-webkit-color-swatch{border:none}
+ .cell input.swatch::-moz-color-swatch{border:none}
  /* flat, with no box around it: the widget this reproduces is a circle drawn
     on the background of the window and nothing else */
  .disc{display:block;flex:0 0 auto;background:none;border:none}
