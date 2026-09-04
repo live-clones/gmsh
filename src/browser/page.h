@@ -164,6 +164,18 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     which is what a window says with leastRows -- and no more: a list of two
     hundred options is not a window two hundred lines tall */
  .line.grows .list{height:100%}
+ /* The colour map of a view: it fills the tab it is given, as the widget
+    of the window this reproduces fills its own, and it is drawn rather than
+    built out of elements -- four curves over two hundred and fifty entries
+    is not a thing to make elements of. */
+ /* The canvas is taken out of the flow and stretched over its cell. In the
+    flow it would size itself from its own height attribute, which draw() sets
+    from the height it was given -- so it grew to whatever it had last asked
+    for and overran the window. Out of the flow it can only ever be as tall as
+    the room its cell was given. */
+ .cell.map{position:relative;flex:1 1 auto;min-width:0;min-height:8em}
+ .cmap{position:absolute;top:0;left:0;right:0;bottom:0;
+       border:1px solid #ccc;background:#fff;display:block;outline:none}
  .cell.run>.cell{gap:0}
  .cell.packed label{flex:0 0 auto}
  /* a row of values with a button after them is not columns of equal width:
@@ -401,6 +413,7 @@ function field(f) {
     }
     return box;
   }
+  if(f.kind === 'colormap') return colourMap(f);
   if(f.kind === 'hierarchy') {
     const box = document.createElement('div');
     box.className = 'list';
@@ -514,13 +527,213 @@ function field(f) {
   }
   return input;
 }
+// --- the colour map of a view
+//
+// What it answers to, in the words the widget of the window this reproduces
+// has always used. It is written here rather than worked out from the keys
+// the description gives, because it is a page one reads: it says what the
+// mouse does as well, and mouse buttons are not parameters.
+const MAP_KEYS = [
+  ['0, 1, 2, 3, ..., 9', 'Select predefined colormap 0...9'],
+  ['Ctrl+0, ..., Ctrl+9', 'Select predefined colormap 10...19'],
+  ['F1, ..., F5', 'Select predefined colormap 20...24'],
+  ['mouse1', 'Draw red or hue channel'],
+  ['mouse2', 'Draw green or saturation channel'],
+  ['mouse3', 'Draw blue or value channel'],
+  ['Ctrl+mouse1', 'Draw alpha channel'],
+  ['Ctrl+c, Ctrl+v, r', 'Copy, paste or reset colormap'],
+  ['m', 'Toggle RGB/HSV mode'],
+  ['left, right', 'Translate abscissa'],
+  ['Ctrl+left, Ctrl+right', 'Rotate abscissa'],
+  ['i, Ctrl+i', 'Invert abscissa or ordinate'],
+  ['up, down', 'Modify color channel curvature'],
+  ['a, Ctrl+a', 'Modify alpha coefficient'],
+  ['p, Ctrl+p', 'Modify alpha channel power law'],
+  ['b, Ctrl+b', 'Modify gamma correction'],
+  ['h', 'Show this help message']];
+
+// where the last stroke of paint started, so that a drag fills what it
+// crossed rather than leaving the entries between two frames untouched
+let mapFrom = -1;
+
+// Hue, saturation and value from red, green and blue, each nought to 255.
+// The same arithmetic as Ui::toHsv, so that the curves this draws are the
+// curves the other two interfaces draw.
+function toHsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const most = Math.max(r, g, b), least = Math.min(r, g, b);
+  const range = most - least;
+  let hue = 0;
+  if(range > 0) {
+    if(most === r) hue = (g - b) / range;
+    else if(most === g) hue = 2 + (b - r) / range;
+    else hue = 4 + (r - g) / range;
+    if(hue < 0) hue += 6;
+  }
+  return [Math.floor(hue / 6 * 255),
+          Math.floor((most > 0 ? range / most : 0) * 255),
+          Math.floor(most * 255)];
+}
+
+function colourMap(f) {
+  const canvas = document.createElement('canvas');
+  canvas.className = 'cmap';
+  canvas.tabIndex = 0;
+  if(f.empty) return canvas;
+  // the entries, four bytes apiece, as they came down
+  const said = f.entries || '';
+  const entries = [];
+  for(let i = 0; i + 7 < said.length; i += 8)
+    entries.push([parseInt(said.substr(i, 2), 16),
+                  parseInt(said.substr(i + 2, 2), 16),
+                  parseInt(said.substr(i + 4, 2), 16),
+                  parseInt(said.substr(i + 6, 2), 16)]);
+  const size = entries.length;
+  const tell = what => post('/map', which(f) + '&' + what);
+  const channelOf = (i, channel) => {
+    const c = entries[i];
+    if(channel === 3) return c[3];
+    if(!f.hsv) return c[channel];
+    return toHsv(c[0], c[1], c[2])[channel];
+  };
+
+  function draw() {
+    // The canvas is told how many pixels it really has, so that what is drawn
+    // on it is not stretched afterwards -- and it is the cell that is asked,
+    // not the canvas: asked for its own box before the page has been laid out
+    // a canvas answers with the one it had, and then keeps drawing to it.
+    const box = (canvas.parentElement || canvas).getBoundingClientRect();
+    const wide = Math.max(1, Math.round(box.width));
+    const tall = Math.max(1, Math.round(box.height));
+    if(canvas.width !== wide || canvas.height !== tall) {
+      canvas.width = wide; canvas.height = tall;
+    }
+    const g = canvas.getContext('2d');
+    const style = getComputedStyle(canvas);
+    const ink = style.color;
+    const lineHeight = parseFloat(style.fontSize) || 12;
+    g.clearRect(0, 0, wide, tall);
+    g.fillStyle = style.backgroundColor || '#fff';
+    g.fillRect(0, 0, wide, tall);
+    if(size < 2) return;
+    // the same three heights the other two interfaces measure off the bottom
+    const labelY = tall - 5;
+    const markerY = labelY - 2 * lineHeight;
+    const wedgeY = markerY - lineHeight;
+    const indexToX = i => wide * i / (size - 1);
+    const valueToY = v => wedgeY * (1 - v / 255);
+    // the four channels, in their own colours
+    const inks = ['#f00', '#0f0', '#00f', ink];
+    for(let channel = 0; channel < 4; channel++) {
+      g.strokeStyle = inks[channel];
+      g.lineWidth = 1;
+      g.beginPath();
+      for(let i = 0; i < size; i++) {
+        const x = indexToX(i), y = valueToY(channelOf(i, channel));
+        if(i) g.lineTo(x, y); else g.moveTo(x, y);
+      }
+      g.stroke();
+    }
+    // the wedge of colours, a column of the picture at a time
+    for(let x = 0; x < wide; x++) {
+      let i = Math.floor(x * size / wide);
+      if(i < 0) i = 0; if(i >= size) i = size - 1;
+      const c = entries[i];
+      g.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+      g.fillRect(x, wedgeY, 1, lineHeight);
+    }
+    // What it answers to, until it is drawn on: the widget of the window this
+    // reproduces shows it and forgets it at the first click, and so does this.
+    if(f.keys) {
+      const small = Math.min(lineHeight * 0.85, (wedgeY - 12) / 18);
+      const step = small + 1;
+      g.fillStyle = ink;
+      g.font = small + 'px ' + style.fontFamily;
+      g.textBaseline = 'top';
+      for(let i = 0; i < MAP_KEYS.length; i++) {
+        g.fillText(MAP_KEYS[i][0], 6, 8 + i * step);
+        g.fillText(MAP_KEYS[i][1], 12 * step, 8 + i * step);
+      }
+    }
+    // and the range the wedge stands for, at either end of it
+    g.fillStyle = ink;
+    g.font = lineHeight + 'px ' + style.fontFamily;
+    g.textBaseline = 'top';
+    const least = String(+(f.least || 0)), most = String(+(f.most || 0));
+    g.fillText(least, 10, labelY - lineHeight);
+    g.fillText(most, wide - g.measureText(most).width - 10, labelY - lineHeight);
+  }
+
+  // Drawing on it: a button per channel, as that widget has it, and the
+  // entries between the last frame and this one are all given the value.
+  function paint(e, first) {
+    const box = canvas.getBoundingClientRect();
+    const tall = box.height, wide = box.width;
+    const lineHeight = parseFloat(getComputedStyle(canvas).fontSize) || 12;
+    const wedgeY = tall - 5 - 3 * lineHeight;
+    const y = e.clientY - box.top, x = e.clientX - box.left;
+    if(y >= wedgeY) return;
+    const channel = e.ctrlKey ? 3 :
+                    (e.buttons & 2) ? 2 : (e.buttons & 4) ? 1 : 0;
+    let value = Math.round((wedgeY - y) * 255 / wedgeY);
+    value = value < 0 ? 0 : (value > 255 ? 255 : value);
+    let to = Math.floor(x * size / wide);
+    to = to < 0 ? 0 : (to >= size ? size - 1 : to);
+    const from = (first || mapFrom < 0) ? to : mapFrom;
+    mapFrom = to;
+    tell('op=paint&c=' + channel + '&from=' + from + '&to=' + to +
+         '&v=' + value);
+  }
+
+  canvas.oncontextmenu = e => e.preventDefault();
+  canvas.onmousedown = e => { e.preventDefault(); canvas.focus(); paint(e, true); };
+  canvas.onmousemove = e => { if(e.buttons) paint(e, false); };
+  canvas.onmouseup = () => { mapFrom = -1; };
+  canvas.onmouseleave = () => { mapFrom = -1; };
+  // the widget takes the keys while the pointer is over it, which is how the
+  // window this reproduces has it
+  canvas.onmouseenter = () => canvas.focus();
+
+  // Which key was struck, and nothing more: what one is worth -- a ready made
+  // map, the turn to hue and saturation, one of the eight numbers the map is
+  // computed from -- is worked out where the description is, so that this
+  // interface cannot come to disagree with the other two about it.
+  canvas.onkeydown = e => {
+    const said = shortcutSaid(e);
+    if(!said) return;
+    e.preventDefault();
+    tell('op=press&k=' + encodeURIComponent(said));
+  };
+
+  // drawn once the page has given it a size, and again whenever that changes
+  requestAnimationFrame(draw);
+  if(window.ResizeObserver)
+    requestAnimationFrame(() => {
+      if(canvas.parentElement) new ResizeObserver(draw).observe(canvas.parentElement);
+    });
+  return canvas;
+}
+
+// A key pressed, said the way Ui::Shortcut::label() says it, so that the two
+// may simply be compared.
+function shortcutSaid(e) {
+  const named = {ArrowLeft: 'Left', ArrowRight: 'Right', ArrowUp: 'Up',
+                 ArrowDown: 'Down', Delete: 'Del'};
+  let key = named[e.key];
+  if(!key && /^F([1-9]|1[0-2])$/.test(e.key)) key = e.key;
+  if(!key && e.key.length === 1) key = e.key.toUpperCase();
+  if(!key) return '';
+  return (e.ctrlKey || e.metaKey ? 'Ctrl+' : '') + (e.shiftKey ? 'Shift+' : '') +
+         (e.altKey ? 'Alt+' : '') + key;
+}
+
 // One field in its cell, with its label where the description puts it
 function cell(f) {
   const box = document.createElement('div');
   box.className = 'cell' + (f.kind === 'action' ? ' act' : '') +
                   (f.packed ? ' packed' : '') +
                   (f.kind === 'list' || f.kind === 'hierarchy' ||
-                   f.kind === 'prose' ? ' whole' :
+                   f.kind === 'prose' || f.kind === 'colormap' ? ' whole' :
                      '') + (f.wraps ? ' runs' : '');
   if(f.help) box.title = f.help;
   if(f.kind === 'gap') { box.className = 'cell gap'; return box; }
@@ -557,6 +770,12 @@ function cell(f) {
   else if(f.share) what.style.width = (f.share * 10) + 'em';
   if(f.off) what.disabled = true;
   if(f.kind === 'action' || f.kind === 'menu') {
+    box.appendChild(what);
+    return box;
+  }
+  if(f.kind === 'colormap') {
+    // the cell is what has the height; the canvas is stretched over it
+    box.classList.add('map');
     box.appendChild(what);
     return box;
   }
@@ -606,14 +825,15 @@ function lines(fields, into, columns) {
     const packed = row.some(f => f.packed);
     // a line holding a list that says it is as tall as the window takes what
     // is left of the height, and gives it to the list
-    const fills = row.some(f => (f.kind === 'list' || f.kind === 'hierarchy') &&
-                                !f.rows);
+    const fills = row.some(f => (f.kind === 'list' || f.kind === 'hierarchy' ||
+                                 f.kind === 'colormap') && !f.rows);
     line.className = 'line' + (row[0].rule ? ' ruled' : '') +
                      (packed ? ' packed' : '') + (fills ? ' grows' : '');
     // how many of them hold a value, so that they may share the width of one
     const holds = row.filter(f => f.kind !== 'label' && f.kind !== 'gap' &&
                                   f.kind !== 'action' && f.kind !== 'list' &&
                                   f.kind !== 'hierarchy' && f.kind !== 'check' &&
+                                  f.kind !== 'colormap' &&
                                   !f.em && !f.share).length;
     if(holds > 1) {
       line.style.setProperty('--n', holds);

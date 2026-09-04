@@ -284,6 +284,12 @@ namespace {
     // it is what the user did, not what the model says -- and it is what lets
     // the children of a branch be asked for only when they are wanted, which
     // is what a described tree is a model rather than a list for.
+    // Whether the colour map is showing what it answers to. The widget of
+    // the window this reproduces shows it and forgets it at the first click,
+    // and it is kept here rather than in the page so that anything driving
+    // the page from outside can ask for it the way it asks for everything
+    // else.
+    bool _mapHelp = true;
     std::map<std::string, bool> _open;
 
     // What the page is being asked, when something has stopped Gmsh to ask
@@ -533,6 +539,42 @@ namespace {
              ",\"h\":" + std::to_string(_actionNames.back());
     }
 
+    // One channel of one entry of a colour map. Red, green and blue unless
+    // the map is being shown as hue, saturation and value, and the fourth is
+    // the alpha either way -- which is what Ui::ColourMap says, and what the
+    // other two interfaces do with it.
+    static int _channelOf(const Ui::ColourMap &map, int i, int channel,
+                          bool hsv)
+    {
+      Ui::Colour c = map.colour(i);
+      if(channel == 3) return c.a;
+      if(!hsv) return channel == 0 ? c.r : (channel == 1 ? c.g : c.b);
+      int h, sat, v;
+      Ui::toHsv(c, h, sat, v);
+      return channel == 0 ? h : (channel == 1 ? sat : v);
+    }
+
+    static void _setChannelOf(const Ui::ColourMap &map, int i, int channel,
+                              int value, bool hsv)
+    {
+      Ui::Colour c = map.colour(i);
+      if(channel == 3) { c.a = (unsigned char)value; }
+      else if(!hsv) {
+        if(channel == 0) c.r = (unsigned char)value;
+        else if(channel == 1) c.g = (unsigned char)value;
+        else c.b = (unsigned char)value;
+      }
+      else {
+        int h, sat, v;
+        Ui::toHsv(c, h, sat, v);
+        if(channel == 0) h = value;
+        else if(channel == 1) sat = value;
+        else v = value;
+        c = Ui::fromHsv(h, sat, v, c.a);
+      }
+      map.setColour(i, c);
+    }
+
     std::string _fieldId(const Ui::Field &f)
     {
       _fields.push_back(f);
@@ -717,6 +759,97 @@ namespace {
         if(*what) (*what)();
         return "{\"did\":true}";
       }
+      if(path == "/map") {
+        // What was done to a colour map. Painting a channel over a run of
+        // entries, choosing one of the ready made maps, turning it round to
+        // hue and saturation, or moving one of the numbers it is computed
+        // from -- which is done through adjust(), so that this interface and
+        // the other two cannot come to disagree about what a key is worth.
+        Ui::Field *f = _fieldAsked(ask);
+        if(!f || f->kind != Ui::ColorMap || f->map.empty()) return "{}";
+        const Ui::ColourMap &map = f->map;
+        const std::string op = _valueOf(ask.body, "op");
+        const bool hsv = map.hsv && map.hsv();
+        if(op == "paint") {
+          int channel = atoi(_valueOf(ask.body, "c").c_str());
+          int from = atoi(_valueOf(ask.body, "from").c_str());
+          int to = atoi(_valueOf(ask.body, "to").c_str());
+          int value = atoi(_valueOf(ask.body, "v").c_str());
+          int entries = map.size();
+          if(from > to) std::swap(from, to);
+          if(from < 0) from = 0;
+          if(to >= entries) to = entries - 1;
+          if(channel < 0 || channel > 3) channel = 0;
+          if(value < 0) value = 0;
+          if(value > 255) value = 255;
+          for(int i = from; i <= to; i++)
+            _setChannelOf(map, i, channel, value, hsv);
+          _mapHelp = false;
+        }
+        else if(op == "press") {
+          // A key, said the way Ui::Shortcut::label() says it. What it is
+          // worth is worked out here rather than in the page: the page tells
+          // which key was struck and nothing more, so it cannot come to
+          // disagree with the other two interfaces about what one does -- and
+          // anything driving the page from outside presses the same keys.
+          const std::string k = _valueOf(ask.body, "k");
+          int presets = map.numPresets ? map.numPresets() : 0;
+          int preset = -1;
+          // the digits, the digits with Control, then the first five function
+          // keys, which is the order the ready made maps are numbered in
+          if(k.size() == 1 && k[0] >= '0' && k[0] <= '9')
+            preset = k[0] - '0';
+          else if(k.size() == 6 && k.compare(0, 5, "Ctrl+") == 0 &&
+                  k[5] >= '0' && k[5] <= '9')
+            preset = 10 + (k[5] - '0');
+          else if(k.size() == 2 && k[0] == 'F' && k[1] >= '1' && k[1] <= '5')
+            preset = 20 + (k[1] - '1');
+          if(preset >= 0) {
+            if(map.choosePreset && preset < presets) map.choosePreset(preset);
+          }
+          else if(k == "M") {
+            if(map.setHsv) map.setHsv(!hsv);
+          }
+          else if(k == "H") {
+            _mapHelp = !_mapHelp;
+            return "{}";
+          }
+          else if(k == "R") {
+            // back to the one it is on, not to the first
+            if(map.choosePreset && map.preset) map.choosePreset(map.preset());
+          }
+          else if(k == "Ctrl+C") {
+            if(map.copy) map.copy();
+            return "{}";
+          }
+          else if(k == "Ctrl+V") {
+            if(map.paste) map.paste();
+          }
+          else {
+            // one of the eight numbers the map is computed from, raised or
+            // lowered by the step the description gives it
+            std::vector<Ui::ColourMap::Parameter> knobs =
+              map.parameters ? map.parameters() :
+                               std::vector<Ui::ColourMap::Parameter>();
+            bool did = false;
+            for(std::size_t i = 0; i < knobs.size() && !did; i++) {
+              if(!knobs[i].up.empty() && knobs[i].up.label() == k) {
+                map.adjust(knobs[i], true);
+                did = true;
+              }
+              else if(!knobs[i].down.empty() && knobs[i].down.label() == k) {
+                map.adjust(knobs[i], false);
+                did = true;
+              }
+            }
+            if(!did) return "{}";
+          }
+        }
+        else
+          return "{}";
+        if(f->changed) f->changed();
+        return "{}";
+      }
       if(path == "/set") {
         Ui::Field *f = _fieldAsked(ask);
         if(f) _write(*f, _valueOf(ask.body, "v"));
@@ -827,6 +960,7 @@ namespace {
       case Ui::Menu: return "menu";
       case Ui::Hierarchy: return "hierarchy";
       case Ui::Prose: return "prose";
+      case Ui::ColorMap: return "colormap";
       default: return "text";
       }
     }
@@ -861,6 +995,69 @@ namespace {
             out += "}";
           }
           out += "]}";
+        }
+        out += "]";
+        out += _fieldId(f);
+        return out + "}";
+      }
+      if(f.kind == Ui::ColorMap) {
+        // The colour map of a view. What goes down is what it takes to *draw*
+        // one -- the entries themselves, and the numbers it is computed from
+        // with the keys that move them -- rather than a picture of it: the
+        // page draws the wedge and the four channels the way the other two
+        // interfaces draw them, from the same description.
+        const Ui::ColourMap &map = f.map;
+        if(map.empty()) {
+          out += ",\"empty\":true";
+          out += _fieldId(f);
+          return out + "}";
+        }
+        std::string of;
+        double least = 0., most = 0.;
+        map.about(of, least, most);
+        out += ",\"of\":" + _quoted(of);
+        out += ",\"least\":" + std::to_string(least);
+        out += ",\"most\":" + std::to_string(most);
+        bool hsv = map.hsv && map.hsv();
+        out += ",\"hsv\":";
+        out += hsv ? "true" : "false";
+        out += ",\"presets\":" +
+               std::to_string(map.numPresets ? map.numPresets() : 0);
+        out += ",\"preset\":" + std::to_string(map.preset ? map.preset() : 0);
+        out += ",\"keys\":";
+        out += _mapHelp ? "true" : "false";
+        // The entries, four bytes apiece in hexadecimal. It is the one long
+        // thing here, and it is what both the wedge and all four curves are
+        // drawn from, so it is sent whole rather than summarised.
+        static const char digits[] = "0123456789abcdef";
+        int entries = map.size();
+        std::string said;
+        said.reserve((std::size_t)entries * 8);
+        for(int i = 0; i < entries; i++) {
+          Ui::Colour c = map.colour(i);
+          unsigned char channel[4] = {c.r, c.g, c.b, c.a};
+          for(int k = 0; k < 4; k++) {
+            said += digits[channel[k] >> 4];
+            said += digits[channel[k] & 15];
+          }
+        }
+        out += ",\"entries\":\"" + said + "\"";
+        // The eight numbers the map is computed from, each with the keys that
+        // raise and lower it. The page presses them by their place in this
+        // list and lets the description do the arithmetic, so that it cannot
+        // come to disagree with the other two about what a key does.
+        out += ",\"knobs\":[";
+        std::vector<Ui::ColourMap::Parameter> knobs =
+          map.parameters ? map.parameters() :
+                           std::vector<Ui::ColourMap::Parameter>();
+        for(std::size_t i = 0; i < knobs.size(); i++) {
+          out += i ? ",{" : "{";
+          out += "\"name\":" + _quoted(knobs[i].name);
+          out += ",\"up\":" + _quoted(knobs[i].up.label());
+          out += ",\"down\":" +
+                 _quoted(knobs[i].down.empty() ? std::string() :
+                                                 knobs[i].down.label());
+          out += "}";
         }
         out += "]";
         out += _fieldId(f);
