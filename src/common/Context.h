@@ -157,12 +157,15 @@ struct contextGeometryOptions {
 class CTX {
 private:
   static CTX *_instance;
+  static CTX *_create();
 
 public:
   CTX();
   ~CTX();
   void init();
-  static CTX *instance();
+  // called in loops over the entities and their elements all over the drawing
+  // code: keep the common path inline, and the creation out of line
+  static CTX *instance() { return _instance ? _instance : _create(); }
 
   // for debug purposes only, i.e. JF and CG personal use
   int debugSurface;
