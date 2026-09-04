@@ -2519,6 +2519,16 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
   endif()
+  # What the interfaces may include, as src/gui/Backend.h states it: the
+  # check is a script, and the list of what still breaks the rule is in it.
+  if(HAVE_GUI)
+    find_program(GMSH_PYTHON3 NAMES python3 python)
+    if(GMSH_PYTHON3)
+      add_test(NAME gui_includes COMMAND ${GMSH_PYTHON3}
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/checkGuiIncludes.py
+               ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
+  endif()
   # enable this once we have worked out the path issues on the build machines
   if(0 AND ENABLE_BUILD_DYNAMIC)
     find_package(PythonInterp)
