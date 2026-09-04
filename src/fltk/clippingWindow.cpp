@@ -117,7 +117,8 @@ static void clip_update_cb(Fl_Widget *w, void *data)
     (CTX::instance()->clipOnlyVolume !=
      FlGui::instance()->clipping->butt[2]->value());
 
-  if(CTX::instance()->clipWholeElements || togglesChanged) {
+  if(CTX::instance()->clipWholeElements || CTX::instance()->clipCapping ||
+     togglesChanged) {
     for(std::size_t index = 0; index < PView::list.size(); index++)
       if(PView::list[index]->getOptions()->clip)
         PView::list[index]->setChanged(true);

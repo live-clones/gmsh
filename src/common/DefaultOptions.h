@@ -532,6 +532,9 @@ StringXNumber GeneralOptions_Number[] = {
     "Third coefficient in equation for clipping plane 5" },
   { F|O, "Clip5D" , opt_general_clip5d , 1.0 ,
     "Fourth coefficient in equation for clipping plane 5" },
+  { F|O, "ClipCapping" , opt_general_clip_capping , 1. ,
+    "Fill the hole a clipping plane opens in a 3D mesh or view with the "
+    "section where the plane cuts the elements" },
   { F|O,   "ClipFactor" , opt_general_clip_factor , 5.0 ,
     "Near and far clipping plane distance factor (decrease value for better "
     "z-buffer resolution)" },

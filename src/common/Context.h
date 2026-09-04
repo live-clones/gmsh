@@ -311,6 +311,9 @@ public:
   // clipping plane options
   double clipPlane[6][4];
   int clipWholeElements, clipOnlyDrawIntersectingVolume, clipOnlyVolume;
+  // fill the hole a clipping plane opens in a 3D mesh or view with the polygon
+  // where the plane cuts each element, so that a cut model still looks solid
+  int clipCapping;
   // draw the vertex arrays from OpenGL buffer objects instead of client memory
   int vertexBufferObjects;
   // polygon offset options

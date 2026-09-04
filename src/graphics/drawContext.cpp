@@ -397,8 +397,50 @@ void drawVertexArray(VertexArray *va, GLenum type)
   if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+// The section a clipping plane cuts out of a 3D element is part of the vertex
+// arrays, so they have to be built again when a plane moves, or when the set of
+// planes that clip a view changes. The planes can be moved from the clipping
+// window, from a script or from the API, so notice it here rather than at every
+// place that sets them
+static void checkClipPlanesChanged()
+{
+  static double planes[6][4] = {{0.}};
+  static int capping = -1, whole = -1;
+  static std::vector<int> clip;
+
+  bool changed = (capping != CTX::instance()->clipCapping) ||
+                 (whole != CTX::instance()->clipWholeElements);
+  capping = CTX::instance()->clipCapping;
+  whole = CTX::instance()->clipWholeElements;
+  for(int i = 0; i < 6; i++)
+    for(int j = 0; j < 4; j++)
+      if(planes[i][j] != CTX::instance()->clipPlane[i][j]) {
+        planes[i][j] = CTX::instance()->clipPlane[i][j];
+        changed = true;
+      }
+
+#if defined(HAVE_POST)
+  if(clip.size() != PView::list.size()) {
+    clip.resize(PView::list.size(), -1);
+    changed = true;
+  }
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    int c = PView::list[i]->getOptions()->clip;
+    if(clip[i] != c) {
+      clip[i] = c;
+      changed = true;
+    }
+  }
+  if(!changed || !capping || whole) return;
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    if(PView::list[i]->getOptions()->clip) PView::list[i]->setChanged(true);
+#endif
+}
+
 void drawContext::draw3d()
 {
+  checkClipPlanesChanged();
+
   deleteOrphanVertexArrayBuffers();
 
   // We can only create this when a valid opengl context exists. (It's cheap to

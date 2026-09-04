@@ -3968,6 +3968,22 @@ double opt_general_clip5d(OPT_ARGS_NUM)
   return CTX::instance()->clipPlane[5][3];
 }
 
+double opt_general_clip_capping(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->clipCapping != (int)val) {
+      CTX::instance()->clipCapping = (int)val;
+      // the caps are part of the arrays, so they have to be built again
+      CTX::instance()->mesh.changed = ENT_ALL;
+#if defined(HAVE_POST)
+      for(std::size_t i = 0; i < PView::list.size(); i++)
+        PView::list[i]->setChanged(true);
+#endif
+    }
+  }
+  return CTX::instance()->clipCapping;
+}
+
 double opt_general_clip_whole_elements(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipWholeElements = (int)val;

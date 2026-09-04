@@ -815,6 +815,83 @@ static void addOutlineTetrahedron(drawTarget *p, double **xyz,
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
 
+// Fill the hole a clipping plane opens in a 3D element with the section where
+// the plane cuts it, colored with the field, so that a cut view still looks
+// like a solid instead of a hollow shell. The section is moved by a fraction of
+// the model size towards the side the plane keeps, so that the plane that
+// produced it does not clip it away again; the other planes still do, which is
+// what makes several planes work together
+static void addScalarCap(drawTarget *p, double **xyz, double **val, int i0,
+                         int i1, int i2, int i3)
+{
+  PViewOptions *opt = p->opt;
+  if(!opt->clip || !CTX::instance()->clipCapping) return;
+  // in this mode the elements the plane cuts are removed whole, so there is no
+  // hole to fill
+  if(CTX::instance()->clipWholeElements) return;
+  // the section is only meaningful where the element is drawn as a solid
+  if(opt->intervalsType != PViewOptions::Continuous &&
+     opt->intervalsType != PViewOptions::Discrete)
+    return;
+
+  const int ii[4] = {i0, i1, i2, i3};
+  double X[4], Y[4], Z[4], V[4];
+  for(int i = 0; i < 4; i++) {
+    X[i] = xyz[ii[i]][0];
+    Y[i] = xyz[ii[i]][1];
+    Z[i] = xyz[ii[i]][2];
+    V[i] = val[ii[i]][0];
+  }
+
+  double cx[3][3], cv[3][9];
+  double *cxyz[3] = {cx[0], cx[1], cx[2]};
+  double *cval[3] = {cv[0], cv[1], cv[2]};
+
+  for(int c = 0; c < 6; c++) {
+    if(!(opt->clip & (1 << c))) continue;
+    double *pl = CTX::instance()->clipPlane[c];
+    double D[4];
+    int neg = 0, pos = 0;
+    for(int i = 0; i < 4; i++) {
+      D[i] = pl[0] * X[i] + pl[1] * Y[i] + pl[2] * Z[i] + pl[3];
+      if(D[i] < 0.)
+        neg++;
+      else
+        pos++;
+    }
+    if(!neg || !pos) continue; // the plane does not cut this element
+
+    double n[3] = {pl[0], pl[1], pl[2]};
+    double len = sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+    if(len < 1.e-15) continue;
+    for(int i = 0; i < 3; i++) n[i] /= len;
+
+    double xp[4], yp[4], zp[4], vp[4];
+    int nb = CutSimplexByPlane(X, Y, Z, V, D, n, xp, yp, zp, vp);
+    if(nb < 3) continue;
+
+    // the corners are on the plane, where the clip test is only as accurate as
+    // the interpolation that put them there: move them just inside
+    double eps = 1.e-5 * CTX::instance()->lc;
+    for(int i = 0; i < nb; i++) {
+      xp[i] += eps * n[0];
+      yp[i] += eps * n[1];
+      zp[i] += eps * n[2];
+    }
+
+    for(int j = 2; j < nb; j++) {
+      const int t[3] = {0, j - 1, j};
+      for(int i = 0; i < 3; i++) {
+        cx[i][0] = xp[t[i]];
+        cx[i][1] = yp[t[i]];
+        cx[i][2] = zp[t[i]];
+        cv[i][0] = vp[t[i]];
+      }
+      addScalarTriangle(p, cxyz, cval, false, 0, 1, 2, false, false);
+    }
+  }
+}
+
 static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
                                  bool pre, int i0 = 0, int i1 = 1, int i2 = 2,
                                  int i3 = 3)
@@ -822,6 +899,8 @@ static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
   PViewOptions *opt = p->opt;
 
   const int it[4][3] = {{i0, i2, i1}, {i0, i1, i3}, {i0, i3, i2}, {i3, i1, i2}};
+
+  if(!pre && opt->boundary <= 0) addScalarCap(p, xyz, val, i0, i1, i2, i3);
 
   if(opt->boundary > 0 || opt->intervalsType == PViewOptions::Continuous ||
      opt->intervalsType == PViewOptions::Discrete) {

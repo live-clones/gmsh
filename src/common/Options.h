@@ -336,6 +336,7 @@ double opt_general_clip5a(OPT_ARGS_NUM);
 double opt_general_clip5b(OPT_ARGS_NUM);
 double opt_general_clip5c(OPT_ARGS_NUM);
 double opt_general_clip5d(OPT_ARGS_NUM);
+double opt_general_clip_capping(OPT_ARGS_NUM);
 double opt_general_clip_whole_elements(OPT_ARGS_NUM);
 double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM);
 double opt_general_clip_only_volume(OPT_ARGS_NUM);
