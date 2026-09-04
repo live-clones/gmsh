@@ -300,8 +300,13 @@ namespace {
 
   // one field of a pane, bound to whatever the description points at: a
   // variable of ours or a Gmsh option, which the accessors hide
+  // `column` says this is the column down the side of a window rather than a
+  // pane of it. A button there takes the width of the column, as the windows
+  // this reproduces draw it -- New, Delete and Visualize down the side of the
+  // size fields window are as wide as the browser above them, whatever is
+  // written on them.
   void _field(const Ui::Field &f, float width, float tall = 0.f,
-              float indent = 0.f)
+              float indent = 0.f, bool column = false)
   {
     bool enabled = f.enabled ? f.enabled() : true;
     ImGui::BeginDisabled(!enabled);
@@ -392,16 +397,18 @@ namespace {
       // as wide as its text, unless the description says how wide it is: a
       // button that lines up with the values above it says so
       if(ImGui::Button(name.c_str(),
-                       ImVec2((f.widthShare > 0. || f.widthEm > 0.) ? width :
-                                                                     0.f,
+                       ImVec2((column || f.widthShare > 0. || f.widthEm > 0.) ?
+                                width : 0.f,
                               0.f)))
         changed = true;
       break;
     case Ui::Menu: {
       // a button that drops what one may do, made when it is opened
-      float w = (f.widthShare > 0. || f.widthEm > 0.) ? width :
+      float w = (column || f.widthShare > 0. || f.widthEm > 0.) ? width :
                   ImGui::CalcTextSize(f.label.c_str()).x +
                     2.f * ImGui::GetStyle().FramePadding.x;
+      // the arrow is added below, and the column has already been measured
+      if(column) w -= ImGui::GetFontSize() * 1.2f;
       std::string id = "##menu" + f.label;
       // room for the arrow that says it drops something, which is what the
       // button this reproduces draws at its right end
@@ -1316,7 +1323,7 @@ namespace {
   }
 
   void _fields(const std::vector<Ui::Field> &fields, float item,
-               int grid = 0, float reserve = 0.f);
+               int grid = 0, float reserve = 0.f, bool column = false);
 
   // What a pane holds: its own fields, then the sections under them, each with
   // its label as a heading. A long one scrolls rather than making the window as
@@ -1416,7 +1423,7 @@ namespace {
   // into a column of a grid -- letting Dear ImGui put them one after another
   // leaves the headings of a table nowhere near what they head.
   void _fields(const std::vector<Ui::Field> &fields, float item, int grid,
-               float reserve)
+               float reserve, bool column)
   {
     std::size_t i = 0;
     while(i < fields.size()) {
@@ -1568,7 +1575,7 @@ namespace {
         }
         ImGui::PushID((int)k);
         _field(f, here, tall,
-               before[(std::size_t)(grid > 0 ? gridColumn : 0)]);
+               before[(std::size_t)(grid > 0 ? gridColumn : 0)], column);
         ImGui::PopID();
         // A direction is drawn over the lines that follow it rather than
         // making its own line that tall: the cursor goes back to where the
@@ -1733,7 +1740,7 @@ void appWindow::_drawDialog(int which)
                          tall > 0.f ? ImGuiChildFlags_None :
                                       ImGuiChildFlags_AutoResizeY))
       ImGui::PushID("side");
-      _fields(panel.side, w);
+      _fields(panel.side, w, 0, 0.f, true);
       ImGui::PopID();
     ImGui::EndChild();
     ImGui::SameLine();
