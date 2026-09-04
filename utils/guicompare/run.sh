@@ -8,7 +8,13 @@
 # Needs Xvfb, and a virtualenv holding the released gmsh, python-xlib and
 # pillow -- GUICOMPARE_VENV says where it is:
 #
-#   python3 -m venv .venv && .venv/bin/pip install gmsh python-xlib pillow
+#   python3 -m venv .venv
+#   .venv/bin/pip install 'gmsh==4.15.2' python-xlib pillow
+#
+# The version is pinned on purpose: that build is the reference every picture
+# is compared against, and every coordinate this bench clicks was measured on
+# its windows. A newer one would move them and quietly change what "the same"
+# means.
 #
 # The FLTK build is expected in build/, the Dear ImGui one in build-imgui/ and
 # the page in build-browser/ if it is wanted, all with ENABLE_BUILD_DYNAMIC so

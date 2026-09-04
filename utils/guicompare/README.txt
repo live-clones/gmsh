@@ -25,8 +25,16 @@ Running it
 ----------
 
   python3 -m venv .venv
-  .venv/bin/pip install gmsh python-xlib pillow
+  .venv/bin/pip install 'gmsh==4.15.2' python-xlib pillow
   utils/guicompare/run.sh
+
+The version is pinned on purpose. That build is the reference every picture is
+compared against, and every coordinate this bench clicks was measured on its
+windows; a newer one would move them and quietly change what "the same" means.
+
+The four builds photograph at the same time. Each holds an X server, a Gmsh
+with its model, and for the page a browser besides, so on a machine with
+little memory to spare GUICOMPARE_AT_ONCE says how many may run together.
 
 The pictures land in utils/guicompare/out/figures, one sheet per dialog, the
 versions side by side at their true size: a dialog that came out twice as tall
@@ -80,6 +88,28 @@ tree, a tab by its name, a button by its label. That makes the browser column
 the one that says whether the description carries enough to build a window
 from, rather than whether a toolkit was clicked in the right place.
 
-What the page cannot do yet, it does not pretend to. It has no file chooser and
-no menu that pops up, so the sheets for those say "pas de capture" in its
-column rather than showing something that is not there.
+What the page cannot do yet, it does not pretend to: a sheet says "pas de
+capture" in its column rather than showing something that is not there. The
+colour map of a view is the one thing left in that state.
+
+No screen needed
+----------------
+
+Everything happens on private X servers, so a machine with no display is where
+this belongs -- nothing is lost, since the scene was already drawn by Mesa's
+software rasteriser under Xvfb rather than by any GPU. What such a machine
+needs is Xvfb, chromium for the page's column, and the virtualenv above.
+
+One thing does not announce itself: the fonts. FLTK asks for "Helvetica", and
+what fontconfig answers decides every width in every window and therefore
+whether the measured clicks still land. Check it before wondering why a run
+misses:
+
+  fc-match Helvetica        # Nimbus Sans here, from the URW base35 fonts
+
+The build matters as much. A tree configured without ENABLE_PLUGINS has no
+plugin window, one without ENABLE_OCC loses half the elementary entities, and
+the bench would report differences that come from the configuration rather
+than from the interface. ENABLE_BUILD_DYNAMIC is required -- there has to be a
+libgmsh to drive -- and FLTK, Dear ImGui and the page are best built together,
+since which of them comes up is decided when it does.
