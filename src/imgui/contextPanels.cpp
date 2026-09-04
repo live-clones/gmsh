@@ -1527,7 +1527,19 @@ namespace {
         // cell gives the gap back out of its own width, so that the cell
         // still measures exactly one field but the eye can tell its halves
         // apart. FLTK draws a border around each and needs no such thing.
-        if(_sharesCell(fields, k, last)) here -= style.ItemSpacing.x;
+        //
+        // What it gives is a courtesy, and it stops well short of what it is
+        // written in: two halves of a value are sixty pixels apiece and eight
+        // of them cost nothing, but the nine boxes that map the components of
+        // a field are a seventh of one and eight pixels leave a box with no
+        // room for its digit. Never more than a quarter of the cell, and
+        // never so much that one character no longer fits inside the frame.
+        if(_sharesCell(fields, k, last)) {
+          float give = std::min(style.ItemSpacing.x, here * .25f);
+          float least = ImGui::CalcTextSize("0").x + 2.f * style.FramePadding.x;
+          if(here - give < least) give = std::max(0.f, here - least);
+          here -= give;
+        }
         // On a grid, a cell is a field and whatever is packed against it;
         // the first field of a line begins one, and every field after it
         // that is not packed begins the next. A field that begins a cell
