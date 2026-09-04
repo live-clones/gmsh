@@ -16,6 +16,8 @@
 #include "GRegion.h"
 #include "closestVertex.h"
 
+int GEntity::numSelected = 0;
+
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _meshMaster(this), _visible(1), _selection(0),
     _onlySomeElementsVisible(1), _obb(nullptr), va_lines(nullptr),

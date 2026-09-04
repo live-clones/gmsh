@@ -806,6 +806,39 @@ static void endFakeTransparency()
   glEnable(GL_DEPTH_TEST);
 }
 
+// The merged arrays drawn just before the per-entity loops already cover the
+// wireframe and the filled faces of every unselected entity, so those loops
+// have something left to do only when a per-entity feature is on (nodes,
+// labels, normals, tangents, dual, voronoi), when an entity is selected and
+// wants its highlight painted on top of the merge, or when the pass is a
+// picking one, which needs a colour per entity. Otherwise the loop is one
+// virtual call and a few cold cache lines per entity for no pixels at all --
+// which, on a mesh split into a few hundred thousand partition entities, is
+// most of the frame. Decide once, not inside every functor.
+static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
+                              bool mergedTriangles)
+{
+  if(ctx->render_mode != drawContext::GMSH_RENDER) return true;
+  if(GEntity::numSelected) return true;
+  CTX *c = CTX::instance();
+  if(c->mesh.nodes || c->mesh.nodeLabels) return true;
+  switch(dim) {
+  case 0: return false;
+  case 1:
+    return (c->mesh.lines && !mergedLines) || c->mesh.lineLabels ||
+           c->mesh.tangents;
+  case 2:
+    return (c->mesh.surfaceEdges && !mergedLines) ||
+           (c->mesh.surfaceFaces && !mergedTriangles) || c->mesh.surfaceLabels ||
+           c->mesh.normals || c->mesh.dual || c->mesh.voronoi;
+  case 3:
+    return (c->mesh.volumeEdges && !mergedLines) ||
+           (c->mesh.volumeFaces && !mergedTriangles) || c->mesh.volumeLabels ||
+           c->mesh.dual || c->mesh.voronoi;
+  default: return true;
+  }
+}
+
 // Main drawing routine
 
 void drawContext::drawMesh()
@@ -876,12 +909,15 @@ void drawContext::drawMesh()
       }
       bool merge = !inPickColorMode();
 
-      if(status >= 0)
-        std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
+      if(status >= 0 && needPerEntityPass(this, 0, false, false))
+        { const auto &l = m->getFlatVertices();
+          std::for_each(l.begin(), l.end(), drawMeshGVertex(this)); }
       if(status >= 1) {
         if(merge) drawMergedArray(this, ma.lines[1], GL_LINES, false);
         _mergedLines = (merge && ma.lines[1]);
-        std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
+        if(needPerEntityPass(this, 1, _mergedLines, false))
+          { const auto &l = m->getFlatEdges();
+            std::for_each(l.begin(), l.end(), drawMeshGEdge(this)); }
         _mergedLines = false;
       }
       if(status >= 2) {
@@ -895,7 +931,9 @@ void drawContext::drawMesh()
         }
         _mergedLines = (merge && ma.lines[2]);
         _mergedTriangles = (merge && ma.triangles[2]);
-        std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
+        if(needPerEntityPass(this, 2, _mergedLines, _mergedTriangles))
+          { const auto &l = m->getFlatFaces();
+            std::for_each(l.begin(), l.end(), drawMeshGFace(this)); }
         _mergedLines = _mergedTriangles = false;
         endFakeTransparency();
       }
@@ -909,7 +947,9 @@ void drawContext::drawMesh()
         }
         _mergedLines = (merge && ma.lines[3]);
         _mergedTriangles = (merge && ma.triangles[3]);
-        std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
+        if(needPerEntityPass(this, 3, _mergedLines, _mergedTriangles))
+          { const auto &l = m->getFlatRegions();
+            std::for_each(l.begin(), l.end(), drawMeshGRegion(this)); }
         _mergedLines = _mergedTriangles = false;
       }
     }

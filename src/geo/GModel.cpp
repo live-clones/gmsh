@@ -506,8 +506,55 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
   return tags;
 }
 
+static void refreshFlat(bool &valid, std::vector<GVertex *> &fv,
+                        std::vector<GEdge *> &fe, std::vector<GFace *> &ff,
+                        std::vector<GRegion *> &fr,
+                        const std::set<GVertex *, GEntityPtrLessThan> &sv,
+                        const std::set<GEdge *, GEntityPtrLessThan> &se,
+                        const std::set<GFace *, GEntityPtrLessThan> &sf,
+                        const std::set<GRegion *, GEntityPtrLessThan> &sr)
+{
+  if(valid && fv.size() == sv.size() && fe.size() == se.size() &&
+     ff.size() == sf.size() && fr.size() == sr.size())
+    return;
+  fv.assign(sv.begin(), sv.end());
+  fe.assign(se.begin(), se.end());
+  ff.assign(sf.begin(), sf.end());
+  fr.assign(sr.begin(), sr.end());
+  valid = true;
+}
+
+const std::vector<GVertex *> &GModel::getFlatVertices()
+{
+  refreshFlat(_flatValid, _flatVertices, _flatEdges, _flatFaces, _flatRegions,
+              vertices, edges, faces, regions);
+  return _flatVertices;
+}
+
+const std::vector<GEdge *> &GModel::getFlatEdges()
+{
+  refreshFlat(_flatValid, _flatVertices, _flatEdges, _flatFaces, _flatRegions,
+              vertices, edges, faces, regions);
+  return _flatEdges;
+}
+
+const std::vector<GFace *> &GModel::getFlatFaces()
+{
+  refreshFlat(_flatValid, _flatVertices, _flatEdges, _flatFaces, _flatRegions,
+              vertices, edges, faces, regions);
+  return _flatFaces;
+}
+
+const std::vector<GRegion *> &GModel::getFlatRegions()
+{
+  refreshFlat(_flatValid, _flatVertices, _flatEdges, _flatFaces, _flatRegions,
+              vertices, edges, faces, regions);
+  return _flatRegions;
+}
+
 bool GModel::remove(GRegion *r)
 {
+  _flatValid = false;
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -528,6 +575,7 @@ bool GModel::remove(GRegion *r)
 
 bool GModel::remove(GFace *f)
 {
+  _flatValid = false;
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -548,6 +596,7 @@ bool GModel::remove(GFace *f)
 
 bool GModel::remove(GEdge *e)
 {
+  _flatValid = false;
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -568,6 +617,7 @@ bool GModel::remove(GEdge *e)
 
 bool GModel::remove(GVertex *v)
 {
+  _flatValid = false;
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was

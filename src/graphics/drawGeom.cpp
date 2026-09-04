@@ -67,16 +67,74 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
   ctx->drawString(str, xx, yy, zz);
 }
 
+// Draw every plain, unselected geometry point in one call instead of a
+// glBegin/glVertex3d/glEnd block each. A model split into partitions has one
+// geometry point per partition boundary node, so this is tens of thousands of
+// one-vertex draw calls per frame, and the driver spends longer setting each
+// of them up than drawing it. Returns true when it has drawn the points, so
+// that the per-entity pass can skip them; selected points and labels are left
+// to that pass, which paints them on top.
+static bool drawGeomPointsBatched(drawContext *ctx,
+                                  const std::vector<GVertex *> &verts)
+{
+  CTX *c = CTX::instance();
+  if(ctx->render_mode == drawContext::GMSH_SELECT) return false;
+  if(!c->geom.points) return false; // only the selected ones are drawn
+  if(c->geom.pointType > 0) return false; // spheres, not points
+  if(c->geom.highlightOrphans) return false; // needs the per-entity colours
+
+  static std::vector<float> xyz;
+  static std::vector<unsigned char> col;
+  xyz.clear();
+  col.clear();
+  for(std::size_t i = 0; i < verts.size(); i++) {
+    GVertex *v = verts[i];
+    if(!v->getVisibility()) continue;
+    if(v->geomType() == GEntity::BoundaryLayerPoint) continue;
+    if(v->getSelection()) continue;
+    double x = v->x(), y = v->y(), z = v->z();
+    ctx->transform(x, y, z);
+    xyz.push_back((float)x);
+    xyz.push_back((float)y);
+    xyz.push_back((float)z);
+    unsigned int cc = v->useColor() ? v->getColor() : c->color.geom.point;
+    const unsigned char *p = (const unsigned char *)&cc;
+    for(int k = 0; k < 4; k++) col.push_back(p[k]);
+  }
+  if(xyz.empty()) return true;
+
+  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+  glDisable(GL_LIGHTING);
+  glPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
+  gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_COLOR_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  glVertexPointer(3, GL_FLOAT, 0, &xyz[0]);
+  glColorPointer(4, GL_UNSIGNED_BYTE, 0, &col[0]);
+  glDrawArrays(GL_POINTS, 0, (GLsizei)(xyz.size() / 3));
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+  return true;
+}
+
 class drawGVertex {
 private:
   drawContext *_ctx;
+  bool _batched;
 
 public:
-  drawGVertex(drawContext *ctx) : _ctx(ctx) {}
+  drawGVertex(drawContext *ctx, bool batched = false)
+    : _ctx(ctx), _batched(batched)
+  {
+  }
   void operator()(GVertex *v)
   {
     if(!v->getVisibility()) return;
     if(v->geomType() == GEntity::BoundaryLayerPoint) return;
+    // already drawn by drawGeomPointsBatched(), and nothing else here applies
+    if(_batched && !v->getSelection() && !CTX::instance()->geom.pointLabels)
+      return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    v->model() == GModel::current());
@@ -529,10 +587,15 @@ void drawContext::drawGeom()
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     if(m->getVisibility() && isVisible(m)) {
-      std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));
-      std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
-      std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
-      std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
+      { const auto &l = m->getFlatVertices();
+        bool batched = drawGeomPointsBatched(this, l);
+        std::for_each(l.begin(), l.end(), drawGVertex(this, batched)); }
+      { const auto &l = m->getFlatEdges();
+        std::for_each(l.begin(), l.end(), drawGEdge(this)); }
+      { const auto &l = m->getFlatFaces();
+        std::for_each(l.begin(), l.end(), drawGFace(this)); }
+      { const auto &l = m->getFlatRegions();
+        std::for_each(l.begin(), l.end(), drawGRegion(this)); }
     }
   }
 
