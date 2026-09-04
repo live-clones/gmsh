@@ -186,8 +186,10 @@ void openglWindow::draw()
 
   if(!context_valid()) {
     _ctx->invalidateQuadricsAndDisplayLists();
-    // the buffer objects were destroyed with the previous context
+    // the buffer objects were destroyed with the previous context, and the
+    // entry points have to be asked of the new one
     VertexArray::invalidateBuffers();
+    glApi::reset();
   }
 
   _ctx->viewport[0] = 0;

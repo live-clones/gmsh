@@ -13,30 +13,8 @@
 #include "SPoint2.h"
 #include "Camera.h"
 
-#if defined(WIN32)
-#include <windows.h>
-#undef min
-#undef max
-#endif
-
-#if defined(__APPLE__)
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#else
-// ask the system headers for the prototypes of what came after OpenGL 1.1, in
-// particular the buffer objects (OpenGL 1.5)
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glu.h>
-#endif
-
-// Buffer objects are core since OpenGL 1.5 and the system headers declare them
-// on macOS and Linux. On Windows opengl32 only exports OpenGL 1.1 and they
-// would have to be fetched from the driver at runtime, which is not done yet:
-// fall back on client-side vertex arrays there.
-#if !defined(WIN32)
-#define HAVE_VERTEX_BUFFER_OBJECTS
-#endif
+// the OpenGL headers, and the entry points that came after OpenGL 1.1
+#include "glApi.h"
 
 #include "GmshConfig.h"
 #include "VertexArray.h"

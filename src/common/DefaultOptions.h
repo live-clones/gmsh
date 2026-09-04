@@ -886,7 +886,8 @@ StringXNumber GeneralOptions_Number[] = {
     "4: +information, 5: +status, 99: +debug)" },
   { F|O, "VertexBufferObjects" , opt_general_vertex_buffer_objects , 1. ,
     "Keep the vertex arrays in OpenGL buffer objects instead of sending them "
-    "from client memory at each frame? (not available on all platforms)" },
+    "from client memory at each frame? (ignored if the OpenGL "
+    "implementation does not provide buffer objects)" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the visibility "
     "window" },

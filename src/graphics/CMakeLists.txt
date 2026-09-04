@@ -7,6 +7,7 @@ set(SRC
   Camera.cpp
   Trackball.cpp
   ReadImg.cpp
+  glApi.cpp
   drawContext.cpp
   drawMesh.cpp
   drawGeom.cpp
