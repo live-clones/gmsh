@@ -453,6 +453,16 @@ namespace Dialog {
         // from the store: typing one only has to ask for a redraw
         f.changed = []() { drawContext::global()->draw(); };
         q.fields.push_back(f);
+        // A second column is not a line cut in two. Two fields sharing a line
+        // otherwise share the width of one, which is what makes a pair of
+        // halves line up with the whole above them -- but the window this
+        // replaces gives the cone's radii and its angle the width a number
+        // has everywhere else, and simply starts them further along. Saying
+        // that each takes a whole field is what says so.
+        if(at.beside && q.fields.size() >= 2) {
+          q.fields[q.fields.size() - 1].widthShare = 1.;
+          q.fields[q.fields.size() - 2].widthShare = 1.;
+        }
       }
       q.chosen = [i]() { geometryElementaryRestart(i); };
       q.buttonLabel = "Add";
