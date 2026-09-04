@@ -254,11 +254,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
 
 MElement *PViewDataGModel::_getElement(int step, int ent, int ele)
 {
-  static int lastStep = -1, lastEnt = -1, lastEle = -1;
-  static MElement *curr = nullptr;
-  if(step != lastStep || ent != lastEnt || ele != lastEle)
-    curr = _steps[step]->getEntity(ent)->getMeshElement(ele);
-  return curr;
+  return _steps[step]->getEntity(ent)->getMeshElement(ele);
 }
 
 std::string PViewDataGModel::getFileName(int step)
