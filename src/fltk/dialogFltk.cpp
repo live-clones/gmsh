@@ -1473,7 +1473,9 @@ void dialogFltk::build(int dialog)
       _addFields(q.fields, 2 * WB, y,
                  width - (form ? Fl::scrollbar_size() : 0), (int)i, q.columns);
       if(q.buttonLabel.size()) {
-        Fl_Button *pb = new Fl_Button(width - BB - 2 * WB, y, BB, BH);
+        // at the right of the line, or at its far left when it stands apart
+        int bx = q.buttonApart ? 2 * WB : width - BB - 2 * WB;
+        Fl_Button *pb = new Fl_Button(bx, y, BB, BH);
         pb->copy_label(_escaped(q.buttonLabel).c_str());
         pb->callback(_buttonCallback, new buttonAction{this, q.button});
         _paneButtons.push_back({pb, (int)i, rows});
@@ -1584,9 +1586,10 @@ void dialogFltk::build(int dialog)
       }
       if(q.buttonLabel.size()) {
         // at the bottom right of the pane, with the same margin under it as
-        // around everything else
-        Fl_Button *b =
-          new Fl_Button(width - BB - 2 * WB, top + height - BH - WB, BB, BH);
+        // around everything else -- or at the bottom left, for the one that
+        // stands apart from what the pane does
+        int bx = q.buttonApart ? 2 * WB : width - BB - 2 * WB;
+        Fl_Button *b = new Fl_Button(bx, top + height - BH - WB, BB, BH);
         // a widget keeps the pointer it is given rather than the text, so the
         // label cannot be a temporary
         b->copy_label(_escaped(q.buttonLabel).c_str());

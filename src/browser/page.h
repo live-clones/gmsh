@@ -942,8 +942,14 @@ function drawForms(forms) {
       lines(beside, bar, 0);
       const row = document.createElement('div'); row.className = 'line act';
       const gap = document.createElement('div');
-      gap.className = 'cell gap'; row.appendChild(gap);
+      gap.className = 'cell gap';
+      // The gap is what pushes the button to the right. A button that stands
+      // apart from what the pane does goes to the far left instead, so the
+      // gap goes after it rather than before.
+      const apart = pane && pane.buttonApart;
+      if(!apart) row.appendChild(gap);
       if(pane && pane.button) row.appendChild(does(pane.button, pane));
+      if(apart) row.appendChild(gap);
       bar.appendChild(row);
       rest.appendChild(bar);
     }

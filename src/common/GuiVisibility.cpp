@@ -804,6 +804,7 @@ namespace Dialog {
       _byPicking(picked.fields, "physical surfaces");
       _byPicking(picked.fields, "physical volumes");
       picked.buttonLabel = "Show all";
+      picked.buttonApart = true;
       picked.button = []() { visibilityInteractive("show all"); };
       p.panes.push_back(picked);
     }
