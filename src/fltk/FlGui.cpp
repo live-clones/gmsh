@@ -505,8 +505,15 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // add global shortcuts
   Fl::add_handler(globalShortcut);
 
-  // make sure a global drawing context is setup
-  if(!drawContext::global()) drawContext::setGlobal(new drawContextFltk);
+  // The draw context that writes in the scene, with the engine the option
+  // asks for. It used to be installed by the option itself, as a side effect
+  // of being read at start-up, which is what also had it replace the draw
+  // context of whichever other scene was running; the scene installs its
+  // own now. global() is never null -- it makes a dummy that draws nothing
+  // -- so the fallback asks it what it is rather than whether it is.
+  Gui::sceneSettingChanged("font_engine");
+  if(drawContext::global()->getName() == "None")
+    drawContext::setGlobal(new drawContextFltk);
 
   // set default font size
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();

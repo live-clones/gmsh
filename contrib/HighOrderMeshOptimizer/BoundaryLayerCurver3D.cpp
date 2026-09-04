@@ -42,9 +42,6 @@
 #include "PView.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
 
 namespace {
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,

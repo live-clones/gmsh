@@ -313,6 +313,20 @@ namespace Ui {
     // and is done by the caller.
     virtual void applyColorScheme(bool dark) {}
 
+    // --- what the options that shape the main window push into it
+    //
+    // Set from a script or from the option window, each of these is a
+    // setting the interface laid itself out from when it came up, and has to
+    // be told about now. An interface whose layout is its own to keep -- the
+    // dock space of Dear ImGui, the page in a browser -- has nothing to do
+    // for any of them, which is why none is pure. A dimension of -1 leaves
+    // that one as it is.
+    virtual void setSceneSize(int width, int height) {}
+    virtual void setConsoleFontSize(int size) {}
+    virtual void setTreeWidth(int width) {}
+    virtual void detachTree(bool detached) {}
+    virtual void enableTooltips(bool on) {}
+
     // --- what the backend may call back
     //
     // The whole of it. Anything else a toolkit wants to say belongs in a

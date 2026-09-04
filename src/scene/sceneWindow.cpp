@@ -578,6 +578,14 @@ namespace WindowScene {
     if(_open() && _it().view) _it().view->addPointMode = on;
   }
 
+  void sceneSettingChanged(const std::string &what)
+  {
+    if(what == "background_image" && _open() && _it().view &&
+       _it().view->getDrawContext())
+      _it().view->getDrawContext()->invalidateBgImageTexture();
+    // the buffering of a GLFW window is decided when it is made
+  }
+
   const std::vector<GVertex *> &selectedVertices()
   {
     return _it().vertices;

@@ -11,7 +11,15 @@
 #include <map>
 
 #include <FL/Fl.H>
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
+// OK
+#elif (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 3)
+// OK
+#else
+#error "Gmsh requires FLTK >= 1.3.3"
+#endif
 #include <FL/fl_ask.H>
+#include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Window.H>
 
 #include "Backend.h"
@@ -120,8 +128,51 @@ namespace {
     void refreshBar() override
     {
       if(!FlGui::available()) return;
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->getProgress()->redraw();
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
+        graphicWindow *g = FlGui::instance()->graph[i];
+        g->getProgress()->redraw();
+        // the buttons of the bar answer to options -- the one that picks with
+        // the mouse says whether picking is on -- and are drawn from them
+        g->refreshStatusButtons();
+      }
+    }
+
+    // --- what the options that shape the main window push into it
+
+    void setSceneSize(int width, int height) override
+    {
+      if(!FlGui::available() || FlGui::instance()->graph.empty()) return;
+      if(width >= 0) FlGui::instance()->graph[0]->setGlWidth(width);
+      if(height >= 0) FlGui::instance()->graph[0]->setGlHeight(height);
+    }
+
+    void setConsoleFontSize(int size) override
+    {
+      if(FlGui::available() && !FlGui::instance()->graph.empty())
+        FlGui::instance()->graph[0]->setMessageFontSize(size);
+    }
+
+    void setTreeWidth(int width) override
+    {
+      if(FlGui::available() && !FlGui::instance()->graph.empty())
+        FlGui::instance()->graph[0]->setMenuWidth(width);
+    }
+
+    void detachTree(bool detached) override
+    {
+      if(!FlGui::available() || FlGui::instance()->graph.empty()) return;
+      if(detached)
+        FlGui::instance()->graph[0]->detachMenu();
+      else
+        FlGui::instance()->graph[0]->attachMenu();
+    }
+
+    void enableTooltips(bool on) override
+    {
+      if(on)
+        Fl_Tooltip::enable();
+      else
+        Fl_Tooltip::disable();
     }
 
     int numWindows() override
