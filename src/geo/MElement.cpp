@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <cmath>
 #include <limits>
+#include <atomic>
+#include <mutex>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -251,24 +253,55 @@ double MElement::maxEdge()
   return m;
 }
 
-double MElement::maxDistToStraight() const
+// The straight-sided shape functions evaluated at the high order nodes of the
+// reference element only depend on the element type. Evaluating them for every
+// element made maxDistToStraight() by far the most expensive part of drawing a
+// high order mesh, so they are computed once per type and kept: one row per
+// high order node, one column per corner. A null entry means that the element
+// has no high order node, or no straight-sided function space.
+static const fullMatrix<double> *straightShapeFunctions(const MElement *ele)
 {
-  const nodalBasis *lagBasis = getFunctionSpace();
+  static std::atomic<const fullMatrix<double> *> cache[MSH_MAX_NUM + 1];
+  static std::mutex mutex;
+
+  int type = ele->getTypeForMSH();
+  if(type < 0 || type > MSH_MAX_NUM) return nullptr;
+  const fullMatrix<double> *sf = cache[type].load(std::memory_order_acquire);
+  if(sf) return sf;
+
+  std::lock_guard<std::mutex> lock(mutex);
+  sf = cache[type].load(std::memory_order_relaxed);
+  if(sf) return sf; // another thread got there first
+
+  const nodalBasis *lagBasis = ele->getFunctionSpace();
+  const nodalBasis *lagBasis1 = ele->getFunctionSpace(1);
+  if(!lagBasis || !lagBasis1) return nullptr;
   const fullMatrix<double> &uvw = lagBasis->points;
-  const int &nV = uvw.size1();
-  const int &dim = uvw.size2();
-  const nodalBasis *lagBasis1 = getFunctionSpace(1);
-  const int &nV1 = lagBasis1->points.size1();
-  std::vector<SPoint3> xyz1(nV1);
-  for(int iV = 0; iV < nV1; ++iV) xyz1[iV] = getVertex(iV)->point();
-  double maxdx = 0.;
+  int nV = uvw.size1(), dim = uvw.size2();
+  int nV1 = lagBasis1->points.size1();
+  fullMatrix<double> *m = new fullMatrix<double>(std::max(nV - nV1, 0), nV1);
   for(int iV = nV1; iV < nV; ++iV) {
     double f[256];
     lagBasis1->f(uvw(iV, 0), (dim > 1) ? uvw(iV, 1) : 0.,
                  (dim > 2) ? uvw(iV, 2) : 0., f);
+    for(int iSF = 0; iSF < nV1; ++iSF) (*m)(iV - nV1, iSF) = f[iSF];
+  }
+  cache[type].store(m, std::memory_order_release);
+  return m;
+}
+
+double MElement::maxDistToStraight() const
+{
+  const fullMatrix<double> *sf = straightShapeFunctions(this);
+  if(!sf || !sf->size1()) return 0.;
+  const int nV1 = sf->size2(), nHO = sf->size1();
+  std::vector<SPoint3> xyz1(nV1);
+  for(int iV = 0; iV < nV1; ++iV) xyz1[iV] = getVertex(iV)->point();
+  double maxdx = 0.;
+  for(int i = 0; i < nHO; ++i) {
     SPoint3 xyzS(0., 0., 0.);
-    for(int iSF = 0; iSF < nV1; ++iSF) xyzS += xyz1[iSF] * f[iSF];
-    SVector3 vec(xyzS, getVertex(iV)->point());
+    for(int iSF = 0; iSF < nV1; ++iSF) xyzS += xyz1[iSF] * (*sf)(i, iSF);
+    SVector3 vec(xyzS, getVertex(nV1 + i)->point());
     double dx = vec.norm();
     if(dx > maxdx) maxdx = dx;
   }
