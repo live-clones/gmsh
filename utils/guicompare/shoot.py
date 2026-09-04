@@ -217,11 +217,15 @@ SHOTS.append(dict(name="plugins", dialog="plugins", branches=[],
                   everyTab={"released": ["options", "help"],
                             "fltk": ["options", "help"],
                             "imgui": ["options", "help"]},
-                  # measured on a picture of the open window: FLTK 1.4 draws
-                  # this strip beside two list boxes whose borders read as tab
+                  # measured on a picture of the open window: FLTK draws this
+                  # strip beside two list boxes whose borders read as tab
                   # separators, so it is the one dialog whose tabs are written
-                  # down rather than found
-                  tabsAt={"fltk": [(261, 94), (306, 94)]}))
+                  # down rather than found. It fools 1.3 as well as 1.4, so the
+                  # released build needs its own places: without them its Help
+                  # picture was the Options tab again, and the sheet compared
+                  # that against the Help of the other three.
+                  tabsAt={"released": [(260, 74), (304, 74)],
+                          "fltk": [(261, 94), (306, 94)]}))
 # The visibility window, on a model that has something to hide. Every one of
 # its tabs is photographed, and where each tab is, is read off the picture --
 # the released build has one more of them than the converted ones, so they are
