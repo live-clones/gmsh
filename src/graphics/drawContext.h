@@ -170,6 +170,23 @@ public:
   };
   std::vector<pickObject> _pickObjects;
   bool _pickColor;
+  // Last identifier image read back from a picking pass, together with its
+  // depths. Hovering asks what is under the cursor on every mouse move: with
+  // the image kept, all but the first of those cost a lookup instead of
+  // drawing every entity again. openglWindow::draw() drops it on every
+  // redraw, which covers camera moves, visibility and mesh changes; the flags
+  // record what the image was drawn with, as a pick that asks for something
+  // else has to be drawn again.
+  std::vector<unsigned char> _pickCache;
+  std::vector<float> _pickCacheDepth;
+  bool _pickCacheValid, _pickCacheMesh, _pickCachePost, _pickCacheElements;
+  // the part of the window the image covers, in real pixels. Not the whole
+  // window: rasterising it all costs several times what a small region does,
+  // and the pointer stays in one place long enough for a region around it to
+  // answer the queries that follow
+  int _pickCacheX, _pickCacheY, _pickCacheWidth, _pickCacheHeight;
+  // draw a region of the window in picking colours and keep the result
+  bool _fillPickCache(bool mesh, bool post, int fx, int fy, int fw, int fh);
   // the projection built by initProjection(), and the modelview it leaves for
   // initPosition() to apply the position transform to
   double _projection[16], _modelBase[16];
@@ -188,6 +205,9 @@ public:
   bool inPickColorMode() const { return _pickColor; }
   // register a pickable object and set the colour that encodes it
   void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1);
+  // forget the identifier image kept by the picking pass: anything that
+  // changes what a redraw would show has to call this
+  void invalidatePickCache() { _pickCacheValid = false; }
   // stop attributing what is drawn next to the object the last setPickColor()
   // registered: the decorations drawn between two pickable objects (frames,
   // axes, labels) would otherwise be picked as that object

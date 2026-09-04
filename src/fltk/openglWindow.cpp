@@ -199,6 +199,10 @@ void openglWindow::draw()
 
   Msg::Debug("openglWindow::draw()");
 
+  // whatever the picking pass last drew is out of date: the camera, the
+  // visibility or the mesh may all have changed since
+  _ctx->invalidatePickCache();
+
   if(!context_valid()) {
     _ctx->invalidateQuadricsAndDisplayLists();
     // the buffer objects were destroyed with the previous context, and the

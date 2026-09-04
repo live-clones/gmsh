@@ -73,6 +73,9 @@ drawContext::drawContext(openglWindow *window, drawTransform *transform)
   glMatrix::identity(_projection);
   glMatrix::identity(_modelBase);
 
+  _pickCacheValid = _pickCacheMesh = _pickCachePost = _pickCacheElements = false;
+  _pickCacheX = _pickCacheY = _pickCacheWidth = _pickCacheHeight = 0;
+
   _bgImageTexture = _bgImageW = _bgImageH = 0;
 
   _quadric = nullptr; // cannot create it here: needs valid opengl context
@@ -1069,28 +1072,19 @@ void drawContext::unsetPickColor()
   glColor4ubv(c);
 }
 
-// Draw the scene once with every pickable object in the flat colour that
-// encodes it, then read the colours back over the picking rectangle. The
-// closest object is the one whose colour sits on the smallest depth.
-bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
-                               int x, int y, int w, int h,
-                               std::vector<GVertex *> &vertices,
-                               std::vector<GEdge *> &edges,
-                               std::vector<GFace *> &faces,
-                               std::vector<GRegion *> &regions,
-                               std::vector<MElement *> &elements,
-                               std::vector<SPoint2> &points,
-                               std::vector<PView *> &views)
+// Side of the region, in real pixels, that a picking pass draws and keeps
+// around the point that was asked for. Big enough that the pointer usually
+// stays inside it while hovering, small enough that drawing it costs a
+// fraction of what the whole window would.
+static const int PICK_CACHE_SIZE = 512;
+
+// Draw a region of the window with every pickable object in the flat colour
+// that encodes it, and keep the result: the picks that follow are then lookups
+// in that image, so hovering does not redraw the scene on every mouse move.
+bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
+                                 int fh)
 {
-  if(w < 1) w = 1;
-  if(h < 1) h = 1;
-  // the rectangle is given by its centre, as glMatrix::pickRegion() takes it
-  int x0 = x - w / 2, y0 = (viewport[3] - y) - h / 2;
-  if(x0 < viewport[0]) x0 = viewport[0];
-  if(y0 < viewport[1]) y0 = viewport[1];
-  if(x0 + w > viewport[2]) w = viewport[2] - x0;
-  if(y0 + h > viewport[3]) h = viewport[3] - y0;
-  if(w < 1 || h < 1) return false;
+  if(fw < 1 || fh < 1) return false;
 
   _pickObjects.clear();
   _pickObjects.push_back(pickObject()); // 0: background
@@ -1108,17 +1102,9 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   glDisable(GL_LIGHTING);
   glDisable(GL_BLEND);
   glShadeModel(GL_FLAT);
-  // the viewport is in logical points, but scissoring and reading back work in
-  // real pixels, which differ on a high resolution display
-  double hr = highResolutionPixelFactor();
-  int fx0 = (int)(x0 * hr), fy0 = (int)(y0 * hr);
-  int fw = (int)(w * hr), fh = (int)(h * hr);
-  if(fw < 1) fw = 1;
-  if(fh < 1) fh = 1;
-
-  // only rasterize the picking rectangle
+  // only rasterise the region the image covers
   glEnable(GL_SCISSOR_TEST);
-  glScissor(fx0, fy0, fw, fh);
+  glScissor(fx, fy, fw, fh);
   glClearColor(0., 0., 0., 0.);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1148,12 +1134,13 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   drawText2d();
   glPopMatrix();
 
-  std::vector<GLubyte> pixels(4 * fw * fh, 0);
-  std::vector<GLfloat> depths(fw * fh, 1.f);
+  _pickCache.assign((std::size_t)4 * fw * fh, 0);
+  _pickCacheDepth.assign((std::size_t)fw * fh, 1.f);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glReadBuffer(GL_BACK);
-  glReadPixels(fx0, fy0, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
-  glReadPixels(fx0, fy0, fw, fh, GL_DEPTH_COMPONENT, GL_FLOAT, &depths[0]);
+  glReadPixels(fx, fy, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE, &_pickCache[0]);
+  glReadPixels(fx, fy, fw, fh, GL_DEPTH_COMPONENT, GL_FLOAT,
+               &_pickCacheDepth[0]);
 
   glDisable(GL_SCISSOR_TEST);
   glDepthRange(0., 1.);
@@ -1164,22 +1151,99 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   _pickColor = _pickColorActive = false;
   render_mode = drawContext::GMSH_RENDER;
 
+  _pickCacheX = fx;
+  _pickCacheY = fy;
+  _pickCacheWidth = fw;
+  _pickCacheHeight = fh;
+  _pickCacheMesh = mesh;
+  _pickCachePost = post;
+  _pickCacheElements = CTX::instance()->pickElements ? true : false;
+  _pickCacheValid = true;
+  Msg::Debug("Colour picking: drew %d objects into a %dx%d image",
+             (int)_pickObjects.size(), fw, fh);
+  return true;
+}
+
+// Find the objects whose colour shows up in the picking rectangle, and return
+// them ordered by depth.
+bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
+                               int x, int y, int w, int h,
+                               std::vector<GVertex *> &vertices,
+                               std::vector<GEdge *> &edges,
+                               std::vector<GFace *> &faces,
+                               std::vector<GRegion *> &regions,
+                               std::vector<MElement *> &elements,
+                               std::vector<SPoint2> &points,
+                               std::vector<PView *> &views)
+{
+  if(w < 1) w = 1;
+  if(h < 1) h = 1;
+  // the rectangle is given by its centre
+  int x0 = x - w / 2, y0 = (viewport[3] - y) - h / 2;
+  if(x0 < viewport[0]) x0 = viewport[0];
+  if(y0 < viewport[1]) y0 = viewport[1];
+  if(x0 + w > viewport[2]) w = viewport[2] - x0;
+  if(y0 + h > viewport[3]) h = viewport[3] - y0;
+  if(w < 1 || h < 1) return false;
+
+  // the viewport is in logical points, but the image is in real pixels, which
+  // differ on a high resolution display
+  double hr = highResolutionPixelFactor();
+  int fx0 = (int)(x0 * hr), fy0 = (int)(y0 * hr);
+  int fw = (int)(w * hr), fh = (int)(h * hr);
+  if(fw < 1) fw = 1;
+  if(fh < 1) fh = 1;
+  int winW = (int)((viewport[2] - viewport[0]) * hr);
+  int winH = (int)((viewport[3] - viewport[1]) * hr);
+
+  bool pickElements = CTX::instance()->pickElements ? true : false;
+  bool inside = _pickCacheValid && fx0 >= _pickCacheX && fy0 >= _pickCacheY &&
+                fx0 + fw <= _pickCacheX + _pickCacheWidth &&
+                fy0 + fh <= _pickCacheY + _pickCacheHeight;
+  if(!inside || _pickCacheMesh != mesh || _pickCachePost != post ||
+     _pickCacheElements != pickElements) {
+    // a region around the query, big enough that the pointer has to travel a
+    // long way before the image has to be drawn again
+    int cw = std::min(winW, PICK_CACHE_SIZE), ch = std::min(winH, PICK_CACHE_SIZE);
+    if(cw < fw) cw = fw;
+    if(ch < fh) ch = fh;
+    int cx = fx0 + fw / 2 - cw / 2, cy = fy0 + fh / 2 - ch / 2;
+    if(cx < 0) cx = 0;
+    if(cy < 0) cy = 0;
+    if(cx + cw > winW) cx = winW - cw;
+    if(cy + ch > winH) cy = winH - ch;
+    if(cx < 0 || cy < 0) return false;
+    if(!_fillPickCache(mesh, post, cx, cy, cw, ch)) return false;
+  }
+
+  const unsigned char *pixels = &_pickCache[0];
+  const float *depths = &_pickCacheDepth[0];
+  const int stride = _pickCacheWidth;
+  fx0 -= _pickCacheX;
+  fy0 -= _pickCacheY;
+  if(fx0 < 0 || fy0 < 0 || fx0 + fw > _pickCacheWidth ||
+     fy0 + fh > _pickCacheHeight)
+    return false;
+
   // gather the objects that show up, keeping the smallest depth for each. The
   // 2D overlay is painted on top of the scene without depth testing, so it
   // wrote no depth of its own and the buffer holds whatever is underneath it:
   // rank it in front, which is where it is drawn.
   std::map<std::size_t, float> found;
-  for(int i = 0; i < fw * fh; i++) {
-    std::size_t id = (std::size_t)pixels[4 * i] |
-                     ((std::size_t)pixels[4 * i + 1] << 8) |
-                     ((std::size_t)pixels[4 * i + 2] << 16);
-    if(!id || id >= _pickObjects.size()) continue;
-    float z = (_pickObjects[id].type >= 4) ? -1.f : depths[i];
-    auto it = found.find(id);
-    if(it == found.end() || z < it->second) found[id] = z;
+  for(int r = 0; r < fh; r++) {
+    for(int c = 0; c < fw; c++) {
+      std::size_t i = (std::size_t)(fy0 + r) * stride + (fx0 + c);
+      std::size_t id = (std::size_t)pixels[4 * i] |
+                       ((std::size_t)pixels[4 * i + 1] << 8) |
+                       ((std::size_t)pixels[4 * i + 2] << 16);
+      if(!id || id >= _pickObjects.size()) continue;
+      float z = (_pickObjects[id].type >= 4) ? -1.f : depths[i];
+      auto it = found.find(id);
+      if(it == found.end() || z < it->second) found[id] = z;
+    }
   }
-  Msg::Debug("Colour picking: %d objects drawn, %d found in a %dx%d rectangle",
-             (int)_pickObjects.size(), (int)found.size(), fw, fh);
+  Msg::Debug("Colour picking: %d found in a %dx%d rectangle",
+             (int)found.size(), fw, fh);
   if(found.empty()) return false;
 
   // order by depth, and prefer the entities of lowest dimension, as the
