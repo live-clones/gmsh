@@ -114,7 +114,7 @@ void file_watch_cb(Fl_Widget *w, void *data)
 
 void help_about_cb(Fl_Widget *w, void *data)
 {
-  Dialog::show(Dialog::About, -1);
+  Dialog::show(Dialog::about(), -1);
 }
 
 void onelab_reload_cb(Fl_Widget *w, void *data)
@@ -236,7 +236,7 @@ void status_options_cb(Fl_Widget *w, void *data)
   std::string what((const char *)data);
 
   if(what == "?") { // display options
-    Dialog::show(Dialog::CurrentOptions, -1);
+    Dialog::show(Dialog::currentOptions(), -1);
   }
   else if(what == "p") { // toggle projection mode
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI,

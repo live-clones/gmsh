@@ -513,7 +513,7 @@ void clippingReset()
 #endif
   }
   clippingRead();
-  Gui::refreshDialog(Dialog::Clipping);
+  Gui::refreshForm(Dialog::clipping());
   drawContext::global()->draw();
 }
 
@@ -558,9 +558,9 @@ void statisticsCompute(bool elementQuality)
 
 void statisticsRefresh(bool elementQuality)
 {
-  if(!Gui::available() || !Gui::dialogVisible(Dialog::Statistics)) return;
+  if(!Gui::available() || !Gui::formVisible(Dialog::statistics())) return;
   statisticsCompute(elementQuality);
-  Gui::refreshDialog(Dialog::Statistics);
+  Gui::refreshForm(Dialog::statistics());
 }
 
 double statisticsValue(int index)
@@ -1050,7 +1050,7 @@ void optionsAction(const std::string &what)
       opt_general_rotation_center2(0, GMSH_SET | GMSH_GUI, pc.z());
       if(drawContext *ctx = Gui::getCurrentDrawContext())
         ctx->recenterForRotationCenterChange(pc);
-      Gui::refreshDialog(Dialog::Manipulator);
+      Gui::refreshForm(Dialog::manipulator());
     }
     CTX::instance()->pickElements = 0;
     CTX::instance()->mesh.changed = ENT_ALL;
@@ -1073,7 +1073,7 @@ void optionsAction(const std::string &what)
   else if(what == "arrow_edit") {
     // the shape of an arrow, described once like every other dialog: it stays
     // up while one tries a shape, looks at it, and tries another
-    Dialog::show(Dialog::Arrow, -1);
+    Dialog::show(Dialog::arrow(), -1);
   }
   else if(what == "axes_fit") {
     SBoundingBox3d bbox = GModel::current()->bounds(true);

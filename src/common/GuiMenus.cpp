@@ -69,22 +69,25 @@ namespace Menu {
     }
 
     // the same, for the windows that have become dialogs of GuiDialogs.h
-    MenuItem dialog(const std::string &label, char mnemonic, int which,
-                const Shortcut &shortcut = Shortcut())
+    // `which` gives the form rather than being it, so that the entry is
+    // right whichever interface is up when it is used
+    MenuItem dialog(const std::string &label, char mnemonic,
+                    Ui::FormRef (*which)(),
+                    const Shortcut &shortcut = Shortcut())
     {
       MenuItem i;
       i.kind = MenuItem::Toggle;
       i.label = label;
       i.mnemonic = mnemonic;
       i.shortcut = shortcut;
-      i.checked = [which]() { return Gui::dialogVisible(which); };
+      i.checked = [which]() { return Gui::formVisible(which()); };
       i.action = [which]() {
         // through Dialog::show(), which is where a dialog gets what it needs
         // read before it appears; -1 keeps the pane it was left on
-        if(Gui::dialogVisible(which))
-          Gui::showDialog(which, false);
+        if(Gui::formVisible(which()))
+          Gui::showForm(which(), false);
         else
-          Dialog::show(which, -1);
+          Dialog::show(which(), -1);
       };
       return i;
     }
@@ -229,9 +232,9 @@ static bool check_utf8(const std::string &string)
                             Shortcut('U', ModCommand | ModShift)));
       tools.push_back(panel("Visibility", 'V', Gui::PanelVisibility,
                             Shortcut('V', ModCommand | ModShift)));
-      tools.push_back(dialog("Clipping", 'C', Dialog::Clipping,
+      tools.push_back(dialog("Clipping", 'C', Dialog::clipping,
                             Shortcut('C', ModCommand | ModShift)));
-      tools.push_back(divide(dialog("Manipulator", 'M', Dialog::Manipulator,
+      tools.push_back(divide(dialog("Manipulator", 'M', Dialog::manipulator,
                                     Shortcut('M', ModCommand | ModShift))));
 #if defined(HAVE_3M)
       // the proprietary extension of contrib/3M, which only the FLTK interface
@@ -239,7 +242,7 @@ static bool check_utf8(const std::string &string)
       if(Gui::supportsWindowAction("3m"))
         tools.push_back(divide(window("3M", '3', "3m")));
 #endif
-      tools.push_back(dialog("Statistics", 't', Dialog::Statistics,
+      tools.push_back(dialog("Statistics", 't', Dialog::statistics,
                             Shortcut('I', ModCommand)));
       tools.push_back(panel("Message Console", 'e', Gui::PanelMessageConsole,
                             Shortcut('L', ModCommand)));
@@ -353,7 +356,7 @@ namespace {
   {
     MenuItem i = action(label, 0, [category]() {
       Dialog::optionsCategory() = category;
-      Dialog::show(Dialog::Options, -1);
+      Dialog::show(Dialog::options(), -1);
     });
     i.dividerAfter = true;
     return i;
@@ -634,7 +637,7 @@ namespace {
     std::vector<MenuItem> items;
     // "Parameter" has nothing to place: it is written from the panel alone
     items.push_back(
-      action("Parameter", 0, []() { Dialog::show(Dialog::Elementary, 0); }));
+      action("Parameter", 0, []() { Dialog::show(Dialog::elementary(), 0); }));
     items.push_back(shape("Point", 1));
     items.push_back(curve("Line", "Line", 12));
     items.push_back(curve("Spline", "Spline", 13));
@@ -758,7 +761,7 @@ std::vector<MenuItem> modules()
   {
     std::vector<MenuItem> define;
     define.push_back(action("Size at points", 0, []() {
-      Dialog::show(Dialog::Mesh, 0);
+      Dialog::show(Dialog::mesh(), 0);
       geometryActOnSelection(GEO_ACTION_MESH_SIZE, "Point");
     }));
     define.push_back(show("Size fields", Gui::PanelFields));
@@ -780,7 +783,7 @@ std::vector<MenuItem> modules()
         static const char *const labels[] = {"Curve", "Surface", "Volume"};
         transfinite.push_back(action(labels[dim - 1], 0, [dim]() {
           // the volume takes its corners without any parameter of its own
-          if(dim < 3) Dialog::show(Dialog::Mesh, dim);
+          if(dim < 3) Dialog::show(Dialog::mesh(), dim);
           meshDefineTransfinite(dim);
         }));
       }
@@ -808,11 +811,11 @@ std::vector<MenuItem> modules()
       mesh.push_back(act("Set order " + std::to_string(o),
                          [o]() { meshSetOrder(o); }));
     mesh.push_back(act("High-order tools",
-                       []() { Dialog::show(Dialog::HighOrder, 0); }));
+                       []() { Dialog::show(Dialog::highOrder(), 0); }));
     mesh.push_back(act("Refine by splitting", meshRefine));
 #if defined(HAVE_METIS)
     mesh.push_back(act("Partition",
-                       []() { Dialog::show(Dialog::Partition, 0); }));
+                       []() { Dialog::show(Dialog::partition(), 0); }));
     mesh.push_back(act("Unpartition", meshUnpartition));
 #endif
     mesh.push_back(act("Smooth 2D", []() { meshOptimize("Laplace2D"); }));

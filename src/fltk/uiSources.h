@@ -18,4 +18,9 @@
 
 const Ui::Backend::Sources &fltkSources();
 
+// What a form is made of, by the FormRef the backend handed out for it: the
+// description is read again every time it is asked, as the contract says.
+// An empty function for a form nobody handed out.
+const std::function<Ui::Form()> &fltkFormDescription(Ui::FormRef form);
+
 #endif

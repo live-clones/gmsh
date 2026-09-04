@@ -458,7 +458,7 @@ void visibilityByNumber(int what, const std::string &value, bool show)
     }
   }
   _redraw();
-  Gui::refreshDialog(Dialog::Visibility);
+  Gui::refreshForm(Dialog::visibility());
 }
 
 namespace {
@@ -521,7 +521,7 @@ namespace {
       }
     }
     (void)allModels;
-    Gui::refreshDialog(Dialog::Visibility);
+    Gui::refreshForm(Dialog::visibility());
   }
 
 } // namespace
@@ -638,7 +638,7 @@ namespace Dialog {
 
   } // namespace
 
-  Form visibility()
+  Form describeVisibility()
   {
     Form p;
     p.title = "Visibility";

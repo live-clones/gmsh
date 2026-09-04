@@ -17,9 +17,9 @@
 #include <string>
 #include <vector>
 
+#include "Form.h"
 #include "GuiActions.h"
 #include "GuiMenus.h"
-#include "GuiDialogs.h"
 #include "fileBrowser.h"
 #include "sceneView.h"
 
@@ -125,19 +125,36 @@ private:
 
   bool _showConsole;
   bool _showModules;
-  // the four context dialogs of GuiDialogs.h, and which of them has just been
-  // asked for and must be brought forward
-  bool _showDialog[Dialog::NumDialogs], _focusDialog[Dialog::NumDialogs];
-  // whether it has been given its size since it was last opened
-  bool _sizedDialog[Dialog::NumDialogs];
-  // the height its rows say it needs, which changes when a dialog is shown
-  // another set of panes -- the option window, on another category
-  float _estimatedHeight[Dialog::NumDialogs];
-  // the pane a dialog has just been asked to show, -1 once it has been
-  int _wantedPane[Dialog::NumDialogs];
-  // the pane each dialog was showing at the end of the last frame, to tell a
-  // tab the user picked from one that came up because it was asked for
-  int _lastPane[Dialog::NumDialogs];
+  // The forms, by the number each was handed out under: what each is made
+  // of, and what this window keeps about it between two frames. A map and
+  // not an array, since how many there are is nobody's to count.
+  struct dialogState {
+    // what Dear ImGui knows the window by, from one run to the next: its
+    // saved layout is keyed on it
+    std::string name;
+    std::function<Ui::Form()> describe;
+    // shown, and whether it has just been asked for and must be brought
+    // forward
+    bool show = false, focus = false;
+    // whether it has been given its size since it was last opened
+    bool sized = false;
+    // the height its rows say it needs, which changes when a dialog is shown
+    // another set of panes -- the option window, on another category
+    float estimatedHeight = 0.f;
+    // the widest it has ever needed to be: one that grows and shrinks
+    // sideways as one goes through its categories will not sit still
+    float widest = 0.f;
+    // how tall the panes beside the side column came out last frame, for
+    // the column to be given exactly that on the next
+    float sideRoom = 0.f;
+    // the pane it has just been asked to show, -1 once it has been
+    int wantedPane = -1;
+    // the pane it is on: what the last frame drew, and what a tab the user
+    // picked is told from one that came up because it was asked for
+    int pane = 0;
+  };
+  std::map<unsigned, dialogState> _dialogs;
+  unsigned _lastDialog;
   // the FLTK interface has three separate help windows, and so does this one
   std::string _solverButton0, _solverButton1;
 
@@ -224,7 +241,7 @@ public:
   void closeTreeItem(const std::string &name) { _treeWanted[name] = false; }
 
 private:
-  void _drawDialog(int which);
+  void _drawDialog(unsigned which);
   void _handleShortcuts();
 
   void _buildDockSpace(int &sceneX, int &sceneY, int &sceneW, int &sceneH);
@@ -377,12 +394,16 @@ public:
   // cancelled. Like the other blocking dialogs, only from a posted action
   bool exportOptionsDialog(int format, const std::string &fileName);
 
-  // not implemented yet, kept so that the rest of Gmsh has something to call
-
-  // raise one of the context dialogs, see Gui::showDialog()
-  void showDialog(int which);
-  void hideDialog(int which);
-  bool dialogVisible(int which) const;
+  // The forms, as the backend hands them out: see Ui::Backend::createForm().
+  // What one is made of is asked again at every frame it is drawn.
+  Ui::FormRef createDialog(const std::string &name,
+                           const std::function<Ui::Form()> &describe);
+  void destroyDialog(Ui::FormRef which);
+  void showDialog(Ui::FormRef which);
+  void hideDialog(Ui::FormRef which);
+  bool dialogVisible(Ui::FormRef which) const;
+  int dialogPane(Ui::FormRef which) const;
+  void setDialogPane(Ui::FormRef which, int pane);
 };
 
 #endif

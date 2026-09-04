@@ -186,10 +186,10 @@ namespace Dialog {
       _state().views.assign(_numViews(), 0);
       if(view < (int)_state().views.size()) _state().views[view] = 1;
     }
-    show(Plugins, -1);
+    show(plugins(), -1);
   }
 
-  Form plugins()
+  Form describePlugins()
   {
     Form p;
     p.title = "Plugins";

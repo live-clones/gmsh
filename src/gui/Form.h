@@ -32,6 +32,23 @@ namespace Ui {
   // included here
   struct Tree;
 
+  // A form one has asked an interface for, as the interface hands it back.
+  //
+  // It is a number and not a pointer, so that a form that is gone is a
+  // number nobody answers to rather than a pointer into freed memory; and it
+  // is a struct and not a bare number, so that a count, an index or a pane
+  // cannot be passed where a form is meant. What the number is worth is the
+  // interface's, which hands them out and never hands the same one out twice.
+  // Zero is no form at all.
+  struct FormRef {
+    unsigned id;
+    explicit FormRef(unsigned i = 0) : id(i) {}
+    bool valid() const { return id != 0; }
+    bool operator==(const FormRef &o) const { return id == o.id; }
+    bool operator!=(const FormRef &o) const { return id != o.id; }
+    bool operator<(const FormRef &o) const { return id < o.id; }
+  };
+
   // A colour, as four bytes. It is four bytes rather than one packed number
   // because there is no packing everyone agrees on -- the one Gmsh uses
   // depends on the endianness of the machine -- and a vocabulary that leaves

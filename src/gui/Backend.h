@@ -60,8 +60,8 @@
 // fl_width() and puts down coordinates once, Dear ImGui stacks them afresh at
 // every frame. A factory of widgets would drag that difference into the
 // shared side; a factory of forms leaves it where it belongs. This is why
-// showForm() takes a number and not a list of widgets: the backend fetches
-// the description itself, through Sources::form, as often as it needs it.
+// createForm() takes a way of describing the form and not a list of widgets:
+// the backend fetches the description itself, as often as it needs it.
 //
 // The methods that are not yet reached through this do nothing rather than
 // being pure: the two interfaces are moved behind it one group at a time, and
@@ -102,16 +102,6 @@ namespace Ui {
       // the size it is meant to be whichever one draws it -- and everything
       // else is measured against it: a field is ten of them wide.
       std::function<int()> fontSize;
-      // the description of one form, by the number the shared side gave it,
-      // and how many numbers there are
-      std::function<Form(int form)> form;
-      std::function<int()> numForms;
-      // Which pane of it is showing. It is here and not in the Form because
-      // the description and the interface have to agree on it without either
-      // telling the other: a menu opens a form on the pane it is about, and a
-      // user picking a tab moves it.
-      std::function<int(int form)> formPane;
-      std::function<void(int form, int pane)> setFormPane;
       // the menu bar, and a counter that changes when it would come out
       // different, so that an interface holding real menu widgets knows when
       // to build them again instead of doing it at every frame
@@ -181,19 +171,39 @@ namespace Ui {
 
     // --- the things that are described
     //
-    // One call per described thing. The backend builds it from Sources, keeps
-    // whatever it has to keep, and is told when to look again.
+    // One call per described thing. The backend builds it from what it is
+    // given, keeps whatever it has to keep, and is told when to look again.
 
-    virtual void showForm(int form, bool show) = 0;
-    virtual bool formVisible(int form) = 0;
+    // A form is asked for and handed back as a FormRef; from then on it is
+    // that. What it holds is not handed over but asked for, through
+    // `describe`, as often as the backend wants it: at every frame for an
+    // interface that draws afresh, when it is told something changed for one
+    // that holds widgets. Nothing is built until the form is first shown,
+    // and a form that is destroyed takes whatever was built with it. How
+    // many forms there are is nobody's to count.
+    //
+    // `name` is what the form is known by from one run to the next, for
+    // whatever an interface remembers about one -- where it was left, whether
+    // it was docked. A FormRef is worth nothing once the process is gone; the
+    // name is. Two forms alive at once must not share one.
+    virtual FormRef createForm(const std::string &name,
+                               const std::function<Form()> &describe) = 0;
+    virtual void destroyForm(FormRef form) = 0;
+    virtual void showForm(FormRef form, bool show) = 0;
+    virtual bool formVisible(FormRef form) = 0;
+    // Which pane of it is showing. It is the interface's to keep, since a
+    // click on a tab is what changes it; the description asks when it needs
+    // to know, and says which to open on before showing the form.
+    virtual int formPane(FormRef form) = 0;
+    virtual void setFormPane(FormRef form, int pane) = 0;
     // Its values changed but not its shape: push them into the widgets. An
     // interface that draws the description afresh at every frame has nothing
     // to do here, which is why this is not pure.
-    virtual void refreshForm(int form) {}
+    virtual void refreshForm(FormRef form) {}
     // Its shape changed -- the plugin window is showing another plugin, the
     // size-field window another field -- so what was built for the old one is
     // no longer right.
-    virtual void rebuildForm(int form) { refreshForm(form); }
+    virtual void rebuildForm(FormRef form) { refreshForm(form); }
 
     // the menu bar would come out different: read it again
     virtual void refreshMenus() {}
@@ -314,7 +324,7 @@ namespace Ui {
       // the user closed a form with the button of its frame rather than
       // through a menu, so that what the description says it undoes is undone
       // and the menu entry that raises it stops looking pressed
-      std::function<void(int form)> formWasClosed;
+      std::function<void(FormRef form)> formWasClosed;
       // and the same for the message console
       std::function<void()> consoleWasClosed;
       // an internal error of the toolkit, which goes to the message console

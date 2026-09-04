@@ -608,7 +608,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
-  if(CTX::instance()->showOptionsOnStartup) Dialog::show(Dialog::Options, -1);
+  if(CTX::instance()->showOptionsOnStartup) Dialog::show(Dialog::options(), -1);
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
 
 #if defined(HAVE_TOUCHBAR)
@@ -866,27 +866,27 @@ int FlGui::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'o')) {
     Dialog::optionsCategory() = 0;
-    Dialog::show(Dialog::Options, -1);
+    Dialog::show(Dialog::options(), -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'g')) {
     Dialog::optionsCategory() = 1;
-    Dialog::show(Dialog::Options, -1);
+    Dialog::show(Dialog::options(), -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'm')) {
     Dialog::optionsCategory() = 2;
-    Dialog::show(Dialog::Options, -1);
+    Dialog::show(Dialog::options(), -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 's')) {
     Dialog::optionsCategory() = 3;
-    Dialog::show(Dialog::Options, -1);
+    Dialog::show(Dialog::options(), -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'p')) {
     Dialog::optionsCategory() = 4;
-    Dialog::show(Dialog::Options, -1);
+    Dialog::show(Dialog::options(), -1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
@@ -1161,22 +1161,22 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
     // and the per-entity parameters, which are described once and read what
     // the server holds: a parameter the solver added is a field more, so the
     // window may have to be built again and not only read again
-    if(dialogFltk *d = fltkDialog(Dialog::OnelabContext, false))
+    if(dialogFltk *d = fltkDialog(Dialog::onelabContext(), false))
       if(d->shown()) d->reshape();
     // the option window is described once and reads what it shows, views
     // included: it wants nothing when their number changes
-    Gui::refreshDialog(Dialog::Options);
+    Gui::refreshForm(Dialog::options());
     // and the size-field window offers the views a field may be drawn on
     Gui::updateFields();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
     statisticsRefresh(false);
   }
 }
 
 void FlGui::resetVisibility()
 {
-  Gui::refreshDialog(Dialog::Visibility);
-  Gui::refreshDialog(Dialog::CurrentOptions);
+  Gui::refreshForm(Dialog::visibility());
+  Gui::refreshForm(Dialog::currentOptions());
   statisticsRefresh(false);
 }
 
@@ -1337,13 +1337,13 @@ void FlGui::storeCurrentWindowsInfo()
   else
     CTX::instance()->detachedMenu = 0;
   // the context dialogs share one remembered position, as they always have
-  for(int i = 0; i < Dialog::NumDialogs; i++) {
-    dialogFltk *d = fltkDialog(i);
-    if(!d || !d->shown()) continue;
+  bool placed = false;
+  fltkEachDialog([&placed](dialogFltk *d) {
+    if(placed || !d->shown()) return;
     CTX::instance()->ctxPosition[0] = d->window()->x();
     CTX::instance()->ctxPosition[1] = d->window()->y();
-    break;
-  }
+    placed = true;
+  });
 #if defined(HAVE_3M)
   storeWindowPosition3M();
 #endif
@@ -1422,10 +1422,9 @@ void window_cb(Fl_Widget *w, void *data)
     // the order is important!
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->getWindow()->show();
-    for(int i = 0; i < Dialog::NumDialogs; i++) {
-      dialogFltk *d = fltkDialog(i);
-      if(d && d->shown()) d->window()->show();
-    }
+    fltkEachDialog([](dialogFltk *d) {
+      if(d->shown()) d->window()->show();
+    });
   }
 }
 
@@ -1444,7 +1443,7 @@ void FlGui::messageLines(std::vector<std::string> &lines)
 void FlGui::rebuildTree(bool deleteWidgets)
 {
   if(onelab) onelab->rebuildTree(deleteWidgets);
-  if(dialogFltk *d = fltkDialog(Dialog::OnelabContext, false))
+  if(dialogFltk *d = fltkDialog(Dialog::onelabContext(), false))
     if(d->shown()) d->reshape();
 }
 

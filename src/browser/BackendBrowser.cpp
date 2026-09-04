@@ -210,11 +210,37 @@ namespace {
     }
 
     void refreshBar() override {}
-    void showForm(int form, bool show) override { _shown[form] = show; }
-    bool formVisible(int form) override
+
+    // --- the forms, by the number each was handed out under
+
+    Ui::FormRef createForm(const std::string &name,
+                           const std::function<Ui::Form()> &describe) override
     {
-      auto it = _shown.find(form);
-      return it != _shown.end() && it->second;
+      Ui::FormRef form(++_lastForm);
+      _forms[form.id].name = name;
+      _forms[form.id].describe = describe;
+      return form;
+    }
+    void destroyForm(Ui::FormRef form) override { _forms.erase(form.id); }
+    void showForm(Ui::FormRef form, bool show) override
+    {
+      auto it = _forms.find(form.id);
+      if(it != _forms.end()) it->second.shown = show;
+    }
+    bool formVisible(Ui::FormRef form) override
+    {
+      auto it = _forms.find(form.id);
+      return it != _forms.end() && it->second.shown;
+    }
+    int formPane(Ui::FormRef form) override
+    {
+      auto it = _forms.find(form.id);
+      return it == _forms.end() ? 0 : it->second.pane;
+    }
+    void setFormPane(Ui::FormRef form, int pane) override
+    {
+      auto it = _forms.find(form.id);
+      if(it != _forms.end()) it->second.pane = pane;
     }
     void drawTooltip(const std::string &text) override { _tip = text; }
     void showConsole(bool show) override { _console = show; }
@@ -264,7 +290,15 @@ namespace {
     bool _toldScene = false;
     double _lastTold = 0.;
     double _lastAsked = 0.;
-    std::map<int, bool> _shown;
+    // what each form is made of, whether it is up, and which pane it is on
+    struct formState {
+      std::string name;
+      std::function<Ui::Form()> describe;
+      bool shown = false;
+      int pane = 0;
+    };
+    std::map<unsigned, formState> _forms;
+    unsigned _lastForm = 0;
     std::vector<std::string> _messages;
     // What the page may ask for, by number: rebuilt every time the state is
     // written, since a description is only true at the moment it is drawn.
@@ -705,8 +739,8 @@ namespace {
         return _where;
       }
       if(path == "/close") {
-        int form = atoi(_valueOf(ask.body, "form").c_str());
-        _shown[form] = false;
+        Ui::FormRef form((unsigned)atoi(_valueOf(ask.body, "form").c_str()));
+        showForm(form, false);
         if(_host.formWasClosed) _host.formWasClosed(form);
         return "{}";
       }
@@ -869,15 +903,17 @@ namespace {
         return "{}";
       }
       if(path == "/pane") {
-        int form = atoi(_valueOf(ask.body, "form").c_str());
+        Ui::FormRef form((unsigned)atoi(_valueOf(ask.body, "form").c_str()));
         int pane = atoi(_valueOf(ask.body, "i").c_str());
-        bool moved = _sources.formPane && _sources.formPane(form) != pane;
-        if(_sources.setFormPane) _sources.setFormPane(form, pane);
+        auto it = _forms.find(form.id);
+        if(it == _forms.end()) return "{}";
+        bool moved = it->second.pane != pane;
+        it->second.pane = pane;
         // the user picked this pane: it may have something to start, which is
         // how moving to the Line tab of the elementary window asks for a start
         // point rather than leaving the tool that was running
-        if(moved && _sources.form) {
-          Ui::Form said = _sources.form(form);
+        if(moved && it->second.describe) {
+          Ui::Form said = it->second.describe();
           if(pane >= 0 && pane < (int)said.panes.size() &&
              said.panes[pane].chosen)
             said.panes[pane].chosen();
@@ -1288,11 +1324,13 @@ namespace {
       return out + "}";
     }
 
-    std::string _form(int which)
+    std::string _form(unsigned which, const formState &state)
     {
-      Ui::Form form = _sources.form(which);
-      int pane = _sources.formPane ? _sources.formPane(which) : 0;
+      Ui::Form form = state.describe ? state.describe() : Ui::Form();
+      int pane = state.pane;
       std::string out = "{\"id\":" + std::to_string(which);
+      // and what it is known by, for anything driving the page from outside
+      out += ",\"name\":" + _quoted(state.name);
       out += ",\"title\":" + _quoted(form.title);
       out += ",\"pane\":" + std::to_string(pane);
       out += ",\"tabbed\":";
@@ -1438,12 +1476,11 @@ namespace {
       out += ",\"bar\":" + _bar();
       out += ",\"forms\":[";
       bool first = true;
-      int forms = _sources.numForms ? _sources.numForms() : 0;
-      for(int i = 0; i < forms; i++) {
-        if(!formVisible(i)) continue;
+      for(const auto &it : _forms) {
+        if(!it.second.shown) continue;
         if(!first) out += ",";
         first = false;
-        out += _form(i);
+        out += _form(it.first, it.second);
       }
       out += "],\"status\":";
       Ui::BarMessage said;

@@ -17,7 +17,6 @@
 #include "appWindow.h"
 #include "sceneView.h"
 #include "Gui.h"
-#include "GuiDialogs.h"
 #include "GuiActions.h"
 #include "GuiMenus.h"
 #include "GuiStatus.h"

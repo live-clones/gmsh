@@ -454,11 +454,11 @@ static std::vector<int> &_picking(int kind, const char *what, bool editable)
 static void _donePicking()
 {
   geometryPicked() = pickedEntities();
-  Gui::refreshDialog(Dialog::Elementary);
+  Gui::refreshForm(Dialog::elementary());
 }
 
 // the dialog shows what has been picked, so it has to be told
-static void _pickedChanged() { Gui::refreshDialog(Dialog::Elementary); }
+static void _pickedChanged() { Gui::refreshForm(Dialog::elementary()); }
 
 static void _addPointBasedCurve(int numPoints, const char *const *prompts,
                                 void (*create)(const std::vector<int> &))
@@ -687,7 +687,7 @@ void geometryElementary(int pane)
 {
   while(pane >= 0) {
     _nextElementaryPane = -1;
-    Dialog::show(Dialog::Elementary, pane);
+    Dialog::show(Dialog::elementary(), pane);
     _runElementaryPane(pane);
     if(!Gui::available()) return;
     pane = _nextElementaryPane;
