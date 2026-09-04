@@ -10,7 +10,8 @@
 #include <vector>
 #include <set>
 #include <unordered_map>
-#include <mutex>
+#include <atomic>
+#include <thread>
 #include <cstdint>
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
@@ -138,8 +139,43 @@ private:
       return true;
     }
   };
+  // A lock held for the length of one probe of the table, i.e. for about the
+  // time of one cache miss: going through the kernel to wait for something that
+  // short costs far more than spinning for it, and with the threads spread over
+  // the shards a wait is rare in the first place. Each lock sits in its own
+  // cache line, so that taking one does not invalidate its neighbours
+  class alignas(64) ShardLock {
+  public:
+    ShardLock() : _locked(false) {}
+    void lock()
+    {
+      int spins = 0;
+      while(_locked.exchange(true, std::memory_order_acquire)) {
+        while(_locked.load(std::memory_order_relaxed)) {
+          // let the thread that holds the lock run if it was descheduled, e.g.
+          // when there are more threads than cores
+          if(++spins > 1000) {
+            std::this_thread::yield();
+            spins = 0;
+          }
+        }
+      }
+    }
+    void unlock() { _locked.store(false, std::memory_order_release); }
+
+  private:
+    std::atomic<bool> _locked;
+  };
+  class ShardGuard {
+  public:
+    ShardGuard(ShardLock &l) : _lock(l) { _lock.lock(); }
+    ~ShardGuard() { _lock.unlock(); }
+
+  private:
+    ShardLock &_lock;
+  };
   Shard _shard[NUM_SHARDS];
-  std::mutex _mutex[NUM_SHARDS];
+  ShardLock _mutex[NUM_SHARDS];
   bool _threaded;
   // the top bits pick the shard, the low bits index inside it
   const Shard &_shardOfConst(std::uint64_t h) const { return _shard[(h >> 56) & (NUM_SHARDS - 1)]; }
@@ -173,7 +209,7 @@ public:
   {
     std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
     if(!_threaded) return !_shardOf(h).insert(h);
-    std::lock_guard<std::mutex> lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
     return !_shardOf(h).insert(h);
   }
   bool contains(const std::uint64_t *key, int n);
@@ -197,7 +233,7 @@ public:
   bool isDuplicate(std::uint64_t h)
   {
     if(!_threaded) return !_shardOf(h).insert(h);
-    std::lock_guard<std::mutex> lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
     return !_shardOf(h).insert(h);
   }
   void insertOrErase(std::uint64_t h)
@@ -206,13 +242,13 @@ public:
       _shardOf(h).insertOrErase(h);
       return;
     }
-    std::lock_guard<std::mutex> lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
     _shardOf(h).insertOrErase(h);
   }
   bool contains(std::uint64_t h)
   {
     if(!_threaded) return _shardOf(h).contains(h);
-    std::lock_guard<std::mutex> lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
     return _shardOf(h).contains(h);
   }
   // test without inserting: used to ask whether a face has been seen twice,

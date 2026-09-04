@@ -111,7 +111,7 @@ bool UniqueElementFilter::contains(const std::uint64_t *key, int n)
   std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
   std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
   if(!_threaded) return _shard[sh].contains(h);
-  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  ShardGuard lock(_mutex[sh]);
   return _shard[sh].contains(h);
 }
 
@@ -123,7 +123,7 @@ void UniqueElementFilter::insertOrErase(const std::uint64_t *key, int n)
     _shard[sh].insertOrErase(h);
     return;
   }
-  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  ShardGuard lock(_mutex[sh]);
   _shard[sh].insertOrErase(h);
 }
 
@@ -139,7 +139,7 @@ void UniqueElementFilter::insertOrErase(unsigned int col, const void *v0,
     _shard[sh].insertOrErase(h);
     return;
   }
-  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  ShardGuard lock(_mutex[sh]);
   _shard[sh].insertOrErase(h);
 }
 
@@ -152,7 +152,7 @@ bool UniqueElementFilter::contains(unsigned int col, const void *v0,
   std::uint64_t h = vaHashKey(k, n * sizeof(std::uint64_t));
   std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
   if(!_threaded) return _shard[sh].contains(h);
-  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  ShardGuard lock(_mutex[sh]);
   return _shard[sh].contains(h);
 }
 
@@ -177,7 +177,7 @@ bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
   // the top bits pick the shard, the low bits index inside it
   std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
   if(!_threaded) return !_shard[sh].insert(h);
-  std::lock_guard<std::mutex> lock(_mutex[sh]);
+  ShardGuard lock(_mutex[sh]);
   return !_shard[sh].insert(h);
 }
 
