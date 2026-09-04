@@ -190,6 +190,9 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     windows this reproduces write the name of what it colours on the swatch
     itself, and the swatch is the width of a value. */
  .cell input.swatch{padding:1px;height:1.5em}
+ /* flat, with no box around it: the widget this reproduces is a circle drawn
+    on the background of the window and nothing else */
+ .disc{display:block;flex:0 0 auto;background:none;border:none}
  .cell.map{position:relative;flex:1 1 auto;min-width:0;min-height:8em}
  .cmap{position:absolute;top:0;left:0;right:0;bottom:0;
        border:1px solid #ccc;background:#fff;display:block;outline:none}
@@ -431,6 +434,7 @@ function field(f) {
     return box;
   }
   if(f.kind === 'colormap') return colourMap(f);
+  if(f.kind === 'direction') return disc(f);
   if(f.kind === 'hierarchy') {
     const box = document.createElement('div');
     box.className = 'list';
@@ -554,6 +558,51 @@ function field(f) {
   }
   return input;
 }
+// The disc one drags to say which way the light comes from. FLTK has a widget
+// for it and Dear ImGui draws one; here it is drawn too, from the same three
+// numbers, and the same direction is worked out from the same drag -- third
+// component and all, which is derived rather than dragged.
+function disc(f) {
+  const side = Math.round((f.rows || 2) * 1.45 * 13);
+  const canvas = document.createElement('canvas');
+  canvas.className = 'disc';
+  canvas.width = canvas.height = side;
+  canvas.style.width = canvas.style.height = side + 'px';
+  let x = +f.x || 0, y = +f.y || 0, z = +f.z || 0;
+  // what is drawn is the direction, not the three numbers: the widget this
+  // reproduces normalises them as it takes them
+  const length = Math.sqrt(x * x + y * y + z * z);
+  if(length) { x /= length; y /= length; z /= length; }
+
+  function draw() {
+    const g = canvas.getContext('2d');
+    const r = side / 2 - 3, mid = side / 2;
+    g.clearRect(0, 0, side, side);
+    g.strokeStyle = getComputedStyle(canvas).color;
+    g.lineWidth = 1;
+    g.beginPath(); g.arc(mid, mid, r, 0, 2 * Math.PI); g.stroke();
+    g.fillStyle = g.strokeStyle;
+    g.fillRect(Math.round(mid + x * r) - 2, Math.round(mid - y * r) - 2, 4, 4);
+  }
+
+  function drag(e) {
+    const box = canvas.getBoundingClientRect();
+    const r = side / 2 - 3;
+    let xx = (e.clientX - box.left - side / 2) / r;
+    let yy = -(e.clientY - box.top - side / 2) / r;
+    let norm = Math.sqrt(xx * xx + yy * yy);
+    if(norm > 1) { xx /= norm; yy /= norm; norm = 1; }
+    x = xx; y = yy;
+    draw();
+    post('/set', which(f) + '&v=' +
+         encodeURIComponent(xx + ',' + yy + ',' + Math.sqrt(1 - norm)));
+  }
+  canvas.onmousedown = e => { e.preventDefault(); drag(e); };
+  canvas.onmousemove = e => { if(e.buttons) drag(e); };
+  draw();
+  return canvas;
+}
+
 // --- the colour map of a view
 //
 // What it answers to, in the words the widget of the window this reproduces

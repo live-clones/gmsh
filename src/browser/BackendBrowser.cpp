@@ -893,6 +893,13 @@ namespace {
       case Ui::Check: f.setFlag(said == "1"); break;
       case Ui::Integer:
       case Ui::Number: f.setNumber(atof(said.c_str())); break;
+      case Ui::Direction: {
+        // "x,y,z", worked out from the drag by the page the way the widget
+        // this reproduces works it out
+        double x = 0., y = 0., z = 0.;
+        if(sscanf(said.c_str(), "%lf,%lf,%lf", &x, &y, &z) == 3)
+          f.setVector(x, y, z);
+      } break;
       case Ui::Color: {
         // "#rrggbb", as the page sends it; what it was keeps its alpha, which
         // is not something the page can say
@@ -972,6 +979,7 @@ namespace {
       case Ui::Hierarchy: return "hierarchy";
       case Ui::Prose: return "prose";
       case Ui::Color: return "colour";
+      case Ui::Direction: return "direction";
       case Ui::ColorMap: return "colormap";
       default: return "text";
       }
@@ -1072,6 +1080,18 @@ namespace {
           out += "}";
         }
         out += "]";
+        out += _fieldId(f);
+        return out + "}";
+      }
+      if(f.kind == Ui::Direction) {
+        // The disc one drags to say where the light comes from. What goes
+        // down is the direction itself; the page draws the circle and the
+        // point on it, as the other two do, and there is nothing else to say.
+        double x = 0., y = 0., z = 0.;
+        f.getVector(x, y, z);
+        out += ",\"x\":" + std::to_string(x);
+        out += ",\"y\":" + std::to_string(y);
+        out += ",\"z\":" + std::to_string(z);
         out += _fieldId(f);
         return out + "}";
       }
