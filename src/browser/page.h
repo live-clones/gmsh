@@ -186,6 +186,10 @@ static const char *const browserPage = R"PAGE(<!doctype html>
     from the height it was given -- so it grew to whatever it had last asked
     for and overran the window. Out of the flow it can only ever be as tall as
     the room its cell was given. */
+ /* A colour fills its field rather than sitting in a corner of it: the
+    windows this reproduces write the name of what it colours on the swatch
+    itself, and the swatch is the width of a value. */
+ .cell input.swatch{padding:1px;height:1.5em}
  .cell.map{position:relative;flex:1 1 auto;min-width:0;min-height:8em}
  .cmap{position:absolute;top:0;left:0;right:0;bottom:0;
        border:1px solid #ccc;background:#fff;display:block;outline:none}
@@ -493,7 +497,17 @@ function field(f) {
     return box;
   }
   let input;
-  if(f.kind === 'check') {
+  if(f.kind === 'colour') {
+    // A colour is shown as a colour, the way the windows this reproduces show
+    // it, and picked with whatever the browser offers for one.
+    input = document.createElement('input');
+    input.type = 'color';
+    input.className = 'swatch';
+    input.value = f.value || '#000000';
+    input.onchange = () => post('/set', which(f) + '&v=' +
+                                 encodeURIComponent(input.value));
+  }
+  else if(f.kind === 'check') {
     input = document.createElement('input');
     input.type = 'checkbox'; input.checked = f.value === '1';
     input.style.width = 'auto';
