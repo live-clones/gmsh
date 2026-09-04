@@ -892,15 +892,30 @@ def category_rows(img, want):
                 break
     if run is not None:
         runs.append(run)
-    if len(runs) < 2 or want < 1:
+    if len(runs) < 3 or want < 1:
         return []
-    top, bottom = runs[0][0], runs[-1][1]
-    step = (bottom - top + 1) / float(want)
+    # A row may leave more than one run behind -- an ascender above the rest of
+    # the word, a descender below it -- so the runs are gathered into rows
+    # first: anything starting less than six lines after the row being filled
+    # belongs to it, since no two rows are that close.
+    starts = []
+    for a, _ in runs:
+        if not starts or a - starts[-1] >= 6:
+            starts.append(a)
+    if len(starts) < 2:
+        return []
+    # The step is then the whole run of rows divided by how many gaps there
+    # are between them -- not the list divided by the number of categories:
+    # the list does not always hold them all, View [0] being there only when a
+    # view is loaded, and dividing a list of five by six put every click a
+    # little higher than the row it was meant for until it landed in the row
+    # above.
+    step = (starts[-1] - starts[0]) / float(len(starts) - 1)
     # a row of a browser is between eight and thirty pixels tall, whatever the
     # font; anything else means this is not the list
     if step < 8. or step > 30.:
         return []
-    return [top + step * (k + .5) for k in range(want)]
+    return [starts[0] + step * (k + .5) for k in range(want)]
 
 
 def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
