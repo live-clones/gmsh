@@ -397,7 +397,9 @@ static VertexArray *buildMerged(IT first, IT last, bool lines, bool forceColor,
   }
   if(num < mergeThreshold || !n) return nullptr;
 
-  VertexArray *out = new VertexArray(lines ? 2 : 3, 1);
+  // the total is known: size the merged array once, instead of letting it grow
+  int npe = lines ? 2 : 3;
+  VertexArray *out = new VertexArray(npe, (int)(n / npe) + 1);
   for(IT it = first; it != last; it++) {
     GEntity *e = *it;
     VertexArray *va = lines ? e->va_lines : e->va_triangles;

@@ -537,9 +537,10 @@ void VertexArray::merge(VertexArray* va, const unsigned char *color)
     _vertices.insert(_vertices.end(), va->firstVertex(), va->lastVertex());
     _normals.insert(_normals.end(), va->firstNormal(), va->lastNormal());
     if(color) {
-      // the merged data is drawn in a single color: repeat it
-      std::size_t n = _colors.size() + 4 * va->getNumVertices();
-      _colors.reserve(n);
+      // the merged data is drawn in a single color: repeat it. Do not reserve
+      // the exact size here: reserve() allocates precisely what is asked for,
+      // so calling it once per merged array would reallocate and copy the whole
+      // array every time, which is quadratic in the number of entities
       for(int i = 0; i < va->getNumVertices(); i++)
         for(int j = 0; j < 4; j++) _colors.push_back(color[j]);
     }
