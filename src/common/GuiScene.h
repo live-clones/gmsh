@@ -177,6 +177,12 @@ namespace Gui {
   // stop the interactive selection that is running, as if the user had pressed
   // 'q'
   void abortSelection();
+  // An option the scene draws from was set, from a script or the option
+  // window, and the scene has to take it in: "background_image" for the
+  // picture behind the model, "buffering" for double buffering and
+  // antialiasing, "font_engine" for what draws the text of the scene. The
+  // scene reads the option itself; this only says which.
+  void sceneSettingChanged(const std::string &what);
   // Turn the "add point mode" of the 3D views on or off: while it is on, the
   // pointer drives the coordinates of the entity being placed instead of
   // highlighting what it hovers.

@@ -144,6 +144,18 @@ namespace ImGuiScene {
       if(app->pane(i)) app->pane(i)->addPointMode = on;
   }
 
+  void sceneSettingChanged(const std::string &what)
+  {
+    if(!Gui::available()) return;
+    if(what == "background_image") {
+      appWindow *app = appWindow::instance();
+      for(int i = 0; i < app->numPanes(); i++)
+        if(app->pane(i) && app->pane(i)->getDrawContext())
+          app->pane(i)->getDrawContext()->invalidateBgImageTexture();
+    }
+    // the buffering of a GLFW window is decided when it is made
+  }
+
   // --- graphic windows
 
   drawContext *getCurrentDrawContext()

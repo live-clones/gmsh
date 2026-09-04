@@ -32,6 +32,9 @@
 #include "fileDialogs.h"
 #include "Context.h"
 #include "drawContext.h"
+#include "drawContextFltk.h"
+#include "drawContextFltkCairo.h"
+#include "drawContextFltkStringTexture.h"
 #include "PixelBuffer.h"
 #include "OS.h"
 
@@ -119,6 +122,46 @@ namespace FltkScene {
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
         FlGui::instance()->graph[i]->gl[j]->addPointMode = on ? 1 : 0;
+  }
+
+  void sceneSettingChanged(const std::string &what)
+  {
+    if(what == "font_engine") {
+      // The engine that draws the text of the scene, swapped under the draw
+      // context: FLTK's own, Cairo, or textures made of strings. It is done
+      // whether or not a window is up yet, as it always was, since the
+      // option is read before the first one is made.
+      drawContextGlobal *old = drawContext::global();
+      if(!old || old->getName() != CTX::instance()->glFontEngine) {
+#if defined(HAVE_CAIRO)
+        if(CTX::instance()->glFontEngine == "Cairo")
+          drawContext::setGlobal(new drawContextFltkCairo);
+        else
+#endif
+          if(CTX::instance()->glFontEngine == "StringTexture")
+          drawContext::setGlobal(new drawContextFltkStringTexture);
+        else
+          drawContext::setGlobal(new drawContextFltk);
+        if(old) delete old;
+      }
+      return;
+    }
+    if(!FlGui::available()) return;
+    if(what == "background_image") {
+      // the texture holding it is made from the file when it is next drawn
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+          FlGui::instance()->graph[i]->gl[j]->getDrawContext()
+            ->invalidateBgImageTexture();
+    }
+    else if(what == "buffering") {
+      int mode =
+        FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
+      if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+          FlGui::instance()->graph[i]->gl[j]->mode(mode);
+    }
   }
 
   // --- graphic windows

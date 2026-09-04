@@ -22,17 +22,6 @@
 #include "GmshGlobal.h"
 #include "StringUtils.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/Fl.H>
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
-// OK
-#elif (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 3)
-// OK
-#else
-#error "Gmsh requires FLTK >= 1.3.3"
-#endif
-#endif
-
 #if defined(HAVE_GUI)
 #include "Gui.h"
 #endif

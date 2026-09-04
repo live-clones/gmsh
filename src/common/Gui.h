@@ -152,6 +152,20 @@ namespace Gui {
   bool panelVisible(int panel);
   void showPanel(int panel, bool show);
 
+  // The options that shape the main window, pushed into it when one is set
+  // from a script or the option window: the size of the scene (-1 leaves a
+  // dimension as it is), the font of the console, the width of the tree and
+  // whether it is a window of its own, and whether tooltips show. An
+  // interface whose layout is its own to keep does nothing for them.
+  void setSceneSize(int width, int height);
+  void setConsoleFontSize(int size);
+  void setTreeWidth(int width);
+  void detachTree(bool detached);
+  void enableTooltips(bool on);
+  // the bar along the bottom is to be drawn again: a button of it answers to
+  // an option that has just been set
+  void refreshBar();
+
   // Act on the windows of the interface: what is "new", "split_h", "split_v",
   // "split_u", "minimize", "zoom", "fullscreen", "front", "attach_detach" or
   // "copy", the vocabulary of the FLTK window_cb().

@@ -705,6 +705,36 @@ namespace Gui {
     if(_backend) _backend->windowAction(what);
   }
 
+  void setSceneSize(int width, int height)
+  {
+    if(_backend) _backend->setSceneSize(width, height);
+  }
+
+  void setConsoleFontSize(int size)
+  {
+    if(_backend) _backend->setConsoleFontSize(size);
+  }
+
+  void setTreeWidth(int width)
+  {
+    if(_backend) _backend->setTreeWidth(width);
+  }
+
+  void detachTree(bool detached)
+  {
+    if(_backend) _backend->detachTree(detached);
+  }
+
+  void enableTooltips(bool on)
+  {
+    if(_backend) _backend->enableTooltips(on);
+  }
+
+  void refreshBar()
+  {
+    if(_backend) _backend->refreshBar();
+  }
+
   bool supportsWindowAction(const std::string &what)
   {
     return _backend && _backend->supports(what);

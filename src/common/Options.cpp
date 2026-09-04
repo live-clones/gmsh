@@ -50,15 +50,12 @@
 #include "drawContext.h"
 #endif
 
+// What is left of FLTK here: the tree of the views, which that interface
+// still builds by hand. It goes with the ONELAB tree of the plan.
 #if defined(HAVE_FLTK)
-#include <FL/Fl_Tooltip.H>
 #include "FlGui.h"
-#include "drawContextFltk.h"
-#include "graphicWindow.h"
 #include "onelabGroup.h"
 #include "viewButton.h"
-#include "drawContextFltkCairo.h"
-#include "drawContextFltkStringTexture.h"
 #endif
 
 // The tables of DefaultOptions.h, indexed by category name. They describe every
@@ -652,8 +649,8 @@ void Sanitize_String_Texi(std::string &s)
 void PrintOptions(int num, int level, int diff, int help, const char *filename,
                   std::vector<std::string> *vec)
 {
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->storeCurrentWindowsInfo();
+#if defined(HAVE_GUI)
+  if(Gui::available()) Gui::storeCurrentWindowsInfo();
 #endif
 
   FILE *file;
@@ -1136,16 +1133,9 @@ std::string opt_general_display(OPT_ARGS_STR)
 std::string opt_general_background_image_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) {
-#if defined(HAVE_FLTK)
-    if(CTX::instance()->bgImageFileName != val && FlGui::available()) {
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()
-            ->graph[i]
-            ->gl[j]
-            ->getDrawContext()
-            ->invalidateBgImageTexture();
-    }
+#if defined(HAVE_GUI)
+    if(CTX::instance()->bgImageFileName != val && Gui::available())
+      Gui::sceneSettingChanged("background_image");
 #endif
     CTX::instance()->bgImageFileName = val;
   }
@@ -1319,12 +1309,16 @@ std::string opt_general_gui_theme(OPT_ARGS_STR)
 std::string opt_general_graphics_font(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->glFont = val;
-#if defined(HAVE_FLTK)
-  drawContextFltk dc;
-  int index = dc.getFontIndex(CTX::instance()->glFont.c_str());
-  if(action & GMSH_SET) {
-    CTX::instance()->glFont = dc.getFontName(index);
-    CTX::instance()->glFontEnum = dc.getFontEnum(index);
+#if defined(HAVE_GUI)
+  // the fonts there are belong to whichever draw context is drawing the
+  // scene; in a batch run nothing is, and the name is kept as it was given
+  if(Gui::available()) {
+    drawContextGlobal *dc = drawContext::global();
+    int index = dc->getFontIndex(CTX::instance()->glFont.c_str());
+    if(action & GMSH_SET) {
+      CTX::instance()->glFont = dc->getFontName(index);
+      CTX::instance()->glFontEnum = dc->getFontEnum(index);
+    }
   }
 #endif
   return CTX::instance()->glFont;
@@ -1333,12 +1327,14 @@ std::string opt_general_graphics_font(OPT_ARGS_STR)
 std::string opt_general_graphics_font_title(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->glFontTitle = val;
-#if defined(HAVE_FLTK)
-  drawContextFltk dc;
-  int index = dc.getFontIndex(CTX::instance()->glFontTitle.c_str());
-  if(action & GMSH_SET) {
-    CTX::instance()->glFontTitle = dc.getFontName(index);
-    CTX::instance()->glFontEnumTitle = dc.getFontEnum(index);
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    drawContextGlobal *dc = drawContext::global();
+    int index = dc->getFontIndex(CTX::instance()->glFontTitle.c_str());
+    if(action & GMSH_SET) {
+      CTX::instance()->glFontTitle = dc->getFontName(index);
+      CTX::instance()->glFontEnumTitle = dc->getFontEnum(index);
+    }
   }
 #endif
   return CTX::instance()->glFontTitle;
@@ -1348,22 +1344,11 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->glFontEngine = val;
 
-#if defined(HAVE_FLTK)
-  if(action & GMSH_SET) {
-    drawContextGlobal *old = drawContext::global();
-    if(!old || old->getName() != CTX::instance()->glFontEngine) {
-#if defined(HAVE_CAIRO)
-      if(CTX::instance()->glFontEngine == "Cairo")
-        drawContext::setGlobal(new drawContextFltkCairo);
-      else
-#endif
-        if(CTX::instance()->glFontEngine == "StringTexture")
-        drawContext::setGlobal(new drawContextFltkStringTexture);
-      else
-        drawContext::setGlobal(new drawContextFltk);
-      if(old) delete old;
-    }
-  }
+#if defined(HAVE_GUI)
+  // Which engine draws the text of the scene is the scene's to change: done
+  // here, with the FLTK engines named, it replaced the draw context of
+  // whichever scene was running -- and took the Dear ImGui one down with it.
+  if(action & GMSH_SET) Gui::sceneSettingChanged("font_engine");
 #endif
 
   return CTX::instance()->glFontEngine;
@@ -1718,10 +1703,10 @@ std::string opt_post_double_clicked_graph_point_command(OPT_ARGS_STR)
   return CTX::instance()->post.doubleClickedGraphPointCommand;
 }
 
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
 int _gui_action_valid(int action, int num)
 {
-  if(!FlGui::available()) return 0;
+  if(!Gui::available()) return 0;
   return (action & GMSH_GUI) && (num == Dialog::optionsView());
 }
 #endif
@@ -2210,10 +2195,9 @@ double opt_general_graphics_size0(OPT_ARGS_NUM)
     CTX::instance()->glSize[0] = (int)val;
     if(CTX::instance()->glSize[0] <= 0) CTX::instance()->glSize[0] = 600;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->graph[0]->setGlWidth(CTX::instance()->glSize[0]);
-  }
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI))
+    Gui::setSceneSize(CTX::instance()->glSize[0], -1);
 #endif
   return CTX::instance()->glSize[0];
 }
@@ -2224,10 +2208,9 @@ double opt_general_graphics_size1(OPT_ARGS_NUM)
     CTX::instance()->glSize[1] = (int)val;
     if(CTX::instance()->glSize[1] <= 0) CTX::instance()->glSize[1] = 600;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->graph[0]->setGlHeight(CTX::instance()->glSize[1]);
-  }
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI))
+    Gui::setSceneSize(-1, CTX::instance()->glSize[1]);
 #endif
   return CTX::instance()->glSize[1];
 }
@@ -2287,11 +2270,9 @@ double opt_general_message_fontsize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->msgFontSize = (int)val;
-#if defined(HAVE_FLTK)
-    if(FlGui::available() && (action & GMSH_GUI)) {
-      FlGui::instance()->graph[0]->setMessageFontSize(
-        CTX::instance()->msgFontSize);
-    }
+#if defined(HAVE_GUI)
+    if(Gui::available() && (action & GMSH_GUI))
+      Gui::setConsoleFontSize(CTX::instance()->msgFontSize);
 #endif
   }
   return CTX::instance()->msgFontSize;
@@ -2300,13 +2281,9 @@ double opt_general_message_fontsize(OPT_ARGS_NUM)
 double opt_general_detached_menu(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->detachedMenu = (int)val; }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->detachedMenu)
-      FlGui::instance()->graph[0]->detachMenu();
-    else
-      FlGui::instance()->graph[0]->attachMenu();
-  }
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI))
+    Gui::detachTree(CTX::instance()->detachedMenu ? true : false);
 #endif
   return CTX::instance()->detachedMenu;
 }
@@ -2323,10 +2300,9 @@ double opt_general_menu_size0(OPT_ARGS_NUM)
     CTX::instance()->menuSize[0] = (int)val;
     if(CTX::instance()->menuSize[0] < 0) CTX::instance()->menuSize[0] = 0;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->graph[0]->setMenuWidth(CTX::instance()->menuSize[0]);
-  }
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI))
+    Gui::setTreeWidth(CTX::instance()->menuSize[0]);
 #endif
   return CTX::instance()->menuSize[0];
 }
@@ -2810,11 +2786,9 @@ double opt_general_tooltips(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->tooltips = (int)val;
-#if defined(HAVE_FLTK)
-    if(CTX::instance()->tooltips)
-      Fl_Tooltip::enable();
-    else
-      Fl_Tooltip::disable();
+#if defined(HAVE_GUI)
+    if(Gui::available())
+      Gui::enableTooltips(CTX::instance()->tooltips ? true : false);
 #endif
   }
   return CTX::instance()->tooltips;
@@ -2829,8 +2803,8 @@ double opt_general_input_scrolling(OPT_ARGS_NUM)
 double opt_general_orthographic(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->ortho = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI))
     Msg::StatusBar(false, CTX::instance()->ortho ? "Orthographic projection" :
                                                    "Perspective projection");
 #endif
@@ -2840,15 +2814,13 @@ double opt_general_orthographic(OPT_ARGS_NUM)
 double opt_general_mouse_selection(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mouseSelection = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI)) {
     Msg::StatusBar(false, CTX::instance()->mouseSelection ?
                             "Mouse selection ON" :
                             "Mouse selection OFF");
-    // the button that says so asks this option at every draw, see
-    // statusButtonFltk::refresh()
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->refreshStatusButtons();
+    // the button that says so asks this option when it is drawn
+    Gui::refreshBar();
   }
 #endif
   return CTX::instance()->mouseSelection;
@@ -3068,15 +3040,8 @@ double opt_general_double_buffer(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->db = (int)val;
-#if defined(HAVE_FLTK)
-    if(FlGui::available()) {
-      int mode =
-        FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-      if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->mode(mode);
-    }
+#if defined(HAVE_GUI)
+    if(Gui::available()) Gui::sceneSettingChanged("buffering");
 #endif
   }
   return CTX::instance()->db;
@@ -3086,15 +3051,8 @@ double opt_general_antialiasing(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->antialiasing = (int)val;
-#if defined(HAVE_FLTK)
-    if(FlGui::available()) {
-      int mode =
-        FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-      if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->mode(mode);
-    }
+#if defined(HAVE_GUI)
+    if(Gui::available()) Gui::sceneSettingChanged("buffering");
 #endif
   }
   return CTX::instance()->antialiasing;
@@ -3867,8 +3825,8 @@ double opt_geometry_transform(OPT_ARGS_NUM)
        CTX::instance()->geom.useTransform > 1)
       CTX::instance()->geom.useTransform = 0;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
+#if defined(HAVE_GUI)
+  if(Gui::available() && Gui::getCurrentDrawContext()) {
     if(action & GMSH_SET) {
       drawContext *ctx = Gui::getCurrentDrawContext();
       if(CTX::instance()->geom.useTransform == 1) {
@@ -3890,8 +3848,8 @@ double opt_geometry_transform(OPT_ARGS_NUM)
 static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
 {
   if(action & GMSH_SET) CTX::instance()->geom.transform[ii][jj] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
+#if defined(HAVE_GUI)
+  if(Gui::available() && Gui::getCurrentDrawContext()) {
     if(action & GMSH_SET) {
       drawContext *ctx = Gui::getCurrentDrawContext();
       drawTransform *tr = ctx->getTransform();
@@ -3952,8 +3910,8 @@ double opt_geometry_transform22(OPT_ARGS_NUM)
 static double _opt_geometry_offset(OPT_ARGS_NUM, int ii, int nn)
 {
   if(action & GMSH_SET) CTX::instance()->geom.offset[ii] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
+#if defined(HAVE_GUI)
+  if(Gui::available() && Gui::getCurrentDrawContext()) {
     if(action & GMSH_SET) {
       drawContext *ctx = Gui::getCurrentDrawContext();
       drawTransform *tr = ctx->getTransform();
@@ -5738,8 +5696,8 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
        CTX::instance()->mesh.colorCarousel > 3)
       CTX::instance()->mesh.colorCarousel = 0;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
+#if defined(HAVE_GUI)
+  if(Gui::available() && (action & GMSH_GUI))
     drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->mesh.colorCarousel;
@@ -6146,10 +6104,8 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
        CTX::instance()->post.animCycle > 2)
       CTX::instance()->post.animCycle = 0;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available())
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->refreshStatusButtons();
+#if defined(HAVE_GUI)
+  if(Gui::available()) Gui::refreshBar();
 #endif
   return CTX::instance()->post.animCycle;
 }
@@ -6244,10 +6200,8 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWd(0.);
   if(!data) return 1;
-#if defined(HAVE_FLTK)
-  if(FlGui::available())
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->refreshStatusButtons();
+#if defined(HAVE_GUI)
+  if(Gui::available()) Gui::refreshBar();
 #endif
   return data->getNumTimeSteps();
 #else
@@ -8197,9 +8151,6 @@ double opt_print_x3d_colorize(OPT_ARGS_NUM)
 
 // Color option routines
 
-#if defined(HAVE_FLTK)
-
-#endif
 
 unsigned int opt_general_color_background(OPT_ARGS_COL)
 {
@@ -8224,7 +8175,7 @@ unsigned int opt_general_color_foreground(OPT_ARGS_COL)
 unsigned int opt_general_color_text(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.text = val;
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->color.text;
@@ -8233,7 +8184,7 @@ unsigned int opt_general_color_text(OPT_ARGS_COL)
 unsigned int opt_general_color_axes(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.axes = val;
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->color.axes;
@@ -8242,7 +8193,7 @@ unsigned int opt_general_color_axes(OPT_ARGS_COL)
 unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.smallAxes = val;
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->color.smallAxes;
@@ -8720,7 +8671,7 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
 #if defined(HAVE_POST)
   GET_VIEWo(0);
   if(action & GMSH_SET) { opt->color.text2d = val; }
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   if(_gui_action_valid(action, num)) {
     drawContext::global()->resetFontTextures();
   }
@@ -8736,7 +8687,7 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
 #if defined(HAVE_POST)
   GET_VIEWo(0);
   if(action & GMSH_SET) { opt->color.text3d = val; }
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   if(_gui_action_valid(action, num)) {
     drawContext::global()->resetFontTextures();
   }
@@ -8752,7 +8703,7 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
 #if defined(HAVE_POST)
   GET_VIEWo(0);
   if(action & GMSH_SET) { opt->color.axes = val; }
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   if(_gui_action_valid(action, num)) {
     drawContext::global()->resetFontTextures();
   }
@@ -8768,7 +8719,7 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL)
 #if defined(HAVE_POST)
   GET_VIEWo(0);
   if(action & GMSH_SET) { opt->color.background2d = val; }
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   if(_gui_action_valid(action, num)) {
     drawContext::global()->resetFontTextures();
   }

@@ -47,7 +47,8 @@
   F(setMouseSelection, (bool on), (on))                                        \
   F(toggleAnimation, (), ())                                                   \
   F(abortSelection, (), ())                                                    \
-  F(setAddPointMode, (bool on), (on))
+  F(setAddPointMode, (bool on), (on))                                          \
+  F(sceneSettingChanged, (const std::string &what), (what))
 
 // what each answers with when there is no scene to answer
 #define GUI_SCENE_VALUE(F)                                                     \
