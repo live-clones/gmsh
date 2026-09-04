@@ -24,6 +24,18 @@ namespace Ui {
       s += "F" + std::to_string(key - KeyF1 + 1);
     else if(key == KeyDelete)
       s += "Del";
+    // The arrows have to be named as well. Falling through to the cast below
+    // truncated them to a control character, which is not a label anyone can
+    // read and not one anything can match against -- and the colour map gives
+    // four of its eight numbers to the arrows.
+    else if(key == KeyLeft)
+      s += "Left";
+    else if(key == KeyRight)
+      s += "Right";
+    else if(key == KeyUp)
+      s += "Up";
+    else if(key == KeyDown)
+      s += "Down";
     else
       s += (char)key;
     return s;
