@@ -852,6 +852,57 @@ def _colormap_keys(dpy, build, win, ww, wh, dx, dy, dw, dh):
     time.sleep(0.3)
     return _dialog_picture(dpy, "options", build, win, ww, wh)
 
+def category_rows(img, want):
+    """The middle of each row of the category list, read off the picture.
+
+    Written down, the step drifts: the rows of an FLTK browser are as tall as
+    the font makes them, and a build whose FLTK draws its text through Pango
+    has them taller than one that does not. The step written down for the FLTK
+    column was three pixels too generous here, which put the click for the
+    sixth category two pixels below the last row -- so the window stayed on the
+    first category, and six pictures of General were saved under the names of
+    the tabs of View.
+
+    The rows are evenly spaced, so what has to be found is where the list
+    starts and where it ends, not where each row is: telling one row from the
+    next by the blank between them fails on the selected one, which is a
+    filled band running into the row under it.
+    """
+    if img is None:
+        return []
+    px = img.convert("RGB").load()
+    wide, tall = img.size
+    # the list is down the left of the window; 92 is inside the narrowest of
+    # these windows and clear of the panes beside it
+    right = min(92, wide)
+    runs, run, blank = [], None, 0
+    for y in range(0, min(tall, 260)):
+        ink = sum(1 for x in range(6, right) if sum(px[x, y]) < 420)
+        if ink >= 6:
+            run = [y, y] if run is None else [run[0], y]
+            blank = 0
+        else:
+            if run is not None:
+                runs.append(run)
+                run = None
+            blank += 1
+            # the list ends where the blank under it begins: what is further
+            # down that side of the window is not a row of it
+            if runs and blank >= 12:
+                break
+    if run is not None:
+        runs.append(run)
+    if len(runs) < 2 or want < 1:
+        return []
+    top, bottom = runs[0][0], runs[-1][1]
+    step = (bottom - top + 1) / float(want)
+    # a row of a browser is between eight and thirty pixels tall, whatever the
+    # font; anything else means this is not the list
+    if step < 8. or step > 30.:
+        return []
+    return [top + step * (k + .5) for k in range(want)]
+
+
 def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
     """Photograph every tab of every category of the option window.
 
@@ -861,6 +912,19 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
     """
     failures = []
     first, step = CATEGORY_ROWS[build]
+    # where the rows really are, read off the window as it stands; the written
+    # numbers are what is used when they cannot be made out
+    # Only where FLTK draws the list: it is its row height that moves from one
+    # build to the next. Dear ImGui measures its own, and the written numbers
+    # for it are right.
+    rows = []
+    if build in ("released", "fltk"):
+        rows = category_rows(
+            _dialog_picture(dpy, "options", build, win, ww, wh),
+            len(OPTION_TABS))
+        if not rows:
+            print("NOTE %s options: category rows not made out, using the "
+                  "written ones" % build)
     for k, (category, tabs) in enumerate(OPTION_TABS):
         if only and not only.startswith(category.lower()):
             continue
@@ -869,7 +933,8 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
             failures.append("options: no window to sweep")
             return failures
         dx, dy, dw, dh = where
-        click(dpy, dx + 45, dy + int(round(first + k * step)))
+        row = rows[k] if k < len(rows) else first + k * step
+        click(dpy, dx + 45, dy + int(round(row)))
         time.sleep(0.6)
         picture = _dialog_picture(dpy, "options", build, win, ww, wh)
         if picture is None:
