@@ -127,7 +127,7 @@ namespace Ui {
       std::function<std::string()> barTooltip;
       std::function<void()> barPressed;
     };
-    virtual void setSources(const Sources &sources) {}
+    virtual void setSources(const Sources &sources) = 0;
 
     // --- what the toolkit is
 
@@ -350,7 +350,7 @@ namespace Ui {
       // the keys a picking answers to: 'q' gives up, 'e' ends, 'u' undoes
       std::function<void(char key)> sceneKey;
     };
-    virtual void setHost(const Host &host) {}
+    virtual void setHost(const Host &host) = 0;
   };
 
 } // namespace Ui
