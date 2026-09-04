@@ -22,6 +22,11 @@
 #include "OS.h"
 #include "SmoothData.h"
 
+// how many edges or faces of one element are hashed and prefetched together
+// before being looked up; elements with more than this fall back on looking
+// them up one at a time
+enum { MAX_BATCHED_EDGES = 32, MAX_BATCHED_FACES = 8 };
+
 static const double curvedRepTol = 1.e-5;
 
 unsigned int getColorByEntity(GEntity *e)
@@ -321,15 +326,25 @@ static void markBoundaryFaces(std::vector<T *> &elements,
       (ele->getPolynomialOrder() > 1) &&
       (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
     if(!repPerFace(ele, curved)) continue;
+    // as when the edges are filtered: hash the faces of the element and ask
+    // for their table entries before touching any of them
     MVertex *fv[4];
-    for(int j = 0; j < ele->getNumFaces(); j++) {
-      int nc = ele->getFaceCorners(j, fv);
-      if(!nc) { // no corner accessor: fall back on the sorted face
-        MFace fa = ele->getFace(j);
-        nc = (int)fa.getNumVertices();
-        for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
+    int nf = ele->getNumFaces();
+    std::uint64_t hash[MAX_BATCHED_FACES];
+    for(int j0 = 0; j0 < nf; j0 += MAX_BATCHED_FACES) {
+      int n = std::min(nf - j0, (int)MAX_BATCHED_FACES);
+      for(int j = 0; j < n; j++) {
+        int nc = ele->getFaceCorners(j0 + j, fv);
+        if(!nc) { // no corner accessor: fall back on the sorted face
+          MFace fa = ele->getFace(j0 + j);
+          nc = (int)fa.getNumVertices();
+          for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
+        }
+        hash[j] =
+          boundary->hashOf(0, fv[0], fv[1], fv[2], nc > 3 ? fv[3] : nullptr);
+        boundary->prefetch(hash[j]);
       }
-      boundary->insertOrErase(0, fv[0], fv[1], fv[2], nc > 3 ? fv[3] : nullptr);
+      for(int j = 0; j < n; j++) boundary->insertOrErase(hash[j]);
     }
   }
 }
@@ -404,8 +419,9 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 
     if(!isElementVisible(ele) || ele->getDim() < 1) continue;
 
-    VertexArray *vaLine = vaLines[Msg::GetThreadNum()];
-    VertexArray *vaTriangle = vaTriangles[Msg::GetThreadNum()];
+    const int tnum = (nthreads == 1) ? 0 : Msg::GetThreadNum();
+    VertexArray *vaLine = vaLines[tnum];
+    VertexArray *vaTriangle = vaTriangles[tnum];
 
     unsigned int c = getColorByElement(ele);
     unsigned int col[4] = {c, c, c, c};
@@ -421,14 +437,24 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
       int numRep = ele->getNumEdgesRep(curved);
       // the representation of a curved edge is subdivided, and does not map one
       // to one onto the topological edges: fall back on the coordinates
-      bool topo = (filter && numRep == ele->getNumEdges());
+      bool topo = (filter && numRep == ele->getNumEdges() &&
+                   numRep <= MAX_BATCHED_EDGES);
       bool unique = uniqueEdges && !topo;
+      // hash the edges of the element and ask for their table entries before
+      // looking any of them up: the lookups are spread over a table far larger
+      // than the caches, and would otherwise stall one after the other
+      std::uint64_t hash[MAX_BATCHED_EDGES];
+      if(topo) {
+        for(int j = 0; j < numRep; j++) {
+          MEdge ed = ele->getEdge(j);
+          hash[j] = filter->hashOf(c, ed.getMinVertex(), ed.getMaxVertex());
+          filter->prefetch(hash[j]);
+        }
+      }
       for(int j = 0; j < numRep; j++) {
         if(topo) {
-          MEdge ed = ele->getEdge(j);
           numIn += 2;
-          if(filter->isDuplicate(c, ed.getMinVertex(), ed.getMaxVertex()))
-            continue;
+          if(filter->isDuplicate(hash[j])) continue;
           numKept += 2;
         }
         double x[2], y[2], z[2];
@@ -452,19 +478,41 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
     if(faces) {
       int numRep = ele->getNumFacesRep(curved);
       int perFace = interior ? repPerFace(ele, curved) : 0;
+      // hash the faces of the element and ask for their table entries before
+      // looking any of them up
+      std::uint64_t interiorHash[MAX_BATCHED_FACES];
+      int nf = perFace ? ele->getNumFaces() : 0;
+      bool batched = (nf > 0 && nf <= MAX_BATCHED_FACES);
+      for(int j = 0; batched && j < nf; j++) {
+        MVertex *fv[4];
+        int nc = ele->getFaceCorners(j, fv);
+        if(!nc) {
+          MFace fa = ele->getFace(j);
+          nc = (int)fa.getNumVertices();
+          for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
+        }
+        interiorHash[j] =
+          interior->hashOf(0, fv[0], fv[1], fv[2], nc > 3 ? fv[3] : nullptr);
+        interior->prefetch(interiorHash[j]);
+      }
       for(int j = 0; j < numRep; j++) {
+        // only the faces that bound the mesh are drawn
         if(perFace) {
-          // only the faces that bound the mesh are drawn
-          MVertex *fv[4];
-          int nc = ele->getFaceCorners(j / perFace, fv);
-          if(!nc) {
-            MFace fa = ele->getFace(j / perFace);
-            nc = (int)fa.getNumVertices();
-            for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
+          bool bnd;
+          if(batched)
+            bnd = interior->contains(interiorHash[j / perFace]);
+          else {
+            MVertex *fv[4];
+            int nc = ele->getFaceCorners(j / perFace, fv);
+            if(!nc) {
+              MFace fa = ele->getFace(j / perFace);
+              nc = (int)fa.getNumVertices();
+              for(int i = 0; i < nc && i < 4; i++) fv[i] = fa.getVertex(i);
+            }
+            bnd = interior->contains(0, fv[0], fv[1], fv[2],
+                                     nc > 3 ? fv[3] : nullptr);
           }
-          if(!interior->contains(0, fv[0], fv[1], fv[2],
-                                 nc > 3 ? fv[3] : nullptr))
-            continue;
+          if(!bnd) continue;
         }
         double x[3], y[3], z[3];
         SVector3 n[3];

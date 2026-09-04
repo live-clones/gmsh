@@ -59,32 +59,17 @@ static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
 }
 
 // hash a key word by word; never returns 0, which marks an empty slot
-static inline std::uint64_t hashKey(const void *p, std::size_t bytes)
-{
-  const std::uint64_t *w = (const std::uint64_t *)p;
-  std::uint64_t h = 0x9e3779b97f4a7c15ULL;
-  for(std::size_t i = 0; i < bytes / 8; i++) {
-    h ^= w[i];
-    h *= 0xff51afd7ed558ccdULL;
-    h = (h << 31) | (h >> 33);
-  }
-  h ^= h >> 33;
-  h *= 0xff51afd7ed558ccdULL;
-  h ^= h >> 29;
-  h *= 0xc4ceb9fe1a85ec53ULL;
-  h ^= h >> 32;
-  return h ? h : 1;
-}
-
 void UniqueElementFilter::Shard::reserve(std::size_t n)
 {
   std::size_t want = 16;
   while(want < 2 * n) want *= 2;
-  if(want <= table.size()) return;
+  if(want <= store.size()) return;
   std::vector<std::uint64_t> old;
-  old.swap(table);
-  table.assign(want, 0);
-  std::size_t mask = want - 1;
+  old.swap(store);
+  store.assign(want, 0);
+  table = &store[0];
+  mask = want - 1;
+  growAt = want / 2;
   for(std::size_t i = 0; i < old.size(); i++) {
     if(!old[i]) continue;
     std::size_t j = old[i] & mask;
@@ -93,22 +78,11 @@ void UniqueElementFilter::Shard::reserve(std::size_t n)
   }
 }
 
-bool UniqueElementFilter::Shard::contains(std::uint64_t h) const
-{
-  if(table.empty()) return false;
-  std::size_t mask = table.size() - 1, i = h & mask;
-  while(table[i]) {
-    if(table[i] == h) return true;
-    i = (i + 1) & mask;
-  }
-  return false;
-}
-
 // Knuth's algorithm R: after removing the entry at i, shift back the following
 // entries that probed past it, so that the table stays free of tombstones
 void UniqueElementFilter::Shard::erase(std::size_t i)
 {
-  std::size_t mask = table.size() - 1, j = i;
+  std::size_t j = i;
   table[i] = 0;
   num--;
   for(;;) {
@@ -127,52 +101,14 @@ void UniqueElementFilter::Shard::erase(std::size_t i)
   }
 }
 
-bool UniqueElementFilter::Shard::insertOrErase(std::uint64_t h)
-{
-  if(2 * (num + 1) > table.size()) reserve(num + 1);
-  std::size_t mask = table.size() - 1, i = h & mask;
-  while(table[i]) {
-    if(table[i] == h) {
-      erase(i);
-      return false;
-    }
-    i = (i + 1) & mask;
-  }
-  table[i] = h;
-  num++;
-  return true;
-}
-
-bool UniqueElementFilter::Shard::insert(std::uint64_t h)
-{
-  if(2 * (num + 1) > table.size()) reserve(num + 1);
-  std::size_t mask = table.size() - 1, i = h & mask;
-  while(table[i]) {
-    if(table[i] == h) return false;
-    i = (i + 1) & mask;
-  }
-  table[i] = h;
-  num++;
-  return true;
-}
-
 void UniqueElementFilter::reserve(std::size_t n)
 {
   for(int i = 0; i < NUM_SHARDS; i++) _shard[i].reserve(n / NUM_SHARDS + 16);
 }
 
-bool UniqueElementFilter::isDuplicate(const std::uint64_t *key, int n)
-{
-  std::uint64_t h = hashKey(key, n * sizeof(std::uint64_t));
-  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
-  if(!_threaded) return !_shard[sh].insert(h);
-  std::lock_guard<std::mutex> lock(_mutex[sh]);
-  return !_shard[sh].insert(h);
-}
-
 bool UniqueElementFilter::contains(const std::uint64_t *key, int n)
 {
-  std::uint64_t h = hashKey(key, n * sizeof(std::uint64_t));
+  std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
   std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
   if(!_threaded) return _shard[sh].contains(h);
   std::lock_guard<std::mutex> lock(_mutex[sh]);
@@ -181,7 +117,7 @@ bool UniqueElementFilter::contains(const std::uint64_t *key, int n)
 
 void UniqueElementFilter::insertOrErase(const std::uint64_t *key, int n)
 {
-  std::uint64_t h = hashKey(key, n * sizeof(std::uint64_t));
+  std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
   std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
   if(!_threaded) {
     _shard[sh].insertOrErase(h);
@@ -191,38 +127,13 @@ void UniqueElementFilter::insertOrErase(const std::uint64_t *key, int n)
   _shard[sh].insertOrErase(h);
 }
 
-// build the key of an element identified by its vertices and its color
-static int buildVertexKey(unsigned int col, const void *v0, const void *v1,
-                          const void *v2, const void *v3, std::uint64_t *k)
-{
-  int n = 0;
-  k[n++] = (std::uint64_t)(std::uintptr_t)v0;
-  k[n++] = (std::uint64_t)(std::uintptr_t)v1;
-  if(v2) k[n++] = (std::uint64_t)(std::uintptr_t)v2;
-  if(v3) k[n++] = (std::uint64_t)(std::uintptr_t)v3;
-  // sort so that the vertices can be given in any order
-  for(int i = 1; i < n; i++)
-    for(int j = i; j > 0 && k[j] < k[j - 1]; j--) std::swap(k[j], k[j - 1]);
-  k[n++] = col;
-  return n;
-}
-
-bool UniqueElementFilter::isDuplicate(unsigned int col, const void *v0,
-                                      const void *v1, const void *v2,
-                                      const void *v3)
-{
-  std::uint64_t k[5];
-  int n = buildVertexKey(col, v0, v1, v2, v3, k);
-  return isDuplicate(k, n);
-}
-
 void UniqueElementFilter::insertOrErase(unsigned int col, const void *v0,
                                        const void *v1, const void *v2,
                                        const void *v3)
 {
   std::uint64_t k[5];
-  int n = buildVertexKey(col, v0, v1, v2, v3, k);
-  std::uint64_t h = hashKey(k, n * sizeof(std::uint64_t));
+  int n = vaVertexKey(col, v0, v1, v2, v3, k);
+  std::uint64_t h = vaHashKey(k, n * sizeof(std::uint64_t));
   std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
   if(!_threaded) {
     _shard[sh].insertOrErase(h);
@@ -237,8 +148,8 @@ bool UniqueElementFilter::contains(unsigned int col, const void *v0,
                                     const void *v3)
 {
   std::uint64_t k[5];
-  int n = buildVertexKey(col, v0, v1, v2, v3, k);
-  std::uint64_t h = hashKey(k, n * sizeof(std::uint64_t));
+  int n = vaVertexKey(col, v0, v1, v2, v3, k);
+  std::uint64_t h = vaHashKey(k, n * sizeof(std::uint64_t));
   std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
   if(!_threaded) return _shard[sh].contains(h);
   std::lock_guard<std::mutex> lock(_mutex[sh]);
@@ -253,12 +164,12 @@ bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
   if(npe == 2) {
     CornerKey<2> k;
     fillCornerKey<2>(k, x, y, z, r, g, b, a);
-    h = hashKey(&k, sizeof(CornerKey<2>));
+    h = vaHashKey(&k, sizeof(CornerKey<2>));
   }
   else if(npe == 3) {
     CornerKey<3> k;
     fillCornerKey<3>(k, x, y, z, r, g, b, a);
-    h = hashKey(&k, sizeof(CornerKey<3>));
+    h = vaHashKey(&k, sizeof(CornerKey<3>));
   }
   else
     return false;
@@ -297,8 +208,9 @@ void VertexArray::setUniqueFilter(UniqueElementFilter *f)
 
 VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
-    _ownsFilter(false), _vboDirty(true), _vboContext(0), _statUniqueIn(0),
-    _statUniqueKept(0)
+    _ownsFilter(false), _storeElements(CTX::instance()->pickElements ? true :
+                                                                       false),
+    _vboDirty(true), _vboContext(0), _statUniqueIn(0), _statUniqueKept(0)
 {
   _vbo[0] = _vbo[1] = _vbo[2] = 0;
 
@@ -360,7 +272,7 @@ void VertexArray::_addColor(unsigned char r, unsigned char g, unsigned char b,
 
 void VertexArray::_addElement(MElement *ele)
 {
-  if(ele && CTX::instance()->pickElements) _elements.push_back(ele);
+  if(ele && _storeElements) _elements.push_back(ele);
 }
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n,

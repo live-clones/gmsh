@@ -36,9 +36,53 @@ public:
   unsigned char pad[8 - ((12 * N + 4) % 8)];
 };
 
+// hash of a key made of 64 bit words. The filter only stores this hash, so the
+// function is part of what the filter is: changing it changes which elements
+// collide, hence (very rarely) which ones are drawn
+static inline std::uint64_t vaHashKey(const void *p, std::size_t bytes)
+{
+  const std::uint64_t *w = (const std::uint64_t *)p;
+  std::uint64_t h = 0x9e3779b97f4a7c15ULL;
+  for(std::size_t i = 0; i < bytes / 8; i++) {
+    h ^= w[i];
+    h *= 0xff51afd7ed558ccdULL;
+    h = (h << 31) | (h >> 33);
+  }
+  h ^= h >> 33;
+  h *= 0xff51afd7ed558ccdULL;
+  h ^= h >> 29;
+  h *= 0xc4ceb9fe1a85ec53ULL;
+  h ^= h >> 32;
+  return h ? h : 1;
+}
+
+// build the key of an element identified by its vertices and its color
+static inline int vaVertexKey(unsigned int col, const void *v0, const void *v1,
+                              const void *v2, const void *v3, std::uint64_t *k)
+{
+  int n = 0;
+  k[n++] = (std::uint64_t)(std::uintptr_t)v0;
+  k[n++] = (std::uint64_t)(std::uintptr_t)v1;
+  if(v2) k[n++] = (std::uint64_t)(std::uintptr_t)v2;
+  if(v3) k[n++] = (std::uint64_t)(std::uintptr_t)v3;
+  // sort so that the vertices can be given in any order
+  for(int i = 1; i < n; i++)
+    for(int j = i; j > 0 && k[j] < k[j - 1]; j--) {
+      std::uint64_t t = k[j];
+      k[j] = k[j - 1];
+      k[j - 1] = t;
+    }
+  k[n++] = col;
+  return n;
+}
+
 // filter used to detect elements that are drawn several times. The keys are
 // spread over several shards, each with its own lock, so that the filter can be
-// shared by the threads that fill the vertex arrays of a given entity.
+// shared by the threads that fill the vertex arrays of a given entity. The
+// lookups are on the hot path of the vertex array construction, so they are
+// defined here rather than in the source file: the table pointer, the mask and
+// the size at which the table has to grow are kept next to the table so that a
+// lookup is one indexed load, and the whole thing inlines into the caller.
 class UniqueElementFilter {
 private:
   enum { NUM_SHARDS = 256 };
@@ -48,19 +92,58 @@ private:
   // ~1e-5, i.e. much less often than one dropped edge per mesh
   class Shard {
   public:
-    std::vector<std::uint64_t> table;
-    std::size_t num;
-    Shard() : num(0) {}
+    std::vector<std::uint64_t> store;
+    std::uint64_t *table;
+    std::size_t mask, num, growAt;
+    Shard() : table(nullptr), mask(0), num(0), growAt(0) {}
     void reserve(std::size_t n);
-    bool insert(std::uint64_t h);
-    bool contains(std::uint64_t h) const;
-    // insert the key, or erase it if it is already there
-    bool insertOrErase(std::uint64_t h);
     void erase(std::size_t i);
+    bool insert(std::uint64_t h)
+    {
+      // an empty shard has growAt == 0, so this also allocates the table
+      if(num >= growAt) reserve(num + 1);
+      std::size_t i = h & mask;
+      while(table[i]) {
+        if(table[i] == h) return false;
+        i = (i + 1) & mask;
+      }
+      table[i] = h;
+      num++;
+      return true;
+    }
+    bool contains(std::uint64_t h) const
+    {
+      if(!num) return false;
+      std::size_t i = h & mask;
+      while(table[i]) {
+        if(table[i] == h) return true;
+        i = (i + 1) & mask;
+      }
+      return false;
+    }
+    // insert the key, or erase it if it is already there
+    bool insertOrErase(std::uint64_t h)
+    {
+      if(num >= growAt) reserve(num + 1);
+      std::size_t i = h & mask;
+      while(table[i]) {
+        if(table[i] == h) {
+          erase(i);
+          return false;
+        }
+        i = (i + 1) & mask;
+      }
+      table[i] = h;
+      num++;
+      return true;
+    }
   };
   Shard _shard[NUM_SHARDS];
   std::mutex _mutex[NUM_SHARDS];
   bool _threaded;
+  // the top bits pick the shard, the low bits index inside it
+  const Shard &_shardOfConst(std::uint64_t h) const { return _shard[(h >> 56) & (NUM_SHARDS - 1)]; }
+  Shard &_shardOf(std::uint64_t h) { return _shard[(h >> 56) & (NUM_SHARDS - 1)]; }
 
 public:
   UniqueElementFilter(bool threaded) : _threaded(threaded) {}
@@ -79,12 +162,59 @@ public:
   // Pass the color as well, as two elements sharing an edge or a face can be
   // drawn with different colors
   bool isDuplicate(unsigned int col, const void *v0, const void *v1,
-                   const void *v2 = nullptr, const void *v3 = nullptr);
+                   const void *v2 = nullptr, const void *v3 = nullptr)
+  {
+    std::uint64_t k[5];
+    return isDuplicate(k, vaVertexKey(col, v0, v1, v2, v3, k));
+  }
   // most general form: the caller builds the key itself, e.g. from node
   // identifiers paired with the color of each node
-  bool isDuplicate(const std::uint64_t *key, int n);
+  bool isDuplicate(const std::uint64_t *key, int n)
+  {
+    std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
+    if(!_threaded) return !_shardOf(h).insert(h);
+    std::lock_guard<std::mutex> lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    return !_shardOf(h).insert(h);
+  }
   bool contains(const std::uint64_t *key, int n);
   void insertOrErase(const std::uint64_t *key, int n);
+  // the hash of an element, its table entry, and the lookup, separately: the
+  // caller can then hash a whole element's worth of edges and ask for their
+  // entries before looking any of them up, which is what keeps the lookups from
+  // stalling one after the other on a table that does not fit in the caches
+  std::uint64_t hashOf(unsigned int col, const void *v0, const void *v1,
+                       const void *v2 = nullptr, const void *v3 = nullptr)
+  {
+    std::uint64_t k[5];
+    int n = vaVertexKey(col, v0, v1, v2, v3, k);
+    return vaHashKey(k, n * sizeof(std::uint64_t));
+  }
+  void prefetch(std::uint64_t h)
+  {
+    const Shard &s = _shard[(h >> 56) & (NUM_SHARDS - 1)];
+    if(s.table) __builtin_prefetch(&s.table[h & s.mask], 1, 1);
+  }
+  bool isDuplicate(std::uint64_t h)
+  {
+    if(!_threaded) return !_shardOf(h).insert(h);
+    std::lock_guard<std::mutex> lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    return !_shardOf(h).insert(h);
+  }
+  void insertOrErase(std::uint64_t h)
+  {
+    if(!_threaded) {
+      _shardOf(h).insertOrErase(h);
+      return;
+    }
+    std::lock_guard<std::mutex> lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    _shardOf(h).insertOrErase(h);
+  }
+  bool contains(std::uint64_t h)
+  {
+    if(!_threaded) return _shardOf(h).contains(h);
+    std::lock_guard<std::mutex> lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    return _shardOf(h).contains(h);
+  }
   // test without inserting: used to ask whether a face has been seen twice,
   // i.e. whether it is interior to the mesh
   bool contains(unsigned int col, const void *v0, const void *v1,
@@ -107,6 +237,9 @@ private:
   // shared with other vertex arrays, in which case it is not owned
   UniqueElementFilter *_filter;
   bool _ownsFilter;
+  // whether the element pointers have to be stored: asking the context for
+  // every corner shows up in the profile of a large mesh
+  bool _storeElements;
   // OpenGL buffer objects holding a copy of the arrays (vertices, normals,
   // colors). They are created and filled by the graphics code, which is the
   // only place where a GL context is current
