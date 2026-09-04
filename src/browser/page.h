@@ -857,9 +857,51 @@ function lines(fields, into, columns) {
       line.style.setProperty('--n', holds);
       line.style.setProperty('--arrow', '1.8em');
     }
+    // What the line is made of, at the top level. Fields that take the width
+    // they need follow one another with nothing between them: two halves of a
+    // value are drawn as one box split in two, not as two boxes with a gap. So
+    // a run of them is one thing, and what is around the run is another.
+    const parts = [];
+    {
+      let run = null;
+      let said = false;               // did the field before this one say what
+                                      // it was, inside the run being filled?
+      for(const f of row) {
+        const one = cell(f);
+        // a switch that opens what is under it belongs at the end of the line,
+        // not flush against the field before it
+        if(f.packed && f.kind !== 'gap' && !f.fold) {
+          if(!run) {
+            run = document.createElement('div');
+            run.className = 'cell packed run';
+            parts.push(run);
+          }
+          // A run is flush only where it is one value split in two: what
+          // separates two halves of a size is nothing at all, but three snaps
+          // each named after its axis are three things, and each stands off
+          // from the name of the one before it.
+          if(said) one.style.marginLeft = '8px';
+          said = !!f.label;
+          run.appendChild(one);
+          continue;
+        }
+        said = false;
+        run = null;
+        parts.push(one);
+      }
+    }
+
     // A line whose fields each take a column of the pane goes on the grid,
     // beside the lines before and after it rather than in a box of its own.
-    if(columns > 1 && !packed && !fills && !row[0].rule) {
+    //
+    // A line holding a run of packed fields goes on it too, the run counting
+    // as one column. Left off the grid it lined up with nothing: the three
+    // rows of the transformation matrix are each a run of three numbers, and
+    // the name after the run -- X, Y +, Z -- is not the same width on all
+    // three, so what followed it started at a different place on every row.
+    // On the grid the column is as wide as the widest of them and the rows
+    // line up, which is what the windows this reproduces do.
+    if(columns > 1 && !fills && !row[0].rule) {
       if(!grid) {
         grid = document.createElement('div');
         grid.className = 'line grid';
@@ -867,8 +909,7 @@ function lines(fields, into, columns) {
         into.appendChild(grid);
       }
       let head = true;
-      for(const f of row) {
-        const one = cell(f);
+      for(const one of parts) {
         // the first field of a line opens a line of the grid, whatever the
         // line before it left unfilled
         if(head) { one.style.gridColumnStart = '1'; head = false; }
@@ -886,36 +927,7 @@ function lines(fields, into, columns) {
       continue;
     }
     grid = null;
-    // Fields that take the width they need follow one another with nothing
-    // between them: two halves of a value are drawn as one box split in two,
-    // not as two boxes with a gap. So a run of them is put in a cell of its
-    // own, and only what is around the run is spaced.
-    let run = null;
-    let said = false;                 // did the field before this one say what
-                                      // it was, inside the run being filled?
-    for(const f of row) {
-      const one = cell(f);
-      // a switch that opens what is under it belongs at the end of the line,
-      // not flush against the field before it
-      if(f.packed && f.kind !== 'gap' && !f.fold) {
-        if(!run) {
-          run = document.createElement('div');
-          run.className = 'cell packed run';
-          line.appendChild(run);
-        }
-        // A run is flush only where it is one value split in two: what
-        // separates two halves of a size is nothing at all, but three snaps
-        // each named after its axis are three things, and each stands off
-        // from the name of the one before it.
-        if(said) one.style.marginLeft = '8px';
-        said = !!f.label;
-        run.appendChild(one);
-        continue;
-      }
-      said = false;
-      run = null;
-      line.appendChild(one);
-    }
+    for(const one of parts) line.appendChild(one);
     into.appendChild(line);
   }
 }
