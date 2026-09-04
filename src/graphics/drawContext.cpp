@@ -1164,15 +1164,19 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   _pickColor = _pickColorActive = false;
   render_mode = drawContext::GMSH_RENDER;
 
-  // gather the objects that show up, keeping the smallest depth for each
+  // gather the objects that show up, keeping the smallest depth for each. The
+  // 2D overlay is painted on top of the scene without depth testing, so it
+  // wrote no depth of its own and the buffer holds whatever is underneath it:
+  // rank it in front, which is where it is drawn.
   std::map<std::size_t, float> found;
   for(int i = 0; i < fw * fh; i++) {
     std::size_t id = (std::size_t)pixels[4 * i] |
                      ((std::size_t)pixels[4 * i + 1] << 8) |
                      ((std::size_t)pixels[4 * i + 2] << 16);
     if(!id || id >= _pickObjects.size()) continue;
+    float z = (_pickObjects[id].type >= 4) ? -1.f : depths[i];
     auto it = found.find(id);
-    if(it == found.end() || depths[i] < it->second) found[id] = depths[i];
+    if(it == found.end() || z < it->second) found[id] = z;
   }
   Msg::Debug("Colour picking: %d objects drawn, %d found in a %dx%d rectangle",
              (int)_pickObjects.size(), (int)found.size(), fw, fh);
