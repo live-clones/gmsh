@@ -805,6 +805,61 @@ def _points(spec, build):
     return point if isinstance(point[0], (list, tuple)) else [point]
 
 
+def first_list_row(img):
+    """The middle of the first line of the list down the side of a window.
+
+    Written down it drifts with the height of a row, which is the height of
+    the font: the number measured for the FLTK column was ten pixels low here
+    and landed in the empty line under the only field, so nothing was picked
+    and the Help of the size-field window was photographed with nothing to
+    show. Read off the picture it is right whatever FLTK draws.
+    """
+    if img is None:
+        return None
+    px = img.convert("RGB").load()
+    wide, tall = img.size
+    right = min(150, wide)
+    # the top of the box the list is drawn in: a rule running right across it
+    top = None
+    for y in range(10, min(tall, 120)):
+        ink = sum(1 for x in range(6, right) if sum(px[x, y]) < 420)
+        if ink > (right - 6) * .7:
+            top = y
+            break
+    if top is None:
+        return None
+    # and the first line written under that rule
+    run = None
+    for y in range(top + 1, min(tall, top + 40)):
+        ink = sum(1 for x in range(6, right) if sum(px[x, y]) < 420)
+        if ink >= 3:
+            run = [y, y] if run is None else [run[0], y]
+        elif run is not None:
+            break
+    if run is None:
+        return None
+    return (run[0] + run[1]) / 2.
+
+
+def points_to_press(dpy, spec, build, win, ww, wh):
+    """Where a shot clicks before it is taken, with what can be measured
+    measured rather than trusted."""
+    points = _points(spec, build)
+    names = spec.get("pressName", [])
+    if not points or build == "imgui":
+        return points
+    if "list:0" not in names[:len(points)]:
+        return points
+    row = first_list_row(_dialog_picture(dpy, spec.get("pressIn",
+                                                       spec["dialog"]),
+                                         build, win, ww, wh))
+    if row is None:
+        return points
+    return [(p[0], int(round(row)))
+            if i < len(names) and names[i] == "list:0" else p
+            for i, p in enumerate(points)]
+
+
 def press_inside(dpy, build, point, dialog, wx, wy):
     """Click a point of the dialog itself. In Dear ImGui the dialog sits at a
     known place inside the one window; in FLTK it is a window of its own and
@@ -1794,7 +1849,7 @@ def photograph(dpy, args, specs):
                 time.sleep(0.5)
 
             missed = False
-            for point in _points(spec, args.build):
+            for point in points_to_press(dpy, spec, args.build, win, ww, wh):
                 # the button to press may be in another window than the one
                 # the shot is of: the arrow editor is opened from the option
                 # window
@@ -1905,7 +1960,7 @@ def photograph(dpy, args, specs):
             time.sleep(0.5)
 
         missed = False
-        for point in _points(spec, args.build):
+        for point in points_to_press(dpy, spec, args.build, win, ww, wh):
             if not press_inside(dpy, args.build, point,
                                 spec.get("pressIn", spec["dialog"]), wx, wy):
                 failures.append("%s: no dialog to press in" % name)
