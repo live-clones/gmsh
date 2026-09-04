@@ -216,7 +216,20 @@ namespace {
     // has to be kept in step: what is here is what to show and what is
     // showing, and a request for a frame.
 
-    void showForm(int form, bool show) override
+    Ui::FormRef createForm(const std::string &name,
+                           const std::function<Ui::Form()> &describe) override
+    {
+      return appWindow::available() ?
+               appWindow::instance()->createDialog(name, describe) :
+               Ui::FormRef();
+    }
+
+    void destroyForm(Ui::FormRef form) override
+    {
+      if(appWindow::available()) appWindow::instance()->destroyDialog(form);
+    }
+
+    void showForm(Ui::FormRef form, bool show) override
     {
       if(!appWindow::available()) return;
       if(show)
@@ -225,10 +238,22 @@ namespace {
         appWindow::instance()->hideDialog(form);
     }
 
-    bool formVisible(int form) override
+    bool formVisible(Ui::FormRef form) override
     {
       return appWindow::available() &&
              appWindow::instance()->dialogVisible(form);
+    }
+
+    int formPane(Ui::FormRef form) override
+    {
+      return appWindow::available() ?
+               appWindow::instance()->dialogPane(form) : 0;
+    }
+
+    void setFormPane(Ui::FormRef form, int pane) override
+    {
+      if(appWindow::available())
+        appWindow::instance()->setDialogPane(form, pane);
     }
 
     void showConsole(bool show) override

@@ -210,7 +210,7 @@ namespace {
 
 namespace Dialog {
 
-  Form shortcuts()
+  Form describeShortcuts()
   {
     Form p;
     p.title = "Keyboard and Mouse Usage";
@@ -273,7 +273,7 @@ namespace Dialog {
     return p;
   }
 
-  Form currentOptions()
+  Form describeCurrentOptions()
   {
     Form p;
     p.title = "Current Options and Workspace";
@@ -384,7 +384,7 @@ namespace Dialog {
     return p;
   }
 
-  Form about()
+  Form describeAbout()
   {
     Form p;
     p.title = "About Gmsh";

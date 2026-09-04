@@ -6,6 +6,7 @@
 #ifndef DIALOG_FLTK_H
 #define DIALOG_FLTK_H
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -14,20 +15,21 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Widget.H>
 
-#include "GuiDialogs.h"
+#include "Form.h"
 
-// The FLTK side of the dialog description of src/common/GuiDialogs.h: it builds
-// the window that contextWindow.cpp used to build by hand, one widget per
-// declared field, each bound to the variable the description points at.
+// The FLTK side of a described form: it builds the window that
+// contextWindow.cpp used to build by hand, one widget per declared field,
+// each bound to the variable the description points at. It knows the forms
+// only as Form.h says them.
 
 class dialogFltk {
 public:
-  dialogFltk() : _which(-1), _win(nullptr), _forcePane(false) {}
+  dialogFltk() : _win(nullptr), _pane(0), _forcePane(false) {}
   ~dialogFltk();
-  // build the window of the given dialog, or build it again when what it shows
+  // build the window of the given form, or build it again when what it shows
   // depends on the model
-  void build(int dialog);
-  // show it on the pane the description says, bringing the widgets up to date
+  void build(Ui::FormRef form);
+  // show it on the pane it is on, bringing the widgets up to date
   void show();
   void hide();
   bool shown() const;
@@ -38,10 +40,19 @@ public:
   // changed shape rather than only value: the plugin window shows the options
   // of the plugin one picks, the size-field window those of the field.
   void reshape();
+  // which pane is showing: the interface keeps it, since a click on a tab is
+  // what changes it, and the description asks when it wants to know
+  int pane() const { return _pane; }
+  void setPane(int pane)
+  {
+    _pane = pane;
+    _forcePane = true;
+  }
 
 private:
-  int _which;
+  Ui::FormRef _which;
   Ui::Form _panel;
+  int _pane;
   // the shape the window was built for; see _signature()
   std::string _signatureBuilt;
   // the panes of this one are not tabbed and are longer than the window: they
@@ -111,12 +122,19 @@ private:
   static void _tick(void *data);
 };
 
-// The dialogs, indexed as Dialog::Elementary and friends. A dialog is built the
-// first time it is asked for; `create` false asks for it only if it already
-// exists, which is what the callers that merely want to know whether it is up
-// need -- building a window while a group is open would make it a child of that
+// The dialogs, by the form each was built for. A dialog is built the first
+// time it is asked for; `create` false asks for it only if it already exists,
+// which is what the callers that merely want to know whether it is up need --
+// building a window while a group is open would make it a child of that
 // group.
-dialogFltk *fltkDialog(int which, bool create = true);
+// `pane` is the one to open on when the dialog is built here and now: a
+// window built on one pane and moved to another draws its row of tabs a
+// little differently, so what is known is said before the widgets exist.
+dialogFltk *fltkDialog(Ui::FormRef which, bool create = true, int pane = -1);
+// the form is gone: so is its window
+void fltkDropDialog(Ui::FormRef which);
+// every dialog that has been built, whatever it shows
+void fltkEachDialog(const std::function<void(dialogFltk *)> &what);
 
 // The interface is being taken down: from now on, hiding a dialog is not the
 // user closing it, and whatever a dialog undoes when it closes is not to be

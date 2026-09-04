@@ -93,14 +93,65 @@ namespace Dialog {
     _installer _install;
   } // namespace
 
-  // --- what each dialog is showing
+  // --- the forms themselves
+  //
+  // Each is asked of the interface the first time it is wanted, and the
+  // FormRef it answers with is kept. The slots are remembered so that they
+  // can all be emptied when the interface goes: a FormRef outliving the
+  // backend that handed it out would be a number nobody answers to.
 
-  int &currentPane(int dialog)
+  namespace {
+    std::vector<Ui::FormRef *> _handed;
+
+    Ui::FormRef _form(Ui::FormRef &slot, const char *name,
+                      Form (*describe)())
+    {
+      if(!slot.valid()) {
+        slot = Gui::createForm(name, describe);
+        if(slot.valid()) _handed.push_back(&slot);
+      }
+      return slot;
+    }
+  } // namespace
+
+// the name is what the interface remembers the form by from one run to the
+// next, and is the name of the function here
+#define GMSH_DIALOG_FORM(handle, describe)                                    \
+  Ui::FormRef handle()                                                         \
+  {                                                                            \
+    static Ui::FormRef slot;                                                   \
+    return _form(slot, #handle, describe);                                     \
+  }
+
+  GMSH_DIALOG_FORM(elementary, describeElementary)
+  GMSH_DIALOG_FORM(physical, describePhysical)
+  GMSH_DIALOG_FORM(transform, describeTransform)
+  GMSH_DIALOG_FORM(mesh, describeMesh)
+  GMSH_DIALOG_FORM(partition, describePartition)
+  GMSH_DIALOG_FORM(highOrder, describeHighOrder)
+  GMSH_DIALOG_FORM(manipulator, describeManipulator)
+  GMSH_DIALOG_FORM(statistics, describeStatistics)
+  GMSH_DIALOG_FORM(clipping, describeClipping)
+  GMSH_DIALOG_FORM(options, describeOptions)
+  GMSH_DIALOG_FORM(gamepad, describeGamepad)
+  GMSH_DIALOG_FORM(visibility, describeVisibility)
+  GMSH_DIALOG_FORM(plugins, describePlugins)
+  GMSH_DIALOG_FORM(fields, describeFields)
+  GMSH_DIALOG_FORM(classify, describeClassify)
+  GMSH_DIALOG_FORM(shortcuts, describeShortcuts)
+  GMSH_DIALOG_FORM(currentOptions, describeCurrentOptions)
+  GMSH_DIALOG_FORM(about, describeAbout)
+  GMSH_DIALOG_FORM(onelabContext, describeOnelabContext)
+  GMSH_DIALOG_FORM(optionValue, describeOptionValue)
+  GMSH_DIALOG_FORM(arrow, describeArrow)
+  GMSH_DIALOG_FORM(history, describeHistory)
+
+#undef GMSH_DIALOG_FORM
+
+  void forgetForms()
   {
-    static int pane[NumDialogs] = {0, 0, 0, 0};
-    static int nowhere = 0;
-    if(dialog < 0 || dialog >= NumDialogs) return nowhere;
-    return pane[dialog];
+    for(auto slot : _handed) *slot = Ui::FormRef();
+    _handed.clear();
   }
 
   bool &extrudeMode()
@@ -125,38 +176,40 @@ namespace Dialog {
   void highOrderRead();
   void physicalChanged();
 
-  void show(int dialog, int pane)
+  void show(Ui::FormRef form, int pane)
   {
-    if(pane >= 0) currentPane(dialog) = pane;
-    // the partitioner edits a copy, taken when it is shown
-    if(dialog == Partition) partitionRead();
-    // the high order dialog asks the mesh what it already is
-    if(dialog == HighOrder) highOrderRead();
+    if(!form.valid()) return;
     // The statistics are counted when the window opens, quality apart: that one
     // costs, and waits for Update. The tab that opens is the one with something
     // in it, as the window this replaces chooses it.
-    // the clipping dialog edits a copy of the plane it is showing
-    if(dialog == Clipping) clippingRead();
-    // and the physical one works out which group it is about
-    if(dialog == Physical) physicalChanged();
-    if(dialog == Statistics && !Gui::dialogVisible(Statistics)) {
+    if(form == statistics() && !Gui::formVisible(form)) {
       statisticsCompute(false);
-      if(pane < 0) currentPane(Statistics) = statisticsFullestPane();
+      if(pane < 0) pane = statisticsFullestPane();
     }
-    Gui::showDialog(dialog);
+    // the pane first: what is read below may depend on it
+    if(pane >= 0) Gui::setFormPane(form, pane);
+    // the partitioner edits a copy, taken when it is shown
+    if(form == partition()) partitionRead();
+    // the high order dialog asks the mesh what it already is
+    if(form == highOrder()) highOrderRead();
+    // the clipping dialog edits a copy of the plane it is showing
+    if(form == clipping()) clippingRead();
+    // and the physical one works out which group it is about
+    if(form == physical()) physicalChanged();
+    Gui::showForm(form);
   }
 
   void showTransform(int pane, bool extrude)
   {
     extrudeMode() = extrude;
-    show(Transform, pane);
+    show(transform(), pane);
   }
 
   void showPhysical(const std::string &type, bool remove)
   {
     physicalType() = type;
     physicalRemove() = remove;
-    show(Physical, remove ? 1 : 0);
+    show(physical(), remove ? 1 : 0);
   }
 
   namespace {
@@ -199,7 +252,7 @@ namespace Dialog {
 
   // --- "Mesh Context"
 
-  Form meshContext()
+  Form describeMesh()
   {
     geometryParameters &g = geometryStore();
     Form p;
@@ -221,7 +274,7 @@ namespace Dialog {
 
   // --- "Elementary Operation Context"
 
-  Form transformContext()
+  Form describeTransform()
   {
     geometryParameters &g = geometryStore();
     Form p;
@@ -272,7 +325,7 @@ namespace Dialog {
     // Filleting asks for volumes and then for curves, in that order: there is
     // nothing left to choose. It is the one operation of the ten that the
     // window this replaces greys it out for.
-    mode.enabled = []() { return currentPane(Transform) != 5; };
+    mode.enabled = []() { return Gui::formPane(transform()) != 5; };
     p.footer.push_back(mode);
     return p;
   }
@@ -422,7 +475,7 @@ namespace Dialog {
       return q;
     }
 
-  Form elementaryContext()
+  Form describeElementary()
   {
     fillElementaryDefaults();
 
@@ -550,7 +603,7 @@ namespace Dialog {
     // Removing acts on a group that exists. The tag the other pane would give
     // a new group means nothing here, so fall back to the first there is --
     // otherwise the list shows one group and the button removes another.
-    if(currentPane(Physical) == 1) {
+    if(Gui::formPane(physical()) == 1) {
       if(tags.find(g.physicalTag) == tags.end()) {
         g.physicalTag = tags.empty() ? 0 : tags.begin()->first;
         g.physicalName = tags.empty() ? "" : tags.begin()->second;
@@ -580,7 +633,7 @@ namespace Dialog {
     return s;
   }
 
-  Form physicalContext()
+  Form describePhysical()
   {
     geometryParameters &g = geometryStore();
     Form p;
@@ -734,7 +787,7 @@ namespace Dialog {
     m.partitionHexWeight = v.hexWeight;
   }
 
-  Form partition()
+  Form describePartition()
   {
     partitionValues &v = partitionStore();
     Form p;
@@ -837,7 +890,7 @@ namespace Dialog {
     v.boundaryNodes = cad ? 1 : 0;
   }
 
-  Form highOrder()
+  Form describeHighOrder()
   {
     highOrderParameters &v = hoStore();
     Form p;
@@ -957,7 +1010,7 @@ namespace Dialog {
   // setting one reaches the draw context of the window that has the focus, so
   // there is nothing of our own to hold.
 
-  Form manipulator()
+  Form describeManipulator()
   {
     Form p;
     p.title = "Manipulator";
@@ -1065,7 +1118,7 @@ namespace Dialog {
 
   } // namespace
 
-  Form statistics()
+  Form describeStatistics()
   {
     Form p;
     p.title = "Statistics";
@@ -1154,7 +1207,7 @@ namespace Dialog {
   // plane being edited is read when it is chosen and written back at every
   // change.
 
-  Form clipping()
+  Form describeClipping()
   {
     clippingParameters &v = clippingStore();
     Form p;
@@ -1284,7 +1337,7 @@ namespace Dialog {
 
   } // namespace
 
-  Form gamepad()
+  Form describeGamepad()
   {
     Form p;
     p.title = "Gamepad Configuration Tool (in work)";
@@ -1346,35 +1399,6 @@ namespace Dialog {
     }
     p.panes.push_back(pane);
     return p;
-  }
-
-  Form panel(int dialog)
-  {
-    switch(dialog) {
-    case Elementary: return elementaryContext();
-    case Physical: return physicalContext();
-    case Transform: return transformContext();
-    case Mesh: return meshContext();
-    case Partition: return partition();
-    case HighOrder: return highOrder();
-    case Manipulator: return manipulator();
-    case Statistics: return statistics();
-    case Clipping: return clipping();
-    case Options: return options();
-    case Gamepad: return gamepad();
-    case Visibility: return visibility();
-    case Plugins: return plugins();
-    case Fields: return fields();
-    case Classify: return classify();
-    case Shortcuts: return shortcuts();
-    case CurrentOptions: return currentOptions();
-    case About: return about();
-    case OnelabContext: return onelabContext();
-    case OptionValue: return optionValue();
-    case Arrow: return arrow();
-    case History: return history();
-    default: return Form();
-    }
   }
 
 } // namespace Dialog

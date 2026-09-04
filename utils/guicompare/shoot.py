@@ -78,7 +78,15 @@ SHOTS = []
 # a Dear ImGui window would run out of the top one into the one below it, which
 # is the same colour.
 STACKED_POS = (260, 460)
-STACKED = {20}  # Dialog::Arrow
+STACKED = {"arrow"}
+# every form the interface has, by the name it is made under -- see the
+# GMSH_DIALOG_FORM lines of src/common/GuiDialogs.cpp -- which is what Dear
+# ImGui keys its saved layout on
+FORMS = ["elementary", "physical", "transform", "mesh", "partition",
+         "highOrder", "manipulator", "statistics", "clipping", "options",
+         "gamepad", "visibility", "plugins", "fields", "classify",
+         "shortcuts", "currentOptions", "about", "onelabContext",
+         "optionValue", "arrow", "history"]
 
 
 def shot(dialog, pane, branches, row, depth, geo=None, scene=(), added=False,
@@ -401,12 +409,12 @@ DIALOG_POS = (260, 60)
 # Only where they are: a size would override the one the dialog asks for, and
 # what a dialog is worth is part of what is being compared.
 IMGUI_INI = "".join(
-    "[Window][shot###gmshDialog%d]\nPos=%d,%d\nCollapsed=0\n\n"
-    # one line per dialog there is, and a few to spare: a dialog with no entry
-    # of its own is put wherever Dear ImGui likes, and the picture is then
-    # taken of whatever happens to be at the place this expects
-    % ((i,) + (STACKED_POS if i in STACKED else DIALOG_POS))
-    for i in range(24))
+    "[Window][shot###form:%s]\nPos=%d,%d\nCollapsed=0\n\n"
+    # one line per form there is: a form with no entry of its own is put
+    # wherever Dear ImGui likes, and the picture is then taken of whatever
+    # happens to be at the place this expects
+    % ((name,) + (STACKED_POS if name in STACKED else DIALOG_POS))
+    for name in FORMS)
 
 
 def dialog_title(dialog):

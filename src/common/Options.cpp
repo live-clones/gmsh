@@ -3330,7 +3330,7 @@ double opt_general_clip0a(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[0][0];
@@ -3343,7 +3343,7 @@ double opt_general_clip0b(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[0][1];
@@ -3356,7 +3356,7 @@ double opt_general_clip0c(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[0][2];
@@ -3369,7 +3369,7 @@ double opt_general_clip0d(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[0][3];
@@ -3382,7 +3382,7 @@ double opt_general_clip1a(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[1][0];
@@ -3395,7 +3395,7 @@ double opt_general_clip1b(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[1][1];
@@ -3408,7 +3408,7 @@ double opt_general_clip1c(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[1][2];
@@ -3421,7 +3421,7 @@ double opt_general_clip1d(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[1][3];
@@ -3434,7 +3434,7 @@ double opt_general_clip2a(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[2][0];
@@ -3447,7 +3447,7 @@ double opt_general_clip2b(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[2][1];
@@ -3460,7 +3460,7 @@ double opt_general_clip2c(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[2][2];
@@ -3473,7 +3473,7 @@ double opt_general_clip2d(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[2][3];
@@ -3486,7 +3486,7 @@ double opt_general_clip3a(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[3][0];
@@ -3499,7 +3499,7 @@ double opt_general_clip3b(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[3][1];
@@ -3512,7 +3512,7 @@ double opt_general_clip3c(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[3][2];
@@ -3525,7 +3525,7 @@ double opt_general_clip3d(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[3][3];
@@ -3538,7 +3538,7 @@ double opt_general_clip4a(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[4][0];
@@ -3551,7 +3551,7 @@ double opt_general_clip4b(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[4][1];
@@ -3564,7 +3564,7 @@ double opt_general_clip4c(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[4][2];
@@ -3577,7 +3577,7 @@ double opt_general_clip4d(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[4][3];
@@ -3590,7 +3590,7 @@ double opt_general_clip5a(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[5][0];
@@ -3603,7 +3603,7 @@ double opt_general_clip5b(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[5][1];
@@ -3616,7 +3616,7 @@ double opt_general_clip5c(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[5][2];
@@ -3629,7 +3629,7 @@ double opt_general_clip5d(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     // the dialog is showing one of these planes: bring it up to date
     clippingRead();
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipPlane[5][3];
@@ -3641,7 +3641,7 @@ double opt_general_clip_whole_elements(OPT_ARGS_NUM)
 #if defined(HAVE_GUI)
   if(Gui::available() && (action & GMSH_GUI)) {
     clippingStore().wholeElements = CTX::instance()->clipWholeElements != 0;
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipWholeElements;
@@ -3655,7 +3655,7 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
   if(Gui::available() && (action & GMSH_GUI)) {
     clippingStore().onlyDrawIntersecting =
       CTX::instance()->clipOnlyDrawIntersectingVolume != 0;
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipOnlyDrawIntersectingVolume;
@@ -3667,7 +3667,7 @@ double opt_general_clip_only_volume(OPT_ARGS_NUM)
 #if defined(HAVE_GUI)
   if(Gui::available() && (action & GMSH_GUI)) {
     clippingStore().onlyVolume = CTX::instance()->clipOnlyVolume != 0;
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
   }
 #endif
   return CTX::instance()->clipOnlyVolume;
@@ -4399,7 +4399,7 @@ double opt_geometry_clip(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->geom.clip = (int)val;
 #if defined(HAVE_GUI)
   if(Gui::available() && (action & GMSH_GUI))
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
 #endif
   return CTX::instance()->geom.clip;
 }
@@ -5912,7 +5912,7 @@ double opt_mesh_clip(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->mesh.clip = (int)val;
 #if defined(HAVE_GUI)
   if(Gui::available() && (action & GMSH_GUI))
-    Gui::refreshDialog(Dialog::Clipping);
+    Gui::refreshForm(Dialog::clipping());
 #endif
   return CTX::instance()->mesh.clip;
 }

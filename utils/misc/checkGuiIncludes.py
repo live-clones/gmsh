@@ -63,10 +63,10 @@ TOLERATED = {
     "src/imgui/appWindow.cpp": {
         "Gui.h", "GuiStatus.h", "GmshGlobal.h", "Context.h", "StringUtils.h",
         "Options.h", "OpenFile.h", "GModel.h", "drawContext.h"},
-    "src/imgui/appWindow.h": {"GuiActions.h", "GuiMenus.h", "GuiDialogs.h"},
+    "src/imgui/appWindow.h": {"GuiActions.h", "GuiMenus.h"},
     "src/imgui/contextPanels.cpp": {
-        "Gui.h", "GuiActions.h", "GuiDialogs.h", "GmshMessage.h",
-        "GmshDefines.h", "Context.h", "drawContext.h"},
+        "Gui.h", "GuiActions.h", "GmshMessage.h", "GmshDefines.h",
+        "Context.h", "drawContext.h"},
     "src/imgui/exportDialog.cpp": {
         "Gui.h", "GmshDefines.h", "Context.h", "Options.h"},
     "src/imgui/menuBar.cpp": {"GuiMenus.h"},
@@ -74,7 +74,7 @@ TOLERATED = {
     "src/imgui/shortcuts.cpp": {
         "GuiActions.h", "GuiMenus.h", "Gui.h", "GmshMessage.h"},
     "src/imgui/statusBar.cpp": {
-        "Gui.h", "GuiDialogs.h", "GuiActions.h", "GuiMenus.h", "GuiStatus.h",
+        "Gui.h", "GuiActions.h", "GuiMenus.h", "GuiStatus.h",
         "GmshMessage.h", "Context.h", "Options.h", "GModel.h",
         "drawContext.h", "PView.h", "PViewData.h"},
     # --- FLTK: an adapter over the interface that was, until 1.4 makes it a
@@ -91,7 +91,6 @@ TOLERATED = {
     "src/fltk/FlGui.h": {"SPoint2.h"},
     "src/fltk/colorbarWindow.cpp": {"ColorTable.h", "Context.h"},
     "src/fltk/dialogFltk.cpp": {"Context.h"},
-    "src/fltk/dialogFltk.h": {"GuiDialogs.h"},
     "src/fltk/extraDialogs.cpp": {
         "GmshDefines.h", "OpenFile.h", "CreateFile.h", "Options.h",
         "drawContext.h", "GModel.h", "Context.h", "PView.h"},

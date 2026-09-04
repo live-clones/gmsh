@@ -226,7 +226,7 @@ namespace {
   {
     historyState &h = _history();
     _historyKeep();
-    Gui::showDialog(Dialog::History, false);
+    Gui::showForm(Dialog::history(), false);
     if(h.kind == "pattern") {
       CTX::instance()->watchFilePattern = h.command;
       watchFiles();
@@ -246,7 +246,7 @@ namespace {
     h.okLabel = okLabel;
     h.fallback = fallback;
     _historyRead();
-    Dialog::show(Dialog::History, -1);
+    Dialog::show(Dialog::history(), -1);
   }
 
 } // namespace
@@ -267,10 +267,10 @@ namespace Dialog {
     s.maximum = maximum;
     s.step = step;
     s.applyTo = applyTo;
-    show(OptionValue, -1);
+    show(optionValue(), -1);
   }
 
-  Form optionValue()
+  Form describeOptionValue()
   {
     optionState &s = _option();
     Form p;
@@ -297,7 +297,7 @@ namespace Dialog {
     Button ok;
     ok.label = "OK";
     ok.isDefault = true;
-    ok.action = []() { Gui::showDialog(OptionValue, false); };
+    ok.action = []() { Gui::showForm(optionValue(), false); };
     p.buttons.push_back(ok);
     Button def;
     def.label = "Default";
@@ -306,13 +306,13 @@ namespace Dialog {
     return p;
   }
 
-  Form arrow()
+  Form describeArrow()
   {
     arrowState &a = _arrow();
     // Seeded from the options every time the window opens: it edits a copy,
     // and Apply is what puts it back. While it is up it must not be seeded
     // again, or the numbers one is typing would be written over.
-    if(!a.read || !Gui::dialogVisible(Arrow)) _arrowRead();
+    if(!a.read || !Gui::formVisible(arrow())) _arrowRead();
 
     Form p;
     p.title = "Arrow Editor";
@@ -340,7 +340,7 @@ namespace Dialog {
     p.buttons.push_back(apply);
     Button cancel;
     cancel.label = "Cancel";
-    cancel.action = []() { Gui::showDialog(Arrow, false); };
+    cancel.action = []() { Gui::showForm(arrow(), false); };
     p.buttons.push_back(cancel);
     return p;
   }
@@ -357,7 +357,7 @@ namespace Dialog {
                  "output/*.msh");
   }
 
-  Form history()
+  Form describeHistory()
   {
     historyState &h = _history();
     if(!h.read) _historyRead();
@@ -410,7 +410,7 @@ namespace Dialog {
       // what was given before is kept whether or not it was used, as the
       // window this reproduces keeps it
       _historyWrite();
-      Gui::showDialog(History, false);
+      Gui::showForm(history(), false);
     };
     p.buttons.push_back(cancel);
     return p;

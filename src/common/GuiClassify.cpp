@@ -317,10 +317,10 @@ namespace Dialog {
     // turns them on as it opens
     opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
     drawContext::global()->draw();
-    show(Classify, -1);
+    show(classify(), -1);
   }
 
-  Form classify()
+  Form describeClassify()
   {
     Form p;
     p.title = "Reclassify 2D";

@@ -932,10 +932,10 @@ namespace Dialog {
     _instantiate();
     _highlight();
 #endif
-    show(OnelabContext, -1);
+    show(onelabContext(), -1);
   }
 
-  Form onelabContext()
+  Form describeOnelabContext()
   {
     Form p;
     p.title = "Parameters";

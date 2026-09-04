@@ -312,7 +312,7 @@ namespace {
 
 namespace Dialog {
 
-  Form fields()
+  Form describeFields()
   {
     Form p;
     p.title = "Size fields";

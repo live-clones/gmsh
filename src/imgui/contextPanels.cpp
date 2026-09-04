@@ -29,7 +29,6 @@
 #include "appWindow.h"
 #include "Gui.h"
 #include "GuiActions.h"
-#include "GuiDialogs.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "Context.h"
@@ -1606,18 +1605,24 @@ namespace {
 // what a line of the tree draws, when the line carries a value
 void drawField(const Ui::Field &f, float width) { _field(f, width); }
 
-void appWindow::_drawDialog(int which)
+void appWindow::_drawDialog(unsigned which)
 {
-  if(!_showDialog[which]) return;
+  auto found = _dialogs.find(which);
+  if(found == _dialogs.end() || !found->second.show) return;
+  // a reference into a map stays good while the entry does, and drawing a
+  // dialog never removes one: whatever a widget does is posted for later
+  dialogState &state = found->second;
 
-  Ui::Form panel = imguiSources().form(which);
+  Ui::Form panel = state.describe ? state.describe() : Ui::Form();
   std::string title = panel.title;
   // the title is the identity of the window, so it must not change under Dear
-  // ImGui: the dialog index keeps it stable
-  title += "###gmshDialog" + std::to_string(which);
+  // ImGui -- the physical dialog renames itself -- and it is what the saved
+  // layout is keyed on, so it must not change from one run to the next
+  // either: the name the form was made under is both
+  title += "###form:" + state.name;
 
-  if(_focusDialog[which]) {
-    _focusDialog[which] = false;
+  if(state.focus) {
+    state.focus = false;
     ImGui::SetNextWindowFocus();
   }
   // A dialog is worth exactly what it holds: it is not resized by hand and it
@@ -1651,10 +1656,6 @@ void appWindow::_drawDialog(int which)
   // The dialog keeps the width its widest row needs, whichever pane is up and
   // whichever section is folded away: a window that grows sideways as one uses
   // it is a window that will not sit still.
-  // the widest each dialog has ever needed to be: one that grows and shrinks
-  // sideways as one goes through its categories is one that will not sit still
-  static std::vector<float> widestSeen(imguiSources().numForms(), 0.f);
-  if(which >= (int)widestSeen.size()) widestSeen.resize(which + 1, 0.f);
   float need = 0.f;
   {
     need = _neededWidth(panel, width) +
@@ -1663,10 +1664,10 @@ void appWindow::_drawDialog(int which)
       need += (float)(panel.sideEm > 0. ? panel.sideEm : 8.) *
                 ImGui::GetFontSize() +
               2.f * ImGui::GetStyle().ItemSpacing.x;
-    if(need > widestSeen[which])
-      widestSeen[which] = need;
+    if(need > state.widest)
+      state.widest = need;
     else
-      need = widestSeen[which];
+      need = state.widest;
     // a window that is given a size rather than following its contents shows
     // a scrollbar as soon as they are taller, and that takes width too
     if(scrolls) need += ImGui::GetStyle().ScrollbarSize;
@@ -1683,22 +1684,22 @@ void appWindow::_drawDialog(int which)
            ImGui::GetFrameHeight() + 2.f * style.WindowPadding.y;
     // A category with fewer rows than the last is a shorter window, as it is
     // in the window this reproduces, which builds itself again for it.
-    if(tall != _estimatedHeight[which]) {
-      _estimatedHeight[which] = tall;
-      _sizedDialog[which] = false;
+    if(tall != state.estimatedHeight) {
+      state.estimatedHeight = tall;
+      state.sized = false;
     }
     // Given when it opens, and not again: left to itself Dear ImGui fits a
     // window to what its first frame draws, which is one tab of one category
     // and tells nothing about the rest -- and a row ending in a spacer, one
     // that eats what is left of the line, has no width of its own to fit to.
-    if(!_sizedDialog[which]) {
+    if(!state.sized) {
       ImGui::SetNextWindowSize(ImVec2(need, tall));
-      _sizedDialog[which] = true;
+      state.sized = true;
     }
   }
   ImGui::SetNextWindowSizeConstraints(ImVec2(need, scrolls ? tall : 0.f),
                                       ImVec2(FLT_MAX, FLT_MAX));
-  if(!ImGui::Begin(title.c_str(), &_showDialog[which],
+  if(!ImGui::Begin(title.c_str(), &state.show,
                    wholeScrolls ? ImGuiWindowFlags_None :
                    scrolls      ? (ImGuiWindowFlags_NoScrollbar |
                                    ImGuiWindowFlags_NoScrollWithMouse) :
@@ -1706,17 +1707,9 @@ void appWindow::_drawDialog(int which)
     ImGui::End();
     // the user clicked the cross on a collapsed window: it is gone all the
     // same, and what it undoes when it goes has to be undone
-    if(!_showDialog[which] && panel.closed) postAction(panel.closed);
+    if(!state.show && panel.closed) postAction(panel.closed);
     return;
   }
-
-  // How tall the panes beside the column came out last time round. A window
-  // that follows its contents has not been given a height when the column is
-  // drawn, so counting lines is the only guess available there -- and it
-  // guesses short. What its neighbour actually measured on the frame before
-  // is the same quantity, told rather than guessed.
-  static std::vector<float> sideRoom(imguiSources().numForms(), 0.f);
-  if(which >= (int)sideRoom.size()) sideRoom.resize(which + 1, 0.f);
 
   // the column of side fields, down the left of everything else
   if(panel.side.size()) {
@@ -1745,8 +1738,8 @@ void appWindow::_drawDialog(int which)
         // A window that follows its contents has none of that to go on, but
         // it has what the panes beside the column came to last frame, which
         // is what the column is meant to match.
-        else if(sideRoom[which] > tall)
-          tall = sideRoom[which];
+        else if(state.sideRoom > tall)
+          tall = state.sideRoom;
       }
     if(ImGui::BeginChild("##side", ImVec2(w, tall),
                          tall > 0.f ? ImGuiChildFlags_None :
@@ -1819,7 +1812,7 @@ void appWindow::_drawDialog(int which)
     // come up: with two rows of tabs the family has to open first, and that
     // takes a frame, so clearing the request straight away would leave the
     // family right and the member wrong.
-    int wanted = _wantedPane[which];
+    int wanted = state.wantedPane;
     // and the height of the tallest pane, for the same reason
     int most = 0;
     for(const auto &q : panel.panes) {
@@ -1837,9 +1830,15 @@ void appWindow::_drawDialog(int which)
       // before its member can -- and the pane drawn in between is not one
       // anybody picked. Starting its tool would answer the request with the
       // wrong window and then make that the right answer.
-      bool moved = wanted < 0 && imguiSources().formPane(which) != (int)i;
-      imguiSources().setFormPane(which, (int)i);
-      if((int)i == wanted) _wantedPane[which] = -1;
+      // The pane is written down only once nothing is being asked for: while
+      // one is, the tab bar shows another for a frame or two, and that one
+      // is not where the dialog is.
+      bool moved = wanted < 0 && state.pane != (int)i;
+      if(wanted < 0) state.pane = (int)i;
+      if((int)i == wanted) {
+        state.wantedPane = -1;
+        state.pane = (int)i;
+      }
       if(moved && panel.panes[i].chosen) panel.panes[i].chosen();
       ImGui::PushID((int)i);
       _paneBody(panel.panes[i], width, scrolls, most, this);
@@ -1881,9 +1880,9 @@ void appWindow::_drawDialog(int which)
       // it: only then does it have something to start. A pane that was asked
       // for takes a frame or two to come up, and the tab bar shows another one
       // meanwhile, which is not a choice anybody made.
-      if(wanted < 0 && (int)i != _lastPane[which] && panel.panes[i].chosen)
+      if(wanted < 0 && (int)i != state.pane && panel.panes[i].chosen)
         postAction(panel.panes[i].chosen);
-      _lastPane[which] = (int)i;
+      if(wanted < 0) state.pane = (int)i;
     };
 
     if(!nested) {
@@ -1931,7 +1930,7 @@ void appWindow::_drawDialog(int which)
     // alone: the three checks the clipping window puts under its tabs are its
     // footer, and the browser it reproduces runs its column past them to the
     // foot of the window.
-    sideRoom[which] = ImGui::GetItemRectSize().y;
+    state.sideRoom = ImGui::GetItemRectSize().y;
   }
 
   if(panel.buttons.size()) {
@@ -1979,36 +1978,72 @@ void appWindow::_drawDialog(int which)
   // Begin() cleared it: the user closed the window, and a dialog that leaves
   // something behind -- the ONELAB context one highlights the entity it is
   // about -- has to take it back
-  if(!_showDialog[which] && panel.closed) postAction(panel.closed);
+  if(!state.show && panel.closed) postAction(panel.closed);
 }
 
-void appWindow::hideDialog(int which)
+Ui::FormRef appWindow::createDialog(const std::string &name,
+                                    const std::function<Ui::Form()> &describe)
 {
-  if(which < 0 || which >= imguiSources().numForms()) return;
-  bool was = _showDialog[which];
-  _showDialog[which] = false;
-  _sizedDialog[which] = false;
+  // handed out once and never again, so that a form that is gone is a number
+  // nobody answers to; nothing is drawn until it is shown
+  Ui::FormRef which(++_lastDialog);
+  _dialogs[which.id].name = name;
+  _dialogs[which.id].describe = describe;
+  return which;
+}
+
+void appWindow::destroyDialog(Ui::FormRef which)
+{
+  _dialogs.erase(which.id);
+}
+
+void appWindow::hideDialog(Ui::FormRef which)
+{
+  auto it = _dialogs.find(which.id);
+  if(it == _dialogs.end()) return;
+  dialogState &state = it->second;
+  bool was = state.show;
+  state.show = false;
+  state.sized = false;
   // hidden from a menu rather than by its cross, which is the same thing to
   // whatever the dialog undoes when it goes
-  if(was) {
-    Ui::Form panel = imguiSources().form(which);
+  if(was && state.describe) {
+    Ui::Form panel = state.describe();
     if(panel.closed) postAction(panel.closed);
   }
 }
 
-bool appWindow::dialogVisible(int which) const
+bool appWindow::dialogVisible(Ui::FormRef which) const
 {
-  if(which < 0 || which >= imguiSources().numForms()) return false;
-  return _showDialog[which];
+  auto it = _dialogs.find(which.id);
+  return it != _dialogs.end() && it->second.show;
 }
 
-void appWindow::showDialog(int which)
+void appWindow::showDialog(Ui::FormRef which)
 {
-  if(which < 0 || which >= imguiSources().numForms()) return;
-  _showDialog[which] = true;
-  _focusDialog[which] = true;
-  // the pane the description asks for, to be forced once
-  _wantedPane[which] = imguiSources().formPane(which);
+  auto it = _dialogs.find(which.id);
+  if(it == _dialogs.end()) return;
+  dialogState &state = it->second;
+  state.show = true;
+  state.focus = true;
+  // the pane it is on, forced once: a tab bar that was not drawn for a while
+  // may have forgotten it
+  state.wantedPane = state.pane;
+}
+
+int appWindow::dialogPane(Ui::FormRef which) const
+{
+  auto it = _dialogs.find(which.id);
+  return it == _dialogs.end() ? 0 : it->second.pane;
+}
+
+void appWindow::setDialogPane(Ui::FormRef which, int pane)
+{
+  auto it = _dialogs.find(which.id);
+  if(it == _dialogs.end() || pane < 0) return;
+  it->second.pane = pane;
+  // to be forced when the dialog is next drawn, whether it is up or not
+  if(it->second.show) it->second.wantedPane = pane;
 }
 
 #endif

@@ -123,12 +123,6 @@ namespace Gui {
     sources.fontSize = []() {
       return CTX::instance()->fontSize > 0 ? CTX::instance()->fontSize : 13;
     };
-    sources.form = [](int form) { return Dialog::panel(form); };
-    sources.numForms = []() { return (int)Dialog::NumDialogs; };
-    sources.formPane = [](int form) { return Dialog::currentPane(form); };
-    sources.setFormPane = [](int form, int pane) {
-      Dialog::currentPane(form) = pane;
-    };
     sources.menuBar = []() { return Menu::bar(); };
     sources.menuGeneration = []() { return Menu::generation(); };
     sources.tree = Modules::tree();
@@ -169,6 +163,8 @@ namespace Gui {
   void destroy()
   {
     if(!_backend) return;
+    // the forms go with the interface that handed them out
+    Dialog::forgetForms();
     _backend->destroy();
     delete _backend;
     _backend = nullptr;
@@ -396,31 +392,57 @@ namespace Gui {
   // A dialog is described once in GuiDialogs.h and built by whichever
   // interface is running; all that is left here is which one, and when.
 
-  void showDialog(int dialog, bool show)
+  Ui::FormRef createForm(const std::string &name,
+                         const std::function<Ui::Form()> &describe)
   {
-    if(_backend) _backend->showForm(dialog, show);
+    return _backend ? _backend->createForm(name, describe) : Ui::FormRef();
   }
 
-  bool dialogVisible(int dialog)
+  void destroyForm(Ui::FormRef form)
   {
-    return _backend && _backend->formVisible(dialog);
+    if(_backend && form.valid()) _backend->destroyForm(form);
   }
 
-  void refreshDialog(int dialog)
+  void showForm(Ui::FormRef form, bool show)
   {
-    if(_backend) _backend->refreshForm(dialog);
+    if(_backend && form.valid()) _backend->showForm(form, show);
+  }
+
+  bool formVisible(Ui::FormRef form)
+  {
+    return _backend && form.valid() && _backend->formVisible(form);
+  }
+
+  int formPane(Ui::FormRef form)
+  {
+    return (_backend && form.valid()) ? _backend->formPane(form) : 0;
+  }
+
+  void setFormPane(Ui::FormRef form, int pane)
+  {
+    if(_backend && form.valid()) _backend->setFormPane(form, pane);
+  }
+
+  void refreshForm(Ui::FormRef form)
+  {
+    if(_backend && form.valid()) _backend->refreshForm(form);
+  }
+
+  void rebuildForm(Ui::FormRef form)
+  {
+    if(_backend && form.valid()) _backend->rebuildForm(form);
   }
 
   void showContextWindow(int dim, int tag) { Dialog::showOnelabContext(dim, tag); }
 
-  void configureGamepad() { Dialog::show(Dialog::Gamepad, 0); }
+  void configureGamepad() { Dialog::show(Dialog::gamepad(), 0); }
 
   void updateFields()
   {
     // the fields of the model have changed: the window that shows them has one
     // line more or one option fewer, which is a matter of shape and not of
     // value
-    if(_backend) _backend->rebuildForm(Dialog::Fields);
+    rebuildForm(Dialog::fields());
   }
 
   // The panels the menus show and hide. Every one of them is a described
@@ -430,18 +452,18 @@ namespace Gui {
 
   namespace {
 
-    int _panelDialog(int panel)
+    Ui::FormRef _panelForm(int panel)
     {
       switch(panel) {
-      case PanelOptions: return Dialog::Options;
-      case PanelVisibility: return Dialog::Visibility;
-      case PanelPlugins: return Dialog::Plugins;
-      case PanelFields: return Dialog::Fields;
-      case PanelKeyboardAndMouse: return Dialog::Shortcuts;
-      case PanelCurrentOptions: return Dialog::CurrentOptions;
-      case PanelAbout: return Dialog::About;
-      case PanelClassify: return Dialog::Classify;
-      default: return -1;
+      case PanelOptions: return Dialog::options();
+      case PanelVisibility: return Dialog::visibility();
+      case PanelPlugins: return Dialog::plugins();
+      case PanelFields: return Dialog::fields();
+      case PanelKeyboardAndMouse: return Dialog::shortcuts();
+      case PanelCurrentOptions: return Dialog::currentOptions();
+      case PanelAbout: return Dialog::about();
+      case PanelClassify: return Dialog::classify();
+      default: return Ui::FormRef();
       }
     }
 
@@ -451,8 +473,7 @@ namespace Gui {
   {
     if(!_backend) return false;
     if(panel == PanelMessageConsole) return _backend->consoleVisible();
-    int dialog = _panelDialog(panel);
-    return dialog >= 0 && dialogVisible(dialog);
+    return formVisible(_panelForm(panel));
   }
 
   void showPanel(int panel, bool show)
@@ -462,20 +483,20 @@ namespace Gui {
       _backend->showConsole(show);
       return;
     }
-    int dialog = _panelDialog(panel);
-    if(dialog < 0) return;
+    Ui::FormRef form = _panelForm(panel);
+    if(!form.valid()) return;
     if(!show) {
-      showDialog(dialog, false);
+      showForm(form, false);
       return;
     }
     // showing one is not only raising it: a dialog that works on something
     // takes it as it opens, which is what Dialog::show() is for. The one that
     // turns a triangulation into a model draws the edges it has detected as
     // well, which is why it has a call of its own.
-    if(dialog == Dialog::Classify)
+    if(panel == PanelClassify)
       Dialog::startClassify();
     else
-      Dialog::show(dialog, -1);
+      Dialog::show(form, -1);
   }
 
   // --- the modules tree, and what has to be looked at again
@@ -511,19 +532,19 @@ namespace Gui {
     // The per-entity parameters are described once and read what the server
     // holds: a parameter a solver added is a field more, so the window may
     // have to be built again and not only read again.
-    _backend->rebuildForm(Dialog::OnelabContext);
+    rebuildForm(Dialog::onelabContext());
     // the option window reads what it shows, views included
-    refreshDialog(Dialog::Options);
+    refreshForm(Dialog::options());
     // the size-field window offers the views a field may be drawn on
     updateFields();
-    refreshDialog(Dialog::Clipping);
+    refreshForm(Dialog::clipping());
     statisticsRefresh(false);
   }
 
   void resetVisibility()
   {
-    refreshDialog(Dialog::Visibility);
-    refreshDialog(Dialog::CurrentOptions);
+    refreshForm(Dialog::visibility());
+    refreshForm(Dialog::currentOptions());
     statisticsRefresh(false);
   }
 

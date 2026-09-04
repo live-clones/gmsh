@@ -66,7 +66,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
 
   ctx->initPosition(false);
   drawContext::global()->draw();
-  Gui::refreshDialog(Dialog::Manipulator);
+  Gui::refreshForm(Dialog::manipulator());
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h)
@@ -369,7 +369,7 @@ void openglWindow::_setLastHandled(openglWindow *w)
 {
   _lastHandled = w;
   // the panel says what this window shows: it reads it again
-  Gui::refreshDialog(Dialog::Visibility);
+  Gui::refreshForm(Dialog::visibility());
 }
 
 int openglWindow::handle(int event)
@@ -546,7 +546,7 @@ int openglWindow::handle(int event)
     }
     _click.set(_ctx, Fl::event_x(), Fl::event_y());
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
-    Gui::refreshDialog(Dialog::Manipulator);
+    Gui::refreshForm(Dialog::manipulator());
     return 1;
 
   case FL_RELEASE:
@@ -580,7 +580,7 @@ int openglWindow::handle(int event)
       redraw();
     }
   }
-    Gui::refreshDialog(Dialog::Manipulator);
+    Gui::refreshForm(Dialog::manipulator());
     return 1;
 
   case FL_DRAG:
@@ -669,7 +669,7 @@ int openglWindow::handle(int event)
       }
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
-    Gui::refreshDialog(Dialog::Manipulator);
+    Gui::refreshForm(Dialog::manipulator());
     return 1;
 
   case FL_MOVE:
@@ -690,7 +690,7 @@ int openglWindow::handle(int event)
         int pane = elementaryPaneStore();
         if(pane >= 1 && pane <= 11) elementaryStore(pane, i) = str;
       }
-      dialogFltk *d = fltkDialog(Dialog::Elementary);
+      dialogFltk *d = fltkDialog(Dialog::elementary());
       if(d) d->refresh();
       redraw();
     }

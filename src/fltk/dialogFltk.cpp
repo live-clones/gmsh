@@ -731,8 +731,8 @@ void dialogFltk::_tabCallback(Fl_Widget *w, void *data)
   Fl_Widget *shown = ((Fl_Tabs *)w)->value();
   for(std::size_t i = 0; i < d->_groups.size(); i++) {
     if(d->_groups[i] != shown) continue;
-    bool moved = fltkSources().formPane(d->_which) != (int)i;
-    fltkSources().setFormPane(d->_which, (int)i);
+    bool moved = d->_pane != (int)i;
+    d->_pane = (int)i;
     d->refresh();
     // the user picked this pane: it may have something to start
     if(moved && i < d->_panel.panes.size() && d->_panel.panes[i].chosen)
@@ -744,8 +744,8 @@ void dialogFltk::_tabCallback(Fl_Widget *w, void *data)
     if(d->_outerGroups[g] != shown) continue;
     if(g < d->_firstOfGroup.size() && d->_firstOfGroup[g] >= 0) {
       int first = d->_firstOfGroup[g];
-      bool moved = fltkSources().formPane(d->_which) != first;
-      fltkSources().setFormPane(d->_which, first);
+      bool moved = d->_pane != first;
+      d->_pane = first;
       d->_forcePane = true;
       d->refresh();
       // picking a family shows its first member, and starts it
@@ -1245,8 +1245,8 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
 // where a window of that dialog opens.
 void dialogFltk::reshape()
 {
-  if(_which < 0) return;
-  Ui::Form now = fltkSources().form(_which);
+  if(!_which.valid()) return;
+  Ui::Form now = fltkFormDescription(_which)();
   if(_win && _signature(now) == _signatureBuilt) {
     _panel = now;
     refresh();
@@ -1258,7 +1258,7 @@ void dialogFltk::reshape()
   refresh();
 }
 
-void dialogFltk::build(int dialog)
+void dialogFltk::build(Ui::FormRef dialog)
 {
   bool wasShown = shown();
   if(_win) {
@@ -1280,7 +1280,7 @@ void dialogFltk::build(int dialog)
   _paneButtons.clear();
 
   _which = dialog;
-  _panel = fltkSources().form(dialog);
+  _panel = fltkFormDescription(dialog)();
   _signatureBuilt = _signature(_panel);
   // a window that has just been built has no tab of its own yet
   _forcePane = true;
@@ -1719,7 +1719,7 @@ void dialogFltk::refresh()
 {
   if(!_panel.tabbed) _relayout();
 
-  int shownPane = fltkSources().formPane(_which);
+  int shownPane = _pane;
   for(std::size_t i = 0; _panel.tabbed && i < _groups.size(); i++) {
     if((int)i == shownPane) {
       _groups[i]->show();
@@ -2015,7 +2015,7 @@ void dialogFltk::show()
   // What the dialog offers can depend on the model, so it may have to be built
   // again -- but only when its shape really changed: rebuilding a window that
   // is already up makes it blink and come back somewhere else.
-  Ui::Form now = fltkSources().form(_which);
+  Ui::Form now = fltkFormDescription(_which)();
   if(!_win || _signature(now) != _signatureBuilt)
     build(_which);
   else
@@ -2037,20 +2037,39 @@ void dialogFltk::hide()
 
 bool dialogFltk::shown() const { return _win && _win->shown(); }
 
-dialogFltk *fltkDialog(int which, bool create)
+namespace {
+  // A map rather than anything counted: how many forms there are is nobody's
+  // to say, and a map keeps the addresses steady, which the widgets that
+  // were built for one of them rely on.
+  std::map<unsigned, dialogFltk> &_dialogs()
+  {
+    static std::map<unsigned, dialogFltk> dialogs;
+    return dialogs;
+  }
+} // namespace
+
+dialogFltk *fltkDialog(Ui::FormRef which, bool create, int pane)
 {
-  // how many forms there are is the application's to say, so this cannot be
-  // an array of that size any more; a map keeps the addresses steady, which
-  // the widgets that were built for one of them rely on
-  static std::map<int, dialogFltk> dialogs;
-  if(which < 0 || which >= fltkSources().numForms()) return nullptr;
-  auto it = dialogs.find(which);
+  if(!which.valid() || !fltkFormDescription(which)) return nullptr;
+  std::map<unsigned, dialogFltk> &dialogs = _dialogs();
+  auto it = dialogs.find(which.id);
   if(it == dialogs.end()) {
     if(!create) return nullptr;
-    it = dialogs.emplace(which, dialogFltk()).first;
+    it = dialogs.emplace(which.id, dialogFltk()).first;
+    if(pane >= 0) it->second.setPane(pane);
     it->second.build(which);
   }
   return &it->second;
+}
+
+void fltkDropDialog(Ui::FormRef which)
+{
+  _dialogs().erase(which.id);
+}
+
+void fltkEachDialog(const std::function<void(dialogFltk *)> &what)
+{
+  for(auto &it : _dialogs()) what(&it.second);
 }
 
 #endif

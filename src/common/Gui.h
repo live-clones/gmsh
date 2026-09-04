@@ -6,9 +6,11 @@
 #ifndef GMSH_GUI_H
 #define GMSH_GUI_H
 
+#include <functional>
 #include <string>
 #include <vector>
 #include "GmshConfig.h"
+#include "Form.h"
 #include "GuiActions.h"
 #include "GuiScene.h"
 
@@ -170,18 +172,31 @@ namespace Gui {
   void closeTreeItem(const std::string &name);
   // show the onelab context window for the given entity
   void showContextWindow(int dim, int tag);
-  // Raise one of the context dialogs of GuiDialogs.h, which says which pane it
-  // shows and holds the values it edits: the interface only has to show the
-  // window. Dialog::show() is what the modules tree calls.
-  void showDialog(int dialog, bool show = true);
-  // is it up? the menu entries that raise a dialog are toggles, like the ones
+  // The forms, as the interface hands them out. A form is asked for with
+  // what describes it and is a Ui::FormRef from then on; GuiDialogs.h keeps
+  // one for each window Gmsh has. Nothing is built until it is shown.
+  Ui::FormRef createForm(const std::string &name,
+                         const std::function<Ui::Form()> &describe);
+  void destroyForm(Ui::FormRef form);
+  // Raise one of them, or take it down. The description says what it holds
+  // and which pane it opens on: the interface only has to show the window.
+  // Dialog::show() is what the modules tree calls.
+  void showForm(Ui::FormRef form, bool show = true);
+  // is it up? the menu entries that raise a form are toggles, like the ones
   // that raise a panel
-  bool dialogVisible(int dialog);
-  // Push the values into the widgets of a dialog that is already up. The Dear
+  bool formVisible(Ui::FormRef form);
+  // which pane it is on, and which to open it on: the interface keeps it,
+  // since a click on a tab is what changes it
+  int formPane(Ui::FormRef form);
+  void setFormPane(Ui::FormRef form, int pane);
+  // Push the values into the widgets of a form that is already up. The Dear
   // ImGui interface draws them afresh at every frame and has nothing to do;
   // the FLTK one holds them in widgets, so a view rotated with the mouse has
   // to be told to the manipulator.
-  void refreshDialog(int dialog);
+  void refreshForm(Ui::FormRef form);
+  // the same when its shape changed rather than its values: a field more, a
+  // section fewer
+  void rebuildForm(Ui::FormRef form);
   // run one of the actions of the onelab tree: "check", "check_always",
   // "reload", "reset", "refresh", "compute" or "stop"
   void onelabAction(const std::string &action);

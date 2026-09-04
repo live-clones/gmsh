@@ -390,7 +390,7 @@ builds.
 A dialog that shows something the running action keeps -- what has been picked
 so far, say -- has to be told when it changes. The Dear ImGui one draws itself
 afresh at every frame and needs nothing; the FLTK one holds its values in
-widgets, so the action calls Gui::refreshDialog(). Forgetting it shows an empty
+widgets, so the action calls Gui::refreshForm(). Forgetting it shows an empty
 list next to a status bar that says otherwise.
 
 utils/guicompare photographs the same dialog in the released Gmsh, in this

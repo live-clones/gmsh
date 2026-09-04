@@ -1455,7 +1455,7 @@ namespace Dialog {
           if(row.kind == RowCheck && row.vmin == 2.)
             f.changed = []() {
               drawContext::global()->draw();
-              show(Options, -1);
+              show(options(), -1);
             };
           if(row.beside) {
             f.sameRow = true;
@@ -1505,10 +1505,10 @@ namespace Dialog {
     int which = -1;
     for(int i = 0; pane.size() && _viewTabs[i].label; i++)
       if(pane == _viewTabs[i].label) which = i;
-    show(Options, which);
+    show(options(), which);
   }
 
-  Form options()
+  Form describeOptions()
   {
     Form p;
     p.tabbed = true;
@@ -1554,7 +1554,7 @@ namespace Dialog {
           if(i >= _numCategories) _state().view = i - _numCategories;
           // another line is another set of tabs: the window is not the same
           // one any more, and has to be built again rather than refreshed
-          show(Options, -1);
+          show(options(), -1);
         }
       },
       false));

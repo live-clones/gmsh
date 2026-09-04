@@ -141,13 +141,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     _browser(nullptr), _exportActive(false), _exportDone(false),
     _exportAccepted(false), _exportFormat(-1)
 {
-  for(int i = 0; i < Dialog::NumDialogs; i++) {
-    _showDialog[i] = _focusDialog[i] = false;
-    _sizedDialog[i] = false;
-    _estimatedHeight[i] = 0.f;
-    _wantedPane[i] = -1;
-    _lastPane[i] = -1;
-  }
+  _lastDialog = 0;
   glfwSetErrorCallback(_glfwErrorCallback);
   if(!_initGlfw()) return;
 
@@ -1021,7 +1015,10 @@ void appWindow::_drawPanels(int &sceneX, int &sceneY, int &sceneW, int &sceneH)
   _drawTooltip();
   _drawMenuBar();
   _drawModulesPanel();
-  for(int i = 0; i < Dialog::NumDialogs; i++) _drawDialog(i);
+  // by number, off a copy: drawing one may ask for another to be made
+  std::vector<unsigned> dialogs;
+  for(const auto &it : _dialogs) dialogs.push_back(it.first);
+  for(unsigned which : dialogs) _drawDialog(which);
   _drawStatusBar();
 }
 

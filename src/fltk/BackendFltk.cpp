@@ -8,6 +8,7 @@
 #if defined(HAVE_FLTK)
 
 #include <cstdio>
+#include <map>
 
 #include <FL/Fl.H>
 #include <FL/fl_ask.H>
@@ -202,9 +203,44 @@ namespace {
 
     // --- the things that are described
 
-    void showForm(int form, bool show) override
+    Ui::FormRef createForm(const std::string &name,
+                           const std::function<Ui::Form()> &describe) override
     {
-      dialogFltk *d = fltkDialog(form);
+      // the name is not yet used here: where a window was left is remembered
+      // by the option file, one position for all of them
+      // handed out once and never again, so that a form that is gone is a
+      // number nobody answers to; nothing is built until it is shown
+      Ui::FormRef form(++_lastForm);
+      _forms[form.id] = describe;
+      return form;
+    }
+
+    void destroyForm(Ui::FormRef form) override
+    {
+      fltkDropDialog(form);
+      _forms.erase(form.id);
+    }
+
+    const std::function<Ui::Form()> &formDescription(Ui::FormRef form) const
+    {
+      static const std::function<Ui::Form()> none;
+      auto it = _forms.find(form.id);
+      return it == _forms.end() ? none : it->second;
+    }
+
+    void showForm(Ui::FormRef form, bool show) override
+    {
+      dialogFltk *d = fltkDialog(form, false);
+      if(!d) {
+        // built here and now, on the pane that was asked for meanwhile
+        int pane = -1;
+        auto it = _paneWanted.find(form.id);
+        if(it != _paneWanted.end()) {
+          pane = it->second;
+          _paneWanted.erase(it);
+        }
+        d = fltkDialog(form, true, pane);
+      }
       if(!d) return;
       if(show)
         d->show();
@@ -212,20 +248,40 @@ namespace {
         d->hide();
     }
 
-    bool formVisible(int form) override
+    bool formVisible(Ui::FormRef form) override
     {
       // only if it is already there: asking is not a reason to build it
       dialogFltk *d = fltkDialog(form, false);
       return d && d->shown();
     }
 
-    void refreshForm(int form) override
+    int formPane(Ui::FormRef form) override
+    {
+      dialogFltk *d = fltkDialog(form, false);
+      // a pane asked for before the window exists is kept for it
+      if(!d) {
+        auto it = _paneWanted.find(form.id);
+        return it == _paneWanted.end() ? 0 : it->second;
+      }
+      return d->pane();
+    }
+
+    void setFormPane(Ui::FormRef form, int pane) override
+    {
+      dialogFltk *d = fltkDialog(form, false);
+      if(d)
+        d->setPane(pane);
+      else
+        _paneWanted[form.id] = pane;
+    }
+
+    void refreshForm(Ui::FormRef form) override
     {
       dialogFltk *d = fltkDialog(form, false);
       if(d && d->shown()) d->refresh();
     }
 
-    void rebuildForm(int form) override
+    void rebuildForm(Ui::FormRef form) override
     {
       dialogFltk *d = fltkDialog(form, false);
       if(d && d->shown()) d->reshape();
@@ -328,6 +384,11 @@ namespace {
     Sources _sources;
     Host _host;
     bool _dark = false;
+    // the forms handed out, by number, and what each is made of
+    std::map<unsigned, std::function<Ui::Form()> > _forms;
+    unsigned _lastForm = 0;
+    // the pane asked for on a form whose window has not been built yet
+    std::map<unsigned, int> _paneWanted;
     std::mutex _mutex;
     std::vector<std::function<void()> > _posted;
 
@@ -352,6 +413,12 @@ const Ui::Backend::Sources &fltkSources()
 {
   static Ui::Backend::Sources none;
   return _the ? _the->sources() : none;
+}
+
+const std::function<Ui::Form()> &fltkFormDescription(Ui::FormRef form)
+{
+  static const std::function<Ui::Form()> none;
+  return _the ? _the->formDescription(form) : none;
 }
 
 // The one this file offers, made once. Saying so here rather than being asked
