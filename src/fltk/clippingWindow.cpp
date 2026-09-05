@@ -117,8 +117,15 @@ static void clip_update_cb(Fl_Widget *w, void *data)
     (CTX::instance()->clipOnlyDrawIntersectingVolume !=
      FlGui::instance()->clipping->butt[2]->value());
 
-  if(CTX::instance()->clipWholeElements || CTX::instance()->clipCapping ||
-     togglesChanged) {
+  // While a plane is being dragged, draw the fast representation - the bounding
+  // box, as FastRedraw does - and leave the arrays alone: the section a plane
+  // cuts out of the elements is part of them, and recomputing it at every
+  // motion event would make the interaction crawl. The full scene is drawn
+  // again when the mouse is released
+  bool dragging = (Fl::event() == FL_DRAG);
+
+  if(!dragging && (CTX::instance()->clipWholeElements ||
+                   CTX::instance()->clipCapping || togglesChanged)) {
     for(std::size_t index = 0; index < PView::list.size(); index++)
       if(PView::list[index]->getOptions()->clip)
         PView::list[index]->setChanged(true);
@@ -141,8 +148,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
 
   int old = CTX::instance()->drawBBox;
   CTX::instance()->drawBBox = 1;
-  if(CTX::instance()->fastRedraw)
-    CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
+  if(dragging) CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   drawContext::global()->draw();
   CTX::instance()->drawBBox = old;
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
@@ -240,6 +246,10 @@ clippingWindow::clippingWindow(int deltaFontSize)
     for(int j = 0; j < 4; j++) {
       plane[j]->align(FL_ALIGN_RIGHT);
       plane[j]->callback(clip_update_cb);
+      // the drag draws the fast representation: ask to be called on release as
+      // well, so that the full scene comes back even if the value settled on
+      // the one it already had
+      plane[j]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
       plane[j]->tooltip("A * X + B * Y + C * Z + D = 0");
     }
 
@@ -261,6 +271,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
     for(int i = 0; i < 6; i++) {
       box[i]->align(FL_ALIGN_RIGHT);
       box[i]->callback(clip_update_cb);
+      box[i]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
     }
 
     group[1]->end();

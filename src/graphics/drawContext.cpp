@@ -23,6 +23,7 @@
 #include "gl2ps.h"
 
 #if defined(HAVE_FLTK)
+#include <FL/Fl.H>
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
 #include <FL/gl.h>
@@ -404,6 +405,15 @@ void drawVertexArray(VertexArray *va, GLenum type)
 // place that sets them
 static void checkClipPlanesChanged()
 {
+#if defined(HAVE_FLTK)
+  // While the user is dragging - a clipping plane, an option slider - the fast
+  // representation is drawn, and the arrays are left as they are however many
+  // times the scene is redrawn in between. The planes below are only remembered
+  // once the change has been acted upon, so the first frame after the mouse is
+  // released picks it up and rebuilds once
+  if(Fl::pushed()) return;
+#endif
+
   static double planes[6][4] = {{0.}};
   static int capping = -1, whole = -1;
   static std::vector<int> clip;
