@@ -3981,6 +3981,13 @@ double opt_general_clip_capping(OPT_ARGS_NUM)
 #endif
     }
   }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->clipping->butt[0]->value(
+      CTX::instance()->clipCapping);
+    FlGui::instance()->clipping->activateButtons();
+  }
+#endif
   return CTX::instance()->clipCapping;
 }
 
@@ -3989,9 +3996,9 @@ double opt_general_clip_whole_elements(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->clipWholeElements = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->clipping->butt[0]->value(
+    FlGui::instance()->clipping->butt[1]->value(
       CTX::instance()->clipWholeElements);
-    FlGui::instance()->options->activate("clip_whole_elements");
+    FlGui::instance()->clipping->activateButtons();
   }
 #endif
   return CTX::instance()->clipWholeElements;
@@ -4002,9 +4009,11 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->clipOnlyDrawIntersectingVolume = (int)val;
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->butt[1]->value(
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->clipping->butt[2]->value(
       CTX::instance()->clipOnlyDrawIntersectingVolume);
+    FlGui::instance()->clipping->activateButtons();
+  }
 #endif
   return CTX::instance()->clipOnlyDrawIntersectingVolume;
 }
@@ -4012,11 +4021,6 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
 double opt_general_clip_only_volume(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipOnlyVolume = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->butt[2]->value(
-      CTX::instance()->clipOnlyVolume);
-#endif
   return CTX::instance()->clipOnlyVolume;
 }
 

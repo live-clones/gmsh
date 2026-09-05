@@ -28,6 +28,7 @@ public:
 public:
   clippingWindow(int deltaFontSize = 0);
   ~clippingWindow() { Fl::delete_widget(win); }
+  void activateButtons();
   void resetBrowser();
   void show();
 };

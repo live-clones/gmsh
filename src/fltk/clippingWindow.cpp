@@ -110,11 +110,11 @@ static void clip_update_cb(Fl_Widget *w, void *data)
   // entity has to be rebuilt. Moving a plane only affects the entities it cuts,
   // or that it moved in or out of: let the model work out which ones.
   bool togglesChanged =
-    (CTX::instance()->clipWholeElements !=
+    (CTX::instance()->clipCapping !=
      FlGui::instance()->clipping->butt[0]->value()) ||
-    (CTX::instance()->clipOnlyDrawIntersectingVolume !=
+    (CTX::instance()->clipWholeElements !=
      FlGui::instance()->clipping->butt[1]->value()) ||
-    (CTX::instance()->clipOnlyVolume !=
+    (CTX::instance()->clipOnlyDrawIntersectingVolume !=
      FlGui::instance()->clipping->butt[2]->value());
 
   if(CTX::instance()->clipWholeElements || CTX::instance()->clipCapping ||
@@ -130,12 +130,14 @@ static void clip_update_cb(Fl_Widget *w, void *data)
     }
   }
 
-  CTX::instance()->clipWholeElements =
+  CTX::instance()->clipCapping =
     FlGui::instance()->clipping->butt[0]->value();
-  CTX::instance()->clipOnlyDrawIntersectingVolume =
+  CTX::instance()->clipWholeElements =
     FlGui::instance()->clipping->butt[1]->value();
-  CTX::instance()->clipOnlyVolume =
+  CTX::instance()->clipOnlyDrawIntersectingVolume =
     FlGui::instance()->clipping->butt[2]->value();
+
+  FlGui::instance()->clipping->activateButtons();
 
   int old = CTX::instance()->drawBBox;
   CTX::instance()->drawBBox = 1;
@@ -267,16 +269,21 @@ clippingWindow::clippingWindow(int deltaFontSize)
   o->end();
 
   butt[0] = new Fl_Check_Button(L + WB, 3 * WB + 6 * BH, width - L - 2 * WB, BH,
-                                "Keep whole elements");
+                                "Cap volumes");
+  butt[0]->tooltip("General.ClipCapping");
   butt[1] = new Fl_Check_Button(L + WB, 3 * WB + 7 * BH, width - L - 2 * WB, BH,
-                                "Only draw volume layer");
+                                "Keep whole elements");
+  butt[1]->tooltip("General.ClipWholeElements");
   butt[2] = new Fl_Check_Button(L + WB, 3 * WB + 8 * BH, width - L - 2 * WB, BH,
-                                "Cut only volume elements");
+                                "Only draw volume layer");
+  butt[2]->tooltip("General.ClipOnlyDrawIntersectingVolume");
+
   for(int i = 0; i < 3; i++) {
     butt[i]->type(FL_TOGGLE_BUTTON);
     butt[i]->callback(clip_update_cb);
   }
 
+  activateButtons();
   resetBrowser();
 
   {
@@ -295,6 +302,21 @@ clippingWindow::clippingWindow(int deltaFontSize)
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
+}
+
+void clippingWindow::activateButtons()
+{
+  if(CTX::instance()->clipCapping) {
+    butt[1]->deactivate();
+    butt[2]->deactivate();
+  }
+  else {
+    butt[1]->activate();
+    if(CTX::instance()->clipWholeElements)
+      butt[2]->activate();
+    else
+      butt[2]->deactivate();
+  }
 }
 
 void clippingWindow::resetBrowser()
