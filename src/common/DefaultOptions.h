@@ -1226,8 +1226,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CreateFaces" , opt_mesh_create_faces, 0. ,
     "Create mesh edges before saving MSH files" },
 
-  { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 0. ,
-    "Draw only the skin of 3D meshes?" },
+  { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 1. ,
+    "Draw only the faces that bound a 3D mesh, dropping those shared by two volume "
+    "elements." },
   { F|O, "DrawUniqueEdges" , opt_mesh_draw_unique_edges , 1. ,
     "Draw each mesh edge once, instead of once per element sharing it? (only "
     "applies if Mesh.Explode is 1)" },
@@ -1939,8 +1940,9 @@ StringXNumber ViewOptions_Number[] = {
     "Display post-processing quadrangles?" },
   { F|O, "DrawScalars" , opt_view_draw_scalars , 1. ,
     "Display scalar values?" },
-  { F|O, "DrawSkinOnly" , opt_view_draw_skin_only , 0. ,
-    "Draw only the skin of 3D scalar views?" },
+  { F|O, "DrawSkinOnly" , opt_view_draw_skin_only , 1. ,
+    "Draw only the faces that bound a 3D view, dropping those shared by two volume "
+    "elements." },
   { F|O, "DrawStrings" , opt_view_draw_strings , 1. ,
     "Display post-processing annotation strings?" },
   { F|O, "DrawTensors" , opt_view_draw_tensors , 1. ,

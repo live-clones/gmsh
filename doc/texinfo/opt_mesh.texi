@@ -132,8 +132,13 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.DrawSkinOnly
-Draw only the skin of 3D meshes?@*
-Default value: @code{0}@*
+Draw only the faces that bound a 3D mesh, dropping those shared by two volume elements.@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.DrawUniqueEdges
+Draw each mesh edge once, instead of once per element sharing it? (only applies if Mesh.Explode is 1)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Dual

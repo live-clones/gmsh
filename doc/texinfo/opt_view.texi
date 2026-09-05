@@ -392,8 +392,8 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.DrawSkinOnly
-Draw only the skin of 3D scalar views?@*
-Default value: @code{0}@*
+Draw only the faces that bound a 3D view, dropping those shared by two volume elements.@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.DrawStrings

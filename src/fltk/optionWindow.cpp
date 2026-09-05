@@ -554,6 +554,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_surface_faces(0, GMSH_SET, o->mesh.butt[9]->value());
   opt_mesh_volume_edges(0, GMSH_SET, o->mesh.butt[10]->value());
   opt_mesh_volume_faces(0, GMSH_SET, o->mesh.butt[11]->value());
+  opt_mesh_draw_skin_only(0, GMSH_SET, o->mesh.butt[0]->value());
   opt_mesh_node_labels(0, GMSH_SET, o->mesh.butt[12]->value());
   opt_mesh_line_labels(0, GMSH_SET, o->mesh.butt[13]->value());
   opt_mesh_surface_labels(0, GMSH_SET, o->mesh.butt[14]->value());
@@ -2640,6 +2641,12 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[11]->type(FL_TOGGLE_BUTTON);
       mesh.butt[11]->callback(mesh_options_ok_cb);
 
+      mesh.butt[0] = new Fl_Check_Button(L + width / 2, 2 * WB + 6 * BH,
+                                          BW / 2 - WB, BH, "Hide interior faces");
+      mesh.butt[0]->tooltip("Mesh.DrawSkinOnly");
+      mesh.butt[0]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[0]->callback(mesh_options_ok_cb);
+
       mesh.butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                           BW / 2 - WB, BH, "Node labels");
       mesh.butt[12]->tooltip("Mesh.NodeLabels");
@@ -3380,7 +3387,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[10]->callback(view_options_ok_cb);
 
       view.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                                         "Draw only skin of 3D views");
+                                         "Hide interior faces");
       view.butt[2]->tooltip("View.DrawSkinOnly");
       view.butt[2]->type(FL_TOGGLE_BUTTON);
       view.butt[2]->callback(view_options_ok_cb);

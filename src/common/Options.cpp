@@ -6609,7 +6609,16 @@ double opt_mesh_voronoi(OPT_ARGS_NUM)
 
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.drawSkinOnly = (int)val; }
+  if(action & GMSH_SET) {
+    if(CTX::instance()->mesh.drawSkinOnly != val)
+      CTX::instance()->mesh.changed |= ENT_VOLUME;
+    CTX::instance()->mesh.drawSkinOnly = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.butt[0]->value(
+      CTX::instance()->mesh.drawSkinOnly);
+#endif
   return CTX::instance()->mesh.drawSkinOnly;
 }
 
