@@ -292,19 +292,16 @@ static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
   }
 }
 
-// The faces interior to a 3D mesh are hidden by its skin, so there is no point
-// in drawing them - not even with transparency, since they are exactly covered
-// by the elements on either side. This only holds if the elements are not
-// exploded, and if no clip plane cuts through them and opens up the interior.
+// Drop the faces interior to a 3D mesh, i.e. those shared by two elements of
+// the same entity, when the user asked for the skin only. They are gone, not
+// merely hidden, whatever else is going on: clipping, exploding or drawing the
+// mesh with transparency will show what is left, which is what the option is
+// for. The one thing that is not a matter of taste is picking, which cannot
+// reach an element that is not in the arrays.
 static bool removeInteriorFaces()
 {
   if(!CTX::instance()->mesh.drawSkinOnly) return false;
-  if(CTX::instance()->mesh.explode != 1.) return false;
-  // an element that is not in the arrays cannot be picked
   if(CTX::instance()->pickElements) return false;
-  if(CTX::instance()->mesh.clip && !CTX::instance()->clipWholeElements &&
-     !CTX::instance()->clipCapping)
-    return false;
   return true;
 }
 
