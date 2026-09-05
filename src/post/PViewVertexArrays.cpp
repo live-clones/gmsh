@@ -90,13 +90,15 @@ public:
   // identifiers of the nodes of the element being drawn, or null when the data
   // has no topology and none could be recreated
   std::size_t *nodeIds;
+  // the entity it belongs to
+  int ent;
   // bounding box of the elements that were drawn
   SBoundingBox3d bbox;
   drawTarget(PView *p)
     : view(p), opt(p->getOptions()), va_points(p->va_points),
       va_lines(p->va_lines), va_triangles(p->va_triangles),
       va_vectors(p->va_vectors), va_ellipses(p->va_ellipses),
-      normals(p->normals), nodeIds(nullptr)
+      normals(p->normals), nodeIds(nullptr), ent(0)
   {
   }
 };
@@ -358,9 +360,12 @@ static bool markingBoundaryFaces = false;
 static std::atomic<int> noNodeIdWarning(0);
 
 // build the key of a triangular face from the identifiers of its nodes, sorted
-// so that the two elements sharing it produce the same key. Returns false if
-// the data has no topology
-static bool faceKey(const std::size_t *nodeIds, const int *idx,
+// so that the two elements sharing it produce the same key. The entity is part
+// of the key, so that the skin is taken entity by entity rather than over the
+// whole view: the face two volumes share then belongs to the skin of each of
+// them, instead of cancelling out and leaving a hole between them. Returns
+// false if the data has no topology
+static bool faceKey(const std::size_t *nodeIds, int ent, const int *idx,
                     std::uint64_t *k)
 {
   if(!nodeIds) return false;
@@ -370,6 +375,7 @@ static bool faceKey(const std::size_t *nodeIds, const int *idx,
   }
   for(int i = 1; i < 3; i++)
     for(int j = i; j > 0 && k[j] < k[j - 1]; j--) std::swap(k[j], k[j - 1]);
+  k[3] = (std::uint64_t)ent;
   return true;
 }
 
@@ -561,14 +567,15 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
 
   if(skin || markingBoundaryFaces) {
     const int ii[3] = {i0, i1, i2};
-    std::uint64_t k[3];
-    if(skin && faceKey(p->nodeIds, ii, k)) {
+    std::uint64_t k[4];
+    if(skin && faceKey(p->nodeIds, p->ent, ii, k)) {
       if(markingBoundaryFaces) {
-        boundaryFaces->insertOrErase(k, 3);
+        boundaryFaces->insertOrErase(k, 4);
         return;
       }
-      // a face shared by two elements is interior, and hidden by the skin
-      if(!boundaryFaces->contains(k, 3)) return;
+      // a face shared by two elements of the same entity is interior, and
+      // hidden by the skin
+      if(!boundaryFaces->contains(k, 4)) return;
       skin = false;
     }
     else if(markingBoundaryFaces)
@@ -1557,6 +1564,7 @@ static void addElementRange(drawTarget *p, PViewData *data,
   while(e + 1 < ents.size() && start[e + 1] <= first) e++;
   for(; e < ents.size() && start[e] < last; e++) {
     int ent = ents[e];
+    p->ent = ent;
     int i0 = (int)(first > start[e] ? first - start[e] : 0);
     int i1 = (int)std::min(last, start[e + 1]) - (int)start[e];
     for(int i = i0; i < i1; i++) {
