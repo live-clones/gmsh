@@ -300,6 +300,8 @@ static bool removeInteriorFaces()
 {
   if(!CTX::instance()->mesh.drawSkinOnly) return false;
   if(CTX::instance()->mesh.explode != 1.) return false;
+  // an element that is not in the arrays cannot be picked
+  if(CTX::instance()->pickElements) return false;
   if(CTX::instance()->mesh.clip && !CTX::instance()->clipWholeElements &&
      !CTX::instance()->clipCapping)
     return false;
