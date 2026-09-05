@@ -4162,6 +4162,7 @@ void optionWindow::activate(const char *what)
       redraw->hide();
       win->redraw();
     }
+    drawContext::global()->draw();
   }
   else if(!strcmp(what, "rotation_center")) {
     if(general.butt[15]->value()) {

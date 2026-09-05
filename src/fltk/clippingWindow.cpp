@@ -139,19 +139,29 @@ static void clip_update_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->clipCapping =
     FlGui::instance()->clipping->butt[0]->value();
-  CTX::instance()->clipWholeElements =
-    FlGui::instance()->clipping->butt[1]->value();
+  if(CTX::instance()->clipCapping) {
+    CTX::instance()->clipWholeElements = 0;
+  }
+  else {
+    CTX::instance()->clipWholeElements =
+      FlGui::instance()->clipping->butt[1]->value();
+  }
   CTX::instance()->clipOnlyDrawIntersectingVolume =
     FlGui::instance()->clipping->butt[2]->value();
 
   FlGui::instance()->clipping->activateButtons();
 
-  int old = CTX::instance()->drawBBox;
-  CTX::instance()->drawBBox = 1;
-  if(dragging) CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
+  if(dragging) {
+    CTX::instance()->drawBBox = 1;
+    if(CTX::instance()->clipCapping || CTX::instance()->clipWholeElements) {
+      CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
+    }
+  }
+  else {
+    CTX::instance()->drawBBox = 0;
+    CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
+  }
   drawContext::global()->draw();
-  CTX::instance()->drawBBox = old;
-  CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
 static void clip_invert_cb(Fl_Widget *w, void *data)
@@ -297,11 +307,6 @@ clippingWindow::clippingWindow(int deltaFontSize)
   activateButtons();
   resetBrowser();
 
-  {
-    Fl_Return_Button *o = new Fl_Return_Button(
-      width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Redraw");
-    o->callback(redraw_cb);
-  }
   {
     Fl_Button *o =
       new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Reset");

@@ -498,7 +498,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.ClipCapping
 Fill the hole a clipping plane opens in a 3D mesh or view with the section where the plane cuts the elements@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ClipFactor
