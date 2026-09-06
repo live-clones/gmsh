@@ -44,6 +44,12 @@ extern bool gmshCollecting;
 // calls this first.
 void gmshPushShaderState();
 
+// Draw whatever immediate mode primitives are waiting. Anything that changes
+// how they would be drawn - the state, the matrices - and anything that draws
+// by another route has to call this first, so that what is on the screen is in
+// the order it was asked for.
+void gmshFlushImmediate();
+
 // what gmshBegin() and gmshEnd() do when they are collecting; gmshImBegin()
 // says whether it took the primitive
 bool gmshImBegin(GLenum mode);
@@ -205,7 +211,13 @@ bool gmshLightingEnabled();
 void gmshLightTwoSide(bool on);
 bool gmshLightTwoSideEnabled();
 
-inline void gmshLineWidth(double w) { glLineWidth((float)w); }
+inline void gmshLineWidth(double w)
+{
+  // the width a line is drawn with is not per vertex: what is waiting was
+  // asked for with the old one
+  if(gmshCollecting || gmshUseShaders()) gmshFlushImmediate();
+  glLineWidth((float)w);
+}
 void gmshPointSize(double s);
 double gmshCurrentPointSize();
 
@@ -225,6 +237,7 @@ inline void gmshLineStippleOff()
 
 inline void gmshPolygonFill(bool fill)
 {
+  if(gmshUseShaders()) gmshFlushImmediate();
   glPolygonMode(GL_FRONT_AND_BACK, fill ? GL_FILL : GL_LINE);
 }
 inline bool gmshPolygonFilled()

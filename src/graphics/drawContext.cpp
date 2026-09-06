@@ -529,6 +529,9 @@ void gmshUnbindArrays()
 // as state of its own, and draw
 void gmshDrawArrays(GLenum type, int count)
 {
+  // whatever immediate mode primitives are waiting were asked for before this
+  // one, and have to be on the screen before it
+  gmshFlushImmediate();
   if(count <= 0) return;
 
   if(useShaders()) {
