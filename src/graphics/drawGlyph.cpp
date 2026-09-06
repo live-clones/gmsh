@@ -205,6 +205,11 @@ namespace {
   class Templates {
   public:
     Tessellation arrow, sphere, disk;
+    // The normals of the sphere, encoded the way a vertex array stores them.
+    // Every sphere glyph is the template translated and scaled by the same
+    // factor in every direction, so they are the normals of all of them and
+    // are worth encoding once rather than per sphere and per vertex.
+    std::vector<normal_type> sphereNormals;
     int subdivisions;
     double headRadius, stemRadius, stemLength;
     Templates()
@@ -239,6 +244,9 @@ namespace {
 
       sphere.clear();
       sphere.sphere(1., n, n);
+      sphereNormals.resize(sphere.nrm.size());
+      for(std::size_t i = 0; i < sphere.nrm.size(); i++)
+        sphereNormals[i] = float2char(sphere.nrm[i]);
 
       disk.clear();
       disk.disk(0., 1., 0., n);
@@ -966,10 +974,22 @@ void drawContext::addSphere(VertexArray *va, double size, double x, double y,
   _tmpl.update();
   if(_tmpl.sphere.empty()) return;
 
-  // the scaling is uniform, so the normals of the template are already the
-  // ones of the sphere it is turned into
-  static const double n[9] = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
-  append(va, _tmpl.sphere, m, n, color);
+  // The scaling is uniform and the same in every direction, so the normals of
+  // the template are already the ones of this sphere: only the coordinates
+  // have to be worked out, and the array takes them a sphere at a time. A view
+  // can hold hundreds of thousands of these, which is what makes it worth not
+  // going through the array one triangle at a time.
+  std::size_t num = _tmpl.sphere.pos.size() / 3;
+  static thread_local std::vector<float> xyz;
+  xyz.resize(3 * num);
+  for(std::size_t i = 0; i < num; i++) {
+    const float *p = &_tmpl.sphere.pos[3 * i];
+    xyz[3 * i] = (float)(m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12]);
+    xyz[3 * i + 1] = (float)(m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13]);
+    xyz[3 * i + 2] = (float)(m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]);
+  }
+  va->addBlock(&xyz[0], &_tmpl.sphereNormals[0],
+               (const unsigned char *)&color, (int)num);
 }
 
 void drawContext::drawArrow3d(double x, double y, double z, double dx,
