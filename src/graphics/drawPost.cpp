@@ -20,68 +20,14 @@
 #include <vector>
 #include <cstring>
 #include "gl2ps.h"
+#include "glyphList.h"
 
-// The glyphs a view is drawn with - the 3D arrows of a vector view, the
-// spheres of a point one - kept between frames. They do not move when the
-// model is turned, so there is no reason to build them again for every frame;
-// what they do depend on is the length a pixel stands for, as the glyph sizes
-// are given in pixels, so they are built again when that changes - on a zoom,
-// not on a rotation. The view changing throws them away with its other arrays.
-class glyphArrays {
-public:
-  VertexArray *triangles;
-  double pixelSize, size;
-  int type;
-  glyphArrays() : triangles(nullptr), pixelSize(0.), size(0.), type(-1) {}
-  // is what was built still what would be built now?
-  bool matches(double pix, double sz, int t) const
-  {
-    return triangles && type == t && pixelSize == pix && size == sz;
-  }
-  // throw it away and start an array to build it again in, holding the number
-  // of triangles the glyphs are known to come to
-  void restart(double pix, double sz, int t, int numTriangles = 100)
-  {
-    clear();
-    triangles = new VertexArray(3, numTriangles);
-    pixelSize = pix;
-    size = sz;
-    type = t;
-  }
-  void clear()
-  {
-    if(triangles) delete triangles;
-    triangles = nullptr;
-    type = -1;
-  }
-};
+void clearGlyphArrays(PView *p) { glyphCache::clear(p); }
 
-// the two kinds a view can have at once
-class viewGlyphs {
-public:
-  glyphArrays vectors, points;
-};
-
-static std::map<PView *, viewGlyphs> _glyphs;
-
-void clearGlyphArrays(PView *p)
-{
-  auto it = _glyphs.find(p);
-  if(it != _glyphs.end()) {
-    it->second.vectors.clear();
-    it->second.points.clear();
-    _glyphs.erase(it);
-  }
-}
-
-static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
-                       bool useNormalArray);
-
-// Where the sphere of one point goes and how big it is, and the sphere
-// appended to the array. As with the arrows, this is here so that the several
-// threads building them can share it - it only reads the view.
+// Where the sphere of one point goes and how big it is. This is here so that
+// the several threads collecting them can share it - it only reads the view.
 static void addSphereFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
-                         int i, VertexArray *into)
+                         int i, glyphList *into)
 {
   float *pt = va->getVertexArray(3 * i);
   double f = 1.;
@@ -95,60 +41,58 @@ static void addSphereFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
   }
   unsigned int col;
   memcpy(&col, va->getColorArray(4 * i), 4);
-  ctx->addSphere(into, opt->pointSize * f, pt[0], pt[1], pt[2], col);
+  into->addSphere(ctx, opt->pointSize * f, pt[0], pt[1], pt[2], col);
 }
 
-// the spheres a view draws its points with, built once and kept
-static void drawPointGlyphs(drawContext *ctx, PView *p, VertexArray *va)
+// Share a range out over the threads, each collecting into a list of its own,
+// merged in order afterwards so that what comes out does not depend on how
+// many of them there were. What the glyphs are worked out from is only read,
+// which is what makes this safe.
+template <class F>
+static void collect(int num, glyphList *into, F add)
 {
-  PViewOptions *opt = p->getOptions();
-  double pixelSize = ctx->pixel_equiv_x / ctx->s[0];
-  glyphArrays *cache = &_glyphs[p].points;
-
-  if(!cache->matches(pixelSize, opt->pointSize, opt->pointType)) {
-    int num = va->getNumVertices();
-    // the shapes are shared and only read while the threads run; how many
-    // triangles one of them comes to is what the arrays are reserved for, as
-    // several hundred megabytes of them is not something to leave to a vector
-    // doubling its size
-    ctx->updateGlyphTemplates();
-    int per = ctx->sphereGlyphTriangles();
-    cache->restart(pixelSize, opt->pointSize, opt->pointType, num * per);
-    // Building them is the expensive part, and it is what a zoom asks for
-    // again: the points are independent of one another, so the range is
-    // shared out and each thread fills an array of its own, merged in order
-    // afterwards so that what comes out does not depend on how many threads
-    // there were.
-    int nthreads = CTX::instance()->numThreads;
-    if(nthreads <= 0) nthreads = 1;
-    // not worth splitting a handful of spheres over several threads
-    if(num < 2000) nthreads = 1;
-    if(nthreads > num) nthreads = num;
-    if(nthreads > 1) {
-      std::vector<VertexArray *> parts(nthreads, nullptr);
+  int nthreads = CTX::instance()->numThreads;
+  if(nthreads <= 0) nthreads = 1;
+  // not worth splitting a handful of glyphs over several threads
+  if(num < 2000) nthreads = 1;
+  if(nthreads > num) nthreads = num;
+  if(nthreads == 1) {
+    for(int i = 0; i < num; i++) add(i, into);
+    return;
+  }
+  std::vector<glyphList *> parts(nthreads, nullptr);
 #if defined(_OPENMP)
 #pragma omp parallel for num_threads(nthreads) schedule(static, 1)
 #endif
-      for(int t = 0; t < nthreads; t++) {
-        int first = (int)((long)num * t / nthreads);
-        int last = (int)((long)num * (t + 1) / nthreads);
-        VertexArray *mine = new VertexArray(3, (last - first) * per);
-        for(int i = first; i < last; i++) addSphereFor(ctx, opt, va, i, mine);
-        parts[t] = mine;
-      }
-      for(int t = 0; t < nthreads; t++) {
-        cache->triangles->merge(parts[t]);
-        delete parts[t];
-      }
-    }
-    else {
-      for(int i = 0; i < num; i++)
-        addSphereFor(ctx, opt, va, i, cache->triangles);
-    }
-    cache->triangles->finalize();
+  for(int t = 0; t < nthreads; t++) {
+    int first = (int)((long)num * t / nthreads);
+    int last = (int)((long)num * (t + 1) / nthreads);
+    glyphList *mine = new glyphList();
+    for(int i = first; i < last; i++) add(i, mine);
+    parts[t] = mine;
   }
+  for(int t = 0; t < nthreads; t++) {
+    into->merge(parts[t]);
+    delete parts[t];
+  }
+}
 
-  drawArrays(ctx, p, cache->triangles, GL_TRIANGLES, opt->light);
+// the spheres a view draws its points with, collected once and kept
+static void drawPointGlyphs(drawContext *ctx, PView *p, VertexArray *va)
+{
+  PViewOptions *opt = p->getOptions();
+  glyphToken tok;
+  tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+  tok.add(opt->pointSize);
+  tok.add(opt->pointType);
+  glyphList *g;
+  if(!glyphCache::get(p, GLYPH_POINTS, tok, g)) {
+    g->reserve(GLYPH_SPHERE, va->getNumVertices());
+    collect(va->getNumVertices(), g, [ctx, opt, va](int i, glyphList *into) {
+      addSphereFor(ctx, opt, va, i, into);
+    });
+  }
+  g->draw(ctx, opt->light);
 }
 
 static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
@@ -300,7 +244,7 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
 // the drawing loop below does; it is here so that the two can share it and so
 // that several threads can run it at once - it only reads the view.
 static void addArrowFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
-                        int i, VertexArray *into)
+                        int i, glyphList *into)
 {
   float *s = va->getVertexArray(3 * i);
   float *v = va->getVertexArray(3 * (i + 1));
@@ -333,7 +277,7 @@ static void addArrowFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
   }
   unsigned int col;
   memcpy(&col, va->getColorArray(4 * i), 4);
-  ctx->addArrow3d(into, x, y, z, dx, dy, dz, col);
+  into->addArrow(x, y, z, dx, dy, dz, col);
 }
 
 static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
@@ -342,59 +286,24 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
 
   PViewOptions *opt = p->getOptions();
 
-  // the 3D arrows are the ones worth keeping: they are several dozen triangles
-  // each, and a view can hold hundreds of thousands of them
-  bool keep = (opt->vectorType == 4);
-  double pixelSize = ctx->pixel_equiv_x / ctx->s[0];
-  glyphArrays *cache = nullptr;
-  if(keep) {
-    cache = &_glyphs[p].vectors;
-    if(cache->matches(pixelSize, 0., opt->vectorType)) {
-      // nothing they depend on has moved: draw what was built
-      drawArrays(ctx, p, cache->triangles, GL_TRIANGLES, opt->light);
-      return;
+  // the 3D arrows are the ones worth collecting: they are several dozen
+  // triangles each, and a view can hold hundreds of thousands of them
+  if(opt->vectorType == 4) {
+    glyphToken tok;
+    tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+    tok.add(opt->vectorType);
+    glyphList *g;
+    if(!glyphCache::get(p, GLYPH_VECTORS, tok, g)) {
+      int num = va->getNumVertices() / 2;
+      g->reserve(GLYPH_ARROW, num);
+      collect(num, g, [ctx, opt, va](int e, glyphList *into) {
+        addArrowFor(ctx, opt, va, 2 * e, into);
+      });
     }
-    cache->restart(pixelSize, 0., opt->vectorType);
-  }
-
-  if(keep) {
-    // Building the arrows is the expensive part, and it is what a zoom asks
-    // for again: the elements are independent of one another, so the range is
-    // shared out and each thread fills an array of its own, merged in order
-    // afterwards so that what comes out does not depend on how many threads
-    // there were.
-    int num = va->getNumVertices() / 2;
-    int nthreads = CTX::instance()->numThreads;
-    if(nthreads <= 0) nthreads = 1;
-    // not worth splitting a handful of arrows over several threads
-    if(num < 2000) nthreads = 1;
-    if(nthreads > num) nthreads = num;
-    // the shapes are shared and only read while the threads run
-    ctx->updateGlyphTemplates();
-    if(nthreads > 1) {
-      std::vector<VertexArray *> parts(nthreads, nullptr);
-#if defined(_OPENMP)
-#pragma omp parallel for num_threads(nthreads) schedule(static, 1)
-#endif
-      for(int t = 0; t < nthreads; t++) {
-        int first = (int)((long)num * t / nthreads);
-        int last = (int)((long)num * (t + 1) / nthreads);
-        VertexArray *mine = new VertexArray(3, 100);
-        for(int e = first; e < last; e++)
-          addArrowFor(ctx, opt, va, 2 * e, mine);
-        parts[t] = mine;
-      }
-      for(int t = 0; t < nthreads; t++) {
-        cache->triangles->merge(parts[t]);
-        delete parts[t];
-      }
-    }
-    else {
-      for(int e = 0; e < num; e++)
-        addArrowFor(ctx, opt, va, 2 * e, cache->triangles);
-    }
-    cache->triangles->finalize();
-    drawArrays(ctx, p, cache->triangles, GL_TRIANGLES, opt->light);
+    if(CTX::instance()->polygonOffset || opt->showElement)
+      glEnable(GL_POLYGON_OFFSET_FILL);
+    g->draw(ctx, opt->light);
+    glDisable(GL_POLYGON_OFFSET_FILL);
     return;
   }
 
@@ -434,24 +343,13 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
           y -= 0.5 * dy;
           z -= 0.5 * dz;
         }
-        if(keep) {
-          unsigned int col;
-          memcpy(&col, va->getColorArray(4 * i), 4);
-          ctx->addArrow3d(cache->triangles, x, y, z, dx, dy, dz, col);
-        }
-        else {
-          ctx->drawVector(opt->vectorType,
-                          opt->intervalsType != PViewOptions::Iso, x, y, z, dx,
-                          dy, dz, opt->light);
-        }
+        ctx->drawVector(opt->vectorType,
+                        opt->intervalsType != PViewOptions::Iso, x, y, z, dx,
+                        dy, dz, opt->light);
       }
     }
   }
 
-  if(keep) {
-    cache->triangles->finalize();
-    drawArrays(ctx, p, cache->triangles, GL_TRIANGLES, opt->light);
-  }
 }
 
 static std::string stringValue(int numComp, double d[9], double norm,

@@ -373,15 +373,14 @@ public:
   void add(double *x, double *y, double *z, SVector3 *n, unsigned char *r = nullptr,
            unsigned char *g = nullptr, unsigned char *b = nullptr, unsigned char *a = nullptr,
            MElement *ele = nullptr, bool unique = true);
-  // Append n vertices at once: their coordinates, their normals already
-  // encoded the way the array stores them, and one colour for all of them.
-  // This is what a glyph repeated many times over needs - the shape is the
-  // same every time, so its normals are encoded once and its colour is the
-  // same at each of its vertices - and it is several times faster than adding
-  // the triangles one by one. No element pointers are stored, so an array
-  // filled this way cannot be picked element by element.
-  void addBlock(const float *xyz, const normal_type *normals,
-                const unsigned char *color, int n);
+  // Grow the array by n vertices and return where they start, so that a
+  // caller that knows how many it is going to add can write them itself -
+  // several threads can then each fill a range of their own, with no copying
+  // and nothing to merge afterwards. Nothing is initialised: every one of the
+  // n vertices, normals and colours has to be written. No element pointers
+  // are stored, so an array filled this way cannot be picked element by
+  // element.
+  int addBlock(int n);
   // finalize the arrays
   void finalize();
   // sort the arrays with elements back to front wrt the eye position
