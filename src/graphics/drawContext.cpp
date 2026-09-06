@@ -1311,7 +1311,16 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   GLfloat oldClear[4];
   glGetFloatv(GL_COLOR_CLEAR_VALUE, oldClear);
 
-  glDrawBuffer(GL_BACK);
+  // Draw into a buffer of our own when the shader pipeline is the one drawing:
+  // the depth has to be read back as well as the identifiers, and reading a
+  // depth buffer is not something OpenGL ES or WebGL will do. The shader
+  // writes it as a colour into a second attachment instead.
+  double hr = highResolutionPixelFactor();
+  bool intoPickBuffer =
+    gmshUseShaders() &&
+    glShader::bindPickBuffer((int)((viewport[2] - viewport[0]) * hr),
+                             (int)((viewport[3] - viewport[1]) * hr));
+  if(!intoPickBuffer) glDrawBuffer(GL_BACK);
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
   gmshLighting(false);
@@ -1355,10 +1364,17 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   _pickCache.assign((std::size_t)4 * fw * fh, 0);
   _pickCacheDepth.assign((std::size_t)fw * fh, 1.f);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glReadBuffer(GL_BACK);
-  glReadPixels(fx, fy, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE, &_pickCache[0]);
-  glReadPixels(fx, fy, fw, fh, GL_DEPTH_COMPONENT, GL_FLOAT,
-               &_pickCacheDepth[0]);
+  if(intoPickBuffer) {
+    glShader::readPickBuffer(fx, fy, fw, fh, &_pickCache[0],
+                             &_pickCacheDepth[0]);
+    glShader::releasePickBuffer();
+  }
+  else {
+    glReadBuffer(GL_BACK);
+    glReadPixels(fx, fy, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE, &_pickCache[0]);
+    glReadPixels(fx, fy, fw, fh, GL_DEPTH_COMPONENT, GL_FLOAT,
+                 &_pickCacheDepth[0]);
+  }
 
   glDisable(GL_SCISSOR_TEST);
   glDepthRange(0., 1.);

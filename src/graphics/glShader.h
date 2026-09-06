@@ -88,6 +88,21 @@ namespace glShader {
   // was last set.
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
                      const unsigned char *colors, int count);
+
+  // The buffer a picking pass draws into: one attachment for the colour that
+  // encodes the object, one for the depth written as a colour. Reading a depth
+  // buffer back is not something OpenGL ES or WebGL will do, which is why the
+  // pass does not simply draw into the window.
+  //
+  // bindPickBuffer() makes a buffer of that size current and asks for both
+  // attachments to be drawn into; false if there is none to be had, in which
+  // case the caller draws into the window as before. readPickBuffer() takes a
+  // region of it, giving the colours as four bytes each and the depths as
+  // floats in [0, 1]. releasePickBuffer() puts the window back.
+  bool bindPickBuffer(int width, int height);
+  void readPickBuffer(int x, int y, int w, int h, unsigned char *colors,
+                      float *depths);
+  void releasePickBuffer();
 } // namespace glShader
 
 #endif

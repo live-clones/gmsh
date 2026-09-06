@@ -65,12 +65,28 @@ uniform bool uLightOn[6];
 uniform vec3 uSpecular;
 uniform float uShininess;
 
-out vec4 fColor;
+layout(location = 0) out vec4 fColor;
+// A picking pass reads the depth back as well as the identifier, and neither
+// OpenGL ES nor WebGL will read a depth buffer: it is written here as a colour
+// instead, the 24 bits of it spread over three bytes. When only one buffer is
+// being drawn into - which is every pass but that one - the write goes nowhere.
+layout(location = 1) out vec4 fDepth;
+
+vec4 packDepth(float d)
+{
+  float v = clamp(d, 0.0, 1.0) * 16777215.0;
+  float r = floor(v / 65536.0);
+  float g = floor((v - r * 65536.0) / 256.0);
+  float b = floor(v - r * 65536.0 - g * 256.0);
+  return vec4(r, g, b, 255.0) / 255.0;
+}
 
 void main()
 {
   for(int i = 0; i < 6; i++)
     if(vClip[i] < 0.0) discard;
+
+  fDepth = packDepth(gl_FragCoord.z);
 
   if(!uLighting) {
     fColor = vColor;
@@ -111,6 +127,9 @@ void main()
     // one buffer for the vertices a caller holds itself and one for their
     // colours, grown as needed and reused from frame to frame
     GLuint _streamVertices = 0, _streamColors = 0, _streamNormals = 0;
+    // the picking buffer and what it is made of
+    GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
+    int _pickWidth = 0, _pickHeight = 0;
     bool _tried = false;
 
     struct {
@@ -258,6 +277,8 @@ void main()
     // current, which are not ours
     _program = _vao = 0;
     _streamVertices = _streamColors = _streamNormals = 0;
+    _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
+    _pickWidth = _pickHeight = 0;
     _tried = false;
   }
 
@@ -438,5 +459,100 @@ void main()
     glApi::DisableVertexAttribArray(ATTRIB_VERTEX);
     glApi::DisableVertexAttribArray(ATTRIB_NORMAL);
     glApi::DisableVertexAttribArray(ATTRIB_COLOR);
+  }
+
+  bool bindPickBuffer(int width, int height)
+  {
+    if(width < 1 || height < 1) return false;
+    if(!ensure() || !glApi::haveFramebufferObjects()) return false;
+
+    if(_pickFbo && (_pickWidth != width || _pickHeight != height)) {
+      // the window has been resized: the attachments are the wrong size
+      glApi::DeleteFramebuffers(1, &_pickFbo);
+      glDeleteTextures(1, &_pickColorTex);
+      glDeleteTextures(1, &_pickDepthTex);
+      glApi::DeleteRenderbuffers(1, &_pickDepthRb);
+      _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
+    }
+
+    if(!_pickFbo) {
+      glApi::GenFramebuffers(1, &_pickFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _pickFbo);
+
+      glGenTextures(1, &_pickColorTex);
+      glBindTexture(GL_TEXTURE_2D, _pickColorTex);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
+                   GL_UNSIGNED_BYTE, nullptr);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                  GL_TEXTURE_2D, _pickColorTex, 0);
+
+      glGenTextures(1, &_pickDepthTex);
+      glBindTexture(GL_TEXTURE_2D, _pickDepthTex);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
+                   GL_UNSIGNED_BYTE, nullptr);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + 1,
+                                  GL_TEXTURE_2D, _pickDepthTex, 0);
+
+      // the pass still depth tests: what it reads back is the depth of what
+      // ended up in front, not of everything that was drawn
+      glApi::GenRenderbuffers(1, &_pickDepthRb);
+      glApi::BindRenderbuffer(GL_RENDERBUFFER, _pickDepthRb);
+      glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width,
+                                 height);
+      glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                     GL_RENDERBUFFER, _pickDepthRb);
+      glBindTexture(GL_TEXTURE_2D, 0);
+
+      if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+         GL_FRAMEBUFFER_COMPLETE) {
+        Msg::Warning("Could not make a buffer to pick in: picking in the "
+                     "window instead");
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+        glApi::DeleteFramebuffers(1, &_pickFbo);
+        _pickFbo = 0;
+        return false;
+      }
+      _pickWidth = width;
+      _pickHeight = height;
+      Msg::Debug("Picking into a %dx%d buffer, with the depth as a colour",
+                 width, height);
+    }
+
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _pickFbo);
+    const GLenum bufs[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0 + 1};
+    glApi::DrawBuffers(2, bufs);
+    return true;
+  }
+
+  void readPickBuffer(int x, int y, int w, int h, unsigned char *colors,
+                      float *depths)
+  {
+    if(!_pickFbo || w < 1 || h < 1) return;
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, colors);
+
+    std::vector<unsigned char> packed((std::size_t)4 * w * h, 0);
+    glReadBuffer(GL_COLOR_ATTACHMENT0 + 1);
+    glReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &packed[0]);
+    for(std::size_t i = 0; i < (std::size_t)w * h; i++) {
+      // the three bytes the shader spread the depth over; a fragment that was
+      // never drawn leaves them at zero, which the alpha tells apart from a
+      // depth of zero
+      unsigned int v = ((unsigned int)packed[4 * i] << 16) |
+                       ((unsigned int)packed[4 * i + 1] << 8) |
+                       (unsigned int)packed[4 * i + 2];
+      depths[i] = packed[4 * i + 3] ? (float)(v / 16777215.) : 1.f;
+    }
+  }
+
+  void releasePickBuffer()
+  {
+    if(!_pickFbo) return;
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
   }
 } // namespace glShader
