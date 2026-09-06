@@ -802,7 +802,9 @@ StringXNumber GeneralOptions_Number[] = {
     "Maximum amount of memory (in MB) used to keep the triangles that the "
     "glyphs (spheres, arrows, cylinders, ...) are made of between frames; "
     "past it they are rebuilt for every frame, which is slower but takes no "
-    "memory (0: automatic)" },
+    "memory (0: automatic). Unused when the shader pipeline draws them, as it "
+    "is handed the shape and where every glyph goes instead of their "
+    "triangles" },
 
   { F,   "RotationX" , opt_general_rotation0 , 0.0 ,
     "First Euler angle (used if Trackball=0)" },

@@ -44,8 +44,18 @@
 // partial pixels along it, and more so with multisampling.
 
 namespace glShader {
-  // where the vertex, normal and colour arrays are bound
-  enum { ATTRIB_VERTEX = 0, ATTRIB_NORMAL = 1, ATTRIB_COLOR = 2 };
+  // where the vertex, normal and colour arrays are bound, and where the
+  // per glyph transform and parameters are when the same shape is being drawn
+  // many times over
+  enum {
+    ATTRIB_VERTEX = 0,
+    ATTRIB_NORMAL = 1,
+    ATTRIB_COLOR = 2,
+    ATTRIB_GLYPH0 = 3,
+    ATTRIB_GLYPH1 = 4,
+    ATTRIB_GLYPH2 = 5,
+    ATTRIB_GLYPH_PARAM = 6
+  };
 
   // Compile and link the program if that has not been done for this context,
   // and make it current. False if there is no program to be had, in which case
@@ -88,6 +98,21 @@ namespace glShader {
   // was last set.
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
                      const unsigned char *colors, int count);
+
+  // Draw one shape many times over, each of them placed by a glyph of its
+  // own: the shape is given as its vertices and normals, and the glyphs as a
+  // buffer of sixty bytes each - three rows of a transform, a colour, and the
+  // two radii a cylinder is shaped by. False if this cannot be done, in which
+  // case the caller has to draw them one shape at a time.
+  //
+  // taper says the shape is a cylinder, whose corners the radii move; colors
+  // says the colour comes from the glyphs rather than from the one that is
+  // current, which is what a picking pass wants.
+  // How one glyph is laid out in that buffer: three rows of four floats, then
+  // four bytes of colour, then two floats of parameters.
+  enum { GLYPH_STRIDE = 60 };
+  bool drawGlyphs(const float *vertices, const float *normals, int numVertices,
+                  const void *glyphs, int numGlyphs, bool taper, bool colors);
 
   // The buffer a picking pass draws into: one attachment for the colour that
   // encodes the object, one for the depth written as a colour. Reading a depth

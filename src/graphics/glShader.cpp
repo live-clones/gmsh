@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include <cstddef>
 #include "glShader.h"
 #include "GmshMessage.h"
 
@@ -19,7 +20,17 @@ namespace glShader {
 in vec3 aVertex;
 in vec3 aNormal;
 in vec4 aColor;
+// one glyph: the three rows of the transform that places it, and the two
+// radii a cylinder is shaped by. These come one per glyph rather than one per
+// vertex, which is what lets the same shape be drawn many times over in one
+// call.
+in vec4 aGlyph0;
+in vec4 aGlyph1;
+in vec4 aGlyph2;
+in vec2 aGlyphParam;
 
+uniform bool uInstanced;
+uniform bool uTaper;
 uniform mat4 uModelview;
 uniform mat4 uProjection;
 uniform mat3 uNormalMatrix;
@@ -36,9 +47,30 @@ out float vClip[6];
 
 void main()
 {
-  vec4 eye = uModelview * vec4(aVertex, 1.0);
+  vec3 p = aVertex;
+  vec3 n = aNormal;
+  if(uInstanced) {
+    if(uTaper) {
+      // the radius of a cylinder follows its length, and the normal of its
+      // side leans over by as much: the shape carries the cosine and the sine
+      // of the angle each of its corners is at, which is what both come from
+      float r = aGlyphParam.x + p.z * (aGlyphParam.y - aGlyphParam.x);
+      n = vec3(p.x, p.y, aGlyphParam.x - aGlyphParam.y);
+      p = vec3(p.x * r, p.y * r, p.z);
+    }
+    vec4 p4 = vec4(p, 1.0);
+    p = vec3(dot(aGlyph0, p4), dot(aGlyph1, p4), dot(aGlyph2, p4));
+    // The normals follow the inverse transpose of the transform. Up to a
+    // positive factor, which normalizing takes out again, that is the
+    // cofactors of its three columns.
+    vec3 c0 = vec3(aGlyph0.x, aGlyph1.x, aGlyph2.x);
+    vec3 c1 = vec3(aGlyph0.y, aGlyph1.y, aGlyph2.y);
+    vec3 c2 = vec3(aGlyph0.z, aGlyph1.z, aGlyph2.z);
+    n = mat3(cross(c1, c2), cross(c2, c0), cross(c0, c1)) * n;
+  }
+  vec4 eye = uModelview * vec4(p, 1.0);
   vEye = eye.xyz;
-  vNormal = uNormalMatrix * aNormal;
+  vNormal = uNormalMatrix * n;
   vColor = uColorArray ? aColor : uColor;
   // the planes are in eye coordinates, as glClipPlane() left them once the
   // modelview it was given had been applied
@@ -127,6 +159,8 @@ void main()
     // one buffer for the vertices a caller holds itself and one for their
     // colours, grown as needed and reused from frame to frame
     GLuint _streamVertices = 0, _streamColors = 0, _streamNormals = 0;
+    // one more for the glyphs a shape is drawn many times over with
+    GLuint _streamGlyphs = 0;
     // the picking buffer and what it is made of
     GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
     int _pickWidth = 0, _pickHeight = 0;
@@ -136,6 +170,7 @@ void main()
       GLint modelview, projection, normalMatrix, colorArray, color, pointSize;
       GLint clipPlane, clipOn;
       GLint lighting, twoSide, specular, shininess;
+      GLint instanced, taper;
       GLint lightPosition, lightAmbient, lightDiffuse, lightSpecular, lightOn;
     } _u;
 
@@ -215,6 +250,10 @@ void main()
       glApi::BindAttribLocation(p, ATTRIB_VERTEX, "aVertex");
       glApi::BindAttribLocation(p, ATTRIB_NORMAL, "aNormal");
       glApi::BindAttribLocation(p, ATTRIB_COLOR, "aColor");
+      glApi::BindAttribLocation(p, ATTRIB_GLYPH0, "aGlyph0");
+      glApi::BindAttribLocation(p, ATTRIB_GLYPH1, "aGlyph1");
+      glApi::BindAttribLocation(p, ATTRIB_GLYPH2, "aGlyph2");
+      glApi::BindAttribLocation(p, ATTRIB_GLYPH_PARAM, "aGlyphParam");
       glApi::LinkProgram(p);
       glApi::DeleteShader(vs);
       glApi::DeleteShader(fs);
@@ -242,6 +281,8 @@ void main()
       _u.twoSide = glApi::GetUniformLocation(p, "uTwoSide");
       _u.specular = glApi::GetUniformLocation(p, "uSpecular");
       _u.shininess = glApi::GetUniformLocation(p, "uShininess");
+      _u.instanced = glApi::GetUniformLocation(p, "uInstanced");
+      _u.taper = glApi::GetUniformLocation(p, "uTaper");
       // the arrays are addressed element by element
       _u.clipPlane = _u.clipOn = -1;
       _u.lightPosition = _u.lightAmbient = _u.lightDiffuse = -1;
@@ -419,6 +460,83 @@ void main()
       glApi::DisableVertexAttribArray(ATTRIB_COLOR);
     }
     glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+  }
+
+  bool drawGlyphs(const float *vertices, const float *normals, int numVertices,
+                  const void *glyphs, int numGlyphs, bool taper, bool colors)
+  {
+    if(numVertices <= 0 || numGlyphs <= 0) return true;
+    if(!glApi::haveInstancing() || !ensure()) return false;
+    glApi::BindVertexArray(_vao);
+
+    // the shape itself, once
+    if(!_streamVertices) glApi::GenBuffers(1, &_streamVertices);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamVertices);
+    glApi::BufferData(GL_ARRAY_BUFFER,
+                      (GLsizeiptr)numVertices * 3 * sizeof(float), vertices,
+                      GL_STREAM_DRAW);
+    glApi::EnableVertexAttribArray(ATTRIB_VERTEX);
+    glApi::VertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, 0,
+                               nullptr);
+    glApi::VertexAttribDivisor(ATTRIB_VERTEX, 0);
+
+    if(!_streamNormals) glApi::GenBuffers(1, &_streamNormals);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamNormals);
+    glApi::BufferData(GL_ARRAY_BUFFER,
+                      (GLsizeiptr)numVertices * 3 * sizeof(float), normals,
+                      GL_STREAM_DRAW);
+    glApi::EnableVertexAttribArray(ATTRIB_NORMAL);
+    glApi::VertexAttribPointer(ATTRIB_NORMAL, 3, GL_FLOAT, GL_FALSE, 0,
+                               nullptr);
+    glApi::VertexAttribDivisor(ATTRIB_NORMAL, 0);
+
+    // and the glyphs, one of each of these per glyph rather than per vertex,
+    // which is what the divisor says
+    const GLsizei stride = GLYPH_STRIDE;
+    if(!_streamGlyphs) glApi::GenBuffers(1, &_streamGlyphs);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamGlyphs);
+    glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)numGlyphs * stride, glyphs,
+                      GL_STREAM_DRAW);
+    for(int i = 0; i < 3; i++) {
+      glApi::EnableVertexAttribArray(ATTRIB_GLYPH0 + i);
+      glApi::VertexAttribPointer(ATTRIB_GLYPH0 + i, 4, GL_FLOAT, GL_FALSE,
+                                 stride,
+                                 (const GLvoid *)(std::size_t)(16 * i));
+      glApi::VertexAttribDivisor(ATTRIB_GLYPH0 + i, 1);
+    }
+    glApi::EnableVertexAttribArray(ATTRIB_GLYPH_PARAM);
+    glApi::VertexAttribPointer(ATTRIB_GLYPH_PARAM, 2, GL_FLOAT, GL_FALSE,
+                               stride, (const GLvoid *)(std::size_t)52);
+    glApi::VertexAttribDivisor(ATTRIB_GLYPH_PARAM, 1);
+    if(colors) {
+      glApi::EnableVertexAttribArray(ATTRIB_COLOR);
+      glApi::VertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE,
+                                 stride, (const GLvoid *)(std::size_t)48);
+      glApi::VertexAttribDivisor(ATTRIB_COLOR, 1);
+    }
+    else {
+      glApi::DisableVertexAttribArray(ATTRIB_COLOR);
+    }
+
+    setColorArray(colors);
+    glApi::Uniform1i(_u.instanced, 1);
+    glApi::Uniform1i(_u.taper, taper ? 1 : 0);
+    glApi::DrawArraysInstanced(GL_TRIANGLES, 0, numVertices, numGlyphs);
+    glApi::Uniform1i(_u.instanced, 0);
+
+    glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+    glApi::DisableVertexAttribArray(ATTRIB_VERTEX);
+    glApi::DisableVertexAttribArray(ATTRIB_NORMAL);
+    glApi::DisableVertexAttribArray(ATTRIB_COLOR);
+    for(int i = 0; i < 3; i++) {
+      glApi::DisableVertexAttribArray(ATTRIB_GLYPH0 + i);
+      glApi::VertexAttribDivisor(ATTRIB_GLYPH0 + i, 0);
+    }
+    glApi::DisableVertexAttribArray(ATTRIB_GLYPH_PARAM);
+    glApi::VertexAttribDivisor(ATTRIB_GLYPH_PARAM, 0);
+    // the colour is a per vertex attribute everywhere else
+    glApi::VertexAttribDivisor(ATTRIB_COLOR, 0);
+    return true;
   }
 
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
