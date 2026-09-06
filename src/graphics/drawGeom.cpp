@@ -106,14 +106,9 @@ static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
   gmshLighting(false);
   gmshPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
   gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-  glVertexPointer(3, GL_FLOAT, 0, &xyz[0]);
-  glColorPointer(4, GL_UNSIGNED_BYTE, 0, &col[0]);
+  gmshBindArrays(&xyz[0], &col[0]);
   glDrawArrays(GL_POINTS, 0, (GLsizei)(xyz.size() / 3));
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
+  gmshUnbindArrays();
   return true;
 }
 
@@ -319,31 +314,13 @@ private:
                         int forceColor = 0, unsigned int color = 0)
   {
     if(!va || !va->getNumVertices()) return;
-    glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
-    glEnableClientState(GL_VERTEX_ARRAY);
-    if(!_ctx->inPickColorMode() && useNormalArray && va->hasNormals()) {
-      gmshLighting(true);
-      glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
-      glEnableClientState(GL_NORMAL_ARRAY);
-    }
-    else {
-      glDisableClientState(GL_NORMAL_ARRAY);
-    }
-    if(_ctx->inPickColorMode()) {
-      glDisableClientState(GL_COLOR_ARRAY);
-    }
-    else if(forceColor) {
-      glDisableClientState(GL_COLOR_ARRAY);
+    bool normals =
+      !_ctx->inPickColorMode() && useNormalArray && va->hasNormals();
+    if(normals) gmshLighting(true);
+    bool colors = !_ctx->inPickColorMode() && !forceColor && va->hasColors();
+    gmshBindVertexArray(va, normals, colors);
+    if(!_ctx->inPickColorMode() && !colors)
       gmshColor4ubv((const void *)&color);
-    }
-    else if(va->hasColors()) {
-      glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
-      glEnableClientState(GL_COLOR_ARRAY);
-    }
-    else {
-      glDisableClientState(GL_COLOR_ARRAY);
-      gmshColor4ubv((const void *)&color);
-    }
     if(CTX::instance()->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
     if(CTX::instance()->geom.surfaceType > 1) {
       if(CTX::instance()->geom.lightTwoSide)
@@ -360,9 +337,7 @@ private:
     glDisable(GL_POLYGON_OFFSET_FILL);
     gmshLighting(false);
     gmshPolygonFill(true);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
+    gmshUnbindArrays();
   }
 
 public:

@@ -419,6 +419,47 @@ const GLvoid *vaColorPointer(VertexArray *va)
   return nullptr;
 }
 
+void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
+{
+  glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
+  glEnableClientState(GL_VERTEX_ARRAY);
+  if(normals) {
+    glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
+    glEnableClientState(GL_NORMAL_ARRAY);
+  }
+  else {
+    glDisableClientState(GL_NORMAL_ARRAY);
+  }
+  if(colors) {
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
+    glEnableClientState(GL_COLOR_ARRAY);
+  }
+  else {
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
+}
+
+void gmshBindArrays(const float *vertices, const unsigned char *colors)
+{
+  glVertexPointer(3, GL_FLOAT, 0, vertices);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  if(colors) {
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+    glEnableClientState(GL_COLOR_ARRAY);
+  }
+  else {
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
+}
+
+void gmshUnbindArrays()
+{
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+}
+
 void drawVertexArray(VertexArray *va, GLenum type)
 {
   glDrawArrays(type, 0, va->getNumVertices());

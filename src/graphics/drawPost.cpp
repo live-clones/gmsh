@@ -105,28 +105,13 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       gl2psEnable(GL2PS_LINE_STIPPLE);
     }
 
-    glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
-    glEnableClientState(GL_VERTEX_ARRAY);
-    if(!ctx->inPickColorMode() && useNormalArray && va->hasNormals()) {
-      gmshLighting(true);
-      glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
-      glEnableClientState(GL_NORMAL_ARRAY);
-    }
-    else
-      glDisableClientState(GL_NORMAL_ARRAY);
-    if(ctx->inPickColorMode()) {
-      glDisableClientState(GL_COLOR_ARRAY);
-    }
-    else if(va->hasColors()) {
-      glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
-      glEnableClientState(GL_COLOR_ARRAY);
-    }
-    else
-      glDisableClientState(GL_COLOR_ARRAY);
+    bool normals =
+      !ctx->inPickColorMode() && useNormalArray && va->hasNormals();
+    if(normals) gmshLighting(true);
+    bool colors = !ctx->inPickColorMode() && va->hasColors();
+    gmshBindVertexArray(va, normals, colors);
     drawVertexArray(va, type);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
+    gmshUnbindArrays();
 
     if(type == GL_LINES && opt->useStipple) {
       gmshLineStippleOff();

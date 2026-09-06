@@ -36,6 +36,17 @@ const GLvoid *vaVertexPointer(VertexArray *va);
 const GLvoid *vaNormalPointer(VertexArray *va);
 const GLvoid *vaColorPointer(VertexArray *va);
 
+// Bind the arrays of a vertex array so that it can be drawn: the vertices
+// always, the normals and the colours when they are asked for. What is not
+// bound is not used - the colour is then whichever one is current - and
+// gmshUnbindArrays() puts that back for whatever is drawn next. A shader
+// pipeline binds the same data as vertex attributes instead of as the client
+// arrays of the fixed function pipeline, which is why this goes through here.
+void gmshBindVertexArray(VertexArray *va, bool normals, bool colors);
+// same, for arrays the caller holds itself rather than in a VertexArray
+void gmshBindArrays(const float *vertices, const unsigned char *colors);
+void gmshUnbindArrays();
+
 // draw a vertex array, using its index array if it has one
 void drawVertexArray(VertexArray *va, GLenum type);
 // delete the buffer objects of the vertex arrays that have been destroyed since

@@ -423,17 +423,9 @@ static void drawMergedArray(drawContext *ctx, VertexArray *va, GLenum type,
 {
   if(!va || !va->getNumVertices()) return;
 
-  glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
-  glEnableClientState(GL_VERTEX_ARRAY);
-  if(useNormalArray && va->hasNormals()) {
-    gmshLighting(true);
-    glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
-    glEnableClientState(GL_NORMAL_ARRAY);
-  }
-  else
-    glDisableClientState(GL_NORMAL_ARRAY);
-  glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
-  glEnableClientState(GL_COLOR_ARRAY);
+  bool normals = useNormalArray && va->hasNormals();
+  if(normals) gmshLighting(true);
+  gmshBindVertexArray(va, normals, true);
 
   if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)
     glEnable(GL_POLYGON_OFFSET_FILL);
@@ -442,9 +434,7 @@ static void drawMergedArray(drawContext *ctx, VertexArray *va, GLenum type,
 
   glDisable(GL_POLYGON_OFFSET_FILL);
   gmshLighting(false);
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
+  gmshUnbindArrays();
 }
 
 static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
@@ -486,35 +476,24 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     glDepthFunc(GL_LEQUAL);
   }
 
-  glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
-  glEnableClientState(GL_VERTEX_ARRAY);
+  bool normals =
+    !ctx->inPickColorMode() && useNormalArray && va->hasNormals();
+  if(normals) gmshLighting(true);
 
-  if(!ctx->inPickColorMode() && useNormalArray && va->hasNormals()) {
-    gmshLighting(true);
-    glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
-    glEnableClientState(GL_NORMAL_ARRAY);
-  }
-  else
-    glDisableClientState(GL_NORMAL_ARRAY);
+  // in picking mode the colour set by setPickColor() encodes the entity and is
+  // kept; otherwise the colours come from the array unless one is forced, or
+  // the entity is selected, or the colour carousel says otherwise
+  bool colors = false;
+  if(!ctx->inPickColorMode() && !forceColor && va->hasColors() &&
+     (CTX::instance()->pickElements ||
+      (!e->getSelection() && (CTX::instance()->mesh.colorCarousel == 0 ||
+                              CTX::instance()->mesh.colorCarousel == 3))))
+    colors = true;
 
-  if(ctx->inPickColorMode()) {
-    // the colour set by setPickColor() encodes the entity: keep it
-    glDisableClientState(GL_COLOR_ARRAY);
-  }
-  else if(forceColor) {
-    glDisableClientState(GL_COLOR_ARRAY);
-    gmshColor4ubv((const void *)&color);
-  }
-  else if(va->hasColors() &&
-          (CTX::instance()->pickElements ||
-           (!e->getSelection() && (CTX::instance()->mesh.colorCarousel == 0 ||
-                                   CTX::instance()->mesh.colorCarousel == 3)))) {
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
-    glEnableClientState(GL_COLOR_ARRAY);
-  }
-  else {
-    glDisableClientState(GL_COLOR_ARRAY);
-    color = getColorByEntity(e);
+  gmshBindVertexArray(va, normals, colors);
+
+  if(!ctx->inPickColorMode() && !colors) {
+    if(!forceColor) color = getColorByEntity(e);
     gmshColor4ubv((const void *)&color);
   }
 
@@ -527,9 +506,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   glDisable(GL_POLYGON_OFFSET_FILL);
   gmshLighting(false);
 
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
+  gmshUnbindArrays();
 }
 
 // GVertex drawing routines
