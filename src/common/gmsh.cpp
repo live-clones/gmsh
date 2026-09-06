@@ -93,6 +93,7 @@
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
+#include "openglWindow.h"
 #endif
 
 #if defined(HAVE_PARSER)
@@ -9144,6 +9145,68 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
   for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
     viewTags.push_back(FlGui::instance()->selectedViews[i]->getTag());
   return selectionCode(ret);
+#else
+  return 0;
+#endif
+}
+
+GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
+                              std::vector<std::size_t> &elementTags,
+                              std::vector<int> &viewTags, const double x,
+                              const double y, const int dim,
+                              const bool elements, const int w, const int h)
+{
+  if(!_checkInit()) return -1;
+  dimTags.clear();
+  elementTags.clear();
+  viewTags.clear();
+#if defined(HAVE_FLTK)
+  _createFltk();
+  if(!FlGui::available()) return 0;
+  openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+  if(!gl) return 0;
+  int type = ENT_ALL;
+  switch(dim) {
+  case 0: type = ENT_POINT; break;
+  case 1: type = ENT_CURVE; break;
+  case 2: type = ENT_SURFACE; break;
+  case 3: type = ENT_VOLUME; break;
+  default: break;
+  }
+  // the elements are only kept in the vertex arrays when they can be picked,
+  // so asking for them means building the arrays again
+  int old = CTX::instance()->pickElements;
+  if(elements) {
+    CTX::instance()->pickElements = 1;
+    CTX::instance()->mesh.changed = ENT_ALL;
+  }
+  std::vector<GVertex *> vertices;
+  std::vector<GEdge *> edges;
+  std::vector<GFace *> faces;
+  std::vector<GRegion *> regions;
+  std::vector<MElement *> ele;
+  std::vector<SPoint2> points;
+  std::vector<PView *> views;
+  bool ret =
+    gl->pick(type, CTX::instance()->mesh.draw ? true : false, true, (int)x,
+             (int)y, w, h, vertices, edges, faces, regions, ele, points, views);
+  if(elements) {
+    CTX::instance()->pickElements = old;
+    CTX::instance()->mesh.changed = ENT_ALL;
+  }
+  for(std::size_t i = 0; i < vertices.size(); i++)
+    dimTags.push_back(std::make_pair(0, vertices[i]->tag()));
+  for(std::size_t i = 0; i < edges.size(); i++)
+    dimTags.push_back(std::make_pair(1, edges[i]->tag()));
+  for(std::size_t i = 0; i < faces.size(); i++)
+    dimTags.push_back(std::make_pair(2, faces[i]->tag()));
+  for(std::size_t i = 0; i < regions.size(); i++)
+    dimTags.push_back(std::make_pair(3, regions[i]->tag()));
+  for(std::size_t i = 0; i < ele.size(); i++)
+    elementTags.push_back(ele[i]->getNum());
+  for(std::size_t i = 0; i < views.size(); i++)
+    viewTags.push_back(views[i]->getTag());
+  return ret ? 1 : 0;
 #else
   return 0;
 #endif

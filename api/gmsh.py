@@ -10901,13 +10901,70 @@ class fltk:
     select_views = selectViews
 
     @staticmethod
+    def pick(x, y, dim=-1, elements=False, w=5, h=5):
+        """
+        gmsh.fltk.pick(x, y, dim=-1, elements=False, w=5, h=5)
+
+        Pick at the position (`x', `y') in the current graphical window, given in
+        window coordinates with the origin at the top left corner, and return what
+        a click there would select: the entities in `dimTags', the post-processing
+        views in `viewTags', and, if `elements' is set, the mesh elements in
+        `elementTags' instead of the entities they belong to. If `dim' is >= 0,
+        only select entities of the given dimension. `w' and `h' give the size of
+        the region that is looked at, in window coordinates. Unlike
+        `selectEntities', `selectElements' and `selectViews', this does not wait
+        for the user to click.
+
+        Return an integer, `dimTags', `elementTags', `viewTags'.
+
+        Types:
+        - `dimTags': vector of pairs of integers
+        - `elementTags': vector of sizes
+        - `viewTags': vector of integers
+        - `x': double
+        - `y': double
+        - `dim': integer
+        - `elements': boolean
+        - `w': integer
+        - `h': integer
+        """
+        api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
+        api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
+        api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        api_result_ = lib.gmshFltkPick(
+            byref(api_dimTags_), byref(api_dimTags_n_),
+            byref(api_elementTags_), byref(api_elementTags_n_),
+            byref(api_viewTags_), byref(api_viewTags_n_),
+            c_double(x),
+            c_double(y),
+            c_int(dim),
+            c_int(bool(elements)),
+            c_int(w),
+            c_int(h),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            api_result_,
+            _ovectorpair(api_dimTags_, api_dimTags_n_.value),
+            _ovectorsize(api_elementTags_, api_elementTags_n_.value),
+            _ovectorint(api_viewTags_, api_viewTags_n_.value))
+
+    @staticmethod
     def splitCurrentWindow(how="v", ratio=0.5):
         """
         gmsh.fltk.splitCurrentWindow(how="v", ratio=0.5)
 
-        Split the current window horizontally (if `how' == "h") or vertically (if
-        `how' == "v"), using ratio `ratio'. If `how' == "u", restore a single
-        window.
+        Pick at the position (`x', `y') in the current graphical window, given in
+        window coordinates with the origin at the top left corner, and return what
+        a click there would select: the entities in `dimTags', the post-processing
+        views in `viewTags', and, if `elements' is set, the mesh elements in
+        `elementTags' instead of the entities they belong to. If `dim' is >= 0,
+        only select entities of the given dimension. `w' and `h' give the size of
+        the region that is looked at, in window coordinates. Unlike
+        `selectEntities', `selectElements' and `selectViews', this does not wait
+        for the user to click.
 
         Types:
         - `how': string

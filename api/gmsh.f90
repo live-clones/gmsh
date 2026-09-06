@@ -150,6 +150,8 @@ module gmsh
         gmshFltkSelectElements
     procedure, nopass :: selectViews => &
         gmshFltkSelectViews
+    procedure, nopass :: pick => &
+        gmshFltkPick
     procedure, nopass :: splitCurrentWindow => &
         gmshFltkSplitCurrentWindow
     procedure, nopass :: setCurrentWindow => &
@@ -15455,9 +15457,104 @@ module gmsh
       api_viewTags_n_)
   end function gmshFltkSelectViews
 
-  !> Split the current window horizontally (if `how' == "h") or vertically (if
-  !! `how' == "v"), using ratio `ratio'. If `how' == "u", restore a single
-  !! window.
+  !> Pick at the position (`x', `y') in the current graphical window, given in
+  !! window coordinates with the origin at the top left corner, and return what
+  !! a click there would select: the entities in `dimTags', the post-processing
+  !! views in `viewTags', and, if `elements' is set, the mesh elements in
+  !! `elementTags' instead of the entities they belong to. If `dim' is >= 0,
+  !! only select entities of the given dimension. `w' and `h' give the size of
+  !! the region that is looked at, in window coordinates. Unlike
+  !! `selectEntities', `selectElements' and `selectViews', this does not wait
+  !! for the user to click.
+  function gmshFltkPick(dimTags, &
+                        elementTags, &
+                        viewTags, &
+                        x, &
+                        y, &
+                        dim, &
+                        elements, &
+                        w, &
+                        h, &
+                        ierr)
+    interface
+    function C_API(api_dimTags_, &
+                   api_dimTags_n_, &
+                   api_elementTags_, &
+                   api_elementTags_n_, &
+                   api_viewTags_, &
+                   api_viewTags_n_, &
+                   x, &
+                   y, &
+                   dim, &
+                   elements, &
+                   w, &
+                   h, &
+                   ierr_) &
+      bind(C, name="gmshFltkPick")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      type(c_ptr), intent(out) :: api_dimTags_
+      integer(c_size_t), intent(out) :: api_dimTags_n_
+      type(c_ptr), intent(out) :: api_elementTags_
+      integer(c_size_t), intent(out) :: api_elementTags_n_
+      type(c_ptr), intent(out) :: api_viewTags_
+      integer(c_size_t), intent(out) :: api_viewTags_n_
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: elements
+      integer(c_int), value, intent(in) :: w
+      integer(c_int), value, intent(in) :: h
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshFltkPick
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: viewTags
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    integer, intent(in), optional :: dim
+    logical, intent(in), optional :: elements
+    integer, intent(in), optional :: w
+    integer, intent(in), optional :: h
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_dimTags_
+    integer(c_size_t) :: api_dimTags_n_
+    type(c_ptr) :: api_elementTags_
+    integer(c_size_t) :: api_elementTags_n_
+    type(c_ptr) :: api_viewTags_
+    integer(c_size_t) :: api_viewTags_n_
+    gmshFltkPick = C_API(api_dimTags_=api_dimTags_, &
+                   api_dimTags_n_=api_dimTags_n_, &
+                   api_elementTags_=api_elementTags_, &
+                   api_elementTags_n_=api_elementTags_n_, &
+                   api_viewTags_=api_viewTags_, &
+                   api_viewTags_n_=api_viewTags_n_, &
+                   x=real(x, c_double), &
+                   y=real(y, c_double), &
+                   dim=optval_c_int(-1, dim), &
+                   elements=optval_c_bool(.false., elements), &
+                   w=optval_c_int(5, w), &
+                   h=optval_c_int(5, h), &
+                   ierr_=ierr)
+    dimTags = ovectorpair_(api_dimTags_, &
+      api_dimTags_n_)
+    elementTags = ovectorsize_(api_elementTags_, &
+      api_elementTags_n_)
+    viewTags = ovectorint_(api_viewTags_, &
+      api_viewTags_n_)
+  end function gmshFltkPick
+
+  !> Pick at the position (`x', `y') in the current graphical window, given in
+  !! window coordinates with the origin at the top left corner, and return what
+  !! a click there would select: the entities in `dimTags', the post-processing
+  !! views in `viewTags', and, if `elements' is set, the mesh elements in
+  !! `elementTags' instead of the entities they belong to. If `dim' is >= 0,
+  !! only select entities of the given dimension. `w' and `h' give the size of
+  !! the region that is looked at, in window coordinates. Unlike
+  !! `selectEntities', `selectElements' and `selectViews', this does not wait
+  !! for the user to click.
   subroutine gmshFltkSplitCurrentWindow(how, &
                                         ratio, &
                                         ierr)

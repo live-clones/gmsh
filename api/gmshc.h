@@ -3621,9 +3621,35 @@ GMSH_API int gmshFltkSelectElements(size_t ** elementTags, size_t * elementTags_
 GMSH_API int gmshFltkSelectViews(int ** viewTags, size_t * viewTags_n,
                                  int * ierr);
 
-/* Split the current window horizontally (if `how' == "h") or vertically (if
- * `how' == "v"), using ratio `ratio'. If `how' == "u", restore a single
- * window. */
+/* Pick at the position (`x', `y') in the current graphical window, given in
+ * window coordinates with the origin at the top left corner, and return what
+ * a click there would select: the entities in `dimTags', the post-processing
+ * views in `viewTags', and, if `elements' is set, the mesh elements in
+ * `elementTags' instead of the entities they belong to. If `dim' is >= 0,
+ * only select entities of the given dimension. `w' and `h' give the size of
+ * the region that is looked at, in window coordinates. Unlike
+ * `selectEntities', `selectElements' and `selectViews', this does not wait
+ * for the user to click. */
+GMSH_API int gmshFltkPick(int ** dimTags, size_t * dimTags_n,
+                          size_t ** elementTags, size_t * elementTags_n,
+                          int ** viewTags, size_t * viewTags_n,
+                          const double x,
+                          const double y,
+                          const int dim,
+                          const int elements,
+                          const int w,
+                          const int h,
+                          int * ierr);
+
+/* Pick at the position (`x', `y') in the current graphical window, given in
+ * window coordinates with the origin at the top left corner, and return what
+ * a click there would select: the entities in `dimTags', the post-processing
+ * views in `viewTags', and, if `elements' is set, the mesh elements in
+ * `elementTags' instead of the entities they belong to. If `dim' is >= 0,
+ * only select entities of the given dimension. `w' and `h' give the size of
+ * the region that is looked at, in window coordinates. Unlike
+ * `selectEntities', `selectElements' and `selectViews', this does not wait
+ * for the user to click. */
 GMSH_API void gmshFltkSplitCurrentWindow(const char * how,
                                          const double ratio,
                                          int * ierr);

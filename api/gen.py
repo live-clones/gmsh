@@ -1169,7 +1169,18 @@ fltk.add('selectElements', doc, oint, ovectorsize('elementTags'))
 doc = '''Select views in the user interface.'''
 fltk.add('selectViews', doc, oint, ovectorint('viewTags'))
 
-doc = '''Split the current window horizontally (if `how' == "h") or vertically (if `how' == "v"), using ratio `ratio'. If `how' == "u", restore a single window.'''
+doc = '''Pick at the position (`x', `y') in the current graphical window, given in
+window coordinates with the origin at the top left corner, and return what a
+click there would select: the entities in `dimTags', the post-processing views
+in `viewTags', and, if `elements' is set, the mesh elements in `elementTags'
+instead of the entities they belong to. If `dim' is >= 0, only select entities
+of the given dimension. `w' and `h' give the size of the region that is looked
+at, in window coordinates. Unlike `selectEntities', `selectElements' and
+`selectViews', this does not wait for the user to click.'''
+fltk.add('pick', doc, oint, ovectorpair('dimTags'), ovectorsize('elementTags'),
+         ovectorint('viewTags'), idouble('x'), idouble('y'), iint('dim', '-1'),
+         ibool('elements', 'false', 'False'), iint('w', '5'), iint('h', '5'))
+
 fltk.add('splitCurrentWindow', doc, None, istring('how', '"v"'), idouble('ratio', '0.5'))
 
 doc = '''Set the current window by speficying its index (starting at 0) in the list of all windows. When new windows are created by splits, new windows are appended at the end of the list.'''

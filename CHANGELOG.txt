@@ -10,7 +10,7 @@ wavefront obj exporter.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getBoundaryOverlapParent, mesh/setNodes,
-  algorithm/refineTetrahedra
+  algorithm/refineTetrahedra, fltk/pick
 
 * Incompatible API changes: new optional argument to mesh/optimize and
   mesh/relocateNodes; new arguments to mesh/classifySurfaces

@@ -4082,11 +4082,38 @@ namespace gmsh { // Top-level functions
     // Select views in the user interface.
     GMSH_API int selectViews(std::vector<int> & viewTags);
 
+    // gmsh::fltk::pick
+    //
+    // Pick at the position (`x', `y') in the current graphical window, given in
+    // window coordinates with the origin at the top left corner, and return what a
+    // click there would select: the entities in `dimTags', the post-processing
+    // views in `viewTags', and, if `elements' is set, the mesh elements in
+    // `elementTags' instead of the entities they belong to. If `dim' is >= 0, only
+    // select entities of the given dimension. `w' and `h' give the size of the
+    // region that is looked at, in window coordinates. Unlike `selectEntities',
+    // `selectElements' and `selectViews', this does not wait for the user to
+    // click.
+    GMSH_API int pick(gmsh::vectorpair & dimTags,
+                      std::vector<std::size_t> & elementTags,
+                      std::vector<int> & viewTags,
+                      const double x,
+                      const double y,
+                      const int dim = -1,
+                      const bool elements = false,
+                      const int w = 5,
+                      const int h = 5);
+
     // gmsh::fltk::splitCurrentWindow
     //
-    // Split the current window horizontally (if `how' == "h") or vertically (if
-    // `how' == "v"), using ratio `ratio'. If `how' == "u", restore a single
-    // window.
+    // Pick at the position (`x', `y') in the current graphical window, given in
+    // window coordinates with the origin at the top left corner, and return what a
+    // click there would select: the entities in `dimTags', the post-processing
+    // views in `viewTags', and, if `elements' is set, the mesh elements in
+    // `elementTags' instead of the entities they belong to. If `dim' is >= 0, only
+    // select entities of the given dimension. `w' and `h' give the size of the
+    // region that is looked at, in window coordinates. Unlike `selectEntities',
+    // `selectElements' and `selectViews', this does not wait for the user to
+    // click.
     GMSH_API void splitCurrentWindow(const std::string & how = "v",
                                      const double ratio = 0.5);
 

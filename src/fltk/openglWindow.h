@@ -123,6 +123,23 @@ public:
   ~openglWindow();
   void show();
   drawContext *getDrawContext() { return _ctx; }
+  // Run one picking pass at the given position, in this window's own
+  // coordinates, and say what is under it. Unlike selectEntity() this does not
+  // wait for the user to click: it answers what a click there would select,
+  // which is what lets a script - a test in particular - exercise the picking
+  // pass, the one thing an image of the window cannot show.
+  bool pick(int type, bool mesh, bool post, int x, int y, int w, int h,
+            std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
+            std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
+            std::vector<MElement *> &elements, std::vector<SPoint2> &points,
+            std::vector<PView *> &views)
+  {
+    // the identifier image is drawn for the position that is asked for, and
+    // the one that is kept was drawn for wherever the pointer last was
+    _ctx->invalidatePickCache();
+    return _select(type, false, mesh, post, x, y, w, h, vertices, edges, faces,
+                   regions, elements, points, views);
+  }
   char selectEntity(int type, std::vector<GVertex *> &vertices,
                     std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
                     std::vector<GRegion *> &regions,

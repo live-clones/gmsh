@@ -9697,10 +9697,60 @@ end
 const select_views = selectViews
 
 """
+    gmsh.fltk.pick(x, y, dim = -1, elements = false, w = 5, h = 5)
+
+Pick at the position (`x`, `y`) in the current graphical window, given in window
+coordinates with the origin at the top left corner, and return what a click
+there would select: the entities in `dimTags`, the post-processing views in
+`viewTags`, and, if `elements` is set, the mesh elements in `elementTags`
+instead of the entities they belong to. If `dim` is >= 0, only select entities
+of the given dimension. `w` and `h` give the size of the region that is looked
+at, in window coordinates. Unlike `selectEntities`, `selectElements` and
+`selectViews`, this does not wait for the user to click.
+
+Return an integer, `dimTags`, `elementTags`, `viewTags`.
+
+Types:
+ - `dimTags`: vector of pairs of integers
+ - `elementTags`: vector of sizes
+ - `viewTags`: vector of integers
+ - `x`: double
+ - `y`: double
+ - `dim`: integer
+ - `elements`: boolean
+ - `w`: integer
+ - `h`: integer
+"""
+function pick(x, y, dim = -1, elements = false, w = 5, h = 5)
+    api_dimTags_ = Ref{Ptr{Cint}}()
+    api_dimTags_n_ = Ref{Csize_t}()
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_viewTags_ = Ref{Ptr{Cint}}()
+    api_viewTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshFltkPick, gmsh.lib), Cint,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Cdouble, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, api_elementTags_, api_elementTags_n_, api_viewTags_, api_viewTags_n_, x, y, dim, elements, w, h, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
+    dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
+    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own = true)
+    return api_result_, dimTags, elementTags, viewTags
+end
+
+"""
     gmsh.fltk.splitCurrentWindow(how = "v", ratio = 0.5)
 
-Split the current window horizontally (if `how` == "h") or vertically (if `how`
-== "v"), using ratio `ratio`. If `how` == "u", restore a single window.
+Pick at the position (`x`, `y`) in the current graphical window, given in window
+coordinates with the origin at the top left corner, and return what a click
+there would select: the entities in `dimTags`, the post-processing views in
+`viewTags`, and, if `elements` is set, the mesh elements in `elementTags`
+instead of the entities they belong to. If `dim` is >= 0, only select entities
+of the given dimension. `w` and `h` give the size of the region that is looked
+at, in window coordinates. Unlike `selectEntities`, `selectElements` and
+`selectViews`, this does not wait for the user to click.
 
 Types:
  - `how`: string
