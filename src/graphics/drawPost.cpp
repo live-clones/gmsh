@@ -17,6 +17,7 @@
 #include "VertexArray.h"
 #include "Context.h"
 #include <map>
+#include <vector>
 #include <cstring>
 #include "gl2ps.h"
 
@@ -186,6 +187,47 @@ void clearGlyphArrays(PView *p)
   }
 }
 
+// Where the arrow of one element goes and how long it is, and the arrow
+// appended to the array if it is worth drawing. This is the same arithmetic
+// the drawing loop below does; it is here so that the two can share it and so
+// that several threads can run it at once - it only reads the view.
+static void addArrowFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
+                        int i, VertexArray *into)
+{
+  float *s = va->getVertexArray(3 * i);
+  float *v = va->getVertexArray(3 * (i + 1));
+  double l = sqrt((double)v[0] * v[0] + (double)v[1] * v[1] +
+                  (double)v[2] * v[2]);
+  double lmax = opt->tmpMax;
+  if(!l || !lmax) return;
+  double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
+  if(opt->scaleType == PViewOptions::Logarithmic && opt->tmpMin > 0 &&
+     opt->tmpMax > opt->tmpMin && l != opt->tmpMin) {
+    scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l *
+            log10(l / opt->tmpMin) / log10(opt->tmpMax / opt->tmpMin);
+  }
+  if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
+  double px = scale * v[0], py = scale * v[1], pz = scale * v[2];
+  // only draw vectors larger than one pixel on screen
+  if(fabs(px) <= 1. && fabs(py) <= 1. && fabs(pz) <= 1.) return;
+  double d = ctx->pixel_equiv_x / ctx->s[0];
+  double dx = px * d, dy = py * d, dz = pz * d;
+  double x = s[0], y = s[1], z = s[2];
+  if(opt->centerGlyphs == 2) {
+    x -= dx;
+    y -= dy;
+    z -= dz;
+  }
+  else if(opt->centerGlyphs == 1) {
+    x -= 0.5 * dx;
+    y -= 0.5 * dy;
+    z -= 0.5 * dz;
+  }
+  unsigned int col;
+  memcpy(&col, va->getColorArray(4 * i), 4);
+  ctx->addArrow3d(into, x, y, z, dx, dy, dz, col);
+}
+
 static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
 {
   if(!va || va->getNumVerticesPerElement() != 2) return;
@@ -209,6 +251,47 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     cache->triangles = new VertexArray(3, 100);
     cache->pixelSize = pixelSize;
     cache->type = opt->vectorType;
+  }
+
+  if(keep) {
+    // Building the arrows is the expensive part, and it is what a zoom asks
+    // for again: the elements are independent of one another, so the range is
+    // shared out and each thread fills an array of its own, merged in order
+    // afterwards so that what comes out does not depend on how many threads
+    // there were.
+    int num = va->getNumVertices() / 2;
+    int nthreads = CTX::instance()->numThreads;
+    if(nthreads <= 0) nthreads = 1;
+    // not worth splitting a handful of arrows over several threads
+    if(num < 2000) nthreads = 1;
+    if(nthreads > num) nthreads = num;
+    // the shapes are shared and only read while the threads run
+    ctx->updateGlyphTemplates();
+    if(nthreads > 1) {
+      std::vector<VertexArray *> parts(nthreads, nullptr);
+#if defined(_OPENMP)
+#pragma omp parallel for num_threads(nthreads) schedule(static, 1)
+#endif
+      for(int t = 0; t < nthreads; t++) {
+        int first = (int)((long)num * t / nthreads);
+        int last = (int)((long)num * (t + 1) / nthreads);
+        VertexArray *mine = new VertexArray(3, 100);
+        for(int e = first; e < last; e++)
+          addArrowFor(ctx, opt, va, 2 * e, mine);
+        parts[t] = mine;
+      }
+      for(int t = 0; t < nthreads; t++) {
+        cache->triangles->merge(parts[t]);
+        delete parts[t];
+      }
+    }
+    else {
+      for(int e = 0; e < num; e++)
+        addArrowFor(ctx, opt, va, 2 * e, cache->triangles);
+    }
+    cache->triangles->finalize();
+    drawArrays(ctx, p, cache->triangles, GL_TRIANGLES, opt->light);
+    return;
   }
 
   for(int i = 0; i < va->getNumVertices(); i += 2) {

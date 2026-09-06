@@ -866,6 +866,8 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
   }
 }
 
+void drawContext::updateGlyphTemplates() { _tmpl.update(); }
+
 void drawContext::addArrow3d(VertexArray *va, double x, double y, double z,
                              double dx, double dy, double dz,
                              unsigned int color)
