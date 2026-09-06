@@ -12,6 +12,7 @@
 #include "Trackball.h"
 #include "GModel.h"
 #include "Context.h"
+#include "glyphList.h"
 #include "Numeric.h"
 #include "gl2ps.h"
 
@@ -151,19 +152,22 @@ void drawContext::drawAxis(double xmin, double ymin, double zmin, double xmax,
     if(ntics < 1) ntics = 1;
     double dd[3] = {(xmax - xmin) / ntics, (ymax - ymin) / ntics,
                     (zmax - zmin) / ntics};
-    double axe_color[4];
-    glGetDoublev(GL_CURRENT_COLOR, axe_color);
+    // the colour the axis is drawn in, which the ticks alternate with white.
+    // A core profile has no current colour to ask OpenGL for, which is why it
+    // is asked of the one place that keeps it
+    unsigned int axeColor = glyphCurrentColor();
+    const unsigned int white = 0xffffffffu;
+    glyphList g;
+    g.reserve(GLYPH_CYLINDER, ntics);
+    double radius = 3.5 * pixel_equiv_x / s[0];
     for(int i = 1; i <= ntics; i++) {
-      if(i % 2)
-        gmshColor4dv(axe_color);
-      else
-        gmshColor3f(1, 1, 1);
       double cx[2] = {xmin + (i - 1) * dd[0], xmin + i * dd[0]};
       double cy[2] = {ymin + (i - 1) * dd[1], ymin + i * dd[1]};
       double cz[2] = {zmin + (i - 1) * dd[2], zmin + i * dd[2]};
-      drawCylinder(3.5, cx, cy, cz, 1);
+      g.addCylinder(cx, cy, cz, radius, radius, (i % 2) ? axeColor : white);
     }
-    gmshColor4dv(axe_color);
+    g.draw(this, 1);
+    gmshColor4ubv((const void *)&axeColor);
   }
   else {
     gmshBegin(GL_LINES);
