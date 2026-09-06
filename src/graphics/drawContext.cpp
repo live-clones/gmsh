@@ -1163,26 +1163,26 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   d[2] /= len;
 }
 
+// The two matrices these need are the ones that are current, which used to be
+// asked of OpenGL. A core profile keeps neither of them - there is no matrix
+// stack in it at all - so they are asked of the place that does, which is
+// where they were computed in the first place.
 void drawContext::viewport2World(double vp[3], double xyz[3])
 {
   GLint glvp[4];
-  GLdouble model[16], proj[16];
   glGetIntegerv(GL_VIEWPORT, glvp);
-  glGetDoublev(GL_PROJECTION_MATRIX, proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model);
   int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
-  glMatrix::unProject(vp, model, proj, viewport, xyz);
+  glMatrix::unProject(vp, gmshMatrix(GMSH_MODELVIEW),
+                      gmshMatrix(GMSH_PROJECTION), viewport, xyz);
 }
 
 void drawContext::world2Viewport(double xyz[3], double vp[3])
 {
   GLint glvp[4];
-  GLdouble model[16], proj[16];
   glGetIntegerv(GL_VIEWPORT, glvp);
-  glGetDoublev(GL_PROJECTION_MATRIX, proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model);
   int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
-  glMatrix::project(xyz, model, proj, viewport, vp);
+  glMatrix::project(xyz, gmshMatrix(GMSH_MODELVIEW),
+                    gmshMatrix(GMSH_PROJECTION), viewport, vp);
 }
 
 // returns the element at a given position in a vertex array (element pointers
