@@ -138,6 +138,11 @@ private:
                     std::size_t last, VertexArray *va, int at);
 };
 
+// The colour that is current, packed the way a glyph carries it: what the
+// drawing code sets before it draws something, and what a glyph collected
+// instead of drawn is to be given.
+unsigned int glyphCurrentColor();
+
 // What an owner keeps a list for: a view draws both its points and its
 // vectors with glyphs, a mesh entity its nodes.
 enum glyphSlot {

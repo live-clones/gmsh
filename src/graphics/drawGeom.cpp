@@ -97,15 +97,6 @@ static glyphList *geomGlyphs(drawContext *ctx)
   return &_geomGlyphs;
 }
 
-// the colour that is current, which is whichever one the entity being drawn
-// has settled on
-static unsigned int currentColor()
-{
-  unsigned int col;
-  memcpy(&col, gmshCurrentColor(), 4);
-  return col;
-}
-
 static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
 {
   CTX *c = CTX::instance();
@@ -203,7 +194,7 @@ public:
       if(CTX::instance()->geom.pointType > 0) {
         double size = v->getSelection() ? sps : ps;
         if(glyphList *g = geomGlyphs(_ctx))
-          g->addSphere(_ctx, size, x, y, z, currentColor());
+          g->addSphere(_ctx, size, x, y, z, glyphCurrentColor());
         else
           _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
       }
@@ -293,7 +284,7 @@ public:
                        CTX::instance()->geom.curveWidth;
           if(glyphList *g = geomGlyphs(_ctx)) {
             double r = w * _ctx->pixel_equiv_x / _ctx->s[0];
-            g->addCylinder(x, y, z, r, r, currentColor());
+            g->addCylinder(x, y, z, r, r, glyphCurrentColor());
           }
           else
             _ctx->drawCylinder(w, x, y, z, CTX::instance()->geom.light);
@@ -546,7 +537,7 @@ public:
     if(CTX::instance()->geom.volumes || r->getSelection() > 1) {
       if(CTX::instance()->geom.volumeType == 0) {
         if(glyphList *g = geomGlyphs(_ctx))
-          g->addSphere(_ctx, size, x, y, z, currentColor());
+          g->addSphere(_ctx, size, x, y, z, glyphCurrentColor());
         else
           _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
       }

@@ -28,6 +28,13 @@
 // and a bound that each of them may reach on its own is not a bound at all.
 static long _keptVertices = 0;
 
+unsigned int glyphCurrentColor()
+{
+  unsigned int col;
+  memcpy(&col, gmshCurrentColor(), 4);
+  return col;
+}
+
 void glyphList::clear()
 {
   for(int k = 0; k < GLYPH_NUMKINDS; k++) {
@@ -383,6 +390,15 @@ void glyphList::draw(drawContext *ctx, bool light)
   // The pipeline that can place a shape itself needs none of this: it is
   // handed the shape once and the glyphs as they are
   if(_instanced(ctx, light)) return;
+
+  // A list that nobody keeps is filled again for the next frame anyway, so
+  // there is nothing to be had from keeping the triangles it comes to: they
+  // would be given up and built again just the same, only with an allocation
+  // the size of the whole scene in between.
+  if(!filled()) {
+    _stream(ctx, light);
+    return;
+  }
 
   // What is already kept stays kept - it is counted in the total below, and
   // throwing it away to make room for this one would only move the problem.
