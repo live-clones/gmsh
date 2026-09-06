@@ -3004,12 +3004,9 @@ double opt_general_shaders(OPT_ARGS_NUM)
     int old = CTX::instance()->shaders;
     CTX::instance()->shaders = (int)val;
 #if defined(HAVE_FLTK)
-    if(CTX::instance()->shaders != old) {
-      if(CTX::instance()->shaders)
-        Msg::Warning("The shader pipeline is not implemented yet: the scene "
-                     "will not be drawn");
-      resetOpenglMode();
-    }
+    // the pipeline is chosen when the context is made, so it has to be made
+    // again
+    if(CTX::instance()->shaders != old) resetOpenglMode();
 #endif
   }
 #if defined(HAVE_FLTK)
