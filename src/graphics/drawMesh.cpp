@@ -26,11 +26,6 @@
 #include "PView.h"
 #include "PViewData.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/Fl.H>
-#include <FL/gl.h>
-#endif
-
 // from GModelVertexArrays
 extern unsigned int getColorByEntity(GEntity *e);
 extern bool isElementVisible(MElement *ele);
@@ -875,9 +870,9 @@ void drawContext::drawMesh()
     GModel *m = GModel::list[i];
     bool changed = m->fillVertexArrays();
     if(changed) Msg::Debug("mesh vertex arrays have changed");
-#if defined(HAVE_FLTK) && defined(__APPLE__)
+#if defined(__APPLE__)
     // FIXME: resetting texture pile fixes bug with recent macOS versions
-    if(changed) gl_texture_pile_height(gl_texture_pile_height());
+    if(changed) global()->resetFontTextures();
 #endif
     if(m->getVisibility() && isVisible(m)) {
       int status = m->getMeshStatus();

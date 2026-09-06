@@ -80,45 +80,6 @@ public:
     if(index >= 0 && index < NUM_FONTS) return menu_font_names[index].label();
     return "Helvetica";
   }
-  int getFontAlign(const char *alignstr)
-  {
-    if(alignstr) {
-      if(!strcmp(alignstr, "BottomLeft") || !strcmp(alignstr, "Left") ||
-         !strcmp(alignstr, "left"))
-        return 0;
-      else if(!strcmp(alignstr, "BottomCenter") ||
-              !strcmp(alignstr, "Center") || !strcmp(alignstr, "center"))
-        return 1;
-      else if(!strcmp(alignstr, "BottomRight") || !strcmp(alignstr, "Right") ||
-              !strcmp(alignstr, "right"))
-        return 2;
-      else if(!strcmp(alignstr, "TopLeft"))
-        return 3;
-      else if(!strcmp(alignstr, "TopCenter"))
-        return 4;
-      else if(!strcmp(alignstr, "TopRight"))
-        return 5;
-      else if(!strcmp(alignstr, "CenterLeft"))
-        return 6;
-      else if(!strcmp(alignstr, "CenterCenter"))
-        return 7;
-      else if(!strcmp(alignstr, "CenterRight"))
-        return 8;
-    }
-    Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)",
-               alignstr);
-    Msg::Info("Available font alignments:");
-    Msg::Info("  \"Left\" (or \"BottomLeft\")");
-    Msg::Info("  \"Center\" (or \"BottomCenter\")");
-    Msg::Info("  \"Right\" (or \"BottomRight\")");
-    Msg::Info("  \"TopLeft\"");
-    Msg::Info("  \"TopCenter\"");
-    Msg::Info("  \"TopRight\"");
-    Msg::Info("  \"CenterLeft\"");
-    Msg::Info("  \"CenterCenter\"");
-    Msg::Info("  \"CenterRight\"");
-    return 0;
-  }
   int getFontSize()
   {
     if(CTX::instance()->fontSize > 0) { return CTX::instance()->fontSize; }
@@ -154,6 +115,11 @@ public:
     gl_texture_pile_height(gl_texture_pile_height());
 #endif
   }
+  void reserveStringTextures(std::size_t n)
+  {
+    if(gl_texture_pile_height() < (int)n) gl_texture_pile_height((int)n);
+  }
+  bool mouseIsPressed() { return Fl::pushed() ? true : false; }
   std::string getName() { return "Fltk"; }
 };
 

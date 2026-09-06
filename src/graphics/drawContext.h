@@ -53,7 +53,6 @@ class GFace;
 class GRegion;
 class MElement;
 class PView;
-class openglWindow;
 
 class drawTransform {
 public:
@@ -111,7 +110,9 @@ public:
   virtual int getFontIndex(const char *fontname) { return 0; }
   virtual int getFontEnum(int index) { return 0; }
   virtual const char *getFontName(int index) { return "Helvetica"; }
-  virtual int getFontAlign(const char *alignstr) { return 0; }
+  // the alignment names are the same whatever the widget toolkit, so this one
+  // is implemented once and for all in drawContext.cpp
+  virtual int getFontAlign(const char *alignstr);
   virtual int getFontSize() { return 12; }
   virtual void setFont(int fontid, int fontsize) {}
   virtual double getStringWidth(const char *str) { return 1.; }
@@ -119,7 +120,14 @@ public:
   virtual int getStringDescent() { return 3; }
   virtual void drawString(const char *str) {}
   virtual void resetFontTextures() {}
+  // ask for the toolkit's cache of string textures to be able to hold n of
+  // them: drawing more strings than it can keep makes it recompute them one by
+  // one, which is what makes labels slow on macOS
+  virtual void reserveStringTextures(std::size_t n) {}
   virtual void flushString() {}
+  // is a mouse button currently held down? While it is, the user is dragging
+  // something and the vertex arrays are left alone
+  virtual bool mouseIsPressed() { return false; }
   virtual std::string getName() { return "None"; }
 };
 
@@ -138,7 +146,9 @@ private:
   std::set<GModel *> _hiddenModels;
   std::set<PView *> _hiddenViews;
   GLuint _bgImageTexture, _bgImageW, _bgImageH;
-  openglWindow *_openglWindow;
+  // factor between the (true) size in pixels and the size reported by the
+  // windowing system (e.g. 2 on an Apple "retina" display); set by the GUI
+  double _highResolutionPixelFactor;
   std::map<std::string, imgtex> _imageTextures;
 
 public:
@@ -213,11 +223,17 @@ public:
   // axes, labels) would otherwise be picked as that object
   void unsetPickColor();
   static bool pickColorActive() { return _pickColorActive; }
-  drawContext(openglWindow *window = nullptr, drawTransform *transform = nullptr);
+  drawContext(drawTransform *transform = nullptr);
   ~drawContext();
   // factor between the (true) size in pixels and the size reported by OSes
-  // (e.g. 2 on an Apple "retina" display)
-  double highResolutionPixelFactor();
+  // (e.g. 2 on an Apple "retina" display); this must be dynamic, as the high
+  // resolution can change when a window is moved across displays, so the GUI
+  // refreshes it before each draw
+  double highResolutionPixelFactor() { return _highResolutionPixelFactor; }
+  void setHighResolutionPixelFactor(double factor)
+  {
+    _highResolutionPixelFactor = (factor > 0.) ? factor : 1.;
+  }
   void copyViewAttributes(drawContext *other)
   {
     camera = other->camera;

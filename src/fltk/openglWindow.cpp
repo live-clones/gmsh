@@ -90,7 +90,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
-  _ctx = new drawContext(this);
+  _ctx = new drawContext();
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
@@ -215,6 +215,10 @@ void openglWindow::draw()
   _ctx->viewport[1] = 0;
   _ctx->viewport[2] = w();
   _ctx->viewport[3] = h();
+  // the high resolution factor can change when the window is moved across
+  // displays, so refresh it before each draw
+  _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() :
+                                           1.);
   glViewport(0, 0, pixel_w(), pixel_h());
 
   if(lassoMode) {

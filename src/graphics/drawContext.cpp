@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
+#include <cstring>
 #include <stdio.h>
 #include "GmshGlobal.h"
 #include "GmshConfig.h"
@@ -22,12 +23,11 @@
 #include "OS.h"
 #include "gl2ps.h"
 
+// the background image is still read with FLTK, which is the last thing this
+// file asks of a widget toolkit
 #if defined(HAVE_FLTK)
-#include <FL/Fl.H>
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
-#include <FL/gl.h>
-#include "openglWindow.h"
 #endif
 
 #if defined(HAVE_POPPLER)
@@ -51,8 +51,8 @@ void gmshColor4ubv(const void *col)
   if(!drawContext::pickColorActive()) glColor4ubv((const GLubyte *)col);
 }
 
-drawContext::drawContext(openglWindow *window, drawTransform *transform)
-  : _transform(transform), _openglWindow(window), _pickColor(false)
+drawContext::drawContext(drawTransform *transform)
+  : _transform(transform), _highResolutionPixelFactor(1.), _pickColor(false)
 {
   // initialize from temp values in global context
   for(int i = 0; i < 3; i++) {
@@ -85,16 +85,44 @@ drawContext::drawContext(openglWindow *window, drawTransform *transform)
 
 drawContext::~drawContext() { invalidateQuadricsAndDisplayLists(); }
 
-double drawContext::highResolutionPixelFactor()
+int drawContextGlobal::getFontAlign(const char *alignstr)
 {
-  // this must be dynamic: the high resolution can change when a window is moved
-  // across displays
-#if defined(HAVE_FLTK)
-  if(_openglWindow && _openglWindow->w()) {
-    return (double)_openglWindow->pixel_w() / (double)_openglWindow->w();
+  if(alignstr) {
+    if(!strcmp(alignstr, "BottomLeft") || !strcmp(alignstr, "Left") ||
+       !strcmp(alignstr, "left"))
+      return 0;
+    else if(!strcmp(alignstr, "BottomCenter") || !strcmp(alignstr, "Center") ||
+            !strcmp(alignstr, "center"))
+      return 1;
+    else if(!strcmp(alignstr, "BottomRight") || !strcmp(alignstr, "Right") ||
+            !strcmp(alignstr, "right"))
+      return 2;
+    else if(!strcmp(alignstr, "TopLeft"))
+      return 3;
+    else if(!strcmp(alignstr, "TopCenter"))
+      return 4;
+    else if(!strcmp(alignstr, "TopRight"))
+      return 5;
+    else if(!strcmp(alignstr, "CenterLeft"))
+      return 6;
+    else if(!strcmp(alignstr, "CenterCenter"))
+      return 7;
+    else if(!strcmp(alignstr, "CenterRight"))
+      return 8;
   }
-#endif
-  return 1.0;
+  Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)",
+             alignstr);
+  Msg::Info("Available font alignments:");
+  Msg::Info("  \"Left\" (or \"BottomLeft\")");
+  Msg::Info("  \"Center\" (or \"BottomCenter\")");
+  Msg::Info("  \"Right\" (or \"BottomRight\")");
+  Msg::Info("  \"TopLeft\"");
+  Msg::Info("  \"TopCenter\"");
+  Msg::Info("  \"TopRight\"");
+  Msg::Info("  \"CenterLeft\"");
+  Msg::Info("  \"CenterCenter\"");
+  Msg::Info("  \"CenterRight\"");
+  return 0;
 }
 
 drawContextGlobal *drawContext::global()
@@ -405,14 +433,12 @@ void drawVertexArray(VertexArray *va, GLenum type)
 // place that sets them
 static void checkClipPlanesChanged()
 {
-#if defined(HAVE_FLTK)
   // While the user is dragging - a clipping plane, an option slider - the fast
   // representation is drawn, and the arrays are left as they are however many
   // times the scene is redrawn in between. The planes below are only remembered
   // once the change has been acted upon, so the first frame after the mouse is
   // released picks it up and rebuilds once
-  if(Fl::pushed()) return;
-#endif
+  if(drawContext::global()->mouseIsPressed()) return;
 
   static double planes[6][4] = {{0.}};
   static int capping = -1, whole = -1;
@@ -481,7 +507,7 @@ void drawContext::draw3d()
     CTX::instance()->polygonOffset = 0;
 
     // speedup drawing of textured fonts on cocoa mac version
-#if defined(HAVE_FLTK) && defined(__APPLE__)
+#if defined(__APPLE__)
   std::size_t numStrings = GModel::current()->getNumVertices();
   if(CTX::instance()->mesh.nodeLabels)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
@@ -489,7 +515,7 @@ void drawContext::draw3d()
      CTX::instance()->mesh.volumeLabels)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshElements());
   numStrings *= 2;
-  if(gl_texture_pile_height() < numStrings) gl_texture_pile_height(numStrings);
+  global()->reserveStringTextures(numStrings);
 #endif
 
   glDepthFunc(GL_LESS);
