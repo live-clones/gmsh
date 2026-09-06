@@ -109,7 +109,6 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
-  _lassoXY[0] = _lassoXY[1] = 0;
 
   addPointMode = 0;
   lassoMode = selectionMode = false;
@@ -242,8 +241,34 @@ void openglWindow::draw()
   glViewport(0, 0, pixel_w(), pixel_h());
 
   if(lassoMode) {
-    // draw the zoom or selection lasso on top of the current scene (without
-    // using overlays!)
+    // Draw the scene again, with the lasso rectangle on top of it.
+    //
+    // The rectangle used to be drawn into the front buffer with a blend that
+    // inverted whatever was underneath it, and erased by drawing the previous
+    // one again, so that the scene did not have to be redrawn while the mouse
+    // moved. Nothing keeps the previous frame around to be inverted, though: a
+    // back buffer that has been swapped holds whatever the driver left in it,
+    // and drawing into the front buffer is not something a current
+    // implementation has to honour - which left the whole frame black. The
+    // fast representation is what makes redrawing it affordable, as it does
+    // while a clipping plane is dragged.
+    if(CTX::instance()->fastRedraw) {
+      CTX::instance()->mesh.draw = 0;
+      CTX::instance()->post.draw = 0;
+    }
+
+    glClearColor(
+      (GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
+      (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) /
+                 255.),
+      (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.),
+      0.0F);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+    _ctx->draw3d();
+    _ctx->draw2d();
+
+    // the rectangle itself, in pixel coordinates, over everything else
     gmshMatrixMode(GMSH_PROJECTION);
     double px[16];
     glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
@@ -251,34 +276,24 @@ void openglWindow::draw()
     gmshLoadMatrix(px);
     gmshMatrixMode(GMSH_MODELVIEW);
     gmshLoadIdentity();
-    gmshColor3d(1., 1., 1.);
     glDisable(GL_DEPTH_TEST);
-    glDrawBuffer(GL_FRONT_AND_BACK);
-    if(selectionMode && CTX::instance()->mouseSelection) {
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+    if(selectionMode && CTX::instance()->mouseSelection)
       gmshLineStipple(1, 0x0F0F);
-    }
-    // glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
-    glEnable(GL_BLEND);
-    gmshLineWidth(0.2F);
-    gmshBegin(GL_LINE_LOOP);
-    gmshVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
-    gmshVertex2d(_lassoXY[0], _ctx->viewport[3] - _click.win[1]);
-    gmshVertex2d(_lassoXY[0], _ctx->viewport[3] - _lassoXY[1]);
-    gmshVertex2d(_click.win[0], _ctx->viewport[3] - _lassoXY[1]);
-    gmshEnd();
+    gmshLineWidth(1.);
     gmshBegin(GL_LINE_LOOP);
     gmshVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
     gmshVertex2d(_curr.win[0], _ctx->viewport[3] - _click.win[1]);
     gmshVertex2d(_curr.win[0], _ctx->viewport[3] - _curr.win[1]);
     gmshVertex2d(_click.win[0], _ctx->viewport[3] - _curr.win[1]);
     gmshEnd();
-    _lassoXY[0] = _curr.win[0];
-    _lassoXY[1] = _curr.win[1];
-    glDisable(GL_BLEND);
     gmshLineStippleOff();
     glEnable(GL_DEPTH_TEST);
-    glDrawBuffer(GL_BACK);
+
+    _drawScreenMessage();
+    _drawBorder();
+    CTX::instance()->mesh.draw = 1;
+    CTX::instance()->post.draw = 1;
   }
   else if(addPointMode) {
     // draw the whole scene and the point to add
@@ -404,6 +419,7 @@ void openglWindow::draw()
   }
   drawContext::global()->flushString();
   _lock = false;
+
 }
 
 openglWindow *openglWindow::_lastHandled = nullptr;
@@ -494,11 +510,7 @@ int openglWindow::handle(int event)
     _curr.set(_ctx, Fl::event_x(), Fl::event_y());
     if(Fl::event_button() == 1 && !Fl::event_state(FL_SHIFT) &&
        !Fl::event_state(FL_ALT)) {
-      if(!lassoMode && Fl::event_state(FL_CTRL)) {
-        lassoMode = true;
-        _lassoXY[0] = _curr.win[0];
-        _lassoXY[1] = _curr.win[1];
-      }
+      if(!lassoMode && Fl::event_state(FL_CTRL)) { lassoMode = true; }
       else if(lassoMode) {
         lassoMode = false;
         if(selectionMode && CTX::instance()->mouseSelection) {

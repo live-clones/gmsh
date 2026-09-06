@@ -92,7 +92,6 @@ private:
   drawContext *_ctx;
   double _point[3];
   int _selection, _trySelection, _trySelectionXYWH[4];
-  double _lassoXY[2];
   void _drawScreenMessage();
   void _drawBorder();
   bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
