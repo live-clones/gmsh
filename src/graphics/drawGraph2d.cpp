@@ -218,12 +218,12 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glEnable(GL_BLEND);
       gmshColor4ubv((const void *)&opt->color.background2d);
-      glBegin(GL_QUADS);
-      glVertex2d(xleft, ytop);
-      glVertex2d(xleft + width, ytop);
-      glVertex2d(xleft + width, ytop - height);
-      glVertex2d(xleft, ytop - height);
-      glEnd();
+      gmshBegin(GL_QUADS);
+      gmshVertex2d(xleft, ytop);
+      gmshVertex2d(xleft + width, ytop);
+      gmshVertex2d(xleft + width, ytop - height);
+      gmshVertex2d(xleft, ytop - height);
+      gmshEnd();
       glDisable(GL_BLEND);
     }
   }
@@ -255,15 +255,15 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 
   // bare axes
   if(!overlay) {
-    glBegin(GL_LINE_STRIP);
-    glVertex2d(xleft, ytop);
-    glVertex2d(xleft, ytop - height);
-    glVertex2d(xleft + width, ytop - height);
+    gmshBegin(GL_LINE_STRIP);
+    gmshVertex2d(xleft, ytop);
+    gmshVertex2d(xleft, ytop - height);
+    gmshVertex2d(xleft + width, ytop - height);
     if(opt->axes > 1) {
-      glVertex2d(xleft + width, ytop);
-      glVertex2d(xleft, ytop);
+      gmshVertex2d(xleft + width, ytop);
+      gmshVertex2d(xleft, ytop);
     }
-    glEnd();
+    gmshEnd();
   }
 
   // y label
@@ -304,23 +304,23 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     double dy = height / (double)nb;
     double dv = (opt->tmpMax - opt->tmpMin) / (double)nb;
     for(int i = 0; i < nb + 1; i++) {
-      glBegin(GL_LINES);
-      glVertex2d(xleft, ytop - i * dy);
-      glVertex2d(xleft + tic, ytop - i * dy);
+      gmshBegin(GL_LINES);
+      gmshVertex2d(xleft, ytop - i * dy);
+      gmshVertex2d(xleft + tic, ytop - i * dy);
       if(opt->axes > 1) {
-        glVertex2d(xleft + width - tic, ytop - i * dy);
-        glVertex2d(xleft + width, ytop - i * dy);
+        gmshVertex2d(xleft + width - tic, ytop - i * dy);
+        gmshVertex2d(xleft + width, ytop - i * dy);
       }
-      glEnd();
+      gmshEnd();
       if(opt->axes > 2 && i != 0 && i != nb) {
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(1, 0x1111);
         gl2psEnable(GL2PS_LINE_STIPPLE);
         gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
-        glBegin(GL_LINES);
-        glVertex2d(xleft, ytop - i * dy);
-        glVertex2d(xleft + width, ytop - i * dy);
-        glEnd();
+        gmshBegin(GL_LINES);
+        gmshVertex2d(xleft, ytop - i * dy);
+        gmshVertex2d(xleft + width, ytop - i * dy);
+        gmshEnd();
         glDisable(GL_LINE_STIPPLE);
         gl2psDisable(GL2PS_LINE_STIPPLE);
         gl2psLineWidth((float)(CTX::instance()->lineWidth *
@@ -356,23 +356,23 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     double ybot = ytop - height;
 
     for(int i = 0; i < nb; i++) {
-      glBegin(GL_LINES);
-      glVertex2d(xleft + i * dx, ybot);
-      glVertex2d(xleft + i * dx, ybot + tic);
+      gmshBegin(GL_LINES);
+      gmshVertex2d(xleft + i * dx, ybot);
+      gmshVertex2d(xleft + i * dx, ybot + tic);
       if(opt->axes > 1) {
-        glVertex2d(xleft + i * dx, ytop);
-        glVertex2d(xleft + i * dx, ytop - tic);
+        gmshVertex2d(xleft + i * dx, ytop);
+        gmshVertex2d(xleft + i * dx, ytop - tic);
       }
-      glEnd();
+      gmshEnd();
       if(opt->axes > 2 && i != 0 && i != nb - 1) {
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(1, 0x1111);
         gl2psEnable(GL2PS_LINE_STIPPLE);
         gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
-        glBegin(GL_LINES);
-        glVertex2d(xleft + i * dx, ytop);
-        glVertex2d(xleft + i * dx, ybot);
-        glEnd();
+        gmshBegin(GL_LINES);
+        gmshVertex2d(xleft + i * dx, ytop);
+        gmshVertex2d(xleft + i * dx, ybot);
+        gmshEnd();
         glDisable(GL_LINE_STIPPLE);
         gl2psDisable(GL2PS_LINE_STIPPLE);
         gl2psLineWidth((float)(CTX::instance()->lineWidth *
@@ -453,9 +453,9 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
         ctx->drawSphere(ps, px, py, 0, 10, 10, opt->light);
     }
     else {
-      if(singlePoint) glBegin(GL_POINTS);
-      glVertex2d(px, py);
-      if(singlePoint) glEnd();
+      if(singlePoint) gmshBegin(GL_POINTS);
+      gmshVertex2d(px, py);
+      if(singlePoint) gmshEnd();
     }
 
     if(singlePoint && ctx->render_mode == drawContext::GMSH_SELECT)
@@ -491,12 +491,12 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
         glLineStipple(opt->stipple[i % 10][0], opt->stipple[i % 10][1]);
         gl2psEnable(GL2PS_LINE_STIPPLE);
       }
-      glBegin(GL_LINE_STRIP);
+      gmshBegin(GL_LINE_STRIP);
       for(std::size_t j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], xmin,
                       xmax, opt->tmpMin, opt->tmpMax, false, false,
                       inModelCoordinates);
-      glEnd();
+      gmshEnd();
       if(opt->useStipple) {
         glDisable(GL_LINE_STIPPLE);
         gl2psDisable(GL2PS_LINE_STIPPLE);

@@ -68,7 +68,7 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
 }
 
 // Draw every plain, unselected geometry point in one call instead of a
-// glBegin/glVertex3d/glEnd block each. A model split into partitions has one
+// gmshBegin/gmshVertex3d/gmshEnd block each. A model split into partitions has one
 // geometry point per partition boundary node, so this is tens of thousands of
 // one-vertex draw calls per frame, and the driver spends longer setting each
 // of them up than drawing it. Returns true when it has drawn the points, so
@@ -180,9 +180,9 @@ public:
           _ctx->drawSphere(ps, x, y, z, CTX::instance()->geom.light);
       }
       else {
-        glBegin(GL_POINTS);
-        glVertex3d(x, y, z);
-        glEnd();
+        gmshBegin(GL_POINTS);
+        gmshVertex3d(x, y, z);
+        gmshEnd();
       }
     }
 
@@ -267,15 +267,15 @@ public:
         }
       }
       else {
-        glBegin(GL_LINE_STRIP);
+        gmshBegin(GL_LINE_STRIP);
         for(int i = 0; i < N; i++) {
           double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
           GPoint p = e->point(t);
           double x = p.x(), y = p.y(), z = p.z();
           _ctx->transform(x, y, z);
-          glVertex3d(x, y, z);
+          gmshVertex3d(x, y, z);
         }
-        glEnd();
+        gmshEnd();
       }
     }
 
@@ -429,15 +429,15 @@ public:
         for(int dim = 0; dim < 2; dim++) {
           for(std::size_t i = 0; i < f->cross[dim].size(); i++) {
             if(f->cross[dim][i].size() >= 2) {
-              glBegin(GL_LINE_STRIP);
+              gmshBegin(GL_LINE_STRIP);
               for(std::size_t j = 0; j < f->cross[dim][i].size(); j++) {
                 double x = f->cross[dim][i][j].x();
                 double y = f->cross[dim][i][j].y();
                 double z = f->cross[dim][i][j].z();
                 _ctx->transform(x, y, z);
-                glVertex3d(x, y, z);
+                gmshVertex3d(x, y, z);
               }
-              glEnd();
+              gmshEnd();
             }
           }
         }
@@ -536,24 +536,24 @@ public:
         _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
       }
       else {
-        glBegin(GL_LINE_LOOP);
-        glVertex3d(x + d, y, z);
-        glVertex3d(x, y + d, z);
-        glVertex3d(x - d, y, z);
-        glVertex3d(x, y - d, z);
-        glEnd();
-        glBegin(GL_LINE_LOOP);
-        glVertex3d(x + d, y, z);
-        glVertex3d(x, y, z + d);
-        glVertex3d(x - d, y, z);
-        glVertex3d(x, y, z - d);
-        glEnd();
-        glBegin(GL_LINE_LOOP);
-        glVertex3d(x, y + d, z);
-        glVertex3d(x, y, z + d);
-        glVertex3d(x, y - d, z);
-        glVertex3d(x, y, z - d);
-        glEnd();
+        gmshBegin(GL_LINE_LOOP);
+        gmshVertex3d(x + d, y, z);
+        gmshVertex3d(x, y + d, z);
+        gmshVertex3d(x - d, y, z);
+        gmshVertex3d(x, y - d, z);
+        gmshEnd();
+        gmshBegin(GL_LINE_LOOP);
+        gmshVertex3d(x + d, y, z);
+        gmshVertex3d(x, y, z + d);
+        gmshVertex3d(x - d, y, z);
+        gmshVertex3d(x, y, z - d);
+        gmshEnd();
+        gmshBegin(GL_LINE_LOOP);
+        gmshVertex3d(x, y + d, z);
+        gmshVertex3d(x, y, z + d);
+        gmshVertex3d(x, y - d, z);
+        gmshVertex3d(x, y, z - d);
+        gmshEnd();
       }
     }
 

@@ -47,9 +47,9 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
           glPointSize((float)s);
           gl2psPointSize(
             (float)(s * CTX::instance()->print.epsPointSizeFactor));
-          glBegin(GL_POINTS);
-          glVertex3d(p[0], p[1], p[2]);
-          glEnd();
+          gmshBegin(GL_POINTS);
+          gmshVertex3d(p[0], p[1], p[2]);
+          gmshEnd();
         }
       }
       else
@@ -601,7 +601,7 @@ public:
 
     _ctx->drawBox(bb.min().x(), bb.min().y(), bb.min().z(), bb.max().x(),
                   bb.max().y(), bb.max().z());
-    glColor3d(1., 0., 0.);
+    gmshColor3d(1., 0., 0.);
     for(int i = 0; i < 6; i++)
       if(opt->clip & (1 << i))
         _ctx->drawPlaneInBoundingBox(

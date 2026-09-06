@@ -183,7 +183,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
       }
     }
     else {
-      glBegin(GL_POINTS);
+      gmshBegin(GL_POINTS);
       for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
@@ -199,9 +199,9 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
           unsigned int col = getColorByEntity(e);
           gmshColor4ubv((const void *)&col);
         }
-        glVertex3d(v->x(), v->y(), v->z());
+        gmshVertex3d(v->x(), v->y(), v->z());
       }
-      glEnd();
+      gmshEnd();
     }
   }
   if(CTX::instance()->mesh.nodeLabels) {
@@ -240,9 +240,9 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
             ctx->drawSphere(CTX::instance()->mesh.nodeSize, v->x(), v->y(),
                             v->z(), CTX::instance()->mesh.light);
           else {
-            glBegin(GL_POINTS);
-            glVertex3d(v->x(), v->y(), v->z());
-            glEnd();
+            gmshBegin(GL_POINTS);
+            gmshVertex3d(v->x(), v->y(), v->z());
+            gmshEnd();
           }
         }
         if(CTX::instance()->mesh.nodeLabels)
@@ -258,7 +258,7 @@ template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
   glEnable(GL_LINE_STIPPLE);
   glLineStipple(1, 0x0F0F);
   gl2psEnable(GL2PS_LINE_STIPPLE);
-  glBegin(GL_LINES);
+  gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
@@ -267,28 +267,28 @@ template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
       for(int j = 0; j < ele->getNumEdges(); j++) {
         MEdge e = ele->getEdge(j);
         SPoint3 p = e.barycenter();
-        glVertex3d(pc.x(), pc.y(), pc.z());
-        glVertex3d(p.x(), p.y(), p.z());
+        gmshVertex3d(pc.x(), pc.y(), pc.z());
+        gmshVertex3d(p.x(), p.y(), p.z());
       }
     }
     else if(ele->getDim() == 3) {
       for(int j = 0; j < ele->getNumFaces(); j++) {
         MFace f = ele->getFace(j);
         SPoint3 p = f.barycenter();
-        glVertex3d(pc.x(), pc.y(), pc.z());
-        glVertex3d(p.x(), p.y(), p.z());
+        gmshVertex3d(pc.x(), pc.y(), pc.z());
+        gmshVertex3d(p.x(), p.y(), p.z());
         for(std::size_t k = 0; k < f.getNumVertices(); k++) {
           MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ?
                                     f.getVertex(0) :
                                     f.getVertex(k + 1));
           SPoint3 pe = e.barycenter();
-          glVertex3d(p.x(), p.y(), p.z());
-          glVertex3d(pe.x(), pe.y(), pe.z());
+          gmshVertex3d(p.x(), p.y(), p.z());
+          gmshVertex3d(pe.x(), pe.y(), pe.z());
         }
       }
     }
   }
-  glEnd();
+  gmshEnd();
   glDisable(GL_LINE_STIPPLE);
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
@@ -299,7 +299,7 @@ template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
   glEnable(GL_LINE_STIPPLE);
   glLineStipple(1, 0x0F0F);
   gl2psEnable(GL2PS_LINE_STIPPLE);
-  glBegin(GL_LINES);
+  gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
     if(!isElementVisible(ele)) continue;
@@ -318,28 +318,28 @@ template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
           (1 - alpha) * e.getVertex(0)->x() + alpha * e.getVertex(1)->x(),
           (1 - alpha) * e.getVertex(0)->y() + alpha * e.getVertex(1)->y(),
           (1 - alpha) * e.getVertex(0)->z() + alpha * e.getVertex(1)->z());
-        glVertex3d(pc.x(), pc.y(), pc.z());
-        glVertex3d(p.x(), p.y(), p.z());
+        gmshVertex3d(pc.x(), pc.y(), pc.z());
+        gmshVertex3d(p.x(), p.y(), p.z());
       }
     }
     else if(ele->getDim() == 3) {
       for(int j = 0; j < ele->getNumFaces(); j++) {
         MFace f = ele->getFace(j);
         SPoint3 p = f.barycenter();
-        glVertex3d(pc.x(), pc.y(), pc.z());
-        glVertex3d(p.x(), p.y(), p.z());
+        gmshVertex3d(pc.x(), pc.y(), pc.z());
+        gmshVertex3d(p.x(), p.y(), p.z());
         for(std::size_t k = 0; k < f.getNumVertices(); k++) {
           MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ?
                                     f.getVertex(0) :
                                     f.getVertex(k + 1));
           SPoint3 pe = e.barycenter();
-          glVertex3d(p.x(), p.y(), p.z());
-          glVertex3d(pe.x(), pe.y(), pe.z());
+          gmshVertex3d(p.x(), p.y(), p.z());
+          gmshVertex3d(pe.x(), pe.y(), pe.z());
         }
       }
     }
   }
-  glEnd();
+  gmshEnd();
   glDisable(GL_LINE_STIPPLE);
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
@@ -466,10 +466,10 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
           i += va->getNumVerticesPerElement()) {
         ctx->setPickColor(e->dim(), e->tag(),
                           va->getNumVerticesPerElement(), i);
-        glBegin(type);
+        gmshBegin(type);
         for(int j = 0; j < va->getNumVerticesPerElement(); j++)
-          glVertex3fv(va->getVertexArray(3 * (i + j)));
-        glEnd();
+          gmshVertex3fv(va->getVertexArray(3 * (i + j)));
+        gmshEnd();
       }
       return;
     }

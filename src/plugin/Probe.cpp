@@ -35,32 +35,32 @@ void GMSH_ProbePlugin::draw(void *context)
     double y = ProbeOptions_Number[1].def;
     double z = ProbeOptions_Number[2].def;
     drawContext *ctx = (drawContext *)context;
-    glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
     glLineWidth((float)CTX::instance()->lineWidth);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
     if(x >= bb.min().x() && x <= bb.max().x() && y >= bb.min().y() &&
        y <= bb.max().y() && z >= bb.min().z() && z <= bb.max().z()) {
       // we're inside the bounding box: draw a large cross
-      glBegin(GL_LINES);
-      glVertex3d(bb.min().x(), y, z);
-      glVertex3d(bb.max().x(), y, z);
-      glVertex3d(x, bb.min().y(), z);
-      glVertex3d(x, bb.max().y(), z);
-      glVertex3d(x, y, bb.min().z());
-      glVertex3d(x, y, bb.max().z());
-      glEnd();
+      gmshBegin(GL_LINES);
+      gmshVertex3d(bb.min().x(), y, z);
+      gmshVertex3d(bb.max().x(), y, z);
+      gmshVertex3d(x, bb.min().y(), z);
+      gmshVertex3d(x, bb.max().y(), z);
+      gmshVertex3d(x, y, bb.min().z());
+      gmshVertex3d(x, y, bb.max().z());
+      gmshEnd();
     }
     else {
       // draw 10-pixel marker
       double d = 10 * ctx->pixel_equiv_x / ctx->s[0];
-      glBegin(GL_LINES);
-      glVertex3d(x - d, y, z);
-      glVertex3d(x + d, y, z);
-      glVertex3d(x, y - d, z);
-      glVertex3d(x, y + d, z);
-      glVertex3d(x, y, z - d);
-      glVertex3d(x, y, z + d);
-      glEnd();
+      gmshBegin(GL_LINES);
+      gmshVertex3d(x - d, y, z);
+      gmshVertex3d(x + d, y, z);
+      gmshVertex3d(x, y - d, z);
+      gmshVertex3d(x, y + d, z);
+      gmshVertex3d(x, y, z - d);
+      gmshVertex3d(x, y, z + d);
+      gmshEnd();
     }
     ctx->drawSphere(CTX::instance()->pointSize, x, y, z, 1);
   }

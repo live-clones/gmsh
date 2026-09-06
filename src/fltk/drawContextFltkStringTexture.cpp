@@ -99,19 +99,19 @@ public:
     pos = 0;
     for(auto it = _elements.begin(); it != _elements.end(); ++it) {
       glTranslatef(it->x, it->y, it->z);
-      glColor4f(it->r, it->g, it->b, it->alpha);
+      gmshColor4f(it->r, it->g, it->b, it->alpha);
       int Lx = it->width;
       int Ly = it->height;
-      glBegin(GL_QUADS);
-      glTexCoord2f(pos, 0);
-      glVertex2f(0.0f, Ly);
-      glTexCoord2f(pos + Lx, 0);
-      glVertex2f(Lx, Ly);
-      glTexCoord2f(pos + Lx, Ly);
-      glVertex2f(Lx, 0.0f);
-      glTexCoord2f(pos, Ly);
-      glVertex2f(0.0f, 0.0f);
-      glEnd();
+      gmshBegin(GL_QUADS);
+      gmshTexCoord2f(pos, 0);
+      gmshVertex2f(0.0f, Ly);
+      gmshTexCoord2f(pos + Lx, 0);
+      gmshVertex2f(Lx, Ly);
+      gmshTexCoord2f(pos + Lx, Ly);
+      gmshVertex2f(Lx, 0.0f);
+      gmshTexCoord2f(pos, Ly);
+      gmshVertex2f(0.0f, 0.0f);
+      gmshEnd();
       pos += Lx;
       glTranslatef(-it->x, -it->y, -it->z);
     }

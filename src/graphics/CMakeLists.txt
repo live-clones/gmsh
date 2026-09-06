@@ -9,6 +9,7 @@ set(SRC
   ReadImg.cpp
   glApi.cpp
   glMatrix.cpp
+  glImmediate.cpp
   drawContext.cpp
   drawMesh.cpp
   drawGeom.cpp

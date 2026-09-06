@@ -42,7 +42,7 @@ GMSH_Plugin *GMSH_RegisterStreamLinesPlugin()
 void GMSH_StreamLinesPlugin::draw(void *context)
 {
 #if defined(HAVE_OPENGL)
-  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   drawContext *ctx = (drawContext *)context;
   double p[3];
   for(int i = 0; i < getNbU(); ++i) {

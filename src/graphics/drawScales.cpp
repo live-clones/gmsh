@@ -22,62 +22,62 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
     if(opt->intervalsType == PViewOptions::Discrete ||
        opt->intervalsType == PViewOptions::Numeric) {
       unsigned int col = opt->getColor(i, opt->nbIso);
-      glColor4ubv((GLubyte *)&col);
-      glBegin(GL_QUADS);
+      gmshColor4ubv((GLubyte *)&col);
+      gmshBegin(GL_QUADS);
       if(horizontal) {
-        glVertex2d(xmin + i * box, ymin);
-        glVertex2d(xmin + (i + 1) * box, ymin);
-        glVertex2d(xmin + (i + 1) * box, ymin + height);
-        glVertex2d(xmin + i * box, ymin + height);
+        gmshVertex2d(xmin + i * box, ymin);
+        gmshVertex2d(xmin + (i + 1) * box, ymin);
+        gmshVertex2d(xmin + (i + 1) * box, ymin + height);
+        gmshVertex2d(xmin + i * box, ymin + height);
       }
       else {
-        glVertex2d(xmin, ymin + i * box);
-        glVertex2d(xmin + width, ymin + i * box);
-        glVertex2d(xmin + width, ymin + (i + 1) * box);
-        glVertex2d(xmin, ymin + (i + 1) * box);
+        gmshVertex2d(xmin, ymin + i * box);
+        gmshVertex2d(xmin + width, ymin + i * box);
+        gmshVertex2d(xmin + width, ymin + (i + 1) * box);
+        gmshVertex2d(xmin, ymin + (i + 1) * box);
       }
-      glEnd();
+      gmshEnd();
     }
     else if(opt->intervalsType == PViewOptions::Continuous) {
-      glBegin(GL_QUADS);
+      gmshBegin(GL_QUADS);
       double dv = (opt->tmpMax - opt->tmpMin) / (opt->nbIso ? opt->nbIso : 1);
       double v1 = opt->tmpMin + i * dv;
       unsigned int col1 = opt->getColor(v1, opt->tmpMin, opt->tmpMax, true);
-      glColor4ubv((GLubyte *)&col1);
+      gmshColor4ubv((GLubyte *)&col1);
       if(horizontal) {
-        glVertex2d(xmin + i * box, ymin + height);
-        glVertex2d(xmin + i * box, ymin);
+        gmshVertex2d(xmin + i * box, ymin + height);
+        gmshVertex2d(xmin + i * box, ymin);
       }
       else {
-        glVertex2d(xmin, ymin + i * box);
-        glVertex2d(xmin + width, ymin + i * box);
+        gmshVertex2d(xmin, ymin + i * box);
+        gmshVertex2d(xmin + width, ymin + i * box);
       }
       double v2 = opt->tmpMin + (i + 1) * dv;
       unsigned int col2 = opt->getColor(v2, opt->tmpMin, opt->tmpMax, true);
-      glColor4ubv((GLubyte *)&col2);
+      gmshColor4ubv((GLubyte *)&col2);
       if(horizontal) {
-        glVertex2d(xmin + (i + 1) * box, ymin);
-        glVertex2d(xmin + (i + 1) * box, ymin + height);
+        gmshVertex2d(xmin + (i + 1) * box, ymin);
+        gmshVertex2d(xmin + (i + 1) * box, ymin + height);
       }
       else {
-        glVertex2d(xmin + width, ymin + (i + 1) * box);
-        glVertex2d(xmin, ymin + (i + 1) * box);
+        gmshVertex2d(xmin + width, ymin + (i + 1) * box);
+        gmshVertex2d(xmin, ymin + (i + 1) * box);
       }
-      glEnd();
+      gmshEnd();
     }
     else {
       unsigned int col = opt->getColor(i, opt->nbIso);
-      glColor4ubv((GLubyte *)&col);
-      glBegin(GL_LINES);
+      gmshColor4ubv((GLubyte *)&col);
+      gmshBegin(GL_LINES);
       if(horizontal) {
-        glVertex2d(xmin + box / 2. + i * box, ymin);
-        glVertex2d(xmin + box / 2. + i * box, ymin + height);
+        gmshVertex2d(xmin + box / 2. + i * box, ymin);
+        gmshVertex2d(xmin + box / 2. + i * box, ymin + height);
       }
       else {
-        glVertex2d(xmin, ymin + box / 2. + i * box);
-        glVertex2d(xmin + width, ymin + box / 2. + i * box);
+        gmshVertex2d(xmin, ymin + box / 2. + i * box);
+        gmshVertex2d(xmin + width, ymin + box / 2. + i * box);
       }
-      glEnd();
+      gmshEnd();
     }
   }
 }
@@ -124,7 +124,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
   double box = (horizontal ? width : height) / opt->nbIso;
   double vbox = (horizontal ? width : height) / nbv;
 
-  glColor4ubv((GLubyte *)&CTX::instance()->color.text);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.text);
 
   if(opt->intervalsType == PViewOptions::Discrete ||
      opt->intervalsType == PViewOptions::Numeric ||

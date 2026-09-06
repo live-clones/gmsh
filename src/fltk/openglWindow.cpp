@@ -153,7 +153,7 @@ void openglWindow::_drawScreenMessage()
 {
   if(screenMessage[0].empty() && screenMessage[1].empty()) return;
 
-  glColor4ubv((GLubyte *)&CTX::instance()->color.text);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.text);
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   double h = drawContext::global()->getStringHeight();
@@ -192,14 +192,14 @@ void openglWindow::_drawBorder()
    else
      Fl::get_color(FL_BACKGROUND_COLOR, r, g, b);
   */
-  glColor3ub(r, g, b);
+  gmshColor3ub(r, g, b);
   glLineWidth(1.0F);
-  glBegin(GL_LINE_LOOP);
-  glVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
-  glVertex2d(_ctx->viewport[2], _ctx->viewport[1]);
-  glVertex2d(_ctx->viewport[2], _ctx->viewport[3]);
-  glVertex2d(_ctx->viewport[0], _ctx->viewport[3]);
-  glEnd();
+  gmshBegin(GL_LINE_LOOP);
+  gmshVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
+  gmshVertex2d(_ctx->viewport[2], _ctx->viewport[1]);
+  gmshVertex2d(_ctx->viewport[2], _ctx->viewport[3]);
+  gmshVertex2d(_ctx->viewport[0], _ctx->viewport[3]);
+  gmshEnd();
 }
 
 void openglWindow::draw()
@@ -250,7 +250,7 @@ void openglWindow::draw()
     glLoadMatrixd(px);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glColor3d(1., 1., 1.);
+    gmshColor3d(1., 1., 1.);
     glDisable(GL_DEPTH_TEST);
     glDrawBuffer(GL_FRONT_AND_BACK);
     if(selectionMode && CTX::instance()->mouseSelection) {
@@ -261,18 +261,18 @@ void openglWindow::draw()
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     glEnable(GL_BLEND);
     glLineWidth(0.2F);
-    glBegin(GL_LINE_LOOP);
-    glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
-    glVertex2d(_lassoXY[0], _ctx->viewport[3] - _click.win[1]);
-    glVertex2d(_lassoXY[0], _ctx->viewport[3] - _lassoXY[1]);
-    glVertex2d(_click.win[0], _ctx->viewport[3] - _lassoXY[1]);
-    glEnd();
-    glBegin(GL_LINE_LOOP);
-    glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
-    glVertex2d(_curr.win[0], _ctx->viewport[3] - _click.win[1]);
-    glVertex2d(_curr.win[0], _ctx->viewport[3] - _curr.win[1]);
-    glVertex2d(_click.win[0], _ctx->viewport[3] - _curr.win[1]);
-    glEnd();
+    gmshBegin(GL_LINE_LOOP);
+    gmshVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
+    gmshVertex2d(_lassoXY[0], _ctx->viewport[3] - _click.win[1]);
+    gmshVertex2d(_lassoXY[0], _ctx->viewport[3] - _lassoXY[1]);
+    gmshVertex2d(_click.win[0], _ctx->viewport[3] - _lassoXY[1]);
+    gmshEnd();
+    gmshBegin(GL_LINE_LOOP);
+    gmshVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
+    gmshVertex2d(_curr.win[0], _ctx->viewport[3] - _click.win[1]);
+    gmshVertex2d(_curr.win[0], _ctx->viewport[3] - _curr.win[1]);
+    gmshVertex2d(_click.win[0], _ctx->viewport[3] - _curr.win[1]);
+    gmshEnd();
     _lassoXY[0] = _curr.win[0];
     _lassoXY[1] = _curr.win[1];
     glDisable(GL_BLEND);
@@ -297,13 +297,13 @@ void openglWindow::draw()
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     _ctx->draw3d();
-    glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
     float ps =
       CTX::instance()->geom.pointSize * _ctx->highResolutionPixelFactor();
     glPointSize(ps);
-    glBegin(GL_POINTS);
-    glVertex3d(_point[0], _point[1], _point[2]);
-    glEnd();
+    gmshBegin(GL_POINTS);
+    gmshVertex3d(_point[0], _point[1], _point[2]);
+    gmshEnd();
     _ctx->draw2d();
     _drawScreenMessage();
     _drawBorder();

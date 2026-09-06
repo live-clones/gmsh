@@ -105,33 +105,33 @@ void GMSH_CutParametricPlugin::draw(void *context)
     fillXYZ();
     recompute = 0;
   }
-  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   int nbU = CutParametricOptions_Number[2].def;
   int nbV = CutParametricOptions_Number[5].def;
   if(CutParametricOptions_Number[6].def && x.size() > 1) {
     if(nbU == 1 || nbV == 1) {
-      glBegin(GL_LINES);
+      gmshBegin(GL_LINES);
       for(std::size_t i = 1; i < x.size(); ++i) {
-        glVertex3d(x[i - 1], y[i - 1], z[i - 1]);
-        glVertex3d(x[i], y[i], z[i]);
+        gmshVertex3d(x[i - 1], y[i - 1], z[i - 1]);
+        gmshVertex3d(x[i], y[i], z[i]);
       }
-      glEnd();
+      gmshEnd();
     }
     else {
-      glBegin(GL_TRIANGLES);
+      gmshBegin(GL_TRIANGLES);
       for(int i = 0; i < nbU - 1; ++i) {
         for(int j = 0; j < nbV - 1; ++j) {
           int v = i * nbV + j;
-          glVertex3d(x[v], y[v], z[v]);
-          glVertex3d(x[v + 1], y[v + 1], z[v + 1]);
-          glVertex3d(x[v + 1 + nbV], y[v + 1 + nbV], z[v + 1 + nbV]);
+          gmshVertex3d(x[v], y[v], z[v]);
+          gmshVertex3d(x[v + 1], y[v + 1], z[v + 1]);
+          gmshVertex3d(x[v + 1 + nbV], y[v + 1 + nbV], z[v + 1 + nbV]);
 
-          glVertex3d(x[v], y[v], z[v]);
-          glVertex3d(x[v + nbV], y[v + nbV], z[v + nbV]);
-          glVertex3d(x[v + 1 + nbV], y[v + 1 + nbV], z[v + 1 + nbV]);
+          gmshVertex3d(x[v], y[v], z[v]);
+          gmshVertex3d(x[v + nbV], y[v + nbV], z[v + nbV]);
+          gmshVertex3d(x[v + 1 + nbV], y[v + 1 + nbV], z[v + 1 + nbV]);
         }
       }
-      glEnd();
+      gmshEnd();
     }
   }
   else {

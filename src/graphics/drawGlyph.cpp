@@ -295,16 +295,16 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, img->tex);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-    glBegin(GL_QUADS);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3d(x + wx * w, y + wy * w, z + wz * w);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3d(x + wx * w + hx * h, y + wy * w + hy * h, z + wz * w + hz * h);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3d(x + hx * h, y + hy * h, z + hz * h);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3d(x, y, z);
-    glEnd();
+    gmshBegin(GL_QUADS);
+    gmshTexCoord2f(1.0f, 1.0f);
+    gmshVertex3d(x + wx * w, y + wy * w, z + wz * w);
+    gmshTexCoord2f(1.0f, 0.0f);
+    gmshVertex3d(x + wx * w + hx * h, y + wy * w + hy * h, z + wz * w + hz * h);
+    gmshTexCoord2f(0.0f, 0.0f);
+    gmshVertex3d(x + hx * h, y + hy * h, z + hz * h);
+    gmshTexCoord2f(0.0f, 1.0f);
+    gmshVertex3d(x, y, z);
+    gmshEnd();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
   }
@@ -318,38 +318,38 @@ void drawContext::drawImage(const std::string &name, double x, double y,
 
 static void _drawBox()
 {
-  glBegin(GL_QUADS);  
+  gmshBegin(GL_QUADS);
   // FRONT
-  glVertex3f(-0.5f, -0.5f, 0.5f);
-  glVertex3f( 0.5f, -0.5f, 0.5f);
-  glVertex3f( 0.5f, 0.5f, 0.5f);
-  glVertex3f(-0.5f, 0.5f, 0.5f);
+  gmshVertex3f(-0.5f, -0.5f, 0.5f);
+  gmshVertex3f( 0.5f, -0.5f, 0.5f);
+  gmshVertex3f( 0.5f, 0.5f, 0.5f);
+  gmshVertex3f(-0.5f, 0.5f, 0.5f);
   // BACK
-  glVertex3f(-0.5f, -0.5f, -0.5f);
-  glVertex3f(-0.5f, 0.5f, -0.5f);
-  glVertex3f( 0.5f, 0.5f, -0.5f);
-  glVertex3f( 0.5f, -0.5f, -0.5f);
+  gmshVertex3f(-0.5f, -0.5f, -0.5f);
+  gmshVertex3f(-0.5f, 0.5f, -0.5f);
+  gmshVertex3f( 0.5f, 0.5f, -0.5f);
+  gmshVertex3f( 0.5f, -0.5f, -0.5f);
   // LEFT
-  glVertex3f(-0.5f, -0.5f, 0.5f);
-  glVertex3f(-0.5f, 0.5f, 0.5f);
-  glVertex3f(-0.5f, 0.5f, -0.5f);
-  glVertex3f(-0.5f, -0.5f, -0.5f);
+  gmshVertex3f(-0.5f, -0.5f, 0.5f);
+  gmshVertex3f(-0.5f, 0.5f, 0.5f);
+  gmshVertex3f(-0.5f, 0.5f, -0.5f);
+  gmshVertex3f(-0.5f, -0.5f, -0.5f);
   // RIGHT
-  glVertex3f( 0.5f, -0.5f, -0.5f);
-  glVertex3f( 0.5f, 0.5f, -0.5f);
-  glVertex3f( 0.5f, 0.5f, 0.5f);
-  glVertex3f( 0.5f, -0.5f, 0.5f);
+  gmshVertex3f( 0.5f, -0.5f, -0.5f);
+  gmshVertex3f( 0.5f, 0.5f, -0.5f);
+  gmshVertex3f( 0.5f, 0.5f, 0.5f);
+  gmshVertex3f( 0.5f, -0.5f, 0.5f);
   // TOP
-  glVertex3f(-0.5f, 0.5f, 0.5f);
-  glVertex3f( 0.5f, 0.5f, 0.5f);
-  glVertex3f( 0.5f, 0.5f, -0.5f);
-  glVertex3f(-0.5f, 0.5f, -0.5f);
+  gmshVertex3f(-0.5f, 0.5f, 0.5f);
+  gmshVertex3f( 0.5f, 0.5f, 0.5f);
+  gmshVertex3f( 0.5f, 0.5f, -0.5f);
+  gmshVertex3f(-0.5f, 0.5f, -0.5f);
   // BOTTOM
-  glVertex3f(-0.5f, -0.5f, 0.5f);
-  glVertex3f(-0.5f, -0.5f, -0.5f);
-  glVertex3f( 0.5f, -0.5f, -0.5f);
-  glVertex3f( 0.5f, -0.5f, 0.5f);
-  glEnd();
+  gmshVertex3f(-0.5f, -0.5f, 0.5f);
+  gmshVertex3f(-0.5f, -0.5f, -0.5f);
+  gmshVertex3f( 0.5f, -0.5f, -0.5f);
+  gmshVertex3f( 0.5f, -0.5f, 0.5f);
+  gmshEnd();
 }
 
 void drawContext::drawCube(double x, double y, double z, float v0[3],
@@ -544,54 +544,54 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
     double f2 = (1 - 2. * CTX::instance()->arrowRelStemRadius) * f1; // hack :-)
 
     if(fill) {
-      glBegin(GL_LINES);
-      glVertex3d(x, y, z);
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      glEnd();
+      gmshBegin(GL_LINES);
+      gmshVertex3d(x, y, z);
+      gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      gmshEnd();
 
       if(light && fill) glEnable(GL_LIGHTING);
-      glBegin(GL_TRIANGLES);
-      if(light) glNormal3dv(u);
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
+      gmshBegin(GL_TRIANGLES);
+      if(light) gmshNormal3dv(u);
+      gmshVertex3d(x + dx, y + dy, z + dz);
+      gmshVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
                  z + f2 * dz + b * (t[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
 
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
+      gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      gmshVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
                  z + f2 * dz + b * (-t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
+      gmshVertex3d(x + dx, y + dy, z + dz);
 
-      if(light) glNormal3dv(t);
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
+      if(light) gmshNormal3dv(t);
+      gmshVertex3d(x + dx, y + dy, z + dz);
+      gmshVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
                  z + f2 * dz + b * (-u[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
 
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
+      gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      gmshVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
                  z + f2 * dz + b * (u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-      glEnd();
+      gmshVertex3d(x + dx, y + dy, z + dz);
+      gmshEnd();
       glDisable(GL_LIGHTING);
     }
     else {
-      glBegin(GL_LINE_STRIP);
-      glVertex3d(x, y, z);
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
+      gmshBegin(GL_LINE_STRIP);
+      gmshVertex3d(x, y, z);
+      gmshVertex3d(x + dx, y + dy, z + dz);
+      gmshVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
                  z + f2 * dz + b * (t[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
+      gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      gmshVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
                  z + f2 * dz + b * (-t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
+      gmshVertex3d(x + dx, y + dy, z + dz);
+      gmshVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
                  z + f2 * dz + b * (-u[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
+      gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      gmshVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
                  z + f2 * dz + b * (u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-      glEnd();
+      gmshVertex3d(x + dx, y + dy, z + dz);
+      gmshEnd();
     }
   }
   else { // simple pyramid
@@ -604,66 +604,66 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
       double nn[3];
 
       if(light && fill) glEnable(GL_LIGHTING);
-      glBegin(GL_TRIANGLES);
+      gmshBegin(GL_TRIANGLES);
       if(light) {
         normal3points(tm[0], tm[1], tm[2], um[0], um[1], um[2], top[0], top[1],
                       top[2], nn);
-        glNormal3dv(nn);
+        gmshNormal3dv(nn);
       }
-      glVertex3d(tm[0], tm[1], tm[2]);
-      glVertex3d(um[0], um[1], um[2]);
-      glVertex3d(top[0], top[1], top[2]);
+      gmshVertex3d(tm[0], tm[1], tm[2]);
+      gmshVertex3d(um[0], um[1], um[2]);
+      gmshVertex3d(top[0], top[1], top[2]);
 
       if(light) {
         normal3points(um[0], um[1], um[2], tp[0], tp[1], tp[2], top[0], top[1],
                       top[2], nn);
-        glNormal3dv(nn);
+        gmshNormal3dv(nn);
       }
-      glVertex3d(um[0], um[1], um[2]);
-      glVertex3d(tp[0], tp[1], tp[2]);
-      glVertex3d(top[0], top[1], top[2]);
+      gmshVertex3d(um[0], um[1], um[2]);
+      gmshVertex3d(tp[0], tp[1], tp[2]);
+      gmshVertex3d(top[0], top[1], top[2]);
 
       if(light) {
         normal3points(tp[0], tp[1], tp[2], up[0], up[1], up[2], top[0], top[1],
                       top[2], nn);
-        glNormal3dv(nn);
+        gmshNormal3dv(nn);
       }
-      glVertex3d(tp[0], tp[1], tp[2]);
-      glVertex3d(up[0], up[1], up[2]);
-      glVertex3d(top[0], top[1], top[2]);
+      gmshVertex3d(tp[0], tp[1], tp[2]);
+      gmshVertex3d(up[0], up[1], up[2]);
+      gmshVertex3d(top[0], top[1], top[2]);
 
       if(light) {
         normal3points(up[0], up[1], up[2], tm[0], tm[1], tm[2], top[0], top[1],
                       top[2], nn);
-        glNormal3dv(nn);
+        gmshNormal3dv(nn);
       }
-      glVertex3d(up[0], up[1], up[2]);
-      glVertex3d(tm[0], tm[1], tm[2]);
-      glVertex3d(top[0], top[1], top[2]);
-      glEnd();
+      gmshVertex3d(up[0], up[1], up[2]);
+      gmshVertex3d(tm[0], tm[1], tm[2]);
+      gmshVertex3d(top[0], top[1], top[2]);
+      gmshEnd();
       glDisable(GL_LIGHTING);
     }
     else {
-      glBegin(GL_LINE_LOOP);
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-      glEnd();
+      gmshBegin(GL_LINE_LOOP);
+      gmshVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
+      gmshVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
+      gmshVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
+      gmshVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
+      gmshEnd();
 
-      glBegin(GL_LINES);
-      glVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
+      gmshBegin(GL_LINES);
+      gmshVertex3d(x + b * (t[0]), y + b * (t[1]), z + b * (t[2]));
+      gmshVertex3d(x + dx, y + dy, z + dz);
 
-      glVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
+      gmshVertex3d(x + b * (-u[0]), y + b * (-u[1]), z + b * (-u[2]));
+      gmshVertex3d(x + dx, y + dy, z + dz);
 
-      glVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
+      gmshVertex3d(x + b * (-t[0]), y + b * (-t[1]), z + b * (-t[2]));
+      gmshVertex3d(x + dx, y + dy, z + dz);
 
-      glVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-      glEnd();
+      gmshVertex3d(x + b * (u[0]), y + b * (u[1]), z + b * (u[2]));
+      gmshVertex3d(x + dx, y + dy, z + dz);
+      gmshEnd();
     }
   }
 }
@@ -702,23 +702,23 @@ void drawContext::drawVector(int Type, int Fill, double x, double y, double z,
 
   switch(Type) {
   case 1:
-    glBegin(GL_LINES);
-    glVertex3d(x, y, z);
-    glVertex3d(x + dx, y + dy, z + dz);
-    glEnd();
+    gmshBegin(GL_LINES);
+    gmshVertex3d(x, y, z);
+    gmshVertex3d(x + dx, y + dy, z + dz);
+    gmshEnd();
     break;
   case 6:
     if(CTX::instance()->arrowRelHeadRadius) {
-      glBegin(GL_POINTS);
-      glVertex3d(x + dx, y + dy, z + dz);
-      glEnd();
+      gmshBegin(GL_POINTS);
+      gmshVertex3d(x + dx, y + dy, z + dz);
+      gmshEnd();
     }
-    glBegin(GL_LINES);
-    glVertex3d(x + dx, y + dy, z + dz);
+    gmshBegin(GL_LINES);
+    gmshVertex3d(x + dx, y + dy, z + dz);
     // color gradient
     gmshColor4ubv((const void *)&CTX::instance()->color.bg);
-    glVertex3d(x, y, z);
-    glEnd();
+    gmshVertex3d(x, y, z);
+    gmshEnd();
     break;
   case 2: drawSimpleVector(1, Fill, x, y, z, dx, dy, dz, length, light); break;
   case 3: drawSimpleVector(0, Fill, x, y, z, dx, dy, dz, length, light); break;
@@ -769,28 +769,28 @@ public:
 void drawContext::drawBox(double xmin, double ymin, double zmin, double xmax,
                           double ymax, double zmax, bool labels)
 {
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(xmin, ymin, zmin);
-  glVertex3d(xmax, ymin, zmin);
-  glVertex3d(xmax, ymax, zmin);
-  glVertex3d(xmin, ymax, zmin);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(xmin, ymin, zmax);
-  glVertex3d(xmax, ymin, zmax);
-  glVertex3d(xmax, ymax, zmax);
-  glVertex3d(xmin, ymax, zmax);
-  glEnd();
-  glBegin(GL_LINES);
-  glVertex3d(xmin, ymin, zmin);
-  glVertex3d(xmin, ymin, zmax);
-  glVertex3d(xmax, ymin, zmin);
-  glVertex3d(xmax, ymin, zmax);
-  glVertex3d(xmax, ymax, zmin);
-  glVertex3d(xmax, ymax, zmax);
-  glVertex3d(xmin, ymax, zmin);
-  glVertex3d(xmin, ymax, zmax);
-  glEnd();
+  gmshBegin(GL_LINE_LOOP);
+  gmshVertex3d(xmin, ymin, zmin);
+  gmshVertex3d(xmax, ymin, zmin);
+  gmshVertex3d(xmax, ymax, zmin);
+  gmshVertex3d(xmin, ymax, zmin);
+  gmshEnd();
+  gmshBegin(GL_LINE_LOOP);
+  gmshVertex3d(xmin, ymin, zmax);
+  gmshVertex3d(xmax, ymin, zmax);
+  gmshVertex3d(xmax, ymax, zmax);
+  gmshVertex3d(xmin, ymax, zmax);
+  gmshEnd();
+  gmshBegin(GL_LINES);
+  gmshVertex3d(xmin, ymin, zmin);
+  gmshVertex3d(xmin, ymin, zmax);
+  gmshVertex3d(xmax, ymin, zmin);
+  gmshVertex3d(xmax, ymin, zmax);
+  gmshVertex3d(xmax, ymax, zmin);
+  gmshVertex3d(xmax, ymax, zmax);
+  gmshVertex3d(xmin, ymax, zmin);
+  gmshVertex3d(xmin, ymax, zmax);
+  gmshEnd();
   if(labels) {
     char label[256];
     double offset = 0.3 * CTX::instance()->glFontSize * pixel_equiv_x;
@@ -874,12 +874,12 @@ void drawContext::drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
     glGetBooleanv(GL_LIGHT_MODEL_TWO_SIDE, &twoside);
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
     glEnable(GL_LIGHTING);
-    glBegin(GL_POLYGON);
-    glNormal3d(n[0], n[1], n[2]);
+    gmshBegin(GL_POLYGON);
+    gmshNormal3d(n[0], n[1], n[2]);
     for(int j = 0; j < n_shade; j++) {
-      glVertex3d(p_shade[j].x, p_shade[j].y, p_shade[j].z);
+      gmshVertex3d(p_shade[j].x, p_shade[j].y, p_shade[j].z);
     }
-    glEnd();
+    gmshEnd();
     glDisable(GL_LIGHTING);
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, twoside);
   }

@@ -46,11 +46,6 @@ extern SPoint2 getGraph2dDataPointForTag(unsigned int);
 
 bool drawContext::_pickColorActive = false;
 
-void gmshColor4ubv(const void *col)
-{
-  if(!drawContext::pickColorActive()) glColor4ubv((const GLubyte *)col);
-}
-
 drawContext::drawContext(drawTransform *transform)
   : _transform(transform), _highResolutionPixelFactor(1.), _pickColor(false)
 {
@@ -564,41 +559,41 @@ void drawContext::draw2d()
 void drawContext::drawBackgroundGradient()
 {
   if(CTX::instance()->bgGradient == 1) { // vertical
-    glBegin(GL_QUADS);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bg);
-    glVertex2i(viewport[0], viewport[1]);
-    glVertex2i(viewport[2], viewport[1]);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
-    glVertex2i(viewport[2], viewport[3]);
-    glVertex2i(viewport[0], viewport[3]);
-    glEnd();
+    gmshBegin(GL_QUADS);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bg);
+    gmshVertex2i(viewport[0], viewport[1]);
+    gmshVertex2i(viewport[2], viewport[1]);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
+    gmshVertex2i(viewport[2], viewport[3]);
+    gmshVertex2i(viewport[0], viewport[3]);
+    gmshEnd();
   }
   else if(CTX::instance()->bgGradient == 2) { // horizontal
-    glBegin(GL_QUADS);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bg);
-    glVertex2i(viewport[2], viewport[1]);
-    glVertex2i(viewport[2], viewport[3]);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
-    glVertex2i(viewport[0], viewport[3]);
-    glVertex2i(viewport[0], viewport[1]);
-    glEnd();
+    gmshBegin(GL_QUADS);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bg);
+    gmshVertex2i(viewport[2], viewport[1]);
+    gmshVertex2i(viewport[2], viewport[3]);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
+    gmshVertex2i(viewport[0], viewport[3]);
+    gmshVertex2i(viewport[0], viewport[1]);
+    gmshEnd();
   }
   else if(CTX::instance()->bgGradient == 3) { // radial
     double cx = 0.5 * (viewport[0] + viewport[2]);
     double cy = 0.5 * (viewport[1] + viewport[3]);
     double r =
       0.5 * std::max(viewport[2] - viewport[0], viewport[3] - viewport[1]);
-    glBegin(GL_TRIANGLE_FAN);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
-    glVertex2d(cx, cy);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bg);
-    glVertex2d(cx + r, cy);
+    gmshBegin(GL_TRIANGLE_FAN);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
+    gmshVertex2d(cx, cy);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bg);
+    gmshVertex2d(cx + r, cy);
     int ntheta = 36;
     for(int i = 1; i < ntheta + 1; i++) {
       double theta = i * 2 * M_PI / (double)ntheta;
-      glVertex2d(cx + r * cos(theta), cy + r * sin(theta));
+      gmshVertex2d(cx + r * cos(theta), cy + r * sin(theta));
     }
-    glEnd();
+    gmshEnd();
   }
 }
 
@@ -729,16 +724,16 @@ void drawContext::drawBackgroundImage(bool threeD)
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, _bgImageTexture);
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  glBegin(GL_QUADS);
+  gmshBegin(GL_QUADS);
   if(threeD) {
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2d(x + w, y);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2d(x + w, y + h);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2d(x, y + h);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2d(x, y);
+    gmshTexCoord2f(1.0f, 1.0f);
+    gmshVertex2d(x + w, y);
+    gmshTexCoord2f(1.0f, 0.0f);
+    gmshVertex2d(x + w, y + h);
+    gmshTexCoord2f(0.0f, 0.0f);
+    gmshVertex2d(x, y + h);
+    gmshTexCoord2f(0.0f, 1.0f);
+    gmshVertex2d(x, y);
   }
   else {
     int c = fix2dCoordinates(&x, &y); // y=0 now means top
@@ -746,16 +741,16 @@ void drawContext::drawBackgroundImage(bool threeD)
     if(c & 2) y += h / 2.;
     if(x < viewport[0]) x = viewport[0];
     if(y < viewport[1]) y = viewport[1];
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2d(x + w, y - h);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2d(x + w, y);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2d(x, y);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2d(x, y - h);
+    gmshTexCoord2f(1.0f, 1.0f);
+    gmshVertex2d(x + w, y - h);
+    gmshTexCoord2f(1.0f, 0.0f);
+    gmshVertex2d(x + w, y);
+    gmshTexCoord2f(0.0f, 0.0f);
+    gmshVertex2d(x, y);
+    gmshTexCoord2f(0.0f, 1.0f);
+    gmshVertex2d(x, y - h);
   }
-  glEnd();
+  gmshEnd();
   glDisable(GL_TEXTURE_2D);
   glDisable(GL_BLEND);
 }
@@ -823,14 +818,14 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     double dx = 1.5 * tan(camera.radians) * w * ratio;
     double dy = 1.5 * tan(camera.radians) * w;
     double dz = -w * 1.25;
-    glBegin(GL_QUADS);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bg);
-    glVertex3i((int)-dx, (int)-dy, (int)dz);
-    glVertex3i((int)dx, (int)-dy, (int)dz);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
-    glVertex3i((int)dx, (int)dy, (int)dz);
-    glVertex3i((int)-dx, (int)dy, (int)dz);
-    glEnd();
+    gmshBegin(GL_QUADS);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bg);
+    gmshVertex3i((int)-dx, (int)-dy, (int)dz);
+    gmshVertex3i((int)dx, (int)-dy, (int)dz);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
+    gmshVertex3i((int)dx, (int)dy, (int)dz);
+    gmshVertex3i((int)-dx, (int)dy, (int)dz);
+    gmshEnd();
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);
   }
@@ -978,7 +973,7 @@ void drawContext::initRenderModel()
 
   glPopMatrix();
 
-  // ambient and diffuse material colors track glColor automatically
+  // ambient and diffuse material colors track the current colour automatically
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   glEnable(GL_COLOR_MATERIAL);
   // "white"-only specular material reflection color
@@ -1134,7 +1129,7 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
   GLubyte c[4] = {(GLubyte)(id & 0xff), (GLubyte)((id >> 8) & 0xff),
                   (GLubyte)((id >> 16) & 0xff), 255};
   glDisableClientState(GL_COLOR_ARRAY);
-  glColor4ubv(c);
+  gmshColor4ubv(c);
 
   // The selection buffer reported every primitive in the picking frustum, so a
   // point or a curve hidden behind a surface could still be selected. Depth
@@ -1151,7 +1146,7 @@ void drawContext::unsetPickColor()
   // 0 is the background: what is drawn now belongs to no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
   glDisableClientState(GL_COLOR_ARRAY);
-  glColor4ubv(c);
+  gmshColor4ubv(c);
 }
 
 // Side of the region, in real pixels, that a picking pass draws and keeps

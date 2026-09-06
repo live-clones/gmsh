@@ -420,7 +420,7 @@ public:
   // is the machine big-endian?
   int bigEndian;
   // how RGBA values are packed and unpacked into/from an unsigned integer to be
-  // fed to glColor4ubv (depends on machine byte ordering!):
+  // fed to gmshColor4ubv (depends on machine byte ordering!):
   unsigned int packColor(int R, int G, int B, int A);
   int unpackRed(unsigned int X);
   int unpackGreen(unsigned int X);

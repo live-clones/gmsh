@@ -15,6 +15,8 @@
 
 // the OpenGL headers, and the entry points that came after OpenGL 1.1
 #include "glApi.h"
+// the immediate mode drawing the decorations of the scene are made of
+#include "glImmediate.h"
 
 #include "GmshConfig.h"
 #include "VertexArray.h"
@@ -33,11 +35,6 @@
 const GLvoid *vaVertexPointer(VertexArray *va);
 const GLvoid *vaNormalPointer(VertexArray *va);
 const GLvoid *vaColorPointer(VertexArray *va);
-// Set the current colour. During a colour picking pass the colour encodes the
-// object being drawn, and must not be overwritten by the colour it is normally
-// displayed with: everything that draws pickable geometry has to go through
-// this instead of calling glColor directly.
-void gmshColor4ubv(const void *col);
 
 // draw a vertex array, using its index array if it has one
 void drawVertexArray(VertexArray *va, GLenum type);
