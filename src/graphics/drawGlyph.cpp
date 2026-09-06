@@ -168,6 +168,37 @@ namespace {
     gmshEnd();
   }
 
+  // Append a tessellation to a vertex array, transformed by m and its normals
+  // by the rotation n, which is 3x3 and column major like the rest. The
+  // normals are handed over as they come out of it: a rotation keeps them unit
+  // and a uniform scaling is not in n at all, which is what the arrays want.
+  void append(VertexArray *va, const Tessellation &t, const double m[16],
+              const double n[9], unsigned int color)
+  {
+    const unsigned char *c = (const unsigned char *)&color;
+    std::size_t num = t.pos.size() / 3;
+    for(std::size_t i = 0; i + 2 < num; i += 3) {
+      double px[3], py[3], pz[3];
+      SVector3 nn[3];
+      unsigned char cr[3], cg[3], cb[3], ca[3];
+      for(int k = 0; k < 3; k++) {
+        const float *pp = &t.pos[3 * (i + k)];
+        const float *qq = &t.nrm[3 * (i + k)];
+        px[k] = m[0] * pp[0] + m[4] * pp[1] + m[8] * pp[2] + m[12];
+        py[k] = m[1] * pp[0] + m[5] * pp[1] + m[9] * pp[2] + m[13];
+        pz[k] = m[2] * pp[0] + m[6] * pp[1] + m[10] * pp[2] + m[14];
+        nn[k] = SVector3(n[0] * qq[0] + n[3] * qq[1] + n[6] * qq[2],
+                         n[1] * qq[0] + n[4] * qq[1] + n[7] * qq[2],
+                         n[2] * qq[0] + n[5] * qq[1] + n[8] * qq[2]);
+        cr[k] = c[0];
+        cg[k] = c[1];
+        cb[k] = c[2];
+        ca[k] = c[3];
+      }
+      va->add(px, py, pz, nn, cr, cg, cb, ca, nullptr, false);
+    }
+  }
+
   // The shapes that only depend on the subdivision count, built once and kept:
   // the arrow with the proportions the arrow options give it, a unit sphere
   // and a unit disk.
@@ -882,6 +913,12 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
 
 void drawContext::updateGlyphTemplates() { _tmpl.update(); }
 
+int drawContext::sphereGlyphTriangles()
+{
+  _tmpl.update();
+  return (int)(_tmpl.sphere.pos.size() / 9);
+}
+
 void drawContext::addArrow3d(VertexArray *va, double x, double y, double z,
                              double dx, double dy, double dz,
                              unsigned int color)
@@ -911,28 +948,28 @@ void drawContext::addArrow3d(VertexArray *va, double x, double y, double z,
   glMatrix::multiply(t, sc, a);
   glMatrix::multiply(a, r, m);
 
-  const unsigned char *c = (const unsigned char *)&color;
-  std::size_t n = _tmpl.arrow.pos.size() / 3;
-  for(std::size_t i = 0; i + 2 < n; i += 3) {
-    double px[3], py[3], pz[3];
-    SVector3 nn[3];
-    unsigned char cr[3], cg[3], cb[3], ca[3];
-    for(int k = 0; k < 3; k++) {
-      const float *pp = &_tmpl.arrow.pos[3 * (i + k)];
-      const float *qq = &_tmpl.arrow.nrm[3 * (i + k)];
-      px[k] = m[0] * pp[0] + m[4] * pp[1] + m[8] * pp[2] + m[12];
-      py[k] = m[1] * pp[0] + m[5] * pp[1] + m[9] * pp[2] + m[13];
-      pz[k] = m[2] * pp[0] + m[6] * pp[1] + m[10] * pp[2] + m[14];
-      nn[k] = SVector3(r[0] * qq[0] + r[4] * qq[1] + r[8] * qq[2],
-                       r[1] * qq[0] + r[5] * qq[1] + r[9] * qq[2],
-                       r[2] * qq[0] + r[6] * qq[1] + r[10] * qq[2]);
-      cr[k] = c[0];
-      cg[k] = c[1];
-      cb[k] = c[2];
-      ca[k] = c[3];
-    }
-    va->add(px, py, pz, nn, cr, cg, cb, ca, nullptr, false);
-  }
+  // the size of the arrow is in the scaling, which the normals are not to
+  // follow: the rotation alone is what they are turned by
+  double n[9] = {r[0], r[1], r[2], r[4], r[5], r[6], r[8], r[9], r[10]};
+  append(va, _tmpl.arrow, m, n, color);
+}
+
+void drawContext::addSphere(VertexArray *va, double size, double x, double y,
+                            double z, unsigned int color)
+{
+  double ss = size * pixel_equiv_x / s[0]; // size is in pixels
+  double t[16], sc[16], m[16];
+  glMatrix::translate(x, y, z, t);
+  glMatrix::scale(ss, ss, ss, sc);
+  glMatrix::multiply(t, sc, m);
+
+  _tmpl.update();
+  if(_tmpl.sphere.empty()) return;
+
+  // the scaling is uniform, so the normals of the template are already the
+  // ones of the sphere it is turned into
+  static const double n[9] = {1., 0., 0., 0., 1., 0., 0., 0., 1.};
+  append(va, _tmpl.sphere, m, n, color);
 }
 
 void drawContext::drawArrow3d(double x, double y, double z, double dx,

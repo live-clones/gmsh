@@ -21,6 +21,136 @@
 #include <cstring>
 #include "gl2ps.h"
 
+// The glyphs a view is drawn with - the 3D arrows of a vector view, the
+// spheres of a point one - kept between frames. They do not move when the
+// model is turned, so there is no reason to build them again for every frame;
+// what they do depend on is the length a pixel stands for, as the glyph sizes
+// are given in pixels, so they are built again when that changes - on a zoom,
+// not on a rotation. The view changing throws them away with its other arrays.
+class glyphArrays {
+public:
+  VertexArray *triangles;
+  double pixelSize, size;
+  int type;
+  glyphArrays() : triangles(nullptr), pixelSize(0.), size(0.), type(-1) {}
+  // is what was built still what would be built now?
+  bool matches(double pix, double sz, int t) const
+  {
+    return triangles && type == t && pixelSize == pix && size == sz;
+  }
+  // throw it away and start an array to build it again in, holding the number
+  // of triangles the glyphs are known to come to
+  void restart(double pix, double sz, int t, int numTriangles = 100)
+  {
+    clear();
+    triangles = new VertexArray(3, numTriangles);
+    pixelSize = pix;
+    size = sz;
+    type = t;
+  }
+  void clear()
+  {
+    if(triangles) delete triangles;
+    triangles = nullptr;
+    type = -1;
+  }
+};
+
+// the two kinds a view can have at once
+class viewGlyphs {
+public:
+  glyphArrays vectors, points;
+};
+
+static std::map<PView *, viewGlyphs> _glyphs;
+
+void clearGlyphArrays(PView *p)
+{
+  auto it = _glyphs.find(p);
+  if(it != _glyphs.end()) {
+    it->second.vectors.clear();
+    it->second.points.clear();
+    _glyphs.erase(it);
+  }
+}
+
+static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
+                       bool useNormalArray);
+
+// Where the sphere of one point goes and how big it is, and the sphere
+// appended to the array. As with the arrows, this is here so that the several
+// threads building them can share it - it only reads the view.
+static void addSphereFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
+                         int i, VertexArray *into)
+{
+  float *pt = va->getVertexArray(3 * i);
+  double f = 1.;
+  if(opt->pointType > 1) {
+#if defined(HAVE_VISUDEV)
+    f = *va->getNormalArray(3 * i);
+#else
+    char *n = va->getNormalArray(3 * i);
+    f = char2float(*n);
+#endif
+  }
+  unsigned int col;
+  memcpy(&col, va->getColorArray(4 * i), 4);
+  ctx->addSphere(into, opt->pointSize * f, pt[0], pt[1], pt[2], col);
+}
+
+// the spheres a view draws its points with, built once and kept
+static void drawPointGlyphs(drawContext *ctx, PView *p, VertexArray *va)
+{
+  PViewOptions *opt = p->getOptions();
+  double pixelSize = ctx->pixel_equiv_x / ctx->s[0];
+  glyphArrays *cache = &_glyphs[p].points;
+
+  if(!cache->matches(pixelSize, opt->pointSize, opt->pointType)) {
+    int num = va->getNumVertices();
+    // the shapes are shared and only read while the threads run; how many
+    // triangles one of them comes to is what the arrays are reserved for, as
+    // several hundred megabytes of them is not something to leave to a vector
+    // doubling its size
+    ctx->updateGlyphTemplates();
+    int per = ctx->sphereGlyphTriangles();
+    cache->restart(pixelSize, opt->pointSize, opt->pointType, num * per);
+    // Building them is the expensive part, and it is what a zoom asks for
+    // again: the points are independent of one another, so the range is
+    // shared out and each thread fills an array of its own, merged in order
+    // afterwards so that what comes out does not depend on how many threads
+    // there were.
+    int nthreads = CTX::instance()->numThreads;
+    if(nthreads <= 0) nthreads = 1;
+    // not worth splitting a handful of spheres over several threads
+    if(num < 2000) nthreads = 1;
+    if(nthreads > num) nthreads = num;
+    if(nthreads > 1) {
+      std::vector<VertexArray *> parts(nthreads, nullptr);
+#if defined(_OPENMP)
+#pragma omp parallel for num_threads(nthreads) schedule(static, 1)
+#endif
+      for(int t = 0; t < nthreads; t++) {
+        int first = (int)((long)num * t / nthreads);
+        int last = (int)((long)num * (t + 1) / nthreads);
+        VertexArray *mine = new VertexArray(3, (last - first) * per);
+        for(int i = first; i < last; i++) addSphereFor(ctx, opt, va, i, mine);
+        parts[t] = mine;
+      }
+      for(int t = 0; t < nthreads; t++) {
+        cache->triangles->merge(parts[t]);
+        delete parts[t];
+      }
+    }
+    else {
+      for(int i = 0; i < num; i++)
+        addSphereFor(ctx, opt, va, i, cache->triangles);
+    }
+    cache->triangles->finalize();
+  }
+
+  drawArrays(ctx, p, cache->triangles, GL_TRIANGLES, opt->light);
+}
+
 static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
                        bool useNormalArray)
 {
@@ -32,6 +162,14 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     glEnable(GL_POLYGON_OFFSET_FILL);
 
   if(type == GL_POINTS && opt->pointType > 0) {
+    // the spheres are the ones worth keeping: they are several dozen
+    // triangles each, and a view can hold hundreds of thousands of them
+    if(opt->pointType != 2 && va->getNumVertices()) {
+      drawPointGlyphs(ctx, p, va);
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      gmshLighting(false);
+      return;
+    }
     for(int i = 0; i < va->getNumVertices(); i++) {
       float *p = va->getVertexArray(3 * i);
       gmshColor4ubv((const void *)va->getColorArray(4 * i));
@@ -157,36 +295,6 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
   }
 }
 
-// The 3D arrows of a view, kept between frames. They do not move when the
-// model is turned, so there is no reason to build them again for every frame;
-// what they do depend on is the length a pixel stands for, as the arrow sizes
-// are given in pixels, so they are built again when that changes - on a zoom,
-// not on a rotation. The view changing throws them away with its other arrays.
-class glyphArrays {
-public:
-  VertexArray *triangles;
-  double pixelSize;
-  int type;
-  glyphArrays() : triangles(nullptr), pixelSize(0.), type(-1) {}
-  void clear()
-  {
-    if(triangles) delete triangles;
-    triangles = nullptr;
-    type = -1;
-  }
-};
-
-static std::map<PView *, glyphArrays> _glyphs;
-
-void clearGlyphArrays(PView *p)
-{
-  auto it = _glyphs.find(p);
-  if(it != _glyphs.end()) {
-    it->second.clear();
-    _glyphs.erase(it);
-  }
-}
-
 // Where the arrow of one element goes and how long it is, and the arrow
 // appended to the array if it is worth drawing. This is the same arithmetic
 // the drawing loop below does; it is here so that the two can share it and so
@@ -240,17 +348,13 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
   double pixelSize = ctx->pixel_equiv_x / ctx->s[0];
   glyphArrays *cache = nullptr;
   if(keep) {
-    cache = &_glyphs[p];
-    if(cache->triangles && cache->type == opt->vectorType &&
-       cache->pixelSize == pixelSize) {
+    cache = &_glyphs[p].vectors;
+    if(cache->matches(pixelSize, 0., opt->vectorType)) {
       // nothing they depend on has moved: draw what was built
       drawArrays(ctx, p, cache->triangles, GL_TRIANGLES, opt->light);
       return;
     }
-    cache->clear();
-    cache->triangles = new VertexArray(3, 100);
-    cache->pixelSize = pixelSize;
-    cache->type = opt->vectorType;
+    cache->restart(pixelSize, 0., opt->vectorType);
   }
 
   if(keep) {

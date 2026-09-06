@@ -377,9 +377,16 @@ public:
   // make sure the shapes the glyphs are made of match the options; they are
   // only read afterwards, so several threads may then use them at once
   void updateGlyphTemplates();
+  // how many triangles one sphere glyph comes to, so that an array meant to
+  // hold several of them can be reserved for exactly what they need
+  int sphereGlyphTriangles();
   // append one 3D arrow to a vertex array instead of drawing it
   void addArrow3d(VertexArray *va, double x, double y, double z, double dx,
                   double dy, double dz, unsigned int color);
+  // append one sphere, of a size given in pixels, to a vertex array instead of
+  // drawing it
+  void addSphere(VertexArray *va, double size, double x, double y, double z,
+                 unsigned int color);
   void drawArrow3d(double x, double y, double z, double dx, double dy,
                    double dz, double length, int light);
   void drawVector(int Type, int Fill, double x, double y, double z, double dx,
