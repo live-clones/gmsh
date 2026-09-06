@@ -343,7 +343,20 @@ void gmshFlushImmediate()
   if(_batchPos.empty()) return;
   int count = (int)(_batchPos.size() / 3);
   if(glShader::use()) {
-    gmshPushShaderState();
+    // the state the primitives were collected under, not whatever is current:
+    // a batch that is still waiting when the matrices change - the 2D overlay
+    // sets its own - would otherwise be drawn in the wrong place
+    glShader::setMatrices(_batchState.modelview, _batchState.projection);
+    glShader::setLighting(_batchState.lighting, _batchState.twoSide);
+    glShader::setPointSize(_batchState.pointSize);
+    glShader::setMaterial(CTX::instance()->shine,
+                          CTX::instance()->shineExponent);
+    for(int i = 0; i < 6; i++) {
+      if(_batchState.clipOn[i])
+        glShader::setClipPlane(i, _batchState.clip[i]);
+      else
+        glShader::setClipPlaneOff(i);
+    }
     glShader::drawImmediate(_batchMode, &_batchPos[0], &_batchNrm[0],
                             &_batchCol[0], count);
   }
