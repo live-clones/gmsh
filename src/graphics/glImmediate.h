@@ -53,11 +53,19 @@ inline void gmshColor4f(float r, float g, float b, float a)
   glColor4f(r, g, b, a);
 }
 inline void gmshColor4dv(const double *c) { glColor4dv(c); }
-// Set the current colour from four bytes. During a colour picking pass the
-// colour encodes the object being drawn, and must not be overwritten by the
-// colour it is normally displayed with: everything that draws pickable
-// geometry goes through this one rather than through the others.
+// Set the current colour from four bytes, as the object is displayed. During a
+// colour picking pass the colour encodes the object being drawn instead, and
+// must not be overwritten by the colour it is normally displayed with, so this
+// one does nothing at all while such a pass is running: it is what everything
+// that draws into the scene uses.
 void gmshColor4ubv(const void *col);
+// Set the identifier colour of a picking pass, which is the one thing that has
+// to be written while such a pass is running. Only drawContext::setPickColor()
+// and unsetPickColor() have any business calling this.
+inline void gmshPickColor4ubv(const void *col)
+{
+  glColor4ubv((const GLubyte *)col);
+}
 
 inline void gmshTexCoord2f(float s, float t) { glTexCoord2f(s, t); }
 

@@ -1134,7 +1134,7 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
   GLubyte c[4] = {(GLubyte)(id & 0xff), (GLubyte)((id >> 8) & 0xff),
                   (GLubyte)((id >> 16) & 0xff), 255};
   glDisableClientState(GL_COLOR_ARRAY);
-  gmshColor4ubv(c);
+  gmshPickColor4ubv(c);
 
   // The selection buffer reported every primitive in the picking frustum, so a
   // point or a curve hidden behind a surface could still be selected. Depth
@@ -1151,7 +1151,7 @@ void drawContext::unsetPickColor()
   // 0 is the background: what is drawn now belongs to no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
   glDisableClientState(GL_COLOR_ARRAY);
-  gmshColor4ubv(c);
+  gmshPickColor4ubv(c);
 }
 
 // Side of the region, in real pixels, that a picking pass draws and keeps
