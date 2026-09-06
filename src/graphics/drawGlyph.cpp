@@ -781,6 +781,63 @@ namespace {
   ArrowTemplate _arrow;
 } // namespace
 
+// Append the triangles of one 3D arrow to a vertex array, in the colour given.
+// This is the same geometry drawArrow3d() hands over, kept instead of drawn:
+// the arrows of a view do not move when the model is turned, so building them
+// once and drawing the array is what makes a view of many vectors bearable.
+void drawContext::addArrow3d(VertexArray *va, double x, double y, double z,
+                             double dx, double dy, double dz,
+                             unsigned int color)
+{
+  double length = std::sqrt(dx * dx + dy * dy + dz * dz);
+  if(length == 0.) return;
+
+  double zdir[3] = {0., 0., 1.};
+  double vdir[3] = {dx / length, dy / length, dz / length};
+  double axis[3];
+  prodve(zdir, vdir, axis);
+  double const cosphi = prosca(zdir, vdir);
+  if(!norme(axis)) {
+    axis[0] = 0.;
+    axis[1] = 1.;
+    axis[2] = 0.;
+  }
+  double phi = 180. * myacos(cosphi) / M_PI;
+
+  if(_arrow.stale()) _arrow.build();
+  if(_arrow.pos.empty()) return;
+
+  double t[16], sc[16], r[16], a[16], m[16];
+  glMatrix::translate(x, y, z, t);
+  glMatrix::scale(length, length, length, sc);
+  glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
+  glMatrix::multiply(t, sc, a);
+  glMatrix::multiply(a, r, m);
+
+  const unsigned char *c = (const unsigned char *)&color;
+  std::size_t n = _arrow.pos.size() / 3;
+  for(std::size_t i = 0; i + 2 < n; i += 3) {
+    double px[3], py[3], pz[3];
+    SVector3 nn[3];
+    unsigned char cr[3], cg[3], cb[3], ca[3];
+    for(int k = 0; k < 3; k++) {
+      const float *pp = &_arrow.pos[3 * (i + k)];
+      const float *qq = &_arrow.nrm[3 * (i + k)];
+      px[k] = m[0] * pp[0] + m[4] * pp[1] + m[8] * pp[2] + m[12];
+      py[k] = m[1] * pp[0] + m[5] * pp[1] + m[9] * pp[2] + m[13];
+      pz[k] = m[2] * pp[0] + m[6] * pp[1] + m[10] * pp[2] + m[14];
+      nn[k] = SVector3(r[0] * qq[0] + r[4] * qq[1] + r[8] * qq[2],
+                       r[1] * qq[0] + r[5] * qq[1] + r[9] * qq[2],
+                       r[2] * qq[0] + r[6] * qq[1] + r[10] * qq[2]);
+      cr[k] = c[0];
+      cg[k] = c[1];
+      cb[k] = c[2];
+      ca[k] = c[3];
+    }
+    va->add(px, py, pz, nn, cr, cg, cb, ca, nullptr, false);
+  }
+}
+
 void drawContext::drawArrow3d(double x, double y, double z, double dx,
                               double dy, double dz, double length, int light)
 {

@@ -376,6 +376,9 @@ public:
   void drawTaperedCylinder(double width, double val1, double val2,
                            double ValMin, double ValMax, double *x, double *y,
                            double *z, int light);
+  // append one 3D arrow to a vertex array instead of drawing it
+  void addArrow3d(VertexArray *va, double x, double y, double z, double dx,
+                  double dy, double dz, unsigned int color);
   void drawArrow3d(double x, double y, double z, double dx, double dy,
                    double dz, double length, int light);
   void drawVector(int Type, int Fill, double x, double y, double z, double dx,

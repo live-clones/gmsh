@@ -16,6 +16,8 @@
 #include "Numeric.h"
 #include "VertexArray.h"
 #include "Context.h"
+#include <map>
+#include <cstring>
 #include "gl2ps.h"
 
 static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
@@ -154,11 +156,60 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
   }
 }
 
+// The 3D arrows of a view, kept between frames. They do not move when the
+// model is turned, so there is no reason to build them again for every frame;
+// what they do depend on is the length a pixel stands for, as the arrow sizes
+// are given in pixels, so they are built again when that changes - on a zoom,
+// not on a rotation. The view changing throws them away with its other arrays.
+class glyphArrays {
+public:
+  VertexArray *triangles;
+  double pixelSize;
+  int type;
+  glyphArrays() : triangles(nullptr), pixelSize(0.), type(-1) {}
+  void clear()
+  {
+    if(triangles) delete triangles;
+    triangles = nullptr;
+    type = -1;
+  }
+};
+
+static std::map<PView *, glyphArrays> _glyphs;
+
+void clearGlyphArrays(PView *p)
+{
+  auto it = _glyphs.find(p);
+  if(it != _glyphs.end()) {
+    it->second.clear();
+    _glyphs.erase(it);
+  }
+}
+
 static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
 {
   if(!va || va->getNumVerticesPerElement() != 2) return;
 
   PViewOptions *opt = p->getOptions();
+
+  // the 3D arrows are the ones worth keeping: they are several dozen triangles
+  // each, and a view can hold hundreds of thousands of them
+  bool keep = (opt->vectorType == 4);
+  double pixelSize = ctx->pixel_equiv_x / ctx->s[0];
+  glyphArrays *cache = nullptr;
+  if(keep) {
+    cache = &_glyphs[p];
+    if(cache->triangles && cache->type == opt->vectorType &&
+       cache->pixelSize == pixelSize) {
+      // nothing they depend on has moved: draw what was built
+      drawArrays(ctx, p, cache->triangles, GL_TRIANGLES, opt->light);
+      return;
+    }
+    cache->clear();
+    cache->triangles = new VertexArray(3, 100);
+    cache->pixelSize = pixelSize;
+    cache->type = opt->vectorType;
+  }
 
   for(int i = 0; i < va->getNumVertices(); i += 2) {
     float *s = va->getVertexArray(3 * i);
@@ -196,11 +247,23 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
           y -= 0.5 * dy;
           z -= 0.5 * dz;
         }
-        ctx->drawVector(opt->vectorType,
-                        opt->intervalsType != PViewOptions::Iso, x, y, z, dx,
-                        dy, dz, opt->light);
+        if(keep) {
+          unsigned int col;
+          memcpy(&col, va->getColorArray(4 * i), 4);
+          ctx->addArrow3d(cache->triangles, x, y, z, dx, dy, dz, col);
+        }
+        else {
+          ctx->drawVector(opt->vectorType,
+                          opt->intervalsType != PViewOptions::Iso, x, y, z, dx,
+                          dy, dz, opt->light);
+        }
       }
     }
+  }
+
+  if(keep) {
+    cache->triangles->finalize();
+    drawArrays(ctx, p, cache->triangles, GL_TRIANGLES, opt->light);
   }
 }
 
@@ -611,7 +674,10 @@ void drawContext::drawPost()
 
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     bool changed = PView::list[i]->fillVertexArrays();
-    if(changed) Msg::Debug("post-pro vertex arrays have changed");
+    if(changed) {
+      Msg::Debug("post-pro vertex arrays have changed");
+      clearGlyphArrays(PView::list[i]);
+    }
 #if defined(__APPLE__)
     // FIXME: resetting texture pile fixes bug with recent macOS versions
     if(changed) global()->resetFontTextures();
