@@ -535,16 +535,11 @@ static void checkClipPlanesChanged()
       changed = true;
     }
   }
-  // The arrays have to be filled again when what is in them depends on where
-  // the planes are: that is so when whole elements are clipped, since they are
-  // then left out as the arrays are filled, and when the planes are capped,
-  // since the section they cut is geometry of its own. Otherwise OpenGL clips
-  // what is already there and there is nothing to build again.
-  if(!changed || (!capping && !whole)) return;
+  if(!changed || !capping || whole) return;
   for(std::size_t i = 0; i < PView::list.size(); i++)
     if(PView::list[i]->getOptions()->clip) PView::list[i]->setChanged(true);
 #else
-  if(!changed || (!capping && !whole)) return;
+  if(!changed || !capping || whole) return;
 #endif
   if(CTX::instance()->mesh.clip && GModel::current())
     GModel::current()->clipPlanesChanged();
