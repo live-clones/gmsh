@@ -12,6 +12,7 @@
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
+#include "glyphList.h"
 #endif
 
 StringXNumber CutParametricOptions_Number[] = {
@@ -136,8 +137,12 @@ void GMSH_CutParametricPlugin::draw(void *context)
   }
   else {
     drawContext *ctx = (drawContext *)context;
+    glyphList g;
+    unsigned int col = glyphCurrentColor();
+    g.reserve(GLYPH_SPHERE, x.size());
     for(std::size_t i = 0; i < x.size(); ++i)
-      ctx->drawSphere(CTX::instance()->pointSize, x[i], y[i], z[i], 1);
+      g.addSphere(ctx, CTX::instance()->pointSize, x[i], y[i], z[i], col);
+    g.draw(ctx, 1);
   }
 #endif
 }
