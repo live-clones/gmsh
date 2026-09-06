@@ -381,6 +381,17 @@ public:
   // are stored, so an array filled this way cannot be picked element by
   // element.
   int addBlock(int n);
+  // Empty the array without giving up the buffer objects it has, so that it
+  // can be filled and drawn again: what a scratch array streaming through the
+  // same buffers frame after frame needs.
+  void clearData()
+  {
+    _vertices.clear();
+    _normals.clear();
+    _colors.clear();
+    _elements.clear();
+    _vboDirty = true;
+  }
   // finalize the arrays
   void finalize();
   // sort the arrays with elements back to front wrt the eye position
