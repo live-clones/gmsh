@@ -327,12 +327,10 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_fast_redraw(0, GMSH_SET, o->general.butt[2]->value());
   opt_general_mouse_hover_meshes(0, GMSH_SET, o->general.butt[11]->value());
   opt_general_mouse_invert_zoom(0, GMSH_SET, o->general.butt[22]->value());
-  if(opt_general_double_buffer(0, GMSH_GET, 0) != o->general.butt[3]->value())
-    opt_general_double_buffer(0, GMSH_SET, o->general.butt[3]->value());
   if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
     opt_general_antialiasing(0, GMSH_SET, o->general.butt[12]->value());
-  if(opt_general_shaders(0, GMSH_GET, 0) != o->general.butt[23]->value())
-    opt_general_shaders(0, GMSH_SET, o->general.butt[23]->value());
+  if(opt_general_shaders(0, GMSH_GET, 0) != o->general.butt[3]->value())
+    opt_general_shaders(0, GMSH_SET, o->general.butt[3]->value());
   opt_general_trackball(0, GMSH_SET, o->general.butt[5]->value());
   opt_general_terminal(0, GMSH_SET, o->general.butt[7]->value());
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
@@ -1431,8 +1429,8 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[11]->callback(general_options_ok_cb);
 
       general.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                                            "Enable double buffering");
-      general.butt[3]->tooltip("General.DoubleBuffer");
+                                            "Draw with the shader pipeline");
+      general.butt[3]->tooltip("General.Shaders");
       general.butt[3]->type(FL_TOGGLE_BUTTON);
       general.butt[3]->callback(general_options_ok_cb);
 
@@ -1576,14 +1574,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[20]->deactivate();
 #endif
 
-      general.butt[23] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
-                            "Draw with the OpenGL shader pipeline");
-      general.butt[23]->tooltip("General.Shaders");
-      general.butt[23]->type(FL_TOGGLE_BUTTON);
-      general.butt[23]->callback(general_options_ok_cb);
-
-      Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 12 * BH, BW, BH,
+      Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
                                     "Restore all options to default settings");
       b2->callback(options_restore_defaults_cb);
       if(CTX::instance()->guiColorScheme)

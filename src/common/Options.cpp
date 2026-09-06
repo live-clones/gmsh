@@ -3014,7 +3014,7 @@ double opt_general_shaders(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.butt[23]->value(
+    FlGui::instance()->options->general.butt[3]->value(
       CTX::instance()->shaders);
 #endif
   return CTX::instance()->shaders;
@@ -3442,10 +3442,6 @@ double opt_general_double_buffer(OPT_ARGS_NUM)
     resetOpenglMode();
 #endif
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.butt[3]->value(CTX::instance()->db);
-#endif
   return CTX::instance()->db;
 }
 

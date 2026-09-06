@@ -1091,6 +1091,11 @@ Z-axis scale factor@*
 Default value: @code{1}@*
 Saved in: @code{-}
 
+@item General.Shaders
+Draw with the OpenGL shader pipeline instead of the fixed function one? (changing this recreates the OpenGL context; ignored if the OpenGL implementation does not provide shaders)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Shininess
 Material shininess@*
 Default value: @code{0.4}@*
