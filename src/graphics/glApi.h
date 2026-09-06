@@ -176,6 +176,13 @@ namespace glApi {
                                              GLsizei stride,
                                              const GLvoid *pointer);
 
+  // drawing the same shape many times over, each with attributes of its own
+  // (OpenGL 3.3, OpenGL ES 3.0)
+  extern void(APIENTRY *VertexAttribDivisor)(GLuint index, GLuint divisor);
+  extern void(APIENTRY *DrawArraysInstanced)(GLenum mode, GLint first,
+                                             GLsizei count,
+                                             GLsizei instancecount);
+
   // vertex array objects (OpenGL 3.0)
   extern void(APIENTRY *GenVertexArrays)(GLsizei n, GLuint *arrays);
   extern void(APIENTRY *DeleteVertexArrays)(GLsizei n, const GLuint *arrays);
@@ -239,6 +246,10 @@ namespace glApi {
   // Can each draw buffer have its own blend function? Dual depth peeling needs
   // this; without it the passes are those of plain depth peeling.
   bool haveIndexedBlend();
+  // Can the same shape be drawn many times over in one call, each of them with
+  // attributes of its own? This is what the glyphs want: one sphere and a
+  // buffer saying where every one of them goes.
+  bool haveInstancing();
   // the version of the current context, and whether it is an OpenGL ES one
   int versionMajor();
   int versionMinor();

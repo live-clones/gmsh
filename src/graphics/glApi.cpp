@@ -61,6 +61,9 @@ namespace glApi {
   void(APIENTRY *GenVertexArrays)(GLsizei, GLuint *) = nullptr;
   void(APIENTRY *DeleteVertexArrays)(GLsizei, const GLuint *) = nullptr;
   void(APIENTRY *BindVertexArray)(GLuint) = nullptr;
+  void(APIENTRY *VertexAttribDivisor)(GLuint, GLuint) = nullptr;
+  void(APIENTRY *DrawArraysInstanced)(GLenum, GLint, GLsizei, GLsizei) =
+    nullptr;
 
   void(APIENTRY *GenFramebuffers)(GLsizei, GLuint *) = nullptr;
   void(APIENTRY *DeleteFramebuffers)(GLsizei, const GLuint *) = nullptr;
@@ -87,6 +90,7 @@ namespace glApi {
   static bool _loaded = false, _buffers = false, _shaders = false;
   static bool _framebuffers = false, _clipDistance = false;
   static bool _indexedBlend = false, _es = false;
+  static bool _instancing = false;
   static int _major = 0, _minor = 0;
 
   static void *address(const char *name)
@@ -218,6 +222,10 @@ namespace glApi {
     DeleteVertexArrays = (void(APIENTRY *)(GLsizei, const GLuint *))
       address("glDeleteVertexArrays");
     BindVertexArray = (void(APIENTRY *)(GLuint))address("glBindVertexArray");
+    VertexAttribDivisor =
+      (void(APIENTRY *)(GLuint, GLuint))address("glVertexAttribDivisor");
+    DrawArraysInstanced = (void(APIENTRY *)(GLenum, GLint, GLsizei, GLsizei))
+      address("glDrawArraysInstanced");
 
     GenFramebuffers =
       (void(APIENTRY *)(GLsizei, GLuint *))address("glGenFramebuffers");
@@ -279,6 +287,9 @@ namespace glApi {
     _clipDistance = _es ? (atLeast(3, 2) ||
                            haveExtension("GL_EXT_clip_cull_distance")) :
                           atLeast(3, 0);
+    // instanced drawing is OpenGL 3.3 and OpenGL ES 3.0
+    _instancing = VertexAttribDivisor && DrawArraysInstanced && _shaders &&
+                  (_es ? atLeast(3, 0) : atLeast(3, 3));
     // per target blending is OpenGL 4.0, and OpenGL ES 3.2
     _indexedBlend = BlendFunci && BlendEquationi &&
                     (_es ? (atLeast(3, 2) ||
@@ -290,6 +301,7 @@ namespace glApi {
   {
     _loaded = _buffers = _shaders = false;
     _framebuffers = _clipDistance = _indexedBlend = _es = false;
+    _instancing = false;
     _major = _minor = 0;
 
     GenBuffers = nullptr;
@@ -330,6 +342,8 @@ namespace glApi {
     GenVertexArrays = nullptr;
     DeleteVertexArrays = nullptr;
     BindVertexArray = nullptr;
+    VertexAttribDivisor = nullptr;
+    DrawArraysInstanced = nullptr;
 
     GenFramebuffers = nullptr;
     DeleteFramebuffers = nullptr;
@@ -380,6 +394,12 @@ namespace glApi {
     return _indexedBlend;
   }
 
+  bool haveInstancing()
+  {
+    load();
+    return _instancing;
+  }
+
   int versionMajor()
   {
     load();
@@ -407,9 +427,10 @@ namespace glApi {
     Msg::Debug("OpenGL %s on %s", v ? v : "?", r ? r : "?");
     Msg::Debug("OpenGL shading language %s", s ? s : "none");
     Msg::Debug("OpenGL has buffer objects: %s, shaders: %s, framebuffer "
-               "objects: %s, clip distances: %s, per target blending: %s",
+               "objects: %s, clip distances: %s, per target blending: %s, "
+               "instancing: %s",
                _buffers ? "yes" : "no", _shaders ? "yes" : "no",
                _framebuffers ? "yes" : "no", _clipDistance ? "yes" : "no",
-               _indexedBlend ? "yes" : "no");
+               _indexedBlend ? "yes" : "no", _instancing ? "yes" : "no");
   }
 } // namespace glApi

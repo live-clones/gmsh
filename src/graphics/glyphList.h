@@ -76,6 +76,12 @@ private:
   // for. A pipeline that can draw the same shape many times over from one
   // instance buffer would not need them at all.
   VertexArray *_va;
+  // The glyphs packed the way the graphics card takes them, built the first
+  // time they are drawn that way and kept with the instances they come from.
+  // This is what a pipeline that can draw one shape many times over is handed,
+  // and it is the whole of what it needs: sixty bytes a glyph instead of the
+  // several thousand its triangles come to.
+  std::vector<unsigned char> _gpu[GLYPH_NUMKINDS];
   glyphToken _token;
   // Has the list been filled with this token? A list can legitimately come to
   // no glyphs at all - nothing visible, everything smaller than a pixel - and
@@ -125,6 +131,9 @@ public:
 private:
   void _draw(drawContext *ctx, VertexArray *va, bool light);
   void _stream(drawContext *ctx, bool light);
+  // draw them by handing the shape and the glyphs over and letting the
+  // graphics card place them; false if it cannot
+  bool _instanced(drawContext *ctx, bool light);
   void _expandRange(drawContext *ctx, glyphKind kind, std::size_t first,
                     std::size_t last, VertexArray *va, int at);
 };

@@ -12,6 +12,8 @@
 #include "glImmediate.h"
 #include "glMatrix.h"
 #include "drawContext.h"
+#include "glShader.h"
+#include "glApi.h"
 #include "VertexArray.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -28,8 +30,10 @@ static long _keptVertices = 0;
 
 void glyphList::clear()
 {
-  for(int k = 0; k < GLYPH_NUMKINDS; k++)
+  for(int k = 0; k < GLYPH_NUMKINDS; k++) {
     std::vector<instance>().swap(_inst[k]);
+    std::vector<unsigned char>().swap(_gpu[k]);
+  }
   if(_va) {
     _keptVertices -= _va->getNumVertices();
     delete _va;
@@ -376,6 +380,10 @@ void glyphList::draw(drawContext *ctx, bool light)
     total += (long)num * (long)_inst[k].size();
   }
 
+  // The pipeline that can place a shape itself needs none of this: it is
+  // handed the shape once and the glyphs as they are
+  if(_instanced(ctx, light)) return;
+
   // What is already kept stays kept - it is counted in the total below, and
   // throwing it away to make room for this one would only move the problem.
   if(!_va && _keptVertices + total > maxKeptVertices()) {
@@ -395,6 +403,55 @@ void glyphList::draw(drawContext *ctx, bool light)
   VertexArray *va = triangles(ctx);
   if(!va) return;
   _draw(ctx, va, light);
+}
+
+bool glyphList::_instanced(drawContext *ctx, bool light)
+{
+  if(!gmshUseShaders() || !glApi::haveInstancing()) return false;
+  if(!glShader::available()) return false;
+
+  ctx->updateGlyphTemplates();
+  bool colors = !ctx->inPickColorMode();
+  if(light) gmshLighting(true);
+  gmshPushShaderState();
+
+  for(int k = 0; k < GLYPH_NUMKINDS; k++) {
+    std::size_t n = _inst[k].size();
+    if(!n) continue;
+    const float *tq;
+    const normal_type *tn;
+    int num = 0;
+    const float *tp = ctx->glyphTemplate(k, tq, tn, num);
+    if(!tp || !num) continue;
+
+    // pack them the way the card takes them, once
+    if(_gpu[k].size() != n * glShader::GLYPH_STRIDE) {
+      _gpu[k].resize(n * glShader::GLYPH_STRIDE);
+      for(std::size_t g = 0; g < n; g++) {
+        const instance &in = _inst[k][g];
+        unsigned char *at = &_gpu[k][g * glShader::GLYPH_STRIDE];
+        float *f = (float *)at;
+        // the rows of the transform, so that placing a point is three dot
+        // products
+        for(int r = 0; r < 3; r++) {
+          f[4 * r] = (float)in.m[r];
+          f[4 * r + 1] = (float)in.m[3 + r];
+          f[4 * r + 2] = (float)in.m[6 + r];
+          f[4 * r + 3] = (float)in.m[9 + r];
+        }
+        memcpy(at + 48, &in.color, 4);
+        memcpy(at + 52, in.param, 2 * sizeof(float));
+      }
+    }
+
+    if(!glShader::drawGlyphs(tp, tq, num, &_gpu[k][0], (int)n,
+                             k == GLYPH_CYLINDER, colors)) {
+      gmshLighting(false);
+      return false;
+    }
+  }
+  gmshLighting(false);
+  return true;
 }
 
 void glyphList::_draw(drawContext *ctx, VertexArray *va, bool light)
