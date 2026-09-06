@@ -577,7 +577,7 @@ void drawContext::draw3d()
 void drawContext::draw2d()
 {
   glDisable(GL_DEPTH_TEST);
-  for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 
   gmshMatrixMode(GMSH_PROJECTION);
 
@@ -1085,7 +1085,7 @@ void drawContext::initPosition(bool saveMatrices)
   }
 
   for(int i = 0; i < 6; i++)
-    glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX::instance()->clipPlane[i]);
+    gmshClipPlane(i, CTX::instance()->clipPlane[i]);
 }
 
 // Takes a cursor position in window coordinates and returns the line (given by
@@ -1245,7 +1245,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   // the axes, drawn before the data points and in the depth range that was
   // current at the time, hide the points from the picking pass.
   glDisable(GL_DEPTH_TEST);
-  for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
   gmshMatrixMode(GMSH_PROJECTION);
   double px2d[16];
   glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3], -100.,

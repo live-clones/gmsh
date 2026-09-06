@@ -478,9 +478,9 @@ public:
     if(!CTX::instance()->clipWholeElements) {
       for(int i = 0; i < 6; i++)
         if(opt->clip & (1 << i))
-          glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+          gmshClipPlaneOn(i, true);
         else
-          glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+          gmshClipPlaneOn(i, false);
     }
 
     if(CTX::instance()->alpha && ColorTable_IsAlpha(&opt->colorTable)) {
@@ -556,7 +556,7 @@ public:
       glEnable(GL_DEPTH_TEST);
     }
 
-    for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+    for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) _ctx->unsetPickColor();
   }

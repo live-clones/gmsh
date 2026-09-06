@@ -836,9 +836,9 @@ void drawContext::drawMesh()
   if(!CTX::instance()->clipWholeElements) {
     for(int i = 0; i < 6; i++)
       if(CTX::instance()->mesh.clip & (1 << i))
-        glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+        gmshClipPlaneOn(i, true);
       else
-        glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+        gmshClipPlaneOn(i, false);
   }
 
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
@@ -925,5 +925,5 @@ void drawContext::drawMesh()
 
   CTX::instance()->mesh.changed = 0;
 
-  for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 }

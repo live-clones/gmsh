@@ -42,17 +42,41 @@ inline void gmshVertex3fv(const float *v) { glVertex3fv(v); }
 inline void gmshNormal3d(double x, double y, double z) { glNormal3d(x, y, z); }
 inline void gmshNormal3dv(const double *v) { glNormal3dv(v); }
 
-inline void gmshColor3d(double r, double g, double b) { glColor3d(r, g, b); }
-inline void gmshColor3f(float r, float g, float b) { glColor3f(r, g, b); }
+// Every colour goes through this one, which remembers it: a shader is handed
+// the current colour as a uniform, and there is no fixed function state to ask
+// for it in a core profile.
+void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
+                  unsigned char a);
+// the colour that is current, as four bytes
+const unsigned char *gmshCurrentColor();
+
+inline unsigned char gmshColorByte(double v)
+{
+  double c = v * 255. + 0.5;
+  return (unsigned char)((c < 0.) ? 0. : (c > 255.) ? 255. : c);
+}
+inline void gmshColor3d(double r, double g, double b)
+{
+  gmshColor4ub(gmshColorByte(r), gmshColorByte(g), gmshColorByte(b), 255);
+}
+inline void gmshColor3f(float r, float g, float b)
+{
+  gmshColor4ub(gmshColorByte(r), gmshColorByte(g), gmshColorByte(b), 255);
+}
 inline void gmshColor3ub(unsigned char r, unsigned char g, unsigned char b)
 {
-  glColor3ub(r, g, b);
+  gmshColor4ub(r, g, b, 255);
 }
 inline void gmshColor4f(float r, float g, float b, float a)
 {
-  glColor4f(r, g, b, a);
+  gmshColor4ub(gmshColorByte(r), gmshColorByte(g), gmshColorByte(b),
+               gmshColorByte(a));
 }
-inline void gmshColor4dv(const double *c) { glColor4dv(c); }
+inline void gmshColor4dv(const double *c)
+{
+  gmshColor4ub(gmshColorByte(c[0]), gmshColorByte(c[1]), gmshColorByte(c[2]),
+               gmshColorByte(c[3]));
+}
 // Set the current colour from four bytes, as the object is displayed. During a
 // colour picking pass the colour encodes the object being drawn instead, and
 // must not be overwritten by the colour it is normally displayed with, so this
@@ -78,31 +102,18 @@ inline void gmshTexCoord2f(float s, float t) { glTexCoord2f(s, t); }
 //
 // A few of them are asked for as well as set, to be put back afterwards; the
 // query goes through here too, as a core profile cannot answer it either.
-inline void gmshLighting(bool on)
-{
-  if(on)
-    glEnable(GL_LIGHTING);
-  else
-    glDisable(GL_LIGHTING);
-}
-inline bool gmshLightingEnabled() { return glIsEnabled(GL_LIGHTING) ? true : false; }
+void gmshLighting(bool on);
+bool gmshLightingEnabled();
 
 // light the back faces as well as the front ones, with the normal flipped:
 // what a shader has to do from gl_FrontFacing, and what decides whether a face
 // seen from behind comes out lit or dark
-inline void gmshLightTwoSide(bool on)
-{
-  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, on ? GL_TRUE : GL_FALSE);
-}
-inline bool gmshLightTwoSideEnabled()
-{
-  GLboolean b = GL_FALSE;
-  glGetBooleanv(GL_LIGHT_MODEL_TWO_SIDE, &b);
-  return b ? true : false;
-}
+void gmshLightTwoSide(bool on);
+bool gmshLightTwoSideEnabled();
 
 inline void gmshLineWidth(double w) { glLineWidth((float)w); }
-inline void gmshPointSize(double s) { glPointSize((float)s); }
+void gmshPointSize(double s);
+double gmshCurrentPointSize();
 
 // a factor and a 16 bit pattern, as glLineStipple takes them
 inline void gmshLineStipple(int factor, unsigned short pattern)
@@ -152,7 +163,17 @@ void gmshScale(double x, double y, double z);
 void gmshRotate(double angle, double x, double y, double z);
 // the current matrix of either stack
 const double *gmshMatrix(int kind);
-// forget the stacks, e.g. because the OpenGL context was recreated
+// The six clipping planes. A plane is given in the coordinates of whatever
+// the current modelview matrix is, as glClipPlane() takes it, and is kept in
+// eye coordinates, which is where both pipelines clip with it.
+void gmshClipPlane(int i, const double plane[4]);
+void gmshClipPlaneOn(int i, bool on);
+bool gmshClipPlaneEnabled(int i);
+// the plane in eye coordinates, which is what a shader is handed
+const double *gmshClipPlaneEye(int i);
+
+// forget the stacks and the state above, e.g. because the OpenGL context was
+// recreated: it belonged to it
 void gmshResetMatrices();
 
 #endif

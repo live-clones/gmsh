@@ -83,6 +83,9 @@ public:
 
     // write the texture on screen
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
+    // what glPopAttrib() puts back below is OpenGL's own state, which the
+    // lighting we remember knows nothing about: say it again afterwards
+    bool wasLit = gmshLightingEnabled();
     glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
     gmshLighting(false);
     glDisable(GL_DEPTH_TEST);
@@ -118,6 +121,7 @@ public:
     glDeleteTextures(1, &textureId);
 
     glPopAttrib();
+    gmshLighting(wasLit);
 
     // reset original matrices
     gmshPopMatrix(); // GL_MODELVIEW
