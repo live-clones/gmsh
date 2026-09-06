@@ -10,6 +10,7 @@ set(SRC
   glApi.cpp
   glMatrix.cpp
   glImmediate.cpp
+  glShader.cpp
   drawContext.cpp
   drawMesh.cpp
   drawGeom.cpp

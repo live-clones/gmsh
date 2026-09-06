@@ -24,6 +24,7 @@
 #include "drawContext.h"
 #include "VertexArray.h"
 #include "glMatrix.h"
+#include "glShader.h"
 #include "Context.h"
 #include "Trackball.h"
 #include "GamePad.h"
@@ -223,11 +224,15 @@ void openglWindow::draw()
     // entry points have to be asked of the new one
     VertexArray::invalidateBuffers();
     glApi::reset();
+    glShader::reset();
     gmshResetMatrices();
     // say what the context that has just been created can do: the pipeline
     // that will be drawn with is decided by what is there, not by what was
     // asked for
     glApi::describe();
+    // say straight away whether the pipeline that was asked for can be had,
+    // rather than at the first draw that needs it
+    if(CTX::instance()->shaders) glShader::available();
   }
 
   _ctx->viewport[0] = 0;
