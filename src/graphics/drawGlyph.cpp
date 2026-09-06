@@ -144,9 +144,23 @@ namespace {
     for(std::size_t i = 0; i < num; i++) {
       const float *p = &t.pos[3 * i];
       const float *q = &t.nrm[3 * i];
-      gmshNormal3d(n[0] * q[0] + n[3] * q[1] + n[6] * q[2],
-                   n[1] * q[0] + n[4] * q[1] + n[7] * q[2],
-                   n[2] * q[0] + n[5] * q[1] + n[8] * q[2]);
+      // The normals have to be handed over unit length. The transform carries
+      // the size of the glyph, so the inverse transpose scales them by its
+      // reciprocal - for a glyph smaller than one unit that makes them longer
+      // than one, and the lighting is amplified until it saturates to white.
+      // What was drawn before had the size in the matrix stack and gave
+      // OpenGL unit normals, which GL_RESCALE_NORMAL then took care of; it
+      // rescales, it does not normalize.
+      double nx = n[0] * q[0] + n[3] * q[1] + n[6] * q[2];
+      double ny = n[1] * q[0] + n[4] * q[1] + n[7] * q[2];
+      double nz = n[2] * q[0] + n[5] * q[1] + n[8] * q[2];
+      double len = std::sqrt(nx * nx + ny * ny + nz * nz);
+      if(len > 0.) {
+        nx /= len;
+        ny /= len;
+        nz /= len;
+      }
+      gmshNormal3d(nx, ny, nz);
       gmshVertex3d(m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12],
                    m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13],
                    m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]);
