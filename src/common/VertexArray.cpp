@@ -321,6 +321,19 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
   }
 }
 
+void VertexArray::addBlock(const float *xyz, const normal_type *normals,
+                           const unsigned char *color, int n)
+{
+  if(n <= 0) return;
+  _vertices.insert(_vertices.end(), xyz, xyz + 3 * n);
+  if(normals) _normals.insert(_normals.end(), normals, normals + 3 * n);
+  if(color) {
+    std::size_t at = _colors.size();
+    _colors.resize(at + 4 * n);
+    for(int i = 0; i < n; i++) memcpy(&_colors[at + 4 * i], color, 4);
+  }
+}
+
 void VertexArray::printStats()
 {
   if(!statUniqueIn) return;
