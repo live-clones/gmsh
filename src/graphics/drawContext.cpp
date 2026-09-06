@@ -75,8 +75,6 @@ drawContext::drawContext(drawTransform *transform)
 
   _bgImageTexture = _bgImageW = _bgImageH = 0;
 
-  _quadric = nullptr; // cannot create it here: needs valid opengl context
-  _displayLists = 0;
 }
 
 drawContext::~drawContext() { invalidateQuadricsAndDisplayLists(); }
@@ -129,73 +127,16 @@ drawContextGlobal *drawContext::global()
 
 void drawContext::invalidateQuadricsAndDisplayLists()
 {
-  if(_quadric) {
-    gluDeleteQuadric(_quadric);
-    _quadric = nullptr;
-  }
-  if(_displayLists) {
-    glDeleteLists(_displayLists, 3);
-    _displayLists = 0;
-  }
+  // nothing to invalidate: the glyph shapes belong to no OpenGL context
 }
 
 void drawContext::createQuadricsAndDisplayLists()
 {
-  if(!_quadric) _quadric = gluNewQuadric();
-  if(!_quadric) {
-    Msg::Error("Could not create quadric");
-    return;
-  }
-
-  if(!_displayLists) _displayLists = glGenLists(3);
-  if(!_displayLists) {
-    Msg::Error("Could not generate display lists");
-    return;
-  }
-
-  // display list 0 (sphere)
-  glNewList(_displayLists + 0, GL_COMPILE);
-  gluSphere(_quadric, 1., CTX::instance()->quadricSubdivisions,
-            CTX::instance()->quadricSubdivisions);
-  glEndList();
-
-  // display list 1 (arrow). The two translations below are the one place where
-  // a matrix operation is a command rather than state: they are recorded into
-  // the list and replayed against whatever matrix is current when it is
-  // called, which is not something gmshTranslate() can do, as it composes the
-  // matrix here and now. They go when the display lists do - a core profile
-  // has neither.
-  glNewList(_displayLists + 1, GL_COMPILE);
-  glTranslated(0., 0., CTX::instance()->arrowRelStemLength);
-  if(CTX::instance()->arrowRelHeadRadius > 0 &&
-     CTX::instance()->arrowRelStemLength < 1)
-    gluCylinder(_quadric, CTX::instance()->arrowRelHeadRadius, 0.,
-                (1. - CTX::instance()->arrowRelStemLength),
-                CTX::instance()->quadricSubdivisions, 1);
-  if(CTX::instance()->arrowRelHeadRadius > CTX::instance()->arrowRelStemRadius)
-    gluDisk(_quadric, CTX::instance()->arrowRelStemRadius,
-            CTX::instance()->arrowRelHeadRadius,
-            CTX::instance()->quadricSubdivisions, 1);
-  else
-    gluDisk(_quadric, CTX::instance()->arrowRelHeadRadius,
-            CTX::instance()->arrowRelStemRadius,
-            CTX::instance()->quadricSubdivisions, 1);
-  glTranslated(0., 0., -CTX::instance()->arrowRelStemLength);
-  if(CTX::instance()->arrowRelStemRadius > 0 &&
-     CTX::instance()->arrowRelStemLength > 0) {
-    gluCylinder(_quadric, CTX::instance()->arrowRelStemRadius,
-                CTX::instance()->arrowRelStemRadius,
-                CTX::instance()->arrowRelStemLength,
-                CTX::instance()->quadricSubdivisions, 1);
-    gluDisk(_quadric, 0, CTX::instance()->arrowRelStemRadius,
-            CTX::instance()->quadricSubdivisions, 1);
-  }
-  glEndList();
-
-  // display list 2 (disk)
-  glNewList(_displayLists + 2, GL_COMPILE);
-  gluDisk(_quadric, 0, 1, CTX::instance()->quadricSubdivisions, 1);
-  glEndList();
+  // The shapes the glyphs are made of used to be GLU quadrics kept in display
+  // lists, called once per glyph with the transform stacked in front of them.
+  // They are built as triangles in drawGlyph.cpp now: a core profile has
+  // neither quadrics nor display lists, and even where it has, a call per glyph
+  // cost far more than handing the geometry over does.
 }
 
 void drawContext::buildRotationMatrix()

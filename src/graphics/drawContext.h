@@ -152,8 +152,6 @@ class drawContext {
 private:
   static drawContextGlobal *_global;
   drawTransform *_transform;
-  GLUquadricObj *_quadric;
-  GLuint _displayLists;
   std::set<GModel *> _hiddenModels;
   std::set<PView *> _hiddenViews;
   GLuint _bgImageTexture, _bgImageW, _bgImageH;

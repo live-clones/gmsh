@@ -16,6 +16,192 @@
 #include <vector>
 #include <cmath>
 
+namespace {
+  // The shapes the glyphs are made of, as triangles, built here instead of
+  // asked of GLU and kept in a display list. A core profile has neither, and
+  // even where it has, a display list called once per glyph with a transform
+  // stacked in front of it costs far more than the drawing does.
+  class Tessellation {
+  public:
+    std::vector<float> pos, nrm;
+    void clear()
+    {
+      pos.clear();
+      nrm.clear();
+    }
+    bool empty() const { return pos.empty(); }
+    void add(double px, double py, double pz, double nx, double ny, double nz)
+    {
+      pos.push_back((float)px);
+      pos.push_back((float)py);
+      pos.push_back((float)pz);
+      nrm.push_back((float)nx);
+      nrm.push_back((float)ny);
+      nrm.push_back((float)nz);
+    }
+    // the side of a cone or a cylinder from z0 to z1, as gluCylinder drew it
+    void side(double r0, double r1, double z0, double z1, int n)
+    {
+      if(z1 == z0 || n < 3) return;
+      double nz = (r0 - r1) / (z1 - z0);
+      double len = std::sqrt(1. + nz * nz);
+      for(int i = 0; i < n; i++) {
+        double a0 = 2. * M_PI * i / n, a1 = 2. * M_PI * (i + 1) / n;
+        double c0 = cos(a0), s0 = sin(a0), c1 = cos(a1), s1 = sin(a1);
+        double n0x = c0 / len, n0y = s0 / len, n1x = c1 / len, n1y = s1 / len;
+        double nzz = nz / len;
+        add(r0 * c0, r0 * s0, z0, n0x, n0y, nzz);
+        add(r0 * c1, r0 * s1, z0, n1x, n1y, nzz);
+        add(r1 * c1, r1 * s1, z1, n1x, n1y, nzz);
+        // when the far radius is zero the shape closes on a point and the
+        // second triangle of the quad is degenerate
+        if(r1 != 0.) {
+          add(r0 * c0, r0 * s0, z0, n0x, n0y, nzz);
+          add(r1 * c1, r1 * s1, z1, n1x, n1y, nzz);
+          add(r1 * c0, r1 * s0, z1, n0x, n0y, nzz);
+        }
+      }
+    }
+    // a disk or an annulus in the plane z, as gluDisk drew it: its normal is
+    // +z, which is the convention GLU used and which two-sided lighting makes
+    // indifferent anyway
+    void disk(double rInner, double rOuter, double z, int n)
+    {
+      if(rOuter <= 0. || rOuter == rInner || n < 3) return;
+      for(int i = 0; i < n; i++) {
+        double a0 = 2. * M_PI * i / n, a1 = 2. * M_PI * (i + 1) / n;
+        double c0 = cos(a0), s0 = sin(a0), c1 = cos(a1), s1 = sin(a1);
+        add(rInner * c0, rInner * s0, z, 0., 0., 1.);
+        add(rOuter * c0, rOuter * s0, z, 0., 0., 1.);
+        add(rOuter * c1, rOuter * s1, z, 0., 0., 1.);
+        if(rInner != 0.) {
+          add(rInner * c0, rInner * s0, z, 0., 0., 1.);
+          add(rOuter * c1, rOuter * s1, z, 0., 0., 1.);
+          add(rInner * c1, rInner * s1, z, 0., 0., 1.);
+        }
+      }
+    }
+    // a sphere of radius r, in slices around and stacks from pole to pole, as
+    // gluSphere drew it; its normals are its own directions
+    void sphere(double r, int slices, int stacks)
+    {
+      if(slices < 3 || stacks < 2) return;
+      for(int i = 0; i < stacks; i++) {
+        double t0 = M_PI * i / stacks - M_PI / 2.;
+        double t1 = M_PI * (i + 1) / stacks - M_PI / 2.;
+        double z0 = sin(t0), z1 = sin(t1);
+        double r0 = cos(t0), r1 = cos(t1);
+        for(int j = 0; j < slices; j++) {
+          double a0 = 2. * M_PI * j / slices, a1 = 2. * M_PI * (j + 1) / slices;
+          double c0 = cos(a0), s0 = sin(a0), c1 = cos(a1), s1 = sin(a1);
+          double p[4][3] = {{r0 * c0, r0 * s0, z0},
+                            {r0 * c1, r0 * s1, z0},
+                            {r1 * c1, r1 * s1, z1},
+                            {r1 * c0, r1 * s0, z1}};
+          const int idx[6] = {0, 1, 2, 0, 2, 3};
+          for(int k = 0; k < 6; k++) {
+            const double *q = p[idx[k]];
+            add(r * q[0], r * q[1], r * q[2], q[0], q[1], q[2]);
+          }
+        }
+      }
+    }
+  };
+
+  // the normal matrix of a transform: the inverse transpose of its rotation
+  // and scaling part, which is what the fixed function pipeline applied to the
+  // normals and what a non-uniform scaling needs
+  void normalMatrix(const double m[16], double n[9])
+  {
+    double a[9] = {m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]};
+    double det = a[0] * (a[4] * a[8] - a[5] * a[7]) -
+                 a[3] * (a[1] * a[8] - a[2] * a[7]) +
+                 a[6] * (a[1] * a[5] - a[2] * a[4]);
+    if(det == 0.) {
+      for(int i = 0; i < 9; i++) n[i] = a[i];
+      return;
+    }
+    double d = 1. / det;
+    n[0] = (a[4] * a[8] - a[5] * a[7]) * d;
+    n[1] = (a[6] * a[5] - a[3] * a[8]) * d;
+    n[2] = (a[3] * a[7] - a[6] * a[4]) * d;
+    n[3] = (a[7] * a[2] - a[1] * a[8]) * d;
+    n[4] = (a[0] * a[8] - a[6] * a[2]) * d;
+    n[5] = (a[6] * a[1] - a[0] * a[7]) * d;
+    n[6] = (a[1] * a[5] - a[4] * a[2]) * d;
+    n[7] = (a[3] * a[2] - a[0] * a[5]) * d;
+    n[8] = (a[0] * a[4] - a[3] * a[1]) * d;
+  }
+
+  // hand a tessellation over, transformed
+  void emit(const Tessellation &t, const double m[16])
+  {
+    if(t.empty()) return;
+    double n[9];
+    normalMatrix(m, n);
+    gmshBegin(GL_TRIANGLES);
+    std::size_t num = t.pos.size() / 3;
+    for(std::size_t i = 0; i < num; i++) {
+      const float *p = &t.pos[3 * i];
+      const float *q = &t.nrm[3 * i];
+      gmshNormal3d(n[0] * q[0] + n[3] * q[1] + n[6] * q[2],
+                   n[1] * q[0] + n[4] * q[1] + n[7] * q[2],
+                   n[2] * q[0] + n[5] * q[1] + n[8] * q[2]);
+      gmshVertex3d(m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12],
+                   m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13],
+                   m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]);
+    }
+    gmshEnd();
+  }
+
+  // The shapes that only depend on the subdivision count, built once and kept:
+  // the arrow with the proportions the arrow options give it, a unit sphere
+  // and a unit disk.
+  class Templates {
+  public:
+    Tessellation arrow, sphere, disk;
+    int subdivisions;
+    double headRadius, stemRadius, stemLength;
+    Templates()
+      : subdivisions(0), headRadius(-1.), stemRadius(-1.), stemLength(-1.)
+    {
+    }
+    void update()
+    {
+      int n = CTX::instance()->quadricSubdivisions;
+      if(n < 3) n = 3;
+      if(n == subdivisions &&
+         headRadius == CTX::instance()->arrowRelHeadRadius &&
+         stemRadius == CTX::instance()->arrowRelStemRadius &&
+         stemLength == CTX::instance()->arrowRelStemLength)
+        return;
+      subdivisions = n;
+      headRadius = CTX::instance()->arrowRelHeadRadius;
+      stemRadius = CTX::instance()->arrowRelStemRadius;
+      stemLength = CTX::instance()->arrowRelStemLength;
+
+      arrow.clear();
+      if(headRadius > 0. && stemLength < 1.)
+        arrow.side(headRadius, 0., stemLength, 1., n);
+      if(headRadius > stemRadius)
+        arrow.disk(stemRadius, headRadius, stemLength, n);
+      else
+        arrow.disk(headRadius, stemRadius, stemLength, n);
+      if(stemRadius > 0. && stemLength > 0.) {
+        arrow.side(stemRadius, stemRadius, 0., stemLength, n);
+        arrow.disk(0., stemRadius, 0., n);
+      }
+
+      sphere.clear();
+      sphere.sphere(1., n, n);
+
+      disk.clear();
+      disk.disk(0., 1., 0., n);
+    }
+  };
+  Templates _tmpl;
+} // namespace
+
 void drawContext::drawString(const std::string &s, double x, double y, double z,
                              const std::string &font_name, int font_enum,
                              int font_size, int align, int line_num)
@@ -375,11 +561,13 @@ void drawContext::drawCube(double x, double y, double z, float v0[3],
 void drawContext::drawSphere(double R, double x, double y, double z, int n1,
                              int n2, int light)
 {
+  // the caller says how finely this one is divided, so it is built here
+  Tessellation t;
+  t.sphere(R, n1, n2);
+  double m[16];
+  glMatrix::translate(x, y, z, m);
   if(light) gmshLighting(true);
-  gmshPushMatrix();
-  gmshTranslate(x, y, z);
-  gluSphere(_quadric, R, n1, n2);
-  gmshPopMatrix();
+  emit(t, m);
   gmshLighting(false);
 }
 
@@ -387,8 +575,6 @@ void drawContext::drawSphere(double R, double x, double y, double z, int n1,
 void drawContext::drawEllipse(double x, double y, double z, float v0[3],
                               float v1[3], int light)
 {
-  if(light) gmshLighting(true);
-  gmshPushMatrix();
   GLfloat m[16] = {v0[0],
                    v0[1],
                    v0[2],
@@ -407,25 +593,23 @@ void drawContext::drawEllipse(double x, double y, double z, float v0[3],
                    1.f};
   double md[16];
   for(int i = 0; i < 16; i++) md[i] = m[i];
-  gmshMultMatrix(md);
-  glCallList(_displayLists + 2);
-  gmshPopMatrix();
+  _tmpl.update();
+  if(light) gmshLighting(true);
+  emit(_tmpl.disk, md);
   gmshLighting(false);
 }
 
 void drawContext::drawEllipsoid(double x, double y, double z, float v0[3],
                                 float v1[3], float v2[3], int light)
 {
-  if(light) gmshLighting(true);
-  gmshPushMatrix();
   GLfloat m[16] = {v0[0],      v0[1],      v0[2],      .0f,   v1[0], v1[1],
                    v1[2],      .0f,        v2[0],      v2[1], v2[2], .0f,
                    (GLfloat)x, (GLfloat)y, (GLfloat)z, 1.f};
   double md[16];
   for(int i = 0; i < 16; i++) md[i] = m[i];
-  gmshMultMatrix(md);
-  glCallList(_displayLists + 0);
-  gmshPopMatrix();
+  _tmpl.update();
+  if(light) gmshLighting(true);
+  emit(_tmpl.sphere, md);
   gmshLighting(false);
 }
 
@@ -433,12 +617,13 @@ void drawContext::drawSphere(double size, double x, double y, double z,
                              int light)
 {
   double ss = size * pixel_equiv_x / s[0]; // size is in pixels
+  double t[16], sc[16], m[16];
+  glMatrix::translate(x, y, z, t);
+  glMatrix::scale(ss, ss, ss, sc);
+  glMatrix::multiply(t, sc, m);
+  _tmpl.update();
   if(light) gmshLighting(true);
-  gmshPushMatrix();
-  gmshTranslate(x, y, z);
-  gmshScale(ss, ss, ss);
-  glCallList(_displayLists + 0);
-  gmshPopMatrix();
+  emit(_tmpl.sphere, m);
   gmshLighting(false);
 }
 
@@ -467,12 +652,15 @@ void drawContext::drawTaperedCylinder(double width, double val1, double val2,
   }
   phi = 180. * myacos(cosphi) / M_PI;
 
-  gmshPushMatrix();
-  gmshTranslate(x[0], y[0], z[0]);
-  gmshRotate(phi, axis[0], axis[1], axis[2]);
-  gluCylinder(_quadric, radius1, radius2, length,
-              CTX::instance()->quadricSubdivisions, 1);
-  gmshPopMatrix();
+  // the radii differ from one end to the other, so this one is built here
+  Tessellation t;
+  int n = CTX::instance()->quadricSubdivisions;
+  t.side(radius1, radius2, 0., length, (n < 3) ? 3 : n);
+  double tr[16], r[16], m[16];
+  glMatrix::translate(x[0], y[0], z[0], tr);
+  glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
+  glMatrix::multiply(tr, r, m);
+  emit(t, m);
 
   gmshLighting(false);
 }
@@ -499,12 +687,14 @@ void drawContext::drawCylinder(double width, double *x, double *y, double *z,
   }
   phi = 180. * myacos(cosphi) / M_PI;
 
-  gmshPushMatrix();
-  gmshTranslate(x[0], y[0], z[0]);
-  gmshRotate(phi, axis[0], axis[1], axis[2]);
-  gluCylinder(_quadric, radius, radius, length,
-              CTX::instance()->quadricSubdivisions, 1);
-  gmshPopMatrix();
+  Tessellation t;
+  int n = CTX::instance()->quadricSubdivisions;
+  t.side(radius, radius, 0., length, (n < 3) ? 3 : n);
+  double tr[16], r[16], m[16];
+  glMatrix::translate(x[0], y[0], z[0], tr);
+  glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
+  glMatrix::multiply(tr, r, m);
+  emit(t, m);
 
   gmshLighting(false);
 }
@@ -676,115 +866,6 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
   }
 }
 
-namespace {
-  // The arrow, as triangles, in the frame it is drawn in: pointing down +z,
-  // one unit long, with the proportions the arrow options give it. It used to
-  // be a display list of GLU cylinders and disks, called once per arrow with
-  // the transform stacked in front of it - eight OpenGL calls an arrow, which
-  // is what made a view of a few thousand vectors slow, and which a core
-  // profile cannot do at all. It is built here instead, once, and the
-  // transform is applied to it as it is handed over, so that the arrows of a
-  // view go into one draw.
-  class ArrowTemplate {
-  public:
-    std::vector<float> pos, nrm;
-    int subdivisions;
-    double headRadius, stemRadius, stemLength;
-    ArrowTemplate()
-      : subdivisions(0), headRadius(-1.), stemRadius(-1.), stemLength(-1.)
-    {
-    }
-    bool stale() const
-    {
-      return subdivisions != CTX::instance()->quadricSubdivisions ||
-             headRadius != CTX::instance()->arrowRelHeadRadius ||
-             stemRadius != CTX::instance()->arrowRelStemRadius ||
-             stemLength != CTX::instance()->arrowRelStemLength;
-    }
-    void add(double px, double py, double pz, double nx, double ny, double nz)
-    {
-      pos.push_back((float)px);
-      pos.push_back((float)py);
-      pos.push_back((float)pz);
-      nrm.push_back((float)nx);
-      nrm.push_back((float)ny);
-      nrm.push_back((float)nz);
-    }
-    // the side of a cone or a cylinder from z0 to z1, as gluCylinder drew it
-    void side(double r0, double r1, double z0, double z1)
-    {
-      if(z1 == z0) return;
-      int n = subdivisions;
-      double nz = (r0 - r1) / (z1 - z0);
-      double len = std::sqrt(1. + nz * nz);
-      for(int i = 0; i < n; i++) {
-        double a0 = 2. * M_PI * i / n, a1 = 2. * M_PI * (i + 1) / n;
-        double c0 = cos(a0), s0 = sin(a0), c1 = cos(a1), s1 = sin(a1);
-        double n0x = c0 / len, n0y = s0 / len, n1x = c1 / len, n1y = s1 / len;
-        double nzz = nz / len;
-        // two triangles for the quad between the two rings; when r1 is zero
-        // the second one is degenerate, as the apex is a single point
-        add(r0 * c0, r0 * s0, z0, n0x, n0y, nzz);
-        add(r0 * c1, r0 * s1, z0, n1x, n1y, nzz);
-        add(r1 * c1, r1 * s1, z1, n1x, n1y, nzz);
-        if(r1 != 0.) {
-          add(r0 * c0, r0 * s0, z0, n0x, n0y, nzz);
-          add(r1 * c1, r1 * s1, z1, n1x, n1y, nzz);
-          add(r1 * c0, r1 * s0, z1, n0x, n0y, nzz);
-        }
-      }
-    }
-    // a disk or an annulus in the plane z, as gluDisk drew it: its normal is
-    // +z, which is the convention GLU used and which two-sided lighting makes
-    // indifferent anyway
-    void disk(double rInner, double rOuter, double z)
-    {
-      if(rOuter <= 0. || rOuter == rInner) return;
-      int n = subdivisions;
-      for(int i = 0; i < n; i++) {
-        double a0 = 2. * M_PI * i / n, a1 = 2. * M_PI * (i + 1) / n;
-        double c0 = cos(a0), s0 = sin(a0), c1 = cos(a1), s1 = sin(a1);
-        add(rInner * c0, rInner * s0, z, 0., 0., 1.);
-        add(rOuter * c0, rOuter * s0, z, 0., 0., 1.);
-        add(rOuter * c1, rOuter * s1, z, 0., 0., 1.);
-        if(rInner != 0.) {
-          add(rInner * c0, rInner * s0, z, 0., 0., 1.);
-          add(rOuter * c1, rOuter * s1, z, 0., 0., 1.);
-          add(rInner * c1, rInner * s1, z, 0., 0., 1.);
-        }
-      }
-    }
-    void build()
-    {
-      pos.clear();
-      nrm.clear();
-      subdivisions = CTX::instance()->quadricSubdivisions;
-      headRadius = CTX::instance()->arrowRelHeadRadius;
-      stemRadius = CTX::instance()->arrowRelStemRadius;
-      stemLength = CTX::instance()->arrowRelStemLength;
-      if(subdivisions < 3) subdivisions = 3;
-      // the head, as the old display list drew it after translating to the
-      // top of the stem
-      if(headRadius > 0. && stemLength < 1.)
-        side(headRadius, 0., stemLength, 1.);
-      if(headRadius > stemRadius)
-        disk(stemRadius, headRadius, stemLength);
-      else
-        disk(headRadius, stemRadius, stemLength);
-      // and the stem
-      if(stemRadius > 0. && stemLength > 0.) {
-        side(stemRadius, stemRadius, 0., stemLength);
-        disk(0., stemRadius, 0.);
-      }
-    }
-  };
-  ArrowTemplate _arrow;
-} // namespace
-
-// Append the triangles of one 3D arrow to a vertex array, in the colour given.
-// This is the same geometry drawArrow3d() hands over, kept instead of drawn:
-// the arrows of a view do not move when the model is turned, so building them
-// once and drawing the array is what makes a view of many vectors bearable.
 void drawContext::addArrow3d(VertexArray *va, double x, double y, double z,
                              double dx, double dy, double dz,
                              unsigned int color)
@@ -804,8 +885,8 @@ void drawContext::addArrow3d(VertexArray *va, double x, double y, double z,
   }
   double phi = 180. * myacos(cosphi) / M_PI;
 
-  if(_arrow.stale()) _arrow.build();
-  if(_arrow.pos.empty()) return;
+  _tmpl.update();
+  if(_tmpl.arrow.empty()) return;
 
   double t[16], sc[16], r[16], a[16], m[16];
   glMatrix::translate(x, y, z, t);
@@ -815,14 +896,14 @@ void drawContext::addArrow3d(VertexArray *va, double x, double y, double z,
   glMatrix::multiply(a, r, m);
 
   const unsigned char *c = (const unsigned char *)&color;
-  std::size_t n = _arrow.pos.size() / 3;
+  std::size_t n = _tmpl.arrow.pos.size() / 3;
   for(std::size_t i = 0; i + 2 < n; i += 3) {
     double px[3], py[3], pz[3];
     SVector3 nn[3];
     unsigned char cr[3], cg[3], cb[3], ca[3];
     for(int k = 0; k < 3; k++) {
-      const float *pp = &_arrow.pos[3 * (i + k)];
-      const float *qq = &_arrow.nrm[3 * (i + k)];
+      const float *pp = &_tmpl.arrow.pos[3 * (i + k)];
+      const float *qq = &_tmpl.arrow.nrm[3 * (i + k)];
       px[k] = m[0] * pp[0] + m[4] * pp[1] + m[8] * pp[2] + m[12];
       py[k] = m[1] * pp[0] + m[5] * pp[1] + m[9] * pp[2] + m[13];
       pz[k] = m[2] * pp[0] + m[6] * pp[1] + m[10] * pp[2] + m[14];
@@ -853,8 +934,8 @@ void drawContext::drawArrow3d(double x, double y, double z, double dx,
   }
   double phi = 180. * myacos(cosphi) / M_PI;
 
-  if(_arrow.stale()) _arrow.build();
-  if(_arrow.pos.empty()) return;
+  _tmpl.update();
+  if(_tmpl.arrow.empty()) return;
 
   // the transform the matrix stack used to carry: translate, then scale, then
   // rotate, applied to the point in that order from the right
@@ -866,21 +947,7 @@ void drawContext::drawArrow3d(double x, double y, double z, double dx,
   glMatrix::multiply(a, r, m);
 
   if(light) gmshLighting(true);
-  gmshBegin(GL_TRIANGLES);
-  std::size_t n = _arrow.pos.size() / 3;
-  for(std::size_t i = 0; i < n; i++) {
-    const float *p = &_arrow.pos[3 * i];
-    const float *q = &_arrow.nrm[3 * i];
-    // the scale is the same in every direction, so the normals only turn
-    double nx = r[0] * q[0] + r[4] * q[1] + r[8] * q[2];
-    double ny = r[1] * q[0] + r[5] * q[1] + r[9] * q[2];
-    double nz = r[2] * q[0] + r[6] * q[1] + r[10] * q[2];
-    gmshNormal3d(nx, ny, nz);
-    gmshVertex3d(m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12],
-                 m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13],
-                 m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]);
-  }
-  gmshEnd();
+  emit(_tmpl.arrow, m);
   gmshLighting(false);
 }
 
