@@ -11,6 +11,7 @@
 #include "GmshMessage.h"
 #include "drawContext.h"
 #include "glMatrix.h"
+#include "glShader.h"
 #include "Trackball.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -317,8 +318,17 @@ static int needPolygonOffset()
   return 0;
 }
 
+// is what is drawn next drawn with the shader pipeline?
+static bool useShaders()
+{
+  return CTX::instance()->shaders && glShader::available();
+}
+
 static bool useVertexBufferObjects()
 {
+  // a core profile has no client arrays at all, so the shader pipeline has to
+  // have the buffer objects whatever the option says
+  if(useShaders()) return true;
   return CTX::instance()->vertexBufferObjects && glApi::haveBufferObjects();
 }
 
@@ -419,8 +429,43 @@ const GLvoid *vaColorPointer(VertexArray *va)
   return nullptr;
 }
 
+// what the last bind left for the draw to use: the client arrays a caller
+// holds itself have to be uploaded, and the count is only known at the draw
+static const float *_clientVertices = nullptr;
+static const unsigned char *_clientColors = nullptr;
+static bool _boundColors = false;
+
 void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
 {
+  _clientVertices = nullptr;
+  _clientColors = nullptr;
+  _boundColors = colors;
+
+  if(useShaders()) {
+    glApi::EnableVertexAttribArray(glShader::ATTRIB_VERTEX);
+    glApi::VertexAttribPointer(glShader::ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE,
+                               0, vaVertexPointer(va));
+    if(normals) {
+      glApi::EnableVertexAttribArray(glShader::ATTRIB_NORMAL);
+      // the normals are stored as bytes, and are the unit vectors they were
+      // when they went in: they have to be scaled back on the way out
+      glApi::VertexAttribPointer(glShader::ATTRIB_NORMAL, 3, NORMAL_GLTYPE,
+                                 GL_TRUE, 0, vaNormalPointer(va));
+    }
+    else {
+      glApi::DisableVertexAttribArray(glShader::ATTRIB_NORMAL);
+    }
+    if(colors) {
+      glApi::EnableVertexAttribArray(glShader::ATTRIB_COLOR);
+      glApi::VertexAttribPointer(glShader::ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE,
+                                 GL_TRUE, 0, vaColorPointer(va));
+    }
+    else {
+      glApi::DisableVertexAttribArray(glShader::ATTRIB_COLOR);
+    }
+    return;
+  }
+
   glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
   glEnableClientState(GL_VERTEX_ARRAY);
   if(normals) {
@@ -441,6 +486,18 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
 
 void gmshBindArrays(const float *vertices, const unsigned char *colors)
 {
+  _boundColors = (colors != nullptr);
+
+  if(useShaders()) {
+    // kept for the draw, which is where the number of vertices is known and
+    // the arrays can be uploaded
+    _clientVertices = vertices;
+    _clientColors = colors;
+    return;
+  }
+
+  _clientVertices = nullptr;
+  _clientColors = nullptr;
   glVertexPointer(3, GL_FLOAT, 0, vertices);
   glEnableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
@@ -455,14 +512,52 @@ void gmshBindArrays(const float *vertices, const unsigned char *colors)
 
 void gmshUnbindArrays()
 {
+  _clientVertices = nullptr;
+  _clientColors = nullptr;
+  if(useShaders()) {
+    glApi::DisableVertexAttribArray(glShader::ATTRIB_VERTEX);
+    glApi::DisableVertexAttribArray(glShader::ATTRIB_NORMAL);
+    glApi::DisableVertexAttribArray(glShader::ATTRIB_COLOR);
+    return;
+  }
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
 }
 
+// hand the program everything it needs that the fixed function pipeline kept
+// as state of its own, and draw
+void gmshDrawArrays(GLenum type, int count)
+{
+  if(count <= 0) return;
+
+  if(useShaders()) {
+    if(!glShader::use()) return;
+    if(_clientVertices) {
+      glShader::streamArrays(_clientVertices, _clientColors, count);
+    }
+    glShader::setColorArray(_boundColors);
+    glShader::setMatrices(gmshMatrix(GMSH_MODELVIEW),
+                          gmshMatrix(GMSH_PROJECTION));
+    glShader::setLighting(gmshLightingEnabled(), gmshLightTwoSideEnabled());
+    glShader::setColor(gmshCurrentColor());
+    glShader::setPointSize(gmshCurrentPointSize());
+    glShader::setMaterial(CTX::instance()->shine,
+                          CTX::instance()->shineExponent);
+    for(int i = 0; i < 6; i++) {
+      if(gmshClipPlaneEnabled(i))
+        glShader::setClipPlane(i, gmshClipPlaneEye(i));
+      else
+        glShader::setClipPlaneOff(i);
+    }
+  }
+
+  glDrawArrays(type, 0, count);
+}
+
 void drawVertexArray(VertexArray *va, GLenum type)
 {
-  glDrawArrays(type, 0, va->getNumVertices());
+  gmshDrawArrays(type, va->getNumVertices());
 
   if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
 }
@@ -973,6 +1068,13 @@ void drawContext::initRenderModel()
                              (GLfloat)CTX::instance()->lightPosition[i][2],
                              (GLfloat)CTX::instance()->lightPosition[i][3]};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
+      // OpenGL puts the position through the modelview matrix that is current
+      // here, which is the scale and the translation alone: the lights follow
+      // neither the rotation nor the camera. The shader is handed the result
+      // of that same transform, so that it lights the scene the same way.
+      double pos[4] = {position[0], position[1], position[2], position[3]};
+      double eye[4];
+      glMatrix::transform(gmshMatrix(GMSH_MODELVIEW), pos, eye);
 
       GLfloat r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.ambientLight[i]) /
@@ -1011,9 +1113,11 @@ void drawContext::initRenderModel()
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
 
       glEnable((GLenum)(GL_LIGHT0 + i));
+      glShader::setLight(i, eye, ambient, diffuse, specular);
     }
     else {
       glDisable((GLenum)(GL_LIGHT0 + i));
+      glShader::setLightOff(i);
     }
   }
 

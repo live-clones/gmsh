@@ -77,6 +77,11 @@ namespace glShader {
   void setColor(const unsigned char color[4]);
   // the size points are drawn at, which a core profile takes from the shader
   void setPointSize(double size);
+  // Upload arrays the caller holds itself into a buffer of ours and bind them:
+  // a core profile cannot be handed a pointer into client memory. Colours may
+  // be null, in which case the current colour is used for every vertex.
+  void streamArrays(const float *vertices, const unsigned char *colors,
+                    int count);
 } // namespace glShader
 
 #endif

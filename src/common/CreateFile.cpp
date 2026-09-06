@@ -212,9 +212,10 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
       height = CTX::instance()->print.height;
     }
     newg = new openglWindow(100, 100, width, height);
-    int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-    if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-    newg->mode(mode);
+    // the same visual as the windows this one stands in for: a picture taken
+    // with a different pipeline than the one on screen is not a picture of
+    // what is on screen
+    newg->mode(openglWindowMode());
     newg->end();
     newg->getDrawContext()->copyViewAttributes
       (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());

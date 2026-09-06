@@ -108,6 +108,9 @@ void main()
 )";
 
     GLuint _program = 0, _vao = 0;
+    // one buffer for the vertices a caller holds itself and one for their
+    // colours, grown as needed and reused from frame to frame
+    GLuint _streamVertices = 0, _streamColors = 0;
     bool _tried = false;
 
     struct {
@@ -116,6 +119,16 @@ void main()
       GLint lighting, twoSide, specular, shininess;
       GLint lightPosition, lightAmbient, lightDiffuse, lightSpecular, lightOn;
     } _u;
+
+    // A uniform is set on the program that is current, and these are called
+    // from places that are not drawing - the lights are set once a frame,
+    // before anything is drawn - so each of them says which program it means.
+    bool ensure()
+    {
+      if(!_program) return false;
+      glApi::UseProgram(_program);
+      return true;
+    }
 
     // the array uniforms are set one element at a time, which needs the
     // location of that element rather than of the array
@@ -232,6 +245,9 @@ void main()
     if(!build()) return false;
     glApi::UseProgram(_program);
     glApi::BindVertexArray(_vao);
+    // OpenGL ES always takes the point size from the shader; a desktop core
+    // profile only does when it is told to
+    if(!glApi::isES()) glEnable(GL_PROGRAM_POINT_SIZE);
     return true;
   }
 
@@ -241,12 +257,13 @@ void main()
     // deleting them now would be deleting names in whichever context is
     // current, which are not ours
     _program = _vao = 0;
+    _streamVertices = _streamColors = 0;
     _tried = false;
   }
 
   void setMatrices(const double modelview[16], const double projection[16])
   {
-    if(!_program) return;
+    if(!ensure()) return;
     float m[16], p[16];
     for(int i = 0; i < 16; i++) {
       m[i] = (float)modelview[i];
@@ -287,7 +304,7 @@ void main()
   void setLight(int i, const double position[4], const float ambient[3],
                 const float diffuse[3], const float specular[3])
   {
-    if(!_program || i < 0 || i > 5) return;
+    if(i < 0 || i > 5 || !ensure()) return;
     const float black[3] = {0.f, 0.f, 0.f};
     float p[4] = {(float)position[0], (float)position[1], (float)position[2],
                   (float)position[3]};
@@ -301,13 +318,13 @@ void main()
 
   void setLightOff(int i)
   {
-    if(!_program || i < 0 || i > 5) return;
+    if(i < 0 || i > 5 || !ensure()) return;
     glApi::Uniform1i(element("uLightOn", i), 0);
   }
 
   void setMaterial(double shine, double shineExponent)
   {
-    if(!_program) return;
+    if(!ensure()) return;
     float s[3] = {(float)shine, (float)shine, (float)shine};
     glApi::Uniform3fv(_u.specular, 1, s);
     // the fixed function exponent is in [0, 128]
@@ -316,14 +333,14 @@ void main()
 
   void setLighting(bool on, bool twoSide)
   {
-    if(!_program) return;
+    if(!ensure()) return;
     glApi::Uniform1i(_u.lighting, on ? 1 : 0);
     glApi::Uniform1i(_u.twoSide, twoSide ? 1 : 0);
   }
 
   void setClipPlane(int i, const double plane[4])
   {
-    if(!_program || i < 0 || i > 5) return;
+    if(i < 0 || i > 5 || !ensure()) return;
     float p[4] = {(float)plane[0], (float)plane[1], (float)plane[2],
                   (float)plane[3]};
     glApi::Uniform4fv(element("uClipPlane", i), 1, p);
@@ -332,19 +349,19 @@ void main()
 
   void setClipPlaneOff(int i)
   {
-    if(!_program || i < 0 || i > 5) return;
+    if(i < 0 || i > 5 || !ensure()) return;
     glApi::Uniform1i(element("uClipOn", i), 0);
   }
 
   void setColorArray(bool on)
   {
-    if(!_program) return;
+    if(!ensure()) return;
     glApi::Uniform1i(_u.colorArray, on ? 1 : 0);
   }
 
   void setColor(const unsigned char color[4])
   {
-    if(!_program) return;
+    if(!ensure()) return;
     float c[4] = {color[0] / 255.f, color[1] / 255.f, color[2] / 255.f,
                   color[3] / 255.f};
     glApi::Uniform4fv(_u.color, 1, c);
@@ -352,7 +369,34 @@ void main()
 
   void setPointSize(double size)
   {
-    if(!_program) return;
+    if(!ensure()) return;
     glApi::Uniform1f(_u.pointSize, (float)size);
+  }
+
+  void streamArrays(const float *vertices, const unsigned char *colors,
+                    int count)
+  {
+    if(count <= 0 || !ensure()) return;
+    if(!_streamVertices) glApi::GenBuffers(1, &_streamVertices);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamVertices);
+    glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 3 * sizeof(float),
+                      vertices, GL_STREAM_DRAW);
+    glApi::EnableVertexAttribArray(ATTRIB_VERTEX);
+    glApi::VertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, 0,
+                               nullptr);
+    glApi::DisableVertexAttribArray(ATTRIB_NORMAL);
+    if(colors) {
+      if(!_streamColors) glApi::GenBuffers(1, &_streamColors);
+      glApi::BindBuffer(GL_ARRAY_BUFFER, _streamColors);
+      glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 4, colors,
+                        GL_STREAM_DRAW);
+      glApi::EnableVertexAttribArray(ATTRIB_COLOR);
+      glApi::VertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0,
+                                 nullptr);
+    }
+    else {
+      glApi::DisableVertexAttribArray(ATTRIB_COLOR);
+    }
+    glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
   }
 } // namespace glShader

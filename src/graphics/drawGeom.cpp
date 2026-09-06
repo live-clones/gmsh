@@ -107,7 +107,7 @@ static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
   gmshPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
   gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
   gmshBindArrays(&xyz[0], &col[0]);
-  glDrawArrays(GL_POINTS, 0, (GLsizei)(xyz.size() / 3));
+  gmshDrawArrays(GL_POINTS, (int)(xyz.size() / 3));
   gmshUnbindArrays();
   return true;
 }
