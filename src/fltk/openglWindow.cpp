@@ -224,6 +224,7 @@ void openglWindow::draw()
     // entry points have to be asked of the new one
     VertexArray::invalidateBuffers();
     glApi::reset();
+    gmshResetMatrices();
     // say what the context that has just been created can do: the pipeline
     // that will be drawn with is decided by what is there, not by what was
     // asked for
@@ -243,13 +244,13 @@ void openglWindow::draw()
   if(lassoMode) {
     // draw the zoom or selection lasso on top of the current scene (without
     // using overlays!)
-    glMatrixMode(GL_PROJECTION);
+    gmshMatrixMode(GMSH_PROJECTION);
     double px[16];
     glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
                     _ctx->viewport[3], -1., 1., px);
-    glLoadMatrixd(px);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    gmshLoadMatrix(px);
+    gmshMatrixMode(GMSH_MODELVIEW);
+    gmshLoadIdentity();
     gmshColor3d(1., 1., 1.);
     glDisable(GL_DEPTH_TEST);
     glDrawBuffer(GL_FRONT_AND_BACK);
@@ -328,18 +329,18 @@ void openglWindow::draw()
       Camera *cam = &(_ctx->camera);
       if(!cam->on) cam->init();
       cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
-      glMatrixMode(GL_PROJECTION);
+      gmshMatrixMode(GMSH_PROJECTION);
       double frustum[16], view[16];
       glMatrix::frustum(cam->glFleft, cam->glFright, cam->glFbottom,
                         cam->glFtop, cam->glFnear, cam->glFfar * cam->Lc,
                         frustum);
-      glLoadMatrixd(frustum);
+      gmshLoadMatrix(frustum);
 
-      glMatrixMode(GL_MODELVIEW);
+      gmshMatrixMode(GMSH_MODELVIEW);
       glDrawBuffer(GL_BACK);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       cameraView(cam, 0., 0., 0., view);
-      glLoadMatrixd(view);
+      gmshLoadMatrix(view);
       _ctx->draw3d();
       _ctx->draw2d();
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active &&
@@ -354,7 +355,7 @@ void openglWindow::draw()
       cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
       XYZ eye = cam->eyesep / 2.0 * cam->right;
       // right eye
-      glMatrixMode(GL_PROJECTION);
+      gmshMatrixMode(GMSH_PROJECTION);
       double frustum[16], view[16];
       double left =
         -cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
@@ -364,31 +365,31 @@ void openglWindow::draw()
       double bottom = -cam->wd2;
       glMatrix::frustum(left, right, bottom, top, cam->glFnear,
                         cam->glFfar * cam->Lc, frustum);
-      glLoadMatrixd(frustum);
-      glMatrixMode(GL_MODELVIEW);
+      gmshLoadMatrix(frustum);
+      gmshMatrixMode(GMSH_MODELVIEW);
       glDrawBuffer(GL_BACK_RIGHT);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       cameraView(cam, eye.x, eye.y, eye.z, view);
-      glLoadMatrixd(view);
+      gmshLoadMatrix(view);
       _ctx->draw3d();
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
       // left eye
-      glMatrixMode(GL_PROJECTION);
+      gmshMatrixMode(GMSH_PROJECTION);
       left = -cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
       right = cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
       top = cam->wd2;
       bottom = -cam->wd2;
       glMatrix::frustum(left, right, bottom, top, cam->glFnear,
                         cam->glFfar * cam->Lc, frustum);
-      glLoadMatrixd(frustum);
+      gmshLoadMatrix(frustum);
 
-      glMatrixMode(GL_MODELVIEW);
+      gmshMatrixMode(GMSH_MODELVIEW);
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       cameraView(cam, -eye.x, -eye.y, -eye.z, view);
-      glLoadMatrixd(view);
+      gmshLoadMatrix(view);
       _ctx->draw3d();
       _ctx->draw2d();
       _drawScreenMessage();

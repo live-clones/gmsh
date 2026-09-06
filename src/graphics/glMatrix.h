@@ -27,6 +27,9 @@ namespace glMatrix {
 
   void translate(double x, double y, double z, double m[16]);
   void scale(double x, double y, double z, double m[16]);
+  // the rotation of angle degrees about the axis (x, y, z), which does not
+  // have to be a unit vector
+  void rotate(double angle, double x, double y, double z, double m[16]);
   void ortho(double left, double right, double bottom, double top, double zNear,
              double zFar, double m[16]);
   void frustum(double left, double right, double bottom, double top,

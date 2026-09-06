@@ -55,8 +55,8 @@ void Navigator::drawIcons()
   double dy = 1.25 * l;
 
   ctx->fix2dCoordinates(&dx, &dy);
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshPushMatrix();
   gmshLineWidth((float)CTX::instance()->lineWidth);
   gl2psLineWidth((float)(CTX::instance()->lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
@@ -600,7 +600,7 @@ void Navigator::drawIcons()
 
   glDisable(GL_BLEND);
   glDisable(GL_LINE_SMOOTH);
-  glPopMatrix();
+  gmshPopMatrix();
 }
 
 void Navigator::move()

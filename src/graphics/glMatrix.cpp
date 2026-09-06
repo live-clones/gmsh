@@ -99,6 +99,27 @@ namespace glMatrix {
     m[10] = z;
   }
 
+  void rotate(double angle, double x, double y, double z, double m[16])
+  {
+    identity(m);
+    double n = std::sqrt(x * x + y * y + z * z);
+    if(n == 0.) return;
+    x /= n;
+    y /= n;
+    z /= n;
+    double c = std::cos(angle * M_PI / 180.), s = std::sin(angle * M_PI / 180.);
+    double c1 = 1. - c;
+    m[0] = x * x * c1 + c;
+    m[1] = y * x * c1 + z * s;
+    m[2] = x * z * c1 - y * s;
+    m[4] = x * y * c1 - z * s;
+    m[5] = y * y * c1 + c;
+    m[6] = y * z * c1 + x * s;
+    m[8] = x * z * c1 + y * s;
+    m[9] = y * z * c1 - x * s;
+    m[10] = z * z * c1 + c;
+  }
+
   void ortho(double left, double right, double bottom, double top,
              double zNear, double zFar, double m[16])
   {

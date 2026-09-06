@@ -102,4 +102,35 @@ inline bool gmshPolygonFilled()
   return mode[1] == GL_FILL;
 }
 
+// The projection and the modelview matrix, and the stack the drawing code
+// saves them on while it draws something in a space of its own - the
+// background, the 2D overlay, a glyph in its own frame.
+//
+// glMatrix already computes the camera transformations; what is left here is
+// the state OpenGL was keeping on top of them, which a core profile does not
+// keep either: which of the two matrices the calls apply to, the stack, and
+// the compositions (translate, scale, rotate) the glyph drawing does. The
+// matrices are ours, and are handed to OpenGL as they change; a shader
+// pipeline would put them in a uniform instead.
+//
+// Layout and conventions are those of glMatrix and of OpenGL: column major,
+// and a composition multiplies the current matrix on the right, so that it
+// applies to the point first.
+enum { GMSH_MODELVIEW = 0, GMSH_PROJECTION = 1 };
+
+void gmshMatrixMode(int kind);
+int gmshMatrixMode();
+void gmshPushMatrix();
+void gmshPopMatrix();
+void gmshLoadIdentity();
+void gmshLoadMatrix(const double m[16]);
+void gmshMultMatrix(const double m[16]);
+void gmshTranslate(double x, double y, double z);
+void gmshScale(double x, double y, double z);
+void gmshRotate(double angle, double x, double y, double z);
+// the current matrix of either stack
+const double *gmshMatrix(int kind);
+// forget the stacks, e.g. because the OpenGL context was recreated
+void gmshResetMatrices();
+
 #endif

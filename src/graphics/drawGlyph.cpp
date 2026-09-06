@@ -234,23 +234,23 @@ void drawContext::drawImage(const std::string &name, double x, double y,
   }
 
   GLboolean valid = GL_TRUE;
-  GLint matrixMode = 0;
+  int matrixMode = 0;
   if(billboard) {
     glRasterPos3d(x, y, z);
     GLfloat pos[4];
     glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-    glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+    matrixMode = gmshMatrixMode();
+    gmshMatrixMode(GMSH_PROJECTION);
+    gmshPushMatrix();
+    gmshLoadIdentity();
+    gmshMatrixMode(GMSH_MODELVIEW);
+    gmshPushMatrix();
+    gmshLoadIdentity();
     double fact = highResolutionPixelFactor();
     double px[16];
     glMatrix::ortho(viewport[0], viewport[2] * fact, viewport[1],
                     viewport[3] * fact, -1., 1., px);
-    glLoadMatrixd(px);
+    gmshLoadMatrix(px);
     x = pos[0];
     y = pos[1];
     z = 0;
@@ -309,10 +309,10 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     glDisable(GL_BLEND);
   }
   if(billboard) {
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(matrixMode);
+    gmshPopMatrix();
+    gmshMatrixMode(GMSH_PROJECTION);
+    gmshPopMatrix();
+    gmshMatrixMode(matrixMode);
   }
 }
 
@@ -357,14 +357,16 @@ void drawContext::drawCube(double x, double y, double z, float v0[3],
 {
  
   if(light) gmshLighting(true);
-  glPushMatrix();
+  gmshPushMatrix();
 
   GLfloat m[16] = {v0[0],      v0[1],      v0[2],      .0f,   v1[0], v1[1],
                    v1[2],      .0f,        v2[0],      v2[1], v2[2], .0f,
                    (GLfloat)x, (GLfloat)y, (GLfloat)z, 1.f};
-  glMultMatrixf(m);
+  double md[16];
+  for(int i = 0; i < 16; i++) md[i] = m[i];
+  gmshMultMatrix(md);
   _drawBox();
-  glPopMatrix();
+  gmshPopMatrix();
   gmshLighting(false);
 }
 
@@ -372,10 +374,10 @@ void drawContext::drawSphere(double R, double x, double y, double z, int n1,
                              int n2, int light)
 {
   if(light) gmshLighting(true);
-  glPushMatrix();
-  glTranslated(x, y, z);
+  gmshPushMatrix();
+  gmshTranslate(x, y, z);
   gluSphere(_quadric, R, n1, n2);
-  glPopMatrix();
+  gmshPopMatrix();
   gmshLighting(false);
 }
 
@@ -384,7 +386,7 @@ void drawContext::drawEllipse(double x, double y, double z, float v0[3],
                               float v1[3], int light)
 {
   if(light) gmshLighting(true);
-  glPushMatrix();
+  gmshPushMatrix();
   GLfloat m[16] = {v0[0],
                    v0[1],
                    v0[2],
@@ -401,9 +403,11 @@ void drawContext::drawEllipse(double x, double y, double z, float v0[3],
                    (GLfloat)y,
                    (GLfloat)z,
                    1.f};
-  glMultMatrixf(m);
+  double md[16];
+  for(int i = 0; i < 16; i++) md[i] = m[i];
+  gmshMultMatrix(md);
   glCallList(_displayLists + 2);
-  glPopMatrix();
+  gmshPopMatrix();
   gmshLighting(false);
 }
 
@@ -411,13 +415,15 @@ void drawContext::drawEllipsoid(double x, double y, double z, float v0[3],
                                 float v1[3], float v2[3], int light)
 {
   if(light) gmshLighting(true);
-  glPushMatrix();
+  gmshPushMatrix();
   GLfloat m[16] = {v0[0],      v0[1],      v0[2],      .0f,   v1[0], v1[1],
                    v1[2],      .0f,        v2[0],      v2[1], v2[2], .0f,
                    (GLfloat)x, (GLfloat)y, (GLfloat)z, 1.f};
-  glMultMatrixf(m);
+  double md[16];
+  for(int i = 0; i < 16; i++) md[i] = m[i];
+  gmshMultMatrix(md);
   glCallList(_displayLists + 0);
-  glPopMatrix();
+  gmshPopMatrix();
   gmshLighting(false);
 }
 
@@ -426,11 +432,11 @@ void drawContext::drawSphere(double size, double x, double y, double z,
 {
   double ss = size * pixel_equiv_x / s[0]; // size is in pixels
   if(light) gmshLighting(true);
-  glPushMatrix();
-  glTranslated(x, y, z);
-  glScaled(ss, ss, ss);
+  gmshPushMatrix();
+  gmshTranslate(x, y, z);
+  gmshScale(ss, ss, ss);
   glCallList(_displayLists + 0);
-  glPopMatrix();
+  gmshPopMatrix();
   gmshLighting(false);
 }
 
@@ -459,12 +465,12 @@ void drawContext::drawTaperedCylinder(double width, double val1, double val2,
   }
   phi = 180. * myacos(cosphi) / M_PI;
 
-  glPushMatrix();
-  glTranslated(x[0], y[0], z[0]);
-  glRotated(phi, axis[0], axis[1], axis[2]);
+  gmshPushMatrix();
+  gmshTranslate(x[0], y[0], z[0]);
+  gmshRotate(phi, axis[0], axis[1], axis[2]);
   gluCylinder(_quadric, radius1, radius2, length,
               CTX::instance()->quadricSubdivisions, 1);
-  glPopMatrix();
+  gmshPopMatrix();
 
   gmshLighting(false);
 }
@@ -491,12 +497,12 @@ void drawContext::drawCylinder(double width, double *x, double *y, double *z,
   }
   phi = 180. * myacos(cosphi) / M_PI;
 
-  glPushMatrix();
-  glTranslated(x[0], y[0], z[0]);
-  glRotated(phi, axis[0], axis[1], axis[2]);
+  gmshPushMatrix();
+  gmshTranslate(x[0], y[0], z[0]);
+  gmshRotate(phi, axis[0], axis[1], axis[2]);
   gluCylinder(_quadric, radius, radius, length,
               CTX::instance()->quadricSubdivisions, 1);
-  glPopMatrix();
+  gmshPopMatrix();
 
   gmshLighting(false);
 }
@@ -684,12 +690,12 @@ void drawContext::drawArrow3d(double x, double y, double z, double dx,
   double phi = 180. * myacos(cosphi) / M_PI;
 
   if(light) gmshLighting(true);
-  glPushMatrix();
-  glTranslated(x, y, z);
-  glScaled(length, length, length);
-  glRotated(phi, axis[0], axis[1], axis[2]);
+  gmshPushMatrix();
+  gmshTranslate(x, y, z);
+  gmshScale(length, length, length);
+  gmshRotate(phi, axis[0], axis[1], axis[2]);
   glCallList(_displayLists + 1);
-  glPopMatrix();
+  gmshPopMatrix();
   gmshLighting(false);
 }
 

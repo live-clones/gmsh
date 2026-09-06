@@ -373,8 +373,8 @@ void drawContext::drawSmallAxes()
   double xx, xy, yx, yy, zx, zy;
 
   if(CTX::instance()->camera) {
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    gmshMatrixMode(GMSH_MODELVIEW);
+    gmshLoadIdentity();
     double eye[3] = {camera.position.x, camera.position.y, camera.position.z};
     double target[3] = {camera.target.x, camera.target.y, camera.target.z};
     double up[3] = {camera.up.x, camera.up.y, camera.up.z};

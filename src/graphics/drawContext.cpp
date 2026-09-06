@@ -158,7 +158,12 @@ void drawContext::createQuadricsAndDisplayLists()
             CTX::instance()->quadricSubdivisions);
   glEndList();
 
-  // display list 1 (arrow)
+  // display list 1 (arrow). The two translations below are the one place where
+  // a matrix operation is a command rather than state: they are recorded into
+  // the list and replayed against whatever matrix is current when it is
+  // called, which is not something gmshTranslate() can do, as it composes the
+  // matrix here and now. They go when the display lists do - a core profile
+  // has neither.
   glNewList(_displayLists + 1, GL_COMPILE);
   glTranslated(0., 0., CTX::instance()->arrowRelStemLength);
   if(CTX::instance()->arrowRelHeadRadius > 0 &&
@@ -533,7 +538,7 @@ void drawContext::draw2d()
   glDisable(GL_DEPTH_TEST);
   for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
-  glMatrixMode(GL_PROJECTION);
+  gmshMatrixMode(GMSH_PROJECTION);
 
   // in pixels, so we can draw some 3D glyphs, and with a shift that makes the
   // 2D primitives appear "in front" in GL2PS
@@ -546,10 +551,10 @@ void drawContext::draw2d()
                         CTX::instance()->clipFactor,
                       front);
   glMatrix::multiply(px, front, m);
-  glLoadMatrixd(m);
-  glMatrixMode(GL_MODELVIEW);
+  gmshLoadMatrix(m);
+  gmshMatrixMode(GMSH_MODELVIEW);
 
-  glLoadIdentity();
+  gmshLoadIdentity();
   drawGraph2d(false);
   drawText2d();
   if(CTX::instance()->post.draw && !CTX::instance()->stereo) drawScales();
@@ -810,8 +815,8 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 
   if(CTX::instance()->camera) { // if we use the camera mode
     glDisable(GL_DEPTH_TEST);
-    glPushMatrix();
-    glLoadIdentity();
+    gmshPushMatrix();
+    gmshLoadIdentity();
     double w = (double)viewport[2];
     double h = (double)viewport[3];
     double ratio = w / h;
@@ -826,7 +831,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     gmshVertex3i((int)dx, (int)dy, (int)dz);
     gmshVertex3i((int)-dx, (int)dy, (int)dz);
     gmshEnd();
-    glPopMatrix();
+    gmshPopMatrix();
     glEnable(GL_DEPTH_TEST);
   }
   else if(!CTX::instance()->camera) { // if not in camera mode
@@ -841,7 +846,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       clip_far = 75. * CTX::instance()->clipFactor * zmax;
     }
     // setup projection matrix
-    glMatrixMode(GL_PROJECTION);
+    gmshMatrixMode(GMSH_PROJECTION);
 
     // restrict picking to a rectangular region around xpick,ypick
     double pick[16];
@@ -856,7 +861,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
         CTX::instance()->bgImageFileName.size()) &&
        (!CTX::instance()->printing || CTX::instance()->print.background)) {
       glDisable(GL_DEPTH_TEST);
-      glPushMatrix();
+      gmshPushMatrix();
       // the z values and the translation are only needed for GL2PS, which does
       // not understand "no depth test" (hence we must make sure that we draw
       // the background behind the rest of the scene)
@@ -865,15 +870,15 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
                       clip_near, clip_far, bg);
       glMatrix::translate(0., 0., -0.99 * clip_far, back);
       glMatrix::multiply(bg, back, m);
-      glLoadMatrixd(m);
+      gmshLoadMatrix(m);
       drawBackgroundGradient();
       // hack for GL2PS (to make sure that the image is in front of the
       // gradient)
       glMatrix::translate(0., 0., -0.98 * clip_far, back);
       glMatrix::multiply(bg, back, m);
-      glLoadMatrixd(m);
+      gmshLoadMatrix(m);
       drawBackgroundImage(false);
-      glPopMatrix();
+      gmshPopMatrix();
       glEnable(GL_DEPTH_TEST);
     }
 
@@ -882,10 +887,10 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       glMatrix::ortho(vxmin, vxmax, vymin, vymax, clip_near, clip_far,
                       projection);
       glMatrix::multiply(pick, projection, _projection);
-      glLoadMatrixd(_projection);
-      glMatrixMode(GL_MODELVIEW);
+      gmshLoadMatrix(_projection);
+      gmshMatrixMode(GMSH_MODELVIEW);
       glMatrix::identity(_modelBase);
-      glLoadMatrixd(_modelBase);
+      gmshLoadMatrix(_modelBase);
     }
     else {
       // recenter the model such that the perspective is always at the center of
@@ -900,25 +905,25 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       glMatrix::frustum(vxmin, vxmax, vymin, vymax, clip_near, clip_far,
                         projection);
       glMatrix::multiply(pick, projection, _projection);
-      glLoadMatrixd(_projection);
-      glMatrixMode(GL_MODELVIEW);
+      gmshLoadMatrix(_projection);
+      gmshMatrixMode(GMSH_MODELVIEW);
       double coef = (clip_far / clip_near) / 3.;
       double tr[16], sc[16];
       glMatrix::translate(-coef * t_init[0], -coef * t_init[1],
                           -coef * clip_near, tr);
       glMatrix::scale(coef, coef, coef, sc);
       glMatrix::multiply(tr, sc, _modelBase);
-      glLoadMatrixd(_modelBase);
+      gmshLoadMatrix(_modelBase);
     }
   }
 }
 
 void drawContext::initRenderModel()
 {
-  glPushMatrix();
-  glLoadIdentity();
-  glScaled(s[0], s[1], s[2]);
-  glTranslated(t[0], t[1], t[2]);
+  gmshPushMatrix();
+  gmshLoadIdentity();
+  gmshScale(s[0], s[1], s[2]);
+  gmshTranslate(t[0], t[1], t[2]);
 
   for(int i = 0; i < 6; i++) {
     if(CTX::instance()->light[i]) {
@@ -971,7 +976,7 @@ void drawContext::initRenderModel()
     }
   }
 
-  glPopMatrix();
+  gmshPopMatrix();
 
   // ambient and diffuse material colors track the current colour automatically
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
@@ -1025,8 +1030,8 @@ void drawContext::initPosition(bool saveMatrices)
   glMatrix::multiply(b, toCenter, a);
   glMatrix::multiply(a, rot, b);
   glMatrix::multiply(b, fromCenter, a);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadMatrixd(a);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshLoadMatrix(a);
 
   // store the projection and modelview matrices at this precise moment (so that
   // we can use them at any later time, even if the context has changed, i.e.,
@@ -1185,7 +1190,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glClearColor(0., 0., 0., 0.);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glPushMatrix();
+  gmshPushMatrix();
   initProjection();
   initPosition(false);
   drawGeom();
@@ -1200,16 +1205,16 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   // current at the time, hide the points from the picking pass.
   glDisable(GL_DEPTH_TEST);
   for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
-  glMatrixMode(GL_PROJECTION);
+  gmshMatrixMode(GMSH_PROJECTION);
   double px2d[16];
   glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3], -100.,
                   100., px2d);
-  glLoadMatrixd(px2d);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+  gmshLoadMatrix(px2d);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshLoadIdentity();
   drawGraph2d(false);
   drawText2d();
-  glPopMatrix();
+  gmshPopMatrix();
 
   _pickCache.assign((std::size_t)4 * fw * fh, 0);
   _pickCacheDepth.assign((std::size_t)fw * fh, 1.f);

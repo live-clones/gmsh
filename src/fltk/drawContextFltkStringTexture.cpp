@@ -63,23 +63,23 @@ public:
     fl_delete_offscreen(offscreen);
 
     // setup matrices
-    GLint matrixMode;
+    int matrixMode;
     GLuint textureId;
-    glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+    matrixMode = gmshMatrixMode();
+    gmshMatrixMode(GMSH_PROJECTION);
+    gmshPushMatrix();
+    gmshLoadIdentity();
+    gmshMatrixMode(GMSH_MODELVIEW);
+    gmshPushMatrix();
+    gmshLoadIdentity();
 
     // FIXME: this is not correct with high-resolution graphics, as w(), h() are
     // in FLTK coordinates, and glRasterPos uses true pixels.
     // The size of the QUAD needs to be changed, too.
     float winw = Fl_Window::current()->w();
     float winh = Fl_Window::current()->h();
-    glScalef(2.0f / winw, 2.0f / winh, 1.0f);
-    glTranslatef(-winw / 2.0f, -winh / 2.0f, 0.0f);
+    gmshScale(2. / winw, 2. / winh, 1.);
+    gmshTranslate(-winw / 2., -winh / 2., 0.);
 
     // write the texture on screen
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
@@ -98,7 +98,7 @@ public:
 
     pos = 0;
     for(auto it = _elements.begin(); it != _elements.end(); ++it) {
-      glTranslatef(it->x, it->y, it->z);
+      gmshTranslate(it->x, it->y, it->z);
       gmshColor4f(it->r, it->g, it->b, it->alpha);
       int Lx = it->width;
       int Ly = it->height;
@@ -113,17 +113,17 @@ public:
       gmshVertex2f(0.0f, 0.0f);
       gmshEnd();
       pos += Lx;
-      glTranslatef(-it->x, -it->y, -it->z);
+      gmshTranslate(-it->x, -it->y, -it->z);
     }
     glDeleteTextures(1, &textureId);
 
     glPopAttrib();
 
     // reset original matrices
-    glPopMatrix(); // GL_MODELVIEW
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(matrixMode);
+    gmshPopMatrix(); // GL_MODELVIEW
+    gmshMatrixMode(GMSH_PROJECTION);
+    gmshPopMatrix();
+    gmshMatrixMode(matrixMode);
     _elements.clear();
     _maxHeight = 0;
     _totalWidth = 0;

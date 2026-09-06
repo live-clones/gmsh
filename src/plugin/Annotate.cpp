@@ -69,12 +69,12 @@ void GMSH_AnnotatePlugin::draw(void *context)
     glGetDoublev(GL_PROJECTION_MATRIX, projection);
     glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+    gmshMatrixMode(GMSH_PROJECTION);
+    gmshLoadIdentity();
     glOrtho((double)ctx->viewport[0], (double)ctx->viewport[2],
             (double)ctx->viewport[1], (double)ctx->viewport[3], -1., 1.);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    gmshMatrixMode(GMSH_MODELVIEW);
+    gmshLoadIdentity();
     ctx->fix2dCoordinates(&X, &Y);
     ctx->drawString(AnnotateOptions_String[0].def, X, Y, 0., style);
     // draw 10-pixel marker
@@ -85,10 +85,10 @@ void GMSH_AnnotatePlugin::draw(void *context)
     gmshVertex2d(X, Y + 10);
     gmshEnd();
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixd(projection);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixd(modelview);
+    gmshMatrixMode(GMSH_PROJECTION);
+    gmshLoadMatrix(projection);
+    gmshMatrixMode(GMSH_MODELVIEW);
+    gmshLoadMatrix(modelview);
   }
 #endif
 }

@@ -658,18 +658,18 @@ void CreateOutputFile(const std::string &fileName, int format,
           double modelview[16], projection[16];
           glGetDoublev(GL_PROJECTION_MATRIX, projection);
           glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-          glMatrixMode(GL_PROJECTION);
-          glLoadIdentity();
+          gmshMatrixMode(GMSH_PROJECTION);
+          gmshLoadIdentity();
           glOrtho((double)pixel_viewport[0], (double)pixel_viewport[2],
                   (double)pixel_viewport[1], (double)pixel_viewport[3], -1., 1.);
-          glMatrixMode(GL_MODELVIEW);
-          glLoadIdentity();
+          gmshMatrixMode(GMSH_MODELVIEW);
+          gmshLoadIdentity();
           glRasterPos2d(0, 0);
           gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, buffer.getPixels());
-          glMatrixMode(GL_PROJECTION);
-          glLoadMatrixd(projection);
-          glMatrixMode(GL_MODELVIEW);
-          glLoadMatrixd(modelview);
+          gmshMatrixMode(GMSH_PROJECTION);
+          gmshLoadMatrix(projection);
+          gmshMatrixMode(GMSH_MODELVIEW);
+          gmshLoadMatrix(modelview);
         }
         else{
           drawContext::global()->drawCurrentOpenglWindow(true);
