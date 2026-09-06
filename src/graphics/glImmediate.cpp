@@ -37,6 +37,36 @@ namespace {
   GLenum _batchMode = GL_POINTS;
   std::vector<float> _batchPos, _batchNrm;
   std::vector<unsigned char> _batchCol;
+
+  // What the primitives in the batch were asked to be drawn with. A call that
+  // sets one of these does not end the batch: only a primitive that does not
+  // match does, so that the toggling a glyph does around itself - lighting on
+  // for its faces, off again afterwards - costs nothing when the next glyph
+  // asks for the same thing again.
+  struct BatchState {
+    double modelview[16], projection[16];
+    double clip[6][4];
+    bool clipOn[6];
+    bool lighting, twoSide;
+    double pointSize;
+    bool operator!=(const BatchState &o) const
+    {
+      if(lighting != o.lighting || twoSide != o.twoSide ||
+         pointSize != o.pointSize)
+        return true;
+      for(int i = 0; i < 16; i++)
+        if(modelview[i] != o.modelview[i] || projection[i] != o.projection[i])
+          return true;
+      for(int i = 0; i < 6; i++) {
+        if(clipOn[i] != o.clipOn[i]) return true;
+        if(clipOn[i])
+          for(int j = 0; j < 4; j++)
+            if(clip[i][j] != o.clip[i][j]) return true;
+      }
+      return false;
+    }
+  };
+  BatchState _batchState;
 } // namespace
 
 namespace {
@@ -72,7 +102,6 @@ void gmshColor4ubv(const void *col)
 
 void gmshLighting(bool on)
 {
-  if(_lighting != on) gmshFlushImmediate();
   _lighting = on;
   if(gmshUseShaders()) return;
   if(on)
@@ -85,7 +114,6 @@ bool gmshLightingEnabled() { return _lighting; }
 
 void gmshLightTwoSide(bool on)
 {
-  if(_twoSide != on) gmshFlushImmediate();
   _twoSide = on;
   if(gmshUseShaders()) return;
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, on ? GL_TRUE : GL_FALSE);
@@ -95,7 +123,6 @@ bool gmshLightTwoSideEnabled() { return _twoSide; }
 
 void gmshPointSize(double s)
 {
-  if(_pointSize != s) gmshFlushImmediate();
   _pointSize = s;
   // the shader writes gl_PointSize instead
   if(!gmshUseShaders()) glPointSize((float)s);
@@ -106,7 +133,6 @@ double gmshCurrentPointSize() { return _pointSize; }
 void gmshClipPlane(int i, const double plane[4])
 {
   if(i < 0 || i > 5) return;
-  gmshFlushImmediate();
   for(int j = 0; j < 4; j++) _clipPlane[i][j] = plane[j];
   // OpenGL keeps the plane in eye coordinates: the equation is transformed by
   // the inverse of the modelview matrix that is current when it is given,
@@ -128,7 +154,6 @@ void gmshClipPlane(int i, const double plane[4])
 void gmshClipPlaneOn(int i, bool on)
 {
   if(i < 0 || i > 5) return;
-  if(_clipOn[i] != on) gmshFlushImmediate();
   _clipOn[i] = on;
   if(gmshUseShaders()) return;
   if(on)
@@ -167,7 +192,6 @@ namespace {
   // pipeline reads it
   void _apply(int kind)
   {
-    gmshFlushImmediate();
     // the shader is handed the matrices as uniforms; a core profile has no
     // matrix stack of its own to load them into
     if(gmshUseShaders()) return;
@@ -180,7 +204,6 @@ namespace {
 
 void gmshMatrixMode(int kind)
 {
-  gmshFlushImmediate();
   _mode = (kind == GMSH_PROJECTION) ? GMSH_PROJECTION : GMSH_MODELVIEW;
   if(gmshUseShaders()) return;
   glMatrixMode(_mode == GMSH_PROJECTION ? GL_PROJECTION : GL_MODELVIEW);
@@ -188,11 +211,7 @@ void gmshMatrixMode(int kind)
 
 int gmshMatrixMode() { return _mode; }
 
-void gmshPushMatrix()
-{
-  gmshFlushImmediate();
-  _stack[_mode].push();
-}
+void gmshPushMatrix() { _stack[_mode].push(); }
 
 void gmshPopMatrix()
 {
@@ -333,11 +352,37 @@ void gmshFlushImmediate()
   _batchCol.clear();
 }
 
+namespace {
+  // what the state is right now, to be compared with the one the batch holds
+  BatchState _currentState()
+  {
+    BatchState b;
+    const double *m = gmshMatrix(GMSH_MODELVIEW);
+    const double *p = gmshMatrix(GMSH_PROJECTION);
+    for(int i = 0; i < 16; i++) {
+      b.modelview[i] = m[i];
+      b.projection[i] = p[i];
+    }
+    for(int i = 0; i < 6; i++) {
+      b.clipOn[i] = _clipOn[i];
+      for(int j = 0; j < 4; j++) b.clip[i][j] = _clipEye[i][j];
+    }
+    b.lighting = _lighting;
+    b.twoSide = _twoSide;
+    b.pointSize = _pointSize;
+    return b;
+  }
+} // namespace
+
 void gmshImEnd()
 {
   gmshCollecting = false;
   std::size_t num = _imPos.size() / 3;
   if(!num) return;
+
+  BatchState now = _currentState();
+  if(!_batchPos.empty() && now != _batchState) gmshFlushImmediate();
+  _batchState = now;
 
   // what the primitive becomes once it is made of independent points, lines or
   // triangles, which is what lets one draw hold several of them

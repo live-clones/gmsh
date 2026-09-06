@@ -1278,6 +1278,10 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
   // the lower ones in front: this keeps the depth order inside a dimension
   // while letting a point be picked through a surface.
   int d = (type < 0) ? 4 : (type > 4 ? 4 : type);
+  // the depth range is OpenGL's own state, which a batch of immediate mode
+  // primitives does not carry: what is waiting belongs to the object before
+  // this one and has to be drawn under its range
+  gmshFlushImmediate();
   glDepthRange(0.2 * d, 0.2 * d + 0.2);
 }
 
@@ -1380,6 +1384,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   }
 
   glDisable(GL_SCISSOR_TEST);
+  gmshFlushImmediate();
   glDepthRange(0., 1.);
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);

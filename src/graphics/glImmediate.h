@@ -213,9 +213,9 @@ bool gmshLightTwoSideEnabled();
 
 inline void gmshLineWidth(double w)
 {
-  // the width a line is drawn with is not per vertex: what is waiting was
-  // asked for with the old one
-  if(gmshCollecting || gmshUseShaders()) gmshFlushImmediate();
+  // the width a line is drawn with is OpenGL's own state, not something the
+  // batch carries: what is waiting was asked for with the old one
+  if(gmshUseShaders()) gmshFlushImmediate();
   glLineWidth((float)w);
 }
 void gmshPointSize(double s);
