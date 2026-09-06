@@ -48,6 +48,7 @@
 #include "FlGui.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
+#include "openglWindow.h"
 #include "optionWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -56,6 +57,22 @@
 #include "viewButton.h"
 #include "drawContextFltkCairo.h"
 #include "drawContextFltkStringTexture.h"
+#endif
+
+#if defined(HAVE_FLTK)
+// hand the graphic windows the visual the options now ask for; FLTK recreates
+// the OpenGL context of each of them whose value changed, and the vertex
+// buffers and the entry points that belonged to the old one are dropped when
+// the new one is first drawn into
+static void resetOpenglMode()
+{
+  if(!FlGui::available()) return;
+  int mode = openglWindowMode();
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+      FlGui::instance()->graph[i]->gl[j]->mode(mode);
+  if(FlGui::instance()->fullscreen) FlGui::instance()->fullscreen->mode(mode);
+}
 #endif
 
 // General routines for string options
@@ -2981,6 +2998,28 @@ double opt_general_vertex_buffer_objects(OPT_ARGS_NUM)
   return CTX::instance()->vertexBufferObjects;
 }
 
+double opt_general_shaders(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    int old = CTX::instance()->shaders;
+    CTX::instance()->shaders = (int)val;
+#if defined(HAVE_FLTK)
+    if(CTX::instance()->shaders != old) {
+      if(CTX::instance()->shaders)
+        Msg::Warning("The shader pipeline is not implemented yet: the scene "
+                     "will not be drawn");
+      resetOpenglMode();
+    }
+#endif
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[23]->value(
+      CTX::instance()->shaders);
+#endif
+  return CTX::instance()->shaders;
+}
+
 double opt_general_progress_meter_step(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { Msg::SetProgressMeterStep((int)val); }
@@ -3400,14 +3439,7 @@ double opt_general_double_buffer(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->db = (int)val;
 #if defined(HAVE_FLTK)
-    if(FlGui::available()) {
-      int mode =
-        FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-      if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->mode(mode);
-    }
+    resetOpenglMode();
 #endif
   }
 #if defined(HAVE_FLTK)
@@ -3422,14 +3454,7 @@ double opt_general_antialiasing(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->antialiasing = (int)val;
 #if defined(HAVE_FLTK)
-    if(FlGui::available()) {
-      int mode =
-        FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-      if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->mode(mode);
-    }
+    resetOpenglMode();
 #endif
   }
 #if defined(HAVE_FLTK)

@@ -86,6 +86,21 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
   FlGui::instance()->manip->update();
 }
 
+int openglWindowMode()
+{
+  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
+  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
+  if(CTX::instance()->stereo) {
+    mode |= FL_DOUBLE;
+    mode |= FL_STEREO;
+  }
+  // the shader pipeline needs a context that has shaders in it, which on macOS
+  // means a core profile - and a core profile cannot do fixed function at all,
+  // which is why the two pipelines cannot share one context
+  if(CTX::instance()->shaders) mode |= FL_OPENGL3;
+  return mode;
+}
+
 openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
@@ -209,6 +224,10 @@ void openglWindow::draw()
     // entry points have to be asked of the new one
     VertexArray::invalidateBuffers();
     glApi::reset();
+    // say what the context that has just been created can do: the pipeline
+    // that will be drawn with is decided by what is there, not by what was
+    // asked for
+    glApi::describe();
   }
 
   _ctx->viewport[0] = 0;

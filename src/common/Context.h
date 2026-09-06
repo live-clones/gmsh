@@ -325,6 +325,9 @@ public:
   }
   // draw the vertex arrays from OpenGL buffer objects instead of client memory
   int vertexBufferObjects;
+  // draw with the shader pipeline instead of the fixed function one; changing
+  // this recreates the OpenGL context, as a core profile cannot do both
+  int shaders;
   // polygon offset options
   int polygonOffset, polygonOffsetAlways;
   double polygonOffsetFactor, polygonOffsetUnits;

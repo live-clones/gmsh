@@ -75,6 +75,13 @@ class GFace;
 class GRegion;
 class MElement;
 
+// The FLTK visual the graphic windows ask for, built from the options that
+// decide it. Every one of those options recreates the OpenGL context when it
+// changes, which is what handing a different value to Fl_Gl_Window::mode()
+// does, so they all have to agree on what the value is: hence one function
+// rather than the same expression written out at each of them.
+int openglWindowMode();
+
 class openglWindow : public Fl_Gl_Window {
 private:
   static openglWindow *_lastHandled;

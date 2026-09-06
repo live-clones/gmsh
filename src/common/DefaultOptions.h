@@ -827,6 +827,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Y-axis scale factor" },
   { F,   "ScaleZ" , opt_general_scale2 , 1.0 ,
     "Z-axis scale factor" },
+  { F|O, "Shaders" , opt_general_shaders , 0. ,
+    "Draw with the OpenGL shader pipeline instead of the fixed function one? "
+    "(changing this recreates the OpenGL context; ignored if the OpenGL "
+    "implementation does not provide shaders)" },
   { F|O, "Shininess" , opt_general_shine , 0.4 ,
     "Material shininess" },
   { F|O, "ShininessExponent" , opt_general_shine_exponent , 40. ,
