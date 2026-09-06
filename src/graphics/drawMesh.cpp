@@ -19,6 +19,7 @@
 #include "MTrihedron.h"
 #include "MElementCut.h"
 #include "Context.h"
+#include "glyphList.h"
 #include "OS.h"
 #include "gl2ps.h"
 #include "VertexArray.h"
@@ -159,52 +160,113 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
                   v->z() + offset / ctx->s[2]);
 }
 
-static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
+// The spheres the nodes of a mesh entity are drawn with, collected once and
+// kept. A mesh holds one per node, so working out where each of them goes -
+// and, worse, whether the element it belongs to is visible - is not something
+// to do for every frame.
+//
+// What they depend on is the mesh itself, which the stamp below stands for,
+// the options that decide their size and colour, and the length a pixel stands
+// for, as the size is given in pixels. The labels are not collected: they are
+// worked out for every frame as they always were.
+static unsigned int _meshStamp = 0;
+
+static void bumpMeshGlyphStamp() { _meshStamp++; }
+
+// what a walk over the nodes of an entity is being asked to do
+enum { NODES_COLLECT = 1, NODES_POINTS = 2, NODES_LABELS = 4 };
+
+// the list an entity keeps its node spheres in, and whether it has to be
+// filled
+static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
 {
-  if(CTX::instance()->mesh.nodes) {
-    if(CTX::instance()->mesh.nodeType) {
-      for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
-        MVertex *v = e->mesh_vertices[i];
-        if(!v->getVisibility()) continue;
-        if(CTX::instance()->mesh.colorCarousel == 0 ||
-           CTX::instance()->mesh.volumeFaces ||
-           CTX::instance()->mesh.surfaceFaces) { // by element type
-          if(v->getPolynomialOrder() > 1)
-            gmshColor4ubv((const void *)&CTX::instance()->color.mesh.nodeSup);
-          else
-            gmshColor4ubv((const void *)&CTX::instance()->color.mesh.node);
-        }
-        else {
-          unsigned int col = getColorByEntity(e);
-          gmshColor4ubv((const void *)&col);
-        }
-        ctx->drawSphere(CTX::instance()->mesh.nodeSize, v->x(), v->y(), v->z(),
-                        CTX::instance()->mesh.light);
-      }
-    }
-    else {
-      gmshBegin(GL_POINTS);
-      for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
-        MVertex *v = e->mesh_vertices[i];
-        if(!v->getVisibility()) continue;
-        if(CTX::instance()->mesh.colorCarousel == 0 ||
-           CTX::instance()->mesh.volumeFaces ||
-           CTX::instance()->mesh.surfaceFaces) { // by element type
-          if(v->getPolynomialOrder() > 1)
-            gmshColor4ubv((const void *)&CTX::instance()->color.mesh.nodeSup);
-          else
-            gmshColor4ubv((const void *)&CTX::instance()->color.mesh.node);
-        }
-        else {
-          unsigned int col = getColorByEntity(e);
-          gmshColor4ubv((const void *)&col);
-        }
-        gmshVertex3d(v->x(), v->y(), v->z());
-      }
-      gmshEnd();
+  glyphToken tok;
+  tok.add(_meshStamp);
+  tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+  tok.add(CTX::instance()->mesh.nodeSize);
+  tok.add(CTX::instance()->mesh.nodeType);
+  tok.add(CTX::instance()->mesh.colorCarousel);
+  tok.add(CTX::instance()->mesh.volumeFaces);
+  tok.add(CTX::instance()->mesh.surfaceFaces);
+  tok.add(CTX::instance()->color.mesh.node);
+  tok.add(CTX::instance()->color.mesh.nodeSup);
+  tok.add(getColorByEntity(e));
+  // Which nodes the walk visits, as well as what they are drawn like: the
+  // stamp stands for the mesh changing, but an entity being hidden or only
+  // some of its elements being drawn does not have to go through that, and a
+  // list that was collected while nothing was visible would otherwise stand.
+  tok.add(e->getVisibility());
+  tok.add(e->getOnlySomeElementsVisible());
+  tok.add((double)e->mesh_vertices.size());
+  tok.add(CTX::instance()->mesh.qualityInf);
+  tok.add(CTX::instance()->mesh.qualitySup);
+  tok.add(CTX::instance()->mesh.radiusInf);
+  tok.add(CTX::instance()->mesh.radiusSup);
+  return !glyphCache::get(e, GLYPH_NODES, tok, g);
+}
+
+// The nodes of an entity: the spheres they are drawn with, and their labels.
+// walk() is how the caller visits them - all the nodes of the entity, or
+// those of its visible elements - and is asked for one thing at a time, so
+// that the spheres come out in the same order whether they had to be
+// collected for this frame or were already there.
+template <class W>
+static void drawNodes(drawContext *ctx, GEntity *e, W walk)
+{
+  int labels = CTX::instance()->mesh.nodeLabels ? NODES_LABELS : 0;
+  if(CTX::instance()->mesh.nodes && CTX::instance()->mesh.nodeType) {
+    glyphList *g;
+    if(getNodeGlyphs(ctx, e, g)) walk(g, NODES_COLLECT);
+    g->draw(ctx, CTX::instance()->mesh.light);
+    if(labels) walk(nullptr, labels);
+  }
+  else {
+    int what = (CTX::instance()->mesh.nodes ? NODES_POINTS : 0) | labels;
+    if(what) walk(nullptr, what);
+  }
+}
+
+// the colour a node is drawn in, which is the one of its order or the one of
+// the entity it belongs to
+static unsigned int getColorByVertex(GEntity *e, MVertex *v)
+{
+  if(CTX::instance()->mesh.colorCarousel == 0 ||
+     CTX::instance()->mesh.volumeFaces ||
+     CTX::instance()->mesh.surfaceFaces) { // by element type
+    if(v->getPolynomialOrder() > 1)
+      return CTX::instance()->color.mesh.nodeSup;
+    return CTX::instance()->color.mesh.node;
+  }
+  return getColorByEntity(e);
+}
+
+// The nodes of an entity. When they are drawn as spheres they are collected
+// into the list instead, and only when it says so - the list is kept between
+// frames. The labels are drawn either way.
+static void drawVerticesPerEntity(drawContext *ctx, GEntity *e, glyphList *g,
+                                  int what)
+{
+  if(what & NODES_COLLECT) {
+    g->reserve(GLYPH_SPHERE, e->mesh_vertices.size());
+    for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
+      MVertex *v = e->mesh_vertices[i];
+      if(!v->getVisibility()) continue;
+      g->addSphere(ctx, CTX::instance()->mesh.nodeSize, v->x(), v->y(), v->z(),
+                   getColorByVertex(e, v));
     }
   }
-  if(CTX::instance()->mesh.nodeLabels) {
+  if(what & NODES_POINTS) {
+    gmshBegin(GL_POINTS);
+    for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
+      MVertex *v = e->mesh_vertices[i];
+      if(!v->getVisibility()) continue;
+      unsigned int col = getColorByVertex(e, v);
+      gmshColor4ubv((const void *)&col);
+      gmshVertex3d(v->x(), v->y(), v->z());
+    }
+    gmshEnd();
+  }
+  if(what & NODES_LABELS) {
     int labelStep = CTX::instance()->mesh.labelSampling;
     if(labelStep <= 0) labelStep = 1;
     for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
@@ -214,7 +276,8 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
 
 template <class T>
 static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
-                                   std::vector<T *> &elements)
+                                   std::vector<T *> &elements, glyphList *g,
+                                   int what)
 {
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
@@ -223,29 +286,17 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
       // FIXME isElementVisible() can be slow: we should also use a
       // vertex array for drawing vertices...
       if(isElementVisible(ele) && v->getVisibility()) {
-        if(CTX::instance()->mesh.nodes) {
-          if(CTX::instance()->mesh.colorCarousel == 0 ||
-             CTX::instance()->mesh.volumeFaces ||
-             CTX::instance()->mesh.surfaceFaces) { // by element type
-            if(v->getPolynomialOrder() > 1)
-              gmshColor4ubv((const void *)&CTX::instance()->color.mesh.nodeSup);
-            else
-              gmshColor4ubv((const void *)&CTX::instance()->color.mesh.node);
-          }
-          else {
-            unsigned int col = getColorByEntity(e);
-            gmshColor4ubv((const void *)&col);
-          }
-          if(CTX::instance()->mesh.nodeType)
-            ctx->drawSphere(CTX::instance()->mesh.nodeSize, v->x(), v->y(),
-                            v->z(), CTX::instance()->mesh.light);
-          else {
-            gmshBegin(GL_POINTS);
-            gmshVertex3d(v->x(), v->y(), v->z());
-            gmshEnd();
-          }
+        if(what & NODES_COLLECT)
+          g->addSphere(ctx, CTX::instance()->mesh.nodeSize, v->x(), v->y(),
+                       v->z(), getColorByVertex(e, v));
+        if(what & NODES_POINTS) {
+          unsigned int col = getColorByVertex(e, v);
+          gmshColor4ubv((const void *)&col);
+          gmshBegin(GL_POINTS);
+          gmshVertex3d(v->x(), v->y(), v->z());
+          gmshEnd();
         }
-        if(CTX::instance()->mesh.nodeLabels)
+        if(what & NODES_LABELS)
           drawVertexLabel(ctx, v->onWhat() ? v->onWhat() : e, v);
       }
     }
@@ -529,8 +580,9 @@ public:
 
     gmshLightTwoSide(false);
 
-    if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels)
-      drawVerticesPerEntity(_ctx, v);
+    drawNodes(_ctx, v, [this, v](glyphList *g, int what) {
+      drawVerticesPerEntity(_ctx, v, g, what);
+    });
 
     if(select) {
     }
@@ -564,12 +616,12 @@ public:
 
     if(CTX::instance()->mesh.lineLabels) drawElementLabels(_ctx, e, e->lines);
 
-    if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
+    drawNodes(_ctx, e, [this, e](glyphList *g, int what) {
       if(!e->getOnlySomeElementsVisible())
-        drawVerticesPerEntity(_ctx, e);
+        drawVerticesPerEntity(_ctx, e, g, what);
       else
-        drawVerticesPerElement(_ctx, e, e->lines);
-    }
+        drawVerticesPerElement(_ctx, e, e->lines, g, what);
+    });
 
     if(CTX::instance()->mesh.tangents) drawTangents(_ctx, e->lines);
 
@@ -625,18 +677,18 @@ public:
                         CTX::instance()->color.mesh.line);
     }
 
-    if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
+    drawNodes(_ctx, f, [this, f](glyphList *g, int what) {
       if(!f->getOnlySomeElementsVisible()) {
-        drawVerticesPerEntity(_ctx, f);
+        drawVerticesPerEntity(_ctx, f, g, what);
       }
       else {
         if(CTX::instance()->mesh.triangles)
-          drawVerticesPerElement(_ctx, f, f->triangles);
+          drawVerticesPerElement(_ctx, f, f->triangles, g, what);
         if(CTX::instance()->mesh.quadrangles)
-          drawVerticesPerElement(_ctx, f, f->quadrangles);
-        drawVerticesPerElement(_ctx, f, f->polygons);
+          drawVerticesPerElement(_ctx, f, f->quadrangles, g, what);
+        drawVerticesPerElement(_ctx, f, f->polygons, g, what);
       }
-    }
+    });
 
     if(CTX::instance()->mesh.normals) {
       if(CTX::instance()->mesh.triangles) drawNormals(_ctx, f->triangles);
@@ -721,24 +773,24 @@ public:
                         CTX::instance()->color.mesh.line);
     }
 
-    if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
+    drawNodes(_ctx, r, [this, r](glyphList *g, int what) {
       if(!r->getOnlySomeElementsVisible()) {
-        drawVerticesPerEntity(_ctx, r);
+        drawVerticesPerEntity(_ctx, r, g, what);
       }
       else {
         if(CTX::instance()->mesh.tetrahedra)
-          drawVerticesPerElement(_ctx, r, r->tetrahedra);
+          drawVerticesPerElement(_ctx, r, r->tetrahedra, g, what);
         if(CTX::instance()->mesh.hexahedra)
-          drawVerticesPerElement(_ctx, r, r->hexahedra);
+          drawVerticesPerElement(_ctx, r, r->hexahedra, g, what);
         if(CTX::instance()->mesh.prisms)
-          drawVerticesPerElement(_ctx, r, r->prisms);
+          drawVerticesPerElement(_ctx, r, r->prisms, g, what);
         if(CTX::instance()->mesh.pyramids)
-          drawVerticesPerElement(_ctx, r, r->pyramids);
+          drawVerticesPerElement(_ctx, r, r->pyramids, g, what);
         if(CTX::instance()->mesh.trihedra)
-          drawVerticesPerElement(_ctx, r, r->trihedra);
-        drawVerticesPerElement(_ctx, r, r->polyhedra);
+          drawVerticesPerElement(_ctx, r, r->trihedra, g, what);
+        drawVerticesPerElement(_ctx, r, r->polyhedra, g, what);
       }
-    }
+    });
 
     if(CTX::instance()->mesh.dual) {
       if(CTX::instance()->mesh.tetrahedra) drawBarycentricDual(r->tetrahedra);
@@ -823,6 +875,12 @@ void drawContext::drawMesh()
       for(std::size_t j = 0; j < PView::list.size(); j++)
         if(PView::list[j]->getData()->hasModel(GModel::list[i]))
           PView::list[j]->setChanged(true);
+    // The glyphs of the entities are worked out from the mesh, so they no
+    // longer stand. Everything kept goes, entities that no longer exist
+    // included: this is the one moment at which their lists can be known to
+    // be stale rather than merely unused.
+    bumpMeshGlyphStamp();
+    glyphCache::clearAll();
   }
 
   gmshPointSize((float)CTX::instance()->mesh.nodeSize);

@@ -19,6 +19,7 @@ set(SRC
   drawScales.cpp
   drawGraph2d.cpp
   drawGlyph.cpp
+  glyphList.cpp
   gl2ps.cpp
   gl2gif.cpp
   gl2jpeg.cpp

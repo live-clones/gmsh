@@ -377,16 +377,16 @@ public:
   // make sure the shapes the glyphs are made of match the options; they are
   // only read afterwards, so several threads may then use them at once
   void updateGlyphTemplates();
-  // how many triangles one sphere glyph comes to, so that an array meant to
-  // hold several of them can be reserved for exactly what they need
-  int sphereGlyphTriangles();
-  // append one 3D arrow to a vertex array instead of drawing it
-  void addArrow3d(VertexArray *va, double x, double y, double z, double dx,
-                  double dy, double dz, unsigned int color);
-  // append one sphere, of a size given in pixels, to a vertex array instead of
-  // drawing it
-  void addSphere(VertexArray *va, double size, double x, double y, double z,
-                 unsigned int color);
+  // The shape a glyph of a kind is made of: the triangle corners, their
+  // normals, and the same normals encoded the way a vertex array stores them,
+  // which is what a glyph that nothing turns is handed. Only valid after
+  // updateGlyphTemplates(), and only read - several threads expand glyphs
+  // from it at once. Null when the shape has no triangles.
+  const float *glyphTemplate(int kind, const float *&normals,
+                             const normal_type *&encoded, int &numVertices);
+  // draw one glyph placed by the transform m, which is what is left to do
+  // when there are too many of them to be worth keeping their triangles
+  void drawGlyph(int kind, const double m[16], unsigned int color);
   void drawArrow3d(double x, double y, double z, double dx, double dy,
                    double dz, double length, int light);
   void drawVector(int Type, int Fill, double x, double y, double z, double dx,
