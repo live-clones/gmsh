@@ -335,6 +335,10 @@ public:
   int colorScheme;
   // number of subdivisions for gluQuadrics
   int quadricSubdivisions;
+  // how much memory (in MB) the triangles the glyphs are made of may take
+  // before they stop being kept between frames (0: work it out from the
+  // machine)
+  double glyphCacheSize;
   // vector display type and options (for normals, etc.)
   int vectorType;
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;

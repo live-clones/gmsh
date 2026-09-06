@@ -3434,6 +3434,12 @@ double opt_general_quadric_subdivisions(OPT_ARGS_NUM)
   return CTX::instance()->quadricSubdivisions;
 }
 
+double opt_general_glyph_cache_size(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->glyphCacheSize = val;
+  return CTX::instance()->glyphCacheSize;
+}
+
 double opt_general_double_buffer(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

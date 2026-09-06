@@ -21,11 +21,19 @@
 #include <omp.h>
 #endif
 
+// What all the lists together are keeping, in vertices. The bound below is on
+// the whole of it rather than on each of them: a model has one list per entity
+// and a bound that each of them may reach on its own is not a bound at all.
+static long _keptVertices = 0;
+
 void glyphList::clear()
 {
   for(int k = 0; k < GLYPH_NUMKINDS; k++)
     std::vector<instance>().swap(_inst[k]);
-  if(_va) delete _va;
+  if(_va) {
+    _keptVertices -= _va->getNumVertices();
+    delete _va;
+  }
   _va = nullptr;
   _filled = false;
 }
@@ -295,45 +303,62 @@ VertexArray *glyphList::triangles(drawContext *ctx)
   _va = new VertexArray(3, (int)(total / 3));
   int at = _va->addBlock((int)total);
 
-  int nthreads = CTX::instance()->numThreads;
-  if(nthreads <= 0) nthreads = 1;
   for(int k = 0; k < GLYPH_NUMKINDS; k++) {
     std::size_t n = _inst[k].size();
     if(!n || !num[k]) continue;
-    // The glyphs are independent of one another and each of them writes a
-    // range of its own, so the range is shared out and nothing has to be put
-    // back together afterwards.
-    int nt = (n < 2000) ? 1 : nthreads;
-    if((std::size_t)nt > n) nt = (int)n;
-#if defined(_OPENMP)
-#pragma omp parallel for num_threads(nt) schedule(static, 1) if(nt > 1)
-#endif
-    for(int t = 0; t < nt; t++) {
-      std::size_t from = n * t / nt, to = n * (t + 1) / nt;
-      expand(ctx, (glyphKind)k, _inst[k], from, to, _va,
-             at + (int)(from * num[k]));
-    }
+    _expandRange(ctx, (glyphKind)k, 0, n, _va, at);
     at += (int)(n * num[k]);
   }
   _va->finalize();
+  _keptVertices += _va->getNumVertices();
   return _va;
 }
 
-// How many triangles it is worth keeping. Past this the glyphs are drawn one
-// at a time instead, which is what was done before there was a list at all -
-// slower, but it costs nothing to keep.
+void glyphList::_expandRange(drawContext *ctx, glyphKind kind,
+                             std::size_t first, std::size_t last,
+                             VertexArray *va, int at)
+{
+  const float *tq;
+  const normal_type *tn;
+  int num = 0;
+  ctx->glyphTemplate(kind, tq, tn, num);
+  if(!num || last <= first) return;
+
+  // The glyphs are independent of one another and each of them writes a range
+  // of its own, so the range is shared out and nothing has to be put back
+  // together afterwards.
+  std::size_t n = last - first;
+  int nthreads = CTX::instance()->numThreads;
+  if(nthreads <= 0) nthreads = 1;
+  int nt = (n < 2000) ? 1 : nthreads;
+  if((std::size_t)nt > n) nt = (int)n;
+#if defined(_OPENMP)
+#pragma omp parallel for num_threads(nt) schedule(static, 1) if(nt > 1)
+#endif
+  for(int t = 0; t < nt; t++) {
+    std::size_t from = first + n * t / nt, to = first + n * (t + 1) / nt;
+    expand(ctx, kind, _inst[kind], from, to, va, at + (int)((from - first) * num));
+  }
+}
+
+// How many triangles it is worth keeping. Past this they are expanded a batch
+// at a time for every frame instead, which is slower but takes no memory.
 //
 // What is being traded: sixty thousand spheres are thirteen million vertices,
 // which take about half a gigabyte - nineteen bytes here and as many again in
 // the buffer object the graphics card is handed - and draw in nine
-// milliseconds a frame instead of ninety-three. Ten times faster for half a
-// gigabyte is worth it once; it is not worth it ten times over, hence a bound
-// that is a fraction of the machine and a number both.
+// milliseconds a frame instead of thirty. Ten times faster for half a
+// gigabyte is worth it once; it is not worth it ten times over, hence a bound,
+// which General.GlyphCacheSize sets and which is otherwise a fraction of the
+// machine and a number both.
 static long maxKeptVertices()
 {
-  double mb = TotalRam() / 32.;
-  if(mb > 1024.) mb = 1024.;
-  if(mb < 64.) mb = 64.;
+  double mb = CTX::instance()->glyphCacheSize;
+  if(mb <= 0.) {
+    mb = TotalRam() / 32.;
+    if(mb > 1024.) mb = 1024.;
+    if(mb < 64.) mb = 64.;
+  }
   return (long)(mb * 1024. * 1024. / 38.);
 }
 
@@ -351,26 +376,30 @@ void glyphList::draw(drawContext *ctx, bool light)
     total += (long)num * (long)_inst[k].size();
   }
 
-  if(total > maxKeptVertices()) {
-    // Too many to keep the triangles of: draw them one at a time, which is
-    // what was done before there was a list at all. Collecting them was not
-    // wasted - it is where they go and what colour they are, which is what
-    // walking the model to find them costs.
-    if(light) gmshLighting(true);
-    for(int k = 0; k < GLYPH_NUMKINDS; k++) {
-      for(std::size_t g = 0; g < _inst[k].size(); g++) {
-        const double *im = _inst[k][g].m;
-        double m[16] = {im[0], im[1], im[2],  0., im[3],  im[4],  im[5],  0.,
-                        im[6], im[7], im[8],  0., im[9],  im[10], im[11], 1.};
-        ctx->drawGlyph(k, m, _inst[k][g].param, _inst[k][g].color);
-      }
-    }
-    gmshLighting(false);
+  // What is already kept stays kept - it is counted in the total below, and
+  // throwing it away to make room for this one would only move the problem.
+  if(!_va && _keptVertices + total > maxKeptVertices()) {
+    _stream(ctx, light);
+    return;
+  }
+  if(_va && _keptVertices > maxKeptVertices()) {
+    // more is kept than is allowed now, e.g. because the option that bounds
+    // it has been lowered
+    _keptVertices -= _va->getNumVertices();
+    delete _va;
+    _va = nullptr;
+    _stream(ctx, light);
     return;
   }
 
   VertexArray *va = triangles(ctx);
   if(!va) return;
+  _draw(ctx, va, light);
+}
+
+void glyphList::_draw(drawContext *ctx, VertexArray *va, bool light)
+{
+  if(!va || !va->getNumVertices()) return;
   bool normals = !ctx->inPickColorMode() && light && va->hasNormals();
   bool colors = !ctx->inPickColorMode() && va->hasColors();
   if(normals) gmshLighting(true);
@@ -378,6 +407,45 @@ void glyphList::draw(drawContext *ctx, bool light)
   drawVertexArray(va, GL_TRIANGLES);
   gmshUnbindArrays();
   gmshLighting(false);
+}
+
+// How many vertices a scratch array holds at a time. Big enough that what it
+// costs to fill and hand over is spread over plenty of them, small enough that
+// it is nothing to keep between frames.
+static const int _chunkVertices = 1 << 18;
+
+void glyphList::_stream(drawContext *ctx, bool light)
+{
+  // Too many to keep the triangles of, so they are expanded a batch at a time
+  // into an array of a size that does not depend on how many there are, drawn,
+  // and expanded over again. Nothing is kept, and the whole of it happens for
+  // every frame - but it is still the arrays doing the drawing, which is what
+  // the glyphs being collected in the first place buys.
+  //
+  // There is one of these for the whole program: only one list draws at a
+  // time, and its buffer objects are worth holding on to between the batches
+  // and between the frames.
+  static VertexArray *scratch = nullptr;
+  if(!scratch) scratch = new VertexArray(3, _chunkVertices / 3);
+
+  for(int k = 0; k < GLYPH_NUMKINDS; k++) {
+    std::size_t n = _inst[k].size();
+    if(!n) continue;
+    const float *tq;
+    const normal_type *tn;
+    int num = 0;
+    ctx->glyphTemplate(k, tq, tn, num);
+    if(!num) continue;
+    std::size_t per = _chunkVertices / num;
+    if(per < 1) per = 1;
+    for(std::size_t first = 0; first < n; first += per) {
+      std::size_t last = std::min(first + per, n);
+      scratch->clearData();
+      int at = scratch->addBlock((int)((last - first) * num));
+      _expandRange(ctx, (glyphKind)k, first, last, scratch, at);
+      _draw(ctx, scratch, light);
+    }
+  }
 }
 
 namespace glyphCache {

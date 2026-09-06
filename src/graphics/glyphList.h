@@ -121,6 +121,12 @@ public:
   // which is slower but costs nothing to keep - a mesh can hold a glyph per
   // node, and a sphere is four kilobytes of triangles.
   void draw(drawContext *ctx, bool light);
+
+private:
+  void _draw(drawContext *ctx, VertexArray *va, bool light);
+  void _stream(drawContext *ctx, bool light);
+  void _expandRange(drawContext *ctx, glyphKind kind, std::size_t first,
+                    std::size_t last, VertexArray *va, int at);
 };
 
 // What an owner keeps a list for: a view draws both its points and its
