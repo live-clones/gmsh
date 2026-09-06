@@ -174,7 +174,10 @@ void gmshColor4ubv(const void *col);
 // and unsetPickColor() have any business calling this.
 inline void gmshPickColor4ubv(const void *col)
 {
-  glColor4ubv((const GLubyte *)col);
+  // the unconditional setter: it is the one colour a picking pass does write,
+  // and the shader is handed it the same way as any other
+  const unsigned char *c = (const unsigned char *)col;
+  gmshColor4ub(c[0], c[1], c[2], c[3]);
 }
 
 inline void gmshTexCoord2f(float s, float t)

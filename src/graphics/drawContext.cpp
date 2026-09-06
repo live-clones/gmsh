@@ -1266,7 +1266,7 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
   std::size_t id = _pickObjects.size() - 1;
   GLubyte c[4] = {(GLubyte)(id & 0xff), (GLubyte)((id >> 8) & 0xff),
                   (GLubyte)((id >> 16) & 0xff), 255};
-  glDisableClientState(GL_COLOR_ARRAY);
+  if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 
   // The selection buffer reported every primitive in the picking frustum, so a
@@ -1283,7 +1283,7 @@ void drawContext::unsetPickColor()
   if(!_pickColor) return;
   // 0 is the background: what is drawn now belongs to no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
-  glDisableClientState(GL_COLOR_ARRAY);
+  if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 }
 
@@ -1316,7 +1316,10 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glEnable(GL_DEPTH_TEST);
   gmshLighting(false);
   glDisable(GL_BLEND);
-  glShadeModel(GL_FLAT);
+  // the identifier colour must not be interpolated across a primitive; the
+  // shader hands every fragment of a draw the same one, so there is nothing to
+  // ask of a core profile, which has no shade model either
+  if(!gmshUseShaders()) glShadeModel(GL_FLAT);
   // only rasterise the region the image covers
   glEnable(GL_SCISSOR_TEST);
   glScissor(fx, fy, fw, fh);
@@ -1362,7 +1365,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);
   if(oldBlend) glEnable(GL_BLEND);
-  glShadeModel(GL_SMOOTH);
+  if(!gmshUseShaders()) glShadeModel(GL_SMOOTH);
   _pickColor = _pickColorActive = false;
   render_mode = drawContext::GMSH_RENDER;
 
