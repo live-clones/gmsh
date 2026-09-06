@@ -28,19 +28,105 @@
 // The variants are those the drawing code uses, and no others: adding one is
 // adding a line here and a line in whichever pipeline is drawing.
 
-inline void gmshBegin(GLenum mode) { glBegin(mode); }
-inline void gmshEnd() { glEnd(); }
+// Is the shader pipeline the one drawing? It has no immediate mode, so the
+// calls below collect the vertices instead of handing them over one at a time,
+// and the state they are drawn with is remembered rather than left to OpenGL.
+bool gmshUseShaders();
 
-inline void gmshVertex2d(double x, double y) { glVertex2d(x, y); }
-inline void gmshVertex2f(float x, float y) { glVertex2f(x, y); }
-inline void gmshVertex2i(int x, int y) { glVertex2i(x, y); }
-inline void gmshVertex3d(double x, double y, double z) { glVertex3d(x, y, z); }
-inline void gmshVertex3f(float x, float y, float z) { glVertex3f(x, y, z); }
-inline void gmshVertex3i(int x, int y, int z) { glVertex3i(x, y, z); }
-inline void gmshVertex3fv(const float *v) { glVertex3fv(v); }
+// True while a primitive is being collected for the shader pipeline. The calls
+// below are on the path of every decoration Gmsh draws, so the test is here
+// and the collecting itself is not.
+extern bool gmshCollecting;
 
-inline void gmshNormal3d(double x, double y, double z) { glNormal3d(x, y, z); }
-inline void gmshNormal3dv(const double *v) { glNormal3dv(v); }
+// Hand the shader program the state the fixed function pipeline kept for
+// itself: the two matrices, the lighting, the colour, the point size, the
+// material and the clipping planes. Everything that draws through the program
+// calls this first.
+void gmshPushShaderState();
+
+// what gmshBegin() and gmshEnd() do when they are collecting; gmshImBegin()
+// says whether it took the primitive
+bool gmshImBegin(GLenum mode);
+void gmshImEnd();
+void gmshImVertex(float x, float y, float z);
+void gmshImNormal(float x, float y, float z);
+
+inline void gmshBegin(GLenum mode)
+{
+  if(!gmshImBegin(mode)) glBegin(mode);
+}
+inline void gmshEnd()
+{
+  if(gmshCollecting)
+    gmshImEnd();
+  else
+    glEnd();
+}
+
+inline void gmshVertex2d(double x, double y)
+{
+  if(gmshCollecting)
+    gmshImVertex((float)x, (float)y, 0.f);
+  else
+    glVertex2d(x, y);
+}
+inline void gmshVertex2f(float x, float y)
+{
+  if(gmshCollecting)
+    gmshImVertex(x, y, 0.f);
+  else
+    glVertex2f(x, y);
+}
+inline void gmshVertex2i(int x, int y)
+{
+  if(gmshCollecting)
+    gmshImVertex((float)x, (float)y, 0.f);
+  else
+    glVertex2i(x, y);
+}
+inline void gmshVertex3d(double x, double y, double z)
+{
+  if(gmshCollecting)
+    gmshImVertex((float)x, (float)y, (float)z);
+  else
+    glVertex3d(x, y, z);
+}
+inline void gmshVertex3f(float x, float y, float z)
+{
+  if(gmshCollecting)
+    gmshImVertex(x, y, z);
+  else
+    glVertex3f(x, y, z);
+}
+inline void gmshVertex3i(int x, int y, int z)
+{
+  if(gmshCollecting)
+    gmshImVertex((float)x, (float)y, (float)z);
+  else
+    glVertex3i(x, y, z);
+}
+inline void gmshVertex3fv(const float *v)
+{
+  if(gmshCollecting)
+    gmshImVertex(v[0], v[1], v[2]);
+  else
+    glVertex3fv(v);
+}
+
+inline void gmshNormal3d(double x, double y, double z)
+{
+  if(gmshCollecting)
+    gmshImNormal((float)x, (float)y, (float)z);
+  else
+    glNormal3d(x, y, z);
+}
+inline void gmshNormal3dv(const double *v)
+{
+  if(gmshCollecting)
+    gmshImNormal((float)v[0], (float)v[1], (float)v[2]);
+  else
+    glNormal3dv(v);
+}
 
 // Every colour goes through this one, which remembers it: a shader is handed
 // the current colour as a uniform, and there is no fixed function state to ask
@@ -91,7 +177,12 @@ inline void gmshPickColor4ubv(const void *col)
   glColor4ubv((const GLubyte *)col);
 }
 
-inline void gmshTexCoord2f(float s, float t) { glTexCoord2f(s, t); }
+inline void gmshTexCoord2f(float s, float t)
+{
+  // only the text and image drawing use these, and they are still drawn the
+  // old way: nothing collects them yet
+  if(!gmshCollecting) glTexCoord2f(s, t);
+}
 
 // The pieces of fixed function state that decide how the primitives above are
 // drawn, and that a shader pipeline has to carry itself: whether the vertices
@@ -118,10 +209,16 @@ double gmshCurrentPointSize();
 // a factor and a 16 bit pattern, as glLineStipple takes them
 inline void gmshLineStipple(int factor, unsigned short pattern)
 {
+  // no stipple in a core profile: a shader would have to dash the line itself
+  // from how far along it the fragment is, which is not done yet
+  if(gmshUseShaders()) return;
   glLineStipple(factor, pattern);
   glEnable(GL_LINE_STIPPLE);
 }
-inline void gmshLineStippleOff() { glDisable(GL_LINE_STIPPLE); }
+inline void gmshLineStippleOff()
+{
+  if(!gmshUseShaders()) glDisable(GL_LINE_STIPPLE);
+}
 
 inline void gmshPolygonFill(bool fill)
 {

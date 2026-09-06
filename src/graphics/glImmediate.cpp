@@ -7,7 +7,28 @@
 
 #include "glImmediate.h"
 #include "glMatrix.h"
+#include "glShader.h"
 #include "drawContext.h"
+#include "Context.h"
+
+bool gmshCollecting = false;
+
+bool gmshUseShaders()
+{
+  return CTX::instance()->shaders && glShader::available();
+}
+
+namespace {
+  // The vertices of the primitive being collected, with the colour and the
+  // normal that were current at each of them. A shader pipeline has no
+  // immediate mode: the run between gmshBegin() and gmshEnd() is gathered here
+  // and drawn in one call.
+  std::vector<float> _imPos, _imNrm;
+  std::vector<unsigned char> _imCol;
+  float _imNormal[3] = {0.f, 0.f, 1.f};
+  GLenum _imMode = GL_POINTS;
+  bool _imQuads = false, _imPolygon = false;
+} // namespace
 
 namespace {
   // The pieces of state that a shader is handed as uniforms, and that a core
@@ -27,7 +48,8 @@ void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
   _color[1] = g;
   _color[2] = b;
   _color[3] = a;
-  glColor4ub(r, g, b, a);
+  // a core profile has no current colour: the shader is handed the one above
+  if(!gmshUseShaders()) glColor4ub(r, g, b, a);
 }
 
 const unsigned char *gmshCurrentColor() { return _color; }
@@ -42,6 +64,7 @@ void gmshColor4ubv(const void *col)
 void gmshLighting(bool on)
 {
   _lighting = on;
+  if(gmshUseShaders()) return;
   if(on)
     glEnable(GL_LIGHTING);
   else
@@ -53,6 +76,7 @@ bool gmshLightingEnabled() { return _lighting; }
 void gmshLightTwoSide(bool on)
 {
   _twoSide = on;
+  if(gmshUseShaders()) return;
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, on ? GL_TRUE : GL_FALSE);
 }
 
@@ -61,7 +85,8 @@ bool gmshLightTwoSideEnabled() { return _twoSide; }
 void gmshPointSize(double s)
 {
   _pointSize = s;
-  glPointSize((float)s);
+  // the shader writes gl_PointSize instead
+  if(!gmshUseShaders()) glPointSize((float)s);
 }
 
 double gmshCurrentPointSize() { return _pointSize; }
@@ -84,13 +109,14 @@ void gmshClipPlane(int i, const double plane[4])
   else {
     for(int j = 0; j < 4; j++) _clipEye[i][j] = plane[j];
   }
-  glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), plane);
+  if(!gmshUseShaders()) glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), plane);
 }
 
 void gmshClipPlaneOn(int i, bool on)
 {
   if(i < 0 || i > 5) return;
   _clipOn[i] = on;
+  if(gmshUseShaders()) return;
   if(on)
     glEnable((GLenum)(GL_CLIP_PLANE0 + i));
   else
@@ -127,6 +153,9 @@ namespace {
   // pipeline reads it
   void _apply(int kind)
   {
+    // the shader is handed the matrices as uniforms; a core profile has no
+    // matrix stack of its own to load them into
+    if(gmshUseShaders()) return;
     glMatrixMode(kind == GMSH_PROJECTION ? GL_PROJECTION : GL_MODELVIEW);
     glLoadMatrixd(_stack[kind].top());
     if(kind != _mode)
@@ -137,6 +166,7 @@ namespace {
 void gmshMatrixMode(int kind)
 {
   _mode = (kind == GMSH_PROJECTION) ? GMSH_PROJECTION : GMSH_MODELVIEW;
+  if(gmshUseShaders()) return;
   glMatrixMode(_mode == GMSH_PROJECTION ? GL_PROJECTION : GL_MODELVIEW);
 }
 
@@ -211,4 +241,101 @@ void gmshResetMatrices()
     glMatrix::identity(&_stack[i].m[0]);
   }
   _mode = GMSH_MODELVIEW;
+}
+
+void gmshPushShaderState()
+{
+  glShader::setMatrices(gmshMatrix(GMSH_MODELVIEW), gmshMatrix(GMSH_PROJECTION));
+  glShader::setLighting(gmshLightingEnabled(), gmshLightTwoSideEnabled());
+  glShader::setColor(gmshCurrentColor());
+  glShader::setPointSize(gmshCurrentPointSize());
+  glShader::setMaterial(CTX::instance()->shine,
+                        CTX::instance()->shineExponent);
+  for(int i = 0; i < 6; i++) {
+    if(gmshClipPlaneEnabled(i))
+      glShader::setClipPlane(i, gmshClipPlaneEye(i));
+    else
+      glShader::setClipPlaneOff(i);
+  }
+}
+
+bool gmshImBegin(GLenum mode)
+{
+  if(!gmshUseShaders()) return false;
+  gmshCollecting = true;
+  _imPos.clear();
+  _imNrm.clear();
+  _imCol.clear();
+  // a core profile has neither quads nor polygons: they are collected as they
+  // come and turned into triangles when the primitive ends
+  _imQuads = (mode == GL_QUADS);
+  _imPolygon = (mode == GL_POLYGON);
+  _imMode = (_imQuads || _imPolygon) ? GL_TRIANGLES : mode;
+  return true;
+}
+
+void gmshImVertex(float x, float y, float z)
+{
+  _imPos.push_back(x);
+  _imPos.push_back(y);
+  _imPos.push_back(z);
+  for(int i = 0; i < 3; i++) _imNrm.push_back(_imNormal[i]);
+  for(int i = 0; i < 4; i++) _imCol.push_back(gmshCurrentColor()[i]);
+}
+
+void gmshImNormal(float x, float y, float z)
+{
+  _imNormal[0] = x;
+  _imNormal[1] = y;
+  _imNormal[2] = z;
+}
+
+namespace {
+  // copy vertex i of what has been collected to the end of the arrays it will
+  // be drawn from
+  void _emit(std::vector<float> &p, std::vector<float> &n,
+             std::vector<unsigned char> &c, std::size_t i)
+  {
+    for(int k = 0; k < 3; k++) p.push_back(_imPos[3 * i + k]);
+    for(int k = 0; k < 3; k++) n.push_back(_imNrm[3 * i + k]);
+    for(int k = 0; k < 4; k++) c.push_back(_imCol[4 * i + k]);
+  }
+} // namespace
+
+void gmshImEnd()
+{
+  gmshCollecting = false;
+  std::size_t num = _imPos.size() / 3;
+  if(!num) return;
+
+  if(_imQuads || _imPolygon) {
+    std::vector<float> p, n;
+    std::vector<unsigned char> c;
+    if(_imQuads) {
+      // each group of four corners becomes two triangles
+      for(std::size_t q = 0; q + 3 < num; q += 4) {
+        const std::size_t idx[6] = {q, q + 1, q + 2, q, q + 2, q + 3};
+        for(int k = 0; k < 6; k++) _emit(p, n, c, idx[k]);
+      }
+    }
+    else {
+      // a polygon becomes a fan around its first corner, which is what
+      // GL_POLYGON drew and what its convexity allowed
+      for(std::size_t t = 1; t + 1 < num; t++) {
+        _emit(p, n, c, 0);
+        _emit(p, n, c, t);
+        _emit(p, n, c, t + 1);
+      }
+    }
+    _imPos.swap(p);
+    _imNrm.swap(n);
+    _imCol.swap(c);
+    num = _imPos.size() / 3;
+    if(!num) return;
+  }
+
+  if(!glShader::use()) return;
+  gmshPushShaderState();
+  glShader::drawImmediate(_imMode, &_imPos[0], &_imNrm[0], &_imCol[0],
+                          (int)num);
 }

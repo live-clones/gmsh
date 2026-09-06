@@ -537,19 +537,7 @@ void gmshDrawArrays(GLenum type, int count)
       glShader::streamArrays(_clientVertices, _clientColors, count);
     }
     glShader::setColorArray(_boundColors);
-    glShader::setMatrices(gmshMatrix(GMSH_MODELVIEW),
-                          gmshMatrix(GMSH_PROJECTION));
-    glShader::setLighting(gmshLightingEnabled(), gmshLightTwoSideEnabled());
-    glShader::setColor(gmshCurrentColor());
-    glShader::setPointSize(gmshCurrentPointSize());
-    glShader::setMaterial(CTX::instance()->shine,
-                          CTX::instance()->shineExponent);
-    for(int i = 0; i < 6; i++) {
-      if(gmshClipPlaneEnabled(i))
-        glShader::setClipPlane(i, gmshClipPlaneEye(i));
-      else
-        glShader::setClipPlaneOff(i);
-    }
+    gmshPushShaderState();
   }
 
   glDrawArrays(type, 0, count);

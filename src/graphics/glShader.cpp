@@ -110,7 +110,7 @@ void main()
     GLuint _program = 0, _vao = 0;
     // one buffer for the vertices a caller holds itself and one for their
     // colours, grown as needed and reused from frame to frame
-    GLuint _streamVertices = 0, _streamColors = 0;
+    GLuint _streamVertices = 0, _streamColors = 0, _streamNormals = 0;
     bool _tried = false;
 
     struct {
@@ -257,7 +257,7 @@ void main()
     // deleting them now would be deleting names in whichever context is
     // current, which are not ours
     _program = _vao = 0;
-    _streamVertices = _streamColors = 0;
+    _streamVertices = _streamColors = _streamNormals = 0;
     _tried = false;
   }
 
@@ -398,5 +398,45 @@ void main()
       glApi::DisableVertexAttribArray(ATTRIB_COLOR);
     }
     glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+  }
+
+  void drawImmediate(GLenum mode, const float *vertices, const float *normals,
+                     const unsigned char *colors, int count)
+  {
+    if(count <= 0 || !ensure()) return;
+    glApi::BindVertexArray(_vao);
+
+    if(!_streamVertices) glApi::GenBuffers(1, &_streamVertices);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamVertices);
+    glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 3 * sizeof(float),
+                      vertices, GL_STREAM_DRAW);
+    glApi::EnableVertexAttribArray(ATTRIB_VERTEX);
+    glApi::VertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, 0,
+                               nullptr);
+
+    if(!_streamNormals) glApi::GenBuffers(1, &_streamNormals);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamNormals);
+    glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 3 * sizeof(float),
+                      normals, GL_STREAM_DRAW);
+    glApi::EnableVertexAttribArray(ATTRIB_NORMAL);
+    glApi::VertexAttribPointer(ATTRIB_NORMAL, 3, GL_FLOAT, GL_FALSE, 0,
+                               nullptr);
+
+    if(!_streamColors) glApi::GenBuffers(1, &_streamColors);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamColors);
+    glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 4, colors,
+                      GL_STREAM_DRAW);
+    glApi::EnableVertexAttribArray(ATTRIB_COLOR);
+    glApi::VertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0,
+                               nullptr);
+
+    // every vertex carries the colour that was current when it was given
+    setColorArray(true);
+    glDrawArrays(mode, 0, count);
+
+    glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+    glApi::DisableVertexAttribArray(ATTRIB_VERTEX);
+    glApi::DisableVertexAttribArray(ATTRIB_NORMAL);
+    glApi::DisableVertexAttribArray(ATTRIB_COLOR);
   }
 } // namespace glShader
