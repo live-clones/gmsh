@@ -102,7 +102,7 @@ static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
   }
   if(xyz.empty()) return true;
 
-  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+  gmshLightTwoSide(false);
   gmshLighting(false);
   gmshPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
   gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
@@ -141,7 +141,7 @@ public:
       _ctx->setPickColor(0, v->tag());
     }
 
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    gmshLightTwoSide(false);
 
     double fact = _ctx->highResolutionPixelFactor();
     double ps = CTX::instance()->geom.pointSize * fact;
@@ -218,7 +218,7 @@ public:
       _ctx->setPickColor(1, e->tag());
     }
 
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    gmshLightTwoSide(false);
 
     if(e->getSelection()) {
       gmshLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
@@ -347,13 +347,13 @@ private:
     if(CTX::instance()->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
     if(CTX::instance()->geom.surfaceType > 1) {
       if(CTX::instance()->geom.lightTwoSide)
-        glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+        gmshLightTwoSide(true);
       else
-        glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+        gmshLightTwoSide(false);
       gmshPolygonFill(true);
     }
     else {
-      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+      gmshLightTwoSide(false);
       gmshPolygonFill(false);
     }
     drawVertexArray(va, GL_TRIANGLES);
@@ -402,9 +402,9 @@ public:
     }
 
     if(CTX::instance()->geom.lightTwoSide)
-      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+      gmshLightTwoSide(true);
     else
-      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+      gmshLightTwoSide(false);
 
     if((CTX::instance()->geom.surfaces || f->getSelection() > 1) &&
        CTX::instance()->geom.surfaceType > 0)
@@ -497,9 +497,9 @@ public:
     }
 
     if(CTX::instance()->geom.lightTwoSide)
-      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+      gmshLightTwoSide(true);
     else
-      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+      gmshLightTwoSide(false);
 
     if(r->getSelection()) {
       gmshLineWidth((float)CTX::instance()->geom.selectedCurveWidth);

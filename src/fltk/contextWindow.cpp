@@ -61,7 +61,7 @@ static void draw_stl(std::vector<SPoint3> &vertices,
   else
     gmshPolygonFill(true);
   gmshLighting(true);
-  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  gmshLightTwoSide(true);
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
 
   VertexArray va(3, triangles.size());

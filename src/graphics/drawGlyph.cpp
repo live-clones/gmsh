@@ -876,9 +876,8 @@ void drawContext::drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
 
   if(shade) {
     // disable two-side lighting beacuse polygon can overlap itself
-    GLboolean twoside;
-    glGetBooleanv(GL_LIGHT_MODEL_TWO_SIDE, &twoside);
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    bool twoside = gmshLightTwoSideEnabled();
+    gmshLightTwoSide(false);
     gmshLighting(true);
     gmshBegin(GL_POLYGON);
     gmshNormal3d(n[0], n[1], n[2]);
@@ -887,6 +886,6 @@ void drawContext::drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
     }
     gmshEnd();
     gmshLighting(false);
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, twoside);
+    gmshLightTwoSide(twoside);
   }
 }

@@ -87,6 +87,20 @@ inline void gmshLighting(bool on)
 }
 inline bool gmshLightingEnabled() { return glIsEnabled(GL_LIGHTING) ? true : false; }
 
+// light the back faces as well as the front ones, with the normal flipped:
+// what a shader has to do from gl_FrontFacing, and what decides whether a face
+// seen from behind comes out lit or dark
+inline void gmshLightTwoSide(bool on)
+{
+  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, on ? GL_TRUE : GL_FALSE);
+}
+inline bool gmshLightTwoSideEnabled()
+{
+  GLboolean b = GL_FALSE;
+  glGetBooleanv(GL_LIGHT_MODEL_TWO_SIDE, &b);
+  return b ? true : false;
+}
+
 inline void gmshLineWidth(double w) { glLineWidth((float)w); }
 inline void gmshPointSize(double s) { glPointSize((float)s); }
 

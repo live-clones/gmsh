@@ -550,7 +550,7 @@ public:
       _ctx->setPickColor(0, v->tag());
     }
 
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    gmshLightTwoSide(false);
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels)
       drawVerticesPerEntity(_ctx, v);
@@ -580,7 +580,7 @@ public:
       _ctx->setPickColor(1, e->tag());
     }
 
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    gmshLightTwoSide(false);
 
     if(CTX::instance()->mesh.lines)
       drawArrays(_ctx, e, e->va_lines, GL_LINES, false);
@@ -621,7 +621,7 @@ public:
       _ctx->setPickColor(2, f->tag());
     }
 
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    gmshLightTwoSide(false);
 
     drawArrays(_ctx, f, f->va_lines, GL_LINES,
                CTX::instance()->mesh.light && CTX::instance()->mesh.lightLines,
@@ -629,7 +629,7 @@ public:
                CTX::instance()->color.mesh.line);
 
     if(CTX::instance()->mesh.lightTwoSide)
-      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+      gmshLightTwoSide(true);
 
     drawArrays(_ctx, f, f->va_triangles, GL_TRIANGLES,
                CTX::instance()->mesh.light);
@@ -699,7 +699,7 @@ public:
       _ctx->setPickColor(3, r->tag());
     }
 
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    gmshLightTwoSide(false);
 
     drawArrays(
       _ctx, r, r->va_lines, GL_LINES,
@@ -707,7 +707,7 @@ public:
       CTX::instance()->mesh.volumeFaces, CTX::instance()->color.mesh.line);
 
     if(CTX::instance()->mesh.lightTwoSide)
-      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+      gmshLightTwoSide(true);
 
     drawArrays(_ctx, r, r->va_triangles, GL_TRIANGLES,
                CTX::instance()->mesh.light);

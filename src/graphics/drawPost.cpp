@@ -537,12 +537,12 @@ public:
     }
 
     // draw all the vertex arrays
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    gmshLightTwoSide(false);
 
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
 
-    if(opt->lightTwoSide) glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    if(opt->lightTwoSide) gmshLightTwoSide(true);
 
     drawArrays(_ctx, p, p->va_triangles, GL_TRIANGLES, opt->light);
 
