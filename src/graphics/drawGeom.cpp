@@ -12,6 +12,8 @@
 #include "SBoundingBox3d.h"
 #include "GmshMessage.h"
 #include "StringUtils.h"
+#include "glyphList.h"
+#include "glImmediate.h"
 
 static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
                             double z, double offset)
@@ -74,6 +76,36 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
 // of them up than drawing it. Returns true when it has drawn the points, so
 // that the per-entity pass can skip them; selected points and labels are left
 // to that pass, which paints them on top.
+// The glyphs the geometry is drawn with - the spheres of its points, the
+// cylinders of its curves - collected over the whole pass and drawn as one
+// array at the end of it, instead of one at a time.
+//
+// Unlike the mesh and the views, these are not kept between frames: nothing
+// says when a geometry has changed, so a list kept from the last frame could
+// no longer be the geometry on screen. Collecting them again for every frame
+// still leaves the walk that was there anyway - it is the expansion into
+// triangles that this is about, and that is what a zoom would ask for again
+// in any case, as the sizes are given in pixels.
+static glyphList _geomGlyphs;
+
+// where a glyph goes, or null when they are being drawn one at a time: a
+// picking pass draws each entity in a colour that stands for it, which is not
+// something a batch of them can carry
+static glyphList *geomGlyphs(drawContext *ctx)
+{
+  if(ctx->render_mode == drawContext::GMSH_SELECT) return nullptr;
+  return &_geomGlyphs;
+}
+
+// the colour that is current, which is whichever one the entity being drawn
+// has settled on
+static unsigned int currentColor()
+{
+  unsigned int col;
+  memcpy(&col, gmshCurrentColor(), 4);
+  return col;
+}
+
 static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
 {
   CTX *c = CTX::instance();
@@ -169,10 +201,11 @@ public:
 
     if(CTX::instance()->geom.points || v->getSelection() > 1) {
       if(CTX::instance()->geom.pointType > 0) {
-        if(v->getSelection())
-          _ctx->drawSphere(sps, x, y, z, CTX::instance()->geom.light);
+        double size = v->getSelection() ? sps : ps;
+        if(glyphList *g = geomGlyphs(_ctx))
+          g->addSphere(_ctx, size, x, y, z, currentColor());
         else
-          _ctx->drawSphere(ps, x, y, z, CTX::instance()->geom.light);
+          _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
       }
       else {
         gmshBegin(GL_POINTS);
@@ -255,10 +288,15 @@ public:
           double z[2] = {p1.z(), p2.z()};
           _ctx->transform(x[0], y[0], z[0]);
           _ctx->transform(x[1], y[1], z[1]);
-          _ctx->drawCylinder(e->getSelection() ?
-                               CTX::instance()->geom.selectedCurveWidth :
-                               CTX::instance()->geom.curveWidth,
-                             x, y, z, CTX::instance()->geom.light);
+          double w = e->getSelection() ?
+                       CTX::instance()->geom.selectedCurveWidth :
+                       CTX::instance()->geom.curveWidth;
+          if(glyphList *g = geomGlyphs(_ctx)) {
+            double r = w * _ctx->pixel_equiv_x / _ctx->s[0];
+            g->addCylinder(x, y, z, r, r, currentColor());
+          }
+          else
+            _ctx->drawCylinder(w, x, y, z, CTX::instance()->geom.light);
         }
       }
       else {
@@ -507,7 +545,10 @@ public:
 
     if(CTX::instance()->geom.volumes || r->getSelection() > 1) {
       if(CTX::instance()->geom.volumeType == 0) {
-        _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
+        if(glyphList *g = geomGlyphs(_ctx))
+          g->addSphere(_ctx, size, x, y, z, currentColor());
+        else
+          _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
       }
       else {
         gmshBegin(GL_LINE_LOOP);
@@ -551,6 +592,8 @@ void drawContext::drawGeom()
   // draw any transient geometry stuff
   if(drawGeomTransient) (*drawGeomTransient)(this);
 
+  _geomGlyphs.clear();
+
   for(int i = 0; i < 6; i++)
     if(CTX::instance()->geom.clip & (1 << i))
       gmshClipPlaneOn(i, true);
@@ -574,6 +617,9 @@ void drawContext::drawGeom()
       std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
     }
   }
+
+  _geomGlyphs.draw(this, CTX::instance()->geom.light);
+  _geomGlyphs.clear();
 
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 }

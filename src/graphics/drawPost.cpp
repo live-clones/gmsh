@@ -77,6 +77,54 @@ static void collect(int num, glyphList *into, F add)
   }
 }
 
+// Where the cylinder of one line segment goes and how thick it is at each
+// end. As with the spheres, this is here so that the several threads
+// collecting them can share it - it only reads the view.
+static void addCylinderFor(drawContext *ctx, PViewOptions *opt,
+                           VertexArray *va, int i, glyphList *into)
+{
+  float *p0 = va->getVertexArray(3 * i);
+  float *p1 = va->getVertexArray(3 * (i + 1));
+  double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]}, z[2] = {p0[2], p1[2]};
+  double r = opt->lineWidth * ctx->pixel_equiv_x / ctx->s[0];
+  double r0 = r, r1 = r;
+  if(opt->lineType == 2) {
+    // the thickness follows the value at each end
+#if defined(HAVE_VISUDEV)
+    double v0 = *va->getNormalArray(3 * i);
+    double v1 = *va->getNormalArray(3 * (i + 1));
+#else
+    char *n0 = va->getNormalArray(3 * i);
+    char *n1 = va->getNormalArray(3 * (i + 1));
+    double v0 = char2float(*n0), v1 = char2float(*n1);
+#endif
+    r0 = v0 * r;
+    r1 = v1 * r;
+  }
+  unsigned int col;
+  memcpy(&col, va->getColorArray(4 * i), 4);
+  into->addCylinder(x, y, z, r0, r1, col);
+}
+
+// the cylinders a view draws its lines with, collected once and kept
+static void drawLineGlyphs(drawContext *ctx, PView *p, VertexArray *va)
+{
+  PViewOptions *opt = p->getOptions();
+  glyphToken tok;
+  tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+  tok.add(opt->lineWidth);
+  tok.add(opt->lineType);
+  glyphList *g;
+  if(!glyphCache::get(p, GLYPH_LINES, tok, g)) {
+    int num = va->getNumVertices() / 2;
+    g->reserve(GLYPH_CYLINDER, num);
+    collect(num, g, [ctx, opt, va](int e, glyphList *into) {
+      addCylinderFor(ctx, opt, va, 2 * e, into);
+    });
+  }
+  g->draw(ctx, opt->light);
+}
+
 // the spheres a view draws its points with, collected once and kept
 static void drawPointGlyphs(drawContext *ctx, PView *p, VertexArray *va)
 {
@@ -142,6 +190,14 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     }
   }
   else if(type == GL_LINES && opt->lineType > 0) {
+    // the cylinders are the ones worth collecting: they are a few dozen
+    // triangles each, and a view can hold hundreds of thousands of them
+    if(opt->lineType <= 2 && va->getNumVertices()) {
+      drawLineGlyphs(ctx, p, va);
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      gmshLighting(false);
+      return;
+    }
     for(int i = 0; i < va->getNumVertices(); i += 2) {
       float *p0 = va->getVertexArray(3 * i);
       float *p1 = va->getVertexArray(3 * (i + 1));
@@ -209,11 +265,74 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
   gmshLighting(false);
 }
 
+// The three axes of the tensor at one point, scaled the way the options ask,
+// and the ellipse or ellipsoid they stand for appended to the list. As with
+// the other glyphs this only reads the view, so the threads can share it.
+static void addEllipseFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
+                          int i, glyphList *into)
+{
+  float *s = va->getVertexArray(3 * i);
+  double vv[3][3];
+  double lmax = opt->tmpMax;
+  double scale = (opt->arrowSizeMax - opt->arrowSizeMin) * ctx->pixel_equiv_x /
+                 ctx->s[0] / 2;
+  double lmin = opt->arrowSizeMin * ctx->pixel_equiv_x / ctx->s[0] / 2;
+  for(int j = 0; j < 3; j++) {
+    float *v = va->getVertexArray(3 * (i + j + 1));
+    double l = std::sqrt((double)v[0] * v[0] + (double)v[1] * v[1] +
+                         (double)v[2] * v[2]);
+    double l2 = std::min(1., l / lmax);
+    for(int k = 0; k < 3; k++) vv[j][k] = v[k] / l * (scale * l2 + lmin);
+  }
+  unsigned int col;
+  memcpy(&col, va->getColorArray(4 * i), 4);
+
+  // the axes are the columns of the transform, which is what turns the unit
+  // sphere into this ellipsoid and the unit disk into this ellipse
+  if(opt->tensorType == PViewOptions::Ellipsoid) {
+    double m[16] = {vv[0][0], vv[0][1], vv[0][2], 0., vv[1][0], vv[1][1],
+                    vv[1][2], 0.,       vv[2][0], vv[2][1], vv[2][2], 0.,
+                    s[0],     s[1],     s[2],     1.};
+    into->add(GLYPH_SPHERE, m, col);
+  }
+  else {
+    // the third axis of an ellipse is the one the other two span
+    double n[3] = {vv[0][1] * vv[1][2] - vv[0][2] * vv[1][1],
+                   vv[0][2] * vv[1][0] - vv[0][0] * vv[1][2],
+                   vv[0][0] * vv[1][1] - vv[0][1] * vv[1][0]};
+    double m[16] = {vv[0][0], vv[0][1], vv[0][2], 0., vv[1][0], vv[1][1],
+                    vv[1][2], 0.,       n[0],     n[1], n[2],   0.,
+                    s[0],     s[1],     s[2],     1.};
+    into->add(GLYPH_DISK, m, col);
+  }
+}
+
 static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
 {
   if(!va || va->getNumVerticesPerElement() != 4) return;
 
   PViewOptions *opt = p->getOptions();
+
+  // the ellipses and the ellipsoids are shapes of their own, placed by the
+  // three axes of the tensor; the frames are not, and are still drawn one at
+  // a time
+  if(opt->tensorType != PViewOptions::Frame && va->getNumVertices()) {
+    glyphToken tok;
+    tok.add(ctx->pixel_equiv_x / ctx->s[0]);
+    tok.add(opt->tensorType);
+    tok.add(opt->arrowSizeMin);
+    tok.add(opt->arrowSizeMax);
+    tok.add(opt->tmpMax);
+    glyphList *g;
+    if(!glyphCache::get(p, GLYPH_TENSORS, tok, g)) {
+      int num = va->getNumVertices() / 4;
+      collect(num, g, [ctx, opt, va](int e, glyphList *into) {
+        addEllipseFor(ctx, opt, va, 4 * e, into);
+      });
+    }
+    g->draw(ctx, opt->light);
+    return;
+  }
 
   for(int i = 0; i < va->getNumVertices(); i += 4) {
     float *s = va->getVertexArray(3 * i);
@@ -230,12 +349,7 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
     }
     gmshColor4ubv((const void *)va->getColorArray(4 * i));
 
-    if(opt->tensorType == PViewOptions::Frame)
-      ctx->drawCube(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
-    else if(opt->tensorType == PViewOptions::Ellipsoid)
-      ctx->drawEllipsoid(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
-    else
-      ctx->drawEllipse(s[0], s[1], s[2], vv[0], vv[1], opt->light);
+    ctx->drawCube(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
   }
 }
 

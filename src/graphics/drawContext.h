@@ -384,9 +384,11 @@ public:
   // from it at once. Null when the shape has no triangles.
   const float *glyphTemplate(int kind, const float *&normals,
                              const normal_type *&encoded, int &numVertices);
-  // draw one glyph placed by the transform m, which is what is left to do
-  // when there are too many of them to be worth keeping their triangles
-  void drawGlyph(int kind, const double m[16], unsigned int color);
+  // draw one glyph placed by the transform m, with the parameters its shape
+  // needs, which is what is left to do when there are too many of them to be
+  // worth keeping their triangles
+  void drawGlyph(int kind, const double m[16], const float *param,
+                 unsigned int color);
   void drawArrow3d(double x, double y, double z, double dx, double dy,
                    double dz, double length, int light);
   void drawVector(int Type, int Fill, double x, double y, double z, double dx,
