@@ -7,6 +7,7 @@
 #include "OctreePost.h"
 #include "CutBox.h"
 #include "Context.h"
+#include "glyphList.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -133,30 +134,36 @@ void GMSH_CutBoxPlugin::draw(void *context)
     gmshEnd();
   }
   else {
+    glyphList g;
+    unsigned int col = glyphCurrentColor();
+    double ps = CTX::instance()->pointSize;
+    g.reserve(GLYPH_SPHERE, 2 * (getNbU() * getNbV() + getNbU() * getNbW() +
+                                 getNbV() * getNbW()));
     for(int i = 0; i < getNbU(); ++i) {
       for(int j = 0; j < getNbV(); ++j) {
         getPoint(i, j, 0, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
         getPoint(i, j, getNbW() - 1, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
       }
     }
     for(int i = 0; i < getNbU(); ++i) {
       for(int j = 0; j < getNbW(); ++j) {
         getPoint(i, 0, j, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
         getPoint(i, getNbV() - 1, j, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
       }
     }
     for(int i = 0; i < getNbV(); ++i) {
       for(int j = 0; j < getNbW(); ++j) {
         getPoint(0, i, j, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
         getPoint(getNbU() - 1, i, j, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
       }
     }
+    g.draw(ctx, 1);
   }
 #endif
 }
