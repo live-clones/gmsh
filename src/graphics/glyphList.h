@@ -31,6 +31,10 @@ enum glyphKind {
   GLYPH_SPHERE = 0,
   GLYPH_ARROW,
   GLYPH_DISK,
+  // the side of a cylinder or of a cone, which is one shape: the two radii
+  // are the parameters of the glyph rather than part of its transform, as a
+  // cone of one taper is not a cone of another one stretched
+  GLYPH_CYLINDER,
   GLYPH_NUMKINDS
 };
 
@@ -60,6 +64,10 @@ public:
   public:
     double m[12];
     unsigned int color;
+    // what the shape of this glyph needs beyond its transform: the two radii
+    // of a cylinder. Unused by the kinds that are one shape however they are
+    // placed, which is most of them.
+    float param[2];
   };
 
 private:
@@ -97,6 +105,10 @@ public:
   // an arrow from (x, y, z) along (dx, dy, dz), which are world lengths
   void addArrow(double x, double y, double z, double dx, double dy, double dz,
                 unsigned int color);
+  // the side of a cylinder from one point to the other, of the two radii
+  // given in world lengths; equal radii make a cylinder, a zero one a cone
+  void addCylinder(const double *x, const double *y, const double *z,
+                   double r0, double r1, unsigned int color);
   // Take the instances of another list, which is left empty. This is how the
   // threads that fill a list of their own are put back together, in an order
   // that does not depend on how many of them there were.
@@ -113,7 +125,14 @@ public:
 
 // What an owner keeps a list for: a view draws both its points and its
 // vectors with glyphs, a mesh entity its nodes.
-enum glyphSlot { GLYPH_POINTS = 0, GLYPH_VECTORS, GLYPH_NODES, GLYPH_NUMSLOTS };
+enum glyphSlot {
+  GLYPH_POINTS = 0,
+  GLYPH_LINES,
+  GLYPH_VECTORS,
+  GLYPH_TENSORS,
+  GLYPH_NODES,
+  GLYPH_NUMSLOTS
+};
 
 // The lists kept between frames, told apart by whoever owns them - a view, a
 // mesh entity, the geometry - and by what they are for. This is the one place

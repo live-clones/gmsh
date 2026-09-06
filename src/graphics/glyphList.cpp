@@ -53,6 +53,7 @@ void glyphList::add(glyphKind kind, const double m[16], unsigned int color)
   i.m[10] = m[13];
   i.m[11] = m[14];
   i.color = color;
+  i.param[0] = i.param[1] = 0.f;
   _inst[kind].push_back(i);
 }
 
@@ -74,6 +75,7 @@ void glyphList::addSphere(drawContext *ctx, double size, double x, double y,
   i.m[10] = y;
   i.m[11] = z;
   i.color = color;
+  i.param[0] = i.param[1] = 0.f;
   _inst[GLYPH_SPHERE].push_back(i);
 }
 
@@ -104,6 +106,40 @@ void glyphList::addArrow(double x, double y, double z, double dx, double dy,
   glMatrix::multiply(t, sc, a);
   glMatrix::multiply(a, r, m);
   add(GLYPH_ARROW, m, color);
+}
+
+void glyphList::addCylinder(const double *x, const double *y, const double *z,
+                            double r0, double r1, unsigned int color)
+{
+  double dx = x[1] - x[0], dy = y[1] - y[0], dz = z[1] - z[0];
+  double length = std::sqrt(dx * dx + dy * dy + dz * dz);
+  if(length == 0. || (r0 == 0. && r1 == 0.)) return;
+
+  double zdir[3] = {0., 0., 1.};
+  double vdir[3] = {dx / length, dy / length, dz / length};
+  double axis[3];
+  prodve(zdir, vdir, axis);
+  double const cosphi = prosca(zdir, vdir);
+  if(!norme(axis)) {
+    axis[0] = 0.;
+    axis[1] = 1.;
+    axis[2] = 0.;
+  }
+  double phi = 180. * myacos(cosphi) / M_PI;
+
+  // the length is in the transform, which stretches the unit cylinder along
+  // its axis; the radii are not, as a cone of one taper is not a cone of
+  // another one stretched
+  double t[16], r[16], sc[16], a[16], m[16];
+  glMatrix::translate(x[0], y[0], z[0], t);
+  glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
+  glMatrix::scale(1., 1., length, sc);
+  glMatrix::multiply(t, r, a);
+  glMatrix::multiply(a, sc, m);
+  add(GLYPH_CYLINDER, m, color);
+  instance &i = _inst[GLYPH_CYLINDER].back();
+  i.param[0] = (float)r0;
+  i.param[1] = (float)r1;
 }
 
 void glyphList::merge(glyphList *other)
@@ -179,16 +215,27 @@ namespace {
         }
       }
 
+      // Where the corners of the template go. A cylinder is the one shape
+      // whose corners are not the template's own: its two radii widen or
+      // narrow it as it goes along, and the normal of its side leans over by
+      // as much - the template carries the cosine and the sine of the angle
+      // each corner is at, which is what both are worked out from.
+      const bool taper = (kind == GLYPH_CYLINDER);
+      double r0 = in.param[0], r1 = in.param[1];
       for(int v = 0; v < num; v++) {
         const float *p = &tp[3 * v];
-        xyz[3 * v] = (float)(m[0] * p[0] + m[3] * p[1] + m[6] * p[2] + m[9]);
-        xyz[3 * v + 1] =
-          (float)(m[1] * p[0] + m[4] * p[1] + m[7] * p[2] + m[10]);
-        xyz[3 * v + 2] =
-          (float)(m[2] * p[0] + m[5] * p[1] + m[8] * p[2] + m[11]);
+        double px = p[0], py = p[1], pz = p[2];
+        if(taper) {
+          double r = r0 + pz * (r1 - r0);
+          px *= r;
+          py *= r;
+        }
+        xyz[3 * v] = (float)(m[0] * px + m[3] * py + m[6] * pz + m[9]);
+        xyz[3 * v + 1] = (float)(m[1] * px + m[4] * py + m[7] * pz + m[10]);
+        xyz[3 * v + 2] = (float)(m[2] * px + m[5] * py + m[8] * pz + m[11]);
         memcpy(&col[4 * v], &in.color, 4);
       }
-      if(same) {
+      if(same && !taper) {
         // nothing turns them: the template's are the ones of this glyph, and
         // they are already encoded
         memcpy(nrm, tn, 3 * num * sizeof(normal_type));
@@ -196,10 +243,19 @@ namespace {
       else {
         for(int v = 0; v < num; v++) {
           const float *q = &tq[3 * v];
-          double nx = n[0] * q[0] + n[3] * q[1] + n[6] * q[2];
-          double ny = n[1] * q[0] + n[4] * q[1] + n[7] * q[2];
-          double nz = n[2] * q[0] + n[5] * q[1] + n[8] * q[2];
-          if(!unit) {
+          // the side of a cone leans over by its taper, over the length the
+          // transform gives it; what is worked out here is that normal
+          // before the transform, which then turns it like any other
+          double q0 = q[0], q1 = q[1], q2 = q[2];
+          if(taper) {
+            q0 = tp[3 * v];
+            q1 = tp[3 * v + 1];
+            q2 = r0 - r1;
+          }
+          double nx = n[0] * q0 + n[3] * q1 + n[6] * q2;
+          double ny = n[1] * q0 + n[4] * q1 + n[7] * q2;
+          double nz = n[2] * q0 + n[5] * q1 + n[8] * q2;
+          if(!unit || taper) {
             double l = std::sqrt(nx * nx + ny * ny + nz * nz);
             if(l > 0.) {
               nx /= l;
@@ -306,7 +362,7 @@ void glyphList::draw(drawContext *ctx, bool light)
         const double *im = _inst[k][g].m;
         double m[16] = {im[0], im[1], im[2],  0., im[3],  im[4],  im[5],  0.,
                         im[6], im[7], im[8],  0., im[9],  im[10], im[11], 1.};
-        ctx->drawGlyph(k, m, _inst[k][g].color);
+        ctx->drawGlyph(k, m, _inst[k][g].param, _inst[k][g].color);
       }
     }
     gmshLighting(false);

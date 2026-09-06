@@ -218,6 +218,12 @@ namespace {
       shape[GLYPH_DISK].clear();
       shape[GLYPH_DISK].disk(0., 1., 0., n);
 
+      // the unit cylinder, which the two radii of a glyph are applied to as
+      // it is expanded: its corners carry the cosine and the sine of the
+      // angle they are at, which is all that is needed of it
+      shape[GLYPH_CYLINDER].clear();
+      shape[GLYPH_CYLINDER].side(1., 1., 0., 1., n);
+
       for(int k = 0; k < GLYPH_NUMKINDS; k++) {
         normals[k].resize(shape[k].nrm.size());
         for(std::size_t i = 0; i < shape[k].nrm.size(); i++)
@@ -910,10 +916,20 @@ const float *drawContext::glyphTemplate(int kind, const float *&normals,
   return &t.pos[0];
 }
 
-void drawContext::drawGlyph(int kind, const double m[16], unsigned int color)
+void drawContext::drawGlyph(int kind, const double m[16], const float *param,
+                            unsigned int color)
 {
   _tmpl.update();
   gmshColor4ubv((const void *)&color);
+  if(kind == GLYPH_CYLINDER) {
+    // the two radii are what this one is shaped by, so it is built here
+    static thread_local Tessellation t;
+    int n = CTX::instance()->quadricSubdivisions;
+    t.clear();
+    t.side(param[0], param[1], 0., 1., (n < 3) ? 3 : n);
+    emit(t, m);
+    return;
+  }
   emit(_tmpl.shape[kind], m);
 }
 
