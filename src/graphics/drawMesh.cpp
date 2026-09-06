@@ -255,8 +255,7 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
 template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
 {
   gmshColor4ubv((const void *)&CTX::instance()->color.fg);
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(1, 0x0F0F);
+  gmshLineStipple(1, 0x0F0F);
   gl2psEnable(GL2PS_LINE_STIPPLE);
   gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < elements.size(); i++) {
@@ -289,15 +288,14 @@ template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
     }
   }
   gmshEnd();
-  glDisable(GL_LINE_STIPPLE);
+  gmshLineStippleOff();
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
 template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
 {
   gmshColor4ubv((const void *)&CTX::instance()->color.fg);
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(1, 0x0F0F);
+  gmshLineStipple(1, 0x0F0F);
   gl2psEnable(GL2PS_LINE_STIPPLE);
   gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < elements.size(); i++) {
@@ -340,7 +338,7 @@ template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
     }
   }
   gmshEnd();
-  glDisable(GL_LINE_STIPPLE);
+  gmshLineStippleOff();
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
@@ -428,7 +426,7 @@ static void drawMergedArray(drawContext *ctx, VertexArray *va, GLenum type,
   glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
   glEnableClientState(GL_VERTEX_ARRAY);
   if(useNormalArray && va->hasNormals()) {
-    glEnable(GL_LIGHTING);
+    gmshLighting(true);
     glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
     glEnableClientState(GL_NORMAL_ARRAY);
   }
@@ -443,7 +441,7 @@ static void drawMergedArray(drawContext *ctx, VertexArray *va, GLenum type,
   drawVertexArray(va, type);
 
   glDisable(GL_POLYGON_OFFSET_FILL);
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
@@ -492,7 +490,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   glEnableClientState(GL_VERTEX_ARRAY);
 
   if(!ctx->inPickColorMode() && useNormalArray && va->hasNormals()) {
-    glEnable(GL_LIGHTING);
+    gmshLighting(true);
     glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
     glEnableClientState(GL_NORMAL_ARRAY);
   }
@@ -527,7 +525,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
 
   if(overlay) glDepthFunc(GL_LESS);
   glDisable(GL_POLYGON_OFFSET_FILL);
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
@@ -850,11 +848,11 @@ void drawContext::drawMesh()
           PView::list[j]->setChanged(true);
   }
 
-  glPointSize((float)CTX::instance()->mesh.nodeSize);
+  gmshPointSize((float)CTX::instance()->mesh.nodeSize);
   gl2psPointSize((float)(CTX::instance()->mesh.nodeSize *
                          CTX::instance()->print.epsPointSizeFactor));
 
-  glLineWidth((float)CTX::instance()->mesh.lineWidth);
+  gmshLineWidth((float)CTX::instance()->mesh.lineWidth);
   gl2psLineWidth((float)(CTX::instance()->mesh.lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
 

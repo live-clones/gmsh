@@ -121,8 +121,7 @@ static void drawGridStipple(int n1, int n2, double p1[3], double p2[3],
   double l1 = norme(t1);
   double l2 = norme(t2);
 
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(1, 0x1111);
+  gmshLineStipple(1, 0x1111);
   gl2psEnable(GL2PS_LINE_STIPPLE);
   gmshBegin(GL_LINES);
 
@@ -140,7 +139,7 @@ static void drawGridStipple(int n1, int n2, double p1[3], double p2[3],
   }
 
   gmshEnd();
-  glDisable(GL_LINE_STIPPLE);
+  gmshLineStippleOff();
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
@@ -306,7 +305,7 @@ void drawContext::drawAxes()
   if(geometryExists &&
      (CTX::instance()->drawBBox || !CTX::instance()->mesh.draw)) {
     gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
-    glLineWidth((float)CTX::instance()->lineWidth);
+    gmshLineWidth((float)CTX::instance()->lineWidth);
     gl2psLineWidth((float)(CTX::instance()->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));
     drawBox(CTX::instance()->min[0], CTX::instance()->min[1],
@@ -326,7 +325,7 @@ void drawContext::drawAxes()
 
   if(CTX::instance()->axes) {
     gmshColor4ubv((GLubyte *)&CTX::instance()->color.axes);
-    glLineWidth((float)CTX::instance()->lineWidth);
+    gmshLineWidth((float)CTX::instance()->lineWidth);
     gl2psLineWidth((float)(CTX::instance()->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));
     if(!CTX::instance()->axesAutoPosition) {
@@ -399,7 +398,7 @@ void drawContext::drawSmallAxes()
     zx = l * rot[8];
     zy = l * rot[9];
   }
-  glLineWidth((float)CTX::instance()->lineWidth);
+  gmshLineWidth((float)CTX::instance()->lineWidth);
   gl2psLineWidth((float)(CTX::instance()->lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.smallAxes);

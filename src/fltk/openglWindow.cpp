@@ -193,7 +193,7 @@ void openglWindow::_drawBorder()
      Fl::get_color(FL_BACKGROUND_COLOR, r, g, b);
   */
   gmshColor3ub(r, g, b);
-  glLineWidth(1.0F);
+  gmshLineWidth(1.0F);
   gmshBegin(GL_LINE_LOOP);
   gmshVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
   gmshVertex2d(_ctx->viewport[2], _ctx->viewport[1]);
@@ -254,13 +254,12 @@ void openglWindow::draw()
     glDisable(GL_DEPTH_TEST);
     glDrawBuffer(GL_FRONT_AND_BACK);
     if(selectionMode && CTX::instance()->mouseSelection) {
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1, 0x0F0F);
+      gmshLineStipple(1, 0x0F0F);
     }
     // glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     glEnable(GL_BLEND);
-    glLineWidth(0.2F);
+    gmshLineWidth(0.2F);
     gmshBegin(GL_LINE_LOOP);
     gmshVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
     gmshVertex2d(_lassoXY[0], _ctx->viewport[3] - _click.win[1]);
@@ -276,7 +275,7 @@ void openglWindow::draw()
     _lassoXY[0] = _curr.win[0];
     _lassoXY[1] = _curr.win[1];
     glDisable(GL_BLEND);
-    glDisable(GL_LINE_STIPPLE);
+    gmshLineStippleOff();
     glEnable(GL_DEPTH_TEST);
     glDrawBuffer(GL_BACK);
   }
@@ -300,7 +299,7 @@ void openglWindow::draw()
     gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
     float ps =
       CTX::instance()->geom.pointSize * _ctx->highResolutionPixelFactor();
-    glPointSize(ps);
+    gmshPointSize(ps);
     gmshBegin(GL_POINTS);
     gmshVertex3d(_point[0], _point[1], _point[2]);
     gmshEnd();

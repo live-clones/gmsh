@@ -243,11 +243,11 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 
   double ps = CTX::instance()->pointSize * ctx->highResolutionPixelFactor();
 
-  glPointSize((float)ps);
+  gmshPointSize((float)ps);
   gl2psPointSize((float)(CTX::instance()->pointSize *
                          CTX::instance()->print.epsPointSizeFactor));
 
-  glLineWidth((float)CTX::instance()->lineWidth);
+  gmshLineWidth((float)CTX::instance()->lineWidth);
   gl2psLineWidth((float)(CTX::instance()->lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
 
@@ -313,15 +313,14 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       }
       gmshEnd();
       if(opt->axes > 2 && i != 0 && i != nb) {
-        glEnable(GL_LINE_STIPPLE);
-        glLineStipple(1, 0x1111);
+        gmshLineStipple(1, 0x1111);
         gl2psEnable(GL2PS_LINE_STIPPLE);
         gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
         gmshBegin(GL_LINES);
         gmshVertex2d(xleft, ytop - i * dy);
         gmshVertex2d(xleft + width, ytop - i * dy);
         gmshEnd();
-        glDisable(GL_LINE_STIPPLE);
+        gmshLineStippleOff();
         gl2psDisable(GL2PS_LINE_STIPPLE);
         gl2psLineWidth((float)(CTX::instance()->lineWidth *
                                CTX::instance()->print.epsLineWidthFactor));
@@ -365,15 +364,14 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       }
       gmshEnd();
       if(opt->axes > 2 && i != 0 && i != nb - 1) {
-        glEnable(GL_LINE_STIPPLE);
-        glLineStipple(1, 0x1111);
+        gmshLineStipple(1, 0x1111);
         gl2psEnable(GL2PS_LINE_STIPPLE);
         gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
         gmshBegin(GL_LINES);
         gmshVertex2d(xleft + i * dx, ytop);
         gmshVertex2d(xleft + i * dx, ybot);
         gmshEnd();
-        glDisable(GL_LINE_STIPPLE);
+        gmshLineStippleOff();
         gl2psDisable(GL2PS_LINE_STIPPLE);
         gl2psLineWidth((float)(CTX::instance()->lineWidth *
                                CTX::instance()->print.epsLineWidthFactor));
@@ -475,11 +473,11 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
 
   double ps = CTX::instance()->pointSize * ctx->highResolutionPixelFactor();
 
-  glPointSize((float)ps);
+  gmshPointSize((float)ps);
   gl2psPointSize(
     (float)(opt->pointSize * CTX::instance()->print.epsPointSizeFactor));
 
-  glLineWidth((float)opt->lineWidth);
+  gmshLineWidth((float)opt->lineWidth);
   gl2psLineWidth(
     (float)(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor));
 
@@ -487,8 +485,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
      opt->intervalsType == PViewOptions::Continuous) {
     for(std::size_t i = 0; i < y.size(); i++) {
       if(opt->useStipple) {
-        glEnable(GL_LINE_STIPPLE);
-        glLineStipple(opt->stipple[i % 10][0], opt->stipple[i % 10][1]);
+        gmshLineStipple(opt->stipple[i % 10][0], opt->stipple[i % 10][1]);
         gl2psEnable(GL2PS_LINE_STIPPLE);
       }
       gmshBegin(GL_LINE_STRIP);
@@ -498,7 +495,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
                       inModelCoordinates);
       gmshEnd();
       if(opt->useStipple) {
-        glDisable(GL_LINE_STIPPLE);
+        gmshLineStippleOff();
         gl2psDisable(GL2PS_LINE_STIPPLE);
       }
     }

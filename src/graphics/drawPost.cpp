@@ -44,7 +44,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       if(opt->pointType == 2) {
         int s = (int)(opt->pointSize * f);
         if(s) {
-          glPointSize((float)s);
+          gmshPointSize((float)s);
           gl2psPointSize(
             (float)(s * CTX::instance()->print.epsPointSizeFactor));
           gmshBegin(GL_POINTS);
@@ -101,15 +101,14 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
   else {
 
     if(type == GL_LINES && opt->useStipple) {
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(opt->stipple[0][0], opt->stipple[0][1]);
+      gmshLineStipple(opt->stipple[0][0], opt->stipple[0][1]);
       gl2psEnable(GL2PS_LINE_STIPPLE);
     }
 
     glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
     glEnableClientState(GL_VERTEX_ARRAY);
     if(!ctx->inPickColorMode() && useNormalArray && va->hasNormals()) {
-      glEnable(GL_LIGHTING);
+      gmshLighting(true);
       glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
       glEnableClientState(GL_NORMAL_ARRAY);
     }
@@ -130,14 +129,14 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     glDisableClientState(GL_COLOR_ARRAY);
 
     if(type == GL_LINES && opt->useStipple) {
-      glDisable(GL_LINE_STIPPLE);
+      gmshLineStippleOff();
       gl2psDisable(GL2PS_LINE_STIPPLE);
     }
 
   }
 
   glDisable(GL_POLYGON_OFFSET_FILL);
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
@@ -468,17 +467,17 @@ public:
       _ctx->setPickColor(5, p->getIndex());
     }
 
-    glPointSize((float)opt->pointSize);
+    gmshPointSize((float)opt->pointSize);
     gl2psPointSize(
       (float)(opt->pointSize * CTX::instance()->print.epsPointSizeFactor));
 
-    glLineWidth((float)opt->lineWidth);
+    gmshLineWidth((float)opt->lineWidth);
     gl2psLineWidth(
       (float)(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor));
 
     if(opt->axes && opt->type == PViewOptions::Plot3D) {
       gmshColor4ubv((const void *)&opt->color.axes);
-      glLineWidth((float)CTX::instance()->lineWidth);
+      gmshLineWidth((float)CTX::instance()->lineWidth);
       gl2psLineWidth((float)(CTX::instance()->lineWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       if(!opt->axesAutoPosition)
@@ -595,7 +594,7 @@ public:
     if(bb.empty()) return;
 
     gmshColor4ubv((const void *)&CTX::instance()->color.fg);
-    glLineWidth((float)CTX::instance()->lineWidth);
+    gmshLineWidth((float)CTX::instance()->lineWidth);
     gl2psLineWidth((float)(CTX::instance()->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));
 

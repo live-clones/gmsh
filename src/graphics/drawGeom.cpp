@@ -103,8 +103,8 @@ static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
   if(xyz.empty()) return true;
 
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-  glDisable(GL_LIGHTING);
-  glPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
+  gmshLighting(false);
+  gmshPointSize((float)(c->geom.pointSize * ctx->highResolutionPixelFactor()));
   gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
@@ -148,13 +148,13 @@ public:
     double sps = CTX::instance()->geom.selectedPointSize * fact;
 
     if(v->getSelection()) {
-      glPointSize((float)sps);
+      gmshPointSize((float)sps);
       gl2psPointSize((float)(CTX::instance()->geom.selectedPointSize *
                              CTX::instance()->print.epsPointSizeFactor));
       gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
     }
     else {
-      glPointSize((float)ps);
+      gmshPointSize((float)ps);
       gl2psPointSize((float)(CTX::instance()->geom.pointSize *
                              CTX::instance()->print.epsPointSizeFactor));
       unsigned int col = v->useColor() ? v->getColor() :
@@ -221,13 +221,13 @@ public:
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
     if(e->getSelection()) {
-      glLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
+      gmshLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
     }
     else {
-      glLineWidth((float)CTX::instance()->geom.curveWidth);
+      gmshLineWidth((float)CTX::instance()->geom.curveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.curveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       unsigned int col = e->useColor() ? e->getColor() :
@@ -322,7 +322,7 @@ private:
     glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
     glEnableClientState(GL_VERTEX_ARRAY);
     if(!_ctx->inPickColorMode() && useNormalArray && va->hasNormals()) {
-      glEnable(GL_LIGHTING);
+      gmshLighting(true);
       glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
       glEnableClientState(GL_NORMAL_ARRAY);
     }
@@ -350,16 +350,16 @@ private:
         glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
       else
         glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      gmshPolygonFill(true);
     }
     else {
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      gmshPolygonFill(false);
     }
     drawVertexArray(va, GL_TRIANGLES);
     glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    gmshLighting(false);
+    gmshPolygonFill(true);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
@@ -380,13 +380,13 @@ public:
     }
 
     if(f->getSelection()) {
-      glLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2.));
+      gmshLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2.));
       gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
       gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
     }
     else {
-      glLineWidth((float)(CTX::instance()->geom.curveWidth / 2.));
+      gmshLineWidth((float)(CTX::instance()->geom.curveWidth / 2.));
       gl2psLineWidth((float)(CTX::instance()->geom.curveWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
       unsigned int col = f->useColor() ? f->getColor() :
@@ -423,8 +423,7 @@ public:
                          selected, CTX::instance()->color.geom.selection);
       }
       else {
-        glEnable(GL_LINE_STIPPLE);
-        glLineStipple(1, 0x0F0F);
+        gmshLineStipple(1, 0x0F0F);
         gl2psEnable(GL2PS_LINE_STIPPLE);
         for(int dim = 0; dim < 2; dim++) {
           for(std::size_t i = 0; i < f->cross[dim].size(); i++) {
@@ -441,7 +440,7 @@ public:
             }
           }
         }
-        glDisable(GL_LINE_STIPPLE);
+        gmshLineStippleOff();
         gl2psDisable(GL2PS_LINE_STIPPLE);
       }
     }
@@ -503,13 +502,13 @@ public:
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
     if(r->getSelection()) {
-      glLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
+      gmshLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
     }
     else {
-      glLineWidth((float)CTX::instance()->geom.curveWidth);
+      gmshLineWidth((float)CTX::instance()->geom.curveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.curveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       unsigned int col = r->useColor() ? r->getColor() :

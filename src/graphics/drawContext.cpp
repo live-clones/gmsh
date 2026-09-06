@@ -1000,7 +1000,7 @@ void drawContext::initRenderModel()
 #endif
 
   // lighting is enabled/disabled for each particular primitive later
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 void drawContext::initPosition(bool saveMatrices)
@@ -1168,7 +1168,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   _pickColor = _pickColorActive = true;
   render_mode = drawContext::GMSH_SELECT;
 
-  GLboolean oldLighting = glIsEnabled(GL_LIGHTING);
+  bool oldLighting = gmshLightingEnabled();
   GLboolean oldBlend = glIsEnabled(GL_BLEND);
   GLfloat oldClear[4];
   glGetFloatv(GL_COLOR_CLEAR_VALUE, oldClear);
@@ -1176,7 +1176,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glDrawBuffer(GL_BACK);
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
   glDisable(GL_BLEND);
   glShadeModel(GL_FLAT);
   // only rasterise the region the image covers
@@ -1222,7 +1222,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glDisable(GL_SCISSOR_TEST);
   glDepthRange(0., 1.);
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
-  if(oldLighting) glEnable(GL_LIGHTING);
+  if(oldLighting) gmshLighting(true);
   if(oldBlend) glEnable(GL_BLEND);
   glShadeModel(GL_SMOOTH);
   _pickColor = _pickColorActive = false;

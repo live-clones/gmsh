@@ -61,4 +61,45 @@ void gmshColor4ubv(const void *col);
 
 inline void gmshTexCoord2f(float s, float t) { glTexCoord2f(s, t); }
 
+// The pieces of fixed function state that decide how the primitives above are
+// drawn, and that a shader pipeline has to carry itself: whether the vertices
+// are lit, how wide a line and how big a point is, the dash pattern of the
+// lines, and whether the polygons are filled or drawn as their edges. Each of
+// them either has no core profile equivalent at all (the lighting, the
+// stipple), or none on OpenGL ES (the polygon mode, the point size).
+//
+// A few of them are asked for as well as set, to be put back afterwards; the
+// query goes through here too, as a core profile cannot answer it either.
+inline void gmshLighting(bool on)
+{
+  if(on)
+    glEnable(GL_LIGHTING);
+  else
+    glDisable(GL_LIGHTING);
+}
+inline bool gmshLightingEnabled() { return glIsEnabled(GL_LIGHTING) ? true : false; }
+
+inline void gmshLineWidth(double w) { glLineWidth((float)w); }
+inline void gmshPointSize(double s) { glPointSize((float)s); }
+
+// a factor and a 16 bit pattern, as glLineStipple takes them
+inline void gmshLineStipple(int factor, unsigned short pattern)
+{
+  glLineStipple(factor, pattern);
+  glEnable(GL_LINE_STIPPLE);
+}
+inline void gmshLineStippleOff() { glDisable(GL_LINE_STIPPLE); }
+
+inline void gmshPolygonFill(bool fill)
+{
+  glPolygonMode(GL_FRONT_AND_BACK, fill ? GL_FILL : GL_LINE);
+}
+inline bool gmshPolygonFilled()
+{
+  GLint mode[2];
+  glGetIntegerv(GL_POLYGON_MODE, mode);
+  // the back mode, which is the one the callers put back
+  return mode[1] == GL_FILL;
+}
+
 #endif

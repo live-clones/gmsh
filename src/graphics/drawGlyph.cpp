@@ -356,7 +356,7 @@ void drawContext::drawCube(double x, double y, double z, float v0[3],
 			   float v1[3], float v2[3], int light)
 {
  
-  if(light) glEnable(GL_LIGHTING);
+  if(light) gmshLighting(true);
   glPushMatrix();
 
   GLfloat m[16] = {v0[0],      v0[1],      v0[2],      .0f,   v1[0], v1[1],
@@ -365,25 +365,25 @@ void drawContext::drawCube(double x, double y, double z, float v0[3],
   glMultMatrixf(m);
   _drawBox();
   glPopMatrix();
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 void drawContext::drawSphere(double R, double x, double y, double z, int n1,
                              int n2, int light)
 {
-  if(light) glEnable(GL_LIGHTING);
+  if(light) gmshLighting(true);
   glPushMatrix();
   glTranslated(x, y, z);
   gluSphere(_quadric, R, n1, n2);
   glPopMatrix();
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 
 void drawContext::drawEllipse(double x, double y, double z, float v0[3],
                               float v1[3], int light)
 {
-  if(light) glEnable(GL_LIGHTING);
+  if(light) gmshLighting(true);
   glPushMatrix();
   GLfloat m[16] = {v0[0],
                    v0[1],
@@ -404,13 +404,13 @@ void drawContext::drawEllipse(double x, double y, double z, float v0[3],
   glMultMatrixf(m);
   glCallList(_displayLists + 2);
   glPopMatrix();
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 void drawContext::drawEllipsoid(double x, double y, double z, float v0[3],
                                 float v1[3], float v2[3], int light)
 {
-  if(light) glEnable(GL_LIGHTING);
+  if(light) gmshLighting(true);
   glPushMatrix();
   GLfloat m[16] = {v0[0],      v0[1],      v0[2],      .0f,   v1[0], v1[1],
                    v1[2],      .0f,        v2[0],      v2[1], v2[2], .0f,
@@ -418,27 +418,27 @@ void drawContext::drawEllipsoid(double x, double y, double z, float v0[3],
   glMultMatrixf(m);
   glCallList(_displayLists + 0);
   glPopMatrix();
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 void drawContext::drawSphere(double size, double x, double y, double z,
                              int light)
 {
   double ss = size * pixel_equiv_x / s[0]; // size is in pixels
-  if(light) glEnable(GL_LIGHTING);
+  if(light) gmshLighting(true);
   glPushMatrix();
   glTranslated(x, y, z);
   glScaled(ss, ss, ss);
   glCallList(_displayLists + 0);
   glPopMatrix();
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 void drawContext::drawTaperedCylinder(double width, double val1, double val2,
                                       double ValMin, double ValMax, double *x,
                                       double *y, double *z, int light)
 {
-  if(light) glEnable(GL_LIGHTING);
+  if(light) gmshLighting(true);
 
   double dx = x[1] - x[0];
   double dy = y[1] - y[0];
@@ -466,13 +466,13 @@ void drawContext::drawTaperedCylinder(double width, double val1, double val2,
               CTX::instance()->quadricSubdivisions, 1);
   glPopMatrix();
 
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 void drawContext::drawCylinder(double width, double *x, double *y, double *z,
                                int light)
 {
-  if(light) glEnable(GL_LIGHTING);
+  if(light) gmshLighting(true);
 
   double dx = x[1] - x[0];
   double dy = y[1] - y[0];
@@ -498,7 +498,7 @@ void drawContext::drawCylinder(double width, double *x, double *y, double *z,
               CTX::instance()->quadricSubdivisions, 1);
   glPopMatrix();
 
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
@@ -549,7 +549,7 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
       gmshVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       gmshEnd();
 
-      if(light && fill) glEnable(GL_LIGHTING);
+      if(light && fill) gmshLighting(true);
       gmshBegin(GL_TRIANGLES);
       if(light) gmshNormal3dv(u);
       gmshVertex3d(x + dx, y + dy, z + dz);
@@ -573,7 +573,7 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
                  z + f2 * dz + b * (u[2]));
       gmshVertex3d(x + dx, y + dy, z + dz);
       gmshEnd();
-      glDisable(GL_LIGHTING);
+      gmshLighting(false);
     }
     else {
       gmshBegin(GL_LINE_STRIP);
@@ -603,7 +603,7 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
       double um[3] = {x - b * u[0], y - b * u[1], z - b * u[2]};
       double nn[3];
 
-      if(light && fill) glEnable(GL_LIGHTING);
+      if(light && fill) gmshLighting(true);
       gmshBegin(GL_TRIANGLES);
       if(light) {
         normal3points(tm[0], tm[1], tm[2], um[0], um[1], um[2], top[0], top[1],
@@ -641,7 +641,7 @@ static void drawSimpleVector(int arrow, int fill, double x, double y, double z,
       gmshVertex3d(tm[0], tm[1], tm[2]);
       gmshVertex3d(top[0], top[1], top[2]);
       gmshEnd();
-      glDisable(GL_LIGHTING);
+      gmshLighting(false);
     }
     else {
       gmshBegin(GL_LINE_LOOP);
@@ -683,14 +683,14 @@ void drawContext::drawArrow3d(double x, double y, double z, double dx,
   }
   double phi = 180. * myacos(cosphi) / M_PI;
 
-  if(light) glEnable(GL_LIGHTING);
+  if(light) gmshLighting(true);
   glPushMatrix();
   glTranslated(x, y, z);
   glScaled(length, length, length);
   glRotated(phi, axis[0], axis[1], axis[2]);
   glCallList(_displayLists + 1);
   glPopMatrix();
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 void drawContext::drawVector(int Type, int Fill, double x, double y, double z,
@@ -873,14 +873,14 @@ void drawContext::drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
     GLboolean twoside;
     glGetBooleanv(GL_LIGHT_MODEL_TWO_SIDE, &twoside);
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-    glEnable(GL_LIGHTING);
+    gmshLighting(true);
     gmshBegin(GL_POLYGON);
     gmshNormal3d(n[0], n[1], n[2]);
     for(int j = 0; j < n_shade; j++) {
       gmshVertex3d(p_shade[j].x, p_shade[j].y, p_shade[j].z);
     }
     gmshEnd();
-    glDisable(GL_LIGHTING);
+    gmshLighting(false);
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, twoside);
   }
 }

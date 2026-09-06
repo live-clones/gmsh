@@ -55,13 +55,12 @@ static void draw_stl(std::vector<SPoint3> &vertices,
                      std::vector<SVector3> &normals,
                      std::vector<int> &triangles)
 {
-  GLint mode[2];
-  glGetIntegerv(GL_POLYGON_MODE, mode);
+  bool fill = gmshPolygonFilled();
   if(CTX::instance()->geom.surfaceType == 1)
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    gmshPolygonFill(false);
   else
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glEnable(GL_LIGHTING);
+    gmshPolygonFill(true);
+  gmshLighting(true);
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
 
@@ -90,8 +89,8 @@ static void draw_stl(std::vector<SPoint3> &vertices,
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
 
-  glDisable(GL_LIGHTING);
-  glPolygonMode(GL_FRONT_AND_BACK, mode[1]);
+  gmshLighting(false);
+  gmshPolygonFill(fill);
 }
 
 static void elementary_add_parameter_cb(Fl_Widget *w, void *data)

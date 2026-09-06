@@ -57,7 +57,7 @@ void Navigator::drawIcons()
   ctx->fix2dCoordinates(&dx, &dy);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
-  glLineWidth((float)CTX::instance()->lineWidth);
+  gmshLineWidth((float)CTX::instance()->lineWidth);
   gl2psLineWidth((float)(CTX::instance()->lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
 

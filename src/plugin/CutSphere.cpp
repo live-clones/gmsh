@@ -33,16 +33,15 @@ GMSH_Plugin *GMSH_RegisterCutSpherePlugin()
 void GMSH_CutSpherePlugin::draw(void *context)
 {
 #if defined(HAVE_OPENGL)
-  GLint mode[2];
-  glGetIntegerv(GL_POLYGON_MODE, mode);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  bool fill = gmshPolygonFilled();
+  gmshPolygonFill(false);
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
-  glLineWidth((float)CTX::instance()->lineWidth);
+  gmshLineWidth((float)CTX::instance()->lineWidth);
   drawContext *ctx = (drawContext *)context;
   ctx->drawSphere(
     CutSphereOptions_Number[3].def, CutSphereOptions_Number[0].def,
     CutSphereOptions_Number[1].def, CutSphereOptions_Number[2].def, 40, 40, 1);
-  glPolygonMode(GL_FRONT_AND_BACK, mode[1]);
+  gmshPolygonFill(fill);
 #endif
 }
 

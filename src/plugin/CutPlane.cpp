@@ -37,7 +37,7 @@ void GMSH_CutPlanePlugin::draw(void *context)
   if(num < 0) num = iview;
   if(num >= 0 && num < (int)PView::list.size()) {
     gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
-    glLineWidth((float)CTX::instance()->lineWidth);
+    gmshLineWidth((float)CTX::instance()->lineWidth);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
     ctx->drawPlaneInBoundingBox(
       bb.min().x(), bb.min().y(), bb.min().z(), bb.max().x(), bb.max().y(),
