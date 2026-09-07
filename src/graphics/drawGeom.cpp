@@ -175,8 +175,10 @@ public:
       gmshPointSize((float)ps);
       gl2psPointSize((float)(CTX::instance()->geom.pointSize *
                              CTX::instance()->print.epsPointSizeFactor));
-      unsigned int col = v->useColor() ? v->getColor() :
-        CTX::instance()->color.geom.point;
+      unsigned int col = CTX::instance()->scaleAlpha(
+        v->useColor() ? v->getColor() :
+          CTX::instance()->color.geom.point,
+        CTX::instance()->geom.transparency);
       gmshColor4ubv((const void *)&col);
     }
 
@@ -249,8 +251,10 @@ public:
       gmshLineWidth((float)CTX::instance()->geom.curveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.curveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
-      unsigned int col = e->useColor() ? e->getColor() :
-        CTX::instance()->color.geom.curve;
+      unsigned int col = CTX::instance()->scaleAlpha(
+        e->useColor() ? e->getColor() :
+          CTX::instance()->color.geom.curve,
+        CTX::instance()->geom.transparency);
       gmshColor4ubv((const void *)&col);
     }
 
@@ -393,8 +397,10 @@ public:
       gmshLineWidth((float)(CTX::instance()->geom.curveWidth / 2.));
       gl2psLineWidth((float)(CTX::instance()->geom.curveWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
-      unsigned int col = f->useColor() ? f->getColor() :
-        CTX::instance()->color.geom.surface;
+      unsigned int col = CTX::instance()->scaleAlpha(
+        f->useColor() ? f->getColor() :
+          CTX::instance()->color.geom.surface,
+        CTX::instance()->geom.transparency);
       gmshColor4ubv((const void *)&col);
     }
 
@@ -424,7 +430,10 @@ public:
         bool selected = false;
         if(f->getSelection()) selected = true;
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
-                         selected, CTX::instance()->color.geom.selection);
+                         selected,
+                         CTX::instance()->scaleAlpha(
+                           CTX::instance()->color.geom.selection,
+                           CTX::instance()->geom.transparency));
       }
       else {
         gmshLineStipple(1, 0x0F0F);
@@ -578,6 +587,12 @@ public:
 
 void drawContext::drawGeom()
 {
+  // the geometry is see-through or it is not, all of it together: it belongs
+  // to one of the two passes and is left out of the other
+  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshGeometryIsTransparent())
+    return;
+  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshGeometryIsTransparent())
+    return;
   if(!CTX::instance()->geom.draw) return;
 
   // draw any transient geometry stuff

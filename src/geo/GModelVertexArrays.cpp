@@ -30,7 +30,9 @@ enum { MAX_BATCHED_EDGES = 32, MAX_BATCHED_FACES = 8 };
 
 static const double curvedRepTol = 1.e-5;
 
-unsigned int getColorByEntity(GEntity *e)
+// The colour an entity's mesh is drawn in, before Mesh.Transparency has had
+// its say. Kept apart so that the two callers below scale it exactly once.
+static unsigned int rawColorByEntity(GEntity *e)
 {
   if(e->getSelection()) { // selection
     return CTX::instance()->color.geom.selection;
@@ -51,7 +53,13 @@ unsigned int getColorByEntity(GEntity *e)
   }
 }
 
-static unsigned int getColorByElement(MElement *ele)
+unsigned int getColorByEntity(GEntity *e)
+{
+  return CTX::instance()->scaleAlpha(rawColorByEntity(e),
+                                     CTX::instance()->mesh.transparency);
+}
+
+static unsigned int rawColorByElement(MElement *ele)
 {
   // CTX::instance() is not inlined across translation units: look it up once,
   // as this is called for every element
@@ -82,10 +90,16 @@ static unsigned int getColorByElement(MElement *ele)
     // associated entity in the element
     for(std::size_t i = 0; i < ele->getNumVertices(); i++) {
       GEntity *e = ele->getVertex(i)->onWhat();
-      if(e && (e->dim() == ele->getDim())) return getColorByEntity(e);
+      if(e && (e->dim() == ele->getDim())) return rawColorByEntity(e);
     }
   }
-  return CTX::instance()->color.fg;
+  return ctx->color.fg;
+}
+
+static unsigned int getColorByElement(MElement *ele)
+{
+  return CTX::instance()->scaleAlpha(rawColorByElement(ele),
+                                     CTX::instance()->mesh.transparency);
 }
 
 static double evalClipPlane(int clip, double x, double y, double z)

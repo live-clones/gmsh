@@ -15,6 +15,8 @@
 class GamePad;
 
 struct contextMeshOptions {
+  // multiplies the alpha of every mesh colour, as above
+  double transparency;
   // mesh algorithms
   int optimize, optimizeNetgen, refineSteps;
   double optimizePyramids;
@@ -101,6 +103,9 @@ struct contextMeshOptions {
 };
 
 struct contextGeometryOptions {
+  // multiplies the alpha of every geometry colour: 1 leaves them as they
+  // are, less than 1 makes the geometry see-through
+  double transparency;
   // geometry algorithms
   int oldCircle, oldNewreg, oldRuledSurface;
   int extrudeSplinePoints, extrudeReturnLateral;
@@ -430,6 +435,9 @@ public:
   // how RGBA values are packed and unpacked into/from an unsigned integer to be
   // fed to gmshColor4ubv (depends on machine byte ordering!):
   unsigned int packColor(int R, int G, int B, int A);
+  // the same colour with its alpha multiplied by s, which is what the
+  // transparency options do to every colour of their category
+  unsigned int scaleAlpha(unsigned int col, double s);
   int unpackRed(unsigned int X);
   int unpackGreen(unsigned int X);
   int unpackBlue(unsigned int X);

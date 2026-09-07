@@ -865,6 +865,9 @@ static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
 
 void drawContext::drawMesh()
 {
+  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshMeshIsTransparent()) return;
+  if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshMeshIsTransparent())
+    return;
   if(!CTX::instance()->mesh.draw) return;
 
   // make sure to flag any model-dependent post-processing view as

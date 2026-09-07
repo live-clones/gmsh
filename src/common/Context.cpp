@@ -165,3 +165,11 @@ int CTX::unpackAlpha(unsigned int X)
   else
     return ( ( (X) >> 24 ) & 0xff );
 }
+
+unsigned int CTX::scaleAlpha(unsigned int col, double s)
+{
+  if(s >= 1.) return col;
+  if(s < 0.) s = 0.;
+  int a = (int)(unpackAlpha(col) * s + 0.5);
+  return packColor(unpackRed(col), unpackGreen(col), unpackBlue(col), a);
+}
