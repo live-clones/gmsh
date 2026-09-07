@@ -104,6 +104,11 @@ namespace glShader {
   // leaves the vertices with no distance and the pattern with nothing to bite
   // on.
   void streamDash(const float *dashes, int count);
+  // Say that nothing is drawn through a texture, and leave the sampler
+  // pointing at one that is at least there: a driver checks that every sampler
+  // in the program points at a complete texture when it draws, whether or not
+  // the branch that reads it is taken.
+  void noTexture();
   // Draw a run of vertices collected from the immediate mode calls, each with
   // the colour and the normal that were current when it was given. The state
   // it is drawn with - the matrices, the lights, the clipping - is whatever

@@ -482,6 +482,9 @@ void gmshDrawArrays(GLenum type, int count, const float *dashes)
       glShader::streamArrays(_clientVertices, _clientColors, count);
     }
     glShader::setColorArray(_boundColors);
+    // an array is never drawn through a texture, but the sampler still has to
+    // point at one the driver is happy with
+    glShader::noTexture();
     gmshPushShaderState();
     // gmshPushShaderState() leaves the pattern off, as most of what is drawn
     // has no distance along a line to measure it against. A caller that has
