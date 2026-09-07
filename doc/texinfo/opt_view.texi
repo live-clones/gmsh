@@ -236,11 +236,6 @@ Close the subtree containing this view@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.ColormapAlpha
-Colormap alpha channel value (used only if != 1)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item View.ColormapAlphaPower
 Colormap alpha channel power@*
 Default value: @code{0}@*
@@ -429,11 +424,6 @@ Saved in: @code{General.OptionsFileName}
 @item View.ExternalView
 Index of the view used to color vector fields (-1: self)@*
 Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item View.FakeTransparency
-Use fake transparency (cheaper than the real thing, but incorrect)@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ForceNumComponents
@@ -730,6 +720,11 @@ Saved in: @code{-}
 Element (3,3) of the 3x3 coordinate transformation matrix@*
 Default value: @code{1}@*
 Saved in: @code{-}
+
+@item View.Transparency
+Multiply the alpha (opacity) the colormap gives by this factor (1: as the colormap says, 0: fully transparent)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
 
 @item View.Type
 Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)@*

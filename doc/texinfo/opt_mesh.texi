@@ -976,6 +976,16 @@ Tolerance for classifying a point inside a reference element (of size 1)@*
 Default value: @code{1e-06}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Transparency
+Multiply the alpha (opacity) of every mesh colour by this factor (1: opaque, 0: fully transparent)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.TransparencyMode
+What Mesh.Transparency is applied to (0: filled surfaces only; 1: everything)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Triangles
 Display mesh triangles?@*
 Default value: @code{1}@*
