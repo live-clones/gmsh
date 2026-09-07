@@ -238,6 +238,11 @@ void main()
     GLuint _streamVertices = 0, _streamColors = 0, _streamNormals = 0;
     // one more for the glyphs a shape is drawn many times over with
     GLuint _streamGlyphs = 0, _streamTex = 0, _streamDash = 0;
+    // A one pixel texture bound whenever nothing else is. The program has a
+    // sampler in it whether or not what is being drawn goes through one, and
+    // a driver checks that every sampler points at a complete texture when it
+    // draws, not only when the branch that reads it is taken.
+    GLuint _noTexture = 0;
     // the picking buffer and what it is made of
     GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
     int _pickWidth = 0, _pickHeight = 0;
@@ -412,6 +417,7 @@ void main()
     _program = _vao = 0;
     _streamVertices = _streamColors = _streamNormals = 0;
     _streamGlyphs = _streamTex = _streamDash = 0;
+    _noTexture = 0;
     _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
     _pickWidth = _pickHeight = 0;
     _tried = false;
@@ -507,6 +513,31 @@ void main()
   {
     if(i < 0 || i > 5 || !ensure()) return;
     glApi::Uniform1i(element("uClipOn", i), 0);
+  }
+
+  // say that nothing is drawn through a texture, and leave the sampler
+  // pointing at one that is at least there
+  void noTexture()
+  {
+    if(!_noTexture) {
+      const unsigned char one = 255;
+      glGenTextures(1, &_noTexture);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, _noTexture);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 1, 1, 0, GL_RED, GL_UNSIGNED_BYTE,
+                   &one);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    else {
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, _noTexture);
+    }
+    glApi::Uniform1i(_u.texture, 0);
+    glApi::Uniform1i(_u.textured, 0);
   }
 
   void setStipple(bool on, int factor, unsigned short pattern)
@@ -643,6 +674,7 @@ void main()
     glApi::DisableVertexAttribArray(ATTRIB_DASH);
 
     setColorArray(colors != nullptr);
+    noTexture();
     glApi::DrawArraysInstanced(GL_TRIANGLES, 0, 6, segments);
 
     glApi::Uniform1i(_u.wideLine, 0);
@@ -713,6 +745,7 @@ void main()
     }
 
     setColorArray(colors);
+    noTexture();
     glApi::Uniform1i(_u.instanced, 1);
     glApi::Uniform1i(_u.taper, taper ? 1 : 0);
     glApi::DrawArraysInstanced(GL_TRIANGLES, 0, numVertices, numGlyphs);
@@ -794,14 +827,14 @@ void main()
     }
     else {
       glApi::DisableVertexAttribArray(ATTRIB_TEXCOORD);
-      glApi::Uniform1i(_u.textured, 0);
+      noTexture();
     }
 
     // every vertex carries the colour that was current when it was given
     setColorArray(true);
     glDrawArrays(mode, 0, count);
 
-    glApi::Uniform1i(_u.textured, 0);
+    noTexture();
     glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
     glApi::DisableVertexAttribArray(ATTRIB_VERTEX);
     glApi::DisableVertexAttribArray(ATTRIB_NORMAL);
