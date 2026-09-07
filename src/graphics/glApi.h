@@ -101,6 +101,28 @@ typedef char GLchar;
 #if !defined(GL_MAX_DRAW_BUFFERS)
 #define GL_MAX_DRAW_BUFFERS 0x8824
 #endif
+// the texture wrapping of OpenGL 1.2, the single channel and half float
+// formats of OpenGL 3.0, and the packed depth and stencil of the framebuffer
+// objects: the shader pipeline draws the strings and sums the transparency
+// through these, and the Windows header knows none of them
+#if !defined(GL_CLAMP_TO_EDGE)
+#define GL_CLAMP_TO_EDGE 0x812F
+#endif
+#if !defined(GL_R8)
+#define GL_R8 0x8229
+#endif
+#if !defined(GL_R16F)
+#define GL_R16F 0x822D
+#endif
+#if !defined(GL_HALF_FLOAT)
+#define GL_HALF_FLOAT 0x140B
+#endif
+#if !defined(GL_DEPTH24_STENCIL8)
+#define GL_DEPTH24_STENCIL8 0x88F0
+#endif
+#if !defined(GL_DEPTH_STENCIL_ATTACHMENT)
+#define GL_DEPTH_STENCIL_ATTACHMENT 0x821A
+#endif
 #if !defined(GL_RGBA16F)
 #define GL_RGBA16F 0x881A
 #define GL_RGBA32F 0x8814
