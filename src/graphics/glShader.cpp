@@ -621,7 +621,7 @@ void main()
     if(!_noTexture) {
       const unsigned char one = 255;
       glGenTextures(1, &_noTexture);
-      glActiveTexture(GL_TEXTURE0);
+      glApi::ActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, _noTexture);
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 1, 1, 0, GL_RED, GL_UNSIGNED_BYTE,
@@ -632,7 +632,7 @@ void main()
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
     else {
-      glActiveTexture(GL_TEXTURE0);
+      glApi::ActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, _noTexture);
     }
     glApi::Uniform1i(_u.texture, 0);
@@ -943,7 +943,7 @@ void main()
       glApi::EnableVertexAttribArray(ATTRIB_TEXCOORD);
       glApi::VertexAttribPointer(ATTRIB_TEXCOORD, 2, GL_FLOAT, GL_FALSE, 0,
                                  nullptr);
-      glActiveTexture(GL_TEXTURE0);
+      glApi::ActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, texture);
       glApi::Uniform1i(_u.texture, 0);
       glApi::Uniform1i(_u.textured, textureMode ? textureMode : 1);
@@ -1253,13 +1253,13 @@ void main()
     for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
       glApi::DisableVertexAttribArray(i);
 
-    glActiveTexture(GL_TEXTURE0);
+    glApi::ActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _oitAccum);
     glApi::Uniform1i(_uAccum, 0);
-    glActiveTexture(GL_TEXTURE0 + 1);
+    glApi::ActiveTexture(GL_TEXTURE0 + 1);
     glBindTexture(GL_TEXTURE_2D, _oitReveal);
     glApi::Uniform1i(_uReveal, 1);
-    glActiveTexture(GL_TEXTURE0);
+    glApi::ActiveTexture(GL_TEXTURE0);
 
     // what the fragments average out to, laid over the window in the
     // proportion the pixel still lets through
@@ -1269,8 +1269,13 @@ void main()
     // is what a saved image keeps, and it has to end up covered as much as the
     // pixel is, which is not what squaring it through the same factor would
     // give: it gets a blending of its own.
-    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE,
-                        GL_ONE_MINUS_SRC_ALPHA);
+    if(glApi::BlendFuncSeparate)
+      glApi::BlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE,
+                               GL_ONE_MINUS_SRC_ALPHA);
+    else
+      // without it the window's alpha comes out squared where the transparency
+      // covers it, which is what the ordinary blend has always done anyway
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
