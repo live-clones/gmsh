@@ -246,15 +246,24 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
     return;
   }
 
-  glRasterPos3d(x, y, z);
-  GLboolean valid;
-  glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
-  if(valid == GL_FALSE) return; // the primitive is culled
+  // Where the string goes, in window coordinates. This was the raster
+  // position, which OpenGL worked out and which a core profile has none of:
+  // the projection is ours, so it is done here, culling the string the way
+  // an invalid raster position did - when what it is anchored to is outside
+  // what is being drawn.
+  double xyz[3] = {x, y, z}, w[3];
+  world2Viewport(xyz, w);
+  // in true pixels, which is what world2Viewport works in - drawContext's own
+  // viewport is in the widget toolkit's coordinates, and the two differ by the
+  // pixel factor of a high resolution screen
+  GLint vp[4];
+  glGetIntegerv(GL_VIEWPORT, vp);
+  if(w[2] < 0. || w[2] > 1. || w[0] < vp[0] || w[0] > vp[0] + vp[2] ||
+     w[1] < vp[1] || w[1] > vp[1] + vp[3])
+    return; // the primitive is culled
 
-  if(align > 0 || line_num) {
-    GLdouble pos[4];
-    glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
-    double x[3], w[3] = {pos[0], pos[1], pos[2]};
+  bool moved = (align > 0 || line_num);
+  if(moved) {
     drawContext::global()->setFont(font_enum, font_size);
     double width = drawContext::global()->getStringWidth(s.c_str());
     double height = drawContext::global()->getStringHeight();
@@ -299,13 +308,25 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
     }
     // treat line number also for TeX
     if(line_num) w[1] -= line_num * (1.1 * height);
-    viewport2World(w, x);
-    glRasterPos3d(x[0], x[1], x[2]);
+  }
+
+  // The raster position is what the backends that hand the string to the
+  // widget toolkit, and what gl2ps, draw at; the ones that draw it themselves
+  // are told where it goes instead. It is only worked out again when the
+  // alignment has moved the string: going to window coordinates and back for
+  // nothing would only lose precision.
+  if(moved) {
+    double where[3];
+    viewport2World(w, where);
+    glRasterPos3d(where[0], where[1], where[2]);
+  }
+  else {
+    glRasterPos3d(x, y, z);
   }
 
   if(!CTX::instance()->printing) {
     drawContext::global()->setFont(font_enum, font_size);
-    drawContext::global()->drawString(s.c_str());
+    drawContext::global()->drawString(s.c_str(), w);
   }
   else {
     if(CTX::instance()->print.fileFormat == FORMAT_TEX) {
@@ -353,7 +374,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
     }
     else {
       drawContext::global()->setFont(font_enum, font_size);
-      drawContext::global()->drawString(s.c_str());
+      drawContext::global()->drawString(s.c_str(), w);
     }
   }
 }
