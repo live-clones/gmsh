@@ -285,6 +285,18 @@ const double *gmshMatrix(int kind)
 
 void gmshResetMatrices()
 {
+  // whatever was waiting to be drawn was collected to be drawn in the context
+  // that is gone, with a texture of its own that went with it
+  _batchPos.clear();
+  _batchNrm.clear();
+  _batchCol.clear();
+  _batchTex.clear();
+  _batchDash.clear();
+  _texture = 0;
+  _stipple = false;
+  _stippleFactor = 1;
+  _stipplePattern = 0xffff;
+
   for(int i = 0; i < 4; i++) _color[i] = 255;
   _lighting = _twoSide = false;
   _pointSize = 1.;
@@ -308,6 +320,12 @@ void gmshPushShaderState()
   glShader::setPointSize(gmshCurrentPointSize());
   glShader::setMaterial(CTX::instance()->shine,
                         CTX::instance()->shineExponent);
+  // Everything that draws by another route than the collected lines draws
+  // undashed: the vertex arrays carry no distance along the line for the
+  // pattern to be measured against, and a glyph is not a line at all. Without
+  // this, a dashed line left the pattern on and everything after it came out
+  // full of holes.
+  glShader::setStipple(false, 1, 0xffff);
   for(int i = 0; i < 6; i++) {
     if(gmshClipPlaneEnabled(i))
       glShader::setClipPlane(i, gmshClipPlaneEye(i));
@@ -463,7 +481,10 @@ void gmshFlushImmediate()
       else
         glShader::setClipPlaneOff(i);
     }
-    glShader::setStipple(_batchState.stipple, _batchState.stippleFactor,
+    // the pattern runs along a line and means nothing on anything else, which
+    // is what OpenGL's stipple did with it too
+    glShader::setStipple(_batchState.stipple && _batchMode == GL_LINES,
+                         _batchState.stippleFactor,
                          _batchState.stipplePattern);
     glShader::drawImmediate(_batchMode, &_batchPos[0], &_batchNrm[0],
                             &_batchCol[0], &_batchTex[0], &_batchDash[0],
