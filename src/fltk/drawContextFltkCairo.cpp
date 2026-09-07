@@ -57,10 +57,23 @@ public:
   void flush()
   {
     if(_elements.empty()) return;
-    cairo_surface_t *surface =
-      cairo_image_surface_create(CAIRO_FORMAT_A8, _totalWidth, _maxHeight);
+
+    // Everything below is in true pixels rather than in the coordinates the
+    // widget toolkit works in: that is what the string was told to go at, and
+    // on a high resolution screen the two differ by this factor. The picture
+    // of the strings is drawn at that scale as well, so that they are as sharp
+    // as the screen allows instead of one blown up to twice its size.
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    double f = 1.;
+    if(Fl_Window::current() && Fl_Window::current()->w() > 0)
+      f = vp[2] / (double)Fl_Window::current()->w();
+    if(f <= 0.) f = 1.;
+
+    cairo_surface_t *surface = cairo_image_surface_create(
+      CAIRO_FORMAT_A8, (int)(_totalWidth * f) + 1, (int)(_maxHeight * f) + 1);
     cairo_t *cr = cairo_create(surface);
-    int pos = 0;
+    double pos = 0.;
     cairo_set_source_rgba(cr, 0., 0., 0., 0);
     cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
     cairo_paint(cr);
@@ -74,12 +87,12 @@ public:
 
     cairo_set_source_rgba(cr, 1, 1, 1, 1);
     for(auto it = _elements.begin(); it != _elements.end(); ++it) {
-      cairo_move_to(cr, pos - it->xBearing, -it->yBearing);
-      cairo_set_font_size(cr, it->fontSize);
+      cairo_move_to(cr, pos - it->xBearing * f, -it->yBearing * f);
+      cairo_set_font_size(cr, it->fontSize * f);
       cairo_set_font_face(cr, it->fontFace);
       cairo_show_text(cr, it->text.c_str());
       cairo_font_face_destroy(it->fontFace);
-      pos += it->width;
+      pos += it->width * f;
     }
     cairo_destroy(cr);
     // setup matrices
@@ -92,53 +105,75 @@ public:
     gmshMatrixMode(GMSH_MODELVIEW);
     gmshPushMatrix();
     gmshLoadIdentity();
-    float winw = Fl_Window::current()->w();
-    float winh = Fl_Window::current()->h();
-    gmshScale(2. / winw, 2. / winh, 1.);
-    gmshTranslate(-winw / 2., -winh / 2., 0.);
-    // write the texture on screen
-    glEnable(GL_TEXTURE_RECTANGLE_ARB);
-    // what glPopAttrib() puts back below is OpenGL's own state, which the
-    // lighting we remember knows nothing about: say it again afterwards
+    // the whole window, in the true pixels the positions are given in
+    gmshScale(2. / vp[2], 2. / vp[3], 1.);
+    gmshTranslate(-vp[2] / 2., -vp[3] / 2., 0.);
+
+    // Write the texture on screen. It is a plain two dimensional one with
+    // coordinates in [0, 1] rather than the rectangle texture this used to
+    // use: rectangle textures are not in OpenGL ES, and the shader pipeline
+    // has to be able to sample it. What is in it is one channel saying how
+    // much of the colour each pixel of the quad gets - the alpha of a fixed
+    // function pipeline, the red of a shader, which has no alpha textures.
+    bool shaders = gmshUseShaders();
     bool wasLit = gmshLightingEnabled();
-    glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
+    if(!shaders) {
+      // what glPopAttrib() puts back below is OpenGL's own state, which the
+      // lighting we remember knows nothing about: say it again afterwards
+      glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
+    }
     gmshLighting(false);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    int tw = cairo_image_surface_get_width(surface);
+    int th = cairo_image_surface_get_height(surface);
     glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, textureId);
-    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA,
-                 cairo_image_surface_get_width(surface),
-                 cairo_image_surface_get_height(surface), 0, GL_ALPHA,
-                 GL_UNSIGNED_BYTE, cairo_image_surface_get_data(surface));
-    // glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_SRC0_ALPHA);
-    // printf("error %i %s\n", __LINE__, gluErrorString(glGetError()));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    // cairo pads the rows of its picture out to a multiple of four bytes, so
+    // the upload has to be told how long a row of it really is
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH,
+                  cairo_image_surface_get_stride(surface));
+    glTexImage2D(GL_TEXTURE_2D, 0, shaders ? GL_R8 : GL_ALPHA, tw, th, 0,
+                 shaders ? GL_RED : GL_ALPHA, GL_UNSIGNED_BYTE,
+                 cairo_image_surface_get_data(surface));
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    // the filtering a rectangle texture had by default
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gmshTexture(textureId);
 
-    pos = 0;
+    pos = 0.;
     for(auto it = _elements.begin(); it != _elements.end(); ++it) {
       gmshTranslate(it->x, it->y, it->z);
       gmshColor4f(it->r, it->g, it->b, it->alpha);
-      int Lx = it->width;
-      int Ly = it->height;
-
+      float Lx = (float)(it->width * f);
+      float Ly = (float)(it->height * f);
+      // the coordinates are in [0, 1] across the picture, not in its pixels
+      float s0 = (float)(pos / tw), s1 = (float)((pos + Lx) / tw);
+      float t0 = 0.f, t1 = Ly / (float)th;
       gmshBegin(GL_QUADS);
-      gmshTexCoord2f(pos, 0);
+      gmshTexCoord2f(s0, t0);
       gmshVertex2f(0.0f, Ly);
-      gmshTexCoord2f(pos + Lx, 0);
+      gmshTexCoord2f(s1, t0);
       gmshVertex2f(Lx, Ly);
-      gmshTexCoord2f(pos + Lx, Ly);
+      gmshTexCoord2f(s1, t1);
       gmshVertex2f(Lx, 0.0f);
-      gmshTexCoord2f(pos, Ly);
+      gmshTexCoord2f(s0, t1);
       gmshVertex2f(0.0f, 0.0f);
       gmshEnd();
       pos += Lx;
       gmshTranslate(-it->x, -it->y, -it->z);
     }
+    // whatever is waiting was collected to be drawn through this texture
+    gmshFlushImmediate();
+    gmshTexture(0);
     glDeleteTextures(1, &textureId);
 
-    glPopAttrib();
+    if(!shaders) glPopAttrib();
     gmshLighting(wasLit);
 
     // reset original matrices
