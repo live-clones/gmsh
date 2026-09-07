@@ -3005,6 +3005,13 @@ double opt_general_vertex_buffer_objects(OPT_ARGS_NUM)
   return CTX::instance()->vertexBufferObjects;
 }
 
+double opt_general_order_independent_transparency(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->orderIndependentTransparency = (int)val;
+  return CTX::instance()->orderIndependentTransparency;
+}
+
 double opt_general_shaders(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

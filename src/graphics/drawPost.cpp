@@ -21,6 +21,7 @@
 #include <cstring>
 #include "gl2ps.h"
 #include "glyphList.h"
+#include "glShader.h"
 
 void clearGlyphArrays(PView *p) { glyphCache::clear(p); }
 
@@ -694,12 +695,32 @@ static bool eyeChanged(drawContext *ctx, PView *p)
   return false;
 }
 
+// Is this view one that has to be blended with what is behind it? The colour
+// map is what says so; a view drawn the "fake" way is additive and unordered
+// already, and is left alone.
+static bool viewIsTransparent(PView *p)
+{
+  PViewOptions *opt = p->getOptions();
+  return CTX::instance()->alpha && !opt->fakeTransparency &&
+         ColorTable_IsAlpha(&opt->colorTable);
+}
+
 class drawPView {
+public:
+  // which views this pass draws: all of them, or only the opaque ones, or
+  // only the transparent ones, which are drawn after and summed rather than
+  // painted in order
+  enum whichViews { ALL, OPAQUE, TRANSPARENT };
+
 private:
   drawContext *_ctx;
+  whichViews _which;
 
 public:
-  drawPView(drawContext *ctx) : _ctx(ctx) {}
+  drawPView(drawContext *ctx, whichViews which = ALL)
+    : _ctx(ctx), _which(which)
+  {
+  }
   void operator()(PView *p)
   {
     // use adaptive data if available
@@ -709,6 +730,8 @@ public:
     if(data->getDirty() || !data->getNumTimeSteps()) return;
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
     if(!_ctx->isVisible(p)) return;
+    if(_which != ALL && (viewIsTransparent(p) != (_which == TRANSPARENT)))
+      return;
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) {
       _ctx->setPickColor(5, p->getIndex());
@@ -753,6 +776,11 @@ public:
         // glBlendFunc(GL_ONE, GL_ONE); // glBlendEquation(GL_MAX);
         glEnable(GL_BLEND);
         glDisable(GL_DEPTH_TEST);
+      }
+      else if(glShader::transparentPass()) {
+        // the pass sums what it is given into buffers of its own, in whatever
+        // order it arrives: there is nothing to sort, and the blending that
+        // does the summing is not ours to set
       }
       else {
         // real translucent blending (requires back-to-front traversal)
@@ -813,7 +841,7 @@ public:
       }
     }
 
-    if(CTX::instance()->alpha) {
+    if(CTX::instance()->alpha && !glShader::transparentPass()) {
       glDisable(GL_BLEND);
       glEnable(GL_DEPTH_TEST);
     }
@@ -883,5 +911,27 @@ void drawContext::drawPost()
 #endif
   }
 
-  std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
+  // What is transparent is drawn after everything else, and summed into
+  // buffers of its own rather than painted back to front. That is only worth
+  // setting up when there is something transparent to draw, and never while
+  // picking, where what is read back has to be an identifier rather than a
+  // blend of several.
+  bool split = false;
+  if(gmshUseShaders() && CTX::instance()->orderIndependentTransparency &&
+     render_mode != GMSH_SELECT) {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(viewIsTransparent(PView::list[i])) split = true;
+  }
+
+  if(!split) {
+    std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
+    return;
+  }
+
+  std::for_each(PView::list.begin(), PView::list.end(),
+                drawPView(this, drawPView::OPAQUE));
+  bool summed = glShader::beginTransparent();
+  std::for_each(PView::list.begin(), PView::list.end(),
+                drawPView(this, drawPView::TRANSPARENT));
+  if(summed) glShader::endTransparent();
 }

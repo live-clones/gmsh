@@ -90,7 +90,7 @@ namespace glApi {
   static bool _loaded = false, _buffers = false, _shaders = false;
   static bool _framebuffers = false, _clipDistance = false;
   static bool _indexedBlend = false, _es = false;
-  static bool _instancing = false;
+  static bool _instancing = false, _floatColorBuffers = false;
   static int _major = 0, _minor = 0;
 
   static void *address(const char *name)
@@ -295,13 +295,21 @@ namespace glApi {
                     (_es ? (atLeast(3, 2) ||
                             haveExtension("GL_EXT_draw_buffers_indexed")) :
                            atLeast(4, 0));
+    // A floating point colour buffer is core desktop OpenGL from 3.0. OpenGL
+    // ES 3.0 can hold half floats in a texture but not draw into one, which
+    // takes an extension until ES 3.2.
+    _floatColorBuffers =
+      _framebuffers &&
+      (_es ? (atLeast(3, 2) || haveExtension("GL_EXT_color_buffer_float") ||
+              haveExtension("GL_EXT_color_buffer_half_float")) :
+             atLeast(3, 0));
   }
 
   void reset()
   {
     _loaded = _buffers = _shaders = false;
     _framebuffers = _clipDistance = _indexedBlend = _es = false;
-    _instancing = false;
+    _instancing = _floatColorBuffers = false;
     _major = _minor = 0;
 
     GenBuffers = nullptr;
@@ -400,6 +408,12 @@ namespace glApi {
     return _instancing;
   }
 
+  bool haveFloatColorBuffers()
+  {
+    load();
+    return _floatColorBuffers;
+  }
+
   int versionMajor()
   {
     load();
@@ -428,9 +442,10 @@ namespace glApi {
     Msg::Debug("OpenGL shading language %s", s ? s : "none");
     Msg::Debug("OpenGL has buffer objects: %s, shaders: %s, framebuffer "
                "objects: %s, clip distances: %s, per target blending: %s, "
-               "instancing: %s",
+               "instancing: %s, floating point colour buffers: %s",
                _buffers ? "yes" : "no", _shaders ? "yes" : "no",
                _framebuffers ? "yes" : "no", _clipDistance ? "yes" : "no",
-               _indexedBlend ? "yes" : "no", _instancing ? "yes" : "no");
+               _indexedBlend ? "yes" : "no", _instancing ? "yes" : "no",
+               _floatColorBuffers ? "yes" : "no");
   }
 } // namespace glApi

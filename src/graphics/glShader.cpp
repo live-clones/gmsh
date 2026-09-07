@@ -165,6 +165,9 @@ uniform vec3 uLightSpecular[6];
 uniform bool uLightOn[6];
 uniform vec3 uSpecular;
 uniform float uShininess;
+// 0 to paint on the window, 1 to sum into the two buffers order independent
+// transparency keeps
+uniform int uOitPass;
 
 layout(location = 0) out vec4 fColor;
 // A picking pass reads the depth back as well as the identifier, and neither
@@ -182,6 +185,33 @@ vec4 packDepth(float d)
   return vec4(r, g, b, 255.0) / 255.0;
 }
 
+// Everything that gets drawn leaves through here. On the window it is simply
+// the colour; in the transparency pass it is added to what the other fragments
+// over the same pixel have left, which is what makes the result the same
+// whatever order they were drawn in.
+void emit(vec4 c)
+{
+  if(uOitPass == 1) {
+    // How much this fragment counts for: the nearer and the more opaque, the
+    // more. This is the weight of Mc Guire and Bavoil, whose point is that a
+    // sum weighted this way looks close enough to the ordered blend. Theirs is
+    // scaled by 1e8; the scale cancels out when the sum is divided by itself
+    // below, and one that never passes 1 is what keeps a thousand fragments
+    // over the same pixel inside what a half float can hold.
+    float w = clamp(pow(min(1.0, c.a * 10.0) + 0.01, 3.0) *
+                    pow(1.0 - gl_FragCoord.z * 0.9, 3.0), 1e-4, 1.0);
+    fColor = vec4(c.rgb * c.a, c.a) * w;
+    // How much light gets through is a product over the fragments, and only a
+    // sum can be had from a buffer that every target blends the same way: the
+    // logarithm is summed here and undone when the two are put on the window.
+    fDepth = vec4(log(max(1.0 - c.a, 1e-4)));
+  }
+  else {
+    fColor = c;
+    fDepth = packDepth(gl_FragCoord.z);
+  }
+}
+
 void main()
 {
   for(int i = 0; i < 6; i++)
@@ -192,12 +222,10 @@ void main()
     if((uStipplePattern & (1 << bit)) == 0) discard;
   }
 
-  fDepth = packDepth(gl_FragCoord.z);
-
   // an image is the colour of what it covers, lit or not: this is what
   // GL_REPLACE did, and nothing below has anything left to say about it
   if(uTextured == 2) {
-    fColor = texture(uTexture, vTexCoord);
+    emit(texture(uTexture, vTexCoord));
     return;
   }
 
@@ -207,7 +235,7 @@ void main()
   if(uTextured == 1) alpha *= texture(uTexture, vTexCoord).r;
 
   if(!uLighting) {
-    fColor = vec4(vColor.rgb, alpha);
+    emit(vec4(vColor.rgb, alpha));
     return;
   }
 
@@ -237,7 +265,37 @@ void main()
     }
   }
 
-  fColor = vec4(min(c, vec3(1.0)), alpha);
+  emit(vec4(min(c, vec3(1.0)), alpha));
+}
+)";
+
+  // What puts the two buffers of the transparency pass on the window. It is a
+  // program of its own because it has samplers of its own and nothing else of
+  // the drawing program to say, and it needs no vertices: three of them cover
+  // the window, made out of the vertex number alone.
+  const char *compositeVertexBody = R"(
+void main()
+{
+  vec2 p = vec2((gl_VertexID == 1) ? 3.0 : -1.0,
+                (gl_VertexID == 2) ? 3.0 : -1.0);
+  gl_Position = vec4(p, 0.0, 1.0);
+}
+)";
+
+  const char *compositeFragmentBody = R"(
+uniform sampler2D uAccum;
+uniform sampler2D uReveal;
+layout(location = 0) out vec4 fColor;
+
+void main()
+{
+  ivec2 at = ivec2(gl_FragCoord.xy);
+  vec4 accum = texelFetch(uAccum, at, 0);
+  // the sum of the logarithms is a product again
+  float reveal = exp(texelFetch(uReveal, at, 0).r);
+  // the colour the fragments average out to, and how much of the pixel they
+  // cover between them: an ordinary "over" from here
+  fColor = vec4(accum.rgb / max(accum.a, 1e-5), 1.0 - reveal);
 }
 )";
 
@@ -257,6 +315,19 @@ void main()
     int _pickWidth = 0, _pickHeight = 0;
     bool _tried = false;
 
+    // The buffers the transparency pass sums into, the program that puts them
+    // on the window, and whether that pass is the one being drawn. The depth
+    // is a copy of the window's, so that what is transparent is hidden by the
+    // opaque geometry in front of it.
+    GLuint _oitFbo = 0, _oitAccum = 0, _oitReveal = 0, _oitDepthRb = 0;
+    int _oitWidth = 0, _oitHeight = 0;
+    GLuint _oitProgram = 0;
+    GLint _uAccum = -1, _uReveal = -1;
+    bool _oitOn = false, _oitFailed = false, _oitTried = false;
+    // which of the two depth formats the window's buffer can be copied into:
+    // they have to match exactly, and there is no asking which one it is
+    GLenum _oitDepthFormat = 0;
+
     struct {
       GLint modelview, projection, normalMatrix, colorArray, color, pointSize;
       GLint clipPlane, clipOn;
@@ -265,6 +336,7 @@ void main()
       GLint textured, texture;
       GLint stipple, stippleFactor, stipplePattern;
       GLint wideLine, lineWidth, viewport;
+      GLint oitPass;
       GLint lightPosition, lightAmbient, lightDiffuse, lightSpecular, lightOn;
     } _u;
 
@@ -390,6 +462,7 @@ void main()
       _u.wideLine = glApi::GetUniformLocation(p, "uWideLine");
       _u.lineWidth = glApi::GetUniformLocation(p, "uLineWidth");
       _u.viewport = glApi::GetUniformLocation(p, "uViewport");
+      _u.oitPass = glApi::GetUniformLocation(p, "uOitPass");
       // the arrays are addressed element by element
       _u.clipPlane = _u.clipOn = -1;
       _u.lightPosition = _u.lightAmbient = _u.lightDiffuse = -1;
@@ -430,6 +503,12 @@ void main()
     _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
     _pickWidth = _pickHeight = 0;
     _tried = false;
+    _oitFbo = _oitAccum = _oitReveal = _oitDepthRb = 0;
+    _oitWidth = _oitHeight = 0;
+    _oitProgram = 0;
+    _uAccum = _uReveal = -1;
+    _oitOn = _oitFailed = _oitTried = false;
+    _oitDepthFormat = 0;
   }
 
   void setMatrices(const double modelview[16], const double projection[16])
@@ -962,5 +1041,224 @@ void main()
   {
     if(!_pickFbo) return;
     glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+  }
+
+  namespace {
+    bool buildComposite()
+    {
+      if(_oitTried) return _oitProgram != 0;
+      _oitTried = true;
+
+      GLuint vs = compile(GL_VERTEX_SHADER, prologue() + compositeVertexBody);
+      if(!vs) return false;
+      GLuint fs =
+        compile(GL_FRAGMENT_SHADER, prologue() + compositeFragmentBody);
+      if(!fs) {
+        glApi::DeleteShader(vs);
+        return false;
+      }
+      GLuint p = glApi::CreateProgram();
+      glApi::AttachShader(p, vs);
+      glApi::AttachShader(p, fs);
+      glApi::LinkProgram(p);
+      glApi::DeleteShader(vs);
+      glApi::DeleteShader(fs);
+
+      GLint ok = 0;
+      glApi::GetProgramiv(p, GL_LINK_STATUS, &ok);
+      if(!ok) {
+        GLint len = 0;
+        glApi::GetProgramiv(p, GL_INFO_LOG_LENGTH, &len);
+        std::vector<char> log(len > 1 ? len : 1, 0);
+        if(len > 1) glApi::GetProgramInfoLog(p, len, nullptr, &log[0]);
+        Msg::Error("Could not link the transparency program: %s", &log[0]);
+        glApi::DeleteProgram(p);
+        return false;
+      }
+      _oitProgram = p;
+      _uAccum = glApi::GetUniformLocation(p, "uAccum");
+      _uReveal = glApi::GetUniformLocation(p, "uReveal");
+      return true;
+    }
+
+    void dropOitBuffers()
+    {
+      if(!_oitFbo) return;
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      glApi::DeleteFramebuffers(1, &_oitFbo);
+      glDeleteTextures(1, &_oitAccum);
+      glDeleteTextures(1, &_oitReveal);
+      glApi::DeleteRenderbuffers(1, &_oitDepthRb);
+      _oitFbo = _oitAccum = _oitReveal = _oitDepthRb = 0;
+    }
+
+    GLuint floatTarget(int width, int height, GLenum internal, GLenum format)
+    {
+      GLuint t = 0;
+      glGenTextures(1, &t);
+      glBindTexture(GL_TEXTURE_2D, t);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format,
+                   GL_HALF_FLOAT, nullptr);
+      return t;
+    }
+
+    // The two buffers plus a copy of the window's depth, and the copy itself.
+    // The depth formats of the two buffers have to match exactly for it, and
+    // there is no way to ask what the window's is, so this is tried with one
+    // and then the other.
+    bool makeOitBuffers(int width, int height, GLenum depthFormat)
+    {
+      glApi::GenFramebuffers(1, &_oitFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _oitFbo);
+
+      // what the colours are summed in, and what the light left over is
+      _oitAccum = floatTarget(width, height, GL_RGBA16F, GL_RGBA);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                  GL_TEXTURE_2D, _oitAccum, 0);
+      _oitReveal = floatTarget(width, height, GL_R16F, GL_RED);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + 1,
+                                  GL_TEXTURE_2D, _oitReveal, 0);
+      glBindTexture(GL_TEXTURE_2D, 0);
+
+      glApi::GenRenderbuffers(1, &_oitDepthRb);
+      glApi::BindRenderbuffer(GL_RENDERBUFFER, _oitDepthRb);
+      glApi::RenderbufferStorage(GL_RENDERBUFFER, depthFormat, width, height);
+      glApi::FramebufferRenderbuffer(
+        GL_FRAMEBUFFER,
+        (depthFormat == GL_DEPTH24_STENCIL8) ? GL_DEPTH_STENCIL_ATTACHMENT :
+                                               GL_DEPTH_ATTACHMENT,
+        GL_RENDERBUFFER, _oitDepthRb);
+
+      if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+         GL_FRAMEBUFFER_COMPLETE) {
+        dropOitBuffers();
+        return false;
+      }
+      _oitWidth = width;
+      _oitHeight = height;
+      return true;
+    }
+
+    bool copyWindowDepth(int width, int height, GLenum depthFormat)
+    {
+      if(!_oitFbo && !makeOitBuffers(width, height, depthFormat)) return false;
+      // whatever error was already pending is not ours to read
+      while(glGetError() != GL_NO_ERROR) {}
+      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _oitFbo);
+      glApi::BlitFramebuffer(0, 0, width, height, 0, 0, width, height,
+                             GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+      if(glGetError() == GL_NO_ERROR) return true;
+      dropOitBuffers();
+      return false;
+    }
+  } // namespace
+
+  bool transparentPass() { return _oitOn; }
+
+  bool beginTransparent()
+  {
+    if(_oitFailed || _oitOn) return false;
+    if(!ensure() || !glApi::haveFramebufferObjects() ||
+       !glApi::haveFloatColorBuffers() || !glApi::BlitFramebuffer ||
+       !buildComposite()) {
+      _oitFailed = true;
+      return false;
+    }
+
+    // the whole window, as that is what the depth is copied from
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    int w = vp[0] + vp[2], h = vp[1] + vp[3];
+    if(w < 1 || h < 1) return false;
+
+    if(_oitFbo && (_oitWidth != w || _oitHeight != h)) dropOitBuffers();
+
+    bool ok = false;
+    if(_oitDepthFormat) { ok = copyWindowDepth(w, h, _oitDepthFormat); }
+    else {
+      const GLenum formats[2] = {GL_DEPTH24_STENCIL8, GL_DEPTH_COMPONENT24};
+      for(int i = 0; i < 2 && !ok; i++) {
+        ok = copyWindowDepth(w, h, formats[i]);
+        if(ok) _oitDepthFormat = formats[i];
+      }
+    }
+    if(!ok) {
+      Msg::Debug("Could not sum transparency into buffers of our own: "
+                 "drawing it sorted instead");
+      _oitFailed = true;
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      return false;
+    }
+
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _oitFbo);
+    const GLenum bufs[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0 + 1};
+    glApi::DrawBuffers(2, bufs);
+
+    // Both start at zero: nothing summed yet, and a summed logarithm of zero
+    // is all of the light getting through. The depth that was just copied is
+    // left alone.
+    GLfloat clear[4];
+    glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
+    glClearColor(0.f, 0.f, 0.f, 0.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(clear[0], clear[1], clear[2], clear[3]);
+
+    // every fragment is added to what the others left, and none of them hides
+    // another: that is the whole point
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    glApi::Uniform1i(_u.oitPass, 1);
+    _oitOn = true;
+    return true;
+  }
+
+  void endTransparent()
+  {
+    if(!_oitOn) return;
+    _oitOn = false;
+    // said on the drawing program, which is still the one in use
+    glApi::Uniform1i(_u.oitPass, 0);
+
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDepthMask(GL_TRUE);
+
+    glApi::UseProgram(_oitProgram);
+    glApi::BindVertexArray(_vao);
+    // the three vertices are made out of their own numbers, and an attribute
+    // left enabled from the last draw would only be read from a stale buffer
+    for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
+      glApi::DisableVertexAttribArray(i);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _oitAccum);
+    glApi::Uniform1i(_uAccum, 0);
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, _oitReveal);
+    glApi::Uniform1i(_uReveal, 1);
+    glActiveTexture(GL_TEXTURE0);
+
+    // what the fragments average out to, laid over the window in the
+    // proportion the pixel still lets through
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    // The colour goes on the window the ordinary way. The window's own alpha
+    // is what a saved image keeps, and it has to end up covered as much as the
+    // pixel is, which is not what squaring it through the same factor would
+    // give: it gets a blending of its own.
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE,
+                        GL_ONE_MINUS_SRC_ALPHA);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glApi::UseProgram(_program);
   }
 } // namespace glShader
