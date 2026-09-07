@@ -106,32 +106,40 @@ static void clip_update_cb(Fl_Widget *w, void *data)
         CTX::instance()->clipPlane[idx][j]);
   }
 
+  // What the user is asking for. It is compared with what was asked for last
+  // time rather than with what the context holds, because while a plane is
+  // dragged the context holds what is being drawn with, which is not the same
+  // thing.
+  int wantCapping = FlGui::instance()->clipping->butt[0]->value();
+  int wantWhole =
+    wantCapping ? 0 : FlGui::instance()->clipping->butt[1]->value();
+  int wantIntersecting = FlGui::instance()->clipping->butt[2]->value();
+
+  static bool haveWanted = false;
+  static int lastCapping = 0, lastWhole = 0, lastIntersecting = 0;
+  if(!haveWanted) {
+    lastCapping = CTX::instance()->clipCapping;
+    lastWhole = CTX::instance()->clipWholeElements;
+    lastIntersecting = CTX::instance()->clipOnlyDrawIntersectingVolume;
+    haveWanted = true;
+  }
   // Changing one of the toggles changes the visibility rule itself, and every
   // entity has to be rebuilt. Moving a plane only affects the entities it cuts,
   // or that it moved in or out of: let the model work out which ones.
-  bool togglesChanged =
-    (CTX::instance()->clipCapping !=
-     FlGui::instance()->clipping->butt[0]->value()) ||
-    (CTX::instance()->clipWholeElements !=
-     FlGui::instance()->clipping->butt[1]->value()) ||
-    (CTX::instance()->clipOnlyDrawIntersectingVolume !=
-     FlGui::instance()->clipping->butt[2]->value());
+  bool togglesChanged = (lastCapping != wantCapping) ||
+                        (lastWhole != wantWhole) ||
+                        (lastIntersecting != wantIntersecting);
+  lastCapping = wantCapping;
+  lastWhole = wantWhole;
+  lastIntersecting = wantIntersecting;
 
-  // While a plane is being dragged the scene is drawn the plain way, whatever
-  // the capping and whole element toggles say: every element is in the arrays
-  // and OpenGL cuts them at the plane, so a motion event costs a redraw and
-  // nothing more. In those two modes what a plane cuts is part of the arrays
-  // themselves - the capping section is geometry of its own, whole elements
-  // are left out as the arrays are filled - and honouring them would mean
-  // refilling at every motion event. The toggles are obeyed again, and the
-  // arrays built to match, when the mouse is released.
   bool dragging = (Fl::event() == FL_DRAG);
-  static bool wasDragging = false;
-  bool startingDrag = (dragging && !wasDragging);
-  wasDragging = dragging;
 
-  if(!dragging && (CTX::instance()->clipWholeElements ||
-                   CTX::instance()->clipCapping || togglesChanged)) {
+  CTX::instance()->clipCapping = wantCapping;
+  CTX::instance()->clipWholeElements = wantWhole;
+  CTX::instance()->clipOnlyDrawIntersectingVolume = wantIntersecting;
+
+  if(!dragging && (wantWhole || wantCapping || togglesChanged)) {
     for(std::size_t index = 0; index < PView::list.size(); index++)
       if(PView::list[index]->getOptions()->clip)
         PView::list[index]->setChanged(true);
@@ -143,44 +151,21 @@ static void clip_update_cb(Fl_Widget *w, void *data)
     }
   }
 
-  CTX::instance()->clipCapping =
-    FlGui::instance()->clipping->butt[0]->value();
-  if(CTX::instance()->clipCapping) {
-    CTX::instance()->clipWholeElements = 0;
-  }
-  else {
-    CTX::instance()->clipWholeElements =
-      FlGui::instance()->clipping->butt[1]->value();
-  }
-  CTX::instance()->clipOnlyDrawIntersectingVolume =
-    FlGui::instance()->clipping->butt[2]->value();
-
-  // said before the toggles are put aside below, so that what the buttons show
-  // is what was asked for rather than what the drag is drawing with
+  // said while the toggles still hold what was asked for, so that the buttons
+  // do not follow what the drag below draws with
   FlGui::instance()->clipping->activateButtons();
 
-  if(dragging) {
-    CTX::instance()->drawBBox = 1;
-    bool wasCutting = (CTX::instance()->clipCapping ||
-                       CTX::instance()->clipWholeElements);
-    CTX::instance()->clipCapping = 0;
-    CTX::instance()->clipWholeElements = 0;
-    if(startingDrag && wasCutting) {
-      // The arrays still hold the section the plane cut, and are missing the
-      // elements it removed: they are built once here, now that the toggles
-      // are aside, so that the whole model is there for OpenGL to clip. The
-      // motion events that follow cost nothing.
-      for(std::size_t index = 0; index < PView::list.size(); index++)
-        if(PView::list[index]->getOptions()->clip)
-          PView::list[index]->setChanged(true);
-      if(CTX::instance()->mesh.clip)
-        CTX::instance()->mesh.changed |=
-          (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-    }
-  }
-  else {
-    CTX::instance()->drawBBox = 0;
-  }
+  // While a plane is dragged, OpenGL does the clipping and the arrays are left
+  // exactly as they are, so that the drag starts at once however big the mesh
+  // is - rebuilding them here is what made it stall. Only whole element mode
+  // has to be put aside, as it is the one that keeps the planes from being
+  // applied at all; capping only ever mattered while the arrays were filled.
+  // What that mode leaves out of the arrays, and the section capping put in
+  // them, are then a plane behind while the mouse moves, and are put right as
+  // soon as it is released.
+  if(dragging) CTX::instance()->clipWholeElements = 0;
+
+  CTX::instance()->drawBBox = dragging ? 1 : 0;
   drawContext::global()->draw();
 }
 
