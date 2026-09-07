@@ -477,9 +477,10 @@ void drawContext::drawImage(const std::string &name, double x, double y,
   GLboolean valid = GL_TRUE;
   int matrixMode = 0;
   if(billboard) {
-    glRasterPos3d(x, y, z);
-    GLfloat pos[4];
-    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+    // where the image is pinned, worked out from the matrices the drawing
+    // code keeps: a core profile has no raster position to ask for
+    double xyz[3] = {x, y, z}, pos[3];
+    world2Viewport(xyz, pos);
     matrixMode = gmshMatrixMode();
     gmshMatrixMode(GMSH_PROJECTION);
     gmshPushMatrix();
@@ -497,7 +498,14 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     z = 0;
     w *= fact * s[0] / pixel_equiv_x;
     h *= fact * s[1] / pixel_equiv_y;
-    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
+    // nothing is drawn of an image pinned to a point that is behind the eye or
+    // off the side of the window, which is what an invalid raster position
+    // used to say
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    if(pos[2] < 0. || pos[2] > 1. || pos[0] < vp[0] || pos[0] > vp[0] + vp[2] ||
+       pos[1] < vp[1] || pos[1] > vp[1] + vp[3])
+      valid = GL_FALSE;
   }
   if(valid == GL_TRUE) {
     switch(align) {
@@ -533,9 +541,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     }
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, img->tex);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    gmshTexture(img->tex, GMSH_TEXTURE_IMAGE);
     gmshBegin(GL_QUADS);
     gmshTexCoord2f(1.0f, 1.0f);
     gmshVertex3d(x + wx * w, y + wy * w, z + wz * w);
@@ -546,7 +552,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     gmshTexCoord2f(0.0f, 1.0f);
     gmshVertex3d(x, y, z);
     gmshEnd();
-    glDisable(GL_TEXTURE_2D);
+    gmshTexture(0); // draws what is waiting, as the texture is going away
     glDisable(GL_BLEND);
   }
   if(billboard) {

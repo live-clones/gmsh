@@ -121,7 +121,8 @@ namespace glShader {
                      double width, bool lit);
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
                      const unsigned char *colors, const float *texCoords,
-                     const float *dashes, unsigned int texture, int count);
+                     const float *dashes, unsigned int texture, int textureMode,
+                     int count);
 
   // Draw one shape many times over, each of them placed by a glyph of its
   // own: the shape is given as its vertices and normals, and the glyphs as a

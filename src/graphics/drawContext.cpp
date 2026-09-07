@@ -859,9 +859,7 @@ void drawContext::drawBackgroundImage(bool threeD)
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, _bgImageTexture);
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+  gmshTexture(_bgImageTexture, GMSH_TEXTURE_IMAGE);
   gmshBegin(GL_QUADS);
   if(threeD) {
     gmshTexCoord2f(1.0f, 1.0f);
@@ -889,7 +887,7 @@ void drawContext::drawBackgroundImage(bool threeD)
     gmshVertex2d(x, y - h);
   }
   gmshEnd();
-  glDisable(GL_TEXTURE_2D);
+  gmshTexture(0); // draws what is waiting, as the texture is going away
   glDisable(GL_BLEND);
 }
 

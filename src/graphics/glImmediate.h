@@ -195,11 +195,17 @@ inline void gmshTexCoord2f(float s, float t)
     glTexCoord2f(s, t);
 }
 
+// What the texture says about the pixels it covers: a string is a picture of
+// how much of the current colour each of them gets, an image is the colour
+// itself. These are what GL_MODULATE and GL_REPLACE did.
+enum gmshTextureMode { GMSH_TEXTURE_NONE = 0, GMSH_TEXTURE_ALPHA = 1,
+                       GMSH_TEXTURE_IMAGE = 2 };
+
 // The texture the primitives after this are drawn through, zero for none.
 // This is what draws a string: the widget toolkit writes it into a picture,
 // and the picture is put on a quad. A shader pipeline is handed the texture
 // with the primitives, so it has to be said rather than only bound.
-void gmshTexture(unsigned int id);
+void gmshTexture(unsigned int id, int mode = GMSH_TEXTURE_ALPHA);
 unsigned int gmshCurrentTexture();
 
 // The pieces of fixed function state that decide how the primitives above are
