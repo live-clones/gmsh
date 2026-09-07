@@ -152,7 +152,9 @@ in float vClip[6];
 uniform bool uStipple;
 uniform int uStippleFactor;
 uniform int uStipplePattern;
-uniform bool uTextured;
+// 0 no texture, 1 the texture says how much colour a pixel gets - a string
+// drawn as a picture of itself - and 2 it is the colour, for an image
+uniform int uTextured;
 uniform sampler2D uTexture;
 uniform bool uLighting;
 uniform bool uTwoSide;
@@ -192,10 +194,17 @@ void main()
 
   fDepth = packDepth(gl_FragCoord.z);
 
+  // an image is the colour of what it covers, lit or not: this is what
+  // GL_REPLACE did, and nothing below has anything left to say about it
+  if(uTextured == 2) {
+    fColor = texture(uTexture, vTexCoord);
+    return;
+  }
+
   // a string is drawn as a picture of itself: the texture says how much of the
   // colour each pixel of the quad gets, whether or not it is lit
   float alpha = vColor.a;
-  if(uTextured) alpha *= texture(uTexture, vTexCoord).r;
+  if(uTextured == 1) alpha *= texture(uTexture, vTexCoord).r;
 
   if(!uLighting) {
     fColor = vec4(vColor.rgb, alpha);
@@ -785,7 +794,8 @@ void main()
 
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
                      const unsigned char *colors, const float *texCoords,
-                     const float *dashes, unsigned int texture, int count)
+                     const float *dashes, unsigned int texture, int textureMode,
+                     int count)
   {
     if(count <= 0 || !ensure()) return;
     glApi::BindVertexArray(_vao);
@@ -840,7 +850,7 @@ void main()
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, texture);
       glApi::Uniform1i(_u.texture, 0);
-      glApi::Uniform1i(_u.textured, 1);
+      glApi::Uniform1i(_u.textured, textureMode ? textureMode : 1);
     }
     else {
       glApi::DisableVertexAttribArray(ATTRIB_TEXCOORD);

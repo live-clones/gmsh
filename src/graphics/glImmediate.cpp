@@ -57,6 +57,7 @@ namespace {
     // string drawn as a picture of itself needs, and the one piece of this
     // state that a batch cannot span
     unsigned int texture;
+  int textureMode;
     // how wide the lines are and what dash pattern they carry
     double lineWidth;
     bool stipple;
@@ -66,6 +67,7 @@ namespace {
     {
       if(lighting != o.lighting || twoSide != o.twoSide ||
          pointSize != o.pointSize || texture != o.texture ||
+         textureMode != o.textureMode ||
          stipple != o.stipple || stippleFactor != o.stippleFactor ||
          stipplePattern != o.stipplePattern || lineWidth != o.lineWidth)
         return true;
@@ -92,6 +94,7 @@ namespace {
   bool _lighting = false, _twoSide = false;
   double _pointSize = 1.;
   unsigned int _texture = 0;
+  int _textureMode = GMSH_TEXTURE_NONE;
   double _lineWidth = 1.;
   bool _stipple = false;
   int _stippleFactor = 1;
@@ -295,6 +298,7 @@ void gmshResetMatrices()
   _batchTex.clear();
   _batchDash.clear();
   _texture = 0;
+  _textureMode = GMSH_TEXTURE_NONE;
   _lineWidth = 1.;
   _stipple = false;
   _stippleFactor = 1;
@@ -406,16 +410,19 @@ bool gmshLineStippleEnabled() { return _stipple; }
 int gmshLineStippleFactor() { return _stippleFactor; }
 unsigned short gmshLineStipplePattern() { return _stipplePattern; }
 
-void gmshTexture(unsigned int id)
+void gmshTexture(unsigned int id, int mode)
 {
-  if(id == _texture) return;
+  if(id == _texture && (!id || mode == _textureMode)) return;
   // what is waiting was collected to be drawn through the old one
   if(gmshUseShaders()) gmshFlushImmediate();
   _texture = id;
+  _textureMode = id ? mode : GMSH_TEXTURE_NONE;
   if(!gmshUseShaders()) {
     if(id) {
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, id);
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
+                (mode == GMSH_TEXTURE_IMAGE) ? GL_REPLACE : GL_MODULATE);
     }
     else {
       glDisable(GL_TEXTURE_2D);
@@ -516,7 +523,8 @@ void gmshFlushImmediate()
                                 _batchState.lighting))
       glShader::drawImmediate(_batchMode, &_batchPos[0], &_batchNrm[0],
                               &_batchCol[0], &_batchTex[0], &_batchDash[0],
-                              _batchState.texture, count);
+                              _batchState.texture, _batchState.textureMode,
+                              count);
   }
   _batchPos.clear();
   _batchNrm.clear();
@@ -544,6 +552,7 @@ namespace {
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;
     b.texture = _texture;
+    b.textureMode = _textureMode;
     b.lineWidth = _lineWidth;
     b.stipple = _stipple;
     b.stippleFactor = _stippleFactor;
