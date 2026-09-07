@@ -328,6 +328,10 @@ public:
   // draw with the shader pipeline instead of the fixed function one; changing
   // this recreates the OpenGL context, as a core profile cannot do both
   int shaders;
+  // sum what is transparent into buffers of its own and put them on the window
+  // afterwards, instead of painting it back to front: nothing has to be
+  // sorted, and the result does not depend on the order things were drawn in
+  int orderIndependentTransparency;
   // polygon offset options
   int polygonOffset, polygonOffsetAlways;
   double polygonOffsetFactor, polygonOffsetUnits;

@@ -109,6 +109,23 @@ namespace glShader {
   // in the program points at a complete texture when it draws, whether or not
   // the branch that reads it is taken.
   void noTexture();
+
+  // Order independent transparency. What is transparent is drawn between these
+  // two, into a pair of buffers - one summing the colours it meets, each
+  // weighted by how near and how opaque it is, and one summing how much light
+  // is left getting through - which endTransparent() then puts on the window.
+  // Nothing has to be sorted back to front, and what comes out does not depend
+  // on the order the triangles happened to be drawn in.
+  //
+  // beginTransparent() is false when the context cannot do it, and then the
+  // caller draws the transparent geometry the sorted way instead. It must be
+  // called with the opaque geometry already drawn: what is transparent is
+  // hidden by it, through a copy of the window's depth buffer.
+  bool beginTransparent();
+  void endTransparent();
+  // whether the pass being drawn is that one, which is what tells the drawing
+  // code not to sort and not to set a blending of its own
+  bool transparentPass();
   // Draw a run of vertices collected from the immediate mode calls, each with
   // the colour and the normal that were current when it was given. The state
   // it is drawn with - the matrices, the lights, the clipping - is whatever

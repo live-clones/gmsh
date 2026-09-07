@@ -768,6 +768,12 @@ StringXNumber GeneralOptions_Number[] = {
     "window" },
   { F|S, "OptionsPositionY" , opt_general_option_position1 , 150. ,
     "Vertical position (in pixels) of the upper left corner of the option window" },
+  { F|O, "OrderIndependentTransparency" ,
+    opt_general_order_independent_transparency , 1. ,
+    "Draw transparent objects by summing them into buffers of their own and "
+    "compositing afterwards, instead of sorting them back to front? (only "
+    "used with the shader pipeline, and ignored if the OpenGL implementation "
+    "cannot draw into floating point buffers)" },
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0: perspective projection)" },
 

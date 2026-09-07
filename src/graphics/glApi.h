@@ -246,6 +246,10 @@ namespace glApi {
   // Can each draw buffer have its own blend function? Dual depth peeling needs
   // this; without it the passes are those of plain depth peeling.
   bool haveIndexedBlend();
+  // Can a buffer of floating point colours be drawn into? Order independent
+  // transparency sums colours in one, and the sum runs well past what eight
+  // bits a channel could hold.
+  bool haveFloatColorBuffers();
   // Can the same shape be drawn many times over in one call, each of them with
   // attributes of its own? This is what the glyphs want: one sphere and a
   // buffer saying where every one of them goes.
