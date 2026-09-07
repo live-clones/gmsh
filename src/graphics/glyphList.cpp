@@ -435,6 +435,7 @@ bool glyphList::_instanced(drawContext *ctx, bool light)
   bool colors = !ctx->inPickColorMode();
   if(light) gmshLighting(true);
   gmshPushShaderState();
+  glShader::setAlphaScale(gmshAlphaScaleFor(GL_POINTS));
 
   for(int k = 0; k < GLYPH_NUMKINDS; k++) {
     std::size_t n = _inst[k].size();

@@ -525,6 +525,9 @@ void gmshDrawArrays(GLenum type, int count, const float *dashes)
     // point at one the driver is happy with
     glShader::noTexture();
     gmshPushShaderState();
+    // the transparency may be meant for the filled surfaces alone, and this is
+    // where what is being drawn is known
+    glShader::setAlphaScale(gmshAlphaScaleFor(type));
     // gmshPushShaderState() leaves the pattern off, as most of what is drawn
     // has no distance along a line to measure it against. A caller that has
     // worked one out for every vertex turns it back on here.
@@ -714,27 +717,29 @@ void drawContext::draw3d()
   // identifiers rather than colours and must not have them faded.
   double geomScale = inPickColorMode() ? 1. : CTX::instance()->geom.transparency;
   double meshScale = inPickColorMode() ? 1. : CTX::instance()->mesh.transparency;
+  bool geomFilled = (CTX::instance()->geom.transparencyMode == 0);
+  bool meshFilled = (CTX::instance()->mesh.transparencyMode == 0);
 
   if(!split) {
     transparencyPass = TRANSPARENCY_ALL;
-    gmshAlphaScale(geomScale);
+    gmshAlphaScale(geomScale, geomFilled);
     drawGeom();
-    gmshAlphaScale(1.);
+    gmshAlphaScale(1., false);
     drawBackgroundImage(true);
-    gmshAlphaScale(meshScale);
+    gmshAlphaScale(meshScale, meshFilled);
     drawMesh();
-    gmshAlphaScale(1.);
+    gmshAlphaScale(1., false);
     drawPost();
   }
   else {
     transparencyPass = TRANSPARENCY_OPAQUE;
-    gmshAlphaScale(geomScale);
+    gmshAlphaScale(geomScale, geomFilled);
     drawGeom();
-    gmshAlphaScale(1.);
+    gmshAlphaScale(1., false);
     drawBackgroundImage(true);
-    gmshAlphaScale(meshScale);
+    gmshAlphaScale(meshScale, meshFilled);
     drawMesh();
-    gmshAlphaScale(1.);
+    gmshAlphaScale(1., false);
     drawPost();
 
     transparencyPass = TRANSPARENCY_TRANSPARENT;
@@ -748,11 +753,11 @@ void drawContext::draw3d()
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glDepthMask(GL_FALSE);
     }
-    gmshAlphaScale(geomScale);
+    gmshAlphaScale(geomScale, geomFilled);
     drawGeom();
-    gmshAlphaScale(meshScale);
+    gmshAlphaScale(meshScale, meshFilled);
     drawMesh();
-    gmshAlphaScale(1.);
+    gmshAlphaScale(1., false);
     // the views sort themselves back to front and have always written depth
     // while doing it: that is left exactly as it was
     if(!summed) glDepthMask(GL_TRUE);

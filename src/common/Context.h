@@ -15,6 +15,9 @@
 class GamePad;
 
 struct contextMeshOptions {
+  // what the transparency above is applied to: 0 the filled surfaces
+  // only, so that the wireframe stays crisp, 1 everything
+  int transparencyMode;
   // multiplies the alpha of every mesh colour, as above
   double transparency;
   // mesh algorithms
@@ -103,6 +106,9 @@ struct contextMeshOptions {
 };
 
 struct contextGeometryOptions {
+  // what the transparency above is applied to: 0 the filled surfaces
+  // only, so that the wireframe stays crisp, 1 everything
+  int transparencyMode;
   // multiplies the alpha of every geometry colour: 1 leaves them as they
   // are, less than 1 makes the geometry see-through
   double transparency;
