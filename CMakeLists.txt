@@ -358,6 +358,10 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/homebrew/opt/libomp/lib -lomp")
+  elseif(MSVC)
+    # MSVC compiler OPENMP support
+    set_config_option(HAVE_OPENMP "OpenMP[llvm]")
+    set(GMSH_MSVC_OPENMP_LLVM ON)
   elseif(OpenMP_FOUND OR OPENMP_FOUND)
     # general case
     set_config_option(HAVE_OPENMP "OpenMP")
@@ -1555,6 +1559,27 @@ endif()
 
 # add C functions API
 set(GMSH_SRC ${GMSH_SRC};api/gmshc.cpp)
+
+if(GMSH_MSVC_OPENMP_LLVM)
+  # apply /openmp:llvm (see the OpenMP setup above) to every gmsh source
+  # file except HXT's, whose own OpenMP pragmas don't compile under it
+  set(GMSH_SRC_OPENMP_LLVM ${GMSH_SRC})
+  list(REMOVE_ITEM GMSH_SRC_OPENMP_LLVM
+       contrib/hxt/core/src/hxt_bbox.c
+       contrib/hxt/tetMesh/src/hxt_tetColor.c
+       contrib/hxt/tetMesh/src/hxt_tetDelaunay.c
+       contrib/hxt/tetMesh/src/hxt_tetFlag.c
+       contrib/hxt/tetMesh/src/hxt_tetNodalSize.c
+       contrib/hxt/tetMesh/src/hxt_tetOpti.c
+       contrib/hxt/tetMesh/src/hxt_tetRefine.c
+       contrib/hxt/tetMesh/src/hxt_tetRepair.c
+       contrib/hxt/tetMesh/src/hxt_tetSync.c
+       contrib/hxt/tetMesh/src/hxt_tetUtils.c
+       contrib/hxt/tetMesh/src/hxt_vertices.c
+       contrib/hxt/tetBR/src/hxt_boundary_recovery.cxx)
+  set_source_files_properties(${GMSH_SRC_OPENMP_LLVM} "src/common/Main.cpp"
+                               PROPERTIES COMPILE_OPTIONS "/openmp:llvm")
+endif()
 
 # force full warnings to encourage everybody to write clean(er) code
 check_cxx_compiler_flag("-Wall" WALL)
