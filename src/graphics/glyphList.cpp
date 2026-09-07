@@ -377,6 +377,11 @@ void glyphList::draw(drawContext *ctx, bool light)
 {
   if(!size()) return;
 
+  // Whatever was collected before these glyphs was asked for before them and
+  // has to reach the window first; the instanced and streamed backends bind
+  // attributes of their own, so nothing may be left waiting behind them.
+  gmshFlushImmediate();
+
   ctx->updateGlyphTemplates();
   long total = 0;
   for(int k = 0; k < GLYPH_NUMKINDS; k++) {
