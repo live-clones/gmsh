@@ -30,9 +30,21 @@ in vec4 aGlyph2;
 in vec2 aGlyphParam;
 in vec2 aTexCoord;
 in float aDash;
+// the far end of a line drawn wide, and what it carries: such a line is one
+// instance of a six cornered quad rather than a line of its own, and the
+// vertex shader is handed both of its ends to work the quad out from
+in vec3 aVertexB;
+in vec3 aNormalB;
+in vec4 aColorB;
 
 uniform bool uInstanced;
 uniform bool uTaper;
+// A line wider than one pixel, which a core profile will not draw: it is drawn
+// as a quad of that width in pixels instead, worked out where the line lands
+// on the screen. uViewport is what turns the one into the other.
+uniform bool uWideLine;
+uniform float uLineWidth;
+uniform vec2 uViewport;
 uniform mat4 uModelview;
 uniform mat4 uProjection;
 uniform mat3 uNormalMatrix;
@@ -53,6 +65,7 @@ void main()
 {
   vec3 p = aVertex;
   vec3 n = aNormal;
+  vec4 eye;
   if(uInstanced) {
     if(uTaper) {
       // the radius of a cylinder follows its length, and the normal of its
@@ -72,18 +85,53 @@ void main()
     vec3 c2 = vec3(aGlyph0.z, aGlyph1.z, aGlyph2.z);
     n = mat3(cross(c1, c2), cross(c2, c0), cross(c0, c1)) * n;
   }
-  vec4 eye = uModelview * vec4(p, 1.0);
+  vec4 clip;
+  float dash = aDash;
+  if(uWideLine) {
+    // Which corner of the quad this is: two triangles over the two ends,
+    // (A-, A+, B+) and (A-, B+, B-), so that the quad is wound the same way
+    // round whichever way the line runs.
+    int corner = gl_VertexID;
+    bool atB = (corner == 2 || corner == 4 || corner == 5);
+    float side = (corner == 1 || corner == 2 || corner == 4) ? 1.0 : -1.0;
+
+    vec4 ea = uModelview * vec4(aVertex, 1.0);
+    vec4 eb = uModelview * vec4(aVertexB, 1.0);
+    vec4 ca = uProjection * ea;
+    vec4 cb = uProjection * eb;
+    // where the two ends land on the screen, which is where the width of the
+    // line and the length the dashes are counted along it are measured
+    vec2 sa = ca.xy / ca.w * uViewport * 0.5;
+    vec2 sb = cb.xy / cb.w * uViewport * 0.5;
+    vec2 along = sb - sa;
+    float len = length(along);
+    vec2 dir = (len > 0.0) ? along / len : vec2(1.0, 0.0);
+    vec2 across = vec2(-dir.y, dir.x);
+
+    eye = atB ? eb : ea;
+    clip = atB ? cb : ca;
+    n = atB ? aNormalB : aNormal;
+    vColor = uColorArray ? (atB ? aColorB : aColor) : uColor;
+    dash = atB ? len : 0.0;
+    // half the width to each side, in the clip coordinates the screen ones
+    // came from
+    clip.xy += across * (side * uLineWidth * 0.5) / uViewport * 2.0 * clip.w;
+  }
+  else {
+    eye = uModelview * vec4(p, 1.0);
+    clip = uProjection * eye;
+    vColor = uColorArray ? aColor : uColor;
+  }
   vEye = eye.xyz;
   vNormal = uNormalMatrix * n;
-  vColor = uColorArray ? aColor : uColor;
   vTexCoord = aTexCoord;
-  vDash = aDash;
+  vDash = dash;
   // the planes are in eye coordinates, as glClipPlane() left them once the
   // modelview it was given had been applied
   for(int i = 0; i < 6; i++)
     vClip[i] = uClipOn[i] ? dot(uClipPlane[i], vec4(eye.xyz, 1.0)) : 1.0;
   gl_PointSize = uPointSize;
-  gl_Position = uProjection * eye;
+  gl_Position = clip;
 }
 )";
 
@@ -202,6 +250,7 @@ void main()
       GLint instanced, taper;
       GLint textured, texture;
       GLint stipple, stippleFactor, stipplePattern;
+      GLint wideLine, lineWidth, viewport;
       GLint lightPosition, lightAmbient, lightDiffuse, lightSpecular, lightOn;
     } _u;
 
@@ -287,6 +336,9 @@ void main()
       glApi::BindAttribLocation(p, ATTRIB_GLYPH_PARAM, "aGlyphParam");
       glApi::BindAttribLocation(p, ATTRIB_TEXCOORD, "aTexCoord");
       glApi::BindAttribLocation(p, ATTRIB_DASH, "aDash");
+      glApi::BindAttribLocation(p, ATTRIB_VERTEXB, "aVertexB");
+      glApi::BindAttribLocation(p, ATTRIB_NORMALB, "aNormalB");
+      glApi::BindAttribLocation(p, ATTRIB_COLORB, "aColorB");
       glApi::LinkProgram(p);
       glApi::DeleteShader(vs);
       glApi::DeleteShader(fs);
@@ -321,6 +373,9 @@ void main()
       _u.stipple = glApi::GetUniformLocation(p, "uStipple");
       _u.stippleFactor = glApi::GetUniformLocation(p, "uStippleFactor");
       _u.stipplePattern = glApi::GetUniformLocation(p, "uStipplePattern");
+      _u.wideLine = glApi::GetUniformLocation(p, "uWideLine");
+      _u.lineWidth = glApi::GetUniformLocation(p, "uLineWidth");
+      _u.viewport = glApi::GetUniformLocation(p, "uViewport");
       // the arrays are addressed element by element
       _u.clipPlane = _u.clipOn = -1;
       _u.lightPosition = _u.lightAmbient = _u.lightDiffuse = -1;
@@ -507,6 +562,98 @@ void main()
       glApi::DisableVertexAttribArray(ATTRIB_COLOR);
     }
     glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+  }
+
+  bool drawWideLines(const float *vertices, const void *normals,
+                     GLenum normalType, const unsigned char *colors, int count,
+                     double width, bool lit)
+  {
+    if(count < 2 || !glApi::haveInstancing() || !ensure()) return false;
+    int segments = count / 2;
+    glApi::BindVertexArray(_vao);
+
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    float view[2] = {(float)vp[2], (float)vp[3]};
+    glApi::Uniform2fv(_u.viewport, 1, view);
+    glApi::Uniform1f(_u.lineWidth, (float)width);
+    glApi::Uniform1i(_u.wideLine, 1);
+
+    // The two ends of a segment are the same buffer read at a stride of two
+    // vertices, one of them a vertex further along: that is what lets the
+    // shader see both of them at once, one segment to an instance.
+    if(!_streamVertices) glApi::GenBuffers(1, &_streamVertices);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamVertices);
+    glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 3 * sizeof(float),
+                      vertices, GL_STREAM_DRAW);
+    const GLsizei vstride = 6 * sizeof(float);
+    glApi::EnableVertexAttribArray(ATTRIB_VERTEX);
+    glApi::VertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, vstride,
+                               nullptr);
+    glApi::VertexAttribDivisor(ATTRIB_VERTEX, 1);
+    glApi::EnableVertexAttribArray(ATTRIB_VERTEXB);
+    glApi::VertexAttribPointer(ATTRIB_VERTEXB, 3, GL_FLOAT, GL_FALSE, vstride,
+                               (const GLvoid *)(std::size_t)(3 *
+                                                             sizeof(float)));
+    glApi::VertexAttribDivisor(ATTRIB_VERTEXB, 1);
+
+    if(lit && normals) {
+      // the arrays keep their normals as bytes and the collector as floats,
+      // so how far apart two of them are depends on which is being drawn
+      std::size_t nsize = (normalType == GL_FLOAT) ? sizeof(float) : 1;
+      GLboolean norm = (normalType == GL_FLOAT) ? GL_FALSE : GL_TRUE;
+      if(!_streamNormals) glApi::GenBuffers(1, &_streamNormals);
+      glApi::BindBuffer(GL_ARRAY_BUFFER, _streamNormals);
+      glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(count * 3 * nsize),
+                        normals, GL_STREAM_DRAW);
+      glApi::EnableVertexAttribArray(ATTRIB_NORMAL);
+      glApi::VertexAttribPointer(ATTRIB_NORMAL, 3, normalType, norm,
+                                 (GLsizei)(6 * nsize), nullptr);
+      glApi::VertexAttribDivisor(ATTRIB_NORMAL, 1);
+      glApi::EnableVertexAttribArray(ATTRIB_NORMALB);
+      glApi::VertexAttribPointer(ATTRIB_NORMALB, 3, normalType, norm,
+                                 (GLsizei)(6 * nsize),
+                                 (const GLvoid *)(3 * nsize));
+      glApi::VertexAttribDivisor(ATTRIB_NORMALB, 1);
+    }
+    else {
+      glApi::DisableVertexAttribArray(ATTRIB_NORMAL);
+      glApi::DisableVertexAttribArray(ATTRIB_NORMALB);
+    }
+
+    if(colors) {
+      if(!_streamColors) glApi::GenBuffers(1, &_streamColors);
+      glApi::BindBuffer(GL_ARRAY_BUFFER, _streamColors);
+      glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 4, colors,
+                        GL_STREAM_DRAW);
+      glApi::EnableVertexAttribArray(ATTRIB_COLOR);
+      glApi::VertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 8,
+                                 nullptr);
+      glApi::VertexAttribDivisor(ATTRIB_COLOR, 1);
+      glApi::EnableVertexAttribArray(ATTRIB_COLORB);
+      glApi::VertexAttribPointer(ATTRIB_COLORB, 4, GL_UNSIGNED_BYTE, GL_TRUE,
+                                 8, (const GLvoid *)(std::size_t)4);
+      glApi::VertexAttribDivisor(ATTRIB_COLORB, 1);
+    }
+    else {
+      glApi::DisableVertexAttribArray(ATTRIB_COLOR);
+      glApi::DisableVertexAttribArray(ATTRIB_COLORB);
+    }
+    glApi::DisableVertexAttribArray(ATTRIB_TEXCOORD);
+    glApi::DisableVertexAttribArray(ATTRIB_DASH);
+
+    setColorArray(colors != nullptr);
+    glApi::DrawArraysInstanced(GL_TRIANGLES, 0, 6, segments);
+
+    glApi::Uniform1i(_u.wideLine, 0);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+    const int attribs[6] = {ATTRIB_VERTEX,  ATTRIB_VERTEXB, ATTRIB_NORMAL,
+                            ATTRIB_NORMALB, ATTRIB_COLOR,   ATTRIB_COLORB};
+    for(int i = 0; i < 6; i++) {
+      glApi::DisableVertexAttribArray(attribs[i]);
+      glApi::VertexAttribDivisor(attribs[i], 0);
+    }
+    return true;
   }
 
   bool drawGlyphs(const float *vertices, const float *normals, int numVertices,

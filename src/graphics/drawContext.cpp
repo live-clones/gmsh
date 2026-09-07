@@ -489,6 +489,24 @@ void gmshDrawArrays(GLenum type, int count)
 
 void drawVertexArray(VertexArray *va, GLenum type)
 {
+  // A line wider than a pixel is not something a core profile draws. The
+  // array holds the two ends of every segment, which is all the shader needs
+  // to make a quad of it, so it is handed them rather than drawn as lines.
+  if(useShaders() && type == GL_LINES && gmshCurrentLineWidth() > 1. &&
+     va->getNumVertices() > 1) {
+    gmshFlushImmediate();
+    gmshPushShaderState();
+    bool lit = gmshLightingEnabled() && va->hasNormals();
+    if(glShader::drawWideLines(
+         va->getVertexArray(), lit ? (const void *)va->getNormalArray() :
+                                     nullptr,
+         NORMAL_GLTYPE, va->hasColors() ? va->getColorArray() : nullptr,
+         va->getNumVertices(), gmshCurrentLineWidth(), lit)) {
+      if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+      return;
+    }
+  }
+
   gmshDrawArrays(type, va->getNumVertices());
 
   if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);

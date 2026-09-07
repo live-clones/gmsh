@@ -220,13 +220,11 @@ bool gmshLightingEnabled();
 void gmshLightTwoSide(bool on);
 bool gmshLightTwoSideEnabled();
 
-inline void gmshLineWidth(double w)
-{
-  // the width a line is drawn with is OpenGL's own state, not something the
-  // batch carries: what is waiting was asked for with the old one
-  if(gmshUseShaders()) gmshFlushImmediate();
-  glLineWidth((float)w);
-}
+// The width a line is drawn with. A core profile draws them all one pixel
+// wide, so under the shader pipeline this is remembered and a wider line is
+// made of triangles instead.
+void gmshLineWidth(double w);
+double gmshCurrentLineWidth();
 void gmshPointSize(double s);
 double gmshCurrentPointSize();
 
