@@ -3224,6 +3224,27 @@ void quick_access_cb(Fl_Widget *w, void *data)
   else if(what == "mesh_size")
     numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor", true, "Factor",
                                 true, 0.01, 100, 0.01);
+  else if(what == "geometry_transparency")
+    numberOrStringOptionChooser("Geometry", 0, "Transparency", true,
+                                "Transparency", true, 0., 1., 0.01);
+  else if(what == "mesh_transparency")
+    numberOrStringOptionChooser("Mesh", 0, "Transparency", true, "Transparency",
+                                true, 0., 1., 0.01);
+  else if(what == "view_transparency") {
+    // the first visible view is the one asked about, and every visible one
+    // follows it, as the other view entries here do
+    double val = 1.;
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        val = numberOrStringOptionChooser("View", i, "Transparency", true,
+                                          "Transparency", true, 0., 1., 0.01);
+        break;
+      }
+    }
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_transparency(i, GMSH_SET | GMSH_GUI, val);
+  }
   else if(what == "view_element_outlines") {
     int set = 0;
     for(std::size_t i = 0; i < PView::list.size(); i++)
@@ -3474,6 +3495,8 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Volumes", FL_ALT + 'v', quick_access_cb, (void*)"geometry_volumes",
            FL_MENU_TOGGLE },
          { nullptr },
+      { "Geometry transparency", 0, quick_access_cb,
+        (void*)"geometry_transparency" },
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Mesh visibility", 0, nullptr, nullptr, FL_SUBMENU },
@@ -3492,6 +3515,7 @@ void status_options_cb(Fl_Widget *w, void *data)
          { nullptr },
       { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
       { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
+      { "Mesh transparency", 0, quick_access_cb, (void*)"mesh_transparency" },
       { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "View element outlines ", FL_ALT + 'e', quick_access_cb,
@@ -3516,11 +3540,13 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
          { "Node", 0, quick_access_cb, (void*)"view_glyph_node"},
          { nullptr },
+      { "View transparency", 0, quick_access_cb, (void*)"view_transparency" },
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { nullptr }
     };
     // clang-format on
-    const int gen = 7, geo = 14, msh = 21, pos = 32, end = 54;
+    // one item was added to each of the geometry, mesh and view sections
+    const int gen = 7, geo = 14, msh = 22, pos = 34, end = 57;
     if(opt_general_axes(0, GMSH_GET, 0))
       menu[gen + 0].set();
     else
@@ -3591,6 +3617,20 @@ void status_options_cb(Fl_Widget *w, void *data)
         }
       }
     }
+    // The transparency multipliers are applied by the shader: with the fixed
+    // function pipeline they would do nothing, so they are not offered at all.
+    // This comes after the view entries above, which show() the whole range.
+    if(opt_general_shaders(0, GMSH_GET, 0)) {
+      menu[geo + 6].show();
+      menu[msh + 10].show();
+      if(!PView::list.empty()) menu[pos + 21].show();
+    }
+    else {
+      menu[geo + 6].hide();
+      menu[msh + 10].hide();
+      menu[pos + 21].hide();
+    }
+
     // popup the menu
     static Fl_Menu_Item *picked =
       &menu[msh + 8]; // toggle mesh display - the default
