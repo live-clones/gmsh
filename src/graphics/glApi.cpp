@@ -83,6 +83,7 @@ namespace glApi {
                                   GLint, GLint, GLbitfield, GLenum) = nullptr;
 
   void(APIENTRY *ActiveTexture)(GLenum) = nullptr;
+  void(APIENTRY *BlendFuncSeparate)(GLenum, GLenum, GLenum, GLenum) = nullptr;
 
   void(APIENTRY *BlendFunci)(GLuint, GLenum, GLenum) = nullptr;
   void(APIENTRY *BlendEquationi)(GLuint, GLenum) = nullptr;
@@ -256,6 +257,8 @@ namespace glApi {
                         GLbitfield, GLenum))address("glBlitFramebuffer");
 
     ActiveTexture = (void(APIENTRY *)(GLenum))address("glActiveTexture");
+    BlendFuncSeparate = (void(APIENTRY *)(GLenum, GLenum, GLenum, GLenum))
+      address("glBlendFuncSeparate");
 
     BlendFunci =
       (void(APIENTRY *)(GLuint, GLenum, GLenum))address("glBlendFunci");
@@ -367,6 +370,7 @@ namespace glApi {
     BlitFramebuffer = nullptr;
 
     ActiveTexture = nullptr;
+    BlendFuncSeparate = nullptr;
 
     BlendFunci = nullptr;
     BlendEquationi = nullptr;

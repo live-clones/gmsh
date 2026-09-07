@@ -713,14 +713,15 @@ public:
   // which views this pass draws: all of them, or only the opaque ones, or
   // only the transparent ones, which are drawn after and summed rather than
   // painted in order
-  enum whichViews { ALL, OPAQUE, TRANSPARENT };
+  // not OPAQUE and TRANSPARENT: windows.h has macros of both those names
+  enum whichViews { ALL_VIEWS, OPAQUE_VIEWS, TRANSPARENT_VIEWS };
 
 private:
   drawContext *_ctx;
   whichViews _which;
 
 public:
-  drawPView(drawContext *ctx, whichViews which = ALL)
+  drawPView(drawContext *ctx, whichViews which = ALL_VIEWS)
     : _ctx(ctx), _which(which)
   {
   }
@@ -733,7 +734,8 @@ public:
     if(data->getDirty() || !data->getNumTimeSteps()) return;
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
     if(!_ctx->isVisible(p)) return;
-    if(_which != ALL && (viewIsTransparent(p) != (_which == TRANSPARENT)))
+    if(_which != ALL_VIEWS &&
+       (viewIsTransparent(p) != (_which == TRANSPARENT_VIEWS)))
       return;
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT) {
@@ -914,9 +916,9 @@ void drawContext::drawPost()
   // mesh and views alike - is summed by one pass.
   drawPView::whichViews which =
     (transparencyPass == TRANSPARENCY_OPAQUE) ?
-      drawPView::OPAQUE :
+      drawPView::OPAQUE_VIEWS :
       ((transparencyPass == TRANSPARENCY_TRANSPARENT) ?
-         drawPView::TRANSPARENT : drawPView::ALL);
+         drawPView::TRANSPARENT_VIEWS : drawPView::ALL_VIEWS);
   std::for_each(PView::list.begin(), PView::list.end(), drawPView(this, which));
 }
 
