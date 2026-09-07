@@ -8,9 +8,13 @@
 #include <iomanip>
 
 #include "all.h"
+#ifndef _MSC_VER
+// MSVC's OpenMP implementation doesn't support user-defined reductions
+// (see the #else branch of the "vec_double_plus:G" reduction below)
 #pragma omp declare reduction(vec_double_plus : std::vector<double> : \
         std::transform(omp_out.begin(), omp_out.end(), omp_in.begin(), omp_out.begin(), std::plus<double>())) \
         initializer(omp_priv = std::vector<double>(omp_orig.size(), 0))
+#endif
 
 using namespace UM;
 
@@ -127,6 +131,7 @@ struct Untangle3D {
         }
     }
 
+#ifndef _MSC_VER
     void evaluate_jacobian(const std::vector<double> &X) {
         if (debug>3) std::cerr << "evaluate the jacobian...";
         detmin = std::numeric_limits<double>::max();
@@ -163,6 +168,49 @@ struct Untangle3D {
         }
         if (debug>3) std::cerr << "ok" << std::endl;
     }
+#else
+    // same as above, but MSVC's OpenMP only allows a static/namespace-scope
+    // variable in a reduction clause, not a non-static data member such as
+    // detmin/ninverted: reduce into locals and write the members afterwards
+    void evaluate_jacobian(const std::vector<double> &X) {
+        if (debug>3) std::cerr << "evaluate the jacobian...";
+        double detmin_ = std::numeric_limits<double>::max();
+        int ninverted_ = 0;
+#pragma omp parallel for reduction(min:detmin_) reduction(+:ninverted_)
+        for (int c=0; c<m.ncells(); c++) {
+            mat<3,3> &J = this->J[c];
+            J = {};
+            for (int i=0; i<4; i++)
+                for (int d : range(3))
+                    J[d] += ref_tet[i]*X[3*m.vert(c,i) + d];
+            det[c] = J.det();
+            detmin_ = std::min(detmin_, det[c]);
+            ninverted_ += (det[c]<=0);
+
+            mat<3,3> &K = this->K[c];
+            K = { // dual basis
+                {{
+                     J[1].y*J[2].z - J[1].z*J[2].y,
+                     J[1].z*J[2].x - J[1].x*J[2].z,
+                     J[1].x*J[2].y - J[1].y*J[2].x
+                 },
+                {
+                    J[0].z*J[2].y - J[0].y*J[2].z,
+                    J[0].x*J[2].z - J[0].z*J[2].x,
+                    J[0].y*J[2].x - J[0].x*J[2].y
+                },
+                {
+                    J[0].y*J[1].z - J[0].z*J[1].y,
+                    J[0].z*J[1].x - J[0].x*J[1].z,
+                    J[0].x*J[1].y - J[0].y*J[1].x
+                }}
+            };
+        }
+        detmin = detmin_;
+        ninverted = ninverted_;
+        if (debug>3) std::cerr << "ok" << std::endl;
+    }
+#endif
 
     double evaluate_energy(const std::vector<double> &X) {
         evaluate_jacobian(X);
@@ -196,6 +244,7 @@ struct Untangle3D {
             const hlbfgs_optimizer::simplified_func_grad_eval func = [&](const std::vector<double>& X, double& F, std::vector<double>& G) {
                 std::fill(G.begin(), G.end(), 0);
                 F = evaluate_energy(X);
+#ifndef _MSC_VER
 #pragma omp parallel for reduction(vec_double_plus:G)
                 for (int t=0; t<m.ncells(); t++) {
                     mat<3,3> &a = this->J[t]; // tangent basis
@@ -218,6 +267,39 @@ struct Untangle3D {
                         }
                     }
                 }
+#else
+                // same as above, but accumulated into a per-thread buffer and
+                // merged under a critical section instead of an omp
+                // declare-reduction on G, which MSVC's OpenMP doesn't support
+#pragma omp parallel
+                {
+                    std::vector<double> G_local(G.size(), 0.);
+#pragma omp for
+                    for (int t=0; t<m.ncells(); t++) {
+                        mat<3,3> &a = this->J[t]; // tangent basis
+                        mat<3,3> &b = this->K[t]; // dual basis
+                        double c1 = chi(eps, det[t]);
+                        double c2 = pow(c1, 2./3.);
+                        double c3 = chi_deriv(eps, det[t]);
+
+                        double f = (a[0]*a[0] + a[1]*a[1] + a[2]*a[2])/c2;
+                        double g = (1+square(det[t]))/c1;
+
+                        for (int dim : range(3)) {
+                            vec3 dfda = a[dim]*(2./c2) - b[dim]*((2.*f*c3)/(3.*c1));
+                            vec3 dgda = b[dim]*((2*det[t]-g*c3)/c1);
+
+                            for (int i=0; i<4; i++) {
+                                int v = m.vert(t,i);
+                                if (!lock[v])
+                                    G_local[v*3+dim] += (dfda*(1.-theta) + dgda*theta)*ref_tet[i];
+                            }
+                        }
+                    }
+#pragma omp critical
+                    for (size_t i=0; i<G.size(); i++) G[i] += G_local[i];
+                }
+#endif
             };
 
             double E_prev = evaluate_energy(X);
