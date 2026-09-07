@@ -739,7 +739,6 @@ double opt_view_arrow_size_max(OPT_ARGS_NUM);
 double opt_view_normals(OPT_ARGS_NUM);
 double opt_view_tangents(OPT_ARGS_NUM);
 double opt_view_displacement_factor(OPT_ARGS_NUM);
-double opt_view_fake_transparency(OPT_ARGS_NUM);
 double opt_view_use_stipple(OPT_ARGS_NUM);
 double opt_view_explode(OPT_ARGS_NUM);
 double opt_view_visible(OPT_ARGS_NUM);

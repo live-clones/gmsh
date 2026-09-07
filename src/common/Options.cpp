@@ -60,6 +60,10 @@
 #endif
 
 #if defined(HAVE_FLTK)
+// grey the transparency widgets in or out, as only the shader pipeline applies
+// them; defined further down, next to the options it acts on
+static void _setTransparencyWidgets();
+
 // hand the graphic windows the visual the options now ask for; FLTK recreates
 // the OpenGL context of each of them whose value changed, and the vertex
 // buffers and the entry points that belonged to the old one are dropped when
@@ -3018,6 +3022,27 @@ double opt_general_order_independent_transparency(OPT_ARGS_NUM)
 // function pipeline cannot do that to the colours a vertex array holds, and
 // ignores them; a colour map with an alpha channel of its own still works
 // there, as it always did.
+#if defined(HAVE_FLTK)
+// The transparency multipliers are applied by the shader: with the fixed
+// function pipeline they do nothing, and saying so by going grey beats letting
+// someone drag a widget that cannot work.
+static void _setTransparencyWidgets()
+{
+  if(!FlGui::available()) return;
+  optionWindow *o = FlGui::instance()->options;
+  bool on = CTX::instance()->shaders ? true : false;
+  Fl_Widget *w[5] = {o->geo.value[21], o->geo.choice[6], o->mesh.value[27],
+                     o->mesh.choice[11], o->view.value[79]};
+  for(int i = 0; i < 5; i++) {
+    if(!w[i]) continue;
+    if(on)
+      w[i]->activate();
+    else
+      w[i]->deactivate();
+  }
+}
+#endif
+
 double opt_geometry_transparency(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -3025,6 +3050,14 @@ double opt_geometry_transparency(OPT_ARGS_NUM)
     if(val > 1.) val = 1.;
     CTX::instance()->geom.transparency = val;
   }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.value[21]->value(
+      CTX::instance()->geom.transparency);
+    // only the shader pipeline can do this, so say so by going grey
+    _setTransparencyWidgets();
+  }
+#endif
   return CTX::instance()->geom.transparency;
 }
 
@@ -3032,6 +3065,11 @@ double opt_geometry_transparency_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->geom.transparencyMode = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->geo.choice[6]->value(
+      CTX::instance()->geom.transparencyMode);
+#endif
   return CTX::instance()->geom.transparencyMode;
 }
 
@@ -3042,6 +3080,13 @@ double opt_mesh_transparency(OPT_ARGS_NUM)
     if(val > 1.) val = 1.;
     CTX::instance()->mesh.transparency = val;
   }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->mesh.value[27]->value(
+      CTX::instance()->mesh.transparency);
+    _setTransparencyWidgets();
+  }
+#endif
   return CTX::instance()->mesh.transparency;
 }
 
@@ -3049,6 +3094,11 @@ double opt_mesh_transparency_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->mesh.transparencyMode = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.choice[11]->value(
+      CTX::instance()->mesh.transparencyMode);
+#endif
   return CTX::instance()->mesh.transparencyMode;
 }
 
@@ -3061,6 +3111,12 @@ double opt_view_transparency(OPT_ARGS_NUM)
     if(val > 1.) val = 1.;
     opt->transparency = val;
   }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    FlGui::instance()->options->view.value[79]->value(opt->transparency);
+    _setTransparencyWidgets();
+  }
+#endif
   return opt->transparency;
 #else
   return 1.;
@@ -3083,9 +3139,12 @@ double opt_general_shaders(OPT_ARGS_NUM)
 #endif
   }
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
+  if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->general.butt[3]->value(
       CTX::instance()->shaders);
+    // the transparency multipliers only mean something with shaders on
+    _setTransparencyWidgets();
+  }
 #endif
   return CTX::instance()->shaders;
 }
@@ -7966,24 +8025,6 @@ double opt_view_displacement_factor(OPT_ARGS_NUM)
     FlGui::instance()->options->view.value[63]->value(opt->displacementFactor);
 #endif
   return opt->displacementFactor;
-#else
-  return 0.;
-#endif
-}
-
-double opt_view_fake_transparency(OPT_ARGS_NUM)
-{
-#if defined(HAVE_POST)
-  GET_VIEWo(0.);
-  if(action & GMSH_SET) {
-    opt->fakeTransparency = (int)val;
-    if(view) view->setChanged(true);
-  }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    FlGui::instance()->options->view.butt[24]->value(opt->fakeTransparency);
-#endif
-  return opt->fakeTransparency;
 #else
   return 0.;
 #endif

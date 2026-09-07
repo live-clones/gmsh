@@ -1982,8 +1982,6 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ExternalView" , opt_view_external_view , -1. ,
     "Index of the view used to color vector fields (-1: self)" },
 
-  { F|O, "FakeTransparency" , opt_view_fake_transparency , 0. ,
-    "Use fake transparency (cheaper than the real thing, but incorrect)" },
   { F|O, "ForceNumComponents" , opt_view_force_num_components , 0. ,
     "Force number of components to display (see View.ComponentMapN for mapping)" },
 
