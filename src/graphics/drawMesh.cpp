@@ -810,24 +810,6 @@ public:
   }
 };
 
-static void beginFakeTransparency()
-{
-  return;
-  // simple additive blending "a la xpost":
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
-  // maximum intensity projection "a la volsuite":
-  // glBlendFunc(GL_ONE, GL_ONE); // glBlendEquation(GL_MAX);
-  glEnable(GL_BLEND);
-  glDisable(GL_DEPTH_TEST);
-}
-
-static void endFakeTransparency()
-{
-  return;
-  glDisable(GL_BLEND);
-  glEnable(GL_DEPTH_TEST);
-}
-
 // The merged arrays drawn just before the per-entity loops already cover the
 // wireframe and the filled faces of every unselected entity, so those loops
 // have something left to do only when a per-entity feature is on (nodes,
@@ -951,7 +933,6 @@ void drawContext::drawMesh()
         _mergedLines = false;
       }
       if(status >= 2) {
-        beginFakeTransparency();
         if(merge) {
           drawMergedArray(this, ma.lines[2], GL_LINES,
                           CTX::instance()->mesh.light &&
@@ -964,7 +945,6 @@ void drawContext::drawMesh()
         if(needPerEntityPass(this, 2, _mergedLines, _mergedTriangles))
           std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
         _mergedLines = _mergedTriangles = false;
-        endFakeTransparency();
       }
       if(status >= 3) {
         if(merge) {
