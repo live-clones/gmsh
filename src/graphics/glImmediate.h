@@ -234,6 +234,12 @@ double gmshCurrentPointSize();
 // throws away the ones the pattern has a hole at.
 void gmshLineStipple(int factor, unsigned short pattern);
 void gmshLineStippleOff();
+// Which pattern is on, if any. A vertex array is drawn straight from its
+// buffer instead of being collected, so whoever draws one has to ask for the
+// pattern and work out the distances along the line itself.
+bool gmshLineStippleEnabled();
+int gmshLineStippleFactor();
+unsigned short gmshLineStipplePattern();
 
 inline void gmshPolygonFill(bool fill)
 {

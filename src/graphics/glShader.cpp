@@ -595,6 +595,23 @@ void main()
     glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
   }
 
+  void streamDash(const float *dashes, int count)
+  {
+    if(!ensure()) return;
+    if(!dashes || count <= 0) {
+      glApi::DisableVertexAttribArray(ATTRIB_DASH);
+      return;
+    }
+    if(!_streamDash) glApi::GenBuffers(1, &_streamDash);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, _streamDash);
+    glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * sizeof(float),
+                      dashes, GL_STREAM_DRAW);
+    glApi::EnableVertexAttribArray(ATTRIB_DASH);
+    glApi::VertexAttribPointer(ATTRIB_DASH, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glApi::VertexAttribDivisor(ATTRIB_DASH, 0);
+    glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+  }
+
   bool drawWideLines(const float *vertices, const void *normals,
                      GLenum normalType, const unsigned char *colors, int count,
                      double width, bool lit)

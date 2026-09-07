@@ -5,6 +5,7 @@
 
 #include <string>
 #include <cstring>
+#include <cmath>
 #include <stdio.h>
 #include "GmshGlobal.h"
 #include "GmshConfig.h"
@@ -468,7 +469,7 @@ void gmshUnbindArrays()
 
 // hand the program everything it needs that the fixed function pipeline kept
 // as state of its own, and draw
-void gmshDrawArrays(GLenum type, int count)
+void gmshDrawArrays(GLenum type, int count, const float *dashes)
 {
   // whatever immediate mode primitives are waiting were asked for before this
   // one, and have to be on the screen before it
@@ -482,9 +483,43 @@ void gmshDrawArrays(GLenum type, int count)
     }
     glShader::setColorArray(_boundColors);
     gmshPushShaderState();
+    // gmshPushShaderState() leaves the pattern off, as most of what is drawn
+    // has no distance along a line to measure it against. A caller that has
+    // worked one out for every vertex turns it back on here.
+    glShader::streamDash(dashes, count);
+    if(dashes)
+      glShader::setStipple(true, gmshLineStippleFactor(),
+                           gmshLineStipplePattern());
   }
 
   glDrawArrays(type, 0, count);
+}
+
+// How far along its segment every vertex of a set of independent lines falls,
+// in pixels of the window, which is what the dash pattern is measured in. The
+// counter starts again at every segment, as OpenGL's stipple did for
+// GL_LINES. Empty if the array is not something that can be dashed.
+static void dashDistances(VertexArray *va, std::vector<float> &dash)
+{
+  int count = va->getNumVertices();
+  if(count < 2) return;
+  GLint glvp[4];
+  glGetIntegerv(GL_VIEWPORT, glvp);
+  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  const double *modelview = gmshMatrix(GMSH_MODELVIEW);
+  const double *projection = gmshMatrix(GMSH_PROJECTION);
+  dash.assign(count, 0.f);
+  for(int i = 0; i + 1 < count; i += 2) {
+    float *v0 = va->getVertexArray(3 * i);
+    float *v1 = va->getVertexArray(3 * (i + 1));
+    double p0[3] = {v0[0], v0[1], v0[2]}, p1[3] = {v1[0], v1[1], v1[2]};
+    double w0[3], w1[3];
+    if(!glMatrix::project(p0, modelview, projection, viewport, w0) ||
+       !glMatrix::project(p1, modelview, projection, viewport, w1))
+      continue;
+    double dx = w1[0] - w0[0], dy = w1[1] - w0[1];
+    dash[i + 1] = (float)std::sqrt(dx * dx + dy * dy);
+  }
 }
 
 void drawVertexArray(VertexArray *va, GLenum type)
@@ -496,6 +531,11 @@ void drawVertexArray(VertexArray *va, GLenum type)
      va->getNumVertices() > 1) {
     gmshFlushImmediate();
     gmshPushShaderState();
+    // a quad knows both of its ends, so the shader works the distance along
+    // the line out for itself and only wants to be told the pattern
+    if(gmshLineStippleEnabled())
+      glShader::setStipple(true, gmshLineStippleFactor(),
+                           gmshLineStipplePattern());
     bool lit = gmshLightingEnabled() && va->hasNormals();
     if(glShader::drawWideLines(
          va->getVertexArray(), lit ? (const void *)va->getNormalArray() :
@@ -507,7 +547,14 @@ void drawVertexArray(VertexArray *va, GLenum type)
     }
   }
 
-  gmshDrawArrays(type, va->getNumVertices());
+  // A dashed line drawn from an array: the array holds no distance along the
+  // line, so it is worked out here and handed over with it.
+  std::vector<float> dash;
+  if(useShaders() && type == GL_LINES && gmshLineStippleEnabled())
+    dashDistances(va, dash);
+
+  gmshDrawArrays(type, va->getNumVertices(), dash.empty() ? nullptr :
+                                                            &dash[0]);
 
   if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
 }
