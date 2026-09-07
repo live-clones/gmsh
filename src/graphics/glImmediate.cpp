@@ -5,6 +5,7 @@
 
 #include <vector>
 
+#include <cmath>
 #include "glImmediate.h"
 #include "glMatrix.h"
 #include "glShader.h"
@@ -24,6 +25,8 @@ namespace {
   // immediate mode: the run between gmshBegin() and gmshEnd() is gathered here
   // and drawn in one call.
   std::vector<float> _imPos, _imNrm, _imTex;
+  // how far along its line each vertex of the batch is, in pixels
+  std::vector<float> _batchDash;
   std::vector<unsigned char> _imCol;
   float _imNormal[3] = {0.f, 0.f, 1.f};
   float _imTexCoord[2] = {0.f, 0.f};
@@ -54,10 +57,16 @@ namespace {
     // string drawn as a picture of itself needs, and the one piece of this
     // state that a batch cannot span
     unsigned int texture;
+    // the dash pattern the lines are drawn with, if any
+    bool stipple;
+    int stippleFactor;
+    unsigned short stipplePattern;
     bool operator!=(const BatchState &o) const
     {
       if(lighting != o.lighting || twoSide != o.twoSide ||
-         pointSize != o.pointSize || texture != o.texture)
+         pointSize != o.pointSize || texture != o.texture ||
+         stipple != o.stipple || stippleFactor != o.stippleFactor ||
+         stipplePattern != o.stipplePattern)
         return true;
       for(int i = 0; i < 16; i++)
         if(modelview[i] != o.modelview[i] || projection[i] != o.projection[i])
@@ -82,6 +91,9 @@ namespace {
   bool _lighting = false, _twoSide = false;
   double _pointSize = 1.;
   unsigned int _texture = 0;
+  bool _stipple = false;
+  int _stippleFactor = 1;
+  unsigned short _stipplePattern = 0xffff;
   double _clipPlane[6][4] = {{0.}}, _clipEye[6][4] = {{0.}};
   bool _clipOn[6] = {false, false, false, false, false, false};
 } // namespace
@@ -329,6 +341,33 @@ void gmshImVertex(float x, float y, float z)
   for(int i = 0; i < 2; i++) _imTex.push_back(_imTexCoord[i]);
 }
 
+void gmshLineStipple(int factor, unsigned short pattern)
+{
+  if(gmshUseShaders()) {
+    if(_stipple && _stippleFactor == factor && _stipplePattern == pattern)
+      return;
+    // what is waiting was collected to be drawn with the old pattern
+    gmshFlushImmediate();
+    _stipple = true;
+    _stippleFactor = (factor > 0) ? factor : 1;
+    _stipplePattern = pattern;
+    return;
+  }
+  glLineStipple(factor, pattern);
+  glEnable(GL_LINE_STIPPLE);
+}
+
+void gmshLineStippleOff()
+{
+  if(gmshUseShaders()) {
+    if(!_stipple) return;
+    gmshFlushImmediate();
+    _stipple = false;
+    return;
+  }
+  glDisable(GL_LINE_STIPPLE);
+}
+
 void gmshTexture(unsigned int id)
 {
   if(id == _texture) return;
@@ -369,6 +408,39 @@ namespace {
     for(int k = 0; k < 3; k++) _batchNrm.push_back(_imNrm[3 * i + k]);
     for(int k = 0; k < 4; k++) _batchCol.push_back(_imCol[4 * i + k]);
     for(int k = 0; k < 2; k++) _batchTex.push_back(_imTex[2 * i + k]);
+    _batchDash.push_back(0.f);
+  }
+
+  // How far along its line each vertex of the segments just added is, in
+  // pixels of the window: this is what the dash pattern is measured in, and
+  // the projection is done here because the shader is only handed the number.
+  // The counter starts again at every segment of an independent line and
+  // carries on along a strip, which is what OpenGL's stipple did.
+  void _dashDistances(std::size_t first, bool carry)
+  {
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    int viewport[4] = {vp[0], vp[1], vp[2], vp[3]};
+    std::size_t count = _batchPos.size() / 3;
+    double run = 0.;
+    for(std::size_t i = first; i + 1 < count; i += 2) {
+      double p0[3] = {_batchPos[3 * i], _batchPos[3 * i + 1],
+                      _batchPos[3 * i + 2]};
+      double p1[3] = {_batchPos[3 * i + 3], _batchPos[3 * i + 4],
+                      _batchPos[3 * i + 5]};
+      double w0[3], w1[3];
+      if(!glMatrix::project(p0, _batchState.modelview, _batchState.projection,
+                            viewport, w0) ||
+         !glMatrix::project(p1, _batchState.modelview, _batchState.projection,
+                            viewport, w1))
+        continue;
+      double dx = w1[0] - w0[0], dy = w1[1] - w0[1];
+      double len = std::sqrt(dx * dx + dy * dy);
+      if(!carry) run = 0.;
+      _batchDash[i] = (float)run;
+      _batchDash[i + 1] = (float)(run + len);
+      run += len;
+    }
   }
 } // namespace
 
@@ -391,14 +463,17 @@ void gmshFlushImmediate()
       else
         glShader::setClipPlaneOff(i);
     }
+    glShader::setStipple(_batchState.stipple, _batchState.stippleFactor,
+                         _batchState.stipplePattern);
     glShader::drawImmediate(_batchMode, &_batchPos[0], &_batchNrm[0],
-                            &_batchCol[0], &_batchTex[0], _batchState.texture,
-                            count);
+                            &_batchCol[0], &_batchTex[0], &_batchDash[0],
+                            _batchState.texture, count);
   }
   _batchPos.clear();
   _batchNrm.clear();
   _batchCol.clear();
   _batchTex.clear();
+  _batchDash.clear();
 }
 
 namespace {
@@ -420,6 +495,9 @@ namespace {
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;
     b.texture = _texture;
+    b.stipple = _stipple;
+    b.stippleFactor = _stippleFactor;
+    b.stipplePattern = _stipplePattern;
     return b;
   }
 } // namespace
@@ -445,6 +523,8 @@ void gmshImEnd()
 
   if(!_batchPos.empty() && mode != _batchMode) gmshFlushImmediate();
   _batchMode = mode;
+
+  std::size_t firstEmitted = _batchPos.size() / 3;
 
   switch(_imMode) {
   case GL_POINTS:
@@ -506,4 +586,7 @@ void gmshImEnd()
     gmshFlushImmediate();
     break;
   }
+
+  if(mode == GL_LINES && _stipple)
+    _dashDistances(firstEmitted, _imMode != GL_LINES);
 }

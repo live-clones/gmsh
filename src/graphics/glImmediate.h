@@ -230,19 +230,12 @@ inline void gmshLineWidth(double w)
 void gmshPointSize(double s);
 double gmshCurrentPointSize();
 
-// a factor and a 16 bit pattern, as glLineStipple takes them
-inline void gmshLineStipple(int factor, unsigned short pattern)
-{
-  // no stipple in a core profile: a shader would have to dash the line itself
-  // from how far along it the fragment is, which is not done yet
-  if(gmshUseShaders()) return;
-  glLineStipple(factor, pattern);
-  glEnable(GL_LINE_STIPPLE);
-}
-inline void gmshLineStippleOff()
-{
-  if(!gmshUseShaders()) glDisable(GL_LINE_STIPPLE);
-}
+// A factor and a 16 bit pattern, as glLineStipple takes them: the pattern
+// runs along the line, a bit every factor pixels of it. A core profile has no
+// stipple, so a shader is told how far along its line each fragment is and
+// throws away the ones the pattern has a hole at.
+void gmshLineStipple(int factor, unsigned short pattern);
+void gmshLineStippleOff();
 
 inline void gmshPolygonFill(bool fill)
 {
