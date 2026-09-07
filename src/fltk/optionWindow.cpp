@@ -330,7 +330,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
     opt_general_antialiasing(0, GMSH_SET, o->general.butt[12]->value());
   if(opt_general_shaders(0, GMSH_GET, 0) != o->general.butt[3]->value())
-    opt_general_shaders(0, GMSH_SET, o->general.butt[3]->value());
+    opt_general_shaders(0, GMSH_SET | GMSH_GUI, o->general.butt[3]->value());
   opt_general_trackball(0, GMSH_SET, o->general.butt[5]->value());
   opt_general_terminal(0, GMSH_SET, o->general.butt[7]->value());
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
@@ -2392,12 +2392,13 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[10]->type(FL_TOGGLE_BUTTON);
       geo.butt[10]->callback(geometry_options_ok_cb);
 
+      int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
       static Fl_Menu_Item menu_transparency_mode[] = {
-        {"Surfaces only", 0, nullptr, nullptr},
+        {"Surfaces", 0, nullptr, nullptr},
         {"Everything", 0, nullptr, nullptr},
         {nullptr}};
       geo.value[21] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH,
-                                        IW / 2, BH);
+                                        w2, BH);
       geo.value[21]->tooltip("Geometry.Transparency");
       geo.value[21]->minimum(0.);
       geo.value[21]->maximum(1.);
@@ -2406,8 +2407,8 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[21]->when(FL_WHEN_RELEASE);
       geo.value[21]->callback(geometry_options_ok_cb);
 
-      geo.choice[6] = new Fl_Choice(L + 2 * WB + IW / 2, 2 * WB + 4 * BH,
-                                    IW / 2, BH, "Transparency");
+      geo.choice[6] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 4 * BH,
+                                    w1, BH, "Transparency");
       geo.choice[6]->tooltip("Geometry.TransparencyMode");
       geo.choice[6]->menu(menu_transparency_mode);
       geo.choice[6]->align(FL_ALIGN_RIGHT);
@@ -2916,12 +2917,13 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[4]->align(FL_ALIGN_RIGHT);
       mesh.choice[4]->callback(mesh_options_ok_cb);
 
+      int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
       static Fl_Menu_Item menu_transparency_mode[] = {
-        {"Surfaces only", 0, nullptr, nullptr},
+        {"Surfaces", 0, nullptr, nullptr},
         {"Everything", 0, nullptr, nullptr},
         {nullptr}};
       mesh.value[27] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH,
-                                        IW / 2, BH);
+                                          w2, BH);
       mesh.value[27]->tooltip("Mesh.Transparency");
       mesh.value[27]->minimum(0.);
       mesh.value[27]->maximum(1.);
@@ -2930,8 +2932,8 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[27]->when(FL_WHEN_RELEASE);
       mesh.value[27]->callback(mesh_options_ok_cb);
 
-      mesh.choice[11] = new Fl_Choice(L + 2 * WB + IW / 2, 2 * WB + 7 * BH,
-                                    IW / 2, BH, "Transparency");
+      mesh.choice[11] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 7 * BH,
+                                      w1, BH, "Transparency");
       mesh.choice[11]->tooltip("Mesh.TransparencyMode");
       mesh.choice[11]->menu(menu_transparency_mode);
       mesh.choice[11]->align(FL_ALIGN_RIGHT);
@@ -4212,6 +4214,22 @@ void optionWindow::activate(const char *what)
       win->redraw();
     }
     drawContext::global()->draw();
+  }
+  else if(!strcmp(what, "shaders")) {
+    if(general.butt[3]->value()) {
+      geo.value[21]->activate();
+      geo.choice[6]->activate();
+      mesh.value[27]->activate();
+      mesh.choice[11]->activate();
+      view.value[79]->activate();
+    }
+    else {
+      geo.value[21]->deactivate();
+      geo.choice[6]->deactivate();
+      mesh.value[27]->deactivate();
+      mesh.choice[11]->deactivate();
+      view.value[79]->deactivate();
+    }
   }
   else if(!strcmp(what, "rotation_center")) {
     if(general.butt[15]->value()) {
