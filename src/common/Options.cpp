@@ -3012,6 +3012,58 @@ double opt_general_order_independent_transparency(OPT_ARGS_NUM)
   return CTX::instance()->orderIndependentTransparency;
 }
 
+double opt_geometry_transparency(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    if(CTX::instance()->geom.transparency != val) {
+      CTX::instance()->geom.transparency = val;
+      // the alpha is worked into the colours the arrays hold, so they have to
+      // be built again
+      if(GModel::current()) GModel::current()->deleteGeometryVertexArrays();
+    }
+  }
+  return CTX::instance()->geom.transparency;
+}
+
+double opt_mesh_transparency(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    if(CTX::instance()->mesh.transparency != val) {
+      CTX::instance()->mesh.transparency = val;
+      CTX::instance()->mesh.changed = ENT_ALL;
+    }
+  }
+  return CTX::instance()->mesh.transparency;
+}
+
+double opt_view_transparency(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    // the alpha is worked into the colour table, which is what the colours in
+    // the vertex arrays are taken from
+    opt->colorTable.dpar[COLORTABLE_ALPHA] = val;
+    ColorTable_Recompute(&opt->colorTable);
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    FlGui::instance()->options->view.colorbar->redraw();
+  }
+#endif
+  return opt->colorTable.dpar[COLORTABLE_ALPHA];
+#else
+  return 1.;
+#endif
+}
+
 double opt_general_shaders(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -9094,26 +9146,6 @@ double opt_view_line_type(OPT_ARGS_NUM)
   }
 #endif
   return opt->lineType;
-#else
-  return 0.;
-#endif
-}
-
-double opt_view_colormap_alpha(OPT_ARGS_NUM)
-{
-#if defined(HAVE_POST)
-  GET_VIEWo(0.);
-  if(action & GMSH_SET) {
-    opt->colorTable.dpar[COLORTABLE_ALPHA] = val;
-    ColorTable_Recompute(&opt->colorTable);
-    if(view) view->setChanged(true);
-  }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
-  return opt->colorTable.dpar[COLORTABLE_ALPHA];
 #else
   return 0.;
 #endif

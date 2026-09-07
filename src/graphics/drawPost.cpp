@@ -911,27 +911,21 @@ void drawContext::drawPost()
 #endif
   }
 
-  // What is transparent is drawn after everything else, and summed into
-  // buffers of its own rather than painted back to front. That is only worth
-  // setting up when there is something transparent to draw, and never while
-  // picking, where what is read back has to be an identifier rather than a
-  // blend of several.
-  bool split = false;
-  if(gmshUseShaders() && CTX::instance()->orderIndependentTransparency &&
-     render_mode != GMSH_SELECT) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(viewIsTransparent(PView::list[i])) split = true;
-  }
+  // Which views this pass wants: draw3d() draws the opaque half of the scene
+  // and then the transparent half, so that everything see-through - geometry,
+  // mesh and views alike - is summed by one pass.
+  drawPView::whichViews which =
+    (transparencyPass == TRANSPARENCY_OPAQUE) ?
+      drawPView::OPAQUE :
+      ((transparencyPass == TRANSPARENCY_TRANSPARENT) ?
+         drawPView::TRANSPARENT : drawPView::ALL);
+  std::for_each(PView::list.begin(), PView::list.end(), drawPView(this, which));
+}
 
-  if(!split) {
-    std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
-    return;
-  }
-
-  std::for_each(PView::list.begin(), PView::list.end(),
-                drawPView(this, drawPView::OPAQUE));
-  bool summed = glShader::beginTransparent();
-  std::for_each(PView::list.begin(), PView::list.end(),
-                drawPView(this, drawPView::TRANSPARENT));
-  if(summed) glShader::endTransparent();
+// whether any view would be drawn in the transparent pass
+bool drawContext::anyViewIsTransparent()
+{
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    if(viewIsTransparent(PView::list[i])) return true;
+  return false;
 }

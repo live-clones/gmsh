@@ -65,6 +65,7 @@ drawContext::drawContext(drawTransform *transform)
   viewport[3] = CTX::instance()->glSize[1];
 
   render_mode = GMSH_RENDER;
+  transparencyPass = TRANSPARENCY_ALL;
   vxmin = vymin = vxmax = vymax = 0.;
   pixel_equiv_x = pixel_equiv_y = 0.;
 
@@ -476,6 +477,35 @@ void gmshUnbindArrays()
 
 // hand the program everything it needs that the fixed function pipeline kept
 // as state of its own, and draw
+// Any colour of the category that is not fully opaque makes it see-through,
+// whether that comes from the Transparency option or from an alpha the colour
+// was given directly.
+static bool anyColorIsTransparent(const unsigned int *colors, int n,
+                                  double transparency)
+{
+  if(!CTX::instance()->alpha) return false;
+  if(transparency < 1.) return true;
+  for(int i = 0; i < n; i++)
+    if(CTX::instance()->unpackAlpha(colors[i]) < 255) return true;
+  return false;
+}
+
+bool gmshGeometryIsTransparent()
+{
+  const unsigned int c[3] = {CTX::instance()->color.geom.point,
+                             CTX::instance()->color.geom.curve,
+                             CTX::instance()->color.geom.surface};
+  return anyColorIsTransparent(c, 3, CTX::instance()->geom.transparency);
+}
+
+bool gmshMeshIsTransparent()
+{
+  const unsigned int c[4] = {
+    CTX::instance()->color.mesh.triangle, CTX::instance()->color.mesh.quadrangle,
+    CTX::instance()->color.mesh.tetrahedron, CTX::instance()->color.fg};
+  return anyColorIsTransparent(c, 4, CTX::instance()->mesh.transparency);
+}
+
 void gmshDrawArrays(GLenum type, int count, const float *dashes)
 {
   // whatever immediate mode primitives are waiting were asked for before this
@@ -668,10 +698,54 @@ void drawContext::draw3d()
 
   if(!CTX::instance()->camera) initPosition(true);
   drawAxes();
-  drawGeom();
-  drawBackgroundImage(true);
-  drawMesh();
-  drawPost();
+
+  // Everything see-through is drawn after everything else, and all of it in
+  // one pass: that way a single pass can sum it, and what comes out does not
+  // depend on whether the geometry, the mesh or a view was drawn first. A
+  // picking pass never splits, as what it reads back has to be an identifier
+  // rather than a blend of several.
+  bool split = (render_mode != GMSH_SELECT) &&
+               (gmshGeometryIsTransparent() || gmshMeshIsTransparent() ||
+                anyViewIsTransparent());
+
+  if(!split) {
+    transparencyPass = TRANSPARENCY_ALL;
+    drawGeom();
+    drawBackgroundImage(true);
+    drawMesh();
+    drawPost();
+  }
+  else {
+    transparencyPass = TRANSPARENCY_OPAQUE;
+    drawGeom();
+    drawBackgroundImage(true);
+    drawMesh();
+    drawPost();
+
+    transparencyPass = TRANSPARENCY_TRANSPARENT;
+    bool summed = glShader::beginTransparent();
+    if(!summed) {
+      // Nothing to sum into: painted in the order it comes. The geometry and
+      // the mesh are not sorted, so they must not write depth either - a face
+      // in front would otherwise hide what is behind it instead of letting it
+      // show through, which is the whole point of drawing them see-through.
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glDepthMask(GL_FALSE);
+    }
+    drawGeom();
+    drawMesh();
+    // the views sort themselves back to front and have always written depth
+    // while doing it: that is left exactly as it was
+    if(!summed) glDepthMask(GL_TRUE);
+    drawPost();
+    if(summed)
+      glShader::endTransparent();
+    else
+      glDisable(GL_BLEND);
+    transparencyPass = TRANSPARENCY_ALL;
+  }
+
   // drawAxes();
   drawGraph2d(true);
 }

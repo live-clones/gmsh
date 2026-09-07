@@ -50,6 +50,20 @@ void gmshUnbindArrays();
 // draw what the last bind left, handing the shader pipeline the state the
 // fixed function one kept for itself
 void gmshDrawArrays(GLenum type, int count, const float *dashes = nullptr);
+// Which half of the scene a pass draws. What is transparent is drawn after
+// everything else, all of it together, so that one pass can sum it whatever
+// order it arrives in.
+enum gmshTransparencyPass {
+  TRANSPARENCY_ALL = 0,
+  TRANSPARENCY_OPAQUE = 1,
+  TRANSPARENCY_TRANSPARENT = 2
+};
+// Whether the geometry and the mesh are drawn see-through, which is what the
+// Transparency options say and what any colour of theirs that is not opaque
+// says too.
+bool gmshGeometryIsTransparent();
+bool gmshMeshIsTransparent();
+
 // draw a vertex array, using its index array if it has one
 void drawVertexArray(VertexArray *va, GLenum type);
 // delete the buffer objects of the vertex arrays that have been destroyed since
@@ -184,6 +198,8 @@ public:
               // at the time of the last InitPosition() call
   enum RenderMode { GMSH_RENDER = 1, GMSH_SELECT = 2, GMSH_FEEDBACK = 3 };
   int render_mode; // current rendering mode
+  // which half of the scene is being drawn, see gmshTransparencyPass
+  int transparencyPass;
 
   // Colour buffer picking. During a selection pass every pickable object is
   // drawn in a flat colour that encodes its position in _pickObjects, and the
@@ -341,6 +357,7 @@ public:
   void drawGeom();
   void drawMesh();
   void drawPost();
+  bool anyViewIsTransparent();
   void drawBackgroundGradient();
   void drawBackgroundImage(bool moving);
   void drawText2d();
