@@ -117,7 +117,11 @@ public:
   }
   void reserveStringTextures(std::size_t n)
   {
+#if((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
     if(gl_texture_pile_height() < (int)n) gl_texture_pile_height((int)n);
+#else
+    (void)n; // this FLTK has no pile to ask about
+#endif
   }
   bool mouseIsPressed() { return Fl::pushed() ? true : false; }
   std::string getName() { return "Fltk"; }
