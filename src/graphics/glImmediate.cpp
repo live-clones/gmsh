@@ -54,6 +54,7 @@ namespace {
     bool lighting, twoSide;
     double pointSize;
     double alphaScale;
+    bool alphaScaleFilledOnly;
     // the texture the primitives are drawn through, zero for none: what a
     // string drawn as a picture of itself needs, and the one piece of this
     // state that a batch cannot span
@@ -69,6 +70,7 @@ namespace {
       if(lighting != o.lighting || twoSide != o.twoSide ||
          pointSize != o.pointSize || texture != o.texture ||
          alphaScale != o.alphaScale ||
+         alphaScaleFilledOnly != o.alphaScaleFilledOnly ||
          textureMode != o.textureMode ||
          stipple != o.stipple || stippleFactor != o.stippleFactor ||
          stipplePattern != o.stipplePattern || lineWidth != o.lineWidth)
@@ -97,6 +99,7 @@ namespace {
   double _pointSize = 1.;
   unsigned int _texture = 0;
   double _alphaScale = 1.;
+  bool _alphaScaleFilledOnly = false;
   int _textureMode = GMSH_TEXTURE_NONE;
   double _lineWidth = 1.;
   bool _stipple = false;
@@ -303,6 +306,7 @@ void gmshResetMatrices()
   _texture = 0;
   _textureMode = GMSH_TEXTURE_NONE;
   _alphaScale = 1.;
+  _alphaScaleFilledOnly = false;
   _lineWidth = 1.;
   _stipple = false;
   _stippleFactor = 1;
@@ -384,17 +388,24 @@ void gmshLineWidth(double w)
 
 double gmshCurrentLineWidth() { return _lineWidth; }
 
-void gmshAlphaScale(double s)
+void gmshAlphaScale(double s, bool filledOnly)
 {
   if(s < 0.) s = 0.;
   if(s > 1.) s = 1.;
-  if(s == _alphaScale) return;
+  if(s == _alphaScale && filledOnly == _alphaScaleFilledOnly) return;
   // what is waiting was collected to be drawn with the old one
   if(gmshUseShaders()) gmshFlushImmediate();
   _alphaScale = s;
+  _alphaScaleFilledOnly = filledOnly;
 }
 
 double gmshCurrentAlphaScale() { return _alphaScale; }
+
+double gmshAlphaScaleFor(unsigned int primitive)
+{
+  if(_alphaScaleFilledOnly && primitive != GL_TRIANGLES) return 1.;
+  return _alphaScale;
+}
 
 void gmshLineStipple(int factor, unsigned short pattern)
 {
@@ -517,7 +528,9 @@ void gmshFlushImmediate()
     glShader::setMatrices(_batchState.modelview, _batchState.projection);
     glShader::setLighting(_batchState.lighting, _batchState.twoSide);
     glShader::setPointSize(_batchState.pointSize);
-    glShader::setAlphaScale(_batchState.alphaScale);
+    glShader::setAlphaScale(
+      (_batchState.alphaScaleFilledOnly && _batchMode != GL_TRIANGLES) ?
+        1. : _batchState.alphaScale);
     glShader::setMaterial(CTX::instance()->shine,
                           CTX::instance()->shineExponent);
     for(int i = 0; i < 6; i++) {
@@ -570,6 +583,7 @@ namespace {
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;
     b.alphaScale = _alphaScale;
+    b.alphaScaleFilledOnly = _alphaScaleFilledOnly;
     b.texture = _texture;
     b.textureMode = _textureMode;
     b.lineWidth = _lineWidth;

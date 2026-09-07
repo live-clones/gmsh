@@ -816,7 +816,7 @@ public:
 
     // draw all the vertex arrays
     gmshLightTwoSide(false);
-    gmshAlphaScale(_ctx->inPickColorMode() ? 1. : opt->transparency);
+    gmshAlphaScale(_ctx->inPickColorMode() ? 1. : opt->transparency, false);
 
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
@@ -850,7 +850,7 @@ public:
       glEnable(GL_DEPTH_TEST);
     }
 
-    gmshAlphaScale(1.);
+    gmshAlphaScale(1., false);
 
     for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 

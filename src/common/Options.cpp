@@ -3028,6 +3028,13 @@ double opt_geometry_transparency(OPT_ARGS_NUM)
   return CTX::instance()->geom.transparency;
 }
 
+double opt_geometry_transparency_mode(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.transparencyMode = (int)val;
+  return CTX::instance()->geom.transparencyMode;
+}
+
 double opt_mesh_transparency(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -3036,6 +3043,13 @@ double opt_mesh_transparency(OPT_ARGS_NUM)
     CTX::instance()->mesh.transparency = val;
   }
   return CTX::instance()->mesh.transparency;
+}
+
+double opt_mesh_transparency_mode(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.transparencyMode = (int)val;
+  return CTX::instance()->mesh.transparencyMode;
 }
 
 double opt_view_transparency(OPT_ARGS_NUM)

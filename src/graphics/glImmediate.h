@@ -239,8 +239,12 @@ double gmshCurrentPointSize();
 // the multiply, so changing one costs a redraw and nothing more. The fixed
 // function pipeline has no way of doing it to the colours a vertex array
 // holds, so it ignores this.
-void gmshAlphaScale(double s);
+// filledOnly leaves lines and points alone, so that a wireframe stays crisp
+// over see-through faces; the primitive being drawn is what decides.
+void gmshAlphaScale(double s, bool filledOnly);
 double gmshCurrentAlphaScale();
+// the scale that applies to this primitive, once filledOnly has had its say
+double gmshAlphaScaleFor(unsigned int primitive);
 
 // A factor and a 16 bit pattern, as glLineStipple takes them: the pattern
 // runs along the line, a bit every factor pixels of it. A core profile has no
