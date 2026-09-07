@@ -379,6 +379,11 @@ static bool _boundColors = false;
 
 void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
 {
+  // Whatever immediate mode primitives are still waiting have to go out before
+  // the attributes are bound, not after: drawing them turns the attribute
+  // arrays off on its way out, and would leave the array that is about to be
+  // drawn with nothing bound at all.
+  gmshFlushImmediate();
   _clientVertices = nullptr;
   _clientColors = nullptr;
   _boundColors = colors;
@@ -428,6 +433,8 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
 
 void gmshBindArrays(const float *vertices, const unsigned char *colors)
 {
+  // as above: what is waiting is drawn before anything is bound for this one
+  gmshFlushImmediate();
   _boundColors = (colors != nullptr);
 
   if(useShaders()) {
