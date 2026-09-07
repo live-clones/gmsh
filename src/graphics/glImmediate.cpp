@@ -53,6 +53,7 @@ namespace {
     bool clipOn[6];
     bool lighting, twoSide;
     double pointSize;
+    double alphaScale;
     // the texture the primitives are drawn through, zero for none: what a
     // string drawn as a picture of itself needs, and the one piece of this
     // state that a batch cannot span
@@ -67,6 +68,7 @@ namespace {
     {
       if(lighting != o.lighting || twoSide != o.twoSide ||
          pointSize != o.pointSize || texture != o.texture ||
+         alphaScale != o.alphaScale ||
          textureMode != o.textureMode ||
          stipple != o.stipple || stippleFactor != o.stippleFactor ||
          stipplePattern != o.stipplePattern || lineWidth != o.lineWidth)
@@ -94,6 +96,7 @@ namespace {
   bool _lighting = false, _twoSide = false;
   double _pointSize = 1.;
   unsigned int _texture = 0;
+  double _alphaScale = 1.;
   int _textureMode = GMSH_TEXTURE_NONE;
   double _lineWidth = 1.;
   bool _stipple = false;
@@ -299,6 +302,7 @@ void gmshResetMatrices()
   _batchDash.clear();
   _texture = 0;
   _textureMode = GMSH_TEXTURE_NONE;
+  _alphaScale = 1.;
   _lineWidth = 1.;
   _stipple = false;
   _stippleFactor = 1;
@@ -325,6 +329,7 @@ void gmshPushShaderState()
   glShader::setLighting(gmshLightingEnabled(), gmshLightTwoSideEnabled());
   glShader::setColor(gmshCurrentColor());
   glShader::setPointSize(gmshCurrentPointSize());
+  glShader::setAlphaScale(_alphaScale);
   glShader::setMaterial(CTX::instance()->shine,
                         CTX::instance()->shineExponent);
   // Everything that draws by another route than the collected lines draws
@@ -378,6 +383,18 @@ void gmshLineWidth(double w)
 }
 
 double gmshCurrentLineWidth() { return _lineWidth; }
+
+void gmshAlphaScale(double s)
+{
+  if(s < 0.) s = 0.;
+  if(s > 1.) s = 1.;
+  if(s == _alphaScale) return;
+  // what is waiting was collected to be drawn with the old one
+  if(gmshUseShaders()) gmshFlushImmediate();
+  _alphaScale = s;
+}
+
+double gmshCurrentAlphaScale() { return _alphaScale; }
 
 void gmshLineStipple(int factor, unsigned short pattern)
 {
@@ -500,6 +517,7 @@ void gmshFlushImmediate()
     glShader::setMatrices(_batchState.modelview, _batchState.projection);
     glShader::setLighting(_batchState.lighting, _batchState.twoSide);
     glShader::setPointSize(_batchState.pointSize);
+    glShader::setAlphaScale(_batchState.alphaScale);
     glShader::setMaterial(CTX::instance()->shine,
                           CTX::instance()->shineExponent);
     for(int i = 0; i < 6; i++) {
@@ -551,6 +569,7 @@ namespace {
     b.lighting = _lighting;
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;
+    b.alphaScale = _alphaScale;
     b.texture = _texture;
     b.textureMode = _textureMode;
     b.lineWidth = _lineWidth;

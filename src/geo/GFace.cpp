@@ -1628,9 +1628,8 @@ bool GFace::fillVertexArray(bool force)
   if(stl_triangles.empty()) return false;
 
   va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
-  unsigned int c = CTX::instance()->scaleAlpha(
-    useColor() ? getColor() : CTX::instance()->color.geom.surface,
-    CTX::instance()->geom.transparency);
+  unsigned int c =
+    useColor() ? getColor() : CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
   if(stl_vertices_xyz.size()) {
     for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {

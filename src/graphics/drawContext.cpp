@@ -484,7 +484,9 @@ static bool anyColorIsTransparent(const unsigned int *colors, int n,
                                   double transparency)
 {
   if(!CTX::instance()->alpha) return false;
-  if(transparency < 1.) return true;
+  // the multiplier is applied by the shader, so it means nothing to the fixed
+  // function pipeline; an alpha the colour carries itself counts in both
+  if(gmshUseShaders() && transparency < 1.) return true;
   for(int i = 0; i < n; i++)
     if(CTX::instance()->unpackAlpha(colors[i]) < 255) return true;
   return false;
@@ -708,18 +710,31 @@ void drawContext::draw3d()
                (gmshGeometryIsTransparent() || gmshMeshIsTransparent() ||
                 anyViewIsTransparent());
 
+  // What each category's Transparency option comes to. A picking pass draws
+  // identifiers rather than colours and must not have them faded.
+  double geomScale = inPickColorMode() ? 1. : CTX::instance()->geom.transparency;
+  double meshScale = inPickColorMode() ? 1. : CTX::instance()->mesh.transparency;
+
   if(!split) {
     transparencyPass = TRANSPARENCY_ALL;
+    gmshAlphaScale(geomScale);
     drawGeom();
+    gmshAlphaScale(1.);
     drawBackgroundImage(true);
+    gmshAlphaScale(meshScale);
     drawMesh();
+    gmshAlphaScale(1.);
     drawPost();
   }
   else {
     transparencyPass = TRANSPARENCY_OPAQUE;
+    gmshAlphaScale(geomScale);
     drawGeom();
+    gmshAlphaScale(1.);
     drawBackgroundImage(true);
+    gmshAlphaScale(meshScale);
     drawMesh();
+    gmshAlphaScale(1.);
     drawPost();
 
     transparencyPass = TRANSPARENCY_TRANSPARENT;
@@ -733,8 +748,11 @@ void drawContext::draw3d()
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glDepthMask(GL_FALSE);
     }
+    gmshAlphaScale(geomScale);
     drawGeom();
+    gmshAlphaScale(meshScale);
     drawMesh();
+    gmshAlphaScale(1.);
     // the views sort themselves back to front and have always written depth
     // while doing it: that is left exactly as it was
     if(!summed) glDepthMask(GL_TRUE);

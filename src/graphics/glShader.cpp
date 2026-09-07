@@ -49,6 +49,10 @@ uniform mat4 uModelview;
 uniform mat4 uProjection;
 uniform mat3 uNormalMatrix;
 uniform bool uColorArray;
+// multiplies the alpha of whatever colour is used: this is what the
+// Transparency options do, and doing it here means dragging one costs
+// nothing but a redraw
+uniform float uAlphaScale;
 uniform vec4 uColor;
 uniform float uPointSize;
 uniform vec4 uClipPlane[6];
@@ -122,6 +126,7 @@ void main()
     clip = uProjection * eye;
     vColor = uColorArray ? aColor : uColor;
   }
+  vColor.a *= uAlphaScale;
   vEye = eye.xyz;
   vNormal = uNormalMatrix * n;
   vTexCoord = aTexCoord;
@@ -330,7 +335,7 @@ void main()
 
     struct {
       GLint modelview, projection, normalMatrix, colorArray, color, pointSize;
-      GLint clipPlane, clipOn;
+      GLint clipPlane, clipOn, alphaScale;
       GLint lighting, twoSide, specular, shininess;
       GLint instanced, taper;
       GLint textured, texture;
@@ -446,6 +451,7 @@ void main()
       _u.projection = glApi::GetUniformLocation(p, "uProjection");
       _u.normalMatrix = glApi::GetUniformLocation(p, "uNormalMatrix");
       _u.colorArray = glApi::GetUniformLocation(p, "uColorArray");
+      _u.alphaScale = glApi::GetUniformLocation(p, "uAlphaScale");
       _u.color = glApi::GetUniformLocation(p, "uColor");
       _u.pointSize = glApi::GetUniformLocation(p, "uPointSize");
       _u.lighting = glApi::GetUniformLocation(p, "uLighting");
@@ -467,6 +473,11 @@ void main()
       _u.clipPlane = _u.clipOn = -1;
       _u.lightPosition = _u.lightAmbient = _u.lightDiffuse = -1;
       _u.lightSpecular = _u.lightOn = -1;
+
+      // a uniform starts at zero, and an alpha scale of zero would draw
+      // nothing at all: it is the one that has to be given a value up front
+      glApi::UseProgram(_program);
+      glApi::Uniform1f(_u.alphaScale, 1.f);
 
       // a core profile draws nothing without a vertex array object bound, and
       // one is enough: the arrays it holds are set again at every draw
@@ -654,6 +665,12 @@ void main()
   {
     if(!ensure()) return;
     glApi::Uniform1f(_u.pointSize, (float)size);
+  }
+
+  void setAlphaScale(double scale)
+  {
+    if(!ensure()) return;
+    glApi::Uniform1f(_u.alphaScale, (float)scale);
   }
 
   void streamArrays(const float *vertices, const unsigned char *colors,

@@ -234,6 +234,14 @@ double gmshCurrentLineWidth();
 void gmshPointSize(double s);
 double gmshCurrentPointSize();
 
+// Multiplies the alpha of every colour drawn after it. This is how the
+// Geometry, Mesh and View Transparency options are applied: the shader does
+// the multiply, so changing one costs a redraw and nothing more. The fixed
+// function pipeline has no way of doing it to the colours a vertex array
+// holds, so it ignores this.
+void gmshAlphaScale(double s);
+double gmshCurrentAlphaScale();
+
 // A factor and a 16 bit pattern, as glLineStipple takes them: the pattern
 // runs along the line, a bit every factor pixels of it. A core profile has no
 // stipple, so a shader is told how far along its line each fragment is and

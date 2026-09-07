@@ -701,8 +701,11 @@ static bool eyeChanged(drawContext *ctx, PView *p)
 static bool viewIsTransparent(PView *p)
 {
   PViewOptions *opt = p->getOptions();
-  return CTX::instance()->alpha && !opt->fakeTransparency &&
-         ColorTable_IsAlpha(&opt->colorTable);
+  if(!CTX::instance()->alpha || opt->fakeTransparency) return false;
+  // an alpha the colour map carries itself, or the multiplier the shader
+  // applies - which means nothing to the fixed function pipeline
+  return ColorTable_IsAlpha(&opt->colorTable) ||
+         (gmshUseShaders() && opt->transparency < 1.);
 }
 
 class drawPView {
@@ -813,6 +816,7 @@ public:
 
     // draw all the vertex arrays
     gmshLightTwoSide(false);
+    gmshAlphaScale(_ctx->inPickColorMode() ? 1. : opt->transparency);
 
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
@@ -845,6 +849,8 @@ public:
       glDisable(GL_BLEND);
       glEnable(GL_DEPTH_TEST);
     }
+
+    gmshAlphaScale(1.);
 
     for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 
