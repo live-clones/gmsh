@@ -352,86 +352,61 @@ void VertexArray::finalize()
   }
 }
 
-class AlphaElement {
- public:
-  AlphaElement(float *vp, normal_type *np, unsigned char *cp) : v(vp), n(np), c(cp) {}
-  float *v;
-  normal_type *n;
-  unsigned char *c;
-};
-
-class AlphaElementLessThan {
- public:
-  static int numVertices;
-  static double eye[3];
-  bool operator()(const AlphaElement &e1, const AlphaElement &e2) const
-  {
-    double cg1[3] = { 0., 0., 0. }, cg2[3] = { 0., 0., 0.};
-    for(int i = 0; i < numVertices; i++) {
-      cg1[0] += e1.v[3 * i];
-      cg1[1] += e1.v[3 * i + 1];
-      cg1[2] += e1.v[3 * i + 2];
-      cg2[0] += e2.v[3 * i];
-      cg2[1] += e2.v[3 * i + 1];
-      cg2[2] += e2.v[3 * i + 2];
-    }
-    return prosca(eye, cg1) < prosca(eye, cg2);
+// How far along the direction of view the barycentre of an element lies. The
+// elements are put in that order so that what is behind is drawn first, which
+// is what blending needs; only the order matters, so the barycentre is left as
+// the sum of the vertices rather than their average.
+static double alphaKey(const float *v, int numVertices, const double eye[3])
+{
+  double cg[3] = {0., 0., 0.};
+  for(int i = 0; i < numVertices; i++) {
+    cg[0] += v[3 * i];
+    cg[1] += v[3 * i + 1];
+    cg[2] += v[3 * i + 2];
   }
-};
-
-int AlphaElementLessThan::numVertices = 0;
-double AlphaElementLessThan::eye[3] = {0., 0., 0.};
+  return prosca(eye, cg);
+}
 
 void VertexArray::sort(double x, double y, double z)
 {
   // the arrays are rewritten: they will have to be uploaded again
   _vboDirty = true;
 
-  // This simplementation is pretty bad: it copies the whole data
-  // twice. We should think about a more efficient way to sort the
-  // three arrays in place.
-
   int npe = getNumVerticesPerElement();
   int n = getNumVertices() / npe;
+  if(n < 2) return;
 
-  AlphaElementLessThan::numVertices = npe;
-  AlphaElementLessThan::eye[0] = x;
-  AlphaElementLessThan::eye[1] = y;
-  AlphaElementLessThan::eye[2] = z;
+  // Where each element falls, worked out once per element. Asking for it
+  // inside the comparison instead means working it out about log2(n) times
+  // over for each of them, reading all over the vertices every time.
+  double eye[3] = {x, y, z};
+  std::vector<std::pair<double, int> > order(n);
+  for(int i = 0; i < n; i++)
+    order[i] = std::make_pair(alphaKey(&_vertices[3 * npe * i], npe, eye), i);
+  // on the key alone, as comparing the pairs would order those that fall in
+  // the same place by their index and give a different answer than before
+  std::sort(order.begin(), order.end(),
+            [](const std::pair<double, int> &a, const std::pair<double, int> &b) {
+              return a.first < b.first;
+            });
 
-  std::vector<AlphaElement> elements;
-  elements.reserve(n);
-  for(int i = 0; i < n; i++){
-    float *vp = &_vertices[3 * npe * i];
-    normal_type *np = _normals.empty() ? nullptr : &_normals[3 * npe * i];
-    unsigned char *cp = _colors.empty() ? nullptr : &_colors[4 * npe * i];
-    elements.push_back(AlphaElement(vp, np, cp));
-  }
-  std::sort(elements.begin(), elements.end(), AlphaElementLessThan());
-
-  std::vector<float> sortedVertices;
-  std::vector<normal_type> sortedNormals;
-  std::vector<unsigned char> sortedColors;
-  sortedVertices.reserve(_vertices.size());
-  sortedNormals.reserve(_normals.size());
-  sortedColors.reserve(_colors.size());
-
-  for(int i = 0; i < n; i++){
-    for(int j = 0; j < npe; j++){
-      for(int k = 0; k < 3; k++)
-        sortedVertices.push_back(elements[i].v[3 * j + k]);
-      if(elements[i].n)
-        for(int k = 0; k < 3; k++)
-          sortedNormals.push_back(elements[i].n[3 * j + k]);
-      if(elements[i].c)
-        for(int k = 0; k < 4; k++)
-          sortedColors.push_back(elements[i].c[4 * j + k]);
-    }
+  // and the three arrays are gathered into the new order an element at a time
+  std::vector<float> sortedVertices(_vertices.size());
+  std::vector<normal_type> sortedNormals(_normals.size());
+  std::vector<unsigned char> sortedColors(_colors.size());
+  const std::size_t vs = 3 * npe, ns = 3 * npe, cs = 4 * npe;
+  for(int i = 0; i < n; i++) {
+    int k = order[i].second;
+    memcpy(&sortedVertices[vs * i], &_vertices[vs * k], vs * sizeof(float));
+    if(!_normals.empty())
+      memcpy(&sortedNormals[ns * i], &_normals[ns * k],
+             ns * sizeof(normal_type));
+    if(!_colors.empty()) memcpy(&sortedColors[cs * i], &_colors[cs * k], cs);
   }
 
-  _vertices = sortedVertices;
-  _normals = sortedNormals;
-  _colors = sortedColors;
+  _vertices.swap(sortedVertices);
+  _normals.swap(sortedNormals);
+  _colors.swap(sortedColors);
 }
 
 char *VertexArray::toChar(int num, const std::string &name, int type,
