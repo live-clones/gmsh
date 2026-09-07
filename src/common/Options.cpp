@@ -1401,12 +1401,12 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET) {
     // The native engine hands the string to the widget toolkit, which draws it
-    // at the raster position, and the cairo one draws it through a texture of
-    // a kind that only a fixed function pipeline has. Under the shader
-    // pipeline the strings are drawn as pictures of themselves instead, which
-    // is what the string texture engine does and what it alone can do.
+    // at the raster position - and a core profile has none. The other two draw
+    // it as a picture of itself, which the shader pipeline can do as well, so
+    // only this one has to be stood in for.
     std::string engine = CTX::instance()->glFontEngine;
-    if(CTX::instance()->shaders) engine = "StringTexture";
+    if(CTX::instance()->shaders && engine == "Native")
+      engine = "StringTexture";
     drawContextGlobal *old = drawContext::global();
     if(!old || old->getName() != engine) {
 #if defined(HAVE_CAIRO)
