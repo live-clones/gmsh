@@ -6,6 +6,7 @@
 // Contributed by Jonathan Lambrechts
 
 #include "drawContextFltkStringTexture.h"
+#include "glImmediate.h"
 #include <algorithm>
 
 // FIXME: hack for current version of mingw
@@ -140,13 +141,24 @@ void drawContextFltkStringTexture::flushString() { _queue->flush(); }
 // ensure the surface is large enough
 void drawContextFltkStringTexture::drawString(const char *str)
 {
-  GLfloat pos[4], color[4];
+  GLfloat pos[4];
   glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-  glGetFloatv(GL_CURRENT_COLOR, color);
+  double win[3] = {pos[0], pos[1], pos[2]};
+  drawString(str, win);
+}
+
+// where the string goes and what colour it is, both of which used to be asked
+// of OpenGL: a core profile keeps neither a raster position nor a current
+// colour, so they are handed over and remembered here instead
+void drawContextFltkStringTexture::drawString(const char *str,
+                                              const double win[3])
+{
+  const unsigned char *c = gmshCurrentColor();
+  GLfloat color[4] = {c[0] / 255.f, c[1] / 255.f, c[2] / 255.f, c[3] / 255.f};
   queueString::element elem = {str,
-                               pos[0],
-                               pos[1],
-                               pos[2],
+                               (GLfloat)win[0],
+                               (GLfloat)win[1],
+                               (GLfloat)win[2],
                                color[0],
                                color[1],
                                color[2],

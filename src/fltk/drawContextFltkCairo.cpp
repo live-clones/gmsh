@@ -6,6 +6,7 @@
 // Contributed by Jonathan Lambrechts
 
 #include "drawContextFltkCairo.h"
+#include "glImmediate.h"
 
 #if defined(HAVE_CAIRO)
 #include <cairo/cairo.h>
@@ -163,16 +164,26 @@ void drawContextFltkCairo::flushString() { _queue->flush(); }
 
 void drawContextFltkCairo::drawString(const char *str)
 {
-  GLfloat pos[4], color[4];
+  GLfloat pos[4];
   glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-  glGetFloatv(GL_CURRENT_COLOR, color);
+  double win[3] = {pos[0], pos[1], pos[2]};
+  drawString(str, win);
+}
+
+// where the string goes and what colour it is, both of which used to be asked
+// of OpenGL: a core profile keeps neither a raster position nor a current
+// colour, so they are handed over and remembered here instead
+void drawContextFltkCairo::drawString(const char *str, const double win[3])
+{
+  const unsigned char *c = gmshCurrentColor();
+  GLfloat color[4] = {c[0] / 255.f, c[1] / 255.f, c[2] / 255.f, c[3] / 255.f};
   cairo_set_font_size(_cr, _currentFontSize);
   cairo_text_extents_t extent;
   cairo_text_extents(_cr, str, &extent);
   queueString::element elem = {str,
-                               pos[0],
-                               pos[1],
-                               pos[2],
+                               (GLfloat)win[0],
+                               (GLfloat)win[1],
+                               (GLfloat)win[2],
                                color[0],
                                color[1],
                                color[2],

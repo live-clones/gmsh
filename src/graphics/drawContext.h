@@ -130,6 +130,15 @@ public:
   virtual int getStringHeight() { return 12; }
   virtual int getStringDescent() { return 3; }
   virtual void drawString(const char *str) {}
+  // Draw a string where the window coordinates win say, in the colour that is
+  // current. What used to say where a string goes was the raster position,
+  // which a core profile has none of, so it is worked out and handed over
+  // instead. A backend that still wants the raster position gets it set for
+  // it as well, and can go on ignoring this.
+  virtual void drawString(const char *str, const double win[3])
+  {
+    drawString(str);
+  }
   virtual void resetFontTextures() {}
   // ask for the toolkit's cache of string textures to be able to hold n of
   // them: drawing more strings than it can keep makes it recompute them one by
