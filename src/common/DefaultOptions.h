@@ -1125,9 +1125,11 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ToleranceBoolean" , opt_geometry_tolerance_boolean, 0. ,
     "Geometrical tolerance for boolean operations" },
   { F|O, "Transparency" , opt_geometry_transparency , 1. ,
-    "Multiply the alpha (opacity) of every geometry colour by this factor (1: opaque, 0: fully transparent)" },
+    "Multiply the alpha (opacity) of every geometry colour by this factor (1: "
+    "opaque, 0: fully transparent)" },
   { F|O, "TransparencyMode" , opt_geometry_transparency_mode , 0. ,
-    "What the transparency above is applied to (0: the filled surfaces only, so that the wireframe stays crisp; 1: everything, lines and points included)" },
+    "What Geomtry.Transparency above is applied to (0: filled surfaces only; "
+    "1: everything)" },
   { F,   "Transform" , opt_geometry_transform , 0. ,
     "Transform model display coordinates (0: no, 1: scale)" },
   { F,   "TransformXX" , opt_geometry_transform00 , 1. ,
@@ -1722,9 +1724,11 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ToleranceReferenceElement" , opt_mesh_tolerance_reference_element , 1e-6,
     "Tolerance for classifying a point inside a reference element (of size 1)" },
   { F|O, "Transparency" , opt_mesh_transparency , 1. ,
-    "Multiply the alpha (opacity) of every mesh colour by this factor (1: opaque, 0: fully transparent)" },
+    "Multiply the alpha (opacity) of every mesh colour by this factor (1: "
+    "opaque, 0: fully transparent)" },
   { F|O, "TransparencyMode" , opt_mesh_transparency_mode , 0. ,
-    "What the transparency above is applied to (0: the filled surfaces only, so that the wireframe stays crisp; 1: everything, lines and points included)" },
+    "What Mesh.Transparency is applied to (0: filled surfaces only; 1: "
+    "everything)" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
   { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,
@@ -1733,8 +1737,8 @@ StringXNumber MeshOptions_Number[] = {
     "Use alternative transfinite arrangement when meshing 3-sided surfaces" },
 
   { F|O, "UnvStrictFormat" , opt_mesh_unv_strict_format , 1 ,
-    "Use strict format specification for UNV files, with 'D' for exponents (instead of "
-    "'E' as used by some tools)" },
+    "Use strict format specification for UNV files, with 'D' for exponents "
+    "(instead of 'E' as used by some tools)" },
 
   { F|O, "VolumeEdges" , opt_mesh_volume_edges , 1. ,
     "Display edges of volume mesh?" },
@@ -1898,6 +1902,8 @@ StringXNumber ViewOptions_Number[] = {
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "Closed" , opt_view_closed , 0,
     "Close the subtree containing this view" },
+  { F|O|D, "ColormapAlpha" , opt_view_transparency , 1.0 ,
+    "[Deprecated]" },
   { F|O, "ColormapAlphaPower" , opt_view_colormap_alpha_power , 0.0 ,
     "Colormap alpha channel power" },
   { F|O, "ColormapBeta" , opt_view_colormap_beta , 0.0 ,
@@ -2121,7 +2127,8 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "TransformZZ" , opt_view_transform22 , 1. ,
     "Element (3,3) of the 3x3 coordinate transformation matrix" },
   { F|O, "Transparency" , opt_view_transparency , 1. ,
-    "Multiply the alpha (opacity) the colormap gives by this factor (1: as the colormap says, 0: fully transparent)" },
+    "Multiply the alpha (opacity) the colormap gives by this factor (1: as the "
+    "colormap says, 0: fully transparent)" },
   { F,   "Type" , opt_view_type , 1 ,
     "Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)" },
 
