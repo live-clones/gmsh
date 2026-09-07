@@ -34,6 +34,7 @@
 #include "drawContext.h"
 #include "GModel.h"
 #include "Context.h"
+#include "Options.h"
 #include "PView.h"
 
 // Arrow editor
@@ -95,6 +96,50 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
     }
   }
   return 0;
+}
+
+// Transparency chooser
+
+int transparencyChooser(const char *title, const std::string &category,
+                        int index, const std::string &name)
+{
+  double val;
+  NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), val);
+
+  paletteWindow win(BB + IW + 2 * WB, BH + 2 * WB,
+                    CTX::instance()->nonModalWindows ? true : false);
+  win.label(title);
+  win.hotspot(win);
+  Fl_Value_Slider slider(WB, WB, BB + IW, BH);
+  slider.type(FL_HOR_SLIDER);
+  slider.bounds(0., 1.);
+  slider.value(val);
+  slider.when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+
+  struct Context {
+    const std::string &category;
+    int index;
+    const std::string &name;
+    bool done = false;
+  } ctx{category, index, name};
+  slider.callback(
+    [](Fl_Widget *w, void *data) {
+      auto *s = static_cast<Fl_Value_Slider *>(w);
+      auto *c = static_cast<Context *>(data);
+      double val = s->value();
+      NumberOption(GMSH_SET | GMSH_GUI, c->category.c_str(), c->index,
+                   c->name.c_str(), val);
+      drawContext::global()->draw();
+      if(Fl::event() == FL_RELEASE) { c->done = true; }
+    },
+    &ctx);
+  win.end();
+  win.show();
+  while(!ctx.done && win.shown()) {
+    Fl::wait();
+  }
+  win.hide();
+  return ctx.done ? 1 : 0;
 }
 
 // Connection and pattern choosers
@@ -431,10 +476,10 @@ int simpleTextEditor(const char *title, const std::string &help,
     editor->edit = new Fl_Text_Editor(WB, WB + BH, 4 * BB, 5 * BH);
     editor->edit->buffer(editor->buff);
     editor->edit->wrap_mode(Fl_Text_Editor::WRAP_AT_BOUNDS, 0);
-    editor->apply = new Fl_Return_Button
-      (4 * BB + WB - BB, 2 * WB + 6 * BH, BB, BH, "Apply");
-    editor->cancel = new Fl_Button
-      (4 * BB - 2 * BB, 2 * WB + 6 * BH, BB, BH, "Cancel");
+    editor->apply =
+      new Fl_Return_Button(4 * BB + WB - BB, 2 * WB + 6 * BH, BB, BH, "Apply");
+    editor->cancel =
+      new Fl_Button(4 * BB - 2 * BB, 2 * WB + 6 * BH, BB, BH, "Cancel");
     Fl_Box *resize = new Fl_Box(WB, WB + BH, WB, WB);
     editor->window->end();
     editor->window->resizable(resize);

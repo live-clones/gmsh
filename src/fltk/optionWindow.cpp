@@ -2414,8 +2414,8 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.choice[6]->align(FL_ALIGN_RIGHT);
       geo.choice[6]->callback(geometry_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 2 * WB + 5 * BH, IW + 20,
-                                   height - 4 * WB - 5 * BH);
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 5 * BH, IW + 20,
+                                   height - 5 * WB - 5 * BH);
       std::size_t i = 0, j = 0;
       while(GeometryOptions_Color[j].str) {
         if(GeometryOptions_Color[j].level & GMSH_DEPRECATED) {
@@ -2904,25 +2904,12 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[18]->when(FL_WHEN_RELEASE);
       mesh.value[18]->callback(mesh_options_ok_cb);
 
-      static Fl_Menu_Item menu_mesh_color[] = {
-        {"By element type", 0, nullptr, nullptr},
-        {"By elementary entity", 0, nullptr, nullptr},
-        {"By physical group", 0, nullptr, nullptr},
-        {"By mesh partition", 0, nullptr, nullptr},
-        {nullptr}};
-      mesh.choice[4] =
-        new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Coloring mode");
-      mesh.choice[4]->tooltip("Mesh.ColorCarousel");
-      mesh.choice[4]->menu(menu_mesh_color);
-      mesh.choice[4]->align(FL_ALIGN_RIGHT);
-      mesh.choice[4]->callback(mesh_options_ok_cb);
-
       int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
       static Fl_Menu_Item menu_transparency_mode[] = {
         {"Surfaces", 0, nullptr, nullptr},
         {"Everything", 0, nullptr, nullptr},
         {nullptr}};
-      mesh.value[27] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH,
+      mesh.value[27] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH,
                                           w2, BH);
       mesh.value[27]->tooltip("Mesh.Transparency");
       mesh.value[27]->minimum(0.);
@@ -2932,12 +2919,25 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[27]->when(FL_WHEN_RELEASE);
       mesh.value[27]->callback(mesh_options_ok_cb);
 
-      mesh.choice[11] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 7 * BH,
+      mesh.choice[11] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 6 * BH,
                                       w1, BH, "Transparency");
       mesh.choice[11]->tooltip("Mesh.TransparencyMode");
       mesh.choice[11]->menu(menu_transparency_mode);
       mesh.choice[11]->align(FL_ALIGN_RIGHT);
       mesh.choice[11]->callback(mesh_options_ok_cb);
+
+      static Fl_Menu_Item menu_mesh_color[] = {
+        {"By element type", 0, nullptr, nullptr},
+        {"By elementary entity", 0, nullptr, nullptr},
+        {"By physical group", 0, nullptr, nullptr},
+        {"By mesh partition", 0, nullptr, nullptr},
+        {nullptr}};
+      mesh.choice[4] =
+        new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Coloring mode");
+      mesh.choice[4]->tooltip("Mesh.ColorCarousel");
+      mesh.choice[4]->menu(menu_mesh_color);
+      mesh.choice[4]->align(FL_ALIGN_RIGHT);
+      mesh.choice[4]->callback(mesh_options_ok_cb);
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 8 * BH, IW + 20,
                                    height - 5 * WB - 8 * BH);

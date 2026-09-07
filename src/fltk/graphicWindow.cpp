@@ -3224,21 +3224,20 @@ void quick_access_cb(Fl_Widget *w, void *data)
   else if(what == "mesh_size")
     numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor", true, "Factor",
                                 true, 0.01, 100, 0.01);
-  else if(what == "geometry_transparency")
-    numberOrStringOptionChooser("Geometry", 0, "Transparency", true,
-                                "Transparency", true, 0., 1., 0.01);
-  else if(what == "mesh_transparency")
-    numberOrStringOptionChooser("Mesh", 0, "Transparency", true, "Transparency",
-                                true, 0., 1., 0.01);
+  else if(what == "geometry_transparency") {
+    transparencyChooser("Geometry Transparency", "Geometry", 0, "Transparency");
+  }
+  else if(what == "mesh_transparency") {
+    transparencyChooser("Mesh Transparency", "Mesh", 0, "Transparency");
+  }
   else if(what == "view_transparency") {
-    // the first visible view is the one asked about, and every visible one
-    // follows it, as the other view entries here do
     double val = 1.;
     for(std::size_t i = 0; i < PView::list.size(); i++) {
       if(opt_view_visible(i, GMSH_GET, 0)) {
-        val = numberOrStringOptionChooser("View", i, "Transparency", true,
-                                          "Transparency", true, 0., 1., 0.01);
-        break;
+        if(transparencyChooser("View Transparency", "View", i, "Transparency")) {
+          val = opt_view_transparency(i, GMSH_GET, 0);
+          break;
+        }
       }
     }
     for(std::size_t i = 0; i < PView::list.size(); i++)
@@ -3557,7 +3556,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       menu[gen + 1].clear();
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
-        menu[gen + 7].set();
+        menu[gen + 0].set();
     if(opt_geometry_points(0, GMSH_GET, 0))
       menu[geo + 1].set();
     else
