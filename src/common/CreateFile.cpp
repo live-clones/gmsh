@@ -32,11 +32,12 @@
 #include "gl2pgf.h"
 #endif
 
+#if defined(HAVE_FLTK)
 // gl2ps writes a vector file by putting OpenGL into feedback mode and reading
-// back the primitives it was handed, and a core profile has no feedback mode
-// at all - a scene drawn by the shader pipeline reaches it as nothing. So the
-// old pipeline is put back for as long as the file is being written, and the
-// one that was asked for is restored afterwards.
+// back the primitives it was handed, and a core profile has no feedback mode at
+// all - a scene drawn by the shader pipeline reaches it as nothing. So the old
+// pipeline is put back for as long as the file is being written, and the one
+// that was asked for is restored afterwards.
 class drawTheOldWayWhileExporting {
 private:
   bool _switched;
@@ -56,6 +57,7 @@ public:
     if(_switched) opt_general_shaders(0, GMSH_SET, 1.);
   }
 };
+#endif
 
 int GetFileFormatFromExtension(const std::string &ext, double *version)
 {
@@ -307,6 +309,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 }
 #endif
 
+#if defined(HAVE_MPEG_ENCODE)
 static void ChangePrintParameter(int frame)
 {
   double first = CTX::instance()->print.parameterFirst;
@@ -319,6 +322,7 @@ static void ChangePrintParameter(int frame)
   opt_print_parameter(0, GMSH_SET | GMSH_GUI, v);
   ParseString(CTX::instance()->print.parameterCommand, true);
 }
+#endif
 
 void CreateOutputFile(const std::string &fileName, int format,
                       bool status)

@@ -3091,7 +3091,9 @@ double opt_view_transparency(OPT_ARGS_NUM)
 double opt_general_shaders(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
+#if defined(HAVE_FLTK)
     int old = CTX::instance()->shaders;
+#endif
     CTX::instance()->shaders = (int)val;
 #if defined(HAVE_FLTK)
     // the pipeline is chosen when the context is made, so it has to be made
