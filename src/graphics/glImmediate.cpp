@@ -402,6 +402,10 @@ void gmshLineStippleOff()
   glDisable(GL_LINE_STIPPLE);
 }
 
+bool gmshLineStippleEnabled() { return _stipple; }
+int gmshLineStippleFactor() { return _stippleFactor; }
+unsigned short gmshLineStipplePattern() { return _stipplePattern; }
+
 void gmshTexture(unsigned int id)
 {
   if(id == _texture) return;

@@ -98,6 +98,12 @@ namespace glShader {
   // be null, in which case the current colour is used for every vertex.
   void streamArrays(const float *vertices, const unsigned char *colors,
                     int count);
+  // How far along its line every vertex of what is about to be drawn falls,
+  // in pixels, for the dash pattern to be measured against. The arrays carry
+  // no such thing, so whoever draws them works it out; nothing to hand over
+  // leaves the vertices with no distance and the pattern with nothing to bite
+  // on.
+  void streamDash(const float *dashes, int count);
   // Draw a run of vertices collected from the immediate mode calls, each with
   // the colour and the normal that were current when it was given. The state
   // it is drawn with - the matrices, the lights, the clipping - is whatever

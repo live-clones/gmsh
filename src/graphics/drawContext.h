@@ -49,7 +49,7 @@ void gmshUnbindArrays();
 
 // draw what the last bind left, handing the shader pipeline the state the
 // fixed function one kept for itself
-void gmshDrawArrays(GLenum type, int count);
+void gmshDrawArrays(GLenum type, int count, const float *dashes = nullptr);
 // draw a vertex array, using its index array if it has one
 void drawVertexArray(VertexArray *va, GLenum type);
 // delete the buffer objects of the vertex arrays that have been destroyed since
