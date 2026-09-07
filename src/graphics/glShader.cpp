@@ -356,6 +356,7 @@ void main()
     // current, which are not ours
     _program = _vao = 0;
     _streamVertices = _streamColors = _streamNormals = 0;
+    _streamGlyphs = _streamTex = _streamDash = 0;
     _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
     _pickWidth = _pickHeight = 0;
     _tried = false;
