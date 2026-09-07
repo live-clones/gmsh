@@ -32,6 +32,31 @@
 #include "gl2pgf.h"
 #endif
 
+// gl2ps writes a vector file by putting OpenGL into feedback mode and reading
+// back the primitives it was handed, and a core profile has no feedback mode
+// at all - a scene drawn by the shader pipeline reaches it as nothing. So the
+// old pipeline is put back for as long as the file is being written, and the
+// one that was asked for is restored afterwards.
+class drawTheOldWayWhileExporting {
+private:
+  bool _switched;
+
+public:
+  drawTheOldWayWhileExporting() : _switched(false)
+  {
+    if(!CTX::instance()->shaders) return;
+    _switched = true;
+    opt_general_shaders(0, GMSH_SET, 0.);
+    // the context is only made again when it is next drawn into, and feedback
+    // mode has to be asked of the one that will do the drawing
+    drawContext::global()->drawCurrentOpenglWindow(true);
+  }
+  ~drawTheOldWayWhileExporting()
+  {
+    if(_switched) opt_general_shaders(0, GMSH_SET, 1.);
+  }
+};
+
 int GetFileFormatFromExtension(const std::string &ext, double *version)
 {
   if(ext == ".geo_unrolled")  return FORMAT_GEO;
@@ -620,6 +645,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         error = true;
         break;
       }
+      drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
       GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
@@ -696,6 +722,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         error = true;
         break;
       }
+      drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
       GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
@@ -733,6 +760,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
 
+      drawTheOldWayWhileExporting noShaders;
       // fill pixel buffer without colorbar and axes
       int restoreGeneralAxis = (int) opt_general_axes(0, GMSH_GET, 0);
       int restoreSmallAxis = (int) opt_general_small_axes(0, GMSH_GET, 0);
