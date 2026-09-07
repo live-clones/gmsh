@@ -56,6 +56,7 @@ bool gmshImBegin(GLenum mode);
 void gmshImEnd();
 void gmshImVertex(float x, float y, float z);
 void gmshImNormal(float x, float y, float z);
+void gmshImTexCoord(float s, float t);
 
 inline void gmshBegin(GLenum mode)
 {
@@ -188,10 +189,18 @@ inline void gmshPickColor4ubv(const void *col)
 
 inline void gmshTexCoord2f(float s, float t)
 {
-  // only the text and image drawing use these, and they are still drawn the
-  // old way: nothing collects them yet
-  if(!gmshCollecting) glTexCoord2f(s, t);
+  if(gmshCollecting)
+    gmshImTexCoord(s, t);
+  else
+    glTexCoord2f(s, t);
 }
+
+// The texture the primitives after this are drawn through, zero for none.
+// This is what draws a string: the widget toolkit writes it into a picture,
+// and the picture is put on a quad. A shader pipeline is handed the texture
+// with the primitives, so it has to be said rather than only bound.
+void gmshTexture(unsigned int id);
+unsigned int gmshCurrentTexture();
 
 // The pieces of fixed function state that decide how the primitives above are
 // drawn, and that a shader pipeline has to carry itself: whether the vertices

@@ -23,9 +23,10 @@ namespace {
   // normal that were current at each of them. A shader pipeline has no
   // immediate mode: the run between gmshBegin() and gmshEnd() is gathered here
   // and drawn in one call.
-  std::vector<float> _imPos, _imNrm;
+  std::vector<float> _imPos, _imNrm, _imTex;
   std::vector<unsigned char> _imCol;
   float _imNormal[3] = {0.f, 0.f, 1.f};
+  float _imTexCoord[2] = {0.f, 0.f};
   GLenum _imMode = GL_POINTS;
 
   // The primitives that have been collected and not drawn yet. Everything is
@@ -35,7 +36,7 @@ namespace {
   // more than the drawing does. Anything that changes how they would be drawn
   // flushes what is waiting first.
   GLenum _batchMode = GL_POINTS;
-  std::vector<float> _batchPos, _batchNrm;
+  std::vector<float> _batchPos, _batchNrm, _batchTex;
   std::vector<unsigned char> _batchCol;
 
   // What the primitives in the batch were asked to be drawn with. A call that
@@ -49,10 +50,14 @@ namespace {
     bool clipOn[6];
     bool lighting, twoSide;
     double pointSize;
+    // the texture the primitives are drawn through, zero for none: what a
+    // string drawn as a picture of itself needs, and the one piece of this
+    // state that a batch cannot span
+    unsigned int texture;
     bool operator!=(const BatchState &o) const
     {
       if(lighting != o.lighting || twoSide != o.twoSide ||
-         pointSize != o.pointSize)
+         pointSize != o.pointSize || texture != o.texture)
         return true;
       for(int i = 0; i < 16; i++)
         if(modelview[i] != o.modelview[i] || projection[i] != o.projection[i])
@@ -76,6 +81,7 @@ namespace {
   unsigned char _color[4] = {255, 255, 255, 255};
   bool _lighting = false, _twoSide = false;
   double _pointSize = 1.;
+  unsigned int _texture = 0;
   double _clipPlane[6][4] = {{0.}}, _clipEye[6][4] = {{0.}};
   bool _clipOn[6] = {false, false, false, false, false, false};
 } // namespace
@@ -305,6 +311,7 @@ bool gmshImBegin(GLenum mode)
   _imPos.clear();
   _imNrm.clear();
   _imCol.clear();
+  _imTex.clear();
   // the primitive is turned into independent points, lines or triangles when
   // it ends: a core profile has neither quads nor polygons, and only
   // independent primitives can share a draw with the ones around them
@@ -319,6 +326,32 @@ void gmshImVertex(float x, float y, float z)
   _imPos.push_back(z);
   for(int i = 0; i < 3; i++) _imNrm.push_back(_imNormal[i]);
   for(int i = 0; i < 4; i++) _imCol.push_back(gmshCurrentColor()[i]);
+  for(int i = 0; i < 2; i++) _imTex.push_back(_imTexCoord[i]);
+}
+
+void gmshTexture(unsigned int id)
+{
+  if(id == _texture) return;
+  // what is waiting was collected to be drawn through the old one
+  if(gmshUseShaders()) gmshFlushImmediate();
+  _texture = id;
+  if(!gmshUseShaders()) {
+    if(id) {
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, id);
+    }
+    else {
+      glDisable(GL_TEXTURE_2D);
+    }
+  }
+}
+
+unsigned int gmshCurrentTexture() { return _texture; }
+
+void gmshImTexCoord(float s, float t)
+{
+  _imTexCoord[0] = s;
+  _imTexCoord[1] = t;
 }
 
 void gmshImNormal(float x, float y, float z)
@@ -335,6 +368,7 @@ namespace {
     for(int k = 0; k < 3; k++) _batchPos.push_back(_imPos[3 * i + k]);
     for(int k = 0; k < 3; k++) _batchNrm.push_back(_imNrm[3 * i + k]);
     for(int k = 0; k < 4; k++) _batchCol.push_back(_imCol[4 * i + k]);
+    for(int k = 0; k < 2; k++) _batchTex.push_back(_imTex[2 * i + k]);
   }
 } // namespace
 
@@ -358,11 +392,13 @@ void gmshFlushImmediate()
         glShader::setClipPlaneOff(i);
     }
     glShader::drawImmediate(_batchMode, &_batchPos[0], &_batchNrm[0],
-                            &_batchCol[0], count);
+                            &_batchCol[0], &_batchTex[0], _batchState.texture,
+                            count);
   }
   _batchPos.clear();
   _batchNrm.clear();
   _batchCol.clear();
+  _batchTex.clear();
 }
 
 namespace {
@@ -383,6 +419,7 @@ namespace {
     b.lighting = _lighting;
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;
+    b.texture = _texture;
     return b;
   }
 } // namespace

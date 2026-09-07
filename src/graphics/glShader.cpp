@@ -28,6 +28,7 @@ in vec4 aGlyph0;
 in vec4 aGlyph1;
 in vec4 aGlyph2;
 in vec2 aGlyphParam;
+in vec2 aTexCoord;
 
 uniform bool uInstanced;
 uniform bool uTaper;
@@ -43,6 +44,7 @@ uniform bool uClipOn[6];
 out vec3 vEye;
 out vec3 vNormal;
 out vec4 vColor;
+out vec2 vTexCoord;
 out float vClip[6];
 
 void main()
@@ -72,6 +74,7 @@ void main()
   vEye = eye.xyz;
   vNormal = uNormalMatrix * n;
   vColor = uColorArray ? aColor : uColor;
+  vTexCoord = aTexCoord;
   // the planes are in eye coordinates, as glClipPlane() left them once the
   // modelview it was given had been applied
   for(int i = 0; i < 6; i++)
@@ -85,8 +88,13 @@ void main()
 in vec3 vEye;
 in vec3 vNormal;
 in vec4 vColor;
+in vec2 vTexCoord;
 in float vClip[6];
 
+// a string is drawn as a picture of itself: the texture says how much of the
+// colour each pixel of the quad gets, and nothing else about it
+uniform bool uTextured;
+uniform sampler2D uTexture;
 uniform bool uLighting;
 uniform bool uTwoSide;
 uniform vec4 uLightPosition[6];
@@ -120,8 +128,13 @@ void main()
 
   fDepth = packDepth(gl_FragCoord.z);
 
+  // a string is drawn as a picture of itself: the texture says how much of the
+  // colour each pixel of the quad gets, whether or not it is lit
+  float alpha = vColor.a;
+  if(uTextured) alpha *= texture(uTexture, vTexCoord).r;
+
   if(!uLighting) {
-    fColor = vColor;
+    fColor = vec4(vColor.rgb, alpha);
     return;
   }
 
@@ -151,7 +164,7 @@ void main()
     }
   }
 
-  fColor = vec4(min(c, vec3(1.0)), vColor.a);
+  fColor = vec4(min(c, vec3(1.0)), alpha);
 }
 )";
 
@@ -160,7 +173,7 @@ void main()
     // colours, grown as needed and reused from frame to frame
     GLuint _streamVertices = 0, _streamColors = 0, _streamNormals = 0;
     // one more for the glyphs a shape is drawn many times over with
-    GLuint _streamGlyphs = 0;
+    GLuint _streamGlyphs = 0, _streamTex = 0;
     // the picking buffer and what it is made of
     GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
     int _pickWidth = 0, _pickHeight = 0;
@@ -171,6 +184,7 @@ void main()
       GLint clipPlane, clipOn;
       GLint lighting, twoSide, specular, shininess;
       GLint instanced, taper;
+      GLint textured, texture;
       GLint lightPosition, lightAmbient, lightDiffuse, lightSpecular, lightOn;
     } _u;
 
@@ -254,6 +268,7 @@ void main()
       glApi::BindAttribLocation(p, ATTRIB_GLYPH1, "aGlyph1");
       glApi::BindAttribLocation(p, ATTRIB_GLYPH2, "aGlyph2");
       glApi::BindAttribLocation(p, ATTRIB_GLYPH_PARAM, "aGlyphParam");
+      glApi::BindAttribLocation(p, ATTRIB_TEXCOORD, "aTexCoord");
       glApi::LinkProgram(p);
       glApi::DeleteShader(vs);
       glApi::DeleteShader(fs);
@@ -283,6 +298,8 @@ void main()
       _u.shininess = glApi::GetUniformLocation(p, "uShininess");
       _u.instanced = glApi::GetUniformLocation(p, "uInstanced");
       _u.taper = glApi::GetUniformLocation(p, "uTaper");
+      _u.textured = glApi::GetUniformLocation(p, "uTextured");
+      _u.texture = glApi::GetUniformLocation(p, "uTexture");
       // the arrays are addressed element by element
       _u.clipPlane = _u.clipOn = -1;
       _u.lightPosition = _u.lightAmbient = _u.lightDiffuse = -1;
@@ -540,7 +557,8 @@ void main()
   }
 
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
-                     const unsigned char *colors, int count)
+                     const unsigned char *colors, const float *texCoords,
+                     unsigned int texture, int count)
   {
     if(count <= 0 || !ensure()) return;
     glApi::BindVertexArray(_vao);
@@ -569,14 +587,36 @@ void main()
     glApi::VertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0,
                                nullptr);
 
+    // the texture a string is drawn as a picture of itself through, if there
+    // is one; the coordinates go with it and are nothing without it
+    if(texture && texCoords) {
+      if(!_streamTex) glApi::GenBuffers(1, &_streamTex);
+      glApi::BindBuffer(GL_ARRAY_BUFFER, _streamTex);
+      glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 2 * sizeof(float),
+                        texCoords, GL_STREAM_DRAW);
+      glApi::EnableVertexAttribArray(ATTRIB_TEXCOORD);
+      glApi::VertexAttribPointer(ATTRIB_TEXCOORD, 2, GL_FLOAT, GL_FALSE, 0,
+                                 nullptr);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture);
+      glApi::Uniform1i(_u.texture, 0);
+      glApi::Uniform1i(_u.textured, 1);
+    }
+    else {
+      glApi::DisableVertexAttribArray(ATTRIB_TEXCOORD);
+      glApi::Uniform1i(_u.textured, 0);
+    }
+
     // every vertex carries the colour that was current when it was given
     setColorArray(true);
     glDrawArrays(mode, 0, count);
 
+    glApi::Uniform1i(_u.textured, 0);
     glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
     glApi::DisableVertexAttribArray(ATTRIB_VERTEX);
     glApi::DisableVertexAttribArray(ATTRIB_NORMAL);
     glApi::DisableVertexAttribArray(ATTRIB_COLOR);
+    glApi::DisableVertexAttribArray(ATTRIB_TEXCOORD);
   }
 
   bool bindPickBuffer(int width, int height)

@@ -1400,14 +1400,21 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
 
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET) {
+    // The native engine hands the string to the widget toolkit, which draws it
+    // at the raster position, and the cairo one draws it through a texture of
+    // a kind that only a fixed function pipeline has. Under the shader
+    // pipeline the strings are drawn as pictures of themselves instead, which
+    // is what the string texture engine does and what it alone can do.
+    std::string engine = CTX::instance()->glFontEngine;
+    if(CTX::instance()->shaders) engine = "StringTexture";
     drawContextGlobal *old = drawContext::global();
-    if(!old || old->getName() != CTX::instance()->glFontEngine) {
+    if(!old || old->getName() != engine) {
 #if defined(HAVE_CAIRO)
-      if(CTX::instance()->glFontEngine == "Cairo")
+      if(engine == "Cairo")
         drawContext::setGlobal(new drawContextFltkCairo);
       else
 #endif
-        if(CTX::instance()->glFontEngine == "StringTexture")
+        if(engine == "StringTexture")
         drawContext::setGlobal(new drawContextFltkStringTexture);
       else
         drawContext::setGlobal(new drawContextFltk);
@@ -3005,8 +3012,12 @@ double opt_general_shaders(OPT_ARGS_NUM)
     CTX::instance()->shaders = (int)val;
 #if defined(HAVE_FLTK)
     // the pipeline is chosen when the context is made, so it has to be made
-    // again
-    if(CTX::instance()->shaders != old) resetOpenglMode();
+    // again - and which engine can draw the strings depends on it
+    if(CTX::instance()->shaders != old) {
+      resetOpenglMode();
+      opt_general_graphics_font_engine(0, GMSH_SET | GMSH_GUI,
+                                       CTX::instance()->glFontEngine);
+    }
 #endif
   }
 #if defined(HAVE_FLTK)

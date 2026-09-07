@@ -54,7 +54,8 @@ namespace glShader {
     ATTRIB_GLYPH0 = 3,
     ATTRIB_GLYPH1 = 4,
     ATTRIB_GLYPH2 = 5,
-    ATTRIB_GLYPH_PARAM = 6
+    ATTRIB_GLYPH_PARAM = 6,
+    ATTRIB_TEXCOORD = 7
   };
 
   // Compile and link the program if that has not been done for this context,
@@ -97,7 +98,8 @@ namespace glShader {
   // it is drawn with - the matrices, the lights, the clipping - is whatever
   // was last set.
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
-                     const unsigned char *colors, int count);
+                     const unsigned char *colors, const float *texCoords,
+                     unsigned int texture, int count);
 
   // Draw one shape many times over, each of them placed by a glyph of its
   // own: the shape is given as its vertices and normals, and the glyphs as a
