@@ -45,8 +45,21 @@ public:
   void flush()
   {
     if(_elements.empty()) return;
+
+    // Everything below is in true pixels rather than in the coordinates the
+    // widget toolkit works in: that is what the string was told to go at, and
+    // on a high resolution screen the two differ by this factor. The picture
+    // of the strings is made at that scale as well, so that they are as sharp
+    // as the screen allows instead of being one blown up to twice its size.
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    double f = 1.;
+    if(Fl_Window::current() && Fl_Window::current()->w() > 0)
+      f = vp[2] / (double)Fl_Window::current()->w();
+    if(f <= 0.) f = 1.;
+
     // 1000 should be _totalWidth but it does not work
-    int w = 1000, h = _maxHeight;
+    int w = (int)(1000 * f), h = (int)(_maxHeight * f) + 1;
     Fl_Offscreen offscreen = fl_create_offscreen(w, h);
     fl_begin_offscreen(offscreen);
     fl_color(0, 0, 0);
@@ -54,9 +67,9 @@ public:
     fl_color(255, 255, 255);
     int pos = 0;
     for(auto it = _elements.begin(); it != _elements.end(); ++it) {
-      fl_font(it->fontId, it->fontSize);
-      fl_draw(it->text.c_str(), pos, it->height - fl_descent());
-      pos += it->width;
+      fl_font(it->fontId, (int)(it->fontSize * f));
+      fl_draw(it->text.c_str(), pos, (int)(it->height * f) - fl_descent());
+      pos += (int)(it->width * f);
     }
     uchar *data = fl_read_image(nullptr, 0, 0, w, h);
     for(int i = 0; i < w * h; ++i) { data[i] = data[i * 3]; }
@@ -74,13 +87,9 @@ public:
     gmshPushMatrix();
     gmshLoadIdentity();
 
-    // FIXME: this is not correct with high-resolution graphics, as w(), h() are
-    // in FLTK coordinates, and glRasterPos uses true pixels.
-    // The size of the QUAD needs to be changed, too.
-    float winw = Fl_Window::current()->w();
-    float winh = Fl_Window::current()->h();
-    gmshScale(2. / winw, 2. / winh, 1.);
-    gmshTranslate(-winw / 2., -winh / 2., 0.);
+    // the whole window, in the true pixels the positions are given in
+    gmshScale(2. / vp[2], 2. / vp[3], 1.);
+    gmshTranslate(-vp[2] / 2., -vp[3] / 2., 0.);
 
     // Write the texture on screen. It is a plain two dimensional one with
     // coordinates in [0, 1] rather than the rectangle texture this used to
@@ -116,8 +125,8 @@ public:
     for(auto it = _elements.begin(); it != _elements.end(); ++it) {
       gmshTranslate(it->x, it->y, it->z);
       gmshColor4f(it->r, it->g, it->b, it->alpha);
-      int Lx = it->width;
-      int Ly = it->height;
+      int Lx = (int)(it->width * f);
+      int Ly = (int)(it->height * f);
       // the coordinates are in [0, 1] across the picture, not in its pixels
       float s0 = pos / (float)w, s1 = (pos + Lx) / (float)w;
       float t0 = 0.f, t1 = Ly / (float)h;
