@@ -56,7 +56,11 @@ namespace glShader {
     ATTRIB_GLYPH2 = 5,
     ATTRIB_GLYPH_PARAM = 6,
     ATTRIB_TEXCOORD = 7,
-    ATTRIB_DASH = 8
+    ATTRIB_DASH = 8,
+    // the far end of a line drawn wide, and what it carries
+    ATTRIB_VERTEXB = 9,
+    ATTRIB_NORMALB = 10,
+    ATTRIB_COLORB = 11
   };
 
   // Compile and link the program if that has not been done for this context,
@@ -101,6 +105,14 @@ namespace glShader {
   // the dash pattern the lines are drawn with: a bit of it every factor
   // pixels along the line, and a fragment where it has a hole is thrown away
   void setStipple(bool on, int factor, unsigned short pattern);
+  // Draw a run of line segments - vertices in pairs - as quads of the given
+  // width in pixels. A core profile draws every line one pixel wide whatever
+  // it is asked for, so a wide one has to be made of triangles. False if this
+  // cannot be done, in which case the caller draws them as lines and they
+  // come out thin.
+  bool drawWideLines(const float *vertices, const void *normals,
+                     GLenum normalType, const unsigned char *colors, int count,
+                     double width, bool lit);
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
                      const unsigned char *colors, const float *texCoords,
                      const float *dashes, unsigned int texture, int count);

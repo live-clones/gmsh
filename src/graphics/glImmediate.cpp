@@ -57,7 +57,8 @@ namespace {
     // string drawn as a picture of itself needs, and the one piece of this
     // state that a batch cannot span
     unsigned int texture;
-    // the dash pattern the lines are drawn with, if any
+    // how wide the lines are and what dash pattern they carry
+    double lineWidth;
     bool stipple;
     int stippleFactor;
     unsigned short stipplePattern;
@@ -66,7 +67,7 @@ namespace {
       if(lighting != o.lighting || twoSide != o.twoSide ||
          pointSize != o.pointSize || texture != o.texture ||
          stipple != o.stipple || stippleFactor != o.stippleFactor ||
-         stipplePattern != o.stipplePattern)
+         stipplePattern != o.stipplePattern || lineWidth != o.lineWidth)
         return true;
       for(int i = 0; i < 16; i++)
         if(modelview[i] != o.modelview[i] || projection[i] != o.projection[i])
@@ -91,6 +92,7 @@ namespace {
   bool _lighting = false, _twoSide = false;
   double _pointSize = 1.;
   unsigned int _texture = 0;
+  double _lineWidth = 1.;
   bool _stipple = false;
   int _stippleFactor = 1;
   unsigned short _stipplePattern = 0xffff;
@@ -293,6 +295,7 @@ void gmshResetMatrices()
   _batchTex.clear();
   _batchDash.clear();
   _texture = 0;
+  _lineWidth = 1.;
   _stipple = false;
   _stippleFactor = 1;
   _stipplePattern = 0xffff;
@@ -358,6 +361,19 @@ void gmshImVertex(float x, float y, float z)
   for(int i = 0; i < 4; i++) _imCol.push_back(gmshCurrentColor()[i]);
   for(int i = 0; i < 2; i++) _imTex.push_back(_imTexCoord[i]);
 }
+
+void gmshLineWidth(double w)
+{
+  if(gmshUseShaders()) {
+    if(_lineWidth == w) return;
+    // what is waiting was collected to be drawn at the old width
+    gmshFlushImmediate();
+    _lineWidth = w;
+  }
+  glLineWidth((float)w);
+}
+
+double gmshCurrentLineWidth() { return _lineWidth; }
 
 void gmshLineStipple(int factor, unsigned short pattern)
 {
@@ -486,9 +502,17 @@ void gmshFlushImmediate()
     glShader::setStipple(_batchState.stipple && _batchMode == GL_LINES,
                          _batchState.stippleFactor,
                          _batchState.stipplePattern);
-    glShader::drawImmediate(_batchMode, &_batchPos[0], &_batchNrm[0],
-                            &_batchCol[0], &_batchTex[0], &_batchDash[0],
-                            _batchState.texture, count);
+    // a line wider than a pixel is not something a core profile draws: it is
+    // made of triangles instead, and the shader is handed both ends of every
+    // segment so that it can work out which way to widen it
+    bool wide = (_batchMode == GL_LINES && _batchState.lineWidth > 1.);
+    if(!wide ||
+       !glShader::drawWideLines(&_batchPos[0], &_batchNrm[0], GL_FLOAT,
+                                &_batchCol[0], count, _batchState.lineWidth,
+                                _batchState.lighting))
+      glShader::drawImmediate(_batchMode, &_batchPos[0], &_batchNrm[0],
+                              &_batchCol[0], &_batchTex[0], &_batchDash[0],
+                              _batchState.texture, count);
   }
   _batchPos.clear();
   _batchNrm.clear();
@@ -516,6 +540,7 @@ namespace {
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;
     b.texture = _texture;
+    b.lineWidth = _lineWidth;
     b.stipple = _stipple;
     b.stippleFactor = _stippleFactor;
     b.stipplePattern = _stipplePattern;
