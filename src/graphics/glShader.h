@@ -93,6 +93,9 @@ namespace glShader {
   void setColor(const unsigned char color[4]);
   // the size points are drawn at, which a core profile takes from the shader
   void setPointSize(double size);
+  // multiplies the alpha of every colour drawn after it, which is how the
+  // geometry, mesh and view Transparency options are applied
+  void setAlphaScale(double scale);
   // Upload arrays the caller holds itself into a buffer of ours and bind them:
   // a core profile cannot be handed a pointer into client memory. Colours may
   // be null, in which case the current colour is used for every vertex.

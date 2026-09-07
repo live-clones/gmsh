@@ -3012,17 +3012,18 @@ double opt_general_order_independent_transparency(OPT_ARGS_NUM)
   return CTX::instance()->orderIndependentTransparency;
 }
 
+// The three transparency multipliers are handed to the shader, which applies
+// them to the alpha of every colour it draws: nothing is rebuilt when one
+// changes, so a widget can be dragged and the picture follows. The fixed
+// function pipeline cannot do that to the colours a vertex array holds, and
+// ignores them; a colour map with an alpha channel of its own still works
+// there, as it always did.
 double opt_geometry_transparency(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(val < 0.) val = 0.;
     if(val > 1.) val = 1.;
-    if(CTX::instance()->geom.transparency != val) {
-      CTX::instance()->geom.transparency = val;
-      // the alpha is worked into the colours the arrays hold, so they have to
-      // be built again
-      if(GModel::current()) GModel::current()->deleteGeometryVertexArrays();
-    }
+    CTX::instance()->geom.transparency = val;
   }
   return CTX::instance()->geom.transparency;
 }
@@ -3032,10 +3033,7 @@ double opt_mesh_transparency(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     if(val < 0.) val = 0.;
     if(val > 1.) val = 1.;
-    if(CTX::instance()->mesh.transparency != val) {
-      CTX::instance()->mesh.transparency = val;
-      CTX::instance()->mesh.changed = ENT_ALL;
-    }
+    CTX::instance()->mesh.transparency = val;
   }
   return CTX::instance()->mesh.transparency;
 }
@@ -3047,18 +3045,9 @@ double opt_view_transparency(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     if(val < 0.) val = 0.;
     if(val > 1.) val = 1.;
-    // the alpha is worked into the colour table, which is what the colours in
-    // the vertex arrays are taken from
-    opt->colorTable.dpar[COLORTABLE_ALPHA] = val;
-    ColorTable_Recompute(&opt->colorTable);
-    if(view) view->setChanged(true);
+    opt->transparency = val;
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
-  return opt->colorTable.dpar[COLORTABLE_ALPHA];
+  return opt->transparency;
 #else
   return 1.;
 #endif

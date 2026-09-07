@@ -435,9 +435,6 @@ public:
   // how RGBA values are packed and unpacked into/from an unsigned integer to be
   // fed to gmshColor4ubv (depends on machine byte ordering!):
   unsigned int packColor(int R, int G, int B, int A);
-  // the same colour with its alpha multiplied by s, which is what the
-  // transparency options do to every colour of their category
-  unsigned int scaleAlpha(unsigned int col, double s);
   int unpackRed(unsigned int X);
   int unpackGreen(unsigned int X);
   int unpackBlue(unsigned int X);
