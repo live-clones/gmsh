@@ -82,23 +82,35 @@ public:
     gmshScale(2. / winw, 2. / winh, 1.);
     gmshTranslate(-winw / 2., -winh / 2., 0.);
 
-    // write the texture on screen
-    glEnable(GL_TEXTURE_RECTANGLE_ARB);
-    // what glPopAttrib() puts back below is OpenGL's own state, which the
-    // lighting we remember knows nothing about: say it again afterwards
+    // Write the texture on screen. It is a plain two dimensional one with
+    // coordinates in [0, 1] rather than the rectangle texture this used to
+    // use: rectangle textures are not in OpenGL ES, and the shader pipeline
+    // has to be able to sample it. What is in it is one channel saying how
+    // much of the colour each pixel of the quad gets - the alpha of a fixed
+    // function pipeline, the red of a shader, which has no alpha textures.
+    bool shaders = gmshUseShaders();
     bool wasLit = gmshLightingEnabled();
-    glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
+    if(!shaders) {
+      // what glPopAttrib() puts back below is OpenGL's own state, which the
+      // lighting we remember knows nothing about: say it again afterwards
+      glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
+    }
     gmshLighting(false);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, textureId);
-    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA, w, h, 0, GL_ALPHA,
-                 GL_UNSIGNED_BYTE, data);
-    // glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_SRC0_ALPHA);
-    // printf("error %i %s\n", __LINE__, gluErrorString(glGetError()));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, shaders ? GL_R8 : GL_ALPHA, w, h, 0,
+                 shaders ? GL_RED : GL_ALPHA, GL_UNSIGNED_BYTE, data);
+    // the filtering a rectangle texture had by default, which is what the
+    // strings were drawn with before
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gmshTexture(textureId);
 
     pos = 0;
     for(auto it = _elements.begin(); it != _elements.end(); ++it) {
@@ -106,22 +118,28 @@ public:
       gmshColor4f(it->r, it->g, it->b, it->alpha);
       int Lx = it->width;
       int Ly = it->height;
+      // the coordinates are in [0, 1] across the picture, not in its pixels
+      float s0 = pos / (float)w, s1 = (pos + Lx) / (float)w;
+      float t0 = 0.f, t1 = Ly / (float)h;
       gmshBegin(GL_QUADS);
-      gmshTexCoord2f(pos, 0);
+      gmshTexCoord2f(s0, t0);
       gmshVertex2f(0.0f, Ly);
-      gmshTexCoord2f(pos + Lx, 0);
+      gmshTexCoord2f(s1, t0);
       gmshVertex2f(Lx, Ly);
-      gmshTexCoord2f(pos + Lx, Ly);
+      gmshTexCoord2f(s1, t1);
       gmshVertex2f(Lx, 0.0f);
-      gmshTexCoord2f(pos, Ly);
+      gmshTexCoord2f(s0, t1);
       gmshVertex2f(0.0f, 0.0f);
       gmshEnd();
       pos += Lx;
       gmshTranslate(-it->x, -it->y, -it->z);
     }
+    // whatever is waiting was collected to be drawn through this texture
+    gmshFlushImmediate();
+    gmshTexture(0);
     glDeleteTextures(1, &textureId);
 
-    glPopAttrib();
+    if(!shaders) glPopAttrib();
     gmshLighting(wasLit);
 
     // reset original matrices
