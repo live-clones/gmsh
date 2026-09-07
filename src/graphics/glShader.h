@@ -55,7 +55,8 @@ namespace glShader {
     ATTRIB_GLYPH1 = 4,
     ATTRIB_GLYPH2 = 5,
     ATTRIB_GLYPH_PARAM = 6,
-    ATTRIB_TEXCOORD = 7
+    ATTRIB_TEXCOORD = 7,
+    ATTRIB_DASH = 8
   };
 
   // Compile and link the program if that has not been done for this context,
@@ -97,9 +98,12 @@ namespace glShader {
   // the colour and the normal that were current when it was given. The state
   // it is drawn with - the matrices, the lights, the clipping - is whatever
   // was last set.
+  // the dash pattern the lines are drawn with: a bit of it every factor
+  // pixels along the line, and a fragment where it has a hole is thrown away
+  void setStipple(bool on, int factor, unsigned short pattern);
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
                      const unsigned char *colors, const float *texCoords,
-                     unsigned int texture, int count);
+                     const float *dashes, unsigned int texture, int count);
 
   // Draw one shape many times over, each of them placed by a glyph of its
   // own: the shape is given as its vertices and normals, and the glyphs as a

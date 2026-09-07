@@ -29,6 +29,7 @@ in vec4 aGlyph1;
 in vec4 aGlyph2;
 in vec2 aGlyphParam;
 in vec2 aTexCoord;
+in float aDash;
 
 uniform bool uInstanced;
 uniform bool uTaper;
@@ -45,6 +46,7 @@ out vec3 vEye;
 out vec3 vNormal;
 out vec4 vColor;
 out vec2 vTexCoord;
+out float vDash;
 out float vClip[6];
 
 void main()
@@ -75,6 +77,7 @@ void main()
   vNormal = uNormalMatrix * n;
   vColor = uColorArray ? aColor : uColor;
   vTexCoord = aTexCoord;
+  vDash = aDash;
   // the planes are in eye coordinates, as glClipPlane() left them once the
   // modelview it was given had been applied
   for(int i = 0; i < 6; i++)
@@ -89,10 +92,18 @@ in vec3 vEye;
 in vec3 vNormal;
 in vec4 vColor;
 in vec2 vTexCoord;
+in float vDash;
 in float vClip[6];
 
 // a string is drawn as a picture of itself: the texture says how much of the
 // colour each pixel of the quad gets, and nothing else about it
+// the dash pattern of a line: a bit of it every uStippleFactor pixels along
+// the line, and the fragments the pattern has a hole at are thrown away.
+// vDash is how far along its line this fragment is, worked out where the line
+// was collected - there is no way to know it here
+uniform bool uStipple;
+uniform int uStippleFactor;
+uniform int uStipplePattern;
 uniform bool uTextured;
 uniform sampler2D uTexture;
 uniform bool uLighting;
@@ -125,6 +136,11 @@ void main()
 {
   for(int i = 0; i < 6; i++)
     if(vClip[i] < 0.0) discard;
+
+  if(uStipple) {
+    int bit = int(mod(floor(vDash / float(uStippleFactor)), 16.0));
+    if((uStipplePattern & (1 << bit)) == 0) discard;
+  }
 
   fDepth = packDepth(gl_FragCoord.z);
 
@@ -173,7 +189,7 @@ void main()
     // colours, grown as needed and reused from frame to frame
     GLuint _streamVertices = 0, _streamColors = 0, _streamNormals = 0;
     // one more for the glyphs a shape is drawn many times over with
-    GLuint _streamGlyphs = 0, _streamTex = 0;
+    GLuint _streamGlyphs = 0, _streamTex = 0, _streamDash = 0;
     // the picking buffer and what it is made of
     GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
     int _pickWidth = 0, _pickHeight = 0;
@@ -185,6 +201,7 @@ void main()
       GLint lighting, twoSide, specular, shininess;
       GLint instanced, taper;
       GLint textured, texture;
+      GLint stipple, stippleFactor, stipplePattern;
       GLint lightPosition, lightAmbient, lightDiffuse, lightSpecular, lightOn;
     } _u;
 
@@ -269,6 +286,7 @@ void main()
       glApi::BindAttribLocation(p, ATTRIB_GLYPH2, "aGlyph2");
       glApi::BindAttribLocation(p, ATTRIB_GLYPH_PARAM, "aGlyphParam");
       glApi::BindAttribLocation(p, ATTRIB_TEXCOORD, "aTexCoord");
+      glApi::BindAttribLocation(p, ATTRIB_DASH, "aDash");
       glApi::LinkProgram(p);
       glApi::DeleteShader(vs);
       glApi::DeleteShader(fs);
@@ -300,6 +318,9 @@ void main()
       _u.taper = glApi::GetUniformLocation(p, "uTaper");
       _u.textured = glApi::GetUniformLocation(p, "uTextured");
       _u.texture = glApi::GetUniformLocation(p, "uTexture");
+      _u.stipple = glApi::GetUniformLocation(p, "uStipple");
+      _u.stippleFactor = glApi::GetUniformLocation(p, "uStippleFactor");
+      _u.stipplePattern = glApi::GetUniformLocation(p, "uStipplePattern");
       // the arrays are addressed element by element
       _u.clipPlane = _u.clipOn = -1;
       _u.lightPosition = _u.lightAmbient = _u.lightDiffuse = -1;
@@ -432,6 +453,14 @@ void main()
     glApi::Uniform1i(element("uClipOn", i), 0);
   }
 
+  void setStipple(bool on, int factor, unsigned short pattern)
+  {
+    if(!ensure()) return;
+    glApi::Uniform1i(_u.stipple, on ? 1 : 0);
+    glApi::Uniform1i(_u.stippleFactor, (factor > 0) ? factor : 1);
+    glApi::Uniform1i(_u.stipplePattern, (int)pattern);
+  }
+
   void setColorArray(bool on)
   {
     if(!ensure()) return;
@@ -558,7 +587,7 @@ void main()
 
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
                      const unsigned char *colors, const float *texCoords,
-                     unsigned int texture, int count)
+                     const float *dashes, unsigned int texture, int count)
   {
     if(count <= 0 || !ensure()) return;
     glApi::BindVertexArray(_vao);
@@ -586,6 +615,19 @@ void main()
     glApi::EnableVertexAttribArray(ATTRIB_COLOR);
     glApi::VertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0,
                                nullptr);
+
+    if(dashes) {
+      if(!_streamDash) glApi::GenBuffers(1, &_streamDash);
+      glApi::BindBuffer(GL_ARRAY_BUFFER, _streamDash);
+      glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * sizeof(float),
+                        dashes, GL_STREAM_DRAW);
+      glApi::EnableVertexAttribArray(ATTRIB_DASH);
+      glApi::VertexAttribPointer(ATTRIB_DASH, 1, GL_FLOAT, GL_FALSE, 0,
+                                 nullptr);
+    }
+    else {
+      glApi::DisableVertexAttribArray(ATTRIB_DASH);
+    }
 
     // the texture a string is drawn as a picture of itself through, if there
     // is one; the coordinates go with it and are nothing without it
