@@ -701,7 +701,7 @@ static bool eyeChanged(drawContext *ctx, PView *p)
 static bool viewIsTransparent(PView *p)
 {
   PViewOptions *opt = p->getOptions();
-  if(!CTX::instance()->alpha || opt->fakeTransparency) return false;
+  if(!CTX::instance()->alpha) return false;
   // an alpha the colour map carries itself, or the multiplier the shader
   // applies - which means nothing to the fixed function pipeline
   return ColorTable_IsAlpha(&opt->colorTable) ||
@@ -772,15 +772,7 @@ public:
     }
 
     if(CTX::instance()->alpha && ColorTable_IsAlpha(&opt->colorTable)) {
-      if(opt->fakeTransparency) {
-        // simple additive blending "a la xpost":
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
-        // maximum intensity projection "a la volsuite":
-        // glBlendFunc(GL_ONE, GL_ONE); // glBlendEquation(GL_MAX);
-        glEnable(GL_BLEND);
-        glDisable(GL_DEPTH_TEST);
-      }
-      else if(glShader::transparentPass()) {
+      if(glShader::transparentPass()) {
         // the pass sums what it is given into buffers of its own, in whatever
         // order it arrives: there is nothing to sort, and the blending that
         // does the summing is not ours to set
