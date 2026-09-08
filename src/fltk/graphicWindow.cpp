@@ -4,8 +4,6 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
-#include "GmshDefines.h"
-#include "GmshVersion.h"
 #if !defined(HAVE_NO_STDINT_H)
 #include <stdint.h>
 #elif defined(HAVE_NO_INTPTR_T)
@@ -30,32 +28,17 @@ typedef unsigned long intptr_t;
 #include "GuiActions.h"
 #include "GuiDialogs.h"
 #include "Gui.h"
-#include "GuiMenus.h"
 #include "menuFltk.h"
 #include "sceneViewFltk.h"
 #include "onelabGroup.h"
 #include "messageBrowser.h"
-#include "gmshLocalNetworkClient.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
 #include "GModel.h"
 #include "PView.h"
-#include "PViewData.h"
-#include "PViewOptions.h"
-#include "OpenFile.h"
-#include "CreateFile.h"
-#include "findLinks.h"
-#include "scriptStringInterface.h"
-#include "CommandLine.h"
 #include "Options.h"
 #include "Context.h"
-#include "StringUtils.h"
 #include "OS.h"
-#include "onelabUtils.h"
-
-#if defined(HAVE_MESH)
-#include "gmshCrossFields.h"
-#endif
 
 #if defined(HAVE_3M)
 #include "3M.h"
@@ -104,60 +87,10 @@ void file_quit_cb(Fl_Widget *w, void *data)
   projectQuit();
 }
 
-void file_watch_cb(Fl_Widget *w, void *data)
-{
-  if(w)
-    Dialog::showWatchPattern();
-  else
-    watchFiles();
-}
-
 void help_about_cb(Fl_Widget *w, void *data)
 {
   Dialog::show(Dialog::about(), -1);
 }
-
-void onelab_reload_cb(Fl_Widget *w, void *data)
-{
-  projectReload();
-}
-
-void geometry_reload_cb(Fl_Widget *w, void *data)
-{
-  geometryReload();
-}
-
-void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
-{
-  geometryRemoveLastCommand();
-}
-
-void mesh_save_cb(Fl_Widget *w, void *data)
-{
-  meshSave();
-}
-
-void mesh_1d_cb(Fl_Widget *w, void *data)
-{
-  meshDimension(1);
-}
-
-void mesh_2d_cb(Fl_Widget *w, void *data)
-{
-  meshDimension(2);
-}
-
-void mesh_3d_cb(Fl_Widget *w, void *data)
-{
-  meshDimension(3);
-}
-
-#if defined(HAVE_MESH)
-
-#if defined(HAVE_NETGEN)
-#endif
-
-#endif // HAVE_MESH
 
 // The menu description of src/common/GuiMenus.h names these actions rather than
 // naming FLTK callbacks, because the file chooser and the windows are the one
@@ -183,10 +116,6 @@ void fltkWindowAction(const std::string &what)
   else
     Msg::Error("Unknown window action '%s'", what.c_str());
 }
-
-// clang-format off
-
-// clang-format on
 
 static graphicWindow *getGraphicWindow(Fl_Widget *w)
 {
@@ -230,21 +159,6 @@ void fltkOrientViews(const std::string &what, bool reverse, bool sync)
     viewSetOrientation(ctx, what, reverse);
   }
   drawContext::global()->draw();
-}
-
-void status_options_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string what((const char *)data);
-
-  if(what == "?") { // display options
-    Dialog::show(Dialog::currentOptions(), -1);
-  }
-  else if(what == "p") { // toggle projection mode
-    opt_general_orthographic(0, GMSH_SET | GMSH_GUI,
-                             !opt_general_orthographic(0, GMSH_GET, 0));
-    drawContext::global()->draw();
-  }
 }
 
 // Picking with the mouse, on or off. Turning it off puts the pointer back to
@@ -303,14 +217,6 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
     FlGui::instance()->graph = graph2;
     delete deleteMe;
   }
-}
-
-void show_hide_message_cb(Fl_Widget *w, void *data)
-{
-  graphicWindow *g =
-    getGraphicWindow(FlGui::instance()->getCurrentOpenglWindow()->parent());
-  g->showHideMessages();
-  FlGui::check();
 }
 
 void show_hide_menu_cb(Fl_Widget *w, void *data)
