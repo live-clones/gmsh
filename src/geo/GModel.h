@@ -32,7 +32,6 @@ class ACIS_Internals;
 class Parasolid_Internals;
 class smooth_normals;
 class FieldManager;
-class gLevelset;
 class discreteFace;
 class discreteRegion;
 class MElementOctree;
@@ -747,11 +746,6 @@ public:
   void classifySurfaces(double angleThreshold, bool includeBoundary,
                         bool forReparametrization, double curveAngleThreshold,
                         std::map<int, std::vector<int>> &splitMap);
-
-  // build a new GModel by cutting the elements crossed by the levelset ls
-  // if cutElem is set to false, split the model without cutting the elements
-  GModel *buildCutGModel(gLevelset *ls, bool cutElem = true,
-                         bool saveTri = false);
 
   // store mesh elements of a chain in a new elementary and physical entity
   void storeChain(int dim, std::map<int, std::vector<MElement *>> &entityMap,

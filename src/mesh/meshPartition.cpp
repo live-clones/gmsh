@@ -77,7 +77,6 @@ typedef std::vector<std::pair<MElement *, int> > elementPartitionList;
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
-#include "MElementCut.h"
 #include "MPoint.h"
 
 extern "C" {

@@ -12,7 +12,7 @@
 #include "discreteFace.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-#include "MElementCut.h"
+#include "MPolygon.h"
 
 class ghostFace : public discreteFace {
 private:

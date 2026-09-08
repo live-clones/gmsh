@@ -21,7 +21,8 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
-#include "MElementCut.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "StringUtils.h"
 #include "GmshMessage.h"
 #include "Context.h"
@@ -401,8 +402,7 @@ int GModel::_readMSH2(const std::string &name)
               }
             }
             if(!(numVertices = MElement::getInfoMSH(type))) {
-              if(type != MSH_POLYG_ && type != MSH_POLYH_ &&
-                 type != MSH_POLYG_B) {
+              if(type != MSH_POLYG_) {
                 fclose(fp);
                 return 0;
               }
