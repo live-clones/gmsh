@@ -102,16 +102,17 @@ an unrelated bow-tie vertex.
   quads with no valid diagonal are retained and reported.
   Non-negative values retain the existing recombination validity filter.
 - `Mesh.QuadqsFinalSplitCadDistanceRatio = 0.2`: after all smoothing and
-  mandatory rewrites, try to split invalid quads and quads outside the absolute
-  corner-angle interval (strictly greater than 25 degrees and less than 160
-  degrees). A positive Jacobian alone must not preserve a nearly flat corner.
-  For otherwise acceptable quads,
+  mandatory rewrites, try to split physically invalid quads. A finite angle
+  outside the absolute quality interval does not alone trigger a split:
+  preserve geometrically valid pattern quads and report their quality violations.
+  TT merges still require the resulting quad to meet the absolute specifications.
+  For otherwise valid quads,
   split only if one diagonal exceeds this CAD distance/local-size ratio and
   the other diagonal is within tolerance and at least twice closer to CAD.
   Insert the **closer** diagonal. If its two triangles fail validity, retain
   the quad; never fall back to the distant diagonal for a CAD-only repair.
   This preserves quads whose two diagonal distances merely reflect curvature.
-  For validity/angle repair, compare both valid diagonals: minimize triangle
+  For validity repair, compare both valid diagonals: minimize triangle
   absolute violations, then minimize the triangles' sampled maximum and
   area-weighted mean squared CAD distances; minimum triangle angle breaks ties.
   The comparison uses seven samples per triangle: centroid, edge midpoints,
