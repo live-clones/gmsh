@@ -5,6 +5,11 @@
 
 #include <stdlib.h>
 #include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <mutex>
 #include <map>
 #include <queue>
 #include <unordered_set>
@@ -22,6 +27,145 @@
 #include "MEdge.h"
 #include "GModelParametrize.h"
 
+extern "C" {
+#include "libol1.h"
+}
+
+namespace {
+
+struct ExactTriangleProjection {
+  SPoint3 point = SPoint3(0., 0., 0.);
+  std::array<double, 3> weights{{0., 0., 0.}};
+  double squaredDistance = std::numeric_limits<double>::max();
+};
+
+static bool finishTriangleProjection(const SPoint3 &query,
+                                     const SPoint3 &point,
+                                     const std::array<double, 3> &weights,
+                                     ExactTriangleProjection &projection)
+{
+  const SVector3 difference = query - point;
+  const double squaredDistance = dot(difference, difference);
+  if(!std::isfinite(point.x()) || !std::isfinite(point.y()) ||
+     !std::isfinite(point.z()) || !std::isfinite(squaredDistance) ||
+     squaredDistance < 0.)
+    return false;
+  projection.point = point;
+  projection.weights = weights;
+  projection.squaredDistance = squaredDistance;
+  return true;
+}
+
+static bool projectPointOnTriangleEdges(const SPoint3 &query,
+                                        const SPoint3 &a, const SPoint3 &b,
+                                        const SPoint3 &c,
+                                        ExactTriangleProjection &projection)
+{
+  bool found = false;
+  const auto consider = [&](const SPoint3 &first, const SPoint3 &second,
+                            int firstIndex, int secondIndex) {
+    const SVector3 edge = second - first;
+    const double squaredLength = dot(edge, edge);
+    double parameter = 0.;
+    if(std::isfinite(squaredLength) && squaredLength > 0.) {
+      parameter = dot(query - first, edge) / squaredLength;
+      parameter = std::max(0., std::min(1., parameter));
+    }
+    const SPoint3 point = first + parameter * edge;
+    std::array<double, 3> weights{{0., 0., 0.}};
+    weights[firstIndex] = 1. - parameter;
+    weights[secondIndex] = parameter;
+    ExactTriangleProjection candidate;
+    if(!finishTriangleProjection(query, point, weights, candidate)) return;
+    if(!found || candidate.squaredDistance < projection.squaredDistance) {
+      projection = candidate;
+      found = true;
+    }
+  };
+  consider(a, b, 0, 1);
+  consider(b, c, 1, 2);
+  consider(c, a, 2, 0);
+  return found;
+}
+
+// Exact Euclidean point-triangle projection (Ericson's Voronoi-region test).
+// The edge fallback also gives a well-defined result on degenerate STL facets.
+static bool projectPointOnTriangle(const SPoint3 &query,
+                                   const MTriangle &triangle,
+                                   ExactTriangleProjection &projection)
+{
+  const SPoint3 a = triangle.getVertex(0)->point();
+  const SPoint3 b = triangle.getVertex(1)->point();
+  const SPoint3 c = triangle.getVertex(2)->point();
+  const SVector3 ab = b - a;
+  const SVector3 ac = c - a;
+  const SVector3 normal = crossprod(ab, ac);
+  const double squaredArea = dot(normal, normal);
+  if(!std::isfinite(squaredArea) || squaredArea == 0.)
+    return projectPointOnTriangleEdges(query, a, b, c, projection);
+
+  const SVector3 ap = query - a;
+  const double d1 = dot(ab, ap);
+  const double d2 = dot(ac, ap);
+  if(d1 <= 0. && d2 <= 0.)
+    return finishTriangleProjection(query, a, {{1., 0., 0.}}, projection);
+
+  const SVector3 bp = query - b;
+  const double d3 = dot(ab, bp);
+  const double d4 = dot(ac, bp);
+  if(d3 >= 0. && d4 <= d3)
+    return finishTriangleProjection(query, b, {{0., 1., 0.}}, projection);
+
+  const double vc = d1 * d4 - d3 * d2;
+  if(vc <= 0. && d1 >= 0. && d3 <= 0.) {
+    const double denominator = d1 - d3;
+    if(denominator > 0.) {
+      const double v = d1 / denominator;
+      return finishTriangleProjection(query, a + v * ab, {{1. - v, v, 0.}},
+                                      projection);
+    }
+    return projectPointOnTriangleEdges(query, a, b, c, projection);
+  }
+
+  const SVector3 cp = query - c;
+  const double d5 = dot(ab, cp);
+  const double d6 = dot(ac, cp);
+  if(d6 >= 0. && d5 <= d6)
+    return finishTriangleProjection(query, c, {{0., 0., 1.}}, projection);
+
+  const double vb = d5 * d2 - d1 * d6;
+  if(vb <= 0. && d2 >= 0. && d6 <= 0.) {
+    const double denominator = d2 - d6;
+    if(denominator > 0.) {
+      const double w = d2 / denominator;
+      return finishTriangleProjection(query, a + w * ac, {{1. - w, 0., w}},
+                                      projection);
+    }
+    return projectPointOnTriangleEdges(query, a, b, c, projection);
+  }
+
+  const double va = d3 * d6 - d5 * d4;
+  if(va <= 0. && d4 - d3 >= 0. && d5 - d6 >= 0.) {
+    const double denominator = d4 - d3 + d5 - d6;
+    if(denominator > 0.) {
+      const double w = (d4 - d3) / denominator;
+      return finishTriangleProjection(query, b + w * (c - b),
+                                      {{0., 1. - w, w}}, projection);
+    }
+    return projectPointOnTriangleEdges(query, a, b, c, projection);
+  }
+
+  const double denominator = va + vb + vc;
+  if(!(denominator > 0.) || !std::isfinite(denominator))
+    return projectPointOnTriangleEdges(query, a, b, c, projection);
+  const double v = vb / denominator;
+  const double w = vc / denominator;
+  return finishTriangleProjection(query, a + v * ab + w * ac,
+                                  {{1. - v - w, v, w}}, projection);
+}
+
+} // namespace
+
 #if defined(HAVE_EIGEN) && defined(HAVE_GEOMETRYCENTRAL)
 #include <Eigen/Core>
 #include <Eigen/Dense>
@@ -36,7 +180,19 @@ discreteFace::param::~param()
 
 void discreteFace::param::clear()
 {
+  if(libolOctree) {
+    LolFreeOctree(libolOctree);
+    libolOctree = 0;
+  }
+  libolVertexCoordinates.clear();
+  libolTriangles.clear();
+  libolTriangleToParam.clear();
+  libolDegenerateTrianglePositions.clear();
+  triangleBvhPositions.clear();
+  triangleBvhNodes.clear();
+  libolUvTriangleCache.clear();
   if(oct) delete oct;
+  oct = nullptr;
   rtree3d.RemoveAll();
   for(auto p : rtree3dData) delete p;
   rtree3dData.clear();
@@ -45,7 +201,236 @@ void discreteFace::param::clear()
   bbox = SBoundingBox3d();
   t2d.clear();
   t3d.clear();
+  triangleUnitNormals.clear();
+  uvTriangleGrid.clear();
+  uvTriangleGridResolution = 0;
+  uvTriangleGridMin[0] = uvTriangleGridMin[1] = 0.;
+  uvTriangleGridMax[0] = uvTriangleGridMax[1] = 0.;
+  uvTriangleGridTolerance = 0.;
   CURV.clear();
+}
+
+void discreteFace::_buildUvTriangleGrid()
+{
+  _param.uvTriangleGrid.clear();
+  _param.uvTriangleGridResolution = 0;
+  if(_param.t2d.empty()) return;
+
+  double minimum[2] = {
+    std::numeric_limits<double>::max(),
+    std::numeric_limits<double>::max()};
+  double maximum[2] = {
+    -std::numeric_limits<double>::max(),
+    -std::numeric_limits<double>::max()};
+  for(const MTriangle &triangle : _param.t2d) {
+    for(int i = 0; i < 3; ++i) {
+      const MVertex *vertex = triangle.getVertex(i);
+      if(!vertex || !std::isfinite(vertex->x()) ||
+         !std::isfinite(vertex->y()))
+        return;
+      minimum[0] = std::min(minimum[0], vertex->x());
+      minimum[1] = std::min(minimum[1], vertex->y());
+      maximum[0] = std::max(maximum[0], vertex->x());
+      maximum[1] = std::max(maximum[1], vertex->y());
+    }
+  }
+  if(!(maximum[0] > minimum[0]) || !(maximum[1] > minimum[1])) return;
+
+  const std::size_t resolution = std::max<std::size_t>(
+    16, std::min<std::size_t>(
+      512, static_cast<std::size_t>(
+        std::ceil(2. * std::sqrt(
+          static_cast<double>(_param.t2d.size()))))));
+  _param.uvTriangleGrid.assign(
+    resolution * resolution, std::vector<std::size_t>());
+  _param.uvTriangleGridResolution = resolution;
+  _param.uvTriangleGridMin[0] = minimum[0];
+  _param.uvTriangleGridMin[1] = minimum[1];
+  _param.uvTriangleGridMax[0] = maximum[0];
+  _param.uvTriangleGridMax[1] = maximum[1];
+  _param.uvTriangleGridTolerance =
+    CTX::instance()->mesh.toleranceReferenceElement;
+
+  auto cell = [&](double value, int axis) {
+    const double normalized =
+      (value - minimum[axis]) / (maximum[axis] - minimum[axis]);
+    if(normalized <= 0.) return std::size_t(0);
+    if(normalized >= 1.) return resolution - 1;
+    return std::min(
+      resolution - 1,
+      static_cast<std::size_t>(normalized * resolution));
+  };
+  const double tolerance = std::max(
+    0., _param.uvTriangleGridTolerance);
+  for(std::size_t position = 0; position < _param.t2d.size();
+      ++position) {
+    const MTriangle &triangle = _param.t2d[position];
+    double lower[2] = {
+      std::numeric_limits<double>::max(),
+      std::numeric_limits<double>::max()};
+    double upper[2] = {
+      -std::numeric_limits<double>::max(),
+      -std::numeric_limits<double>::max()};
+    for(int axis = 0; axis < 2; ++axis) {
+      double edgeSum = 0.;
+      for(int i = 0; i < 3; ++i) {
+        const double current = axis == 0 ?
+          triangle.getVertex(i)->x() : triangle.getVertex(i)->y();
+        const double next = axis == 0 ?
+          triangle.getVertex((i + 1) % 3)->x() :
+          triangle.getVertex((i + 1) % 3)->y();
+        lower[axis] = std::min(lower[axis], current);
+        upper[axis] = std::max(upper[axis], current);
+        edgeSum += std::abs(next - current);
+      }
+      // MElement::isInside accepts barycentric coordinates through +/-tol.
+      // Expand by a conservative coordinate-space image of that envelope so
+      // every triangle accepted by the historical predicate is in the cell.
+      const double padding = 2. * tolerance * edgeSum;
+      lower[axis] -= padding;
+      upper[axis] += padding;
+    }
+    const std::size_t firstU = cell(lower[0], 0);
+    const std::size_t lastU = cell(upper[0], 0);
+    const std::size_t firstV = cell(lower[1], 1);
+    const std::size_t lastV = cell(upper[1], 1);
+    for(std::size_t j = firstV; j <= lastV; ++j)
+      for(std::size_t i = firstU; i <= lastU; ++i)
+        _param.uvTriangleGrid[j * resolution + i].push_back(position);
+  }
+}
+
+void discreteFace::_buildTriangleBvh()
+{
+  _param.triangleBvhPositions.clear();
+  _param.triangleBvhNodes.clear();
+  if(_param.t3d.empty()) return;
+
+  _param.triangleBvhPositions.resize(_param.t3d.size());
+  for(std::size_t i = 0; i < _param.t3d.size(); ++i)
+    _param.triangleBvhPositions[i] = i;
+  _param.triangleBvhNodes.reserve(2 * _param.t3d.size());
+
+  const auto coordinate = [&](std::size_t triangle, int vertex, int axis) {
+    const MVertex *point = _param.t3d[triangle].getVertex(vertex);
+    return axis == 0 ? point->x() : axis == 1 ? point->y() : point->z();
+  };
+  bool valid = true;
+  const std::function<std::size_t(std::size_t, std::size_t)> build =
+    [&](std::size_t begin, std::size_t end) -> std::size_t {
+      param::TriangleBvhNode node;
+      node.begin = begin;
+      node.end = end;
+      for(int axis = 0; axis < 3; ++axis) {
+        node.minimum[axis] = std::numeric_limits<double>::max();
+        node.maximum[axis] = -std::numeric_limits<double>::max();
+      }
+      for(std::size_t offset = begin; offset < end; ++offset) {
+        const std::size_t triangle =
+          _param.triangleBvhPositions[offset];
+        for(int vertex = 0; vertex < 3; ++vertex) {
+          for(int axis = 0; axis < 3; ++axis) {
+            const double value = coordinate(triangle, vertex, axis);
+            if(!std::isfinite(value)) valid = false;
+            node.minimum[axis] = std::min(node.minimum[axis], value);
+            node.maximum[axis] = std::max(node.maximum[axis], value);
+          }
+        }
+      }
+
+      const std::size_t index = _param.triangleBvhNodes.size();
+      _param.triangleBvhNodes.push_back(node);
+      constexpr std::size_t leafSize = 2;
+      if(end - begin <= leafSize) return index;
+
+      int splitAxis = 0;
+      for(int axis = 1; axis < 3; ++axis)
+        if(node.maximum[axis] - node.minimum[axis] >
+           node.maximum[splitAxis] - node.minimum[splitAxis])
+          splitAxis = axis;
+      std::stable_sort(
+        _param.triangleBvhPositions.begin() +
+          static_cast<std::ptrdiff_t>(begin),
+        _param.triangleBvhPositions.begin() +
+          static_cast<std::ptrdiff_t>(end),
+        [&](std::size_t first, std::size_t second) {
+          double firstCenter = 0.;
+          double secondCenter = 0.;
+          for(int vertex = 0; vertex < 3; ++vertex) {
+            firstCenter += coordinate(first, vertex, splitAxis);
+            secondCenter += coordinate(second, vertex, splitAxis);
+          }
+          if(firstCenter != secondCenter)
+            return firstCenter < secondCenter;
+          return first < second;
+        });
+      const std::size_t middle = begin + (end - begin) / 2;
+      const std::size_t left = build(begin, middle);
+      const std::size_t right = build(middle, end);
+      _param.triangleBvhNodes[index].leaf = false;
+      _param.triangleBvhNodes[index].left = left;
+      _param.triangleBvhNodes[index].right = right;
+      return index;
+    };
+
+  build(0, _param.triangleBvhPositions.size());
+  if(!valid) {
+    _param.triangleBvhPositions.clear();
+    _param.triangleBvhNodes.clear();
+  }
+}
+
+const MTriangle *discreteFace::_findUniqueInteriorUvTriangle(
+  double u, double v) const
+{
+  const std::size_t resolution = _param.uvTriangleGridResolution;
+  if(!resolution || _param.uvTriangleGrid.size() != resolution * resolution ||
+     !std::isfinite(u) || !std::isfinite(v) ||
+     CTX::instance()->mesh.toleranceReferenceElement !=
+       _param.uvTriangleGridTolerance ||
+     u < _param.uvTriangleGridMin[0] ||
+     u > _param.uvTriangleGridMax[0] ||
+     v < _param.uvTriangleGridMin[1] ||
+     v > _param.uvTriangleGridMax[1])
+    return nullptr;
+
+  auto cell = [&](double value, int axis) {
+    const double normalized =
+      (value - _param.uvTriangleGridMin[axis]) /
+      (_param.uvTriangleGridMax[axis] - _param.uvTriangleGridMin[axis]);
+    if(normalized <= 0.) return std::size_t(0);
+    if(normalized >= 1.) return resolution - 1;
+    return std::min(
+      resolution - 1,
+      static_cast<std::size_t>(normalized * resolution));
+  };
+  const std::size_t i = cell(u, 0);
+  const std::size_t j = cell(v, 1);
+  const std::vector<std::size_t> &candidates =
+    _param.uvTriangleGrid[j * resolution + i];
+  const MTriangle *match = nullptr;
+  bool strictlyInterior = false;
+  double point[3] = {u, v, 0.};
+  const double tolerance = _param.uvTriangleGridTolerance;
+  for(const std::size_t position : candidates) {
+    if(position >= _param.t2d.size()) return nullptr;
+    const MTriangle &triangle = _param.t2d[position];
+    double barycentric[3] = {0., 0., 0.};
+    triangle.xyz2uvw(point, barycentric);
+    if(!std::isfinite(barycentric[0]) ||
+       !std::isfinite(barycentric[1]) ||
+       !std::isfinite(barycentric[2]) ||
+       !triangle.isInside(
+         barycentric[0], barycentric[1], barycentric[2]))
+      continue;
+    if(match) return nullptr;
+    match = &triangle;
+    strictlyInterior = barycentric[0] > tolerance &&
+      barycentric[1] > tolerance &&
+      1. - barycentric[0] - barycentric[1] > tolerance &&
+      std::abs(barycentric[2]) <= tolerance;
+  }
+  return match && strictlyInterior ? match : nullptr;
 }
 
 bool discreteFace::param::checkPlanar()
@@ -280,6 +665,240 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
                                   const double initialGuess[2]) const
 {
+  const GPoint result = closestPointLibOL(queryPoint, nullptr, initialGuess);
+  if(result.succeeded() || !std::isfinite(queryPoint.x()) ||
+     !std::isfinite(queryPoint.y()) || !std::isfinite(queryPoint.z()))
+    return result;
+  return closestPoint(queryPoint, 1e-1);
+}
+
+GPoint discreteFace::closestPointLibOL(const SPoint3 &queryPoint,
+                                       SVector3 *normal,
+                                       const double initialGuess[2]) const
+{
+  const auto failedPoint = [this]() {
+    GPoint result(0., 0., 0., this);
+    result.setNoSuccess();
+    return result;
+  };
+  double query[3] = {queryPoint.x(), queryPoint.y(), queryPoint.z()};
+  std::size_t position = std::numeric_limits<std::size_t>::max();
+  ExactTriangleProjection best;
+  bool haveInitialCandidate = false;
+  // LibOL uses face-local mutable scratch arrays indexed by a thread slot.
+  // This first, deliberately conservative implementation owns one slot and
+  // serializes concurrent queries on the same face. Different faces remain
+  // fully independent and can still be queried in parallel. Holding the lock
+  // until the GPoint is assembled also protects against a geometry rebuild.
+  std::lock_guard<std::mutex> lock(_param.libolMutex);
+  if(_param.empty() ||
+     (!_param.libolOctree &&
+      _param.libolDegenerateTrianglePositions.empty()) ||
+     !std::isfinite(queryPoint.x()) || !std::isfinite(queryPoint.y()) ||
+     !std::isfinite(queryPoint.z()))
+    return failedPoint();
+
+  const auto consider = [&](std::size_t candidatePosition) {
+    if(candidatePosition >= _param.t3d.size() ||
+       candidatePosition >= _param.t2d.size())
+      return;
+    ExactTriangleProjection candidate;
+    if(!projectPointOnTriangle(queryPoint, _param.t3d[candidatePosition],
+                               candidate))
+      return;
+    if(position == std::numeric_limits<std::size_t>::max() ||
+       candidate.squaredDistance < best.squaredDistance) {
+      position = candidatePosition;
+      best = candidate;
+    }
+  };
+
+  // Degenerate STL facets are not inserted in LibOL because its octree
+  // construction computes a facet aspect ratio. They are generally absent;
+  // when present, checking their edges explicitly keeps this query exact.
+  for(const std::size_t candidatePosition :
+      _param.libolDegenerateTrianglePositions)
+    consider(candidatePosition);
+
+  // A valid UV guess immediately supplies a rigorous upper distance bound.
+  // Keeping it on ties also preserves the expected chart at discrete seams.
+  if(initialGuess && std::isfinite(initialGuess[0]) &&
+     std::isfinite(initialGuess[1]) && _param.oct) {
+    const param::uvKey key(initialGuess[0], initialGuess[1]);
+    const auto cached = _param.libolUvTriangleCache.find(key);
+    if(cached != _param.libolUvTriangleCache.end()) {
+      haveInitialCandidate = cached->second < _param.t3d.size();
+      consider(cached->second);
+    }
+    else {
+      const MTriangle *triangle = _findUniqueInteriorUvTriangle(
+        initialGuess[0], initialGuess[1]);
+      const MElement *element = triangle;
+      if(!element)
+        element = _param.oct->find(
+          initialGuess[0], initialGuess[1], 0., -1, true);
+      if(element) {
+        triangle = static_cast<const MTriangle *>(element);
+        const std::ptrdiff_t candidatePosition =
+          triangle - _param.t2d.data();
+        if(candidatePosition >= 0 &&
+           static_cast<std::size_t>(candidatePosition) <
+             _param.t2d.size()) {
+          constexpr std::size_t maxCachedGuesses = 4096;
+          if(_param.libolUvTriangleCache.size() >= maxCachedGuesses)
+            _param.libolUvTriangleCache.clear();
+          _param.libolUvTriangleCache.emplace(
+            key, static_cast<std::size_t>(candidatePosition));
+          haveInitialCandidate = true;
+          consider(static_cast<std::size_t>(candidatePosition));
+        }
+      }
+    }
+  }
+
+  // The UV seed provides an upper bound. Traverse the immutable triangle BVH
+  // against that bound and evaluate every surviving leaf with the same exact
+  // Euclidean predicate. Unlike an octree, each surface triangle occurs in a
+  // single leaf; this removes the repeated tagged-link walks from the hot
+  // projection path while preserving the seed on equal-distance seams.
+  bool usedTriangleBvh = false;
+  if(haveInitialCandidate &&
+     position != std::numeric_limits<std::size_t>::max() &&
+     best.squaredDistance > 0. &&
+     !_param.triangleBvhNodes.empty() &&
+     _param.triangleBvhPositions.size() == _param.t3d.size()) {
+    const double coordinateScale =
+      std::max({1., std::fabs(queryPoint.x()), std::fabs(queryPoint.y()),
+                std::fabs(queryPoint.z()), std::fabs(best.point.x()),
+                std::fabs(best.point.y()), std::fabs(best.point.z())});
+    const double roundingMargin =
+      256. * std::numeric_limits<double>::epsilon() *
+      coordinateScale * coordinateScale;
+    const auto boxSquaredDistance = [&](const param::TriangleBvhNode &node) {
+      double squaredDistance = 0.;
+      for(int axis = 0; axis < 3; ++axis) {
+        const double value = query[axis];
+        double difference = 0.;
+        if(value < node.minimum[axis])
+          difference = node.minimum[axis] - value;
+        else if(value > node.maximum[axis])
+          difference = value - node.maximum[axis];
+        squaredDistance += difference * difference;
+      }
+      return squaredDistance;
+    };
+
+    thread_local std::vector<std::size_t> stack;
+    stack.clear();
+    stack.push_back(0);
+    while(!stack.empty()) {
+      const std::size_t nodePosition = stack.back();
+      stack.pop_back();
+      if(nodePosition >= _param.triangleBvhNodes.size()) continue;
+      const param::TriangleBvhNode &node =
+        _param.triangleBvhNodes[nodePosition];
+      if(boxSquaredDistance(node) >
+         best.squaredDistance + roundingMargin)
+        continue;
+      if(node.leaf) {
+        const std::size_t end = std::min(
+          node.end, _param.triangleBvhPositions.size());
+        for(std::size_t offset = node.begin; offset < end; ++offset)
+          consider(_param.triangleBvhPositions[offset]);
+        continue;
+      }
+
+      if(node.left >= _param.triangleBvhNodes.size() ||
+         node.right >= _param.triangleBvhNodes.size())
+        continue;
+      const double leftDistance = boxSquaredDistance(
+        _param.triangleBvhNodes[node.left]);
+      const double rightDistance = boxSquaredDistance(
+        _param.triangleBvhNodes[node.right]);
+      // LIFO: push the farther child first so the nearer bound tightens the
+      // search before the other branch is reconsidered.
+      if(leftDistance < rightDistance) {
+        if(rightDistance <= best.squaredDistance + roundingMargin)
+          stack.push_back(node.right);
+        if(leftDistance <= best.squaredDistance + roundingMargin)
+          stack.push_back(node.left);
+      }
+      else {
+        if(leftDistance <= best.squaredDistance + roundingMargin)
+          stack.push_back(node.left);
+        if(rightDistance <= best.squaredDistance + roundingMargin)
+          stack.push_back(node.right);
+      }
+    }
+    usedTriangleBvh = true;
+  }
+
+  // Retain LibOL for callers without a usable UV seed and as a defensive
+  // fallback when the immutable BVH could not be built.
+  if(!usedTriangleBvh && _param.libolOctree &&
+     (position == std::numeric_limits<std::size_t>::max() ||
+      best.squaredDistance > 0.)) {
+    double nearestDistance = std::numeric_limits<double>::max();
+    double maxDistance = 0.;
+    if(position != std::numeric_limits<std::size_t>::max()) {
+      const double coordinateScale =
+        std::max({1., std::fabs(queryPoint.x()), std::fabs(queryPoint.y()),
+                  std::fabs(queryPoint.z()), std::fabs(best.point.x()),
+                  std::fabs(best.point.y()), std::fabs(best.point.z())});
+      maxDistance = std::sqrt(best.squaredDistance) +
+        128. * std::numeric_limits<double>::epsilon() * coordinateScale;
+    }
+    const int32_t nearest =
+      LolGetNearest(_param.libolOctree, LolTypTri, query,
+                    &nearestDistance, maxDistance, nullptr, nullptr, 0);
+    if(nearest > 0) {
+      const std::size_t libolPosition =
+        static_cast<std::size_t>(nearest - 1);
+      if(libolPosition < _param.libolTriangleToParam.size())
+        consider(_param.libolTriangleToParam[libolPosition]);
+    }
+  }
+  if(position == std::numeric_limits<std::size_t>::max())
+    return failedPoint();
+
+  if(position >= _param.t3d.size() || position >= _param.t2d.size())
+    return failedPoint();
+  const MTriangle &triangle3d = _param.t3d[position];
+  const MTriangle &triangle2d = _param.t2d[position];
+
+  if(normal) {
+    if(position < _param.triangleUnitNormals.size())
+      *normal = _param.triangleUnitNormals[position];
+    else {
+      const SVector3 first(
+        triangle3d.getVertex(1)->x() - triangle3d.getVertex(0)->x(),
+        triangle3d.getVertex(1)->y() - triangle3d.getVertex(0)->y(),
+        triangle3d.getVertex(1)->z() - triangle3d.getVertex(0)->z());
+      const SVector3 second(
+        triangle3d.getVertex(2)->x() - triangle3d.getVertex(0)->x(),
+        triangle3d.getVertex(2)->y() - triangle3d.getVertex(0)->y(),
+        triangle3d.getVertex(2)->z() - triangle3d.getVertex(0)->z());
+      *normal = crossprod(first, second);
+      normal->normalize();
+    }
+  }
+
+  SPoint2 parameter;
+  for(int i = 0; i < 3; ++i) {
+    parameter[0] += best.weights[i] * triangle2d.getVertex(i)->x();
+    parameter[1] += best.weights[i] * triangle2d.getVertex(i)->y();
+  }
+  return GPoint(best.point.x(), best.point.y(), best.point.z(), this,
+                parameter);
+}
+
+GPoint discreteFace::closestPointFromTrustedGuess(
+  const SPoint3 &queryPoint, const double initialGuess[2]) const
+{
+  const GPoint result = closestPointLibOL(queryPoint, nullptr, initialGuess);
+  if(result.succeeded() || !std::isfinite(queryPoint.x()) ||
+     !std::isfinite(queryPoint.y()) || !std::isfinite(queryPoint.z()))
+    return result;
   return closestPoint(queryPoint, 1e-1);
 }
 
@@ -301,6 +920,7 @@ Range<double> discreteFace::parBounds(int i) const
 bool discreteFace::containsParam(const SPoint2 &pt)
 {
   if(_param.empty()) return false;
+  if(_findUniqueInteriorUvTriangle(pt.x(), pt.y())) return true;
   if(_param.oct->find(pt.x(), pt.y(), 0.0, -1, true)) return true;
   return false;
 }
@@ -315,13 +935,21 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
 {
   if(_param.empty()) return SVector3();
 
-  MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
+  const MTriangle *triangle2d =
+    _findUniqueInteriorUvTriangle(param.x(), param.y());
+  MElement *e = const_cast<MTriangle *>(triangle2d);
+  if(!e)
+    e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
     Msg::Debug("Triangle not found at uv=(%g,%g) on discrete surface %d",
               param.x(), param.y(), tag());
     return SVector3(0, 0, 1);
   }
   int position = (int)((MTriangle *)e - &_param.t2d[0]);
+  if(position >= 0 &&
+     static_cast<std::size_t>(position) <
+       _param.triangleUnitNormals.size())
+    return _param.triangleUnitNormals[static_cast<std::size_t>(position)];
   const MTriangle &t3d = _param.t3d[position];
   SVector3 v31(t3d.getVertex(2)->x() - t3d.getVertex(0)->x(),
                t3d.getVertex(2)->y() - t3d.getVertex(0)->y(),
@@ -332,6 +960,112 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
   SVector3 n = crossprod(v21, v31);
   n.normalize();
   return n;
+}
+
+bool discreteFace::normalIfContainsParam(const SPoint2 &param,
+                                         SVector3 &result) const
+{
+  if(_param.empty()) return false;
+  const MTriangle *triangle2d =
+    _findUniqueInteriorUvTriangle(param.x(), param.y());
+  std::ptrdiff_t position = -1;
+  if(triangle2d) {
+    position = triangle2d - _param.t2d.data();
+  }
+  else {
+    MElement *element =
+      _param.oct->find(param.x(), param.y(), 0.0, -1, true);
+    if(!element) return false;
+    position = static_cast<MTriangle *>(element) - _param.t2d.data();
+  }
+  if(position < 0 ||
+     static_cast<std::size_t>(position) >= _param.t3d.size())
+    return false;
+  if(static_cast<std::size_t>(position) <
+     _param.triangleUnitNormals.size()) {
+    result = _param.triangleUnitNormals[static_cast<std::size_t>(position)];
+    return true;
+  }
+  const MTriangle &triangle = _param.t3d[position];
+  const SVector3 first(
+    triangle.getVertex(1)->x() - triangle.getVertex(0)->x(),
+    triangle.getVertex(1)->y() - triangle.getVertex(0)->y(),
+    triangle.getVertex(1)->z() - triangle.getVertex(0)->z());
+  const SVector3 second(
+    triangle.getVertex(2)->x() - triangle.getVertex(0)->x(),
+    triangle.getVertex(2)->y() - triangle.getVertex(0)->y(),
+    triangle.getVertex(2)->z() - triangle.getVertex(0)->z());
+  result = crossprod(first, second);
+  result.normalize();
+  return true;
+}
+
+bool discreteFace::normalBoundsForParametricTriangle(
+  const SPoint2 &first, const SPoint2 &second, const SPoint2 &third,
+  SVector3 &minimumNormal, SVector3 &maximumNormal) const
+{
+  if(_param.empty() ||
+     _param.triangleUnitNormals.size() != _param.t2d.size() ||
+     !std::isfinite(first.x()) || !std::isfinite(first.y()) ||
+     !std::isfinite(second.x()) || !std::isfinite(second.y()) ||
+     !std::isfinite(third.x()) || !std::isfinite(third.y()))
+    return false;
+
+  const double minimum[2] = {
+    std::min({first.x(), second.x(), third.x()}),
+    std::min({first.y(), second.y(), third.y()})};
+  const double maximum[2] = {
+    std::max({first.x(), second.x(), third.x()}),
+    std::max({first.y(), second.y(), third.y()})};
+
+  double lower[3] = {
+    std::numeric_limits<double>::max(),
+    std::numeric_limits<double>::max(),
+    std::numeric_limits<double>::max()};
+  double upper[3] = {
+    -std::numeric_limits<double>::max(),
+    -std::numeric_limits<double>::max(),
+    -std::numeric_limits<double>::max()};
+  bool found = false;
+  for(std::size_t position = 0; position < _param.t2d.size(); ++position) {
+    const MTriangle &triangle = _param.t2d[position];
+    double triangleMinimum[2] = {
+      std::numeric_limits<double>::max(),
+      std::numeric_limits<double>::max()};
+    double triangleMaximum[2] = {
+      -std::numeric_limits<double>::max(),
+      -std::numeric_limits<double>::max()};
+    for(int vertex = 0; vertex < 3; ++vertex) {
+      triangleMinimum[0] = std::min(
+        triangleMinimum[0], triangle.getVertex(vertex)->x());
+      triangleMinimum[1] = std::min(
+        triangleMinimum[1], triangle.getVertex(vertex)->y());
+      triangleMaximum[0] = std::max(
+        triangleMaximum[0], triangle.getVertex(vertex)->x());
+      triangleMaximum[1] = std::max(
+        triangleMaximum[1], triangle.getVertex(vertex)->y());
+    }
+    if(triangleMaximum[0] < minimum[0] ||
+       triangleMinimum[0] > maximum[0] ||
+       triangleMaximum[1] < minimum[1] ||
+       triangleMinimum[1] > maximum[1])
+      continue;
+
+    const SVector3 &normal = _param.triangleUnitNormals[position];
+    const double norm = normal.norm();
+    if(!std::isfinite(normal.x()) || !std::isfinite(normal.y()) ||
+       !std::isfinite(normal.z()) || !std::isfinite(norm) || !(norm > 0.))
+      continue;
+    for(int component = 0; component < 3; ++component) {
+      lower[component] = std::min(lower[component], normal[component]);
+      upper[component] = std::max(upper[component], normal[component]);
+    }
+    found = true;
+  }
+  if(!found) return false;
+  minimumNormal = SVector3(lower);
+  maximumNormal = SVector3(upper);
+  return true;
 }
 
 double discreteFace::curvatureMax(const SPoint2 &param) const
@@ -642,6 +1376,7 @@ void discreteFace::_createGeometryFromSTL()
      stl_vertices_xyz.empty())
     return;
 
+  std::lock_guard<std::mutex> lock(_param.libolMutex);
   _param.clear();
 
   for(size_t i = 0; i < stl_vertices_uv.size(); i++) {
@@ -670,9 +1405,25 @@ void discreteFace::_createGeometryFromSTL()
       _param.CURV.push_back(stl_curvatures[2 * c + 1]);
     }
   }
+  _param.triangleUnitNormals.reserve(_param.t3d.size());
+  for(const MTriangle &triangle : _param.t3d) {
+    const SVector3 first(
+      triangle.getVertex(1)->x() - triangle.getVertex(0)->x(),
+      triangle.getVertex(1)->y() - triangle.getVertex(0)->y(),
+      triangle.getVertex(1)->z() - triangle.getVertex(0)->z());
+    const SVector3 second(
+      triangle.getVertex(2)->x() - triangle.getVertex(0)->x(),
+      triangle.getVertex(2)->y() - triangle.getVertex(0)->y(),
+      triangle.getVertex(2)->z() - triangle.getVertex(0)->z());
+    SVector3 normal = crossprod(first, second);
+    normal.normalize();
+    _param.triangleUnitNormals.push_back(normal);
+  }
   if(_param.checkPlanar())
     Msg::Info("Discrete surface %d is planar, simplifying parametrization",
               tag());
+
+  _buildTriangleBvh();
 
   std::vector<MElement *> temp;
   for(size_t j = 0; j < _param.t2d.size(); j++) {
@@ -696,6 +1447,62 @@ void discreteFace::_createGeometryFromSTL()
     _param.rtree3d.Insert(MIN, MAX, _param.rtree3dData.back());
   }
   _param.oct = new MElementOctree(temp);
+  _buildUvTriangleGrid();
+
+  // Keep the legacy R-tree above and build a second, true nearest-neighbour
+  // index for exact and inexpensive projections. LibOL stores pointers to the
+  // supplied arrays, hence these flat buffers live in _param for the complete
+  // lifetime of the octree. Exactly degenerate triangles are left out because
+  // LibOL computes a facet aspect ratio while constructing its index.
+  if(_param.v3d.size() <=
+       static_cast<std::size_t>(std::numeric_limits<int32_t>::max()) &&
+     _param.t3d.size() <=
+       static_cast<std::size_t>(std::numeric_limits<int32_t>::max())) {
+    _param.libolVertexCoordinates.reserve(3 * _param.v3d.size());
+    bool finiteVertices = true;
+    for(const MVertex &vertex : _param.v3d) {
+      finiteVertices = finiteVertices && std::isfinite(vertex.x()) &&
+        std::isfinite(vertex.y()) && std::isfinite(vertex.z());
+      _param.libolVertexCoordinates.push_back(vertex.x());
+      _param.libolVertexCoordinates.push_back(vertex.y());
+      _param.libolVertexCoordinates.push_back(vertex.z());
+    }
+    _param.libolTriangles.reserve(3 * _param.t3d.size());
+    _param.libolTriangleToParam.reserve(_param.t3d.size());
+    _param.libolDegenerateTrianglePositions.reserve(
+      std::min<std::size_t>(_param.t3d.size(), 16));
+    if(finiteVertices) {
+      for(std::size_t i = 0; i < stl_triangles.size() / 3; ++i) {
+        const MTriangle &triangle = _param.t3d[i];
+        const SVector3 first = triangle.getVertex(1)->point() -
+          triangle.getVertex(0)->point();
+        const SVector3 second = triangle.getVertex(2)->point() -
+          triangle.getVertex(0)->point();
+        const SVector3 triangleNormal = crossprod(first, second);
+        const double squaredNorm = dot(triangleNormal, triangleNormal);
+        if(!std::isfinite(squaredNorm) ||
+           squaredNorm < std::numeric_limits<double>::min()) {
+          _param.libolDegenerateTrianglePositions.push_back(i);
+          continue;
+        }
+        _param.libolTriangles.push_back(stl_triangles[3 * i] + 1);
+        _param.libolTriangles.push_back(stl_triangles[3 * i + 1] + 1);
+        _param.libolTriangles.push_back(stl_triangles[3 * i + 2] + 1);
+        _param.libolTriangleToParam.push_back(i);
+      }
+    }
+    if(finiteVertices && !_param.libolVertexCoordinates.empty() &&
+       !_param.libolTriangles.empty()) {
+      _param.libolOctree = LolNewOctree(
+        static_cast<int32_t>(_param.libolVertexCoordinates.size() / 3),
+        _param.libolVertexCoordinates.data(),
+        _param.libolVertexCoordinates.data() + 3, 0, nullptr, nullptr,
+        static_cast<int32_t>(_param.libolTriangles.size() / 3),
+        _param.libolTriangles.data(), _param.libolTriangles.data() + 3, 0,
+        nullptr, nullptr, 0, nullptr, nullptr, 0, nullptr, nullptr, 0,
+        nullptr, nullptr, 0, nullptr, nullptr, 1, 1);
+    }
+  }
 }
 
 void discreteFace::mesh(bool verbose)

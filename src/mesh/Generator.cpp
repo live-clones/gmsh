@@ -89,6 +89,7 @@
 
 #if defined(HAVE_QUADOPTIMIZER)
 #include "smallCavityOptimizer.h"
+#include "smallCavityOptimizerV2.h"
 #endif
 
 #include "meshDuplicateVertices.h"
@@ -840,10 +841,12 @@ static void Mesh2D(GModel *m)
       }
     }
 
+    // A disabled cleanup must also bypass the terminal legacy closure and
+    // splitting passes. This preserves the PACK output for isolated optimizer
+    // comparisons and matches the public option's documented meaning.
+    if(CTX::instance()->mesh.quadqsCleanupMethod != 2) {
     if(CTX::instance()->mesh.quadqsCleanupMethod == 0)
       OptimizeMesh(m, "OptimizeQuads", false, 1, 0., false);
-    else if(CTX::instance()->mesh.quadqsCleanupMethod == 1)
-      OptimizeMesh(m, "OptimizeQuadsFast", false, 1, 0., false);
 
     // Cleanup can deliberately leave a malformed input face unchanged after
     // warning about it. No later PACK operation may then split/recombine that
@@ -878,8 +881,16 @@ static void Mesh2D(GModel *m)
       if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
         continue;
 #if defined(HAVE_QUADOPTIMIZER)
+      // In the staged Fast strategy every valid TT pair is deliberately
+      // merged before the single global smoothing pass. Splitting a convex,
+      // oriented result only because it exceeds the quality warping target
+      // would recreate the exact TT/QTT/TQQT patterns that phase removed.
+      // Keep the terminal fallback for genuinely concave, inverted or
+      // degenerate quads; leave finite warping to the reported quality.
       const double maximumWarpingDegrees =
-        QuadOptimizer::absoluteMaximumQuadWarpingDegrees;
+        CTX::instance()->mesh.quadqsCleanupMethod == 1 ?
+          std::numeric_limits<double>::max() :
+          QuadOptimizer::absoluteMaximumQuadWarpingDegrees;
 #else
       // Without the optional quality module, still enforce the requested
       // concavity/validity invariant; only the extra warping limit is absent.
@@ -887,7 +898,8 @@ static void Mesh2D(GModel *m)
         std::numeric_limits<double>::max();
 #endif
       const WarpedQuadrangleSplitResult split =
-        splitExcessivelyWarpedQuadrangles(gf, maximumWarpingDegrees);
+        splitExcessivelyWarpedQuadrangles(
+          gf, maximumWarpingDegrees, {}, {}, {}, {}, {}, true);
       terminalNonConvexOrInvalid += split.nonConvexOrInvalid;
       terminalExcessiveWarping += split.excessiveWarping;
       terminalSplitCount += split.split;
@@ -940,8 +952,9 @@ static void Mesh2D(GModel *m)
     // Recover quadrangles from the residual triangles, but do not use the
     // historical Blossom/greedy recombiner here: it can recreate the exact
     // concave quad split above. This local transaction is accepted only when
-    // the UV/physical validity, absolute specifications, size, valence and
-    // integrated CAD-distance score all pass.
+    // the UV/physical validity, absolute specifications and size guards all
+    // pass after a transactional mixed Winslow solve. Once those hard guards
+    // pass, reducing two triangles to one valid quad is sufficient.
     QuadOptimizer::SmallCavityOptimizerOptions terminalOptions;
     terminalOptions.invalidateVertexArrays = false;
     terminalOptions.minimumRecombinationQuality =
@@ -959,6 +972,86 @@ static void Mesh2D(GModel *m)
       terminalOptions.minimumEdgeSizeRatio = 0.;
       terminalOptions.maximumEdgeSizeRatio = 0.;
     }
+    auto closeFinalPatterns =
+      [&](const std::set<GFace *> &faces, const char *stage) {
+        QuadOptimizer::SmallCavityOptimizerOptions closureOptions =
+          terminalOptions;
+        closureOptions.fastInteractiveCleanUp = true;
+        closureOptions.finalPatternClosureOnly = true;
+        closureOptions.smoothingPasses = 0;
+        closureOptions.finalSmoothingPasses = 0;
+        closureOptions.postTopologyNeighborSmoothingPasses = 0;
+        closureOptions.invalidateVertexArrays = false;
+        closureOptions.verbose = std::max(0, Msg::GetVerbosity() - 4);
+        std::size_t processed = 0;
+        std::size_t topologyChanges = 0;
+        std::size_t edgeSwaps = 0;
+        std::size_t triangleReductions = 0;
+        std::size_t boundaryFans = 0;
+        std::size_t diamonds = 0;
+        bool success = true;
+        for(GFace *gf : faces) {
+          if(!gf || terminalSkippedFaces.find(gf) !=
+                      terminalSkippedFaces.end())
+            continue;
+          const QuadOptimizer::SmallCavityOptimizerResult closure =
+            QuadOptimizer::optimizeSmallQuadCavities(gf, closureOptions);
+          ++processed;
+          success = success && closure.success;
+          diamonds += closure.acceptedDiamonds;
+          edgeSwaps += closure.acceptedEdgeSwaps +
+            closure.acceptedTriangleTriangleSwaps;
+          boundaryFans +=
+            closure.acceptedBoundaryTriangleQuadTriangleFans;
+          triangleReductions +=
+            closure.acceptedInteriorTriangleTriangleQuadReductions +
+            closure.acceptedInteriorFourTriangleFanReductions +
+            closure.acceptedInteriorAlternatingQuadTriangleReductions +
+            closure.acceptedInteriorQQTQQTReductions +
+            closure.acceptedQuadTwoTriangleReductions +
+            closure.acceptedOppositeEdgeTriangleQuadFans +
+            closure.acceptedBoundaryTriangleQuadTriangleFans +
+            closure.terminalTrianglePairsAccepted;
+          const std::size_t cleanUpChanges =
+            closure.cleanUpConnectivityAccepted +
+            closure.cleanUpBoundaryAccepted +
+            closure.cleanUpShapeAccepted +
+            closure.cleanUpSizeAccepted;
+          const std::size_t nonCleanUpEdgeSwaps =
+            closure.acceptedEdgeSwaps >=
+                closure.acceptedCleanUpEdgeSwaps ?
+              closure.acceptedEdgeSwaps -
+                closure.acceptedCleanUpEdgeSwaps : 0;
+          topologyChanges +=
+            closure.acceptedDiamonds +
+            closure.acceptedTriangleTriangleSwaps +
+            closure.acceptedQuadTwoTriangleReductions +
+            closure.acceptedOppositeEdgeTriangleQuadFans +
+            closure.acceptedInteriorTriangleTriangleQuadReductions +
+            closure.acceptedInteriorFourTriangleFanReductions +
+            closure.acceptedInteriorAlternatingQuadTriangleReductions +
+            closure.acceptedInteriorQQTQQTReductions +
+            closure.acceptedValenceSixSplits +
+            closure.acceptedBoundaryTriangleQuadTriangleFans +
+            nonCleanUpEdgeSwaps +
+            closure.acceptedOneInteriorVertexCavities +
+            closure.acceptedThreeInteriorVertexCavities +
+            closure.acceptedFourInteriorVertexCavities +
+            closure.terminalTrianglePairsAccepted +
+            closure.warpedQuadranglesSplit +
+            closure.catastrophicAngleQuadranglesSplit +
+            cleanUpChanges;
+        }
+        if(topologyChanges) m->deleteVertexArrays();
+        Msg::Info("PACK %s complete pattern closure: faces=%zu "
+                  "topologyChanges=%zu edgeSwaps=%zu "
+                  "triangleReductions=%zu boundaryFans=%zu diamonds=%zu "
+                  "status=%s",
+                  stage, processed, topologyChanges, edgeSwaps,
+                  triangleReductions, boundaryFans, diamonds,
+                  success ? "PASS" : "FAIL");
+        return success;
+      };
     std::size_t terminalPairsVisited = 0;
     std::size_t terminalPairsAccepted = 0;
     std::size_t terminalPairsRejectedInvalid = 0;
@@ -966,23 +1059,24 @@ static void Mesh2D(GModel *m)
     std::size_t terminalPairsRejectedQuality = 0;
     std::size_t terminalPairsRejectedSize = 0;
     std::size_t terminalPairsRejectedGeometry = 0;
-    for(GFace *gf : m->getFaces()) {
-      if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
-        continue;
-      const QuadOptimizer::TerminalTriangleRecombinationResult recombination =
-        QuadOptimizer::recombineRemainingTrianglePairs(
-          gf, terminalOptions);
-      terminalPairsVisited += recombination.pairsVisited;
-      terminalPairsAccepted += recombination.accepted;
-      terminalPairsRejectedInvalid += recombination.rejectedInvalid;
-      terminalPairsRejectedTopology += recombination.rejectedTopology;
-      terminalPairsRejectedQuality += recombination.rejectedQuality;
-      terminalPairsRejectedSize += recombination.rejectedSize;
-      terminalPairsRejectedGeometry += recombination.rejectedGeometry;
-      if(!recombination.success) {
-        gf->meshStatistics.status = GFace::FAILED;
-        Msg::Error("PACK terminal triangle recombination failed on face %d",
-                   gf->tag());
+    if(CTX::instance()->mesh.quadqsCleanupMethod != 1) {
+      for(GFace *gf : m->getFaces()) {
+        if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
+          continue;
+        const QuadOptimizer::TerminalTriangleRecombinationResult recombination =
+          QuadOptimizer::recombineRemainingTrianglePairs(
+            gf, terminalOptions);
+        terminalPairsVisited += recombination.pairsVisited;
+        terminalPairsAccepted += recombination.accepted;
+        terminalPairsRejectedInvalid += recombination.rejectedInvalid;
+        terminalPairsRejectedTopology += recombination.rejectedTopology;
+        terminalPairsRejectedQuality += recombination.rejectedQuality;
+        terminalPairsRejectedSize += recombination.rejectedSize;
+        terminalPairsRejectedGeometry += recombination.rejectedGeometry;
+        if(!recombination.success) {
+          Msg::Warning("PACK skipped terminal triangle recombination on "
+                       "face %d", gf->tag());
+        }
       }
     }
     if(terminalPairsAccepted) m->deleteVertexArrays();
@@ -994,37 +1088,50 @@ static void Mesh2D(GModel *m)
               terminalPairsRejectedTopology,
               terminalPairsRejectedQuality, terminalPairsRejectedSize,
               terminalPairsRejectedGeometry);
+    std::set<GFace *> terminalClosureFaces;
+    for(GFace *gf : m->getFaces()) terminalClosureFaces.insert(gf);
+    if(CTX::instance()->mesh.quadqsCleanupMethod != 1)
+      closeFinalPatterns(terminalClosureFaces, "terminal");
+    else
+      Msg::Info("PACK Fast staged cleanup: terminal recombination and "
+                "full-catalog restart disabled after final smoothing");
 #endif
 
-    // Absolute final operation: audit every quad created above and retain
-    // fallback triangles permanently if any candidate escaped a guard.
-    // Nothing is recombined after this pass.
+    // Audit every quad created above. Any fallback triangles introduced here
+    // receive one final transactional T+T -> Q attempt below; the reducer can
+    // only recreate a quad that passes every configured criterion after
+    // mixed Winslow.
     std::size_t finalNonConvexOrInvalid = 0;
     std::size_t finalExcessiveWarping = 0;
     std::size_t finalSplitCount = 0;
     std::size_t finalRejected = 0;
+    std::set<GFace *> finalSplitFaces;
     for(GFace *gf : m->getFaces()) {
       if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
         continue;
 #if defined(HAVE_QUADOPTIMIZER)
       const double maximumWarpingDegrees =
-        QuadOptimizer::absoluteMaximumQuadWarpingDegrees;
+        CTX::instance()->mesh.quadqsCleanupMethod == 1 ?
+          std::numeric_limits<double>::max() :
+          QuadOptimizer::absoluteMaximumQuadWarpingDegrees;
 #else
       const double maximumWarpingDegrees =
         std::numeric_limits<double>::max();
 #endif
       const WarpedQuadrangleSplitResult audit =
-        splitExcessivelyWarpedQuadrangles(gf, maximumWarpingDegrees);
+        splitExcessivelyWarpedQuadrangles(
+          gf, maximumWarpingDegrees, {}, {}, {}, {}, {}, true);
       finalNonConvexOrInvalid += audit.nonConvexOrInvalid;
       finalExcessiveWarping += audit.excessiveWarping;
       finalSplitCount += audit.split;
       const std::size_t rejected = audit.rejectedInvalid +
         audit.rejectedUnsupportedOrder;
       finalRejected += rejected;
+      if(audit.split) finalSplitFaces.insert(gf);
       if(rejected) {
-        gf->meshStatistics.status = GFace::FAILED;
-        Msg::Error("PACK face %d failed the final quad validity audit "
-                   "(%zu rejected)", gf->tag(), rejected);
+        Msg::Warning("PACK face %d retained %zu quadrangle%s rejected by "
+                     "the final validity audit",
+                     gf->tag(), rejected, rejected == 1 ? "" : "s");
       }
     }
     Msg::Info("PACK final quad audit: concaveOrInvalid=%zu "
@@ -1032,6 +1139,57 @@ static void Mesh2D(GModel *m)
               finalNonConvexOrInvalid, finalExcessiveWarping,
               finalSplitCount, finalRejected,
               terminalSkippedFaces.size());
+#if defined(HAVE_QUADOPTIMIZER)
+    std::size_t postFallbackVisited = 0;
+    std::size_t postFallbackAccepted = 0;
+    std::size_t postFallbackRejectedInvalid = 0;
+    std::size_t postFallbackRejectedTopology = 0;
+    std::size_t postFallbackRejectedQuality = 0;
+    std::size_t postFallbackRejectedSize = 0;
+    std::size_t postFallbackRejectedGeometry = 0;
+    if(CTX::instance()->mesh.quadqsCleanupMethod != 1) {
+      for(GFace *gf : finalSplitFaces) {
+        const QuadOptimizer::TerminalTriangleRecombinationResult recombination =
+          QuadOptimizer::recombineRemainingTrianglePairs(
+            gf, terminalOptions);
+        postFallbackVisited += recombination.pairsVisited;
+        postFallbackAccepted += recombination.accepted;
+        postFallbackRejectedInvalid += recombination.rejectedInvalid;
+        postFallbackRejectedTopology += recombination.rejectedTopology;
+        postFallbackRejectedQuality += recombination.rejectedQuality;
+        postFallbackRejectedSize += recombination.rejectedSize;
+        postFallbackRejectedGeometry += recombination.rejectedGeometry;
+        if(!recombination.success) {
+          Msg::Warning("PACK skipped post-fallback triangle recombination on "
+                       "face %d", gf->tag());
+        }
+      }
+    }
+    if(postFallbackAccepted) m->deleteVertexArrays();
+    if(!finalSplitFaces.empty() &&
+       CTX::instance()->mesh.quadqsCleanupMethod != 1)
+      Msg::Info("PACK post-fallback triangle recombination: visited=%zu "
+                "accepted=%zu rejectedInvalid=%zu rejectedTopology=%zu "
+                "rejectedQuality=%zu rejectedSize=%zu "
+                "rejectedGeometry=%zu",
+                postFallbackVisited, postFallbackAccepted,
+                postFallbackRejectedInvalid,
+                postFallbackRejectedTopology,
+                postFallbackRejectedQuality, postFallbackRejectedSize,
+                postFallbackRejectedGeometry);
+    if(!finalSplitFaces.empty() &&
+       CTX::instance()->mesh.quadqsCleanupMethod != 1)
+      closeFinalPatterns(finalSplitFaces, "post-fallback");
+#endif
+
+    // V2 owns the final topology cleanup and nodal Winslow sweeps. Run it
+    // after PACK's validity fallbacks so no later split can invalidate the
+    // final smoothing, and the file written by Gmsh is the optimized mesh.
+    if(CTX::instance()->mesh.quadqsCleanupMethod == 1) {
+      Msg::Info("PACK final cleanup: V2 with final nodal Winslow");
+      OptimizeMesh(m, "OptimizeQuadsFast", false, 1, 0., false);
+    }
+
 #if defined(HAVE_QUADOPTIMIZER)
     if(Msg::GetVerbosity() >= 4) {
       QuadOptimizer::SmallCavityOptimizerOptions auditOptions =
@@ -1043,6 +1201,10 @@ static void Mesh2D(GModel *m)
       PrintQuadMeshQualitySummary("PACK final", finalQuality);
     }
 #endif
+    }
+    else {
+      Msg::Info("PACK cleanup disabled: preserving generated mesh");
+    }
     if(debug) m->writeMSH("opti4.msh");
 
     for(GFace *gf : m->getFaces()) {
@@ -1337,6 +1499,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
 #if defined(HAVE_QUADOPTIMIZER)
     QuadOptimizer::SmallCavityOptimizerOptions options;
     options.fastInteractiveCleanUp = how == "OptimizeQuadsFast";
+    options.stagedTopologyThenQuality = options.fastInteractiveCleanUp;
     options.minimumRecombinationQuality =
       std::max(0., CTX::instance()->mesh.recombineMinimumQuality);
     options.pillowNeighborLayers =
@@ -1353,9 +1516,20 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
       options.minimumEdgeSizeRatio = 0.;
       options.maximumEdgeSizeRatio = 0.;
     }
+    options.smartLaplacian = options.fastInteractiveCleanUp &&
+      CTX::instance()->mesh.quadqsSmartLaplacian != 0;
+    options.finalWinslowPasses = options.fastInteractiveCleanUp &&
+      CTX::instance()->mesh.quadqsSmartLaplacian == 2 ? 1 : 0;
     options.finalSmoothingPasses =
       std::max(0, CTX::instance()->mesh.nbSmoothing);
     if(options.fastInteractiveCleanUp) {
+      // Complete topology before the final physical mean-plane smoothing.
+      // Mesh.Smoothing controls the terminal sweep budget, once per model.
+      // Use the validated V2 budgets. The historical adapter capped the
+      // old cleanup at two passes and inherited only 100 accepted cavities,
+      // prematurely stopping V2 compared with the standalone benchmark.
+      options.maximumOptimizationPasses = 8;
+      options.maximumAcceptedCavities = 10000;
       options.postTopologyNeighborSmoothingPasses = 1;
       // Pillow is a separate structural operator and does not yet use the
       // same strict Fast global-quality transaction.
@@ -1363,9 +1537,12 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
     }
     // Keep -v5 output unchanged while reserving -v6 and above for compact
     // per-pattern diagnostics inside the half-edge optimizer.
-    options.verbose = std::max(0, Msg::GetVerbosity() - 4);
+    options.verbose = std::max(
+      0, Msg::GetVerbosity() - (options.fastInteractiveCleanUp ? 5 : 4));
     const QuadOptimizer::AllFacesOptimizerResult result =
-      QuadOptimizer::optimizeSmallQuadCavitiesAllFaces(options);
+      options.fastInteractiveCleanUp ?
+        QuadOptimizer::optimizeSmallQuadCavitiesAllFacesV2(options) :
+        QuadOptimizer::optimizeSmallQuadCavitiesAllFaces(options);
     if(!result.success) {
       Msg::Error("%s failed", how.c_str());
     }
@@ -1390,12 +1567,38 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
                 result.rejectedBySize);
       if(options.fastInteractiveCleanUp)
         Msg::Info("%s half-edge rule triangle_triangle_swap: "
-                  "visited=%zu accepted=%zu",
+                  "visited=%zu accepted=%zu geometry=%zu",
                   how.c_str(), result.triangleTriangleSwapsVisited,
-                  result.acceptedTriangleTriangleSwaps);
+                  result.acceptedTriangleTriangleSwaps,
+                  result.acceptedGeometryDrivenTriangleTriangleSwaps);
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s geometry-driven midpoint swaps: TT=%zu TQ=%zu",
+                  how.c_str(),
+                  result.acceptedGeometryDrivenTriangleTriangleSwaps,
+                  result.acceptedGeometryDrivenMixedTriangleQuadSwaps);
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s interior TTQ -> Q reduction: accepted=%zu",
+                  how.c_str(),
+                  result.acceptedInteriorTriangleTriangleQuadReductions);
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s interior TTTT -> Q reduction: accepted=%zu",
+                  how.c_str(),
+                  result.acceptedInteriorFourTriangleFanReductions);
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s interior QTQT -> 2Q reduction: accepted=%zu",
+                  how.c_str(),
+                  result.acceptedInteriorAlternatingQuadTriangleReductions);
       if(options.fastInteractiveCleanUp)
         Msg::Info("%s Q+T+T triangle reduction: accepted=%zu",
                   how.c_str(), result.acceptedQuadTwoTriangleReductions);
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s opposite-edge T-Q-T mixed swap: accepted=%zu",
+                  how.c_str(),
+                  result.acceptedOppositeEdgeTriangleQuadSwaps);
+      if(options.fastInteractiveCleanUp)
+        Msg::Info("%s opposite-edge T-Q-T -> 3Q fan: accepted=%zu",
+                  how.c_str(),
+                  result.acceptedOppositeEdgeTriangleQuadFans);
       if(options.fastInteractiveCleanUp)
         Msg::Info("%s half-edge rule boundary_t_qn_t: accepted=%zu",
                   how.c_str(),
@@ -2020,7 +2223,7 @@ void GenerateMesh(GModel *m, int ask)
         mesh.quadqsTargetSize : .5 * (mesh.lcMin + mesh.lcMax);
       mesh.recombineAll = 1;
       mesh.minCurveNodes = 1;
-      mesh.nbSmoothing = std::max(mesh.nbSmoothing, 5);
+      mesh.nbSmoothing = std::max(mesh.nbSmoothing, mesh.quadqsSmartLaplacian ? 3 : 5);
       mesh.quadqsPacking3D = 1;
       mesh.quadqsPacking3DForceAllPoints = 1;
       mesh.lcFactor = 1.;

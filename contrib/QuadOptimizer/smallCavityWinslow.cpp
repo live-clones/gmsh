@@ -44,13 +44,97 @@ namespace QuadOptimizer {
     double boundarySignedArea(const std::vector<Point> &points,
                               std::size_t boundaryVertexCount)
     {
-      double twiceArea = 0.;
+      if(boundaryVertexCount > points.size() || boundaryVertexCount < 3)
+        return 0.;
+      // Translate before taking products: a small cavity can have large CAD
+      // parameter offsets even when its local coordinates are well resolved.
+      const Point &origin = points.front();
+      long double twiceArea = 0.;
       for(std::size_t i = 0; i < boundaryVertexCount; ++i) {
         const Point &a = points[i];
         const Point &b = points[(i + 1) % boundaryVertexCount];
-        twiceArea += a[0] * b[1] - a[1] * b[0];
+        twiceArea +=
+          (static_cast<long double>(a[0]) - origin[0]) *
+            (static_cast<long double>(b[1]) - origin[1]) -
+          (static_cast<long double>(a[1]) - origin[1]) *
+            (static_cast<long double>(b[0]) - origin[0]);
       }
-      return .5 * twiceArea;
+      return static_cast<double>(.5L * twiceArea);
+    }
+
+    struct PatchCoordinates {
+      Point origin;
+      double scale;
+      std::vector<Point> points;
+
+      Point physical(const Point &point) const
+      {
+        return {std::fma(scale, point[0], origin[0]),
+                std::fma(scale, point[1], origin[1])};
+      }
+    };
+
+    PatchCoordinates normalizedPatch(
+      const std::vector<Point> &points,
+      const std::vector<std::array<std::size_t, 3> > &triangles,
+      const std::vector<std::array<std::size_t, 4> > &quadrangles)
+    {
+      if(points.empty() || (triangles.empty() && quadrangles.empty()))
+        throw std::invalid_argument("Winslow patch has no points or elements");
+      Point minimum = points.front(), maximum = points.front();
+      for(const Point &p : points)
+        for(std::size_t k = 0; k < 2; ++k) {
+          if(!std::isfinite(p[k]))
+            throw std::invalid_argument("Winslow patch has non-finite coordinates");
+          minimum[k] = std::min(minimum[k], p[k]);
+          maximum[k] = std::max(maximum[k], p[k]);
+        }
+      PatchCoordinates result;
+      for(std::size_t k = 0; k < 2; ++k)
+        result.origin[k] = .5 * minimum[k] + .5 * maximum[k];
+      const long double extent = std::max(
+        static_cast<long double>(maximum[0]) - minimum[0],
+        static_cast<long double>(maximum[1]) - minimum[1]);
+      if(!(extent > 0.) || !std::isfinite(extent))
+        throw std::invalid_argument("Winslow patch has zero or invalid extent");
+
+      // Internal edges cancel in this oriented area sum. On a fixed-boundary
+      // patch it is independent of the movable vertices, including inverted
+      // initial cells. One unit square and one half-unit equilateral triangle
+      // retain the same target areas as the former square/right-triangle
+      // references. All coordinates share one scale: no UV anisotropy is
+      // introduced by the normalization.
+      long double area = 0.;
+      auto triangleArea = [&](std::size_t a, std::size_t b, std::size_t c) {
+        if(a >= points.size() || b >= points.size() || c >= points.size())
+          throw std::invalid_argument("Winslow element references an invalid vertex");
+        const long double ux = static_cast<long double>(points[b][0]) - points[a][0];
+        const long double uy = static_cast<long double>(points[b][1]) - points[a][1];
+        const long double vx = static_cast<long double>(points[c][0]) - points[a][0];
+        const long double vy = static_cast<long double>(points[c][1]) - points[a][1];
+        return .5L * (ux * vy - uy * vx);
+      };
+      for(const auto &triangle : triangles)
+        area += triangleArea(triangle[0], triangle[1], triangle[2]);
+      for(const auto &quad : quadrangles) {
+        area += triangleArea(quad[0], quad[1], quad[2]);
+        area += triangleArea(quad[0], quad[2], quad[3]);
+      }
+      const long double targetArea =
+        quadrangles.size() + .5L * triangles.size();
+      long double scale = std::sqrt(std::abs(area) / targetArea);
+      // A completely collapsed/folded start still needs a finite chart for
+      // untangling. The isotropic extent supplies it when signed area cancels.
+      if(!(scale > 1.e-12L * extent)) scale = extent;
+      result.scale = static_cast<double>(scale);
+      if(!(result.scale > 0.) || !std::isfinite(result.scale))
+        throw std::invalid_argument("Winslow patch has an invalid coordinate scale");
+      result.points.reserve(points.size());
+      for(const Point &p : points)
+        result.points.push_back({
+          static_cast<double>((static_cast<long double>(p[0]) - result.origin[0]) / scale),
+          static_cast<double>((static_cast<long double>(p[1]) - result.origin[1]) / scale)});
+      return result;
     }
 
     Point point(const WinslowData &data, const std::vector<double> &x,
@@ -63,16 +147,16 @@ namespace QuadOptimizer {
 
     double chi(double determinant, double epsilon)
     {
-      return .5 *
-             (determinant +
-              std::sqrt(epsilon * epsilon + determinant * determinant));
+      const double root = std::hypot(epsilon, determinant);
+      // Rationalize the negative branch to avoid cancellation during
+      // untangling (the smoothed positive determinant must remain positive).
+      return determinant >= 0. ? .5 * (determinant + root) :
+        .5 * epsilon * (epsilon / (root - determinant));
     }
 
     double chip(double determinant, double epsilon)
     {
-      return .5 + determinant /
-                      (2. * std::sqrt(epsilon * epsilon +
-                                      determinant * determinant));
+      return chi(determinant, epsilon) / std::hypot(epsilon, determinant);
     }
 
     double energyAndGradient(WinslowData &data,
@@ -89,11 +173,11 @@ namespace QuadOptimizer {
           p[k] = point(data, x, triangle.vertices[k]);
 
         double J00 = 0., J10 = 0., J01 = 0., J11 = 0.;
-        for(std::size_t k = 0; k < 3; ++k) {
-          J00 += p[k][0] * triangle.shapeGradients[k][0];
-          J10 += p[k][0] * triangle.shapeGradients[k][1];
-          J01 += p[k][1] * triangle.shapeGradients[k][0];
-          J11 += p[k][1] * triangle.shapeGradients[k][1];
+        for(std::size_t k = 1; k < 3; ++k) {
+          J00 += (p[k][0] - p[0][0]) * triangle.shapeGradients[k][0];
+          J10 += (p[k][0] - p[0][0]) * triangle.shapeGradients[k][1];
+          J01 += (p[k][1] - p[0][1]) * triangle.shapeGradients[k][0];
+          J11 += (p[k][1] - p[0][1]) * triangle.shapeGradients[k][1];
         }
 
         const double determinant = J00 * J11 - J01 * J10;
@@ -263,8 +347,10 @@ namespace QuadOptimizer {
       const std::array<Point, 4> target = {
         Point{0., 0.}, Point{1., 0.}, Point{1., 1.}, Point{0., 1.}};
       data.triangles.reserve(triangles.size() + 4 * quadrangles.size());
+      const double triangleSide = std::sqrt(2. / std::sqrt(3.));
       const std::array<Point, 3> targetTriangle = {
-        Point{0., 0.}, Point{1., 0.}, Point{0., 1.}};
+        Point{0., 0.}, Point{triangleSide, 0.},
+        Point{.5 * triangleSide, .5 * std::sqrt(3.) * triangleSide}};
       for(const auto &source : triangles) {
         TriangleContribution triangle;
         for(std::size_t k = 0; k < 3; ++k) {
@@ -273,9 +359,9 @@ namespace QuadOptimizer {
               "Small-cavity triangle references an invalid vertex");
           triangle.vertices[k] = source[k];
         }
-        if(orientation < 0.)
-          std::swap(triangle.vertices[1], triangle.vertices[2]);
         triangle.shapeGradients = shapeGradients(targetTriangle);
+        if(orientation < 0.)
+          for(Point &gradient : triangle.shapeGradients) gradient[0] = -gradient[0];
         data.triangles.push_back(triangle);
       }
       for(const auto &quad : quadrangles) {
@@ -292,10 +378,12 @@ namespace QuadOptimizer {
             triangle.vertices[k] = quad[local];
             ideal[k] = target[local];
           }
-          if(orientation < 0.) {
-            std::swap(triangle.vertices[1], triangle.vertices[2]);
-          }
           triangle.shapeGradients = shapeGradients(ideal);
+          // Reflect the reference chart, not the vertex correspondence.
+          // Swapping vertices moves the right-angle corner of a quad's
+          // reference triangle and changes its intended square metric.
+          if(orientation < 0.)
+            for(Point &gradient : triangle.shapeGradients) gradient[0] = -gradient[0];
           data.triangles.push_back(triangle);
         }
       }
@@ -314,8 +402,17 @@ namespace QuadOptimizer {
          options.maxLineSearchSteps <= 0)
         throw std::invalid_argument(
           "Small-cavity Winslow iteration limits must be positive");
+      for(const double tolerance : {options.gradientTolerance,
+                                     options.functionTolerance,
+                                     options.stepTolerance})
+        if(!std::isfinite(tolerance) || tolerance < 0.)
+          throw std::invalid_argument("Invalid Winslow convergence tolerance");
+      if(boundaryVertexCount < 3 || boundaryVertexCount >= parametricPoints.size())
+        throw std::invalid_argument("Winslow patch needs fixed and movable vertices");
 
-      std::vector<Point> candidate = parametricPoints;
+      const PatchCoordinates coordinates = normalizedPatch(
+        parametricPoints, triangles, quadrangles);
+      std::vector<Point> candidate = coordinates.points;
       if(options.harmonicInitialization)
         harmonicInitialize(candidate, boundaryVertexCount, triangles,
                            quadrangles);
@@ -341,8 +438,8 @@ namespace QuadOptimizer {
       output.initialEnergy = initialEnergy;
       double previousEnergy = initialEnergy;
       for(int outer = 0; outer < options.maxOuterIterations; ++outer) {
-        data.epsilon = std::sqrt(
-          1.e-12 + .04 * std::pow(std::min(data.minimumJacobian, 0.), 2));
+        data.epsilon = std::hypot(1.e-6,
+                                  .2 * std::min(data.minimumJacobian, 0.));
 
         GmshLBFGS::Options lbfgs;
         lbfgs.maxIterations = options.maxInnerIterations;
@@ -375,15 +472,28 @@ namespace QuadOptimizer {
       output.success = output.untangled && std::isfinite(data.energy);
       if(output.success) {
         for(std::size_t i = 0; i < interiorVertexCount; ++i)
-          parametricPoints[boundaryVertexCount + i] =
-            {x[2 * i], x[2 * i + 1]};
+          candidate[boundaryVertexCount + i] = {x[2 * i], x[2 * i + 1]};
       }
       else if(initialMinimumJacobian > 0. && std::isfinite(initialEnergy)) {
         output.success = true;
         output.untangled = true;
         output.finalEnergy = initialEnergy;
         output.minimumJacobian = initialMinimumJacobian;
-        parametricPoints = candidate;
+      }
+      if(output.success) {
+        std::vector<Point> mapped;
+        mapped.reserve(interiorVertexCount);
+        for(std::size_t i = boundaryVertexCount; i < candidate.size(); ++i) {
+          const Point p = coordinates.physical(candidate[i]);
+          if(!std::isfinite(p[0]) || !std::isfinite(p[1])) {
+            output.success = false;
+            return output;
+          }
+          mapped.push_back(p);
+        }
+        // Fixed vertices never make a floating-point round trip.
+        std::copy(mapped.begin(), mapped.end(),
+                  parametricPoints.begin() + boundaryVertexCount);
       }
       return output;
     }
@@ -399,14 +509,15 @@ namespace QuadOptimizer {
        boundaryVertexCount > parametricPoints.size() ||
        quadrangles.empty())
       return false;
+    PatchCoordinates coordinates;
     try {
-      harmonicInitialize(parametricPoints, boundaryVertexCount, {},
-                         quadrangles);
+      coordinates = normalizedPatch(parametricPoints, {}, quadrangles);
+      harmonicInitialize(coordinates.points, boundaryVertexCount, {}, quadrangles);
     }
     catch(const std::invalid_argument &) { return false; }
 
     const double orientation =
-      boundarySignedArea(parametricPoints, boundaryVertexCount);
+      boundarySignedArea(coordinates.points, boundaryVertexCount);
     if(!std::isfinite(orientation) || std::abs(orientation) <=
          std::numeric_limits<double>::epsilon())
       return false;
@@ -416,12 +527,14 @@ namespace QuadOptimizer {
         if(vertex >= parametricPoints.size()) return false;
       for(const auto &corner : quadCornerTriangles) {
         const double area = signedArea(
-          parametricPoints[quad[corner[0]]],
-          parametricPoints[quad[corner[1]]],
-          parametricPoints[quad[corner[2]]]);
+          coordinates.points[quad[corner[0]]],
+          coordinates.points[quad[corner[1]]],
+          coordinates.points[quad[corner[2]]]);
         if(!std::isfinite(area) || sign * area <= 1.e-14) return false;
       }
     }
+    for(std::size_t i = boundaryVertexCount; i < parametricPoints.size(); ++i)
+      parametricPoints[i] = coordinates.physical(coordinates.points[i]);
     return true;
   }
 
@@ -434,7 +547,23 @@ namespace QuadOptimizer {
     const double orientation =
       boundarySignedArea(parametricPoints, boundaryVertexCount);
     return optimizeContiguousPatch(parametricPoints, boundaryVertexCount, {},
-                                   quadrangles, orientation, options);
+                                   quadrangles,
+                                   orientation > 0. ? 1. : orientation < 0. ? -1. : 0.,
+                                   options);
+  }
+
+  double evaluateLocalSurfacePatchWinslowEnergy(
+    const std::vector<std::array<double, 2> > &points,
+    const std::vector<std::array<std::size_t, 3> > &triangles,
+    const std::vector<std::array<std::size_t, 4> > &quadrangles,
+    double orientationSign, double lambda)
+  {
+    const auto coordinates = normalizedPatch(points, triangles, quadrangles);
+    auto data = prepareData(coordinates.points, points.size() - 1,
+                            triangles, quadrangles, lambda, orientationSign);
+    const auto &last = coordinates.points.back();
+    std::vector<double> x{last[0], last[1]}, gradient(2);
+    return energyAndGradient(data, x, gradient);
   }
 
   SmallCavityWinslowResult optimizeLocalSurfacePatchWinslow(

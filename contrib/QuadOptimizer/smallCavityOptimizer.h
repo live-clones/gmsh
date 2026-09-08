@@ -50,6 +50,28 @@ namespace QuadOptimizer {
     // decisions, harmonic candidate placement and bounded local Winslow
     // relaxation.
     bool fastInteractiveCleanUp = false;
+    // Simpler Fast schedule: first apply monotone structural reductions
+    // (including valid TT -> Q and diamond collapses), then accept QQ/QT/TT
+    // swaps only when the unchanged vertex geometry strictly improves the
+    // element-quality objective, and finally smooth the resulting topology
+    // once.
+    bool stagedTopologyThenQuality = false;
+    // Internal candidate-evaluation contracts used by the staged schedule.
+    // They remain public to keep copied option sets explicit and testable,
+    // but normal callers should select stagedTopologyThenQuality instead.
+    bool evaluateCandidatesWithoutLocalSmoothing = false;
+    bool requireStrictElementQualityImprovement = false;
+    // Internal contract for mandatory acyclic reductions selected by the
+    // staged topology pass (QTT -> Q, T-Q^k-T, TT -> Q and diamonds).
+    // The replacement must remain topologically valid, oriented and
+    // non-degenerate, but quality/size/CAD improvement is deferred to the
+    // single global smoothing pass.
+    bool acceptValidTopologyReduction = false;
+    // Run only the final fixed-point closure of the complete local rewrite
+    // catalog. PACK uses this after its terminal operations, which can expose
+    // swaps, triangle strips, boundary fans or diamonds after the ordinary
+    // Fast optimization.
+    bool finalPatternClosureOnly = false;
     bool topologyOnlyIfCavityHasSpecificationFailure = true;
     // Optional post-processing: attempt to establish one complete quad ring
     // around every hole, opening a newly inserted infinitesimal ring with
@@ -58,7 +80,12 @@ namespace QuadOptimizer {
     // values add neighboring element layers to that patch.
     int pillowNeighborLayers = 0;
     int smoothingPasses = 2;
+    // Freitag (1997) Smart Laplacian, adapted to projected surface quads.
+    // Strict local minimum-sine improvement; no optimization fallback.
+    bool smartLaplacian = false;
     int finalSmoothingPasses = 2;
+    // Pure mean-plane 3D Winslow sweeps after the nodal smoothing phase.
+    int finalWinslowPasses = 0;
     int postTopologyNeighborSmoothingPasses = 2;
     int maximumOptimizationPasses = 3;
     int maximumAcceptedCavities = 100;
@@ -95,6 +122,18 @@ namespace QuadOptimizer {
     bool enforceRelativeSizeErrorIncrease = false;
     double maximumRelativeSizeErrorIncrease = .02;
     double objectiveRelativeTolerance = 1.e-12;
+    // Geometry-driven T+T and T+Q edge swaps. A separating chord becomes a
+    // repair target when its midpoint is farther than this fraction of the
+    // local target size from the supporting face. The replacement chord must
+    // leave at most this fraction of the old normalized distance. The
+    // defaults therefore require d_old > 0.1 h and d_new <= 0.5 d_old.
+    double edgeMidpointCadSwapTriggerRatio = .1;
+    double edgeMidpointCadSwapMaximumRemainingFraction = .5;
+    // Structural reductions may trade a bounded amount of chordal CAD fit
+    // for fewer triangles or a removed diamond. Both limits are dimensionless:
+    // the integral is divided by A*h^2 and the maximum-distance increase by h.
+    double maximumNormalizedCadRegression = .005;
+    double maximumCadDistanceIncreaseRatio = .1;
     // A terminal T+T -> Q merge must not recreate a quadrangle that the
     // caller's optional eta-quality filter would immediately split again.
     double minimumRecombinationQuality = 0.;
@@ -102,12 +141,24 @@ namespace QuadOptimizer {
     SmallCavityWinslowOptions winslow;
     bool invalidateVertexArrays = true;
     int verbose = 0;
+    // Deterministic V2 structural schedules, followed by swaps and Winslow.
+    // 0: stars/diamonds/strips/boundary; 1: strips/stars/boundary/diamonds;
+    // 2: diamonds/boundary/stars/strips. All use identical acceptance guards.
+    int v2Schedule = 0;
+    // Bounded V2 searches after ordinary local operators reach a fixed point.
+    // Bit 1: repair a defective patch; bit 2: compose triangle reductions.
+    int v2SearchMode = 0;
+    int v2SearchCandidateLimit = 32;
   };
 
   struct SmallCavityOptimizerResult {
     bool success = true;
     bool skippedInvalidInputCellComplex = false;
     std::size_t passes = 0;
+    // Number of committed local topology transactions on this face. The V2
+    // engine records this directly; legacy callers can continue using the
+    // individual rule counters below.
+    std::size_t acceptedCavities = 0;
     std::size_t cavitiesVisited = 0;
     std::size_t topologyCandidatesOptimized = 0;
     std::size_t rejectedByWinslow = 0;
@@ -119,6 +170,15 @@ namespace QuadOptimizer {
     std::size_t acceptedDiamonds = 0;
     std::size_t valenceSixVerticesVisited = 0;
     std::size_t acceptedValenceSixSplits = 0;
+    // Complete interior B=4, I=1 star with 2T+1Q collapsed to one quad.
+    std::size_t interiorTriangleTriangleQuadStarsVisited = 0;
+    std::size_t acceptedInteriorTriangleTriangleQuadReductions = 0;
+    std::size_t interiorFourTriangleFansVisited = 0;
+    std::size_t acceptedInteriorFourTriangleFanReductions = 0;
+    // Complete interior B=6, I=1 alternating Q-T-Q-T star collapsed to the
+    // best admissible pair of quadrangles.
+    std::size_t interiorAlternatingQuadTriangleStarsVisited = 0;
+    std::size_t acceptedInteriorAlternatingQuadTriangleReductions = 0;
     // Complete interior star T-Q-Q-T-Q-Q (up to D10 symmetry) rewritten as
     // six quads with one additional interior vertex.
     std::size_t interiorQQTQQTStarsVisited = 0;
@@ -127,11 +187,21 @@ namespace QuadOptimizer {
     std::size_t acceptedBoundaryTriangleQuadTriangleFans = 0;
     std::size_t triangleTriangleSwapsVisited = 0;
     std::size_t acceptedTriangleTriangleSwaps = 0;
+    std::size_t acceptedGeometryDrivenTriangleTriangleSwaps = 0;
+    std::size_t acceptedGeometryDrivenMixedTriangleQuadSwaps = 0;
     // Fast Q+T+T -> Q+Q reduction: a six-vertex disk containing one quad
     // and two adjacent triangles is replaced by the best valid pair of
     // quads. Triangle count is the strict improvement for this operator.
     std::size_t quadTwoTriangleCavitiesVisited = 0;
     std::size_t acceptedQuadTwoTriangleReductions = 0;
+    // Simultaneous B=6 mixed rewrite for T-Q-T on opposite quad edges. It
+    // preserves 1Q+2T while choosing among all 21 labelled planar fillings.
+    std::size_t oppositeEdgeTriangleQuadSwapsVisited = 0;
+    std::size_t acceptedOppositeEdgeTriangleQuadSwaps = 0;
+    // Fallback for an opposite-edge T-Q-T disk when none of its direct 2Q
+    // fillings is admissible: insert one face vertex and build three quads.
+    std::size_t oppositeEdgeTriangleQuadFansVisited = 0;
+    std::size_t acceptedOppositeEdgeTriangleQuadFans = 0;
     std::size_t acceptedFinalSmoothingCavities = 0;
     std::size_t acceptedEdgeSwaps = 0;
     // Subset of acceptedEdgeSwaps found by the generic CleanUp cavity stage;
@@ -189,10 +259,21 @@ namespace QuadOptimizer {
     double finalMaximumEdgeLength = 0.;
     SpecificationObjective initialObjective;
     SpecificationObjective finalObjective;
+    bool reachedFixedPoint = false;
+    bool exhaustedIterationBudget = false;
+    bool exhaustedCavityBudget = false;
+    std::size_t rejectedByCad = 0;
+    std::size_t rejectedByOrientation = 0;
+    std::size_t rejectedByTopology = 0;
+    std::size_t rejectedCacheHits = 0;
   };
 
   struct ExistingTopologyWinslowResult {
     bool success = true;
+    // True only when the last requested sweep accepted no bitwise geometry
+    // change, which certifies that repeating the same deterministic sweep on
+    // the same topology is idle.
+    bool reachedFixedPoint = false;
     std::size_t passes = 0;
     std::size_t quadsVisited = 0;
     std::size_t admissibleCavities = 0;
@@ -230,11 +311,19 @@ namespace QuadOptimizer {
     std::size_t acceptedCavities = 0;
     std::size_t acceptedEdgeSwaps = 0;
     std::size_t acceptedDiamonds = 0;
+    std::size_t acceptedValenceSixSplits = 0;
     std::size_t acceptedQuadTwoTriangleReductions = 0;
+    std::size_t acceptedOppositeEdgeTriangleQuadSwaps = 0;
+    std::size_t acceptedOppositeEdgeTriangleQuadFans = 0;
+    std::size_t acceptedInteriorTriangleTriangleQuadReductions = 0;
+    std::size_t acceptedInteriorFourTriangleFanReductions = 0;
+    std::size_t acceptedInteriorAlternatingQuadTriangleReductions = 0;
     std::size_t acceptedInteriorQQTQQTReductions = 0;
     std::size_t acceptedBoundaryTriangleQuadTriangleFans = 0;
     std::size_t triangleTriangleSwapsVisited = 0;
     std::size_t acceptedTriangleTriangleSwaps = 0;
+    std::size_t acceptedGeometryDrivenTriangleTriangleSwaps = 0;
+    std::size_t acceptedGeometryDrivenMixedTriangleQuadSwaps = 0;
     std::size_t acceptedSmoothingCavities = 0;
     std::size_t rejectedByWinslow = 0;
     std::size_t rejectedBySize = 0;
