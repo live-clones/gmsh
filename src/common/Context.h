@@ -325,15 +325,6 @@ public:
   // fill the hole a clipping plane opens in a 3D mesh or view with the polygon
   // where the plane cuts each element, so that a cut model still looks solid
   int clipCapping;
-  // is the section of the mesh worth computing? Only where the mesh is drawn as
-  // a surface, and only when the planes are applied by OpenGL: with
-  // clipWholeElements the elements a plane cuts are removed whole and there is
-  // no hole to fill
-  bool meshClipCaps() const
-  {
-    return clipCapping && !clipWholeElements && mesh.clip &&
-           (mesh.volumeFaces || mesh.surfaceFaces);
-  }
   // draw the vertex arrays from OpenGL buffer objects instead of client memory
   int vertexBufferObjects;
   // draw with the shader pipeline instead of the fixed function one; changing
