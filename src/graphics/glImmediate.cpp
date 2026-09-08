@@ -382,7 +382,11 @@ void gmshLineWidth(double w)
     // what is waiting was collected to be drawn at the old width
     gmshFlushImmediate();
     _lineWidth = w;
+    // a core profile draws every line one pixel wide and a wider one is made
+    // of triangles: there is nothing to tell OpenGL
+    return;
   }
+  _lineWidth = w;
   glLineWidth((float)w);
 }
 
