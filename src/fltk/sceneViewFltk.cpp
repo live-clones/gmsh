@@ -192,8 +192,9 @@ int sceneViewFltk::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
-    // the arrows of the view rather than the widget navigation FLTK would do
-    if(FlGui::instance()->testArrowShortcuts()) return 1;
+    // the keys of the application before the widget navigation FLTK would
+    // do with the arrows
+    if(FlGui::instance()->runKeys()) return 1;
     return Fl_Gl_Window::handle(event);
 
   case FL_PUSH:

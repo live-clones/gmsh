@@ -111,8 +111,9 @@ namespace Gui {
   void scenePointer(double x, double y, int button, int what, double wheel,
                     bool shift, bool ctrl, bool alt);
   // and the keys a picking answers to: 'q' gives up, 'e' ends, 'u' undoes,
-  // 'i' inverts
-  void sceneKey(char key);
+  // 'i' inverts. Whether a picking was there to take it: a key nothing was
+  // waiting for is the caller's to make something else of.
+  bool sceneKey(char key);
 
   // Two lines said over the scene rather than in the bar: what to do, and
   // which keys end or abort it, which is what a picking says while it runs.

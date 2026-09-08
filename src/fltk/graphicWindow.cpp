@@ -171,6 +171,8 @@ void fltkWindowAction(const std::string &what)
     file_window_cb(nullptr, (void *)what.c_str());
   else if(what == "attach_detach")
     attach_detach_menu_cb(nullptr, nullptr);
+  else if(what == "show_hide_tree")
+    show_hide_menu_cb(nullptr, nullptr);
   else if(what == "minimize" || what == "zoom" || what == "fullscreen" ||
           what == "front")
     window_cb(nullptr, (void *)what.c_str());

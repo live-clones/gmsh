@@ -81,7 +81,15 @@ namespace ImGuiScene {
   }
   bool sceneMoved() { return false; }
   void sceneResize(int width, int height) {}
-  void sceneKey(char key) {}
+  bool sceneKey(char key)
+  {
+    if(!appWindow::available()) return false;
+    bool taken = false;
+    appWindow *app = appWindow::instance();
+    for(int i = 0; i < app->numPanes(); i++)
+      if(app->pane(i) && app->pane(i)->key(key)) taken = true;
+    return taken;
+  }
 
   void sceneMessage(const std::string &first, const std::string &second)
   {

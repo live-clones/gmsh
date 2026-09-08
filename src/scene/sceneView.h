@@ -153,6 +153,11 @@ public:
   // process the mouse events that fall inside the pane
   void handleMouse(const paneInput &in);
 
+  // A key a picking listens for: 'e' ends it, 'u' undoes the last pick, 'i'
+  // inverts, 'q' gives up -- and gives up a lasso being drawn as well.
+  // Whether there was a picking or a lasso to take it.
+  bool key(char what);
+
   // blocking entity selection, as FlGui::selectEntity(); returns 'q', 'l', 'r',
   // 'u' or 'e'
   char selectEntity(int type, std::vector<GVertex *> &vertices,

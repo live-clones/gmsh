@@ -159,6 +159,8 @@ void appWindow::windowAction(const std::string &what)
     _windowZoom();
   else if(what == "fullscreen")
     _windowFullScreen();
+  else if(what == "show_hide_tree")
+    _showModules = !_showModules;
   else
     Toolkit::report(Toolkit::Error, "Unknown window action '%s'", what.c_str());
 }

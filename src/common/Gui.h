@@ -182,6 +182,8 @@ namespace Gui {
   // --- modules, tree and context windows
 
   void openModule(const std::string &name);
+  // fold it if it is unfolded, unfold it otherwise: what its key does
+  void toggleModule(const std::string &name);
   void openTreeItem(const std::string &name);
   void closeTreeItem(const std::string &name);
   // show the onelab context window for the given entity

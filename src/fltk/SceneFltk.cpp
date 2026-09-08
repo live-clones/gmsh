@@ -69,7 +69,15 @@ namespace FltkScene {
   }
   bool sceneMoved() { return false; }
   void sceneResize(int width, int height) {}
-  void sceneKey(char key) {}
+  // every view hears it, as every view always has
+  bool sceneKey(char key)
+  {
+    bool taken = false;
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+        if(FlGui::instance()->graph[i]->gl[j]->scene()->key(key)) taken = true;
+    return taken;
+  }
 
   void sceneMessage(const std::string &first, const std::string &second)
   {

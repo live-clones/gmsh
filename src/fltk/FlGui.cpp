@@ -6,6 +6,7 @@
 #include "GmshConfig.h"
 #include <sstream>
 #include <string.h>
+#include <cctype>
 #include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Shared_Image.H>
@@ -17,35 +18,23 @@
 #include "drawContextFltkCairo.h"
 #include "graphicWindow.h"
 #include "Gui.h"
-#include "GuiActions.h"
 #include "GuiDialogs.h"
 #include "GuiStatus.h"
 #include "dialogFltk.h"
-#include "GuiActions.h"
+#include "uiSources.h"
 #include "onelabGroup.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"
-#include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "OS.h"
-#include "MElement.h"
-#include "PView.h"
-#include "Plugin.h"
-#include "PluginManager.h"
 #include "OpenFile.h"
 #include "XpmIcon.h"
 #include "Options.h"
 #include "CommandLine.h"
 #include "Context.h"
 #include "StringUtils.h"
-#include "gl2ps.h"
-#include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
-
-#if defined(HAVE_MESH)
-#include "Field.h"
-#endif
 
 #if defined(HAVE_TOUCHBAR)
 #include "touchBar.h"
@@ -678,432 +667,77 @@ void FlGui::destroy()
   _instance = nullptr;
 }
 
+namespace {
+
+  // The key FLTK reports, said as Ui::Shortcut says it: an upper case letter,
+  // a digit or a punctuation mark, or one of the named keys. 0 for a key no
+  // shortcut could name.
+  int _uiKey(int key)
+  {
+    if(key >= 'a' && key <= 'z') return toupper(key);
+    if(key >= FL_F + 1 && key <= FL_F + 12) return Ui::KeyF1 + key - FL_F - 1;
+    switch(key) {
+    case FL_Left: return Ui::KeyLeft;
+    case FL_Right: return Ui::KeyRight;
+    case FL_Up: return Ui::KeyUp;
+    case FL_Down: return Ui::KeyDown;
+    case FL_Escape: return Ui::KeyEscape;
+    case FL_Home: return Ui::KeyHome;
+    case FL_Page_Up: return Ui::KeyPageUp;
+    case FL_Page_Down: return Ui::KeyPageDown;
+    case FL_Delete: return Ui::KeyDelete;
+    default: break;
+    }
+    if(key > ' ' && key < 127) return key;
+    return 0;
+  }
+
+  // FL_COMMAND is FL_CTRL everywhere but on macOS, where it is the Command
+  // key, which is what Ui::ModCommand means
+  unsigned _uiMods()
+  {
+    unsigned mods = 0;
+    if(Fl::event_state(FL_COMMAND)) mods |= Ui::ModCommand;
+    if(Fl::event_state(FL_SHIFT)) mods |= Ui::ModShift;
+    if(Fl::event_state(FL_ALT)) mods |= Ui::ModAlt;
+    return mods;
+  }
+
+} // namespace
+
 int FlGui::testGlobalShortcuts(int event)
 {
   // we only handle shortcuts here
   if(event != FL_SHORTCUT) return 0;
+  return runKeys();
+}
 
+// The keys, read off the one list the interfaces share. What was four
+// hundred lines of Fl::test_shortcut() here -- and a second copy of them in
+// the Dear ImGui interface, which had drifted -- is the description now,
+// Menu::keys(); what is left here is FLTK's way of saying which key was
+// struck, and the one thing that is this window's rather than the
+// application's: Escape leaves full screen.
+int FlGui::runKeys()
+{
+  if(Fl::event_key() == FL_Escape && fullscreen && fullscreen->shown()) {
+    window_cb(nullptr, (void *)"fullscreen");
+    return 1;
+  }
+  int key = _uiKey(Fl::event_key());
+  if(!key || !fltkSources().keys) return 0;
+  unsigned mods = _uiMods();
   int status = 0;
-
-  if(Fl::test_shortcut('0')) {
-    geometry_reload_cb(nullptr, nullptr);
+  for(const Ui::KeyBinding &k : fltkSources().keys()) {
+    if(!k.shortcut.matches(key, mods)) continue;
+    if(k.action) k.action();
     status = 1;
+    if(k.spent) break;
   }
-  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0') ||
-     Fl::test_shortcut('9')) { // for Bruno
-    onelab_reload_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F + 1)) {
-    mesh_1d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('2') || Fl::test_shortcut(FL_F + 2)) {
-    mesh_2d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('3') || Fl::test_shortcut(FL_F + 3)) {
-    mesh_3d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + 'q') ||
-          Fl::test_shortcut(FL_META + 'q')) {
-    // only necessary when using the system menu bar, but hey, it cannot hurt...
-    file_quit_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + 't') ||
-          Fl::test_shortcut(FL_META + 't')) {
-    onelab_cb(nullptr,  (void *)"compute");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + FL_ALT + 't') ||
-          Fl::test_shortcut(FL_META + FL_ALT + 't')) {
-    show_hide_menu_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('g')) {
-    FlGui::toggleModule("Geometry");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('m')) {
-    FlGui::toggleModule("Mesh");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('s')) {
-    FlGui::toggleModule("Solver");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('p')) {
-    FlGui::toggleModule("Post-processing");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('w')) {
-    file_watch_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('e')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->scene()->endSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('u')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->scene()->undoSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('i')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->scene()->invertSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('q')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->scene()->quitSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('-')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->scene()->invertSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('x')) {
-    elementaryFrozen(0) = !elementaryFrozen(0);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('y')) {
-    elementaryFrozen(1) = !elementaryFrozen(1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('z')) {
-    elementaryFrozen(2) = !elementaryFrozen(2);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'x')) {
-    elementaryFrozen(0) = false;
-    elementaryFrozen(1) = true;
-    elementaryFrozen(2) = true;
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'y')) {
-    elementaryFrozen(0) = true;
-    elementaryFrozen(1) = false;
-    elementaryFrozen(2) = true;
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'z')) {
-    elementaryFrozen(0) = true;
-    elementaryFrozen(1) = true;
-    elementaryFrozen(2) = false;
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_Escape) ||
-          Fl::test_shortcut(FL_META + FL_Escape) ||
-          Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
-          Fl::test_shortcut(FL_CTRL + FL_Escape) ||
-          Fl::test_shortcut(FL_ALT + FL_Escape)) {
-    if(fullscreen->shown()) {
-      window_cb(nullptr, (void *)"fullscreen");
-      status = 1;
-    }
-    else {
-      bool lasso = false;
-      for(std::size_t i = 0; i < graph.size(); i++)
-        for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-          if(graph[i]->gl[j]->scene()->lasso()) lasso = true;
-      if(lasso) {
-        for(std::size_t i = 0; i < graph.size(); i++)
-          for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-            graph[i]->gl[j]->scene()->endLasso();
-        status = 2;
-      }
-      else {
-        status_options_cb(nullptr, (void *)"S");
-        status = 1;
-      }
-    }
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'a')) {
-    window_cb(nullptr, (void *)"front");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'o')) {
-    Dialog::optionsCategory() = 0;
-    Dialog::show(Dialog::options(), -1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'g')) {
-    Dialog::optionsCategory() = 1;
-    Dialog::show(Dialog::options(), -1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'm')) {
-    Dialog::optionsCategory() = 2;
-    Dialog::show(Dialog::options(), -1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 's')) {
-    Dialog::optionsCategory() = 3;
-    Dialog::show(Dialog::options(), -1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'p')) {
-    Dialog::optionsCategory() = 4;
-    Dialog::show(Dialog::options(), -1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    Dialog::showOptionsForView(-1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
-    if(PView::list.size()) {
-      if(Dialog::optionsView() >= 0 &&
-         Dialog::optionsView() < (int)PView::list.size())
-        Dialog::showPluginsForView(Dialog::optionsView());
-      else
-        Dialog::showPluginsForView(0);
-    }
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'f')) {
-    opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
-                            !opt_general_fast_redraw(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'b')) {
-    opt_general_draw_bounding_box(
-      0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'i')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
-                            !opt_view_show_scale(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'c')) {
-    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
-                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'c')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
-                                 opt_view_colormap_number(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'w')) {
-    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
-                       !opt_geometry_light(0, GMSH_GET, 0));
-    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'x') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
-    Gui::orientViews("x", Fl::event_state(FL_SHIFT) ? true : false,
-                    Fl::event_state(FL_CTRL) || Fl::event_state(FL_META));
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'y') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'y')) {
-    Gui::orientViews("y", Fl::event_state(FL_SHIFT) ? true : false,
-                    Fl::event_state(FL_CTRL) || Fl::event_state(FL_META));
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'z') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
-    Gui::orientViews("z", Fl::event_state(FL_SHIFT) ? true : false,
-                    Fl::event_state(FL_CTRL) || Fl::event_state(FL_META));
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_CTRL + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_META + '1')) {
-    Gui::orientViews("1:1", Fl::event_state(FL_SHIFT) ? true : false,
-                    Fl::event_state(FL_CTRL) || Fl::event_state(FL_META));
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'o')) {
-    status_options_cb(nullptr, (void *)"p");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'a')) {
-    opt_general_axes(0, GMSH_SET | GMSH_GUI,
-                     opt_general_axes(0, GMSH_GET, 0) + 1);
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_axes(i, GMSH_SET | GMSH_GUI,
-                      opt_view_axes(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'a')) {
-    opt_general_small_axes(0, GMSH_SET | GMSH_GUI,
-                           !opt_general_small_axes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'p')) {
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_points(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'l')) {
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_curves(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 's')) {
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI,
-                          !opt_geometry_surfaces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'v')) {
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI,
-                         !opt_geometry_volumes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'p')) {
-    opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, !opt_mesh_nodes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'l')) {
-    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
-    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_edges(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
-    opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_edges(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'd')) {
-    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
-                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
-    opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_faces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'b')) {
-    opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_faces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    quickAccessAction("mesh_toggle");
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 't')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
-        if(t == 4) t = 1; // skip numeric display
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
-      }
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 't')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
-                                opt_view_intervals_type(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'r')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
-                            opt_view_range_type(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'n')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_draw_strings(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'e') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'e')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_show_element(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'h')) {
-    static int show = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
-    show = !show;
-    status = 2;
-  }
-  else if(testArrowShortcuts()) {
-    status = 1;
-  }
-
 #if defined(HAVE_TOUCHBAR)
   updateTouchBar();
 #endif
-
-  if(status == 2) {
-    drawContext::global()->draw();
-    return 1;
-  }
-  else if(status == 1)
-    return 1;
-  else
-    return 0;
-}
-
-int FlGui::testArrowShortcuts()
-{
-  if(Fl::test_shortcut(FL_Left)) {
-    animationStep(1, -CTX::instance()->post.animStep);
-    return 1;
-  }
-  else if(Fl::test_shortcut(FL_Right)) {
-    animationStep(1, CTX::instance()->post.animStep);
-    return 1;
-  }
-  else if(Fl::test_shortcut(FL_Up)) {
-    animationStep(0, -CTX::instance()->post.animStep);
-    return 1;
-  }
-  else if(Fl::test_shortcut(FL_Down)) {
-    animationStep(0, CTX::instance()->post.animStep);
-    return 1;
-  }
-#if defined(HAVE_POPPLER)
-  else if(Fl::test_shortcut('u') || Fl::test_shortcut(FL_Page_Up)) {
-    gmshPopplerWrapper::setCurrentPageDown();
-    drawContext::global()->draw();
-    return 1;
-  }
-  else if(Fl::test_shortcut('d') || Fl::test_shortcut(FL_Page_Down)) {
-    gmshPopplerWrapper::setCurrentPageUp();
-    drawContext::global()->draw();
-    return 1;
-  }
-#endif
-  return 0;
+  return status;
 }
 
 void FlGui::setGraphicTitle(const std::string &title)
@@ -1413,17 +1047,6 @@ void FlGui::rebuildTree(bool deleteWidgets)
   if(onelab) onelab->rebuildTree(deleteWidgets);
   if(dialogFltk *d = fltkDialog(Dialog::onelabContext(), false))
     if(d->shown()) d->reshape();
-}
-
-void FlGui::toggleModule(const std::string &name)
-{
-  if(FlGui::instance()->onelab){
-    if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/" + name)){
-      FlGui::instance()->onelab->closeTreeItem("0Modules/" + name);
-    } else {
-      FlGui::instance()->onelab->openTreeItem("0Modules/" + name);
-    }
-  }
 }
 
 void FlGui::openModule(const std::string &name)

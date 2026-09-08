@@ -163,6 +163,7 @@ namespace Gui {
     };
     sources.menuBar = []() { return Menu::bar(); };
     sources.menuGeneration = []() { return Menu::generation(); };
+    sources.keys = []() { return Menu::keys(); };
     sources.tree = Modules::tree();
     sources.barButtons = []() { return StatusBar::bar(); };
     sources.barMessage = []() { return StatusBar::message(); };
@@ -551,6 +552,13 @@ namespace Gui {
   void openModule(const std::string &name)
   {
     if(_backend) _backend->openTreeItem("0Modules/" + name, true);
+  }
+
+  void toggleModule(const std::string &name)
+  {
+    if(!_backend) return;
+    std::string item = "0Modules/" + name;
+    _backend->openTreeItem(item, !_backend->treeItemOpen(item));
   }
 
   void openTreeItem(const std::string &name)

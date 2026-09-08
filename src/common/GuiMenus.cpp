@@ -10,6 +10,7 @@
 
 #if defined(HAVE_GUI)
 
+#include <cctype>
 #include <string>
 #include <vector>
 
@@ -25,6 +26,10 @@
 
 #if defined(HAVE_POST)
 #include "PView.h"
+#endif
+
+#if defined(HAVE_POPPLER)
+#include "gmshPopplerWrapper.h"
 #endif
 
 namespace Menu {
@@ -845,6 +850,273 @@ std::vector<MenuItem> modules()
 #endif
 
   return tree;
+}
+
+// --- the keys, wherever the pointer is
+//
+// What FlGui::testGlobalShortcuts() and the Dear ImGui _handleShortcuts()
+// each wrote out by hand, in two lists that had already drifted: one had 'm'
+// fold the mesh module and the other had it hide the console. The bar and the
+// quick access menu come first, since a key that is in a menu is that entry;
+// then the keys that are in no menu at all, which are the ones this list
+// exists for.
+
+namespace {
+
+  // a key and what it does; unspent when whatever else listens for the key
+  // is to hear it too
+  KeyBinding key(const Shortcut &shortcut, const std::function<void()> &what,
+                 bool spent = true)
+  {
+    KeyBinding k;
+    k.shortcut = shortcut;
+    k.action = what;
+    k.spent = spent;
+    return k;
+  }
+
+  // the shortcuts of a menu, submenus included, as bindings: an entry that
+  // is not enabled right now does nothing, as it would in the menu
+  void bindingsOf(const std::vector<MenuItem> &items,
+                  std::vector<KeyBinding> &keys)
+  {
+    for(const auto &it : items) {
+      bindingsOf(it.children, keys);
+      if(it.shortcut.empty() || !it.action) continue;
+      std::function<void()> action = it.action;
+      std::function<bool()> enabled = it.enabled;
+      keys.push_back(key(it.shortcut, [action, enabled]() {
+        if(!enabled || enabled()) action();
+      }));
+    }
+  }
+
+  // an option toggled, and the scene drawn again to show it
+  template <class F> std::function<void()> flips(F option)
+  {
+    return [option]() {
+      option(0, GMSH_SET | GMSH_GUI, !option(0, GMSH_GET, 0));
+      drawContext::global()->draw();
+    };
+  }
+
+  // the same on every view that is showing
+  template <class F> std::function<void()> flipsViews(F option)
+  {
+    return [option]() {
+#if defined(HAVE_POST)
+      for(std::size_t i = 0; i < PView::list.size(); i++)
+        if(opt_view_visible(i, GMSH_GET, 0))
+          option(i, GMSH_SET | GMSH_GUI, !option(i, GMSH_GET, 0));
+#endif
+      drawContext::global()->draw();
+    };
+  }
+
+  // an option stepped to its next value
+  template <class F> std::function<void()> steps(F option)
+  {
+    return [option]() {
+      option(0, GMSH_SET | GMSH_GUI, option(0, GMSH_GET, 0) + 1);
+      drawContext::global()->draw();
+    };
+  }
+
+  template <class F> std::function<void()> stepsViews(F option)
+  {
+    return [option]() {
+#if defined(HAVE_POST)
+      for(std::size_t i = 0; i < PView::list.size(); i++)
+        if(opt_view_visible(i, GMSH_GET, 0))
+          option(i, GMSH_SET | GMSH_GUI, option(i, GMSH_GET, 0) + 1);
+#endif
+      drawContext::global()->draw();
+    };
+  }
+
+  // the option window, open on one of its categories
+  std::function<void()> optionsOn(int category)
+  {
+    return [category]() {
+      Dialog::optionsCategory() = category;
+      Dialog::show(Dialog::options(), -1);
+    };
+  }
+
+  // the axes an elementary entity may still be placed along
+  std::function<void()> frozen(bool x, bool y, bool z)
+  {
+    return [x, y, z]() {
+      elementaryFrozen(0) = x;
+      elementaryFrozen(1) = y;
+      elementaryFrozen(2) = z;
+    };
+  }
+
+  std::function<void()> toggleFrozen(int coord)
+  {
+    return [coord]() { elementaryFrozen(coord) = !elementaryFrozen(coord); };
+  }
+
+  // a key a picking listens for: the scene reads it, and the key goes on
+  std::function<void()> picking(char what)
+  {
+    return [what]() { Gui::sceneKey(what); };
+  }
+
+} // namespace
+
+std::vector<KeyBinding> keys()
+{
+  std::vector<KeyBinding> k;
+
+  // --- what is in a menu is that entry
+  bindingsOf(bar(), k);
+  bindingsOf(quickAccess(), k);
+
+  // --- a picking under way: end it, undo the last pick, invert, give up.
+  // Unspent, as they have always been: the scene reads them and so may
+  // whatever else wants them.
+  k.push_back(key(Shortcut('E'), picking('e'), false));
+  k.push_back(key(Shortcut('U'), picking('u'), false));
+  k.push_back(key(Shortcut('I'), picking('i'), false));
+  k.push_back(key(Shortcut('-'), picking('i'), false));
+  k.push_back(key(Shortcut('Q'), picking('q'), false));
+  // Escape gives a picking up too, and otherwise turns picking with the
+  // mouse on and off, which is what the "S" button of the bar says. Leaving
+  // full screen on it is the window's, and the interface sees to it before
+  // asking here. However it is struck: with a modifier held it is still
+  // Escape.
+  k.push_back(key(Shortcut(KeyEscape, ModAny), []() {
+    if(!Gui::sceneKey('q'))
+      Gui::setMouseSelection(!CTX::instance()->mouseSelection);
+  }));
+
+  // --- reload and mesh, on the digits
+  k.push_back(key(Shortcut('0'), geometryReload));
+  k.push_back(key(Shortcut('0', ModCommand), projectReload));
+  k.push_back(key(Shortcut('9'), projectReload)); // for Bruno
+  for(int dim = 1; dim <= 3; dim++) {
+    k.push_back(key(Shortcut('0' + dim), [dim]() { meshDimension(dim); }));
+    k.push_back(
+      key(Shortcut(KeyF1 + dim - 1), [dim]() { meshDimension(dim); }));
+  }
+  k.push_back(key(Shortcut('T', ModCommand),
+                  []() { Gui::onelabAction("compute"); }));
+  k.push_back(key(Shortcut('T', ModCommand | ModAlt),
+                  []() { Gui::windowAction("show_hide_tree"); }));
+
+  // --- the modules of the tree, folded and unfolded
+  k.push_back(key(Shortcut('G'), []() { Gui::toggleModule("Geometry"); }));
+  k.push_back(key(Shortcut('M'), []() { Gui::toggleModule("Mesh"); }));
+  k.push_back(key(Shortcut('S'), []() { Gui::toggleModule("Solver"); }));
+  k.push_back(
+    key(Shortcut('P'), []() { Gui::toggleModule("Post-processing"); }));
+  k.push_back(key(Shortcut('W'), watchFiles));
+
+  // --- placing an elementary entity with the mouse: the axes it may move
+  // along, one at a time or all but one
+  k.push_back(key(Shortcut('X'), toggleFrozen(0)));
+  k.push_back(key(Shortcut('Y'), toggleFrozen(1)));
+  k.push_back(key(Shortcut('Z'), toggleFrozen(2)));
+  k.push_back(key(Shortcut('X', ModShift), frozen(false, true, true)));
+  k.push_back(key(Shortcut('Y', ModShift), frozen(true, false, true)));
+  k.push_back(key(Shortcut('Z', ModShift), frozen(true, true, false)));
+
+  // --- the windows
+  k.push_back(
+    key(Shortcut('A', ModShift), []() { Gui::windowAction("front"); }));
+  k.push_back(key(Shortcut('O', ModShift), optionsOn(0)));
+  k.push_back(key(Shortcut('G', ModShift), optionsOn(1)));
+  k.push_back(key(Shortcut('M', ModShift), optionsOn(2)));
+  k.push_back(key(Shortcut('S', ModShift), optionsOn(3)));
+  k.push_back(key(Shortcut('P', ModShift), optionsOn(4)));
+  k.push_back(key(Shortcut('W', ModShift),
+                  []() { Dialog::showOptionsForView(-1); }));
+  k.push_back(key(Shortcut('U', ModShift), []() {
+#if defined(HAVE_POST)
+    if(PView::list.empty()) return;
+    int view = Dialog::optionsView();
+    if(view < 0 || view >= (int)PView::list.size()) view = 0;
+    Dialog::showPluginsForView(view);
+#endif
+  }));
+
+  // --- what is drawn, and how
+  k.push_back(key(Shortcut('F', ModAlt), flips(opt_general_fast_redraw)));
+  k.push_back(
+    key(Shortcut('B', ModAlt), flips(opt_general_draw_bounding_box)));
+  k.push_back(key(Shortcut('I', ModAlt), flipsViews(opt_view_show_scale)));
+  k.push_back(key(Shortcut('C', ModAlt), steps(opt_general_color_scheme)));
+  k.push_back(key(Shortcut('C', ModAlt | ModShift),
+                  stepsViews(opt_view_colormap_number)));
+  k.push_back(key(Shortcut('W', ModAlt), []() {
+    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
+                       !opt_geometry_light(0, GMSH_GET, 0));
+    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
+    flipsViews(opt_view_light)();
+  }));
+  k.push_back(key(Shortcut('A', ModAlt | ModShift),
+                  flips(opt_general_small_axes)));
+  k.push_back(key(Shortcut('D', ModAlt), steps(opt_geometry_surface_type)));
+  k.push_back(key(Shortcut('T', ModAlt | ModShift),
+                  stepsViews(opt_view_intervals_type)));
+  k.push_back(key(Shortcut('R', ModAlt), stepsViews(opt_view_range_type)));
+  k.push_back(key(Shortcut('N', ModAlt), flipsViews(opt_view_draw_strings)));
+  k.push_back(key(Shortcut('E', ModAlt | ModShift),
+                  flipsViews(opt_view_show_element)));
+  k.push_back(key(Shortcut('H', ModAlt), []() {
+    // every view off, then every view on
+    static int show = 0;
+#if defined(HAVE_POST)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
+#endif
+    show = !show;
+    drawContext::global()->draw();
+  }));
+
+  // --- the view turned to face an axis; Shift turns it the other way,
+  // Control makes the other views follow
+  for(const char *axis : {"x", "y", "z"}) {
+    std::string what(axis);
+    k.push_back(key(Shortcut(toupper(axis[0]), ModAlt),
+                    [what]() { Gui::orientViews(what, false, false); }));
+    k.push_back(key(Shortcut(toupper(axis[0]), ModAlt | ModShift),
+                    [what]() { Gui::orientViews(what, true, false); }));
+  }
+  k.push_back(key(Shortcut('1', ModAlt),
+                  []() { Gui::orientViews("1:1", false, false); }));
+  k.push_back(key(Shortcut('1', ModAlt | ModShift),
+                  []() { Gui::orientViews("1:1", true, false); }));
+  k.push_back(key(Shortcut('1', ModAlt | ModCommand),
+                  []() { Gui::orientViews("1:1", false, true); }));
+
+  // --- the animation of a view, on the arrows
+  k.push_back(key(Shortcut(KeyLeft), []() { animationStepBy(false); }));
+  k.push_back(key(Shortcut(KeyRight), []() { animationStepBy(true); }));
+  k.push_back(key(Shortcut(KeyUp), []() { animationStepBy(false, true); }));
+  k.push_back(key(Shortcut(KeyDown), []() { animationStepBy(true, true); }));
+  k.push_back(key(Shortcut(KeyHome), animationRewind));
+
+#if defined(HAVE_POPPLER)
+  // the pages of a PDF shown as a background
+  auto page = [](bool down) {
+    return [down]() {
+      if(down)
+        gmshPopplerWrapper::setCurrentPageDown();
+      else
+        gmshPopplerWrapper::setCurrentPageUp();
+      drawContext::global()->draw();
+    };
+  };
+  k.push_back(key(Shortcut('U'), page(true)));
+  k.push_back(key(Shortcut(KeyPageUp), page(true)));
+  k.push_back(key(Shortcut('D'), page(false)));
+  k.push_back(key(Shortcut(KeyPageDown), page(false)));
+#endif
+
+  return k;
 }
 
 } // namespace Menu

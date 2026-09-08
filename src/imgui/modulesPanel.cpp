@@ -58,7 +58,9 @@ void appWindow::_walkModules(const std::string &path, int depth)
       }
       ImGuiTreeNodeFlags flags =
         depth ? ImGuiTreeNodeFlags_None : ImGuiTreeNodeFlags_DefaultOpen;
-      if(ImGui::TreeNodeEx(label.c_str(), flags)) {
+      bool open = ImGui::TreeNodeEx(label.c_str(), flags);
+      _treeOpen[child] = open;
+      if(open) {
         _walkModules(child, depth + 1);
         ImGui::TreePop();
       }

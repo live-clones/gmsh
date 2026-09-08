@@ -3,10 +3,15 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// Application-level keyboard shortcuts, the counterpart of
-// FlGui::testGlobalShortcuts() and FlGui::testArrowShortcuts(). Like the menu
-// items, the ones that trigger an action queue it with postAction() so that it
-// runs outside of the Dear ImGui frame.
+// The keys, wherever the pointer is.
+//
+// They are read off the one list the interfaces share, Sources::keys -- the
+// shortcuts of the menus and after them the keys of the 3D view -- so that
+// what a key does is said once. This file used to be a second copy of the
+// FLTK list, written by hand, and the two had drifted: 'm' folded the mesh
+// module in one and hid the console in the other. What is left here is Dear
+// ImGui's way of saying which key was struck, and the one thing that is this
+// window's rather than the application's: Escape leaves full screen.
 
 #include "uiSources.h"
 #include "GmshConfig.h"
@@ -16,41 +21,43 @@
 #include "imgui.h"
 
 #include "appWindow.h"
-#include "sceneView.h"
-#include "GuiActions.h"
-#include "menuActions.h"
-#include "GuiMenus.h"
-#include "Gui.h"
-#include "GmshMessage.h"
 
-// The key of a shortcut, as Dear ImGui names it.
-static ImGuiKey _imguiKey(int key)
-{
-  if(key >= 'A' && key <= 'Z') return (ImGuiKey)(ImGuiKey_A + (key - 'A'));
-  if(key >= '0' && key <= '9') return (ImGuiKey)(ImGuiKey_0 + (key - '0'));
-  if(key >= Ui::KeyF1 && key < Ui::KeyF1 + 12)
-    return (ImGuiKey)(ImGuiKey_F1 + (key - Ui::KeyF1));
-  return ImGuiKey_None;
-}
+namespace {
 
-// Run the first entry whose shortcut is being typed, submenus included.
-static bool _runMenuShortcut(const std::vector<Ui::MenuItem> &items, bool ctrl,
-                             bool shift, bool alt)
-{
-  for(const auto &it : items) {
-    if(_runMenuShortcut(it.children, ctrl, shift, alt)) return true;
-    if(it.shortcut.empty() || !it.action) continue;
-    if(ctrl != ((it.shortcut.mods & Ui::ModCommand) != 0)) continue;
-    if(shift != ((it.shortcut.mods & Ui::ModShift) != 0)) continue;
-    if(alt != ((it.shortcut.mods & Ui::ModAlt) != 0)) continue;
-    ImGuiKey key = _imguiKey(it.shortcut.key);
-    if(key == ImGuiKey_None || !ImGui::IsKeyPressed(key, false)) continue;
-    if(it.enabled && !it.enabled()) continue;
-    it.action();
-    return true;
+  // The key that was struck this frame, said as Ui::Shortcut says it: an
+  // upper case letter, a digit or a punctuation mark, or one of the named
+  // keys. 0 when none was, or none a shortcut could name. Dear ImGui does not
+  // say which key went down; each one is asked.
+  int _uiKey()
+  {
+    for(int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k++) {
+      ImGuiKey key = (ImGuiKey)k;
+      if(!ImGui::IsKeyPressed(key, false)) continue;
+      if(key >= ImGuiKey_A && key <= ImGuiKey_Z) return 'A' + (key - ImGuiKey_A);
+      if(key >= ImGuiKey_0 && key <= ImGuiKey_9) return '0' + (key - ImGuiKey_0);
+      if(key >= ImGuiKey_Keypad0 && key <= ImGuiKey_Keypad9)
+        return '0' + (key - ImGuiKey_Keypad0);
+      if(key >= ImGuiKey_F1 && key <= ImGuiKey_F12)
+        return Ui::KeyF1 + (key - ImGuiKey_F1);
+      switch(key) {
+      case ImGuiKey_LeftArrow: return Ui::KeyLeft;
+      case ImGuiKey_RightArrow: return Ui::KeyRight;
+      case ImGuiKey_UpArrow: return Ui::KeyUp;
+      case ImGuiKey_DownArrow: return Ui::KeyDown;
+      case ImGuiKey_Escape: return Ui::KeyEscape;
+      case ImGuiKey_Home: return Ui::KeyHome;
+      case ImGuiKey_PageUp: return Ui::KeyPageUp;
+      case ImGuiKey_PageDown: return Ui::KeyPageDown;
+      case ImGuiKey_Delete: return Ui::KeyDelete;
+      case ImGuiKey_Minus:
+      case ImGuiKey_KeypadSubtract: return '-';
+      default: break;
+      }
+    }
+    return 0;
   }
-  return false;
-}
+
+} // namespace
 
 void appWindow::_handleShortcuts()
 {
@@ -61,103 +68,27 @@ void appWindow::_handleShortcuts()
   // which would leave the shortcuts working only when nothing is focused.
   if(io.WantTextInput || _modalDepth > 0) return;
 
-  const bool ctrl = io.KeyCtrl || io.KeySuper;
-  const bool shift = io.KeyShift;
+  int key = _uiKey();
+  if(!key) return;
 
-  auto pressed = [](ImGuiKey key) { return ImGui::IsKeyPressed(key, false); };
-
-  // during an interactive selection these keys end, undo, invert or abort it;
-  // they are not "used up", exactly as in the FLTK interface
-  if(_currentPane && _currentPane->selectionMode) {
-    if(pressed(ImGuiKey_E)) _currentPane->endSelection = 1;
-    if(pressed(ImGuiKey_U)) _currentPane->undoSelection = 1;
-    if(pressed(ImGuiKey_I) || pressed(ImGuiKey_Minus))
-      _currentPane->invertSelection = 1;
-    if(pressed(ImGuiKey_Q) || pressed(ImGuiKey_Escape))
-      _currentPane->quitSelection = 1;
+  if(key == Ui::KeyEscape && _fullscreen) {
+    _windowFullScreen();
     return;
   }
 
-  // --- the accelerators of the menu bar
-  //
-  // Dear ImGui draws the menus itself and never acts on the shortcut it
-  // displays next to an item, so they have to be tested here. They are read
-  // from the same description the menu is built from, which is the point:
-  // a label saying "Ctrl+H" and a handler doing something else was a kind of
-  // drift nothing could catch as long as the two were written separately.
-  {
-    static std::vector<Ui::MenuItem> menus;
-    static unsigned built = 0;
-    if(built != imguiSources().menuGeneration()) {
-      built = imguiSources().menuGeneration();
-      menus = imguiSources().menuBar();
-    }
-    if(_runMenuShortcut(menus, ctrl, shift, io.KeyAlt)) return;
-  }
+  unsigned mods = 0;
+  if(io.KeyCtrl || io.KeySuper) mods |= Ui::ModCommand;
+  if(io.KeyShift) mods |= Ui::ModShift;
+  if(io.KeyAlt) mods |= Ui::ModAlt;
 
-  // not in the menu bar, but in the FLTK interface too
-  if(ctrl && !shift && pressed(ImGuiKey_T)) {
-    postAction([]() { Gui::onelabAction("compute"); });
-    return;
-  }
-  if(ctrl && !shift && pressed(ImGuiKey_0)) {
-    postAction(projectReload);
-    return;
-  }
-
-  if(pressed(ImGuiKey_0)) {
-    postAction(geometryReload);
-    return;
-  }
-  if(pressed(ImGuiKey_9)) { // as in the FLTK interface
-    postAction(projectReload);
-    return;
-  }
-  if(pressed(ImGuiKey_1) || pressed(ImGuiKey_F1)) {
-    postAction([]() { meshDimension(1); });
-    return;
-  }
-  if(pressed(ImGuiKey_2) || pressed(ImGuiKey_F2)) {
-    postAction([]() { meshDimension(2); });
-    return;
-  }
-  if(pressed(ImGuiKey_3) || pressed(ImGuiKey_F3)) {
-    postAction([]() { meshDimension(3); });
-    return;
-  }
-
-  // arrows step through the post-processing animation
-  if(pressed(ImGuiKey_LeftArrow)) {
-    postAction([]() { animationStepBy(false); });
-    return;
-  }
-  if(pressed(ImGuiKey_RightArrow)) {
-    postAction([]() { animationStepBy(true); });
-    return;
-  }
-  if(pressed(ImGuiKey_UpArrow)) {
-    postAction([]() { animationStepBy(false, true); });
-    return;
-  }
-  if(pressed(ImGuiKey_DownArrow)) {
-    postAction([]() { animationStepBy(true, true); });
-    return;
-  }
-  if(pressed(ImGuiKey_Home)) {
-    postAction(animationRewind);
-    return;
-  }
-
-  // toggle the panels
-  if(!ctrl && !shift) {
-    if(pressed(ImGuiKey_M)) {
-      _showConsole = !_showConsole;
-      return;
-    }
-    if(pressed(ImGuiKey_W)) {
-      postAction([]() { Gui::watchFile(); });
-      return;
-    }
+  if(!imguiSources().keys) return;
+  // Like the menu entries, what a key runs is queued with postAction() so
+  // that it runs outside of the frame: it is free to open a blocking dialog
+  // or start a picking, both of which pump frames of their own.
+  for(const Ui::KeyBinding &k : imguiSources().keys()) {
+    if(!k.shortcut.matches(key, mods)) continue;
+    if(k.action) postAction(k.action);
+    if(k.spent) break;
   }
 }
 

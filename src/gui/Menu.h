@@ -21,11 +21,18 @@ namespace Ui {
 
   // Modifiers of a shortcut. Command is the Control key on X11 and Windows and
   // the Command key on macOS, which is what both toolkits expect and what the
-  // FLTK bar_table[]/sysbar_table[] pair used to spell out twice.
-  enum { ModCommand = 1 << 0, ModShift = 1 << 1, ModAlt = 1 << 2 };
+  // FLTK bar_table[]/sysbar_table[] pair used to spell out twice. ModAny says
+  // the key is the shortcut whatever else is held, or nothing: Escape is
+  // Escape with a modifier down.
+  enum {
+    ModCommand = 1 << 0,
+    ModShift = 1 << 1,
+    ModAlt = 1 << 2,
+    ModAny = 1 << 3
+  };
 
-  // The key of a shortcut: an upper case letter or a digit for the printable
-  // ones, or one of these.
+  // The key of a shortcut: an upper case letter, a digit or a punctuation
+  // mark for the printable ones, or one of these.
   enum {
     KeyNone = 0,
     KeyF1 = 0x1000 /* .. KeyF1 + 11 */,
@@ -33,7 +40,11 @@ namespace Ui {
     KeyLeft,
     KeyRight,
     KeyUp,
-    KeyDown
+    KeyDown,
+    KeyEscape,
+    KeyHome,
+    KeyPageUp,
+    KeyPageDown
   };
 
   struct Shortcut {
@@ -43,6 +54,24 @@ namespace Ui {
     bool empty() const { return key == KeyNone; }
     // "Ctrl+Shift+O", for the interface that has to draw it itself
     std::string label() const;
+    // Whether a key struck with these modifiers held is this shortcut. The
+    // interfaces read their key events differently and compare the same
+    // way: here, once, so that none of them compares labels.
+    bool matches(int key, unsigned mods) const;
+  };
+
+  // A key that does something wherever the pointer is, outside any menu:
+  // 'g' folds the geometry module, an arrow steps the animation, Escape
+  // gives up a picking. The interfaces walk the list on a key press, in
+  // order, and run every binding that matches up to the first one that
+  // spends the key. One that does not spend it does its work and leaves the
+  // key to whatever else was listening -- the keys a picking reads are
+  // heard by the picking as well.
+  struct KeyBinding {
+    Shortcut shortcut;
+    std::function<void()> action;
+    bool spent;
+    KeyBinding() : spent(true) {}
   };
 
   struct MenuItem {

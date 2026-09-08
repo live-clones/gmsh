@@ -73,6 +73,14 @@ namespace Menu {
   // those are widgets, not entries, and each interface builds them itself.
   std::vector<MenuItem> modules();
 
+  // The keys, wherever the pointer is: what the bar and the quick access
+  // menu bind, and after them the keys of the 3D view that are in no menu --
+  // 'g' folds the geometry module, an arrow steps the animation, Alt+X faces
+  // the x axis. Two interfaces each wrote the list out by hand, and they had
+  // drifted; this is the one list both walk. The order is the order they
+  // are tried in, see Ui::KeyBinding.
+  std::vector<KeyBinding> keys();
+
   // Say that what the menus show has changed -- a file was opened, a model was
   // added -- so that the interfaces build them again.
   void invalidate();

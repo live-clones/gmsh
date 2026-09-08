@@ -96,10 +96,11 @@ public:
   static bool getFinishedProcessingCommandLine();
   // test application-level keyboard shortcuts
   int testGlobalShortcuts(int event);
-  // test the arrow shortcuts (not in the application-level shortcuts)
-  // since it is used elsewhere (where we want to override widget
-  // navigation). This is necessary since FLTK 1.1.
-  int testArrowShortcuts();
+  // The keys of the application, from Menu::keys(), for the key FLTK is
+  // reporting. The 3D view calls it on its own key events, so that the arrows
+  // step the animation rather than move the focus, which is what FLTK would
+  // do with them; everything else reaches it as a shortcut nothing else took.
+  int runKeys();
   // set the title of the graphic windows
   void setGraphicTitle(const std::string &title);
   // update the GUI when views get modified, added or deleted
@@ -134,7 +135,6 @@ public:
   // rebuild the tree
   void rebuildTree(bool deleteWidgets);
   // toggles the module open or closed based on its current state
-  void toggleModule(const std::string &name);
   // open module in tree
   void openModule(const std::string &name);
   // open tree item
