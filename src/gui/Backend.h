@@ -440,8 +440,6 @@ namespace Ui {
       std::function<void(double x, double y, int button, int what,
                          double wheel, bool shift, bool ctrl, bool alt)>
         scenePointer;
-      // the keys a picking answers to: 'q' gives up, 'e' ends, 'u' undoes
-      std::function<void(char key)> sceneKey;
     };
     virtual void setHost(const Host &host) = 0;
   };
