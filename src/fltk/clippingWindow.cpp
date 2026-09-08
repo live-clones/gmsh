@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <FL/Fl.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include <algorithm>
@@ -23,7 +24,37 @@ static void clip_num_cb(Fl_Widget *w, void *data)
   FlGui::instance()->clipping->resetBrowser();
 }
 
+// adjusting says the user is still choosing the value - dragging a plane,
+// typing a number into one of the fields, scrolling over one - and that the
+// fast representation is what should be drawn
+static void clip_update(bool adjusting);
+
+// There is no event to say that typing a value is over: Enter does not reach
+// the callback, and the field only says so when the focus leaves it. So the
+// full representation is put back a moment after the last change instead.
+static void clip_settle_cb(void *) { clip_update(false); }
+
+// Is the user still choosing the value this callback carries? A drag of a
+// plane or of a value input, a scroll over one, and every keystroke as a
+// number is typed in - the callback fires on each one, and building the
+// section or the cut elements at every character is far too slow.
+static bool clip_adjusting()
+{
+  switch(Fl::event()) {
+  case FL_DRAG:
+  case FL_MOUSEWHEEL:
+  case FL_KEYBOARD:
+  case FL_PASTE: return true;
+  default: return false;
+  }
+}
+
 static void clip_update_cb(Fl_Widget *w, void *data)
+{
+  clip_update(clip_adjusting());
+}
+
+static void clip_update(bool adjusting)
 {
   if(FlGui::instance()->clipping->group[0]->visible()) { // plane tab
     int idx = FlGui::instance()->clipping->choice->value();
@@ -133,13 +164,11 @@ static void clip_update_cb(Fl_Widget *w, void *data)
   lastWhole = wantWhole;
   lastIntersecting = wantIntersecting;
 
-  bool dragging = (Fl::event() == FL_DRAG);
-
   CTX::instance()->clipCapping = wantCapping;
   CTX::instance()->clipWholeElements = wantWhole;
   CTX::instance()->clipOnlyDrawIntersectingVolume = wantIntersecting;
 
-  if(!dragging && (wantWhole || wantCapping || togglesChanged)) {
+  if(!adjusting && (wantWhole || wantCapping || togglesChanged)) {
     for(std::size_t index = 0; index < PView::list.size(); index++)
       if(PView::list[index]->getOptions()->clip)
         PView::list[index]->setChanged(true);
@@ -155,19 +184,24 @@ static void clip_update_cb(Fl_Widget *w, void *data)
   // do not follow what the drag below draws with
   FlGui::instance()->clipping->activateButtons();
 
-  // While a plane is dragged, OpenGL alone does the clipping: no array is
-  // built, so a motion event costs a redraw however big the mesh is. Whole
-  // element mode is put aside because it is what keeps the planes from being
-  // applied at all, and capping because the section it cuts is worked out by
-  // walking every 3D element - cheap next to rebuilding the mesh, but far too
-  // much to do at every motion event. Both are obeyed again, and the section
-  // built once, as soon as the mouse is released.
-  if(dragging) {
+  // While the value is being chosen, OpenGL alone does the clipping: no array
+  // is built, so an event costs a redraw however big the mesh is. Whole element
+  // mode is put aside because it is what keeps the planes from being applied at
+  // all, and capping because the section it cuts is worked out by walking every
+  // 3D element - cheap next to rebuilding the mesh, but far too much to do at
+  // every keystroke or motion event. Both are obeyed again, and everything they
+  // add built once, as soon as the value is settled.
+  if(adjusting) {
     CTX::instance()->clipWholeElements = 0;
     CTX::instance()->clipCapping = 0;
   }
 
-  CTX::instance()->drawBBox = dragging ? 1 : 0;
+  // A drag says when it is over, so it is left to say so; a value being typed
+  // or scrolled does not, and settles on its own.
+  Fl::remove_timeout(clip_settle_cb);
+  if(adjusting && Fl::event() != FL_DRAG) Fl::add_timeout(0.5, clip_settle_cb);
+
+  CTX::instance()->drawBBox = adjusting ? 1 : 0;
   drawContext::global()->draw();
 }
 
