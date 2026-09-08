@@ -70,13 +70,21 @@ namespace Ui {
     // to it that way, and a solver what to run.
     std::function<std::vector<MenuItem>()> menu;
     // Drawn as something to be looked at rather than as an ordinary line, in
-    // the colour packed here; zero for an ordinary one. A solver says which
-    // parameters it is waiting on that way, through the Highlight attribute.
-    unsigned int highlight;
+    // this colour. A solver says which parameters it is waiting on that way,
+    // through the Highlight attribute.
+    //
+    // Four bytes and not one packed number, for the reason Form.h gives for
+    // Colour: there is no packing everyone agrees on, and the one Gmsh uses
+    // depends on the endianness of the machine. Packed here, it made the one
+    // interface that draws it unpack it the Gmsh way -- the only thing in
+    // that file which knew Gmsh at all. An alpha of zero is an ordinary
+    // line, which is what a node gets by default; nothing here draws a
+    // highlight half way.
+    Colour highlight;
     // Folded when the tree is built, for a node that arrives asking to be:
     // what is folded afterwards is the tree's, below, not the node's.
     bool closed;
-    Node() : hasField(false), highlight(0), closed(false) {}
+    Node() : hasField(false), highlight(0, 0, 0, 0), closed(false) {}
   };
 
   struct Tree {

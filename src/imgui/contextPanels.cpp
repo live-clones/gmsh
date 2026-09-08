@@ -31,7 +31,6 @@
 #include "GuiActions.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "Context.h"
 #include "drawContext.h"
 
 namespace {
@@ -60,11 +59,21 @@ namespace {
   // declared by the same fields that can be slid with the mouse in FLTK.
   // Claiming the wheel for the hovered field also keeps it from reaching the
   // window under it, and has to be done on every frame it is hovered.
-  // whether a value may be slid at all: the option that says so in FLTK, where
-  // it decides both the dragging and the decimals a value is shown to
+  // Whether a value may be slid at all: the setting that says so, which
+  // decides both the dragging and the decimals a value is shown to.
+  //
+  // Read once a frame and not once a field: this is asked for every value of
+  // every panel, and what it answers cannot change halfway through a frame.
   bool _sliding()
   {
-    return CTX::instance()->inputScrolling ? true : false;
+    static int frame = -1;
+    static bool on = true;
+    int now = ImGui::GetFrameCount();
+    if(now != frame) {
+      frame = now;
+      on = imguiSources().settings().inputScrolling;
+    }
+    return on;
   }
 
   bool _wheeled(const Ui::Field &f, double &value)

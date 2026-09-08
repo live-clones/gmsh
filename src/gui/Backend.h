@@ -96,12 +96,66 @@ namespace Ui {
     // Dear ImGui asks at every frame; FLTK asks when it is told something
     // changed, which is what the refresh calls below are for.
 
+    // What the interface lays itself out from: how big to draw, what the
+    // parts of the window are worth, and the handful of behaviours a widget
+    // answers to. Every one of them is a setting of the application and not
+    // of the toolkit -- the same number for every interface, so that a window
+    // is the size it is meant to be whichever one draws it.
+    //
+    // Asked for rather than handed over, like every other description here,
+    // so that an interface which draws itself again at every frame is never
+    // out of step with one of them. The set...() below are the other half:
+    // an interface that holds widgets is *told* when one of these changes,
+    // because it has something to move; one that draws afresh reads these
+    // and has nothing to do there.
+    struct Settings {
+      // how tall the interface font is, in points; 0 for the toolkit's own.
+      // Everything else is measured against it: a field is ten of them wide.
+      int fontSize;
+      // What a window that has just come up is made of, in pixels: the 3D
+      // scene, the tree beside it, the console under it. An interface that
+      // lays itself out differently -- a dock space, a page in a browser --
+      // is free to read what it needs of this and no more.
+      int sceneWidth, sceneHeight, treeWidth, consoleHeight;
+      int consoleFontSize;
+      // where a dialog opens, for an interface that places its own windows
+      int dialogX, dialogY;
+      // a dark interface rather than a light one
+      bool darkScheme;
+      // ask the windowing system for a multisampled visual
+      bool antialiasing;
+      // little labels appear under the pointer
+      bool tooltips;
+      // the tree is a window of its own rather than standing beside the scene
+      bool detachedTree;
+      // The wheel over a value changes it. It is one option in Gmsh and it
+      // decides two things, as it always has: whether a value may be dragged
+      // at all, and how many decimals one is shown to.
+      bool inputScrolling;
+      // a dialog leaves the rest of the interface usable while it is up
+      bool nonModalWindows;
+      // What is behind the model. It is here for the one widget that has to
+      // sit on the scene's own background rather than on the interface's --
+      // the colour map of a view, whose wedge is drawn over it.
+      Colour background;
+      // how many frames a second the interface may be pumped at; 0 for as
+      // often as it likes
+      double refreshRate;
+      // Where the user's own files are: what a chooser opens on, and where an
+      // interface writes down what it remembers of its own layout.
+      std::string homeDir;
+      Settings()
+        : fontSize(0), sceneWidth(0), sceneHeight(0), treeWidth(0),
+          consoleHeight(0), consoleFontSize(0), dialogX(0), dialogY(0),
+          darkScheme(false), antialiasing(false), tooltips(true),
+          detachedTree(false), inputScrolling(true), nonModalWindows(false),
+          refreshRate(0.)
+      {
+      }
+    };
+
     struct Sources {
-      // How big to draw. It is a setting of the application and not of the
-      // toolkit -- the same number for every interface, so that a window is
-      // the size it is meant to be whichever one draws it -- and everything
-      // else is measured against it: a field is ten of them wide.
-      std::function<int()> fontSize;
+      std::function<Settings()> settings;
       // the menu bar, and a counter that changes when it would come out
       // different, so that an interface holding real menu widgets knows when
       // to build them again instead of doing it at every frame
@@ -315,12 +369,14 @@ namespace Ui {
 
     // --- what the options that shape the main window push into it
     //
-    // Set from a script or from the option window, each of these is a
-    // setting the interface laid itself out from when it came up, and has to
-    // be told about now. An interface whose layout is its own to keep -- the
-    // dock space of Dear ImGui, the page in a browser -- has nothing to do
-    // for any of them, which is why none is pure. A dimension of -1 leaves
-    // that one as it is.
+    // The other half of Sources::settings above. Each of these is one of
+    // those settings, changed from a script or from the option window after
+    // the interface laid itself out from it: an interface that holds widgets
+    // has something to move now, and is told. An interface whose layout is
+    // its own to keep -- the dock space of Dear ImGui, the page in a browser
+    // -- reads the setting where it matters and has nothing to do here,
+    // which is why none of these is pure. A dimension of -1 leaves that one
+    // as it is.
     virtual void setSceneSize(int width, int height) {}
     virtual void setConsoleFontSize(int size) {}
     virtual void setTreeWidth(int width) {}

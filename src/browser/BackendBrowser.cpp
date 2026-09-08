@@ -1469,7 +1469,8 @@ namespace {
       out += ",\"menus\":";
       out += _sources.menuBar ? _menu(_sources.menuBar()) : "[]";
       out += ",\"font\":";
-      out += std::to_string(_sources.fontSize ? _sources.fontSize() : 13);
+      int points = _sources.settings ? _sources.settings().fontSize : 13;
+      out += std::to_string(points > 0 ? points : 13);
       out += ",\"tip\":" + _quoted(_tip);
       out += ",\"ask\":" + _ask();
       out += ",\"tree\":" + _tree();

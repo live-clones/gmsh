@@ -61,18 +61,23 @@ TOLERATED = {
     # into the facade (1.3), and the export options it writes by hand (1.4c)
     "src/imgui/BackendImGui.cpp": {"GuiActions.h"},
     "src/imgui/appWindow.cpp": {
-        "Gui.h", "GuiStatus.h", "GmshGlobal.h", "Context.h", "StringUtils.h",
+        "Gui.h", "GuiStatus.h", "GmshGlobal.h", "StringUtils.h",
         "Options.h", "OpenFile.h", "GModel.h", "drawContext.h"},
     "src/imgui/appWindow.h": {"GuiActions.h", "GuiMenus.h"},
     "src/imgui/contextPanels.cpp": {
         "Gui.h", "GuiActions.h", "GmshMessage.h", "GmshDefines.h",
-        "Context.h", "drawContext.h"},
+        "drawContext.h"},
     "src/imgui/exportDialog.cpp": {
         "Gui.h", "GmshDefines.h", "Context.h", "Options.h"},
     "src/imgui/menuBar.cpp": {"GuiMenus.h"},
     "src/imgui/messageConsole.cpp": {"Gui.h"},
     "src/imgui/shortcuts.cpp": {
         "GuiActions.h", "GuiMenus.h", "Gui.h", "GmshMessage.h"},
+    # Context.h here is not a setting the interface lays itself out from: it
+    # is the delay, the step and the cycle of the post-processing animation,
+    # which this bar steps from the frame loop and the FLTK one from a
+    # blocking loop -- the same arithmetic written twice. It belongs in the
+    # description of the bar, and goes when it is said there.
     "src/imgui/statusBar.cpp": {
         "Gui.h", "GuiActions.h", "GuiMenus.h", "GuiStatus.h",
         "GmshMessage.h", "Context.h", "Options.h", "GModel.h",
@@ -89,8 +94,6 @@ TOLERATED = {
         "CommandLine.h", "Context.h", "StringUtils.h", "gl2ps.h",
         "gmshPopplerWrapper.h", "PixelBuffer.h", "Field.h", "3M.h"},
     "src/fltk/FlGui.h": {"SPoint2.h"},
-    "src/fltk/colorbarWindow.cpp": {"ColorTable.h", "Context.h"},
-    "src/fltk/dialogFltk.cpp": {"Context.h"},
     "src/fltk/extraDialogs.cpp": {
         "GmshDefines.h", "OpenFile.h", "CreateFile.h", "Options.h",
         "drawContext.h", "GModel.h", "Context.h", "PView.h"},
@@ -120,7 +123,6 @@ TOLERATED = {
                                   "GuiActions.h"},
     "src/fltk/touchBar.mm": {"GuiActions.h", "drawContext.h", "Options.h",
                              "PView.h"},
-    "src/fltk/treeFltk.cpp": {"Context.h"},
     "src/fltk/viewButton.cpp": {
         "GuiDialogs.h", "drawContext.h", "Context.h", "GModel.h", "PView.h",
         "PViewData.h", "PViewOptions.h", "Options.h", "OpenFile.h",

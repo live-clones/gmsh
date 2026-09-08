@@ -117,13 +117,14 @@ namespace Modules {
 
     // What it asks to be drawn as, when it asks to be looked at: "1" is the
     // yellow the tree this reproduces uses, and anything else is a colour by
-    // name. Zero is an ordinary line.
-    unsigned int _highlight(const std::string &say)
+    // name. An alpha of zero is an ordinary line.
+    Ui::Colour _highlight(const std::string &say)
     {
-      if(say.empty()) return 0;
+      if(say.empty()) return Ui::Colour(0, 0, 0, 0);
       int r = 255, g = 255, b = 0;
-      if(say != "1" && !GetRGBForString(say.c_str(), r, g, b)) return 0;
-      return CTX::instance()->packColor(r, g, b, 255);
+      if(say != "1" && !GetRGBForString(say.c_str(), r, g, b))
+        return Ui::Colour(0, 0, 0, 0);
+      return Ui::Colour((unsigned char)r, (unsigned char)g, (unsigned char)b);
     }
 
     // and the parameter itself, on the line its name gives it
