@@ -13,7 +13,7 @@
 #include "imgui.h"
 
 #include "messageConsole.h"
-#include "Gui.h"
+#include "Backend.h"
 
 messageConsole::messageConsole()
   : _maxLines(50000), _autoScroll(true), _scrollToBottom(false)
@@ -43,9 +43,9 @@ static ImVec4 _colorForLevel(int level)
 {
   // these follow the colors of the FLTK message browser
   switch(level) {
-  case Gui::MessageError: return ImVec4(0.90f, 0.30f, 0.30f, 1.f);
-  case Gui::MessageWarning: return ImVec4(0.95f, 0.75f, 0.25f, 1.f);
-  case Gui::MessageDirect: return ImVec4(0.45f, 0.65f, 1.00f, 1.f);
+  case Ui::Backend::Error: return ImVec4(0.90f, 0.30f, 0.30f, 1.f);
+  case Ui::Backend::Warning: return ImVec4(0.95f, 0.75f, 0.25f, 1.f);
+  case Ui::Backend::Direct: return ImVec4(0.45f, 0.65f, 1.00f, 1.f);
   default: return ImGui::GetStyleColorVec4(ImGuiCol_Text);
   }
 }
