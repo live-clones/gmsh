@@ -155,15 +155,17 @@ static void clip_update_cb(Fl_Widget *w, void *data)
   // do not follow what the drag below draws with
   FlGui::instance()->clipping->activateButtons();
 
-  // While a plane is dragged, OpenGL does the clipping and the arrays are left
-  // exactly as they are, so that the drag starts at once however big the mesh
-  // is - rebuilding them here is what made it stall. Only whole element mode
-  // has to be put aside, as it is the one that keeps the planes from being
-  // applied at all; capping only ever mattered while the arrays were filled.
-  // What that mode leaves out of the arrays, and the section capping put in
-  // them, are then a plane behind while the mouse moves, and are put right as
-  // soon as it is released.
-  if(dragging) CTX::instance()->clipWholeElements = 0;
+  // While a plane is dragged, OpenGL alone does the clipping: no array is
+  // built, so a motion event costs a redraw however big the mesh is. Whole
+  // element mode is put aside because it is what keeps the planes from being
+  // applied at all, and capping because the section it cuts is worked out by
+  // walking every 3D element - cheap next to rebuilding the mesh, but far too
+  // much to do at every motion event. Both are obeyed again, and the section
+  // built once, as soon as the mouse is released.
+  if(dragging) {
+    CTX::instance()->clipWholeElements = 0;
+    CTX::instance()->clipCapping = 0;
+  }
 
   CTX::instance()->drawBBox = dragging ? 1 : 0;
   drawContext::global()->draw();
