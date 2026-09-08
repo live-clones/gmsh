@@ -327,6 +327,9 @@ public:
   // draw with the shader pipeline instead of the fixed function one
   // (recreates the OpenGL context)
   int shaders;
+  // lighting model of the shader pipeline: 0 the fixed function one, 1
+  // studio (linear light, hemisphere ambient, soft key light, no specular)
+  int shading;
   // order independent (weighted blended) transparency instead of back to
   // front sorting
   int orderIndependentTransparency;
