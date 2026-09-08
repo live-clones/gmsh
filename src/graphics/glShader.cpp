@@ -335,14 +335,19 @@ void main()
 
     struct {
       GLint modelview, projection, normalMatrix, colorArray, color, pointSize;
-      GLint clipPlane, clipOn, alphaScale;
+      GLint alphaScale;
       GLint lighting, twoSide, specular, shininess;
       GLint instanced, taper;
       GLint textured, texture;
       GLint stipple, stippleFactor, stipplePattern;
       GLint wideLine, lineWidth, viewport;
       GLint oitPass;
-      GLint lightPosition, lightAmbient, lightDiffuse, lightSpecular, lightOn;
+      // the arrays, one location per element: they are set one element at a
+      // time, and asking the driver for the location by name at every draw
+      // costs more than the draw on a scene of many small draws
+      GLint clipPlane[6], clipOn[6];
+      GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
+      GLint lightSpecular[6], lightOn[6];
     } _u;
 
     // A uniform is set on the program that is current, and these are called
@@ -470,9 +475,15 @@ void main()
       _u.viewport = glApi::GetUniformLocation(p, "uViewport");
       _u.oitPass = glApi::GetUniformLocation(p, "uOitPass");
       // the arrays are addressed element by element
-      _u.clipPlane = _u.clipOn = -1;
-      _u.lightPosition = _u.lightAmbient = _u.lightDiffuse = -1;
-      _u.lightSpecular = _u.lightOn = -1;
+      for(int i = 0; i < 6; i++) {
+        _u.clipPlane[i] = element("uClipPlane", i);
+        _u.clipOn[i] = element("uClipOn", i);
+        _u.lightPosition[i] = element("uLightPosition", i);
+        _u.lightAmbient[i] = element("uLightAmbient", i);
+        _u.lightDiffuse[i] = element("uLightDiffuse", i);
+        _u.lightSpecular[i] = element("uLightSpecular", i);
+        _u.lightOn[i] = element("uLightOn", i);
+      }
 
       // a uniform starts at zero, and an alpha scale of zero would draw
       // nothing at all: it is the one that has to be given a value up front
@@ -569,18 +580,17 @@ void main()
     const float black[3] = {0.f, 0.f, 0.f};
     float p[4] = {(float)position[0], (float)position[1], (float)position[2],
                   (float)position[3]};
-    glApi::Uniform4fv(element("uLightPosition", i), 1, p);
-    glApi::Uniform3fv(element("uLightAmbient", i), 1, ambient ? ambient : black);
-    glApi::Uniform3fv(element("uLightDiffuse", i), 1, diffuse ? diffuse : black);
-    glApi::Uniform3fv(element("uLightSpecular", i), 1,
-                      specular ? specular : black);
-    glApi::Uniform1i(element("uLightOn", i), 1);
+    glApi::Uniform4fv(_u.lightPosition[i], 1, p);
+    glApi::Uniform3fv(_u.lightAmbient[i], 1, ambient ? ambient : black);
+    glApi::Uniform3fv(_u.lightDiffuse[i], 1, diffuse ? diffuse : black);
+    glApi::Uniform3fv(_u.lightSpecular[i], 1, specular ? specular : black);
+    glApi::Uniform1i(_u.lightOn[i], 1);
   }
 
   void setLightOff(int i)
   {
     if(i < 0 || i > 5 || !ensure()) return;
-    glApi::Uniform1i(element("uLightOn", i), 0);
+    glApi::Uniform1i(_u.lightOn[i], 0);
   }
 
   void setMaterial(double shine, double shineExponent)
@@ -604,14 +614,14 @@ void main()
     if(i < 0 || i > 5 || !ensure()) return;
     float p[4] = {(float)plane[0], (float)plane[1], (float)plane[2],
                   (float)plane[3]};
-    glApi::Uniform4fv(element("uClipPlane", i), 1, p);
-    glApi::Uniform1i(element("uClipOn", i), 1);
+    glApi::Uniform4fv(_u.clipPlane[i], 1, p);
+    glApi::Uniform1i(_u.clipOn[i], 1);
   }
 
   void setClipPlaneOff(int i)
   {
     if(i < 0 || i > 5 || !ensure()) return;
-    glApi::Uniform1i(element("uClipOn", i), 0);
+    glApi::Uniform1i(_u.clipOn[i], 0);
   }
 
   // say that nothing is drawn through a texture, and leave the sampler
@@ -713,7 +723,8 @@ void main()
                       dashes, GL_STREAM_DRAW);
     glApi::EnableVertexAttribArray(ATTRIB_DASH);
     glApi::VertexAttribPointer(ATTRIB_DASH, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glApi::VertexAttribDivisor(ATTRIB_DASH, 0);
+    // a context with shaders but no instancing has no divisor to reset
+    if(glApi::VertexAttribDivisor) glApi::VertexAttribDivisor(ATTRIB_DASH, 0);
     glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
   }
 
