@@ -1751,7 +1751,13 @@ static void addElementRange(drawTarget *p, PViewData *data,
   p->nodeIds = nullptr;
 }
 
-// What each view's clip arrays were last built for.
+// What each view's clip arrays were last built for. Only what changes them
+// without marking the view as changed is in here: the planes and the clipping
+// options, whose setters leave the view alone (the capping one marks the
+// *mesh* as changed, which reaches only the views attached to a model). Every
+// other option the arrays depend on - the time step, the intervals, the
+// range, the skin, the smoothing - marks the view as changed, and drawPost()
+// invalidates the clip arrays whenever it rebuilds the view's own.
 static std::map<PView *, std::vector<double> > _viewClipToken;
 
 static std::vector<double> viewClipToken(PView *p)
@@ -1764,8 +1770,6 @@ static std::vector<double> viewClipToken(PView *p)
   t.push_back(ctx->clipWholeElements);
   t.push_back(ctx->clipOnlyVolume);
   t.push_back(ctx->clipOnlyDrawIntersectingVolume);
-  t.push_back(opt->intervalsType);
-  t.push_back(opt->timeStep);
   for(int i = 0; i < 6; i++)
     for(int j = 0; j < 4; j++) t.push_back(ctx->clipPlane[i][j]);
   return t;
