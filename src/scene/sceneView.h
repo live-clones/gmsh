@@ -75,6 +75,8 @@ private:
   // see setOrigin()
   double _originX, _originY, _pixelFactor;
   int _windowHeight;
+  // whether it has ever drawn: see everDrawn()
+  bool _drawn;
 
   void _drawScreenMessage();
   void _drawBorder();
@@ -111,6 +113,10 @@ public:
   ~sceneView();
 
   drawContext *getDrawContext() { return _ctx; }
+
+  // whether a picture has been drawn yet: what flies the camera has nothing
+  // to move around until there is one
+  bool everDrawn() const { return _drawn; }
 
   // where the point being placed with the mouse currently is
   void setPoint(double x, double y, double z)

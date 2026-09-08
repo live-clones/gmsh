@@ -14,10 +14,8 @@
 
 #include "sceneViewFltk.h"
 #include "FlGui.h"
-#include "Navigator.h"
+#include "sceneGamepad.h"
 #include "drawContext.h"
-#include "Context.h"
-#include "GamePad.h"
 #include "GmshMessage.h"
 
 sceneViewFltk *sceneViewFltk::_lastHandled = nullptr;
@@ -32,50 +30,31 @@ namespace {
     return all;
   }
 
-  // The gamepad, read on a timer rather than as an event: there is none to
-  // wait for. It asks every three seconds while nothing is plugged in, and at
-  // the rate the pad reports once one is.
-  Navigator *_nautilus = nullptr;
-
+  // The gamepad, asked on a timer rather than as an event: there is none to
+  // wait for. The scene says how often, and does the rest; what is the
+  // window's is that only the view the pointer was last in moves, as it
+  // always has.
   void _gamepad(void *data)
   {
     sceneViewFltk *view = (sceneViewFltk *)data;
-    if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
-      if(!_nautilus)
-        _nautilus = new Navigator(CTX::instance()->gamepad->frequency,
-                                  view->getDrawContext());
-      // Only the view the pointer was last in moves, as it always has, and
-      // not before it has drawn once: there is nothing to move a camera
-      // around until then.
-      if(view->everDrawn() && (sceneViewFltk::lastHandled() == view ||
-                               sceneViewFltk::lastHandled() == nullptr)) {
-        drawContext *ctx = view->getDrawContext();
-        if(ctx && !ctx->camera.on) ctx->camera.init();
-        _nautilus->move();
-        view->flush();
-      }
-      Fl::add_timeout(CTX::instance()->gamepad->frequency, _gamepad, data);
+    if(sceneViewFltk::lastHandled() == view ||
+       sceneViewFltk::lastHandled() == nullptr) {
+      if(Scene::gamepadTurn(view->scene())) view->flush();
     }
-    else {
-      if(_nautilus) {
-        delete _nautilus;
-        _nautilus = nullptr;
-      }
-      Fl::add_timeout(3., _gamepad, data);
-    }
+    Fl::add_timeout(Scene::gamepadPeriod(), _gamepad, data);
   }
 
 } // namespace
 
 sceneViewFltk::sceneViewFltk(int x, int y, int w, int h)
-  : Fl_Gl_Window(x, y, w, h, "gl"), _drawing(false), _drawn(false),
+  : Fl_Gl_Window(x, y, w, h, "gl"), _drawing(false),
     _lastX(0.), _lastY(0.), _everMoved(false), _cursorKind(Scene::Ordinary)
 {
   _view = new sceneView();
   _tooltip = new tooltipWindow();
   _tooltip->hide();
   _all().push_back(this);
-  if(CTX::instance()->gamepad) Fl::add_timeout(.5, _gamepad, (void *)this);
+  if(Scene::gamepadPeriod() > 0.) Fl::add_timeout(.5, _gamepad, (void *)this);
 }
 
 sceneViewFltk::~sceneViewFltk()
@@ -146,7 +125,6 @@ void sceneViewFltk::draw()
   if(_drawing) return;
   _drawing = true;
 
-  _drawn = true;
   Msg::Debug("sceneViewFltk::draw()");
   if(!context_valid())
     _view->getDrawContext()->invalidateQuadricsAndDisplayLists();

@@ -43,6 +43,7 @@ sceneView::sceneView()
   _originX = _originY = 0.;
   _pixelFactor = 1.;
   _windowHeight = 0;
+  _drawn = false;
   addPointMode = false;
   _point[0] = _point[1] = _point[2] = 0.;
   _ctx = new drawContext();
@@ -148,6 +149,7 @@ void sceneView::_drawBorder()
 
 void sceneView::draw(double pixelFactor, int windowHeight)
 {
+  _drawn = true;
   // the scene is rendered directly into the rectangle of the central dock node,
   // so both the viewport and the scissor box are needed: the scissor box keeps
   // glClear() and the drawing inside the pane, which is what makes several

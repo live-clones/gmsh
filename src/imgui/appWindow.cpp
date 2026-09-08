@@ -26,6 +26,7 @@
 #include "toolkit.h"
 #include "sceneView.h"
 #include "sceneHost.h"
+#include "sceneGamepad.h"
 #include "messageConsole.h"
 #include "fileBrowser.h"
 #include "drawContextGL.h"
@@ -1075,6 +1076,9 @@ void appWindow::frame()
   }
   _handleInput();
   _handleShortcuts();
+  // the gamepad flies the view the pointer was last in; the frame that
+  // follows is the picture it asked for
+  Scene::gamepadTurn(currentPane());
 
   // Whether the loop may go to sleep after this frame, or has to draw
   // another at once. Anything the user is in the middle of -- typing,
@@ -1396,7 +1400,13 @@ int appWindow::runLoop()
     // interface and the scene with it, which on a machine with no graphics
     // card is a good sixtieth of a second -- so it is as rare as it can be
     // without a stale window lasting long enough to notice.
-    if(!_keepDrawing && _frames <= 0) glfwWaitEventsTimeout(2.);
+    // A gamepad is no event either: while one is enabled the loop wakes at
+    // the rate the scene asks for instead, and asks it.
+    double pad = Scene::gamepadPeriod();
+    if(pad > 0.)
+      glfwWaitEventsTimeout(pad);
+    else if(!_keepDrawing && _frames <= 0)
+      glfwWaitEventsTimeout(2.);
     frame();
   }
   return 0;

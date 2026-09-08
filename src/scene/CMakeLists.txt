@@ -8,6 +8,8 @@
 set(SRC
   sceneHost.cpp
   sceneView.cpp
+  sceneGamepad.cpp
+  Navigator.cpp
 )
 
 # And the part that is held by GLFW rather than by a widget: the window of its
