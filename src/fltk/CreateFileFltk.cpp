@@ -19,14 +19,14 @@
 
 #include "FlGui.h"
 #include "graphicWindow.h"
-#include "openglWindow.h"
+#include "sceneViewFltk.h"
 #include "drawContext.h"
 #include "PixelBuffer.h"
 #include "Context.h"
 
 PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type)
 {
-  openglWindow *newg = nullptr;
+  sceneViewFltk *newg = nullptr;
 
   if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
     GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
@@ -45,7 +45,7 @@ PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type)
       width = CTX::instance()->print.width;
       height = CTX::instance()->print.height;
     }
-    newg = new openglWindow(100, 100, width, height);
+    newg = new sceneViewFltk(100, 100, width, height);
     int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
     if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
     newg->mode(mode);
@@ -53,7 +53,7 @@ PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type)
     newg->getDrawContext()->copyViewAttributes
       (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
     newg->show();
-    openglWindow::setLastHandled(newg);
+    sceneViewFltk::setLastHandled(newg);
     // waiting for the OS to really make the window visible and to call the
     // draw() function on (some ?) linux; if we do not wait here, the window is
     // not ready and the picture cannot be generated
@@ -86,7 +86,7 @@ PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type)
     int ww = 0, hh = 0;
     std::vector<PixelBuffer*> buffers;
     for(std::size_t i = 0; i < g->gl.size(); i++){
-      openglWindow::setLastHandled(g->gl[i]);
+      sceneViewFltk::setLastHandled(g->gl[i]);
       buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(),
                                format, type);
       buffer->fill(CTX::instance()->batch);
@@ -106,7 +106,7 @@ PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type)
   }
 
   if(newg){
-    openglWindow::setLastHandled(nullptr);
+    sceneViewFltk::setLastHandled(nullptr);
     newg->hide();
     delete newg;
   }

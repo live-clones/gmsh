@@ -21,7 +21,12 @@
 #define WB (5) // window border
 
 class graphicWindow;
-class openglWindow;
+class sceneViewFltk;
+
+// Say to the 3D scene of src/scene who is holding it, once the windows it is
+// drawn in exist: it asks its holder for a redraw, for the shape of the
+// pointer, for which view is the current one. Defined in SceneFltk.cpp.
+void fltkInstallSceneHost();
 class onelabWindow;
 class onelabGroup;
 class Fl_Widget;
@@ -54,7 +59,7 @@ public:
 public:
   std::vector<graphicWindow *> graph;
   onelabGroup *onelab;
-  openglWindow *fullscreen;
+  sceneViewFltk *fullscreen;
 
 public:
   FlGui(int argc, char **argv, bool quitShouldExit,
@@ -104,7 +109,7 @@ public:
   // store current window positions and sizes in CTX
   void storeCurrentWindowsInfo();
   // get the last opengl window that received an event
-  openglWindow *getCurrentOpenglWindow();
+  sceneViewFltk *getCurrentOpenglWindow();
   // get the draw context from the last opengl window that received an event
   drawContext *getCurrentDrawContext();
   // override which opengl window should be considered as current, by given an

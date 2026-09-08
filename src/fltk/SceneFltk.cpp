@@ -26,7 +26,7 @@
 #include <FL/fl_draw.H>
 #include "extraDialogs.h"
 #include "graphicWindow.h"
-#include "openglWindow.h"
+#include "sceneViewFltk.h"
 #include "dialogFltk.h"
 #include "onelabGroup.h"
 #include "fileDialogs.h"
@@ -74,10 +74,10 @@ namespace FltkScene {
   void sceneMessage(const std::string &first, const std::string &second)
   {
     if(!FlGui::available()) return;
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(!gl) return;
-    gl->screenMessage[0] = first;
-    gl->screenMessage[1] = second;
+    gl->scene()->screenMessage[0] = first;
+    gl->scene()->screenMessage[1] = second;
   }
   void scenePointer(double x, double y, int button, int what, double wheel,
                     bool shift, bool ctrl, bool alt)
@@ -110,10 +110,10 @@ namespace FltkScene {
 
   void abortSelection()
   {
-    openglWindow *w = FlGui::instance()->getCurrentOpenglWindow();
+    sceneViewFltk *w = FlGui::instance()->getCurrentOpenglWindow();
     if(w) {
-      w->quitSelection = 1;
-      w->selectionMode = false;
+      w->scene()->quitSelection = 1;
+      w->scene()->selectionMode = false;
     }
   }
 
@@ -121,7 +121,7 @@ namespace FltkScene {
   {
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-        FlGui::instance()->graph[i]->gl[j]->addPointMode = on ? 1 : 0;
+        FlGui::instance()->graph[i]->gl[j]->scene()->addPointMode = on;
   }
 
   void sceneSettingChanged(const std::string &what)
@@ -173,7 +173,7 @@ namespace FltkScene {
 
   void getCurrentPixelSize(int &width, int &height)
   {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
     width = gl->pixel_w();
     height = gl->pixel_h();
   }
@@ -248,6 +248,64 @@ namespace FltkScene {
   }
 
 
+  // --- what the scene needs of whoever is holding it
+  //
+  // The other half of the port: the scene of src/scene is written to ask its
+  // holder for the handful of things a window has and it has not, and this is
+  // FLTK answering. Everything above is what the rest of Gmsh asks of the
+  // scene; everything here is what the scene asks back.
+  void installHost();
+
+  void installHost()
+  {
+    Scene::Host held;
+    // another picture is wanted: every window that shows one draws again,
+    // which is what the draw context of this interface has always done
+    held.redraw = []() { drawContext::global()->draw(); };
+    held.check = [](bool rateLimited) { FlGui::check(rateLimited); };
+    held.wait = [](double seconds, bool force) {
+      if(seconds < 0.)
+        FlGui::wait(force);
+      else
+        FlGui::wait(seconds, force);
+    };
+    held.drawCurrent = []() {
+      drawContext::global()->drawCurrentOpenglWindow(true);
+    };
+    held.uiScale = []() -> float {
+      if(!FlGui::available()) return 1.f;
+      sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
+      return gl ? (float)gl->pixelFactor() : 1.f;
+    };
+    held.numViews = []() {
+      if(!FlGui::available()) return 0;
+      int n = 0;
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+        n += (int)FlGui::instance()->graph[i]->gl.size();
+      return n;
+    };
+    held.tooltip = [](const std::string &text) {
+      if(!FlGui::available()) return;
+      if(sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow())
+        gl->drawTooltip(text);
+    };
+    held.cursor = [](Scene::Cursor kind) {
+      if(!FlGui::available()) return;
+      if(sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow())
+        gl->setCursor(kind);
+    };
+    held.current = []() -> sceneView * {
+      if(!FlGui::available()) return nullptr;
+      sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
+      return gl ? gl->scene() : nullptr;
+    };
+    held.setCurrent = [](sceneView *view) {
+      if(sceneViewFltk *gl = sceneViewFltk::holding(view))
+        sceneViewFltk::setLastHandled(gl);
+    };
+    Scene::setHost(held);
+  }
+
 // what this file answers for, said once and filled from the list in
 // GuiSceneOps.h so that nothing here can be forgotten
 namespace {
@@ -270,6 +328,10 @@ namespace {
   offering _offering;
 }
 } // namespace FltkScene
+
+// The scene is told who is holding it once the windows exist: see
+// FltkScene::installHost().
+void fltkInstallSceneHost() { FltkScene::installHost(); }
 
 
 #endif

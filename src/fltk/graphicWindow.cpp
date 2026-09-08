@@ -32,7 +32,7 @@ typedef unsigned long intptr_t;
 #include "Gui.h"
 #include "GuiMenus.h"
 #include "menuFltk.h"
-#include "openglWindow.h"
+#include "sceneViewFltk.h"
 #include "onelabGroup.h"
 #include "messageBrowser.h"
 #include "gmshLocalNetworkClient.h"
@@ -199,8 +199,8 @@ static graphicWindow *getGraphicWindow(Fl_Widget *w)
 // pointer is over, which is what makes this the interface's.
 void fltkOrientViews(const std::string &what, bool reverse, bool sync)
 {
-  std::vector<openglWindow *> gls;
-  openglWindow *last = FlGui::instance()->getCurrentOpenglWindow();
+  std::vector<sceneViewFltk *> gls;
+  sceneViewFltk *last = FlGui::instance()->getCurrentOpenglWindow();
   if(last && last->parent())
     gls = getGraphicWindow(last->parent())->gl;
   else if(last)
@@ -297,7 +297,7 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
       graph2.push_back(FlGui::instance()->graph[i]);
   }
   if(deleteMe) {
-    openglWindow::setLastHandled(nullptr);
+    sceneViewFltk::setLastHandled(nullptr);
     FlGui::instance()->graph = graph2;
     delete deleteMe;
   }
@@ -532,33 +532,33 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int w2 = glwidth / 2, h2 = glheight / 2;
   if(numTiles == 2) {
-    gl.push_back(new openglWindow(twidth, mh, w2, glheight));
+    gl.push_back(new sceneViewFltk(twidth, mh, w2, glheight));
     gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, glheight));
+    gl.push_back(new sceneViewFltk(twidth + w2, mh, glwidth - w2, glheight));
     gl.back()->end();
   }
   else if(numTiles == 3) {
-    gl.push_back(new openglWindow(twidth, mh, w2, glheight));
+    gl.push_back(new sceneViewFltk(twidth, mh, w2, glheight));
     gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
+    gl.push_back(new sceneViewFltk(twidth + w2, mh, glwidth - w2, h2));
     gl.back()->end();
     gl.push_back(
-      new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
+      new sceneViewFltk(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
     gl.back()->end();
   }
   else if(numTiles == 4) {
-    gl.push_back(new openglWindow(twidth, mh, w2, h2));
+    gl.push_back(new sceneViewFltk(twidth, mh, w2, h2));
     gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
+    gl.push_back(new sceneViewFltk(twidth + w2, mh, glwidth - w2, h2));
     gl.back()->end();
-    gl.push_back(new openglWindow(twidth, mh + h2, w2, glheight - h2));
+    gl.push_back(new sceneViewFltk(twidth, mh + h2, w2, glheight - h2));
     gl.back()->end();
     gl.push_back(
-      new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
+      new sceneViewFltk(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
     gl.back()->end();
   }
   else {
-    gl.push_back(new openglWindow(twidth, mh, glwidth, glheight));
+    gl.push_back(new sceneViewFltk(twidth, mh, glwidth, glheight));
     gl.back()->end();
   }
 
@@ -682,7 +682,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
 graphicWindow::~graphicWindow()
 {
-  openglWindow::setLastHandled(nullptr);
+  sceneViewFltk::setLastHandled(nullptr);
   _tile->clear();
   _win->clear();
   Fl::delete_widget(_win);
@@ -821,7 +821,7 @@ int graphicWindow::getMenuPositionY()
   return _menuwin->y();
 }
 
-bool graphicWindow::split(openglWindow *g, char how, double ratio)
+bool graphicWindow::split(sceneViewFltk *g, char how, double ratio)
 {
   if(_tile->find(g) == _tile->children()) return false; // not found
 
@@ -829,13 +829,13 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     // after many tries I cannot figure out how to do this cleanly, so let's be
     // brutal :-)
     int mode = g->mode();
-    openglWindow::setLastHandled(nullptr);
+    sceneViewFltk::setLastHandled(nullptr);
     for(std::size_t i = 0; i < gl.size(); i++) {
       _tile->remove(gl[i]);
       delete gl[i];
     }
     gl.clear();
-    openglWindow *g2 = new openglWindow(
+    sceneViewFltk *g2 = new sceneViewFltk(
       _tile->x() + (_onelab && !_menuwin ? _onelab->w() : 0), _tile->y(),
       _tile->w() - (_onelab && !_menuwin ? _onelab->w() : 0),
       _tile->h() - (_browser ? _browser->h() : 0));
@@ -844,7 +844,7 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     gl.push_back(g2);
     _tile->add(g2);
     g2->show();
-    openglWindow::setLastHandled(g2);
+    sceneViewFltk::setLastHandled(g2);
   }
   else {
     double fact = (ratio <= 0.) ? 0.01 : (ratio >= 1.) ? 0.99 : ratio;
@@ -861,20 +861,20 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     int h2 = (how == 'h') ? g->h() : (g->h() - h1);
 
     g->resize(x1, y1, w1, h1);
-    openglWindow *g2 = new openglWindow(x2, y2, w2, h2);
+    sceneViewFltk *g2 = new sceneViewFltk(x2, y2, w2, h2);
     g2->end();
     g2->mode(g->mode());
     gl.push_back(g2);
     _tile->add(g2);
     g2->show();
-    openglWindow::setLastHandled(g2);
+    sceneViewFltk::setLastHandled(g2);
   }
   return true;
 }
 
 void graphicWindow::setStereo(bool st)
 {
-  openglWindow::setLastHandled(nullptr);
+  sceneViewFltk::setLastHandled(nullptr);
   for(std::size_t i = 0; i < gl.size(); i++) {
     if(st) { gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO); }
     else {

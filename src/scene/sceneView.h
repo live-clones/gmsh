@@ -91,6 +91,12 @@ private:
                std::vector<SPoint2> &points, std::vector<PView *> &views);
 
 public:
+  // Whether a lasso is being drawn, and giving up on it: the key that aborts
+  // a picking asks every view, and the lasso is otherwise the scene's own
+  // business.
+  bool lasso() const { return _lassoMode; }
+  void endLasso() { _lassoMode = false; }
+
   // While this is on, the pointer places the entity being created instead of
   // highlighting what it hovers: see geometryAddPointBasedEntity().
   bool addPointMode;

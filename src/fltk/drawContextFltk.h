@@ -20,7 +20,7 @@ typedef unsigned long intptr_t;
 #include "graphicsFonts.h"
 #include "drawContext.h"
 #include "graphicWindow.h"
-#include "openglWindow.h"
+#include "sceneViewFltk.h"
 #include "Context.h"
 
 class drawContextFltk : public drawContextGlobal {
@@ -51,7 +51,7 @@ public:
   void drawCurrentOpenglWindow(bool make_current)
   {
     if(!FlGui::available()) return;
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(make_current) gl->make_current();
     gl->redraw();
     glFlush();

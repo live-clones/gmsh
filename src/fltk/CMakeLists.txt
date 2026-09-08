@@ -10,7 +10,8 @@ set(SRC
   CreateFileFltk.cpp
     graphicWindow.cpp menuFltk.cpp treeFltk.cpp dialogFltk.cpp
     graphicsFonts.cpp
-      openglWindow.cpp
+      sceneViewFltk.cpp
+      sceneViewFltk.cpp
       colorbarWindow.cpp
     drawContextFltkCairo.cpp
     drawContextFltkStringTexture.cpp
