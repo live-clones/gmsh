@@ -830,7 +830,10 @@ bool PViewDataGModel::skipElement(int step, int ent, int ele,
   MElement *e = _getElement(step, ent, ele);
   if(checkVisibility && !e->getVisibility()) return true;
   if(_type == NodeData) {
-    for(int i = 0; i < getNumNodes(step, ent, ele); i++)
+    // not in the loop condition: this is called for every element of a view,
+    // and it works the element out again on every turn
+    int numNodes = getNumNodes(step, ent, ele);
+    for(int i = 0; i < numNodes; i++)
       if(!sd->getData(_getNode(e, i)->getNum())) return true;
   }
   else {
