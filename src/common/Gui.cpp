@@ -45,6 +45,9 @@
 
 namespace Gui {
 
+  // where the interface says its windows are, written into the options
+  static void _takeLayout(const Ui::Backend::Layout &l);
+
   namespace {
 
     Ui::Backend *_backend = nullptr;
@@ -120,6 +123,7 @@ namespace Gui {
       return scenePicture(w, h, always);
     };
     host.sceneMoved = []() { return sceneMoved(); };
+    host.layoutChanged = [](const Ui::Backend::Layout &l) { _takeLayout(l); };
     host.sceneResize = [](int w, int h) { sceneResize(w, h); };
     host.scenePointer = [](double x, double y, int button, int what,
                            double wheel, bool shift, bool ctrl, bool alt) {
@@ -139,13 +143,22 @@ namespace Gui {
       Ui::Backend::Settings s;
       CTX *c = CTX::instance();
       s.fontSize = c->fontSize;
+      s.sceneX = c->glPosition[0];
+      s.sceneY = c->glPosition[1];
       s.sceneWidth = c->glSize[0];
       s.sceneHeight = c->glSize[1];
+      s.sceneTiles = c->numTiles;
       s.treeWidth = c->menuSize[0];
+      s.treeX = c->menuPosition[0];
+      s.treeY = c->menuPosition[1];
+      s.treeHeight = c->menuSize[1];
       s.consoleHeight = c->msgSize;
       s.consoleFontSize = c->msgFontSize;
       s.dialogX = c->ctxPosition[0];
       s.dialogY = c->ctxPosition[1];
+      s.doubleBuffer = c->db ? true : false;
+      s.stereo = c->stereo ? true : false;
+      s.systemMenuBar = c->systemMenuBar ? true : false;
       s.darkScheme = c->guiColorScheme ? true : false;
       s.antialiasing = c->antialiasing ? true : false;
       s.tooltips = c->tooltips ? true : false;
@@ -522,6 +535,9 @@ namespace Gui {
   {
     if(!_backend) return;
     if(panel == PanelMessageConsole) {
+      // the count of errors the bar shows is of those not yet looked at:
+      // showing the console is looking at them
+      if(show) Msg::ResetErrorCounter();
       _backend->showConsole(show);
       return;
     }
@@ -723,9 +739,34 @@ namespace Gui {
     watchFiles();
   }
 
+  // Where the interface left its windows, written where the option file
+  // reads them. The interface says what it knows and nothing else: a value
+  // it has nothing to say about keeps what it was.
+  static void _takeLayout(const Ui::Backend::Layout &l)
+  {
+    CTX *c = CTX::instance();
+    auto take = [](int &into, int value) {
+      if(value >= 0) into = value;
+    };
+    take(c->glPosition[0], l.sceneX);
+    take(c->glPosition[1], l.sceneY);
+    take(c->glSize[0], l.sceneWidth);
+    take(c->glSize[1], l.sceneHeight);
+    take(c->msgSize, l.consoleHeight);
+    take(c->menuSize[0], l.treeWidth);
+    take(c->detachedMenu, l.treeDetached);
+    take(c->menuPosition[0], l.treeX);
+    take(c->menuPosition[1], l.treeY);
+    take(c->menuSize[1], l.treeHeight);
+    take(c->ctxPosition[0], l.dialogX);
+    take(c->ctxPosition[1], l.dialogY);
+    take(c->fileChooserPosition[0], l.chooserX);
+    take(c->fileChooserPosition[1], l.chooserY);
+  }
+
   void storeCurrentWindowsInfo()
   {
-    if(_backend) _backend->storeWindowLayout();
+    if(_backend) _takeLayout(_backend->windowLayout());
   }
 
   void setSolverButtonMode(const std::string &button0,

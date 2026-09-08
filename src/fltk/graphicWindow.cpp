@@ -22,11 +22,11 @@ typedef unsigned long intptr_t;
 #include <FL/filename.H>
 #include <FL/Fl_Tree.H>
 #include "FlGui.h"
+#include "uiSources.h"
 #include "mainWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
 #include "GuiActions.h"
-#include "GuiDialogs.h"
 #include "Gui.h"
 #include "menuFltk.h"
 #include "sceneViewFltk.h"
@@ -34,10 +34,6 @@ typedef unsigned long intptr_t;
 #include "messageBrowser.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
-#include "GModel.h"
-#include "PView.h"
-#include "Options.h"
-#include "Context.h"
 #include "OS.h"
 
 #if defined(HAVE_3M)
@@ -57,11 +53,17 @@ static void file_window_cb(Fl_Widget *w, void *data)
   std::string str((const char *)data);
   if(str == "new") {
     graphicWindow *g1 = FlGui::instance()->graph.back();
-    graphicWindow *g2 = new graphicWindow(false, CTX::instance()->numTiles);
+    graphicWindow *g2 =
+      new graphicWindow(false, fltkSources().settings().sceneTiles);
     FlGui::instance()->graph.push_back(g2);
     g2->getWindow()->resize(g1->getWindow()->x() + 10,
                             g1->getWindow()->y() + 10, g1->getWindow()->w(),
                             g1->getWindow()->h());
+    // named after the first window, numbered, as every window after the
+    // first is
+    const char *first = FlGui::instance()->graph[0]->getWindow()->label();
+    g2->setTitle(std::string(first ? first : "Gmsh") + " [" +
+                 std::to_string(FlGui::instance()->graph.size() - 1) + "]");
     g2->getWindow()->show();
   }
   else if(str == "split_h") {
@@ -77,7 +79,6 @@ static void file_window_cb(Fl_Widget *w, void *data)
     FlGui::instance()->copyCurrentOpenglWindowToClipboard();
   }
   drawContext::global()->draw();
-  FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
 }
 
 
@@ -89,7 +90,7 @@ void file_quit_cb(Fl_Widget *w, void *data)
 
 void help_about_cb(Fl_Widget *w, void *data)
 {
-  Dialog::show(Dialog::about(), -1);
+  Gui::showPanel(Gui::PanelAbout, true);
 }
 
 // The menu description of src/common/GuiMenus.h names these actions rather than
@@ -97,7 +98,7 @@ void help_about_cb(Fl_Widget *w, void *data)
 // part of a menu entry that is genuinely toolkit business.
 
 
-void fltkWindowAction(const std::string &what)
+bool fltkWindowAction(const std::string &what)
 {
   if(what == "new" || what == "split_h" || what == "split_v" ||
      what == "split_u" || what == "copy")
@@ -114,7 +115,8 @@ void fltkWindowAction(const std::string &what)
     window3M_cb(nullptr, nullptr);
 #endif
   else
-    Msg::Error("Unknown window action '%s'", what.c_str());
+    return false;
+  return true;
 }
 
 static graphicWindow *getGraphicWindow(Fl_Widget *w)
@@ -126,47 +128,34 @@ static graphicWindow *getGraphicWindow(Fl_Widget *w)
   return FlGui::instance()->graph[0];
 }
 
-// The views the status bar acts upon are the panes of the graphic window the
-// pointer is over, which is what makes this the interface's.
-void fltkOrientViews(const std::string &what, bool reverse, bool sync)
+std::vector<sceneView *> fltkViewsBeside(sceneViewFltk *view)
 {
-  std::vector<sceneViewFltk *> gls;
-  sceneViewFltk *last = FlGui::instance()->getCurrentOpenglWindow();
-  if(last && last->parent())
-    gls = getGraphicWindow(last->parent())->gl;
-  else if(last)
-    gls.push_back(last);
-
-  for(std::size_t i = 0; i < gls.size(); i++) {
-    drawContext *ctx = gls[i]->getDrawContext();
-    // Control makes the other views follow the first instead of being
-    // oriented themselves; that part stays here, being about the list of
-    // views, which is ours
-    if(sync && (what == "r" || what == "1:1")) {
-      if(i == 0) continue;
-      drawContext *first = gls[0]->getDrawContext();
-      if(what == "r")
-        ctx->setQuaternion(first->quaternion[0], first->quaternion[1],
-                           first->quaternion[2], first->quaternion[3]);
-      else if(!CTX::instance()->camera) {
-        for(int j = 0; j < 3; j++) {
-          ctx->t[j] = first->t[j];
-          ctx->s[j] = first->s[j];
-        }
-      }
-      continue;
-    }
-    viewSetOrientation(ctx, what, reverse);
-  }
-  drawContext::global()->draw();
+  std::vector<sceneView *> views;
+  if(!view) return views;
+  if(view->parent())
+    for(auto *gl : getGraphicWindow(view->parent())->gl)
+      views.push_back(gl->scene());
+  else
+    views.push_back(view->scene());
+  return views;
 }
 
-// Picking with the mouse, on or off. Turning it off puts the pointer back to
-// what it was: it is the interface that has the pointers, which is why
-// Gui::setMouseSelection() comes here.
+// The views the status bar acts upon are the panes of the graphic window the
+// pointer is over, which is what makes this the interface's; what is done
+// to them is the scene's.
+void fltkOrientViews(const std::string &what, bool reverse, bool sync)
+{
+  Scene::orientViews(
+    fltkViewsBeside(FlGui::instance()->getCurrentOpenglWindow()), what,
+    reverse, sync);
+}
+
+// Picking with the mouse, on or off. The option is set by whoever asks;
+// turning it off puts the pointer back to what it was, and it is the
+// interface that has the pointers, which is why Gui::setMouseSelection()
+// comes here.
 void fltkSetMouseSelection(bool on)
 {
-  opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, on ? 1 : 0);
   if(!on)
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
@@ -321,18 +310,19 @@ public:
   }
   void draw() override
   {
-    Ui::BarMessage m = StatusBar::message();
+    const Ui::Backend::Sources &sources = fltkSources();
+    Ui::BarMessage m = sources.barMessage ? sources.barMessage() : Ui::BarMessage();
     if(!label() || m.text != label()) copy_label(m.text.c_str());
     minimum(0.);
     maximum(m.running ? 1. : 0.);
     value(m.running ? (float)m.fraction : 0.f);
-    int col = (m.weight == Ui::MessageError) ?
-                (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED) :
+    bool dark = sources.settings().darkScheme;
+    int col = (m.weight == Ui::MessageError) ? (dark ? FL_DARK_RED : FL_RED) :
               (m.weight == Ui::MessageWarning) ?
-                (CTX::instance()->guiColorScheme ? FL_DARK_YELLOW : FL_YELLOW) :
-                -1;
+                                              (dark ? FL_DARK_YELLOW : FL_YELLOW) :
+                                              -1;
     if(col >= 0) {
-      if(CTX::instance()->guiColorScheme)
+      if(dark)
         color(col);
       else
         labelcolor(col);
@@ -346,7 +336,7 @@ public:
   int handle(int event)
   {
     if(event == FL_PUSH) {
-      StatusBar::messagePressed();
+      if(fltkSources().barPressed) fltkSources().barPressed();
       return 1;
     }
     return Fl_Progress::handle(event);
@@ -356,41 +346,47 @@ public:
 graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   : _autoScrollMessages(true)
 {
+  // What the window is to be made of, as the settings say it. Clamped to
+  // the screen here and not written back: what the window turned out to be
+  // is asked of it when the option file is written, see layout().
+  const Ui::Backend::Settings settings = fltkSources().settings();
+
   int mh = main ? BH : 0; // menu bar height
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar) mh = 0;
+  if(settings.systemMenuBar) mh = 0;
 #endif
   int sh = 2 * FL_NORMAL_SIZE - 3; // status bar height
   int sw = FL_NORMAL_SIZE + 2; // status button width
 
   int mheight = main ? 2 * BH /* nonzero! */ : 0;
-  int glheight = CTX::instance()->glSize[1] - mheight;
+  int sceneHeight = settings.sceneHeight;
+  int glheight = sceneHeight - mheight;
   // make sure glheight is positive
   if(glheight <= 0) {
-    CTX::instance()->glSize[1] = 600;
-    glheight = CTX::instance()->glSize[1] - mheight;
+    sceneHeight = 600;
+    glheight = sceneHeight - mheight;
   }
   int height = mh + glheight + mheight + sh;
   // make sure height < screen height
   if(height > Fl::h()) {
     height = Fl::h();
     glheight = height - mh - mheight - sh;
-    CTX::instance()->glSize[1] = glheight + mheight;
+    sceneHeight = glheight + mheight;
   }
 
   int twidth = (main && !detachedMenu) ? 14 * sw : 0;
-  int glwidth = CTX::instance()->glSize[0] - twidth;
+  int sceneWidth = settings.sceneWidth;
+  int glwidth = sceneWidth - twidth;
   // make sure glwidth is positive
   if(glwidth <= 0) {
-    CTX::instance()->glSize[0] = 600;
-    glwidth = CTX::instance()->glSize[0] - twidth;
+    sceneWidth = 600;
+    glwidth = sceneWidth - twidth;
   }
   int width = glwidth + twidth;
   // make sure width < screen width
   if(width > Fl::w()) {
     width = Fl::w();
     glwidth = width - twidth;
-    CTX::instance()->glSize[0] = glwidth + twidth;
   }
 
   // the graphic window should be a "normal" window (neither modal nor
@@ -410,7 +406,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _bar = nullptr;
   if(main) {
 #if defined(__APPLE__)
-    if(CTX::instance()->systemMenuBar) {
+    if(settings.systemMenuBar) {
       _sysbar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
       _sysbar->menu(fltkMenuBuild(true));
       _sysbar->global();
@@ -470,9 +466,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     gl.back()->end();
   }
 
-  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  if(CTX::instance()->stereo) {
+  int mode = FL_RGB | FL_DEPTH | (settings.doubleBuffer ? FL_DOUBLE : FL_SINGLE);
+  if(settings.antialiasing) mode |= FL_MULTISAMPLE;
+  if(settings.stereo) {
     mode |= FL_DOUBLE;
     mode |= FL_STEREO;
   }
@@ -480,7 +476,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   if(main) {
     _browser = new messageBrowser(twidth, mh + glheight, glwidth, mheight);
-    int s = CTX::instance()->msgFontSize;
+    int s = settings.consoleFontSize;
     _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 2 : s);
     _browser->callback(message_browser_cb, this);
     _browser->search_callback(message_menu_search_cb, this);
@@ -504,13 +500,20 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _tile->end();
 
   // resize the tiles to match the prescribed sizes
-  _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
+  _tile->position(0, mh + glheight, 0, mh + sceneHeight);
 
   // if the tree widget is too small it will not be rebuilt correctly (probably
-  // a bug)... so impose minimum width
+  // a bug)... so impose minimum width -- and say so, since the tree is shown
+  // again at the width the settings say
+  int treeWidth = settings.treeWidth;
   int minw = 3 * BB / 2 + 4 * WB;
-  if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
-  _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
+  if(treeWidth < minw) {
+    treeWidth = minw;
+    Ui::Backend::Layout l;
+    l.treeWidth = treeWidth;
+    _forgetting(l);
+  }
+  _tile->position(twidth, 0, treeWidth, 0);
 
   // bottom button bar
   _bottom = new Fl_Box(0, mh + glheight + mheight, width, sh);
@@ -524,7 +527,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // of them built here by hand, indexed in the order they happened to be
   // declared rather than the order they are drawn in.
   {
-    std::vector<Ui::BarButton> wanted = StatusBar::bar();
+    std::vector<Ui::BarButton> wanted =
+      fltkSources().barButtons ? fltkSources().barButtons() :
+                                 std::vector<Ui::BarButton>();
     for(const auto &b : wanted) {
       if(b.gapBefore) x += 4;
       int bw = b.widthEm > 0. ? (int)(b.widthEm * FL_NORMAL_SIZE) : sw;
@@ -559,25 +564,22 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     new mainWindowProgress(x, mh + glheight + mheight + 2, width - x - 2, sht);
   _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  if(CTX::instance()->guiColorScheme)
+  if(settings.darkScheme)
     _label->color(FL_BACKGROUND_COLOR, FL_LIGHT3);
   else
     _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
 
-  _win->position(CTX::instance()->glPosition[0],
-                 CTX::instance()->glPosition[1]);
+  _win->position(settings.sceneX, settings.sceneY);
   _win->end();
 
   if(main && detachedMenu) {
-    _menuwin =
-      new mainWindow(CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
-                     CTX::instance()->nonModalWindows ? true : false, "Gmsh");
+    _menuwin = new mainWindow(treeWidth, settings.treeHeight,
+                              settings.nonModalWindows, "Gmsh");
     _menuwin->callback(file_quit_cb);
     _menuwin->box(GMSH_WINDOW_BOX);
     _onelab = new onelabGroup(0, 0, _menuwin->w(), _menuwin->h());
     _onelab->enableTreeWidgetResize(true);
-    _menuwin->position(CTX::instance()->menuPosition[0],
-                       CTX::instance()->menuPosition[1]);
+    _menuwin->position(settings.treeX, settings.treeY);
     _menuwin->resizable(_onelab);
     _menuwin->size_range(_onelab->getMinWindowWidth(),
                          _onelab->getMinWindowHeight());
@@ -619,16 +621,15 @@ void graphicWindow::detachMenu()
   }
   _tile->redraw();
 
-  _menuwin =
-    new mainWindow(_onelab->w(), CTX::instance()->menuSize[1],
-                   CTX::instance()->nonModalWindows ? true : false, "Gmsh");
+  const Ui::Backend::Settings settings = fltkSources().settings();
+  _menuwin = new mainWindow(_onelab->w(), settings.treeHeight,
+                            settings.nonModalWindows, "Gmsh");
   _menuwin->callback(file_quit_cb);
   _menuwin->box(GMSH_WINDOW_BOX);
   _onelab->box(FL_FLAT_BOX);
   _menuwin->add(_onelab);
   _onelab->resize(0, 0, _menuwin->w(), _menuwin->h());
-  _menuwin->position(CTX::instance()->menuPosition[0],
-                     CTX::instance()->menuPosition[1]);
+  _menuwin->position(settings.treeX, settings.treeY);
   _menuwin->resizable(_onelab);
   _menuwin->size_range(_onelab->getMinWindowWidth(),
                        _onelab->getMinWindowHeight());
@@ -642,9 +643,14 @@ void graphicWindow::detachMenu()
 void graphicWindow::attachMenu()
 {
   if(!_menuwin || !_onelab || !_browser) return;
-  CTX::instance()->menuSize[1] = _menuwin->h();
-  CTX::instance()->menuPosition[0] = _menuwin->x();
-  CTX::instance()->menuPosition[1] = _menuwin->y();
+  {
+    // where it stood, for the next time it is detached
+    Ui::Backend::Layout l;
+    l.treeX = _menuwin->x();
+    l.treeY = _menuwin->y();
+    l.treeHeight = _menuwin->h();
+    _forgetting(l);
+  }
   _menuwin->remove(_onelab);
   _menuwin->hide();
   delete _menuwin;
@@ -679,7 +685,7 @@ void graphicWindow::showMenu()
 {
   if(_menuwin || !_onelab || !_win->shown()) return;
   if(_onelab->w() < FL_NORMAL_SIZE) {
-    int width = CTX::instance()->menuSize[0];
+    int width = fltkSources().settings().treeWidth;
     if(width < FL_NORMAL_SIZE) width = _onelab->getMinWindowWidth();
     int maxw = _win->w();
     if(width > maxw) width = maxw / 2;
@@ -692,7 +698,9 @@ void graphicWindow::showMenu()
 void graphicWindow::hideMenu()
 {
   if(_menuwin || !_onelab) return;
-  CTX::instance()->menuSize[0] = _onelab->w();
+  Ui::Backend::Layout l;
+  l.treeWidth = _onelab->w();
+  _forgetting(l);
   setMenuWidth(0);
 }
 
@@ -727,6 +735,31 @@ int graphicWindow::getMenuPositionY()
 {
   if(!_menuwin) return 0;
   return _menuwin->y();
+}
+
+void graphicWindow::_forgetting(const Ui::Backend::Layout &what)
+{
+  if(fltkHost().layoutChanged) fltkHost().layoutChanged(what);
+}
+
+Ui::Backend::Layout graphicWindow::layout()
+{
+  Ui::Backend::Layout l;
+  l.sceneX = _win->x();
+  l.sceneY = _win->y();
+  l.sceneWidth = getGlWidth();
+  l.sceneHeight = getGlHeight();
+  // a hidden console has nothing to say: what it measured when it was
+  // hidden was said then
+  if(getMessageHeight()) l.consoleHeight = getMessageHeight();
+  l.treeWidth = getMenuWidth();
+  l.treeDetached = _menuwin ? 1 : 0;
+  if(_menuwin) {
+    l.treeX = _menuwin->x();
+    l.treeY = _menuwin->y();
+    l.treeHeight = _menuwin->h();
+  }
+  return l;
 }
 
 bool graphicWindow::split(sceneViewFltk *g, char how, double ratio)
@@ -790,7 +823,6 @@ void graphicWindow::setStereo(bool st)
     }
     gl[i]->show();
   }
-  Msg::Info("new gl window for stereo vision!");
 }
 
 void graphicWindow::refreshStatusButtons()
@@ -883,9 +915,8 @@ void graphicWindow::setMessageHeight(int h)
 void graphicWindow::showMessages()
 {
   if(!_browser || !_win->shown()) return;
-  Msg::ResetErrorCounter();
   if(_browser->h() < FL_NORMAL_SIZE) {
-    int height = CTX::instance()->msgSize;
+    int height = fltkSources().settings().consoleHeight;
     if(height < FL_NORMAL_SIZE) height = 10 * FL_NORMAL_SIZE;
     int maxh = _win->h() - _bottom->h();
     if(height > maxh) height = maxh / 2;
@@ -897,7 +928,9 @@ void graphicWindow::showMessages()
 void graphicWindow::hideMessages()
 {
   if(!_browser) return;
-  CTX::instance()->msgSize = _browser->h();
+  Ui::Backend::Layout l;
+  l.consoleHeight = _browser->h();
+  _forgetting(l);
   setMessageHeight(0);
 }
 
@@ -990,54 +1023,10 @@ void graphicWindow::fillRecentHistoryMenu()
   // nothing to patch in place any more: the menu is simply built again
   Menu::invalidate();
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar) {
+  if(fltkSources().settings().systemMenuBar) {
     if(_sysbar) _sysbar->menu(fltkMenuBuild(true));
     return;
   }
 #endif
   if(_bar) _bar->menu(fltkMenuBuild(false));
-}
-
-
-void onelabGroup::_addGmshMenus()
-{
-  _tree->sortorder(FL_TREE_SORT_NONE);
-
-  // the static geometry and mesh items, from the shared description
-  fltkModulesBuild([this](const std::string &path, Fl_Callback *cb, void *data) {
-    _addMenu(path, cb, data);
-  });
-
-  // add dynamic solver module items
-  for(int i = 0; i < 5; i++) {
-    std::string name = opt_solver_name(i, GMSH_GET, "");
-    if(name.size()) _addSolverMenu(i);
-  }
-
-  // add dynamic post-processing module items
-  for(std::size_t i = 0; i < PView::list.size(); i++) _addViewMenu(i);
-
-  _tree->sortorder(FL_TREE_SORT_ASCENDING);
-
-  if(_firstBuild) {
-    _firstBuild = false;
-    Fl_Tree_Item *n0 = _tree->find_item("0Modules");
-    for(Fl_Tree_Item *n = n0; n; n = n->next()) {
-      if(!n->is_root() && n->has_children() && n->depth() > 1) n->close();
-    }
-  }
-}
-
-std::set<std::string> onelabGroup::_getClosedGmshMenus()
-{
-  std::set<std::string> closed;
-  Fl_Tree_Item *n0 = _tree->find_item("0Modules");
-  for(Fl_Tree_Item *n = n0; n; n = n->next()) {
-    if(!n->is_root() && n->has_children() && n->is_close()) {
-      char path[1024];
-      _tree->item_pathname(path, sizeof(path), n);
-      closed.insert(path);
-    }
-  }
-  return closed;
 }

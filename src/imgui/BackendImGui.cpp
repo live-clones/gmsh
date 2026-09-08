@@ -296,11 +296,6 @@ namespace {
       if(appWindow::available()) appWindow::instance()->requestRedraw();
     }
 
-    void storeWindowLayout() override
-    {
-      // the layout is saved by Dear ImGui itself, in .gmsh-imgui.ini
-    }
-
     void setSolverButtonMode(const std::string &button0,
                              const std::string &button1) override
     {

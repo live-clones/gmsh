@@ -771,6 +771,12 @@ void highOrderOptimize(const highOrderParameters &par)
 #endif
 }
 
+void pickWithMouse(bool on)
+{
+  opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, on ? 1 : 0);
+  Gui::setMouseSelection(on);
+}
+
 void viewSetOrientation(drawContext *ctx, const std::string &what,
                         bool reverse)
 {

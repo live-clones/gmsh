@@ -488,6 +488,10 @@ void meshDefineTransfinite(int dim);
 // rotation as well. Set reverse for the variant the FLTK interface binds to
 // Shift: the opposite axis direction, the opposite rotation, or, for "1:1",
 // recomputing the bounding box around what is visible.
+// Picking with the mouse, on or off: the option, and then the interface,
+// which has pointers to put back.
+void pickWithMouse(bool on);
+
 void viewSetOrientation(drawContext *ctx, const std::string &what,
                         bool reverse);
 

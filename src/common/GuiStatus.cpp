@@ -116,8 +116,7 @@ namespace StatusBar {
       // plain the rest of the time.
       BarButton select = does("S", "", "Toggle mouse selection ON/OFF (Escape)",
                            []() {
-                             Gui::setMouseSelection(
-                               !CTX::instance()->mouseSelection);
+                             pickWithMouse(!CTX::instance()->mouseSelection);
                            });
       select.alert = []() { return !CTX::instance()->mouseSelection; };
       buttons.push_back(select);

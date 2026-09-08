@@ -16,9 +16,8 @@
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Progress.H>
 
-#include "GuiActions.h"
 #include "Bar.h"
-#include "GuiStatus.h"
+#include "Backend.h"
 #include "menuFltk.h"
 
 // One button of the status bar, bound to what src/common/GuiStatus.h says it
@@ -59,6 +58,7 @@ public:
 #include <FL/Fl_Menu_Bar.H>
 
 class sceneViewFltk;
+class sceneView;
 class onelabGroup;
 class messageBrowser;
 
@@ -80,6 +80,11 @@ private:
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;
+  // What is about to be forgotten -- the width of a tree being folded away,
+  // the height of a console being hidden, where a tree stood as a window of
+  // its own -- is said to the host, which keeps it with the settings; it is
+  // read back from there when the thing is shown again.
+  void _forgetting(const Ui::Backend::Layout &what);
 
 public:
   std::vector<sceneViewFltk *> gl;
@@ -109,6 +114,8 @@ public:
   int getMenuHeight();
   int getMenuPositionX();
   int getMenuPositionY();
+  // where everything ended up, for the option file
+  Ui::Backend::Layout layout();
   void showMenu();
   void hideMenu();
   void showHideMenu();
@@ -143,6 +150,8 @@ void help_about_cb(Fl_Widget *w, void *data);
 // interface's
 void fltkOrientViews(const std::string &what, bool reverse, bool sync);
 void fltkSetMouseSelection(bool on);
+// the scenes of the window holding a view, or the view alone
+std::vector<sceneView *> fltkViewsBeside(sceneViewFltk *view);
 bool fltkAnimating();
 void fltkToggleAnimation();
 void show_hide_menu_cb(Fl_Widget *w, void *data);
@@ -150,6 +159,7 @@ void attach_detach_menu_cb(Fl_Widget *w, void *data);
 
 // The actions the shared menu description names: the file chooser and the
 // windows are the one part of a menu entry that is genuinely toolkit business.
-void fltkWindowAction(const std::string &what);
+// false for an action it does not know
+bool fltkWindowAction(const std::string &what);
 
 #endif

@@ -17,6 +17,8 @@
 // built is in the library at once now and only one of them is running.
 
 const Ui::Backend::Sources &fltkSources();
+// and what the interface may call back
+const Ui::Backend::Host &fltkHost();
 
 // What a form is made of, by the FormRef the backend handed out for it: the
 // description is read again every time it is asked, as the contract says.
