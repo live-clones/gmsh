@@ -69,8 +69,7 @@ public:
   int boundary, pointType, lineType, drawSkinOnly;
   double pointSize, lineWidth;
   GmshColorTable colorTable;
-  // multiplies the alpha of the colours the colormap gives, applied by the
-  // shader rather than worked into the table
+  // multiplies the alpha of the colormap (applied by the shader)
   double transparency;
   int useStipple, stipple[10][2];
   std::string stippleString[10];

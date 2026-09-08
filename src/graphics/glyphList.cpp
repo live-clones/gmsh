@@ -23,9 +23,8 @@
 #include <omp.h>
 #endif
 
-// What all the lists together are keeping, in vertices. The bound below is on
-// the whole of it rather than on each of them: a model has one list per entity
-// and a bound that each of them may reach on its own is not a bound at all.
+// what all the lists together keep, in vertices (the bound is global, as a
+// model has one list per entity)
 static long _keptVertices = 0;
 
 unsigned int glyphCurrentColor()
@@ -116,8 +115,7 @@ void glyphList::addArrow(double x, double y, double z, double dx, double dy,
   }
   double phi = 180. * myacos(cosphi) / M_PI;
 
-  // the transform the matrix stack used to carry: translate, then scale, then
-  // rotate, applied to the point in that order from the right
+  // translate, then scale, then rotate, applied to the point from the right
   double t[16], sc[16], r[16], a[16], m[16];
   glMatrix::translate(x, y, z, t);
   glMatrix::scale(length, length, length, sc);
@@ -146,9 +144,7 @@ void glyphList::addCylinder(const double *x, const double *y, const double *z,
   }
   double phi = 180. * myacos(cosphi) / M_PI;
 
-  // the length is in the transform, which stretches the unit cylinder along
-  // its axis; the radii are not, as a cone of one taper is not a cone of
-  // another one stretched
+  // the length is in the transform, the radii are parameters
   double t[16], r[16], sc[16], a[16], m[16];
   glMatrix::translate(x[0], y[0], z[0], t);
   glMatrix::rotate(phi, axis[0], axis[1], axis[2], r);
@@ -171,9 +167,8 @@ void glyphList::merge(glyphList *other)
 }
 
 namespace {
-  // Expand a run of glyphs of one kind into a vertex array, starting at the
-  // vertex first. Everything it needs is read only, so several threads can be
-  // in here at once, each on a range of its own.
+  // expand a run of glyphs of one kind into a vertex array from the vertex
+  // first; thread safe, as everything it reads is read only
   void expand(drawContext *ctx, glyphKind kind,
               const std::vector<glyphList::instance> &inst, std::size_t from,
               std::size_t to, VertexArray *va, int first)
@@ -191,12 +186,10 @@ namespace {
     for(std::size_t g = from; g < to; g++) {
       const glyphList::instance &in = inst[g];
       const double *m = in.m;
-      // The normals follow the transform, but not the way the coordinates do:
-      // what they are turned by is the inverse transpose of it. When the
-      // transform is a rotation and the same scaling in every direction -
-      // which is what a sphere and an arrow are - that is the rotation again,
-      // so the result is already unit length and the template's own normals
-      // can be handed over as they are when there is not even a rotation.
+      // the normals follow the inverse transpose of the transform; for a
+      // rotation with uniform scaling (a sphere, an arrow) that is the
+      // rotation itself, and without rotation the template's normals can be
+      // copied as they are
       double n[9];
       bool unit = false, same = false;
       {
@@ -234,11 +227,9 @@ namespace {
         }
       }
 
-      // Where the corners of the template go. A cylinder is the one shape
-      // whose corners are not the template's own: its two radii widen or
-      // narrow it as it goes along, and the normal of its side leans over by
-      // as much - the template carries the cosine and the sine of the angle
-      // each corner is at, which is what both are worked out from.
+      // a cylinder is the one shape whose corners are not the template's:
+      // the radii widen it along its length and its side normal leans by as
+      // much, both computed from the cosine and sine of each corner's angle
       const bool taper = (kind == GLYPH_CYLINDER);
       double r0 = in.param[0], r1 = in.param[1];
       for(int v = 0; v < num; v++) {
@@ -255,16 +246,14 @@ namespace {
         memcpy(&col[4 * v], &in.color, 4);
       }
       if(same && !taper) {
-        // nothing turns them: the template's are the ones of this glyph, and
-        // they are already encoded
+        // no rotation: the template's encoded normals are the glyph's
         memcpy(nrm, tn, 3 * num * sizeof(normal_type));
       }
       else {
         for(int v = 0; v < num; v++) {
           const float *q = &tq[3 * v];
-          // the side of a cone leans over by its taper, over the length the
-          // transform gives it; what is worked out here is that normal
-          // before the transform, which then turns it like any other
+          // the normal before the transform, leaning by the taper over the
+          // length the transform gives
           double q0 = q[0], q1 = q[1], q2 = q[2];
           if(taper) {
             q0 = tp[3 * v];
@@ -335,9 +324,7 @@ void glyphList::_expandRange(drawContext *ctx, glyphKind kind,
   ctx->glyphTemplate(kind, tq, tn, num);
   if(!num || last <= first) return;
 
-  // The glyphs are independent of one another and each of them writes a range
-  // of its own, so the range is shared out and nothing has to be put back
-  // together afterwards.
+  // each thread writes a range of its own
   std::size_t n = last - first;
   int nthreads = CTX::instance()->numThreads;
   if(nthreads <= 0) nthreads = 1;
@@ -352,16 +339,11 @@ void glyphList::_expandRange(drawContext *ctx, glyphKind kind,
   }
 }
 
-// How many triangles it is worth keeping. Past this they are expanded a batch
-// at a time for every frame instead, which is slower but takes no memory.
-//
-// What is being traded: sixty thousand spheres are thirteen million vertices,
-// which take about half a gigabyte - nineteen bytes here and as many again in
-// the buffer object the graphics card is handed - and draw in nine
-// milliseconds a frame instead of thirty. Ten times faster for half a
-// gigabyte is worth it once; it is not worth it ten times over, hence a bound,
-// which General.GlyphCacheSize sets and which is otherwise a fraction of the
-// machine and a number both.
+// how many vertices it is worth keeping; past this the glyphs are expanded
+// a batch at a time for every frame, which is slower but takes no memory
+// (60000 spheres are 13 million vertices, about half a gigabyte with the
+// buffer objects). Set by General.GlyphCacheSize, or derived from the
+// machine.
 static long maxKeptVertices()
 {
   double mb = CTX::instance()->glyphCacheSize;
@@ -377,9 +359,8 @@ void glyphList::draw(drawContext *ctx, bool light)
 {
   if(!size()) return;
 
-  // Whatever was collected before these glyphs was asked for before them and
-  // has to reach the window first; the instanced and streamed backends bind
-  // attributes of their own, so nothing may be left waiting behind them.
+  // pending immediate mode primitives come first, and the backends below
+  // bind attributes of their own
   gmshFlushImmediate();
 
   ctx->updateGlyphTemplates();
@@ -392,28 +373,23 @@ void glyphList::draw(drawContext *ctx, bool light)
     total += (long)num * (long)_inst[k].size();
   }
 
-  // The pipeline that can place a shape itself needs none of this: it is
-  // handed the shape once and the glyphs as they are
+  // instanced drawing needs none of what follows
   if(_instanced(ctx, light)) return;
 
-  // A list that nobody keeps is filled again for the next frame anyway, so
-  // there is nothing to be had from keeping the triangles it comes to: they
-  // would be given up and built again just the same, only with an allocation
-  // the size of the whole scene in between.
+  // a list nobody keeps is refilled for the next frame anyway: do not keep
+  // its triangles either
   if(!filled()) {
     _stream(ctx, light);
     return;
   }
 
-  // What is already kept stays kept - it is counted in the total below, and
-  // throwing it away to make room for this one would only move the problem.
+  // what is already kept stays kept
   if(!_va && _keptVertices + total > maxKeptVertices()) {
     _stream(ctx, light);
     return;
   }
   if(_va && _keptVertices > maxKeptVertices()) {
-    // more is kept than is allowed now, e.g. because the option that bounds
-    // it has been lowered
+    // more is kept than allowed (e.g. the option was lowered)
     _keptVertices -= _va->getNumVertices();
     delete _va;
     _va = nullptr;
@@ -453,8 +429,7 @@ bool glyphList::_instanced(drawContext *ctx, bool light)
         const instance &in = _inst[k][g];
         unsigned char *at = &_gpu[k][g * glShader::GLYPH_STRIDE];
         float *f = (float *)at;
-        // the rows of the transform, so that placing a point is three dot
-        // products
+        // the rows of the transform: placing a point is three dot products
         for(int r = 0; r < 3; r++) {
           f[4 * r] = (float)in.m[r];
           f[4 * r + 1] = (float)in.m[3 + r];
@@ -488,22 +463,15 @@ void glyphList::_draw(drawContext *ctx, VertexArray *va, bool light)
   gmshLighting(false);
 }
 
-// How many vertices a scratch array holds at a time. Big enough that what it
-// costs to fill and hand over is spread over plenty of them, small enough that
-// it is nothing to keep between frames.
+// how many vertices a scratch array holds at a time
 static const int _chunkVertices = 1 << 18;
 
 void glyphList::_stream(drawContext *ctx, bool light)
 {
-  // Too many to keep the triangles of, so they are expanded a batch at a time
-  // into an array of a size that does not depend on how many there are, drawn,
-  // and expanded over again. Nothing is kept, and the whole of it happens for
-  // every frame - but it is still the arrays doing the drawing, which is what
-  // the glyphs being collected in the first place buys.
-  //
-  // There is one of these for the whole program: only one list draws at a
-  // time, and its buffer objects are worth holding on to between the batches
-  // and between the frames.
+  // too many to keep: expand them a batch at a time into a scratch array of
+  // fixed size, drawn and refilled. One scratch array for the whole program,
+  // as only one list draws at a time and its buffer objects are worth
+  // keeping.
   static VertexArray *scratch = nullptr;
   if(!scratch) scratch = new VertexArray(3, _chunkVertices / 3);
 
@@ -550,8 +518,7 @@ namespace glyphCache {
 
   void clear(const void *owner)
   {
-    // the slots of an owner are consecutive, so this is one lookup rather
-    // than one per slot: it is called for every entity a model deletes
+    // the slots of an owner are consecutive: one lookup
     auto it = _lists.lower_bound(key(owner, 0));
     while(it != _lists.end() && it->first.first == owner) {
       delete it->second;

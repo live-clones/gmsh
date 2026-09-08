@@ -24,20 +24,15 @@ static void clip_num_cb(Fl_Widget *w, void *data)
   FlGui::instance()->clipping->resetBrowser();
 }
 
-// adjusting says the user is still choosing the value - dragging a plane,
-// typing a number into one of the fields, scrolling over one - and that the
-// fast representation is what should be drawn
+// adjusting says the user is still choosing the value (dragging, typing,
+// scrolling) and that the fast representation should be drawn
 static void clip_update(bool adjusting);
 
-// There is no event to say that typing a value is over: Enter does not reach
-// the callback, and the field only says so when the focus leaves it. So the
-// full representation is put back a moment after the last change instead.
+// no event says that typing a value is over: the full representation is put
+// back a moment after the last change
 static void clip_settle_cb(void *) { clip_update(false); }
 
-// Is the user still choosing the value this callback carries? A drag of a
-// plane or of a value input, a scroll over one, and every keystroke as a
-// number is typed in - the callback fires on each one, and building the
-// section or the cut elements at every character is far too slow.
+// is the user still choosing the value (a drag, a scroll, a keystroke)?
 static bool clip_adjusting()
 {
   switch(Fl::event()) {
@@ -137,9 +132,8 @@ static void clip_update(bool adjusting)
         CTX::instance()->clipPlane[idx][j]);
   }
 
-  // What the user is asking for. It is read here rather than from the context
-  // because while a value is being chosen the context holds what is being drawn
-  // with, which is not the same thing.
+  // what the user asks for (the context holds what is being drawn with,
+  // which differs while a value is chosen)
   int wantCapping = FlGui::instance()->clipping->butt[0]->value();
   int wantWhole =
     wantCapping ? 0 : FlGui::instance()->clipping->butt[1]->value();
@@ -149,30 +143,20 @@ static void clip_update(bool adjusting)
   CTX::instance()->clipWholeElements = wantWhole;
   CTX::instance()->clipOnlyDrawIntersectingVolume = wantIntersecting;
 
-  // Nothing has to be built again from here: neither the mesh arrays nor the
-  // view arrays depend on where the planes are or on which of these modes is
-  // on, and what the modes add is held in arrays of their own, rebuilt from
-  // their own token. The one thing that does - a view drawn with only the
-  // volumes a plane cuts - is looked after by checkClipPlanesChanged().
+  // nothing to rebuild from here: what the planes add is rebuilt from its
+  // own token, and checkClipPlanesChanged() handles the one exception
 
-  // said while the toggles still hold what was asked for, so that the buttons
-  // do not follow what the drag below draws with
+  // while the toggles still hold what was asked for
   FlGui::instance()->clipping->activateButtons();
 
-  // While the value is being chosen, OpenGL alone does the clipping: no array
-  // is built, so an event costs a redraw however big the mesh is. Whole element
-  // mode is put aside because it is what keeps the planes from being applied at
-  // all, and capping because the section it cuts is worked out by walking every
-  // 3D element - cheap next to rebuilding the mesh, but far too much to do at
-  // every keystroke or motion event. Both are obeyed again, and everything they
-  // add built once, as soon as the value is settled.
+  // while the value is chosen OpenGL alone clips: whole element mode and
+  // capping (which walk every 3D element) are put aside until it settles
   if(adjusting) {
     CTX::instance()->clipWholeElements = 0;
     CTX::instance()->clipCapping = 0;
   }
 
-  // A drag says when it is over, so it is left to say so; a value being typed
-  // or scrolled does not, and settles on its own.
+  // a drag says when it is over; a typed or scrolled value settles on its own
   Fl::remove_timeout(clip_settle_cb);
   if(adjusting && Fl::event() != FL_DRAG) Fl::add_timeout(0.5, clip_settle_cb);
 
@@ -266,9 +250,8 @@ clippingWindow::clippingWindow(int deltaFontSize)
     for(int j = 0; j < 4; j++) {
       plane[j]->align(FL_ALIGN_RIGHT);
       plane[j]->callback(clip_update_cb);
-      // the drag draws the fast representation: ask to be called on release as
-      // well, so that the full scene comes back even if the value settled on
-      // the one it already had
+      // also called on release, so that the full scene comes back even if the
+      // value did not change
       plane[j]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
       plane[j]->tooltip("A * X + B * Y + C * Z + D = 0");
     }

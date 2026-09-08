@@ -67,12 +67,9 @@ public: // these will become protected at some point
 
   // the vertex arrays to draw the mesh of the entity efficiently
   VertexArray *va_lines, *va_triangles;
-  // What the clipping planes add to what is drawn, kept apart from the arrays
-  // above: the section they cut out of the 3D elements when capping is on, or
-  // the elements they cut drawn whole when whole element mode is. It is the
-  // only thing about the arrays that a plane moving changes, so holding it
-  // separately means a plane can be moved without the mesh being built again.
-  // Only 3D entities have them.
+  // what the clipping planes add, kept apart so that moving a plane does not
+  // rebuild the arrays above: the section they cut (capping), or the cut
+  // elements drawn whole (whole element mode)
   VertexArray *va_clip_lines, *va_clip_triangles;
 
   // the set of high-order elements fixed by the "fast curving" boundary layer
@@ -352,8 +349,8 @@ public:
   virtual void setColor(unsigned color, bool recursive = false)
   {
     _color = color;
-    // whoever bakes the colours of the entities into something they keep -
-    // the merged mesh arrays do - can tell by this that they have changed
+    // tells whoever bakes the entity colours in (the merged mesh arrays)
+    // that they changed
     colorChanges++;
   }
   static int colorChanges;

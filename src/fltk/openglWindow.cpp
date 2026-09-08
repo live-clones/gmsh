@@ -30,11 +30,8 @@
 #include "GamePad.h"
 #include "StringUtils.h"
 
-// Navigator handler (read gamepad event if gamepad exists or question presence
-// of gamepad)
-// the modelview matrix that looks at the camera target from the camera
-// position, both moved by the same offset (the half eye separation of a stereo
-// pair, or nothing at all)
+// the modelview matrix looking at the camera target from the camera position,
+// both moved by the same offset (the half eye separation of a stereo pair)
 static void cameraView(Camera *cam, double dx, double dy, double dz,
                        double view[16])
 {
@@ -46,6 +43,7 @@ static void cameraView(Camera *cam, double dx, double dy, double dz,
   glMatrix::lookAt(eye, target, up, view);
 }
 
+// read the gamepad events, if there is a gamepad
 static void navigator_handler(void *data)
 {
   openglWindow *gl_win = (openglWindow *)data;
@@ -95,9 +93,8 @@ int openglWindowMode()
     mode |= FL_DOUBLE;
     mode |= FL_STEREO;
   }
-  // the shader pipeline needs a context that has shaders in it, which on macOS
-  // means a core profile - and a core profile cannot do fixed function at all,
-  // which is why the two pipelines cannot share one context
+  // the shader pipeline needs a core profile on macOS, which cannot do fixed
+  // function: the two pipelines cannot share a context
   if(CTX::instance()->shaders) mode |= FL_OPENGL3;
   return mode;
 }
@@ -214,24 +211,19 @@ void openglWindow::draw()
 
   Msg::Debug("openglWindow::draw()");
 
-  // whatever the picking pass last drew is out of date: the camera, the
-  // visibility or the mesh may all have changed since
+  // the picking image is out of date
   _ctx->invalidatePickCache();
 
   if(!context_valid()) {
     _ctx->invalidateQuadricsAndDisplayLists();
-    // the buffer objects were destroyed with the previous context, and the
-    // entry points have to be asked of the new one
+    // the buffer objects and entry points belonged to the previous context
     VertexArray::invalidateBuffers();
     glApi::reset();
     glShader::reset();
     gmshResetMatrices();
-    // say what the context that has just been created can do: the pipeline
-    // that will be drawn with is decided by what is there, not by what was
-    // asked for
+    // report what the new context can do
     glApi::describe();
-    // say straight away whether the pipeline that was asked for can be had,
-    // rather than at the first draw that needs it
+    // report now if the shader pipeline cannot be had
     if(CTX::instance()->shaders) glShader::available();
   }
 
@@ -239,24 +231,15 @@ void openglWindow::draw()
   _ctx->viewport[1] = 0;
   _ctx->viewport[2] = w();
   _ctx->viewport[3] = h();
-  // the high resolution factor can change when the window is moved across
-  // displays, so refresh it before each draw
+  // the factor changes when the window moves across displays
   _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() :
                                            1.);
   glViewport(0, 0, pixel_w(), pixel_h());
 
   if(lassoMode) {
-    // Draw the scene again, with the lasso rectangle on top of it.
-    //
-    // The rectangle used to be drawn into the front buffer with a blend that
-    // inverted whatever was underneath it, and erased by drawing the previous
-    // one again, so that the scene did not have to be redrawn while the mouse
-    // moved. Nothing keeps the previous frame around to be inverted, though: a
-    // back buffer that has been swapped holds whatever the driver left in it,
-    // and drawing into the front buffer is not something a current
-    // implementation has to honour - which left the whole frame black. The
-    // fast representation is what makes redrawing it affordable, as it does
-    // while a clipping plane is dragged.
+    // draw the scene again with the lasso rectangle on top (drawing into the
+    // front buffer, as was done before, left the frame black on current
+    // implementations)
     if(CTX::instance()->fastRedraw) {
       CTX::instance()->mesh.draw = 0;
       CTX::instance()->post.draw = 0;
@@ -273,11 +256,8 @@ void openglWindow::draw()
     _ctx->draw3d();
     _ctx->draw2d();
 
-    // The rectangle itself, in pixel coordinates, over everything else. Its
-    // border inverts whatever it crosses, so that it shows on the background
-    // and on a dark mesh alike, and the inside gets a faint wash of the
-    // foreground colour, which is what makes it out on a mid grey that
-    // inverts to itself.
+    // the rectangle, in pixel coordinates: a border inverting whatever it
+    // crosses, and a faint wash of the foreground colour inside
     gmshMatrixMode(GMSH_PROJECTION);
     double px[16];
     glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
@@ -287,8 +267,7 @@ void openglWindow::draw()
     gmshLoadIdentity();
     double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
     double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
-    // the blending is OpenGL state the collector knows nothing about, so
-    // whatever is pending is drawn before it changes, each time
+    // flush before changing the blending, which the collector does not track
     gmshFlushImmediate();
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -304,20 +283,17 @@ void openglWindow::draw()
     gmshVertex2d(x0, y1);
     gmshEnd();
     gmshFlushImmediate();
-    // white, through a blend that leaves one minus what was there
+    // white blended to one minus the destination: an inversion
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     gmshColor3d(1., 1., 1.);
     if(selectionMode && CTX::instance()->mouseSelection)
       gmshLineStipple(1, 0x0F0F);
-    // two pixels of the window, whatever the resolution of the display; the
-    // width is in pixels of the display, the coordinates in those of the
-    // window
+    // two window pixels wide (the width is in display pixels, the
+    // coordinates in window pixels)
     double hw = 1.;
     gmshLineWidth(2. * hw * _ctx->highResolutionPixelFactor());
-    // Four segments rather than a loop, the horizontal ones stretched by
-    // half the width and the vertical ones shortened by it, so that each
-    // corner is covered exactly once: covered twice, it would be inverted
-    // back to what it was.
+    // four segments, the horizontal ones stretched by half the width and the
+    // vertical ones shortened by it, so that each corner is inverted once
     double sx = (x1 > x0) ? hw : (x1 < x0) ? -hw : 0.;
     double sy = (y1 > y0) ? hw : (y1 < y0) ? -hw : 0.;
     gmshBegin(GL_LINES);
