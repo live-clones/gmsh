@@ -36,13 +36,15 @@ class MElement;
 // times, e.g. an edge shared by several tetrahedra: the N corners are stored in
 // canonical (sorted) order, together with the color, so that an element added
 // twice with the same geometry and the same color maps to the same key. The
-// size is padded to a multiple of 8 bytes so that it can be hashed word by word
+// alignment rounds the size up to a multiple of 8 bytes, so that the key can
+// be hashed word by word; the bytes that adds are zeroed when the key is made
 template <int N> class alignas(8) CornerKey {
 public:
   float p[3 * N];
   unsigned char c[4];
-  unsigned char pad[8 - ((12 * N + 4) % 8)];
 };
+static_assert(sizeof(CornerKey<2>) == 32 && sizeof(CornerKey<3>) == 40,
+              "a corner key is hashed as whole 64 bit words");
 
 // hash of a key made of 64 bit words. The filter only stores this hash, so the
 // function is part of what the filter is: changing it changes which elements
