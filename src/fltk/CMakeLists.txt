@@ -11,7 +11,6 @@ set(SRC
     graphicWindow.cpp menuFltk.cpp treeFltk.cpp dialogFltk.cpp
     graphicsFonts.cpp
       sceneViewFltk.cpp
-      sceneViewFltk.cpp
       colorbarWindow.cpp
     drawContextFltkCairo.cpp
     drawContextFltkStringTexture.cpp
@@ -22,7 +21,6 @@ set(SRC
 
     inputValue.cpp
     viewButton.cpp solverButton.cpp
-    Navigator.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

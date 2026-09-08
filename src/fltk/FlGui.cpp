@@ -38,7 +38,6 @@
 #include "Options.h"
 #include "CommandLine.h"
 #include "Context.h"
-#include "GamePad.h"
 #include "StringUtils.h"
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
@@ -355,18 +354,6 @@ static void gmsh_colormap(Fl_Color col)
 #undef bl
 #undef el
 
-// question presence of gamepad every 3. seconds
-static void gamepad_handler(void *data)
-{
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
-    CTX::instance()->gamepad->read_event();
-    Fl::add_timeout(CTX::instance()->gamepad->frequency, gamepad_handler, data);
-  }
-  else {
-    Fl::add_timeout(.5, gamepad_handler, data);
-  }
-}
-
 void FlGui::applyColorScheme(bool redraw)
 {
   static int first = true;
@@ -498,10 +485,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // apply color scheme before widget creation (noop if default color scheme is
   // selected), so that there's no color "flashing"
   applyColorScheme();
-
-  // add gamepad handler
-  if(CTX::instance()->gamepad)
-    Fl::add_timeout(5., gamepad_handler, (void *)nullptr);
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);

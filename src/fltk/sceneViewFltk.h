@@ -111,7 +111,6 @@ public:
   void setCursor(Scene::Cursor kind);
 
   void show();
-  bool everDrawn() const { return _drawn; }
 
   // The view the pointer was last in, which is what the rest of Gmsh means by
   // "the current one": a click on a view is what changes it.
@@ -133,9 +132,6 @@ private:
   // again inside a draw. It is the window's guard and not the scene's: the
   // interface that draws afresh at every frame has its own.
   bool _drawing;
-  // whether it has ever drawn: the gamepad has nothing to move around before
-  // the first picture
-  bool _drawn;
   // where the pointer was at the previous event, for the movement one turn of
   // a scene is given
   double _lastX, _lastY;

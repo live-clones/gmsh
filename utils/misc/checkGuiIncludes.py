@@ -51,7 +51,6 @@ SCENE = {
     "src/fltk/drawContextFltkStringTexture.cpp",
     "src/fltk/drawContextFltkStringTexture.h",
     "src/fltk/graphicsFonts.cpp", "src/fltk/graphicsFonts.h",
-    "src/fltk/Navigator.cpp", "src/fltk/Navigator.h",
 }
 
 # What still breaks the rule, and which part of the plan takes it away. The
@@ -77,7 +76,7 @@ TOLERATED = {
         "Gui.h", "GuiActions.h", "GuiDialogs.h", "GuiStatus.h",
         "GmshDefines.h", "GmshMessage.h", "GModel.h", "MElement.h", "PView.h",
         "Plugin.h", "PluginManager.h", "OpenFile.h", "Options.h",
-        "CommandLine.h", "Context.h", "GamePad.h", "StringUtils.h",
+        "CommandLine.h", "Context.h", "StringUtils.h",
         "gl2ps.h", "gmshPopplerWrapper.h", "PixelBuffer.h", "Field.h",
         "3M.h"},
     "src/fltk/FlGui.h": {"SPoint2.h"},
