@@ -471,6 +471,34 @@ namespace QuadOptimizer {
             }
         }
         if(sides[0].size() != 2 || sides[0] != sides[1]) continue;
+        // Splitting a shared two-edge chain can hide overlapping input.
+        // Before staging any cut, prove that both cells occupy opposite
+        // physical sides of each shared segment. Winding and UV coordinates
+        // play no role in this check.
+        std::array<Point, 2> interior;
+        for(int k = 0; k < 2; ++k) {
+          MElement *element = entry.second[k];
+          if(element->getNumPrimaryVertices() == 3) {
+            interior[k] = {{0., 0., 0.}};
+            for(int i = 0; i < 3; ++i) {
+              const Point p = point(element->getVertex(i));
+              for(int d = 0; d < 3; ++d) interior[k][d] += p[d] / 3.;
+            }
+          }
+          else {
+            for(int i = 0; i < 4; ++i)
+              if(element->getVertex(i) == pole)
+                interior[k] = point(element->getVertex((i + 2) % 4));
+          }
+        }
+        for(MVertex *end : sides[0]) {
+          const Point segment = subtract(point(end), point(pole));
+          const Point a = cross(segment, subtract(interior[0], point(pole)));
+          const Point b = cross(segment, subtract(interior[1], point(pole)));
+          const double scale = std::sqrt(dot(a, a) * dot(b, b));
+          if(!(scale > 0.) || !std::isfinite(scale) ||
+             !(dot(a, b) < -1.e-12 * scale)) return result;
+        }
         MQuadrangle *best = nullptr;
         int corner = -1;
         double bestAngle = -1.;

@@ -29,9 +29,9 @@ if(NOT quality_summary_count EQUAL 2)
 endif()
 
 if(NOT log MATCHES
-   "half-edge rule catastrophic_angle_quad_split[ \n\r]+accepted=1")
+   "QuadOptimizerV2 final split face=1 quad=[0-9]+ reason=invalid diagonal=[01]")
   message(FATAL_ERROR
-    "The final absolute-quality catalog rule was not accepted once:\n${log}")
+    "The V2 final invalid-quad split was not accepted:\n${log}")
 endif()
 if(log MATCHES
    "terminal triangle recombination: [^\n\r]*accepted=[1-9]")

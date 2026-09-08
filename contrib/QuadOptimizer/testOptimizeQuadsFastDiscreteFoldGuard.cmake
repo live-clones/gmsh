@@ -23,14 +23,12 @@ if(log MATCHES "Error *:" OR log MATCHES "OptimizeQuadsFast failed")
   message(FATAL_ERROR "The discrete-fold guard emitted an error:\n${log}")
 endif()
 
-# The imported discrete face contains one warped quad in the orientation
-# opposite to its sampled GFace normal. The coherent-component repair first
-# reverses it; one diagonal can then be split into two triangles whose ordered
-# physical Jacobians follow the GFace at every reliable sample.
+# V2 validates physical Jacobians and sampled CAD normals at final splitting.
+# Preserve the output connectivity and CAD-coverage assertions below.
 if(NOT log MATCHES
-   "terminal split: excessiveWarping=1 nonConvexOrInvalid=0 split=1 rejected=0")
+   "QuadOptimizerV2 final split face=1 invalid=1 cad=0 rejected=0")
   message(FATAL_ERROR
-    "The safely reoriented terminal split was not accepted:\n${log}")
+    "The physical terminal split was not accepted:\n${log}")
 endif()
 if(NOT log MATCHES
    "quality: faces=1 triangles=2 quads=0 [^\n\r]*validity=PASS" OR

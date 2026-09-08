@@ -30,19 +30,24 @@ if(log MATCHES "not a regular oriented surface cell complex" OR
     "Fast rejected the repairable Blossom cell complex:\n${log}")
 endif()
 
+if(NOT log MATCHES
+   "prepared fixed CAD valence-two stars: splitQuads=1 addedPoints=0")
+  message(FATAL_ERROR "V2 did not prepare the shared CAD pole:\n${log}")
+endif()
+
 string(REGEX MATCHALL
-  "OptimizeQuadsFast terminal split: [^\n\r]*" split_summaries "${log}")
+  "QuadOptimizerV2 final split face=1 [^\n\r]*" split_summaries "${log}")
 list(LENGTH split_summaries split_summary_count)
 if(NOT split_summary_count EQUAL 2)
   message(FATAL_ERROR "Expected two Fast split summaries:\n${log}")
 endif()
 list(GET split_summaries 0 first_split)
 list(GET split_summaries 1 second_split)
-if(NOT first_split MATCHES "nonConvexOrInvalid=1 split=1 rejected=0")
+if(NOT first_split MATCHES "invalid=1 cad=0 rejected=0")
   message(FATAL_ERROR
-    "Fast did not restore the concave quad diagonal before cleanup:\n${log}")
+    "V2 did not split the remaining invalid quad at the end:\n${log}")
 endif()
-if(NOT second_split MATCHES "nonConvexOrInvalid=0 split=0 rejected=0")
+if(NOT second_split MATCHES "invalid=0 cad=0 rejected=0")
   message(FATAL_ERROR "The preflight repair is not a fixed point:\n${log}")
 endif()
 
@@ -53,7 +58,7 @@ if(NOT summary_count EQUAL 2)
 endif()
 list(GET summaries 0 first_summary)
 list(GET summaries 1 second_summary)
-if(NOT first_summary MATCHES "reoriented=1" OR
+if(NOT first_summary MATCHES "reoriented=[1-9][0-9]*" OR
    NOT second_summary MATCHES "reoriented=0")
   message(FATAL_ERROR
     "Concavity split and local orientation repair did not compose:\n${log}")

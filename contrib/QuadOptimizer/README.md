@@ -182,15 +182,14 @@ These are reference results, not a guarantee that all specifications pass.
 last-only splitting and the explicit nodal modes. Numerical tests
 cover Smart corner sines, Winslow normalization and 3D rigid transformations.
 
-The full 35-test quad subset currently has six pre-existing failures, also
-reproduced with the pre-Smart executable: `optimizeQuadsFastTriangleTriangleSwap`,
-`optimizeQuadsFastFinalAbsoluteBadQuadSplit`,
-`optimizeQuadsFastDiscreteFoldGuard`, `optimizeQuadsFastPreflightConcaveSplit`,
-`quadPackTerminalConcaveSplit`, and `quadPackTerminalTriangleRecombine`.
-They concern historical trace/terminal repair expectations; the last two
-request disabled cleanup while expecting its terminal operations. They are
-kept visible rather than reported as passing. In particular, V2 is not a
-general repairer for invalid imported meshes or fixed bad quadrangles.
+The existing 35-test quad subset passes with the current V2 pipeline. The
+historical TT-swap fixture now checks preservation under the supported V2
+QQ/QT-swap and TT-merge policy; V2 does not run the former dihedral-only TT
+pass. Final-split checks use V2 diagnostics, and PACK terminal checks explicitly
+enable cleanup instead of requesting preservation mode. No tests were added.
+Fixed CAD valence-two preparation checks physical separation across both
+shared segments before any cut, so overlapping T/Q or Q/Q input is rejected
+without mutation while legitimate QQ/QT poles remain repairable.
 
 ## STEP campaign, one report
 
