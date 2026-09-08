@@ -407,6 +407,14 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     glyphToken tok;
     tok.add(ctx->pixel_equiv_x / ctx->s[0]);
     tok.add(opt->vectorType);
+    // everything addArrowFor() works an arrow out from: leave one of these out
+    // and the arrows keep the size they were first built at
+    tok.add(opt->arrowSizeMin);
+    tok.add(opt->arrowSizeMax);
+    tok.add(opt->tmpMin);
+    tok.add(opt->tmpMax);
+    tok.add(opt->scaleType);
+    tok.add(opt->centerGlyphs);
     glyphList *g;
     if(!glyphCache::get(p, GLYPH_VECTORS, tok, g)) {
       int num = va->getNumVertices() / 2;
