@@ -27,37 +27,23 @@ if(NOT swap_count EQUAL 2)
 endif()
 list(GET swaps 0 first_swap)
 list(GET swaps 1 second_swap)
-if(NOT first_swap MATCHES "accepted=1")
-  message(FATAL_ERROR "The improving T+T diagonal was not selected:\n${log}")
+# V2 exposes QQ/QT swaps and acceptable TT merges. It deliberately has no
+# standalone dihedral-only TT flip. These fixed cells must remain valid and
+# unchanged under both size settings, including a second invocation.
+if(NOT first_swap MATCHES "visited=0 accepted=0" OR
+   NOT second_swap MATCHES "visited=0 accepted=0")
+  message(FATAL_ERROR "V2 unexpectedly ran the legacy dihedral-only TT pass:\n${log}")
 endif()
-if(NOT second_swap MATCHES "accepted=0")
-  message(FATAL_ERROR "The T+T diagonal swap is not a fixed point:\n${log}")
-endif()
-
 string(REGEX MATCHALL
-       "dihedral=[0-9.eE+-]+->[0-9.eE+-]+"
-       accepted "${log}")
-list(LENGTH accepted accepted_count)
-if(NOT accepted_count EQUAL 1)
-  message(FATAL_ERROR "Expected one strict dihedral improvement:\n${log}")
+  "OptimizeQuadsFast quality: [^\n\r]*triangles=2 quads=1 [^\n\r]*validity=PASS"
+  quality_summaries "${log}")
+list(LENGTH quality_summaries quality_summary_count)
+if(NOT quality_summary_count EQUAL 2 OR log MATCHES
+   "OptimizeQuadsFast: [^\n\r]*[1-9][0-9]* topology changes")
+  message(FATAL_ERROR "V2 changed the protected fixed TT/Q patch:\n${log}")
 endif()
 
-# The acceptance trace must expose the additive affected-edge state potential,
-# not only the new/old shared diagonal angle. External T/T neighbors are absent
-# from this minimal fixture, but this still exercises the common support scorer
-# and protects its integration in the transaction ordering.
-string(REGEX MATCHALL
-       "affectedPenalty=[0-9.eE+-]+->[0-9.eE+-]+"
-       affected_penalties "${log}")
-list(LENGTH affected_penalties affected_penalty_count)
-if(NOT affected_penalty_count EQUAL 1)
-  message(FATAL_ERROR
-    "Expected one affected-edge T/T penalty improvement:\n${log}")
-endif()
-
-# The replacement diagonal is about 3.33 long. Raising h/2 to 4 must reject
-# exactly the same geometrically improving flip: this explicitly exercises the
-# hard lower-size gate instead of relying only on production Doghouse meshes.
+# Raising the lower length limit must not admit a replacement either.
 execute_process(
   COMMAND "${GMSH_EXECUTABLE}" "${TEST_GEO}"
           -parse_and_exit -nopopup -v 6

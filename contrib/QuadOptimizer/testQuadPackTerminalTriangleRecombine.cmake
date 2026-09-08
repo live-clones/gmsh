@@ -6,7 +6,7 @@ endif()
 
 execute_process(
   COMMAND "${GMSH_EXECUTABLE}" "${TEST_GEO}" -2 -nopopup -v 5
-          -setnumber Mesh.QuadqsCleanupMethod 2
+          -setnumber Mesh.QuadqsCleanupMethod 1
           -o "${TEST_OUTPUT}"
   RESULT_VARIABLE status
   OUTPUT_VARIABLE output
@@ -16,30 +16,15 @@ if(NOT status EQUAL 0)
   message(FATAL_ERROR "PACK terminal triangle recombination failed:\n${log}")
 endif()
 
-# Greedy recombination can now skip the first inverted pair and select the
-# valid alternative directly. Retain explicit coverage of both that upstream
-# route and the historical terminal split/recombine route.
-if(log MATCHES
-   "Blossom recombination completed [^\n\r]*: 1 quads, 1 triangles, 0 invalid quads")
-  if(NOT log MATCHES
-     "PACK terminal quad validity: concaveOrInvalid=0 [^\n\r]*split=0 rejected=0" OR
-     NOT log MATCHES
-     "PACK terminal triangle recombination: visited=0 accepted=0 [^\n\r]*rejectedInvalid=0")
-    message(FATAL_ERROR
-      "PACK altered the valid pair selected by the upstream guard:\n${log}")
-  endif()
-elseif(log MATCHES
-       "Blossom recombination completed [^\n\r]*: 1 quads, 1 triangles, 1 invalid quads")
-  if(NOT log MATCHES
-     "PACK terminal quad validity: concaveOrInvalid=1 [^\n\r]*split=1 rejected=0" OR
-     NOT log MATCHES
-     "PACK terminal triangle recombination: [^\n\r]*accepted=1 [^\n\r]*rejectedInvalid=0")
-    message(FATAL_ERROR
-      "PACK did not repair and recombine its invalid intermediate pair:\n${log}")
-  endif()
-else()
-  message(FATAL_ERROR
-    "PACK followed no recognized triangle-pair recombination route:\n${log}")
+# Enable V2 explicitly. CleanupMethod=2 preserves the generated mesh and
+# cannot provide terminal-cleanup diagnostics. Blossom must keep its valid
+# pairing and V2 must leave the same valid final connectivity (checked below).
+if(NOT log MATCHES
+   "Blossom recombination completed [^\n\r]*: 1 quads, 1 triangles, 0 invalid quads" OR
+   NOT log MATCHES "PACK final cleanup: V2 with final nodal Winslow" OR
+   NOT log MATCHES
+   "QuadOptimizerV2 final split face=1 invalid=0 cad=0 rejected=0")
+  message(FATAL_ERROR "PACK/V2 did not preserve the protected pairing:\n${log}")
 endif()
 if(NOT log MATCHES
    "PACK final quad audit: concaveOrInvalid=0 [^\n\r]*split=0 rejected=0")
