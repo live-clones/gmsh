@@ -82,7 +82,7 @@ TOLERATED = {
         "GmshMessage.h", "GmshDefines.h", "StringUtils.h", "GuiDialogs.h",
         "CreateFile.h", "Options.h", "Context.h", "GModel.h", "PView.h",
         "PViewOptions.h"},
-    "src/fltk/graphicWindow.cpp": {"GuiActions.h", "Gui.h", "3M.h"},
+    "src/fltk/graphicWindow.cpp": {"Gui.h", "3M.h"},
     "src/fltk/inputRange.h": {"Context.h"},
     "src/fltk/menuFltk.cpp": {"GuiMenus.h"},
     "src/fltk/menuFltk.h": {"GuiMenus.h"},

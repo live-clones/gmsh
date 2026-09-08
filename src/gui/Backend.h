@@ -210,6 +210,11 @@ namespace Ui {
       std::function<BarMessage()> barMessage;
       std::function<std::string()> barTooltip;
       std::function<void()> barPressed;
+      // What the save button of the console runs. The console is the
+      // interface's, but the file its lines are written to is the
+      // application's, chooser included: an interface that offers the button
+      // runs this, and one that does not offers nothing.
+      std::function<void()> saveMessages;
     };
     virtual void setSources(const Sources &sources) = 0;
 
@@ -450,7 +455,10 @@ namespace Ui {
       // an internal error of the toolkit, which goes to the message console
       // like any other
       std::function<void(const std::string &text)> error;
-      // the last window is gone: run() is about to return
+      // The user asked to leave: the last window was closed. What follows
+      // -- writing the session file, leaving the process or only closing
+      // the interface -- is the application's, so this is the whole of what
+      // a close button does.
       std::function<void()> quitting;
       // Where a window stood, said as the interface is about to forget it:
       // the tree is folded away or put back beside the scene, the console

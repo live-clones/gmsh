@@ -771,6 +771,13 @@ void highOrderOptimize(const highOrderParameters &par)
 #endif
 }
 
+void messagesSaveAs()
+{
+  std::string fileName;
+  if(Gui::fileDialog(Gui::Create, "Save Messages", "", fileName))
+    messagesSave(fileName);
+}
+
 void pickWithMouse(bool on)
 {
   opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, on ? 1 : 0);

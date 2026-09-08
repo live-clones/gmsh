@@ -120,7 +120,7 @@ static bool _initGlfw()
 }
 
 appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
-  : _window(nullptr), _quitShouldExit(quitShouldExit), _inFrame(false),
+  : _window(nullptr), _inFrame(false),
     _frames(3), _keepDrawing(false),
     _lastRefresh(0.), _currentPane(nullptr), _console(nullptr),
     _showConsole(true),
@@ -1005,10 +1005,9 @@ void appWindow::frame()
   if(glfwWindowShouldClose(_window)) {
     glfwSetWindowShouldClose(_window, GLFW_FALSE);
     _inFrame = false;
-    if(_quitShouldExit)
-      Toolkit::quit();
-    else
-      destroy();
+    // what closing the last window comes to -- writing the session, leaving
+    // the process or only taking the interface down -- is the application's
+    Toolkit::quit();
     return;
   }
 

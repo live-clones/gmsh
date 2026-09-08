@@ -22,6 +22,7 @@
 #include <FL/fl_ask.H>
 
 #include "Gui.h"
+#include "GuiActions.h"
 #include "FlGui.h"
 #include <FL/fl_draw.H>
 #include "extraDialogs.h"
@@ -109,12 +110,32 @@ namespace FltkScene {
     if(Gui::available()) fltkSetMouseSelection(on);
   }
 
+  // While the animation plays, this interface runs a loop of its own and
+  // pumps the events itself; Gui::toggleAnimation() starts and stops it.
+  // Whether it is time for the next step is animationTick()'s.
+  bool _playing = false, _stop = false;
+
+  bool animating() { return _playing; }
+
   void toggleAnimation()
   {
-    if(Gui::available()) fltkToggleAnimation();
+    if(!Gui::available()) return;
+    if(_playing) {
+      _stop = true;
+      return;
+    }
+    _playing = true;
+    _stop = false;
+    while(1) {
+      if(!FlGui::available()) return;
+      if(_stop) break;
+      animationTick();
+      FlGui::check();
+    }
+    _playing = false;
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      FlGui::instance()->graph[i]->refreshStatusButtons();
   }
-
-  bool animating() { return Gui::available() && fltkAnimating(); }
 
   void abortSelection()
   {
