@@ -161,6 +161,11 @@ namespace Ui {
       // to build them again instead of doing it at every frame
       std::function<std::vector<MenuItem>()> menuBar;
       std::function<unsigned()> menuGeneration;
+      // The keys that do something wherever the pointer is, in the order
+      // they are to be tried: what the menus bind, and after them the keys
+      // that are in no menu -- those of the 3D view. Asked for on a key
+      // press, not kept: what an entry does may depend on what is loaded.
+      std::function<std::vector<KeyBinding>()> keys;
       // the tree down the left side, as one thing: the commands and, under
       // them, whatever a solver has published
       Tree tree;
@@ -271,6 +276,9 @@ namespace Ui {
     // the modules tree: what it says changed, or what it is made of did
     virtual void refreshTree(bool rebuild) = 0;
     virtual void openTreeItem(const std::string &name, bool open) = 0;
+    // whether a branch is unfolded, which is the interface's to know: a
+    // click on it is what changes it
+    virtual bool treeItemOpen(const std::string &name) = 0;
     // Whether it is closed because the user closed it, as opposed to because
     // it has never been opened. A module is opened when what it is about
     // happens -- a mesh was made, so Mesh opens -- but not one the user has

@@ -31,7 +31,6 @@
     (double x, double y, int button, int what, double wheel, bool shift,       \
      bool ctrl, bool alt),                                                     \
     (x, y, button, what, wheel, shift, ctrl, alt))                             \
-  F(sceneKey, (char key), (key))                                               \
   F(sceneMessage, (const std::string &first, const std::string &second),       \
     (first, second))                                                           \
   F(getCurrentPixelSize, (int &width, int &height), (width, height))           \
@@ -55,6 +54,7 @@
   F(std::string, scenePicture, (int &width, int &height, bool always),         \
     (width, height, always), std::string())                                    \
   F(bool, sceneMoved, (), (), false)                                           \
+  F(bool, sceneKey, (char key), (key), false)                                  \
   F(drawContext *, getCurrentDrawContext, (), (), nullptr)                     \
   F(PixelBuffer *, createCompositePixelBuffer,                                 \
     (unsigned int format, unsigned int type), (format, type), nullptr)         \

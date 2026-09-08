@@ -253,6 +253,11 @@ namespace {
     {
       _open[name] = open;
     }
+    bool treeItemOpen(const std::string &name) override
+    {
+      auto it = _open.find(name);
+      return it != _open.end() && it->second;
+    }
     void setSolverButtonMode(const std::string &, const std::string &) override
     {
     }

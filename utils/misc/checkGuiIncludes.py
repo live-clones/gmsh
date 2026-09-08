@@ -66,19 +66,14 @@ TOLERATED = {
         "drawContext.h"},
     "src/imgui/exportDialog.cpp": {
         "Gui.h", "GmshDefines.h", "Context.h", "Options.h"},
-    "src/imgui/shortcuts.cpp": {
-        "GuiActions.h", "GuiMenus.h", "Gui.h", "GmshMessage.h"},
     # --- FLTK: an adapter over the interface that was, until 1.4 makes it a
     # backend like the two others
     "src/fltk/CreateFileFltk.cpp": {"drawContext.h", "PixelBuffer.h",
                                     "Context.h"},
     "src/fltk/FlGui.cpp": {
-        "Gui.h", "GuiActions.h", "GuiDialogs.h", "GuiStatus.h",
-        "GmshDefines.h", "GmshMessage.h", "GModel.h", "MElement.h", "PView.h",
-        "Plugin.h", "PluginManager.h", "OpenFile.h", "Options.h",
-        "CommandLine.h", "Context.h", "StringUtils.h",
-        "gl2ps.h", "gmshPopplerWrapper.h", "PixelBuffer.h", "Field.h",
-        "3M.h"},
+        "Gui.h", "GuiDialogs.h", "GuiStatus.h", "GmshMessage.h", "GModel.h",
+        "OpenFile.h", "Options.h", "CommandLine.h", "Context.h",
+        "StringUtils.h", "PixelBuffer.h", "3M.h"},
     "src/fltk/FlGui.h": {"SPoint2.h"},
     "src/fltk/extraDialogs.cpp": {
         "GmshDefines.h", "OpenFile.h", "CreateFile.h", "Options.h",

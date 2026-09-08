@@ -36,9 +36,25 @@ namespace Ui {
       s += "Up";
     else if(key == KeyDown)
       s += "Down";
+    else if(key == KeyEscape)
+      s += "Esc";
+    else if(key == KeyHome)
+      s += "Home";
+    else if(key == KeyPageUp)
+      s += "PgUp";
+    else if(key == KeyPageDown)
+      s += "PgDn";
     else
       s += (char)key;
     return s;
+  }
+
+  bool Shortcut::matches(int k, unsigned m) const
+  {
+    if(empty() || k != key) return false;
+    if(mods & ModAny) return true;
+    const unsigned held = ModCommand | ModShift | ModAlt;
+    return (mods & held) == (m & held);
   }
 
 } // namespace Ui

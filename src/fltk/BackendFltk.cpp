@@ -373,6 +373,12 @@ namespace {
         FlGui::instance()->onelab->closeTreeItem(name);
     }
 
+    bool treeItemOpen(const std::string &name) override
+    {
+      return FlGui::available() && FlGui::instance()->onelab &&
+             FlGui::instance()->onelab->isTreeItemOpen(name);
+    }
+
     void showTree() override
     {
       if(FlGui::available() && FlGui::instance()->onelab)

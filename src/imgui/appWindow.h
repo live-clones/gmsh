@@ -234,10 +234,20 @@ private:
   // branch is actually drawn, so that unfolding a whole chain in one go works
   // whatever was open before.
   std::map<std::string, bool> _treeWanted;
+  // and what each branch was, the last time it was drawn: whether it is
+  // unfolded is asked by the key that folds it
+  std::map<std::string, bool> _treeOpen;
 
 public:
   void openTreeItem(const std::string &name) { _treeWanted[name] = true; }
   void closeTreeItem(const std::string &name) { _treeWanted[name] = false; }
+  bool treeItemOpen(const std::string &name) const
+  {
+    auto wanted = _treeWanted.find(name);
+    if(wanted != _treeWanted.end()) return wanted->second;
+    auto open = _treeOpen.find(name);
+    return open != _treeOpen.end() && open->second;
+  }
 
 private:
   void _drawDialog(unsigned which);

@@ -476,18 +476,13 @@ namespace WindowScene {
 
   bool sceneMoved() { return _it().changed; }
 
-  void sceneKey(char key)
+  bool sceneKey(char key)
   {
     standalone &it = _it();
-    if(!_open() || !it.view || !it.view->selectionMode) return;
+    if(!_open() || !it.view) return false;
+    if(!it.view->key(key)) return false;
     it.changed = true;
-    switch(key) {
-    case 'e': it.view->endSelection = 1; break;
-    case 'u': it.view->undoSelection = 1; break;
-    case 'i': it.view->invertSelection = 1; break;
-    case 'q': it.view->quitSelection = 1; break;
-    default: break;
-    }
+    return true;
   }
 
   void sceneMessage(const std::string &first, const std::string &second)

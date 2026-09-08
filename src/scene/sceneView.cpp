@@ -342,6 +342,24 @@ void sceneView::_hover()
   }
 }
 
+bool sceneView::key(char what)
+{
+  if(what == 'q' && _lassoMode) {
+    _lassoMode = false;
+    Scene::host().redraw();
+    return true;
+  }
+  if(!selectionMode) return false;
+  switch(what) {
+  case 'e': endSelection = 1; break;
+  case 'u': undoSelection = 1; break;
+  case 'i': invertSelection = 1; break;
+  case 'q': quitSelection = 1; break;
+  default: return false;
+  }
+  return true;
+}
+
 void sceneView::handleMouse(const paneInput &in)
 {
   double mx = in.x, my = in.y;

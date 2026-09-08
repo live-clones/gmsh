@@ -280,6 +280,12 @@ namespace {
         appWindow::instance()->closeTreeItem(name);
     }
 
+    bool treeItemOpen(const std::string &name) override
+    {
+      return appWindow::available() &&
+             appWindow::instance()->treeItemOpen(name);
+    }
+
     void showTree() override
     {
       if(appWindow::available()) appWindow::instance()->showModulesPanel();
