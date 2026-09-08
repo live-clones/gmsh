@@ -3513,8 +3513,8 @@ void status_options_cb(Fl_Widget *w, void *data)
            (void*)"mesh_volume_faces", FL_MENU_TOGGLE },
          { nullptr },
       { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
-      { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
       { "Mesh transparency", 0, quick_access_cb, (void*)"mesh_transparency" },
+      { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
       { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "View element outlines ", FL_ALT + 'e', quick_access_cb,
@@ -3621,12 +3621,12 @@ void status_options_cb(Fl_Widget *w, void *data)
     // This comes after the view entries above, which show() the whole range.
     if(opt_general_shaders(0, GMSH_GET, 0)) {
       menu[geo + 6].show();
-      menu[msh + 10].show();
+      menu[msh + 9].show();
       if(!PView::list.empty()) menu[pos + 21].show();
     }
     else {
       menu[geo + 6].hide();
-      menu[msh + 10].hide();
+      menu[msh + 9].hide();
       menu[pos + 21].hide();
     }
 
