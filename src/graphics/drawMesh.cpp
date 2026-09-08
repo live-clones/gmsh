@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <map>
+#include <algorithm>
 #include <cmath>
 #include "drawContext.h"
 #include "GmshMessage.h"
@@ -407,7 +408,11 @@ class mergedArrays {
 public:
   VertexArray *lines[4], *triangles[4];
   bool built;
-  mergedArrays() : built(false)
+  // the colours are baked into the merged arrays, unlike the per entity draw
+  // which asks for them: what they were built with, so that a colour changing
+  // builds them again
+  int colorStamp;
+  mergedArrays() : built(false), colorStamp(0)
   {
     for(int i = 0; i < 4; i++) lines[i] = triangles[i] = nullptr;
   }
@@ -921,6 +926,17 @@ void drawContext::drawMesh()
   // planes off. Nothing here depends on where the planes are any more.
   setMeshClipPlanes(true);
 
+  // the merged arrays of a model that is gone go with it
+  for(auto it = _merged.begin(); it != _merged.end();) {
+    if(std::find(GModel::list.begin(), GModel::list.end(), it->first) ==
+       GModel::list.end()) {
+      it->second.clear();
+      it = _merged.erase(it);
+    }
+    else
+      it++;
+  }
+
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     bool changed = m->fillVertexArrays();
@@ -940,9 +956,10 @@ void drawContext::drawMesh()
       // draw each of them in a single call; the entities then only draw their
       // labels and, if they are selected, themselves on top
       mergedArrays &ma = _merged[m];
-      if(changed) ma.clear();
+      if(changed || ma.colorStamp != GEntity::colorChanges) ma.clear();
       if(!ma.built && !inPickColorMode()) {
         ma.built = true;
+        ma.colorStamp = GEntity::colorChanges;
         if(status >= 1)
           ma.lines[1] =
             buildMerged(m->firstEdge(), m->lastEdge(), true, false, 0);

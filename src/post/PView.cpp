@@ -13,6 +13,10 @@
 #include "SmoothData.h"
 #include "adaptiveData.h"
 #include "GmshMessage.h"
+#include "GmshConfig.h"
+#if defined(HAVE_OPENGL)
+#include "glyphList.h"
+#endif
 
 int PView::_globalTag = 1;
 std::vector<PView *> PView::list;
@@ -180,6 +184,10 @@ void PView::addStep(GModel *model,
 PView::~PView()
 {
   deleteVertexArrays();
+#if defined(HAVE_OPENGL)
+  // the glyphs kept for this view go with it
+  glyphCache::clear(this);
+#endif
   if(normals) delete normals;
   if(_options) delete _options;
 
