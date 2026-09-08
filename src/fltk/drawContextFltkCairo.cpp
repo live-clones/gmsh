@@ -7,6 +7,7 @@
 
 #include "drawContextFltkCairo.h"
 #include "glImmediate.h"
+#include "glShader.h"
 
 #if defined(HAVE_CAIRO)
 #include <cairo/cairo.h>
@@ -117,6 +118,15 @@ public:
     // function pipeline, the red of a shader, which has no alpha textures.
     bool shaders = gmshUseShaders();
     bool wasLit = gmshLightingEnabled();
+    // The queue is flushed whenever it fills up, which can be in the middle of
+    // the scene: what is changed here has to be put back afterwards. The
+    // fixed function pipeline does that with the attribute stack; the shader
+    // pipeline has none, and remembers the two toggles itself. In the pass
+    // that sums what is transparent the blending is that pass's own, and is
+    // left alone: the strings go through it like everything else in it.
+    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
+    GLboolean wasBlend = glIsEnabled(GL_BLEND);
+    bool ownBlend = !glShader::transparentPass();
     if(!shaders) {
       // what glPopAttrib() puts back below is OpenGL's own state, which the
       // lighting we remember knows nothing about: say it again afterwards
@@ -124,8 +134,10 @@ public:
     }
     gmshLighting(false);
     glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if(ownBlend) {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
     int tw = cairo_image_surface_get_width(surface);
     int th = cairo_image_surface_get_height(surface);
     glGenTextures(1, &textureId);
@@ -173,7 +185,12 @@ public:
     gmshTexture(0);
     glDeleteTextures(1, &textureId);
 
-    if(!shaders) glPopAttrib();
+    if(!shaders)
+      glPopAttrib();
+    else {
+      if(wasDepth) glEnable(GL_DEPTH_TEST);
+      if(ownBlend && !wasBlend) glDisable(GL_BLEND);
+    }
     gmshLighting(wasLit);
 
     // reset original matrices

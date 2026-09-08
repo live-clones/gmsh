@@ -6,6 +6,7 @@
 #include <string.h>
 #include "drawContext.h"
 #include "glMatrix.h"
+#include "glShader.h"
 #include "GmshDefines.h"
 #include "Numeric.h"
 #include "StringUtils.h"
@@ -548,8 +549,13 @@ void drawContext::drawImage(const std::string &name, double x, double y,
       break; // center right
     default: break;
     }
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // the summing pass has a blending of its own, which the image goes
+    // through like everything else in it
+    bool ownBlend = !glShader::transparentPass();
+    if(ownBlend) {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
     gmshTexture(img->tex, GMSH_TEXTURE_IMAGE);
     gmshBegin(GL_QUADS);
     gmshTexCoord2f(1.0f, 1.0f);
@@ -562,7 +568,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     gmshVertex3d(x, y, z);
     gmshEnd();
     gmshTexture(0); // draws what is waiting, as the texture is going away
-    glDisable(GL_BLEND);
+    if(ownBlend) glDisable(GL_BLEND);
   }
   if(billboard) {
     gmshPopMatrix();
