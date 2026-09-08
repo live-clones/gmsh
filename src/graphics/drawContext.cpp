@@ -492,20 +492,70 @@ static bool anyColorIsTransparent(const unsigned int *colors, int n,
   return false;
 }
 
+// Does an entity carry a colour of its own that is not opaque? This is asked
+// several times a frame and means walking every entity, so the answer is kept
+// and only worked out again when a colour was set or an entity came or went.
+static bool anyEntityColorIsTransparent()
+{
+  static int stamp = -1;
+  static std::size_t count = 0;
+  static bool result = false;
+  std::size_t n = 0;
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
+    GModel *m = GModel::list[i];
+    n += m->getNumVertices() + m->getNumEdges() + m->getNumFaces() +
+         m->getNumRegions();
+  }
+  if(stamp == GEntity::colorChanges && count == n) return result;
+  stamp = GEntity::colorChanges;
+  count = n;
+  result = false;
+  CTX *ctx = CTX::instance();
+  for(std::size_t i = 0; i < GModel::list.size() && !result; i++) {
+    std::vector<GEntity *> entities;
+    GModel::list[i]->getEntities(entities);
+    for(std::size_t j = 0; j < entities.size(); j++) {
+      GEntity *e = entities[j];
+      if(e->useColor() && ctx->unpackAlpha(e->getColor()) < 255) {
+        result = true;
+        break;
+      }
+    }
+  }
+  return result;
+}
+
 bool gmshGeometryIsTransparent()
 {
-  const unsigned int c[3] = {CTX::instance()->color.geom.point,
-                             CTX::instance()->color.geom.curve,
-                             CTX::instance()->color.geom.surface};
-  return anyColorIsTransparent(c, 3, CTX::instance()->geom.transparency);
+  CTX *ctx = CTX::instance();
+  const unsigned int c[7] = {
+    ctx->color.geom.point,     ctx->color.geom.curve,
+    ctx->color.geom.surface,   ctx->color.geom.volume,
+    ctx->color.geom.selection, ctx->color.geom.highlight[0],
+    ctx->color.geom.highlight[1]};
+  if(anyColorIsTransparent(c, 7, ctx->geom.transparency)) return true;
+  // and the colours the entities were given one by one
+  return ctx->alpha && anyEntityColorIsTransparent();
 }
 
 bool gmshMeshIsTransparent()
 {
-  const unsigned int c[4] = {
-    CTX::instance()->color.mesh.triangle, CTX::instance()->color.mesh.quadrangle,
-    CTX::instance()->color.mesh.tetrahedron, CTX::instance()->color.fg};
-  return anyColorIsTransparent(c, 4, CTX::instance()->mesh.transparency);
+  CTX *ctx = CTX::instance();
+  std::vector<unsigned int> c = {
+    ctx->color.mesh.line,       ctx->color.mesh.triangle,
+    ctx->color.mesh.quadrangle, ctx->color.mesh.tetrahedron,
+    ctx->color.mesh.hexahedron, ctx->color.mesh.prism,
+    ctx->color.mesh.pyramid,    ctx->color.mesh.trihedron,
+    ctx->color.fg,              ctx->color.geom.selection};
+  // by entity, by physical group and by partition the mesh is coloured from
+  // the carousel, and in the first two from what the entities were given
+  int carousel = ctx->mesh.colorCarousel;
+  if(carousel >= 1 && carousel <= 3)
+    for(int i = 0; i < 20; i++) c.push_back(ctx->color.mesh.carousel[i]);
+  if(anyColorIsTransparent(&c[0], (int)c.size(), ctx->mesh.transparency))
+    return true;
+  return ctx->alpha && (carousel == 1 || carousel == 2) &&
+         anyEntityColorIsTransparent();
 }
 
 void gmshDrawArrays(GLenum type, int count, const float *dashes)
