@@ -201,6 +201,7 @@ public:
   // which half of the scene is being drawn, see gmshTransparencyPass
   int transparencyPass;
 
+private:
   // Colour buffer picking. During a selection pass every pickable object is
   // drawn in a flat colour that encodes its position in _pickObjects, and the
   // colours are then read back from the framebuffer. This replaces GL_SELECT,
