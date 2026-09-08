@@ -476,6 +476,9 @@ static void gatherCutElements(std::vector<T *> &elements,
 {
   for(std::size_t i = 0; i < elements.size(); i++) {
     if(!isElementVisible(elements[i])) continue;
+    // an element one plane cuts can still be entirely beyond another, and is
+    // then not drawn at all: what is drawn whole here is not clipped again
+    if(!elementIsKept(elements[i])) continue;
     if(!elementIsCut(elements[i])) continue;
     cut.push_back(elements[i]);
   }
