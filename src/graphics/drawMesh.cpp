@@ -837,7 +837,7 @@ static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
            c->mesh.normals || c->mesh.dual || c->mesh.voronoi;
   case 3:
     return (c->mesh.volumeEdges && !mergedLines) ||
-           ((c->mesh.volumeFaces || c->meshClipCaps()) && !mergedTriangles) ||
+           (c->mesh.volumeFaces && !mergedTriangles) ||
            c->mesh.volumeLabels || c->mesh.dual || c->mesh.voronoi;
   default: return true;
   }
@@ -888,6 +888,10 @@ void drawContext::drawMesh()
     GModel *m = GModel::list[i];
     bool changed = m->fillVertexArrays();
     if(changed) Msg::Debug("mesh vertex arrays have changed");
+    // the section the planes cut is held apart from the mesh and built on its
+    // own: a plane moving costs this and nothing else
+    if(changed) m->invalidateCapVertexArrays();
+    m->fillCapVertexArrays();
 #if defined(__APPLE__)
     // FIXME: resetting texture pile fixes bug with recent macOS versions
     if(changed) global()->resetFontTextures();
@@ -956,6 +960,17 @@ void drawContext::drawMesh()
         }
         _mergedLines = (merge && ma.lines[3]);
         _mergedTriangles = (merge && ma.triangles[3]);
+        // The section the clipping planes cut is held apart from the mesh and
+        // is not merged with it, so it is drawn here rather than left to the
+        // per entity pass, which the merged arrays may well make unnecessary.
+        for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
+          GRegion *r = *it;
+          if(!r->va_caps || !r->getVisibility()) continue;
+          if(render_mode == GMSH_SELECT) setPickColor(3, r->tag());
+          drawArrays(this, r, r->va_caps, GL_TRIANGLES,
+                     CTX::instance()->mesh.light);
+          if(render_mode == GMSH_SELECT) unsetPickColor();
+        }
         if(needPerEntityPass(this, 3, _mergedLines, _mergedTriangles))
           std::for_each(m->firstRegion(), m->lastRegion(),
                         drawMeshGRegion(this));

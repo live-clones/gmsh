@@ -196,11 +196,9 @@ static SBoundingBox3d &entityBounds(GEntity *e)
 // vertex arrays to be rebuilt.
 static char entityClipState(GEntity *e)
 {
-  // without clipWholeElements the planes are applied by OpenGL, and the arrays
-  // only depend on them through the section they cut out of a 3D entity
-  if(!CTX::instance()->clipWholeElements) {
-    if(e->dim() < 3 || !CTX::instance()->meshClipCaps()) return 1;
-  }
+  // without clipWholeElements the planes are applied by OpenGL, and the section
+  // they cut is an array of its own: the mesh arrays do not depend on them
+  if(!CTX::instance()->clipWholeElements) return 1;
   int mask = CTX::instance()->mesh.clip;
   if(!mask) return 1;
   // in this mode only the elements that the plane cuts are drawn, so moving it
@@ -430,9 +428,26 @@ static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
   }
 }
 
+// The section the clipping planes cut out of the 3D elements. This is the one
+// thing about the arrays that moving a plane changes, so it is built on its
+// own and the rest is left exactly as it is: a plane can then be moved without
+// the mesh being built again. Only the elements a plane actually cuts produce
+// anything, so this is a slice through the model however big the model is.
+template <class T>
+static void addCapsInArray(GEntity *e, std::vector<T *> &elements)
+{
+  for(std::size_t i = 0; i < elements.size(); i++) {
+    MElement *ele = elements[i];
+    if(ele->getDim() != 3 || !isElementVisible(ele)) continue;
+    unsigned int c = getColorByElement(ele);
+    unsigned int col[4] = {c, c, c, c};
+    addCapInArray(e->va_caps, ele, col);
+  }
+}
+
 template <class T>
 static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
-                                bool edges, bool faces, bool caps,
+                                bool edges, bool faces,
                                 UniqueElementFilter *interior = nullptr)
 {
   int nthreads = CTX::instance()->numThreads;
@@ -461,8 +476,8 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
         vaLines[t] = new VertexArray(2, 6 * n);
         vaLines[t]->setUniqueFilter(fl);
       }
-      if(faces || caps) {
-        vaTriangles[t] = new VertexArray(3, faces ? 4 * n : n / 4);
+      if(faces) {
+        vaTriangles[t] = new VertexArray(3, 4 * n);
         vaTriangles[t]->setUniqueFilter(ft);
       }
     }
@@ -513,8 +528,6 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 
     SPoint3 pc(0., 0., 0.);
     if(explode != 1.) pc = ele->barycenter();
-
-    if(caps && ele->getDim() == 3) addCapInArray(vaTriangle, ele, col);
 
     if(edges) {
       int numRep = ele->getNumEdgesRep(curved);
@@ -656,8 +669,7 @@ public:
 
     if(CTX::instance()->mesh.lines) {
       e->va_lines = new VertexArray(2, _estimateNumLines(e));
-      addElementsInArrays(e, e->lines, CTX::instance()->mesh.lines, false,
-                          false);
+      addElementsInArrays(e, e->lines, CTX::instance()->mesh.lines, false);
       e->va_lines->finalize();
     }
   }
@@ -718,10 +730,10 @@ public:
       f->va_triangles =
         new VertexArray(3, fac ? _estimateNumTriangles(f) : 100);
       if(CTX::instance()->mesh.triangles)
-        addElementsInArrays(f, f->triangles, edg, fac, false);
+        addElementsInArrays(f, f->triangles, edg, fac);
       if(CTX::instance()->mesh.quadrangles)
-        addElementsInArrays(f, f->quadrangles, edg, fac, false);
-      addElementsInArrays(f, f->polygons, edg, fac, false);
+        addElementsInArrays(f, f->quadrangles, edg, fac);
+      addElementsInArrays(f, f->polygons, edg, fac);
       f->va_lines->finalize();
       f->va_triangles->finalize();
     }
@@ -808,16 +820,15 @@ public:
 
     bool edg = CTX::instance()->mesh.volumeEdges;
     bool fac = CTX::instance()->mesh.volumeFaces;
-    bool cap = CTX::instance()->meshClipCaps();
-    if(edg || fac || cap) {
+    if(edg || fac) {
       _curved = (areSomeElementsCurved(r->tetrahedra) ||
                  areSomeElementsCurved(r->hexahedra) ||
                  areSomeElementsCurved(r->prisms) ||
                  areSomeElementsCurved(r->pyramids) ||
                  areSomeElementsCurved(r->trihedra));
       r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 100);
-      r->va_triangles = new VertexArray(
-        3, fac ? _estimateNumTriangles(r) : (cap ? _estimateNumCaps(r) : 100));
+      r->va_triangles =
+        new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
 
       // locate the interior faces before filling the arrays: all the element
       // types have to be seen before any of them can be drawn
@@ -843,22 +854,74 @@ public:
       }
 
       if(CTX::instance()->mesh.tetrahedra)
-        addElementsInArrays(r, r->tetrahedra, edg, fac, cap, interior);
+        addElementsInArrays(r, r->tetrahedra, edg, fac, interior);
       if(CTX::instance()->mesh.hexahedra)
-        addElementsInArrays(r, r->hexahedra, edg, fac, cap, interior);
+        addElementsInArrays(r, r->hexahedra, edg, fac, interior);
       if(CTX::instance()->mesh.prisms)
-        addElementsInArrays(r, r->prisms, edg, fac, cap, interior);
+        addElementsInArrays(r, r->prisms, edg, fac, interior);
       if(CTX::instance()->mesh.pyramids)
-        addElementsInArrays(r, r->pyramids, edg, fac, cap, interior);
+        addElementsInArrays(r, r->pyramids, edg, fac, interior);
       if(CTX::instance()->mesh.trihedra)
-        addElementsInArrays(r, r->trihedra, edg, fac, cap, interior);
-      addElementsInArrays(r, r->polyhedra, edg, fac, cap, interior);
+        addElementsInArrays(r, r->trihedra, edg, fac, interior);
+      addElementsInArrays(r, r->polyhedra, edg, fac, interior);
       delete interior;
       r->va_lines->finalize();
       r->va_triangles->finalize();
     }
   }
 };
+
+// What each model's caps were last built for. Rebuilding them when none of this
+// has changed would be work at every frame for nothing; keyed by model, as
+// several of them can be drawn one after the other in the same frame.
+static std::map<GModel *, std::vector<double> > _capToken;
+
+static std::vector<double> capToken()
+{
+  CTX *ctx = CTX::instance();
+  std::vector<double> t;
+  t.push_back(ctx->meshClipCaps() ? 1. : 0.);
+  t.push_back(ctx->mesh.clip);
+  t.push_back(ctx->clipOnlyVolume);
+  for(int i = 0; i < 6; i++)
+    for(int j = 0; j < 4; j++) t.push_back(ctx->clipPlane[i][j]);
+  return t;
+}
+
+void GModel::invalidateCapVertexArrays() { _capToken.erase(this); }
+
+bool GModel::fillCapVertexArrays()
+{
+  std::vector<double> tok = capToken();
+  auto it = _capToken.find(this);
+  if(it != _capToken.end() && it->second == tok) return false;
+  _capToken[this] = tok;
+
+  bool caps = CTX::instance()->meshClipCaps();
+  double t1 = TimeOfDay();
+  std::size_t n = 0;
+  for(auto it = firstRegion(); it != lastRegion(); it++) {
+    GRegion *r = *it;
+    r->deleteCapVertexArrays();
+    if(!caps || !r->getVisibility()) continue;
+    // as many as the 2/3 power of the elements: a plane cuts a surface through
+    // the volume, however many elements the volume holds
+    std::size_t ne = r->getNumMeshElements();
+    r->va_caps = new VertexArray(3, (int)(2. * pow((double)ne, 2. / 3.)) + 100);
+    if(CTX::instance()->mesh.tetrahedra) addCapsInArray(r, r->tetrahedra);
+    if(CTX::instance()->mesh.hexahedra) addCapsInArray(r, r->hexahedra);
+    if(CTX::instance()->mesh.prisms) addCapsInArray(r, r->prisms);
+    if(CTX::instance()->mesh.pyramids) addCapsInArray(r, r->pyramids);
+    if(CTX::instance()->mesh.trihedra) addCapsInArray(r, r->trihedra);
+    addCapsInArray(r, r->polyhedra);
+    r->va_caps->finalize();
+    n += r->va_caps->getNumVertices();
+  }
+  if(n)
+    Msg::Debug("Clipping section: %lu vertices in %g s", (unsigned long)n,
+               TimeOfDay() - t1);
+  return true;
+}
 
 bool GModel::fillVertexArrays()
 {
