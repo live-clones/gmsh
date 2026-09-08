@@ -2157,7 +2157,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "ParameterSteps" , opt_print_parameter_steps , 10. ,
     "Number of steps in loop over print parameter" },
 
-  { F|O, "Background" , opt_print_background , 0. ,
+  { F|O, "Background" , opt_print_background , 1. ,
     "Print background (gradient and image)?" },
 
   { F|O, "CompositeWindows" , opt_print_composite_windows , 0. ,

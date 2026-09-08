@@ -28,7 +28,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Print.Background
 Print background (gradient and image)?@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.CompositeWindows
