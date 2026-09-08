@@ -26,7 +26,7 @@
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGFaceBDS.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "meshGFaceBamg.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFaceQuadHalf.h"
@@ -271,7 +271,6 @@ static bool algoDelaunay2D(GFace *gf)
   if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
      gf->getMeshingAlgo() == ALGO_2D_BAMG ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL ||
-     gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR ||
@@ -587,12 +586,19 @@ runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
                      std::map<MVertex *, SPoint2> *parametricCoordinates,
                      std::vector<SPoint2> *true_boundary)
 {
+  // Mesh.FlatRefine2D picks the kernel, not the algorithm: the flat
+  // one runs on index-based arrays and produces the very same mesh (1), or
+  // trades that for a cheaper floating-point route (2). See
+  // meshGFaceDelaunayFlat.cpp
+  const bool flat = CTX::instance()->mesh.flatRefine2D != 0;
+
   if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) {
-    bowyerWatsonFrontal(gf, equivalence, parametricCoordinates, true_boundary);
-  }
-  else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_OPT) {
-    bowyerWatsonFrontalOptimized(gf, equivalence, parametricCoordinates,
-                                 true_boundary);
+    if(flat)
+      bowyerWatsonFrontalFlat(gf, equivalence, parametricCoordinates,
+                              true_boundary);
+    else
+      bowyerWatsonFrontal(gf, equivalence, parametricCoordinates,
+                          true_boundary);
   }
   else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
     bowyerWatsonFrontalLayers(gf, true, equivalence, parametricCoordinates);
@@ -605,11 +611,18 @@ runDelaunayAlgorithm(GFace *gf, bool infty, bool seedBamgWithBowyerWatson,
   }
   else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
           gf->getMeshingAlgo() == ALGO_2D_AUTO) {
-    bowyerWatson(gf, 1000000000, equivalence, parametricCoordinates);
+    if(flat)
+      bowyerWatsonFlat(gf, 1000000000, equivalence, parametricCoordinates);
+    else
+      bowyerWatson(gf, 1000000000, equivalence, parametricCoordinates);
   }
   else {
-    if(seedBamgWithBowyerWatson)
-      bowyerWatson(gf, 15000, equivalence, parametricCoordinates);
+    if(seedBamgWithBowyerWatson) {
+      if(flat)
+        bowyerWatsonFlat(gf, 15000, equivalence, parametricCoordinates);
+      else
+        bowyerWatson(gf, 15000, equivalence, parametricCoordinates);
+    }
     meshGFaceBamg(gf);
   }
 
@@ -1443,38 +1456,11 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   if(debug) debugViews(m, gf, "recovered");
 
-  if(1) {
-    auto itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      BDS_Face *t = *itt;
-      if(!t->deleted) {
-        BDS_Point *n[4];
-        if(t->getNodes(n)) {
-          MVertex *v1 = recoverMap[n[0]];
-          MVertex *v2 = recoverMap[n[1]];
-          MVertex *v3 = recoverMap[n[2]];
-          if(!n[3]) {
-            if(v1 != v2 && v1 != v3 && v2 != v3)
-              gf->triangles.push_back(new MTriangle(v1, v2, v3));
-          }
-          else {
-            MVertex *v4 = recoverMap[n[3]];
-            gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-          }
-        }
-      }
-      ++itt;
-    }
-  }
-
   {
     int nb_swap;
     Msg::Debug("Delaunizing the initial mesh");
     delaunayizeBDS(gf, *m, nb_swap);
   }
-
-  // only delete the mesh data stored in the base GFace class
-  gf->GFace::deleteMesh();
 
   Msg::Debug("Starting to add internal nodes");
   // start mesh generation
@@ -2306,7 +2292,6 @@ void meshGFace::operator()(GFace *gf, bool print)
   case ALGO_2D_INITIAL_ONLY: algo = "Initial Mesh Only"; break;
   case ALGO_2D_DELAUNAY: algo = "Delaunay"; break;
   case ALGO_2D_FRONTAL: algo = "Frontal-Delaunay"; break;
-  case ALGO_2D_FRONTAL_OPT: algo = "Frontal-Delaunay Optimized"; break;
   case ALGO_2D_BAMG: algo = "Bamg"; break;
   case ALGO_2D_FRONTAL_QUAD: algo = "Frontal-Delaunay for Quads"; break;
   case ALGO_2D_PACK_PRLGRMS: algo = "Packing of Parallelograms"; break;

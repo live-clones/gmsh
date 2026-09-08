@@ -7,6 +7,10 @@ set(SRC
   Camera.cpp
   Trackball.cpp
   ReadImg.cpp
+  glApi.cpp
+  glMatrix.cpp
+  glImmediate.cpp
+  glShader.cpp
   drawContext.cpp
   drawMesh.cpp
   drawGeom.cpp
@@ -15,6 +19,7 @@ set(SRC
   drawScales.cpp
   drawGraph2d.cpp
   drawGlyph.cpp
+  glyphList.cpp
   gl2ps.cpp
   gl2gif.cpp
   gl2jpeg.cpp

@@ -22,7 +22,7 @@
 #include "GModelParametrize.h"
 
 #if defined(HAVE_MESH)
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #endif
 
 static void NoElementsSelectedMode(classificationEditor *e)

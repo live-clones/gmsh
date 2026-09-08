@@ -17,6 +17,7 @@
 #include "Options.h"
 #include "StringUtils.h"
 #include "gl2png.h"
+#include "glMatrix.h"
 
 static int assembleColmapStr(const int num, const int intType, int &samples,
                              std::string &ret)
@@ -452,8 +453,7 @@ static int assemble3d(const int num, const int exportAxis, std::string &axisstr,
     // project the 8 axis end points to pixel coordinates,
     // accept if they are in the screen range.
 
-    gluProject(axPts[j][0], axPts[j][1], axPts[j][2], model, proj, viewport,
-               &axViewPt[j][0], &axViewPt[j][1], &axViewPt[j][2]);
+    glMatrix::project(axPts[j], model, proj, viewport, axViewPt[j]);
     // printf("x=%f, y=%f, z=%f\n", axPts[j][0], axPts[j][1], axPts[j][2]);
     // printf("xprn=%f, yprn=%f, zprn=%f\n",
     //        axViewPt[j][0], axViewPt[j][1], axViewPt[j][2]);

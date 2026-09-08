@@ -3,7 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
+// Contributor(s): Matti Pellikka (initial implementation), Bruno de Sousa Alves
+// (periodicity)
 
 #ifndef CELLCOMPLEX_H
 #define CELLCOMPLEX_H
@@ -70,6 +71,9 @@ private:
 
   // is the cell complex at reduced state
   bool _reduced;
+
+  // have the periodically equivalent cells been identified
+  bool _periodic;
 
   int _numRelativeCells[4];
   int _numSubdomainCells[4];
@@ -269,6 +273,15 @@ public:
 
   // restore the cell complex to its original state before (co)reduction
   bool restoreComplex();
+
+  // replace each pair of periodically equivalent cells by a single cell, so
+  // that the complex becomes the periodic quotient of the domain. Must be
+  // called on an unreduced complex, and is a no-op if already done.
+  // Only the periodic links carried by the nodes in slaveNodes and pointing
+  // to nodes in masterNodes are used; an empty set means no restriction on
+  // that side, i.e. all the periodic links of the model are used
+  void periodicComplex(const std::set<MVertex *> &slaveNodes,
+                       const std::set<MVertex *> &masterNodes);
 
   // relabel the (restored) original cell complex for a new relative
   // subdomain, instead of constructing the same complex from scratch:

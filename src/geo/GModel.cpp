@@ -197,6 +197,9 @@ void GModel::destroy(bool keepName)
   vertices.clear();
   std::set<GVertex *, GEntityPtrLessThan>().swap(vertices);
 
+  // The overlap managers point into the entities deleted above
+  clearOverlaps();
+
   destroyMeshCaches();
 
   resetOCCInternals();
@@ -328,13 +331,44 @@ bool GModel::empty() const
 
 int GModel::overlapDim() const
 {
-  if(std::get<1>(_overlaps).size() > 0) {
-    return 3; // 3D overlap
+  int maxDim = 0;
+  for(const auto &mgr : _overlapManagers) {
+    maxDim = std::max(maxDim, mgr.overlapDim());
   }
-  else if(std::get<0>(_overlaps).size() > 0) {
-    return 2; // 2D overlap
+  return maxDim;
+}
+
+OverlapManager &GModel::createNewOverlapManager(int layers)
+{
+  _overlapManagers.emplace_back(_nextOverlapTag++, layers);
+  return _overlapManagers.back();
+}
+
+OverlapManager *GModel::createOverlapManagerWithTag(int tag, int layers)
+{
+  if(tag != (int)_overlapManagers.size()) {
+    Msg::Error("Overlap manager tag %d does not match expected position %zu. "
+               "Tags must be sequential.",
+               tag, _overlapManagers.size());
+    return nullptr;
   }
-  return 0; // no overlap
+  _overlapManagers.emplace_back(tag, layers);
+  _nextOverlapTag = tag + 1;
+  return &_overlapManagers.back();
+}
+
+OverlapManager *GModel::getOverlapManagerByTag(int tag)
+{
+  for(auto &mgr : _overlapManagers) {
+    if(mgr.tag() == tag) return &mgr;
+  }
+  return nullptr;
+}
+
+void GModel::clearOverlaps()
+{
+  _overlapManagers.clear();
+  _nextOverlapTag = 0;
 }
 
 GRegion *GModel::getRegionByTag(int n) const
@@ -474,8 +508,14 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
 
 bool GModel::remove(GRegion *r)
 {
-  auto it = std::find(firstRegion(), lastRegion(), r);
-  if(it != (riter)regions.end()) {
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = regions.find(r);
+  if(it == regions.end() || *it != r)
+    it = std::find(regions.begin(), regions.end(), r);
+  if(it != regions.end()) {
     regions.erase(it);
     std::vector<GFace *> f = r->faces();
     for(auto it = f.begin(); it != f.end(); it++) (*it)->delRegion(r);
@@ -488,7 +528,13 @@ bool GModel::remove(GRegion *r)
 
 bool GModel::remove(GFace *f)
 {
-  auto it = std::find(firstFace(), lastFace(), f);
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = faces.find(f);
+  if(it == faces.end() || *it != f)
+    it = std::find(faces.begin(), faces.end(), f);
   if(it != faces.end()) {
     faces.erase(it);
     std::vector<GEdge *> const &e = f->edges();
@@ -502,7 +548,13 @@ bool GModel::remove(GFace *f)
 
 bool GModel::remove(GEdge *e)
 {
-  auto it = std::find(firstEdge(), lastEdge(), e);
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = edges.find(e);
+  if(it == edges.end() || *it != e)
+    it = std::find(edges.begin(), edges.end(), e);
   if(it != edges.end()) {
     edges.erase(it);
     if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
@@ -516,7 +568,13 @@ bool GModel::remove(GEdge *e)
 
 bool GModel::remove(GVertex *v)
 {
-  auto it = std::find(firstVertex(), lastVertex(), v);
+  // the container is sorted by tag, so look the entity up instead of scanning
+  // (this is O(#entities) per removal otherwise, which dominates on models
+  // with many partition entities); fall back to a scan in case a tag was
+  // changed after insertion
+  auto it = vertices.find(v);
+  if(it == vertices.end() || *it != v)
+    it = std::find(vertices.begin(), vertices.end(), v);
   if(it != vertices.end()) {
     vertices.erase(it);
     return true;
@@ -650,8 +708,7 @@ void GModel::remove()
   faces.clear();
   edges.clear();
   vertices.clear();
-  std::get<0>(_overlaps).clear();
-  std::get<1>(_overlaps).clear();
+  clearOverlaps();
 }
 
 void GModel::snapVertices()
@@ -874,12 +931,21 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int>> &inDimTags,
 
 int GModel::getMaxElementaryNumber(int dim)
 {
-  std::vector<GEntity *> entities;
-  getEntities(entities);
+  // scan the relevant containers directly, rather than materializing a vector
+  // of every entity in the model on each call
   int num = 0;
-  for(std::size_t i = 0; i < entities.size(); i++)
-    if(dim < 0 || entities[i]->dim() == dim)
-      num = std::max(num, std::abs(entities[i]->tag()));
+  if(dim < 0 || dim == 0)
+    for(auto it = vertices.begin(); it != vertices.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 1)
+    for(auto it = edges.begin(); it != edges.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 2)
+    for(auto it = faces.begin(); it != faces.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
+  if(dim < 0 || dim == 3)
+    for(auto it = regions.begin(); it != regions.end(); ++it)
+      num = std::max(num, std::abs((*it)->tag()));
   return num;
 }
 
@@ -2446,12 +2512,13 @@ int GModel::convertOldPartitioningToNewOne()
 }
 
 template <int dim>
-static void _buildOverlapsForDim(const int layers, GModel *const m)
+static void _buildOverlapsForDim(const int layers, GModel *const m,
+                                  OverlapManager &mgr)
 {
   auto ovlps = quickOverlap<dim>(m);
   for(int i = 1; i < layers; ++i) extendOverlapCollection<dim>(m, ovlps);
-  buildOverlapEntities<dim>(m, ovlps);
-  overlapBuildBoundaries<dim>(m, ovlps);
+  buildOverlapEntities<dim>(m, mgr, ovlps);
+  overlapBuildBoundaries<dim>(m, mgr, ovlps);
 }
 
 int GModel::createOverlaps(int layers, bool createBoundaries)
@@ -2462,25 +2529,32 @@ int GModel::createOverlaps(int layers, bool createBoundaries)
   auto dim = getDim();
   if(dim < 2) {
     Msg::Error("Model dimension (%d) is too low for overlap creation", dim);
-    return 1;
+    return -1;
   }
 
   if(layers < 1) {
     Msg::Error("Number of layers %d in overlaps must be strictly positive",
                layers);
-    return 1;
+    return -1;
+  }
+
+  if(getNumPartitions() == 0) {
+    Msg::Error("Model is not partitioned: cannot create overlaps");
+    return -1;
   }
 
   Msg::StatusBar(true, "Building overlaps...");
 
+  auto &mgr = createNewOverlapManager(layers);
+
   double t1 = Cpu(), w1 = TimeOfDay();
   if(dim == 2)
-    _buildOverlapsForDim<2>(layers, this);
+    _buildOverlapsForDim<2>(layers, this, mgr);
   else
-    _buildOverlapsForDim<3>(layers, this);
+    _buildOverlapsForDim<3>(layers, this, mgr);
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
-  return 0;
+  return mgr.tag();
 }
 
 void GModel::storeChain(int dim,
@@ -3736,8 +3810,18 @@ void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
                               bool forReparametrization,
                               double curveAngleThreshold)
 {
+  auto splitMap = std::map<int, std::vector<int>>();
   classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
-                curveAngleThreshold);
+                curveAngleThreshold, splitMap);
+}
+
+void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
+                              bool forReparametrization,
+                              double curveAngleThreshold,
+                              std::map<int, std::vector<int>> &splitMap)
+{
+  classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
+                curveAngleThreshold, splitMap);
 }
 
 void GModel::addHomologyRequest(const std::string &type,

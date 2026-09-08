@@ -275,23 +275,29 @@ mesh.add('generate', doc, None, iint('dim', '3'))
 doc = '''Partition the mesh of the current model into `numPart' partitions. Optionally, `elementTags' and `partitions' can be provided to specify the partition of each element explicitly.'''
 mesh.add('partition', doc, None, iint('numPart'), ivectorsize('elementTags', 'std::vector<std::size_t>()','[]', '[]'), ivectorint('partitions', 'std::vector<int>()','[]', '[]'))
 
-doc = '''Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to `layers'. If `createBoundaries' is set, build the overlaps for the entities bounding the highest-dimensional entities (i.e. "boundary overlaps"), as well as the inner boundaries of the overlaps (i.e. "overlap boundaries").'''
-mesh.add('createOverlaps', doc, None, iint('layers', '1'), ibool('createBoundaries', 'true', 'True'))
+doc = '''Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to `layers'. The overlaps of the bounding entities (i.e. "boundary overlaps") and the inner boundaries of the overlaps (i.e. "overlap boundaries") are always built: the `createBoundaries' flag is currently ignored. Return the index of the newly created overlap group, which can be passed as `overlapIndex' to the query functions (indices are assigned sequentially from 0, so the index is also the position of the group).'''
+mesh.add('createOverlaps', doc, oint, iint('layers', '1'), ibool('createBoundaries', 'true', 'True'))
 
-doc = '''Get the tags of the partitioned entities of dimension `dim' whose parent has dimension `dim' and tag `tag', and which belong to the partition `partition'. If overlaps are present, fill `overlapEntities' with the tags of the entities that are in the overlap of the partition. Works for entities of the same dimension as the model as well as for entities one dimension below (boundary overlaps).'''
-mesh.add('getPartitionEntities', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), ovectorint('overlapEntities'))
+doc = '''Get the tags of the partitioned entities of dimension `dim' whose parent has dimension `dim' and tag `tag', and which belong to the partition `partition'. If overlaps are present, fill `overlapEntities' with the tags of the entities that are in the overlap of the partition. Works for entities of the same dimension as the model as well as for entities one dimension below (boundary overlaps). `overlapIndex' selects which overlap group to query (as returned by `createOverlaps').'''
+mesh.add('getPartitionEntities', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), ovectorint('overlapEntities'), iint('overlapIndex', '0'))
 
-doc = '''Get the tags of the entities making up the overlap boundary of partition `partition' inside the (non-partitioned) entity of dimension `dim' and tag `tag'. Only the plain inner boundaries are returned: the inner boundaries lying on an internal interface are a distinct class, queried with `getOverlapInterfaceBoundary'. A solver imposing a transmission condition on the whole rim of an overlap patch must therefore combine both.'''
-mesh.add('getOverlapBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'))
+doc = '''Get the tags of the entities making up the overlap boundary of partition `partition' inside the (non-partitioned) entity of dimension `dim' and tag `tag'. Only the plain inner boundaries are returned: the inner boundaries lying on an internal interface are a distinct class, queried with `getOverlapInterfaceBoundary'. A solver imposing a transmission condition on the whole rim of an overlap patch must therefore combine both. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getOverlapBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), iint('overlapIndex', '0'))
 
-doc = '''Get the tags of the overlap boundary entities of partition `partition' that lie on the internal interface entity of dimension `dim' and tag `tag' (a dim-1 entity of the model shared by two entities of dimension `dim'+1). These boundaries are artificial (the domain continues on the other side of the interface) and carry a transmission condition, but keep the interface identity so an interface-aware condition can be imposed. Note that `dim' is the dimension of the interface, one below the model dimension, unlike `getOverlapBoundary' which takes the parent entity.'''
-mesh.add('getOverlapInterfaceBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'))
+doc = '''Get the tags of the overlap boundary entities of partition `partition' that lie on the internal interface entity of dimension `dim' and tag `tag' (a dim-1 entity of the model shared by two entities of dimension `dim'+1). These boundaries are artificial (the domain continues on the other side of the interface) and carry a transmission condition, but keep the interface identity so an interface-aware condition can be imposed. Note that `dim' is the dimension of the interface, one below the model dimension, unlike `getOverlapBoundary' which takes the parent entity. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getOverlapInterfaceBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'), iint('overlapIndex', '0'))
 
-doc = '''If the entity of dimension `dim' and tag `tag' is a boundary overlap, get the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on error.'''
-mesh.add('getBoundaryOverlapParent', doc, None, iint('dim'), iint('tag'), oint('parentTag'))
+doc = '''If the entity of dimension `dim' and tag `tag' is a boundary overlap, get the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on error. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getBoundaryOverlapParent', doc, None, iint('dim'), iint('tag'), oint('parentTag'), iint('overlapIndex', '0'))
+
+doc = '''If the entity of dimension `dim' and tag `overlapTag' is a highest-dimensional overlap entity (OverlapSurface or OverlapVolume), set `overlappedEntityTag' to the tag of the partition entity whose elements it covers. This covered partition entity belongs to a partition different from the partition owning the overlap. For a boundary overlap that extends an existing model boundary, or an inner overlap boundary lying on an internal interface, set `overlappedEntityTag' to the tag of the underlying boundary or interface entity. A plain inner overlap boundary has no underlying same-dimensional entity and returns -1. Set `overlappedEntityTag' to -1 if the entity is not an overlap. `overlapIndex' selects which overlap group to query.'''
+mesh.add('getOverlapOverlappedEntity', doc, None, iint('dim'), iint('overlapTag'), oint('overlappedEntityTag'), iint('overlapIndex', '0'))
 
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)
+
+doc = '''Write selected partitions of the mesh into a single file `fileName'. The export format is MSH4. The `partitions' vector specifies which partition numbers to include.'''
+mesh.add('writePartitions', doc, None, istring('fileName'), ivectorint('partitions'))
 
 doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation, "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry" for untangling, "HXT" for tetrahedral optimisation). If `force' is set apply the optimization also to discrete entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given, only apply the optimizer to the given entities. For HXT optimizer, the `quality' argument should be specified'''
 mesh.add('optimize', doc, None, istring('method', '""'), ibool('force', 'false', 'False'), iint('niter', '1'), ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'), idouble('quality', '0.0'))
@@ -337,6 +343,9 @@ mesh.add('getNode', doc, None, isize('nodeTag'), ovectordouble('coord'), ovector
 
 doc = '''Set the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This function relies on an internal cache (a vector in case of dense node numbering, a map otherwise); for large meshes accessing nodes in bulk is often preferable.'''
 mesh.add('setNode', doc, None, isize('nodeTag'), ivectordouble('coord'), ivectordouble('parametricCoord'))
+
+doc = '''Set the coordinates and the parametric coordinates (if any) of the nodes with tags `nodeTags'. `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, the nodes must be classified on an entity of dimension `dim' (and of tag `tag' if `tag' >= 0), and the length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `dim' < 0 the nodes can be classified anywhere, and `parametricCoord' must be empty.'''
+mesh.add('setNodes', doc, None, ivectorsize('nodeTags'), ivectordouble('coord'), ivectordouble('parametricCoord'), iint('dim', '-1'), iint('tag', '-1'))
 
 doc = '''Rebuild the node cache.'''
 mesh.add('rebuildNodeCache', doc, None, ibool('onlyIfNecessary', 'true', 'True'))
@@ -584,8 +593,8 @@ mesh.add('setVisibility', doc, None, ivectorsize('elementTags'), iint('value'))
 doc = '''Get the visibility of the elements of tags `elementTags'.'''
 mesh.add('getVisibility', doc, None, ivectorsize('elementTags'), ovectorint('values'))
 
-doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create curves and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
-mesh.add('classifySurfaces', doc, None, idouble('angle'), ibool('boundary', 'true', 'True'), ibool('forReparametrization', 'false', 'False'), idouble('curveAngle', 'M_PI', 'pi', 'pi'), ibool('exportDiscrete', 'true', 'True'))
+doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. The `oldSurfaceTags' and `newSurfaceTags' vectors map the old surface tags to the new surface tags, ie. `oldSurfaceTags[i]' corresponds to `newSurfaceTags[i]'. Removed surface tags are not returned, only old surfaces that map to one or more new surfaces are returned. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create curves and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
+mesh.add('classifySurfaces', doc, None, idouble('angle'), ovectorint('oldSurfaceTags'), ovectorint('newSurfaceTags'), ibool('boundary', 'true', 'True'), ibool('forReparametrization', 'false', 'False'), idouble('curveAngle', 'M_PI', 'pi', 'pi'), ibool('exportDiscrete', 'true', 'True'))
 
 doc = '''Create a geometry for the discrete entities `dimTags' (given as a vector of (dim, tag) pairs) represented solely by a mesh (without an underlying CAD description), i.e. create a parametrization for discrete curves and surfaces, assuming that each can be parametrized with a single map. If `dimTags' is empty, create a geometry for all the discrete entities.'''
 mesh.add('createGeometry', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))
@@ -1159,6 +1168,18 @@ fltk.add('selectElements', doc, oint, ovectorsize('elementTags'))
 
 doc = '''Select views in the user interface.'''
 fltk.add('selectViews', doc, oint, ovectorint('viewTags'))
+
+doc = '''Pick at the position (`x', `y') in the current graphical window, given in
+window coordinates with the origin at the top left corner, and return what a
+click there would select: the entities in `dimTags', the post-processing views
+in `viewTags', and, if `elements' is set, the mesh elements in `elementTags'
+instead of the entities they belong to. If `dim' is >= 0, only select entities
+of the given dimension. `w' and `h' give the size of the region that is looked
+at, in window coordinates. Unlike `selectEntities', `selectElements' and
+`selectViews', this does not wait for the user to click.'''
+fltk.add('pick', doc, oint, ovectorpair('dimTags'), ovectorsize('elementTags'),
+         ovectorint('viewTags'), idouble('x'), idouble('y'), iint('dim', '-1'),
+         ibool('elements', 'false', 'False'), iint('w', '5'), iint('h', '5'))
 
 doc = '''Split the current window horizontally (if `how' == "h") or vertically (if `how' == "v"), using ratio `ratio'. If `how' == "u", restore a single window.'''
 fltk.add('splitCurrentWindow', doc, None, istring('how', '"v"'), idouble('ratio', '0.5'))

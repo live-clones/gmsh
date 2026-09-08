@@ -14,7 +14,7 @@
 #include "Context.h"
 
 #if defined(HAVE_MESH)
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #endif
 
 StringXNumber TriangulateOptions_Number[] = {

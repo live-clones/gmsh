@@ -3,7 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
+// Contributor(s): Matti Pellikka (initial implementation)
 
 #include "Chain.h"
 #include "MLine.h"

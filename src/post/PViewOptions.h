@@ -55,7 +55,7 @@ public:
   int visible, intervalsType, nbIso;
   int light, lightTwoSide, lightLines, smoothNormals;
   double angleSmoothNormals;
-  int saturateValues, fakeTransparency;
+  int saturateValues;
   int showElement, showTime, showScale;
   int scaleType, rangeType, abscissaRangeType;
   int vectorType, tensorType, glyphLocation, centerGlyphs;
@@ -69,6 +69,9 @@ public:
   int boundary, pointType, lineType, drawSkinOnly;
   double pointSize, lineWidth;
   GmshColorTable colorTable;
+  // multiplies the alpha of the colours the colormap gives, applied by the
+  // shader rather than worked into the table
+  double transparency;
   int useStipple, stipple[10][2];
   std::string stippleString[10];
   int externalViewIndex, viewIndexForGenRaise;

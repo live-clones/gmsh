@@ -12,7 +12,7 @@
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "meshGRegionDelaunay.h"
 #endif
 

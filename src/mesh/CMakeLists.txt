@@ -11,8 +11,8 @@ set(SRC
   meshGFace.cpp
   meshGFacePack.cpp
     meshGFaceTransfinite.cpp meshGFaceExtruded.cpp
-    meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp
-    meshGFaceDelaunayInsertionOptimized.cpp meshGFaceOptimize.cpp
+    meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunay.cpp
+    meshGFaceDelaunayFlat.cpp meshGFaceOptimize.cpp
     meshGFaceBipartiteLabelling.cpp
     meshGFaceOrient.cpp meshGFaceQuadHalf.cpp meshGFaceCopy.cpp
     meshGFaceDirections.cpp meshGFaceBoundaryLayer.cpp
@@ -21,7 +21,7 @@ set(SRC
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
     meshGRegionDelaunay.cpp meshGRegionTet4.cpp
-    meshGRegionRefine.cpp meshGRegionOptimize.cpp meshGRegionAdapt.cpp
+    meshGRegionDelaunayFlat.cpp meshGRegionOptimize.cpp meshGRegionOptimizeFlat.cpp meshGRegionAdapt.cpp
     meshGRegionTransfinite.cpp
     meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp

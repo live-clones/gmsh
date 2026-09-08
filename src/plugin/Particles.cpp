@@ -12,6 +12,7 @@
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
+#include "glyphList.h"
 #endif
 
 StringXNumber ParticlesOptions_Number[] = {
@@ -44,15 +45,19 @@ GMSH_Plugin *GMSH_RegisterParticlesPlugin()
 void GMSH_ParticlesPlugin::draw(void *context)
 {
 #if defined(HAVE_OPENGL)
-  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   drawContext *ctx = (drawContext *)context;
   double p[3];
+  glyphList g;
+  unsigned int col = glyphCurrentColor();
+  g.reserve(GLYPH_SPHERE, getNbU() * getNbV());
   for(int i = 0; i < getNbU(); ++i) {
     for(int j = 0; j < getNbV(); ++j) {
       getPoint(i, j, p);
-      ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+      g.addSphere(ctx, CTX::instance()->pointSize, p[0], p[1], p[2], col);
     }
   }
+  g.draw(ctx, 1);
 #endif
 }
 

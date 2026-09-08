@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-b90fab957; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260820; Build host: mac.user.uliege.priv; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.0.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-4a13a5e28; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260906; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -183,7 +183,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"5.0.0-git-b90fab957"}@*
+Default value: @code{"5.0.0-git-4a13a5e28"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -494,6 +494,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Clip5D
 Fourth coefficient in equation for clipping plane 5@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.ClipCapping
+Fill the hole a clipping plane opens in a 3D mesh or view with the section where the plane cuts the elements@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ClipFactor
@@ -971,6 +976,11 @@ Vertical position (in pixels) of the upper left corner of the option window@*
 Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
+@item General.OrderIndependentTransparency
+Draw transparent objects by summing them into buffers of their own and compositing afterwards, instead of sorting them back to front? (only used with the shader pipeline, and ignored if the OpenGL implementation cannot draw into floating point buffers)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Orthographic
 Orthographic projection mode (0: perspective projection)@*
 Default value: @code{1}@*
@@ -1024,6 +1034,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.QuadricSubdivisions
 Number of subdivisions used to draw points or lines as spheres or cylinders@*
 Default value: @code{6}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.GlyphCacheSize
+Maximum amount of memory (in MB) used to keep the triangles that the glyphs (spheres, arrows, cylinders, ...) are made of between frames; past it they are rebuilt for every frame, which is slower but takes no memory (0: automatic). Unused when the shader pipeline draws them, as it is handed the shape and where every glyph goes instead of their triangles@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.RotationX
@@ -1085,6 +1100,11 @@ Saved in: @code{-}
 Z-axis scale factor@*
 Default value: @code{1}@*
 Saved in: @code{-}
+
+@item General.Shaders
+Draw with the OpenGL shader pipeline instead of the fixed function one? (changing this recreates the OpenGL context; ignored if the OpenGL implementation does not provide shaders)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
 
 @item General.Shininess
 Material shininess@*
@@ -1214,6 +1234,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Verbosity
 Level of information printed on the terminal and the message console (0: silent except for fatal errors, 1: +errors, 2: +warnings, 3: +direct, 4: +information, 5: +status, 99: +debug)@*
 Default value: @code{5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.VertexBufferObjects
+Keep the vertex arrays in OpenGL buffer objects instead of sending them from client memory at each frame? (ignored if the OpenGL implementation does not provide buffer objects)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.VisibilityPositionX

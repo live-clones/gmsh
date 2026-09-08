@@ -3,7 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
+// Contributor(s): Matti Pellikka (initial implementation), Bruno de Sousa Alves
+// (periodicity)
 
 #ifndef HOMOLOGY_H
 #define HOMOLOGY_H
@@ -49,6 +50,14 @@ private:
   bool _smoothen;
   // corecution heuristic
   int _heuristic;
+  // identify periodically equivalent cells, i.e. compute the (co)homology of
+  // the periodic quotient of the domain instead of the domain itself
+  bool _periodic;
+  // physical groups of the periodic boundaries to glue: only the periodic
+  // links of the mesh nodes on the slave groups, pointing to the master
+  // groups, are used. Empty means no restriction on that side
+  std::vector<int> _periodicSlave;
+  std::vector<int> _periodicMaster;
 
   // file name to store the results
   std::string _fileName;
@@ -79,6 +88,9 @@ private:
   // construct the cell complex
   void _createCellComplex();
 
+  // identify the periodically equivalent cells of the cell complex
+  void _periodicCellComplex();
+
   // create and store a chain from homology solver result
   void _createChain(std::map<Cell *, int, CellPtrLessThan> &preChain,
                     const std::string &name, bool co);
@@ -100,6 +112,20 @@ public:
 
   GModel *getModel() const { return _model; }
   void setFileName(const std::string &fileName) { _fileName = fileName; }
+
+  // identify periodically equivalent cells before the computations, using
+  // only the periodic links from the given slave to the given master
+  // physical groups (empty: all the periodic links of the model)
+  void setPeriodic(bool periodic,
+                   const std::vector<int> &slavePhysicalGroups =
+                     std::vector<int>(),
+                   const std::vector<int> &masterPhysicalGroups =
+                     std::vector<int>())
+  {
+    _periodic = periodic;
+    _periodicSlave = slavePhysicalGroups;
+    _periodicMaster = masterPhysicalGroups;
+  }
 
   // change the relative subdomain, keeping the domain: relabels the already
   // constructed cell complex if possible (much cheaper than the full

@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
+#include <stdlib.h>
 #include <algorithm>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -12,12 +13,211 @@
 #include "Numeric.h"
 #include "OS.h"
 
-template<int N> float ElementDataLessThan<N>::tolerance = 0.0F;
-float BarycenterLessThan::tolerance = 0.0F;
+
+std::vector<unsigned int> VertexArray::vboToDelete;
+unsigned int VertexArray::vboContext = 1;
+long int VertexArray::statUniqueIn = 0;
+long int VertexArray::statUniqueKept = 0;
+
+// fill a corner key with the N corners sorted lexicographically, so that an
+// element added with its corners in any order maps to the same key
+template <int N>
+static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
+                                 double *z, unsigned char *r, unsigned char *g,
+                                 unsigned char *b, unsigned char *a)
+{
+  memset(&k, 0, sizeof(CornerKey<N>));
+  float px[N], py[N], pz[N];
+  for(int i = 0; i < N; i++) {
+    px[i] = (float)x[i];
+    py[i] = (float)y[i];
+    pz[i] = (float)z[i];
+  }
+  // sorting network: one comparison for a line, three for a triangle
+  for(int i = 1; i < N; i++) {
+    for(int j = i; j > 0; j--) {
+      if(px[j] > px[j - 1] ||
+         (px[j] == px[j - 1] &&
+          (py[j] > py[j - 1] || (py[j] == py[j - 1] && pz[j] >= pz[j - 1]))))
+        break;
+      std::swap(px[j], px[j - 1]);
+      std::swap(py[j], py[j - 1]);
+      std::swap(pz[j], pz[j - 1]);
+    }
+  }
+  for(int i = 0; i < N; i++) {
+    k.p[3 * i] = px[i];
+    k.p[3 * i + 1] = py[i];
+    k.p[3 * i + 2] = pz[i];
+  }
+  if(r && g && b && a) {
+    k.c[0] = r[0];
+    k.c[1] = g[0];
+    k.c[2] = b[0];
+    k.c[3] = a[0];
+  }
+}
+
+// hash a key word by word; never returns 0, which marks an empty slot
+void UniqueElementFilter::Shard::reserve(std::size_t n)
+{
+  std::size_t want = 16;
+  while(want < 2 * n) want *= 2;
+  if(want <= store.size()) return;
+  std::vector<std::uint64_t> old;
+  old.swap(store);
+  store.assign(want, 0);
+  table = &store[0];
+  mask = want - 1;
+  growAt = want / 2;
+  for(std::size_t i = 0; i < old.size(); i++) {
+    if(!old[i]) continue;
+    std::size_t j = old[i] & mask;
+    while(table[j]) j = (j + 1) & mask;
+    table[j] = old[i];
+  }
+}
+
+// Knuth's algorithm R: after removing the entry at i, shift back the following
+// entries that probed past it, so that the table stays free of tombstones
+void UniqueElementFilter::Shard::erase(std::size_t i)
+{
+  std::size_t j = i;
+  table[i] = 0;
+  num--;
+  for(;;) {
+    j = (j + 1) & mask;
+    if(!table[j]) break;
+    std::size_t k = table[j] & mask;
+    if(i <= j) {
+      if(i < k && k <= j) continue;
+    }
+    else {
+      if(i < k || k <= j) continue;
+    }
+    table[i] = table[j];
+    table[j] = 0;
+    i = j;
+  }
+}
+
+void UniqueElementFilter::reserve(std::size_t n)
+{
+  for(int i = 0; i < NUM_SHARDS; i++) _shard[i].reserve(n / NUM_SHARDS + 16);
+}
+
+bool UniqueElementFilter::contains(const std::uint64_t *key, int n)
+{
+  std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) return _shard[sh].contains(h);
+  ShardGuard lock(_mutex[sh]);
+  return _shard[sh].contains(h);
+}
+
+void UniqueElementFilter::insertOrErase(const std::uint64_t *key, int n)
+{
+  std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) {
+    _shard[sh].insertOrErase(h);
+    return;
+  }
+  ShardGuard lock(_mutex[sh]);
+  _shard[sh].insertOrErase(h);
+}
+
+void UniqueElementFilter::insertOrErase(unsigned int col, const void *v0,
+                                       const void *v1, const void *v2,
+                                       const void *v3)
+{
+  std::uint64_t k[5];
+  int n = vaVertexKey(col, v0, v1, v2, v3, k);
+  std::uint64_t h = vaHashKey(k, n * sizeof(std::uint64_t));
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) {
+    _shard[sh].insertOrErase(h);
+    return;
+  }
+  ShardGuard lock(_mutex[sh]);
+  _shard[sh].insertOrErase(h);
+}
+
+bool UniqueElementFilter::contains(unsigned int col, const void *v0,
+                                    const void *v1, const void *v2,
+                                    const void *v3)
+{
+  std::uint64_t k[5];
+  int n = vaVertexKey(col, v0, v1, v2, v3, k);
+  std::uint64_t h = vaHashKey(k, n * sizeof(std::uint64_t));
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) return _shard[sh].contains(h);
+  ShardGuard lock(_mutex[sh]);
+  return _shard[sh].contains(h);
+}
+
+bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
+                                     unsigned char *r, unsigned char *g,
+                                     unsigned char *b, unsigned char *a)
+{
+  std::uint64_t h;
+  if(npe == 2) {
+    CornerKey<2> k;
+    fillCornerKey<2>(k, x, y, z, r, g, b, a);
+    h = vaHashKey(&k, sizeof(CornerKey<2>));
+  }
+  else if(npe == 3) {
+    CornerKey<3> k;
+    fillCornerKey<3>(k, x, y, z, r, g, b, a);
+    h = vaHashKey(&k, sizeof(CornerKey<3>));
+  }
+  else
+    return false;
+
+  // the top bits pick the shard, the low bits index inside it
+  std::size_t sh = (h >> 56) & (NUM_SHARDS - 1);
+  if(!_threaded) return !_shard[sh].insert(h);
+  ShardGuard lock(_mutex[sh]);
+  return !_shard[sh].insert(h);
+}
+
+VertexArray::~VertexArray()
+{
+  if(_ownsFilter) delete _filter;
+  // only the names of the current context designate anything: the buffers of a
+  // context that has been recreated are already gone, and deleting their names
+  // would hit whatever the new context has since given them to
+  if(getVboValid())
+    for(int i = 0; i < 3; i++)
+      if(_vbo[i]) vboToDelete.push_back(_vbo[i]);
+}
+
+UniqueElementFilter *VertexArray::getUniqueFilter(bool threaded)
+{
+  if(!_filter) {
+    _filter = new UniqueElementFilter(threaded);
+    _ownsFilter = true;
+  }
+  else if(threaded)
+    _filter->setThreaded();
+  return _filter;
+}
+
+void VertexArray::setUniqueFilter(UniqueElementFilter *f)
+{
+  if(_ownsFilter) delete _filter;
+  _filter = f;
+  _ownsFilter = false;
+}
 
 VertexArray::VertexArray(int numVerticesPerElement, int numElements)
-  : _numVerticesPerElement(numVerticesPerElement)
+  : _numVerticesPerElement(numVerticesPerElement), _filter(nullptr),
+    _ownsFilter(false), _storeElements(CTX::instance()->pickElements ? true :
+                                                                       false),
+    _vboDirty(true), _vboContext(0), _statUniqueIn(0), _statUniqueKept(0)
 {
+  _vbo[0] = _vbo[1] = _vbo[2] = 0;
+
   int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
 
   double memv = (nb * 3. * sizeof(float)) / 1024. / 1024.;
@@ -34,9 +234,9 @@ VertexArray::VertexArray(int numVerticesPerElement, int numElements)
 
 double VertexArray::getMemoryInMB()
 {
-  int bytes = _vertices.size() * sizeof(float) +
-              _normals.size() * sizeof(normal_type) +
-              _colors.size() * sizeof(unsigned char);
+  std::size_t bytes = _vertices.size() * sizeof(float) +
+                      _normals.size() * sizeof(normal_type) +
+                      _colors.size() * sizeof(unsigned char);
   return (double)bytes / 1024. / 1024.;
 }
 
@@ -76,57 +276,42 @@ void VertexArray::_addColor(unsigned char r, unsigned char g, unsigned char b,
 
 void VertexArray::_addElement(MElement *ele)
 {
-  if(ele && CTX::instance()->pickElements) _elements.push_back(ele);
+  if(ele && _storeElements) _elements.push_back(ele);
 }
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
-                      unsigned int *col, MElement *ele, bool unique, bool boundary)
+                      unsigned int *col, MElement *ele, bool unique)
 {
   if(col){
     unsigned char r[100], g[100], b[100], a[100];
     int npe = getNumVerticesPerElement();
+    CTX *ctx = CTX::instance();
     for(int i = 0; i < npe; i++){
-      r[i] = CTX::instance()->unpackRed(col[i]);
-      g[i] = CTX::instance()->unpackGreen(col[i]);
-      b[i] = CTX::instance()->unpackBlue(col[i]);
-      a[i] = CTX::instance()->unpackAlpha(col[i]);
+      r[i] = ctx->unpackRed(col[i]);
+      g[i] = ctx->unpackGreen(col[i]);
+      b[i] = ctx->unpackBlue(col[i]);
+      a[i] = ctx->unpackAlpha(col[i]);
     }
-    add(x, y, z, n, r, g, b, a, ele, unique, boundary);
+    add(x, y, z, n, r, g, b, a, ele, unique);
   }
   else
-    add(x, y, z, n, nullptr, nullptr, nullptr, nullptr, ele, unique, boundary);
+    add(x, y, z, n, nullptr, nullptr, nullptr, nullptr, ele, unique);
 }
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned char *r,
                       unsigned char *g, unsigned char *b, unsigned char *a,
-                      MElement *ele, bool unique, bool boundary)
+                      MElement *ele, bool unique)
 {
   int npe = getNumVerticesPerElement();
 
-  if(boundary && npe == 3){
-    ElementData<3> e(x, y, z, n, r, g, b, a, ele);
-    ElementDataLessThan<3>::tolerance = (float)(CTX::instance()->lc * 1.e-12);
-    auto it = _data3.find(e);
-    if(it == _data3.end())
-      _data3.insert(e);
-    else
-      _data3.erase(it);
-    return;
+  // drop elements that have already been added: an edge or a face shared by
+  // several elements is only drawn once. This reduces both the memory and the
+  // rendering time, at the price of a hash table lookup per element.
+  if(unique && (npe == 2 || npe == 3)) {
+    _statUniqueIn += npe;
+    if(getUniqueFilter(false)->isDuplicate(npe, x, y, z, r, g, b, a)) return;
+    _statUniqueKept += npe;
   }
-
-  // enabling this will reduce memory and rendering time; but will increase the
-  // time it takes to create the vertex array
-#if 0
-  if(unique){
-    Barycenter pc(0.0F, 0.0F, 0.0F);
-    for(int i = 0; i < npe; i++)
-      pc += Barycenter(x[i], y[i], z[i]);
-    BarycenterLessThan::tolerance = (float)(CTX::instance()->lc * 1.e-12);
-    if(_barycenters.find(pc) != _barycenters.end())
-      return;
-    _barycenters.insert(pc);
-  }
-#endif
 
   for(int i = 0; i < npe; i++){
     _addVertex((float)x[i], (float)y[i], (float)z[i]);
@@ -136,100 +321,92 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
   }
 }
 
-void VertexArray::finalize()
+int VertexArray::addBlock(int n)
 {
-  if(_data3.size()){
-    auto it = _data3.begin();
-    for(; it != _data3.end(); it++){
-      for(int i = 0; i < 3; i++){
-        _addVertex(it->x(i), it->y(i), it->z(i));
-        _addNormal(it->nx(i), it->ny(i), it->nz(i));
-        _addColor(it->r(i), it->g(i), it->b(i), it->a(i));
-        _addElement(it->ele());
-      }
-    }
-    _data3.clear();
-  }
-  _barycenters.clear();
+  int first = getNumVertices();
+  if(n <= 0) return first;
+  _vertices.resize(3 * (first + n));
+  _normals.resize(3 * (first + n));
+  _colors.resize(4 * (first + n));
+  return first;
 }
 
-class AlphaElement {
- public:
-  AlphaElement(float *vp, normal_type *np, unsigned char *cp) : v(vp), n(np), c(cp) {}
-  float *v;
-  normal_type *n;
-  unsigned char *c;
-};
+void VertexArray::printStats()
+{
+  if(!statUniqueIn) return;
+  Msg::Debug("Vertex array unique filter: %ld -> %ld corners (%.2fx)",
+            statUniqueIn, statUniqueKept,
+            (double)statUniqueIn / statUniqueKept);
+  statUniqueIn = statUniqueKept = 0;
+}
 
-class AlphaElementLessThan {
- public:
-  static int numVertices;
-  static double eye[3];
-  bool operator()(const AlphaElement &e1, const AlphaElement &e2) const
-  {
-    double cg1[3] = { 0., 0., 0. }, cg2[3] = { 0., 0., 0.};
-    for(int i = 0; i < numVertices; i++) {
-      cg1[0] += e1.v[3 * i];
-      cg1[1] += e1.v[3 * i + 1];
-      cg1[2] += e1.v[3 * i + 2];
-      cg2[0] += e2.v[3 * i];
-      cg2[1] += e2.v[3 * i + 1];
-      cg2[2] += e2.v[3 * i + 2];
-    }
-    return prosca(eye, cg1) < prosca(eye, cg2);
+void VertexArray::finalize()
+{
+  statUniqueIn += _statUniqueIn;
+  statUniqueKept += _statUniqueKept;
+  _statUniqueIn = _statUniqueKept = 0;
+  if(_ownsFilter) {
+    delete _filter;
+    _filter = nullptr;
+    _ownsFilter = false;
   }
-};
+}
 
-int AlphaElementLessThan::numVertices = 0;
-double AlphaElementLessThan::eye[3] = {0., 0., 0.};
+// How far along the direction of view the barycentre of an element lies. The
+// elements are put in that order so that what is behind is drawn first, which
+// is what blending needs; only the order matters, so the barycentre is left as
+// the sum of the vertices rather than their average.
+static double alphaKey(const float *v, int numVertices, const double eye[3])
+{
+  double cg[3] = {0., 0., 0.};
+  for(int i = 0; i < numVertices; i++) {
+    cg[0] += v[3 * i];
+    cg[1] += v[3 * i + 1];
+    cg[2] += v[3 * i + 2];
+  }
+  return prosca(eye, cg);
+}
 
 void VertexArray::sort(double x, double y, double z)
 {
-  // This simplementation is pretty bad: it copies the whole data
-  // twice. We should think about a more efficient way to sort the
-  // three arrays in place.
+  // the arrays are rewritten: they will have to be uploaded again
+  _vboDirty = true;
 
   int npe = getNumVerticesPerElement();
   int n = getNumVertices() / npe;
+  if(n < 2) return;
 
-  AlphaElementLessThan::numVertices = npe;
-  AlphaElementLessThan::eye[0] = x;
-  AlphaElementLessThan::eye[1] = y;
-  AlphaElementLessThan::eye[2] = z;
+  // Where each element falls, worked out once per element. Asking for it
+  // inside the comparison instead means working it out about log2(n) times
+  // over for each of them, reading all over the vertices every time.
+  double eye[3] = {x, y, z};
+  std::vector<std::pair<double, int> > order(n);
+  for(int i = 0; i < n; i++)
+    order[i] = std::make_pair(alphaKey(&_vertices[3 * npe * i], npe, eye), i);
+  // on the key alone, as comparing the pairs would order those that fall in
+  // the same place by their index and give a different answer than before
+  std::sort(order.begin(), order.end(),
+            [](const std::pair<double, int> &a, const std::pair<double, int> &b) {
+              return a.first < b.first;
+            });
 
-  std::vector<AlphaElement> elements;
-  elements.reserve(n);
-  for(int i = 0; i < n; i++){
-    float *vp = &_vertices[3 * npe * i];
-    normal_type *np = _normals.empty() ? nullptr : &_normals[3 * npe * i];
-    unsigned char *cp = _colors.empty() ? nullptr : &_colors[4 * npe * i];
-    elements.push_back(AlphaElement(vp, np, cp));
-  }
-  std::sort(elements.begin(), elements.end(), AlphaElementLessThan());
-
-  std::vector<float> sortedVertices;
-  std::vector<normal_type> sortedNormals;
-  std::vector<unsigned char> sortedColors;
-  sortedVertices.reserve(_vertices.size());
-  sortedNormals.reserve(_normals.size());
-  sortedColors.reserve(_colors.size());
-
-  for(int i = 0; i < n; i++){
-    for(int j = 0; j < npe; j++){
-      for(int k = 0; k < 3; k++)
-        sortedVertices.push_back(elements[i].v[3 * j + k]);
-      if(elements[i].n)
-        for(int k = 0; k < 3; k++)
-          sortedNormals.push_back(elements[i].n[3 * j + k]);
-      if(elements[i].c)
-        for(int k = 0; k < 4; k++)
-          sortedColors.push_back(elements[i].c[4 * j + k]);
-    }
+  // and the three arrays are gathered into the new order an element at a time
+  std::vector<float> sortedVertices(_vertices.size());
+  std::vector<normal_type> sortedNormals(_normals.size());
+  std::vector<unsigned char> sortedColors(_colors.size());
+  const std::size_t vs = 3 * npe, ns = 3 * npe, cs = 4 * npe;
+  for(int i = 0; i < n; i++) {
+    int k = order[i].second;
+    memcpy(&sortedVertices[vs * i], &_vertices[vs * k], vs * sizeof(float));
+    if(!_normals.empty())
+      memcpy(&sortedNormals[ns * i], &_normals[ns * k],
+             ns * sizeof(normal_type));
+    if(!_colors.empty()) memcpy(&sortedColors[cs * i], &_colors[cs * k], cs);
   }
 
-  _vertices = sortedVertices;
-  _normals = sortedNormals;
-  _colors = sortedColors;
+  _vertices.swap(sortedVertices);
+  _normals.swap(sortedNormals);
+  _colors.swap(sortedColors);
 }
 
 char *VertexArray::toChar(int num, const std::string &name, int type,
@@ -341,13 +518,25 @@ void VertexArray::fromChar(int length, const char *bytes, int swap)
   }
 }
 
-void VertexArray::merge(VertexArray* va)
+void VertexArray::merge(VertexArray* va, const unsigned char *color)
 {
+  _statUniqueIn += va->_statUniqueIn;
+  _statUniqueKept += va->_statUniqueKept;
   if(va->getNumVertices() != 0) {
     _vertices.insert(_vertices.end(), va->firstVertex(), va->lastVertex());
     _normals.insert(_normals.end(), va->firstNormal(), va->lastNormal());
-    _colors.insert(_colors.end(), va->firstColor(), va->lastColor());
+    if(color) {
+      // the merged data is drawn in a single color: repeat it. Do not reserve
+      // the exact size here: reserve() allocates precisely what is asked for,
+      // so calling it once per merged array would reallocate and copy the whole
+      // array every time, which is quadratic in the number of entities
+      for(int i = 0; i < va->getNumVertices(); i++)
+        for(int j = 0; j < 4; j++) _colors.push_back(color[j]);
+    }
+    else
+      _colors.insert(_colors.end(), va->firstColor(), va->lastColor());
     _elements.insert(_elements.end(), va->firstElementPointer(),
                      va->lastElementPointer());
   }
+  _vboDirty = true;
 }

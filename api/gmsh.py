@@ -2219,35 +2219,42 @@ class model:
             gmsh.model.mesh.createOverlaps(layers=1, createBoundaries=True)
 
             Generate node-based overlaps (of highest dimension) for all partitions,
-            with a number of layers equal to `layers'. If `createBoundaries' is set,
-            build the overlaps for the entities bounding the highest-dimensional
-            entities (i.e. "boundary overlaps"), as well as the inner boundaries of the
-            overlaps (i.e. "overlap boundaries").
+            with a number of layers equal to `layers'. The overlaps of the bounding
+            entities (i.e. "boundary overlaps") and the inner boundaries of the
+            overlaps (i.e. "overlap boundaries") are always built: the
+            `createBoundaries' flag is currently ignored. Return the index of the newly
+            created overlap group, which can be passed as `overlapIndex' to the query
+            functions (indices are assigned sequentially from 0, so the index is also
+            the position of the group).
+
+            Return an integer.
 
             Types:
             - `layers': integer
             - `createBoundaries': boolean
             """
             ierr = c_int()
-            lib.gmshModelMeshCreateOverlaps(
+            api_result_ = lib.gmshModelMeshCreateOverlaps(
                 c_int(layers),
                 c_int(bool(createBoundaries)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+            return api_result_
         create_overlaps = createOverlaps
 
         @staticmethod
-        def getPartitionEntities(dim, tag, partition):
+        def getPartitionEntities(dim, tag, partition, overlapIndex=0):
             """
-            gmsh.model.mesh.getPartitionEntities(dim, tag, partition)
+            gmsh.model.mesh.getPartitionEntities(dim, tag, partition, overlapIndex=0)
 
             Get the tags of the partitioned entities of dimension `dim' whose parent
             has dimension `dim' and tag `tag', and which belong to the partition
             `partition'. If overlaps are present, fill `overlapEntities' with the tags
             of the entities that are in the overlap of the partition. Works for
             entities of the same dimension as the model as well as for entities one
-            dimension below (boundary overlaps).
+            dimension below (boundary overlaps). `overlapIndex' selects which overlap
+            group to query (as returned by `createOverlaps').
 
             Return `entityTags', `overlapEntities'.
 
@@ -2257,6 +2264,7 @@ class model:
             - `partition': integer
             - `entityTags': vector of integers
             - `overlapEntities': vector of integers
+            - `overlapIndex': integer
             """
             api_entityTags_, api_entityTags_n_ = POINTER(c_int)(), c_size_t()
             api_overlapEntities_, api_overlapEntities_n_ = POINTER(c_int)(), c_size_t()
@@ -2267,6 +2275,7 @@ class model:
                 c_int(partition),
                 byref(api_entityTags_), byref(api_entityTags_n_),
                 byref(api_overlapEntities_), byref(api_overlapEntities_n_),
+                c_int(overlapIndex),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -2276,9 +2285,9 @@ class model:
         get_partition_entities = getPartitionEntities
 
         @staticmethod
-        def getOverlapBoundary(dim, tag, partition):
+        def getOverlapBoundary(dim, tag, partition, overlapIndex=0):
             """
-            gmsh.model.mesh.getOverlapBoundary(dim, tag, partition)
+            gmsh.model.mesh.getOverlapBoundary(dim, tag, partition, overlapIndex=0)
 
             Get the tags of the entities making up the overlap boundary of partition
             `partition' inside the (non-partitioned) entity of dimension `dim' and tag
@@ -2286,6 +2295,7 @@ class model:
             lying on an internal interface are a distinct class, queried with
             `getOverlapInterfaceBoundary'. A solver imposing a transmission condition
             on the whole rim of an overlap patch must therefore combine both.
+            `overlapIndex' selects which overlap group to query.
 
             Return `entityTags'.
 
@@ -2294,6 +2304,7 @@ class model:
             - `tag': integer
             - `partition': integer
             - `entityTags': vector of integers
+            - `overlapIndex': integer
             """
             api_entityTags_, api_entityTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -2302,6 +2313,7 @@ class model:
                 c_int(tag),
                 c_int(partition),
                 byref(api_entityTags_), byref(api_entityTags_n_),
+                c_int(overlapIndex),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -2309,9 +2321,9 @@ class model:
         get_overlap_boundary = getOverlapBoundary
 
         @staticmethod
-        def getOverlapInterfaceBoundary(dim, tag, partition):
+        def getOverlapInterfaceBoundary(dim, tag, partition, overlapIndex=0):
             """
-            gmsh.model.mesh.getOverlapInterfaceBoundary(dim, tag, partition)
+            gmsh.model.mesh.getOverlapInterfaceBoundary(dim, tag, partition, overlapIndex=0)
 
             Get the tags of the overlap boundary entities of partition `partition' that
             lie on the internal interface entity of dimension `dim' and tag `tag' (a
@@ -2320,7 +2332,8 @@ class model:
             the interface) and carry a transmission condition, but keep the interface
             identity so an interface-aware condition can be imposed. Note that `dim' is
             the dimension of the interface, one below the model dimension, unlike
-            `getOverlapBoundary' which takes the parent entity.
+            `getOverlapBoundary' which takes the parent entity. `overlapIndex' selects
+            which overlap group to query.
 
             Return `entityTags'.
 
@@ -2329,6 +2342,7 @@ class model:
             - `tag': integer
             - `partition': integer
             - `entityTags': vector of integers
+            - `overlapIndex': integer
             """
             api_entityTags_, api_entityTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -2337,6 +2351,7 @@ class model:
                 c_int(tag),
                 c_int(partition),
                 byref(api_entityTags_), byref(api_entityTags_n_),
+                c_int(overlapIndex),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -2344,13 +2359,13 @@ class model:
         get_overlap_interface_boundary = getOverlapInterfaceBoundary
 
         @staticmethod
-        def getBoundaryOverlapParent(dim, tag):
+        def getBoundaryOverlapParent(dim, tag, overlapIndex=0):
             """
-            gmsh.model.mesh.getBoundaryOverlapParent(dim, tag)
+            gmsh.model.mesh.getBoundaryOverlapParent(dim, tag, overlapIndex=0)
 
             If the entity of dimension `dim' and tag `tag' is a boundary overlap, get
             the entity of dimension `dim+1' that created it. Sets `parentTag' to -1 on
-            error.
+            error. `overlapIndex' selects which overlap group to query.
 
             Return `parentTag'.
 
@@ -2358,6 +2373,7 @@ class model:
             - `dim': integer
             - `tag': integer
             - `parentTag': integer
+            - `overlapIndex': integer
             """
             api_parentTag_ = c_int()
             ierr = c_int()
@@ -2365,11 +2381,50 @@ class model:
                 c_int(dim),
                 c_int(tag),
                 byref(api_parentTag_),
+                c_int(overlapIndex),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_parentTag_.value
         get_boundary_overlap_parent = getBoundaryOverlapParent
+
+        @staticmethod
+        def getOverlapOverlappedEntity(dim, overlapTag, overlapIndex=0):
+            """
+            gmsh.model.mesh.getOverlapOverlappedEntity(dim, overlapTag, overlapIndex=0)
+
+            If the entity of dimension `dim' and tag `overlapTag' is a highest-
+            dimensional overlap entity (OverlapSurface or OverlapVolume), set
+            `overlappedEntityTag' to the tag of the partition entity whose elements it
+            covers. This covered partition entity belongs to a partition different from
+            the partition owning the overlap. For a boundary overlap that extends an
+            existing model boundary, or an inner overlap boundary lying on an internal
+            interface, set `overlappedEntityTag' to the tag of the underlying boundary
+            or interface entity. A plain inner overlap boundary has no underlying same-
+            dimensional entity and returns -1. Set `overlappedEntityTag' to -1 if the
+            entity is not an overlap. `overlapIndex' selects which overlap group to
+            query.
+
+            Return `overlappedEntityTag'.
+
+            Types:
+            - `dim': integer
+            - `overlapTag': integer
+            - `overlappedEntityTag': integer
+            - `overlapIndex': integer
+            """
+            api_overlappedEntityTag_ = c_int()
+            ierr = c_int()
+            lib.gmshModelMeshGetOverlapOverlappedEntity(
+                c_int(dim),
+                c_int(overlapTag),
+                byref(api_overlappedEntityTag_),
+                c_int(overlapIndex),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_overlappedEntityTag_.value
+        get_overlap_overlapped_entity = getOverlapOverlappedEntity
 
         @staticmethod
         def unpartition():
@@ -2383,6 +2438,29 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+
+        @staticmethod
+        def writePartitions(fileName, partitions):
+            """
+            gmsh.model.mesh.writePartitions(fileName, partitions)
+
+            Write selected partitions of the mesh into a single file `fileName'. The
+            export format is MSH4. The `partitions' vector specifies which partition
+            numbers to include.
+
+            Types:
+            - `fileName': string
+            - `partitions': vector of integers
+            """
+            api_partitions_, api_partitions_n_ = _ivectorint(partitions)
+            ierr = c_int()
+            lib.gmshModelMeshWritePartitions(
+                c_char_p(fileName.encode()),
+                api_partitions_, api_partitions_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        write_partitions = writePartitions
 
         @staticmethod
         def optimize(method="", force=False, niter=1, dimTags=[], quality=0.0):
@@ -2781,6 +2859,42 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
         set_node = setNode
+
+        @staticmethod
+        def setNodes(nodeTags, coord, parametricCoord, dim=-1, tag=-1):
+            """
+            gmsh.model.mesh.setNodes(nodeTags, coord, parametricCoord, dim=-1, tag=-1)
+
+            Set the coordinates and the parametric coordinates (if any) of the nodes
+            with tags `nodeTags'. `coord' is a vector of length 3 times the length of
+            `nodeTags' that contains the x, y, z coordinates of the nodes,
+            concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, the nodes must be
+            classified on an entity of dimension `dim' (and of tag `tag' if `tag' >=
+            0), and the length of `parametricCoord' can be 0 or `dim' times the length
+            of `nodeTags'. If `dim' < 0 the nodes can be classified anywhere, and
+            `parametricCoord' must be empty.
+
+            Types:
+            - `nodeTags': vector of sizes
+            - `coord': vector of doubles
+            - `parametricCoord': vector of doubles
+            - `dim': integer
+            - `tag': integer
+            """
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+            ierr = c_int()
+            lib.gmshModelMeshSetNodes(
+                api_nodeTags_, api_nodeTags_n_,
+                api_coord_, api_coord_n_,
+                api_parametricCoord_, api_parametricCoord_n_,
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_nodes = setNodes
 
         @staticmethod
         def rebuildNodeCache(onlyIfNecessary=True):
@@ -5216,23 +5330,35 @@ class model:
 
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create new discrete surfaces, curves and points
-            accordingly. If `boundary' is set, also create discrete curves on the
-            boundary if the surface is open. If `forReparametrization' is set, create
-            curves and surfaces that can be reparametrized using a single map. If
-            `curveAngle' is less than Pi, also force curves to be split according to
-            `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
-            entities and export the discrete entities in the built-in CAD kernel.
+            accordingly. The `oldSurfaceTags' and `newSurfaceTags' vectors map the old
+            surface tags to the new surface tags, ie. `oldSurfaceTags[i]' corresponds
+            to `newSurfaceTags[i]'. Removed surface tags are not returned, only old
+            surfaces that map to one or more new surfaces are returned. If `boundary'
+            is set, also create discrete curves on the boundary if the surface is open.
+            If `forReparametrization' is set, create curves and surfaces that can be
+            reparametrized using a single map. If `curveAngle' is less than Pi, also
+            force curves to be split according to `curveAngle'. If `exportDiscrete' is
+            set, clear any built-in CAD kernel entities and export the discrete
+            entities in the built-in CAD kernel.
+
+            Return `oldSurfaceTags', `newSurfaceTags'.
 
             Types:
             - `angle': double
+            - `oldSurfaceTags': vector of integers
+            - `newSurfaceTags': vector of integers
             - `boundary': boolean
             - `forReparametrization': boolean
             - `curveAngle': double
             - `exportDiscrete': boolean
             """
+            api_oldSurfaceTags_, api_oldSurfaceTags_n_ = POINTER(c_int)(), c_size_t()
+            api_newSurfaceTags_, api_newSurfaceTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
                 c_double(angle),
+                byref(api_oldSurfaceTags_), byref(api_oldSurfaceTags_n_),
+                byref(api_newSurfaceTags_), byref(api_newSurfaceTags_n_),
                 c_int(bool(boundary)),
                 c_int(bool(forReparametrization)),
                 c_double(curveAngle),
@@ -5240,6 +5366,9 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+            return (
+                _ovectorint(api_oldSurfaceTags_, api_oldSurfaceTags_n_.value),
+                _ovectorint(api_newSurfaceTags_, api_newSurfaceTags_n_.value))
         classify_surfaces = classifySurfaces
 
         @staticmethod
@@ -10770,6 +10899,57 @@ class fltk:
             api_result_,
             _ovectorint(api_viewTags_, api_viewTags_n_.value))
     select_views = selectViews
+
+    @staticmethod
+    def pick(x, y, dim=-1, elements=False, w=5, h=5):
+        """
+        gmsh.fltk.pick(x, y, dim=-1, elements=False, w=5, h=5)
+
+        Pick at the position (`x', `y') in the current graphical window, given in
+        window coordinates with the origin at the top left corner, and return what
+        a click there would select: the entities in `dimTags', the post-processing
+        views in `viewTags', and, if `elements' is set, the mesh elements in
+        `elementTags' instead of the entities they belong to. If `dim' is >= 0,
+        only select entities of the given dimension. `w' and `h' give the size of
+        the region that is looked at, in window coordinates. Unlike
+        `selectEntities', `selectElements' and `selectViews', this does not wait
+        for the user to click.
+
+        Return an integer, `dimTags', `elementTags', `viewTags'.
+
+        Types:
+        - `dimTags': vector of pairs of integers
+        - `elementTags': vector of sizes
+        - `viewTags': vector of integers
+        - `x': double
+        - `y': double
+        - `dim': integer
+        - `elements': boolean
+        - `w': integer
+        - `h': integer
+        """
+        api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
+        api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
+        api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        api_result_ = lib.gmshFltkPick(
+            byref(api_dimTags_), byref(api_dimTags_n_),
+            byref(api_elementTags_), byref(api_elementTags_n_),
+            byref(api_viewTags_), byref(api_viewTags_n_),
+            c_double(x),
+            c_double(y),
+            c_int(dim),
+            c_int(bool(elements)),
+            c_int(w),
+            c_int(h),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            api_result_,
+            _ovectorpair(api_dimTags_, api_dimTags_n_.value),
+            _ovectorsize(api_elementTags_, api_elementTags_n_.value),
+            _ovectorint(api_viewTags_, api_viewTags_n_.value))
 
     @staticmethod
     def splitCurrentWindow(how="v", ratio=0.5):

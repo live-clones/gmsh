@@ -94,6 +94,11 @@ public:
     return MFace(_v[faces_hexa(num, 0)], _v[faces_hexa(num, 1)],
                  _v[faces_hexa(num, 2)], _v[faces_hexa(num, 3)]);
   }
+  virtual int getFaceCorners(int num, MVertex *v[4]) const
+  {
+    for(int i = 0; i < 4; i++) v[i] = _v[faces_hexa(num, i)];
+    return 4;
+  }
   virtual double getInnerRadius();
   virtual double angleShapeMeasure();
   virtual bool getFaceInfo(const MFace &face, int &ithFace, int &sign,

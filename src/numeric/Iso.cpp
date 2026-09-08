@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include "Numeric.h"
 
 static void affect(double *xi, double *yi, double *zi, int i, double *xp,
@@ -170,6 +171,138 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
     n[0] = -n[0];
     n[1] = -n[1];
     n[2] = -n[2];
+  }
+
+  return nb;
+}
+
+void OrderPolygonInPlane(int nb, const double n[3], double *Xp, double *Yp,
+                         double *Zp, double *Vp)
+{
+  if(nb < 3) return;
+
+  double c[3] = {0., 0., 0.};
+  for(int i = 0; i < nb; i++) {
+    c[0] += Xp[i];
+    c[1] += Yp[i];
+    c[2] += Zp[i];
+  }
+  for(int i = 0; i < 3; i++) c[i] /= nb;
+
+  // any two directions of the plane will do: the order they give only differs
+  // by where it starts and by its sense, and the sense is fixed below
+  double u[3] = {1., 0., 0.};
+  if(fabs(n[0]) > fabs(n[1])) {
+    u[0] = 0.;
+    u[1] = 1.;
+  }
+  double m[3] = {n[0], n[1], n[2]}, w[3];
+  prodve(m, u, w);
+  norme(w);
+  prodve(w, m, u);
+  norme(u);
+
+  double a[12];
+  for(int i = 0; i < nb && i < 12; i++) {
+    double d[3] = {Xp[i] - c[0], Yp[i] - c[1], Zp[i] - c[2]};
+    a[i] = atan2(prosca(d, w), prosca(d, u));
+  }
+
+  for(int i = 1; i < nb; i++)
+    for(int j = i; j > 0 && a[j] < a[j - 1]; j--) {
+      std::swap(a[j], a[j - 1]);
+      std::swap(Xp[j], Xp[j - 1]);
+      std::swap(Yp[j], Yp[j - 1]);
+      std::swap(Zp[j], Zp[j - 1]);
+      if(Vp) std::swap(Vp[j], Vp[j - 1]);
+    }
+}
+
+static int cutEdgeByPlane(double *X, double *Y, double *Z, double *Val,
+                          double *D, int i1, int i2, double *Xp, double *Yp,
+                          double *Zp, double *Vp, int nb)
+{
+  if((D[i1] < 0. && D[i2] < 0.) || (D[i1] > 0. && D[i2] > 0.)) return nb;
+  double t = (D[i1] == D[i2]) ? 0. : D[i1] / (D[i1] - D[i2]);
+  Xp[nb] = X[i1] + t * (X[i2] - X[i1]);
+  Yp[nb] = Y[i1] + t * (Y[i2] - Y[i1]);
+  Zp[nb] = Z[i1] + t * (Z[i2] - Z[i1]);
+  if(Val) Vp[nb] = Val[i1] + t * (Val[i2] - Val[i1]);
+  return nb + 1;
+}
+
+int CutSimplexByPlane(double *X, double *Y, double *Z, double *Val, double *D,
+                      const double n[3], double *Xp, double *Yp, double *Zp,
+                      double *Vp)
+{
+  // the edges are visited in the order IsoSimplex() uses, so that the two last
+  // corners of a quadrangle are the ones to swap to get it ordered
+  int nb = 0;
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 0, 1, Xp, Yp, Zp, Vp, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 0, 2, Xp, Yp, Zp, Vp, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 0, 3, Xp, Yp, Zp, Vp, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 1, 2, Xp, Yp, Zp, Vp, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 1, 3, Xp, Yp, Zp, Vp, nb);
+  nb = cutEdgeByPlane(X, Y, Z, Val, D, 2, 3, Xp, Yp, Zp, Vp, nb);
+
+  // a plane through a node or along an edge crosses several edges at the same
+  // point: keep each corner once
+  if(nb > 4) {
+    int ni = 1;
+    for(int j = 1; j < nb; j++) {
+      int same = 0;
+      for(int i = 0; i < ni; i++)
+        if(fabs(Xp[j] - Xp[i]) < 1.e-12 && fabs(Yp[j] - Yp[i]) < 1.e-12 &&
+           fabs(Zp[j] - Zp[i]) < 1.e-12) {
+          same = 1;
+          break;
+        }
+      if(same) continue;
+      Xp[ni] = Xp[j];
+      Yp[ni] = Yp[j];
+      Zp[ni] = Zp[j];
+      if(Val) Vp[ni] = Vp[j];
+      ni++;
+    }
+    nb = ni;
+  }
+
+  if(nb < 3 || nb > 4) return 0;
+
+  if(nb == 4) {
+    double x = Xp[3], y = Yp[3], z = Zp[3], v = Val ? Vp[3] : 0.;
+    Xp[3] = Xp[2];
+    Yp[3] = Yp[2];
+    Zp[3] = Zp[2];
+    Xp[2] = x;
+    Yp[2] = y;
+    Zp[2] = z;
+    if(Val) {
+      Vp[3] = Vp[2];
+      Vp[2] = v;
+    }
+  }
+
+  // wind the polygon counter-clockwise as seen from the side n points to
+  double v1[3] = {Xp[1] - Xp[0], Yp[1] - Yp[0], Zp[1] - Zp[0]};
+  double v2[3] = {Xp[2] - Xp[0], Yp[2] - Yp[0], Zp[2] - Zp[0]};
+  double c[3];
+  prodve(v1, v2, c);
+  if(prosca(c, n) < 0.) {
+    for(int i = 0; i < nb / 2; i++) {
+      int j = nb - i - 1;
+      double x = Xp[i], y = Yp[i], z = Zp[i], v = Val ? Vp[i] : 0.;
+      Xp[i] = Xp[j];
+      Yp[i] = Yp[j];
+      Zp[i] = Zp[j];
+      Xp[j] = x;
+      Yp[j] = y;
+      Zp[j] = z;
+      if(Val) {
+        Vp[i] = Vp[j];
+        Vp[j] = v;
+      }
+    }
   }
 
   return nb;
