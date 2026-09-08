@@ -1181,6 +1181,7 @@ fltk.add('pick', doc, oint, ovectorpair('dimTags'), ovectorsize('elementTags'),
          ovectorint('viewTags'), idouble('x'), idouble('y'), iint('dim', '-1'),
          ibool('elements', 'false', 'False'), iint('w', '5'), iint('h', '5'))
 
+doc = '''Split the current window horizontally (if `how' == "h") or vertically (if `how' == "v"), using ratio `ratio'. If `how' == "u", restore a single window.'''
 fltk.add('splitCurrentWindow', doc, None, istring('how', '"v"'), idouble('ratio', '0.5'))
 
 doc = '''Set the current window by speficying its index (starting at 0) in the list of all windows. When new windows are created by splits, new windows are appended at the end of the list.'''
