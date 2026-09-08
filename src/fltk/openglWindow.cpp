@@ -273,7 +273,11 @@ void openglWindow::draw()
     _ctx->draw3d();
     _ctx->draw2d();
 
-    // the rectangle itself, in pixel coordinates, over everything else
+    // The rectangle itself, in pixel coordinates, over everything else. Its
+    // border inverts whatever it crosses, so that it shows on the background
+    // and on a dark mesh alike, and the inside gets a faint wash of the
+    // foreground colour, which is what makes it out on a mid grey that
+    // inverts to itself.
     gmshMatrixMode(GMSH_PROJECTION);
     double px[16];
     glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
@@ -281,18 +285,55 @@ void openglWindow::draw()
     gmshLoadMatrix(px);
     gmshMatrixMode(GMSH_MODELVIEW);
     gmshLoadIdentity();
+    double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
+    double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
+    // the blending is OpenGL state the collector knows nothing about, so
+    // whatever is pending is drawn before it changes, each time
+    gmshFlushImmediate();
     glDisable(GL_DEPTH_TEST);
-    gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    unsigned int fg = CTX::instance()->color.fg;
+    gmshColor4ub((unsigned char)CTX::instance()->unpackRed(fg),
+                 (unsigned char)CTX::instance()->unpackGreen(fg),
+                 (unsigned char)CTX::instance()->unpackBlue(fg), 40);
+    gmshBegin(GL_QUADS);
+    gmshVertex2d(x0, y0);
+    gmshVertex2d(x1, y0);
+    gmshVertex2d(x1, y1);
+    gmshVertex2d(x0, y1);
+    gmshEnd();
+    gmshFlushImmediate();
+    // white, through a blend that leaves one minus what was there
+    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+    gmshColor3d(1., 1., 1.);
     if(selectionMode && CTX::instance()->mouseSelection)
       gmshLineStipple(1, 0x0F0F);
-    gmshLineWidth(1.);
-    gmshBegin(GL_LINE_LOOP);
-    gmshVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
-    gmshVertex2d(_curr.win[0], _ctx->viewport[3] - _click.win[1]);
-    gmshVertex2d(_curr.win[0], _ctx->viewport[3] - _curr.win[1]);
-    gmshVertex2d(_click.win[0], _ctx->viewport[3] - _curr.win[1]);
+    // two pixels of the window, whatever the resolution of the display; the
+    // width is in pixels of the display, the coordinates in those of the
+    // window
+    double hw = 1.;
+    gmshLineWidth(2. * hw * _ctx->highResolutionPixelFactor());
+    // Four segments rather than a loop, the horizontal ones stretched by
+    // half the width and the vertical ones shortened by it, so that each
+    // corner is covered exactly once: covered twice, it would be inverted
+    // back to what it was.
+    double sx = (x1 > x0) ? hw : (x1 < x0) ? -hw : 0.;
+    double sy = (y1 > y0) ? hw : (y1 < y0) ? -hw : 0.;
+    gmshBegin(GL_LINES);
+    gmshVertex2d(x0 - sx, y0);
+    gmshVertex2d(x1 + sx, y0);
+    gmshVertex2d(x0 - sx, y1);
+    gmshVertex2d(x1 + sx, y1);
+    gmshVertex2d(x0, y0 + sy);
+    gmshVertex2d(x0, y1 - sy);
+    gmshVertex2d(x1, y0 + sy);
+    gmshVertex2d(x1, y1 - sy);
     gmshEnd();
+    gmshFlushImmediate();
     gmshLineStippleOff();
+    gmshLineWidth(1.);
+    glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
 
     _drawScreenMessage();
