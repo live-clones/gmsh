@@ -801,22 +801,26 @@ public:
   }
 };
 
-// What each model's caps were last built for. Rebuilding them when none of this
-// has changed would be work at every frame for nothing; keyed by model, as
-// several of them can be drawn one after the other in the same frame.
+// What each model's clip arrays were last built for. Rebuilding them when none
+// of this has changed would be work at every frame for nothing; keyed by
+// model, as several of them can be drawn one after the other in the same
+// frame.
+//
+// Only what changes the arrays without marking the mesh as changed is in here:
+// the planes and the clipping options that leave the mesh arrays alone. The
+// capping option, what is drawn (edges, faces, each kind of element) and the
+// visibility all set mesh.changed, and drawMesh() invalidates the arrays
+// whenever it rebuilds the mesh ones.
 static std::map<GModel *, std::vector<double> > _clipToken;
 
 static std::vector<double> clipToken()
 {
   CTX *ctx = CTX::instance();
   std::vector<double> t;
-  t.push_back(ctx->meshClipCaps() ? 1. : 0.);
-  t.push_back(ctx->clipWholeElements);
-  t.push_back(ctx->clipOnlyDrawIntersectingVolume);
-  t.push_back(ctx->mesh.volumeEdges);
-  t.push_back(ctx->mesh.volumeFaces);
   t.push_back(ctx->mesh.clip);
+  t.push_back(ctx->clipWholeElements);
   t.push_back(ctx->clipOnlyVolume);
+  t.push_back(ctx->clipOnlyDrawIntersectingVolume);
   for(int i = 0; i < 6; i++)
     for(int j = 0; j < 4; j++) t.push_back(ctx->clipPlane[i][j]);
   return t;
@@ -867,7 +871,11 @@ bool GModel::fillClipVertexArrays()
   _clipToken[this] = tok;
 
   CTX *ctx = CTX::instance();
-  bool caps = ctx->meshClipCaps();
+  // The caps are worth computing only where the mesh is drawn as a surface,
+  // and only when the planes are applied by OpenGL: in whole element mode the
+  // elements a plane cuts are removed entire and there is no hole to fill.
+  bool caps = ctx->clipCapping && !ctx->clipWholeElements && ctx->mesh.clip &&
+              (ctx->mesh.volumeFaces || ctx->mesh.surfaceFaces);
   bool whole = ctx->clipWholeElements && ctx->mesh.clip;
   double t1 = TimeOfDay();
   std::size_t n = 0;
