@@ -450,14 +450,14 @@ namespace glApi {
     const char *v = (const char *)glGetString(GL_VERSION);
     const char *r = (const char *)glGetString(GL_RENDERER);
     const char *s = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
-    Msg::Debug("OpenGL %s on %s", v ? v : "?", r ? r : "?");
-    Msg::Debug("OpenGL shading language %s", s ? s : "none");
-    Msg::Debug("OpenGL has buffer objects: %s, shaders: %s, framebuffer "
-               "objects: %s, clip distances: %s, per target blending: %s, "
-               "instancing: %s, floating point colour buffers: %s",
-               _buffers ? "yes" : "no", _shaders ? "yes" : "no",
-               _framebuffers ? "yes" : "no", _clipDistance ? "yes" : "no",
-               _indexedBlend ? "yes" : "no", _instancing ? "yes" : "no",
-               _floatColorBuffers ? "yes" : "no");
+    Msg::Info("OpenGL %s on %s", v ? v : "?", r ? r : "?");
+    Msg::Info("OpenGL shading language %s", s ? s : "none");
+    Msg::Info("OpenGL has buffer objects: %s, shaders: %s, framebuffer "
+              "objects: %s, clip distances: %s, per target blending: %s, "
+              "instancing: %s, floating point colour buffers: %s",
+              _buffers ? "yes" : "no", _shaders ? "yes" : "no",
+              _framebuffers ? "yes" : "no", _clipDistance ? "yes" : "no",
+              _indexedBlend ? "yes" : "no", _instancing ? "yes" : "no",
+              _floatColorBuffers ? "yes" : "no");
   }
 } // namespace glApi
