@@ -155,101 +155,6 @@ template <class T> static bool areSomeElementsCurved(std::vector<T *> &elements)
   return false;
 }
 
-// Set when only the clipping planes moved: fillVertexArrays() then rebuilds
-// only the entities that clipPlanesChanged() marked, instead of all of them.
-static bool selectiveVertexArrayUpdate = false;
-
-// Bounding boxes of the entities, which are only needed when the clipping
-// planes move. bounds() is cheap for CAD entities but walks the mesh for
-// discrete ones, so cache the result and only recompute it when the entity has
-// been remeshed - which the number of elements detects well enough here.
-static std::map<GEntity *, std::pair<std::size_t, SBoundingBox3d> > clipBounds;
-
-static SBoundingBox3d &entityBounds(GEntity *e)
-{
-  std::size_t n = e->getNumMeshElements();
-  auto it = clipBounds.find(e);
-  if(it != clipBounds.end() && it->second.first == n) return it->second.second;
-  clipBounds[e] = std::make_pair(n, e->bounds());
-  return clipBounds[e].second;
-}
-
-// Where the entity sits with respect to the clipping planes: 1 if all of its
-// elements are visible, 2 if they are all clipped away, 3 if a plane cuts
-// through it. Only 3, or a change from one state to another, requires the
-// vertex arrays to be rebuilt.
-static char entityClipState(GEntity *e)
-{
-  // The planes are applied by OpenGL, and what they add - the section in
-  // capping mode, the elements they cut in whole element mode - is held in
-  // arrays of its own: nothing about the mesh arrays depends on where they
-  // are, so a plane moving never asks for one to be built again.
-  return 1;
-  int mask = CTX::instance()->mesh.clip;
-  if(!mask) return 1;
-  // in this mode only the elements that the plane cuts are drawn, so moving it
-  // changes the arrays everywhere
-  if(CTX::instance()->clipWholeElements &&
-     CTX::instance()->clipOnlyDrawIntersectingVolume)
-    return 3;
-  if(!e->getNumMeshElements()) return 1;
-
-  SBoundingBox3d &b = entityBounds(e);
-  if(b.empty()) return 1;
-  SPoint3 lo = b.min(), hi = b.max();
-  bool cut = false;
-  for(int c = 0; c < 6; c++) {
-    if(!(mask & (1 << c))) continue;
-    if(e->dim() < 3 && CTX::instance()->clipOnlyVolume) continue;
-    double *p = CTX::instance()->clipPlane[c];
-    // the extreme values of the plane equation over the box are reached at two
-    // of its corners, picked componentwise by the sign of the coefficients
-    double mn = p[3], mx = p[3];
-    for(int k = 0; k < 3; k++) {
-      double a = p[k], l = lo[k], h = hi[k];
-      mn += (a > 0) ? a * l : a * h;
-      mx += (a > 0) ? a * h : a * l;
-    }
-    if(mx < 0.) return 2; // entirely on the clipped side of this plane
-    if(mn < 0.) cut = true;
-  }
-  return cut ? 3 : 1;
-}
-
-void GModel::clipPlanesChanged()
-{
-  int changed = 0;
-  std::vector<GEntity *> ents;
-  ents.insert(ents.end(), firstEdge(), lastEdge());
-  ents.insert(ents.end(), firstFace(), lastFace());
-  ents.insert(ents.end(), firstRegion(), lastRegion());
-
-  for(auto e : ents) {
-    char state = entityClipState(e);
-    // an entity that a plane cuts always changes; one that is entirely on one
-    // side only changes when it moved from one side to the other
-    if(state == 3 || state != e->getVertexArraysClipState()) {
-      e->setVertexArraysDirty(true);
-      e->setVertexArraysClipState(state);
-      changed |= (e->dim() == 1) ? ENT_CURVE :
-                 (e->dim() == 2) ? ENT_SURFACE : ENT_VOLUME;
-    }
-  }
-
-  if(Msg::GetVerbosity() >= 99) {
-    int dirty = 0;
-    for(auto e : ents)
-      if(e->getVertexArraysDirty()) dirty++;
-    Msg::Debug("Clipping planes moved: %d of %d entities to rebuild", dirty,
-               (int)ents.size());
-  }
-
-  if(changed) {
-    CTX::instance()->mesh.changed |= changed;
-    selectiveVertexArrayUpdate = true;
-  }
-}
-
 template <class T>
 static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
 {
@@ -712,8 +617,6 @@ private:
 public:
   void operator()(GEdge *e)
   {
-    if(!e->getVertexArraysDirty()) return;
-    e->setVertexArraysDirty(false);
     e->deleteVertexArrays();
     if(!e->getVisibility()) return;
     e->setOnlySomeElementsVisible(areOnlySomeElementsVisible(e->lines));
@@ -765,8 +668,6 @@ private:
 public:
   void operator()(GFace *f)
   {
-    if(!f->getVertexArraysDirty()) return;
-    f->setVertexArraysDirty(false);
     f->deleteVertexArrays();
     if(!f->getVisibility()) return;
     f->setOnlySomeElementsVisible(areOnlySomeElementsVisible(f->triangles) ||
@@ -794,24 +695,6 @@ public:
 class initMeshGRegion {
 private:
   bool _curved;
-  int _estimateIfClipped(int num)
-  {
-    if(CTX::instance()->clipWholeElements) {
-      for(int clip = 0; clip < 6; clip++) {
-        if(CTX::instance()->mesh.clip & (1 << clip)) {
-          if(CTX::instance()->clipOnlyDrawIntersectingVolume) {
-            // let be more aggressive than num^{2/3}
-            return (int)sqrt((double)num);
-          }
-          else {
-            // why not :-)
-            return num / 4;
-          }
-        }
-      }
-    }
-    return num;
-  }
   int _estimateNumLines(GRegion *r)
   {
     int num = 0;
@@ -824,7 +707,6 @@ private:
               18 * r->prisms.size() + 16 * r->pyramids.size() +
               10 * r->trihedra.size() + numLP) /
              4;
-      num = _estimateIfClipped(num);
       if(CTX::instance()->mesh.explode != 1.) num *= 4;
       if(_curved) num *= 2;
     }
@@ -841,7 +723,6 @@ private:
               8 * r->prisms.size() + 6 * r->pyramids.size() +
               4 * r->trihedra.size() + numFP) /
              2;
-      num = _estimateIfClipped(num);
       if(CTX::instance()->mesh.explode != 1.) num *= 2;
       if(_curved) num *= 4;
     }
@@ -859,8 +740,6 @@ public:
 
   void operator()(GRegion *r)
   {
-    if(!r->getVertexArraysDirty()) return;
-    r->setVertexArraysDirty(false);
     r->deleteVertexArrays();
     if(!r->getVisibility()) return;
     r->setOnlySomeElementsVisible(areOnlySomeElementsVisible(r->tetrahedra) ||
@@ -1115,17 +994,6 @@ bool GModel::fillVertexArrays()
   if(!getVisibility() || !CTX::instance()->mesh.changed) return false;
 
   Msg::Debug("Mesh has changed: reinitializing vertex arrays");
-
-  if(!selectiveVertexArrayUpdate) {
-    // anything other than a clipping plane can change every entity
-    for(auto it = firstEdge(); it != lastEdge(); it++)
-      (*it)->setVertexArraysDirty(true);
-    for(auto it = firstFace(); it != lastFace(); it++)
-      (*it)->setVertexArraysDirty(true);
-    for(auto it = firstRegion(); it != lastRegion(); it++)
-      (*it)->setVertexArraysDirty(true);
-  }
-  selectiveVertexArrayUpdate = false;
 
   double tStart = TimeOfDay();
   int status = getMeshStatus();

@@ -137,48 +137,23 @@ static void clip_update(bool adjusting)
         CTX::instance()->clipPlane[idx][j]);
   }
 
-  // What the user is asking for. It is compared with what was asked for last
-  // time rather than with what the context holds, because while a plane is
-  // dragged the context holds what is being drawn with, which is not the same
-  // thing.
+  // What the user is asking for. It is read here rather than from the context
+  // because while a value is being chosen the context holds what is being drawn
+  // with, which is not the same thing.
   int wantCapping = FlGui::instance()->clipping->butt[0]->value();
   int wantWhole =
     wantCapping ? 0 : FlGui::instance()->clipping->butt[1]->value();
   int wantIntersecting = FlGui::instance()->clipping->butt[2]->value();
 
-  static bool haveWanted = false;
-  static int lastCapping = 0, lastWhole = 0, lastIntersecting = 0;
-  if(!haveWanted) {
-    lastCapping = CTX::instance()->clipCapping;
-    lastWhole = CTX::instance()->clipWholeElements;
-    lastIntersecting = CTX::instance()->clipOnlyDrawIntersectingVolume;
-    haveWanted = true;
-  }
-  // Changing one of the toggles changes the visibility rule itself, and every
-  // entity has to be rebuilt. Moving a plane only affects the entities it cuts,
-  // or that it moved in or out of: let the model work out which ones.
-  bool togglesChanged = (lastCapping != wantCapping) ||
-                        (lastWhole != wantWhole) ||
-                        (lastIntersecting != wantIntersecting);
-  lastCapping = wantCapping;
-  lastWhole = wantWhole;
-  lastIntersecting = wantIntersecting;
-
   CTX::instance()->clipCapping = wantCapping;
   CTX::instance()->clipWholeElements = wantWhole;
   CTX::instance()->clipOnlyDrawIntersectingVolume = wantIntersecting;
 
-  if(!adjusting && (wantWhole || wantCapping || togglesChanged)) {
-    for(std::size_t index = 0; index < PView::list.size(); index++)
-      if(PView::list[index]->getOptions()->clip)
-        PView::list[index]->setChanged(true);
-    if(CTX::instance()->mesh.clip) {
-      if(togglesChanged)
-        CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-      else
-        GModel::current()->clipPlanesChanged();
-    }
-  }
+  // Nothing has to be built again from here: neither the mesh arrays nor the
+  // view arrays depend on where the planes are or on which of these modes is
+  // on, and what the modes add is held in arrays of their own, rebuilt from
+  // their own token. The one thing that does - a view drawn with only the
+  // volumes a plane cuts - is looked after by checkClipPlanesChanged().
 
   // said while the toggles still hold what was asked for, so that the buttons
   // do not follow what the drag below draws with
@@ -233,12 +208,6 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   CTX::instance()->clipPlane[3][3] = 1.;
   CTX::instance()->clipPlane[4][3] = 1.;
   CTX::instance()->clipPlane[5][3] = 1.;
-
-  if(CTX::instance()->clipWholeElements) {
-    CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-    for(std::size_t index = 0; index < PView::list.size(); index++)
-      PView::list[index]->setChanged(true);
-  }
 
   FlGui::instance()->clipping->resetBrowser();
   drawContext::global()->draw();

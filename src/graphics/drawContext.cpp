@@ -609,41 +609,41 @@ void drawVertexArray(VertexArray *va, GLenum type)
 // planes that clip a view changes. The planes can be moved from the clipping
 // window, from a script or from the API, so notice it here rather than at every
 // place that sets them
+// The clipping planes are applied by OpenGL, and what they add - the section
+// they cut, the elements they cut drawn whole - is held in arrays of its own,
+// built on its own token: a plane moving asks for nothing to be built again.
+// The one exception is a view drawn with only the volumes a plane cuts, which
+// nothing but the fill can express: those arrays are filled through the planes
+// themselves, and have to be filled again when they move.
 static void checkClipPlanesChanged()
 {
-  // While the user is dragging - a clipping plane, an option slider - the fast
-  // representation is drawn, and the arrays are left as they are however many
-  // times the scene is redrawn in between. The planes below are only remembered
-  // once the change has been acted upon, so the first frame after the mouse is
-  // released picks it up and rebuilds once
+#if defined(HAVE_POST)
+  // While the user is choosing - dragging a clipping plane, typing a value -
+  // the fast representation is drawn, and the arrays are left as they are
+  // however many times the scene is redrawn in between. What the planes were is
+  // only remembered once the change has been acted upon, so the first frame
+  // after that picks it up and rebuilds once
   if(drawContext::global()->mouseIsPressed()) return;
 
+  CTX *ctx = CTX::instance();
   static double planes[6][4] = {{0.}};
-  static int capping = -1, whole = -1, onlyVolume = -1, cutOnly = -1;
+  static int whole = -1, onlyVolume = -1, cutOnly = -1;
   static std::vector<int> clip;
 
-  CTX *ctx = CTX::instance();
-  bool changed = (capping != ctx->clipCapping) ||
-                 (whole != ctx->clipWholeElements) ||
+  bool changed = (whole != ctx->clipWholeElements) ||
                  (onlyVolume != ctx->clipOnlyVolume) ||
                  (cutOnly != ctx->clipOnlyDrawIntersectingVolume);
-#if defined(HAVE_POST)
-  // the one mode whose arrays are still filled through the planes, remembered
-  // as it was so that leaving it builds them one last time
+  // remembered as it was, so that leaving the mode fills them one last time
   bool wasCutOnly = (whole == 1 && cutOnly == 1);
-#endif
-  capping = ctx->clipCapping;
   whole = ctx->clipWholeElements;
   onlyVolume = ctx->clipOnlyVolume;
   cutOnly = ctx->clipOnlyDrawIntersectingVolume;
   for(int i = 0; i < 6; i++)
     for(int j = 0; j < 4; j++)
-      if(planes[i][j] != CTX::instance()->clipPlane[i][j]) {
-        planes[i][j] = CTX::instance()->clipPlane[i][j];
+      if(planes[i][j] != ctx->clipPlane[i][j]) {
+        planes[i][j] = ctx->clipPlane[i][j];
         changed = true;
       }
-
-#if defined(HAVE_POST)
   if(clip.size() != PView::list.size()) {
     clip.resize(PView::list.size(), -1);
     changed = true;
@@ -656,22 +656,11 @@ static void checkClipPlanesChanged()
     }
   }
   if(!changed) return;
-  // The views no longer have to be built again when a plane moves: the section
-  // it cuts, and the elements it cuts drawn whole, are arrays of their own, and
-  // nothing else about their arrays depends on where the planes are. The one
-  // mode left out is the one that draws only the volumes a plane cuts, which
-  // nothing but the fill can express.
-  if(wasCutOnly || (ctx->clipWholeElements &&
-                    ctx->clipOnlyDrawIntersectingVolume))
+
+  if(wasCutOnly || (ctx->clipWholeElements && ctx->clipOnlyDrawIntersectingVolume))
     for(std::size_t i = 0; i < PView::list.size(); i++)
       PView::list[i]->setChanged(true);
-#else
-  if(!changed) return;
 #endif
-  // nor does the mesh, in capping mode; entityClipState() says as much, so this
-  // only has anything to do while whole element mode is on
-  if(CTX::instance()->mesh.clip && GModel::current())
-    GModel::current()->clipPlanesChanged();
 }
 
 void drawContext::draw3d()
