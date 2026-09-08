@@ -397,6 +397,11 @@ namespace Ui {
       std::function<void(FormRef form)> formWasClosed;
       // and the same for the message console
       std::function<void()> consoleWasClosed;
+      // Files were dropped on a window of the interface. What a dropped
+      // file means is the application's -- the first is opened and the rest
+      // merged -- and a toolkit that let itself answer that one had to know
+      // what a Gmsh file is.
+      std::function<void(const std::vector<std::string> &paths)> filesDropped;
       // an internal error of the toolkit, which goes to the message console
       // like any other
       std::function<void(const std::string &text)> error;

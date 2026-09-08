@@ -290,5 +290,55 @@ namespace {
 }
 } // namespace ImGuiScene
 
+// --- the two things the bar asks of the scene
+//
+// They lived in statusBar.cpp, beside the bar that asks for them, which left
+// that file -- otherwise a plain reader of the description of a bar --
+// including a third of Gmsh. What they do is the scene's: one orients the
+// draw context of every pane, the other steps the post-processing animation.
+
+// The views the status bar acts upon are the panes of the graphic window, which
+// is what makes this the interface's rather than the description's.
+void appWindow::orientPanes(const std::string &what, bool reverse, bool sync)
+{
+  std::vector<sceneView *> panes;
+  for(auto *p : _panes)
+    if(_isTiled(p)) panes.push_back(p);
+  if(panes.empty()) {
+    if(sceneView *p = currentPane()) panes.push_back(p);
+  }
+  for(std::size_t i = 0; i < panes.size(); i++) {
+    drawContext *ctx = panes[i]->getDrawContext();
+    if(!ctx) continue;
+    // Control makes the others follow the first instead of being oriented
+    // themselves, as the bar this reproduces has it
+    if(sync && (what == "r" || what == "1:1")) {
+      if(i == 0) continue;
+      drawContext *first = panes[0]->getDrawContext();
+      if(!first) continue;
+      if(what == "r")
+        ctx->setQuaternion(first->quaternion[0], first->quaternion[1],
+                           first->quaternion[2], first->quaternion[3]);
+      else if(!CTX::instance()->camera) {
+        for(int j = 0; j < 3; j++) {
+          ctx->t[j] = first->t[j];
+          ctx->s[j] = first->s[j];
+        }
+      }
+      continue;
+    }
+    viewSetOrientation(ctx, what, reverse);
+  }
+  drawContext::global()->draw();
+}
+
+// Stepping the animation from the frame loop rather than from a blocking loop
+// as the FLTK interface does: an immediate-mode frame is not re-entrant, and
+// there is a frame going by anyway. Whether it is time is animationTick()'s.
+void appWindow::_stepAnimation()
+{
+  if(_animating) animationTick();
+}
+
 
 #endif

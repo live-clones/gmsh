@@ -689,34 +689,6 @@ void FlGui::destroy()
   _instance = nullptr;
 }
 
-int FlGui::run(const std::string &optionFileName)
-{
-  // if optionFileName is given, we load the file before entering the event
-  // loop, and we automatically save the options when it ends
-  if(optionFileName.size()) {
-    MergeFile(optionFileName, false);
-  }
-
-  // draw the scene
-  drawContext::global()->draw(false);
-
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
-
-  int ret = Fl::run();
-
-  if(optionFileName.size()) {
-    PrintOptions(0, GMSH_FULLRC, 1, 0, optionFileName.c_str());
-    int old = CTX::instance()->expertMode;
-    CTX::instance()->expertMode = 1; // disable warning if non-geo file
-    visibility_save(optionFileName);
-    CTX::instance()->expertMode = old;
-  }
-
-  return ret;
-}
-
 int FlGui::testGlobalShortcuts(int event)
 {
   // we only handle shortcuts here

@@ -897,6 +897,16 @@ void animationStep(int time, int incr, bool redraw)
   busy = false;
 }
 
+void animationTick()
+{
+  static double last = 0.;
+  double now = TimeOfDay();
+  if(now - last < CTX::instance()->post.animDelay) return;
+  last = now;
+  animationStep(!CTX::instance()->post.animCycle,
+                CTX::instance()->post.animStep);
+}
+
 void animationStepBy(bool forward, bool views)
 {
   int step = CTX::instance()->post.animStep;

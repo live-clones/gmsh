@@ -33,7 +33,9 @@
 #include "openglWindow.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
-#include "drawContext.h"
+#if defined(HAVE_TOUCHBAR)
+#include "touchBar.h"
+#endif
 
 // FLTK, as the interface asks for it. Nothing here says anything about Gmsh.
 
@@ -69,9 +71,11 @@ namespace {
 
     int runLoop() override
     {
-      // the scene is drawn once before the loop, which is what makes a window
-      // that has just come up show something
-      drawContext::global()->draw(false);
+#if defined(HAVE_TOUCHBAR)
+      // the bar of buttons a MacBook offers over its keyboard, which this
+      // interface fills; it was set up in a run() nothing called any more
+      updateTouchBar();
+#endif
       return Fl::run();
     }
 

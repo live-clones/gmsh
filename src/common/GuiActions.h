@@ -513,6 +513,11 @@ void animationStep(int time, int incr, bool redraw = true);
 // time steps. How big a step is, and whether the time steps are cycled, are
 // read from the options here so that nobody outside has to.
 void animationStepBy(bool forward, bool views = false);
+// Step it if it is time to. Both interfaces call this as often as they come
+// round -- Dear ImGui from its frame loop, FLTK from the loop it runs while
+// the animation plays -- and how long a step lasts, how big it is and
+// whether it cycles are read here rather than in each of them.
+void animationTick();
 // rewind the animation to its first step (or first view)
 void animationRewind();
 

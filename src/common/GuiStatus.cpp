@@ -194,7 +194,9 @@ namespace StatusBar {
     const messageState &m = _message();
     BarMessage out;
     out.text = " " + m.text;
-    out.colour = m.colour;
+    out.weight = (m.colour == Gui::StatusColorError)   ? Ui::MessageError :
+                 (m.colour == Gui::StatusColorWarning) ? Ui::MessageWarning :
+                                                         Ui::MessageOrdinary;
     out.running = (m.most > m.least);
     out.fraction = out.running ? (m.value - m.least) / (m.most - m.least) : 0.;
     out.progressText = m.text;
@@ -203,7 +205,7 @@ namespace StatusBar {
     // hidden: with it open the errors are already there to read, and the bar
     // saying so as well would be saying it twice.
     if(Gui::panelVisible(Gui::PanelMessageConsole)) {
-      out.colour = Gui::StatusColorDefault;
+      out.weight = Ui::MessageOrdinary;
       return out;
     }
     int errors = Msg::GetErrorCount(), warnings = Msg::GetWarningCount();

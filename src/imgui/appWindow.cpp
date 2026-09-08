@@ -29,14 +29,7 @@
 #include "messageConsole.h"
 #include "fileBrowser.h"
 #include "drawContextGL.h"
-#include "Gui.h"
-#include "GuiStatus.h"
-#include "GmshGlobal.h"
-#include "StringUtils.h"
-#include "Options.h"
-#include "OpenFile.h"
 #include "OS.h"
-#include "GModel.h"
 #include "drawContext.h"
 
 appWindow *appWindow::_instance = nullptr;
@@ -66,13 +59,9 @@ static void _glfwErrorCallback(int error, const char *description)
 
 static void _glfwDropCallback(GLFWwindow *window, int count, const char **paths)
 {
-  for(int i = 0; i < count; i++) {
-    if(i == 0)
-      OpenProject(paths[i]);
-    else
-      MergeFile(paths[i]);
-  }
-  drawContext::global()->draw();
+  std::vector<std::string> said;
+  for(int i = 0; i < count; i++) said.push_back(paths[i]);
+  imguiDropped(said);
 }
 
 // Initialize GLFW, picking the windowing system to talk to. On Linux, GLFW is
@@ -137,7 +126,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     _showModules(true),
     _paneRoot(nullptr), _uiScale(0.f),
     _uiScaleOverride(0.f), _styleScale(0.f), _reportedDetachable(false),
-    _animating(false), _animLastStep(0.), _zoomed(false), _fullscreen(false), _savedX(0), _savedY(0), _savedW(0), _savedH(0), _captureW(0), _captureH(0), _captureComposite(false), _modalDepth(0),
+    _animating(false), _zoomed(false), _fullscreen(false), _savedX(0), _savedY(0), _savedW(0), _savedH(0), _captureW(0), _captureH(0), _captureComposite(false), _modalDepth(0),
     _browser(nullptr), _exportActive(false), _exportDone(false),
     _exportAccepted(false), _exportFormat(-1)
 {
@@ -733,37 +722,6 @@ void appWindow::addMessage(const std::string &msg, int level)
   // interface: without this it would be shown at the next frame, which may be
   // a whole second away
   requestRedraw();
-}
-
-void appWindow::setStatus(const std::string &msg, bool graphics)
-{
-  if(!Toolkit::onThread()) return;
-  if(graphics) {
-    // the message is written on two lines in the view, as in the FLTK backend:
-    // what to do, then which keys end or abort it
-    if(_currentPane) {
-      std::vector<std::string> m = SplitString(msg, '\n');
-      _currentPane->screenMessage[0] = (m.size() > 0) ? m[0] : "";
-      _currentPane->screenMessage[1] = (m.size() > 1) ? m[1] : "";
-    }
-    drawContext::global()->draw();
-  }
-  else
-    StatusBar::setMessage(msg);
-}
-
-void appWindow::setLastStatus(int color)
-{
-  if(!Toolkit::onThread()) return;
-  StatusBar::setColour(color);
-}
-
-void appWindow::setProgress(const std::string &msg, double val, double min,
-                            double max)
-{
-  if(!Toolkit::onThread()) return;
-  StatusBar::setProgress(val, min, max);
-  StatusBar::setMessage(msg);
 }
 
 void appWindow::setGraphicTitle(const std::string &title)
@@ -1425,9 +1383,6 @@ void appWindow::endCapture()
 int appWindow::runLoop()
 {
   if(!_window) return 0;
-  // the scene is drawn once before the loop, which is what makes a window
-  // that has just come up show something
-  drawContext::global()->draw(false);
   while(_instance && _window && !glfwWindowShouldClose(_window)) {
     // Wait for something to happen rather than redrawing a picture nobody
     // asked for. Every event wakes this by itself -- a key, the pointer, a
