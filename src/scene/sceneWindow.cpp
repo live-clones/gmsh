@@ -5,7 +5,7 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GL_SCENE)
+#if defined(HAVE_GL_SCENE) && defined(HAVE_GLFW)
 
 #include <string>
 #include <vector>
@@ -69,6 +69,10 @@ namespace {
     int wantW = 0, wantH = 0;
     // what is being picked, said over the view
     std::string tooltip;
+    // the hand, made once and put on the window while the pointer is over
+    // something that can be clicked
+    GLFWcursor *hand = nullptr;
+    bool handOn = false;
     // and what the last picking answered
     std::vector<GVertex *> vertices;
     std::vector<GEdge *> edges;
@@ -266,6 +270,16 @@ namespace {
     held.tooltip = [](const std::string &text) {
       _it().tooltip = text;
       Gui::drawTooltip(text);
+    };
+    held.cursor = [](Scene::Cursor kind) {
+      standalone &one = _it();
+      if(!one.window) return;
+      bool want = (kind == Scene::Picking);
+      if(want == one.handOn) return;
+      if(want && !one.hand)
+        one.hand = glfwCreateStandardCursor(GLFW_POINTING_HAND_CURSOR);
+      glfwSetCursor(one.window, want ? one.hand : nullptr);
+      one.handOn = want;
     };
     held.current = []() { return _it().view; };
     held.setCurrent = [](sceneView *) {};

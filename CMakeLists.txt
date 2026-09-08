@@ -776,11 +776,6 @@ if(ENABLE_IMGUI OR ENABLE_BROWSER)
     message(SEND_ERROR "Could not find GLFW: disabling the Dear ImGui interface")
   elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/imgui)
     add_subdirectory(contrib/imgui)
-    # the 3D scene, which draws with OpenGL and takes its text from the Dear
-    # ImGui font atlas: it belongs to neither chrome, and an interface that
-    # holds it says so with HAVE_GL_SCENE
-    add_subdirectory(src/scene)
-    set(HAVE_GL_SCENE TRUE)
     include_directories(contrib/imgui contrib/imgui/backends
                         contrib/imgui/misc/cpp)
     if(ENABLE_IMGUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui)
@@ -794,6 +789,17 @@ if(ENABLE_IMGUI OR ENABLE_BROWSER)
   else()
     message(SEND_ERROR "Could not find Dear ImGui in contrib/imgui")
   endif()
+endif()
+
+# The 3D scene: it draws the model with OpenGL and picks in it, and it belongs
+# to no interface -- whichever one is up holds it, through Scene::Host. So it
+# is added once every interface that could hold it is known, and says so with
+# HAVE_GL_SCENE. Two of its files want more than OpenGL and are picked inside:
+# see src/scene/CMakeLists.txt.
+if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER) AND
+   EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
+  add_subdirectory(src/scene)
+  set(HAVE_GL_SCENE TRUE)
 endif()
 
 # HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in

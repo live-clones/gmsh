@@ -8,7 +8,7 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_GL_SCENE)
+#if defined(HAVE_GL_SCENE) && defined(HAVE_GLFW)
 
 #include <string>
 #include "drawContext.h"

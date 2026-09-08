@@ -232,6 +232,9 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     held.tooltip = [](const std::string &text) {
       if(appWindow::available()) appWindow::instance()->setTooltip(text);
     };
+    held.cursor = [](Scene::Cursor kind) {
+      if(kind == Scene::Picking) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+    };
     held.current = []() -> sceneView * {
       return appWindow::available() ? appWindow::instance()->currentPane() :
                                       nullptr;
