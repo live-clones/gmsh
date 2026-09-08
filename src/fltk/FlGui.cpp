@@ -920,38 +920,26 @@ void FlGui::setProgress(const std::string &msg, double val, double min,
   setStatus(msg);
 }
 
-void FlGui::storeCurrentWindowsInfo()
+// Where the windows ended up, for the option file: said rather than written
+// into the options, which are the application's to keep.
+Ui::Backend::Layout FlGui::windowLayout()
 {
-  CTX::instance()->glPosition[0] = graph[0]->getWindow()->x();
-  CTX::instance()->glPosition[1] = graph[0]->getWindow()->y();
-  CTX::instance()->glSize[0] = graph[0]->getGlWidth();
-  CTX::instance()->glSize[1] = graph[0]->getGlHeight();
-  CTX::instance()->msgSize = graph[0]->getMessageHeight() ?
-                               graph[0]->getMessageHeight() :
-                               CTX::instance()->msgSize;
-  CTX::instance()->menuSize[0] = graph[0]->getMenuWidth();
-  if(graph[0]->isMenuDetached()) {
-    CTX::instance()->detachedMenu = 1;
-    CTX::instance()->menuSize[1] = graph[0]->getMenuHeight();
-    CTX::instance()->menuPosition[0] = graph[0]->getMenuPositionX();
-    CTX::instance()->menuPosition[1] = graph[0]->getMenuPositionY();
-  }
-  else
-    CTX::instance()->detachedMenu = 0;
+  Ui::Backend::Layout l;
+  if(graph.empty()) return l;
+  l = graph[0]->layout();
   // the context dialogs share one remembered position, as they always have
   bool placed = false;
-  fltkEachDialog([&placed](dialogFltk *d) {
+  fltkEachDialog([&placed, &l](dialogFltk *d) {
     if(placed || !d->shown()) return;
-    CTX::instance()->ctxPosition[0] = d->window()->x();
-    CTX::instance()->ctxPosition[1] = d->window()->y();
+    l.dialogX = d->window()->x();
+    l.dialogY = d->window()->y();
     placed = true;
   });
 #if defined(HAVE_3M)
   storeWindowPosition3M();
 #endif
-
-  fileChooserGetPosition(&CTX::instance()->fileChooserPosition[0],
-                         &CTX::instance()->fileChooserPosition[1]);
+  fileChooserGetPosition(&l.chooserX, &l.chooserY);
+  return l;
 }
 
 // Callbacks

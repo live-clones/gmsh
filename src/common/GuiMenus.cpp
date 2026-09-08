@@ -989,7 +989,7 @@ std::vector<KeyBinding> keys()
   // Escape.
   k.push_back(key(Shortcut(KeyEscape, ModAny), []() {
     if(!Gui::sceneKey('q'))
-      Gui::setMouseSelection(!CTX::instance()->mouseSelection);
+      pickWithMouse(!CTX::instance()->mouseSelection);
   }));
 
   // --- reload and mesh, on the digits

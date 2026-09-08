@@ -342,6 +342,32 @@ void sceneView::_hover()
   }
 }
 
+void Scene::orientViews(const std::vector<sceneView *> &views,
+                        const std::string &what, bool reverse, bool sync)
+{
+  for(std::size_t i = 0; i < views.size(); i++) {
+    drawContext *ctx = views[i]->getDrawContext();
+    if(!ctx) continue;
+    if(sync && (what == "r" || what == "1:1")) {
+      if(i == 0) continue;
+      drawContext *first = views[0]->getDrawContext();
+      if(!first) continue;
+      if(what == "r")
+        ctx->setQuaternion(first->quaternion[0], first->quaternion[1],
+                           first->quaternion[2], first->quaternion[3]);
+      else if(!CTX::instance()->camera) {
+        for(int j = 0; j < 3; j++) {
+          ctx->t[j] = first->t[j];
+          ctx->s[j] = first->s[j];
+        }
+      }
+      continue;
+    }
+    viewSetOrientation(ctx, what, reverse);
+  }
+  drawContext::global()->draw();
+}
+
 bool sceneView::key(char what)
 {
   if(what == 'q' && _lassoMode) {

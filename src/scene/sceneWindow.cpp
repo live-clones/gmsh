@@ -550,11 +550,8 @@ namespace WindowScene {
     pumpScene(false);
   }
 
-  void setMouseSelection(bool on)
-  {
-    double v = on ? 1. : 0.;
-    NumberOption(GMSH_SET | GMSH_GUI, "General", 0, "MouseSelection", v, false);
-  }
+  // the option is set by whoever asks; there is no pointer here to put back
+  void setMouseSelection(bool on) {}
 
   // one window that shows what it is told to: nothing plays here
   void toggleAnimation() {}

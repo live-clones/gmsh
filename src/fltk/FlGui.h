@@ -10,6 +10,7 @@
 #include <vector>
 #include <atomic>
 #include "SPoint2.h"
+#include "Backend.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
@@ -107,8 +108,8 @@ public:
   void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets);
   // reset the visibility window
   void resetVisibility();
-  // store current window positions and sizes in CTX
-  void storeCurrentWindowsInfo();
+  // where the windows ended up, for the option file
+  Ui::Backend::Layout windowLayout();
   // get the last opengl window that received an event
   sceneViewFltk *getCurrentOpenglWindow();
   // get the draw context from the last opengl window that received an event

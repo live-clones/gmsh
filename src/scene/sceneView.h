@@ -55,6 +55,19 @@ struct paneInput {
   }
 };
 
+class sceneView;
+
+namespace Scene {
+  // Turn the views to face an axis, or reset them: `what` is "x", "y", "z",
+  // "r" or "1:1" as viewSetOrientation() knows them, `reverse` looks from
+  // the other side, and `sync` makes the views after the first follow it
+  // instead of being turned themselves. Which views are meant -- those of
+  // the window the pointer is over -- is the holder's to say; what is done
+  // to them was the same in both holders.
+  void orientViews(const std::vector<sceneView *> &views,
+                   const std::string &what, bool reverse, bool sync);
+} // namespace Scene
+
 class sceneView {
 private:
   drawContext *_ctx;

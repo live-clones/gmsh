@@ -59,6 +59,7 @@ namespace {
     const Sources &sources() const { return _sources; }
 
     void setHost(const Host &host) override { _host = host; }
+    const Host &host() const { return _host; }
 
     bool create(int argc, char **argv, bool quitShouldExit) override
     {
@@ -397,9 +398,10 @@ namespace {
         FlGui::instance()->graph[0]->fillRecentHistoryMenu();
     }
 
-    void storeWindowLayout() override
+    Ui::Backend::Layout windowLayout() override
     {
-      if(FlGui::available()) FlGui::instance()->storeCurrentWindowsInfo();
+      return FlGui::available() ? FlGui::instance()->windowLayout() :
+                                  Ui::Backend::Layout();
     }
 
     void setSolverButtonMode(const std::string &button0,
@@ -418,7 +420,8 @@ namespace {
 
     void windowAction(const std::string &what) override
     {
-      fltkWindowAction(what);
+      if(!fltkWindowAction(what) && _host.error)
+        _host.error("Unknown window action '" + what + "'");
     }
 
     bool supports(const std::string &what) override
@@ -482,6 +485,13 @@ const Ui::Backend::Sources &fltkSources()
     return empty;
   }();
   return _the ? _the->sources() : none;
+}
+
+// and what it may call back
+const Ui::Backend::Host &fltkHost()
+{
+  static const Ui::Backend::Host none;
+  return _the ? _the->host() : none;
 }
 
 const std::function<Ui::Form()> &fltkFormDescription(Ui::FormRef form)

@@ -113,13 +113,22 @@ namespace Ui {
       // Everything else is measured against it: a field is ten of them wide.
       int fontSize;
       // What a window that has just come up is made of, in pixels: the 3D
-      // scene, the tree beside it, the console under it. An interface that
-      // lays itself out differently -- a dock space, a page in a browser --
-      // is free to read what it needs of this and no more.
-      int sceneWidth, sceneHeight, treeWidth, consoleHeight;
+      // scene, the tree beside it, the console under it, and where the
+      // window itself opens. An interface that lays itself out differently
+      // -- a dock space, a page in a browser -- is free to read what it
+      // needs of this and no more.
+      int sceneX, sceneY, sceneWidth, sceneHeight, treeWidth, consoleHeight;
       int consoleFontSize;
+      // how many views the scene of a new window is cut into
+      int sceneTiles;
+      // the tree as a window of its own: where it opens, how tall it is
+      int treeX, treeY, treeHeight;
       // where a dialog opens, for an interface that places its own windows
       int dialogX, dialogY;
+      // what the scene asks of the windowing system, besides antialiasing
+      bool doubleBuffer, stereo;
+      // the menu bar is the system's rather than a widget, where there is one
+      bool systemMenuBar;
       // a dark interface rather than a light one
       bool darkScheme;
       // ask the windowing system for a multisampled visual
@@ -145,11 +154,37 @@ namespace Ui {
       // interface writes down what it remembers of its own layout.
       std::string homeDir;
       Settings()
-        : fontSize(0), sceneWidth(0), sceneHeight(0), treeWidth(0),
-          consoleHeight(0), consoleFontSize(0), dialogX(0), dialogY(0),
+        : fontSize(0), sceneX(0), sceneY(0), sceneWidth(0), sceneHeight(0),
+          treeWidth(0), consoleHeight(0), consoleFontSize(0), sceneTiles(1),
+          treeX(0), treeY(0), treeHeight(0), dialogX(0), dialogY(0),
+          doubleBuffer(true), stereo(false), systemMenuBar(false),
           darkScheme(false), antialiasing(false), tooltips(true),
           detachedTree(false), inputScrolling(true), nonModalWindows(false),
           refreshRate(0.)
+      {
+      }
+    };
+
+    // Where the windows ended up, which is what the option file remembers
+    // for the next run: the other half of Settings, going the other way.
+    // Each is in pixels and -1 where the interface has nothing to say --
+    // one that keeps its own layout, as the dock space of Dear ImGui does,
+    // says nothing at all. The console keeps the height it had when it was
+    // last shown, even while hidden; so does the tree as a window of its
+    // own, even while it stands beside the scene.
+    struct Layout {
+      int sceneX, sceneY, sceneWidth, sceneHeight;
+      int consoleHeight;
+      int treeWidth;
+      int treeDetached; // 1, 0, or -1 for nothing to say
+      int treeX, treeY, treeHeight;
+      int dialogX, dialogY;
+      int chooserX, chooserY;
+      Layout()
+        : sceneX(-1), sceneY(-1), sceneWidth(-1), sceneHeight(-1),
+          consoleHeight(-1), treeWidth(-1), treeDetached(-1), treeX(-1),
+          treeY(-1), treeHeight(-1), dialogX(-1), dialogY(-1), chooserX(-1),
+          chooserY(-1)
       {
       }
     };
@@ -368,9 +403,11 @@ namespace Ui {
     // "fullscreen", "front", "attach_detach", "copy": what supports() answers
     // about
     virtual void windowAction(const std::string &what) = 0;
-    // where the windows are and how big they are, for the option file, in the
-    // order the caller wrote them
-    virtual void storeWindowLayout() {}
+    // Where the windows are and how big they are, asked when the option file
+    // is about to be written. Not pure: an interface whose layout is its own
+    // to keep -- Dear ImGui writes its ini -- has nothing to say, and says so
+    // with the empty Layout.
+    virtual Layout windowLayout() { return Layout(); }
     // dark or light. Redrawing the scene afterwards is not the toolkit's
     // and is done by the caller.
     virtual void applyColorScheme(bool dark) {}
@@ -415,6 +452,13 @@ namespace Ui {
       std::function<void(const std::string &text)> error;
       // the last window is gone: run() is about to return
       std::function<void()> quitting;
+      // Where a window stood, said as the interface is about to forget it:
+      // the tree is folded away or put back beside the scene, the console
+      // is hidden. What the option file remembers of the layout used to be
+      // written by the interface into the options themselves; this is the
+      // same thing said to whoever keeps them. Only the fields that are
+      // about to be lost are filled, the rest is -1.
+      std::function<void(const Layout &layout)> layoutChanged;
       // One turn of the loop has come round: whatever the application has to
       // do on its own, it does here. A chrome that has no 3D scene of its own
       // is what this is for -- the scene is in a window of its own and has to

@@ -748,3 +748,46 @@ void onelabGroup::addSolver(const std::string &name,
   solverAdd(name, executable, remoteLogin, index);
   rebuildSolverList();
 }
+
+void onelabGroup::_addGmshMenus()
+{
+  _tree->sortorder(FL_TREE_SORT_NONE);
+
+  // the static geometry and mesh items, from the shared description
+  fltkModulesBuild([this](const std::string &path, Fl_Callback *cb, void *data) {
+    _addMenu(path, cb, data);
+  });
+
+  // add dynamic solver module items
+  for(int i = 0; i < 5; i++) {
+    std::string name = opt_solver_name(i, GMSH_GET, "");
+    if(name.size()) _addSolverMenu(i);
+  }
+
+  // add dynamic post-processing module items
+  for(std::size_t i = 0; i < PView::list.size(); i++) _addViewMenu(i);
+
+  _tree->sortorder(FL_TREE_SORT_ASCENDING);
+
+  if(_firstBuild) {
+    _firstBuild = false;
+    Fl_Tree_Item *n0 = _tree->find_item("0Modules");
+    for(Fl_Tree_Item *n = n0; n; n = n->next()) {
+      if(!n->is_root() && n->has_children() && n->depth() > 1) n->close();
+    }
+  }
+}
+
+std::set<std::string> onelabGroup::_getClosedGmshMenus()
+{
+  std::set<std::string> closed;
+  Fl_Tree_Item *n0 = _tree->find_item("0Modules");
+  for(Fl_Tree_Item *n = n0; n; n = n->next()) {
+    if(!n->is_root() && n->has_children() && n->is_close()) {
+      char path[1024];
+      _tree->item_pathname(path, sizeof(path), n);
+      closed.insert(path);
+    }
+  }
+  return closed;
+}

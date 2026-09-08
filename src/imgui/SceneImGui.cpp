@@ -118,11 +118,9 @@ namespace ImGuiScene {
     a->orientPanes(what, reverse, sync);
   }
 
-  void setMouseSelection(bool on)
-  {
-    double v = on ? 1. : 0.;
-    NumberOption(GMSH_SET | GMSH_GUI, "General", 0, "MouseSelection", v, false);
-  }
+  // the option is set by whoever asks; the panes have no pointer of their
+  // own to put back
+  void setMouseSelection(bool on) {}
 
   void toggleAnimation()
   {
@@ -315,29 +313,7 @@ void appWindow::orientPanes(const std::string &what, bool reverse, bool sync)
   if(panes.empty()) {
     if(sceneView *p = currentPane()) panes.push_back(p);
   }
-  for(std::size_t i = 0; i < panes.size(); i++) {
-    drawContext *ctx = panes[i]->getDrawContext();
-    if(!ctx) continue;
-    // Control makes the others follow the first instead of being oriented
-    // themselves, as the bar this reproduces has it
-    if(sync && (what == "r" || what == "1:1")) {
-      if(i == 0) continue;
-      drawContext *first = panes[0]->getDrawContext();
-      if(!first) continue;
-      if(what == "r")
-        ctx->setQuaternion(first->quaternion[0], first->quaternion[1],
-                           first->quaternion[2], first->quaternion[3]);
-      else if(!CTX::instance()->camera) {
-        for(int j = 0; j < 3; j++) {
-          ctx->t[j] = first->t[j];
-          ctx->s[j] = first->s[j];
-        }
-      }
-      continue;
-    }
-    viewSetOrientation(ctx, what, reverse);
-  }
-  drawContext::global()->draw();
+  Scene::orientViews(panes, what, reverse, sync);
 }
 
 // Stepping the animation from the frame loop rather than from a blocking loop
