@@ -67,11 +67,13 @@ public: // these will become protected at some point
 
   // the vertex arrays to draw the mesh of the entity efficiently
   VertexArray *va_lines, *va_triangles;
-  // The section the clipping planes cut out of the 3D elements, kept apart
-  // from the triangles above: it is the only thing about the arrays that a
-  // plane moving changes, and holding it separately means a plane can be
-  // moved without the mesh being built again. Only 3D entities have one.
-  VertexArray *va_caps;
+  // What the clipping planes add to what is drawn, kept apart from the arrays
+  // above: the section they cut out of the 3D elements when capping is on, or
+  // the elements they cut drawn whole when whole element mode is. It is the
+  // only thing about the arrays that a plane moving changes, so holding it
+  // separately means a plane can be moved without the mesh being built again.
+  // Only 3D entities have them.
+  VertexArray *va_clip_lines, *va_clip_triangles;
 
   // true if the vertex arrays have to be rebuilt, and where the entity sits
   // with respect to the clipping planes when they were last built (0: unknown,
@@ -219,8 +221,8 @@ public:
 
   // delete the geometry vertex arrays, used to to draw the geometry efficiently
   virtual void deleteGeometryVertexArrays() {}
-  // throw away only the section the planes cut, which is rebuilt on its own
-  void deleteCapVertexArrays();
+  // throw away only what the planes add, which is rebuilt on its own
+  void deleteClipVertexArrays();
 
   // spatial dimension of the entity
   virtual int dim() const { return -1; }

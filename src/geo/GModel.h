@@ -744,8 +744,8 @@ public:
   // Build the section the clipping planes cut out of the 3D elements. It is
   // kept apart from the mesh arrays so that moving a plane rebuilds only
   // this, which is a slice through the model rather than the whole of it.
-  bool fillCapVertexArrays();
-  void invalidateCapVertexArrays();
+  bool fillClipVertexArrays();
+  void invalidateClipVertexArrays();
 
   // reclassify a surface mesh, using an angle threshold to tag edges and faces
   void classifySurfaces(double angleThreshold, bool includeBoundary,

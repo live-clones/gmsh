@@ -819,6 +819,46 @@ public:
 // virtual call and a few cold cache lines per entity for no pixels at all --
 // which, on a mesh split into a few hundred thousand partition entities, is
 // most of the frame. Decide once, not inside every functor.
+// Turn the clipping planes the mesh asks for on or off. What whole element mode
+// holds apart is drawn with them off, so that the elements a plane cuts come
+// out entire.
+static void setMeshClipPlanes(bool on)
+{
+  for(int i = 0; i < 6; i++)
+    gmshClipPlaneOn(i, on && (CTX::instance()->mesh.clip & (1 << i)));
+}
+
+// Draw what the clipping planes add for these entities: the elements they cut,
+// drawn whole with the planes off so that they come out entire. Nothing to do
+// in capping mode for anything but the volumes, and nothing at all when the
+// planes are not being applied to this dimension.
+template <class IT>
+static void drawClipArrays(drawContext *ctx, IT first, IT last, int dim)
+{
+  if(!CTX::instance()->clipWholeElements) return;
+  bool any = false;
+  for(IT it = first; it != last; it++)
+    if((*it)->va_clip_lines || (*it)->va_clip_triangles) any = true;
+  if(!any) return;
+  setMeshClipPlanes(false);
+  for(IT it = first; it != last; it++) {
+    GEntity *e = *it;
+    if(!e->getVisibility()) continue;
+    if(!e->va_clip_lines && !e->va_clip_triangles) continue;
+    if(ctx->render_mode == drawContext::GMSH_SELECT)
+      ctx->setPickColor(dim, e->tag());
+    drawArrays(ctx, e, e->va_clip_lines, GL_LINES,
+               CTX::instance()->mesh.light &&
+                 (CTX::instance()->mesh.lightLines > 1),
+               CTX::instance()->mesh.surfaceFaces,
+               CTX::instance()->color.mesh.line);
+    drawArrays(ctx, e, e->va_clip_triangles, GL_TRIANGLES,
+               CTX::instance()->mesh.light);
+    if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
+  }
+  setMeshClipPlanes(true);
+}
+
 static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
                               bool mergedTriangles)
 {
@@ -876,13 +916,10 @@ void drawContext::drawMesh()
   gl2psLineWidth((float)(CTX::instance()->mesh.lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
 
-  if(!CTX::instance()->clipWholeElements) {
-    for(int i = 0; i < 6; i++)
-      if(CTX::instance()->mesh.clip & (1 << i))
-        gmshClipPlaneOn(i, true);
-      else
-        gmshClipPlaneOn(i, false);
-  }
+  // OpenGL applies the planes now, in both modes: what whole element mode used
+  // to leave out of the arrays it gets back from va_clip_*, drawn with the
+  // planes off. Nothing here depends on where the planes are any more.
+  setMeshClipPlanes(true);
 
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
@@ -890,8 +927,8 @@ void drawContext::drawMesh()
     if(changed) Msg::Debug("mesh vertex arrays have changed");
     // the section the planes cut is held apart from the mesh and built on its
     // own: a plane moving costs this and nothing else
-    if(changed) m->invalidateCapVertexArrays();
-    m->fillCapVertexArrays();
+    if(changed) m->invalidateClipVertexArrays();
+    m->fillClipVertexArrays();
 #if defined(__APPLE__)
     // FIXME: resetting texture pile fixes bug with recent macOS versions
     if(changed) global()->resetFontTextures();
@@ -925,6 +962,12 @@ void drawContext::drawMesh()
         }
       }
       bool merge = !inPickColorMode();
+      CTX *c = CTX::instance();
+      // Only the volume is meant to be clipped: the curves and the surfaces are
+      // then drawn with the planes off and left whole, as they were when the
+      // arrays themselves left the clipped elements out.
+      bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
+      if(volumeOnly) setMeshClipPlanes(false);
 
       if(status >= 0 && needPerEntityPass(this, 0, false, false))
         std::for_each(m->firstVertex(), m->lastVertex(),
@@ -935,6 +978,7 @@ void drawContext::drawMesh()
         if(needPerEntityPass(this, 1, _mergedLines, false))
           std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
         _mergedLines = false;
+        drawClipArrays(this, m->firstEdge(), m->lastEdge(), 1);
       }
       if(status >= 2) {
         if(merge) {
@@ -949,29 +993,44 @@ void drawContext::drawMesh()
         if(needPerEntityPass(this, 2, _mergedLines, _mergedTriangles))
           std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
         _mergedLines = _mergedTriangles = false;
+        drawClipArrays(this, m->firstFace(), m->lastFace(), 2);
       }
+      if(volumeOnly) setMeshClipPlanes(true);
+      // With this on, the only elements drawn are the ones a plane cuts, and
+      // those are exactly what the clip arrays hold: the mesh itself is left
+      // out altogether.
+      bool cutOnly = c->clipWholeElements && c->clipOnlyDrawIntersectingVolume &&
+                     c->mesh.clip;
       if(status >= 3) {
-        if(merge) {
+        if(merge && !cutOnly) {
           drawMergedArray(this, ma.lines[3], GL_LINES,
                           CTX::instance()->mesh.light &&
                             (CTX::instance()->mesh.lightLines > 1));
           drawMergedArray(this, ma.triangles[3], GL_TRIANGLES,
                           CTX::instance()->mesh.light);
         }
-        _mergedLines = (merge && ma.lines[3]);
-        _mergedTriangles = (merge && ma.triangles[3]);
-        // The section the clipping planes cut is held apart from the mesh and
-        // is not merged with it, so it is drawn here rather than left to the
-        // per entity pass, which the merged arrays may well make unnecessary.
-        for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
-          GRegion *r = *it;
-          if(!r->va_caps || !r->getVisibility()) continue;
-          if(render_mode == GMSH_SELECT) setPickColor(3, r->tag());
-          drawArrays(this, r, r->va_caps, GL_TRIANGLES,
-                     CTX::instance()->mesh.light);
-          if(render_mode == GMSH_SELECT) unsetPickColor();
+        _mergedLines = (merge && !cutOnly && ma.lines[3]);
+        _mergedTriangles = (merge && !cutOnly && ma.triangles[3]);
+        // What the clipping planes add is held apart from the mesh and is not
+        // merged with it, so it is drawn here rather than left to the per
+        // entity pass, which the merged arrays may well make unnecessary. In
+        // capping mode it is the section they cut, which is clipped like
+        // everything else; in whole element mode it is the elements they cut,
+        // drawn whole with the planes off.
+        if(CTX::instance()->clipWholeElements) {
+          drawClipArrays(this, m->firstRegion(), m->lastRegion(), 3);
         }
-        if(needPerEntityPass(this, 3, _mergedLines, _mergedTriangles))
+        else {
+          for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
+            GRegion *r = *it;
+            if(!r->va_clip_triangles || !r->getVisibility()) continue;
+            if(render_mode == GMSH_SELECT) setPickColor(3, r->tag());
+            drawArrays(this, r, r->va_clip_triangles, GL_TRIANGLES,
+                       CTX::instance()->mesh.light);
+            if(render_mode == GMSH_SELECT) unsetPickColor();
+          }
+        }
+        if(!cutOnly && needPerEntityPass(this, 3, _mergedLines, _mergedTriangles))
           std::for_each(m->firstRegion(), m->lastRegion(),
                         drawMeshGRegion(this));
         _mergedLines = _mergedTriangles = false;
