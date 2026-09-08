@@ -26,13 +26,11 @@ typedef unsigned long intptr_t;
 #include "mainWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
-#include "GuiActions.h"
 #include "Gui.h"
 #include "menuFltk.h"
 #include "sceneViewFltk.h"
 #include "onelabGroup.h"
 #include "messageBrowser.h"
-#include "fileDialogs.h"
 #include "extraDialogs.h"
 #include "OS.h"
 
@@ -83,9 +81,10 @@ static void file_window_cb(Fl_Widget *w, void *data)
 
 
 
+// the close button of the window: what follows is the application's
 void file_quit_cb(Fl_Widget *w, void *data)
 {
-  projectQuit();
+  if(fltkHost().quitting) fltkHost().quitting();
 }
 
 void help_about_cb(Fl_Widget *w, void *data)
@@ -165,32 +164,6 @@ void fltkSetMouseSelection(bool on)
     FlGui::instance()->graph[i]->refreshStatusButtons();
 }
 
-// While the animation plays, the FLTK interface runs a loop of its own and
-// pumps the events itself; Gui::toggleAnimation() starts and stops it.
-static bool stop_anim = false;
-static bool playing_anim = false;
-
-bool fltkAnimating() { return playing_anim; }
-
-void fltkToggleAnimation()
-{
-  if(playing_anim) {
-    stop_anim = true;
-    return;
-  }
-  playing_anim = true;
-  stop_anim = false;
-  while(1) {
-    if(!FlGui::available()) return;
-    if(stop_anim) break;
-    animationTick();
-    FlGui::check();
-  }
-  playing_anim = false;
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-    FlGui::instance()->graph[i]->refreshStatusButtons();
-}
-
 static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 {
   std::vector<graphicWindow *> graph2;
@@ -238,8 +211,7 @@ static void message_menu_clear_cb(Fl_Widget *w, void *data)
 
 static void message_menu_save_cb(Fl_Widget *w, void *data)
 {
-  if(fileChooser(FILE_CHOOSER_CREATE, "Save Messages", ""))
-    messagesSave(fileChooserGetName(1));
+  if(fltkSources().saveMessages) fltkSources().saveMessages();
 }
 
 static void message_browser_cb(Fl_Widget *w, void *data)

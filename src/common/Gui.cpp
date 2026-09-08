@@ -51,6 +51,11 @@ namespace Gui {
   namespace {
 
     Ui::Backend *_backend = nullptr;
+    // The one that was taken down, kept until the next is made. destroy()
+    // is reached from inside the backend's own loop -- the close button of
+    // its window -- and that loop has to unwind through the object before
+    // it may go.
+    Ui::Backend *_retired = nullptr;
     bool _quitShouldExit = true;
     bool _finishedProcessingCommandLine = false;
     std::string _openedThroughMacFinder;
@@ -75,6 +80,8 @@ namespace Gui {
     // asking for an interface that is not there is a mistake, not a wish.
     std::string want = CTX::instance()->guiToolkit;
     if(want.empty() && getenv("GMSH_GUI")) want = getenv("GMSH_GUI");
+    delete _retired;
+    _retired = nullptr;
     Ui::Backend *made = Ui::make(want);
     // and the scene that goes with it: the one offered under that name, or
     // the one in a window of its own for a chrome that draws none
@@ -115,7 +122,7 @@ namespace Gui {
     };
     // the last window is gone: the interface was the process, so the process
     // goes with it
-    host.quitting = []() { Msg::Exit(0); };
+    host.quitting = []() { projectQuit(); };
     // what the application does when the loop comes round: draw the scene, if
     // it is in a window of its own
     host.tick = []() { pumpScene(true); };
@@ -178,6 +185,7 @@ namespace Gui {
     sources.keys = []() { return Menu::keys(); };
     sources.tree = Modules::tree();
     sources.barButtons = []() { return StatusBar::bar(); };
+    sources.saveMessages = []() { messagesSaveAs(); };
     sources.barMessage = []() { return StatusBar::message(); };
     sources.barTooltip = []() { return StatusBar::messageTooltip(); };
     sources.barPressed = []() { StatusBar::messagePressed(); };
@@ -216,9 +224,13 @@ namespace Gui {
     if(!_backend) return;
     // the forms go with the interface that handed them out
     Dialog::forgetForms();
-    _backend->destroy();
-    delete _backend;
+    Ui::Backend *was = _backend;
+    // nothing reaches it from here on, and it is deleted once its loop has
+    // unwound: see _retired
     _backend = nullptr;
+    was->destroy();
+    delete _retired;
+    _retired = was;
   }
 
   int run(const std::string &optionFileName)

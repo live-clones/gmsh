@@ -51,7 +51,6 @@ private:
   static std::atomic<int> _locked;
 
   GLFWwindow *_window;
-  bool _quitShouldExit;
   // guards against re-entering frame(), which can happen because check() is
   // called from deep inside the mesher
   bool _inFrame;
@@ -346,7 +345,6 @@ public:
   void beginCapture(int &width, int &height, bool composite = false);
   void endCapture();
 
-  bool quitShouldExit() const { return _quitShouldExit; }
 
   // scale factor currently applied to the interface (1 on a standard display,
   // 2 on a "retina" one, 1.5 with a 150% desktop scaling, ...)

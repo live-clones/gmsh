@@ -152,8 +152,6 @@ void fltkOrientViews(const std::string &what, bool reverse, bool sync);
 void fltkSetMouseSelection(bool on);
 // the scenes of the window holding a view, or the view alone
 std::vector<sceneView *> fltkViewsBeside(sceneViewFltk *view);
-bool fltkAnimating();
-void fltkToggleAnimation();
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
 

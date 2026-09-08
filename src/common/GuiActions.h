@@ -59,6 +59,9 @@ void fileRemote(const std::string &what);
 // lines through Gui::messageLines(); everything else about it -- opening the
 // file, saying that it was written -- is the same whichever interface is up.
 void messagesSave(const std::string &fileName);
+// the same after asking where, which is what the save button of a console
+// runs
+void messagesSaveAs();
 
 // reset every option to its default value, after confirmation
 void optionsRestoreDefaults();
