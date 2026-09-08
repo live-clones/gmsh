@@ -61,6 +61,8 @@ namespace glShader {
   void setLightOff(int i);
   // the specular colour and exponent of the material
   void setMaterial(double shine, double shineExponent);
+  // the lighting model: 0 the fixed function one, 1 studio
+  void setShading(int model);
   // is what is drawn next lit, and are its back faces lit as well?
   void setLighting(bool on, bool twoSide);
   // clip plane i, in eye coordinates; setClipPlaneOff() stops clipping with it

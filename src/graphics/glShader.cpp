@@ -156,6 +156,8 @@ uniform vec3 uLightSpecular[6];
 uniform bool uLightOn[6];
 uniform vec3 uSpecular;
 uniform float uShininess;
+// 0: the fixed function model below; 1: studio
+uniform int uShading;
 // 0: draw on the window; 1: sum into the transparency buffers
 uniform int uOitPass;
 
@@ -225,6 +227,25 @@ void main()
   vec3 n = normalize(vNormal);
   // GL_LIGHT_MODEL_TWO_SIDE: a back face is lit with its normal flipped
   if(uTwoSide && !gl_FrontFacing) n = -n;
+
+  if(uShading == 1) {
+    // studio: the light is computed in linear space, from a hemisphere
+    // ambient (sky above, darker ground below, in eye space) and a wrapped
+    // diffuse key light in the direction of light 0, with no specular; the
+    // result goes back to sRGB
+    vec3 base = pow(vColor.rgb, vec3(2.2));
+    vec3 l = vec3(0.0, 0.0, 1.0), key = vec3(1.0);
+    if(uLightOn[0]) {
+      l = (uLightPosition[0].w == 0.0) ? normalize(uLightPosition[0].xyz) :
+                                         normalize(uLightPosition[0].xyz - vEye);
+      key = uLightDiffuse[0];
+    }
+    vec3 ambient = mix(vec3(0.25), vec3(0.55), 0.5 + 0.5 * n.y);
+    float d = clamp((dot(n, l) + 0.5) / 1.5, 0.0, 1.0);
+    vec3 c = base * (ambient + 0.6 * key * d * d);
+    emit(vec4(pow(min(c, vec3(1.0)), vec3(1.0 / 2.2)), alpha));
+    return;
+  }
 
   // GL_COLOR_MATERIAL on GL_AMBIENT_AND_DIFFUSE, and the default global
   // ambient of 0.2
@@ -304,7 +325,7 @@ void main()
     struct {
       GLint modelview, projection, normalMatrix, colorArray, color, pointSize;
       GLint alphaScale;
-      GLint lighting, twoSide, specular, shininess;
+      GLint lighting, twoSide, specular, shininess, shading;
       GLint instanced, taper;
       GLint textured, texture;
       GLint stipple, stippleFactor, stipplePattern;
@@ -428,6 +449,7 @@ void main()
       _u.twoSide = glApi::GetUniformLocation(p, "uTwoSide");
       _u.specular = glApi::GetUniformLocation(p, "uSpecular");
       _u.shininess = glApi::GetUniformLocation(p, "uShininess");
+      _u.shading = glApi::GetUniformLocation(p, "uShading");
       _u.instanced = glApi::GetUniformLocation(p, "uInstanced");
       _u.taper = glApi::GetUniformLocation(p, "uTaper");
       _u.textured = glApi::GetUniformLocation(p, "uTextured");
@@ -562,6 +584,12 @@ void main()
     glApi::Uniform3fv(_u.specular, 1, s);
     // the fixed function exponent is in [0, 128]
     glApi::Uniform1f(_u.shininess, (float)shineExponent);
+  }
+
+  void setShading(int model)
+  {
+    if(!ensure()) return;
+    glApi::Uniform1i(_u.shading, model);
   }
 
   void setLighting(bool on, bool twoSide)
