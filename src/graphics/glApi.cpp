@@ -83,6 +83,7 @@ namespace glApi {
                                   GLint, GLint, GLbitfield, GLenum) = nullptr;
 
   void(APIENTRY *ActiveTexture)(GLenum) = nullptr;
+  const GLubyte *(APIENTRY *GetStringi)(GLenum, GLuint) = nullptr;
   void(APIENTRY *BlendFuncSeparate)(GLenum, GLenum, GLenum, GLenum) = nullptr;
 
   void(APIENTRY *BlendFunci)(GLuint, GLenum, GLenum) = nullptr;
@@ -131,8 +132,18 @@ namespace glApi {
 
   static bool haveExtension(const char *name)
   {
-    // the core profile dropped the one string that listed them all, and hands
-    // them out one at a time instead
+    // OpenGL 3 hands the extensions out one at a time, and a core profile only
+    // that way: the one string that listed them all is gone there, and asking
+    // for it is an error
+    if(_major >= 3 && GetStringi) {
+      GLint n = 0;
+      glGetIntegerv(GL_NUM_EXTENSIONS, &n);
+      for(GLint i = 0; i < n; i++) {
+        const char *e = (const char *)GetStringi(GL_EXTENSIONS, (GLuint)i);
+        if(e && !strcmp(e, name)) return true;
+      }
+      return false;
+    }
     const char *all = (const char *)glGetString(GL_EXTENSIONS);
     if(all) {
       std::size_t n = strlen(name);
@@ -257,6 +268,8 @@ namespace glApi {
                         GLbitfield, GLenum))address("glBlitFramebuffer");
 
     ActiveTexture = (void(APIENTRY *)(GLenum))address("glActiveTexture");
+    GetStringi =
+      (const GLubyte *(APIENTRY *)(GLenum, GLuint))address("glGetStringi");
     BlendFuncSeparate = (void(APIENTRY *)(GLenum, GLenum, GLenum, GLenum))
       address("glBlendFuncSeparate");
 
@@ -370,6 +383,7 @@ namespace glApi {
     BlitFramebuffer = nullptr;
 
     ActiveTexture = nullptr;
+    GetStringi = nullptr;
     BlendFuncSeparate = nullptr;
 
     BlendFunci = nullptr;

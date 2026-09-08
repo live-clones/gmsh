@@ -239,6 +239,10 @@ namespace glApi {
   // textures (OpenGL 1.3)
   extern void(APIENTRY *ActiveTexture)(GLenum texture);
 
+  // the extensions one at a time (OpenGL 3.0): a core profile has no other way
+  // of listing them
+  extern const GLubyte *(APIENTRY *GetStringi)(GLenum name, GLuint index);
+
   // separate blending for colour and alpha (OpenGL 1.4): what keeps the
   // window's own alpha sensible when the transparency buffers are put on it
   extern void(APIENTRY *BlendFuncSeparate)(GLenum srcRGB, GLenum dstRGB,
