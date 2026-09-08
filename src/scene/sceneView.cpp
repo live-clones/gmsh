@@ -14,6 +14,7 @@
 
 #include "sceneView.h"
 #include "sceneHost.h"
+#include "Gui.h"
 #include "GuiActions.h"
 #include "GuiDialogs.h"
 #include "GmshMessage.h"
@@ -369,6 +370,8 @@ void sceneView::handleMouse(const paneInput &in)
       _prev.recenter(_ctx);
     }
     if(Scene::host().redraw) Scene::host().redraw();
+    // the window that says where the view is looking from has to follow it
+    Gui::refreshForm(Dialog::manipulator());
   }
 
   // --- placing a new entity: the pointer drives its coordinates, unless the
@@ -563,6 +566,7 @@ void sceneView::handleMouse(const paneInput &in)
     CTX::instance()->post.draw = 0;
   }
   if(Scene::host().redraw) Scene::host().redraw();
+  Gui::refreshForm(Dialog::manipulator());
   _prev.set(_ctx, (int)lx, (int)ly);
 }
 

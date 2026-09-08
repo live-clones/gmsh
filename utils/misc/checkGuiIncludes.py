@@ -45,7 +45,7 @@ ALWAYS = {"OS.h", "GmshConfig.h"}
 SCENE = {
     "src/imgui/SceneImGui.cpp",
     "src/fltk/SceneFltk.cpp",
-    "src/fltk/openglWindow.cpp", "src/fltk/openglWindow.h",
+    "src/fltk/sceneViewFltk.cpp", "src/fltk/sceneViewFltk.h",
     "src/fltk/drawContextFltk.h",
     "src/fltk/drawContextFltkCairo.cpp", "src/fltk/drawContextFltkCairo.h",
     "src/fltk/drawContextFltkStringTexture.cpp",
@@ -77,8 +77,9 @@ TOLERATED = {
         "Gui.h", "GuiActions.h", "GuiDialogs.h", "GuiStatus.h",
         "GmshDefines.h", "GmshMessage.h", "GModel.h", "MElement.h", "PView.h",
         "Plugin.h", "PluginManager.h", "OpenFile.h", "Options.h",
-        "CommandLine.h", "Context.h", "StringUtils.h", "gl2ps.h",
-        "gmshPopplerWrapper.h", "PixelBuffer.h", "Field.h", "3M.h"},
+        "CommandLine.h", "Context.h", "GamePad.h", "StringUtils.h",
+        "gl2ps.h", "gmshPopplerWrapper.h", "PixelBuffer.h", "Field.h",
+        "3M.h"},
     "src/fltk/FlGui.h": {"SPoint2.h"},
     "src/fltk/extraDialogs.cpp": {
         "GmshDefines.h", "OpenFile.h", "CreateFile.h", "Options.h",

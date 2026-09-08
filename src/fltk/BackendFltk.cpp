@@ -30,7 +30,7 @@
 #include "dialogFltk.h"
 #include "onelabGroup.h"
 #include "menuFltk.h"
-#include "openglWindow.h"
+#include "sceneViewFltk.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
 #if defined(HAVE_TOUCHBAR)
@@ -406,7 +406,7 @@ namespace {
     void drawTooltip(const std::string &text) override
     {
       if(!FlGui::available()) return;
-      if(openglWindow *w = FlGui::instance()->getCurrentOpenglWindow())
+      if(sceneViewFltk *w = FlGui::instance()->getCurrentOpenglWindow())
         w->drawTooltip(text);
     }
 

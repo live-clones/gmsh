@@ -58,7 +58,7 @@ public:
 #endif
 #include <FL/Fl_Menu_Bar.H>
 
-class openglWindow;
+class sceneViewFltk;
 class onelabGroup;
 class messageBrowser;
 
@@ -82,7 +82,7 @@ private:
   std::vector<std::string> _messages;
 
 public:
-  std::vector<openglWindow *> gl;
+  std::vector<sceneViewFltk *> gl;
 
 public:
   graphicWindow(bool main = true, int numTiles = 1, bool detachedMenu = false);
@@ -116,7 +116,7 @@ public:
   void attachMenu();
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
-  bool split(openglWindow *g, char how, double ratio);
+  bool split(sceneViewFltk *g, char how, double ratio);
   // bring the buttons of the status bar up to date: what is greyed out, what
   // is pressed, what is worth looking at
   void refreshStatusButtons();

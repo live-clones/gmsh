@@ -38,6 +38,7 @@
 #include "Options.h"
 #include "CommandLine.h"
 #include "Context.h"
+#include "GamePad.h"
 #include "StringUtils.h"
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
@@ -562,6 +563,11 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // don't move input dialogs to follow mouse
   fl_message_hotspot(0);
 
+  // the scene draws itself in those windows and asks them for what a window
+  // has and it has not, so it is told who they are before the first one is
+  // made
+  fltkInstallSceneHost();
+
   // create main graphic window (note that we create all the windows even if
   // some are not displayed, since the shortcuts should be valid even for hidden
   // windows, and we don't want to test for widget existence every time)
@@ -600,7 +606,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   setGraphicTitle(GModel::current()->getFileName());
 
   // create window that will be used for fullscreen display
-  fullscreen = new openglWindow(100, 100, 100, 100);
+  fullscreen = new sceneViewFltk(100, 100, 100, 100);
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
   if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
   if(CTX::instance()->stereo) {
@@ -756,31 +762,31 @@ int FlGui::testGlobalShortcuts(int event)
   else if(Fl::test_shortcut('e')) {
     for(std::size_t i = 0; i < graph.size(); i++)
       for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->endSelection = 1;
+        graph[i]->gl[j]->scene()->endSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('u')) {
     for(std::size_t i = 0; i < graph.size(); i++)
       for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->undoSelection = 1;
+        graph[i]->gl[j]->scene()->undoSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('i')) {
     for(std::size_t i = 0; i < graph.size(); i++)
       for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->invertSelection = 1;
+        graph[i]->gl[j]->scene()->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('q')) {
     for(std::size_t i = 0; i < graph.size(); i++)
       for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->quitSelection = 1;
+        graph[i]->gl[j]->scene()->quitSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('-')) {
     for(std::size_t i = 0; i < graph.size(); i++)
       for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->invertSelection = 1;
+        graph[i]->gl[j]->scene()->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('x')) {
@@ -826,11 +832,11 @@ int FlGui::testGlobalShortcuts(int event)
       bool lasso = false;
       for(std::size_t i = 0; i < graph.size(); i++)
         for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-          if(graph[i]->gl[j]->lassoMode) lasso = true;
+          if(graph[i]->gl[j]->scene()->lasso()) lasso = true;
       if(lasso) {
         for(std::size_t i = 0; i < graph.size(); i++)
           for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-            graph[i]->gl[j]->lassoMode = false;
+            graph[i]->gl[j]->scene()->endLasso();
         status = 2;
       }
       else {
@@ -1159,10 +1165,10 @@ void FlGui::resetVisibility()
   statisticsRefresh(false);
 }
 
-openglWindow *FlGui::getCurrentOpenglWindow()
+sceneViewFltk *FlGui::getCurrentOpenglWindow()
 {
-  if(openglWindow::getLastHandled())
-    return openglWindow::getLastHandled();
+  if(sceneViewFltk::lastHandled())
+    return sceneViewFltk::lastHandled();
   else
     return graph[0]->gl[0];
 }
@@ -1173,17 +1179,17 @@ void FlGui::setCurrentOpenglWindow(int which)
   for(std::size_t i = 0; i < graph.size(); i++) {
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++) {
       if(which == ii++) {
-        openglWindow::setLastHandled(graph[i]->gl[j]);
+        sceneViewFltk::setLastHandled(graph[i]->gl[j]);
         return;
       }
     }
   }
-  openglWindow::setLastHandled(graph[0]->gl[0]);
+  sceneViewFltk::setLastHandled(graph[0]->gl[0]);
 }
 
 void FlGui::splitCurrentOpenglWindow(char how, double ratio)
 {
-  openglWindow *g = getCurrentOpenglWindow();
+  sceneViewFltk *g = getCurrentOpenglWindow();
   for(std::size_t i = 0; i < graph.size(); i++) {
     if(graph[i]->split(g, how, ratio)) break;
   }
@@ -1255,7 +1261,7 @@ drawContext *FlGui::getCurrentDrawContext()
 
 char FlGui::selectEntity(int type)
 {
-  return getCurrentOpenglWindow()->selectEntity(
+  return getCurrentOpenglWindow()->scene()->selectEntity(
     type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
     selectedElements, selectedPoints, selectedViews);
 }
@@ -1271,10 +1277,10 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
       graph[i]->getProgress()->redraw();
   }
   else {
-    openglWindow *gl = getCurrentOpenglWindow();
+    sceneViewFltk *gl = getCurrentOpenglWindow();
     std::vector<std::string> m = SplitString(msg, '\n');
-    if(m.size() > 0) gl->screenMessage[0] = m[0];
-    if(m.size() > 1) gl->screenMessage[1] = m[1];
+    if(m.size() > 0) gl->scene()->screenMessage[0] = m[0];
+    if(m.size() > 1) gl->scene()->screenMessage[1] = m[1];
     if(m.size() > 2)
       Msg::Debug("Ignoring extra lines of status message: %s", msg.c_str());
     drawContext::global()->draw();
@@ -1375,7 +1381,7 @@ void window_cb(Fl_Widget *w, void *data)
       while(!FlGui::instance()->fullscreen->valid()) FlGui::wait();
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
-      openglWindow::setLastHandled(FlGui::instance()->fullscreen);
+      sceneViewFltk::setLastHandled(FlGui::instance()->fullscreen);
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->hide();
       drawContext::global()->draw();
@@ -1390,7 +1396,7 @@ void window_cb(Fl_Widget *w, void *data)
         while(!FlGui::instance()->graph[i]->gl[0]->valid()) FlGui::wait();
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
-      openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
+      sceneViewFltk::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
       FlGui::instance()->fullscreen->fullscreen_off();
       FlGui::instance()->fullscreen->hide();
       drawContext::global()->draw();
