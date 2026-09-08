@@ -1171,13 +1171,18 @@ void drawContext::initRenderModel()
   gmshScale(s[0], s[1], s[2]);
   gmshTranslate(t[0], t[1], t[2]);
 
+  // A core profile has none of the fixed function lighting state below, and
+  // each call to it would only raise an error: the shader is handed the same
+  // lights as uniforms instead.
+  bool fixed = !gmshUseShaders();
+
   for(int i = 0; i < 6; i++) {
     if(CTX::instance()->light[i]) {
       GLfloat position[4] = {(GLfloat)CTX::instance()->lightPosition[i][0],
                              (GLfloat)CTX::instance()->lightPosition[i][1],
                              (GLfloat)CTX::instance()->lightPosition[i][2],
                              (GLfloat)CTX::instance()->lightPosition[i][3]};
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
+      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
       // OpenGL puts the position through the modelview matrix that is current
       // here, which is the scale and the translation alone: the lights follow
       // neither the rotation nor the camera. The shader is handed the result
@@ -1196,7 +1201,7 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.ambientLight[i]) /
         255.);
       GLfloat ambient[4] = {r, g, b, 1.0F};
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
+      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
 
       r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.diffuseLight[i]) /
@@ -1208,7 +1213,7 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.diffuseLight[i]) /
         255.);
       GLfloat diffuse[4] = {r, g, b, 1.0F};
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
+      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
 
       r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.specularLight[i]) /
@@ -1220,44 +1225,48 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.specularLight[i]) /
         255.);
       GLfloat specular[4] = {r, g, b, 1.0F};
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
-
-      glEnable((GLenum)(GL_LIGHT0 + i));
+      if(fixed) {
+        glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
+        glEnable((GLenum)(GL_LIGHT0 + i));
+      }
       glShader::setLight(i, eye, ambient, diffuse, specular);
     }
     else {
-      glDisable((GLenum)(GL_LIGHT0 + i));
+      if(fixed) glDisable((GLenum)(GL_LIGHT0 + i));
       glShader::setLightOff(i);
     }
   }
 
   gmshPopMatrix();
 
-  // ambient and diffuse material colors track the current colour automatically
-  glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-  glEnable(GL_COLOR_MATERIAL);
-  // "white"-only specular material reflection color
-  GLfloat spec[4] = {(GLfloat)CTX::instance()->shine,
-                     (GLfloat)CTX::instance()->shine,
-                     (GLfloat)CTX::instance()->shine, 1.0F};
-  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
-  // specular exponent in [0,128] (larger means more "focused"
-  // reflection)
-  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,
-              (GLfloat)CTX::instance()->shineExponent);
+  if(fixed) {
+    // ambient and diffuse material colors track the current colour
+    // automatically
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glEnable(GL_COLOR_MATERIAL);
+    // "white"-only specular material reflection color
+    GLfloat spec[4] = {(GLfloat)CTX::instance()->shine,
+                       (GLfloat)CTX::instance()->shine,
+                       (GLfloat)CTX::instance()->shine, 1.0F};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
+    // specular exponent in [0,128] (larger means more "focused"
+    // reflection)
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,
+                (GLfloat)CTX::instance()->shineExponent);
 
-  glShadeModel(GL_SMOOTH);
+    glShadeModel(GL_SMOOTH);
 
-  // Normalize the normals automatically. Using glEnable(GL_RESCALE_NORMAL)
-  // instead of glEnable(GL_NORMALIZE) (since we initially specify unit normals)
-  // is more efficient, but will only work with isotropic scalings (and we allow
-  // anistotropic scalings in myZoom...). Note that GL_RESCALE_NORMAL is only
-  // available in GL_VERSION_1_2.
+    // Normalize the normals automatically. Using glEnable(GL_RESCALE_NORMAL)
+    // instead of glEnable(GL_NORMALIZE) (since we initially specify unit
+    // normals) is more efficient, but will only work with isotropic scalings
+    // (and we allow anistotropic scalings in myZoom...). Note that
+    // GL_RESCALE_NORMAL is only available in GL_VERSION_1_2.
 #if defined(WIN32)
-  glEnable(GL_NORMALIZE);
+    glEnable(GL_NORMALIZE);
 #else
-  glEnable(GL_RESCALE_NORMAL);
+    glEnable(GL_RESCALE_NORMAL);
 #endif
+  }
 
   // lighting is enabled/disabled for each particular primitive later
   gmshLighting(false);
