@@ -2404,7 +2404,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[21]->maximum(1.);
       if(CTX::instance()->inputScrolling) geo.value[21]->step(0.01);
       geo.value[21]->align(FL_ALIGN_RIGHT);
-      geo.value[21]->when(FL_WHEN_RELEASE);
+      geo.value[21]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
       geo.value[21]->callback(geometry_options_ok_cb);
 
       geo.choice[6] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 4 * BH,
@@ -2916,7 +2916,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[27]->maximum(1.);
       if(CTX::instance()->inputScrolling) mesh.value[27]->step(0.01);
       mesh.value[27]->align(FL_ALIGN_RIGHT);
-      mesh.value[27]->when(FL_WHEN_RELEASE);
+      mesh.value[27]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
       mesh.value[27]->callback(mesh_options_ok_cb);
 
       mesh.choice[11] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 6 * BH,
@@ -3851,7 +3851,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[79]->maximum(1.);
       if(CTX::instance()->inputScrolling) view.value[79]->step(0.01);
       view.value[79]->align(FL_ALIGN_RIGHT);
-      view.value[79]->when(FL_WHEN_RELEASE);
+      view.value[79]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
       view.value[79]->callback(view_options_ok_cb);
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
