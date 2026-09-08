@@ -33,6 +33,7 @@ void PView::_init(int tag)
   _aliasOf = -1;
   _eye = SPoint3(0., 0., 0.);
   va_points = va_lines = va_triangles = va_vectors = va_ellipses = nullptr;
+  va_clip_lines = va_clip_triangles = nullptr;
   normals = nullptr;
 
   for(std::size_t i = 0; i < list.size(); i++) {
@@ -207,6 +208,14 @@ int PView::getGlobalTag() { return _globalTag; }
 
 void PView::setGlobalTag(int tag) { _globalTag = tag; }
 
+void PView::deleteClipVertexArrays()
+{
+  if(va_clip_lines) delete va_clip_lines;
+  va_clip_lines = nullptr;
+  if(va_clip_triangles) delete va_clip_triangles;
+  va_clip_triangles = nullptr;
+}
+
 void PView::deleteVertexArrays()
 {
   if(va_points) delete va_points;
@@ -219,6 +228,7 @@ void PView::deleteVertexArrays()
   va_vectors = nullptr;
   if(va_ellipses) delete va_ellipses;
   va_ellipses = nullptr;
+  deleteClipVertexArrays();
 }
 
 void PView::setOptions(PViewOptions *val)

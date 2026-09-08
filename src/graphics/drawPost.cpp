@@ -827,6 +827,9 @@ public:
 
     drawArrays(_ctx, p, p->va_triangles, GL_TRIANGLES, opt->light);
 
+    // the section the clipping planes cut, which fills the hole they open
+    drawArrays(_ctx, p, p->va_clip_triangles, GL_TRIANGLES, opt->light);
+
     // draw the "pseudo" vertex arrays for vectors
     drawVectorArray(_ctx, p, p->va_vectors);
     drawEllipseArray(_ctx, p, p->va_ellipses);
@@ -909,6 +912,9 @@ void drawContext::drawPost()
 
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     bool changed = PView::list[i]->fillVertexArrays();
+    // the section the planes cut is held apart and built on its own
+    if(changed) PView::list[i]->invalidateClipVertexArrays();
+    PView::list[i]->fillClipVertexArrays();
     if(changed) {
       Msg::Debug("post-pro vertex arrays have changed");
       clearGlyphArrays(PView::list[i]);

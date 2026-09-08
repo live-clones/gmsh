@@ -645,12 +645,15 @@ static void checkClipPlanesChanged()
       changed = true;
     }
   }
-  if(!changed || !capping || whole) return;
-  for(std::size_t i = 0; i < PView::list.size(); i++)
-    if(PView::list[i]->getOptions()->clip) PView::list[i]->setChanged(true);
+  if(!changed) return;
+  // The views no longer have to be built again when a plane moves: the section
+  // it cuts is an array of its own, and nothing else about their arrays
+  // depends on where the planes are.
 #else
-  if(!changed || !capping || whole) return;
+  if(!changed) return;
 #endif
+  // nor does the mesh, in capping mode; entityClipState() says as much, so this
+  // only has anything to do while whole element mode is on
   if(CTX::instance()->mesh.clip && GModel::current())
     GModel::current()->clipPlanesChanged();
 }

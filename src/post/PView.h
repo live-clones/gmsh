@@ -156,9 +156,18 @@ public:
 
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
+  // What the clipping planes add to what is drawn, kept apart from the arrays
+  // above so that moving a plane rebuilds only this: the section they cut when
+  // capping is on, or the elements they cut drawn whole when whole element
+  // mode is. The arrays above never depend on where the planes are.
+  VertexArray *va_clip_lines, *va_clip_triangles;
 
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
+  // build what the clipping planes add; false when nothing had to change
+  bool fillClipVertexArrays();
+  void deleteClipVertexArrays();
+  void invalidateClipVertexArrays();
 
   // fill a vertex array using a raw stream of bytes
   static void fillVertexArray(onelab::localNetworkClient *remote, int length,

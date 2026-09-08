@@ -92,13 +92,19 @@ public:
   std::size_t *nodeIds;
   // the entity it belongs to
   int ent;
+  // What this target is gathering: everything the view draws, or only what the
+  // clipping planes add - the section they cut, or the elements they cut drawn
+  // whole. The last two go into arrays of their own, so that moving a plane
+  // rebuilds only those.
+  enum { COLLECT_ALL, COLLECT_CAPS, COLLECT_CUT };
+  int collect;
   // bounding box of the elements that were drawn
   SBoundingBox3d bbox;
   drawTarget(PView *p)
     : view(p), opt(p->getOptions()), va_points(p->va_points),
       va_lines(p->va_lines), va_triangles(p->va_triangles),
       va_vectors(p->va_vectors), va_ellipses(p->va_ellipses),
-      normals(p->normals), nodeIds(nullptr), ent(0)
+      normals(p->normals), nodeIds(nullptr), ent(0), collect(COLLECT_ALL)
   {
   }
 };
@@ -832,6 +838,9 @@ static void addScalarCap(drawTarget *p, double **xyz, double **val, int i0,
                          int i1, int i2, int i3)
 {
   PViewOptions *opt = p->opt;
+  // the section is an array of its own now: only the pass that gathers it says
+  // so, and the ordinary fill leaves it alone
+  if(p->collect != drawTarget::COLLECT_CAPS) return;
   if(!opt->clip || !CTX::instance()->clipCapping) return;
   // in this mode the elements the plane cuts are removed whole, so there is no
   // hole to fill
@@ -908,6 +917,9 @@ static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
   const int it[4][3] = {{i0, i2, i1}, {i0, i1, i3}, {i0, i3, i2}, {i3, i1, i2}};
 
   if(!pre && opt->boundary <= 0) addScalarCap(p, xyz, val, i0, i1, i2, i3);
+  // every 3D element comes through here, so this is the one place the pass
+  // that gathers the section has to stop at
+  if(p->collect == drawTarget::COLLECT_CAPS) return;
 
   if(opt->boundary > 0 || opt->intervalsType == PViewOptions::Continuous ||
      opt->intervalsType == PViewOptions::Discrete) {
@@ -1641,11 +1653,15 @@ static void addElementRange(drawTarget *p, PViewData *data,
       changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
       int dim = data->getDimension(opt->timeStep, ent, i);
       if(!isElementVisible(opt, dim, numNodes, xyz)) continue;
+      // the pass that gathers the section a plane cuts wants nothing else: no
+      // outlines, and none of the elements that have no section to give
+      if(p->collect == drawTarget::COLLECT_CAPS && dim < 3) continue;
 
       for(int j = 0; j < numNodes; j++)
         p->bbox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
 
-      if(opt->showElement && !data->useGaussPoints())
+      if(opt->showElement && !data->useGaussPoints() &&
+         p->collect == drawTarget::COLLECT_ALL)
         addOutlineElement(p, type, xyz, preprocessNormalsOnly, numNodes);
 
       if(opt->intervalsType != PViewOptions::Numeric) {
@@ -1692,6 +1708,28 @@ static void addElementRange(drawTarget *p, PViewData *data,
   delete[] nodeIds;
   p->nodeIds = nullptr;
 }
+
+// What each view's clip arrays were last built for.
+static std::map<PView *, std::vector<double> > _viewClipToken;
+
+static std::vector<double> viewClipToken(PView *p)
+{
+  CTX *ctx = CTX::instance();
+  PViewOptions *opt = p->getOptions();
+  std::vector<double> t;
+  t.push_back(opt->clip);
+  t.push_back(ctx->clipCapping);
+  t.push_back(ctx->clipWholeElements);
+  t.push_back(ctx->clipOnlyVolume);
+  t.push_back(ctx->clipOnlyDrawIntersectingVolume);
+  t.push_back(opt->intervalsType);
+  t.push_back(opt->timeStep);
+  for(int i = 0; i < 6; i++)
+    for(int j = 0; j < 4; j++) t.push_back(ctx->clipPlane[i][j]);
+  return t;
+}
+
+void PView::invalidateClipVertexArrays() { _viewClipToken.erase(this); }
 
 static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 {
@@ -1947,6 +1985,53 @@ public:
     return true;
   }
 };
+
+bool PView::fillClipVertexArrays()
+{
+  std::vector<double> tok = viewClipToken(this);
+  auto found = _viewClipToken.find(this);
+  if(found != _viewClipToken.end() && found->second == tok) return false;
+  _viewClipToken[this] = tok;
+
+  deleteClipVertexArrays();
+  PViewOptions *opt = getOptions();
+  bool caps = opt->clip && CTX::instance()->clipCapping &&
+              !CTX::instance()->clipWholeElements;
+  if(!caps) return true;
+
+  PViewData *data = getData(true);
+  if(!data || data->getDirty() || !data->getNumTimeSteps()) return true;
+
+  double t1 = TimeOfDay();
+  va_clip_lines = new VertexArray(2, 100);
+  va_clip_triangles = new VertexArray(3, 1000);
+
+  // the same walk the arrays are filled by, stopped at the section
+  std::vector<int> ents;
+  std::vector<std::size_t> start;
+  std::size_t num = 0;
+  int numEnt = data->getNumEntities(opt->timeStep);
+  for(int ent = 0; ent < numEnt; ent++) {
+    if(data->skipEntity(opt->timeStep, ent)) continue;
+    ents.push_back(ent);
+    start.push_back(num);
+    num += data->getNumElements(opt->timeStep, ent);
+  }
+  start.push_back(num);
+  if(num) {
+    drawTarget t(this);
+    t.va_lines = va_clip_lines;
+    t.va_triangles = va_clip_triangles;
+    t.collect = drawTarget::COLLECT_CAPS;
+    addElementRange(&t, data, false, ents, start, 0, num);
+  }
+  va_clip_lines->finalize();
+  va_clip_triangles->finalize();
+  if(va_clip_triangles->getNumVertices())
+    Msg::Debug("View[%d] section: %d vertices in %g s", getIndex(),
+               va_clip_triangles->getNumVertices(), TimeOfDay() - t1);
+  return true;
+}
 
 bool PView::fillVertexArrays()
 {
