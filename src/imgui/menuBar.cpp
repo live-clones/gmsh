@@ -32,7 +32,6 @@
 #include "appWindow.h"
 #include "toolkit.h"
 #include "menuActions.h"
-#include "GuiMenus.h"
 // the one Gmsh header left here: reporting that the window manager refused
 
 // Walk the shared description. An entry is a Dear ImGui menu item of the

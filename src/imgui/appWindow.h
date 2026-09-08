@@ -18,8 +18,6 @@
 #include <vector>
 
 #include "Form.h"
-#include "GuiActions.h"
-#include "GuiMenus.h"
 #include "fileBrowser.h"
 #include "sceneView.h"
 

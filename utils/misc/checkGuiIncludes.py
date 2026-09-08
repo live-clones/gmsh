@@ -59,18 +59,14 @@ SCENE = {
 TOLERATED = {
     # --- Dear ImGui: the settings it reads off CTX and the calls it makes
     # into the facade (1.3), and the export options it writes by hand (1.4c)
-    "src/imgui/BackendImGui.cpp": {"GuiActions.h"},
     # what is left is the draw context of the scene, which this window
     # installs and hands to its panes: the scene, not the interface
     "src/imgui/appWindow.cpp": {"drawContext.h"},
-    "src/imgui/appWindow.h": {"GuiActions.h", "GuiMenus.h"},
     "src/imgui/contextPanels.cpp": {
         "Gui.h", "GuiActions.h", "GmshMessage.h", "GmshDefines.h",
         "drawContext.h"},
     "src/imgui/exportDialog.cpp": {
         "Gui.h", "GmshDefines.h", "Context.h", "Options.h"},
-    "src/imgui/menuBar.cpp": {"GuiMenus.h"},
-    "src/imgui/messageConsole.cpp": {"Gui.h"},
     "src/imgui/shortcuts.cpp": {
         "GuiActions.h", "GuiMenus.h", "Gui.h", "GmshMessage.h"},
     # --- FLTK: an adapter over the interface that was, until 1.4 makes it a
