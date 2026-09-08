@@ -83,11 +83,26 @@ namespace QuadOptimizer {
     // Freitag (1997) Smart Laplacian, adapted to projected surface quads.
     // Strict local minimum-sine improvement; no optimization fallback.
     bool smartLaplacian = false;
+    // V2: only revisit stars touched by connectivity or coordinate changes.
+    bool activeNodalSmoothing = true;
     int finalSmoothingPasses = 2;
-    // Pure mean-plane 3D Winslow sweeps after the nodal smoothing phase.
+    // In V2, each initial/round batch uses these two nodal sweep budgets.
+    // Winslow proposes mean-plane 3D moves with the same quality gate as Smart.
     int finalWinslowPasses = 0;
+    // V2: full-mesh pure Winslow sweeps after topology becomes idle. No
+    // topological operation follows, except the final invalid/CAD quad split.
+    int terminalWinslowPasses = 4;
+    // Enable the V2 valence phase, with local Winslow on replacement points.
+    bool terminalMandatoryCleanup = true;
+    // V2 quality-gated QQ/QT swaps, separate from valence and TT merges.
+    bool qualitySwaps = true;
+    // Final Q -> 2T fallback, after all smoothing and mandatory rewrites.
+    // A negative ratio disables only the CAD-distance trigger. Invalid quads
+    // are always tried; no split is committed without two valid triangles.
+    double finalSplitCadDistanceRatio = .2;
+    bool finalPairCleanup = true; // V2: enable the TT merge phase.
     int postTopologyNeighborSmoothingPasses = 2;
-    int maximumOptimizationPasses = 3;
+    int maximumOptimizationPasses = 3; // V2: -1 runs until a topology-idle pass.
     int maximumAcceptedCavities = 100;
     int maximumTopologyCandidatesPerCavity = 24;
     // Connectivity candidates are screened with a short Winslow solve; only
@@ -159,6 +174,15 @@ namespace QuadOptimizer {
     // engine records this directly; legacy callers can continue using the
     // individual rule counters below.
     std::size_t acceptedCavities = 0;
+    std::size_t acceptedTerminalMandatoryCavities = 0;
+    std::size_t finalInvalidQuadsSplit = 0;
+    std::size_t finalQtSwaps = 0;
+    std::size_t finalTtMerges = 0;
+    std::size_t finalTtCadSwaps = 0;
+    std::size_t initialValenceTwoQuadsSplit = 0;
+    std::size_t finalCadQuadsSplit = 0;
+    std::size_t finalQuadsSplitRejected = 0;
+    std::size_t finalQuadDiagonalQueriesFailed = 0;
     std::size_t cavitiesVisited = 0;
     std::size_t topologyCandidatesOptimized = 0;
     std::size_t rejectedByWinslow = 0;
@@ -309,6 +333,15 @@ namespace QuadOptimizer {
     std::size_t facesWithQuadrangles = 0;
     std::size_t facesSkippedInvalidInputCellComplex = 0;
     std::size_t acceptedCavities = 0;
+    std::size_t acceptedTerminalMandatoryCavities = 0;
+    std::size_t finalInvalidQuadsSplit = 0;
+    std::size_t finalQtSwaps = 0;
+    std::size_t finalTtMerges = 0;
+    std::size_t finalTtCadSwaps = 0;
+    std::size_t initialValenceTwoQuadsSplit = 0;
+    std::size_t finalCadQuadsSplit = 0;
+    std::size_t finalQuadsSplitRejected = 0;
+    std::size_t finalQuadDiagonalQueriesFailed = 0;
     std::size_t acceptedEdgeSwaps = 0;
     std::size_t acceptedDiamonds = 0;
     std::size_t acceptedValenceSixSplits = 0;

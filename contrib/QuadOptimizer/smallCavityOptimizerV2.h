@@ -10,13 +10,10 @@ class GFace;
 
 namespace QuadOptimizer {
 
-  // Compact optimizer used by OptimizeQuadsFast. It owns one persistent
-  // FaceHalfEdge per GFace, evaluates only the modified cavity C, applies the
-  // monotone CleanUp rules first, then quality-improving QQ/QT/TT swaps, and
-  // optionally smooths between rounds. In the staged schedule, nodal
-  // smoothing follows the last topology/context revisit on all regular faces.
-  // Smart Laplacian can be followed by pure mean-plane 3D Winslow sweeps;
-  // both phases are independent of topology budgets and preserve connectivity.
+  // Persistent local rewrite queues and active nodal smoothing. A round
+  // without topology changes ends the alternating loop; bounded global
+  // mean-plane Winslow sweeps and the final physical/CAD quad split follow.
+  // No rewrite or smoothing runs after that split.
   GMSH_API SmallCavityOptimizerResult optimizeSmallQuadCavitiesV2(
     GFace *face,
     const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions());

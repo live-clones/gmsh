@@ -119,11 +119,15 @@ namespace QuadOptimizer {
     Contribution sampleElement(GFace *face, MElement *element,
                                const std::vector<UV> &parameters,
                                TargetAt targetAt,
-                               DistanceCache *cache = nullptr)
+                               DistanceCache *cache = nullptr,
+                               bool triangleInteriorSamples = false)
     {
       Contribution result;
       const std::size_t count = element ? element->getNumPrimaryVertices() : 0;
-      result.requestedSamples = count + 1;
+      // Optional extra samples for comparing the two triangulations of a
+      // patch. Keep the default ledger quadrature unchanged.
+      result.requestedSamples = count + 1 +
+        (triangleInteriorSamples && count == 3 ? 3 : 0);
       if(!face || !element || (count != 3 && count != 4) ||
          parameters.size() != count)
         return result;
@@ -156,6 +160,7 @@ namespace QuadOptimizer {
         UV uv = {{0., 0.}};
         for(std::size_t i = 0; i < count; ++i) {
           const double weight = sample == 0 ? 1. / count :
+            sample > count ? (i == sample - count - 1 ? .6 : .2) :
             (i == sample - 1 || i == sample % count ? .5 : 0.);
           for(int d = 0; d < 3; ++d) linear[d] += weight * vertices[i][d];
           for(int d = 0; d < 2; ++d) uv[d] += weight * parameters[i][d];

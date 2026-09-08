@@ -26,11 +26,17 @@ namespace {
     int schedule = 0;
     int searchMode = 0;
     int searchCandidates = 32;
-    int maximumPasses = 8;
+    int maximumPasses = -1;
     int maximumAccepted = 10000;
     int smoothingPasses = 2;
     int finalWinslowPasses = 0;
+    int terminalWinslowPasses = 4;
     bool smartLaplacian = false;
+    bool activeNodalSmoothing = true;
+    bool terminalMandatory = true;
+    bool qualitySwaps = true;
+    bool finalPairs = true;
+    double finalSplitCadRatio = .2;
     int verbosity = 0;
     double target = 4.;
     double minimum = -1.;
@@ -42,9 +48,9 @@ namespace {
     out << "Usage: gmshQuadV2Strategy --input frozen.msh --output result.msh "
            "--report result.json [--geometry model.geo|model.brep|reference.msh] "
            "[--schedule 0|1|2] [--target-size 4] [--min-edge h/2] "
-           "[--max-edge 2h] [--max-passes 8] [--max-accepted 10000] "
-           "[--smoothing-passes 2] [--smart-laplacian 0|1] "
-           "[--final-winslow-passes 0] [--search-mode 0|1|2|3] "
+           "[--max-edge 2h] [--max-passes -1] [--max-accepted 10000] "
+           "[--smoothing-passes 2] [--smart-laplacian 0|1] [--active-smoothing 0|1] "
+           "[--final-winslow-passes 0] [--terminal-winslow-passes 4] [--valence 0|1] [--swaps 0|1] [--final-split-cad-ratio 0.2] [--merge-tt 0|1] [--search-mode 0|1|2|3] "
            "[--search-candidates 32] [--verbosity 0]\n";
   }
 
@@ -84,7 +90,13 @@ namespace {
       else if(key == "--max-edge") args.maximum = number(value);
       else if(key == "--max-passes") args.maximumPasses = integer(value);
       else if(key == "--max-accepted") args.maximumAccepted = integer(value);
+      else if(key == "--final-split-cad-ratio") args.finalSplitCadRatio = number(value);
+      else if(key == "--final-pairs" || key == "--merge-tt") args.finalPairs = integer(value) != 0;
+      else if(key == "--terminal-mandatory" || key == "--valence") args.terminalMandatory = integer(value) != 0;
+      else if(key == "--active-smoothing") args.activeNodalSmoothing = integer(value) != 0;
+      else if(key == "--swaps") args.qualitySwaps = integer(value) != 0;
       else if(key == "--smart-laplacian") args.smartLaplacian = integer(value) != 0;
+      else if(key == "--terminal-winslow-passes") args.terminalWinslowPasses = integer(value);
       else if(key == "--final-winslow-passes") args.finalWinslowPasses = integer(value);
       else if(key == "--smoothing-passes") args.smoothingPasses = integer(value);
       else if(key == "--verbosity") args.verbosity = integer(value);
@@ -93,8 +105,8 @@ namespace {
     if(args.input.empty() || args.output.empty() || args.report.empty())
       throw std::runtime_error("--input, --output and --report are required");
     if(!(args.target > 0.) || args.schedule < 0 || args.schedule > 2 ||
-       args.maximumPasses < 1 || args.maximumAccepted < 0 ||
-       args.smoothingPasses < 0 || args.finalWinslowPasses < 0 || args.verbosity < 0 ||
+       args.maximumPasses < -1 || args.maximumAccepted < 0 ||
+       args.smoothingPasses < 0 || args.finalWinslowPasses < 0 || args.terminalWinslowPasses < 0 || args.verbosity < 0 ||
        args.searchMode < 0 || args.searchMode > 3 || args.searchCandidates < 1)
       throw std::runtime_error("Invalid schedule, size or optimization budget");
     if(args.minimum < 0.) args.minimum = .5 * args.target;
@@ -320,6 +332,15 @@ namespace {
     FIELD(facesWithQuadrangles);
     FIELD(facesSkippedInvalidInputCellComplex);
     FIELD(acceptedCavities);
+    FIELD(acceptedTerminalMandatoryCavities);
+    FIELD(finalInvalidQuadsSplit);
+    FIELD(finalQtSwaps);
+    FIELD(finalTtMerges);
+    FIELD(finalTtCadSwaps);
+    FIELD(initialValenceTwoQuadsSplit);
+    FIELD(finalCadQuadsSplit);
+    FIELD(finalQuadsSplitRejected);
+    FIELD(finalQuadDiagonalQueriesFailed);
     FIELD(acceptedEdgeSwaps);
     FIELD(acceptedDiamonds);
     FIELD(acceptedValenceSixSplits);
@@ -369,6 +390,12 @@ namespace {
       faceJson.field("success", face.optimizer.success);
       faceJson.field("passes", face.optimizer.passes);
       faceJson.field("acceptedCavities", face.optimizer.acceptedCavities);
+      faceJson.field("acceptedTerminalMandatoryCavities",
+                     face.optimizer.acceptedTerminalMandatoryCavities);
+      faceJson.field("finalInvalidQuadsSplit", face.optimizer.finalInvalidQuadsSplit);
+      faceJson.field("finalCadQuadsSplit", face.optimizer.finalCadQuadsSplit);
+      faceJson.field("finalQuadsSplitRejected", face.optimizer.finalQuadsSplitRejected);
+      faceJson.field("finalQuadDiagonalQueriesFailed", face.optimizer.finalQuadDiagonalQueriesFailed);
       faceJson.field("reachedFixedPoint", face.optimizer.reachedFixedPoint);
       faceJson.field("exhaustedIterationBudget",
                      face.optimizer.exhaustedIterationBudget);
@@ -429,7 +456,13 @@ int main(int argc, char **argv)
     options.maximumAcceptedCavities = args.maximumAccepted;
     options.finalSmoothingPasses = args.smoothingPasses;
     options.smartLaplacian = args.smartLaplacian;
+    options.activeNodalSmoothing = args.activeNodalSmoothing;
     options.finalWinslowPasses = args.finalWinslowPasses;
+    options.terminalWinslowPasses = args.terminalWinslowPasses;
+    options.terminalMandatoryCleanup = args.terminalMandatory;
+    options.qualitySwaps = args.qualitySwaps;
+    options.finalSplitCadDistanceRatio = args.finalSplitCadRatio;
+    options.finalPairCleanup = args.finalPairs;
     options.verbose = std::max(0, args.verbosity - 4);
     options.v2Schedule = args.schedule;
     options.v2SearchMode = args.searchMode;
@@ -486,7 +519,13 @@ int main(int argc, char **argv)
         configuration.field("maximumAcceptedCavities", args.maximumAccepted);
         configuration.field("finalSmoothingPasses", args.smoothingPasses);
         configuration.field("smartLaplacian", args.smartLaplacian);
+        configuration.field("activeNodalSmoothing", args.activeNodalSmoothing);
         configuration.field("finalWinslowPasses", args.finalWinslowPasses);
+        configuration.field("terminalWinslowPasses", args.terminalWinslowPasses);
+        configuration.field("terminalMandatoryCleanup", args.terminalMandatory);
+        configuration.field("qualitySwaps", args.qualitySwaps);
+        configuration.field("finalSplitCadDistanceRatio", args.finalSplitCadRatio);
+        configuration.field("finalPairCleanup", args.finalPairs);
       }
       json.key("timingsSeconds");
       {
