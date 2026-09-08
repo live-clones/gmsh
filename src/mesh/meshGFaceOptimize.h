@@ -153,6 +153,14 @@ using QuadrangleSplitTransactionAdmissibility = std::function<bool(
   GFace *, const std::vector<MElement *> &,
   const std::vector<MElement *> &)>;
 
+// Optional owner-side commit for the complete planned split batch. The
+// callback is invoked after admissibility, before this routine mutates GFace.
+// It must leave ownership of the proposed elements with the caller when it
+// returns false; on true they must have been transferred to the GFace.
+using QuadrangleSplitTransactionCommit = std::function<bool(
+  GFace *, const std::vector<MElement *> &,
+  const std::vector<MElement *> &)>;
+
 // Optional selector used by repair preflights that own only a precisely
 // identified subset of quadrangles. An empty predicate audits every quad.
 using QuadrangleSplitSelection =
@@ -172,20 +180,28 @@ using QuadrangleSplitRequirement =
 using QuadrangleSplitGeometryAdmissibility = std::function<bool(
   GFace *, MQuadrangle *, MElement *, MElement *)>;
 
-// Atomic terminal quad-dominant fallback: split every linear quad whose
+// Transactional terminal quad-dominant fallback: split every linear quad whose
 // warping is not strictly below maximumWarpingDegrees, whose corner topology
 // is not a strictly convex quadrangle in the face parametrization, or which
-// is selected by additionalRequirement. Among the size- and CAD-admissible
-// diagonals, choose the one minimizing the angle between the two triangle
-// normals, then maximize the minimum triangle gamma quality. If any required
-// split is rejected, leave the complete face unchanged.
+// is selected by additionalRequirement. Among the size- and geometry-
+// admissible diagonals, choose the one minimizing the angle between the two
+// triangle normals, then maximize the minimum triangle gamma quality. The
+// optional face-normal gate samples each proposed triangle at several
+// interior parameter locations: unavailable samples abstain, one reliable
+// non-positive sample rejects, and every triangle needs at least one reliable
+// positive sample. It should remain enabled whenever an oriented surface
+// normal field is available. Rejected quadrangles remain unchanged; all
+// admissible splits are submitted together to the optional transaction gate
+// before the valid subset is committed.
 WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
   GFace *gf, double maximumWarpingDegrees,
   const QuadrangleDiagonalAdmissibility &diagonalAdmissible = {},
   const QuadrangleSplitTransactionAdmissibility &transactionAdmissible = {},
   const QuadrangleSplitSelection &selection = {},
   const QuadrangleSplitRequirement &additionalRequirement = {},
-  const QuadrangleSplitGeometryAdmissibility &geometryAdmissible = {});
+  const QuadrangleSplitGeometryAdmissibility &geometryAdmissible = {},
+  bool requireFaceNormal = true,
+  const QuadrangleSplitTransactionCommit &transactionCommit = {});
 
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf);
 

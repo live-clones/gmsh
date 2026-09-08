@@ -22,6 +22,6 @@ Line(6) = {6, 1};
 Curve Loop(1) = {1:6};
 Plane Surface(1) = {1};
 
-Merge "testQuadCleanUpFixedPoint.msh";
+Merge "testOptimizeQuadsFastPlan.msh";
 OptimizeMesh "OptimizeQuadsFast";
 OptimizeMesh "OptimizeQuadsFast";

@@ -1427,6 +1427,9 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
         _recombineIntoQuads(gf, false, cubicGraph);
       }
       else {
+        std::size_t rejectedInvertedPairs = 0;
+        double minimumRejectedEta = std::numeric_limits<double>::infinity();
+        double maximumRejectedEta = -std::numeric_limits<double>::infinity();
         // TEST
         for(int k = 0; k < elist[0]; k++) {
           int i1 = elist[1 + 3 * k], i2 = elist[1 + 3 * k + 1],
@@ -1441,8 +1444,6 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
           else {
             MElement *t1 = n2t[i1];
             MElement *t2 = n2t[i2];
-            touched.insert(t1);
-            touched.insert(t2);
             MVertex *other = nullptr;
             for(int i = 0; i < 3; i++) {
               if(t1->getVertex(0) != t2->getVertex(i) &&
@@ -1467,23 +1468,51 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
             MEdge e1(vs[0], vs[2]);
             MEdge e2(vs[1], vs[3]);
             if(embedges.find(e1) != embedges.end()) {
+              touched.insert(t1);
+              touched.insert(t2);
               MTriangle *t1 = new MTriangle(vs[0], vs[1], vs[2]);
               MTriangle *t2 = new MTriangle(vs[2], vs[3], vs[0]);
               gf->triangles.push_back(t1);
               gf->triangles.push_back(t2);
             }
             else if(embedges.find(e2) != embedges.end()) {
+              touched.insert(t1);
+              touched.insert(t2);
               MTriangle *t1 = new MTriangle(vs[1], vs[2], vs[3]);
               MTriangle *t2 = new MTriangle(vs[3], vs[0], vs[1]);
               gf->triangles.push_back(t1);
               gf->triangles.push_back(t2);
             }
             else {
-              MQuadrangle *q = new MQuadrangle(vs[0], vs[1], vs[2], vs[3]);
+              // Blossom solves a purely combinatorial perfect matching. On
+              // a sharply folded discrete surface it can consequently pair
+              // two individually valid triangles into a physically inverted
+              // bilinear quadrangle. Keep the original pair in that case:
+              // the mixed cleanup catalog can still reconnect it later, but
+              // it must never be handed an already invalid cell merely to
+              // satisfy the perfect matching.
+              MQuadrangle *q =
+                new MQuadrangle(vs[0], vs[1], vs[2], vs[3]);
+              const double eta = q->etaShapeMeasure();
+              if(!std::isfinite(eta) || !(eta > 0.)) {
+                ++rejectedInvertedPairs;
+                minimumRejectedEta = std::min(minimumRejectedEta, eta);
+                maximumRejectedEta = std::max(maximumRejectedEta, eta);
+                delete q;
+                continue;
+              }
+              touched.insert(t1);
+              touched.insert(t2);
               gf->quadrangles.push_back(q);
             }
           }
         }
+        if(rejectedInvertedPairs)
+          Msg::Info("Blossom: kept %zu inverted matched triangle pair%s "
+                    "unrecombined (eta range [%g,%g])",
+                    rejectedInvertedPairs,
+                    rejectedInvertedPairs == 1 ? "" : "s",
+                    minimumRejectedEta, maximumRejectedEta);
         free(elist);
         pairs.clear();
         Msg::Debug("Perfect Match Succeeded in Quadrangulation (%g sec)",
@@ -1504,8 +1533,6 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       MElement *t2 = itp->t2;
       if(touched.find(t1) == touched.end() &&
          touched.find(t2) == touched.end()) {
-        touched.insert(t1);
-        touched.insert(t2);
         int orientation = 0;
         for(int i = 0; i < 3; i++) {
           if(t1->getVertex(i) == itp->n1) {
@@ -1516,9 +1543,18 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
             break;
           }
         }
-        gf->quadrangles.push_back(
-          new MQuadrangle(itp->n1, orientation < 0 ? itp->n3 : itp->n4, itp->n2,
-                          orientation < 0 ? itp->n4 : itp->n3));
+        MQuadrangle *quadrangle = new MQuadrangle(
+          itp->n1, orientation < 0 ? itp->n3 : itp->n4, itp->n2,
+          orientation < 0 ? itp->n4 : itp->n3);
+        const double eta = quadrangle->etaShapeMeasure();
+        if(std::isfinite(eta) && eta > 0.) {
+          touched.insert(t1);
+          touched.insert(t2);
+          gf->quadrangles.push_back(quadrangle);
+        }
+        else {
+          delete quadrangle;
+        }
       }
     }
     ++itp;
@@ -1875,9 +1911,9 @@ namespace {
   }
 
   TrianglePairPlanarity trianglePairPlanarity(
-    const QuadrangleVertices &vertices,
+    GFace *face, const QuadrangleVertices &vertices,
     const QuadrangleParameters &parameters, const TriangleCorners &firstCorners,
-    const TriangleCorners &secondCorners)
+    const TriangleCorners &secondCorners, bool requireFaceNormal)
   {
     const double parameterTolerance = parametricAreaTolerance(parameters);
     const double firstArea = orientation2d(
@@ -1911,6 +1947,60 @@ namespace {
     if(!std::isfinite(firstNorm) || !std::isfinite(secondNorm) ||
        !(firstNorm > normalTolerance) || !(secondNorm > normalTolerance))
       return {};
+
+    // The signed areas preserve the intrinsic face orientation; the physical
+    // normals and gamma checks reject degenerate diagonal triangles. A caller
+    // can additionally require sampled agreement with the geometric normal.
+    if(requireFaceNormal) {
+      const auto agreesWithCadNormal =
+        [face, &parameters](const TriangleCorners &corners,
+                            const SVector3 &physicalNormal,
+                            double physicalNormalNorm) {
+          static const double weights[4][3] = {
+            {1. / 3., 1. / 3., 1. / 3.},
+            {.98, .01, .01}, {.01, .98, .01}, {.01, .01, .98}};
+          bool foundPositiveSample = false;
+          for(const auto &weight : weights) {
+            SPoint2 sample;
+            sample[0] = 0.;
+            sample[1] = 0.;
+            for(std::size_t i = 0; i < 3; ++i) {
+              sample[0] += weight[i] * parameters[corners[i]].x();
+              sample[1] += weight[i] * parameters[corners[i]].y();
+            }
+            if(!std::isfinite(sample.x()) ||
+               !std::isfinite(sample.y()) ||
+               !face->containsParam(sample))
+              continue;
+            SVector3 cadNormal;
+            try {
+              cadNormal = face->normal(sample);
+            }
+            catch(...) {
+              // Splitting is planned transactionally. A geometry-query
+              // failure makes this sample abstain without emitting a fatal
+              // mesh error or modifying the face.
+              continue;
+            }
+            const double cadNormalNorm = cadNormal.norm();
+            if(!std::isfinite(cadNormal.x()) ||
+               !std::isfinite(cadNormal.y()) ||
+               !std::isfinite(cadNormal.z()) ||
+               !std::isfinite(cadNormalNorm) || !(cadNormalNorm > 0.))
+              continue;
+            const double scalarProduct = dot(physicalNormal, cadNormal);
+            const double tolerance =
+              1.e-10 * physicalNormalNorm * cadNormalNorm;
+            if(!std::isfinite(scalarProduct)) continue;
+            if(scalarProduct <= tolerance) return false;
+            foundPositiveSample = true;
+          }
+          return foundPositiveSample;
+        };
+      if(!agreesWithCadNormal(firstCorners, first, firstNorm) ||
+         !agreesWithCadNormal(secondCorners, second, secondNorm))
+        return {};
+    }
 
     const double normalAngle = angle(first, second) * 180. / M_PI;
     if(!std::isfinite(normalAngle)) return {};
@@ -1947,7 +2037,9 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
   const QuadrangleSplitTransactionAdmissibility &transactionAdmissible,
   const QuadrangleSplitSelection &selection,
   const QuadrangleSplitRequirement &additionalRequirement,
-  const QuadrangleSplitGeometryAdmissibility &geometryAdmissible)
+  const QuadrangleSplitGeometryAdmissibility &geometryAdmissible,
+  bool requireFaceNormal,
+  const QuadrangleSplitTransactionCommit &transactionCommit)
 {
   WarpedQuadrangleSplitResult result;
   if(!gf || !std::isfinite(maximumWarpingDegrees) ||
@@ -1997,9 +2089,11 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
     TrianglePairPlanarity diagonal02, diagonal13;
     if(parametrized) {
       diagonal02 = trianglePairPlanarity(
-        vertices, parameters, {0, 1, 2}, {2, 3, 0});
+        gf, vertices, parameters, {0, 1, 2}, {2, 3, 0},
+        requireFaceNormal);
       diagonal13 = trianglePairPlanarity(
-        vertices, parameters, {1, 2, 3}, {3, 0, 1});
+        gf, vertices, parameters, {1, 2, 3}, {3, 0, 1},
+        requireFaceNormal);
     }
     const double warping = std::max(
       trianglePairNormalAngle(vertices, {0, 1, 2}, {2, 3, 0}),
@@ -2092,29 +2186,19 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
     existingEdges.insert(useDiagonal02 ? MEdge(v0, v2) : MEdge(v1, v3));
   }
 
-  // Splitting is a mesh-topology transaction. If any prohibited quad cannot
-  // be replaced, keep the complete input face unchanged instead of leaving a
-  // partially repaired mesh on the caller's failure path.
-  if(result.rejectedInvalid || result.rejectedBySize ||
-     result.rejectedByGeometry ||
-     result.rejectedUnsupportedOrder) {
-    for(const PlannedQuadrangleSplit &plan : plans) {
-      delete plan.first;
-      delete plan.second;
-    }
-    return result;
+  // Rejected quadrangles remain untouched. The admissible subset is still a
+  // single mesh-topology transaction, so a caller can validate and optionally
+  // commit every safe split before this routine mutates public face storage.
+  std::vector<MElement *> removed;
+  std::vector<MElement *> inserted;
+  removed.reserve(plans.size());
+  inserted.reserve(2 * plans.size());
+  for(const PlannedQuadrangleSplit &plan : plans) {
+    removed.push_back(plan.quadrangle);
+    inserted.push_back(plan.first);
+    inserted.push_back(plan.second);
   }
-
   if(transactionAdmissible && !plans.empty()) {
-    std::vector<MElement *> removed;
-    std::vector<MElement *> inserted;
-    removed.reserve(plans.size());
-    inserted.reserve(2 * plans.size());
-    for(const PlannedQuadrangleSplit &plan : plans) {
-      removed.push_back(plan.quadrangle);
-      inserted.push_back(plan.first);
-      inserted.push_back(plan.second);
-    }
     if(!transactionAdmissible(gf, removed, inserted)) {
       for(const PlannedQuadrangleSplit &plan : plans) {
         delete plan.first;
@@ -2127,9 +2211,25 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
     }
   }
 
+  std::map<MElement *, std::pair<MElement *, MElement *> > change;
+  for(const PlannedQuadrangleSplit &plan : plans)
+    change[plan.quadrangle] = {plan.first, plan.second};
+  if(transactionCommit && !plans.empty()) {
+    if(!transactionCommit(gf, removed, inserted)) {
+      for(const PlannedQuadrangleSplit &plan : plans) {
+        delete plan.first;
+        delete plan.second;
+      }
+      ++result.rejectedInvalid;
+      return result;
+    }
+    result.split = plans.size();
+    updateBoundaryLayerColumnsAfterQuadSplits(gf, change);
+    return result;
+  }
+
   std::vector<MQuadrangle *> retained;
   retained.reserve(gf->quadrangles.size() - plans.size());
-  std::map<MElement *, std::pair<MElement *, MElement *> > change;
   std::map<MQuadrangle *, std::size_t, std::less<MQuadrangle *> > planIndex;
   for(std::size_t i = 0; i < plans.size(); ++i)
     planIndex[plans[i].quadrangle] = i;
@@ -2142,7 +2242,6 @@ WarpedQuadrangleSplitResult splitExcessivelyWarpedQuadrangles(
     PlannedQuadrangleSplit &plan = plans[found->second];
     gf->triangles.push_back(plan.first);
     gf->triangles.push_back(plan.second);
-    change[quad] = {plan.first, plan.second};
     delete quad;
   }
   result.split = plans.size();

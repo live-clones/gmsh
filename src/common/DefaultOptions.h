@@ -1523,6 +1523,11 @@ StringXNumber MeshOptions_Number[] = {
     "Cleanup after packing of parallelograms. 0: legacy OptimizeQuads, "
       "1: bounded fast Quad Cleanup with local Winslow and a strict global "
       "shape, size, valence and CAD-distance score, 2: disabled" },
+  { F|O, "QuadqsSmartLaplacian", opt_mesh_quadqs_smart_laplacian, 2,
+    "V2 nodal smoothing: 0: projected centroid with Winslow fallback, "
+      "1: projected Smart Laplacian (strict minimum corner-sine improvement), "
+      "2: Smart Laplacian followed by one pure mean-plane 3D Winslow sweep. "
+      "All modes retain CAD and specification guards" },
   { F|O, "QuadqsTargetSize" , opt_mesh_quadqs_target_size, 0. ,
     "Constant target edge length used by quad cleanup (non-positive: use "
       "the active mesh size map)" },
@@ -1533,10 +1538,11 @@ StringXNumber MeshOptions_Number[] = {
     "Hard maximum edge length accepted by quad cleanup (non-positive: "
       "disabled)" },
   { F|O, "QuadqsIntrinsicEdgeLengthFactor" ,
-    opt_mesh_quadqs_intrinsic_edge_length_factor, 1.4142135623730951 ,
+    opt_mesh_quadqs_intrinsic_edge_length_factor, 0. ,
     "Maximum intrinsic triangulation edge length divided by the local target "
-      "size before local splitting and Delaunay legalization (non-positive: "
-      "disable intrinsic long-edge splitting)" },
+      "size before local splitting and Delaunay legalization. Opt-in refinement: "
+      "inserted midpoints do not obey the packing exclusion or cross field "
+      "(non-positive: preserve packed points, no intrinsic long-edge splitting)" },
   { F|O, "QuadqsPillowLayers" , opt_mesh_quadqs_pillow_layers, 0 ,
     "Attempt a complete quadrilateral ring around holes after quad "
       "optimization and open an admissible new ring with local Winslow "

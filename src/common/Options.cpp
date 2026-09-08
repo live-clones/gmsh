@@ -6925,6 +6925,12 @@ double opt_mesh_quadqs_cleanup_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.quadqsCleanupMethod;
 }
 
+double opt_mesh_quadqs_smart_laplacian(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsSmartLaplacian = (int)val;
+  return CTX::instance()->mesh.quadqsSmartLaplacian;
+}
+
 double opt_mesh_quadqs_target_size(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.quadqsTargetSize = val;

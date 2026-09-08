@@ -8,6 +8,7 @@
 #include "qmtDiskQuadrangulationRemeshing.h"
 
 /* System includes */
+#include <limits>
 // #include <vector>
 // #include <array>
 // #include <unordered_map>
@@ -29,7 +30,6 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "BackgroundMesh.h"
-#include "StringUtils.h"
 
 /* QuadMeshingTools includes */
 #include "cppUtils.h"
@@ -44,6 +44,55 @@ constexpr bool PARANO_QUALITY = false;
 namespace QMT {
   using id = uint32_t;
   using id4 = std::array<id, 4>;
+
+  namespace {
+    // Keep the generated database split in its original C string blocks.  In
+    // particular, do not concatenate it into a temporary std::string: that
+    // used to copy the complete 1.8 MB database several times before parsing.
+    const char *const diskQuadrangulationDataBlocks[] = {
+      data_dqrgl_block0,  data_dqrgl_block1,  data_dqrgl_block2,
+      data_dqrgl_block3,  data_dqrgl_block4,  data_dqrgl_block5,
+      data_dqrgl_block6,  data_dqrgl_block7,  data_dqrgl_block8,
+      data_dqrgl_block9,  data_dqrgl_block10, data_dqrgl_block11,
+      data_dqrgl_block12, data_dqrgl_block13, data_dqrgl_block14,
+      data_dqrgl_block15, data_dqrgl_block16, data_dqrgl_block17,
+      data_dqrgl_block18, data_dqrgl_block19, data_dqrgl_block20,
+      data_dqrgl_block21, data_dqrgl_block22, data_dqrgl_block23,
+      data_dqrgl_block24, data_dqrgl_block25, data_dqrgl_block26,
+      data_dqrgl_block27, data_dqrgl_block28, data_dqrgl_block29,
+      data_dqrgl_block30, data_dqrgl_block31,
+    };
+
+    constexpr std::size_t diskQuadrangulationDataBlockCount =
+      sizeof(diskQuadrangulationDataBlocks) /
+      sizeof(diskQuadrangulationDataBlocks[0]);
+
+    inline void skipHorizontalWhitespace(const char *&cursor)
+    {
+      while(*cursor == ' ' || *cursor == '\t' || *cursor == '\r') ++cursor;
+    }
+
+    inline bool parseUnsigned(const char *&cursor, std::size_t &value)
+    {
+      skipHorizontalWhitespace(cursor);
+      if(*cursor < '0' || *cursor > '9') return false;
+      value = 0;
+      do {
+        value = value * 10 + static_cast<unsigned>(*cursor - '0');
+        ++cursor;
+      } while(*cursor >= '0' && *cursor <= '9');
+      return true;
+    }
+
+    inline void skipMalformedRecord(const char *&cursor, std::size_t &lineCount)
+    {
+      while(*cursor && *cursor != '\n') ++cursor;
+      if(*cursor == '\n') {
+        ++cursor;
+        ++lineCount;
+      }
+    }
+  } // namespace
 
   struct vidHash {
     size_t operator()(const std::vector<id> &p) const noexcept
@@ -75,57 +124,80 @@ namespace QMT {
     Msg::Info("loading disk quadrangulations ...");
     B_disk_quadrangulations.reserve(20);
     B_BVL_ids.reserve(20);
-    // std::string data(disk_quadrangulations);
-    std::string data;
-    diskQuadrangulationConcat(data);
-    vector<std::string> lines = SplitString(data, '\n');
     Quadrangulation qdrl;
-    vector<std::string> numbers;
     vector<id> bdrValLoop;
     size_t lastB = 0;
-    for(size_t i = 0; i < lines.size(); ++i) {
-      numbers = SplitString(lines[i], ' ');
-      if(numbers.size() < 7) continue;
-      size_t B = std::stoi(numbers[0]);
-      size_t I = std::stoi(numbers[1]);
-      size_t Q = std::stoi(numbers[2]);
-      if(numbers.size() != 3 + 4 * Q) {
-        Msg::Warning("load_disk_quadrangulations | wrong sizes: B=%li, I=%li, "
-                     "Q=%li and numbers.size = %li",
-                     B, I, Q, numbers.size());
-        continue;
-      }
-      lastB = B;
-      qdrl.resize(Q);
-      for(size_t j = 0; j < Q; ++j) {
-        for(size_t lv = 0; lv < 4; ++lv) {
-          qdrl[j][lv] = std::stoi(numbers[3 + 4 * j + lv]);
+    // SplitString() includes the final empty line after the trailing newline;
+    // start at one to preserve the historical diagnostic count exactly.
+    size_t lineCount = 1;
+    for(size_t block = 0; block < diskQuadrangulationDataBlockCount; ++block) {
+      const char *cursor = diskQuadrangulationDataBlocks[block];
+      while(*cursor) {
+        size_t B = 0, I = 0, Q = 0;
+        if(!parseUnsigned(cursor, B) || !parseUnsigned(cursor, I) ||
+           !parseUnsigned(cursor, Q)) {
+          skipMalformedRecord(cursor, lineCount);
+          continue;
+        }
+
+        bool valid = Q != 0; // the old parser skipped records with < 7 tokens
+        qdrl.resize(Q);
+        bdrValLoop.assign(B, 0);
+        for(size_t j = 0; valid && j < Q; ++j) {
+          for(size_t lv = 0; lv < 4; ++lv) {
+            size_t vertex = 0;
+            if(!parseUnsigned(cursor, vertex) ||
+               vertex > std::numeric_limits<id>::max()) {
+              valid = false;
+              break;
+            }
+            qdrl[j][lv] = static_cast<id>(vertex);
+            if(vertex < B) bdrValLoop[vertex] += 1;
+          }
+        }
+
+        skipHorizontalWhitespace(cursor);
+        if(*cursor && *cursor != '\n') valid = false;
+        if(!valid) {
+          size_t numberCount = 3;
+          const char *rest = cursor;
+          while(*rest && *rest != '\n') {
+            size_t ignored = 0;
+            if(parseUnsigned(rest, ignored))
+              ++numberCount;
+            else
+              ++rest;
+          }
+          Msg::Warning("load_disk_quadrangulations | wrong sizes: B=%li, "
+                       "I=%li, Q=%li and numbers.size = %li",
+                       B, I, Q, numberCount);
+          skipMalformedRecord(cursor, lineCount);
+          continue;
+        }
+
+        lastB = B;
+        if(B >= B_disk_quadrangulations.size()) {
+          B_disk_quadrangulations.resize(B + 1);
+          B_disk_quadrangulations[B].reserve(1000);
+          B_BVL_ids.resize(B + 1);
+        }
+
+        id qId = B_disk_quadrangulations[B].size();
+        B_disk_quadrangulations[B].push_back(qdrl);
+
+        /* Assumes:
+         * - first B vertices are on the boundary
+         * - canonical valence ordering according to boundary valence loop
+         *   (should be compatible with the generator) */
+        B_BVL_ids[B][bdrValLoop].push_back(qId);
+
+        if(*cursor == '\n') {
+          ++cursor;
+          ++lineCount;
         }
       }
-
-      if(B >= B_disk_quadrangulations.size()) {
-        B_disk_quadrangulations.resize(B + 1);
-        B_disk_quadrangulations[B].reserve(1000);
-        B_BVL_ids.resize(B + 1);
-      }
-
-      id qId = B_disk_quadrangulations[B].size();
-      B_disk_quadrangulations[B].push_back(qdrl);
-
-      /* Assumes:
-       * - first B vertices are on the boundary
-       * - canonical valence ordering according to boundary valence loop
-       *   (should be compatible with the generator) */
-      bdrValLoop.clear();
-      bdrValLoop.resize(B, 0);
-      for(size_t j = 0; j < Q; ++j)
-        for(size_t lv = 0; lv < 4; ++lv) {
-          id v = qdrl[j][lv];
-          if(v < B) bdrValLoop[v] += 1;
-        }
-      B_BVL_ids[B][bdrValLoop].push_back(qId);
     }
-    Msg::Info("%li disk quadrangulations loaded", lines.size());
+    Msg::Info("%li disk quadrangulations loaded", lineCount);
 
     /* Add basic quadrangulations of the disk with no interior vertices
      * for very high valences cases (due to "bugs" in quad meshers, but

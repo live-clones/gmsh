@@ -16,23 +16,43 @@ if(NOT status EQUAL 0)
   message(FATAL_ERROR "PACK terminal triangle recombination failed:\n${log}")
 endif()
 
-if(NOT log MATCHES
-   "Blossom recombination completed [^\n\r]*: 1 quads, 1 triangles, 1 invalid quads")
+# Greedy recombination can now skip the first inverted pair and select the
+# valid alternative directly. Retain explicit coverage of both that upstream
+# route and the historical terminal split/recombine route.
+if(log MATCHES
+   "Blossom recombination completed [^\n\r]*: 1 quads, 1 triangles, 0 invalid quads")
+  if(NOT log MATCHES
+     "PACK terminal quad validity: concaveOrInvalid=0 [^\n\r]*split=0 rejected=0" OR
+     NOT log MATCHES
+     "PACK terminal triangle recombination: visited=0 accepted=0 [^\n\r]*rejectedInvalid=0")
+    message(FATAL_ERROR
+      "PACK altered the valid pair selected by the upstream guard:\n${log}")
+  endif()
+elseif(log MATCHES
+       "Blossom recombination completed [^\n\r]*: 1 quads, 1 triangles, 1 invalid quads")
+  if(NOT log MATCHES
+     "PACK terminal quad validity: concaveOrInvalid=1 [^\n\r]*split=1 rejected=0" OR
+     NOT log MATCHES
+     "PACK terminal triangle recombination: [^\n\r]*accepted=1 [^\n\r]*rejectedInvalid=0")
+    message(FATAL_ERROR
+      "PACK did not repair and recombine its invalid intermediate pair:\n${log}")
+  endif()
+else()
   message(FATAL_ERROR
-    "The fixture no longer creates one bad quad and one triangle:\n${log}")
-endif()
-if(NOT log MATCHES
-   "PACK terminal quad validity: concaveOrInvalid=1 [^\n\r]*split=1 rejected=0")
-  message(FATAL_ERROR "The bad source quad was not split:\n${log}")
-endif()
-if(NOT log MATCHES
-   "PACK terminal triangle recombination: [^\n\r]*accepted=1 [^\n\r]*rejectedInvalid=0")
-  message(FATAL_ERROR
-    "The valid alternative triangle pair was not recombined:\n${log}")
+    "PACK followed no recognized triangle-pair recombination route:\n${log}")
 endif()
 if(NOT log MATCHES
    "PACK final quad audit: concaveOrInvalid=0 [^\n\r]*split=0 rejected=0")
   message(FATAL_ERROR "The final quad validity audit failed:\n${log}")
+endif()
+string(FIND "${log}"
+  "PACK final quality: faces=1 triangles=1 quads=1"
+  final_count_position)
+string(FIND "${log}"
+  "validity=PASS invalid[T/Q]=0/0 nonManifoldFaces=0"
+  final_validity_position)
+if(final_count_position EQUAL -1 OR final_validity_position EQUAL -1)
+  message(FATAL_ERROR "PACK final validity summary failed:\n${log}")
 endif()
 
 file(READ "${TEST_OUTPUT}" mesh)

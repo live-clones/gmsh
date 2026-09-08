@@ -2310,6 +2310,23 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   if(TARGET testSmallCavityWinslow)
     add_test(NAME testSmallCavityWinslow COMMAND testSmallCavityWinslow)
   endif()
+  if(TARGET testHalfEdgeRewriteCatalog)
+    add_test(NAME testHalfEdgeRewriteCatalog
+      COMMAND testHalfEdgeRewriteCatalog)
+  endif()
+  if(TARGET testSmartLaplacian)
+    add_test(NAME testSmartLaplacian COMMAND testSmartLaplacian)
+  endif()
+  if(TARGET testQuadQualityLedger)
+    add_test(NAME testQuadQualityLedger COMMAND testQuadQualityLedger)
+  endif()
+  if(TARGET testSmallCavityWinslowNormalization)
+    add_test(NAME testSmallCavityWinslowNormalization
+      COMMAND testSmallCavityWinslowNormalization)
+  endif()
+  if(TARGET testSurfaceWinslow3D)
+    add_test(NAME testSurfaceWinslow3D COMMAND testSurfaceWinslow3D)
+  endif()
   if(HAVE_QUADOPTIMIZER)
     add_test(
       NAME quadOptimizerSizeConstraints
@@ -2347,9 +2364,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           -o ${CMAKE_CURRENT_BINARY_DIR}/quadOptimizerSizeAllowsTopology.msh)
       set_tests_properties(quadOptimizerSizeAllowsTopology PROPERTIES
         PASS_REGULAR_EXPRESSION
-          "OptimizeQuads: [0-9]+ faces, [1-9][0-9]* topology changes, .*rejected\\(size=[0-9]+\\)"
+          "OptimizeQuads: [0-9]+ faces, [0-9]+ topology changes, .*rejected\\(size=0\\);PACK final quality: .*validity=PASS .*sizeSpecs=PASS"
         FAIL_REGULAR_EXPRESSION
-          "Unknown number option;edge-length requirements are not met;OptimizeQuads: .* 0 topology changes")
+          "Unknown number option;edge-length requirements are not met")
 
       add_test(
         NAME quadOptimizerSizeRejectsTopology
@@ -2388,6 +2405,27 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
         FAIL_REGULAR_EXPRESSION
           "Unknown number option;intrinsic long-edge split budget reached")
 
+      # The default PACK pipeline must not add unfiltered intrinsic midpoints
+      # after the point cloud has passed the oriented-cube exclusion.
+      add_test(
+        NAME quadPackPreservesPointCloud
+        COMMAND gmsh
+          ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadIntrinsicLongEdgeSplit.geo
+          -2 -algo pack -clmin 0.03 -clmax 0.03
+          -setnumber Mesh.QuadqsPacking3D 1
+          -setnumber Mesh.QuadqsPacking3DForceAllPoints 1
+          -setnumber Mesh.AlgorithmSwitchOnFailure 0
+          -setnumber Mesh.QuadqsCleanupMethod 2
+          -setnumber Mesh.RecombineMinimumQuality 0
+          -nopopup -v 5
+          -o ${CMAKE_CURRENT_BINARY_DIR}/quadPackPreservesPointCloud.msh)
+      set_tests_properties(quadPackPreservesPointCloud PROPERTIES
+        TIMEOUT 10
+        PASS_REGULAR_EXPRESSION
+          "intrinsic Delaunay triangulation, [0-9]+ edge flips, 0 long-edge splits"
+        FAIL_REGULAR_EXPRESSION
+          "Unknown number option;[1-9][0-9]* long-edge splits;3D packing lost")
+
       add_test(
         NAME optimizeQuadsFastMixedSwap
         COMMAND ${CMAKE_COMMAND}
@@ -2395,6 +2433,79 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastMixedSwap.geo
           -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastMixedSwap.cmake)
       set_tests_properties(optimizeQuadsFastMixedSwap PROPERTIES TIMEOUT 10)
+
+      add_test(
+        NAME quadSmartWinslowFinal
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testSmartWinslowFinal.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testSmartWinslowFinal.cmake)
+      set_tests_properties(quadSmartWinslowFinal PROPERTIES TIMEOUT 15)
+
+      add_test(
+        NAME optimizeQuadsFastQuadTwoTriangles
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastQuadTwoTriangles.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastQuadTwoTriangles.cmake)
+      set_tests_properties(optimizeQuadsFastQuadTwoTriangles PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastTriangleQuadStrips
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastTriangleQuadStrips.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastTriangleQuadStrips.cmake)
+      set_tests_properties(optimizeQuadsFastTriangleQuadStrips PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastTriangleTriangleSwap
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastTriangleTriangleSwap.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastTriangleTriangleSwap.cmake)
+      set_tests_properties(optimizeQuadsFastTriangleTriangleSwap PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastValenceSix
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastValenceSix.geo
+          -DTEST_MSH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastValenceSix.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastValenceSix.cmake)
+      set_tests_properties(optimizeQuadsFastValenceSix PROPERTIES TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastInteriorQQTQQT
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastInteriorQQTQQT.geo
+          -DTEST_MSH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastInteriorQQTQQT.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastInteriorQQTQQT.cmake)
+      set_tests_properties(optimizeQuadsFastInteriorQQTQQT PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastInteriorQTQT
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastInteriorQTQT.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastInteriorQTQT.cmake)
+      set_tests_properties(optimizeQuadsFastInteriorQTQT PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastBoundaryTriangleQuadFan
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastBoundaryTriangleQuadFan.geo
+          -DTEST_MSH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastBoundaryTriangleQuadFan.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastBoundaryTriangleQuadFan.cmake)
+      set_tests_properties(optimizeQuadsFastBoundaryTriangleQuadFan PROPERTIES
+        TIMEOUT 10)
 
       add_test(
         NAME optimizeQuadsFastMixedQualitySwap
@@ -2406,12 +2517,32 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
         TIMEOUT 10)
 
       add_test(
-        NAME quadCleanUpMixedQualitySwap
+        NAME optimizeQuadsFastMixedBadImprovement
         COMMAND ${CMAKE_COMMAND}
           -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
-          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpMixedQualitySwap.geo
-          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpMixedQualitySwap.cmake)
-      set_tests_properties(quadCleanUpMixedQualitySwap PROPERTIES TIMEOUT 10)
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastMixedBadImprovement.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastMixedBadImprovement.cmake)
+      set_tests_properties(optimizeQuadsFastMixedBadImprovement PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastFinalAbsoluteBadQuadSplit
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastFinalAbsoluteBadQuadSplit.geo
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastFinalAbsoluteBadQuadSplit.cmake)
+      set_tests_properties(optimizeQuadsFastFinalAbsoluteBadQuadSplit
+        PROPERTIES TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastDiscreteFoldGuard
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastDiscreteFoldGuard.geo
+          -DTEST_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/testOptimizeQuadsFastDiscreteFoldGuard.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastDiscreteFoldGuard.cmake)
+      set_tests_properties(optimizeQuadsFastDiscreteFoldGuard PROPERTIES
+        TIMEOUT 10)
 
       add_test(
         NAME optimizeQuadsFastTopologyGuard
@@ -2421,6 +2552,16 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           -DTEST_MSH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastTopologyGuard.msh
           -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastTopologyGuard.cmake)
       set_tests_properties(optimizeQuadsFastTopologyGuard PROPERTIES
+        TIMEOUT 10)
+
+      add_test(
+        NAME optimizeQuadsFastBowTieVertexGuard
+        COMMAND ${CMAKE_COMMAND}
+          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
+          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastBowTieVertexGuard.geo
+          -DTEST_MSH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastBowTieVertexGuard.msh
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastBowTieVertexGuard.cmake)
+      set_tests_properties(optimizeQuadsFastBowTieVertexGuard PROPERTIES
         TIMEOUT 10)
 
       add_test(
@@ -2487,38 +2628,6 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastDiamond.geo
           -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testOptimizeQuadsFastDiamond.cmake)
       set_tests_properties(optimizeQuadsFastDiamond PROPERTIES TIMEOUT 10)
-
-      add_test(
-        NAME quadCleanUpFixedPoint
-        COMMAND ${CMAKE_COMMAND}
-          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
-          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpFixedPoint.geo
-          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpFixedPoint.cmake)
-      set_tests_properties(quadCleanUpFixedPoint PROPERTIES TIMEOUT 30)
-
-      add_test(
-        NAME quadCleanUpSizeRepair
-        COMMAND ${CMAKE_COMMAND}
-          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
-          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpSizeRepair.geo
-          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpSizeRepair.cmake)
-      set_tests_properties(quadCleanUpSizeRepair PROPERTIES TIMEOUT 30)
-
-      add_test(
-        NAME quadCleanUpMixedSizeRepair
-        COMMAND ${CMAKE_COMMAND}
-          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
-          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpMixedSizeRepair.geo
-          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpMixedSizeRepair.cmake)
-      set_tests_properties(quadCleanUpMixedSizeRepair PROPERTIES TIMEOUT 30)
-
-      add_test(
-        NAME quadCleanUpPillow
-        COMMAND ${CMAKE_COMMAND}
-          -DGMSH_EXECUTABLE=$<TARGET_FILE:gmsh>
-          -DTEST_GEO=${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpPillow.geo
-          -P ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOptimizer/testQuadCleanUpPillow.cmake)
-      set_tests_properties(quadCleanUpPillow PROPERTIES TIMEOUT 30)
 
       add_test(
         NAME quadOptimizerFastGlobalQualityPlan

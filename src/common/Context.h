@@ -54,7 +54,8 @@ struct contextMeshOptions {
   int nLayersPerGap;
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods, quadqsCleanupMethod,
-    quadqsPillowLayers, quadqsPacking3D, quadqsPacking3DForceAllPoints;
+    quadqsPillowLayers, quadqsPacking3D, quadqsPacking3DForceAllPoints,
+    quadqsSmartLaplacian;
   double quadqsRemeshingBoldness, quadqsScalingOnTriangulation,
     quadqsTargetSize, quadqsMinimumEdgeLength, quadqsMaximumEdgeLength,
     quadqsIntrinsicEdgeLengthFactor;

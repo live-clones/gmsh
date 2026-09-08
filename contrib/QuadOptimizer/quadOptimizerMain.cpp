@@ -58,6 +58,11 @@ int main(int argc, char **argv)
                   << face.optimizer.acceptedDiamonds
                   << " acceptedValence6="
                   << face.optimizer.acceptedValenceSixSplits
+                  << " acceptedInteriorTTQ="
+                  << face.optimizer
+                       .acceptedInteriorTriangleTriangleQuadReductions
+                  << " acceptedInteriorTTTT="
+                  << face.optimizer.acceptedInteriorFourTriangleFanReductions
                   << " acceptedBoundaryTQT="
                   << face.optimizer.acceptedBoundaryTriangleQuadTriangleFans
                   << " finalSmooth="
@@ -147,6 +152,10 @@ int main(int argc, char **argv)
               << result.acceptedDiamonds
               << " acceptedValence6="
               << result.acceptedValenceSixSplits
+              << " acceptedInteriorTTQ="
+              << result.acceptedInteriorTriangleTriangleQuadReductions
+              << " acceptedInteriorTTTT="
+              << result.acceptedInteriorFourTriangleFanReductions
               << " acceptedBoundaryTQT="
               << result.acceptedBoundaryTriangleQuadTriangleFans
               << " finalSmooth="
