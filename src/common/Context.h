@@ -58,7 +58,7 @@ struct contextMeshOptions {
     quadqsSmartLaplacian;
   double quadqsRemeshingBoldness, quadqsScalingOnTriangulation,
     quadqsTargetSize, quadqsMinimumEdgeLength, quadqsMaximumEdgeLength,
-    quadqsIntrinsicEdgeLengthFactor;
+    quadqsIntrinsicEdgeLengthFactor, quadqsFinalSplitCadDistanceRatio;
   int oldInitialDelaunay2D;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;

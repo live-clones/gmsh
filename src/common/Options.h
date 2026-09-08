@@ -655,6 +655,7 @@ double opt_mesh_ignore_parametrization(OPT_ARGS_NUM);
 double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_quadqs_cleanup_method(OPT_ARGS_NUM);
 double opt_mesh_quadqs_smart_laplacian(OPT_ARGS_NUM);
+double opt_mesh_quadqs_final_split_cad_distance_ratio(OPT_ARGS_NUM);
 double opt_mesh_quadqs_target_size(OPT_ARGS_NUM);
 double opt_mesh_quadqs_minimum_edge_length(OPT_ARGS_NUM);
 double opt_mesh_quadqs_maximum_edge_length(OPT_ARGS_NUM);

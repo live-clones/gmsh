@@ -521,7 +521,8 @@ static void recombineSurfaceMesh(GFace *gf)
       // recombined. Keep every quad until that optimization has had a chance
       // to repair it; Generator.cpp applies the requested quality threshold
       // at the end of the PACK pipeline.
-      if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) minqual = 0.;
+      if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS)
+        minqual = std::min(0., minqual);
       recombineIntoQuads(gf, blossom, topo, repos, minqual);
     }
   }

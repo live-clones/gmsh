@@ -6931,6 +6931,12 @@ double opt_mesh_quadqs_smart_laplacian(OPT_ARGS_NUM)
   return CTX::instance()->mesh.quadqsSmartLaplacian;
 }
 
+double opt_mesh_quadqs_final_split_cad_distance_ratio(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsFinalSplitCadDistanceRatio = val;
+  return CTX::instance()->mesh.quadqsFinalSplitCadDistanceRatio;
+}
+
 double opt_mesh_quadqs_target_size(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.quadqsTargetSize = val;

@@ -16424,17 +16424,10 @@ namespace QuadOptimizer {
         const std::vector<SPoint2> &parameters =
           foundParameters == parametersByElement.end() ?
             noParameters : foundParameters->second;
-        std::vector<UV> uv;
         std::vector<Point> xyz(4);
         for(std::size_t i = 0; i < 4; ++i) {
           MVertex *vertex = quadrangle->getVertex(static_cast<int>(i));
           xyz[i] = {vertex->x(), vertex->y(), vertex->z()};
-        }
-        if(parameters.size() >= 4) {
-          uv.resize(4);
-          for(std::size_t i = 0; i < 4; ++i) {
-            uv[i] = {parameters[i].x(), parameters[i].y()};
-          }
         }
         const Pattern singleQuadrangle = {{{0, 1, 2, 3}}};
         const double eta = quadrangle->etaShapeMeasure();
@@ -16442,10 +16435,6 @@ namespace QuadOptimizer {
         const bool validQuadrangle = quality.topologicallyValid &&
           candidateQuadranglesArePhysicallyNonConcave(
             singleQuadrangle, xyz) &&
-          (face->geomType() == GEntity::Plane ||
-           !face->haveParametrization() ||
-           (parameters.size() >= 4 &&
-           candidateQuadsAreStrictlyConvex(singleQuadrangle, uv))) &&
           std::isfinite(sicn) && sicn > 0. &&
           std::isfinite(eta) && eta > 0. &&
           surfaceElementCadNormalSign(

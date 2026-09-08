@@ -873,12 +873,21 @@ static void Mesh2D(GModel *m)
     // fallback. Split every such quad with a parametrically and physically
     // consistent diagonal, even when this increases the triangle count or
     // violates the requested edge-size interval.
+    // Opt-in raw Blossom experiment: give V2 the complete matched quads
+    // before any legacy validity split; keep all optimizer acceptance guards.
+    const bool keepRawMatchedQuads =
+      CTX::instance()->mesh.quadqsCleanupMethod == 1 &&
+      CTX::instance()->mesh.recombineMinimumQuality < 0.;
+    if(keepRawMatchedQuads)
+      Msg::Info("PACK: preserving raw matched quads for V2 repair "
+                "(RecombineMinimumQuality < 0)");
     std::size_t terminalNonConvexOrInvalid = 0;
     std::size_t terminalExcessiveWarping = 0;
     std::size_t terminalSplitCount = 0;
     std::size_t terminalRejected = 0;
     for(GFace *gf : m->getFaces()) {
-      if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
+      if(keepRawMatchedQuads ||
+         terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
         continue;
 #if defined(HAVE_QUADOPTIMIZER)
       // In the staged Fast strategy every valid TT pair is deliberately
@@ -1107,7 +1116,8 @@ static void Mesh2D(GModel *m)
     std::size_t finalRejected = 0;
     std::set<GFace *> finalSplitFaces;
     for(GFace *gf : m->getFaces()) {
-      if(terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
+      if(keepRawMatchedQuads ||
+         terminalSkippedFaces.find(gf) != terminalSkippedFaces.end())
         continue;
 #if defined(HAVE_QUADOPTIMIZER)
       const double maximumWarpingDegrees =
@@ -1516,6 +1526,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
       options.minimumEdgeSizeRatio = 0.;
       options.maximumEdgeSizeRatio = 0.;
     }
+    options.finalSplitCadDistanceRatio =
+      CTX::instance()->mesh.quadqsFinalSplitCadDistanceRatio;
     options.smartLaplacian = options.fastInteractiveCleanUp &&
       CTX::instance()->mesh.quadqsSmartLaplacian != 0;
     options.finalWinslowPasses = options.fastInteractiveCleanUp &&
@@ -1528,7 +1540,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
       // Use the validated V2 budgets. The historical adapter capped the
       // old cleanup at two passes and inherited only 100 accepted cavities,
       // prematurely stopping V2 compared with the standalone benchmark.
-      options.maximumOptimizationPasses = 8;
+      options.maximumOptimizationPasses = -1; // V2 stops after a topology-idle round.
       options.maximumAcceptedCavities = 10000;
       options.postTopologyNeighborSmoothingPasses = 1;
       // Pillow is a separate structural operator and does not yet use the

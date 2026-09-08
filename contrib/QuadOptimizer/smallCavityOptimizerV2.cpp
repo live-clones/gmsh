@@ -161,6 +161,7 @@ namespace QuadOptimizer {
     struct OrientationRepair {
       bool regular = true;
       std::size_t reversed = 0;
+      std::size_t valenceTwoQuadsSplit = 0;
     };
 
     // Establish coherent half-edge directions before constructing the
@@ -430,6 +431,105 @@ namespace QuadOptimizer {
       return result;
     }
 
+    OrientationRepair prepareFaceComponents(GFace *face)
+    {
+      auto result = orientFaceComponents(face);
+      if(result.regular || !face) return result;
+      // Raw recombination can leave a fixed CAD pole with just two incident
+      // cells sharing its two sides. Our rewrite complex requires at least
+      // three cells around an interior pole. Split one quad through the pole
+      // rather than dropping the CAD vertex or skipping the entire face.
+      std::map<MVertex *, std::vector<MElement *> > stars;
+      std::set<std::pair<MVertex *, MVertex *> > edges;
+      const auto key = [](MVertex *a, MVertex *b) {
+        if(std::less<MVertex *>()(b, a)) std::swap(a, b);
+        return std::make_pair(a, b);
+      };
+      std::vector<MElement *> elements(face->triangles.begin(), face->triangles.end());
+      elements.insert(elements.end(), face->quadrangles.begin(), face->quadrangles.end());
+      for(MElement *element : elements) {
+        const int n = element->getNumPrimaryVertices();
+        for(int i = 0; i < n; ++i) {
+          MVertex *v = element->getVertex(i);
+          stars[v].push_back(element);
+          edges.insert(key(v, element->getVertex((i + 1) % n)));
+        }
+      }
+      std::map<MQuadrangle *, int> cuts;
+      for(const auto &entry : stars) {
+        MVertex *pole = entry.first;
+        if(entry.second.size() != 2 || !pole->onWhat() ||
+           pole->onWhat()->dim() >= 2) continue;
+        std::array<std::set<MVertex *>, 2> sides;
+        for(int k = 0; k < 2; ++k) {
+          MElement *element = entry.second[k];
+          const int n = element->getNumPrimaryVertices();
+          for(int i = 0; i < n; ++i)
+            if(element->getVertex(i) == pole) {
+              sides[k].insert(element->getVertex((i + 1) % n));
+              sides[k].insert(element->getVertex((i + n - 1) % n));
+            }
+        }
+        if(sides[0].size() != 2 || sides[0] != sides[1]) continue;
+        MQuadrangle *best = nullptr;
+        int corner = -1;
+        double bestAngle = -1.;
+        for(MElement *element : entry.second) {
+          auto *quad = dynamic_cast<MQuadrangle *>(element);
+          if(!quad || quad->getNumVertices() != 4) continue;
+          for(int i = 0; i < 4; ++i) {
+            if(quad->getVertex(i) != pole ||
+               edges.count(key(pole, quad->getVertex((i + 2) % 4)))) continue;
+            MTriangle a(pole, quad->getVertex((i + 1) % 4), quad->getVertex((i + 2) % 4));
+            MTriangle b(pole, quad->getVertex((i + 2) % 4), quad->getVertex((i + 3) % 4));
+            const auto qa = evaluateElementQuality(&a), qb = evaluateElementQuality(&b);
+            const double angle = std::min(qa.minimumAngleDegrees, qb.minimumAngleDegrees);
+            if(qa.topologicallyValid && qb.topologicallyValid && angle > bestAngle) {
+              best = quad; corner = i; bestAngle = angle;
+            }
+          }
+        }
+        if(best) cuts.emplace(best, corner);
+      }
+      if(cuts.empty()) return result;
+      std::vector<std::unique_ptr<MTriangle> > added;
+      auto triangles = face->triangles;
+      std::vector<MQuadrangle *> quadrangles;
+      for(MQuadrangle *quad : face->quadrangles) {
+        const auto cut = cuts.find(quad);
+        if(cut == cuts.end()) { quadrangles.push_back(quad); continue; }
+        const int i = cut->second;
+        for(int j = 1; j <= 2; ++j) {
+          added.emplace_back(new MTriangle(quad->getVertex(i),
+            quad->getVertex((i + j) % 4), quad->getVertex((i + j + 1) % 4)));
+          added.back()->setPartition(quad->getPartition());
+          added.back()->setVisibility(quad->getVisibility());
+          triangles.push_back(added.back().get());
+        }
+      }
+      // Validate the entire staged face. On failure the original elements,
+      // winding, coordinates and classifications remain untouched.
+      face->triangles.swap(triangles);
+      face->quadrangles.swap(quadrangles);
+      try { result = orientFaceComponents(face); }
+      catch(...) {
+        face->triangles.swap(triangles);
+        face->quadrangles.swap(quadrangles);
+        throw;
+      }
+      if(!result.regular) {
+        face->triangles.swap(triangles);
+        face->quadrangles.swap(quadrangles);
+        return result;
+      }
+      for(auto &triangle : added) triangle.release();
+      for(const auto &cut : cuts) delete cut.first;
+      result.valenceTwoQuadsSplit = cuts.size();
+      Msg::Info("QuadOptimizerV2 face=%d prepared fixed CAD valence-two stars: "
+                "splitQuads=%zu addedPoints=0", face->tag(), cuts.size());
+      return result;
+    }
+
     std::vector<std::vector<Id> > canonicalConnectivity(
       std::vector<std::vector<Id> > connectivity)
     {
@@ -534,6 +634,8 @@ namespace QuadOptimizer {
       const SmallCavityOptimizerOptions &_options;
       FaceHalfEdge _topology;
       bool _smartSmoothing = false;
+      bool _terminalMandatory = false;
+      bool _terminalPairs = false;
       std::set<Id> _fixedCadVertices;
       std::set<std::pair<Id, Id> > _embeddedMeshEdges;
 
@@ -599,7 +701,22 @@ namespace QuadOptimizer {
       std::size_t _accepted = 0;
       bool _started = false, _hasContextRejections = false;
       std::vector<Id> _smoothingTouched;
-      std::uint64_t _queuedContext = 0, _lastProcessedContext = 0;
+      // Each proposal method must see a changed star independently: a rejected
+      // Smart proposal does not make Winslow unnecessary (or conversely).
+      std::set<Id> _activeSmart, _activeWinslow;
+      std::vector<std::vector<Id> > _smoothingColors;
+      bool _smoothingColorsValid = false;
+
+      void activateSmoothing(const std::vector<Id> &vertices)
+      {
+        for(Id id : vertices) {
+          MVertex *vertex = _topology.vertex(id);
+          if(!vertex || vertex->onWhat() != _face ||
+             _topology.isBoundaryVertex(id)) continue;
+          _activeSmart.insert(id);
+          _activeWinslow.insert(id);
+        }
+      }
       struct UvHash {
         std::size_t operator()(const UV &uv) const {
           const std::size_t a = std::hash<double>{}(uv[0]);
@@ -619,7 +736,7 @@ namespace QuadOptimizer {
       std::unordered_map<Id, ElementCache> _elementCache;
       std::set<Id> _stars, _diamonds, _strips, _fans;
       std::set<Id> _repairCells, _composedTriangles;
-      std::set<std::pair<Id, Id> > _swaps;
+      std::set<std::pair<Id, Id> > _swaps, _merges;
       struct RuleStats {
         std::size_t applicable = 0, cache = 0, candidates = 0;
         std::size_t topology = 0, orientation = 0, size = 0, cad = 0;
@@ -1277,6 +1394,93 @@ namespace QuadOptimizer {
         return result;
       }
 
+      bool smoothReplacementInterior(const FaceHalfEdge::Cavity &cavity,
+                                     Candidate &candidate)
+      {
+        const std::size_t boundary = cavity.boundary.size();
+        if(candidate.vertices.size() < boundary || boundary < 3) return false;
+        std::vector<Point> xyz;
+        std::vector<bool> fixed(candidate.vertices.size(), true);
+        std::size_t free = 0, firstFree = 0;
+        for(std::size_t i = 0; i < candidate.vertices.size(); ++i) {
+          const auto &vertex = candidate.vertices[i];
+          xyz.push_back(vertex.xyz);
+          if(i < boundary) {
+            if(vertex.vertex != _topology.vertex(cavity.boundary[i])) return false;
+          }
+          else if(!vertex.vertex ||
+                  (std::find(cavity.interior.begin(), cavity.interior.end(),
+                             _topology.id(vertex.vertex)) != cavity.interior.end() &&
+                   !_fixedCadVertices.count(_topology.id(vertex.vertex)))) {
+            fixed[i] = false;
+            firstFree = i;
+            ++free;
+          }
+        }
+        // Reductions with no surviving interior point need no smoothing.
+        if(!free) return true;
+        Point origin, tangent1, tangent2;
+        std::vector<UV> plane;
+        if(!meanPlaneChart(xyz, 0, boundary, firstFree, origin,
+                           tangent1, tangent2, plane)) return false;
+        const auto initialPlane = plane;
+        double area = 0.;
+        for(std::size_t i = 0; i < boundary; ++i) {
+          const UV &a = plane[i], &b = plane[(i + 1) % boundary];
+          area += a[0] * b[1] - a[1] * b[0];
+        }
+        if(!std::isfinite(area) || area == 0.) return false;
+        const double orientation = area > 0. ? 1. : -1.;
+        std::vector<std::array<std::size_t, 3> > triangles;
+        std::vector<std::array<std::size_t, 4> > quadrangles;
+        for(const Cell &cell : candidate.cells) {
+          if(cell.size() == 3)
+            triangles.push_back({{cell[0], cell[1], cell[2]}});
+          else if(cell.size() == 4)
+            quadrangles.push_back({{cell[0], cell[1], cell[2], cell[3]}});
+          else return false;
+        }
+        SmallCavityWinslowOptions options = _options.winslow;
+        options.harmonicInitialization = false;
+        options.maxInnerIterations = std::min(options.maxInnerIterations, 20);
+        options.maxOuterIterations = std::min(options.maxOuterIterations, 2);
+        options.maxLineSearchSteps = std::min(options.maxLineSearchSteps, 12);
+        options.verbose = 0;
+        SmallCavityWinslowResult optimized;
+        try {
+          // QQTQQT has exactly two free points (four coupled unknowns).
+          // This solve owns only candidate arrays, never live mesh vertices.
+          optimized = optimizeLocalSurfacePatchWinslow(
+            plane, fixed, triangles, quadrangles, orientation, options);
+        }
+        catch(const std::invalid_argument &) {}
+        if(_options.verbose)
+          Msg::Info("QuadOptimizerV2 face=%d valence local Winslow rule=%s "
+                    "C=%zu B=%zu points=%zu unknowns=%zu success=%d",
+                    _face->tag(), candidate.name, cavity.cells.size(), boundary,
+                    free, 2 * free, optimized.success && optimized.untangled);
+        if(!optimized.success || !optimized.untangled) return false;
+        for(std::size_t i = 0; i < candidate.vertices.size(); ++i) {
+          if(fixed[i]) continue;
+          auto &vertex = candidate.vertices[i];
+          const double dx = plane[i][0] - initialPlane[i][0];
+          const double dy = plane[i][1] - initialPlane[i][1];
+          const SPoint3 target(xyz[i][0] + dx * tangent1[0] + dy * tangent2[0],
+                               xyz[i][1] + dx * tangent1[1] + dy * tangent2[1],
+                               xyz[i][2] + dx * tangent1[2] + dy * tangent2[2]);
+          UV guess = vertex.uv;
+          const GPoint projected =
+            _face->closestPointFromTrustedGuess(target, guess.data());
+          if(!projected.succeeded()) return false;
+          vertex.uv = {{projected.u(), projected.v()}};
+          if(!mappedPoint(vertex.uv, vertex.xyz)) return false;
+          // Stage even a retained interior point as a replacement. The
+          // original cavity is left intact if any transaction guard rejects.
+          vertex.vertex = nullptr;
+        }
+        return true;
+      }
+
       std::vector<Candidate> splitInteriorStarCandidates(
         const FaceHalfEdge::Cavity &cavity, Id,
         bool qqtqqt)
@@ -1454,7 +1658,9 @@ namespace QuadOptimizer {
             _fans.insert(corners[i]);
             for(const Id central : _topology.incidentCells(corners[i]))
               _diamonds.insert(central);
-            _swaps.insert(std::minmax(corners[i], corners[(i + 1) % corners.size()]));
+            const auto edge = std::minmax(corners[i], corners[(i + 1) % corners.size()]);
+            _swaps.insert(edge);
+            _merges.insert(edge);
           }
         }
         // A strip can start up to six dual edges from a changed cell.
@@ -1475,9 +1681,18 @@ namespace QuadOptimizer {
         }
       }
 
+      std::uint64_t rejectionKey(Rule rule, const FaceHalfEdge::Cavity &cavity) const
+      {
+        // Terminal candidates include a coupled local solve. A rejection of
+        // the earlier closed-form placement must not suppress that retry.
+        return attemptKey(rule, cavity) ^
+          (_terminalMandatory ? 0xd6e8feb86659fd93ull : 0ull) ^
+          (_terminalPairs ? 0xa0761d6478bd642full : 0ull);
+      }
+
       bool cached(Rule rule, const FaceHalfEdge::Cavity &cavity)
       {
-        const auto found = _rejected.find(attemptKey(rule, cavity));
+        const auto found = _rejected.find(rejectionKey(rule, cavity));
         if(found == _rejected.end() ||
            found->second.localState != _topology.state(cavity) ||
            (found->second.contextDependent &&
@@ -1521,9 +1736,28 @@ namespace QuadOptimizer {
         }
         for(MVertex *vertex : retired) _parameters.erase(vertex);
         enqueueAffected(_topology.lastTouchedVertices());
+        activateSmoothing(_topology.lastTouchedVertices());
+        _smoothingColorsValid = false;
         ++_accepted;
         ++_result.acceptedCavities;
         return true;
+      }
+
+      CadDistance::Contribution trianglePairCad(
+        const std::vector<MElement *> &elements,
+        const std::unordered_map<MVertex *, UV> *overrides = nullptr)
+      {
+        CadDistance::Contribution result;
+        for(MElement *element : elements) {
+          std::vector<UV> uv;
+          if(element->getNumPrimaryVertices() != 3 ||
+             !elementParameters(element, overrides, uv)) return {};
+          result += CadDistance::sampleElement(_face, element, uv,
+            [&](const Point &xyz, const UV &parameter) {
+              return localTarget(xyz, parameter);
+            }, &_distanceCache, true);
+        }
+        return result;
       }
 
       bool attempt(Rule rule, const FaceHalfEdge::Cavity &cavity,
@@ -1532,13 +1766,14 @@ namespace QuadOptimizer {
         if(cavity.empty()) return false;
         // Callers check before generation; keep this guard for direct users.
         if(cached(rule, cavity)) return false;
-        const std::uint64_t key = attemptKey(rule, cavity);
+        const std::uint64_t key = rejectionKey(rule, cavity);
         const std::uint64_t state = _topology.state(cavity);
         bool contextDependent = false;
         RuleStats &stats = _stats[rule];
         ++stats.applicable;
         ++_result.cavitiesVisited;
         const std::vector<MElement *> beforeElements = cavityElements(cavity);
+        const bool merge = rule == Rule::TriangleStrip && cavity.cells.size() == 2;
         Score reference = score(beforeElements, nullptr, false);
         bool referenceCad = false;
         const auto beforeConnectivity = connectivity(cavity);
@@ -1548,6 +1783,13 @@ namespace QuadOptimizer {
         const char *bestName = "";
         Score bestScore;
         for(Candidate &candidate : candidates) {
+          if(candidate.cells.empty() || connectivity(candidate) == beforeConnectivity)
+            continue;
+          if(_terminalMandatory && mandatory &&
+             !smoothReplacementInterior(cavity, candidate)) {
+            ++_result.rejectedByWinslow;
+            continue;
+          }
           const auto candidateConnectivity = connectivity(candidate);
           std::vector<UV> newPositions;
           for(const VertexSpec &vertex : candidate.vertices)
@@ -1578,8 +1820,9 @@ namespace QuadOptimizer {
               reference.shape.absoluteViolationCount, oldPreferred, reference.triangles);
             const bool sizeRejected = !boundedSize(cheap, reference);
             if(cheap.invalid || sizeRejected ||
-               !boundedQuality(cheap, reference) ||
-               (!mandatory && (prefix > oldPrefix ||
+               (!mandatory && !boundedQuality(cheap, reference)) ||
+               (merge && preferred > oldPreferred) ||
+               (!mandatory && !merge && (prefix > oldPrefix ||
                 (prefix == oldPrefix && cheap.maximumAngularDeviation >
                   reference.maximumAngularDeviation + _options.objectiveRelativeTolerance)))) {
               _buildingCavity = nullptr;
@@ -1591,7 +1834,8 @@ namespace QuadOptimizer {
               const auto oldLocalPrefix = std::make_tuple(reference.invalid, reference.sizeViolations,
                 reference.shape.absoluteBadElementCount, reference.shape.absoluteViolationCount);
               if(!cheap.invalid && !sizeRejected && boundedQuality(cheap, reference) &&
-                 localPrefix == oldLocalPrefix) {
+                 ((_terminalMandatory && preferred > oldPreferred) ||
+                  localPrefix == oldLocalPrefix)) {
                 contextDependent = true;
                 _hasContextRejections = true;
               }
@@ -1625,6 +1869,18 @@ namespace QuadOptimizer {
                _options.minimumRecombinationQuality) {
             ++stats.quality; ++_result.rejectedByQuality; continue;
           }
+          if(merge) {
+            bool allowed = true;
+            for(MElement *element : built->elementPointers) {
+              if(element->getNumPrimaryVertices() != 4) continue;
+              const auto assessment = assessFinalQuad(element, &built->parameters);
+              if(!assessment.parametrized || assessment.queryFailures ||
+                 assessment.invalid || assessment.cadRepair) allowed = false;
+            }
+            if(!allowed) {
+              ++stats.cad; ++_result.rejectedByCad; continue;
+            }
+          }
           Score candidateScore = score(built->elementPointers, &built->parameters, false);
           if(candidateScore.invalid) {
             ++stats.orientation; ++_result.rejectedByOrientation; continue;
@@ -1632,7 +1888,10 @@ namespace QuadOptimizer {
           if(!boundedSize(candidateScore, reference)) {
             ++stats.size; ++_result.rejectedBySize; continue;
           }
-          if(!boundedQuality(candidateScore, reference) ||
+          if((!mandatory && !boundedQuality(candidateScore, reference)) ||
+             (merge &&
+              _context.quality.replaced(reference.criteria, candidateScore.criteria).preferredDeficit() >
+                _context.quality.preferredDeficit()) ||
              (rule == Rule::TriangleStrip && cavity.cells.size() == 2 &&
               candidateScore.shape.absoluteBadElementCount != 0)) {
             ++stats.quality; ++_result.rejectedByQuality; continue;
@@ -1650,7 +1909,7 @@ namespace QuadOptimizer {
             _hasContextRejections = true;
             ++stats.cad; ++_result.rejectedByCad; continue;
           }
-          if(!mandatory && !better(candidateScore, reference)) {
+          if(!mandatory && !merge && !better(candidateScore, reference)) {
             contextDependent = true;
             _hasContextRejections = true;
             ++stats.quality; ++_result.rejectedByQuality; continue;
@@ -1666,11 +1925,14 @@ namespace QuadOptimizer {
           return false;
         }
         _context.replace(reference, bestScore);
+        if(_terminalMandatory) ++_result.acceptedTerminalMandatoryCavities;
         ++stats.accepted;
         traceGuard("topology", reference, bestScore);
         if(_options.verbose)
-          Msg::Info("QuadOptimizerV2 face=%d accepted %s C=%zu B=%zu",
-                    _face->tag(), bestName, cavity.cells.size(), cavity.boundary.size());
+          Msg::Info("QuadOptimizerV2 face=%d accepted %s C=%zu B=%zu stage=%s",
+                    _face->tag(), bestName, cavity.cells.size(), cavity.boundary.size(),
+                    _terminalMandatory ? "valence" :
+                    _terminalPairs ? "merge" : "swap");
         return true;
       }
 
@@ -1832,6 +2094,11 @@ namespace QuadOptimizer {
                 return _topology.cornerCount(cell) == 4;
               });
             };
+            // The valence phase removes true 3-3 diamonds only. A 3-4
+            // collapse creates a valence-5 pole and is a discretionary
+            // coarsening operation, not a mandatory final repair.
+            if(_terminalMandatory &&
+               (firstStar.size() != 3 || secondStar.size() != 3)) continue;
             if(!allQuads(firstStar) || !allQuads(secondStar) ||
                firstStar.size() > 4 || secondStar.size() > 4 ||
                (firstStar.size() != 3 && secondStar.size() != 3))
@@ -1878,6 +2145,7 @@ namespace QuadOptimizer {
           if(_topology.cornerCount(path[i]) != 4) return false;
         FaceHalfEdge::Cavity cavity;
         const std::size_t quads = path.size() - 2;
+        if(_terminalMandatory && quads == 0) return false;
         if(!_topology.cavity(path, cavity) || !cavity.interior.empty() ||
            cavity.boundary.size() != 2 * quads + 4)
           return false;
@@ -1934,7 +2202,7 @@ namespace QuadOptimizer {
           for(const auto &filling : HalfEdgeRewrite::triangleQuadStripZipperReconnections(leftLocal, rightLocal))
             candidates.push_back(polygonCandidate(cavity, filling, "T-Q^n-T zipper"));
         }
-        // A terminal pair is merged only when its actual quality improves.
+        // TT uses the acceptable-quad gate; longer strips are valence rewrites.
         if(attempt(Rule::TriangleStrip, cavity, std::move(candidates), quads != 0)) {
           ++_result.acceptedQuadTwoTriangleReductions;
           return true;
@@ -1998,26 +2266,11 @@ namespace QuadOptimizer {
         return result;
       }
 
-      std::vector<Candidate> ttCandidates(
-        const FaceHalfEdge::Cavity &cavity)
+      bool swaps(bool pairsOnly = false)
       {
-        std::vector<Candidate> result;
-        if(cavity.boundary.size() != 4) return result;
-        Candidate first;
-        first.name = "TT swap";
-        if(baseCandidate(cavity, first)) {
-          first.cells = {{0, 1, 2}, {0, 2, 3}};
-          result.push_back(first);
-          first.cells = {{1, 2, 3}, {1, 3, 0}};
-          result.push_back(first);
-        }
-        return result;
-      }
-
-      bool swaps()
-      {
-        while(!_swaps.empty()) {
-          const auto endpoints = *_swaps.begin(); _swaps.erase(_swaps.begin());
+        auto &pending = pairsOnly ? _merges : _swaps;
+        while(!pending.empty()) {
+          const auto endpoints = *pending.begin(); pending.erase(pending.begin());
           FaceHalfEdge::Edge edge;
           edge.first = endpoints.first; edge.second = endpoints.second;
           for(const Id cell : _topology.incidentCells(edge.first)) {
@@ -2033,32 +2286,34 @@ namespace QuadOptimizer {
             continue;
           const std::size_t first = _topology.cornerCount(edge.cells[0]);
           const std::size_t second = _topology.cornerCount(edge.cells[1]);
-          if(first == 4 && second == 4 && cavity.boundary.size() == 6) {
+          if(!pairsOnly && first == 4 && second == 4 && cavity.boundary.size() == 6) {
             if(!cached(Rule::QuadQuad, cavity) &&
                attempt(Rule::QuadQuad, cavity, qqCandidates(cavity), false)) {
               ++_result.acceptedEdgeSwaps;
               return true;
             }
           }
-          else if(((first == 3 && second == 4) ||
+          else if(!pairsOnly && ((first == 3 && second == 4) ||
                    (first == 4 && second == 3)) &&
                   cavity.boundary.size() == 5) {
             if(!cached(Rule::QuadTriangle, cavity) &&
                attempt(Rule::QuadTriangle, cavity, qtCandidates(cavity), false)) {
               ++_result.acceptedEdgeSwaps;
               ++_result.acceptedGeometryDrivenMixedTriangleQuadSwaps;
+              ++_result.finalQtSwaps;
               return true;
             }
           }
           else if(first == 3 && second == 3 &&
                   cavity.boundary.size() == 4) {
-            ++_result.triangleTriangleSwapsVisited;
-            if(!cached(Rule::TriangleTriangle, cavity) &&
-               attempt(Rule::TriangleTriangle, cavity, ttCandidates(cavity), false)) {
-              ++_result.acceptedTriangleTriangleSwaps;
-              ++_result.acceptedEdgeSwaps;
-              return true;
+            if(pairsOnly) {
+              if(stripPath(edge.cells)) {
+                ++_result.finalTtMerges;
+                return true;
+              }
+              continue;
             }
+
           }
         }
         return false;
@@ -2082,12 +2337,15 @@ namespace QuadOptimizer {
         std::size_t visited = 0, accepted = 0, solves = 0, cells = 0;
         std::size_t centroidTried = 0, centroidAccepted = 0;
         double minimumStep = 1., solveSeconds = 0., guardSeconds = 0.;
+        double prepareSeconds = 0.;
         double maximumMove = 0., sumSquaredMove = 0.;
       } _nodeSweep;
 
-      std::vector<std::vector<Id> > smoothingColors() const
+      const std::vector<std::vector<Id> > &smoothingColors()
       {
-        std::vector<std::vector<Id> > colors;
+        if(_smoothingColorsValid) return _smoothingColors;
+        auto &colors = _smoothingColors;
+        colors.clear();
         std::map<Id, std::size_t> assigned;
         for(Id center : _topology.vertices()) {
           MVertex *vertex = _topology.vertex(center);
@@ -2107,6 +2365,7 @@ namespace QuadOptimizer {
           colors[color].push_back(center);
           assigned.emplace(center, color);
         }
+        _smoothingColorsValid = true;
         return colors;
       }
 
@@ -2247,12 +2506,12 @@ namespace QuadOptimizer {
         }
         if(stationary) return finish("stationary");
         const auto elements = cavityElements(job.cavity);
-        double initialSine = 0., proposedSine = 0.;
+        const double initialSine = minimumSine(elements);
+        double proposedSine = 0.;
         if(_smartSmoothing) {
           Point proposed;
           if(!mappedPoint({{projected.u(), projected.v()}}, proposed))
             return finish("mapping-rejected");
-          initialSine = minimumSine(elements);
           proposedSine = minimumSine(elements, vertex, &proposed);
           // Freitag's strict max-min acceptance. Evaluate the physical,
           // projected candidate, before paying for specification/CAD guards.
@@ -2326,25 +2585,13 @@ namespace QuadOptimizer {
           }
           const bool sizeSafe = boundedSize(candidate, reference);
           const bool qualitySafe = boundedQuality(candidate, reference);
-          // Winslow supplies the continuous smoothing objective. Preserve
-          // the absolute criteria and exact preferred quotas; a smaller
-          // worst angle alone is not the definition of a smoother star.
+          // Both nodal proposals must improve the minimum physical corner
+          // sine, while preserving absolute criteria and preferred quotas.
           const bool quotaSafe =
             _context.quality.replaced(reference.criteria, candidate.criteria).preferredDeficit() <=
             _context.quality.preferredDeficit();
-          bool improved = false;
-          if(_smartSmoothing)
-            improved = minimumSine(elements) > initialSine +
-              64. * std::numeric_limits<double>::epsilon();
-          else {
-            const Point displacement = subtract(xyz, job.origin);
-            auto trialPlane = job.plane;
-            trialPlane[0] = {{dot(displacement, job.tangent1), dot(displacement, job.tangent2)}};
-            const double energy = evaluateLocalSurfacePatchWinslowEnergy(
-              trialPlane, job.triangles, job.quadrangles, job.orientation, _options.winslow.lambda);
-            improved = std::isfinite(energy) && energy < job.initialEnergy -
-              tolerance * std::max(1., std::abs(job.initialEnergy));
-          }
+          const bool improved = minimumSine(elements) > initialSine +
+            std::max(64. * std::numeric_limits<double>::epsilon(), tolerance);
           const bool cheapSafe = !candidate.invalid && warpingSafe &&
             sizeSafe && qualitySafe && quotaSafe && improved;
           if(cheapSafe) {
@@ -2395,6 +2642,8 @@ namespace QuadOptimizer {
           _context.replace(reference, candidate);
           rollback.active = false;
           _smoothingTouched.push_back(job.center);
+          for(Id cell : job.cavity.cells)
+            activateSmoothing(_topology.cellVertices(cell));
           traceGuard("smoothing", reference, candidate);
           ++_result.acceptedFinalSmoothingCavities;
           ++_nodeSweep.accepted;
@@ -2466,16 +2715,19 @@ namespace QuadOptimizer {
       bool smoothSweep(const char *stage, std::size_t sweep,
                        bool winslowOnly = false)
       {
+        const auto sweepStarted = std::chrono::steady_clock::now();
+        const bool terminalPolish = std::string(stage) == "polish";
         _smartSmoothing = _options.smartLaplacian && !winslowOnly;
         _nodeSweep = NodeSweepStats();
         _smoothingTouched.clear();
-        const auto colors = smoothingColors();
+        const auto &colors = smoothingColors();
+        auto &active = _smartSmoothing ? _activeSmart : _activeWinslow;
         std::size_t free = 0;
         for(const auto &color : colors) free += color.size();
         if(_options.verbose)
           Msg::Info("QuadOptimizerV2 face=%d %s stage=%s sweep=%zu "
-                    "begin free=%zu colors=%zu", _face->tag(), _smartSmoothing ? "nodeSmartLaplacian" : "nodeWinslow",
-                    stage, sweep, free, colors.size());
+                    "begin free=%zu colors=%zu active=%zu", _face->tag(), _smartSmoothing ? "nodeSmartLaplacian" : "nodeWinslow",
+                    stage, sweep, free, colors.size(), active.size());
         SmallCavityWinslowOptions winslow = _options.winslow;
         winslow.harmonicInitialization = false;
         winslow.maxInnerIterations = std::min(winslow.maxInnerIterations, 20);
@@ -2486,9 +2738,13 @@ namespace QuadOptimizer {
           std::vector<NodeSmoothingJob> jobs;
           jobs.reserve(colors[color].size());
           for(Id center : colors[color]) {
+            if(!terminalPolish && _options.activeNodalSmoothing && !active.erase(center)) continue;
             NodeSmoothingJob job;
             job.center = center;
+            const auto prepareStarted = std::chrono::steady_clock::now();
             prepareNodeSmoothing(job);
+            _nodeSweep.prepareSeconds += std::chrono::duration<double>(
+              std::chrono::steady_clock::now() - prepareStarted).count();
             ++_nodeSweep.visited;
             const auto centroidStarted = std::chrono::steady_clock::now();
             const bool accepted = !winslowOnly &&
@@ -2525,39 +2781,23 @@ namespace QuadOptimizer {
         }
         // No topological operation runs inside a nodal sweep. Schedule the
         // union once: repeated six-ring traversals per moved node are redundant.
-        if(std::string(stage) != "final" && !_smoothingTouched.empty())
+        const auto queueStarted = std::chrono::steady_clock::now();
+        if(!terminalPolish && !_smoothingTouched.empty())
           enqueueAffected(_smoothingTouched);
+        const double queueSeconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - queueStarted).count();
+        const double totalSeconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - sweepStarted).count();
         if(_options.verbose)
           Msg::Info("QuadOptimizerV2 face=%d %s stage=%s sweep=%zu "
-                    "end visited=%zu acceptedNodes=%zu solves=%zu solveSeconds=%.9g guardSeconds=%.9g maxMoveOverH=%.9g rmsMoveOverH=%.9g centroidTried=%zu centroidAccepted=%zu winslowFallbacks=%zu",
+                    "end visited=%zu acceptedNodes=%zu solves=%zu solveSeconds=%.9g guardSeconds=%.9g maxMoveOverH=%.9g rmsMoveOverH=%.9g centroidTried=%zu centroidAccepted=%zu winslowFallbacks=%zu prepareSeconds=%.9g queueSeconds=%.9g totalSeconds=%.9g",
                     _face->tag(), _smartSmoothing ? "nodeSmartLaplacian" : "nodeWinslow",
                     stage, sweep, _nodeSweep.visited, _nodeSweep.accepted,
                     _nodeSweep.solves, _nodeSweep.solveSeconds, _nodeSweep.guardSeconds,
                     _nodeSweep.maximumMove, std::sqrt(_nodeSweep.sumSquaredMove / std::max<std::size_t>(1, _nodeSweep.visited)),
-                    _nodeSweep.centroidTried, _nodeSweep.centroidAccepted, _nodeSweep.solves);
+                    _nodeSweep.centroidTried, _nodeSweep.centroidAccepted, _nodeSweep.solves,
+                    _nodeSweep.prepareSeconds, queueSeconds, totalSeconds);
         return _nodeSweep.accepted != 0;
-      }
-
-      bool smooth()
-      {
-        if(_options.verbose)
-          Msg::Info("QuadOptimizerV2 face=%d round=%zu Winslow begin", _face->tag(), _result.passes);
-        std::size_t sweeps = 0, accepted = 0;
-        for(int pass = 0; pass < _options.finalSmoothingPasses; ++pass) {
-          ++sweeps;
-          const bool changed = smoothSweep("round", sweeps);
-          if(_options.verbose)
-            Msg::Info("QuadOptimizerV2 face=%d round=%zu Winslow status=%s step=%.17g cells=%zu",
-                      _face->tag(), _result.passes, changed ? "accepted" :
-                        _nodeSweep.visited ? "stationary-or-rejected" : "all-fixed",
-                      _nodeSweep.minimumStep, _nodeSweep.cells);
-          if(!changed) break;
-          ++accepted;
-        }
-        if(_options.verbose)
-          Msg::Info("QuadOptimizerV2 face=%d round=%zu Winslow end sweeps=%zu accepted=%zu",
-                    _face->tag(), _result.passes, sweeps, accepted);
-        return accepted != 0;
       }
 
       std::size_t searchLimit() const
@@ -2785,180 +3025,356 @@ namespace QuadOptimizer {
         collectCadConstraints();
       }
 
-      bool needsContextSweep() const
+      bool initialize()
       {
-        return _started && _hasContextRejections &&
-          _lastProcessedContext != _context.revision;
+        if(!_face || !_topology.valid()) {
+          _result.skippedInvalidInputCellComplex = true;
+          return false;
+        }
+        if(!_started) {
+          const auto elements = cavityElements(FaceHalfEdge::Cavity{_topology.cells(), {}, {}});
+          _result.initialObjective = specificationObjective(elements);
+          auditSize(score(elements, nullptr, false), true);
+          const auto vertices = _topology.vertices();
+          activateSmoothing(vertices);
+          enqueueAffected(vertices); // Seed once; later updates stay local.
+          _started = true;
+        }
+        return true;
       }
 
-      bool hasIterationBudget() const
+      std::size_t nodalSweep(const char *stage, std::size_t sweep, bool winslowOnly)
       {
-        return _result.passes < static_cast<std::size_t>(
-          std::max(1, _options.maximumOptimizationPasses)) &&
-          !_result.exhaustedCavityBudget;
-      }
-
-      std::size_t finalSmoothingSweep(std::size_t sweep,
-                                      bool winslowOnly = false)
-      {
-        const std::size_t before = _result.acceptedFinalSmoothingCavities;
-        const bool changed = smoothSweep("final", sweep, winslowOnly);
-        if(changed) _result.reachedFixedPoint = false;
+        if(!_started) return 0;
+        const auto before = _result.acceptedFinalSmoothingCavities;
+        smoothSweep(stage, sweep, winslowOnly);
         return _result.acceptedFinalSmoothingCavities - before;
+      }
+
+      std::size_t topologySweep(int phase)
+      {
+        const auto limit = static_cast<std::size_t>(std::max(0, _options.maximumAcceptedCavities));
+        if(!_started || !_topology.valid() || _accepted >= limit) return 0;
+        _terminalMandatory = phase == 0;
+        _terminalPairs = phase == 2;
+        const auto searchStarted = std::chrono::steady_clock::now();
+        const auto before = _accepted;
+        while(_accepted < limit && (phase == 0 ? mandatoryPass() :
+          phase == 1 ? (swaps(false) || experimentalSearch()) : swaps(true))) {}
+        _terminalMandatory = _terminalPairs = false;
+        if(_options.verbose)
+          Msg::Info("QuadOptimizerV2 face=%d topologyTiming phase=%d accepted=%zu queueSeconds=%.9g searchSeconds=%.9g",
+                    _face->tag(), phase, _accepted - before,
+                    0.,
+                    std::chrono::duration<double>(std::chrono::steady_clock::now() - searchStarted).count());
+        return _accepted - before;
+      }
+
+      bool cavityBudgetExhausted() const
+      {
+        return _started && _accepted >= static_cast<std::size_t>(
+          std::max(0, _options.maximumAcceptedCavities));
+      }
+
+      void loopResult(std::size_t rounds, bool fixed, bool iterationLimit)
+      {
+        _result.passes = rounds;
+        _result.exhaustedCavityBudget = cavityBudgetExhausted();
+        _result.reachedFixedPoint = fixed && !_result.exhaustedCavityBudget;
+        _result.exhaustedIterationBudget = iterationLimit;
       }
 
       SmallCavityOptimizerResult finalResult()
       {
-        // Terminal smoothing runs after all topology/context revisits.
-        // Audit the actual delivered mesh, including these last movements.
-        const auto elements = cavityElements(
-          FaceHalfEdge::Cavity{_topology.cells(), {}, {}});
+        const auto elements = cavityElements(FaceHalfEdge::Cavity{_topology.cells(), {}, {}});
         _result.finalObjective = specificationObjective(elements);
         auditSize(score(elements, nullptr, false), false);
-        auto result = _result;
-        if(needsContextSweep()) {
-          result.reachedFixedPoint = false;
-          result.exhaustedIterationBudget = !result.exhaustedCavityBudget &&
-            _result.passes >= static_cast<std::size_t>(
-              std::max(1, _options.maximumOptimizationPasses));
-        }
-        return result;
-      }
-
-      SmallCavityOptimizerResult run()
-      {
-        if(!_face || !_topology.valid()) {
-          // An unrelated invalid/non-manifold input component is not an
-          // optimizer failure. Leave the face untouched and report the skip
-          // so a caller can decide whether to repair it separately.
-          _result.success = true;
-          _result.skippedInvalidInputCellComplex = true;
-          if(_face)
-            Msg::Warning("QuadOptimizer: face %d is not a regular oriented "
-                         "surface cell complex", _face->tag());
-          return _result;
-        }
-        if(!_started) {
-          _result.initialObjective = specificationObjective(cavityElements(
-            FaceHalfEdge::Cavity{_topology.cells(), {}, {}}));
-          auditSize(score(cavityElements(FaceHalfEdge::Cavity{_topology.cells(), {}, {}}), nullptr, false), true);
-          enqueueAffected(_topology.vertices());
-          _queuedContext = _context.revision;
-          _started = true;
-        }
-        _result.reachedFixedPoint = false;
-        const int iterations = std::max(1, _options.maximumOptimizationPasses);
-        const std::size_t acceptedLimit = static_cast<std::size_t>(
-          std::max(0, _options.maximumAcceptedCavities));
-        for(int iteration = static_cast<int>(_result.passes); iteration < iterations; ++iteration) {
-          ++_result.passes;
-          if(_options.verbose)
-            Msg::Info("QuadOptimizerV2 face=%d round=%zu begin",
-                      _face->tag(), _result.passes);
-          // Quotas and the remaining cumulative CAD budget are part of the
-          // objective state. Refresh distant anchors once per global sweep,
-          // while keeping context-independent local rejections cached.
-          if(_context.revision != _queuedContext) {
-            _hasContextRejections = false;
-            enqueueAffected(_topology.vertices());
-            _queuedContext = _context.revision;
-          }
-          const std::size_t before = _accepted;
-          while(_accepted <
-                  acceptedLimit &&
-                mandatoryPass()) {
-          }
-          while(_accepted <
-                  acceptedLimit &&
-                swaps()) {
-          }
-          while(_accepted < acceptedLimit && experimentalSearch()) {
-            while(_accepted < acceptedLimit && mandatoryPass()) {}
-            while(_accepted < acceptedLimit && swaps()) {}
-          }
-          const bool smoothed = _options.stagedTopologyThenQuality ? false : smooth();
-          if(_options.stagedTopologyThenQuality && _options.verbose)
-            Msg::Info("QuadOptimizerV2 face=%d round=%zu end smoothing=deferred-to-final",
-                      _face->tag(), _result.passes);
-          // A successful nodal Winslow sweep changes every incident cavity
-          // state and can make a previously rejected swap profitable. Only a
-          // topology- and geometry-idle iteration is a fixed point.
-          if(_accepted >= acceptedLimit) {
-            _result.exhaustedCavityBudget = true;
-            break;
-          }
-          if(_accepted == before && !smoothed) {
-            _result.reachedFixedPoint = true;
-            break;
-          }
-        }
-        _result.finalObjective = specificationObjective(cavityElements(
-          FaceHalfEdge::Cavity{_topology.cells(), {}, {}}));
-        auditSize(score(cavityElements(FaceHalfEdge::Cavity{_topology.cells(), {}, {}}), nullptr, false), false);
-        _result.exhaustedIterationBudget = !_result.reachedFixedPoint &&
-          !_result.exhaustedCavityBudget;
-        _lastProcessedContext = _context.revision;
         _result.success = _result.success && _topology.valid();
-        if(_options.verbose) {
-          if(_onePointStats.solves || _onePointStats.fixedCornerRejections)
-            Msg::Info("QuadOptimizerV2 face=%d one-point Winslow total solves=%zu "
-                      "iterations=%zu evaluations=%zu seconds=%.9g fixedCornerRejections=%zu",
-                      _face->tag(), _onePointStats.solves, _onePointStats.iterations,
-                      _onePointStats.evaluations, _onePointStats.seconds,
-                      _onePointStats.fixedCornerRejections);
-          for(const auto &entry : _stats) {
-            const auto &v = entry.second;
-            Msg::Info("QuadOptimizerV2 face=%d rule=%llu applicable=%zu cache=%zu candidates=%zu "
-                      "rejected(topology=%zu orientation=%zu size=%zu cad=%zu quality=%zu) accepted=%zu",
-                      _face->tag(), static_cast<unsigned long long>(entry.first),
-                      v.applicable, v.cache, v.candidates, v.topology, v.orientation,
-                      v.size, v.cad, v.quality, v.accepted);
-          }
-          Msg::Info("QuadOptimizerV2 face=%d stop=%s passes=%zu accepted=%zu",
-                    _face->tag(), _result.reachedFixedPoint ? "fixed-point" :
-                      _result.exhaustedCavityBudget ? "cavity-budget" : "iteration-budget",
-                    _result.passes, _accepted);
-        }
-        if(_options.invalidateVertexArrays) _face->model()->deleteVertexArrays();
         return _result;
       }
+
+      struct FinalQuadAssessment {
+        bool parametrized = false, invalid = false, cadRepair = false;
+        int first = 0;
+        double distance[2] = {0., 0.};
+        std::size_t queryFailures = 0;
+        std::vector<UV> uv;
+      };
+
+      FinalQuadAssessment assessFinalQuad(MElement *quad,
+        const std::unordered_map<MVertex *, UV> *overrides = nullptr)
+      {
+        FinalQuadAssessment assessment;
+        std::vector<UV> uv;
+        if(!elementParameters(quad, overrides, uv)) return assessment;
+        const auto quality = evaluateElementQuality(quad);
+        bool opposed = false;
+        followsFace(quad, uv, &opposed);
+        const double eta = quad->etaShapeMeasure();
+        const double sicn = quad->minSICNShapeMeasure();
+        const bool invalid = !quality.topologicallyValid || opposed ||
+          !std::isfinite(quality.maximumAngleDegrees) ||
+          quality.maximumAngleDegrees >= absoluteMaximumQuadAngleDegrees ||
+          !std::isfinite(quality.minimumAngleDegrees) ||
+          quality.minimumAngleDegrees <= absoluteMinimumQuadAngleDegrees ||
+          !std::isfinite(eta) || !(eta > 0.) ||
+          !std::isfinite(sicn) || !(sicn > 0.);
+        double distance[2] = {0., 0.};
+        bool covered[2] = {true, true};
+        if(_options.finalSplitCadDistanceRatio >= 0.) {
+          for(int diagonal = 0; diagonal < 2; ++diagonal) {
+            const Point a = point(quad->getVertex(diagonal));
+            const Point b = point(quad->getVertex(diagonal + 2));
+            // Sample the chord, not the interpolated CAD curve. These
+            // three distances are estimates, not a certified supremum.
+            for(const double t : {.25, .5, .75}) {
+              Point p;
+              UV guess;
+              for(int d = 0; d < 3; ++d) p[d] = (1. - t) * a[d] + t * b[d];
+              for(int d = 0; d < 2; ++d)
+                guess[d] = (1. - t) * uv[diagonal][d] + t * uv[diagonal + 2][d];
+              bool found = false;
+              try {
+                const double h = localTarget(p, guess);
+                const GPoint projected = _face->closestPointFromTrustedGuess(
+                  SPoint3(p[0], p[1], p[2]), guess.data());
+                if(h > 0. && projected.succeeded()) {
+                  const double d = std::hypot(projected.x() - p[0],
+                    projected.y() - p[1], projected.z() - p[2]) / h;
+                  if(std::isfinite(d)) {
+                    distance[diagonal] = std::max(distance[diagonal], d);
+                    found = true;
+                  }
+                }
+              }
+              catch(...) {}
+              covered[diagonal] = covered[diagonal] && found;
+            }
+            if(!covered[diagonal]) ++assessment.queryFailures;
+          }
+        }
+        // Ordinary curvature can put both diagonals away from the CAD.
+        // Split only if one is excessive and the other is clearly better,
+        // within tolerance. The inserted chord must be the closer one.
+        const int first = covered[0] && covered[1] &&
+          distance[1] < distance[0] ? 1 : 0;
+        const bool cadRepair = _options.finalSplitCadDistanceRatio >= 0. &&
+          covered[0] && covered[1] &&
+          distance[1 - first] > _options.finalSplitCadDistanceRatio &&
+          distance[first] <= _options.finalSplitCadDistanceRatio &&
+          distance[first] <= .5 * distance[1 - first];
+        assessment.parametrized = true;
+        assessment.invalid = invalid;
+        assessment.cadRepair = cadRepair;
+        assessment.first = first;
+        assessment.distance[0] = distance[0];
+        assessment.distance[1] = distance[1];
+        assessment.uv = std::move(uv);
+        return assessment;
+      }
+
+      std::size_t splitFinalQuads()
+      {
+        if(!_started || !_topology.valid()) return 0;
+        const std::size_t before = _result.acceptedCavities;
+        const auto start = std::chrono::steady_clock::now();
+        // Snapshot IDs: newly created triangles are never revisited here.
+        // There is no optimization phase after this final repair.
+        for(const Id id : _topology.cells()) {
+          if(_topology.cornerCount(id) != 4) continue;
+          MElement *quad = _topology.element(id);
+          if(quad->getNumVertices() != 4) continue;
+          const auto assessment = assessFinalQuad(quad);
+          _result.finalQuadDiagonalQueriesFailed += assessment.queryFailures;
+          if(!assessment.parametrized) {
+            ++_result.finalQuadDiagonalQueriesFailed;
+            ++_result.finalQuadsSplitRejected;
+            continue;
+          }
+          const auto &uv = assessment.uv;
+          const auto &distance = assessment.distance;
+          const int first = assessment.first;
+          const bool invalid = assessment.invalid, cadRepair = assessment.cadRepair;
+          if(!invalid && !cadRepair) continue;
+          FaceHalfEdge::Cavity cavity;
+          if(!_topology.cavity({id}, cavity)) {
+            ++_result.finalQuadsSplitRejected;
+            continue;
+          }
+          std::unique_ptr<BuiltCandidate> chosen;
+          int selected = -1;
+          std::tuple<std::size_t, bool, double, double, double> bestSplit;
+          for(int trial = 0; trial < 2; ++trial) {
+            const int d = trial == 0 ? first : 1 - first;
+            // Never fall back to the distant chord for a CAD-only repair.
+            // Invalid quads may use either admissible diagonal.
+            if(!invalid && trial != 0) continue;
+            Candidate candidate;
+            for(int i = 0; i < 4; ++i)
+              candidate.vertices.push_back({quad->getVertex(i), uv[i], point(quad->getVertex(i))});
+            candidate.cells = d == 0 ? std::vector<Cell>{{0, 1, 2}, {2, 3, 0}} :
+                                      std::vector<Cell>{{1, 2, 3}, {3, 0, 1}};
+            auto built = std::unique_ptr<BuiltCandidate>(new BuiltCandidate);
+            _buildingCavity = &cavity;
+            const bool ready = build(candidate, *built);
+            _buildingCavity = nullptr;
+            if(!ready) continue;
+            bool valid = true;
+            std::size_t absoluteViolations = 0;
+            double minimumAngle = 180.;
+            // No shape quota can veto repair of an invalid quad; validity
+            // still requires nondegenerate, consistently oriented triangles.
+            for(MElement *triangle : built->elementPointers) {
+              std::vector<UV> parameters;
+              const auto triangleQuality = evaluateElementQuality(triangle);
+              absoluteViolations += specificationObjective(triangleQuality).absoluteViolationCount;
+              minimumAngle = std::min(minimumAngle, triangleQuality.minimumAngleDegrees);
+              valid = valid && triangleQuality.topologicallyValid &&
+                elementParameters(triangle, &built->parameters, parameters) &&
+                followsFace(triangle, parameters);
+            }
+            if(!valid || !_topology.prepareReplacement(
+                 cavity, built->elementPointers, built->replacement)) continue;
+            // Absolute triangle safety comes first. Among equally safe cuts,
+            // compare the physical triangles to the CAD before angle comfort.
+            // Chord distance alone misses errors in triangle interiors.
+            const auto cad = trianglePairCad(built->elementPointers, &built->parameters);
+            const double maximum = cad.complete() ? cad.maximumNormalizedDistance :
+              std::numeric_limits<double>::infinity();
+            const double mean = cad.complete() ?
+              cad.normalizedSquaredDistanceIntegral / cad.sampledArea : maximum;
+            const auto rank = std::make_tuple(absoluteViolations, !cad.complete(),
+              maximum < 1.e-10 ? 0. : maximum, mean < 1.e-20 ? 0. : mean, -minimumAngle);
+            if(!chosen || rank < bestSplit) {
+              chosen = std::move(built);
+              selected = d;
+              bestSplit = rank;
+            }
+          }
+          if(!chosen) {
+            ++_result.finalQuadsSplitRejected;
+            if(_options.verbose)
+              Msg::Info("QuadOptimizerV2 final split rejected face=%d quad=%zu "
+                        "reason=%s distance02/h=%.9g distance13/h=%.9g",
+                        _face->tag(), quad->getNum(),
+                        invalid ? "invalid" : "cad-distance", distance[0], distance[1]);
+            continue;
+          }
+          const std::size_t tag = quad->getNum();
+          const Score removed = score({quad});
+          const Score inserted = score(chosen->elementPointers, &chosen->parameters);
+          // Commit directly: final splits have separate counters and are
+          // independent of the optimization cavity budget. Keep the shared
+          // ledger current for the final QT/TT cleanup, without resetting its
+          // immutable initial CAD reference.
+          if(!_topology.replace(chosen->replacement)) {
+            ++_result.finalQuadsSplitRejected;
+            continue;
+          }
+          for(auto &element : chosen->elements) element.release();
+          _context.replace(removed, inserted);
+          ++_result.acceptedCavities;
+          if(invalid) ++_result.finalInvalidQuadsSplit;
+          else ++_result.finalCadQuadsSplit;
+          if(_options.verbose)
+            Msg::Info("QuadOptimizerV2 final split face=%d quad=%zu reason=%s "
+                      "diagonal=%d distance02/h=%.9g distance13/h=%.9g",
+                      _face->tag(), tag, invalid ? "invalid" : "cad-distance",
+                      selected, distance[0], distance[1]);
+        }
+        const double seconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - start).count();
+        Msg::Info("QuadOptimizerV2 final split face=%d invalid=%zu cad=%zu "
+                  "rejected=%zu queryFailures=%zu wall=%.6g s",
+                  _face->tag(), _result.finalInvalidQuadsSplit,
+                  _result.finalCadQuadsSplit, _result.finalQuadsSplitRejected,
+                  _result.finalQuadDiagonalQueriesFailed, seconds);
+        return _result.acceptedCavities - before;
+      }
+
     };
 
-    void smoothFinalModel(const std::vector<Optimizer *> &engines,
-                          const SmallCavityOptimizerOptions &options)
+    std::size_t smoothModel(const std::vector<Optimizer *> &engines,
+                            const SmallCavityOptimizerOptions &options,
+                            const char *stage)
     {
-      if(options.verbose) Msg::Info("QuadOptimizerV2 final %s begin",
-        options.smartLaplacian ? "SmartLaplacian" : "Winslow");
-      std::size_t sweeps = 0, accepted = 0;
+      std::size_t moved = 0;
       for(int pass = 0; pass < options.finalSmoothingPasses; ++pass) {
-        ++sweeps;
-        std::size_t moved = 0;
-        // Even faces that exhausted their topology budget participate.
-        // Check for an idle pass only after visiting the entire model.
-        for(Optimizer *engine : engines)
-          moved += engine->finalSmoothingSweep(sweeps);
-        accepted += moved;
-        if(!moved) break;
+        std::size_t changed = 0;
+        for(Optimizer *engine : engines) changed += engine->nodalSweep(stage, pass + 1, false);
+        moved += changed;
+        if(!changed) break;
       }
-      if(options.verbose)
-        Msg::Info("QuadOptimizerV2 final %s end sweeps=%zu acceptedNodes=%zu",
-                  options.smartLaplacian ? "SmartLaplacian" : "Winslow", sweeps, accepted);
-      if(options.finalWinslowPasses > 0) {
-        if(options.verbose)
-          Msg::Info("QuadOptimizerV2 final Winslow polish begin");
-        sweeps = accepted = 0;
-        for(int pass = 0; pass < options.finalWinslowPasses; ++pass) {
-          ++sweeps;
-          std::size_t moved = 0;
-          for(Optimizer *engine : engines)
-            moved += engine->finalSmoothingSweep(sweeps, true);
-          accepted += moved;
-          if(!moved) break;
+      for(int pass = 0; pass < options.finalWinslowPasses; ++pass) {
+        std::size_t changed = 0;
+        for(Optimizer *engine : engines) changed += engine->nodalSweep(stage, pass + 1, true);
+        moved += changed;
+        if(!changed) break;
+      }
+      return moved;
+    }
+
+    void improveModel(const std::vector<Optimizer *> &engines,
+                      const SmallCavityOptimizerOptions &options)
+    {
+      for(Optimizer *engine : engines) engine->initialize();
+      Msg::Info("QuadOptimizerV2 initial smoothing begin");
+      const auto initial = smoothModel(engines, options, "initial");
+      Msg::Info("QuadOptimizerV2 initial smoothing end moved=%zu", initial);
+      std::size_t round = 0;
+      bool fixed = false;
+      while(options.maximumOptimizationPasses < 0 ||
+            round < static_cast<std::size_t>(options.maximumOptimizationPasses)) {
+        ++round;
+        std::size_t counts[3] = {0, 0, 0};
+        for(int phase = 0; phase < 3; ++phase) {
+          if(phase == 0 && !options.terminalMandatoryCleanup) continue;
+          if(phase == 1 && !options.qualitySwaps) continue;
+          if(phase == 2 && !options.finalPairCleanup) continue;
+          Msg::Info("QuadOptimizerV2 loop round=%zu phase=%s begin", round,
+                    phase == 0 ? "valence" : phase == 1 ? "swap" : "merge");
+          const auto phaseStarted = std::chrono::steady_clock::now();
+          std::size_t changed;
+          do {
+            changed = 0;
+            for(Optimizer *engine : engines) changed += engine->topologySweep(phase);
+            counts[phase] += changed;
+          } while(changed);
+          Msg::Info("QuadOptimizerV2 loop round=%zu phase=%s end accepted=%zu wall=%.9g",
+                    round, phase == 0 ? "valence" : phase == 1 ? "swap" : "merge",
+                    counts[phase], std::chrono::duration<double>(
+                      std::chrono::steady_clock::now() - phaseStarted).count());
         }
-        if(options.verbose)
-          Msg::Info("QuadOptimizerV2 final Winslow polish end sweeps=%zu "
-                    "acceptedNodes=%zu", sweeps, accepted);
+        const bool topologyIdle = !counts[0] && !counts[1] && !counts[2];
+        // An idle topology round terminates the alternating loop. Do not
+        // restart it because the bounded terminal Winslow pass moves nodes.
+        const auto moved = topologyIdle ? 0 : smoothModel(engines, options, "round");
+        Msg::Info("QuadOptimizerV2 loop round=%zu end valence=%zu swaps=%zu merges=%zu moved=%zu",
+                  round, counts[0], counts[1], counts[2], moved);
+        if(topologyIdle) { fixed = true; break; }
       }
+      const bool cavityLimit = std::any_of(engines.begin(), engines.end(),
+        [](Optimizer *engine) { return engine->cavityBudgetExhausted(); });
+      for(Optimizer *engine : engines)
+        engine->loopResult(round, fixed, !fixed && !cavityLimit);
+      Msg::Info("QuadOptimizerV2 loop end rounds=%zu reason=%s", round,
+                cavityLimit ? "cavity-budget" : fixed ? "topology-idle" : "iteration-budget");
+      Msg::Info("QuadOptimizerV2 terminal Winslow begin passes=%d", options.terminalWinslowPasses);
+      std::size_t polished = 0;
+      for(int pass = 0; pass < options.terminalWinslowPasses; ++pass) {
+        std::size_t moved = 0;
+        for(Optimizer *engine : engines)
+          moved += engine->nodalSweep("polish", pass + 1, true);
+        polished += moved;
+        Msg::Info("QuadOptimizerV2 terminal Winslow sweep=%d moved=%zu", pass + 1, moved);
+      }
+      Msg::Info("QuadOptimizerV2 terminal Winslow end passes=%d moved=%zu",
+                options.terminalWinslowPasses, polished);
+      // This is deliberately the last mutation. No cleanup or smoothing may
+      // reconnect the triangles created to repair invalid/CAD-distant quads.
+      Msg::Info("QuadOptimizerV2 final split begin");
+      for(Optimizer *engine : engines) engine->splitFinalQuads();
+      Msg::Info("QuadOptimizerV2 final split end");
     }
 
     void accumulate(AllFacesOptimizerResult &all,
@@ -2966,6 +3382,15 @@ namespace QuadOptimizer {
     {
       all.success = all.success && face.success;
       all.acceptedCavities += face.acceptedCavities;
+      all.initialValenceTwoQuadsSplit += face.initialValenceTwoQuadsSplit;
+      all.acceptedTerminalMandatoryCavities += face.acceptedTerminalMandatoryCavities;
+      all.finalInvalidQuadsSplit += face.finalInvalidQuadsSplit;
+      all.finalQtSwaps += face.finalQtSwaps;
+      all.finalTtMerges += face.finalTtMerges;
+      all.finalTtCadSwaps += face.finalTtCadSwaps;
+      all.finalCadQuadsSplit += face.finalCadQuadsSplit;
+      all.finalQuadsSplitRejected += face.finalQuadsSplitRejected;
+      all.finalQuadDiagonalQueriesFailed += face.finalQuadDiagonalQueriesFailed;
       all.acceptedEdgeSwaps += face.acceptedEdgeSwaps;
       all.acceptedDiamonds += face.acceptedDiamonds;
       all.acceptedQuadTwoTriangleReductions +=
@@ -3013,7 +3438,7 @@ namespace QuadOptimizer {
   SmallCavityOptimizerResult optimizeSmallQuadCavitiesV2(
     GFace *face, const SmallCavityOptimizerOptions &options)
   {
-    const OrientationRepair orientation = orientFaceComponents(face);
+    const OrientationRepair orientation = prepareFaceComponents(face);
     if(!orientation.regular) {
       SmallCavityOptimizerResult result;
       result.skippedInvalidInputCellComplex = true;
@@ -3024,12 +3449,10 @@ namespace QuadOptimizer {
     OptimizationContext context;
     if(face) context.initialize({face}, options);
     Optimizer engine(face, options, context);
-    SmallCavityOptimizerResult result = engine.run();
-    if(face && !result.skippedInvalidInputCellComplex) {
-      smoothFinalModel({&engine}, options);
-      result = engine.finalResult();
-    }
+    improveModel({&engine}, options);
+    SmallCavityOptimizerResult result = engine.finalResult();
     result.reorientedElements += orientation.reversed;
+    result.initialValenceTwoQuadsSplit += orientation.valenceTwoQuadsSplit;
     return result;
   }
 
@@ -3055,7 +3478,7 @@ namespace QuadOptimizer {
     std::vector<GFace *> faces;
     for(GFace *face : model->getFaces()) if(face) faces.push_back(face);
     std::map<GFace *, OrientationRepair> orientations;
-    for(GFace *face : faces) orientations.emplace(face, orientFaceComponents(face));
+    for(GFace *face : faces) orientations.emplace(face, prepareFaceComponents(face));
     OptimizationContext context;
     context.initialize(faces, localOptions);
     std::map<GFace *, std::unique_ptr<Optimizer> > engines;
@@ -3066,22 +3489,6 @@ namespace QuadOptimizer {
       if(orientations.at(face).regular) {
         engines.emplace(face, std::unique_ptr<Optimizer>(
           new Optimizer(face, localOptions, context)));
-        engines.at(face)->run();
-      }
-    }
-    // A later face can change an exact quota or release cumulative CAD budget.
-    // Keep the same persistent engines, caches, and per-face budgets when
-    // revisiting those context-dependent rejections.
-    bool revisited = true;
-    while(revisited) {
-      revisited = false;
-      for(GFace *face : faces) {
-        const auto engine = engines.find(face);
-        if(engine != engines.end() && engine->second->needsContextSweep() &&
-           engine->second->hasIterationBudget()) {
-          engine->second->run();
-          revisited = true;
-        }
       }
     }
     std::vector<Optimizer *> finalEngines;
@@ -3089,7 +3496,7 @@ namespace QuadOptimizer {
       const auto engine = engines.find(face);
       if(engine != engines.end()) finalEngines.push_back(engine->second.get());
     }
-    smoothFinalModel(finalEngines, localOptions);
+    improveModel(finalEngines, localOptions);
     for(GFace *face : faces) {
       if(face->triangles.empty() && face->quadrangles.empty()) continue;
       FaceOptimizerResult faceResult;
@@ -3098,6 +3505,7 @@ namespace QuadOptimizer {
       if(engine != engines.end()) {
         faceResult.optimizer = engine->second->finalResult();
         faceResult.optimizer.reorientedElements += orientations.at(face).reversed;
+        faceResult.optimizer.initialValenceTwoQuadsSplit += orientations.at(face).valenceTwoQuadsSplit;
       }
       else {
         faceResult.optimizer.skippedInvalidInputCellComplex = true;
