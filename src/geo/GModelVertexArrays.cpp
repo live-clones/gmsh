@@ -180,9 +180,11 @@ static SBoundingBox3d &entityBounds(GEntity *e)
 // vertex arrays to be rebuilt.
 static char entityClipState(GEntity *e)
 {
-  // without clipWholeElements the planes are applied by OpenGL, and the section
-  // they cut is an array of its own: the mesh arrays do not depend on them
-  if(!CTX::instance()->clipWholeElements) return 1;
+  // The planes are applied by OpenGL, and what they add - the section in
+  // capping mode, the elements they cut in whole element mode - is held in
+  // arrays of its own: nothing about the mesh arrays depends on where they
+  // are, so a plane moving never asks for one to be built again.
+  return 1;
   int mask = CTX::instance()->mesh.clip;
   if(!mask) return 1;
   // in this mode only the elements that the plane cuts are drawn, so moving it
