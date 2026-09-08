@@ -266,10 +266,12 @@ inline void gmshPolygonFill(bool fill)
 }
 inline bool gmshPolygonFilled()
 {
-  GLint mode[2];
+  // a compatibility profile answers with two values, front and back, and a
+  // core profile with one: the first is there in both, and Gmsh sets the two
+  // together anyway
+  GLint mode[2] = {GL_FILL, GL_FILL};
   glGetIntegerv(GL_POLYGON_MODE, mode);
-  // the back mode, which is the one the callers put back
-  return mode[1] == GL_FILL;
+  return mode[0] == GL_FILL;
 }
 
 // The projection and the modelview matrix, and the stack the drawing code
