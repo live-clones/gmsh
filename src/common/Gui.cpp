@@ -121,7 +121,6 @@ namespace Gui {
     };
     host.sceneMoved = []() { return sceneMoved(); };
     host.sceneResize = [](int w, int h) { sceneResize(w, h); };
-    host.sceneKey = [](char key) { sceneKey(key); };
     host.scenePointer = [](double x, double y, int button, int what,
                            double wheel, bool shift, bool ctrl, bool alt) {
       scenePointer(x, y, button, what, wheel, shift, ctrl, alt);

@@ -8,6 +8,7 @@
 #if defined(HAVE_BROWSER)
 
 #include <cstdio>
+#include <cctype>
 #include <cstdlib>
 #include <algorithm>
 #include <map>
@@ -51,6 +52,33 @@
 // used would push over a socket and send what changed.
 
 namespace {
+
+  // The key a browser names -- "a", "A", "Escape", "ArrowLeft", "F3" -- said
+  // as Ui::Shortcut says it: an upper case letter, a digit or a punctuation
+  // mark, or one of the named keys. 0 for one no shortcut could name.
+  int _uiKey(const std::string &name)
+  {
+    if(name.size() == 1) {
+      unsigned char c = (unsigned char)name[0];
+      if(c > ' ' && c < 127) return toupper(c);
+      return 0;
+    }
+    if(name.size() >= 2 && name[0] == 'F') {
+      int n = atoi(name.c_str() + 1);
+      if(n >= 1 && n <= 12 && name == "F" + std::to_string(n))
+        return Ui::KeyF1 + n - 1;
+    }
+    if(name == "Escape") return Ui::KeyEscape;
+    if(name == "ArrowLeft") return Ui::KeyLeft;
+    if(name == "ArrowRight") return Ui::KeyRight;
+    if(name == "ArrowUp") return Ui::KeyUp;
+    if(name == "ArrowDown") return Ui::KeyDown;
+    if(name == "Home") return Ui::KeyHome;
+    if(name == "PageUp") return Ui::KeyPageUp;
+    if(name == "PageDown") return Ui::KeyPageDown;
+    if(name == "Delete") return Ui::KeyDelete;
+    return 0;
+  }
 
   // --- writing a description down
   //
@@ -750,10 +778,18 @@ namespace {
         return "{}";
       }
       if(path == "/key") {
-        // "j", not "k": "k" is the word that says the request may be asked
-        // at all
-        std::string said = _valueOf(ask.body, "j");
-        if(_host.sceneKey && said.size()) _host.sceneKey(said[0]);
+        // The key the page names, said as Ui::Shortcut says it, and walked
+        // through the one list of keys the interfaces share. "j", not "k":
+        // "k" is the word that says the request may be asked at all.
+        int key = _uiKey(_valueOf(ask.body, "j"));
+        unsigned mods = (unsigned)atoi(_valueOf(ask.body, "m").c_str());
+        if(key && _sources.keys) {
+          for(const Ui::KeyBinding &k : _sources.keys()) {
+            if(!k.shortcut.matches(key, mods)) continue;
+            if(k.action) k.action();
+            if(k.spent) break;
+          }
+        }
         return "{}";
       }
       if(path == "/size") {

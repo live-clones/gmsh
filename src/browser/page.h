@@ -1667,12 +1667,22 @@ async function refresh() {
     return false;
   }
 }
-// A picking listens for a key: 'e' ends it, 'u' undoes the last one, 'q'
-// gives it up. The status bar says which, as the window this reproduces does.
+// The keys of the application: what a picking listens for, the digits that
+// mesh, the Alt keys that turn an option. The page says which key was struck
+// and with what held, as the browser names them, and nothing more: what a key
+// is worth is decided where the other interfaces decide it, so that the page
+// cannot come to disagree with them.
 window.addEventListener('keydown', e => {
-  if(typing() || e.ctrlKey || e.altKey || e.metaKey) return;
-  if(e.key.length !== 1) return;
-  say('/key', 'j=' + encodeURIComponent(e.key));
+  if(typing() || e.repeat) return;
+  if(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph'].includes(e.key)) return;
+  const mods = ((e.ctrlKey || e.metaKey) ? 1 : 0) | (e.shiftKey ? 2 : 0) |
+               (e.altKey ? 4 : 0);
+  // "j", not "k": "k" is the word that says the request may be asked at all
+  say('/key', 'j=' + encodeURIComponent(e.key) + '&m=' + mods);
+  // the browser's own shortcuts on the keys Gmsh binds
+  if((e.ctrlKey || e.altKey || e.metaKey) && /^[a-z0-9]$/i.test(e.key))
+    e.preventDefault();
+  if(/^F([1-9]|1[0-2])$/.test(e.key)) e.preventDefault();
 });
 document.addEventListener('click', () => {
   for(const open of document.querySelectorAll('.drops.open'))
