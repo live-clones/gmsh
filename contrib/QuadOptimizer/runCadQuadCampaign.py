@@ -121,8 +121,12 @@ def parse_quality(log):
     q, t = count('quads'), count('triangles')
     for k, c in counts.items():
         expected = q if k in ('warp', 'quadAngleMin', 'quadAngleMax') else t if k.startswith('triAngle') else q+t
-        if c['total'] != expected:
+        if not (0 <= c['preferred'] <= c['absolute'] <= c['total'] <= expected):
             raise ValueError('wrong applicable count for ' + k)
+        # Non-manifold/invalid cells can be absent from the native ledger.
+        # Keep them in the campaign denominator as unassessed failures.
+        c['unassessed'] = expected - c['total']
+        c['total'] = expected
     if len(re.findall(r'terminal Winslow sweep=\d+ moved=\d+', log)) != 4:
         raise ValueError('expected four terminal Winslow sweeps')
     if 'loop round=' in log[log.index('terminal Winslow begin'):]:
@@ -188,7 +192,8 @@ def report(args, rows, manifest):
              'Arrêt du cas sur échec de récupération de frontière ou erreur ; aucun algorithme de secours. '
              f'{args.jobs} cas simultanés, un thread Gmsh par cas. Les temps incluent la concurrence éventuelle.', '',
              'Les seuils angulaires/ratios sont stricts : au moins 99 % des éléments applicables doivent respecter la limite préférée, '
-             '100 % la limite absolue. Longueurs demandées : [2,8]. Les violations par critère peuvent concerner les mêmes éléments.', '',
+             '100 % la limite absolue. Longueurs demandées : [2,8]. Les violations par critère peuvent concerner les mêmes éléments. '
+             'Les éléments non évaluables restent dans les dénominateurs et sont comptés non conformes.', '',
              '| Critère | Limite préférée (99 %) | Limite absolue (100 %) |', '|---|---:|---:|']
     for label,op,pref,absolute in CRITERIA.values():
         lines.append(f'| {label} | {op} {pref} | {op} {absolute} |')
@@ -209,10 +214,10 @@ def report(args, rows, manifest):
             lines += ['Cas arrêté : '+row['error'].replace('|','\\|'), '']
         if 'quality' not in row:
             continue
-        q=row['quality']; lines += ['| Critère | Respect préféré | Violations absolues |', '|---|---:|---:|']
+        q=row['quality']; lines += ['| Critère | Respect préféré | Non conformes absolus | Dont non évalués |', '|---|---:|---:|---:|']
         for key,c in q['counts'].items():
             ratio=f"{100*c['preferred']/c['total']:.2f} % ({c['preferred']}/{c['total']})" if c['total'] else 'N/A'
-            lines.append(f"| {CRITERIA[key][0]} | {ratio} | {c['total']-c['absolute']}/{c['total']} |")
+            lines.append(f"| {CRITERIA[key][0]} | {ratio} | {c['total']-c['absolute']}/{c['total']} | {c['unassessed']} |")
         lines += ['', 'Audit natif Gmsh (validité physique, orientation CAD, tailles et distance CAD échantillonnée) :',
                   '```text', q['summary'], q['metrics'], q['fit'], '```', '',
                   'Les échecs de validité, les critères non conformes et la couverture CAD incomplète restent visibles ; '
