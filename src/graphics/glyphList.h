@@ -148,6 +148,9 @@ unsigned int glyphCurrentColor();
 enum glyphSlot {
   GLYPH_POINTS = 0,
   GLYPH_LINES,
+  // the lines of what the clipping planes add to a view, which are drawn from
+  // an array of their own and so need a list of their own
+  GLYPH_CLIP_LINES,
   GLYPH_VECTORS,
   GLYPH_TENSORS,
   GLYPH_NODES,

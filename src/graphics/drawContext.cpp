@@ -619,13 +619,23 @@ static void checkClipPlanesChanged()
   if(drawContext::global()->mouseIsPressed()) return;
 
   static double planes[6][4] = {{0.}};
-  static int capping = -1, whole = -1;
+  static int capping = -1, whole = -1, onlyVolume = -1, cutOnly = -1;
   static std::vector<int> clip;
 
-  bool changed = (capping != CTX::instance()->clipCapping) ||
-                 (whole != CTX::instance()->clipWholeElements);
-  capping = CTX::instance()->clipCapping;
-  whole = CTX::instance()->clipWholeElements;
+  CTX *ctx = CTX::instance();
+  bool changed = (capping != ctx->clipCapping) ||
+                 (whole != ctx->clipWholeElements) ||
+                 (onlyVolume != ctx->clipOnlyVolume) ||
+                 (cutOnly != ctx->clipOnlyDrawIntersectingVolume);
+#if defined(HAVE_POST)
+  // the one mode whose arrays are still filled through the planes, remembered
+  // as it was so that leaving it builds them one last time
+  bool wasCutOnly = (whole == 1 && cutOnly == 1);
+#endif
+  capping = ctx->clipCapping;
+  whole = ctx->clipWholeElements;
+  onlyVolume = ctx->clipOnlyVolume;
+  cutOnly = ctx->clipOnlyDrawIntersectingVolume;
   for(int i = 0; i < 6; i++)
     for(int j = 0; j < 4; j++)
       if(planes[i][j] != CTX::instance()->clipPlane[i][j]) {
@@ -647,8 +657,14 @@ static void checkClipPlanesChanged()
   }
   if(!changed) return;
   // The views no longer have to be built again when a plane moves: the section
-  // it cuts is an array of its own, and nothing else about their arrays
-  // depends on where the planes are.
+  // it cuts, and the elements it cuts drawn whole, are arrays of their own, and
+  // nothing else about their arrays depends on where the planes are. The one
+  // mode left out is the one that draws only the volumes a plane cuts, which
+  // nothing but the fill can express.
+  if(wasCutOnly || (ctx->clipWholeElements &&
+                    ctx->clipOnlyDrawIntersectingVolume))
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      PView::list[i]->setChanged(true);
 #else
   if(!changed) return;
 #endif

@@ -191,5 +191,6 @@ public:
 void changeCoordinates(PView *p, int ient, int iele, int numNodes, int type,
                        int numComp, double **xyz, double **val);
 bool isElementVisible(PViewOptions *opt, int dim, int numNodes, double **xyz);
+bool elementIsKept(PViewOptions *opt, int dim, int numNodes, double **xyz);
 
 #endif
