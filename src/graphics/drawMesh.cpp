@@ -166,13 +166,11 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
 // and, worse, whether the element it belongs to is visible - is not something
 // to do for every frame.
 //
-// What they depend on is the mesh itself, which the stamp below stands for,
-// the options that decide their size and colour, and the length a pixel stands
-// for, as the size is given in pixels. The labels are not collected: they are
-// worked out for every frame as they always were.
-static unsigned int _meshStamp = 0;
-
-static void bumpMeshGlyphStamp() { _meshStamp++; }
+// What they depend on is the mesh itself - every list is thrown away when it
+// changes, see drawMesh() - the options that decide their size and colour,
+// and the length a pixel stands for, as the size is given in pixels. The
+// labels are not collected: they are worked out for every frame as they
+// always were.
 
 // what a walk over the nodes of an entity is being asked to do
 enum { NODES_COLLECT = 1, NODES_POINTS = 2, NODES_LABELS = 4 };
@@ -182,7 +180,6 @@ enum { NODES_COLLECT = 1, NODES_POINTS = 2, NODES_LABELS = 4 };
 static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
 {
   glyphToken tok;
-  tok.add(_meshStamp);
   tok.add(ctx->pixel_equiv_x / ctx->s[0]);
   tok.add(CTX::instance()->mesh.nodeSize);
   tok.add(CTX::instance()->mesh.nodeType);
@@ -906,10 +903,8 @@ void drawContext::drawMesh()
         if(PView::list[j]->getData()->hasModel(GModel::list[i]))
           PView::list[j]->setChanged(true);
     // The glyphs of the entities are worked out from the mesh, so they no
-    // longer stand. Everything kept goes, entities that no longer exist
-    // included: this is the one moment at which their lists can be known to
-    // be stale rather than merely unused.
-    bumpMeshGlyphStamp();
+    // longer stand: everything kept goes, the views' lists included, which
+    // are built again the next time they are drawn.
     glyphCache::clearAll();
   }
 
