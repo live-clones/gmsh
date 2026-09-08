@@ -137,18 +137,6 @@ public:
 };
 
 void file_quit_cb(Fl_Widget *w, void *data);
-void file_watch_cb(Fl_Widget *w, void *data);
-void mod_geometry_cb(Fl_Widget *w, void *data);
-void mod_mesh_cb(Fl_Widget *w, void *data);
-void mod_solver_cb(Fl_Widget *w, void *data);
-void mod_post_cb(Fl_Widget *w, void *data);
-void mod_back_cb(Fl_Widget *w, void *data);
-void mod_forward_cb(Fl_Widget *w, void *data);
-void geometry_reload_cb(Fl_Widget *w, void *data);
-void onelab_reload_cb(Fl_Widget *w, void *data);
-void mesh_1d_cb(Fl_Widget *w, void *data);
-void mesh_2d_cb(Fl_Widget *w, void *data);
-void mesh_3d_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
 // what Gui::orientViews() and Gui::setMouseSelection() come down to here: the
 // views the status bar acts upon, and the pointers it changes, are the
@@ -157,8 +145,6 @@ void fltkOrientViews(const std::string &what, bool reverse, bool sync);
 void fltkSetMouseSelection(bool on);
 bool fltkAnimating();
 void fltkToggleAnimation();
-void status_options_cb(Fl_Widget *w, void *data);
-void show_hide_message_cb(Fl_Widget *w, void *data);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
 

@@ -348,9 +348,9 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 #if defined(HAVE_MESH)
   NSInteger segment = ((NSSegmentedControl *)sender).selectedSegment;
   switch(segment) {
-  case 0: mesh_1d_cb(0, 0); break;
-  case 1: mesh_2d_cb(0, 0); break;
-  case 2: mesh_3d_cb(0, 0); break;
+  case 0: meshDimension(1); break;
+  case 1: meshDimension(2); break;
+  case 2: meshDimension(3); break;
   default: break;
   }
   FlGui::check(); // to see meshing messages in the fltk gui
