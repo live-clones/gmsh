@@ -152,6 +152,8 @@ Merge next files
 Open next files
 @item -log filename
 Log all messages to filename
+@item -shaders
+Draw with the shader pipeline (General.Shaders)
 @item -a, -g, -m, -s, -p
 Start in automatic, geometry, mesh, solver or post-processing mode (General.InitialModule)
 @item -pid

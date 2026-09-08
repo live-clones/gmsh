@@ -67,6 +67,13 @@ public: // these will become protected at some point
 
   // the vertex arrays to draw the mesh of the entity efficiently
   VertexArray *va_lines, *va_triangles;
+  // What the clipping planes add to what is drawn, kept apart from the arrays
+  // above: the section they cut out of the 3D elements when capping is on, or
+  // the elements they cut drawn whole when whole element mode is. It is the
+  // only thing about the arrays that a plane moving changes, so holding it
+  // separately means a plane can be moved without the mesh being built again.
+  // Only 3D entities have them.
+  VertexArray *va_clip_lines, *va_clip_triangles;
 
   // the set of high-order elements fixed by the "fast curving" boundary layer
   // optimization
@@ -188,7 +195,7 @@ public:
 
   GEntity(GModel *m, int t);
 
-  virtual ~GEntity() {}
+  virtual ~GEntity();
 
   // mesh generation of the entity
   virtual void mesh(bool verbose) {}
@@ -201,6 +208,8 @@ public:
 
   // delete the geometry vertex arrays, used to to draw the geometry efficiently
   virtual void deleteGeometryVertexArrays() {}
+  // throw away only what the planes add, which is rebuilt on its own
+  void deleteClipVertexArrays();
 
   // spatial dimension of the entity
   virtual int dim() const { return -1; }
@@ -329,14 +338,25 @@ public:
 
   // get/set the selection flag
   virtual char getSelection() { return _selection; }
-  virtual void setSelection(char val) { _selection = val; }
+  virtual void setSelection(char val)
+  {
+    if(!_selection != !val) numSelected += val ? 1 : -1;
+    _selection = val;
+  }
+  // how many entities are selected, so that the drawing code can ask without
+  // walking them all
+  static int numSelected;
 
   // get/set the color
   virtual unsigned int getColor() { return _color; }
   virtual void setColor(unsigned color, bool recursive = false)
   {
     _color = color;
+    // whoever bakes the colours of the entities into something they keep -
+    // the merged mesh arrays do - can tell by this that they have changed
+    colorChanges++;
   }
+  static int colorChanges;
 
   // return true if we should use this color to represent the entity
   virtual bool useColor();

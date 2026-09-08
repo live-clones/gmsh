@@ -3224,6 +3224,26 @@ void quick_access_cb(Fl_Widget *w, void *data)
   else if(what == "mesh_size")
     numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor", true, "Factor",
                                 true, 0.01, 100, 0.01);
+  else if(what == "geometry_transparency") {
+    transparencyChooser("Geometry Transparency", "Geometry", 0, "Transparency");
+  }
+  else if(what == "mesh_transparency") {
+    transparencyChooser("Mesh Transparency", "Mesh", 0, "Transparency");
+  }
+  else if(what == "view_transparency") {
+    double val = 1.;
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        if(transparencyChooser("View Transparency", "View", i, "Transparency")) {
+          val = opt_view_transparency(i, GMSH_GET, 0);
+          break;
+        }
+      }
+    }
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_transparency(i, GMSH_SET | GMSH_GUI, val);
+  }
   else if(what == "view_element_outlines") {
     int set = 0;
     for(std::size_t i = 0; i < PView::list.size(); i++)
@@ -3474,6 +3494,8 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Volumes", FL_ALT + 'v', quick_access_cb, (void*)"geometry_volumes",
            FL_MENU_TOGGLE },
          { nullptr },
+      { "Geometry transparency", 0, quick_access_cb,
+        (void*)"geometry_transparency" },
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Mesh visibility", 0, nullptr, nullptr, FL_SUBMENU },
@@ -3491,6 +3513,7 @@ void status_options_cb(Fl_Widget *w, void *data)
            (void*)"mesh_volume_faces", FL_MENU_TOGGLE },
          { nullptr },
       { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
+      { "Mesh transparency", 0, quick_access_cb, (void*)"mesh_transparency" },
       { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
       { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
@@ -3516,11 +3539,13 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
          { "Node", 0, quick_access_cb, (void*)"view_glyph_node"},
          { nullptr },
+      { "View transparency", 0, quick_access_cb, (void*)"view_transparency" },
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { nullptr }
     };
     // clang-format on
-    const int gen = 7, geo = 14, msh = 21, pos = 32, end = 54;
+    // one item was added to each of the geometry, mesh and view sections
+    const int gen = 7, geo = 14, msh = 22, pos = 34, end = 57;
     if(opt_general_axes(0, GMSH_GET, 0))
       menu[gen + 0].set();
     else
@@ -3531,7 +3556,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       menu[gen + 1].clear();
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
-        menu[gen + 7].set();
+        menu[gen + 0].set();
     if(opt_geometry_points(0, GMSH_GET, 0))
       menu[geo + 1].set();
     else
@@ -3591,6 +3616,20 @@ void status_options_cb(Fl_Widget *w, void *data)
         }
       }
     }
+    // The transparency multipliers are applied by the shader: with the fixed
+    // function pipeline they would do nothing, so they are not offered at all.
+    // This comes after the view entries above, which show() the whole range.
+    if(opt_general_shaders(0, GMSH_GET, 0)) {
+      menu[geo + 6].show();
+      menu[msh + 9].show();
+      if(!PView::list.empty()) menu[pos + 21].show();
+    }
+    else {
+      menu[geo + 6].hide();
+      menu[msh + 9].hide();
+      menu[pos + 21].hide();
+    }
+
     // popup the menu
     static Fl_Menu_Item *picked =
       &menu[msh + 8]; // toggle mesh display - the default
@@ -3975,12 +4014,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     gl.back()->end();
   }
 
-  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  if(CTX::instance()->stereo) {
-    mode |= FL_DOUBLE;
-    mode |= FL_STEREO;
-  }
+  int mode = openglWindowMode();
   for(std::size_t i = 0; i < gl.size(); i++) gl[i]->mode(mode);
 
   if(main) {

@@ -54,6 +54,13 @@ public:
 
 private:
   int _index[33];
+  // list-based data has no topology: node identifiers are recreated once, by
+  // merging the nodes that have the same coordinates, and cached here. _nodeId
+  // is indexed by _nodeOffset[element] + node
+  std::vector<unsigned int> _nodeId, _nodeOffset;
+  int _nodeIndexStatus; // 0: not built, 1: built, -1: not available
+  void _buildNodeIndex();
+
   int _lastElement, _lastDimension;
   int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges,
     _lastType;
@@ -106,6 +113,7 @@ public:
   int getNumNodes(int step, int ent, int ele);
   int getNode(int step, int ent, int ele, int nod, double &x, double &y,
               double &z);
+  std::size_t getNodeId(int step, int ent, int ele, int nod);
   void setNode(int step, int ent, int ele, int nod, double x, double y,
                double z);
   int getNumComponents(int step, int ent, int ele);

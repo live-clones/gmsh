@@ -4,11 +4,15 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
+#include <cstring>
+#include <cmath>
 #include <stdio.h>
 #include "GmshGlobal.h"
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "drawContext.h"
+#include "glMatrix.h"
+#include "glShader.h"
 #include "Trackball.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -21,11 +25,11 @@
 #include "OS.h"
 #include "gl2ps.h"
 
+// the background image is still read with FLTK, which is the last thing this
+// file asks of a widget toolkit
 #if defined(HAVE_FLTK)
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
-#include <FL/gl.h>
-#include "openglWindow.h"
 #endif
 
 #if defined(HAVE_POPPLER)
@@ -42,8 +46,10 @@ void drawContext::setDrawGeomTransientFunction(void (*fct)(void *))
 
 extern SPoint2 getGraph2dDataPointForTag(unsigned int);
 
-drawContext::drawContext(openglWindow *window, drawTransform *transform)
-  : _transform(transform), _openglWindow(window)
+bool drawContext::_pickColorActive = false;
+
+drawContext::drawContext(drawTransform *transform)
+  : _transform(transform), _highResolutionPixelFactor(1.), _pickColor(false)
 {
   // initialize from temp values in global context
   for(int i = 0; i < 3; i++) {
@@ -59,27 +65,60 @@ drawContext::drawContext(openglWindow *window, drawTransform *transform)
   viewport[3] = CTX::instance()->glSize[1];
 
   render_mode = GMSH_RENDER;
+  transparencyPass = TRANSPARENCY_ALL;
   vxmin = vymin = vxmax = vymax = 0.;
   pixel_equiv_x = pixel_equiv_y = 0.;
 
+  glMatrix::identity(_projection);
+  glMatrix::identity(_modelBase);
+
+  _pickCacheValid = _pickCacheMesh = _pickCachePost = _pickCacheElements = false;
+  _pickCacheX = _pickCacheY = _pickCacheWidth = _pickCacheHeight = 0;
+
   _bgImageTexture = _bgImageW = _bgImageH = 0;
 
-  _quadric = nullptr; // cannot create it here: needs valid opengl context
-  _displayLists = 0;
 }
 
 drawContext::~drawContext() { invalidateQuadricsAndDisplayLists(); }
 
-double drawContext::highResolutionPixelFactor()
+int drawContextGlobal::getFontAlign(const char *alignstr)
 {
-  // this must be dynamic: the high resolution can change when a window is moved
-  // across displays
-#if defined(HAVE_FLTK)
-  if(_openglWindow && _openglWindow->w()) {
-    return (double)_openglWindow->pixel_w() / (double)_openglWindow->w();
+  if(alignstr) {
+    if(!strcmp(alignstr, "BottomLeft") || !strcmp(alignstr, "Left") ||
+       !strcmp(alignstr, "left"))
+      return 0;
+    else if(!strcmp(alignstr, "BottomCenter") || !strcmp(alignstr, "Center") ||
+            !strcmp(alignstr, "center"))
+      return 1;
+    else if(!strcmp(alignstr, "BottomRight") || !strcmp(alignstr, "Right") ||
+            !strcmp(alignstr, "right"))
+      return 2;
+    else if(!strcmp(alignstr, "TopLeft"))
+      return 3;
+    else if(!strcmp(alignstr, "TopCenter"))
+      return 4;
+    else if(!strcmp(alignstr, "TopRight"))
+      return 5;
+    else if(!strcmp(alignstr, "CenterLeft"))
+      return 6;
+    else if(!strcmp(alignstr, "CenterCenter"))
+      return 7;
+    else if(!strcmp(alignstr, "CenterRight"))
+      return 8;
   }
-#endif
-  return 1.0;
+  Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)",
+             alignstr);
+  Msg::Info("Available font alignments:");
+  Msg::Info("  \"Left\" (or \"BottomLeft\")");
+  Msg::Info("  \"Center\" (or \"BottomCenter\")");
+  Msg::Info("  \"Right\" (or \"BottomRight\")");
+  Msg::Info("  \"TopLeft\"");
+  Msg::Info("  \"TopCenter\"");
+  Msg::Info("  \"TopRight\"");
+  Msg::Info("  \"CenterLeft\"");
+  Msg::Info("  \"CenterCenter\"");
+  Msg::Info("  \"CenterRight\"");
+  return 0;
 }
 
 drawContextGlobal *drawContext::global()
@@ -90,68 +129,16 @@ drawContextGlobal *drawContext::global()
 
 void drawContext::invalidateQuadricsAndDisplayLists()
 {
-  if(_quadric) {
-    gluDeleteQuadric(_quadric);
-    _quadric = nullptr;
-  }
-  if(_displayLists) {
-    glDeleteLists(_displayLists, 3);
-    _displayLists = 0;
-  }
+  // nothing to invalidate: the glyph shapes belong to no OpenGL context
 }
 
 void drawContext::createQuadricsAndDisplayLists()
 {
-  if(!_quadric) _quadric = gluNewQuadric();
-  if(!_quadric) {
-    Msg::Error("Could not create quadric");
-    return;
-  }
-
-  if(!_displayLists) _displayLists = glGenLists(3);
-  if(!_displayLists) {
-    Msg::Error("Could not generate display lists");
-    return;
-  }
-
-  // display list 0 (sphere)
-  glNewList(_displayLists + 0, GL_COMPILE);
-  gluSphere(_quadric, 1., CTX::instance()->quadricSubdivisions,
-            CTX::instance()->quadricSubdivisions);
-  glEndList();
-
-  // display list 1 (arrow)
-  glNewList(_displayLists + 1, GL_COMPILE);
-  glTranslated(0., 0., CTX::instance()->arrowRelStemLength);
-  if(CTX::instance()->arrowRelHeadRadius > 0 &&
-     CTX::instance()->arrowRelStemLength < 1)
-    gluCylinder(_quadric, CTX::instance()->arrowRelHeadRadius, 0.,
-                (1. - CTX::instance()->arrowRelStemLength),
-                CTX::instance()->quadricSubdivisions, 1);
-  if(CTX::instance()->arrowRelHeadRadius > CTX::instance()->arrowRelStemRadius)
-    gluDisk(_quadric, CTX::instance()->arrowRelStemRadius,
-            CTX::instance()->arrowRelHeadRadius,
-            CTX::instance()->quadricSubdivisions, 1);
-  else
-    gluDisk(_quadric, CTX::instance()->arrowRelHeadRadius,
-            CTX::instance()->arrowRelStemRadius,
-            CTX::instance()->quadricSubdivisions, 1);
-  glTranslated(0., 0., -CTX::instance()->arrowRelStemLength);
-  if(CTX::instance()->arrowRelStemRadius > 0 &&
-     CTX::instance()->arrowRelStemLength > 0) {
-    gluCylinder(_quadric, CTX::instance()->arrowRelStemRadius,
-                CTX::instance()->arrowRelStemRadius,
-                CTX::instance()->arrowRelStemLength,
-                CTX::instance()->quadricSubdivisions, 1);
-    gluDisk(_quadric, 0, CTX::instance()->arrowRelStemRadius,
-            CTX::instance()->quadricSubdivisions, 1);
-  }
-  glEndList();
-
-  // display list 2 (disk)
-  glNewList(_displayLists + 2, GL_COMPILE);
-  gluDisk(_quadric, 0, 1, CTX::instance()->quadricSubdivisions, 1);
-  glEndList();
+  // The shapes the glyphs are made of used to be GLU quadrics kept in display
+  // lists, called once per glyph with the transform stacked in front of them.
+  // They are built as triangles in drawGlyph.cpp now: a core profile has
+  // neither quadrics nor display lists, and even where it has, a call per glyph
+  // cost far more than handing the geometry over does.
 }
 
 void drawContext::buildRotationMatrix()
@@ -274,8 +261,479 @@ static int needPolygonOffset()
   return 0;
 }
 
+// is what is drawn next drawn with the shader pipeline?
+static bool useShaders()
+{
+  return CTX::instance()->shaders && glShader::available();
+}
+
+static bool useVertexBufferObjects()
+{
+  // a core profile has no client arrays at all, so the shader pipeline has to
+  // have the buffer objects whatever the option says
+  if(useShaders()) return true;
+  return CTX::instance()->vertexBufferObjects && glApi::haveBufferObjects();
+}
+
+// statistics on the data uploaded to the GPU since the last frame
+static double vboBytes = 0., vboTime = 0.;
+
+void deleteOrphanVertexArrayBuffers()
+{
+  if(vboBytes > 0.) {
+    Msg::Debug("Uploaded %.1f Mb to buffer objects in %g s",
+               vboBytes / 1024. / 1024., vboTime);
+    vboBytes = vboTime = 0.;
+  }
+
+  if(VertexArray::vboToDelete.empty()) return;
+  if(glApi::haveBufferObjects())
+    glApi::DeleteBuffers((GLsizei)VertexArray::vboToDelete.size(),
+                         &VertexArray::vboToDelete[0]);
+  VertexArray::vboToDelete.clear();
+}
+
+// copy the arrays into buffer objects, if this has not been done yet or if the
+// arrays have changed since
+static void uploadVertexArray(VertexArray *va)
+{
+  unsigned int *id = va->getVboIds();
+  if(id[0] && !va->getVboValid()) {
+    // the context that owned these buffers is gone and took them with it: the
+    // names do not designate anything any more
+    id[0] = id[1] = id[2] = 0;
+  }
+  if(!id[0]) {
+    glApi::GenBuffers(3, id);
+    va->setVboValid();
+    va->setVboDirty(true);
+  }
+  if(!va->getVboDirty()) return;
+
+  double t1 = TimeOfDay();
+  int n = va->getNumVertices();
+  glApi::BindBuffer(GL_ARRAY_BUFFER, id[0]);
+  glApi::BufferData(GL_ARRAY_BUFFER, n * 3 * sizeof(float),
+                    n ? va->getVertexArray() : nullptr, GL_STATIC_DRAW);
+  if(va->hasNormals()) {
+    glApi::BindBuffer(GL_ARRAY_BUFFER, id[1]);
+    glApi::BufferData(GL_ARRAY_BUFFER, n * 3 * sizeof(normal_type),
+                      va->getNormalArray(), GL_STATIC_DRAW);
+  }
+  if(va->hasColors()) {
+    glApi::BindBuffer(GL_ARRAY_BUFFER, id[2]);
+    glApi::BufferData(GL_ARRAY_BUFFER, n * 4 * sizeof(unsigned char),
+                      va->getColorArray(), GL_STATIC_DRAW);
+  }
+  va->setVboDirty(false);
+
+  vboBytes += n * 3. * sizeof(float) +
+              (va->hasNormals() ? n * 3. * sizeof(normal_type) : 0.) +
+              (va->hasColors() ? n * 4. : 0.);
+  vboTime += TimeOfDay() - t1;
+}
+
+const GLvoid *vaVertexPointer(VertexArray *va)
+{
+  if(!useVertexBufferObjects()) {
+    // make sure a buffer left bound by a previous frame does not turn the
+    // client-side pointer below into an offset
+    if(glApi::haveBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+    return va->getVertexArray();
+  }
+  uploadVertexArray(va);
+  glApi::BindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[0]);
+  return nullptr;
+}
+
+const GLvoid *vaNormalPointer(VertexArray *va)
+{
+  if(!useVertexBufferObjects()) {
+    // make sure a buffer left bound by a previous frame does not turn the
+    // client-side pointer below into an offset
+    if(glApi::haveBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+    return va->getNormalArray();
+  }
+  uploadVertexArray(va);
+  glApi::BindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[1]);
+  return nullptr;
+}
+
+const GLvoid *vaColorPointer(VertexArray *va)
+{
+  if(!useVertexBufferObjects()) {
+    // make sure a buffer left bound by a previous frame does not turn the
+    // client-side pointer below into an offset
+    if(glApi::haveBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+    return va->getColorArray();
+  }
+  uploadVertexArray(va);
+  glApi::BindBuffer(GL_ARRAY_BUFFER, va->getVboIds()[2]);
+  return nullptr;
+}
+
+// what the last bind left for the draw to use: the client arrays a caller
+// holds itself have to be uploaded, and the count is only known at the draw
+static const float *_clientVertices = nullptr;
+static const unsigned char *_clientColors = nullptr;
+static bool _boundColors = false;
+
+void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
+{
+  // Whatever immediate mode primitives are still waiting have to go out before
+  // the attributes are bound, not after: drawing them turns the attribute
+  // arrays off on its way out, and would leave the array that is about to be
+  // drawn with nothing bound at all.
+  gmshFlushImmediate();
+  _clientVertices = nullptr;
+  _clientColors = nullptr;
+  _boundColors = colors;
+
+  if(useShaders()) {
+    glApi::EnableVertexAttribArray(glShader::ATTRIB_VERTEX);
+    glApi::VertexAttribPointer(glShader::ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE,
+                               0, vaVertexPointer(va));
+    if(normals) {
+      glApi::EnableVertexAttribArray(glShader::ATTRIB_NORMAL);
+      // the normals are stored as bytes, and are the unit vectors they were
+      // when they went in: they have to be scaled back on the way out
+      glApi::VertexAttribPointer(glShader::ATTRIB_NORMAL, 3, NORMAL_GLTYPE,
+                                 GL_TRUE, 0, vaNormalPointer(va));
+    }
+    else {
+      glApi::DisableVertexAttribArray(glShader::ATTRIB_NORMAL);
+    }
+    if(colors) {
+      glApi::EnableVertexAttribArray(glShader::ATTRIB_COLOR);
+      glApi::VertexAttribPointer(glShader::ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE,
+                                 GL_TRUE, 0, vaColorPointer(va));
+    }
+    else {
+      glApi::DisableVertexAttribArray(glShader::ATTRIB_COLOR);
+    }
+    return;
+  }
+
+  glVertexPointer(3, GL_FLOAT, 0, vaVertexPointer(va));
+  glEnableClientState(GL_VERTEX_ARRAY);
+  if(normals) {
+    glNormalPointer(NORMAL_GLTYPE, 0, vaNormalPointer(va));
+    glEnableClientState(GL_NORMAL_ARRAY);
+  }
+  else {
+    glDisableClientState(GL_NORMAL_ARRAY);
+  }
+  if(colors) {
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, vaColorPointer(va));
+    glEnableClientState(GL_COLOR_ARRAY);
+  }
+  else {
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
+}
+
+void gmshBindArrays(const float *vertices, const unsigned char *colors)
+{
+  // as above: what is waiting is drawn before anything is bound for this one
+  gmshFlushImmediate();
+  _boundColors = (colors != nullptr);
+
+  if(useShaders()) {
+    // kept for the draw, which is where the number of vertices is known and
+    // the arrays can be uploaded
+    _clientVertices = vertices;
+    _clientColors = colors;
+    return;
+  }
+
+  _clientVertices = nullptr;
+  _clientColors = nullptr;
+  glVertexPointer(3, GL_FLOAT, 0, vertices);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  if(colors) {
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+    glEnableClientState(GL_COLOR_ARRAY);
+  }
+  else {
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
+}
+
+void gmshUnbindArrays()
+{
+  _clientVertices = nullptr;
+  _clientColors = nullptr;
+  if(useShaders()) {
+    glApi::DisableVertexAttribArray(glShader::ATTRIB_VERTEX);
+    glApi::DisableVertexAttribArray(glShader::ATTRIB_NORMAL);
+    glApi::DisableVertexAttribArray(glShader::ATTRIB_COLOR);
+    return;
+  }
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+}
+
+// hand the program everything it needs that the fixed function pipeline kept
+// as state of its own, and draw
+// Any colour of the category that is not fully opaque makes it see-through,
+// whether that comes from the Transparency option or from an alpha the colour
+// was given directly.
+static bool anyColorIsTransparent(const unsigned int *colors, int n,
+                                  double transparency)
+{
+  if(!CTX::instance()->alpha) return false;
+  // the multiplier is applied by the shader, so it means nothing to the fixed
+  // function pipeline; an alpha the colour carries itself counts in both
+  if(gmshUseShaders() && transparency < 1.) return true;
+  for(int i = 0; i < n; i++)
+    if(CTX::instance()->unpackAlpha(colors[i]) < 255) return true;
+  return false;
+}
+
+// Does an entity carry a colour of its own that is not opaque? This is asked
+// several times a frame and means walking every entity, so the answer is kept
+// and only worked out again when a colour was set or an entity came or went.
+static bool anyEntityColorIsTransparent()
+{
+  static int stamp = -1;
+  static std::size_t count = 0;
+  static bool result = false;
+  std::size_t n = 0;
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
+    GModel *m = GModel::list[i];
+    n += m->getNumVertices() + m->getNumEdges() + m->getNumFaces() +
+         m->getNumRegions();
+  }
+  if(stamp == GEntity::colorChanges && count == n) return result;
+  stamp = GEntity::colorChanges;
+  count = n;
+  result = false;
+  CTX *ctx = CTX::instance();
+  for(std::size_t i = 0; i < GModel::list.size() && !result; i++) {
+    std::vector<GEntity *> entities;
+    GModel::list[i]->getEntities(entities);
+    for(std::size_t j = 0; j < entities.size(); j++) {
+      GEntity *e = entities[j];
+      if(e->useColor() && ctx->unpackAlpha(e->getColor()) < 255) {
+        result = true;
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+bool gmshGeometryIsTransparent()
+{
+  CTX *ctx = CTX::instance();
+  const unsigned int c[7] = {
+    ctx->color.geom.point,     ctx->color.geom.curve,
+    ctx->color.geom.surface,   ctx->color.geom.volume,
+    ctx->color.geom.selection, ctx->color.geom.highlight[0],
+    ctx->color.geom.highlight[1]};
+  if(anyColorIsTransparent(c, 7, ctx->geom.transparency)) return true;
+  // and the colours the entities were given one by one
+  return ctx->alpha && anyEntityColorIsTransparent();
+}
+
+bool gmshMeshIsTransparent()
+{
+  CTX *ctx = CTX::instance();
+  std::vector<unsigned int> c = {
+    ctx->color.mesh.line,       ctx->color.mesh.triangle,
+    ctx->color.mesh.quadrangle, ctx->color.mesh.tetrahedron,
+    ctx->color.mesh.hexahedron, ctx->color.mesh.prism,
+    ctx->color.mesh.pyramid,    ctx->color.mesh.trihedron,
+    ctx->color.fg,              ctx->color.geom.selection};
+  // by entity, by physical group and by partition the mesh is coloured from
+  // the carousel, and in the first two from what the entities were given
+  int carousel = ctx->mesh.colorCarousel;
+  if(carousel >= 1 && carousel <= 3)
+    for(int i = 0; i < 20; i++) c.push_back(ctx->color.mesh.carousel[i]);
+  if(anyColorIsTransparent(&c[0], (int)c.size(), ctx->mesh.transparency))
+    return true;
+  return ctx->alpha && (carousel == 1 || carousel == 2) &&
+         anyEntityColorIsTransparent();
+}
+
+void gmshDrawArrays(GLenum type, int count, const float *dashes)
+{
+  // whatever immediate mode primitives are waiting were asked for before this
+  // one, and have to be on the screen before it
+  gmshFlushImmediate();
+  if(count <= 0) return;
+
+  if(useShaders()) {
+    if(!glShader::use()) return;
+    if(_clientVertices) {
+      glShader::streamArrays(_clientVertices, _clientColors, count);
+    }
+    glShader::setColorArray(_boundColors);
+    // an array is never drawn through a texture, but the sampler still has to
+    // point at one the driver is happy with
+    glShader::noTexture();
+    gmshPushShaderState();
+    // the transparency may be meant for the filled surfaces alone, and this is
+    // where what is being drawn is known
+    glShader::setAlphaScale(gmshAlphaScaleFor(type));
+    // gmshPushShaderState() leaves the pattern off, as most of what is drawn
+    // has no distance along a line to measure it against. A caller that has
+    // worked one out for every vertex turns it back on here.
+    glShader::streamDash(dashes, count);
+    if(dashes)
+      glShader::setStipple(true, gmshLineStippleFactor(),
+                           gmshLineStipplePattern());
+  }
+
+  // Keep the large-array protection when using the shared drawing path:
+  // each chunk ends on an independent primitive boundary. Connected strips
+  // and fans must remain a single draw to preserve their connectivity.
+  const int verticesPerElement = type == GL_POINTS ? 1 :
+    type == GL_LINES ? 2 : type == GL_TRIANGLES ? 3 : type == GL_QUADS ? 4 : 0;
+  if(verticesPerElement) {
+    const int maxVerticesPerDraw = (1 << 16) * verticesPerElement;
+    for(int first = 0; first < count;) {
+      const int chunk = std::min(maxVerticesPerDraw, count - first);
+      glDrawArrays(type, first, chunk);
+      first += chunk;
+    }
+  }
+  else {
+    glDrawArrays(type, 0, count);
+  }
+}
+
+// How far along its segment every vertex of a set of independent lines falls,
+// in pixels of the window, which is what the dash pattern is measured in. The
+// counter starts again at every segment, as OpenGL's stipple did for
+// GL_LINES. Empty if the array is not something that can be dashed.
+static void dashDistances(VertexArray *va, std::vector<float> &dash)
+{
+  int count = va->getNumVertices();
+  if(count < 2) return;
+  GLint glvp[4];
+  glGetIntegerv(GL_VIEWPORT, glvp);
+  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  const double *modelview = gmshMatrix(GMSH_MODELVIEW);
+  const double *projection = gmshMatrix(GMSH_PROJECTION);
+  dash.assign(count, 0.f);
+  for(int i = 0; i + 1 < count; i += 2) {
+    float *v0 = va->getVertexArray(3 * i);
+    float *v1 = va->getVertexArray(3 * (i + 1));
+    double p0[3] = {v0[0], v0[1], v0[2]}, p1[3] = {v1[0], v1[1], v1[2]};
+    double w0[3], w1[3];
+    if(!glMatrix::project(p0, modelview, projection, viewport, w0) ||
+       !glMatrix::project(p1, modelview, projection, viewport, w1))
+      continue;
+    double dx = w1[0] - w0[0], dy = w1[1] - w0[1];
+    dash[i + 1] = (float)std::sqrt(dx * dx + dy * dy);
+  }
+}
+
+void drawVertexArray(VertexArray *va, GLenum type)
+{
+  // A line wider than a pixel is not something a core profile draws. The
+  // array holds the two ends of every segment, which is all the shader needs
+  // to make a quad of it, so it is handed them rather than drawn as lines.
+  if(useShaders() && type == GL_LINES && gmshCurrentLineWidth() > 1. &&
+     va->getNumVertices() > 1) {
+    gmshFlushImmediate();
+    gmshPushShaderState();
+    // a quad knows both of its ends, so the shader works the distance along
+    // the line out for itself and only wants to be told the pattern
+    if(gmshLineStippleEnabled())
+      glShader::setStipple(true, gmshLineStippleFactor(),
+                           gmshLineStipplePattern());
+    bool lit = gmshLightingEnabled() && va->hasNormals();
+    if(glShader::drawWideLines(
+         va->getVertexArray(), lit ? (const void *)va->getNormalArray() :
+                                     nullptr,
+         NORMAL_GLTYPE, va->hasColors() ? va->getColorArray() : nullptr,
+         va->getNumVertices(), gmshCurrentLineWidth(), lit)) {
+      if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+      return;
+    }
+  }
+
+  // A dashed line drawn from an array: the array holds no distance along the
+  // line, so it is worked out here and handed over with it.
+  std::vector<float> dash;
+  if(useShaders() && type == GL_LINES && gmshLineStippleEnabled())
+    dashDistances(va, dash);
+
+  gmshDrawArrays(type, va->getNumVertices(), dash.empty() ? nullptr :
+                                                            &dash[0]);
+
+  if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+// The section a clipping plane cuts out of a 3D element is part of the vertex
+// arrays, so they have to be built again when a plane moves, or when the set of
+// planes that clip a view changes. The planes can be moved from the clipping
+// window, from a script or from the API, so notice it here rather than at every
+// place that sets them
+// The clipping planes are applied by OpenGL, and what they add - the section
+// they cut, the elements they cut drawn whole - is held in arrays of its own,
+// built on its own token: a plane moving asks for nothing to be built again.
+// The one exception is a view drawn with only the volumes a plane cuts, which
+// nothing but the fill can express: those arrays are filled through the planes
+// themselves, and have to be filled again when they move.
+static void checkClipPlanesChanged()
+{
+#if defined(HAVE_POST)
+  // While the user is choosing - dragging a clipping plane, typing a value -
+  // the fast representation is drawn, and the arrays are left as they are
+  // however many times the scene is redrawn in between. What the planes were is
+  // only remembered once the change has been acted upon, so the first frame
+  // after that picks it up and rebuilds once
+  if(drawContext::global()->mouseIsPressed()) return;
+
+  CTX *ctx = CTX::instance();
+  static double planes[6][4] = {{0.}};
+  static int whole = -1, onlyVolume = -1, cutOnly = -1;
+  static std::vector<int> clip;
+
+  bool changed = (whole != ctx->clipWholeElements) ||
+                 (onlyVolume != ctx->clipOnlyVolume) ||
+                 (cutOnly != ctx->clipOnlyDrawIntersectingVolume);
+  // remembered as it was, so that leaving the mode fills them one last time
+  bool wasCutOnly = (whole == 1 && cutOnly == 1);
+  whole = ctx->clipWholeElements;
+  onlyVolume = ctx->clipOnlyVolume;
+  cutOnly = ctx->clipOnlyDrawIntersectingVolume;
+  for(int i = 0; i < 6; i++)
+    for(int j = 0; j < 4; j++)
+      if(planes[i][j] != ctx->clipPlane[i][j]) {
+        planes[i][j] = ctx->clipPlane[i][j];
+        changed = true;
+      }
+  if(clip.size() != PView::list.size()) {
+    clip.resize(PView::list.size(), -1);
+    changed = true;
+  }
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    int c = PView::list[i]->getOptions()->clip;
+    if(clip[i] != c) {
+      clip[i] = c;
+      changed = true;
+    }
+  }
+  if(!changed) return;
+
+  if(wasCutOnly || (ctx->clipWholeElements && ctx->clipOnlyDrawIntersectingVolume))
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      PView::list[i]->setChanged(true);
+#endif
+}
+
 void drawContext::draw3d()
 {
+  checkClipPlanesChanged();
+
+  deleteOrphanVertexArrayBuffers();
+
   // We can only create this when a valid opengl context exists. (It's cheap to
   // create so we just do it at each redraw: this makes it much simpler to deal
   // with option changes, e.g. arrow shape changes)
@@ -300,7 +758,7 @@ void drawContext::draw3d()
     CTX::instance()->polygonOffset = 0;
 
     // speedup drawing of textured fonts on cocoa mac version
-#if defined(HAVE_FLTK) && defined(__APPLE__)
+#if defined(__APPLE__)
   std::size_t numStrings = GModel::current()->getNumVertices();
   if(CTX::instance()->mesh.nodeLabels)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
@@ -308,7 +766,7 @@ void drawContext::draw3d()
      CTX::instance()->mesh.volumeLabels)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshElements());
   numStrings *= 2;
-  if(gl_texture_pile_height() < numStrings) gl_texture_pile_height(numStrings);
+  global()->reserveStringTextures(numStrings);
 #endif
 
   glDepthFunc(GL_LESS);
@@ -318,10 +776,72 @@ void drawContext::draw3d()
 
   if(!CTX::instance()->camera) initPosition(true);
   drawAxes();
-  drawGeom();
-  drawBackgroundImage(true);
-  drawMesh();
-  drawPost();
+
+  // Everything see-through is drawn after everything else, and all of it in
+  // one pass: that way a single pass can sum it, and what comes out does not
+  // depend on whether the geometry, the mesh or a view was drawn first. A
+  // picking pass never splits, as what it reads back has to be an identifier
+  // rather than a blend of several.
+  bool split = (render_mode != GMSH_SELECT) &&
+               (gmshGeometryIsTransparent() || gmshMeshIsTransparent() ||
+                anyViewIsTransparent());
+
+  // What each category's Transparency option comes to. A picking pass draws
+  // identifiers rather than colours and must not have them faded.
+  double geomScale = inPickColorMode() ? 1. : CTX::instance()->geom.transparency;
+  double meshScale = inPickColorMode() ? 1. : CTX::instance()->mesh.transparency;
+  bool geomFilled = (CTX::instance()->geom.transparencyMode == 0);
+  bool meshFilled = (CTX::instance()->mesh.transparencyMode == 0);
+
+  if(!split) {
+    transparencyPass = TRANSPARENCY_ALL;
+    gmshAlphaScale(geomScale, geomFilled);
+    drawGeom();
+    gmshAlphaScale(1., false);
+    drawBackgroundImage(true);
+    gmshAlphaScale(meshScale, meshFilled);
+    drawMesh();
+    gmshAlphaScale(1., false);
+    drawPost();
+  }
+  else {
+    transparencyPass = TRANSPARENCY_OPAQUE;
+    gmshAlphaScale(geomScale, geomFilled);
+    drawGeom();
+    gmshAlphaScale(1., false);
+    drawBackgroundImage(true);
+    gmshAlphaScale(meshScale, meshFilled);
+    drawMesh();
+    gmshAlphaScale(1., false);
+    drawPost();
+
+    transparencyPass = TRANSPARENCY_TRANSPARENT;
+    bool summed = glShader::beginTransparent();
+    if(!summed) {
+      // Nothing to sum into: painted in the order it comes. The geometry and
+      // the mesh are not sorted, so they must not write depth either - a face
+      // in front would otherwise hide what is behind it instead of letting it
+      // show through, which is the whole point of drawing them see-through.
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glDepthMask(GL_FALSE);
+    }
+    gmshAlphaScale(geomScale, geomFilled);
+    drawGeom();
+    gmshAlphaScale(meshScale, meshFilled);
+    drawMesh();
+    gmshAlphaScale(1., false);
+    // the views sort themselves back to front and have always written depth
+    // while doing it: that is left exactly as it was
+    if(!summed) glDepthMask(GL_TRUE);
+    drawPost();
+    if(summed)
+      glShader::endTransparent();
+    else
+      glDisable(GL_BLEND);
+    transparencyPass = TRANSPARENCY_ALL;
+  }
+
   // drawAxes();
   drawGraph2d(true);
 }
@@ -329,23 +849,25 @@ void drawContext::draw3d()
 void drawContext::draw2d()
 {
   glDisable(GL_DEPTH_TEST);
-  for(int i = 0; i < 6; i++) glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
+  gmshMatrixMode(GMSH_PROJECTION);
 
-  glOrtho((double)viewport[0], (double)viewport[2], (double)viewport[1],
-          (double)viewport[3], -100.,
-          100.); // in pixels, so we can draw some 3D glyphs
+  // in pixels, so we can draw some 3D glyphs, and with a shift that makes the
+  // 2D primitives appear "in front" in GL2PS
+  double px[16], front[16], m[16];
+  glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3], -100.,
+                  100., px);
+  glMatrix::translate(0., 0.,
+                      CTX::instance()->clipFactor > 1. ?
+                        1. / CTX::instance()->clipFactor :
+                        CTX::instance()->clipFactor,
+                      front);
+  glMatrix::multiply(px, front, m);
+  gmshLoadMatrix(m);
+  gmshMatrixMode(GMSH_MODELVIEW);
 
-  // hack to make the 2D primitives appear "in front" in GL2PS
-  glTranslated(0., 0.,
-               CTX::instance()->clipFactor > 1. ?
-                 1. / CTX::instance()->clipFactor :
-                 CTX::instance()->clipFactor);
-  glMatrixMode(GL_MODELVIEW);
-
-  glLoadIdentity();
+  gmshLoadIdentity();
   drawGraph2d(false);
   drawText2d();
   if(CTX::instance()->post.draw && !CTX::instance()->stereo) drawScales();
@@ -355,41 +877,41 @@ void drawContext::draw2d()
 void drawContext::drawBackgroundGradient()
 {
   if(CTX::instance()->bgGradient == 1) { // vertical
-    glBegin(GL_QUADS);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bg);
-    glVertex2i(viewport[0], viewport[1]);
-    glVertex2i(viewport[2], viewport[1]);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
-    glVertex2i(viewport[2], viewport[3]);
-    glVertex2i(viewport[0], viewport[3]);
-    glEnd();
+    gmshBegin(GL_QUADS);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bg);
+    gmshVertex2i(viewport[0], viewport[1]);
+    gmshVertex2i(viewport[2], viewport[1]);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
+    gmshVertex2i(viewport[2], viewport[3]);
+    gmshVertex2i(viewport[0], viewport[3]);
+    gmshEnd();
   }
   else if(CTX::instance()->bgGradient == 2) { // horizontal
-    glBegin(GL_QUADS);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bg);
-    glVertex2i(viewport[2], viewport[1]);
-    glVertex2i(viewport[2], viewport[3]);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
-    glVertex2i(viewport[0], viewport[3]);
-    glVertex2i(viewport[0], viewport[1]);
-    glEnd();
+    gmshBegin(GL_QUADS);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bg);
+    gmshVertex2i(viewport[2], viewport[1]);
+    gmshVertex2i(viewport[2], viewport[3]);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
+    gmshVertex2i(viewport[0], viewport[3]);
+    gmshVertex2i(viewport[0], viewport[1]);
+    gmshEnd();
   }
   else if(CTX::instance()->bgGradient == 3) { // radial
     double cx = 0.5 * (viewport[0] + viewport[2]);
     double cy = 0.5 * (viewport[1] + viewport[3]);
     double r =
       0.5 * std::max(viewport[2] - viewport[0], viewport[3] - viewport[1]);
-    glBegin(GL_TRIANGLE_FAN);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
-    glVertex2d(cx, cy);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bg);
-    glVertex2d(cx + r, cy);
+    gmshBegin(GL_TRIANGLE_FAN);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
+    gmshVertex2d(cx, cy);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bg);
+    gmshVertex2d(cx + r, cy);
     int ntheta = 36;
     for(int i = 1; i < ntheta + 1; i++) {
       double theta = i * 2 * M_PI / (double)ntheta;
-      glVertex2d(cx + r * cos(theta), cy + r * sin(theta));
+      gmshVertex2d(cx + r * cos(theta), cy + r * sin(theta));
     }
-    glEnd();
+    gmshEnd();
   }
 }
 
@@ -517,19 +1039,17 @@ void drawContext::drawBackgroundImage(bool threeD)
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, _bgImageTexture);
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  glBegin(GL_QUADS);
+  gmshTexture(_bgImageTexture, GMSH_TEXTURE_IMAGE);
+  gmshBegin(GL_QUADS);
   if(threeD) {
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2d(x + w, y);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2d(x + w, y + h);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2d(x, y + h);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2d(x, y);
+    gmshTexCoord2f(1.0f, 1.0f);
+    gmshVertex2d(x + w, y);
+    gmshTexCoord2f(1.0f, 0.0f);
+    gmshVertex2d(x + w, y + h);
+    gmshTexCoord2f(0.0f, 0.0f);
+    gmshVertex2d(x, y + h);
+    gmshTexCoord2f(0.0f, 1.0f);
+    gmshVertex2d(x, y);
   }
   else {
     int c = fix2dCoordinates(&x, &y); // y=0 now means top
@@ -537,17 +1057,17 @@ void drawContext::drawBackgroundImage(bool threeD)
     if(c & 2) y += h / 2.;
     if(x < viewport[0]) x = viewport[0];
     if(y < viewport[1]) y = viewport[1];
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2d(x + w, y - h);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2d(x + w, y);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2d(x, y);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2d(x, y - h);
+    gmshTexCoord2f(1.0f, 1.0f);
+    gmshVertex2d(x + w, y - h);
+    gmshTexCoord2f(1.0f, 0.0f);
+    gmshVertex2d(x + w, y);
+    gmshTexCoord2f(0.0f, 0.0f);
+    gmshVertex2d(x, y);
+    gmshTexCoord2f(0.0f, 1.0f);
+    gmshVertex2d(x, y - h);
   }
-  glEnd();
-  glDisable(GL_TEXTURE_2D);
+  gmshEnd();
+  gmshTexture(0); // draws what is waiting, as the texture is going away
   glDisable(GL_BLEND);
 }
 
@@ -606,23 +1126,23 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 
   if(CTX::instance()->camera) { // if we use the camera mode
     glDisable(GL_DEPTH_TEST);
-    glPushMatrix();
-    glLoadIdentity();
+    gmshPushMatrix();
+    gmshLoadIdentity();
     double w = (double)viewport[2];
     double h = (double)viewport[3];
     double ratio = w / h;
     double dx = 1.5 * tan(camera.radians) * w * ratio;
     double dy = 1.5 * tan(camera.radians) * w;
     double dz = -w * 1.25;
-    glBegin(GL_QUADS);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bg);
-    glVertex3i((int)-dx, (int)-dy, (int)dz);
-    glVertex3i((int)dx, (int)-dy, (int)dz);
-    glColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
-    glVertex3i((int)dx, (int)dy, (int)dz);
-    glVertex3i((int)-dx, (int)dy, (int)dz);
-    glEnd();
-    glPopMatrix();
+    gmshBegin(GL_QUADS);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bg);
+    gmshVertex3i((int)-dx, (int)-dy, (int)dz);
+    gmshVertex3i((int)dx, (int)-dy, (int)dz);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.bgGrad);
+    gmshVertex3i((int)dx, (int)dy, (int)dz);
+    gmshVertex3i((int)-dx, (int)dy, (int)dz);
+    gmshEnd();
+    gmshPopMatrix();
     glEnable(GL_DEPTH_TEST);
   }
   else if(!CTX::instance()->camera) { // if not in camera mode
@@ -637,13 +1157,14 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       clip_far = 75. * CTX::instance()->clipFactor * zmax;
     }
     // setup projection matrix
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+    gmshMatrixMode(GMSH_PROJECTION);
 
     // restrict picking to a rectangular region around xpick,ypick
+    double pick[16];
+    glMatrix::identity(pick);
     if(render_mode == GMSH_SELECT)
-      gluPickMatrix((GLdouble)xpick, (GLdouble)(viewport[3] - ypick),
-                    (GLdouble)wpick, (GLdouble)hpick, (GLint *)viewport);
+      glMatrix::pickRegion(xpick, viewport[3] - ypick, wpick, hpick, viewport,
+                           pick);
 
     // draw background if not in selection mode
     if(render_mode != GMSH_SELECT &&
@@ -651,27 +1172,36 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
         CTX::instance()->bgImageFileName.size()) &&
        (!CTX::instance()->printing || CTX::instance()->print.background)) {
       glDisable(GL_DEPTH_TEST);
-      glPushMatrix();
-      glLoadIdentity();
+      gmshPushMatrix();
       // the z values and the translation are only needed for GL2PS, which does
       // not understand "no depth test" (hence we must make sure that we draw
       // the background behind the rest of the scene)
-      glOrtho((double)viewport[0], (double)viewport[2], (double)viewport[1],
-              (double)viewport[3], clip_near, clip_far);
-      glTranslated(0., 0., -0.99 * clip_far);
+      double bg[16], back[16], m[16];
+      glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3],
+                      clip_near, clip_far, bg);
+      glMatrix::translate(0., 0., -0.99 * clip_far, back);
+      glMatrix::multiply(bg, back, m);
+      gmshLoadMatrix(m);
       drawBackgroundGradient();
       // hack for GL2PS (to make sure that the image is in front of the
       // gradient)
-      glTranslated(0., 0., 0.01 * clip_far);
+      glMatrix::translate(0., 0., -0.98 * clip_far, back);
+      glMatrix::multiply(bg, back, m);
+      gmshLoadMatrix(m);
       drawBackgroundImage(false);
-      glPopMatrix();
+      gmshPopMatrix();
       glEnable(GL_DEPTH_TEST);
     }
 
+    double projection[16];
     if(CTX::instance()->ortho) {
-      glOrtho(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
+      glMatrix::ortho(vxmin, vxmax, vymin, vymax, clip_near, clip_far,
+                      projection);
+      glMatrix::multiply(pick, projection, _projection);
+      gmshLoadMatrix(_projection);
+      gmshMatrixMode(GMSH_MODELVIEW);
+      glMatrix::identity(_modelBase);
+      gmshLoadMatrix(_modelBase);
     }
     else {
       // recenter the model such that the perspective is always at the center of
@@ -683,22 +1213,33 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       vxmax -= t_init[0];
       vymin -= t_init[1];
       vymax -= t_init[1];
-      glFrustum(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
+      glMatrix::frustum(vxmin, vxmax, vymin, vymax, clip_near, clip_far,
+                        projection);
+      glMatrix::multiply(pick, projection, _projection);
+      gmshLoadMatrix(_projection);
+      gmshMatrixMode(GMSH_MODELVIEW);
       double coef = (clip_far / clip_near) / 3.;
-      glTranslated(-coef * t_init[0], -coef * t_init[1], -coef * clip_near);
-      glScaled(coef, coef, coef);
+      double tr[16], sc[16];
+      glMatrix::translate(-coef * t_init[0], -coef * t_init[1],
+                          -coef * clip_near, tr);
+      glMatrix::scale(coef, coef, coef, sc);
+      glMatrix::multiply(tr, sc, _modelBase);
+      gmshLoadMatrix(_modelBase);
     }
   }
 }
 
 void drawContext::initRenderModel()
 {
-  glPushMatrix();
-  glLoadIdentity();
-  glScaled(s[0], s[1], s[2]);
-  glTranslated(t[0], t[1], t[2]);
+  gmshPushMatrix();
+  gmshLoadIdentity();
+  gmshScale(s[0], s[1], s[2]);
+  gmshTranslate(t[0], t[1], t[2]);
+
+  // A core profile has none of the fixed function lighting state below, and
+  // each call to it would only raise an error: the shader is handed the same
+  // lights as uniforms instead.
+  bool fixed = !gmshUseShaders();
 
   for(int i = 0; i < 6; i++) {
     if(CTX::instance()->light[i]) {
@@ -706,7 +1247,14 @@ void drawContext::initRenderModel()
                              (GLfloat)CTX::instance()->lightPosition[i][1],
                              (GLfloat)CTX::instance()->lightPosition[i][2],
                              (GLfloat)CTX::instance()->lightPosition[i][3]};
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
+      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
+      // OpenGL puts the position through the modelview matrix that is current
+      // here, which is the scale and the translation alone: the lights follow
+      // neither the rotation nor the camera. The shader is handed the result
+      // of that same transform, so that it lights the scene the same way.
+      double pos[4] = {position[0], position[1], position[2], position[3]};
+      double eye[4];
+      glMatrix::transform(gmshMatrix(GMSH_MODELVIEW), pos, eye);
 
       GLfloat r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.ambientLight[i]) /
@@ -718,7 +1266,7 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.ambientLight[i]) /
         255.);
       GLfloat ambient[4] = {r, g, b, 1.0F};
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
+      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
 
       r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.diffuseLight[i]) /
@@ -730,7 +1278,7 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.diffuseLight[i]) /
         255.);
       GLfloat diffuse[4] = {r, g, b, 1.0F};
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
+      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
 
       r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.specularLight[i]) /
@@ -742,83 +1290,90 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.specularLight[i]) /
         255.);
       GLfloat specular[4] = {r, g, b, 1.0F};
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
-
-      glEnable((GLenum)(GL_LIGHT0 + i));
+      if(fixed) {
+        glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
+        glEnable((GLenum)(GL_LIGHT0 + i));
+      }
+      glShader::setLight(i, eye, ambient, diffuse, specular);
     }
     else {
-      glDisable((GLenum)(GL_LIGHT0 + i));
+      if(fixed) glDisable((GLenum)(GL_LIGHT0 + i));
+      glShader::setLightOff(i);
     }
   }
 
-  glPopMatrix();
+  gmshPopMatrix();
 
-  // ambient and diffuse material colors track glColor automatically
-  glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-  glEnable(GL_COLOR_MATERIAL);
-  // "white"-only specular material reflection color
-  GLfloat spec[4] = {(GLfloat)CTX::instance()->shine,
-                     (GLfloat)CTX::instance()->shine,
-                     (GLfloat)CTX::instance()->shine, 1.0F};
-  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
-  // specular exponent in [0,128] (larger means more "focused"
-  // reflection)
-  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,
-              (GLfloat)CTX::instance()->shineExponent);
+  if(fixed) {
+    // ambient and diffuse material colors track the current colour
+    // automatically
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glEnable(GL_COLOR_MATERIAL);
+    // "white"-only specular material reflection color
+    GLfloat spec[4] = {(GLfloat)CTX::instance()->shine,
+                       (GLfloat)CTX::instance()->shine,
+                       (GLfloat)CTX::instance()->shine, 1.0F};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
+    // specular exponent in [0,128] (larger means more "focused"
+    // reflection)
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,
+                (GLfloat)CTX::instance()->shineExponent);
 
-  glShadeModel(GL_SMOOTH);
+    glShadeModel(GL_SMOOTH);
 
-  // Normalize the normals automatically. Using glEnable(GL_RESCALE_NORMAL)
-  // instead of glEnable(GL_NORMALIZE) (since we initially specify unit normals)
-  // is more efficient, but will only work with isotropic scalings (and we allow
-  // anistotropic scalings in myZoom...). Note that GL_RESCALE_NORMAL is only
-  // available in GL_VERSION_1_2.
+    // Normalize the normals automatically. Using glEnable(GL_RESCALE_NORMAL)
+    // instead of glEnable(GL_NORMALIZE) (since we initially specify unit
+    // normals) is more efficient, but will only work with isotropic scalings
+    // (and we allow anistotropic scalings in myZoom...). Note that
+    // GL_RESCALE_NORMAL is only available in GL_VERSION_1_2.
 #if defined(WIN32)
-  glEnable(GL_NORMALIZE);
+    glEnable(GL_NORMALIZE);
 #else
-  glEnable(GL_RESCALE_NORMAL);
+    glEnable(GL_RESCALE_NORMAL);
 #endif
+  }
 
   // lighting is enabled/disabled for each particular primitive later
-  glDisable(GL_LIGHTING);
+  gmshLighting(false);
 }
 
 void drawContext::initPosition(bool saveMatrices)
 {
   // NB: Those operations are applied to the model in the view coordinates
-  // (in opposite order)
-  glScaled(s[0], s[1], s[2]);
-  glTranslated(t[0] - CTX::instance()->cg[0], t[1] - CTX::instance()->cg[1],
-               t[2] - CTX::instance()->cg[2]);
-  if(CTX::instance()->rotationCenterCg)
-    glTranslated(CTX::instance()->cg[0], CTX::instance()->cg[1],
-                 CTX::instance()->cg[2]);
-  else
-    glTranslated(CTX::instance()->rotationCenter[0],
-                 CTX::instance()->rotationCenter[1],
-                 CTX::instance()->rotationCenter[2]);
+  // (in opposite order), on top of the modelview left by initProjection()
+  const double *rc = CTX::instance()->rotationCenterCg ?
+                       CTX::instance()->cg :
+                       CTX::instance()->rotationCenter;
+  double sc[16], tr[16], toCenter[16], fromCenter[16], a[16], b[16];
+  glMatrix::scale(s[0], s[1], s[2], sc);
+  glMatrix::translate(t[0] - CTX::instance()->cg[0],
+                      t[1] - CTX::instance()->cg[1],
+                      t[2] - CTX::instance()->cg[2], tr);
+  glMatrix::translate(rc[0], rc[1], rc[2], toCenter);
+  glMatrix::translate(-rc[0], -rc[1], -rc[2], fromCenter);
 
   buildRotationMatrix();
-  glMultMatrixd(rot);
 
-  if(CTX::instance()->rotationCenterCg)
-    glTranslated(-CTX::instance()->cg[0], -CTX::instance()->cg[1],
-                 -CTX::instance()->cg[2]);
-  else
-    glTranslated(-CTX::instance()->rotationCenter[0],
-                 -CTX::instance()->rotationCenter[1],
-                 -CTX::instance()->rotationCenter[2]);
+  glMatrix::multiply(_modelBase, sc, a);
+  glMatrix::multiply(a, tr, b);
+  glMatrix::multiply(b, toCenter, a);
+  glMatrix::multiply(a, rot, b);
+  glMatrix::multiply(b, fromCenter, a);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshLoadMatrix(a);
 
   // store the projection and modelview matrices at this precise moment (so that
   // we can use them at any later time, even if the context has changed, i.e.,
   // even if we are out of draw())
   if(saveMatrices) {
-    glGetDoublev(GL_PROJECTION_MATRIX, proj);
-    glGetDoublev(GL_MODELVIEW_MATRIX, model);
+    for(int i = 0; i < 16; i++) {
+      proj[i] = _projection[i];
+      model[i] = a[i];
+    }
   }
 
   for(int i = 0; i < 6; i++)
-    glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX::instance()->clipPlane[i]);
+    gmshClipPlane(i, CTX::instance()->clipPlane[i]);
 }
 
 // Takes a cursor position in window coordinates and returns the line (given by
@@ -831,71 +1386,56 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   winx *= fact;
   winy *= fact;
 
-  GLint vp[4];
-  glGetIntegerv(GL_VIEWPORT, vp);
+  GLint glvp[4];
+  glGetIntegerv(GL_VIEWPORT, glvp);
+  int vp[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
 
   winy = vp[3] - winy;
-
-  GLdouble x0, y0, z0, x1, y1, z1;
 
   // we use the stored model and proj matrices instead of directly
   // getGetDouble'ing the matrices since unproject can be called in or after
   // draw2d
-  if(!gluUnProject(winx, winy, 0.0, model, proj, vp, &x0, &y0, &z0))
+  double onNear[3] = {0., 0., 0.}, onFar[3] = {0., 0., 0.};
+  double win[3] = {winx, winy, 0.};
+  if(!glMatrix::unProject(win, model, proj, vp, onNear))
     Msg::Warning("unproject1 failed");
-  if(!gluUnProject(winx, winy, 1.0, model, proj, vp, &x1, &y1, &z1))
+  win[2] = 1.;
+  if(!glMatrix::unProject(win, model, proj, vp, onFar))
     Msg::Warning("unproject2 failed");
 
-  p[0] = x0;
-  p[1] = y0;
-  p[2] = z0;
-  d[0] = x1 - x0;
-  d[1] = y1 - y0;
-  d[2] = z1 - z0;
+  p[0] = onNear[0];
+  p[1] = onNear[1];
+  p[2] = onNear[2];
+  d[0] = onFar[0] - onNear[0];
+  d[1] = onFar[1] - onNear[1];
+  d[2] = onFar[2] - onNear[2];
   double len = sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
   d[0] /= len;
   d[1] /= len;
   d[2] /= len;
 }
 
+// The two matrices these need are the ones that are current, which used to be
+// asked of OpenGL. A core profile keeps neither of them - there is no matrix
+// stack in it at all - so they are asked of the place that does, which is
+// where they were computed in the first place.
 void drawContext::viewport2World(double vp[3], double xyz[3])
 {
-  GLint viewport[4];
-  GLdouble model[16], proj[16];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-  glGetDoublev(GL_PROJECTION_MATRIX, proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluUnProject(vp[0], vp[1], vp[2], model, proj, viewport, &xyz[0], &xyz[1],
-               &xyz[2]);
+  GLint glvp[4];
+  glGetIntegerv(GL_VIEWPORT, glvp);
+  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  glMatrix::unProject(vp, gmshMatrix(GMSH_MODELVIEW),
+                      gmshMatrix(GMSH_PROJECTION), viewport, xyz);
 }
 
 void drawContext::world2Viewport(double xyz[3], double vp[3])
 {
-  GLint viewport[4];
-  GLdouble model[16], proj[16];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-  glGetDoublev(GL_PROJECTION_MATRIX, proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluProject(xyz[0], xyz[1], xyz[2], model, proj, viewport, &vp[0], &vp[1],
-             &vp[2]);
+  GLint glvp[4];
+  glGetIntegerv(GL_VIEWPORT, glvp);
+  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  glMatrix::project(xyz, gmshMatrix(GMSH_MODELVIEW),
+                    gmshMatrix(GMSH_PROJECTION), viewport, vp);
 }
-
-class hit {
-public:
-  GLuint type, ient, depth, type2, ient2;
-  hit(GLuint t, GLuint i, GLuint d, GLuint t2 = 0, GLuint i2 = 0)
-    : type(t), ient(i), depth(d), type2(t2), ient2(i2)
-  {
-  }
-};
-
-class hitDepthLessThan {
-public:
-  bool operator()(const hit &h1, const hit &h2) const
-  {
-    return h1.depth < h2.depth;
-  }
-};
 
 // returns the element at a given position in a vertex array (element pointers
 // are not always stored: returning 0 is not an error)
@@ -912,6 +1452,312 @@ static MElement *getElement(GEntity *e, int va_type, int index)
     break;
   }
   return nullptr;
+}
+
+void drawContext::setPickColor(int type, int ient, int type2, int ient2)
+{
+  if(!_pickColor) return;
+  _pickObjects.push_back(pickObject(type, ient, type2, ient2));
+  // 0 is the background: 24 bits give 16 million pickable objects per pass
+  std::size_t id = _pickObjects.size() - 1;
+  GLubyte c[4] = {(GLubyte)(id & 0xff), (GLubyte)((id >> 8) & 0xff),
+                  (GLubyte)((id >> 16) & 0xff), 255};
+  if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
+  gmshPickColor4ubv(c);
+
+  // The selection buffer reported every primitive in the picking frustum, so a
+  // point or a curve hidden behind a surface could still be selected. Depth
+  // testing would hide them here, so give each dimension its own depth range,
+  // the lower ones in front: this keeps the depth order inside a dimension
+  // while letting a point be picked through a surface.
+  int d = (type < 0) ? 4 : (type > 4 ? 4 : type);
+  // the depth range is OpenGL's own state, which a batch of immediate mode
+  // primitives does not carry: what is waiting belongs to the object before
+  // this one and has to be drawn under its range
+  gmshFlushImmediate();
+  glDepthRange(0.2 * d, 0.2 * d + 0.2);
+}
+
+void drawContext::unsetPickColor()
+{
+  if(!_pickColor) return;
+  // 0 is the background: what is drawn now belongs to no pickable object
+  GLubyte c[4] = {0, 0, 0, 255};
+  if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
+  gmshPickColor4ubv(c);
+}
+
+// Side of the region, in real pixels, that a picking pass draws and keeps
+// around the point that was asked for. Big enough that the pointer usually
+// stays inside it while hovering, small enough that drawing it costs a
+// fraction of what the whole window would.
+static const int PICK_CACHE_SIZE = 512;
+
+// Draw a region of the window with every pickable object in the flat colour
+// that encodes it, and keep the result: the picks that follow are then lookups
+// in that image, so hovering does not redraw the scene on every mouse move.
+bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
+                                 int fh)
+{
+  if(fw < 1 || fh < 1) return false;
+
+  _pickObjects.clear();
+  _pickObjects.push_back(pickObject()); // 0: background
+  _pickColor = _pickColorActive = true;
+  render_mode = drawContext::GMSH_SELECT;
+
+  bool oldLighting = gmshLightingEnabled();
+  GLboolean oldBlend = glIsEnabled(GL_BLEND);
+  GLfloat oldClear[4];
+  glGetFloatv(GL_COLOR_CLEAR_VALUE, oldClear);
+
+  // Draw into a buffer of our own when the shader pipeline is the one drawing:
+  // the depth has to be read back as well as the identifiers, and reading a
+  // depth buffer is not something OpenGL ES or WebGL will do. The shader
+  // writes it as a colour into a second attachment instead.
+  double hr = highResolutionPixelFactor();
+  bool intoPickBuffer =
+    gmshUseShaders() &&
+    glShader::bindPickBuffer((int)((viewport[2] - viewport[0]) * hr),
+                             (int)((viewport[3] - viewport[1]) * hr));
+  if(!intoPickBuffer) glDrawBuffer(GL_BACK);
+  glDepthFunc(GL_LESS);
+  glEnable(GL_DEPTH_TEST);
+  gmshLighting(false);
+  glDisable(GL_BLEND);
+  // the identifier colour must not be interpolated across a primitive; the
+  // shader hands every fragment of a draw the same one, so there is nothing to
+  // ask of a core profile, which has no shade model either
+  if(!gmshUseShaders()) glShadeModel(GL_FLAT);
+  // only rasterise the region the image covers
+  glEnable(GL_SCISSOR_TEST);
+  glScissor(fx, fy, fw, fh);
+  glClearColor(0., 0., 0., 0.);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  gmshPushMatrix();
+  initProjection();
+  initPosition(false);
+  drawGeom();
+  if(mesh) drawMesh();
+  if(post) drawPost();
+  drawGraph2d(true);
+
+  // 2d stuff, drawn in pixel coordinates
+  // as in draw2d(): the 2D overlay is painted on top, in the order it is drawn,
+  // so the depth test has to go. Leaving it on would make the graph frame and
+  // the axes, drawn before the data points and in the depth range that was
+  // current at the time, hide the points from the picking pass.
+  glDisable(GL_DEPTH_TEST);
+  for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
+  gmshMatrixMode(GMSH_PROJECTION);
+  double px2d[16];
+  glMatrix::ortho(viewport[0], viewport[2], viewport[1], viewport[3], -100.,
+                  100., px2d);
+  gmshLoadMatrix(px2d);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshLoadIdentity();
+  drawGraph2d(false);
+  drawText2d();
+  gmshPopMatrix();
+
+  _pickCache.assign((std::size_t)4 * fw * fh, 0);
+  _pickCacheDepth.assign((std::size_t)fw * fh, 1.f);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  if(intoPickBuffer) {
+    glShader::readPickBuffer(fx, fy, fw, fh, &_pickCache[0],
+                             &_pickCacheDepth[0]);
+    glShader::releasePickBuffer();
+  }
+  else {
+    glReadBuffer(GL_BACK);
+    glReadPixels(fx, fy, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE, &_pickCache[0]);
+    glReadPixels(fx, fy, fw, fh, GL_DEPTH_COMPONENT, GL_FLOAT,
+                 &_pickCacheDepth[0]);
+  }
+
+  glDisable(GL_SCISSOR_TEST);
+  gmshFlushImmediate();
+  glDepthRange(0., 1.);
+  glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
+  if(oldLighting) gmshLighting(true);
+  if(oldBlend) glEnable(GL_BLEND);
+  if(!gmshUseShaders()) glShadeModel(GL_SMOOTH);
+  _pickColor = _pickColorActive = false;
+  render_mode = drawContext::GMSH_RENDER;
+
+  _pickCacheX = fx;
+  _pickCacheY = fy;
+  _pickCacheWidth = fw;
+  _pickCacheHeight = fh;
+  _pickCacheMesh = mesh;
+  _pickCachePost = post;
+  _pickCacheElements = CTX::instance()->pickElements ? true : false;
+  _pickCacheValid = true;
+  Msg::Debug("Colour picking: drew %d objects into a %dx%d image",
+             (int)_pickObjects.size(), fw, fh);
+  return true;
+}
+
+// Find the objects whose colour shows up in the picking rectangle, and return
+// them ordered by depth.
+bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
+                               int x, int y, int w, int h,
+                               std::vector<GVertex *> &vertices,
+                               std::vector<GEdge *> &edges,
+                               std::vector<GFace *> &faces,
+                               std::vector<GRegion *> &regions,
+                               std::vector<MElement *> &elements,
+                               std::vector<SPoint2> &points,
+                               std::vector<PView *> &views)
+{
+  if(w < 1) w = 1;
+  if(h < 1) h = 1;
+  // the rectangle is given by its centre
+  int x0 = x - w / 2, y0 = (viewport[3] - y) - h / 2;
+  if(x0 < viewport[0]) x0 = viewport[0];
+  if(y0 < viewport[1]) y0 = viewport[1];
+  if(x0 + w > viewport[2]) w = viewport[2] - x0;
+  if(y0 + h > viewport[3]) h = viewport[3] - y0;
+  if(w < 1 || h < 1) return false;
+
+  // the viewport is in logical points, but the image is in real pixels, which
+  // differ on a high resolution display
+  double hr = highResolutionPixelFactor();
+  int fx0 = (int)(x0 * hr), fy0 = (int)(y0 * hr);
+  int fw = (int)(w * hr), fh = (int)(h * hr);
+  if(fw < 1) fw = 1;
+  if(fh < 1) fh = 1;
+  int winW = (int)((viewport[2] - viewport[0]) * hr);
+  int winH = (int)((viewport[3] - viewport[1]) * hr);
+
+  bool pickElements = CTX::instance()->pickElements ? true : false;
+  bool inside = _pickCacheValid && fx0 >= _pickCacheX && fy0 >= _pickCacheY &&
+                fx0 + fw <= _pickCacheX + _pickCacheWidth &&
+                fy0 + fh <= _pickCacheY + _pickCacheHeight;
+  if(!inside || _pickCacheMesh != mesh || _pickCachePost != post ||
+     _pickCacheElements != pickElements) {
+    // a region around the query, big enough that the pointer has to travel a
+    // long way before the image has to be drawn again
+    int cw = std::min(winW, PICK_CACHE_SIZE), ch = std::min(winH, PICK_CACHE_SIZE);
+    if(cw < fw) cw = fw;
+    if(ch < fh) ch = fh;
+    int cx = fx0 + fw / 2 - cw / 2, cy = fy0 + fh / 2 - ch / 2;
+    if(cx < 0) cx = 0;
+    if(cy < 0) cy = 0;
+    if(cx + cw > winW) cx = winW - cw;
+    if(cy + ch > winH) cy = winH - ch;
+    if(cx < 0 || cy < 0) return false;
+    if(!_fillPickCache(mesh, post, cx, cy, cw, ch)) return false;
+  }
+
+  const unsigned char *pixels = &_pickCache[0];
+  const float *depths = &_pickCacheDepth[0];
+  const int stride = _pickCacheWidth;
+  fx0 -= _pickCacheX;
+  fy0 -= _pickCacheY;
+  if(fx0 < 0 || fy0 < 0 || fx0 + fw > _pickCacheWidth ||
+     fy0 + fh > _pickCacheHeight)
+    return false;
+
+  // gather the objects that show up, keeping the smallest depth for each. The
+  // 2D overlay is painted on top of the scene without depth testing, so it
+  // wrote no depth of its own and the buffer holds whatever is underneath it:
+  // rank it in front, which is where it is drawn.
+  std::map<std::size_t, float> found;
+  for(int r = 0; r < fh; r++) {
+    for(int c = 0; c < fw; c++) {
+      std::size_t i = (std::size_t)(fy0 + r) * stride + (fx0 + c);
+      std::size_t id = (std::size_t)pixels[4 * i] |
+                       ((std::size_t)pixels[4 * i + 1] << 8) |
+                       ((std::size_t)pixels[4 * i + 2] << 16);
+      if(!id || id >= _pickObjects.size()) continue;
+      float z = (_pickObjects[id].type >= 4) ? -1.f : depths[i];
+      auto it = found.find(id);
+      if(it == found.end() || z < it->second) found[id] = z;
+    }
+  }
+  Msg::Debug("Colour picking: %d found in a %dx%d rectangle",
+             (int)found.size(), fw, fh);
+  if(found.empty()) return false;
+
+  // order by depth, and prefer the entities of lowest dimension, as the
+  // selection buffer based code did
+  std::vector<std::pair<float, std::size_t> > sorted;
+  for(auto &p : found) sorted.push_back(std::make_pair(p.second, p.first));
+  std::sort(sorted.begin(), sorted.end());
+
+  int typmin = 10;
+  for(auto &p : sorted) typmin = std::min(typmin, _pickObjects[p.second].type);
+
+  GModel *m = GModel::current();
+  for(auto &p : sorted) {
+    const pickObject &o = _pickObjects[p.second];
+    if(o.type < 4 &&
+       !((type == ENT_ALL) || (type == ENT_NONE && o.type == typmin) ||
+         (type == ENT_POINT && o.type == 0) ||
+         (type == ENT_CURVE && o.type == 1) ||
+         (type == ENT_SURFACE && o.type == 2) ||
+         (type == ENT_VOLUME && o.type == 3)))
+      continue;
+    switch(o.type) {
+    case 0: {
+      GVertex *v = m->getVertexByTag(o.ient);
+      if(v) vertices.push_back(v);
+      break;
+    }
+    case 1: {
+      GEdge *e = m->getEdgeByTag(o.ient);
+      if(e) {
+        MElement *ele = getElement(e, o.type2, o.ient2);
+        if(ele)
+          elements.push_back(ele);
+        else
+          edges.push_back(e);
+      }
+      break;
+    }
+    case 2: {
+      GFace *f = m->getFaceByTag(o.ient);
+      if(f) {
+        MElement *ele = getElement(f, o.type2, o.ient2);
+        if(ele)
+          elements.push_back(ele);
+        else
+          faces.push_back(f);
+      }
+      break;
+    }
+    case 3: {
+      GRegion *r = m->getRegionByTag(o.ient);
+      if(r) {
+        MElement *ele = getElement(r, o.type2, o.ient2);
+        if(ele)
+          elements.push_back(ele);
+        else
+          regions.push_back(r);
+      }
+      break;
+    }
+    case 4: {
+      points.push_back(getGraph2dDataPointForTag(o.ient));
+      break;
+    }
+    case 5: {
+      if(o.ient >= 0 && o.ient < (int)PView::list.size())
+        views.push_back(PView::list[o.ient]);
+      break;
+    }
+    default: break;
+    }
+    if(!multiple && (vertices.size() || edges.size() || faces.size() ||
+                     regions.size() || elements.size() || points.size() ||
+                     views.size()))
+      return true;
+  }
+
+  return (vertices.size() || edges.size() || faces.size() || regions.size() ||
+          elements.size() || points.size() || views.size());
 }
 
 bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
@@ -931,198 +1777,16 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
   points.clear();
   views.clear();
 
-  // in our case the selection buffer size is equal to between 5 and 7 times the
-  // maximum number of possible hits
-  GModel *m = GModel::current();
-  int eles =
-    (mesh && CTX::instance()->pickElements) ? 4 * m->getNumMeshElements() : 0;
-  int nviews = PView::list.size() * 100;
-  int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() +
-                  m->getNumRegions() + eles) +
-             nviews;
-  if(!size) return false; // the model is empty, don't bother!
-
-  // allocate selection buffer
-  size += 1000; // just to make sure
-  GLuint *selectionBuffer = new GLuint[size];
-  glSelectBuffer(size, selectionBuffer);
-
-  // do one rendering pass in select mode
-  render_mode = drawContext::GMSH_SELECT;
-  glRenderMode(GL_SELECT);
-  glInitNames();
-  glPushMatrix();
-
-  // 3d stuff
-  initProjection(x, y, w, h);
-  initPosition(false);
-  drawGeom();
-  if(mesh) drawMesh();
-  if(post) drawPost();
-  drawGraph2d(true);
-
-  // 2d stuff
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPickMatrix((GLdouble)x, (GLdouble)(viewport[3] - y), (GLdouble)w,
-                (GLdouble)h, (GLint *)viewport);
-  glOrtho((double)viewport[0], (double)viewport[2], (double)viewport[1],
-          (double)viewport[3], -100.,
-          100.); // in pixels, so we can draw some 3D glyphs
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  drawGraph2d(false);
-  drawText2d();
-
-  glPopMatrix();
-
-  GLint numhits = glRenderMode(GL_RENDER);
-  render_mode = drawContext::GMSH_RENDER;
-
-  if(!numhits) { // no hits
-    delete[] selectionBuffer;
-    return false;
-  }
-  else if(numhits < 0) { // overflow
-    delete[] selectionBuffer;
-    Msg::Warning("Too many entities selected");
-    return false;
-  }
-
-  // decode the hits
-  std::vector<hit> hits;
-  GLuint *ptr = selectionBuffer;
-  for(int i = 0; i < numhits; i++) {
-    // in Gmsh 'names' should always be 0, 2 or 4:
-    // * names == 0 means that there is nothing on the stack
-    // * if names == 2, the first name is the type of the entity (0 for point, 1
-    //   for edge, 2 for face or 3 for volume) and the second is the entity
-    //   number;
-    // * if names == 4, the first name is the type of the entity, the second is
-    //   the entity number, the third is the type of vertex array (2 for line, 3
-    //   for triangle, 4 for quad) and the fourth is the index of the element in
-    //   the vertex array
-    GLuint names = *ptr++;
-    GLuint mindepth = *ptr++;
-    GLuint maxdepth = *ptr++;
-    if(names == 2) {
-      GLuint depth =
-        maxdepth + 0 * mindepth; // could do something with mindepth
-      GLuint type = *ptr++;
-      GLuint ient = *ptr++;
-      hits.push_back(hit(type, ient, depth));
-    }
-    else if(names == 4) {
-      GLuint depth =
-        maxdepth + 0 * mindepth; // could do something with mindepth
-      GLuint type = *ptr++;
-      GLuint ient = *ptr++;
-      GLuint type2 = *ptr++;
-      GLuint ient2 = *ptr++;
-      hits.push_back(hit(type, ient, depth, type2, ient2));
-    }
-  }
-
-  delete[] selectionBuffer;
-
-  if(!hits.size()) { // no entities
-    return false;
-  }
-
-  // sort hits to get closest entities first
-  std::sort(hits.begin(), hits.end(), hitDepthLessThan());
-
-  // filter result: if type == ENT_NONE, return the closest entity of "lowest
-  // dimension" (point < line < surface < volume). Otherwise, return the closest
-  // entity of type "type"
-  GLuint typmin = 10;
-  for(std::size_t i = 0; i < hits.size(); i++)
-    typmin = std::min(typmin, hits[i].type);
-
-  for(std::size_t i = 0; i < hits.size(); i++) {
-    if((type == ENT_ALL) || (type == ENT_NONE && hits[i].type == typmin) ||
-       (type == ENT_POINT && hits[i].type == 0) ||
-       (type == ENT_CURVE && hits[i].type == 1) ||
-       (type == ENT_SURFACE && hits[i].type == 2) ||
-       (type == ENT_VOLUME && hits[i].type == 3)) {
-      switch(hits[i].type) {
-      case 0: {
-        GVertex *v = m->getVertexByTag(hits[i].ient);
-        if(!v) {
-          Msg::Error("Problem in point selection processing");
-          return false;
-        }
-        vertices.push_back(v);
-        if(!multiple) return true;
-      } break;
-      case 1: {
-        GEdge *e = m->getEdgeByTag(hits[i].ient);
-        if(!e) {
-          Msg::Error("Problem in line selection processing");
-          return false;
-        }
-        if(hits[i].type2) {
-          MElement *ele = getElement(e, hits[i].type2, hits[i].ient2);
-          if(ele) elements.push_back(ele);
-        }
-        edges.push_back(e);
-        if(!multiple) return true;
-      } break;
-      case 2: {
-        GFace *f = m->getFaceByTag(hits[i].ient);
-        if(!f) {
-          Msg::Error("Problem in surface selection processing");
-          return false;
-        }
-        if(hits[i].type2) {
-          MElement *ele = getElement(f, hits[i].type2, hits[i].ient2);
-          if(ele) elements.push_back(ele);
-        }
-        faces.push_back(f);
-        if(!multiple) return true;
-      } break;
-      case 3: {
-        GRegion *r = m->getRegionByTag(hits[i].ient);
-        if(!r) {
-          Msg::Error("Problem in volume selection processing");
-          return false;
-        }
-        if(hits[i].type2) {
-          MElement *ele = getElement(r, hits[i].type2, hits[i].ient2);
-          if(ele) elements.push_back(ele);
-        }
-        regions.push_back(r);
-        if(!multiple) return true;
-      } break;
-      case 4: {
-        int tag = hits[i].ient;
-        SPoint2 p = getGraph2dDataPointForTag(tag);
-        points.push_back(p);
-        if(!multiple) return true;
-      } break;
-      case 5: {
-        int tag = hits[i].ient;
-        if(tag >= 0 && tag < (int)PView::list.size())
-          views.push_back(PView::list[tag]);
-        if(!multiple) return true;
-      } break;
-      }
-    }
-  }
-
-  if(vertices.size() || edges.size() || faces.size() || regions.size() ||
-     elements.size() || points.size() || views.size())
-    return true;
-  return false;
+  return _selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
+                      faces, regions, elements, points, views);
 }
 
 void drawContext::recenterForRotationCenterChange(SPoint3 newRotationCenter)
 {
   // Recompute model translation so that the view is not changed
   SPoint3 &p = newRotationCenter;
-  double vp[3];
-  gluProject(p.x(), p.y(), p.z(), model, proj, viewport, &vp[0], &vp[1],
-             &vp[2]);
+  double vp[3], xyz[3] = {p.x(), p.y(), p.z()};
+  glMatrix::project(xyz, model, proj, viewport, vp);
   double wnr[3]; // look at mousePosition::recenter()
   const double &width = viewport[2];
   const double &height = viewport[3];

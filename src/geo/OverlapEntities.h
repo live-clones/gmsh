@@ -35,8 +35,6 @@ public:
     : discreteFace(model, model->getMaxElementaryNumber(2) + 1),
       _covered(covered), _partition(partition)
   {
-    Msg::Info("Creating overlapFace for partition %d covering face with tag %d",
-              _partition, this->tag());
   }
 
   virtual GeomType geomType() const override { return OverlapSurface; }
@@ -55,11 +53,20 @@ public:
     this->quadrangles.clear();
     this->polygons.clear();
   }
+  // Never delete shared elements, whatever the caller asked for
+  void removeElement(MElement *e, bool del = false) override
+  {
+    GFace::removeElement(e, false);
+  }
+  void removeElements(bool del = false) override
+  {
+    GFace::removeElements(false);
+  }
 };
 
 class overlapRegion : public discreteRegion {
 private:
-  partitionRegion *_covered;
+  partitionRegion *_covered = nullptr;
   int _partition;
 
 public:
@@ -71,7 +78,11 @@ public:
 
   virtual GeomType geomType() const override { return OverlapVolume; }
   int owningPartition() const { return _partition; }
-  partitionRegion *getCovered() const { return _covered; }
+  partitionRegion *getCovered() const
+  {
+    if(!_covered) Msg::Error("No covered entity");
+    return _covered;
+  }
 
   virtual ~overlapRegion() { deleteMesh(); }
   virtual void deleteMesh() override
@@ -83,6 +94,15 @@ public:
     this->pyramids.clear();
     this->trihedra.clear();
     this->polyhedra.clear();
+  }
+  // Never delete shared elements, whatever the caller asked for
+  void removeElement(MElement *e, bool del = false) override
+  {
+    GRegion::removeElement(e, false);
+  }
+  void removeElements(bool del = false) override
+  {
+    GRegion::removeElements(false);
   }
 };
 
@@ -98,11 +118,23 @@ using OverlapCollection =
                                           MElementPtrEqual>,
                        GEntityPtrFullHash, GEntityPtrFullEqual>>;
 
+// One partition's worth of overlap data: covered entity -> subset of its
+// elements to save
+template <int dim>
+using CoveredElementsMap = typename OverlapCollection<dim>::value_type;
+
+// Map from entity to the subset of its mesh vertices to save
+using EntityToVerticesMap =
+  std::unordered_map<GEntity *,
+                     std::unordered_set<MVertex *, MVertexPtrHash,
+                                        MVertexPtrEqual>,
+                     GEntityPtrFullHash, GEntityPtrFullEqual>;
+
 // For each partition, we keep a map from volume entity to face/edges with their
 // parent element. Parent allows a reconstruction of a high-order boundary
 // element.
 template <int dim>
-using OveralBoundariesMesh = std::vector<std::unordered_map<
+using OverlapBoundariesMesh = std::vector<std::unordered_map<
   typename EntityTraits<dim>::Entity *,
   std::unordered_map<typename EntityTraits<dim>::BoundaryMeshObject, MElement *,
                      typename EntityTraits<dim>::BoundaryMeshObjectHash,
@@ -117,9 +149,12 @@ using BoundaryToPartitionEntity =
                      typename EntityTraits<dim>::BoundaryMeshObjectEqual>;
 
 inline std::vector<int> getEntityPartition(GEntity *entity,
-                                           bool failOnNull = true)
+                                           bool errorIfNotPartitioned = true)
 {
-  if(!entity) Msg::Error("getEntityPartition: entity is null.");
+  if(!entity) {
+    Msg::Error("getEntityPartition: entity is null.");
+    return {};
+  }
   auto pv = dynamic_cast<partitionVertex *>(entity);
   if(pv) { return pv->getPartitions(); }
   auto pe = dynamic_cast<partitionEdge *>(entity);
@@ -128,7 +163,7 @@ inline std::vector<int> getEntityPartition(GEntity *entity,
   if(pf) { return pf->getPartitions(); }
   auto pr = dynamic_cast<partitionRegion *>(entity);
   if(pr) { return pr->getPartitions(); }
-  if(failOnNull)
+  if(errorIfNotPartitioned)
     Msg::Error("getEntityPartition: entity is not a partitioned entity.");
   return {};
 }

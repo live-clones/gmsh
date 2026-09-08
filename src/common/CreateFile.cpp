@@ -32,6 +32,33 @@
 #include "gl2pgf.h"
 #endif
 
+#if defined(HAVE_FLTK)
+// gl2ps writes a vector file by putting OpenGL into feedback mode and reading
+// back the primitives it was handed, and a core profile has no feedback mode at
+// all - a scene drawn by the shader pipeline reaches it as nothing. So the old
+// pipeline is put back for as long as the file is being written, and the one
+// that was asked for is restored afterwards.
+class drawTheOldWayWhileExporting {
+private:
+  bool _switched;
+
+public:
+  drawTheOldWayWhileExporting() : _switched(false)
+  {
+    if(!CTX::instance()->shaders) return;
+    _switched = true;
+    opt_general_shaders(0, GMSH_SET, 0.);
+    // the context is only made again when it is next drawn into, and feedback
+    // mode has to be asked of the one that will do the drawing
+    drawContext::global()->drawCurrentOpenglWindow(true);
+  }
+  ~drawTheOldWayWhileExporting()
+  {
+    if(_switched) opt_general_shaders(0, GMSH_SET, 1.);
+  }
+};
+#endif
+
 int GetFileFormatFromExtension(const std::string &ext, double *version)
 {
   if(ext == ".geo_unrolled")  return FORMAT_GEO;
@@ -212,9 +239,10 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
       height = CTX::instance()->print.height;
     }
     newg = new openglWindow(100, 100, width, height);
-    int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-    if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-    newg->mode(mode);
+    // the same visual as the windows this one stands in for: a picture taken
+    // with a different pipeline than the one on screen is not a picture of
+    // what is on screen
+    newg->mode(openglWindowMode());
     newg->end();
     newg->getDrawContext()->copyViewAttributes
       (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
@@ -281,6 +309,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 }
 #endif
 
+#if defined(HAVE_MPEG_ENCODE)
 static void ChangePrintParameter(int frame)
 {
   double first = CTX::instance()->print.parameterFirst;
@@ -293,6 +322,7 @@ static void ChangePrintParameter(int frame)
   opt_print_parameter(0, GMSH_SET | GMSH_GUI, v);
   ParseString(CTX::instance()->print.parameterCommand, true);
 }
+#endif
 
 void CreateOutputFile(const std::string &fileName, int format,
                       bool status)
@@ -619,6 +649,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         error = true;
         break;
       }
+      drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
       GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
@@ -658,18 +689,18 @@ void CreateOutputFile(const std::string &fileName, int format,
           double modelview[16], projection[16];
           glGetDoublev(GL_PROJECTION_MATRIX, projection);
           glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-          glMatrixMode(GL_PROJECTION);
-          glLoadIdentity();
+          gmshMatrixMode(GMSH_PROJECTION);
+          gmshLoadIdentity();
           glOrtho((double)pixel_viewport[0], (double)pixel_viewport[2],
                   (double)pixel_viewport[1], (double)pixel_viewport[3], -1., 1.);
-          glMatrixMode(GL_MODELVIEW);
-          glLoadIdentity();
+          gmshMatrixMode(GMSH_MODELVIEW);
+          gmshLoadIdentity();
           glRasterPos2d(0, 0);
           gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, buffer.getPixels());
-          glMatrixMode(GL_PROJECTION);
-          glLoadMatrixd(projection);
-          glMatrixMode(GL_MODELVIEW);
-          glLoadMatrixd(modelview);
+          gmshMatrixMode(GMSH_PROJECTION);
+          gmshLoadMatrix(projection);
+          gmshMatrixMode(GMSH_MODELVIEW);
+          gmshLoadMatrix(modelview);
         }
         else{
           drawContext::global()->drawCurrentOpenglWindow(true);
@@ -695,6 +726,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         error = true;
         break;
       }
+      drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
       GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
@@ -732,6 +764,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
 
+      drawTheOldWayWhileExporting noShaders;
       // fill pixel buffer without colorbar and axes
       int restoreGeneralAxis = (int) opt_general_axes(0, GMSH_GET, 0);
       int restoreSmallAxis = (int) opt_general_small_axes(0, GMSH_GET, 0);

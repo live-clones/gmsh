@@ -6,12 +6,24 @@
 #ifndef VERTEX_ARRAY_H
 #define VERTEX_ARRAY_H
 
+#include <string.h>
 #include <vector>
 #include <set>
+#include <unordered_map>
+#include <atomic>
+#include <thread>
+#include <cstdint>
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
 
 #include "GmshConfig.h"
+
+// only MSVC on x86 has an intrinsic for the prefetch below; the other Windows
+// targets do without it, which only costs a hint
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#include <xmmintrin.h>
+#endif
+
 #if defined(HAVE_VISUDEV)
 typedef float normal_type;
 #else
@@ -20,134 +32,258 @@ typedef char normal_type;
 
 class MElement;
 
-template <int N> class ElementData {
-private:
-  float _x[N], _y[N], _z[N], _nx[N], _ny[N], _nz[N];
-  unsigned char _r[N], _g[N], _b[N], _a[N];
-  MElement *_ele;
-
+// key used by the "unique" filter to detect elements that are drawn several
+// times, e.g. an edge shared by several tetrahedra: the N corners are stored in
+// canonical (sorted) order, together with the color, so that an element added
+// twice with the same geometry and the same color maps to the same key. The
+// alignment rounds the size up to a multiple of 8 bytes, so that the key can
+// be hashed word by word; the bytes that adds are zeroed when the key is made
+template <int N> class alignas(8) CornerKey {
 public:
-  ElementData(double *x, double *y, double *z, SVector3 *n, unsigned char *r,
-              unsigned char *g, unsigned char *b, unsigned char *a,
-              MElement *ele)
-  {
-    for(int i = 0; i < N; i++) {
-      _x[i] = (float)x[i];
-      _y[i] = (float)y[i];
-      _z[i] = (float)z[i];
-      if(n) {
-        _nx[i] = (float)n[i].x();
-        _ny[i] = (float)n[i].y();
-        _nz[i] = (float)n[i].z();
-      }
-      else
-        _nx[i] = _ny[i] = _nz[i] = 0.;
-      if(r && g && b && a) {
-        _r[i] = r[i];
-        _g[i] = g[i];
-        _b[i] = b[i];
-        _a[i] = a[i];
-      }
-      else
-        _r[i] = _g[i] = _b[i] = _a[i] = 0;
+  float p[3 * N];
+  unsigned char c[4];
+};
+static_assert(sizeof(CornerKey<2>) == 32 && sizeof(CornerKey<3>) == 40,
+              "a corner key is hashed as whole 64 bit words");
+
+// hash of a key made of 64 bit words. The filter only stores this hash, so the
+// function is part of what the filter is: changing it changes which elements
+// collide, hence (very rarely) which ones are drawn
+static inline std::uint64_t vaHashKey(const void *p, std::size_t bytes)
+{
+  const std::uint64_t *w = (const std::uint64_t *)p;
+  std::uint64_t h = 0x9e3779b97f4a7c15ULL;
+  for(std::size_t i = 0; i < bytes / 8; i++) {
+    h ^= w[i];
+    h *= 0xff51afd7ed558ccdULL;
+    h = (h << 31) | (h >> 33);
+  }
+  h ^= h >> 33;
+  h *= 0xff51afd7ed558ccdULL;
+  h ^= h >> 29;
+  h *= 0xc4ceb9fe1a85ec53ULL;
+  h ^= h >> 32;
+  return h ? h : 1;
+}
+
+// Ask for a cache line to be brought in, so that a lookup that will need it
+// later does not stall on it. This is only a hint: doing nothing at all is
+// always correct, and is what happens on compilers that cannot express it
+static inline void vaPrefetch(const void *p)
+{
+#if defined(__GNUC__) || defined(__clang__)
+  __builtin_prefetch(p, 1, 1);
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+  _mm_prefetch((const char *)p, _MM_HINT_T0);
+#else
+  (void)p;
+#endif
+}
+
+// build the key of an element identified by its vertices and its color
+static inline int vaVertexKey(unsigned int col, const void *v0, const void *v1,
+                              const void *v2, const void *v3, std::uint64_t *k)
+{
+  int n = 0;
+  k[n++] = (std::uint64_t)(std::uintptr_t)v0;
+  k[n++] = (std::uint64_t)(std::uintptr_t)v1;
+  if(v2) k[n++] = (std::uint64_t)(std::uintptr_t)v2;
+  if(v3) k[n++] = (std::uint64_t)(std::uintptr_t)v3;
+  // sort so that the vertices can be given in any order
+  for(int i = 1; i < n; i++)
+    for(int j = i; j > 0 && k[j] < k[j - 1]; j--) {
+      std::uint64_t t = k[j];
+      k[j] = k[j - 1];
+      k[j - 1] = t;
     }
-    _ele = ele;
-  }
-  inline float x(int i) const { return _x[i]; }
-  inline float y(int i) const { return _y[i]; }
-  inline float z(int i) const { return _z[i]; }
-  inline float nx(int i) const { return _nx[i]; }
-  inline float ny(int i) const { return _ny[i]; }
-  inline float nz(int i) const { return _nz[i]; }
-  inline unsigned char r(int i) const { return _r[i]; }
-  inline unsigned char g(int i) const { return _g[i]; }
-  inline unsigned char b(int i) const { return _b[i]; }
-  inline unsigned char a(int i) const { return _a[i]; }
-  inline MElement *ele() const { return _ele; }
-  SPoint3 barycenter() const
-  {
-    SPoint3 p(0., 0., 0.);
-    for(int i = 0; i < N; i++) {
-      p[0] += _x[i];
-      p[1] += _y[i];
-      p[2] += _z[i];
-    }
-    p[0] /= (double)N;
-    p[1] /= (double)N;
-    p[2] /= (double)N;
-    return p;
-  }
-};
+  k[n++] = col;
+  return n;
+}
 
-template <int N> class ElementDataLessThan {
-public:
-  static float tolerance;
-  bool operator()(const ElementData<N> &e1, const ElementData<N> &e2) const
-  {
-    SPoint3 p1 = e1.barycenter();
-    SPoint3 p2 = e2.barycenter();
-    if(p1.x() - p2.x() > tolerance) return true;
-    if(p1.x() - p2.x() < -tolerance) return false;
-    if(p1.y() - p2.y() > tolerance) return true;
-    if(p1.y() - p2.y() < -tolerance) return false;
-    if(p1.z() - p2.z() > tolerance) return true;
-    return false;
-  }
-};
-
-class Barycenter {
+// filter used to detect elements that are drawn several times. The keys are
+// spread over several shards, each with its own lock, so that the filter can be
+// shared by the threads that fill the vertex arrays of a given entity. The
+// lookups are on the hot path of the vertex array construction, so they are
+// defined here rather than in the source file: the table pointer, the mask and
+// the size at which the table has to grow are kept next to the table so that a
+// lookup is one indexed load, and the whole thing inlines into the caller.
+class UniqueElementFilter {
 private:
-  float _x, _y, _z;
+  enum { NUM_SHARDS = 256 };
+  // open addressing table of 64 bit hashes, with 0 marking an empty slot: only
+  // the hash is stored, so two elements whose keys collide on 64 bits are
+  // wrongly merged. With 20 million elements this happens with probability
+  // ~1e-5, i.e. much less often than one dropped edge per mesh
+  class Shard {
+  public:
+    std::vector<std::uint64_t> store;
+    std::uint64_t *table;
+    std::size_t mask, num, growAt;
+    Shard() : table(nullptr), mask(0), num(0), growAt(0) {}
+    void reserve(std::size_t n);
+    void erase(std::size_t i);
+    bool insert(std::uint64_t h)
+    {
+      // an empty shard has growAt == 0, so this also allocates the table
+      if(num >= growAt) reserve(num + 1);
+      std::size_t i = h & mask;
+      while(table[i]) {
+        if(table[i] == h) return false;
+        i = (i + 1) & mask;
+      }
+      table[i] = h;
+      num++;
+      return true;
+    }
+    bool contains(std::uint64_t h) const
+    {
+      if(!num) return false;
+      std::size_t i = h & mask;
+      while(table[i]) {
+        if(table[i] == h) return true;
+        i = (i + 1) & mask;
+      }
+      return false;
+    }
+    // insert the key, or erase it if it is already there
+    bool insertOrErase(std::uint64_t h)
+    {
+      if(num >= growAt) reserve(num + 1);
+      std::size_t i = h & mask;
+      while(table[i]) {
+        if(table[i] == h) {
+          erase(i);
+          return false;
+        }
+        i = (i + 1) & mask;
+      }
+      table[i] = h;
+      num++;
+      return true;
+    }
+  };
+  // A lock held for the length of one probe of the table, i.e. for about the
+  // time of one cache miss: going through the kernel to wait for something that
+  // short costs far more than spinning for it, and with the threads spread over
+  // the shards a wait is rare in the first place. Each lock sits in its own
+  // cache line, so that taking one does not invalidate its neighbours
+  class alignas(64) ShardLock {
+  public:
+    ShardLock() : _locked(false) {}
+    void lock()
+    {
+      int spins = 0;
+      while(_locked.exchange(true, std::memory_order_acquire)) {
+        while(_locked.load(std::memory_order_relaxed)) {
+          // let the thread that holds the lock run if it was descheduled, e.g.
+          // when there are more threads than cores
+          if(++spins > 1000) {
+            std::this_thread::yield();
+            spins = 0;
+          }
+        }
+      }
+    }
+    void unlock() { _locked.store(false, std::memory_order_release); }
+
+  private:
+    std::atomic<bool> _locked;
+  };
+  class ShardGuard {
+  public:
+    ShardGuard(ShardLock &l) : _lock(l) { _lock.lock(); }
+    ~ShardGuard() { _lock.unlock(); }
+
+  private:
+    ShardLock &_lock;
+  };
+  Shard _shard[NUM_SHARDS];
+  ShardLock _mutex[NUM_SHARDS];
+  bool _threaded;
+  // the top bits pick the shard, the low bits index inside it
+  const Shard &_shardOfConst(std::uint64_t h) const { return _shard[(h >> 56) & (NUM_SHARDS - 1)]; }
+  Shard &_shardOf(std::uint64_t h) { return _shard[(h >> 56) & (NUM_SHARDS - 1)]; }
 
 public:
-  Barycenter(double x, double y, double z)
-    : _x((float)x), _y((float)y), _z((float)z)
+  UniqueElementFilter(bool threaded) : _threaded(threaded) {}
+  // hint at the total number of elements that will be filtered
+  void reserve(std::size_t n);
+  // switch on the locks: this must be called before the filter is shared, e.g.
+  // when a first, small batch of elements has been treated serially
+  void setThreaded() { _threaded = true; }
+  // return true if an element with the same corners and the same color has
+  // already been seen
+  bool isDuplicate(int npe, double *x, double *y, double *z, unsigned char *r,
+                   unsigned char *g, unsigned char *b, unsigned char *a);
+  // same, for data that has a topology: the element is identified by its
+  // vertices (any opaque, stable pointer or index) instead of by the
+  // coordinates of its corners, which avoids building and hashing a large key.
+  // Pass the color as well, as two elements sharing an edge or a face can be
+  // drawn with different colors
+  bool isDuplicate(unsigned int col, const void *v0, const void *v1,
+                   const void *v2 = nullptr, const void *v3 = nullptr)
   {
+    std::uint64_t k[5];
+    return isDuplicate(k, vaVertexKey(col, v0, v1, v2, v3, k));
   }
-  inline float x() const { return _x; }
-  inline float y() const { return _y; }
-  inline float z() const { return _z; }
-  void operator+=(const Barycenter &p)
+  // most general form: the caller builds the key itself, e.g. from node
+  // identifiers paired with the color of each node
+  bool isDuplicate(const std::uint64_t *key, int n)
   {
-    _x += p.x();
-    _y += p.y();
-    _z += p.z();
+    std::uint64_t h = vaHashKey(key, n * sizeof(std::uint64_t));
+    if(!_threaded) return !_shardOf(h).insert(h);
+    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    return !_shardOf(h).insert(h);
   }
+  bool contains(const std::uint64_t *key, int n);
+  void insertOrErase(const std::uint64_t *key, int n);
+  // the hash of an element, its table entry, and the lookup, separately: the
+  // caller can then hash a whole element's worth of edges and ask for their
+  // entries before looking any of them up, which is what keeps the lookups from
+  // stalling one after the other on a table that does not fit in the caches
+  std::uint64_t hashOf(unsigned int col, const void *v0, const void *v1,
+                       const void *v2 = nullptr, const void *v3 = nullptr)
+  {
+    std::uint64_t k[5];
+    int n = vaVertexKey(col, v0, v1, v2, v3, k);
+    return vaHashKey(k, n * sizeof(std::uint64_t));
+  }
+  void prefetch(std::uint64_t h)
+  {
+    const Shard &s = _shard[(h >> 56) & (NUM_SHARDS - 1)];
+    if(s.table) vaPrefetch(&s.table[h & s.mask]);
+  }
+  bool isDuplicate(std::uint64_t h)
+  {
+    if(!_threaded) return !_shardOf(h).insert(h);
+    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    return !_shardOf(h).insert(h);
+  }
+  void insertOrErase(std::uint64_t h)
+  {
+    if(!_threaded) {
+      _shardOf(h).insertOrErase(h);
+      return;
+    }
+    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    _shardOf(h).insertOrErase(h);
+  }
+  bool contains(std::uint64_t h)
+  {
+    if(!_threaded) return _shardOf(h).contains(h);
+    ShardGuard lock(_mutex[(h >> 56) & (NUM_SHARDS - 1)]);
+    return _shardOf(h).contains(h);
+  }
+  // test without inserting: used to ask whether a face has been seen twice,
+  // i.e. whether it is interior to the mesh
+  bool contains(unsigned int col, const void *v0, const void *v1,
+                const void *v2 = nullptr, const void *v3 = nullptr);
+  // insert the element, or remove it if it has already been seen: after all the
+  // elements have been passed, the filter holds exactly those seen an odd
+  // number of times, i.e. the faces that bound the mesh
+  void insertOrErase(unsigned int col, const void *v0, const void *v1,
+                     const void *v2 = nullptr, const void *v3 = nullptr);
 };
-
-class BarycenterLessThan {
-public:
-  static float tolerance;
-  bool operator()(const Barycenter &p1, const Barycenter &p2) const
-  {
-    if(p1.x() - p2.x() > tolerance) return true;
-    if(p1.x() - p2.x() < -tolerance) return false;
-    if(p1.y() - p2.y() > tolerance) return true;
-    if(p1.y() - p2.y() < -tolerance) return false;
-    if(p1.z() - p2.z() > tolerance) return true;
-    return false;
-  }
-};
-
-class BarycenterHash {
-public:
-  std::size_t operator()(const Barycenter &b) const
-  {
-    return (std::size_t)(b.x() + b.y() + b.z());
-  }
-};
-
-class BarycenterEqual {
-public:
-  bool operator()(const Barycenter &a, const Barycenter &b) const
-  {
-    return (fabs(a.x() - b.x()) < BarycenterLessThan::tolerance &&
-            fabs(a.y() - b.y()) < BarycenterLessThan::tolerance &&
-            fabs(a.z() - b.z()) < BarycenterLessThan::tolerance);
-  }
-};
-
-//#include <tr1/unordered_set>
 
 class VertexArray {
 private:
@@ -156,10 +292,22 @@ private:
   std::vector<normal_type> _normals;
   std::vector<unsigned char> _colors;
   std::vector<MElement *> _elements;
-  std::set<ElementData<3>, ElementDataLessThan<3> > _data3;
-  std::set<Barycenter, BarycenterLessThan> _barycenters;
-  // std::tr1::unordered_set<Barycenter, BarycenterHash, BarycenterEqual>
-  // _barycenters;
+  // elements already added, when the "unique" filter is on: the filter can be
+  // shared with other vertex arrays, in which case it is not owned
+  UniqueElementFilter *_filter;
+  bool _ownsFilter;
+  // whether the element pointers have to be stored: asking the context for
+  // every corner shows up in the profile of a large mesh
+  bool _storeElements;
+  // OpenGL buffer objects holding a copy of the arrays (vertices, normals,
+  // colors). They are created and filled by the graphics code, which is the
+  // only place where a GL context is current
+  unsigned int _vbo[3];
+  bool _vboDirty;
+  // buffer objects belong to a GL context: they all become invalid when it is
+  // recreated, e.g. when the antialiasing or the double buffering changes
+  unsigned int _vboContext;
+  long int _statUniqueIn, _statUniqueKept;
 
   // add stuff in the arrays
   void _addVertex(float x, float y, float z);
@@ -170,7 +318,12 @@ private:
 
 public:
   VertexArray(int numVerticesPerElement, int numElements);
-  ~VertexArray() {}
+  ~VertexArray();
+  // return the filter used to drop elements that are drawn several times,
+  // creating it if necessary
+  UniqueElementFilter *getUniqueFilter(bool threaded);
+  // use a filter owned by somebody else
+  void setUniqueFilter(UniqueElementFilter *f);
   // return the number of vertices in the array
   int getNumVertices() { return (int)_vertices.size() / 3; }
   // return the number of vertices per element
@@ -184,6 +337,16 @@ public:
   std::vector<float>::iterator firstVertex() { return _vertices.begin(); }
   std::vector<float>::iterator lastVertex() { return _vertices.end(); }
 
+  // return true if the array stores normals (resp. colors)
+  bool hasNormals() { return (int)_normals.size() == 3 * getNumVertices(); }
+  bool hasColors() { return (int)_colors.size() == 4 * getNumVertices(); }
+  // buffer objects: the ids are 0 as long as nothing has been uploaded
+  unsigned int *getVboIds() { return _vbo; }
+  bool getVboDirty() { return _vboDirty; }
+  void setVboDirty(bool dirty) { _vboDirty = dirty; }
+  // were the buffers created in the GL context that is current?
+  bool getVboValid() { return _vboContext == vboContext; }
+  void setVboValid() { _vboContext = vboContext; }
   // return a pointer to the raw normal array
   normal_type *getNormalArray(int i = 0) { return &_normals[i]; }
   std::vector<normal_type>::iterator firstNormal() { return _normals.begin(); }
@@ -205,14 +368,32 @@ public:
     return _elements.end();
   }
 
-  // add element data in the arrays (if unique is set, only add the
-  // element if another one with the same barycenter is not already
-  // present)
+  // add element data in the arrays (if unique is set, only add the element if
+  // an identical one has not already been added)
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
-           MElement *ele = nullptr, bool unique = true, bool boundary = false);
+           MElement *ele = nullptr, bool unique = true);
   void add(double *x, double *y, double *z, SVector3 *n, unsigned char *r = nullptr,
            unsigned char *g = nullptr, unsigned char *b = nullptr, unsigned char *a = nullptr,
-           MElement *ele = nullptr, bool unique = true, bool boundary = false);
+           MElement *ele = nullptr, bool unique = true);
+  // Grow the array by n vertices and return where they start, so that a
+  // caller that knows how many it is going to add can write them itself -
+  // several threads can then each fill a range of their own, with no copying
+  // and nothing to merge afterwards. Nothing is initialised: every one of the
+  // n vertices, normals and colours has to be written. No element pointers
+  // are stored, so an array filled this way cannot be picked element by
+  // element.
+  int addBlock(int n);
+  // Empty the array without giving up the buffer objects it has, so that it
+  // can be filled and drawn again: what a scratch array streaming through the
+  // same buffers frame after frame needs.
+  void clearData()
+  {
+    _vertices.clear();
+    _normals.clear();
+    _colors.clear();
+    _elements.clear();
+    _vboDirty = true;
+  }
   // finalize the arrays
   void finalize();
   // sort the arrays with elements back to front wrt the eye position
@@ -230,8 +411,39 @@ public:
                           double &max, int &numSteps, double &time,
                           double &xmin, double &ymin, double &zmin,
                           double &xmax, double &ymax, double &zmax);
-  // merge another vertex array into this one
-  void merge(VertexArray *va);
+  // Merge another vertex array into this one. If a color is given it replaces
+  // the colors of the merged data, which is how the arrays of several entities
+  // drawn each in their own single color are concatenated.
+  void merge(VertexArray *va, const unsigned char *color = nullptr);
+  // the element pointers are only needed for picking, which uses the arrays of
+  // the entities themselves
+  void clearElementPointers() { std::vector<MElement *>().swap(_elements); }
+
+  // buffer objects whose vertex array has been deleted: they can only be freed
+  // when a GL context is current, i.e. at the beginning of the next frame
+  static std::vector<unsigned int> vboToDelete;
+
+  // Identifies the GL context the buffer objects were created in. Call
+  // invalidateBuffers() when the context has been recreated: the buffer names
+  // then mean nothing any more and have to be created again.
+  static unsigned int vboContext;
+  static void invalidateBuffers()
+  {
+    vboContext++;
+    vboToDelete.clear();
+  }
+
+  // count elements offered to and kept by a filter used outside add(), so that
+  // merge() and finalize() reduce them like the ones counted there
+  void addUniqueStats(long int in, long int kept)
+  {
+    _statUniqueIn += in;
+    _statUniqueKept += kept;
+  }
+
+  // statistics gathered by the unique element filter
+  static long int statUniqueIn, statUniqueKept;
+  static void printStats();
 };
 
 #endif

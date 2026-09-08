@@ -15,6 +15,11 @@
 class GamePad;
 
 struct contextMeshOptions {
+  // what the transparency above is applied to: 0 the filled surfaces
+  // only, so that the wireframe stays crisp, 1 everything
+  int transparencyMode;
+  // multiplies the alpha of every mesh colour, as above
+  double transparency;
   // mesh algorithms
   int optimize, optimizeNetgen, refineSteps;
   double optimizePyramids;
@@ -43,7 +48,7 @@ struct contextMeshOptions {
   int hoCurveOuterBL;
   double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
-  int flatRefineDelaunay3D, flatOptimize3D;
+  int flatRefine2D, flatRefine3D, flatOptimize3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, ignoreUnknownSections;
   int boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
@@ -96,6 +101,7 @@ struct contextMeshOptions {
   int labelType;
   double nodeSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
+  int drawUniqueEdges;
   int smoothNormals, clip;
   // records cpu times for 1D, 2D and 3D mesh generation
   double timer[3];
@@ -104,6 +110,12 @@ struct contextMeshOptions {
 };
 
 struct contextGeometryOptions {
+  // what the transparency above is applied to: 0 the filled surfaces
+  // only, so that the wireframe stays crisp, 1 everything
+  int transparencyMode;
+  // multiplies the alpha of every geometry colour: 1 leaves them as they
+  // are, less than 1 makes the geometry see-through
+  double transparency;
   // geometry algorithms
   int oldCircle, oldNewreg, oldRuledSurface;
   int extrudeSplinePoints, extrudeReturnLateral;
@@ -160,12 +172,15 @@ struct contextGeometryOptions {
 class CTX {
 private:
   static CTX *_instance;
+  static CTX *_create();
 
 public:
   CTX();
   ~CTX();
   void init();
-  static CTX *instance();
+  // called in loops over the entities and their elements all over the drawing
+  // code: keep the common path inline, and the creation out of line
+  static CTX *instance() { return _instance ? _instance : _create(); }
 
   // for debug purposes only, i.e. JF and CG personal use
   int debugSurface;
@@ -311,6 +326,27 @@ public:
   // clipping plane options
   double clipPlane[6][4];
   int clipWholeElements, clipOnlyDrawIntersectingVolume, clipOnlyVolume;
+  // fill the hole a clipping plane opens in a 3D mesh or view with the polygon
+  // where the plane cuts each element, so that a cut model still looks solid
+  int clipCapping;
+  // is the section of the mesh worth computing? Only where the mesh is drawn as
+  // a surface, and only when the planes are applied by OpenGL: with
+  // clipWholeElements the elements a plane cuts are removed whole and there is
+  // no hole to fill
+  bool meshClipCaps() const
+  {
+    return clipCapping && !clipWholeElements && mesh.clip &&
+           (mesh.volumeFaces || mesh.surfaceFaces);
+  }
+  // draw the vertex arrays from OpenGL buffer objects instead of client memory
+  int vertexBufferObjects;
+  // draw with the shader pipeline instead of the fixed function one; changing
+  // this recreates the OpenGL context, as a core profile cannot do both
+  int shaders;
+  // sum what is transparent into buffers of its own and put them on the window
+  // afterwards, instead of painting it back to front: nothing has to be
+  // sorted, and the result does not depend on the order things were drawn in
+  int orderIndependentTransparency;
   // polygon offset options
   int polygonOffset, polygonOffsetAlways;
   double polygonOffsetFactor, polygonOffsetUnits;
@@ -318,6 +354,10 @@ public:
   int colorScheme;
   // number of subdivisions for gluQuadrics
   int quadricSubdivisions;
+  // how much memory (in MB) the triangles the glyphs are made of may take
+  // before they stop being kept between frames (0: work it out from the
+  // machine)
+  double glyphCacheSize;
   // vector display type and options (for normals, etc.)
   int vectorType;
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
@@ -403,7 +443,7 @@ public:
   // is the machine big-endian?
   int bigEndian;
   // how RGBA values are packed and unpacked into/from an unsigned integer to be
-  // fed to glColor4ubv (depends on machine byte ordering!):
+  // fed to gmshColor4ubv (depends on machine byte ordering!):
   unsigned int packColor(int R, int G, int B, int A);
   int unpackRed(unsigned int X);
   int unpackGreen(unsigned int X);

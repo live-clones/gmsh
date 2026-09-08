@@ -111,8 +111,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "coordinates (Mesh.SaveParametric)"));
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, "
-                 "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, hxt, "
-                 "initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
+                 "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, "
+                 "hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
   s.push_back(mp("-smooth int", "Set number of mesh smoothing steps "
                  "(Mesh.Smoothing)"));
   s.push_back(mp("-order int", "Set mesh order (Mesh.ElementOrder)"));
@@ -189,6 +189,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-open", "Open next files"));
   s.push_back(mp("-log filename", "Log all messages to filename"));
 #if defined(HAVE_FLTK)
+  s.push_back(mp("-shaders", "Draw with the shader pipeline (General.Shaders)"));
   s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, "
                  "solver or post-processing mode (General.InitialModule)"));
 #endif
@@ -989,9 +990,6 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
       else if(argv[i] == "FrontalDelaunay2D" || argv[i] == "front2d" ||
               argv[i] == "frontal")
         opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL);
-      else if(argv[i] == "FrontalDelaunayOptimized2D" ||
-              argv[i] == "frontopt2d" || argv[i] == "frontalopt")
-        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL_OPT);
       else if(argv[i] == "bamg")
         opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_BAMG);
       else if(argv[i] == "DelaunayFrontalForQuads" || argv[i] == "delquad")
@@ -1239,6 +1237,10 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   }
   else if(argv[i] == "-nopopup") {
     opt_general_nopopup(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-shaders" || argv[i] == "-shader") {
+    opt_general_shaders(0, GMSH_SET, 1);
     i++;
   }
   else if(argv[i] == "-watch") {

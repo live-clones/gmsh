@@ -22,4 +22,21 @@ void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug);
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N);
 
+// Same test, for the case where many points are tested against the same
+// boundary and the same outside point. Precomputes the half of each crossing
+// test that only depends on the segment and on out, and a bounding box per
+// segment used to reject segments that cannot cross - which does not change
+// the crossing count, only how fast it is obtained.
+class ParametricDomainChecker {
+public:
+  ParametricDomainChecker(std::vector<SPoint2> &bnd, const SPoint2 &out);
+  bool inside(const SPoint2 &p, int &N) const;
+
+private:
+  std::vector<SPoint2> &_bnd;
+  SPoint2 _out;
+  std::vector<double> _orientOut;
+  std::vector<double> _xmin, _xmax, _ymin, _ymax;
+};
+
 #endif

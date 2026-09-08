@@ -10,6 +10,7 @@
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
+#include "glyphList.h"
 #endif
 
 StringXNumber CutGridOptions_Number[] = {
@@ -34,7 +35,7 @@ GMSH_Plugin *GMSH_RegisterCutGridPlugin() { return new GMSH_CutGridPlugin(); }
 void GMSH_CutGridPlugin::draw(void *context)
 {
 #if defined(HAVE_OPENGL)
-  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   double p[3];
   drawContext *ctx = (drawContext *)context;
 
@@ -50,28 +51,32 @@ void GMSH_CutGridPlugin::draw(void *context)
   }
 
   if(CutGridOptions_Number[11].def) {
-    glBegin(GL_LINES);
+    gmshBegin(GL_LINES);
     for(int i = 0; i < getNbU(); ++i) {
       getPoint(i, 0, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(i, getNbV() - 1, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
     }
     for(int i = 0; i < getNbV(); ++i) {
       getPoint(0, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU() - 1, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
     }
-    glEnd();
+    gmshEnd();
   }
   else {
+    glyphList g;
+    unsigned int col = glyphCurrentColor();
+    g.reserve(GLYPH_SPHERE, getNbU() * getNbV());
     for(int i = 0; i < getNbU(); ++i) {
       for(int j = 0; j < getNbV(); ++j) {
         getPoint(i, j, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, CTX::instance()->pointSize, p[0], p[1], p[2], col);
       }
     }
+    g.draw(ctx, 1);
   }
 #endif
 }

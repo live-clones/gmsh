@@ -327,10 +327,10 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_fast_redraw(0, GMSH_SET, o->general.butt[2]->value());
   opt_general_mouse_hover_meshes(0, GMSH_SET, o->general.butt[11]->value());
   opt_general_mouse_invert_zoom(0, GMSH_SET, o->general.butt[22]->value());
-  if(opt_general_double_buffer(0, GMSH_GET, 0) != o->general.butt[3]->value())
-    opt_general_double_buffer(0, GMSH_SET, o->general.butt[3]->value());
   if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
     opt_general_antialiasing(0, GMSH_SET, o->general.butt[12]->value());
+  if(opt_general_shaders(0, GMSH_GET, 0) != o->general.butt[3]->value())
+    opt_general_shaders(0, GMSH_SET | GMSH_GUI, o->general.butt[3]->value());
   opt_general_trackball(0, GMSH_SET, o->general.butt[5]->value());
   opt_general_terminal(0, GMSH_SET, o->general.butt[7]->value());
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
@@ -511,6 +511,8 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
   opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value());
   opt_geometry_volume_type(0, GMSH_SET, o->geo.choice[5]->value());
+  opt_geometry_transparency(0, GMSH_SET, o->geo.value[21]->value());
+  opt_geometry_transparency_mode(0, GMSH_SET, o->geo.choice[6]->value());
 
 #if defined(HAVE_TOUCHBAR)
   updateTouchBar();
@@ -554,6 +556,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_surface_faces(0, GMSH_SET, o->mesh.butt[9]->value());
   opt_mesh_volume_edges(0, GMSH_SET, o->mesh.butt[10]->value());
   opt_mesh_volume_faces(0, GMSH_SET, o->mesh.butt[11]->value());
+  opt_mesh_draw_skin_only(0, GMSH_SET, o->mesh.butt[0]->value());
   opt_mesh_node_labels(0, GMSH_SET, o->mesh.butt[12]->value());
   opt_mesh_line_labels(0, GMSH_SET, o->mesh.butt[13]->value());
   opt_mesh_surface_labels(0, GMSH_SET, o->mesh.butt[14]->value());
@@ -590,7 +593,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[2]->value() == 6) ? ALGO_2D_PACK_PRLGRMS :
                   (o->mesh.choice[2]->value() == 7) ? ALGO_2D_QUAD_QUASI_STRUCT :
                   (o->mesh.choice[2]->value() == 8) ? ALGO_2D_INITIAL_ONLY :
-                  (o->mesh.choice[2]->value() == 9) ? ALGO_2D_FRONTAL_OPT :
                   ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
@@ -601,6 +603,8 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
+  opt_mesh_transparency(0, GMSH_SET, o->mesh.value[27]->value());
+  opt_mesh_transparency_mode(0, GMSH_SET, o->mesh.choice[11]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
   opt_mesh_light_lines(0, GMSH_SET, o->mesh.choice[10]->value());
@@ -791,8 +795,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
   double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
   double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
-  double fake_transparency = opt_view_fake_transparency(current, GMSH_GET, 0);
   double use_stipple = opt_view_use_stipple(current, GMSH_GET, 0);
+  double transparency = opt_view_transparency(current, GMSH_GET, 0);
 
   double normals = opt_view_normals(current, GMSH_GET, 0);
   double tangents = opt_view_tangents(current, GMSH_GET, 0);
@@ -1021,12 +1025,11 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != use_gen_raise))
         opt_view_use_gen_raise(i, GMSH_SET, val);
 
-      val = o->view.butt[24]->value();
-      if(force || (val != fake_transparency))
-        opt_view_fake_transparency(i, GMSH_SET, val);
-
       val = o->view.butt[26]->value();
       if(force || (val != use_stipple)) opt_view_use_stipple(i, GMSH_SET, val);
+
+      val = o->view.value[79]->value();
+      if(force || (val != transparency)) opt_view_transparency(i, GMSH_SET, val);
 
       // view_values
 
@@ -1429,8 +1432,8 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[11]->callback(general_options_ok_cb);
 
       general.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                                            "Enable double buffering");
-      general.butt[3]->tooltip("General.DoubleBuffer");
+                                            "Draw with the shader pipeline");
+      general.butt[3]->tooltip("General.Shaders");
       general.butt[3]->type(FL_TOGGLE_BUTTON);
       general.butt[3]->callback(general_options_ok_cb);
 
@@ -2389,8 +2392,30 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[10]->type(FL_TOGGLE_BUTTON);
       geo.butt[10]->callback(geometry_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 2 * WB + 4 * BH, IW + 20,
-                                   height - 4 * WB - 4 * BH);
+      int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
+      static Fl_Menu_Item menu_transparency_mode[] = {
+        {"Surfaces", 0, nullptr, nullptr},
+        {"Everything", 0, nullptr, nullptr},
+        {nullptr}};
+      geo.value[21] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH,
+                                        w2, BH);
+      geo.value[21]->tooltip("Geometry.Transparency");
+      geo.value[21]->minimum(0.);
+      geo.value[21]->maximum(1.);
+      if(CTX::instance()->inputScrolling) geo.value[21]->step(0.01);
+      geo.value[21]->align(FL_ALIGN_RIGHT);
+      geo.value[21]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      geo.value[21]->callback(geometry_options_ok_cb);
+
+      geo.choice[6] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 4 * BH,
+                                    w1, BH, "Transparency");
+      geo.choice[6]->tooltip("Geometry.TransparencyMode");
+      geo.choice[6]->menu(menu_transparency_mode);
+      geo.choice[6]->align(FL_ALIGN_RIGHT);
+      geo.choice[6]->callback(geometry_options_ok_cb);
+
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 5 * BH, IW + 20,
+                                   height - 5 * WB - 5 * BH);
       std::size_t i = 0, j = 0;
       while(GeometryOptions_Color[j].str) {
         if(GeometryOptions_Color[j].level & GMSH_DEPRECATED) {
@@ -2436,7 +2461,6 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Packing of parallelograms (experimental)", 0, nullptr, nullptr},
         {"Quasi-Structured Quad (experimental)", 0, nullptr, nullptr},
         {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
-        {"Frontal-Delaunay Optimized (experimental)", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, nullptr, nullptr},
@@ -2641,6 +2665,12 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[11]->tooltip("Mesh.VolumeFaces (Alt+Shift+b)");
       mesh.butt[11]->type(FL_TOGGLE_BUTTON);
       mesh.butt[11]->callback(mesh_options_ok_cb);
+
+      mesh.butt[0] = new Fl_Check_Button(L + width / 2, 2 * WB + 6 * BH,
+                                          BW / 2 - WB, BH, "Hide interior faces");
+      mesh.butt[0]->tooltip("Mesh.DrawSkinOnly");
+      mesh.butt[0]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[0]->callback(mesh_options_ok_cb);
 
       mesh.butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                           BW / 2 - WB, BH, "Node labels");
@@ -2874,6 +2904,28 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[18]->when(FL_WHEN_RELEASE);
       mesh.value[18]->callback(mesh_options_ok_cb);
 
+      int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
+      static Fl_Menu_Item menu_transparency_mode[] = {
+        {"Surfaces", 0, nullptr, nullptr},
+        {"Everything", 0, nullptr, nullptr},
+        {nullptr}};
+      mesh.value[27] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH,
+                                          w2, BH);
+      mesh.value[27]->tooltip("Mesh.Transparency");
+      mesh.value[27]->minimum(0.);
+      mesh.value[27]->maximum(1.);
+      if(CTX::instance()->inputScrolling) mesh.value[27]->step(0.01);
+      mesh.value[27]->align(FL_ALIGN_RIGHT);
+      mesh.value[27]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      mesh.value[27]->callback(mesh_options_ok_cb);
+
+      mesh.choice[11] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 6 * BH,
+                                      w1, BH, "Transparency");
+      mesh.choice[11]->tooltip("Mesh.TransparencyMode");
+      mesh.choice[11]->menu(menu_transparency_mode);
+      mesh.choice[11]->align(FL_ALIGN_RIGHT);
+      mesh.choice[11]->callback(mesh_options_ok_cb);
+
       static Fl_Menu_Item menu_mesh_color[] = {
         {"By element type", 0, nullptr, nullptr},
         {"By elementary entity", 0, nullptr, nullptr},
@@ -2881,14 +2933,14 @@ optionWindow::optionWindow(int deltaFontSize)
         {"By mesh partition", 0, nullptr, nullptr},
         {nullptr}};
       mesh.choice[4] =
-        new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Coloring mode");
+        new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Coloring mode");
       mesh.choice[4]->tooltip("Mesh.ColorCarousel");
       mesh.choice[4]->menu(menu_mesh_color);
       mesh.choice[4]->align(FL_ALIGN_RIGHT);
       mesh.choice[4]->callback(mesh_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
-                                   height - 5 * WB - 7 * BH);
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 8 * BH, IW + 20,
+                                   height - 5 * WB - 8 * BH);
       std::size_t i = 0, j = 0;
       while(MeshOptions_Color[j].str) {
         if(MeshOptions_Color[j].level & GMSH_DEPRECATED) {
@@ -3382,7 +3434,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[10]->callback(view_options_ok_cb);
 
       view.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                                         "Draw only skin of 3D views");
+                                         "Hide interior faces");
       view.butt[2]->tooltip("View.DrawSkinOnly");
       view.butt[2]->type(FL_TOGGLE_BUTTON);
       view.butt[2]->callback(view_options_ok_cb);
@@ -3792,11 +3844,15 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[10]->when(FL_WHEN_RELEASE);
       view.value[10]->callback(view_options_ok_cb);
 
-      view.butt[24] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                                          "Use fake transparency mode");
-      view.butt[24]->tooltip("View.FakeTransparency");
-      view.butt[24]->type(FL_TOGGLE_BUTTON);
-      view.butt[24]->callback(view_options_ok_cb);
+      view.value[79] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
+                                          "Transparency");
+      view.value[79]->tooltip("View.Transparency");
+      view.value[79]->minimum(0.);
+      view.value[79]->maximum(1.);
+      if(CTX::instance()->inputScrolling) view.value[79]->step(0.01);
+      view.value[79]->align(FL_ALIGN_RIGHT);
+      view.value[79]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      view.value[79]->callback(view_options_ok_cb);
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
                                    height - 5 * WB - 7 * BH);
@@ -3996,7 +4052,7 @@ void optionWindow::updateViewGroup(int index)
     view.value[i]->maximum(CTX::instance()->lc);
   }
 
-  if(data->getNumElements()) {
+  if(data->hasElements()) {
     view.range->activate();
     ((Fl_Menu_Item *)view.choice[13]->menu())[0].activate();
   }
@@ -4117,8 +4173,8 @@ void optionWindow::updateViewGroup(int index)
   opt_view_center_glyphs(index, GMSH_GUI, 0);
   opt_view_tensor_type(index, GMSH_GUI, 0);
 
-  opt_view_fake_transparency(index, GMSH_GUI, 0);
   opt_view_use_stipple(index, GMSH_GUI, 0);
+  opt_view_transparency(index, GMSH_GUI, 0);
   opt_view_color_points(index, GMSH_GUI, 0);
   opt_view_color_lines(index, GMSH_GUI, 0);
   opt_view_color_triangles(index, GMSH_GUI, 0);
@@ -4156,6 +4212,23 @@ void optionWindow::activate(const char *what)
       browser->resize(browser->x(), browser->y(), browser->w(), win->h());
       redraw->hide();
       win->redraw();
+    }
+    drawContext::global()->draw();
+  }
+  else if(!strcmp(what, "shaders")) {
+    if(general.butt[3]->value()) {
+      geo.value[21]->activate();
+      geo.choice[6]->activate();
+      mesh.value[27]->activate();
+      mesh.choice[11]->activate();
+      view.value[79]->activate();
+    }
+    else {
+      geo.value[21]->deactivate();
+      geo.choice[6]->deactivate();
+      mesh.value[27]->deactivate();
+      mesh.choice[11]->deactivate();
+      view.value[79]->deactivate();
     }
   }
   else if(!strcmp(what, "rotation_center")) {
