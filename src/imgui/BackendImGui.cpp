@@ -336,6 +336,11 @@ namespace {
       return true;
     }
 
+    void dropped(const std::vector<std::string> &paths)
+    {
+      if(_host.filesDropped) _host.filesDropped(paths);
+    }
+
     // what the frame loop drains when it comes round
     void drain()
     {
@@ -362,6 +367,12 @@ namespace {
 void drainPostedFromThread()
 {
   if(_the) _the->drain();
+}
+
+// files were dropped on a window: what that means is the application's
+void imguiDropped(const std::vector<std::string> &paths)
+{
+  if(_the) _the->dropped(paths);
 }
 
 // what the interface was given, for the files that build from it

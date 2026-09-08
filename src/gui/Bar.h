@@ -50,10 +50,16 @@ namespace Ui {
   };
 
   // and what takes the rest of the bar
+  // How a message is to be read. Which colour that comes out as is the
+  // interface's, as it is for Ui::Field::alert: both bars were comparing
+  // against an enum of the application to decide, which is a toolkit knowing
+  // where Gmsh keeps one.
+  enum MessageWeight { MessageOrdinary = 0, MessageWarning, MessageError };
+
   struct BarMessage {
     // the message, with what went wrong appended when the console is hidden
     std::string text;
-    int colour;
+    MessageWeight weight;
     // is something running? and how far along, between 0 and 1
     bool running;
     double fraction;

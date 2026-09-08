@@ -15,43 +15,12 @@
 #include "imgui_internal.h" // BeginViewportSideBar()
 
 #include "appWindow.h"
-#include "sceneView.h"
-#include "Gui.h"
-#include "GuiActions.h"
-#include "GuiMenus.h"
-#include "GuiStatus.h"
 #include "menuActions.h"
-#include "GmshMessage.h"
-#include "Context.h"
-#include "Options.h"
-#include "GModel.h"
-#include "OS.h"
-#include "drawContext.h"
-
-#if defined(HAVE_POST)
-#include "PView.h"
-#include "PViewData.h"
-#endif
 
 // The bar along the bottom of the window: the same handful of controls the FLTK
 // interface puts there -- the current model, a menu of the options one reaches
 // for most often, the view orientation, the animation -- and, taking whatever
 // width is left, the last message and the progress of what is running.
-
-namespace {
-
-  bool _number(const char *category, int num, const char *name, double &val)
-  {
-    return NumberOption(GMSH_GET, category, num, name, val, false);
-  }
-
-  void _setNumber(const char *category, int num, const char *name, double val)
-  {
-    NumberOption(GMSH_SET | GMSH_GUI, category, num, name, val, false);
-  }
-
-} // namespace
-
 
 void appWindow::_drawStatusBar()
 {
@@ -130,9 +99,9 @@ void appWindow::_drawStatusBar()
         ImGui::SetTooltip("%s", imguiSources().barTooltip().c_str());
       ImGui::SetCursorScreenPos(textPos);
 
-      if(m.colour == Gui::StatusColorError)
+      if(m.weight == Ui::MessageError)
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.90f, 0.30f, 0.30f, 1.f));
-      else if(m.colour == Gui::StatusColorWarning)
+      else if(m.weight == Ui::MessageWarning)
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.95f, 0.75f, 0.25f, 1.f));
       else
         ImGui::PushStyleColor(ImGuiCol_Text,
@@ -152,54 +121,6 @@ void appWindow::_drawStatusBar()
     }
   }
   ImGui::End();
-}
-
-// The views the status bar acts upon are the panes of the graphic window, which
-// is what makes this the interface's rather than the description's.
-void appWindow::orientPanes(const std::string &what, bool reverse, bool sync)
-{
-  std::vector<sceneView *> panes;
-  for(auto *p : _panes)
-    if(_isTiled(p)) panes.push_back(p);
-  if(panes.empty()) {
-    if(sceneView *p = currentPane()) panes.push_back(p);
-  }
-  for(std::size_t i = 0; i < panes.size(); i++) {
-    drawContext *ctx = panes[i]->getDrawContext();
-    if(!ctx) continue;
-    // Control makes the others follow the first instead of being oriented
-    // themselves, as the bar this reproduces has it
-    if(sync && (what == "r" || what == "1:1")) {
-      if(i == 0) continue;
-      drawContext *first = panes[0]->getDrawContext();
-      if(!first) continue;
-      if(what == "r")
-        ctx->setQuaternion(first->quaternion[0], first->quaternion[1],
-                           first->quaternion[2], first->quaternion[3]);
-      else if(!CTX::instance()->camera) {
-        for(int j = 0; j < 3; j++) {
-          ctx->t[j] = first->t[j];
-          ctx->s[j] = first->s[j];
-        }
-      }
-      continue;
-    }
-    viewSetOrientation(ctx, what, reverse);
-  }
-  drawContext::global()->draw();
-}
-
-// Stepping the animation from the frame loop rather than from a blocking loop
-// as the FLTK interface does: an immediate-mode frame is not re-entrant, and
-// there is a frame going by anyway.
-void appWindow::_stepAnimation()
-{
-  if(!_animating) return;
-  double now = TimeOfDay();
-  if(now - _animLastStep < CTX::instance()->post.animDelay) return;
-  _animLastStep = now;
-  animationStep(!CTX::instance()->post.animCycle,
-                CTX::instance()->post.animStep);
 }
 
 #endif

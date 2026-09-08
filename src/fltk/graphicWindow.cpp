@@ -275,15 +275,10 @@ void fltkToggleAnimation()
   }
   playing_anim = true;
   stop_anim = false;
-  double last = TimeOfDay();
   while(1) {
     if(!FlGui::available()) return;
     if(stop_anim) break;
-    if(TimeOfDay() - last > CTX::instance()->post.animDelay) {
-      last = TimeOfDay();
-      animationStep(!CTX::instance()->post.animCycle,
-                    CTX::instance()->post.animStep);
-    }
+    animationTick();
     FlGui::check();
   }
   playing_anim = false;
@@ -423,9 +418,9 @@ public:
     minimum(0.);
     maximum(m.running ? 1. : 0.);
     value(m.running ? (float)m.fraction : 0.f);
-    int col = (m.colour == Gui::StatusColorError) ?
+    int col = (m.weight == Ui::MessageError) ?
                 (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED) :
-              (m.colour == Gui::StatusColorWarning) ?
+              (m.weight == Ui::MessageWarning) ?
                 (CTX::instance()->guiColorScheme ? FL_DARK_YELLOW : FL_YELLOW) :
                 -1;
     if(col >= 0) {

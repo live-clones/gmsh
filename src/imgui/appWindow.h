@@ -42,6 +42,8 @@ class drawContext;
 // what came in from another thread, drained by the frame loop; the backend
 // holds it, since it is the backend that was asked to carry it
 void drainPostedFromThread();
+// and files dropped on a window, which the application says what to do with
+void imguiDropped(const std::vector<std::string> &paths);
 
 class appWindow {
 private:
@@ -222,7 +224,6 @@ private:
   // jump straight to the right one
   // the animation runs from the frame loop, see _stepAnimation()
   bool _animating;
-  double _animLastStep;
   std::string _tooltip;
   void _drawTooltip();
   void _loadFont();
@@ -369,9 +370,6 @@ public:
   // messages and status
   messageConsole *console() { return _console; }
   void addMessage(const std::string &msg, int level);
-  void setStatus(const std::string &msg, bool graphics);
-  void setLastStatus(int color);
-  void setProgress(const std::string &msg, double val, double min, double max);
   void setGraphicTitle(const std::string &title);
 
   // blocking modal dialogs

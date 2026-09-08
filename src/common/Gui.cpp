@@ -98,6 +98,18 @@ namespace Gui {
       host.error = [](const std::string &text) {
         Msg::Error("%s (GUI internal error)", text.c_str());
       };
+    // What files dropped on the interface mean: the first is what one is
+    // now working on, the rest are merged into it. Both interfaces had it,
+    // and only one of them redrew afterwards.
+    host.filesDropped = [](const std::vector<std::string> &paths) {
+      for(std::size_t i = 0; i < paths.size(); i++) {
+        if(i == 0)
+          OpenProject(paths[i]);
+        else
+          MergeFile(paths[i]);
+      }
+      drawContext::global()->draw();
+    };
     // the last window is gone: the interface was the process, so the process
     // goes with it
     host.quitting = []() { Msg::Exit(0); };
@@ -204,6 +216,10 @@ namespace Gui {
     // one interface wrote what differs from the defaults and saved the
     // visibilities, the other wrote the whole file and saved nothing.
     if(optionFileName.size()) MergeFile(optionFileName, false);
+    // What a window shows before anything has happened. Both interfaces drew
+    // it from inside their loop, which is the application asking itself for
+    // something through a toolkit.
+    drawContext::global()->draw(false);
     int ret = _backend->runLoop();
     if(optionFileName.size()) {
       PrintOptions(0, GMSH_FULLRC, 1, 0, optionFileName.c_str());

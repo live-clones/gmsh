@@ -60,9 +60,9 @@ TOLERATED = {
     # --- Dear ImGui: the settings it reads off CTX and the calls it makes
     # into the facade (1.3), and the export options it writes by hand (1.4c)
     "src/imgui/BackendImGui.cpp": {"GuiActions.h"},
-    "src/imgui/appWindow.cpp": {
-        "Gui.h", "GuiStatus.h", "GmshGlobal.h", "StringUtils.h",
-        "Options.h", "OpenFile.h", "GModel.h", "drawContext.h"},
+    # what is left is the draw context of the scene, which this window
+    # installs and hands to its panes: the scene, not the interface
+    "src/imgui/appWindow.cpp": {"drawContext.h"},
     "src/imgui/appWindow.h": {"GuiActions.h", "GuiMenus.h"},
     "src/imgui/contextPanels.cpp": {
         "Gui.h", "GuiActions.h", "GmshMessage.h", "GmshDefines.h",
@@ -73,18 +73,8 @@ TOLERATED = {
     "src/imgui/messageConsole.cpp": {"Gui.h"},
     "src/imgui/shortcuts.cpp": {
         "GuiActions.h", "GuiMenus.h", "Gui.h", "GmshMessage.h"},
-    # Context.h here is not a setting the interface lays itself out from: it
-    # is the delay, the step and the cycle of the post-processing animation,
-    # which this bar steps from the frame loop and the FLTK one from a
-    # blocking loop -- the same arithmetic written twice. It belongs in the
-    # description of the bar, and goes when it is said there.
-    "src/imgui/statusBar.cpp": {
-        "Gui.h", "GuiActions.h", "GuiMenus.h", "GuiStatus.h",
-        "GmshMessage.h", "Context.h", "Options.h", "GModel.h",
-        "drawContext.h", "PView.h", "PViewData.h"},
     # --- FLTK: an adapter over the interface that was, until 1.4 makes it a
     # backend like the two others
-    "src/fltk/BackendFltk.cpp": {"drawContext.h"},
     "src/fltk/CreateFileFltk.cpp": {"drawContext.h", "PixelBuffer.h",
                                     "Context.h"},
     "src/fltk/FlGui.cpp": {
