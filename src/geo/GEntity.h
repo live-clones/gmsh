@@ -75,13 +75,6 @@ public: // these will become protected at some point
   // Only 3D entities have them.
   VertexArray *va_clip_lines, *va_clip_triangles;
 
-  // true if the vertex arrays have to be rebuilt, and where the entity sits
-  // with respect to the clipping planes when they were last built (0: unknown,
-  // 1: fully visible, 2: fully clipped away, 3: cut by a plane). They let a
-  // change of clipping plane only rebuild the entities it actually affects.
-  bool _vaDirty = true;
-  char _vaClipState = 0;
-
   // the set of high-order elements fixed by the "fast curving" boundary layer
   // optimization
   std::set<MElement *> curvedBLElements;
@@ -212,12 +205,6 @@ public:
 
   // delete the mesh vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();
-
-  // do the mesh vertex arrays have to be rebuilt?
-  bool getVertexArraysDirty() const { return _vaDirty; }
-  void setVertexArraysDirty(bool dirty) { _vaDirty = dirty; }
-  char getVertexArraysClipState() const { return _vaClipState; }
-  void setVertexArraysClipState(char state) { _vaClipState = state; }
 
   // delete the geometry vertex arrays, used to to draw the geometry efficiently
   virtual void deleteGeometryVertexArrays() {}

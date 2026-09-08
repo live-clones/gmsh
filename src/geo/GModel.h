@@ -740,7 +740,6 @@ public:
   // Mark the entities whose mesh vertex arrays have to be rebuilt after the
   // clipping planes moved: only those that the planes cut, or that they moved
   // in or out of, actually change. Sets Mesh.Changed accordingly.
-  void clipPlanesChanged();
   // Build the section the clipping planes cut out of the 3D elements. It is
   // kept apart from the mesh arrays so that moving a plane rebuilds only
   // this, which is a slice through the model rather than the whole of it.
