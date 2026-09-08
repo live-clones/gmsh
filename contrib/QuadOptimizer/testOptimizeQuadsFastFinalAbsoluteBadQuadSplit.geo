@@ -1,7 +1,7 @@
 // One convex planar quadrangle that fails the absolute maximum-angle
 // specification. All its edges and both diagonals satisfy [h/2, 2h]. The
-// final one-shot fallback must leave two triangles, and the second optimizer
-// invocation must not recombine them into the same unacceptable quad.
+// final repair must preserve this physically valid quad and report its quality
+// violation. A second optimizer invocation must leave it unchanged as well.
 General.Terminal = 1;
 General.AbortOnError = 1;
 General.NumThreads = 1;

@@ -3140,11 +3140,13 @@ namespace QuadOptimizer {
         followsFace(quad, uv, &opposed);
         const double eta = quad->etaShapeMeasure();
         const double sicn = quad->minSICNShapeMeasure();
+        // Final repair enforces physical validity, not the angle quality
+        // targets. Cutting a valid pattern quad solely for a poor angle
+        // destroys its connectivity without repairing a geometric defect.
+        // Quality violations remain in the audit and in TT merge guards.
         const bool invalid = !quality.topologicallyValid || opposed ||
           !std::isfinite(quality.maximumAngleDegrees) ||
-          quality.maximumAngleDegrees >= absoluteMaximumQuadAngleDegrees ||
           !std::isfinite(quality.minimumAngleDegrees) ||
-          quality.minimumAngleDegrees <= absoluteMinimumQuadAngleDegrees ||
           !std::isfinite(eta) || !(eta > 0.) ||
           !std::isfinite(sicn) || !(sicn > 0.);
         double distance[2] = {0., 0.};

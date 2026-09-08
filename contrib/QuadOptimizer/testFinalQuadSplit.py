@@ -83,7 +83,7 @@ def main():
             gmsh.logger.stop()
             qtags, _ = gmsh.model.mesh.getElementsByType(3, face)
             ttags, conn = gmsh.model.mesh.getElementsByType(2, face)
-            expected = name in ("concave_plane", "sphere_02", "sphere_13", "near_flat", "near_flat_tt",
+            expected = name in ("concave_plane", "sphere_02", "sphere_13", "near_flat_tt",
                                 "sphere_angle_cad", "sphere_angle_cad_tt")
             assert (len(qtags), len(ttags)) == ((0, 2) if expected else (1, 0)), name
             for tag, original in enumerate(xyz, 1):
