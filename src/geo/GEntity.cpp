@@ -15,8 +15,21 @@
 #include "GFace.h"
 #include "GRegion.h"
 #include "closestVertex.h"
+#include "GmshConfig.h"
+#if defined(HAVE_OPENGL)
+#include "glyphList.h"
+#endif
 
 int GEntity::numSelected = 0;
+int GEntity::colorChanges = 0;
+
+GEntity::~GEntity()
+{
+#if defined(HAVE_OPENGL)
+  // the glyphs kept for this entity go with it
+  glyphCache::clear(this);
+#endif
+}
 
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _meshMaster(this), _visible(1), _selection(0),

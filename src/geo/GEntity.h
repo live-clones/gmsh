@@ -195,7 +195,7 @@ public:
 
   GEntity(GModel *m, int t);
 
-  virtual ~GEntity() {}
+  virtual ~GEntity();
 
   // mesh generation of the entity
   virtual void mesh(bool verbose) {}
@@ -352,7 +352,11 @@ public:
   virtual void setColor(unsigned color, bool recursive = false)
   {
     _color = color;
+    // whoever bakes the colours of the entities into something they keep -
+    // the merged mesh arrays do - can tell by this that they have changed
+    colorChanges++;
   }
+  static int colorChanges;
 
   // return true if we should use this color to represent the entity
   virtual bool useColor();

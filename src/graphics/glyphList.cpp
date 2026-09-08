@@ -550,12 +550,12 @@ namespace glyphCache {
 
   void clear(const void *owner)
   {
-    for(int s = 0; s < GLYPH_NUMSLOTS; s++) {
-      auto it = _lists.find(key(owner, s));
-      if(it != _lists.end()) {
-        delete it->second;
-        _lists.erase(it);
-      }
+    // the slots of an owner are consecutive, so this is one lookup rather
+    // than one per slot: it is called for every entity a model deletes
+    auto it = _lists.lower_bound(key(owner, 0));
+    while(it != _lists.end() && it->first.first == owner) {
+      delete it->second;
+      it = _lists.erase(it);
     }
   }
 
