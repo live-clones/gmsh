@@ -311,17 +311,26 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   }
 
   // The raster position is what the backends that hand the string to the
-  // widget toolkit, and what gl2ps, draw at; the ones that draw it themselves
-  // are told where it goes instead. It is only worked out again when the
-  // alignment has moved the string: going to window coordinates and back for
-  // nothing would only lose precision.
-  if(moved) {
-    double where[3];
-    viewport2World(w, where);
-    glRasterPos3d(where[0], where[1], where[2]);
-  }
-  else {
-    glRasterPos3d(x, y, z);
+  // widget toolkit, and what gl2ps, draw at; the ones that draw it
+  // themselves are told where it goes instead, through the win argument
+  // below, and never read it back. The native engine is the only one that
+  // hands the string over, and it is only ever picked when there is no
+  // drawing program to run (see opt_general_graphics_font_engine), so this
+  // is skipped whenever the shader pipeline is what is drawing: it is worked
+  // out in software there, by running the drawing program through the
+  // driver's feedback path, and that crashes on gl_VertexID on some drivers
+  // (Mesa/llvmpipe, at least). It is only worked out again when the
+  // alignment has moved the string: going to window coordinates and back
+  // for nothing would only lose precision.
+  if(!gmshUseShaders() || CTX::instance()->printing) {
+    if(moved) {
+      double where[3];
+      viewport2World(w, where);
+      glRasterPos3d(where[0], where[1], where[2]);
+    }
+    else {
+      glRasterPos3d(x, y, z);
+    }
   }
 
   if(!CTX::instance()->printing) {
