@@ -22,6 +22,7 @@
 #include <GLFW/glfw3.h>
 
 #include "appWindow.h"
+#include "uiSources.h"
 #include "toolkit.h"
 #include "sceneView.h"
 #include "sceneHost.h"
@@ -31,7 +32,6 @@
 #include "Gui.h"
 #include "GuiStatus.h"
 #include "GmshGlobal.h"
-#include "Context.h"
 #include "StringUtils.h"
 #include "Options.h"
 #include "OpenFile.h"
@@ -149,7 +149,8 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   // fixed pipeline and GLU, and so does the imgui_impl_opengl2 backend
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
-  if(CTX::instance()->antialiasing) glfwWindowHint(GLFW_SAMPLES, 4);
+  const Ui::Backend::Settings set = imguiSources().settings();
+  if(set.antialiasing) glfwWindowHint(GLFW_SAMPLES, 4);
 
   // Identify the window to the desktop. Left alone, GLFW leaves the Wayland app
   // id empty and derives the X11 WM_CLASS from the window title, which follows
@@ -164,8 +165,8 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   glfwWindowHintString(GLFW_X11_CLASS_NAME, "Gmsh");
   glfwWindowHintString(GLFW_X11_INSTANCE_NAME, "gmsh");
 
-  int w = CTX::instance()->glSize[0] + CTX::instance()->menuSize[0];
-  int h = CTX::instance()->glSize[1] + CTX::instance()->msgSize;
+  int w = set.sceneWidth + set.treeWidth;
+  int h = set.sceneHeight + set.consoleHeight;
   if(w < 640) w = 1024;
   if(h < 480) h = 768;
 
@@ -192,7 +193,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   // always safe to ask for it here; _detachablePanels() reports what we got.
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
   // the layout is saved next to the other Gmsh configuration files
-  static std::string iniFile = CTX::instance()->homeDir + ".gmsh-imgui.ini";
+  static std::string iniFile = set.homeDir + ".gmsh-imgui.ini";
   io.IniFilename = iniFile.c_str();
 
   // GMSH_GUI_SCALE overrides the scale factor reported by the windowing system,
@@ -260,7 +261,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   Toolkit::claimThread();
   _console = new messageConsole();
   _browser = new fileBrowser();
-  fileBrowser::setHome(CTX::instance()->homeDir);
+  fileBrowser::setHome(imguiSources().settings().homeDir);
   _panes.push_back(new sceneView());
   _currentPane = _panes[0];
   _paneRoot = new paneNode(_panes[0]);
@@ -812,8 +813,9 @@ void appWindow::_applyStyle(float scale)
   Toolkit::report(Toolkit::Debug, "Interface scale %g: %g from the framebuffer, %g from Dear ImGui",
              scale, fb, _styleScale);
 
+  const Ui::Backend::Settings set = imguiSources().settings();
   ImGuiStyle fresh;
-  if(CTX::instance()->guiColorScheme)
+  if(set.darkScheme)
     ImGui::StyleColorsDark(&fresh);
   else
     ImGui::StyleColorsLight(&fresh);
@@ -822,9 +824,7 @@ void appWindow::_applyStyle(float scale)
   fresh.ScaleAllSizes(_styleScale);
   // Dear ImGui applies FontScaleDpi on top of FontSizeBase; General.FontSize
   // keeps its usual meaning of a size in points, independent of the display
-  fresh.FontSizeBase = (CTX::instance()->fontSize > 0) ?
-                         (float)CTX::instance()->fontSize :
-                         13.f;
+  fresh.FontSizeBase = (set.fontSize > 0) ? (float)set.fontSize : 13.f;
   fresh.FontScaleDpi = _styleScale;
   if(_detachablePanels()) {
     // a panel that became a window of its own must not show the rounded
@@ -1061,9 +1061,8 @@ void appWindow::frame()
       glfwGetWindowContentScale(_window, &sx, &sy);
       want = (sx > 0.f) ? sx : 1.f;
     }
-    float base = (CTX::instance()->fontSize > 0) ?
-                   (float)CTX::instance()->fontSize :
-                   13.f;
+    int said = imguiSources().settings().fontSize;
+    float base = (said > 0) ? (float)said : 13.f;
     float fb = _framebufferScale();
     if(fabs(want - _uiScale) > 0.01f ||
        fabs((fb > 0.f ? want / fb : want) - _styleScale) > 0.01f ||
@@ -1316,8 +1315,9 @@ void appWindow::check(bool rateLimited)
   // the thread that created the window
   if(!Toolkit::onThread() || _locked > 0) return;
   double start = TimeOfDay();
-  if(rateLimited && CTX::instance()->guiRefreshRate > 0) {
-    if(start - _lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
+  double rate = imguiSources().settings().refreshRate;
+  if(rateLimited && rate > 0) {
+    if(start - _lastRefresh > 1. / rate) {
       _lastRefresh = start;
       frame();
     }

@@ -42,7 +42,6 @@
 #include "menuFltk.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
-#include "Context.h"
 
 // While the interface is being taken down every window is hidden in turn, and
 // a dialog that undoes something when it closes must not undo it then: there
@@ -988,7 +987,8 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
           v->maximum(f.maximum);
         }
         // the arrows only step where Gmsh is set up for them
-        if(f.step > 0. && CTX::instance()->inputScrolling) v->step(f.step);
+        if(f.step > 0. && fltkSources().settings().inputScrolling)
+          v->step(f.step);
         widget = v;
       } break;
       case Ui::Check:
@@ -1166,7 +1166,7 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
       // it is the face that is coloured, as red text on it would not be read;
       // on a light one it is the text, which is what Gmsh has always done.
       if(f.alert) {
-        if(f.kind == Ui::Action && CTX::instance()->guiColorScheme)
+        if(f.kind == Ui::Action && fltkSources().settings().darkScheme)
           widget->color(FL_DARK_RED);
         else
           widget->labelcolor(FL_DARK_RED);
@@ -1418,7 +1418,7 @@ void dialogFltk::build(Ui::FormRef dialog)
   Fl_Group::current(nullptr);
 
   dialogWindow *win = new dialogWindow(
-    width, height, CTX::instance()->nonModalWindows ? true : false,
+    width, height, fltkSources().settings().nonModalWindows,
     _panel.title.c_str());
   win->closed = _panel.closed;
   _win = win;
@@ -1669,8 +1669,8 @@ void dialogFltk::build(Ui::FormRef dialog)
     y += BH + WB;
   }
 
-  _win->position(CTX::instance()->ctxPosition[0],
-                 CTX::instance()->ctxPosition[1]);
+  const Ui::Backend::Settings set = fltkSources().settings();
+  _win->position(set.dialogX, set.dialogY);
   _win->end();
   Fl_Group::current(previous);
 

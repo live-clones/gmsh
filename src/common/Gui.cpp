@@ -120,8 +120,34 @@ namespace Gui {
     // for again rather than handed over, since what they say is only true at
     // the moment they are drawn.
     Ui::Backend::Sources sources;
-    sources.fontSize = []() {
-      return CTX::instance()->fontSize > 0 ? CTX::instance()->fontSize : 13;
+    // What the interface lays itself out from. Read again every time it is
+    // asked rather than handed over once, so that an interface which draws
+    // itself afresh follows an option that has just been set without having
+    // to be told; the set...() of the backend are for the one that does not.
+    sources.settings = []() {
+      Ui::Backend::Settings s;
+      CTX *c = CTX::instance();
+      s.fontSize = c->fontSize;
+      s.sceneWidth = c->glSize[0];
+      s.sceneHeight = c->glSize[1];
+      s.treeWidth = c->menuSize[0];
+      s.consoleHeight = c->msgSize;
+      s.consoleFontSize = c->msgFontSize;
+      s.dialogX = c->ctxPosition[0];
+      s.dialogY = c->ctxPosition[1];
+      s.darkScheme = c->guiColorScheme ? true : false;
+      s.antialiasing = c->antialiasing ? true : false;
+      s.tooltips = c->tooltips ? true : false;
+      s.detachedTree = c->detachedMenu ? true : false;
+      s.inputScrolling = c->inputScrolling ? true : false;
+      s.nonModalWindows = c->nonModalWindows ? true : false;
+      s.background = Ui::Colour((unsigned char)c->unpackRed(c->color.bg),
+                                (unsigned char)c->unpackGreen(c->color.bg),
+                                (unsigned char)c->unpackBlue(c->color.bg),
+                                (unsigned char)c->unpackAlpha(c->color.bg));
+      s.refreshRate = c->guiRefreshRate;
+      s.homeDir = c->homeDir;
+      return s;
     };
     sources.menuBar = []() { return Menu::bar(); };
     sources.menuGeneration = []() { return Menu::generation(); };

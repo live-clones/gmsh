@@ -24,7 +24,7 @@
 
 #include "treeFltk.h"
 #include "menuFltk.h"
-#include "Context.h"
+#include "uiSources.h"
 
 namespace {
 
@@ -97,7 +97,7 @@ void fltkTreeForget()
 }
 
 Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
-                        double labelRatio, unsigned int highlight,
+                        double labelRatio, const Ui::Colour &highlight,
                         Fl_Color background)
 {
   // A switch and a button carry their name inside themselves and take the
@@ -166,7 +166,8 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
       v->minimum(f.minimum);
       v->maximum(f.maximum);
     }
-    if(f.step > 0. && CTX::instance()->inputScrolling) v->step(f.step);
+    if(f.step > 0. && fltkSources().settings().inputScrolling)
+      v->step(f.step);
     v->value(f.getNumber());
     v->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
     v->callback(_numberChanged, bound);
@@ -206,11 +207,8 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
       line->copy_label(f.label.c_str());
   }
   if(!nameInside) line->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
-  if(highlight) {
-    CTX *c = CTX::instance();
-    Fl_Color paint = fl_rgb_color(c->unpackRed(highlight),
-                                  c->unpackGreen(highlight),
-                                  c->unpackBlue(highlight));
+  if(highlight.a) {
+    Fl_Color paint = fl_rgb_color(highlight.r, highlight.g, highlight.b);
     widget->color(paint);
     widget->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, paint));
   }

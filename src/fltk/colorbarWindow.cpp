@@ -10,8 +10,7 @@
 
 #include <FL/fl_draw.H>
 #include "colorbarWindow.h"
-#include "ColorTable.h"
-#include "Context.h"
+#include "uiSources.h"
 
 #define EPS 1.e-10
 
@@ -284,11 +283,12 @@ void colorbarWindow::draw()
   label_y = h() - 5;
   marker_y = label_y - marker_height - font_height;
   wedge_y = marker_y - wedge_height;
-  color_bg = fl_color_cube(
-    CTX::instance()->unpackRed(CTX::instance()->color.bg) * FL_NUM_RED / 256,
-    CTX::instance()->unpackGreen(CTX::instance()->color.bg) * FL_NUM_GREEN /
-      256,
-    CTX::instance()->unpackBlue(CTX::instance()->color.bg) * FL_NUM_BLUE / 256);
+  // the wedge is drawn over what is behind the model, not over what is
+  // behind the interface
+  Ui::Colour behind = fltkSources().settings().background;
+  color_bg = fl_color_cube(behind.r * FL_NUM_RED / 256,
+                           behind.g * FL_NUM_GREEN / 256,
+                           behind.b * FL_NUM_BLUE / 256);
   redraw_range(0, _map.size() - 1);
   redraw_marker();
 }

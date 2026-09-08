@@ -367,7 +367,15 @@ void drainPostedFromThread()
 // what the interface was given, for the files that build from it
 const Ui::Backend::Sources &imguiSources()
 {
-  static Ui::Backend::Sources none;
+  // Answered before the interface was given anything, which is not something
+  // that happens but is not worth throwing over either: the settings come
+  // out at their defaults, and no call site has to ask whether they are
+  // there.
+  static Ui::Backend::Sources none = []() {
+    Ui::Backend::Sources empty;
+    empty.settings = []() { return Ui::Backend::Settings(); };
+    return empty;
+  }();
   return _the ? _the->sources() : none;
 }
 

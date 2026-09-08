@@ -25,7 +25,7 @@
 // back, and what it points at has to outlive the line.
 
 Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
-                        double labelRatio, unsigned int highlight,
+                        double labelRatio, const Ui::Colour &highlight,
                         Fl_Color background);
 
 // the tree is being built again: what was kept for the old lines may go
