@@ -96,7 +96,7 @@ public:
   // clipping planes add - the section they cut, or the elements they cut drawn
   // whole. The last two go into arrays of their own, so that moving a plane
   // rebuilds only those.
-  enum { COLLECT_ALL, COLLECT_CAPS, COLLECT_CUT };
+  enum { COLLECT_ALL, COLLECT_CAPS, COLLECT_CUT, COLLECT_KEPT };
   int collect;
   // bounding box of the elements that were drawn
   SBoundingBox3d bbox;
@@ -326,27 +326,58 @@ static double intersectClipPlane(int clip, int numNodes, double **xyz)
   return val;
 }
 
+// Is this element kept by whole element mode? The ones a plane cuts are, and so
+// are the ones entirely on the visible side; only those entirely beyond a plane
+// are dropped. This is the test the arrays used to be filled through, and it is
+// still what the glyphs a view draws straight from its elements go through.
+bool elementIsKept(PViewOptions *opt, int dim, int numNodes, double **xyz)
+{
+  CTX *ctx = CTX::instance();
+  if(!ctx->clipWholeElements) return true;
+  for(int clip = 0; clip < 6; clip++) {
+    if(!(opt->clip & (1 << clip))) continue;
+    // in this mode the planes are only applied to the volume: everything else
+    // is drawn whole, wherever it sits
+    if(dim < 3 && ctx->clipOnlyVolume) continue;
+    double d = intersectClipPlane(clip, numNodes, xyz);
+    // and in this one only the volumes a plane cuts are drawn at all
+    if(dim == 3 && ctx->clipOnlyDrawIntersectingVolume && d) return false;
+    if(d < 0.) return false;
+  }
+  return true;
+}
+
+// Does this element belong in the array held apart for whole element mode? The
+// ones a plane cuts do - OpenGL would slice them, and they are meant to come
+// out entire - and so does everything the planes are not applied to, which
+// OpenGL would slice just the same.
+static bool elementIsCut(PViewOptions *opt, int dim, int numNodes, double **xyz)
+{
+  CTX *ctx = CTX::instance();
+  if(!elementIsKept(opt, dim, numNodes, xyz)) return false;
+  if(dim < 3 && ctx->clipOnlyVolume) return true;
+  for(int clip = 0; clip < 6; clip++) {
+    if(!(opt->clip & (1 << clip))) continue;
+    if(!intersectClipPlane(clip, numNodes, xyz)) return true;
+  }
+  return false;
+}
+
+// Does this element go in the arrays the view is drawn from? OpenGL applies the
+// clipping planes to those, and the elements a plane cuts are drawn whole from
+// an array of their own, over the slice OpenGL leaves: nothing here depends on
+// where the planes are. The exception is the mode that draws only the volumes a
+// plane cuts - nothing brings back what OpenGL has clipped away, and the glyphs
+// a view hangs on its elements are not drawn from that other array - so there
+// the arrays are still filled through the planes themselves, and moving one
+// builds them again (see checkClipPlanesChanged()).
 bool isElementVisible(PViewOptions *opt, int dim, int numNodes, double **xyz)
 {
-  if(!CTX::instance()->clipWholeElements) return true;
-  bool hidden = false;
-  for(int clip = 0; clip < 6; clip++) {
-    if(opt->clip & (1 << clip)) {
-      if(dim < 3 && CTX::instance()->clipOnlyVolume) {}
-      else {
-        double d = intersectClipPlane(clip, numNodes, xyz);
-        if(dim == 3 && CTX::instance()->clipOnlyDrawIntersectingVolume && d) {
-          hidden = true;
-          break;
-        }
-        else if(d < 0) {
-          hidden = true;
-          break;
-        }
-      }
-    }
-  }
-  return !hidden;
+  CTX *ctx = CTX::instance();
+  if(!ctx->clipWholeElements || !opt->clip) return true;
+  if(ctx->clipOnlyDrawIntersectingVolume)
+    return elementIsKept(opt, dim, numNodes, xyz);
+  return true;
 }
 
 static void addOutlinePoint(drawTarget *p, double **xyz, unsigned int color,
@@ -1652,7 +1683,16 @@ static void addElementRange(drawTarget *p, PViewData *data,
 
       changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
       int dim = data->getDimension(opt->timeStep, ent, i);
-      if(!isElementVisible(opt, dim, numNodes, xyz)) continue;
+      // the pass that gathers what the clipping planes add wants the elements
+      // they cut and nothing else; the ordinary fill wants what is left
+      if(p->collect == drawTarget::COLLECT_CUT) {
+        if(!elementIsCut(opt, dim, numNodes, xyz)) continue;
+      }
+      else if(p->collect == drawTarget::COLLECT_KEPT) {
+        if(!elementIsKept(opt, dim, numNodes, xyz)) continue;
+      }
+      else if(!isElementVisible(opt, dim, numNodes, xyz))
+        continue;
       // the pass that gathers the section a plane cuts wants nothing else: no
       // outlines, and none of the elements that have no section to give
       if(p->collect == drawTarget::COLLECT_CAPS && dim < 3) continue;
@@ -1660,8 +1700,10 @@ static void addElementRange(drawTarget *p, PViewData *data,
       for(int j = 0; j < numNodes; j++)
         p->bbox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
 
+      // an element drawn whole is outlined whole
       if(opt->showElement && !data->useGaussPoints() &&
-         p->collect == drawTarget::COLLECT_ALL)
+         (p->collect == drawTarget::COLLECT_ALL ||
+          p->collect == drawTarget::COLLECT_CUT))
         addOutlineElement(p, type, xyz, preprocessNormalsOnly, numNodes);
 
       if(opt->intervalsType != PViewOptions::Numeric) {
@@ -1731,13 +1773,24 @@ static std::vector<double> viewClipToken(PView *p)
 
 void PView::invalidateClipVertexArrays() { _viewClipToken.erase(this); }
 
-static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
+// Walk the elements and draw them into vertex arrays. What is collected is
+// usually the view itself, into its own arrays; the passes that build what the
+// clipping planes add ask for a subset of the elements and hand over the two
+// arrays it goes into. Everything else those passes produce - the points, the
+// vectors, the ellipses, the bounding box - is thrown away: a view's glyphs are
+// drawn from its own arrays, one at a time and whole.
+static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
+                                int collect = drawTarget::COLLECT_ALL,
+                                VertexArray *vaL = nullptr,
+                                VertexArray *vaT = nullptr,
+                                smooth_normals *normals = nullptr)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
+  bool own = (collect == drawTarget::COLLECT_ALL);
 
-  opt->tmpBBox.reset();
+  if(own) opt->tmpBBox.reset();
 
   // number the elements of the entities that are drawn in a single flat index
   // space, so that the loop below can be split evenly between the threads
@@ -1767,8 +1820,18 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 
   if(nthreads == 1) {
     drawTarget t(p);
+    VertexArray points(1, 100), vectors(2, 100), ellipses(4, 100);
+    if(!own) {
+      t.collect = collect;
+      t.va_lines = vaL;
+      t.va_triangles = vaT;
+      t.va_points = &points;
+      t.va_vectors = &vectors;
+      t.va_ellipses = &ellipses;
+      if(normals) t.normals = normals;
+    }
     addElementRange(&t, data, preprocessNormalsOnly, ents, start, 0, num);
-    if(!t.bbox.empty()) opt->tmpBBox += t.bbox;
+    if(own && !t.bbox.empty()) opt->tmpBBox += t.bbox;
     return;
   }
 
@@ -1785,13 +1848,16 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
     // would delete: that option is drawn serially, so drop it here
     opts[t]->genRaiseEvaluator = nullptr;
     d->opt = opts[t];
-    // the threads share the filters of the view's own arrays, so that an
+    d->collect = collect;
+    if(normals) d->normals = normals;
+    // the threads share the filters of the arrays being filled, so that an
     // element is dropped whichever thread sees it first
     d->va_points = new VertexArray(1, n / 4);
     d->va_lines = new VertexArray(2, n / 4);
-    d->va_lines->setUniqueFilter(p->va_lines->getUniqueFilter(true));
+    d->va_lines->setUniqueFilter((own ? p->va_lines : vaL)->getUniqueFilter(true));
     d->va_triangles = new VertexArray(3, 4 * n);
-    d->va_triangles->setUniqueFilter(p->va_triangles->getUniqueFilter(true));
+    d->va_triangles->setUniqueFilter(
+      (own ? p->va_triangles : vaT)->getUniqueFilter(true));
     d->va_vectors = new VertexArray(2, n / 4);
     d->va_ellipses = new VertexArray(4, n / 4);
     targets[t] = d;
@@ -1804,13 +1870,19 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
                     num * t / nthreads, num * (t + 1) / nthreads);
 
   for(int t = 0; t < nthreads; t++) {
-    p->va_points->merge(targets[t]->va_points);
-    p->va_lines->merge(targets[t]->va_lines);
-    p->va_triangles->merge(targets[t]->va_triangles);
-    p->va_vectors->merge(targets[t]->va_vectors);
-    p->va_ellipses->merge(targets[t]->va_ellipses);
-    // adding an empty box would stretch the bounding box to infinity
-    if(!targets[t]->bbox.empty()) opt->tmpBBox += targets[t]->bbox;
+    if(own) {
+      p->va_points->merge(targets[t]->va_points);
+      p->va_lines->merge(targets[t]->va_lines);
+      p->va_triangles->merge(targets[t]->va_triangles);
+      p->va_vectors->merge(targets[t]->va_vectors);
+      p->va_ellipses->merge(targets[t]->va_ellipses);
+      // adding an empty box would stretch the bounding box to infinity
+      if(!targets[t]->bbox.empty()) opt->tmpBBox += targets[t]->bbox;
+    }
+    else {
+      vaL->merge(targets[t]->va_lines);
+      vaT->merge(targets[t]->va_triangles);
+    }
     delete targets[t]->va_points;
     delete targets[t]->va_lines;
     delete targets[t]->va_triangles;
@@ -1995,9 +2067,13 @@ bool PView::fillClipVertexArrays()
 
   deleteClipVertexArrays();
   PViewOptions *opt = getOptions();
-  bool caps = opt->clip && CTX::instance()->clipCapping &&
-              !CTX::instance()->clipWholeElements;
-  if(!caps) return true;
+  CTX *ctx = CTX::instance();
+  bool caps = opt->clip && ctx->clipCapping && !ctx->clipWholeElements;
+  // the mode that draws only the volumes a plane cuts fills the view's own
+  // arrays through the planes: there is nothing to hold apart there
+  bool whole = opt->clip && ctx->clipWholeElements &&
+               !ctx->clipOnlyDrawIntersectingVolume;
+  if(!caps && !whole) return true;
 
   PViewData *data = getData(true);
   if(!data || data->getDirty() || !data->getNumTimeSteps()) return true;
@@ -2006,29 +2082,35 @@ bool PView::fillClipVertexArrays()
   va_clip_lines = new VertexArray(2, 100);
   va_clip_triangles = new VertexArray(3, 1000);
 
-  // the same walk the arrays are filled by, stopped at the section
-  std::vector<int> ents;
-  std::vector<std::size_t> start;
-  std::size_t num = 0;
-  int numEnt = data->getNumEntities(opt->timeStep);
-  for(int ent = 0; ent < numEnt; ent++) {
-    if(data->skipEntity(opt->timeStep, ent)) continue;
-    ents.push_back(ent);
-    start.push_back(num);
-    num += data->getNumElements(opt->timeStep, ent);
+  if(whole && opt->drawSkinOnly) {
+    // The skin of what whole element mode keeps: a face between two kept
+    // elements is interior and hidden, so the boundary has to be worked out
+    // over those rather than over the whole field - which is what the view's
+    // own arrays, filled without the planes, hold the skin of.
+    delete boundaryFaces;
+    boundaryFaces = new UniqueElementFilter(false);
+    markingBoundaryFaces = true;
+    // this pass feeds the smoothed normals, which are built already
+    smooth_normals scratch(opt->angleSmoothNormals);
+    addElementsInArrays(this, true, drawTarget::COLLECT_KEPT, va_clip_lines,
+                        va_clip_triangles, &scratch);
+    markingBoundaryFaces = false;
   }
-  start.push_back(num);
-  if(num) {
-    drawTarget t(this);
-    t.va_lines = va_clip_lines;
-    t.va_triangles = va_clip_triangles;
-    t.collect = drawTarget::COLLECT_CAPS;
-    addElementRange(&t, data, false, ents, start, 0, num);
-  }
+  // the same walk the view's own arrays are filled by, over the elements the
+  // clipping planes add and into the arrays those are held in
+  addElementsInArrays(this, false,
+                      whole ? drawTarget::COLLECT_CUT :
+                              drawTarget::COLLECT_CAPS,
+                      va_clip_lines, va_clip_triangles);
+  delete boundaryFaces;
+  boundaryFaces = nullptr;
+
   va_clip_lines->finalize();
   va_clip_triangles->finalize();
-  if(va_clip_triangles->getNumVertices())
-    Msg::Debug("View[%d] section: %d vertices in %g s", getIndex(),
+  if(va_clip_lines->getNumVertices() || va_clip_triangles->getNumVertices())
+    Msg::Debug("View[%d] %s: %d lines, %d triangles in %g s", getIndex(),
+               whole ? "cut elements" : "section",
+               va_clip_lines->getNumVertices(),
                va_clip_triangles->getNumVertices(), TimeOfDay() - t1);
   return true;
 }
