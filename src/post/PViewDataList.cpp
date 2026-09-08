@@ -449,10 +449,8 @@ int PViewDataList::getNumNodes(int step, int ent, int ele)
   return _lastNumNodes;
 }
 
-// list-based data stores raw coordinates and has no notion of a node shared by
-// several elements: recreate one by merging the nodes that have exactly the
-// same coordinates. The result is cached, so that it is only paid once and not
-// on every vertex array rebuild
+// list-based data has no topology: recreate one by merging the nodes with
+// the same coordinates, cached
 namespace {
   struct NodeKey {
     double x, y, z;

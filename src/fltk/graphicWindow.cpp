@@ -3616,9 +3616,7 @@ void status_options_cb(Fl_Widget *w, void *data)
         }
       }
     }
-    // The transparency multipliers are applied by the shader: with the fixed
-    // function pipeline they would do nothing, so they are not offered at all.
-    // This comes after the view entries above, which show() the whole range.
+    // the transparency factors are only applied by the shader pipeline
     if(opt_general_shaders(0, GMSH_GET, 0)) {
       menu[geo + 6].show();
       menu[msh + 9].show();

@@ -9173,8 +9173,7 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   case 3: type = ENT_VOLUME; break;
   default: break;
   }
-  // the elements are only kept in the vertex arrays when they can be picked,
-  // so asking for them means building the arrays again
+  // the arrays only keep the elements when they can be picked
   int old = CTX::instance()->pickElements;
   if(elements) {
     CTX::instance()->pickElements = 1;

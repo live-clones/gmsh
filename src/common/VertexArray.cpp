@@ -184,9 +184,8 @@ bool UniqueElementFilter::isDuplicate(int npe, double *x, double *y, double *z,
 VertexArray::~VertexArray()
 {
   if(_ownsFilter) delete _filter;
-  // only the names of the current context designate anything: the buffers of a
-  // context that has been recreated are already gone, and deleting their names
-  // would hit whatever the new context has since given them to
+  // only delete names of the current context: those of a recreated context
+  // are gone and may have been reused
   if(getVboValid())
     for(int i = 0; i < 3; i++)
       if(_vbo[i]) vboToDelete.push_back(_vbo[i]);
@@ -352,10 +351,8 @@ void VertexArray::finalize()
   }
 }
 
-// How far along the direction of view the barycentre of an element lies. The
-// elements are put in that order so that what is behind is drawn first, which
-// is what blending needs; only the order matters, so the barycentre is left as
-// the sum of the vertices rather than their average.
+// depth of the barycentre of an element along the view direction (left as
+// the sum of the vertices, as only the order matters)
 static double alphaKey(const float *v, int numVertices, const double eye[3])
 {
   double cg[3] = {0., 0., 0.};
@@ -376,15 +373,12 @@ void VertexArray::sort(double x, double y, double z)
   int n = getNumVertices() / npe;
   if(n < 2) return;
 
-  // Where each element falls, worked out once per element. Asking for it
-  // inside the comparison instead means working it out about log2(n) times
-  // over for each of them, reading all over the vertices every time.
+  // the key of each element, computed once rather than in the comparison
   double eye[3] = {x, y, z};
   std::vector<std::pair<double, int> > order(n);
   for(int i = 0; i < n; i++)
     order[i] = std::make_pair(alphaKey(&_vertices[3 * npe * i], npe, eye), i);
-  // on the key alone, as comparing the pairs would order those that fall in
-  // the same place by their index and give a different answer than before
+  // on the key alone, to keep the order of equal keys as before
   std::sort(order.begin(), order.end(),
             [](const std::pair<double, int> &a, const std::pair<double, int> &b) {
               return a.first < b.first;
@@ -526,10 +520,8 @@ void VertexArray::merge(VertexArray* va, const unsigned char *color)
     _vertices.insert(_vertices.end(), va->firstVertex(), va->lastVertex());
     _normals.insert(_normals.end(), va->firstNormal(), va->lastNormal());
     if(color) {
-      // the merged data is drawn in a single color: repeat it. Do not reserve
-      // the exact size here: reserve() allocates precisely what is asked for,
-      // so calling it once per merged array would reallocate and copy the whole
-      // array every time, which is quadratic in the number of entities
+      // the merged data is drawn in a single color: repeat it (no reserve()
+      // here, which would be quadratic over the merged arrays)
       for(int i = 0; i < va->getNumVertices(); i++)
         for(int j = 0; j < 4; j++) _colors.push_back(color[j]);
     }

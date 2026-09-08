@@ -130,10 +130,8 @@ public:
   // elements if ent < 0
   virtual int getNumElements(int step = -1, int ent = -1) { return 0; }
 
-  // cheap "does this view have any elements?" test: the default answers by
-  // counting them, which for a view on a model means walking every entity of
-  // that model. Callers that only need the yes/no answer -- drawScales(), once
-  // per frame -- should ask for it here instead
+  // cheap "does this view have any elements?" test (counting them walks
+  // every entity of a model-based view)
   virtual bool hasElements() { return getNumElements() > 0; }
 
   // return the geometrical dimension of the ele-th element in the ent-th entity
@@ -141,10 +139,8 @@ public:
 
   // return the number of nodes of the ele-th element in the ent-th entity
   virtual int getNumNodes(int step, int ent, int ele) { return 0; }
-  // Return a stable identifier for a node of an element, such that two elements
-  // sharing that node get the same identifier. Returns 0 if the data has no
-  // node topology, in which case the identifiers have to be recreated from the
-  // coordinates (see PViewDataList)
+  // a stable identifier for a node of an element, the same for the elements
+  // sharing it; 0 if the data has no node topology
   virtual std::size_t getNodeId(int step, int ent, int ele, int nod)
   {
     return 0;

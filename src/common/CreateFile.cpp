@@ -33,11 +33,8 @@
 #endif
 
 #if defined(HAVE_FLTK)
-// gl2ps writes a vector file by putting OpenGL into feedback mode and reading
-// back the primitives it was handed, and a core profile has no feedback mode at
-// all - a scene drawn by the shader pipeline reaches it as nothing. So the old
-// pipeline is put back for as long as the file is being written, and the one
-// that was asked for is restored afterwards.
+// gl2ps needs OpenGL feedback mode, which a core profile has none of: draw
+// with the fixed function pipeline while the file is written
 class drawTheOldWayWhileExporting {
 private:
   bool _switched;
@@ -48,8 +45,7 @@ public:
     if(!CTX::instance()->shaders) return;
     _switched = true;
     opt_general_shaders(0, GMSH_SET, 0.);
-    // the context is only made again when it is next drawn into, and feedback
-    // mode has to be asked of the one that will do the drawing
+    // the context is only recreated when next drawn into
     drawContext::global()->drawCurrentOpenglWindow(true);
   }
   ~drawTheOldWayWhileExporting()
@@ -239,9 +235,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
       height = CTX::instance()->print.height;
     }
     newg = new openglWindow(100, 100, width, height);
-    // the same visual as the windows this one stands in for: a picture taken
-    // with a different pipeline than the one on screen is not a picture of
-    // what is on screen
+    // the same visual (hence pipeline) as the windows on screen
     newg->mode(openglWindowMode());
     newg->end();
     newg->getDrawContext()->copyViewAttributes

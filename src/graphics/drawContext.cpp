@@ -25,8 +25,7 @@
 #include "OS.h"
 #include "gl2ps.h"
 
-// the background image is still read with FLTK, which is the last thing this
-// file asks of a widget toolkit
+// the background image is still read with FLTK
 #if defined(HAVE_FLTK)
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
@@ -134,11 +133,8 @@ void drawContext::invalidateQuadricsAndDisplayLists()
 
 void drawContext::createQuadricsAndDisplayLists()
 {
-  // The shapes the glyphs are made of used to be GLU quadrics kept in display
-  // lists, called once per glyph with the transform stacked in front of them.
-  // They are built as triangles in drawGlyph.cpp now: a core profile has
-  // neither quadrics nor display lists, and even where it has, a call per glyph
-  // cost far more than handing the geometry over does.
+  // the glyph shapes are built as triangles in drawGlyph.cpp: a core
+  // profile has neither quadrics nor display lists
 }
 
 void drawContext::buildRotationMatrix()
@@ -269,8 +265,8 @@ static bool useShaders()
 
 static bool useVertexBufferObjects()
 {
-  // a core profile has no client arrays at all, so the shader pipeline has to
-  // have the buffer objects whatever the option says
+  // a core profile has no client arrays: the shader pipeline needs buffer
+  // objects whatever the option says
   if(useShaders()) return true;
   return CTX::instance()->vertexBufferObjects && glApi::haveBufferObjects();
 }
@@ -299,8 +295,7 @@ static void uploadVertexArray(VertexArray *va)
 {
   unsigned int *id = va->getVboIds();
   if(id[0] && !va->getVboValid()) {
-    // the context that owned these buffers is gone and took them with it: the
-    // names do not designate anything any more
+    // the context that owned these buffers is gone: the names are stale
     id[0] = id[1] = id[2] = 0;
   }
   if(!id[0]) {
@@ -372,18 +367,16 @@ const GLvoid *vaColorPointer(VertexArray *va)
   return nullptr;
 }
 
-// what the last bind left for the draw to use: the client arrays a caller
-// holds itself have to be uploaded, and the count is only known at the draw
+// what the last bind left for the draw: client arrays are uploaded at the
+// draw, when the count is known
 static const float *_clientVertices = nullptr;
 static const unsigned char *_clientColors = nullptr;
 static bool _boundColors = false;
 
 void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
 {
-  // Whatever immediate mode primitives are still waiting have to go out before
-  // the attributes are bound, not after: drawing them turns the attribute
-  // arrays off on its way out, and would leave the array that is about to be
-  // drawn with nothing bound at all.
+  // pending immediate mode primitives must be drawn before the attributes
+  // are bound: drawing them disables the attribute arrays on the way out
   gmshFlushImmediate();
   _clientVertices = nullptr;
   _clientColors = nullptr;
@@ -395,8 +388,7 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
                                0, vaVertexPointer(va));
     if(normals) {
       glApi::EnableVertexAttribArray(glShader::ATTRIB_NORMAL);
-      // the normals are stored as bytes, and are the unit vectors they were
-      // when they went in: they have to be scaled back on the way out
+      // the normals are stored as bytes and scaled back to unit vectors
       glApi::VertexAttribPointer(glShader::ATTRIB_NORMAL, 3, NORMAL_GLTYPE,
                                  GL_TRUE, 0, vaNormalPointer(va));
     }
@@ -434,13 +426,12 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
 
 void gmshBindArrays(const float *vertices, const unsigned char *colors)
 {
-  // as above: what is waiting is drawn before anything is bound for this one
+  // as above
   gmshFlushImmediate();
   _boundColors = (colors != nullptr);
 
   if(useShaders()) {
-    // kept for the draw, which is where the number of vertices is known and
-    // the arrays can be uploaded
+    // uploaded at the draw, when the count is known
     _clientVertices = vertices;
     _clientColors = colors;
     return;
@@ -475,26 +466,21 @@ void gmshUnbindArrays()
   glDisableClientState(GL_COLOR_ARRAY);
 }
 
-// hand the program everything it needs that the fixed function pipeline kept
-// as state of its own, and draw
-// Any colour of the category that is not fully opaque makes it see-through,
-// whether that comes from the Transparency option or from an alpha the colour
-// was given directly.
+// is any of these colours transparent, through the Transparency option or
+// through its own alpha?
 static bool anyColorIsTransparent(const unsigned int *colors, int n,
                                   double transparency)
 {
   if(!CTX::instance()->alpha) return false;
-  // the multiplier is applied by the shader, so it means nothing to the fixed
-  // function pipeline; an alpha the colour carries itself counts in both
+  // the Transparency factor is only applied by the shader pipeline
   if(gmshUseShaders() && transparency < 1.) return true;
   for(int i = 0; i < n; i++)
     if(CTX::instance()->unpackAlpha(colors[i]) < 255) return true;
   return false;
 }
 
-// Does an entity carry a colour of its own that is not opaque? This is asked
-// several times a frame and means walking every entity, so the answer is kept
-// and only worked out again when a colour was set or an entity came or went.
+// does an entity have a non-opaque colour of its own? Cached, as this is
+// asked several times a frame and walks every entity.
 static bool anyEntityColorIsTransparent()
 {
   static int stamp = -1;
@@ -547,8 +533,8 @@ bool gmshMeshIsTransparent()
     ctx->color.mesh.hexahedron, ctx->color.mesh.prism,
     ctx->color.mesh.pyramid,    ctx->color.mesh.trihedron,
     ctx->color.fg,              ctx->color.geom.selection};
-  // by entity, by physical group and by partition the mesh is coloured from
-  // the carousel, and in the first two from what the entities were given
+  // the carousel colours the mesh by entity, physical group or partition,
+  // and the first two also use the entity colours
   int carousel = ctx->mesh.colorCarousel;
   if(carousel >= 1 && carousel <= 3)
     for(int i = 0; i < 20; i++) c.push_back(ctx->color.mesh.carousel[i]);
@@ -560,8 +546,7 @@ bool gmshMeshIsTransparent()
 
 void gmshDrawArrays(GLenum type, int count, const float *dashes)
 {
-  // whatever immediate mode primitives are waiting were asked for before this
-  // one, and have to be on the screen before it
+  // pending immediate mode primitives come before this one
   gmshFlushImmediate();
   if(count <= 0) return;
 
@@ -571,16 +556,13 @@ void gmshDrawArrays(GLenum type, int count, const float *dashes)
       glShader::streamArrays(_clientVertices, _clientColors, count);
     }
     glShader::setColorArray(_boundColors);
-    // an array is never drawn through a texture, but the sampler still has to
-    // point at one the driver is happy with
+    // no texture, but the sampler must still point to a valid one
     glShader::noTexture();
     gmshPushShaderState();
-    // the transparency may be meant for the filled surfaces alone, and this is
-    // where what is being drawn is known
+    // the transparency may apply to filled surfaces only
     glShader::setAlphaScale(gmshAlphaScaleFor(type));
-    // gmshPushShaderState() leaves the pattern off, as most of what is drawn
-    // has no distance along a line to measure it against. A caller that has
-    // worked one out for every vertex turns it back on here.
+    // gmshPushShaderState() leaves the dash pattern off; a caller that has
+    // computed the distances along the line turns it on here
     glShader::streamDash(dashes, count);
     if(dashes)
       glShader::setStipple(true, gmshLineStippleFactor(),
@@ -590,10 +572,9 @@ void gmshDrawArrays(GLenum type, int count, const float *dashes)
   glDrawArrays(type, 0, count);
 }
 
-// How far along its segment every vertex of a set of independent lines falls,
-// in pixels of the window, which is what the dash pattern is measured in. The
-// counter starts again at every segment, as OpenGL's stipple did for
-// GL_LINES. Empty if the array is not something that can be dashed.
+// distance along its segment of every vertex of a set of independent lines,
+// in pixels, for the dash pattern; restarts at every segment as OpenGL's
+// stipple did for GL_LINES. Empty if the array cannot be dashed.
 static void dashDistances(VertexArray *va, std::vector<float> &dash)
 {
   int count = va->getNumVertices();
@@ -619,15 +600,14 @@ static void dashDistances(VertexArray *va, std::vector<float> &dash)
 
 void drawVertexArray(VertexArray *va, GLenum type)
 {
-  // A line wider than a pixel is not something a core profile draws. The
-  // array holds the two ends of every segment, which is all the shader needs
-  // to make a quad of it, so it is handed them rather than drawn as lines.
+  // a core profile draws no wide lines: the shader makes quads out of the
+  // segments instead
   if(useShaders() && type == GL_LINES && gmshCurrentLineWidth() > 1. &&
      va->getNumVertices() > 1) {
     gmshFlushImmediate();
     gmshPushShaderState();
-    // a quad knows both of its ends, so the shader works the distance along
-    // the line out for itself and only wants to be told the pattern
+    // the shader knows both ends of a quad and computes the dash distance
+    // itself
     if(gmshLineStippleEnabled())
       glShader::setStipple(true, gmshLineStippleFactor(),
                            gmshLineStipplePattern());
@@ -642,8 +622,8 @@ void drawVertexArray(VertexArray *va, GLenum type)
     }
   }
 
-  // A dashed line drawn from an array: the array holds no distance along the
-  // line, so it is worked out here and handed over with it.
+  // a dashed line from an array: the distances along the line are computed
+  // here
   std::vector<float> dash;
   if(useShaders() && type == GL_LINES && gmshLineStippleEnabled())
     dashDistances(va, dash);
@@ -654,25 +634,17 @@ void drawVertexArray(VertexArray *va, GLenum type)
   if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-// The section a clipping plane cuts out of a 3D element is part of the vertex
-// arrays, so they have to be built again when a plane moves, or when the set of
-// planes that clip a view changes. The planes can be moved from the clipping
-// window, from a script or from the API, so notice it here rather than at every
-// place that sets them
-// The clipping planes are applied by OpenGL, and what they add - the section
-// they cut, the elements they cut drawn whole - is held in arrays of its own,
-// built on its own token: a plane moving asks for nothing to be built again.
-// The one exception is a view drawn with only the volumes a plane cuts, which
-// nothing but the fill can express: those arrays are filled through the planes
-// themselves, and have to be filled again when they move.
+// The clipping planes are applied by OpenGL and what they add (the section,
+// the cut elements drawn whole) lives in arrays of its own, so moving a plane
+// rebuilds nothing here. The exception is a view drawn with only the volumes
+// a plane cuts: its arrays are filled through the planes and must be refilled
+// when they move.
 static void checkClipPlanesChanged()
 {
 #if defined(HAVE_POST)
-  // While the user is choosing - dragging a clipping plane, typing a value -
-  // the fast representation is drawn, and the arrays are left as they are
-  // however many times the scene is redrawn in between. What the planes were is
-  // only remembered once the change has been acted upon, so the first frame
-  // after that picks it up and rebuilds once
+  // while dragging the fast representation is drawn and the arrays are left
+  // alone; the planes are only remembered once acted upon, so the first
+  // frame afterwards rebuilds once
   if(drawContext::global()->mouseIsPressed()) return;
 
   CTX *ctx = CTX::instance();
@@ -683,7 +655,7 @@ static void checkClipPlanesChanged()
   bool changed = (whole != ctx->clipWholeElements) ||
                  (onlyVolume != ctx->clipOnlyVolume) ||
                  (cutOnly != ctx->clipOnlyDrawIntersectingVolume);
-  // remembered as it was, so that leaving the mode fills them one last time
+  // leaving the mode fills them one last time
   bool wasCutOnly = (whole == 1 && cutOnly == 1);
   whole = ctx->clipWholeElements;
   onlyVolume = ctx->clipOnlyVolume;
@@ -762,17 +734,14 @@ void drawContext::draw3d()
   if(!CTX::instance()->camera) initPosition(true);
   drawAxes();
 
-  // Everything see-through is drawn after everything else, and all of it in
-  // one pass: that way a single pass can sum it, and what comes out does not
-  // depend on whether the geometry, the mesh or a view was drawn first. A
-  // picking pass never splits, as what it reads back has to be an identifier
-  // rather than a blend of several.
+  // everything transparent is drawn after everything else, in one pass, so
+  // that the result does not depend on the drawing order; a picking pass
+  // never splits, as it reads back identifiers rather than blends
   bool split = (render_mode != GMSH_SELECT) &&
                (gmshGeometryIsTransparent() || gmshMeshIsTransparent() ||
                 anyViewIsTransparent());
 
-  // What each category's Transparency option comes to. A picking pass draws
-  // identifiers rather than colours and must not have them faded.
+  // the Transparency options; a picking pass must not fade its identifiers
   double geomScale = inPickColorMode() ? 1. : CTX::instance()->geom.transparency;
   double meshScale = inPickColorMode() ? 1. : CTX::instance()->mesh.transparency;
   bool geomFilled = (CTX::instance()->geom.transparencyMode == 0);
@@ -803,10 +772,9 @@ void drawContext::draw3d()
     transparencyPass = TRANSPARENCY_TRANSPARENT;
     bool summed = glShader::beginTransparent();
     if(!summed) {
-      // Nothing to sum into: painted in the order it comes. The geometry and
-      // the mesh are not sorted, so they must not write depth either - a face
-      // in front would otherwise hide what is behind it instead of letting it
-      // show through, which is the whole point of drawing them see-through.
+      // no summing buffers: blend in drawing order. The geometry and the
+      // mesh are not sorted, so they must not write depth, or a face in
+      // front would hide what is behind it.
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glDepthMask(GL_FALSE);
@@ -816,8 +784,7 @@ void drawContext::draw3d()
     gmshAlphaScale(meshScale, meshFilled);
     drawMesh();
     gmshAlphaScale(1., false);
-    // the views sort themselves back to front and have always written depth
-    // while doing it: that is left exactly as it was
+    // the views sort back to front and write depth, as they always did
     if(!summed) glDepthMask(GL_TRUE);
     drawPost();
     if(summed)
@@ -1221,9 +1188,8 @@ void drawContext::initRenderModel()
   gmshScale(s[0], s[1], s[2]);
   gmshTranslate(t[0], t[1], t[2]);
 
-  // A core profile has none of the fixed function lighting state below, and
-  // each call to it would only raise an error: the shader is handed the same
-  // lights as uniforms instead.
+  // a core profile has no fixed function lighting: the shader gets the lights
+  // as uniforms instead
   bool fixed = !gmshUseShaders();
 
   for(int i = 0; i < 6; i++) {
@@ -1233,10 +1199,9 @@ void drawContext::initRenderModel()
                              (GLfloat)CTX::instance()->lightPosition[i][2],
                              (GLfloat)CTX::instance()->lightPosition[i][3]};
       if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
-      // OpenGL puts the position through the modelview matrix that is current
-      // here, which is the scale and the translation alone: the lights follow
-      // neither the rotation nor the camera. The shader is handed the result
-      // of that same transform, so that it lights the scene the same way.
+      // OpenGL transforms the position by the current modelview (the scale
+      // and translation alone, so the lights do not rotate with the model);
+      // the shader is given the same result
       double pos[4] = {position[0], position[1], position[2], position[3]};
       double eye[4];
       glMatrix::transform(gmshMatrix(GMSH_MODELVIEW), pos, eye);
@@ -1400,10 +1365,7 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   d[2] /= len;
 }
 
-// The two matrices these need are the ones that are current, which used to be
-// asked of OpenGL. A core profile keeps neither of them - there is no matrix
-// stack in it at all - so they are asked of the place that does, which is
-// where they were computed in the first place.
+// the current matrices are ours (a core profile has no matrix stack)
 void drawContext::viewport2World(double vp[3], double xyz[3])
 {
   GLint glvp[4];
@@ -1450,15 +1412,12 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 
-  // The selection buffer reported every primitive in the picking frustum, so a
-  // point or a curve hidden behind a surface could still be selected. Depth
-  // testing would hide them here, so give each dimension its own depth range,
-  // the lower ones in front: this keeps the depth order inside a dimension
-  // while letting a point be picked through a surface.
+  // give each dimension its own depth range, lower dimensions in front, so
+  // that a point or a curve can be picked through a surface, as with the
+  // selection buffer
   int d = (type < 0) ? 4 : (type > 4 ? 4 : type);
-  // the depth range is OpenGL's own state, which a batch of immediate mode
-  // primitives does not carry: what is waiting belongs to the object before
-  // this one and has to be drawn under its range
+  // pending immediate mode primitives belong to the previous object and its
+  // depth range
   gmshFlushImmediate();
   glDepthRange(0.2 * d, 0.2 * d + 0.2);
 }
@@ -1466,21 +1425,18 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
 void drawContext::unsetPickColor()
 {
   if(!_pickColor) return;
-  // 0 is the background: what is drawn now belongs to no pickable object
+  // 0 is the background: no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 }
 
-// Side of the region, in real pixels, that a picking pass draws and keeps
-// around the point that was asked for. Big enough that the pointer usually
-// stays inside it while hovering, small enough that drawing it costs a
-// fraction of what the whole window would.
+// side (in real pixels) of the region a picking pass draws and keeps around
+// the query point
 static const int PICK_CACHE_SIZE = 512;
 
-// Draw a region of the window with every pickable object in the flat colour
-// that encodes it, and keep the result: the picks that follow are then lookups
-// in that image, so hovering does not redraw the scene on every mouse move.
+// draw a region of the window in picking colours and keep the image, so that
+// the picks that follow are lookups rather than redraws
 bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
                                  int fh)
 {
@@ -1496,10 +1452,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   GLfloat oldClear[4];
   glGetFloatv(GL_COLOR_CLEAR_VALUE, oldClear);
 
-  // Draw into a buffer of our own when the shader pipeline is the one drawing:
-  // the depth has to be read back as well as the identifiers, and reading a
-  // depth buffer is not something OpenGL ES or WebGL will do. The shader
-  // writes it as a colour into a second attachment instead.
+  // the shader pipeline draws into its own framebuffer, where the depth is
+  // written as a colour: OpenGL ES and WebGL cannot read a depth buffer back
   double hr = highResolutionPixelFactor();
   bool intoPickBuffer =
     gmshUseShaders() &&
@@ -1510,9 +1464,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glEnable(GL_DEPTH_TEST);
   gmshLighting(false);
   glDisable(GL_BLEND);
-  // the identifier colour must not be interpolated across a primitive; the
-  // shader hands every fragment of a draw the same one, so there is nothing to
-  // ask of a core profile, which has no shade model either
+  // the identifier colour must not be interpolated (the shader gives every
+  // fragment the same one)
   if(!gmshUseShaders()) glShadeModel(GL_FLAT);
   // only rasterise the region the image covers
   glEnable(GL_SCISSOR_TEST);
@@ -1528,11 +1481,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   if(post) drawPost();
   drawGraph2d(true);
 
-  // 2d stuff, drawn in pixel coordinates
-  // as in draw2d(): the 2D overlay is painted on top, in the order it is drawn,
-  // so the depth test has to go. Leaving it on would make the graph frame and
-  // the axes, drawn before the data points and in the depth range that was
-  // current at the time, hide the points from the picking pass.
+  // 2D overlay, painted on top in drawing order as in draw2d(): without the
+  // depth test off, the graph frame and axes would hide the data points
   glDisable(GL_DEPTH_TEST);
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
   gmshMatrixMode(GMSH_PROJECTION);
@@ -1606,8 +1556,7 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   if(y0 + h > viewport[3]) h = viewport[3] - y0;
   if(w < 1 || h < 1) return false;
 
-  // the viewport is in logical points, but the image is in real pixels, which
-  // differ on a high resolution display
+  // the viewport is in logical points, the image in real pixels
   double hr = highResolutionPixelFactor();
   int fx0 = (int)(x0 * hr), fy0 = (int)(y0 * hr);
   int fw = (int)(w * hr), fh = (int)(h * hr);
@@ -1622,8 +1571,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
                 fy0 + fh <= _pickCacheY + _pickCacheHeight;
   if(!inside || _pickCacheMesh != mesh || _pickCachePost != post ||
      _pickCacheElements != pickElements) {
-    // a region around the query, big enough that the pointer has to travel a
-    // long way before the image has to be drawn again
+    // a region around the query, so that the image serves the picks that
+    // follow
     int cw = std::min(winW, PICK_CACHE_SIZE), ch = std::min(winH, PICK_CACHE_SIZE);
     if(cw < fw) cw = fw;
     if(ch < fh) ch = fh;
@@ -1645,10 +1594,9 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
      fy0 + fh > _pickCacheHeight)
     return false;
 
-  // gather the objects that show up, keeping the smallest depth for each. The
-  // 2D overlay is painted on top of the scene without depth testing, so it
-  // wrote no depth of its own and the buffer holds whatever is underneath it:
-  // rank it in front, which is where it is drawn.
+  // gather the objects, keeping the smallest depth of each; the 2D overlay
+  // wrote no depth (it is painted on top without depth test), so rank it in
+  // front
   std::map<std::size_t, float> found;
   for(int r = 0; r < fh; r++) {
     for(int c = 0; c < fw; c++) {

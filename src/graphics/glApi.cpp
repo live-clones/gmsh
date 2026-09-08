@@ -132,9 +132,7 @@ namespace glApi {
 
   static bool haveExtension(const char *name)
   {
-    // OpenGL 3 hands the extensions out one at a time, and a core profile only
-    // that way: the one string that listed them all is gone there, and asking
-    // for it is an error
+    // a core profile only lists the extensions one at a time
     if(_major >= 3 && GetStringi) {
       GLint n = 0;
       glGetIntegerv(GL_NUM_EXTENSIONS, &n);
@@ -279,17 +277,14 @@ namespace glApi {
 
     parseVersion((const char *)glGetString(GL_VERSION), _major, _minor, _es);
 
-    // An entry point being there says nothing about the context being able to
-    // run it: the macOS framework exports the whole of the core profile
-    // whatever version the current context is, so every capability below is
-    // the version the feature became core in, and the pointers on top of it.
+    // an entry point being there says nothing about the context (macOS
+    // exports the whole core profile whatever the context version), so each
+    // capability also checks the version the feature became core in
     _buffers = GenBuffers && DeleteBuffers && BindBuffer && BufferData &&
                atLeast(1, 5);
-    // what it takes to draw a frame with shaders: the programs themselves
-    // (OpenGL 2.0), the vertex attributes they read (2.0), and the vertex
-    // array objects a core profile makes compulsory (3.0). Asking for 3.2
-    // rather than 3.0 is asking for the profile macOS gives, which is the
-    // oldest one it has with shaders in it
+    // programs (OpenGL 2.0), vertex attributes (2.0) and the vertex array
+    // objects a core profile requires (3.0); 3.2 is the oldest profile macOS
+    // provides with shaders
     _shaders = CreateShader && ShaderSource && CompileShader && CreateProgram &&
                AttachShader && LinkProgram && UseProgram &&
                GetUniformLocation && VertexAttribPointer &&
@@ -311,9 +306,8 @@ namespace glApi {
                     (_es ? (atLeast(3, 2) ||
                             haveExtension("GL_EXT_draw_buffers_indexed")) :
                            atLeast(4, 0));
-    // A floating point colour buffer is core desktop OpenGL from 3.0. OpenGL
-    // ES 3.0 can hold half floats in a texture but not draw into one, which
-    // takes an extension until ES 3.2.
+    // floating point colour buffers are core from OpenGL 3.0; OpenGL ES 3.0
+    // needs an extension to draw into one, until ES 3.2
     _floatColorBuffers =
       _framebuffers &&
       (_es ? (atLeast(3, 2) || haveExtension("GL_EXT_color_buffer_float") ||

@@ -533,8 +533,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Clip5D" , opt_general_clip5d , 1.0 ,
     "Fourth coefficient in equation for clipping plane 5" },
   { F|O, "ClipCapping" , opt_general_clip_capping , 0. ,
-    "Fill the hole a clipping plane opens in a 3D mesh or view with the "
-    "section where the plane cuts the elements" },
+    "Fill the section cut by the clipping planes in 3D meshes and views?" },
   { F|O,   "ClipFactor" , opt_general_clip_factor , 5.0 ,
     "Near and far clipping plane distance factor (decrease value for better "
     "z-buffer resolution)" },
@@ -770,10 +769,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Vertical position (in pixels) of the upper left corner of the option window" },
   { F|O, "OrderIndependentTransparency" ,
     opt_general_order_independent_transparency , 1. ,
-    "Draw transparent objects by summing them into buffers of their own and "
-    "compositing afterwards, instead of sorting them back to front? (only "
-    "used with the shader pipeline, and ignored if the OpenGL implementation "
-    "cannot draw into floating point buffers)" },
+    "Use order-independent (weighted blended) transparency instead of "
+    "back-to-front sorting? (shader pipeline only)" },
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0: perspective projection)" },
 
@@ -805,12 +802,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "QuadricSubdivisions" , opt_general_quadric_subdivisions, 6. ,
     "Number of subdivisions used to draw points or lines as spheres or cylinders" },
   { F|O, "GlyphCacheSize" , opt_general_glyph_cache_size, 0. ,
-    "Maximum amount of memory (in MB) used to keep the triangles that the "
-    "glyphs (spheres, arrows, cylinders, ...) are made of between frames; "
-    "past it they are rebuilt for every frame, which is slower but takes no "
-    "memory (0: automatic). Unused when the shader pipeline draws them, as it "
-    "is handed the shape and where every glyph goes instead of their "
-    "triangles" },
+    "Maximum memory (in MB) used to cache glyphs (spheres, arrows, ...) "
+    "between frames (0: automatic; unused with the shader pipeline)" },
 
   { F,   "RotationX" , opt_general_rotation0 , 0.0 ,
     "First Euler angle (used if Trackball=0)" },
@@ -841,9 +834,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F,   "ScaleZ" , opt_general_scale2 , 1.0 ,
     "Z-axis scale factor" },
   { F|O, "Shaders" , opt_general_shaders , 0. ,
-    "Draw with the OpenGL shader pipeline instead of the fixed function one? "
-    "(changing this recreates the OpenGL context; ignored if the OpenGL "
-    "implementation does not provide shaders)" },
+    "Use the OpenGL shader pipeline instead of the fixed function one? "
+    "(recreates the OpenGL context)" },
   { F|O, "Shininess" , opt_general_shine , 0.4 ,
     "Material shininess" },
   { F|O, "ShininessExponent" , opt_general_shine_exponent , 40. ,
@@ -905,9 +897,7 @@ StringXNumber GeneralOptions_Number[] = {
     "(0: silent except for fatal errors, 1: +errors, 2: +warnings, 3: +direct, "
     "4: +information, 5: +status, 99: +debug)" },
   { F|O, "VertexBufferObjects" , opt_general_vertex_buffer_objects , 1. ,
-    "Keep the vertex arrays in OpenGL buffer objects instead of sending them "
-    "from client memory at each frame? (ignored if the OpenGL "
-    "implementation does not provide buffer objects)" },
+    "Store vertex arrays in OpenGL buffer objects?" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the visibility "
     "window" },
@@ -1125,11 +1115,10 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ToleranceBoolean" , opt_geometry_tolerance_boolean, 0. ,
     "Geometrical tolerance for boolean operations" },
   { F|O, "Transparency" , opt_geometry_transparency , 1. ,
-    "Multiply the alpha (opacity) of every geometry colour by this factor (1: "
-    "opaque, 0: fully transparent)" },
+    "Opacity factor applied to all geometry colors (1: opaque, 0: fully "
+    "transparent)" },
   { F|O, "TransparencyMode" , opt_geometry_transparency_mode , 0. ,
-    "What Geomtry.Transparency above is applied to (0: filled surfaces only; "
-    "1: everything)" },
+    "Apply Geometry.Transparency to (0: filled surfaces only; 1: everything)" },
   { F,   "Transform" , opt_geometry_transform , 0. ,
     "Transform model display coordinates (0: no, 1: scale)" },
   { F,   "TransformXX" , opt_geometry_transform00 , 1. ,
@@ -1250,11 +1239,10 @@ StringXNumber MeshOptions_Number[] = {
     "Create mesh edges before saving MSH files" },
 
   { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 1. ,
-    "Draw only the faces that bound a 3D mesh, dropping those shared by two volume "
-    "elements." },
+    "Draw only the boundary faces of 3D meshes?" },
   { F|O, "DrawUniqueEdges" , opt_mesh_draw_unique_edges , 1. ,
-    "Draw each mesh edge once, instead of once per element sharing it? (only "
-    "applies if Mesh.Explode is 1)" },
+    "Draw each mesh edge once instead of once per element? (only if "
+    "Mesh.Explode is 1)" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 
@@ -1724,11 +1712,10 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ToleranceReferenceElement" , opt_mesh_tolerance_reference_element , 1e-6,
     "Tolerance for classifying a point inside a reference element (of size 1)" },
   { F|O, "Transparency" , opt_mesh_transparency , 1. ,
-    "Multiply the alpha (opacity) of every mesh colour by this factor (1: "
-    "opaque, 0: fully transparent)" },
+    "Opacity factor applied to all mesh colors (1: opaque, 0: fully "
+    "transparent)" },
   { F|O, "TransparencyMode" , opt_mesh_transparency_mode , 0. ,
-    "What Mesh.Transparency is applied to (0: filled surfaces only; 1: "
-    "everything)" },
+    "Apply Mesh.Transparency to (0: filled surfaces only; 1: everything)" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
   { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,
@@ -1970,8 +1957,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "DrawScalars" , opt_view_draw_scalars , 1. ,
     "Display scalar values?" },
   { F|O, "DrawSkinOnly" , opt_view_draw_skin_only , 1. ,
-    "Draw only the faces that bound a 3D view, dropping those shared by two volume "
-    "elements." },
+    "Draw only the boundary faces of 3D views?" },
   { F|O, "DrawStrings" , opt_view_draw_strings , 1. ,
     "Display post-processing annotation strings?" },
   { F|O, "DrawTensors" , opt_view_draw_tensors , 1. ,
@@ -2127,8 +2113,8 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "TransformZZ" , opt_view_transform22 , 1. ,
     "Element (3,3) of the 3x3 coordinate transformation matrix" },
   { F|O, "Transparency" , opt_view_transparency , 1. ,
-    "Multiply the alpha (opacity) the colormap gives by this factor (1: as the "
-    "colormap says, 0: fully transparent)" },
+    "Opacity factor applied to the colormap (1: unchanged, 0: fully "
+    "transparent)" },
   { F,   "Type" , opt_view_type , 1 ,
     "Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)" },
 
