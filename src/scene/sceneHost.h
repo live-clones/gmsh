@@ -30,6 +30,10 @@ class sceneView;
 
 namespace Scene {
 
+  // What the pointer says it is over. There is no crosshair among the cursors
+  // every toolkit has, so the hand is what "this can be clicked" comes out as.
+  enum Cursor { Ordinary = 0, Picking };
+
   struct Host {
     // another frame is wanted
     std::function<void()> redraw;
@@ -47,6 +51,14 @@ namespace Scene {
     // say something next to the pointer, over the view: what is being picked,
     // put where the user is already looking
     std::function<void(const std::string &text)> tooltip;
+    // What the pointer is to look like over the view: Picking when it is
+    // over something that can be clicked, Ordinary otherwise. Said both ways
+    // round every time the scene works out what is under the pointer, so
+    // that a holder which keeps the cursor it was given needs no rule of its
+    // own for taking it off again. It is the holder's because a cursor
+    // belongs to a window rather than to what is drawn in it, and because
+    // the toolkits do not offer the same ones.
+    std::function<void(Cursor kind)> cursor;
     // The view the pointer was last in, which is the one the rest of Gmsh
     // means by "the current one". Whoever holds the views keeps it, since a
     // click on one of them is what changes it.

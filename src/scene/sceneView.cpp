@@ -11,7 +11,6 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include "imgui.h"
 
 #include "sceneView.h"
 #include "sceneHost.h"
@@ -271,14 +270,17 @@ void sceneView::_hover()
                      (int)_curr.win[1], 5, 5, vertices, edges, faces, regions,
                      elements, points, views);
 
-  // there is no crosshair among the cursors Dear ImGui knows, so the hand is
-  // what says "this can be clicked"
-  if((_selection == ENT_ALL && res) ||
-     (_selection == ENT_POINT && vertices.size()) ||
-     (_selection == ENT_CURVE && edges.size()) ||
-     (_selection == ENT_SURFACE && faces.size()) ||
-     (_selection == ENT_VOLUME && regions.size()))
-    ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+  // What the pointer is to look like. Said both ways round and not only when
+  // there is something to click: a holder that keeps the cursor it was given
+  // -- which is every one of them but the immediate mode interface, where it
+  // is set again at every frame -- would otherwise be left holding a hand.
+  bool pickable = (_selection == ENT_ALL && res) ||
+                  (_selection == ENT_POINT && vertices.size()) ||
+                  (_selection == ENT_CURVE && edges.size()) ||
+                  (_selection == ENT_SURFACE && faces.size()) ||
+                  (_selection == ENT_VOLUME && regions.size());
+  if(Scene::host().cursor)
+    Scene::host().cursor(pickable ? Scene::Picking : Scene::Ordinary);
 
   std::string text, cmd;
   bool multiline = CTX::instance()->tooltips;
