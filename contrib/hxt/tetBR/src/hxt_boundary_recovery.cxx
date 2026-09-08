@@ -556,7 +556,7 @@ int tetgenmesh::reconstructmesh(void *p, double tol){
       }
 
 
-      int counter = 0;
+      uint64_t counter = 0;
       while (tetloop.tet != (tetrahedron *) NULL) {
         tetloop.ver = 11;
         p[0] = org(tetloop);
