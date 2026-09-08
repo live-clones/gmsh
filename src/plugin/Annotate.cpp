@@ -10,6 +10,7 @@
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
+#include "glMatrix.h"
 #endif
 
 StringXNumber AnnotateOptions_Number[] = {
@@ -65,14 +66,16 @@ void GMSH_AnnotatePlugin::draw(void *context)
     gmshEnd();
   }
   else {
-    double modelview[16], projection[16];
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-
+    // the matrices are ours, not OpenGL's: a core profile has none to ask for
+    double modelview[16], projection[16], px[16];
+    for(int i = 0; i < 16; i++) {
+      projection[i] = gmshMatrix(GMSH_PROJECTION)[i];
+      modelview[i] = gmshMatrix(GMSH_MODELVIEW)[i];
+    }
     gmshMatrixMode(GMSH_PROJECTION);
-    gmshLoadIdentity();
-    glOrtho((double)ctx->viewport[0], (double)ctx->viewport[2],
-            (double)ctx->viewport[1], (double)ctx->viewport[3], -1., 1.);
+    glMatrix::ortho(ctx->viewport[0], ctx->viewport[2], ctx->viewport[1],
+                    ctx->viewport[3], -1., 1., px);
+    gmshLoadMatrix(px);
     gmshMatrixMode(GMSH_MODELVIEW);
     gmshLoadIdentity();
     ctx->fix2dCoordinates(&X, &Y);
