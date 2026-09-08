@@ -1407,11 +1407,12 @@ namespace {
         const char *label = q.buttonLabel.c_str();
         float w = ImGui::CalcTextSize(label).x +
                   2.f * ImGui::GetStyle().FramePadding.x;
-        // On the last line of the pane when there is room for it there, on
-        // one of its own when the pane is already full -- and always on one of
-        // its own when it stands apart, which is the line the box gave up for
-        // it above.
-        if(pad == 0 && !started && !q.buttonApart) ImGui::SameLine();
+        // On the last line of the pane when there is room for it there, and
+        // on one of its own when the pane is already full. A pane that is a
+        // box has been given that line above, under the box: putting the
+        // button on the same line as the box would put it level with the top
+        // of it, which is where it used to land.
+        if(pad == 0 && !started && !q.buttonApart && !boxed) ImGui::SameLine();
         ImGui::SetCursorPosX(q.buttonApart ?
                                ImGui::GetCursorStartPos().x :
                                ImGui::GetContentRegionMax().x - w);
@@ -1768,6 +1769,24 @@ void appWindow::_drawDialog(unsigned which)
     ImGui::PopID();
   }
 
+  // What the panel keeps under the panes and does not scroll with them: its
+  // footer, and its buttons unless they share the footer's last line. A pane
+  // that scrolls has to stop above it, which is what its box is given a
+  // negative height for -- and a pane that does not scroll has nothing to
+  // leave room for, since the window follows what it holds.
+  bool merged = panel.buttonsInFooter && panel.footer.size() &&
+                panel.buttons.size();
+  float underPanes = 0.f;
+  if(!wholeScrolls) {
+    if(panel.footer.size())
+      underPanes += (float)_rows(panel.footer) *
+                      ImGui::GetFrameHeightWithSpacing() +
+                    // and the rule drawn above it
+                    ImGui::GetStyle().ItemSpacing.y + 1.f;
+    if(panel.buttons.size() && !merged)
+      underPanes += ImGui::GetFrameHeightWithSpacing();
+  }
+
   if(!panel.tabbed) {
     // one long form: the panes follow one another as titled sections
     for(std::size_t i = 0; i < panel.panes.size(); i++) {
@@ -1775,16 +1794,7 @@ void appWindow::_drawDialog(unsigned which)
       if(q.visible && !q.visible()) continue;
       if(q.label.size()) ImGui::SeparatorText(q.label.c_str());
       ImGui::PushID((int)i);
-      // what has to be left under the last pane: the footer of the panel and
-      // its buttons, which do not scroll with it
-      float reserve = 0.f;
-      if(!wholeScrolls) {
-        if(panel.footer.size())
-          reserve += (float)_rows(panel.footer) *
-                     ImGui::GetFrameHeightWithSpacing();
-        if(panel.buttons.size()) reserve += ImGui::GetFrameHeightWithSpacing();
-      }
-      _paneBody(q, width, scrolls && !wholeScrolls, 0, nullptr, reserve);
+      _paneBody(q, width, scrolls && !wholeScrolls, 0, nullptr, underPanes);
       ImGui::PopID();
       if(q.buttonLabel.size()) {
         // against the right edge, where the window this replaces puts it --
@@ -1850,7 +1860,7 @@ void appWindow::_drawDialog(unsigned which)
       }
       if(moved && panel.panes[i].chosen) panel.panes[i].chosen();
       ImGui::PushID((int)i);
-      _paneBody(panel.panes[i], width, scrolls, most, this);
+      _paneBody(panel.panes[i], width, scrolls, most, this, underPanes);
       ImGui::PopID();
     };
 
@@ -1923,8 +1933,6 @@ void appWindow::_drawDialog(unsigned which)
     }
   }
 
-  bool merged = panel.buttonsInFooter && panel.footer.size() &&
-                panel.buttons.size();
   if(panel.footer.size()) {
     ImGui::Separator();
     ImGui::PushID("footer");
