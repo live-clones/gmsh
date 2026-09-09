@@ -1959,8 +1959,8 @@ optionWindow::optionWindow(int deltaFontSize)
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 5 * BH, IW / 2, BH,
                            "Studio light spread and floor offset");
       general.value[34]->tooltip("General.StudioFloorOffset");
-      general.value[34]->minimum(-1.e22);
-      general.value[34]->maximum(1.e22);
+      general.value[34]->minimum(-10);
+      general.value[34]->maximum(10);
       if(CTX::instance()->inputScrolling) general.value[34]->step(0.01);
       general.value[34]->align(FL_ALIGN_RIGHT);
       general.value[34]->callback(general_options_ok_cb);
