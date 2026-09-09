@@ -9310,14 +9310,16 @@ double opt_view_colormap_number(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     int n = (int)val;
-    if(n < 0) n = 24;
-    if(n > 24) n = 0;
+    if(n < 0) n = ColorTable_NumPredefined() - 1;
+    if(n >= ColorTable_NumPredefined()) n = 0;
     opt->colorTable.ipar[COLORTABLE_NUMBER] = n;
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
+    FlGui::instance()->options->view.choice[17]->value(
+      opt->colorTable.ipar[COLORTABLE_NUMBER]);
     FlGui::instance()->options->view.colorbar->redraw();
   }
 #endif

@@ -836,6 +836,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double displacement_factor =
     opt_view_displacement_factor(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
+  int colormap_number = (int)opt_view_colormap_number(current, GMSH_GET, 0);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
   double explode = opt_view_explode(current, GMSH_GET, 0);
   double angle_smooth_normals =
@@ -912,6 +913,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 
       val = o->view.choice[8]->value();
       if(force || (val != axes)) opt_view_axes(i, GMSH_SET, val);
+
+      val = o->view.choice[17]->value();
+      if(force || (val != colormap_number))
+        opt_view_colormap_number(i, GMSH_SET, val);
 
       val = o->view.choice[9]->value();
       if(force || (val != boundary)) opt_view_boundary(i, GMSH_SET, val);
@@ -3926,8 +3931,25 @@ optionWindow::optionWindow(int deltaFontSize)
       // o->label("@-1gmsh_colormap");
       o->hide();
 
-      view.colorbar = new colorbarWindow(L + 2 * WB, 2 * WB + BH,
-                                         width - 4 * WB, height - 4 * WB - BH);
+      // the predefined maps by name, above the map itself
+      static std::vector<Fl_Menu_Item> menu_colormap;
+      if(menu_colormap.empty()) {
+        for(int i = 0; i < ColorTable_NumPredefined(); i++) {
+          Fl_Menu_Item item = {ColorTable_Name(i), 0, nullptr, nullptr};
+          menu_colormap.push_back(item);
+        }
+        Fl_Menu_Item last = {nullptr};
+        menu_colormap.push_back(last);
+      }
+      view.choice[17] = new Fl_Choice(L + 2 * WB, 2 * WB + BH, IW, BH,
+                                      "Predefined colormap");
+      view.choice[17]->tooltip("View.ColormapNumber");
+      view.choice[17]->menu(&menu_colormap[0]);
+      view.choice[17]->align(FL_ALIGN_RIGHT);
+      view.choice[17]->callback(view_options_ok_cb);
+
+      view.colorbar = new colorbarWindow(L + 2 * WB, 2 * WB + 2 * BH,
+                                         width - 4 * WB, height - 4 * WB - 2 * BH);
       view.colorbar->end();
       view.colorbar->callback(view_options_ok_cb);
 
@@ -4071,6 +4093,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_size1(index, GMSH_GUI, 0);
 
   opt_view_axes(index, GMSH_GUI, 0);
+  opt_view_colormap_number(index, GMSH_GUI, 0);
   opt_view_axes_mikado(index, GMSH_GUI, 0);
   opt_view_axes_format0(index, GMSH_GUI, "");
   opt_view_axes_format1(index, GMSH_GUI, "");
