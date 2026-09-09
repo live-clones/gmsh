@@ -3004,6 +3004,11 @@ double opt_general_vertex_buffer_objects(OPT_ARGS_NUM)
 double opt_general_shading(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->shading = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.choice[8]->value(
+      CTX::instance()->shading);
+#endif
   return CTX::instance()->shading;
 }
 
@@ -3016,6 +3021,11 @@ double opt_general_studio_light_spread(OPT_ARGS_NUM)
 double opt_general_studio_samples(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->studioSamples = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[33]->value(
+      CTX::instance()->studioSamples);
+#endif
   return CTX::instance()->studioSamples;
 }
 
