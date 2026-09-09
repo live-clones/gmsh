@@ -381,23 +381,13 @@ void openglWindow::draw()
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     if(CTX::instance()->camera && !CTX::instance()->stereo) {
-      Camera *cam = &(_ctx->camera);
-      if(!cam->on) cam->init();
-      cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
-      gmshMatrixMode(GMSH_PROJECTION);
-      double frustum[16], view[16];
-      glMatrix::frustum(cam->glFleft, cam->glFright, cam->glFbottom,
-                        cam->glFtop, cam->glFnear, cam->glFfar * cam->Lc,
-                        frustum);
-      gmshLoadMatrix(frustum);
-
-      gmshMatrixMode(GMSH_MODELVIEW);
-      glDrawBuffer(GL_BACK);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      cameraView(cam, 0., 0., 0., view);
-      gmshLoadMatrix(view);
+      // both eyes' buffers may be left selected by stereo (a print target
+      // has no such buffer)
+      if(!_printW) glDrawBuffer(GL_BACK);
+      _cameraMatrices();
       _ctx->draw3d();
       _ctx->draw2d();
+      _studioFrame();
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active &&
          Nautilus)
         Nautilus->drawIcons();
@@ -452,6 +442,7 @@ void openglWindow::draw()
     }
     else {
       _ctx->draw3d();
+      memcpy(_frameView, _ctx->model, sizeof(_frameView));
       _ctx->draw2d();
       _studioFrame();
       _drawScreenMessage();
@@ -465,6 +456,23 @@ void openglWindow::draw()
 
 }
 
+void openglWindow::_cameraMatrices()
+{
+  Camera *cam = &(_ctx->camera);
+  if(!cam->on) cam->init();
+  cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
+  double frustum[16], jitter[16], proj[16];
+  glMatrix::frustum(cam->glFleft, cam->glFright, cam->glFbottom, cam->glFtop,
+                    cam->glFnear, cam->glFfar * cam->Lc, frustum);
+  _ctx->studioJitter(jitter);
+  glMatrix::multiply(jitter, frustum, proj);
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshLoadMatrix(proj);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  cameraView(cam, 0., 0., 0., _frameView);
+  gmshLoadMatrix(_frameView);
+}
+
 // The accumulation of the studio shading: after a frame, while the view is
 // still, the timer asks for more frames with the light, the dome and the
 // projection jittered, and each is added to the average put on the window.
@@ -474,7 +482,7 @@ void openglWindow::_studioFrame()
   Fl::remove_timeout(_studioSampleCb, this);
   CTX *ctx = CTX::instance();
   int n = ctx->studioSamples;
-  if(!gmshUseShaders() || ctx->shading < 1 || n < 2) {
+  if(!gmshUseShaders() || ctx->shading < 1 || n < 2 || ctx->stereo) {
     _ctx->studioSample = 0;
     return;
   }
@@ -483,7 +491,7 @@ void openglWindow::_studioFrame()
   if(k > 0) {
     // the view changed since the last frame: start over
     if(w != _studioW || h != _studioH ||
-       memcmp(_studioModel, _ctx->model, sizeof(_studioModel))) {
+       memcmp(_studioModel, _frameView, sizeof(_studioModel))) {
       Msg::Debug("Studio frames: the view changed, starting over");
       k = _ctx->studioSample = 0;
     }
@@ -499,13 +507,14 @@ void openglWindow::_studioFrame()
       Msg::Debug("Studio frame %d of %d accumulated", k, n);
     }
   }
-  memcpy(_studioModel, _ctx->model, sizeof(_studioModel));
+  memcpy(_studioModel, _frameView, sizeof(_studioModel));
   _studioW = w;
   _studioH = h;
   if(ctx->printing) {
     for(int j = k + 1; j < n; j++) {
       _ctx->studioSample = j;
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      if(ctx->camera) _cameraMatrices();
       _ctx->draw3d();
       _ctx->draw2d();
       gmshFlushImmediate();

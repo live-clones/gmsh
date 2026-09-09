@@ -92,13 +92,15 @@ private:
   void _drawScreenMessage();
   void _drawBorder();
   // the accumulation of the studio frames: whether this draw is one of them
-  // (asked for by the timer), and the modelview and window size the last one
-  // was drawn with
+  // (asked for by the timer), the modelview of this frame, and the modelview
+  // and window size the last one was drawn with
   bool _studioTimer;
-  double _studioModel[16];
+  double _frameView[16], _studioModel[16];
   int _studioW, _studioH;
   // the size of the picture being drawn instead of the window, or 0
   int _printW, _printH;
+  // the camera's projection (shifted for the studio frame) and modelview
+  void _cameraMatrices();
   void _studioFrame();
   static void _studioSampleCb(void *data);
   bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
