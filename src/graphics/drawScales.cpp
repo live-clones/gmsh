@@ -89,17 +89,14 @@ static std::string multiplierText(int exp)
   return s;
 }
 
-// where t (0 to 1) falls along a bar of the given length: an iso bar keeps
-// its marks a little inside its outline
+// where t (0 to 1) falls along a bar of the given length: a pixel inside
+// the outline at either end, the same for every interval type so that
+// nothing moves when the type changes (the first and last iso marks, 3
+// pixels wide, then overlap the outline, which is drawn over them)
 static double alongBar(PViewOptions *opt, double t, double length)
 {
-  if(opt->intervalsType == PViewOptions::Iso) {
-    // the first and last marks (3 pixels wide) flush with the outline, which
-    // is drawn over them
-    double inset = 1.;
-    return inset + t * (length - 2 * inset);
-  }
-  return t * length;
+  double inset = 1.;
+  return inset + t * (length - 2 * inset);
 }
 
 static bool ticksFit(const std::vector<scaleTick> &ticks, double length,
