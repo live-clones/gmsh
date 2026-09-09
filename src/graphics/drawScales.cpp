@@ -500,18 +500,18 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   std::string name = data->getName();
 
   if(horizontal) {
-    double y = ymin + height + tic + 1.4 * font_h;
+    double y = ymin + height + tic + 1.2 * font_h;
     if(sub[0] || multiplier.size()) {
       if(sub[0]) haloString(ctx, sub, xmin + width / 2., y, 1);
       if(multiplier.size()) haloString(ctx, multiplier, xmin + width, y, 2);
-      y += 1.2 * title_h;
+      y += 1.05 * title_h;
     }
     haloString(ctx, name, xmin + width / 2., y, 1, true);
   }
   else {
     double y = ymin - 2 * font_h;
     haloString(ctx, name, xmin, y, 0, true);
-    if(sub[0]) haloString(ctx, sub, xmin, y - 1.3 * font_h, 0);
+    if(sub[0]) haloString(ctx, sub, xmin, y - 1.15 * font_h, 0);
     if(multiplier.size())
       haloString(ctx, multiplier, xmin + width + tic, ymin + height + 1.2 * font_h,
                  0);
@@ -590,10 +590,10 @@ void drawContext::drawScales()
   double title_h = drawContext::global()->getStringHeight();
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
-  double above = tic + 1.4 * font_h + 2.2 * title_h;
+  double above = tic + 1.2 * font_h + 2.05 * title_h;
   // and a vertical one below its bar (the title and that line) and above
   // it (the top label and the power of ten)
-  double belowV = 3.6 * font_h, aboveV = 2.2 * font_h;
+  double belowV = 3.4 * font_h, aboveV = 2.2 * font_h;
 
   for(std::size_t i = 0; i < scales.size(); i++) {
     PView *p = scales[i];
