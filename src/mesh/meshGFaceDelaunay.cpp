@@ -2515,7 +2515,7 @@ void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
       backgroundMesh::setCrossFieldsByDistance(gf); // faster for delquad
     else
       backgroundMesh::set(gf); // will solve PDE
-    if(Msg::GetVerbosity() == 99) {
+    if(CTX::instance()->mesh.quadqsSaveDebugFiles) {
       char name[256];
       sprintf(name, "bgm-%d.pos", gf->tag());
       backgroundMesh::current()->print(name, gf);
@@ -2748,7 +2748,7 @@ void bowyerWatsonParallelograms(
                  rejectedPackedPoints, packed.size(), gf->tag());
   }
 
-  if(Msg::GetVerbosity() == 99) {
+  if(CTX::instance()->mesh.quadqsSaveDebugFiles) {
     char name[256];
     sprintf(name, "ParametricTriangulation3D%d.pos", gf->tag());
     // Keep the UV-Delaunay connectivity for direct comparison with the
@@ -2769,7 +2769,7 @@ void bowyerWatsonParallelograms(
      gf->geomType() == GEntity::DiscreteSurface)
     intrinsicDelaunayizePackedSurface(gf, DATA);
 
-  if(Msg::GetVerbosity() == 99) {
+  if(CTX::instance()->mesh.quadqsSaveDebugFiles) {
     char name[256];
     sprintf(name, "RawTriangulation3D%d.pos", gf->tag());
     // This is the actual 3D triangulation sent to Blossom, after intrinsic

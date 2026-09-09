@@ -208,3 +208,19 @@ validity, edge lengths and sampled CAD-distance diagnostics. A completed mesh
 is not necessarily specification-compliant. Native logs and the input/binary
 manifest remain in the same output directory; no per-case quality reports or
 geometry files are committed.
+
+## Optional diagnostic files
+
+Optimization drivers save only the requested mesh by default.
+`gmshQuadV2Strategy --report path.json` explicitly enables its JSON report
+and the report-only closest-CAD audits. `gmshQuadOptimizer` accepts
+`input.msh face-tag|all output.msh` without a quality POS path; supplying
+that optional path retains the existing quality export behavior.
+`buildQuadV2Strategy.py --manifest path.json` requests a build manifest.
+
+`Mesh.SaveDebugFiles = 1` enables optional PACK/QuadQuasiStructured
+point views, background-field exports, intermediate debug meshes and the
+statistics JSON. It defaults to zero; high verbosity alone does not enable
+these exports. `Solver.SaveDatabaseJSON = 1` requests the additional JSON
+copy of a saved ONELAB database. The normal ONELAB database save policy
+remains controlled by `Solver.AutoSaveDatabase`.

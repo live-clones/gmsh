@@ -1353,7 +1353,7 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   double t1 = Cpu(), w1 = TimeOfDay();
 
   bool haveParam = (gf->geomType() != GEntity::DiscreteSurface);
-  bool debug = (Msg::GetVerbosity() == 99);
+  bool debug = CTX::instance()->mesh.quadqsSaveDebugFiles;
 
   if(debug) gf->model()->writeMSH("recombine_0before.msh");
 

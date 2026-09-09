@@ -60,7 +60,7 @@ struct contextMeshOptions {
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods, quadqsCleanupMethod,
     quadqsPillowLayers, quadqsPacking3D, quadqsPacking3DForceAllPoints,
-    quadqsSmartLaplacian;
+    quadqsSmartLaplacian, quadqsSaveDebugFiles;
   double quadqsRemeshingBoldness, quadqsScalingOnTriangulation,
     quadqsTargetSize, quadqsMinimumEdgeLength, quadqsMaximumEdgeLength,
     quadqsIntrinsicEdgeLengthFactor, quadqsFinalSplitCadDistanceRatio;
@@ -401,7 +401,7 @@ public:
     std::string socketName, pythonInterpreter, octaveInterpreter;
     std::string name[NUM_SOLVERS], extension[NUM_SOLVERS];
     std::string executable[NUM_SOLVERS], remoteLogin[NUM_SOLVERS];
-    int autoSaveDatabase, autoLoadDatabase;
+    int autoSaveDatabase, autoLoadDatabase, saveDatabaseJSON;
     int autoArchiveOutputFiles, autoMesh, autoMergeFile;
     int autoShowViews, autoShowLastStep, autoCheck, showInvisibleParameters;
   } solver;

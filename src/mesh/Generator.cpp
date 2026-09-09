@@ -824,7 +824,7 @@ static void Mesh2D(GModel *m)
         gf->meshStatistics.status = GFace::PENDING;
       }
     }
-    bool debug = (Msg::GetVerbosity() == 99);
+    bool debug = CTX::instance()->mesh.quadqsSaveDebugFiles;
 
     transferSeamGEdgesVerticesToGFace(m);
     quadMeshingOfSimpleFacesWithPatterns(m, .02);

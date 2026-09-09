@@ -691,6 +691,11 @@ Display mesh pyramids?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.SaveDebugFiles
+Write optional meshing and optimization debug meshes, background fields, point views and statistics JSON, independently of verbosity@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.QuadqsSizemapMethod
 Size map method in QuadQuasiStructured. 0: default, 1: cross-field,2: cross-field + CAD small features adaptation,3: from background mesh (e.g. sizes in current triangulation),4: cross-field + CAD small features adaptation (clamped by background mesh)@*
 Default value: @code{3}@*

@@ -648,7 +648,7 @@ static void packingOfOrientedCubes3D(GFace *gf,
   }
 
   FILE *debug = nullptr;
-  if(Msg::GetVerbosity() == 99) {
+  if(CTX::instance()->mesh.quadqsSaveDebugFiles) {
     char filename[256];
     sprintf(filename, "points3d%d.pos", gf->tag());
     debug = Fopen(filename, "w");
@@ -687,7 +687,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 
   FILE *f = NULL;
   FILE *f2 = NULL;
-  if(Msg::GetVerbosity() == 99) {
+  if(CTX::instance()->mesh.quadqsSaveDebugFiles) {
     char ccc[256];
     sprintf(ccc, "points%d.pos", gf->tag());
     f = Fopen(ccc, "w");
@@ -829,7 +829,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	}
       else{
 	//	printf("%d %d\n", inExclusionZone(parent->_v, parent->_p[i], rtree), outBounds(parent->_p[i],minu,maxu,minv,maxv));
-	if(Msg::GetVerbosity() == 99) {
+	if(f2) {
 	  GPoint gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =
 	    new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());

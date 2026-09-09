@@ -22,9 +22,13 @@ def main():
                         default=Path(__file__).resolve().parents[2])
     parser.add_argument("--build", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--manifest", type=Path,
+                        help="Optional build manifest JSON output path")
     args = parser.parse_args()
     source, build, output = (p.resolve() for p in
                              (args.source, args.build, args.output))
+    if args.manifest is not None and args.manifest.resolve() == output:
+        raise RuntimeError("Build manifest must differ from the executable")
     cache = (build / "CMakeCache.txt").read_text()
     original_source = next(
         Path(line.split("=", 1)[1]).resolve() for line in cache.splitlines()
@@ -87,37 +91,38 @@ def main():
     print(f"Linking {output}", flush=True)
     subprocess.run(link, cwd=build, check=True)
     commands.append(link)
-    files = (
-        "contrib/QuadOptimizer/quadV2StrategyMain.cpp",
-        "contrib/QuadOptimizer/smallCavityOptimizerV2.cpp",
-        "contrib/QuadOptimizer/smallCavityOptimizer.h",
-        "contrib/QuadOptimizer/halfEdge.h",
-        "contrib/QuadOptimizer/halfEdge.cpp",
-        "contrib/QuadOptimizer/halfEdgeMesh.h",
-        "contrib/QuadOptimizer/quadQuality.cpp",
-        "contrib/QuadOptimizer/smallCavityOptimizer.cpp",
-        "contrib/QuadOptimizer/smallCavityWinslow.cpp",
-        "contrib/QuadOptimizer/smallCavityWinslow.h",
-        "contrib/QuadOptimizer/quadCadDistance.h",
-        "contrib/QuadOptimizer/quadGeometryGuard.h",
-        "contrib/QuadOptimizer/quadSmartLaplacian.h",
-        "contrib/QuadOptimizer/quadSurfaceWinslow3D.h",
-        "contrib/QuadOptimizer/smallCavityOptimizerV2.h",
-        "contrib/QuadOptimizer/halfEdgeRewriteCatalog.h",
-    )
-    manifest = {
-        "source": str(source), "commonBuild": str(build),
-        "output": str(output), "commands": commands,
-        "sourceSha256": {
-            name: hashlib.sha256((source / name).read_bytes()).hexdigest()
-            for name in (*files, "contrib/QuadOptimizer/quadQualityLedger.h",
-                         "contrib/QuadOptimizer/quadPatchSearch.h")
-            if (source / name).is_file()
-        },
-        "runnerSha256": hashlib.sha256(output.read_bytes()).hexdigest(),
-    }
-    output.with_name(output.name + ".build.json").write_text(
-        json.dumps(manifest, indent=2) + "\n")
+    if args.manifest is not None:
+        files = (
+            "contrib/QuadOptimizer/quadV2StrategyMain.cpp",
+            "contrib/QuadOptimizer/smallCavityOptimizerV2.cpp",
+            "contrib/QuadOptimizer/smallCavityOptimizer.h",
+            "contrib/QuadOptimizer/halfEdge.h",
+            "contrib/QuadOptimizer/halfEdge.cpp",
+            "contrib/QuadOptimizer/halfEdgeMesh.h",
+            "contrib/QuadOptimizer/quadQuality.cpp",
+            "contrib/QuadOptimizer/smallCavityOptimizer.cpp",
+            "contrib/QuadOptimizer/smallCavityWinslow.cpp",
+            "contrib/QuadOptimizer/smallCavityWinslow.h",
+            "contrib/QuadOptimizer/quadCadDistance.h",
+            "contrib/QuadOptimizer/quadGeometryGuard.h",
+            "contrib/QuadOptimizer/quadSmartLaplacian.h",
+            "contrib/QuadOptimizer/quadSurfaceWinslow3D.h",
+            "contrib/QuadOptimizer/smallCavityOptimizerV2.h",
+            "contrib/QuadOptimizer/halfEdgeRewriteCatalog.h",
+        )
+        manifest = {
+            "source": str(source), "commonBuild": str(build),
+            "output": str(output), "commands": commands,
+            "sourceSha256": {
+                name: hashlib.sha256((source / name).read_bytes()).hexdigest()
+                for name in (*files, "contrib/QuadOptimizer/quadQualityLedger.h",
+                             "contrib/QuadOptimizer/quadPatchSearch.h")
+                if (source / name).is_file()
+            },
+            "runnerSha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+        }
+        args.manifest.write_text(
+            json.dumps(manifest, indent=2) + "\n")
     print(output)
 
 
