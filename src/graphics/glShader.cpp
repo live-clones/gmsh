@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <cstddef>
 #include "glShader.h"
@@ -460,6 +461,76 @@ void main()
     // exactly and cannot be queried
     GLenum _oitDepthFormat = 0;
 
+    // Every window has an OpenGL context of its own, which shares the
+    // programs, textures and buffers of the first but not the container
+    // objects (the vertex array object and the framebuffers), nor should it
+    // share what is the size of the window or holds its frames: the
+    // transparency, accumulation and picking buffers. Those live per
+    // context, the current one's names in the variables above, the others'
+    // here. The shadow maps are shared, with a framebuffer per context.
+    struct contextObjects {
+      GLuint vao = 0, shadowFbo[2] = {0, 0};
+      GLuint oitFbo = 0, oitAccum = 0, oitReveal = 0, oitDepthRb = 0;
+      int oitWidth = 0, oitHeight = 0;
+      GLenum oitDepthFormat = 0;
+      GLuint accFbo = 0, accTex = 0, accCopy = 0;
+      int accWidth = 0, accHeight = 0;
+      GLuint pickFbo = 0, pickColorTex = 0, pickDepthTex = 0, pickDepthRb = 0;
+      int pickWidth = 0, pickHeight = 0;
+    };
+    std::map<const void *, contextObjects> _contexts;
+    const void *_context = nullptr;
+    void storeContext()
+    {
+      contextObjects &c = _contexts[_context];
+      c.vao = _vao;
+      c.shadowFbo[0] = _shadowFbo[0];
+      c.shadowFbo[1] = _shadowFbo[1];
+      c.oitFbo = _oitFbo;
+      c.oitAccum = _oitAccum;
+      c.oitReveal = _oitReveal;
+      c.oitDepthRb = _oitDepthRb;
+      c.oitWidth = _oitWidth;
+      c.oitHeight = _oitHeight;
+      c.oitDepthFormat = _oitDepthFormat;
+      c.accFbo = _accFbo;
+      c.accTex = _accTex;
+      c.accCopy = _accCopy;
+      c.accWidth = _accWidth;
+      c.accHeight = _accHeight;
+      c.pickFbo = _pickFbo;
+      c.pickColorTex = _pickColorTex;
+      c.pickDepthTex = _pickDepthTex;
+      c.pickDepthRb = _pickDepthRb;
+      c.pickWidth = _pickWidth;
+      c.pickHeight = _pickHeight;
+    }
+    void loadContext()
+    {
+      contextObjects &c = _contexts[_context];
+      _vao = c.vao;
+      _shadowFbo[0] = c.shadowFbo[0];
+      _shadowFbo[1] = c.shadowFbo[1];
+      _oitFbo = c.oitFbo;
+      _oitAccum = c.oitAccum;
+      _oitReveal = c.oitReveal;
+      _oitDepthRb = c.oitDepthRb;
+      _oitWidth = c.oitWidth;
+      _oitHeight = c.oitHeight;
+      _oitDepthFormat = c.oitDepthFormat;
+      _accFbo = c.accFbo;
+      _accTex = c.accTex;
+      _accCopy = c.accCopy;
+      _accWidth = c.accWidth;
+      _accHeight = c.accHeight;
+      _pickFbo = c.pickFbo;
+      _pickColorTex = c.pickColorTex;
+      _pickDepthTex = c.pickDepthTex;
+      _pickDepthRb = c.pickDepthRb;
+      _pickWidth = c.pickWidth;
+      _pickHeight = c.pickHeight;
+    }
+
     struct {
       GLint modelview, projection, normalMatrix, colorArray, color, pointSize;
       GLint alphaScale;
@@ -551,7 +622,12 @@ void main()
 
     bool build()
     {
-      if(_tried) return _program != 0;
+      if(_tried) {
+        // a context that has none yet: one is enough, its arrays are set at
+        // every draw
+        if(_program && !_vao) glApi::GenVertexArrays(1, &_vao);
+        return _program != 0;
+      }
       _tried = true;
 
       if(!glApi::haveShaders()) {
@@ -707,6 +783,16 @@ void main()
     _uAccum = _uReveal = -1;
     _oitOn = _oitFailed = _oitTried = false;
     _oitDepthFormat = 0;
+    _contexts.clear();
+    _context = nullptr;
+  }
+
+  void setContext(const void *id)
+  {
+    if(id == _context) return;
+    storeContext();
+    _context = id;
+    loadContext();
   }
 
   void setMatrices(const double modelview[16], const double projection[16])
@@ -820,14 +906,15 @@ void main()
     if(which < 0 || which > 1 || size < 1 || _shadowPass >= 0) return false;
     if(!ensure() || !glApi::haveFramebufferObjects()) return false;
     GLuint &fbo = _shadowFbo[which], &tex = _shadowTex[which];
-    if(fbo && _shadowSize[which] != size) {
-      glApi::DeleteFramebuffers(1, &fbo);
+    if(tex && _shadowSize[which] != size) {
+      // another size: the map is made again, and the framebuffers holding
+      // it, this context's and the others', with it
+      if(fbo) glApi::DeleteFramebuffers(1, &fbo);
       glDeleteTextures(1, &tex);
       fbo = tex = 0;
+      for(auto &c : _contexts) c.second.shadowFbo[which] = 0;
     }
-    if(!fbo) {
-      glApi::GenFramebuffers(1, &fbo);
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);
+    if(!tex) {
       glGenTextures(1, &tex);
       glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
       glBindTexture(GL_TEXTURE_2D, tex);
@@ -842,6 +929,12 @@ void main()
                       GL_COMPARE_REF_TO_TEXTURE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
       glApi::ActiveTexture(GL_TEXTURE0);
+      _shadowSize[which] = size;
+      Msg::Debug("Shadow map %d of %dx%d texels", which, size, size);
+    }
+    if(!fbo) {
+      glApi::GenFramebuffers(1, &fbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                                   GL_TEXTURE_2D, tex, 0);
       // depth only: no colour is written or read
@@ -857,8 +950,6 @@ void main()
         fbo = tex = 0;
         return false;
       }
-      _shadowSize[which] = size;
-      Msg::Debug("Shadow map %d of %dx%d texels", which, size, size);
     }
     else
       glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);

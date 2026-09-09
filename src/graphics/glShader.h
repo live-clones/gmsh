@@ -49,6 +49,9 @@ namespace glShader {
   // forget the program and the vertex array object (e.g. after the OpenGL
   // context was recreated)
   void reset();
+  // the OpenGL context about to be drawn with, when a window has one of its
+  // own: the objects a context does not share get kept apart per context
+  void setContext(const void *id);
   // is there a working program? Compiles it if necessary and says why not
   bool available();
 

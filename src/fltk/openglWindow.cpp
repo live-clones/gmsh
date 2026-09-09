@@ -237,6 +237,7 @@ void openglWindow::draw()
     // report now if the shader pipeline cannot be had
     if(CTX::instance()->shaders) glShader::available();
   }
+  glShader::setContext(context());
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
@@ -1046,6 +1047,7 @@ bool openglWindow::_select(
   if(_lock) return false;
   _lock = true;
   make_current();
+  glShader::setContext(context());
   bool ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
                           edges, faces, regions, elements, points, views);
   _lock = false;
