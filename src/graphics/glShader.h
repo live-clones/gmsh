@@ -65,23 +65,19 @@ namespace glShader {
   // catcher of the studio model (only the shadow is drawn)
   void setShading(int model);
   // the studio light: the key direction and the model's up axis, in eye
-  // coordinates, the size of a texel of the shadow maps in eye coordinates,
-  // how many texels of penumbra a unit of depth between a blocker and a
-  // point gives, and the dome direction of the current sample (or none),
-  // for the ambient occlusion
+  // coordinates, the size of a texel of the shadow map in eye coordinates,
+  // and how many texels of penumbra a unit of depth between a blocker and a
+  // point gives
   void setStudioLight(const double dir[3], const double up[3], double texel,
                       double soft);
-  void setDome(const double dir[3]);
-  void setDomeOff();
-  // The shadow maps of the studio shading, 0 for the key light and 1 for the
-  // dome: beginShadowPass() binds a depth buffer of size x size texels, to be
-  // drawn with the light's matrices (transparent fragments are kept in
-  // proportion to their opacity, at random on accumulated frame sample > 0);
-  // endShadowPass() rebinds the window and hands the shader the map with the
-  // matrix from eye coordinates to its texture space (null for none).
-  // setShadowOff() draws without any.
-  bool beginShadowPass(int which, int size, int sample);
-  void endShadowPass(int which, const double fromEye[16]);
+  // The shadow map of the studio shading: beginShadowPass() binds a depth
+  // buffer of size x size texels, to be drawn with the light's matrices
+  // (transparent fragments are kept in proportion to their opacity, at random
+  // on accumulated frame sample > 0); endShadowPass() rebinds the window and
+  // hands the shader the map with the matrix from eye coordinates to its
+  // texture space (null for none). setShadowOff() draws without any.
+  bool beginShadowPass(int size, int sample);
+  void endShadowPass(const double fromEye[16]);
   void setShadowOff();
   // A print target: a framebuffer of width x height pixels that stands in for
   // the window between beginPrintTarget() and endPrintTarget(), so that a
@@ -90,6 +86,16 @@ namespace glShader {
   void readPrintTarget(int width, int height, GLenum format, GLenum type,
                        void *pixels);
   void endPrintTarget();
+  // The frame drawn into a buffer of its own, with its depth as a texture,
+  // for the ambient occlusion: beginFrame() stands it in for the window (or
+  // the print target), applyOcclusion() darkens what has been drawn so far
+  // where the depth says it is occluded, within radius (eye coordinates) and
+  // by up to strength, and endFrame() puts the frame on the window. False if
+  // it cannot be done. Whatever is pending must be flushed before both.
+  bool beginFrame(int width, int height);
+  void applyOcclusion(const double projection[16], double radius,
+                      double strength, int sample);
+  void endFrame();
   // Progressive accumulation of the studio frames: add the window (width x
   // height pixels) to a sum, cleared when first, and put the average of
   // count frames back on the window. False if it cannot be done.

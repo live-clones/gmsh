@@ -376,6 +376,12 @@ void openglWindow::draw()
         (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) /
                    255.),
         0.0F);
+    // the studio shading draws the frame into a buffer of its own, for the
+    // occlusion it works out from its depth
+    bool frame = !CTX::instance()->camera && !CTX::instance()->stereo &&
+                 _ctx->studioActive() &&
+                 glShader::beginFrame(_printW ? _printW : pixel_w(),
+                                      _printW ? _printH : pixel_h());
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     if(CTX::instance()->camera && !CTX::instance()->stereo) {
@@ -450,7 +456,13 @@ void openglWindow::draw()
     }
     else {
       _ctx->draw3d();
+      if(frame) _ctx->applyStudioOcclusion();
       _ctx->draw2d();
+      if(frame) {
+        gmshFlushImmediate();
+        drawContext::global()->flushString();
+        glShader::endFrame();
+      }
       _studioFrame();
       _drawScreenMessage();
       _drawBorder();
@@ -464,8 +476,9 @@ void openglWindow::draw()
 }
 
 // The accumulation of the studio shading: after a frame, while the view is
-// still, the timer asks for more frames with the light, the dome and the
-// projection jittered, and each is added to the average put on the window.
+// still, the timer asks for more frames with the projection, the shadow of
+// the transparent and the occlusion samples jittered, and each is added to
+// the average put on the window.
 // A print does not wait: it draws them all at once.
 void openglWindow::_studioFrame()
 {
@@ -503,11 +516,14 @@ void openglWindow::_studioFrame()
   if(ctx->printing) {
     for(int j = k + 1; j < n; j++) {
       _ctx->studioSample = j;
+      bool frame = glShader::beginFrame(w, h);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       _ctx->draw3d();
+      if(frame) _ctx->applyStudioOcclusion();
       _ctx->draw2d();
       gmshFlushImmediate();
       drawContext::global()->flushString();
+      if(frame) glShader::endFrame();
       if(!glShader::accumulate(w, h, j == 1, j)) break;
     }
     _ctx->studioSample = 0;
