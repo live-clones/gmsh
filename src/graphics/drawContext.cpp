@@ -887,6 +887,47 @@ static int studioUpAxis()
   return std::max(0, std::min(2, CTX::instance()->shading - 1));
 }
 
+// the direction of the key light of the studio shading, in model coordinates
+static void studioKeyDirection(double dir[3])
+{
+  CTX *ctx = CTX::instance();
+  for(int i = 0; i < 3; i++) dir[i] = ctx->lightPosition[0][i];
+  double len = sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
+  if(!len) {
+    dir[0] = dir[1] = 0.;
+    dir[2] = len = 1.;
+  }
+  for(int i = 0; i < 3; i++) dir[i] /= len;
+}
+
+// Half the side of the floor, around the middle of the bounds: one and a
+// half times the model, or as far as the key light throws the corners of the
+// bounds onto it when that is further - a light oblique to the floor throws
+// the shadow a long way - within four times the model.
+static double studioFloorHalfSize(const double min[3], const double max[3],
+                                  int up, double z0)
+{
+  double d[3], mid[3], dir[3];
+  for(int i = 0; i < 3; i++) {
+    d[i] = max[i] - min[i];
+    mid[i] = 0.5 * (min[i] + max[i]);
+  }
+  int u = (up + 1) % 3, v = (up + 2) % 3;
+  double size = std::max(d[0], std::max(d[1], d[2]));
+  double h = 1.5 * std::max(d[u], d[v]);
+  studioKeyDirection(dir);
+  if(dir[up] > 0.05) {
+    for(int k = 0; k < 8; k++) {
+      double p[3] = {(k & 1) ? max[0] : min[0], (k & 2) ? max[1] : min[1],
+                     (k & 4) ? max[2] : min[2]};
+      double t = (p[up] - z0) / dir[up];
+      h = std::max(h, 1.1 * fabs(p[u] - t * dir[u] - mid[u]));
+      h = std::max(h, 1.1 * fabs(p[v] - t * dir[v] - mid[v]));
+    }
+  }
+  return std::min(h, 4. * size);
+}
+
 // The bounding sphere a shadow map from the direction dir has to cover: the
 // model, and the part of the floor its shadow can fall on - the corners of
 // the bounds carried along the light down to the floor plane, kept within
@@ -902,7 +943,8 @@ static void studioMapBounds(const double dir[3], double c[3], double &R)
   }
   diag = sqrt(diag);
   int up = studioUpAxis(), u = (up + 1) % 3, v = (up + 2) % 3;
-  double h = 1.5 * std::max(d[u], d[v]), z0 = min[up] - 1.e-3 * diag;
+  double z0 = min[up] - 1.e-3 * diag;
+  double h = studioFloorHalfSize(min, max, up, z0);
   std::vector<SPoint3> pts;
   for(int k = 0; k < 8; k++) {
     double p[3] = {(k & 1) ? max[0] : min[0], (k & 2) ? max[1] : min[1],
@@ -1029,14 +1071,8 @@ void drawContext::drawShadowMap()
 {
   CTX *ctx = CTX::instance();
   int k = studioSample;
-  double dir[3] = {ctx->lightPosition[0][0], ctx->lightPosition[0][1],
-                   ctx->lightPosition[0][2]};
-  double len = sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
-  if(!len) {
-    dir[0] = dir[1] = 0.;
-    dir[2] = len = 1.;
-  }
-  for(int i = 0; i < 3; i++) dir[i] /= len;
+  double dir[3];
+  studioKeyDirection(dir);
   if(k > 0 && ctx->studioLightSpread > 0.) {
     double e1[3], e2[3];
     studioBasis(dir, e1, e2);
@@ -1093,8 +1129,8 @@ void drawContext::drawStudioFloor()
   if(diag <= 0.) return;
   int up = studioUpAxis();
   int u = (up + 1) % 3, v = (up + 2) % 3;
-  double h = 1.5 * std::max(d[u], d[v]);
   double z0 = min[up] - 1.e-3 * diag;
+  double h = studioFloorHalfSize(min, max, up, z0);
   double p[4][3];
   for(int k = 0; k < 4; k++) {
     p[k][up] = z0;
