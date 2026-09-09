@@ -901,9 +901,10 @@ static void studioKeyDirection(double dir[3])
 }
 
 // Half the side of the floor, around the middle of the bounds: one and a
-// half times the model, or as far as the key light throws the corners of the
-// bounds onto it when that is further - a light oblique to the floor throws
-// the shadow a long way - within four times the model.
+// half times the model, or as far as the key light, tilted by its spread,
+// throws the corners of the bounds onto it when that is further - a light
+// oblique to the floor throws the shadow a long way - within six times the
+// model.
 static double studioFloorHalfSize(const double min[3], const double max[3],
                                   int up, double z0)
 {
@@ -916,23 +917,31 @@ static double studioFloorHalfSize(const double min[3], const double max[3],
   double size = std::max(d[0], std::max(d[1], d[2]));
   double h = 1.5 * std::max(d[u], d[v]);
   studioKeyDirection(dir);
-  if(dir[up] > 0.05) {
+  // the angle from the floor's normal, plus the spread, at most 85 degrees
+  double theta = acos(std::max(-1., std::min(1., dir[up]))) +
+                 CTX::instance()->studioLightSpread * M_PI / 180.;
+  theta = std::min(theta, 85. * M_PI / 180.);
+  if(theta < M_PI / 2.) {
+    double reach = tan(theta);
     for(int k = 0; k < 8; k++) {
       double p[3] = {(k & 1) ? max[0] : min[0], (k & 2) ? max[1] : min[1],
                      (k & 4) ? max[2] : min[2]};
-      double t = (p[up] - z0) / dir[up];
-      h = std::max(h, 1.1 * fabs(p[u] - t * dir[u] - mid[u]));
-      h = std::max(h, 1.1 * fabs(p[v] - t * dir[v] - mid[v]));
+      double t = (p[up] - z0) * reach;
+      h = std::max(h, 1.1 * (fabs(p[u] - mid[u]) + t));
+      h = std::max(h, 1.1 * (fabs(p[v] - mid[v]) + t));
     }
   }
-  return std::min(h, 4. * size);
+  return std::min(h, 6. * size);
 }
 
 // The bounding sphere a shadow map from the direction dir has to cover: the
 // model, and the part of the floor its shadow can fall on - the corners of
 // the bounds carried along the light down to the floor plane, kept within
-// the floor. A high light keeps the map tight, a low one reaches out.
-static void studioMapBounds(const double dir[3], double c[3], double &R)
+// the floor, so that a high light keeps the map tight and a low one reaches
+// out; or the whole floor, for the dome, whose samples near the floor's
+// plane throw the longest shadows and need no detail.
+static void studioMapBounds(const double dir[3], bool wholeFloor, double c[3],
+                            double &R)
 {
   double min[3], max[3], d[3], mid[3], diag = 0.;
   studioBounds(min, max);
@@ -946,11 +955,20 @@ static void studioMapBounds(const double dir[3], double c[3], double &R)
   double z0 = min[up] - 1.e-3 * diag;
   double h = studioFloorHalfSize(min, max, up, z0);
   std::vector<SPoint3> pts;
+  if(wholeFloor) {
+    for(int k = 0; k < 4; k++) {
+      double q[3];
+      q[up] = z0;
+      q[u] = mid[u] + ((k & 1) ? h : -h);
+      q[v] = mid[v] + ((k & 2) ? h : -h);
+      pts.push_back(SPoint3(q[0], q[1], q[2]));
+    }
+  }
   for(int k = 0; k < 8; k++) {
     double p[3] = {(k & 1) ? max[0] : min[0], (k & 2) ? max[1] : min[1],
                    (k & 4) ? max[2] : min[2]};
     pts.push_back(SPoint3(p[0], p[1], p[2]));
-    if(dir[up] > 0.05) {
+    if(!wholeFloor && dir[up] > 0.05) {
       double t = (p[up] - z0) / dir[up], q[3];
       for(int i = 0; i < 3; i++) q[i] = p[i] - t * dir[i];
       q[u] = std::max(mid[u] - h, std::min(mid[u] + h, q[u]));
@@ -1006,7 +1024,7 @@ bool drawContext::drawOneShadowMap(int which, const double dir[3])
 {
   CTX *ctx = CTX::instance();
   double c[3], R;
-  studioMapBounds(dir, c, R);
+  studioMapBounds(dir, which == 1, c, R);
   if(R <= 0.) return false;
   double eye[3] = {c[0] + 2. * R * dir[0], c[1] + 2. * R * dir[1],
                    c[2] + 2. * R * dir[2]};
@@ -1089,7 +1107,7 @@ void drawContext::drawShadowMap()
   toEye(up, ue);
   // a texel of the key map, in eye coordinates
   double c[3], R;
-  studioMapBounds(dir, c, R);
+  studioMapBounds(dir, false, c, R);
   const double *M = gmshMatrix(GMSH_MODELVIEW);
   double scale = sqrt(M[0] * M[0] + M[1] * M[1] + M[2] * M[2]);
   glShader::setStudioLight(de, ue, 2. * R * scale / 2048.);
