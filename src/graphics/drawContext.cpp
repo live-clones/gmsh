@@ -1091,6 +1091,15 @@ void drawContext::drawShadowMap()
   int k = studioSample;
   double dir[3];
   studioKeyDirection(dir);
+  if(k > 0 && ctx->studioLightSpread > 0.) {
+    double e1[3], e2[3];
+    studioBasis(dir, e1, e2);
+    double alpha = ctx->studioLightSpread * M_PI / 180.;
+    double ct = 1. - halton(k, 5) * (1. - cos(alpha));
+    double st = sqrt(std::max(0., 1. - ct * ct)), phi = 2. * M_PI * halton(k, 7);
+    for(int i = 0; i < 3; i++)
+      dir[i] = ct * dir[i] + st * (cos(phi) * e1[i] + sin(phi) * e2[i]);
+  }
   double up[3] = {0., 0., 0.};
   up[studioUpAxis()] = 1.;
   double de[3], ue[3];
@@ -1101,10 +1110,7 @@ void drawContext::drawShadowMap()
   studioMapBounds(dir, false, c, R);
   const double *M = gmshMatrix(GMSH_MODELVIEW);
   double scale = sqrt(M[0] * M[0] + M[1] * M[1] + M[2] * M[2]);
-  // the map's depth runs over 2R, its width over 2048 texels: a unit of
-  // depth is 2048 texels, and the penumbra grows with the spread of the light
-  glShader::setStudioLight(de, ue, 2. * R * scale / 2048.,
-                           2048. * tan(ctx->studioLightSpread * M_PI / 180.));
+  glShader::setStudioLight(de, ue, 2. * R * scale / 2048.);
 
   if(!drawOneShadowMap(0, dir)) glShader::setShadowOff();
 

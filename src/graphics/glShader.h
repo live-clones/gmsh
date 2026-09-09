@@ -66,11 +66,9 @@ namespace glShader {
   void setShading(int model);
   // the studio light: the key direction and the model's up axis, in eye
   // coordinates, the size of a texel of the shadow maps in eye coordinates,
-  // how many texels of penumbra a unit of depth between a blocker and a
-  // point gives, and the dome direction of the current sample (or none),
-  // for the ambient occlusion
-  void setStudioLight(const double dir[3], const double up[3], double texel,
-                      double soft);
+  // and the dome direction of the current sample (or none), for the ambient
+  // occlusion
+  void setStudioLight(const double dir[3], const double up[3], double texel);
   void setDome(const double dir[3]);
   void setDomeOff();
   // The shadow maps of the studio shading, 0 for the key light and 1 for the

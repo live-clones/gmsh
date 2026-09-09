@@ -169,11 +169,6 @@ uniform float uShadowTexel;
 uniform bool uShadowOn;
 uniform mat4 uShadowFromEye;
 uniform sampler2DShadow uShadow;
-// the key map read raw, for the search of what blocks the light, and how
-// many texels of penumbra a unit of depth between a blocker and the point
-// gives (zero to filter over a fixed width instead)
-uniform sampler2D uShadowDepth;
-uniform float uShadowSoft;
 uniform bool uDomeOn;
 uniform vec3 uDomeDir;
 uniform mat4 uDomeFromEye;
@@ -242,58 +237,17 @@ vec3 mapCoord(mat4 fromEye, vec3 n, vec3 l)
 // full shade, filtered over 5x5 texels. One function per map: a sampler
 // handed to a function as an argument is not something every driver gets
 // right.
-// percentage closer soft shadows: the blockers in front of the point are
-// looked for in the map read raw, the penumbra is as wide as the spread of
-// the light makes it for their distance, and the comparison is filtered
-// over that width, on taps turned by a hash of the pixel so that their
-// pattern averages out over the accumulated frames
-const vec2 TAPS[16] = vec2[16](
-  vec2(-0.94201624, -0.39906216), vec2(0.94558609, -0.76890725),
-  vec2(-0.09418410, -0.92938870), vec2(0.34495938, 0.29387760),
-  vec2(-0.91588581, 0.45771432), vec2(-0.81544232, -0.87912464),
-  vec2(-0.38277543, 0.27676845), vec2(0.97484398, 0.75648379),
-  vec2(0.44323325, -0.97511554), vec2(0.53742981, -0.47373420),
-  vec2(-0.26496911, -0.41893023), vec2(0.79197514, 0.19090188),
-  vec2(-0.24188840, 0.99706507), vec2(-0.81409955, 0.91437590),
-  vec2(0.19984126, 0.78641367), vec2(0.14383161, -0.14100790));
-
 float keyLit(vec3 n)
 {
   vec3 q = mapCoord(uShadowFromEye, n, uStudioLight);
   if(q.z > 1.0) return 1.0;
   vec2 texel = 1.0 / vec2(textureSize(uShadow, 0));
   float lit = 0.0;
-  if(uShadowSoft <= 0.0) {
-    for(int i = -2; i <= 2; i++)
-      for(int j = -2; j <= 2; j++)
-        lit += texture(uShadow, vec3(q.xy + vec2(float(i), float(j)) * texel,
-                                     q.z));
-    return lit / 25.0;
-  }
-  // the widest penumbra a blocker could give this point, which is how far
-  // the blockers are looked for
-  float search = clamp(q.z * uShadowSoft, 1.0, 24.0);
-  float sum = 0.0, count = 0.0;
   for(int i = -2; i <= 2; i++)
-    for(int j = -2; j <= 2; j++) {
-      float d = texture(uShadowDepth, q.xy + vec2(float(i), float(j)) *
-                                              (0.5 * search) * texel).r;
-      if(d < q.z) {
-        sum += d;
-        count += 1.0;
-      }
-    }
-  if(count == 0.0) return 1.0;
-  float pen = clamp((q.z - sum / count) * uShadowSoft, 0.75, 24.0);
-  float a = 6.2831853 * fract(sin(dot(gl_FragCoord.xy + vec2(max(uSeed, 0.0)),
-                                      vec2(12.9898, 78.233))) * 43758.5453);
-  float c = cos(a), s = sin(a);
-  for(int k = 0; k < 16; k++) {
-    vec2 p = TAPS[k];
-    p = vec2(c * p.x - s * p.y, s * p.x + c * p.y) * pen * texel;
-    lit += texture(uShadow, vec3(q.xy + p, q.z));
-  }
-  return lit / 16.0;
+    for(int j = -2; j <= 2; j++)
+      lit += texture(uShadow, vec3(q.xy + vec2(float(i), float(j)) * texel,
+                                   q.z));
+  return lit / 25.0;
 }
 
 float domeLit(vec3 n)
@@ -466,8 +420,6 @@ void main()
     // the 1x1 depth texture bound in their place when there is none (the
     // samplers must always point at one)
     GLuint _shadowFbo[2] = {0, 0}, _shadowTex[2] = {0, 0}, _noShadow = 0;
-    // reads the key map raw, on unit 4, next to its comparison on unit 2
-    GLuint _rawSampler = 0;
     int _shadowSize[2] = {0, 0};
     GLint _shadowViewport[4] = {0, 0, 0, 0};
     int _shadowPass = -1;
@@ -510,7 +462,6 @@ void main()
       // name at every draw is costly on scenes of many small draws
       GLint clipPlane[6], clipOn[6];
       GLint studioLight, studioUp, shadowTexel, shadowOn, shadowFromEye, shadow;
-      GLint shadowDepth, shadowSoft;
       GLint domeOn, domeDir, domeFromEye, dome, shadowPass, seed;
       GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
       GLint lightSpecular[6], lightOn[6];
@@ -539,31 +490,7 @@ void main()
       }
       else
         glBindTexture(GL_TEXTURE_2D, _noShadow);
-      if(which == 0) {
-        glApi::ActiveTexture(GL_TEXTURE0 + 4);
-        glBindTexture(GL_TEXTURE_2D, _noShadow);
-      }
       glApi::ActiveTexture(GL_TEXTURE0);
-    }
-
-    // the sampler that reads a depth texture raw, bound on unit 4; zero if
-    // the context has no sampler objects, in which case the key shadow is
-    // filtered over a fixed width
-    GLuint rawSampler()
-    {
-      if(!glApi::GenSamplers || !glApi::BindSampler) return 0;
-      if(!_rawSampler) {
-        glApi::GenSamplers(1, &_rawSampler);
-        glApi::SamplerParameteri(_rawSampler, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-        glApi::SamplerParameteri(_rawSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glApi::SamplerParameteri(_rawSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glApi::SamplerParameteri(_rawSampler, GL_TEXTURE_WRAP_S,
-                                 GL_CLAMP_TO_EDGE);
-        glApi::SamplerParameteri(_rawSampler, GL_TEXTURE_WRAP_T,
-                                 GL_CLAMP_TO_EDGE);
-        glApi::BindSampler(4, _rawSampler);
-      }
-      return _rawSampler;
     }
 
     bool ensure()
@@ -682,8 +609,6 @@ void main()
       _u.shadowOn = glApi::GetUniformLocation(p, "uShadowOn");
       _u.shadowFromEye = glApi::GetUniformLocation(p, "uShadowFromEye");
       _u.shadow = glApi::GetUniformLocation(p, "uShadow");
-      _u.shadowDepth = glApi::GetUniformLocation(p, "uShadowDepth");
-      _u.shadowSoft = glApi::GetUniformLocation(p, "uShadowSoft");
       _u.domeOn = glApi::GetUniformLocation(p, "uDomeOn");
       _u.domeDir = glApi::GetUniformLocation(p, "uDomeDir");
       _u.domeFromEye = glApi::GetUniformLocation(p, "uDomeFromEye");
@@ -714,10 +639,9 @@ void main()
 
       // a uniform starts at zero, and a zero alpha scale would draw nothing
       glApi::UseProgram(_program);
-      // the shadow maps live on texture units 2 and 3, the key one raw on 4
+      // the shadow maps live on texture units 2 and 3
       glApi::Uniform1i(_u.shadow, 2);
       glApi::Uniform1i(_u.dome, 3);
-      glApi::Uniform1i(_u.shadowDepth, 4);
       bindNoShadow(0);
       bindNoShadow(1);
       glApi::Uniform1f(_u.alphaScale, 1.f);
@@ -754,7 +678,6 @@ void main()
     _streamGlyphs = _streamTex = _streamDash = 0;
     _noTexture = 0;
     _shadowFbo[0] = _shadowFbo[1] = _shadowTex[0] = _shadowTex[1] = 0;
-    _rawSampler = 0;
     _shadowSize[0] = _shadowSize[1] = 0;
     _noShadow = 0;
     _shadowPass = -1;
@@ -848,8 +771,7 @@ void main()
     glApi::Uniform1i(_u.shading, model);
   }
 
-  void setStudioLight(const double dir[3], const double up[3], double texel,
-                      double soft)
+  void setStudioLight(const double dir[3], const double up[3], double texel)
   {
     if(!ensure()) return;
     float d[3] = {(float)dir[0], (float)dir[1], (float)dir[2]};
@@ -857,7 +779,6 @@ void main()
     glApi::Uniform3fv(_u.studioLight, 1, d);
     glApi::Uniform3fv(_u.studioUp, 1, u);
     glApi::Uniform1f(_u.shadowTexel, (float)texel);
-    glApi::Uniform1f(_u.shadowSoft, rawSampler() ? (float)soft : 0.f);
   }
 
   void setDome(const double dir[3])
@@ -964,10 +885,6 @@ void main()
     }
     glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
     glBindTexture(GL_TEXTURE_2D, _shadowTex[which]);
-    if(which == 0 && rawSampler()) {
-      glApi::ActiveTexture(GL_TEXTURE0 + 4);
-      glBindTexture(GL_TEXTURE_2D, _shadowTex[0]);
-    }
     glApi::ActiveTexture(GL_TEXTURE0);
     float m[16];
     for(int i = 0; i < 16; i++) m[i] = (float)fromEye[i];
