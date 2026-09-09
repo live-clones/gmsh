@@ -27,7 +27,9 @@
 #include "BackgroundMeshTools.h"
 #include "STensor3.h"
 #include "ExtrudeParams.h"
+#if defined(HAVE_OCTREE_SIZE_FIELD)
 #include "OctreeSizeField.h"
+#endif
 #include "fullMatrix.h"
 #include "SPoint3KDTree.h"
 #include "MVertex.h"
@@ -3317,7 +3319,9 @@ FieldManager::FieldManager()
     new FieldFactoryT<AttractorAnisoCurveField>();
 #endif
   mapTypeName["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
+#if defined(HAVE_OCTREE_SIZE_FIELD)
   mapTypeName["AutomaticMeshSizeField"] = new FieldFactoryT<OctreeSizeField>();
+#endif
   _backgroundField = -1;
 }
 
