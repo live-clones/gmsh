@@ -405,7 +405,7 @@ public:
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posSICN, posSIGE, posDisto;
     int compositeWindows, deleteTmpFiles, background;
-    int width, height;
+    int width, height, supersampling;
     double parameter, parameterFirst, parameterLast, parameterSteps;
     int pgfTwoDim, pgfExportAxis, pgfHorizBar;
     std::string parameterCommand;

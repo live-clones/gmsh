@@ -423,6 +423,9 @@ void main()
     int _shadowSize[2] = {0, 0};
     GLint _shadowViewport[4] = {0, 0, 0, 0};
     int _shadowPass = -1;
+    // what stands in for the window: 0, or the print target while there is
+    // one
+    GLuint _window = 0, _printFbo = 0, _printColor = 0, _printDepth = 0;
     // the accumulation of the studio frames: the sum, a copy of the window
     // to add to it, and the program that does both
     GLuint _accFbo = 0, _accTex = 0, _accCopy = 0, _blitProgram = 0;
@@ -680,6 +683,7 @@ void main()
     _shadowPass = -1;
     _accFbo = _accTex = _accCopy = _blitProgram = 0;
     _accWidth = _accHeight = 0;
+    _window = _printFbo = _printColor = _printDepth = 0;
     _uBlitTex = _uBlitScale = -1;
     _blitTried = false;
     _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
@@ -835,7 +839,7 @@ void main()
       if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
          GL_FRAMEBUFFER_COMPLETE) {
         Msg::Warning("Could not make a shadow map: drawing without shadows");
-        glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
         glApi::DeleteFramebuffers(1, &fbo);
         glDeleteTextures(1, &tex);
         fbo = tex = 0;
@@ -867,7 +871,7 @@ void main()
     if(_shadowPass != which) return;
     _shadowPass = -1;
     glApi::Uniform1i(_u.shadowPass, 0);
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
                _shadowViewport[3]);
     if(!fromEye) {
@@ -947,7 +951,7 @@ void main()
       if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
          GL_FRAMEBUFFER_COMPLETE) {
         Msg::Warning("Could not make an accumulation buffer");
-        glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
         glApi::DeleteFramebuffers(1, &_accFbo);
         glDeleteTextures(1, &_accTex);
         _accFbo = _accTex = 0;
@@ -967,8 +971,8 @@ void main()
     }
 
     // the window into the copy
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
-    glReadBuffer(GL_BACK);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+    glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : GL_BACK);
     glBindTexture(GL_TEXTURE_2D, _accCopy);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
@@ -998,7 +1002,7 @@ void main()
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     // and the average put back on the window
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glDisable(GL_BLEND);
     glBindTexture(GL_TEXTURE_2D, _accTex);
     glApi::Uniform1f(_uBlitScale, 1.f / count);
@@ -1432,7 +1436,7 @@ void main()
          GL_FRAMEBUFFER_COMPLETE) {
         Msg::Warning("Could not make a buffer to pick in: picking in the "
                      "window instead");
-        glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
         glApi::DeleteFramebuffers(1, &_pickFbo);
         _pickFbo = 0;
         return false;
@@ -1473,7 +1477,7 @@ void main()
   void releasePickBuffer()
   {
     if(!_pickFbo) return;
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
   }
 
   namespace {
@@ -1517,7 +1521,7 @@ void main()
     void dropOitBuffers()
     {
       if(!_oitFbo) return;
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
       glApi::DeleteFramebuffers(1, &_oitFbo);
       glDeleteTextures(1, &_oitAccum);
       glDeleteTextures(1, &_oitReveal);
@@ -1580,7 +1584,7 @@ void main()
       if(!_oitFbo && !makeOitBuffers(width, height, depthFormat)) return false;
       // whatever error was already pending is not ours to read
       while(glGetError() != GL_NO_ERROR) {}
-      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, _window);
       glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _oitFbo);
       glApi::BlitFramebuffer(0, 0, width, height, 0, 0, width, height,
                              GL_DEPTH_BUFFER_BIT, GL_NEAREST);
@@ -1591,6 +1595,75 @@ void main()
   } // namespace
 
   bool transparentPass() { return _oitOn; }
+
+  bool beginPrintTarget(int width, int height)
+  {
+    if(width < 1 || height < 1 || _printFbo) return false;
+    if(!ensure() || !glApi::haveFramebufferObjects()) return false;
+    GLint maxSize = 0;
+    glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxSize);
+    if(width > maxSize || height > maxSize) {
+      Msg::Warning("Picture of %dx%d pixels larger than the largest buffer "
+                   "(%dx%d)", width, height, maxSize, maxSize);
+      return false;
+    }
+    glApi::GenFramebuffers(1, &_printFbo);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _printFbo);
+    glApi::GenRenderbuffers(1, &_printColor);
+    glApi::BindRenderbuffer(GL_RENDERBUFFER, _printColor);
+    glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
+    glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                   GL_RENDERBUFFER, _printColor);
+    glApi::GenRenderbuffers(1, &_printDepth);
+    glApi::BindRenderbuffer(GL_RENDERBUFFER, _printDepth);
+    glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width,
+                               height);
+    glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                   GL_RENDERBUFFER, _printDepth);
+    const GLenum buf = GL_COLOR_ATTACHMENT0;
+    glApi::DrawBuffers(1, &buf);
+    if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+       GL_FRAMEBUFFER_COMPLETE) {
+      Msg::Warning("Could not make a buffer of %dx%d pixels to print into",
+                   width, height);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      glApi::DeleteFramebuffers(1, &_printFbo);
+      glApi::DeleteRenderbuffers(1, &_printColor);
+      glApi::DeleteRenderbuffers(1, &_printDepth);
+      _printFbo = _printColor = _printDepth = 0;
+      return false;
+    }
+    _window = _printFbo;
+    // the transparency buffers were made to match the window
+    dropOitBuffers();
+    _oitDepthFormat = 0;
+    Msg::Debug("Printing into a %dx%d buffer", width, height);
+    return true;
+  }
+
+  void readPrintTarget(int width, int height, GLenum format, GLenum type,
+                       void *pixels)
+  {
+    if(!_printFbo) return;
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _printFbo);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glFinish();
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, width, height, format, type, pixels);
+  }
+
+  void endPrintTarget()
+  {
+    if(!_printFbo) return;
+    _window = 0;
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glApi::DeleteFramebuffers(1, &_printFbo);
+    glApi::DeleteRenderbuffers(1, &_printColor);
+    glApi::DeleteRenderbuffers(1, &_printDepth);
+    _printFbo = _printColor = _printDepth = 0;
+    dropOitBuffers();
+    _oitDepthFormat = 0;
+  }
 
   bool beginTransparent()
   {
@@ -1623,7 +1696,7 @@ void main()
       Msg::Debug("Could not sum transparency into buffers of our own: "
                  "drawing it sorted instead");
       _oitFailed = true;
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
       return false;
     }
 
@@ -1656,7 +1729,7 @@ void main()
     // said on the drawing program, which is still the one in use
     glApi::Uniform1i(_u.oitPass, 0);
 
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glDepthMask(GL_TRUE);
 
     glApi::UseProgram(_oitProgram);

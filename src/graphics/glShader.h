@@ -81,6 +81,13 @@ namespace glShader {
   bool beginShadowPass(int which, int size, int sample);
   void endShadowPass(int which, const double fromEye[16]);
   void setShadowOff();
+  // A print target: a framebuffer of width x height pixels that stands in for
+  // the window between beginPrintTarget() and endPrintTarget(), so that a
+  // picture can be larger than the window; readPrintTarget() reads it back.
+  bool beginPrintTarget(int width, int height);
+  void readPrintTarget(int width, int height, GLenum format, GLenum type,
+                       void *pixels);
+  void endPrintTarget();
   // Progressive accumulation of the studio frames: add the window (width x
   // height pixels) to a sum, cleared when first, and put the average of
   // count frames back on the window. False if it cannot be done.

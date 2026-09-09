@@ -9725,6 +9725,12 @@ double opt_print_text(OPT_ARGS_NUM)
   return CTX::instance()->print.text;
 }
 
+double opt_print_supersampling(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.supersampling = (int)val;
+  return CTX::instance()->print.supersampling;
+}
+
 double opt_print_tex_as_equation(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->print.texAsEquation = (int)val;

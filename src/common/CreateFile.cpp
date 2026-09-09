@@ -22,6 +22,7 @@
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
+#include "glImmediate.h"
 #include "visibilityWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
@@ -213,27 +214,85 @@ std::string GetKnownFileFormats(bool onlyMeshFormats)
 }
 
 #if defined(HAVE_FLTK)
+// the size of the picture: Print.Width and Print.Height, with the missing one
+// scaled from the window
+static void printSize(int &width, int &height)
+{
+  width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+  height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+  if(CTX::instance()->print.width <= 0 && CTX::instance()->print.height <= 0)
+    return;
+  if(CTX::instance()->print.width <= 0){
+    double w = width * CTX::instance()->print.height / (double)height;
+    width = (int)w;
+    height = CTX::instance()->print.height;
+  }
+  else if(CTX::instance()->print.height <= 0){
+    double h = height * CTX::instance()->print.width / (double)width;
+    height = (int)h;
+    width = CTX::instance()->print.width;
+  }
+  else{
+    width = CTX::instance()->print.width;
+    height = CTX::instance()->print.height;
+  }
+}
+
+// average blocks of k x k pixels of `from' into `to', k times smaller
+static void downsample(PixelBuffer *from, PixelBuffer *to, int k)
+{
+  int nc = to->getNumComp(), w = to->getWidth(), h = to->getHeight();
+  int fw = from->getWidth();
+  const unsigned char *src = (const unsigned char *)from->getPixels();
+  unsigned char *dst = (unsigned char *)to->getPixels();
+  for(int j = 0; j < h; j++)
+    for(int i = 0; i < w; i++)
+      for(int c = 0; c < nc; c++) {
+        unsigned int sum = 0;
+        for(int jj = 0; jj < k; jj++)
+          for(int ii = 0; ii < k; ii++)
+            sum += src[((j * k + jj) * fw + i * k + ii) * nc + c];
+        dst[(j * w + i) * nc + c] = (unsigned char)((sum + k * k / 2) / (k * k));
+      }
+}
+
 static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 {
   openglWindow *newg = nullptr;
 
+  // with the shader pipeline a picture of any size is drawn into a buffer of
+  // its own, and possibly at a multiple of its size, averaged down
+  int ss = std::max(1, CTX::instance()->print.supersampling);
+  if(type != GL_UNSIGNED_BYTE) ss = 1;
+  if(gmshUseShaders() && !CTX::instance()->batch &&
+     (CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0 ||
+      ss > 1)) {
+    int width, height;
+    printSize(width, height);
+    if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0) {
+      // as the window drawn for the picture would have been: Print.Width and
+      // Print.Height are in the units of the widget toolkit, which a high
+      // resolution display scales
+      double hr = FlGui::instance()->getCurrentOpenglWindow()
+                    ->getDrawContext()->highResolutionPixelFactor();
+      width = (int)(width * hr);
+      height = (int)(height * hr);
+    }
+    PixelBuffer *big = new PixelBuffer(width * ss, height * ss, format, type);
+    if(FlGui::instance()->getCurrentOpenglWindow()->printTo(
+         width * ss, height * ss, format, type, big->getPixels())) {
+      if(ss == 1) return big;
+      PixelBuffer *small = new PixelBuffer(width, height, format, type);
+      downsample(big, small, ss);
+      delete big;
+      return small;
+    }
+    delete big;
+  }
+
   if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
-    GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-    GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
-    if(CTX::instance()->print.width <= 0){
-      double w = width * CTX::instance()->print.height / (double)height;
-      width = (int)w;
-      height = CTX::instance()->print.height;
-    }
-    else if(CTX::instance()->print.height <= 0){
-      double h = height * CTX::instance()->print.width / (double)width;
-      height = (int)h;
-      width = CTX::instance()->print.width;
-    }
-    else{
-      width = CTX::instance()->print.width;
-      height = CTX::instance()->print.height;
-    }
+    int width, height;
+    printSize(width, height);
     newg = new openglWindow(100, 100, width, height);
     // the same visual (hence pipeline) as the windows on screen
     newg->mode(openglWindowMode());

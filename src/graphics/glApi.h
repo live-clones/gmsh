@@ -94,6 +94,9 @@ typedef char GLchar;
 #if !defined(GL_MAX_DRAW_BUFFERS)
 #define GL_MAX_DRAW_BUFFERS 0x8824
 #endif
+#if !defined(GL_MAX_RENDERBUFFER_SIZE)
+#define GL_MAX_RENDERBUFFER_SIZE 0x84E8
+#endif
 // texture wrapping (OpenGL 1.2), single channel and half float formats
 // (OpenGL 3.0) and packed depth and stencil, which the Windows header lacks
 #if !defined(GL_CLAMP_TO_EDGE)
