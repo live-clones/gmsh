@@ -1168,6 +1168,10 @@ static void addOutlineElement(drawTarget *p, int type, double **xyz, bool pre,
 static void addScalarElement(drawTarget *p, int type, double **xyz,
                              double **val, bool pre, int numNodes)
 {
+  // a range given the other way round holds no value: nothing is drawn, in
+  // every interval type (the bands and the iso values of a reversed range
+  // would still cut the elements)
+  if(p->opt->tmpMin > p->opt->tmpMax) return;
   switch(type) {
   case TYPE_PNT: addScalarPoint(p, xyz, val, pre); break;
   case TYPE_LIN: addScalarLine(p, xyz, val, pre); break;
