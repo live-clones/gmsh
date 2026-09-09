@@ -208,7 +208,10 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
     for(int i = 0; i < n; i++) {
       scaleTick tk;
       tk.v = opt->getScaleValue(i, n, min, max);
-      tk.t = iso ? (i + 0.5) / nbIso : (double)i / nbIso;
+      // the first and last iso values are the ends of the range: at the
+      // ends of the bar
+      tk.t = iso ? (nbIso > 1 ? (double)i / (nbIso - 1) : 0.5) :
+                   (double)i / nbIso;
       if(defaultFormat)
         tk.label = fixedNumber(tk.v, decimals, exp);
       else {
@@ -376,17 +379,23 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       gmshEnd();
     }
     else {
-      // an iso value: a thick mark in its colour
+      // an iso value: a thick mark in its colour, the first and last ones on
+      // the ends of the bar, which they are the values of
       unsigned int col = opt->getColor(i, opt->nbIso);
       gmshColor4ubv((GLubyte *)&col);
+      double t = (opt->nbIso > 1) ? (double)i / (opt->nbIso - 1) : 0.5;
+      // kept inside the outline
+      double inset = 1.5;
       gmshBegin(GL_LINES);
       if(horizontal) {
-        gmshVertex2d(xmin + box / 2. + i * box, ymin);
-        gmshVertex2d(xmin + box / 2. + i * box, ymin + height);
+        double x = xmin + inset + t * (width - 2 * inset);
+        gmshVertex2d(x, ymin);
+        gmshVertex2d(x, ymin + height);
       }
       else {
-        gmshVertex2d(xmin, ymin + box / 2. + i * box);
-        gmshVertex2d(xmin + width, ymin + box / 2. + i * box);
+        double y = ymin + inset + t * (height - 2 * inset);
+        gmshVertex2d(xmin, y);
+        gmshVertex2d(xmin + width, y);
       }
       gmshEnd();
     }
