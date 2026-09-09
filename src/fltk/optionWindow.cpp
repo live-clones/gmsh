@@ -1953,7 +1953,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[35]->tooltip("General.StudioLightSpread");
       general.value[35]->minimum(0);
       general.value[35]->maximum(90);
-      if(CTX::instance()->inputScrolling) general.value[35]->step(1);
+      if(CTX::instance()->inputScrolling) general.value[35]->step(.1);
       general.value[35]->callback(general_options_ok_cb);
       general.value[34] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 5 * BH, IW / 2, BH,
