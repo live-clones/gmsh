@@ -269,15 +269,6 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
       ss > 1)) {
     int width, height;
     printSize(width, height);
-    if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0) {
-      // as the window drawn for the picture would have been: Print.Width and
-      // Print.Height are in the units of the widget toolkit, which a high
-      // resolution display scales
-      double hr = FlGui::instance()->getCurrentOpenglWindow()
-                    ->getDrawContext()->highResolutionPixelFactor();
-      width = (int)(width * hr);
-      height = (int)(height * hr);
-    }
     PixelBuffer *big = new PixelBuffer(width * ss, height * ss, format, type);
     if(FlGui::instance()->getCurrentOpenglWindow()->printTo(
          width * ss, height * ss, format, type, big->getPixels())) {
@@ -293,7 +284,12 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
     int width, height;
     printSize(width, height);
-    newg = new openglWindow(100, 100, width, height);
+    // the size is in pixels, the window's in the units of the widget toolkit,
+    // which a high resolution display scales
+    double hr = FlGui::instance()->getCurrentOpenglWindow()
+                  ->getDrawContext()->highResolutionPixelFactor();
+    newg = new openglWindow(100, 100, (int)(width / hr + 0.5),
+                            (int)(height / hr + 0.5));
     // the same visual (hence pipeline) as the windows on screen
     newg->mode(openglWindowMode());
     newg->end();
