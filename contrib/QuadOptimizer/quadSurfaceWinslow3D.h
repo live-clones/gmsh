@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
 // Coupled Winslow proposals in nodal mean planes. CAD acceptance stays in V2.
 #pragma once
-#include "gmshLBFGS.h"
+#include "../BoundaryLayers/gmshLBFGS.h"
 #include <array>
 #include <algorithm>
 #include <cmath>
