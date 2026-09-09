@@ -43,7 +43,7 @@ namespace {
   struct BatchState {
     double modelview[16], projection[16];
     double clip[6][4];
-    bool clipOn[6];
+    bool clipOn[6], clipOutside;
     bool lighting, twoSide;
     double pointSize;
     double alphaScale;
@@ -59,6 +59,7 @@ namespace {
     bool operator!=(const BatchState &o) const
     {
       if(lighting != o.lighting || twoSide != o.twoSide ||
+         clipOutside != o.clipOutside ||
          pointSize != o.pointSize || texture != o.texture ||
          alphaScale != o.alphaScale ||
          alphaScaleFilledOnly != o.alphaScaleFilledOnly ||
@@ -97,6 +98,7 @@ namespace {
   unsigned short _stipplePattern = 0xffff;
   double _clipPlane[6][4] = {{0.}}, _clipEye[6][4] = {{0.}};
   bool _clipOn[6] = {false, false, false, false, false, false};
+  bool _clipOutside = false;
 } // namespace
 
 void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
@@ -184,6 +186,13 @@ bool gmshClipPlaneEnabled(int i)
 {
   return (i >= 0 && i <= 5) ? _clipOn[i] : false;
 }
+
+void gmshClipOutside(bool outside)
+{
+  _clipOutside = outside;
+}
+
+bool gmshClipOutside() { return _clipOutside; }
 
 const double *gmshClipPlaneEye(int i)
 {
@@ -305,6 +314,7 @@ void gmshResetMatrices()
     _clipOn[i] = false;
     for(int j = 0; j < 4; j++) _clipPlane[i][j] = _clipEye[i][j] = 0.;
   }
+  _clipOutside = false;
 
   for(int i = 0; i < 2; i++) {
     _stack[i].m.resize(16);
@@ -337,12 +347,18 @@ void gmshPushShaderState()
   // everything but the collected lines draws undashed: the vertex arrays
   // carry no distance along the line, and a glyph is not a line
   glShader::setStipple(false, 1, 0xffff);
+  bool anyPlane = false;
   for(int i = 0; i < 6; i++) {
-    if(gmshClipPlaneEnabled(i))
+    if(gmshClipPlaneEnabled(i)) {
       glShader::setClipPlane(i, gmshClipPlaneEye(i));
+      anyPlane = true;
+    }
     else
       glShader::setClipPlaneOff(i);
   }
+  // nothing is cut off when no plane is on: drawn as is then (the glyphs of
+  // the cut elements are drawn whole, with the planes off)
+  glShader::setClipOutside(_clipOutside && anyPlane);
 }
 
 bool gmshImBegin(GLenum mode)
@@ -528,12 +544,16 @@ void gmshFlushImmediate()
     glShader::setMaterial(CTX::instance()->shine,
                           CTX::instance()->shineExponent);
     glShader::setShading(gmshShadingModel());
+    bool anyPlane = false;
     for(int i = 0; i < 6; i++) {
-      if(_batchState.clipOn[i])
+      if(_batchState.clipOn[i]) {
         glShader::setClipPlane(i, _batchState.clip[i]);
+        anyPlane = true;
+      }
       else
         glShader::setClipPlaneOff(i);
     }
+    glShader::setClipOutside(_batchState.clipOutside && anyPlane);
     // the pattern only applies to lines
     glShader::setStipple(_batchState.stipple && _batchMode == GL_LINES,
                          _batchState.stippleFactor,
@@ -571,6 +591,7 @@ namespace {
       b.clipOn[i] = _clipOn[i];
       for(int j = 0; j < 4; j++) b.clip[i][j] = _clipEye[i][j];
     }
+    b.clipOutside = _clipOutside;
     b.lighting = _lighting;
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;

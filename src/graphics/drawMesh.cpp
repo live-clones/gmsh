@@ -805,17 +805,29 @@ static void setMeshClipPlanes(bool on)
     gmshClipPlaneOn(i, on && (CTX::instance()->mesh.clip & (1 << i)));
 }
 
-// draw what the clipping planes add for these entities: the cut elements,
-// whole with the planes off
+// Draw what the clipping planes add for these entities: the cut elements.
+// With the shader pipeline they are clipped to what the planes cut off, so
+// that they sit next to the clipped rest without overlapping it (a
+// transparent mesh would show the overlap); the fixed function pipeline
+// draws them whole with the planes off, as does either when nothing else is
+// drawn (whole = true) or the planes are already off.
 template <class IT>
-static void drawClipArrays(drawContext *ctx, IT first, IT last, int dim)
+static void drawClipArrays(drawContext *ctx, IT first, IT last, int dim,
+                           bool whole = false)
 {
   if(!CTX::instance()->clipWholeElements) return;
   bool any = false;
   for(IT it = first; it != last; it++)
     if((*it)->va_clip_lines || (*it)->va_clip_triangles) any = true;
   if(!any) return;
-  setMeshClipPlanes(false);
+  bool planesOn = false;
+  for(int i = 0; i < 6; i++)
+    if(gmshClipPlaneEnabled(i)) planesOn = true;
+  bool outside = gmshUseShaders() && planesOn && !whole;
+  if(outside)
+    gmshClipOutside(true);
+  else
+    setMeshClipPlanes(false);
   for(IT it = first; it != last; it++) {
     GEntity *e = *it;
     if(!e->getVisibility() || !passWants(ctx, e)) continue;
@@ -831,7 +843,10 @@ static void drawClipArrays(drawContext *ctx, IT first, IT last, int dim)
                CTX::instance()->mesh.light);
     if(ctx->render_mode == drawContext::GMSH_SELECT) ctx->unsetPickColor();
   }
-  setMeshClipPlanes(true);
+  if(outside)
+    gmshClipOutside(false);
+  else
+    setMeshClipPlanes(true);
 }
 
 static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
@@ -999,7 +1014,7 @@ void drawContext::drawMesh()
         // the section in capping mode (clipped like everything else), the
         // cut elements in whole element mode (whole, with the planes off)
         if(CTX::instance()->clipWholeElements) {
-          drawClipArrays(this, m->firstRegion(), m->lastRegion(), 3);
+          drawClipArrays(this, m->firstRegion(), m->lastRegion(), 3, cutOnly);
         }
         else {
           for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {

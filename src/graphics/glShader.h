@@ -98,6 +98,9 @@ namespace glShader {
   // clip plane i, in eye coordinates; setClipPlaneOff() stops clipping with it
   void setClipPlane(int i, const double plane[4]);
   void setClipPlaneOff(int i);
+  // keep only what the planes cut off (the cut elements of whole element
+  // mode are drawn that way, next to the clipped rest, without overlap)
+  void setClipOutside(bool outside);
   // does the colour come from the array, or is it the one colour given here?
   void setColorArray(bool on);
   void setColor(const unsigned char color[4]);

@@ -33,6 +33,18 @@ static void setViewClipPlanes(PViewOptions *opt, bool on)
     gmshClipPlaneOn(i, on && (opt->clip & (1 << i)));
 }
 
+// The cut elements of whole element mode, with the shader pipeline, are
+// clipped to what the planes cut off, so that they sit next to the clipped
+// rest of the view without overlapping it (a transparent view would show the
+// overlap); the fixed function pipeline draws them whole with the planes off.
+static void setViewClipOutside(PViewOptions *opt, bool on)
+{
+  if(gmshUseShaders())
+    gmshClipOutside(on);
+  else
+    setViewClipPlanes(opt, !on);
+}
+
 // Are the glyphs tested against the planes one at a time? In whole element
 // mode a glyph is drawn whole or not at all, so the test is made on the
 // point or segment it is placed by, with the planes off while drawing. Not
@@ -904,12 +916,12 @@ public:
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
 
-    // the outlines of the cut elements, drawn whole with the planes off
+    // the outlines of the cut elements, on the side the planes cut off
     if(whole) {
-      setViewClipPlanes(opt, false);
+      setViewClipOutside(opt, true);
       drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
                  opt->light && opt->lightLines, true);
-      setViewClipPlanes(opt, true);
+      setViewClipOutside(opt, false);
     }
 
     if(opt->lightTwoSide) gmshLightTwoSide(true);
@@ -918,10 +930,10 @@ public:
 
     // what the clipping planes add: in capping mode the section they cut,
     // clipped like everything else; in whole element mode the cut elements,
-    // drawn whole with the planes off
-    if(whole) setViewClipPlanes(opt, false);
+    // on the side the planes cut off
+    if(whole) setViewClipOutside(opt, true);
     drawArrays(_ctx, p, p->va_clip_triangles, GL_TRIANGLES, opt->light, true);
-    if(whole) setViewClipPlanes(opt, true);
+    if(whole) setViewClipOutside(opt, false);
 
     // draw the "pseudo" vertex arrays for vectors
     drawVectorArray(_ctx, p, p->va_vectors);

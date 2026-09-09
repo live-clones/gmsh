@@ -261,6 +261,10 @@ const double *gmshMatrix(int kind);
 void gmshClipPlane(int i, const double plane[4]);
 void gmshClipPlaneOn(int i, bool on);
 bool gmshClipPlaneEnabled(int i);
+// keep only what the enabled planes cut off (shader pipeline only: the fixed
+// function planes have no such mode)
+void gmshClipOutside(bool outside);
+bool gmshClipOutside();
 // the plane in eye coordinates, which is what a shader is handed
 const double *gmshClipPlaneEye(int i);
 
