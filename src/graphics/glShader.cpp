@@ -12,36 +12,31 @@
 
 namespace glShader {
   namespace {
-    // The body of the two shaders, without the version line: the only thing
-    // that separates a desktop core profile from OpenGL ES is that prologue,
-    // as long as nothing here uses what one of them does not have -
-    // gl_ClipDistance and the geometry stage in particular.
+    // The shader bodies without the version line, which is all that
+    // separates a desktop core profile from OpenGL ES, as long as nothing
+    // here uses what one lacks (gl_ClipDistance, geometry shaders).
     const char *vertexBody = R"(
 in vec3 aVertex;
 in vec3 aNormal;
 in vec4 aColor;
-// one glyph: the three rows of the transform that places it, and the two
-// radii a cylinder is shaped by. These come one per glyph rather than one per
-// vertex, which is what lets the same shape be drawn many times over in one
-// call.
+// per glyph (instanced drawing): three rows of the placing transform, and the
+// two radii of a cylinder
 in vec4 aGlyph0;
 in vec4 aGlyph1;
 in vec4 aGlyph2;
 in vec2 aGlyphParam;
 in vec2 aTexCoord;
 in float aDash;
-// the far end of a line drawn wide, and what it carries: such a line is one
-// instance of a six cornered quad rather than a line of its own, and the
-// vertex shader is handed both of its ends to work the quad out from
+// the far end of a wide line: such a line is an instance of a six vertex
+// quad, and the shader needs both ends to build it
 in vec3 aVertexB;
 in vec3 aNormalB;
 in vec4 aColorB;
 
 uniform bool uInstanced;
 uniform bool uTaper;
-// A line wider than one pixel, which a core profile will not draw: it is drawn
-// as a quad of that width in pixels instead, worked out where the line lands
-// on the screen. uViewport is what turns the one into the other.
+// a line wider than one pixel is drawn as a quad of that width in pixels,
+// computed where the line lands on screen (uViewport)
 uniform bool uWideLine;
 uniform float uLineWidth;
 uniform vec2 uViewport;
@@ -49,9 +44,7 @@ uniform mat4 uModelview;
 uniform mat4 uProjection;
 uniform mat3 uNormalMatrix;
 uniform bool uColorArray;
-// multiplies the alpha of whatever colour is used: this is what the
-// Transparency options do, and doing it here means dragging one costs
-// nothing but a redraw
+// multiplies the alpha of every colour (the Transparency options)
 uniform float uAlphaScale;
 uniform vec4 uColor;
 uniform float uPointSize;
@@ -72,18 +65,17 @@ void main()
   vec4 eye;
   if(uInstanced) {
     if(uTaper) {
-      // the radius of a cylinder follows its length, and the normal of its
-      // side leans over by as much: the shape carries the cosine and the sine
-      // of the angle each of its corners is at, which is what both come from
+      // the radius of a cylinder varies along its length and its side normal
+      // leans by as much; the shape carries the cosine and sine of each
+      // corner's angle
       float r = aGlyphParam.x + p.z * (aGlyphParam.y - aGlyphParam.x);
       n = vec3(p.x, p.y, aGlyphParam.x - aGlyphParam.y);
       p = vec3(p.x * r, p.y * r, p.z);
     }
     vec4 p4 = vec4(p, 1.0);
     p = vec3(dot(aGlyph0, p4), dot(aGlyph1, p4), dot(aGlyph2, p4));
-    // The normals follow the inverse transpose of the transform. Up to a
-    // positive factor, which normalizing takes out again, that is the
-    // cofactors of its three columns.
+    // normals follow the inverse transpose of the transform, which up to a
+    // positive factor is the cofactors of its columns
     vec3 c0 = vec3(aGlyph0.x, aGlyph1.x, aGlyph2.x);
     vec3 c1 = vec3(aGlyph0.y, aGlyph1.y, aGlyph2.y);
     vec3 c2 = vec3(aGlyph0.z, aGlyph1.z, aGlyph2.z);
@@ -92,9 +84,8 @@ void main()
   vec4 clip;
   float dash = aDash;
   if(uWideLine) {
-    // Which corner of the quad this is: two triangles over the two ends,
-    // (A-, A+, B+) and (A-, B+, B-), so that the quad is wound the same way
-    // round whichever way the line runs.
+    // which corner of the quad: triangles (A-, A+, B+) and (A-, B+, B-),
+    // wound the same way whichever way the line runs
     int corner = gl_VertexID;
     bool atB = (corner == 2 || corner == 4 || corner == 5);
     float side = (corner == 1 || corner == 2 || corner == 4) ? 1.0 : -1.0;
@@ -103,8 +94,8 @@ void main()
     vec4 eb = uModelview * vec4(aVertexB, 1.0);
     vec4 ca = uProjection * ea;
     vec4 cb = uProjection * eb;
-    // where the two ends land on the screen, which is where the width of the
-    // line and the length the dashes are counted along it are measured
+    // where the ends land on screen: the width and the dash length are
+    // measured there
     vec2 sa = ca.xy / ca.w * uViewport * 0.5;
     vec2 sb = cb.xy / cb.w * uViewport * 0.5;
     vec2 along = sb - sa;
@@ -117,8 +108,7 @@ void main()
     n = atB ? aNormalB : aNormal;
     vColor = uColorArray ? (atB ? aColorB : aColor) : uColor;
     dash = atB ? len : 0.0;
-    // half the width to each side, in the clip coordinates the screen ones
-    // came from
+    // half the width to each side, back in clip coordinates
     clip.xy += across * (side * uLineWidth * 0.5) / uViewport * 2.0 * clip.w;
   }
   else {
@@ -131,8 +121,7 @@ void main()
   vNormal = uNormalMatrix * n;
   vTexCoord = aTexCoord;
   vDash = dash;
-  // the planes are in eye coordinates, as glClipPlane() left them once the
-  // modelview it was given had been applied
+  // the planes are in eye coordinates
   for(int i = 0; i < 6; i++)
     vClip[i] = uClipOn[i] ? dot(uClipPlane[i], vec4(eye.xyz, 1.0)) : 1.0;
   gl_PointSize = uPointSize;
@@ -148,17 +137,14 @@ in vec2 vTexCoord;
 in float vDash;
 in float vClip[6];
 
-// a string is drawn as a picture of itself: the texture says how much of the
-// colour each pixel of the quad gets, and nothing else about it
-// the dash pattern of a line: a bit of it every uStippleFactor pixels along
-// the line, and the fragments the pattern has a hole at are thrown away.
-// vDash is how far along its line this fragment is, worked out where the line
-// was collected - there is no way to know it here
+// the dash pattern of a line: a bit every uStippleFactor pixels along the
+// line, fragments in a hole are discarded; vDash (distance along the line) is
+// computed where the line was collected, as it cannot be known here
 uniform bool uStipple;
 uniform int uStippleFactor;
 uniform int uStipplePattern;
-// 0 no texture, 1 the texture says how much colour a pixel gets - a string
-// drawn as a picture of itself - and 2 it is the colour, for an image
+// 0: no texture; 1: the texture is the alpha of the colour (a string); 2: it
+// is the colour (an image)
 uniform int uTextured;
 uniform sampler2D uTexture;
 uniform bool uLighting;
@@ -170,15 +156,34 @@ uniform vec3 uLightSpecular[6];
 uniform bool uLightOn[6];
 uniform vec3 uSpecular;
 uniform float uShininess;
-// 0 to paint on the window, 1 to sum into the two buffers order independent
-// transparency keeps
+// 0: the fixed function model below; 1: studio; 2: the shadow catcher of the
+// studio model, on which only the shadow is drawn
+uniform int uShading;
+// the studio light: the key direction and the model's up axis in eye
+// coordinates, the key's shadow map with the matrix from eye coordinates to
+// it, and the same for the dome direction of the current sample
+uniform vec3 uStudioLight;
+uniform vec3 uStudioUp;
+// the size of a texel of the maps, in eye coordinates
+uniform float uShadowTexel;
+uniform bool uShadowOn;
+uniform mat4 uShadowFromEye;
+uniform sampler2DShadow uShadow;
+uniform bool uDomeOn;
+uniform vec3 uDomeDir;
+uniform mat4 uDomeFromEye;
+uniform sampler2DShadow uDome;
+// drawing into a shadow map, and the seed of the frame being accumulated
+// (negative on the plain frame)
+uniform bool uShadowPass;
+uniform float uSeed;
+// 0: draw on the window; 1: sum into the transparency buffers
 uniform int uOitPass;
 
 layout(location = 0) out vec4 fColor;
-// A picking pass reads the depth back as well as the identifier, and neither
-// OpenGL ES nor WebGL will read a depth buffer: it is written here as a colour
-// instead, the 24 bits of it spread over three bytes. When only one buffer is
-// being drawn into - which is every pass but that one - the write goes nowhere.
+// A picking pass also reads the depth back, which OpenGL ES and WebGL cannot
+// do from a depth buffer: it is written as a colour, 24 bits over three
+// bytes. With a single draw buffer the write goes nowhere.
 layout(location = 1) out vec4 fDepth;
 
 vec4 packDepth(float d)
@@ -190,25 +195,20 @@ vec4 packDepth(float d)
   return vec4(r, g, b, 255.0) / 255.0;
 }
 
-// Everything that gets drawn leaves through here. On the window it is simply
-// the colour; in the transparency pass it is added to what the other fragments
-// over the same pixel have left, which is what makes the result the same
-// whatever order they were drawn in.
+// every fragment leaves through here: written as is on the window, added to
+// the other fragments of the pixel in the transparency pass
 void emit(vec4 c)
 {
   if(uOitPass == 1) {
-    // How much this fragment counts for: the nearer and the more opaque, the
-    // more. This is the weight of Mc Guire and Bavoil, whose point is that a
-    // sum weighted this way looks close enough to the ordered blend. Theirs is
-    // scaled by 1e8; the scale cancels out when the sum is divided by itself
-    // below, and one that never passes 1 is what keeps a thousand fragments
-    // over the same pixel inside what a half float can hold.
+    // the weight of McGuire and Bavoil: the nearer and the more opaque, the
+    // more the fragment counts. Their 1e8 scale cancels out in the division
+    // at composite time, and a weight below 1 keeps the sum within a half
+    // float.
     float w = clamp(pow(min(1.0, c.a * 10.0) + 0.01, 3.0) *
                     pow(1.0 - gl_FragCoord.z * 0.9, 3.0), 1e-4, 1.0);
     fColor = vec4(c.rgb * c.a, c.a) * w;
-    // How much light gets through is a product over the fragments, and only a
-    // sum can be had from a buffer that every target blends the same way: the
-    // logarithm is summed here and undone when the two are put on the window.
+    // the light let through is a product over the fragments, but a buffer
+    // can only sum: sum the logarithm here, exponentiate at composite time
     fDepth = vec4(log(max(1.0 - c.a, 1e-4)));
   }
   else {
@@ -217,27 +217,96 @@ void emit(vec4 c)
   }
 }
 
+// Where a fragment of normal n is looked up in the map of a light in the
+// direction l: a texel or two away along the normal, more so at grazing
+// angles, and a little nearer the light (the z), so that a surface does not
+// shadow itself. z is set beyond 1 outside the map.
+vec3 mapCoord(mat4 fromEye, vec3 n, vec3 l)
+{
+  float nl = clamp(dot(n, l), -1.0, 1.0);
+  vec3 at = vEye + n * uShadowTexel * (1.0 + 2.0 * sqrt(1.0 - nl * nl));
+  vec4 p = fromEye * vec4(at, 1.0);
+  vec3 q = p.xyz / p.w;
+  q.z -= 0.0005 + 0.0015 * (1.0 - max(nl, 0.0));
+  if(q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0) q.z = 2.0;
+  return q;
+}
+
+// How much of the key light, and of the dome, reaches this fragment of
+// normal n through its map: 1 outside the map or with nothing in front, 0 in
+// full shade, filtered over 5x5 texels. One function per map: a sampler
+// handed to a function as an argument is not something every driver gets
+// right.
+float keyLit(vec3 n)
+{
+  vec3 q = mapCoord(uShadowFromEye, n, uStudioLight);
+  if(q.z > 1.0) return 1.0;
+  vec2 texel = 1.0 / vec2(textureSize(uShadow, 0));
+  float lit = 0.0;
+  for(int i = -2; i <= 2; i++)
+    for(int j = -2; j <= 2; j++)
+      lit += texture(uShadow, vec3(q.xy + vec2(float(i), float(j)) * texel,
+                                   q.z));
+  return lit / 25.0;
+}
+
+float domeLit(vec3 n)
+{
+  vec3 q = mapCoord(uDomeFromEye, n, uDomeDir);
+  if(q.z > 1.0) return 1.0;
+  vec2 texel = 1.0 / vec2(textureSize(uDome, 0));
+  float lit = 0.0;
+  for(int i = -2; i <= 2; i++)
+    for(int j = -2; j <= 2; j++)
+      lit += texture(uDome, vec3(q.xy + vec2(float(i), float(j)) * texel,
+                                 q.z));
+  return lit / 25.0;
+}
+
 void main()
 {
   for(int i = 0; i < 6; i++)
     if(vClip[i] < 0.0) discard;
+
+  if(uShadowPass && vColor.a < 1.0) {
+    // a transparent fragment casts a shadow in proportion to its opacity:
+    // kept with that probability on the accumulated frames, and when at
+    // least half opaque on the plain one
+    if(uSeed < 0.0) {
+      if(vColor.a < 0.5) discard;
+    }
+    else {
+      float r = fract(sin(dot(gl_FragCoord.xy + vec2(uSeed),
+                              vec2(12.9898, 78.233))) * 43758.5453);
+      if(r > vColor.a) discard;
+    }
+  }
 
   if(uStipple) {
     int bit = int(mod(floor(vDash / float(uStippleFactor)), 16.0));
     if((uStipplePattern & (1 << bit)) == 0) discard;
   }
 
-  // an image is the colour of what it covers, lit or not: this is what
-  // GL_REPLACE did, and nothing below has anything left to say about it
+  // an image is the colour of what it covers, lit or not (GL_REPLACE)
   if(uTextured == 2) {
     emit(texture(uTexture, vTexCoord));
     return;
   }
 
-  // a string is drawn as a picture of itself: the texture says how much of the
-  // colour each pixel of the quad gets, whether or not it is lit
+  // a string is a picture of itself: the texture is the alpha of the colour
   float alpha = vColor.a;
   if(uTextured == 1) alpha *= texture(uTexture, vTexCoord).r;
+
+  if(uShading == 2) {
+    // the shadow catcher: a tint as opaque as the shade it is in, from the
+    // key light and, once the dome is sampled, from the ambient occlusion
+    vec3 nf = normalize(vNormal);
+    float lit = uShadowOn ? keyLit(nf) : 1.0;
+    float shade = 1.0 - lit;
+    if(uDomeOn) shade = 1.0 - 0.6 * lit - 0.4 * domeLit(nf);
+    emit(vec4(vColor.rgb, alpha * shade));
+    return;
+  }
 
   if(!uLighting) {
     emit(vec4(vColor.rgb, alpha));
@@ -249,9 +318,42 @@ void main()
   // GL_LIGHT_MODEL_TWO_SIDE: a back face is lit with its normal flipped
   if(uTwoSide && !gl_FrontFacing) n = -n;
 
-  // GL_COLOR_MATERIAL on GL_AMBIENT_AND_DIFFUSE: the material ambient and
-  // diffuse colours are the current colour. The global ambient light is the
-  // OpenGL default, which Gmsh never changes.
+  if(uShading == 1) {
+    // studio: the light is computed in linear space, from a hemisphere
+    // ambient (sky above, darker ground below, in eye space) and a wrapped
+    // diffuse key light (the studio light, with light 0's colour) that casts
+    // the shadow, plus its highlight; the result goes back to sRGB
+    vec3 base = pow(vColor.rgb, vec3(2.2));
+    vec3 key = uLightOn[0] ? uLightDiffuse[0] : vec3(1.0);
+    float nl = dot(n, uStudioLight);
+    float lit = uShadowOn ? keyLit(n) : 1.0;
+    // the ground below, and the sky above: analytic on the first frame, and
+    // from a dome direction of each frame afterwards (cosine weighted about
+    // the up axis, so that a surface facing up gets 1 on average and a tilted
+    // one (n.d)/(up.d)), which converges to the occluded sky
+    float nu = dot(n, uStudioUp);
+    vec3 ambient = vec3(0.25 * (0.5 - 0.5 * nu));
+    if(uDomeOn) {
+      float nd = dot(n, uDomeDir), ud = dot(uStudioUp, uDomeDir);
+      float v = domeLit(n);
+      ambient += vec3(0.55 * v * min(max(nd, 0.0) / max(ud, 0.05), 4.0));
+    }
+    else
+      ambient += vec3(0.55 * (0.5 + 0.5 * nu));
+    float d = clamp((nl + 0.5) / 1.5, 0.0, 1.0);
+    vec3 c = base * (ambient + 0.6 * key * d * d * lit);
+    // the highlight of the key light, with the material's shininess (none
+    // when General.Shininess is 0), in the shadow like the diffuse
+    if(nl > 0.0) {
+      vec3 h = normalize(uStudioLight + vec3(0.0, 0.0, 1.0));
+      c += 0.6 * key * lit * uSpecular * pow(max(dot(n, h), 0.0), uShininess);
+    }
+    emit(vec4(pow(min(c, vec3(1.0)), vec3(1.0 / 2.2)), alpha));
+    return;
+  }
+
+  // GL_COLOR_MATERIAL on GL_AMBIENT_AND_DIFFUSE, and the default global
+  // ambient of 0.2
   vec3 c = 0.2 * vColor.rgb;
 
   for(int i = 0; i < 6; i++) {
@@ -263,8 +365,7 @@ void main()
     float d = max(dot(n, l), 0.0);
     c += uLightDiffuse[i] * vColor.rgb * d;
     if(d > 0.0) {
-      // an infinite viewer: the half vector is taken against (0, 0, 1) rather
-      // than against the direction to the vertex
+      // infinite viewer: half vector against (0, 0, 1)
       vec3 h = normalize(l + vec3(0.0, 0.0, 1.0));
       c += uLightSpecular[i] * uSpecular * pow(max(dot(n, h), 0.0), uShininess);
     }
@@ -274,16 +375,26 @@ void main()
 }
 )";
 
-  // What puts the two buffers of the transparency pass on the window. It is a
-  // program of its own because it has samplers of its own and nothing else of
-  // the drawing program to say, and it needs no vertices: three of them cover
-  // the window, made out of the vertex number alone.
+  // The composite program of the transparency pass: its own samplers, and no
+  // vertices (three made out of gl_VertexID cover the window).
   const char *compositeVertexBody = R"(
 void main()
 {
   vec2 p = vec2((gl_VertexID == 1) ? 3.0 : -1.0,
                 (gl_VertexID == 2) ? 3.0 : -1.0);
   gl_Position = vec4(p, 0.0, 1.0);
+}
+)";
+
+  // what adds a frame to the accumulation buffer and puts the average back
+  const char *blitFragmentBody = R"(
+uniform sampler2D uTex;
+uniform float uScale;
+layout(location = 0) out vec4 fColor;
+
+void main()
+{
+  fColor = texelFetch(uTex, ivec2(gl_FragCoord.xy), 0) * uScale;
 }
 )";
 
@@ -298,61 +409,96 @@ void main()
   vec4 accum = texelFetch(uAccum, at, 0);
   // the sum of the logarithms is a product again
   float reveal = exp(texelFetch(uReveal, at, 0).r);
-  // the colour the fragments average out to, and how much of the pixel they
-  // cover between them: an ordinary "over" from here
+  // the average colour of the fragments, laid over with their total coverage
   fColor = vec4(accum.rgb / max(accum.a, 1e-5), 1.0 - reveal);
 }
 )";
 
     GLuint _program = 0, _vao = 0;
-    // one buffer for the vertices a caller holds itself and one for their
-    // colours, grown as needed and reused from frame to frame
+    // buffers for client arrays, grown as needed and reused across frames
     GLuint _streamVertices = 0, _streamColors = 0, _streamNormals = 0;
-    // one more for the glyphs a shape is drawn many times over with
+    // and for the glyphs, the texture coordinates and the dashes
     GLuint _streamGlyphs = 0, _streamTex = 0, _streamDash = 0;
-    // A one pixel texture bound whenever nothing else is. The program has a
-    // sampler in it whether or not what is being drawn goes through one, and
-    // a driver checks that every sampler points at a complete texture when it
-    // draws, not only when the branch that reads it is taken.
+    // a 1x1 texture bound whenever no other is: a driver validates every
+    // sampler at draw time, whether or not its branch is taken
     GLuint _noTexture = 0;
+    // the shadow maps of the studio shading (the key light and the dome), and
+    // the 1x1 depth texture bound in their place when there is none (the
+    // samplers must always point at one)
+    GLuint _shadowFbo[2] = {0, 0}, _shadowTex[2] = {0, 0}, _noShadow = 0;
+    int _shadowSize[2] = {0, 0};
+    GLint _shadowViewport[4] = {0, 0, 0, 0};
+    int _shadowPass = -1;
+    // what stands in for the window: 0, or the print target while there is
+    // one
+    GLuint _window = 0, _printFbo = 0, _printColor = 0, _printDepth = 0;
+    // the accumulation of the studio frames: the sum, a copy of the window
+    // to add to it, and the program that does both
+    GLuint _accFbo = 0, _accTex = 0, _accCopy = 0, _blitProgram = 0;
+    int _accWidth = 0, _accHeight = 0;
+    GLint _uBlitTex = -1, _uBlitScale = -1;
+    bool _blitTried = false;
     // the picking buffer and what it is made of
     GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
     int _pickWidth = 0, _pickHeight = 0;
     bool _tried = false;
 
-    // The buffers the transparency pass sums into, the program that puts them
-    // on the window, and whether that pass is the one being drawn. The depth
-    // is a copy of the window's, so that what is transparent is hidden by the
-    // opaque geometry in front of it.
+    // the transparency buffers, the composite program and whether that pass
+    // is being drawn; the depth is a copy of the window's, so that opaque
+    // geometry hides what is behind it
     GLuint _oitFbo = 0, _oitAccum = 0, _oitReveal = 0, _oitDepthRb = 0;
     int _oitWidth = 0, _oitHeight = 0;
     GLuint _oitProgram = 0;
     GLint _uAccum = -1, _uReveal = -1;
     bool _oitOn = false, _oitFailed = false, _oitTried = false;
-    // which of the two depth formats the window's buffer can be copied into:
-    // they have to match exactly, and there is no asking which one it is
+    // the depth format the window's buffer can be copied into: it must match
+    // exactly and cannot be queried
     GLenum _oitDepthFormat = 0;
 
     struct {
       GLint modelview, projection, normalMatrix, colorArray, color, pointSize;
       GLint alphaScale;
-      GLint lighting, twoSide, specular, shininess;
+      GLint lighting, twoSide, specular, shininess, shading;
       GLint instanced, taper;
       GLint textured, texture;
       GLint stipple, stippleFactor, stipplePattern;
       GLint wideLine, lineWidth, viewport;
       GLint oitPass;
-      // the arrays, one location per element: they are set one element at a
-      // time, and asking the driver for the location by name at every draw
-      // costs more than the draw on a scene of many small draws
+      // one location per array element, looked up at link time: asking by
+      // name at every draw is costly on scenes of many small draws
       GLint clipPlane[6], clipOn[6];
+      GLint studioLight, studioUp, shadowTexel, shadowOn, shadowFromEye, shadow;
+      GLint domeOn, domeDir, domeFromEye, dome, shadowPass, seed;
       GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
       GLint lightSpecular[6], lightOn[6];
     } _u;
 
-    // A uniform is set on the program that is current, and these are called
-    // from places that are not drawing - the lights are set once a frame,
-    // before anything is drawn - so each of them says which program it means.
+    // uniforms are set on the current program, and some setters are called
+    // outside drawing (the lights, once a frame): make the program current
+    // bind the 1x1 depth texture in place of shadow map `which', on unit
+    // 2 + which
+    void bindNoShadow(int which)
+    {
+      glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
+      if(!_noShadow) {
+        const GLuint one = 0xffffffff;
+        glGenTextures(1, &_noShadow);
+        glBindTexture(GL_TEXTURE_2D, _noShadow);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 1, 1, 0,
+                     GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, &one);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE,
+                        GL_COMPARE_REF_TO_TEXTURE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+      }
+      else
+        glBindTexture(GL_TEXTURE_2D, _noShadow);
+      glApi::ActiveTexture(GL_TEXTURE0);
+    }
+
     bool ensure()
     {
       if(!_program) return false;
@@ -360,8 +506,7 @@ void main()
       return true;
     }
 
-    // the array uniforms are set one element at a time, which needs the
-    // location of that element rather than of the array
+    // location of element i of an array uniform
     GLint element(const char *name, int i)
     {
       char buf[64];
@@ -421,8 +566,8 @@ void main()
       GLuint p = glApi::CreateProgram();
       glApi::AttachShader(p, vs);
       glApi::AttachShader(p, fs);
-      // the attribute numbers are ours, so that a vertex array can be bound
-      // without asking the program where each of them went
+      // fixed attribute numbers, so that arrays can be bound without asking
+      // the program
       glApi::BindAttribLocation(p, ATTRIB_VERTEX, "aVertex");
       glApi::BindAttribLocation(p, ATTRIB_NORMAL, "aNormal");
       glApi::BindAttribLocation(p, ATTRIB_COLOR, "aColor");
@@ -463,6 +608,19 @@ void main()
       _u.twoSide = glApi::GetUniformLocation(p, "uTwoSide");
       _u.specular = glApi::GetUniformLocation(p, "uSpecular");
       _u.shininess = glApi::GetUniformLocation(p, "uShininess");
+      _u.shading = glApi::GetUniformLocation(p, "uShading");
+      _u.studioLight = glApi::GetUniformLocation(p, "uStudioLight");
+      _u.studioUp = glApi::GetUniformLocation(p, "uStudioUp");
+      _u.shadowTexel = glApi::GetUniformLocation(p, "uShadowTexel");
+      _u.shadowOn = glApi::GetUniformLocation(p, "uShadowOn");
+      _u.shadowFromEye = glApi::GetUniformLocation(p, "uShadowFromEye");
+      _u.shadow = glApi::GetUniformLocation(p, "uShadow");
+      _u.domeOn = glApi::GetUniformLocation(p, "uDomeOn");
+      _u.domeDir = glApi::GetUniformLocation(p, "uDomeDir");
+      _u.domeFromEye = glApi::GetUniformLocation(p, "uDomeFromEye");
+      _u.dome = glApi::GetUniformLocation(p, "uDome");
+      _u.shadowPass = glApi::GetUniformLocation(p, "uShadowPass");
+      _u.seed = glApi::GetUniformLocation(p, "uSeed");
       _u.instanced = glApi::GetUniformLocation(p, "uInstanced");
       _u.taper = glApi::GetUniformLocation(p, "uTaper");
       _u.textured = glApi::GetUniformLocation(p, "uTextured");
@@ -485,13 +643,17 @@ void main()
         _u.lightOn[i] = element("uLightOn", i);
       }
 
-      // a uniform starts at zero, and an alpha scale of zero would draw
-      // nothing at all: it is the one that has to be given a value up front
+      // a uniform starts at zero, and a zero alpha scale would draw nothing
       glApi::UseProgram(_program);
+      // the shadow maps live on texture units 2 and 3
+      glApi::Uniform1i(_u.shadow, 2);
+      glApi::Uniform1i(_u.dome, 3);
+      bindNoShadow(0);
+      bindNoShadow(1);
       glApi::Uniform1f(_u.alphaScale, 1.f);
 
-      // a core profile draws nothing without a vertex array object bound, and
-      // one is enough: the arrays it holds are set again at every draw
+      // a core profile draws nothing without a vertex array object; one is
+      // enough, its arrays are set at every draw
       glApi::GenVertexArrays(1, &_vao);
 
       Msg::Debug("Drawing program built, GLSL %s",
@@ -507,21 +669,29 @@ void main()
     if(!build()) return false;
     glApi::UseProgram(_program);
     glApi::BindVertexArray(_vao);
-    // OpenGL ES always takes the point size from the shader; a desktop core
-    // profile only does when it is told to
+    // OpenGL ES always takes the point size from the shader, a desktop core
+    // profile only if told to
     if(!glApi::isES()) glEnable(GL_PROGRAM_POINT_SIZE);
     return true;
   }
 
   void reset()
   {
-    // the program and the array object belonged to a context that is gone;
-    // deleting them now would be deleting names in whichever context is
-    // current, which are not ours
+    // the names belonged to a context that is gone: deleting them now would
+    // delete names of the current one
     _program = _vao = 0;
     _streamVertices = _streamColors = _streamNormals = 0;
     _streamGlyphs = _streamTex = _streamDash = 0;
     _noTexture = 0;
+    _shadowFbo[0] = _shadowFbo[1] = _shadowTex[0] = _shadowTex[1] = 0;
+    _shadowSize[0] = _shadowSize[1] = 0;
+    _noShadow = 0;
+    _shadowPass = -1;
+    _accFbo = _accTex = _accCopy = _blitProgram = 0;
+    _accWidth = _accHeight = 0;
+    _window = _printFbo = _printColor = _printDepth = 0;
+    _uBlitTex = _uBlitScale = -1;
+    _blitTried = false;
     _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
     _pickWidth = _pickHeight = 0;
     _tried = false;
@@ -544,9 +714,8 @@ void main()
     glApi::UniformMatrix4fv(_u.modelview, 1, GL_FALSE, m);
     glApi::UniformMatrix4fv(_u.projection, 1, GL_FALSE, p);
 
-    // the normal matrix is the inverse transpose of the upper left 3x3 of the
-    // modelview, which is what a non-uniform scale needs; GL_NORMALIZE takes
-    // care of the length afterwards
+    // inverse transpose of the upper left 3x3 of the modelview, for
+    // non-uniform scales; the shader normalizes afterwards
     double a[9] = {modelview[0], modelview[1], modelview[2],
                    modelview[4], modelview[5], modelview[6],
                    modelview[8], modelview[9], modelview[10]};
@@ -602,6 +771,266 @@ void main()
     glApi::Uniform1f(_u.shininess, (float)shineExponent);
   }
 
+  void setShading(int model)
+  {
+    if(!ensure()) return;
+    glApi::Uniform1i(_u.shading, model);
+  }
+
+  void setStudioLight(const double dir[3], const double up[3], double texel)
+  {
+    if(!ensure()) return;
+    float d[3] = {(float)dir[0], (float)dir[1], (float)dir[2]};
+    float u[3] = {(float)up[0], (float)up[1], (float)up[2]};
+    glApi::Uniform3fv(_u.studioLight, 1, d);
+    glApi::Uniform3fv(_u.studioUp, 1, u);
+    glApi::Uniform1f(_u.shadowTexel, (float)texel);
+  }
+
+  void setDome(const double dir[3])
+  {
+    if(!ensure()) return;
+    float d[3] = {(float)dir[0], (float)dir[1], (float)dir[2]};
+    glApi::Uniform3fv(_u.domeDir, 1, d);
+  }
+
+  void setDomeOff()
+  {
+    if(!ensure()) return;
+    glApi::Uniform1i(_u.domeOn, 0);
+    bindNoShadow(1);
+  }
+
+  void setShadowOff()
+  {
+    if(!ensure()) return;
+    glApi::Uniform1i(_u.shadowOn, 0);
+    bindNoShadow(0);
+    setDomeOff();
+  }
+
+  bool beginShadowPass(int which, int size, int sample)
+  {
+    if(which < 0 || which > 1 || size < 1 || _shadowPass >= 0) return false;
+    if(!ensure() || !glApi::haveFramebufferObjects()) return false;
+    GLuint &fbo = _shadowFbo[which], &tex = _shadowTex[which];
+    if(fbo && _shadowSize[which] != size) {
+      glApi::DeleteFramebuffers(1, &fbo);
+      glDeleteTextures(1, &tex);
+      fbo = tex = 0;
+    }
+    if(!fbo) {
+      glApi::GenFramebuffers(1, &fbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);
+      glGenTextures(1, &tex);
+      glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
+      glBindTexture(GL_TEXTURE_2D, tex);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, size, size, 0,
+                   GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+      // linear filtering of a comparison is a 2x2 filter of the results
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE,
+                      GL_COMPARE_REF_TO_TEXTURE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+      glApi::ActiveTexture(GL_TEXTURE0);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                  GL_TEXTURE_2D, tex, 0);
+      // depth only: no colour is written or read
+      const GLenum none = GL_NONE;
+      glApi::DrawBuffers(1, &none);
+      glReadBuffer(GL_NONE);
+      if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+         GL_FRAMEBUFFER_COMPLETE) {
+        Msg::Warning("Could not make a shadow map: drawing without shadows");
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+        glApi::DeleteFramebuffers(1, &fbo);
+        glDeleteTextures(1, &tex);
+        fbo = tex = 0;
+        return false;
+      }
+      _shadowSize[which] = size;
+      Msg::Debug("Shadow map %d of %dx%d texels", which, size, size);
+    }
+    else
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    // the map is being written, so it must not be read
+    glApi::Uniform1i(which ? _u.domeOn : _u.shadowOn, 0);
+    bindNoShadow(which);
+    glApi::Uniform1i(_u.shadowPass, 1);
+    glApi::Uniform1f(_u.seed, sample > 0 ? 0.7318f * sample : -1.f);
+    glGetIntegerv(GL_VIEWPORT, _shadowViewport);
+    glViewport(0, 0, size, size);
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    _shadowPass = which;
+    return true;
+  }
+
+  void endShadowPass(int which, const double fromEye[16])
+  {
+    if(_shadowPass != which) return;
+    _shadowPass = -1;
+    glApi::Uniform1i(_u.shadowPass, 0);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+    glViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
+               _shadowViewport[3]);
+    if(!fromEye) {
+      if(which)
+        setDomeOff();
+      else {
+        glApi::Uniform1i(_u.shadowOn, 0);
+        bindNoShadow(0);
+      }
+      return;
+    }
+    glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
+    glBindTexture(GL_TEXTURE_2D, _shadowTex[which]);
+    glApi::ActiveTexture(GL_TEXTURE0);
+    float m[16];
+    for(int i = 0; i < 16; i++) m[i] = (float)fromEye[i];
+    glApi::UniformMatrix4fv(which ? _u.domeFromEye : _u.shadowFromEye, 1,
+                            GL_FALSE, m);
+    glApi::Uniform1i(which ? _u.domeOn : _u.shadowOn, 1);
+  }
+
+  namespace {
+    GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
+                       GLenum type);
+
+    bool buildBlit()
+    {
+      if(_blitTried) return _blitProgram != 0;
+      _blitTried = true;
+      GLuint vs = compile(GL_VERTEX_SHADER, prologue() + compositeVertexBody);
+      if(!vs) return false;
+      GLuint fs = compile(GL_FRAGMENT_SHADER, prologue() + blitFragmentBody);
+      if(!fs) {
+        glApi::DeleteShader(vs);
+        return false;
+      }
+      GLuint p = glApi::CreateProgram();
+      glApi::AttachShader(p, vs);
+      glApi::AttachShader(p, fs);
+      glApi::LinkProgram(p);
+      glApi::DeleteShader(vs);
+      glApi::DeleteShader(fs);
+      GLint ok = 0;
+      glApi::GetProgramiv(p, GL_LINK_STATUS, &ok);
+      if(!ok) {
+        Msg::Warning("Could not link the accumulation program");
+        glApi::DeleteProgram(p);
+        return false;
+      }
+      _uBlitTex = glApi::GetUniformLocation(p, "uTex");
+      _uBlitScale = glApi::GetUniformLocation(p, "uScale");
+      _blitProgram = p;
+      return true;
+    }
+  } // namespace
+
+  bool accumulate(int width, int height, bool first, int count)
+  {
+    if(width < 1 || height < 1 || count < 1) return false;
+    if(!ensure() || !glApi::haveFramebufferObjects() ||
+       !glApi::haveFloatColorBuffers() || !buildBlit())
+      return false;
+    if(_accFbo && (_accWidth != width || _accHeight != height)) {
+      glApi::DeleteFramebuffers(1, &_accFbo);
+      glDeleteTextures(1, &_accTex);
+      glDeleteTextures(1, &_accCopy);
+      _accFbo = _accTex = _accCopy = 0;
+    }
+    glApi::ActiveTexture(GL_TEXTURE0);
+    if(!_accFbo) {
+      glApi::GenFramebuffers(1, &_accFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _accFbo);
+      // 32 bits: the same 8 bit value added many times over rounds the same
+      // way each time in a half float, which bands a smooth gradient
+      _accTex = floatTarget(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                  GL_TEXTURE_2D, _accTex, 0);
+      const GLenum buf = GL_COLOR_ATTACHMENT0;
+      glApi::DrawBuffers(1, &buf);
+      if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+         GL_FRAMEBUFFER_COMPLETE) {
+        Msg::Warning("Could not make an accumulation buffer");
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+        glApi::DeleteFramebuffers(1, &_accFbo);
+        glDeleteTextures(1, &_accTex);
+        _accFbo = _accTex = 0;
+        return false;
+      }
+      glGenTextures(1, &_accCopy);
+      glBindTexture(GL_TEXTURE_2D, _accCopy);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
+                   GL_UNSIGNED_BYTE, nullptr);
+      _accWidth = width;
+      _accHeight = height;
+      first = true;
+    }
+
+    // the window into the copy
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+    glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : GL_BACK);
+    glBindTexture(GL_TEXTURE_2D, _accCopy);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+
+    // what is changed below is put back: this runs in the middle of a frame,
+    // and what is drawn afterwards expects the state it left
+    GLint vp[4];
+    GLfloat clear[4];
+    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
+    GLboolean wasBlend = glIsEnabled(GL_BLEND);
+    glGetIntegerv(GL_VIEWPORT, vp);
+    glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
+    glViewport(0, 0, width, height);
+    glDisable(GL_DEPTH_TEST);
+    glApi::UseProgram(_blitProgram);
+    glApi::BindVertexArray(_vao);
+    // the vertices come from gl_VertexID; an attribute left enabled would
+    // read a stale buffer
+    for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
+      glApi::DisableVertexAttribArray(i);
+    glApi::Uniform1i(_uBlitTex, 0);
+
+    // added to the sum
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _accFbo);
+    if(first) {
+      glClearColor(0.f, 0.f, 0.f, 0.f);
+      glClear(GL_COLOR_BUFFER_BIT);
+    }
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    glApi::Uniform1f(_uBlitScale, 1.f);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    // and the average put back on the window
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+    glDisable(GL_BLEND);
+    glBindTexture(GL_TEXTURE_2D, _accTex);
+    glApi::Uniform1f(_uBlitScale, 1.f / count);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glViewport(vp[0], vp[1], vp[2], vp[3]);
+    glClearColor(clear[0], clear[1], clear[2], clear[3]);
+    if(wasDepth) glEnable(GL_DEPTH_TEST);
+    if(wasBlend) glEnable(GL_BLEND);
+    glApi::UseProgram(_program);
+    glApi::BindVertexArray(_vao);
+    noTexture();
+    return true;
+  }
+
   void setLighting(bool on, bool twoSide)
   {
     if(!ensure()) return;
@@ -624,8 +1053,7 @@ void main()
     glApi::Uniform1i(_u.clipOn[i], 0);
   }
 
-  // say that nothing is drawn through a texture, and leave the sampler
-  // pointing at one that is at least there
+  // draw without texture, keeping the 1x1 one bound
   void noTexture()
   {
     if(!_noTexture) {
@@ -743,9 +1171,8 @@ void main()
     glApi::Uniform1f(_u.lineWidth, (float)width);
     glApi::Uniform1i(_u.wideLine, 1);
 
-    // The two ends of a segment are the same buffer read at a stride of two
-    // vertices, one of them a vertex further along: that is what lets the
-    // shader see both of them at once, one segment to an instance.
+    // both ends of a segment come from the same buffer at a stride of two
+    // vertices, the far end one vertex further: one segment per instance
     if(!_streamVertices) glApi::GenBuffers(1, &_streamVertices);
     glApi::BindBuffer(GL_ARRAY_BUFFER, _streamVertices);
     glApi::BufferData(GL_ARRAY_BUFFER, (GLsizeiptr)count * 3 * sizeof(float),
@@ -762,8 +1189,7 @@ void main()
     glApi::VertexAttribDivisor(ATTRIB_VERTEXB, 1);
 
     if(lit && normals) {
-      // the arrays keep their normals as bytes and the collector as floats,
-      // so how far apart two of them are depends on which is being drawn
+      // vertex arrays keep normals as bytes, the collector as floats
       std::size_t nsize = (normalType == GL_FLOAT) ? sizeof(float) : 1;
       GLboolean norm = (normalType == GL_FLOAT) ? GL_FALSE : GL_TRUE;
       if(!_streamNormals) glApi::GenBuffers(1, &_streamNormals);
@@ -849,8 +1275,7 @@ void main()
                                nullptr);
     glApi::VertexAttribDivisor(ATTRIB_NORMAL, 0);
 
-    // and the glyphs, one of each of these per glyph rather than per vertex,
-    // which is what the divisor says
+    // the glyphs, one per instance (divisor 1)
     const GLsizei stride = GLYPH_STRIDE;
     if(!_streamGlyphs) glApi::GenBuffers(1, &_streamGlyphs);
     glApi::BindBuffer(GL_ARRAY_BUFFER, _streamGlyphs);
@@ -944,8 +1369,8 @@ void main()
       glApi::DisableVertexAttribArray(ATTRIB_DASH);
     }
 
-    // the texture a string is drawn as a picture of itself through, if there
-    // is one; the coordinates go with it and are nothing without it
+    // the texture (a string drawn as a picture of itself), with its
+    // coordinates
     if(texture && texCoords) {
       if(!_streamTex) glApi::GenBuffers(1, &_streamTex);
       glApi::BindBuffer(GL_ARRAY_BUFFER, _streamTex);
@@ -1012,8 +1437,7 @@ void main()
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + 1,
                                   GL_TEXTURE_2D, _pickDepthTex, 0);
 
-      // the pass still depth tests: what it reads back is the depth of what
-      // ended up in front, not of everything that was drawn
+      // depth tested, so that what is read back is what ended up in front
       glApi::GenRenderbuffers(1, &_pickDepthRb);
       glApi::BindRenderbuffer(GL_RENDERBUFFER, _pickDepthRb);
       glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width,
@@ -1026,7 +1450,7 @@ void main()
          GL_FRAMEBUFFER_COMPLETE) {
         Msg::Warning("Could not make a buffer to pick in: picking in the "
                      "window instead");
-        glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
         glApi::DeleteFramebuffers(1, &_pickFbo);
         _pickFbo = 0;
         return false;
@@ -1055,9 +1479,8 @@ void main()
     glReadBuffer(GL_COLOR_ATTACHMENT0 + 1);
     glReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &packed[0]);
     for(std::size_t i = 0; i < (std::size_t)w * h; i++) {
-      // the three bytes the shader spread the depth over; a fragment that was
-      // never drawn leaves them at zero, which the alpha tells apart from a
-      // depth of zero
+      // the three bytes the shader spread the depth over; the alpha tells a
+      // pixel never drawn from a depth of zero
       unsigned int v = ((unsigned int)packed[4 * i] << 16) |
                        ((unsigned int)packed[4 * i + 1] << 8) |
                        (unsigned int)packed[4 * i + 2];
@@ -1068,7 +1491,7 @@ void main()
   void releasePickBuffer()
   {
     if(!_pickFbo) return;
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
   }
 
   namespace {
@@ -1112,7 +1535,7 @@ void main()
     void dropOitBuffers()
     {
       if(!_oitFbo) return;
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
       glApi::DeleteFramebuffers(1, &_oitFbo);
       glDeleteTextures(1, &_oitAccum);
       glDeleteTextures(1, &_oitReveal);
@@ -1120,7 +1543,8 @@ void main()
       _oitFbo = _oitAccum = _oitReveal = _oitDepthRb = 0;
     }
 
-    GLuint floatTarget(int width, int height, GLenum internal, GLenum format)
+    GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
+                       GLenum type)
     {
       GLuint t = 0;
       glGenTextures(1, &t);
@@ -1129,25 +1553,24 @@ void main()
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format,
-                   GL_HALF_FLOAT, nullptr);
+      glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, type,
+                   nullptr);
       return t;
     }
 
-    // The two buffers plus a copy of the window's depth, and the copy itself.
-    // The depth formats of the two buffers have to match exactly for it, and
-    // there is no way to ask what the window's is, so this is tried with one
-    // and then the other.
+    // The two buffers plus a copy of the window's depth. The depth formats
+    // must match exactly and the window's cannot be queried, so both are
+    // tried.
     bool makeOitBuffers(int width, int height, GLenum depthFormat)
     {
       glApi::GenFramebuffers(1, &_oitFbo);
       glApi::BindFramebuffer(GL_FRAMEBUFFER, _oitFbo);
 
-      // what the colours are summed in, and what the light left over is
-      _oitAccum = floatTarget(width, height, GL_RGBA16F, GL_RGBA);
+      // the weighted colours, and the light let through
+      _oitAccum = floatTarget(width, height, GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                   GL_TEXTURE_2D, _oitAccum, 0);
-      _oitReveal = floatTarget(width, height, GL_R16F, GL_RED);
+      _oitReveal = floatTarget(width, height, GL_R16F, GL_RED, GL_HALF_FLOAT);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + 1,
                                   GL_TEXTURE_2D, _oitReveal, 0);
       glBindTexture(GL_TEXTURE_2D, 0);
@@ -1176,7 +1599,7 @@ void main()
       if(!_oitFbo && !makeOitBuffers(width, height, depthFormat)) return false;
       // whatever error was already pending is not ours to read
       while(glGetError() != GL_NO_ERROR) {}
-      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, _window);
       glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _oitFbo);
       glApi::BlitFramebuffer(0, 0, width, height, 0, 0, width, height,
                              GL_DEPTH_BUFFER_BIT, GL_NEAREST);
@@ -1187,6 +1610,75 @@ void main()
   } // namespace
 
   bool transparentPass() { return _oitOn; }
+
+  bool beginPrintTarget(int width, int height)
+  {
+    if(width < 1 || height < 1 || _printFbo) return false;
+    if(!glApi::haveFramebufferObjects()) return false;
+    GLint maxSize = 0;
+    glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxSize);
+    if(width > maxSize || height > maxSize) {
+      Msg::Warning("Picture of %dx%d pixels larger than the largest buffer "
+                   "(%dx%d)", width, height, maxSize, maxSize);
+      return false;
+    }
+    glApi::GenFramebuffers(1, &_printFbo);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _printFbo);
+    glApi::GenRenderbuffers(1, &_printColor);
+    glApi::BindRenderbuffer(GL_RENDERBUFFER, _printColor);
+    glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
+    glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                   GL_RENDERBUFFER, _printColor);
+    glApi::GenRenderbuffers(1, &_printDepth);
+    glApi::BindRenderbuffer(GL_RENDERBUFFER, _printDepth);
+    glApi::RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width,
+                               height);
+    glApi::FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                   GL_RENDERBUFFER, _printDepth);
+    const GLenum buf = GL_COLOR_ATTACHMENT0;
+    glApi::DrawBuffers(1, &buf);
+    if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+       GL_FRAMEBUFFER_COMPLETE) {
+      Msg::Warning("Could not make a buffer of %dx%d pixels to print into",
+                   width, height);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      glApi::DeleteFramebuffers(1, &_printFbo);
+      glApi::DeleteRenderbuffers(1, &_printColor);
+      glApi::DeleteRenderbuffers(1, &_printDepth);
+      _printFbo = _printColor = _printDepth = 0;
+      return false;
+    }
+    _window = _printFbo;
+    // the transparency buffers were made to match the window
+    dropOitBuffers();
+    _oitDepthFormat = 0;
+    Msg::Debug("Printing into a %dx%d buffer", width, height);
+    return true;
+  }
+
+  void readPrintTarget(int width, int height, GLenum format, GLenum type,
+                       void *pixels)
+  {
+    if(!_printFbo) return;
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _printFbo);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glFinish();
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, width, height, format, type, pixels);
+  }
+
+  void endPrintTarget()
+  {
+    if(!_printFbo) return;
+    _window = 0;
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glApi::DeleteFramebuffers(1, &_printFbo);
+    glApi::DeleteRenderbuffers(1, &_printColor);
+    glApi::DeleteRenderbuffers(1, &_printDepth);
+    _printFbo = _printColor = _printDepth = 0;
+    dropOitBuffers();
+    _oitDepthFormat = 0;
+  }
 
   bool beginTransparent()
   {
@@ -1219,7 +1711,7 @@ void main()
       Msg::Debug("Could not sum transparency into buffers of our own: "
                  "drawing it sorted instead");
       _oitFailed = true;
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
       return false;
     }
 
@@ -1227,17 +1719,15 @@ void main()
     const GLenum bufs[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0 + 1};
     glApi::DrawBuffers(2, bufs);
 
-    // Both start at zero: nothing summed yet, and a summed logarithm of zero
-    // is all of the light getting through. The depth that was just copied is
-    // left alone.
+    // nothing summed yet, and a summed log of zero lets all light through;
+    // the copied depth is left alone
     GLfloat clear[4];
     glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(clear[0], clear[1], clear[2], clear[3]);
 
-    // every fragment is added to what the others left, and none of them hides
-    // another: that is the whole point
+    // every fragment is added, none hides another
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     glEnable(GL_DEPTH_TEST);
@@ -1254,13 +1744,13 @@ void main()
     // said on the drawing program, which is still the one in use
     glApi::Uniform1i(_u.oitPass, 0);
 
-    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glDepthMask(GL_TRUE);
 
     glApi::UseProgram(_oitProgram);
     glApi::BindVertexArray(_vao);
-    // the three vertices are made out of their own numbers, and an attribute
-    // left enabled from the last draw would only be read from a stale buffer
+    // the vertices come from gl_VertexID; an attribute left enabled would
+    // read a stale buffer
     for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
       glApi::DisableVertexAttribArray(i);
 
@@ -1272,20 +1762,17 @@ void main()
     glApi::Uniform1i(_uReveal, 1);
     glApi::ActiveTexture(GL_TEXTURE0);
 
-    // what the fragments average out to, laid over the window in the
-    // proportion the pixel still lets through
+    // the averaged colour, laid over the window with the fragments' coverage
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
-    // The colour goes on the window the ordinary way. The window's own alpha
-    // is what a saved image keeps, and it has to end up covered as much as the
-    // pixel is, which is not what squaring it through the same factor would
-    // give: it gets a blending of its own.
+    // the window's alpha (kept by saved images) must end up as covered as the
+    // pixel is, which a plain SRC_ALPHA blend would square: blend it apart
     if(glApi::BlendFuncSeparate)
       glApi::BlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE,
                                GL_ONE_MINUS_SRC_ALPHA);
     else
-      // without it the window's alpha comes out squared where the transparency
-      // covers it, which is what the ordinary blend has always done anyway
+      // the window's alpha comes out squared, as the ordinary blend always
+      // did
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

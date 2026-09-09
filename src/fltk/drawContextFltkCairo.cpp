@@ -59,11 +59,8 @@ public:
   {
     if(_elements.empty()) return;
 
-    // Everything below is in true pixels rather than in the coordinates the
-    // widget toolkit works in: that is what the string was told to go at, and
-    // on a high resolution screen the two differ by this factor. The picture
-    // of the strings is drawn at that scale as well, so that they are as sharp
-    // as the screen allows instead of one blown up to twice its size.
+    // everything below is in true pixels, and the strings are drawn at that
+    // scale so that they are sharp on a high resolution screen
     GLint vp[4];
     glGetIntegerv(GL_VIEWPORT, vp);
     double f = 1.;
@@ -110,26 +107,21 @@ public:
     gmshScale(2. / vp[2], 2. / vp[3], 1.);
     gmshTranslate(-vp[2] / 2., -vp[3] / 2., 0.);
 
-    // Write the texture on screen. It is a plain two dimensional one with
-    // coordinates in [0, 1] rather than the rectangle texture this used to
-    // use: rectangle textures are not in OpenGL ES, and the shader pipeline
-    // has to be able to sample it. What is in it is one channel saying how
-    // much of the colour each pixel of the quad gets - the alpha of a fixed
-    // function pipeline, the red of a shader, which has no alpha textures.
+    // a plain 2D texture with coordinates in [0, 1] (rectangle textures are
+    // not in OpenGL ES), with one channel giving the alpha of the colour:
+    // an alpha texture for the fixed function pipeline, a red one for the
+    // shader
     bool shaders = gmshUseShaders();
     bool wasLit = gmshLightingEnabled();
-    // The queue is flushed whenever it fills up, which can be in the middle of
-    // the scene: what is changed here has to be put back afterwards. The
-    // fixed function pipeline does that with the attribute stack; the shader
-    // pipeline has none, and remembers the two toggles itself. In the pass
-    // that sums what is transparent the blending is that pass's own, and is
-    // left alone: the strings go through it like everything else in it.
+    // the queue can be flushed in the middle of the scene, so the state
+    // changed here is put back afterwards: through the attribute stack with
+    // the fixed function pipeline, by hand with the shader one. The
+    // transparency pass keeps its own blending.
     GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
     GLboolean wasBlend = glIsEnabled(GL_BLEND);
     bool ownBlend = !glShader::transparentPass();
     if(!shaders) {
-      // what glPopAttrib() puts back below is OpenGL's own state, which the
-      // lighting we remember knows nothing about: say it again afterwards
+      // glPopAttrib() does not restore the lighting we remember ourselves
       glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
     }
     gmshLighting(false);
@@ -142,8 +134,7 @@ public:
     int th = cairo_image_surface_get_height(surface);
     glGenTextures(1, &textureId);
     glBindTexture(GL_TEXTURE_2D, textureId);
-    // cairo pads the rows of its picture out to a multiple of four bytes, so
-    // the upload has to be told how long a row of it really is
+    // cairo pads the rows to a multiple of four bytes
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ROW_LENGTH,
                   cairo_image_surface_get_stride(surface));
@@ -222,9 +213,8 @@ void drawContextFltkCairo::drawString(const char *str)
   drawString(str, win);
 }
 
-// where the string goes and what colour it is, both of which used to be asked
-// of OpenGL: a core profile keeps neither a raster position nor a current
-// colour, so they are handed over and remembered here instead
+// the position and colour are passed in, as a core profile has neither a
+// raster position nor a current colour to query
 void drawContextFltkCairo::drawString(const char *str, const double win[3])
 {
   const unsigned char *c = gmshCurrentColor();

@@ -23,9 +23,8 @@
 #include "SmoothData.h"
 #include "Iso.h"
 
-// how many edges or faces of one element are hashed and prefetched together
-// before being looked up; elements with more than this fall back on looking
-// them up one at a time
+// how many edges or faces of an element are hashed and prefetched together
+// before being looked up (more fall back on one at a time)
 enum { MAX_BATCHED_EDGES = 32, MAX_BATCHED_FACES = 8 };
 
 static const double curvedRepTol = 1.e-5;
@@ -129,10 +128,8 @@ bool isElementVisible(MElement *ele)
     double r = ele->maxEdge();
     if(r < ctx->mesh.radiusInf || r > ctx->mesh.radiusSup) return false;
   }
-  // Nothing about the clipping planes here on purpose: the arrays are built
-  // once and OpenGL applies the planes, so that moving one costs nothing but a
-  // redraw. What whole element mode used to leave out is drawn back from
-  // va_clip_*, and what capping used to add is built there too.
+  // nothing about the clipping planes here: OpenGL applies them, and what
+  // they add is built into va_clip_*
   return true;
 }
 
@@ -192,12 +189,9 @@ static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
   }
 }
 
-// Drop the faces interior to a 3D mesh, i.e. those shared by two elements of
-// the same entity, when the user asked for the skin only. They are gone, not
-// merely hidden, whatever else is going on: clipping, exploding or drawing the
-// mesh with transparency will show what is left, which is what the option is
-// for. The one thing that is not a matter of taste is picking, which cannot
-// reach an element that is not in the arrays.
+// drop the faces interior to a 3D mesh (shared by two elements of the same
+// entity) when only the skin is asked for; they are then not in the arrays
+// at all, so they cannot be picked either
 static bool removeInteriorFaces()
 {
   if(!CTX::instance()->mesh.drawSkinOnly) return false;
@@ -214,11 +208,8 @@ static int repPerFace(MElement *ele, bool curved)
   return numRep / numFaces;
 }
 
-// First pass: a face shared by two visible elements is interior, and is hidden
-// by the skin of the mesh. Insert each face and cancel it when it is seen a
-// second time, so that the filter is left holding exactly the faces that bound
-// the mesh - far fewer than the interior ones, so the table stays small and hot
-// instead of growing to the total number of faces.
+// first pass: insert each face and cancel it when seen a second time, so
+// that the filter is left with the boundary faces only
 template <class T>
 static void markBoundaryFaces(std::vector<T *> &elements,
                               UniqueElementFilter *boundary, int nthreads)
@@ -231,8 +222,7 @@ static void markBoundaryFaces(std::vector<T *> &elements,
       (ele->getPolynomialOrder() > 1) &&
       (ele->maxDistToStraight() > curvedRepTol * ele->getInnerRadius());
     if(!repPerFace(ele, curved)) continue;
-    // as when the edges are filtered: hash the faces of the element and ask
-    // for their table entries before touching any of them
+    // hash the faces and prefetch their table entries before looking up
     MVertex *fv[4];
     int nf = ele->getNumFaces();
     std::uint64_t hash[MAX_BATCHED_FACES];
@@ -254,10 +244,9 @@ static void markBoundaryFaces(std::vector<T *> &elements,
   }
 }
 
-// Add the section a clipping plane cuts out of an element to the array. The
-// section is moved by a fraction of the model size towards the side the plane
-// keeps, so that the plane that produced it does not clip it away again; the
-// other planes still do, which is what makes several planes work together
+// add the section a clipping plane cuts out of an element, moved slightly
+// towards the kept side so that the plane does not clip it away (the other
+// planes still do)
 static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
 {
   int nv = ele->getNumPrimaryVertices();
@@ -330,16 +319,9 @@ static void addCapInArray(VertexArray *va, MElement *ele, unsigned int *col)
   }
 }
 
-// The section the clipping planes cut out of the 3D elements. This is the one
-// thing about the arrays that moving a plane changes, so it is built on its
-// own and the rest is left exactly as it is: a plane can then be moved without
-// the mesh being built again. Only the elements a plane actually cuts produce
-// anything, so this is a slice through the model however big the model is.
-// Does a plane cut through this element? Those are the ones whole element mode
-// draws entire, and they are the only elements whose faces can lie between
-// what is kept and what is removed: a fully visible element and a fully
-// removed one cannot share a face, as its vertices would have to be on both
-// sides at once.
+// does a plane cut through this element? Those are the elements whole
+// element mode draws whole, and the only ones whose faces can lie between
+// what is kept and what is removed.
 static bool elementIsCut(MElement *ele)
 {
   CTX *ctx = CTX::instance();
@@ -351,9 +333,8 @@ static bool elementIsCut(MElement *ele)
   return false;
 }
 
-// Is this element kept by whole element mode? The elements a plane cuts are,
-// and so are the ones entirely on the visible side; only those entirely beyond
-// a plane are dropped. This is the test isElementVisible() used to make.
+// is this element kept by whole element mode? Only those entirely beyond a
+// plane are dropped.
 static bool elementIsKept(MElement *ele)
 {
   CTX *ctx = CTX::instance();
@@ -368,10 +349,8 @@ static bool elementIsKept(MElement *ele)
   return true;
 }
 
-// The faces on the boundary of what whole element mode keeps. What is drawn is
-// that boundary, so the faces between a kept element and a removed one count
-// while those between two kept elements do not - which is why the boundary has
-// to be worked out over the kept elements rather than over the whole mesh.
+// the boundary faces of what whole element mode keeps (a face between two
+// kept elements is interior, one facing a removed element is not)
 template <class T>
 static void markKeptBoundaryFaces(std::vector<T *> &elements,
                                   UniqueElementFilter *bnd, int nthreads)
@@ -384,16 +363,14 @@ static void markKeptBoundaryFaces(std::vector<T *> &elements,
   markBoundaryFaces(kept, bnd, nthreads);
 }
 
-// The elements a plane cuts, gathered so that they can be drawn whole while
-// OpenGL clips everything else.
+// the elements a plane cuts, to be drawn whole while OpenGL clips the rest
 template <class T>
 static void gatherCutElements(std::vector<T *> &elements,
                               std::vector<T *> &cut)
 {
   for(std::size_t i = 0; i < elements.size(); i++) {
     if(!isElementVisible(elements[i])) continue;
-    // an element one plane cuts can still be entirely beyond another, and is
-    // then not drawn at all: what is drawn whole here is not clipped again
+    // an element cut by one plane can be entirely beyond another
     if(!elementIsKept(elements[i])) continue;
     if(!elementIsCut(elements[i])) continue;
     cut.push_back(elements[i]);
@@ -412,8 +389,8 @@ static void addCapsInArray(GEntity *e, std::vector<T *> &elements)
   }
 }
 
-// vaL and vaT are where the lines and the triangles go: the entity's own
-// arrays, or the ones held apart for what the clipping planes add.
+// vaL and vaT are where the lines and triangles go: the entity's own arrays,
+// or the ones holding what the clipping planes add
 template <class T>
 static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
                                 std::vector<T *> &elements, bool edges,
@@ -434,9 +411,8 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
   }
   else {
     int n = (int)(elements.size() / nthreads) + 100;
-    // the threads share the filter of the entity's own arrays, so that an
-    // element is dropped whichever thread sees it first, and so that the filter
-    // survives across the successive calls made for each element type
+    // the threads share the entity's filter, which also survives across the
+    // calls made for each element type
     UniqueElementFilter *fl = vaL ? vaL->getUniqueFilter(true) : nullptr;
     UniqueElementFilter *ft = vaT ? vaT->getUniqueFilter(true) : nullptr;
     for(int t = 0; t < nthreads; t++) {
@@ -456,17 +432,14 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
   const double explode = CTX::instance()->mesh.explode;
   const bool smooth = CTX::instance()->mesh.smoothNormals;
   const bool pick = CTX::instance()->pickElements;
-  // the filter is only worth it on edges, which are shared by many elements; it
-  // finds nothing at all when the elements are exploded, since no two of them
-  // then share any coordinate
+  // the filter is only worth it on edges, and finds nothing when the elements
+  // are exploded
   const bool filtering =
     CTX::instance()->mesh.drawUniqueEdges && (explode == 1.) && !pick;
   const bool uniqueEdges = (e->dim() > 1 && filtering);
 
-  // when the elements have a topology, identify a duplicated edge by its two
-  // vertices rather than by the coordinates of its corners: this is both
-  // cheaper and exact, and it lets us skip getEdgeRep() altogether for the
-  // edges that have already been drawn
+  // with a topology, identify a duplicated edge by its two vertices rather
+  // than by coordinates: cheaper, exact, and getEdgeRep() can be skipped
   UniqueElementFilter *filter =
     (uniqueEdges && vaL) ? vaL->getUniqueFilter(nthreads > 1) : nullptr;
   // size the tables up front: growing them by successive doublings costs about
@@ -501,9 +474,8 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
       bool topo = (filter && numRep == ele->getNumEdges() &&
                    numRep <= MAX_BATCHED_EDGES);
       bool unique = uniqueEdges && !topo;
-      // hash the edges of the element and ask for their table entries before
-      // looking any of them up: the lookups are spread over a table far larger
-      // than the caches, and would otherwise stall one after the other
+      // hash the edges and prefetch their table entries before looking up,
+      // so that the cache misses overlap
       std::uint64_t hash[MAX_BATCHED_EDGES];
       if(topo) {
         for(int j = 0; j < numRep; j++) {
@@ -539,8 +511,7 @@ static void addElementsInArrays(GEntity *e, VertexArray *vaL, VertexArray *vaT,
     if(faces) {
       int numRep = ele->getNumFacesRep(curved);
       int perFace = interior ? repPerFace(ele, curved) : 0;
-      // hash the faces of the element and ask for their table entries before
-      // looking any of them up
+      // same for the faces
       std::uint64_t interiorHash[MAX_BATCHED_FACES];
       int nf = perFace ? ele->getNumFaces() : 0;
       bool batched = (nf > 0 && nf <= MAX_BATCHED_FACES);
@@ -741,8 +712,7 @@ private:
 public:
   int _estimateNumCaps(GRegion *r)
   {
-    // the elements a plane cuts form a surface through the volume: there are
-    // about as many of them as the 2/3 power of the number of elements
+    // the cut elements form a surface: about the 2/3 power of the elements
     std::size_t n = r->getNumMeshElements();
     return (int)(2. * pow((double)n, 2. / 3.)) + 100;
   }
@@ -810,22 +780,19 @@ public:
   }
 };
 
-// What each model's caps were last built for. Rebuilding them when none of this
-// has changed would be work at every frame for nothing; keyed by model, as
-// several of them can be drawn one after the other in the same frame.
+// what each model's clip arrays were last built for: only what changes them
+// without marking the mesh as changed (the planes and the clipping options);
+// everything else sets mesh.changed, and drawMesh() then invalidates them
 static std::map<GModel *, std::vector<double> > _clipToken;
 
 static std::vector<double> clipToken()
 {
   CTX *ctx = CTX::instance();
   std::vector<double> t;
-  t.push_back(ctx->meshClipCaps() ? 1. : 0.);
-  t.push_back(ctx->clipWholeElements);
-  t.push_back(ctx->clipOnlyDrawIntersectingVolume);
-  t.push_back(ctx->mesh.volumeEdges);
-  t.push_back(ctx->mesh.volumeFaces);
   t.push_back(ctx->mesh.clip);
+  t.push_back(ctx->clipWholeElements);
   t.push_back(ctx->clipOnlyVolume);
+  t.push_back(ctx->clipOnlyDrawIntersectingVolume);
   for(int i = 0; i < 6; i++)
     for(int j = 0; j < 4; j++) t.push_back(ctx->clipPlane[i][j]);
   return t;
@@ -876,7 +843,11 @@ bool GModel::fillClipVertexArrays()
   _clipToken[this] = tok;
 
   CTX *ctx = CTX::instance();
-  bool caps = ctx->meshClipCaps();
+  // The caps are worth computing only where the mesh is drawn as a surface,
+  // and only when the planes are applied by OpenGL: in whole element mode the
+  // elements a plane cuts are removed entire and there is no hole to fill.
+  bool caps = ctx->clipCapping && !ctx->clipWholeElements && ctx->mesh.clip &&
+              (ctx->mesh.volumeFaces || ctx->mesh.surfaceFaces);
   bool whole = ctx->clipWholeElements && ctx->mesh.clip;
   double t1 = TimeOfDay();
   std::size_t n = 0;
@@ -888,9 +859,7 @@ bool GModel::fillClipVertexArrays()
     GRegion *r = *it;
     r->deleteClipVertexArrays();
     if(!r->getVisibility() || (!caps && !whole)) continue;
-    // A plane cuts a surface through the volume: there are about as many
-    // elements on it as the 2/3 power of the ones in the volume, however many
-    // that is. This is what makes holding it apart worth doing.
+    // the cut elements form a surface: about the 2/3 power of the elements
     std::size_t ne = r->getNumMeshElements();
     int est = (int)(2. * pow((double)ne, 2. / 3.)) + 100;
 
@@ -905,16 +874,14 @@ bool GModel::fillClipVertexArrays()
       r->va_clip_triangles->finalize();
     }
     else {
-      // whole element mode: the elements a plane cuts, drawn entire while
-      // OpenGL clips the rest
+      // whole element mode: the cut elements, drawn whole
       bool edg = ctx->mesh.volumeEdges, fac = ctx->mesh.volumeFaces;
       if(!edg && !fac) continue;
       r->va_clip_lines = new VertexArray(2, edg ? 6 * est : 100);
       r->va_clip_triangles = new VertexArray(3, fac ? 4 * est : 100);
       VertexArray *vl = r->va_clip_lines, *vt = r->va_clip_triangles;
 
-      // what is drawn is the boundary of what is kept, so that a face between
-      // two kept elements stays hidden and one facing the removed side does not
+      // only the boundary of what is kept is drawn
       UniqueElementFilter *bnd = nullptr;
       int nth = ctx->numThreads;
       if(!nth) nth = Msg::GetMaxThreads();
@@ -963,11 +930,8 @@ bool GModel::fillClipVertexArrays()
     if(r->va_clip_triangles) n += r->va_clip_triangles->getNumVertices();
   }
 
-  // Curves and surfaces are cut by OpenGL like everything else, so whole
-  // element mode has to give their cut elements back too - otherwise the skin
-  // ends flat at the plane instead of following the elements. Not when only
-  // the volume is meant to be clipped: they are then left alone entirely, and
-  // drawn with the planes off.
+  // curves and surfaces get their cut elements back too, unless only the
+  // volume is clipped (they are then drawn whole with the planes off)
   if(whole && !ctx->clipOnlyVolume) {
     if(ctx->mesh.lines) {
       for(auto it = firstEdge(); it != lastEdge(); it++) {

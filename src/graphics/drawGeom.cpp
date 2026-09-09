@@ -69,34 +69,23 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
   ctx->drawString(str, xx, yy, zz);
 }
 
-// Draw every plain, unselected geometry point in one call instead of a
-// gmshBegin/gmshVertex3d/gmshEnd block each. A model split into partitions has one
-// geometry point per partition boundary node, so this is tens of thousands of
-// one-vertex draw calls per frame, and the driver spends longer setting each
-// of them up than drawing it. Returns true when it has drawn the points, so
-// that the per-entity pass can skip them; selected points and labels are left
-// to that pass, which paints them on top.
-// The glyphs the geometry is drawn with - the spheres of its points, the
-// cylinders of its curves - collected over the whole pass and drawn as one
-// array at the end of it, instead of one at a time.
-//
-// Unlike the mesh and the views, these are not kept between frames: nothing
-// says when a geometry has changed, so a list kept from the last frame could
-// no longer be the geometry on screen. Collecting them again for every frame
-// still leaves the walk that was there anyway - it is the expansion into
-// triangles that this is about, and that is what a zoom would ask for again
-// in any case, as the sizes are given in pixels.
+// the glyphs of the geometry (point spheres, curve cylinders), collected
+// over the pass and drawn as one array at the end; not kept between frames,
+// as nothing says when the geometry has changed
 static glyphList _geomGlyphs;
 
-// where a glyph goes, or null when they are being drawn one at a time: a
-// picking pass draws each entity in a colour that stands for it, which is not
-// something a batch of them can carry
+// where a glyph goes, or null when they are drawn one at a time (a picking
+// pass needs a colour per entity)
 static glyphList *geomGlyphs(drawContext *ctx)
 {
   if(ctx->render_mode == drawContext::GMSH_SELECT) return nullptr;
   return &_geomGlyphs;
 }
 
+// Draw every plain, unselected geometry point in one call instead of a
+// gmshBegin/gmshEnd block each, which costs tens of thousands of draw calls
+// on a partitioned model. Returns true if it drew them; selected points and
+// labels are left to the per-entity pass.
 static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
 {
   CTX *c = CTX::instance();
@@ -135,6 +124,15 @@ static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
   return true;
 }
 
+// does this pass draw this entity? A mixed geometry draws its opaque
+// entities in the opaque pass and the others in the transparent one
+static bool passWants(drawContext *ctx, GEntity *e)
+{
+  if(ctx->transparencyPass == TRANSPARENCY_ALL) return true;
+  return (ctx->transparencyPass == TRANSPARENCY_TRANSPARENT) ==
+         gmshGeometryEntityIsTransparent(e);
+}
+
 class drawGVertex {
 private:
   drawContext *_ctx;
@@ -147,6 +145,7 @@ public:
   }
   void operator()(GVertex *v)
   {
+    if(!passWants(_ctx, v)) return;
     if(!v->getVisibility()) return;
     if(v->geomType() == GEntity::BoundaryLayerPoint) return;
     // already drawn by drawGeomPointsBatched(), and nothing else here applies
@@ -226,6 +225,7 @@ public:
   drawGEdge(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GEdge *e)
   {
+    if(!passWants(_ctx, e)) return;
     if(!e->getVisibility()) return;
     if(e->geomType() == GEntity::DiscreteCurve) return;
     if(e->geomType() == GEntity::PartitionCurve) return;
@@ -373,6 +373,7 @@ public:
   drawGFace(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GFace *f)
   {
+    if(!passWants(_ctx, f)) return;
     if(!f->getVisibility()) return;
     if(f->geomType() == GEntity::PartitionSurface) return;
     if(f->geomType() == GEntity::BoundaryLayerSurface) return;
@@ -492,6 +493,7 @@ public:
   drawGRegion(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GRegion *r)
   {
+    if(!passWants(_ctx, r)) return;
     if(!r->getVisibility()) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
@@ -578,9 +580,10 @@ public:
 
 void drawContext::drawGeom()
 {
-  // the geometry is see-through or it is not, all of it together: it belongs
-  // to one of the two passes and is left out of the other
-  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshGeometryIsTransparent())
+  // nothing of the geometry is opaque when the colours of the options are
+  // transparent; otherwise the entities are sorted out one by one
+  if(transparencyPass == TRANSPARENCY_OPAQUE &&
+     gmshGeometryColorsAreTransparent())
     return;
   if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshGeometryIsTransparent())
     return;
@@ -601,9 +604,11 @@ void drawContext::drawGeom()
     GModel *m = GModel::list[i];
     if(m->getVisibility() && isVisible(m)) {
       {
-        // when the batch drew every point there is, the pass below would walk
-        // the points only to return immediately for each of them
-        bool batched = drawGeomPointsBatched(this, m);
+        // nothing left for the per-point pass when the batch drew them all
+        // a mixed geometry is drawn entity by entity
+        bool mixed = transparencyPass != TRANSPARENCY_ALL &&
+                     !gmshGeometryColorsAreTransparent();
+        bool batched = !mixed && drawGeomPointsBatched(this, m);
         if(!batched || CTX::instance()->geom.pointLabels ||
            GEntity::numSelected)
           std::for_each(m->firstVertex(), m->lastVertex(),

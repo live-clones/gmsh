@@ -161,16 +161,10 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
                   v->z() + offset / ctx->s[2]);
 }
 
-// The spheres the nodes of a mesh entity are drawn with, collected once and
-// kept. A mesh holds one per node, so working out where each of them goes -
-// and, worse, whether the element it belongs to is visible - is not something
-// to do for every frame.
-//
-// What they depend on is the mesh itself - every list is thrown away when it
-// changes, see drawMesh() - the options that decide their size and colour,
-// and the length a pixel stands for, as the size is given in pixels. The
-// labels are not collected: they are worked out for every frame as they
-// always were.
+// The node spheres of a mesh entity, collected once and kept: they depend on
+// the mesh (every list is dropped when it changes, see drawMesh()), the
+// options deciding their size and colour, and the pixel size. The labels are
+// not collected.
 
 // what a walk over the nodes of an entity is being asked to do
 enum { NODES_COLLECT = 1, NODES_POINTS = 2, NODES_LABELS = 4 };
@@ -189,10 +183,7 @@ static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
   tok.add(CTX::instance()->color.mesh.node);
   tok.add(CTX::instance()->color.mesh.nodeSup);
   tok.add(getColorByEntity(e));
-  // Which nodes the walk visits, as well as what they are drawn like: the
-  // stamp stands for the mesh changing, but an entity being hidden or only
-  // some of its elements being drawn does not have to go through that, and a
-  // list that was collected while nothing was visible would otherwise stand.
+  // which nodes the walk visits, not only how they are drawn
   tok.add(e->getVisibility());
   tok.add(e->getOnlySomeElementsVisible());
   tok.add((double)e->mesh_vertices.size());
@@ -203,11 +194,9 @@ static bool getNodeGlyphs(drawContext *ctx, GEntity *e, glyphList *&g)
   return !glyphCache::get(e, GLYPH_NODES, tok, g);
 }
 
-// The nodes of an entity: the spheres they are drawn with, and their labels.
-// walk() is how the caller visits them - all the nodes of the entity, or
-// those of its visible elements - and is asked for one thing at a time, so
-// that the spheres come out in the same order whether they had to be
-// collected for this frame or were already there.
+// the nodes of an entity, as spheres and labels; walk() visits them (all of
+// them, or those of the visible elements) for one thing at a time, so that
+// the spheres come out in the same order whether or not they were kept
 template <class W>
 static void drawNodes(drawContext *ctx, GEntity *e, W walk)
 {
@@ -238,9 +227,8 @@ static unsigned int getColorByVertex(GEntity *e, MVertex *v)
   return getColorByEntity(e);
 }
 
-// The nodes of an entity. When they are drawn as spheres they are collected
-// into the list instead, and only when it says so - the list is kept between
-// frames. The labels are drawn either way.
+// the nodes of an entity: spheres are collected into the list (kept between
+// frames) when it asks for it, labels are drawn either way
 static void drawVerticesPerEntity(drawContext *ctx, GEntity *e, glyphList *g,
                                   int what)
 {
@@ -393,21 +381,15 @@ template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
 
 // Routine for drawing the vertex arrays
 
-// Merged vertex arrays. On a model made of many entities the per-entity draw
-// calls dominate the frame: an assembly of 38000 entities spends about 8 of its
-// 13 ms in them, while a model of the same size held in a few entities spends
-// none. Concatenate the arrays of all the entities of a dimension into a single
-// one and draw that in one call. The entities keep their own arrays, which are
-// still used for picking and for the entities that are selected: those are
-// drawn again on top of the merged draw, so that selecting something does not
-// require the merged arrays to be rebuilt.
+// Merged vertex arrays: on a model with many entities the per-entity draw
+// calls dominate the frame, so the arrays of all the entities of a dimension
+// are concatenated and drawn in one call. The entities keep their own arrays
+// for picking and for the selected ones, drawn again on top.
 class mergedArrays {
 public:
   VertexArray *lines[4], *triangles[4];
   bool built;
-  // the colours are baked into the merged arrays, unlike the per entity draw
-  // which asks for them: what they were built with, so that a colour changing
-  // builds them again
+  // the colours are baked in: rebuild when they change
   int colorStamp;
   mergedArrays() : built(false), colorStamp(0)
   {
@@ -428,8 +410,7 @@ static std::map<GModel *, mergedArrays> _merged;
 // set while a merged array covers the entities being drawn, per primitive
 static bool _mergedLines = false, _mergedTriangles = false;
 
-// below this many entities the per-entity draw calls cost nothing, and merging
-// would only duplicate the arrays in memory
+// below this many entities merging is not worth the duplicated memory
 static const std::size_t mergeThreshold = 200;
 
 template <class IT>
@@ -533,9 +514,8 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
     !ctx->inPickColorMode() && useNormalArray && va->hasNormals();
   if(normals) gmshLighting(true);
 
-  // in picking mode the colour set by setPickColor() encodes the entity and is
-  // kept; otherwise the colours come from the array unless one is forced, or
-  // the entity is selected, or the colour carousel says otherwise
+  // in picking mode the colour set by setPickColor() is kept; otherwise the
+  // colours come from the array unless forced, selected or by carousel
   bool colors = false;
   if(!ctx->inPickColorMode() && !forceColor && va->hasColors() &&
      (CTX::instance()->pickElements ||
@@ -564,6 +544,15 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
 
 // GVertex drawing routines
 
+// does this pass draw this entity? A mixed mesh draws its opaque entities in
+// the opaque pass and the others in the transparent one
+static bool passWants(drawContext *ctx, GEntity *e)
+{
+  if(ctx->transparencyPass == TRANSPARENCY_ALL) return true;
+  return (ctx->transparencyPass == TRANSPARENCY_TRANSPARENT) ==
+         gmshMeshEntityIsTransparent(e);
+}
+
 class drawMeshGVertex {
 private:
   drawContext *_ctx;
@@ -572,7 +561,7 @@ public:
   drawMeshGVertex(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GVertex *v)
   {
-    if(!v->getVisibility()) return;
+    if(!v->getVisibility() || !passWants(_ctx, v)) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    v->model() == GModel::current());
@@ -601,9 +590,7 @@ public:
   drawMeshGEdge(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GEdge *e)
   {
-    if(!e->getVisibility()) {
-      return;
-    }
+    if(!e->getVisibility() || !passWants(_ctx, e)) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    e->model() == GModel::current());
@@ -642,9 +629,7 @@ public:
   drawMeshGFace(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GFace *f)
   {
-    if(!f->getVisibility()) {
-      return;
-    }
+    if(!f->getVisibility() || !passWants(_ctx, f)) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    f->model() == GModel::current());
@@ -722,7 +707,7 @@ public:
   drawMeshGRegion(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GRegion *r)
   {
-    if(!r->getVisibility()) return;
+    if(!r->getVisibility() || !passWants(_ctx, r)) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    r->model() == GModel::current());
@@ -812,28 +797,16 @@ public:
   }
 };
 
-// The merged arrays drawn just before the per-entity loops already cover the
-// wireframe and the filled faces of every unselected entity, so those loops
-// have something left to do only when a per-entity feature is on (nodes,
-// labels, normals, tangents, dual, voronoi), when an entity is selected and
-// wants its highlight painted on top of the merge, or when the pass is a
-// picking one, which needs a colour per entity. Otherwise the loop is one
-// virtual call and a few cold cache lines per entity for no pixels at all --
-// which, on a mesh split into a few hundred thousand partition entities, is
-// most of the frame. Decide once, not inside every functor.
-// Turn the clipping planes the mesh asks for on or off. What whole element mode
-// holds apart is drawn with them off, so that the elements a plane cuts come
-// out entire.
+// turn the clipping planes of the mesh on or off (the cut elements of whole
+// element mode are drawn with them off)
 static void setMeshClipPlanes(bool on)
 {
   for(int i = 0; i < 6; i++)
     gmshClipPlaneOn(i, on && (CTX::instance()->mesh.clip & (1 << i)));
 }
 
-// Draw what the clipping planes add for these entities: the elements they cut,
-// drawn whole with the planes off so that they come out entire. Nothing to do
-// in capping mode for anything but the volumes, and nothing at all when the
-// planes are not being applied to this dimension.
+// draw what the clipping planes add for these entities: the cut elements,
+// whole with the planes off
 template <class IT>
 static void drawClipArrays(drawContext *ctx, IT first, IT last, int dim)
 {
@@ -845,7 +818,7 @@ static void drawClipArrays(drawContext *ctx, IT first, IT last, int dim)
   setMeshClipPlanes(false);
   for(IT it = first; it != last; it++) {
     GEntity *e = *it;
-    if(!e->getVisibility()) continue;
+    if(!e->getVisibility() || !passWants(ctx, e)) continue;
     if(!e->va_clip_lines && !e->va_clip_triangles) continue;
     if(ctx->render_mode == drawContext::GMSH_SELECT)
       ctx->setPickColor(dim, e->tag());
@@ -889,7 +862,10 @@ static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
 
 void drawContext::drawMesh()
 {
-  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshMeshIsTransparent()) return;
+  // nothing of the mesh is opaque when the colours of the options are
+  // transparent; otherwise the entities are sorted out one by one
+  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshMeshColorsAreTransparent())
+    return;
   if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshMeshIsTransparent())
     return;
   if(!CTX::instance()->mesh.draw) return;
@@ -902,9 +878,7 @@ void drawContext::drawMesh()
       for(std::size_t j = 0; j < PView::list.size(); j++)
         if(PView::list[j]->getData()->hasModel(GModel::list[i]))
           PView::list[j]->setChanged(true);
-    // The glyphs of the entities are worked out from the mesh, so they no
-    // longer stand: everything kept goes, the views' lists included, which
-    // are built again the next time they are drawn.
+    // the glyphs depend on the mesh: drop them all, the views' included
     glyphCache::clearAll();
   }
 
@@ -916,9 +890,8 @@ void drawContext::drawMesh()
   gl2psLineWidth((float)(CTX::instance()->mesh.lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
 
-  // OpenGL applies the planes now, in both modes: what whole element mode used
-  // to leave out of the arrays it gets back from va_clip_*, drawn with the
-  // planes off. Nothing here depends on where the planes are any more.
+  // OpenGL applies the planes in both modes; whole element mode gets its cut
+  // elements back from va_clip_*, drawn with the planes off
   setMeshClipPlanes(true);
 
   // the merged arrays of a model that is gone go with it
@@ -936,8 +909,7 @@ void drawContext::drawMesh()
     GModel *m = GModel::list[i];
     bool changed = m->fillVertexArrays();
     if(changed) Msg::Debug("mesh vertex arrays have changed");
-    // the section the planes cut is held apart from the mesh and built on its
-    // own: a plane moving costs this and nothing else
+    // what the planes add is built on its own: moving a plane costs only this
     if(changed) m->invalidateClipVertexArrays();
     m->fillClipVertexArrays();
 #if defined(__APPLE__)
@@ -973,11 +945,13 @@ void drawContext::drawMesh()
             buildMerged(m->firstRegion(), m->lastRegion(), false, false, 0);
         }
       }
-      bool merge = !inPickColorMode();
+      // a mixed mesh, some entities transparent and the others not, is drawn
+      // entity by entity: the merged arrays hold them all
+      bool mixed = transparencyPass != TRANSPARENCY_ALL &&
+                   !gmshMeshColorsAreTransparent();
+      bool merge = !inPickColorMode() && !mixed;
       CTX *c = CTX::instance();
-      // Only the volume is meant to be clipped: the curves and the surfaces are
-      // then drawn with the planes off and left whole, as they were when the
-      // arrays themselves left the clipped elements out.
+      // only the volume is clipped: curves and surfaces are drawn whole
       bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
       if(volumeOnly) setMeshClipPlanes(false);
 
@@ -1008,9 +982,7 @@ void drawContext::drawMesh()
         drawClipArrays(this, m->firstFace(), m->lastFace(), 2);
       }
       if(volumeOnly) setMeshClipPlanes(true);
-      // With this on, the only elements drawn are the ones a plane cuts, and
-      // those are exactly what the clip arrays hold: the mesh itself is left
-      // out altogether.
+      // only the cut elements are drawn, which is what the clip arrays hold
       bool cutOnly = c->clipWholeElements && c->clipOnlyDrawIntersectingVolume &&
                      c->mesh.clip;
       if(status >= 3) {
@@ -1023,19 +995,18 @@ void drawContext::drawMesh()
         }
         _mergedLines = (merge && !cutOnly && ma.lines[3]);
         _mergedTriangles = (merge && !cutOnly && ma.triangles[3]);
-        // What the clipping planes add is held apart from the mesh and is not
-        // merged with it, so it is drawn here rather than left to the per
-        // entity pass, which the merged arrays may well make unnecessary. In
-        // capping mode it is the section they cut, which is clipped like
-        // everything else; in whole element mode it is the elements they cut,
-        // drawn whole with the planes off.
+        // what the clipping planes add is not merged, so it is drawn here:
+        // the section in capping mode (clipped like everything else), the
+        // cut elements in whole element mode (whole, with the planes off)
         if(CTX::instance()->clipWholeElements) {
           drawClipArrays(this, m->firstRegion(), m->lastRegion(), 3);
         }
         else {
           for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
             GRegion *r = *it;
-            if(!r->va_clip_triangles || !r->getVisibility()) continue;
+            if(!r->va_clip_triangles || !r->getVisibility() ||
+               !passWants(this, r))
+              continue;
             if(render_mode == GMSH_SELECT) setPickColor(3, r->tag());
             drawArrays(this, r, r->va_clip_triangles, GL_TRIANGLES,
                        CTX::instance()->mesh.light);

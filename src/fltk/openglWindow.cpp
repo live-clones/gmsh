@@ -7,6 +7,7 @@
 #include <string.h>
 #include <FL/Fl_Tooltip.H>
 #include "openglWindow.h"
+#include "drawContextFltkStringTexture.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -27,14 +28,12 @@
 #include "glShader.h"
 #include "Context.h"
 #include "Trackball.h"
+#include <cstring>
 #include "GamePad.h"
 #include "StringUtils.h"
 
-// Navigator handler (read gamepad event if gamepad exists or question presence
-// of gamepad)
-// the modelview matrix that looks at the camera target from the camera
-// position, both moved by the same offset (the half eye separation of a stereo
-// pair, or nothing at all)
+// the modelview matrix looking at the camera target from the camera position,
+// both moved by the same offset (the half eye separation of a stereo pair)
 static void cameraView(Camera *cam, double dx, double dy, double dz,
                        double view[16])
 {
@@ -46,6 +45,7 @@ static void cameraView(Camera *cam, double dx, double dy, double dz,
   glMatrix::lookAt(eye, target, up, view);
 }
 
+// read the gamepad events, if there is a gamepad
 static void navigator_handler(void *data)
 {
   openglWindow *gl_win = (openglWindow *)data;
@@ -95,9 +95,8 @@ int openglWindowMode()
     mode |= FL_DOUBLE;
     mode |= FL_STEREO;
   }
-  // the shader pipeline needs a context that has shaders in it, which on macOS
-  // means a core profile - and a core profile cannot do fixed function at all,
-  // which is why the two pipelines cannot share one context
+  // the shader pipeline needs a core profile on macOS, which cannot do fixed
+  // function: the two pipelines cannot share a context
   if(CTX::instance()->shaders) mode |= FL_OPENGL3;
   return mode;
 }
@@ -106,6 +105,10 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
+  _studioTimer = false;
+  _studioW = _studioH = 0;
+  _printW = _printH = 0;
+  _printScale = 1.;
   _ctx = new drawContext();
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
@@ -127,6 +130,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
 openglWindow::~openglWindow()
 {
+  Fl::remove_timeout(_studioSampleCb, this);
   delete _ctx;
 #if defined(NEW_TOOLTIPS)
   delete _tooltip;
@@ -204,6 +208,10 @@ void openglWindow::_drawBorder()
 
 void openglWindow::draw()
 {
+  // a draw the studio timer did not ask for, or that anyone else asked for
+  // as well, starts the accumulation over
+  _studioTimer = (damage() & FL_DAMAGE_USER1) && !(damage() & FL_DAMAGE_ALL);
+  if(!_studioTimer) _ctx->studioSample = 0;
   // some drawing routines can create data (STL triangulations, etc.): make sure
   // that we don't fire draw() while we are already drawing, e.g. due to an
   // impromptu Fl::check(). The same lock is also used in _select to guarantee
@@ -214,49 +222,45 @@ void openglWindow::draw()
 
   Msg::Debug("openglWindow::draw()");
 
-  // whatever the picking pass last drew is out of date: the camera, the
-  // visibility or the mesh may all have changed since
+  // the picking image is out of date
   _ctx->invalidatePickCache();
 
   if(!context_valid()) {
     _ctx->invalidateQuadricsAndDisplayLists();
-    // the buffer objects were destroyed with the previous context, and the
-    // entry points have to be asked of the new one
+    // the buffer objects and entry points belonged to the previous context
     VertexArray::invalidateBuffers();
     glApi::reset();
     glShader::reset();
     gmshResetMatrices();
-    // say what the context that has just been created can do: the pipeline
-    // that will be drawn with is decided by what is there, not by what was
-    // asked for
+    // report what the new context can do
     glApi::describe();
-    // say straight away whether the pipeline that was asked for can be had,
-    // rather than at the first draw that needs it
+    // report now if the shader pipeline cannot be had
     if(CTX::instance()->shaders) glShader::available();
   }
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
-  _ctx->viewport[2] = w();
-  _ctx->viewport[3] = h();
-  // the high resolution factor can change when the window is moved across
-  // displays, so refresh it before each draw
-  _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() :
-                                           1.);
-  glViewport(0, 0, pixel_w(), pixel_h());
+  if(_printW) {
+    // a picture of its own size, drawn at its own scale: what is sized in
+    // pixels (fonts, lines, points, the scales) follows
+    _ctx->viewport[2] = (int)(_printW / _printScale + 0.5);
+    _ctx->viewport[3] = (int)(_printH / _printScale + 0.5);
+    _ctx->setHighResolutionPixelFactor(_printScale);
+    glViewport(0, 0, _printW, _printH);
+  }
+  else {
+    _ctx->viewport[2] = w();
+    _ctx->viewport[3] = h();
+    // the factor changes when the window moves across displays
+    _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() :
+                                             1.);
+    glViewport(0, 0, pixel_w(), pixel_h());
+  }
 
   if(lassoMode) {
-    // Draw the scene again, with the lasso rectangle on top of it.
-    //
-    // The rectangle used to be drawn into the front buffer with a blend that
-    // inverted whatever was underneath it, and erased by drawing the previous
-    // one again, so that the scene did not have to be redrawn while the mouse
-    // moved. Nothing keeps the previous frame around to be inverted, though: a
-    // back buffer that has been swapped holds whatever the driver left in it,
-    // and drawing into the front buffer is not something a current
-    // implementation has to honour - which left the whole frame black. The
-    // fast representation is what makes redrawing it affordable, as it does
-    // while a clipping plane is dragged.
+    // draw the scene again with the lasso rectangle on top (drawing into the
+    // front buffer, as was done before, left the frame black on current
+    // implementations)
     if(CTX::instance()->fastRedraw) {
       CTX::instance()->mesh.draw = 0;
       CTX::instance()->post.draw = 0;
@@ -273,11 +277,8 @@ void openglWindow::draw()
     _ctx->draw3d();
     _ctx->draw2d();
 
-    // The rectangle itself, in pixel coordinates, over everything else. Its
-    // border inverts whatever it crosses, so that it shows on the background
-    // and on a dark mesh alike, and the inside gets a faint wash of the
-    // foreground colour, which is what makes it out on a mid grey that
-    // inverts to itself.
+    // the rectangle, in pixel coordinates: a border inverting whatever it
+    // crosses, and a faint wash of the foreground colour inside
     gmshMatrixMode(GMSH_PROJECTION);
     double px[16];
     glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
@@ -287,8 +288,7 @@ void openglWindow::draw()
     gmshLoadIdentity();
     double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
     double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
-    // the blending is OpenGL state the collector knows nothing about, so
-    // whatever is pending is drawn before it changes, each time
+    // flush before changing the blending, which the collector does not track
     gmshFlushImmediate();
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -304,20 +304,17 @@ void openglWindow::draw()
     gmshVertex2d(x0, y1);
     gmshEnd();
     gmshFlushImmediate();
-    // white, through a blend that leaves one minus what was there
+    // white blended to one minus the destination: an inversion
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     gmshColor3d(1., 1., 1.);
     if(selectionMode && CTX::instance()->mouseSelection)
       gmshLineStipple(1, 0x0F0F);
-    // two pixels of the window, whatever the resolution of the display; the
-    // width is in pixels of the display, the coordinates in those of the
-    // window
+    // two window pixels wide (the width is in display pixels, the
+    // coordinates in window pixels)
     double hw = 1.;
     gmshLineWidth(2. * hw * _ctx->highResolutionPixelFactor());
-    // Four segments rather than a loop, the horizontal ones stretched by
-    // half the width and the vertical ones shortened by it, so that each
-    // corner is covered exactly once: covered twice, it would be inverted
-    // back to what it was.
+    // four segments, the horizontal ones stretched by half the width and the
+    // vertical ones shortened by it, so that each corner is inverted once
     double sx = (x1 > x0) ? hw : (x1 < x0) ? -hw : 0.;
     double sy = (y1 > y0) ? hw : (y1 < y0) ? -hw : 0.;
     gmshBegin(GL_LINES);
@@ -387,23 +384,13 @@ void openglWindow::draw()
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     if(CTX::instance()->camera && !CTX::instance()->stereo) {
-      Camera *cam = &(_ctx->camera);
-      if(!cam->on) cam->init();
-      cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
-      gmshMatrixMode(GMSH_PROJECTION);
-      double frustum[16], view[16];
-      glMatrix::frustum(cam->glFleft, cam->glFright, cam->glFbottom,
-                        cam->glFtop, cam->glFnear, cam->glFfar * cam->Lc,
-                        frustum);
-      gmshLoadMatrix(frustum);
-
-      gmshMatrixMode(GMSH_MODELVIEW);
-      glDrawBuffer(GL_BACK);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      cameraView(cam, 0., 0., 0., view);
-      gmshLoadMatrix(view);
+      // both eyes' buffers may be left selected by stereo (a print target
+      // has no such buffer)
+      if(!_printW) glDrawBuffer(GL_BACK);
+      _cameraMatrices();
       _ctx->draw3d();
       _ctx->draw2d();
+      _studioFrame();
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active &&
          Nautilus)
         Nautilus->drawIcons();
@@ -458,7 +445,9 @@ void openglWindow::draw()
     }
     else {
       _ctx->draw3d();
+      memcpy(_frameView, _ctx->model, sizeof(_frameView));
       _ctx->draw2d();
+      _studioFrame();
       _drawScreenMessage();
       _drawBorder();
     }
@@ -466,7 +455,127 @@ void openglWindow::draw()
   gmshFlushImmediate();
   drawContext::global()->flushString();
   _lock = false;
+  _studioTimer = false;
 
+}
+
+void openglWindow::_cameraMatrices()
+{
+  Camera *cam = &(_ctx->camera);
+  if(!cam->on) cam->init();
+  cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
+  double frustum[16], jitter[16], proj[16];
+  glMatrix::frustum(cam->glFleft, cam->glFright, cam->glFbottom, cam->glFtop,
+                    cam->glFnear, cam->glFfar * cam->Lc, frustum);
+  _ctx->studioJitter(jitter);
+  glMatrix::multiply(jitter, frustum, proj);
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshLoadMatrix(proj);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  cameraView(cam, 0., 0., 0., _frameView);
+  gmshLoadMatrix(_frameView);
+}
+
+// The accumulation of the studio shading: after a frame, while the view is
+// still, the timer asks for more frames with the light, the dome and the
+// projection jittered, and each is added to the average put on the window.
+// A print does not wait: it draws them all at once.
+void openglWindow::_studioFrame()
+{
+  Fl::remove_timeout(_studioSampleCb, this);
+  CTX *ctx = CTX::instance();
+  int n = ctx->studioSamples;
+  if(!gmshUseShaders() || ctx->shading < 1 || n < 2 || ctx->stereo) {
+    _ctx->studioSample = 0;
+    return;
+  }
+  int k = _ctx->studioSample;
+  int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
+  if(k > 0) {
+    // the view changed since the last frame: start over
+    if(w != _studioW || h != _studioH ||
+       memcmp(_studioModel, _frameView, sizeof(_studioModel))) {
+      Msg::Debug("Studio frames: the view changed, starting over");
+      k = _ctx->studioSample = 0;
+    }
+    else {
+      // the frame has to be complete before it is added: what the overlay
+      // collected is still pending
+      gmshFlushImmediate();
+      drawContext::global()->flushString();
+      if(!glShader::accumulate(w, h, k == 1, k)) {
+        _ctx->studioSample = 0;
+        return;
+      }
+      Msg::Debug("Studio frame %d of %d accumulated", k, n);
+    }
+  }
+  memcpy(_studioModel, _frameView, sizeof(_studioModel));
+  _studioW = w;
+  _studioH = h;
+  if(ctx->printing) {
+    for(int j = k + 1; j < n; j++) {
+      _ctx->studioSample = j;
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      if(ctx->camera) _cameraMatrices();
+      _ctx->draw3d();
+      _ctx->draw2d();
+      gmshFlushImmediate();
+      drawContext::global()->flushString();
+      if(!glShader::accumulate(w, h, j == 1, j)) break;
+    }
+    _ctx->studioSample = 0;
+    return;
+  }
+  if(k + 1 < n) Fl::add_timeout(0.01, _studioSampleCb, this);
+}
+
+bool openglWindow::printTo(int width, int height, int supersampling,
+                           unsigned int format, unsigned int type,
+                           void *pixels)
+{
+  make_current();
+  if(!glShader::beginPrintTarget(width, height)) return false;
+  _printW = width;
+  _printH = height;
+  _printScale = std::max(1, supersampling) *
+                (w() ? (double)pixel_w() / (double)w() : 1.);
+  // the native font engine places its strings from the window's size and
+  // scale, which the picture has neither of: strings as textures meanwhile
+  drawContextGlobal *native = nullptr;
+  if(drawContext::global()->getName() == "Fltk") {
+    native = drawContext::global();
+    drawContext::setGlobal(new drawContextFltkStringTexture);
+  }
+  draw();
+  if(native) {
+    delete drawContext::global();
+    drawContext::setGlobal(native);
+  }
+  glShader::readPrintTarget(width, height, format, type, pixels);
+  glShader::endPrintTarget();
+  _printW = _printH = 0;
+  _printScale = 1.;
+  // the window itself is drawn again at its own size
+  redraw();
+  return true;
+}
+
+void openglWindow::_studioSampleCb(void *data)
+{
+  openglWindow *w = (openglWindow *)data;
+  // not while a mouse button is down: the view, or an option dragged in the
+  // options window, is changing, and each step redraws the plain frame;
+  // look again once it is up
+  if(Fl::pushed()) {
+    Fl::repeat_timeout(0.05, _studioSampleCb, data);
+    return;
+  }
+  // asked for with a damage bit of its own: a redraw() asked for by anyone
+  // else before the frame is drawn (an option changed, say) marks the
+  // window fully damaged, and draw() knows the frame is a plain one then
+  w->_ctx->studioSample++;
+  w->damage(FL_DAMAGE_USER1);
 }
 
 openglWindow *openglWindow::_lastHandled = nullptr;

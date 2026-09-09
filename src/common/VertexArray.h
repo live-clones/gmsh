@@ -18,8 +18,7 @@
 
 #include "GmshConfig.h"
 
-// only MSVC on x86 has an intrinsic for the prefetch below; the other Windows
-// targets do without it, which only costs a hint
+// only MSVC on x86 has an intrinsic for the prefetch below
 #if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 #include <xmmintrin.h>
 #endif
@@ -32,12 +31,10 @@ typedef char normal_type;
 
 class MElement;
 
-// key used by the "unique" filter to detect elements that are drawn several
-// times, e.g. an edge shared by several tetrahedra: the N corners are stored in
-// canonical (sorted) order, together with the color, so that an element added
-// twice with the same geometry and the same color maps to the same key. The
-// alignment rounds the size up to a multiple of 8 bytes, so that the key can
-// be hashed word by word; the bytes that adds are zeroed when the key is made
+// key used by the "unique" filter to detect elements drawn several times
+// (e.g. an edge shared by several tetrahedra): the N corners in sorted order
+// plus the color. The alignment rounds the size up to a multiple of 8 bytes
+// so that the key can be hashed word by word; the padding is zeroed.
 template <int N> class alignas(8) CornerKey {
 public:
   float p[3 * N];
@@ -46,9 +43,8 @@ public:
 static_assert(sizeof(CornerKey<2>) == 32 && sizeof(CornerKey<3>) == 40,
               "a corner key is hashed as whole 64 bit words");
 
-// hash of a key made of 64 bit words. The filter only stores this hash, so the
-// function is part of what the filter is: changing it changes which elements
-// collide, hence (very rarely) which ones are drawn
+// hash of a key made of 64 bit words; the filter only stores the hash, so
+// changing the function changes which elements (very rarely) collide
 static inline std::uint64_t vaHashKey(const void *p, std::size_t bytes)
 {
   const std::uint64_t *w = (const std::uint64_t *)p;
@@ -66,9 +62,7 @@ static inline std::uint64_t vaHashKey(const void *p, std::size_t bytes)
   return h ? h : 1;
 }
 
-// Ask for a cache line to be brought in, so that a lookup that will need it
-// later does not stall on it. This is only a hint: doing nothing at all is
-// always correct, and is what happens on compilers that cannot express it
+// prefetch a cache line (a hint: doing nothing is always correct)
 static inline void vaPrefetch(const void *p)
 {
 #if defined(__GNUC__) || defined(__clang__)
@@ -100,20 +94,15 @@ static inline int vaVertexKey(unsigned int col, const void *v0, const void *v1,
   return n;
 }
 
-// filter used to detect elements that are drawn several times. The keys are
-// spread over several shards, each with its own lock, so that the filter can be
-// shared by the threads that fill the vertex arrays of a given entity. The
-// lookups are on the hot path of the vertex array construction, so they are
-// defined here rather than in the source file: the table pointer, the mask and
-// the size at which the table has to grow are kept next to the table so that a
-// lookup is one indexed load, and the whole thing inlines into the caller.
+// filter used to detect elements drawn several times. The keys are spread
+// over shards with a lock each, so that the threads filling the arrays of an
+// entity can share it. The lookups are on the hot path, hence inline here.
 class UniqueElementFilter {
 private:
   enum { NUM_SHARDS = 256 };
-  // open addressing table of 64 bit hashes, with 0 marking an empty slot: only
-  // the hash is stored, so two elements whose keys collide on 64 bits are
-  // wrongly merged. With 20 million elements this happens with probability
-  // ~1e-5, i.e. much less often than one dropped edge per mesh
+  // open addressing table of 64 bit hashes, 0 marking an empty slot; two
+  // elements colliding on 64 bits are wrongly merged (probability ~1e-5 with
+  // 20 million elements)
   class Shard {
   public:
     std::vector<std::uint64_t> store;
@@ -162,11 +151,8 @@ private:
       return true;
     }
   };
-  // A lock held for the length of one probe of the table, i.e. for about the
-  // time of one cache miss: going through the kernel to wait for something that
-  // short costs far more than spinning for it, and with the threads spread over
-  // the shards a wait is rare in the first place. Each lock sits in its own
-  // cache line, so that taking one does not invalidate its neighbours
+  // a spin lock held for one probe of the table (about one cache miss:
+  // spinning is cheaper than the kernel), one per cache line
   class alignas(64) ShardLock {
   public:
     ShardLock() : _locked(false) {}
@@ -215,11 +201,8 @@ public:
   // already been seen
   bool isDuplicate(int npe, double *x, double *y, double *z, unsigned char *r,
                    unsigned char *g, unsigned char *b, unsigned char *a);
-  // same, for data that has a topology: the element is identified by its
-  // vertices (any opaque, stable pointer or index) instead of by the
-  // coordinates of its corners, which avoids building and hashing a large key.
-  // Pass the color as well, as two elements sharing an edge or a face can be
-  // drawn with different colors
+  // same, for data with a topology: the element is identified by its
+  // vertices (any stable pointer or index) and its color
   bool isDuplicate(unsigned int col, const void *v0, const void *v1,
                    const void *v2 = nullptr, const void *v3 = nullptr)
   {
@@ -237,10 +220,8 @@ public:
   }
   bool contains(const std::uint64_t *key, int n);
   void insertOrErase(const std::uint64_t *key, int n);
-  // the hash of an element, its table entry, and the lookup, separately: the
-  // caller can then hash a whole element's worth of edges and ask for their
-  // entries before looking any of them up, which is what keeps the lookups from
-  // stalling one after the other on a table that does not fit in the caches
+  // the hash, the table entry and the lookup separately, so that a caller can
+  // prefetch the entries of a whole element before looking them up
   std::uint64_t hashOf(unsigned int col, const void *v0, const void *v1,
                        const void *v2 = nullptr, const void *v3 = nullptr)
   {
@@ -278,9 +259,9 @@ public:
   // i.e. whether it is interior to the mesh
   bool contains(unsigned int col, const void *v0, const void *v1,
                 const void *v2 = nullptr, const void *v3 = nullptr);
-  // insert the element, or remove it if it has already been seen: after all the
-  // elements have been passed, the filter holds exactly those seen an odd
-  // number of times, i.e. the faces that bound the mesh
+  // insert the element, or remove it if already seen: once all elements have
+  // been passed, the filter holds those seen an odd number of times, i.e. the
+  // boundary faces
   void insertOrErase(unsigned int col, const void *v0, const void *v1,
                      const void *v2 = nullptr, const void *v3 = nullptr);
 };
@@ -375,17 +356,12 @@ public:
   void add(double *x, double *y, double *z, SVector3 *n, unsigned char *r = nullptr,
            unsigned char *g = nullptr, unsigned char *b = nullptr, unsigned char *a = nullptr,
            MElement *ele = nullptr, bool unique = true);
-  // Grow the array by n vertices and return where they start, so that a
-  // caller that knows how many it is going to add can write them itself -
-  // several threads can then each fill a range of their own, with no copying
-  // and nothing to merge afterwards. Nothing is initialised: every one of the
-  // n vertices, normals and colours has to be written. No element pointers
-  // are stored, so an array filled this way cannot be picked element by
-  // element.
+  // grow the array by n uninitialised vertices and return where they start,
+  // so that several threads can each fill a range; no element pointers are
+  // stored, so such an array cannot be picked element by element
   int addBlock(int n);
-  // Empty the array without giving up the buffer objects it has, so that it
-  // can be filled and drawn again: what a scratch array streaming through the
-  // same buffers frame after frame needs.
+  // empty the array but keep its buffer objects (for a scratch array reused
+  // every frame)
   void clearData()
   {
     _vertices.clear();
@@ -411,9 +387,8 @@ public:
                           double &max, int &numSteps, double &time,
                           double &xmin, double &ymin, double &zmin,
                           double &xmax, double &ymax, double &zmax);
-  // Merge another vertex array into this one. If a color is given it replaces
-  // the colors of the merged data, which is how the arrays of several entities
-  // drawn each in their own single color are concatenated.
+  // merge another vertex array into this one; a given color replaces the
+  // colors of the merged data
   void merge(VertexArray *va, const unsigned char *color = nullptr);
   // the element pointers are only needed for picking, which uses the arrays of
   // the entities themselves
@@ -423,9 +398,8 @@ public:
   // when a GL context is current, i.e. at the beginning of the next frame
   static std::vector<unsigned int> vboToDelete;
 
-  // Identifies the GL context the buffer objects were created in. Call
-  // invalidateBuffers() when the context has been recreated: the buffer names
-  // then mean nothing any more and have to be created again.
+  // identifies the GL context the buffer objects were created in; call
+  // invalidateBuffers() when the context has been recreated
   static unsigned int vboContext;
   static void invalidateBuffers()
   {

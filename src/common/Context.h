@@ -15,10 +15,10 @@
 class GamePad;
 
 struct contextMeshOptions {
-  // what the transparency above is applied to: 0 the filled surfaces
-  // only, so that the wireframe stays crisp, 1 everything
+  // what the transparency is applied to: 0 filled surfaces only, 1
+  // everything
   int transparencyMode;
-  // multiplies the alpha of every mesh colour, as above
+  // multiplies the alpha of every mesh colour
   double transparency;
   // mesh algorithms
   int optimize, optimizeNetgen, refineSteps;
@@ -113,11 +113,10 @@ struct contextMeshOptions {
 };
 
 struct contextGeometryOptions {
-  // what the transparency above is applied to: 0 the filled surfaces
-  // only, so that the wireframe stays crisp, 1 everything
+  // what the transparency is applied to: 0 filled surfaces only, 1
+  // everything
   int transparencyMode;
-  // multiplies the alpha of every geometry colour: 1 leaves them as they
-  // are, less than 1 makes the geometry see-through
+  // multiplies the alpha of every geometry colour
   double transparency;
   // geometry algorithms
   int oldCircle, oldNewreg, oldRuledSurface;
@@ -181,8 +180,7 @@ public:
   CTX();
   ~CTX();
   void init();
-  // called in loops over the entities and their elements all over the drawing
-  // code: keep the common path inline, and the creation out of line
+  // called in tight loops in the drawing code: common path inline
   static CTX *instance() { return _instance ? _instance : _create(); }
 
   // for debug purposes only, i.e. JF and CG personal use
@@ -329,26 +327,25 @@ public:
   // clipping plane options
   double clipPlane[6][4];
   int clipWholeElements, clipOnlyDrawIntersectingVolume, clipOnlyVolume;
-  // fill the hole a clipping plane opens in a 3D mesh or view with the polygon
-  // where the plane cuts each element, so that a cut model still looks solid
+  // fill the section cut by the clipping planes in 3D meshes and views
   int clipCapping;
-  // is the section of the mesh worth computing? Only where the mesh is drawn as
-  // a surface, and only when the planes are applied by OpenGL: with
-  // clipWholeElements the elements a plane cuts are removed whole and there is
-  // no hole to fill
-  bool meshClipCaps() const
-  {
-    return clipCapping && !clipWholeElements && mesh.clip &&
-           (mesh.volumeFaces || mesh.surfaceFaces);
-  }
   // draw the vertex arrays from OpenGL buffer objects instead of client memory
   int vertexBufferObjects;
-  // draw with the shader pipeline instead of the fixed function one; changing
-  // this recreates the OpenGL context, as a core profile cannot do both
+  // draw with the shader pipeline instead of the fixed function one
+  // (recreates the OpenGL context)
   int shaders;
-  // sum what is transparent into buffers of its own and put them on the window
-  // afterwards, instead of painting it back to front: nothing has to be
-  // sorted, and the result does not depend on the order things were drawn in
+  // lighting model of the shader pipeline: 0 the fixed function one, 1 to 3
+  // studio (linear light, hemisphere ambient, soft key light, no specular,
+  // shadows) with the floor normal to x, y or z
+  int shading;
+  // angular radius (degrees) of the studio light, which sets the softness of
+  // its shadow, the offset of the floor from the bottom of the model along
+  // its normal (relative to the size of the bounds), and the number of
+  // frames accumulated while the view is still
+  double studioLightSpread, studioFloorOffset;
+  int studioSamples;
+  // order independent (weighted blended) transparency instead of back to
+  // front sorting
   int orderIndependentTransparency;
   // polygon offset options
   int polygonOffset, polygonOffsetAlways;
@@ -357,9 +354,8 @@ public:
   int colorScheme;
   // number of subdivisions for gluQuadrics
   int quadricSubdivisions;
-  // how much memory (in MB) the triangles the glyphs are made of may take
-  // before they stop being kept between frames (0: work it out from the
-  // machine)
+  // memory (in MB) the glyph triangles may take between frames (0:
+  // automatic)
   double glyphCacheSize;
   // vector display type and options (for normals, etc.)
   int vectorType;
@@ -419,7 +415,7 @@ public:
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posSICN, posSIGE, posDisto;
     int compositeWindows, deleteTmpFiles, background;
-    int width, height;
+    int width, height, supersampling;
     double parameter, parameterFirst, parameterLast, parameterSteps;
     int pgfTwoDim, pgfExportAxis, pgfHorizBar;
     std::string parameterCommand;

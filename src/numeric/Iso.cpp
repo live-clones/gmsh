@@ -189,8 +189,7 @@ void OrderPolygonInPlane(int nb, const double n[3], double *Xp, double *Yp,
   }
   for(int i = 0; i < 3; i++) c[i] /= nb;
 
-  // any two directions of the plane will do: the order they give only differs
-  // by where it starts and by its sense, and the sense is fixed below
+  // any two directions of the plane will do: the sense is fixed below
   double u[3] = {1., 0., 0.};
   if(fabs(n[0]) > fabs(n[1])) {
     u[0] = 0.;

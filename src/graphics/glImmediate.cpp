@@ -20,10 +20,8 @@ bool gmshUseShaders()
 }
 
 namespace {
-  // The vertices of the primitive being collected, with the colour and the
-  // normal that were current at each of them. A shader pipeline has no
-  // immediate mode: the run between gmshBegin() and gmshEnd() is gathered here
-  // and drawn in one call.
+  // the vertices of the primitive being collected, with the colour and
+  // normal current at each of them
   std::vector<float> _imPos, _imNrm, _imTex;
   // how far along its line each vertex of the batch is, in pixels
   std::vector<float> _batchDash;
@@ -32,21 +30,16 @@ namespace {
   float _imTexCoord[2] = {0.f, 0.f};
   GLenum _imMode = GL_POINTS;
 
-  // The primitives that have been collected and not drawn yet. Everything is
-  // turned into points, lines or triangles, so that primitives that follow one
-  // another with the same state can go into one draw: what the decorations are
-  // made of is thousands of two-vertex runs, and a draw each would cost far
-  // more than the drawing does. Anything that changes how they would be drawn
-  // flushes what is waiting first.
+  // The collected primitives not drawn yet, turned into points, lines or
+  // triangles so that consecutive primitives with the same state go into one
+  // draw (the decorations are thousands of two-vertex runs). Anything that
+  // changes how they would be drawn flushes them first.
   GLenum _batchMode = GL_POINTS;
   std::vector<float> _batchPos, _batchNrm, _batchTex;
   std::vector<unsigned char> _batchCol;
 
-  // What the primitives in the batch were asked to be drawn with. A call that
-  // sets one of these does not end the batch: only a primitive that does not
-  // match does, so that the toggling a glyph does around itself - lighting on
-  // for its faces, off again afterwards - costs nothing when the next glyph
-  // asks for the same thing again.
+  // the state the batch is drawn with; setting one of these does not end
+  // the batch, only a primitive that does not match does
   struct BatchState {
     double modelview[16], projection[16];
     double clip[6][4];
@@ -55,9 +48,7 @@ namespace {
     double pointSize;
     double alphaScale;
     bool alphaScaleFilledOnly;
-    // the texture the primitives are drawn through, zero for none: what a
-    // string drawn as a picture of itself needs, and the one piece of this
-    // state that a batch cannot span
+    // the texture, zero for none
     unsigned int texture;
   int textureMode;
     // how wide the lines are and what dash pattern they carry
@@ -91,9 +82,8 @@ namespace {
 } // namespace
 
 namespace {
-  // The pieces of state that a shader is handed as uniforms, and that a core
-  // profile therefore cannot be asked for. They are remembered here as they
-  // are set, and are what glShader is given before a draw.
+  // the state a shader is handed as uniforms, which a core profile cannot
+  // be asked for
   unsigned char _color[4] = {255, 255, 255, 255};
   bool _lighting = false, _twoSide = false;
   double _pointSize = 1.;
@@ -163,9 +153,8 @@ void gmshClipPlane(int i, const double plane[4])
 {
   if(i < 0 || i > 5) return;
   for(int j = 0; j < 4; j++) _clipPlane[i][j] = plane[j];
-  // OpenGL keeps the plane in eye coordinates: the equation is transformed by
-  // the inverse of the modelview matrix that is current when it is given,
-  // which for a plane - a row vector - is the transpose of that inverse
+  // OpenGL keeps the plane in eye coordinates: the equation (a row vector)
+  // is transformed by the inverse transpose of the current modelview
   double inv[16];
   if(glMatrix::invert(gmshMatrix(GMSH_MODELVIEW), inv)) {
     for(int r = 0; r < 4; r++) {
@@ -217,12 +206,10 @@ namespace {
   MatrixStack _stack[2];
   int _mode = GMSH_MODELVIEW;
 
-  // hand the current matrix to OpenGL, which is where the fixed function
-  // pipeline reads it
+  // hand the current matrix to the fixed function pipeline
   void _apply(int kind)
   {
-    // the shader is handed the matrices as uniforms; a core profile has no
-    // matrix stack of its own to load them into
+    // the shader gets the matrices as uniforms
     if(gmshUseShaders()) return;
     glMatrixMode(kind == GMSH_PROJECTION ? GL_PROJECTION : GL_MODELVIEW);
     glLoadMatrixd(_stack[kind].top());
@@ -296,8 +283,7 @@ const double *gmshMatrix(int kind)
 
 void gmshResetMatrices()
 {
-  // whatever was waiting to be drawn was collected to be drawn in the context
-  // that is gone, with a texture of its own that went with it
+  // what was pending belonged to the context that is gone
   _batchPos.clear();
   _batchNrm.clear();
   _batchCol.clear();
@@ -327,6 +313,17 @@ void gmshResetMatrices()
   _mode = GMSH_MODELVIEW;
 }
 
+static int _shadingModel = 0;
+
+void gmshShadingModel(int model)
+{
+  if(model == _shadingModel) return;
+  if(gmshUseShaders()) gmshFlushImmediate();
+  _shadingModel = model;
+}
+
+int gmshShadingModel() { return _shadingModel; }
+
 void gmshPushShaderState()
 {
   glShader::setMatrices(gmshMatrix(GMSH_MODELVIEW), gmshMatrix(GMSH_PROJECTION));
@@ -336,11 +333,9 @@ void gmshPushShaderState()
   glShader::setAlphaScale(_alphaScale);
   glShader::setMaterial(CTX::instance()->shine,
                         CTX::instance()->shineExponent);
-  // Everything that draws by another route than the collected lines draws
-  // undashed: the vertex arrays carry no distance along the line for the
-  // pattern to be measured against, and a glyph is not a line at all. Without
-  // this, a dashed line left the pattern on and everything after it came out
-  // full of holes.
+  glShader::setShading(gmshShadingModel());
+  // everything but the collected lines draws undashed: the vertex arrays
+  // carry no distance along the line, and a glyph is not a line
   glShader::setStipple(false, 1, 0xffff);
   for(int i = 0; i < 6; i++) {
     if(gmshClipPlaneEnabled(i))
@@ -358,9 +353,9 @@ bool gmshImBegin(GLenum mode)
   _imNrm.clear();
   _imCol.clear();
   _imTex.clear();
-  // the primitive is turned into independent points, lines or triangles when
-  // it ends: a core profile has neither quads nor polygons, and only
-  // independent primitives can share a draw with the ones around them
+  // the primitive is turned into independent points, lines or triangles
+  // when it ends: a core profile has neither quads nor polygons, and only
+  // independent primitives can share a draw
   _imMode = mode;
   return true;
 }
@@ -382,8 +377,7 @@ void gmshLineWidth(double w)
     // what is waiting was collected to be drawn at the old width
     gmshFlushImmediate();
     _lineWidth = w;
-    // a core profile draws every line one pixel wide and a wider one is made
-    // of triangles: there is nothing to tell OpenGL
+    // a wider line is made of triangles: nothing to tell OpenGL
     return;
   }
   _lineWidth = w;
@@ -488,11 +482,9 @@ namespace {
     _batchDash.push_back(0.f);
   }
 
-  // How far along its line each vertex of the segments just added is, in
-  // pixels of the window: this is what the dash pattern is measured in, and
-  // the projection is done here because the shader is only handed the number.
-  // The counter starts again at every segment of an independent line and
-  // carries on along a strip, which is what OpenGL's stipple did.
+  // distance along its line of each vertex of the segments just added, in
+  // pixels, for the dash pattern; restarts at every independent segment and
+  // carries on along a strip, as OpenGL's stipple did
   void _dashDistances(std::size_t first, bool carry)
   {
     GLint vp[4];
@@ -526,9 +518,7 @@ void gmshFlushImmediate()
   if(_batchPos.empty()) return;
   int count = (int)(_batchPos.size() / 3);
   if(glShader::use()) {
-    // the state the primitives were collected under, not whatever is current:
-    // a batch that is still waiting when the matrices change - the 2D overlay
-    // sets its own - would otherwise be drawn in the wrong place
+    // the state the primitives were collected under, not the current one
     glShader::setMatrices(_batchState.modelview, _batchState.projection);
     glShader::setLighting(_batchState.lighting, _batchState.twoSide);
     glShader::setPointSize(_batchState.pointSize);
@@ -537,20 +527,18 @@ void gmshFlushImmediate()
         1. : _batchState.alphaScale);
     glShader::setMaterial(CTX::instance()->shine,
                           CTX::instance()->shineExponent);
+    glShader::setShading(gmshShadingModel());
     for(int i = 0; i < 6; i++) {
       if(_batchState.clipOn[i])
         glShader::setClipPlane(i, _batchState.clip[i]);
       else
         glShader::setClipPlaneOff(i);
     }
-    // the pattern runs along a line and means nothing on anything else, which
-    // is what OpenGL's stipple did with it too
+    // the pattern only applies to lines
     glShader::setStipple(_batchState.stipple && _batchMode == GL_LINES,
                          _batchState.stippleFactor,
                          _batchState.stipplePattern);
-    // a line wider than a pixel is not something a core profile draws: it is
-    // made of triangles instead, and the shader is handed both ends of every
-    // segment so that it can work out which way to widen it
+    // a core profile draws no wide lines: make triangles out of them
     bool wide = (_batchMode == GL_LINES && _batchState.lineWidth > 1.);
     if(!wide ||
        !glShader::drawWideLines(&_batchPos[0], &_batchNrm[0], GL_FLOAT,
@@ -569,7 +557,7 @@ void gmshFlushImmediate()
 }
 
 namespace {
-  // what the state is right now, to be compared with the one the batch holds
+  // the current state, to compare with the batch's
   BatchState _currentState()
   {
     BatchState b;
@@ -608,8 +596,7 @@ void gmshImEnd()
   if(!_batchPos.empty() && now != _batchState) gmshFlushImmediate();
   _batchState = now;
 
-  // what the primitive becomes once it is made of independent points, lines or
-  // triangles, which is what lets one draw hold several of them
+  // what the primitive becomes as independent points, lines or triangles
   GLenum mode = GL_TRIANGLES;
   if(_imMode == GL_POINTS)
     mode = GL_POINTS;
@@ -660,8 +647,7 @@ void gmshImEnd()
     break;
   case GL_TRIANGLE_FAN:
   case GL_POLYGON:
-    // a fan around the first corner, which is what GL_POLYGON drew and what
-    // its convexity allowed
+    // a fan around the first corner (GL_POLYGON is convex)
     for(std::size_t t = 1; t + 1 < num; t++) {
       _emit(0);
       _emit(t);

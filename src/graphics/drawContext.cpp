@@ -25,8 +25,7 @@
 #include "OS.h"
 #include "gl2ps.h"
 
-// the background image is still read with FLTK, which is the last thing this
-// file asks of a widget toolkit
+// the background image is still read with FLTK
 #if defined(HAVE_FLTK)
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
@@ -66,6 +65,8 @@ drawContext::drawContext(drawTransform *transform)
 
   render_mode = GMSH_RENDER;
   transparencyPass = TRANSPARENCY_ALL;
+  shadowPass = false;
+  studioSample = 0;
   vxmin = vymin = vxmax = vymax = 0.;
   pixel_equiv_x = pixel_equiv_y = 0.;
 
@@ -134,11 +135,8 @@ void drawContext::invalidateQuadricsAndDisplayLists()
 
 void drawContext::createQuadricsAndDisplayLists()
 {
-  // The shapes the glyphs are made of used to be GLU quadrics kept in display
-  // lists, called once per glyph with the transform stacked in front of them.
-  // They are built as triangles in drawGlyph.cpp now: a core profile has
-  // neither quadrics nor display lists, and even where it has, a call per glyph
-  // cost far more than handing the geometry over does.
+  // the glyph shapes are built as triangles in drawGlyph.cpp: a core
+  // profile has neither quadrics nor display lists
 }
 
 void drawContext::buildRotationMatrix()
@@ -269,8 +267,8 @@ static bool useShaders()
 
 static bool useVertexBufferObjects()
 {
-  // a core profile has no client arrays at all, so the shader pipeline has to
-  // have the buffer objects whatever the option says
+  // a core profile has no client arrays: the shader pipeline needs buffer
+  // objects whatever the option says
   if(useShaders()) return true;
   return CTX::instance()->vertexBufferObjects && glApi::haveBufferObjects();
 }
@@ -299,8 +297,7 @@ static void uploadVertexArray(VertexArray *va)
 {
   unsigned int *id = va->getVboIds();
   if(id[0] && !va->getVboValid()) {
-    // the context that owned these buffers is gone and took them with it: the
-    // names do not designate anything any more
+    // the context that owned these buffers is gone: the names are stale
     id[0] = id[1] = id[2] = 0;
   }
   if(!id[0]) {
@@ -372,18 +369,16 @@ const GLvoid *vaColorPointer(VertexArray *va)
   return nullptr;
 }
 
-// what the last bind left for the draw to use: the client arrays a caller
-// holds itself have to be uploaded, and the count is only known at the draw
+// what the last bind left for the draw: client arrays are uploaded at the
+// draw, when the count is known
 static const float *_clientVertices = nullptr;
 static const unsigned char *_clientColors = nullptr;
 static bool _boundColors = false;
 
 void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
 {
-  // Whatever immediate mode primitives are still waiting have to go out before
-  // the attributes are bound, not after: drawing them turns the attribute
-  // arrays off on its way out, and would leave the array that is about to be
-  // drawn with nothing bound at all.
+  // pending immediate mode primitives must be drawn before the attributes
+  // are bound: drawing them disables the attribute arrays on the way out
   gmshFlushImmediate();
   _clientVertices = nullptr;
   _clientColors = nullptr;
@@ -395,8 +390,7 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
                                0, vaVertexPointer(va));
     if(normals) {
       glApi::EnableVertexAttribArray(glShader::ATTRIB_NORMAL);
-      // the normals are stored as bytes, and are the unit vectors they were
-      // when they went in: they have to be scaled back on the way out
+      // the normals are stored as bytes and scaled back to unit vectors
       glApi::VertexAttribPointer(glShader::ATTRIB_NORMAL, 3, NORMAL_GLTYPE,
                                  GL_TRUE, 0, vaNormalPointer(va));
     }
@@ -434,13 +428,12 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
 
 void gmshBindArrays(const float *vertices, const unsigned char *colors)
 {
-  // as above: what is waiting is drawn before anything is bound for this one
+  // as above
   gmshFlushImmediate();
   _boundColors = (colors != nullptr);
 
   if(useShaders()) {
-    // kept for the draw, which is where the number of vertices is known and
-    // the arrays can be uploaded
+    // uploaded at the draw, when the count is known
     _clientVertices = vertices;
     _clientColors = colors;
     return;
@@ -475,26 +468,21 @@ void gmshUnbindArrays()
   glDisableClientState(GL_COLOR_ARRAY);
 }
 
-// hand the program everything it needs that the fixed function pipeline kept
-// as state of its own, and draw
-// Any colour of the category that is not fully opaque makes it see-through,
-// whether that comes from the Transparency option or from an alpha the colour
-// was given directly.
+// is any of these colours transparent, through the Transparency option or
+// through its own alpha?
 static bool anyColorIsTransparent(const unsigned int *colors, int n,
                                   double transparency)
 {
   if(!CTX::instance()->alpha) return false;
-  // the multiplier is applied by the shader, so it means nothing to the fixed
-  // function pipeline; an alpha the colour carries itself counts in both
+  // the Transparency factor is only applied by the shader pipeline
   if(gmshUseShaders() && transparency < 1.) return true;
   for(int i = 0; i < n; i++)
     if(CTX::instance()->unpackAlpha(colors[i]) < 255) return true;
   return false;
 }
 
-// Does an entity carry a colour of its own that is not opaque? This is asked
-// several times a frame and means walking every entity, so the answer is kept
-// and only worked out again when a colour was set or an entity came or went.
+// does an entity have a non-opaque colour of its own? Cached, as this is
+// asked several times a frame and walks every entity.
 static bool anyEntityColorIsTransparent()
 {
   static int stamp = -1;
@@ -525,7 +513,14 @@ static bool anyEntityColorIsTransparent()
   return result;
 }
 
-bool gmshGeometryIsTransparent()
+// is an entity's own colour transparent?
+static bool entityColorIsTransparent(GEntity *e)
+{
+  CTX *ctx = CTX::instance();
+  return ctx->alpha && e->useColor() && ctx->unpackAlpha(e->getColor()) < 255;
+}
+
+bool gmshGeometryColorsAreTransparent()
 {
   CTX *ctx = CTX::instance();
   const unsigned int c[7] = {
@@ -533,12 +528,30 @@ bool gmshGeometryIsTransparent()
     ctx->color.geom.surface,   ctx->color.geom.volume,
     ctx->color.geom.selection, ctx->color.geom.highlight[0],
     ctx->color.geom.highlight[1]};
-  if(anyColorIsTransparent(c, 7, ctx->geom.transparency)) return true;
-  // and the colours the entities were given one by one
-  return ctx->alpha && anyEntityColorIsTransparent();
+  return anyColorIsTransparent(c, 7, ctx->geom.transparency);
 }
 
-bool gmshMeshIsTransparent()
+bool gmshGeometryIsTransparent()
+{
+  // the colours the entities were given one by one count too
+  return gmshGeometryColorsAreTransparent() ||
+         (CTX::instance()->alpha && anyEntityColorIsTransparent());
+}
+
+bool gmshGeometryEntityIsTransparent(GEntity *e)
+{
+  return gmshGeometryColorsAreTransparent() || entityColorIsTransparent(e);
+}
+
+// the carousel colours the mesh by entity, physical group or partition, and
+// the first two also use the entity colours
+static bool meshUsesEntityColors()
+{
+  int carousel = CTX::instance()->mesh.colorCarousel;
+  return carousel == 1 || carousel == 2;
+}
+
+bool gmshMeshColorsAreTransparent()
 {
   CTX *ctx = CTX::instance();
   std::vector<unsigned int> c = {
@@ -547,21 +560,28 @@ bool gmshMeshIsTransparent()
     ctx->color.mesh.hexahedron, ctx->color.mesh.prism,
     ctx->color.mesh.pyramid,    ctx->color.mesh.trihedron,
     ctx->color.fg,              ctx->color.geom.selection};
-  // by entity, by physical group and by partition the mesh is coloured from
-  // the carousel, and in the first two from what the entities were given
   int carousel = ctx->mesh.colorCarousel;
   if(carousel >= 1 && carousel <= 3)
     for(int i = 0; i < 20; i++) c.push_back(ctx->color.mesh.carousel[i]);
-  if(anyColorIsTransparent(&c[0], (int)c.size(), ctx->mesh.transparency))
-    return true;
-  return ctx->alpha && (carousel == 1 || carousel == 2) &&
-         anyEntityColorIsTransparent();
+  return anyColorIsTransparent(&c[0], (int)c.size(), ctx->mesh.transparency);
+}
+
+bool gmshMeshIsTransparent()
+{
+  return gmshMeshColorsAreTransparent() ||
+         (CTX::instance()->alpha && meshUsesEntityColors() &&
+          anyEntityColorIsTransparent());
+}
+
+bool gmshMeshEntityIsTransparent(GEntity *e)
+{
+  return gmshMeshColorsAreTransparent() ||
+         (meshUsesEntityColors() && entityColorIsTransparent(e));
 }
 
 void gmshDrawArrays(GLenum type, int count, const float *dashes)
 {
-  // whatever immediate mode primitives are waiting were asked for before this
-  // one, and have to be on the screen before it
+  // pending immediate mode primitives come before this one
   gmshFlushImmediate();
   if(count <= 0) return;
 
@@ -571,16 +591,13 @@ void gmshDrawArrays(GLenum type, int count, const float *dashes)
       glShader::streamArrays(_clientVertices, _clientColors, count);
     }
     glShader::setColorArray(_boundColors);
-    // an array is never drawn through a texture, but the sampler still has to
-    // point at one the driver is happy with
+    // no texture, but the sampler must still point to a valid one
     glShader::noTexture();
     gmshPushShaderState();
-    // the transparency may be meant for the filled surfaces alone, and this is
-    // where what is being drawn is known
+    // the transparency may apply to filled surfaces only
     glShader::setAlphaScale(gmshAlphaScaleFor(type));
-    // gmshPushShaderState() leaves the pattern off, as most of what is drawn
-    // has no distance along a line to measure it against. A caller that has
-    // worked one out for every vertex turns it back on here.
+    // gmshPushShaderState() leaves the dash pattern off; a caller that has
+    // computed the distances along the line turns it on here
     glShader::streamDash(dashes, count);
     if(dashes)
       glShader::setStipple(true, gmshLineStippleFactor(),
@@ -605,10 +622,9 @@ void gmshDrawArrays(GLenum type, int count, const float *dashes)
   }
 }
 
-// How far along its segment every vertex of a set of independent lines falls,
-// in pixels of the window, which is what the dash pattern is measured in. The
-// counter starts again at every segment, as OpenGL's stipple did for
-// GL_LINES. Empty if the array is not something that can be dashed.
+// distance along its segment of every vertex of a set of independent lines,
+// in pixels, for the dash pattern; restarts at every segment as OpenGL's
+// stipple did for GL_LINES. Empty if the array cannot be dashed.
 static void dashDistances(VertexArray *va, std::vector<float> &dash)
 {
   int count = va->getNumVertices();
@@ -634,15 +650,14 @@ static void dashDistances(VertexArray *va, std::vector<float> &dash)
 
 void drawVertexArray(VertexArray *va, GLenum type)
 {
-  // A line wider than a pixel is not something a core profile draws. The
-  // array holds the two ends of every segment, which is all the shader needs
-  // to make a quad of it, so it is handed them rather than drawn as lines.
+  // a core profile draws no wide lines: the shader makes quads out of the
+  // segments instead
   if(useShaders() && type == GL_LINES && gmshCurrentLineWidth() > 1. &&
      va->getNumVertices() > 1) {
     gmshFlushImmediate();
     gmshPushShaderState();
-    // a quad knows both of its ends, so the shader works the distance along
-    // the line out for itself and only wants to be told the pattern
+    // the shader knows both ends of a quad and computes the dash distance
+    // itself
     if(gmshLineStippleEnabled())
       glShader::setStipple(true, gmshLineStippleFactor(),
                            gmshLineStipplePattern());
@@ -657,8 +672,8 @@ void drawVertexArray(VertexArray *va, GLenum type)
     }
   }
 
-  // A dashed line drawn from an array: the array holds no distance along the
-  // line, so it is worked out here and handed over with it.
+  // a dashed line from an array: the distances along the line are computed
+  // here
   std::vector<float> dash;
   if(useShaders() && type == GL_LINES && gmshLineStippleEnabled())
     dashDistances(va, dash);
@@ -669,25 +684,17 @@ void drawVertexArray(VertexArray *va, GLenum type)
   if(useVertexBufferObjects()) glApi::BindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-// The section a clipping plane cuts out of a 3D element is part of the vertex
-// arrays, so they have to be built again when a plane moves, or when the set of
-// planes that clip a view changes. The planes can be moved from the clipping
-// window, from a script or from the API, so notice it here rather than at every
-// place that sets them
-// The clipping planes are applied by OpenGL, and what they add - the section
-// they cut, the elements they cut drawn whole - is held in arrays of its own,
-// built on its own token: a plane moving asks for nothing to be built again.
-// The one exception is a view drawn with only the volumes a plane cuts, which
-// nothing but the fill can express: those arrays are filled through the planes
-// themselves, and have to be filled again when they move.
+// The clipping planes are applied by OpenGL and what they add (the section,
+// the cut elements drawn whole) lives in arrays of its own, so moving a plane
+// rebuilds nothing here. The exception is a view drawn with only the volumes
+// a plane cuts: its arrays are filled through the planes and must be refilled
+// when they move.
 static void checkClipPlanesChanged()
 {
 #if defined(HAVE_POST)
-  // While the user is choosing - dragging a clipping plane, typing a value -
-  // the fast representation is drawn, and the arrays are left as they are
-  // however many times the scene is redrawn in between. What the planes were is
-  // only remembered once the change has been acted upon, so the first frame
-  // after that picks it up and rebuilds once
+  // while dragging the fast representation is drawn and the arrays are left
+  // alone; the planes are only remembered once acted upon, so the first
+  // frame afterwards rebuilds once
   if(drawContext::global()->mouseIsPressed()) return;
 
   CTX *ctx = CTX::instance();
@@ -698,7 +705,7 @@ static void checkClipPlanesChanged()
   bool changed = (whole != ctx->clipWholeElements) ||
                  (onlyVolume != ctx->clipOnlyVolume) ||
                  (cutOnly != ctx->clipOnlyDrawIntersectingVolume);
-  // remembered as it was, so that leaving the mode fills them one last time
+  // leaving the mode fills them one last time
   bool wasCutOnly = (whole == 1 && cutOnly == 1);
   whole = ctx->clipWholeElements;
   onlyVolume = ctx->clipOnlyVolume;
@@ -775,19 +782,26 @@ void drawContext::draw3d()
   initRenderModel();
 
   if(!CTX::instance()->camera) initPosition(true);
-  drawAxes();
 
-  // Everything see-through is drawn after everything else, and all of it in
-  // one pass: that way a single pass can sum it, and what comes out does not
-  // depend on whether the geometry, the mesh or a view was drawn first. A
-  // picking pass never splits, as what it reads back has to be an identifier
-  // rather than a blend of several.
+  // everything transparent is drawn after everything else, in one pass, so
+  // that the result does not depend on the drawing order; a picking pass
+  // never splits, as it reads back identifiers rather than blends
   bool split = (render_mode != GMSH_SELECT) &&
                (gmshGeometryIsTransparent() || gmshMeshIsTransparent() ||
                 anyViewIsTransparent());
 
-  // What each category's Transparency option comes to. A picking pass draws
-  // identifiers rather than colours and must not have them faded.
+  // the studio shading casts a shadow, drawn first into a map of its own
+  bool studio = gmshUseShaders() && CTX::instance()->shading >= 1 &&
+                render_mode != GMSH_SELECT && !inPickColorMode();
+  gmshShadingModel(studio ? 1 : 0);
+  if(studio)
+    drawShadowMap();
+  else if(gmshUseShaders())
+    glShader::setShadowOff();
+
+  drawAxes();
+
+  // the Transparency options; a picking pass must not fade its identifiers
   double geomScale = inPickColorMode() ? 1. : CTX::instance()->geom.transparency;
   double meshScale = inPickColorMode() ? 1. : CTX::instance()->mesh.transparency;
   bool geomFilled = (CTX::instance()->geom.transparencyMode == 0);
@@ -803,6 +817,7 @@ void drawContext::draw3d()
     drawMesh();
     gmshAlphaScale(1., false);
     drawPost();
+    if(studio) drawStudioFloor();
   }
   else {
     transparencyPass = TRANSPARENCY_OPAQUE;
@@ -814,14 +829,14 @@ void drawContext::draw3d()
     drawMesh();
     gmshAlphaScale(1., false);
     drawPost();
+    if(studio) drawStudioFloor();
 
     transparencyPass = TRANSPARENCY_TRANSPARENT;
     bool summed = glShader::beginTransparent();
     if(!summed) {
-      // Nothing to sum into: painted in the order it comes. The geometry and
-      // the mesh are not sorted, so they must not write depth either - a face
-      // in front would otherwise hide what is behind it instead of letting it
-      // show through, which is the whole point of drawing them see-through.
+      // no summing buffers: blend in drawing order. The geometry and the
+      // mesh are not sorted, so they must not write depth, or a face in
+      // front would hide what is behind it.
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glDepthMask(GL_FALSE);
@@ -831,8 +846,7 @@ void drawContext::draw3d()
     gmshAlphaScale(meshScale, meshFilled);
     drawMesh();
     gmshAlphaScale(1., false);
-    // the views sort themselves back to front and have always written depth
-    // while doing it: that is left exactly as it was
+    // the views sort back to front and write depth, as they always did
     if(!summed) glDepthMask(GL_TRUE);
     drawPost();
     if(summed)
@@ -844,6 +858,345 @@ void drawContext::draw3d()
 
   // drawAxes();
   drawGraph2d(true);
+}
+
+// the i-th number of the Halton sequence in base b, in [0, 1)
+static double halton(int i, int b)
+{
+  double f = 1., r = 0.;
+  while(i > 0) {
+    f /= b;
+    r += f * (i % b);
+    i /= b;
+  }
+  return r;
+}
+
+// The bounds of what the studio shading lights and stands on: the bounding
+// box of the scene, and of the views as they are drawn, which a raise takes
+// outside it.
+static void studioBounds(double min[3], double max[3])
+{
+  CTX *ctx = CTX::instance();
+  for(int i = 0; i < 3; i++) {
+    min[i] = ctx->min[i];
+    max[i] = ctx->max[i];
+  }
+#if defined(HAVE_POST)
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    PViewOptions *opt = PView::list[i]->getOptions();
+    if(!opt->visible || opt->tmpBBox.empty()) continue;
+    SPoint3 lo = opt->tmpBBox.min(), hi = opt->tmpBBox.max();
+    for(int j = 0; j < 3; j++) {
+      min[j] = std::min(min[j], lo[j]);
+      max[j] = std::max(max[j], hi[j]);
+    }
+  }
+#endif
+}
+
+// the up axis of the studio shading, which General.Shading 1, 2 or 3 makes
+// x, y or z: the floor is normal to it, and the dome above it
+static int studioUpAxis()
+{
+  return std::max(0, std::min(2, CTX::instance()->shading - 1));
+}
+
+// the direction of the key light of the studio shading, in model coordinates
+static void studioKeyDirection(double dir[3])
+{
+  CTX *ctx = CTX::instance();
+  for(int i = 0; i < 3; i++) dir[i] = ctx->lightPosition[0][i];
+  double len = sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
+  if(!len) {
+    dir[0] = dir[1] = 0.;
+    dir[2] = len = 1.;
+  }
+  for(int i = 0; i < 3; i++) dir[i] /= len;
+}
+
+// where the floor of the studio shading lies along the up axis: just below
+// the bounds, shifted by General.StudioFloorOffset times the largest
+// dimension of the bounds
+static double studioFloorLevel(const double min[3], const double max[3],
+                               int up)
+{
+  double diag = 0., size = 0.;
+  for(int i = 0; i < 3; i++) {
+    diag += (max[i] - min[i]) * (max[i] - min[i]);
+    size = std::max(size, max[i] - min[i]);
+  }
+  return min[up] - 1.e-3 * sqrt(diag) +
+         CTX::instance()->studioFloorOffset * size;
+}
+
+// Half the side of the floor, around the middle of the bounds: one and a
+// half times the model, or as far as the key light, tilted by its spread,
+// throws the corners of the bounds onto it when that is further - a light
+// oblique to the floor throws the shadow a long way - within six times the
+// model.
+static double studioFloorHalfSize(const double min[3], const double max[3],
+                                  int up, double z0)
+{
+  double d[3], mid[3], dir[3];
+  for(int i = 0; i < 3; i++) {
+    d[i] = max[i] - min[i];
+    mid[i] = 0.5 * (min[i] + max[i]);
+  }
+  int u = (up + 1) % 3, v = (up + 2) % 3;
+  double size = std::max(d[0], std::max(d[1], d[2]));
+  double h = 1.5 * std::max(d[u], d[v]);
+  studioKeyDirection(dir);
+  // the angle from the floor's normal, plus the spread, at most 85 degrees
+  double theta = acos(std::max(-1., std::min(1., dir[up]))) +
+                 CTX::instance()->studioLightSpread * M_PI / 180.;
+  theta = std::min(theta, 85. * M_PI / 180.);
+  if(theta < M_PI / 2.) {
+    double reach = tan(theta);
+    for(int k = 0; k < 8; k++) {
+      double p[3] = {(k & 1) ? max[0] : min[0], (k & 2) ? max[1] : min[1],
+                     (k & 4) ? max[2] : min[2]};
+      double t = (p[up] - z0) * reach;
+      h = std::max(h, 1.1 * (fabs(p[u] - mid[u]) + t));
+      h = std::max(h, 1.1 * (fabs(p[v] - mid[v]) + t));
+    }
+  }
+  return std::min(h, 6. * size);
+}
+
+// The bounding sphere a shadow map from the direction dir has to cover: the
+// model, and the part of the floor its shadow can fall on - the corners of
+// the bounds carried along the light down to the floor plane, kept within
+// the floor, so that a high light keeps the map tight and a low one reaches
+// out; or the whole floor, for the dome, whose samples near the floor's
+// plane throw the longest shadows and need no detail.
+static void studioMapBounds(const double dir[3], bool wholeFloor, double c[3],
+                            double &R)
+{
+  double min[3], max[3], mid[3];
+  studioBounds(min, max);
+  for(int i = 0; i < 3; i++) mid[i] = 0.5 * (min[i] + max[i]);
+  int up = studioUpAxis(), u = (up + 1) % 3, v = (up + 2) % 3;
+  double z0 = studioFloorLevel(min, max, up);
+  double h = studioFloorHalfSize(min, max, up, z0);
+  std::vector<SPoint3> pts;
+  if(wholeFloor) {
+    for(int k = 0; k < 4; k++) {
+      double q[3];
+      q[up] = z0;
+      q[u] = mid[u] + ((k & 1) ? h : -h);
+      q[v] = mid[v] + ((k & 2) ? h : -h);
+      pts.push_back(SPoint3(q[0], q[1], q[2]));
+    }
+  }
+  for(int k = 0; k < 8; k++) {
+    double p[3] = {(k & 1) ? max[0] : min[0], (k & 2) ? max[1] : min[1],
+                   (k & 4) ? max[2] : min[2]};
+    pts.push_back(SPoint3(p[0], p[1], p[2]));
+    if(!wholeFloor && dir[up] > 0.05) {
+      double t = (p[up] - z0) / dir[up], q[3];
+      for(int i = 0; i < 3; i++) q[i] = p[i] - t * dir[i];
+      q[u] = std::max(mid[u] - h, std::min(mid[u] + h, q[u]));
+      q[v] = std::max(mid[v] - h, std::min(mid[v] + h, q[v]));
+      pts.push_back(SPoint3(q[0], q[1], q[2]));
+    }
+  }
+  SBoundingBox3d box;
+  for(std::size_t i = 0; i < pts.size(); i++) box += pts[i];
+  SPoint3 lo = box.min(), hi = box.max();
+  R = 0.;
+  for(int i = 0; i < 3; i++) {
+    c[i] = 0.5 * (lo[i] + hi[i]);
+    double e = 0.5 * (hi[i] - lo[i]);
+    R += e * e;
+  }
+  R = 1.05 * sqrt(R);
+}
+
+// two unit vectors orthogonal to the unit vector d and to each other
+static void studioBasis(const double d[3], double e1[3], double e2[3])
+{
+  int k = (fabs(d[0]) < fabs(d[1])) ? ((fabs(d[0]) < fabs(d[2])) ? 0 : 2) :
+                                      ((fabs(d[1]) < fabs(d[2])) ? 1 : 2);
+  double a[3] = {0., 0., 0.};
+  a[k] = 1.;
+  e1[0] = a[1] * d[2] - a[2] * d[1];
+  e1[1] = a[2] * d[0] - a[0] * d[2];
+  e1[2] = a[0] * d[1] - a[1] * d[0];
+  double n = sqrt(e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2]);
+  for(int i = 0; i < 3; i++) e1[i] /= n;
+  e2[0] = d[1] * e1[2] - d[2] * e1[1];
+  e2[1] = d[2] * e1[0] - d[0] * e1[2];
+  e2[2] = d[0] * e1[1] - d[1] * e1[0];
+}
+
+// a direction in model coordinates taken to eye coordinates
+static void toEye(const double d[3], double e[3])
+{
+  const double *M = gmshMatrix(GMSH_MODELVIEW);
+  e[0] = M[0] * d[0] + M[4] * d[1] + M[8] * d[2];
+  e[1] = M[1] * d[0] + M[5] * d[1] + M[9] * d[2];
+  e[2] = M[2] * d[0] + M[6] * d[1] + M[10] * d[2];
+  double n = sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+  if(n)
+    for(int i = 0; i < 3; i++) e[i] /= n;
+}
+
+// The model drawn from the direction dir (model coordinates) into shadow map
+// `which', which the shader compares against afterwards. The map is
+// orthographic over the bounding sphere of the model.
+bool drawContext::drawOneShadowMap(int which, const double dir[3])
+{
+  CTX *ctx = CTX::instance();
+  double c[3], R;
+  studioMapBounds(dir, which == 1, c, R);
+  if(R <= 0.) return false;
+  double eye[3] = {c[0] + 2. * R * dir[0], c[1] + 2. * R * dir[1],
+                   c[2] + 2. * R * dir[2]};
+  double up[3], e2[3], view[16], proj[16];
+  studioBasis(dir, up, e2);
+  glMatrix::lookAt(eye, c, up, view);
+  glMatrix::ortho(-R, R, -R, R, R, 3. * R, proj);
+
+  // what is pending (the background) must reach the window, not the map
+  gmshFlushImmediate();
+  if(!glShader::beginShadowPass(which, 2048, studioSample)) return false;
+  shadowPass = true;
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshPushMatrix();
+  gmshLoadMatrix(proj);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshPushMatrix();
+  gmshLoadMatrix(view);
+  for(int i = 0; i < 6; i++) gmshClipPlane(i, ctx->clipPlane[i]);
+  // everything casts, the transparent in proportion to its opacity, which
+  // the shader has to be given as on the window
+  int pass = transparencyPass;
+  transparencyPass = TRANSPARENCY_ALL;
+  gmshAlphaScale(ctx->geom.transparency, ctx->geom.transparencyMode == 0);
+  drawGeom();
+  gmshAlphaScale(ctx->mesh.transparency, ctx->mesh.transparencyMode == 0);
+  drawMesh();
+  gmshAlphaScale(1., false);
+  drawPost();
+  gmshFlushImmediate();
+  transparencyPass = pass;
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshPopMatrix();
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshPopMatrix();
+  for(int i = 0; i < 6; i++) gmshClipPlane(i, ctx->clipPlane[i]);
+  shadowPass = false;
+
+  // from eye coordinates to the map: back to model coordinates, through the
+  // light's matrices, and from [-1, 1] to [0, 1]
+  double inv[16], a[16], b[16], s[16], t[16], bias[16];
+  if(!glMatrix::invert(gmshMatrix(GMSH_MODELVIEW), inv)) {
+    glShader::endShadowPass(which, nullptr);
+    return false;
+  }
+  glMatrix::multiply(view, inv, a);
+  glMatrix::multiply(proj, a, b);
+  glMatrix::translate(0.5, 0.5, 0.5, t);
+  glMatrix::scale(0.5, 0.5, 0.5, s);
+  glMatrix::multiply(t, s, bias);
+  glMatrix::multiply(bias, b, a);
+  glShader::endShadowPass(which, a);
+  return true;
+}
+
+// The shadows of the studio shading. The key light is light 0's direction in
+// model coordinates, so that the shadow stays put when the model is rotated;
+// on the accumulated frames it is jittered inside its cone, which softens the
+// shadow on average, and a second map is drawn from a direction of the dome
+// above the model, which occludes the ambient light on average.
+void drawContext::drawShadowMap()
+{
+  CTX *ctx = CTX::instance();
+  int k = studioSample;
+  double dir[3];
+  studioKeyDirection(dir);
+  if(k > 0 && ctx->studioLightSpread > 0.) {
+    double e1[3], e2[3];
+    studioBasis(dir, e1, e2);
+    double alpha = ctx->studioLightSpread * M_PI / 180.;
+    double ct = 1. - halton(k, 5) * (1. - cos(alpha));
+    double st = sqrt(std::max(0., 1. - ct * ct)), phi = 2. * M_PI * halton(k, 7);
+    for(int i = 0; i < 3; i++)
+      dir[i] = ct * dir[i] + st * (cos(phi) * e1[i] + sin(phi) * e2[i]);
+  }
+  double up[3] = {0., 0., 0.};
+  up[studioUpAxis()] = 1.;
+  double de[3], ue[3];
+  toEye(dir, de);
+  toEye(up, ue);
+  // a texel of the key map, in eye coordinates
+  double c[3], R;
+  studioMapBounds(dir, false, c, R);
+  const double *M = gmshMatrix(GMSH_MODELVIEW);
+  double scale = sqrt(M[0] * M[0] + M[1] * M[1] + M[2] * M[2]);
+  glShader::setStudioLight(de, ue, 2. * R * scale / 2048.);
+
+  if(!drawOneShadowMap(0, dir)) glShader::setShadowOff();
+
+  if(k > 0) {
+    // cosine weighted about the up axis
+    double e1[3], e2[3], dome[3];
+    studioBasis(up, e1, e2);
+    double r = sqrt(halton(k, 11)), phi = 2. * M_PI * halton(k, 13);
+    double z = sqrt(std::max(0., 1. - r * r));
+    for(int i = 0; i < 3; i++)
+      dome[i] = r * cos(phi) * e1[i] + r * sin(phi) * e2[i] + z * up[i];
+    double dome_e[3];
+    toEye(dome, dome_e);
+    glShader::setDome(dome_e);
+    if(!drawOneShadowMap(1, dome)) glShader::setDomeOff();
+  }
+  else
+    glShader::setDomeOff();
+}
+
+// The shadow catcher of the studio shading: a plane under the model, at the
+// bottom of its bounding box along z (or along y for a model flat in z),
+// showing nothing but the shadow cast on it.
+void drawContext::drawStudioFloor()
+{
+  double min[3], max[3], d[3], c[3], diag = 0.;
+  studioBounds(min, max);
+  for(int i = 0; i < 3; i++) {
+    d[i] = max[i] - min[i];
+    c[i] = 0.5 * (min[i] + max[i]);
+    diag += d[i] * d[i];
+  }
+  diag = sqrt(diag);
+  if(diag <= 0.) return;
+  int up = studioUpAxis();
+  int u = (up + 1) % 3, v = (up + 2) % 3;
+  double z0 = studioFloorLevel(min, max, up);
+  double h = studioFloorHalfSize(min, max, up, z0);
+  double p[4][3];
+  for(int k = 0; k < 4; k++) {
+    p[k][up] = z0;
+    p[k][u] = c[u] + ((k == 1 || k == 2) ? h : -h);
+    p[k][v] = c[v] + ((k >= 2) ? h : -h);
+  }
+  double n[3] = {0., 0., 0.};
+  n[up] = 1.;
+
+  gmshShadingModel(2);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // hidden by the model, but hiding nothing itself: whatever hangs below
+  // it (glyphs, a view raised further than its data) stays visible
+  glDepthMask(GL_FALSE);
+  gmshColor4ub(0, 0, 0, 150);
+  gmshNormal3d(n[0], n[1], n[2]);
+  gmshBegin(GL_QUADS);
+  for(int k = 0; k < 4; k++) gmshVertex3d(p[k][0], p[k][1], p[k][2]);
+  gmshEnd();
+  gmshShadingModel(1);
+  glDepthMask(GL_TRUE);
+  glDisable(GL_BLEND);
 }
 
 void drawContext::draw2d()
@@ -1161,7 +1514,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 
     // restrict picking to a rectangular region around xpick,ypick
     double pick[16];
-    glMatrix::identity(pick);
+    studioJitter(pick);
     if(render_mode == GMSH_SELECT)
       glMatrix::pickRegion(xpick, viewport[3] - ypick, wpick, hpick, viewport,
                            pick);
@@ -1229,6 +1582,17 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   }
 }
 
+void drawContext::studioJitter(double m[16])
+{
+  glMatrix::identity(m);
+  if(studioSample <= 0 || render_mode == GMSH_SELECT || _pickColor) return;
+  double hr = highResolutionPixelFactor();
+  double w = (viewport[2] - viewport[0]) * hr;
+  double h = (viewport[3] - viewport[1]) * hr;
+  glMatrix::translate(2. * (halton(studioSample, 2) - 0.5) / w,
+                      2. * (halton(studioSample, 3) - 0.5) / h, 0., m);
+}
+
 void drawContext::initRenderModel()
 {
   gmshPushMatrix();
@@ -1236,9 +1600,8 @@ void drawContext::initRenderModel()
   gmshScale(s[0], s[1], s[2]);
   gmshTranslate(t[0], t[1], t[2]);
 
-  // A core profile has none of the fixed function lighting state below, and
-  // each call to it would only raise an error: the shader is handed the same
-  // lights as uniforms instead.
+  // a core profile has no fixed function lighting: the shader gets the lights
+  // as uniforms instead
   bool fixed = !gmshUseShaders();
 
   for(int i = 0; i < 6; i++) {
@@ -1248,10 +1611,9 @@ void drawContext::initRenderModel()
                              (GLfloat)CTX::instance()->lightPosition[i][2],
                              (GLfloat)CTX::instance()->lightPosition[i][3]};
       if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
-      // OpenGL puts the position through the modelview matrix that is current
-      // here, which is the scale and the translation alone: the lights follow
-      // neither the rotation nor the camera. The shader is handed the result
-      // of that same transform, so that it lights the scene the same way.
+      // OpenGL transforms the position by the current modelview (the scale
+      // and translation alone, so the lights do not rotate with the model);
+      // the shader is given the same result
       double pos[4] = {position[0], position[1], position[2], position[3]};
       double eye[4];
       glMatrix::transform(gmshMatrix(GMSH_MODELVIEW), pos, eye);
@@ -1415,10 +1777,7 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   d[2] /= len;
 }
 
-// The two matrices these need are the ones that are current, which used to be
-// asked of OpenGL. A core profile keeps neither of them - there is no matrix
-// stack in it at all - so they are asked of the place that does, which is
-// where they were computed in the first place.
+// the current matrices are ours (a core profile has no matrix stack)
 void drawContext::viewport2World(double vp[3], double xyz[3])
 {
   GLint glvp[4];
@@ -1465,15 +1824,12 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 
-  // The selection buffer reported every primitive in the picking frustum, so a
-  // point or a curve hidden behind a surface could still be selected. Depth
-  // testing would hide them here, so give each dimension its own depth range,
-  // the lower ones in front: this keeps the depth order inside a dimension
-  // while letting a point be picked through a surface.
+  // give each dimension its own depth range, lower dimensions in front, so
+  // that a point or a curve can be picked through a surface, as with the
+  // selection buffer
   int d = (type < 0) ? 4 : (type > 4 ? 4 : type);
-  // the depth range is OpenGL's own state, which a batch of immediate mode
-  // primitives does not carry: what is waiting belongs to the object before
-  // this one and has to be drawn under its range
+  // pending immediate mode primitives belong to the previous object and its
+  // depth range
   gmshFlushImmediate();
   glDepthRange(0.2 * d, 0.2 * d + 0.2);
 }
@@ -1481,21 +1837,18 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
 void drawContext::unsetPickColor()
 {
   if(!_pickColor) return;
-  // 0 is the background: what is drawn now belongs to no pickable object
+  // 0 is the background: no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 }
 
-// Side of the region, in real pixels, that a picking pass draws and keeps
-// around the point that was asked for. Big enough that the pointer usually
-// stays inside it while hovering, small enough that drawing it costs a
-// fraction of what the whole window would.
+// side (in real pixels) of the region a picking pass draws and keeps around
+// the query point
 static const int PICK_CACHE_SIZE = 512;
 
-// Draw a region of the window with every pickable object in the flat colour
-// that encodes it, and keep the result: the picks that follow are then lookups
-// in that image, so hovering does not redraw the scene on every mouse move.
+// draw a region of the window in picking colours and keep the image, so that
+// the picks that follow are lookups rather than redraws
 bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
                                  int fh)
 {
@@ -1511,10 +1864,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   GLfloat oldClear[4];
   glGetFloatv(GL_COLOR_CLEAR_VALUE, oldClear);
 
-  // Draw into a buffer of our own when the shader pipeline is the one drawing:
-  // the depth has to be read back as well as the identifiers, and reading a
-  // depth buffer is not something OpenGL ES or WebGL will do. The shader
-  // writes it as a colour into a second attachment instead.
+  // the shader pipeline draws into its own framebuffer, where the depth is
+  // written as a colour: OpenGL ES and WebGL cannot read a depth buffer back
   double hr = highResolutionPixelFactor();
   bool intoPickBuffer =
     gmshUseShaders() &&
@@ -1525,9 +1876,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glEnable(GL_DEPTH_TEST);
   gmshLighting(false);
   glDisable(GL_BLEND);
-  // the identifier colour must not be interpolated across a primitive; the
-  // shader hands every fragment of a draw the same one, so there is nothing to
-  // ask of a core profile, which has no shade model either
+  // the identifier colour must not be interpolated (the shader gives every
+  // fragment the same one)
   if(!gmshUseShaders()) glShadeModel(GL_FLAT);
   // only rasterise the region the image covers
   glEnable(GL_SCISSOR_TEST);
@@ -1543,11 +1893,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   if(post) drawPost();
   drawGraph2d(true);
 
-  // 2d stuff, drawn in pixel coordinates
-  // as in draw2d(): the 2D overlay is painted on top, in the order it is drawn,
-  // so the depth test has to go. Leaving it on would make the graph frame and
-  // the axes, drawn before the data points and in the depth range that was
-  // current at the time, hide the points from the picking pass.
+  // 2D overlay, painted on top in drawing order as in draw2d(): without the
+  // depth test off, the graph frame and axes would hide the data points
   glDisable(GL_DEPTH_TEST);
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
   gmshMatrixMode(GMSH_PROJECTION);
@@ -1621,8 +1968,7 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   if(y0 + h > viewport[3]) h = viewport[3] - y0;
   if(w < 1 || h < 1) return false;
 
-  // the viewport is in logical points, but the image is in real pixels, which
-  // differ on a high resolution display
+  // the viewport is in logical points, the image in real pixels
   double hr = highResolutionPixelFactor();
   int fx0 = (int)(x0 * hr), fy0 = (int)(y0 * hr);
   int fw = (int)(w * hr), fh = (int)(h * hr);
@@ -1637,8 +1983,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
                 fy0 + fh <= _pickCacheY + _pickCacheHeight;
   if(!inside || _pickCacheMesh != mesh || _pickCachePost != post ||
      _pickCacheElements != pickElements) {
-    // a region around the query, big enough that the pointer has to travel a
-    // long way before the image has to be drawn again
+    // a region around the query, so that the image serves the picks that
+    // follow
     int cw = std::min(winW, PICK_CACHE_SIZE), ch = std::min(winH, PICK_CACHE_SIZE);
     if(cw < fw) cw = fw;
     if(ch < fh) ch = fh;
@@ -1660,10 +2006,9 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
      fy0 + fh > _pickCacheHeight)
     return false;
 
-  // gather the objects that show up, keeping the smallest depth for each. The
-  // 2D overlay is painted on top of the scene without depth testing, so it
-  // wrote no depth of its own and the buffer holds whatever is underneath it:
-  // rank it in front, which is where it is drawn.
+  // gather the objects, keeping the smallest depth of each; the 2D overlay
+  // wrote no depth (it is painted on top without depth test), so rank it in
+  // front
   std::map<std::size_t, float> found;
   for(int r = 0; r < fh; r++) {
     for(int c = 0; c < fw; c++) {

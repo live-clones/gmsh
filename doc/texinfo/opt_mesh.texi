@@ -132,12 +132,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.DrawSkinOnly
-Draw only the faces that bound a 3D mesh, dropping those shared by two volume elements.@*
+Draw only the boundary faces of 3D meshes?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.DrawUniqueEdges
-Draw each mesh edge once, instead of once per element sharing it? (only applies if Mesh.Explode is 1)@*
+Draw each mesh edge once instead of once per element? (only if Mesh.Explode is 1)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1047,12 +1047,12 @@ Default value: @code{1e-06}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Transparency
-Multiply the alpha (opacity) of every mesh colour by this factor (1: opaque, 0: fully transparent)@*
+Opacity factor applied to all mesh colors (1: opaque, 0: fully transparent)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.TransparencyMode
-What Mesh.Transparency is applied to (0: filled surfaces only; 1: everything)@*
+Apply Mesh.Transparency to (0: filled surfaces only; 1: everything)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

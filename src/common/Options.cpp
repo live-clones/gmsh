@@ -60,10 +60,8 @@
 #endif
 
 #if defined(HAVE_FLTK)
-// hand the graphic windows the visual the options now ask for; FLTK recreates
-// the OpenGL context of each of them whose value changed, and the vertex
-// buffers and the entry points that belonged to the old one are dropped when
-// the new one is first drawn into
+// give the graphic windows the visual the options ask for; FLTK recreates the
+// OpenGL context of those whose mode changed
 static void resetOpenglMode()
 {
   if(!FlGui::available()) return;
@@ -1400,10 +1398,8 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
 
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET) {
-    // The native engine hands the string to the widget toolkit, which draws it
-    // at the raster position - and a core profile has none. The other two draw
-    // it as a picture of itself, which the shader pipeline can do as well, so
-    // only this one has to be stood in for.
+    // the native engine draws at the raster position, which a core profile
+    // has none of
     std::string engine = CTX::instance()->glFontEngine;
     if(CTX::instance()->shaders && engine == "Native")
       engine = "StringTexture";
@@ -3005,6 +3001,51 @@ double opt_general_vertex_buffer_objects(OPT_ARGS_NUM)
   return CTX::instance()->vertexBufferObjects;
 }
 
+double opt_general_shading(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->shading = std::max(0, std::min(3, (int)val));
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.choice[8]->value(
+      CTX::instance()->shading);
+#endif
+  return CTX::instance()->shading;
+}
+
+double opt_general_studio_light_spread(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->studioLightSpread = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[35]->value(
+      CTX::instance()->studioLightSpread);
+#endif
+  return CTX::instance()->studioLightSpread;
+}
+
+double opt_general_studio_floor_offset(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->studioFloorOffset = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[34]->value(
+      CTX::instance()->studioFloorOffset);
+#endif
+  return CTX::instance()->studioFloorOffset;
+}
+
+double opt_general_studio_samples(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->studioSamples = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[33]->value(
+      CTX::instance()->studioSamples);
+#endif
+  return CTX::instance()->studioSamples;
+}
+
 double opt_general_order_independent_transparency(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3096,8 +3137,8 @@ double opt_general_shaders(OPT_ARGS_NUM)
 #endif
     CTX::instance()->shaders = (int)val;
 #if defined(HAVE_FLTK)
-    // the pipeline is chosen when the context is made, so it has to be made
-    // again - and which engine can draw the strings depends on it
+    // the pipeline is chosen when the context is made; the font engine
+    // depends on it
     if(CTX::instance()->shaders != old) {
       resetOpenglMode();
       opt_general_graphics_font_engine(0, GMSH_SET | GMSH_GUI,
@@ -9801,6 +9842,12 @@ double opt_print_text(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->print.text = (int)val;
   return CTX::instance()->print.text;
+}
+
+double opt_print_supersampling(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.supersampling = (int)val;
+  return CTX::instance()->print.supersampling;
 }
 
 double opt_print_tex_as_equation(OPT_ARGS_NUM)

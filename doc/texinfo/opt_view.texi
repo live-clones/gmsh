@@ -387,7 +387,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.DrawSkinOnly
-Draw only the faces that bound a 3D view, dropping those shared by two volume elements.@*
+Draw only the boundary faces of 3D views?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -722,7 +722,7 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item View.Transparency
-Multiply the alpha (opacity) the colormap gives by this factor (1: as the colormap says, 0: fully transparent)@*
+Opacity factor applied to the colormap (1: unchanged, 0: fully transparent)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

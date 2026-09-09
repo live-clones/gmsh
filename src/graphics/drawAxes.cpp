@@ -152,9 +152,8 @@ void drawContext::drawAxis(double xmin, double ymin, double zmin, double xmax,
     if(ntics < 1) ntics = 1;
     double dd[3] = {(xmax - xmin) / ntics, (ymax - ymin) / ntics,
                     (zmax - zmin) / ntics};
-    // the colour the axis is drawn in, which the ticks alternate with white.
-    // A core profile has no current colour to ask OpenGL for, which is why it
-    // is asked of the one place that keeps it
+    // the axis colour, which the ticks alternate with white (a core profile
+    // has no current colour to query)
     unsigned int axeColor = glyphCurrentColor();
     const unsigned int white = 0xffffffffu;
     glyphList g;

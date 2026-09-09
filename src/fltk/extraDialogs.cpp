@@ -135,13 +135,8 @@ int transparencyChooser(const char *title, const std::string &category,
     &ctx);
   win.end();
   win.show();
-  // The slider is dragged with the button held down, and it is easily let go
-  // of with the pointer outside this little window - over the graphic window,
-  // or off the application altogether - where the slider never sees the
-  // release and the callback above never fires. Watch the button itself
-  // instead: once it has gone down and come up again, wherever that was, the
-  // chooser has done its job. The wait is given a timeout so that a release
-  // that sends us no event of its own is still noticed.
+  // the button can be released outside this window, where the slider never
+  // sees it: watch the button state itself, with a timeout
   bool up = false, down = false;
   while(!ctx.done && win.shown()) {
     Fl::wait(0.1);
