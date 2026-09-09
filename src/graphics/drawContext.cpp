@@ -892,6 +892,47 @@ static int studioUpAxis()
   return (d[2] > 1.e-6 * diag) ? 2 : (d[1] > 1.e-6 * diag) ? 1 : 0;
 }
 
+// The bounding sphere a shadow map from the direction dir has to cover: the
+// model, and the part of the floor its shadow can fall on - the corners of
+// the bounds carried along the light down to the floor plane, kept within
+// the floor. A high light keeps the map tight, a low one reaches out.
+static void studioMapBounds(const double dir[3], double c[3], double &R)
+{
+  double min[3], max[3], d[3], mid[3], diag = 0.;
+  studioBounds(min, max);
+  for(int i = 0; i < 3; i++) {
+    d[i] = max[i] - min[i];
+    mid[i] = 0.5 * (min[i] + max[i]);
+    diag += d[i] * d[i];
+  }
+  diag = sqrt(diag);
+  int up = studioUpAxis(), u = (up + 1) % 3, v = (up + 2) % 3;
+  double h = 1.5 * std::max(d[u], d[v]), z0 = min[up] - 1.e-3 * diag;
+  std::vector<SPoint3> pts;
+  for(int k = 0; k < 8; k++) {
+    double p[3] = {(k & 1) ? max[0] : min[0], (k & 2) ? max[1] : min[1],
+                   (k & 4) ? max[2] : min[2]};
+    pts.push_back(SPoint3(p[0], p[1], p[2]));
+    if(dir[up] > 0.05) {
+      double t = (p[up] - z0) / dir[up], q[3];
+      for(int i = 0; i < 3; i++) q[i] = p[i] - t * dir[i];
+      q[u] = std::max(mid[u] - h, std::min(mid[u] + h, q[u]));
+      q[v] = std::max(mid[v] - h, std::min(mid[v] + h, q[v]));
+      pts.push_back(SPoint3(q[0], q[1], q[2]));
+    }
+  }
+  SBoundingBox3d box;
+  for(std::size_t i = 0; i < pts.size(); i++) box += pts[i];
+  SPoint3 lo = box.min(), hi = box.max();
+  R = 0.;
+  for(int i = 0; i < 3; i++) {
+    c[i] = 0.5 * (lo[i] + hi[i]);
+    double e = 0.5 * (hi[i] - lo[i]);
+    R += e * e;
+  }
+  R = 1.05 * sqrt(R);
+}
+
 // two unit vectors orthogonal to the unit vector d and to each other
 static void studioBasis(const double d[3], double e1[3], double e2[3])
 {
@@ -927,14 +968,8 @@ static void toEye(const double d[3], double e[3])
 bool drawContext::drawOneShadowMap(int which, const double dir[3])
 {
   CTX *ctx = CTX::instance();
-  double min[3], max[3], c[3], R = 0.;
-  studioBounds(min, max);
-  for(int i = 0; i < 3; i++) {
-    c[i] = 0.5 * (min[i] + max[i]);
-    double h = 0.5 * (max[i] - min[i]);
-    R += h * h;
-  }
-  R = 1.05 * sqrt(R);
+  double c[3], R;
+  studioMapBounds(dir, c, R);
   if(R <= 0.) return false;
   double eye[3] = {c[0] + 2. * R * dir[0], c[1] + 2. * R * dir[1],
                    c[2] + 2. * R * dir[2]};
@@ -1021,16 +1056,12 @@ void drawContext::drawShadowMap()
   double de[3], ue[3];
   toEye(dir, de);
   toEye(up, ue);
-  // a texel of the maps, which span the bounding sphere, in eye coordinates
-  double min[3], max[3], R = 0.;
-  studioBounds(min, max);
-  for(int i = 0; i < 3; i++) {
-    double h = 0.5 * (max[i] - min[i]);
-    R += h * h;
-  }
+  // a texel of the key map, in eye coordinates
+  double c[3], R;
+  studioMapBounds(dir, c, R);
   const double *M = gmshMatrix(GMSH_MODELVIEW);
   double scale = sqrt(M[0] * M[0] + M[1] * M[1] + M[2] * M[2]);
-  glShader::setStudioLight(de, ue, 2. * 1.05 * sqrt(R) * scale / 2048.);
+  glShader::setStudioLight(de, ue, 2. * R * scale / 2048.);
 
   if(!drawOneShadowMap(0, dir)) glShader::setShadowOff();
 
