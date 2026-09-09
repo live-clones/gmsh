@@ -136,6 +136,9 @@ in vec4 vColor;
 in vec2 vTexCoord;
 in float vDash;
 in float vClip[6];
+// keep only what the planes cut off instead: the cut elements of whole
+// element mode, drawn next to the clipped rest without overlapping it
+uniform bool uClipOutside;
 
 // the dash pattern of a line: a bit every uStippleFactor pixels along the
 // line, fragments in a hole are discarded; vDash (distance along the line) is
@@ -265,8 +268,10 @@ float domeLit(vec3 n)
 
 void main()
 {
+  bool cut = false;
   for(int i = 0; i < 6; i++)
-    if(vClip[i] < 0.0) discard;
+    if(vClip[i] < 0.0) cut = true;
+  if(cut != uClipOutside) discard;
 
   if(uShadowPass && vColor.a < 1.0) {
     // a transparent fragment casts a shadow in proportion to its opacity:
@@ -466,7 +471,7 @@ void main()
       GLint oitPass;
       // one location per array element, looked up at link time: asking by
       // name at every draw is costly on scenes of many small draws
-      GLint clipPlane[6], clipOn[6];
+      GLint clipPlane[6], clipOn[6], clipOutside;
       GLint studioLight, studioUp, shadowTexel, shadowOn, shadowFromEye, shadow;
       GLint domeOn, domeDir, domeFromEye, dome, shadowPass, seed;
       GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
@@ -633,6 +638,7 @@ void main()
       _u.viewport = glApi::GetUniformLocation(p, "uViewport");
       _u.oitPass = glApi::GetUniformLocation(p, "uOitPass");
       // the arrays are addressed element by element
+      _u.clipOutside = glApi::GetUniformLocation(p, "uClipOutside");
       for(int i = 0; i < 6; i++) {
         _u.clipPlane[i] = element("uClipPlane", i);
         _u.clipOn[i] = element("uClipOn", i);
@@ -1051,6 +1057,12 @@ void main()
   {
     if(i < 0 || i > 5 || !ensure()) return;
     glApi::Uniform1i(_u.clipOn[i], 0);
+  }
+
+  void setClipOutside(bool outside)
+  {
+    if(!ensure()) return;
+    glApi::Uniform1i(_u.clipOutside, outside ? 1 : 0);
   }
 
   // draw without texture, keeping the 1x1 one bound
