@@ -45,7 +45,6 @@ set(SRC
   Field.cpp
   filterElements.cpp
   gmshCrossFields.cpp
-  automaticMeshSizeField.cpp
   meshQuadQuasiStructured.cpp
   meshOctreeLibOL.cpp
   meshCombine3D.cpp

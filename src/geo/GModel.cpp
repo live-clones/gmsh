@@ -3945,13 +3945,14 @@ void GModel::computeHomology(std::vector<std::pair<int, int>> &newPhysicals)
 
 void GModel::computeSizeField()
 {
-#if defined(HAVE_HXT) && defined(HAVE_P4EST)
+#if defined(HAVE_HXT) && defined(HAVE_OCTREE_SIZE_FIELD)
   FieldManager *fields = getFields();
   int myId = fields->newId();
   fields->newField(myId, std::string("AutomaticMeshSizeField"));
   fields->get(myId)->update();
 #else
-  Msg::Error("Size field computation requires both HXT and P4EST");
+  Msg::Error("Size field computation requires both HXT and OctreeSizeField "
+             "(ENABLE_OCTREE_SIZE_FIELD)");
 #endif
 }
 

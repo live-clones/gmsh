@@ -49,6 +49,7 @@
 #cmakedefine HAVE_NO_VSNPRINTF
 #cmakedefine HAVE_OCC
 #cmakedefine HAVE_OCC_CAF
+#cmakedefine HAVE_OCTREE_SIZE_FIELD
 #cmakedefine HAVE_ONELAB
 #cmakedefine HAVE_ONELAB2
 #cmakedefine HAVE_ONELAB_METAMODEL
@@ -56,7 +57,6 @@
 #cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OPTHOM
 #cmakedefine HAVE_OSMESA
-#cmakedefine HAVE_P4EST
 #cmakedefine HAVE_PARASOLID
 #cmakedefine HAVE_PARASOLID_STEP
 #cmakedefine HAVE_PARSER
