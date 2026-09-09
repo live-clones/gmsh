@@ -868,6 +868,12 @@ StringXNumber GeneralOptions_Number[] = {
     " window" },
   { F|O, "Stereo" , opt_general_stereo_mode , 0. ,
     "Use stereo rendering" },
+  { F|O, "StudioLightSpread" , opt_general_studio_light_spread , 12. ,
+    "Angular radius (in degrees) of the light in studio shading, which sets "
+    "the softness of its shadow" },
+  { F|O, "StudioSamples" , opt_general_studio_samples , 64. ,
+    "Number of frames accumulated in studio shading while the view is still, "
+    "for soft shadows, ambient occlusion and antialiasing" },
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. ,
     "Use the system menu bar on macOS?" },
 

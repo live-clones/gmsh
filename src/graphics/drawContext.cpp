@@ -66,6 +66,7 @@ drawContext::drawContext(drawTransform *transform)
   render_mode = GMSH_RENDER;
   transparencyPass = TRANSPARENCY_ALL;
   shadowPass = false;
+  studioSample = 0;
   vxmin = vymin = vxmax = vymax = 0.;
   pixel_equiv_x = pixel_equiv_y = 0.;
 
@@ -810,33 +811,66 @@ void drawContext::draw3d()
   drawGraph2d(true);
 }
 
-// The shadow of the studio shading: the model drawn from its key light into a
-// depth map, which the shader compares against afterwards. The light is a
-// direction in model coordinates (light 0's), so that the shadow stays put
-// when the model is rotated, and the map covers the bounding sphere of the
-// model.
-void drawContext::drawShadowMap(bool split)
+// the i-th number of the Halton sequence in base b, in [0, 1)
+static double halton(int i, int b)
+{
+  double f = 1., r = 0.;
+  while(i > 0) {
+    f /= b;
+    r += f * (i % b);
+    i /= b;
+  }
+  return r;
+}
+
+// the up axis of the model in studio shading: z, or y for a model flat in z
+static int studioUpAxis()
 {
   CTX *ctx = CTX::instance();
-  double dir[3] = {ctx->lightPosition[0][0], ctx->lightPosition[0][1],
-                   ctx->lightPosition[0][2]};
-  double len = sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
-  if(!len) {
-    dir[0] = dir[1] = 0.;
-    dir[2] = len = 1.;
+  double d[3], diag = 0.;
+  for(int i = 0; i < 3; i++) {
+    d[i] = ctx->max[i] - ctx->min[i];
+    diag += d[i] * d[i];
   }
-  for(int i = 0; i < 3; i++) dir[i] /= len;
+  diag = sqrt(diag);
+  return (d[2] > 1.e-6 * diag) ? 2 : (d[1] > 1.e-6 * diag) ? 1 : 0;
+}
 
-  // the light's direction in eye coordinates, for the shading
+// two unit vectors orthogonal to the unit vector d and to each other
+static void studioBasis(const double d[3], double e1[3], double e2[3])
+{
+  int k = (fabs(d[0]) < fabs(d[1])) ? ((fabs(d[0]) < fabs(d[2])) ? 0 : 2) :
+                                      ((fabs(d[1]) < fabs(d[2])) ? 1 : 2);
+  double a[3] = {0., 0., 0.};
+  a[k] = 1.;
+  e1[0] = a[1] * d[2] - a[2] * d[1];
+  e1[1] = a[2] * d[0] - a[0] * d[2];
+  e1[2] = a[0] * d[1] - a[1] * d[0];
+  double n = sqrt(e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2]);
+  for(int i = 0; i < 3; i++) e1[i] /= n;
+  e2[0] = d[1] * e1[2] - d[2] * e1[1];
+  e2[1] = d[2] * e1[0] - d[0] * e1[2];
+  e2[2] = d[0] * e1[1] - d[1] * e1[0];
+}
+
+// a direction in model coordinates taken to eye coordinates
+static void toEye(const double d[3], double e[3])
+{
   const double *M = gmshMatrix(GMSH_MODELVIEW);
-  double de[3] = {M[0] * dir[0] + M[4] * dir[1] + M[8] * dir[2],
-                  M[1] * dir[0] + M[5] * dir[1] + M[9] * dir[2],
-                  M[2] * dir[0] + M[6] * dir[1] + M[10] * dir[2]};
-  len = sqrt(de[0] * de[0] + de[1] * de[1] + de[2] * de[2]);
-  if(len)
-    for(int i = 0; i < 3; i++) de[i] /= len;
-  glShader::setStudioLight(de);
+  e[0] = M[0] * d[0] + M[4] * d[1] + M[8] * d[2];
+  e[1] = M[1] * d[0] + M[5] * d[1] + M[9] * d[2];
+  e[2] = M[2] * d[0] + M[6] * d[1] + M[10] * d[2];
+  double n = sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+  if(n)
+    for(int i = 0; i < 3; i++) e[i] /= n;
+}
 
+// The model drawn from the direction dir (model coordinates) into shadow map
+// `which', which the shader compares against afterwards. The map is
+// orthographic over the bounding sphere of the model.
+bool drawContext::drawOneShadowMap(int which, const double dir[3], bool split)
+{
+  CTX *ctx = CTX::instance();
   double c[3], R = 0.;
   for(int i = 0; i < 3; i++) {
     c[i] = 0.5 * (ctx->min[i] + ctx->max[i]);
@@ -844,25 +878,17 @@ void drawContext::drawShadowMap(bool split)
     R += h * h;
   }
   R = 1.05 * sqrt(R);
-  if(R <= 0.) {
-    glShader::setShadowOff();
-    return;
-  }
-  // an orthographic view along the light, from 2R away, spanning the sphere
+  if(R <= 0.) return false;
   double eye[3] = {c[0] + 2. * R * dir[0], c[1] + 2. * R * dir[1],
                    c[2] + 2. * R * dir[2]};
-  double up[3] = {0., 0., 0.};
-  int k = (fabs(dir[0]) < fabs(dir[1])) ?
-            ((fabs(dir[0]) < fabs(dir[2])) ? 0 : 2) :
-            ((fabs(dir[1]) < fabs(dir[2])) ? 1 : 2);
-  up[k] = 1.;
-  double view[16], proj[16];
+  double up[3], e2[3], view[16], proj[16];
+  studioBasis(dir, up, e2);
   glMatrix::lookAt(eye, c, up, view);
   glMatrix::ortho(-R, R, -R, R, R, 3. * R, proj);
 
   // what is pending (the background) must reach the window, not the map
   gmshFlushImmediate();
-  if(!glShader::beginShadowPass(2048)) return;
+  if(!glShader::beginShadowPass(which, 2048)) return false;
   shadowPass = true;
   gmshMatrixMode(GMSH_PROJECTION);
   gmshPushMatrix();
@@ -890,8 +916,8 @@ void drawContext::drawShadowMap(bool split)
   // light's matrices, and from [-1, 1] to [0, 1]
   double inv[16], a[16], b[16], s[16], t[16], bias[16];
   if(!glMatrix::invert(gmshMatrix(GMSH_MODELVIEW), inv)) {
-    glShader::endShadowPass(nullptr);
-    return;
+    glShader::endShadowPass(which, nullptr);
+    return false;
   }
   glMatrix::multiply(view, inv, a);
   glMatrix::multiply(proj, a, b);
@@ -899,7 +925,60 @@ void drawContext::drawShadowMap(bool split)
   glMatrix::scale(0.5, 0.5, 0.5, s);
   glMatrix::multiply(t, s, bias);
   glMatrix::multiply(bias, b, a);
-  glShader::endShadowPass(a);
+  glShader::endShadowPass(which, a);
+  return true;
+}
+
+// The shadows of the studio shading. The key light is light 0's direction in
+// model coordinates, so that the shadow stays put when the model is rotated;
+// on the accumulated frames it is jittered inside its cone, which softens the
+// shadow on average, and a second map is drawn from a direction of the dome
+// above the model, which occludes the ambient light on average.
+void drawContext::drawShadowMap(bool split)
+{
+  CTX *ctx = CTX::instance();
+  int k = studioSample;
+  double dir[3] = {ctx->lightPosition[0][0], ctx->lightPosition[0][1],
+                   ctx->lightPosition[0][2]};
+  double len = sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
+  if(!len) {
+    dir[0] = dir[1] = 0.;
+    dir[2] = len = 1.;
+  }
+  for(int i = 0; i < 3; i++) dir[i] /= len;
+  if(k > 0 && ctx->studioLightSpread > 0.) {
+    double e1[3], e2[3];
+    studioBasis(dir, e1, e2);
+    double alpha = ctx->studioLightSpread * M_PI / 180.;
+    double ct = 1. - halton(k, 5) * (1. - cos(alpha));
+    double st = sqrt(std::max(0., 1. - ct * ct)), phi = 2. * M_PI * halton(k, 7);
+    for(int i = 0; i < 3; i++)
+      dir[i] = ct * dir[i] + st * (cos(phi) * e1[i] + sin(phi) * e2[i]);
+  }
+  double up[3] = {0., 0., 0.};
+  up[studioUpAxis()] = 1.;
+  double de[3], ue[3];
+  toEye(dir, de);
+  toEye(up, ue);
+  glShader::setStudioLight(de, ue);
+
+  if(!drawOneShadowMap(0, dir, split)) glShader::setShadowOff();
+
+  if(k > 0) {
+    // cosine weighted about the up axis
+    double e1[3], e2[3], dome[3];
+    studioBasis(up, e1, e2);
+    double r = sqrt(halton(k, 11)), phi = 2. * M_PI * halton(k, 13);
+    double z = sqrt(std::max(0., 1. - r * r));
+    for(int i = 0; i < 3; i++)
+      dome[i] = r * cos(phi) * e1[i] + r * sin(phi) * e2[i] + z * up[i];
+    double dome_e[3];
+    toEye(dome, dome_e);
+    glShader::setDome(dome_e);
+    if(!drawOneShadowMap(1, dome, split)) glShader::setDomeOff();
+  }
+  else
+    glShader::setDomeOff();
 }
 
 // The shadow catcher of the studio shading: a plane under the model, at the
@@ -916,7 +995,7 @@ void drawContext::drawStudioFloor()
   }
   diag = sqrt(diag);
   if(diag <= 0.) return;
-  int up = (d[2] > 1.e-6 * diag) ? 2 : (d[1] > 1.e-6 * diag) ? 1 : 0;
+  int up = studioUpAxis();
   int u = (up + 1) % 3, v = (up + 2) % 3;
   double h = 1.5 * std::max(d[u], d[v]);
   double z0 = ctx->min[up] - 1.e-3 * diag;
@@ -934,7 +1013,7 @@ void drawContext::drawStudioFloor()
   ctx->shading = 2;
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  gmshColor4ub(0, 0, 0, 110);
+  gmshColor4ub(0, 0, 0, 150);
   gmshNormal3d(n[0], n[1], n[2]);
   gmshBegin(GL_QUADS);
   for(int k = 0; k < 4; k++) gmshVertex3d(p[k][0], p[k][1], p[k][2]);
@@ -1260,6 +1339,15 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     // restrict picking to a rectangular region around xpick,ypick
     double pick[16];
     glMatrix::identity(pick);
+    // studio shading: each accumulated frame is shifted by a fraction of a
+    // pixel, which antialiases the average
+    if(studioSample > 0 && render_mode != GMSH_SELECT && !_pickColor) {
+      double hr = highResolutionPixelFactor();
+      double w = (viewport[2] - viewport[0]) * hr;
+      double h = (viewport[3] - viewport[1]) * hr;
+      glMatrix::translate(2. * (halton(studioSample, 2) - 0.5) / w,
+                          2. * (halton(studioSample, 3) - 0.5) / h, 0., pick);
+    }
     if(render_mode == GMSH_SELECT)
       glMatrix::pickRegion(xpick, viewport[3] - ypick, wpick, hpick, viewport,
                            pick);
