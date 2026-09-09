@@ -65,6 +65,7 @@ drawContext::drawContext(drawTransform *transform)
 
   render_mode = GMSH_RENDER;
   transparencyPass = TRANSPARENCY_ALL;
+  shadowPass = false;
   vxmin = vymin = vxmax = vymax = 0.;
   pixel_equiv_x = pixel_equiv_y = 0.;
 
@@ -732,7 +733,6 @@ void drawContext::draw3d()
   initRenderModel();
 
   if(!CTX::instance()->camera) initPosition(true);
-  drawAxes();
 
   // everything transparent is drawn after everything else, in one pass, so
   // that the result does not depend on the drawing order; a picking pass
@@ -740,6 +740,16 @@ void drawContext::draw3d()
   bool split = (render_mode != GMSH_SELECT) &&
                (gmshGeometryIsTransparent() || gmshMeshIsTransparent() ||
                 anyViewIsTransparent());
+
+  // the studio shading casts a shadow, drawn first into a map of its own
+  bool studio = gmshUseShaders() && CTX::instance()->shading == 1 &&
+                render_mode != GMSH_SELECT && !inPickColorMode();
+  if(studio)
+    drawShadowMap(split);
+  else if(gmshUseShaders())
+    glShader::setShadowOff();
+
+  drawAxes();
 
   // the Transparency options; a picking pass must not fade its identifiers
   double geomScale = inPickColorMode() ? 1. : CTX::instance()->geom.transparency;
@@ -757,6 +767,7 @@ void drawContext::draw3d()
     drawMesh();
     gmshAlphaScale(1., false);
     drawPost();
+    if(studio) drawStudioFloor();
   }
   else {
     transparencyPass = TRANSPARENCY_OPAQUE;
@@ -768,6 +779,7 @@ void drawContext::draw3d()
     drawMesh();
     gmshAlphaScale(1., false);
     drawPost();
+    if(studio) drawStudioFloor();
 
     transparencyPass = TRANSPARENCY_TRANSPARENT;
     bool summed = glShader::beginTransparent();
@@ -796,6 +808,140 @@ void drawContext::draw3d()
 
   // drawAxes();
   drawGraph2d(true);
+}
+
+// The shadow of the studio shading: the model drawn from its key light into a
+// depth map, which the shader compares against afterwards. The light is a
+// direction in model coordinates (light 0's), so that the shadow stays put
+// when the model is rotated, and the map covers the bounding sphere of the
+// model.
+void drawContext::drawShadowMap(bool split)
+{
+  CTX *ctx = CTX::instance();
+  double dir[3] = {ctx->lightPosition[0][0], ctx->lightPosition[0][1],
+                   ctx->lightPosition[0][2]};
+  double len = sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
+  if(!len) {
+    dir[0] = dir[1] = 0.;
+    dir[2] = len = 1.;
+  }
+  for(int i = 0; i < 3; i++) dir[i] /= len;
+
+  // the light's direction in eye coordinates, for the shading
+  const double *M = gmshMatrix(GMSH_MODELVIEW);
+  double de[3] = {M[0] * dir[0] + M[4] * dir[1] + M[8] * dir[2],
+                  M[1] * dir[0] + M[5] * dir[1] + M[9] * dir[2],
+                  M[2] * dir[0] + M[6] * dir[1] + M[10] * dir[2]};
+  len = sqrt(de[0] * de[0] + de[1] * de[1] + de[2] * de[2]);
+  if(len)
+    for(int i = 0; i < 3; i++) de[i] /= len;
+  glShader::setStudioLight(de);
+
+  double c[3], R = 0.;
+  for(int i = 0; i < 3; i++) {
+    c[i] = 0.5 * (ctx->min[i] + ctx->max[i]);
+    double h = 0.5 * (ctx->max[i] - ctx->min[i]);
+    R += h * h;
+  }
+  R = 1.05 * sqrt(R);
+  if(R <= 0.) {
+    glShader::setShadowOff();
+    return;
+  }
+  // an orthographic view along the light, from 2R away, spanning the sphere
+  double eye[3] = {c[0] + 2. * R * dir[0], c[1] + 2. * R * dir[1],
+                   c[2] + 2. * R * dir[2]};
+  double up[3] = {0., 0., 0.};
+  int k = (fabs(dir[0]) < fabs(dir[1])) ?
+            ((fabs(dir[0]) < fabs(dir[2])) ? 0 : 2) :
+            ((fabs(dir[1]) < fabs(dir[2])) ? 1 : 2);
+  up[k] = 1.;
+  double view[16], proj[16];
+  glMatrix::lookAt(eye, c, up, view);
+  glMatrix::ortho(-R, R, -R, R, R, 3. * R, proj);
+
+  // what is pending (the background) must reach the window, not the map
+  gmshFlushImmediate();
+  if(!glShader::beginShadowPass(2048)) return;
+  shadowPass = true;
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshPushMatrix();
+  gmshLoadMatrix(proj);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshPushMatrix();
+  gmshLoadMatrix(view);
+  for(int i = 0; i < 6; i++) gmshClipPlane(i, ctx->clipPlane[i]);
+  int pass = transparencyPass;
+  // what is transparent casts no shadow
+  transparencyPass = split ? TRANSPARENCY_OPAQUE : TRANSPARENCY_ALL;
+  drawGeom();
+  drawMesh();
+  drawPost();
+  gmshFlushImmediate();
+  transparencyPass = pass;
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshPopMatrix();
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshPopMatrix();
+  for(int i = 0; i < 6; i++) gmshClipPlane(i, ctx->clipPlane[i]);
+  shadowPass = false;
+
+  // from eye coordinates to the map: back to model coordinates, through the
+  // light's matrices, and from [-1, 1] to [0, 1]
+  double inv[16], a[16], b[16], s[16], t[16], bias[16];
+  if(!glMatrix::invert(gmshMatrix(GMSH_MODELVIEW), inv)) {
+    glShader::endShadowPass(nullptr);
+    return;
+  }
+  glMatrix::multiply(view, inv, a);
+  glMatrix::multiply(proj, a, b);
+  glMatrix::translate(0.5, 0.5, 0.5, t);
+  glMatrix::scale(0.5, 0.5, 0.5, s);
+  glMatrix::multiply(t, s, bias);
+  glMatrix::multiply(bias, b, a);
+  glShader::endShadowPass(a);
+}
+
+// The shadow catcher of the studio shading: a plane under the model, at the
+// bottom of its bounding box along z (or along y for a model flat in z),
+// showing nothing but the shadow cast on it.
+void drawContext::drawStudioFloor()
+{
+  CTX *ctx = CTX::instance();
+  double d[3], c[3], diag = 0.;
+  for(int i = 0; i < 3; i++) {
+    d[i] = ctx->max[i] - ctx->min[i];
+    c[i] = 0.5 * (ctx->min[i] + ctx->max[i]);
+    diag += d[i] * d[i];
+  }
+  diag = sqrt(diag);
+  if(diag <= 0.) return;
+  int up = (d[2] > 1.e-6 * diag) ? 2 : (d[1] > 1.e-6 * diag) ? 1 : 0;
+  int u = (up + 1) % 3, v = (up + 2) % 3;
+  double h = 1.5 * std::max(d[u], d[v]);
+  double z0 = ctx->min[up] - 1.e-3 * diag;
+  double p[4][3];
+  for(int k = 0; k < 4; k++) {
+    p[k][up] = z0;
+    p[k][u] = c[u] + ((k == 1 || k == 2) ? h : -h);
+    p[k][v] = c[v] + ((k >= 2) ? h : -h);
+  }
+  double n[3] = {0., 0., 0.};
+  n[up] = 1.;
+
+  gmshFlushImmediate();
+  // the collector reads the shading when it draws this
+  ctx->shading = 2;
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshColor4ub(0, 0, 0, 110);
+  gmshNormal3d(n[0], n[1], n[2]);
+  gmshBegin(GL_QUADS);
+  for(int k = 0; k < 4; k++) gmshVertex3d(p[k][0], p[k][1], p[k][2]);
+  gmshEnd();
+  gmshFlushImmediate();
+  glDisable(GL_BLEND);
+  ctx->shading = 1;
 }
 
 void drawContext::draw2d()

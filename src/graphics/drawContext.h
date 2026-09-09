@@ -192,6 +192,9 @@ public:
   int render_mode; // current rendering mode
   // which half of the scene is being drawn, see gmshTransparencyPass
   int transparencyPass;
+  // true while the scene is drawn into the shadow map of the studio shading:
+  // only the model is drawn then, no strings or images
+  bool shadowPass;
 
 private:
   // Colour buffer picking: a selection pass draws every pickable object in a
@@ -343,6 +346,8 @@ public:
   void drawMesh();
   void drawPost();
   bool anyViewIsTransparent();
+  void drawShadowMap(bool split);
+  void drawStudioFloor();
   void drawBackgroundGradient();
   void drawBackgroundImage(bool moving);
   void drawText2d();

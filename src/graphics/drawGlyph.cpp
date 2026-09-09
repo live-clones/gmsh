@@ -225,7 +225,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
                              const std::string &font_name, int font_enum,
                              int font_size, int align, int line_num)
 {
-  if(s.empty()) return;
+  if(s.empty() || shadowPass) return;
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
   if(s.size() > 8 && s.substr(0, 7) == "file://") {
@@ -409,6 +409,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
 void drawContext::drawImage(const std::string &name, double x, double y,
                             double z, int align)
 {
+  if(shadowPass) return;
   // format can be "@wxh" or "@wxh,wx,wy,wz,hx,hy,hz", where w and h are the
   // width and height (in model coordinates for T3 or in pixels for T2) of the
   // image, wx,wy,wz is the direction of the bottom edge of the image and

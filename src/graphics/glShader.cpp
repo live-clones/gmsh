@@ -156,8 +156,15 @@ uniform vec3 uLightSpecular[6];
 uniform bool uLightOn[6];
 uniform vec3 uSpecular;
 uniform float uShininess;
-// 0: the fixed function model below; 1: studio
+// 0: the fixed function model below; 1: studio; 2: the shadow catcher of the
+// studio model, on which only the shadow is drawn
 uniform int uShading;
+// the studio light: its direction in eye coordinates, and its shadow map with
+// the matrix from eye coordinates to the map
+uniform vec3 uStudioLight;
+uniform bool uShadowOn;
+uniform mat4 uShadowFromEye;
+uniform sampler2DShadow uShadow;
 // 0: draw on the window; 1: sum into the transparency buffers
 uniform int uOitPass;
 
@@ -198,6 +205,23 @@ void emit(vec4 c)
   }
 }
 
+// how much of the studio light reaches this fragment: 1 outside the map or
+// with nothing in front, 0 in full shade, filtered over 5x5 texels
+float shadowLit(float bias)
+{
+  if(!uShadowOn) return 1.0;
+  vec4 p = uShadowFromEye * vec4(vEye, 1.0);
+  vec3 q = p.xyz / p.w;
+  if(q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0 || q.z > 1.0) return 1.0;
+  vec2 texel = 1.0 / vec2(textureSize(uShadow, 0));
+  float lit = 0.0;
+  for(int i = -2; i <= 2; i++)
+    for(int j = -2; j <= 2; j++)
+      lit += texture(uShadow, vec3(q.xy + vec2(float(i), float(j)) * texel,
+                                   q.z - bias));
+  return lit / 25.0;
+}
+
 void main()
 {
   for(int i = 0; i < 6; i++)
@@ -218,6 +242,12 @@ void main()
   float alpha = vColor.a;
   if(uTextured == 1) alpha *= texture(uTexture, vTexCoord).r;
 
+  if(uShading == 2) {
+    // the shadow catcher: a tint as opaque as the shade it is in
+    emit(vec4(vColor.rgb, alpha * (1.0 - shadowLit(0.001))));
+    return;
+  }
+
   if(!uLighting) {
     emit(vec4(vColor.rgb, alpha));
     return;
@@ -231,18 +261,15 @@ void main()
   if(uShading == 1) {
     // studio: the light is computed in linear space, from a hemisphere
     // ambient (sky above, darker ground below, in eye space) and a wrapped
-    // diffuse key light in the direction of light 0, with no specular; the
-    // result goes back to sRGB
+    // diffuse key light (the studio light, with light 0's colour) that casts
+    // the shadow, with no specular; the result goes back to sRGB
     vec3 base = pow(vColor.rgb, vec3(2.2));
-    vec3 l = vec3(0.0, 0.0, 1.0), key = vec3(1.0);
-    if(uLightOn[0]) {
-      l = (uLightPosition[0].w == 0.0) ? normalize(uLightPosition[0].xyz) :
-                                         normalize(uLightPosition[0].xyz - vEye);
-      key = uLightDiffuse[0];
-    }
+    vec3 key = uLightOn[0] ? uLightDiffuse[0] : vec3(1.0);
+    float nl = dot(n, uStudioLight);
+    float lit = shadowLit(0.001 + 0.003 * (1.0 - max(nl, 0.0)));
     vec3 ambient = mix(vec3(0.25), vec3(0.55), 0.5 + 0.5 * n.y);
-    float d = clamp((dot(n, l) + 0.5) / 1.5, 0.0, 1.0);
-    vec3 c = base * (ambient + 0.6 * key * d * d);
+    float d = clamp((nl + 0.5) / 1.5, 0.0, 1.0);
+    vec3 c = base * (ambient + 0.6 * key * d * d * lit);
     emit(vec4(pow(min(c, vec3(1.0)), vec3(1.0 / 2.2)), alpha));
     return;
   }
@@ -305,6 +332,12 @@ void main()
     // a 1x1 texture bound whenever no other is: a driver validates every
     // sampler at draw time, whether or not its branch is taken
     GLuint _noTexture = 0;
+    // the shadow map of the studio light, and the 1x1 depth texture bound in
+    // its place when there is none (the sampler must always point at one)
+    GLuint _shadowFbo = 0, _shadowTex = 0, _noShadow = 0;
+    int _shadowSize = 0;
+    GLint _shadowViewport[4] = {0, 0, 0, 0};
+    bool _shadowPass = false;
     // the picking buffer and what it is made of
     GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
     int _pickWidth = 0, _pickHeight = 0;
@@ -334,12 +367,36 @@ void main()
       // one location per array element, looked up at link time: asking by
       // name at every draw is costly on scenes of many small draws
       GLint clipPlane[6], clipOn[6];
+      GLint studioLight, shadowOn, shadowFromEye, shadow;
       GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
       GLint lightSpecular[6], lightOn[6];
     } _u;
 
     // uniforms are set on the current program, and some setters are called
     // outside drawing (the lights, once a frame): make the program current
+    // bind the 1x1 depth texture in place of the shadow map, on unit 2
+    void bindNoShadow()
+    {
+      glApi::ActiveTexture(GL_TEXTURE0 + 2);
+      if(!_noShadow) {
+        const GLuint one = 0xffffffff;
+        glGenTextures(1, &_noShadow);
+        glBindTexture(GL_TEXTURE_2D, _noShadow);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 1, 1, 0,
+                     GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, &one);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE,
+                        GL_COMPARE_REF_TO_TEXTURE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+      }
+      else
+        glBindTexture(GL_TEXTURE_2D, _noShadow);
+      glApi::ActiveTexture(GL_TEXTURE0);
+    }
+
     bool ensure()
     {
       if(!_program) return false;
@@ -450,6 +507,10 @@ void main()
       _u.specular = glApi::GetUniformLocation(p, "uSpecular");
       _u.shininess = glApi::GetUniformLocation(p, "uShininess");
       _u.shading = glApi::GetUniformLocation(p, "uShading");
+      _u.studioLight = glApi::GetUniformLocation(p, "uStudioLight");
+      _u.shadowOn = glApi::GetUniformLocation(p, "uShadowOn");
+      _u.shadowFromEye = glApi::GetUniformLocation(p, "uShadowFromEye");
+      _u.shadow = glApi::GetUniformLocation(p, "uShadow");
       _u.instanced = glApi::GetUniformLocation(p, "uInstanced");
       _u.taper = glApi::GetUniformLocation(p, "uTaper");
       _u.textured = glApi::GetUniformLocation(p, "uTextured");
@@ -474,6 +535,9 @@ void main()
 
       // a uniform starts at zero, and a zero alpha scale would draw nothing
       glApi::UseProgram(_program);
+      // the shadow map lives on texture unit 2
+      glApi::Uniform1i(_u.shadow, 2);
+      bindNoShadow();
       glApi::Uniform1f(_u.alphaScale, 1.f);
 
       // a core profile draws nothing without a vertex array object; one is
@@ -507,6 +571,9 @@ void main()
     _streamVertices = _streamColors = _streamNormals = 0;
     _streamGlyphs = _streamTex = _streamDash = 0;
     _noTexture = 0;
+    _shadowFbo = _shadowTex = _noShadow = 0;
+    _shadowSize = 0;
+    _shadowPass = false;
     _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
     _pickWidth = _pickHeight = 0;
     _tried = false;
@@ -590,6 +657,99 @@ void main()
   {
     if(!ensure()) return;
     glApi::Uniform1i(_u.shading, model);
+  }
+
+  void setStudioLight(const double dir[3])
+  {
+    if(!ensure()) return;
+    float d[3] = {(float)dir[0], (float)dir[1], (float)dir[2]};
+    glApi::Uniform3fv(_u.studioLight, 1, d);
+  }
+
+  void setShadowOff()
+  {
+    if(!ensure()) return;
+    glApi::Uniform1i(_u.shadowOn, 0);
+    bindNoShadow();
+  }
+
+  bool beginShadowPass(int size)
+  {
+    if(size < 1 || !ensure() || !glApi::haveFramebufferObjects()) return false;
+    if(_shadowFbo && _shadowSize != size) {
+      glApi::DeleteFramebuffers(1, &_shadowFbo);
+      glDeleteTextures(1, &_shadowTex);
+      _shadowFbo = _shadowTex = 0;
+    }
+    if(!_shadowFbo) {
+      glApi::GenFramebuffers(1, &_shadowFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _shadowFbo);
+      glGenTextures(1, &_shadowTex);
+      glApi::ActiveTexture(GL_TEXTURE0 + 2);
+      glBindTexture(GL_TEXTURE_2D, _shadowTex);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, size, size, 0,
+                   GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+      // linear filtering of a comparison is a 2x2 filter of the results
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE,
+                      GL_COMPARE_REF_TO_TEXTURE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+      glApi::ActiveTexture(GL_TEXTURE0);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                  GL_TEXTURE_2D, _shadowTex, 0);
+      // depth only: no colour is written or read
+      const GLenum none = GL_NONE;
+      glApi::DrawBuffers(1, &none);
+      glReadBuffer(GL_NONE);
+      if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+         GL_FRAMEBUFFER_COMPLETE) {
+        Msg::Warning("Could not make a shadow map: drawing without shadows");
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+        glApi::DeleteFramebuffers(1, &_shadowFbo);
+        glDeleteTextures(1, &_shadowTex);
+        _shadowFbo = _shadowTex = 0;
+        return false;
+      }
+      _shadowSize = size;
+      Msg::Debug("Shadow map of %dx%d texels", size, size);
+    }
+    else
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _shadowFbo);
+
+    // the map is being written, so it must not be read
+    glApi::Uniform1i(_u.shadowOn, 0);
+    bindNoShadow();
+    glGetIntegerv(GL_VIEWPORT, _shadowViewport);
+    glViewport(0, 0, size, size);
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    _shadowPass = true;
+    return true;
+  }
+
+  void endShadowPass(const double fromEye[16])
+  {
+    if(!_shadowPass) return;
+    _shadowPass = false;
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
+               _shadowViewport[3]);
+    if(!fromEye) {
+      setShadowOff();
+      return;
+    }
+    glApi::ActiveTexture(GL_TEXTURE0 + 2);
+    glBindTexture(GL_TEXTURE_2D, _shadowTex);
+    glApi::ActiveTexture(GL_TEXTURE0);
+    float m[16];
+    for(int i = 0; i < 16; i++) m[i] = (float)fromEye[i];
+    glApi::UniformMatrix4fv(_u.shadowFromEye, 1, GL_FALSE, m);
+    glApi::Uniform1i(_u.shadowOn, 1);
   }
 
   void setLighting(bool on, bool twoSide)
