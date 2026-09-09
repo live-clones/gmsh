@@ -539,6 +539,18 @@ void drawContext::drawScales()
   const double tic = CTX::instance()->glFontSize; // used to be 10
   const double bar_size = CTX::instance()->glFontSize; // used to be 16
   double width = 0., width_prev = 0., width_total = 0.;
+  // what a horizontal scale takes above its bar: the labels, the line of
+  // the time or step, and the title (see drawScaleLabel())
+  double font_h = drawContext::global()->getStringHeight();
+  drawContext::global()->setFont(CTX::instance()->glFontEnumTitle,
+                                 CTX::instance()->glFontSizeTitle);
+  double title_h = drawContext::global()->getStringHeight();
+  drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                 CTX::instance()->glFontSize);
+  double above = tic + 1.4 * font_h + 2.2 * title_h;
+  // and a vertical one below its bar (the title and that line) and above
+  // it (the top label and the power of ten)
+  double belowV = 3.6 * font_h, aboveV = 2.2 * font_h;
 
   for(std::size_t i = 0; i < scales.size(); i++) {
     PView *p = scales[i];
@@ -570,10 +582,7 @@ void drawContext::drawScales()
         if(w < 20.) w = 20.;
         double h = bar_size;
         double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
-        double y =
-          viewport[1] + ysep +
-          (i / 2) * (bar_size + tic +
-                     2 * drawContext::global()->getStringHeight() + ysep);
+        double y = viewport[1] + ysep + (i / 2) * (bar_size + above + ysep);
         drawScale(this, p, x, y, w, h, tic, 1);
       }
     }
@@ -589,10 +598,11 @@ void drawContext::drawScales()
       else {
         double ysep = (viewport[3] - viewport[1]) / 15.;
         double w = bar_size;
-        double h = (viewport[3] - viewport[1] - 3 * ysep - 2.5 * dy) / 2.;
+        double h = (viewport[3] - viewport[1] - 3 * ysep -
+                    2 * (belowV + aboveV)) / 2.;
         double x = viewport[0] + xsep + width_total + (i / 2) * xsep;
-        double y =
-          viewport[1] + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
+        double y = viewport[1] + ysep + belowV +
+                   (1 - i % 2) * (h + aboveV + ysep + belowV);
         drawScale(this, p, x, y, w, h, tic, 0);
       }
       // compute width
