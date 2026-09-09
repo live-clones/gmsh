@@ -3019,6 +3019,12 @@ double opt_general_studio_light_spread(OPT_ARGS_NUM)
   return CTX::instance()->studioLightSpread;
 }
 
+double opt_general_studio_floor_offset(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->studioFloorOffset = val;
+  return CTX::instance()->studioFloorOffset;
+}
+
 double opt_general_studio_samples(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->studioSamples = (int)val;

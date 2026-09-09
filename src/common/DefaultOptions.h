@@ -868,6 +868,9 @@ StringXNumber GeneralOptions_Number[] = {
     " window" },
   { F|O, "Stereo" , opt_general_stereo_mode , 0. ,
     "Use stereo rendering" },
+  { F|O, "StudioFloorOffset" , opt_general_studio_floor_offset , 0. ,
+    "Offset of the floor in studio shading from the bottom of the model, "
+    "along the floor's normal (in model units)" },
   { F|O, "StudioLightSpread" , opt_general_studio_light_spread , 12. ,
     "Angular radius (in degrees) of the light in studio shading, which sets "
     "the softness of its shadow" },

@@ -900,6 +900,16 @@ static void studioKeyDirection(double dir[3])
   for(int i = 0; i < 3; i++) dir[i] /= len;
 }
 
+// where the floor of the studio shading lies along the up axis: just below
+// the bounds, shifted by General.StudioFloorOffset
+static double studioFloorLevel(const double min[3], const double max[3],
+                               int up)
+{
+  double diag = 0.;
+  for(int i = 0; i < 3; i++) diag += (max[i] - min[i]) * (max[i] - min[i]);
+  return min[up] - 1.e-3 * sqrt(diag) + CTX::instance()->studioFloorOffset;
+}
+
 // Half the side of the floor, around the middle of the bounds: one and a
 // half times the model, or as far as the key light, tilted by its spread,
 // throws the corners of the bounds onto it when that is further - a light
@@ -943,16 +953,11 @@ static double studioFloorHalfSize(const double min[3], const double max[3],
 static void studioMapBounds(const double dir[3], bool wholeFloor, double c[3],
                             double &R)
 {
-  double min[3], max[3], d[3], mid[3], diag = 0.;
+  double min[3], max[3], mid[3];
   studioBounds(min, max);
-  for(int i = 0; i < 3; i++) {
-    d[i] = max[i] - min[i];
-    mid[i] = 0.5 * (min[i] + max[i]);
-    diag += d[i] * d[i];
-  }
-  diag = sqrt(diag);
+  for(int i = 0; i < 3; i++) mid[i] = 0.5 * (min[i] + max[i]);
   int up = studioUpAxis(), u = (up + 1) % 3, v = (up + 2) % 3;
-  double z0 = min[up] - 1.e-3 * diag;
+  double z0 = studioFloorLevel(min, max, up);
   double h = studioFloorHalfSize(min, max, up, z0);
   std::vector<SPoint3> pts;
   if(wholeFloor) {
@@ -1147,7 +1152,7 @@ void drawContext::drawStudioFloor()
   if(diag <= 0.) return;
   int up = studioUpAxis();
   int u = (up + 1) % 3, v = (up + 2) % 3;
-  double z0 = min[up] - 1.e-3 * diag;
+  double z0 = studioFloorLevel(min, max, up);
   double h = studioFloorHalfSize(min, max, up, z0);
   double p[4][3];
   for(int k = 0; k < 4; k++) {
