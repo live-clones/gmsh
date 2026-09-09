@@ -106,6 +106,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 {
   _studioTimer = false;
   _studioW = _studioH = 0;
+  _printW = _printH = 0;
   _ctx = new drawContext();
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
@@ -235,12 +236,21 @@ void openglWindow::draw()
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
-  _ctx->viewport[2] = w();
-  _ctx->viewport[3] = h();
-  // the factor changes when the window moves across displays
-  _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() :
-                                           1.);
-  glViewport(0, 0, pixel_w(), pixel_h());
+  if(_printW) {
+    // a picture of its own size, in plain pixels
+    _ctx->viewport[2] = _printW;
+    _ctx->viewport[3] = _printH;
+    _ctx->setHighResolutionPixelFactor(1.);
+    glViewport(0, 0, _printW, _printH);
+  }
+  else {
+    _ctx->viewport[2] = w();
+    _ctx->viewport[3] = h();
+    // the factor changes when the window moves across displays
+    _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() :
+                                             1.);
+    glViewport(0, 0, pixel_w(), pixel_h());
+  }
 
   if(lassoMode) {
     // draw the scene again with the lasso rectangle on top (drawing into the
@@ -466,7 +476,8 @@ void openglWindow::_studioFrame()
     _ctx->studioSample = 0;
     return;
   }
-  int k = _ctx->studioSample, w = pixel_w(), h = pixel_h();
+  int k = _ctx->studioSample;
+  int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
   if(k > 0) {
     // the view changed since the last frame: start over
     if(w != _studioW || h != _studioH ||
@@ -497,6 +508,23 @@ void openglWindow::_studioFrame()
   }
   if(k + 1 < n && !drawContext::global()->mouseIsPressed())
     Fl::add_timeout(0.01, _studioSampleCb, this);
+}
+
+bool openglWindow::printTo(int width, int height, unsigned int format,
+                           unsigned int type, void *pixels)
+{
+  make_current();
+  if(!gmshUseShaders() || !glShader::beginPrintTarget(width, height))
+    return false;
+  _printW = width;
+  _printH = height;
+  draw();
+  glShader::readPrintTarget(width, height, format, type, pixels);
+  glShader::endPrintTarget();
+  _printW = _printH = 0;
+  // the window itself is drawn again at its own size
+  redraw();
+  return true;
 }
 
 void openglWindow::_studioSampleCb(void *data)

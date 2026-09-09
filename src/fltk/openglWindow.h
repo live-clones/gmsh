@@ -97,6 +97,8 @@ private:
   bool _studioTimer;
   double _studioModel[16];
   int _studioW, _studioH;
+  // the size of the picture being drawn instead of the window, or 0
+  int _printW, _printH;
   void _studioFrame();
   static void _studioSampleCb(void *data);
   bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
@@ -127,6 +129,10 @@ public:
   ~openglWindow();
   void show();
   drawContext *getDrawContext() { return _ctx; }
+  // draw into a picture of the given size instead of the window, with the
+  // shader pipeline; false if it cannot be done
+  bool printTo(int width, int height, unsigned int format, unsigned int type,
+               void *pixels);
   // run one picking pass at the given position (window coordinates) and
   // return what a click there would select, without waiting for a click
   bool pick(int type, bool mesh, bool post, int x, int y, int w, int h,
