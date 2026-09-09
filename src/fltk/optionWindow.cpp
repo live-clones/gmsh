@@ -4262,6 +4262,8 @@ void optionWindow::activate(const char *what)
     if(general.butt[3]->value()) {
       general.choice[8]->activate();
       general.value[33]->activate();
+      general.value[34]->activate();
+      general.value[35]->activate();
       geo.value[21]->activate();
       geo.choice[6]->activate();
       mesh.value[27]->activate();
@@ -4271,6 +4273,8 @@ void optionWindow::activate(const char *what)
     else {
       general.choice[8]->deactivate();
       general.value[33]->deactivate();
+      general.value[34]->deactivate();
+      general.value[35]->deactivate();
       geo.value[21]->deactivate();
       geo.choice[6]->deactivate();
       mesh.value[27]->deactivate();
