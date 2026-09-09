@@ -12,7 +12,7 @@
 
 PViewOptions::PViewOptions() : genRaiseEvaluator(nullptr)
 {
-  ColorTable_InitParam(25, &colorTable);
+  ColorTable_InitParam(26, &colorTable);
   ColorTable_Recompute(&colorTable);
   currentTime = 0.;
 }
