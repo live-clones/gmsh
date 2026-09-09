@@ -9,6 +9,7 @@
 #include <cstddef>
 #include "glShader.h"
 #include "GmshMessage.h"
+#include "glMatrix.h"
 
 namespace glShader {
   namespace {
@@ -160,8 +161,8 @@ uniform float uShininess;
 // studio model, on which only the shadow is drawn
 uniform int uShading;
 // the studio light: the key direction and the model's up axis in eye
-// coordinates, the key's shadow map with the matrix from eye coordinates to
-// it, and the same for the dome direction of the current sample
+// coordinates, and the key's shadow map with the matrix from eye
+// coordinates to it
 uniform vec3 uStudioLight;
 uniform vec3 uStudioUp;
 // the size of a texel of the maps, in eye coordinates
@@ -174,10 +175,6 @@ uniform sampler2DShadow uShadow;
 // gives (zero to filter over a fixed width instead)
 uniform sampler2D uShadowDepth;
 uniform float uShadowSoft;
-uniform bool uDomeOn;
-uniform vec3 uDomeDir;
-uniform mat4 uDomeFromEye;
-uniform sampler2DShadow uDome;
 // drawing into a shadow map, and the seed of the frame being accumulated
 // (negative on the plain frame)
 uniform bool uShadowPass;
@@ -237,12 +234,9 @@ vec3 mapCoord(mat4 fromEye, vec3 n, vec3 l)
   return q;
 }
 
-// How much of the key light, and of the dome, reaches this fragment of
-// normal n through its map: 1 outside the map or with nothing in front, 0 in
-// full shade, filtered over 5x5 texels. One function per map: a sampler
-// handed to a function as an argument is not something every driver gets
-// right.
-// percentage closer soft shadows: the blockers in front of the point are
+// How much of the key light reaches this fragment of normal n through its
+// map: 1 outside the map or with nothing in front, 0 in full shade.
+// Percentage closer soft shadows: the blockers in front of the point are
 // looked for in the map read raw, the penumbra is as wide as the spread of
 // the light makes it for their distance, and the comparison is filtered
 // over that width, on taps turned by a hash of the pixel so that their
@@ -296,19 +290,6 @@ float keyLit(vec3 n)
   return lit / 16.0;
 }
 
-float domeLit(vec3 n)
-{
-  vec3 q = mapCoord(uDomeFromEye, n, uDomeDir);
-  if(q.z > 1.0) return 1.0;
-  vec2 texel = 1.0 / vec2(textureSize(uDome, 0));
-  float lit = 0.0;
-  for(int i = -2; i <= 2; i++)
-    for(int j = -2; j <= 2; j++)
-      lit += texture(uDome, vec3(q.xy + vec2(float(i), float(j)) * texel,
-                                 q.z));
-  return lit / 25.0;
-}
-
 void main()
 {
   for(int i = 0; i < 6; i++)
@@ -344,13 +325,9 @@ void main()
   if(uTextured == 1) alpha *= texture(uTexture, vTexCoord).r;
 
   if(uShading == 2) {
-    // the shadow catcher: a tint as opaque as the shade it is in, from the
-    // key light and, once the dome is sampled, from the ambient occlusion
-    vec3 nf = normalize(vNormal);
-    float lit = uShadowOn ? keyLit(nf) : 1.0;
-    float shade = 1.0 - lit;
-    if(uDomeOn) shade = 1.0 - 0.6 * lit - 0.4 * domeLit(nf);
-    emit(vec4(vColor.rgb, alpha * shade));
+    // the shadow catcher: a tint as opaque as the shade of the key light
+    float lit = uShadowOn ? keyLit(normalize(vNormal)) : 1.0;
+    emit(vec4(vColor.rgb, alpha * (1.0 - lit)));
     return;
   }
 
@@ -373,19 +350,10 @@ void main()
     vec3 key = uLightOn[0] ? uLightDiffuse[0] : vec3(1.0);
     float nl = dot(n, uStudioLight);
     float lit = uShadowOn ? keyLit(n) : 1.0;
-    // the ground below, and the sky above: analytic on the first frame, and
-    // from a dome direction of each frame afterwards (cosine weighted about
-    // the up axis, so that a surface facing up gets 1 on average and a tilted
-    // one (n.d)/(up.d)), which converges to the occluded sky
+    // the ground below and the sky above; what the surroundings occlude is
+    // taken off afterwards, from the depth of the frame
     float nu = dot(n, uStudioUp);
-    vec3 ambient = vec3(0.25 * (0.5 - 0.5 * nu));
-    if(uDomeOn) {
-      float nd = dot(n, uDomeDir), ud = dot(uStudioUp, uDomeDir);
-      float v = domeLit(n);
-      ambient += vec3(0.55 * v * min(max(nd, 0.0) / max(ud, 0.05), 4.0));
-    }
-    else
-      ambient += vec3(0.55 * (0.5 + 0.5 * nu));
+    vec3 ambient = vec3(0.25 * (0.5 - 0.5 * nu) + 0.55 * (0.5 + 0.5 * nu));
     float d = clamp((nl + 0.5) / 1.5, 0.0, 1.0);
     vec3 c = base * (ambient + 0.6 * key * d * d * lit);
     emit(vec4(pow(min(c, vec3(1.0)), vec3(1.0 / 2.2)), alpha));
@@ -426,6 +394,103 @@ void main()
 }
 )";
 
+  // The ambient occlusion of the frame from its depth: for each pixel the
+  // eye position is rebuilt, the normal taken from its screen derivatives,
+  // and points of a hemisphere around it, turned by a hash of the pixel and
+  // the frame, are counted as occluded when the surface at their pixel is in
+  // front of them and not too far.
+  const char *ssaoFragmentBody = R"(
+uniform sampler2D uDepth;
+uniform mat4 uProj;
+uniform mat4 uInvProj;
+uniform vec2 uSize;
+uniform float uRadius;
+uniform float uSeed;
+layout(location = 0) out vec4 fColor;
+
+const vec3 KERNEL[16] = vec3[16](
+  vec3(0.0537, 0.0130, 0.0182), vec3(-0.0468, 0.0554, 0.0330),
+  vec3(0.0175, -0.0946, 0.0483), vec3(0.1141, 0.0736, 0.0525),
+  vec3(-0.1503, -0.0426, 0.1046), vec3(0.0623, 0.1841, 0.1088),
+  vec3(0.1975, -0.1554, 0.1229), vec3(-0.2735, 0.0803, 0.1770),
+  vec3(0.1002, 0.2960, 0.2117), vec3(0.2359, -0.3082, 0.2318),
+  vec3(-0.4009, -0.0836, 0.2698), vec3(0.2201, 0.4004, 0.3237),
+  vec3(0.1993, -0.4834, 0.3573), vec3(-0.5378, 0.1839, 0.3963),
+  vec3(0.4390, 0.4358, 0.4548), vec3(-0.2003, -0.5906, 0.5411));
+
+vec3 eyeAt(vec2 uv)
+{
+  float z = texture(uDepth, uv).r;
+  vec4 p = uInvProj * vec4(uv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0);
+  return p.xyz / p.w;
+}
+
+void main()
+{
+  vec2 uv = gl_FragCoord.xy / uSize;
+  if(texture(uDepth, uv).r >= 1.0) {
+    fColor = vec4(1.0);
+    return;
+  }
+  vec3 P = eyeAt(uv);
+  vec3 N = normalize(cross(dFdx(P), dFdy(P)));
+  if(N.z < 0.0) N = -N;
+  float a = 6.2831853 * fract(sin(dot(gl_FragCoord.xy + vec2(uSeed),
+                                      vec2(12.9898, 78.233))) * 43758.5453);
+  vec3 t = normalize(cross(N, (abs(N.z) < 0.9) ? vec3(0.0, 0.0, 1.0) :
+                                                 vec3(1.0, 0.0, 0.0)));
+  vec3 b = cross(N, t);
+  vec3 t2 = cos(a) * t + sin(a) * b, b2 = cross(N, t2);
+  float occ = 0.0;
+  for(int k = 0; k < 16; k++) {
+    vec3 s = KERNEL[k];
+    vec3 q = P + uRadius * (s.x * t2 + s.y * b2 + s.z * N);
+    vec4 c = uProj * vec4(q, 1.0);
+    vec2 suv = (c.xy / c.w) * 0.5 + 0.5;
+    if(suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) continue;
+    float sz = eyeAt(suv).z;
+    if(sz >= q.z + 0.02 * uRadius)
+      occ += smoothstep(0.0, 1.0, uRadius / abs(P.z - sz));
+  }
+  fColor = vec4(vec3(1.0 - occ / 16.0), 1.0);
+}
+)";
+
+  // what darkens the frame by its occlusion, blurred over the 4x4 pixels
+  // around it that lie on the same surface (within the radius in depth), so
+  // that a silhouette does not bleed onto what is behind it
+  const char *occlusionFragmentBody = R"(
+uniform sampler2D uAO;
+uniform sampler2D uDepth;
+uniform mat4 uInvProj;
+uniform vec2 uSize;
+uniform float uRadius;
+uniform float uStrength;
+layout(location = 0) out vec4 fColor;
+
+float eyeZ(ivec2 at)
+{
+  float z = texelFetch(uDepth, at, 0).r;
+  vec4 p = uInvProj * vec4(0.0, 0.0, z * 2.0 - 1.0, 1.0);
+  return p.z / p.w;
+}
+
+void main()
+{
+  ivec2 at = ivec2(gl_FragCoord.xy), last = ivec2(uSize) - 1;
+  if(texelFetch(uDepth, at, 0).r >= 1.0) discard;
+  float z0 = eyeZ(at), ao = 0.0, n = 0.0;
+  for(int i = -2; i < 2; i++)
+    for(int j = -2; j < 2; j++) {
+      ivec2 q = clamp(at + ivec2(i, j), ivec2(0), last);
+      if(abs(eyeZ(q) - z0) > uRadius) continue;
+      ao += texelFetch(uAO, q, 0).r;
+      n += 1.0;
+    }
+  fColor = vec4(0.0, 0.0, 0.0, uStrength * (1.0 - ao / n));
+}
+)";
+
   // what adds a frame to the accumulation buffer and puts the average back
   const char *blitFragmentBody = R"(
 uniform sampler2D uTex;
@@ -462,18 +527,28 @@ void main()
     // a 1x1 texture bound whenever no other is: a driver validates every
     // sampler at draw time, whether or not its branch is taken
     GLuint _noTexture = 0;
-    // the shadow maps of the studio shading (the key light and the dome), and
-    // the 1x1 depth texture bound in their place when there is none (the
-    // samplers must always point at one)
-    GLuint _shadowFbo[2] = {0, 0}, _shadowTex[2] = {0, 0}, _noShadow = 0;
-    // reads the key map raw, on unit 4, next to its comparison on unit 2
+    // the shadow map of the studio shading, and the 1x1 depth texture bound
+    // in its place when there is none (the samplers must always point at one)
+    GLuint _shadowFbo = 0, _shadowTex = 0, _noShadow = 0;
+    // reads the map raw, on unit 4, next to its comparison on unit 2
     GLuint _rawSampler = 0;
-    int _shadowSize[2] = {0, 0};
+    int _shadowSize = 0;
     GLint _shadowViewport[4] = {0, 0, 0, 0};
-    int _shadowPass = -1;
+    bool _shadowPass = false;
     // what stands in for the window: 0, or the print target while there is
     // one
     GLuint _window = 0, _printFbo = 0, _printColor = 0, _printDepth = 0;
+    // the frame of the studio shading drawn into a buffer of its own, its
+    // depth as a texture, the occlusion worked out from it, and the two
+    // programs that do it
+    GLuint _frameFbo = 0, _frameColor = 0, _frameDepth = 0, _frameParent = 0;
+    GLuint _aoFbo = 0, _aoTex = 0, _ssaoProgram = 0, _occlusionProgram = 0;
+    int _frameWidth = 0, _frameHeight = 0;
+    bool _frameOn = false, _ssaoTried = false;
+    GLint _uSsaoDepth = -1, _uSsaoProj = -1, _uSsaoInvProj = -1;
+    GLint _uSsaoSize = -1, _uSsaoRadius = -1, _uSsaoSeed = -1;
+    GLint _uOccAO = -1, _uOccDepth = -1, _uOccInvProj = -1, _uOccSize = -1;
+    GLint _uOccRadius = -1, _uOccStrength = -1;
     // the accumulation of the studio frames: the sum, a copy of the window
     // to add to it, and the program that does both
     GLuint _accFbo = 0, _accTex = 0, _accCopy = 0, _blitProgram = 0;
@@ -511,18 +586,17 @@ void main()
       GLint clipPlane[6], clipOn[6];
       GLint studioLight, studioUp, shadowTexel, shadowOn, shadowFromEye, shadow;
       GLint shadowDepth, shadowSoft;
-      GLint domeOn, domeDir, domeFromEye, dome, shadowPass, seed;
+      GLint shadowPass, seed;
       GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
       GLint lightSpecular[6], lightOn[6];
     } _u;
 
     // uniforms are set on the current program, and some setters are called
     // outside drawing (the lights, once a frame): make the program current
-    // bind the 1x1 depth texture in place of shadow map `which', on unit
-    // 2 + which
-    void bindNoShadow(int which)
+    // bind the 1x1 depth texture in place of the shadow map, on units 2 and 4
+    void bindNoShadow()
     {
-      glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
+      glApi::ActiveTexture(GL_TEXTURE0 + 2);
       if(!_noShadow) {
         const GLuint one = 0xffffffff;
         glGenTextures(1, &_noShadow);
@@ -539,10 +613,8 @@ void main()
       }
       else
         glBindTexture(GL_TEXTURE_2D, _noShadow);
-      if(which == 0) {
-        glApi::ActiveTexture(GL_TEXTURE0 + 4);
-        glBindTexture(GL_TEXTURE_2D, _noShadow);
-      }
+      glApi::ActiveTexture(GL_TEXTURE0 + 4);
+      glBindTexture(GL_TEXTURE_2D, _noShadow);
       glApi::ActiveTexture(GL_TEXTURE0);
     }
 
@@ -684,10 +756,6 @@ void main()
       _u.shadow = glApi::GetUniformLocation(p, "uShadow");
       _u.shadowDepth = glApi::GetUniformLocation(p, "uShadowDepth");
       _u.shadowSoft = glApi::GetUniformLocation(p, "uShadowSoft");
-      _u.domeOn = glApi::GetUniformLocation(p, "uDomeOn");
-      _u.domeDir = glApi::GetUniformLocation(p, "uDomeDir");
-      _u.domeFromEye = glApi::GetUniformLocation(p, "uDomeFromEye");
-      _u.dome = glApi::GetUniformLocation(p, "uDome");
       _u.shadowPass = glApi::GetUniformLocation(p, "uShadowPass");
       _u.seed = glApi::GetUniformLocation(p, "uSeed");
       _u.instanced = glApi::GetUniformLocation(p, "uInstanced");
@@ -714,12 +782,10 @@ void main()
 
       // a uniform starts at zero, and a zero alpha scale would draw nothing
       glApi::UseProgram(_program);
-      // the shadow maps live on texture units 2 and 3, the key one raw on 4
+      // the shadow map lives on texture unit 2, and raw on 4
       glApi::Uniform1i(_u.shadow, 2);
-      glApi::Uniform1i(_u.dome, 3);
       glApi::Uniform1i(_u.shadowDepth, 4);
-      bindNoShadow(0);
-      bindNoShadow(1);
+      bindNoShadow();
       glApi::Uniform1f(_u.alphaScale, 1.f);
 
       // a core profile draws nothing without a vertex array object; one is
@@ -753,14 +819,18 @@ void main()
     _streamVertices = _streamColors = _streamNormals = 0;
     _streamGlyphs = _streamTex = _streamDash = 0;
     _noTexture = 0;
-    _shadowFbo[0] = _shadowFbo[1] = _shadowTex[0] = _shadowTex[1] = 0;
+    _shadowFbo = _shadowTex = 0;
     _rawSampler = 0;
-    _shadowSize[0] = _shadowSize[1] = 0;
+    _shadowSize = 0;
     _noShadow = 0;
-    _shadowPass = -1;
+    _shadowPass = false;
     _accFbo = _accTex = _accCopy = _blitProgram = 0;
     _accWidth = _accHeight = 0;
     _window = _printFbo = _printColor = _printDepth = 0;
+    _frameFbo = _frameColor = _frameDepth = _frameParent = 0;
+    _aoFbo = _aoTex = _ssaoProgram = _occlusionProgram = 0;
+    _frameWidth = _frameHeight = 0;
+    _frameOn = _ssaoTried = false;
     _uBlitTex = _uBlitScale = -1;
     _blitTried = false;
     _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
@@ -860,34 +930,19 @@ void main()
     glApi::Uniform1f(_u.shadowSoft, rawSampler() ? (float)soft : 0.f);
   }
 
-  void setDome(const double dir[3])
-  {
-    if(!ensure()) return;
-    float d[3] = {(float)dir[0], (float)dir[1], (float)dir[2]};
-    glApi::Uniform3fv(_u.domeDir, 1, d);
-  }
-
-  void setDomeOff()
-  {
-    if(!ensure()) return;
-    glApi::Uniform1i(_u.domeOn, 0);
-    bindNoShadow(1);
-  }
-
   void setShadowOff()
   {
     if(!ensure()) return;
     glApi::Uniform1i(_u.shadowOn, 0);
-    bindNoShadow(0);
-    setDomeOff();
+    bindNoShadow();
   }
 
-  bool beginShadowPass(int which, int size, int sample)
+  bool beginShadowPass(int size, int sample)
   {
-    if(which < 0 || which > 1 || size < 1 || _shadowPass >= 0) return false;
+    if(size < 1 || _shadowPass) return false;
     if(!ensure() || !glApi::haveFramebufferObjects()) return false;
-    GLuint &fbo = _shadowFbo[which], &tex = _shadowTex[which];
-    if(fbo && _shadowSize[which] != size) {
+    GLuint &fbo = _shadowFbo, &tex = _shadowTex;
+    if(fbo && _shadowSize != size) {
       glApi::DeleteFramebuffers(1, &fbo);
       glDeleteTextures(1, &tex);
       fbo = tex = 0;
@@ -896,7 +951,7 @@ void main()
       glApi::GenFramebuffers(1, &fbo);
       glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);
       glGenTextures(1, &tex);
-      glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
+      glApi::ActiveTexture(GL_TEXTURE0 + 2);
       glBindTexture(GL_TEXTURE_2D, tex);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, size, size, 0,
                    GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
@@ -924,15 +979,15 @@ void main()
         fbo = tex = 0;
         return false;
       }
-      _shadowSize[which] = size;
-      Msg::Debug("Shadow map %d of %dx%d texels", which, size, size);
+      _shadowSize = size;
+      Msg::Debug("Shadow map of %dx%d texels", size, size);
     }
     else
       glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);
 
     // the map is being written, so it must not be read
-    glApi::Uniform1i(which ? _u.domeOn : _u.shadowOn, 0);
-    bindNoShadow(which);
+    glApi::Uniform1i(_u.shadowOn, 0);
+    bindNoShadow();
     glApi::Uniform1i(_u.shadowPass, 1);
     glApi::Uniform1f(_u.seed, sample > 0 ? 0.7318f * sample : -1.f);
     glGetIntegerv(GL_VIEWPORT, _shadowViewport);
@@ -941,55 +996,50 @@ void main()
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
     glClear(GL_DEPTH_BUFFER_BIT);
-    _shadowPass = which;
+    _shadowPass = true;
     return true;
   }
 
-  void endShadowPass(int which, const double fromEye[16])
+  void endShadowPass(const double fromEye[16])
   {
-    if(_shadowPass != which) return;
-    _shadowPass = -1;
+    if(!_shadowPass) return;
+    _shadowPass = false;
     glApi::Uniform1i(_u.shadowPass, 0);
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     glViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
                _shadowViewport[3]);
     if(!fromEye) {
-      if(which)
-        setDomeOff();
-      else {
-        glApi::Uniform1i(_u.shadowOn, 0);
-        bindNoShadow(0);
-      }
+      setShadowOff();
       return;
     }
-    glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
-    glBindTexture(GL_TEXTURE_2D, _shadowTex[which]);
-    if(which == 0 && rawSampler()) {
+    glApi::ActiveTexture(GL_TEXTURE0 + 2);
+    glBindTexture(GL_TEXTURE_2D, _shadowTex);
+    if(rawSampler()) {
       glApi::ActiveTexture(GL_TEXTURE0 + 4);
-      glBindTexture(GL_TEXTURE_2D, _shadowTex[0]);
+      glBindTexture(GL_TEXTURE_2D, _shadowTex);
     }
     glApi::ActiveTexture(GL_TEXTURE0);
     float m[16];
     for(int i = 0; i < 16; i++) m[i] = (float)fromEye[i];
-    glApi::UniformMatrix4fv(which ? _u.domeFromEye : _u.shadowFromEye, 1,
-                            GL_FALSE, m);
-    glApi::Uniform1i(which ? _u.domeOn : _u.shadowOn, 1);
+    glApi::UniformMatrix4fv(_u.shadowFromEye, 1, GL_FALSE, m);
+    glApi::Uniform1i(_u.shadowOn, 1);
   }
 
   namespace {
     GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
                        GLenum type);
+    void dropOitBuffers();
 
-    bool buildBlit()
+    // a program drawing over the whole window, with the fragment shader
+    // given; zero if it cannot be built
+    GLuint fullScreenProgram(const char *fragmentBody, const char *what)
     {
-      if(_blitTried) return _blitProgram != 0;
-      _blitTried = true;
       GLuint vs = compile(GL_VERTEX_SHADER, prologue() + compositeVertexBody);
-      if(!vs) return false;
-      GLuint fs = compile(GL_FRAGMENT_SHADER, prologue() + blitFragmentBody);
+      if(!vs) return 0;
+      GLuint fs = compile(GL_FRAGMENT_SHADER, prologue() + fragmentBody);
       if(!fs) {
         glApi::DeleteShader(vs);
-        return false;
+        return 0;
       }
       GLuint p = glApi::CreateProgram();
       glApi::AttachShader(p, vs);
@@ -1000,16 +1050,210 @@ void main()
       GLint ok = 0;
       glApi::GetProgramiv(p, GL_LINK_STATUS, &ok);
       if(!ok) {
-        Msg::Warning("Could not link the accumulation program");
+        Msg::Warning("Could not link the %s program", what);
         glApi::DeleteProgram(p);
-        return false;
+        return 0;
       }
+      return p;
+    }
+
+    bool buildBlit()
+    {
+      if(_blitTried) return _blitProgram != 0;
+      _blitTried = true;
+      GLuint p = fullScreenProgram(blitFragmentBody, "accumulation");
+      if(!p) return false;
       _uBlitTex = glApi::GetUniformLocation(p, "uTex");
       _uBlitScale = glApi::GetUniformLocation(p, "uScale");
       _blitProgram = p;
       return true;
     }
+
+    bool buildOcclusion()
+    {
+      if(_ssaoTried) return _ssaoProgram != 0;
+      _ssaoTried = true;
+      GLuint p = fullScreenProgram(ssaoFragmentBody, "ambient occlusion");
+      if(!p) return false;
+      GLuint q = fullScreenProgram(occlusionFragmentBody, "occlusion");
+      if(!q) {
+        glApi::DeleteProgram(p);
+        return false;
+      }
+      _uSsaoDepth = glApi::GetUniformLocation(p, "uDepth");
+      _uSsaoProj = glApi::GetUniformLocation(p, "uProj");
+      _uSsaoInvProj = glApi::GetUniformLocation(p, "uInvProj");
+      _uSsaoSize = glApi::GetUniformLocation(p, "uSize");
+      _uSsaoRadius = glApi::GetUniformLocation(p, "uRadius");
+      _uSsaoSeed = glApi::GetUniformLocation(p, "uSeed");
+      _uOccAO = glApi::GetUniformLocation(q, "uAO");
+      _uOccDepth = glApi::GetUniformLocation(q, "uDepth");
+      _uOccInvProj = glApi::GetUniformLocation(q, "uInvProj");
+      _uOccSize = glApi::GetUniformLocation(q, "uSize");
+      _uOccRadius = glApi::GetUniformLocation(q, "uRadius");
+      _uOccStrength = glApi::GetUniformLocation(q, "uStrength");
+      _ssaoProgram = p;
+      _occlusionProgram = q;
+      return true;
+    }
+
+    // a framebuffer of one colour texture of the given format
+    bool colorTarget(GLuint &fbo, GLuint &tex, int width, int height,
+                     GLenum internal, GLenum format)
+    {
+      glApi::GenFramebuffers(1, &fbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);
+      glGenTextures(1, &tex);
+      glBindTexture(GL_TEXTURE_2D, tex);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format,
+                   GL_UNSIGNED_BYTE, nullptr);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                  GL_TEXTURE_2D, tex, 0);
+      const GLenum buf = GL_COLOR_ATTACHMENT0;
+      glApi::DrawBuffers(1, &buf);
+      return true;
+    }
+
+    void dropFrame()
+    {
+      if(_frameFbo) glApi::DeleteFramebuffers(1, &_frameFbo);
+      if(_frameColor) glDeleteTextures(1, &_frameColor);
+      if(_frameDepth) glDeleteTextures(1, &_frameDepth);
+      if(_aoFbo) glApi::DeleteFramebuffers(1, &_aoFbo);
+      if(_aoTex) glDeleteTextures(1, &_aoTex);
+      _frameFbo = _frameColor = _frameDepth = _aoFbo = _aoTex = 0;
+      _frameWidth = _frameHeight = 0;
+    }
   } // namespace
+
+  bool beginFrame(int width, int height)
+  {
+    if(width < 1 || height < 1 || _frameOn) return false;
+    if(!ensure() || !glApi::haveFramebufferObjects() || !glApi::BlitFramebuffer ||
+       !buildOcclusion())
+      return false;
+    if(_frameFbo && (_frameWidth != width || _frameHeight != height))
+      dropFrame();
+    glApi::ActiveTexture(GL_TEXTURE0);
+    if(!_frameFbo) {
+      colorTarget(_frameFbo, _frameColor, width, height, GL_RGBA8, GL_RGBA);
+      glGenTextures(1, &_frameDepth);
+      glBindTexture(GL_TEXTURE_2D, _frameDepth);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0,
+                   GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                  GL_TEXTURE_2D, _frameDepth, 0);
+      bool ok = glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) ==
+                GL_FRAMEBUFFER_COMPLETE;
+      if(ok) {
+        colorTarget(_aoFbo, _aoTex, width, height, GL_R8, GL_RED);
+        ok = glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) ==
+             GL_FRAMEBUFFER_COMPLETE;
+      }
+      if(!ok) {
+        Msg::Warning("Could not make a buffer to draw the frame into");
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+        dropFrame();
+        return false;
+      }
+      _frameWidth = width;
+      _frameHeight = height;
+      glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    _frameParent = _window;
+    _window = _frameFbo;
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+    // the transparency pass copies the depth of what stands for the window
+    if(_oitDepthFormat && _oitDepthFormat != GL_DEPTH_COMPONENT24) {
+      dropOitBuffers();
+      _oitDepthFormat = 0;
+    }
+    _frameOn = true;
+    noTexture();
+    return true;
+  }
+
+  void applyOcclusion(const double projection[16], double radius,
+                      double strength, int sample)
+  {
+    if(!_frameOn || !_ssaoProgram) return;
+    double inv[16];
+    if(!glMatrix::invert(projection, inv)) return;
+    float proj[16], invProj[16];
+    for(int i = 0; i < 16; i++) {
+      proj[i] = (float)projection[i];
+      invProj[i] = (float)inv[i];
+    }
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
+    GLboolean wasBlend = glIsEnabled(GL_BLEND);
+    glViewport(0, 0, _frameWidth, _frameHeight);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glApi::BindVertexArray(_vao);
+    for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
+      glApi::DisableVertexAttribArray(i);
+    glApi::ActiveTexture(GL_TEXTURE0);
+
+    // the occlusion of each pixel, from the depth
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _aoFbo);
+    glApi::UseProgram(_ssaoProgram);
+    glBindTexture(GL_TEXTURE_2D, _frameDepth);
+    glApi::Uniform1i(_uSsaoDepth, 0);
+    glApi::UniformMatrix4fv(_uSsaoProj, 1, GL_FALSE, proj);
+    glApi::UniformMatrix4fv(_uSsaoInvProj, 1, GL_FALSE, invProj);
+    const float size[2] = {(float)_frameWidth, (float)_frameHeight};
+    glApi::Uniform2fv(_uSsaoSize, 1, size);
+    glApi::Uniform1f(_uSsaoRadius, (float)radius);
+    glApi::Uniform1f(_uSsaoSeed, 0.7318f * sample);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    // and the frame darkened by it
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+    glApi::UseProgram(_occlusionProgram);
+    glBindTexture(GL_TEXTURE_2D, _aoTex);
+    glApi::ActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, _frameDepth);
+    glApi::Uniform1i(_uOccAO, 0);
+    glApi::Uniform1i(_uOccDepth, 1);
+    glApi::UniformMatrix4fv(_uOccInvProj, 1, GL_FALSE, invProj);
+    glApi::Uniform2fv(_uOccSize, 1, size);
+    glApi::Uniform1f(_uOccRadius, (float)radius);
+    glApi::Uniform1f(_uOccStrength, (float)strength);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glApi::ActiveTexture(GL_TEXTURE0);
+    glViewport(vp[0], vp[1], vp[2], vp[3]);
+    if(wasDepth) glEnable(GL_DEPTH_TEST);
+    if(!wasBlend) glDisable(GL_BLEND);
+    glApi::UseProgram(_program);
+    glApi::BindVertexArray(_vao);
+    noTexture();
+  }
+
+  void endFrame()
+  {
+    if(!_frameOn) return;
+    _frameOn = false;
+    _window = _frameParent;
+    glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, _frameFbo);
+    glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _window);
+    glApi::BlitFramebuffer(0, 0, _frameWidth, _frameHeight, 0, 0, _frameWidth,
+                           _frameHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+  }
 
   bool accumulate(int width, int height, bool first, int count)
   {
