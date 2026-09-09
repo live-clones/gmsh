@@ -837,9 +837,9 @@ StringXNumber GeneralOptions_Number[] = {
     "Use the OpenGL shader pipeline instead of the fixed function one? "
     "(recreates the OpenGL context)" },
   { F|O, "Shading" , opt_general_shading , 0. ,
-    "Shading model (0: classic; 1: studio, with soft lighting, no specular "
-    "highlights, and a shadow cast by light 0 on a floor under the model; "
-    "shader pipeline only)" },
+    "Shading model (0: classic; 1, 2 or 3: studio, with soft lighting, no "
+    "specular highlights, and a shadow cast by light 0 on a floor normal to "
+    "the X, Y or Z axis; shader pipeline only)" },
   { F|O, "Shininess" , opt_general_shine , 0.4 ,
     "Material shininess" },
   { F|O, "ShininessExponent" , opt_general_shine_exponent , 40. ,

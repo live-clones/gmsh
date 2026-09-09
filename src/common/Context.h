@@ -327,8 +327,9 @@ public:
   // draw with the shader pipeline instead of the fixed function one
   // (recreates the OpenGL context)
   int shaders;
-  // lighting model of the shader pipeline: 0 the fixed function one, 1
-  // studio (linear light, hemisphere ambient, soft key light, no specular)
+  // lighting model of the shader pipeline: 0 the fixed function one, 1 to 3
+  // studio (linear light, hemisphere ambient, soft key light, no specular,
+  // shadows) with the floor normal to x, y or z
   int shading;
   // angular radius (degrees) of the studio light, which sets the softness of
   // its shadow, and the number of frames accumulated while the view is still

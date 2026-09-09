@@ -3003,7 +3003,8 @@ double opt_general_vertex_buffer_objects(OPT_ARGS_NUM)
 
 double opt_general_shading(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->shading = (int)val;
+  if(action & GMSH_SET)
+    CTX::instance()->shading = std::max(0, std::min(3, (int)val));
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.choice[8]->value(

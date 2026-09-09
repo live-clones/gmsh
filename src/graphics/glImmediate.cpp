@@ -313,6 +313,17 @@ void gmshResetMatrices()
   _mode = GMSH_MODELVIEW;
 }
 
+static int _shadingModel = 0;
+
+void gmshShadingModel(int model)
+{
+  if(model == _shadingModel) return;
+  if(gmshUseShaders()) gmshFlushImmediate();
+  _shadingModel = model;
+}
+
+int gmshShadingModel() { return _shadingModel; }
+
 void gmshPushShaderState()
 {
   glShader::setMatrices(gmshMatrix(GMSH_MODELVIEW), gmshMatrix(GMSH_PROJECTION));
@@ -322,7 +333,7 @@ void gmshPushShaderState()
   glShader::setAlphaScale(_alphaScale);
   glShader::setMaterial(CTX::instance()->shine,
                         CTX::instance()->shineExponent);
-  glShader::setShading(CTX::instance()->shading);
+  glShader::setShading(gmshShadingModel());
   // everything but the collected lines draws undashed: the vertex arrays
   // carry no distance along the line, and a glyph is not a line
   glShader::setStipple(false, 1, 0xffff);
@@ -516,7 +527,7 @@ void gmshFlushImmediate()
         1. : _batchState.alphaScale);
     glShader::setMaterial(CTX::instance()->shine,
                           CTX::instance()->shineExponent);
-    glShader::setShading(CTX::instance()->shading);
+    glShader::setShading(gmshShadingModel());
     for(int i = 0; i < 6; i++) {
       if(_batchState.clipOn[i])
         glShader::setClipPlane(i, _batchState.clip[i]);

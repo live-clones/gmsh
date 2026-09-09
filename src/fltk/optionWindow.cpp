@@ -123,7 +123,9 @@ Fl_Menu_Item menu_font_names[] = {
 
 Fl_Menu_Item menu_shading_mode[] = {
   {"Classic", 0, nullptr},
-  {"Studio", 0, nullptr},
+  {"Studio (X floor)", 0, nullptr},
+  {"Studio (Y floor)", 0, nullptr},
+  {"Studio (Z floor)", 0, nullptr},
   {nullptr}};
 
 static void color_cb(Fl_Widget *w, void *data)
