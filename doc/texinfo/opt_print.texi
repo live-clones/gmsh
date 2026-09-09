@@ -112,7 +112,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.Height
-Height of printed image; use (possibly scaled) current height if < 0@*
+Height of the printed image in pixels; use the current height if < 0@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -191,6 +191,11 @@ Width of tex graphics in mm (use 0 for the natural width inferred from the image
 Default value: @code{150}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.Supersampling
+Render pictures at this multiple of their size and average them down (shader pipeline only)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.Text
 Print text strings?@*
 Default value: @code{1}@*
@@ -242,7 +247,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.Width
-Width of printed image; use (possibly scaled) current width if < 0)@*
+Width of the printed image in pixels; use the current width if < 0@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
