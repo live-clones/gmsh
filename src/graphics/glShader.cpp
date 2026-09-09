@@ -894,7 +894,8 @@ void main()
   }
 
   namespace {
-    GLuint floatTarget(int width, int height, GLenum internal, GLenum format);
+    GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
+                       GLenum type);
 
     bool buildBlit()
     {
@@ -943,7 +944,9 @@ void main()
     if(!_accFbo) {
       glApi::GenFramebuffers(1, &_accFbo);
       glApi::BindFramebuffer(GL_FRAMEBUFFER, _accFbo);
-      _accTex = floatTarget(width, height, GL_RGBA16F, GL_RGBA);
+      // 32 bits: the same 8 bit value added many times over rounds the same
+      // way each time in a half float, which bands a smooth gradient
+      _accTex = floatTarget(width, height, GL_RGBA32F, GL_RGBA, GL_FLOAT);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                   GL_TEXTURE_2D, _accTex, 0);
       const GLenum buf = GL_COLOR_ATTACHMENT0;
@@ -1534,7 +1537,8 @@ void main()
       _oitFbo = _oitAccum = _oitReveal = _oitDepthRb = 0;
     }
 
-    GLuint floatTarget(int width, int height, GLenum internal, GLenum format)
+    GLuint floatTarget(int width, int height, GLenum internal, GLenum format,
+                       GLenum type)
     {
       GLuint t = 0;
       glGenTextures(1, &t);
@@ -1543,8 +1547,8 @@ void main()
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format,
-                   GL_HALF_FLOAT, nullptr);
+      glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, type,
+                   nullptr);
       return t;
     }
 
@@ -1557,10 +1561,10 @@ void main()
       glApi::BindFramebuffer(GL_FRAMEBUFFER, _oitFbo);
 
       // the weighted colours, and the light let through
-      _oitAccum = floatTarget(width, height, GL_RGBA16F, GL_RGBA);
+      _oitAccum = floatTarget(width, height, GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                   GL_TEXTURE_2D, _oitAccum, 0);
-      _oitReveal = floatTarget(width, height, GL_R16F, GL_RED);
+      _oitReveal = floatTarget(width, height, GL_R16F, GL_RED, GL_HALF_FLOAT);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + 1,
                                   GL_TEXTURE_2D, _oitReveal, 0);
       glBindTexture(GL_TEXTURE_2D, 0);
