@@ -538,8 +538,18 @@ bool openglWindow::printTo(int width, int height, int supersampling,
   if(!glShader::beginPrintTarget(width, height)) return false;
   _printW = width;
   _printH = height;
-  _printScale = std::max(1, supersampling) *
-                (w() ? (double)pixel_w() / (double)w() : 1.);
+  // the picture is the window scaled: by the supersampling, and by its size
+  // relative to the window's unless the sizes given in pixels are to keep
+  // their screen size; the fonts and everything else in the units of the
+  // window follow the pixel factor, the line widths and point sizes given in
+  // pixels of the window follow the pixel scale
+  int ss = std::max(1, supersampling);
+  double hr = w() ? (double)pixel_w() / (double)w() : 1.;
+  double ratio = 1.;
+  if(CTX::instance()->print.scalePixelSizes && pixel_w() > 0)
+    ratio = (double)width / (ss * pixel_w());
+  _printScale = ss * hr * ratio;
+  gmshPixelScale(ss * ratio);
   // the native font engine places its strings from the window's size and
   // scale, which the picture has neither of: strings as textures meanwhile
   drawContextGlobal *native = nullptr;
@@ -554,6 +564,7 @@ bool openglWindow::printTo(int width, int height, int supersampling,
   }
   glShader::readPrintTarget(width, height, format, type, pixels);
   glShader::endPrintTarget();
+  gmshPixelScale(1.);
   _printW = _printH = 0;
   _printScale = 1.;
   // the window itself is drawn again at its own size

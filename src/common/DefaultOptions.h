@@ -2234,6 +2234,10 @@ StringXNumber PrintOptions_Number[] = {
     "Save Disto quality measure in mesh statistics exported as "
     "post-processing views" },
 
+  { F|O, "ScalePixelSizes" , opt_print_scale_pixel_sizes , 1. ,
+    "Scale what is sized in pixels (fonts, line widths, point and glyph "
+    "sizes, value scales) with the size of the picture, so that a large "
+    "picture looks like the window (0: keep their screen size)" },
   { F|O, "Supersampling" , opt_print_supersampling , 1. ,
     "Render pictures at this multiple of their size and average them down" },
 

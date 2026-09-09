@@ -93,6 +93,7 @@ namespace {
   bool _alphaScaleFilledOnly = false;
   int _textureMode = GMSH_TEXTURE_NONE;
   double _lineWidth = 1.;
+  double _pixelScale = 1.;
   bool _stipple = false;
   int _stippleFactor = 1;
   unsigned short _stipplePattern = 0xffff;
@@ -142,8 +143,13 @@ void gmshLightTwoSide(bool on)
 
 bool gmshLightTwoSideEnabled() { return _twoSide; }
 
+void gmshPixelScale(double scale) { _pixelScale = (scale > 0.) ? scale : 1.; }
+
+double gmshPixelScale() { return _pixelScale; }
+
 void gmshPointSize(double s)
 {
+  s *= _pixelScale;
   _pointSize = s;
   // the shader writes gl_PointSize instead
   if(!gmshUseShaders()) glPointSize((float)s);
@@ -388,6 +394,7 @@ void gmshImVertex(float x, float y, float z)
 
 void gmshLineWidth(double w)
 {
+  w *= _pixelScale;
   if(gmshUseShaders()) {
     if(_lineWidth == w) return;
     // what is waiting was collected to be drawn at the old width
