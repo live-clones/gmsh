@@ -193,8 +193,8 @@ void colorbarWindow::redraw_range(int a, int b)
     fl_draw("Ctrl+0, ..., Ctrl+9", xx0, yy0 + (i + 1) * fh);
     fl_draw("Select predefined colormap 10...19", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("F1, ..., F5", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap 20...24", xx1, yy0 + (i + 1) * fh);
+    fl_draw("F1, ..., F6", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Select predefined colormap 20...25", xx1, yy0 + (i + 1) * fh);
     i++;
     fl_draw("mouse1", xx0, yy0 + (i + 1) * fh);
     fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * fh);
@@ -239,10 +239,14 @@ void colorbarWindow::redraw_range(int a, int b)
     fl_draw("Show this help message", xx1, yy0 + (i + 1) * fh);
     i++;
   }
-  else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB)
-    fl_draw("RGB", xx0, yy0 + font_height);
-  else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV)
-    fl_draw("HSV", xx0, yy0 + font_height);
+  else {
+    // the map and the mode
+    char str[128];
+    sprintf(str, "%s (%d) - %s", ColorTable_Name(ct->ipar[COLORTABLE_NUMBER]),
+            ct->ipar[COLORTABLE_NUMBER],
+            (ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV) ? "HSV" : "RGB");
+    fl_draw(str, xx0, yy0 + font_height);
+  }
 }
 
 void colorbarWindow::redraw_marker()
@@ -430,6 +434,10 @@ int colorbarWindow::handle(int event)
     }
     else if(Fl::test_shortcut(FL_F + 5)) {
       ColorTable_InitParam(24, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_F + 6)) {
+      ColorTable_InitParam(25, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + 'c') ||
