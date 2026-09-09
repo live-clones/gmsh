@@ -176,8 +176,13 @@ Save Disto quality measure in mesh statistics exported as post-processing views@
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.ScalePixelSizes
+Scale what is sized in pixels (fonts, line widths, point and glyph sizes, value scales) with the size of the picture, so that a large picture looks like the window (0: keep their screen size)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.Supersampling
-Render pictures at this multiple of their size and average them down (shader pipeline only)@*
+Render pictures at this multiple of their size and average them down@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
