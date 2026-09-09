@@ -4,7 +4,6 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
-#include <cstring>
 #include "drawContext.h"
 #include "PView.h"
 #include "PViewOptions.h"
@@ -483,10 +482,6 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   case 6: sprintf(sub, "eigenvalue %s", time); break;
   case 7: sprintf(sub, "eigenvalue %s (%s part)", time, part); break;
   default: break;
-  }
-  if(opt->tmpMin > opt->tmpMax) {
-    if(sub[0]) strcat(sub, ", ");
-    strcat(sub, "empty range");
   }
   std::string name = data->getName();
 
