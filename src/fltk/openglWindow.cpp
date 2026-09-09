@@ -472,7 +472,7 @@ void openglWindow::_studioFrame()
   Fl::remove_timeout(_studioSampleCb, this);
   CTX *ctx = CTX::instance();
   int n = ctx->studioSamples;
-  if(!gmshUseShaders() || ctx->shading != 1 || n < 2) {
+  if(!gmshUseShaders() || ctx->shading < 1 || n < 2) {
     _ctx->studioSample = 0;
     return;
   }

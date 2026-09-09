@@ -198,6 +198,12 @@ double gmshCurrentLineWidth();
 void gmshPointSize(double s);
 double gmshCurrentPointSize();
 
+// The lighting model the shader is told: 0 the fixed function one, 1 studio,
+// 2 the shadow catcher of the studio shading. Set once a frame from
+// General.Shading, and by the floor for itself.
+void gmshShadingModel(int model);
+int gmshShadingModel();
+
 // multiplies the alpha of every colour drawn afterwards (the Transparency
 // options; ignored by the fixed function pipeline); filledOnly leaves lines
 // and points opaque

@@ -776,8 +776,9 @@ void drawContext::draw3d()
                 anyViewIsTransparent());
 
   // the studio shading casts a shadow, drawn first into a map of its own
-  bool studio = gmshUseShaders() && CTX::instance()->shading == 1 &&
+  bool studio = gmshUseShaders() && CTX::instance()->shading >= 1 &&
                 render_mode != GMSH_SELECT && !inPickColorMode();
+  gmshShadingModel(studio ? 1 : 0);
   if(studio)
     drawShadowMap();
   else if(gmshUseShaders())
@@ -879,17 +880,11 @@ static void studioBounds(double min[3], double max[3])
 #endif
 }
 
-// the up axis of the model in studio shading: z, or y for a model flat in z
+// the up axis of the studio shading, which General.Shading 1, 2 or 3 makes
+// x, y or z: the floor is normal to it, and the dome above it
 static int studioUpAxis()
 {
-  double min[3], max[3], d[3], diag = 0.;
-  studioBounds(min, max);
-  for(int i = 0; i < 3; i++) {
-    d[i] = max[i] - min[i];
-    diag += d[i] * d[i];
-  }
-  diag = sqrt(diag);
-  return (d[2] > 1.e-6 * diag) ? 2 : (d[1] > 1.e-6 * diag) ? 1 : 0;
+  return std::max(0, std::min(2, CTX::instance()->shading - 1));
 }
 
 // The bounding sphere a shadow map from the direction dir has to cover: the
@@ -1087,7 +1082,6 @@ void drawContext::drawShadowMap()
 // showing nothing but the shadow cast on it.
 void drawContext::drawStudioFloor()
 {
-  CTX *ctx = CTX::instance();
   double min[3], max[3], d[3], c[3], diag = 0.;
   studioBounds(min, max);
   for(int i = 0; i < 3; i++) {
@@ -1110,9 +1104,7 @@ void drawContext::drawStudioFloor()
   double n[3] = {0., 0., 0.};
   n[up] = 1.;
 
-  gmshFlushImmediate();
-  // the collector reads the shading when it draws this
-  ctx->shading = 2;
+  gmshShadingModel(2);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   // hidden by the model, but hiding nothing itself: whatever hangs below
@@ -1123,10 +1115,9 @@ void drawContext::drawStudioFloor()
   gmshBegin(GL_QUADS);
   for(int k = 0; k < 4; k++) gmshVertex3d(p[k][0], p[k][1], p[k][2]);
   gmshEnd();
-  gmshFlushImmediate();
+  gmshShadingModel(1);
   glDepthMask(GL_TRUE);
   glDisable(GL_BLEND);
-  ctx->shading = 1;
 }
 
 void drawContext::draw2d()
