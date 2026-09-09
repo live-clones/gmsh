@@ -241,14 +241,14 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
     Fl_Window *window;
     Fl_Value_Slider *s[2];
     Fl_Check_Button *b[3];
-    Fl_Value_Input *v[2];
+    Fl_Value_Input *v[3];
     Fl_Button *ok, *cancel;
   };
   static _genericBitmapFileDialog *dialog = nullptr;
 
   if(!dialog) {
     dialog = new _genericBitmapFileDialog;
-    int h = 3 * WB + 7 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -280,6 +280,13 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
     dialog->v[1]->maximum(5000);
     if(CTX::instance()->inputScrolling) dialog->v[1]->step(1);
     dialog->v[1]->align(FL_ALIGN_RIGHT);
+    dialog->v[2] = new Fl_Value_Input(WB, y, BB, BH, "Supersampling");
+    dialog->v[2]->tooltip("Print.Supersampling");
+    y += BH;
+    dialog->v[2]->minimum(1);
+    dialog->v[2]->maximum(8);
+    if(CTX::instance()->inputScrolling) dialog->v[2]->step(1);
+    dialog->v[2]->align(FL_ALIGN_RIGHT);
     dialog->s[0] = new Fl_Value_Slider(WB, y, BB, BH, "Quality");
     dialog->s[0]->tooltip("Print.JpegQuality");
     y += BH;
@@ -319,6 +326,7 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
   dialog->b[2]->value(opt_print_composite_windows(0, GMSH_GET, 0));
   dialog->v[0]->value(opt_print_width(0, GMSH_GET, 0));
   dialog->v[1]->value(opt_print_height(0, GMSH_GET, 0));
+  dialog->v[2]->value(opt_print_supersampling(0, GMSH_GET, 0));
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -338,6 +346,8 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
                                     (int)dialog->b[2]->value());
         opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
         opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
+        opt_print_supersampling(0, GMSH_SET | GMSH_GUI,
+                                (int)dialog->v[2]->value());
         CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;

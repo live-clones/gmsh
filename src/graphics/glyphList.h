@@ -12,37 +12,23 @@
 class VertexArray;
 class drawContext;
 
-// The glyphs the drawing code places: the spheres a node or a point is drawn
-// with, the arrows of a vector field, the cylinders of a curve, the ellipsoids
-// of a tensor. Each of them is one shape, built once, drawn many times over,
-// moved and scaled by a transform of its own.
-//
-// A glyph comes to several thousand triangles - a sphere alone is four
-// kilobytes of them - and a model can hold one per mesh node, so the triangles
-// are what a frame builds and throws away, not what is kept between frames.
-// What is kept is the placement: where each glyph goes and what colour it is,
-// which is a hundred bytes. That is the whole point of collecting them here.
-//
-// The placement is kept in double precision, as the drawing code works it out:
-// rounding it to what the vertex arrays hold would move a glyph by a fraction
-// of the length a pixel stands for, which is invisible but not nothing - it
-// changes which side of a normal's quantization step a highlight falls on.
+// The glyphs (spheres, arrows, cylinders, ellipsoids): one shape each, built
+// once and drawn many times with a transform of its own. What is kept
+// between frames is the placement (about a hundred bytes per glyph, in
+// double precision so that nothing moves by rounding), not the triangles
+// (several kilobytes per glyph).
 enum glyphKind {
   GLYPH_SPHERE = 0,
   GLYPH_ARROW,
   GLYPH_DISK,
-  // the side of a cylinder or of a cone, which is one shape: the two radii
-  // are the parameters of the glyph rather than part of its transform, as a
-  // cone of one taper is not a cone of another one stretched
+  // the side of a cylinder or cone; the two radii are parameters of the
+  // glyph, not part of its transform
   GLYPH_CYLINDER,
   GLYPH_NUMKINDS
 };
 
-// What a list of glyphs was built from, so that it can be told whether it
-// still stands: the length a pixel stands for, the sizes and the types the
-// options give them, a counter bumped when the model changes - whatever the
-// caller's glyphs depend on. Two tokens that compare equal stand for the same
-// glyphs; a token is cheap enough to build for every frame.
+// what a list of glyphs was built from (pixel size, options, ...), so that
+// it can be told whether it is still valid; cheap enough to build every frame
 class glyphToken {
 private:
   std::vector<double> _v;
@@ -54,39 +40,28 @@ public:
   bool operator!=(const glyphToken &o) const { return !(_v == o._v); }
 };
 
-// A run of glyphs, collected instead of drawn.
+// a run of glyphs, collected instead of drawn
 class glyphList {
 public:
-  // one glyph: its shape placed by an affine transform - three columns and an
-  // origin, column major like every other matrix here - and drawn in one
-  // colour
+  // one glyph: an affine transform (three columns and an origin, column
+  // major) and a colour
   class instance {
   public:
     double m[12];
     unsigned int color;
-    // what the shape of this glyph needs beyond its transform: the two radii
-    // of a cylinder. Unused by the kinds that are one shape however they are
-    // placed, which is most of them.
+    // shape parameters (the two radii of a cylinder)
     float param[2];
   };
 
 private:
   std::vector<instance> _inst[GLYPH_NUMKINDS];
-  // The triangles the instances come to, built the first time they are asked
-  // for. A pipeline that can draw the same shape many times over from one
-  // instance buffer would not need them at all.
+  // the triangles of the instances, built on first request
   VertexArray *_va;
-  // The glyphs packed the way the graphics card takes them, built the first
-  // time they are drawn that way and kept with the instances they come from.
-  // This is what a pipeline that can draw one shape many times over is handed,
-  // and it is the whole of what it needs: sixty bytes a glyph instead of the
-  // several thousand its triangles come to.
+  // the glyphs packed for instanced drawing (glShader::GLYPH_STRIDE bytes
+  // each), built on first use
   std::vector<unsigned char> _gpu[GLYPH_NUMKINDS];
   glyphToken _token;
-  // Has the list been filled with this token? A list can legitimately come to
-  // no glyphs at all - nothing visible, everything smaller than a pixel - and
-  // finding that out again for every frame is what the cache is there to
-  // avoid.
+  // has the list been filled with this token? (a filled list can be empty)
   bool _filled;
 
 public:
@@ -115,41 +90,33 @@ public:
   // given in world lengths; equal radii make a cylinder, a zero one a cone
   void addCylinder(const double *x, const double *y, const double *z,
                    double r0, double r1, unsigned int color);
-  // Take the instances of another list, which is left empty. This is how the
-  // threads that fill a list of their own are put back together, in an order
-  // that does not depend on how many of them there were.
+  // take the instances of another list, which is left empty (used to merge
+  // the lists filled by several threads)
   void merge(glyphList *other);
-  // The triangles the instances come to, built if that has not been done yet
-  // and kept until the list is cleared. Null if there is nothing to draw.
+  // the triangles of the instances, built on first request; null if there is
+  // nothing to draw
   VertexArray *triangles(drawContext *ctx);
-  // Draw the glyphs. Below a bound on what they come to this is the triangles
-  // above, kept and drawn as one array; past it they are drawn one at a time,
-  // which is slower but costs nothing to keep - a mesh can hold a glyph per
-  // node, and a sphere is four kilobytes of triangles.
+  // draw the glyphs: from the kept triangles below a memory bound, one at a
+  // time past it
   void draw(drawContext *ctx, bool light);
 
 private:
   void _draw(drawContext *ctx, VertexArray *va, bool light);
   void _stream(drawContext *ctx, bool light);
-  // draw them by handing the shape and the glyphs over and letting the
-  // graphics card place them; false if it cannot
+  // instanced drawing; false if not possible
   bool _instanced(drawContext *ctx, bool light);
   void _expandRange(drawContext *ctx, glyphKind kind, std::size_t first,
                     std::size_t last, VertexArray *va, int at);
 };
 
-// The colour that is current, packed the way a glyph carries it: what the
-// drawing code sets before it draws something, and what a glyph collected
-// instead of drawn is to be given.
+// the current colour, packed as a glyph carries it
 unsigned int glyphCurrentColor();
 
-// What an owner keeps a list for: a view draws both its points and its
-// vectors with glyphs, a mesh entity its nodes.
+// what an owner keeps a list for
 enum glyphSlot {
   GLYPH_POINTS = 0,
   GLYPH_LINES,
-  // the lines of what the clipping planes add to a view, which are drawn from
-  // an array of their own and so need a list of their own
+  // the lines the clipping planes add to a view
   GLYPH_CLIP_LINES,
   GLYPH_VECTORS,
   GLYPH_TENSORS,
@@ -157,14 +124,11 @@ enum glyphSlot {
   GLYPH_NUMSLOTS
 };
 
-// The lists kept between frames, told apart by whoever owns them - a view, a
-// mesh entity, the geometry - and by what they are for. This is the one place
-// they are kept, so that there is one answer to when they are thrown away and
-// one place to count what they cost.
+// the lists kept between frames, keyed by owner (a view, a mesh entity, the
+// geometry) and slot
 namespace glyphCache {
-  // The list an owner keeps in a slot. True if it was built with this token
-  // and can be drawn as it is; false if it was cleared and has to be filled
-  // again.
+  // the list of an owner and slot; true if it was built with this token and
+  // can be drawn as is, false if it has to be filled again
   bool get(const void *owner, glyphSlot slot, const glyphToken &token,
            glyphList *&list);
   // throw away everything an owner has, e.g. because it is being deleted

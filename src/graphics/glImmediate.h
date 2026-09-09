@@ -8,50 +8,32 @@
 
 #include "glApi.h"
 
-// Immediate mode drawing - a primitive opened with a mode, a run of vertices
-// each carrying the colour and the normal that were current when it was given,
-// and the primitive closed again - behind functions of our own.
-//
-// The decorations of the scene are drawn this way: the axes, the scales, the
-// graphs, the glyphs, the lasso, everything a plugin draws. Only the mesh and
-// the views go through vertex arrays, and they are the exception rather than
-// the rule.
-//
-// A shader pipeline has no immediate mode at all: the calls below are the
-// whole of what it has to reproduce, and they are named rather than made
-// directly so that there is one place to do it in. For now each of them is the
-// OpenGL 1.1 call it is named after, so that going through them changes
-// nothing; what a shader pipeline would do instead is collect the vertices,
-// with the colour and the normal current at each of them, into a buffer that
-// gmshEnd() draws in one call.
-//
-// The variants are those the drawing code uses, and no others: adding one is
-// adding a line here and a line in whichever pipeline is drawing.
+// Immediate mode drawing (glBegin/glVertex/glEnd and the state that goes
+// with it) behind functions of our own. The decorations of the scene (axes,
+// scales, graphs, glyphs, lasso, plugins) are drawn this way; only the mesh
+// and the views use vertex arrays. With the fixed function pipeline each
+// call is the OpenGL 1.1 call it is named after; the shader pipeline, which
+// has no immediate mode, collects the vertices with their colour and normal
+// and draws them in batches.
 
-// Is the shader pipeline the one drawing? It has no immediate mode, so the
-// calls below collect the vertices instead of handing them over one at a time,
-// and the state they are drawn with is remembered rather than left to OpenGL.
+// is the shader pipeline drawing? The calls below then collect the vertices
+// and remember the state instead of handing them to OpenGL.
 bool gmshUseShaders();
 
-// True while a primitive is being collected for the shader pipeline. The calls
-// below are on the path of every decoration Gmsh draws, so the test is here
-// and the collecting itself is not.
+// true while a primitive is being collected for the shader pipeline
 extern bool gmshCollecting;
 
-// Hand the shader program the state the fixed function pipeline kept for
-// itself: the two matrices, the lighting, the colour, the point size, the
-// material and the clipping planes. Everything that draws through the program
-// calls this first.
+// hand the shader program the state the fixed function pipeline kept itself
+// (matrices, lighting, colour, point size, material, clipping planes);
+// everything that draws through the program calls this first
 void gmshPushShaderState();
 
-// Draw whatever immediate mode primitives are waiting. Anything that changes
-// how they would be drawn - the state, the matrices - and anything that draws
-// by another route has to call this first, so that what is on the screen is in
-// the order it was asked for.
+// draw the pending immediate mode primitives; anything that changes how
+// they would be drawn, or that draws by another route, must call this first
 void gmshFlushImmediate();
 
-// what gmshBegin() and gmshEnd() do when they are collecting; gmshImBegin()
-// says whether it took the primitive
+// what gmshBegin() and gmshEnd() do when collecting; gmshImBegin() returns
+// false if it did not take the primitive
 bool gmshImBegin(GLenum mode);
 void gmshImEnd();
 void gmshImVertex(float x, float y, float z);
@@ -135,9 +117,8 @@ inline void gmshNormal3dv(const double *v)
     glNormal3dv(v);
 }
 
-// Every colour goes through this one, which remembers it: a shader is handed
-// the current colour as a uniform, and there is no fixed function state to ask
-// for it in a core profile.
+// every colour goes through this one, which remembers it (a core profile
+// has no current colour to query)
 void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
                   unsigned char a);
 // the colour that is current, as four bytes
@@ -170,19 +151,13 @@ inline void gmshColor4dv(const double *c)
   gmshColor4ub(gmshColorByte(c[0]), gmshColorByte(c[1]), gmshColorByte(c[2]),
                gmshColorByte(c[3]));
 }
-// Set the current colour from four bytes, as the object is displayed. During a
-// colour picking pass the colour encodes the object being drawn instead, and
-// must not be overwritten by the colour it is normally displayed with, so this
-// one does nothing at all while such a pass is running: it is what everything
-// that draws into the scene uses.
+// set the current colour from four bytes; does nothing during a colour
+// picking pass, where the colour encodes the object instead
 void gmshColor4ubv(const void *col);
-// Set the identifier colour of a picking pass, which is the one thing that has
-// to be written while such a pass is running. Only drawContext::setPickColor()
-// and unsetPickColor() have any business calling this.
+// set the identifier colour of a picking pass; only
+// drawContext::setPickColor() and unsetPickColor() should call this
 inline void gmshPickColor4ubv(const void *col)
 {
-  // the unconditional setter: it is the one colour a picking pass does write,
-  // and the shader is handed it the same way as any other
   const unsigned char *c = (const unsigned char *)col;
   gmshColor4ub(c[0], c[1], c[2], c[3]);
 }
@@ -195,66 +170,55 @@ inline void gmshTexCoord2f(float s, float t)
     glTexCoord2f(s, t);
 }
 
-// What the texture says about the pixels it covers: a string is a picture of
-// how much of the current colour each of them gets, an image is the colour
-// itself. These are what GL_MODULATE and GL_REPLACE did.
+// what a texture means: the alpha of the current colour (a string, as
+// GL_MODULATE) or the colour itself (an image, as GL_REPLACE)
 enum gmshTextureMode { GMSH_TEXTURE_NONE = 0, GMSH_TEXTURE_ALPHA = 1,
                        GMSH_TEXTURE_IMAGE = 2 };
 
-// The texture the primitives after this are drawn through, zero for none.
-// This is what draws a string: the widget toolkit writes it into a picture,
-// and the picture is put on a quad. A shader pipeline is handed the texture
-// with the primitives, so it has to be said rather than only bound.
+// the texture the primitives after this are drawn through, zero for none
+// (the shader pipeline needs it said, not only bound)
 void gmshTexture(unsigned int id, int mode = GMSH_TEXTURE_ALPHA);
 unsigned int gmshCurrentTexture();
 
-// The pieces of fixed function state that decide how the primitives above are
-// drawn, and that a shader pipeline has to carry itself: whether the vertices
-// are lit, how wide a line and how big a point is, the dash pattern of the
-// lines, and whether the polygons are filled or drawn as their edges. Each of
-// them either has no core profile equivalent at all (the lighting, the
-// stipple), or none on OpenGL ES (the polygon mode, the point size).
-//
-// A few of them are asked for as well as set, to be put back afterwards; the
-// query goes through here too, as a core profile cannot answer it either.
+// The fixed function state that decides how primitives are drawn and that
+// the shader pipeline has to carry itself: lighting, line width, point size,
+// dash pattern, polygon mode. The queries go through here too, as a core
+// profile cannot answer them.
 void gmshLighting(bool on);
 bool gmshLightingEnabled();
 
-// light the back faces as well as the front ones, with the normal flipped:
-// what a shader has to do from gl_FrontFacing, and what decides whether a face
-// seen from behind comes out lit or dark
+// light the back faces as well, with the normal flipped
 void gmshLightTwoSide(bool on);
 bool gmshLightTwoSideEnabled();
 
-// The width a line is drawn with. A core profile draws them all one pixel
-// wide, so under the shader pipeline this is remembered and a wider line is
-// made of triangles instead.
+// the line width; a core profile draws every line one pixel wide, so the
+// shader pipeline makes wider lines out of triangles
 void gmshLineWidth(double w);
 double gmshCurrentLineWidth();
 void gmshPointSize(double s);
 double gmshCurrentPointSize();
 
-// Multiplies the alpha of every colour drawn after it. This is how the
-// Geometry, Mesh and View Transparency options are applied: the shader does
-// the multiply, so changing one costs a redraw and nothing more. The fixed
-// function pipeline has no way of doing it to the colours a vertex array
-// holds, so it ignores this.
-// filledOnly leaves lines and points alone, so that a wireframe stays crisp
-// over see-through faces; the primitive being drawn is what decides.
+// The lighting model the shader is told: 0 the fixed function one, 1 studio,
+// 2 the shadow catcher of the studio shading. Set once a frame from
+// General.Shading, and by the floor for itself.
+void gmshShadingModel(int model);
+int gmshShadingModel();
+
+// multiplies the alpha of every colour drawn afterwards (the Transparency
+// options; ignored by the fixed function pipeline); filledOnly leaves lines
+// and points opaque
 void gmshAlphaScale(double s, bool filledOnly);
 double gmshCurrentAlphaScale();
-// the scale that applies to this primitive, once filledOnly has had its say
+// the scale that applies to this primitive, given filledOnly
 double gmshAlphaScaleFor(unsigned int primitive);
 
-// A factor and a 16 bit pattern, as glLineStipple takes them: the pattern
-// runs along the line, a bit every factor pixels of it. A core profile has no
-// stipple, so a shader is told how far along its line each fragment is and
-// throws away the ones the pattern has a hole at.
+// a factor and a 16 bit pattern as glLineStipple takes them; a core profile
+// has no stipple, so the shader discards the fragments in a hole of the
+// pattern from their distance along the line
 void gmshLineStipple(int factor, unsigned short pattern);
 void gmshLineStippleOff();
-// Which pattern is on, if any. A vertex array is drawn straight from its
-// buffer instead of being collected, so whoever draws one has to ask for the
-// pattern and work out the distances along the line itself.
+// the current pattern, for whoever draws a vertex array and has to compute
+// the distances along the line itself
 bool gmshLineStippleEnabled();
 int gmshLineStippleFactor();
 unsigned short gmshLineStipplePattern();
@@ -266,28 +230,18 @@ inline void gmshPolygonFill(bool fill)
 }
 inline bool gmshPolygonFilled()
 {
-  // a compatibility profile answers with two values, front and back, and a
-  // core profile with one: the first is there in both, and Gmsh sets the two
-  // together anyway
+  // a compatibility profile answers with two values (front and back), a
+  // core profile with one
   GLint mode[2] = {GL_FILL, GL_FILL};
   glGetIntegerv(GL_POLYGON_MODE, mode);
   return mode[0] == GL_FILL;
 }
 
-// The projection and the modelview matrix, and the stack the drawing code
-// saves them on while it draws something in a space of its own - the
-// background, the 2D overlay, a glyph in its own frame.
-//
-// glMatrix already computes the camera transformations; what is left here is
-// the state OpenGL was keeping on top of them, which a core profile does not
-// keep either: which of the two matrices the calls apply to, the stack, and
-// the compositions (translate, scale, rotate) the glyph drawing does. The
-// matrices are ours, and are handed to OpenGL as they change; a shader
-// pipeline would put them in a uniform instead.
-//
-// Layout and conventions are those of glMatrix and of OpenGL: column major,
-// and a composition multiplies the current matrix on the right, so that it
-// applies to the point first.
+// The projection and modelview matrices and their stacks, kept by us as a
+// core profile has no matrix stack: column major as in glMatrix and OpenGL,
+// and a composition multiplies the current matrix on the right. The fixed
+// function pipeline is handed the matrices as they change, the shader
+// pipeline gets them as uniforms.
 enum { GMSH_MODELVIEW = 0, GMSH_PROJECTION = 1 };
 
 void gmshMatrixMode(int kind);
@@ -302,17 +256,16 @@ void gmshScale(double x, double y, double z);
 void gmshRotate(double angle, double x, double y, double z);
 // the current matrix of either stack
 const double *gmshMatrix(int kind);
-// The six clipping planes. A plane is given in the coordinates of whatever
-// the current modelview matrix is, as glClipPlane() takes it, and is kept in
-// eye coordinates, which is where both pipelines clip with it.
+// the six clipping planes, given in the coordinates of the current modelview
+// as glClipPlane() takes them, and kept in eye coordinates
 void gmshClipPlane(int i, const double plane[4]);
 void gmshClipPlaneOn(int i, bool on);
 bool gmshClipPlaneEnabled(int i);
 // the plane in eye coordinates, which is what a shader is handed
 const double *gmshClipPlaneEye(int i);
 
-// forget the stacks and the state above, e.g. because the OpenGL context was
-// recreated: it belonged to it
+// forget the stacks and the state above (e.g. after the OpenGL context was
+// recreated)
 void gmshResetMatrices();
 
 #endif

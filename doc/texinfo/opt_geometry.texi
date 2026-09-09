@@ -442,12 +442,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Transparency
-Multiply the alpha (opacity) of every geometry colour by this factor (1: opaque, 0: fully transparent)@*
+Opacity factor applied to all geometry colors (1: opaque, 0: fully transparent)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.TransparencyMode
-What Geomtry.Transparency above is applied to (0: filled surfaces only; 1: everything)@*
+Apply Geometry.Transparency to (0: filled surfaces only; 1: everything)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

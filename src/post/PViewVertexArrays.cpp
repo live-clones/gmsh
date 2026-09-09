@@ -75,12 +75,9 @@ static SVector3 normal3(double **xyz, int i0 = 0, int i1 = 1, int i2 = 2)
   return n;
 }
 
-// Everything the functions that take an element apart read the options from and
-// write the primitives to. Each thread filling the vertex arrays of a view gets
-// its own, with its own copy of the options -- the boundary level is
-// decremented as an element is taken apart, and the range of a vector view is
-// set per element -- and its own arrays, merged in thread order once the loop
-// is over
+// what the drawing functions read the options from and write the primitives
+// to; each thread gets its own, with its own copy of the options (which the
+// functions modify) and its own arrays, merged in thread order afterwards
 class drawTarget {
 public:
   PView *view;
@@ -92,10 +89,8 @@ public:
   std::size_t *nodeIds;
   // the entity it belongs to
   int ent;
-  // What this target is gathering: everything the view draws, or only what the
-  // clipping planes add - the section they cut, or the elements they cut drawn
-  // whole. The last two go into arrays of their own, so that moving a plane
-  // rebuilds only those.
+  // what is gathered: everything, or only what the clipping planes add (the
+  // section they cut, or the cut elements drawn whole)
   enum { COLLECT_ALL, COLLECT_CAPS, COLLECT_CUT, COLLECT_KEPT };
   int collect;
   // bounding box of the elements that were drawn
@@ -326,31 +321,26 @@ static double intersectClipPlane(int clip, int numNodes, double **xyz)
   return val;
 }
 
-// Is this element kept by whole element mode? The ones a plane cuts are, and so
-// are the ones entirely on the visible side; only those entirely beyond a plane
-// are dropped. This is the test the arrays used to be filled through, and it is
-// still what the glyphs a view draws straight from its elements go through.
+// is this element kept by whole element mode? Only those entirely beyond a
+// plane are dropped. Used for the glyphs drawn straight from the elements.
 bool elementIsKept(PViewOptions *opt, int dim, int numNodes, double **xyz)
 {
   CTX *ctx = CTX::instance();
   if(!ctx->clipWholeElements) return true;
   for(int clip = 0; clip < 6; clip++) {
     if(!(opt->clip & (1 << clip))) continue;
-    // in this mode the planes are only applied to the volume: everything else
-    // is drawn whole, wherever it sits
+    // only the volume is clipped
     if(dim < 3 && ctx->clipOnlyVolume) continue;
     double d = intersectClipPlane(clip, numNodes, xyz);
-    // and in this one only the volumes a plane cuts are drawn at all
+    // only the cut volumes are drawn
     if(dim == 3 && ctx->clipOnlyDrawIntersectingVolume && d) return false;
     if(d < 0.) return false;
   }
   return true;
 }
 
-// Does this element belong in the array held apart for whole element mode? The
-// ones a plane cuts do - OpenGL would slice them, and they are meant to come
-// out entire - and so does everything the planes are not applied to, which
-// OpenGL would slice just the same.
+// does this element go in the array of whole element mode? The cut ones do,
+// and everything the planes are not applied to (OpenGL would slice both).
 static bool elementIsCut(PViewOptions *opt, int dim, int numNodes, double **xyz)
 {
   CTX *ctx = CTX::instance();
@@ -363,14 +353,10 @@ static bool elementIsCut(PViewOptions *opt, int dim, int numNodes, double **xyz)
   return false;
 }
 
-// Does this element go in the arrays the view is drawn from? OpenGL applies the
-// clipping planes to those, and the elements a plane cuts are drawn whole from
-// an array of their own, over the slice OpenGL leaves: nothing here depends on
-// where the planes are. The exception is the mode that draws only the volumes a
-// plane cuts - nothing brings back what OpenGL has clipped away, and the glyphs
-// a view hangs on its elements are not drawn from that other array - so there
-// the arrays are still filled through the planes themselves, and moving one
-// builds them again (see checkClipPlanesChanged()).
+// does this element go in the view's own arrays? OpenGL clips those, so
+// nothing depends on the planes here, except in the mode drawing only the
+// cut volumes, whose arrays are filled through the planes (see
+// checkClipPlanesChanged()).
 bool isElementVisible(PViewOptions *opt, int dim, int numNodes, double **xyz)
 {
   CTX *ctx = CTX::instance();
@@ -389,19 +375,14 @@ static void addOutlinePoint(drawTarget *p, double **xyz, unsigned int color,
                     true);
 }
 
-// Faces of 3D elements that bound the mesh, when View.DrawSkinOnly is set: they
-// are found in a first pass by inserting every face and cancelling it when it
-// is seen a second time, so that only the faces seen once are left.
+// the boundary faces of the 3D elements when View.DrawSkinOnly is set, found
+// by inserting every face and cancelling it when seen a second time
 static UniqueElementFilter *boundaryFaces = nullptr;
 static bool markingBoundaryFaces = false;
 static std::atomic<int> noNodeIdWarning(0);
 
-// build the key of a triangular face from the identifiers of its nodes, sorted
-// so that the two elements sharing it produce the same key. The entity is part
-// of the key, so that the skin is taken entity by entity rather than over the
-// whole view: the face two volumes share then belongs to the skin of each of
-// them, instead of cancelling out and leaving a hole between them. Returns
-// false if the data has no topology
+// the key of a face from its sorted node identifiers and its entity (so that
+// the skin is taken entity by entity); false if the data has no topology
 static bool faceKey(const std::size_t *nodeIds, int ent, const int *idx,
                     std::uint64_t *k)
 {
@@ -416,10 +397,8 @@ static bool faceKey(const std::size_t *nodeIds, int ent, const int *idx,
   return true;
 }
 
-// Skip an element that has already been added, identifying it by its nodes
-// instead of by the coordinates of its corners. Returns true if the element
-// should be skipped, and clears `unique' when the check was done here, so that
-// it is not done a second time on the coordinates.
+// skip an element already added, identified by its nodes rather than by
+// coordinates; clears `unique' when the check was done here
 static bool topoDuplicate(VertexArray *va, const std::size_t *nodeIds,
                           bool &unique, const int *idx, int n,
                           const unsigned int *col)
@@ -432,9 +411,7 @@ static bool topoDuplicate(VertexArray *va, const std::size_t *nodeIds,
     k[2 * i] = nodeIds[idx[i]];
     k[2 * i + 1] = col[i];
   }
-  // sort the (node, color) pairs by node, so that an element added twice with
-  // its nodes in a different order gives the same key. The color is part of the
-  // key: two elements sharing a face are only merged if they draw it the same
+  // sort the (node, color) pairs by node; the color is part of the key
   for(int i = 1; i < n; i++)
     for(int j = i; j > 0 && k[2 * j] < k[2 * (j - 1)]; j--) {
       std::swap(k[2 * j], k[2 * (j - 1)]);
@@ -859,22 +836,17 @@ static void addOutlineTetrahedron(drawTarget *p, double **xyz,
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
 
-// Fill the hole a clipping plane opens in a 3D element with the section where
-// the plane cuts it, colored with the field, so that a cut view still looks
-// like a solid instead of a hollow shell. The section is moved by a fraction of
-// the model size towards the side the plane keeps, so that the plane that
-// produced it does not clip it away again; the other planes still do, which is
-// what makes several planes work together
+// add the section a clipping plane cuts out of a 3D element, colored with
+// the field and moved slightly towards the kept side so that the plane does
+// not clip it away (the other planes still do)
 static void addScalarCap(drawTarget *p, double **xyz, double **val, int i0,
                          int i1, int i2, int i3)
 {
   PViewOptions *opt = p->opt;
-  // the section is an array of its own now: only the pass that gathers it says
-  // so, and the ordinary fill leaves it alone
+  // only the pass gathering the section wants it
   if(p->collect != drawTarget::COLLECT_CAPS) return;
   if(!opt->clip || !CTX::instance()->clipCapping) return;
-  // in this mode the elements the plane cuts are removed whole, so there is no
-  // hole to fill
+  // no hole to fill in whole element mode
   if(CTX::instance()->clipWholeElements) return;
   // the section is only meaningful where the element is drawn as a solid
   if(opt->intervalsType != PViewOptions::Continuous &&
@@ -917,8 +889,7 @@ static void addScalarCap(drawTarget *p, double **xyz, double **val, int i0,
     int nb = CutSimplexByPlane(X, Y, Z, V, D, n, xp, yp, zp, vp);
     if(nb < 3) continue;
 
-    // the corners are on the plane, where the clip test is only as accurate as
-    // the interpolation that put them there: move them just inside
+    // the corners are on the plane: move them just inside
     double eps = 1.e-5 * CTX::instance()->lc;
     for(int i = 0; i < nb; i++) {
       xp[i] += eps * n[0];
@@ -948,8 +919,7 @@ static void addScalarTetrahedron(drawTarget *p, double **xyz, double **val,
   const int it[4][3] = {{i0, i2, i1}, {i0, i1, i3}, {i0, i3, i2}, {i3, i1, i2}};
 
   if(!pre && opt->boundary <= 0) addScalarCap(p, xyz, val, i0, i1, i2, i3);
-  // every 3D element comes through here, so this is the one place the pass
-  // that gathers the section has to stop at
+  // the pass gathering the section stops here
   if(p->collect == drawTarget::COLLECT_CAPS) return;
 
   if(opt->boundary > 0 || opt->intervalsType == PViewOptions::Continuous ||
@@ -1683,8 +1653,7 @@ static void addElementRange(drawTarget *p, PViewData *data,
 
       changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
       int dim = data->getDimension(opt->timeStep, ent, i);
-      // the pass that gathers what the clipping planes add wants the elements
-      // they cut and nothing else; the ordinary fill wants what is left
+      // the cut pass wants the cut elements only, the ordinary fill the rest
       if(p->collect == drawTarget::COLLECT_CUT) {
         if(!elementIsCut(opt, dim, numNodes, xyz)) continue;
       }
@@ -1693,8 +1662,7 @@ static void addElementRange(drawTarget *p, PViewData *data,
       }
       else if(!isElementVisible(opt, dim, numNodes, xyz))
         continue;
-      // the pass that gathers the section a plane cuts wants nothing else: no
-      // outlines, and none of the elements that have no section to give
+      // the caps pass wants 3D elements only, and no outlines
       if(p->collect == drawTarget::COLLECT_CAPS && dim < 3) continue;
 
       for(int j = 0; j < numNodes; j++)
@@ -1751,7 +1719,10 @@ static void addElementRange(drawTarget *p, PViewData *data,
   p->nodeIds = nullptr;
 }
 
-// What each view's clip arrays were last built for.
+// what each view's clip arrays were last built for: only what changes them
+// without marking the view as changed (the planes and the clipping options;
+// capping marks the mesh, which only reaches model-based views); everything
+// else marks the view as changed, and drawPost() then invalidates them
 static std::map<PView *, std::vector<double> > _viewClipToken;
 
 static std::vector<double> viewClipToken(PView *p)
@@ -1764,8 +1735,6 @@ static std::vector<double> viewClipToken(PView *p)
   t.push_back(ctx->clipWholeElements);
   t.push_back(ctx->clipOnlyVolume);
   t.push_back(ctx->clipOnlyDrawIntersectingVolume);
-  t.push_back(opt->intervalsType);
-  t.push_back(opt->timeStep);
   for(int i = 0; i < 6; i++)
     for(int j = 0; j < 4; j++) t.push_back(ctx->clipPlane[i][j]);
   return t;
@@ -1773,12 +1742,10 @@ static std::vector<double> viewClipToken(PView *p)
 
 void PView::invalidateClipVertexArrays() { _viewClipToken.erase(this); }
 
-// Walk the elements and draw them into vertex arrays. What is collected is
-// usually the view itself, into its own arrays; the passes that build what the
-// clipping planes add ask for a subset of the elements and hand over the two
-// arrays it goes into. Everything else those passes produce - the points, the
-// vectors, the ellipses, the bounding box - is thrown away: a view's glyphs are
-// drawn from its own arrays, one at a time and whole.
+// walk the elements and draw them into vertex arrays: the view's own, or
+// for the passes building what the clipping planes add, a subset of the
+// elements into the two arrays given (everything else those passes produce
+// is thrown away)
 static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
                                 int collect = drawTarget::COLLECT_ALL,
                                 VertexArray *vaL = nullptr,
@@ -1811,9 +1778,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
   int nthreads = CTX::instance()->numThreads;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
   if(num < 10000) nthreads = 1;
-  // the options that make the drawing functions touch state shared with the
-  // rest of gmsh -- the smoothed normals, the evaluator of a general raise, the
-  // data of another view, the Gauss points of a step -- are handled serially
+  // options that touch shared state (smoothed normals, general raise,
+  // external view, Gauss points) are handled serially
   if(opt->smoothNormals || opt->useGenRaise || opt->externalViewIndex >= 0 ||
      data->useGaussPoints() || !data->isThreadSafe())
     nthreads = 1;
@@ -1835,17 +1801,15 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     return;
   }
 
-  // each thread fills its own arrays and works on its own copy of the options,
-  // which the drawing functions write to; the arrays are merged in thread order
-  // below, so that they come out as in a serial run
+  // each thread fills its own arrays with its own copy of the options,
+  // merged in thread order below
   std::vector<drawTarget *> targets(nthreads, nullptr);
   std::vector<PViewOptions *> opts(nthreads, nullptr);
   int n = (int)(num / nthreads) + 100;
   for(int t = 0; t < nthreads; t++) {
     drawTarget *d = new drawTarget(p);
     opts[t] = new PViewOptions(*opt);
-    // the copy shares the evaluator of a general raise, which the destructor
-    // would delete: that option is drawn serially, so drop it here
+    // the copy must not delete the shared general raise evaluator
     opts[t]->genRaiseEvaluator = nullptr;
     d->opt = opts[t];
     d->collect = collect;
@@ -2069,8 +2033,7 @@ bool PView::fillClipVertexArrays()
   PViewOptions *opt = getOptions();
   CTX *ctx = CTX::instance();
   bool caps = opt->clip && ctx->clipCapping && !ctx->clipWholeElements;
-  // the mode that draws only the volumes a plane cuts fills the view's own
-  // arrays through the planes: there is nothing to hold apart there
+  // the mode drawing only the cut volumes has nothing to hold apart
   bool whole = opt->clip && ctx->clipWholeElements &&
                !ctx->clipOnlyDrawIntersectingVolume;
   if(!caps && !whole) return true;
@@ -2083,10 +2046,8 @@ bool PView::fillClipVertexArrays()
   va_clip_triangles = new VertexArray(3, 1000);
 
   if(whole && opt->drawSkinOnly) {
-    // The skin of what whole element mode keeps: a face between two kept
-    // elements is interior and hidden, so the boundary has to be worked out
-    // over those rather than over the whole field - which is what the view's
-    // own arrays, filled without the planes, hold the skin of.
+    // the skin of what whole element mode keeps, which differs from the
+    // skin of the whole field
     delete boundaryFaces;
     boundaryFaces = new UniqueElementFilter(false);
     markingBoundaryFaces = true;
@@ -2096,8 +2057,7 @@ bool PView::fillClipVertexArrays()
                         va_clip_triangles, &scratch);
     markingBoundaryFaces = false;
   }
-  // the same walk the view's own arrays are filled by, over the elements the
-  // clipping planes add and into the arrays those are held in
+  // the same walk as for the view's own arrays, into the clip arrays
   addElementsInArrays(this, false,
                       whole ? drawTarget::COLLECT_CUT :
                               drawTarget::COLLECT_CAPS,

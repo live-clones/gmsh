@@ -8,45 +8,25 @@
 
 #include "glApi.h"
 
-// The program the shader pipeline draws everything with, and the state it is
-// given.
+// The single program the shader pipeline draws with. The fixed function
+// computation is one calculation with a few switches (lit or not, colour from
+// the array or from a uniform, picking colour), so the switches are uniforms
+// rather than separate programs.
 //
-// There is one program rather than one per kind of primitive: what the fixed
-// function pipeline did to a vertex is a single computation with a handful of
-// switches in it - is it lit, does the colour come from the array or from a
-// uniform, is it being drawn in a colour that encodes it for picking - and
-// making those switches uniforms costs less than changing programs would.
+// It reproduces the fixed function pipeline as Gmsh configured it: colour
+// material on ambient and diffuse, grey specular at General.Shininess with
+// exponent General.ShininessExponent, global ambient 0.2 (the OpenGL
+// default), up to six lights in eye coordinates, an infinite viewer (half
+// vector against (0, 0, 1)), two-sided lighting from gl_FrontFacing,
+// normalized normals and six clipping planes in eye coordinates.
 //
-// What it has to reproduce is the fixed function pipeline as Gmsh configured
-// it, and nothing more:
-//
-//  - the material ambient and diffuse colours follow the current colour
-//    (GL_COLOR_MATERIAL on GL_AMBIENT_AND_DIFFUSE), the specular colour is
-//    grey at General.Shininess and the exponent is General.ShininessExponent;
-//  - the global ambient light is 0.2, which is the OpenGL default and which
-//    Gmsh never changes;
-//  - up to six lights, each with its own ambient, diffuse and specular colour,
-//    positional or directional according to the w of its position. The
-//    positions are given in eye coordinates: the caller transforms them the
-//    way initRenderModel() did, by the scale and the translation alone, so
-//    that the lights follow neither the rotation nor the camera;
-//  - an infinite viewer, i.e. the half vector is taken against (0, 0, 1)
-//    rather than against the direction to the vertex;
-//  - two-sided lighting when it is on: a back face is lit with its normal
-//    flipped, which is what keeps a face seen from behind from coming out
-//    dark. Which side a fragment is on comes from gl_FrontFacing;
-//  - the normals are normalized, as GL_NORMALIZE asked;
-//  - the six clipping planes, given in eye coordinates.
-//
-// The one thing it does differently is the clipping: gl_ClipDistance is not in
-// OpenGL ES before 3.2, so the distances are interpolated and the fragment is
-// discarded. The cut is then rasterized rather than geometric, which shows as
-// partial pixels along it, and more so with multisampling.
+// Clipping differs: gl_ClipDistance is not in OpenGL ES before 3.2, so the
+// distance is interpolated and the fragment discarded, which makes the cut
+// slightly rasterized rather than geometric.
 
 namespace glShader {
-  // where the vertex, normal and colour arrays are bound, and where the
-  // per glyph transform and parameters are when the same shape is being drawn
-  // many times over
+  // attribute locations: the vertex, normal and colour arrays, and the per
+  // glyph transform and parameters of instanced drawing
   enum {
     ATTRIB_VERTEX = 0,
     ATTRIB_NORMAL = 1,
@@ -57,32 +37,62 @@ namespace glShader {
     ATTRIB_GLYPH_PARAM = 6,
     ATTRIB_TEXCOORD = 7,
     ATTRIB_DASH = 8,
-    // the far end of a line drawn wide, and what it carries
+    // the far end of a wide line, with its normal and colour
     ATTRIB_VERTEXB = 9,
     ATTRIB_NORMALB = 10,
     ATTRIB_COLORB = 11
   };
 
-  // Compile and link the program if that has not been done for this context,
-  // and make it current. False if there is no program to be had, in which case
-  // nothing has been changed and the caller has to draw some other way.
+  // Compile, link and use the program; false if none can be had, in which
+  // case the caller must draw some other way.
   bool use();
-  // Forget the program and the vertex array object, e.g. because the OpenGL
-  // context was recreated. They belong to it.
+  // forget the program and the vertex array object (e.g. after the OpenGL
+  // context was recreated)
   void reset();
-  // Is there a working program? Compiles it if necessary, and says why not if
-  // there is not.
+  // is there a working program? Compiles it if necessary and says why not
   bool available();
 
   // the two matrices, in the column major layout glMatrix uses
   void setMatrices(const double modelview[16], const double projection[16]);
-  // light i, with its position already in eye coordinates; a null colour is
-  // black. Lights that are not set are off.
+  // light i, position in eye coordinates; null colours are black, lights
+  // that are not set are off
   void setLight(int i, const double position[4], const float ambient[3],
                 const float diffuse[3], const float specular[3]);
   void setLightOff(int i);
   // the specular colour and exponent of the material
   void setMaterial(double shine, double shineExponent);
+  // the lighting model: 0 the fixed function one, 1 studio, 2 the shadow
+  // catcher of the studio model (only the shadow is drawn)
+  void setShading(int model);
+  // the studio light: the key direction and the model's up axis, in eye
+  // coordinates, the size of a texel of the shadow maps in eye coordinates,
+  // and the dome direction of the current sample (or none), for the ambient
+  // occlusion
+  void setStudioLight(const double dir[3], const double up[3], double texel);
+  void setDome(const double dir[3]);
+  void setDomeOff();
+  // The shadow maps of the studio shading, 0 for the key light and 1 for the
+  // dome: beginShadowPass() binds a depth buffer of size x size texels, to be
+  // drawn with the light's matrices (transparent fragments are kept in
+  // proportion to their opacity, at random on accumulated frame sample > 0);
+  // endShadowPass() rebinds the window and hands the shader the map with the
+  // matrix from eye coordinates to its texture space (null for none).
+  // setShadowOff() draws without any.
+  bool beginShadowPass(int which, int size, int sample);
+  void endShadowPass(int which, const double fromEye[16]);
+  void setShadowOff();
+  // A print target: a framebuffer of width x height pixels that stands in for
+  // the window between beginPrintTarget() and endPrintTarget(), so that a
+  // picture can be larger than the window; readPrintTarget() reads it back.
+  // Either pipeline can draw into it.
+  bool beginPrintTarget(int width, int height);
+  void readPrintTarget(int width, int height, GLenum format, GLenum type,
+                       void *pixels);
+  void endPrintTarget();
+  // Progressive accumulation of the studio frames: add the window (width x
+  // height pixels) to a sum, cleared when first, and put the average of
+  // count frames back on the window. False if it cannot be done.
+  bool accumulate(int width, int height, bool first, int count);
   // is what is drawn next lit, and are its back faces lit as well?
   void setLighting(bool on, bool twoSide);
   // clip plane i, in eye coordinates; setClipPlaneOff() stops clipping with it
@@ -91,89 +101,66 @@ namespace glShader {
   // does the colour come from the array, or is it the one colour given here?
   void setColorArray(bool on);
   void setColor(const unsigned char color[4]);
-  // the size points are drawn at, which a core profile takes from the shader
+  // the point size, which a core profile takes from the shader
   void setPointSize(double size);
-  // multiplies the alpha of every colour drawn after it, which is how the
-  // geometry, mesh and view Transparency options are applied
+  // multiplies the alpha of everything drawn afterwards (the Transparency
+  // options)
   void setAlphaScale(double scale);
-  // Upload arrays the caller holds itself into a buffer of ours and bind them:
-  // a core profile cannot be handed a pointer into client memory. Colours may
-  // be null, in which case the current colour is used for every vertex.
+  // Upload client arrays into buffers of ours and bind them (a core profile
+  // cannot read client memory). Null colours use the current colour.
   void streamArrays(const float *vertices, const unsigned char *colors,
                     int count);
-  // How far along its line every vertex of what is about to be drawn falls,
-  // in pixels, for the dash pattern to be measured against. The arrays carry
-  // no such thing, so whoever draws them works it out; nothing to hand over
-  // leaves the vertices with no distance and the pattern with nothing to bite
-  // on.
+  // Distance along its line of each vertex about to be drawn, in pixels, for
+  // the dash pattern; without it the pattern has nothing to measure against.
   void streamDash(const float *dashes, int count);
-  // Say that nothing is drawn through a texture, and leave the sampler
-  // pointing at one that is at least there: a driver checks that every sampler
-  // in the program points at a complete texture when it draws, whether or not
-  // the branch that reads it is taken.
+  // Draw without texture, keeping a valid 1x1 texture bound: a driver
+  // validates every sampler of the program at draw time, whether or not its
+  // branch is taken.
   void noTexture();
 
-  // Order independent transparency. What is transparent is drawn between these
-  // two, into a pair of buffers - one summing the colours it meets, each
-  // weighted by how near and how opaque it is, and one summing how much light
-  // is left getting through - which endTransparent() then puts on the window.
-  // Nothing has to be sorted back to front, and what comes out does not depend
-  // on the order the triangles happened to be drawn in.
-  //
-  // beginTransparent() is false when the context cannot do it, and then the
-  // caller draws the transparent geometry the sorted way instead. It must be
-  // called with the opaque geometry already drawn: what is transparent is
-  // hidden by it, through a copy of the window's depth buffer.
+  // Order independent transparency: what is drawn between these two is
+  // summed into two buffers (weighted colours, and the log of the light let
+  // through) that endTransparent() composites onto the window, so nothing
+  // has to be sorted. beginTransparent() returns false if the context cannot
+  // do it, and must be called after the opaque geometry, whose depth it
+  // copies.
   bool beginTransparent();
   void endTransparent();
-  // whether the pass being drawn is that one, which is what tells the drawing
-  // code not to sort and not to set a blending of its own
+  // is the transparent pass being drawn? The drawing code then neither
+  // sorts nor sets a blending of its own.
   bool transparentPass();
-  // Draw a run of vertices collected from the immediate mode calls, each with
-  // the colour and the normal that were current when it was given. The state
-  // it is drawn with - the matrices, the lights, the clipping - is whatever
-  // was last set.
-  // the dash pattern the lines are drawn with: a bit of it every factor
-  // pixels along the line, and a fragment where it has a hole is thrown away
+  // the dash pattern of the lines: a bit every factor pixels along the line,
+  // fragments in a hole are discarded
   void setStipple(bool on, int factor, unsigned short pattern);
-  // Draw a run of line segments - vertices in pairs - as quads of the given
-  // width in pixels. A core profile draws every line one pixel wide whatever
-  // it is asked for, so a wide one has to be made of triangles. False if this
-  // cannot be done, in which case the caller draws them as lines and they
-  // come out thin.
+  // Draw line segments (vertices in pairs) as quads of the given width in
+  // pixels, as a core profile draws every line one pixel wide. False if not
+  // possible; the caller then draws them thin.
   bool drawWideLines(const float *vertices, const void *normals,
                      GLenum normalType, const unsigned char *colors, int count,
                      double width, bool lit);
+  // draw vertices collected from the immediate mode calls, each with its own
+  // colour and normal, with whatever state was last set
   void drawImmediate(GLenum mode, const float *vertices, const float *normals,
                      const unsigned char *colors, const float *texCoords,
                      const float *dashes, unsigned int texture, int textureMode,
                      int count);
 
-  // Draw one shape many times over, each of them placed by a glyph of its
-  // own: the shape is given as its vertices and normals, and the glyphs as a
-  // buffer of sixty bytes each - three rows of a transform, a colour, and the
-  // two radii a cylinder is shaped by. False if this cannot be done, in which
-  // case the caller has to draw them one shape at a time.
-  //
-  // taper says the shape is a cylinder, whose corners the radii move; colors
-  // says the colour comes from the glyphs rather than from the one that is
-  // current, which is what a picking pass wants.
-  // How one glyph is laid out in that buffer: three rows of four floats, then
-  // four bytes of colour, then two floats of parameters.
+  // Draw one shape (vertices and normals) once per glyph, each glyph being
+  // GLYPH_STRIDE bytes: three rows of four floats of transform, four bytes
+  // of colour, two floats of parameters (the radii of a cylinder). taper says
+  // the shape is a cylinder; colors takes the colour from the glyphs instead
+  // of the current one (picking). False if not possible; the caller then
+  // draws the glyphs one at a time.
   enum { GLYPH_STRIDE = 60 };
   bool drawGlyphs(const float *vertices, const float *normals, int numVertices,
                   const void *glyphs, int numGlyphs, bool taper, bool colors);
 
-  // The buffer a picking pass draws into: one attachment for the colour that
-  // encodes the object, one for the depth written as a colour. Reading a depth
-  // buffer back is not something OpenGL ES or WebGL will do, which is why the
-  // pass does not simply draw into the window.
-  //
-  // bindPickBuffer() makes a buffer of that size current and asks for both
-  // attachments to be drawn into; false if there is none to be had, in which
-  // case the caller draws into the window as before. readPickBuffer() takes a
-  // region of it, giving the colours as four bytes each and the depths as
-  // floats in [0, 1]. releasePickBuffer() puts the window back.
+  // The framebuffer a picking pass draws into: one attachment for the colour
+  // encoding the object, one for the depth written as a colour, as OpenGL ES
+  // and WebGL cannot read a depth buffer back. bindPickBuffer() returns false
+  // if none can be had (the caller then draws into the window);
+  // readPickBuffer() returns colours as four bytes and depths as floats in
+  // [0, 1]; releasePickBuffer() rebinds the window.
   bool bindPickBuffer(int width, int height);
   void readPickBuffer(int x, int y, int w, int h, unsigned char *colors,
                       float *depths);

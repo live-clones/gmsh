@@ -253,12 +253,10 @@ double MElement::maxEdge()
   return m;
 }
 
-// The straight-sided shape functions evaluated at the high order nodes of the
-// reference element only depend on the element type. Evaluating them for every
-// element made maxDistToStraight() by far the most expensive part of drawing a
-// high order mesh, so they are computed once per type and kept: one row per
-// high order node, one column per corner. A null entry means that the element
-// has no high order node, or no straight-sided function space.
+// the straight-sided shape functions at the high order nodes of the
+// reference element, computed once per type (one row per high order node,
+// one column per corner); null if the element has no high order node or no
+// straight-sided function space
 static const fullMatrix<double> *straightShapeFunctions(const MElement *ele)
 {
   static std::atomic<const fullMatrix<double> *> cache[MSH_MAX_NUM + 1];

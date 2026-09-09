@@ -25,32 +25,27 @@
 
 void clearGlyphArrays(PView *p) { glyphCache::clear(p); }
 
-// Turn the clipping planes this view asks for on or off. What whole element
-// mode holds apart - the elements a plane cuts - is drawn with them off, so
-// that those elements come out entire, and so are the glyphs.
+// turn the clipping planes of this view on or off (the cut elements of whole
+// element mode and the glyphs are drawn with them off)
 static void setViewClipPlanes(PViewOptions *opt, bool on)
 {
   for(int i = 0; i < 6; i++)
     gmshClipPlaneOn(i, on && (opt->clip & (1 << i)));
 }
 
-// Are this view's glyphs tested against the planes one at a time? In whole
-// element mode they are: a glyph is drawn whole or not at all - OpenGL would
-// slice an arrow or a sphere in two - so the planes are tested here, on the
-// point or the segment the glyph is placed by, and turned off while it is
-// drawn. The mode that draws only the volumes a plane cuts is left alone: its
-// arrays are filled through the planes already, and what is in them is meant to
-// be drawn whole.
+// Are the glyphs tested against the planes one at a time? In whole element
+// mode a glyph is drawn whole or not at all, so the test is made on the
+// point or segment it is placed by, with the planes off while drawing. Not
+// in the mode that draws only the cut volumes: its arrays are already filled
+// through the planes.
 static bool clipGlyphs(PViewOptions *opt)
 {
   return CTX::instance()->clipWholeElements && opt->clip &&
          !CTX::instance()->clipOnlyDrawIntersectingVolume;
 }
 
-// Is this glyph one whole element mode keeps? One placed by a point is kept
-// when the point is on the visible side of every plane; one placed by a segment
-// is kept unless a plane has the whole segment beyond it, which is the test the
-// element it came from used to go through.
+// is this glyph kept by whole element mode? A point is kept when on the
+// visible side of every plane, a segment unless a plane has all of it beyond
 static bool glyphIsKept(PViewOptions *opt, const float *p0,
                         const float *p1 = nullptr)
 {
@@ -70,8 +65,7 @@ static bool glyphIsKept(PViewOptions *opt, const float *p0,
   return true;
 }
 
-// What the glyphs that are kept depend on: leave this out and they stay as they
-// were when a plane moves
+// what the kept glyphs depend on
 static void addClipToken(glyphToken &tok, PViewOptions *opt)
 {
   tok.add(clipGlyphs(opt) ? opt->clip : 0);
@@ -81,7 +75,7 @@ static void addClipToken(glyphToken &tok, PViewOptions *opt)
       for(int j = 0; j < 4; j++) tok.add(CTX::instance()->clipPlane[i][j]);
 }
 
-// The clipping planes off while glyphs are drawn whole, and back on after
+// the clipping planes off while the glyphs are drawn, and back on after
 class glyphClip {
 private:
   PViewOptions *_opt;
@@ -98,8 +92,7 @@ public:
   }
 };
 
-// Where the sphere of one point goes and how big it is. This is here so that
-// the several threads collecting them can share it - it only reads the view.
+// the sphere of one point (thread safe: only reads the view)
 static void addSphereFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
                          int i, glyphList *into)
 {
@@ -118,10 +111,8 @@ static void addSphereFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
   into->addSphere(ctx, opt->pointSize * f, pt[0], pt[1], pt[2], col);
 }
 
-// Share a range out over the threads, each collecting into a list of its own,
-// merged in order afterwards so that what comes out does not depend on how
-// many of them there were. What the glyphs are worked out from is only read,
-// which is what makes this safe.
+// share a range over the threads, each collecting into its own list, merged
+// in order afterwards
 template <class F>
 static void collect(int num, glyphList *into, F add)
 {
@@ -151,9 +142,7 @@ static void collect(int num, glyphList *into, F add)
   }
 }
 
-// Where the cylinder of one line segment goes and how thick it is at each
-// end. As with the spheres, this is here so that the several threads
-// collecting them can share it - it only reads the view.
+// the cylinder of one line segment (thread safe: only reads the view)
 static void addCylinderFor(drawContext *ctx, PViewOptions *opt,
                            VertexArray *va, int i, glyphList *into)
 {
@@ -225,8 +214,8 @@ static void drawPointGlyphs(drawContext *ctx, PView *p, VertexArray *va)
   g->draw(ctx, opt->light);
 }
 
-// clipArray says this is one of the arrays holding what the clipping planes
-// add: it holds what is to be drawn whole and is not tested against them again
+// clipArray says this array holds what the clipping planes add, drawn whole
+// and not tested against them again
 static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
                        bool useNormalArray, bool clipArray = false)
 {
@@ -238,12 +227,10 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     glEnable(GL_POLYGON_OFFSET_FILL);
 
   if(type == GL_POINTS && opt->pointType > 0) {
-    // a sphere is drawn whole or not at all: the planes are tested one glyph
-    // at a time and turned off while they are drawn
+    // a sphere is drawn whole or not at all
     glyphClip clip(opt);
     (void)clipArray; // no array of points is held apart
-    // the spheres are the ones worth keeping: they are several dozen
-    // triangles each, and a view can hold hundreds of thousands of them
+    // the spheres are worth keeping: dozens of triangles each
     if(opt->pointType != 2 && va->getNumVertices()) {
       drawPointGlyphs(ctx, p, va);
       glDisable(GL_POLYGON_OFFSET_FILL);
@@ -281,8 +268,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
   else if(type == GL_LINES && opt->lineType > 0) {
     // as with the spheres above: a cylinder is drawn whole or not at all
     glyphClip clip(opt);
-    // the cylinders are the ones worth collecting: they are a few dozen
-    // triangles each, and a view can hold hundreds of thousands of them
+    // the cylinders are worth keeping: dozens of triangles each
     if(opt->lineType <= 2 && va->getNumVertices()) {
       drawLineGlyphs(ctx, p, va, clipArray);
       glDisable(GL_POLYGON_OFFSET_FILL);
@@ -357,9 +343,8 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
   gmshLighting(false);
 }
 
-// The three axes of the tensor at one point, scaled the way the options ask,
-// and the ellipse or ellipsoid they stand for appended to the list. As with
-// the other glyphs this only reads the view, so the threads can share it.
+// the ellipse or ellipsoid of the tensor at one point (thread safe: only
+// reads the view)
 static void addEllipseFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
                           int i, glyphList *into)
 {
@@ -379,8 +364,7 @@ static void addEllipseFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
   unsigned int col;
   memcpy(&col, va->getColorArray(4 * i), 4);
 
-  // the axes are the columns of the transform, which is what turns the unit
-  // sphere into this ellipsoid and the unit disk into this ellipse
+  // the axes are the columns of the transform of the unit sphere or disk
   if(opt->tensorType == PViewOptions::Ellipsoid) {
     double m[16] = {vv[0][0], vv[0][1], vv[0][2], 0., vv[1][0], vv[1][1],
                     vv[1][2], 0.,       vv[2][0], vv[2][1], vv[2][2], 0.,
@@ -408,9 +392,7 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
   // as with the arrows: an ellipsoid is drawn whole or not at all
   glyphClip clip(opt);
 
-  // the ellipses and the ellipsoids are shapes of their own, placed by the
-  // three axes of the tensor; the frames are not, and are still drawn one at
-  // a time
+  // ellipses and ellipsoids are glyphs; frames are still drawn one at a time
   if(opt->tensorType != PViewOptions::Frame && va->getNumVertices()) {
     glyphToken tok;
     tok.add(ctx->pixel_equiv_x / ctx->s[0]);
@@ -451,10 +433,8 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
   }
 }
 
-// Where the arrow of one element goes and how long it is, and the arrow
-// appended to the array if it is worth drawing. This is the same arithmetic
-// the drawing loop below does; it is here so that the two can share it and so
-// that several threads can run it at once - it only reads the view.
+// the arrow of one element, appended if worth drawing; shared with the
+// drawing loop below (thread safe: only reads the view)
 static void addArrowFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
                         int i, glyphList *into)
 {
@@ -498,19 +478,15 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
 
   PViewOptions *opt = p->getOptions();
 
-  // an arrow is drawn whole or not at all: the planes are tested one glyph at
-  // a time, on the point the arrow hangs from, and turned off while they are
-  // drawn
+  // an arrow is drawn whole or not at all, tested on the point it hangs from
   glyphClip clip(opt);
 
-  // the 3D arrows are the ones worth collecting: they are several dozen
-  // triangles each, and a view can hold hundreds of thousands of them
+  // the 3D arrows are worth keeping: dozens of triangles each
   if(opt->vectorType == 4) {
     glyphToken tok;
     tok.add(ctx->pixel_equiv_x / ctx->s[0]);
     tok.add(opt->vectorType);
-    // everything addArrowFor() works an arrow out from: leave one of these out
-    // and the arrows keep the size they were first built at
+    // everything addArrowFor() depends on
     tok.add(opt->arrowSizeMin);
     tok.add(opt->arrowSizeMax);
     tok.add(opt->tmpMin);
@@ -783,8 +759,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
       }
       if(opt->forceNumComponents) numComp = opt->forceNumComponents;
       changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
-      // these are drawn straight from the elements, one at a time: whole
-      // element mode is applied here rather than through the arrays
+      // drawn straight from the elements: whole element mode applies here
       if(!elementIsKept(opt, dim, numNodes, xyz)) continue;
       if(opt->intervalsType == PViewOptions::Numeric)
         drawNumberGlyphs(ctx, p, numNodes, numComp, xyz, val);
@@ -813,25 +788,21 @@ static bool eyeChanged(drawContext *ctx, PView *p)
   return false;
 }
 
-// Is this view one that has to be blended with what is behind it? The colour
-// map is what says so; a view drawn the "fake" way is additive and unordered
-// already, and is left alone.
+// does this view have to be blended with what is behind it? (a "fake"
+// transparency view is additive and unordered already)
 static bool viewIsTransparent(PView *p)
 {
   PViewOptions *opt = p->getOptions();
   if(!CTX::instance()->alpha) return false;
-  // an alpha the colour map carries itself, or the multiplier the shader
-  // applies - which means nothing to the fixed function pipeline
+  // an alpha in the colormap, or the factor the shader applies
   return ColorTable_IsAlpha(&opt->colorTable) ||
          (gmshUseShaders() && opt->transparency < 1.);
 }
 
 class drawPView {
 public:
-  // which views this pass draws: all of them, or only the opaque ones, or
-  // only the transparent ones, which are drawn after and summed rather than
-  // painted in order
-  // not OPAQUE and TRANSPARENT: windows.h has macros of both those names
+  // which views this pass draws (not OPAQUE and TRANSPARENT: windows.h has
+  // macros of both names)
   enum whichViews { ALL_VIEWS, OPAQUE_VIEWS, TRANSPARENT_VIEWS };
 
 private:
@@ -883,11 +854,10 @@ public:
                        opt->tmpBBox);
     }
 
-    // OpenGL applies the planes to the view's own arrays, and what they add is
-    // drawn from arrays of its own with them off: nothing in either depends on
-    // where they are. The exception is the mode that draws only the volumes a
-    // plane cuts, which fills the view's arrays through the planes themselves -
-    // what is in them there is drawn whole.
+    // OpenGL applies the planes to the view's arrays, and what they add is
+    // drawn from its own arrays with them off; the mode that draws only the
+    // cut volumes fills the view's arrays through the planes and draws them
+    // whole
     CTX *c = CTX::instance();
     bool cutOnly = c->clipWholeElements && opt->clip &&
                    c->clipOnlyDrawIntersectingVolume;
@@ -896,9 +866,7 @@ public:
 
     if(CTX::instance()->alpha && ColorTable_IsAlpha(&opt->colorTable)) {
       if(glShader::transparentPass()) {
-        // the pass sums what it is given into buffers of its own, in whatever
-        // order it arrives: there is nothing to sort, and the blending that
-        // does the summing is not ours to set
+        // the transparency pass sums in any order, with its own blending
       }
       else {
         // real translucent blending (requires back-to-front traversal)
@@ -936,8 +904,7 @@ public:
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
 
-    // the outlines of the elements the planes cut, drawn whole with them off
-    // and here, with the lines they belong with
+    // the outlines of the cut elements, drawn whole with the planes off
     if(whole) {
       setViewClipPlanes(opt, false);
       drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
@@ -949,12 +916,9 @@ public:
 
     drawArrays(_ctx, p, p->va_triangles, GL_TRIANGLES, opt->light);
 
-    // What the clipping planes add, held apart from the arrays above: in
-    // capping mode the section they cut, which fills the hole they open and is
-    // clipped like everything else; in whole element mode the elements they
-    // cut, drawn whole with the planes off - outlines included, since an edge
-    // of a cut element can lie entirely beyond a plane and the arrays above
-    // are drawn one glyph, one fragment at a time.
+    // what the clipping planes add: in capping mode the section they cut,
+    // clipped like everything else; in whole element mode the cut elements,
+    // drawn whole with the planes off
     if(whole) setViewClipPlanes(opt, false);
     drawArrays(_ctx, p, p->va_clip_triangles, GL_TRIANGLES, opt->light, true);
     if(whole) setViewClipPlanes(opt, true);
@@ -1041,7 +1005,7 @@ void drawContext::drawPost()
 
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     bool changed = PView::list[i]->fillVertexArrays();
-    // the section the planes cut is held apart and built on its own
+    // what the planes add is built on its own
     if(changed) PView::list[i]->invalidateClipVertexArrays();
     PView::list[i]->fillClipVertexArrays();
     if(changed) {
@@ -1054,9 +1018,7 @@ void drawContext::drawPost()
 #endif
   }
 
-  // Which views this pass wants: draw3d() draws the opaque half of the scene
-  // and then the transparent half, so that everything see-through - geometry,
-  // mesh and views alike - is summed by one pass.
+  // draw3d() draws the opaque part of the scene, then the transparent one
   drawPView::whichViews which =
     (transparencyPass == TRANSPARENCY_OPAQUE) ?
       drawPView::OPAQUE_VIEWS :
