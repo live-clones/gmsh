@@ -470,9 +470,9 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
   for(std::size_t i = 0; i < ticks.size(); i++) {
     if(horizontal)
       haloString(ctx, ticks[i].label, xmin + alongBar(opt, ticks[i].t, width),
-                 ymin + height + 0.75 * tic, 1);
+                 ymin + height + 0.85 * tic, 1);
     else
-      haloString(ctx, ticks[i].label, xmin + width + 0.7 * tic,
+      haloString(ctx, ticks[i].label, xmin + width + 0.8 * tic,
                  ymin + alongBar(opt, ticks[i].t, height) - font_a / 3., 0);
   }
 }
@@ -536,7 +536,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   std::string name = data->getName();
 
   if(horizontal) {
-    double y = ymin + height + 0.75 * tic + 1.2 * font_h;
+    double y = ymin + height + 0.85 * tic + 1.2 * font_h;
     if(sub[0] || multiplier.size()) {
       if(sub[0]) haloString(ctx, sub, xmin + width / 2., y, 1);
       if(multiplier.size()) haloString(ctx, multiplier, xmin + width, y, 2);
@@ -549,7 +549,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
     haloString(ctx, name, xmin, y, 0, true);
     if(sub[0]) haloString(ctx, sub, xmin, y - 1.15 * font_h, 0);
     if(multiplier.size())
-      haloString(ctx, multiplier, xmin + width + 0.7 * tic,
+      haloString(ctx, multiplier, xmin + width + 0.8 * tic,
                  ymin + height + 1.2 * font_h,
                  0);
   }
