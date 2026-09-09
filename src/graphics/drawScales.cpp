@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <cstring>
 #include "drawContext.h"
 #include "PView.h"
 #include "PViewOptions.h"
@@ -146,6 +147,25 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
   int nbIso = std::max(1, opt->nbIso);
   char str[128];
 
+  if(min > max) {
+    // a range given the other way round shows nothing: its two ends only
+    int exp = defaultFormat ? sharedExponent(min, max) : 0;
+    multiplier = multiplierText(exp);
+    for(int i = 0; i < 2; i++) {
+      scaleTick tk;
+      tk.v = i ? max : min;
+      tk.t = i ? 1. : 0.;
+      if(defaultFormat)
+        tk.label = endLabel(tk.v, 0, exp, min - max);
+      else {
+        sprintf(str, opt->format.c_str(), tk.v);
+        tk.label = str;
+      }
+      ticks.push_back(tk);
+    }
+    return;
+  }
+
   if(opt->intervalsType == PViewOptions::Iso ||
      opt->intervalsType == PViewOptions::Discrete ||
      opt->intervalsType == PViewOptions::Numeric) {
@@ -188,11 +208,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
     return;
   }
 
-  if(defaultFormat && linear && max != min) {
-    // a range given the other way round runs down the bar: the ticks are
-    // those of the range the right way up, at the mirrored positions
-    bool reversed = (min > max);
-    if(reversed) std::swap(min, max);
+  if(defaultFormat && linear && max > min) {
     int exp = sharedExponent(min, max);
     multiplier = multiplierText(exp);
     // the ends
@@ -211,7 +227,6 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       ticks.push_back(mid);
       return;
     }
-    // (the middle needs no mirroring)
     // the finest round step whose labels all fit, tried from coarse to
     // fine; a round value too close to an end for both labels gives way
     std::vector<double> steps;
@@ -251,8 +266,6 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       if(ticksFit(cand, length, widths, fontH, horizontal)) best = cand;
     }
     ticks = best;
-    if(reversed)
-      for(std::size_t i = 0; i < ticks.size(); i++) ticks[i].t = 1. - ticks[i].t;
     return;
   }
 
@@ -299,8 +312,10 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   double box = (horizontal ? width : height) / (opt->nbIso ? opt->nbIso : 1);
 
   bool iso = (opt->intervalsType == PViewOptions::Iso);
+  // nothing is drawn with a range given the other way round: an empty bar
+  int n = (opt->tmpMin > opt->tmpMax) ? 0 : opt->nbIso;
   if(iso) gmshLineWidth(3.);
-  for(int i = 0; i < opt->nbIso; i++) {
+  for(int i = 0; i < n; i++) {
     if(opt->intervalsType == PViewOptions::Discrete ||
        opt->intervalsType == PViewOptions::Numeric) {
       unsigned int col = opt->getColor(i, opt->nbIso);
@@ -468,6 +483,10 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   case 6: sprintf(sub, "eigenvalue %s", time); break;
   case 7: sprintf(sub, "eigenvalue %s (%s part)", time, part); break;
   default: break;
+  }
+  if(opt->tmpMin > opt->tmpMax) {
+    if(sub[0]) strcat(sub, ", ");
+    strcat(sub, "empty range");
   }
   std::string name = data->getName();
 
