@@ -2233,6 +2233,10 @@ StringXNumber PrintOptions_Number[] = {
     "Save Disto quality measure in mesh statistics exported as "
     "post-processing views" },
 
+  { F|O, "Supersampling" , opt_print_supersampling , 1. ,
+    "Render pictures at this multiple of their size and average them down "
+    "(shader pipeline only)" },
+
   { F|O, "TexAsEquation" , opt_print_tex_as_equation , 0. ,
     "Print all TeX strings as equations" },
   { F|O, "TexForceFontSize" , opt_print_tex_force_fontsize , 0. ,
@@ -2240,9 +2244,6 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "TexWidthInMm" , opt_print_tex_width_in_mm , 150. ,
     "Width of tex graphics in mm (use 0 for the natural width inferred from the "
     "image width in pixels)" },
-  { F|O, "Supersampling" , opt_print_supersampling , 1. ,
-    "Render pictures at this multiple of their size and average them down "
-    "(shader pipeline only)" },
   { F|O, "Text" , opt_print_text , 1. ,
     "Print text strings?" },
 
