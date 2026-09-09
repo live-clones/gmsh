@@ -513,8 +513,7 @@ void openglWindow::_studioFrame()
     _ctx->studioSample = 0;
     return;
   }
-  if(k + 1 < n && !drawContext::global()->mouseIsPressed())
-    Fl::add_timeout(0.01, _studioSampleCb, this);
+  if(k + 1 < n) Fl::add_timeout(0.01, _studioSampleCb, this);
 }
 
 bool openglWindow::printTo(int width, int height, unsigned int format,
@@ -537,6 +536,13 @@ bool openglWindow::printTo(int width, int height, unsigned int format,
 void openglWindow::_studioSampleCb(void *data)
 {
   openglWindow *w = (openglWindow *)data;
+  // not while the mouse is down in this window, where it is about to change
+  // the view (down elsewhere, in the options window say, is no reason to
+  // wait): look again once it is up
+  if(Fl::pushed() == w) {
+    Fl::repeat_timeout(0.05, _studioSampleCb, data);
+    return;
+  }
   w->_ctx->studioSample++;
   w->_studioTimer = true;
   w->redraw();
