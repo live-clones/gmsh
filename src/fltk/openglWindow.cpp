@@ -485,12 +485,17 @@ void openglWindow::_studioFrame()
       Msg::Debug("Studio frames: the view changed, starting over");
       k = _ctx->studioSample = 0;
     }
-    else if(!glShader::accumulate(w, h, k == 1, k)) {
-      _ctx->studioSample = 0;
-      return;
-    }
-    else
+    else {
+      // the frame has to be complete before it is added: what the overlay
+      // collected is still pending
+      gmshFlushImmediate();
+      drawContext::global()->flushString();
+      if(!glShader::accumulate(w, h, k == 1, k)) {
+        _ctx->studioSample = 0;
+        return;
+      }
       Msg::Debug("Studio frame %d of %d accumulated", k, n);
+    }
   }
   memcpy(_studioModel, _ctx->model, sizeof(_studioModel));
   _studioW = w;
@@ -501,6 +506,8 @@ void openglWindow::_studioFrame()
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       _ctx->draw3d();
       _ctx->draw2d();
+      gmshFlushImmediate();
+      drawContext::global()->flushString();
       if(!glShader::accumulate(w, h, j == 1, j)) break;
     }
     _ctx->studioSample = 0;
