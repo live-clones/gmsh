@@ -188,8 +188,7 @@ void colorbarWindow::redraw_range(int a, int b)
   if(help_flag) {
     i = 0;
     fl_draw("0-9, Ctrl+0-9, F1-F7", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap 0-9, 10-19, 20-26", xx1,
-            yy0 + (i + 1) * fh);
+    fl_draw("Select predefined colormap", xx1, yy0 + (i + 1) * fh);
     i++;
     fl_draw("mouse1", xx0, yy0 + (i + 1) * fh);
     fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * fh);
@@ -237,8 +236,7 @@ void colorbarWindow::redraw_range(int a, int b)
   else {
     // the map and the mode
     char str[128];
-    sprintf(str, "%s (%d) - %s", ColorTable_Name(ct->ipar[COLORTABLE_NUMBER]),
-            ct->ipar[COLORTABLE_NUMBER],
+    sprintf(str, "%d - %s", ct->ipar[COLORTABLE_NUMBER],
             (ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV) ? "HSV" : "RGB");
     fl_draw(str, xx0, yy0 + font_height);
   }
