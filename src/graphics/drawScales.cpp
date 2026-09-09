@@ -94,7 +94,9 @@ static std::string multiplierText(int exp)
 static double alongBar(PViewOptions *opt, double t, double length)
 {
   if(opt->intervalsType == PViewOptions::Iso) {
-    double inset = 1.5;
+    // the first and last marks (3 pixels wide) flush with the outline, which
+    // is drawn over them
+    double inset = 1.;
     return inset + t * (length - 2 * inset);
   }
   return t * length;
