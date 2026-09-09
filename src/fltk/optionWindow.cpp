@@ -417,6 +417,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_shading(0, GMSH_SET, o->general.choice[8]->value());
   opt_general_studio_samples(0, GMSH_SET, o->general.value[33]->value());
   opt_general_studio_floor_offset(0, GMSH_SET, o->general.value[34]->value());
+  opt_general_studio_light_spread(0, GMSH_SET, o->general.value[35]->value());
 
   if((opt_general_gamepad(0, GMSH_GET, 0) != o->general.butt[19]->value()) ||
      (opt_general_camera_mode(0, GMSH_GET, 0) !=
@@ -1947,8 +1948,16 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[33]->align(FL_ALIGN_RIGHT);
       general.value[33]->callback(general_options_ok_cb);
 
-      general.value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW,
-                                             BH, "Studio floor offset");
+      general.value[35] =
+        new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW / 2, BH);
+      general.value[35]->tooltip("General.StudioLightSpread");
+      general.value[35]->minimum(0);
+      general.value[35]->maximum(90);
+      if(CTX::instance()->inputScrolling) general.value[35]->step(1);
+      general.value[35]->callback(general_options_ok_cb);
+      general.value[34] =
+        new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 5 * BH, IW / 2, BH,
+                           "Studio light spread and floor offset");
       general.value[34]->tooltip("General.StudioFloorOffset");
       general.value[34]->minimum(-1.e22);
       general.value[34]->maximum(1.e22);
