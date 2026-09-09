@@ -100,9 +100,12 @@ static double _pixelFactor = 1.;
 // (half a pixel further) fall on the same pixel.
 static double alongBar(PViewOptions *opt, double t, double length)
 {
-  double inset = 1.;
-  double x = inset + t * (length - 2 * inset);
-  return floor(x * _pixelFactor + 0.5) / _pixelFactor;
+  // in pixels: the outline, a line centred on the bar's ends, covers the
+  // pixel before the first and the last one of the bar, so the inside runs
+  // from the second pixel to the one before the last
+  double n = length * _pixelFactor;
+  double col = 1. + floor(t * (n - 3.) + 0.5);
+  return col / _pixelFactor;
 }
 
 // a line drawn at a box edge: on the pixel that starts there
