@@ -1171,6 +1171,11 @@ Use stereo rendering@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.StudioFloorOffset
+Offset of the floor in studio shading from the bottom of the model, along the floor's normal (in model units)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.StudioLightSpread
 Angular radius (in degrees) of the light in studio shading, which sets the softness of its shadow@*
 Default value: @code{12}@*
