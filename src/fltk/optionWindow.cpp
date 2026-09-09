@@ -416,6 +416,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
   opt_general_shading(0, GMSH_SET, o->general.choice[8]->value());
   opt_general_studio_samples(0, GMSH_SET, o->general.value[33]->value());
+  opt_general_studio_floor_offset(0, GMSH_SET, o->general.value[34]->value());
 
   if((opt_general_gamepad(0, GMSH_GET, 0) != o->general.butt[19]->value()) ||
      (opt_general_camera_mode(0, GMSH_GET, 0) !=
@@ -1946,6 +1947,15 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[33]->align(FL_ALIGN_RIGHT);
       general.value[33]->callback(general_options_ok_cb);
 
+      general.value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW,
+                                             BH, "Studio floor offset");
+      general.value[34]->tooltip("General.StudioFloorOffset");
+      general.value[34]->minimum(-1.e22);
+      general.value[34]->maximum(1.e22);
+      if(CTX::instance()->inputScrolling) general.value[34]->step(0.01);
+      general.value[34]->align(FL_ALIGN_RIGHT);
+      general.value[34]->callback(general_options_ok_cb);
+
       static Fl_Menu_Item menu_color_scheme[] = {
         {"Light", 0, nullptr, nullptr},
         {"Default", 0, nullptr, nullptr},
@@ -1953,7 +1963,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Dark", 0, nullptr, nullptr},
         {nullptr}};
 
-      general.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
+      general.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
                                         "Predefined color scheme");
       general.choice[3]->tooltip("General.ColorScheme (Alt+c)");
       general.choice[3]->menu(menu_color_scheme);
@@ -1966,22 +1976,22 @@ optionWindow::optionWindow(int deltaFontSize)
                                             {"Radial", 0, nullptr, nullptr},
                                             {nullptr}};
 
-      general.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
+      general.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
                                         "Background gradient");
       general.choice[5]->tooltip("General.BackgroundGradient");
       general.choice[5]->menu(menu_bg_grad);
       general.choice[5]->align(FL_ALIGN_RIGHT);
       general.choice[5]->callback(general_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
-                                   height - 5 * WB - 7 * BH);
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 8 * BH, IW + 20,
+                                   height - 5 * WB - 8 * BH);
       std::size_t i = 0, j = 0;
       while(GeneralOptions_Color[j].str) {
         if(GeneralOptions_Color[j].level & GMSH_DEPRECATED) {
           j++;
           continue;
         }
-        general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW,
+        general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (8 + i) * BH, IW,
                                          BH, GeneralOptions_Color[j].str);
         general.color[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE |
                                 FL_ALIGN_CLIP);

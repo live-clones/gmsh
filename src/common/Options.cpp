@@ -3022,6 +3022,11 @@ double opt_general_studio_light_spread(OPT_ARGS_NUM)
 double opt_general_studio_floor_offset(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->studioFloorOffset = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[34]->value(
+      CTX::instance()->studioFloorOffset);
+#endif
   return CTX::instance()->studioFloorOffset;
 }
 
