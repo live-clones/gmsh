@@ -61,6 +61,10 @@ namespace glApi {
   void(APIENTRY *GenVertexArrays)(GLsizei, GLuint *) = nullptr;
   void(APIENTRY *DeleteVertexArrays)(GLsizei, const GLuint *) = nullptr;
   void(APIENTRY *BindVertexArray)(GLuint) = nullptr;
+  void(APIENTRY *GenSamplers)(GLsizei, GLuint *) = nullptr;
+  void(APIENTRY *DeleteSamplers)(GLsizei, const GLuint *) = nullptr;
+  void(APIENTRY *BindSampler)(GLuint, GLuint) = nullptr;
+  void(APIENTRY *SamplerParameteri)(GLuint, GLenum, GLint) = nullptr;
   void(APIENTRY *VertexAttribDivisor)(GLuint, GLuint) = nullptr;
   void(APIENTRY *DrawArraysInstanced)(GLenum, GLint, GLsizei, GLsizei) =
     nullptr;
@@ -232,6 +236,12 @@ namespace glApi {
     DeleteVertexArrays = (void(APIENTRY *)(GLsizei, const GLuint *))
       address("glDeleteVertexArrays");
     BindVertexArray = (void(APIENTRY *)(GLuint))address("glBindVertexArray");
+    GenSamplers = (void(APIENTRY *)(GLsizei, GLuint *))address("glGenSamplers");
+    DeleteSamplers =
+      (void(APIENTRY *)(GLsizei, const GLuint *))address("glDeleteSamplers");
+    BindSampler = (void(APIENTRY *)(GLuint, GLuint))address("glBindSampler");
+    SamplerParameteri =
+      (void(APIENTRY *)(GLuint, GLenum, GLint))address("glSamplerParameteri");
     VertexAttribDivisor =
       (void(APIENTRY *)(GLuint, GLuint))address("glVertexAttribDivisor");
     DrawArraysInstanced = (void(APIENTRY *)(GLenum, GLint, GLsizei, GLsizei))
@@ -360,6 +370,10 @@ namespace glApi {
     GenVertexArrays = nullptr;
     DeleteVertexArrays = nullptr;
     BindVertexArray = nullptr;
+    GenSamplers = nullptr;
+    DeleteSamplers = nullptr;
+    BindSampler = nullptr;
+    SamplerParameteri = nullptr;
     VertexAttribDivisor = nullptr;
     DrawArraysInstanced = nullptr;
 
