@@ -1499,16 +1499,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 
     // restrict picking to a rectangular region around xpick,ypick
     double pick[16];
-    glMatrix::identity(pick);
-    // studio shading: each accumulated frame is shifted by a fraction of a
-    // pixel, which antialiases the average
-    if(studioSample > 0 && render_mode != GMSH_SELECT && !_pickColor) {
-      double hr = highResolutionPixelFactor();
-      double w = (viewport[2] - viewport[0]) * hr;
-      double h = (viewport[3] - viewport[1]) * hr;
-      glMatrix::translate(2. * (halton(studioSample, 2) - 0.5) / w,
-                          2. * (halton(studioSample, 3) - 0.5) / h, 0., pick);
-    }
+    studioJitter(pick);
     if(render_mode == GMSH_SELECT)
       glMatrix::pickRegion(xpick, viewport[3] - ypick, wpick, hpick, viewport,
                            pick);
@@ -1574,6 +1565,17 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       gmshLoadMatrix(_modelBase);
     }
   }
+}
+
+void drawContext::studioJitter(double m[16])
+{
+  glMatrix::identity(m);
+  if(studioSample <= 0 || render_mode == GMSH_SELECT || _pickColor) return;
+  double hr = highResolutionPixelFactor();
+  double w = (viewport[2] - viewport[0]) * hr;
+  double h = (viewport[3] - viewport[1]) * hr;
+  glMatrix::translate(2. * (halton(studioSample, 2) - 0.5) / w,
+                      2. * (halton(studioSample, 3) - 0.5) / h, 0., m);
 }
 
 void drawContext::initRenderModel()
