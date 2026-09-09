@@ -332,8 +332,9 @@ public:
   // shadows) with the floor normal to x, y or z
   int shading;
   // angular radius (degrees) of the studio light, which sets the softness of
-  // its shadow, and the number of frames accumulated while the view is still
-  double studioLightSpread;
+  // its shadow, the offset of the floor from the bottom of the model along
+  // its normal, and the number of frames accumulated while the view is still
+  double studioLightSpread, studioFloorOffset;
   int studioSamples;
   // order independent (weighted blended) transparency instead of back to
   // front sorting
