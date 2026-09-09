@@ -4,7 +4,7 @@
 
 #include "smallCavityWinslow.h"
 
-#include "gmshLBFGS.h"
+#include "../BoundaryLayers/gmshLBFGS.h"
 
 #include <algorithm>
 #include <cmath>
