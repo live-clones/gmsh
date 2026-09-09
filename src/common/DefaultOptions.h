@@ -2235,8 +2235,7 @@ StringXNumber PrintOptions_Number[] = {
     "post-processing views" },
 
   { F|O, "Supersampling" , opt_print_supersampling , 1. ,
-    "Render pictures at this multiple of their size and average them down "
-    "(shader pipeline only)" },
+    "Render pictures at this multiple of their size and average them down" },
 
   { F|O, "TexAsEquation" , opt_print_tex_as_equation , 0. ,
     "Print all TeX strings as equations" },

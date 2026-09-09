@@ -135,8 +135,8 @@ public:
   void show();
   drawContext *getDrawContext() { return _ctx; }
   // draw into a picture of the given size (pixels) instead of the window,
-  // with the shader pipeline, at supersampling times the scale of the
-  // window; false if it cannot be done
+  // at supersampling times the scale of the window; false if it cannot be
+  // done
   bool printTo(int width, int height, int supersampling, unsigned int format,
                unsigned int type, void *pixels);
   // run one picking pass at the given position (window coordinates) and

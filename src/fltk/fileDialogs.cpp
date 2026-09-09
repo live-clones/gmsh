@@ -37,7 +37,6 @@
 #include "GModel.h"
 #include "PView.h"
 #include "PViewOptions.h"
-#include "glImmediate.h"
 #include <iostream>
 
 // basic file chooser
@@ -328,11 +327,6 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
   dialog->v[0]->value(opt_print_width(0, GMSH_GET, 0));
   dialog->v[1]->value(opt_print_height(0, GMSH_GET, 0));
   dialog->v[2]->value(opt_print_supersampling(0, GMSH_GET, 0));
-  // only the shader pipeline supersamples
-  if(gmshUseShaders())
-    dialog->v[2]->activate();
-  else
-    dialog->v[2]->deactivate();
   dialog->window->show();
 
   while(dialog->window->shown()) {

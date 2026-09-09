@@ -534,8 +534,7 @@ bool openglWindow::printTo(int width, int height, int supersampling,
                            void *pixels)
 {
   make_current();
-  if(!gmshUseShaders() || !glShader::beginPrintTarget(width, height))
-    return false;
+  if(!glShader::beginPrintTarget(width, height)) return false;
   _printW = width;
   _printH = height;
   _printScale = std::max(1, supersampling) *
