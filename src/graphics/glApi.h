@@ -201,6 +201,13 @@ namespace glApi {
                                              GLsizei stride,
                                              const GLvoid *pointer);
 
+  // sampler objects (OpenGL 3.3, OpenGL ES 3.0): how a texture is sampled,
+  // apart from the texture itself
+  extern void(APIENTRY *GenSamplers)(GLsizei n, GLuint *samplers);
+  extern void(APIENTRY *DeleteSamplers)(GLsizei n, const GLuint *samplers);
+  extern void(APIENTRY *BindSampler)(GLuint unit, GLuint sampler);
+  extern void(APIENTRY *SamplerParameteri)(GLuint sampler, GLenum pname,
+                                           GLint param);
   // instanced drawing (OpenGL 3.3, OpenGL ES 3.0)
   extern void(APIENTRY *VertexAttribDivisor)(GLuint index, GLuint divisor);
   extern void(APIENTRY *DrawArraysInstanced)(GLenum mode, GLint first,
