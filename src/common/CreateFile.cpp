@@ -260,11 +260,12 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 {
   openglWindow *newg = nullptr;
 
-  // with the shader pipeline a picture of any size is drawn into a buffer of
-  // its own, and possibly at a multiple of its size, averaged down
+  // a picture of any size is drawn into a buffer of its own (a window could
+  // not be larger than the screen), and possibly at a multiple of its size,
+  // averaged down
   int ss = std::max(1, CTX::instance()->print.supersampling);
   if(type != GL_UNSIGNED_BYTE) ss = 1;
-  if(gmshUseShaders() && !CTX::instance()->batch &&
+  if(!CTX::instance()->batch &&
      (CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0 ||
       ss > 1)) {
     int width, height;

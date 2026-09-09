@@ -84,6 +84,7 @@ namespace glShader {
   // A print target: a framebuffer of width x height pixels that stands in for
   // the window between beginPrintTarget() and endPrintTarget(), so that a
   // picture can be larger than the window; readPrintTarget() reads it back.
+  // Either pipeline can draw into it.
   bool beginPrintTarget(int width, int height);
   void readPrintTarget(int width, int height, GLenum format, GLenum type,
                        void *pixels);

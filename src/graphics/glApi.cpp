@@ -290,9 +290,12 @@ namespace glApi {
                GetUniformLocation && VertexAttribPointer &&
                EnableVertexAttribArray && GenVertexArrays && BindVertexArray &&
                _buffers && (_es ? atLeast(3, 0) : atLeast(3, 2));
+    // core from 3.0, and the same entry points as an extension on the
+    // fixed function contexts before (the 2.1 one of macOS)
     _framebuffers = GenFramebuffers && BindFramebuffer &&
                     FramebufferTexture2D && CheckFramebufferStatus &&
-                    DrawBuffers && atLeast(3, 0);
+                    DrawBuffers &&
+                    (atLeast(3, 0) || haveExtension("GL_ARB_framebuffer_object"));
     // gl_ClipDistance is core desktop OpenGL from 3.0, and only an extension on
     // OpenGL ES, where it arrived in 3.2
     _clipDistance = _es ? (atLeast(3, 2) ||

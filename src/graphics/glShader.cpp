@@ -1614,7 +1614,7 @@ void main()
   bool beginPrintTarget(int width, int height)
   {
     if(width < 1 || height < 1 || _printFbo) return false;
-    if(!ensure() || !glApi::haveFramebufferObjects()) return false;
+    if(!glApi::haveFramebufferObjects()) return false;
     GLint maxSize = 0;
     glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxSize);
     if(width > maxSize || height > maxSize) {
