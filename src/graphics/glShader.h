@@ -61,8 +61,19 @@ namespace glShader {
   void setLightOff(int i);
   // the specular colour and exponent of the material
   void setMaterial(double shine, double shineExponent);
-  // the lighting model: 0 the fixed function one, 1 studio
+  // the lighting model: 0 the fixed function one, 1 studio, 2 the shadow
+  // catcher of the studio model (only the shadow is drawn)
   void setShading(int model);
+  // the direction of the studio key light, in eye coordinates
+  void setStudioLight(const double dir[3]);
+  // The shadow map of the studio light: beginShadowPass() binds a depth
+  // buffer of size x size texels, to be drawn with the light's matrices;
+  // endShadowPass() rebinds the window and hands the shader the map with the
+  // matrix from eye coordinates to its texture space (null to draw without
+  // shadow). setShadowOff() draws without shadow.
+  bool beginShadowPass(int size);
+  void endShadowPass(const double fromEye[16]);
+  void setShadowOff();
   // is what is drawn next lit, and are its back faces lit as well?
   void setLighting(bool on, bool twoSide);
   // clip plane i, in eye coordinates; setClipPlaneOff() stops clipping with it

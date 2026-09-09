@@ -128,6 +128,15 @@ typedef char GLchar;
 #define GL_CLIP_DISTANCE0 0x3000
 #endif
 
+// depth texture comparison (OpenGL 1.4, OpenGL ES 3.0), for the shadow map
+#if !defined(GL_TEXTURE_COMPARE_MODE)
+#define GL_TEXTURE_COMPARE_MODE 0x884C
+#define GL_TEXTURE_COMPARE_FUNC 0x884D
+#endif
+#if !defined(GL_COMPARE_REF_TO_TEXTURE)
+#define GL_COMPARE_REF_TO_TEXTURE 0x884E
+#endif
+
 namespace glApi {
   // buffer objects (OpenGL 1.5)
   extern void(APIENTRY *GenBuffers)(GLsizei n, GLuint *buffers);
