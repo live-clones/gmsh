@@ -322,7 +322,7 @@ void main()
     // studio: the light is computed in linear space, from a hemisphere
     // ambient (sky above, darker ground below, in eye space) and a wrapped
     // diffuse key light (the studio light, with light 0's colour) that casts
-    // the shadow, with no specular; the result goes back to sRGB
+    // the shadow, plus its highlight; the result goes back to sRGB
     vec3 base = pow(vColor.rgb, vec3(2.2));
     vec3 key = uLightOn[0] ? uLightDiffuse[0] : vec3(1.0);
     float nl = dot(n, uStudioLight);
@@ -342,6 +342,12 @@ void main()
       ambient += vec3(0.55 * (0.5 + 0.5 * nu));
     float d = clamp((nl + 0.5) / 1.5, 0.0, 1.0);
     vec3 c = base * (ambient + 0.6 * key * d * d * lit);
+    // the highlight of the key light, with the material's shininess (none
+    // when General.Shininess is 0), in the shadow like the diffuse
+    if(nl > 0.0) {
+      vec3 h = normalize(uStudioLight + vec3(0.0, 0.0, 1.0));
+      c += 0.6 * key * lit * uSpecular * pow(max(dot(n, h), 0.0), uShininess);
+    }
     emit(vec4(pow(min(c, vec3(1.0)), vec3(1.0 / 2.2)), alpha));
     return;
   }
