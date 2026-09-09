@@ -124,6 +124,15 @@ static bool drawGeomPointsBatched(drawContext *ctx, GModel *m)
   return true;
 }
 
+// does this pass draw this entity? A mixed geometry draws its opaque
+// entities in the opaque pass and the others in the transparent one
+static bool passWants(drawContext *ctx, GEntity *e)
+{
+  if(ctx->transparencyPass == TRANSPARENCY_ALL) return true;
+  return (ctx->transparencyPass == TRANSPARENCY_TRANSPARENT) ==
+         gmshGeometryEntityIsTransparent(e);
+}
+
 class drawGVertex {
 private:
   drawContext *_ctx;
@@ -136,6 +145,7 @@ public:
   }
   void operator()(GVertex *v)
   {
+    if(!passWants(_ctx, v)) return;
     if(!v->getVisibility()) return;
     if(v->geomType() == GEntity::BoundaryLayerPoint) return;
     // already drawn by drawGeomPointsBatched(), and nothing else here applies
@@ -215,6 +225,7 @@ public:
   drawGEdge(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GEdge *e)
   {
+    if(!passWants(_ctx, e)) return;
     if(!e->getVisibility()) return;
     if(e->geomType() == GEntity::DiscreteCurve) return;
     if(e->geomType() == GEntity::PartitionCurve) return;
@@ -362,6 +373,7 @@ public:
   drawGFace(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GFace *f)
   {
+    if(!passWants(_ctx, f)) return;
     if(!f->getVisibility()) return;
     if(f->geomType() == GEntity::PartitionSurface) return;
     if(f->geomType() == GEntity::BoundaryLayerSurface) return;
@@ -481,6 +493,7 @@ public:
   drawGRegion(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GRegion *r)
   {
+    if(!passWants(_ctx, r)) return;
     if(!r->getVisibility()) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
@@ -567,8 +580,10 @@ public:
 
 void drawContext::drawGeom()
 {
-  // the whole geometry belongs to one of the two passes
-  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshGeometryIsTransparent())
+  // nothing of the geometry is opaque when the colours of the options are
+  // transparent; otherwise the entities are sorted out one by one
+  if(transparencyPass == TRANSPARENCY_OPAQUE &&
+     gmshGeometryColorsAreTransparent())
     return;
   if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshGeometryIsTransparent())
     return;
@@ -590,7 +605,10 @@ void drawContext::drawGeom()
     if(m->getVisibility() && isVisible(m)) {
       {
         // nothing left for the per-point pass when the batch drew them all
-        bool batched = drawGeomPointsBatched(this, m);
+        // a mixed geometry is drawn entity by entity
+        bool mixed = transparencyPass != TRANSPARENCY_ALL &&
+                     !gmshGeometryColorsAreTransparent();
+        bool batched = !mixed && drawGeomPointsBatched(this, m);
         if(!batched || CTX::instance()->geom.pointLabels ||
            GEntity::numSelected)
           std::for_each(m->firstVertex(), m->lastVertex(),

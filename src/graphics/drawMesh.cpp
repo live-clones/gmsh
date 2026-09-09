@@ -544,6 +544,15 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
 
 // GVertex drawing routines
 
+// does this pass draw this entity? A mixed mesh draws its opaque entities in
+// the opaque pass and the others in the transparent one
+static bool passWants(drawContext *ctx, GEntity *e)
+{
+  if(ctx->transparencyPass == TRANSPARENCY_ALL) return true;
+  return (ctx->transparencyPass == TRANSPARENCY_TRANSPARENT) ==
+         gmshMeshEntityIsTransparent(e);
+}
+
 class drawMeshGVertex {
 private:
   drawContext *_ctx;
@@ -552,7 +561,7 @@ public:
   drawMeshGVertex(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GVertex *v)
   {
-    if(!v->getVisibility()) return;
+    if(!v->getVisibility() || !passWants(_ctx, v)) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    v->model() == GModel::current());
@@ -581,9 +590,7 @@ public:
   drawMeshGEdge(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GEdge *e)
   {
-    if(!e->getVisibility()) {
-      return;
-    }
+    if(!e->getVisibility() || !passWants(_ctx, e)) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    e->model() == GModel::current());
@@ -622,9 +629,7 @@ public:
   drawMeshGFace(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GFace *f)
   {
-    if(!f->getVisibility()) {
-      return;
-    }
+    if(!f->getVisibility() || !passWants(_ctx, f)) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    f->model() == GModel::current());
@@ -702,7 +707,7 @@ public:
   drawMeshGRegion(drawContext *ctx) : _ctx(ctx) {}
   void operator()(GRegion *r)
   {
-    if(!r->getVisibility()) return;
+    if(!r->getVisibility() || !passWants(_ctx, r)) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    r->model() == GModel::current());
@@ -813,7 +818,7 @@ static void drawClipArrays(drawContext *ctx, IT first, IT last, int dim)
   setMeshClipPlanes(false);
   for(IT it = first; it != last; it++) {
     GEntity *e = *it;
-    if(!e->getVisibility()) continue;
+    if(!e->getVisibility() || !passWants(ctx, e)) continue;
     if(!e->va_clip_lines && !e->va_clip_triangles) continue;
     if(ctx->render_mode == drawContext::GMSH_SELECT)
       ctx->setPickColor(dim, e->tag());
@@ -857,7 +862,10 @@ static bool needPerEntityPass(drawContext *ctx, int dim, bool mergedLines,
 
 void drawContext::drawMesh()
 {
-  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshMeshIsTransparent()) return;
+  // nothing of the mesh is opaque when the colours of the options are
+  // transparent; otherwise the entities are sorted out one by one
+  if(transparencyPass == TRANSPARENCY_OPAQUE && gmshMeshColorsAreTransparent())
+    return;
   if(transparencyPass == TRANSPARENCY_TRANSPARENT && !gmshMeshIsTransparent())
     return;
   if(!CTX::instance()->mesh.draw) return;
@@ -937,7 +945,11 @@ void drawContext::drawMesh()
             buildMerged(m->firstRegion(), m->lastRegion(), false, false, 0);
         }
       }
-      bool merge = !inPickColorMode();
+      // a mixed mesh, some entities transparent and the others not, is drawn
+      // entity by entity: the merged arrays hold them all
+      bool mixed = transparencyPass != TRANSPARENCY_ALL &&
+                   !gmshMeshColorsAreTransparent();
+      bool merge = !inPickColorMode() && !mixed;
       CTX *c = CTX::instance();
       // only the volume is clipped: curves and surfaces are drawn whole
       bool volumeOnly = c->clipWholeElements && c->clipOnlyVolume;
@@ -992,7 +1004,9 @@ void drawContext::drawMesh()
         else {
           for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
             GRegion *r = *it;
-            if(!r->va_clip_triangles || !r->getVisibility()) continue;
+            if(!r->va_clip_triangles || !r->getVisibility() ||
+               !passWants(this, r))
+              continue;
             if(render_mode == GMSH_SELECT) setPickColor(3, r->tag());
             drawArrays(this, r, r->va_clip_triangles, GL_TRIANGLES,
                        CTX::instance()->mesh.light);

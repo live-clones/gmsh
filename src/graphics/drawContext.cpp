@@ -513,7 +513,14 @@ static bool anyEntityColorIsTransparent()
   return result;
 }
 
-bool gmshGeometryIsTransparent()
+// is an entity's own colour transparent?
+static bool entityColorIsTransparent(GEntity *e)
+{
+  CTX *ctx = CTX::instance();
+  return ctx->alpha && e->useColor() && ctx->unpackAlpha(e->getColor()) < 255;
+}
+
+bool gmshGeometryColorsAreTransparent()
 {
   CTX *ctx = CTX::instance();
   const unsigned int c[7] = {
@@ -521,12 +528,30 @@ bool gmshGeometryIsTransparent()
     ctx->color.geom.surface,   ctx->color.geom.volume,
     ctx->color.geom.selection, ctx->color.geom.highlight[0],
     ctx->color.geom.highlight[1]};
-  if(anyColorIsTransparent(c, 7, ctx->geom.transparency)) return true;
-  // and the colours the entities were given one by one
-  return ctx->alpha && anyEntityColorIsTransparent();
+  return anyColorIsTransparent(c, 7, ctx->geom.transparency);
 }
 
-bool gmshMeshIsTransparent()
+bool gmshGeometryIsTransparent()
+{
+  // the colours the entities were given one by one count too
+  return gmshGeometryColorsAreTransparent() ||
+         (CTX::instance()->alpha && anyEntityColorIsTransparent());
+}
+
+bool gmshGeometryEntityIsTransparent(GEntity *e)
+{
+  return gmshGeometryColorsAreTransparent() || entityColorIsTransparent(e);
+}
+
+// the carousel colours the mesh by entity, physical group or partition, and
+// the first two also use the entity colours
+static bool meshUsesEntityColors()
+{
+  int carousel = CTX::instance()->mesh.colorCarousel;
+  return carousel == 1 || carousel == 2;
+}
+
+bool gmshMeshColorsAreTransparent()
 {
   CTX *ctx = CTX::instance();
   std::vector<unsigned int> c = {
@@ -535,15 +560,23 @@ bool gmshMeshIsTransparent()
     ctx->color.mesh.hexahedron, ctx->color.mesh.prism,
     ctx->color.mesh.pyramid,    ctx->color.mesh.trihedron,
     ctx->color.fg,              ctx->color.geom.selection};
-  // the carousel colours the mesh by entity, physical group or partition,
-  // and the first two also use the entity colours
   int carousel = ctx->mesh.colorCarousel;
   if(carousel >= 1 && carousel <= 3)
     for(int i = 0; i < 20; i++) c.push_back(ctx->color.mesh.carousel[i]);
-  if(anyColorIsTransparent(&c[0], (int)c.size(), ctx->mesh.transparency))
-    return true;
-  return ctx->alpha && (carousel == 1 || carousel == 2) &&
-         anyEntityColorIsTransparent();
+  return anyColorIsTransparent(&c[0], (int)c.size(), ctx->mesh.transparency);
+}
+
+bool gmshMeshIsTransparent()
+{
+  return gmshMeshColorsAreTransparent() ||
+         (CTX::instance()->alpha && meshUsesEntityColors() &&
+          anyEntityColorIsTransparent());
+}
+
+bool gmshMeshEntityIsTransparent(GEntity *e)
+{
+  return gmshMeshColorsAreTransparent() ||
+         (meshUsesEntityColors() && entityColorIsTransparent(e));
 }
 
 void gmshDrawArrays(GLenum type, int count, const float *dashes)

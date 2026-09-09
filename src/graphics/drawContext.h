@@ -56,8 +56,16 @@ enum gmshTransparencyPass {
 };
 // is anything in the geometry or the mesh transparent, through the
 // Transparency options or through a non-opaque colour?
+// Is anything in the geometry or the mesh transparent, through the
+// Transparency options, the colours of the options, or the colour of an
+// entity? Everything is, when the options' colours are; otherwise only the
+// entities whose own colour is, which a pass asks about one by one.
 bool gmshGeometryIsTransparent();
+bool gmshGeometryColorsAreTransparent();
+bool gmshGeometryEntityIsTransparent(GEntity *e);
 bool gmshMeshIsTransparent();
+bool gmshMeshColorsAreTransparent();
+bool gmshMeshEntityIsTransparent(GEntity *e);
 
 // draw a vertex array, using its index array if it has one
 void drawVertexArray(VertexArray *va, GLenum type);
@@ -349,8 +357,8 @@ public:
   void drawMesh();
   void drawPost();
   bool anyViewIsTransparent();
-  void drawShadowMap(bool split);
-  bool drawOneShadowMap(int which, const double dir[3], bool split);
+  void drawShadowMap();
+  bool drawOneShadowMap(int which, const double dir[3]);
   void drawStudioFloor();
   void drawBackgroundGradient();
   void drawBackgroundImage(bool moving);
