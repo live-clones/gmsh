@@ -3016,6 +3016,11 @@ double opt_general_shading(OPT_ARGS_NUM)
 double opt_general_studio_light_spread(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->studioLightSpread = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[35]->value(
+      CTX::instance()->studioLightSpread);
+#endif
   return CTX::instance()->studioLightSpread;
 }
 
