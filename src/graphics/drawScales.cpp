@@ -61,17 +61,31 @@ static int sharedExponent(double min, double max)
   return (e >= 5 || e <= -4) ? e : 0;
 }
 
-// "x10^e" with a multiplication sign and superscript digits
+// "x10^e": with a multiplication sign and superscript digits on screen and
+// in a raster picture, as TeX in a TeX picture, and in plain ASCII in the
+// other vector pictures, whose fonts have neither
 static std::string multiplierText(int exp)
 {
   if(!exp) return "";
+  char str[64];
+  if(CTX::instance()->printing) {
+    int f = CTX::instance()->print.fileFormat;
+    if(f == FORMAT_TEX) {
+      sprintf(str, "$\\times 10^{%d}$", exp);
+      return str;
+    }
+    if(f == FORMAT_PS || f == FORMAT_EPS || f == FORMAT_PDF ||
+       f == FORMAT_SVG || f == FORMAT_TIKZ) {
+      sprintf(str, "x10^%d", exp);
+      return str;
+    }
+  }
   const char *sup[10] = {"⁰", "¹", "²", "³", "⁴",
                          "⁵", "⁶", "⁷", "⁸", "⁹"};
   std::string s = "×10";
   if(exp < 0) s += "⁻";
-  char digits[16];
-  sprintf(digits, "%d", abs(exp));
-  for(const char *c = digits; *c; c++) s += sup[*c - '0'];
+  sprintf(str, "%d", abs(exp));
+  for(const char *c = str; *c; c++) s += sup[*c - '0'];
   return s;
 }
 
