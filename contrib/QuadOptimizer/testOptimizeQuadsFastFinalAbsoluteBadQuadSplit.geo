@@ -6,9 +6,9 @@ General.Terminal = 1;
 General.AbortOnError = 1;
 General.NumThreads = 1;
 Mesh.Smoothing = 0;
-Mesh.QuadqsTargetSize = 2;
-Mesh.QuadqsMinimumEdgeLength = 1;
-Mesh.QuadqsMaximumEdgeLength = 4;
+Mesh.PackTargetSize = 2;
+Mesh.OptimizeQuadsMinimumEdgeLength = 1;
+Mesh.OptimizeQuadsMaximumEdgeLength = 4;
 
 Point(1) = {0, 0, 0};
 Point(2) = {2, 0, 0};

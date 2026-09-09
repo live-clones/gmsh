@@ -16,7 +16,7 @@ def main():
     sys.path.insert(0, str(args.bindings.resolve()))
     import gmsh
     gmsh.initialize()
-    assert gmsh.option.getNumber("Mesh.QuadqsFinalSplitCadDistanceRatio") == .2
+    assert gmsh.option.getNumber("Mesh.OptimizeQuadsFinalSplitCadDistanceRatio") == .2
     records = []
     try:
         for name in ("valid_plane", "concave_plane", "bowtie_plane", "near_flat", "near_flat_tt",
@@ -70,11 +70,11 @@ def main():
                 gmsh.model.mesh.addElementsByType(face, 3, [1], [1, 2, 3, 4])
             if name == "near_flat":
                 assert gmsh.model.mesh.getElementQualities([1], "minSICN")[0] > 0
-            gmsh.option.setNumber("Mesh.QuadqsTargetSize", 1)
-            gmsh.option.setNumber("Mesh.QuadqsMinimumEdgeLength", 0)
-            gmsh.option.setNumber("Mesh.QuadqsMaximumEdgeLength", 100)
-            gmsh.option.setNumber("Mesh.QuadqsFinalSplitCadDistanceRatio", ratio)
-            gmsh.option.setNumber("Mesh.QuadqsSmartLaplacian", 1)
+            gmsh.option.setNumber("Mesh.PackTargetSize", 1)
+            gmsh.option.setNumber("Mesh.OptimizeQuadsMinimumEdgeLength", 0)
+            gmsh.option.setNumber("Mesh.OptimizeQuadsMaximumEdgeLength", 100)
+            gmsh.option.setNumber("Mesh.OptimizeQuadsFinalSplitCadDistanceRatio", ratio)
+            gmsh.option.setNumber("Mesh.OptimizeQuadsSmartLaplacian", 1)
             gmsh.option.setNumber("Mesh.Smoothing", 0)
             gmsh.option.setNumber("General.Verbosity", 6)
             gmsh.logger.start()

@@ -3,9 +3,9 @@
 General.Terminal = 1;
 General.AbortOnError = 1;
 
-Mesh.QuadqsTargetSize = 4;
-Mesh.QuadqsMinimumEdgeLength = 2;
-Mesh.QuadqsMaximumEdgeLength = 8;
+Mesh.PackTargetSize = 4;
+Mesh.OptimizeQuadsMinimumEdgeLength = 2;
+Mesh.OptimizeQuadsMaximumEdgeLength = 8;
 
 Point(1) = {0, 0, 0, 4};
 Point(2) = {8.1, 0, 0, 4};

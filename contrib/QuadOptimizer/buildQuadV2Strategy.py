@@ -94,6 +94,12 @@ def main():
     if args.manifest is not None:
         files = (
             "contrib/QuadOptimizer/quadV2StrategyMain.cpp",
+            "contrib/QuadOptimizer/intrinsicTriangulation.cpp",
+            "contrib/QuadOptimizer/intrinsicTriangulation.h",
+            "contrib/QuadOptimizer/quadFinalRepair.cpp",
+            "contrib/QuadOptimizer/quadFinalRepair.h",
+            "contrib/QuadOptimizer/quadOptimizerIntegration.cpp",
+            "contrib/QuadOptimizer/quadOptimizerIntegration.h",
             "contrib/QuadOptimizer/smallCavityOptimizerV2.cpp",
             "contrib/QuadOptimizer/smallCavityOptimizer.h",
             "contrib/QuadOptimizer/halfEdge.h",

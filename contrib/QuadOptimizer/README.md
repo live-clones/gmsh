@@ -1,5 +1,60 @@
 # Quad optimizer V2: repeated improvement rounds
 
+
+PACK + OptimizeQuads is independent of the QuadQuasiStructured algorithm.
+Gmsh generates the mesh in this order: PACK point placement, intrinsic
+triangulation on discrete surfaces, Blossom recombination, then OptimizeQuads.
+The shared background-field and pattern utilities remain reusable by both
+algorithms.
+
+## Code ownership and options
+
+- `intrinsicTriangulation.cpp`: intrinsic connectivity, flips and optional
+  long-edge splitting; called before Blossom, never as a final cleanup.
+- `quadOptimizerIntegration.cpp`: PACK completion, native optimizer dispatch,
+  option translation, temporary target-size settings and quality summaries.
+- `quadFinalRepair.cpp`: quality-based and transactional terminal quad splitting.
+- `smallCavityOptimizerV2.cpp`: V2 improvement rounds and final physical smoothing.
+
+The core keeps small dispatch calls. `Generator.h` and `meshGFaceOptimize.h`
+retain their original interfaces. Projection accelerators and the MSH4 embedded
+entity fix remain general geometry services. QuadOptimizer reuses the shared
+LBFGS solver without requiring the BoundaryLayers plugin.
+
+`Mesh.Pack*` controls generation; `Mesh.OptimizeQuads*` controls optimization.
+`Mesh.Quadqs*` remains reserved for QuadQuasiStructured. These development-branch
+options have been renamed; the old names are not aliases:
+
+| Previous suffix after `Mesh.` | Replacement |
+| --- | --- |
+| `QuadqsCleanupMethod` | `PackCleanupMethod` |
+| `QuadqsTargetSize` | `PackTargetSize` |
+| `QuadqsPacking3D` | `Pack3D` |
+| `QuadqsPacking3DForceAllPoints` | `PackForceAllPoints` |
+| `QuadqsIntrinsicEdgeLengthFactor` | `PackIntrinsicEdgeLengthFactor` |
+| `QuadqsSmartLaplacian` | `OptimizeQuadsSmartLaplacian` |
+| `QuadqsFinalSplitCadDistanceRatio` | `OptimizeQuadsFinalSplitCadDistanceRatio` |
+| `QuadqsMinimumEdgeLength` | `OptimizeQuadsMinimumEdgeLength` |
+| `QuadqsMaximumEdgeLength` | `OptimizeQuadsMaximumEdgeLength` |
+| `QuadqsPillowLayers` | `OptimizeQuadsPillowLayers` |
+
+`Mesh.OptimizeQuadsTargetSize` optionally overrides the target used by the
+optimizer; zero inherits `Mesh.PackTargetSize`, then the active size field.
+`Mesh.PackSizemapMethod = 3` and `Mesh.PackScalingOnTriangulation = 0.75`
+configure the shared guiding-field implementation independently of Quadqs.
+The default intrinsic split factor remains zero: no extra midpoint insertion.
+For example, surface quads with target size 4:
+
+```sh
+gmsh geometry.step -2 -algo pack -setnumber Mesh.PackTargetSize 4 -o mesh.msh
+```
+
+There are no QuadOptimizer test targets or CTest registrations in the Gmsh
+build. Existing standalone diagnostic fixtures remain available for explicit
+manual use. Debug files and JSON reports require explicit opt-in.
+
+## Improvement rounds
+
 `OptimizeQuadsFast` uses the persistent half-edge V2 optimizer. PACK delegates
 mesh generation to Gmsh. V2 then runs the following model-wide schedule:
 
@@ -86,8 +141,8 @@ an unrelated bow-tie vertex.
 
 ## Options
 
-- `Mesh.QuadqsCleanupMethod = 1`: V2 cleanup (default).
-- `Mesh.QuadqsSmartLaplacian = 2`: Smart Laplacian followed by one
+- `Mesh.PackCleanupMethod = 1`: V2 cleanup (default).
+- `Mesh.OptimizeQuadsSmartLaplacian = 2`: Smart Laplacian followed by one
   Winslow sweep per batch (default). `1` selects Smart Laplacian in the batches;
   `0` retains projected centroid/Winslow fallback. All modes finish with four
   global pure Winslow sweeps before splitting.
@@ -101,7 +156,7 @@ an unrelated bow-tie vertex.
   remain active. The final split tries to repair any invalid quads left by V2;
   quads with no valid diagonal are retained and reported.
   Non-negative values retain the existing recombination validity filter.
-- `Mesh.QuadqsFinalSplitCadDistanceRatio = 0.2`: after all smoothing and
+- `Mesh.OptimizeQuadsFinalSplitCadDistanceRatio = 0.2`: after all smoothing and
   mandatory rewrites, try to split physically invalid quads. A finite angle
   outside the absolute quality interval does not alone trigger a split:
   preserve geometrically valid pattern quads and report their quality violations.
@@ -127,7 +182,7 @@ an unrelated bow-tie vertex.
   `--final-split-cad-ratio` with the same semantics.
   Final repairs are independent of optimization budgets and shape quotas;
   remaining size/quality violations are reported by the final audit.
-- `Mesh.QuadqsIntrinsicEdgeLengthFactor = 0`: preserve the packed point cloud
+- `Mesh.PackIntrinsicEdgeLengthFactor = 0`: preserve the packed point cloud
   (default). Intrinsic edge splitting is opt-in: inserted midpoints have not
   passed the oriented-cube exclusion.
 
@@ -141,18 +196,18 @@ For a size-1 triangular, parametrized background mesh:
 
 ```sh
 gmsh background_h1.msh -2 -algo pack -clmin 1 -clmax 1 \
-  -setnumber Mesh.QuadqsPacking3D 1 \
-  -setnumber Mesh.QuadqsCleanupMethod 1 \
-  -setnumber Mesh.QuadqsSmartLaplacian 2 \
+  -setnumber Mesh.Pack3D 1 \
+  -setnumber Mesh.PackCleanupMethod 1 \
+  -setnumber Mesh.OptimizeQuadsSmartLaplacian 2 \
   -setnumber Mesh.Smoothing 3 \
-  -setnumber Mesh.QuadqsIntrinsicEdgeLengthFactor 0 \
+  -setnumber Mesh.PackIntrinsicEdgeLengthFactor 0 \
   -setnumber Mesh.RecombineMinimumQuality 0 \
   -setnumber Mesh.AlgorithmSwitchOnFailure 0 \
   -setnumber Mesh.SaveAll 1 -setnumber Mesh.SaveParametric 1 \
   -nt 1 -o result.msh
 ```
 
-`-2` meshes surfaces; `QuadqsPacking3D` selects physical 3D surface packing.
+`-2` meshes surfaces; `Pack3D` selects physical 3D surface packing.
 The standalone `quadV2StrategyMain.cpp` driver can also resume an existing
 mesh with `--max-accepted 0 --smoothing-passes 0 --final-winslow-passes 1`.
 `buildQuadV2Strategy.py` builds that driver using an existing Gmsh build.
@@ -183,11 +238,6 @@ These are reference results, not a guarantee that all specifications pass.
 last-only splitting and the explicit nodal modes. Numerical tests
 cover Smart corner sines, Winslow normalization and 3D rigid transformations.
 
-The existing 35-test quad subset passes with the current V2 pipeline. The
-historical TT-swap fixture now checks preservation under the supported V2
-QQ/QT-swap and TT-merge policy; V2 does not run the former dihedral-only TT
-pass. Final-split checks use V2 diagnostics, and PACK terminal checks explicitly
-enable cleanup instead of requesting preservation mode. No tests were added.
 Fixed CAD valence-two preparation checks physical separation across both
 shared segments before any cut, so overlapping T/Q or Q/Q input is rejected
 without mutation while legitimate QQ/QT poles remain repairable.

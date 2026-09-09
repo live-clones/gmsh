@@ -1,7 +1,7 @@
 foreach(mode IN ITEMS default 1 0)
   set(options)
   if(NOT mode STREQUAL "default")
-    list(APPEND options -setnumber Mesh.QuadqsSmartLaplacian ${mode})
+    list(APPEND options -setnumber Mesh.OptimizeQuadsSmartLaplacian ${mode})
   endif()
   execute_process(
     COMMAND "${GMSH_EXECUTABLE}" "${TEST_GEO}" -parse_and_exit -nopopup

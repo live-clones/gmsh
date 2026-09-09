@@ -21,6 +21,7 @@
 #include "MTriangle.h"
 #include "MVertex.h"
 #include "meshGFaceOptimize.h"
+#include "quadFinalRepair.h"
 #include "qmtDiskQuadrangulationRemeshing.h"
 #include "qmtMeshUtils.h"
 #include "discreteFace.h"
@@ -5053,7 +5054,7 @@ namespace QuadOptimizer {
     {
       if(options.targetSize > 0.) return options.targetSize;
 
-      // Quadqs/PACK is driven by the norm of a vector-valued background
+      // PACK is driven by the norm of a vector-valued background
       // field. Query that field directly when it is still available: the
       // generic BGM_MeshSize path can apply additional clamps and factors and
       // thus need not reproduce the length used during packing exactly.

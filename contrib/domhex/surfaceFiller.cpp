@@ -648,7 +648,7 @@ static void packingOfOrientedCubes3D(GFace *gf,
   }
 
   FILE *debug = nullptr;
-  if(CTX::instance()->mesh.quadqsSaveDebugFiles) {
+  if(CTX::instance()->mesh.saveDebugFiles) {
     char filename[256];
     sprintf(filename, "points3d%d.pos", gf->tag());
     debug = Fopen(filename, "w");
@@ -677,7 +677,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                              std::vector<SMetric3> &metrics)
 {
 
-  if(CTX::instance()->mesh.quadqsPacking3D) {
+  if(CTX::instance()->mesh.pack3D) {
     packingOfOrientedCubes3D(gf, packed, metrics);
     return;
   }
@@ -687,7 +687,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 
   FILE *f = NULL;
   FILE *f2 = NULL;
-  if(CTX::instance()->mesh.quadqsSaveDebugFiles) {
+  if(CTX::instance()->mesh.saveDebugFiles) {
     char ccc[256];
     sprintf(ccc, "points%d.pos", gf->tag());
     f = Fopen(ccc, "w");

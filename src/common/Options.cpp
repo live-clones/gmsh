@@ -7089,72 +7089,90 @@ double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.quadqsSizemapMethod;
 }
 
-double opt_mesh_quadqs_save_debug_files(OPT_ARGS_NUM)
+double opt_mesh_save_debug_files(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsSaveDebugFiles = val != 0.;
-  return CTX::instance()->mesh.quadqsSaveDebugFiles;
+  if(action & GMSH_SET) CTX::instance()->mesh.saveDebugFiles = val != 0.;
+  return CTX::instance()->mesh.saveDebugFiles;
 }
 
-double opt_mesh_quadqs_cleanup_method(OPT_ARGS_NUM)
+double opt_mesh_pack_cleanup_method(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsCleanupMethod = (int)val;
-  return CTX::instance()->mesh.quadqsCleanupMethod;
+  if(action & GMSH_SET) CTX::instance()->mesh.packCleanupMethod = (int)val;
+  return CTX::instance()->mesh.packCleanupMethod;
 }
 
-double opt_mesh_quadqs_smart_laplacian(OPT_ARGS_NUM)
+double opt_mesh_optimize_quads_smart_laplacian(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsSmartLaplacian = (int)val;
-  return CTX::instance()->mesh.quadqsSmartLaplacian;
+  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsSmartLaplacian = (int)val;
+  return CTX::instance()->mesh.optimizeQuadsSmartLaplacian;
 }
 
-double opt_mesh_quadqs_final_split_cad_distance_ratio(OPT_ARGS_NUM)
+double opt_mesh_optimize_quads_final_split_cad_distance_ratio(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsFinalSplitCadDistanceRatio = val;
-  return CTX::instance()->mesh.quadqsFinalSplitCadDistanceRatio;
+  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsFinalSplitCadDistanceRatio = val;
+  return CTX::instance()->mesh.optimizeQuadsFinalSplitCadDistanceRatio;
 }
 
-double opt_mesh_quadqs_target_size(OPT_ARGS_NUM)
+double opt_mesh_optimize_quads_target_size(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsTargetSize = val;
-  return CTX::instance()->mesh.quadqsTargetSize;
+  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsTargetSize = val;
+  return CTX::instance()->mesh.optimizeQuadsTargetSize;
 }
 
-double opt_mesh_quadqs_minimum_edge_length(OPT_ARGS_NUM)
+double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsMinimumEdgeLength = val;
-  return CTX::instance()->mesh.quadqsMinimumEdgeLength;
+  if(action & GMSH_SET) CTX::instance()->mesh.packSizemapMethod = val;
+  return CTX::instance()->mesh.packSizemapMethod;
 }
 
-double opt_mesh_quadqs_maximum_edge_length(OPT_ARGS_NUM)
+double opt_mesh_pack_scaling_on_triangulation(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsMaximumEdgeLength = val;
-  return CTX::instance()->mesh.quadqsMaximumEdgeLength;
+  if(action & GMSH_SET) CTX::instance()->mesh.packScalingOnTriangulation = val;
+  return CTX::instance()->mesh.packScalingOnTriangulation;
 }
 
-double opt_mesh_quadqs_intrinsic_edge_length_factor(OPT_ARGS_NUM)
+double opt_mesh_pack_target_size(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.packTargetSize = val;
+  return CTX::instance()->mesh.packTargetSize;
+}
+
+double opt_mesh_optimize_quads_minimum_edge_length(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsMinimumEdgeLength = val;
+  return CTX::instance()->mesh.optimizeQuadsMinimumEdgeLength;
+}
+
+double opt_mesh_optimize_quads_maximum_edge_length(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsMaximumEdgeLength = val;
+  return CTX::instance()->mesh.optimizeQuadsMaximumEdgeLength;
+}
+
+double opt_mesh_pack_intrinsic_edge_length_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.quadqsIntrinsicEdgeLengthFactor = val;
-  return CTX::instance()->mesh.quadqsIntrinsicEdgeLengthFactor;
+    CTX::instance()->mesh.packIntrinsicEdgeLengthFactor = val;
+  return CTX::instance()->mesh.packIntrinsicEdgeLengthFactor;
 }
 
-double opt_mesh_quadqs_pillow_layers(OPT_ARGS_NUM)
+double opt_mesh_optimize_quads_pillow_layers(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsPillowLayers = (int)val;
-  return CTX::instance()->mesh.quadqsPillowLayers;
+  if(action & GMSH_SET) CTX::instance()->mesh.optimizeQuadsPillowLayers = (int)val;
+  return CTX::instance()->mesh.optimizeQuadsPillowLayers;
 }
 
-double opt_mesh_quadqs_packing_3d(OPT_ARGS_NUM)
+double opt_mesh_pack_3d(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsPacking3D = (int)val;
-  return CTX::instance()->mesh.quadqsPacking3D;
+  if(action & GMSH_SET) CTX::instance()->mesh.pack3D = (int)val;
+  return CTX::instance()->mesh.pack3D;
 }
 
-double opt_mesh_quadqs_packing_3d_force_all_points(OPT_ARGS_NUM)
+double opt_mesh_pack_force_all_points(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.quadqsPacking3DForceAllPoints = (int)val;
-  return CTX::instance()->mesh.quadqsPacking3DForceAllPoints;
+    CTX::instance()->mesh.packForceAllPoints = (int)val;
+  return CTX::instance()->mesh.packForceAllPoints;
 }
 
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM)
