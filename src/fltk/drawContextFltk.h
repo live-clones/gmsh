@@ -107,7 +107,33 @@ public:
   double getStringWidth(const char *str) { return gl_width(str); }
   int getStringHeight() { return gl_height(); }
   int getStringDescent() { return gl_descent(); }
-  void drawString(const char *str) { gl_draw(str); }
+  void drawString(const char *str)
+  {
+    if(!stringHalo()) {
+      gl_draw(str);
+      return;
+    }
+    // eight copies around it in the background colour first, the raster
+    // position moved by a pixel each time (an empty bitmap moves it) and
+    // brought back after each, as drawing advances it
+    GLfloat pos[4], color[4];
+    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+    glGetFloatv(GL_CURRENT_COLOR, color);
+    unsigned int bg = CTX::instance()->color.bg;
+    glColor4ub(CTX::instance()->unpackRed(bg), CTX::instance()->unpackGreen(bg),
+               CTX::instance()->unpackBlue(bg), 255);
+    for(int i = -1; i <= 1; i++)
+      for(int j = -1; j <= 1; j++) {
+        if(!i && !j) continue;
+        glBitmap(0, 0, 0.f, 0.f, (GLfloat)i, (GLfloat)j, nullptr);
+        gl_draw(str);
+        GLfloat now[4];
+        glGetFloatv(GL_CURRENT_RASTER_POSITION, now);
+        glBitmap(0, 0, 0.f, 0.f, pos[0] - now[0], pos[1] - now[1], nullptr);
+      }
+    glColor4fv(color);
+    gl_draw(str);
+  }
   void resetFontTextures()
   {
 #if((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
