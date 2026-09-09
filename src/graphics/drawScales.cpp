@@ -153,14 +153,22 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
     int n = iso ? nbIso : nbIso + 1;
     int exp = 0, decimals = 0;
     if(defaultFormat) {
-      // three significant digits of the largest value, and enough to tell
-      // the neighbours apart
+      // the decimals the spacing calls for when they print every value
+      // exactly (round bands), else three significant digits of the largest
+      // value and enough to tell the neighbours apart
       exp = sharedExponent(min, max);
-      decimals = significantDecimals(std::max(fabs(min), fabs(max)), exp);
-      if(n > 1 && max > min && linear) {
-        double spacing = (max - min) / (n - 1);
-        int d = -(int)floor(log10(spacing / pow(10., exp)) + 1e-9);
-        decimals = std::max(decimals, std::min(d, decimals + 2));
+      int sig = significantDecimals(std::max(fabs(min), fabs(max)), exp);
+      decimals = sig;
+      if(n > 1 && max != min && linear) {
+        double spacing = fabs(max - min) / (n - 1);
+        int d = std::max(0, -(int)floor(log10(spacing / pow(10., exp)) + 1e-9));
+        bool exact = true;
+        for(int i = 0; i < n && exact; i++) {
+          double m = opt->getScaleValue(i, n, min, max) / pow(10., exp);
+          double sc = pow(10., d);
+          if(fabs(m * sc - floor(m * sc + 0.5)) > 1.e-6) exact = false;
+        }
+        decimals = exact ? d : std::max(sig, std::min(d, sig + 2));
       }
       multiplier = multiplierText(exp);
     }
@@ -180,7 +188,11 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
     return;
   }
 
-  if(defaultFormat && linear && max > min) {
+  if(defaultFormat && linear && max != min) {
+    // a range given the other way round runs down the bar: the ticks are
+    // those of the range the right way up, at the mirrored positions
+    bool reversed = (min > max);
+    if(reversed) std::swap(min, max);
     int exp = sharedExponent(min, max);
     multiplier = multiplierText(exp);
     // the ends
@@ -199,6 +211,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       ticks.push_back(mid);
       return;
     }
+    // (the middle needs no mirroring)
     // the finest round step whose labels all fit, tried from coarse to
     // fine; a round value too close to an end for both labels gives way
     std::vector<double> steps;
@@ -238,6 +251,8 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       if(ticksFit(cand, length, widths, fontH, horizontal)) best = cand;
     }
     ticks = best;
+    if(reversed)
+      for(std::size_t i = 0; i < ticks.size(); i++) ticks[i].t = 1. - ticks[i].t;
     return;
   }
 
