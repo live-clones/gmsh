@@ -6,6 +6,8 @@
 // Contributed by Jonathan Lambrechts
 
 #include "drawContextFltkStringTexture.h"
+#include "FlGui.h"
+#include "openglWindow.h"
 #include "glImmediate.h"
 #include "glShader.h"
 #include <algorithm>
@@ -52,7 +54,13 @@ public:
     GLint vp[4];
     glGetIntegerv(GL_VIEWPORT, vp);
     double f = 1.;
-    if(Fl_Window::current() && Fl_Window::current()->w() > 0)
+    openglWindow *gl = FlGui::available() ?
+                         FlGui::instance()->getCurrentOpenglWindow() :
+                         nullptr;
+    if(gl)
+      // the window's, or the picture's being printed
+      f = gl->getDrawContext()->highResolutionPixelFactor();
+    else if(Fl_Window::current() && Fl_Window::current()->w() > 0)
       f = vp[2] / (double)Fl_Window::current()->w();
     if(f <= 0.) f = 1.;
 
