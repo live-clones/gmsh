@@ -1557,6 +1557,8 @@ StringXNumber MeshOptions_Number[] = {
       "2: cross-field + CAD small features adaptation,"
       "3: from background mesh (e.g. sizes in current triangulation),"
       "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
+  { F|O, "SaveDebugFiles", opt_mesh_quadqs_save_debug_files, 0,
+    "Write optional meshing and optimization debug meshes, background fields, point views and statistics JSON (independent of verbosity)" },
   { F|O, "QuadqsCleanupMethod" , opt_mesh_quadqs_cleanup_method, 1 ,
     "Cleanup after packing of parallelograms. 0: legacy OptimizeQuads, "
       "1: bounded fast Quad Cleanup with local Winslow and a strict global "
@@ -1807,6 +1809,8 @@ StringXNumber SolverOptions_Number[] = {
     "Automatically check model every time a parameter is changed" },
   { F|O, "AutoLoadDatabase" , opt_solver_auto_load_database , 0. ,
     "Automatically load the ONELAB database when launching a solver" },
+  { F|O, "SaveDatabaseJSON", opt_solver_save_database_json, 0.,
+    "Write a JSON copy when saving the ONELAB database" },
   { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 1. ,
     "Automatically save the ONELAB database after each computation" },
   { F|O, "AutoMesh" , opt_solver_auto_mesh , 2. ,

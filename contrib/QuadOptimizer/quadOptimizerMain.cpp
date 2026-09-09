@@ -9,9 +9,9 @@
 
 int main(int argc, char **argv)
 {
-  if(argc < 5 || argc > 6) {
+  if(argc < 4 || argc > 6) {
     std::cerr << "Usage: gmshQuadOptimizer input.msh face-tag|all output.msh "
-                 "quality.pos [maximum-accepted-cavities|--smooth-existing]\n";
+                 "[quality.pos [maximum-accepted-cavities|--smooth-existing]]\n";
     return 1;
   }
   try {
@@ -32,8 +32,8 @@ int main(int argc, char **argv)
                                       optimizationStart)
           .count();
       if(!result.success ||
-         !QuadOptimizer::writeModelQualityPos(argv[4])) {
-        std::cerr << "Could not optimize all faces or write " << argv[4]
+         (argc >= 5 && !QuadOptimizer::writeModelQualityPos(argv[4]))) {
+        std::cerr << "Could not optimize all faces or write quality diagnostics"
                   << '\n';
         gmsh::finalize();
         return 2;
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
         gmsh::finalize();
         return 2;
       }
-      if(!QuadOptimizer::writeFaceQualityPos(faceTag, argv[4])) {
+      if(argc >= 5 && !QuadOptimizer::writeFaceQualityPos(faceTag, argv[4])) {
         std::cerr << "Could not write " << argv[4] << '\n';
         gmsh::finalize();
         return 3;
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
       gmsh::finalize();
       return 2;
     }
-    if(!QuadOptimizer::writeFaceQualityPos(faceTag, argv[4])) {
+    if(argc >= 5 && !QuadOptimizer::writeFaceQualityPos(faceTag, argv[4])) {
       std::cerr << "Could not write " << argv[4] << '\n';
       gmsh::finalize();
       return 3;

@@ -7089,6 +7089,12 @@ double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.quadqsSizemapMethod;
 }
 
+double opt_mesh_quadqs_save_debug_files(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsSaveDebugFiles = val != 0.;
+  return CTX::instance()->mesh.quadqsSaveDebugFiles;
+}
+
 double opt_mesh_quadqs_cleanup_method(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.quadqsCleanupMethod = (int)val;
@@ -7209,6 +7215,12 @@ double opt_solver_auto_load_database(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->solver.autoLoadDatabase = (int)val;
   return CTX::instance()->solver.autoLoadDatabase;
+}
+
+double opt_solver_save_database_json(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->solver.saveDatabaseJSON = val != 0.;
+  return CTX::instance()->solver.saveDatabaseJSON;
 }
 
 double opt_solver_auto_save_database(OPT_ARGS_NUM)

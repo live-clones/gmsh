@@ -236,6 +236,11 @@ Automatically load the ONELAB database when launching a solver@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.SaveDatabaseJSON
+Write a JSON copy when saving the ONELAB database@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.AutoSaveDatabase
 Automatically save the ONELAB database after each computation@*
 Default value: @code{1}@*

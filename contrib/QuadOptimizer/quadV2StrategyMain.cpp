@@ -46,7 +46,7 @@ namespace {
   void usage(std::ostream &out)
   {
     out << "Usage: gmshQuadV2Strategy --input frozen.msh --output result.msh "
-           "--report result.json [--geometry model.geo|model.brep|reference.msh] "
+           "[--report result.json] [--geometry model.geo|model.brep|reference.msh] "
            "[--schedule 0|1|2] [--target-size 4] [--min-edge h/2] "
            "[--max-edge 2h] [--max-passes -1] [--max-accepted 10000] "
            "[--smoothing-passes 2] [--smart-laplacian 0|1] [--active-smoothing 0|1] "
@@ -102,8 +102,8 @@ namespace {
       else if(key == "--verbosity") args.verbosity = integer(value);
       else throw std::runtime_error("Unknown option: " + key);
     }
-    if(args.input.empty() || args.output.empty() || args.report.empty())
-      throw std::runtime_error("--input, --output and --report are required");
+    if(args.input.empty() || args.output.empty())
+      throw std::runtime_error("--input and --output are required");
     if(!(args.target > 0.) || args.schedule < 0 || args.schedule > 2 ||
        args.maximumPasses < -1 || args.maximumAccepted < 0 ||
        args.smoothingPasses < 0 || args.finalWinslowPasses < 0 || args.terminalWinslowPasses < 0 || args.verbosity < 0 ||
@@ -115,12 +115,13 @@ namespace {
       throw std::runtime_error("Minimum edge length exceeds maximum edge length");
     const auto input = std::filesystem::weakly_canonical(args.input);
     const auto output = std::filesystem::weakly_canonical(args.output);
-    const auto report = std::filesystem::weakly_canonical(args.report);
-    if(input == output || input == report || output == report)
+    const auto report = args.report.empty() ? std::filesystem::path{} :
+      std::filesystem::weakly_canonical(args.report);
+    if(input == output || (!args.report.empty() && (input == report || output == report)))
       throw std::runtime_error("Input, output and report must be different files");
     if(!args.geometry.empty()) {
       const auto geometry = std::filesystem::weakly_canonical(args.geometry);
-      if(geometry == output || geometry == report)
+      if(geometry == output || (!args.report.empty() && geometry == report))
         throw std::runtime_error("Output and report cannot overwrite the geometry");
     }
     return args;
@@ -473,7 +474,8 @@ int main(int argc, char **argv)
       QuadOptimizer::summarizeQuadMeshQuality(GModel::current(), options);
     const double initialAuditSeconds = seconds(initialAuditStart);
     const auto initialClosestCadStart = Clock::now();
-    const auto initialClosestCad = auditClosestCad(GModel::current(), args.target);
+    const auto initialClosestCad = args.report.empty() ? ClosestCadAudit{} :
+      auditClosestCad(GModel::current(), args.target);
     const double initialClosestCadSeconds = seconds(initialClosestCadStart);
     const auto optimizerStart = Clock::now();
     const auto result =
@@ -484,7 +486,8 @@ int main(int argc, char **argv)
       QuadOptimizer::summarizeQuadMeshQuality(GModel::current(), options);
     const double finalAuditSeconds = seconds(finalAuditStart);
     const auto finalClosestCadStart = Clock::now();
-    const auto finalClosestCad = auditClosestCad(GModel::current(), args.target);
+    const auto finalClosestCad = args.report.empty() ? ClosestCadAudit{} :
+      auditClosestCad(GModel::current(), args.target);
     const double finalClosestCadSeconds = seconds(finalClosestCadStart);
 
     const auto writeStart = Clock::now();
@@ -495,64 +498,66 @@ int main(int argc, char **argv)
     gmsh::write(args.output);
     const double writeSeconds = seconds(writeStart);
 
-    std::ofstream report(args.report);
-    if(!report) throw std::runtime_error("Cannot open report: " + args.report);
-    report << std::setprecision(17);
-    {
-      JsonObject json(report);
-      json.field("schemaVersion", 2);
-      json.field("cadContractMetric",
-                 std::string(QuadOptimizer::CadDistance::metricId()));
-      json.field("input", args.input);
-      json.field("output", args.output);
-      json.field("geometry", args.geometry);
-      json.key("configuration");
+    if(!args.report.empty()) {
+      std::ofstream report(args.report);
+      if(!report) throw std::runtime_error("Cannot open report: " + args.report);
+      report << std::setprecision(17);
       {
-        JsonObject configuration(report);
-        configuration.field("schedule", args.schedule);
-        configuration.field("searchMode", args.searchMode);
-        configuration.field("searchCandidateLimit", args.searchCandidates);
-        configuration.field("targetSize", args.target);
-        configuration.field("minimumEdgeLength", args.minimum);
-        configuration.field("maximumEdgeLength", args.maximum);
-        configuration.field("maximumOptimizationPasses", args.maximumPasses);
-        configuration.field("maximumAcceptedCavities", args.maximumAccepted);
-        configuration.field("finalSmoothingPasses", args.smoothingPasses);
-        configuration.field("smartLaplacian", args.smartLaplacian);
-        configuration.field("activeNodalSmoothing", args.activeNodalSmoothing);
-        configuration.field("finalWinslowPasses", args.finalWinslowPasses);
-        configuration.field("terminalWinslowPasses", args.terminalWinslowPasses);
-        configuration.field("terminalMandatoryCleanup", args.terminalMandatory);
-        configuration.field("qualitySwaps", args.qualitySwaps);
-        configuration.field("finalSplitCadDistanceRatio", args.finalSplitCadRatio);
-        configuration.field("finalPairCleanup", args.finalPairs);
+        JsonObject json(report);
+        json.field("schemaVersion", 2);
+        json.field("cadContractMetric",
+                   std::string(QuadOptimizer::CadDistance::metricId()));
+        json.field("input", args.input);
+        json.field("output", args.output);
+        json.field("geometry", args.geometry);
+        json.key("configuration");
+        {
+          JsonObject configuration(report);
+          configuration.field("schedule", args.schedule);
+          configuration.field("searchMode", args.searchMode);
+          configuration.field("searchCandidateLimit", args.searchCandidates);
+          configuration.field("targetSize", args.target);
+          configuration.field("minimumEdgeLength", args.minimum);
+          configuration.field("maximumEdgeLength", args.maximum);
+          configuration.field("maximumOptimizationPasses", args.maximumPasses);
+          configuration.field("maximumAcceptedCavities", args.maximumAccepted);
+          configuration.field("finalSmoothingPasses", args.smoothingPasses);
+          configuration.field("smartLaplacian", args.smartLaplacian);
+          configuration.field("activeNodalSmoothing", args.activeNodalSmoothing);
+          configuration.field("finalWinslowPasses", args.finalWinslowPasses);
+          configuration.field("terminalWinslowPasses", args.terminalWinslowPasses);
+          configuration.field("terminalMandatoryCleanup", args.terminalMandatory);
+          configuration.field("qualitySwaps", args.qualitySwaps);
+          configuration.field("finalSplitCadDistanceRatio", args.finalSplitCadRatio);
+          configuration.field("finalPairCleanup", args.finalPairs);
+        }
+        json.key("timingsSeconds");
+        {
+          JsonObject timings(report);
+          timings.field("load", loadSeconds);
+          timings.field("initialAudit", initialAuditSeconds);
+          timings.field("initialClosestCadAudit", initialClosestCadSeconds);
+          timings.field("optimizer", optimizerSeconds);
+          timings.field("finalAudit", finalAuditSeconds);
+          timings.field("finalClosestCadAudit", finalClosestCadSeconds);
+          timings.field("write", writeSeconds);
+        }
+        json.key("initial");
+        writeAudit(report, initial);
+        json.key("final");
+        writeAudit(report, final);
+        json.key("closestCadInitial");
+        writeClosestCadAudit(report, initialClosestCad, args.target);
+        json.key("closestCadFinal");
+        writeClosestCadAudit(report, finalClosestCad, args.target);
+        json.key("optimizer");
+        writeResult(report, result);
       }
-      json.key("timingsSeconds");
-      {
-        JsonObject timings(report);
-        timings.field("load", loadSeconds);
-        timings.field("initialAudit", initialAuditSeconds);
-        timings.field("initialClosestCadAudit", initialClosestCadSeconds);
-        timings.field("optimizer", optimizerSeconds);
-        timings.field("finalAudit", finalAuditSeconds);
-        timings.field("finalClosestCadAudit", finalClosestCadSeconds);
-        timings.field("write", writeSeconds);
-      }
-      json.key("initial");
-      writeAudit(report, initial);
-      json.key("final");
-      writeAudit(report, final);
-      json.key("closestCadInitial");
-      writeClosestCadAudit(report, initialClosestCad, args.target);
-      json.key("closestCadFinal");
-      writeClosestCadAudit(report, finalClosestCad, args.target);
-      json.key("optimizer");
-      writeResult(report, result);
+      report << '\n';
+      report.close();
+      if(!report) throw std::runtime_error("Could not write report: " + args.report);
+      std::cout << "QUAD_V2_REPORT " << quoted(args.report) << '\n';
     }
-    report << '\n';
-    report.close();
-    if(!report) throw std::runtime_error("Could not write report: " + args.report);
-    std::cout << "QUAD_V2_REPORT " << quoted(args.report) << '\n';
     gmsh::finalize();
     initialized = false;
     return result.success && initial.success && final.success ? 0 : 2;
