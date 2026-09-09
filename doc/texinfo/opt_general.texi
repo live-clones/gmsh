@@ -1107,7 +1107,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Shading
-Shading model (0: classic; 1, 2 or 3: studio, with soft lighting, no specular highlights, and a shadow cast by light 0 on a floor normal to the X, Y or Z axis; shader pipeline only)@*
+Shading model (0: classic; 1, 2 or 3: studio, with soft lighting and a shadow cast by light 0 on a floor normal to the X, Y or Z axis; shader pipeline only)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1172,7 +1172,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.StudioFloorOffset
-Offset of the floor in studio shading from the bottom of the model, along the floor's normal (in model units)@*
+Offset of the floor in studio shading from the bottom of the model, along the floor's normal, relative to the largest dimension of the bounding box@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
