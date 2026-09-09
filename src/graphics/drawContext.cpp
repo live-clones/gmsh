@@ -901,13 +901,18 @@ static void studioKeyDirection(double dir[3])
 }
 
 // where the floor of the studio shading lies along the up axis: just below
-// the bounds, shifted by General.StudioFloorOffset
+// the bounds, shifted by General.StudioFloorOffset times the largest
+// dimension of the bounds
 static double studioFloorLevel(const double min[3], const double max[3],
                                int up)
 {
-  double diag = 0.;
-  for(int i = 0; i < 3; i++) diag += (max[i] - min[i]) * (max[i] - min[i]);
-  return min[up] - 1.e-3 * sqrt(diag) + CTX::instance()->studioFloorOffset;
+  double diag = 0., size = 0.;
+  for(int i = 0; i < 3; i++) {
+    diag += (max[i] - min[i]) * (max[i] - min[i]);
+    size = std::max(size, max[i] - min[i]);
+  }
+  return min[up] - 1.e-3 * sqrt(diag) +
+         CTX::instance()->studioFloorOffset * size;
 }
 
 // Half the side of the floor, around the middle of the bounds: one and a
