@@ -27,6 +27,7 @@ public:
     cairo_font_face_t *fontFace;
     int width, height;
     double xBearing, yBearing;
+      bool halo;
   } element;
 
 private:
@@ -150,26 +151,44 @@ public:
     gmshTexture(textureId);
 
     pos = 0.;
+    const unsigned char *cc = gmshCurrentColor();
+    unsigned char savedColor[4] = {cc[0], cc[1], cc[2], cc[3]};
+    unsigned int bg = CTX::instance()->color.bg;
+    float bgf[3] = {CTX::instance()->unpackRed(bg) / 255.f,
+                    CTX::instance()->unpackGreen(bg) / 255.f,
+                    CTX::instance()->unpackBlue(bg) / 255.f};
     for(auto it = _elements.begin(); it != _elements.end(); ++it) {
-      gmshTranslate(it->x, it->y, it->z);
-      gmshColor4f(it->r, it->g, it->b, it->alpha);
       float Lx = (float)(it->width * f);
       float Ly = (float)(it->height * f);
       // the coordinates are in [0, 1] across the picture, not in its pixels
       float s0 = (float)(pos / tw), s1 = (float)((pos + Lx) / tw);
       float t0 = 0.f, t1 = Ly / (float)th;
-      gmshBegin(GL_QUADS);
-      gmshTexCoord2f(s0, t0);
-      gmshVertex2f(0.0f, Ly);
-      gmshTexCoord2f(s1, t0);
-      gmshVertex2f(Lx, Ly);
-      gmshTexCoord2f(s1, t1);
-      gmshVertex2f(Lx, 0.0f);
-      gmshTexCoord2f(s0, t1);
-      gmshVertex2f(0.0f, 0.0f);
-      gmshEnd();
+      // the string, and before it, if it has a halo, eight copies around it
+      // in the background colour
+      int n = it->halo ? 9 : 1;
+      for(int k = 0; k < n; k++) {
+        float dx = 0.f, dy = 0.f;
+        if(n == 9 && k < 8) {
+          dx = (float)((k % 3) - 1) * (float)f;
+          dy = (float)((k / 3) - 1) * (float)f;
+          gmshColor4f(bgf[0], bgf[1], bgf[2], it->alpha);
+        }
+        else
+          gmshColor4f(it->r, it->g, it->b, it->alpha);
+        gmshTranslate(it->x + dx, it->y + dy, it->z);
+        gmshBegin(GL_QUADS);
+        gmshTexCoord2f(s0, t0);
+        gmshVertex2f(0.0f, Ly);
+        gmshTexCoord2f(s1, t0);
+        gmshVertex2f(Lx, Ly);
+        gmshTexCoord2f(s1, t1);
+        gmshVertex2f(Lx, 0.0f);
+        gmshTexCoord2f(s0, t1);
+        gmshVertex2f(0.0f, 0.0f);
+        gmshEnd();
+        gmshTranslate(-it->x - dx, -it->y - dy, -it->z);
+      }
       pos += Lx;
-      gmshTranslate(-it->x, -it->y, -it->z);
     }
     // whatever is waiting was collected to be drawn through this texture
     gmshFlushImmediate();
@@ -183,6 +202,7 @@ public:
       if(ownBlend && !wasBlend) glDisable(GL_BLEND);
     }
     gmshLighting(wasLit);
+    gmshColor4ubv(savedColor);
 
     // reset original matrices
     gmshPopMatrix(); // GL_MODELVIEW
@@ -235,7 +255,8 @@ void drawContextFltkCairo::drawString(const char *str, const double win[3])
                                (int)ceil(extent.width) + 2,
                                (int)ceil(extent.height) + 2,
                                extent.x_bearing - 1,
-                               extent.y_bearing - 1};
+                               extent.y_bearing - 1,
+                               stringHalo()};
   cairo_font_face_reference(elem.fontFace);
   _queue->append(elem);
 }

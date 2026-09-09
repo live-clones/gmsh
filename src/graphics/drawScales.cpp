@@ -52,6 +52,29 @@ static std::string endLabel(double v, int stepDecimals, int exp, double range)
                      exp);
 }
 
+// the power of ten the labels of a range share, or 0 for none
+static int sharedExponent(double min, double max)
+{
+  double mag = std::max(fabs(min), fabs(max));
+  if(mag <= 0.) return 0;
+  int e = (int)floor(log10(mag));
+  return (e >= 5 || e <= -4) ? e : 0;
+}
+
+// "x10^e" with a multiplication sign and superscript digits
+static std::string multiplierText(int exp)
+{
+  if(!exp) return "";
+  const char *sup[10] = {"⁰", "¹", "²", "³", "⁴",
+                         "⁵", "⁶", "⁷", "⁸", "⁹"};
+  std::string s = "×10";
+  if(exp < 0) s += "⁻";
+  char digits[16];
+  sprintf(digits, "%d", abs(exp));
+  for(const char *c = digits; *c; c++) s += sup[*c - '0'];
+  return s;
+}
+
 static bool ticksFit(const std::vector<scaleTick> &ticks, double length,
                      const std::vector<double> &widths, double fontH,
                      bool horizontal)
@@ -65,12 +88,52 @@ static bool ticksFit(const std::vector<scaleTick> &ticks, double length,
   return true;
 }
 
-// The labels of the scale. With the default format the values are round
-// numbers of a step that lets the labels fit along the bar, the range's
-// ends added, printed as plain decimals or scaled by a power of ten written
-// once in `multiplier'; with a format of the user's, or on a logarithmic
-// scale, they are the nbIso divisions of the range as before, as many as
-// fit.
+// every k-th of the given labels, the last one always, with k the smallest
+// that lets them fit
+static void thinTicks(std::vector<scaleTick> &ticks, double length,
+                      double fontH, bool horizontal)
+{
+  drawContextGlobal *g = drawContext::global();
+  std::vector<double> widths(ticks.size());
+  for(std::size_t i = 0; i < ticks.size(); i++)
+    widths[i] = g->getStringWidth(ticks[i].label.c_str());
+  int n = (int)ticks.size();
+  for(int k = 1; k < n; k++) {
+    std::vector<scaleTick> kept;
+    std::vector<double> kw;
+    for(int i = 0; i < n; i += k) {
+      kept.push_back(ticks[i]);
+      kw.push_back(widths[i]);
+    }
+    if(kept.back().t != ticks.back().t) {
+      kept.push_back(ticks.back());
+      kw.push_back(widths.back());
+    }
+    if(ticksFit(kept, length, kw, fontH, horizontal)) {
+      ticks = kept;
+      return;
+    }
+    // the last two may be what collides: without the one before the last
+    if(kept.size() > 2) {
+      kept.erase(kept.end() - 2);
+      kw.erase(kw.end() - 2);
+      if(ticksFit(kept, length, kw, fontH, horizontal)) {
+        ticks = kept;
+        return;
+      }
+    }
+  }
+  scaleTick last = ticks.back();
+  ticks.clear();
+  ticks.push_back(last);
+}
+
+// The labels of the scale. Iso: one per iso value, centred on it; discrete
+// or numeric: the boundaries of the bands; both every k-th as needed to fit.
+// Continuous with the default format: round numbers of a step that lets the
+// labels fit, the range's ends added. Otherwise the nbIso divisions of the
+// range, as many as fit. With the default format the labels are plain
+// decimals, or mantissas over one power of ten given in `multiplier'.
 static void scaleTicks(PViewOptions *opt, double min, double max,
                        double length, double fontH, bool horizontal,
                        std::vector<scaleTick> &ticks, std::string &multiplier)
@@ -80,16 +143,46 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
   drawContextGlobal *g = drawContext::global();
   bool defaultFormat = (opt->format == "%.3g");
   bool linear = (opt->scaleType == PViewOptions::Linear);
+  int nbIso = std::max(1, opt->nbIso);
   char str[128];
 
-  if(defaultFormat && linear && max > min) {
-    double mag = std::max(fabs(min), fabs(max));
-    int e = (int)floor(log10(mag));
-    int exp = (e >= 5 || e <= -4) ? e : 0;
-    if(exp) {
-      sprintf(str, "x10^%d", exp);
-      multiplier = str;
+  if(opt->intervalsType == PViewOptions::Iso ||
+     opt->intervalsType == PViewOptions::Discrete ||
+     opt->intervalsType == PViewOptions::Numeric) {
+    bool iso = (opt->intervalsType == PViewOptions::Iso);
+    int n = iso ? nbIso : nbIso + 1;
+    int exp = 0, decimals = 0;
+    if(defaultFormat) {
+      // three significant digits of the largest value, and enough to tell
+      // the neighbours apart
+      exp = sharedExponent(min, max);
+      decimals = significantDecimals(std::max(fabs(min), fabs(max)), exp);
+      if(n > 1 && max > min && linear) {
+        double spacing = (max - min) / (n - 1);
+        int d = -(int)floor(log10(spacing / pow(10., exp)) + 1e-9);
+        decimals = std::max(decimals, std::min(d, decimals + 2));
+      }
+      multiplier = multiplierText(exp);
     }
+    for(int i = 0; i < n; i++) {
+      scaleTick tk;
+      tk.v = opt->getScaleValue(i, n, min, max);
+      tk.t = iso ? (i + 0.5) / nbIso : (double)i / nbIso;
+      if(defaultFormat)
+        tk.label = fixedNumber(tk.v, decimals, exp);
+      else {
+        sprintf(str, opt->format.c_str(), tk.v);
+        tk.label = str;
+      }
+      ticks.push_back(tk);
+    }
+    thinTicks(ticks, length, fontH, horizontal);
+    return;
+  }
+
+  if(defaultFormat && linear && max > min) {
+    int exp = sharedExponent(min, max);
+    multiplier = multiplierText(exp);
     // the ends
     double r = max - min;
     std::vector<scaleTick> ends(2);
@@ -151,7 +244,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
   // the divisions of the range, as many as fit
   sprintf(str, opt->format.c_str(), -M_PI * 1.e-4);
   double maxw = g->getStringWidth(str);
-  int nbv = std::max(1, opt->nbIso);
+  int nbv = nbIso;
   double f = 2.;
   if(horizontal && length < nbv * maxw)
     nbv = (length < f * maxw) ? 1 : 2;
@@ -160,11 +253,26 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
   for(int i = 0; i < nbv + 1; i++) {
     scaleTick tk;
     tk.v = opt->getScaleValue(i, nbv + 1, min, max);
-    tk.t = (nbv == 0) ? 0.5 : (double)i / nbv;
+    tk.t = (double)i / nbv;
     sprintf(str, opt->format.c_str(), tk.v);
     tk.label = str;
     ticks.push_back(tk);
   }
+}
+
+// a string with a halo in the background colour, so that it reads over the
+// data; align 0 left, 1 centred, 2 right
+static void haloString(drawContext *ctx, const std::string &s, double x,
+                       double y, int align, bool title = false)
+{
+  CTX *c = CTX::instance();
+  const std::string &font = title ? c->glFontTitle : c->glFont;
+  int fontEnum = title ? c->glFontEnumTitle : c->glFontEnum;
+  int size = title ? c->glFontSizeTitle : c->glFontSize;
+  gmshColor4ubv((GLubyte *)&c->color.text);
+  drawContext::global()->setStringHalo(true);
+  ctx->drawString(s, x, y, 0., font, fontEnum, size, align);
+  drawContext::global()->setStringHalo(false);
 }
 
 static void drawScaleBar(PView *p, double xmin, double ymin, double width,
@@ -175,6 +283,8 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
 
   double box = (horizontal ? width : height) / (opt->nbIso ? opt->nbIso : 1);
 
+  bool iso = (opt->intervalsType == PViewOptions::Iso);
+  if(iso) gmshLineWidth(3.);
   for(int i = 0; i < opt->nbIso; i++) {
     if(opt->intervalsType == PViewOptions::Discrete ||
        opt->intervalsType == PViewOptions::Numeric) {
@@ -223,6 +333,7 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       gmshEnd();
     }
     else {
+      // an iso value: a thick mark in its colour
       unsigned int col = opt->getColor(i, opt->nbIso);
       gmshColor4ubv((GLubyte *)&col);
       gmshBegin(GL_LINES);
@@ -238,135 +349,61 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
     }
   }
 
-  // a filled bar gets an outline and a tick mark at each label
-  if(opt->intervalsType != PViewOptions::Iso) {
-    gmshColor4ubv((GLubyte *)&CTX::instance()->color.text);
-    gmshLineWidth(1.);
-    gmshBegin(GL_LINE_LOOP);
-    gmshVertex2d(xmin, ymin);
-    gmshVertex2d(xmin + width, ymin);
-    gmshVertex2d(xmin + width, ymin + height);
-    gmshVertex2d(xmin, ymin + height);
-    gmshEnd();
-    gmshBegin(GL_LINES);
-    for(std::size_t i = 0; i < ticks.size(); i++) {
-      if(horizontal) {
-        double x = xmin + ticks[i].t * width;
-        gmshVertex2d(x, ymin + height);
-        gmshVertex2d(x, ymin + height + 0.4 * tic);
-      }
-      else {
-        double y = ymin + ticks[i].t * height;
-        gmshVertex2d(xmin + width, y);
-        gmshVertex2d(xmin + width + 0.4 * tic, y);
-      }
+  // an outline, and a tick mark at each label
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.text);
+  gmshLineWidth(1.);
+  gmshBegin(GL_LINE_LOOP);
+  gmshVertex2d(xmin, ymin);
+  gmshVertex2d(xmin + width, ymin);
+  gmshVertex2d(xmin + width, ymin + height);
+  gmshVertex2d(xmin, ymin + height);
+  gmshEnd();
+  gmshBegin(GL_LINES);
+  for(std::size_t i = 0; i < ticks.size(); i++) {
+    if(horizontal) {
+      double x = xmin + ticks[i].t * width;
+      gmshVertex2d(x, ymin + height);
+      gmshVertex2d(x, ymin + height + 0.4 * tic);
     }
-    gmshEnd();
+    else {
+      double y = ymin + ticks[i].t * height;
+      gmshVertex2d(xmin + width, y);
+      gmshVertex2d(xmin + width + 0.4 * tic, y);
+    }
   }
+  gmshEnd();
 }
 
 static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
                             double ymin, double width, double height,
                             double tic, int horizontal,
-                            const std::vector<scaleTick> &ticks,
-                            const std::string &multiplier)
+                            const std::vector<scaleTick> &ticks)
 {
   PViewOptions *opt = p->getOptions();
-
   if(!opt->nbIso) return;
 
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
-  double font_h = drawContext::global()->getStringHeight(); // total font height
   double font_a =
     drawContext::global()->getStringHeight() -
     drawContext::global()->getStringDescent(); // height above ref pt
 
-  gmshColor4ubv((GLubyte *)&CTX::instance()->color.text);
-
-  if(opt->intervalsType == PViewOptions::Iso) {
-    // one label per iso line, centred on it; with the default format the
-    // values share the multiplier, with three significant digits
-    bool defaultFormat = (opt->format == "%.3g");
-    int exp = 0, decimals = 0;
-    if(defaultFormat) {
-      // three significant digits of the largest value, and enough to tell
-      // neighbouring iso values apart
-      double mag = std::max(fabs(opt->tmpMin), fabs(opt->tmpMax));
-      int e = mag > 0. ? (int)floor(log10(mag)) : 0;
-      exp = (e >= 5 || e <= -4) ? e : 0;
-      decimals = significantDecimals(mag, exp);
-      if(opt->nbIso > 1 && opt->tmpMax > opt->tmpMin) {
-        double spacing = (opt->tmpMax - opt->tmpMin) / (opt->nbIso - 1);
-        int d = -(int)floor(log10(spacing / pow(10., exp)) + 1e-9);
-        decimals = std::max(decimals, std::min(d, decimals + 2));
-      }
-    }
-    char label[1024];
-    if(defaultFormat)
-      strcpy(label, fixedNumber(-M_PI * 1.e-4 * pow(10., exp), decimals, exp).c_str());
-    else
-      sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
-    double maxw = drawContext::global()->getStringWidth(label);
-    int nbv = opt->nbIso;
-    if(horizontal && width < nbv * maxw)
-      nbv = (width < 2.5 * maxw) ? 1 : 2;
-    else if(!horizontal && height < nbv * font_h)
-      nbv = (height < 2.5 * font_h) ? 1 : 2;
-    double box = (horizontal ? width : height) / opt->nbIso;
-    double vbox = (horizontal ? width : height) / nbv;
-    if(opt->nbIso > 2 && (nbv == 1 || nbv == 2)) {
-      vbox = (vbox * nbv - box) / nbv;
-      nbv++;
-    }
-    for(int i = 0; i < nbv; i++) {
-      double v = opt->getScaleValue(i, nbv, opt->tmpMin, opt->tmpMax);
-      if(defaultFormat)
-        strcpy(label, fixedNumber(v, decimals, exp).c_str());
-      else
-        sprintf(label, opt->format.c_str(), v);
-      if(horizontal)
-        ctx->drawStringCenter(label, xmin + box / 2. + i * vbox,
-                              ymin + height + tic, 0.);
-      else
-        ctx->drawString(label, xmin + width + tic,
-                        ymin + box / 2. + i * vbox - font_a / 3., 0.);
-    }
-    if(exp) {
-      char mult[32];
-      sprintf(mult, "x10^%d", exp);
-      if(horizontal)
-        ctx->drawStringRight(mult, xmin + width, ymin - 0.4 * tic - font_a, 0.);
-      else
-        ctx->drawString(mult, xmin + width + tic, ymin + height + 1.2 * font_h,
-                        0.);
-    }
-    return;
-  }
-
   for(std::size_t i = 0; i < ticks.size(); i++) {
     if(horizontal)
-      ctx->drawStringCenter(ticks[i].label, xmin + ticks[i].t * width,
-                            ymin + height + tic, 0.);
+      haloString(ctx, ticks[i].label, xmin + ticks[i].t * width,
+                 ymin + height + tic, 1);
     else
-      ctx->drawString(ticks[i].label, xmin + width + tic,
-                      ymin + ticks[i].t * height - font_a / 3., 0.);
-  }
-  if(multiplier.size()) {
-    if(horizontal)
-      ctx->drawStringRight(multiplier, xmin + width, ymin - 0.4 * tic - font_a,
-                           0.);
-    else
-      ctx->drawString(multiplier, xmin + width + tic,
-                      ymin + height + 1.2 * font_h, 0.);
+      haloString(ctx, ticks[i].label, xmin + width + tic,
+                 ymin + ticks[i].t * height - font_a / 3., 0);
   }
 }
 
-// the title of the scale: the name of the view, and on a line of its own
-// below it what the time or step is, when there is one
+// the title of the scale: the name of the view, and below it on a line of
+// its own what the time or step is, when there is one, with the power of
+// ten the labels share at the end of that line
 static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
                            double width, double height, double tic,
-                           int horizontal)
+                           int horizontal, const std::string &multiplier)
 {
   PViewOptions *opt = p->getOptions();
   PViewData *data;
@@ -419,29 +456,22 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   }
   std::string name = data->getName();
 
-  gmshColor4ubv((GLubyte *)&CTX::instance()->color.text);
   if(horizontal) {
     double y = ymin + height + tic + 1.4 * font_h;
-    if(sub[0]) {
-      ctx->drawString(sub, xmin + width / 2., y, 0., CTX::instance()->glFont,
-                      CTX::instance()->glFontEnum, CTX::instance()->glFontSize,
-                      1);
+    if(sub[0] || multiplier.size()) {
+      if(sub[0]) haloString(ctx, sub, xmin + width / 2., y, 1);
+      if(multiplier.size()) haloString(ctx, multiplier, xmin + width, y, 2);
       y += 1.2 * title_h;
     }
-    ctx->drawString(name, xmin + width / 2., y, 0.,
-                    CTX::instance()->glFontTitle,
-                    CTX::instance()->glFontEnumTitle,
-                    CTX::instance()->glFontSizeTitle, 1);
+    haloString(ctx, name, xmin + width / 2., y, 1, true);
   }
   else {
     double y = ymin - 2 * font_h;
-    ctx->drawString(name, xmin, y, 0., CTX::instance()->glFontTitle,
-                    CTX::instance()->glFontEnumTitle,
-                    CTX::instance()->glFontSizeTitle, 0);
-    if(sub[0])
-      ctx->drawString(sub, xmin, y - 1.3 * font_h, 0., CTX::instance()->glFont,
-                      CTX::instance()->glFontEnum, CTX::instance()->glFontSize,
-                      0);
+    haloString(ctx, name, xmin, y, 0, true);
+    if(sub[0]) haloString(ctx, sub, xmin, y - 1.3 * font_h, 0);
+    if(multiplier.size())
+      haloString(ctx, multiplier, xmin + width + tic, ymin + height + 1.2 * font_h,
+                 0);
   }
 }
 
@@ -474,14 +504,13 @@ static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
   double font_h = drawContext::global()->getStringHeight();
   std::vector<scaleTick> ticks;
   std::string multiplier;
-  if(opt->intervalsType != PViewOptions::Iso)
-    scaleTicks(opt, opt->tmpMin, opt->tmpMax, horizontal ? width : height,
-               font_h, horizontal, ticks, multiplier);
+  scaleTicks(opt, opt->tmpMin, opt->tmpMax, horizontal ? width : height,
+             font_h, horizontal, ticks, multiplier);
 
   drawScaleBar(p, xmin, ymin, width, height, tic, horizontal, ticks);
-  drawScaleValues(ctx, p, xmin, ymin, width, height, tic, horizontal, ticks,
-                  multiplier);
-  drawScaleLabel(ctx, p, xmin, ymin, width, height, tic, horizontal);
+  drawScaleValues(ctx, p, xmin, ymin, width, height, tic, horizontal, ticks);
+  drawScaleLabel(ctx, p, xmin, ymin, width, height, tic, horizontal,
+                 multiplier);
 }
 
 void drawContext::drawScales()

@@ -159,6 +159,13 @@ public:
   // strings are recomputed one by one, which is slow on macOS
   virtual void reserveStringTextures(std::size_t n) {}
   virtual void flushString() {}
+  // draw the strings with a one pixel halo in the background colour, so
+  // that they read over the data
+  void setStringHalo(bool halo) { _stringHalo = halo; }
+  bool stringHalo() { return _stringHalo; }
+protected:
+  bool _stringHalo = false;
+public:
   // is a mouse button held down? The vertex arrays are left alone while
   // dragging.
   virtual bool mouseIsPressed() { return false; }
