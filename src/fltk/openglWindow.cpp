@@ -107,6 +107,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   _studioTimer = false;
   _studioW = _studioH = 0;
   _printW = _printH = 0;
+  _printScale = 1.;
   _ctx = new drawContext();
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
@@ -239,10 +240,11 @@ void openglWindow::draw()
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
   if(_printW) {
-    // a picture of its own size, in plain pixels
-    _ctx->viewport[2] = _printW;
-    _ctx->viewport[3] = _printH;
-    _ctx->setHighResolutionPixelFactor(1.);
+    // a picture of its own size, drawn at its own scale: what is sized in
+    // pixels (fonts, lines, points, the scales) follows
+    _ctx->viewport[2] = (int)(_printW / _printScale + 0.5);
+    _ctx->viewport[3] = (int)(_printH / _printScale + 0.5);
+    _ctx->setHighResolutionPixelFactor(_printScale);
     glViewport(0, 0, _printW, _printH);
   }
   else {
@@ -527,18 +529,22 @@ void openglWindow::_studioFrame()
   if(k + 1 < n) Fl::add_timeout(0.01, _studioSampleCb, this);
 }
 
-bool openglWindow::printTo(int width, int height, unsigned int format,
-                           unsigned int type, void *pixels)
+bool openglWindow::printTo(int width, int height, int supersampling,
+                           unsigned int format, unsigned int type,
+                           void *pixels)
 {
   make_current();
   if(!gmshUseShaders() || !glShader::beginPrintTarget(width, height))
     return false;
   _printW = width;
   _printH = height;
+  _printScale = std::max(1, supersampling) *
+                (w() ? (double)pixel_w() / (double)w() : 1.);
   draw();
   glShader::readPrintTarget(width, height, format, type, pixels);
   glShader::endPrintTarget();
   _printW = _printH = 0;
+  _printScale = 1.;
   // the window itself is drawn again at its own size
   redraw();
   return true;

@@ -271,7 +271,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     printSize(width, height);
     PixelBuffer *big = new PixelBuffer(width * ss, height * ss, format, type);
     if(FlGui::instance()->getCurrentOpenglWindow()->printTo(
-         width * ss, height * ss, format, type, big->getPixels())) {
+         width * ss, height * ss, ss, format, type, big->getPixels())) {
       if(ss == 1) return big;
       PixelBuffer *small = new PixelBuffer(width, height, format, type);
       downsample(big, small, ss);
