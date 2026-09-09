@@ -91,6 +91,14 @@ private:
   int _selection, _trySelection, _trySelectionXYWH[4];
   void _drawScreenMessage();
   void _drawBorder();
+  // the accumulation of the studio frames: whether this draw is one of them
+  // (asked for by the timer), and the modelview and window size the last one
+  // was drawn with
+  bool _studioTimer;
+  double _studioModel[16];
+  int _studioW, _studioH;
+  void _studioFrame();
+  static void _studioSampleCb(void *data);
   bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
                int w, int h, std::vector<GVertex *> &vertices,
                std::vector<GEdge *> &edges, std::vector<GFace *> &faces,

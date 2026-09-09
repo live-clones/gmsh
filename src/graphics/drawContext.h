@@ -195,6 +195,9 @@ public:
   // true while the scene is drawn into the shadow map of the studio shading:
   // only the model is drawn then, no strings or images
   bool shadowPass;
+  // the frame being accumulated in studio shading: 0 draws the plain frame,
+  // higher ones jitter the light, the dome and the projection
+  int studioSample;
 
 private:
   // Colour buffer picking: a selection pass draws every pickable object in a
@@ -347,6 +350,7 @@ public:
   void drawPost();
   bool anyViewIsTransparent();
   void drawShadowMap(bool split);
+  bool drawOneShadowMap(int which, const double dir[3], bool split);
   void drawStudioFloor();
   void drawBackgroundGradient();
   void drawBackgroundImage(bool moving);

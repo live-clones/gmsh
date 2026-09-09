@@ -3007,6 +3007,18 @@ double opt_general_shading(OPT_ARGS_NUM)
   return CTX::instance()->shading;
 }
 
+double opt_general_studio_light_spread(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->studioLightSpread = val;
+  return CTX::instance()->studioLightSpread;
+}
+
+double opt_general_studio_samples(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->studioSamples = (int)val;
+  return CTX::instance()->studioSamples;
+}
+
 double opt_general_order_independent_transparency(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

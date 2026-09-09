@@ -330,6 +330,10 @@ public:
   // lighting model of the shader pipeline: 0 the fixed function one, 1
   // studio (linear light, hemisphere ambient, soft key light, no specular)
   int shading;
+  // angular radius (degrees) of the studio light, which sets the softness of
+  // its shadow, and the number of frames accumulated while the view is still
+  double studioLightSpread;
+  int studioSamples;
   // order independent (weighted blended) transparency instead of back to
   // front sorting
   int orderIndependentTransparency;

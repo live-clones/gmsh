@@ -159,12 +159,18 @@ uniform float uShininess;
 // 0: the fixed function model below; 1: studio; 2: the shadow catcher of the
 // studio model, on which only the shadow is drawn
 uniform int uShading;
-// the studio light: its direction in eye coordinates, and its shadow map with
-// the matrix from eye coordinates to the map
+// the studio light: the key direction and the model's up axis in eye
+// coordinates, the key's shadow map with the matrix from eye coordinates to
+// it, and the same for the dome direction of the current sample
 uniform vec3 uStudioLight;
+uniform vec3 uStudioUp;
 uniform bool uShadowOn;
 uniform mat4 uShadowFromEye;
 uniform sampler2DShadow uShadow;
+uniform bool uDomeOn;
+uniform vec3 uDomeDir;
+uniform mat4 uDomeFromEye;
+uniform sampler2DShadow uDome;
 // 0: draw on the window; 1: sum into the transparency buffers
 uniform int uOitPass;
 
@@ -205,20 +211,19 @@ void emit(vec4 c)
   }
 }
 
-// how much of the studio light reaches this fragment: 1 outside the map or
-// with nothing in front, 0 in full shade, filtered over 5x5 texels
-float shadowLit(float bias)
+// how much of a light reaches this fragment through its map: 1 outside the
+// map or with nothing in front, 0 in full shade, filtered over 5x5 texels
+float mapLit(sampler2DShadow map, mat4 fromEye, float bias)
 {
-  if(!uShadowOn) return 1.0;
-  vec4 p = uShadowFromEye * vec4(vEye, 1.0);
+  vec4 p = fromEye * vec4(vEye, 1.0);
   vec3 q = p.xyz / p.w;
   if(q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0 || q.z > 1.0) return 1.0;
-  vec2 texel = 1.0 / vec2(textureSize(uShadow, 0));
+  vec2 texel = 1.0 / vec2(textureSize(map, 0));
   float lit = 0.0;
   for(int i = -2; i <= 2; i++)
     for(int j = -2; j <= 2; j++)
-      lit += texture(uShadow, vec3(q.xy + vec2(float(i), float(j)) * texel,
-                                   q.z - bias));
+      lit += texture(map, vec3(q.xy + vec2(float(i), float(j)) * texel,
+                               q.z - bias));
   return lit / 25.0;
 }
 
@@ -243,8 +248,13 @@ void main()
   if(uTextured == 1) alpha *= texture(uTexture, vTexCoord).r;
 
   if(uShading == 2) {
-    // the shadow catcher: a tint as opaque as the shade it is in
-    emit(vec4(vColor.rgb, alpha * (1.0 - shadowLit(0.001))));
+    // the shadow catcher: a tint as opaque as the shade it is in, from the
+    // key light and, once the dome is sampled, from the ambient occlusion
+    float lit = uShadowOn ? mapLit(uShadow, uShadowFromEye, 0.001) : 1.0;
+    float shade = 1.0 - lit;
+    if(uDomeOn)
+      shade = 1.0 - 0.6 * lit - 0.4 * mapLit(uDome, uDomeFromEye, 0.001);
+    emit(vec4(vColor.rgb, alpha * shade));
     return;
   }
 
@@ -266,8 +276,22 @@ void main()
     vec3 base = pow(vColor.rgb, vec3(2.2));
     vec3 key = uLightOn[0] ? uLightDiffuse[0] : vec3(1.0);
     float nl = dot(n, uStudioLight);
-    float lit = shadowLit(0.001 + 0.003 * (1.0 - max(nl, 0.0)));
-    vec3 ambient = mix(vec3(0.25), vec3(0.55), 0.5 + 0.5 * n.y);
+    float lit = uShadowOn ?
+      mapLit(uShadow, uShadowFromEye, 0.001 + 0.003 * (1.0 - max(nl, 0.0))) :
+      1.0;
+    // the ground below, and the sky above: analytic on the first frame, and
+    // from a dome direction of each frame afterwards (cosine weighted about
+    // the up axis, so that a surface facing up gets 1 on average and a tilted
+    // one (n.d)/(up.d)), which converges to the occluded sky
+    float nu = dot(n, uStudioUp);
+    vec3 ambient = vec3(0.25 * (0.5 - 0.5 * nu));
+    if(uDomeOn) {
+      float nd = dot(n, uDomeDir), ud = dot(uStudioUp, uDomeDir);
+      float v = mapLit(uDome, uDomeFromEye, 0.001 + 0.003 * (1.0 - max(nd, 0.0)));
+      ambient += vec3(0.55 * v * min(max(nd, 0.0) / max(ud, 0.05), 4.0));
+    }
+    else
+      ambient += vec3(0.55 * (0.5 + 0.5 * nu));
     float d = clamp((nl + 0.5) / 1.5, 0.0, 1.0);
     vec3 c = base * (ambient + 0.6 * key * d * d * lit);
     emit(vec4(pow(min(c, vec3(1.0)), vec3(1.0 / 2.2)), alpha));
@@ -308,6 +332,18 @@ void main()
 }
 )";
 
+  // what adds a frame to the accumulation buffer and puts the average back
+  const char *blitFragmentBody = R"(
+uniform sampler2D uTex;
+uniform float uScale;
+layout(location = 0) out vec4 fColor;
+
+void main()
+{
+  fColor = texelFetch(uTex, ivec2(gl_FragCoord.xy), 0) * uScale;
+}
+)";
+
   const char *compositeFragmentBody = R"(
 uniform sampler2D uAccum;
 uniform sampler2D uReveal;
@@ -332,12 +368,19 @@ void main()
     // a 1x1 texture bound whenever no other is: a driver validates every
     // sampler at draw time, whether or not its branch is taken
     GLuint _noTexture = 0;
-    // the shadow map of the studio light, and the 1x1 depth texture bound in
-    // its place when there is none (the sampler must always point at one)
-    GLuint _shadowFbo = 0, _shadowTex = 0, _noShadow = 0;
-    int _shadowSize = 0;
+    // the shadow maps of the studio shading (the key light and the dome), and
+    // the 1x1 depth texture bound in their place when there is none (the
+    // samplers must always point at one)
+    GLuint _shadowFbo[2] = {0, 0}, _shadowTex[2] = {0, 0}, _noShadow = 0;
+    int _shadowSize[2] = {0, 0};
     GLint _shadowViewport[4] = {0, 0, 0, 0};
-    bool _shadowPass = false;
+    int _shadowPass = -1;
+    // the accumulation of the studio frames: the sum, a copy of the window
+    // to add to it, and the program that does both
+    GLuint _accFbo = 0, _accTex = 0, _accCopy = 0, _blitProgram = 0;
+    int _accWidth = 0, _accHeight = 0;
+    GLint _uBlitTex = -1, _uBlitScale = -1;
+    bool _blitTried = false;
     // the picking buffer and what it is made of
     GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
     int _pickWidth = 0, _pickHeight = 0;
@@ -367,17 +410,19 @@ void main()
       // one location per array element, looked up at link time: asking by
       // name at every draw is costly on scenes of many small draws
       GLint clipPlane[6], clipOn[6];
-      GLint studioLight, shadowOn, shadowFromEye, shadow;
+      GLint studioLight, studioUp, shadowOn, shadowFromEye, shadow;
+      GLint domeOn, domeDir, domeFromEye, dome;
       GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
       GLint lightSpecular[6], lightOn[6];
     } _u;
 
     // uniforms are set on the current program, and some setters are called
     // outside drawing (the lights, once a frame): make the program current
-    // bind the 1x1 depth texture in place of the shadow map, on unit 2
-    void bindNoShadow()
+    // bind the 1x1 depth texture in place of shadow map `which', on unit
+    // 2 + which
+    void bindNoShadow(int which)
     {
-      glApi::ActiveTexture(GL_TEXTURE0 + 2);
+      glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
       if(!_noShadow) {
         const GLuint one = 0xffffffff;
         glGenTextures(1, &_noShadow);
@@ -508,9 +553,14 @@ void main()
       _u.shininess = glApi::GetUniformLocation(p, "uShininess");
       _u.shading = glApi::GetUniformLocation(p, "uShading");
       _u.studioLight = glApi::GetUniformLocation(p, "uStudioLight");
+      _u.studioUp = glApi::GetUniformLocation(p, "uStudioUp");
       _u.shadowOn = glApi::GetUniformLocation(p, "uShadowOn");
       _u.shadowFromEye = glApi::GetUniformLocation(p, "uShadowFromEye");
       _u.shadow = glApi::GetUniformLocation(p, "uShadow");
+      _u.domeOn = glApi::GetUniformLocation(p, "uDomeOn");
+      _u.domeDir = glApi::GetUniformLocation(p, "uDomeDir");
+      _u.domeFromEye = glApi::GetUniformLocation(p, "uDomeFromEye");
+      _u.dome = glApi::GetUniformLocation(p, "uDome");
       _u.instanced = glApi::GetUniformLocation(p, "uInstanced");
       _u.taper = glApi::GetUniformLocation(p, "uTaper");
       _u.textured = glApi::GetUniformLocation(p, "uTextured");
@@ -535,9 +585,11 @@ void main()
 
       // a uniform starts at zero, and a zero alpha scale would draw nothing
       glApi::UseProgram(_program);
-      // the shadow map lives on texture unit 2
+      // the shadow maps live on texture units 2 and 3
       glApi::Uniform1i(_u.shadow, 2);
-      bindNoShadow();
+      glApi::Uniform1i(_u.dome, 3);
+      bindNoShadow(0);
+      bindNoShadow(1);
       glApi::Uniform1f(_u.alphaScale, 1.f);
 
       // a core profile draws nothing without a vertex array object; one is
@@ -571,9 +623,14 @@ void main()
     _streamVertices = _streamColors = _streamNormals = 0;
     _streamGlyphs = _streamTex = _streamDash = 0;
     _noTexture = 0;
-    _shadowFbo = _shadowTex = _noShadow = 0;
-    _shadowSize = 0;
-    _shadowPass = false;
+    _shadowFbo[0] = _shadowFbo[1] = _shadowTex[0] = _shadowTex[1] = 0;
+    _shadowSize[0] = _shadowSize[1] = 0;
+    _noShadow = 0;
+    _shadowPass = -1;
+    _accFbo = _accTex = _accCopy = _blitProgram = 0;
+    _accWidth = _accHeight = 0;
+    _uBlitTex = _uBlitScale = -1;
+    _blitTried = false;
     _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
     _pickWidth = _pickHeight = 0;
     _tried = false;
@@ -659,34 +716,53 @@ void main()
     glApi::Uniform1i(_u.shading, model);
   }
 
-  void setStudioLight(const double dir[3])
+  void setStudioLight(const double dir[3], const double up[3])
   {
     if(!ensure()) return;
     float d[3] = {(float)dir[0], (float)dir[1], (float)dir[2]};
+    float u[3] = {(float)up[0], (float)up[1], (float)up[2]};
     glApi::Uniform3fv(_u.studioLight, 1, d);
+    glApi::Uniform3fv(_u.studioUp, 1, u);
+  }
+
+  void setDome(const double dir[3])
+  {
+    if(!ensure()) return;
+    float d[3] = {(float)dir[0], (float)dir[1], (float)dir[2]};
+    glApi::Uniform3fv(_u.domeDir, 1, d);
+  }
+
+  void setDomeOff()
+  {
+    if(!ensure()) return;
+    glApi::Uniform1i(_u.domeOn, 0);
+    bindNoShadow(1);
   }
 
   void setShadowOff()
   {
     if(!ensure()) return;
     glApi::Uniform1i(_u.shadowOn, 0);
-    bindNoShadow();
+    bindNoShadow(0);
+    setDomeOff();
   }
 
-  bool beginShadowPass(int size)
+  bool beginShadowPass(int which, int size)
   {
-    if(size < 1 || !ensure() || !glApi::haveFramebufferObjects()) return false;
-    if(_shadowFbo && _shadowSize != size) {
-      glApi::DeleteFramebuffers(1, &_shadowFbo);
-      glDeleteTextures(1, &_shadowTex);
-      _shadowFbo = _shadowTex = 0;
+    if(which < 0 || which > 1 || size < 1 || _shadowPass >= 0) return false;
+    if(!ensure() || !glApi::haveFramebufferObjects()) return false;
+    GLuint &fbo = _shadowFbo[which], &tex = _shadowTex[which];
+    if(fbo && _shadowSize[which] != size) {
+      glApi::DeleteFramebuffers(1, &fbo);
+      glDeleteTextures(1, &tex);
+      fbo = tex = 0;
     }
-    if(!_shadowFbo) {
-      glApi::GenFramebuffers(1, &_shadowFbo);
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, _shadowFbo);
-      glGenTextures(1, &_shadowTex);
-      glApi::ActiveTexture(GL_TEXTURE0 + 2);
-      glBindTexture(GL_TEXTURE_2D, _shadowTex);
+    if(!fbo) {
+      glApi::GenFramebuffers(1, &fbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);
+      glGenTextures(1, &tex);
+      glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
+      glBindTexture(GL_TEXTURE_2D, tex);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, size, size, 0,
                    GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
       // linear filtering of a comparison is a 2x2 filter of the results
@@ -699,7 +775,7 @@ void main()
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
       glApi::ActiveTexture(GL_TEXTURE0);
       glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                                  GL_TEXTURE_2D, _shadowTex, 0);
+                                  GL_TEXTURE_2D, tex, 0);
       // depth only: no colour is written or read
       const GLenum none = GL_NONE;
       glApi::DrawBuffers(1, &none);
@@ -708,48 +784,178 @@ void main()
          GL_FRAMEBUFFER_COMPLETE) {
         Msg::Warning("Could not make a shadow map: drawing without shadows");
         glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
-        glApi::DeleteFramebuffers(1, &_shadowFbo);
-        glDeleteTextures(1, &_shadowTex);
-        _shadowFbo = _shadowTex = 0;
+        glApi::DeleteFramebuffers(1, &fbo);
+        glDeleteTextures(1, &tex);
+        fbo = tex = 0;
         return false;
       }
-      _shadowSize = size;
-      Msg::Debug("Shadow map of %dx%d texels", size, size);
+      _shadowSize[which] = size;
+      Msg::Debug("Shadow map %d of %dx%d texels", which, size, size);
     }
     else
-      glApi::BindFramebuffer(GL_FRAMEBUFFER, _shadowFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, fbo);
 
     // the map is being written, so it must not be read
-    glApi::Uniform1i(_u.shadowOn, 0);
-    bindNoShadow();
+    glApi::Uniform1i(which ? _u.domeOn : _u.shadowOn, 0);
+    bindNoShadow(which);
     glGetIntegerv(GL_VIEWPORT, _shadowViewport);
     glViewport(0, 0, size, size);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
     glClear(GL_DEPTH_BUFFER_BIT);
-    _shadowPass = true;
+    _shadowPass = which;
     return true;
   }
 
-  void endShadowPass(const double fromEye[16])
+  void endShadowPass(int which, const double fromEye[16])
   {
-    if(!_shadowPass) return;
-    _shadowPass = false;
+    if(_shadowPass != which) return;
+    _shadowPass = -1;
     glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
                _shadowViewport[3]);
     if(!fromEye) {
-      setShadowOff();
+      if(which)
+        setDomeOff();
+      else {
+        glApi::Uniform1i(_u.shadowOn, 0);
+        bindNoShadow(0);
+      }
       return;
     }
-    glApi::ActiveTexture(GL_TEXTURE0 + 2);
-    glBindTexture(GL_TEXTURE_2D, _shadowTex);
+    glApi::ActiveTexture(GL_TEXTURE0 + 2 + which);
+    glBindTexture(GL_TEXTURE_2D, _shadowTex[which]);
     glApi::ActiveTexture(GL_TEXTURE0);
     float m[16];
     for(int i = 0; i < 16; i++) m[i] = (float)fromEye[i];
-    glApi::UniformMatrix4fv(_u.shadowFromEye, 1, GL_FALSE, m);
-    glApi::Uniform1i(_u.shadowOn, 1);
+    glApi::UniformMatrix4fv(which ? _u.domeFromEye : _u.shadowFromEye, 1,
+                            GL_FALSE, m);
+    glApi::Uniform1i(which ? _u.domeOn : _u.shadowOn, 1);
+  }
+
+  namespace {
+    GLuint floatTarget(int width, int height, GLenum internal, GLenum format);
+
+    bool buildBlit()
+    {
+      if(_blitTried) return _blitProgram != 0;
+      _blitTried = true;
+      GLuint vs = compile(GL_VERTEX_SHADER, prologue() + compositeVertexBody);
+      if(!vs) return false;
+      GLuint fs = compile(GL_FRAGMENT_SHADER, prologue() + blitFragmentBody);
+      if(!fs) {
+        glApi::DeleteShader(vs);
+        return false;
+      }
+      GLuint p = glApi::CreateProgram();
+      glApi::AttachShader(p, vs);
+      glApi::AttachShader(p, fs);
+      glApi::LinkProgram(p);
+      glApi::DeleteShader(vs);
+      glApi::DeleteShader(fs);
+      GLint ok = 0;
+      glApi::GetProgramiv(p, GL_LINK_STATUS, &ok);
+      if(!ok) {
+        Msg::Warning("Could not link the accumulation program");
+        glApi::DeleteProgram(p);
+        return false;
+      }
+      _uBlitTex = glApi::GetUniformLocation(p, "uTex");
+      _uBlitScale = glApi::GetUniformLocation(p, "uScale");
+      _blitProgram = p;
+      return true;
+    }
+  } // namespace
+
+  bool accumulate(int width, int height, bool first, int count)
+  {
+    if(width < 1 || height < 1 || count < 1) return false;
+    if(!ensure() || !glApi::haveFramebufferObjects() ||
+       !glApi::haveFloatColorBuffers() || !buildBlit())
+      return false;
+    if(_accFbo && (_accWidth != width || _accHeight != height)) {
+      glApi::DeleteFramebuffers(1, &_accFbo);
+      glDeleteTextures(1, &_accTex);
+      glDeleteTextures(1, &_accCopy);
+      _accFbo = _accTex = _accCopy = 0;
+    }
+    glApi::ActiveTexture(GL_TEXTURE0);
+    if(!_accFbo) {
+      glApi::GenFramebuffers(1, &_accFbo);
+      glApi::BindFramebuffer(GL_FRAMEBUFFER, _accFbo);
+      _accTex = floatTarget(width, height, GL_RGBA16F, GL_RGBA);
+      glApi::FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                  GL_TEXTURE_2D, _accTex, 0);
+      const GLenum buf = GL_COLOR_ATTACHMENT0;
+      glApi::DrawBuffers(1, &buf);
+      if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+         GL_FRAMEBUFFER_COMPLETE) {
+        Msg::Warning("Could not make an accumulation buffer");
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+        glApi::DeleteFramebuffers(1, &_accFbo);
+        glDeleteTextures(1, &_accTex);
+        _accFbo = _accTex = 0;
+        return false;
+      }
+      glGenTextures(1, &_accCopy);
+      glBindTexture(GL_TEXTURE_2D, _accCopy);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
+                   GL_UNSIGNED_BYTE, nullptr);
+      _accWidth = width;
+      _accHeight = height;
+      first = true;
+    }
+
+    // the window into the copy
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glReadBuffer(GL_BACK);
+    glBindTexture(GL_TEXTURE_2D, _accCopy);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+
+    GLint vp[4];
+    GLfloat clear[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
+    glViewport(0, 0, width, height);
+    glDisable(GL_DEPTH_TEST);
+    glApi::UseProgram(_blitProgram);
+    glApi::BindVertexArray(_vao);
+    // the vertices come from gl_VertexID; an attribute left enabled would
+    // read a stale buffer
+    for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
+      glApi::DisableVertexAttribArray(i);
+    glApi::Uniform1i(_uBlitTex, 0);
+
+    // added to the sum
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _accFbo);
+    if(first) {
+      glClearColor(0.f, 0.f, 0.f, 0.f);
+      glClear(GL_COLOR_BUFFER_BIT);
+    }
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    glApi::Uniform1f(_uBlitScale, 1.f);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    // and the average put back on the window
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_BLEND);
+    glBindTexture(GL_TEXTURE_2D, _accTex);
+    glApi::Uniform1f(_uBlitScale, 1.f / count);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glViewport(vp[0], vp[1], vp[2], vp[3]);
+    glClearColor(clear[0], clear[1], clear[2], clear[3]);
+    glEnable(GL_DEPTH_TEST);
+    glApi::UseProgram(_program);
+    glApi::BindVertexArray(_vao);
+    noTexture();
+    return true;
   }
 
   void setLighting(bool on, bool twoSide)

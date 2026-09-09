@@ -27,6 +27,7 @@
 #include "glShader.h"
 #include "Context.h"
 #include "Trackball.h"
+#include <cstring>
 #include "GamePad.h"
 #include "StringUtils.h"
 
@@ -103,6 +104,8 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
+  _studioTimer = false;
+  _studioW = _studioH = 0;
   _ctx = new drawContext();
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
@@ -124,6 +127,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
 openglWindow::~openglWindow()
 {
+  Fl::remove_timeout(_studioSampleCb, this);
   delete _ctx;
 #if defined(NEW_TOOLTIPS)
   delete _tooltip;
@@ -201,6 +205,8 @@ void openglWindow::_drawBorder()
 
 void openglWindow::draw()
 {
+  // a draw the studio timer did not ask for starts the accumulation over
+  if(!_studioTimer) _ctx->studioSample = 0;
   // some drawing routines can create data (STL triangulations, etc.): make sure
   // that we don't fire draw() while we are already drawing, e.g. due to an
   // impromptu Fl::check(). The same lock is also used in _select to guarantee
@@ -435,6 +441,7 @@ void openglWindow::draw()
     else {
       _ctx->draw3d();
       _ctx->draw2d();
+      _studioFrame();
       _drawScreenMessage();
       _drawBorder();
     }
@@ -442,7 +449,62 @@ void openglWindow::draw()
   gmshFlushImmediate();
   drawContext::global()->flushString();
   _lock = false;
+  _studioTimer = false;
 
+}
+
+// The accumulation of the studio shading: after a frame, while the view is
+// still, the timer asks for more frames with the light, the dome and the
+// projection jittered, and each is added to the average put on the window.
+// A print does not wait: it draws them all at once.
+void openglWindow::_studioFrame()
+{
+  Fl::remove_timeout(_studioSampleCb, this);
+  CTX *ctx = CTX::instance();
+  int n = ctx->studioSamples;
+  if(!gmshUseShaders() || ctx->shading != 1 || n < 2) {
+    _ctx->studioSample = 0;
+    return;
+  }
+  int k = _ctx->studioSample, w = pixel_w(), h = pixel_h();
+  if(k > 0) {
+    // the view changed since the last frame: start over
+    if(w != _studioW || h != _studioH ||
+       memcmp(_studioModel, _ctx->model, sizeof(_studioModel))) {
+      Msg::Debug("Studio frames: the view changed, starting over");
+      k = _ctx->studioSample = 0;
+    }
+    else if(!glShader::accumulate(w, h, k == 1, k)) {
+      _ctx->studioSample = 0;
+      return;
+    }
+    else
+      Msg::Debug("Studio frame %d of %d accumulated", k, n);
+  }
+  memcpy(_studioModel, _ctx->model, sizeof(_studioModel));
+  _studioW = w;
+  _studioH = h;
+  if(ctx->printing) {
+    for(int j = k + 1; j < n; j++) {
+      _ctx->studioSample = j;
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      _ctx->draw3d();
+      _ctx->draw2d();
+      if(!glShader::accumulate(w, h, j == 1, j)) break;
+    }
+    _ctx->studioSample = 0;
+    return;
+  }
+  if(k + 1 < n && !drawContext::global()->mouseIsPressed())
+    Fl::add_timeout(0.01, _studioSampleCb, this);
+}
+
+void openglWindow::_studioSampleCb(void *data)
+{
+  openglWindow *w = (openglWindow *)data;
+  w->_ctx->studioSample++;
+  w->_studioTimer = true;
+  w->redraw();
 }
 
 openglWindow *openglWindow::_lastHandled = nullptr;

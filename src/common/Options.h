@@ -250,6 +250,8 @@ double opt_general_verbosity(OPT_ARGS_NUM);
 double opt_general_vertex_buffer_objects(OPT_ARGS_NUM);
 double opt_general_shaders(OPT_ARGS_NUM);
 double opt_general_shading(OPT_ARGS_NUM);
+double opt_general_studio_light_spread(OPT_ARGS_NUM);
+double opt_general_studio_samples(OPT_ARGS_NUM);
 double opt_general_order_independent_transparency(OPT_ARGS_NUM);
 double opt_geometry_transparency(OPT_ARGS_NUM);
 double opt_geometry_transparency_mode(OPT_ARGS_NUM);

@@ -64,16 +64,24 @@ namespace glShader {
   // the lighting model: 0 the fixed function one, 1 studio, 2 the shadow
   // catcher of the studio model (only the shadow is drawn)
   void setShading(int model);
-  // the direction of the studio key light, in eye coordinates
-  void setStudioLight(const double dir[3]);
-  // The shadow map of the studio light: beginShadowPass() binds a depth
-  // buffer of size x size texels, to be drawn with the light's matrices;
-  // endShadowPass() rebinds the window and hands the shader the map with the
-  // matrix from eye coordinates to its texture space (null to draw without
-  // shadow). setShadowOff() draws without shadow.
-  bool beginShadowPass(int size);
-  void endShadowPass(const double fromEye[16]);
+  // the studio light: the key direction and the model's up axis, in eye
+  // coordinates, and the dome direction of the current sample (or none), for
+  // the ambient occlusion
+  void setStudioLight(const double dir[3], const double up[3]);
+  void setDome(const double dir[3]);
+  void setDomeOff();
+  // The shadow maps of the studio shading, 0 for the key light and 1 for the
+  // dome: beginShadowPass() binds a depth buffer of size x size texels, to be
+  // drawn with the light's matrices; endShadowPass() rebinds the window and
+  // hands the shader the map with the matrix from eye coordinates to its
+  // texture space (null for none). setShadowOff() draws without any.
+  bool beginShadowPass(int which, int size);
+  void endShadowPass(int which, const double fromEye[16]);
   void setShadowOff();
+  // Progressive accumulation of the studio frames: add the window (width x
+  // height pixels) to a sum, cleared when first, and put the average of
+  // count frames back on the window. False if it cannot be done.
+  bool accumulate(int width, int height, bool first, int count);
   // is what is drawn next lit, and are its back faces lit as well?
   void setLighting(bool on, bool twoSide);
   // clip plane i, in eye coordinates; setClipPlaneOff() stops clipping with it
