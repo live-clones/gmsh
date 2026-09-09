@@ -1193,6 +1193,8 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
   // use adaptive data if available
   PViewData *data = p->view->getData(true);
   PViewOptions *opt = p->opt;
+  // a range given the other way round holds no value: nothing is drawn
+  if(opt->tmpMin > opt->tmpMax) return;
 
   int numComp2;
   double **val2 = new double *[numNodes];
@@ -1349,6 +1351,8 @@ static void addTensorElement(drawTarget *p, int iEnt, int iEle, int numNodes,
                              int type, double **xyz, double **val, bool pre)
 {
   PViewOptions *opt = p->opt;
+  // a range given the other way round holds no value: nothing is drawn
+  if(opt->tmpMin > opt->tmpMax) return;
   fullMatrix<double> tensor(3, 3);
   fullVector<double> S(3), imS(3);
   fullMatrix<double> leftV(3, 3), rightV(3, 3);
