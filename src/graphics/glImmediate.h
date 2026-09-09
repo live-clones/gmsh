@@ -193,6 +193,10 @@ bool gmshLightTwoSideEnabled();
 
 // the line width; a core profile draws every line one pixel wide, so the
 // shader pipeline makes wider lines out of triangles
+// the scale applied to what is given in pixels of the window (line widths,
+// point sizes): 1 on the window, more in a picture drawn at another size
+void gmshPixelScale(double scale);
+double gmshPixelScale();
 void gmshLineWidth(double w);
 double gmshCurrentLineWidth();
 void gmshPointSize(double s);

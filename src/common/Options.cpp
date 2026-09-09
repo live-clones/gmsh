@@ -9752,6 +9752,12 @@ double opt_print_text(OPT_ARGS_NUM)
   return CTX::instance()->print.text;
 }
 
+double opt_print_scale_pixel_sizes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.scalePixelSizes = (int)val;
+  return CTX::instance()->print.scalePixelSizes;
+}
+
 double opt_print_supersampling(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->print.supersampling = (int)val;
