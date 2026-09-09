@@ -206,7 +206,9 @@ void openglWindow::_drawBorder()
 
 void openglWindow::draw()
 {
-  // a draw the studio timer did not ask for starts the accumulation over
+  // a draw the studio timer did not ask for, or that anyone else asked for
+  // as well, starts the accumulation over
+  _studioTimer = (damage() & FL_DAMAGE_USER1) && !(damage() & FL_DAMAGE_ALL);
   if(!_studioTimer) _ctx->studioSample = 0;
   // some drawing routines can create data (STL triangulations, etc.): make sure
   // that we don't fire draw() while we are already drawing, e.g. due to an
@@ -543,9 +545,11 @@ void openglWindow::_studioSampleCb(void *data)
     Fl::repeat_timeout(0.05, _studioSampleCb, data);
     return;
   }
+  // asked for with a damage bit of its own: a redraw() asked for by anyone
+  // else before the frame is drawn (an option changed, say) marks the
+  // window fully damaged, and draw() knows the frame is a plain one then
   w->_ctx->studioSample++;
-  w->_studioTimer = true;
-  w->redraw();
+  w->damage(FL_DAMAGE_USER1);
 }
 
 openglWindow *openglWindow::_lastHandled = nullptr;
