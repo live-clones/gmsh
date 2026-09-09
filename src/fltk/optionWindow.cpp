@@ -837,6 +837,9 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
     opt_view_displacement_factor(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
   int colormap_number = (int)opt_view_colormap_number(current, GMSH_GET, 0);
+  // a map picked in the map widget itself: the chooser follows, or it
+  // would put the map it still shows back
+  if(w == o->view.colorbar) o->view.choice[17]->value(colormap_number);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
   double explode = opt_view_explode(current, GMSH_GET, 0);
   double angle_smooth_normals =
@@ -915,8 +918,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != axes)) opt_view_axes(i, GMSH_SET, val);
 
       val = o->view.choice[17]->value();
-      if(force || (val != colormap_number))
+      if(force || (val != colormap_number)) {
         opt_view_colormap_number(i, GMSH_SET, val);
+        o->view.colorbar->redraw();
+      }
 
       val = o->view.choice[9]->value();
       if(force || (val != boundary)) opt_view_boundary(i, GMSH_SET, val);
@@ -3947,9 +3952,11 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[17]->menu(&menu_colormap[0]);
       view.choice[17]->align(FL_ALIGN_RIGHT);
       view.choice[17]->callback(view_options_ok_cb);
+      // the keys go to the map widget below
+      view.choice[17]->clear_visible_focus();
 
-      view.colorbar = new colorbarWindow(L + 2 * WB, 2 * WB + 2 * BH,
-                                         width - 4 * WB, height - 4 * WB - 2 * BH);
+      view.colorbar = new colorbarWindow(L + 2 * WB, 3 * WB + 2 * BH,
+                                         width - 4 * WB, height - 5 * WB - 2 * BH);
       view.colorbar->end();
       view.colorbar->callback(view_options_ok_cb);
 
