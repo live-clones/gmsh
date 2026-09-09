@@ -7,6 +7,7 @@
 #include <string.h>
 #include <FL/Fl_Tooltip.H>
 #include "openglWindow.h"
+#include "drawContextFltkStringTexture.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -539,7 +540,18 @@ bool openglWindow::printTo(int width, int height, int supersampling,
   _printH = height;
   _printScale = std::max(1, supersampling) *
                 (w() ? (double)pixel_w() / (double)w() : 1.);
+  // the native font engine places its strings from the window's size and
+  // scale, which the picture has neither of: strings as textures meanwhile
+  drawContextGlobal *native = nullptr;
+  if(drawContext::global()->getName() == "Fltk") {
+    native = drawContext::global();
+    drawContext::setGlobal(new drawContextFltkStringTexture);
+  }
   draw();
+  if(native) {
+    delete drawContext::global();
+    drawContext::setGlobal(native);
+  }
   glShader::readPrintTarget(width, height, format, type, pixels);
   glShader::endPrintTarget();
   _printW = _printH = 0;
