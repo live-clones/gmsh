@@ -2195,7 +2195,7 @@ StringXNumber PrintOptions_Number[] = {
     "Output transparent GIF image" },
 
   { F|O, "Height" , opt_print_height , -1. ,
-    "Height of printed image; use (possibly scaled) current height if < 0" },
+    "Height of the printed image in pixels; use the current height if < 0" },
 
   { F|O, "JpegQuality" , opt_print_jpeg_quality , 100. ,
     "JPEG quality (between 1 and 100)" },
@@ -2267,7 +2267,7 @@ StringXNumber PrintOptions_Number[] = {
     "Apply colors to faces (0: no, 1: yes)"},
 
   { F|O, "Width" , opt_print_width , -1. ,
-    "Width of printed image; use (possibly scaled) current width if < 0)" },
+    "Width of the printed image in pixels; use the current width if < 0" },
 
   { 0, nullptr , nullptr , 0., "" }
 } ;
