@@ -856,13 +856,36 @@ static double halton(int i, int b)
   return r;
 }
 
+// The bounds of what the studio shading lights and stands on: the bounding
+// box of the scene, and of the views as they are drawn, which a raise takes
+// outside it.
+static void studioBounds(double min[3], double max[3])
+{
+  CTX *ctx = CTX::instance();
+  for(int i = 0; i < 3; i++) {
+    min[i] = ctx->min[i];
+    max[i] = ctx->max[i];
+  }
+#if defined(HAVE_POST)
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    PViewOptions *opt = PView::list[i]->getOptions();
+    if(!opt->visible || opt->tmpBBox.empty()) continue;
+    SPoint3 lo = opt->tmpBBox.min(), hi = opt->tmpBBox.max();
+    for(int j = 0; j < 3; j++) {
+      min[j] = std::min(min[j], lo[j]);
+      max[j] = std::max(max[j], hi[j]);
+    }
+  }
+#endif
+}
+
 // the up axis of the model in studio shading: z, or y for a model flat in z
 static int studioUpAxis()
 {
-  CTX *ctx = CTX::instance();
-  double d[3], diag = 0.;
+  double min[3], max[3], d[3], diag = 0.;
+  studioBounds(min, max);
   for(int i = 0; i < 3; i++) {
-    d[i] = ctx->max[i] - ctx->min[i];
+    d[i] = max[i] - min[i];
     diag += d[i] * d[i];
   }
   diag = sqrt(diag);
@@ -904,10 +927,11 @@ static void toEye(const double d[3], double e[3])
 bool drawContext::drawOneShadowMap(int which, const double dir[3])
 {
   CTX *ctx = CTX::instance();
-  double c[3], R = 0.;
+  double min[3], max[3], c[3], R = 0.;
+  studioBounds(min, max);
   for(int i = 0; i < 3; i++) {
-    c[i] = 0.5 * (ctx->min[i] + ctx->max[i]);
-    double h = 0.5 * (ctx->max[i] - ctx->min[i]);
+    c[i] = 0.5 * (min[i] + max[i]);
+    double h = 0.5 * (max[i] - min[i]);
     R += h * h;
   }
   R = 1.05 * sqrt(R);
@@ -998,9 +1022,10 @@ void drawContext::drawShadowMap()
   toEye(dir, de);
   toEye(up, ue);
   // a texel of the maps, which span the bounding sphere, in eye coordinates
-  double R = 0.;
+  double min[3], max[3], R = 0.;
+  studioBounds(min, max);
   for(int i = 0; i < 3; i++) {
-    double h = 0.5 * (ctx->max[i] - ctx->min[i]);
+    double h = 0.5 * (max[i] - min[i]);
     R += h * h;
   }
   const double *M = gmshMatrix(GMSH_MODELVIEW);
@@ -1032,10 +1057,11 @@ void drawContext::drawShadowMap()
 void drawContext::drawStudioFloor()
 {
   CTX *ctx = CTX::instance();
-  double d[3], c[3], diag = 0.;
+  double min[3], max[3], d[3], c[3], diag = 0.;
+  studioBounds(min, max);
   for(int i = 0; i < 3; i++) {
-    d[i] = ctx->max[i] - ctx->min[i];
-    c[i] = 0.5 * (ctx->min[i] + ctx->max[i]);
+    d[i] = max[i] - min[i];
+    c[i] = 0.5 * (min[i] + max[i]);
     diag += d[i] * d[i];
   }
   diag = sqrt(diag);
@@ -1043,7 +1069,7 @@ void drawContext::drawStudioFloor()
   int up = studioUpAxis();
   int u = (up + 1) % 3, v = (up + 2) % 3;
   double h = 1.5 * std::max(d[u], d[v]);
-  double z0 = ctx->min[up] - 1.e-3 * diag;
+  double z0 = min[up] - 1.e-3 * diag;
   double p[4][3];
   for(int k = 0; k < 4; k++) {
     p[k][up] = z0;
@@ -1058,12 +1084,16 @@ void drawContext::drawStudioFloor()
   ctx->shading = 2;
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // hidden by the model, but hiding nothing itself: whatever hangs below
+  // it (glyphs, a view raised further than its data) stays visible
+  glDepthMask(GL_FALSE);
   gmshColor4ub(0, 0, 0, 150);
   gmshNormal3d(n[0], n[1], n[2]);
   gmshBegin(GL_QUADS);
   for(int k = 0; k < 4; k++) gmshVertex3d(p[k][0], p[k][1], p[k][2]);
   gmshEnd();
   gmshFlushImmediate();
+  glDepthMask(GL_TRUE);
   glDisable(GL_BLEND);
   ctx->shading = 1;
 }
