@@ -536,10 +536,10 @@ bool openglWindow::printTo(int width, int height, unsigned int format,
 void openglWindow::_studioSampleCb(void *data)
 {
   openglWindow *w = (openglWindow *)data;
-  // not while the mouse is down in this window, where it is about to change
-  // the view (down elsewhere, in the options window say, is no reason to
-  // wait): look again once it is up
-  if(Fl::pushed() == w) {
+  // not while a mouse button is down: the view, or an option dragged in the
+  // options window, is changing, and each step redraws the plain frame;
+  // look again once it is up
+  if(Fl::pushed()) {
     Fl::repeat_timeout(0.05, _studioSampleCb, data);
     return;
   }
