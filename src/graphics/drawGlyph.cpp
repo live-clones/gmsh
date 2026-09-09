@@ -349,7 +349,11 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
         opt = GL2PS_TEXT_BL;
         break; // bottom left
       }
-      gl2psTextOpt(tmp.c_str(), font_name.c_str(), font_size, opt, 0.);
+      // the vector picture is the viewport in pixels: the font follows the
+      // pixel factor like everything else sized in the window's units
+      gl2psTextOpt(tmp.c_str(), font_name.c_str(),
+                   (int)(font_size * highResolutionPixelFactor() + 0.5), opt,
+                   0.);
     }
     else if(CTX::instance()->print.epsQuality &&
             (CTX::instance()->print.fileFormat == FORMAT_PS ||
@@ -357,7 +361,8 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
              CTX::instance()->print.fileFormat == FORMAT_PDF ||
              CTX::instance()->print.fileFormat == FORMAT_SVG ||
              CTX::instance()->print.fileFormat == FORMAT_TIKZ)) {
-      gl2psText(s.c_str(), font_name.c_str(), font_size);
+      gl2psText(s.c_str(), font_name.c_str(),
+                (int)(font_size * highResolutionPixelFactor() + 0.5));
     }
     else {
       drawContext::global()->setFont(font_enum, font_size);
