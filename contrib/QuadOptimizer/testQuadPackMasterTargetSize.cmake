@@ -161,7 +161,7 @@ endfunction()
 
 execute_process(
   COMMAND "${GMSH_EXECUTABLE}" "${TEST_GEO}" -2 -algo pack
-          -setnumber Mesh.QuadqsTargetSize 0.03
+          -setnumber Mesh.PackTargetSize 0.03
           -nopopup -v 5 -o "${TEST_OUTPUT}"
   RESULT_VARIABLE status
   OUTPUT_VARIABLE output
@@ -192,7 +192,7 @@ endif()
 assert_pack_log_contract(log "PACK master-target driver")
 
 # Preserve the historical uniform-size command-line spelling. It must enter
-# the exact same bounded CAD pipeline without requiring QuadqsTargetSize.
+# the exact same bounded CAD pipeline without requiring PackTargetSize.
 set(legacy_output "${TEST_OUTPUT}.legacy.msh")
 execute_process(
   COMMAND "${GMSH_EXECUTABLE}" "${TEST_GEO}" -2 -algo pack

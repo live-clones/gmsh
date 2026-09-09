@@ -1,4 +1,3 @@
-Mesh.Algorithm=12;
 fact = 1;
 lc = .03 * fact;
 Point(1) = {0.0,0.0,0,lc/30};

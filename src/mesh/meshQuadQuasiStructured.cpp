@@ -180,7 +180,7 @@ int buildBackgroundField(
 
   gm->getFields()->setBackgroundMesh(view->getIndex());
 
-  if(CTX::instance()->mesh.quadqsSaveDebugFiles) {
+  if(CTX::instance()->mesh.saveDebugFiles) {
     std::string name = gm->getName() + "_bgm.pos";
     Msg::Warning("Exporting background field to '%s'", name.c_str());
     view->write(name, 0);
@@ -462,9 +462,12 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     return -1;
   }
 
-  const int qqsSizemapMethod = CTX::instance()->mesh.quadqsSizemapMethod;
+  const bool packing = CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS;
+  const char *method = packing ? "PACK" : "QuadQuasiStructured";
+  const int qqsSizemapMethod = packing ? CTX::instance()->mesh.packSizemapMethod :
+                                       CTX::instance()->mesh.quadqsSizemapMethod;
   if(qqsSizemapMethod == 5) {
-    Msg::Warning("Quadqs method: no background mesh");
+    Msg::Warning("%s: no background mesh", method);
     return 0;
   }
 
@@ -502,8 +505,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
         else {
           Msg::Warning("scalar background field exists, but ignored because "
-                       "QuadqsSizemapMethod is %i",
-                       CTX::instance()->mesh.quadqsSizemapMethod);
+                       "%sSizemapMethod is %i",
+                       packing ? "Pack" : "Quadqs", qqsSizemapMethod);
         }
       }
     }
@@ -529,7 +532,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   /* - scalingOnTriangulation: this factor is used to get a triangulation a bit
    * more finer than the target quadrangulation, to get a more accurate cross
    * field */
-  double edgeScaling = CTX::instance()->mesh.quadqsScalingOnTriangulation;
+  double edgeScaling = packing ? CTX::instance()->mesh.packScalingOnTriangulation :
+                                 CTX::instance()->mesh.quadqsScalingOnTriangulation;
   if(!surfaceMeshed) { generateMeshWithSpecialParameters(gm, edgeScaling); }
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
@@ -564,10 +568,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   /* Per GFace computations, in parallel */
   {
     Msg::Info(
-      "- quadqs sizemap method: %s (%i), expect midpoint subdivision: %i, "
+      "- %s sizemap method: %s (%i), expect midpoint subdivision: %i, "
       "scaling on edge length: %f",
-      nameOfSizeMapMethod(CTX::instance()->mesh.quadqsSizemapMethod).c_str(),
-      CTX::instance()->mesh.quadqsSizemapMethod, midpointSubdivisionAfter,
+      method, nameOfSizeMapMethod(qqsSizemapMethod).c_str(),
+      qqsSizemapMethod, midpointSubdivisionAfter,
       edgeScaling);
 
     std::vector<GFace *> faces = model_faces(gm);
@@ -1619,7 +1623,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
     errorAndAbortIfInvalidVertexInModel(gm, "after refine + proj");
   }
 
-  if(CTX::instance()->mesh.quadqsSaveDebugFiles) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
+  if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
 
   //  optimizeGeometryQuadqs(gm);
 
@@ -1663,7 +1667,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     GeoLog::add(elements, "qqs_quadtri");
     GeoLog::flush();
   }
-  if(CTX::instance()->mesh.quadqsSaveDebugFiles) { gm->writeMSH("qqs_init.msh", 4.1); }
+  if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_init.msh", 4.1); }
 
   Msg::Info(
     "Refine mesh (midpoint subdivision, with background projection) ...");
@@ -1675,7 +1679,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     std::unordered_map<std::string, double> stats;
     appendQuadMeshStatistics(gm, stats, "MPS_");
     printStatistics(stats, "Quad mesh after subdivision, before projection:");
-    if(CTX::instance()->mesh.quadqsSaveDebugFiles) { gm->writeMSH("qqs_subdiv_noproj.msh", 4.1); }
+    if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_subdiv_noproj.msh", 4.1); }
   }
 
   /* Convert vertex types:
@@ -1912,7 +1916,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     errorAndAbortIfInvalidVertexInModel(gm, "after refine + proj");
   }
 
-  if(CTX::instance()->mesh.quadqsSaveDebugFiles) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
+  if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
 
   return 0;
 }
@@ -2073,7 +2077,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
   appendQuadMeshStatistics(gm, stats, "Mesh_");
   printStatistics(stats, "Quad mesh after cavity remeshing:");
 
-  if(CTX::instance()->mesh.quadqsSaveDebugFiles)
+  if(CTX::instance()->mesh.saveDebugFiles)
     writeStatistics(stats, "quadqs_statistics.json");
 
   if(PARANO_VALIDITY) {
@@ -2083,7 +2087,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   GeoLog::flush();
 
-  if(CTX::instance()->mesh.quadqsSaveDebugFiles) { gm->writeMSH("qqs_cavrmsh.msh", 4.1); }
+  if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_cavrmsh.msh", 4.1); }
 
   return 0;
 }

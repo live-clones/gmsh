@@ -6,7 +6,7 @@ endif()
 
 execute_process(
   COMMAND "${GMSH_EXECUTABLE}" "${TEST_GEO}" -2 -nopopup -v 5
-          -setnumber Mesh.QuadqsCleanupMethod 1
+          -setnumber Mesh.PackCleanupMethod 1
           -o "${TEST_OUTPUT}"
   RESULT_VARIABLE status
   OUTPUT_VARIABLE output

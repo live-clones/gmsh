@@ -125,7 +125,7 @@ namespace QuadOptimizer {
     // takes precedence over the scalar settings below. It must be thread-safe
     // when optimizeSmallQuadCavitiesAllFaces() is used.
     EdgeLengthCriteriaAt edgeLengthCriteriaAt;
-    // Positive: constant target size. Non-positive: use the active Quadqs
+    // Positive: constant target size. Non-positive: use the active scaled
     // vector field when enforcing constraints, then fall back to BGM_MeshSize.
     double targetSize = -1.;
     // Absolute physical bounds; non-positive values disable the corresponding

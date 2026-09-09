@@ -46,9 +46,9 @@ def main():
                 return [(int(t), list(map(int, ts)), list(map(int, ns)))
                         for t,ts,ns in zip(types,tags,nodes)]
             before = connectivity()
-            for key, value in {'Mesh.QuadqsSmartLaplacian':1, 'Mesh.Smoothing':0,
-                               'Mesh.QuadqsTargetSize':1, 'Mesh.QuadqsMinimumEdgeLength':0,
-                               'Mesh.QuadqsMaximumEdgeLength':100, 'General.Verbosity':6}.items():
+            for key, value in {'Mesh.OptimizeQuadsSmartLaplacian':1, 'Mesh.Smoothing':0,
+                               'Mesh.PackTargetSize':1, 'Mesh.OptimizeQuadsMinimumEdgeLength':0,
+                               'Mesh.OptimizeQuadsMaximumEdgeLength':100, 'General.Verbosity':6}.items():
                 gmsh.option.setNumber(key, value)
             gmsh.logger.start()
             gmsh.model.mesh.optimize('OptimizeQuadsFast', force=True)

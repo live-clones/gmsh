@@ -158,11 +158,11 @@ def case(args, source):
             return row
         scripts[1].write_text(common + '\nMerge ' + geo_string(tri) + ';\n' + '\n'.join([
             'Mesh.Algorithm = 9;', 'Mesh.RecombineAll = 1;',
-            'Mesh.QuadqsPacking3D = 1;', 'Mesh.QuadqsCleanupMethod = 1;',
-            'Mesh.QuadqsSmartLaplacian = 2;', 'Mesh.QuadqsIntrinsicEdgeLengthFactor = 0;',
-            'Mesh.QuadqsTargetSize = 4;', 'Mesh.QuadqsMinimumEdgeLength = 2;',
-            'Mesh.QuadqsMaximumEdgeLength = 8;', 'Mesh.RecombineMinimumQuality = -1;',
-            'Mesh.QuadqsFinalSplitCadDistanceRatio = 0.2;',
+            'Mesh.Pack3D = 1;', 'Mesh.PackCleanupMethod = 1;',
+            'Mesh.OptimizeQuadsSmartLaplacian = 2;', 'Mesh.PackIntrinsicEdgeLengthFactor = 0;',
+            'Mesh.PackTargetSize = 4;', 'Mesh.OptimizeQuadsMinimumEdgeLength = 2;',
+            'Mesh.OptimizeQuadsMaximumEdgeLength = 8;', 'Mesh.RecombineMinimumQuality = -1;',
+            'Mesh.OptimizeQuadsFinalSplitCadDistanceRatio = 0.2;',
             'Mesh 2;', 'Save ' + geo_string(quad) + ';',
         ]) + '\n')
         seconds, text, error = run_stage(args.gmsh, scripts[1], args.output/(stem+'.quad.log'), args.timeout)

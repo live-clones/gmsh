@@ -6,9 +6,9 @@ get_filename_component(TEST_DIRECTORY "${TEST_GEO}" DIRECTORY)
 execute_process(
   COMMAND "${GMSH_EXECUTABLE}" "${TEST_GEO}"
           -parse_and_exit -nopopup -v 6
-          -setnumber Mesh.QuadqsTargetSize 4
-          -setnumber Mesh.QuadqsMinimumEdgeLength 2
-          -setnumber Mesh.QuadqsMaximumEdgeLength 8
+          -setnumber Mesh.PackTargetSize 4
+          -setnumber Mesh.OptimizeQuadsMinimumEdgeLength 2
+          -setnumber Mesh.OptimizeQuadsMaximumEdgeLength 8
   WORKING_DIRECTORY "${TEST_DIRECTORY}"
   RESULT_VARIABLE status
   OUTPUT_VARIABLE output
@@ -47,9 +47,9 @@ endif()
 execute_process(
   COMMAND "${GMSH_EXECUTABLE}" "${TEST_GEO}"
           -parse_and_exit -nopopup -v 6
-          -setnumber Mesh.QuadqsTargetSize 4
-          -setnumber Mesh.QuadqsMinimumEdgeLength 4
-          -setnumber Mesh.QuadqsMaximumEdgeLength 8
+          -setnumber Mesh.PackTargetSize 4
+          -setnumber Mesh.OptimizeQuadsMinimumEdgeLength 4
+          -setnumber Mesh.OptimizeQuadsMaximumEdgeLength 8
   WORKING_DIRECTORY "${TEST_DIRECTORY}"
   RESULT_VARIABLE rejected_status
   OUTPUT_VARIABLE rejected_output

@@ -22,7 +22,7 @@ try:
   assert min(turns)<0<max(turns),turns
   gmsh.model.mesh.clear(); gmsh.model.mesh.addNodes(2,face,[1,2,3,4],flat,uv)
   gmsh.model.mesh.addElementsByType(face,3,[1],[1,2,3,4])
-  for key,val in {'Mesh.Smoothing':0,'Mesh.QuadqsSmartLaplacian':1,'Mesh.QuadqsTargetSize':2,'Mesh.QuadqsMinimumEdgeLength':0,'Mesh.QuadqsMaximumEdgeLength':100,'General.Verbosity':6}.items():gmsh.option.setNumber(key,val)
+  for key,val in {'Mesh.Smoothing':0,'Mesh.OptimizeQuadsSmartLaplacian':1,'Mesh.PackTargetSize':2,'Mesh.OptimizeQuadsMinimumEdgeLength':0,'Mesh.OptimizeQuadsMaximumEdgeLength':100,'General.Verbosity':6}.items():gmsh.option.setNumber(key,val)
   gmsh.logger.start(); gmsh.model.mesh.optimize('OptimizeQuadsFast',force=True)
   log='\n'.join(gmsh.logger.get()); gmsh.logger.stop()
   qt,_=gmsh.model.mesh.getElementsByType(3,face); tt,_=gmsh.model.mesh.getElementsByType(2,face)
