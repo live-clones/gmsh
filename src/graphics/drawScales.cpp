@@ -89,15 +89,24 @@ static std::string multiplierText(int exp)
   return s;
 }
 
-// where t (0 to 1) falls along a bar of the given length: a pixel inside
+// the pixels per unit of the drawing, for the snapping below
+static double _pixelFactor = 1.;
+
+// Where t (0 to 1) falls along a bar of the given length: a pixel inside
 // the outline at either end, the same for every interval type so that
 // nothing moves when the type changes (the first and last iso marks, 3
-// pixels wide, then overlap the outline, which is drawn over them)
+// pixels wide, then overlap the outline, which is drawn over them). Snapped
+// to a pixel boundary, so that the edge of a box and the line drawn at it
+// (half a pixel further) fall on the same pixel.
 static double alongBar(PViewOptions *opt, double t, double length)
 {
   double inset = 1.;
-  return inset + t * (length - 2 * inset);
+  double x = inset + t * (length - 2 * inset);
+  return floor(x * _pixelFactor + 0.5) / _pixelFactor;
 }
+
+// a line drawn at a box edge: on the pixel that starts there
+static double lineAt(double edge) { return edge + 0.5 / _pixelFactor; }
 
 static bool ticksFit(const std::vector<scaleTick> &ticks, double length,
                      const std::vector<double> &widths, double fontH,
@@ -335,7 +344,14 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
 {
   PViewOptions *opt = p->getOptions();
 
-  double box = (horizontal ? width : height) / (opt->nbIso ? opt->nbIso : 1);
+  int nb = opt->nbIso ? opt->nbIso : 1;
+  // the edges of the boxes go through the mapping of the ticks, so that the
+  // colour changes sit under the tick marks; the ends stay on the bar's
+  double length = horizontal ? width : height;
+  auto edge = [&](int i) {
+    return (i <= 0) ? 0. :
+           (i >= nb) ? length : alongBar(opt, (double)i / nb, length);
+  };
 
   bool iso = (opt->intervalsType == PViewOptions::Iso);
   // nothing is drawn with a range given the other way round: an empty bar
@@ -348,16 +364,16 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       gmshColor4ubv((GLubyte *)&col);
       gmshBegin(GL_QUADS);
       if(horizontal) {
-        gmshVertex2d(xmin + i * box, ymin);
-        gmshVertex2d(xmin + (i + 1) * box, ymin);
-        gmshVertex2d(xmin + (i + 1) * box, ymin + height);
-        gmshVertex2d(xmin + i * box, ymin + height);
+        gmshVertex2d(xmin + edge(i), ymin);
+        gmshVertex2d(xmin + edge(i + 1), ymin);
+        gmshVertex2d(xmin + edge(i + 1), ymin + height);
+        gmshVertex2d(xmin + edge(i), ymin + height);
       }
       else {
-        gmshVertex2d(xmin, ymin + i * box);
-        gmshVertex2d(xmin + width, ymin + i * box);
-        gmshVertex2d(xmin + width, ymin + (i + 1) * box);
-        gmshVertex2d(xmin, ymin + (i + 1) * box);
+        gmshVertex2d(xmin, ymin + edge(i));
+        gmshVertex2d(xmin + width, ymin + edge(i));
+        gmshVertex2d(xmin + width, ymin + edge(i + 1));
+        gmshVertex2d(xmin, ymin + edge(i + 1));
       }
       gmshEnd();
     }
@@ -368,23 +384,23 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       unsigned int col1 = opt->getColor(v1, opt->tmpMin, opt->tmpMax, true);
       gmshColor4ubv((GLubyte *)&col1);
       if(horizontal) {
-        gmshVertex2d(xmin + i * box, ymin + height);
-        gmshVertex2d(xmin + i * box, ymin);
+        gmshVertex2d(xmin + edge(i), ymin + height);
+        gmshVertex2d(xmin + edge(i), ymin);
       }
       else {
-        gmshVertex2d(xmin, ymin + i * box);
-        gmshVertex2d(xmin + width, ymin + i * box);
+        gmshVertex2d(xmin, ymin + edge(i));
+        gmshVertex2d(xmin + width, ymin + edge(i));
       }
       double v2 = opt->tmpMin + (i + 1) * dv;
       unsigned int col2 = opt->getColor(v2, opt->tmpMin, opt->tmpMax, true);
       gmshColor4ubv((GLubyte *)&col2);
       if(horizontal) {
-        gmshVertex2d(xmin + (i + 1) * box, ymin);
-        gmshVertex2d(xmin + (i + 1) * box, ymin + height);
+        gmshVertex2d(xmin + edge(i + 1), ymin);
+        gmshVertex2d(xmin + edge(i + 1), ymin + height);
       }
       else {
-        gmshVertex2d(xmin + width, ymin + (i + 1) * box);
-        gmshVertex2d(xmin, ymin + (i + 1) * box);
+        gmshVertex2d(xmin + width, ymin + edge(i + 1));
+        gmshVertex2d(xmin, ymin + edge(i + 1));
       }
       gmshEnd();
     }
@@ -396,12 +412,12 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       double t = (opt->nbIso > 1) ? (double)i / (opt->nbIso - 1) : 0.5;
       gmshBegin(GL_LINES);
       if(horizontal) {
-        double x = xmin + alongBar(opt, t, width);
+        double x = xmin + lineAt(alongBar(opt, t, width));
         gmshVertex2d(x, ymin);
         gmshVertex2d(x, ymin + height);
       }
       else {
-        double y = ymin + alongBar(opt, t, height);
+        double y = ymin + lineAt(alongBar(opt, t, height));
         gmshVertex2d(xmin, y);
         gmshVertex2d(xmin + width, y);
       }
@@ -421,12 +437,12 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < ticks.size(); i++) {
     if(horizontal) {
-      double x = xmin + alongBar(opt, ticks[i].t, width);
+      double x = xmin + lineAt(alongBar(opt, ticks[i].t, width));
       gmshVertex2d(x, ymin + height);
       gmshVertex2d(x, ymin + height + 0.4 * tic);
     }
     else {
-      double y = ymin + alongBar(opt, ticks[i].t, height);
+      double y = ymin + lineAt(alongBar(opt, ticks[i].t, height));
       gmshVertex2d(xmin + width, y);
       gmshVertex2d(xmin + width + 0.4 * tic, y);
     }
@@ -562,6 +578,7 @@ static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   double font_h = drawContext::global()->getStringHeight();
+  _pixelFactor = ctx->highResolutionPixelFactor();
   std::vector<scaleTick> ticks;
   std::string multiplier;
   scaleTicks(opt, opt->tmpMin, opt->tmpMax, horizontal ? width : height,
