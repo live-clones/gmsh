@@ -976,8 +976,12 @@ void main()
     glBindTexture(GL_TEXTURE_2D, _accCopy);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
+    // what is changed below is put back: this runs in the middle of a frame,
+    // and what is drawn afterwards expects the state it left
     GLint vp[4];
     GLfloat clear[4];
+    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
+    GLboolean wasBlend = glIsEnabled(GL_BLEND);
     glGetIntegerv(GL_VIEWPORT, vp);
     glGetFloatv(GL_COLOR_CLEAR_VALUE, clear);
     glViewport(0, 0, width, height);
@@ -1010,7 +1014,8 @@ void main()
 
     glViewport(vp[0], vp[1], vp[2], vp[3]);
     glClearColor(clear[0], clear[1], clear[2], clear[3]);
-    glEnable(GL_DEPTH_TEST);
+    if(wasDepth) glEnable(GL_DEPTH_TEST);
+    if(wasBlend) glEnable(GL_BLEND);
     glApi::UseProgram(_program);
     glApi::BindVertexArray(_vao);
     noTexture();
