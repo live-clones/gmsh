@@ -164,6 +164,8 @@ uniform int uShading;
 // it, and the same for the dome direction of the current sample
 uniform vec3 uStudioLight;
 uniform vec3 uStudioUp;
+// the size of a texel of the maps, in eye coordinates
+uniform float uShadowTexel;
 uniform bool uShadowOn;
 uniform mat4 uShadowFromEye;
 uniform sampler2DShadow uShadow;
@@ -171,6 +173,10 @@ uniform bool uDomeOn;
 uniform vec3 uDomeDir;
 uniform mat4 uDomeFromEye;
 uniform sampler2DShadow uDome;
+// drawing into a shadow map, and the seed of the frame being accumulated
+// (negative on the plain frame)
+uniform bool uShadowPass;
+uniform float uSeed;
 // 0: draw on the window; 1: sum into the transparency buffers
 uniform int uOitPass;
 
@@ -211,19 +217,49 @@ void emit(vec4 c)
   }
 }
 
-// how much of a light reaches this fragment through its map: 1 outside the
-// map or with nothing in front, 0 in full shade, filtered over 5x5 texels
-float mapLit(sampler2DShadow map, mat4 fromEye, float bias)
+// Where a fragment of normal n is looked up in the map of a light in the
+// direction l: a texel or two away along the normal, more so at grazing
+// angles, and a little nearer the light (the z), so that a surface does not
+// shadow itself. z is set beyond 1 outside the map.
+vec3 mapCoord(mat4 fromEye, vec3 n, vec3 l)
 {
-  vec4 p = fromEye * vec4(vEye, 1.0);
+  float nl = clamp(dot(n, l), -1.0, 1.0);
+  vec3 at = vEye + n * uShadowTexel * (1.0 + 2.0 * sqrt(1.0 - nl * nl));
+  vec4 p = fromEye * vec4(at, 1.0);
   vec3 q = p.xyz / p.w;
-  if(q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0 || q.z > 1.0) return 1.0;
-  vec2 texel = 1.0 / vec2(textureSize(map, 0));
+  q.z -= 0.0005 + 0.0015 * (1.0 - max(nl, 0.0));
+  if(q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0) q.z = 2.0;
+  return q;
+}
+
+// How much of the key light, and of the dome, reaches this fragment of
+// normal n through its map: 1 outside the map or with nothing in front, 0 in
+// full shade, filtered over 5x5 texels. One function per map: a sampler
+// handed to a function as an argument is not something every driver gets
+// right.
+float keyLit(vec3 n)
+{
+  vec3 q = mapCoord(uShadowFromEye, n, uStudioLight);
+  if(q.z > 1.0) return 1.0;
+  vec2 texel = 1.0 / vec2(textureSize(uShadow, 0));
   float lit = 0.0;
   for(int i = -2; i <= 2; i++)
     for(int j = -2; j <= 2; j++)
-      lit += texture(map, vec3(q.xy + vec2(float(i), float(j)) * texel,
-                               q.z - bias));
+      lit += texture(uShadow, vec3(q.xy + vec2(float(i), float(j)) * texel,
+                                   q.z));
+  return lit / 25.0;
+}
+
+float domeLit(vec3 n)
+{
+  vec3 q = mapCoord(uDomeFromEye, n, uDomeDir);
+  if(q.z > 1.0) return 1.0;
+  vec2 texel = 1.0 / vec2(textureSize(uDome, 0));
+  float lit = 0.0;
+  for(int i = -2; i <= 2; i++)
+    for(int j = -2; j <= 2; j++)
+      lit += texture(uDome, vec3(q.xy + vec2(float(i), float(j)) * texel,
+                                 q.z));
   return lit / 25.0;
 }
 
@@ -231,6 +267,20 @@ void main()
 {
   for(int i = 0; i < 6; i++)
     if(vClip[i] < 0.0) discard;
+
+  if(uShadowPass && vColor.a < 1.0) {
+    // a transparent fragment casts a shadow in proportion to its opacity:
+    // kept with that probability on the accumulated frames, and when at
+    // least half opaque on the plain one
+    if(uSeed < 0.0) {
+      if(vColor.a < 0.5) discard;
+    }
+    else {
+      float r = fract(sin(dot(gl_FragCoord.xy + vec2(uSeed),
+                              vec2(12.9898, 78.233))) * 43758.5453);
+      if(r > vColor.a) discard;
+    }
+  }
 
   if(uStipple) {
     int bit = int(mod(floor(vDash / float(uStippleFactor)), 16.0));
@@ -250,10 +300,10 @@ void main()
   if(uShading == 2) {
     // the shadow catcher: a tint as opaque as the shade it is in, from the
     // key light and, once the dome is sampled, from the ambient occlusion
-    float lit = uShadowOn ? mapLit(uShadow, uShadowFromEye, 0.001) : 1.0;
+    vec3 nf = normalize(vNormal);
+    float lit = uShadowOn ? keyLit(nf) : 1.0;
     float shade = 1.0 - lit;
-    if(uDomeOn)
-      shade = 1.0 - 0.6 * lit - 0.4 * mapLit(uDome, uDomeFromEye, 0.001);
+    if(uDomeOn) shade = 1.0 - 0.6 * lit - 0.4 * domeLit(nf);
     emit(vec4(vColor.rgb, alpha * shade));
     return;
   }
@@ -276,9 +326,7 @@ void main()
     vec3 base = pow(vColor.rgb, vec3(2.2));
     vec3 key = uLightOn[0] ? uLightDiffuse[0] : vec3(1.0);
     float nl = dot(n, uStudioLight);
-    float lit = uShadowOn ?
-      mapLit(uShadow, uShadowFromEye, 0.001 + 0.003 * (1.0 - max(nl, 0.0))) :
-      1.0;
+    float lit = uShadowOn ? keyLit(n) : 1.0;
     // the ground below, and the sky above: analytic on the first frame, and
     // from a dome direction of each frame afterwards (cosine weighted about
     // the up axis, so that a surface facing up gets 1 on average and a tilted
@@ -287,7 +335,7 @@ void main()
     vec3 ambient = vec3(0.25 * (0.5 - 0.5 * nu));
     if(uDomeOn) {
       float nd = dot(n, uDomeDir), ud = dot(uStudioUp, uDomeDir);
-      float v = mapLit(uDome, uDomeFromEye, 0.001 + 0.003 * (1.0 - max(nd, 0.0)));
+      float v = domeLit(n);
       ambient += vec3(0.55 * v * min(max(nd, 0.0) / max(ud, 0.05), 4.0));
     }
     else
@@ -410,8 +458,8 @@ void main()
       // one location per array element, looked up at link time: asking by
       // name at every draw is costly on scenes of many small draws
       GLint clipPlane[6], clipOn[6];
-      GLint studioLight, studioUp, shadowOn, shadowFromEye, shadow;
-      GLint domeOn, domeDir, domeFromEye, dome;
+      GLint studioLight, studioUp, shadowTexel, shadowOn, shadowFromEye, shadow;
+      GLint domeOn, domeDir, domeFromEye, dome, shadowPass, seed;
       GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
       GLint lightSpecular[6], lightOn[6];
     } _u;
@@ -554,6 +602,7 @@ void main()
       _u.shading = glApi::GetUniformLocation(p, "uShading");
       _u.studioLight = glApi::GetUniformLocation(p, "uStudioLight");
       _u.studioUp = glApi::GetUniformLocation(p, "uStudioUp");
+      _u.shadowTexel = glApi::GetUniformLocation(p, "uShadowTexel");
       _u.shadowOn = glApi::GetUniformLocation(p, "uShadowOn");
       _u.shadowFromEye = glApi::GetUniformLocation(p, "uShadowFromEye");
       _u.shadow = glApi::GetUniformLocation(p, "uShadow");
@@ -561,6 +610,8 @@ void main()
       _u.domeDir = glApi::GetUniformLocation(p, "uDomeDir");
       _u.domeFromEye = glApi::GetUniformLocation(p, "uDomeFromEye");
       _u.dome = glApi::GetUniformLocation(p, "uDome");
+      _u.shadowPass = glApi::GetUniformLocation(p, "uShadowPass");
+      _u.seed = glApi::GetUniformLocation(p, "uSeed");
       _u.instanced = glApi::GetUniformLocation(p, "uInstanced");
       _u.taper = glApi::GetUniformLocation(p, "uTaper");
       _u.textured = glApi::GetUniformLocation(p, "uTextured");
@@ -716,13 +767,14 @@ void main()
     glApi::Uniform1i(_u.shading, model);
   }
 
-  void setStudioLight(const double dir[3], const double up[3])
+  void setStudioLight(const double dir[3], const double up[3], double texel)
   {
     if(!ensure()) return;
     float d[3] = {(float)dir[0], (float)dir[1], (float)dir[2]};
     float u[3] = {(float)up[0], (float)up[1], (float)up[2]};
     glApi::Uniform3fv(_u.studioLight, 1, d);
     glApi::Uniform3fv(_u.studioUp, 1, u);
+    glApi::Uniform1f(_u.shadowTexel, (float)texel);
   }
 
   void setDome(const double dir[3])
@@ -747,7 +799,7 @@ void main()
     setDomeOff();
   }
 
-  bool beginShadowPass(int which, int size)
+  bool beginShadowPass(int which, int size, int sample)
   {
     if(which < 0 || which > 1 || size < 1 || _shadowPass >= 0) return false;
     if(!ensure() || !glApi::haveFramebufferObjects()) return false;
@@ -798,6 +850,8 @@ void main()
     // the map is being written, so it must not be read
     glApi::Uniform1i(which ? _u.domeOn : _u.shadowOn, 0);
     bindNoShadow(which);
+    glApi::Uniform1i(_u.shadowPass, 1);
+    glApi::Uniform1f(_u.seed, sample > 0 ? 0.7318f * sample : -1.f);
     glGetIntegerv(GL_VIEWPORT, _shadowViewport);
     glViewport(0, 0, size, size);
     glEnable(GL_DEPTH_TEST);
@@ -812,6 +866,7 @@ void main()
   {
     if(_shadowPass != which) return;
     _shadowPass = -1;
+    glApi::Uniform1i(_u.shadowPass, 0);
     glApi::BindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
                _shadowViewport[3]);

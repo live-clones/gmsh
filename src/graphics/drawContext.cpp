@@ -779,7 +779,7 @@ void drawContext::draw3d()
   bool studio = gmshUseShaders() && CTX::instance()->shading == 1 &&
                 render_mode != GMSH_SELECT && !inPickColorMode();
   if(studio)
-    drawShadowMap(split);
+    drawShadowMap();
   else if(gmshUseShaders())
     glShader::setShadowOff();
 
@@ -901,7 +901,7 @@ static void toEye(const double d[3], double e[3])
 // The model drawn from the direction dir (model coordinates) into shadow map
 // `which', which the shader compares against afterwards. The map is
 // orthographic over the bounding sphere of the model.
-bool drawContext::drawOneShadowMap(int which, const double dir[3], bool split)
+bool drawContext::drawOneShadowMap(int which, const double dir[3])
 {
   CTX *ctx = CTX::instance();
   double c[3], R = 0.;
@@ -921,7 +921,7 @@ bool drawContext::drawOneShadowMap(int which, const double dir[3], bool split)
 
   // what is pending (the background) must reach the window, not the map
   gmshFlushImmediate();
-  if(!glShader::beginShadowPass(which, 2048)) return false;
+  if(!glShader::beginShadowPass(which, 2048, studioSample)) return false;
   shadowPass = true;
   gmshMatrixMode(GMSH_PROJECTION);
   gmshPushMatrix();
@@ -930,11 +930,15 @@ bool drawContext::drawOneShadowMap(int which, const double dir[3], bool split)
   gmshPushMatrix();
   gmshLoadMatrix(view);
   for(int i = 0; i < 6; i++) gmshClipPlane(i, ctx->clipPlane[i]);
+  // everything casts, the transparent in proportion to its opacity, which
+  // the shader has to be given as on the window
   int pass = transparencyPass;
-  // what is transparent casts no shadow
-  transparencyPass = split ? TRANSPARENCY_OPAQUE : TRANSPARENCY_ALL;
+  transparencyPass = TRANSPARENCY_ALL;
+  gmshAlphaScale(ctx->geom.transparency, ctx->geom.transparencyMode == 0);
   drawGeom();
+  gmshAlphaScale(ctx->mesh.transparency, ctx->mesh.transparencyMode == 0);
   drawMesh();
+  gmshAlphaScale(1., false);
   drawPost();
   gmshFlushImmediate();
   transparencyPass = pass;
@@ -967,7 +971,7 @@ bool drawContext::drawOneShadowMap(int which, const double dir[3], bool split)
 // on the accumulated frames it is jittered inside its cone, which softens the
 // shadow on average, and a second map is drawn from a direction of the dome
 // above the model, which occludes the ambient light on average.
-void drawContext::drawShadowMap(bool split)
+void drawContext::drawShadowMap()
 {
   CTX *ctx = CTX::instance();
   int k = studioSample;
@@ -993,9 +997,17 @@ void drawContext::drawShadowMap(bool split)
   double de[3], ue[3];
   toEye(dir, de);
   toEye(up, ue);
-  glShader::setStudioLight(de, ue);
+  // a texel of the maps, which span the bounding sphere, in eye coordinates
+  double R = 0.;
+  for(int i = 0; i < 3; i++) {
+    double h = 0.5 * (ctx->max[i] - ctx->min[i]);
+    R += h * h;
+  }
+  const double *M = gmshMatrix(GMSH_MODELVIEW);
+  double scale = sqrt(M[0] * M[0] + M[1] * M[1] + M[2] * M[2]);
+  glShader::setStudioLight(de, ue, 2. * 1.05 * sqrt(R) * scale / 2048.);
 
-  if(!drawOneShadowMap(0, dir, split)) glShader::setShadowOff();
+  if(!drawOneShadowMap(0, dir)) glShader::setShadowOff();
 
   if(k > 0) {
     // cosine weighted about the up axis
@@ -1008,7 +1020,7 @@ void drawContext::drawShadowMap(bool split)
     double dome_e[3];
     toEye(dome, dome_e);
     glShader::setDome(dome_e);
-    if(!drawOneShadowMap(1, dome, split)) glShader::setDomeOff();
+    if(!drawOneShadowMap(1, dome)) glShader::setDomeOff();
   }
   else
     glShader::setDomeOff();
