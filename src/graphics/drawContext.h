@@ -204,8 +204,7 @@ public:
   // only the model is drawn then, no strings or images
   bool shadowPass;
   // the frame being accumulated in studio shading: 0 draws the plain frame,
-  // higher ones jitter the projection, the shadow of the transparent and the
-  // occlusion samples
+  // higher ones jitter the light, the dome and the projection
   int studioSample;
 
 private:
@@ -359,10 +358,7 @@ public:
   void drawPost();
   bool anyViewIsTransparent();
   void drawShadowMap();
-  // is the studio shading drawing this frame?
-  bool studioActive();
-  void applyStudioOcclusion();
-  bool drawOneShadowMap(const double dir[3]);
+  bool drawOneShadowMap(int which, const double dir[3]);
   void drawStudioFloor();
   void drawBackgroundGradient();
   void drawBackgroundImage(bool moving);

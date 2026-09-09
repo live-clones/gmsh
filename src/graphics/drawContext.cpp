@@ -776,7 +776,8 @@ void drawContext::draw3d()
                 anyViewIsTransparent());
 
   // the studio shading casts a shadow, drawn first into a map of its own
-  bool studio = studioActive();
+  bool studio = gmshUseShaders() && CTX::instance()->shading >= 1 &&
+                render_mode != GMSH_SELECT && !inPickColorMode();
   gmshShadingModel(studio ? 1 : 0);
   if(studio)
     drawShadowMap();
@@ -880,7 +881,7 @@ static void studioBounds(double min[3], double max[3])
 }
 
 // the up axis of the studio shading, which General.Shading 1, 2 or 3 makes
-// x, y or z: the floor is normal to it, and the sky above it
+// x, y or z: the floor is normal to it, and the dome above it
 static int studioUpAxis()
 {
   return std::max(0, std::min(2, CTX::instance()->shading - 1));
@@ -933,12 +934,14 @@ static double studioFloorHalfSize(const double min[3], const double max[3],
   return std::min(h, 6. * size);
 }
 
-// The bounding sphere the shadow map from the direction dir has to cover:
-// the model, and the part of the floor its shadow can fall on - the corners
-// of the bounds carried along the light down to the floor plane, kept within
+// The bounding sphere a shadow map from the direction dir has to cover: the
+// model, and the part of the floor its shadow can fall on - the corners of
+// the bounds carried along the light down to the floor plane, kept within
 // the floor, so that a high light keeps the map tight and a low one reaches
-// out.
-static void studioMapBounds(const double dir[3], double c[3], double &R)
+// out; or the whole floor, for the dome, whose samples near the floor's
+// plane throw the longest shadows and need no detail.
+static void studioMapBounds(const double dir[3], bool wholeFloor, double c[3],
+                            double &R)
 {
   double min[3], max[3], d[3], mid[3], diag = 0.;
   studioBounds(min, max);
@@ -952,11 +955,20 @@ static void studioMapBounds(const double dir[3], double c[3], double &R)
   double z0 = min[up] - 1.e-3 * diag;
   double h = studioFloorHalfSize(min, max, up, z0);
   std::vector<SPoint3> pts;
+  if(wholeFloor) {
+    for(int k = 0; k < 4; k++) {
+      double q[3];
+      q[up] = z0;
+      q[u] = mid[u] + ((k & 1) ? h : -h);
+      q[v] = mid[v] + ((k & 2) ? h : -h);
+      pts.push_back(SPoint3(q[0], q[1], q[2]));
+    }
+  }
   for(int k = 0; k < 8; k++) {
     double p[3] = {(k & 1) ? max[0] : min[0], (k & 2) ? max[1] : min[1],
                    (k & 4) ? max[2] : min[2]};
     pts.push_back(SPoint3(p[0], p[1], p[2]));
-    if(dir[up] > 0.05) {
+    if(!wholeFloor && dir[up] > 0.05) {
       double t = (p[up] - z0) / dir[up], q[3];
       for(int i = 0; i < 3; i++) q[i] = p[i] - t * dir[i];
       q[u] = std::max(mid[u] - h, std::min(mid[u] + h, q[u]));
@@ -1005,14 +1017,14 @@ static void toEye(const double d[3], double e[3])
     for(int i = 0; i < 3; i++) e[i] /= n;
 }
 
-// The model drawn from the direction dir (model coordinates) into the shadow
-// map, which the shader compares against afterwards. The map is orthographic
-// over the bounding sphere of the model and of the floor its shadow reaches.
-bool drawContext::drawOneShadowMap(const double dir[3])
+// The model drawn from the direction dir (model coordinates) into shadow map
+// `which', which the shader compares against afterwards. The map is
+// orthographic over the bounding sphere of the model.
+bool drawContext::drawOneShadowMap(int which, const double dir[3])
 {
   CTX *ctx = CTX::instance();
   double c[3], R;
-  studioMapBounds(dir, c, R);
+  studioMapBounds(dir, which == 1, c, R);
   if(R <= 0.) return false;
   double eye[3] = {c[0] + 2. * R * dir[0], c[1] + 2. * R * dir[1],
                    c[2] + 2. * R * dir[2]};
@@ -1023,7 +1035,7 @@ bool drawContext::drawOneShadowMap(const double dir[3])
 
   // what is pending (the background) must reach the window, not the map
   gmshFlushImmediate();
-  if(!glShader::beginShadowPass(2048, studioSample)) return false;
+  if(!glShader::beginShadowPass(which, 2048, studioSample)) return false;
   shadowPass = true;
   gmshMatrixMode(GMSH_PROJECTION);
   gmshPushMatrix();
@@ -1055,7 +1067,7 @@ bool drawContext::drawOneShadowMap(const double dir[3])
   // light's matrices, and from [-1, 1] to [0, 1]
   double inv[16], a[16], b[16], s[16], t[16], bias[16];
   if(!glMatrix::invert(gmshMatrix(GMSH_MODELVIEW), inv)) {
-    glShader::endShadowPass(nullptr);
+    glShader::endShadowPass(which, nullptr);
     return false;
   }
   glMatrix::multiply(view, inv, a);
@@ -1064,15 +1076,19 @@ bool drawContext::drawOneShadowMap(const double dir[3])
   glMatrix::scale(0.5, 0.5, 0.5, s);
   glMatrix::multiply(t, s, bias);
   glMatrix::multiply(bias, b, a);
-  glShader::endShadowPass(a);
+  glShader::endShadowPass(which, a);
   return true;
 }
 
-// The shadow of the studio shading. The key light is light 0's direction in
-// model coordinates, so that the shadow stays put when the model is rotated.
+// The shadows of the studio shading. The key light is light 0's direction in
+// model coordinates, so that the shadow stays put when the model is rotated;
+// on the accumulated frames it is jittered inside its cone, which softens the
+// shadow on average, and a second map is drawn from a direction of the dome
+// above the model, which occludes the ambient light on average.
 void drawContext::drawShadowMap()
 {
   CTX *ctx = CTX::instance();
+  int k = studioSample;
   double dir[3];
   studioKeyDirection(dir);
   double up[3] = {0., 0., 0.};
@@ -1082,7 +1098,7 @@ void drawContext::drawShadowMap()
   toEye(up, ue);
   // a texel of the key map, in eye coordinates
   double c[3], R;
-  studioMapBounds(dir, c, R);
+  studioMapBounds(dir, false, c, R);
   const double *M = gmshMatrix(GMSH_MODELVIEW);
   double scale = sqrt(M[0] * M[0] + M[1] * M[1] + M[2] * M[2]);
   // the map's depth runs over 2R, its width over 2048 texels: a unit of
@@ -1090,28 +1106,23 @@ void drawContext::drawShadowMap()
   glShader::setStudioLight(de, ue, 2. * R * scale / 2048.,
                            2048. * tan(ctx->studioLightSpread * M_PI / 180.));
 
-  if(!drawOneShadowMap(dir)) glShader::setShadowOff();
-}
+  if(!drawOneShadowMap(0, dir)) glShader::setShadowOff();
 
-bool drawContext::studioActive()
-{
-  return gmshUseShaders() && CTX::instance()->shading >= 1 &&
-         render_mode != GMSH_SELECT && !inPickColorMode();
-}
-
-// The contact darkening of the studio shading, from the depth of the frame
-// drawn so far: what is occluded within a tenth of the model gets darker.
-void drawContext::applyStudioOcclusion()
-{
-  if(!studioActive()) return;
-  double min[3], max[3], diag = 0.;
-  studioBounds(min, max);
-  for(int i = 0; i < 3; i++) diag += (max[i] - min[i]) * (max[i] - min[i]);
-  const double *M = gmshMatrix(GMSH_MODELVIEW);
-  double scale = sqrt(M[0] * M[0] + M[1] * M[1] + M[2] * M[2]);
-  gmshFlushImmediate();
-  glShader::applyOcclusion(_projection, 0.1 * sqrt(diag) * scale, 0.8,
-                           studioSample);
+  if(k > 0) {
+    // cosine weighted about the up axis
+    double e1[3], e2[3], dome[3];
+    studioBasis(up, e1, e2);
+    double r = sqrt(halton(k, 11)), phi = 2. * M_PI * halton(k, 13);
+    double z = sqrt(std::max(0., 1. - r * r));
+    for(int i = 0; i < 3; i++)
+      dome[i] = r * cos(phi) * e1[i] + r * sin(phi) * e2[i] + z * up[i];
+    double dome_e[3];
+    toEye(dome, dome_e);
+    glShader::setDome(dome_e);
+    if(!drawOneShadowMap(1, dome)) glShader::setDomeOff();
+  }
+  else
+    glShader::setDomeOff();
 }
 
 // The shadow catcher of the studio shading: a plane under the model, at the
@@ -1144,12 +1155,16 @@ void drawContext::drawStudioFloor()
   gmshShadingModel(2);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // hidden by the model, but hiding nothing itself: whatever hangs below
+  // it (glyphs, a view raised further than its data) stays visible
+  glDepthMask(GL_FALSE);
   gmshColor4ub(0, 0, 0, 150);
   gmshNormal3d(n[0], n[1], n[2]);
   gmshBegin(GL_QUADS);
   for(int k = 0; k < 4; k++) gmshVertex3d(p[k][0], p[k][1], p[k][2]);
   gmshEnd();
   gmshShadingModel(1);
+  glDepthMask(GL_TRUE);
   glDisable(GL_BLEND);
 }
 
