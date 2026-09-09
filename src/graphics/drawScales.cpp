@@ -89,6 +89,17 @@ static std::string multiplierText(int exp)
   return s;
 }
 
+// where t (0 to 1) falls along a bar of the given length: an iso bar keeps
+// its marks a little inside its outline
+static double alongBar(PViewOptions *opt, double t, double length)
+{
+  if(opt->intervalsType == PViewOptions::Iso) {
+    double inset = 1.5;
+    return inset + t * (length - 2 * inset);
+  }
+  return t * length;
+}
+
 static bool ticksFit(const std::vector<scaleTick> &ticks, double length,
                      const std::vector<double> &widths, double fontH,
                      bool horizontal)
@@ -384,16 +395,14 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       unsigned int col = opt->getColor(i, opt->nbIso);
       gmshColor4ubv((GLubyte *)&col);
       double t = (opt->nbIso > 1) ? (double)i / (opt->nbIso - 1) : 0.5;
-      // kept inside the outline
-      double inset = 1.5;
       gmshBegin(GL_LINES);
       if(horizontal) {
-        double x = xmin + inset + t * (width - 2 * inset);
+        double x = xmin + alongBar(opt, t, width);
         gmshVertex2d(x, ymin);
         gmshVertex2d(x, ymin + height);
       }
       else {
-        double y = ymin + inset + t * (height - 2 * inset);
+        double y = ymin + alongBar(opt, t, height);
         gmshVertex2d(xmin, y);
         gmshVertex2d(xmin + width, y);
       }
@@ -413,12 +422,12 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < ticks.size(); i++) {
     if(horizontal) {
-      double x = xmin + ticks[i].t * width;
+      double x = xmin + alongBar(opt, ticks[i].t, width);
       gmshVertex2d(x, ymin + height);
       gmshVertex2d(x, ymin + height + 0.4 * tic);
     }
     else {
-      double y = ymin + ticks[i].t * height;
+      double y = ymin + alongBar(opt, ticks[i].t, height);
       gmshVertex2d(xmin + width, y);
       gmshVertex2d(xmin + width + 0.4 * tic, y);
     }
@@ -442,11 +451,11 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
 
   for(std::size_t i = 0; i < ticks.size(); i++) {
     if(horizontal)
-      haloString(ctx, ticks[i].label, xmin + ticks[i].t * width,
+      haloString(ctx, ticks[i].label, xmin + alongBar(opt, ticks[i].t, width),
                  ymin + height + tic, 1);
     else
       haloString(ctx, ticks[i].label, xmin + width + tic,
-                 ymin + ticks[i].t * height - font_a / 3., 0);
+                 ymin + alongBar(opt, ticks[i].t, height) - font_a / 3., 0);
   }
 }
 
