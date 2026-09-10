@@ -280,6 +280,21 @@ static std::string getGraphTitle(PView *p)
   return label;
 }
 
+// What a graph does in the frame it is drawn in: the first one drawn there
+// owns the frame, the grid and the axes, and the ones drawn over it add an
+// axis of their own only where their range differs, so that a shared frame
+// does not end up with two grids and two rows of numbers saying the same
+// thing. Their names then go in a legend inside the frame.
+struct graphPlace {
+  bool first = true; // draws the frame, the grid and the axes
+  bool legend = false; // several graphs share the frame
+  int nth = 0; // its line in the legend
+  bool xaxis = true, yaxis = true; // its own numbers under and beside it
+  int xrow = 0; // that many rows of numbers under the frame's own
+  double yshift = 0.; // that far out on the right of the frame
+  bool ytwin = false; // another graph writes numbers on its right
+};
+
 // Where the frame of a graph sits in its box and what goes around it: the
 // numbers of the two axes, the power of ten they share, the name of the view
 // and the label of the abscissa. The margins are what that text measures, so
@@ -292,7 +307,7 @@ struct graphLayout {
   double fontH = 1., fontA = 1., titleH = 1., titleA = 1.;
   double numX = 0., multX = 0., titleX = 0.; // baselines under the frame
   double multY = 0., titleY = 0.; // baselines over the frame
-  bool rightLabels = false; // the numbers of the Y axis on the right
+  double ynum = 0.; // how wide the numbers of the Y axis are
   double ss = 1.; // a pixel in the units the graph is drawn in
 };
 
@@ -301,14 +316,10 @@ static double stringWidth(const std::string &s)
   return drawContext::global()->getStringWidth(s.c_str());
 }
 
-// `overlay' is the number of lines of text the graphs already drawn in the
-// same frame have put under it, `legend' says that the frame is shared, in
-// which case the names of the views go inside it rather than over it. Every
-// length is in pixels: drawGraph scales them to the units it draws in.
+// Every length is in pixels: drawGraph scales them to the units it draws in.
 static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
                            double ymax, double width, double height,
-                           double tic, int overlay, bool legend,
-                           graphLayout &l)
+                           double tic, const graphPlace &pl, graphLayout &l)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -322,17 +333,16 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
   l.fontA = l.fontH - drawContext::global()->getStringDescent();
   l.out = 0.5 * tic;
   l.gap = 0.4 * tic;
-  l.rightLabels = (overlay != 0);
 
   if(!opt->axes) { // nothing is written: the curves alone, off the edges
     l.left = l.right = l.top = l.bottom = 1.5 * l.fontH;
     return;
   }
 
-  if(opt->axesTics[0] > 0)
+  if(pl.xaxis && opt->axesTics[0] > 0)
     makeAxisTicks(xmin, xmax, width, l.fontH, true, opt->axesFormat[0],
                   (int)opt->axesTics[0], false, l.xt, l.xmult);
-  if(opt->axesTics[1] > 0)
+  if(pl.yaxis && opt->axesTics[1] > 0)
     makeAxisTicks(ymin, ymax, height, l.fontH, false, opt->axesFormat[1],
                   (int)opt->axesTics[1], false, l.yt, l.ymult);
 
@@ -340,7 +350,7 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
   l.left = l.bottom = l.out;
   l.right = l.top = (opt->axes > 1) ? l.out : 0.;
 
-  l.numX = l.out + l.gap + l.fontH + overlay * (l.fontH + tic);
+  l.numX = l.out + l.gap + l.fontH + pl.xrow * (l.fontH + tic);
   l.multX = l.numX + 1.2 * l.fontH;
   // the power of ten of the Y axis goes over the frame, clear of the number
   // written at the top of it
@@ -350,29 +360,32 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
 
   if(opt->showScale) {
     // the widest number of the Y axis, and the power of ten over it
-    double w = l.ymult.size() ? stringWidth(l.ymult) : 0.;
+    l.ynum = l.ymult.size() ? stringWidth(l.ymult) : 0.;
     for(std::size_t i = 0; i < l.yt.size(); i++)
-      w = std::max(w, stringWidth(l.yt[i].label));
-    if(w > 0.) {
-      double &side = l.rightLabels ? l.right : l.left;
-      side = std::max(side, l.out + l.gap + w);
+      l.ynum = std::max(l.ynum, stringWidth(l.yt[i].label));
+    if(l.ynum > 0.) {
+      double need = l.out + l.gap + l.ynum;
+      if(pl.first)
+        l.left = std::max(l.left, need);
+      else
+        l.right = std::max(l.right, pl.yshift + need);
       if(l.ymult.size()) l.top = std::max(l.top, l.multY + l.fontA);
     }
     // the numbers of the X axis stick out at both ends of the frame
     for(std::size_t i = 0; i < l.xt.size(); i++) {
-      double w2 = 0.5 * stringWidth(l.xt[i].label);
-      l.left = std::max(l.left, w2 - l.xt[i].t * width);
-      l.right = std::max(l.right, w2 - (1. - l.xt[i].t) * width);
+      double w = 0.5 * stringWidth(l.xt[i].label);
+      l.left = std::max(l.left, w - l.xt[i].t * width);
+      l.right = std::max(l.right, w - (1. - l.xt[i].t) * width);
     }
     if(l.xt.size())
       l.bottom = std::max(l.bottom, (l.xmult.size() ? l.multX : l.numX) +
                                       l.fontH - l.fontA);
   }
 
-  if(opt->axesLabel[0].size())
+  if(pl.first && opt->axesLabel[0].size())
     l.bottom = std::max(l.bottom, l.titleX + l.titleH - l.titleA);
   // the name of the view goes over the frame, unless it is in the legend
-  if(!legend && getGraphTitle(p).size())
+  if(!pl.legend && getGraphTitle(p).size())
     l.top = std::max(l.top, l.titleY + l.titleA);
 }
 
@@ -381,7 +394,8 @@ static void scaleGraphLayout(graphLayout &l, double ss)
   l.ss = ss;
   double *v[] = {&l.left,  &l.right, &l.top,    &l.bottom, &l.out,
                  &l.gap,   &l.fontH, &l.fontA,  &l.titleH, &l.titleA,
-                 &l.numX,  &l.multX, &l.titleX, &l.multY,  &l.titleY};
+                 &l.numX,  &l.multX, &l.titleX, &l.multY,  &l.titleY,
+                 &l.ynum};
   for(std::size_t i = 0; i < sizeof(v) / sizeof(v[0]); i++) *v[i] *= ss;
 }
 
@@ -421,19 +435,16 @@ static void drawGraphLegend(drawContext *ctx, PView *p, double xleft,
 }
 
 static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
-                          double width, double height, int overlay, int nth,
-                          bool legend, bool inModelCoordinates,
-                          const graphLayout &l)
+                          double width, double height, bool inModelCoordinates,
+                          const graphPlace &pl, const graphLayout &l)
 {
   PViewOptions *opt = p->getOptions();
 
   if(!opt->axes) return;
 
-  if(overlay > 2) return;
-
   if(width <= 0 || height <= 0) return;
 
-  if(!overlay && !inModelCoordinates) {
+  if(pl.first && !inModelCoordinates) {
     int alpha = CTX::instance()->unpackAlpha(opt->color.background2d);
     if(alpha != 0) {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -462,7 +473,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   gmshColor4ubv((const void *)&opt->color.axes);
 
   // bare axes
-  if(!overlay) {
+  if(pl.first) {
     gmshBegin(GL_LINE_STRIP);
     gmshVertex2d(xleft, ytop);
     gmshVertex2d(xleft, ytop - height);
@@ -478,8 +489,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   drawContext::global()->setStringHalo(true);
 
   // the name of the view
-  if(legend)
-    drawGraphLegend(ctx, p, xleft, ytop, width, nth, l);
+  if(pl.legend)
+    drawGraphLegend(ctx, p, xleft, ytop, width, pl.nth, l);
   else
     ctx->drawString(getGraphTitle(p), xleft, ytop + l.titleY, 0,
                     CTX::instance()->glFontTitle,
@@ -489,7 +500,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   double ybot = ytop - height;
 
   // the label of the abscissa
-  if(opt->axesLabel[0].size())
+  if(pl.first && opt->axesLabel[0].size())
     ctx->drawString(opt->axesLabel[0], xleft + width / 2, ybot - l.titleX, 0,
                     CTX::instance()->glFontTitle,
                     CTX::instance()->glFontEnumTitle,
@@ -504,19 +515,27 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     CTX::instance()->unpackGreen(opt->color.axes),
     CTX::instance()->unpackBlue(opt->color.axes), 60);
 
-  // y tics, their labels and the horizontal grid
-  double ynum = l.rightLabels ? xleft + width + out + l.gap : xleft - out - l.gap;
+  // y tics, their numbers and the horizontal grid: on the left of the frame
+  // for the graph that owns it, on its right, past what is already written
+  // there, for a graph drawn over it
+  double yaxis = pl.first ? xleft : xleft + width + pl.yshift;
   for(std::size_t i = 0; i < l.yt.size(); i++) {
     double y = ybot + l.yt[i].t * height;
     gmshBegin(GL_LINES);
-    gmshVertex2d(xleft - out, y);
-    gmshVertex2d(xleft, y);
-    if(opt->axes > 1) {
-      gmshVertex2d(xleft + width, y);
-      gmshVertex2d(xleft + width + out, y);
+    if(pl.first) {
+      gmshVertex2d(xleft - out, y);
+      gmshVertex2d(xleft, y);
+      if(opt->axes > 1 && !pl.ytwin) { // the twin axis has the right side
+        gmshVertex2d(xleft + width, y);
+        gmshVertex2d(xleft + width + out, y);
+      }
+    }
+    else {
+      gmshVertex2d(yaxis, y);
+      gmshVertex2d(yaxis + out, y);
     }
     gmshEnd();
-    if(opt->axes > 2 && l.yt[i].t > 0. && l.yt[i].t < 1.) {
+    if(pl.first && opt->axes > 2 && l.yt[i].t > 0. && l.yt[i].t < 1.) {
       gmshColor4ubv((const void *)&grid);
       gmshBegin(GL_LINES);
       gmshVertex2d(xleft, y);
@@ -525,37 +544,41 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       gmshColor4ubv((const void *)&opt->color.axes);
     }
     if(opt->showScale) {
-      if(l.rightLabels)
-        ctx->drawString(l.yt[i].label, ynum, y - l.fontA / 3., 0.);
+      if(pl.first)
+        ctx->drawStringRight(l.yt[i].label, xleft - out - l.gap,
+                             y - l.fontA / 3., 0.);
       else
-        ctx->drawStringRight(l.yt[i].label, ynum, y - l.fontA / 3., 0.);
+        ctx->drawString(l.yt[i].label, yaxis + out + l.gap, y - l.fontA / 3.,
+                        0.);
     }
   }
   if(opt->showScale && l.ymult.size()) {
-    if(l.rightLabels)
-      ctx->drawString(l.ymult, ynum, ytop + l.multY, 0.);
+    if(pl.first)
+      ctx->drawStringRight(l.ymult, xleft - out - l.gap, ytop + l.multY, 0.);
     else
-      ctx->drawStringRight(l.ymult, ynum, ytop + l.multY, 0.);
+      ctx->drawString(l.ymult, yaxis + out + l.gap, ytop + l.multY, 0.);
   }
 
-  // x tics, their labels and the vertical grid
+  // x tics, their numbers and the vertical grid
   for(std::size_t i = 0; i < l.xt.size(); i++) {
     double x = xleft + l.xt[i].t * width;
-    gmshBegin(GL_LINES);
-    gmshVertex2d(x, ybot - out);
-    gmshVertex2d(x, ybot);
-    if(opt->axes > 1) {
-      gmshVertex2d(x, ytop);
-      gmshVertex2d(x, ytop + out);
-    }
-    gmshEnd();
-    if(opt->axes > 2 && l.xt[i].t > 0. && l.xt[i].t < 1.) {
-      gmshColor4ubv((const void *)&grid);
+    if(pl.first) {
       gmshBegin(GL_LINES);
+      gmshVertex2d(x, ybot - out);
       gmshVertex2d(x, ybot);
-      gmshVertex2d(x, ytop);
+      if(opt->axes > 1) {
+        gmshVertex2d(x, ytop);
+        gmshVertex2d(x, ytop + out);
+      }
       gmshEnd();
-      gmshColor4ubv((const void *)&opt->color.axes);
+      if(opt->axes > 2 && l.xt[i].t > 0. && l.xt[i].t < 1.) {
+        gmshColor4ubv((const void *)&grid);
+        gmshBegin(GL_LINES);
+        gmshVertex2d(x, ybot);
+        gmshVertex2d(x, ytop);
+        gmshEnd();
+        gmshColor4ubv((const void *)&opt->color.axes);
+      }
     }
     if(opt->showScale)
       ctx->drawStringCenter(l.xt[i].label, x, ybot - l.numX, 0.);
@@ -696,9 +719,8 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
 }
 
 static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
-                      double width, double height, double tic, int overlay = 0,
-                      int nth = 0, bool legend = false,
-                      bool inModelCoordinates = false)
+                      double width, double height, double tic,
+                      const graphPlace &pl, bool inModelCoordinates = false)
 {
   std::vector<double> x;
   std::vector<std::vector<double> > y;
@@ -735,13 +757,21 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
   double ss = inModelCoordinates ? ctx->pixel_equiv_x / ctx->s[0] : 1.;
   graphLayout l;
   getGraphLayout(p, xmin, xmax, opt->tmpMin, opt->tmpMax, width / ss,
-                 height / ss, tic / ss, overlay, legend, l);
+                 height / ss, tic / ss, pl, l);
   scaleGraphLayout(l, ss);
 
-  drawGraphAxes(ctx, p, xleft, ytop, width, height, overlay, nth, legend,
-                inModelCoordinates, l);
+  drawGraphAxes(ctx, p, xleft, ytop, width, height, inModelCoordinates, pl, l);
   drawGraphCurves(ctx, p, xleft, ytop, width, height, x, xmin, xmax, y,
                   inModelCoordinates);
+}
+
+// two ranges the same to the eye: an axis for the second would repeat the
+// first
+static bool sameRange(double a0, double a1, double b0, double b1)
+{
+  double d = std::max(fabs(a1 - a0), fabs(b1 - b0));
+  if(d <= 0.) return (a0 == b0 && a1 == b1);
+  return fabs(a0 - b0) < 1.e-6 * d && fabs(a1 - b1) < 1.e-6 * d;
 }
 
 void drawContext::drawGraph2d(bool inModelCoordinates)
@@ -775,37 +805,58 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   double winh = viewport[3] - viewport[1];
 
   // how many graphs share each of the fixed positions: those beyond the
-  // first are drawn over the first one, and then the names of the views go
-  // in a legend inside the frame rather than over it
+  // first are drawn in its frame, and then the names of the views go in a
+  // legend inside it rather than over it
   int shared[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   for(std::size_t i = 0; i < graphs.size(); i++) {
-    int a = graphs[i]->getOptions()->autoPosition;
-    if(a >= 2 && a <= 11) shared[a]++;
+    PViewOptions *opt = graphs[i]->getOptions();
+    int a = opt->autoPosition;
+    if(a >= 2 && a <= 11 && opt->axes) shared[a]++;
   }
 
-  // what the text of the graphs needs around their frames: measured on a
-  // frame as large as the window, so that the margins are never too small
-  // for the labels the graphs end up with
+  // what each graph does in its frame, and what the text of all of them
+  // needs around it: measured on a frame as large as the window, so that
+  // the margins are never too small for the labels they end up with
+  std::vector<graphPlace> place(graphs.size());
   double ml = 0., mr = 0., mt = 0., mb = 0.;
   if(!inModelCoordinates) {
+    int nb[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int owner[12] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     int rows[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    double shift[12] = {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
+    double x0[12], x1[12], y0[12], y1[12];
     for(std::size_t i = 0; i < graphs.size(); i++) {
       PViewOptions *opt = graphs[i]->getOptions();
       int a = opt->autoPosition;
       if(a == 0 || a == 12) continue; // a graph placed by hand
-      int overlay = 0;
-      bool legend = false;
-      if(a >= 2 && a <= 11) {
-        overlay = rows[a];
-        legend = (shared[a] > 1);
-        if(opt->axes) rows[a] += (opt->axesLabel[0].size() ? 2 : 1);
-      }
+      if(!opt->axes) continue; // nothing is written around it
+      graphPlace &pl = place[i];
       double xmin, xmax, ymin, ymax;
       getGraphAbscissa(graphs[i], xmin, xmax);
       getGraphRange(graphs[i], ymin, ymax);
+      if(a >= 2 && a <= 11) {
+        pl.legend = (shared[a] > 1);
+        pl.nth = nb[a];
+        pl.first = !nb[a];
+        if(pl.first) {
+          owner[a] = (int)i;
+          x0[a] = xmin; x1[a] = xmax; y0[a] = ymin; y1[a] = ymax;
+        }
+        else {
+          // an axis of its own only where it would not repeat the frame's,
+          // and only for the first few: past that they cannot be read
+          pl.xaxis = !sameRange(xmin, xmax, x0[a], x1[a]) && nb[a] <= 2;
+          pl.yaxis = !sameRange(ymin, ymax, y0[a], y1[a]) && nb[a] <= 3;
+          if(pl.xaxis) pl.xrow = ++rows[a]; // under the frame's own numbers
+          pl.yshift = shift[a];
+          if(pl.yaxis) place[owner[a]].ytwin = true;
+        }
+        nb[a]++;
+      }
       graphLayout l;
-      getGraphLayout(graphs[i], xmin, xmax, ymin, ymax, winw, winh, tic,
-                     overlay, legend, l);
+      getGraphLayout(graphs[i], xmin, xmax, ymin, ymax, winw, winh, tic, pl, l);
+      if(!pl.first && pl.yaxis && l.ynum > 0.)
+        shift[a] = pl.yshift + l.out + 2 * l.gap + l.ynum;
       ml = std::max(ml, l.left);
       mr = std::max(mr, l.right);
       mt = std::max(mt, l.top);
@@ -829,8 +880,6 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   //  |          mb+my                          |
   //  +-----------------------------------------+
 
-  int overlay[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int nb[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   for(std::size_t i = 0; i < graphs.size(); i++) {
     double x = viewport[0] + mx + ml;
     double y = viewport[1] + my + mt;
@@ -841,26 +890,26 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
       int center = fix2dCoordinates(&x, &y);
       drawGraph(this, p, x - (center & 1 ? opt->size[0] / 2. : 0),
                 y + (center & 2 ? opt->size[1] / 2. : 0), opt->size[0],
-                opt->size[1], tic);
+                opt->size[1], tic, place[i]);
     }
     else if(opt->autoPosition == 1 && !inModelCoordinates) { // automatic
       if(graphs.size() == 1) {
         double w = winw - 2 * mx - ml - mr;
         double h = winh - 2 * my - mt - mb;
-        drawGraph(this, p, x, viewport[3] - y, w, h, tic);
+        drawGraph(this, p, x, viewport[3] - y, w, h, tic, place[i]);
       }
       else if(graphs.size() == 2) {
         double w = winw - 2 * mx - ml - mr;
         double h = (winh - 3 * my - 2 * (mt + mb)) / 2.;
         if(i == 1) y += (h + my + mt + mb);
-        drawGraph(this, p, x, viewport[3] - y, w, h, tic);
+        drawGraph(this, p, x, viewport[3] - y, w, h, tic, place[i]);
       }
       else {
         double w = (winw - 3 * mx - 2 * (ml + mr)) / 2.;
         double h = (winh - 3 * my - 2 * (mt + mb)) / 2.;
         if(i == 1 || i == 3) x += (w + mx + ml + mr);
         if(i == 2 || i == 3) y += (h + my + mt + mb);
-        drawGraph(this, p, x, viewport[3] - y, w, h, tic);
+        drawGraph(this, p, x, viewport[3] - y, w, h, tic, place[i]);
       }
     }
     else if(opt->autoPosition >= 2 && opt->autoPosition <= 11 &&
@@ -882,17 +931,12 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
         h = winh - 2 * my - mt - mb;
       if(a == 3 || a == 5 || a == 9) x += (w + mx + ml + mr);
       if(a == 4 || a == 5 || a == 7) y += (h + my + mt + mb);
-      drawGraph(this, p, x, viewport[3] - y, w, h, tic, overlay[a], nb[a],
-                shared[a] > 1);
-      if(opt->axes) {
-        overlay[a] += (opt->axesLabel[0].size() ? 2 : 1);
-        nb[a]++;
-      }
+      drawGraph(this, p, x, viewport[3] - y, w, h, tic, place[i]);
     }
     else if(opt->autoPosition == 12 &&
             inModelCoordinates) { // in model coordinates
       drawGraph(this, p, opt->position[0], opt->position[1] + opt->size[1],
-                opt->size[0], opt->size[1], tic, 0, 0, false, true);
+                opt->size[0], opt->size[1], tic, place[i], true);
     }
   }
 }
