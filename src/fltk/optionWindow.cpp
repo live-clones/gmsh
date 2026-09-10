@@ -1629,21 +1629,21 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.value[17] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW / 3, BH);
-      general.value[17]->tooltip("General.AxesTicsX");
+      general.value[17]->tooltip("General.AxesTicksX");
       general.value[17]->minimum(0.);
       if(CTX::instance()->inputScrolling) general.value[17]->step(1);
       general.value[17]->maximum(100);
       general.value[17]->callback(general_options_ok_cb);
       general.value[18] = new Fl_Value_Input(L + 2 * WB + 1 * IW / 3,
                                              2 * WB + 2 * BH, IW / 3, BH);
-      general.value[18]->tooltip("General.AxesTicsY");
+      general.value[18]->tooltip("General.AxesTicksY");
       general.value[18]->minimum(0.);
       if(CTX::instance()->inputScrolling) general.value[18]->step(1);
       general.value[18]->maximum(100);
       general.value[18]->callback(general_options_ok_cb);
       general.value[19] = new Fl_Value_Input(
         L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes tics");
-      general.value[19]->tooltip("General.AxesTicsZ");
+      general.value[19]->tooltip("General.AxesTicksZ");
       general.value[19]->minimum(0.);
       if(CTX::instance()->inputScrolling) general.value[19]->step(1);
       general.value[19]->maximum(100);
@@ -3321,21 +3321,21 @@ optionWindow::optionWindow(int deltaFontSize)
 
       view.value[3] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW / 3, BH);
-      view.value[3]->tooltip("View.AxesTicsX");
+      view.value[3]->tooltip("View.AxesTicksX");
       view.value[3]->minimum(0.);
       if(CTX::instance()->inputScrolling) view.value[3]->step(1);
       view.value[3]->maximum(100);
       view.value[3]->callback(view_options_ok_cb);
       view.value[4] = new Fl_Value_Input(L + 2 * WB + 1 * IW / 3,
                                          2 * WB + 2 * BH, IW / 3, BH);
-      view.value[4]->tooltip("View.AxesTicsY");
+      view.value[4]->tooltip("View.AxesTicksY");
       view.value[4]->minimum(0.);
       if(CTX::instance()->inputScrolling) view.value[4]->step(1);
       view.value[4]->maximum(100);
       view.value[4]->callback(view_options_ok_cb);
       view.value[5] = new Fl_Value_Input(
         L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes tics");
-      view.value[5]->tooltip("View.AxesTicsZ");
+      view.value[5]->tooltip("View.AxesTicksZ");
       view.value[5]->minimum(0.);
       if(CTX::instance()->inputScrolling) view.value[5]->step(1);
       view.value[5]->maximum(100);
