@@ -72,8 +72,8 @@ Default value: @code{""}@*
 Saved in: @code{-}
 
 @item View.NumberFormat
-Number format (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format (in standard C form); use clever automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple0

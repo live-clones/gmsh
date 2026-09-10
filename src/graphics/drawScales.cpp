@@ -177,7 +177,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
   ticks.clear();
   multiplier.clear();
   drawContextGlobal *g = drawContext::global();
-  bool defaultFormat = (opt->format == "%.3g");
+  bool defaultFormat = opt->format.empty();
   bool linear = (opt->scaleType == PViewOptions::Linear);
   int nbIso = std::max(1, opt->nbIso);
   char str[128];
@@ -470,7 +470,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
   for(std::size_t i = 0; i < ticks.size(); i++) {
     if(horizontal)
       haloString(ctx, ticks[i].label, xmin + alongBar(opt, ticks[i].t, width),
-                 ymin + height + 0.85 * tic, 1);
+                 ymin + height + tic, 1); // adjust for compactness
     else
       haloString(ctx, ticks[i].label, xmin + width + 0.8 * tic,
                  ymin + alongBar(opt, ticks[i].t, height) - font_a / 3., 0);
@@ -536,18 +536,19 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   std::string name = data->getName();
 
   if(horizontal) {
-    double y = ymin + height + 0.85 * tic + 1.2 * font_h;
+    double y = ymin + height + tic + 1.3 * font_h; // adjust for compactness
     if(sub[0] || multiplier.size()) {
       if(sub[0]) haloString(ctx, sub, xmin + width / 2., y, 1);
       if(multiplier.size()) haloString(ctx, multiplier, xmin + width, y, 2);
-      y += 1.05 * title_h;
+      y += 1.1 * title_h; // adjust for compactness
     }
     haloString(ctx, name, xmin + width / 2., y, 1, true);
   }
   else {
     double y = ymin - 2 * font_h;
     haloString(ctx, name, xmin, y, 0, true);
-    if(sub[0]) haloString(ctx, sub, xmin, y - 1.15 * font_h, 0);
+    if(sub[0])
+      haloString(ctx, sub, xmin, y - 1.2 * font_h, 0); // adjust for compactness
     if(multiplier.size())
       haloString(ctx, multiplier, xmin + width + 0.8 * tic,
                  ymin + height + 1.2 * font_h,
@@ -628,10 +629,10 @@ void drawContext::drawScales()
   double title_h = drawContext::global()->getStringHeight();
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
-  double above = tic + 1.2 * font_h + 2.05 * title_h;
+  double above = tic + 1.3 * font_h + 2.1 * title_h; // adjust for compactness
   // and a vertical one below its bar (the title and that line) and above
   // it (the top label and the power of ten)
-  double belowV = 3.4 * font_h, aboveV = 2.2 * font_h;
+  double belowV = 3.5 * font_h, aboveV = 2.2 * font_h; // adjust for compactness
 
   for(std::size_t i = 0; i < scales.size(); i++) {
     PView *p = scales[i];
@@ -653,7 +654,7 @@ void drawContext::drawScales()
       if(scales.size() == 1) {
         // half the window long, and thicker than the font on a large window
         double vw = viewport[2] - viewport[0], vh = viewport[3] - viewport[1];
-        double w = vw / 2., h = std::max(bar_size, 0.03 * std::min(vw, vh));
+        double w = vw / 2., h = std::max(bar_size, 0.025 * std::min(vw, vh));
         double x = xc - w / 2., y = viewport[1] + ysep;
         drawScale(this, p, x, y, w, h, tic, 1);
       }
@@ -671,8 +672,11 @@ void drawContext::drawScales()
       double xsep = 20.;
       double dy = 2. * CTX::instance()->glFontSize;
       if(scales.size() == 1) {
-        double ysep = (viewport[3] - viewport[1]) / 6.;
-        double w = bar_size, h = viewport[3] - viewport[1] - 2 * ysep - dy;
+        double vw = viewport[2] - viewport[0], vh = viewport[3] - viewport[1];
+        double ysep = vh / 6.;
+        // thicker than the font on a large window
+        double w = std::max(bar_size, 0.025 * std::min(vw, vh));
+        double h = vh - 2 * ysep - dy;
         double x = viewport[0] + xsep, y = viewport[1] + ysep + dy;
         drawScale(this, p, x, y, w, h, tic, 0);
       }
