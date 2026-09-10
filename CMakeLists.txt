@@ -112,6 +112,8 @@ opt(WINSLOWUNTANGLER "Enable WinslowUntangler extensions (requires ALGLIB)" ${DE
 opt(WRAP_JAVA "Generate SWIG Java wrappers for private API" OFF)
 opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by public API)" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
+opt(HIERARCHICAL_BASIS "Enable building hierarchical basis functions" ${DEFAULT})
+
 
 set(GMSH_MAJOR_VERSION 5)
 set(GMSH_MINOR_VERSION 0)
@@ -1038,6 +1040,18 @@ endif()
       list(APPEND EXTERNAL_INCLUDES ${MMG_INC})
       set_config_option(HAVE_MMG "Mmg")
     endif()
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis AND ENABLE_HIERARCHICAL_BASIS)
+    message(STATUS "Using new HierarchicalBasis implementation")
+    add_subdirectory(contrib/HierarchicalBasis)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis)
+    add_definitions(-DHAVE_HIERARCHICAL_BASIS=1)
+  else()
+    message(STATUS "Using old HierarchicalBasis implementation")
+    add_subdirectory(contrib/HierarchicalBasis_old)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis_old)
+    # Pas de définition -> macro absente
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
