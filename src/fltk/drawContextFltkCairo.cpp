@@ -62,12 +62,7 @@ public:
 
     // everything below is in true pixels, and the strings are drawn at that
     // scale so that they are sharp on a high resolution screen
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
-    double f = 1.;
-    if(Fl_Window::current() && Fl_Window::current()->w() > 0)
-      f = vp[2] / (double)Fl_Window::current()->w();
-    if(f <= 0.) f = 1.;
+    double f = drawContext::global()->pixelFactor();
 
     cairo_surface_t *surface = cairo_image_surface_create(
       CAIRO_FORMAT_A8, (int)(_totalWidth * f) + 1, (int)(_maxHeight * f) + 1);
@@ -105,6 +100,8 @@ public:
     gmshPushMatrix();
     gmshLoadIdentity();
     // the whole window, in the true pixels the positions are given in
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
     gmshScale(2. / vp[2], 2. / vp[3], 1.);
     gmshTranslate(-vp[2] / 2., -vp[3] / 2., 0.);
 

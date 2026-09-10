@@ -6,8 +6,6 @@
 // Contributed by Jonathan Lambrechts
 
 #include "drawContextFltkStringTexture.h"
-#include "FlGui.h"
-#include "openglWindow.h"
 #include "glImmediate.h"
 #include "glShader.h"
 #include <algorithm>
@@ -51,19 +49,9 @@ public:
     if(_elements.empty()) return;
 
     // everything below is in true pixels, and the strings are drawn at that
-    // scale so that they are sharp on a high resolution screen
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
-    double f = 1.;
-    openglWindow *gl = FlGui::available() ?
-                         FlGui::instance()->getCurrentOpenglWindow() :
-                         nullptr;
-    if(gl)
-      // the window's, or the picture's being printed
-      f = gl->getDrawContext()->highResolutionPixelFactor();
-    else if(Fl_Window::current() && Fl_Window::current()->w() > 0)
-      f = vp[2] / (double)Fl_Window::current()->w();
-    if(f <= 0.) f = 1.;
+    // scale so that they are sharp on a high resolution screen: the window's
+    // scale, or the picture's being printed
+    double f = drawContext::global()->pixelFactor();
 
     // 1000 should be _totalWidth but it does not work
     int w = (int)(1000 * f), h = (int)(_maxHeight * f) + 1;
@@ -95,6 +83,8 @@ public:
     gmshLoadIdentity();
 
     // the whole window, in the true pixels the positions are given in
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
     gmshScale(2. / vp[2], 2. / vp[3], 1.);
     gmshTranslate(-vp[2] / 2., -vp[3] / 2., 0.);
 

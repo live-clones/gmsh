@@ -163,8 +163,15 @@ public:
   // that they read over the data
   void setStringHalo(bool halo) { _stringHalo = halo; }
   bool stringHalo() { return _stringHalo; }
+  // the pixels per unit of the drawing of what is being drawn (a window, or
+  // a picture being printed), which the strings are rasterised at: said by
+  // the window at the beginning of its draw, as a window that has not drawn
+  // yet (a tile just split off) knows nothing of its own
+  void setPixelFactor(double f) { _pixelFactor = (f > 0.) ? f : 1.; }
+  double pixelFactor() { return _pixelFactor; }
 protected:
   bool _stringHalo = false;
+  double _pixelFactor = 1.;
 public:
   // is a mouse button held down? The vertex arrays are left alone while
   // dragging.
