@@ -44,6 +44,10 @@ namespace {
     double modelview[16], projection[16];
     double clip[6][4];
     bool clipOn[6], clipOutside;
+    // the blending, which the callers switch with plain OpenGL calls around
+    // the primitives they hand over: it is read back rather than set here
+    bool blend;
+    GLint blendSrc[2], blendDst[2]; // colour, then alpha
     bool lighting, twoSide;
     double pointSize;
     double alphaScale;
@@ -58,6 +62,11 @@ namespace {
     unsigned short stipplePattern;
     bool operator!=(const BatchState &o) const
     {
+      if(blend != o.blend) return true;
+      if(blend)
+        for(int i = 0; i < 2; i++)
+          if(blendSrc[i] != o.blendSrc[i] || blendDst[i] != o.blendDst[i])
+            return true;
       if(lighting != o.lighting || twoSide != o.twoSide ||
          clipOutside != o.clipOutside ||
          pointSize != o.pointSize || texture != o.texture ||
@@ -536,12 +545,37 @@ namespace {
   }
 } // namespace
 
+namespace {
+  // switch the blending, colour and alpha factors together
+  void _setBlend(bool on, const GLint src[2], const GLint dst[2])
+  {
+    if(!on) {
+      glDisable(GL_BLEND);
+      return;
+    }
+    glEnable(GL_BLEND);
+    if(glApi::BlendFuncSeparate)
+      glApi::BlendFuncSeparate(src[0], dst[0], src[1], dst[1]);
+    else
+      glBlendFunc(src[0], dst[0]);
+  }
+} // namespace
+
 void gmshFlushImmediate()
 {
   if(_batchPos.empty()) return;
   int count = (int)(_batchPos.size() / 3);
   if(glShader::use()) {
-    // the state the primitives were collected under, not the current one
+    // the state the primitives were collected under, not the current one:
+    // the blending is OpenGL's own, so it is set here and the caller's put
+    // back afterwards
+    GLboolean wasBlend = glIsEnabled(GL_BLEND);
+    GLint wasSrc[2] = {GL_ONE, GL_ONE}, wasDst[2] = {GL_ZERO, GL_ZERO};
+    glGetIntegerv(GL_BLEND_SRC_RGB, &wasSrc[0]);
+    glGetIntegerv(GL_BLEND_DST_RGB, &wasDst[0]);
+    glGetIntegerv(GL_BLEND_SRC_ALPHA, &wasSrc[1]);
+    glGetIntegerv(GL_BLEND_DST_ALPHA, &wasDst[1]);
+    _setBlend(_batchState.blend, _batchState.blendSrc, _batchState.blendDst);
     glShader::setMatrices(_batchState.modelview, _batchState.projection);
     glShader::setLighting(_batchState.lighting, _batchState.twoSide);
     glShader::setPointSize(_batchState.pointSize);
@@ -575,6 +609,7 @@ void gmshFlushImmediate()
                               &_batchCol[0], &_batchTex[0], &_batchDash[0],
                               _batchState.texture, _batchState.textureMode,
                               count);
+    _setBlend(wasBlend ? true : false, wasSrc, wasDst);
   }
   _batchPos.clear();
   _batchNrm.clear();
@@ -599,6 +634,15 @@ namespace {
       for(int j = 0; j < 4; j++) b.clip[i][j] = _clipEye[i][j];
     }
     b.clipOutside = _clipOutside;
+    b.blend = glIsEnabled(GL_BLEND) ? true : false;
+    b.blendSrc[0] = b.blendSrc[1] = GL_ONE;
+    b.blendDst[0] = b.blendDst[1] = GL_ZERO;
+    if(b.blend) {
+      glGetIntegerv(GL_BLEND_SRC_RGB, &b.blendSrc[0]);
+      glGetIntegerv(GL_BLEND_DST_RGB, &b.blendDst[0]);
+      glGetIntegerv(GL_BLEND_SRC_ALPHA, &b.blendSrc[1]);
+      glGetIntegerv(GL_BLEND_DST_ALPHA, &b.blendDst[1]);
+    }
     b.lighting = _lighting;
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;
