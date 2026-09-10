@@ -508,12 +508,17 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 
   // the tics point away from the plot, as in a printed figure
   double out = l.out;
-  // the grid is a light shade of the axes colour: it should not compete
-  // with the curves
+  // the grid is a faint shade of the axes colour: it should not compete with
+  // the curves, so it is blended into whatever is behind the graph
   unsigned int grid = CTX::instance()->packColor(
     CTX::instance()->unpackRed(opt->color.axes),
     CTX::instance()->unpackGreen(opt->color.axes),
     CTX::instance()->unpackBlue(opt->color.axes), 60);
+  bool blend = (opt->axes > 2);
+  if(blend) {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+  }
 
   // y tics, their numbers and the horizontal grid: on the left of the frame
   // for the graph that owns it, on its right, past what is already written
@@ -583,6 +588,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     if(opt->showScale)
       ctx->drawStringCenter(l.xt[i].label, x, ybot - l.numX, 0.);
   }
+  if(blend) glDisable(GL_BLEND);
+
   if(opt->showScale && l.xmult.size())
     ctx->drawStringRight(l.xmult, xleft + width, ybot - l.multX, 0.);
 
