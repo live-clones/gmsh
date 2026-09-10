@@ -89,6 +89,7 @@ opt(PLUGINS "Enable post-processing plugins" ${DEFAULT})
 opt(POST "Enable post-processing module (required by GUI)" ${DEFAULT})
 opt(POPPLER "Enable Poppler for displaying PDF documents (experimental)" OFF)
 opt(PRIVATE_API "Enable private API" OFF)
+opt(PERIODICITY "Enable Periodicity extensions" ON)
 opt(PRO "Enable PRO extensions" ${DEFAULT})
 opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
@@ -1047,6 +1048,13 @@ if(HAVE_MESH)
     if(MSVC)
       add_definitions(/bigobj)
     endif()
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Periodicity
+     AND ENABLE_PERIODICITY)
+    set_config_option(HAVE_PERIODICITY "Periodicity[contrib]")
+    add_subdirectory(contrib/Periodicity)
+    include_directories(BEFORE contrib/Periodicity)
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools
