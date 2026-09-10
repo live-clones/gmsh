@@ -25,6 +25,9 @@ public:
     int width;
     int height;
     bool halo;
+    // was the depth test on when this string was queued? It then belongs to
+    // the scene and is drawn depth tested; the 2D overlay is not
+    bool depth;
   } element;
 
 private:
@@ -112,6 +115,10 @@ public:
       // glPopAttrib() does not restore the lighting we remember ourselves
       glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
     }
+    GLboolean wasMask = GL_TRUE;
+    GLint wasFunc = GL_LESS;
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &wasMask);
+    glGetIntegerv(GL_DEPTH_FUNC, &wasFunc);
     gmshLighting(false);
     glDisable(GL_DEPTH_TEST);
     if(ownBlend) {
@@ -130,47 +137,75 @@ public:
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gmshTexture(textureId);
 
-    pos = 0;
-    for(auto it = _elements.begin(); it != _elements.end(); ++it) {
-      int Lx = (int)(it->width * f);
-      int Ly = (int)(it->height * f);
-      // the coordinates are in [0, 1] across the picture, not in its pixels
-      float s0 = pos / (float)w, s1 = (pos + Lx) / (float)w;
-      float t0 = 0.f, t1 = Ly / (float)h;
-      // the string, and before it, if it has a halo, eight copies around it
-      // in the background colour
-      int n = it->halo ? 9 : 1;
-      for(int k = 0; k < n; k++) {
-        float dx = 0.f, dy = 0.f;
-        if(n == 9) {
-          if(k == 8) {
-            gmshColor4f(it->r, it->g, it->b, it->alpha);
-          }
-          else {
-            dx = (float)((k % 3) - 1) * (float)f;
-            dy = (float)((k / 3) - 1) * (float)f;
-            gmshColor4f(bgf[0], bgf[1], bgf[2], it->alpha);
-          }
-        }
-        else
-          gmshColor4f(it->r, it->g, it->b, it->alpha);
-        gmshTranslate(it->x + dx, it->y + dy, it->z);
-        gmshBegin(GL_QUADS);
-        gmshTexCoord2f(s0, t0);
-        gmshVertex2f(0.0f, Ly);
-        gmshTexCoord2f(s1, t0);
-        gmshVertex2f(Lx, Ly);
-        gmshTexCoord2f(s1, t1);
-        gmshVertex2f(Lx, 0.0f);
-        gmshTexCoord2f(s0, t1);
-        gmshVertex2f(0.0f, 0.0f);
-        gmshEnd();
-        gmshTranslate(-it->x - dx, -it->y - dy, -it->z);
+    // The strings of the scene first, depth tested, then the 2D overlay on
+    // top of everything. The collector is flushed between the two, as it
+    // does not follow the depth state.
+    for(int pass = 0; pass < 2; pass++) {
+      bool depth = (pass == 0);
+      bool any = false;
+      for(auto it = _elements.begin(); it != _elements.end(); ++it)
+        if(it->depth == depth) any = true;
+      if(!any) continue;
+      if(depth) {
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        // a string does not hide the strings drawn after it
+        glDepthMask(GL_FALSE);
       }
-      pos += Lx;
+      else
+        glDisable(GL_DEPTH_TEST);
+      pos = 0;
+      for(auto it = _elements.begin(); it != _elements.end(); ++it) {
+        int Lx = (int)(it->width * f);
+        int Ly = (int)(it->height * f);
+        if(it->depth != depth) {
+          pos += Lx;
+          continue;
+        }
+        // the coordinates are in [0, 1] across the picture, not in its pixels
+        float s0 = pos / (float)w, s1 = (pos + Lx) / (float)w;
+        float t0 = 0.f, t1 = Ly / (float)h;
+        // the depth of the point the string is anchored to, in the [-1, 1]
+        // the identity projection expects, a little towards the eye so that
+        // a label is not eaten by the surface it names
+        float z = 2.f * it->z - 1.f - 2.e-3f;
+        // the string, and before it, if it has a halo, eight copies around it
+        // in the background colour
+        int n = it->halo ? 9 : 1;
+        for(int k = 0; k < n; k++) {
+          float dx = 0.f, dy = 0.f;
+          if(n == 9) {
+            if(k == 8) {
+              gmshColor4f(it->r, it->g, it->b, it->alpha);
+            }
+            else {
+              dx = (float)((k % 3) - 1) * (float)f;
+              dy = (float)((k / 3) - 1) * (float)f;
+              gmshColor4f(bgf[0], bgf[1], bgf[2], it->alpha);
+            }
+          }
+          else
+            gmshColor4f(it->r, it->g, it->b, it->alpha);
+          gmshTranslate(it->x + dx, it->y + dy, z);
+          gmshBegin(GL_QUADS);
+          gmshTexCoord2f(s0, t0);
+          gmshVertex2f(0.0f, Ly);
+          gmshTexCoord2f(s1, t0);
+          gmshVertex2f(Lx, Ly);
+          gmshTexCoord2f(s1, t1);
+          gmshVertex2f(Lx, 0.0f);
+          gmshTexCoord2f(s0, t1);
+          gmshVertex2f(0.0f, 0.0f);
+          gmshEnd();
+          gmshTranslate(-it->x - dx, -it->y - dy, -z);
+        }
+        pos += Lx;
+      }
+      // whatever is waiting was collected to be drawn through this texture
+      gmshFlushImmediate();
     }
-    // whatever is waiting was collected to be drawn through this texture
-    gmshFlushImmediate();
+    glDepthMask(wasMask);
+    glDepthFunc(wasFunc);
     gmshTexture(0);
     glDeleteTextures(1, &textureId);
 
@@ -225,7 +260,8 @@ void drawContextFltkStringTexture::drawString(const char *str,
                                _currentFontId,
                                (int)getStringWidth(str) + 1,
                                getStringHeight(),
-                               stringHalo()};
+                               stringHalo(),
+                               glIsEnabled(GL_DEPTH_TEST) ? true : false};
   _queue->append(elem);
 }
 
