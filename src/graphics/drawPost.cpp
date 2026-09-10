@@ -607,13 +607,13 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
       unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
       gmshColor4ubv((const void *)&col);
       if(opt->centerGlyphs == 2)
-        ctx->drawStringRight(stringValue(numComp, d, v, opt->format.c_str()),
+        ctx->drawStringRight(stringValue(numComp, d, v, opt->getFormat().c_str()),
                              pc.x(), pc.y(), pc.z());
       else if(opt->centerGlyphs == 1)
-        ctx->drawStringCenter(stringValue(numComp, d, v, opt->format.c_str()),
+        ctx->drawStringCenter(stringValue(numComp, d, v, opt->getFormat().c_str()),
                               pc.x(), pc.y(), pc.z());
       else
-        ctx->drawString(stringValue(numComp, d, v, opt->format.c_str()), pc.x(),
+        ctx->drawString(stringValue(numComp, d, v, opt->getFormat().c_str()), pc.x(),
                         pc.y(), pc.z());
     }
   }
@@ -625,14 +625,14 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
         gmshColor4ubv((const void *)&col);
         if(opt->centerGlyphs == 2)
           ctx->drawStringRight(
-            stringValue(numComp, val[i], v, opt->format.c_str()), xyz[i][0],
+            stringValue(numComp, val[i], v, opt->getFormat().c_str()), xyz[i][0],
             xyz[i][1], xyz[i][2]);
         else if(opt->centerGlyphs == 1)
           ctx->drawStringCenter(
-            stringValue(numComp, val[i], v, opt->format.c_str()), xyz[i][0],
+            stringValue(numComp, val[i], v, opt->getFormat().c_str()), xyz[i][0],
             xyz[i][1], xyz[i][2]);
         else
-          ctx->drawString(stringValue(numComp, val[i], v, opt->format.c_str()),
+          ctx->drawString(stringValue(numComp, val[i], v, opt->getFormat().c_str()),
                           xyz[i][0], xyz[i][1], xyz[i][2]);
       }
     }

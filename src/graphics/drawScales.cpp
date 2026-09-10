@@ -193,7 +193,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       if(defaultFormat)
         tk.label = endLabel(tk.v, 0, exp, min - max);
       else {
-        sprintf(str, opt->format.c_str(), tk.v);
+        sprintf(str, opt->getFormat().c_str(), tk.v);
         tk.label = str;
       }
       ticks.push_back(tk);
@@ -237,7 +237,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       if(defaultFormat)
         tk.label = fixedNumber(tk.v, decimals, exp);
       else {
-        sprintf(str, opt->format.c_str(), tk.v);
+        sprintf(str, opt->getFormat().c_str(), tk.v);
         tk.label = str;
       }
       ticks.push_back(tk);
@@ -308,7 +308,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
   }
 
   // the divisions of the range, as many as fit
-  sprintf(str, opt->format.c_str(), -M_PI * 1.e-4);
+  sprintf(str, opt->getFormat().c_str(), -M_PI * 1.e-4);
   double maxw = g->getStringWidth(str);
   int nbv = nbIso;
   double f = 2.;
@@ -320,7 +320,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
     scaleTick tk;
     tk.v = opt->getScaleValue(i, nbv + 1, min, max);
     tk.t = (double)i / nbv;
-    sprintf(str, opt->format.c_str(), tk.v);
+    sprintf(str, opt->getFormat().c_str(), tk.v);
     tk.label = str;
     ticks.push_back(tk);
   }
@@ -506,7 +506,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   int n0 = data->getFirstNonEmptyTimeStep();
   int n = (nt - n0 > 0) ? nt - n0 : 1;
   char time[256];
-  sprintf(time, opt->format.c_str(), data->getTime(opt->timeStep));
+  sprintf(time, opt->getFormat().c_str(), data->getTime(opt->timeStep));
   const char *part = ((opt->timeStep - n0) % 2) ? "imaginary" : "real";
   int choice = opt->showTime;
   if(choice == 3) { // automatic
@@ -614,7 +614,7 @@ void drawContext::drawScales()
   double maxw = 0.;
   for(std::size_t i = 0; i < scales.size(); i++) {
     PViewOptions *opt = scales[i]->getOptions();
-    sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
+    sprintf(label, opt->getFormat().c_str(), -M_PI * 1.e-4);
     maxw = std::max(maxw, drawContext::global()->getStringWidth(label));
   }
 
@@ -692,11 +692,11 @@ void drawContext::drawScales()
       }
       // compute width
       width_prev = width;
-      sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
+      sprintf(label, opt->getFormat().c_str(), -M_PI * 1.e-4);
       width = bar_size + tic + drawContext::global()->getStringWidth(label);
       if(opt->showTime) {
         char tmp[256];
-        sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
+        sprintf(tmp, opt->getFormat().c_str(), data->getTime(opt->timeStep));
         sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
       }
       else

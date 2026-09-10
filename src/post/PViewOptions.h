@@ -41,6 +41,10 @@ public:
   int type, autoPosition;
   double position[2], size[2];
   std::string format;
+  // How a value is printed: what the user asked for, or, when they asked for
+  // nothing, the automatic format. The scale adapts its labels to the range
+  // it spans; a single value out in the scene has no range to adapt to.
+  std::string getFormat() const { return format.empty() ? "%.3g" : format; }
   int axes, axesAutoPosition, axesMikado;
   double axesTics[3];
   std::string axesFormat[3], axesLabel[3];
