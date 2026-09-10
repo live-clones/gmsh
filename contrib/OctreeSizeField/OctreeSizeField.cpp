@@ -567,10 +567,19 @@ static void computeFeatureSize(SizeFieldContext &ctx)
   // approximating the local medial sheet as seen from that vertex.
   std::vector<std::vector<MFace> > allUp(mesh->vertices.num);
   // Each umbrella point is tagged with the index of the tet that generated
-  // it, so that edge testing can discard points whose generating tet is
-  // incident to *both* candidate-edge endpoints (see Pass 2 below).
-  std::vector<std::vector<std::pair<SPoint3, uint64_t> > > allUmbrellaPts(
-    mesh->vertices.num);
+  // it (so edge testing can discard points whose generating tet is incident
+  // to *both* candidate-edge endpoints, see Pass 2 below) and with the
+  // normal of the crossing face it came from (so Pass 2 can also check that
+  // the two endpoints' local medial sheets are roughly *parallel*, not just
+  // nearby -- at a convex corner/edge, e.g. a cube's, two faces meeting at
+  // ~90 degrees produce nearby-but-orthogonal umbrella sheets, which a pure
+  // distance test cannot tell apart from a genuine thin slab).
+  struct UmbrellaPt {
+    SPoint3 pt;
+    uint64_t tet;
+    SVector3 normal;
+  };
+  std::vector<std::vector<UmbrellaPt> > allUmbrellaPts(mesh->vertices.num);
 
   for(size_t i = 0; i < mesh->vertices.num; ++i) {
     SPoint3 pole(0., 0., 0.), tmp(0., 0., 0.),
@@ -590,7 +599,7 @@ static void computeFeatureSize(SizeFieldContext &ctx)
     SPoint3 p2(0., -D / vp[1], 0.);
 
     std::vector<MFace> &up = allUp[i];
-    std::vector<std::pair<SPoint3, uint64_t> > &umbrellaPts = allUmbrellaPts[i];
+    std::vector<UmbrellaPt> &umbrellaPts = allUmbrellaPts[i];
     double orientj, orientk;
     for(size_t j = 0; j < tetIncidents[i].size(); ++j) {
       uint64_t tetj = tetIncidents[i][j];
@@ -606,9 +615,11 @@ static void computeFeatureSize(SizeFieldContext &ctx)
             orientk = robustPredicates::orient3d((double *)p, (double *)p1,
                                                  (double *)p2, (double *)ck);
             if(orientj * orientk < 0) {
-              up.push_back(allTets[tetj]->getFace(indFace));
-              umbrellaPts.push_back(std::make_pair(cj, tetj));
-              umbrellaPts.push_back(std::make_pair(ck, tetk));
+              MFace face = allTets[tetj]->getFace(indFace);
+              SVector3 n = face.normal();
+              up.push_back(face);
+              umbrellaPts.push_back(UmbrellaPt{cj, tetj, n});
+              umbrellaPts.push_back(UmbrellaPt{ck, tetk, n});
             }
           }
         }
@@ -680,35 +691,57 @@ static void computeFeatureSize(SizeFieldContext &ctx)
           SPoint3 pv1(e.getVertex(1)->x(), e.getVertex(1)->y(),
                       e.getVertex(1)->z());
           double locality = 2. * e.length();
-          const std::vector<std::pair<SPoint3, uint64_t> > &ptsA =
-            allUmbrellaPts[v0];
-          const std::vector<std::pair<SPoint3, uint64_t> > &ptsB =
-            allUmbrellaPts[v1];
+          const std::vector<UmbrellaPt> &ptsA = allUmbrellaPts[v0];
+          const std::vector<UmbrellaPt> &ptsB = allUmbrellaPts[v1];
           double minGap = DBL_MAX;
           bool anyA = false, anyB = false;
-          for(const std::pair<SPoint3, uint64_t> &pa : ptsA) {
-            if(pv0.distance(pa.first) > locality) continue;
-            MTetrahedron *ta = allTets[pa.second];
+          SVector3 bestNA(0., 0., 0.), bestNB(0., 0., 0.);
+          for(const UmbrellaPt &pa : ptsA) {
+            if(pv0.distance(pa.pt) > locality) continue;
+            MTetrahedron *ta = allTets[pa.tet];
             if(ta->getVertex(0)->getNum() - firstVertex == v1 ||
                ta->getVertex(1)->getNum() - firstVertex == v1 ||
                ta->getVertex(2)->getNum() - firstVertex == v1 ||
                ta->getVertex(3)->getNum() - firstVertex == v1)
               continue;
             anyA = true;
-            for(const std::pair<SPoint3, uint64_t> &pb : ptsB) {
-              if(pv1.distance(pb.first) > locality) continue;
-              MTetrahedron *tb = allTets[pb.second];
+            for(const UmbrellaPt &pb : ptsB) {
+              if(pv1.distance(pb.pt) > locality) continue;
+              MTetrahedron *tb = allTets[pb.tet];
               if(tb->getVertex(0)->getNum() - firstVertex == v0 ||
                  tb->getVertex(1)->getNum() - firstVertex == v0 ||
                  tb->getVertex(2)->getNum() - firstVertex == v0 ||
                  tb->getVertex(3)->getNum() - firstVertex == v0)
                 continue;
               anyB = true;
-              minGap = fmin(minGap, pa.first.distance(pb.first));
+              double gap = pa.pt.distance(pb.pt);
+              if(gap < minGap) {
+                minGap = gap;
+                bestNA = pa.normal;
+                bestNB = pb.normal;
+              }
             }
           }
 
-          bool umbrellaPass = anyA && anyB && minGap < 0.5 * e.length();
+          // Sheet-alignment test: a genuine thin slab has v0's and v1's
+          // local medial sheets running roughly *parallel* to each other
+          // (both approximate the same separator sheet). At a convex
+          // corner/edge (e.g. a cube's), the two umbrellas instead meet at
+          // a sharp angle -- close in the distance sense (both converge to
+          // the same nearby Voronoi vertex of the corner) but built from
+          // near-orthogonal crossing faces. Compare the crossing-face
+          // normals of the winning (closest) pair; |cos| near 1 means
+          // parallel, near 0 means orthogonal (normal orientation/winding
+          // is arbitrary, hence the absolute value).
+          bool aligned = false;
+          if(anyA && anyB) {
+            double na = bestNA.norm(), nb = bestNB.norm();
+            if(na > 0. && nb > 0.)
+              aligned = fabs(dot(bestNA, bestNB) / (na * nb)) > 0.7071;
+          }
+
+          bool umbrellaPass =
+            anyA && anyB && minGap < 0.5 * e.length() && aligned;
 
           if(umbrellaPass) {
             // Edge bounds a thin gap: constrain the size at its endpoints.
