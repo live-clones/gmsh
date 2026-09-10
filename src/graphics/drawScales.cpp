@@ -10,84 +10,10 @@
 #include "PViewData.h"
 #include "Context.h"
 #include "gl2ps.h"
+#include "axisTicks.h"
 
-// A label of the scale: its value, where it sits along the bar (0 at the
-// start, 1 at the end) and the text
-struct scaleTick {
-  double v, t;
-  std::string label;
-};
-
-// v divided by 10^exp, with the given number of decimals
-static std::string fixedNumber(double v, int decimals, int exp)
-{
-  double m = exp ? v / pow(10., exp) : v;
-  char str[64];
-  sprintf(str, "%.*f", decimals, m);
-  // no "-0.00"
-  bool zero = true;
-  for(const char *c = str; *c; c++)
-    if(*c >= '1' && *c <= '9') zero = false;
-  if(zero && str[0] == '-') return std::string(str + 1);
-  return str;
-}
-
-// decimals enough for three significant digits of v / 10^exp
-static int significantDecimals(double v, int exp)
-{
-  double m = fabs(exp ? v / pow(10., exp) : v);
-  if(m == 0.) return 0;
-  return std::max(0, 2 - (int)floor(log10(m)));
-}
-
-// the label of an end of the range: with the decimals of the step when they
-// print it exactly, with three significant digits otherwise
-static std::string endLabel(double v, int stepDecimals, int exp, double range)
-{
-  double m = exp ? v / pow(10., exp) : v;
-  double scale = pow(10., stepDecimals);
-  if(fabs(m * scale - floor(m * scale + 0.5)) < 1.e-6 * range / pow(10., exp))
-    return fixedNumber(v, stepDecimals, exp);
-  return fixedNumber(v, std::max(stepDecimals, significantDecimals(v, exp)),
-                     exp);
-}
-
-// the power of ten the labels of a range share, or 0 for none
-static int sharedExponent(double min, double max)
-{
-  double mag = std::max(fabs(min), fabs(max));
-  if(mag <= 0.) return 0;
-  int e = (int)floor(log10(mag));
-  return (e >= 5 || e <= -4) ? e : 0;
-}
-
-// "x10^e": with a multiplication sign and superscript digits on screen and
-// in a raster picture, as TeX in a TeX picture, and in plain ASCII in the
-// other vector pictures, whose fonts have neither
-static std::string multiplierText(int exp)
-{
-  if(!exp) return "";
-  char str[64];
-  if(CTX::instance()->printing) {
-    int f = CTX::instance()->print.fileFormat;
-    if(f == FORMAT_TEX) {
-      sprintf(str, "$\\times 10^{%d}$", exp);
-      return str;
-    }
-    if(f == FORMAT_PS || f == FORMAT_EPS || f == FORMAT_PDF ||
-       f == FORMAT_SVG || f == FORMAT_TIKZ) {
-      sprintf(str, "x10^%d", exp);
-      return str;
-    }
-  }
-  const char *sup[10] = {"⁰", "¹", "²", "³", "⁴",
-                         "⁵", "⁶", "⁷", "⁸", "⁹"};
-  std::string s = "×10";
-  if(exp < 0) s += "⁻";
-  sprintf(str, "%d", abs(exp));
-  for(const char *c = str; *c; c++) s += sup[*c - '0'];
-  return s;
-}
+// where a scale is labelled: the same as an axis
+typedef axisTick scaleTick;
 
 // the pixels per unit of the drawing, for the snapping below
 static double _pixelFactor = 1.;
@@ -111,94 +37,30 @@ static double alongBar(PViewOptions *opt, double t, double length)
 // a line drawn at a box edge: on the pixel that starts there
 static double lineAt(double edge) { return edge + 0.5 / _pixelFactor; }
 
-static bool ticksFit(const std::vector<scaleTick> &ticks, double length,
-                     const std::vector<double> &widths, double fontH,
-                     bool horizontal)
-{
-  for(std::size_t i = 1; i < ticks.size(); i++) {
-    double gap = (ticks[i].t - ticks[i - 1].t) * length;
-    double need = horizontal ? 0.5 * (widths[i] + widths[i - 1]) + 0.6 * fontH :
-                               1.3 * fontH;
-    if(gap < need) return false;
-  }
-  return true;
-}
-
-// every k-th of the given labels, the last one always, with k the smallest
-// that lets them fit
-static void thinTicks(std::vector<scaleTick> &ticks, double length,
-                      double fontH, bool horizontal)
-{
-  drawContextGlobal *g = drawContext::global();
-  std::vector<double> widths(ticks.size());
-  for(std::size_t i = 0; i < ticks.size(); i++)
-    widths[i] = g->getStringWidth(ticks[i].label.c_str());
-  int n = (int)ticks.size();
-  for(int k = 1; k < n; k++) {
-    std::vector<scaleTick> kept;
-    std::vector<double> kw;
-    for(int i = 0; i < n; i += k) {
-      kept.push_back(ticks[i]);
-      kw.push_back(widths[i]);
-    }
-    if(kept.back().t != ticks.back().t) {
-      kept.push_back(ticks.back());
-      kw.push_back(widths.back());
-    }
-    if(ticksFit(kept, length, kw, fontH, horizontal)) {
-      ticks = kept;
-      return;
-    }
-    // the last two may be what collides: without the one before the last
-    if(kept.size() > 2) {
-      kept.erase(kept.end() - 2);
-      kw.erase(kw.end() - 2);
-      if(ticksFit(kept, length, kw, fontH, horizontal)) {
-        ticks = kept;
-        return;
-      }
-    }
-  }
-  scaleTick last = ticks.back();
-  ticks.clear();
-  ticks.push_back(last);
-}
-
 // The labels of the scale. Iso: one per iso value, centred on it; discrete
 // or numeric: the boundaries of the bands; both every k-th as needed to fit.
-// Continuous with the default format: round numbers of a step that lets the
-// labels fit, the range's ends added. Otherwise the nbIso divisions of the
-// range, as many as fit. With the default format the labels are plain
-// decimals, or mantissas over one power of ten given in `multiplier'.
+// Anything else is an axis over the range, round numbers when the user asked
+// for no particular format; a logarithmic scale keeps the divisions of the
+// range, which are round in the log.
 static void scaleTicks(PViewOptions *opt, double min, double max,
                        double length, double fontH, bool horizontal,
                        std::vector<scaleTick> &ticks, std::string &multiplier)
 {
   ticks.clear();
   multiplier.clear();
-  drawContextGlobal *g = drawContext::global();
   bool defaultFormat = opt->format.empty();
   bool linear = (opt->scaleType == PViewOptions::Linear);
   int nbIso = std::max(1, opt->nbIso);
   char str[128];
 
-  if(min > max) {
-    // a range given the other way round shows nothing: its two ends only
-    int exp = defaultFormat ? sharedExponent(min, max) : 0;
-    multiplier = multiplierText(exp);
-    for(int i = 0; i < 2; i++) {
-      scaleTick tk;
-      tk.v = i ? max : min;
-      tk.t = i ? 1. : 0.;
-      if(defaultFormat)
-        tk.label = endLabel(tk.v, 0, exp, min - max);
-      else {
-        sprintf(str, opt->getFormat().c_str(), tk.v);
-        tk.label = str;
-      }
-      ticks.push_back(tk);
+  if(min > max || opt->intervalsType == PViewOptions::Continuous) {
+    // a range given the other way round shows nothing: only its two ends,
+    // which is what an axis over it comes down to
+    if(linear || min > max) {
+      makeAxisTicks(min, max, length, fontH, horizontal, opt->format, 0, true,
+                    ticks, multiplier);
+      return;
     }
-    return;
   }
 
   if(opt->intervalsType == PViewOptions::Iso ||
@@ -211,8 +73,8 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       // the decimals the spacing calls for when they print every value
       // exactly (round bands), else three significant digits of the largest
       // value and enough to tell the neighbours apart
-      exp = sharedExponent(min, max);
-      int sig = significantDecimals(std::max(fabs(min), fabs(max)), exp);
+      exp = axisSharedExponent(min, max);
+      int sig = axisDecimals(std::max(fabs(min), fabs(max)), exp);
       decimals = sig;
       if(n > 1 && max != min && linear) {
         double spacing = fabs(max - min) / (n - 1);
@@ -225,7 +87,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
         }
         decimals = exact ? d : std::max(sig, std::min(d, sig + 2));
       }
-      multiplier = multiplierText(exp);
+      multiplier = axisMultiplier(exp);
     }
     for(int i = 0; i < n; i++) {
       scaleTick tk;
@@ -235,95 +97,33 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       tk.t = iso ? (nbIso > 1 ? (double)i / (nbIso - 1) : 0.5) :
                    (double)i / nbIso;
       if(defaultFormat)
-        tk.label = fixedNumber(tk.v, decimals, exp);
+        tk.label = axisNumber(tk.v, decimals, exp);
       else {
         sprintf(str, opt->getFormat().c_str(), tk.v);
         tk.label = str;
       }
       ticks.push_back(tk);
     }
-    thinTicks(ticks, length, fontH, horizontal);
+    axisThinTicks(ticks, length, fontH, horizontal);
     return;
   }
 
-  if(defaultFormat && linear && max > min) {
-    int exp = sharedExponent(min, max);
-    multiplier = multiplierText(exp);
-    // the ends
-    double r = max - min;
-    std::vector<scaleTick> ends(2);
-    ends[0].v = min; ends[0].t = 0.; ends[0].label = endLabel(min, 0, exp, r);
-    ends[1].v = max; ends[1].t = 1.; ends[1].label = endLabel(max, 0, exp, r);
-    std::vector<double> endWidths(2);
-    for(int i = 0; i < 2; i++) endWidths[i] = g->getStringWidth(ends[i].label.c_str());
-    if(!ticksFit(ends, length, endWidths, fontH, horizontal)) {
-      // room for one label only: the middle of the range
-      scaleTick mid;
-      mid.v = 0.5 * (min + max);
-      mid.t = 0.5;
-      mid.label = fixedNumber(mid.v, significantDecimals(mid.v, exp), exp);
-      ticks.push_back(mid);
-      return;
-    }
-    // the finest round step whose labels all fit, tried from coarse to
-    // fine; a round value too close to an end for both labels gives way
-    std::vector<double> steps;
-    const int mant[3] = {5, 2, 1};
-    for(int k = (int)ceil(log10(r)); k >= (int)floor(log10(r)) - 2; k--)
-      for(int j = 0; j < 3; j++) {
-        double st = mant[j] * pow(10., k);
-        if(r / st >= 1.5 && r / st <= 12.) steps.push_back(st);
-      }
-    std::vector<scaleTick> best = ends;
-    for(std::size_t si = 0; si < steps.size(); si++) {
-      double st = steps[si];
-      int decimals = std::max(0, -(int)floor(log10(st / pow(10., exp)) + 1e-9));
-      std::vector<scaleTick> cand;
-      cand.push_back(ends[0]);
-      cand[0].label = endLabel(min, decimals, exp, r);
-      double w0 = g->getStringWidth(cand[0].label.c_str());
-      scaleTick last = ends[1];
-      last.label = endLabel(max, decimals, exp, r);
-      double w1 = g->getStringWidth(last.label.c_str());
-      for(double v = ceil(min / st) * st; v < max; v += st) {
-        if(v <= min) continue;
-        scaleTick tk;
-        tk.v = v;
-        tk.t = (v - min) / r;
-        tk.label = fixedNumber(v, decimals, exp);
-        double w = g->getStringWidth(tk.label.c_str());
-        double need0 = horizontal ? 0.5 * (w + w0) + 0.6 * fontH : 1.3 * fontH;
-        double need1 = horizontal ? 0.5 * (w + w1) + 0.6 * fontH : 1.3 * fontH;
-        if(tk.t * length < need0 || (1. - tk.t) * length < need1) continue;
-        cand.push_back(tk);
-      }
-      cand.push_back(last);
-      std::vector<double> widths(cand.size());
-      for(std::size_t i = 0; i < cand.size(); i++)
-        widths[i] = g->getStringWidth(cand[i].label.c_str());
-      if(ticksFit(cand, length, widths, fontH, horizontal)) best = cand;
-    }
-    ticks = best;
+  if(linear) {
+    makeAxisTicks(min, max, length, fontH, horizontal, opt->format, 0, true,
+                  ticks, multiplier);
     return;
   }
 
-  // the divisions of the range, as many as fit
-  sprintf(str, opt->getFormat().c_str(), -M_PI * 1.e-4);
-  double maxw = g->getStringWidth(str);
-  int nbv = nbIso;
-  double f = 2.;
-  if(horizontal && length < nbv * maxw)
-    nbv = (length < f * maxw) ? 1 : 2;
-  else if(!horizontal && length < nbv * fontH)
-    nbv = (length < f * fontH) ? 1 : 2;
-  for(int i = 0; i < nbv + 1; i++) {
+  // logarithmic: the divisions of the range, as many as fit
+  for(int i = 0; i < nbIso + 1; i++) {
     scaleTick tk;
-    tk.v = opt->getScaleValue(i, nbv + 1, min, max);
-    tk.t = (double)i / nbv;
+    tk.v = opt->getScaleValue(i, nbIso + 1, min, max);
+    tk.t = (double)i / nbIso;
     sprintf(str, opt->getFormat().c_str(), tk.v);
     tk.label = str;
     ticks.push_back(tk);
   }
+  axisThinTicks(ticks, length, fontH, horizontal);
 }
 
 // a string with a halo in the background colour, so that it reads over the

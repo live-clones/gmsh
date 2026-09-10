@@ -9,6 +9,7 @@
 #include "PViewOptions.h"
 #include "PViewData.h"
 #include "gl2ps.h"
+#include "axisTicks.h"
 #include "Context.h"
 #include "Numeric.h"
 
@@ -296,99 +297,90 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     CTX::instance()->glFontTitle, CTX::instance()->glFontEnumTitle,
     CTX::instance()->glFontSizeTitle, 1);
 
-  // y tics and horizontal grid
-  if(opt->nbIso > 0) {
-    int nb = opt->nbIso;
-    if(opt->showScale && (opt->nbIso * font_h > height))
-      nb = (int)floor(height / font_h);
-    double dy = height / (double)nb;
-    double dv = (opt->tmpMax - opt->tmpMin) / (double)nb;
-    for(int i = 0; i < nb + 1; i++) {
+  // Where both axes are labelled: round numbers when no format is asked
+  // for, about as many as View.AxesTics{X,Y} wants, and the power of ten
+  // they share written once. The Y axis follows the range of the values,
+  // the X axis the abscissa of the curves.
+  std::vector<axisTick> xt, yt;
+  std::string xmult, ymult;
+  if(opt->axesTics[0] > 0)
+    makeAxisTicks(xmin, xmax, width, font_h, true, opt->axesFormat[0],
+                  (int)opt->axesTics[0], false, xt, xmult);
+  if(opt->axesTics[1] > 0)
+    makeAxisTicks(opt->tmpMin, opt->tmpMax, height, font_h, false,
+                  opt->axesFormat[1], (int)opt->axesTics[1], false, yt, ymult);
+
+  double ybot = ytop - height;
+  // the tics point away from the plot, as in a printed figure
+  double out = 0.5 * tic;
+  // the grid is a light shade of the axes colour: it should not compete
+  // with the curves
+  unsigned int grid = CTX::instance()->packColor(
+    CTX::instance()->unpackRed(opt->color.axes),
+    CTX::instance()->unpackGreen(opt->color.axes),
+    CTX::instance()->unpackBlue(opt->color.axes), 60);
+
+  // y tics, their labels and the horizontal grid
+  for(std::size_t i = 0; i < yt.size(); i++) {
+    double y = ybot + yt[i].t * height;
+    gmshBegin(GL_LINES);
+    gmshVertex2d(xleft - out, y);
+    gmshVertex2d(xleft, y);
+    if(opt->axes > 1) {
+      gmshVertex2d(xleft + width, y);
+      gmshVertex2d(xleft + width + out, y);
+    }
+    gmshEnd();
+    if(opt->axes > 2 && yt[i].t > 0. && yt[i].t < 1.) {
+      gmshColor4ubv((const void *)&grid);
       gmshBegin(GL_LINES);
-      gmshVertex2d(xleft, ytop - i * dy);
-      gmshVertex2d(xleft + tic, ytop - i * dy);
-      if(opt->axes > 1) {
-        gmshVertex2d(xleft + width - tic, ytop - i * dy);
-        gmshVertex2d(xleft + width, ytop - i * dy);
-      }
+      gmshVertex2d(xleft, y);
+      gmshVertex2d(xleft + width, y);
       gmshEnd();
-      if(opt->axes > 2 && i != 0 && i != nb) {
-        gmshLineStipple(1, 0x1111);
-        gl2psEnable(GL2PS_LINE_STIPPLE);
-        gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
-        gmshBegin(GL_LINES);
-        gmshVertex2d(xleft, ytop - i * dy);
-        gmshVertex2d(xleft + width, ytop - i * dy);
-        gmshEnd();
-        gmshLineStippleOff();
-        gl2psDisable(GL2PS_LINE_STIPPLE);
-        gl2psLineWidth((float)(CTX::instance()->lineWidth *
-                               CTX::instance()->print.epsLineWidthFactor));
-      }
-      if(opt->showScale) {
-        char tmp[256];
-        sprintf(tmp, opt->getFormat().c_str(),
-                (i == nb) ? opt->tmpMin : (opt->tmpMax - i * dv));
-        if(!overlay) {
-          ctx->drawStringRight(tmp, xleft - 2 * tic,
-                               ytop - i * dy - font_a / 3., 0.);
-        }
-        else {
-          ctx->drawString(tmp, xleft + width + 2 * tic,
-                          ytop - i * dy - font_a / 3., 0.);
-        }
-      }
+      gmshColor4ubv((const void *)&opt->color.axes);
+    }
+    if(opt->showScale) {
+      if(!overlay)
+        ctx->drawStringRight(yt[i].label, xleft - out - 0.4 * tic,
+                             y - font_a / 3., 0.);
+      else
+        ctx->drawString(yt[i].label, xleft + width + out + 0.4 * tic,
+                        y - font_a / 3., 0.);
     }
   }
-
-  // x tics and vertical grid
-  if(opt->axesTics[0] > 0) {
-    int nb = opt->axesTics[0];
-    char tmp[256];
-    sprintf(tmp, opt->axesFormat[0].c_str(), -M_PI * 1.e4);
-    double ww = drawContext::global()->getStringWidth(tmp);
-    if(inModelCoordinates) ww *= ctx->pixel_equiv_x / ctx->s[0];
-    if((nb - 1) * ww > width) nb = (int)(width / ww) + 1;
-    if(nb == 1) nb++;
-
-    double dx = width / (double)(nb - 1);
-    double ybot = ytop - height;
-
-    for(int i = 0; i < nb; i++) {
-      gmshBegin(GL_LINES);
-      gmshVertex2d(xleft + i * dx, ybot);
-      gmshVertex2d(xleft + i * dx, ybot + tic);
-      if(opt->axes > 1) {
-        gmshVertex2d(xleft + i * dx, ytop);
-        gmshVertex2d(xleft + i * dx, ytop - tic);
-      }
-      gmshEnd();
-      if(opt->axes > 2 && i != 0 && i != nb - 1) {
-        gmshLineStipple(1, 0x1111);
-        gl2psEnable(GL2PS_LINE_STIPPLE);
-        gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
-        gmshBegin(GL_LINES);
-        gmshVertex2d(xleft + i * dx, ytop);
-        gmshVertex2d(xleft + i * dx, ybot);
-        gmshEnd();
-        gmshLineStippleOff();
-        gl2psDisable(GL2PS_LINE_STIPPLE);
-        gl2psLineWidth((float)(CTX::instance()->lineWidth *
-                               CTX::instance()->print.epsLineWidthFactor));
-      }
-      if(opt->showScale) {
-        char tmp[256];
-        if(nb == 1)
-          sprintf(tmp, opt->axesFormat[0].c_str(), xmin);
-        else
-          sprintf(tmp, opt->axesFormat[0].c_str(),
-                  xmin + i * (xmax - xmin) / (double)(nb - 1));
-        ctx->drawStringCenter(tmp, xleft + i * dx,
-                              ybot - font_h - tic - overlay * (font_h + tic),
-                              0.);
-      }
-    }
+  if(opt->showScale && ymult.size()) {
+    if(!overlay)
+      ctx->drawStringRight(ymult, xleft - out - 0.4 * tic, ytop + 0.9 * font_h,
+                           0.);
+    else
+      ctx->drawString(ymult, xleft + width + out + 0.4 * tic,
+                      ytop + 0.9 * font_h, 0.);
   }
+
+  // x tics, their labels and the vertical grid
+  double xlabels = ybot - out - font_h - 0.4 * tic - overlay * (font_h + tic);
+  for(std::size_t i = 0; i < xt.size(); i++) {
+    double x = xleft + xt[i].t * width;
+    gmshBegin(GL_LINES);
+    gmshVertex2d(x, ybot - out);
+    gmshVertex2d(x, ybot);
+    if(opt->axes > 1) {
+      gmshVertex2d(x, ytop);
+      gmshVertex2d(x, ytop + out);
+    }
+    gmshEnd();
+    if(opt->axes > 2 && xt[i].t > 0. && xt[i].t < 1.) {
+      gmshColor4ubv((const void *)&grid);
+      gmshBegin(GL_LINES);
+      gmshVertex2d(x, ybot);
+      gmshVertex2d(x, ytop);
+      gmshEnd();
+      gmshColor4ubv((const void *)&opt->color.axes);
+    }
+    if(opt->showScale) ctx->drawStringCenter(xt[i].label, x, xlabels, 0.);
+  }
+  if(opt->showScale && xmult.size())
+    ctx->drawStringRight(xmult, xleft + width, xlabels - 1.2 * font_h, 0.);
 }
 
 static std::map<SPoint2, unsigned int> tags;

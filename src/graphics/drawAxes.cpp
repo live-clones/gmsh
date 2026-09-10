@@ -39,7 +39,9 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
 
   // return number of tics in special cases
   if(n < 2.) return 0;
-  if(format.empty()) return n;
+  // with no format of the user's, the automatic one (View.AxesTics 0 is
+  // what hides the tics)
+  std::string fmt = format.empty() ? "%.3g" : format;
 
   // select perp direction automatically if it is not provided
   double lp = norme(perp);
@@ -56,7 +58,7 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   char tmp[256];
-  sprintf(tmp, format.c_str(), -M_PI * 1.e4);
+  sprintf(tmp, fmt.c_str(), -M_PI * 1.e4);
   double win1[3], win2[3];
   ctx->world2Viewport(p1, win1);
   ctx->world2Viewport(p2, win2);
@@ -93,9 +95,9 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
 
     // draw tic labels
     if(comp < 0) // display the length value (ruler-mode, starting at 0)
-      sprintf(tmp, format.c_str(), value_d);
+      sprintf(tmp, fmt.c_str(), value_d);
     else // display the coordinate value
-      sprintf(tmp, format.c_str(), value_p[comp]);
+      sprintf(tmp, fmt.c_str(), value_p[comp]);
     double winp[3], winr[3];
     ctx->world2Viewport(p, winp);
     ctx->world2Viewport(r, winr);

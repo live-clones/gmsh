@@ -18,6 +18,7 @@ set(SRC
   drawAxes.cpp
   drawScales.cpp
   drawGraph2d.cpp
+  axisTicks.cpp
   drawGlyph.cpp
   glyphList.cpp
   gl2ps.cpp
