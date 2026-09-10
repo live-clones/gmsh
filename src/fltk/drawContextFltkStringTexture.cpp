@@ -119,6 +119,13 @@ public:
     GLint wasFunc = GL_LESS;
     glGetBooleanv(GL_DEPTH_WRITEMASK, &wasMask);
     glGetIntegerv(GL_DEPTH_FUNC, &wasFunc);
+    // the quads below are in window coordinates: the clipping planes, which
+    // are in the coordinates of the scene, would cut them at random
+    bool wasClip[6];
+    for(int i = 0; i < 6; i++) {
+      wasClip[i] = gmshClipPlaneEnabled(i);
+      if(wasClip[i]) gmshClipPlaneOn(i, false);
+    }
     gmshLighting(false);
     glDisable(GL_DEPTH_TEST);
     if(ownBlend) {
@@ -216,6 +223,8 @@ public:
       if(ownBlend && !wasBlend) glDisable(GL_BLEND);
     }
     gmshLighting(wasLit);
+    for(int i = 0; i < 6; i++)
+      if(wasClip[i]) gmshClipPlaneOn(i, true);
     gmshColor4ubv(savedColor);
 
     // reset original matrices

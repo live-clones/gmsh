@@ -228,6 +228,15 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   if(s.empty() || shadowPass) return;
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
+  // a string anchored beyond one of the clipping planes in force goes with
+  // what it names: the quads a string is drawn as live in window
+  // coordinates, where the planes mean nothing, so they are not clipped
+  for(int i = 0; i < 6; i++) {
+    if(!gmshClipPlaneEnabled(i)) continue;
+    const double *p = CTX::instance()->clipPlane[i];
+    if(p[0] * x + p[1] * y + p[2] * z + p[3] < 0.) return;
+  }
+
   if(s.size() > 8 && s.substr(0, 7) == "file://") {
     drawImage(s.substr(7), x, y, z, align);
     return;
