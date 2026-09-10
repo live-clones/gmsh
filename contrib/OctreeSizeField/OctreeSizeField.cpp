@@ -562,8 +562,17 @@ static void computeFeatureSize(SizeFieldContext &ctx)
 
   std::set<MEdge, MEdgeLessThan> axis;
 
+  // Pass 1: compute, for every vertex, its pole/umbrella (unchanged), PLUS
+  // the umbrella's circumcenters themselves (umbrellaPts) -- the point cloud
+  // approximating the local medial sheet as seen from that vertex.
+  std::vector<std::vector<MFace> > allUp(mesh->vertices.num);
+  // Each umbrella point is tagged with the index of the tet that generated
+  // it, so that edge testing can discard points whose generating tet is
+  // incident to *both* candidate-edge endpoints (see Pass 2 below).
+  std::vector<std::vector<std::pair<SPoint3, uint64_t> > > allUmbrellaPts(
+    mesh->vertices.num);
+
   for(size_t i = 0; i < mesh->vertices.num; ++i) {
-    // Pole of p: farthest circumcenter among the tets incident to p.
     SPoint3 pole(0., 0., 0.), tmp(0., 0., 0.),
       p(mesh->vertices.coord[4 * i + 0], mesh->vertices.coord[4 * i + 1],
         mesh->vertices.coord[4 * i + 2]);
@@ -575,13 +584,13 @@ static void computeFeatureSize(SizeFieldContext &ctx)
       d = fmax(d, p.distance(tmp));
     }
 
-    // Pole vector and the plane through p normal to it.
     SPoint3 vp = pole - p;
     double D = -(vp[0] * p[0] + vp[1] * p[1] + vp[2] * p[2]);
     SPoint3 p1(0., 0., -D / vp[2]);
     SPoint3 p2(0., -D / vp[1], 0.);
 
-    std::vector<MFace> up; // umbrella
+    std::vector<MFace> &up = allUp[i];
+    std::vector<std::pair<SPoint3, uint64_t> > &umbrellaPts = allUmbrellaPts[i];
     double orientj, orientk;
     for(size_t j = 0; j < tetIncidents[i].size(); ++j) {
       uint64_t tetj = tetIncidents[i][j];
@@ -598,14 +607,25 @@ static void computeFeatureSize(SizeFieldContext &ctx)
                                                  (double *)p2, (double *)ck);
             if(orientj * orientk < 0) {
               up.push_back(allTets[tetj]->getFace(indFace));
+              umbrellaPts.push_back(std::make_pair(cj, tetj));
+              umbrellaPts.push_back(std::make_pair(ck, tetk));
             }
           }
         }
       }
     }
+  }
 
-    double theta = M_PI / 8., rho = 8., maxAngle, minRatio, localAngle,
-           alpha0, alpha1;
+  // Pass 2: edge testing. Angle/ratio unchanged; the per-endpoint surface-
+  // normal alignment test is replaced by comparing the *local medial-sheet
+  // reconstructions* of the two endpoints (allUmbrellaPts[v0] vs
+  // allUmbrellaPts[v1]) -- if they nearly coincide in space, both endpoints
+  // independently agree on where the medial axis is, which is insensitive
+  // to any lateral offset between v0 and v1 themselves (unlike comparing
+  // e's direction to a single surface normal).
+  for(size_t i = 0; i < mesh->vertices.num; ++i) {
+    double theta = M_PI / 8., rho = 8., maxAngle, minRatio, localAngle;
+    std::vector<MFace> &up = allUp[i];
     std::vector<MEdge> checkedEdges;
     for(size_t j = 0; j < edgIncidents[i].size(); ++j) {
       MEdge e = edgIncidents[i][j];
@@ -638,13 +658,59 @@ static void computeFeatureSize(SizeFieldContext &ctx)
         }
 
         if(maxAngle < M_PI / 2. - theta || minRatio > rho) {
-          double *n0 = &ctx.nodeNormals[3 * v0];
-          double *n1 = &ctx.nodeNormals[3 * v1];
-          alpha0 = angle(SVector3(n0), e.tangent());
-          alpha1 = angle(SVector3(n1), e.tangent());
+          // Umbrella-distance test: do v0's and v1's independently
+          // reconstructed local medial-sheet point clouds nearly coincide?
+          // Circumcenters of sliver (near-degenerate) tets -- a known
+          // Delaunay pathology on thin-slab point samples -- can land far
+          // from their generating vertex; without a locality bound, two
+          // such far-flung circumcenters can spuriously coincide and make
+          // two geometrically unrelated vertices look "close". Only compare
+          // circumcenters that are themselves within a few edge-lengths of
+          // p/q, i.e. locally relevant to *this* candidate edge.
+          //
+          // A tet incident to the candidate edge e=(v0,v1) itself touches
+          // both endpoints, so its circumcenter can land in *both*
+          // allUmbrellaPts[v0] and allUmbrellaPts[v1] -- trivially
+          // satisfying "the two point clouds coincide" with zero distance,
+          // regardless of whether v0/v1 actually bound a thin external
+          // feature. Such points carry no information about proximity to a
+          // *different* medial-axis branch and must be excluded.
+          SPoint3 pv0(e.getVertex(0)->x(), e.getVertex(0)->y(),
+                      e.getVertex(0)->z());
+          SPoint3 pv1(e.getVertex(1)->x(), e.getVertex(1)->y(),
+                      e.getVertex(1)->z());
+          double locality = 2. * e.length();
+          const std::vector<std::pair<SPoint3, uint64_t> > &ptsA =
+            allUmbrellaPts[v0];
+          const std::vector<std::pair<SPoint3, uint64_t> > &ptsB =
+            allUmbrellaPts[v1];
+          double minGap = DBL_MAX;
+          bool anyA = false, anyB = false;
+          for(const std::pair<SPoint3, uint64_t> &pa : ptsA) {
+            if(pv0.distance(pa.first) > locality) continue;
+            MTetrahedron *ta = allTets[pa.second];
+            if(ta->getVertex(0)->getNum() - firstVertex == v1 ||
+               ta->getVertex(1)->getNum() - firstVertex == v1 ||
+               ta->getVertex(2)->getNum() - firstVertex == v1 ||
+               ta->getVertex(3)->getNum() - firstVertex == v1)
+              continue;
+            anyA = true;
+            for(const std::pair<SPoint3, uint64_t> &pb : ptsB) {
+              if(pv1.distance(pb.first) > locality) continue;
+              MTetrahedron *tb = allTets[pb.second];
+              if(tb->getVertex(0)->getNum() - firstVertex == v0 ||
+                 tb->getVertex(1)->getNum() - firstVertex == v0 ||
+                 tb->getVertex(2)->getNum() - firstVertex == v0 ||
+                 tb->getVertex(3)->getNum() - firstVertex == v0)
+                continue;
+              anyB = true;
+              minGap = fmin(minGap, pa.first.distance(pb.first));
+            }
+          }
 
-          if(fmin(alpha0, fabs(M_PI - alpha0)) < M_PI / 8. &&
-             fmin(alpha1, fabs(M_PI - alpha1)) < M_PI / 8.) {
+          bool umbrellaPass = anyA && anyB && minGap < 0.5 * e.length();
+
+          if(umbrellaPass) {
             // Edge bounds a thin gap: constrain the size at its endpoints.
             auto ret = axis.insert(e);
             if(ret.second) {
