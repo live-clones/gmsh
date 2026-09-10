@@ -224,6 +224,9 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       gmshVertex2d(xleft + width, ytop - height);
       gmshVertex2d(xleft, ytop - height);
       gmshEnd();
+      // the quad is only collected: it must reach the window while the
+      // blending is still on, or it comes out opaque and hides the scene
+      gmshFlushImmediate();
       glDisable(GL_BLEND);
     }
   }
