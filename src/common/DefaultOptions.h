@@ -363,8 +363,8 @@ StringXString ViewOptions_String[] = {
 
   { F,   "Name" , opt_view_name , "" ,
     "Default post-processing view name" },
-  { F|O, "NumberFormat" , opt_view_number_format , "%.3g" ,
-    "Number format (in standard C form)" },
+  { F|O, "NumberFormat" , opt_view_number_format , "" ,
+    "Number format (in standard C form); use adaptive automatic default if empty" },
 
   { F|O, "Stipple0" , opt_view_stipple0 , "1*0x1F1F" ,
     "First stippling pattern" },
