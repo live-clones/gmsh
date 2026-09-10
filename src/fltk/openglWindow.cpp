@@ -257,6 +257,7 @@ void openglWindow::draw()
                                              1.);
     glViewport(0, 0, pixel_w(), pixel_h());
   }
+  drawContext::global()->setPixelFactor(_ctx->highResolutionPixelFactor());
 
   if(lassoMode) {
     // draw the scene again with the lasso rectangle on top (drawing into the
