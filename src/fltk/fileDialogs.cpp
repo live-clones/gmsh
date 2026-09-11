@@ -29,7 +29,8 @@
 #include "GmshDefines.h"
 #include "StringUtils.h"
 #include "FlGui.h"
-#include "optionWindow.h"
+#include "GuiDialogs.h"
+#include "Backend.h"
 #include "fileDialogs.h"
 #include "CreateFile.h"
 #include "Options.h"
@@ -348,7 +349,6 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
         opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
         opt_print_supersampling(0, GMSH_SET | GMSH_GUI,
                                 (int)dialog->v[2]->value());
-        CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
       }
@@ -440,7 +440,6 @@ int pgfBitmapFileDialog(const char *name, const char *title, int format)
                                     0); // never do compositing print
         opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
         opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
-        CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
       }
@@ -511,7 +510,6 @@ int latexFileDialog(const char *name)
         opt_print_tex_force_fontsize(0, GMSH_SET | GMSH_GUI,
                                      (int)dialog->b[1]->value());
         opt_print_tex_width_in_mm(0, GMSH_SET | GMSH_GUI, dialog->v->value());
-        CreateOutputFile(name, FORMAT_TEX);
         dialog->window->hide();
         return 1;
       }
@@ -779,7 +777,6 @@ int gifFileDialog(const char *name)
         opt_print_background(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
         opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
                                     dialog->b[6]->value());
-        CreateOutputFile(name, FORMAT_GIF);
         dialog->window->hide();
         return 1;
       }
@@ -918,7 +915,6 @@ int gl2psFileDialog(const char *name, const char *title, int format)
         opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
         opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
         opt_print_background(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
-        CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
       }
@@ -1035,7 +1031,6 @@ int geoFileDialog(const char *name)
                              dialog->b[0]->value() ? 1 : 0);
         opt_print_geo_only_physicals(0, GMSH_SET | GMSH_GUI,
                                      dialog->b[1]->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_GEO);
         dialog->window->hide();
         return 1;
       }
@@ -1136,7 +1131,6 @@ int meshStatFileDialog(const char *name)
                           dialog->b[6]->value() ? 1 : 0);
         opt_print_pos_disto(0, GMSH_SET | GMSH_GUI,
                             dialog->b[7]->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_POS);
         dialog->window->hide();
         return 1;
       }
@@ -1249,7 +1243,6 @@ int mshFileDialog(const char *name)
                                             dialog->b[2]->value() ? 1 : 0);
         opt_mesh_partition_save_topology_file(0, GMSH_SET | GMSH_GUI,
                                               dialog->b[3]->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_MSH);
         dialog->window->hide();
         return 1;
       }
@@ -1326,7 +1319,6 @@ int unvinpFileDialog(const char *name, const char *title, int format)
                           dialog->b[0]->value() ? 1 : 0);
         opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
                                       dialog->b[1]->value() ? 1 : 0);
-        CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
       }
@@ -1430,7 +1422,6 @@ int keyFileDialog(const char *name, const char *title, int format)
         opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
                                       (dialog->b[0]->value() ? 2 : 0) +
                                         (dialog->b[1]->value() ? 1 : 0));
-        CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
       }
@@ -1534,7 +1525,6 @@ int radFileDialog(const char *name, const char *title, int format)
         opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
                                       (dialog->b[0]->value() ? 2 : 0) +
                                         (dialog->b[1]->value() ? 1 : 0));
-        CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
       }
@@ -1615,7 +1605,6 @@ int bdfFileDialog(const char *name)
         opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI,
                                        dialog->d->value() + 1);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_BDF);
         dialog->window->hide();
         return 1;
       }
@@ -1707,7 +1696,6 @@ int stlFileDialog(const char *name)
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         opt_mesh_stl_one_solid_per_surface(0, GMSH_SET | GMSH_GUI,
                                            dialog->c[1]->value());
-        CreateOutputFile(name, FORMAT_STL);
         dialog->window->hide();
         return 1;
       }
@@ -1796,7 +1784,6 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
         opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI,
                                        dialog->d->value() + 1);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
       }
@@ -1816,7 +1803,7 @@ static void _saveViews(const std::string &name, int which, int format,
 {
   if(PView::list.empty()) { Msg::Error("No views to save"); }
   else if(which == 0) {
-    int iview = FlGui::instance()->options->view.index;
+    int iview = Dialog::optionsView();
     if(iview < 0 || iview >= (int)PView::list.size()) {
       Msg::Info("No or invalid current view: saving View[0]");
       iview = 0;
@@ -1937,7 +1924,7 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
 {
   if(PView::list.empty()) { Msg::Error("No views to save"); }
   else if(which == 0) {
-    int iview = FlGui::instance()->options->view.index;
+    int iview = Dialog::optionsView();
     if(iview < 0 || iview >= (int)PView::list.size()) {
       Msg::Info("No or invalid current view: saving View[0]");
       iview = 0;
@@ -2246,4 +2233,129 @@ int cgnsFileDialog(const char *filename)
 {
   CreateOutputFile(filename, FORMAT_CGNS);
   return 1;
+}
+
+// What each output format takes, asked for in the little window this
+// interface has always had for it. Which window that is was written out as
+// forty one-line functions and a table of pointers; it is a switch now, and
+// the table of formats it went with lives on the shared side, where the entry
+// that offers them lives.
+//
+// Three of them choose *which* file to write rather than how -- which views,
+// in which flavour -- so they write it and say so.
+int fltkFormatOptions(int format, const std::string &name)
+{
+  switch(format) {
+  case FORMAT_BREP: return Ui::Backend::GoAhead;
+  case FORMAT_CELUM:
+    return genericMeshFileDialog(name.c_str(), "CELUM Options", FORMAT_CELUM, false,
+                               false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_CGNS:
+    return cgnsFileDialog(name.c_str()) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_DIFF:
+    return genericMeshFileDialog(name.c_str(), "Diffpack Options", FORMAT_DIFF, true,
+                               false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_EPS:
+    return gl2psFileDialog(name.c_str(), "EPS Options", FORMAT_EPS) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_IGES: return Ui::Backend::GoAhead;
+  case FORMAT_INP:
+    return unvinpFileDialog(name.c_str(), "Abaqus INP Options", FORMAT_INP) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_IR3:
+    return genericMeshFileDialog(name.c_str(), "Iridium Options", FORMAT_IR3, false,
+                               true) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_JPEG:
+    return genericBitmapFileDialog(name.c_str(), "JPEG Options", FORMAT_JPEG) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_KEY:
+    return keyFileDialog(name.c_str(), "LSDYNA KEY Options", FORMAT_KEY) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_MAIL:
+    return genericMeshFileDialog(name.c_str(), "MAIL Options", FORMAT_MAIL, false, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_MATLAB:
+    return genericMeshFileDialog(name.c_str(), "MATLAB Options", FORMAT_MATLAB, false,
+                               false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_MED:
+    return genericMeshFileDialog(name.c_str(), "MED Options", FORMAT_MED, false, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_MESH:
+    return genericMeshFileDialog(name.c_str(), "MESH Options", FORMAT_MESH, false, true) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_MPEG_PREVIEW:
+    return mpegFileDialog(name.c_str()) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_NEU:
+    return genericMeshFileDialog(name.c_str(), "NEU Options", FORMAT_NEU, false, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_OBJ:
+    return genericMeshFileDialog(name.c_str(), "OBJ Options", FORMAT_OBJ, false, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_OFF:
+    return genericMeshFileDialog(name.c_str(), "OFF Options", FORMAT_OFF, false, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_P3D:
+    return genericMeshFileDialog(name.c_str(), "P3D Options", FORMAT_P3D, false, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_PDF:
+    return gl2psFileDialog(name.c_str(), "PDF Options", FORMAT_PDF) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_PGF:
+    return pgfBitmapFileDialog(name.c_str(), "PGF Options", FORMAT_PGF) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_PLY2:
+    return genericMeshFileDialog(name.c_str(), "PLY2 Options", FORMAT_PLY2, false, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_PNG:
+    return genericBitmapFileDialog(name.c_str(), "PNG Options", FORMAT_PNG) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_PPM:
+    return genericBitmapFileDialog(name.c_str(), "PPM Options", FORMAT_PPM) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_PS:
+    return gl2psFileDialog(name.c_str(), "PS Options", FORMAT_PS) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_RAD:
+    return radFileDialog(name.c_str(), "RADIOSS Block Options", FORMAT_RAD) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_STEP: return Ui::Backend::GoAhead;
+  case FORMAT_SU2:
+    return genericMeshFileDialog(name.c_str(), "SU2 Options", FORMAT_SU2, false, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_SVG:
+    return gl2psFileDialog(name.c_str(), "SVG Options", FORMAT_SVG) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_TIKZ:
+    return gl2psFileDialog(name.c_str(), "TIKZ Options", FORMAT_TIKZ) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_TOCHNOG:
+    return genericMeshFileDialog(name.c_str(), "Tochnog Options", FORMAT_TOCHNOG, true,
+                               false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_UNV:
+    return unvinpFileDialog(name.c_str(), "UNV Options", FORMAT_UNV) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_VIS: return Ui::Backend::GoAhead;
+  case FORMAT_VRML:
+    return genericMeshFileDialog(name.c_str(), "VRML Options", FORMAT_VRML, false, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_VTK:
+    return genericMeshFileDialog(name.c_str(), "VTK Options", FORMAT_VTK, true, false) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  case FORMAT_X3D:
+    return genericMeshFileDialog(name.c_str(), "X3D Options", FORMAT_X3D, false, false) ? Ui::Backend::Written :
+                                Ui::Backend::Cancelled;
+  case FORMAT_XAO: return Ui::Backend::GoAhead;
+  case FORMAT_XMT: return Ui::Backend::GoAhead;
+  case FORMAT_YUV:
+    return genericBitmapFileDialog(name.c_str(), "YUV Options", FORMAT_YUV) ? Ui::Backend::GoAhead :
+                                Ui::Backend::Cancelled;
+  default: return Ui::Backend::GoAhead;
+  }
 }

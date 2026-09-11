@@ -6,6 +6,7 @@
 #include <map>
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include "drawContext.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -912,7 +913,7 @@ void drawContext::drawMesh()
     // what the planes add is built on its own: moving a plane costs only this
     if(changed) m->invalidateClipVertexArrays();
     m->fillClipVertexArrays();
-#if defined(__APPLE__)
+#if defined(HAVE_GUI) && defined(__APPLE__)
     // FIXME: resetting texture pile fixes bug with recent macOS versions
     if(changed) global()->resetFontTextures();
 #endif

@@ -759,6 +759,7 @@ double opt_view_normals(OPT_ARGS_NUM);
 double opt_view_tangents(OPT_ARGS_NUM);
 double opt_view_displacement_factor(OPT_ARGS_NUM);
 double opt_view_use_stipple(OPT_ARGS_NUM);
+double opt_view_fake_transparency(OPT_ARGS_NUM);
 double opt_view_explode(OPT_ARGS_NUM);
 double opt_view_visible(OPT_ARGS_NUM);
 double opt_view_intervals_type(OPT_ARGS_NUM);
@@ -766,6 +767,7 @@ double opt_view_saturate_values(OPT_ARGS_NUM);
 double opt_view_max_recursion_level(OPT_ARGS_NUM);
 double opt_view_adapt_visualization_grid(OPT_ARGS_NUM);
 double opt_view_target_error(OPT_ARGS_NUM);
+double opt_view_colormap_alpha(OPT_ARGS_NUM);
 double opt_view_colormap_alpha_power(OPT_ARGS_NUM);
 double opt_view_colormap_beta(OPT_ARGS_NUM);
 double opt_view_colormap_bias(OPT_ARGS_NUM);
@@ -997,6 +999,15 @@ typedef struct {
   unsigned char def1[4], def2[4], def3[4], def4[4];
   const char *help;
 } StringXColor;
+
+// Access to the option description tables of DefaultOptions.h, so that a
+// graphical interface can build an option editor generically. The returned
+// array is terminated by an entry whose "str" member is null; GetOptionCategories()
+// returns a null-terminated list of the valid category names.
+const char **GetOptionCategories();
+StringXString *GetStringOptionCategory(const char *category);
+StringXNumber *GetNumberOptionCategory(const char *category);
+StringXColor *GetColorOptionCategory(const char *category);
 
 void InitOptions(int num);
 void InitOptionsGUI(int num);

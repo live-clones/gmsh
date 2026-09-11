@@ -53,6 +53,31 @@ linux_compatibility_ci:
   except:
     - tags
 
+linux_imgui_ci:
+  image: onelab/ci
+  script:
+    # contrib/glfw is built from source: the image needs the X11 and Wayland
+    # development headers (libx11, libxrandr, libxinerama, libxcursor, libxi,
+    # xorgproto, wayland, wayland-scanner, wayland-protocols, libxkbcommon)
+    - mkdir build_imgui
+    - cd build_imgui
+    - cmake -DENABLE_IMGUI=1 ..
+    - make -j 8
+    - ctest -j 8 --output-on-failure
+    # the interface cannot be opened without a display, but the batch mode must
+    # behave exactly as it does with the FLTK build
+    - ./gmsh ../tutorials/t5.geo -3 -o t5_imgui.msh
+    - cd .. && mkdir build_fltk && cd build_fltk
+    - cmake ..
+    - make -j 8
+    - ./gmsh ../tutorials/t5.geo -3 -o t5_fltk.msh
+    - cmp t5_fltk.msh ../build_imgui/t5_imgui.msh
+  tags:
+    - linux64
+    - docker
+  except:
+    - tags
+
 windows_ci:
   script:
     - md build

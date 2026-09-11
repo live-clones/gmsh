@@ -10,12 +10,12 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_Menu_Button.H>
+#include "menuFltk.h"
 
 class solverButton : public Fl_Group {
 private:
   Fl_Button *_butt[2];
-  Fl_Menu_Button *_popup;
+  popupButtonFltk *_popup;
   char _tooltip[256];
 
 public:

@@ -17,7 +17,6 @@
 #include "MEdge.h"
 #include "Context.h"
 
-#include "FlGui.h"
 
 #include <algorithm>
 

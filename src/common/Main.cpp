@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "GmshGlobal.h"
 
-#if (defined(WIN32) || defined(_WIN32)) && (defined(__MINGW32__) || (defined(_MSC_VER) && !defined(HAVE_FLTK)))
+#if (defined(WIN32) || defined(_WIN32)) && (defined(__MINGW32__) || (defined(_MSC_VER) && !defined(HAVE_GUI)))
 
 // in order to handle non-ASCII command line arguments on Windows, use wmain()
 // instead of main() (we could also use main() and retrieve the "wide" args with
@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
 
 #endif
 
-#if defined(HAVE_FLTK)
-  return GmshMainFLTK(argc, argv);
+#if defined(HAVE_GUI)
+  return GmshMainGUI(argc, argv);
 #else
   return GmshMainBatch(argc, argv);
 #endif

@@ -22,15 +22,8 @@
 #include "GmshGlobal.h"
 #include "StringUtils.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/Fl.H>
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
-// OK
-#elif (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 3)
-// OK
-#else
-#error "Gmsh requires FLTK >= 1.3.3"
-#endif
+#if defined(HAVE_GUI)
+#include "Gui.h"
 #endif
 
 #if defined(HAVE_PETSC)
@@ -150,7 +143,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-check", "Perform various consistency checks on mesh"));
   s.push_back(mp("-ignore_periocity", "Ignore periodic boundaries "
                  "(Mesh.IgnorePeriodicity)"));
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   s.push_back(mp("Post-processing:", ""));
   s.push_back(mp("-link int", "Select link mode between views "
                  "(PostProcessing.Link)"));
@@ -175,6 +168,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "(General.FontSize)"));
   s.push_back(mp("-theme string", "Specify FLTK GUI theme (General.FltkTheme)"));
   s.push_back(mp("-display string", "Specify display (General.Display)"));
+  s.push_back(mp("-gui string", "Which interface to use when the build has "
+                 "more than one (fltk, imgui, browser)"));
+  s.push_back(mp("-imgui", "Shortcut for '-gui imgui'"));
   s.push_back(mp("-camera", "Use camera mode view (General.CameraMode)"));
   s.push_back(mp("-stereo", "OpenGL quad-buffered stereo rendering "
                  "(General.Stereo)"));
@@ -188,7 +184,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-merge", "Merge next files"));
   s.push_back(mp("-open", "Open next files"));
   s.push_back(mp("-log filename", "Log all messages to filename"));
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   s.push_back(mp("-shaders", "Draw with the shader pipeline (General.Shaders)"));
   s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, "
                  "solver or post-processing mode (General.InitialModule)"));
@@ -376,13 +372,8 @@ std::vector<std::string> GetBuildInfo()
   s.push_back(std::string("Build date    : ") + GMSH_DATE);
   s.push_back(std::string("Build host    : ") + GMSH_HOST);
   s.push_back(std::string("Build options :") + GMSH_CONFIG_OPTIONS);
-#if defined(HAVE_FLTK)
-  {
-    char tmp[256];
-    sprintf(tmp, "%d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION,
-            FL_PATCH_VERSION);
-    s.push_back(std::string("FLTK version  : ") + tmp);
-  }
+#if defined(HAVE_GUI)
+  s.push_back(std::string("GUI toolkit   : ") + Gui::toolkitVersion());
 #endif
 #if defined(HAVE_PETSC)
   {
@@ -1495,6 +1486,19 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
       Msg::Error("Missing argument");
       if(exitOnError) Msg::Exit(1);
     }
+  }
+  else if(argv[i] == "-gui") {
+    i++;
+    if(i < argv.size())
+      CTX::instance()->guiToolkit = argv[i++];
+    else {
+      Msg::Error("Missing argument");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-imgui") {
+    CTX::instance()->guiToolkit = "imgui";
+    i++;
   }
   else {
     return false;

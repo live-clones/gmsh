@@ -9,3 +9,9 @@ Categories=Science;NumericalAnalysis;
 Icon=gmsh
 Exec=gmsh
 Terminal=false
+
+# Lets the desktop resolve a running window back to this entry, which is what
+# window rules (tiling extensions, "always on this workspace", ...) key on. On
+# X11 this is compared with WM_CLASS; on Wayland the app id is used instead and
+# must be the base name of this file.
+StartupWMClass=Gmsh

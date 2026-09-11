@@ -6,6 +6,11 @@
 #ifndef MESSAGE_BROWSER_H
 #define MESSAGE_BROWSER_H
 
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Browser.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Input.H>
 #include "FlGui.h"
 #include <algorithm>
 #include <string>
