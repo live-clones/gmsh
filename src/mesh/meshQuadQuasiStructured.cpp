@@ -565,6 +565,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   std::vector<std::pair<MVertex *, double>> global_size_map;
   std::vector<std::array<double, 5>>
     global_singularity_list; /* format: gf->tag(), index, x, y, z */
+  int failedCrossFields = 0;
   /* Per GFace computations, in parallel */
   {
     Msg::Info(
@@ -588,8 +589,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     global_triangles.reserve(ntris);
     global_size_map.reserve(3 * ntris);
 
-    int nthreads = getNumThreads();
-#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+    int nthreads = crossFieldHeatSolverUsesMumps() ? 1 : getNumThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads) reduction(+ : failedCrossFields)
     for(size_t f = 0; f < faces.size(); ++f) {
       GFace *gf = faces[f];
 
@@ -627,6 +628,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
       if(scf != 0) {
         Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
+        ++failedCrossFields;
+        continue;
       }
 
       /* Cross field singularities */
@@ -752,6 +755,12 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         //    localSizemap, "sizemap_f"+std::to_string(gf->tag()));
       }
     }
+  }
+
+  if(failedCrossFields) {
+    Msg::Error("Could not compute cross field on %i surface(s); "
+               "guiding field not built", failedCrossFields);
+    return -1;
   }
 
   sort_unique(global_size_map);
@@ -962,6 +971,7 @@ bool getSingularitiesFromNewCrossFieldComputation(
     thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
   if(scf != 0) {
     Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
+    return false;
   }
 
   /* Cross field singularities */
@@ -2041,7 +2051,9 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
 
-  int nthreads = getNumThreads();
+  // A missing stored field triggers a new PETSc/MUMPS solve below. Keep it
+  // on the host thread, as in the initial guiding-field construction.
+  int nthreads = crossFieldHeatSolverUsesMumps() ? 1 : getNumThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
@@ -2061,6 +2073,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
         getSingularitiesFromNewCrossFieldComputation(bmesh, gf, singularities);
       if(!okg) {
         Msg::Warning("- Face %i: failed to get singularities", gf->tag());
+        continue;
       }
     }
 

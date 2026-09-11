@@ -635,6 +635,15 @@ static void Mesh2D(GModel *m)
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
       nthreads = 1;
 
+#if defined(HAVE_QUADMESHINGTOOLS)
+    // Compound surfaces can compute a fresh cross field inside GFace::mesh.
+    // PETSc/MUMPS must run on the host thread that initialized MPI.
+    if(crossFieldHeatSolverUsesMumps() && !(*it)->compound.empty() &&
+       ((*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+        (*it)->getMeshingAlgo() == ALGO_2D_QUAD_QUASI_STRUCT))
+      nthreads = 1;
+#endif
+
     // Periodic meshing is not yet thread-safe
     if((*it)->getMeshMaster() != *it) nthreads = 1;
 
@@ -1591,8 +1600,13 @@ void GenerateMesh(GModel *m, int ask)
     if(doIt) {
       bool deleteGModelMeshAfter =
         true; // mesh saved in background, no longer needed
-      BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
-                                         deleteGModelMeshAfter, overwriteField);
+      if(BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
+                                           deleteGModelMeshAfter,
+                                           overwriteField) != 0) {
+        CTX::instance()->lock = 0;
+        Msg::Error("Could not build background guiding field; meshing aborted");
+        return;
+      }
     }
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT && old == 2 &&
