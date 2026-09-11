@@ -131,6 +131,16 @@ typedef char GLchar;
 #define GL_CLIP_DISTANCE0 0x3000
 #endif
 
+// the two halves of the blend function (OpenGL 1.4), to read back what the
+// caller set: the Windows header stops at 1.1, which has GL_BLEND_SRC and
+// GL_BLEND_DST alone
+#if !defined(GL_BLEND_SRC_RGB)
+#define GL_BLEND_DST_RGB 0x80C8
+#define GL_BLEND_SRC_RGB 0x80C9
+#define GL_BLEND_DST_ALPHA 0x80CA
+#define GL_BLEND_SRC_ALPHA 0x80CB
+#endif
+
 // depth texture comparison (OpenGL 1.4, OpenGL ES 3.0), for the shadow map
 #if !defined(GL_TEXTURE_COMPARE_MODE)
 #define GL_TEXTURE_COMPARE_MODE 0x884C
