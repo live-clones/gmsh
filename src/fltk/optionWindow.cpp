@@ -1943,14 +1943,14 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[0]->align(FL_ALIGN_RIGHT);
       general.value[0]->callback(general_options_ok_cb);
 
-      int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
-      general.choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, w1, BH);
+      general.choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
+                                        "Shading mode");
       general.choice[8]->tooltip("General.Shading");
       general.choice[8]->menu(menu_shading_mode);
       general.choice[8]->align(FL_ALIGN_RIGHT);
       general.choice[8]->callback(general_options_ok_cb);
-      general.value[33] = new Fl_Value_Input(L + 2 * WB + w1, 2 * WB + 4 * BH,
-                                             w2, BH, "Shading mode and studio samples");
+
+      general.value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW / 3, BH);
       general.value[33]->tooltip("General.StudioSamples");
       general.value[33]->minimum(1);
       general.value[33]->maximum(256);
@@ -1959,15 +1959,16 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[33]->callback(general_options_ok_cb);
 
       general.value[35] =
-        new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW / 2, BH);
+        new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 5 * BH, IW / 3, BH);
       general.value[35]->tooltip("General.StudioLightSpread");
       general.value[35]->minimum(0);
       general.value[35]->maximum(90);
       if(CTX::instance()->inputScrolling) general.value[35]->step(.1);
       general.value[35]->callback(general_options_ok_cb);
+
       general.value[34] =
-        new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 5 * BH, IW / 2, BH,
-                           "Studio light spread and floor offset");
+        new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 5 * BH, IW / 3, BH,
+                           "Studio samples, spread and floor offset");
       general.value[34]->tooltip("General.StudioFloorOffset");
       general.value[34]->minimum(-10);
       general.value[34]->maximum(10);

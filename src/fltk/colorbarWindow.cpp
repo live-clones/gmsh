@@ -233,7 +233,7 @@ void colorbarWindow::redraw_range(int a, int b)
     fl_draw("Reset colormap modifications", xx1, yy0 + (i + 1) * fh);
     i++;
     fl_draw("h", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Show this help message", xx1, yy0 + (i + 1) * fh);
+    fl_draw("Toggle help message", xx1, yy0 + (i + 1) * fh);
     i++;
   }
   else {
