@@ -8,6 +8,7 @@
 #include "meshVolumeUntangling.h"
 
 #include "winslowUntangler.h"
+#include "winslowUntanglerGMSH.h"
 
 #include <math.h>
 #include <iostream> // debugging
@@ -279,12 +280,18 @@ bool buildVerticesAndTetrahedra(
   tets.clear();
 
   std::unordered_map<MVertex *, uint32_t> old2new;
-  vector<vector<uint32_t> > elements(gr->getNumMeshElements());
+  // Trihedra (the hex/tet transition element of the hybrid hex-dominant
+  // mesher) are not a shape this untangler's ideal-shape machinery knows
+  // about: skip them rather than silently mistreating them as tets, since
+  // their 4 vertices don't describe a regular tetrahedron.
+  vector<vector<uint32_t> > elements;
+  elements.reserve(gr->getNumMeshElements());
   for(size_t e = 0; e < gr->getNumMeshElements(); ++e) {
     MElement *elt = gr->getMeshElement(e);
+    if(elt->getType() == TYPE_TRIH) continue;
     size_t n = elt->getNumVertices();
-    vector<uint32_t> &vert = elements[e];
-    vert.resize(n);
+    elements.push_back(vector<uint32_t>(n));
+    vector<uint32_t> &vert = elements.back();
     for(size_t lv = 0; lv < n; ++lv) {
       MVertex *v = elt->getVertex(lv);
       auto it = old2new.find(v);
@@ -346,8 +353,8 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
   double lambda = 1.025;
 
   bool converged =
-    untangle_tetrahedra(points, locked, tets, tetIdealShapes, lambda,
-                        iterMaxInner, iterMax, iterFailMax, timeMax);
+    untangle_tetrahedra_GMSH(points, locked, tets, tetIdealShapes, lambda,
+                             iterMaxInner, iterMax, iterFailMax, timeMax);
 
   for(size_t v = 0; v < points.size(); ++v)
     if(!locked[v]) {
@@ -357,10 +364,10 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
   double sicnMinA, sicnAvgA;
   computeSICNquality(gr, sicnMinA, sicnAvgA);
 
-  Msg::Info("- Region %i: Winslow untangling, SICN min: %.3f -> %.3f, avg: "
+  Msg::Info("- Region %i: Winslow untangling%s, SICN min: %.3f -> %.3f, avg: "
             "%.3f -> %.3f (%li vertices, %.3f seconds)",
-            gr->tag(), sicnMinB, sicnMinA, sicnAvgB, sicnAvgA, vertices.size(),
-            Cpu() - t0);
+            gr->tag(), converged ? "" : " (did not converge)", sicnMinB,
+            sicnMinA, sicnAvgB, sicnAvgA, vertices.size(), Cpu() - t0);
 
   return true;
 }

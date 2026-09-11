@@ -7,6 +7,7 @@ set(SRC
   directions3D.cpp
   simple3D.cpp
   pointInsertion.cpp
+  pointInsertionFlat.cpp
   pointInsertionRTreeTools.cpp
   yamakawa.cpp
   ThinLayer.cpp

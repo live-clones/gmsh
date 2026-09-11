@@ -54,6 +54,7 @@
 #include "simple3D.h"
 // #include "yamakawa.h"
 #include "pointInsertion.h"
+#include "pointInsertionFlat.h"
 #endif
 
 #if defined(HAVE_OPTHOM)
@@ -918,15 +919,8 @@ static void Mesh3D(GModel *m)
       GRegion *gr = connected[i][j];
       bool treat_region_ok = false;
       if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
-        if(old_algo_hexa()) {
-          Filler f;
-          f.treat_region(gr);
-          treat_region_ok = true;
-        }
-        else {
-          Filler3D f;
-          treat_region_ok = f.treat_region(gr);
-        }
+        fillRegionFlat(gr);
+        treat_region_ok = true;
       }
 
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
