@@ -20,7 +20,6 @@ public:
   drawContextFltkStringTexture();
   ~drawContextFltkStringTexture();
   void flushString();
-  bool queuesStrings() { return true; }
   void drawString(const char *str);
   void drawString(const char *str, const double win[3]);
   void setFont(int fontid, int fontsize);

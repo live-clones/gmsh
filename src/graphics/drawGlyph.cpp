@@ -228,13 +228,12 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   if(s.empty() || shadowPass) return;
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
-  // A pick pass reads identifiers back out of the colour buffer: an engine
-  // that collects the strings of a frame to draw them at its end would leave
-  // these for the next frame, which would paint what the pass saw over the
-  // picture - the labels of a view hidden in between, say. Nothing is lost:
-  // they never reach the image the pass reads.
-  if(render_mode == GMSH_SELECT && drawContext::global()->queuesStrings())
-    return;
+  // A pick pass draws no text at all, so that a label never hides what is
+  // behind it from a click. It would not be read reliably anyway: an engine
+  // that collects the strings of a frame to draw them at its end left them
+  // for the *next* frame, which then painted what the pass saw over the
+  // picture, the labels of a view hidden in between among them.
+  if(render_mode == GMSH_SELECT) return;
 
   // a string anchored beyond one of the clipping planes in force goes with
   // what it names: the quads a string is drawn as live in window
