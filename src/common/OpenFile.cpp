@@ -46,11 +46,8 @@ typedef unsigned long intptr_t;
 #include "PViewOptions.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include <FL/fl_ask.H>
-#include "FlGui.h"
-#include "onelabGroup.h"
-#include "graphicWindow.h"
+#if defined(HAVE_GUI)
+#include "Gui.h"
 #include "drawContext.h"
 #include "ReadImg.h"
 #endif
@@ -231,9 +228,9 @@ int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
   gmsh_yylineno = old_yylineno;
   gmsh_yyviewindex = old_yyviewindex;
 
-#if defined(HAVE_FLTK) && defined(HAVE_POST)
-  if(FlGui::available()) {
-    FlGui::instance()->updateViews(true, false);
+#if defined(HAVE_GUI) && defined(HAVE_POST)
+  if(Gui::available()) {
+    Gui::updateViews(true, false);
   }
 #endif
 
@@ -334,7 +331,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
 
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
 
-#if defined(HAVE_FLTK) && defined(HAVE_POST)
+#if defined(HAVE_GUI) && defined(HAVE_POST)
   int numViewsBefore = PView::list.size();
 #endif
   int status = 0;
@@ -449,7 +446,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   else if(ext == ".p3d" || ext == ".P3D") {
     status = GModel::current()->readP3D(fileName);
   }
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
   else if(ext == ".pnm" || ext == ".PNM" || ext == ".pbm" || ext == ".PBM" ||
           ext == ".pgm" || ext == ".PGM" || ext == ".ppm" || ext == ".PPM") {
     status = read_pnm(fileName);
@@ -564,15 +561,14 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
 
   if(importPhysicalsInOnelab) Msg::ImportPhysicalGroupsInOnelab();
 
-#if defined(HAVE_FLTK) && defined(HAVE_POST)
-  if(FlGui::available()) {
+#if defined(HAVE_GUI) && defined(HAVE_POST)
+  if(Gui::available()) {
     // go directly to the first non-empty step after the one that is requested
     for(std::size_t i = numViewsBefore; i < PView::list.size(); i++)
       opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                         PView::list[i]->getData()->getFirstNonEmptyTimeStep(
                           opt_view_timestep(i, GMSH_GET, 0)));
-    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size(),
-                                   false);
+    Gui::updateViews(numViewsBefore != (int)PView::list.size(), false);
   }
 #endif
 
@@ -719,11 +715,11 @@ void ClearProject()
   std::string base = (getenv("PWD") ? "" : CTX::instance()->homeDir);
   GModel::current()->setFileName(base + CTX::instance()->defaultFileName);
   GModel::current()->setName("");
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    FlGui::instance()->resetVisibility();
-    FlGui::instance()->updateViews(true, true);
-    FlGui::instance()->updateFields();
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    Gui::resetVisibility();
+    Gui::updateViews(true, true);
+    Gui::updateFields();
     GModel::current()->setSelection(0);
   }
 #endif
@@ -784,8 +780,8 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
     if(tmp[i] != fileName) CTX::instance()->recentFiles.push_back(tmp[i]);
   }
   CTX::instance()->recentFiles.resize(10);
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->graph[0]->fillRecentHistoryMenu();
+#if defined(HAVE_GUI)
+  if(Gui::available()) Gui::fillRecentHistoryMenu();
 #endif
 
   // close the files that might have been left open by ParseFile
@@ -800,12 +796,12 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
   if(CTX::instance()->geom.autoExtrude)
     GModel::current()->addAutomaticExtrusionConstraints({10}, {1}, true, {});
 
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    file_watch_cb(nullptr, nullptr);
-    FlGui::instance()->resetVisibility();
-    FlGui::instance()->updateViews(true, false);
-    FlGui::instance()->updateFields();
+#if defined(HAVE_GUI)
+  if(Gui::available()) {
+    Gui::watchFile();
+    Gui::resetVisibility();
+    Gui::updateViews(true, false);
+    Gui::updateFields();
     GModel::current()->setSelection(0);
   }
 #endif
@@ -820,17 +816,17 @@ void OpenProjectMacFinder(const char *fileName)
                "is the executable name '%s'", name.c_str());
     return;
   }
-#if defined(HAVE_FLTK)
-  if(!FlGui::available() || !FlGui::getFinishedProcessingCommandLine()) {
+#if defined(HAVE_GUI)
+  if(!Gui::available() || !Gui::getFinishedProcessingCommandLine()) {
     // Gmsh is not ready: will open the file later
-    FlGui::setOpenedThroughMacFinder(name);
+    Gui::setOpenedThroughMacFinder(name);
   }
   else {
     // Gmsh is running
     OpenProject(name);
     drawContext::global()->draw();
     if(CTX::instance()->launchSolverAtStartup >= 0)
-      solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+      Gui::startSolver(CTX::instance()->launchSolverAtStartup);
   }
 #endif
 }

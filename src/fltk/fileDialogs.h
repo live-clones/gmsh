@@ -46,4 +46,8 @@ int bdfFileDialog(const char *filename);
 int latexFileDialog(const char *filename);
 int cgnsFileDialog(const char *filename);
 
+// what an output format takes, asked for in the window this interface has for
+// it; one of Ui::Backend::Cancelled, GoAhead or Written
+int fltkFormatOptions(int format, const std::string &name);
+
 #endif

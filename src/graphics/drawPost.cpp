@@ -686,7 +686,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
   glyphClip clip(opt);
 
   // speedup drawing of textured fonts on cocoa mac version
-#if defined(__APPLE__)
+#if defined(HAVE_GUI) && defined(__APPLE__)
   if(opt->intervalsType == PViewOptions::Numeric) {
     int numStrings = 0;
     for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++)
@@ -1012,7 +1012,7 @@ void drawContext::drawPost()
       Msg::Debug("post-pro vertex arrays have changed");
       clearGlyphArrays(PView::list[i]);
     }
-#if defined(__APPLE__)
+#if defined(HAVE_GUI) && defined(__APPLE__)
     // FIXME: resetting texture pile fixes bug with recent macOS versions
     if(changed) global()->resetFontTextures();
 #endif

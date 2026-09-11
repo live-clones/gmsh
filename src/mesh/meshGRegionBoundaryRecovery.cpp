@@ -36,8 +36,8 @@ typedef unsigned long intptr_t;
 #include "PView.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
+#if defined(HAVE_GUI)
+#include "Gui.h"
 #include "drawContext.h"
 #endif
 
@@ -1302,8 +1302,8 @@ namespace tetgenBR {
                    pb.str().c_str());
 #if defined(HAVE_POST)
         new PView("Boundary mesh issue", x, y, z, val);
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+#if defined(HAVE_GUI)
+        if(Gui::available()) Gui::updateViews(true, true);
         drawContext::global()->draw();
 #endif
 #endif

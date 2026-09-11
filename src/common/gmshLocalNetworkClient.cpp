@@ -23,9 +23,8 @@ typedef unsigned long intptr_t;
 #include "gmshLocalNetworkClient.h"
 #include "onelabUtils.h"
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#include "onelabGroup.h"
+#if defined(HAVE_GUI)
+#include "Gui.h"
 #include "drawContext.h"
 #endif
 
@@ -62,8 +61,8 @@ public:
          (_client->getExecutable().empty() && !CTX::instance()->solver.listen))
         return 1; // process has been killed or we stopped listening
       int ret = 0;
-#if defined(HAVE_FLTK)
-      if(FlGui::available()) {
+#if defined(HAVE_GUI)
+      if(Gui::available()) {
         // if GUI available, check if there is data and return immediately (we
         // will wait for GUI events later - see below)
         ret = Select(0, 0, socket);
@@ -75,8 +74,8 @@ public:
       ret = Select(0, waitint * 1e6, socket);
 #endif
       if(ret == 0) { // nothing available
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) {
+#if defined(HAVE_GUI)
+        if(Gui::available()) {
           if(timeout < 0) {
             // if asked, refresh the onelab GUI, but no more than every 1/4th of
             // a second
@@ -88,13 +87,13 @@ public:
                 ps[0].setVisible(false);
                 ps[0].setValue("");
                 onelab::server::instance()->set(ps[0]);
-                if(FlGui::available()) onelab_cb(nullptr, (void *)"refresh");
+                if(Gui::available()) Gui::onelabAction("refresh");
               }
               lastRefresh = start;
             }
           }
           // wait at most waitint seconds and respond to FLTK events if ready
-          if(Fl::ready()) FlGui::wait(waitint);
+          if(Gui::ready()) Gui::wait(waitint);
         }
 #endif
         // return to caller (we will be back here soon again)
@@ -299,10 +298,10 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
         }
         set(p);
         if(p.getName() == getName() + "/Progress") {
-#if defined(HAVE_FLTK)
-          if(FlGui::available())
-            FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
-                                           p.getMin(), p.getMax());
+#if defined(HAVE_GUI)
+          if(Gui::available())
+            Gui::setProgress(p.getLabel().c_str(), p.getValue(), p.getMin(),
+                             p.getMax());
 #endif
         }
       }
@@ -427,29 +426,29 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     break;
   case GmshSocket::GMSH_MERGE_FILE:
     if(CTX::instance()->solver.autoMergeFile) {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
       std::size_t n = PView::list.size();
 #endif
       bool changedBeforeMerge = onelab::server::instance()->getChanged("Gmsh");
       MergePostProcessingFile(message, CTX::instance()->solver.autoShowViews,
                               CTX::instance()->solver.autoShowLastStep, true);
       onelab::server::instance()->setChanged(changedBeforeMerge, "Gmsh");
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
       drawContext::global()->draw();
-      if(FlGui::available() && n != PView::list.size()) {
-        FlGui::instance()->rebuildTree(true);
-        FlGui::instance()->openModule("Post-processing");
+      if(Gui::available() && n != PView::list.size()) {
+        Gui::rebuildTree(true);
+        Gui::openModule("Post-processing");
       }
 #endif
     }
     break;
   case GmshSocket::GMSH_OPEN_PROJECT: OpenProject(message);
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
     drawContext::global()->draw();
 #endif
     break;
   case GmshSocket::GMSH_PARSE_STRING: ParseString(message, true);
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
     drawContext::global()->draw();
 #endif
     break;
@@ -458,15 +457,15 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
               TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_GUI)
     int n = PView::list.size();
 #endif
 #if defined(HAVE_POST)
     PView::fillVertexArray(this, length, &message[0], swap);
 #endif
-#if defined(HAVE_FLTK)
-    if(FlGui::available())
-      FlGui::instance()->updateViews(n != (int)PView::list.size(), true);
+#if defined(HAVE_GUI)
+    if(Gui::available())
+      Gui::updateViews(n != (int)PView::list.size(), true);
     drawContext::global()->draw();
 #endif
   } break;
@@ -663,8 +662,8 @@ bool gmshLocalNetworkClient::kill()
   if(getPid() > 0) {
     if(KillProcess(getPid())) {
       Msg::Info("Killed '%s' (pid %d)", _name.c_str(), getPid());
-#if defined(HAVE_FLTK)
-      if(FlGui::available()) FlGui::instance()->setProgress("Killed", 0, 0, 0);
+#if defined(HAVE_GUI)
+      if(Gui::available()) Gui::setProgress("Killed", 0, 0, 0);
 #endif
       setPid(-1);
       return true;

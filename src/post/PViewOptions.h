@@ -55,7 +55,7 @@ public:
   int visible, intervalsType, nbIso;
   int light, lightTwoSide, lightLines, smoothNormals;
   double angleSmoothNormals;
-  int saturateValues;
+  int saturateValues, fakeTransparency;
   int showElement, showTime, showScale;
   int scaleType, rangeType, abscissaRangeType;
   int vectorType, tensorType, glyphLocation, centerGlyphs;

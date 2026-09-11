@@ -14,14 +14,14 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
+#if defined(HAVE_GUI)
+#include "Gui.h"
 #endif
 
 void updateFltk()
 {
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+#if defined(HAVE_GUI)
+  if(Gui::available()) Gui::updateViews(true, true);
 #endif
 }
 

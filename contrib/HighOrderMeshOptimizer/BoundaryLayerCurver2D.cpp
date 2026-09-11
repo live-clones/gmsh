@@ -45,9 +45,6 @@
 #include "PView.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
 
 namespace {
   void drawEquidistantPoints(GEdge *gedge, int N)

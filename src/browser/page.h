@@ -1,0 +1,1737 @@
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#ifndef BROWSER_PAGE_H
+#define BROWSER_PAGE_H
+
+#include "GmshConfig.h"
+
+#if defined(HAVE_BROWSER)
+
+// The page. It asks for the state, draws it, and posts back what was done.
+//
+// It is as plain as it can be on purpose: what is being tried out is whether
+// the descriptions of src/gui survive being written down and sent, not whether
+// a web page can be made to look like Gmsh.
+
+static const char *const browserPage = R"PAGE(<!doctype html>
+<meta charset="utf-8">
+<title>Gmsh</title>
+<style>
+ html,body{height:100%;margin:0}
+ body{font:13px system-ui,sans-serif;background:#f4f4f4;color:#111;
+      display:flex;flex-direction:column}
+ /* A form control does not inherit the font it sits in: left alone it draws
+    at whatever the browser likes, and a width said in ems then comes out
+    wrong by that much. */
+ /* A field is as wide as it says, frame included -- which is what the width
+    of a widget means in the windows this reproduces. Without it two halves of
+    a value come out wider than the one field they are meant to fill, and
+    nothing lines up with the line above. */
+ input,select,button,textarea{font:inherit;box-sizing:border-box}
+ #bar{background:#e3e3e3;border-bottom:1px solid #bbb;padding:2px 6px;
+      display:flex;gap:2px;flex:none}
+ .top{padding:3px 9px;cursor:default;position:relative}
+ .top:hover{background:#cfd8ff}
+ .drop{display:none;position:absolute;left:0;top:100%;background:#fff;
+       border:1px solid #bbb;box-shadow:0 2px 8px #0003;min-width:230px;z-index:9}
+ .top:hover>.drop,.item:hover>.drop{display:block}
+ /* A button of the bar that drops a menu opens it by being pressed, and the
+    menu goes up: the bar is at the bottom of the page. */
+ .drops{position:relative;display:inline-block}
+ /* the arrow that says it drops something */
+ button.menu::after{content:' \25be';font-size:.85em}
+ .drops>.drop{bottom:100%;top:auto}
+ .drops.open>.drop{display:block}
+ .item{padding:3px 10px;white-space:nowrap;display:flex;justify-content:space-between;
+       gap:24px;position:relative}
+ .item:hover{background:#cfd8ff}
+ .item.off{color:#999}
+ .key{color:#777}
+ .sub>.drop{left:100%;top:0}
+ .hr{border-top:1px solid #ddd;margin:3px 0}
+ #middle{flex:1;display:flex;min-height:0;position:relative}
+ #tree{width:290px;flex:none;overflow:auto;background:#fff;
+       border-right:1px solid #ccc;padding:4px 0}
+ .node{display:flex;align-items:center;gap:4px;padding:1px 6px;white-space:nowrap}
+ .node:hover{background:#eef1ff}
+ .arrow{width:12px;text-align:center;cursor:default;color:#555;flex:none}
+ .leaf{cursor:default}
+ .leaf:hover{text-decoration:underline}
+ .picked{accent-color:#356}
+ /* a check on a line of a tree is a check, not a field taking its share of
+    the line */
+ .node input[type=checkbox]{width:auto;flex:none}
+ .node input,.node select{width:135px}
+ #scene{flex:1;min-width:260px;background:#222;position:relative;overflow:hidden}
+ #view{display:block;width:100%;height:100%;object-fit:contain;cursor:crosshair;
+       user-select:none;-webkit-user-drag:none}
+ /* The windows float over everything, inside the page: the desk is the
+    layer they live on, and lets the pointer through wherever none of them is.
+    Docking moves one out of that layer and into the column on the right,
+    which takes its width from the scene rather than covering it. */
+ #desk{position:absolute;inset:0;pointer-events:none;z-index:5}
+ #dock{flex:none;width:330px;overflow:auto;background:#efefef;
+       border-left:1px solid #ccc;padding:8px;display:flex;
+       flex-direction:column;gap:10px;align-items:stretch}
+ #dock:empty{display:none}
+ .form{position:absolute;pointer-events:auto;background:#fff;
+       border:1px solid #999;box-shadow:0 6px 20px #0004;min-width:12em;
+       max-width:calc(100% - 16px);max-height:calc(100% - 16px);
+       display:flex;flex-direction:column}
+ #dock .form{position:static;box-shadow:none;border-color:#ccc;
+             max-height:none;min-width:0}
+ .form h2{font-size:13px;margin:0;padding:5px 8px;background:#ececec;
+          border-bottom:1px solid #ccc;display:flex;gap:10px;
+          align-items:center;cursor:move;user-select:none}
+ .form h2 .name{flex:1;overflow:hidden;text-overflow:ellipsis;
+                white-space:nowrap}
+ .form h2 button{font:12px system-ui;line-height:1;padding:1px 5px;
+                 border:1px solid #bbb;background:#f7f7f7;cursor:default}
+ #dock .form h2{cursor:default}
+ .form .body{display:flex;align-items:stretch;min-height:0;overflow:hidden}
+ .form .main{flex:1;min-width:0;overflow:auto;padding-bottom:5px;
+             display:flex;flex-direction:column}
+ .form .main.scrolls{max-height:26em}
+ .form .aside{flex:none;overflow:hidden;border-right:1px solid #ccc;
+              padding:3px 0;display:flex;flex-direction:column}
+ /* what is beside the column: the tabs, the panes and what the window says
+    under them */
+ .form .rest{flex:1;min-width:0;display:flex;flex-direction:column}
+ .form .body{align-items:stretch}
+ /* a list down the side is not a box inside the window: it is the column */
+ .aside .list{border:none}
+ .form .aside .line{padding:2px 4px}
+ .form .aside .cell{flex:1 1 auto}
+ /* A button down the side column takes the column: what it says is not what
+    says how wide it is there, as the windows this reproduces have it. */
+ .form .aside .cell.act{flex:1 1 auto}
+ .form .aside .cell.act>button,.form .aside .drops,
+ .form .aside .drops>button{width:100%}
+ .list{border:1px solid #ccc;background:#fff;overflow:auto;flex:1 1 auto;
+       min-width:0;min-height:5em;max-height:26em}
+ /* The column down the side is as tall as the window, and the window is as
+    tall as what is beside it: what the column holds is taken out of the flow
+    so that a list of fifty plugins does not ask for a window fifty lines
+    tall, and given the height the column really has. */
+ .form .aside{position:relative;overflow:hidden}
+ .form .aside .inside{position:absolute;top:0;left:0;right:0;bottom:0;
+                      display:flex;flex-direction:column;min-height:0}
+ .form .aside .line.grows{flex:1 1 auto;min-height:0}
+ /* two lists side by side down the column -- which plugin, and which views to
+    run it on -- stay side by side: the column is theirs, and neither of them
+    is pushed under the other */
+ .form .aside .line{flex-wrap:nowrap}
+ .form .aside .cell,.form .aside .list{min-width:0}
+ .form .aside .list{max-height:none;height:100%}
+ .pick{padding:1px 8px;white-space:nowrap;cursor:default}
+ .pick .col{display:inline-block;overflow:hidden;vertical-align:top}
+ .pick:hover{background:#eef1ff}
+ .pick.on{background:#cfd8ff}
+ .tabs{display:flex;gap:2px;padding:4px 6px 0;border-bottom:1px solid #ccc;
+       flex-wrap:wrap}
+ .tabs.family{border-bottom:none;padding-bottom:0}
+ .tabs.family .tab{background:#e4e4e4}
+ .tabs.family .tab.on{background:#eee;font-weight:600}
+ /* as narrow as the tabs of the windows this reproduces: a row of eight of
+    them decides how wide the window is, and nine pixels of air apiece put a
+    third of a window between the first tab and the last */
+ .tab{padding:3px 5px;border:1px solid #ccc;border-bottom:none;background:#eee;
+      cursor:default}
+ .tab.on{background:#fff;font-weight:600}
+ /* A line of a pane. What shares a line is what the description says shares
+    one, which is most of the layout it carries: these windows are two and
+    three columns wide in places. */
+ .line{display:flex;align-items:center;gap:8px;padding:2px 8px;flex-wrap:wrap}
+ .line.ruled{border-top:1px solid #ddd;margin-top:4px;padding-top:5px}
+ /* the lines of a pane laid out on columns, all of them on one grid: a
+    column is as wide as the widest thing in it, over every line at once */
+ .line.grid{display:grid;align-items:center;column-gap:8px;row-gap:4px;
+            align-content:start}
+ /* A cell takes the width it needs and no more, its label running on as far
+    as it must: a window is then as wide as its widest line, which is how the
+    ones this reproduces are sized. Sharing the line evenly is what the grid
+    of a pane laid out on columns is for. */
+ .cell{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0}
+ .cell.packed{flex:0 0 auto}
+ .cell.run{gap:0}
+ /* what fills the height it is given, down to the list itself */
+ .line.grows{flex:1 1 auto;min-height:0}
+ .line.grows>.cell{min-height:0;align-self:stretch;position:relative}
+ /* and a list that fills its line takes the height the line was given --
+    which is what a window says with leastRows -- and no more: a list of two
+    hundred options is not a window two hundred lines tall.
+    A list that has the line to itself is stretched over its cell rather than
+    given a height, the way the colour map is. Asked for a height of a hundred
+    percent it got none -- nothing above it has one to give -- and fell back
+    on the ceiling in ems, which is lower than the room it had been given: the
+    slack was then shared above and below it, an inch of nothing between the
+    buttons at the top of the workspace window and the listing under them.
+    Lifting the ceiling is no answer either, since the list then counts the
+    two hundred options it holds and takes the window with it. Out of the flow
+    it neither counts them nor stops short. A list with something written
+    beside it stays where it was: there the cell holds more than the list. */
+ .line.grows .list{height:100%}
+ .line.grows>.cell>.list:only-child{position:absolute;top:0;left:0;right:0;
+                                    bottom:0;height:auto;max-height:none;
+                                    min-height:0}
+ /* The colour map of a view: it fills the tab it is given, as the widget
+    of the window this reproduces fills its own, and it is drawn rather than
+    built out of elements -- four curves over two hundred and fifty entries
+    is not a thing to make elements of. */
+ /* The canvas is taken out of the flow and stretched over its cell. In the
+    flow it would size itself from its own height attribute, which draw() sets
+    from the height it was given -- so it grew to whatever it had last asked
+    for and overran the window. Out of the flow it can only ever be as tall as
+    the room its cell was given. */
+ /* A colour fills its field rather than sitting in a corner of it: the
+    windows this reproduces write the name of what it colours on the swatch
+    itself, and the swatch is the width of a value. */
+ /* The swatch is the colour, edge to edge, the way the other two draw it --
+    not a colour band adrift in a box. What the browser wraps around the
+    colour of an <input type=color> is padding of its own, and it has to be
+    taken back before the field says what it is worth. */
+ .cell input.swatch{padding:0;height:1.55em;cursor:pointer;
+                    border:1px solid #767676;background:none}
+ .cell input.swatch::-webkit-color-swatch-wrapper{padding:0}
+ .cell input.swatch::-webkit-color-swatch{border:none}
+ .cell input.swatch::-moz-color-swatch{border:none}
+ /* flat, with no box around it: the widget this reproduces is a circle drawn
+    on the background of the window and nothing else */
+ .disc{display:block;flex:0 0 auto;background:none;border:none}
+ .cell.map{position:relative;flex:1 1 auto;min-width:0;min-height:8em}
+ .cmap{position:absolute;top:0;left:0;right:0;bottom:0;
+       border:1px solid #ccc;background:#fff;display:block;outline:none}
+ .cell.run>.cell{gap:0}
+ .cell.packed label{flex:0 0 auto}
+ /* a row of values with a button after them is not columns of equal width:
+    the button goes to the end of the line, as these windows draw it */
+ .line.packed .cell.act{margin-left:auto}
+ .cell.gap{flex:1 1 auto;min-width:8px}
+ /* What shares a line shares the width of one field, rather than each
+    taking a whole one: two little numbers under one label are two halves of
+    a value, not two values. It is the rule the windows this reproduces are
+    laid out by. */
+ /* Ten of the font's own size, which is how wide a field is in the windows
+    this reproduces, divided by however many share the line. */
+ .cell input,.cell select{width:calc(10em / var(--n, 1));min-width:0}
+ /* A dropdown keeps its arrow inside the box. Alone on its line it has a
+    whole field's width and room to spare for it; sharing one it takes the
+    arrow on top of its share, as the windows this reproduces do -- and only
+    then, or it would never line up with the fields above and below it. */
+ .cell select{width:calc(10em / var(--n, 1) + var(--arrow, 0em))}
+ /* the number and the scale it is dragged along, as one thing */
+ .slid{display:inline-flex;align-items:center;gap:0;width:10em}
+ .slid input[type=text],.slid input:not([type]){width:2.9em;flex:0 0 auto}
+ .slid input[type=range]{flex:1 1 auto;min-width:0;width:auto;margin:0 0 0 2px}
+ /* the label runs on rather than wrapping: a window grows to hold what it
+    says, as the ones this reproduces do */
+ .cell label{flex:0 1 auto;min-width:0;white-space:nowrap}
+ /* A button in the flow of the fields starts where its share of the line
+    starts, so that two columns of them line up; one on a line of its own --
+    what a window does rather than what it holds -- keeps to its own width
+    and goes to the end. */
+ .line:not(.act)>.cell.act{flex:1 1 0;justify-content:flex-start}
+ .line.act>.cell.act{flex:0 0 auto}
+ .cell.act{flex:0 0 auto}
+ /* a button in the flow of the fields is as small as the word on it: the
+    little ones a line of measurements ends with are two letters wide */
+ .cell button{padding:1px 5px;white-space:nowrap}
+ /* a label written before its field is right against it, and as wide as the
+    widest of the ones it lines up with -- see square() */
+ .cell.before>label{text-align:right;flex:0 0 auto}
+ /* A list takes a line of its own. A line of text that runs on over several
+    lines takes what is left of the one it is on -- the whole of it when it is
+    alone there, half when it is the second of a pair, which is what the list
+    of keyboard shortcuts is made of. And it wraps at something one can read
+    rather than making the window as wide as its longest line. */
+ .cell.whole{flex:1 1 100%}
+ .cell.runs>div{white-space:pre-line;max-width:26em}
+ /* a page one reads: the window that says what Gmsh is */
+ .prose{padding:4px 2px;line-height:1.35}
+ .prose .middle{text-align:center}
+ .prose .head{font-size:1.6em;font-weight:600;margin-bottom:2px}
+ .prose ul{margin:4px 0;padding-left:1.4em}
+ .prose li{margin:1px 0}
+ .prose a{color:#0645ad}
+ .section{margin:6px 8px 2px;border-top:1px solid #ddd;padding-top:4px}
+ .section h3{font-size:12px;margin:0 0 2px;color:#444;font-weight:600}
+ .section .line{padding-left:0;padding-right:0}
+ /* What a window says under its panes. Its lines are lines, one under
+    another: three switches are three of them, not one long one. */
+ .foot{border-top:1px solid #ccc;padding:3px 0;background:#f7f7f7}
+ .foot .line{padding:2px 8px}
+ .foot button{min-width:70px}
+ .fold{cursor:default;user-select:none;color:#444}
+ #console{flex:none;height:150px;overflow:auto;margin:0;padding:6px 8px;
+          background:#fff;border-top:1px solid #ccc;
+          font:11px ui-monospace,monospace;white-space:pre-wrap}
+ #foot{flex:none;background:#e3e3e3;border-top:1px solid #bbb;padding:2px 6px;
+       display:flex;align-items:center;gap:4px}
+ #foot button{font:11px system-ui;padding:1px 6px}
+ #foot button.on{background:#cfd8ff}
+ #status{margin-left:8px;font-size:12px;color:#333}
+ .note{padding:10px;color:#666}
+ /* what the scene says is under the pointer, said where the pointer is */
+ #tip{position:absolute;z-index:6;pointer-events:none;max-width:340px;
+      background:#ffffe1;color:#111;border:1px solid #999;padding:2px 5px;
+      font:11px system-ui;white-space:pre-line;box-shadow:0 2px 6px #0004}
+ #tip:empty{display:none}
+ /* A window that must be answered before anything else goes on: it is drawn
+    over the whole page, and the page under it cannot be reached -- which is
+    what the windows this reproduces do by stopping Gmsh where it stands. */
+ #ask{position:fixed;top:0;left:0;right:0;bottom:0;background:#0006;
+      display:flex;align-items:center;justify-content:center;z-index:1000}
+ #ask:empty{display:none}
+ #ask .card{background:#fff;border:1px solid #999;box-shadow:0 8px 30px #0006;
+            min-width:34em;max-width:calc(100% - 40px);
+            max-height:calc(100% - 40px);display:flex;flex-direction:column}
+ #ask h2{font-size:13px;margin:0;padding:5px 8px;background:#ececec;
+         border-bottom:1px solid #ccc;font-weight:600}
+ #ask .body{display:flex;flex-direction:column;gap:6px;padding:8px;min-height:0}
+ #ask .where{display:flex;gap:4px;align-items:center}
+ #ask .where input{flex:1 1 auto;min-width:0}
+ #ask .files{border:1px solid #ccc;background:#fff;overflow:auto;
+             height:16em;min-height:6em}
+ #ask .files .pick.dir{font-weight:600}
+ #ask .row{display:flex;gap:6px;align-items:center}
+ #ask .row label{flex:0 0 auto}
+ #ask .row input,#ask .row select{flex:1 1 auto;min-width:0}
+ #ask .foot{display:flex;gap:8px;justify-content:flex-end;padding:6px 8px;
+            border-top:1px solid #ddd}
+ #ask .foot button{min-width:6em}
+</style>
+<div id="bar"></div>
+<div id="middle"><div id="tree"></div><div id="scene"><img id="view"><div id="tip"></div></div>
+ <div id="dock"></div><div id="desk"></div></div>
+<pre id="console"></pre>
+<div id="foot"><span id="buttons"></span><span id="status"></span></div>
+<div id="ask"></div>
+<script>
+// The page draws what Gmsh says it is showing, and posts back what was done.
+//
+// The one thing it must not do is redraw something that is being used: the
+// hover a menu is held open by, and the field one is typing in, both live in
+// the DOM. So every part of the page is drawn again only when that part has
+// changed, and each part remembers what it was last given. A chrome that was
+// pushed to would be told what changed; this one has to work it out, which is
+// the price of asking rather than being told.
+// The word that came in the address. Everything asked of Gmsh carries it:
+// without it, any page anyone happens to visit could drive this one.
+const KEY = new URLSearchParams(location.search).get('k') || '';
+function to(where) {
+  return where + (where.indexOf('?') < 0 ? '?' : '&') + 'k=' +
+         encodeURIComponent(KEY);
+}
+// What a number the page was given stands for, sent back with it: between
+// being given one and using it, what it pointed at may have moved.
+function which(x) { return 'id=' + x.id + '&h=' + x.h; }
+
+function say(where, what) {
+  return fetch(to(where), {method: 'POST',
+                           body: what + '&k=' + encodeURIComponent(KEY)});
+}
+
+let busy = false, overBar = false;
+const was = {};                       // what each part was last drawn from
+function fresh(part, said) {          // has this part changed since last time?
+  const key = JSON.stringify(said);
+  if(was[part] === key) return false;
+  was[part] = key;
+  return true;
+}
+function typing() {
+  const on = document.activeElement;
+  return on && (on.tagName === 'INPUT' || on.tagName === 'SELECT');
+}
+async function post(where, what) {
+  // Nothing is drawn again while a change is in flight, or the page would
+  // draw what Gmsh has not done yet. But a tool that picks does not answer
+  // until the user has clicked something in the scene, so the wait is let go
+  // of after a moment: the interface has to stay alive under the tool, which
+  // is the only way left to give it up.
+  busy = true;
+  const letGo = setTimeout(() => { busy = false; refresh(); }, 300);
+  try { await say(where, what); } catch(e) {}
+  clearTimeout(letGo);
+  busy = false;
+  refresh();                          // what was done changed something
+  frame(true);                        // and it may have changed the picture
+}
+
+// --- the menu bar
+function menu(items) {
+  const box = document.createElement('div');
+  box.className = 'drop';
+  for(const it of items) {
+    const row = document.createElement('div');
+    row.className = 'item' + (it.enabled ? '' : ' off') +
+                    (it.children ? ' sub' : '');
+    const name = document.createElement('span');
+    name.textContent = (it.checked ? '✓ ' : '') + it.label;
+    row.appendChild(name);
+    if(it.key) {
+      const k = document.createElement('span');
+      k.className = 'key'; k.textContent = it.key; row.appendChild(k);
+    }
+    if(it.children) row.appendChild(menu(it.children));
+    else if(it.enabled && it.id >= 0)
+      row.onclick = () => post('/do', which(it));
+    box.appendChild(row);
+    if(it.divider) {
+      const hr = document.createElement('div'); hr.className = 'hr';
+      box.appendChild(hr);
+    }
+  }
+  return box;
+}
+function drawMenus(menus) {
+  const bar = document.getElementById('bar');
+  bar.textContent = '';
+  for(const top of menus) {
+    const t = document.createElement('div');
+    t.className = 'top'; t.textContent = top.label;
+    if(top.children) t.appendChild(menu(top.children));
+    bar.appendChild(t);
+  }
+}
+
+// --- one field of a form, or of a line of the tree
+function field(f) {
+  if(f.kind === 'action') {
+    const b = document.createElement('button');
+    b.textContent = f.label;
+    b.onclick = () => post('/do', which(f));
+    return b;
+  }
+  if(f.kind === 'prose') {
+    // A page one reads rather than a form one fills in: lines of words, some
+    // of them centred, some of them items of a list, some worth following.
+    const box = document.createElement('div');
+    box.className = 'prose';
+    let list = null;
+    for(const l of (f.page || [])) {
+      const line = document.createElement(l.bullet ? 'li' : 'div');
+      if(l.bullet) {
+        if(!list) { list = document.createElement('ul'); box.appendChild(list); }
+        list.appendChild(line);
+      }
+      else {
+        list = null;
+        if(l.centred) line.className = 'middle';
+        if(l.heading) line.className = (line.className + ' head').trim();
+        box.appendChild(line);
+      }
+      if(!(l.words || []).length) line.innerHTML = '&nbsp;';
+      for(const word of (l.words || [])) {
+        const said = document.createElement(word.id === undefined ? 'span' : 'a');
+        said.textContent = word.text;
+        if(word.italic) said.style.fontStyle = 'italic';
+        if(word.id !== undefined) {
+          said.href = '#';
+          said.onclick = e => {
+            e.preventDefault();
+            post('/do', 'id=' + word.id + '&h=' + word.h);
+          };
+        }
+        line.appendChild(said);
+      }
+    }
+    return box;
+  }
+  if(f.kind === 'colormap') return colourMap(f);
+  if(f.kind === 'direction') return disc(f);
+  if(f.kind === 'hierarchy') {
+    const box = document.createElement('div');
+    box.className = 'list';
+    box.style.height = (f.rows ? f.rows * 1.45 : 16) + 'em';
+    treeLines(f.lines || [], box);
+    return box;
+  }
+  if(f.kind === 'menu') {
+    // A button that drops what one may do, not a choice of what a value is:
+    // it is as wide as the word on it, and it says so with an arrow, which is
+    // what the button this reproduces looks like.
+    const holder = document.createElement('span');
+    holder.className = 'drops';
+    const button = document.createElement('button');
+    button.className = 'menu';
+    button.textContent = f.label;
+    const drop = document.createElement('div');
+    drop.className = 'drop';
+    (f.items || []).forEach((label, i) => {
+      const row = document.createElement('div');
+      row.className = 'item';
+      row.textContent = label;
+      row.onclick = () => post('/choose', which(f) + '&i=' + i + '&v=1');
+      drop.appendChild(row);
+    });
+    button.onclick = e => {
+      e.stopPropagation();
+      const was = holder.classList.contains('open');
+      for(const other of document.querySelectorAll('.drops.open'))
+        other.classList.remove('open');
+      if(!was) holder.classList.add('open');
+    };
+    holder.appendChild(button);
+    holder.appendChild(drop);
+    return holder;
+  }
+  if(f.kind === 'list') {
+    const box = document.createElement('div');
+    box.className = 'list';
+    // as tall as it says: zero means as tall as the window will allow
+    // As tall as it says. Nought means as tall as the window allows, which
+    // is what is left of it rather than a height the window grows to.
+    if(f.rows) box.style.height = (f.rows * 1.45) + 'em';
+    (f.items || []).forEach((label, i) => {
+      const line = document.createElement('div');
+      line.className = 'pick' + ((f.on || []).indexOf(i) >= 0 ? ' on' : '');
+      // A line that is columns rather than plain text: the entities the
+      // visibility panel lists are a kind, a number and a name, and they line
+      // up under what names them. The description says how wide each is.
+      if(f.cols && label.indexOf('\t') >= 0) {
+        label.split('\t').forEach((part, c) => {
+          const cell = document.createElement('span');
+          cell.className = 'col';
+          if(c < f.cols.length && f.cols[c] > 0)
+            cell.style.width = f.cols[c] + 'em';
+          cell.textContent = part;
+          line.appendChild(cell);
+        });
+      }
+      else line.textContent = label;
+      line.onclick = () => post('/choose', which(f) + '&i=' + i + '&v=1');
+      box.appendChild(line);
+    });
+    return box;
+  }
+  let input;
+  if(f.kind === 'colour') {
+    // A colour is shown as a colour, the way the windows this reproduces show
+    // it, and picked with whatever the browser offers for one.
+    input = document.createElement('input');
+    input.type = 'color';
+    input.className = 'swatch';
+    input.value = f.value || '#000000';
+    input.onchange = () => post('/set', which(f) + '&v=' +
+                                 encodeURIComponent(input.value));
+  }
+  else if(f.kind === 'check') {
+    input = document.createElement('input');
+    input.type = 'checkbox'; input.checked = f.value === '1';
+    input.style.width = 'auto';
+    input.onchange = () => post('/set', which(f) + '&v=' +
+                                 (input.checked ? 1 : 0));
+  }
+  else if(f.kind === 'choice' && f.choices) {
+    input = document.createElement('select');
+    for(const c of f.choices) {
+      const o = document.createElement('option');
+      o.textContent = c; input.appendChild(o);
+    }
+    input.value = f.value;
+    input.onchange = () => post('/set', which(f) + '&v=' +
+                                 encodeURIComponent(input.value));
+  }
+  else if(f.slider) {
+    // A value one drags along a scale as well as types: the number at the
+    // left end and the scale beside it, as one thing, which is how the window
+    // this reproduces draws it.
+    const holder = document.createElement('span');
+    holder.className = 'slid';
+    const said = document.createElement('input');
+    said.value = f.value;
+    const scale = document.createElement('input');
+    scale.type = 'range';
+    scale.min = f.least; scale.max = f.most;
+    if(f.step) scale.step = f.step;
+    scale.value = f.value;
+    const tell = v => post('/set', which(f) + '&v=' + encodeURIComponent(v));
+    said.onchange = () => { scale.value = said.value; tell(said.value); };
+    scale.oninput = () => { said.value = scale.value; };
+    scale.onchange = () => tell(scale.value);
+    holder.appendChild(said);
+    holder.appendChild(scale);
+    return holder;
+  }
+  else {
+    input = document.createElement('input');
+    input.value = f.value;
+    if(f.kind === 'output') input.disabled = true;
+    input.onchange = () => post('/set', which(f) + '&v=' +
+                                 encodeURIComponent(input.value));
+  }
+  return input;
+}
+// The disc one drags to say which way the light comes from. FLTK has a widget
+// for it and Dear ImGui draws one; here it is drawn too, from the same three
+// numbers, and the same direction is worked out from the same drag -- third
+// component and all, which is derived rather than dragged.
+function disc(f) {
+  const side = Math.round((f.rows || 2) * 1.45 * 13);
+  const canvas = document.createElement('canvas');
+  canvas.className = 'disc';
+  canvas.width = canvas.height = side;
+  canvas.style.width = canvas.style.height = side + 'px';
+  let x = +f.x || 0, y = +f.y || 0, z = +f.z || 0;
+  // what is drawn is the direction, not the three numbers: the widget this
+  // reproduces normalises them as it takes them
+  const length = Math.sqrt(x * x + y * y + z * z);
+  if(length) { x /= length; y /= length; z /= length; }
+
+  function draw() {
+    const g = canvas.getContext('2d');
+    const r = side / 2 - 3, mid = side / 2;
+    g.clearRect(0, 0, side, side);
+    g.strokeStyle = getComputedStyle(canvas).color;
+    g.lineWidth = 1;
+    g.beginPath(); g.arc(mid, mid, r, 0, 2 * Math.PI); g.stroke();
+    g.fillStyle = g.strokeStyle;
+    g.fillRect(Math.round(mid + x * r) - 2, Math.round(mid - y * r) - 2, 4, 4);
+  }
+
+  function drag(e) {
+    const box = canvas.getBoundingClientRect();
+    const r = side / 2 - 3;
+    let xx = (e.clientX - box.left - side / 2) / r;
+    let yy = -(e.clientY - box.top - side / 2) / r;
+    let norm = Math.sqrt(xx * xx + yy * yy);
+    if(norm > 1) { xx /= norm; yy /= norm; norm = 1; }
+    x = xx; y = yy;
+    draw();
+    post('/set', which(f) + '&v=' +
+         encodeURIComponent(xx + ',' + yy + ',' + Math.sqrt(1 - norm)));
+  }
+  canvas.onmousedown = e => { e.preventDefault(); drag(e); };
+  canvas.onmousemove = e => { if(e.buttons) drag(e); };
+  draw();
+  return canvas;
+}
+
+// --- the colour map of a view
+//
+// What it answers to, in the words the widget of the window this reproduces
+// has always used. It is written here rather than worked out from the keys
+// the description gives, because it is a page one reads: it says what the
+// mouse does as well, and mouse buttons are not parameters.
+const MAP_KEYS = [
+  ['0, 1, 2, 3, ..., 9', 'Select predefined colormap 0...9'],
+  ['Ctrl+0, ..., Ctrl+9', 'Select predefined colormap 10...19'],
+  ['F1, ..., F5', 'Select predefined colormap 20...24'],
+  ['mouse1', 'Draw red or hue channel'],
+  ['mouse2', 'Draw green or saturation channel'],
+  ['mouse3', 'Draw blue or value channel'],
+  ['Ctrl+mouse1', 'Draw alpha channel'],
+  ['Ctrl+c, Ctrl+v, r', 'Copy, paste or reset colormap'],
+  ['m', 'Toggle RGB/HSV mode'],
+  ['left, right', 'Translate abscissa'],
+  ['Ctrl+left, Ctrl+right', 'Rotate abscissa'],
+  ['i, Ctrl+i', 'Invert abscissa or ordinate'],
+  ['up, down', 'Modify color channel curvature'],
+  ['a, Ctrl+a', 'Modify alpha coefficient'],
+  ['p, Ctrl+p', 'Modify alpha channel power law'],
+  ['b, Ctrl+b', 'Modify gamma correction'],
+  ['h', 'Show this help message']];
+
+// where the last stroke of paint started, so that a drag fills what it
+// crossed rather than leaving the entries between two frames untouched
+let mapFrom = -1;
+
+// Hue, saturation and value from red, green and blue, each nought to 255.
+// The same arithmetic as Ui::toHsv, so that the curves this draws are the
+// curves the other two interfaces draw.
+function toHsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const most = Math.max(r, g, b), least = Math.min(r, g, b);
+  const range = most - least;
+  let hue = 0;
+  if(range > 0) {
+    if(most === r) hue = (g - b) / range;
+    else if(most === g) hue = 2 + (b - r) / range;
+    else hue = 4 + (r - g) / range;
+    if(hue < 0) hue += 6;
+  }
+  return [Math.floor(hue / 6 * 255),
+          Math.floor((most > 0 ? range / most : 0) * 255),
+          Math.floor(most * 255)];
+}
+
+function colourMap(f) {
+  const canvas = document.createElement('canvas');
+  canvas.className = 'cmap';
+  canvas.tabIndex = 0;
+  if(f.empty) return canvas;
+  // the entries, four bytes apiece, as they came down
+  const said = f.entries || '';
+  const entries = [];
+  for(let i = 0; i + 7 < said.length; i += 8)
+    entries.push([parseInt(said.substr(i, 2), 16),
+                  parseInt(said.substr(i + 2, 2), 16),
+                  parseInt(said.substr(i + 4, 2), 16),
+                  parseInt(said.substr(i + 6, 2), 16)]);
+  const size = entries.length;
+  const tell = what => post('/map', which(f) + '&' + what);
+  const channelOf = (i, channel) => {
+    const c = entries[i];
+    if(channel === 3) return c[3];
+    if(!f.hsv) return c[channel];
+    return toHsv(c[0], c[1], c[2])[channel];
+  };
+
+  function draw() {
+    // The canvas is told how many pixels it really has, so that what is drawn
+    // on it is not stretched afterwards -- and it is the cell that is asked,
+    // not the canvas: asked for its own box before the page has been laid out
+    // a canvas answers with the one it had, and then keeps drawing to it.
+    const box = (canvas.parentElement || canvas).getBoundingClientRect();
+    const wide = Math.max(1, Math.round(box.width));
+    const tall = Math.max(1, Math.round(box.height));
+    if(canvas.width !== wide || canvas.height !== tall) {
+      canvas.width = wide; canvas.height = tall;
+    }
+    const g = canvas.getContext('2d');
+    const style = getComputedStyle(canvas);
+    const ink = style.color;
+    const lineHeight = parseFloat(style.fontSize) || 12;
+    g.clearRect(0, 0, wide, tall);
+    g.fillStyle = style.backgroundColor || '#fff';
+    g.fillRect(0, 0, wide, tall);
+    if(size < 2) return;
+    // the same three heights the other two interfaces measure off the bottom
+    const labelY = tall - 5;
+    const markerY = labelY - 2 * lineHeight;
+    const wedgeY = markerY - lineHeight;
+    const indexToX = i => wide * i / (size - 1);
+    const valueToY = v => wedgeY * (1 - v / 255);
+    // the four channels, in their own colours
+    const inks = ['#f00', '#0f0', '#00f', ink];
+    for(let channel = 0; channel < 4; channel++) {
+      g.strokeStyle = inks[channel];
+      g.lineWidth = 1;
+      g.beginPath();
+      for(let i = 0; i < size; i++) {
+        const x = indexToX(i), y = valueToY(channelOf(i, channel));
+        if(i) g.lineTo(x, y); else g.moveTo(x, y);
+      }
+      g.stroke();
+    }
+    // the wedge of colours, a column of the picture at a time
+    for(let x = 0; x < wide; x++) {
+      let i = Math.floor(x * size / wide);
+      if(i < 0) i = 0; if(i >= size) i = size - 1;
+      const c = entries[i];
+      g.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+      g.fillRect(x, wedgeY, 1, lineHeight);
+    }
+    // What it answers to, until it is drawn on: the widget of the window this
+    // reproduces shows it and forgets it at the first click, and so does this.
+    if(f.keys) {
+      const small = Math.min(lineHeight * 0.85, (wedgeY - 12) / 18);
+      const step = small + 1;
+      g.fillStyle = ink;
+      g.font = small + 'px ' + style.fontFamily;
+      g.textBaseline = 'top';
+      for(let i = 0; i < MAP_KEYS.length; i++) {
+        g.fillText(MAP_KEYS[i][0], 6, 8 + i * step);
+        g.fillText(MAP_KEYS[i][1], 12 * step, 8 + i * step);
+      }
+    }
+    // and the range the wedge stands for, at either end of it
+    g.fillStyle = ink;
+    g.font = lineHeight + 'px ' + style.fontFamily;
+    g.textBaseline = 'top';
+    const least = String(+(f.least || 0)), most = String(+(f.most || 0));
+    g.fillText(least, 10, labelY - lineHeight);
+    g.fillText(most, wide - g.measureText(most).width - 10, labelY - lineHeight);
+  }
+
+  // Drawing on it: a button per channel, as that widget has it, and the
+  // entries between the last frame and this one are all given the value.
+  function paint(e, first) {
+    const box = canvas.getBoundingClientRect();
+    const tall = box.height, wide = box.width;
+    const lineHeight = parseFloat(getComputedStyle(canvas).fontSize) || 12;
+    const wedgeY = tall - 5 - 3 * lineHeight;
+    const y = e.clientY - box.top, x = e.clientX - box.left;
+    if(y >= wedgeY) return;
+    const channel = e.ctrlKey ? 3 :
+                    (e.buttons & 2) ? 2 : (e.buttons & 4) ? 1 : 0;
+    let value = Math.round((wedgeY - y) * 255 / wedgeY);
+    value = value < 0 ? 0 : (value > 255 ? 255 : value);
+    let to = Math.floor(x * size / wide);
+    to = to < 0 ? 0 : (to >= size ? size - 1 : to);
+    const from = (first || mapFrom < 0) ? to : mapFrom;
+    mapFrom = to;
+    tell('op=paint&c=' + channel + '&from=' + from + '&to=' + to +
+         '&v=' + value);
+  }
+
+  canvas.oncontextmenu = e => e.preventDefault();
+  canvas.onmousedown = e => { e.preventDefault(); canvas.focus(); paint(e, true); };
+  canvas.onmousemove = e => { if(e.buttons) paint(e, false); };
+  canvas.onmouseup = () => { mapFrom = -1; };
+  canvas.onmouseleave = () => { mapFrom = -1; };
+  // the widget takes the keys while the pointer is over it, which is how the
+  // window this reproduces has it
+  canvas.onmouseenter = () => canvas.focus();
+
+  // Which key was struck, and nothing more: what one is worth -- a ready made
+  // map, the turn to hue and saturation, one of the eight numbers the map is
+  // computed from -- is worked out where the description is, so that this
+  // interface cannot come to disagree with the other two about it.
+  canvas.onkeydown = e => {
+    const said = shortcutSaid(e);
+    if(!said) return;
+    e.preventDefault();
+    tell('op=press&k=' + encodeURIComponent(said));
+  };
+
+  // drawn once the page has given it a size, and again whenever that changes
+  requestAnimationFrame(draw);
+  if(window.ResizeObserver)
+    requestAnimationFrame(() => {
+      if(canvas.parentElement) new ResizeObserver(draw).observe(canvas.parentElement);
+    });
+  return canvas;
+}
+
+// A key pressed, said the way Ui::Shortcut::label() says it, so that the two
+// may simply be compared.
+function shortcutSaid(e) {
+  const named = {ArrowLeft: 'Left', ArrowRight: 'Right', ArrowUp: 'Up',
+                 ArrowDown: 'Down', Delete: 'Del'};
+  let key = named[e.key];
+  if(!key && /^F([1-9]|1[0-2])$/.test(e.key)) key = e.key;
+  if(!key && e.key.length === 1) key = e.key.toUpperCase();
+  if(!key) return '';
+  return (e.ctrlKey || e.metaKey ? 'Ctrl+' : '') + (e.shiftKey ? 'Shift+' : '') +
+         (e.altKey ? 'Alt+' : '') + key;
+}
+
+// One field in its cell, with its label where the description puts it
+function cell(f) {
+  const box = document.createElement('div');
+  box.className = 'cell' + (f.kind === 'action' ? ' act' : '') +
+                  (f.packed ? ' packed' : '') +
+                  (f.kind === 'list' || f.kind === 'hierarchy' ||
+                   f.kind === 'prose' || f.kind === 'colormap' ? ' whole' :
+                     '') + (f.wraps ? ' runs' : '');
+  if(f.help) box.title = f.help;
+  if(f.kind === 'gap') { box.className = 'cell gap'; return box; }
+  if(f.kind === 'label') {
+    // What it says is worked out as the window is drawn -- the help of a
+    // size field is a paragraph the field itself writes -- so it is the
+    // value that is said, and the label only when there is no value.
+    const say = document.createElement('div');
+    say.textContent = f.value || f.label;
+    box.appendChild(say);
+    return box;
+  }
+  if(f.kind === 'check' && f.fold) {
+    // A switch that opens what is under it is not a check box: the windows
+    // this reproduces draw it as a button at the end of its line, carrying an
+    // arrow that points at what pressing it would do.
+    const b = document.createElement('button');
+    b.className = 'disclose';
+    b.textContent = f.label + (f.value === '1' ? ' \u25b4' : ' \u25be');
+    b.onclick = () => post('/set', which(f) + '&v=' +
+                            (f.value === '1' ? 0 : 1));
+    box.className += ' act';
+    box.style.marginLeft = 'auto';
+    box.style.flex = '0 0 auto';
+    box.appendChild(b);
+    return box;
+  }
+  const say = document.createElement('label');
+  say.textContent = f.label;
+  const what = field(f);
+  // how wide it says it is: in its own units, or as a fraction of the one
+  // field a line is divided into
+  if(f.em) what.style.width = f.em + 'em';
+  else if(f.share) what.style.width = (f.share * 10) + 'em';
+  if(f.off) what.disabled = true;
+  if(f.kind === 'action' || f.kind === 'menu') {
+    box.appendChild(what);
+    return box;
+  }
+  if(f.kind === 'colormap') {
+    // the cell is what has the height; the canvas is stretched over it
+    box.classList.add('map');
+    box.appendChild(what);
+    return box;
+  }
+  if(f.kind === 'list' || f.kind === 'hierarchy') {
+    // a list takes the line it is on: what names it, if anything does, is
+    // written beside it and takes only what it needs
+    //
+    // How wide it says it is goes on the cell as well: a list that fills its
+    // line is stretched over the cell and out of the flow, so its own width
+    // is no longer what anything is measured from.
+    if(f.em) box.style.minWidth = f.em + 'em';
+    box.appendChild(what);
+    if(f.label) { say.style.flex = '0 0 auto'; box.appendChild(say); }
+    return box;
+  }
+  if(f.before) {
+    // its label comes first, and those of a pane line up: what follows them
+    // starts at the same place on every line, as it does in the windows this
+    // reproduces
+    box.classList.add('before');
+    if(f.label) box.appendChild(say);
+    box.appendChild(what);
+  }
+  else {
+    box.appendChild(what);
+    // A field with nothing to say beside it says nothing: an empty label
+    // would still take the space between itself and the field, which is
+    // what separates two halves of a value that are meant to touch.
+    if(f.label) box.appendChild(say);
+  }
+  return box;
+}
+
+// A run of fields laid out in lines: a field starts a new line unless it says
+// it shares the one before it.
+function lines(fields, into, columns) {
+  // what shares a line, worked out first: whether the line is laid out on
+  // equal columns depends on what is in it
+  const rows = [];
+  for(const f of fields) {
+    if(!rows.length || !f.sameRow) rows.push([]);
+    rows[rows.length - 1].push(f);
+  }
+  // A pane laid out on columns is one grid, and not one grid per line: a
+  // column is as wide as the widest thing in it on every line at once, which
+  // is the whole of what lining two lines up means. A line that does not
+  // belong on the grid -- a run of packed fields, a list that fills the
+  // height, a line under a rule -- closes it, and the next one opens another.
+  let grid = null;
+  for(const row of rows) {
+    const line = document.createElement('div');
+    const packed = row.some(f => f.packed);
+    // a line holding a list that says it is as tall as the window takes what
+    // is left of the height, and gives it to the list
+    const fills = row.some(f => (f.kind === 'list' || f.kind === 'hierarchy' ||
+                                 f.kind === 'colormap') && !f.rows);
+    line.className = 'line' + (row[0].rule ? ' ruled' : '') +
+                     (packed ? ' packed' : '') + (fills ? ' grows' : '');
+    // how many of them hold a value, so that they may share the width of one
+    const holds = row.filter(f => f.kind !== 'label' && f.kind !== 'gap' &&
+                                  f.kind !== 'action' && f.kind !== 'list' &&
+                                  f.kind !== 'hierarchy' && f.kind !== 'check' &&
+                                  f.kind !== 'colormap' &&
+                                  !f.em && !f.share).length;
+    if(holds > 1) {
+      line.style.setProperty('--n', holds);
+      line.style.setProperty('--arrow', '1.8em');
+    }
+    // What the line is made of, at the top level. Fields that take the width
+    // they need follow one another with nothing between them: two halves of a
+    // value are drawn as one box split in two, not as two boxes with a gap. So
+    // a run of them is one thing, and what is around the run is another.
+    const parts = [];
+    {
+      let run = null;
+      let said = false;               // did the field before this one say what
+                                      // it was, inside the run being filled?
+      for(const f of row) {
+        const one = cell(f);
+        // a switch that opens what is under it belongs at the end of the line,
+        // not flush against the field before it
+        if(f.packed && f.kind !== 'gap' && !f.fold) {
+          if(!run) {
+            run = document.createElement('div');
+            run.className = 'cell packed run';
+            parts.push(run);
+          }
+          // A run is flush only where it is one value split in two: what
+          // separates two halves of a size is nothing at all, but three snaps
+          // each named after its axis are three things, and each stands off
+          // from the name of the one before it.
+          if(said) one.style.marginLeft = '8px';
+          said = !!f.label;
+          run.appendChild(one);
+          continue;
+        }
+        said = false;
+        run = null;
+        parts.push(one);
+      }
+    }
+
+    // A line whose fields each take a column of the pane goes on the grid,
+    // beside the lines before and after it rather than in a box of its own.
+    //
+    // A line holding a run of packed fields goes on it too, the run counting
+    // as one column. Left off the grid it lined up with nothing: the three
+    // rows of the transformation matrix are each a run of three numbers, and
+    // the name after the run -- X, Y +, Z -- is not the same width on all
+    // three, so what followed it started at a different place on every row.
+    // On the grid the column is as wide as the widest of them and the rows
+    // line up, which is what the windows this reproduces do.
+    if(columns > 1 && !fills && !row[0].rule) {
+      if(!grid) {
+        grid = document.createElement('div');
+        grid.className = 'line grid';
+        grid.style.gridTemplateColumns = 'repeat(' + columns + ',max-content)';
+        into.appendChild(grid);
+      }
+      let head = true;
+      for(const one of parts) {
+        // the first field of a line opens a line of the grid, whatever the
+        // line before it left unfilled
+        if(head) { one.style.gridColumnStart = '1'; head = false; }
+        if(holds > 1) {
+          one.style.setProperty('--n', holds);
+          one.style.setProperty('--arrow', '1.8em');
+        }
+        grid.appendChild(one);
+      }
+      // The last field of a line runs on to the end of the grid: what is
+      // written beside it takes the room no other column uses, rather than
+      // making the column it sits in as wide as itself. It is what keeps the
+      // columns as narrow as the windows this reproduces have them.
+      grid.lastChild.style.gridColumnEnd = '-1';
+      continue;
+    }
+    grid = null;
+    for(const one of parts) line.appendChild(one);
+    into.appendChild(line);
+  }
+}
+
+// the button a pane or a section carries, at the end of its own line
+function does(label, what) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  b.onclick = () => post('/do', 'id=' + what.buttonId + '&h=' + what.buttonH);
+  return b;
+}
+
+function paneBody(pane, into) {
+  // a pane that says it scrolls is a pane the window does not grow for
+  if(pane.scrolls) into.classList.add('scrolls');
+  lines(pane.fields, into, pane.columns);
+  for(const section of pane.sections) {
+    const box = document.createElement('div');
+    box.className = 'section';
+    if(section.label) {
+      const h = document.createElement('h3');
+      h.textContent = section.label;
+      box.appendChild(h);
+    }
+    lines(section.fields, box, section.columns);
+    // a section acts as well as holds, and its button goes at the end of it
+    if(section.button) {
+      const row = document.createElement('div'); row.className = 'line act';
+      const gap = document.createElement('div');
+      gap.className = 'cell gap'; row.appendChild(gap);
+      row.appendChild(does(section.button, section));
+      box.appendChild(row);
+    }
+    into.appendChild(box);
+  }
+}
+
+// --- the tree down the left side
+function drawTree(lines) {
+  const box = document.getElementById('tree');
+  box.textContent = '';
+  treeLines(lines, box);
+}
+
+// The lines of a tree, wherever it is drawn: down the left of the window, or
+// inside a window that shows the model that way.
+function treeLines(lines, box) {
+  for(const n of lines) {
+    const line = document.createElement('div');
+    line.className = 'node';
+    line.style.paddingLeft = (6 + n.depth * 13) + 'px';
+    if(n.help) line.title = n.help;
+    const arrow = document.createElement('span');
+    arrow.className = 'arrow';
+    arrow.textContent = n.branch ? (n.open ? '▾' : '▸') : '';
+    if(n.branch)
+      arrow.onclick = () => post('/open', 'path=' +
+                                 encodeURIComponent(n.path) + '&v=' +
+                                 (n.open ? 0 : 1));
+    line.appendChild(arrow);
+    if(n.picked !== undefined) {
+      const tick = document.createElement('input');
+      tick.type = 'checkbox'; tick.className = 'picked';
+      tick.checked = n.picked;
+      tick.onchange = () => post('/pick', 'path=' +
+                                 encodeURIComponent(n.path) + '&v=' +
+                                 (tick.checked ? 1 : 0));
+      line.appendChild(tick);
+    }
+    if(n.field) line.appendChild(field(n.field));
+    const name = document.createElement('span');
+    // a line that carries a widget takes its name from it
+    name.textContent = n.field ? n.field.label : n.label;
+    if(n.id >= 0) {
+      name.className = 'leaf';
+      name.onclick = () => post('/do', which(n));
+    }
+    else if(n.branch) {
+      name.style.cursor = 'default';
+      name.onclick = () => post('/open', 'path=' +
+                               encodeURIComponent(n.path) + '&v=' +
+                               (n.open ? 0 : 1));
+    }
+    line.appendChild(name);
+    box.appendChild(line);
+  }
+}
+
+// --- the forms that are up
+//
+// A form is a window of its own, floating over the page and dragged by its
+// title, or docked into the column on the right. Where each one sits is the
+// page's own business -- Gmsh says what a form holds, not where it is -- so
+// it is kept here, by the number of the form, and survives the redraws.
+const placed = {};
+let dragging = null, highest = 10;
+function place(id) {
+  if(!placed[id]) {
+    const n = Object.keys(placed).length;
+    placed[id] = {x: 70 + 28 * (n % 7), y: 30 + 28 * (n % 7),
+                  docked: false, z: ++highest};
+  }
+  return placed[id];
+}
+function deskRect() {
+  return document.getElementById('desk').getBoundingClientRect();
+}
+function grab(e, card, at) {
+  if(e.target.tagName === 'BUTTON') return;
+  const r = deskRect();
+  dragging = {at: at, card: card,
+              dx: e.clientX - r.left - at.x, dy: e.clientY - r.top - at.y};
+  card.style.zIndex = at.z = ++highest;
+  e.preventDefault();
+}
+window.addEventListener('mousemove', e => {
+  if(!dragging) return;
+  const r = deskRect(), at = dragging.at;
+  // it stays inside the page: a window one cannot reach is a window lost
+  at.x = Math.max(0, Math.min(e.clientX - r.left - dragging.dx, r.width - 80));
+  at.y = Math.max(0, Math.min(e.clientY - r.top - dragging.dy, r.height - 26));
+  dragging.card.style.left = at.x + 'px';
+  dragging.card.style.top = at.y + 'px';
+});
+window.addEventListener('mouseup', () => { dragging = null; });
+
+// the buttons of the bar, in the order they are drawn, so that what is
+// outside the page can say which one it means
+const bars = [];
+
+let showing = [];                     // the forms as they were last drawn
+// Where the page has put things, said back to Gmsh. Nothing outside a page
+// can know that: the bench that photographs the interfaces side by side has
+// to be told which part of the picture is the window it came for.
+function sayWhere(cards) {
+  const parts = [];
+  const put = (name, el) => {
+    if(!el) return;
+    const r = el.getBoundingClientRect();
+    parts.push(name + '=' + Math.round(r.left) + ',' + Math.round(r.top) +
+               ',' + Math.round(r.width) + ',' + Math.round(r.height));
+  };
+  put('page', document.body);
+  put('bar', document.getElementById('bar'));
+  put('tree', document.getElementById('tree'));
+  put('scene', document.getElementById('scene'));
+  put('console', document.getElementById('console'));
+  bars.forEach((b, i) => put('bar' + i, b));
+  for(const at of cards) put('form' + at[0], at[1]);
+  say('/where', parts.join('&')).catch(() => {});
+}
+
+function drawForms(forms) {
+  showing = forms;
+  const desk = document.getElementById('desk');
+  const dock = document.getElementById('dock');
+  desk.textContent = ''; dock.textContent = '';
+  const up = {}, told = [];
+  for(const form of forms) {
+    up[form.id] = true;
+    const at = place(form.id);
+    const card = document.createElement('div');
+    card.className = 'form';
+    const h = document.createElement('h2');
+    const name = document.createElement('span');
+    name.className = 'name'; name.textContent = form.title;
+    h.appendChild(name);
+    const side = document.createElement('button');
+    side.textContent = at.docked ? '❐' : '▤';
+    side.title = at.docked ? 'let it float' : 'dock it to the side';
+    side.onclick = () => { at.docked = !at.docked; drawForms(showing); };
+    h.appendChild(side);
+    const shut = document.createElement('button');
+    shut.textContent = '×'; shut.title = 'close';
+    shut.onclick = () => post('/close', 'form=' + form.id);
+    h.appendChild(shut);
+    if(!at.docked) h.onmousedown = e => grab(e, card, at);
+    card.appendChild(h);
+    // The tabs. A window with more panes than fit across one row wears two
+    // rows of them: which family first, then which member of it -- the same
+    // grouping the description gives the other interfaces.
+    // The column down the side runs the whole height of the window, beside
+    // the tabs rather than inside them -- which is where the windows this
+    // reproduces put it: a browser at (0, 0), the width of the column and the
+    // height of the whole thing, with a rule down its right.
+    const body = document.createElement('div'); body.className = 'body';
+    if(form.leastRows > 0)
+      body.style.minHeight = (form.leastRows * 2.1) + 'em';
+    if(form.side && form.side.length) {
+      const aside = document.createElement('div'); aside.className = 'aside';
+      aside.style.width = (form.sideEm || 8) + 'em';
+      // what it holds sits in a box of its own, which is what the stylesheet
+      // takes out of the flow: see .aside there
+      const inside = document.createElement('div');
+      inside.className = 'inside';
+      lines(form.side, inside, 0);
+      aside.appendChild(inside);
+      body.appendChild(aside);
+    }
+    const rest = document.createElement('div'); rest.className = 'rest';
+    body.appendChild(rest);
+    card.appendChild(body);
+    if(form.tabbed && form.tabs.length > 1) {
+      const families = [];
+      form.tabs.forEach((t, i) => {
+        if(!t.on) return;
+        const name = t.group || '';
+        let f = families.find(q => q.name === name && name);
+        if(!f) families.push(f = {name: name, panes: []});
+        f.panes.push(i);
+      });
+      const grouped = families.some(f => f.name);
+      const openFamily = families.find(f => f.panes.indexOf(form.pane) >= 0);
+      if(grouped) {
+        const row = document.createElement('div');
+        row.className = 'tabs family';
+        for(const f of families) {
+          const tab = document.createElement('div');
+          tab.className = 'tab' + (f === openFamily ? ' on' : '');
+          tab.textContent = f.name || form.tabs[f.panes[0]].label;
+          tab.onclick = () => post('/pane', 'form=' + form.id +
+                                            '&i=' + f.panes[0]);
+          row.appendChild(tab);
+        }
+        rest.appendChild(row);
+      }
+      const shown = grouped && openFamily ? openFamily.panes
+                                          : form.tabs.map((t, i) => i);
+      // a pane that belongs to no family is named in the row above: a second
+      // row saying the same word again is not what these windows wear
+      if(!(grouped && openFamily && !openFamily.name)) {
+      const row = document.createElement('div'); row.className = 'tabs';
+      for(const i of shown) {
+        if(!form.tabs[i].on) continue;
+        const tab = document.createElement('div');
+        tab.className = 'tab' + (i === form.pane ? ' on' : '');
+        tab.textContent = form.tabs[i].label || '\u00b7';
+        tab.onclick = () => post('/pane', 'form=' + form.id + '&i=' + i);
+        row.appendChild(tab);
+      }
+      rest.appendChild(row);
+      }
+    }
+    const main = document.createElement('div'); main.className = 'main';
+    lines(form.header, main, 0);
+    for(const pane of form.panes) {
+      if(!form.tabbed && pane.label) {
+        const h = document.createElement('h3');
+        h.className = 'section'; h.textContent = pane.label;
+        main.appendChild(h);
+      }
+      paneBody(pane, main);
+    }
+    rest.appendChild(main);
+    // what the window says under its panes, and what it does: the fields on
+    // the line of the button come before it, as the windows this reproduces
+    // put them
+    const pane = form.panes[form.panes.length - 1];
+    const beside = pane ? pane.beside : [];
+    if(beside.length || (pane && pane.button)) {
+      const bar = document.createElement('div'); bar.className = 'foot';
+      lines(beside, bar, 0);
+      const row = document.createElement('div'); row.className = 'line act';
+      const gap = document.createElement('div');
+      gap.className = 'cell gap';
+      // The gap is what pushes the button to the right. A button that stands
+      // apart from what the pane does goes to the far left instead, so the
+      // gap goes after it rather than before.
+      const apart = pane && pane.buttonApart;
+      if(!apart) row.appendChild(gap);
+      if(pane && pane.button) row.appendChild(does(pane.button, pane));
+      if(apart) row.appendChild(gap);
+      bar.appendChild(row);
+      rest.appendChild(bar);
+    }
+    if(form.footer.length || form.buttons.length) {
+      const bar = document.createElement('div'); bar.className = 'foot';
+      // A line of the footer is a line, as everywhere else: three switches one
+      // under another are three lines, not one long one.
+      lines(form.footer, bar, 0);
+      if(form.buttons.length) {
+        const row = document.createElement('div'); row.className = 'line act';
+        const gap = document.createElement('div');
+        gap.className = 'cell gap'; row.appendChild(gap);
+        for(const b of form.buttons) row.appendChild(does(b.label, b));
+        bar.appendChild(row);
+      }
+      rest.appendChild(bar);
+    }
+    told.push([form.id, card]);
+    if(at.docked) { dock.appendChild(card); }
+    else {
+      card.style.left = at.x + 'px';
+      card.style.top = at.y + 'px';
+      card.style.zIndex = at.z;
+      card.onmousedown = () => { card.style.zIndex = at.z = ++highest; };
+      desk.appendChild(card);
+    }
+  }
+  // a window that is gone forgets where it was
+  for(const id in placed) if(!up[id]) delete placed[id];
+  // now that they are in the page and have a width, the labels that come
+  // before their fields are squared up
+  for(const at of told) square(at[1]);
+  sayWhere(told);
+}
+
+// Labels written before their field line up: the column is as wide as the
+// widest of them, so that what follows starts at the same place on every
+// line. Nothing but the page can work that out -- it is the width of a word
+// once it is drawn -- so it is done here, once the window is in the page.
+function square(card) {
+  for(const body of card.querySelectorAll('.main, .aside, .foot')) {
+    const labels = [...body.querySelectorAll('.cell.before>label')];
+    if(labels.length < 2) continue;
+    for(const l of labels) l.style.width = '';
+    const widest = Math.max(...labels.map(l => l.offsetWidth));
+    for(const l of labels) l.style.width = widest + 'px';
+  }
+}
+
+// --- the row of little buttons along the bottom
+function drawButtons(buttons) {
+  const box = document.getElementById('buttons');
+  box.textContent = '';
+  bars.length = 0;
+  for(const b of buttons) {
+    const button = document.createElement('button');
+    button.textContent = b.label;
+    if(b.help) button.title = b.help;
+    if(b.on) button.className = 'on';
+    button.disabled = !b.enabled;
+    if(b.id >= 0) button.onclick = () => post('/do', which(b));
+    if(b.children) {
+      // A button that drops a menu rather than doing something: the models
+      // and the quick access. It opens where it is, which is at the bottom of
+      // the page, so the menu goes up from it.
+      const holder = document.createElement('span');
+      holder.className = 'drops';
+      const drop = menu(b.children);
+      drop.classList.add('up');
+      button.onclick = e => {
+        e.stopPropagation();
+        const was = holder.classList.contains('open');
+        for(const other of document.querySelectorAll('.drops.open'))
+          other.classList.remove('open');
+        if(!was) holder.classList.add('open');
+      };
+      holder.appendChild(button);
+      holder.appendChild(drop);
+      box.appendChild(holder);
+      bars.push(holder);
+      continue;
+    }
+    box.appendChild(button);
+    bars.push(button);
+  }
+}
+
+// --- the windows that must be answered
+//
+// Gmsh has stopped and is waiting for one of these. The page draws it over
+// everything else and sends the answer back; until it does, nothing else it
+// posts is listened to.
+
+// What a chooser offers, matched the way the choosers of the other
+// interfaces match it: "*", "?" and a list in braces.
+function matches(name, pattern) {
+  if(!pattern) return true;
+  let rule = '';
+  for(let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if(c === '*') rule += '.*';
+    else if(c === '?') rule += '.';
+    else if(c === '{') rule += '(?:';
+    else if(c === '}') rule += ')';
+    else if(c === ',') rule += '|';
+    else rule += c.replace(/[.+^$()|[\]\\]/g, '\\$&');
+  }
+  try { return new RegExp('^' + rule + '$', 'i').test(name); }
+  catch(e) { return true; }
+}
+
+let asking = null;                    // what is being asked, as it was drawn
+async function askFiles(dir, into, state) {
+  const said = await fetch(to('/files'), {
+    method: 'POST', body: 'dir=' + encodeURIComponent(dir || '') +
+                          '&k=' + encodeURIComponent(KEY)});
+  const read = await said.json();
+  state.dir = read.dir;
+  state.where.value = read.dir;
+  into.textContent = '';
+  const up = document.createElement('div');
+  up.className = 'pick dir';
+  up.textContent = '..';
+  up.onclick = () => {
+    const cut = state.dir.replace(/\/+$/, '').lastIndexOf('/');
+    askFiles(cut > 0 ? state.dir.slice(0, cut) : '/', into, state);
+  };
+  into.appendChild(up);
+  for(const it of (read.entries || [])) {
+    if(!it.dir && !matches(it.name, state.pattern())) continue;
+    const line = document.createElement('div');
+    line.className = 'pick' + (it.dir ? ' dir' : '');
+    line.textContent = it.name + (it.dir ? '/' : '');
+    line.onclick = () => {
+      if(it.dir) { askFiles(state.dir + '/' + it.name, into, state); return; }
+      for(const other of into.querySelectorAll('.pick.on'))
+        other.classList.remove('on');
+      line.classList.add('on');
+      state.name.value = it.name;
+    };
+    line.ondblclick = () => { if(!it.dir) state.done(true); };
+    into.appendChild(line);
+  }
+}
+
+function drawAsk(ask) {
+  const box = document.getElementById('ask');
+  box.textContent = '';
+  asking = ask;
+  if(!ask) return;
+  const card = document.createElement('div'); card.className = 'card';
+  const head = document.createElement('h2'); head.textContent = ask.title;
+  card.appendChild(head);
+  const body = document.createElement('div'); body.className = 'body';
+  card.appendChild(body);
+  const foot = document.createElement('div'); foot.className = 'foot';
+  card.appendChild(foot);
+  const answer = what => say('/answer', what).catch(() => {});
+  const gaveUp = () => answer('ok=0');
+
+  if(ask.kind === 'question') {
+    const said = document.createElement('div');
+    said.textContent = ask.title;
+    said.style.whiteSpace = 'pre-line';
+    body.appendChild(said);
+    (ask.buttons || []).forEach((label, i) => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.onclick = () => answer('ok=1&chose=' + i);
+      foot.appendChild(b);
+    });
+  }
+  else if(ask.kind === 'value') {
+    const row = document.createElement('div'); row.className = 'row';
+    const name = document.createElement('label');
+    name.textContent = ask.hint || '';
+    const said = document.createElement('input');
+    said.value = ask.value || '';
+    said.disabled = !!ask.readOnly;
+    row.appendChild(name); row.appendChild(said);
+    body.appendChild(row);
+    const ok = document.createElement('button');
+    ok.textContent = 'OK';
+    ok.onclick = () => answer('ok=1&value=' + encodeURIComponent(said.value));
+    said.onkeydown = e => { if(e.key === 'Enter') ok.onclick(); };
+    const no = document.createElement('button');
+    no.textContent = 'Cancel'; no.onclick = gaveUp;
+    foot.appendChild(no); foot.appendChild(ok);
+    setTimeout(() => said.focus(), 0);
+  }
+  else {
+    // a file: where one is, what is there, what it is to be called, and in
+    // which of the formats the caller offered
+    const several = ask.mode === 2;
+    const where = document.createElement('div'); where.className = 'where';
+    const at = document.createElement('input');
+    const files = document.createElement('div'); files.className = 'files';
+    const nameRow = document.createElement('div'); nameRow.className = 'row';
+    const nameSaid = document.createElement('label');
+    nameSaid.textContent = several ? 'Files' : 'File';
+    const name = document.createElement('input');
+    const formats = document.createElement('select');
+    (ask.formats || []).forEach((f, i) => {
+      const o = document.createElement('option');
+      o.textContent = f.name || f.pattern;
+      o.value = i;
+      formats.appendChild(o);
+    });
+    const state = {
+      dir: '', where: at, name: name,
+      pattern: () => {
+        const f = (ask.formats || [])[formats.value | 0];
+        return f ? f.pattern : '';
+      },
+      done: null
+    };
+    state.done = ok => {
+      if(!ok) return gaveUp();
+      const said = name.value.trim();
+      if(!said) return;
+      const full = said.split(/\s*,\s*/).filter(x => x).map(
+        x => x[0] === '/' ? x : state.dir + '/' + x).join('\n');
+      answer('ok=1&chose=' + (formats.value | 0) +
+             '&names=' + encodeURIComponent(full));
+    };
+    at.value = '';
+    at.onkeydown = e => {
+      if(e.key === 'Enter') askFiles(at.value, files, state);
+    };
+    where.appendChild(at);
+    const go = document.createElement('button');
+    go.textContent = 'Go';
+    go.onclick = () => askFiles(at.value, files, state);
+    where.appendChild(go);
+    body.appendChild(where);
+    body.appendChild(files);
+    nameRow.appendChild(nameSaid); nameRow.appendChild(name);
+    body.appendChild(nameRow);
+    if((ask.formats || []).length) {
+      const kind = document.createElement('div'); kind.className = 'row';
+      const said = document.createElement('label');
+      said.textContent = 'Format';
+      kind.appendChild(said); kind.appendChild(formats);
+      body.appendChild(kind);
+      formats.onchange = () => askFiles(state.dir, files, state);
+    }
+    const no = document.createElement('button');
+    no.textContent = 'Cancel'; no.onclick = gaveUp;
+    const ok = document.createElement('button');
+    ok.textContent = ask.mode === 1 ? 'Save' : 'Open';
+    ok.onclick = () => state.done(true);
+    name.onkeydown = e => { if(e.key === 'Enter') state.done(true); };
+    foot.appendChild(no); foot.appendChild(ok);
+    // what it was started from: the directory it is in, and its name
+    const from = ask.start || '';
+    const cut = from.lastIndexOf('/');
+    name.value = cut >= 0 ? from.slice(cut + 1) : from;
+    askFiles(cut > 0 ? from.slice(0, cut) : '', files, state);
+    setTimeout(() => name.focus(), 0);
+  }
+  box.appendChild(card);
+}
+
+function draw(state) {
+  // what has stopped Gmsh to ask, over everything else
+  if(fresh('ask', state.ask)) drawAsk(state.ask);
+  // a menu is held open by the pointer being on it: leave it alone
+  if(!overBar && fresh('menus', state.menus)) drawMenus(state.menus);
+  if(fresh('tree', state.tree)) drawTree(state.tree);
+  if(fresh('bar', state.bar)) drawButtons(state.bar);
+  if(!typing() && !dragging && fresh('forms', state.forms))
+    drawForms(state.forms);
+  if(fresh('log', state.messages)) {
+    const log = document.getElementById('console');
+    const atEnd = log.scrollTop + log.clientHeight >= log.scrollHeight - 4;
+    log.textContent = state.messages.join('\n');
+    if(atEnd) log.scrollTop = log.scrollHeight;
+  }
+  // how big to draw, which is the application's setting and not the page's
+  if(fresh('font', state.font))
+    document.body.style.fontSize = state.font + 'px';
+  if(fresh('status', state.status))
+    document.getElementById('status').textContent = state.status;
+  if(fresh('tip', state.tip)) {
+    // it says what is under the pointer, which is how one knows a point five
+    // pixels wide is about to be picked
+    const tip = document.getElementById('tip');
+    tip.textContent = state.tip || '';
+    if(state.tip) {
+      const box = document.getElementById('scene').getBoundingClientRect();
+      let x = lastPointer[0] + 16, y = lastPointer[1] + 18;
+      if(x + tip.offsetWidth > box.width) x = box.width - tip.offsetWidth - 4;
+      if(y + tip.offsetHeight > box.height) y = lastPointer[1] - tip.offsetHeight - 6;
+      tip.style.left = Math.max(0, x) + 'px';
+      tip.style.top = Math.max(0, y) + 'px';
+    }
+  }
+}
+
+// --- the 3D scene, as a picture
+//
+// A page cannot be handed an OpenGL context, so what arrives is a frame and
+// what goes back is what the pointer did over it. It is a remote view and it
+// costs what one costs: a frame crosses on every move. Whether that is
+// tolerable is a thing worth knowing, which is why it is here.
+const view = document.getElementById('view');
+let sceneBusy = false, sceneAgain = false, sceneSize = '';
+let sceneW = 1, sceneH = 1;   // the size the scene was last asked at
+async function frame(force) {
+  if(sceneBusy) { sceneAgain = true; return; }
+  sceneBusy = true;
+  try {
+    const box = document.getElementById('scene').getBoundingClientRect();
+    const want = Math.round(box.width) + 'x' + Math.round(box.height);
+    if(want !== sceneSize && box.width > 32) {
+      sceneSize = want;
+      sceneW = Math.round(box.width); sceneH = Math.round(box.height);
+      await say('/size', 'w=' + Math.round(box.width) +
+                         '&h=' + Math.round(box.height));
+    }
+    // Nothing comes back when the scene has not moved, and what is showing
+    // stays. Asking for it whatever it thinks is for right after something
+    // was done: what an action changed is not the scene's business.
+    const r = await fetch(to('/scene?' + Date.now() + (force ? '&force' : '')));
+    const blob = await r.blob();
+    if(blob.size) {
+      const old = view.src;
+      view.src = URL.createObjectURL(blob);
+      if(old.startsWith('blob:')) URL.revokeObjectURL(old);
+    }
+  } catch(e) {}
+  sceneBusy = false;
+  if(sceneAgain) { sceneAgain = false; frame(force); }
+}
+let lastPointer = [0, 0];   // where the pointer is over the scene
+function where(e) {
+  // The picture fits the box it is drawn in and may be a moment behind it, so
+  // where the pointer is is worked out as a fraction of the picture and given
+  // back in the size the scene was last asked at -- which is the size the
+  // scene itself is working in.
+  const box = view.getBoundingClientRect();
+  // before the first picture has come there is nothing to measure against
+  // but the size that was asked for, which is the shape it will have
+  const nw = view.naturalWidth || sceneW, nh = view.naturalHeight || sceneH;
+  const k = Math.min(box.width / nw, box.height / nh);
+  const w = nw * k || 1, h = nh * k || 1;
+  const fx = (e.clientX - box.left - (box.width - w) / 2) / w;
+  const fy = (e.clientY - box.top - (box.height - h) / 2) / h;
+  lastPointer = [e.clientX - box.left, e.clientY - box.top];
+  return 'x=' + Math.round(fx * sceneW) +
+         '&y=' + Math.round(fy * sceneH) +
+         '&b=' + (e.button === 1 ? 2 : e.button === 2 ? 1 : 0) +
+         '&s=' + (e.shiftKey ? 1 : 0) + '&c=' + (e.ctrlKey ? 1 : 0) +
+         '&a=' + (e.altKey ? 1 : 0);
+}
+// A move may be dropped -- there is always another one coming -- but a press
+// or a release may not: the modes that place an entity follow the pointer
+// without any button held, so plain moves have to be reported too, and one at
+// a time is enough to keep up.
+let moving = false;
+async function pointer(e, what, wheel) {
+  if(what === 0) {
+    if(moving) return;
+    moving = true;
+  }
+  try {
+    await say('/pointer', where(e) + '&w=' + what + '&d=' + (wheel || 0));
+  } catch(err) {}
+  if(what === 0) moving = false;
+  frame();
+}
+view.oncontextmenu = e => e.preventDefault();
+view.onmousedown = e => { e.preventDefault(); pointer(e, 1); };
+view.onmouseup = e => pointer(e, 2);
+view.onmousemove = e => pointer(e, 0);
+view.onwheel = e => { e.preventDefault(); pointer(e, 3, e.deltaY > 0 ? -1 : 1); };
+
+// What Gmsh is showing, drawn again only if it is not what is already drawn.
+// The whole answer is compared as it arrived, before anything is made of it:
+// an interface sitting still says exactly the same thing every time, and
+// reading it is most of what a page costs while nobody is touching it.
+let wasSaid = '';
+async function refresh() {
+  if(busy) return false;
+  try {
+    const said = await (await say('/state', '')).text();
+    if(said === wasSaid) return false;
+    wasSaid = said;
+    draw(JSON.parse(said));
+    return true;
+  } catch(e) {
+    document.getElementById('status').textContent = 'Gmsh has gone away.';
+    wasSaid = '';
+    return false;
+  }
+}
+// The keys of the application: what a picking listens for, the digits that
+// mesh, the Alt keys that turn an option. The page says which key was struck
+// and with what held, as the browser names them, and nothing more: what a key
+// is worth is decided where the other interfaces decide it, so that the page
+// cannot come to disagree with them.
+window.addEventListener('keydown', e => {
+  if(typing() || e.repeat) return;
+  if(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph'].includes(e.key)) return;
+  const mods = ((e.ctrlKey || e.metaKey) ? 1 : 0) | (e.shiftKey ? 2 : 0) |
+               (e.altKey ? 4 : 0);
+  // "j", not "k": "k" is the word that says the request may be asked at all
+  say('/key', 'j=' + encodeURIComponent(e.key) + '&m=' + mods);
+  // the browser's own shortcuts on the keys Gmsh binds
+  if((e.ctrlKey || e.altKey || e.metaKey) && /^[a-z0-9]$/i.test(e.key))
+    e.preventDefault();
+  if(/^F([1-9]|1[0-2])$/.test(e.key)) e.preventDefault();
+});
+document.addEventListener('click', () => {
+  for(const open of document.querySelectorAll('.drops.open'))
+    open.classList.remove('open');
+});
+document.getElementById('bar').onmouseenter = () => { overBar = true; };
+document.getElementById('bar').onmouseleave = () => { overBar = false; };
+frame();
+// --- being told, rather than asking
+//
+// One connection that is never answered and never closed: Gmsh writes a line
+// into it whenever it has something new to say, and the browser hands that to
+// us as events. Nothing is polled -- a page sitting there costs nothing at
+// all -- and what the page does still goes up as plain requests.
+//
+// EventSource reconnects by itself when the connection drops, so a Gmsh that
+// went away and came back is picked up again without anything here noticing.
+function listen() {
+  const news = new EventSource(to('/events'));
+  news.addEventListener('state', e => {
+    if(e.data === wasSaid) return;
+    wasSaid = e.data;
+    try { draw(JSON.parse(e.data)); } catch(err) {}
+  });
+  news.addEventListener('scene', () => frame(true));
+  news.onopen = () => {
+    document.getElementById('status').textContent = '';
+    // A fresh connection may be a fresh Gmsh, which knows nothing of this
+    // page -- not even how big to draw the scene. Everything it has to be
+    // told again, it is told again.
+    sceneSize = '';
+    frame(true);
+  };
+  news.onerror = () => {
+    document.getElementById('status').textContent = 'Gmsh has gone away.';
+    wasSaid = '';
+  };
+}
+listen();
+
+// The picture is fetched when Gmsh says it has changed, and once more when a
+// tab is looked at again -- what happened while it was hidden was drawn for
+// no one.
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState !== 'hidden') frame(true);
+});
+</script>
+)PAGE";
+
+#endif
+
+#endif

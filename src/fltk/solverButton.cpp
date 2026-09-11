@@ -15,74 +15,10 @@ typedef unsigned long intptr_t;
 #include "Options.h"
 #include "onelabGroup.h"
 #include "solverButton.h"
+#include "menuFltk.h"
+#include "GuiMenus.h"
+#include "GuiActions.h"
 #include "fileDialogs.h"
-
-static void solver_rename_cb(Fl_Widget *w, void *data)
-{
-  if(FlGui::instance()->onelab->isBusy()) {
-    Msg::Warning("Cannot rename client while solver is running");
-    return;
-  }
-
-  int num = (intptr_t)data;
-  std::string name = opt_solver_name(num, GMSH_GET, "");
-  const char *n = fl_input("Solver name:", name.c_str());
-  if(n) {
-    std::string exe = opt_solver_executable(num, GMSH_GET, "");
-    std::string host = opt_solver_remote_login(num, GMSH_GET, "");
-    // this will remove the old client if the new name is different
-    FlGui::instance()->onelab->addSolver(n, exe, host, num);
-    onelab_cb(nullptr, (void *)"reset");
-  }
-}
-
-static void solver_change_exe_cb(Fl_Widget *w, void *data)
-{
-  if(FlGui::instance()->onelab->isBusy()) {
-    Msg::Warning("Cannot change executable name while solver is running");
-    return;
-  }
-
-  int num = (intptr_t)data;
-  std::string name = opt_solver_name(num, GMSH_GET, "");
-  std::string exe = opt_solver_executable(num, GMSH_GET, "");
-  const char *old = exe.size() ? exe.c_str() : nullptr;
-  std::string title = "Choose location of " + name + " executable";
-  std::string pattern = "*";
-#if defined(WIN32)
-  pattern += ".exe";
-#endif
-  if(fileChooser(FILE_CHOOSER_SINGLE, title.c_str(), pattern.c_str(), old)) {
-    exe = fileChooserGetName(1);
-    if(exe.size()) {
-      // remove old client if it's already loaded
-      auto it = onelab::server::instance()->findClient(name);
-      if(it != onelab::server::instance()->lastClient()) delete *it;
-      std::string host = opt_solver_remote_login(num, GMSH_GET, "");
-      FlGui::instance()->onelab->addSolver(name, exe, host, num);
-      onelab_cb(nullptr, (void *)"reset");
-    }
-  }
-}
-
-static void solver_remove_cb(Fl_Widget *w, void *data)
-{
-  if(FlGui::instance()->onelab->isBusy()) {
-    Msg::Warning("Cannot remove client while solver is running");
-    return;
-  }
-
-  int num = (intptr_t)data;
-
-  std::string name = opt_solver_name(num, GMSH_GET, "");
-  opt_solver_name(num, GMSH_SET, "");
-  opt_solver_executable(num, GMSH_SET, "");
-  opt_solver_remote_login(num, GMSH_SET, "");
-
-  auto it = onelab::server::instance()->findClient(name);
-  if(it != onelab::server::instance()->lastClient()) { delete *it; }
-  FlGui::instance()->onelab->rebuildSolverList();
-}
 
 solverButton::solverButton(int x, int y, int w, int h, int num, Fl_Color col)
   : Fl_Group(x, y, w, h)
@@ -108,15 +44,11 @@ solverButton::solverButton(int x, int y, int w, int h, int num, Fl_Color col)
   _butt[1]->box(FL_FLAT_BOX);
   _butt[1]->color(col);
   _butt[1]->selection_color(col);
-  _popup = new Fl_Menu_Button(x + w - popw, y, popw, h);
-  _popup->type(Fl_Menu_Button::POPUP123);
-  _popup->add("Rename...", 0, (Fl_Callback *)solver_rename_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("Change Executable Location...", 0,
-              (Fl_Callback *)solver_change_exe_cb, (void *)(intptr_t)num,
-              FL_MENU_DIVIDER);
-  _popup->add("Remove", 0, (Fl_Callback *)solver_remove_cb,
-              (void *)(intptr_t)num, 0);
+  // described once in src/common/GuiMenus.cpp, as the view menu is
+  _popup = new popupButtonFltk(x + w - popw, y, popw, h);
+  _popup->box(FL_NO_BOX);
+  _popup->key = "solver";
+  _popup->what = [num]() { return Menu::solverActions(num); };
 
   end(); // close the group
   resizable(_butt[0]);

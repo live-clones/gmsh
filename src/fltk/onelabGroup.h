@@ -10,7 +10,8 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Tree.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_Menu_Button.H>
+#include "Tree.h"
+#include "menuFltk.h"
 #include <FL/Fl_Input.H>
 #include "onelab.h"
 
@@ -20,8 +21,7 @@ class onelabGroup : public Fl_Group {
 private:
   Fl_Tree *_tree;
   Fl_Button *_butt[2];
-  Fl_Menu_Button *_gear;
-  int _gearOptionsStart, _gearOptionsEnd;
+  popupButtonFltk *_gear;
   std::vector<Fl_Widget *> _treeWidgets;
   std::vector<char *> _treeStrings;
   bool _stop;
@@ -32,7 +32,7 @@ private:
   bool _enableTreeWidgetResize;
   bool _firstBuild;
   void _computeWidths();
-  template <class T> void _addParameter(T &p);
+  void _addField(const std::string &path, const Ui::Node &node);
   void _addMenu(const std::string &path, Fl_Callback *callback, void *data);
   void _addSolverMenu(int num);
   void _addViewMenu(int num);
@@ -41,7 +41,6 @@ private:
 
 public:
   onelabGroup(int x, int y, int w, int h, const char *l = nullptr);
-  void updateGearMenu();
   void rebuildSolverList();
   void rebuildTree(bool deleteWidgets);
   void enableTreeWidgetResize(bool value) { _enableTreeWidgetResize = value; }
@@ -73,19 +72,12 @@ public:
                  const std::string &hostName, int index);
   void removeSolver(const std::string &name);
   void checkForErrors(const std::string &client);
-  bool stop() { return _stop; }
-  void stop(bool val) { _stop = val; }
+  // the stop flag is shared with GuiActions.cpp, so that the interface and the
+  // run loop cannot disagree
+  bool stop();
+  void stop(bool val);
 };
 
-bool getParameterColor(const std::string &str, Fl_Color &c);
-Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
-                              double labelRatio, const std::string &ppath,
-                              bool highlight, Fl_Color c, Fl_Color bgc,
-                              std::vector<char *> &stringsToFree);
-Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
-                              double labelRatio, const std::string &ppath,
-                              bool highlight, Fl_Color c, Fl_Color bgc,
-                              std::vector<char *> &stringsToFree);
 void solver_cb(Fl_Widget *w, void *data);
 void onelab_cb(Fl_Widget *w, void *data);
 

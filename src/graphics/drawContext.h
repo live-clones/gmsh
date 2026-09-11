@@ -138,8 +138,9 @@ public:
   virtual int getFontIndex(const char *fontname) { return 0; }
   virtual int getFontEnum(int index) { return 0; }
   virtual const char *getFontName(int index) { return "Helvetica"; }
-  // implemented once in drawContext.cpp, as the names do not depend on the
-  // widget toolkit
+  virtual int getNumFonts() { return 1; }
+  // the alignment names are the same whatever the widget toolkit, so this one
+  // is implemented once and for all in drawContext.cpp
   virtual int getFontAlign(const char *alignstr);
   virtual int getFontSize() { return 12; }
   virtual void setFont(int fontid, int fontsize) {}
@@ -263,10 +264,11 @@ public:
   static bool pickColorActive() { return _pickColorActive; }
   drawContext(drawTransform *transform = nullptr);
   ~drawContext();
-  // factor between the true size in pixels and the size reported by the OS
-  // (e.g. 2 on an Apple "retina" display); refreshed by the GUI before each
-  // draw, as it changes when a window moves across displays
-  double highResolutionPixelFactor() { return _highResolutionPixelFactor; }
+  // factor between the (true) size in pixels and the size reported by OSes
+  // (e.g. 2 on an Apple "retina" display); this must be dynamic, as the high
+  // resolution can change when a window is moved across displays, so the GUI
+  // refreshes it before each draw
+  double highResolutionPixelFactor();
   void setHighResolutionPixelFactor(double factor)
   {
     _highResolutionPixelFactor = (factor > 0.) ? factor : 1.;
