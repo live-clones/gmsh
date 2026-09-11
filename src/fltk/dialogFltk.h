@@ -24,7 +24,7 @@
 
 class dialogFltk {
 public:
-  dialogFltk() : _pane(0), _win(nullptr), _forcePane(false) {}
+  dialogFltk() : _win(nullptr), _pane(0), _forcePane(false) {}
   ~dialogFltk();
   // build the window of the given form, or build it again when what it shows
   // depends on the model
