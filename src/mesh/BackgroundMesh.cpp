@@ -578,10 +578,19 @@ double backgroundMesh::operator()(double u, double v, double w) const
 #if defined(HAVE_ANN)
     if(uv_kdtree->nPoints() < 2) return -1000.;
     double pt[3] = {u, v, 0.0};
-#pragma omp critical(backgroundMeshANN) // just to avoid crash (still incorrect) - should use nanoflann
-    uv_kdtree->annkSearch(pt, 2, index, dist);
-    SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
-    SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    // index/dist are shared mutable members: a search result read here
+    // could otherwise be clobbered by another thread's search between the
+    // write below and the read that follows, so use call-local (hence
+    // thread-local) buffers instead -- only the ANN call itself, whose own
+    // thread-safety is unclear, still needs to be serialized.
+    ANNidx localIdx[2];
+    ANNdist localDist[2];
+#pragma omp critical(backgroundMeshANN)
+    uv_kdtree->annkSearch(pt, 2, localIdx, localDist);
+    SPoint3 p1(nodes[localIdx[0]][0], nodes[localIdx[0]][1],
+              nodes[localIdx[0]][2]);
+    SPoint3 p2(nodes[localIdx[1]][0], nodes[localIdx[1]][1],
+              nodes[localIdx[1]][2]);
     SPoint3 pnew;
     double d;
     signedDistancePointLine(p1, p2, SPoint3(u, v, 0.), d, pnew);
@@ -609,12 +618,17 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     double angle = 0.;
     if(angle_kdtree->nPoints() >= NBANN) {
       double pt[3] = {u, v, 0.0};
-#pragma omp critical(getAngleANN1) // just to avoid crash (still incorrect) - should use nanoflann
-      angle_kdtree->annkSearch(pt, NBANN, index, dist);
+      // see the comment in operator() above: call-local buffers, not the
+      // shared index/dist members, so concurrent calls can't clobber each
+      // other's results between the search and the read below
+      ANNidx localIdx[NBANN];
+      ANNdist localDist[NBANN];
+#pragma omp critical(getAngleANN1)
+      angle_kdtree->annkSearch(pt, NBANN, localIdx, localDist);
       double SINE = 0.0, COSINE = 0.0;
       for(int i = 0; i < NBANN; i++) {
-        SINE += _sin[index[i]];
-        COSINE += _cos[index[i]];
+        SINE += _sin[localIdx[i]];
+        COSINE += _cos[localIdx[i]];
       }
       angle = atan2(SINE, COSINE) / 4.0;
     }
@@ -640,10 +654,15 @@ double backgroundMesh::getAngle(double u, double v, double w) const
 #if defined(HAVE_ANN)
     if(uv_kdtree->nPoints() < 2) return -1000.0;
     double pt[3] = {u, v, 0.0};
-#pragma omp critical(getAngleANN2) // just to avoid crash (still incorrect) - should use nanoflann
-    uv_kdtree->annkSearch(pt, 2, index, dist);
-    SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
-    SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    // see the comment in operator() above: call-local, not shared, buffers
+    ANNidx localIdx[2];
+    ANNdist localDist[2];
+#pragma omp critical(getAngleANN2)
+    uv_kdtree->annkSearch(pt, 2, localIdx, localDist);
+    SPoint3 p1(nodes[localIdx[0]][0], nodes[localIdx[0]][1],
+              nodes[localIdx[0]][2]);
+    SPoint3 p2(nodes[localIdx[1]][0], nodes[localIdx[1]][1],
+              nodes[localIdx[1]][2]);
     SPoint3 pnew;
     double d;
     signedDistancePointLine(p1, p2, SPoint3(u, v, 0.), d, pnew);

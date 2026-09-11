@@ -92,6 +92,24 @@ public:
     return false;
   }
 
+  // plain Euclidean-radius collection, for the exact-duplicate cleanup pass
+  // below (unlike hasNeighborWithin, no metric weighting, no early-out)
+  void collectWithin(double x, double y, double z, double radius,
+                     std::vector<uint32_t> &out) const
+  {
+    int64_t cx = cellOf(x), cy = cellOf(y), cz = cellOf(z);
+    int reach = (int)std::ceil(radius / _cell) + 1;
+    for(int dx = -reach; dx <= reach; dx++) {
+      for(int dy = -reach; dy <= reach; dy++) {
+        for(int dz = -reach; dz <= reach; dz++) {
+          auto it = _grid.find(pack(cx + dx, cy + dy, cz + dz));
+          if(it == _grid.end()) continue;
+          for(uint32_t idx : it->second) out.push_back(idx);
+        }
+      }
+    }
+  }
+
 private:
   double _cell;
   std::unordered_map<int64_t, std::vector<uint32_t> > _grid;
@@ -276,10 +294,45 @@ void fillRegionFlat(GRegion *gr)
   Msg::Info("- Region %i: flat filler inserted %d points (%.3f seconds)",
             gr->tag(), (int)pts.size(), Cpu() - t0);
 
+  // Defensive near-duplicate cleanup: the spacing check above rejects
+  // candidates closer than k1*h to an existing point, but a handful of
+  // numerically-coincident points have been observed to slip through
+  // (intermittently, likely from two frontal directions converging on
+  // the same spot within floating-point noise); a degenerate/duplicate
+  // vertex in the tet mesh has been seen to crash HXTCombine's surface
+  // extraction downstream, so catch it here rather than there.
+  {
+    double eps = std::max(gr->bounds().diag() * 1e-9, 1e-10);
+    std::vector<bool> dropped(pts.size(), false);
+    std::vector<uint32_t> nearby;
+    int ndup = 0;
+    for(std::size_t i = 0; i < pts.size(); i++) {
+      if(dropped[i]) continue;
+      nearby.clear();
+      hash.collectWithin(pts[i].x, pts[i].y, pts[i].z, eps, nearby);
+      for(uint32_t j : nearby) {
+        if(j <= i || dropped[j]) continue;
+        double dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y,
+               dz = pts[j].z - pts[i].z;
+        if(dx * dx + dy * dy + dz * dz < eps * eps) {
+          dropped[j] = true;
+          ndup++;
+        }
+      }
+    }
+    if(ndup > 0) {
+      Msg::Info("- Region %i: dropped %d near-duplicate point(s)", gr->tag(),
+                ndup);
+      std::vector<FlatPoint> kept;
+      kept.reserve(pts.size() - ndup);
+      for(std::size_t i = 0; i < pts.size(); i++)
+        if(!dropped[i]) kept.push_back(pts[i]);
+      pts.swap(kept);
+    }
+  }
+
   // hand the points to the Delaunay tetrahedralizer, same embedded-vertex
-  // mechanism as Filler::treat_region -- but route it through HXT (the
-  // legacy non-HXT insertion this used to fall through to does not scale
-  // to this many Steiner points)
+  // mechanism as Filler::treat_region.
   deMeshGRegion deleter;
   deleter(gr);
 
@@ -302,9 +355,13 @@ void fillRegionFlat(GRegion *gr)
   // (MPoint elements), not GVertex::mesh_vertices -- the same field both
   // this code and the original Filler populate -- so routing through HXT
   // silently drops the large majority of the generated points (verified:
-  // 305286 generated, only 176490 survived). Fixing that would mean
-  // wiring MPoint elements too and re-checking HXT's own Steiner-point
-  // handling; until then this stays on the slower but correct legacy path.
+  // 305286 generated, only 176490 survived). It was tried again after
+  // fixing the TetGen point2tetorg/recoveredgebyflips crash (see
+  // src/mesh/tetgenBR.{h,cxx}) since HXT's boundary recovery ends up
+  // calling the exact same (now-fixed) TetGen code anyway -- but HXT
+  // still failed to recover the boundary even for a plain uniform-size
+  // mesh with this many embedded points, which the legacy path has always
+  // handled correctly. Stay on the legacy path.
   std::vector<GRegion *> regions;
   regions.push_back(gr);
   MeshDelaunayVolume(regions);
