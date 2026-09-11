@@ -41,6 +41,8 @@
 
 namespace {
 
+#if defined(HAVE_MESH)
+
   // Which field the window is editing, and what one has typed into it so far.
   // The window this replaces kept both in its widgets: the browser said which,
   // and the inputs held what had not been applied yet.
@@ -57,8 +59,6 @@ namespace {
     static sizeFieldState state;
     return state;
   }
-
-#if defined(HAVE_MESH)
 
   FieldManager *_manager()
   {
