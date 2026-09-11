@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A rejected TT merge must preserve its diagonal: V2 has no TT flip phase."""
+"""Terminal TT swaps improve CAD fit while preserving the fixed boundary."""
 import argparse
 import collections
 import json
@@ -59,7 +59,7 @@ def main():
                     maximum = max(maximum, d)
                     integral += weight*d*d
                     area += weight
-            return maximum, integral/area
+            return maximum, integral, integral/area
 
         before = cad_error([[1,2,3], [3,4,1]])
         for mode in ('disabled', 'enabled', 'idle', 'budget_zero'):
@@ -68,15 +68,16 @@ def main():
             output = Path(str(prefix) + '.msh')
             report = Path(str(prefix) + '.json')
             command = [str(args.runner.resolve()), '--input', str(inp), '--geometry', str(geo),
-                       '--output', str(output), '--report', str(report), '--max-passes', '-1',
+                       '--output', str(output), '--report', str(report), '--max-passes', '0',
                        '--smoothing-passes', '0', '--final-winslow-passes', '0', '--terminal-winslow-passes', '0',
-                       '--terminal-mandatory', '0', '--final-pairs', '0' if mode == 'disabled' else '1',
+                       '--terminal-mandatory', '0', '--final-pairs', '1',
+                       '--swaps', '0' if mode == 'disabled' else '1',
                        '--max-accepted', '0' if mode == 'budget_zero' else '100',
                        '--target-size', '1', '--min-edge', '0', '--max-edge', '100', '--verbosity', '6']
             result = subprocess.run(command, capture_output=True, text=True, check=True)
             Path(str(prefix) + '.log').write_text(result.stdout + result.stderr)
             data = json.loads(report.read_text())
-            assert data['optimizer']['finalTtCadSwaps'] == 0, data
+            assert data['optimizer']['finalTtCadSwaps'] == (1 if mode == 'enabled' else 0), data
             assert data['optimizer']['finalTtMerges'] == 0, data
             gmsh.clear()
             gmsh.open(str(output))
@@ -90,15 +91,26 @@ def main():
             edges = collections.Counter(tuple(sorted((c[i],c[(i+1)%3]))) for c in cells for i in range(3))
             assert {e for e,n in edges.items() if n == 1} == {(1,2),(2,3),(3,4),(1,4)}
             diagonal = next(e for e,n in edges.items() if n == 2)
-            assert diagonal == (1,3), (mode, cells)
             after = cad_error(cells)
-            assert math.isclose(after[0], before[0], abs_tol=1.e-12)
-            assert math.isclose(after[1], before[1], abs_tol=1.e-12)
+            if mode in ('enabled', 'idle'):
+                assert diagonal == (2,4), (mode, cells)
+                assert after[0] < before[0] - 1.e-12, (mode, before, after)
+                assert after[1] < before[1] - 1.e-12, (mode, before, after)
+                assert after[2] < before[2] - 1.e-12, (mode, before, after)
+                if mode == 'enabled':
+                    enabled_cells, enabled_error = cells, after
+                else:
+                    assert cells == enabled_cells, (mode, cells, enabled_cells)
+                    assert after == enabled_error, (mode, after, enabled_error)
+            else:
+                assert diagonal == (1,3), (mode, cells)
+                assert all(math.isclose(a, b, abs_tol=1.e-12)
+                           for a, b in zip(after, before)), (mode, before, after)
             records.append(dict(case=mode, passed=True, diagonal=diagonal, cad_before=before, cad_after=after))
     finally:
         gmsh.finalize()
     (out / 'cadtt.tests.json').write_text(json.dumps(records, indent=2) + '\n')
-    print('PASS TT merge rejection preserves CAD triangulation, orientation and fixed nodes')
+    print('PASS terminal TT CAD improvement, fixed point, disabled and zero-budget guards')
 
 
 if __name__ == '__main__':

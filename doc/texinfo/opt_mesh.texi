@@ -702,7 +702,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeQuadsFinalSplitCadDistanceRatio
-Final V2 quad splitting: trigger distance to CAD divided by local target size; insert the other diagonal only if within tolerance and at least twice closer (negative disables CAD trigger; invalid quads are still split when possible)@*
+Final V2 quad splitting: trigger distance to CAD divided by local target size; insert the other diagonal only if within tolerance and at least twice closer (negative disables CAD trigger; invalid or absolutely unacceptable quads are still split when possible)@*
 Default value: @code{0.2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -752,8 +752,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Pack3D
-Use tangent-frame propagation and oriented exclusion cubes in 3D for packing points on CAD and discrete surfaces (0: UV parallelograms, 1: 3D cubes)@*
-Default value: @code{0}@*
+Deprecated compatibility option, fixed to 1: PACK always uses tangent-frame propagation and oriented exclusion cubes in 3D@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PackForceAllPoints

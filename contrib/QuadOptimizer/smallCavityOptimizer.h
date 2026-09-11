@@ -89,16 +89,17 @@ namespace QuadOptimizer {
     // In V2, each initial/round batch uses these two nodal sweep budgets.
     // Winslow proposes mean-plane 3D moves with the same quality gate as Smart.
     int finalWinslowPasses = 0;
-    // V2: full-mesh pure Winslow sweeps after topology becomes idle. No
-    // topological operation follows, except the final invalid/CAD quad split.
+    // V2: full-mesh pure Winslow sweeps after topology becomes idle, followed
+    // by final quad splitting, admissible TT recombination and CAD-edge swaps.
     int terminalWinslowPasses = 4;
     // Enable the V2 valence phase, with local Winslow on replacement points.
     bool terminalMandatoryCleanup = true;
     // V2 quality-gated QQ/QT swaps, separate from valence and TT merges.
     bool qualitySwaps = true;
     // Final Q -> 2T fallback, after all smoothing and mandatory rewrites.
-    // A negative ratio disables only the CAD-distance trigger. Invalid quads
-    // are always tried; no split is committed without two valid triangles.
+    // A negative ratio disables only the CAD-distance trigger. Invalid and
+    // absolute-quality-failing quads are always tried; every inserted triangle
+    // must pass the complete physical orientation check.
     double finalSplitCadDistanceRatio = .2;
     bool finalPairCleanup = true; // V2: enable the TT merge phase.
     int postTopologyNeighborSmoothingPasses = 2;
@@ -176,6 +177,7 @@ namespace QuadOptimizer {
     std::size_t acceptedCavities = 0;
     std::size_t acceptedTerminalMandatoryCavities = 0;
     std::size_t finalInvalidQuadsSplit = 0;
+    std::size_t finalQualityQuadsSplit = 0;
     std::size_t finalQtSwaps = 0;
     std::size_t finalTtMerges = 0;
     std::size_t finalTtCadSwaps = 0;
@@ -335,6 +337,7 @@ namespace QuadOptimizer {
     std::size_t acceptedCavities = 0;
     std::size_t acceptedTerminalMandatoryCavities = 0;
     std::size_t finalInvalidQuadsSplit = 0;
+    std::size_t finalQualityQuadsSplit = 0;
     std::size_t finalQtSwaps = 0;
     std::size_t finalTtMerges = 0;
     std::size_t finalTtCadSwaps = 0;
