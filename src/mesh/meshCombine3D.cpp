@@ -80,6 +80,13 @@ static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
 
 int meshCombine3D(GRegion *gr)
 {
+  if(gr->tetrahedra.empty()) {
+    Msg::Error("Region %d has no tetrahedra to combine (Delaunay meshing "
+               "likely failed for this region)",
+               gr->tag());
+    return -1;
+  }
+
   Msg::Info("Creating Mesh Wrapper for region %d", gr->tag());
   double volHex = 0, volTet = 0;
   int numHex = 0, numTet = 0;
