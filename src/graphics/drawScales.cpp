@@ -37,6 +37,17 @@ static double alongBar(PViewOptions *opt, double t, double length)
 // a line drawn at a box edge: on the pixel that starts there
 static double lineAt(double edge) { return edge + 0.5 / _pixelFactor; }
 
+// Where a tick mark and its label go along a bar of the given length. The
+// ends of the range are marked on the outline of the box itself: they are
+// what it stops at, and a mark a pixel inside it, at the first and the last
+// colour, reads as a misalignment.
+static double tickAt(PViewOptions *opt, double t, double length)
+{
+  if(t <= 0.) return 0.;
+  if(t >= 1.) return length;
+  return lineAt(alongBar(opt, t, length));
+}
+
 // The labels of the scale. Iso: one per iso value, centred on it; discrete
 // or numeric: the boundaries of the bands; both every k-th as needed to fit.
 // Anything else is an axis over the range, round numbers when the user asked
@@ -240,12 +251,12 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < ticks.size(); i++) {
     if(horizontal) {
-      double x = xmin + lineAt(alongBar(opt, ticks[i].t, width));
+      double x = xmin + tickAt(opt, ticks[i].t, width);
       gmshVertex2d(x, ymin + height);
       gmshVertex2d(x, ymin + height + 0.4 * tick);
     }
     else {
-      double y = ymin + lineAt(alongBar(opt, ticks[i].t, height));
+      double y = ymin + tickAt(opt, ticks[i].t, height);
       gmshVertex2d(xmin + width, y);
       gmshVertex2d(xmin + width + 0.4 * tick, y);
     }
@@ -268,12 +279,13 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
     drawContext::global()->getStringDescent(); // height above ref pt
 
   for(std::size_t i = 0; i < ticks.size(); i++) {
+    // centred on its tick mark
     if(horizontal)
-      haloString(ctx, ticks[i].label, xmin + alongBar(opt, ticks[i].t, width),
+      haloString(ctx, ticks[i].label, xmin + tickAt(opt, ticks[i].t, width),
                  ymin + height + tick, 1); // adjust for compactness
     else
       haloString(ctx, ticks[i].label, xmin + width + 0.8 * tick,
-                 ymin + alongBar(opt, ticks[i].t, height) - font_a / 3., 0);
+                 ymin + tickAt(opt, ticks[i].t, height) - font_a / 3., 0);
   }
 }
 
