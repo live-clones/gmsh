@@ -3375,37 +3375,37 @@ double opt_general_axes_auto_position(OPT_ARGS_NUM)
   return CTX::instance()->axesAutoPosition;
 }
 
-double opt_general_axes_tics0(OPT_ARGS_NUM)
+double opt_general_axes_ticks0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->axesTics[0] = val;
+  if(action & GMSH_SET) CTX::instance()->axesTicks[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.value[17]->value(
-      CTX::instance()->axesTics[0]);
+      CTX::instance()->axesTicks[0]);
 #endif
-  return CTX::instance()->axesTics[0];
+  return CTX::instance()->axesTicks[0];
 }
 
-double opt_general_axes_tics1(OPT_ARGS_NUM)
+double opt_general_axes_ticks1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->axesTics[1] = val;
+  if(action & GMSH_SET) CTX::instance()->axesTicks[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.value[18]->value(
-      CTX::instance()->axesTics[1]);
+      CTX::instance()->axesTicks[1]);
 #endif
-  return CTX::instance()->axesTics[1];
+  return CTX::instance()->axesTicks[1];
 }
 
-double opt_general_axes_tics2(OPT_ARGS_NUM)
+double opt_general_axes_ticks2(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->axesTics[2] = val;
+  if(action & GMSH_SET) CTX::instance()->axesTicks[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.value[19]->value(
-      CTX::instance()->axesTics[2]);
+      CTX::instance()->axesTicks[2]);
 #endif
-  return CTX::instance()->axesTics[2];
+  return CTX::instance()->axesTicks[2];
 }
 
 double opt_general_axes_xmin(OPT_ARGS_NUM)
@@ -8453,49 +8453,49 @@ double opt_view_axes_zmax(OPT_ARGS_NUM)
 #endif
 }
 
-double opt_view_axes_tics0(OPT_ARGS_NUM)
+double opt_view_axes_ticks0(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
-  if(action & GMSH_SET) { opt->axesTics[0] = val; }
+  if(action & GMSH_SET) { opt->axesTicks[0] = val; }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.value[3]->value(opt->axesTics[0]);
+    FlGui::instance()->options->view.value[3]->value(opt->axesTicks[0]);
   }
 #endif
-  return opt->axesTics[0];
+  return opt->axesTicks[0];
 #else
   return 0.;
 #endif
 }
 
-double opt_view_axes_tics1(OPT_ARGS_NUM)
+double opt_view_axes_ticks1(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
-  if(action & GMSH_SET) { opt->axesTics[1] = val; }
+  if(action & GMSH_SET) { opt->axesTicks[1] = val; }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.value[4]->value(opt->axesTics[1]);
+    FlGui::instance()->options->view.value[4]->value(opt->axesTicks[1]);
   }
 #endif
-  return opt->axesTics[1];
+  return opt->axesTicks[1];
 #else
   return 0.;
 #endif
 }
 
-double opt_view_axes_tics2(OPT_ARGS_NUM)
+double opt_view_axes_ticks2(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
-  if(action & GMSH_SET) { opt->axesTics[2] = val; }
+  if(action & GMSH_SET) { opt->axesTicks[2] = val; }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.value[5]->value(opt->axesTics[2]);
+    FlGui::instance()->options->view.value[5]->value(opt->axesTicks[2]);
   }
 #endif
-  return opt->axesTics[2];
+  return opt->axesTicks[2];
 #else
   return 0.;
 #endif

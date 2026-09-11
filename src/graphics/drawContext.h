@@ -384,10 +384,10 @@ public:
   void drawGraph2d(bool inModelCoordinates);
   void drawAxis(double xmin, double ymin, double zmin, double xmax, double ymax,
                 double zmax, int nticks, int mikado);
-  void drawAxes(int mode, double tics[3], std::string format[3],
+  void drawAxes(int mode, double ticks[3], std::string format[3],
                 std::string label[3], double bb[6], int mikado,
                 double value_bb[6]);
-  void drawAxes(int mode, double tics[3], std::string format[3],
+  void drawAxes(int mode, double ticks[3], std::string format[3],
                 std::string label[3], SBoundingBox3d &bb, int mikado,
                 SBoundingBox3d &value_bb);
   void drawAxes();

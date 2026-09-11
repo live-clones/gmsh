@@ -290,7 +290,7 @@ public:
   int smallAxes, smallAxesSize, smallAxesPos[2];
   // large axes options
   int axes, axesAutoPosition, axesMikado, axesForceValue;
-  double axesPosition[6], axesValue[6], axesTics[3];
+  double axesPosition[6], axesValue[6], axesTicks[3];
   std::string axesLabel[3], axesFormat[3];
   // simple dynamic lock (should be a mutex)
   int lock;

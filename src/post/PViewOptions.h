@@ -46,7 +46,7 @@ public:
   // it spans; a single value out in the scene has no range to adapt to.
   std::string getFormat() const { return format.empty() ? "%.3g" : format; }
   int axes, axesAutoPosition, axesMikado;
-  double axesTics[3];
+  double axesTicks[3];
   std::string axesFormat[3], axesLabel[3];
   double axesPosition[6];
   double customMin, customMax, tmpMin, tmpMax, externalMin, externalMax;

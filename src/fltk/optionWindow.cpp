@@ -385,9 +385,9 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_clip_factor(0, GMSH_SET, o->general.value[14]->value());
   opt_general_polygon_offset_factor(0, GMSH_SET, o->general.value[15]->value());
   opt_general_polygon_offset_units(0, GMSH_SET, o->general.value[16]->value());
-  opt_general_axes_tics0(0, GMSH_SET, o->general.value[17]->value());
-  opt_general_axes_tics1(0, GMSH_SET, o->general.value[18]->value());
-  opt_general_axes_tics2(0, GMSH_SET, o->general.value[19]->value());
+  opt_general_axes_ticks0(0, GMSH_SET, o->general.value[17]->value());
+  opt_general_axes_ticks1(0, GMSH_SET, o->general.value[18]->value());
+  opt_general_axes_ticks2(0, GMSH_SET, o->general.value[19]->value());
   opt_general_axes_xmin(0, GMSH_SET, o->general.value[20]->value());
   opt_general_axes_ymin(0, GMSH_SET, o->general.value[21]->value());
   opt_general_axes_zmin(0, GMSH_SET, o->general.value[22]->value());
@@ -848,9 +848,9 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double position1 = opt_view_position1(current, GMSH_GET, 0);
   double size0 = opt_view_size0(current, GMSH_GET, 0);
   double size1 = opt_view_size1(current, GMSH_GET, 0);
-  double axes_tics0 = opt_view_axes_tics0(current, GMSH_GET, 0);
-  double axes_tics1 = opt_view_axes_tics1(current, GMSH_GET, 0);
-  double axes_tics2 = opt_view_axes_tics2(current, GMSH_GET, 0);
+  double axes_ticks0 = opt_view_axes_ticks0(current, GMSH_GET, 0);
+  double axes_ticks1 = opt_view_axes_ticks1(current, GMSH_GET, 0);
+  double axes_ticks2 = opt_view_axes_ticks2(current, GMSH_GET, 0);
   double axes_xmin = opt_view_axes_xmin(current, GMSH_GET, 0);
   double axes_ymin = opt_view_axes_ymin(current, GMSH_GET, 0);
   double axes_zmin = opt_view_axes_zmin(current, GMSH_GET, 0);
@@ -1189,13 +1189,13 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
         opt_view_gen_raise_factor(i, GMSH_SET, val);
 
       val = o->view.value[3]->value();
-      if(force || (val != axes_tics0)) opt_view_axes_tics0(i, GMSH_SET, val);
+      if(force || (val != axes_ticks0)) opt_view_axes_ticks0(i, GMSH_SET, val);
 
       val = o->view.value[4]->value();
-      if(force || (val != axes_tics1)) opt_view_axes_tics1(i, GMSH_SET, val);
+      if(force || (val != axes_ticks1)) opt_view_axes_ticks1(i, GMSH_SET, val);
 
       val = o->view.value[5]->value();
-      if(force || (val != axes_tics2)) opt_view_axes_tics2(i, GMSH_SET, val);
+      if(force || (val != axes_ticks2)) opt_view_axes_ticks2(i, GMSH_SET, val);
 
       val = o->view.value[70]->value();
       if(force || (val != component_map0))
@@ -1642,7 +1642,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[18]->maximum(100);
       general.value[18]->callback(general_options_ok_cb);
       general.value[19] = new Fl_Value_Input(
-        L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes tics");
+        L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes ticks");
       general.value[19]->tooltip("General.AxesTicksZ");
       general.value[19]->minimum(0.);
       if(CTX::instance()->inputScrolling) general.value[19]->step(1);
@@ -3334,7 +3334,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[4]->maximum(100);
       view.value[4]->callback(view_options_ok_cb);
       view.value[5] = new Fl_Value_Input(
-        L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes tics");
+        L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes ticks");
       view.value[5]->tooltip("View.AxesTicksZ");
       view.value[5]->minimum(0.);
       if(CTX::instance()->inputScrolling) view.value[5]->step(1);
@@ -4105,9 +4105,9 @@ void optionWindow::updateViewGroup(int index)
   opt_view_axes_format0(index, GMSH_GUI, "");
   opt_view_axes_format1(index, GMSH_GUI, "");
   opt_view_axes_format2(index, GMSH_GUI, "");
-  opt_view_axes_tics0(index, GMSH_GUI, 0);
-  opt_view_axes_tics1(index, GMSH_GUI, 0);
-  opt_view_axes_tics2(index, GMSH_GUI, 0);
+  opt_view_axes_ticks0(index, GMSH_GUI, 0);
+  opt_view_axes_ticks1(index, GMSH_GUI, 0);
+  opt_view_axes_ticks2(index, GMSH_GUI, 0);
   opt_view_axes_label0(index, GMSH_GUI, "");
   opt_view_axes_label1(index, GMSH_GUI, "");
   opt_view_axes_label2(index, GMSH_GUI, "");
