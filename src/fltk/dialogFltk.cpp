@@ -672,6 +672,7 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
     case Ui::Label:
     case Ui::Output:
     case Ui::Action:
+    case Ui::Prose:
     case Ui::Spacer: break;
     case Ui::List: {
       Fl_Browser *br = (Fl_Browser *)w;
@@ -1143,6 +1144,7 @@ void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
         bar->end();
         widget = bar;
       } break;
+      case Ui::Spacer: break; // no widget: it only claims the layout space
       }
       if(!widget) continue;
       // A widget keeps the pointer it is given rather than the text, so the
@@ -1536,7 +1538,9 @@ void dialogFltk::build(Ui::FormRef dialog)
       _outerTabs = new Fl_Tabs(_sideWidth + WB, y, width - _sideWidth - 2 * WB,
                                paneH + rows * BH);
       _outerTabs->callback(_tabCallback, this);
+#if FL_API_VERSION >= 10400
       _outerTabs->handle_overflow(Fl_Tabs::OVERFLOW_PULLDOWN);
+#endif
     }
 
     auto addPane = [&](std::size_t i, int top, int height) {
@@ -1604,7 +1608,9 @@ void dialogFltk::build(Ui::FormRef dialog)
       Fl_Tabs *tabs = new Fl_Tabs(_sideWidth + WB, y, width - _sideWidth - 2 * WB,
                                   paneH + BH);
       tabs->callback(_tabCallback, this);
+#if FL_API_VERSION >= 10400
       tabs->handle_overflow(Fl_Tabs::OVERFLOW_PULLDOWN);
+#endif
       _tabs.push_back(tabs);
       for(std::size_t i = 0; i < _panel.panes.size(); i++)
         addPane(i, y + BH, paneH);
@@ -1628,7 +1634,9 @@ void dialogFltk::build(Ui::FormRef dialog)
         _firstOfGroup.push_back((int)e.panes[0]);
         Fl_Tabs *tabs = new Fl_Tabs(WB, y + BH, width - 2 * WB, paneH + BH);
         tabs->callback(_tabCallback, this);
+#if FL_API_VERSION >= 10400
         tabs->handle_overflow(Fl_Tabs::OVERFLOW_PULLDOWN);
+#endif
         _tabs.push_back(tabs);
         for(std::size_t i : e.panes) addPane(i, y + 2 * BH, paneH);
         tabs->end();
@@ -1821,7 +1829,7 @@ void dialogFltk::refresh()
         b.was = signature;
         // clear() takes the root with it, and everything hangs from the root
         tree->clear();
-        Fl_Tree_Item *root = new Fl_Tree_Item(tree);
+        Fl_Tree_Item *root = new Fl_Tree_Item(tree->prefs());
         root->label(_plain(f.label.size() ? f.label : "Gmsh").c_str());
         tree->root(root);
         _addBranch(tree, root, said, "");
