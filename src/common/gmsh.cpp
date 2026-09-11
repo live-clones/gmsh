@@ -91,11 +91,9 @@
 #include "drawContext.h"
 #endif
 
-#if defined(HAVE_GUI)
-#include "Gui.h"
-#endif
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
+#include "openglWindow.h"
 #endif
 
 #if defined(HAVE_PARSER)
@@ -151,9 +149,9 @@ GMSH_API void gmsh::initialize(int argc, char **argv,
     _argv = new char *[_argc + 1];
     for(int i = 0; i < argc; i++) _argv[i] = argv[i];
 
-#if defined(HAVE_GUI)
+#if defined(HAVE_FLTK)
     // if the GUI is already running (rare case, but could happen), we're done
-    if(Gui::available()) return;
+    if(FlGui::available()) return;
 #endif
 
     if(run) {
@@ -1271,9 +1269,9 @@ GMSH_API void gmsh::model::setVisibilityPerWindow(const int value,
                                                   const int windowIndex)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  Gui::setCurrentOpenglWindow(windowIndex);
-  drawContext *ctx = Gui::getCurrentDrawContext();
+#if defined(HAVE_FLTK)
+  FlGui::instance()->setCurrentOpenglWindow(windowIndex);
+  drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   GModel *m = GModel::current();
   if(value)
     ctx->show(m);
@@ -6226,8 +6224,8 @@ GMSH_API int gmsh::model::mesh::field::add(const std::string &fieldType,
     Msg::Error("Cannot add Field %i of type '%s'", outTag, fieldType.c_str());
     return -1;
   }
-#if defined(HAVE_GUI)
-  if(Gui::available()) Gui::updateFields();
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateFields();
 #endif
 #else
   Msg::Error("Fields require the mesh module");
@@ -6240,8 +6238,8 @@ GMSH_API void gmsh::model::mesh::field::remove(const int tag)
   if(!_checkInit()) return;
 #if defined(HAVE_MESH)
   GModel::current()->getFields()->deleteField(tag);
-#if defined(HAVE_GUI)
-  if(Gui::available()) Gui::updateFields();
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateFields();
 #endif
 #else
   Msg::Error("Fields require the mesh module");
@@ -7804,8 +7802,8 @@ GMSH_API int gmsh::view::add(const std::string &name, const int tag)
 #if defined(HAVE_POST)
   PView *view = new PView(tag);
   view->getData()->setName(name);
-#if defined(HAVE_GUI)
-  if(Gui::available()) Gui::updateViews(true, true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
   return view->getTag();
 #else
@@ -7824,8 +7822,8 @@ GMSH_API void gmsh::view::remove(const int tag)
     return;
   }
   delete view;
-#if defined(HAVE_GUI)
-  if(Gui::available()) Gui::updateViews(true, true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -8463,8 +8461,8 @@ GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
     return -1;
   }
   PView *view = new PView(ref, copyOptions, tag);
-#if defined(HAVE_GUI)
-  if(Gui::available()) Gui::updateViews(true, true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
   return view->getTag();
 #else
@@ -8482,8 +8480,8 @@ GMSH_API void gmsh::view::combine(const std::string &what,
   bool time = (what == "steps") ? true : false; // "elements"
   int ihow = (how == "all") ? 1 : (how == "name") ? 2 : 0; // "visible"
   PView::combine(time, ihow, remove, copyOptions);
-#if defined(HAVE_GUI)
-  if(Gui::available()) Gui::updateViews(true, true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -8593,9 +8591,9 @@ GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag, const int value,
     Msg::Error("Unknown view with tag %d", tag);
     return;
   }
-#if defined(HAVE_GUI)
-  Gui::setCurrentOpenglWindow(windowIndex);
-  drawContext *ctx = Gui::getCurrentDrawContext();
+#if defined(HAVE_FLTK)
+  FlGui::instance()->setCurrentOpenglWindow(windowIndex);
+  drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   if(value)
     ctx->show(view);
   else
@@ -8751,8 +8749,8 @@ GMSH_API void gmsh::view::option::copy(const int refTag, const int tag)
   }
   view->setOptions(ref->getOptions());
   view->setChanged(true);
-#if defined(HAVE_GUI)
-  if(Gui::available()) Gui::updateViews(true, true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -8953,30 +8951,31 @@ GMSH_API void gmsh::graphics::draw()
 
 // gmsh::fltk
 
-#if defined(HAVE_GUI)
-static void _errorHandlerGui(const char *fmt, ...)
+#if defined(HAVE_FLTK)
+static void _errorHandlerFltk(const char *fmt, ...)
 {
   char str[5000];
   va_list args;
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  Msg::Error("%s (GUI internal error)", str);
+  Msg::Error("%s (FLTK internal error)", str);
 }
 
-static void _createGui()
+static void _createFltk()
 {
-  Gui::create(_argc, _argv, false, _errorHandlerGui);
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv, false, _errorHandlerFltk);
 }
 #endif
 
 GMSH_API void gmsh::fltk::initialize()
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
-  Gui::setFinishedProcessingCommandLine();
-  Gui::check();
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::setFinishedProcessingCommandLine();
+  FlGui::check();
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -8985,8 +8984,8 @@ GMSH_API void gmsh::fltk::initialize()
 GMSH_API void gmsh::fltk::finalize()
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  Gui::destroy();
+#if defined(HAVE_FLTK)
+  FlGui::destroy();
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -8995,8 +8994,8 @@ GMSH_API void gmsh::fltk::finalize()
 GMSH_API int gmsh::fltk::isAvailable()
 {
   if(!_checkInit()) return -1;
-#if defined(HAVE_GUI)
-  return Gui::available() ? 1 : 0;
+#if defined(HAVE_FLTK)
+  return FlGui::available() ? 1 : 0;
 #else
   return 0;
 #endif
@@ -9005,12 +9004,12 @@ GMSH_API int gmsh::fltk::isAvailable()
 GMSH_API void gmsh::fltk::wait(const double time)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
+#if defined(HAVE_FLTK)
+  _createFltk();
   if(time >= 0)
-    Gui::wait(time, true); // force
+    FlGui::wait(time, true); // force
   else
-    Gui::wait(true); // force
+    FlGui::wait(true); // force
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -9019,8 +9018,8 @@ GMSH_API void gmsh::fltk::wait(const double time)
 GMSH_API void gmsh::fltk::lock()
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  Gui::lock();
+#if defined(HAVE_FLTK)
+  FlGui::lock();
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -9029,8 +9028,8 @@ GMSH_API void gmsh::fltk::lock()
 GMSH_API void gmsh::fltk::unlock()
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  Gui::unlock();
+#if defined(HAVE_FLTK)
+  FlGui::unlock();
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -9039,9 +9038,9 @@ GMSH_API void gmsh::fltk::unlock()
 GMSH_API void gmsh::fltk::update()
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
-  Gui::updateViews(true, true);
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->updateViews(true, true);
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -9050,8 +9049,8 @@ GMSH_API void gmsh::fltk::update()
 GMSH_API void gmsh::fltk::awake(const std::string &action)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  Gui::awake(action);
+#if defined(HAVE_FLTK)
+  FlGui::awake(action);
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -9060,15 +9059,15 @@ GMSH_API void gmsh::fltk::awake(const std::string &action)
 GMSH_API void gmsh::fltk::run(const std::string &optionFileName)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
-  Gui::run(optionFileName); // this calls draw() once
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->run(optionFileName); // this calls draw() once
 #else
   Msg::Error("Fltk not available");
 #endif
 }
 
-#if defined(HAVE_GUI)
+#if defined(HAVE_FLTK)
 static int selectionCode(char val)
 {
   switch(val) {
@@ -9086,25 +9085,29 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
 {
   if(!_checkInit()) return -1;
   dimTags.clear();
-#if defined(HAVE_GUI)
-  _createGui();
+#if defined(HAVE_FLTK)
+  _createFltk();
   char ret = 0;
   switch(dim) {
-  case 0: ret = Gui::selectEntity(ENT_POINT); break;
-  case 1: ret = Gui::selectEntity(ENT_CURVE); break;
-  case 2: ret = Gui::selectEntity(ENT_SURFACE); break;
-  case 3: ret = Gui::selectEntity(ENT_VOLUME); break;
-  default: ret = Gui::selectEntity(ENT_ALL); break;
+  case 0: ret = FlGui::instance()->selectEntity(ENT_POINT); break;
+  case 1: ret = FlGui::instance()->selectEntity(ENT_CURVE); break;
+  case 2: ret = FlGui::instance()->selectEntity(ENT_SURFACE); break;
+  case 3: ret = FlGui::instance()->selectEntity(ENT_VOLUME); break;
+  default: ret = FlGui::instance()->selectEntity(ENT_ALL); break;
   }
-  if(!Gui::available()) return 0; // GUI closed during selection
-  for(std::size_t i = 0; i < Gui::selectedVertices().size(); i++)
-    dimTags.push_back(std::make_pair(0, Gui::selectedVertices()[i]->tag()));
-  for(std::size_t i = 0; i < Gui::selectedEdges().size(); i++)
-    dimTags.push_back(std::make_pair(1, Gui::selectedEdges()[i]->tag()));
-  for(std::size_t i = 0; i < Gui::selectedFaces().size(); i++)
-    dimTags.push_back(std::make_pair(2, Gui::selectedFaces()[i]->tag()));
-  for(std::size_t i = 0; i < Gui::selectedRegions().size(); i++)
-    dimTags.push_back(std::make_pair(3, Gui::selectedRegions()[i]->tag()));
+  if(!FlGui::available()) return 0; // GUI closed during selection
+  for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++)
+    dimTags.push_back(
+      std::make_pair(0, FlGui::instance()->selectedVertices[i]->tag()));
+  for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
+    dimTags.push_back(
+      std::make_pair(1, FlGui::instance()->selectedEdges[i]->tag()));
+  for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
+    dimTags.push_back(
+      std::make_pair(2, FlGui::instance()->selectedFaces[i]->tag()));
+  for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
+    dimTags.push_back(
+      std::make_pair(3, FlGui::instance()->selectedRegions[i]->tag()));
   return selectionCode(ret);
 #else
   return 0;
@@ -9115,16 +9118,16 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
 {
   if(!_checkInit()) return -1;
   elementTags.clear();
-#if defined(HAVE_GUI)
-  _createGui();
+#if defined(HAVE_FLTK)
+  _createFltk();
   int old = CTX::instance()->pickElements;
   CTX::instance()->pickElements = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
-  char ret = Gui::selectEntity(ENT_ALL);
+  char ret = FlGui::instance()->selectEntity(ENT_ALL);
   CTX::instance()->pickElements = old;
-  if(!Gui::available()) return 0; // GUI closed during selection
-  for(std::size_t i = 0; i < Gui::selectedElements().size(); i++)
-    elementTags.push_back(Gui::selectedElements()[i]->getNum());
+  if(!FlGui::available()) return 0; // GUI closed during selection
+  for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++)
+    elementTags.push_back(FlGui::instance()->selectedElements[i]->getNum());
   return selectionCode(ret);
 #else
   return 0;
@@ -9135,12 +9138,12 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
 {
   if(!_checkInit()) return -1;
   viewTags.clear();
-#if defined(HAVE_GUI)
-  _createGui();
-  char ret = Gui::selectEntity(ENT_ALL);
-  if(!Gui::available()) return 0; // GUI closed during selection
-  for(std::size_t i = 0; i < Gui::selectedViews().size(); i++)
-    viewTags.push_back(Gui::selectedViews()[i]->getTag());
+#if defined(HAVE_FLTK)
+  _createFltk();
+  char ret = FlGui::instance()->selectEntity(ENT_ALL);
+  if(!FlGui::available()) return 0; // GUI closed during selection
+  for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
+    viewTags.push_back(FlGui::instance()->selectedViews[i]->getTag());
   return selectionCode(ret);
 #else
   return 0;
@@ -9158,10 +9161,10 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   elementTags.clear();
   viewTags.clear();
 #if defined(HAVE_FLTK)
-  _createGui();
+  _createFltk();
   if(!FlGui::available()) return 0;
-  drawContext *dc = FlGui::instance()->getCurrentDrawContext();
-  if(!dc) return 0;
+  openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+  if(!gl) return 0;
   int type = ENT_ALL;
   switch(dim) {
   case 0: type = ENT_POINT; break;
@@ -9183,9 +9186,9 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   std::vector<MElement *> ele;
   std::vector<SPoint2> points;
   std::vector<PView *> views;
-  bool ret = dc->select(type, true, CTX::instance()->mesh.draw ? true : false,
-                        true, (int)x, (int)y, w, h, vertices, edges, faces,
-                        regions, ele, points, views);
+  bool ret =
+    gl->pick(type, CTX::instance()->mesh.draw ? true : false, true, (int)x,
+             (int)y, w, h, vertices, edges, faces, regions, ele, points, views);
   if(elements) {
     CTX::instance()->pickElements = old;
     CTX::instance()->mesh.changed = ENT_ALL;
@@ -9212,14 +9215,14 @@ GMSH_API void gmsh::fltk::splitCurrentWindow(const std::string &how,
                                              const double ratio)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
+#if defined(HAVE_FLTK)
+  _createFltk();
   if(how == "h")
-    Gui::splitCurrentOpenglWindow('h', ratio);
+    FlGui::instance()->splitCurrentOpenglWindow('h', ratio);
   else if(how == "v")
-    Gui::splitCurrentOpenglWindow('v', ratio);
+    FlGui::instance()->splitCurrentOpenglWindow('v', ratio);
   else if(how == "u")
-    Gui::splitCurrentOpenglWindow('u');
+    FlGui::instance()->splitCurrentOpenglWindow('u');
   else {
     Msg::Error("Unknown window splitting method '%s'", how.c_str());
   }
@@ -9229,9 +9232,9 @@ GMSH_API void gmsh::fltk::splitCurrentWindow(const std::string &how,
 GMSH_API void gmsh::fltk::setCurrentWindow(const int windowIndex)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
-  Gui::setCurrentOpenglWindow(windowIndex);
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->setCurrentOpenglWindow(windowIndex);
 #endif
 }
 
@@ -9239,36 +9242,36 @@ GMSH_API void gmsh::fltk::setStatusMessage(const std::string &message,
                                            const bool graphics)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
-  Gui::setStatus(message, graphics);
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->setStatus(message, graphics);
 #endif
 }
 
 GMSH_API void gmsh::fltk::showContextWindow(const int dim, const int tag)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
-  Gui::showContextWindow(dim, tag);
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->showOnelabContext(dim, tag);
 #endif
 }
 
 GMSH_API void gmsh::fltk::openTreeItem(const std::string &name)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
-  Gui::openTreeItem(name);
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->openTreeItem(name);
 #endif
 }
 
 GMSH_API void gmsh::fltk::closeTreeItem(const std::string &name)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_GUI)
-  _createGui();
-  Gui::closeTreeItem(name);
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->closeTreeItem(name);
 #endif
 }
 

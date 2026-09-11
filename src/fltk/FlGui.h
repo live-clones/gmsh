@@ -10,7 +10,6 @@
 #include <vector>
 #include <atomic>
 #include "SPoint2.h"
-#include "Backend.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
@@ -22,14 +21,23 @@
 #define WB (5) // window border
 
 class graphicWindow;
-class sceneViewFltk;
-
-// Say to the 3D scene of src/scene who is holding it, once the windows it is
-// drawn in exist: it asks its holder for a redraw, for the shape of the
-// pointer, for which view is the current one. Defined in SceneFltk.cpp.
-void fltkInstallSceneHost();
+class openglWindow;
+class optionWindow;
 class onelabWindow;
+class fieldWindow;
+class pluginWindow;
+class statisticsWindow;
+class visibilityWindow;
+class highOrderToolsWindow;
+class clippingWindow;
+class manipWindow;
+class elementaryContextWindow;
+class transformContextWindow;
+class meshContextWindow;
+class physicalContextWindow;
+class onelabContextWindow;
 class onelabGroup;
+class helpWindow;
 class Fl_Widget;
 class drawContext;
 
@@ -46,6 +54,7 @@ private:
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
   static std::atomic<int> _locked;
+  std::string _lastStatus;
   bool _quitShouldExit;
 
 public:
@@ -59,8 +68,23 @@ public:
 
 public:
   std::vector<graphicWindow *> graph;
+  optionWindow *options;
+  fieldWindow *fields;
+  pluginWindow *plugins;
+  statisticsWindow *stats;
+  visibilityWindow *visibility;
+  highOrderToolsWindow *highordertools;
+  clippingWindow *clipping;
+  manipWindow *manip;
+  elementaryContextWindow *elementaryContext;
+  transformContextWindow *transformContext;
+  meshContextWindow *meshContext;
+  physicalContextWindow *physicalContext;
+  onelabContextWindow *onelabContext;
+  int lastContextWindow;
+  helpWindow *help;
   onelabGroup *onelab;
-  sceneViewFltk *fullscreen;
+  openglWindow *fullscreen;
 
 public:
   FlGui(int argc, char **argv, bool quitShouldExit,
@@ -75,6 +99,7 @@ public:
   // check if the GUI is available
   static bool available();
   // run the GUI until there's no window left
+  static int run(const std::string &optionFileName="");
   // check if there are any pending events, and process them (if rateLimited is
   // set, only perform the check if one has not been made in the last 1 /
   // General.FltkRefreshRate seconds)
@@ -97,21 +122,24 @@ public:
   static bool getFinishedProcessingCommandLine();
   // test application-level keyboard shortcuts
   int testGlobalShortcuts(int event);
-  // The keys of the application, from Menu::keys(), for the key FLTK is
-  // reporting. The 3D view calls it on its own key events, so that the arrows
-  // step the animation rather than move the focus, which is what FLTK would
-  // do with them; everything else reaches it as a shortcut nothing else took.
-  int runKeys();
+  // test the arrow shortcuts (not in the application-level shortcuts)
+  // since it is used elsewhere (where we want to override widget
+  // navigation). This is necessary since FLTK 1.1.
+  int testArrowShortcuts();
   // set the title of the graphic windows
   void setGraphicTitle(const std::string &title);
   // update the GUI when views get modified, added or deleted
   void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets);
+  // update the GUI when fields change
+  void updateFields();
   // reset the visibility window
   void resetVisibility();
-  // where the windows ended up, for the option file
-  Ui::Backend::Layout windowLayout();
+  // update the statistics window
+  void updateStatistics(bool qualities = false);
+  // store current window positions and sizes in CTX
+  void storeCurrentWindowsInfo();
   // get the last opengl window that received an event
-  sceneViewFltk *getCurrentOpenglWindow();
+  openglWindow *getCurrentOpenglWindow();
   // get the draw context from the last opengl window that received an event
   drawContext *getCurrentDrawContext();
   // override which opengl window should be considered as current, by given an
@@ -132,10 +160,11 @@ public:
   // add line in message console
   void addMessage(const char *msg);
   // save messages to file
-  void messageLines(std::vector<std::string> &lines);
+  void saveMessages(const char *fileName);
   // rebuild the tree
   void rebuildTree(bool deleteWidgets);
   // toggles the module open or closed based on its current state
+  void toggleModule(const std::string &name);
   // open module in tree
   void openModule(const std::string &name);
   // open tree item
@@ -147,6 +176,7 @@ public:
   // should the quit callback exit the app, or just close all windows?
   bool quitShouldExit() { return _quitShouldExit; }
   // show onelab context window for the given entity
+  void showOnelabContext(int dim, int tag);
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

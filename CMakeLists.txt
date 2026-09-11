@@ -51,15 +51,11 @@ opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT}
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
-opt(BROWSER "Enable the browser chrome: the panels in a web page, the model in a\n     window of its own (a demonstration, and a way of trying the structure)" OFF)
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
-opt(GLFW_WAYLAND "Enable the native Wayland backend of GLFW (Linux only, used by ENABLE_IMGUI)" ${DEFAULT})
-opt(GLFW_X11 "Enable the X11 backend of GLFW (Linux only, used by ENABLE_IMGUI)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
 opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
-opt(IMGUI "Enable Dear ImGui/GLFW graphical user interface (requires mesh/post)" OFF)
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module" ${DEFAULT})
@@ -617,7 +613,6 @@ if(ENABLE_TCMALLOC)
   endif()
 endif()
 
-add_subdirectory(src/gui)
 add_subdirectory(src/common)
 add_subdirectory(src/numeric)
 add_subdirectory(src/geo)
@@ -650,11 +645,6 @@ if(ENABLE_VISUDEV)
   set_config_option(HAVE_VISUDEV "VisuDev")
 endif()
 
-# The interfaces are not exclusive: every one that is enabled is compiled in,
-# and which of them comes up is decided when it does -- "gmsh -gui imgui", or
-# GMSH_GUI, or the first there is. Each says it is there at start-up, and each
-# brings the 3D scene that goes with it.
-
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
   # where e.g. xft and xinerama options are not dealt with)
@@ -671,16 +661,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
                       OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
       string(STRIP ${FLTK_INCLUDE_DIR} FLTK_INCLUDE_DIR)
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
-      # --includedir only gives the prefix; since 1.4 the fltk headers include
-      # those of the libraries fltk was itself built against (Fl.H pulls in
-      # <cairo.h>), which live in the other -I of --cxxflags
-      execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --cxxflags
-                      OUTPUT_VARIABLE FLTK_CXX_FLAGS)
-      string(REGEX MATCHALL "-I[^ ]+" FLTK_INCLUDE_FLAGS "${FLTK_CXX_FLAGS}")
-      foreach(flag ${FLTK_INCLUDE_FLAGS})
-        string(SUBSTRING ${flag} 2 -1 dir)
-        list(APPEND EXTERNAL_INCLUDES ${dir})
-      endforeach()
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
                       OUTPUT_VARIABLE FLTK_LIBRARIES)
       string(STRIP ${FLTK_LIBRARIES} FLTK_LIBRARIES)
@@ -709,111 +689,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
     endif()
   endif()
 endif()
-
-# GLFW, Dear ImGui and the 3D scene, wanted by the Dear ImGui interface and by
-# anything else that shows the model in a window of its own -- the browser
-# chrome does, since it has no way of drawing one itself
-if(ENABLE_IMGUI OR ENABLE_BROWSER)
-  # GLFW provides the window and the OpenGL context; use the upstream
-  # CMakeLists, which selects the platform backend (X11, Wayland, Cocoa, Win32)
-  # and sets the corresponding _GLFW_* definitions
-  # (only look for a system GLFW when explicitly asked: find_package() imports a
-  # target named "glfw", which would clash with the one from contrib/glfw)
-  if(ENABLE_SYSTEM_CONTRIB)
-    find_package(glfw3 3.3 QUIET)
-  endif()
-  if(ENABLE_SYSTEM_CONTRIB AND glfw3_FOUND)
-    message(STATUS "Using system version of GLFW")
-    list(APPEND GMSH_PRIVATE_LIBRARIES glfw)
-    set(HAVE_GLFW TRUE)
-  elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/glfw)
-    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-    set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-    if(UNIX AND NOT APPLE)
-      # GLFW can build the native Wayland backend and/or the X11 backend. When
-      # both are built the backend is selected at runtime (Wayland if a Wayland
-      # display is available, X11 otherwise), and can be forced with the
-      # GLFW_PLATFORM window hint. Building the Wayland backend requires
-      # wayland-scanner, the wayland protocol files and libxkbcommon.
-      if(NOT ENABLE_GLFW_WAYLAND AND NOT ENABLE_GLFW_X11)
-        message(SEND_ERROR "ENABLE_IMGUI needs at least one of ENABLE_GLFW_WAYLAND "
-                "and ENABLE_GLFW_X11")
-      endif()
-      set(GLFW_BUILD_WAYLAND ${ENABLE_GLFW_WAYLAND} CACHE BOOL "" FORCE)
-      set(GLFW_BUILD_X11 ${ENABLE_GLFW_X11} CACHE BOOL "" FORCE)
-      if(ENABLE_GLFW_WAYLAND)
-        set_config_option(HAVE_GLFW_WAYLAND "Wayland")
-      endif()
-    endif()
-    add_subdirectory(contrib/glfw)
-    list(APPEND GMSH_PRIVATE_LIBRARIES glfw)
-    list(APPEND EXTERNAL_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/contrib/glfw/include)
-    set(HAVE_GLFW TRUE)
-    if(GLFW_BUILD_WAYLAND)
-      # GLFW deliberately dlopen()s the Wayland client libraries, so that a
-      # binary built with Wayland support still runs where they are absent. The
-      # dynamic loader resolves a dlopen() through the RUNPATH of the caller, so
-      # remember where they were found: on the distributions that keep their
-      # libraries out of the default search path, Gmsh would otherwise always
-      # fall back to X11. They are not linked, so they stay optional.
-      include(FindPkgConfig)
-      pkg_check_modules(GMSH_WAYLAND QUIET wayland-client wayland-cursor
-                                           xkbcommon)
-      if(GMSH_WAYLAND_FOUND)
-        list(APPEND GMSH_DLOPEN_RPATH_DIRS ${GMSH_WAYLAND_LIBRARY_DIRS})
-      endif()
-      # libdecor draws the window frames on the compositors that leave that to
-      # the client, which is most of them; GLFW falls back to plain coloured
-      # borders without it, and the windows then have no title bar to grab
-      pkg_check_modules(GMSH_LIBDECOR QUIET libdecor-0)
-      if(GMSH_LIBDECOR_FOUND)
-        list(APPEND GMSH_DLOPEN_RPATH_DIRS ${GMSH_LIBDECOR_LIBRARY_DIRS})
-      endif()
-    endif()
-  endif()
-  if(NOT HAVE_GLFW)
-    message(SEND_ERROR "Could not find GLFW: disabling the Dear ImGui interface")
-  elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/imgui)
-    add_subdirectory(contrib/imgui)
-    include_directories(contrib/imgui contrib/imgui/backends
-                        contrib/imgui/misc/cpp)
-    if(ENABLE_IMGUI AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui)
-      add_subdirectory(src/imgui)
-      set_config_option(HAVE_IMGUI "ImGui[contrib]")
-    endif()
-    if(ENABLE_BROWSER AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/browser)
-      add_subdirectory(src/browser)
-      set_config_option(HAVE_BROWSER "Browser")
-    endif()
-  else()
-    message(SEND_ERROR "Could not find Dear ImGui in contrib/imgui")
-  endif()
-endif()
-
-# The 3D scene: it draws the model with OpenGL and picks in it, and it belongs
-# to no interface -- whichever one is up holds it, through Scene::Host. So it
-# is added once every interface that could hold it is known, and says so with
-# HAVE_GL_SCENE. Two of its files want more than OpenGL and are picked inside:
-# see src/scene/CMakeLists.txt.
-if((HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER) AND
-   EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scene)
-  add_subdirectory(src/scene)
-  set(HAVE_GL_SCENE TRUE)
-endif()
-
-# HAVE_GUI is set as soon as one of the graphical user interfaces is compiled in
-if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER)
-  set(HAVE_GUI TRUE)
-endif()
-
-# Which 3D scene runs is decided at the same time as which interface does:
-# each says it is there under the name of the chrome it belongs to, and the one
-# in a window of its own serves whichever chrome has none. When none of them is
-# compiled in, src/common/GuiScene.cpp answers for them -- the scene is a
-# chantier of its own and must not be the thing that stops a new interface from
-# linking.
 
 if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
   STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
@@ -845,7 +720,7 @@ if(ENABLE_BUILD_IOS)
   add_definitions(-DBUILD_IOS)
 endif()
 
-if(HAVE_GUI OR ENABLE_GRAPHICS)
+if(HAVE_FLTK OR ENABLE_GRAPHICS)
   if(NOT HAVE_POST OR NOT HAVE_PLUGINS OR NOT HAVE_ONELAB)
     message(SEND_ERROR "Cannot compile GUI without Post, Plugin and ONELAB")
   endif()
@@ -1845,18 +1720,6 @@ if(EXTERNAL_INCLUDES)
   list(REMOVE_DUPLICATES EXTERNAL_INCLUDES)
 endif()
 
-# GMSH_PRIVATE_LIBRARIES holds what is linked into Gmsh but never handed on:
-# CMake targets of this very build, as opposed to the paths and flags of
-# EXTERNAL_LIBRARIES. They cannot travel with the rest, for two reasons. A name
-# such as "glfw" means nothing outside this build tree, so it has no business in
-# the GMSH_EXTERNAL_LIBRARIES other projects are given; and a target named in
-# the interface of an installed library must itself be installed and exported,
-# which a vendored dependency is not -- install(EXPORT) refuses the whole export
-# set over it. Linking them PRIVATE keeps them out of both.
-if(GMSH_PRIVATE_LIBRARIES)
-  list(REMOVE_DUPLICATES GMSH_PRIVATE_LIBRARIES)
-endif()
-
 if(HAVE_FLTK)
   set(LINK_LIBRARIES ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES}
                      ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
@@ -1896,9 +1759,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(src/gui src/scene src/browser src/common src/fltk src/imgui src/geo src/graphics src/mesh
-                    src/solver src/numeric src/parser src/plugin src/post api
-                    contrib/stb
+include_directories(src/common src/fltk src/geo src/graphics src/mesh src/solver
+                    src/numeric src/parser src/plugin src/post api
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
 
 # set this for external codes that might include this CMakeList file
@@ -1948,10 +1810,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
       list(APPEND LINK_LIBRARIES "-Wl,--exclude-libs,ALL")
     endif()
   endif()
-  # PUBLIC is what the plain signature used to mean; the private ones are baked
-  # into the shared library and stop there
-  target_link_libraries(shared PUBLIC ${LINK_LIBRARIES}
-                               PRIVATE ${GMSH_PRIVATE_LIBRARIES})
+  target_link_libraries(shared ${LINK_LIBRARIES})
   # don't define LC_RPATH in dylib for development, to not get endless warnings
   # about code signing
   if(APPLE AND NOT GMSH_RELEASE)
@@ -1964,10 +1823,10 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 endif()
 
 # binary targets
-if(HAVE_GUI)
+if(HAVE_FLTK)
   if(ENABLE_BUILD_DYNAMIC)
     add_executable(gmsh WIN32 src/common/Main.cpp)
-    target_link_libraries(gmsh PRIVATE shared)
+    target_link_libraries(gmsh shared)
   else()
     add_executable(gmsh WIN32 src/common/Main.cpp ${GMSH_SRC})
   endif()
@@ -1979,39 +1838,21 @@ if(HAVE_GUI)
 else()
   if(ENABLE_BUILD_DYNAMIC)
     add_executable(gmsh src/common/Main.cpp)
-    target_link_libraries(gmsh PRIVATE shared)
+    target_link_libraries(gmsh shared)
   else()
     add_executable(gmsh src/common/Main.cpp ${GMSH_SRC})
   endif()
 endif()
-target_link_libraries(gmsh PRIVATE ${LINK_LIBRARIES})
-if(NOT ENABLE_BUILD_DYNAMIC)
-  # a dynamic build gets them through the shared library
-  target_link_libraries(gmsh PRIVATE ${GMSH_PRIVATE_LIBRARIES})
-endif()
-
-# directories that must stay reachable for the libraries Gmsh (or the libraries
-# it embeds) load with dlopen()
-if(GMSH_DLOPEN_RPATH_DIRS AND ENABLE_RPATH)
-  list(REMOVE_DUPLICATES GMSH_DLOPEN_RPATH_DIRS)
-  foreach(TARGET_NAME gmsh lib shared)
-    if(TARGET ${TARGET_NAME})
-      set_property(TARGET ${TARGET_NAME} APPEND PROPERTY
-                   BUILD_RPATH ${GMSH_DLOPEN_RPATH_DIRS})
-      set_property(TARGET ${TARGET_NAME} APPEND PROPERTY
-                   INSTALL_RPATH ${GMSH_DLOPEN_RPATH_DIRS})
-    endif()
-  endforeach()
-endif()
+target_link_libraries(gmsh ${LINK_LIBRARIES})
 
 # OS specific linker options
 if(WIN32 AND NOT MSVC)
   set(FLAGS "-Wl,--stack,16777216 -Wl,--image-base -Wl,0x10000000 -static")
-  if(HAVE_GUI)
+  if(HAVE_FLTK)
     set(APPFLAGS "${FLAGS} -municode -mwindows")
-    if(HAVE_FLTK AND HAVE_64BIT_SIZE_T)
+    if(HAVE_64BIT_SIZE_T)
       set(APPFLAGS "${APPFLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/Win64Icon.res\"")
-    elseif(HAVE_FLTK)
+    else()
       set(APPFLAGS "${APPFLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/Win32Icon.res\"")
     endif()
   else()
@@ -2222,34 +2063,6 @@ endif()
 if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
   install(FILES ${ONELAB_PY} DESTINATION ${GMSH_BIN})
 endif()
-
-# Desktop integration. This is what lets the desktop tell which application a
-# Gmsh window belongs to: it matches the Wayland app id, or the X11 WM_CLASS
-# against StartupWMClass, against the entries it has installed. Window rules key
-# on that, and a tiling extension typically skips a window it cannot resolve --
-# so without this the windows behave as if they belonged to no application.
-if(HAVE_GUI AND UNIX AND NOT APPLE)
-  set(GMSH_DESKTOP_ENTRY
-      ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/info.gmsh.gmsh.desktop)
-  install(FILES ${GMSH_DESKTOP_ENTRY}
-          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
-  install(FILES
-          ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/info.gmsh.gmsh.metainfo.xml
-          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/utils/icons/gmsh.svg
-          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps)
-
-  # Gmsh is usually run straight from the build tree, where none of the above
-  # has happened: "make desktop-entry" installs a hidden copy of the entry for
-  # the current user, pointing at the binary just built, so that its windows are
-  # recognized too. Deleting the file it writes undoes it.
-  add_custom_target(desktop-entry
-    COMMAND ${CMAKE_COMMAND} -DENTRY=${GMSH_DESKTOP_ENTRY}
-            -DEXECUTABLE=$<TARGET_FILE:gmsh>
-            -P ${CMAKE_CURRENT_SOURCE_DIR}/utils/freedesktop/InstallUserDesktopEntry.cmake
-    COMMENT "Registering ${CMAKE_PROJECT_NAME} with the desktop for this user"
-    VERBATIM)
-endif()
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
   install(FILES ${GMSH_PY} DESTINATION ${GMSH_LIB})
@@ -2429,7 +2242,7 @@ if(UNIX)
   set(CPACK_INSTALL_COMMANDS "rm -rf ${CMAKE_CURRENT_BINARY_DIR}/_CPack_Packages")
 endif()
 
-if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL AND HAVE_GUI)
+if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL AND HAVE_FLTK)
   set(CPACK_GENERATOR Bundle)
   set(CPACK_BUNDLE_NAME Gmsh)
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_app.plist F0)
@@ -2519,7 +2332,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       target_link_libraries(${TEST} shared)
       if(WIN32 AND NOT MSVC)
         set(FLAGS "-static")
-        if(HAVE_GUI)
+        if(HAVE_FLTK)
           set(FLAGS "${FLAGS} -mwindows")
         else()
           set(FLAGS "${FLAGS} -mconsole")
@@ -2528,16 +2341,6 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
-  endif()
-  # What the interfaces may include, as src/gui/Backend.h states it: the
-  # check is a script, and the list of what still breaks the rule is in it.
-  if(HAVE_GUI)
-    find_program(GMSH_PYTHON3 NAMES python3 python)
-    if(GMSH_PYTHON3)
-      add_test(NAME gui_includes COMMAND ${GMSH_PYTHON3}
-               ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/checkGuiIncludes.py
-               ${CMAKE_CURRENT_SOURCE_DIR})
-    endif()
   endif()
   # enable this once we have worked out the path issues on the build machines
   if(0 AND ENABLE_BUILD_DYNAMIC)

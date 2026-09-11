@@ -18,10 +18,12 @@
 #include "drawContext.h"
 #endif
 
-#if defined(HAVE_GUI)
-#include "Gui.h"
-#include "GuiActions.h"
-#include "PixelBuffer.h"
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#include "graphicWindow.h"
+#include "openglWindow.h"
+#include "glImmediate.h"
+#include "visibilityWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
@@ -210,6 +212,152 @@ std::string GetKnownFileFormats(bool onlyMeshFormats)
   }
   return all;
 }
+
+#if defined(HAVE_FLTK)
+// the size of the picture: Print.Width and Print.Height, with the missing one
+// scaled from the window
+static void printSize(int &width, int &height)
+{
+  width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+  height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+  if(CTX::instance()->print.width <= 0 && CTX::instance()->print.height <= 0)
+    return;
+  if(CTX::instance()->print.width <= 0){
+    double w = width * CTX::instance()->print.height / (double)height;
+    width = (int)w;
+    height = CTX::instance()->print.height;
+  }
+  else if(CTX::instance()->print.height <= 0){
+    double h = height * CTX::instance()->print.width / (double)width;
+    height = (int)h;
+    width = CTX::instance()->print.width;
+  }
+  else{
+    width = CTX::instance()->print.width;
+    height = CTX::instance()->print.height;
+  }
+}
+
+// average blocks of k x k pixels of `from' into `to', k times smaller
+static void downsample(PixelBuffer *from, PixelBuffer *to, int k)
+{
+  int nc = to->getNumComp(), w = to->getWidth(), h = to->getHeight();
+  int fw = from->getWidth();
+  const unsigned char *src = (const unsigned char *)from->getPixels();
+  unsigned char *dst = (unsigned char *)to->getPixels();
+  for(int j = 0; j < h; j++)
+    for(int i = 0; i < w; i++)
+      for(int c = 0; c < nc; c++) {
+        unsigned int sum = 0;
+        for(int jj = 0; jj < k; jj++)
+          for(int ii = 0; ii < k; ii++)
+            sum += src[((j * k + jj) * fw + i * k + ii) * nc + c];
+        dst[(j * w + i) * nc + c] = (unsigned char)((sum + k * k / 2) / (k * k));
+      }
+}
+
+static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
+{
+  openglWindow *newg = nullptr;
+
+  // a picture of any size is drawn into a buffer of its own (a window could
+  // not be larger than the screen), and possibly at a multiple of its size,
+  // averaged down
+  int ss = std::max(1, CTX::instance()->print.supersampling);
+  if(type != GL_UNSIGNED_BYTE) ss = 1;
+  if(!CTX::instance()->batch &&
+     (CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0 ||
+      ss > 1)) {
+    int width, height;
+    printSize(width, height);
+    PixelBuffer *big = new PixelBuffer(width * ss, height * ss, format, type);
+    if(FlGui::instance()->getCurrentOpenglWindow()->printTo(
+         width * ss, height * ss, ss, format, type, big->getPixels())) {
+      if(ss == 1) return big;
+      PixelBuffer *small = new PixelBuffer(width, height, format, type);
+      downsample(big, small, ss);
+      delete big;
+      return small;
+    }
+    delete big;
+  }
+
+  if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
+    int width, height;
+    printSize(width, height);
+    // the size is in pixels, the window's in the units of the widget toolkit,
+    // which a high resolution display scales
+    double hr = FlGui::instance()->getCurrentOpenglWindow()
+                  ->getDrawContext()->highResolutionPixelFactor();
+    newg = new openglWindow(100, 100, (int)(width / hr + 0.5),
+                            (int)(height / hr + 0.5));
+    // the same visual (hence pipeline) as the windows on screen
+    newg->mode(openglWindowMode());
+    newg->end();
+    newg->getDrawContext()->copyViewAttributes
+      (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
+    newg->show();
+    openglWindow::setLastHandled(newg);
+    // waiting for the OS to really make the window visible and to call the
+    // draw() function on (some ?) linux; if we do not wait here, the window is
+    // not ready and the picture cannot be generated
+    while(!newg->valid()) Fl::wait();
+  }
+
+  PixelBuffer *buffer;
+  if(newg || !CTX::instance()->print.compositeWindows){
+    GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+    GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+    buffer = new PixelBuffer(width, height, format, type);
+    buffer->fill(CTX::instance()->batch);
+  }
+  else{
+    graphicWindow *g = FlGui::instance()->graph[0];
+    for(std::size_t i = 1; i < FlGui::instance()->graph.size(); i++){
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
+        if(FlGui::instance()->graph[i]->gl[j] ==
+           FlGui::instance()->getCurrentOpenglWindow()){
+          g = FlGui::instance()->graph[i];
+          break;
+        }
+      }
+    }
+    int xmin = 10000000, ymin = 10000000;
+    for(std::size_t i = 0; i < g->gl.size(); i++){
+      xmin = std::min(xmin, g->gl[i]->x());
+      ymin = std::min(ymin, g->gl[i]->y());
+    }
+    int ww = 0, hh = 0;
+    std::vector<PixelBuffer*> buffers;
+    for(std::size_t i = 0; i < g->gl.size(); i++){
+      openglWindow::setLastHandled(g->gl[i]);
+      buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(),
+                               format, type);
+      buffer->fill(CTX::instance()->batch);
+      buffers.push_back(buffer);
+      double fact = g->gl[i]->getDrawContext()->highResolutionPixelFactor();
+      ww = std::max(ww, (int)(fact * (g->gl[i]->x() - xmin)) + g->gl[i]->pixel_w());
+      hh = std::max(hh, (int)(fact * (g->gl[i]->y() - ymin)) + g->gl[i]->pixel_h());
+    }
+    buffer = new PixelBuffer(ww, hh, format, type);
+    for(std::size_t i = 0; i < g->gl.size(); i++){
+      double fact = g->gl[i]->getDrawContext()->highResolutionPixelFactor();
+      buffer->copyPixels(fact * (g->gl[i]->x() - xmin),
+                         hh - g->gl[i]->pixel_h() - fact * (g->gl[i]->y() - ymin),
+                         buffers[i]);
+      delete buffers[i];
+    }
+  }
+
+  if(newg){
+    openglWindow::setLastHandled(nullptr);
+    newg->hide();
+    delete newg;
+  }
+
+  return buffer;
+}
+#endif
 
 #if defined(HAVE_MPEG_ENCODE)
 static void ChangePrintParameter(int frame)
@@ -484,7 +632,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       Msg::Error("No Parasolid CAD data found for XMT export");
     break;
 
-#if defined(HAVE_GUI)
+#if defined(HAVE_FLTK)
   case FORMAT_VIS:
     UnlinkFile(name);
     visibility_save(name);
@@ -496,7 +644,7 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_JPEG:
   case FORMAT_PNG:
     {
-      if(!Gui::available()){
+      if(!FlGui::available()){
         Msg::Error("Creating '%s' requires a graphical interface context",
                    name.c_str());
         break;
@@ -509,7 +657,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
 
-      PixelBuffer *buffer = Gui::createCompositePixelBuffer
+      PixelBuffer *buffer = GetCompositePixelBuffer
         ((format == FORMAT_PNG) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE);
 
       if(format == FORMAT_PPM)
@@ -540,7 +688,7 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_SVG:
   case FORMAT_TIKZ:
     {
-      if(!Gui::available()){
+      if(!FlGui::available()){
         Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
         break;
       }
@@ -553,10 +701,8 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
-      int width, height;
-      Gui::getCurrentPixelSize(width, height);
-      Gui::beginGraphicCapture(width, height,
-                               CTX::instance()->print.compositeWindows);
+      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
       GLint pixel_viewport[4] = {0, 0, width, height};
 
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
@@ -612,7 +758,6 @@ void CreateOutputFile(const std::string &fileName, int format,
         res = gl2psEndPage();
       }
 
-      Gui::endGraphicCapture();
       fclose(fp);
       drawContext::global()->draw();
     }
@@ -620,7 +765,7 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_TEX:
     {
-      if(!Gui::available()){
+      if(!FlGui::available()){
         Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
         break;
       }
@@ -633,9 +778,8 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
-      int width, height;
-      Gui::getCurrentPixelSize(width, height);
-      Gui::beginGraphicCapture(width, height, false);
+      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
       GLfloat width_desired_in_mm = CTX::instance()->print.texWidthInMm;
       GLfloat scaling = 1.;
       if(width_desired_in_mm > 0) {
@@ -659,14 +803,13 @@ void CreateOutputFile(const std::string &fileName, int format,
         CTX::instance()->print.text = oldtext;
         res = gl2psEndPage();
       }
-      Gui::endGraphicCapture();
       fclose(fp);
     }
     break;
 
   case FORMAT_PGF:
     {
-      if(!Gui::available()){
+      if(!FlGui::available()){
         Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
         break;
       }
@@ -687,10 +830,10 @@ void CreateOutputFile(const std::string &fileName, int format,
           }
         }
       }
-      PixelBuffer *buffer = Gui::createCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
-      drawContext *ctx = Gui::getCurrentDrawContext();
-      int width = buffer ? buffer->getWidth() : 0;
-      int height = buffer ? buffer->getHeight() : 0;
+      PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
+      drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
       GLint pixel_viewport[4] = {0, 0, width, height};
       print_pgf(name, num, cnt, buffer, ctx->r, pixel_viewport, ctx->proj, ctx->model);
       delete buffer;
@@ -706,7 +849,7 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_MPEG:
   case FORMAT_MPEG_PREVIEW:
     {
-      if(!Gui::available()){
+      if(!FlGui::available()){
         Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
         break;
       }
@@ -746,7 +889,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         frames.push_back(tmp);
       }
       if(cycle != 2)
-        animationStep(!cycle, 0, false);
+        status_play_manual(!cycle, 0, false);
       for(std::size_t i = 0; i < frames.size(); i++){
         if(cycle == 2)
           ChangePrintParameter(i);
@@ -758,7 +901,7 @@ void CreateOutputFile(const std::string &fileName, int format,
           SleepInSeconds(CTX::instance()->post.animDelay);
         }
         if(cycle != 2)
-          animationStep(!cycle, CTX::instance()->post.animStep, false);
+          status_play_manual(!cycle, CTX::instance()->post.animStep, false);
       }
       if(fp){
         int repeat = (int)(CTX::instance()->post.animDelay * 30);

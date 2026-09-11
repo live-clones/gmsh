@@ -10,6 +10,10 @@
 #include "OS.h"
 #include "GamePad.h"
 
+#if defined(HAVE_FLTK)
+#include <FL/Fl.H>
+#endif
+
 CTX::CTX()
 {
   // Warning: this does not initialize all the variables; for all the options
@@ -68,11 +72,11 @@ void CTX::init()
 
   geom.autoExtrude = 0; // FIXME: temporary for auto-extrude testing
 
-  // default font of the graphic window, before InitOptions() resolves
-  // General.GraphicsFont through drawContextGlobal::getFontEnum(); 0 is
-  // FL_HELVETICA in the FLTK build and the first font of the atlas in the
-  // ImGui one
-  glFontEnum = 0;
+#if defined(HAVE_FLTK)
+  glFontEnum = FL_HELVETICA;
+#else
+  glFontEnum = -1;
+#endif
   forcedBBox = 0;
   hideUnselected = 0;
   numWindows = numTiles = 1;

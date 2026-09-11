@@ -15,50 +15,12 @@
 #include <FL/Fl_Tile.H>
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Progress.H>
-
-#include "Bar.h"
-#include "Backend.h"
-#include "menuFltk.h"
-
-// One button of the status bar, bound to what src/common/GuiStatus.h says it
-// is. It reads the description at every draw rather than being told, so a
-// button that says whether the mouse picks cannot be left showing the wrong
-// thing by an option changed from a script.
-class statusButtonFltk : public Fl_Button {
-public:
-  Ui::BarButton what;
-  statusButtonFltk(int x, int y, int w, int h) : Fl_Button(x, y, w, h) {}
-  // the label it carries now: the play button says pause while it plays
-  std::string shown() const
-  {
-    bool on = what.on && what.on();
-    const std::string &glyph = (on && what.glyphOn.size()) ? what.glyphOn :
-                                                             what.glyph;
-    if(glyph.size()) return "@-1" + glyph;
-    return (on && what.labelOn.size()) ? what.labelOn : what.label;
-  }
-  void refresh();
-  void draw() override
-  {
-    refresh();
-    Fl_Button::draw();
-  }
-  int handle(int event) override
-  {
-    if(event == FL_PUSH && what.menu) {
-      fltkMenuPopup(what.menu(), Fl::event_x(), Fl::event_y(), what.label);
-      return 1;
-    }
-    return Fl_Button::handle(event);
-  }
-};
 #if defined(__APPLE__)
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 #include <FL/Fl_Menu_Bar.H>
 
-class sceneViewFltk;
-class sceneView;
+class openglWindow;
 class onelabGroup;
 class messageBrowser;
 
@@ -74,20 +36,13 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  // the buttons of the status bar, in the order src/common/GuiStatus.h
-  // describes them
-  std::vector<statusButtonFltk *> _butt;
+  Fl_Button *_butt[12];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;
-  // What is about to be forgotten -- the width of a tree being folded away,
-  // the height of a console being hidden, where a tree stood as a window of
-  // its own -- is said to the host, which keeps it with the settings; it is
-  // read back from there when the thing is shown again.
-  void _forgetting(const Ui::Backend::Layout &what);
 
 public:
-  std::vector<sceneViewFltk *> gl;
+  std::vector<openglWindow *> gl;
 
 public:
   graphicWindow(bool main = true, int numTiles = 1, bool detachedMenu = false);
@@ -96,7 +51,7 @@ public:
   Fl_Window *getMenuWindow() { return _menuwin; }
   onelabGroup *getMenu() { return _onelab; }
   Fl_Progress *getProgress() { return _label; }
-
+  Fl_Button *getSelectionButton() { return _butt[9]; }
   messageBrowser *getMessageBrowser() { return _browser; }
   std::vector<std::string> &getMessages() { return _messages; }
   int getMinWidth() { return _minWidth; }
@@ -114,8 +69,6 @@ public:
   int getMenuHeight();
   int getMenuPositionX();
   int getMenuPositionY();
-  // where everything ended up, for the option file
-  Ui::Backend::Layout layout();
   void showMenu();
   void hideMenu();
   void showHideMenu();
@@ -123,10 +76,9 @@ public:
   void attachMenu();
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
-  bool split(sceneViewFltk *g, char how, double ratio);
-  // bring the buttons of the status bar up to date: what is greyed out, what
-  // is pressed, what is worth looking at
-  void refreshStatusButtons();
+  bool split(openglWindow *g, char how, double ratio);
+  void setAnimButtons(int mode);
+  void checkAnimButtons();
   int getMessageHeight();
   void setMessageHeight(int h);
   void showMessages();
@@ -134,9 +86,7 @@ public:
   void showHideMessages();
   void addMessage(const char *msg);
   void clearMessages();
-  // what the browser holds, in the order it holds it: writing it to a file is
-  // done once, in messagesSave()
-  void messageLines(std::vector<std::string> &lines);
+  void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
   void setMessageFontSize(int size);
   void changeMessageFontSize(int incr);
@@ -144,20 +94,25 @@ public:
 };
 
 void file_quit_cb(Fl_Widget *w, void *data);
+void file_watch_cb(Fl_Widget *w, void *data);
+void mod_geometry_cb(Fl_Widget *w, void *data);
+void mod_mesh_cb(Fl_Widget *w, void *data);
+void mod_solver_cb(Fl_Widget *w, void *data);
+void mod_post_cb(Fl_Widget *w, void *data);
+void mod_back_cb(Fl_Widget *w, void *data);
+void mod_forward_cb(Fl_Widget *w, void *data);
+void geometry_reload_cb(Fl_Widget *w, void *data);
+void onelab_reload_cb(Fl_Widget *w, void *data);
+void mesh_1d_cb(Fl_Widget *w, void *data);
+void mesh_2d_cb(Fl_Widget *w, void *data);
+void mesh_3d_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
-// what Gui::orientViews() and Gui::setMouseSelection() come down to here: the
-// views the status bar acts upon, and the pointers it changes, are the
-// interface's
-void fltkOrientViews(const std::string &what, bool reverse, bool sync);
-void fltkSetMouseSelection(bool on);
-// the scenes of the window holding a view, or the view alone
-std::vector<sceneView *> fltkViewsBeside(sceneViewFltk *view);
+void status_xyz1p_cb(Fl_Widget *w, void *data);
+void status_options_cb(Fl_Widget *w, void *data);
+void status_play_manual(int time, int incr, bool redraw = true);
+void quick_access_cb(Fl_Widget *w, void *data);
+void show_hide_message_cb(Fl_Widget *w, void *data);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
-
-// The actions the shared menu description names: the file chooser and the
-// windows are the one part of a menu entry that is genuinely toolkit business.
-// false for an action it does not know
-bool fltkWindowAction(const std::string &what);
 
 #endif

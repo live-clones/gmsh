@@ -7,7 +7,7 @@
 
 #include "drawContextFltkStringTexture.h"
 #include "FlGui.h"
-#include "sceneViewFltk.h"
+#include "openglWindow.h"
 #include "glImmediate.h"
 #include "glShader.h"
 #include <algorithm>
@@ -54,7 +54,7 @@ public:
     GLint vp[4];
     glGetIntegerv(GL_VIEWPORT, vp);
     double f = 1.;
-    sceneViewFltk *gl = FlGui::available() ?
+    openglWindow *gl = FlGui::available() ?
                          FlGui::instance()->getCurrentOpenglWindow() :
                          nullptr;
     if(gl)

@@ -45,8 +45,10 @@
 #include <slepc.h>
 #endif
 
-#if defined(HAVE_GUI)
-#include "Gui.h"
+#if defined(HAVE_FLTK)
+#include <FL/fl_ask.H>
+#include "FlGui.h"
+#include "extraDialogs.h"
 #endif
 
 #if defined(HAVE_OCC)
@@ -332,10 +334,10 @@ void Msg::StopProgressMeter()
 {
   _progressMeterCurrent = -1;
   _progressMeterTotal = 0;
-#if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::setProgress("", 0, 0, 1);
-    Gui::check(true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    FlGui::instance()->setProgress("", 0, 0, 1);
+    FlGui::check(true);
   }
 #endif
 }
@@ -516,11 +518,14 @@ void Msg::Error(const char *fmt, ...)
     if(_logFile) fprintf(_logFile, "Error   : %s\n", str);
     if(_callback) (*_callback)("Error", str);
     if(_client) _client->Error(str);
-#if defined(HAVE_GUI)
-    if(Gui::available()){
-      Gui::addMessage(std::string("Error   : ") + str, Gui::MessageError);
-      Gui::setLastStatus(Gui::StatusColorError);
-      Gui::check(true);
+#if defined(HAVE_FLTK)
+    if(FlGui::available()){
+      std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
+        + "Error   : " + str;
+      FlGui::instance()->addMessage(tmp.c_str());
+      FlGui::instance()->setLastStatus
+        (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
+      FlGui::check(true);
     }
 #endif
     if(CTX::instance()->terminal){
@@ -537,8 +542,8 @@ void Msg::Error(const char *fmt, ...)
   }
 
   if(CTX::instance()->abortOnError == 2) {
-#if defined(HAVE_GUI)
-    if(Gui::available()) return; // don't throw if GUI is running
+#if defined(HAVE_FLTK)
+    if(FlGui::available()) return; // don't throw if GUI is running
 #endif
     throw std::runtime_error(_lastError);
   }
@@ -570,12 +575,14 @@ void Msg::Warning(const char *fmt, ...)
   if(_callback) (*_callback)("Warning", str);
   if(_client) _client->Warning(str);
 
-#if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::addMessage(std::string("Warning : ") + str, Gui::MessageWarning);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
+      + "Warning : " + str;
+    FlGui::instance()->addMessage(tmp.c_str());
     if(_firstWarning.empty()) _firstWarning = str;
-    Gui::setLastStatus();
-    Gui::check(true);
+    FlGui::instance()->setLastStatus();
+    FlGui::check(true);
   }
 #endif
 
@@ -623,10 +630,11 @@ void Msg::Info(const char *fmt, ...)
   if(_callback) (*_callback)("Info", str);
   if(_client) _client->Info(str);
 
-#if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::addMessage(std::string("Info    : ") + str, Gui::MessageInfo);
-    Gui::check(true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    std::string tmp = std::string("Info    : ") + str;
+    FlGui::instance()->addMessage(tmp.c_str());
+    FlGui::check(true);
   }
 #endif
 
@@ -666,10 +674,12 @@ void Msg::Direct(const char *fmt, ...)
   if(_callback) (*_callback)("Direct", str);
   if(_client) _client->Info(str);
 
-#if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::addMessage(str, Gui::MessageDirect);
-    Gui::check(true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
+      + str;
+    FlGui::instance()->addMessage(tmp.c_str());
+    FlGui::check(true);
   }
 #endif
 
@@ -721,13 +731,14 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   if(log && _callback) (*_callback)("Info", str);
   if(log && _client) _client->Info(str);
 
-#if defined(HAVE_GUI)
-  if(Gui::available()){
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
     if(!log || GetVerbosity() > 4)
-      Gui::setStatus(str);
+      FlGui::instance()->setStatus(str);
     if(log){
-      Gui::addMessage(std::string("Info    : ") + str, Gui::MessageInfo);
-      Gui::check(true);
+      std::string tmp = std::string("Info    : ") + str;
+      FlGui::instance()->addMessage(tmp.c_str());
+      FlGui::check(true);
     }
   }
 #endif
@@ -743,7 +754,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 
 void Msg::StatusGl(const char *fmt, ...)
 {
-#if defined(HAVE_GUI)
+#if defined(HAVE_FLTK)
   if(GetCommRank()) return;
   char str[5000];
   va_list args;
@@ -752,16 +763,16 @@ void Msg::StatusGl(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(Gui::available())
-    Gui::setStatus(str, true);
+  if(FlGui::available())
+    FlGui::instance()->setStatus(str, true);
 #endif
 }
 
 void Msg::SetWindowTitle(const std::string &title)
 {
-#if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::setGraphicTitle(title);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    FlGui::instance()->setGraphicTitle(title);
   }
 #endif
 }
@@ -781,9 +792,10 @@ void Msg::Debug(const char *fmt, ...)
   if(_callback) (*_callback)("Debug", str);
   if(_client) _client->Info(str);
 
-#if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::addMessage(std::string("Debug   : ") + str, Gui::MessageDebug);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    std::string tmp = std::string("Debug   : ") + str;
+    FlGui::instance()->addMessage(tmp.c_str());
   }
 #endif
 
@@ -821,10 +833,10 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 
     if(_client) _client->Progress(str2);
 
-#if defined(HAVE_GUI)
-    if(Gui::available() && GetVerbosity() > 4){
-      Gui::setProgress(str, (n > N - 1) ? 0 : n, 0, N);
-      Gui::check(true);
+#if defined(HAVE_FLTK)
+    if(FlGui::available() && GetVerbosity() > 4){
+      FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
+      FlGui::check(true);
     }
 #endif
     if(log && _logFile) fprintf(_logFile, "%s\n", str2);
@@ -867,8 +879,8 @@ void Msg::ResetErrorCounter()
 {
   _warningCount = 0; _errorCount = 0;
   _firstWarning.clear(); _firstError.clear(); _lastError.clear();
-#if defined(HAVE_GUI)
-  if(Gui::available()) Gui::setLastStatus();
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->setLastStatus();
 #endif
 }
 
@@ -884,16 +896,18 @@ void Msg::PrintErrorCounter(const char *title)
   sprintf(warn, "%5d warning%s", GetWarningCount(), GetWarningCount() == 1 ? "" : "s");
   sprintf(err, "%5d error%s", GetErrorCount(), GetErrorCount() == 1 ? "" : "s");
 
-#if defined(HAVE_GUI)
-  if(Gui::available()){
-    int level = GetErrorCount() ? Gui::MessageError : Gui::MessageWarning;
-    Gui::addMessage(prefix + line, level);
-    Gui::addMessage(prefix + title, level);
-    Gui::addMessage(prefix + warn, level);
-    Gui::addMessage(prefix + err, level);
-    Gui::addMessage(prefix + help, level);
-    Gui::addMessage(prefix + line, level);
-    if(GetErrorCount()) Gui::beep();
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    std::string col = GetErrorCount() ?
+      std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.") :
+      std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.");
+    FlGui::instance()->addMessage((col + prefix + line).c_str());
+    FlGui::instance()->addMessage((col + prefix + title).c_str());
+    FlGui::instance()->addMessage((col + prefix + warn).c_str());
+    FlGui::instance()->addMessage((col + prefix + err).c_str());
+    FlGui::instance()->addMessage((col + prefix + help).c_str());
+    FlGui::instance()->addMessage((col + prefix + line).c_str());
+    if(GetErrorCount()) fl_beep();
   }
 #endif
 
@@ -917,15 +931,15 @@ double Msg::GetValue(const char *text, double defaultval)
   // with interactive stuff
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
-#if defined(HAVE_GUI)
-  if(Gui::available()){
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
     char defaultstr[256];
     sprintf(defaultstr, "%.16g", defaultval);
-    std::string val = defaultstr;
-    if(!Gui::inputDialog(text, val))
+    const char *ret = fl_input(text, defaultstr, "");
+    if(!ret)
       return defaultval;
     else
-      return atof(val.c_str());
+      return atof(ret);
   }
 #endif
 
@@ -944,13 +958,13 @@ std::string Msg::GetString(const char *text, const std::string &defaultval)
   // with interactive stuff
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
-#if defined(HAVE_GUI)
-  if(Gui::available()){
-    std::string val = defaultval;
-    if(!Gui::inputDialog(text, val))
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    const char *ret = fl_input(text, defaultval.c_str(), "");
+    if(!ret)
       return defaultval;
     else
-      return val;
+      return std::string(ret);
   }
 #endif
 
@@ -970,10 +984,9 @@ int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
   // with interactive stuff
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
-#if defined(HAVE_GUI)
-  if(Gui::available())
-    return Gui::questionDialog(question, zero ? zero : "", one ? one : "",
-                               two ? two : "");
+#if defined(HAVE_FLTK)
+  if(FlGui::available())
+    return fl_choice(question, zero, one, two, "");
 #endif
 
   if(two)
@@ -1587,10 +1600,10 @@ void Msg::ImportPhysicalGroupsInOnelab()
       _onelabClient->clear(tmp);
     }
 
-#if defined(HAVE_GUI)
-    if(Gui::available()){
-      Gui::resetVisibility();
-      Gui::rebuildTree(false);
+#if defined(HAVE_FLTK)
+    if(FlGui::available()){
+      FlGui::instance()->resetVisibility();
+      FlGui::instance()->rebuildTree(false);
     }
 #endif
   }

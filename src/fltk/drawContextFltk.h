@@ -17,10 +17,10 @@ typedef unsigned long intptr_t;
 #include <FL/gl.h>
 #include "GmshMessage.h"
 #include "FlGui.h"
-#include "graphicsFonts.h"
 #include "drawContext.h"
 #include "graphicWindow.h"
-#include "sceneViewFltk.h"
+#include "optionWindow.h"
+#include "openglWindow.h"
 #include "Context.h"
 
 class drawContextFltk : public drawContextGlobal {
@@ -51,7 +51,7 @@ public:
   void drawCurrentOpenglWindow(bool make_current)
   {
     if(!FlGui::available()) return;
-    sceneViewFltk *gl = FlGui::instance()->getCurrentOpenglWindow();
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(make_current) gl->make_current();
     gl->redraw();
     glFlush();
@@ -80,7 +80,6 @@ public:
     if(index >= 0 && index < NUM_FONTS) return menu_font_names[index].label();
     return "Helvetica";
   }
-  int getNumFonts() { return NUM_FONTS; }
   int getFontSize()
   {
     if(CTX::instance()->fontSize > 0) { return CTX::instance()->fontSize; }
