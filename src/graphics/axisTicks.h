@@ -40,9 +40,8 @@ void axisThinTicks(std::vector<axisTick> &ticks, double length, double fontH,
 // added; `divisions', when positive, says about how many labels are wanted.
 // Otherwise they are `divisions' equal steps printed with that format, as
 // many as fit. `multiplier' comes back with the power of ten they share.
-// `labelEnds' asks for the ends of the range themselves to be labelled,
-// which a colour scale wants and a graph, whose frame shows where the axis
-// stops, does not.
+// `labelEnds' asks for the ends of the range themselves to be labelled, as
+// the round values alone never say what the range is.
 void makeAxisTicks(double min, double max, double length, double fontH,
                    bool horizontal, const std::string &format, int divisions,
                    bool labelEnds, std::vector<axisTick> &ticks,

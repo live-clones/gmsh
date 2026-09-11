@@ -339,12 +339,14 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
     return;
   }
 
+  // the ends of the ranges are labelled as on a colour scale: the frame says
+  // where an axis stops, only the number says at what value
   if(pl.xaxis && opt->axesTics[0] > 0)
     makeAxisTicks(xmin, xmax, width, l.fontH, true, opt->axesFormat[0],
-                  (int)opt->axesTics[0], false, l.xt, l.xmult);
+                  (int)opt->axesTics[0], true, l.xt, l.xmult);
   if(pl.yaxis && opt->axesTics[1] > 0)
     makeAxisTicks(ymin, ymax, height, l.fontH, false, opt->axesFormat[1],
-                  (int)opt->axesTics[1], false, l.yt, l.ymult);
+                  (int)opt->axesTics[1], true, l.yt, l.ymult);
 
   // the tic marks stick out of the frame, on both sides of a box
   l.left = l.bottom = l.out;
@@ -354,7 +356,7 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
   l.multX = l.numX + 1.2 * l.fontH;
   // the power of ten of the Y axis goes over the frame, clear of the number
   // written at the top of it
-  l.multY = l.fontH - 0.3 * l.fontA;
+  l.multY = l.fontH - 0.2 * l.fontA;
   l.titleY = (l.ymult.size() ? l.multY + l.fontA : 0.25 * l.fontH) + tic;
   l.titleX = (l.xmult.size() ? l.multX : l.numX) + tic + l.titleA;
 
@@ -371,11 +373,17 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
         l.right = std::max(l.right, pl.yshift + need);
       if(l.ymult.size()) l.top = std::max(l.top, l.multY + l.fontA);
     }
-    // the numbers of the X axis stick out at both ends of the frame
+    // the numbers of the X axis stick out at both ends of the frame, and
+    // those of the Y axis over and under its corners
     for(std::size_t i = 0; i < l.xt.size(); i++) {
       double w = 0.5 * stringWidth(l.xt[i].label);
       l.left = std::max(l.left, w - l.xt[i].t * width);
       l.right = std::max(l.right, w - (1. - l.xt[i].t) * width);
+    }
+    for(std::size_t i = 0; i < l.yt.size(); i++) {
+      l.top = std::max(l.top, (l.yt[i].t - 1.) * height + 2. * l.fontA / 3.);
+      l.bottom = std::max(l.bottom, -l.yt[i].t * height + l.fontH -
+                                      2. * l.fontA / 3.);
     }
     if(l.xt.size())
       l.bottom = std::max(l.bottom, (l.xmult.size() ? l.multX : l.numX) +
@@ -826,6 +834,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   // the margins are never too small for the labels they end up with
   std::vector<graphPlace> place(graphs.size());
   double ml = 0., mr = 0., mt = 0., mb = 0.;
+  int nw = 1, nh = 1; // as many graphs side by side, and one over the other
   if(!inModelCoordinates) {
     int nb[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     int owner[12] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -868,6 +877,29 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
       mr = std::max(mr, l.right);
       mt = std::max(mt, l.top);
       mb = std::max(mb, l.bottom);
+      if(a == 1)
+        nw = nh = (graphs.size() > 2) ? 2 : 1;
+      else {
+        if(a <= 5 || a == 8 || a == 9) nw = 2;
+        if(a <= 5 || a == 6 || a == 7) nh = std::max(nh, 2);
+        if(a == 11) nh = 3;
+      }
+    }
+    // text wider than the window would leave nothing to draw in: the graphs
+    // keep two thirds of it, whatever their labels measure
+    double needw = nw * (ml + mr) + (nw + 1) * mx;
+    if(needw > 0.67 * winw) {
+      double f = 0.67 * winw / needw;
+      ml *= f;
+      mr *= f;
+      mx *= f;
+    }
+    double needh = nh * (mt + mb) + (nh + 1) * my;
+    if(needh > 0.67 * winh) {
+      double f = 0.67 * winh / needh;
+      mt *= f;
+      mb *= f;
+      my *= f;
     }
   }
 
