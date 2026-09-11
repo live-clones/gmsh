@@ -857,11 +857,11 @@ public:
       gl2psLineWidth((float)(CTX::instance()->lineWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       if(!opt->axesAutoPosition)
-        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat,
+        _ctx->drawAxes(opt->axes, opt->axesTicks, opt->axesFormat,
                        opt->axesLabel, opt->axesPosition, opt->axesMikado,
                        opt->axesPosition);
       else if(!opt->tmpBBox.empty())
-        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat,
+        _ctx->drawAxes(opt->axes, opt->axesTicks, opt->axesFormat,
                        opt->axesLabel, opt->tmpBBox, opt->axesMikado,
                        opt->tmpBBox);
     }

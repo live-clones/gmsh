@@ -142,7 +142,7 @@ static void haloString(drawContext *ctx, const std::string &s, double x,
 }
 
 static void drawScaleBar(PView *p, double xmin, double ymin, double width,
-                         double height, double tic, int horizontal,
+                         double height, double tick, int horizontal,
                          const std::vector<scaleTick> &ticks)
 {
   PViewOptions *opt = p->getOptions();
@@ -242,12 +242,12 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
     if(horizontal) {
       double x = xmin + lineAt(alongBar(opt, ticks[i].t, width));
       gmshVertex2d(x, ymin + height);
-      gmshVertex2d(x, ymin + height + 0.4 * tic);
+      gmshVertex2d(x, ymin + height + 0.4 * tick);
     }
     else {
       double y = ymin + lineAt(alongBar(opt, ticks[i].t, height));
       gmshVertex2d(xmin + width, y);
-      gmshVertex2d(xmin + width + 0.4 * tic, y);
+      gmshVertex2d(xmin + width + 0.4 * tick, y);
     }
   }
   gmshEnd();
@@ -255,7 +255,7 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
 
 static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
                             double ymin, double width, double height,
-                            double tic, int horizontal,
+                            double tick, int horizontal,
                             const std::vector<scaleTick> &ticks)
 {
   PViewOptions *opt = p->getOptions();
@@ -270,9 +270,9 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
   for(std::size_t i = 0; i < ticks.size(); i++) {
     if(horizontal)
       haloString(ctx, ticks[i].label, xmin + alongBar(opt, ticks[i].t, width),
-                 ymin + height + tic, 1); // adjust for compactness
+                 ymin + height + tick, 1); // adjust for compactness
     else
-      haloString(ctx, ticks[i].label, xmin + width + 0.8 * tic,
+      haloString(ctx, ticks[i].label, xmin + width + 0.8 * tick,
                  ymin + alongBar(opt, ticks[i].t, height) - font_a / 3., 0);
   }
 }
@@ -281,7 +281,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
 // its own what the time or step is, when there is one, with the power of
 // ten the labels share at the end of that line
 static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
-                           double width, double height, double tic,
+                           double width, double height, double tick,
                            int horizontal, const std::string &multiplier)
 {
   PViewOptions *opt = p->getOptions();
@@ -336,7 +336,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   std::string name = data->getName();
 
   if(horizontal) {
-    double y = ymin + height + tic + 1.3 * font_h; // adjust for compactness
+    double y = ymin + height + tick + 1.3 * font_h; // adjust for compactness
     if(sub[0] || multiplier.size()) {
       if(sub[0]) haloString(ctx, sub, xmin + width / 2., y, 1);
       if(multiplier.size()) haloString(ctx, multiplier, xmin + width, y, 2);
@@ -350,14 +350,14 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
     if(sub[0])
       haloString(ctx, sub, xmin, y - 1.2 * font_h, 0); // adjust for compactness
     if(multiplier.size())
-      haloString(ctx, multiplier, xmin + width + 0.8 * tic,
+      haloString(ctx, multiplier, xmin + width + 0.8 * tick,
                  ymin + height + 1.2 * font_h,
                  0);
   }
 }
 
 static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
-                      double width, double height, double tic, int horizontal)
+                      double width, double height, double tick, int horizontal)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -389,9 +389,9 @@ static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
   scaleTicks(opt, opt->tmpMin, opt->tmpMax, horizontal ? width : height,
              font_h, horizontal, ticks, multiplier);
 
-  drawScaleBar(p, xmin, ymin, width, height, tic, horizontal, ticks);
-  drawScaleValues(ctx, p, xmin, ymin, width, height, tic, horizontal, ticks);
-  drawScaleLabel(ctx, p, xmin, ymin, width, height, tic, horizontal,
+  drawScaleBar(p, xmin, ymin, width, height, tick, horizontal, ticks);
+  drawScaleValues(ctx, p, xmin, ymin, width, height, tick, horizontal, ticks);
+  drawScaleLabel(ctx, p, xmin, ymin, width, height, tick, horizontal,
                  multiplier);
 }
 
@@ -418,7 +418,7 @@ void drawContext::drawScales()
     maxw = std::max(maxw, drawContext::global()->getStringWidth(label));
   }
 
-  const double tic = CTX::instance()->glFontSize; // used to be 10
+  const double tick = CTX::instance()->glFontSize; // used to be 10
   const double bar_size = CTX::instance()->glFontSize; // used to be 16
   double width = 0., width_prev = 0., width_total = 0.;
   // what a horizontal scale takes above its bar: the labels, the line of
@@ -429,7 +429,7 @@ void drawContext::drawScales()
   double title_h = drawContext::global()->getStringHeight();
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
-  double above = tic + 1.3 * font_h + 2.1 * title_h; // adjust for compactness
+  double above = tick + 1.3 * font_h + 2.1 * title_h; // adjust for compactness
   // and a vertical one below its bar (the title and that line) and above
   // it (the top label and the power of ten)
   double belowV = 3.5 * font_h, aboveV = 2.2 * font_h; // adjust for compactness
@@ -445,7 +445,7 @@ void drawContext::drawScales()
       int c = fix2dCoordinates(&x, &y);
       if(c & 1) x -= w / 2.;
       if(c & 2) y -= h / 2.;
-      drawScale(this, p, x, y, w, h, tic,
+      drawScale(this, p, x, y, w, h, tick,
                 CTX::instance()->post.horizontalScales);
     }
     else if(CTX::instance()->post.horizontalScales) {
@@ -456,7 +456,7 @@ void drawContext::drawScales()
         double vw = viewport[2] - viewport[0], vh = viewport[3] - viewport[1];
         double w = vw / 2., h = std::max(bar_size, 0.025 * std::min(vw, vh));
         double x = xc - w / 2., y = viewport[1] + ysep;
-        drawScale(this, p, x, y, w, h, tic, 1);
+        drawScale(this, p, x, y, w, h, tick, 1);
       }
       else {
         double xsep = maxw / 4. + (viewport[2] - viewport[0]) / 10.;
@@ -465,7 +465,7 @@ void drawContext::drawScales()
         double h = bar_size;
         double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
         double y = viewport[1] + ysep + (i / 2) * (bar_size + above + ysep);
-        drawScale(this, p, x, y, w, h, tic, 1);
+        drawScale(this, p, x, y, w, h, tick, 1);
       }
     }
     else {
@@ -478,7 +478,7 @@ void drawContext::drawScales()
         double w = std::max(bar_size, 0.025 * std::min(vw, vh));
         double h = vh - 2 * ysep - dy;
         double x = viewport[0] + xsep, y = viewport[1] + ysep + dy;
-        drawScale(this, p, x, y, w, h, tic, 0);
+        drawScale(this, p, x, y, w, h, tick, 0);
       }
       else {
         double ysep = (viewport[3] - viewport[1]) / 15.;
@@ -488,12 +488,12 @@ void drawContext::drawScales()
         double x = viewport[0] + xsep + width_total + (i / 2) * xsep;
         double y = viewport[1] + ysep + belowV +
                    (1 - i % 2) * (h + aboveV + ysep + belowV);
-        drawScale(this, p, x, y, w, h, tic, 0);
+        drawScale(this, p, x, y, w, h, tick, 0);
       }
       // compute width
       width_prev = width;
       sprintf(label, opt->getFormat().c_str(), -M_PI * 1.e-4);
-      width = bar_size + tic + drawContext::global()->getStringWidth(label);
+      width = bar_size + tick + drawContext::global()->getStringWidth(label);
       if(opt->showTime) {
         char tmp[256];
         sprintf(tmp, opt->getFormat().c_str(), data->getTime(opt->timeStep));

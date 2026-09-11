@@ -18,29 +18,29 @@
 
 #define SQU(a) ((a) * (a))
 
-static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
+static int drawTicks(drawContext *ctx, int comp, double n, std::string &format,
                     std::string &label, double p1[3], double p2[3],
                     double perp[3], int mikado, double pixelfact,
                     double value_p1[3], double value_p2[3])
 {
-  // draws n tic marks (in direction perp) and labels along the line p1->p2
+  // draws n tick marks (in direction perp) and labels along the line p1->p2
 
   double t[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
   double l = norme(t);
   double value_t[3] = {value_p2[0] - value_p1[0], value_p2[1] - value_p1[1],
                        value_p2[2] - value_p1[2]};
   double value_l = norme(value_t);
-  double w = 10 * pixelfact; // tic marks are 10 pixels long
+  double w = 10 * pixelfact; // tick marks are 10 pixels long
   double w2 = w * 1.25; // distance to labels
 
   // draw label at the end of the axis
   ctx->drawString(label, p2[0] + t[0] * w2, p2[1] + t[1] * w2,
                   p2[2] + t[2] * w2);
 
-  // return number of tics in special cases
+  // return number of ticks in special cases
   if(n < 2.) return 0;
   // with no format of the user's, the automatic one (View.AxesTics 0 is
-  // what hides the tics)
+  // what hides the ticks)
   std::string fmt = format.empty() ? "%.3g" : format;
 
   // select perp direction automatically if it is not provided
@@ -54,7 +54,7 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
     }
   }
 
-  // reduce number of tics depending on font size and length of axis on screen
+  // reduce number of ticks depending on font size and length of axis on screen
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   char tmp[256];
@@ -72,7 +72,7 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
       return 0;
   }
 
-  // draw n tics
+  // draw n ticks
   double step = l / (double)(n - 1);
   double value_step = value_l / (double)(n - 1);
 
@@ -93,7 +93,7 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
     gmshVertex3d(q[0], q[1], q[2]);
     gmshEnd();
 
-    // draw tic labels
+    // draw tick labels
     if(comp < 0) // display the length value (ruler-mode, starting at 0)
       sprintf(tmp, fmt.c_str(), value_d);
     else // display the coordinate value
@@ -178,7 +178,7 @@ void drawContext::drawAxis(double xmin, double ymin, double zmin, double xmax,
   }
 }
 
-void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
+void drawContext::drawAxes(int mode, double ticks[3], std::string format[3],
                            std::string label[3], double bb[6], int mikado,
                            double value_bb[6])
 {
@@ -219,9 +219,9 @@ void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
       perp[2] = -dir[1];
     }
     double value_end[3] = {value_xmax, value_ymax, value_zmax};
-    drawTics(this, -1, tics[0], format[0], label[0], orig, end, perp, mikado,
+    drawTicks(this, -1, ticks[0], format[0], label[0], orig, end, perp, mikado,
              pixelfact, value_orig, value_end);
-    drawAxis(xmin, ymin, zmin, xmax, ymax, zmax, tics[0], mikado);
+    drawAxis(xmin, ymin, zmin, xmax, ymax, zmax, ticks[0], mikado);
     return;
   }
   double xx[3] = {xmax, ymin, zmin};
@@ -235,15 +235,15 @@ void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
   double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
 
   int nx = (xmin != xmax) ?
-             drawTics(this, 0, tics[0], format[0], label[0], orig, xx, dxm,
+             drawTicks(this, 0, ticks[0], format[0], label[0], orig, xx, dxm,
                       mikado, pixelfact, value_orig, value_xx) :
              0;
   int ny = (ymin != ymax) ?
-             drawTics(this, 1, tics[1], format[1], label[1], orig, yy, dym,
+             drawTicks(this, 1, ticks[1], format[1], label[1], orig, yy, dym,
                       mikado, pixelfact, value_orig, value_yy) :
              0;
   int nz = (zmin != zmax) ?
-             drawTics(this, 2, tics[2], format[2], label[2], orig, zz, dzm,
+             drawTicks(this, 2, ticks[2], format[2], label[2], orig, zz, dzm,
                       mikado, pixelfact, value_orig, value_zz) :
              0;
 
@@ -285,7 +285,7 @@ void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
   }
 }
 
-void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
+void drawContext::drawAxes(int mode, double ticks[3], std::string format[3],
                            std::string label[3], SBoundingBox3d &bb, int mikado,
                            SBoundingBox3d &value_bb)
 {
@@ -294,7 +294,7 @@ void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
   double value_bbox[6] = {value_bb.min().x(), value_bb.max().x(),
                           value_bb.min().y(), value_bb.max().y(),
                           value_bb.min().z(), value_bb.max().z()};
-  drawAxes(mode, tics, format, label, bbox, mikado, value_bbox);
+  drawAxes(mode, ticks, format, label, bbox, mikado, value_bbox);
 }
 
 void drawContext::drawAxes()
@@ -334,7 +334,7 @@ void drawContext::drawAxes()
     gl2psLineWidth((float)(CTX::instance()->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));
     if(!CTX::instance()->axesAutoPosition) {
-      drawAxes(CTX::instance()->axes, CTX::instance()->axesTics,
+      drawAxes(CTX::instance()->axes, CTX::instance()->axesTicks,
                CTX::instance()->axesFormat, CTX::instance()->axesLabel,
                CTX::instance()->axesPosition, CTX::instance()->axesMikado,
                CTX::instance()->axesForceValue ? CTX::instance()->axesValue :
@@ -344,7 +344,7 @@ void drawContext::drawAxes()
       double bb[6] = {CTX::instance()->min[0], CTX::instance()->max[0],
                       CTX::instance()->min[1], CTX::instance()->max[1],
                       CTX::instance()->min[2], CTX::instance()->max[2]};
-      drawAxes(CTX::instance()->axes, CTX::instance()->axesTics,
+      drawAxes(CTX::instance()->axes, CTX::instance()->axesTicks,
                CTX::instance()->axesFormat, CTX::instance()->axesLabel, bb,
                CTX::instance()->axesMikado,
                CTX::instance()->axesForceValue ? CTX::instance()->axesValue :

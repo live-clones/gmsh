@@ -303,7 +303,7 @@ struct graphLayout {
   std::vector<axisTick> xt, yt; // where the axes are labelled
   std::string xmult, ymult; // the power of ten their numbers share
   double left = 0., right = 0., top = 0., bottom = 0.; // around the frame
-  double out = 0., gap = 0.; // tic out of the frame, tic to its number
+  double out = 0., gap = 0.; // tick out of the frame, tick to its number
   double fontH = 1., fontA = 1., titleH = 1., titleA = 1.;
   double numX = 0., multX = 0., titleX = 0.; // baselines under the frame
   double multY = 0., titleY = 0.; // baselines over the frame
@@ -319,7 +319,7 @@ static double stringWidth(const std::string &s)
 // Every length is in pixels: drawGraph scales them to the units it draws in.
 static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
                            double ymax, double width, double height,
-                           double tic, const graphPlace &pl, graphLayout &l)
+                           double tick, const graphPlace &pl, graphLayout &l)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -331,7 +331,7 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
                                  CTX::instance()->glFontSize);
   l.fontH = std::max(1., (double)drawContext::global()->getStringHeight());
   l.fontA = l.fontH - drawContext::global()->getStringDescent();
-  // the tic marks, and the space between them and their numbers, are those
+  // the tick marks, and the space between them and their numbers, are those
   // of a colour scale, so that a graph and a scale in the same window match
   l.out = l.gap = 0.4 * CTX::instance()->glFontSize;
 
@@ -342,24 +342,24 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
 
   // the ends of the ranges are labelled as on a colour scale: the frame says
   // where an axis stops, only the number says at what value
-  if(pl.xaxis && opt->axesTics[0] > 0)
+  if(pl.xaxis && opt->axesTicks[0] > 0)
     makeAxisTicks(xmin, xmax, width, l.fontH, true, opt->axesFormat[0],
-                  (int)opt->axesTics[0], true, l.xt, l.xmult);
-  if(pl.yaxis && opt->axesTics[1] > 0)
+                  (int)opt->axesTicks[0], true, l.xt, l.xmult);
+  if(pl.yaxis && opt->axesTicks[1] > 0)
     makeAxisTicks(ymin, ymax, height, l.fontH, false, opt->axesFormat[1],
-                  (int)opt->axesTics[1], true, l.yt, l.ymult);
+                  (int)opt->axesTicks[1], true, l.yt, l.ymult);
 
-  // the tic marks stick out of the frame, on both sides of a box
+  // the tick marks stick out of the frame, on both sides of a box
   l.left = l.bottom = l.out;
   l.right = l.top = (opt->axes > 1) ? l.out : 0.;
 
-  l.numX = l.out + l.gap + l.fontH + pl.xrow * (l.fontH + tic);
+  l.numX = l.out + l.gap + l.fontH + pl.xrow * (l.fontH + tick);
   l.multX = l.numX + 1.2 * l.fontH;
   // the power of ten of the Y axis goes over the frame, clear of the number
   // written at the top of it
   l.multY = l.fontH - 0.2 * l.fontA;
-  l.titleY = (l.ymult.size() ? l.multY + l.fontA : 0.25 * l.fontH) + tic;
-  l.titleX = (l.xmult.size() ? l.multX : l.numX) + tic + l.titleA;
+  l.titleY = (l.ymult.size() ? l.multY + l.fontA : 0.25 * l.fontH) + tick;
+  l.titleX = (l.xmult.size() ? l.multX : l.numX) + tick + l.titleA;
 
   if(opt->showScale) {
     // the widest number of the Y axis, and the power of ten over it
@@ -515,7 +515,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
                     CTX::instance()->glFontEnumTitle,
                     CTX::instance()->glFontSizeTitle, 1);
 
-  // the tics point away from the plot, as in a printed figure
+  // the ticks point away from the plot, as in a printed figure
   double out = l.out;
   // the grid is a faint shade of the axes colour: it should not compete with
   // the curves, so it is blended into whatever is behind the graph
@@ -529,7 +529,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     glEnable(GL_BLEND);
   }
 
-  // y tics, their numbers and the horizontal grid: on the left of the frame
+  // y ticks, their numbers and the horizontal grid: on the left of the frame
   // for the graph that owns it, on its right, past what is already written
   // there, for a graph drawn over it
   double yaxis = pl.first ? xleft : xleft + width + pl.yshift;
@@ -573,7 +573,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       ctx->drawString(l.ymult, yaxis + out + l.gap, ytop + l.multY, 0.);
   }
 
-  // x tics, their numbers and the vertical grid
+  // x ticks, their numbers and the vertical grid
   for(std::size_t i = 0; i < l.xt.size(); i++) {
     double x = xleft + l.xt[i].t * width;
     if(pl.first) {
@@ -735,7 +735,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
 }
 
 static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
-                      double width, double height, double tic,
+                      double width, double height, double tick,
                       const graphPlace &pl, bool inModelCoordinates = false)
 {
   std::vector<double> x;
@@ -773,7 +773,7 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
   double ss = inModelCoordinates ? ctx->pixel_equiv_x / ctx->s[0] : 1.;
   graphLayout l;
   getGraphLayout(p, xmin, xmax, opt->tmpMin, opt->tmpMax, width / ss,
-                 height / ss, tic / ss, pl, l);
+                 height / ss, tick / ss, pl, l);
   scaleGraphLayout(l, ss);
 
   drawGraphAxes(ctx, p, xleft, ytop, width, height, inModelCoordinates, pl, l);
@@ -804,7 +804,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
 
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
-  double tic = 5; // the space between two lines of text
+  double tick = 5; // the space between two lines of text
   // a margin to the border of the window, in the size of the text, so that a
   // graph keeps its air on a screen whose pixels are half as large
   double font_h = std::max(1., (double)drawContext::global()->getStringHeight());
@@ -812,7 +812,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   double ss = 1.;
   if(inModelCoordinates) {
     ss = pixel_equiv_x / s[0];
-    tic *= ss;
+    tick *= ss;
     mx *= ss;
     my *= ss;
   }
@@ -871,7 +871,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
         nb[a]++;
       }
       graphLayout l;
-      getGraphLayout(graphs[i], xmin, xmax, ymin, ymax, winw, winh, tic, pl, l);
+      getGraphLayout(graphs[i], xmin, xmax, ymin, ymax, winw, winh, tick, pl, l);
       if(!pl.first && pl.yaxis && l.ynum > 0.)
         shift[a] = pl.yshift + l.out + 2 * l.gap + l.ynum;
       ml = std::max(ml, l.left);
@@ -930,26 +930,26 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
       int center = fix2dCoordinates(&x, &y);
       drawGraph(this, p, x - (center & 1 ? opt->size[0] / 2. : 0),
                 y + (center & 2 ? opt->size[1] / 2. : 0), opt->size[0],
-                opt->size[1], tic, place[i]);
+                opt->size[1], tick, place[i]);
     }
     else if(opt->autoPosition == 1 && !inModelCoordinates) { // automatic
       if(graphs.size() == 1) {
         double w = winw - 2 * mx - ml - mr;
         double h = winh - 2 * my - mt - mb;
-        drawGraph(this, p, x, viewport[3] - y, w, h, tic, place[i]);
+        drawGraph(this, p, x, viewport[3] - y, w, h, tick, place[i]);
       }
       else if(graphs.size() == 2) {
         double w = winw - 2 * mx - ml - mr;
         double h = (winh - 3 * my - 2 * (mt + mb)) / 2.;
         if(i == 1) y += (h + my + mt + mb);
-        drawGraph(this, p, x, viewport[3] - y, w, h, tic, place[i]);
+        drawGraph(this, p, x, viewport[3] - y, w, h, tick, place[i]);
       }
       else {
         double w = (winw - 3 * mx - 2 * (ml + mr)) / 2.;
         double h = (winh - 3 * my - 2 * (mt + mb)) / 2.;
         if(i == 1 || i == 3) x += (w + mx + ml + mr);
         if(i == 2 || i == 3) y += (h + my + mt + mb);
-        drawGraph(this, p, x, viewport[3] - y, w, h, tic, place[i]);
+        drawGraph(this, p, x, viewport[3] - y, w, h, tick, place[i]);
       }
     }
     else if(opt->autoPosition >= 2 && opt->autoPosition <= 11 &&
@@ -971,12 +971,12 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
         h = winh - 2 * my - mt - mb;
       if(a == 3 || a == 5 || a == 9) x += (w + mx + ml + mr);
       if(a == 4 || a == 5 || a == 7) y += (h + my + mt + mb);
-      drawGraph(this, p, x, viewport[3] - y, w, h, tic, place[i]);
+      drawGraph(this, p, x, viewport[3] - y, w, h, tick, place[i]);
     }
     else if(opt->autoPosition == 12 &&
             inModelCoordinates) { // in model coordinates
       drawGraph(this, p, opt->position[0], opt->position[1] + opt->size[1],
-                opt->size[0], opt->size[1], tic, place[i], true);
+                opt->size[0], opt->size[1], tick, place[i], true);
     }
   }
 }
