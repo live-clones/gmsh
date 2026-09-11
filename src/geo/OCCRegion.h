@@ -26,6 +26,7 @@ public:
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_s; }
   virtual bool containsPoint(const SPoint3 &pt) const;
+  int containsPoints(const std::vector<double> &coord) const;
   void writeBREP(const char *filename);
 };
 

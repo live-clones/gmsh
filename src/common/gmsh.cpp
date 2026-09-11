@@ -63,6 +63,10 @@
 #include "HierarchicalBasisHcurlPri.h"
 #include "Overlap.h"
 
+#if defined(HAVE_OCC)
+#include "OCCRegion.h"
+#endif
+
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFace.h"
@@ -1140,6 +1144,11 @@ GMSH_API int gmsh::model::isInside(const int dim, const int tag,
       Msg::Error("Number of coordinates should be a multiple of 3");
       return 0;
     }
+#if defined(HAVE_OCC)
+    if(dim == 3 && coord.size() > 3 &&
+       entity->getNativeType() == GEntity::OpenCascadeModel)
+      return static_cast<OCCRegion *>(entity)->containsPoints(coord);
+#endif
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 pt(coord[i], coord[i + 1], coord[i + 2]);
       if(entity->isFullyDiscrete()) { // query the mesh

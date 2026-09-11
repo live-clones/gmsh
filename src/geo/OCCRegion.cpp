@@ -130,6 +130,27 @@ bool OCCRegion::containsPoint(const SPoint3 &pt) const
   return (state == TopAbs_IN || state == TopAbs_ON);
 }
 
+int OCCRegion::containsPoints(const std::vector<double> &coord) const
+{
+  if(coord.empty()) return 0;
+  if(coord.size() % 3) {
+    Msg::Error("Number of coordinates should be a multiple of 3");
+    return 0;
+  }
+  // Reuse only the shape-dependent classifier setup for this call. Perform
+  // resets the point classification; tolerance and accepted states match the
+  // scalar path, and no classifier survives a CAD edit or another API call.
+  BRepClass3d_SolidClassifier solidClassifier(_s);
+  int num = 0;
+  for(std::size_t i = 0; i < coord.size(); i += 3) {
+    solidClassifier.Perform(gp_Pnt{coord[i], coord[i + 1], coord[i + 2]},
+                            CTX::instance()->geom.tolerance);
+    const TopAbs_State state = solidClassifier.State();
+    if(state == TopAbs_IN || state == TopAbs_ON) num++;
+  }
+  return num;
+}
+
 void OCCRegion::writeBREP(const char *filename)
 {
   BRep_Builder b;
