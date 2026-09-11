@@ -1618,11 +1618,14 @@ static bool buildConsecutiveListOfVertices(
         }
       }
       else {
-        // detect which mesh variant to use for the next curve by selecting the
-        // mesh that starts with the node at the smallest distance, within the
-        // prescribed tolerance
-        double dist1 = coords.back().distance(p.front());
-        double dist2 = coords.back().distance(p_rev.front());
+        // Preserve the topological junction before choosing the closest
+        // parametric image. OCC pcurves can require a large UV tolerance: it
+        // must not let a different endpoint replace the current mesh vertex.
+        const double incompatible = std::numeric_limits<double>::infinity();
+        double dist1 = verts.back() == v.front() ?
+                         coords.back().distance(p.front()) : incompatible;
+        double dist2 = verts.back() == v_rev.front() ?
+                         coords.back().distance(p_rev.front()) : incompatible;
         if(!seam) {
           if(dist1 < dist2 && dist1 < tol) {
             coords.pop_back();
@@ -1655,8 +1658,10 @@ static bool buildConsecutiveListOfVertices(
           }
         }
         else {
-          double dist3 = coords.back().distance(p_alt.front());
-          double dist4 = coords.back().distance(p_alt_rev.front());
+          double dist3 = verts.back() == v.front() ?
+                           coords.back().distance(p_alt.front()) : incompatible;
+          double dist4 = verts.back() == v_rev.front() ?
+                           coords.back().distance(p_alt_rev.front()) : incompatible;
           if(dist1 < dist2 && dist1 < dist3 && dist1 < dist4 && dist1 < tol) {
             coords.pop_back();
             coords.insert(coords.end(), p.begin(), p.end());
@@ -1717,14 +1722,15 @@ static bool buildConsecutiveListOfVertices(
     return true;
   }
   double dist = coords.back().distance(coords.front());
-  if(dist < tol) {
+  if(verts.back() == verts.front() && dist < tol) {
     coords.pop_back();
     verts.pop_back();
   }
   else {
-    Msg::Debug("Distance %g between first and last node in 1D mesh of surface "
-               "%d exceeds tolerance %g",
-               dist, gf->tag(), tol);
+    Msg::Debug("First and last node in 1D mesh of surface %d do not match "
+               "(nodes %zu and %zu, parametric distance %g, tolerance %g)",
+               gf->tag(), verts.front()->getNum(), verts.back()->getNum(),
+               dist, tol);
     return false;
   }
 
