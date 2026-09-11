@@ -547,6 +547,27 @@ namespace {
 
 namespace {
   // switch the blending, colour and alpha factors together
+  // the blend function in force; the colour's and the alpha's are the same
+  // one when the driver has no separate blending (OpenGL 1.4), whose enums
+  // it would reject
+  void _getBlend(GLint src[2], GLint dst[2])
+  {
+    src[0] = src[1] = GL_ONE;
+    dst[0] = dst[1] = GL_ZERO;
+    if(glApi::BlendFuncSeparate) {
+      glGetIntegerv(GL_BLEND_SRC_RGB, &src[0]);
+      glGetIntegerv(GL_BLEND_DST_RGB, &dst[0]);
+      glGetIntegerv(GL_BLEND_SRC_ALPHA, &src[1]);
+      glGetIntegerv(GL_BLEND_DST_ALPHA, &dst[1]);
+    }
+    else {
+      glGetIntegerv(GL_BLEND_SRC, &src[0]);
+      glGetIntegerv(GL_BLEND_DST, &dst[0]);
+      src[1] = src[0];
+      dst[1] = dst[0];
+    }
+  }
+
   void _setBlend(bool on, const GLint src[2], const GLint dst[2])
   {
     if(!on) {
@@ -570,11 +591,8 @@ void gmshFlushImmediate()
     // the blending is OpenGL's own, so it is set here and the caller's put
     // back afterwards
     GLboolean wasBlend = glIsEnabled(GL_BLEND);
-    GLint wasSrc[2] = {GL_ONE, GL_ONE}, wasDst[2] = {GL_ZERO, GL_ZERO};
-    glGetIntegerv(GL_BLEND_SRC_RGB, &wasSrc[0]);
-    glGetIntegerv(GL_BLEND_DST_RGB, &wasDst[0]);
-    glGetIntegerv(GL_BLEND_SRC_ALPHA, &wasSrc[1]);
-    glGetIntegerv(GL_BLEND_DST_ALPHA, &wasDst[1]);
+    GLint wasSrc[2], wasDst[2];
+    _getBlend(wasSrc, wasDst);
     _setBlend(_batchState.blend, _batchState.blendSrc, _batchState.blendDst);
     glShader::setMatrices(_batchState.modelview, _batchState.projection);
     glShader::setLighting(_batchState.lighting, _batchState.twoSide);
@@ -637,12 +655,7 @@ namespace {
     b.blend = glIsEnabled(GL_BLEND) ? true : false;
     b.blendSrc[0] = b.blendSrc[1] = GL_ONE;
     b.blendDst[0] = b.blendDst[1] = GL_ZERO;
-    if(b.blend) {
-      glGetIntegerv(GL_BLEND_SRC_RGB, &b.blendSrc[0]);
-      glGetIntegerv(GL_BLEND_DST_RGB, &b.blendDst[0]);
-      glGetIntegerv(GL_BLEND_SRC_ALPHA, &b.blendSrc[1]);
-      glGetIntegerv(GL_BLEND_DST_ALPHA, &b.blendDst[1]);
-    }
+    if(b.blend) _getBlend(b.blendSrc, b.blendDst);
     b.lighting = _lighting;
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;
