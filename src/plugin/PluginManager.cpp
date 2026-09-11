@@ -85,7 +85,10 @@
 #include <dlfcn.h>
 #endif
 
-#include <filesystem>
+#if defined(HAVE_FLTK)
+#include <FL/Fl.H>
+#include <FL/filename.H>
+#endif
 
 const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 
@@ -307,23 +310,24 @@ void PluginManager::registerDefaultPlugins()
 #endif
   }
 
+#if defined(HAVE_FLTK)
   char *pluginsHome = getenv("GMSHPLUGINSHOME");
   if(!pluginsHome) return;
-  std::error_code ec;
-  for(const auto &entry :
-      std::filesystem::directory_iterator(pluginsHome, ec)) {
-    std::string name = entry.path().string();
-    std::string ext = SplitFileName(name)[2];
-    if(ext == ".so" || ext == ".dll") addPlugin(name);
+  struct dirent **list;
+  int nbFiles = fl_filename_list(pluginsHome, &list);
+  if(nbFiles <= 0) return;
+  for(int i = 0; i < nbFiles; i++) {
+    std::string ext = SplitFileName(list[i]->d_name)[2];
+    if(ext == ".so" || ext == ".dll") addPlugin(list[i]->d_name);
   }
-  if(ec)
-    Msg::Debug("Could not list plugin directory '%s': %s", pluginsHome,
-               ec.message().c_str());
+  for(int i = 0; i < nbFiles; i++) free(list[i]);
+  free(list);
+#endif
 }
 
 void PluginManager::addPlugin(const std::string &fileName)
 {
-#if !defined(HAVE_DLOPEN) || !defined(HAVE_GUI)
+#if !defined(HAVE_DLOPEN) || !defined(HAVE_FLTK)
   Msg::Warning("No dynamic plugin loading on this platform");
 #else
   Msg::Info("Opening Plugin '%s'", fileName.c_str());

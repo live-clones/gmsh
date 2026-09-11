@@ -7,12 +7,13 @@
 
 #if defined(HAVE_POPPLER)
 
-#include <vector>
 #include "GmshMessage.h"
 #include "FunctionManager.h"
 #include <poppler/cpp/poppler-image.h>
 #include <poppler/cpp/poppler-page-renderer.h>
-#include "ImageIO.h"
+#if defined(HAVE_FLTK)
+#include <FL/Fl_JPEG_Image.H>
+#endif
 
 gmshPopplerWrapper *gmshPopplerWrapper::_instance = 0;
 std::map<int, std::pair<GModel *, std::string> > gmshPopplerWrapper::_macros;
@@ -69,27 +70,24 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres, double yres)
   pr.set_render_hint(poppler::page_renderer::antialiasing, true);
   poppler::image im = pr.render_page(page, xres, yres, -1, -1, -1);
   im.save("hop.jpeg", "jpeg");
-  int w = 0, h = 0, comp = 0;
-  std::vector<unsigned char> pixels;
-  if(!ImageIO::read("hop.jpeg", w, h, comp, pixels)) return 0;
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, w);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  Fl_RGB_Image *img = new Fl_JPEG_Image("hop.jpeg");
+  //  Fl_RGB_Image *img2 = (Fl_RGB_Image*)img->copy(2048, 2048);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, img->w());
   GLuint texture;
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  GLenum format = (comp == 4) ? GL_RGBA :
-                  (comp == 3) ? GL_RGB :
-                  (comp == 2) ? GL_LUMINANCE_ALPHA : GL_LUMINANCE;
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, format, GL_UNSIGNED_BYTE,
-               &pixels[0]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->w(), img->h(), 0,
+               (img->d() == 4) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE,
+               img->array);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-  _w = w;
-  _h = h;
+  _w = img->w();
+  _h = img->h();
 
+  delete img;
+  //  delete img2;
   _pages2textures[iPage] = texture;
   return texture;
 }

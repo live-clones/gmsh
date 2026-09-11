@@ -8,7 +8,7 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
-#include "Form.h"
+#include "ColorTable.h"
 
 class colorbarWindow : public Fl_Window {
 private:
@@ -20,8 +20,7 @@ private:
   int label_y; // y coord of text labels
   int help_flag; // if nonzero, print help message
   int marker_pos; // position of marker as index into table
-  // what it edits, described rather than handed over: see Ui::ColourMap
-  Ui::ColourMap _map;
+  GmshColorTable *ct; // pointer to the color table (allocated in the view)
   bool *viewchanged; // pointer to changed bit in view
   Fl_Color color_bg;
   // convert window X coordinate to color table index
@@ -36,21 +35,12 @@ private:
   void redraw_range(int a, int b);
   // redraw the marker and the text
   void redraw_marker();
-  // one channel of an entry, and the three of it at once in hue, saturation
-  // and value
-  int _channel(int i, int channel);
-  void _channels(int i, double &H, double &S, double &V);
-  // one of the numbers the map is computed from, when the event is one of the
-  // keys the description gives them
-  bool _adjust();
-  static bool _pressed(const Ui::Shortcut &s);
 
 public:
   colorbarWindow(int x, int y, int w, int h, const char *l = nullptr);
   void draw();
   int handle(int);
-  void update(const char *name, double min, double max,
-              const Ui::ColourMap &map,
+  void update(const char *name, double min, double max, GmshColorTable *ct,
               bool *changed);
 };
 

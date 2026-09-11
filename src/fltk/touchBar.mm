@@ -11,7 +11,6 @@
 #include <AppKit/AppKit.h>
 
 #include "touchBar.h"
-#include "GuiActions.h"
 #include "graphicWindow.h"
 #include "drawContext.h"
 #include "Options.h"
@@ -348,9 +347,9 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 #if defined(HAVE_MESH)
   NSInteger segment = ((NSSegmentedControl *)sender).selectedSegment;
   switch(segment) {
-  case 0: meshDimension(1); break;
-  case 1: meshDimension(2); break;
-  case 2: meshDimension(3); break;
+  case 0: mesh_1d_cb(0, 0); break;
+  case 1: mesh_2d_cb(0, 0); break;
+  case 2: mesh_3d_cb(0, 0); break;
   default: break;
   }
   FlGui::check(); // to see meshing messages in the fltk gui
@@ -363,10 +362,10 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 {
   NSInteger segment = ((NSSegmentedControl *)sender).selectedSegment;
   switch(segment) {
-  case 0: quickAccessAction("geometry_points"); break;
-  case 1: quickAccessAction("geometry_curves"); break;
-  case 2: quickAccessAction("geometry_surfaces"); break;
-  case 3: quickAccessAction("geometry_volumes"); break;
+  case 0: quick_access_cb(0, (void *)"geometry_points"); break;
+  case 1: quick_access_cb(0, (void *)"geometry_curves"); break;
+  case 2: quick_access_cb(0, (void *)"geometry_surfaces"); break;
+  case 3: quick_access_cb(0, (void *)"geometry_volumes"); break;
   default: break;
   }
   drawContext::global()->draw();
@@ -396,30 +395,30 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   switch(segment) {
   case 0: // show all
     if(!opt_geometry_points(0, GMSH_GET, 0)) {
-      quickAccessAction("geometry_points");
+      quick_access_cb(0, (void *)"geometry_points");
     }
     if(!opt_geometry_curves(0, GMSH_GET, 0)) {
-      quickAccessAction("geometry_curves");
+      quick_access_cb(0, (void *)"geometry_curves");
     }
     if(!opt_geometry_surfaces(0, GMSH_GET, 0)) {
-      quickAccessAction("geometry_surfaces");
+      quick_access_cb(0, (void *)"geometry_surfaces");
     }
     if(!opt_geometry_volumes(0, GMSH_GET, 0)) {
-      quickAccessAction("geometry_volumes");
+      quick_access_cb(0, (void *)"geometry_volumes");
     }
     break;
   case 1: // hide all
     if(opt_geometry_points(0, GMSH_GET, 0)) {
-      quickAccessAction("geometry_points");
+      quick_access_cb(0, (void *)"geometry_points");
     }
     if(opt_geometry_curves(0, GMSH_GET, 0)) {
-      quickAccessAction("geometry_curves");
+      quick_access_cb(0, (void *)"geometry_curves");
     }
     if(opt_geometry_surfaces(0, GMSH_GET, 0)) {
-      quickAccessAction("geometry_surfaces");
+      quick_access_cb(0, (void *)"geometry_surfaces");
     }
     if(opt_geometry_volumes(0, GMSH_GET, 0)) {
-      quickAccessAction("geometry_volumes");
+      quick_access_cb(0, (void *)"geometry_volumes");
     }
     break;
   default: break;
@@ -433,12 +432,12 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 {
   NSInteger segment = ((NSSegmentedControl *)sender).selectedSegment;
   switch(segment) {
-  case 0: quickAccessAction("mesh_nodes"); break;
-  case 1: quickAccessAction("mesh_lines"); break;
-  case 2: quickAccessAction("mesh_surface_edges"); break;
-  case 3: quickAccessAction("mesh_surface_faces"); break;
-  case 4: quickAccessAction("mesh_volume_edges"); break;
-  case 5: quickAccessAction("mesh_volume_faces"); break;
+  case 0: quick_access_cb(0, (void *)"mesh_nodes"); break;
+  case 1: quick_access_cb(0, (void *)"mesh_lines"); break;
+  case 2: quick_access_cb(0, (void *)"mesh_surface_edges"); break;
+  case 3: quick_access_cb(0, (void *)"mesh_surface_faces"); break;
+  case 4: quick_access_cb(0, (void *)"mesh_volume_edges"); break;
+  case 5: quick_access_cb(0, (void *)"mesh_volume_faces"); break;
   default: break;
   }
   drawContext::global()->draw();
@@ -468,42 +467,42 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   switch(segment) {
   case 0: // show all
     if(!opt_mesh_nodes(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_nodes");
+      quick_access_cb(0, (void *)"mesh_nodes");
     }
     if(!opt_mesh_lines(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_lines");
+      quick_access_cb(0, (void *)"mesh_lines");
     }
     if(!opt_mesh_surface_edges(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_surface_edges");
+      quick_access_cb(0, (void *)"mesh_surface_edges");
     }
     if(!opt_mesh_surface_faces(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_surface_faces");
+      quick_access_cb(0, (void *)"mesh_surface_faces");
     }
     if(!opt_mesh_volume_edges(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_volume_edges");
+      quick_access_cb(0, (void *)"mesh_volume_edges");
     }
     if(!opt_mesh_volume_faces(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_volume_faces");
+      quick_access_cb(0, (void *)"mesh_volume_faces");
     }
     break;
   case 1: // hide all
     if(opt_mesh_nodes(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_nodes");
+      quick_access_cb(0, (void *)"mesh_nodes");
     }
     if(opt_mesh_lines(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_lines");
+      quick_access_cb(0, (void *)"mesh_lines");
     }
     if(opt_mesh_surface_edges(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_surface_edges");
+      quick_access_cb(0, (void *)"mesh_surface_edges");
     }
     if(opt_mesh_surface_faces(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_surface_faces");
+      quick_access_cb(0, (void *)"mesh_surface_faces");
     }
     if(opt_mesh_volume_edges(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_volume_edges");
+      quick_access_cb(0, (void *)"mesh_volume_edges");
     }
     if(opt_mesh_volume_faces(0, GMSH_GET, 0)) {
-      quickAccessAction("mesh_volume_faces");
+      quick_access_cb(0, (void *)"mesh_volume_faces");
     }
     break;
   default: break;

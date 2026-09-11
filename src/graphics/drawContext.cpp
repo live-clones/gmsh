@@ -25,7 +25,11 @@
 #include "OS.h"
 #include "gl2ps.h"
 
-#include "ImageIO.h"
+// the background image is still read with FLTK
+#if defined(HAVE_FLTK)
+#include <FL/Fl_JPEG_Image.H>
+#include <FL/Fl_PNG_Image.H>
+#endif
 
 #if defined(HAVE_POPPLER)
 #include "gmshPopplerWrapper.h"
@@ -73,16 +77,10 @@ drawContext::drawContext(drawTransform *transform)
   _pickCacheX = _pickCacheY = _pickCacheWidth = _pickCacheHeight = 0;
 
   _bgImageTexture = _bgImageW = _bgImageH = 0;
+
 }
 
 drawContext::~drawContext() { invalidateQuadricsAndDisplayLists(); }
-
-double drawContext::highResolutionPixelFactor()
-{
-  // this must be dynamic: the high resolution can change when a window is moved
-  // across displays, so it is refreshed by the GUI before each draw
-  return _highResolutionPixelFactor;
-}
 
 int drawContextGlobal::getFontAlign(const char *alignstr)
 {
@@ -109,7 +107,8 @@ int drawContextGlobal::getFontAlign(const char *alignstr)
     else if(!strcmp(alignstr, "CenterRight"))
       return 8;
   }
-  Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)", alignstr);
+  Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)",
+             alignstr);
   Msg::Info("Available font alignments:");
   Msg::Info("  \"Left\" (or \"BottomLeft\")");
   Msg::Info("  \"Center\" (or \"BottomCenter\")");
@@ -766,7 +765,7 @@ void drawContext::draw3d()
     CTX::instance()->polygonOffset = 0;
 
     // speedup drawing of textured fonts on cocoa mac version
-#if defined(HAVE_GUI) && defined(__APPLE__)
+#if defined(__APPLE__)
   std::size_t numStrings = GModel::current()->getNumVertices();
   if(CTX::instance()->mesh.nodeLabels)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
@@ -1303,32 +1302,36 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
 #endif
   }
   else {
+#if defined(HAVE_FLTK)
     if(!imageTexture) {
-      int w = 0, h = 0, comp = 0;
-      std::vector<unsigned char> pixels;
-      if(!ImageIO::read(name, w, h, comp, pixels)) return false;
-      // resample to a fixed power-of-two size, as the original image can have
-      // dimensions that old OpenGL implementations do not accept for textures
-      const int texSize = 2048;
-      std::vector<unsigned char> scaled;
-      if(!ImageIO::resize(pixels, w, h, comp, scaled, texSize, texSize))
+      Fl_RGB_Image *img = nullptr;
+      if(ext == ".jpg" || ext == ".JPG" || ext == ".jpeg" || ext == ".JPEG")
+        img = new Fl_JPEG_Image(name.c_str());
+      else if(ext == ".png" || ext == ".PNG")
+        img = new Fl_PNG_Image(name.c_str());
+      if(!img) {
+        Msg::Error("Could not load background image '%s'", name.c_str());
         return false;
-      glPixelStorei(GL_UNPACK_ROW_LENGTH, texSize);
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      }
+      Fl_RGB_Image *img2 = (Fl_RGB_Image *)img->copy(2048, 2048);
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, img2->w());
       glGenTextures(1, &imageTexture);
       glBindTexture(GL_TEXTURE_2D, imageTexture);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      GLenum format = (comp == 4) ? GL_RGBA :
-                      (comp == 3) ? GL_RGB :
-                      (comp == 2) ? GL_LUMINANCE_ALPHA : GL_LUMINANCE;
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texSize, texSize, 0, format,
-                   GL_UNSIGNED_BYTE, &scaled[0]);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img2->w(), img2->h(), 0,
+                   (img2->d() == 4) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE,
+                   img2->array);
       glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-      imageW = w;
-      imageH = h;
+      imageW = img->w();
+      imageH = img->h();
+      delete img;
+      delete img2;
     }
+#else
+    Msg::Error("Gmsh must be compiled with FLTK support to load JPEGs or PNGs");
+    return false;
+#endif
   }
   return true;
 }
@@ -1745,12 +1748,9 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   winx *= fact;
   winy *= fact;
 
-  // The viewport of this view, not the one OpenGL happens to have set: the
-  // pointer moves outside of any drawing, and in an interface where several
-  // views share one context -- src/imgui -- what is left in the OpenGL state is
-  // whoever drew last, or the whole window. The stored viewport is also what
-  // the model and projection matrices below were computed for.
-  GLint vp[4] = {0, 0, (GLint)(viewport[2] * fact), (GLint)(viewport[3] * fact)};
+  GLint glvp[4];
+  glGetIntegerv(GL_VIEWPORT, glvp);
+  int vp[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
 
   winy = vp[3] - winy;
 

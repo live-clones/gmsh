@@ -5,22 +5,31 @@
 
 set(SRC
   FlGui.cpp
-  SceneFltk.cpp
-  BackendFltk.cpp
-  CreateFileFltk.cpp
-    graphicWindow.cpp menuFltk.cpp treeFltk.cpp dialogFltk.cpp
-    graphicsFonts.cpp
-      sceneViewFltk.cpp
+    graphicWindow.cpp
+      openglWindow.cpp
+    optionWindow.cpp
       colorbarWindow.cpp
     drawContextFltkCairo.cpp
     drawContextFltkStringTexture.cpp
-
+    gamepadWindow.cpp
+    fieldWindow.cpp
+    pluginWindow.cpp
+    statisticsWindow.cpp
+    visibilityWindow.cpp
+    highOrderToolsWindow.cpp
+    clippingWindow.cpp
+    manipWindow.cpp
+    contextWindow.cpp
+    onelabContextWindow.cpp
     onelabGroup.cpp
+    helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp
-
+    classificationEditor.cpp
+    partitionDialog.cpp
     inputValue.cpp
     viewButton.cpp solverButton.cpp
+    Navigator.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
