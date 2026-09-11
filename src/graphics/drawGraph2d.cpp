@@ -331,8 +331,9 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
                                  CTX::instance()->glFontSize);
   l.fontH = std::max(1., (double)drawContext::global()->getStringHeight());
   l.fontA = l.fontH - drawContext::global()->getStringDescent();
-  l.out = 0.5 * tic;
-  l.gap = 0.4 * tic;
+  // the tic marks, and the space between them and their numbers, are those
+  // of a colour scale, so that a graph and a scale in the same window match
+  l.out = l.gap = 0.4 * CTX::instance()->glFontSize;
 
   if(!opt->axes) { // nothing is written: the curves alone, off the edges
     l.left = l.right = l.top = l.bottom = 1.5 * l.fontH;
@@ -803,7 +804,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
 
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
-  double tic = 5; // size of tic marks
+  double tic = 5; // the space between two lines of text
   // a margin to the border of the window, in the size of the text, so that a
   // graph keeps its air on a screen whose pixels are half as large
   double font_h = std::max(1., (double)drawContext::global()->getStringHeight());
