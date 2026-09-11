@@ -29,7 +29,6 @@ public:
   ~drawContextFltkCairo();
   double getStringWidth(const char *str);
   void flushString();
-  bool queuesStrings() { return true; }
   void drawString(const char *str);
   void drawString(const char *str, const double win[3]);
   void setFont(int fontid, int fontsize);

@@ -34,14 +34,15 @@ int drawContext::fix2dCoordinates(double *x, double *y)
 
 void drawContext::drawText2d()
 {
+  // a pick pass draws no text (see drawString): a view is picked through
+  // what it draws of its data, not through a label lying over the model
+  if(render_mode == drawContext::GMSH_SELECT) return;
+
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
     if(opt->visible && opt->drawStrings && isVisible(PView::list[i])) {
-      if(render_mode == drawContext::GMSH_SELECT)
-        setPickColor(5, PView::list[i]->getIndex());
-      else
-        gmshColor4ubv((const void *)&opt->color.text2d);
+      gmshColor4ubv((const void *)&opt->color.text2d);
       for(int j = 0; j < data->getNumStrings2D(); j++) {
         double x, y, style;
         std::string str;
@@ -49,7 +50,6 @@ void drawContext::drawText2d()
         fix2dCoordinates(&x, &y);
         drawString(str, x, y, 0., style);
       }
-      if(render_mode == drawContext::GMSH_SELECT) unsetPickColor();
     }
   }
 }

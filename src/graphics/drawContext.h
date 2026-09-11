@@ -169,9 +169,6 @@ public:
   // yet (a tile just split off) knows nothing of its own
   void setPixelFactor(double f) { _pixelFactor = (f > 0.) ? f : 1.; }
   double pixelFactor() { return _pixelFactor; }
-  // does the engine collect the strings of a frame to draw them all at the
-  // end of it, rather than where the caller asks?
-  virtual bool queuesStrings() { return false; }
 protected:
   bool _stringHalo = false;
   double _pixelFactor = 1.;
