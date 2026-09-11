@@ -1695,15 +1695,8 @@ void bowyerWatsonParallelograms(
 
 
 #if defined(HAVE_DOMHEX)
-  if(old_algo_hexa()) {
-    Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");
-    packingOfParallelograms(gf, packed, metrics);
-  }
-  else {
-    Msg::Debug("bowyerWatsonParallelograms: call Filler2D::pointInsertion2D()");
-    Filler2D f;
-    f.pointInsertion2D(gf, packed, metrics);
-  }
+  Msg::Debug("bowyerWatsonParallelograms: 3D point placement and exclusion");
+  packingOfParallelograms(gf, packed, metrics);
 #else
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
@@ -1723,7 +1716,6 @@ void bowyerWatsonParallelograms(
 
   MTri3 *oneNewTriangle = nullptr;
   const bool forceAllPackedPoints =
-    CTX::instance()->mesh.pack3D &&
     CTX::instance()->mesh.packForceAllPoints;
   std::size_t rejectedPackedPoints = 0;
   for(std::size_t i = 0; i < packed.size();) {
@@ -1794,8 +1786,7 @@ void bowyerWatsonParallelograms(
   // UV midpoint there is generally not the geometric midpoint of an edge and
   // repeatedly splitting it can refine away from the intended location.
 #if defined(HAVE_QUADOPTIMIZER)
-  if(CTX::instance()->mesh.pack3D &&
-     gf->geomType() == GEntity::DiscreteSurface)
+  if(gf->geomType() == GEntity::DiscreteSurface)
     QuadOptimizer::intrinsicDelaunayizePackedSurface(gf, DATA);
 #endif
 

@@ -2737,7 +2737,11 @@ GMSH_API void gmsh::model::mesh::addElements(
 
   for(std::size_t i = 0; i < elementTypes.size(); i++)
     _addElements(dim, tag, ge, elementTypes[i], elementTags[i], nodeTags[i]);
-  GModel::current()->destroyMeshCaches();
+  // Adding elements does not change existing mesh vertices. Keep their
+  // lookup cache across entity batches, but invalidate all element caches.
+  GModel::current()->destroyMeshElementCaches();
+  ge->deleteVertexArrays();
+  CTX::instance()->mesh.changed = ENT_ALL;
 }
 
 GMSH_API void gmsh::model::mesh::addElementsByType(
@@ -2753,7 +2757,11 @@ GMSH_API void gmsh::model::mesh::addElementsByType(
     return;
   }
   _addElements(dim, tag, ge, elementType, elementTags, nodeTags);
-  GModel::current()->destroyMeshCaches();
+  // Adding elements does not change existing mesh vertices. Keep their
+  // lookup cache across entity batches, but invalidate all element caches.
+  GModel::current()->destroyMeshElementCaches();
+  ge->deleteVertexArrays();
+  CTX::instance()->mesh.changed = ENT_ALL;
 }
 
 GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,

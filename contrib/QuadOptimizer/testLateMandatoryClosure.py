@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression: repeated improvement rounds followed by a strictly final split."""
+"""Regression: improvement rounds followed by split, pair and CAD-edge closure."""
 import argparse
 import collections
 import json
@@ -72,7 +72,9 @@ def main():
     assert 'loop round=' not in log[log.index('terminal Winslow begin'):]
     assert log.index('loop end') < log.index('final split begin')
     tail = log[log.index('final split begin'):]
-    assert not re.search(r'stage=(valence|swap|merge|initial|round|polish)', tail)
+    assert not re.search(r'stage=(valence|initial|round|polish)', tail)
+    assert 'final closure merges=' in tail
+    assert tail.index('final split end') < tail.index('final closure merges=')
     assert 'loop round=' not in tail
     assert 'validity=PASS invalid[T/Q]=0/0' in log
     sys.path.insert(0, str(args.bindings.resolve()))
@@ -82,14 +84,14 @@ def main():
     try:
         gmsh.open(str(mesh))
         survivors = qqtqqt_stars(gmsh)
-        # Final splitting may expose patterns; restarting would violate its contract.
+        # Only admissible pairs/CAD edges close after the split, without a valence restart.
         quads = len(gmsh.model.mesh.getElementsByType(3)[0])
         triangles = len(gmsh.model.mesh.getElementsByType(2)[0])
     finally:
         gmsh.finalize()
     (out / 'closure-regression.json').write_text(json.dumps(dict(
         passed=True, rounds=len(rounds), survivorsAfterFinalSplit=survivors, quadrangles=quads, triangles=triangles), indent=2)+'\n')
-    print('PASS improvement loop: ordered productive rounds to idle, final split is last, valid mesh')
+    print('PASS improvement loop: ordered productive rounds to idle, final pair/CAD closure without smoothing, valid mesh')
 
 
 if __name__ == '__main__':

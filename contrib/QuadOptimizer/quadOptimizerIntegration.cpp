@@ -233,6 +233,13 @@ namespace QuadOptimizer {
         Msg::Info("%s half-edge rule boundary_t_qn_t: accepted=%zu",
                   how.c_str(), result.acceptedBoundaryTriangleQuadTriangleFans);
       if(options.fastInteractiveCleanUp)
+        Msg::Info("%s final cleanup: split[invalid/quality/CAD]=%zu/%zu/%zu "
+                  "TTmerges=%zu TTcadSwaps=%zu QTswaps=%zu rejectedSplits=%zu",
+                  how.c_str(), result.finalInvalidQuadsSplit,
+                  result.finalQualityQuadsSplit, result.finalCadQuadsSplit,
+                  result.finalTtMerges, result.finalTtCadSwaps,
+                  result.finalQtSwaps, result.finalQuadsSplitRejected);
+      if(options.fastInteractiveCleanUp)
         Msg::Info("%s terminal split: excessiveWarping=%zu "
                   "nonConvexOrInvalid=%zu split=%zu rejected=%zu",
                   how.c_str(), result.excessiveWarpingQuadrangles,
@@ -664,7 +671,6 @@ namespace QuadOptimizer {
     int recombineAll = 0;
     int minCurveNodes = 0;
     int smoothingPasses = 0;
-    int packing3D = 0;
     int forceAllPackedPoints = 0;
     double sizeFactor = 1.;
     double minimumSize = 0.;
@@ -690,7 +696,6 @@ namespace QuadOptimizer {
       recombineAll = mesh.recombineAll;
       minCurveNodes = mesh.minCurveNodes;
       smoothingPasses = mesh.nbSmoothing;
-      packing3D = mesh.pack3D;
       forceAllPackedPoints = mesh.packForceAllPoints;
       sizeFactor = mesh.lcFactor;
       minimumSize = mesh.lcMin;
@@ -706,7 +711,6 @@ namespace QuadOptimizer {
       mesh.minCurveNodes = 1;
       mesh.nbSmoothing =
         std::max(mesh.nbSmoothing, mesh.optimizeQuadsSmartLaplacian ? 3 : 5);
-      mesh.pack3D = 1;
       mesh.packForceAllPoints = 1;
       mesh.lcFactor = 1.;
       mesh.lcMin = h;
@@ -728,7 +732,6 @@ namespace QuadOptimizer {
       mesh.recombineAll = recombineAll;
       mesh.minCurveNodes = minCurveNodes;
       mesh.nbSmoothing = smoothingPasses;
-      mesh.pack3D = packing3D;
       mesh.packForceAllPoints = forceAllPackedPoints;
       mesh.lcFactor = sizeFactor;
       mesh.lcMin = minimumSize;

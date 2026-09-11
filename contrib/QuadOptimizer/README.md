@@ -64,17 +64,22 @@ mesh generation to Gmsh. V2 then runs the following model-wide schedule:
    triangle/quad strips, true 3-3 diamonds), without requiring quality gain.
    Replacement interior points receive local coupled Winslow; QQTQQT has
    exactly two free points. Topology, orientation, size and CAD guards remain.
-3. Apply QQ/QT swaps only with strict improvement of the quality objective.
+3. Apply QQ/QT swaps with strict improvement of the quality objective.
 4. Merge TT pairs only when the resulting quad meets the absolute quality
-   requirements, preserves preferred quotas, size and CAD guards, and passes
-   the same validity/selective diagonal-CAD predicate as final splitting.
+   requirements, preserves size and CAD guards, and passes
+   the same validity/absolute-quality/selective diagonal-CAD predicate as final
+   splitting. Admissible quads take precedence over preferred-quality quotas.
 5. If the round changed topology, run another active nodal smoothing batch
    and repeat steps 2–5. If no topological operation was accepted, stop this loop
    immediately, regardless of whether nodal proposals could still improve it.
 6. Run exactly four pure mean-plane 3D Winslow sweeps over all eligible nodes.
    These sweeps do not enqueue topology work or restart the alternating loop.
-7. Split remaining invalid or selectively CAD-distant quads. This is the
-   **last mutation**: no swap, merge or smoothing follows it.
+7. Split remaining invalid, absolutely unacceptable or selectively CAD-distant
+   quads, choosing the safest physical diagonal.
+8. Recombine admissible TT pairs, then try one distant TT/QT chord swap per
+   face. Repeat with merges first until idle or the cavity budget is exhausted.
+   No nodal smoothing, quality swap or valence rewrite follows this closure;
+   a later quality objective therefore cannot undo a CAD-driven swap.
 
 Both nodal proposal methods require a strict increase of the minimum physical
 corner sine over incident elements. They retain quality, size, orientation and
@@ -110,8 +115,8 @@ Native Fast optimization has no round limit. The standalone driver uses
 The existing per-face cavity cap remains a safeguard. Logs distinguish `topology-idle`,
 `iteration-budget` and `cavity-budget`; an exhausted cap is not convergence.
 `--max-passes 0` skips the rounds, but retains initial smoothing, terminal
-Winslow and final splitting. `--max-accepted 0` disables topology rewrites, not node smoothing or
-final validity repair. The historical `reachedFixedPoint` result refers to the
+Winslow and final split/pair/CAD closure. `--max-accepted 0` disables topology
+rewrites, not node smoothing or final quad splitting. The historical `reachedFixedPoint` result refers to the
 pre-polish topology stopping condition, not a joint topology/nodal fixed point
 of the delivered mesh. `terminalWinslowPasses` defaults to four; the standalone
 switch `--terminal-winslow-passes 0` disables only this polish for isolated tests.
@@ -122,13 +127,13 @@ names are retained for compatibility. The standalone switches are `--valence`,
 `--swaps`, `--merge-tt` (0/1); old `--terminal-mandatory`/`--final-pairs` aliases
 remain accepted. Legacy counters `acceptedTerminalMandatoryCavities`,
 `finalQtSwaps` and `finalTtMerges` now cover those operations across all rounds.
-There is no TT diagonal-flip phase.
+CAD-driven TT flips retain the number of triangles and only replace a distant
+diagonal with a substantially closer one. `testTerminalCadTriangleSwap.py`
+checks this against analytic sphere distances.
 
-Final splitting may expose new triangle patterns; they are intentionally not
-revisited after the repair. `testLateMandatoryClosure.py` now checks the repeated
-round ordering, the topology-only stopping condition, four terminal Winslow
-sweeps, and the absence of mutations after
-the final split, rather than the superseded post-split closure.
+Final splitting re-enqueues adjacent pairs. `testLateMandatoryClosure.py` checks
+round ordering, topology-only stopping, four terminal Winslow sweeps, and the
+final pair/CAD closure without restarting smoothing or valence operations.
 
 Before constructing the V2 topology, a fixed CAD pole of valence two may be
 regularized by splitting one incident quad through that pole. This preserves
@@ -157,10 +162,9 @@ an unrelated bow-tie vertex.
   quads with no valid diagonal are retained and reported.
   Non-negative values retain the existing recombination validity filter.
 - `Mesh.OptimizeQuadsFinalSplitCadDistanceRatio = 0.2`: after all smoothing and
-  mandatory rewrites, try to split physically invalid quads. A finite angle
-  outside the absolute quality interval does not alone trigger a split:
-  preserve geometrically valid pattern quads and report their quality violations.
-  TT merges still require the resulting quad to meet the absolute specifications.
+  mandatory rewrites, try to split physically invalid quads and quads failing
+  absolute shape specifications. Preferred limits alone never trigger a split.
+  TT merges use the same absolute specifications, preventing split/merge cycles.
   For otherwise valid quads,
   split only if one diagonal exceeds this CAD distance/local-size ratio and
   the other diagonal is within tolerance and at least twice closer to CAD.
@@ -176,12 +180,15 @@ an unrelated bow-tie vertex.
   Distances are sampled at 1/4, 1/2 and 3/4 of each straight diagonal using
   closest-point projection; they are estimates, not certified bounds.
   Replacement triangles must have positive area and consistent intrinsic and
-  CAD orientation. No points are added or moved. No optimization follows this split.
+  CAD orientation at every sample. No points are added or moved. Admissible TT
+  recombination and distant TT/QT chord swaps follow, without smoothing.
   Rejected splits and projection failures are reported. Negative values
   disable only the CAD trigger. The standalone driver exposes
   `--final-split-cad-ratio` with the same semantics.
-  Final repairs are independent of optimization budgets and shape quotas;
-  remaining size/quality violations are reported by the final audit.
+  Final splits are independent of optimization budgets. A quality/CAD-only
+  cut requires two absolutely admissible triangles and complete CAD samples;
+  a physically invalid quad is repaired even when triangle shape limits cannot
+  be met. Quads without a safe improving cut remain reported by the final audit.
 - `Mesh.PackIntrinsicEdgeLengthFactor = 0`: preserve the packed point cloud
   (default). Intrinsic edge splitting is opt-in: inserted midpoints have not
   passed the oriented-cube exclusion.
@@ -196,7 +203,6 @@ For a size-1 triangular, parametrized background mesh:
 
 ```sh
 gmsh background_h1.msh -2 -algo pack -clmin 1 -clmax 1 \
-  -setnumber Mesh.Pack3D 1 \
   -setnumber Mesh.PackCleanupMethod 1 \
   -setnumber Mesh.OptimizeQuadsSmartLaplacian 2 \
   -setnumber Mesh.Smoothing 3 \
@@ -207,7 +213,9 @@ gmsh background_h1.msh -2 -algo pack -clmin 1 -clmax 1 \
   -nt 1 -o result.msh
 ```
 
-`-2` meshes surfaces; `Pack3D` selects physical 3D surface packing.
+`-2` meshes surfaces; PACK always places points and evaluates exclusion in
+physical 3D space. `Mesh.Pack3D` is retained only for compatibility and always
+returns 1; setting it to 0 warns and cannot enable UV packing.
 The standalone `quadV2StrategyMain.cpp` driver can also resume an existing
 mesh with `--max-accepted 0 --smoothing-passes 0 --final-winslow-passes 1`.
 `buildQuadV2Strategy.py` builds that driver using an existing Gmsh build.

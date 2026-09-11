@@ -1,5 +1,5 @@
-// An asymmetric four-quad star: the Smart Laplacian and Winslow objectives
-// have different minimizers, so both final phases must move its free node.
+// An asymmetric fixed four-quad star exercises both nodal proposals and
+// convergence with a shared strict minimum-corner-sine acceptance criterion.
 General.Terminal = 1;
 General.AbortOnError = 1;
 General.NumThreads = 1;

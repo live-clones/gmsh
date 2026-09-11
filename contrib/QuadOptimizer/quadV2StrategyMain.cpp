@@ -335,6 +335,7 @@ namespace {
     FIELD(acceptedCavities);
     FIELD(acceptedTerminalMandatoryCavities);
     FIELD(finalInvalidQuadsSplit);
+    FIELD(finalQualityQuadsSplit);
     FIELD(finalQtSwaps);
     FIELD(finalTtMerges);
     FIELD(finalTtCadSwaps);
