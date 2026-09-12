@@ -10,6 +10,8 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GFace.h"
+#include "GEdge.h"
+#include "GVertex.h"
 #include "MQuadrangle.h"
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
@@ -18,6 +20,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <map>
 #include <set>
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "qmtQuadCavityRemeshing.h"
@@ -678,6 +681,39 @@ namespace QuadOptimizer {
     double targetSize = 0.;
     double minimumEdgeLength = 0.;
     double maximumEdgeLength = 0.;
+    std::map<GEdge *, int> minimumSegmentsByEdge;
+
+    void preserveDiscreteBoundaryLoops()
+    {
+      GModel *model = GModel::current();
+      if(!model) return;
+      const auto requireSegments = [&](GEdge *edge, int minimum) {
+        if(edge->meshAttributes.minimumMeshSegments >= minimum) return;
+        minimumSegmentsByEdge.emplace(
+          edge, edge->meshAttributes.minimumMeshSegments);
+        edge->meshAttributes.minimumMeshSegments = minimum;
+      };
+      for(GFace *face : model->getFaces()) {
+        if(face->geomType() != GEntity::DiscreteSurface) continue;
+        // Imported discrete faces need not populate GFace::edgeLoops. Recover
+        // the one- and two-curve loops from their actual boundary edges and
+        // endpoints; embedded curves are deliberately not included. OCCFace
+        // already imposes these same topological minima on its wires.
+        std::map<std::pair<int, int>, std::set<GEdge *>> edgesByEndpoints;
+        for(GEdge *edge : face->edges()) {
+          GVertex *first = edge->getBeginVertex();
+          GVertex *second = edge->getEndVertex();
+          if(!first || !second) continue;
+          if(first == second)
+            requireSegments(edge, 3);
+          else
+            edgesByEndpoints[std::minmax(first->tag(), second->tag())].insert(edge);
+        }
+        for(const auto &entry : edgesByEndpoints)
+          if(entry.second.size() == 2)
+            for(GEdge *edge : entry.second) requireSegments(edge, 2);
+      }
+    }
 
     State()
     {
@@ -708,6 +744,7 @@ namespace QuadOptimizer {
                          mesh.packTargetSize :
                          .5 * (mesh.lcMin + mesh.lcMax);
       mesh.recombineAll = 1;
+      preserveDiscreteBoundaryLoops();
       mesh.minCurveNodes = 1;
       mesh.nbSmoothing =
         std::max(mesh.nbSmoothing, mesh.optimizeQuadsSmartLaplacian ? 3 : 5);
@@ -739,6 +776,8 @@ namespace QuadOptimizer {
       mesh.packTargetSize = targetSize;
       mesh.optimizeQuadsMinimumEdgeLength = minimumEdgeLength;
       mesh.optimizeQuadsMaximumEdgeLength = maximumEdgeLength;
+      for(const auto &entry : minimumSegmentsByEdge)
+        entry.first->meshAttributes.minimumMeshSegments = entry.second;
     }
   };
 

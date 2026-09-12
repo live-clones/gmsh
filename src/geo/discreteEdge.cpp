@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <vector>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -101,7 +102,8 @@ SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
 
 int discreteEdge::minimumMeshSegments() const
 {
-  return CTX::instance()->mesh.minCurveNodes;
+  return std::max(CTX::instance()->mesh.minCurveNodes,
+                  meshAttributes.minimumMeshSegments);
 }
 
 double discreteEdge::curvature(double par) const
