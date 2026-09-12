@@ -96,6 +96,10 @@ namespace glShader {
   // height pixels) to a sum, cleared when first, and put the average of
   // count frames back on the window. False if it cannot be done.
   bool accumulate(int width, int height, bool first, int count);
+  // Flames over what is drawn, licking up from every pixel of it, at a
+  // level from 0 to 1 (and taller beyond) and flickering with the time (in
+  // seconds). False if it cannot be done.
+  bool fire(int width, int height, double level, double time);
   // is what is drawn next lit, and are its back faces lit as well?
   void setLighting(bool on, bool twoSide);
   // clip plane i, in eye coordinates; setClipPlaneOff() stops clipping with it

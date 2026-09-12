@@ -23,6 +23,7 @@
 #include "onelabContextWindow.h"
 #include "OpenFile.h"
 #include "drawContext.h"
+#include "OS.h"
 #include "VertexArray.h"
 #include "glMatrix.h"
 #include "glShader.h"
@@ -106,6 +107,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
   _studioTimer = false;
+  _spin = _spinTime = _fire = _fireTime = 0.;
   _studioW = _studioH = 0;
   _printW = _printH = 0;
   _printScale = 1.;
@@ -131,6 +133,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 openglWindow::~openglWindow()
 {
   Fl::remove_timeout(_studioSampleCb, this);
+  Fl::remove_timeout(_fireCb, this);
   delete _ctx;
 #if defined(NEW_TOOLTIPS)
   delete _tooltip;
@@ -391,6 +394,7 @@ void openglWindow::draw()
       if(!_printW) glDrawBuffer(GL_BACK);
       _cameraMatrices();
       _ctx->draw3d();
+      _burn();
       _ctx->draw2d();
       _studioFrame();
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active &&
@@ -448,6 +452,7 @@ void openglWindow::draw()
     else {
       _ctx->draw3d();
       memcpy(_frameView, _ctx->model, sizeof(_frameView));
+      _burn();
       _ctx->draw2d();
       _studioFrame();
       _drawScreenMessage();
@@ -590,6 +595,35 @@ void openglWindow::_studioSampleCb(void *data)
   w->_ctx->studioSample++;
   w->damage(FL_DAMAGE_USER1);
 }
+
+// The fire lit by spinning the model: drawn over the scene at its current
+// level, which dies down in a couple of seconds once the spinning stops,
+// with a frame every 30 ms in the meantime. Not accumulated: the studio
+// frames start over as long as it burns.
+void openglWindow::_burn()
+{
+  Fl::remove_timeout(_fireCb, this);
+  if(_fire <= 0.) return;
+  double now = TimeOfDay();
+  if(!_printW) {
+    _fire *= exp(-(now - _fireTime) / 1.5);
+    _fireTime = now;
+  }
+  if(_fire < 0.02) {
+    _fire = 0.;
+    return;
+  }
+  gmshFlushImmediate();
+  int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
+  if(!glShader::fire(w, h, _fire, now)) {
+    _fire = 0.;
+    return;
+  }
+  _ctx->studioSample = 0;
+  if(!_printW) Fl::add_timeout(0.03, _fireCb, this);
+}
+
+void openglWindow::_fireCb(void *data) { ((openglWindow *)data)->redraw(); }
 
 openglWindow *openglWindow::_lastHandled = nullptr;
 
@@ -824,6 +858,24 @@ int openglWindow::handle(int event)
         // (m1) and (!shift) and (!alt)  => rotation
         else if(Fl::event_button() == 1 && !Fl::event_state(FL_SHIFT) &&
                 !Fl::event_state(FL_ALT)) {
+          // how fast the model is spun, in window sizes per second, smoothed
+          // over the last few events: past a point it catches fire, the
+          // faster the sooner, and the fire goes on building as long as the
+          // spinning does, up to half as much again as a full blaze
+          double now = TimeOfDay(), dt = now - _spinTime;
+          _spinTime = now;
+          if(dt > 0. && dt < 0.5) {
+            double v = sqrt(dx * dx / (w() * (double)w()) +
+                            dy * dy / (h() * (double)h())) / dt;
+            _spin = 0.7 * _spin + 0.3 * v;
+            const double catches = 8.;
+            if(_spin > catches) {
+              if(_fire <= 0.) _fireTime = now;
+              _fire = std::min(1.5, _fire + 1.5 * (_spin / catches - 1.) * dt);
+            }
+          }
+          else
+            _spin = 0.;
           if(CTX::instance()->useTrackball)
             _ctx->addQuaternion(
               (2. * _prev.win[0] - w()) / w(), (h() - 2. * _prev.win[1]) / h(),

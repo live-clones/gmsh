@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
-
+#include <cmath>
 #include <cstddef>
 #include "glShader.h"
 #include "GmshMessage.h"
@@ -404,6 +404,163 @@ void main()
 }
 )";
 
+  // The fire: a march down the window's depth from each pixel, leaning
+  // sideways more the further it goes, through a turbulence that drifts up
+  // with time. Every pixel of the model met on the way feeds the flame, the
+  // near ones most, so tongues rise from the outline and the model itself
+  // glows through a veil. The frame is put back with the air above the
+  // flames shimmering, the flames laid over it with a black body's colours,
+  // a soft glow around them and a few embers rising.
+  const char *fireFragmentBody = R"(
+uniform sampler2D uDepth;
+uniform sampler2D uFrame;
+uniform sampler2D uReveal;
+uniform bool uRevealOn;
+uniform float uLevel;
+uniform float uTime;
+layout(location = 0) out vec4 fColor;
+
+// Is something drawn at this pixel? The depth says so for what is opaque:
+// the cleared depth comes back as 1, or as 0.996 from a packed depth and
+// stencil texture, whose 24 bits are read as the top of 32. Transparent
+// things write no depth, but the summed logarithm of the light they let
+// through, when they were drawn that way this frame, is below 0 wherever
+// they are.
+bool drawn(ivec2 q)
+{
+  if(texelFetch(uDepth, q, 0).r < 0.994) return true;
+  return uRevealOn && texelFetch(uReveal, q, 0).r < -0.02;
+}
+
+float hash(vec2 p)
+{
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float noise(vec2 p)
+{
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x),
+             f.y);
+}
+
+// three octaves, each turned a little so that no grid shows through
+float fbm(vec2 p)
+{
+  const mat2 m = mat2(1.6, 1.2, -1.2, 1.6);
+  float v = 0.5 * noise(p);
+  p = m * p;
+  v += 0.25 * noise(p);
+  p = m * p;
+  v += 0.125 * noise(p);
+  return v / 0.875;
+}
+
+// dark red, orange, yellow, white: hotter and hotter
+vec3 blackBody(float h)
+{
+  vec3 c = vec3(0.6, 0.04, 0.0) * smoothstep(0.0, 0.2, h);
+  c = mix(c, vec3(1.0, 0.35, 0.03), smoothstep(0.15, 0.5, h));
+  c = mix(c, vec3(1.0, 0.85, 0.35), smoothstep(0.5, 0.85, h));
+  c = mix(c, vec3(1.0, 0.98, 0.9), smoothstep(0.85, 1.3, h));
+  return c;
+}
+
+void main()
+{
+  vec2 size = vec2(textureSize(uDepth, 0));
+  vec2 p = gl_FragCoord.xy;
+  float H = size.y;
+  // past a full blaze the flames only get taller
+  float reach = 0.3 * H * uLevel;
+  float level = min(uLevel, 1.0);
+  float rise = uTime * 0.4 * H;
+  bool onModel = drawn(ivec2(p));
+
+  // the turbulence at this pixel, for the shimmer and the embers
+  vec2 c0 = vec2(p.x, p.y + rise) * (9.0 / H);
+  vec2 warp0 = vec2(fbm(c0 + vec2(0.0, 0.6 * uTime)),
+                    fbm(c0 + vec2(5.2, 1.3 - 0.4 * uTime)));
+
+  float heat = 0.0, glow = 0.0;
+  const int N = 28;
+  // the steps start at a different offset from one pixel to the next and
+  // from one frame to the next, so that they never show as bands
+  float dither = hash(p + fract(uTime) * 17.0);
+  for(int k = 0; k < N; k++) {
+    float t = (float(k) + dither) / float(N);
+    float d = t * reach;
+    vec2 c = vec2(p.x, p.y - d + rise) * (9.0 / H);
+    vec2 warp = vec2(fbm(c + vec2(0.0, 0.6 * uTime)),
+                     fbm(c + vec2(5.2, 1.3 - 0.4 * uTime)));
+    float lean = (warp.x - 0.5) * 2.2 * d;
+    ivec2 q = ivec2(p + vec2(lean, -d));
+    if(q.y < 0) break;
+    if(q.x < 0 || q.x >= int(size.x) || q.y >= int(size.y)) continue;
+    // fetched, not sampled: no level of detail to work out inside a loop
+    // that not every fragment runs the same way
+    if(drawn(q)) {
+      // a tongue is where the warped turbulence is dense, and it thins out
+      // with the distance from its root
+      float shape = fbm(c * 1.7 + 2.6 * (warp - 0.5));
+      float tongue = smoothstep(0.42, 0.8, shape + 0.4 * (1.0 - t) - 0.05);
+      heat += (1.0 - t) * tongue;
+      glow += (1.0 - t) * (1.0 - t);
+    }
+  }
+  heat *= 3.4 * level / float(N);
+  glow *= 2.5 * level / float(N);
+  if(glow <= 0.002) discard;
+
+  // the frame, seen through the hot air above the flames
+  vec2 shimmer = onModel ? vec2(0.0) : (warp0 - 0.5) * 0.02 * H * min(glow, 0.5);
+  vec2 uv = clamp((p + shimmer) / size, vec2(0.0), vec2(1.0));
+  vec3 frame = texture(uFrame, uv).rgb;
+
+  // the flames over it: on the model a veil it glows through, above it a
+  // body of their own; a soft orange glow around; embers in the updraft
+  vec3 fire = blackBody(heat);
+  float alpha = (onModel ? 0.65 : 0.95) * smoothstep(0.0, 0.5, heat);
+  vec3 c = mix(frame, fire, alpha);
+  // the model reddens all over as it burns, the flames or not
+  if(onModel) c = mix(c, vec3(1.0, 0.3, 0.05), 0.4 * smoothstep(0.0, 0.3, glow) * (1.0 - alpha));
+  c += vec3(1.0, 0.45, 0.12) * 0.35 * glow * (1.0 - alpha);
+  // A few embers in the updraft: one in some of the cells of a grid that
+  // scrolls up faster than the flames, and sways with the same turbulence.
+  // Each is a streak drawn out behind itself rather than a dot, of its own
+  // size, with a halo, and cools from yellow to red as it leaves the fire.
+  if(!onModel) {
+    float cellSize = H / 70.0;
+    vec2 ep = vec2(p.x - 0.06 * H * (warp0.x - 0.5), p.y - 1.4 * rise);
+    vec2 base = floor(ep / cellSize);
+    float ember = 0.0;
+    // the neighbouring cells too, or a spark would be cut off square where
+    // its halo crosses into them
+    for(int j = -1; j <= 1; j++) {
+      for(int i = -1; i <= 1; i++) {
+        vec2 cell = base + vec2(float(i), float(j));
+        if(hash(cell + 3.1) < 0.94) continue;
+        vec2 centre =
+          (cell + 0.5 + 0.6 * (vec2(hash(cell), hash(cell + 0.7)) - 0.5)) * cellSize;
+        vec2 d = ep - centre;
+        // the tail hangs below it, and it is a little taller than it is wide
+        d.y *= (d.y < 0.0) ? 0.16 : 1.3;
+        float size = 0.6 + 0.9 * hash(cell + 9.4);
+        float r = length(d);
+        ember += smoothstep(size + 0.7, 0.3 * size, r) +
+                 0.22 * smoothstep(5.0 * size, 0.0, r);
+      }
+    }
+    vec3 spark = mix(vec3(1.0, 0.25, 0.05), vec3(1.0, 0.8, 0.45),
+                     smoothstep(0.02, 0.3, glow));
+    c += spark * 1.8 * ember * smoothstep(0.0, 0.15, glow) * (1.0 - alpha);
+  }
+  fColor = vec4(min(c, vec3(1.0)), 1.0);
+}
+)";
+
   const char *compositeFragmentBody = R"(
 uniform sampler2D uAccum;
 uniform sampler2D uReveal;
@@ -444,6 +601,13 @@ void main()
     int _accWidth = 0, _accHeight = 0;
     GLint _uBlitTex = -1, _uBlitScale = -1;
     bool _blitTried = false;
+    // the fire: a copy of the window's depth it rises from, and its program
+    GLuint _fireFbo = 0, _fireDepth = 0, _fireFrame = 0, _fireProgram = 0;
+    int _fireWidth = 0, _fireHeight = 0;
+    GLenum _fireDepthFormat = 0;
+    GLint _uFireDepth = -1, _uFireFrame = -1, _uFireLevel = -1, _uFireTime = -1;
+    GLint _uFireReveal = -1, _uFireRevealOn = -1;
+    bool _fireTried = false;
     // the picking buffer and what it is made of
     GLuint _pickFbo = 0, _pickColorTex = 0, _pickDepthTex = 0, _pickDepthRb = 0;
     int _pickWidth = 0, _pickHeight = 0;
@@ -457,6 +621,10 @@ void main()
     GLuint _oitProgram = 0;
     GLint _uAccum = -1, _uReveal = -1;
     bool _oitOn = false, _oitFailed = false, _oitTried = false;
+    // whether the summing buffers were drawn into since the fire last
+    // looked: their light let through says where transparent things are,
+    // which the depth does not
+    bool _oitUsed = false;
     // the depth format the window's buffer can be copied into: it must match
     // exactly and cannot be queried
     GLenum _oitDepthFormat = 0;
@@ -475,6 +643,9 @@ void main()
       GLenum oitDepthFormat = 0;
       GLuint accFbo = 0, accTex = 0, accCopy = 0;
       int accWidth = 0, accHeight = 0;
+      GLuint fireFbo = 0, fireDepth = 0, fireFrame = 0;
+      int fireWidth = 0, fireHeight = 0;
+      GLenum fireDepthFormat = 0;
       GLuint pickFbo = 0, pickColorTex = 0, pickDepthTex = 0, pickDepthRb = 0;
       int pickWidth = 0, pickHeight = 0;
     };
@@ -498,6 +669,12 @@ void main()
       c.accCopy = _accCopy;
       c.accWidth = _accWidth;
       c.accHeight = _accHeight;
+      c.fireFbo = _fireFbo;
+      c.fireDepth = _fireDepth;
+      c.fireFrame = _fireFrame;
+      c.fireWidth = _fireWidth;
+      c.fireHeight = _fireHeight;
+      c.fireDepthFormat = _fireDepthFormat;
       c.pickFbo = _pickFbo;
       c.pickColorTex = _pickColorTex;
       c.pickDepthTex = _pickDepthTex;
@@ -523,6 +700,12 @@ void main()
       _accCopy = c.accCopy;
       _accWidth = c.accWidth;
       _accHeight = c.accHeight;
+      _fireFbo = c.fireFbo;
+      _fireDepth = c.fireDepth;
+      _fireFrame = c.fireFrame;
+      _fireWidth = c.fireWidth;
+      _fireHeight = c.fireHeight;
+      _fireDepthFormat = c.fireDepthFormat;
       _pickFbo = c.pickFbo;
       _pickColorTex = c.pickColorTex;
       _pickDepthTex = c.pickDepthTex;
@@ -774,6 +957,12 @@ void main()
     _window = _printFbo = _printColor = _printDepth = 0;
     _uBlitTex = _uBlitScale = -1;
     _blitTried = false;
+    _fireFbo = _fireDepth = _fireFrame = _fireProgram = 0;
+    _fireWidth = _fireHeight = 0;
+    _fireDepthFormat = 0;
+    _uFireDepth = _uFireFrame = _uFireLevel = _uFireTime = -1;
+    _uFireReveal = _uFireRevealOn = -1;
+    _fireTried = false;
     _pickFbo = _pickColorTex = _pickDepthTex = _pickDepthRb = 0;
     _pickWidth = _pickHeight = 0;
     _tried = false;
@@ -781,7 +970,7 @@ void main()
     _oitWidth = _oitHeight = 0;
     _oitProgram = 0;
     _uAccum = _uReveal = -1;
-    _oitOn = _oitFailed = _oitTried = false;
+    _oitOn = _oitFailed = _oitTried = _oitUsed = false;
     _oitDepthFormat = 0;
     _contexts.clear();
     _context = nullptr;
@@ -1122,6 +1311,171 @@ void main()
     glClearColor(clear[0], clear[1], clear[2], clear[3]);
     if(wasDepth) glEnable(GL_DEPTH_TEST);
     if(wasBlend) glEnable(GL_BLEND);
+    glApi::UseProgram(_program);
+    glApi::BindVertexArray(_vao);
+    noTexture();
+    return true;
+  }
+
+  namespace {
+    bool buildFire()
+    {
+      if(_fireTried) return _fireProgram != 0;
+      _fireTried = true;
+      GLuint vs = compile(GL_VERTEX_SHADER, prologue() + compositeVertexBody);
+      if(!vs) return false;
+      GLuint fs = compile(GL_FRAGMENT_SHADER, prologue() + fireFragmentBody);
+      if(!fs) {
+        glApi::DeleteShader(vs);
+        return false;
+      }
+      GLuint p = glApi::CreateProgram();
+      glApi::AttachShader(p, vs);
+      glApi::AttachShader(p, fs);
+      glApi::LinkProgram(p);
+      glApi::DeleteShader(vs);
+      glApi::DeleteShader(fs);
+      GLint ok = 0;
+      glApi::GetProgramiv(p, GL_LINK_STATUS, &ok);
+      if(!ok) {
+        Msg::Debug("Could not link the fire program");
+        glApi::DeleteProgram(p);
+        return false;
+      }
+      _uFireDepth = glApi::GetUniformLocation(p, "uDepth");
+      _uFireFrame = glApi::GetUniformLocation(p, "uFrame");
+      _uFireReveal = glApi::GetUniformLocation(p, "uReveal");
+      _uFireRevealOn = glApi::GetUniformLocation(p, "uRevealOn");
+      _uFireLevel = glApi::GetUniformLocation(p, "uLevel");
+      _uFireTime = glApi::GetUniformLocation(p, "uTime");
+      _fireProgram = p;
+      return true;
+    }
+
+    void dropFireBuffers()
+    {
+      if(_fireFbo) glApi::DeleteFramebuffers(1, &_fireFbo);
+      if(_fireDepth) glDeleteTextures(1, &_fireDepth);
+      if(_fireFrame) glDeleteTextures(1, &_fireFrame);
+      _fireFbo = _fireDepth = _fireFrame = 0;
+      _fireWidth = _fireHeight = 0;
+    }
+
+    // the window's depth into a texture of the given format, which has to
+    // be the window's own, unknown: tried like the transparency buffers'
+    bool copyDepthToTexture(int width, int height, GLenum format)
+    {
+      if(!_fireFbo) {
+        glApi::GenFramebuffers(1, &_fireFbo);
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _fireFbo);
+        bool stencil = (format == GL_DEPTH24_STENCIL8);
+        glGenTextures(1, &_fireDepth);
+        glBindTexture(GL_TEXTURE_2D, _fireDepth);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
+                     stencil ? GL_DEPTH_STENCIL : GL_DEPTH_COMPONENT,
+                     stencil ? GL_UNSIGNED_INT_24_8 : GL_UNSIGNED_INT, nullptr);
+        // and the frame itself, for the shimmer of the air over the flames
+        glGenTextures(1, &_fireFrame);
+        glBindTexture(GL_TEXTURE_2D, _fireFrame);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
+                     GL_UNSIGNED_BYTE, nullptr);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glApi::FramebufferTexture2D(
+          GL_FRAMEBUFFER,
+          stencil ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT,
+          GL_TEXTURE_2D, _fireDepth, 0);
+        const GLenum none = GL_NONE;
+        glApi::DrawBuffers(1, &none);
+        if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+           GL_FRAMEBUFFER_COMPLETE) {
+          dropFireBuffers();
+          return false;
+        }
+        _fireWidth = width;
+        _fireHeight = height;
+      }
+      while(glGetError() != GL_NO_ERROR) {}
+      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, _window);
+      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _fireFbo);
+      glApi::BlitFramebuffer(0, 0, width, height, 0, 0, width, height,
+                             GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+      if(glGetError() == GL_NO_ERROR) return true;
+      dropFireBuffers();
+      return false;
+    }
+  } // namespace
+
+  bool fire(int width, int height, double level, double time)
+  {
+    if(width < 1 || height < 1 || level <= 0.) return false;
+    if(!ensure() || !glApi::haveFramebufferObjects() ||
+       !glApi::BlitFramebuffer || !buildFire())
+      return false;
+    if(_fireFbo && (_fireWidth != width || _fireHeight != height))
+      dropFireBuffers();
+    bool ok = false;
+    if(_fireDepthFormat) { ok = copyDepthToTexture(width, height, _fireDepthFormat); }
+    else {
+      const GLenum formats[2] = {GL_DEPTH24_STENCIL8, GL_DEPTH_COMPONENT24};
+      for(int i = 0; i < 2 && !ok; i++) {
+        ok = copyDepthToTexture(width, height, formats[i]);
+        if(ok) _fireDepthFormat = formats[i];
+      }
+    }
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+    if(!ok) return false;
+
+    // the frame into its copy
+    glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : GL_BACK);
+    glApi::ActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, _fireFrame);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+
+    // the window drawn over, wherever the fire reaches; what is changed is
+    // put back afterwards
+    GLint vp[4];
+    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
+    GLboolean wasBlend = glIsEnabled(GL_BLEND);
+    glGetIntegerv(GL_VIEWPORT, vp);
+    glViewport(0, 0, width, height);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glApi::UseProgram(_fireProgram);
+    glApi::BindVertexArray(_vao);
+    for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
+      glApi::DisableVertexAttribArray(i);
+    glApi::ActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _fireDepth);
+    glApi::Uniform1i(_uFireDepth, 0);
+    glApi::Uniform1i(_uFireFrame, 1);
+    // the transparent things drawn this frame, from the summing buffers
+    bool reveal = _oitUsed && _oitReveal && _oitWidth == width &&
+                  _oitHeight == height;
+    _oitUsed = false;
+    glApi::ActiveTexture(GL_TEXTURE0 + 2);
+    glBindTexture(GL_TEXTURE_2D, reveal ? _oitReveal : 0);
+    glApi::Uniform1i(_uFireReveal, 2);
+    glApi::Uniform1i(_uFireRevealOn, reveal ? 1 : 0);
+    glApi::Uniform1f(_uFireLevel, (float)level);
+    glApi::Uniform1f(_uFireTime, (float)fmod(time, 100.));
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glViewport(vp[0], vp[1], vp[2], vp[3]);
+    if(wasDepth) glEnable(GL_DEPTH_TEST);
+    if(wasBlend) glEnable(GL_BLEND);
+    glApi::ActiveTexture(GL_TEXTURE0 + 2);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glApi::ActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glApi::ActiveTexture(GL_TEXTURE0);
     glApi::UseProgram(_program);
     glApi::BindVertexArray(_vao);
     noTexture();
@@ -1844,6 +2198,7 @@ void main()
   {
     if(!_oitOn) return;
     _oitOn = false;
+    _oitUsed = true;
     // said on the drawing program, which is still the one in use
     glApi::Uniform1i(_u.oitPass, 0);
 
