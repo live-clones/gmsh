@@ -61,7 +61,12 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
   ticks.clear();
   multiplier.clear();
   bool defaultFormat = opt->format.empty();
-  bool linear = !opt->logScale(min, max);
+  int type = opt->getScaleType(min, max);
+  bool linear = (type == PViewOptions::Linear);
+  // a symmetric logarithmic scale is logarithmic outside this and linear
+  // inside it; the labels of the other two have no threshold to keep clear
+  double thr = (type == PViewOptions::SymmetricLogarithmic) ?
+                 opt->getScaleThreshold(min, max) : 0.;
   int nbIso = std::max(1, opt->nbIso);
   char str[128];
 
@@ -109,8 +114,12 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       tk.t = iso ? (nbIso > 1 ? (double)i / (nbIso - 1) : 0.5) :
                    (double)i / nbIso;
       if(defaultFormat)
-        tk.label = linear ? axisNumber(tk.v, decimals, exp) :
-                            axisLogNumber(tk.v, axisLogPowers(min, max));
+        tk.label = linear ?
+                     axisNumber(tk.v, decimals, exp) :
+                     axisLogNumber(tk.v,
+                                   axisLogPowers(thr > 0. ? thr : min,
+                                                 std::max(fabs(min),
+                                                          fabs(max))));
       else {
         sprintf(str, opt->getFormat().c_str(), tk.v);
         tk.label = str;
@@ -127,9 +136,14 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
     return;
   }
 
-  // logarithmic: the powers of ten of the range, laid out by their logarithm
-  makeLogAxisTicks(min, max, length, fontH, horizontal, opt->format,
-                   defaultFormat ? 0 : nbIso, true, ticks, multiplier);
+  // logarithmic: the powers of ten of the range, laid out by their
+  // logarithm, on one side of zero or on both
+  if(thr > 0.)
+    makeSymLogAxisTicks(min, max, thr, length, fontH, horizontal, opt->format,
+                        defaultFormat ? 0 : nbIso, true, ticks, multiplier);
+  else
+    makeLogAxisTicks(min, max, length, fontH, horizontal, opt->format,
+                     defaultFormat ? 0 : nbIso, true, ticks, multiplier);
 }
 
 // a string with a halo in the background colour, so that it reads over the
@@ -390,12 +404,13 @@ static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
   }
 
   if(opt->scaleType != PViewOptions::Linear &&
-     !opt->logScale(opt->tmpMin, opt->tmpMax)) {
+     opt->getScaleType(opt->tmpMin, opt->tmpMax) == PViewOptions::Linear) {
     static bool warned = false;
     if(!warned) {
       warned = true;
       Msg::Warning("Logarithmic scale of a range that is not positive: "
-                   "drawing it linearly");
+                   "drawing it linearly (View.ScaleType = 3 for a scale that "
+                   "is logarithmic on both sides of zero)");
     }
   }
 

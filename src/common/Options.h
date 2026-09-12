@@ -808,6 +808,7 @@ double opt_view_draw_vectors(OPT_ARGS_NUM);
 double opt_view_draw_tensors(OPT_ARGS_NUM);
 double opt_view_draw_skin_only(OPT_ARGS_NUM);
 double opt_view_scale_type(OPT_ARGS_NUM);
+double opt_view_scale_threshold(OPT_ARGS_NUM);
 double opt_view_tensor_type(OPT_ARGS_NUM);
 double opt_view_range_type(OPT_ARGS_NUM);
 double opt_view_abscissa_range_type(OPT_ARGS_NUM);

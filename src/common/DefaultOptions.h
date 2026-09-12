@@ -2102,8 +2102,12 @@ StringXNumber ViewOptions_Number[] = {
     "Element sampling rate (draw one out every `Sampling' elements)" },
   { F|O, "SaturateValues" , opt_view_saturate_values , 0. ,
     "Saturate the view values to custom min and max (1: true, 0: false)" },
+  { F|O, "ScaleThreshold" , opt_view_scale_threshold , 0. ,
+    "Value below which a symmetric logarithmic scale is linear (0: automatic, "
+    "four decades below the largest value)" },
   { F|O, "ScaleType" , opt_view_scale_type , 1 ,
-    "Value scale type (1: linear, 2: logarithmic, 3: double logarithmic)" },
+    "Value scale type (1: linear, 2: logarithmic, 3: symmetric logarithmic, "
+    "logarithmic on both sides of zero and linear in between)" },
   { F|O, "ShowElement" , opt_view_show_element , 0. ,
     "Show element boundaries?" },
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,

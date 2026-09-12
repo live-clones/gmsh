@@ -457,10 +457,13 @@ static void addArrowFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
   double lmax = opt->tmpMax;
   if(!l || !lmax) return;
   double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
-  if(opt->scaleType == PViewOptions::Logarithmic && opt->tmpMin > 0 &&
+  if(opt->getScaleType(opt->tmpMin, opt->tmpMax) != PViewOptions::Linear &&
      opt->tmpMax > opt->tmpMin && l != opt->tmpMin) {
+    // as long as the arrow, on the scale of the view
+    double a = opt->scaleForward(opt->tmpMin, opt->tmpMin, opt->tmpMax);
+    double b = opt->scaleForward(opt->tmpMax, opt->tmpMin, opt->tmpMax);
     scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l *
-            log10(l / opt->tmpMin) / log10(opt->tmpMax / opt->tmpMin);
+            (opt->scaleForward(l, opt->tmpMin, opt->tmpMax) - a) / (b - a);
   }
   if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
   double px = scale * v[0], py = scale * v[1], pz = scale * v[2];
@@ -504,6 +507,7 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     tok.add(opt->tmpMin);
     tok.add(opt->tmpMax);
     tok.add(opt->scaleType);
+    tok.add(opt->scaleThreshold);
     tok.add(opt->centerGlyphs);
     addClipToken(tok, opt);
     glyphList *g;
@@ -533,10 +537,12 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     if((l || opt->vectorType == 6) && lmax) {
       double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
       // log scaling
-      if(opt->scaleType == PViewOptions::Logarithmic && opt->tmpMin > 0 &&
+      if(opt->getScaleType(opt->tmpMin, opt->tmpMax) != PViewOptions::Linear &&
          opt->tmpMax > opt->tmpMin && l != opt->tmpMin) {
+        double a = opt->scaleForward(opt->tmpMin, opt->tmpMin, opt->tmpMax);
+        double b = opt->scaleForward(opt->tmpMax, opt->tmpMin, opt->tmpMax);
         scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l *
-                log10(l / opt->tmpMin) / log10(opt->tmpMax / opt->tmpMin);
+                (opt->scaleForward(l, opt->tmpMin, opt->tmpMax) - a) / (b - a);
       }
       if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
       double px = scale * v[0];
