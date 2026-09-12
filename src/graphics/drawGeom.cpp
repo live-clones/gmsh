@@ -499,7 +499,9 @@ public:
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    r->model() == GModel::current());
     if(select) {
-      _ctx->setPickColor(3, r->tag());
+      // all a volume draws is a marker at its middle: it is picked in front
+      // of the surfaces around it, which would otherwise always cover it
+      _ctx->setPickColor(3, r->tag(), -1, -1, true);
     }
 
     if(CTX::instance()->geom.lightTwoSide)

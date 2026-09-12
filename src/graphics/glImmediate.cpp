@@ -133,6 +133,11 @@ void gmshColor4ubv(const void *col)
 
 void gmshLighting(bool on)
 {
+  // A picking pass writes identifiers as colours: shading one would spread
+  // it over the identifiers around it, so a lit glyph came back as a
+  // handful of other entities, or as the background. Colours are ignored
+  // there for the same reason (see gmshColor4ubv).
+  if(on && drawContext::pickColorActive()) on = false;
   _lighting = on;
   if(gmshUseShaders()) return;
   if(on)
