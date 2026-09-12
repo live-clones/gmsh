@@ -340,6 +340,23 @@ void fillRegionFlat(GRegion *gr)
   std::vector<Vertex *> newVertex;
   newVertex.reserve(pts.size());
   for(const FlatPoint &p : pts) {
+    // Layer-0 points are the boundary vertices this fill started from
+    // (seeded straight from the GFace meshes, see above): they are
+    // already part of the domain's boundary mesh/PLC, so only genuinely
+    // new interior points (layer > 0) should be embedded here -- matching
+    // Filler::treat_region, which only ever pushes accepted *spawns* into
+    // new_vertices, never the boundary seeds themselves (simple3D.cpp).
+    // Re-embedding a boundary vertex as a second, separate point produces
+    // an exact or near-coincident duplicate wherever two independently
+    // meshed adjacent GFaces (e.g. across a small/sharp shared feature)
+    // happen to place their own boundary nodes close together in real
+    // space -- confirmed directly: with a strongly graded size field,
+    // ~1100 point pairs ended up far closer than the k1*h spacing the
+    // frontal acceptance test is supposed to guarantee, and *every one*
+    // of them involved a layer-0 point (never two candidate points),
+    // which is exactly this. That degenerate local configuration is what
+    // was corrupting TetGen's boundary recovery downstream.
+    if(p.layer == 0) continue;
     MVertex *v = new MVertex(p.x, p.y, p.z, gr, 0);
     Vertex *vv = new Vertex(p.x, p.y, p.z);
     newVertex.push_back(vv);
