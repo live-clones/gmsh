@@ -1,8 +1,11 @@
 #include "hxt_combine_cpp_api.h"
 
+#include <array>
 #include <map>
+#include <queue>
 #include <set>
 #include <sstream>
+#include <unordered_map>
 
 #include "basic_types.h"
 #include "cell_types.h"
@@ -68,24 +71,113 @@ namespace {
       const double* cellQualities,
       vector<bool>& selected)
     {
-      std::vector<CellIndex> reorder = orderCellDecreasingQuality(cells, cellQualities);
-
-      for (unsigned int i = 0; i < reorder.size(); ++i) {
-        CellIndex cellId = reorder[i];
-        if (selected[cellId]) continue;
-        else {
-          const HXTCombineCell& cell = cells[cellId];
-          if (isCellCompatible(cell)) {
-            selected[cellId] = true;
-            addCellCompatibilityConstraints(cells[cellId], cellId);
-          }
-        }
-      }
+      frontalSelection(cells, cellQualities, selected);
 
       localSearchImprove(cells, cellQualities, selected);
     }
 
   private:
+    /**
+    * Canonical key for a hex's quad facet: its 4 global vertex indices,
+    * sorted -- two hexes on either side of the same face produce the
+    * same key, which is exactly the face-adjacency relation a frontal
+    * growth strategy needs.
+    */
+    typedef std::array<VertexIndex, 4> FacetKey;
+
+    static FacetKey hexFacetKey(const HXTCombineCell& cell, unsigned int f)
+    {
+      FacetKey k = {{ cell.vertex(Hex::facetVertex[f][0]),
+                     cell.vertex(Hex::facetVertex[f][1]),
+                     cell.vertex(Hex::facetVertex[f][2]),
+                     cell.vertex(Hex::facetVertex[f][3]) }};
+      std::sort(k.begin(), k.end());
+      return k;
+    }
+
+    /**
+    * Frontal cell selection: rather than sorting every candidate by
+    * quality globally and scanning (which happily jumps to the next best
+    * cell anywhere in the domain, with no notion of spatial continuity),
+    * grow selected regions like the point-insertion frontal advance
+    * does: seed with the best remaining candidate, then only consider
+    * candidates that are face-adjacent to what has already been
+    * selected, picking the best one available in that active front at
+    * each step; re-seed globally only once a front is fully exhausted.
+    * Currently scoped to hexes (the only cell type this store's caller
+    * enables here); non-hex cells fall back to being handled entirely by
+    * the trailing quality-sorted scan below, same as before.
+    */
+    void frontalSelection(
+      const vector<HXTCombineCell>& cells,
+      const double* cellQualities,
+      vector<bool>& selected)
+    {
+      std::unordered_map<size_t, std::vector<CellIndex> > facetToCells;
+      auto keyHash = [](const FacetKey& k) {
+        size_t h = 1469598103934665603ull;
+        for(VertexIndex v : k) { h ^= v; h *= 1099511628211ull; }
+        return h;
+      };
+      for (CellIndex c = 0; c < cells.size(); ++c) {
+        if (!cells[c].isHex()) continue;
+        for (unsigned int f = 0; f < 6; ++f)
+          facetToCells[keyHash(hexFacetKey(cells[c], f))].push_back(c);
+      }
+
+      std::vector<CellIndex> globalOrder =
+        orderCellDecreasingQuality(cells, cellQualities);
+      std::size_t nextSeed = 0;
+      std::vector<bool> resolved(cells.size(), false);
+
+      auto qualityCmp = [&](CellIndex a, CellIndex b) {
+        return cellQualities[a] < cellQualities[b]; // priority_queue: max on top
+      };
+      std::priority_queue<CellIndex, std::vector<CellIndex>,
+        decltype(qualityCmp)> front(qualityCmp);
+
+      auto pushNeighbors = [&](CellIndex c) {
+        if (!cells[c].isHex()) return;
+        for (unsigned int f = 0; f < 6; ++f) {
+          auto it = facetToCells.find(keyHash(hexFacetKey(cells[c], f)));
+          if (it == facetToCells.end()) continue;
+          for (CellIndex nb : it->second)
+            if (nb != c && !resolved[nb]) front.push(nb);
+        }
+      };
+
+      while (true) {
+        while (front.empty() && nextSeed < globalOrder.size()) {
+          CellIndex s = globalOrder[nextSeed++];
+          if (!resolved[s] && !selected[s]) front.push(s);
+        }
+        if (front.empty()) break;
+
+        CellIndex c = front.top();
+        front.pop();
+        if (resolved[c]) continue;
+        resolved[c] = true;
+
+        if (!cells[c].isHex()) continue; // let the trailing scan handle it
+        if (isCellCompatible(cells[c])) {
+          selected[c] = true;
+          addCellCompatibilityConstraints(cells[c], c);
+          pushNeighbors(c);
+        }
+      }
+
+      // Non-hex candidates (or anything skipped above) still get the
+      // original quality-sorted scan, unaffected by the above.
+      for (unsigned int i = 0; i < globalOrder.size(); ++i) {
+        CellIndex cellId = globalOrder[i];
+        if (selected[cellId] || cells[cellId].isHex()) continue;
+        if (isCellCompatible(cells[cellId])) {
+          selected[cellId] = true;
+          addCellCompatibilityConstraints(cells[cellId], cellId);
+        }
+      }
+    }
+
     /**
     * Local-search polish on top of the greedy result: the greedy pass
     * above is a classic quality-sorted "scan and lock" heuristic for what
