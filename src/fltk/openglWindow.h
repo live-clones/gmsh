@@ -106,6 +106,11 @@ private:
   void _cameraMatrices();
   void _studioFrame();
   static void _studioSampleCb(void *data);
+  // a model spun hard enough catches fire: the speed of the drag, smoothed,
+  // and when it last moved; how much is alight and when that was last drawn
+  double _spin, _spinTime, _fire, _fireTime;
+  void _burn();
+  static void _fireCb(void *data);
   bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
                int w, int h, std::vector<GVertex *> &vertices,
                std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
