@@ -14,6 +14,8 @@
 struct axisTick {
   double v, t;
   std::string label;
+  // a subdivision of a logarithmic axis: a shorter mark, and no number
+  bool minor = false;
 };
 
 // The power of ten the labels of a range are worth writing over (0 for
@@ -27,6 +29,14 @@ std::string axisMultiplier(int exp);
 // significant digits of it call for
 std::string axisNumber(double v, int decimals, int exp);
 int axisDecimals(double v, int exp);
+
+// v as a number on a logarithmic axis: three significant digits times a
+// power of ten, written the way the multiplier is, or plainly while that
+// stays short (1000 rather than 10^3, 0.002 rather than 2x10^-3) unless
+// `powers'. Whether a range is worth writing that way is decided once for
+// all of its labels: 10^-4 next to 0.01 reads as two different scales.
+std::string axisLogNumber(double v, bool powers = false);
+bool axisLogPowers(double min, double max);
 
 // keep every k-th of these labels, the last one always, k the smallest that
 // lets them fit along an axis of the given length in pixels
@@ -46,5 +56,19 @@ void makeAxisTicks(double min, double max, double length, double fontH,
                    bool horizontal, const std::string &format, int divisions,
                    bool labelEnds, std::vector<axisTick> &ticks,
                    std::string &multiplier);
+
+// The labels of a logarithmic axis spanning [min, max], both positive, laid
+// out by their logarithm. With no format, they are the decades of the range,
+// or every second, fifth... one of them when that many labels do not fit,
+// with the 1-2-5 or the nine subdivisions of a decade when the range is
+// short enough to tell them apart; the next finer division is marked without
+// a number. A range too short for a power of ten to fall in it is labelled
+// like a linear one, which is what it looks like. The other arguments are
+// those of makeAxisTicks(), and `multiplier' comes back empty unless the
+// labels are linear ones.
+void makeLogAxisTicks(double min, double max, double length, double fontH,
+                      bool horizontal, const std::string &format,
+                      int divisions, bool labelEnds,
+                      std::vector<axisTick> &ticks, std::string &multiplier);
 
 #endif

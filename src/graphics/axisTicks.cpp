@@ -20,6 +20,41 @@ int axisSharedExponent(double min, double max)
   return (e >= 5 || e <= -4) ? e : 0;
 }
 
+namespace {
+  // the digits of n in superscript
+  std::string superscript(int n)
+  {
+    const char *sup[10] = {"⁰", "¹", "²", "³", "⁴",
+                           "⁵", "⁶", "⁷", "⁸", "⁹"};
+    char str[32];
+    sprintf(str, "%d", abs(n));
+    std::string s;
+    for(const char *c = str; *c; c++) s += sup[*c - '0'];
+    return s;
+  }
+
+  // 10^exp on its own, written the way the picture being drawn allows
+  std::string powerOfTen(int exp)
+  {
+    char str[64];
+    if(CTX::instance()->printing) {
+      int f = CTX::instance()->print.fileFormat;
+      if(f == FORMAT_TEX) {
+        sprintf(str, "$10^{%d}$", exp);
+        return str;
+      }
+      if(f == FORMAT_PS || f == FORMAT_EPS || f == FORMAT_PDF ||
+         f == FORMAT_SVG || f == FORMAT_TIKZ) {
+        sprintf(str, "10^%d", exp);
+        return str;
+      }
+    }
+    std::string s = "10";
+    if(exp < 0) s += "⁻";
+    return s + superscript(exp);
+  }
+} // namespace
+
 std::string axisMultiplier(int exp)
 {
   if(!exp) return "";
@@ -36,13 +71,9 @@ std::string axisMultiplier(int exp)
       return str;
     }
   }
-  const char *sup[10] = {"⁰", "¹", "²", "³", "⁴",
-                         "⁵", "⁶", "⁷", "⁸", "⁹"};
   std::string s = "×10";
   if(exp < 0) s += "⁻";
-  sprintf(str, "%d", abs(exp));
-  for(const char *c = str; *c; c++) s += sup[*c - '0'];
-  return s;
+  return s + superscript(exp);
 }
 
 std::string axisNumber(double v, int decimals, int exp)
@@ -265,4 +296,216 @@ void makeAxisTicks(double min, double max, double length, double fontH,
     }
   }
   ticks = best;
+}
+
+namespace {
+  // the number with the decimals it needs and no more
+  std::string trimmed(double v, int decimals)
+  {
+    std::string s = axisNumber(v, decimals, 0);
+    if(s.find('.') == std::string::npos) return s;
+    while(s.size() && s[s.size() - 1] == '0') s.erase(s.size() - 1);
+    if(s.size() && s[s.size() - 1] == '.') s.erase(s.size() - 1);
+    return s;
+  }
+} // namespace
+
+bool axisLogPowers(double min, double max)
+{
+  if(min <= 0. || max <= 0.) return false;
+  return floor(log10(min)) < -3. || floor(log10(max)) > 3.;
+}
+
+std::string axisLogNumber(double v, bool powers)
+{
+  if(v <= 0.) return axisNumber(v, 0, 0);
+  int k = (int)floor(log10(v));
+  double m = v / pow(10., k);
+  if(m >= 9.995) { // a mantissa that rounds to ten is the next power
+    m = 1.;
+    k++;
+  }
+  int mi = (int)floor(m + 0.5);
+  bool round = (fabs(m - mi) < 5.e-3);
+  // a plain number while it is short enough to read at a glance
+  if(!powers && k >= -3 && k <= 3)
+    return trimmed(v, std::max(0, round ? -k : 2 - k));
+  if(round) return (mi == 1) ? powerOfTen(k) : trimmed(mi, 0) + axisMultiplier(k);
+  return trimmed(m, 2) + axisMultiplier(k);
+}
+
+void makeLogAxisTicks(double min, double max, double length, double fontH,
+                      bool horizontal, const std::string &format,
+                      int divisions, bool labelEnds,
+                      std::vector<axisTick> &ticks, std::string &multiplier)
+{
+  ticks.clear();
+  multiplier.clear();
+  char str[128];
+
+  // a range that has no logarithm, or none to speak of, is a linear one
+  if(min <= 0. || max <= 0. || min >= max) {
+    makeAxisTicks(min, max, length, fontH, horizontal, format, divisions,
+                  labelEnds, ticks, multiplier);
+    return;
+  }
+
+  double lmin = log10(min), lmax = log10(max), r = lmax - lmin;
+  bool powers = axisLogPowers(min, max);
+
+  if(!format.empty()) {
+    // the divisions of the range, equally spaced in the logarithm, as many
+    // as fit
+    int n = std::max(1, divisions);
+    for(int i = 0; i < n + 1; i++) {
+      axisTick tk;
+      tk.t = (double)i / n;
+      tk.v = pow(10., lmin + tk.t * r);
+      sprintf(str, format.c_str(), tk.v);
+      tk.label = str;
+      ticks.push_back(tk);
+    }
+    axisThinTicks(ticks, length, fontH, horizontal);
+    return;
+  }
+
+  // a range that is a third of a decade or less has no round power of ten
+  // to show: it is labelled like a linear one, laid out in the logarithm
+  // all the same
+  if(r <= 0.34) {
+    makeAxisTicks(min, max, length, fontH, horizontal, format, divisions,
+                  labelEnds, ticks, multiplier);
+    for(std::size_t i = 0; i < ticks.size(); i++) {
+      double t = (log10(ticks[i].v) - lmin) / r;
+      ticks[i].t = std::min(1., std::max(0., t));
+    }
+    return;
+  }
+
+  // the ends of the range are always labelled
+  std::vector<axisTick> ends(2);
+  ends[0].v = min; ends[0].t = 0.; ends[0].label = axisLogNumber(min, powers);
+  ends[1].v = max; ends[1].t = 1.; ends[1].label = axisLogNumber(max, powers);
+  std::vector<double> endWidths(2);
+  for(int i = 0; i < 2; i++) endWidths[i] = labelWidth(ends[i].label);
+  if(labelEnds && !ticksFit(ends, length, endWidths, fontH, horizontal)) {
+    // room for one label only: the middle of the range
+    axisTick mid;
+    mid.t = 0.5;
+    mid.v = pow(10., 0.5 * (lmin + lmax));
+    mid.label = axisLogNumber(mid.v, powers);
+    ticks.push_back(mid);
+    return;
+  }
+
+  // what a decade is labelled at, from coarse to fine: every hundredth,
+  // fiftieth... decade while there are more of them than labels, then the
+  // decade itself, then the 1-2-5 and the nine divisions of it
+  const int one[1] = {1}, onetwofive[3] = {1, 2, 5};
+  const int every[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+  struct logStep {
+    int decades;
+    const int *mant;
+    int nm;
+  };
+  std::vector<logStep> steps;
+  const int dec[6] = {100, 50, 20, 10, 5, 2};
+  for(int i = 0; i < 6; i++)
+    if(r / dec[i] >= 1.) steps.push_back({dec[i], one, 1});
+  steps.push_back({1, one, 1});
+  steps.push_back({1, onetwofive, 3});
+  steps.push_back({1, every, 9});
+
+  std::vector<axisTick> best = labelEnds ? ends : std::vector<axisTick>();
+  int bestScore = -1, chosen = -1;
+  for(std::size_t si = 0; si < steps.size(); si++) {
+    const logStep &st = steps[si];
+    std::vector<axisTick> cand;
+    double w0 = endWidths[0], w1 = endWidths[1];
+    if(labelEnds) cand.push_back(ends[0]);
+    for(int k = (int)floor(lmin); k <= (int)ceil(lmax); k++) {
+      if(st.decades > 1 && (k % st.decades)) continue;
+      for(int j = 0; j < st.nm; j++) {
+        axisTick tk;
+        tk.v = st.mant[j] * pow(10., k);
+        tk.t = (log10(tk.v) - lmin) / r;
+        if(tk.t < -1.e-9 || tk.t > 1. + 1.e-9) continue;
+        tk.label = axisLogNumber(tk.v, powers);
+        if(labelEnds) {
+          // a round value too close to an end for both labels gives way
+          if(tk.t <= 1.e-9 || tk.t >= 1. - 1.e-9) continue;
+          double w = labelWidth(tk.label);
+          double need0 = horizontal ? 0.5 * (w + w0) + 0.6 * fontH : 1.3 * fontH;
+          double need1 = horizontal ? 0.5 * (w + w1) + 0.6 * fontH : 1.3 * fontH;
+          if(tk.t * length < need0 || (1. - tk.t) * length < need1) continue;
+        }
+        else {
+          tk.t = std::min(1., std::max(0., tk.t));
+        }
+        cand.push_back(tk);
+      }
+    }
+    if(labelEnds) cand.push_back(ends[1]);
+    if(cand.empty()) continue;
+    std::vector<double> widths(cand.size());
+    for(std::size_t i = 0; i < cand.size(); i++)
+      widths[i] = labelWidth(cand[i].label);
+    if(!ticksFit(cand, length, widths, fontH, horizontal)) continue;
+    if(divisions <= 0) { // the finest that fits
+      best = cand;
+      chosen = (int)si;
+      bestScore = 0;
+      continue;
+    }
+    // as close as possible to the number of labels asked for, the coarser
+    // step winning a tie
+    int score = abs((int)cand.size() - divisions);
+    if(bestScore < 0 || score < bestScore) {
+      best = cand;
+      chosen = (int)si;
+      bestScore = score;
+    }
+  }
+
+  // The next finer division, marked but not labelled: what tells a
+  // logarithmic axis from a linear one at a glance. The finest one that does
+  // not smudge, as marks a couple of pixels apart are a texture, not a
+  // scale: every digit of a decade, then its half and its fifth, then none.
+  const int twofive[2] = {2, 5};
+  std::vector<logStep> fine;
+  if(chosen < 0 || steps[chosen].decades > 1)
+    fine.push_back({1, one, 1}); // the decades that are not labelled
+  else if(steps[chosen].nm < 9) {
+    fine.push_back({1, every, 9});
+    if(steps[chosen].nm == 1) fine.push_back({1, twofive, 2});
+  }
+
+  ticks = best;
+  for(std::size_t fi = 0; fi < fine.size(); fi++) {
+    std::vector<axisTick> cand = best;
+    for(int k = (int)floor(lmin); k <= (int)ceil(lmax); k++) {
+      for(int j = 0; j < fine[fi].nm; j++) {
+        axisTick tk;
+        tk.v = fine[fi].mant[j] * pow(10., k);
+        tk.t = (log10(tk.v) - lmin) / r;
+        if(tk.t < -1.e-9 || tk.t > 1. + 1.e-9) continue;
+        tk.t = std::min(1., std::max(0., tk.t));
+        tk.minor = true;
+        bool same = false;
+        for(std::size_t i = 0; i < best.size(); i++)
+          if(fabs(best[i].t - tk.t) < 1.e-6) same = true;
+        if(!same) cand.push_back(tk);
+      }
+    }
+    if(cand.size() == best.size()) continue;
+    std::sort(cand.begin(), cand.end(),
+              [](const axisTick &a, const axisTick &b) { return a.t < b.t; });
+    bool fits = true;
+    for(std::size_t i = 1; i < cand.size() && fits; i++)
+      if((cand[i].t - cand[i - 1].t) * length < 3.) fits = false;
+    if(fits) {
+      ticks = cand;
+      break;
+    }
+  }
 }

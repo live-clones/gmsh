@@ -34,7 +34,7 @@ double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
 {
   if(numIso == 1) return (min + max) / 2.;
 
-  if(scaleType == Linear) {
+  if(!logScale(min, max)) {
     // treat min/max separately to avoid numerical errors (important
     // not to miss first/last discrete iso on piece-wise constant
     // datasets)
@@ -47,12 +47,10 @@ double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
   }
   else if(scaleType == Logarithmic) {
     // should translate scale instead, with smallest val an option!
-    if(min <= 0.) return 0;
     return pow(10.,
                log10(min) + iso * (log10(max) - log10(min)) / (numIso - 1.));
   }
   else if(scaleType == DoubleLogarithmic) {
-    if(min <= 0.) return 0;
     double iso2 = iso / 2.;
     double numIso2 = numIso / 2.;
     return pow(10.,
@@ -66,17 +64,12 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
 {
   if(min == max) return numIso / 2;
 
-  if(forceLinear || scaleType == Linear) {
+  if(forceLinear || !logScale(min, max)) {
     return (int)((val - min) * (numIso - 1) / (max - min));
   }
-  else if(scaleType == Logarithmic) {
-    if(min <= 0.) return 0;
-    return (int)((log10(val) - log10(min)) * (numIso - 1) /
-                 (log10(max) - log10(min)));
-  }
-  else if(scaleType == DoubleLogarithmic) {
-    // FIXME
-    if(min <= 0.) return 0;
+  else if(scaleType == Logarithmic || scaleType == DoubleLogarithmic) {
+    // FIXME: the double logarithmic scale is laid out as a simple one
+    if(val <= 0.) return 0;
     return (int)((log10(val) - log10(min)) * (numIso - 1) /
                  (log10(max) - log10(min)));
   }

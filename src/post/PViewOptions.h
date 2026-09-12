@@ -45,6 +45,13 @@ public:
   // nothing, the automatic format. The scale adapts its labels to the range
   // it spans; a single value out in the scene has no range to adapt to.
   std::string getFormat() const { return format.empty() ? "%.3g" : format; }
+  // Whether the values of a range are laid out by their logarithm: asked
+  // for, and positive. A value that is not positive has no logarithm, and a
+  // range reaching zero is drawn linearly rather than half drawn.
+  bool logScale(double min, double max) const
+  {
+    return scaleType != Linear && min > 0. && max > 0.;
+  }
   int axes, axesAutoPosition, axesMikado;
   double axesTicks[3];
   std::string axesFormat[3], axesLabel[3];

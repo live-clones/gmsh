@@ -9,6 +9,7 @@
 #include "PViewOptions.h"
 #include "PViewData.h"
 #include "Context.h"
+#include "GmshMessage.h"
 #include "gl2ps.h"
 #include "axisTicks.h"
 
@@ -51,8 +52,8 @@ static double tickAt(PViewOptions *opt, double t, double length)
 // The labels of the scale. Iso: one per iso value, centred on it; discrete
 // or numeric: the boundaries of the bands; both every k-th as needed to fit.
 // Anything else is an axis over the range, round numbers when the user asked
-// for no particular format; a logarithmic scale keeps the divisions of the
-// range, which are round in the log.
+// for no particular format, round powers of ten when the scale is
+// logarithmic.
 static void scaleTicks(PViewOptions *opt, double min, double max,
                        double length, double fontH, bool horizontal,
                        std::vector<scaleTick> &ticks, std::string &multiplier)
@@ -60,7 +61,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
   ticks.clear();
   multiplier.clear();
   bool defaultFormat = opt->format.empty();
-  bool linear = (opt->scaleType == PViewOptions::Linear);
+  bool linear = !opt->logScale(min, max);
   int nbIso = std::max(1, opt->nbIso);
   char str[128];
 
@@ -80,7 +81,7 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
     bool iso = (opt->intervalsType == PViewOptions::Iso);
     int n = iso ? nbIso : nbIso + 1;
     int exp = 0, decimals = 0;
-    if(defaultFormat) {
+    if(defaultFormat && linear) {
       // the decimals the spacing calls for when they print every value
       // exactly (round bands), else three significant digits of the largest
       // value and enough to tell the neighbours apart
@@ -108,7 +109,8 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
       tk.t = iso ? (nbIso > 1 ? (double)i / (nbIso - 1) : 0.5) :
                    (double)i / nbIso;
       if(defaultFormat)
-        tk.label = axisNumber(tk.v, decimals, exp);
+        tk.label = linear ? axisNumber(tk.v, decimals, exp) :
+                            axisLogNumber(tk.v, axisLogPowers(min, max));
       else {
         sprintf(str, opt->getFormat().c_str(), tk.v);
         tk.label = str;
@@ -125,16 +127,9 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
     return;
   }
 
-  // logarithmic: the divisions of the range, as many as fit
-  for(int i = 0; i < nbIso + 1; i++) {
-    scaleTick tk;
-    tk.v = opt->getScaleValue(i, nbIso + 1, min, max);
-    tk.t = (double)i / nbIso;
-    sprintf(str, opt->getFormat().c_str(), tk.v);
-    tk.label = str;
-    ticks.push_back(tk);
-  }
-  axisThinTicks(ticks, length, fontH, horizontal);
+  // logarithmic: the powers of ten of the range, laid out by their logarithm
+  makeLogAxisTicks(min, max, length, fontH, horizontal, opt->format,
+                   defaultFormat ? 0 : nbIso, true, ticks, multiplier);
 }
 
 // a string with a halo in the background colour, so that it reads over the
@@ -250,15 +245,16 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   gmshEnd();
   gmshBegin(GL_LINES);
   for(std::size_t i = 0; i < ticks.size(); i++) {
+    double out = (ticks[i].minor ? 0.2 : 0.4) * tick;
     if(horizontal) {
       double x = xmin + tickAt(opt, ticks[i].t, width);
       gmshVertex2d(x, ymin + height);
-      gmshVertex2d(x, ymin + height + 0.4 * tick);
+      gmshVertex2d(x, ymin + height + out);
     }
     else {
       double y = ymin + tickAt(opt, ticks[i].t, height);
       gmshVertex2d(xmin + width, y);
-      gmshVertex2d(xmin + width + 0.4 * tick, y);
+      gmshVertex2d(xmin + width + out, y);
     }
   }
   gmshEnd();
@@ -279,6 +275,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin,
     drawContext::global()->getStringDescent(); // height above ref pt
 
   for(std::size_t i = 0; i < ticks.size(); i++) {
+    if(ticks[i].minor) continue; // a subdivision: the mark says enough
     // centred on its tick mark
     if(horizontal)
       haloString(ctx, ticks[i].label, xmin + tickAt(opt, ticks[i].t, width),
@@ -390,6 +387,16 @@ static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
   else {
     opt->tmpMin = data->getMin();
     opt->tmpMax = data->getMax();
+  }
+
+  if(opt->scaleType != PViewOptions::Linear &&
+     !opt->logScale(opt->tmpMin, opt->tmpMax)) {
+    static bool warned = false;
+    if(!warned) {
+      warned = true;
+      Msg::Warning("Logarithmic scale of a range that is not positive: "
+                   "drawing it linearly");
+    }
   }
 
   drawContext::global()->setFont(CTX::instance()->glFontEnum,

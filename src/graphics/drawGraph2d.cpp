@@ -4,11 +4,13 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <limits>
 #include "drawContext.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
 #include "gl2ps.h"
+#include "GmshMessage.h"
 #include "axisTicks.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -52,6 +54,43 @@ void drawContext::drawText2d()
       }
     }
   }
+}
+
+// The values a graph is plotted over, from the options and the data alone
+static void getGraphValueRange(PView *p, double &min, double &max)
+{
+  PViewData *data = p->getData(true);
+  PViewOptions *opt = p->getOptions();
+  if(opt->rangeType == PViewOptions::Custom) {
+    min = opt->customMin;
+    max = opt->customMax;
+  }
+  else if(opt->rangeType == PViewOptions::PerTimeStep) {
+    min = data->getMin(opt->timeStep);
+    max = data->getMax(opt->timeStep);
+  }
+  else {
+    min = data->getMin();
+    max = data->getMax();
+  }
+}
+
+// Whether the graph is drawn in the logarithm of its values: asked for, and
+// possible, which a range reaching zero is not
+static bool logScale(PView *p)
+{
+  PViewOptions *opt = p->getOptions();
+  if(opt->scaleType == PViewOptions::Linear) return false;
+  double min, max;
+  getGraphValueRange(p, min, max);
+  if(opt->logScale(min, max)) return true;
+  static bool warned = false;
+  if(!warned) {
+    warned = true;
+    Msg::Warning("Logarithmic scale of a range that is not positive: "
+                 "drawing it linearly");
+  }
+  return false;
 }
 
 static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
@@ -184,41 +223,35 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
     xmax = data->getTime(data->getNumTimeSteps() - 1);
   }
 
-  if(opt->scaleType == PViewOptions::Logarithmic)
+  // a logarithmic graph is plotted in the logarithm of its values; one that
+  // is not positive has none, and is left out of the curve rather than
+  // turned into a nan that would swallow the range
+  if(logScale(p)) {
+    double none = std::numeric_limits<double>::quiet_NaN();
     for(std::size_t i = 0; i < y.size(); i++)
-      for(std::size_t j = 0; j < y[i].size(); j++) y[i][j] = log10(y[i][j]);
+      for(std::size_t j = 0; j < y[i].size(); j++)
+        y[i][j] = (y[i][j] > 0.) ? log10(y[i][j]) : none;
+  }
 
   ymin = VAL_INF;
   ymax = -VAL_INF;
   for(std::size_t i = 0; i < y.size(); i++) {
     for(std::size_t j = 0; j < y[i].size(); j++) {
+      // std::min and std::max keep what they have of a nan
       ymin = std::min(ymin, y[i][j]);
       ymax = std::max(ymax, y[i][j]);
     }
   }
 
-  return true;
+  return ymin <= ymax;
 }
 
-// The values a graph is plotted over, from the options and the data alone:
+// The range a graph is drawn over, on the scale it is drawn on:
 // drawGraph narrows this to the abscissa range when one is asked for.
 static void getGraphRange(PView *p, double &min, double &max)
 {
-  PViewData *data = p->getData(true);
-  PViewOptions *opt = p->getOptions();
-  if(opt->rangeType == PViewOptions::Custom) {
-    min = opt->customMin;
-    max = opt->customMax;
-  }
-  else if(opt->rangeType == PViewOptions::PerTimeStep) {
-    min = data->getMin(opt->timeStep);
-    max = data->getMax(opt->timeStep);
-  }
-  else {
-    min = data->getMin();
-    max = data->getMax();
-  }
-  if(opt->scaleType == PViewOptions::Logarithmic) {
+  getGraphValueRange(p, min, max);
+  if(logScale(p)) {
     min = log10(min);
     max = log10(max);
   }
@@ -276,7 +309,6 @@ static std::string getGraphTitle(PView *p)
       label += std::string(" (") + tmp + ")";
     }
   }
-  if(opt->scaleType == PViewOptions::Logarithmic) label = "Log10 " + label;
   return label;
 }
 
@@ -345,9 +377,17 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
   if(pl.xaxis && opt->axesTicks[0] > 0)
     makeAxisTicks(xmin, xmax, width, l.fontH, true, opt->axesFormat[0],
                   (int)opt->axesTicks[0], true, l.xt, l.xmult);
-  if(pl.yaxis && opt->axesTicks[1] > 0)
-    makeAxisTicks(ymin, ymax, height, l.fontH, false, opt->axesFormat[1],
-                  (int)opt->axesTicks[1], true, l.yt, l.ymult);
+  if(pl.yaxis && opt->axesTicks[1] > 0) {
+    // the graph is drawn in the logarithm: its axis is labelled in the
+    // values, which is what makes it read as a logarithmic one
+    if(logScale(p))
+      makeLogAxisTicks(pow(10., ymin), pow(10., ymax), height, l.fontH, false,
+                       opt->axesFormat[1], (int)opt->axesTicks[1], true, l.yt,
+                       l.ymult);
+    else
+      makeAxisTicks(ymin, ymax, height, l.fontH, false, opt->axesFormat[1],
+                    (int)opt->axesTicks[1], true, l.yt, l.ymult);
+  }
 
   // the tick marks stick out of the frame, on both sides of a box
   l.left = l.bottom = l.out;
@@ -523,6 +563,12 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     CTX::instance()->unpackRed(opt->color.axes),
     CTX::instance()->unpackGreen(opt->color.axes),
     CTX::instance()->unpackBlue(opt->color.axes), 60);
+  // the subdivisions of a logarithmic axis are fainter still: there are
+  // eight of them to a decade, and they are read as a texture, not as lines
+  unsigned int gridMinor = CTX::instance()->packColor(
+    CTX::instance()->unpackRed(opt->color.axes),
+    CTX::instance()->unpackGreen(opt->color.axes),
+    CTX::instance()->unpackBlue(opt->color.axes), 25);
   bool blend = (opt->axes > 2);
   if(blend) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -535,29 +581,32 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   double yaxis = pl.first ? xleft : xleft + width + pl.yshift;
   for(std::size_t i = 0; i < l.yt.size(); i++) {
     double y = ybot + l.yt[i].t * height;
+    // a subdivision gets a shorter mark and no number
+    bool minor = l.yt[i].minor;
+    double o = minor ? 0.5 * out : out;
     gmshBegin(GL_LINES);
     if(pl.first) {
-      gmshVertex2d(xleft - out, y);
+      gmshVertex2d(xleft - o, y);
       gmshVertex2d(xleft, y);
       if(opt->axes > 1 && !pl.ytwin) { // the twin axis has the right side
         gmshVertex2d(xleft + width, y);
-        gmshVertex2d(xleft + width + out, y);
+        gmshVertex2d(xleft + width + o, y);
       }
     }
     else {
       gmshVertex2d(yaxis, y);
-      gmshVertex2d(yaxis + out, y);
+      gmshVertex2d(yaxis + o, y);
     }
     gmshEnd();
     if(pl.first && opt->axes > 2 && l.yt[i].t > 0. && l.yt[i].t < 1.) {
-      gmshColor4ubv((const void *)&grid);
+      gmshColor4ubv((const void *)(minor ? &gridMinor : &grid));
       gmshBegin(GL_LINES);
       gmshVertex2d(xleft, y);
       gmshVertex2d(xleft + width, y);
       gmshEnd();
       gmshColor4ubv((const void *)&opt->color.axes);
     }
-    if(opt->showScale) {
+    if(opt->showScale && !minor) {
       if(pl.first)
         ctx->drawStringRight(l.yt[i].label, xleft - out - l.gap,
                              y - l.fontA / 3., 0.);
@@ -576,17 +625,19 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   // x ticks, their numbers and the vertical grid
   for(std::size_t i = 0; i < l.xt.size(); i++) {
     double x = xleft + l.xt[i].t * width;
+    bool minor = l.xt[i].minor;
+    double o = minor ? 0.5 * out : out;
     if(pl.first) {
       gmshBegin(GL_LINES);
-      gmshVertex2d(x, ybot - out);
+      gmshVertex2d(x, ybot - o);
       gmshVertex2d(x, ybot);
       if(opt->axes > 1) {
         gmshVertex2d(x, ytop);
-        gmshVertex2d(x, ytop + out);
+        gmshVertex2d(x, ytop + o);
       }
       gmshEnd();
       if(opt->axes > 2 && l.xt[i].t > 0. && l.xt[i].t < 1.) {
-        gmshColor4ubv((const void *)&grid);
+        gmshColor4ubv((const void *)(minor ? &gridMinor : &grid));
         gmshBegin(GL_LINES);
         gmshVertex2d(x, ybot);
         gmshVertex2d(x, ytop);
@@ -594,7 +645,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
         gmshColor4ubv((const void *)&opt->color.axes);
       }
     }
-    if(opt->showScale)
+    if(opt->showScale && !minor)
       ctx->drawStringCenter(l.xt[i].label, x, ybot - l.numX, 0.);
   }
   if(blend) glDisable(GL_BLEND);
@@ -623,7 +674,7 @@ SPoint2 getGraph2dDataPointForTag(unsigned int tag) { return tags_rev[tag]; }
 static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
                           double width, double height, double x, double y,
                           double xmin, double xmax, double ymin, double ymax,
-                          bool numeric, bool singlePoint,
+                          bool numeric, bool singlePoint, bool inLog,
                           bool inModelCoordinates)
 {
   PViewOptions *opt = p->getOptions();
@@ -654,7 +705,7 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       double offset = 3;
       if(inModelCoordinates) offset *= ctx->pixel_equiv_x / ctx->s[0];
       char label[256];
-      sprintf(label, opt->getFormat().c_str(), y);
+      sprintf(label, opt->getFormat().c_str(), inLog ? pow(10., y) : y);
       ctx->drawString(label, px + offset, py + offset, 0.);
     }
     else if(singlePoint && (opt->pointType == 1 || opt->pointType == 3)) {
@@ -678,7 +729,7 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
 static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
                             double ytop, double width, double height,
                             std::vector<double> &x, double xmin, double xmax,
-                            std::vector<std::vector<double> > &y,
+                            std::vector<std::vector<double> > &y, bool inLog,
                             bool inModelCoordinates)
 {
   if(width <= 0 || height <= 0) return;
@@ -705,7 +756,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
       gmshBegin(GL_LINE_STRIP);
       for(std::size_t j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], xmin,
-                      xmax, opt->tmpMin, opt->tmpMax, false, false,
+                      xmax, opt->tmpMin, opt->tmpMax, false, false, inLog,
                       inModelCoordinates);
       gmshEnd();
       if(opt->useStipple) {
@@ -721,7 +772,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
     for(std::size_t i = 0; i < y.size(); i++)
       for(std::size_t j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], xmin,
-                      xmax, opt->tmpMin, opt->tmpMax, false, true,
+                      xmax, opt->tmpMin, opt->tmpMax, false, true, inLog,
                       inModelCoordinates);
   }
 
@@ -729,7 +780,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
     for(std::size_t i = 0; i < y.size(); i++)
       for(std::size_t j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], xmin,
-                      xmax, opt->tmpMin, opt->tmpMax, true, true,
+                      xmax, opt->tmpMin, opt->tmpMax, true, true, inLog,
                       inModelCoordinates);
   }
 }
@@ -745,6 +796,7 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
 
   PViewData *data = p->getData(true); // use adaptive data if available
   PViewOptions *opt = p->getOptions();
+  bool logged = false;
   if(opt->rangeType == PViewOptions::Custom) {
     opt->tmpMin = opt->customMin;
     opt->tmpMax = opt->customMax;
@@ -758,13 +810,15 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
     // steps
     opt->tmpMin = ymin;
     opt->tmpMax = ymax;
+    logged = true; // what getGraphData plotted, logarithm taken
   }
   else {
     opt->tmpMin = data->getMin();
     opt->tmpMax = data->getMax();
   }
 
-  if(opt->scaleType == PViewOptions::Logarithmic) {
+  bool inLog = logScale(p);
+  if(inLog && !logged) {
     opt->tmpMin = log10(opt->tmpMin);
     opt->tmpMax = log10(opt->tmpMax);
   }
@@ -777,7 +831,7 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
   scaleGraphLayout(l, ss);
 
   drawGraphAxes(ctx, p, xleft, ytop, width, height, inModelCoordinates, pl, l);
-  drawGraphCurves(ctx, p, xleft, ytop, width, height, x, xmin, xmax, y,
+  drawGraphCurves(ctx, p, xleft, ytop, width, height, x, xmin, xmax, y, inLog,
                   inModelCoordinates);
 }
 
