@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
+#include <cmath>
 #include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -30,33 +32,48 @@ PViewOptions *PViewOptions::reference()
   return _reference;
 }
 
+double PViewOptions::getScaleThreshold(double min, double max) const
+{
+  if(scaleThreshold > 0.) return scaleThreshold;
+  double m = std::max(fabs(min), fabs(max));
+  return (m > 0.) ? m * 1.e-4 : 1.;
+}
+
+double PViewOptions::scaleForward(double v, double min, double max) const
+{
+  int type = getScaleType(min, max);
+  if(type == Logarithmic) return log10(v);
+  if(type == SymmetricLogarithmic) {
+    // logarithmic beyond the threshold, linear inside it, and smooth where
+    // they meet: a field that changes sign has both of its tails readable
+    double s = getScaleThreshold(min, max);
+    return (v < 0. ? -1. : 1.) * log10(1. + fabs(v) / s);
+  }
+  return v;
+}
+
+double PViewOptions::scaleInverse(double u, double min, double max) const
+{
+  int type = getScaleType(min, max);
+  if(type == Logarithmic) return pow(10., u);
+  if(type == SymmetricLogarithmic) {
+    double s = getScaleThreshold(min, max);
+    return (u < 0. ? -1. : 1.) * s * (pow(10., fabs(u)) - 1.);
+  }
+  return u;
+}
+
 double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
 {
   if(numIso == 1) return (min + max) / 2.;
 
-  if(!logScale(min, max)) {
-    // treat min/max separately to avoid numerical errors (important
-    // not to miss first/last discrete iso on piece-wise constant
-    // datasets)
-    if(iso == 0)
-      return min;
-    else if(iso == numIso - 1)
-      return max;
-    else
-      return min + iso * (max - min) / (numIso - 1.);
-  }
-  else if(scaleType == Logarithmic) {
-    // should translate scale instead, with smallest val an option!
-    return pow(10.,
-               log10(min) + iso * (log10(max) - log10(min)) / (numIso - 1.));
-  }
-  else if(scaleType == DoubleLogarithmic) {
-    double iso2 = iso / 2.;
-    double numIso2 = numIso / 2.;
-    return pow(10.,
-               log10(min) + iso2 * (log10(max) - log10(min)) / (numIso2 - 1.));
-  }
-  return 0.;
+  // treat min/max separately to avoid numerical errors (important not to
+  // miss first/last discrete iso on piece-wise constant datasets)
+  if(iso <= 0) return min;
+  if(iso >= numIso - 1) return max;
+
+  double a = scaleForward(min, min, max), b = scaleForward(max, min, max);
+  return scaleInverse(a + iso * (b - a) / (numIso - 1.), min, max);
 }
 
 int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
@@ -64,16 +81,14 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
 {
   if(min == max) return numIso / 2;
 
-  if(forceLinear || !logScale(min, max)) {
+  if(forceLinear || getScaleType(min, max) == Linear)
     return (int)((val - min) * (numIso - 1) / (max - min));
-  }
-  else if(scaleType == Logarithmic || scaleType == DoubleLogarithmic) {
-    // FIXME: the double logarithmic scale is laid out as a simple one
-    if(val <= 0.) return 0;
-    return (int)((log10(val) - log10(min)) * (numIso - 1) /
-                 (log10(max) - log10(min)));
-  }
-  return 0;
+
+  // a value with no logarithm is off the end of a logarithmic scale
+  if(scaleType == Logarithmic && val <= 0.) return 0;
+
+  double a = scaleForward(min, min, max), b = scaleForward(max, min, max);
+  return (int)((scaleForward(val, min, max) - a) * (numIso - 1) / (b - a));
 }
 
 unsigned int PViewOptions::getColor(double val, double min, double max,

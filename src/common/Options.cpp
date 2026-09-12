@@ -9012,6 +9012,25 @@ double opt_view_draw_skin_only(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_scale_threshold(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->scaleThreshold = val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    FlGui::instance()->options->view.value[35]->value(opt->scaleThreshold);
+  }
+#endif
+  return opt->scaleThreshold;
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_scale_type(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)

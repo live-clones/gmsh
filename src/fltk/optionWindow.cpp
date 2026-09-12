@@ -813,6 +813,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double normals = opt_view_normals(current, GMSH_GET, 0);
   double tangents = opt_view_tangents(current, GMSH_GET, 0);
   double custom_min = opt_view_custom_min(current, GMSH_GET, 0);
+  double scale_threshold = opt_view_scale_threshold(current, GMSH_GET, 0);
   double custom_max = opt_view_custom_max(current, GMSH_GET, 0);
   double nb_iso = opt_view_nb_iso(current, GMSH_GET, 0);
   double offset0 = opt_view_offset0(current, GMSH_GET, 0);
@@ -1066,6 +1067,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 
       val = o->view.value[32]->value();
       if(force || (val != custom_max)) opt_view_custom_max(i, GMSH_SET, val);
+
+      val = o->view.value[35]->value();
+      if(force || (val != scale_threshold))
+        opt_view_scale_threshold(i, GMSH_SET, val);
 
       val = o->view.value[33]->value();
       if(force || (val != max_recursion_level))
@@ -3224,7 +3229,7 @@ optionWindow::optionWindow(int deltaFontSize)
       static Fl_Menu_Item menu_scale[] = {
         {"Linear", 0, nullptr, nullptr},
         {"Logarithmic", 0, nullptr, nullptr},
-        {"Double logarithmic", 0, nullptr, nullptr},
+        {"Symmetric logarithmic", 0, nullptr, nullptr},
         {nullptr}};
       view.choice[1] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
                                      2 * WB + 5 * BH, (int)(0.85 * IW), BH);
@@ -3260,6 +3265,15 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[31]->align(FL_ALIGN_RIGHT);
       view.value[31]->when(FL_WHEN_RELEASE);
       view.value[31]->callback(view_options_ok_cb);
+
+      view.value[35] =
+        new Fl_Value_Input(L + width - (int)(0.85 * IW) - 2 * WB,
+                           2 * WB + 7 * BH, (int)(0.45 * 0.85 * IW), BH,
+                           "Threshold");
+      view.value[35]->tooltip("View.ScaleThreshold");
+      view.value[35]->align(FL_ALIGN_RIGHT);
+      view.value[35]->when(FL_WHEN_RELEASE);
+      view.value[35]->callback(view_options_ok_cb);
 
       view.push[2] = new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, sw2, BH, "Max");
       view.push[2]->callback(view_options_ok_cb, (void *)"range_max");
@@ -4173,6 +4187,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_custom_min(index, GMSH_GUI, 0);
   opt_view_custom_max(index, GMSH_GUI, 0);
   opt_view_scale_type(index, GMSH_GUI, 0);
+  opt_view_scale_threshold(index, GMSH_GUI, 0);
   opt_view_saturate_values(index, GMSH_GUI, 0);
 
   opt_view_offset0(index, GMSH_GUI, 0);

@@ -71,4 +71,14 @@ void makeLogAxisTicks(double min, double max, double length, double fontH,
                       int divisions, bool labelEnds,
                       std::vector<axisTick> &ticks, std::string &multiplier);
 
+// The same for a symmetric logarithmic axis, which is logarithmic beyond
+// `threshold' on both sides of zero and linear inside it (0: four decades
+// below the largest value): the labels are the powers of ten of both sides
+// and zero itself, and the range may span it.
+void makeSymLogAxisTicks(double min, double max, double threshold,
+                         double length, double fontH, bool horizontal,
+                         const std::string &format, int divisions,
+                         bool labelEnds, std::vector<axisTick> &ticks,
+                         std::string &multiplier);
+
 #endif
