@@ -30,7 +30,7 @@ namespace {
 // k1*h is the minimal distance between two accepted points, k2*h the
 // minimal distance to the boundary (unused here, see below -- disabled
 // upstream too).
-const double k1 = 0.7;
+const double k1 = 0.61;
 
 // One accepted (or candidate) point, everything a plain double/int: no
 // Node/MVertex/GVertex allocated per point during the fill itself.
