@@ -107,7 +107,11 @@ openglWindow::openglWindow(int x, int y, int w, int h)
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
   _studioTimer = false;
-  _spin = _spinTime = _fire = _fireTime = 0.;
+  _spin = _spinTime = _fire = _fireTime = _pickStepTime = 0.;
+  _stepping = false;
+  _stepAnchor[0] = _stepAnchor[1] = 0.;
+  _highlighted = nullptr;
+  _highlightedWas = 0;
   _studioW = _studioH = 0;
   _printW = _printH = 0;
   _printScale = 1.;
@@ -125,7 +129,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
     Fl::add_timeout(.5, navigator_handler, (void *)this);
 
 #if defined(NEW_TOOLTIPS)
-  _tooltip = new tooltipWindow();
+  _tooltip = new tooltipWindow(this);
   _tooltip->hide();
 #endif
 }
@@ -633,6 +637,158 @@ void openglWindow::_setLastHandled(openglWindow *w)
   FlGui::instance()->visibility->updatePerWindow();
 }
 
+// One step through the entities under the cursor for one press or one notch,
+// which takes some holding down. A wheel event is rate limited because a
+// mouse gives one for each notch but a trackpad gives a burst of them for a
+// single swipe of two fingers, with more coming while it glides. A key is
+// rate limited too, and against being stepped again from inside this call,
+// because one press of it can reach this window more than once: macOS sends
+// an FL_KEYBOARD for the command an arrow key stands for and another for the
+// text it carries (Fl_cocoa.mm, doCommandBySelector: and insertText:), and
+// the tooltip this shows hands on the key that dismisses it.
+void openglWindow::_stepPick(int direction, bool rateLimited)
+{
+  if(_stepping) return;
+  double now = TimeOfDay();
+  // the two deliveries of one press are microseconds apart, so a short guard
+  // is enough for them and leaves a held key repeating
+  if(now - _pickStepTime < (rateLimited ? 0.2 : 0.03)) return;
+  _pickStepTime = now;
+  _stepAnchor[0] = _curr.win[0];
+  _stepAnchor[1] = _curr.win[1];
+  _stepping = true;
+  // where the hover last looked: neither a wheel nor a key moves the
+  // cursor, and the position an event reports is not the pointer's once a
+  // tooltip window has been shown under it
+  _ctx->stepPick(direction);
+  _hover();
+  _stepping = false;
+}
+
+// The entity the cursor is over, drawn as a selected one until the cursor is
+// over something else. The picture changes, so this redraws; what is drawn is
+// the same geometry in another colour, so the identifier image a pick is read
+// from does not change and is not thrown away.
+void openglWindow::_highlight(GEntity *e)
+{
+  if(!CTX::instance()->mouseHoverHighlight) e = nullptr;
+  if(e == _highlighted) return;
+  // put back what it was, unless something else has changed it since
+  if(_highlighted && _highlighted->getSelection() == GEntity::SelectHover)
+    _highlighted->setSelection(_highlightedWas);
+  _highlightedWas = e ? e->getSelection() : 0;
+  _highlighted = e;
+  // selected as far as the drawing is concerned, so that it is drawn again
+  // on top of the merged arrays, but in the highlight colour and without the
+  // marker and label a chosen entity shows (see getSelectionColor())
+  if(e) e->setSelection(GEntity::SelectHover);
+  redraw();
+}
+
+// What the cursor is over: the tooltip or the status bar says what a click
+// would pick, and the cursor says whether there is anything. When several
+// entities are under it, the wheel steps through them (FL_MOUSEWHEEL below)
+// and this says which one is current.
+void openglWindow::_hover()
+{
+  std::vector<GVertex *> vertices;
+  std::vector<GEdge *> edges;
+  std::vector<GFace *> faces;
+  std::vector<GRegion *> regions;
+  std::vector<MElement *> elements;
+  std::vector<SPoint2> points;
+  std::vector<PView *> views;
+  bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
+                     CTX::instance()->mouseHoverMeshes, (int)_curr.win[0],
+                     (int)_curr.win[1], 5, 5, vertices, edges, faces,
+                     regions, elements, points, views);
+  if((_selection == ENT_ALL && res) ||
+     (_selection == ENT_POINT && vertices.size()) ||
+     (_selection == ENT_CURVE && edges.size()) ||
+     (_selection == ENT_SURFACE && faces.size()) ||
+     (_selection == ENT_VOLUME && regions.size()))
+    cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
+  else
+    cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+  std::string text, cmd;
+  bool multiline = CTX::instance()->tooltips;
+  if(vertices.size()) {
+    text = vertices[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedPointCommand;
+  }
+  else if(edges.size()) {
+    text = edges[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedCurveCommand;
+  }
+  else if(faces.size()) {
+    text = faces[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
+  }
+  else if(regions.size()) {
+    text = regions[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
+  }
+  else if(elements.size()) {
+    text = elements[0]->getInfoString(multiline);
+  }
+  else if(points.size()) {
+    char tmp[256];
+    sprintf(tmp, "Point (%g, %g)", points[0].x(), points[0].y());
+    text = tmp;
+    cmd = CTX::instance()->post.doubleClickedGraphPointCommand;
+  }
+  else if(views.size()) {
+    char tmp[256];
+    sprintf(tmp, "View[%d]", views[0]->getIndex());
+    text = tmp;
+    cmd = views[0]->getOptions()->doubleClickedCommand;
+  }
+  if(cmd.size()) {
+    if(multiline) text += "\n\n";
+    else text += " ";
+    if(cmd == "ONELAB") {
+      text += std::string("Double-click to edit parameters");
+    }
+    else {
+      text += std::string("Double-click to execute\n\n");
+      std::replace(cmd.begin(), cmd.end(), '\r', ' ');
+      text += cmd;
+    }
+  }
+  // and drawn as selected, so that it is not only named but shown
+  GEntity *over = nullptr;
+  if(vertices.size())
+    over = vertices[0];
+  else if(edges.size())
+    over = edges[0];
+  else if(faces.size())
+    over = faces[0];
+  else if(regions.size())
+    over = regions[0];
+  _highlight(over);
+
+  // how far under the cursor this one is, and how to go further
+  if(text.size()) {
+    char tmp[256];
+    int d = _ctx->pickDepth();
+    if(d)
+      sprintf(tmp, "%s%d behind (Alt and the wheel, or Alt and the up and "
+                   "down arrows, for what is behind)",
+              multiline ? "\n\n" : " ", d);
+    else
+      sprintf(tmp, "%sAlt and the wheel, or Alt and the up and down arrows, "
+                   "for what is behind",
+              multiline ? "\n\n" : " ");
+    text += tmp;
+  }
+  if(CTX::instance()->tooltips)
+    drawTooltip(text);
+  else
+    Msg::StatusBar(false, text.c_str());
+  if(Msg::GetVerbosity() == 99)
+    Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
+}
+
 int openglWindow::handle(int event)
 {
   switch(event) {
@@ -641,11 +797,27 @@ int openglWindow::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
+    // Alt and the up or down arrows step through what is under the cursor,
+    // as Alt and the wheel do, one entity at a time: a trackpad has no
+    // notches to count
+    if(Fl::event_state(FL_ALT) && CTX::instance()->mouseSelection &&
+       !lassoMode && !addPointMode &&
+       (Fl::event_key() == FL_Up || Fl::event_key() == FL_Down)) {
+      _stepPick((Fl::event_key() == FL_Down) ? 1 : -1, false);
+      return 1;
+    }
     // override the default widget arrow-key-navigation
     if(FlGui::instance()->testArrowShortcuts()) return 1;
     return Fl_Gl_Window::handle(event);
 
+  case FL_LEAVE:
+    // nothing under the cursor once it is out of the window
+    _highlight(nullptr);
+    return Fl_Gl_Window::handle(event);
+
   case FL_PUSH:
+    // what the click does with the pick is not this highlight's business
+    _highlight(nullptr);
     if(Fl::event_clicks() == 1 && !selectionMode &&
        CTX::instance()->mouseSelection) {
       // double-click and not in selection mode, but with mouse selection enabled
@@ -818,11 +990,25 @@ int openglWindow::handle(int event)
     return 1;
 
   case FL_MOUSEWHEEL: {
-    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
     double dy = Fl::event_dy();
+    // which way the wheel is being turned, as the zoom reads it: the sign
+    // depends on the mouse, on the trackpad and on how the system is set up,
+    // so the one gesture that brings the model closer is the one that steps
+    // to the entity in front
+    bool direction = (CTX::instance()->mouseInvertZoom) ? (dy <= 0) : (dy > 0);
+    // With Alt, the wheel steps through the entities under the cursor
+    // instead of zooming: a click then picks the one the hover names,
+    // rather than the drawing order deciding which of them wins.
+    if(Fl::event_state(FL_ALT) && CTX::instance()->mouseSelection &&
+       !lassoMode && !addPointMode) {
+      // _prev is left alone: it is what a move is measured against, and
+      // nothing has moved
+      _stepPick(direction ? -1 : 1, true);
+      return 1;
+    }
+    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
     double fact =
       (5. * CTX::instance()->zoomFactor * fabs(dy) + h()) / (double)h();
-    bool direction = (CTX::instance()->mouseInvertZoom) ? (dy <= 0) : (dy > 0);
     if(CTX::instance()->camera) {
       fact = (direction ? fact : 1. / fact);
       _ctx->camera.zoom(fact);
@@ -978,79 +1164,22 @@ int openglWindow::handle(int event)
     }
     else { // hover mode
       if(_curr.win[0] != _prev.win[0] || _curr.win[1] != _prev.win[1]) {
-        std::vector<GVertex *> vertices;
-        std::vector<GEdge *> edges;
-        std::vector<GFace *> faces;
-        std::vector<GRegion *> regions;
-        std::vector<MElement *> elements;
-        std::vector<SPoint2> points;
-        std::vector<PView *> views;
-        bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
-                           CTX::instance()->mouseHoverMeshes, (int)_curr.win[0],
-                           (int)_curr.win[1], 5, 5, vertices, edges, faces,
-                           regions, elements, points, views);
-        if((_selection == ENT_ALL && res) ||
-           (_selection == ENT_POINT && vertices.size()) ||
-           (_selection == ENT_CURVE && edges.size()) ||
-           (_selection == ENT_SURFACE && faces.size()) ||
-           (_selection == ENT_VOLUME && regions.size()))
-          cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
-        else
-          cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-        std::string text, cmd;
-        bool multiline = CTX::instance()->tooltips;
-        if(vertices.size()) {
-          text = vertices[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedPointCommand;
+        // Somewhere else under the cursor: back to the entity in front. A
+        // pixel or two is not somewhere else, as a trackpad nudges the
+        // pointer while it is dragged over for the stepping.
+        if(fabs(_curr.win[0] - _stepAnchor[0]) > 3. ||
+           fabs(_curr.win[1] - _stepAnchor[1]) > 3.) {
+          _ctx->resetPick();
+          _stepAnchor[0] = _curr.win[0];
+          _stepAnchor[1] = _curr.win[1];
         }
-        else if(edges.size()) {
-          text = edges[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedCurveCommand;
-        }
-        else if(faces.size()) {
-          text = faces[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
-        }
-        else if(regions.size()) {
-          text = regions[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
-        }
-        else if(elements.size()) {
-          text = elements[0]->getInfoString(multiline);
-        }
-        else if(points.size()) {
-          char tmp[256];
-          sprintf(tmp, "Point (%g, %g)", points[0].x(), points[0].y());
-          text = tmp;
-          cmd = CTX::instance()->post.doubleClickedGraphPointCommand;
-        }
-        else if(views.size()) {
-          char tmp[256];
-          sprintf(tmp, "View[%d]", views[0]->getIndex());
-          text = tmp;
-          cmd = views[0]->getOptions()->doubleClickedCommand;
-        }
-        if(cmd.size()) {
-          if(multiline) text += "\n\n";
-          else text += " ";
-          if(cmd == "ONELAB") {
-            text += std::string("Double-click to edit parameters");
-          }
-          else {
-            text += std::string("Double-click to execute\n\n");
-            std::replace(cmd.begin(), cmd.end(), '\r', ' ');
-            text += cmd;
-          }
-        }
-        if(CTX::instance()->tooltips)
-          drawTooltip(text);
-        else
-          Msg::StatusBar(false, text.c_str());
-        if(Msg::GetVerbosity() == 99)
-          Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
+        _hover();
       }
     }
-    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
+    // not read from the event again: showing a tooltip under the cursor
+    // leaves the toolkit reporting its own coordinates, and _prev is what a
+    // move is measured against
+    _prev = _curr;
     return 1;
 
   default: return Fl_Gl_Window::handle(event);
@@ -1191,7 +1320,11 @@ void openglWindow::drawTooltip(const std::string &text)
 #if defined(NEW_TOOLTIPS)
   if(text.empty()) { _tooltip->hide(); }
   else {
-    _tooltip->position(Fl::event_x_root(), Fl::event_y_root() + 20);
+    // from where the cursor is over this window, not from what an event
+    // reports: a tooltip already shown leaves the toolkit reporting its own
+    // coordinates (see _stepPick())
+    _tooltip->position(x_root() + (int)_curr.win[0],
+                       y_root() + (int)_curr.win[1] + 20);
     _tooltip->value(text);
     _tooltip->show();
   }

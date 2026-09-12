@@ -3476,7 +3476,7 @@ void status_options_cb(Fl_Widget *w, void *data)
          { nullptr },
       { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
-      { "Mouse hover over meshes", 0, quick_access_cb, (void*)"hover_meshes",
+      { "Hover meshes and views", 0, quick_access_cb, (void*)"hover_meshes",
         FL_MENU_TOGGLE },
       { "Projection mode", 0, nullptr, nullptr, FL_SUBMENU },
          { "Orthographic", FL_ALT + 'o', quick_access_cb, (void*)"orthographic"},

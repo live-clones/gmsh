@@ -29,10 +29,20 @@ enum { MAX_BATCHED_EDGES = 32, MAX_BATCHED_FACES = 8 };
 
 static const double curvedRepTol = 1.e-5;
 
+// The colour of a selected entity: the cursor merely resting on one is not
+// the same as having chosen it, so what is hovered is drawn in the highlight
+// colour instead (Geometry.Color.HighlightTwo, which nothing else uses).
+unsigned int getSelectionColor(GEntity *e)
+{
+  return (e && e->getSelection() == GEntity::SelectHover) ?
+           CTX::instance()->color.geom.highlight[2] :
+           CTX::instance()->color.geom.selection;
+}
+
 unsigned int getColorByEntity(GEntity *e)
 {
   if(e->getSelection()) { // selection
-    return CTX::instance()->color.geom.selection;
+    return getSelectionColor(e);
   }
   else if(e->useColor()) { // forced from a script
     return e->getColor();

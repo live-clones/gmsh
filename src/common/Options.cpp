@@ -3262,6 +3262,21 @@ double opt_general_mouse_hover_meshes(OPT_ARGS_NUM)
   return CTX::instance()->mouseHoverMeshes;
 }
 
+double opt_general_mouse_hover_highlight(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mouseHoverHighlight = (int)val;
+    if(!CTX::instance()->mouseHoverHighlight)
+      GModel::current()->setSelection(0);
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[23]->value(
+      CTX::instance()->mouseHoverHighlight);
+#endif
+  return CTX::instance()->mouseHoverHighlight;
+}
+
 double opt_general_mouse_invert_zoom(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mouseInvertZoom = (int)val;

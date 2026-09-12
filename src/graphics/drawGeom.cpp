@@ -6,6 +6,9 @@
 #include <string.h>
 #include "drawContext.h"
 #include "Context.h"
+
+// the colour a selected entity is drawn in (GModelVertexArrays.cpp)
+extern unsigned int getSelectionColor(GEntity *e);
 #include "gl2ps.h"
 #include "VertexArray.h"
 #include "GModel.h"
@@ -164,11 +167,17 @@ public:
     double ps = CTX::instance()->geom.pointSize * fact;
     double sps = CTX::instance()->geom.selectedPointSize * fact;
 
-    if(v->getSelection()) {
+    // a picking pass draws what is selected at its plain size: the image it
+    // reads identifiers from must not depend on what is selected, or
+    // highlighting a point would grow it over the marker of the volume next
+    // to it and there would be no way back
+    bool sel = v->getSelection() && !_ctx->inPickColorMode();
+    if(sel) {
       gmshPointSize((float)sps);
       gl2psPointSize((float)(CTX::instance()->geom.selectedPointSize *
                              CTX::instance()->print.epsPointSizeFactor));
-      gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
+      unsigned int sc = getSelectionColor(v);
+      gmshColor4ubv((const void *)&sc);
     }
     else {
       gmshPointSize((float)ps);
@@ -189,9 +198,9 @@ public:
     double x = v->x(), y = v->y(), z = v->z();
     _ctx->transform(x, y, z);
 
-    if(CTX::instance()->geom.points || v->getSelection() > 1) {
+    if(CTX::instance()->geom.points || v->getSelection() == GEntity::SelectShow) {
       if(CTX::instance()->geom.pointType > 0) {
-        double size = v->getSelection() ? sps : ps;
+        double size = sel ? sps : ps;
         if(glyphList *g = geomGlyphs(_ctx))
           g->addSphere(_ctx, size, x, y, z, glyphCurrentColor());
         else
@@ -204,10 +213,10 @@ public:
       }
     }
 
-    if(CTX::instance()->geom.pointLabels || v->getSelection() > 1) {
+    if(CTX::instance()->geom.pointLabels || v->getSelection() == GEntity::SelectShow) {
       double offset =
         (0.5 * ps + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
-      if(v->getSelection() > 1)
+      if(v->getSelection() == GEntity::SelectShow)
         gmshColor4ubv((const void *)&CTX::instance()->color.fg);
       drawEntityLabel(_ctx, v, x, y, z, offset);
     }
@@ -239,11 +248,13 @@ public:
 
     gmshLightTwoSide(false);
 
-    if(e->getSelection()) {
+    bool sel = e->getSelection() && !_ctx->inPickColorMode();
+    if(sel) {
       gmshLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
-      gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
+      unsigned int sc = getSelectionColor(e);
+      gmshColor4ubv((const void *)&sc);
     }
     else {
       gmshLineWidth((float)CTX::instance()->geom.curveWidth);
@@ -265,7 +276,7 @@ public:
     double t_min = t_bounds.low();
     double t_max = t_bounds.high();
 
-    if(CTX::instance()->geom.curves || e->getSelection() > 1) {
+    if(CTX::instance()->geom.curves || e->getSelection() == GEntity::SelectShow) {
       int N = e->minimumDrawSegments() + 1;
       if(CTX::instance()->geom.curveType > 0) {
         for(int i = 0; i < N - 1; i++) {
@@ -303,14 +314,14 @@ public:
       }
     }
 
-    if(CTX::instance()->geom.curveLabels || e->getSelection() > 1) {
+    if(CTX::instance()->geom.curveLabels || e->getSelection() == GEntity::SelectShow) {
       GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
       double offset = (0.5 * CTX::instance()->geom.curveWidth +
                        0.1 * CTX::instance()->glFontSize) *
                       _ctx->pixel_equiv_x;
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
-      if(e->getSelection() > 1)
+      if(e->getSelection() == GEntity::SelectShow)
         gmshColor4ubv((const void *)&CTX::instance()->color.fg);
       drawEntityLabel(_ctx, e, x, y, z, offset);
     }
@@ -384,11 +395,12 @@ public:
       _ctx->setPickColor(2, f->tag());
     }
 
-    if(f->getSelection()) {
+    if(f->getSelection() && !_ctx->inPickColorMode()) {
       gmshLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2.));
       gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
-      gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
+      unsigned int sc = getSelectionColor(f);
+      gmshColor4ubv((const void *)&sc);
     }
     else {
       gmshLineWidth((float)(CTX::instance()->geom.curveWidth / 2.));
@@ -411,21 +423,21 @@ public:
     else
       gmshLightTwoSide(false);
 
-    if((CTX::instance()->geom.surfaces || f->getSelection() > 1) &&
+    if((CTX::instance()->geom.surfaces || f->getSelection() == GEntity::SelectShow) &&
        CTX::instance()->geom.surfaceType > 0)
       f->fillVertexArray();
 
-    if(((CTX::instance()->geom.surfaces || f->getSelection() > 1) &&
+    if(((CTX::instance()->geom.surfaces || f->getSelection() == GEntity::SelectShow) &&
         CTX::instance()->geom.surfaceType == 0) ||
        CTX::instance()->geom.surfaceLabels || CTX::instance()->geom.normals)
       f->buildRepresentationCross();
 
-    if(CTX::instance()->geom.surfaces || f->getSelection() > 1) {
+    if(CTX::instance()->geom.surfaces || f->getSelection() == GEntity::SelectShow) {
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles) {
         bool selected = false;
         if(f->getSelection()) selected = true;
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
-                         selected, CTX::instance()->color.geom.selection);
+                         selected, getSelectionColor(f));
       }
       else {
         gmshLineStipple(1, 0x0F0F);
@@ -452,13 +464,13 @@ public:
 
     if(f->cross[0].size() && f->cross[0][0].size()) {
       int idx = f->cross[0][0].size() / 2;
-      if(CTX::instance()->geom.surfaceLabels || f->getSelection() > 1) {
+      if(CTX::instance()->geom.surfaceLabels || f->getSelection() == GEntity::SelectShow) {
         double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
         double x = f->cross[0][0][idx].x();
         double y = f->cross[0][0][idx].y();
         double z = f->cross[0][0][idx].z();
         _ctx->transform(x, y, z);
-        if(f->getSelection() > 1)
+        if(f->getSelection() == GEntity::SelectShow)
           gmshColor4ubv((const void *)&CTX::instance()->color.fg);
         drawEntityLabel(_ctx, f, x, y, z, offset);
       }
@@ -509,11 +521,12 @@ public:
     else
       gmshLightTwoSide(false);
 
-    if(r->getSelection()) {
+    if(r->getSelection() && !_ctx->inPickColorMode()) {
       gmshLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
-      gmshColor4ubv((const void *)&CTX::instance()->color.geom.selection);
+      unsigned int sc = getSelectionColor(r);
+      gmshColor4ubv((const void *)&sc);
     }
     else {
       gmshLineWidth((float)CTX::instance()->geom.curveWidth);
@@ -528,7 +541,7 @@ public:
     double x = 0., y = 0., z = 0., d = 0.;
 
     if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumeLabels ||
-       r->getSelection() > 1) {
+       r->getSelection() == GEntity::SelectShow) {
       SBoundingBox3d bb = r->bounds(true); // fast approx if mesh-based
       SPoint3 p = bb.center();
       x = p.x();
@@ -538,7 +551,7 @@ public:
       _ctx->transform(x, y, z);
     }
 
-    if(CTX::instance()->geom.volumes || r->getSelection() > 1) {
+    if(CTX::instance()->geom.volumes || r->getSelection() == GEntity::SelectShow) {
       if(CTX::instance()->geom.volumeType == 0) {
         if(glyphList *g = geomGlyphs(_ctx))
           g->addSphere(_ctx, size, x, y, z, glyphCurrentColor());
@@ -567,10 +580,10 @@ public:
       }
     }
 
-    if(CTX::instance()->geom.volumeLabels || r->getSelection() > 1) {
+    if(CTX::instance()->geom.volumeLabels || r->getSelection() == GEntity::SelectShow) {
       double offset =
         (1. * size + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
-      if(r->getSelection() > 1)
+      if(r->getSelection() == GEntity::SelectShow)
         gmshColor4ubv((const void *)&CTX::instance()->color.fg);
       drawEntityLabel(_ctx, r, x, y, z, offset);
     }

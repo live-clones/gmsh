@@ -333,6 +333,17 @@ public:
     _visible = val;
   }
 
+  // What the selection flag holds: nothing, an entity the user has chosen,
+  // one chosen and drawn with its marker and label, or one the cursor is
+  // merely resting on, which is drawn in the highlight colour and undone by
+  // a move of the mouse (General.MouseHoverHighlight).
+  enum SelectionState {
+    SelectNone = 0,
+    SelectOn = 1,
+    SelectShow = 2,
+    SelectHover = 3
+  };
+
   // get/set the selection flag
   virtual char getSelection() { return _selection; }
   virtual void setSelection(char val)

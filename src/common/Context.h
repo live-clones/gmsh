@@ -356,7 +356,7 @@ public:
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
   // enable selection/hover/picking using the mouse
-  int mouseSelection, mouseHoverMeshes, pickElements;
+  int mouseSelection, mouseHoverMeshes, mouseHoverHighlight, pickElements;
   // invert sense of mouse wheel zoom
   int mouseInvertZoom;
   // disable some warnings for expert users?
