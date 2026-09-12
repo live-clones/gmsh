@@ -381,20 +381,54 @@ static UniqueElementFilter *boundaryFaces = nullptr;
 static bool markingBoundaryFaces = false;
 static std::atomic<int> noNodeIdWarning(0);
 
-// the key of a face from its sorted node identifiers and its entity (so that
-// the skin is taken entity by entity); false if the data has no topology
-static bool faceKey(const std::size_t *nodeIds, int ent, const int *idx,
+// The key of a face of n nodes, from their sorted identifiers and the entity
+// (so that the skin is taken entity by entity); false if the data has no
+// topology. A quadrangle and a triangle never collide: the keys differ in
+// length.
+static bool faceKey(const std::size_t *nodeIds, int ent, const int *idx, int n,
                     std::uint64_t *k)
 {
   if(!nodeIds) return false;
-  for(int i = 0; i < 3; i++) {
+  for(int i = 0; i < n; i++) {
     if(!nodeIds[idx[i]]) return false;
     k[i] = nodeIds[idx[i]];
   }
-  for(int i = 1; i < 3; i++)
+  for(int i = 1; i < n; i++)
     for(int j = i; j > 0 && k[j] < k[j - 1]; j--) std::swap(k[j], k[j - 1]);
-  k[3] = (std::uint64_t)ent;
+  k[n] = (std::uint64_t)ent;
   return true;
+}
+
+// Is this face of a 3D element on the skin of the field? In the pass that
+// marks them it is inserted, and cancelled when the element on the other
+// side inserts it too. The faces of the element itself are used, not those
+// of the tetrahedra a hexahedron, a prism or a pyramid is split into: the
+// diagonal that splits a shared quadrangle into two triangles need not be
+// the one the neighbour chose, and the halves then cancel nothing and both
+// sides of every such face are drawn.
+static bool skinFace(drawTarget *p, const int *idx, int n)
+{
+  std::uint64_t k[5];
+  if(!faceKey(p->nodeIds, p->ent, idx, n, k)) {
+    if(markingBoundaryFaces) return false;
+    if(!noNodeIdWarning++)
+      Msg::Warning("DrawSkinOnly needs node identifiers, which this data does "
+                   "not have: drawing all the faces");
+    return true; // nothing to tell the faces apart: draw them all
+  }
+  if(markingBoundaryFaces) {
+    boundaryFaces->insertOrErase(k, n + 1);
+    return false;
+  }
+  return boundaryFaces->contains(k, n + 1);
+}
+
+// does this element draw its own faces, and only the ones on the skin?
+static bool skinOnly(PViewOptions *opt)
+{
+  return opt->drawSkinOnly && opt->boundary <= 0 &&
+         (opt->intervalsType == PViewOptions::Continuous ||
+          opt->intervalsType == PViewOptions::Discrete);
 }
 
 // skip an element already added, identified by its nodes rather than by
@@ -582,7 +616,7 @@ static void addScalarTriangle(drawTarget *p, double **xyz, double **val,
   if(skin || markingBoundaryFaces) {
     const int ii[3] = {i0, i1, i2};
     std::uint64_t k[4];
-    if(skin && faceKey(p->nodeIds, p->ent, ii, k)) {
+    if(skin && faceKey(p->nodeIds, p->ent, ii, 3, k)) {
       if(markingBoundaryFaces) {
         boundaryFaces->insertOrErase(k, 4);
         return;
@@ -1005,6 +1039,19 @@ static void addScalarHexahedron(drawTarget *p, double **xyz, double **val,
     return;
   }
 
+  if(skinOnly(opt)) {
+    // the caps still come from the tetrahedra it is split into
+    if(!pre)
+      for(int i = 0; i < 6; i++)
+        addScalarCap(p, xyz, val, is[i][0], is[i][1], is[i][2], is[i][3]);
+    if(p->collect == drawTarget::COLLECT_CAPS) return;
+    for(int i = 0; i < 6; i++)
+      if(skinFace(p, iq[i], 4))
+        addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2],
+                            iq[i][3], true);
+    return;
+  }
+
   for(int i = 0; i < 6; i++)
     addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2],
                          is[i][3]);
@@ -1041,6 +1088,21 @@ static void addScalarPrism(drawTarget *p, double **xyz, double **val, bool pre)
     return;
   }
 
+  if(skinOnly(opt)) {
+    if(!pre)
+      for(int i = 0; i < 3; i++)
+        addScalarCap(p, xyz, val, is[i][0], is[i][1], is[i][2], is[i][3]);
+    if(p->collect == drawTarget::COLLECT_CAPS) return;
+    for(int i = 0; i < 3; i++)
+      if(skinFace(p, iq[i], 4))
+        addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2],
+                            iq[i][3], true);
+    for(int i = 0; i < 2; i++)
+      if(skinFace(p, it[i], 3))
+        addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
+    return;
+  }
+
   for(int i = 0; i < 3; i++)
     addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2],
                          is[i][3]);
@@ -1070,6 +1132,20 @@ static void addScalarPyramid(drawTarget *p, double **xyz, double **val,
     for(int i = 0; i < 4; i++)
       addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
     opt->boundary++;
+    return;
+  }
+
+  if(skinOnly(opt)) {
+    if(!pre)
+      for(int i = 0; i < 2; i++)
+        addScalarCap(p, xyz, val, is[i][0], is[i][1], is[i][2], is[i][3]);
+    if(p->collect == drawTarget::COLLECT_CAPS) return;
+    const int iq[4] = {0, 3, 2, 1};
+    if(skinFace(p, iq, 4))
+      addScalarQuadrangle(p, xyz, val, pre, iq[0], iq[1], iq[2], iq[3], true);
+    for(int i = 0; i < 4; i++)
+      if(skinFace(p, it[i], 3))
+        addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
     return;
   }
 
