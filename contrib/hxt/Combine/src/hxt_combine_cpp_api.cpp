@@ -1,5 +1,6 @@
 #include "hxt_combine_cpp_api.h"
 
+#include <map>
 #include <set>
 #include <sstream>
 
@@ -51,9 +52,11 @@ namespace {
 
   class CellGreedySelection {
   public:
+    static constexpr CellIndex NO_CELL = (CellIndex)-1;
+
     CellGreedySelection(const TetMeshWrapper& tets)
-      :selectedTets_(tets.nbTets(), false),
-      selectedVertices_(tets.nbVertices(), false)
+      :tetOwner_(tets.nbTets(), NO_CELL),
+      vertexRefCount_(tets.nbVertices(), 0)
     {}
 
     /**
@@ -74,13 +77,107 @@ namespace {
           const HXTCombineCell& cell = cells[cellId];
           if (isCellCompatible(cell)) {
             selected[cellId] = true;
-            addCellCompatibilityConstraints(cells[cellId]);
+            addCellCompatibilityConstraints(cells[cellId], cellId);
           }
+        }
+      }
+
+      localSearchImprove(cells, cellQualities, selected);
+    }
+
+  private:
+    /**
+    * Local-search polish on top of the greedy result: the greedy pass
+    * above is a classic quality-sorted "scan and lock" heuristic for what
+    * is really a set-packing problem, so it can get stuck -- a single
+    * mediocre cell accepted early can permanently block two or three
+    * better cells that would have fit together. For every currently
+    * selected cell (worst quality first), try ejecting it and greedily
+    * re-filling the freed tets/vertices/edges from the pool of previously
+    * rejected candidates that actually touched that cell; keep the swap
+    * only if it nets at least one more selected cell than before, else
+    * put the original cell back exactly as it was.
+    */
+    void localSearchImprove(
+      const vector<HXTCombineCell>& cells,
+      const double* cellQualities,
+      vector<bool>& selected)
+    {
+      if (cells.empty()) return;
+
+      // Reverse indices: for a given interior tet / vertex, which
+      // (currently unselected, at build time) candidate cells touch it.
+      // Built once, used to bound each ejection's re-fill search to the
+      // handful of candidates that could plausibly be affected, instead
+      // of rescanning all cells.
+      std::vector<std::vector<CellIndex> > tetToCells(tetOwner_.size());
+      std::vector<std::vector<CellIndex> > vertexToCells(vertexRefCount_.size());
+      for (CellIndex c = 0; c < cells.size(); ++c) {
+        const HXTCombineCell& cell = cells[c];
+        for (unsigned int i = 0; i < cell.nbInteriorTets(); ++i)
+          tetToCells[cell.interiorTetrahedra[i]].push_back(c);
+        for (unsigned int i = 0; i < cell.nbVertices(); ++i)
+          vertexToCells[cell.vertexes[i]].push_back(c);
+      }
+
+      std::vector<CellIndex> selectedList;
+      for (CellIndex c = 0; c < cells.size(); ++c)
+        if (selected[c]) selectedList.push_back(c);
+      // Try ejecting the worst-quality selected cells first: they are the
+      // ones most likely to be worth trading away.
+      std::sort(selectedList.begin(), selectedList.end(),
+        [&](CellIndex a, CellIndex b) {
+          return cellQualities[a] < cellQualities[b];
+        });
+
+      std::set<CellIndex> pool;
+      std::vector<CellIndex> poolSorted, added;
+      for (CellIndex s : selectedList) {
+        if (!selected[s]) continue; // already ejected for good by an earlier swap
+        const HXTCombineCell& cellS = cells[s];
+
+        pool.clear();
+        for (unsigned int i = 0; i < cellS.nbInteriorTets(); ++i)
+          for (CellIndex c : tetToCells[cellS.interiorTetrahedra[i]])
+            if (!selected[c]) pool.insert(c);
+        for (unsigned int i = 0; i < cellS.nbVertices(); ++i)
+          for (CellIndex c : vertexToCells[cellS.vertexes[i]])
+            if (!selected[c]) pool.insert(c);
+        if (pool.empty()) continue; // ejecting s cannot unlock anything
+
+        removeCellCompatibilityConstraints(cellS, s);
+        selected[s] = false;
+
+        poolSorted.assign(pool.begin(), pool.end());
+        std::sort(poolSorted.begin(), poolSorted.end(),
+          [&](CellIndex a, CellIndex b) {
+            return cellQualities[a] > cellQualities[b];
+          });
+
+        added.clear();
+        for (CellIndex c : poolSorted) {
+          if (selected[c]) continue;
+          if (isCellCompatible(cells[c])) {
+            selected[c] = true;
+            addCellCompatibilityConstraints(cells[c], c);
+            added.push_back(c);
+          }
+        }
+
+        if (added.size() >= 2) {
+          // net gain: keep s ejected and the newly added cells selected
+        }
+        else {
+          for (CellIndex c : added) {
+            removeCellCompatibilityConstraints(cells[c], c);
+            selected[c] = false;
+          }
+          selected[s] = true;
+          addCellCompatibilityConstraints(cellS, s);
         }
       }
     }
 
-  private:
     /** Check that the input cell is compatible with
     * all the already selected cells.
     *
@@ -112,7 +209,7 @@ namespace {
 
     bool oneInteriorTetSelected(const HXTCombineCell& cell) const {
       for (unsigned int i = 0; i < cell.nbInteriorTets(); ++i) {
-        if (selectedTets_[cell.interiorTetrahedra[i]]) return true;
+        if (tetOwner_[cell.interiorTetrahedra[i]] != NO_CELL) return true;
       }
       return false;
     }
@@ -120,7 +217,7 @@ namespace {
     unsigned int numberSelectedVertices(const HXTCombineCell& cell) const {
       unsigned int nb = 0;
       for (unsigned int i = 0; i < cell.nbVertices(); ++i) {
-        if (selectedVertices_[cell.vertexes[i]]) nb++;
+        if (vertexRefCount_[cell.vertexes[i]] > 0) nb++;
       }
       return nb;
     }
@@ -224,18 +321,39 @@ namespace {
     /**
     * The Cell has been selected. Add its faces and edges as constraints for the following cells.
     */
-    void addCellCompatibilityConstraints(const HXTCombineCell& cell)
+    void addCellCompatibilityConstraints(const HXTCombineCell& cell, CellIndex id)
     {
       for (CellVertexIndex i = 0; i < cell.nbVertices(); ++i)
-        selectedVertices_[cell.vertexes[i]] = true;
+        vertexRefCount_[cell.vertexes[i]]++;
 
       for (CellTetIndex i = 0; i < cell.nbInteriorTets(); ++i)
-        selectedTets_[cell.interiorTets()[i]] = true;
+        tetOwner_[cell.interiorTets()[i]] = id;
 
       addQuadFacetConstraints(cell);
       // Do not forget prisms triangular facets
       addEdgeConstraints(cell);
       addFacetDiagonalConstraints(cell);
+    }
+
+    /**
+    * The reverse of addCellCompatibilityConstraints: undo exactly what
+    * selecting this cell had added, so it (and only it) can be ejected
+    * without disturbing any other still-selected cell that happens to
+    * share a vertex/edge/diagonal with it.
+    */
+    void removeCellCompatibilityConstraints(const HXTCombineCell& cell, CellIndex id)
+    {
+      for (CellVertexIndex i = 0; i < cell.nbVertices(); ++i)
+        vertexRefCount_[cell.vertexes[i]]--;
+
+      for (CellTetIndex i = 0; i < cell.nbInteriorTets(); ++i) {
+        TetIndex t = cell.interiorTets()[i];
+        if (tetOwner_[t] == id) tetOwner_[t] = NO_CELL;
+      }
+
+      removeQuadFacetConstraints(cell);
+      removeEdgeConstraints(cell);
+      removeFacetDiagonalConstraints(cell);
     }
 
     template<class T>
@@ -245,13 +363,13 @@ namespace {
         VertexIndex v0 = cell.vertex(T::quadFacetTriangleVertex[f][0]);
         VertexIndex v1 = cell.vertex(T::quadFacetTriangleVertex[f][1]);
         VertexIndex v2 = cell.vertex(T::quadFacetTriangleVertex[f][2]);
-        facetTriangles_.insert(trindex(v0, v1, v2));
+        facetTriangles_[trindex(v0, v1, v2)]++;
       }
     }
     template<class T>
     inline void addEdgeConstraints(const HXTCombineCell& cell) {
       for (CellEdgeIndex e = 0; e < T::nbEdges; ++e) {
-        edges_.insert(cellEdge<T>(cell, e));
+        edges_[cellEdge<T>(cell, e)]++;
       }
     }
 
@@ -260,7 +378,40 @@ namespace {
       for (unsigned int d = 0; d < 2*T::nbQuadFacets; ++d) {
         VertexIndex v0 = cell.vertex(T::quadFacetDiagonalVertex[d][0]);
         VertexIndex v1 = cell.vertex(T::quadFacetDiagonalVertex[d][1]);
-        facetDiagonals_.insert(bindex(v0, v1));
+        facetDiagonals_[bindex(v0, v1)]++;
+      }
+    }
+
+    template<class Map, class Key>
+    static inline void decrementAndErase(Map& m, const Key& k)
+    {
+      auto it = m.find(k);
+      if (it == m.end()) return; // should not happen if add/remove stay paired
+      if (--(it->second) <= 0) m.erase(it);
+    }
+
+    template<class T>
+    inline void removeQuadFacetConstraints(const HXTCombineCell& cell)
+    {
+      for (unsigned int f = 0; f < 4*T::nbQuadFacets; ++f) {
+        VertexIndex v0 = cell.vertex(T::quadFacetTriangleVertex[f][0]);
+        VertexIndex v1 = cell.vertex(T::quadFacetTriangleVertex[f][1]);
+        VertexIndex v2 = cell.vertex(T::quadFacetTriangleVertex[f][2]);
+        decrementAndErase(facetTriangles_, trindex(v0, v1, v2));
+      }
+    }
+    template<class T>
+    inline void removeEdgeConstraints(const HXTCombineCell& cell) {
+      for (CellEdgeIndex e = 0; e < T::nbEdges; ++e)
+        decrementAndErase(edges_, cellEdge<T>(cell, e));
+    }
+
+    template<class T>
+    inline void removeFacetDiagonalConstraints(const HXTCombineCell& cell) {
+      for (unsigned int d = 0; d < 2*T::nbQuadFacets; ++d) {
+        VertexIndex v0 = cell.vertex(T::quadFacetDiagonalVertex[d][0]);
+        VertexIndex v1 = cell.vertex(T::quadFacetDiagonalVertex[d][1]);
+        decrementAndErase(facetDiagonals_, bindex(v0, v1));
       }
     }
 
@@ -285,18 +436,39 @@ namespace {
       else if (cell.isPyramid()) return addFacetDiagonalConstraints<Pyramid>(cell);
     }
 
+    void removeQuadFacetConstraints(const HXTCombineCell& cell)
+    {
+      if (cell.isHex())     return removeQuadFacetConstraints<Hex>(cell);
+      else if (cell.isPrism())   return removeQuadFacetConstraints<Prism>(cell);
+      else if (cell.isPyramid()) return removeQuadFacetConstraints<Pyramid>(cell);
+    }
+
+    void removeEdgeConstraints(const HXTCombineCell& cell)
+    {
+      if (cell.isHex())     return removeEdgeConstraints<Hex>(cell);
+      else if (cell.isPrism())   return removeEdgeConstraints<Prism>(cell);
+      else if (cell.isPyramid()) return removeEdgeConstraints<Pyramid>(cell);
+    }
+
+    void removeFacetDiagonalConstraints(const HXTCombineCell& cell)
+    {
+      if (cell.isHex())     return removeFacetDiagonalConstraints<Hex>(cell);
+      else if (cell.isPrism())   return removeFacetDiagonalConstraints<Prism>(cell);
+      else if (cell.isPyramid()) return removeFacetDiagonalConstraints<Pyramid>(cell);
+    }
+
   private:
-    std::vector<bool> selectedTets_;
-    std::vector<bool> selectedVertices_;
+    std::vector<CellIndex> tetOwner_;
+    std::vector<int> vertexRefCount_;
 
     /**
     * \todo For very large meshes these sets are a bottleneck
     * An option is to have only visible facets of the selected cells.
     * Because for sure if we already have selected 2 hexes sharing a facet we can remove it from here.
     */
-    std::set<trindex> facetTriangles_;
-    std::set<bindex> facetDiagonals_;
-    std::set<bindex> edges_;
+    std::map<trindex, int> facetTriangles_;
+    std::map<bindex, int> facetDiagonals_;
+    std::map<bindex, int> edges_;
   };
 
 }
