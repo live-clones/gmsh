@@ -659,16 +659,28 @@ double Frame_field::findBarycenter(
     Qtn Rxy = x.rotationTo(y);
 
     MEdge edge(pVertex0, pVertex);
+    double elen = edge.length();
+    if(elen < 1e-12) {
+      // Coincident/zero-length neighbor edge (a pre-existing, occasional
+      // characteristic of this pipeline's point sets, independent of this
+      // smoothing code): dividing by it produces Inf, and the T += dT /
+      // T *= 1.0/temp combination below then yields Inf*0 = NaN, silently
+      // corrupting this vertex's whole cross-field entry -- and every
+      // later query that happens to land closest to it. Such a neighbor
+      // carries no meaningful gradient information anyway, so just skip
+      // it.
+      continue;
+    }
     theta = eulerAngleFromQtn(Rxy);
-    gradient = theta / edge.length();
+    gradient = theta / elen;
     energy += gradient * gradient;
     crossDist[edge] = theta;
     if(fabs(theta) > 1e-10) {
       axis = eulerAxisFromQtn(Rxy); // undefined if theta==0
-      dT = axis * (theta / edge.length() / edge.length());
+      dT = axis * (theta / elen / elen);
       T += dT;
     }
-    temp += 1. / edge.length() / edge.length();
+    temp += 1. / elen / elen;
   }
   if(temp) T *= 1.0 / temp; // average rotation vector
 

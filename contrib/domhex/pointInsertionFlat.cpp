@@ -195,6 +195,21 @@ bool farFromBoundary(MElementOctree *octree, double x, double y, double z,
   return true;
 }
 
+// A degenerate cross-field/size query (e.g. a zero-length edge feeding a
+// division in Frame_field's smoothing) has been seen to return a NaN
+// metric or size. Since any comparison with NaN is false, the spacing
+// rejection test below would then never consider such a point "too close"
+// to anything -- so it (and its own spawned children, equally NaN) get
+// accepted unconditionally, forever: an unbounded point-count runaway
+// rather than a clean failure. Reject non-finite points outright instead.
+bool isFinitePoint(double h, const double m[9])
+{
+  if(!std::isfinite(h)) return false;
+  for(int i = 0; i < 9; i++)
+    if(!std::isfinite(m[i])) return false;
+  return true;
+}
+
 } // namespace
 
 void fillRegionFlat(GRegion *gr)
@@ -254,6 +269,7 @@ void fillRegionFlat(GRegion *gr)
     p.x = v->x(); p.y = v->y(); p.z = v->z();
     p.h = Size_field::search(p.x, p.y, p.z);
     metricAt(p.x, p.y, p.z, p.m);
+    if(!isFinitePoint(p.h, p.m)) continue;
     p.layer = 0;
     p.limit = limitOf[v];
     uint32_t idx = (uint32_t)pts.size();
@@ -300,6 +316,7 @@ void fillRegionFlat(GRegion *gr)
       cand.x = x; cand.y = y; cand.z = z;
       cand.h = Size_field::search(x, y, z);
       metricAt(x, y, z, cand.m);
+      if(!isFinitePoint(cand.h, cand.m)) continue;
       cand.layer = parent.layer + 1;
       cand.limit = parent.limit;
 
