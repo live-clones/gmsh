@@ -1798,11 +1798,41 @@ static MElement *getElement(GEntity *e, int va_type, int index)
   return nullptr;
 }
 
+// what names an object of a picking pass from one pass to the next: the
+// identifiers are indices into a list rebuilt every time, the tags are not
+std::size_t drawContext::_pickKey(int type, int ient, int type2, int ient2)
+{
+  return ((std::size_t)(type & 0xff) << 56) |
+         ((std::size_t)(type2 & 0xff) << 48) |
+         ((std::size_t)(unsigned int)ient << 16) |
+         ((std::size_t)(unsigned int)ient2 & 0xffff);
+}
+
+void drawContext::stepPick(int direction)
+{
+  if(direction > 0) {
+    if(!_pickLastValid) return;
+    _pickSkip.push_back(_pickLast);
+  }
+  else {
+    if(_pickSkip.empty()) return;
+    _pickSkip.pop_back();
+  }
+  _pickCacheValid = false;
+}
+
+void drawContext::resetPick()
+{
+  if(_pickSkip.empty()) return;
+  _pickSkip.clear();
+  _pickCacheValid = false;
+}
+
 void drawContext::setPickColor(int type, int ient, int type2, int ient2,
                                bool front)
 {
   if(!_pickColor) return;
-  _pickObjects.push_back(pickObject(type, ient, type2, ient2));
+  _pickObjects.push_back(pickObject(type, ient, type2, ient2, front));
   // 0 is the background: 24 bits give 16 million pickable objects per pass
   std::size_t id = _pickObjects.size() - 1;
   GLubyte c[4] = {(GLubyte)(id & 0xff), (GLubyte)((id >> 8) & 0xff),
@@ -1810,20 +1840,37 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
   gmshPickColor4ubv(c);
 
+  // an entity stepped past with the wheel is drawn into neither the colours
+  // nor the depth, so that the pass finds what stands behind it
+  bool skip = false;
+  std::size_t key = _pickKey(type, ient, type2, ient2);
+  for(std::size_t i = 0; i < _pickSkip.size(); i++)
+    if(_pickSkip[i] == key) {
+      skip = true;
+      break;
+    }
+
   // give each dimension its own depth range, lower dimensions in front, so
   // that a point or a curve can be picked through a surface, as with the
   // selection buffer; a marker standing for an entity goes in front of all
   // of them
   int d = front ? 0 : ((type < 0) ? 4 : (type > 4 ? 4 : type));
-  // pending immediate mode primitives belong to the previous object and its
-  // depth range
+  // pending immediate mode primitives belong to the previous object, its
+  // depth range and its masks
   gmshFlushImmediate();
+  GLboolean on = skip ? GL_FALSE : GL_TRUE;
+  glColorMask(on, on, on, on);
+  glDepthMask(on);
   glDepthRange(0.2 * d, 0.2 * d + 0.2);
 }
 
 void drawContext::unsetPickColor()
 {
   if(!_pickColor) return;
+  // what was set aside for the wheel is drawn again from here on
+  gmshFlushImmediate();
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
   // 0 is the background: no pickable object
   GLubyte c[4] = {0, 0, 0, 255};
   if(!gmshUseShaders()) glDisableClientState(GL_COLOR_ARRAY);
@@ -1912,6 +1959,8 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
 
   glDisable(GL_SCISSOR_TEST);
   gmshFlushImmediate();
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
   glDepthRange(0., 1.);
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);
@@ -1995,7 +2044,16 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
 
   // gather the objects, keeping the smallest depth of each; the 2D overlay
   // wrote no depth (it is painted on top without depth test), so rank it in
-  // front
+  // front. What lies under the middle of the rectangle is remembered: the
+  // rest are only near the cursor.
+  std::size_t under = 0;
+  {
+    std::size_t i = (std::size_t)(fy0 + fh / 2) * stride + (fx0 + fw / 2);
+    under = (std::size_t)pixels[4 * i] |
+            ((std::size_t)pixels[4 * i + 1] << 8) |
+            ((std::size_t)pixels[4 * i + 2] << 16);
+    if(under >= _pickObjects.size()) under = 0;
+  }
   std::map<std::size_t, float> found;
   for(int r = 0; r < fh; r++) {
     for(int c = 0; c < fw; c++) {
@@ -2022,7 +2080,10 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
   int typmin = 10;
   for(auto &p : sorted) typmin = std::min(typmin, _pickObjects[p.second].type);
 
-  GModel *m = GModel::current();
+  // what the caller asked for, in the order they would be picked: all of
+  // them when several are wanted, otherwise the first, which the wheel can
+  // set aside to reach the next (stepPick())
+  std::vector<std::size_t> candidates;
   for(auto &p : sorted) {
     const pickObject &o = _pickObjects[p.second];
     if(o.type < 4 &&
@@ -2032,6 +2093,31 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
          (type == ENT_SURFACE && o.type == 2) ||
          (type == ENT_VOLUME && o.type == 3)))
       continue;
+    candidates.push_back(p.second);
+  }
+  // A marker the cursor is exactly on comes first: it stands for an entity
+  // that has nothing else to be picked by (the sphere of a volume), and the
+  // rule that a lower dimension wins would otherwise give away half of it to
+  // a point or a curve that merely passes within a few pixels.
+  if(under && _pickObjects[under].front) {
+    for(std::size_t i = 1; i < candidates.size(); i++)
+      if(candidates[i] == under) {
+        candidates.erase(candidates.begin() + i);
+        candidates.insert(candidates.begin(), under);
+        break;
+      }
+  }
+  _pickCandidates = (int)candidates.size();
+  if(candidates.empty()) return false;
+
+  GModel *m = GModel::current();
+  for(auto &id : candidates) {
+    const pickObject &o = _pickObjects[id];
+    // what the wheel would step past, if this is the one that is returned
+    if(!multiple) {
+      _pickLast = _pickKey(o.type, o.ient, o.type2, o.ient2);
+      _pickLastValid = true;
+    }
     switch(o.type) {
     case 0: {
       GVertex *v = m->getVertexByTag(o.ient);
@@ -2109,8 +2195,22 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
   points.clear();
   views.clear();
 
-  return _selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
-                      faces, regions, elements, points, views);
+  _pickLastValid = false;
+  if(_selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
+                  faces, regions, elements, points, views))
+    return true;
+  // Nothing stands behind the last one: stay on it rather than coming round
+  // to the front, so that stepping the other way is what goes back. The
+  // steps that found nothing are undone one by one, as the scene may have
+  // changed under a cursor that has not moved.
+  while(!_pickSkip.empty()) {
+    _pickSkip.pop_back();
+    _pickCacheValid = false;
+    if(_selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
+                    faces, regions, elements, points, views))
+      return true;
+  }
+  return false;
 }
 
 void drawContext::recenterForRotationCenterChange(SPoint3 newRotationCenter)

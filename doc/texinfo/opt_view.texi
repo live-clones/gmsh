@@ -7,18 +7,18 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesFormatX
-Number format for X-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for X-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesFormatY
-Number format for Y-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for Y-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesFormatZ
-Number format for Z-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for Z-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesLabelX
@@ -72,7 +72,7 @@ Default value: @code{""}@*
 Saved in: @code{-}
 
 @item View.NumberFormat
-Number format (in standard C form); use clever automatic default if empty@*
+Number format (in standard C form); use adaptive automatic default if empty@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -201,18 +201,18 @@ Minimum Z-axis coordinate@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.AxesTicsX
-Number of tics on the X-axis@*
+@item View.AxesTicksX
+Number of ticks on the X-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.AxesTicsY
-Number of tics on the Y-axis@*
+@item View.AxesTicksY
+Number of ticks on the Y-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.AxesTicsZ
-Number of tics on the Z-axis@*
+@item View.AxesTicksZ
+Number of ticks on the Z-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 

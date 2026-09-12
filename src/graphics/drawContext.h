@@ -231,8 +231,11 @@ private:
   // back. This replaces GL_SELECT, which drivers implement on the CPU.
   struct pickObject {
     int type, ient, type2, ient2;
-    pickObject(int t = -1, int i = -1, int t2 = -1, int i2 = -1)
-      : type(t), ient(i), type2(t2), ient2(i2)
+    // a marker standing for an entity rather than showing its shape, drawn
+    // in front of everything (the sphere of a volume)
+    bool front;
+    pickObject(int t = -1, int i = -1, int t2 = -1, int i2 = -1, bool f = false)
+      : type(t), ient(i), type2(t2), ient2(i2), front(f)
     {
     }
   };
@@ -245,6 +248,12 @@ private:
   std::vector<unsigned char> _pickCache;
   std::vector<float> _pickCacheDepth;
   bool _pickCacheValid, _pickCacheMesh, _pickCachePost, _pickCacheElements;
+  // the entities stepped past, and the last one a pick chose
+  std::vector<std::size_t> _pickSkip;
+  std::size_t _pickLast = 0;
+  bool _pickLastValid = false;
+  int _pickCandidates = 0;
+  static std::size_t _pickKey(int type, int ient, int type2, int ient2);
   // the region of the window the image covers, in real pixels (a region
   // around the pointer is much cheaper to draw than the whole window)
   int _pickCacheX, _pickCacheY, _pickCacheWidth, _pickCacheHeight;
@@ -277,6 +286,17 @@ public:
   // forget the identifier image: anything that changes what a redraw would
   // show must call this
   void invalidatePickCache() { _pickCacheValid = false; }
+  // Step through the entities under the cursor instead of the drawing order
+  // deciding which one wins: what a pick returned is set aside, a pass draws
+  // nothing at all for it (setPickColor()), and the next pick finds what was
+  // behind it. stepPick() goes one deeper (or back) and stops at the furthest
+  // and the nearest rather than coming round, resetPick() returns to the
+  // entity in front, pickDepth() says how deep the last pick went and
+  // pickCandidates() how many entities its image held around the cursor.
+  void stepPick(int direction);
+  void resetPick();
+  int pickDepth() const { return (int)_pickSkip.size(); }
+  int pickCandidates() const { return _pickCandidates; }
   // stop attributing what is drawn next to the last registered object, so
   // that decorations (frames, axes, labels) are not picked as it
   void unsetPickColor();

@@ -333,6 +333,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_small_axes(0, GMSH_SET, o->general.butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, o->general.butt[2]->value());
   opt_general_mouse_hover_meshes(0, GMSH_SET, o->general.butt[11]->value());
+  opt_general_mouse_hover_highlight(0, GMSH_SET, o->general.butt[23]->value());
   opt_general_mouse_invert_zoom(0, GMSH_SET, o->general.butt[22]->value());
   if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
     opt_general_antialiasing(0, GMSH_SET, o->general.butt[12]->value());
@@ -1445,9 +1446,16 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[2]->type(FL_TOGGLE_BUTTON);
       general.butt[2]->callback(general_options_ok_cb, (void *)"fast_redraw");
 
+      general.butt[23] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2, BH,
+                            "Highlight hovered entity");
+      general.butt[23]->tooltip("General.MouseHoverHighlight");
+      general.butt[23]->type(FL_TOGGLE_BUTTON);
+      general.butt[23]->callback(general_options_ok_cb);
+
       general.butt[11] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                            "Enable mouse hover over meshes and views");
+        new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 5 * BH, BW / 2, BH,
+                            "Hover meshes and views");
       general.butt[11]->tooltip("General.MouseHoverMeshes");
       general.butt[11]->type(FL_TOGGLE_BUTTON);
       general.butt[11]->callback(general_options_ok_cb);

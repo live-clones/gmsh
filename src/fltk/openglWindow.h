@@ -11,6 +11,8 @@
 #include <FL/Fl_Gl_Window.H>
 #include <FL/Fl_Box.H>
 #include "drawContext.h"
+
+class GEntity;
 #include "Navigator.h"
 
 #define NEW_TOOLTIPS 1
@@ -24,9 +26,11 @@
 class tooltipWindow : public Fl_Menu_Window {
 private:
   char _text[1024];
+  // the window this floats over, which the keys are for
+  Fl_Widget *_owner;
 
 public:
-  tooltipWindow() : Fl_Menu_Window(1, 1)
+  tooltipWindow(Fl_Widget *owner = nullptr) : Fl_Menu_Window(1, 1), _owner(owner)
   {
     strcpy(_text, "");
     set_override();
@@ -46,9 +50,19 @@ public:
   }
   int handle(int e)
   {
-    if(e == FL_PUSH || e == FL_KEYDOWN) {
+    if(e == FL_PUSH) {
       hide();
       return 1;
+    }
+    // A key makes the tooltip go away, but it is not for this window, which
+    // only floats over the graphics: it is handed to the window under it
+    // rather than left to the toolkit, which sends keys to whatever has the
+    // focus and gives one to a tooltip as it is shown. Claiming it, as this
+    // did, swallowed every other press of a key that shows a tooltip - the
+    // steps through the entities under the cursor, say.
+    if(e == FL_KEYDOWN || e == FL_SHORTCUT) {
+      hide();
+      return _owner ? _owner->handle(e) : 0;
     }
     return Fl_Menu_Window::handle(e);
   }
@@ -89,6 +103,22 @@ private:
   drawContext *_ctx;
   double _point[3];
   int _selection, _trySelection, _trySelectionXYWH[4];
+  // what the cursor is over, in the tooltip or the status bar
+  void _hover();
+  // and drawn as selected while it is: the entity, what its selection was
+  // before, and the change of one for the other (which redraws)
+  GEntity *_highlighted;
+  char _highlightedWas;
+  void _highlight(GEntity *e);
+  // step through what is under the cursor, once per press or notch: see
+  // _stepPick() for the several ways one of them arrives twice
+  double _pickStepTime;
+  bool _stepping;
+  // where the cursor was when it last stepped: a trackpad nudges the pointer
+  // while two fingers are dragged over it, and a pixel of that must not
+  // throw away the place in the stack
+  double _stepAnchor[2];
+  void _stepPick(int direction, bool rateLimited);
   void _drawScreenMessage();
   void _drawBorder();
   // the accumulation of the studio frames: whether this draw is one of them

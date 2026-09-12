@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-896cf1462; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260910; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.4.5; OCC version: 8.1.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-d8eb05001; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260911; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.4.5; OCC version: 8.1.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -183,7 +183,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"5.0.0-git-896cf1462"}@*
+Default value: @code{"5.0.0-git-d8eb05001"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -271,18 +271,18 @@ Minimum Z-axis coordinate@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesTicsX
-Number of tics on the X-axis@*
+@item General.AxesTicksX
+Number of ticks on the X-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesTicsY
-Number of tics on the Y-axis@*
+@item General.AxesTicksY
+Number of ticks on the Y-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesTicsZ
-Number of tics on the Z-axis@*
+@item General.AxesTicksZ
+Number of ticks on the Z-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -930,6 +930,11 @@ Saved in: @code{-}
 Minimum model coordinate along the Z-axis (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
+
+@item General.MouseHoverHighlight
+Highlight the entity the mouse is over@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
 
 @item General.MouseHoverMeshes
 Enable mouse hover on meshes@*
