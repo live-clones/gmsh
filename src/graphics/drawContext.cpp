@@ -1798,7 +1798,8 @@ static MElement *getElement(GEntity *e, int va_type, int index)
   return nullptr;
 }
 
-void drawContext::setPickColor(int type, int ient, int type2, int ient2)
+void drawContext::setPickColor(int type, int ient, int type2, int ient2,
+                               bool front)
 {
   if(!_pickColor) return;
   _pickObjects.push_back(pickObject(type, ient, type2, ient2));
@@ -1811,8 +1812,9 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2)
 
   // give each dimension its own depth range, lower dimensions in front, so
   // that a point or a curve can be picked through a surface, as with the
-  // selection buffer
-  int d = (type < 0) ? 4 : (type > 4 ? 4 : type);
+  // selection buffer; a marker standing for an entity goes in front of all
+  // of them
+  int d = front ? 0 : ((type < 0) ? 4 : (type > 4 ? 4 : type));
   // pending immediate mode primitives belong to the previous object and its
   // depth range
   gmshFlushImmediate();

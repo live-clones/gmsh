@@ -266,8 +266,14 @@ public:
   // true during a colour buffer picking pass, where the drawing code must
   // use the colour set by setPickColor() instead of its own
   bool inPickColorMode() const { return _pickColor; }
-  // register a pickable object and set the colour that encodes it
-  void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1);
+  // Register a pickable object and set the colour that encodes it. Each
+  // dimension is drawn into a depth range of its own, lower dimensions in
+  // front, so that a point or a curve can be picked through a surface;
+  // `front' puts what follows in the front-most range whatever its
+  // dimension, for a marker that stands for an entity rather than showing
+  // its shape (the sphere of a volume, which floats inside it).
+  void setPickColor(int type, int ient, int type2 = -1, int ient2 = -1,
+                    bool front = false);
   // forget the identifier image: anything that changes what a redraw would
   // show must call this
   void invalidatePickCache() { _pickCacheValid = false; }
