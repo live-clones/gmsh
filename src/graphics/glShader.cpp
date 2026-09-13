@@ -420,15 +420,21 @@ uniform float uLevel;
 uniform float uTime;
 layout(location = 0) out vec4 fColor;
 
-// Is something drawn at this pixel? The depth says so for what is opaque:
-// the cleared depth comes back as 1, or as 0.996 from a packed depth and
-// stencil texture, whose 24 bits are read as the top of 32. Transparent
-// things write no depth, but the summed logarithm of the light they let
-// through, when they were drawn that way this frame, is below 0 wherever
-// they are.
+// What an empty pixel reads as: the row the copy of the depth keeps over
+// the window's own, left cleared. It is not simply 1: a packed depth and
+// stencil texture can hand its 24 bits back as the top of 32. Nor is a
+// constant just under it of any use, since how far in front of the far
+// plane the model falls is what the projection decides - in perspective it
+// sits within a ten thousandth of it.
+float gBack;
+
+// Is something drawn at this pixel? The depth says so for what is opaque.
+// Transparent things write no depth, but the summed logarithm of the light
+// they let through, when they were drawn that way this frame, is below 0
+// wherever they are.
 bool drawn(ivec2 q)
 {
-  if(texelFetch(uDepth, q, 0).r < 0.994) return true;
+  if(texelFetch(uDepth, q, 0).r < gBack - 1.0e-6) return true;
   return uRevealOn && texelFetch(uReveal, q, 0).r < -0.02;
 }
 
@@ -470,7 +476,9 @@ vec3 blackBody(float h)
 
 void main()
 {
-  vec2 size = vec2(textureSize(uDepth, 0));
+  ivec2 whole = textureSize(uDepth, 0);
+  vec2 size = vec2(float(whole.x), float(whole.y - 1));
+  gBack = texelFetch(uDepth, ivec2(0, whole.y - 1), 0).r;
   vec2 p = gl_FragCoord.xy;
   float H = size.y;
   // past a full blaze the flames only get taller
@@ -1375,7 +1383,10 @@ void main()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
+        // one row taller than the window: the extra row is left cleared,
+        // and what it reads as is what the far plane reads as here (see
+        // drawn() in the shader)
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height + 1, 0,
                      stencil ? GL_DEPTH_STENCIL : GL_DEPTH_COMPONENT,
                      stencil ? GL_UNSIGNED_INT_24_8 : GL_UNSIGNED_INT, nullptr);
         // and the frame itself, for the shimmer of the air over the flames
@@ -1403,8 +1414,21 @@ void main()
         _fireHeight = height;
       }
       while(glGetError() != GL_NO_ERROR) {}
-      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, _window);
+      // the whole copy is cleared first, so that the row over the window's
+      // own holds a depth of one; the blit covers the rest of it
       glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _fireFbo);
+      GLboolean wasMask = GL_TRUE, wasScissor = glIsEnabled(GL_SCISSOR_TEST);
+      glGetBooleanv(GL_DEPTH_WRITEMASK, &wasMask);
+      GLdouble wasClear = 1.;
+      glGetDoublev(GL_DEPTH_CLEAR_VALUE, &wasClear);
+      glDepthMask(GL_TRUE);
+      glDisable(GL_SCISSOR_TEST);
+      glClearDepth(1.);
+      glClear(GL_DEPTH_BUFFER_BIT);
+      glClearDepth(wasClear);
+      if(wasScissor) glEnable(GL_SCISSOR_TEST);
+      glDepthMask(wasMask);
+      glApi::BindFramebuffer(GL_READ_FRAMEBUFFER, _window);
       glApi::BlitFramebuffer(0, 0, width, height, 0, 0, width, height,
                              GL_DEPTH_BUFFER_BIT, GL_NEAREST);
       if(glGetError() == GL_NO_ERROR) return true;
