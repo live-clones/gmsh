@@ -238,13 +238,21 @@ vec3 mapCoord(mat4 fromEye, vec3 n, vec3 l)
 
 // How much of the key light, and of the dome, reaches this fragment of
 // normal n through its map: 1 outside the map or with nothing in front, 0 in
-// full shade, filtered over 5x5 texels. One function per map: a sampler
-// handed to a function as an argument is not something every driver gets
-// right.
+// full shade. One function per map: a sampler handed to a function as an
+// argument is not something every driver gets right.
+//
+// The plain frame filters the key light over 5x5 texels, to be soft at
+// once. An accumulated frame - the only kind that has the dome on - takes a
+// single comparison (2x2 texels through the sampler's linear filter): the
+// light jittered from one frame to the next softens the shadow over the
+// frames, the same as the 5x5 filter did on each of them, at a
+// twenty-fifth of the lookups. Same for the dome, which is only ever looked
+// up on those frames.
 float keyLit(vec3 n)
 {
   vec3 q = mapCoord(uShadowFromEye, n, uStudioLight);
   if(q.z > 1.0) return 1.0;
+  if(uDomeOn) return texture(uShadow, q);
   vec2 texel = 1.0 / vec2(textureSize(uShadow, 0));
   float lit = 0.0;
   for(int i = -2; i <= 2; i++)
@@ -258,13 +266,7 @@ float domeLit(vec3 n)
 {
   vec3 q = mapCoord(uDomeFromEye, n, uDomeDir);
   if(q.z > 1.0) return 1.0;
-  vec2 texel = 1.0 / vec2(textureSize(uDome, 0));
-  float lit = 0.0;
-  for(int i = -2; i <= 2; i++)
-    for(int j = -2; j <= 2; j++)
-      lit += texture(uDome, vec3(q.xy + vec2(float(i), float(j)) * texel,
-                                 q.z));
-  return lit / 25.0;
+  return texture(uDome, q);
 }
 
 void main()
@@ -292,6 +294,9 @@ void main()
     int bit = int(mod(floor(vDash / float(uStippleFactor)), 16.0));
     if((uStipplePattern & (1 << bit)) == 0) discard;
   }
+
+  // a shadow map keeps the depth alone: there is nothing to light
+  if(uShadowPass) return;
 
   // an image is the colour of what it covers, lit or not (GL_REPLACE)
   if(uTextured == 2) {
