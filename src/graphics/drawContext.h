@@ -167,6 +167,26 @@ public:
   // that they read over the data
   void setStringHalo(bool halo) { _stringHalo = halo; }
   bool stringHalo() { return _stringHalo; }
+  // Where the copies of a string drawn behind it for its halo go, in the
+  // pixels the strings are drawn in: twelve directions around a circle one
+  // pixel of the window across (in a print, that pixel scaled as the line
+  // widths are). This is the outline the native engine draws with its eight
+  // copies one pixel apart, thin and even; eight copies a whole pixel factor
+  // apart (two pixels on a high resolution screen) gave a thick corona.
+  static int stringHaloOffsets(float offsets[12][2])
+  {
+    static const float dir[12][2] = {
+      {1.f, 0.f},         {0.8660254f, 0.5f},   {0.5f, 0.8660254f},
+      {0.f, 1.f},         {-0.5f, 0.8660254f},  {-0.8660254f, 0.5f},
+      {-1.f, 0.f},        {-0.8660254f, -0.5f}, {-0.5f, -0.8660254f},
+      {0.f, -1.f},        {0.5f, -0.8660254f},  {0.8660254f, -0.5f}};
+    float r = (float)gmshPixelScale();
+    for(int k = 0; k < 12; k++) {
+      offsets[k][0] = r * dir[k][0];
+      offsets[k][1] = r * dir[k][1];
+    }
+    return 12;
+  }
   // the pixels per unit of the drawing of what is being drawn (a window, or
   // a picture being printed), which the strings are rasterised at: said by
   // the window at the beginning of its draw, as a window that has not drawn

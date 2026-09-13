@@ -176,20 +176,16 @@ public:
         // the identity projection expects, a little towards the eye so that
         // a label is not eaten by the surface it names
         float z = 2.f * it->z - 1.f - 2.e-3f;
-        // the string, and before it, if it has a halo, eight copies around it
+        // the string, and before it, if it has a halo, copies of it around it
         // in the background colour
-        int n = it->halo ? 9 : 1;
-        for(int k = 0; k < n; k++) {
+        float halo[12][2];
+        int nh = it->halo ? drawContextGlobal::stringHaloOffsets(halo) : 0;
+        for(int k = 0; k <= nh; k++) {
           float dx = 0.f, dy = 0.f;
-          if(n == 9) {
-            if(k == 8) {
-              gmshColor4f(it->r, it->g, it->b, it->alpha);
-            }
-            else {
-              dx = (float)((k % 3) - 1) * (float)f;
-              dy = (float)((k / 3) - 1) * (float)f;
-              gmshColor4f(bgf[0], bgf[1], bgf[2], it->alpha);
-            }
+          if(k < nh) {
+            dx = halo[k][0];
+            dy = halo[k][1];
+            gmshColor4f(bgf[0], bgf[1], bgf[2], it->alpha);
           }
           else
             gmshColor4f(it->r, it->g, it->b, it->alpha);
