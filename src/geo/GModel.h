@@ -737,6 +737,11 @@ public:
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
 
+  // build what the clipping planes add (see GEntity::va_clip_*); false if
+  // nothing had to change
+  bool fillClipVertexArrays();
+  void invalidateClipVertexArrays();
+
   // reclassify a surface mesh, using an angle threshold to tag edges and faces
   void classifySurfaces(double angleThreshold, bool includeBoundary,
                         bool forReparametrization, double curveAngleThreshold);

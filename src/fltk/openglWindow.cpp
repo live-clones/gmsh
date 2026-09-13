@@ -7,6 +7,7 @@
 #include <string.h>
 #include <FL/Fl_Tooltip.H>
 #include "openglWindow.h"
+#include "drawContextFltkStringTexture.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -22,13 +23,30 @@
 #include "onelabContextWindow.h"
 #include "OpenFile.h"
 #include "drawContext.h"
+#include "OS.h"
+#include "VertexArray.h"
+#include "glMatrix.h"
+#include "glShader.h"
 #include "Context.h"
 #include "Trackball.h"
+#include <cstring>
 #include "GamePad.h"
 #include "StringUtils.h"
 
-// Navigator handler (read gamepad event if gamepad exists or question presence
-// of gamepad)
+// the modelview matrix looking at the camera target from the camera position,
+// both moved by the same offset (the half eye separation of a stereo pair)
+static void cameraView(Camera *cam, double dx, double dy, double dz,
+                       double view[16])
+{
+  double eye[3] = {cam->position.x + dx, cam->position.y + dy,
+                   cam->position.z + dz};
+  double target[3] = {cam->target.x + dx, cam->target.y + dy,
+                      cam->target.z + dz};
+  double up[3] = {cam->up.x, cam->up.y, cam->up.z};
+  glMatrix::lookAt(eye, target, up, view);
+}
+
+// read the gamepad events, if there is a gamepad
 static void navigator_handler(void *data)
 {
   openglWindow *gl_win = (openglWindow *)data;
@@ -70,15 +88,37 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
   FlGui::instance()->manip->update();
 }
 
+int openglWindowMode()
+{
+  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
+  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
+  if(CTX::instance()->stereo) {
+    mode |= FL_DOUBLE;
+    mode |= FL_STEREO;
+  }
+  // the shader pipeline needs a core profile on macOS, which cannot do fixed
+  // function: the two pipelines cannot share a context
+  if(CTX::instance()->shaders) mode |= FL_OPENGL3;
+  return mode;
+}
+
 openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
-  _ctx = new drawContext(this);
+  _studioTimer = false;
+  _spin = _spinTime = _fire = _fireTime = _pickStepTime = 0.;
+  _stepping = false;
+  _stepAnchor[0] = _stepAnchor[1] = 0.;
+  _highlighted = nullptr;
+  _highlightedWas = 0;
+  _studioW = _studioH = 0;
+  _printW = _printH = 0;
+  _printScale = 1.;
+  _ctx = new drawContext();
 
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
-  _lassoXY[0] = _lassoXY[1] = 0;
 
   addPointMode = 0;
   lassoMode = selectionMode = false;
@@ -89,13 +129,15 @@ openglWindow::openglWindow(int x, int y, int w, int h)
     Fl::add_timeout(.5, navigator_handler, (void *)this);
 
 #if defined(NEW_TOOLTIPS)
-  _tooltip = new tooltipWindow();
+  _tooltip = new tooltipWindow(this);
   _tooltip->hide();
 #endif
 }
 
 openglWindow::~openglWindow()
 {
+  Fl::remove_timeout(_studioSampleCb, this);
+  Fl::remove_timeout(_fireCb, this);
   delete _ctx;
 #if defined(NEW_TOOLTIPS)
   delete _tooltip;
@@ -122,7 +164,7 @@ void openglWindow::_drawScreenMessage()
 {
   if(screenMessage[0].empty() && screenMessage[1].empty()) return;
 
-  glColor4ubv((GLubyte *)&CTX::instance()->color.text);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.text);
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   double h = drawContext::global()->getStringHeight();
@@ -161,18 +203,22 @@ void openglWindow::_drawBorder()
    else
      Fl::get_color(FL_BACKGROUND_COLOR, r, g, b);
   */
-  glColor3ub(r, g, b);
-  glLineWidth(1.0F);
-  glBegin(GL_LINE_LOOP);
-  glVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
-  glVertex2d(_ctx->viewport[2], _ctx->viewport[1]);
-  glVertex2d(_ctx->viewport[2], _ctx->viewport[3]);
-  glVertex2d(_ctx->viewport[0], _ctx->viewport[3]);
-  glEnd();
+  gmshColor3ub(r, g, b);
+  gmshLineWidth(1.0F);
+  gmshBegin(GL_LINE_LOOP);
+  gmshVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
+  gmshVertex2d(_ctx->viewport[2], _ctx->viewport[1]);
+  gmshVertex2d(_ctx->viewport[2], _ctx->viewport[3]);
+  gmshVertex2d(_ctx->viewport[0], _ctx->viewport[3]);
+  gmshEnd();
 }
 
 void openglWindow::draw()
 {
+  // a draw the studio timer did not ask for, or that anyone else asked for
+  // as well, starts the accumulation over
+  _studioTimer = (damage() & FL_DAMAGE_USER1) && !(damage() & FL_DAMAGE_ALL);
+  if(!_studioTimer) _ctx->studioSample = 0;
   // some drawing routines can create data (STL triangulations, etc.): make sure
   // that we don't fire draw() while we are already drawing, e.g. due to an
   // impromptu Fl::check(). The same lock is also used in _select to guarantee
@@ -183,52 +229,123 @@ void openglWindow::draw()
 
   Msg::Debug("openglWindow::draw()");
 
-  if(!context_valid()) { _ctx->invalidateQuadricsAndDisplayLists(); }
+  // the picking image is out of date
+  _ctx->invalidatePickCache();
+
+  if(!context_valid()) {
+    _ctx->invalidateQuadricsAndDisplayLists();
+    // the buffer objects and entry points belonged to the previous context
+    VertexArray::invalidateBuffers();
+    glApi::reset();
+    glShader::reset();
+    gmshResetMatrices();
+    // report what the new context can do
+    glApi::describe();
+    // report now if the shader pipeline cannot be had
+    if(CTX::instance()->shaders) glShader::available();
+  }
+  glShader::setContext(context());
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
-  _ctx->viewport[2] = w();
-  _ctx->viewport[3] = h();
-  glViewport(0, 0, pixel_w(), pixel_h());
+  if(_printW) {
+    // a picture of its own size, drawn at its own scale: what is sized in
+    // pixels (fonts, lines, points, the scales) follows
+    _ctx->viewport[2] = (int)(_printW / _printScale + 0.5);
+    _ctx->viewport[3] = (int)(_printH / _printScale + 0.5);
+    _ctx->setHighResolutionPixelFactor(_printScale);
+    glViewport(0, 0, _printW, _printH);
+  }
+  else {
+    _ctx->viewport[2] = w();
+    _ctx->viewport[3] = h();
+    // the factor changes when the window moves across displays
+    _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() :
+                                             1.);
+    glViewport(0, 0, pixel_w(), pixel_h());
+  }
+  drawContext::global()->setPixelFactor(_ctx->highResolutionPixelFactor());
 
   if(lassoMode) {
-    // draw the zoom or selection lasso on top of the current scene (without
-    // using overlays!)
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho((double)_ctx->viewport[0], (double)_ctx->viewport[2],
-            (double)_ctx->viewport[1], (double)_ctx->viewport[3], -1., 1.);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glColor3d(1., 1., 1.);
-    glDisable(GL_DEPTH_TEST);
-    glDrawBuffer(GL_FRONT_AND_BACK);
-    if(selectionMode && CTX::instance()->mouseSelection) {
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1, 0x0F0F);
+    // draw the scene again with the lasso rectangle on top (drawing into the
+    // front buffer, as was done before, left the frame black on current
+    // implementations)
+    if(CTX::instance()->fastRedraw) {
+      CTX::instance()->mesh.draw = 0;
+      CTX::instance()->post.draw = 0;
     }
-    // glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+
+    glClearColor(
+      (GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
+      (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) /
+                 255.),
+      (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.),
+      0.0F);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+    _ctx->draw3d();
+    _ctx->draw2d();
+
+    // the rectangle, in pixel coordinates: a border inverting whatever it
+    // crosses, and a faint wash of the foreground colour inside
+    gmshMatrixMode(GMSH_PROJECTION);
+    double px[16];
+    glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
+                    _ctx->viewport[3], -1., 1., px);
+    gmshLoadMatrix(px);
+    gmshMatrixMode(GMSH_MODELVIEW);
+    gmshLoadIdentity();
+    double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
+    double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
+    // flush before changing the blending, which the collector does not track
+    gmshFlushImmediate();
+    glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
-    glLineWidth(0.2F);
-    glBegin(GL_LINE_LOOP);
-    glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
-    glVertex2d(_lassoXY[0], _ctx->viewport[3] - _click.win[1]);
-    glVertex2d(_lassoXY[0], _ctx->viewport[3] - _lassoXY[1]);
-    glVertex2d(_click.win[0], _ctx->viewport[3] - _lassoXY[1]);
-    glEnd();
-    glBegin(GL_LINE_LOOP);
-    glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
-    glVertex2d(_curr.win[0], _ctx->viewport[3] - _click.win[1]);
-    glVertex2d(_curr.win[0], _ctx->viewport[3] - _curr.win[1]);
-    glVertex2d(_click.win[0], _ctx->viewport[3] - _curr.win[1]);
-    glEnd();
-    _lassoXY[0] = _curr.win[0];
-    _lassoXY[1] = _curr.win[1];
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    unsigned int fg = CTX::instance()->color.fg;
+    gmshColor4ub((unsigned char)CTX::instance()->unpackRed(fg),
+                 (unsigned char)CTX::instance()->unpackGreen(fg),
+                 (unsigned char)CTX::instance()->unpackBlue(fg), 40);
+    gmshBegin(GL_QUADS);
+    gmshVertex2d(x0, y0);
+    gmshVertex2d(x1, y0);
+    gmshVertex2d(x1, y1);
+    gmshVertex2d(x0, y1);
+    gmshEnd();
+    gmshFlushImmediate();
+    // white blended to one minus the destination: an inversion
+    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+    gmshColor3d(1., 1., 1.);
+    if(selectionMode && CTX::instance()->mouseSelection)
+      gmshLineStipple(1, 0x0F0F);
+    // two window pixels wide (the width is in display pixels, the
+    // coordinates in window pixels)
+    double hw = 1.;
+    gmshLineWidth(2. * hw * _ctx->highResolutionPixelFactor());
+    // four segments, the horizontal ones stretched by half the width and the
+    // vertical ones shortened by it, so that each corner is inverted once
+    double sx = (x1 > x0) ? hw : (x1 < x0) ? -hw : 0.;
+    double sy = (y1 > y0) ? hw : (y1 < y0) ? -hw : 0.;
+    gmshBegin(GL_LINES);
+    gmshVertex2d(x0 - sx, y0);
+    gmshVertex2d(x1 + sx, y0);
+    gmshVertex2d(x0 - sx, y1);
+    gmshVertex2d(x1 + sx, y1);
+    gmshVertex2d(x0, y0 + sy);
+    gmshVertex2d(x0, y1 - sy);
+    gmshVertex2d(x1, y0 + sy);
+    gmshVertex2d(x1, y1 - sy);
+    gmshEnd();
+    gmshFlushImmediate();
+    gmshLineStippleOff();
+    gmshLineWidth(1.);
     glDisable(GL_BLEND);
-    glDisable(GL_LINE_STIPPLE);
     glEnable(GL_DEPTH_TEST);
-    glDrawBuffer(GL_BACK);
+
+    _drawScreenMessage();
+    _drawBorder();
+    CTX::instance()->mesh.draw = 1;
+    CTX::instance()->post.draw = 1;
   }
   else if(addPointMode) {
     // draw the whole scene and the point to add
@@ -247,13 +364,13 @@ void openglWindow::draw()
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     _ctx->draw3d();
-    glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+    gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
     float ps =
       CTX::instance()->geom.pointSize * _ctx->highResolutionPixelFactor();
-    glPointSize(ps);
-    glBegin(GL_POINTS);
-    glVertex3d(_point[0], _point[1], _point[2]);
-    glEnd();
+    gmshPointSize(ps);
+    gmshBegin(GL_POINTS);
+    gmshVertex3d(_point[0], _point[1], _point[2]);
+    gmshEnd();
     _ctx->draw2d();
     _drawScreenMessage();
     _drawBorder();
@@ -276,25 +393,14 @@ void openglWindow::draw()
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     if(CTX::instance()->camera && !CTX::instance()->stereo) {
-      Camera *cam = &(_ctx->camera);
-      if(!cam->on) cam->init();
-      cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-
-      glFrustum(cam->glFleft, cam->glFright, cam->glFbottom, cam->glFtop,
-                cam->glFnear, cam->glFfar * cam->Lc);
-
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-      glDrawBuffer(GL_BACK);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glLoadIdentity();
-      gluLookAt(cam->position.x, cam->position.y, cam->position.z,
-                cam->target.x, cam->target.y, cam->target.z, cam->up.x,
-                cam->up.y, cam->up.z);
+      // both eyes' buffers may be left selected by stereo (a print target
+      // has no such buffer)
+      if(!_printW) glDrawBuffer(GL_BACK);
+      _cameraMatrices();
       _ctx->draw3d();
+      _burn();
       _ctx->draw2d();
+      _studioFrame();
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active &&
          Nautilus)
         Nautilus->drawIcons();
@@ -307,44 +413,41 @@ void openglWindow::draw()
       cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
       XYZ eye = cam->eyesep / 2.0 * cam->right;
       // right eye
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
+      gmshMatrixMode(GMSH_PROJECTION);
+      double frustum[16], view[16];
       double left =
         -cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
       double right =
         cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
       double top = cam->wd2;
       double bottom = -cam->wd2;
-      glFrustum(left, right, bottom, top, cam->glFnear, cam->glFfar * cam->Lc);
-      glMatrixMode(GL_MODELVIEW);
+      glMatrix::frustum(left, right, bottom, top, cam->glFnear,
+                        cam->glFfar * cam->Lc, frustum);
+      gmshLoadMatrix(frustum);
+      gmshMatrixMode(GMSH_MODELVIEW);
       glDrawBuffer(GL_BACK_RIGHT);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glLoadIdentity();
-      gluLookAt(cam->position.x + eye.x, cam->position.y + eye.y,
-                cam->position.z + eye.z, cam->target.x + eye.x,
-                cam->target.y + eye.y, cam->target.z + eye.z, cam->up.x,
-                cam->up.y, cam->up.z);
+      cameraView(cam, eye.x, eye.y, eye.z, view);
+      gmshLoadMatrix(view);
       _ctx->draw3d();
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
       // left eye
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
+      gmshMatrixMode(GMSH_PROJECTION);
       left = -cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
       right = cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
       top = cam->wd2;
       bottom = -cam->wd2;
-      glFrustum(left, right, bottom, top, cam->glFnear, cam->glFfar * cam->Lc);
+      glMatrix::frustum(left, right, bottom, top, cam->glFnear,
+                        cam->glFfar * cam->Lc, frustum);
+      gmshLoadMatrix(frustum);
 
-      glMatrixMode(GL_MODELVIEW);
+      gmshMatrixMode(GMSH_MODELVIEW);
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glLoadIdentity();
-      gluLookAt(cam->position.x - eye.x, cam->position.y - eye.y,
-                cam->position.z - eye.z, cam->target.x - eye.x,
-                cam->target.y - eye.y, cam->target.z - eye.z, cam->up.x,
-                cam->up.y, cam->up.z);
+      cameraView(cam, -eye.x, -eye.y, -eye.z, view);
+      gmshLoadMatrix(view);
       _ctx->draw3d();
       _ctx->draw2d();
       _drawScreenMessage();
@@ -352,14 +455,179 @@ void openglWindow::draw()
     }
     else {
       _ctx->draw3d();
+      memcpy(_frameView, _ctx->model, sizeof(_frameView));
+      _burn();
       _ctx->draw2d();
+      _studioFrame();
       _drawScreenMessage();
       _drawBorder();
     }
   }
+  gmshFlushImmediate();
   drawContext::global()->flushString();
   _lock = false;
+  _studioTimer = false;
+
 }
+
+void openglWindow::_cameraMatrices()
+{
+  Camera *cam = &(_ctx->camera);
+  if(!cam->on) cam->init();
+  cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
+  double frustum[16], jitter[16], proj[16];
+  glMatrix::frustum(cam->glFleft, cam->glFright, cam->glFbottom, cam->glFtop,
+                    cam->glFnear, cam->glFfar * cam->Lc, frustum);
+  _ctx->studioJitter(jitter);
+  glMatrix::multiply(jitter, frustum, proj);
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshLoadMatrix(proj);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  cameraView(cam, 0., 0., 0., _frameView);
+  gmshLoadMatrix(_frameView);
+}
+
+// The accumulation of the studio shading: after a frame, while the view is
+// still, the timer asks for more frames with the light, the dome and the
+// projection jittered, and each is added to the average put on the window.
+// A print does not wait: it draws them all at once.
+void openglWindow::_studioFrame()
+{
+  Fl::remove_timeout(_studioSampleCb, this);
+  CTX *ctx = CTX::instance();
+  int n = ctx->studioSamples;
+  if(!gmshUseShaders() || ctx->shading < 1 || n < 2 || ctx->stereo) {
+    _ctx->studioSample = 0;
+    return;
+  }
+  int k = _ctx->studioSample;
+  int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
+  if(k > 0) {
+    // the view changed since the last frame: start over
+    if(w != _studioW || h != _studioH ||
+       memcmp(_studioModel, _frameView, sizeof(_studioModel))) {
+      Msg::Debug("Studio frames: the view changed, starting over");
+      k = _ctx->studioSample = 0;
+    }
+    else {
+      // the frame has to be complete before it is added: what the overlay
+      // collected is still pending
+      gmshFlushImmediate();
+      drawContext::global()->flushString();
+      if(!glShader::accumulate(w, h, k == 1, k)) {
+        _ctx->studioSample = 0;
+        return;
+      }
+      Msg::Debug("Studio frame %d of %d accumulated", k, n);
+    }
+  }
+  memcpy(_studioModel, _frameView, sizeof(_studioModel));
+  _studioW = w;
+  _studioH = h;
+  if(ctx->printing) {
+    for(int j = k + 1; j < n; j++) {
+      _ctx->studioSample = j;
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      if(ctx->camera) _cameraMatrices();
+      _ctx->draw3d();
+      _ctx->draw2d();
+      gmshFlushImmediate();
+      drawContext::global()->flushString();
+      if(!glShader::accumulate(w, h, j == 1, j)) break;
+    }
+    _ctx->studioSample = 0;
+    return;
+  }
+  if(k + 1 < n) Fl::add_timeout(0.01, _studioSampleCb, this);
+}
+
+bool openglWindow::printTo(int width, int height, int supersampling,
+                           unsigned int format, unsigned int type,
+                           void *pixels)
+{
+  make_current();
+  if(!glShader::beginPrintTarget(width, height)) return false;
+  _printW = width;
+  _printH = height;
+  // the picture is the window scaled: by the supersampling, and by its size
+  // relative to the window's unless the sizes given in pixels are to keep
+  // their screen size; the fonts and everything else in the units of the
+  // window follow the pixel factor, the line widths and point sizes given in
+  // pixels of the window follow the pixel scale
+  int ss = std::max(1, supersampling);
+  double hr = w() ? (double)pixel_w() / (double)w() : 1.;
+  double ratio = 1.;
+  if(CTX::instance()->print.scalePixelSizes && pixel_w() > 0)
+    ratio = (double)width / (ss * pixel_w());
+  _printScale = ss * hr * ratio;
+  gmshPixelScale(ss * ratio);
+  // the native font engine places its strings from the window's size and
+  // scale, which the picture has neither of: strings as textures meanwhile
+  drawContextGlobal *native = nullptr;
+  if(drawContext::global()->getName() == "Fltk") {
+    native = drawContext::global();
+    drawContext::setGlobal(new drawContextFltkStringTexture);
+  }
+  draw();
+  if(native) {
+    delete drawContext::global();
+    drawContext::setGlobal(native);
+  }
+  glShader::readPrintTarget(width, height, format, type, pixels);
+  glShader::endPrintTarget();
+  gmshPixelScale(1.);
+  _printW = _printH = 0;
+  _printScale = 1.;
+  // the window itself is drawn again at its own size
+  redraw();
+  return true;
+}
+
+void openglWindow::_studioSampleCb(void *data)
+{
+  openglWindow *w = (openglWindow *)data;
+  // not while a mouse button is down: the view, or an option dragged in the
+  // options window, is changing, and each step redraws the plain frame;
+  // look again once it is up
+  if(Fl::pushed()) {
+    Fl::repeat_timeout(0.05, _studioSampleCb, data);
+    return;
+  }
+  // asked for with a damage bit of its own: a redraw() asked for by anyone
+  // else before the frame is drawn (an option changed, say) marks the
+  // window fully damaged, and draw() knows the frame is a plain one then
+  w->_ctx->studioSample++;
+  w->damage(FL_DAMAGE_USER1);
+}
+
+// The fire lit by spinning the model: drawn over the scene at its current
+// level, which dies down in a couple of seconds once the spinning stops,
+// with a frame every 30 ms in the meantime. Not accumulated: the studio
+// frames start over as long as it burns.
+void openglWindow::_burn()
+{
+  Fl::remove_timeout(_fireCb, this);
+  if(_fire <= 0.) return;
+  double now = TimeOfDay();
+  if(!_printW) {
+    _fire *= exp(-(now - _fireTime) / 1.5);
+    _fireTime = now;
+  }
+  if(_fire < 0.02) {
+    _fire = 0.;
+    return;
+  }
+  gmshFlushImmediate();
+  int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
+  if(!glShader::fire(w, h, _fire, now)) {
+    _fire = 0.;
+    return;
+  }
+  _ctx->studioSample = 0;
+  if(!_printW) Fl::add_timeout(0.03, _fireCb, this);
+}
+
+void openglWindow::_fireCb(void *data) { ((openglWindow *)data)->redraw(); }
 
 openglWindow *openglWindow::_lastHandled = nullptr;
 
@@ -367,6 +635,158 @@ void openglWindow::_setLastHandled(openglWindow *w)
 {
   _lastHandled = w;
   FlGui::instance()->visibility->updatePerWindow();
+}
+
+// One step through the entities under the cursor for one press or one notch,
+// which takes some holding down. A wheel event is rate limited because a
+// mouse gives one for each notch but a trackpad gives a burst of them for a
+// single swipe of two fingers, with more coming while it glides. A key is
+// rate limited too, and against being stepped again from inside this call,
+// because one press of it can reach this window more than once: macOS sends
+// an FL_KEYBOARD for the command an arrow key stands for and another for the
+// text it carries (Fl_cocoa.mm, doCommandBySelector: and insertText:), and
+// the tooltip this shows hands on the key that dismisses it.
+void openglWindow::_stepPick(int direction, bool rateLimited)
+{
+  if(_stepping) return;
+  double now = TimeOfDay();
+  // the two deliveries of one press are microseconds apart, so a short guard
+  // is enough for them and leaves a held key repeating
+  if(now - _pickStepTime < (rateLimited ? 0.2 : 0.03)) return;
+  _pickStepTime = now;
+  _stepAnchor[0] = _curr.win[0];
+  _stepAnchor[1] = _curr.win[1];
+  _stepping = true;
+  // where the hover last looked: neither a wheel nor a key moves the
+  // cursor, and the position an event reports is not the pointer's once a
+  // tooltip window has been shown under it
+  _ctx->stepPick(direction);
+  _hover();
+  _stepping = false;
+}
+
+// The entity the cursor is over, drawn as a selected one until the cursor is
+// over something else. The picture changes, so this redraws; what is drawn is
+// the same geometry in another colour, so the identifier image a pick is read
+// from does not change and is not thrown away.
+void openglWindow::_highlight(GEntity *e)
+{
+  if(!CTX::instance()->mouseHoverHighlight) e = nullptr;
+  if(e == _highlighted) return;
+  // put back what it was, unless something else has changed it since
+  if(_highlighted && _highlighted->getSelection() == GEntity::SelectHover)
+    _highlighted->setSelection(_highlightedWas);
+  _highlightedWas = e ? e->getSelection() : 0;
+  _highlighted = e;
+  // selected as far as the drawing is concerned, so that it is drawn again
+  // on top of the merged arrays, but in the highlight colour and without the
+  // marker and label a chosen entity shows (see getSelectionColor())
+  if(e) e->setSelection(GEntity::SelectHover);
+  redraw();
+}
+
+// What the cursor is over: the tooltip or the status bar says what a click
+// would pick, and the cursor says whether there is anything. When several
+// entities are under it, the wheel steps through them (FL_MOUSEWHEEL below)
+// and this says which one is current.
+void openglWindow::_hover()
+{
+  std::vector<GVertex *> vertices;
+  std::vector<GEdge *> edges;
+  std::vector<GFace *> faces;
+  std::vector<GRegion *> regions;
+  std::vector<MElement *> elements;
+  std::vector<SPoint2> points;
+  std::vector<PView *> views;
+  bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
+                     CTX::instance()->mouseHoverMeshes, (int)_curr.win[0],
+                     (int)_curr.win[1], 5, 5, vertices, edges, faces,
+                     regions, elements, points, views);
+  if((_selection == ENT_ALL && res) ||
+     (_selection == ENT_POINT && vertices.size()) ||
+     (_selection == ENT_CURVE && edges.size()) ||
+     (_selection == ENT_SURFACE && faces.size()) ||
+     (_selection == ENT_VOLUME && regions.size()))
+    cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
+  else
+    cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+  std::string text, cmd;
+  bool multiline = CTX::instance()->tooltips;
+  if(vertices.size()) {
+    text = vertices[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedPointCommand;
+  }
+  else if(edges.size()) {
+    text = edges[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedCurveCommand;
+  }
+  else if(faces.size()) {
+    text = faces[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
+  }
+  else if(regions.size()) {
+    text = regions[0]->getInfoString(true, multiline);
+    cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
+  }
+  else if(elements.size()) {
+    text = elements[0]->getInfoString(multiline);
+  }
+  else if(points.size()) {
+    char tmp[256];
+    sprintf(tmp, "Point (%g, %g)", points[0].x(), points[0].y());
+    text = tmp;
+    cmd = CTX::instance()->post.doubleClickedGraphPointCommand;
+  }
+  else if(views.size()) {
+    char tmp[256];
+    sprintf(tmp, "View[%d]", views[0]->getIndex());
+    text = tmp;
+    cmd = views[0]->getOptions()->doubleClickedCommand;
+  }
+  if(cmd.size()) {
+    if(multiline) text += "\n\n";
+    else text += " ";
+    if(cmd == "ONELAB") {
+      text += std::string("Double-click to edit parameters");
+    }
+    else {
+      text += std::string("Double-click to execute\n\n");
+      std::replace(cmd.begin(), cmd.end(), '\r', ' ');
+      text += cmd;
+    }
+  }
+  // and drawn as selected, so that it is not only named but shown
+  GEntity *over = nullptr;
+  if(vertices.size())
+    over = vertices[0];
+  else if(edges.size())
+    over = edges[0];
+  else if(faces.size())
+    over = faces[0];
+  else if(regions.size())
+    over = regions[0];
+  _highlight(over);
+
+  // how far under the cursor this one is, and how to go further
+  if(text.size()) {
+    char tmp[256];
+    int d = _ctx->pickDepth();
+    if(d)
+      sprintf(tmp, "%s%d behind (Alt and the wheel, or Alt and the up and "
+                   "down arrows, for what is behind)",
+              multiline ? "\n\n" : " ", d);
+    else
+      sprintf(tmp, "%sAlt and the wheel, or Alt and the up and down arrows, "
+                   "for what is behind",
+              multiline ? "\n\n" : " ");
+    text += tmp;
+  }
+  if(CTX::instance()->tooltips)
+    drawTooltip(text);
+  else
+    Msg::StatusBar(false, text.c_str());
+  if(Msg::GetVerbosity() == 99)
+    Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
 }
 
 int openglWindow::handle(int event)
@@ -377,11 +797,27 @@ int openglWindow::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
+    // Alt and the up or down arrows step through what is under the cursor,
+    // as Alt and the wheel do, one entity at a time: a trackpad has no
+    // notches to count
+    if(Fl::event_state(FL_ALT) && CTX::instance()->mouseSelection &&
+       !lassoMode && !addPointMode &&
+       (Fl::event_key() == FL_Up || Fl::event_key() == FL_Down)) {
+      _stepPick((Fl::event_key() == FL_Down) ? 1 : -1, false);
+      return 1;
+    }
     // override the default widget arrow-key-navigation
     if(FlGui::instance()->testArrowShortcuts()) return 1;
     return Fl_Gl_Window::handle(event);
 
+  case FL_LEAVE:
+    // nothing under the cursor once it is out of the window
+    _highlight(nullptr);
+    return Fl_Gl_Window::handle(event);
+
   case FL_PUSH:
+    // what the click does with the pick is not this highlight's business
+    _highlight(nullptr);
     if(Fl::event_clicks() == 1 && !selectionMode &&
        CTX::instance()->mouseSelection) {
       // double-click and not in selection mode, but with mouse selection enabled
@@ -449,11 +885,7 @@ int openglWindow::handle(int event)
     _curr.set(_ctx, Fl::event_x(), Fl::event_y());
     if(Fl::event_button() == 1 && !Fl::event_state(FL_SHIFT) &&
        !Fl::event_state(FL_ALT)) {
-      if(!lassoMode && Fl::event_state(FL_CTRL)) {
-        lassoMode = true;
-        _lassoXY[0] = _curr.win[0];
-        _lassoXY[1] = _curr.win[1];
-      }
+      if(!lassoMode && Fl::event_state(FL_CTRL)) { lassoMode = true; }
       else if(lassoMode) {
         lassoMode = false;
         if(selectionMode && CTX::instance()->mouseSelection) {
@@ -558,11 +990,25 @@ int openglWindow::handle(int event)
     return 1;
 
   case FL_MOUSEWHEEL: {
-    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
     double dy = Fl::event_dy();
+    // which way the wheel is being turned, as the zoom reads it: the sign
+    // depends on the mouse, on the trackpad and on how the system is set up,
+    // so the one gesture that brings the model closer is the one that steps
+    // to the entity in front
+    bool direction = (CTX::instance()->mouseInvertZoom) ? (dy <= 0) : (dy > 0);
+    // With Alt, the wheel steps through the entities under the cursor
+    // instead of zooming: a click then picks the one the hover names,
+    // rather than the drawing order deciding which of them wins.
+    if(Fl::event_state(FL_ALT) && CTX::instance()->mouseSelection &&
+       !lassoMode && !addPointMode) {
+      // _prev is left alone: it is what a move is measured against, and
+      // nothing has moved
+      _stepPick(direction ? -1 : 1, true);
+      return 1;
+    }
+    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
     double fact =
       (5. * CTX::instance()->zoomFactor * fabs(dy) + h()) / (double)h();
-    bool direction = (CTX::instance()->mouseInvertZoom) ? (dy <= 0) : (dy > 0);
     if(CTX::instance()->camera) {
       fact = (direction ? fact : 1. / fact);
       _ctx->camera.zoom(fact);
@@ -598,6 +1044,24 @@ int openglWindow::handle(int event)
         // (m1) and (!shift) and (!alt)  => rotation
         else if(Fl::event_button() == 1 && !Fl::event_state(FL_SHIFT) &&
                 !Fl::event_state(FL_ALT)) {
+          // how fast the model is spun, in window sizes per second, smoothed
+          // over the last few events: past a point it catches fire, the
+          // faster the sooner, and the fire goes on building as long as the
+          // spinning does, up to half as much again as a full blaze
+          double now = TimeOfDay(), dt = now - _spinTime;
+          _spinTime = now;
+          if(dt > 0. && dt < 0.5) {
+            double v = sqrt(dx * dx / (w() * (double)w()) +
+                            dy * dy / (h() * (double)h())) / dt;
+            _spin = 0.7 * _spin + 0.3 * v;
+            const double catches = 8.;
+            if(_spin > catches) {
+              if(_fire <= 0.) _fireTime = now;
+              _fire = std::min(1.5, _fire + 1.5 * (_spin / catches - 1.) * dt);
+            }
+          }
+          else
+            _spin = 0.;
           if(CTX::instance()->useTrackball)
             _ctx->addQuaternion(
               (2. * _prev.win[0] - w()) / w(), (h() - 2. * _prev.win[1]) / h(),
@@ -700,79 +1164,22 @@ int openglWindow::handle(int event)
     }
     else { // hover mode
       if(_curr.win[0] != _prev.win[0] || _curr.win[1] != _prev.win[1]) {
-        std::vector<GVertex *> vertices;
-        std::vector<GEdge *> edges;
-        std::vector<GFace *> faces;
-        std::vector<GRegion *> regions;
-        std::vector<MElement *> elements;
-        std::vector<SPoint2> points;
-        std::vector<PView *> views;
-        bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
-                           CTX::instance()->mouseHoverMeshes, (int)_curr.win[0],
-                           (int)_curr.win[1], 5, 5, vertices, edges, faces,
-                           regions, elements, points, views);
-        if((_selection == ENT_ALL && res) ||
-           (_selection == ENT_POINT && vertices.size()) ||
-           (_selection == ENT_CURVE && edges.size()) ||
-           (_selection == ENT_SURFACE && faces.size()) ||
-           (_selection == ENT_VOLUME && regions.size()))
-          cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
-        else
-          cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-        std::string text, cmd;
-        bool multiline = CTX::instance()->tooltips;
-        if(vertices.size()) {
-          text = vertices[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedPointCommand;
+        // Somewhere else under the cursor: back to the entity in front. A
+        // pixel or two is not somewhere else, as a trackpad nudges the
+        // pointer while it is dragged over for the stepping.
+        if(fabs(_curr.win[0] - _stepAnchor[0]) > 3. ||
+           fabs(_curr.win[1] - _stepAnchor[1]) > 3.) {
+          _ctx->resetPick();
+          _stepAnchor[0] = _curr.win[0];
+          _stepAnchor[1] = _curr.win[1];
         }
-        else if(edges.size()) {
-          text = edges[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedCurveCommand;
-        }
-        else if(faces.size()) {
-          text = faces[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
-        }
-        else if(regions.size()) {
-          text = regions[0]->getInfoString(true, multiline);
-          cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
-        }
-        else if(elements.size()) {
-          text = elements[0]->getInfoString(multiline);
-        }
-        else if(points.size()) {
-          char tmp[256];
-          sprintf(tmp, "Point (%g, %g)", points[0].x(), points[0].y());
-          text = tmp;
-          cmd = CTX::instance()->post.doubleClickedGraphPointCommand;
-        }
-        else if(views.size()) {
-          char tmp[256];
-          sprintf(tmp, "View[%d]", views[0]->getIndex());
-          text = tmp;
-          cmd = views[0]->getOptions()->doubleClickedCommand;
-        }
-        if(cmd.size()) {
-          if(multiline) text += "\n\n";
-          else text += " ";
-          if(cmd == "ONELAB") {
-            text += std::string("Double-click to edit parameters");
-          }
-          else {
-            text += std::string("Double-click to execute\n\n");
-            std::replace(cmd.begin(), cmd.end(), '\r', ' ');
-            text += cmd;
-          }
-        }
-        if(CTX::instance()->tooltips)
-          drawTooltip(text);
-        else
-          Msg::StatusBar(false, text.c_str());
-        if(Msg::GetVerbosity() == 99)
-          Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
+        _hover();
       }
     }
-    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
+    // not read from the event again: showing a tooltip under the cursor
+    // leaves the toolkit reporting its own coordinates, and _prev is what a
+    // move is measured against
+    _prev = _curr;
     return 1;
 
   default: return Fl_Gl_Window::handle(event);
@@ -822,6 +1229,7 @@ bool openglWindow::_select(
   if(_lock) return false;
   _lock = true;
   make_current();
+  glShader::setContext(context());
   bool ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
                           edges, faces, regions, elements, points, views);
   _lock = false;
@@ -912,7 +1320,11 @@ void openglWindow::drawTooltip(const std::string &text)
 #if defined(NEW_TOOLTIPS)
   if(text.empty()) { _tooltip->hide(); }
   else {
-    _tooltip->position(Fl::event_x_root(), Fl::event_y_root() + 20);
+    // from where the cursor is over this window, not from what an event
+    // reports: a tooltip already shown leaves the toolkit reporting its own
+    // coordinates (see _stepPick())
+    _tooltip->position(x_root() + (int)_curr.win[0],
+                       y_root() + (int)_curr.win[1] + 20);
     _tooltip->value(text);
     _tooltip->show();
   }

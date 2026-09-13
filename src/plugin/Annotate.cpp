@@ -10,6 +10,7 @@
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
+#include "glMatrix.h"
 #endif
 
 StringXNumber AnnotateOptions_Number[] = {
@@ -50,45 +51,47 @@ void GMSH_AnnotatePlugin::draw(void *context)
   double style = getStyle();
   drawContext *ctx = (drawContext *)context;
 
-  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   if(AnnotateOptions_Number[3].def) { // 3D
     ctx->drawString(AnnotateOptions_String[0].def, X, Y, Z, style);
     // draw 10-pixel marker
     double d = 10 * ctx->pixel_equiv_x / ctx->s[0];
-    glBegin(GL_LINES);
-    glVertex3d(X - d, Y, Z);
-    glVertex3d(X + d, Y, Z);
-    glVertex3d(X, Y - d, Z);
-    glVertex3d(X, Y + d, Z);
-    glVertex3d(X, Y, Z - d);
-    glVertex3d(X, Y, Z + d);
-    glEnd();
+    gmshBegin(GL_LINES);
+    gmshVertex3d(X - d, Y, Z);
+    gmshVertex3d(X + d, Y, Z);
+    gmshVertex3d(X, Y - d, Z);
+    gmshVertex3d(X, Y + d, Z);
+    gmshVertex3d(X, Y, Z - d);
+    gmshVertex3d(X, Y, Z + d);
+    gmshEnd();
   }
   else {
-    double modelview[16], projection[16];
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho((double)ctx->viewport[0], (double)ctx->viewport[2],
-            (double)ctx->viewport[1], (double)ctx->viewport[3], -1., 1.);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    // the matrices are ours, not OpenGL's: a core profile has none to ask for
+    double modelview[16], projection[16], px[16];
+    for(int i = 0; i < 16; i++) {
+      projection[i] = gmshMatrix(GMSH_PROJECTION)[i];
+      modelview[i] = gmshMatrix(GMSH_MODELVIEW)[i];
+    }
+    gmshMatrixMode(GMSH_PROJECTION);
+    glMatrix::ortho(ctx->viewport[0], ctx->viewport[2], ctx->viewport[1],
+                    ctx->viewport[3], -1., 1., px);
+    gmshLoadMatrix(px);
+    gmshMatrixMode(GMSH_MODELVIEW);
+    gmshLoadIdentity();
     ctx->fix2dCoordinates(&X, &Y);
     ctx->drawString(AnnotateOptions_String[0].def, X, Y, 0., style);
     // draw 10-pixel marker
-    glBegin(GL_LINES);
-    glVertex2d(X - 10, Y);
-    glVertex2d(X + 10, Y);
-    glVertex2d(X, Y - 10);
-    glVertex2d(X, Y + 10);
-    glEnd();
+    gmshBegin(GL_LINES);
+    gmshVertex2d(X - 10, Y);
+    gmshVertex2d(X + 10, Y);
+    gmshVertex2d(X, Y - 10);
+    gmshVertex2d(X, Y + 10);
+    gmshEnd();
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixd(projection);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixd(modelview);
+    gmshMatrixMode(GMSH_PROJECTION);
+    gmshLoadMatrix(projection);
+    gmshMatrixMode(GMSH_MODELVIEW);
+    gmshLoadMatrix(modelview);
   }
 #endif
 }

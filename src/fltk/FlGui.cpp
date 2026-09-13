@@ -592,13 +592,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
   // create window that will be used for fullscreen display
   fullscreen = new openglWindow(100, 100, 100, 100);
-  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  if(CTX::instance()->stereo) {
-    mode |= FL_DOUBLE;
-    mode |= FL_STEREO;
-  }
-  fullscreen->mode(mode);
+  fullscreen->mode(openglWindowMode());
   fullscreen->end();
 
   // create all other windows

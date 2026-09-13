@@ -254,11 +254,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
 
 MElement *PViewDataGModel::_getElement(int step, int ent, int ele)
 {
-  static int lastStep = -1, lastEnt = -1, lastEle = -1;
-  static MElement *curr = nullptr;
-  if(step != lastStep || ent != lastEnt || ele != lastEle)
-    curr = _steps[step]->getEntity(ent)->getMeshElement(ele);
-  return curr;
+  return _steps[step]->getEntity(ent)->getMeshElement(ele);
 }
 
 std::string PViewDataGModel::getFileName(int step)
@@ -543,6 +539,16 @@ MVertex *PViewDataGModel::_getNode(MElement *e, int nod)
   return v;
 }
 
+std::size_t PViewDataGModel::getNodeId(int step, int ent, int ele, int nod)
+{
+  // the "nodes" of Gauss point data are not mesh vertices
+  if(_type == GaussPointData) return 0;
+  MElement *e = _getElement(step, ent, ele);
+  if(!e) return 0;
+  MVertex *v = _getNode(e, nod);
+  return v ? v->getNum() : 0;
+}
+
 int PViewDataGModel::getNode(int step, int ent, int ele, int nod, double &x,
                              double &y, double &z)
 {
@@ -824,7 +830,9 @@ bool PViewDataGModel::skipElement(int step, int ent, int ele,
   MElement *e = _getElement(step, ent, ele);
   if(checkVisibility && !e->getVisibility()) return true;
   if(_type == NodeData) {
-    for(int i = 0; i < getNumNodes(step, ent, ele); i++)
+    // not in the loop condition: getNumNodes() is expensive
+    int numNodes = getNumNodes(step, ent, ele);
+    for(int i = 0; i < numNodes; i++)
       if(!sd->getData(_getNode(e, i)->getNum())) return true;
   }
   else {

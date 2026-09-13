@@ -33,16 +33,16 @@ static inline void unsignedInt2RGBA(unsigned int &color, double &r, double &g,
 }
 
 static void writeX3DScale(FILE *fp, PView *p, double xmin, double ymin,
-                          double width, double height, double tic,
+                          double width, double height, double tick,
                           int horizontal, double font_size);
 static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin,
-                             double width, double height, double tic,
+                             double width, double height, double tick,
                              int horizontal);
 static void writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
-                                double width, double height, double tic,
+                                double width, double height, double tick,
                                 int horizontal, double font_size);
 static void writeX3DScaleLabel(FILE *fp, PView *p, double xmin, double ymin,
-                               double width, double height, double tic,
+                               double width, double height, double tick,
                                int horizontal, double font_size);
 static void writeX3DStringCenter(FILE *fp, char *label, double x, double y,
                                  double z, double font_size);

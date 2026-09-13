@@ -36,16 +36,37 @@ public:
   };
   enum GlyphLocation { COG = 1, Vertex = 2 };
   enum RangeType { Default = 1, Custom = 2, PerTimeStep = 3 };
-  enum ScaleType { Linear = 1, Logarithmic = 2, DoubleLogarithmic = 3 };
+  enum ScaleType { Linear = 1, Logarithmic = 2, SymmetricLogarithmic = 3 };
 
   int type, autoPosition;
   double position[2], size[2];
   std::string format;
+  // How a value is printed: what the user asked for, or, when they asked for
+  // nothing, the automatic format. The scale adapts its labels to the range
+  // it spans; a single value out in the scene has no range to adapt to.
+  std::string getFormat() const { return format.empty() ? "%.3g" : format; }
+  // The scale the values of a range are laid out on: the one that is asked
+  // for, or the linear one when that cannot be done - a logarithmic scale of
+  // a range that reaches zero, whose values have no logarithm. The symmetric
+  // one always can: it is logarithmic on both sides of a threshold around
+  // zero, and linear inside it.
+  int getScaleType(double min, double max) const
+  {
+    if(scaleType == Logarithmic && (min <= 0. || max <= 0.)) return Linear;
+    return scaleType;
+  }
+  // the threshold a symmetric logarithmic scale uses over that range: the
+  // one that is asked for, or four decades below the largest value
+  double getScaleThreshold(double min, double max) const;
+  // where a value falls on that scale, and what falls there
+  double scaleForward(double v, double min, double max) const;
+  double scaleInverse(double u, double min, double max) const;
   int axes, axesAutoPosition, axesMikado;
-  double axesTics[3];
+  double axesTicks[3];
   std::string axesFormat[3], axesLabel[3];
   double axesPosition[6];
   double customMin, customMax, tmpMin, tmpMax, externalMin, externalMax;
+  double scaleThreshold;
   double customAbscissaMin, customAbscissaMax;
   SBoundingBox3d tmpBBox;
   double offset[3], raise[3], transform[3][3], displacementFactor, normalRaise;
@@ -55,7 +76,7 @@ public:
   int visible, intervalsType, nbIso;
   int light, lightTwoSide, lightLines, smoothNormals;
   double angleSmoothNormals;
-  int saturateValues, fakeTransparency;
+  int saturateValues;
   int showElement, showTime, showScale;
   int scaleType, rangeType, abscissaRangeType;
   int vectorType, tensorType, glyphLocation, centerGlyphs;
@@ -69,6 +90,8 @@ public:
   int boundary, pointType, lineType, drawSkinOnly;
   double pointSize, lineWidth;
   GmshColorTable colorTable;
+  // multiplies the alpha of the colormap (applied by the shader)
+  double transparency;
   int useStipple, stipple[10][2];
   std::string stippleString[10];
   int externalViewIndex, viewIndexForGenRaise;

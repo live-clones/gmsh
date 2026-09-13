@@ -4973,6 +4973,25 @@ GMSH_API int gmshFltkSelectViews(int ** viewTags, size_t * viewTags_n, int * ier
   return result_api_;
 }
 
+GMSH_API int gmshFltkPick(int ** dimTags, size_t * dimTags_n, size_t ** elementTags, size_t * elementTags_n, int ** viewTags, size_t * viewTags_n, const double x, const double y, const int dim, const int elements, const int w, const int h, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_;
+    std::vector<std::size_t> api_elementTags_;
+    std::vector<int> api_viewTags_;
+    result_api_ = gmsh::fltk::pick(api_dimTags_, api_elementTags_, api_viewTags_, x, y, dim, elements, w, h);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
+    vector2ptr(api_elementTags_, elementTags, elementTags_n);
+    vector2ptr(api_viewTags_, viewTags, viewTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshFltkSplitCurrentWindow(const char * how, const double ratio, int * ierr)
 {
   if(ierr) *ierr = 0;

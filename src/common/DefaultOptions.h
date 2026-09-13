@@ -328,12 +328,12 @@ StringXString ViewOptions_String[] = {
   { F|O, "Attributes" , opt_view_attributes , "" ,
     "Optional string attached to the view. If the string contains 'AlwaysVisible', "
     "the view will not be hidden when new ones are merged."},
-  { F|O, "AxesFormatX" , opt_view_axes_format0 , "%.3g" ,
-    "Number format for X-axis (in standard C form)" },
-  { F|O, "AxesFormatY" , opt_view_axes_format1 , "%.3g" ,
-    "Number format for Y-axis (in standard C form)" },
-  { F|O, "AxesFormatZ" , opt_view_axes_format2 , "%.3g" ,
-    "Number format for Z-axis (in standard C form)" },
+  { F|O, "AxesFormatX" , opt_view_axes_format0 , "" ,
+    "Number format for X-axis (in standard C form); use adaptive automatic default if empty" },
+  { F|O, "AxesFormatY" , opt_view_axes_format1 , "" ,
+    "Number format for Y-axis (in standard C form); use adaptive automatic default if empty" },
+  { F|O, "AxesFormatZ" , opt_view_axes_format2 , "" ,
+    "Number format for Z-axis (in standard C form); use adaptive automatic default if empty" },
   { F|O, "AxesLabelX" , opt_view_axes_label0 , "" ,
     "X-axis label" },
   { F|O, "AxesLabelY" , opt_view_axes_label1 , "" ,
@@ -363,8 +363,8 @@ StringXString ViewOptions_String[] = {
 
   { F,   "Name" , opt_view_name , "" ,
     "Default post-processing view name" },
-  { F|O, "NumberFormat" , opt_view_number_format , "%.3g" ,
-    "Number format (in standard C form)" },
+  { F|O, "NumberFormat" , opt_view_number_format , "" ,
+    "Number format (in standard C form); use adaptive automatic default if empty" },
 
   { F|O, "Stipple0" , opt_view_stipple0 , "1*0x1F1F" ,
     "First stippling pattern" },
@@ -435,12 +435,21 @@ StringXNumber GeneralOptions_Number[] = {
     "Minimum Y-axis coordinate" },
   { F|O, "AxesMinZ" , opt_general_axes_zmin , 0. ,
     "Minimum Z-axis coordinate" },
-  { F|O, "AxesTicsX" , opt_general_axes_tics0 , 5. ,
-    "Number of tics on the X-axis" },
-  { F|O, "AxesTicsY" , opt_general_axes_tics1 , 5. ,
-    "Number of tics on the Y-axis" },
-  { F|O, "AxesTicsZ" , opt_general_axes_tics2 , 5. ,
-    "Number of tics on the Z-axis" },
+  { F|O, "AxesTicksX" , opt_general_axes_ticks0 , 5. ,
+    "Number of ticks on the X-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O, "AxesTicksY" , opt_general_axes_ticks1 , 5. ,
+    "Number of ticks on the Y-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O, "AxesTicksZ" , opt_general_axes_ticks2 , 5. ,
+    "Number of ticks on the Z-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O|D, "AxesTicsX" , opt_general_axes_ticks0 , 5. ,
+    "[Deprecated]" },
+  { F|O|D, "AxesTicsY" , opt_general_axes_ticks1 , 5. ,
+    "[Deprecated]" },
+  { F|O|D, "AxesTicsZ" , opt_general_axes_ticks2 , 5. ,
+    "[Deprecated]" },
   { F|O, "AxesValueMaxX" , opt_general_axes_value_xmax , 1. ,
     "Maximum X-axis forced value" },
   { F|O, "AxesValueMaxY" , opt_general_axes_value_ymax , 1. ,
@@ -532,6 +541,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Third coefficient in equation for clipping plane 5" },
   { F|O, "Clip5D" , opt_general_clip5d , 1.0 ,
     "Fourth coefficient in equation for clipping plane 5" },
+  { F|O, "ClipCapping" , opt_general_clip_capping , 0. ,
+    "Fill the section cut by the clipping planes in 3D meshes and views?" },
   { F|O,   "ClipFactor" , opt_general_clip_factor , 5.0 ,
     "Near and far clipping plane distance factor (decrease value for better "
     "z-buffer resolution)" },
@@ -736,6 +747,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Minimum model coordinate along the Y-axis (read-only)" },
   { F,   "MinZ" , opt_general_zmin , 0. ,
     "Minimum model coordinate along the Z-axis (read-only)" },
+  { F|O, "MouseHoverHighlight" , opt_general_mouse_hover_highlight , 1. ,
+    "Highlight the entity the mouse is over" },
   { F|O, "MouseHoverMeshes" , opt_general_mouse_hover_meshes , 0. ,
     "Enable mouse hover on meshes" },
   { F|O, "MouseSelection" , opt_general_mouse_selection , 1. ,
@@ -765,6 +778,10 @@ StringXNumber GeneralOptions_Number[] = {
     "window" },
   { F|S, "OptionsPositionY" , opt_general_option_position1 , 150. ,
     "Vertical position (in pixels) of the upper left corner of the option window" },
+  { F|O, "OrderIndependentTransparency" ,
+    opt_general_order_independent_transparency , 1. ,
+    "Use order-independent (weighted blended) transparency instead of "
+    "back-to-front sorting? (shader pipeline only)" },
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0: perspective projection)" },
 
@@ -795,6 +812,9 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "QuadricSubdivisions" , opt_general_quadric_subdivisions, 6. ,
     "Number of subdivisions used to draw points or lines as spheres or cylinders" },
+  { F|O, "GlyphCacheSize" , opt_general_glyph_cache_size, 0. ,
+    "Maximum memory (in MB) used to cache glyphs (spheres, arrows, ...) "
+    "between frames (0: automatic; unused with the shader pipeline)" },
 
   { F,   "RotationX" , opt_general_rotation0 , 0.0 ,
     "First Euler angle (used if Trackball=0)" },
@@ -824,6 +844,13 @@ StringXNumber GeneralOptions_Number[] = {
     "Y-axis scale factor" },
   { F,   "ScaleZ" , opt_general_scale2 , 1.0 ,
     "Z-axis scale factor" },
+  { F|O, "Shaders" , opt_general_shaders , 0. ,
+    "Use the OpenGL shader pipeline instead of the fixed function one? "
+    "(recreates the OpenGL context)" },
+  { F|O, "Shading" , opt_general_shading , 0. ,
+    "Shading model (0: classic; 1, 2 or 3: studio, with soft lighting and a "
+    "shadow cast by light 0 on a floor normal to the X, Y or Z axis; shader "
+    "pipeline only)" },
   { F|O, "Shininess" , opt_general_shine , 0.4 ,
     "Material shininess" },
   { F|O, "ShininessExponent" , opt_general_shine_exponent , 40. ,
@@ -852,6 +879,16 @@ StringXNumber GeneralOptions_Number[] = {
     " window" },
   { F|O, "Stereo" , opt_general_stereo_mode , 0. ,
     "Use stereo rendering" },
+  { F|O, "StudioFloorOffset" , opt_general_studio_floor_offset , 0. ,
+    "Offset of the floor in studio shading from the bottom of the model, "
+    "along the floor's normal, relative to the largest dimension of the "
+    "bounding box" },
+  { F|O, "StudioLightSpread" , opt_general_studio_light_spread , 12. ,
+    "Angular radius (in degrees) of the light in studio shading, which sets "
+    "the softness of its shadow" },
+  { F|O, "StudioSamples" , opt_general_studio_samples , 128. ,
+    "Number of frames accumulated in studio shading while the view is still, "
+    "for soft shadows, ambient occlusion and antialiasing" },
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. ,
     "Use the system menu bar on macOS?" },
 
@@ -884,6 +921,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Level of information printed on the terminal and the message console "
     "(0: silent except for fatal errors, 1: +errors, 2: +warnings, 3: +direct, "
     "4: +information, 5: +status, 99: +debug)" },
+  { F|O, "VertexBufferObjects" , opt_general_vertex_buffer_objects , 1. ,
+    "Store vertex arrays in OpenGL buffer objects?" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the visibility "
     "window" },
@@ -1100,6 +1139,11 @@ StringXNumber GeometryOptions_Number[] = {
     "Geometrical tolerance" },
   { F|O, "ToleranceBoolean" , opt_geometry_tolerance_boolean, 0. ,
     "Geometrical tolerance for boolean operations" },
+  { F|O, "Transparency" , opt_geometry_transparency , 1. ,
+    "Opacity factor applied to all geometry colors (1: opaque, 0: fully "
+    "transparent)" },
+  { F|O, "TransparencyMode" , opt_geometry_transparency_mode , 0. ,
+    "Apply Geometry.Transparency to (0: filled surfaces only; 1: everything)" },
   { F,   "Transform" , opt_geometry_transform , 0. ,
     "Transform model display coordinates (0: no, 1: scale)" },
   { F,   "TransformXX" , opt_geometry_transform00 , 1. ,
@@ -1219,8 +1263,11 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CreateFaces" , opt_mesh_create_faces, 0. ,
     "Create mesh edges before saving MSH files" },
 
-  { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 0. ,
-    "Draw only the skin of 3D meshes?" },
+  { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 1. ,
+    "Draw only the boundary faces of 3D meshes?" },
+  { F|O, "DrawUniqueEdges" , opt_mesh_draw_unique_edges , 1. ,
+    "Draw each mesh edge once instead of once per element? (only if "
+    "Mesh.Explode is 1)" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 
@@ -1689,6 +1736,11 @@ StringXNumber MeshOptions_Number[] = {
     "Tolerance for initial 3D Delaunay mesher" },
   { F|O, "ToleranceReferenceElement" , opt_mesh_tolerance_reference_element , 1e-6,
     "Tolerance for classifying a point inside a reference element (of size 1)" },
+  { F|O, "Transparency" , opt_mesh_transparency , 1. ,
+    "Opacity factor applied to all mesh colors (1: opaque, 0: fully "
+    "transparent)" },
+  { F|O, "TransparencyMode" , opt_mesh_transparency_mode , 0. ,
+    "Apply Mesh.Transparency to (0: filled surfaces only; 1: everything)" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
   { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,
@@ -1697,8 +1749,8 @@ StringXNumber MeshOptions_Number[] = {
     "Use alternative transfinite arrangement when meshing 3-sided surfaces" },
 
   { F|O, "UnvStrictFormat" , opt_mesh_unv_strict_format , 1 ,
-    "Use strict format specification for UNV files, with 'D' for exponents (instead of "
-    "'E' as used by some tools)" },
+    "Use strict format specification for UNV files, with 'D' for exponents "
+    "(instead of 'E' as used by some tools)" },
 
   { F|O, "VolumeEdges" , opt_mesh_volume_edges , 1. ,
     "Display edges of volume mesh?" },
@@ -1845,12 +1897,21 @@ StringXNumber ViewOptions_Number[] = {
     "Minimum Y-axis coordinate" },
   { F|O, "AxesMinZ" , opt_view_axes_zmin , 0. ,
     "Minimum Z-axis coordinate" },
-  { F|O, "AxesTicsX" , opt_view_axes_tics0 , 5. ,
-    "Number of tics on the X-axis" },
-  { F|O, "AxesTicsY" , opt_view_axes_tics1 , 5. ,
-    "Number of tics on the Y-axis" },
-  { F|O, "AxesTicsZ" , opt_view_axes_tics2 , 5. ,
-    "Number of tics on the Z-axis" },
+  { F|O, "AxesTicksX" , opt_view_axes_ticks0 , 5. ,
+    "Number of ticks on the X-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O, "AxesTicksY" , opt_view_axes_ticks1 , 5. ,
+    "Number of ticks on the Y-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O, "AxesTicksZ" , opt_view_axes_ticks2 , 5. ,
+    "Number of ticks on the Z-axis (about that many, when the labels "
+    "are placed at round values)" },
+  { F|O|D, "AxesTicsX" , opt_view_axes_ticks0 , 5. ,
+    "[Deprecated]" },
+  { F|O|D, "AxesTicsY" , opt_view_axes_ticks1 , 5. ,
+    "[Deprecated]" },
+  { F|O|D, "AxesTicsZ" , opt_view_axes_ticks2 , 5. ,
+    "[Deprecated]" },
 
   { F|O, "Boundary" , opt_view_boundary , 0. ,
     "Draw the `N minus b'-dimensional boundary of the element (N: element "
@@ -1862,8 +1923,8 @@ StringXNumber ViewOptions_Number[] = {
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "Closed" , opt_view_closed , 0,
     "Close the subtree containing this view" },
-  { F|O, "ColormapAlpha" , opt_view_colormap_alpha , 1.0 ,
-    "Colormap alpha channel value (used only if != 1)" },
+  { F|O|D, "ColormapAlpha" , opt_view_transparency , 1.0 ,
+    "[Deprecated]" },
   { F|O, "ColormapAlphaPower" , opt_view_colormap_alpha_power , 0.0 ,
     "Colormap alpha channel power" },
   { F|O, "ColormapBeta" , opt_view_colormap_beta , 0.0 ,
@@ -1879,7 +1940,7 @@ StringXNumber ViewOptions_Number[] = {
     "5: emc2000, 6: incadescent, 7: hot, 8: pink, 9: grayscale, 10: french, "
     "11: hsv, 12: spectrum, 13: bone, 14: spring, 15: summer, 16: autumm, "
     "17: winter, 18: cool, 19: copper, 20: magma, 21: inferno, 22: plasma, "
-    "23: viridis, 24: turbo)"},
+    "23: viridis, 24: turbo, 25: cool to warm, 26: fast)"},
   { F|O, "ColormapRotation" , opt_view_colormap_rotation , 0. ,
     "Incremental colormap rotation" },
   { F|O, "ColormapSwap" , opt_view_colormap_swap , 0. ,
@@ -1929,8 +1990,8 @@ StringXNumber ViewOptions_Number[] = {
     "Display post-processing quadrangles?" },
   { F|O, "DrawScalars" , opt_view_draw_scalars , 1. ,
     "Display scalar values?" },
-  { F|O, "DrawSkinOnly" , opt_view_draw_skin_only , 0. ,
-    "Draw only the skin of 3D scalar views?" },
+  { F|O, "DrawSkinOnly" , opt_view_draw_skin_only , 1. ,
+    "Draw only the boundary faces of 3D views?" },
   { F|O, "DrawStrings" , opt_view_draw_strings , 1. ,
     "Display post-processing annotation strings?" },
   { F|O, "DrawTensors" , opt_view_draw_tensors , 1. ,
@@ -1947,8 +2008,6 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ExternalView" , opt_view_external_view , -1. ,
     "Index of the view used to color vector fields (-1: self)" },
 
-  { F|O, "FakeTransparency" , opt_view_fake_transparency , 0. ,
-    "Use fake transparency (cheaper than the real thing, but incorrect)" },
   { F|O, "ForceNumComponents" , opt_view_force_num_components , 0. ,
     "Force number of components to display (see View.ComponentMapN for mapping)" },
 
@@ -2043,8 +2102,12 @@ StringXNumber ViewOptions_Number[] = {
     "Element sampling rate (draw one out every `Sampling' elements)" },
   { F|O, "SaturateValues" , opt_view_saturate_values , 0. ,
     "Saturate the view values to custom min and max (1: true, 0: false)" },
+  { F|O, "ScaleThreshold" , opt_view_scale_threshold , 0. ,
+    "Value below which a symmetric logarithmic scale is linear (0: automatic, "
+    "four decades below the largest value)" },
   { F|O, "ScaleType" , opt_view_scale_type , 1 ,
-    "Value scale type (1: linear, 2: logarithmic, 3: double logarithmic)" },
+    "Value scale type (1: linear, 2: logarithmic, 3: symmetric logarithmic, "
+    "logarithmic on both sides of zero and linear in between)" },
   { F|O, "ShowElement" , opt_view_show_element , 0. ,
     "Show element boundaries?" },
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
@@ -2087,6 +2150,9 @@ StringXNumber ViewOptions_Number[] = {
     "Element (3,2) of the 3x3 coordinate transformation matrix" },
   { F,   "TransformZZ" , opt_view_transform22 , 1. ,
     "Element (3,3) of the 3x3 coordinate transformation matrix" },
+  { F|O, "Transparency" , opt_view_transparency , 1. ,
+    "Opacity factor applied to the colormap (1: unchanged, 0: fully "
+    "transparent)" },
   { F,   "Type" , opt_view_type , 1 ,
     "Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)" },
 
@@ -2115,7 +2181,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "ParameterSteps" , opt_print_parameter_steps , 10. ,
     "Number of steps in loop over print parameter" },
 
-  { F|O, "Background" , opt_print_background , 0. ,
+  { F|O, "Background" , opt_print_background , 1. ,
     "Print background (gradient and image)?" },
 
   { F|O, "CompositeWindows" , opt_print_composite_windows , 0. ,
@@ -2157,7 +2223,7 @@ StringXNumber PrintOptions_Number[] = {
     "Output transparent GIF image" },
 
   { F|O, "Height" , opt_print_height , -1. ,
-    "Height of printed image; use (possibly scaled) current height if < 0" },
+    "Height of the printed image in pixels; use the current height if < 0" },
 
   { F|O, "JpegQuality" , opt_print_jpeg_quality , 100. ,
     "JPEG quality (between 1 and 100)" },
@@ -2191,6 +2257,13 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "PostDisto" , opt_print_pos_disto , 0. ,
     "Save Disto quality measure in mesh statistics exported as "
     "post-processing views" },
+
+  { F|O, "ScalePixelSizes" , opt_print_scale_pixel_sizes , 1. ,
+    "Scale what is sized in pixels (fonts, line widths, point and glyph "
+    "sizes, value scales) with the size of the picture, so that a large "
+    "picture looks like the window (0: keep their screen size)" },
+  { F|O, "Supersampling" , opt_print_supersampling , 1. ,
+    "Render pictures at this multiple of their size and average them down" },
 
   { F|O, "TexAsEquation" , opt_print_tex_as_equation , 0. ,
     "Print all TeX strings as equations" },
@@ -2226,7 +2299,7 @@ StringXNumber PrintOptions_Number[] = {
     "Apply colors to faces (0: no, 1: yes)"},
 
   { F|O, "Width" , opt_print_width , -1. ,
-    "Width of printed image; use (possibly scaled) current width if < 0)" },
+    "Width of the printed image in pixels; use the current width if < 0" },
 
   { 0, nullptr , nullptr , 0., "" }
 } ;
@@ -2295,8 +2368,8 @@ StringXColor GeometryOptions_Color[] = {
     {255, 150, 0, 255}, {255, 150, 0, 255}, {255, 150, 0, 255}, {255, 150, 0, 255},
     "Highlight 1 color" },
   { F|O, "HighlightTwo" , opt_geometry_color_highlight2 ,
-    {255, 255, 0, 255}, {255, 255, 0, 255}, {255, 255, 0, 255}, {255, 255, 0, 255},
-    "Highlight 2 color" },
+    {255, 150, 0, 255}, {255, 150, 0, 255}, {255, 150, 0, 255}, {255, 150, 0, 255},
+    "Highlight 2 color, which the entity under the mouse is drawn in" },
   { F|O, "Tangents" , opt_geometry_color_tangents ,
     {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255}, {255, 255, 0, 255},
     "Tangent geometry vectors color" },

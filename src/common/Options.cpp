@@ -48,6 +48,7 @@
 #include "FlGui.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
+#include "openglWindow.h"
 #include "optionWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -56,6 +57,20 @@
 #include "viewButton.h"
 #include "drawContextFltkCairo.h"
 #include "drawContextFltkStringTexture.h"
+#endif
+
+#if defined(HAVE_FLTK)
+// give the graphic windows the visual the options ask for; FLTK recreates the
+// OpenGL context of those whose mode changed
+static void resetOpenglMode()
+{
+  if(!FlGui::available()) return;
+  int mode = openglWindowMode();
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+      FlGui::instance()->graph[i]->gl[j]->mode(mode);
+  if(FlGui::instance()->fullscreen) FlGui::instance()->fullscreen->mode(mode);
+}
 #endif
 
 // General routines for string options
@@ -1383,14 +1398,19 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
 
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET) {
+    // the native engine draws at the raster position, which a core profile
+    // has none of
+    std::string engine = CTX::instance()->glFontEngine;
+    if(CTX::instance()->shaders && engine == "Native")
+      engine = "StringTexture";
     drawContextGlobal *old = drawContext::global();
-    if(!old || old->getName() != CTX::instance()->glFontEngine) {
+    if(!old || old->getName() != engine) {
 #if defined(HAVE_CAIRO)
-      if(CTX::instance()->glFontEngine == "Cairo")
+      if(engine == "Cairo")
         drawContext::setGlobal(new drawContextFltkCairo);
       else
 #endif
-        if(CTX::instance()->glFontEngine == "StringTexture")
+        if(engine == "StringTexture")
         drawContext::setGlobal(new drawContextFltkStringTexture);
       else
         drawContext::setGlobal(new drawContextFltk);
@@ -2975,6 +2995,167 @@ double opt_general_verbosity(OPT_ARGS_NUM)
   return Msg::GetVerbosity();
 }
 
+double opt_general_vertex_buffer_objects(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->vertexBufferObjects = (int)val;
+  return CTX::instance()->vertexBufferObjects;
+}
+
+double opt_general_shading(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->shading = std::max(0, std::min(3, (int)val));
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.choice[8]->value(
+      CTX::instance()->shading);
+#endif
+  return CTX::instance()->shading;
+}
+
+double opt_general_studio_light_spread(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->studioLightSpread = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[35]->value(
+      CTX::instance()->studioLightSpread);
+#endif
+  return CTX::instance()->studioLightSpread;
+}
+
+double opt_general_studio_floor_offset(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->studioFloorOffset = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[34]->value(
+      CTX::instance()->studioFloorOffset);
+#endif
+  return CTX::instance()->studioFloorOffset;
+}
+
+double opt_general_studio_samples(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->studioSamples = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[33]->value(
+      CTX::instance()->studioSamples);
+#endif
+  return CTX::instance()->studioSamples;
+}
+
+double opt_general_order_independent_transparency(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->orderIndependentTransparency = (int)val;
+  return CTX::instance()->orderIndependentTransparency;
+}
+
+double opt_geometry_transparency(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    CTX::instance()->geom.transparency = val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.value[21]->value(
+      CTX::instance()->geom.transparency);
+  }
+#endif
+  return CTX::instance()->geom.transparency;
+}
+
+double opt_geometry_transparency_mode(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.transparencyMode = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->geo.choice[6]->value(
+      CTX::instance()->geom.transparencyMode);
+#endif
+  return CTX::instance()->geom.transparencyMode;
+}
+
+double opt_mesh_transparency(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    CTX::instance()->mesh.transparency = val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->mesh.value[27]->value(
+      CTX::instance()->mesh.transparency);
+  }
+#endif
+  return CTX::instance()->mesh.transparency;
+}
+
+double opt_mesh_transparency_mode(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.transparencyMode = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.choice[11]->value(
+      CTX::instance()->mesh.transparencyMode);
+#endif
+  return CTX::instance()->mesh.transparencyMode;
+}
+
+double opt_view_transparency(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    if(val < 0.) val = 0.;
+    if(val > 1.) val = 1.;
+    opt->transparency = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    FlGui::instance()->options->view.value[79]->value(opt->transparency);
+  }
+#endif
+  return opt->transparency;
+#else
+  return 1.;
+#endif
+}
+
+double opt_general_shaders(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+#if defined(HAVE_FLTK)
+    int old = CTX::instance()->shaders;
+#endif
+    CTX::instance()->shaders = (int)val;
+#if defined(HAVE_FLTK)
+    // the pipeline is chosen when the context is made; the font engine
+    // depends on it
+    if(CTX::instance()->shaders != old) {
+      resetOpenglMode();
+      opt_general_graphics_font_engine(0, GMSH_SET | GMSH_GUI,
+                                       CTX::instance()->glFontEngine);
+    }
+#endif
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->general.butt[3]->value(
+      CTX::instance()->shaders);
+    FlGui::instance()->options->activate("shaders");
+  }
+#endif
+  return CTX::instance()->shaders;
+}
+
 double opt_general_progress_meter_step(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { Msg::SetProgressMeterStep((int)val); }
@@ -3079,6 +3260,21 @@ double opt_general_mouse_hover_meshes(OPT_ARGS_NUM)
       CTX::instance()->mouseHoverMeshes);
 #endif
   return CTX::instance()->mouseHoverMeshes;
+}
+
+double opt_general_mouse_hover_highlight(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mouseHoverHighlight = (int)val;
+    if(!CTX::instance()->mouseHoverHighlight)
+      GModel::current()->setSelection(0);
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[23]->value(
+      CTX::instance()->mouseHoverHighlight);
+#endif
+  return CTX::instance()->mouseHoverHighlight;
 }
 
 double opt_general_mouse_invert_zoom(OPT_ARGS_NUM)
@@ -3194,37 +3390,37 @@ double opt_general_axes_auto_position(OPT_ARGS_NUM)
   return CTX::instance()->axesAutoPosition;
 }
 
-double opt_general_axes_tics0(OPT_ARGS_NUM)
+double opt_general_axes_ticks0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->axesTics[0] = val;
+  if(action & GMSH_SET) CTX::instance()->axesTicks[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.value[17]->value(
-      CTX::instance()->axesTics[0]);
+      CTX::instance()->axesTicks[0]);
 #endif
-  return CTX::instance()->axesTics[0];
+  return CTX::instance()->axesTicks[0];
 }
 
-double opt_general_axes_tics1(OPT_ARGS_NUM)
+double opt_general_axes_ticks1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->axesTics[1] = val;
+  if(action & GMSH_SET) CTX::instance()->axesTicks[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.value[18]->value(
-      CTX::instance()->axesTics[1]);
+      CTX::instance()->axesTicks[1]);
 #endif
-  return CTX::instance()->axesTics[1];
+  return CTX::instance()->axesTicks[1];
 }
 
-double opt_general_axes_tics2(OPT_ARGS_NUM)
+double opt_general_axes_ticks2(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->axesTics[2] = val;
+  if(action & GMSH_SET) CTX::instance()->axesTicks[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.value[19]->value(
-      CTX::instance()->axesTics[2]);
+      CTX::instance()->axesTicks[2]);
 #endif
-  return CTX::instance()->axesTics[2];
+  return CTX::instance()->axesTicks[2];
 }
 
 double opt_general_axes_xmin(OPT_ARGS_NUM)
@@ -3389,25 +3585,20 @@ double opt_general_quadric_subdivisions(OPT_ARGS_NUM)
   return CTX::instance()->quadricSubdivisions;
 }
 
+double opt_general_glyph_cache_size(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->glyphCacheSize = val;
+  return CTX::instance()->glyphCacheSize;
+}
+
 double opt_general_double_buffer(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->db = (int)val;
 #if defined(HAVE_FLTK)
-    if(FlGui::available()) {
-      int mode =
-        FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-      if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->mode(mode);
-    }
+    resetOpenglMode();
 #endif
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.butt[3]->value(CTX::instance()->db);
-#endif
   return CTX::instance()->db;
 }
 
@@ -3416,14 +3607,7 @@ double opt_general_antialiasing(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->antialiasing = (int)val;
 #if defined(HAVE_FLTK)
-    if(FlGui::available()) {
-      int mode =
-        FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-      if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->mode(mode);
-    }
+    resetOpenglMode();
 #endif
   }
 #if defined(HAVE_FLTK)
@@ -3962,14 +4146,37 @@ double opt_general_clip5d(OPT_ARGS_NUM)
   return CTX::instance()->clipPlane[5][3];
 }
 
+double opt_general_clip_capping(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->clipCapping != (int)val) {
+      CTX::instance()->clipCapping = (int)val;
+      // the caps are part of the arrays, so they have to be built again
+      CTX::instance()->mesh.changed = ENT_ALL;
+#if defined(HAVE_POST)
+      for(std::size_t i = 0; i < PView::list.size(); i++)
+        PView::list[i]->setChanged(true);
+#endif
+    }
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->clipping->butt[0]->value(
+      CTX::instance()->clipCapping);
+    FlGui::instance()->clipping->activateButtons();
+  }
+#endif
+  return CTX::instance()->clipCapping;
+}
+
 double opt_general_clip_whole_elements(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipWholeElements = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->clipping->butt[0]->value(
+    FlGui::instance()->clipping->butt[1]->value(
       CTX::instance()->clipWholeElements);
-    FlGui::instance()->options->activate("clip_whole_elements");
+    FlGui::instance()->clipping->activateButtons();
   }
 #endif
   return CTX::instance()->clipWholeElements;
@@ -3980,9 +4187,11 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->clipOnlyDrawIntersectingVolume = (int)val;
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->butt[1]->value(
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->clipping->butt[2]->value(
       CTX::instance()->clipOnlyDrawIntersectingVolume);
+    FlGui::instance()->clipping->activateButtons();
+  }
 #endif
   return CTX::instance()->clipOnlyDrawIntersectingVolume;
 }
@@ -3990,11 +4199,6 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
 double opt_general_clip_only_volume(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipOnlyVolume = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->butt[2]->value(
-      CTX::instance()->clipOnlyVolume);
-#endif
   return CTX::instance()->clipOnlyVolume;
 }
 
@@ -6587,8 +6791,27 @@ double opt_mesh_voronoi(OPT_ARGS_NUM)
 
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.drawSkinOnly = (int)val; }
+  if(action & GMSH_SET) {
+    if(CTX::instance()->mesh.drawSkinOnly != val)
+      CTX::instance()->mesh.changed |= ENT_VOLUME;
+    CTX::instance()->mesh.drawSkinOnly = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.butt[0]->value(
+      CTX::instance()->mesh.drawSkinOnly);
+#endif
   return CTX::instance()->mesh.drawSkinOnly;
+}
+
+double opt_mesh_draw_unique_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->mesh.drawUniqueEdges != (int)val)
+      CTX::instance()->mesh.changed = ENT_ALL;
+    CTX::instance()->mesh.drawUniqueEdges = (int)val;
+  }
+  return CTX::instance()->mesh.drawUniqueEdges;
 }
 
 double opt_mesh_save_all(OPT_ARGS_NUM)
@@ -6647,6 +6870,8 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
     if(CTX::instance()->mesh.colorCarousel != (int)val &&
        ((val == 0. || val == 3.) || CTX::instance()->pickElements))
       CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+    // the other modes colour by entity, which the merged mesh arrays bake in
+    if(CTX::instance()->mesh.colorCarousel != (int)val) GEntity::colorChanges++;
     CTX::instance()->mesh.colorCarousel = (int)val;
     if(CTX::instance()->mesh.colorCarousel < 0 ||
        CTX::instance()->mesh.colorCarousel > 3)
@@ -7829,24 +8054,6 @@ double opt_view_displacement_factor(OPT_ARGS_NUM)
 #endif
 }
 
-double opt_view_fake_transparency(OPT_ARGS_NUM)
-{
-#if defined(HAVE_POST)
-  GET_VIEWo(0.);
-  if(action & GMSH_SET) {
-    opt->fakeTransparency = (int)val;
-    if(view) view->setChanged(true);
-  }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    FlGui::instance()->options->view.butt[24]->value(opt->fakeTransparency);
-#endif
-  return opt->fakeTransparency;
-#else
-  return 0.;
-#endif
-}
-
 double opt_view_explode(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
@@ -8261,49 +8468,49 @@ double opt_view_axes_zmax(OPT_ARGS_NUM)
 #endif
 }
 
-double opt_view_axes_tics0(OPT_ARGS_NUM)
+double opt_view_axes_ticks0(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
-  if(action & GMSH_SET) { opt->axesTics[0] = val; }
+  if(action & GMSH_SET) { opt->axesTicks[0] = val; }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.value[3]->value(opt->axesTics[0]);
+    FlGui::instance()->options->view.value[3]->value(opt->axesTicks[0]);
   }
 #endif
-  return opt->axesTics[0];
+  return opt->axesTicks[0];
 #else
   return 0.;
 #endif
 }
 
-double opt_view_axes_tics1(OPT_ARGS_NUM)
+double opt_view_axes_ticks1(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
-  if(action & GMSH_SET) { opt->axesTics[1] = val; }
+  if(action & GMSH_SET) { opt->axesTicks[1] = val; }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.value[4]->value(opt->axesTics[1]);
+    FlGui::instance()->options->view.value[4]->value(opt->axesTicks[1]);
   }
 #endif
-  return opt->axesTics[1];
+  return opt->axesTicks[1];
 #else
   return 0.;
 #endif
 }
 
-double opt_view_axes_tics2(OPT_ARGS_NUM)
+double opt_view_axes_ticks2(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
-  if(action & GMSH_SET) { opt->axesTics[2] = val; }
+  if(action & GMSH_SET) { opt->axesTicks[2] = val; }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.value[5]->value(opt->axesTics[2]);
+    FlGui::instance()->options->view.value[5]->value(opt->axesTicks[2]);
   }
 #endif
-  return opt->axesTics[2];
+  return opt->axesTicks[2];
 #else
   return 0.;
 #endif
@@ -8805,6 +9012,25 @@ double opt_view_draw_skin_only(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_scale_threshold(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->scaleThreshold = val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    FlGui::instance()->options->view.value[35]->value(opt->scaleThreshold);
+  }
+#endif
+  return opt->scaleThreshold;
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_scale_type(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
@@ -9012,26 +9238,6 @@ double opt_view_line_type(OPT_ARGS_NUM)
 #endif
 }
 
-double opt_view_colormap_alpha(OPT_ARGS_NUM)
-{
-#if defined(HAVE_POST)
-  GET_VIEWo(0.);
-  if(action & GMSH_SET) {
-    opt->colorTable.dpar[COLORTABLE_ALPHA] = val;
-    ColorTable_Recompute(&opt->colorTable);
-    if(view) view->setChanged(true);
-  }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
-  return opt->colorTable.dpar[COLORTABLE_ALPHA];
-#else
-  return 0.;
-#endif
-}
-
 double opt_view_colormap_alpha_power(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
@@ -9138,14 +9344,16 @@ double opt_view_colormap_number(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     int n = (int)val;
-    if(n < 0) n = 24;
-    if(n > 24) n = 0;
+    if(n < 0) n = ColorTable_NumPredefined() - 1;
+    if(n >= ColorTable_NumPredefined()) n = 0;
     opt->colorTable.ipar[COLORTABLE_NUMBER] = n;
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
+    FlGui::instance()->options->view.choice[17]->value(
+      opt->colorTable.ipar[COLORTABLE_NUMBER]);
     FlGui::instance()->options->view.colorbar->redraw();
   }
 #endif
@@ -9578,6 +9786,18 @@ double opt_print_text(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->print.text = (int)val;
   return CTX::instance()->print.text;
+}
+
+double opt_print_scale_pixel_sizes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.scalePixelSizes = (int)val;
+  return CTX::instance()->print.scalePixelSizes;
+}
+
+double opt_print_supersampling(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.supersampling = (int)val;
+  return CTX::instance()->print.supersampling;
 }
 
 double opt_print_tex_as_equation(OPT_ARGS_NUM)

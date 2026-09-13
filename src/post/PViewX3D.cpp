@@ -350,8 +350,8 @@ bool PView::writeX3D(const std::string &fileName)
 
       char label[1024];
       double maxw = 10. * font_size * 3. / 4.;
-      const double tic = viewportWidth / 100;
-      const double bar_size = tic * 1.6;
+      const double tick = viewportWidth / 100;
+      const double bar_size = tick * 1.6;
       double width = 0., width_prev = 0., width_total = 0.;
 
       for(std::size_t i = 0; i < scales.size(); i++) {
@@ -364,7 +364,7 @@ bool PView::writeX3D(const std::string &fileName)
           double h = viewportHeight / 11;
           double x = 0.;
           double y = -viewportHeight;
-          writeX3DScale(fp, p, x, y, w, h, tic,
+          writeX3DScale(fp, p, x, y, w, h, tick,
                         CTX::instance()->post.horizontalScales, font_size);
         }
         else if(CTX::instance()->post.horizontalScales) {
@@ -373,7 +373,7 @@ bool PView::writeX3D(const std::string &fileName)
           if(scales.size() == 1) {
             double w = viewportWidth / 2., h = bar_size;
             double x = xc - w / 2., y = -viewportHeight / 2 + ysep;
-            writeX3DScale(fp, p, x, y, w, h, tic, 1, font_size);
+            writeX3DScale(fp, p, x, y, w, h, tick, 1, font_size);
           }
           else {
             double xsep = maxw / 4. + viewportWidth / 10.;
@@ -382,8 +382,8 @@ bool PView::writeX3D(const std::string &fileName)
             double h = bar_size;
             double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
             double y = -viewportHeight / 2 + ysep +
-                       (i / 2) * (bar_size + tic + 2 * font_size + ysep);
-            writeX3DScale(fp, p, x, y, w, h, tic, 1, font_size);
+                       (i / 2) * (bar_size + tick + 2 * font_size + ysep);
+            writeX3DScale(fp, p, x, y, w, h, tick, 1, font_size);
           }
         }
         else {
@@ -394,7 +394,7 @@ bool PView::writeX3D(const std::string &fileName)
             double w = bar_size, h = viewportHeight - 2 * ysep - dy;
             double x = -viewportWidth / 2 + xsep,
                    y = -viewportHeight / 2 + ysep + dy;
-            writeX3DScale(fp, p, x, y, w, h, tic, 1, font_size);
+            writeX3DScale(fp, p, x, y, w, h, tick, 1, font_size);
           }
           else {
             double ysep = viewportHeight / 30.;
@@ -403,11 +403,11 @@ bool PView::writeX3D(const std::string &fileName)
             double x = -viewportWidth / 2 + xsep + width_total + (i / 2) * xsep;
             double y = -viewportHeight / 2 + ysep + dy +
                        (1 - i % 2) * (h + 1.5 * dy + ysep);
-            writeX3DScale(fp, p, x, y, w, h, tic, 1, font_size);
+            writeX3DScale(fp, p, x, y, w, h, tick, 1, font_size);
           }
           // compute width
           width_prev = width;
-          width = bar_size + tic + 10. * font_size * 3 / 4;
+          width = bar_size + tick + 10. * font_size * 3 / 4;
           if(opt->showTime) {
             char tmp[256];
             sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
@@ -633,7 +633,7 @@ bool PView::writeX3D(const std::string &fileName)
 }
 
 static void writeX3DScale(FILE *fp, PView *p, double xmin, double ymin,
-                          double width, double height, double tic,
+                          double width, double height, double tick,
                           int horizontal, double font_size)
 {
   // use adaptive data if available
@@ -657,15 +657,15 @@ static void writeX3DScale(FILE *fp, PView *p, double xmin, double ymin,
     opt->tmpMax = data->getMax();
   }
 
-  writeX3DScaleBar(fp, p, xmin, ymin, width, height, tic, horizontal);
-  writeX3DScaleValues(fp, p, xmin, ymin, width, height, tic, horizontal,
+  writeX3DScaleBar(fp, p, xmin, ymin, width, height, tick, horizontal);
+  writeX3DScaleValues(fp, p, xmin, ymin, width, height, tick, horizontal,
                       font_size);
-  writeX3DScaleLabel(fp, p, xmin, ymin, width, height, tic, horizontal,
+  writeX3DScaleLabel(fp, p, xmin, ymin, width, height, tick, horizontal,
                      font_size);
 }
 
 static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin,
-                             double width, double height, double tic,
+                             double width, double height, double tick,
                              int horizontal)
 {
   PViewOptions *opt = p->getOptions();
@@ -749,7 +749,7 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin,
 }
 
 static void writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
-                                double width, double height, double tic,
+                                double width, double height, double tick,
                                 int horizontal, double font_size)
 {
   PViewOptions *opt = p->getOptions();
@@ -794,11 +794,11 @@ static void writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
       double v = opt->getScaleValue(i, nbv + 1, opt->tmpMin, opt->tmpMax);
       sprintf(label, opt->format.c_str(), v);
       if(horizontal) {
-        writeX3DStringCenter(fp, label, xmin + i * vbox, ymin + height + tic,
+        writeX3DStringCenter(fp, label, xmin + i * vbox, ymin + height + tick,
                              0., font_h);
       }
       else {
-        writeX3DStringCenter(fp, label, xmin + width + tic,
+        writeX3DStringCenter(fp, label, xmin + width + tick,
                              ymin + i * vbox - font_a / 3., 0., font_h);
       }
     }
@@ -813,10 +813,10 @@ static void writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
       sprintf(label, opt->format.c_str(), v);
       if(horizontal) {
         writeX3DStringCenter(fp, label, xmin + box / 2. + i * vbox,
-                             ymin + height + tic, 0., font_h);
+                             ymin + height + tick, 0., font_h);
       }
       else {
-        writeX3DStringCenter(fp, label, xmin + width + tic,
+        writeX3DStringCenter(fp, label, xmin + width + tick,
                              ymin + box / 2. + i * vbox - font_a / 3., 0.,
                              font_h);
       }
@@ -825,7 +825,7 @@ static void writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
 }
 
 static void writeX3DScaleLabel(FILE *fp, PView *p, double xmin, double ymin,
-                               double width, double height, double tic,
+                               double width, double height, double tick,
                                int horizontal, double font_size)
 {
   PViewOptions *opt = p->getOptions();
@@ -854,7 +854,7 @@ static void writeX3DScaleLabel(FILE *fp, PView *p, double xmin, double ymin,
     sprintf(label, "%s", data->getName().c_str());
   if(horizontal) {
     writeX3DStringCenter(fp, label, xmin + width / 2.,
-                         ymin + height + tic + .9 * font_h, 0., font_h);
+                         ymin + height + tick + .9 * font_h, 0., font_h);
   }
   else {
     writeX3DStringCenter(fp, label, xmin, ymin - 2 * font_h, 0., font_h);

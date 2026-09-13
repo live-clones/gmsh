@@ -189,6 +189,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-open", "Open next files"));
   s.push_back(mp("-log filename", "Log all messages to filename"));
 #if defined(HAVE_FLTK)
+  s.push_back(mp("-shaders", "Draw with the shader pipeline (General.Shaders)"));
   s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, "
                  "solver or post-processing mode (General.InitialModule)"));
 #endif
@@ -1236,6 +1237,10 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   }
   else if(argv[i] == "-nopopup") {
     opt_general_nopopup(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-shaders" || argv[i] == "-shader") {
+    opt_general_shaders(0, GMSH_SET, 1);
     i++;
   }
   else if(argv[i] == "-watch") {

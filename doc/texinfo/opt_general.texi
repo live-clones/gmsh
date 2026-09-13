@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 5.0.0-git-1a98315a5; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260902; Build host: mac.user.uliege.priv; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.5.0; OCC version: 8.1.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 5.0.0-git-d8eb05001; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20260911; Build host: cg.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom BoundaryLayers Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk Gmm[contrib] Hxt Jpeg MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] Untangle Voro++[contrib] WinslowUntangler Zlib tinyobjloader; FLTK version: 1.4.5; OCC version: 8.1.0; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -183,7 +183,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"5.0.0-git-1a98315a5"}@*
+Default value: @code{"5.0.0-git-d8eb05001"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -271,18 +271,18 @@ Minimum Z-axis coordinate@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesTicsX
-Number of tics on the X-axis@*
+@item General.AxesTicksX
+Number of ticks on the X-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesTicsY
-Number of tics on the Y-axis@*
+@item General.AxesTicksY
+Number of ticks on the Y-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AxesTicsZ
-Number of tics on the Z-axis@*
+@item General.AxesTicksZ
+Number of ticks on the Z-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -494,6 +494,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Clip5D
 Fourth coefficient in equation for clipping plane 5@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.ClipCapping
+Fill the section cut by the clipping planes in 3D meshes and views?@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ClipFactor
@@ -926,6 +931,11 @@ Minimum model coordinate along the Z-axis (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item General.MouseHoverHighlight
+Highlight the entity the mouse is over@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.MouseHoverMeshes
 Enable mouse hover on meshes@*
 Default value: @code{0}@*
@@ -970,6 +980,11 @@ Saved in: @code{General.SessionFileName}
 Vertical position (in pixels) of the upper left corner of the option window@*
 Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
+
+@item General.OrderIndependentTransparency
+Use order-independent (weighted blended) transparency instead of back-to-front sorting? (shader pipeline only)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
 
 @item General.Orthographic
 Orthographic projection mode (0: perspective projection)@*
@@ -1024,6 +1039,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.QuadricSubdivisions
 Number of subdivisions used to draw points or lines as spheres or cylinders@*
 Default value: @code{6}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.GlyphCacheSize
+Maximum memory (in MB) used to cache glyphs (spheres, arrows, ...) between frames (0: automatic; unused with the shader pipeline)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.RotationX
@@ -1086,6 +1106,16 @@ Z-axis scale factor@*
 Default value: @code{1}@*
 Saved in: @code{-}
 
+@item General.Shaders
+Use the OpenGL shader pipeline instead of the fixed function one? (recreates the OpenGL context)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Shading
+Shading model (0: classic; 1, 2 or 3: studio, with soft lighting and a shadow cast by light 0 on a floor normal to the X, Y or Z axis; shader pipeline only)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Shininess
 Material shininess@*
 Default value: @code{0.4}@*
@@ -1144,6 +1174,21 @@ Saved in: @code{General.SessionFileName}
 @item General.Stereo
 Use stereo rendering@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.StudioFloorOffset
+Offset of the floor in studio shading from the bottom of the model, along the floor's normal, relative to the largest dimension of the bounding box@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.StudioLightSpread
+Angular radius (in degrees) of the light in studio shading, which sets the softness of its shadow@*
+Default value: @code{12}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.StudioSamples
+Number of frames accumulated in studio shading while the view is still, for soft shadows, ambient occlusion and antialiasing@*
+Default value: @code{128}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SystemMenuBar
@@ -1214,6 +1259,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Verbosity
 Level of information printed on the terminal and the message console (0: silent except for fatal errors, 1: +errors, 2: +warnings, 3: +direct, 4: +information, 5: +status, 99: +debug)@*
 Default value: @code{5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.VertexBufferObjects
+Store vertex arrays in OpenGL buffer objects?@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.VisibilityPositionX

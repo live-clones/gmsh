@@ -105,6 +105,18 @@ public:
     else
       return MFace(_v[0], _v[3], _v[2], _v[1]);
   }
+  virtual int getFaceCorners(int num, MVertex *v[4]) const
+  {
+    if(num < 4) {
+      for(int i = 0; i < 3; i++) v[i] = _v[faces_pyramid(num, i)];
+      return 3;
+    }
+    v[0] = _v[0];
+    v[1] = _v[3];
+    v[2] = _v[2];
+    v[3] = _v[1];
+    return 4;
+  }
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);

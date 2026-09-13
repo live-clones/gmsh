@@ -55,15 +55,14 @@ static void draw_stl(std::vector<SPoint3> &vertices,
                      std::vector<SVector3> &normals,
                      std::vector<int> &triangles)
 {
-  GLint mode[2];
-  glGetIntegerv(GL_POLYGON_MODE, mode);
+  bool fill = gmshPolygonFilled();
   if(CTX::instance()->geom.surfaceType == 1)
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    gmshPolygonFill(false);
   else
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glEnable(GL_LIGHTING);
-  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-  glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+    gmshPolygonFill(true);
+  gmshLighting(true);
+  gmshLightTwoSide(true);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
 
   VertexArray va(3, triangles.size());
   for(std::size_t i = 0; i < triangles.size(); i += 3) {
@@ -81,17 +80,12 @@ static void draw_stl(std::vector<SPoint3> &vertices,
   }
   va.finalize();
 
-  glVertexPointer(3, GL_FLOAT, 0, va.getVertexArray());
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glNormalPointer(NORMAL_GLTYPE, 0, va.getNormalArray());
-  glEnableClientState(GL_NORMAL_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-  glDrawArrays(GL_TRIANGLES, 0, va.getNumVertices());
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
+  gmshBindVertexArray(&va, true, false);
+  drawVertexArray(&va, GL_TRIANGLES);
+  gmshUnbindArrays();
 
-  glDisable(GL_LIGHTING);
-  glPolygonMode(GL_FRONT_AND_BACK, mode[1]);
+  gmshLighting(false);
+  gmshPolygonFill(fill);
 }
 
 static void elementary_add_parameter_cb(Fl_Widget *w, void *data)
@@ -151,17 +145,17 @@ static void draw_circle(void *context)
     return;
 
   if(angle2 <= angle1) return;
-  glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-  glBegin(GL_LINE_STRIP);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+  gmshBegin(GL_LINE_STRIP);
   const int N = 30;
   for(int i = 0; i < N; i++) {
     double t = angle1 + (double)i / (double)(N - 1) * (angle2 - angle1);
     double x = xc + r * cos(t);
     double y = yc + r * sin(t);
     double z = zc;
-    glVertex3d(x, y, z);
+    gmshVertex3d(x, y, z);
   }
-  glEnd();
+  gmshEnd();
 }
 
 static void elementary_draw_circle_cb(Fl_Widget *w, void *data)
@@ -205,17 +199,17 @@ static void draw_ellipse(void *context)
   if(!getval(FlGui::instance()->elementaryContext->input[20]->value(), angle2))
     return;
   if(angle2 <= angle1) return;
-  glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-  glBegin(GL_LINE_STRIP);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+  gmshBegin(GL_LINE_STRIP);
   const int N = 30;
   for(int i = 0; i < N; i++) {
     double t = angle1 + (double)i / (double)(N - 1) * (angle2 - angle1);
     double x = xc + rx * cos(t);
     double y = yc + ry * sin(t);
     double z = zc;
-    glVertex3d(x, y, z);
+    gmshVertex3d(x, y, z);
   }
-  glEnd();
+  gmshEnd();
 }
 
 static void elementary_draw_ellipse_cb(Fl_Widget *w, void *data)

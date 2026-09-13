@@ -121,6 +121,13 @@ Fl_Menu_Item menu_font_names[] = {
   {"Screen", 0, nullptr, (void *)FL_SCREEN},
   {nullptr}};
 
+Fl_Menu_Item menu_shading_mode[] = {
+  {"Classic", 0, nullptr},
+  {"Studio (X floor)", 0, nullptr},
+  {"Studio (Y floor)", 0, nullptr},
+  {"Studio (Z floor)", 0, nullptr},
+  {nullptr}};
+
 static void color_cb(Fl_Widget *w, void *data)
 {
   unsigned int (*fct)(int, int, unsigned int);
@@ -326,11 +333,12 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_small_axes(0, GMSH_SET, o->general.butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, o->general.butt[2]->value());
   opt_general_mouse_hover_meshes(0, GMSH_SET, o->general.butt[11]->value());
+  opt_general_mouse_hover_highlight(0, GMSH_SET, o->general.butt[23]->value());
   opt_general_mouse_invert_zoom(0, GMSH_SET, o->general.butt[22]->value());
-  if(opt_general_double_buffer(0, GMSH_GET, 0) != o->general.butt[3]->value())
-    opt_general_double_buffer(0, GMSH_SET, o->general.butt[3]->value());
   if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
     opt_general_antialiasing(0, GMSH_SET, o->general.butt[12]->value());
+  if(opt_general_shaders(0, GMSH_GET, 0) != o->general.butt[3]->value())
+    opt_general_shaders(0, GMSH_SET | GMSH_GUI, o->general.butt[3]->value());
   opt_general_trackball(0, GMSH_SET, o->general.butt[5]->value());
   opt_general_terminal(0, GMSH_SET, o->general.butt[7]->value());
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
@@ -378,9 +386,9 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_clip_factor(0, GMSH_SET, o->general.value[14]->value());
   opt_general_polygon_offset_factor(0, GMSH_SET, o->general.value[15]->value());
   opt_general_polygon_offset_units(0, GMSH_SET, o->general.value[16]->value());
-  opt_general_axes_tics0(0, GMSH_SET, o->general.value[17]->value());
-  opt_general_axes_tics1(0, GMSH_SET, o->general.value[18]->value());
-  opt_general_axes_tics2(0, GMSH_SET, o->general.value[19]->value());
+  opt_general_axes_ticks0(0, GMSH_SET, o->general.value[17]->value());
+  opt_general_axes_ticks1(0, GMSH_SET, o->general.value[18]->value());
+  opt_general_axes_ticks2(0, GMSH_SET, o->general.value[19]->value());
   opt_general_axes_xmin(0, GMSH_SET, o->general.value[20]->value());
   opt_general_axes_ymin(0, GMSH_SET, o->general.value[21]->value());
   opt_general_axes_zmin(0, GMSH_SET, o->general.value[22]->value());
@@ -407,6 +415,10 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_orthographic(0, GMSH_SET, !o->general.choice[2]->value());
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
+  opt_general_shading(0, GMSH_SET, o->general.choice[8]->value());
+  opt_general_studio_samples(0, GMSH_SET, o->general.value[33]->value());
+  opt_general_studio_floor_offset(0, GMSH_SET, o->general.value[34]->value());
+  opt_general_studio_light_spread(0, GMSH_SET, o->general.value[35]->value());
 
   if((opt_general_gamepad(0, GMSH_GET, 0) != o->general.butt[19]->value()) ||
      (opt_general_camera_mode(0, GMSH_GET, 0) !=
@@ -511,6 +523,8 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
   opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value());
   opt_geometry_volume_type(0, GMSH_SET, o->geo.choice[5]->value());
+  opt_geometry_transparency(0, GMSH_SET, o->geo.value[21]->value());
+  opt_geometry_transparency_mode(0, GMSH_SET, o->geo.choice[6]->value());
 
 #if defined(HAVE_TOUCHBAR)
   updateTouchBar();
@@ -554,6 +568,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_surface_faces(0, GMSH_SET, o->mesh.butt[9]->value());
   opt_mesh_volume_edges(0, GMSH_SET, o->mesh.butt[10]->value());
   opt_mesh_volume_faces(0, GMSH_SET, o->mesh.butt[11]->value());
+  opt_mesh_draw_skin_only(0, GMSH_SET, o->mesh.butt[0]->value());
   opt_mesh_node_labels(0, GMSH_SET, o->mesh.butt[12]->value());
   opt_mesh_line_labels(0, GMSH_SET, o->mesh.butt[13]->value());
   opt_mesh_surface_labels(0, GMSH_SET, o->mesh.butt[14]->value());
@@ -600,6 +615,8 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
+  opt_mesh_transparency(0, GMSH_SET, o->mesh.value[27]->value());
+  opt_mesh_transparency_mode(0, GMSH_SET, o->mesh.choice[11]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
   opt_mesh_light_lines(0, GMSH_SET, o->mesh.choice[10]->value());
@@ -790,12 +807,13 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
   double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
   double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
-  double fake_transparency = opt_view_fake_transparency(current, GMSH_GET, 0);
   double use_stipple = opt_view_use_stipple(current, GMSH_GET, 0);
+  double transparency = opt_view_transparency(current, GMSH_GET, 0);
 
   double normals = opt_view_normals(current, GMSH_GET, 0);
   double tangents = opt_view_tangents(current, GMSH_GET, 0);
   double custom_min = opt_view_custom_min(current, GMSH_GET, 0);
+  double scale_threshold = opt_view_scale_threshold(current, GMSH_GET, 0);
   double custom_max = opt_view_custom_max(current, GMSH_GET, 0);
   double nb_iso = opt_view_nb_iso(current, GMSH_GET, 0);
   double offset0 = opt_view_offset0(current, GMSH_GET, 0);
@@ -820,6 +838,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double displacement_factor =
     opt_view_displacement_factor(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
+  int colormap_number = (int)opt_view_colormap_number(current, GMSH_GET, 0);
+  // a map picked in the map widget itself: the chooser follows, or it
+  // would put the map it still shows back
+  if(w == o->view.colorbar) o->view.choice[17]->value(colormap_number);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
   double explode = opt_view_explode(current, GMSH_GET, 0);
   double angle_smooth_normals =
@@ -828,9 +850,9 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double position1 = opt_view_position1(current, GMSH_GET, 0);
   double size0 = opt_view_size0(current, GMSH_GET, 0);
   double size1 = opt_view_size1(current, GMSH_GET, 0);
-  double axes_tics0 = opt_view_axes_tics0(current, GMSH_GET, 0);
-  double axes_tics1 = opt_view_axes_tics1(current, GMSH_GET, 0);
-  double axes_tics2 = opt_view_axes_tics2(current, GMSH_GET, 0);
+  double axes_ticks0 = opt_view_axes_ticks0(current, GMSH_GET, 0);
+  double axes_ticks1 = opt_view_axes_ticks1(current, GMSH_GET, 0);
+  double axes_ticks2 = opt_view_axes_ticks2(current, GMSH_GET, 0);
   double axes_xmin = opt_view_axes_xmin(current, GMSH_GET, 0);
   double axes_ymin = opt_view_axes_ymin(current, GMSH_GET, 0);
   double axes_zmin = opt_view_axes_zmin(current, GMSH_GET, 0);
@@ -896,6 +918,12 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 
       val = o->view.choice[8]->value();
       if(force || (val != axes)) opt_view_axes(i, GMSH_SET, val);
+
+      val = o->view.choice[17]->value();
+      if(force || (val != colormap_number)) {
+        opt_view_colormap_number(i, GMSH_SET, val);
+        o->view.colorbar->redraw();
+      }
 
       val = o->view.choice[9]->value();
       if(force || (val != boundary)) opt_view_boundary(i, GMSH_SET, val);
@@ -1020,12 +1048,11 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != use_gen_raise))
         opt_view_use_gen_raise(i, GMSH_SET, val);
 
-      val = o->view.butt[24]->value();
-      if(force || (val != fake_transparency))
-        opt_view_fake_transparency(i, GMSH_SET, val);
-
       val = o->view.butt[26]->value();
       if(force || (val != use_stipple)) opt_view_use_stipple(i, GMSH_SET, val);
+
+      val = o->view.value[79]->value();
+      if(force || (val != transparency)) opt_view_transparency(i, GMSH_SET, val);
 
       // view_values
 
@@ -1040,6 +1067,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 
       val = o->view.value[32]->value();
       if(force || (val != custom_max)) opt_view_custom_max(i, GMSH_SET, val);
+
+      val = o->view.value[35]->value();
+      if(force || (val != scale_threshold))
+        opt_view_scale_threshold(i, GMSH_SET, val);
 
       val = o->view.value[33]->value();
       if(force || (val != max_recursion_level))
@@ -1164,13 +1195,13 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
         opt_view_gen_raise_factor(i, GMSH_SET, val);
 
       val = o->view.value[3]->value();
-      if(force || (val != axes_tics0)) opt_view_axes_tics0(i, GMSH_SET, val);
+      if(force || (val != axes_ticks0)) opt_view_axes_ticks0(i, GMSH_SET, val);
 
       val = o->view.value[4]->value();
-      if(force || (val != axes_tics1)) opt_view_axes_tics1(i, GMSH_SET, val);
+      if(force || (val != axes_ticks1)) opt_view_axes_ticks1(i, GMSH_SET, val);
 
       val = o->view.value[5]->value();
-      if(force || (val != axes_tics2)) opt_view_axes_tics2(i, GMSH_SET, val);
+      if(force || (val != axes_ticks2)) opt_view_axes_ticks2(i, GMSH_SET, val);
 
       val = o->view.value[70]->value();
       if(force || (val != component_map0))
@@ -1420,16 +1451,23 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[2]->type(FL_TOGGLE_BUTTON);
       general.butt[2]->callback(general_options_ok_cb, (void *)"fast_redraw");
 
+      general.butt[23] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW / 2, BH,
+                            "Highlight hovered entity");
+      general.butt[23]->tooltip("General.MouseHoverHighlight");
+      general.butt[23]->type(FL_TOGGLE_BUTTON);
+      general.butt[23]->callback(general_options_ok_cb);
+
       general.butt[11] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                            "Enable mouse hover over meshes and views");
+        new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 5 * BH, BW / 2, BH,
+                            "Hover meshes and views");
       general.butt[11]->tooltip("General.MouseHoverMeshes");
       general.butt[11]->type(FL_TOGGLE_BUTTON);
       general.butt[11]->callback(general_options_ok_cb);
 
       general.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                                            "Enable double buffering");
-      general.butt[3]->tooltip("General.DoubleBuffer");
+                                            "Draw with the shader pipeline");
+      general.butt[3]->tooltip("General.Shaders");
       general.butt[3]->type(FL_TOGGLE_BUTTON);
       general.butt[3]->callback(general_options_ok_cb);
 
@@ -1604,21 +1642,21 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.value[17] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW / 3, BH);
-      general.value[17]->tooltip("General.AxesTicsX");
+      general.value[17]->tooltip("General.AxesTicksX");
       general.value[17]->minimum(0.);
       if(CTX::instance()->inputScrolling) general.value[17]->step(1);
       general.value[17]->maximum(100);
       general.value[17]->callback(general_options_ok_cb);
       general.value[18] = new Fl_Value_Input(L + 2 * WB + 1 * IW / 3,
                                              2 * WB + 2 * BH, IW / 3, BH);
-      general.value[18]->tooltip("General.AxesTicsY");
+      general.value[18]->tooltip("General.AxesTicksY");
       general.value[18]->minimum(0.);
       if(CTX::instance()->inputScrolling) general.value[18]->step(1);
       general.value[18]->maximum(100);
       general.value[18]->callback(general_options_ok_cb);
       general.value[19] = new Fl_Value_Input(
-        L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes tics");
-      general.value[19]->tooltip("General.AxesTicsZ");
+        L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes ticks");
+      general.value[19]->tooltip("General.AxesTicksZ");
       general.value[19]->minimum(0.);
       if(CTX::instance()->inputScrolling) general.value[19]->step(1);
       general.value[19]->maximum(100);
@@ -1910,13 +1948,46 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[1]->callback(general_options_ok_cb);
       general.value[0] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 3 * BH, IW / 2, BH,
-                           "Material shininess/exponent");
+                           "Material shininess and exponent");
       general.value[0]->tooltip("General.ShininessExponent");
       general.value[0]->minimum(0);
       general.value[0]->maximum(128);
       if(CTX::instance()->inputScrolling) general.value[0]->step(1);
       general.value[0]->align(FL_ALIGN_RIGHT);
       general.value[0]->callback(general_options_ok_cb);
+
+      general.choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
+                                        "Shading mode");
+      general.choice[8]->tooltip("General.Shading");
+      general.choice[8]->menu(menu_shading_mode);
+      general.choice[8]->align(FL_ALIGN_RIGHT);
+      general.choice[8]->callback(general_options_ok_cb);
+
+      general.value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW / 3, BH);
+      general.value[33]->tooltip("General.StudioSamples");
+      general.value[33]->minimum(1);
+      general.value[33]->maximum(256);
+      if(CTX::instance()->inputScrolling) general.value[33]->step(1);
+      general.value[33]->align(FL_ALIGN_RIGHT);
+      general.value[33]->callback(general_options_ok_cb);
+
+      general.value[35] =
+        new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 5 * BH, IW / 3, BH);
+      general.value[35]->tooltip("General.StudioLightSpread");
+      general.value[35]->minimum(0);
+      general.value[35]->maximum(90);
+      if(CTX::instance()->inputScrolling) general.value[35]->step(.1);
+      general.value[35]->callback(general_options_ok_cb);
+
+      general.value[34] =
+        new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 5 * BH, IW / 3, BH,
+                           "Studio samples, spread and floor offset");
+      general.value[34]->tooltip("General.StudioFloorOffset");
+      general.value[34]->minimum(-10);
+      general.value[34]->maximum(10);
+      if(CTX::instance()->inputScrolling) general.value[34]->step(0.01);
+      general.value[34]->align(FL_ALIGN_RIGHT);
+      general.value[34]->callback(general_options_ok_cb);
 
       static Fl_Menu_Item menu_color_scheme[] = {
         {"Light", 0, nullptr, nullptr},
@@ -1925,7 +1996,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Dark", 0, nullptr, nullptr},
         {nullptr}};
 
-      general.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
+      general.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
                                         "Predefined color scheme");
       general.choice[3]->tooltip("General.ColorScheme (Alt+c)");
       general.choice[3]->menu(menu_color_scheme);
@@ -1938,22 +2009,22 @@ optionWindow::optionWindow(int deltaFontSize)
                                             {"Radial", 0, nullptr, nullptr},
                                             {nullptr}};
 
-      general.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
+      general.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
                                         "Background gradient");
       general.choice[5]->tooltip("General.BackgroundGradient");
       general.choice[5]->menu(menu_bg_grad);
       general.choice[5]->align(FL_ALIGN_RIGHT);
       general.choice[5]->callback(general_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 6 * BH, IW + 20,
-                                   height - 5 * WB - 6 * BH);
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 8 * BH, IW + 20,
+                                   height - 5 * WB - 8 * BH);
       std::size_t i = 0, j = 0;
       while(GeneralOptions_Color[j].str) {
         if(GeneralOptions_Color[j].level & GMSH_DEPRECATED) {
           j++;
           continue;
         }
-        general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (6 + i) * BH, IW,
+        general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (8 + i) * BH, IW,
                                          BH, GeneralOptions_Color[j].str);
         general.color[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE |
                                 FL_ALIGN_CLIP);
@@ -2388,8 +2459,30 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[10]->type(FL_TOGGLE_BUTTON);
       geo.butt[10]->callback(geometry_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 2 * WB + 4 * BH, IW + 20,
-                                   height - 4 * WB - 4 * BH);
+      int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
+      static Fl_Menu_Item menu_transparency_mode[] = {
+        {"Surfaces", 0, nullptr, nullptr},
+        {"Everything", 0, nullptr, nullptr},
+        {nullptr}};
+      geo.value[21] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH,
+                                        w2, BH);
+      geo.value[21]->tooltip("Geometry.Transparency");
+      geo.value[21]->minimum(0.);
+      geo.value[21]->maximum(1.);
+      if(CTX::instance()->inputScrolling) geo.value[21]->step(0.01);
+      geo.value[21]->align(FL_ALIGN_RIGHT);
+      geo.value[21]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      geo.value[21]->callback(geometry_options_ok_cb);
+
+      geo.choice[6] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 4 * BH,
+                                    w1, BH, "Transparency");
+      geo.choice[6]->tooltip("Geometry.TransparencyMode");
+      geo.choice[6]->menu(menu_transparency_mode);
+      geo.choice[6]->align(FL_ALIGN_RIGHT);
+      geo.choice[6]->callback(geometry_options_ok_cb);
+
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 5 * BH, IW + 20,
+                                   height - 5 * WB - 5 * BH);
       std::size_t i = 0, j = 0;
       while(GeometryOptions_Color[j].str) {
         if(GeometryOptions_Color[j].level & GMSH_DEPRECATED) {
@@ -2640,6 +2733,12 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[11]->type(FL_TOGGLE_BUTTON);
       mesh.butt[11]->callback(mesh_options_ok_cb);
 
+      mesh.butt[0] = new Fl_Check_Button(L + width / 2, 2 * WB + 6 * BH,
+                                          BW / 2 - WB, BH, "Hide interior faces");
+      mesh.butt[0]->tooltip("Mesh.DrawSkinOnly");
+      mesh.butt[0]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[0]->callback(mesh_options_ok_cb);
+
       mesh.butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                           BW / 2 - WB, BH, "Node labels");
       mesh.butt[12]->tooltip("Mesh.NodeLabels");
@@ -2872,6 +2971,28 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[18]->when(FL_WHEN_RELEASE);
       mesh.value[18]->callback(mesh_options_ok_cb);
 
+      int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
+      static Fl_Menu_Item menu_transparency_mode[] = {
+        {"Surfaces", 0, nullptr, nullptr},
+        {"Everything", 0, nullptr, nullptr},
+        {nullptr}};
+      mesh.value[27] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH,
+                                          w2, BH);
+      mesh.value[27]->tooltip("Mesh.Transparency");
+      mesh.value[27]->minimum(0.);
+      mesh.value[27]->maximum(1.);
+      if(CTX::instance()->inputScrolling) mesh.value[27]->step(0.01);
+      mesh.value[27]->align(FL_ALIGN_RIGHT);
+      mesh.value[27]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      mesh.value[27]->callback(mesh_options_ok_cb);
+
+      mesh.choice[11] = new Fl_Choice(L + 2 * WB + w2, 2 * WB + 6 * BH,
+                                      w1, BH, "Transparency");
+      mesh.choice[11]->tooltip("Mesh.TransparencyMode");
+      mesh.choice[11]->menu(menu_transparency_mode);
+      mesh.choice[11]->align(FL_ALIGN_RIGHT);
+      mesh.choice[11]->callback(mesh_options_ok_cb);
+
       static Fl_Menu_Item menu_mesh_color[] = {
         {"By element type", 0, nullptr, nullptr},
         {"By elementary entity", 0, nullptr, nullptr},
@@ -2879,14 +3000,14 @@ optionWindow::optionWindow(int deltaFontSize)
         {"By mesh partition", 0, nullptr, nullptr},
         {nullptr}};
       mesh.choice[4] =
-        new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Coloring mode");
+        new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Coloring mode");
       mesh.choice[4]->tooltip("Mesh.ColorCarousel");
       mesh.choice[4]->menu(menu_mesh_color);
       mesh.choice[4]->align(FL_ALIGN_RIGHT);
       mesh.choice[4]->callback(mesh_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
-                                   height - 5 * WB - 7 * BH);
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 8 * BH, IW + 20,
+                                   height - 5 * WB - 8 * BH);
       std::size_t i = 0, j = 0;
       while(MeshOptions_Color[j].str) {
         if(MeshOptions_Color[j].level & GMSH_DEPRECATED) {
@@ -3108,7 +3229,7 @@ optionWindow::optionWindow(int deltaFontSize)
       static Fl_Menu_Item menu_scale[] = {
         {"Linear", 0, nullptr, nullptr},
         {"Logarithmic", 0, nullptr, nullptr},
-        {"Double logarithmic", 0, nullptr, nullptr},
+        {"Symmetric logarithmic", 0, nullptr, nullptr},
         {nullptr}};
       view.choice[1] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
                                      2 * WB + 5 * BH, (int)(0.85 * IW), BH);
@@ -3144,6 +3265,15 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[31]->align(FL_ALIGN_RIGHT);
       view.value[31]->when(FL_WHEN_RELEASE);
       view.value[31]->callback(view_options_ok_cb);
+
+      view.value[35] =
+        new Fl_Value_Input(L + width - (int)(0.85 * IW) - 2 * WB,
+                           2 * WB + 7 * BH, (int)(0.45 * 0.85 * IW), BH,
+                           "Threshold");
+      view.value[35]->tooltip("View.ScaleThreshold");
+      view.value[35]->align(FL_ALIGN_RIGHT);
+      view.value[35]->when(FL_WHEN_RELEASE);
+      view.value[35]->callback(view_options_ok_cb);
 
       view.push[2] = new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, sw2, BH, "Max");
       view.push[2]->callback(view_options_ok_cb, (void *)"range_max");
@@ -3214,21 +3344,21 @@ optionWindow::optionWindow(int deltaFontSize)
 
       view.value[3] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW / 3, BH);
-      view.value[3]->tooltip("View.AxesTicsX");
+      view.value[3]->tooltip("View.AxesTicksX");
       view.value[3]->minimum(0.);
       if(CTX::instance()->inputScrolling) view.value[3]->step(1);
       view.value[3]->maximum(100);
       view.value[3]->callback(view_options_ok_cb);
       view.value[4] = new Fl_Value_Input(L + 2 * WB + 1 * IW / 3,
                                          2 * WB + 2 * BH, IW / 3, BH);
-      view.value[4]->tooltip("View.AxesTicsY");
+      view.value[4]->tooltip("View.AxesTicksY");
       view.value[4]->minimum(0.);
       if(CTX::instance()->inputScrolling) view.value[4]->step(1);
       view.value[4]->maximum(100);
       view.value[4]->callback(view_options_ok_cb);
       view.value[5] = new Fl_Value_Input(
-        L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes tics");
-      view.value[5]->tooltip("View.AxesTicsZ");
+        L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH, "Axes ticks");
+      view.value[5]->tooltip("View.AxesTicksZ");
       view.value[5]->minimum(0.);
       if(CTX::instance()->inputScrolling) view.value[5]->step(1);
       view.value[5]->maximum(100);
@@ -3380,7 +3510,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[10]->callback(view_options_ok_cb);
 
       view.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                                         "Draw only skin of 3D views");
+                                         "Hide interior faces");
       view.butt[2]->tooltip("View.DrawSkinOnly");
       view.butt[2]->type(FL_TOGGLE_BUTTON);
       view.butt[2]->callback(view_options_ok_cb);
@@ -3790,11 +3920,15 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[10]->when(FL_WHEN_RELEASE);
       view.value[10]->callback(view_options_ok_cb);
 
-      view.butt[24] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                                          "Use fake transparency mode");
-      view.butt[24]->tooltip("View.FakeTransparency");
-      view.butt[24]->type(FL_TOGGLE_BUTTON);
-      view.butt[24]->callback(view_options_ok_cb);
+      view.value[79] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
+                                          "Transparency");
+      view.value[79]->tooltip("View.Transparency");
+      view.value[79]->minimum(0.);
+      view.value[79]->maximum(1.);
+      if(CTX::instance()->inputScrolling) view.value[79]->step(0.01);
+      view.value[79]->align(FL_ALIGN_RIGHT);
+      view.value[79]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+      view.value[79]->callback(view_options_ok_cb);
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
                                    height - 5 * WB - 7 * BH);
@@ -3825,8 +3959,27 @@ optionWindow::optionWindow(int deltaFontSize)
       // o->label("@-1gmsh_colormap");
       o->hide();
 
-      view.colorbar = new colorbarWindow(L + 2 * WB, 2 * WB + BH,
-                                         width - 4 * WB, height - 4 * WB - BH);
+      // the predefined maps by name, above the map itself
+      static std::vector<Fl_Menu_Item> menu_colormap;
+      if(menu_colormap.empty()) {
+        for(int i = 0; i < ColorTable_NumPredefined(); i++) {
+          Fl_Menu_Item item = {ColorTable_Name(i), 0, nullptr, nullptr};
+          menu_colormap.push_back(item);
+        }
+        Fl_Menu_Item last = {nullptr};
+        menu_colormap.push_back(last);
+      }
+      view.choice[17] = new Fl_Choice(L + 2 * WB, 2 * WB + BH, IW, BH,
+                                      "Predefined colormap");
+      view.choice[17]->tooltip("View.ColormapNumber");
+      view.choice[17]->menu(&menu_colormap[0]);
+      view.choice[17]->align(FL_ALIGN_RIGHT);
+      view.choice[17]->callback(view_options_ok_cb);
+      // the keys go to the map widget below
+      view.choice[17]->clear_visible_focus();
+
+      view.colorbar = new colorbarWindow(L + 2 * WB, 3 * WB + 2 * BH,
+                                         width - 4 * WB, height - 5 * WB - 2 * BH);
       view.colorbar->end();
       view.colorbar->callback(view_options_ok_cb);
 
@@ -3970,13 +4123,14 @@ void optionWindow::updateViewGroup(int index)
   opt_view_size1(index, GMSH_GUI, 0);
 
   opt_view_axes(index, GMSH_GUI, 0);
+  opt_view_colormap_number(index, GMSH_GUI, 0);
   opt_view_axes_mikado(index, GMSH_GUI, 0);
   opt_view_axes_format0(index, GMSH_GUI, "");
   opt_view_axes_format1(index, GMSH_GUI, "");
   opt_view_axes_format2(index, GMSH_GUI, "");
-  opt_view_axes_tics0(index, GMSH_GUI, 0);
-  opt_view_axes_tics1(index, GMSH_GUI, 0);
-  opt_view_axes_tics2(index, GMSH_GUI, 0);
+  opt_view_axes_ticks0(index, GMSH_GUI, 0);
+  opt_view_axes_ticks1(index, GMSH_GUI, 0);
+  opt_view_axes_ticks2(index, GMSH_GUI, 0);
   opt_view_axes_label0(index, GMSH_GUI, "");
   opt_view_axes_label1(index, GMSH_GUI, "");
   opt_view_axes_label2(index, GMSH_GUI, "");
@@ -3994,7 +4148,7 @@ void optionWindow::updateViewGroup(int index)
     view.value[i]->maximum(CTX::instance()->lc);
   }
 
-  if(data->getNumElements()) {
+  if(data->hasElements()) {
     view.range->activate();
     ((Fl_Menu_Item *)view.choice[13]->menu())[0].activate();
   }
@@ -4033,6 +4187,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_custom_min(index, GMSH_GUI, 0);
   opt_view_custom_max(index, GMSH_GUI, 0);
   opt_view_scale_type(index, GMSH_GUI, 0);
+  opt_view_scale_threshold(index, GMSH_GUI, 0);
   opt_view_saturate_values(index, GMSH_GUI, 0);
 
   opt_view_offset0(index, GMSH_GUI, 0);
@@ -4115,8 +4270,8 @@ void optionWindow::updateViewGroup(int index)
   opt_view_center_glyphs(index, GMSH_GUI, 0);
   opt_view_tensor_type(index, GMSH_GUI, 0);
 
-  opt_view_fake_transparency(index, GMSH_GUI, 0);
   opt_view_use_stipple(index, GMSH_GUI, 0);
+  opt_view_transparency(index, GMSH_GUI, 0);
   opt_view_color_points(index, GMSH_GUI, 0);
   opt_view_color_lines(index, GMSH_GUI, 0);
   opt_view_color_triangles(index, GMSH_GUI, 0);
@@ -4154,6 +4309,31 @@ void optionWindow::activate(const char *what)
       browser->resize(browser->x(), browser->y(), browser->w(), win->h());
       redraw->hide();
       win->redraw();
+    }
+    drawContext::global()->draw();
+  }
+  else if(!strcmp(what, "shaders")) {
+    if(general.butt[3]->value()) {
+      general.choice[8]->activate();
+      general.value[33]->activate();
+      general.value[34]->activate();
+      general.value[35]->activate();
+      geo.value[21]->activate();
+      geo.choice[6]->activate();
+      mesh.value[27]->activate();
+      mesh.choice[11]->activate();
+      view.value[79]->activate();
+    }
+    else {
+      general.choice[8]->deactivate();
+      general.value[33]->deactivate();
+      general.value[34]->deactivate();
+      general.value[35]->deactivate();
+      geo.value[21]->deactivate();
+      geo.choice[6]->deactivate();
+      mesh.value[27]->deactivate();
+      mesh.choice[11]->deactivate();
+      view.value[79]->deactivate();
     }
   }
   else if(!strcmp(what, "rotation_center")) {

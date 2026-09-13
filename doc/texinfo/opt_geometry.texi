@@ -441,6 +441,16 @@ Geometrical tolerance for boolean operations@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.Transparency
+Opacity factor applied to all geometry colors (1: opaque, 0: fully transparent)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.TransparencyMode
+Apply Geometry.Transparency to (0: filled surfaces only; 1: everything)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Transform
 Transform model display coordinates (0: no, 1: scale)@*
 Default value: @code{0}@*
@@ -542,8 +552,8 @@ Default value: @code{@{255,150,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.HighlightTwo
-Highlight 2 color@*
-Default value: @code{@{255,255,0@}}@*
+Highlight 2 color, which the entity under the mouse is drawn in@*
+Default value: @code{@{255,150,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Tangents

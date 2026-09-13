@@ -15,6 +15,11 @@
 class GamePad;
 
 struct contextMeshOptions {
+  // what the transparency is applied to: 0 filled surfaces only, 1
+  // everything
+  int transparencyMode;
+  // multiplies the alpha of every mesh colour
+  double transparency;
   // mesh algorithms
   int optimize, optimizeNetgen, refineSteps;
   double optimizePyramids;
@@ -92,6 +97,7 @@ struct contextMeshOptions {
   int labelType;
   double nodeSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
+  int drawUniqueEdges;
   int smoothNormals, clip;
   // records cpu times for 1D, 2D and 3D mesh generation
   double timer[3];
@@ -100,6 +106,11 @@ struct contextMeshOptions {
 };
 
 struct contextGeometryOptions {
+  // what the transparency is applied to: 0 filled surfaces only, 1
+  // everything
+  int transparencyMode;
+  // multiplies the alpha of every geometry colour
+  double transparency;
   // geometry algorithms
   int oldCircle, oldNewreg, oldRuledSurface;
   int extrudeSplinePoints, extrudeReturnLateral;
@@ -156,12 +167,14 @@ struct contextGeometryOptions {
 class CTX {
 private:
   static CTX *_instance;
+  static CTX *_create();
 
 public:
   CTX();
   ~CTX();
   void init();
-  static CTX *instance();
+  // called in tight loops in the drawing code: common path inline
+  static CTX *instance() { return _instance ? _instance : _create(); }
 
   // for debug purposes only, i.e. JF and CG personal use
   int debugSurface;
@@ -277,7 +290,7 @@ public:
   int smallAxes, smallAxesSize, smallAxesPos[2];
   // large axes options
   int axes, axesAutoPosition, axesMikado, axesForceValue;
-  double axesPosition[6], axesValue[6], axesTics[3];
+  double axesPosition[6], axesValue[6], axesTicks[3];
   std::string axesLabel[3], axesFormat[3];
   // simple dynamic lock (should be a mutex)
   int lock;
@@ -307,6 +320,26 @@ public:
   // clipping plane options
   double clipPlane[6][4];
   int clipWholeElements, clipOnlyDrawIntersectingVolume, clipOnlyVolume;
+  // fill the section cut by the clipping planes in 3D meshes and views
+  int clipCapping;
+  // draw the vertex arrays from OpenGL buffer objects instead of client memory
+  int vertexBufferObjects;
+  // draw with the shader pipeline instead of the fixed function one
+  // (recreates the OpenGL context)
+  int shaders;
+  // lighting model of the shader pipeline: 0 the fixed function one, 1 to 3
+  // studio (linear light, hemisphere ambient, soft key light, no specular,
+  // shadows) with the floor normal to x, y or z
+  int shading;
+  // angular radius (degrees) of the studio light, which sets the softness of
+  // its shadow, the offset of the floor from the bottom of the model along
+  // its normal (relative to the size of the bounds), and the number of
+  // frames accumulated while the view is still
+  double studioLightSpread, studioFloorOffset;
+  int studioSamples;
+  // order independent (weighted blended) transparency instead of back to
+  // front sorting
+  int orderIndependentTransparency;
   // polygon offset options
   int polygonOffset, polygonOffsetAlways;
   double polygonOffsetFactor, polygonOffsetUnits;
@@ -314,13 +347,16 @@ public:
   int colorScheme;
   // number of subdivisions for gluQuadrics
   int quadricSubdivisions;
+  // memory (in MB) the glyph triangles may take between frames (0:
+  // automatic)
+  double glyphCacheSize;
   // vector display type and options (for normals, etc.)
   int vectorType;
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
   // enable selection/hover/picking using the mouse
-  int mouseSelection, mouseHoverMeshes, pickElements;
+  int mouseSelection, mouseHoverMeshes, mouseHoverHighlight, pickElements;
   // invert sense of mouse wheel zoom
   int mouseInvertZoom;
   // disable some warnings for expert users?
@@ -372,7 +408,7 @@ public:
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posSICN, posSIGE, posDisto;
     int compositeWindows, deleteTmpFiles, background;
-    int width, height;
+    int width, height, supersampling, scalePixelSizes;
     double parameter, parameterFirst, parameterLast, parameterSteps;
     int pgfTwoDim, pgfExportAxis, pgfHorizBar;
     std::string parameterCommand;
@@ -399,7 +435,7 @@ public:
   // is the machine big-endian?
   int bigEndian;
   // how RGBA values are packed and unpacked into/from an unsigned integer to be
-  // fed to glColor4ubv (depends on machine byte ordering!):
+  // fed to gmshColor4ubv (depends on machine byte ordering!):
   unsigned int packColor(int R, int G, int B, int A);
   int unpackRed(unsigned int X);
   int unpackGreen(unsigned int X);

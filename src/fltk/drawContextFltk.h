@@ -80,45 +80,6 @@ public:
     if(index >= 0 && index < NUM_FONTS) return menu_font_names[index].label();
     return "Helvetica";
   }
-  int getFontAlign(const char *alignstr)
-  {
-    if(alignstr) {
-      if(!strcmp(alignstr, "BottomLeft") || !strcmp(alignstr, "Left") ||
-         !strcmp(alignstr, "left"))
-        return 0;
-      else if(!strcmp(alignstr, "BottomCenter") ||
-              !strcmp(alignstr, "Center") || !strcmp(alignstr, "center"))
-        return 1;
-      else if(!strcmp(alignstr, "BottomRight") || !strcmp(alignstr, "Right") ||
-              !strcmp(alignstr, "right"))
-        return 2;
-      else if(!strcmp(alignstr, "TopLeft"))
-        return 3;
-      else if(!strcmp(alignstr, "TopCenter"))
-        return 4;
-      else if(!strcmp(alignstr, "TopRight"))
-        return 5;
-      else if(!strcmp(alignstr, "CenterLeft"))
-        return 6;
-      else if(!strcmp(alignstr, "CenterCenter"))
-        return 7;
-      else if(!strcmp(alignstr, "CenterRight"))
-        return 8;
-    }
-    Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)",
-               alignstr);
-    Msg::Info("Available font alignments:");
-    Msg::Info("  \"Left\" (or \"BottomLeft\")");
-    Msg::Info("  \"Center\" (or \"BottomCenter\")");
-    Msg::Info("  \"Right\" (or \"BottomRight\")");
-    Msg::Info("  \"TopLeft\"");
-    Msg::Info("  \"TopCenter\"");
-    Msg::Info("  \"TopRight\"");
-    Msg::Info("  \"CenterLeft\"");
-    Msg::Info("  \"CenterCenter\"");
-    Msg::Info("  \"CenterRight\"");
-    return 0;
-  }
   int getFontSize()
   {
     if(CTX::instance()->fontSize > 0) { return CTX::instance()->fontSize; }
@@ -146,7 +107,33 @@ public:
   double getStringWidth(const char *str) { return gl_width(str); }
   int getStringHeight() { return gl_height(); }
   int getStringDescent() { return gl_descent(); }
-  void drawString(const char *str) { gl_draw(str); }
+  void drawString(const char *str)
+  {
+    if(!stringHalo()) {
+      gl_draw(str);
+      return;
+    }
+    // eight copies around it in the background colour first, the raster
+    // position moved by a pixel each time (an empty bitmap moves it) and
+    // brought back after each, as drawing advances it
+    GLfloat pos[4], color[4];
+    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+    glGetFloatv(GL_CURRENT_COLOR, color);
+    unsigned int bg = CTX::instance()->color.bg;
+    glColor4ub(CTX::instance()->unpackRed(bg), CTX::instance()->unpackGreen(bg),
+               CTX::instance()->unpackBlue(bg), 255);
+    for(int i = -1; i <= 1; i++)
+      for(int j = -1; j <= 1; j++) {
+        if(!i && !j) continue;
+        glBitmap(0, 0, 0.f, 0.f, (GLfloat)i, (GLfloat)j, nullptr);
+        gl_draw(str);
+        GLfloat now[4];
+        glGetFloatv(GL_CURRENT_RASTER_POSITION, now);
+        glBitmap(0, 0, 0.f, 0.f, pos[0] - now[0], pos[1] - now[1], nullptr);
+      }
+    glColor4fv(color);
+    gl_draw(str);
+  }
   void resetFontTextures()
   {
 #if((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
@@ -154,6 +141,15 @@ public:
     gl_texture_pile_height(gl_texture_pile_height());
 #endif
   }
+  void reserveStringTextures(std::size_t n)
+  {
+#if((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
+    if(gl_texture_pile_height() < (int)n) gl_texture_pile_height((int)n);
+#else
+    (void)n; // this FLTK has no pile to ask about
+#endif
+  }
+  bool mouseIsPressed() { return Fl::pushed() ? true : false; }
   std::string getName() { return "Fltk"; }
 };
 
