@@ -4199,6 +4199,13 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
 double opt_general_clip_only_volume(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipOnlyVolume = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->clipping->butt[3]->value(
+      CTX::instance()->clipOnlyVolume);
+    FlGui::instance()->clipping->activateButtons();
+  }
+#endif
   return CTX::instance()->clipOnlyVolume;
 }
 

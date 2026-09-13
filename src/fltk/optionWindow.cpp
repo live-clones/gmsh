@@ -1634,8 +1634,8 @@ optionWindow::optionWindow(int deltaFontSize)
                                   (void *)"general_axes");
 
       general.butt[16] = new Fl_Check_Button(
-        L + width - (int)(0.85 * IW) - 2 * WB, 2 * WB + 1 * BH,
-        (int)(0.85 * IW), BH, "Mikado style");
+        L + width - IW - 2 * WB, 2 * WB + 1 * BH,
+        IW, BH, "Mikado style");
       general.butt[16]->tooltip("General.AxesMikado");
       general.butt[16]->type(FL_TOGGLE_BUTTON);
       general.butt[16]->callback(general_options_ok_cb);
@@ -2623,8 +2623,8 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[3]->callback(mesh_options_ok_cb);
 
       mesh.butt[4] =
-        new Fl_Check_Button(L + 2 * WB + 1.25 * IW, 2 * WB + 9 * BH, BW, BH,
-                            "Use incomplete elements");
+        new Fl_Check_Button(L + width / 2, 2 * WB + 9 * BH,
+                            BW / 2 - WB, BH, "Incomplete elements");
       mesh.butt[4]->tooltip("Mesh.SecondOrderIncomplete");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
@@ -2771,15 +2771,15 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Coordinates", 0, nullptr, nullptr},
         {nullptr}};
       mesh.choice[7] =
-        new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Label type");
+        new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Label");
       mesh.choice[7]->tooltip("Mesh.LabelType");
       mesh.choice[7]->menu(menu_label_type);
       mesh.choice[7]->align(FL_ALIGN_RIGHT);
       mesh.choice[7]->callback(mesh_options_ok_cb);
 
       mesh.value[12] =
-        new Fl_Value_Input(L + width - (int)(0.85 * IW) - 2 * WB,
-                           2 * WB + 7 * BH, IW / 3, BH, "Sampling");
+        new Fl_Value_Input(L + width / 2, 2 * WB + 7 * BH,
+                           IW / 2, BH, "Sampling");
       mesh.value[12]->tooltip("Mesh.LabelSampling");
       mesh.value[12]->minimum(1);
       mesh.value[12]->maximum(100);
@@ -3207,8 +3207,8 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[30]->callback(view_options_ok_cb);
 
       view.input[1] =
-        new Fl_Input(L + width - (int)(0.85 * IW) - 2 * WB, 2 * WB + 4 * BH,
-                     (int)(0.5 * 0.85 * IW), BH, "Format");
+        new Fl_Input(L + width - IW - 2 * WB, 2 * WB + 4 * BH,
+                     IW / 2, BH, "Format");
       view.input[1]->tooltip("View.Format");
       view.input[1]->align(FL_ALIGN_RIGHT);
       view.input[1]->callback(view_options_ok_cb);
@@ -3231,8 +3231,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Logarithmic", 0, nullptr, nullptr},
         {"Symmetric logarithmic", 0, nullptr, nullptr},
         {nullptr}};
-      view.choice[1] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
-                                     2 * WB + 5 * BH, (int)(0.85 * IW), BH);
+      view.choice[1] = new Fl_Choice(L + width - IW - 2 * WB,
+                                     2 * WB + 5 * BH, IW, BH);
       view.choice[1]->tooltip("View.ScaleType");
       view.choice[1]->menu(menu_scale);
       view.choice[1]->align(FL_ALIGN_RIGHT);
@@ -3250,8 +3250,8 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[7]->callback(view_options_ok_cb, (void *)"custom_range");
 
       view.butt[38] =
-        new Fl_Check_Button(L + width - (int)(0.85 * IW) - 2 * WB,
-                            2 * WB + 6 * BH, (int)(0.85 * IW), BH, "Saturate");
+        new Fl_Check_Button(L + width - IW - 2 * WB,
+                            2 * WB + 6 * BH, IW, BH, "Saturate");
       view.butt[38]->tooltip("View.SaturateValues");
       view.butt[38]->type(FL_TOGGLE_BUTTON);
       view.butt[38]->callback(view_options_ok_cb);
@@ -3267,8 +3267,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[31]->callback(view_options_ok_cb);
 
       view.value[35] =
-        new Fl_Value_Input(L + width - (int)(0.85 * IW) - 2 * WB,
-                           2 * WB + 7 * BH, (int)(0.45 * 0.85 * IW), BH,
+        new Fl_Value_Input(L + width - IW - 2 * WB, 2 * WB + 7 * BH, IW / 2, BH,
                            "Threshold");
       view.value[35]->tooltip("View.ScaleThreshold");
       view.value[35]->align(FL_ALIGN_RIGHT);
@@ -3335,8 +3334,8 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[8]->align(FL_ALIGN_RIGHT);
       view.choice[8]->callback(view_options_ok_cb, (void *)"view_axes");
 
-      view.butt[3] = new Fl_Check_Button(L + width - (int)(0.85 * IW) - 2 * WB,
-                                         2 * WB + 1 * BH, (int)(0.85 * IW), BH,
+      view.butt[3] = new Fl_Check_Button(L + width - IW - 2 * WB,
+                                         2 * WB + 1 * BH, IW, BH,
                                          "Mikado style");
       view.butt[3]->tooltip("View.AxesMikado");
       view.butt[3]->type(FL_TOGGLE_BUTTON);
@@ -3774,8 +3773,8 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[6]->callback(view_options_ok_cb);
 
       view.butt[26] =
-        new Fl_Check_Button(L + width - (int)(0.85 * IW) - 2 * WB,
-                            2 * WB + 4 * BH, (int)(0.85 * IW), BH, "Stipple");
+        new Fl_Check_Button(L + width - IW - 2 * WB,
+                            2 * WB + 4 * BH, IW, BH, "Stipple");
       view.butt[26]->tooltip("View.Stipple");
       view.butt[26]->type(FL_TOGGLE_BUTTON);
       view.butt[26]->callback(view_options_ok_cb);
@@ -3856,8 +3855,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Centered", 0, nullptr, nullptr},
         {"Right-aligned", 0, nullptr, nullptr},
         {nullptr}};
-      view.choice[15] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
-                                      2 * WB + 10 * BH, (int)(0.85 * IW), BH);
+      view.choice[15] = new Fl_Choice(L + width - IW - 2 * WB,
+                                      2 * WB + 10 * BH, IW, BH);
       view.choice[15]->tooltip("View.CenterGlyphs");
       view.choice[15]->menu(menu_glyph_center);
       view.choice[15]->callback(view_options_ok_cb);
