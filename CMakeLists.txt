@@ -658,7 +658,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
       message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
                       OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
-      string(STRIP ${FLTK_INCLUDE_DIR} FLTK_INCLUDE_DIR)
+      string(STRIP "${FLTK_INCLUDE_DIR}" FLTK_INCLUDE_DIR)
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
                       OUTPUT_VARIABLE FLTK_LIBRARIES)
