@@ -762,7 +762,7 @@ void drawContext::draw3d()
 #endif
 
   glDepthFunc(GL_LESS);
-  glEnable(GL_DEPTH_TEST);
+  gmshDepthTest(true);
   initProjection();
   initRenderModel();
 
@@ -824,7 +824,7 @@ void drawContext::draw3d()
       // front would hide what is behind it.
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glDepthMask(GL_FALSE);
+      gmshDepthMask(false);
     }
     gmshAlphaScale(geomScale, geomFilled);
     drawGeom();
@@ -832,7 +832,7 @@ void drawContext::draw3d()
     drawMesh();
     gmshAlphaScale(1., false);
     // the views sort back to front and write depth, as they always did
-    if(!summed) glDepthMask(GL_TRUE);
+    if(!summed) gmshDepthMask(true);
     drawPost();
     if(summed)
       glShader::endTransparent();
@@ -1173,20 +1173,20 @@ void drawContext::drawStudioFloor()
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   // hidden by the model, but hiding nothing itself: whatever hangs below
   // it (glyphs, a view raised further than its data) stays visible
-  glDepthMask(GL_FALSE);
+  gmshDepthMask(false);
   gmshColor4ub(0, 0, 0, 150);
   gmshNormal3d(n[0], n[1], n[2]);
   gmshBegin(GL_QUADS);
   for(int k = 0; k < 4; k++) gmshVertex3d(p[k][0], p[k][1], p[k][2]);
   gmshEnd();
   gmshShadingModel(1);
-  glDepthMask(GL_TRUE);
+  gmshDepthMask(true);
   glDisable(GL_BLEND);
 }
 
 void drawContext::draw2d()
 {
-  glDisable(GL_DEPTH_TEST);
+  gmshDepthTest(false);
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
 
   gmshMatrixMode(GMSH_PROJECTION);
@@ -1463,7 +1463,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
 
   if(CTX::instance()->camera) { // if we use the camera mode
-    glDisable(GL_DEPTH_TEST);
+    gmshDepthTest(false);
     gmshPushMatrix();
     gmshLoadIdentity();
     double w = (double)viewport[2];
@@ -1481,7 +1481,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     gmshVertex3i((int)-dx, (int)dy, (int)dz);
     gmshEnd();
     gmshPopMatrix();
-    glEnable(GL_DEPTH_TEST);
+    gmshDepthTest(true);
   }
   else if(!CTX::instance()->camera) { // if not in camera mode
 
@@ -1509,7 +1509,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
        (CTX::instance()->bgGradient ||
         CTX::instance()->bgImageFileName.size()) &&
        (!CTX::instance()->printing || CTX::instance()->print.background)) {
-      glDisable(GL_DEPTH_TEST);
+      gmshDepthTest(false);
       gmshPushMatrix();
       // the z values and the translation are only needed for GL2PS, which does
       // not understand "no depth test" (hence we must make sure that we draw
@@ -1528,7 +1528,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       gmshLoadMatrix(m);
       drawBackgroundImage(false);
       gmshPopMatrix();
-      glEnable(GL_DEPTH_TEST);
+      gmshDepthTest(true);
     }
 
     double projection[16];
@@ -1907,7 +1907,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
                              (int)((viewport[3] - viewport[1]) * hr));
   if(!intoPickBuffer) glDrawBuffer(GL_BACK);
   glDepthFunc(GL_LESS);
-  glEnable(GL_DEPTH_TEST);
+  gmshDepthTest(true);
   gmshLighting(false);
   glDisable(GL_BLEND);
   // the identifier colour must not be interpolated (the shader gives every
@@ -1929,7 +1929,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
 
   // 2D overlay, painted on top in drawing order as in draw2d(): without the
   // depth test off, the graph frame and axes would hide the data points
-  glDisable(GL_DEPTH_TEST);
+  gmshDepthTest(false);
   for(int i = 0; i < 6; i++) gmshClipPlaneOn(i, false);
   gmshMatrixMode(GMSH_PROJECTION);
   double px2d[16];

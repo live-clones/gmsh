@@ -963,7 +963,7 @@ public:
 
     if(CTX::instance()->alpha && !glShader::transparentPass()) {
       glDisable(GL_BLEND);
-      glEnable(GL_DEPTH_TEST);
+      gmshDepthTest(true);
     }
 
     gmshAlphaScale(1., false);
