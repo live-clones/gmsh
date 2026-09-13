@@ -498,12 +498,23 @@ void openglWindow::_studioFrame()
   Fl::remove_timeout(_studioSampleCb, this);
   CTX *ctx = CTX::instance();
   int n = ctx->studioSamples;
+  int printed = _studioPrinted;
+  _studioPrinted = 0;
   if(!gmshUseShaders() || ctx->shading < 1 || n < 2 || ctx->stereo) {
     _ctx->studioSample = 0;
     return;
   }
   int k = _ctx->studioSample;
   int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
+  // a print drawn again right after accumulating all its frames, of the same
+  // view: the average is put back instead of being drawn a second time
+  if(ctx->printing && _again && printed == n && k == 0 && w == _studioW &&
+     h == _studioH &&
+     !memcmp(_studioModel, _frameView, sizeof(_studioModel))) {
+    gmshFlushImmediate();
+    drawContext::global()->flushString();
+    if(glShader::showAccumulation(w, h, n - 1)) return;
+  }
   if(k > 0) {
     // the view changed since the last frame: start over
     if(w != _studioW || h != _studioH ||
@@ -526,8 +537,20 @@ void openglWindow::_studioFrame()
   memcpy(_studioModel, _frameView, sizeof(_studioModel));
   _studioW = w;
   _studioH = h;
-  if(ctx->printing) {
+
+  // The frames still to come, drawn here rather than one per draw of the
+  // window: all of them for a print, which is the converged picture; for the
+  // window, as many as fit in a fiftieth of a second, as one draw is shown
+  // once a refresh of the display at most, which held a light model to a
+  // frame per refresh however fast it drew. A plain frame (k = 0), which is
+  // what every rotation, zoom or option change draws, only starts the timer:
+  // accumulating there would slow the interaction down, and a mouse button
+  // held anywhere stops it too.
+  bool live = !ctx->printing;
+  if(!live || (k > 0 && !Fl::pushed())) {
+    double start = TimeOfDay();
     for(int j = k + 1; j < n; j++) {
+      if(live && TimeOfDay() - start >= 0.02) break;
       _ctx->studioSample = j;
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       if(ctx->camera) _cameraMatrices();
@@ -535,12 +558,23 @@ void openglWindow::_studioFrame()
       _ctx->draw2d();
       gmshFlushImmediate();
       drawContext::global()->flushString();
-      if(!glShader::accumulate(w, h, j == 1, j)) break;
+      if(!glShader::accumulate(w, h, j == 1, j)) {
+        _ctx->studioSample = 0;
+        return;
+      }
+      // what is left for the GPU to do counts against the time too
+      if(live) glFinish();
     }
+  }
+  if(!live) {
+    // all of them, for the view and the size recorded above
+    _studioPrinted = (_ctx->studioSample == n - 1) ? n : 0;
     _ctx->studioSample = 0;
     return;
   }
-  if(k + 1 < n) Fl::add_timeout(0.01, _studioSampleCb, this);
+  // after a plain frame, the view has to stay still a moment first
+  k = _ctx->studioSample;
+  if(k + 1 < n) Fl::add_timeout(k ? 0. : 0.03, _studioSampleCb, this);
 }
 
 bool openglWindow::printTo(int width, int height, int supersampling,

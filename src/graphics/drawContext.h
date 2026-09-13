@@ -134,7 +134,11 @@ public:
   drawContextGlobal() {}
   virtual ~drawContextGlobal() {}
   virtual void draw(bool rateLimited = true) {}
-  virtual void drawCurrentOpenglWindow(bool make_current) {}
+  // again: the same picture as the draw just before it (the second of the
+  // two a print makes), whose studio frames need not be drawn a second time
+  virtual void drawCurrentOpenglWindow(bool make_current, bool again = false)
+  {
+  }
   virtual int getFontIndex(const char *fontname) { return 0; }
   virtual int getFontEnum(int index) { return 0; }
   virtual const char *getFontName(int index) { return "Helvetica"; }
