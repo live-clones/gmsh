@@ -1457,8 +1457,12 @@ void main()
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
     if(!ok) return false;
 
-    // the frame into its copy
-    glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : GL_BACK);
+    // the frame into its copy, from the buffer being drawn into: each eye
+    // of a stereo pair has one of its own
+    GLint drawBuf = GL_BACK;
+    glGetIntegerv(GL_DRAW_BUFFER, &drawBuf);
+    if(drawBuf == GL_NONE) drawBuf = GL_BACK;
+    glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : (GLenum)drawBuf);
     glApi::ActiveTexture(GL_TEXTURE0 + 1);
     glBindTexture(GL_TEXTURE_2D, _fireFrame);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
