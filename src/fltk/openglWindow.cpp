@@ -430,6 +430,7 @@ void openglWindow::draw()
       cameraView(cam, eye.x, eye.y, eye.z, view);
       gmshLoadMatrix(view);
       _ctx->draw3d();
+      _burn();
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
@@ -449,6 +450,7 @@ void openglWindow::draw()
       cameraView(cam, -eye.x, -eye.y, -eye.z, view);
       gmshLoadMatrix(view);
       _ctx->draw3d();
+      _burn(true); // the same frame as the other eye
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
@@ -604,12 +606,12 @@ void openglWindow::_studioSampleCb(void *data)
 // level, which dies down in a couple of seconds once the spinning stops,
 // with a frame every 30 ms in the meantime. Not accumulated: the studio
 // frames start over as long as it burns.
-void openglWindow::_burn()
+void openglWindow::_burn(bool sameFrame)
 {
-  Fl::remove_timeout(_fireCb, this);
+  if(!sameFrame) Fl::remove_timeout(_fireCb, this);
   if(_fire <= 0.) return;
   double now = TimeOfDay();
-  if(!_printW) {
+  if(!_printW && !sameFrame) {
     _fire *= exp(-(now - _fireTime) / 1.5);
     _fireTime = now;
   }
@@ -624,7 +626,7 @@ void openglWindow::_burn()
     return;
   }
   _ctx->studioSample = 0;
-  if(!_printW) Fl::add_timeout(0.03, _fireCb, this);
+  if(!_printW && !sameFrame) Fl::add_timeout(0.03, _fireCb, this);
 }
 
 void openglWindow::_fireCb(void *data) { ((openglWindow *)data)->redraw(); }
