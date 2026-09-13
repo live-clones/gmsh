@@ -138,10 +138,12 @@ static void clip_update(bool adjusting)
   int wantWhole =
     wantCapping ? 0 : FlGui::instance()->clipping->butt[1]->value();
   int wantIntersecting = FlGui::instance()->clipping->butt[2]->value();
+  int wantOnlyVolume = FlGui::instance()->clipping->butt[3]->value();
 
   CTX::instance()->clipCapping = wantCapping;
   CTX::instance()->clipWholeElements = wantWhole;
   CTX::instance()->clipOnlyDrawIntersectingVolume = wantIntersecting;
+  CTX::instance()->clipOnlyVolume = wantOnlyVolume;
 
   // nothing to rebuild from here: what the planes add is rebuilt from its
   // own token, and checkClipPlanesChanged() handles the one exception
@@ -210,7 +212,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
                                         {nullptr}};
 
   int width = 26 * FL_NORMAL_SIZE;
-  int height = 10 * BH + 5 * WB;
+  int height = 11 * BH + 5 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow(
@@ -222,10 +224,10 @@ clippingWindow::clippingWindow(int deltaFontSize)
   browser->box(GMSH_SIMPLE_RIGHT_BOX);
 
   Fl_Tabs *o =
-    new Fl_Tabs(L + WB, WB, width - L - 2 * WB, height - 3 * WB - 4 * BH);
+    new Fl_Tabs(L + WB, WB, width - L - 2 * WB, height - 3 * WB - 5 * BH);
   {
     group[0] = new Fl_Group(L + WB, WB + BH, width - L - 2 * WB,
-                            height - 3 * WB - 5 * BH, "Planes");
+                            height - 3 * WB - 6 * BH, "Planes");
 
     int BW = width - L - 4 * WB - 4 * FL_NORMAL_SIZE;
 
@@ -260,7 +262,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
   }
   {
     group[1] = new Fl_Group(L + WB, WB + BH, width - L - 2 * WB,
-                            height - 3 * WB - 5 * BH, "Box");
+                            height - 3 * WB - 6 * BH, "Box");
     group[1]->hide();
 
     int w2 = (width - L - 4 * WB) / 2;
@@ -291,8 +293,11 @@ clippingWindow::clippingWindow(int deltaFontSize)
   butt[2] = new Fl_Check_Button(L + WB, 3 * WB + 8 * BH, width - L - 2 * WB, BH,
                                 "Only draw volume layer");
   butt[2]->tooltip("General.ClipOnlyDrawIntersectingVolume");
+  butt[3] = new Fl_Check_Button(L + WB, 3 * WB + 9 * BH, width - L - 2 * WB, BH,
+                                "Only clip volume elements");
+  butt[3]->tooltip("General.ClipOnlyVolume");
 
-  for(int i = 0; i < 3; i++) {
+  for(int i = 0; i < 4; i++) {
     butt[i]->type(FL_TOGGLE_BUTTON);
     butt[i]->callback(clip_update_cb);
   }
@@ -318,13 +323,18 @@ void clippingWindow::activateButtons()
   if(CTX::instance()->clipCapping) {
     butt[1]->deactivate();
     butt[2]->deactivate();
+    butt[3]->deactivate();
   }
   else {
     butt[1]->activate();
-    if(CTX::instance()->clipWholeElements)
+    if(CTX::instance()->clipWholeElements) {
       butt[2]->activate();
-    else
+      butt[3]->activate();
+    }
+    else {
       butt[2]->deactivate();
+      butt[3]->deactivate();
+    }
   }
 }
 
