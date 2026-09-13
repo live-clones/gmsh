@@ -811,7 +811,7 @@ endif()
 
 if(HAVE_FLTK AND ENABLE_CAIRO)
   find_library(CAIRO_LIB cairo)
-  find_path(CAIRO_INC "cairo/cairo.h" PATH_SUFFIXES include)
+  find_path(CAIRO_INC "cairo.h" PATH_SUFFIXES include include/cairo)
   if(CAIRO_INC AND CAIRO_LIB)
      set_config_option(HAVE_CAIRO "Cairo")
      list(APPEND EXTERNAL_LIBRARIES ${CAIRO_LIB})
