@@ -70,7 +70,8 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
   int nbIso = std::max(1, opt->nbIso);
   char str[128];
 
-  if(min > max || opt->intervalsType == PViewOptions::Continuous) {
+  if(min > max || (defaultFormat &&
+                   opt->intervalsType == PViewOptions::Continuous)) {
     // a range given the other way round shows nothing: only its two ends,
     // which is what an axis over it comes down to
     if(linear || min > max) {
@@ -80,9 +81,14 @@ static void scaleTicks(PViewOptions *opt, double min, double max,
     }
   }
 
+  // A format of the user's own labels a continuous scale the way it labels
+  // filled iso-values, at the boundaries of the bands the map would be cut
+  // into (as the scales always did before the automatic labels): the round
+  // numbers are the automatic format's business.
   if(opt->intervalsType == PViewOptions::Iso ||
      opt->intervalsType == PViewOptions::Discrete ||
-     opt->intervalsType == PViewOptions::Numeric) {
+     opt->intervalsType == PViewOptions::Numeric ||
+     (!defaultFormat && opt->intervalsType == PViewOptions::Continuous)) {
     bool iso = (opt->intervalsType == PViewOptions::Iso);
     int n = iso ? nbIso : nbIso + 1;
     int exp = 0, decimals = 0;
