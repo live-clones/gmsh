@@ -127,6 +127,9 @@ private:
   bool _studioTimer;
   double _frameView[16], _studioModel[16];
   int _studioW, _studioH;
+  bool _again = false;
+  // the studio frames the last draw of a print accumulated, all of them or 0
+  int _studioPrinted = 0;
   // the size (pixels) of the picture being drawn instead of the window, or
   // 0, and its pixels per unit of the drawing (the window's, times the
   // supersampling)
@@ -195,6 +198,10 @@ public:
                     std::vector<MElement *> &elements,
                     std::vector<SPoint2> &points, std::vector<PView *> &views);
   static openglWindow *getLastHandled() { return _lastHandled; }
+  // the next draw is the same picture as the last one (see
+  // PixelBuffer::fill): the studio frames that one accumulated are put back
+  // rather than drawn again
+  void setAgain(bool again) { _again = again; }
   static void setLastHandled(openglWindow *w) { _lastHandled = w; }
   void drawTooltip(const std::string &text);
   double frequency;

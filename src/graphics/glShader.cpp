@@ -1330,6 +1330,37 @@ void main()
     return true;
   }
 
+  bool showAccumulation(int width, int height, int count)
+  {
+    if(count < 1 || !ensure() || !_accFbo || _accWidth != width ||
+       _accHeight != height || !buildBlit())
+      return false;
+    GLint vp[4];
+    GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
+    GLboolean wasBlend = glIsEnabled(GL_BLEND);
+    glGetIntegerv(GL_VIEWPORT, vp);
+    glViewport(0, 0, width, height);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glApi::UseProgram(_blitProgram);
+    glApi::BindVertexArray(_vao);
+    for(int i = ATTRIB_VERTEX; i <= ATTRIB_COLORB; i++)
+      glApi::DisableVertexAttribArray(i);
+    glApi::ActiveTexture(GL_TEXTURE0);
+    glApi::Uniform1i(_uBlitTex, 0);
+    glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
+    glBindTexture(GL_TEXTURE_2D, _accTex);
+    glApi::Uniform1f(_uBlitScale, 1.f / count);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glViewport(vp[0], vp[1], vp[2], vp[3]);
+    if(wasDepth) glEnable(GL_DEPTH_TEST);
+    if(wasBlend) glEnable(GL_BLEND);
+    glApi::UseProgram(_program);
+    glApi::BindVertexArray(_vao);
+    noTexture();
+    return true;
+  }
+
   namespace {
     bool buildFire()
     {

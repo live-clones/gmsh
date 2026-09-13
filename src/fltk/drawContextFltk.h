@@ -48,14 +48,16 @@ public:
     }
     FlGui::check(rateLimited);
   }
-  void drawCurrentOpenglWindow(bool make_current)
+  void drawCurrentOpenglWindow(bool make_current, bool again = false)
   {
     if(!FlGui::available()) return;
     openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(make_current) gl->make_current();
+    gl->setAgain(again);
     gl->redraw();
     glFlush();
     FlGui::check();
+    gl->setAgain(false);
   }
   int getFontIndex(const char *fontname)
   {
