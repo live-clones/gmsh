@@ -232,6 +232,26 @@ inline void gmshPolygonFill(bool fill)
   if(gmshUseShaders()) gmshFlushImmediate();
   glPolygonMode(GL_FRONT_AND_BACK, fill ? GL_FILL : GL_LINE);
 }
+
+// The depth test, and whether it writes. What is waiting was collected to be
+// drawn the way it was when it was collected: turning the test off with
+// glDisable() alone leaves the queue for later, under whatever state is in
+// force then, which is how the background gradient came to write its depth
+// over the whole window, where a pass reading the depth afterwards took it
+// for the model.
+inline void gmshDepthTest(bool on)
+{
+  if(gmshUseShaders()) gmshFlushImmediate();
+  if(on)
+    glEnable(GL_DEPTH_TEST);
+  else
+    glDisable(GL_DEPTH_TEST);
+}
+inline void gmshDepthMask(bool on)
+{
+  if(gmshUseShaders()) gmshFlushImmediate();
+  glDepthMask(on ? GL_TRUE : GL_FALSE);
+}
 inline bool gmshPolygonFilled()
 {
   // a compatibility profile answers with two values (front and back), a
