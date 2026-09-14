@@ -801,10 +801,6 @@ namespace Dialog {
 #endif
 
       Field num = integer("Number of Partitions", &v.num);
-      // as in the FLTK dialog, the count picks the algorithm for you
-      num.changed = []() {
-        partitionStore().algorithm = (partitionStore().num <= 8) ? 1 : 2;
-      };
 
       p.panes.push_back(ruled(pane(
         "", {who, beside(num), check("Create partition topology", &v.topology),

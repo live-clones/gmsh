@@ -377,7 +377,7 @@ namespace Dialog {
   const char *const _c_curveType[] = {"Color segment", "3D cylinder",  nullptr};
   const char *const _c_surfaceType[] = {"Cross", "Wireframe", "Solid",  nullptr};
   const char *const _c_volumeType[] = {"Sphere", "Diamond",  nullptr};
-  const char *const _c_algorithm[] = {"Automatic", "MeshAdapt", "Delaunay", "Frontal-Delaunay", "BAMG (experimental)", "Frontal-Delaunay for Quads (experimental)", "Packing of parallelograms (experimental)", "Quasi-Structured Quad (experimental)", "Initial Mesh Only (no node insertion)", "Frontal-Delaunay Optimized (experimental)",  nullptr};
+  const char *const _c_algorithm[] = {"Automatic", "MeshAdapt", "Delaunay", "Frontal-Delaunay", "BAMG (experimental)", "Frontal-Delaunay for Quads (experimental)", "Packing of parallelograms (experimental)", "Quasi-Structured Quad (experimental)", "Initial Mesh Only (no node insertion)",  nullptr};
   const char *const _c_algorithm3D[] = {"Delaunay", "Frontal", "HXT (experimental)", "MMG3D (experimental, single volume only)", "Initial Mesh Only (no node insertion)",  nullptr};
   const char *const _c_recombinationAlgorithm[] = {"Simple", "Blossom", "Simple Full-Quad", "Blossom Full-Quad", "Christos's bipartite labelling",  nullptr};
   const char *const _c_subdivisionAlgorithm[] = {"None", "All Quads", "All Hexas",  nullptr};
@@ -410,7 +410,7 @@ namespace Dialog {
   const double _v_orthographic[] = {1., 0.};
   // the scale of a view is one, two or three, not zero, one or two
   const double _v_scaleType[] = {1., 2., 3.};
-  const double _v_algorithm[] = {2., 1., 5., 6., 7., 8., 9., 11., 3., 12.};
+  const double _v_algorithm[] = {2., 1., 5., 6., 7., 8., 9., 11., 3.};
   const double _v_algorithm3D[] = {1., 4., 10., 7., 3.};
 
   // the switches a menu button gathers, as the window this reproduces does

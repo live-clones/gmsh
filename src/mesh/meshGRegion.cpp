@@ -25,6 +25,7 @@
 #include "discreteEdge.h"
 #include "MLine.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
