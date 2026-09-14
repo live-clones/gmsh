@@ -7,6 +7,7 @@
 #include <string.h>
 #include <FL/Fl_Tooltip.H>
 #include "openglWindow.h"
+#include <FL/fl_draw.H>
 #include "drawContextFltkStringTexture.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
@@ -87,6 +88,37 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
   drawContext::global()->draw();
   FlGui::instance()->manip->update();
 }
+
+
+#if defined(NEW_TOOLTIPS)
+
+void tooltipWindow::draw()
+{
+  draw_box(FL_BORDER_BOX, 0, 0, w(), h(), Fl_Tooltip::color());
+  fl_color(Fl_Tooltip::textcolor());
+  fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
+  int X = Fl_Tooltip::margin_width();
+  int Y = Fl_Tooltip::margin_height();
+  int W = w() - (Fl_Tooltip::margin_width() * 2);
+  int H = h() - (Fl_Tooltip::margin_height() * 2);
+  fl_draw(_text, X, Y, W, H, Fl_Align(FL_ALIGN_LEFT | FL_ALIGN_WRAP), 0, 1);
+}
+
+void tooltipWindow::value(const std::string &s)
+{
+  strncpy(_text, s.c_str(), 1023);
+  _text[1023] = '\0';
+  fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
+  int ww = Fl_Tooltip::wrap_width();
+  int hh = 0;
+  fl_measure(_text, ww, hh, 1);
+  ww += (Fl_Tooltip::margin_width() * 2);
+  hh += (Fl_Tooltip::margin_height() * 2);
+  size(ww, hh);
+  redraw();
+}
+
+#endif
 
 int openglWindowMode()
 {
