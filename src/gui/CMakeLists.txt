@@ -6,6 +6,7 @@
 set(SRC
   Backend.cpp
   Form.cpp
+  Layout.cpp
   Menu.cpp
 )
 
