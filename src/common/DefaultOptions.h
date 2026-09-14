@@ -785,6 +785,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0: perspective projection)" },
 
+  { F|O, "Phlogiston" , opt_general_phlogiston , 1. ,
+    "Phlogiston (0: none)" },
   { F|S, "PluginPositionX" , opt_general_plugin_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the plugin "
     "window" },

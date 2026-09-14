@@ -3035,6 +3035,12 @@ double opt_general_studio_floor_offset(OPT_ARGS_NUM)
   return CTX::instance()->studioFloorOffset;
 }
 
+double opt_general_phlogiston(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->phlogiston = (int)val;
+  return CTX::instance()->phlogiston;
+}
+
 double opt_general_studio_samples(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->studioSamples = (int)val;
