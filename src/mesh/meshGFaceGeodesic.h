@@ -178,17 +178,13 @@ struct HEdgeItem {
   HEdgeItem(PolyMesh::HalfEdge *hedge, double l) : he(hedge), adimLength(l) {}
   bool operator<(const HEdgeItem &other) const
   {
-    return adimLength < other.adimLength;
+    return adimLength < other.adimLength ||
+           (adimLength == other.adimLength && he < other.he);
   }
   bool operator>(const HEdgeItem &other) const
   {
-    return adimLength > other.adimLength;
-  }
-  bool operator==(const HEdgeItem &other) const
-  {
-    return (
-      he == other.he ||
-      (he->opposite && he->opposite == other.he)); // if edges are undirected
+    return adimLength > other.adimLength ||
+           (adimLength == other.adimLength && he > other.he);
   }
 };
 
@@ -199,15 +195,8 @@ struct TriangleItem {
   TriangleItem(int i, double q) : index(i), quality(q) {}
   bool operator<(const TriangleItem &other) const
   {
-    return quality < other.quality;
-  }
-  bool operator>(const TriangleItem &other) const
-  {
-    return quality > other.quality;
-  }
-  bool operator==(const TriangleItem &other) const
-  {
-    return index == other.index;
+    return quality < other.quality ||
+           (quality == other.quality && index < other.index);
   }
 };
 
@@ -508,6 +497,7 @@ public:
                               const double *, const size_t)>
     triangleQualityPtr;
   unsigned iteration_loop;
+  std::vector<double> triangleQualities;
 
   PathView cachedIntersectionPath = PathView();
   std::vector<geodesic::Vertex *> cachedIntersectionVertices;
@@ -516,6 +506,9 @@ public:
   std::chrono::duration<double> timer_geodesic_propagation{0};
   std::chrono::duration<double> timer_geodesic_trace_back{0};
   std::chrono::duration<double> timer_circumcenter{0};
+
+  unsigned _nbr_failed_circumcenter = 0;
+  unsigned _nbr_not_found_split_triangle = 0;
 
   highOrderPolyMesh(PolyMesh *pm, std::vector<size_t> &tris);
   highOrderPolyMesh(PolyMesh *pm);
@@ -608,15 +601,18 @@ public:
 
   bool splitEdge(PolyMesh::HalfEdge *he, std::vector<HEdgeItem> &removedEdges,
                  std::vector<HEdgeItem> &adjacentEdges,
-                 bool check_quality = true);
+                 bool check_quality = true, bool swap = true);
   int splitEdges();
 
   int findTriangleToSplit(int circumindex, int t);
   void replaceCavity(std::vector<size_t> &cavity, std::vector<size_t> &newTris);
   bool doSplitTriangle(size_t circumindex, std::vector<size_t> &cavity,
                        std::vector<size_t> &newTris);
-  bool splitTriangle(int iTriangle, std::vector<TriangleItem> removedTriangles,
+  bool splitTriangle(int iTriangle, std::vector<TriangleItem> &removedTriangles,
                      std::vector<TriangleItem> &adjacentTriangles);
+  bool splitTriangleLongestEdge(int iTriangle,
+                                std::vector<TriangleItem> &removedTriangles,
+                                std::vector<TriangleItem> &adjacentTriangles);
   int splitTriangles();
 
   bool collapseEdge(PolyMesh::HalfEdge *he,

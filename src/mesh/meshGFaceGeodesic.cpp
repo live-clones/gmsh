@@ -19,6 +19,7 @@
 #include <map>
 #include <ostream>
 #include <random>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -34,14 +35,15 @@
 #include "geodesic_mesh_elements.h"
 
 #define DEBUG false
-#define PRINT false
-#define PRINT_COLORED false
-#define WARNING false
+#define PRINT true
+#define PRINT_COLORED true
+#define NO_WRITE true
+#define WARNING true
 #define PRINT_STEP ((size_t)1e5)
 #define PRINT_STEP_SWAP ((size_t)1e6)
 #define ASTAR true
 #define EPS 1e-8
-#define CIRCUMMULT 5
+#define CIRCUMMULT 1e100
 #define HEURISTIC_SWAP true
 #define SPLIT_IF_CANT_SWAP true
 
@@ -556,6 +558,7 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
   if(p0.type() == geodesic::FACE) {
     geodesic::Face *f = static_cast<geodesic::Face *>(p0.base_element());
     double angle = computeAngleOnFace(p0, p1, p2, f);
+    if(abs(angle) < 1e-12) angle = 0;
     if(angle < 0.0) angle += 2 * M_PI;
     return angle;
   }
@@ -569,6 +572,7 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
     double angle = computeAngleOnFace(p0, p1, sp, f);
     f = (onFace(p2, fs[0])) ? fs[0] : fs[1];
     angle -= computeAngleOnFace(p0, p2, sp, f);
+    if(abs(angle) < 1e-12) angle = 0;
     if(angle < 0.0) angle += 2 * M_PI;
     return angle;
   }
@@ -597,6 +601,7 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
 
     if(f1 == f2) {
       double angle = computeAngleOnFace(p0, p1, p2, f1);
+      if(abs(angle) < 1e-12) angle = 0;
       if(angle < 0.0) angle += 2 * M_PI;
       if(angle < M_PI) { return angle; }
     }
@@ -620,6 +625,7 @@ double highOrderPolyMesh::computeIntrinsicAngle(geodesic::SurfacePoint &p0,
 
     sp = geodesic::SurfacePoint(v1);
     double tmp = computeAngleOnFace(p0, sp, p2, f);
+    if(abs(tmp) < 1e-12) tmp = 0;
     if(tmp < 0.0) tmp += 2 * M_PI;
     angle += tmp;
     return angle;
@@ -1327,6 +1333,7 @@ void highOrderPolyMesh::createCircumcenter(
   if(circumcenter.type() == geodesic::UNDEFINED_POINT) {
     if(WARNING) Msg::Warning(("Could not find circumcenter"));
     circumradius = geodesic::GEODESIC_INF;
+    ++_nbr_failed_circumcenter;
   }
   if(isnan(circumradius)) Msg::Error("The computed circumradius is NaN");
 }
@@ -1387,6 +1394,10 @@ void highOrderPolyMesh::getCircumcenter(std::array<int, 3> &tri,
       Msg::Error("The circumcenter does not exist");
     return;
   }
+  if(tri[0] == tri[1] || tri[1] == tri[2] || tri[2] == tri[0])
+    throw std::runtime_error(
+      "Searching circumcenter of same points " + std::to_string(tri[0]) + " " +
+      std::to_string(tri[1]) + " " + std::to_string(tri[2]));
   std::vector<geodesic::SurfacePoint> pts = {
     pointsPool[tri[0]], pointsPool[tri[1]], pointsPool[tri[2]]};
   double d = 0.;
@@ -1738,14 +1749,10 @@ bool highOrderPolyMesh::swapEdge(
   if(q < 0.) canSwap = false;
 
   if(!canSwap) {
-    if(WARNING)
-      Msg::Warning("Should be swapped but could not: %d %d", edge.first,
-                   edge.second);
-
     if(split_if_cant_swap) {
       std::vector<HEdgeItem> removedEdges, adjacentEdgeItems;
       // Try split edge
-      if(splitEdge(he, removedEdges, adjacentEdgeItems, false)) {
+      if(splitEdge(he, removedEdges, adjacentEdgeItems, false, false)) {
         adjacentEdges.clear();
         for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
         return true;
@@ -1772,11 +1779,13 @@ bool highOrderPolyMesh::swapEdge(
         for(auto kv : adjacentEdgeItems) adjacentEdges.push_back(kv.he);
       }
       if(s0 || s1 || s2 || s3) return true;
-
       if(WARNING)
         Msg::Warning("Could not split an edge that should be swapped");
     }
 
+    // if(WARNING)
+    //   Msg::Warning("Should be swapped but could not: %d %d", edge.first,
+    //                edge.second);
     return false;
   }
 
@@ -1818,9 +1827,10 @@ bool highOrderPolyMesh::doWeSwapAngleHeuristic(std::pair<int, int> &edge,
   double after = computeIntrinsicAngle(borders[0], borders[3]) +
                  computeIntrinsicAngle(borders[2], borders[1]);
 
-  if(abs(before - after) < 1e-6) {
-    return std::min(edge.first, edge.second) >
-           std::min(oppEdge.first, oppEdge.second);
+  if(abs(before - after) < 1e-12) {
+    return false;
+    // return std::min(edge.first, edge.second) >
+    //        std::min(oppEdge.first, oppEdge.second);
   }
   return before > after;
 }
@@ -1841,14 +1851,14 @@ bool highOrderPolyMesh::canWeSwap(std::pair<int, int> &edge,
   PathView p01, p23;
   getGeodesicPath(edge.first, edge.second, p01);
   getGeodesicPath(oppEdge.first, oppEdge.second, p23);
-  if(!intersectGeodesicPath(p23, p01)) return false;
+  if(!intersectGeodesicPath(p23, p01)) { return false; }
 
   std::vector<std::pair<size_t, size_t>> newEdges = {oppEdge}, borderEdges(4);
   borderEdges[0] = {edge.first, oppEdge.second};
   borderEdges[1] = {oppEdge.second, edge.second};
   borderEdges[2] = {edge.second, oppEdge.first};
   borderEdges[3] = {oppEdge.first, edge.first};
-  if(intersectNewEdges(newEdges, borderEdges)) return false;
+  if(intersectNewEdges(newEdges, borderEdges)) { return false; }
 
   return true;
 }
@@ -2007,7 +2017,9 @@ int highOrderPolyMesh::swapEdges(bool heuristic, bool split_if_cant_swap)
     updated[he->data] = false;
 
     std::vector<PolyMesh::HalfEdge *> adjacentEdges;
-    if(!swapEdge(he, adjacentEdges, heuristic, split_if_cant_swap)) continue;
+    if(!swapEdge(he, adjacentEdges, heuristic, split_if_cant_swap)) {
+      continue;
+    }
     ++count;
 
     if(updated.size() < ipm->hedges.size())
@@ -2035,7 +2047,7 @@ int highOrderPolyMesh::swapEdges(bool heuristic, bool split_if_cant_swap)
 bool highOrderPolyMesh::splitEdge(PolyMesh::HalfEdge *he,
                                   std::vector<HEdgeItem> &removedEdges,
                                   std::vector<HEdgeItem> &adjacentEdges,
-                                  bool check_quality)
+                                  bool check_quality, bool swap)
 {
   size_t nPointBefore = pointsPool.size();
   std::pair<int, int> edge = {he->v->data, he->next->v->data};
@@ -2105,16 +2117,19 @@ bool highOrderPolyMesh::splitEdge(PolyMesh::HalfEdge *he,
     return false;
   }
 
-  bool result = symbolicSwapEdges(newTriangles, cavity, true, true);
-  if(!result) {
-    if(WARNING)
-      Msg::Warning("Could not split edge %d %d: symbolic swap was not possible",
-                   edge.first, edge.second);
-    for(int i = nPointBefore; i < pointsPool.size(); ++i) {
-      if(pointsPool.type(i) != PointType::Vertex) continue;
-      pointsPool.remove(i);
+  if(swap) {
+    bool result = symbolicSwapEdges(newTriangles, cavity, true, true);
+    if(!result) {
+      if(WARNING)
+        Msg::Warning(
+          "Could not split edge %d %d: symbolic swap was not possible",
+          edge.first, edge.second);
+      for(int i = nPointBefore; i < pointsPool.size(); ++i) {
+        if(pointsPool.type(i) != PointType::Vertex) continue;
+        pointsPool.remove(i);
+      }
+      return false;
     }
-    return false;
   }
 
   if(check_quality) {
@@ -2829,12 +2844,13 @@ int highOrderPolyMesh::collapseEdges()
 
 int highOrderPolyMesh::findTriangleToSplit(int circumindex, int t)
 {
-  constexpr double eps = 0;
+  constexpr double eps = 1e-12;
+  // constexpr double eps = 0;
   PathView borderPaths[3], newPaths[3];
   double angles[3];
 
   size_t counter = 0;
-  constexpr size_t MAX_COUNTER = 1e4;
+  constexpr size_t MAX_COUNTER = 1e6;
   while(++counter < MAX_COUNTER) {
     auto he = ipm->faces[t]->he;
     for(int j = 0; j < 3; ++j, he = he->next) {
@@ -2848,6 +2864,8 @@ int highOrderPolyMesh::findTriangleToSplit(int circumindex, int t)
         computeIntrinsicAngle(borderPaths[j], borderPaths[(j + 2) % 3]);
       angles[j] -= computeIntrinsicAngle(newPaths[j], borderPaths[(j + 2) % 3]);
     }
+    // std::cout << " " << angles[0] << " " << angles[1] << " " << angles[2]
+    //           << "\n";
 
     // Point inside triangle
     if(angles[0] > -eps && angles[1] > -eps && angles[2] > -eps) return t;
@@ -3037,6 +3055,7 @@ bool highOrderPolyMesh::symbolicSwapEdges(std::vector<size_t> &newTriangles,
       borderEdges[3] = {oppEdge.first, edge.first};
       bool intersect = intersectNewEdges(newEdges, borderEdges);
       if(intersect) {
+        if(WARNING) Msg::Warning("Could not split due to intersections");
         possible = false;
         break;
       }
@@ -3269,7 +3288,7 @@ bool highOrderPolyMesh::doSplitTriangle(size_t circumindex,
 }
 
 bool highOrderPolyMesh::splitTriangle(
-  int iTriangle, std::vector<TriangleItem> removedTriangles,
+  int iTriangle, std::vector<TriangleItem> &removedTriangles,
   std::vector<TriangleItem> &adjacentTriangles)
 {
   double radius;
@@ -3293,6 +3312,16 @@ bool highOrderPolyMesh::splitTriangle(
   int triangleToSplit = findTriangleToSplit(circumindex, iTriangle);
   if(triangleToSplit == -1) {
     if(WARNING) Msg::Warning("Could not find triangle to split");
+    ++_nbr_not_found_split_triangle;
+    // {
+    //   printGeodesics("not_found.pos");
+    //   printGeodesic("not_found_0", circumindex,
+    //                 ipm->faces[iTriangle]->he->v->data);
+    //   printGeodesic("not_found_1", circumindex,
+    //                 ipm->faces[iTriangle]->he->next->v->data);
+    //   printGeodesic("not_found_2", circumindex,
+    //                 ipm->faces[iTriangle]->he->next->next->v->data);
+    // }
     return false;
   }
 
@@ -3308,45 +3337,77 @@ bool highOrderPolyMesh::splitTriangle(
                                       (size_t)he->v->data,
                                       circumindex};
 
-  std::vector<std::pair<size_t, size_t>> newEdges(3), borderEdges(3);
-  for(int i = 0; i < 3; ++i, he = he->next) {
-    borderEdges[i] = {he->v->data, he->next->v->data};
-    newEdges[i] = {he->v->data, circumindex};
-  }
+  // Rather split edge in two
+  {
+    PathView borderPaths[3], newPaths[3];
+    auto he = ipm->faces[triangleToSplit]->he;
+    for(int j = 0; j < 3; ++j, he = he->next) {
+      size_t i0 = he->v->data, i1 = he->next->v->data;
+      getGeodesicPath(i0, i1, borderPaths[j]);
+      getGeodesicPath(i0, circumindex, newPaths[j]);
+    }
 
-  // Check intersections
-  bool intersect = intersectNewEdges(newEdges, borderEdges);
-  if(intersect) {
-    // Split edge instead of triangle
-    int i = 0;
-    for(; i < 3; ++i, he = he->next) {
+    for(int j = 0; j < 3; ++j, he = he->next) {
+      double angle =
+        computeIntrinsicAngle(borderPaths[j], borderPaths[(j + 2) % 3]);
+      angle -= computeIntrinsicAngle(newPaths[j], borderPaths[(j + 2) % 3]);
+      if(angle > 1e-12) continue;
+
       if(!he->opposite) {
         Msg::Error("No implementation for triangle split on the boundary");
       }
       PolyMesh::HalfEdge *ohe = he->opposite;
-
-      std::pair<int, int> e = {he->v->data, he->next->v->data};
       cavity = {(size_t)he->f->data, (size_t)ohe->f->data};
       size_t is[4] = {(size_t)he->v->data, (size_t)ohe->v->data,
                       (size_t)he->next->next->v->data,
                       (size_t)ohe->next->next->v->data};
       newTriangles = {circumindex, is[2], is[0], circumindex, is[1], is[2],
                       circumindex, is[0], is[3], circumindex, is[3], is[1]};
-      newEdges = {{circumindex, is[0]},
-                  {circumindex, is[1]},
-                  {circumindex, is[2]},
-                  {circumindex, is[3]}};
-      borderEdges = {
-        {is[0], is[3]}, {is[3], is[1]}, {is[1], is[2]}, {is[2], is[0]}};
-      intersect = intersectNewEdges(newEdges, borderEdges);
-      if(!intersect) break;
+      break;
     }
-    if(i == 3) {
-      if(WARNING)
-        Msg::Warning("Could not split triangle: intersection between new edges "
-                     "and/or border edges");
-      return false;
-    }
+  }
+
+  std::vector<std::pair<size_t, size_t>> newEdges, borderEdges;
+  getBorder(newTriangles, borderEdges, newEdges);
+
+  // Check intersections
+  bool intersect = intersectNewEdges(newEdges, borderEdges);
+  if(intersect) {
+    // // Split edge instead of triangle
+    // int i = 0;
+    // for(; i < 3; ++i, he = he->next) {
+    //   if(!he->opposite) {
+    //     Msg::Error("No implementation for triangle split on the boundary");
+    //   }
+    //   PolyMesh::HalfEdge *ohe = he->opposite;
+    //
+    //   std::pair<int, int> e = {he->v->data, he->next->v->data};
+    //   cavity = {(size_t)he->f->data, (size_t)ohe->f->data};
+    //   size_t is[4] = {(size_t)he->v->data, (size_t)ohe->v->data,
+    //                   (size_t)he->next->next->v->data,
+    //                   (size_t)ohe->next->next->v->data};
+    //   newTriangles = {circumindex, is[2], is[0], circumindex, is[1], is[2],
+    //                   circumindex, is[0], is[3], circumindex, is[3], is[1]};
+    //   newEdges = {{circumindex, is[0]},
+    //               {circumindex, is[1]},
+    //               {circumindex, is[2]},
+    //               {circumindex, is[3]}};
+    //   borderEdges = {
+    //     {is[0], is[3]}, {is[3], is[1]}, {is[1], is[2]}, {is[2], is[0]}};
+    //   intersect = intersectNewEdges(newEdges, borderEdges);
+    //   if(!intersect) break;
+    // }
+    // if(i == 3) {
+    //   if(WARNING)
+    //     Msg::Warning("Could not split triangle: intersection between new
+    //     edges "
+    //                  "and/or border edges");
+    //   return false;
+    // }
+    if(WARNING)
+      Msg::Warning("Could not split triangle: intersection between new edges "
+                   "and/or border edges");
+    return false;
   }
 
   size_t nPointBefore = pointsPool.size();
@@ -3374,19 +3435,19 @@ bool highOrderPolyMesh::splitTriangle(
     oldTriangles[3 * i + 1] = he->next->v->data;
     oldTriangles[3 * i + 2] = he->next->next->v->data;
   }
-  double qualityBefore = getQuality(oldTriangles);
-
-  double qualityAfter = getQuality(newTriangles);
-
-  if(qualityAfter < 0. && qualityAfter - qualityBefore < EPS) {
-    if(WARNING)
-      Msg::Warning("Quality does not improve after splitting the triangle");
-    for(int i = nPointBefore; i < pointsPool.size(); ++i) {
-      if(pointsPool.type(i) != PointType::Vertex) continue;
-      pointsPool.remove(i);
-    }
-    return false;
-  }
+  // double qualityBefore = getQuality(oldTriangles);
+  //
+  // double qualityAfter = getQuality(newTriangles);
+  //
+  // if(qualityAfter < 0. && qualityAfter - qualityBefore < EPS) {
+  //   if(WARNING)
+  //     Msg::Warning("Quality does not improve after splitting the triangle");
+  //   for(int i = nPointBefore; i < pointsPool.size(); ++i) {
+  //     if(pointsPool.type(i) != PointType::Vertex) continue;
+  //     pointsPool.remove(i);
+  //   }
+  //   return false;
+  // }
 
   // Split Triangle
 
@@ -3414,14 +3475,68 @@ bool highOrderPolyMesh::splitTriangle(
   return true;
 }
 
+bool highOrderPolyMesh::splitTriangleLongestEdge(
+  int iTriangle, std::vector<TriangleItem> &removedTriangles,
+  std::vector<TriangleItem> &adjacentTriangles)
+{
+  removedTriangles.clear();
+  adjacentTriangles.clear();
+
+  auto he = ipm->faces[iTriangle]->he;
+  auto longest = he;
+  double longestLength = length(he);
+
+  for(int j = 1; j < 3; ++j) {
+    he = he->next;
+    double l = length(he);
+    if(l > longestLength) {
+      longest = he;
+      longestLength = l;
+    }
+  }
+
+  // replaceCavity currently assumes a closed mesh.
+  if(!longest->opposite || !std::isfinite(longestLength) || longestLength <= 0.)
+    return false;
+
+  auto triangleItem = [&](PolyMesh::Face *f) {
+    auto h = f->he;
+    size_t tri[3] = {(size_t)h->v->data, (size_t)h->next->v->data,
+                     (size_t)h->next->next->v->data};
+    return TriangleItem(f->data, getTriangleQuality(tri));
+  };
+
+  // Capture old qualities before splitEdge reuses the faces.
+  removedTriangles.push_back(triangleItem(longest->f));
+  removedTriangles.push_back(triangleItem(longest->opposite->f));
+
+  std::vector<HEdgeItem> removedEdges, adjacentEdges;
+  if(!splitEdge(longest, removedEdges, adjacentEdges, false, false)) {
+    removedTriangles.clear();
+    return false;
+  }
+
+  // Each new face appears once per halfedge: deduplicate by index.
+  std::set<int> seen;
+  for(const auto &edge : adjacentEdges) {
+    auto f = edge.he->f;
+    if(seen.insert(f->data).second)
+      adjacentTriangles.push_back(triangleItem(f));
+  }
+
+  return true;
+}
+
 int highOrderPolyMesh::splitTriangles()
 {
-  std::set<TriangleItem, std::less<TriangleItem>> queue;
+  triangleQualities.assign(ipm->faces.size(), -1);
+  std::set<TriangleItem> queue;
   for(size_t i = 0; i < ipm->faces.size(); ++i) {
     auto he = ipm->faces[i]->he;
     size_t tri[3] = {(size_t)he->v->data, (size_t)he->next->v->data,
                      (size_t)he->next->next->v->data};
     double q = getTriangleQuality(tri);
+    triangleQualities[i] = q;
 
     if(q < 0.) queue.insert(TriangleItem(i, q));
   }
@@ -3435,15 +3550,38 @@ int highOrderPolyMesh::splitTriangles()
     }
 
     TriangleItem item = *queue.begin();
+    // std::cout << item.quality << " " << ipm->faces[item.index]->he->v->data
+    //           << " " << ipm->faces[item.index]->he->next->v->data << " "
+    //           << ipm->faces[item.index]->he->next->next->v->data << " " <<
+    //           "\n";
+    if(item.quality != triangleQualities[item.index] || item.quality >= 0)
+      throw std::runtime_error("NOT CORRECT QUALITY");
     queue.erase(queue.begin());
     std::vector<TriangleItem> removedTriangles, adjacentTriangles;
 
     if(splitTriangle(item.index, removedTriangles, adjacentTriangles)) {
+      // if(splitTriangle(item.index, removedTriangles, adjacentTriangles) ||
+      //    splitTriangleLongestEdge(item.index, removedTriangles,
+      //                             adjacentTriangles)) {
       ++count;
+      if(count >= 13060 && count <= 13110 && count % 1 == 0)
+        saveIsoTriangles(count, pointsPool, ipm);
 
-      for(auto item : removedTriangles) queue.erase(item);
+      // if(count == 13081) throw std::runtime_error("stop");
+
+      triangleQualities.resize(ipm->faces.size(), -1);
+      for(auto item : removedTriangles) {
+        item.quality = triangleQualities[item.index];
+        queue.erase(item);
+      }
 
       for(auto item : adjacentTriangles) {
+        PolyMesh::HalfEdge *he = ipm->faces[item.index]->he;
+        size_t tri[3] = {(size_t)he->v->data, (size_t)he->next->v->data,
+                         (size_t)he->next->next->v->data};
+        double q = getTriangleQuality(tri);
+        triangleQualities[item.index] = q;
+        item.quality = q;
         if(item.quality < 0.) queue.insert(item);
       }
     }
@@ -4030,6 +4168,8 @@ highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices)
 void highOrderPolyMesh::write(GModel *gm, PolyMesh *pm_new,
                               std::vector<PolyMesh::Vertex *> &pointVertices)
 {
+  if(NO_WRITE) return;
+
   std::ofstream posFile("elements.pos");
   if(posFile.is_open()) {
     posFile << "View \"intrinsicElements\" {\n";
@@ -4458,7 +4598,7 @@ void highOrderPolyMesh::write(GModel *gm, PolyMesh *pm_new,
 void saveIsoTriangles(int num, TypedPoints &points, PolyMesh *ipm)
 {
   char name[256];
-  snprintf(name, sizeof(name), "isoTriangle%d.pos", num);
+  snprintf(name, sizeof(name), "isoTriangle_%05d.pos", num);
   std::ofstream f(name);
   if(!f) Msg::Error("Failed to open file: %s", name);
   f << "View \"P\"{\n";
@@ -4653,8 +4793,9 @@ void highOrderPolyMesh::meshAdapt(int niter)
 
   if(niter >= 0) {
     nbrSwap = swapEdges(HEURISTIC_SWAP, false);
-    nbrSwap += swapEdges(HEURISTIC_SWAP);
-
+    Msg::Info("Number of edge swaps (before): \t%d\tTriangles: %d", nbrSwap,
+              ipm->faces.size());
+    nbrSwap += swapEdges(HEURISTIC_SWAP, true);
     Msg::Info("Number of edge swaps: \t%d\tTriangles: %d", nbrSwap,
               ipm->faces.size());
 
@@ -4711,7 +4852,7 @@ void highOrderPolyMesh::meshAdapt(int niter)
     Msg::Info("Did not converged after %d iterations", i);
   }
 
-  createGeodesics();
+  // createGeodesics();
   if(PRINT) {
     printGeodesics("geodesics_adapted.pos");
     saveIsoTriangles(printIndex++, pointsPool, ipm);
@@ -4954,6 +5095,10 @@ int makeMeshGeodesic(GModel *gm)
   Msg::Info("Mean area triangle: %g", meanA);
   Msg::Info("Max area triangle: %g", maxA);
   Msg::Info("Nbr areas less than %g: %d", zeroAreaMax, nbrZeroArea);
+  Msg::Info("Nbr of failed circumcenter searchs: %d",
+            hop._nbr_failed_circumcenter);
+  Msg::Info("Nbr of not found triangle to split: %d",
+            hop._nbr_not_found_split_triangle);
 
   int diffEd = nbrEdgeGreaterThanMax + nbrEdgeLessThanMin;
   if(diffEd == 0)

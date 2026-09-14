@@ -102,6 +102,17 @@ namespace geodesic {
         return;
       }
 
+      // std::cout << sources[0].distance(&sources[1]) << "\n";
+      // std::cout << sources[1].distance(&sources[2]) << "\n";
+      // std::cout << sources[2].distance(&sources[0]) << "\n";
+      // if(abs(sources[0].distance(&sources[1])) < 1e-5 ||
+      //    abs(sources[0].distance(&sources[2])) < 1e-5 ||
+      //    abs(sources[1].distance(&sources[2])) < 1e-5) {
+      //   std::cerr << "Error: sources are too close to each other !"
+      //             << std::endl;
+      //   return;
+      // }
+
       // std::cout << sources[0].base_element()->id() << " "
       //           << sources[1].base_element()->id() << " "
       //           << sources[2].base_element()->id() << std::endl;
@@ -114,6 +125,7 @@ namespace geodesic {
 
       // m_circumradius = circumradius;
       // m_circumcenter = SurfacePoint(nullptr, 0., 0., 0., UNDEFINED_POINT);
+      // std::cout << "---------------" << std::endl;
       propagate(sources, min_propagation_distance, nullptr, FINDCIRCUMCENTER);
 
       // if(m_circumcenter.type() == UNDEFINED_POINT)
@@ -123,9 +135,15 @@ namespace geodesic {
       //    m_circumcenter[0].type() == UNDEFINED_POINT) {
       // if (m_iterations > 250000) {
       // if(m_iterations > 1000) {
-      if(false) {
-        // if(true) {
-        // if(m_circumcenter.size() == 0) {
+      if(m_circumcenter.size() == 1) {
+        circumcenter = m_circumcenter[0];
+        circumradius = m_circumradius[0];
+      }
+      if(isnan(circumradius)) throw std::runtime_error("Error: radius is nan");
+      // if(circumcenter.type() == geodesic::UNDEFINED_POINT) {
+      // if(false) {
+      // if(true) {
+      if(m_circumcenter.size() == 0) {
         static int count = 0;
         std::ofstream posFile("intervals" + std::to_string(count++) + ".pos");
         posFile << "View \"Intervals\" {\n";
@@ -215,11 +233,6 @@ namespace geodesic {
       //   circumcenter = SurfacePoint(nullptr, 0., 0., 0., UNDEFINED_POINT);
       //   circumradius = GEODESIC_INF;
       // }
-      if(m_circumcenter.size() == 1) {
-        circumcenter = m_circumcenter[0];
-        circumradius = m_circumradius[0];
-      }
-      if(isnan(circumradius)) throw std::runtime_error("Error: radius is nan");
     }
 
     void propagateToCircumcenters(
@@ -1153,16 +1166,21 @@ namespace geodesic {
 
     double E0x = xb, E0y = yb;
     double norm0 = sqrt(E0x * E0x + E0y * E0y);
-    if(norm0 < GEODESIC_EPS) { return; }
-    E0x /= norm0;
-    E0y /= norm0;
+    if(norm0 < GEODESIC_EPS) {
+      return;
+      // throw std::runtime_error(
+      //   "A and B at the same position while computing circumcenter of ABC");
+    }
+    double inv_norm0 = 1. / norm0;
+    E0x *= inv_norm0;
+    E0y *= inv_norm0;
     xb = norm0;
     yb = 0;
 
     double E1x = -E0y, E1y = E0x; // orthogonal vector
     double dotx = E0x * xc + E0y * yc;
     double doty = E1x * xc + E1y * yc;
-    if(doty < -GEODESIC_EPS) {
+    if(doty < 0) {
       E1x = E0y;
       E1y = -E0x;
       doty = -doty;
@@ -1170,10 +1188,10 @@ namespace geodesic {
     xc = dotx;
     yc = doty;
 
-    xc /= xb;
-    yc /= xb;
-    db /= xb;
-    dc /= xb;
+    xc *= inv_norm0;
+    yc *= inv_norm0;
+    db *= inv_norm0;
+    dc *= inv_norm0;
 
     if(yc < GEODESIC_EPS) { // Collinear sources
       double db_m_1 = db - 1;
@@ -1204,6 +1222,7 @@ namespace geodesic {
         yP[i] = xb * (x * E0y + y * E1y) + ya;
         dP[i] = xb * (sqrt(x * x + y * y)) + da;
       }
+      // std::cout << "Colinear" << "\n";
       return;
     }
 
@@ -1213,6 +1232,7 @@ namespace geodesic {
       xP[0] = xb * (x * E0x + y * E1x) + xa;
       yP[0] = xb * (x * E0y + y * E1y) + ya;
       dP[0] = xb * (sqrt(x * x + y * y)) + da;
+      // std::cout << "Two lines" << "\n";
       return;
     }
 
@@ -1220,6 +1240,7 @@ namespace geodesic {
       double x = .5;
 
       double yc2_m_dc2 = (yc - dc) * (yc + dc);
+      if(yc2_m_dc2 < GEODESIC_EPS) return;
       double xc2_p_yc2_m_dc2 = xc * xc + yc2_m_dc2;
       double delta = xc2_p_yc2_m_dc2 * (xc2_p_yc2_m_dc2 + 1 - 2 * xc);
       if(delta < -GEODESIC_EPS) { // No solution
@@ -1236,18 +1257,23 @@ namespace geodesic {
         ys.push_back((A + B) / C);
       }
 
+      // std::cout << delta << " " << xc << " " << yc << " " << dc << " " << db
+      //           << " " << A << " " << C << "\n";
       for(size_t i = 0; i < ys.size(); ++i) {
         double y = ys[i];
+        // std::cout << "x=" << x << " y=" << y << "\n";
         xP[i] = xb * (x * E0x + y * E1x) + xa;
         yP[i] = xb * (x * E0y + y * E1y) + ya;
         dP[i] = xb * (sqrt(x * x + y * y)) + da;
       }
+      // std::cout << "One line one hyperbola" << "\n";
       return;
     }
 
     // One hyperbola and one (line or hyperbola)
 
     double db_m_1 = db - 1;
+    if(db_m_1 > GEODESIC_EPS) return;
     double db_p_1 = db + 1;
     double db2_m_1 = db_m_1 * db_p_1;
     double xc2_p_yc2_m_dc2 = xc * xc + (yc - dc) * (yc + dc);
@@ -1264,6 +1290,8 @@ namespace geodesic {
       xc * db_dc_m_xc * db2_m_1 + (db2_m_1 - db * dc_m_db_xc) * xc2_p_yc2_m_dc2;
     double C = 2 * (db2_m_1 * xc2_p_yc2_m_dc2 + db_dc_m_xc * db_dc_m_xc);
 
+    if(C > GEODESIC_EPS) return;
+
     std::vector<double> xs;
     if(delta < GEODESIC_EPS) { // one solution
       xs.push_back(A / C);
@@ -1274,16 +1302,20 @@ namespace geodesic {
       xs.push_back((A - B) / C);
     }
 
+    // std::cout << delta << " " << xc << " " << yc << " " << dc << " " << db
+    //           << " " << A << " " << C << "\n";
     double a = 2 * dc_m_db_xc;
     double b = dc * db2_m_1 + db * xc2_p_yc2_m_dc2;
     double c = 2 * db * yc;
     for(int i = 0; i < xs.size(); ++i) {
       double x = xs[i];
       double y = (a * x + b) / c;
+      // std::cout << "x=" << x << " y=" << y << "\n";
       xP[i] = xb * (x * E0x + y * E1x) + xa;
       yP[i] = xb * (x * E0y + y * E1y) + ya;
       dP[i] = xb * (sqrt(x * x + y * y)) + da;
     }
+    // std::cout << "One hyperbola one line/hyperbola" << "\n";
   }
 
   inline void GeodesicAlgorithmExact::propagate(
@@ -1849,65 +1881,12 @@ namespace geodesic {
     double queue_distance = (*m_queue.begin())->min();
 
     bool print = false;
-    // if(m_sources[0].base_element()->id() == 7 &&
-    //    m_sources[1].base_element()->id() == 30 &&
-    //    m_sources[2].base_element()->id() == 8)
-    //   print = true;
-
-    // if(m_sources.size() != 2) {
-    // for(int i = 0; i < m_circumcenter.size(); ++i) {
-    //   // auto &spC = m_circumcenter[i];
-    //   // std::vector<edge_pointer> possible_edges;
-    //   // possible_traceback_edges(spC, possible_edges);
-    //   // interval_pointer interval = 0ULL;
-    //   // double total_distance, position;
-    //   //
-    //   // double o, d;
-    //   // best_point_on_the_edge_set(spC, possible_edges, interval,
-    //   //                            total_distance, position);
-    //   //
-    //   // if(spC.base_element()->type() == FACE &&
-    //   //    m_sources_on_face.count(spC.base_element()->id())) {
-    //   //   Face *f = (Face *)spC.base_element();
-    //   //   std::vector<SurfacePoint> sourcesOnFace;
-    //   //   for(auto i : m_sources_on_face[f->id()])
-    //   //     sourcesOnFace.push_back(m_sources[i]);
-    //   //   for(auto s : sourcesOnFace) {
-    //   //     if(s.type() != FACE) continue;
-    //   //     SVector3 v(spC.xyz(), s.xyz());
-    //   //     d = norm(v);
-    //   //     if(d < total_distance) {
-    //   //       total_distance = d;
-    //   //       interval = nullptr;
-    //   //     }
-    //   //   }
-    //   // }
-    //
-    //   // if(abs(m_circumradius[i] - total_distance) > GEODESIC_EPSDIST) {
-    //   if(!checkCircumcenter(m_circumcenter[i], m_circumradius[i])) {
-    //     // std::cout << "erased" << std::endl;
-    //     m_circumcenter.erase(m_circumcenter.begin() + i);
-    //     m_circumradius.erase(m_circumradius.begin() + i);
-    //     m_circumsources.erase(m_circumsources.begin() + 3 * i);
-    //     m_circumsources.erase(m_circumsources.begin() + 3 * i);
-    //     m_circumsources.erase(m_circumsources.begin() + 3 * i);
-    //     --i;
-    //   }
-    // }
-    // }
-
-    // if(m_possible_circumfaces.size() > 0) std::cout << "check cir" <<
-    // std::endl;
-    // static int cc = 0;
-    // if(m_possible_circumfaces.size())
-    // std::cout << "check " << cc + m_possible_circumfaces.size() << std::endl;
     for(auto f : m_possible_circumfaces) {
       SurfacePoint spC = SurfacePoint();
       std::vector<SurfacePoint> circumcenters;
       std::vector<double> circumradii;
       std::vector<unsigned> circumsources;
       findCircumcenter(f, spC, circumcenters, circumradii, circumsources);
-      // if(print) std::cout << circumcenters.size() << std::endl;
       for(size_t i = 0; i < circumcenters.size(); ++i) {
         if(isnan(circumradii[i]))
           throw std::runtime_error("Error: radii is nan");
@@ -1920,172 +1899,9 @@ namespace geodesic {
         m_circumsources.push_back(circumsources[3 * i]);
         m_circumsources.push_back(circumsources[3 * i + 1]);
         m_circumsources.push_back(circumsources[3 * i + 2]);
-        // int j = 0;
-        // for(; j < m_circumcenter.size(); ++j) {
-        //   // std::cout << circumradii[j] << " " << m_circumsources[3 * j] <<
-        //   " "
-        //   //           << m_circumsources[3 * j + 1] << " "
-        //   //           << m_circumsources[3 * j + 2] << " " << circumradii[i]
-        //   //           << " " << circumsources[3 * i] << " "
-        //   //           << circumsources[3 * i + 1] << " "
-        //   //           << circumsources[3 * i + 2] << std::endl;
-        //   if(m_circumsources[3 * j] != circumsources[3 * i] ||
-        //      m_circumsources[3 * j + 1] != circumsources[3 * i + 1] ||
-        //      m_circumsources[3 * j + 2] != circumsources[3 * i + 2])
-        //     continue;
-        //   // if(circumradii[i] - m_circumradius[j] < 1e-8) {
-        //   // if(circumradii[i] < m_circumradius[j]) {
-        //   if( // circumradii[i] < m_circumradius[j] &&
-        //     checkCircumcenter(circumcenters[i], circumradii[i]) &&
-        //     circumradii[i] < m_circumradius[j]) {
-        //     if(print) std::cout << "add" << std::endl;
-        //     m_circumradius[j] = circumradii[i];
-        //     m_circumcenter[j] = circumcenters[i];
-        //     // std::cout << "refound radius: " << circumradii[i] <<
-        //     std::endl;
-        //
-        //     // if(m_sources.size() == 2) {
-        //     //   std::vector<SurfacePoint> p;
-        //     //   trace_back(circumcenters[i], m_shortest_path, 0);
-        //     //   std::reverse(m_shortest_path.begin(),
-        //     m_shortest_path.end());
-        //     //   trace_back(circumcenters[i], p, 1);
-        //     //   m_shortest_path.insert(m_shortest_path.end(), p.begin(),
-        //     //   p.end()); m_max_remaining_distance = 0; for(unsigned ii = 0;
-        //     ii
-        //     //   < 2; ++ii) {
-        //     //     double d, p;
-        //     //     best_first_interval(circumcenters[i], d, p, ii);
-        //     //     d += m_sources[1 - ii].distance(circumcenters[i].xyz());
-        //     //     // double d =
-        //     //     //
-        //     m_circumcenter_heuristic.distance(circumcenters[i].xyz());
-        //     //     if(d > m_max_remaining_distance) m_max_remaining_distance
-        //     =
-        //     //     d;
-        //     //   }
-        //     // }
-        //   }
-        //   break;
-        // }
-        // if(print) std::cout << "do we add" << std::endl;
-        // if(print)
-        //   std::cout << j << " vs " << m_circumcenter.size() << std::endl;
-        // if(j == m_circumcenter.size() &&
-        //    checkCircumcenter(circumcenters[i], circumradii[i])) {
-        //   if(print) std::cout << "add" << std::endl;
-        //   // std::cout << "dist = " << circumradii[i] << std::endl;
-        //   m_circumcenter.push_back(circumcenters[i]);
-        //   m_circumradius.push_back(circumradii[i]);
-        //   // std::cout << "found radius: " << circumradii[i] << " "
-        //   //           << circumsources[3 * i] << " " << circumsources[3 * i
-        //   +
-        //   //           1]
-        //   //           << " " << circumsources[3 * i + 2] << std::endl;
-        //   m_circumsources.push_back(circumsources[3 * i]);
-        //   m_circumsources.push_back(circumsources[3 * i + 1]);
-        //   m_circumsources.push_back(circumsources[3 * i + 2]);
-        //
-        //   // if(m_sources.size() == 2) {
-        //   //   std::vector<SurfacePoint> p;
-        //   //   trace_back(circumcenters[i], m_shortest_path, 0);
-        //   //   std::reverse(m_shortest_path.begin(), m_shortest_path.end());
-        //   //   trace_back(circumcenters[i], p, 1);
-        //   //   m_shortest_path.insert(m_shortest_path.end(), p.begin(),
-        //   //   p.end());
-        //   //
-        //   //   m_max_remaining_distance = 0;
-        //   //   for(unsigned ii = 0; ii < 2; ++ii) {
-        //   //     double d, p;
-        //   //     best_first_interval(circumcenters[i], d, p, ii);
-        //   //     d += m_sources[1 - ii].distance(circumcenters[i].xyz());
-        //   //     // double d =
-        //   //     //
-        //   m_circumcenter_heuristic.distance(circumcenters[i].xyz());
-        //   //     if(d > m_max_remaining_distance) m_max_remaining_distance =
-        //   d;
-        //   //   }
-        //   // }
-        // }
       }
     }
-    // m_possible_circumfaces.clear();
     m_current_intervals.clear();
-
-    // // if(m_iterations % 10000 == 0) {
-    // if(false) {
-    //   // if(true) {
-    //   static int count = 0;
-    //   std::ofstream posFile("iterations" + std::to_string(count++) + ".pos");
-    //   posFile << "View \"Intervals\" {\n";
-    //   for(unsigned i = 0; i < m_edge_interval_lists.size(); ++i) {
-    //     list_pointer list = &m_edge_interval_lists[i];
-    //     interval_pointer p = list->first();
-    //     while(p) {
-    //       edge_pointer edge = p->edge();
-    //       vertex_pointer v0 = edge->v0();
-    //       vertex_pointer v1 = edge->v1();
-    //       double start = p->start();
-    //       double stop = p->stop();
-    //       double length = edge->length();
-    //       double x0 = v0->x() + (v1->x() - v0->x()) * (start / length);
-    //       double y0 = v0->y() + (v1->y() - v0->y()) * (start / length);
-    //       double z0 = v0->z() + (v1->z() - v0->z()) * (start / length);
-    //       double x1 = v0->x() + (v1->x() - v0->x()) * (stop / length);
-    //       double y1 = v0->y() + (v1->y() - v0->y()) * (stop / length);
-    //       double z1 = v0->z() + (v1->z() - v0->z()) * (stop / length);
-    //       // posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," <<
-    //       // x1
-    //       // <<
-    //       // "," << y1 << "," << z1 << "){" << p->min() << "," <<
-    //       // p->min()
-    //       // <<
-    //       // "};\n";
-    //       posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1 <<
-    //       ","
-    //               << y1 << "," << z1 << "){" << p->source_index() << ","
-    //               << p->source_index() << "};\n";
-    //       p = p->next();
-    //     }
-    //   }
-    //   for(size_t i = 0; i < m_sources.size(); ++i) {
-    //     posFile << "SP(" << m_sources[i].x() << "," << m_sources[i].y() <<
-    //     ","
-    //             << m_sources[i].z() << "){" << i << "};\n";
-    //   }
-    //   for(int i = 0; i < m_circumcenter.size(); ++i) {
-    //     posFile << "SP(" << m_circumcenter[i].x() << ","
-    //             << m_circumcenter[i].y() << "," << m_circumcenter[i].z() <<
-    //             "){"
-    //             << -1 << "};\n";
-    //   }
-    //   // for (size_t i = 0; i < m_stop_vertices.size(); ++i) {
-    //   // 	posFile << "SP(" << m_stop_vertices[i]->x() << "," <<
-    //   // m_stop_vertices[i]->y() << "," << m_stop_vertices[i]->z() <<
-    //   // "){1};\n";
-    //   // }
-    //   posFile << "};\n";
-    //   posFile.close();
-    //
-    //   // std::cerr << "Error: propagateToCircumcenter failed to find
-    //   // circumcenter" << std::endl; throw
-    //   // std::runtime_error("propagateToCircumcenter failed to find
-    //   // circumcenter"); std::cout << "Warning: propagateToCircumcenter
-    //   // failed to find circumcenter" << std::endl;
-    // }
-    // if(queue_distance > maxDistance) return true;
-
-    // if(m_sources.size() == 2) {
-    //   if(queue_distance <= m_max_remaining_distance) return false;
-    // }
-    // else {
-    // for(int i = 0; i < m_sources.size() - 2; ++i) {
-    //   // std::cout << i << std::endl;
-    //   if(i == m_circumcenter.size()) return false;
-    //   // std::cout << i << " " << m_circumradius[i] << std::endl;
-    //   if(queue_distance <= m_circumradius[i]) return false;
-    // }
-    // }
 
     int foundIndex = -1;
     double foundRadius = geodesic::GEODESIC_INF;
@@ -3052,6 +2868,9 @@ namespace geodesic {
     circumSources.clear();
     Vertex *vs[3] = {f->adjacent_vertices()[0], f->adjacent_vertices()[1],
                      f->adjacent_vertices()[2]};
+    double ls[3] = {f->opposite_edge(vs[2])->length(),
+                    f->opposite_edge(vs[0])->length(),
+                    f->opposite_edge(vs[1])->length()};
 
     std::vector<Interval *> intervalToCheck;
     for(auto interval : m_current_intervals) {
@@ -3061,81 +2880,20 @@ namespace geodesic {
           break;
         }
       }
-      // Vertex *v = interval->edge()->v0();
-      // if(v != vs[0] && v != vs[1] && v != vs[2]) continue;
-      // v = interval->edge()->v1();
-      // if(v != vs[0] && v != vs[1] && v != vs[2]) continue;
-      // intervalToCheck.push_back(interval);
     }
     if(intervalToCheck.size() == 0) return;
-    // std::vector<unsigned> indicesToCheck(intervalToCheck.size());
     std::vector<unsigned> indicesToCheck;
     indicesToCheck.reserve(2 * intervalToCheck.size());
-    // std::cout << "(" << vs[0]->x() << "," << vs[0]->y() << "," <<
-    // vs[0]->z()
-    //           << ") " << "(" << vs[1]->x() << "," << vs[1]->y() << ","
-    //           << vs[1]->z() << ") " << "(" << vs[2]->x() << "," <<
-    //           vs[2]->y()
-    //           << "," << vs[2]->z() << ") " << std::endl;
-    // double dx = vs[2]->x() - vs[1]->x();
-    // double dy = vs[2]->y() - vs[1]->y();
-    // double dz = vs[2]->z() - vs[1]->z();
-    // double l0 = sqrt(dx * dx + dy * dy + dz * dz);
-    // dx = vs[0]->x() - vs[2]->x();
-    // dy = vs[0]->y() - vs[2]->y();
-    // dz = vs[0]->z() - vs[2]->z();
-    // double l1 = sqrt(dx * dx + dy * dy + dz * dz);
-    // dx = vs[1]->x() - vs[0]->x();
-    // dy = vs[1]->y() - vs[0]->y();
-    // dz = vs[1]->z() - vs[0]->z();
-    // double l2 = sqrt(dx * dx + dy * dy + dz * dz);
 
-    double e0[3] = {vs[1]->x() - vs[0]->x(), vs[1]->y() - vs[0]->y(),
-                    vs[1]->z() - vs[0]->z()};
-    double e1[3] = {vs[2]->x() - vs[0]->x(), vs[2]->y() - vs[0]->y(),
-                    vs[2]->z() - vs[0]->z()};
-    double local_scale = sqrt(e0[0] * e0[0] + e0[1] * e0[1] + e0[2] * e0[2]);
-    double inv_local_scale = 1. / local_scale;
-    e0[0] *= inv_local_scale;
-    e0[1] *= inv_local_scale;
-    e0[2] *= inv_local_scale;
-    e1[0] *= inv_local_scale;
-    e1[1] *= inv_local_scale;
-    e1[2] *= inv_local_scale;
+    double x2 = ls[0], x3, y3;
+    Edge *edge = f->opposite_edge(vs[2]);
+    edge->local_coordinates(vs[2], x3, y3);
+    if(edge->v0() == vs[1]) x3 = ls[0] - x3;
 
-    double norm0 = sqrt(e0[0] * e0[0] + e0[1] * e0[1] + e0[2] * e0[2]);
-
-    double d = e1[0] * e0[0] + e1[1] * e0[1] + e1[2] * e0[2];
-    e1[0] -= d * e0[0];
-    e1[1] -= d * e0[1];
-    e1[2] -= d * e0[2];
-    double norm1 = sqrt(e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2]);
-    if(norm1 < 1e-14) return;
-    double inv_norm1 = 1. / norm1;
-    e1[0] *= inv_norm1;
-    e1[1] *= inv_norm1;
-    e1[2] *= inv_norm1;
-
-    const double pxs[3] = {0., norm0, d};
-    // const double pxs[3] = {0., 1., d};
-    const double pys[3] = {0., 0., norm1};
-    const double rots[3] = {0., M_PI - atan2(norm1, norm0 - d),
-                            -M_PI + atan2(norm1, d)};
-    // const double rots[3] = {0., M_PI - atan2(norm1, 1. - d),
-    //                         -M_PI + atan2(norm1, d)};
-    // const double coss[3] = {cos(rots[0]), cos(rots[1]), cos(rots[2])};
-    // const double sins[3] = {sin(rots[0]), sin(rots[1]), sin(rots[2])};
-    const double coss[3] = {cos(rots[0]) * inv_local_scale,
-                            cos(rots[1]) * inv_local_scale,
-                            cos(rots[2]) * inv_local_scale};
-    const double sins[3] = {sin(rots[0]) * inv_local_scale,
-                            sin(rots[1]) * inv_local_scale,
-                            sin(rots[2]) * inv_local_scale};
-    // const double coss[3] = {1., -(l0 * l0 + l2 * l2 - l1 * l1) / (2 * l0 *
-    // l2),
-    //                         -(l1 * l1 + l2 * l2 - l0 * l0) / (2 * l1 * l2)};
-    // const double sins[3] = {0., sqrt(1. - coss[1] * coss[1]),
-    //                         -sqrt(1. - coss[2] * coss[2])};
+    const double pxs[3] = {0., x2, x3};
+    const double pys[3] = {0., 0., y3};
+    const double coss[3] = {1, (x3 - x2) / ls[1], -x3 / ls[2]};
+    const double sins[3] = {0, y3 / ls[1], -y3 / ls[2]};
 
     std::vector<unsigned> sourceIndices;
     std::vector<double> sourceXs;
@@ -3151,24 +2909,6 @@ namespace geodesic {
       else if(e->v0() == vs[(j + 1) % 3] && e->v1() == vs[j])
         swap = true;
 
-      // for(auto ee : f->adjacent_edges()) {
-      //   if(ee->adjacent_vertices()[0] == vs[j] &&
-      //      ee->adjacent_vertices()[1] == vs[(j + 1) % 3]) {
-      //     e = ee;
-      //     break;
-      //   }
-      //   if(ee->adjacent_vertices()[0] == vs[(j + 1) % 3] &&
-      //      ee->adjacent_vertices()[1] == vs[j]) {
-      //     e = ee;
-      //     swap = true;
-      //     break;
-      //   }
-      // }
-      // if(e == nullptr) {
-      //   std::cerr << "propagateToCircumcenter: edge not found" << std::endl;
-      //   return;
-      // }
-
       Interval *next = interval_list(e)->first();
       while(next != nullptr) {
         Interval *p = next;
@@ -3176,11 +2916,6 @@ namespace geodesic {
           next = p->next();
           continue;
         }
-        // if(!computeSource[p->source_index()] &&
-        //    computeInterval.find(p) == computeInterval.end()) {
-        //   p = p->next();
-        //   continue;
-        // }
 
         double x = p->pseudo_x(), y = p->pseudo_y();
         if(swap) { x = e->length() - x; }
@@ -3204,7 +2939,7 @@ namespace geodesic {
           sourceIndices.push_back(p->source_index());
           sourceXs.push_back(px);
           sourceYs.push_back(py);
-          sourceDs.push_back(p->d() * inv_local_scale);
+          sourceDs.push_back(p->d());
           sourceIntervals.push_back(p);
         }
 
@@ -3227,7 +2962,7 @@ namespace geodesic {
           sourceIndices.push_back(p->source_index());
           sourceXs.push_back(px);
           sourceYs.push_back(py);
-          sourceDs.push_back(p->d() * inv_local_scale);
+          sourceDs.push_back(p->d());
           sourceIntervals.push_back(p);
         }
         next = p->next();
@@ -3239,7 +2974,7 @@ namespace geodesic {
         // SurfacePoint sp = SurfacePoint(f, vs[j]->x(), vs[j]->y(),
         // vs[j]->z(), geodesic::FACE);
         SurfacePoint sp = SurfacePoint(vs[j]);
-        interval_pointer interval = 0ULL;
+        interval_pointer interval = nullptr;
         double total_distance, position;
         // best_point_on_the_edge_set(sp,
         // 							{e},
@@ -3278,7 +3013,7 @@ namespace geodesic {
         sourceIndices.push_back(interval->source_index());
         sourceXs.push_back(px);
         sourceYs.push_back(py);
-        sourceDs.push_back(total_distance * inv_local_scale);
+        sourceDs.push_back(total_distance);
         if(interval == nullptr)
           throw std::runtime_error("Error: interval is nullptr");
         sourceIntervals.push_back(interval);
@@ -3307,10 +3042,6 @@ namespace geodesic {
       std::cerr << "propagateToCircumcenter: edge not found" << std::endl;
       return;
     }
-    // for (size_t i = 0; i < m_sources.size(); ++i) {
-    // 	if (m_sources[i].type() != FACE ||
-    // 		m_sources[i].base_element() != f)
-    // 		continue;
 
     if(m_sources_on_face.count(f->id())) {
       for(auto i : m_sources_on_face[f->id()]) {
@@ -3323,39 +3054,17 @@ namespace geodesic {
         double px = dx * coss[0];
         double py = dy * sins[0];
 
-        // std::cout << sourceIndices.size() << ": " << i << " " << dx << " " <<
-        // dy << " " << 0. << " nullptr" << std::endl;
-        // TODO: manage vertices on a same face
-
-        // indicesToCheck.push_back(sourceIndices.size());
-
         sourceIndices.push_back(i);
         sourceXs.push_back(px);
         sourceYs.push_back(py);
         sourceDs.push_back(0.);
         sourceIntervals.push_back(nullptr);
-        // std::cout << "source type " << sources[i].type() << " and " <<
-        // sources[i].base_element() << std::endl;
       }
     }
-
-    // std::cout << "sourceIndices.size()=" << sourceIndices.size() <<
-    // std::endl; std::cout << "sourceXs.size()=" << sourceXs.size() <<
-    // std::endl; std::cout << "sourceYs.size()=" << sourceYs.size() <<
-    // std::endl; std::cout << "sourceDs.size()=" << sourceDs.size() <<
-    // std::endl; std::cout << "sourceIntervals.size()=" <<
-    // sourceIntervals.size() << std::endl;
 
     circumCenters.clear();
     circumRadii.clear();
     circumSources.clear();
-
-    // // Write circumcenters to a .pos file
-    // FILE *circumFile = fopen("circumcenters.pos", "w");
-    // fprintf(circumFile, "View \"Circumcenters\" {\n");
-
-    // std::cout << "sourceIndices.size()=" << sourceIndices.size() <<
-    // std::endl;
 
     std::vector<SurfacePoint> sourcesOnFace;
     if(m_sources_on_face.count(f->id())) {
@@ -3363,161 +3072,46 @@ namespace geodesic {
         sourcesOnFace.push_back(m_sources[i]);
     }
 
-    // std::cout << "Ref (" << pxs[0] << "," << pys[0] << ") (" << pxs[1] <<
-    // ","
-    //           << pys[1] << ") (" << pxs[2] << "," << pys[2] << std::endl;
-
     bool print = false;
-    // if(m_sources[0].base_element()->id() == 7 &&
-    //    m_sources[1].base_element()->id() == 30 &&
-    //    m_sources[2].base_element()->id() == 8)
-    //   print = true;
     std::vector<double> xVector, yVector, dVector, sourceXVector, sourceYVector;
     std::vector<Interval *> intervalVector;
     std::vector<int> indexVector;
-    // for(unsigned ii = 0; ii < sourceindices.size(); ++ii) {
-    //   unsigned jj = ii + 1;
     for(unsigned iii = 0; iii < indicesToCheck.size(); ++iii) {
       unsigned ii = indicesToCheck[iii];
       unsigned jj = 0;
       for(; jj < sourceIndices.size(); ++jj) {
         if(sourceIndices[ii] == sourceIndices[jj]) continue;
 
-        // if(m_sources.size() == 2) {
-        //   //   if(m_current_intervals.find(sourceIntervals[ii]) ==
-        //   //        m_current_intervals.end() &&
-        //   //      m_current_intervals.find(sourceIntervals[jj]) ==
-        //   //        m_current_intervals.end())
-        //   //   // if(std::find(m_current_intervals.begin(),
-        //   //   // m_current_intervals.end(),
-        //   //   //              sourceIntervals[ii]) ==
-        //   m_current_intervals.end()
-        //   //   &&
-        //   //   //    std::find(m_current_intervals.begin(),
-        //   //   //    m_current_intervals.end(),
-        //   //   //              sourceIntervals[jj]) ==
-        //   //   m_current_intervals.end())
-        //   //   {
-        //   //     std::cout << "QUIT" << std::endl;
-        //   //     continue;
-        //   //   }
-        //
-        //   double ux = sourceXs[jj] - sourceXs[ii];
-        //   double uy = sourceYs[jj] - sourceYs[ii];
-        //   for(int k = 0; k < 3; ++k) {
-        //     double vx = pxs[(k + 1) % 3] - pxs[k];
-        //     double vy = pys[(k + 1) % 3] - pys[k];
-        //     double den = ux * vy - uy * vx;
-        //     if(abs(den) < 1e-10) continue;
-        //     double t =
-        //       ((pxs[k] - sourceXs[ii]) * vy - (pys[k] - sourceYs[ii]) * vx) /
-        //       den;
-        //     double s =
-        //       ((pxs[k] - sourceXs[ii]) * uy - (pys[k] - sourceYs[ii]) * ux) /
-        //       den;
-        //     if(t < -1e-10 || 1 + 1e-10 < t) continue;
-        //     if(s < -1e-10 || 1 + 1e-10 < s) continue;
-        //
-        //     double distance =
-        //       sourceDs[ii] + sourceDs[jj] + sqrt(ux * ux + uy * uy);
-        //
-        //     xVector.push_back(sourceXs[ii] + t * ux);
-        //     yVector.push_back(sourceYs[ii] + t * uy);
-        //     dVector.push_back(distance);
-        //     intervalVector.push_back(sourceIntervals[ii]);
-        //     intervalVector.push_back(sourceIntervals[jj]);
-        //     intervalVector.push_back(nullptr);
-        //     indexVector.push_back(sourceIndices[ii]);
-        //     indexVector.push_back(sourceIndices[jj]);
-        //     indexVector.push_back(-1);
-        //
-        //     sourceXVector.push_back(sourceXs[ii]);
-        //     sourceXVector.push_back(sourceXs[jj]);
-        //     sourceXVector.push_back(0.);
-        //     sourceYVector.push_back(sourceYs[ii]);
-        //     sourceYVector.push_back(sourceYs[jj]);
-        //     sourceYVector.push_back(0.);
-        //   }
-        //
-        //   // double x = sourceXs[jj] - sourceXs[ii];
-        //   // double y = sourceYs[jj] - sourceYs[ii];
-        //   // double l = sqrt(x * x + y * y);
-        //   // double d = sourceDs[ii] + l + sourceDs[jj];
-        //   // d = d / 2;
-        //   // if(l < 1e-10) continue;
-        //   // l = (d - sourceDs[ii]) / l;
-        //   // if(l < 1e-10) continue;
-        //   // if(1 - 1e-10 < l) continue;
-        //   // x = sourceXs[ii] + l * x;
-        //   // y = sourceYs[ii] + l * y;
-        //   //
-        //   // // std::cout << "from " << sourceXs[ii] << " " << sourceYs[ii]
-        //   << "
-        //   // "
-        //   // //           << sourceDs[ii] << std::endl;
-        //   // // std::cout << "from " << sourceXs[jj] << " " << sourceYs[jj]
-        //   << "
-        //   // "
-        //   // //           << sourceDs[jj] << std::endl;
-        //   // // std::cout << "Found " << x << " " << y << " " << d <<
-        //   std::endl;
-        //   // xVector.push_back(x);
-        //   // yVector.push_back(y);
-        //   // dVector.push_back(d);
-        //   // intervalVector.push_back(sourceIntervals[ii]);
-        //   // intervalVector.push_back(sourceIntervals[jj]);
-        //   // intervalVector.push_back(nullptr);
-        //   // indexVector.push_back(sourceIndices[ii]);
-        //   // indexVector.push_back(sourceIndices[jj]);
-        //   // indexVector.push_back(-1);
-        //   //
-        //   // sourceXVector.push_back(sourceXs[ii]);
-        //   // sourceXVector.push_back(sourceXs[jj]);
-        //   // sourceXVector.push_back(0.);
-        //   // sourceYVector.push_back(sourceYs[ii]);
-        //   // sourceYVector.push_back(sourceYs[jj]);
-        //   // sourceYVector.push_back(0.);
-        //   continue;
-        // }
-
         for(unsigned kk = jj + 1; kk < sourceIndices.size(); ++kk) {
           if(sourceIndices[ii] == sourceIndices[kk] ||
              sourceIndices[jj] == sourceIndices[kk])
             continue;
-
-          // if(m_current_intervals.find(sourceIntervals[ii]) ==
-          //      m_current_intervals.end() &&
-          //    m_current_intervals.find(sourceIntervals[jj]) ==
-          //      m_current_intervals.end() &&
-          //    m_current_intervals.find(sourceIntervals[kk]) ==
-          //      m_current_intervals.end())
-          //   // if(std::find(m_current_intervals.begin(),
-          //   // m_current_intervals.end(),
-          //   //              sourceIntervals[ii]) == m_current_intervals.end()
-          //   &&
-          //   //    std::find(m_current_intervals.begin(),
-          //   //    m_current_intervals.end(),
-          //   //              sourceIntervals[jj]) == m_current_intervals.end()
-          //   &&
-          //   //    std::find(m_current_intervals.begin(),
-          //   //    m_current_intervals.end(),
-          //   //              sourceIntervals[kk]) ==
-          //   m_current_intervals.end()) continue;
 
           if(print)
             std::cout << ii << "(" << sourceIndices[ii] << ") " << jj << "("
                       << sourceIndices[jj] << ") " << kk << "("
                       << sourceIndices[kk] << std::endl;
 
+          // std::cout << "\n";
           double xPs[4], yPs[4], dPs[4];
           circumcenter(sourceXs[ii], sourceYs[ii], sourceDs[ii], sourceXs[jj],
                        sourceYs[jj], sourceDs[jj], sourceXs[kk], sourceYs[kk],
                        sourceDs[kk], xPs, yPs, dPs);
 
-          xVector.insert(xVector.end(), std::begin(xPs), std::end(xPs));
-          yVector.insert(yVector.end(), std::begin(yPs), std::end(yPs));
-          dVector.insert(dVector.end(), std::begin(dPs), std::end(dPs));
           for(int i = 0; i < 4; ++i) {
+            if(dPs[i] == geodesic::GEODESIC_INF) continue;
+            // double eqii = sourceDs[ii] + sqrt(pow(xPs[i] - sourceXs[ii], 2) +
+            //                                   pow(yPs[i] - sourceYs[ii], 2));
+            // double eqjj = sourceDs[jj] + sqrt(pow(xPs[i] - sourceXs[jj], 2) +
+            //                                   pow(yPs[i] - sourceYs[jj], 2));
+            // double eqkk = sourceDs[kk] + sqrt(pow(xPs[i] - sourceXs[kk], 2) +
+            //                                   pow(yPs[i] - sourceYs[kk], 2));
+            // std::cout << "Diff " << eqii - dPs[i] << " " << eqjj - dPs[i] <<
+            // " "
+            //           << eqkk - dPs[i] << "\n";
+            xVector.push_back(xPs[i]);
+            yVector.push_back(yPs[i]);
+            dVector.push_back(dPs[i]);
             intervalVector.push_back(sourceIntervals[ii]);
             intervalVector.push_back(sourceIntervals[jj]);
             intervalVector.push_back(sourceIntervals[kk]);
@@ -3535,6 +3129,13 @@ namespace geodesic {
       }
     }
 
+    double denominator = ((pxs[1] - pxs[0]) * (pys[2] - pys[0]) -
+                          (pxs[2] - pxs[0]) * (pys[1] - pys[0]));
+    if(std::abs(denominator) < 1e-12) {
+      std::cout << "Warning: the circumcenter is in a degenerate triangle"
+                << std::endl;
+      throw std::runtime_error("The triangle is degenerate!");
+    }
     for(int pi = 0; pi < xVector.size(); ++pi) {
       double xP = xVector[pi];
       double yP = yVector[pi];
@@ -3548,15 +3149,6 @@ namespace geodesic {
       }
 
       // double GEODESIC_EPS = 1e-8;
-
-      double denominator = ((pxs[1] - pxs[0]) * (pys[2] - pys[0]) -
-                            (pxs[2] - pxs[0]) * (pys[1] - pys[0]));
-      if(std::abs(denominator) < 1e-12) {
-        // throw std::runtime_error("The triangle is degenerate!");
-        std::cout << "Warning: the circumcenter is in a degenerate triangle"
-                  << std::endl;
-        continue;
-      }
       double v = ((xP - pxs[0]) * (pys[2] - pys[0]) -
                   (pxs[2] - pxs[0]) * (yP - pys[0])) /
                  denominator;
@@ -3564,12 +3156,47 @@ namespace geodesic {
                   (xP - pxs[0]) * (pys[1] - pys[0])) /
                  denominator;
 
-      // std::cout << v << " " << w << std::endl;
+      SurfacePoint spC(f, v, w);
+
+      double distance0 = GEODESIC_INF, distance1 = GEODESIC_INF,
+             distance2 = GEODESIC_INF, offset, x, y;
+      bool printt = true;
+      if(intervalVector[3 * pi + 0]) {
+        intervalVector[3 * pi + 0]->edge()->local_coordinates(&spC, x, y);
+        intervalVector[3 * pi + 0]->find_closest_point(x, y, offset, distance0);
+        if(offset == intervalVector[3 * pi + 0]->start() ||
+           offset == intervalVector[3 * pi + 0]->stop())
+          printt = false;
+      }
+      if(intervalVector[3 * pi + 1]) {
+        intervalVector[3 * pi + 1]->edge()->local_coordinates(&spC, x, y);
+        intervalVector[3 * pi + 1]->find_closest_point(x, y, offset, distance1);
+        if(offset == intervalVector[3 * pi + 1]->start() ||
+           offset == intervalVector[3 * pi + 1]->stop())
+          printt = false;
+      }
+      if(intervalVector[3 * pi + 2]) {
+        intervalVector[3 * pi + 2]->edge()->local_coordinates(&spC, x, y);
+        intervalVector[3 * pi + 2]->find_closest_point(x, y, offset, distance2);
+        if(offset == intervalVector[3 * pi + 2]->start() ||
+           offset == intervalVector[3 * pi + 2]->stop())
+          printt = false;
+      }
+      if(printt) {
+        // std::cout << "Diff from intervals " << distance0 - dVector[pi] << " "
+        //           << distance1 - dVector[pi] << " " << distance2 -
+        //           dVector[pi]
+        //           << " " << dVector[pi] << "\n";
+        //
+        // std::cout << v << " " << w << std::endl;
+      }
+
       // throw std::runtime_error("stop");
       if(print) std::cout << v << " " << w << std::endl;
 
       if(v < -GEODESIC_EPS_SNAP || w < -GEODESIC_EPS_SNAP ||
          1. - v - w < -GEODESIC_EPS_SNAP) {
+        // std::cout << "skip " << v << " " << w << "\n";
         continue;
       }
       // if(v < 0.) v = 0.;
@@ -3577,8 +3204,6 @@ namespace geodesic {
       // if(1. - v - w < 0.) w = 1. - v;
 
       if(print) std::cout << v << " " << w << std::endl;
-
-      SurfacePoint spC(f, v, w);
 
       static int count = 0;
       if(count == 30) throw std::runtime_error("Error: stop");
@@ -3632,15 +3257,19 @@ namespace geodesic {
 
       // double GEODESIC_EPS = 1e-12;
       if(v < GEODESIC_EPS_SNAP && w < GEODESIC_EPS_SNAP) {
+        // std::cout << "snap v0 " << v << " " << w << "\n";
         spC = SurfacePoint(vs[0]);
       }
       else if(w < GEODESIC_EPS_SNAP && 1. - v - w < GEODESIC_EPS_SNAP) {
+        // std::cout << "snap v1 " << v << " " << w << "\n";
         spC = SurfacePoint(vs[1]);
       }
       else if(1. - v - w < GEODESIC_EPS_SNAP && v < GEODESIC_EPS_SNAP) {
+        // std::cout << "snap v2 " << v << " " << w << "\n";
         spC = SurfacePoint(vs[2]);
       }
       else if(v < GEODESIC_EPS_SNAP) {
+        // std::cout << "snap e0 " << v << " " << w << "\n";
         for(auto ee : f->adjacent_edges()) {
           if(ee->adjacent_vertices()[0] == vs[2] &&
              ee->adjacent_vertices()[1] == vs[0]) {
@@ -3655,6 +3284,7 @@ namespace geodesic {
         }
       }
       else if(w < GEODESIC_EPS_SNAP) {
+        // std::cout << "snap e1 " << v << " " << w << "\n";
         for(auto ee : f->adjacent_edges()) {
           if(ee->adjacent_vertices()[0] == vs[0] &&
              ee->adjacent_vertices()[1] == vs[1]) {
@@ -3669,6 +3299,7 @@ namespace geodesic {
         }
       }
       else if(1. - v - w < GEODESIC_EPS_SNAP) {
+        // std::cout << "snap e2 " << v << " " << w << "\n";
         for(auto ee : f->adjacent_edges()) {
           if(ee->adjacent_vertices()[0] == vs[1] &&
              ee->adjacent_vertices()[1] == vs[2]) {
@@ -3817,7 +3448,7 @@ namespace geodesic {
       // if(index == circumCenters.size()) {
       //   if(print) std::cout << "added" << std::endl;
       circumCenters.push_back(spC);
-      circumRadii.push_back(dP * local_scale);
+      circumRadii.push_back(dP);
       // std::cout << dP << std::endl;
       circumSources.push_back(minSource);
       circumSources.push_back(midSource);
@@ -3841,10 +3472,6 @@ namespace geodesic {
                                             double &circumRadius)
   {
     bool print = false;
-    // if(m_sources[0].base_element()->id() == 7 &&
-    //    m_sources[1].base_element()->id() == 30 &&
-    //    m_sources[2].base_element()->id() == 8)
-    //   print = true;
     double d, p;
     best_first_interval(circumCenter, d, p);
     if(d >= GEODESIC_INF) return false;
@@ -3853,81 +3480,6 @@ namespace geodesic {
     std::vector<face_pointer> incident_faces;
     possible_traceback_edges(circumCenter, possible_edges, incident_faces);
 
-    // if(m_sources.size() == 2) {
-    //   double position, d0, d1;
-    //   Interval *interval;
-    //   best_point_on_the_edge_set(circumCenter, possible_edges, interval, d0,
-    //                              position, 0);
-    //   if(d0 >= GEODESIC_INF) return false;
-    //   // std::cout << "d0: " << d0 << std::endl;
-    //   // SVector3 p(spC.xyz(), m_sources[1].xyz());
-    //   // d0 += norm(p);
-    //   best_point_on_the_edge_set(circumCenter, possible_edges, interval, d1,
-    //                              position, 1);
-    //   if(d1 >= GEODESIC_INF) return false;
-    //   // std::cout << "d1: " << d1 << std::endl;
-    //   // p = SVector3(spC.xyz(), m_sources[0].xyz());
-    //   // d1 += norm(p);
-    //   // dP = (d0 > d1) ? d0 : d1;
-    //   circumRadius = d0 + d1;
-    //   return true;
-    // }
-
-    // interval_pointer interval = 0ULL;
-    // double total_distance, position;
-    // best_point_on_the_edge_set(circumCenter, possible_edges, interval,
-    //                            total_distance, position);
-    // double o, d;
-    //
-    // if(circumCenter.type() == FACE) {
-    //   for(auto id : m_sources_on_face[circumCenter.base_element()->id()]) {
-    //     SurfacePoint s = m_sources[id];
-    //     if(s.type() != FACE) continue;
-    //     SVector3 v(circumCenter.xyz(), s.xyz());
-    //     d = norm(v);
-    //     if(d < total_distance) {
-    //       total_distance = d;
-    //       interval = nullptr;
-    //     }
-    //   }
-    // }
-    //
-    // // if(print)
-    // //   std::cout << " Dist tot: " << total_distance - circumRadius << " "
-    // //             << circumRadius << std::endl;
-    // if(abs(circumRadius - total_distance) > GEODESIC_EPSDIST) { return false;
-    // }
-    //
-    // bool right_path = true;
-    // for(size_t i = 0; i < 3; ++i) {
-    //   // if(i == 2 && m_sources.size() == 2) break;
-    //   Interval *interval = intervalVector[3 * pi + i];
-    //   double off, dist, x, y;
-    //
-    //   SurfacePoint s = m_sources[indexVector[3 * pi + i]];
-    //
-    //   if(s.type() == FACE && s.base_element() == f) {
-    //     SVector3 v(circumCenter.xyz(), s.xyz());
-    //     dist = norm(v);
-    //   }
-    //   else {
-    //     interval->edge()->local_coordinates(&circumCenter, x, y);
-    //     interval->find_closest_point(x, y, off, dist);
-    //   }
-    //
-    //   // if(print)
-    //   //   std::cout << "\tDist: " << dist - total_distance << " " << dist <<
-    //   "
-    //   //   "
-    //   //             << indexVector[3 * pi + i] << std::endl;
-    //   if(abs(dist - total_distance) > GEODESIC_EPSDIST) // TODO make more
-    //   precise
-    //   {
-    //     right_path = false;
-    //   }
-    // }
-    // if(!right_path) { return false; }
-    //
     if(print) std::cout << "type " << circumCenter.type() << std::endl;
 
     double best_total_distances[3] = {GEODESIC_INF, GEODESIC_INF, GEODESIC_INF};
@@ -3971,66 +3523,16 @@ namespace geodesic {
       }
     }
 
+    // std::cout << std::endl;
     for(int i = 0; i < 3; ++i) {
+      // std::cout << best_total_distances[i] << " vs " << circumRadius << " ->
+      // "
+      //           << best_total_distances[i] - circumRadius << std::endl;
       if(print) {
         std::cout << best_total_distances[i] << " vs " << circumRadius
                   << std::endl;
       }
-      if(abs((best_total_distances[i] - circumRadius) / circumRadius) >
-         GEODESIC_EPSDIST) {
-        // static int count = 0;
-        // std::ofstream posFile("intervals" + std::to_string(count++) +
-        // ".pos"); posFile << "View \"Intervals\" {\n"; for(unsigned i = 0; i <
-        // m_edge_interval_lists.size(); ++i) {
-        //   list_pointer list = &m_edge_interval_lists[i];
-        //   interval_pointer p = list->first();
-        //   while(p) {
-        //     edge_pointer edge = p->edge();
-        //     vertex_pointer v0 = edge->v0();
-        //     vertex_pointer v1 = edge->v1();
-        //     double start = p->start();
-        //     double stop = p->stop();
-        //     double length = edge->length();
-        //     double x0 = v0->x() + (v1->x() - v0->x()) * (start / length);
-        //     double y0 = v0->y() + (v1->y() - v0->y()) * (start / length);
-        //     double z0 = v0->z() + (v1->z() - v0->z()) * (start / length);
-        //     double x1 = v0->x() + (v1->x() - v0->x()) * (stop / length);
-        //     double y1 = v0->y() + (v1->y() - v0->y()) * (stop / length);
-        //     double z1 = v0->z() + (v1->z() - v0->z()) * (stop / length);
-        //     posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1 <<
-        //     ","
-        //             << y1 << "," << z1 << "){" << p->signal(start) << ","
-        //             << p->signal(stop) << "};\n";
-        //     // posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1
-        //     <<
-        //     // ","
-        //     //         << y1 << "," << z1 << "){" << p->d() << "," << p->d()
-        //     //         << "};\n";
-        //     // posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1
-        //     <<
-        //     // ","
-        //     //         << y1 << "," << z1 << "){" << p->min() << "," <<
-        //     p->min()
-        //     //         << "};\n";
-        //     // posFile << "SL(" << x0 << "," << y0 << "," << z0 << "," << x1
-        //     <<
-        //     // ","
-        //     //         << y1 << "," << z1 << "){" << p->source_index() << ","
-        //     //         << p->source_index() << "};\n";
-        //     p = p->next();
-        //   }
-        // }
-        // for(size_t i = 0; i < m_sources.size(); ++i) {
-        //   posFile << "SP(" << m_sources[i].x() << "," << m_sources[i].y() <<
-        //   ","
-        //           << m_sources[i].z() << "){" << i << "};\n";
-        // }
-        // posFile << "SP(" << circumCenter.x() << "," << circumCenter.y() <<
-        // ","
-        //         << circumCenter.z() << "){" << -1 << "};\n";
-        // posFile << "};\n";
-        // posFile.close();
-        // throw std::runtime_error("stop");
+      if(abs(best_total_distances[i] - circumRadius) > GEODESIC_EPSDIST) {
         return false;
       }
     }
