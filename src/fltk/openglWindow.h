@@ -140,8 +140,9 @@ private:
   void _studioFrame();
   static void _studioSampleCb(void *data);
   // a model spun hard enough catches fire: the speed of the drag, smoothed,
-  // and when it last moved; how much is alight and when that was last drawn
-  double _spin, _spinTime, _fire, _fireTime;
+  // the path drawn since it was last measured and when that was, and how
+  // long it has stayed fast; how much is alight and when that was last drawn
+  double _spin, _spinFrom, _spinPath, _spinHot, _fire, _fireTime;
   // sameFrame: the other eye of a stereo pair, drawn at the level the first
   // of them left
   void _burn(bool sameFrame = false);

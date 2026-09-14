@@ -107,7 +107,8 @@ openglWindow::openglWindow(int x, int y, int w, int h)
     _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
   _studioTimer = false;
-  _spin = _spinTime = _fire = _fireTime = _pickStepTime = 0.;
+  _spin = _spinFrom = _spinPath = _spinHot = 0.;
+  _fire = _fireTime = _pickStepTime = 0.;
   _stepping = false;
   _stepAnchor[0] = _stepAnchor[1] = 0.;
   _highlighted = nullptr;
@@ -643,6 +644,7 @@ void openglWindow::_studioSampleCb(void *data)
 void openglWindow::_burn(bool sameFrame)
 {
   if(!sameFrame) Fl::remove_timeout(_fireCb, this);
+  if(!CTX::instance()->phlogiston) _fire = 0.;
   if(_fire <= 0.) return;
   double now = TimeOfDay();
   if(!_printW && !sameFrame) {
@@ -1011,6 +1013,9 @@ int openglWindow::handle(int event)
     }
     _click.set(_ctx, Fl::event_x(), Fl::event_y());
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
+    // a drag is measured from where it starts, not from the last one
+    _spin = _spinPath = _spinHot = 0.;
+    _spinFrom = TimeOfDay();
     FlGui::instance()->manip->update();
     return 1;
 
@@ -1080,24 +1085,34 @@ int openglWindow::handle(int event)
         // (m1) and (!shift) and (!alt)  => rotation
         else if(Fl::event_button() == 1 && !Fl::event_state(FL_SHIFT) &&
                 !Fl::event_state(FL_ALT)) {
-          // how fast the model is spun, in window sizes per second, smoothed
-          // over the last few events: past a point it catches fire, the
+          // How fast the model is spun, in window sizes per second: kept up
+          // past a point for a quarter of a second, it catches fire, the
           // faster the sooner, and the fire goes on building as long as the
-          // spinning does, up to half as much again as a full blaze
-          double now = TimeOfDay(), dt = now - _spinTime;
-          _spinTime = now;
-          if(dt > 0. && dt < 0.5) {
-            double v = sqrt(dx * dx / (w() * (double)w()) +
-                            dy * dy / (h() * (double)h())) / dt;
-            _spin = 0.7 * _spin + 0.3 * v;
+          // spinning does, up to half as much again as a full blaze. The
+          // speed is the path drawn over a few hundredths of a second, not
+          // one event's step over the time since the previous one: events
+          // can arrive in clumps microseconds apart, as they do on X11,
+          // which made a slight movement look like a frantic one. A step
+          // counts for half a window at most, so a pointer that jumps
+          // (a stale position, a warp) does not count either.
+          double now = TimeOfDay(), dt = now - _spinFrom;
+          _spinPath += std::min(0.5, sqrt(dx * dx / (w() * (double)w()) +
+                                          dy * dy / (h() * (double)h())));
+          if(dt > 0.25) { // the drag stopped for a while
+            _spin = _spinPath = _spinHot = 0.;
+            _spinFrom = now;
+          }
+          else if(dt >= 0.03) {
+            _spin = 0.7 * _spin + 0.3 * std::min(40., _spinPath / dt);
             const double catches = 8.;
-            if(_spin > catches) {
+            _spinHot = (_spin > catches) ? _spinHot + dt : 0.;
+            if(_spinHot > 0.25 && CTX::instance()->phlogiston) {
               if(_fire <= 0.) _fireTime = now;
               _fire = std::min(1.5, _fire + 1.5 * (_spin / catches - 1.) * dt);
             }
+            _spinPath = 0.;
+            _spinFrom = now;
           }
-          else
-            _spin = 0.;
           if(CTX::instance()->useTrackball)
             _ctx->addQuaternion(
               (2. * _prev.win[0] - w()) / w(), (h() - 2. * _prev.win[1]) / h(),

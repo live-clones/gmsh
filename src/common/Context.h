@@ -337,6 +337,7 @@ public:
   // frames accumulated while the view is still
   double studioLightSpread, studioFloorOffset;
   int studioSamples;
+  int phlogiston;
   // order independent (weighted blended) transparency instead of back to
   // front sorting
   int orderIndependentTransparency;
