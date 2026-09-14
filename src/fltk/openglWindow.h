@@ -19,9 +19,11 @@ class GEntity;
 
 #if defined(NEW_TOOLTIPS)
 
+// no <FL/fl_draw.H> here: it brings in the platform headers of FLTK
+// (<FL/win32.H> on Windows), which src/common/gmsh.cpp cannot take after
+// all it includes before this header
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Tooltip.H>
-#include <FL/fl_draw.H>
 
 class tooltipWindow : public Fl_Menu_Window {
 private:
@@ -32,22 +34,12 @@ private:
 public:
   tooltipWindow(Fl_Widget *owner = nullptr) : Fl_Menu_Window(1, 1), _owner(owner)
   {
-    strcpy(_text, "");
+    _text[0] = '\0';
     set_override();
     set_tooltip_window();
     end();
   }
-  void draw()
-  {
-    draw_box(FL_BORDER_BOX, 0, 0, w(), h(), Fl_Tooltip::color());
-    fl_color(Fl_Tooltip::textcolor());
-    fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
-    int X = Fl_Tooltip::margin_width();
-    int Y = Fl_Tooltip::margin_height();
-    int W = w() - (Fl_Tooltip::margin_width() * 2);
-    int H = h() - (Fl_Tooltip::margin_height() * 2);
-    fl_draw(_text, X, Y, W, H, Fl_Align(FL_ALIGN_LEFT|FL_ALIGN_WRAP), 0, 1);
-  }
+  void draw();
   int handle(int e)
   {
     if(e == FL_PUSH) {
@@ -66,19 +58,7 @@ public:
     }
     return Fl_Menu_Window::handle(e);
   }
-  void value(const std::string &s)
-  {
-    strncpy(_text, s.c_str(), 1023);
-    _text[1023] = '\0';
-    fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
-    int ww = Fl_Tooltip::wrap_width();
-    int hh = 0;
-    fl_measure(_text, ww, hh, 1);
-    ww += (Fl_Tooltip::margin_width() * 2);
-    hh += (Fl_Tooltip::margin_height() * 2);
-    size(ww, hh);
-    redraw();
-  }
+  void value(const std::string &s);
 };
 
 #endif
