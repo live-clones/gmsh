@@ -15,6 +15,7 @@
 #include "Context.h"
 #include "OS.h"
 #include "adaptiveData.h"
+#include <stdexcept>
 
 bool PView::readPOS(const std::string &fileName, int fileIndex)
 {
@@ -85,33 +86,23 @@ bool PView::readMSHInterpolationScheme(FILE *fp)
 {
   char str[256] = "XXX";
   std::string name;
-  if(!fgets(str, sizeof(str), fp)) {
-    return false;
-  }
+  if(!fgets(str, sizeof(str), fp)) { return false; }
   name = ExtractDoubleQuotedString(str, sizeof(str));
   Msg::Debug("Reading interpolation scheme '%s'", name.c_str());
   PViewData::removeInterpolationScheme(name);
   int numTypes;
-  if(fscanf(fp, "%d", &numTypes) != 1) {
-    return false;
-  }
+  if(fscanf(fp, "%d", &numTypes) != 1) { return false; }
   for(int i = 0; i < numTypes; i++) {
     int type, numMatrices;
-    if(fscanf(fp, "%d %d", &type, &numMatrices) != 2) {
-      return false;
-    }
+    if(fscanf(fp, "%d %d", &type, &numMatrices) != 2) { return false; }
     for(int j = 0; j < numMatrices; j++) {
       int m, n;
-      if(fscanf(fp, "%d %d", &m, &n) != 2) {
-        return false;
-      }
+      if(fscanf(fp, "%d %d", &m, &n) != 2) { return false; }
       fullMatrix<double> mat(m, n);
       for(int k = 0; k < m; k++) {
         for(int l = 0; l < n; l++) {
           double d;
-          if(fscanf(fp, "%lf", &d) != 1) {
-            return false;
-          }
+          if(fscanf(fp, "%lf", &d) != 1) { return false; }
           mat.set(k, l, d);
         }
       }
@@ -121,8 +112,8 @@ bool PView::readMSHInterpolationScheme(FILE *fp)
   return true;
 }
 
-bool PView::readMSHViewData(const std::string &fileName, FILE *fp,
-                            bool binary, bool swap, const char *dataType,
+bool PView::readMSHViewData(const std::string &fileName, FILE *fp, bool binary,
+                            bool swap, const char *dataType,
                             int partitionToRead)
 {
   PViewDataGModel::DataType type;
@@ -138,16 +129,10 @@ bool PView::readMSHViewData(const std::string &fileName, FILE *fp,
   int numTags;
   // string tags
   std::string viewName, interpolationScheme;
-  if(!fgets(str, sizeof(str), fp)) {
-    return false;
-  }
-  if(sscanf(str, "%d", &numTags) != 1) {
-    return false;
-  }
+  if(!fgets(str, sizeof(str), fp)) { return false; }
+  if(sscanf(str, "%d", &numTags) != 1) { return false; }
   for(int i = 0; i < numTags; i++) {
-    if(!fgets(str, sizeof(str), fp)) {
-      return false;
-    }
+    if(!fgets(str, sizeof(str), fp)) { return false; }
     if(i == 0)
       viewName = ExtractDoubleQuotedString(str, sizeof(str));
     else if(i == 1)
@@ -155,59 +140,35 @@ bool PView::readMSHViewData(const std::string &fileName, FILE *fp,
   }
   // double tags
   double time = 0.;
-  if(!fgets(str, sizeof(str), fp)) {
-    return false;
-  }
-  if(sscanf(str, "%d", &numTags) != 1) {
-    return false;
-  }
+  if(!fgets(str, sizeof(str), fp)) { return false; }
+  if(sscanf(str, "%d", &numTags) != 1) { return false; }
   for(int i = 0; i < numTags; i++) {
-    if(!fgets(str, sizeof(str), fp)) {
-      return false;
-    }
+    if(!fgets(str, sizeof(str), fp)) { return false; }
     if(i == 0) {
-      if(sscanf(str, "%lf", &time) != 1) {
-        return false;
-      }
+      if(sscanf(str, "%lf", &time) != 1) { return false; }
     }
   }
   // integer tags
   int timeStep = 0, numComp = 0, numEnt = 0, partition = 0;
   long int blocksize = 0;
-  if(!fgets(str, sizeof(str), fp)) {
-    return false;
-  }
-  if(sscanf(str, "%d", &numTags) != 1) {
-    return false;
-  }
+  if(!fgets(str, sizeof(str), fp)) { return false; }
+  if(sscanf(str, "%d", &numTags) != 1) { return false; }
   for(int i = 0; i < numTags; i++) {
-    if(!fgets(str, sizeof(str), fp)) {
-      return false;
-    }
+    if(!fgets(str, sizeof(str), fp)) { return false; }
     if(i == 0) {
-      if(sscanf(str, "%d", &timeStep) != 1) {
-        return false;
-      }
+      if(sscanf(str, "%d", &timeStep) != 1) { return false; }
     }
     else if(i == 1) {
-      if(sscanf(str, "%d", &numComp) != 1) {
-        return false;
-      }
+      if(sscanf(str, "%d", &numComp) != 1) { return false; }
     }
     else if(i == 2) {
-      if(sscanf(str, "%d", &numEnt) != 1) {
-        return false;
-      }
+      if(sscanf(str, "%d", &numEnt) != 1) { return false; }
     }
     else if(i == 3) {
-      if(sscanf(str, "%d", &partition) != 1) {
-        return false;
-      }
+      if(sscanf(str, "%d", &partition) != 1) { return false; }
     }
     else if(i == 4) {
-      if(sscanf(str, "%ld", &blocksize) != 1) {
-        return false;
-      }
+      if(sscanf(str, "%ld", &blocksize) != 1) { return false; }
     }
   }
   if(partitionToRead == -1 || partitionToRead == partition) {
@@ -223,9 +184,8 @@ bool PView::readMSHViewData(const std::string &fileName, FILE *fp,
       if(create) d = new PViewDataGModel(type);
       // currently unused indices:
       int fileIndex = -1, index = 1;
-      if(!d->readMSH(viewName, fileName, fileIndex, fp, binary, swap,
-                     timeStep, time, partition, numComp, numEnt,
-                     interpolationScheme)) {
+      if(!d->readMSH(viewName, fileName, fileIndex, fp, binary, swap, timeStep,
+                     time, partition, numComp, numEnt, interpolationScheme)) {
         Msg::Error("Could not read data in file '%s'", fileName.c_str());
         if(create) delete d;
         return false;
@@ -322,6 +282,7 @@ bool PView::write(const std::string &fileName, int format, bool append)
     break;
   case 6: ret = _data->writeMED(fileName); break;
   case 7: ret = writeX3D(fileName); break;
+  case 8: ret = _data->writeGLTF(fileName, this); break;
   case 10: {
     std::string ext = SplitFileName(fileName)[2];
     if(ext == ".pos")
@@ -340,6 +301,8 @@ bool PView::write(const std::string &fileName, int format, bool append)
       ret = _data->writeMED(fileName);
     else if(ext == ".x3d")
       ret = writeX3D(fileName);
+    else if(ext == ".gltf")
+      ret = _data->writeGLTF(fileName, this);
     else
       ret = _data->writeTXT(fileName);
     break;

@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include "PView.h"
 #include "SBoundingBox3d.h"
 #include "SPoint3KDTree.h"
 
@@ -23,7 +24,7 @@ class nameData;
 class OctreePost;
 template <class scalar> class fullMatrix;
 
-typedef std::map<int, std::vector<fullMatrix<double> *> > interpolationMatrices;
+typedef std::map<int, std::vector<fullMatrix<double> *>> interpolationMatrices;
 
 // The abstract interface to post-processing view data.
 class PViewData {
@@ -324,22 +325,26 @@ public:
   // match was found
   bool searchScalarClosest(double x, double y, double z, double &distance,
                            double *values, int step = -1,
-                           double *size = nullptr, int qn = 0, double *qx = nullptr,
-                           double *qy = nullptr, double *qz = nullptr,
-                           bool grad = false, int dim = -1);
+                           double *size = nullptr, int qn = 0,
+                           double *qx = nullptr, double *qy = nullptr,
+                           double *qz = nullptr, bool grad = false,
+                           int dim = -1);
   bool searchVectorClosest(double x, double y, double z, double &distance,
                            double *values, int step = -1,
-                           double *size = nullptr, int qn = 0, double *qx = nullptr,
-                           double *qy = nullptr, double *qz = nullptr,
-                           bool grad = false, int dim = -1);
+                           double *size = nullptr, int qn = 0,
+                           double *qx = nullptr, double *qy = nullptr,
+                           double *qz = nullptr, bool grad = false,
+                           int dim = -1);
   bool searchTensorClosest(double x, double y, double z, double &distance,
                            double *values, int step = -1,
-                           double *size = nullptr, int qn = 0, double *qx = nullptr,
-                           double *qy = nullptr, double *qz = nullptr,
-                           bool grad = false, int dim = -1);
+                           double *size = nullptr, int qn = 0,
+                           double *qx = nullptr, double *qy = nullptr,
+                           double *qz = nullptr, bool grad = false,
+                           int dim = -1);
 
   // I/O routines
   virtual bool writeSTL(const std::string &fileName);
+  virtual bool writeGLTF(const std::string &fileName, PView *pv);
   virtual bool writeTXT(const std::string &fileName);
   virtual bool writePOS(const std::string &fileName, bool binary = false,
                         bool parsed = true, bool append = false);
@@ -350,8 +355,8 @@ public:
                         bool forceNodeData = false,
                         bool forceElementData = false);
   virtual bool writeMED(const std::string &fileName);
-  virtual bool toVector(std::vector<std::vector<double> > &vec);
-  virtual bool fromVector(const std::vector<std::vector<double> > &vec);
+  virtual bool toVector(std::vector<std::vector<double>> &vec);
+  virtual bool fromVector(const std::vector<std::vector<double>> &vec);
   virtual void importLists(int N[24], std::vector<double> *V[24]);
   virtual void getListPointers(int N[24], std::vector<double> *V[24]);
   virtual void sendToServer(const std::string &name);
