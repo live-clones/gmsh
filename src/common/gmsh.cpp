@@ -3354,34 +3354,6 @@ GMSH_API void gmsh::model::mesh::getJacobian(
   }
 }
 
-static void
-_validateWantedOrientations(const std::vector<int> &wantedOrientations,
-                            int maxOrientation, const std::string &fsName,
-                            const int familyType)
-{
-  if(wantedOrientations.empty()) { return; }
-  if(wantedOrientations.size() > static_cast<size_t>(maxOrientation)) {
-    Msg::Error("Asking for more orientation that there exist (max allowed: %d)",
-               maxOrientation);
-    return;
-  }
-  std::unordered_set<int> uniqueOrientations;
-  for(int ori : wantedOrientations) {
-    if(ori < 0 || ori >= maxOrientation) {
-      Msg::Error(
-        "Orientation %d does not exist for function space named '%s' on %s",
-        ori, fsName.c_str(),
-        ElementType::nameOfParentType(familyType, true).c_str());
-      return;
-    }
-
-    if(!uniqueOrientations.insert(ori).second) {
-      Msg::Error("Duplicate wanted orientation %d found", ori);
-      return;
-    }
-  }
-}
-
 GMSH_API void gmsh::model::mesh::getBasisFunctions(
   const int elementType, const std::vector<double> &localCoord,
   const std::string &functionSpaceType, int &numComponents,
@@ -3404,13 +3376,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     ElementType::getParentType(elementType); // TYPE_PNT ....
 
   if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
-    // Check if there is no error in wantedOrientations
-    const std::size_t maxOrientation = 1;
-    _validateWantedOrientations(wantedOrientations, maxOrientation, fsName,
-                                familyType);
-
-    const nodalBasis *basis =
-      nullptr; // class nodalBasis : numOrientations = maxOrientation = 1;
+    const nodalBasis *basis = nullptr;
 
     if(numComponents) {
       if(fsOrder == -1) { // isoparametric
@@ -3447,7 +3413,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         }
       }
     }
-    numOrientations = maxOrientation;
+    numOrientations = 1;
   }
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
@@ -3480,8 +3446,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       numberOfGaussPoints * numFunctionsPerElement * numComponents);
 
     // Check if there is no error in wantedOrientations
-    _validateWantedOrientations(wantedOrientations, maxOrientation, fsName,
-                                familyType);
+    validateWantedOrientations(wantedOrientations, maxOrientation, fsName,
+                               familyType);
 
     std::vector<MVertex *> vertices(numVertices);
     for(unsigned int i = 0; i < numVertices; ++i) {
