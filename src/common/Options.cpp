@@ -3006,9 +3006,11 @@ double opt_general_shading(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->shading = std::max(0, std::min(3, (int)val));
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
+  if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->general.choice[8]->value(
       CTX::instance()->shading);
+    FlGui::instance()->options->activate("shaders");
+  }
 #endif
   return CTX::instance()->shading;
 }
@@ -3022,6 +3024,18 @@ double opt_general_studio_light_spread(OPT_ARGS_NUM)
       CTX::instance()->studioLightSpread);
 #endif
   return CTX::instance()->studioLightSpread;
+}
+
+double opt_general_brightness(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->brightness = std::max(0., std::min(10., val));
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[36]->value(
+      CTX::instance()->brightness);
+#endif
+  return CTX::instance()->brightness;
 }
 
 double opt_general_studio_floor_offset(OPT_ARGS_NUM)

@@ -163,6 +163,8 @@ uniform float uShininess;
 // 0: the fixed function model below; 1: studio; 2: the shadow catcher of the
 // studio model, on which only the shadow is drawn
 uniform int uShading;
+// a factor on the light of the lit surfaces
+uniform float uBrightness;
 // the studio light: the key direction and the model's up axis in eye
 // coordinates, the key's shadow map with the matrix from eye coordinates to
 // it, and the same for the dome direction of the current sample
@@ -359,6 +361,12 @@ void main()
       vec3 h = normalize(uStudioLight + vec3(0.0, 0.0, 1.0));
       c += 0.6 * key * lit * uSpecular * pow(max(dot(n, h), 0.0), uShininess);
     }
+    // in linear light, as an exposure would be: the shadows of the floor,
+    // drawn apart, are left as dark as they are. The 1.2 makes the default
+    // brightness look like classic shading: over six test scenes (meshes,
+    // geometry, views) classic had 1.12 to 1.56 times the mean linear light
+    // of studio on the model, 1.21 on (geometric) average.
+    c *= 1.2 * uBrightness;
     emit(vec4(pow(min(c, vec3(1.0)), vec3(1.0 / 2.2)), alpha));
     return;
   }
@@ -369,9 +377,10 @@ void main()
 
   for(int i = 0; i < 6; i++) {
     if(!uLightOn[i]) continue;
+    // a point light is at (x, y, z) / w, as OpenGL has it
     vec3 l = (uLightPosition[i].w == 0.0) ?
                normalize(uLightPosition[i].xyz) :
-               normalize(uLightPosition[i].xyz - vEye);
+               normalize(uLightPosition[i].xyz / uLightPosition[i].w - vEye);
     c += uLightAmbient[i] * vColor.rgb;
     float d = max(dot(n, l), 0.0);
     c += uLightDiffuse[i] * vColor.rgb * d;
@@ -382,6 +391,10 @@ void main()
     }
   }
 
+  // the factor on the light, raised to 1/2.2 as the colours here are those
+  // of the screen and not linear light, so that a factor brightens classic
+  // shading as much as it does studio shading
+  c *= pow(uBrightness, 1.0 / 2.2);
   emit(vec4(min(c, vec3(1.0)), alpha));
 }
 )";
@@ -739,7 +752,8 @@ void main()
       // one location per array element, looked up at link time: asking by
       // name at every draw is costly on scenes of many small draws
       GLint clipPlane[6], clipOn[6], clipOutside;
-      GLint studioLight, studioUp, shadowTexel, shadowOn, shadowFromEye, shadow;
+      GLint studioLight, studioUp, brightness;
+      GLint shadowTexel, shadowOn, shadowFromEye, shadow;
       GLint domeOn, domeDir, domeFromEye, dome, shadowPass, seed;
       GLint lightPosition[6], lightAmbient[6], lightDiffuse[6];
       GLint lightSpecular[6], lightOn[6];
@@ -886,6 +900,7 @@ void main()
       _u.specular = glApi::GetUniformLocation(p, "uSpecular");
       _u.shininess = glApi::GetUniformLocation(p, "uShininess");
       _u.shading = glApi::GetUniformLocation(p, "uShading");
+      _u.brightness = glApi::GetUniformLocation(p, "uBrightness");
       _u.studioLight = glApi::GetUniformLocation(p, "uStudioLight");
       _u.studioUp = glApi::GetUniformLocation(p, "uStudioUp");
       _u.shadowTexel = glApi::GetUniformLocation(p, "uShadowTexel");
@@ -1065,10 +1080,11 @@ void main()
     glApi::Uniform1f(_u.shininess, (float)shineExponent);
   }
 
-  void setShading(int model)
+  void setShading(int model, double brightness)
   {
     if(!ensure()) return;
     glApi::Uniform1i(_u.shading, model);
+    glApi::Uniform1f(_u.brightness, (float)brightness);
   }
 
   void setStudioLight(const double dir[3], const double up[3], double texel)

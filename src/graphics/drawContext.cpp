@@ -1588,6 +1588,10 @@ void drawContext::initRenderModel()
   // a core profile has no fixed function lighting: the shader gets the lights
   // as uniforms instead
   bool fixed = !gmshUseShaders();
+  // General.Brightness: the shader applies it itself, the fixed function
+  // pipeline to the colours of its lights and of the global ambient (raised
+  // to 1/2.2 like the shader's classic shading)
+  GLfloat k = (GLfloat)pow(CTX::instance()->brightness, 1. / 2.2);
 
   for(int i = 0; i < 6; i++) {
     if(CTX::instance()->light[i]) {
@@ -1613,7 +1617,10 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.ambientLight[i]) /
         255.);
       GLfloat ambient[4] = {r, g, b, 1.0F};
-      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
+      if(fixed) {
+        GLfloat a[4] = {k * r, k * g, k * b, 1.0F};
+        glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, a);
+      }
 
       r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.diffuseLight[i]) /
@@ -1625,7 +1632,10 @@ void drawContext::initRenderModel()
         CTX::instance()->unpackBlue(CTX::instance()->color.diffuseLight[i]) /
         255.);
       GLfloat diffuse[4] = {r, g, b, 1.0F};
-      if(fixed) glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
+      if(fixed) {
+        GLfloat d[4] = {k * r, k * g, k * b, 1.0F};
+        glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, d);
+      }
 
       r = (GLfloat)(
         CTX::instance()->unpackRed(CTX::instance()->color.specularLight[i]) /
@@ -1638,7 +1648,8 @@ void drawContext::initRenderModel()
         255.);
       GLfloat specular[4] = {r, g, b, 1.0F};
       if(fixed) {
-        glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
+        GLfloat sp[4] = {k * r, k * g, k * b, 1.0F};
+        glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, sp);
         glEnable((GLenum)(GL_LIGHT0 + i));
       }
       glShader::setLight(i, eye, ambient, diffuse, specular);
@@ -1656,6 +1667,9 @@ void drawContext::initRenderModel()
     // automatically
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
+    // the global ambient, OpenGL's 0.2 times the brightness
+    GLfloat global[4] = {0.2F * k, 0.2F * k, 0.2F * k, 1.0F};
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global);
     // "white"-only specular material reflection color
     GLfloat spec[4] = {(GLfloat)CTX::instance()->shine,
                        (GLfloat)CTX::instance()->shine,

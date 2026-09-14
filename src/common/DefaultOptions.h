@@ -485,6 +485,10 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "BoundingBoxSize" , opt_general_lc, 1. ,
     "Overall bounding box size (read-only)" },
 
+  { F|O, "Brightness" , opt_general_brightness , 1. ,
+    "Brightness of the lit surfaces, a factor on the light (applied in linear "
+    "light in studio shading, and so that a factor looks the same in classic "
+    "shading)" },
   { F|O, "Camera" , opt_general_camera_mode, 0. ,
     "Enable camera view mode" },
   { F|O, "CameraAperture" , opt_general_camera_aperture, 40. ,
@@ -657,8 +661,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light0Z" , opt_general_light02 , 1.0 ,
     "Z position of light source 0" },
   { F|O, "Light0W" , opt_general_light03 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 0 (W=0 means "
-    "infinitely far source)" },
+    "Proximity of light source 0, its W coordinate: 0 for a directional light "
+    "(infinitely far), 1 for a point light at (X, Y, Z), in between for a "
+    "point light at (X, Y, Z) / W (not used by studio shading)" },
   { F|O, "Light1" , opt_general_light1 , 0.,
     "Enable light source 1" },
   { F|O, "Light1X" , opt_general_light10 , 0.5 ,
@@ -668,8 +673,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light1Z" , opt_general_light12 , 1.0 ,
     "Z position of light source 1" },
   { F|O, "Light1W" , opt_general_light13 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 1 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 1: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "Light2" , opt_general_light2 , 0.,
     "Enable light source 2" },
   { F|O, "Light2X" , opt_general_light20 , 0.5 ,
@@ -679,8 +684,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light2Z" , opt_general_light22 , 1.0 ,
     "Z position of light source 2" },
   { F|O, "Light2W" , opt_general_light23 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 2 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 2: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "Light3" , opt_general_light3 , 0.,
     "Enable light source 3" },
   { F|O, "Light3X" , opt_general_light30 , 0.5 ,
@@ -690,8 +695,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light3Z" , opt_general_light32 , 1.0 ,
     "Z position of light source 3" },
   { F|O, "Light3W" , opt_general_light33 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 3 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 3: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "Light4" , opt_general_light4 , 0.,
     "Enable light source 4" },
   { F|O, "Light4X" , opt_general_light40 , 0.5 ,
@@ -701,8 +706,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light4Z" , opt_general_light42 , 1.0 ,
     "Z position of light source 4" },
   { F|O, "Light4W" , opt_general_light43 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 4 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 4: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "Light5" , opt_general_light5 , 0.,
     "Enable light source 5" },
   { F|O, "Light5X" , opt_general_light50 , 0.5 ,
@@ -712,8 +717,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light5Z" , opt_general_light52 , 1.0 ,
     "Z position of light source 5" },
   { F|O, "Light5W" , opt_general_light53 , 0.0 ,
-    "Divisor of the X, Y and Z coordinates of light source 5 (W=0 means infinitely "
-    "far source)" },
+    "W coordinate of light source 5: 0 for a directional light, 1 for a point "
+    "light at (X, Y, Z), in between for a point light at (X, Y, Z) / W" },
   { F|O, "LineWidth" , opt_general_line_width , 1.0 ,
     "Display width of lines (in pixels)" },
 
