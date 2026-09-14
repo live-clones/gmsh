@@ -120,7 +120,8 @@ double OrthogonalPoly::EvalLobatto(int order, double x)
     L = L * 1. / 2048. * pow(29. / 2., 0.5);
     return L;
 
-  default: throw std::runtime_error("Lobatto functions are written for orders =< 15");
+  default:
+    throw std::runtime_error("Lobatto functions are written for orders =< 15");
   }
 }
 
@@ -231,7 +232,8 @@ double OrthogonalPoly::EvalDLobatto(int order, double x)
     dL = dL * 1. / 2048. * pow(29. / 2., 0.5);
     return dL;
 
-  default: throw std::runtime_error("Lobatto functions are written for orders =< 15");
+  default:
+    throw std::runtime_error("Lobatto functions are written for orders =< 15");
   }
 }
 
@@ -322,7 +324,8 @@ double OrthogonalPoly::EvalKernelFunction(int order, double x)
                                     xsquare * (965770 - 334305 * xsquare))))));
     phi = phi * 1. / 512. * pow(29. / 2., 0.5);
     return phi;
-  default: throw std::runtime_error("Lobatto functions are written for orders =< 15");
+  default:
+    throw std::runtime_error("Lobatto functions are written for orders =< 15");
   }
 }
 
@@ -408,7 +411,8 @@ double OrthogonalPoly::EvalDKernelFunction(int order, double x)
                                   xsquare * (10623470 - 4345965 * xsquare)))));
     dphi = dphi * 1. / 512. * pow(29. / 2., 0.5);
     return dphi;
-  default: throw std::runtime_error("Lobatto functions are written for orders =< 15");
+  default:
+    throw std::runtime_error("Lobatto functions are written for orders =< 15");
   }
 }
 
@@ -458,7 +462,8 @@ double OrthogonalPoly::EvalLegendre(int order, double x)
         63;
     L = 1. / 256. * L;
     return L;
-  default: throw std::runtime_error("Legendre functions are written for orders =< 10");
+  default:
+    throw std::runtime_error("Legendre functions are written for orders =< 10");
   }
 }
 
@@ -504,6 +509,7 @@ double OrthogonalPoly::EvalDLegendre(int order, double x)
                  xsquare * (540540 + xsquare * (-875160 + 461890 * xsquare))));
     dL = 1. / 256. * dL;
     return dL;
-  default: throw std::runtime_error("Legendre functions are written for orders =< 10");
+  default:
+    throw std::runtime_error("Legendre functions are written for orders =< 10");
   }
 }

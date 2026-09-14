@@ -11,14 +11,13 @@
 #include "MVertex.h"
 #include "MElement.h"
 
-void validateWantedOrientations(const std::vector<int>& wantedOrientations,
-                                int maxOrientation,
-                                const std::string& fsName,
+void validateWantedOrientations(const std::vector<int> &wantedOrientations,
+                                int maxOrientation, const std::string &fsName,
                                 const int familyType);
 
 // Update Element Vertices With Next Permutation
 
-void updateElementVerticesWithNextPermutation(std::vector<MVertex*>& vertices,
-                                              MElement* element);
+void updateElementVerticesWithNextPermutation(std::vector<MVertex *> &vertices,
+                                              MElement *element);
 
 #endif // UTILS_H

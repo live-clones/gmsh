@@ -11,40 +11,44 @@
 
 #include "HierarchicalBasisH1Point.h"
 
-HierarchicalBasisH1Point::HierarchicalBasisH1Point() {
-    _numVertex = 1;
-    _numEdge = 0;
-    _numQuadFace = 0;
-    _numTriFace = 0;
-    _numVertexFunction = 1;
-    _numEdgeFunction = 0;
-    _numQuadFaceFunction = 0;
-    _numTriFaceFunction = 0;
-    _numBubbleFunction = 0;
+HierarchicalBasisH1Point::HierarchicalBasisH1Point()
+{
+  _numVertex = 1;
+  _numEdge = 0;
+  _numQuadFace = 0;
+  _numTriFace = 0;
+  _numVertexFunction = 1;
+  _numEdgeFunction = 0;
+  _numQuadFaceFunction = 0;
+  _numTriFaceFunction = 0;
+  _numBubbleFunction = 0;
 }
 
-unsigned int HierarchicalBasisH1Point::getNumberOfOrientations() const {
-    return 1; // factorial 1
+unsigned int HierarchicalBasisH1Point::getNumberOfOrientations() const
+{
+  return 1; // factorial 1
 }
 
-void HierarchicalBasisH1Point::generateBasis(double const &u, double const &v, double const &w,
+void HierarchicalBasisH1Point::generateBasis(double const &u, double const &v,
+                                             double const &w,
                                              std::vector<double> &vertexBasis,
                                              std::vector<double> &edgeBasis,
                                              std::vector<double> &faceBasis,
                                              std::vector<double> &bubbleBasis,
-                                             std::string typeFunction) {
-    vertexBasis[0] = 1;
-}
+                                             std::string typeFunction)
+{ vertexBasis[0] = 1; }
 
-void HierarchicalBasisH1Point::generateGradientBasis(double const &u, double const &v, double const &w,
-                                                     std::vector<std::vector<double> > &gradientVertex,
-                                                     std::vector<std::vector<double> > &gradientEdge,
-                                                     std::vector<std::vector<double> > &gradientFace,
-                                                     std::vector<std::vector<double> > &gradientBubble) {
-    gradientVertex[0][0] = 1;
-}
+void HierarchicalBasisH1Point::generateGradientBasis(
+  double const &u, double const &v, double const &w,
+  std::vector<std::vector<double>> &gradientVertex,
+  std::vector<std::vector<double>> &gradientEdge,
+  std::vector<std::vector<double>> &gradientFace,
+  std::vector<std::vector<double>> &gradientBubble)
+{ gradientVertex[0][0] = 1; }
 
-void HierarchicalBasisH1Point::getKeysInfo(std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo) {
-    functionTypeInfo[0] = 0;
-    orderInfo[0] = 0;
+void HierarchicalBasisH1Point::getKeysInfo(std::vector<int> &functionTypeInfo,
+                                           std::vector<int> &orderInfo)
+{
+  functionTypeInfo[0] = 0;
+  orderInfo[0] = 0;
 }

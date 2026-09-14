@@ -27,7 +27,7 @@ HierarchicalBasisHcurlTetra::HierarchicalBasisHcurlTetra(int order)
   else {
     _numTriFaceFunction = 12 * (order - 1) + 4 * (order - 2) * (order - 1);
     _numBubbleFunction = (order - 1) * (order - 2) * (order - 3) / 2 +
-                       2 * (order - 2) * (order - 1);
+                         2 * (order - 2) * (order - 1);
   }
   _pb = order;
   for(int i = 0; i < 4; i++) { _pOrderFace[i] = order; }
@@ -57,15 +57,13 @@ double HierarchicalBasisHcurlTetra::_affineCoordinate(const int &j,
 
 double HierarchicalBasisHcurlTetra::dotProduct(const std::vector<double> &u,
                                                const std::vector<double> &v)
-{
-  return u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
-}
+{ return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]; }
 
 void HierarchicalBasisHcurlTetra::generateHcurlBasis(
   double const &u, double const &v, double const &w,
-  std::vector<std::vector<double> > &edgeBasis,
-  std::vector<std::vector<double> > &faceBasis,
-  std::vector<std::vector<double> > &bubbleBasis)
+  std::vector<std::vector<double>> &edgeBasis,
+  std::vector<std::vector<double>> &faceBasis,
+  std::vector<std::vector<double>> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -105,8 +103,8 @@ void HierarchicalBasisHcurlTetra::generateHcurlBasis(
   t6[1] = -1;
   t6[2] = 1;
   // Whitney functions:
-  std::vector<std::vector<double> > psie_0(6, std::vector<double>(3, 0));
-  std::vector<std::vector<double> > psie_1(6, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> psie_0(6, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> psie_1(6, std::vector<double>(3, 0));
   for(int i = 0; i < 3; i++) {
     psie_0[0][i] = lambda3 * n2[i] / dotProduct(n2, t1) +
                    lambda2 * n3[i] / dotProduct(n3, t1);
@@ -145,7 +143,7 @@ void HierarchicalBasisHcurlTetra::generateHcurlBasis(
   sub[6] = lambda2 - lambda4;
   sub[7] = -lambda2 + lambda1;
   sub[8] = lambda3 - lambda4;
-  std::vector<std::vector<double> > legendreVector(9);
+  std::vector<std::vector<double>> legendreVector(9);
   legendreVector[0] = std::vector<double>(std::max(
     std::max(std::max(_pOrderEdge[0], _pOrderFace[0] - 1), _pOrderFace[1] - 1),
     0));
@@ -442,9 +440,9 @@ void HierarchicalBasisHcurlTetra::generateHcurlBasis(
 
 void HierarchicalBasisHcurlTetra::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &edgeFunctions,
-  const std::vector<std::vector<double> > &eTablePositiveFlag,
-  const std::vector<std::vector<double> > &eTableNegativeFlag)
+  std::vector<std::vector<double>> &edgeFunctions,
+  const std::vector<std::vector<double>> &eTablePositiveFlag,
+  const std::vector<std::vector<double>> &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -472,7 +470,7 @@ void HierarchicalBasisHcurlTetra::orientEdge(
   }
 }
 void HierarchicalBasisHcurlTetra::orientEdgeFunctionsForNegativeFlag(
-  std::vector<std::vector<double> > &edgeFunctions)
+  std::vector<std::vector<double>> &edgeFunctions)
 {
   int constant1 = 0;
   int constant2 = 0;
@@ -494,7 +492,7 @@ void HierarchicalBasisHcurlTetra::orientEdgeFunctionsForNegativeFlag(
 void HierarchicalBasisHcurlTetra::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
+  std::vector<std::vector<double>> &faceFunctions, std::string typeFunction)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     if(typeFunction == "HcurlLegendre") {
@@ -512,7 +510,7 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
                  (_pOrderFace[k] - 2) * (_pOrderFace[k] - 1);
       }
       std::vector<double> lambda(3);
-      std::vector<std::vector<double> > dlambda(3, std::vector<double>(3, 0));
+      std::vector<std::vector<double>> dlambda(3, std::vector<double>(3, 0));
       switch(faceNumber) {
       case(0):
         lambda[0] = _affineCoordinate(2, uc, vc, wc);
@@ -692,7 +690,7 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
                  (_pOrderFace[k] - 2) * (_pOrderFace[k] - 1);
       }
       std::vector<double> lambda(3);
-      std::vector<std::vector<double> > dlambda(3, std::vector<double>(3, 0));
+      std::vector<std::vector<double>> dlambda(3, std::vector<double>(3, 0));
       switch(faceNumber) {
       case(0):
         lambda[0] = _affineCoordinate(2, uc, vc, wc);
@@ -794,7 +792,7 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
       n3[1] = dlambda[1][1];
       n3[2] = dlambda[1][2];
 
-      std::vector<std::vector<double> > dsub(3, std::vector<double>(3, 0));
+      std::vector<std::vector<double>> dsub(3, std::vector<double>(3, 0));
       for(int p = 0; p < 3; p++) {
         dsub[0][p] = dlambda[1][p] - dlambda[0][p];
         dsub[1][p] = dlambda[2][p] - dlambda[1][p];
@@ -890,7 +888,7 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
                       dlambda[2][i] * lambda[1] * lambda[0];
       }
       double product = lambda[0] * lambda[1] * lambda[2];
-      std::vector<std::vector<double> > copy(
+      std::vector<std::vector<double>> copy(
         int((_pOrderFace[faceNumber] - 2) * (_pOrderFace[faceNumber] - 1) / 2),
         std::vector<double>(3, 0));
       int itCopy = 0;
@@ -925,9 +923,9 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
 }
 void HierarchicalBasisHcurlTetra::orientFace(
   int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
-  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
-  std::vector<std::vector<double> > &fTableCopy)
+  const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double>> &fTableCopy)
 {
   int iterator = 0;
   for(int i = 0; i < faceNumber; i++) {
@@ -967,9 +965,9 @@ inline void HierarchicalBasisHcurlTetra::gradient(
 
 void HierarchicalBasisHcurlTetra::generateCurlBasis(
   double const &u, double const &v, double const &w,
-  std::vector<std::vector<double> > &edgeBasis,
-  std::vector<std::vector<double> > &faceBasis,
-  std::vector<std::vector<double> > &bubbleBasis)
+  std::vector<std::vector<double>> &edgeBasis,
+  std::vector<std::vector<double>> &faceBasis,
+  std::vector<std::vector<double>> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -1027,7 +1025,7 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
   sub[7] = -lambda2 + lambda1;
   sub[8] = lambda3 - lambda4;
 
-  std::vector<std::vector<double> > dsubtraction(9, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> dsubtraction(9, std::vector<double>(3, 0));
   for(int k = 0; k < 3; k++) {
     dsubtraction[0][k] = dlambda3[k] - dlambda2[k];
     dsubtraction[1][k] = dlambda1[k] - dlambda3[k];
@@ -1039,8 +1037,8 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
     dsubtraction[7][k] = -dlambda2[k] + dlambda1[k];
     dsubtraction[8][k] = dlambda3[k] - dlambda4[k];
   }
-  std::vector<std::vector<double> > legendreVector(9);
-  std::vector<std::vector<double> > dlegendreVector(9);
+  std::vector<std::vector<double>> legendreVector(9);
+  std::vector<std::vector<double>> dlegendreVector(9);
   legendreVector[0] = std::vector<double>(std::max(
     std::max(std::max(_pOrderEdge[0], _pOrderFace[0] - 1), _pOrderFace[1] - 1),
     0));
@@ -1087,8 +1085,8 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
     }
   }
 
-  std::vector<std::vector<double> > dfaceProduct(_numTriFace,
-                                                 std::vector<double>(3));
+  std::vector<std::vector<double>> dfaceProduct(_numTriFace,
+                                                std::vector<double>(3));
   for(int i = 0; i < 3; i++) {
     dfaceProduct[0][i] = lambda3 * lambda2 * dlambda1[i] +
                          lambda3 * dlambda2[i] * lambda1 +
@@ -1104,8 +1102,8 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
                          dlambda1[i] * lambda3 * lambda4;
   }
   // Whitney functions:
-  std::vector<std::vector<double> > psie_0(6, std::vector<double>(3, 0));
-  std::vector<std::vector<double> > psie_1(6, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> psie_0(6, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> psie_1(6, std::vector<double>(3, 0));
   for(int i = 0; i < 3; i++) {
     psie_0[0][i] = lambda3 * n2[i] / dotProduct(n2, t1) +
                    lambda2 * n3[i] / dotProduct(n3, t1);
@@ -1134,7 +1132,7 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
                    lambda3 * n4[i] / dotProduct(n4, t5);
   }
   // curl of withney functions
-  std::vector<std::vector<double> > curlpsie_0(6, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> curlpsie_0(6, std::vector<double>(3, 0));
   curlpsie_0[0][1] = -1;
   curlpsie_0[0][2] = 1;
   curlpsie_0[1][2] = 1;
@@ -1397,7 +1395,7 @@ void HierarchicalBasisHcurlTetra::generateCurlBasis(
       break;
     }
 
-    std::vector<std::vector<double> > copy(
+    std::vector<std::vector<double>> copy(
       int((_pOrderFace[nFace] - 2) * (_pOrderFace[nFace] - 1) / 2),
       std::vector<double>(3, 0));
     int itCopy = 0;
