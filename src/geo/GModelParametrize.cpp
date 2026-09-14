@@ -16,6 +16,7 @@
 #include "discreteEdge.h"
 #include "discreteVertex.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MEdge.h"
 #include "GEdge.h"
 #include "MLine.h"
@@ -110,6 +111,13 @@ static bool breakForLargeAngle(MVertex *vprev, MVertex *vmid, MVertex *vpos,
 // extern void discoverQuadrics(GModel *gm);
 
 void classifyFaces(GModel *gm, double curveAngleThreshold)
+{
+  auto splitMap = std::map<int, std::vector<int>>();
+  classifyFaces(gm, curveAngleThreshold, splitMap);
+}
+
+void classifyFaces(GModel *gm, double curveAngleThreshold,
+                   std::map<int, std::vector<int>> &splitMap)
 {
 #if defined(HAVE_MESH)
   size_t MAX0 = gm->getMaxElementaryNumber(0);
@@ -444,11 +452,21 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     else
       gm->remove(*fit);
   }
+
+  for (const auto [oldFace, newFace] : replacedBy) {
+    if (fac.find(newFace) != fac.end()) {
+      auto& faces = splitMap[oldFace->tag()];
+      if (std::find(faces.begin(), faces.end(), newFace->tag()) == faces.end()) {
+        faces.push_back(newFace->tag());
+      }
+    }
+  }
 #endif
 }
 
 void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
-                   bool forParametrization, double curveAngleThreshold)
+                   bool forParametrization, double curveAngleThreshold,
+                  std::map<int, std::vector<int>> &splitMap)
 {
   //  bool _detectQuadrics = true;
 
@@ -493,7 +511,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
   if(forParametrization)
     computeEdgeCut(gm, edge->lines, CTX::instance()->mesh.reparamMaxTriangles);
   computeNonManifoldEdges(gm, edge->lines, true);
-  classifyFaces(gm, curveAngleThreshold);
+  classifyFaces(gm, curveAngleThreshold, splitMap);
 
   gm->remove(edge);
   edge->lines.clear();

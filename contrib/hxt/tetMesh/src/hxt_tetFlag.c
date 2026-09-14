@@ -115,7 +115,7 @@ HXTStatus hxtGetLines2TriMap(HXTMesh* mesh, uint64_t* lines2TriMap, uint64_t* mi
         if(i!=numEdgesTotal-1 && edgeKey[i].v[0]==edgeKey[i+1].v[0]) {
         #ifndef NDEBUG
           if(edgeKey[i+1].v[1]%2==0) {
-            HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated line in mesh->lines (" HXTu64 " & " HXTu64 ")\n"
+            HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated line in mesh->lines (%" HXTu64 " & %" HXTu64 ")\n"
                                            "\tThis case is not handled in Release mode, FIX IT !!",
                                            edgeKey[i].v[1]/2, edgeKey[i+1].v[1]/2);
             exit(EXIT_FAILURE);
@@ -248,7 +248,7 @@ HXT_ASSERT( mesh!=NULL );
       int nthreads = omp_get_num_threads();
       numEdgesTotal = mesh->lines.num;
       for (int i=0; i<nthreads; i++) {
-        uint32_t tsum = numEdgesTotal + numEdges[i];
+        uint64_t tsum = numEdgesTotal + numEdges[i];
         numEdges[i] = numEdgesTotal;
         numEdgesTotal = tsum;
       }
@@ -333,7 +333,7 @@ HXT_ASSERT( mesh!=NULL );
         if(i!=numEdgesTotal-1 && edgeKey[i].v[0]==edgeKey[i+1].v[0]) {
         #ifndef NDEBUG
           if(edgeKey[i+1].v[1]%2==0) {
-            HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated line in mesh->lines (" HXTu64 " & " HXTu64 ")\n"
+            HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated line in mesh->lines (%" HXTu64 " & %" HXTu64 ")\n"
                                             "\tThis issue will not produce a direct error if NDEBUG is defined",
                                            edgeKey[i].v[1]/2, edgeKey[i+1].v[1]/2);
             exit(EXIT_FAILURE);
@@ -437,7 +437,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
       int nthreads = omp_get_num_threads();
       numTrianglesTotal = mesh->triangles.num;
       for (int i=0; i<nthreads; i++) {
-        uint32_t tsum = numTrianglesTotal + numTriangles[i];
+        uint64_t tsum = numTrianglesTotal + numTriangles[i];
         numTriangles[i] = numTrianglesTotal;
         numTrianglesTotal = tsum;
       }
@@ -445,7 +445,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
     #ifndef NDEBUG
       if(numTrianglesTotal!=2*(mesh->tetrahedra.num+nBoundaries)-3*(nGhosts+nBoundaries)/2+mesh->triangles.num){
         HXT_ERROR_MSG(HXT_STATUS_ERROR, "you should never go here..."
-                                        " (" HXTu64 "!=2*" HXTu64 "+(" HXTu64 "-3*" HXTu64 ")/2",
+                                        " (%" HXTu64 "!=2*%" HXTu64 "+(%" HXTu64 "-3*%" HXTu64 ")/2",
                                         numTrianglesTotal-mesh->triangles.num,
                                         mesh->tetrahedra.num, nBoundaries, nGhosts);
         exit(EXIT_FAILURE);
@@ -558,7 +558,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
           if(i!=numTrianglesTotal-1 && triKey[i].v[0]==triKey[i+1].v[0]) {
           #ifndef NDEBUG
             if(triKey[i+1].v[1]%2==0) {
-              HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated triangle in mesh->triangles (" HXTu64 " & " HXTu64 ")\n"
+              HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated triangle in mesh->triangles (%" HXTu64 " & %" HXTu64 ")\n"
                                              "\tThis case is not handled in Release mode, FIX IT !!",
                                              triKey[i].v[1]/2, triKey[i+1].v[1]/2);
               exit(EXIT_FAILURE);
@@ -583,7 +583,7 @@ HXTStatus hxtGetTri2TetMap(HXTMesh* mesh, uint64_t* tri2TetMap, uint64_t* missin
           if(i!=numTrianglesTotal-1 && pairKey[i].v[0]==pairKey[i+1].v[0] && pairKey[i].v[1]==pairKey[i+1].v[1]) {
           #ifndef NDEBUG
             if(pairKey[i+1].v[2]%2==0) {
-              HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated triangle in mesh->triangles (" HXTu64 " & " HXTu64 ")\n"
+              HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicated triangle in mesh->triangles (%" HXTu64 " & %" HXTu64 ")\n"
                                              "\tThis case is not handled in Release mode, FIX IT !!",
                                              pairKey[i].v[2]/2, pairKey[i+1].v[2]/2);
               exit(EXIT_FAILURE);

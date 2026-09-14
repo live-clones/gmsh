@@ -54,7 +54,7 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "GModelParametrize.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #endif
 
 #if defined(HAVE_OPTHOM)

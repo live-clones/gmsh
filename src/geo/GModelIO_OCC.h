@@ -404,6 +404,15 @@ public:
   bool importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags);
 
+  // bind shapes to explicit tags, e.g. to restore the entity tags stored in a
+  // file before importing the corresponding shape with importShapes(). The
+  // shapes are bound in increasing dimension, so that sub-shapes that are
+  // explicitly listed keep their tag. Nothing is bound and false is returned if
+  // one of the tags is already used by another shape, or if the type of one of
+  // the shapes does not match its dimension.
+  bool
+  bindShapes(const std::map<std::pair<int, int>, TopoDS_Shape> &dimTagShape);
+
   // apply various healing algorithms to try to fix the shapes
   bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
                   std::vector<std::pair<int, int> > &outDimTags,

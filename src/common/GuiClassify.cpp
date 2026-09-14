@@ -30,6 +30,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "MLine.h"
+#include "MQuadrangle.h"
 #include "Context.h"
 #include "Options.h"
 #include "drawContext.h"

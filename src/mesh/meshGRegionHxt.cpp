@@ -296,7 +296,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 #if 1
   std::vector<std::size_t> numtet(regions.size(), 0);
   for(std::size_t i = 0; i < m->tetrahedra.num; i++) {
-    uint16_t c = m->tetrahedra.color[i];
+    uint32_t c = m->tetrahedra.color[i];
     if(c >= numtet.size()) continue;
     numtet[c]++;
   }
@@ -305,7 +305,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     regions[c]->mesh_vertices.reserve(numtet[c] / 6);
   }
   for(std::size_t i = 0; i < m->tetrahedra.num; i++) {
-    uint16_t c = m->tetrahedra.color[i];
+    uint32_t c = m->tetrahedra.color[i];
     if(c >= regions.size()) continue;
     GRegion *gr = regions[c];
     MVertex *vv[4];

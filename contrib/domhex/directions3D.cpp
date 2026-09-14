@@ -10,7 +10,7 @@
 #include <fstream>
 #include "GModel.h"
 #include "BackgroundMesh.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "MTetrahedron.h"
 #include "directions3D.h"
 #include "OS.h"

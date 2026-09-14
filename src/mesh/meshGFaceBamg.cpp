@@ -16,7 +16,7 @@
 #include "GmshConfig.h"
 #include "Context.h"
 #include "BackgroundMeshTools.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "Options.h"
 #include "meshGFace.h"
 #include "MElementOctree.h"

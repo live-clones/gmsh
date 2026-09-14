@@ -6,6 +6,7 @@
 #include <stack>
 #include "GmshConfig.h"
 #include "meshGFaceOptimize.h"
+#include "meshGFaceDelaunay.h"
 #include "qualityMeasures.h"
 #include "GFace.h"
 #include "GEdge.h"
@@ -136,281 +137,6 @@ edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
     double const sina = norme(c3);
     angle = std::atan2(sina, cosa);
   }
-}
-
-static void setLcsInit(MTriangle *t, std::map<MVertex *, double> &vSizes)
-{
-  for(int i = 0; i < 3; i++) {
-    for(int j = i + 1; j < 3; j++) {
-      MVertex *vi = t->getVertex(i);
-      MVertex *vj = t->getVertex(j);
-      vSizes[vi] = -1;
-      vSizes[vj] = -1;
-    }
-  }
-}
-
-static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
-                   bidimMeshData &data)
-{
-  for(int i = 0; i < 3; i++) {
-    for(int j = i + 1; j < 3; j++) {
-      MVertex *vi = t->getVertex(i);
-      MVertex *vj = t->getVertex(j);
-      if(vi != data.equivalent(vj) && vj != data.equivalent(vi)) {
-        double dx = vi->x() - vj->x();
-        double dy = vi->y() - vj->y();
-        double dz = vi->z() - vj->z();
-        double l = sqrt(dx * dx + dy * dy + dz * dz);
-        auto iti = vSizes.find(vi);
-        auto itj = vSizes.find(vj);
-        if(iti->second < 0 || iti->second > l) iti->second = l;
-        if(itj->second < 0 || itj->second > l) itj->second = l;
-      }
-    }
-  }
-}
-
-bool buildMeshGenerationDataStructures(
-  GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data)
-{
-  std::map<MVertex *, double> vSizesMap;
-
-  for(std::size_t i = 0; i < gf->triangles.size(); i++)
-    setLcsInit(gf->triangles[i], vSizesMap);
-
-  auto itfind = vSizesMap.find(nullptr);
-  if(itfind != vSizesMap.end()) {
-    Msg::Error("Some NULL points exist in 2D mesh");
-    return false;
-  }
-
-  for(std::size_t i = 0; i < gf->triangles.size(); i++)
-    setLcs(gf->triangles[i], vSizesMap, data);
-
-  // take care of embedded vertices
-  std::set<MVertex *> embeddedVertices;
-  {
-    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
-    auto itvx = emb_vertx.begin();
-    while(itvx != emb_vertx.end()) {
-      if((*itvx)->mesh_vertices.size()) {
-        MVertex *v = *((*itvx)->mesh_vertices.begin());
-        vSizesMap[v] =
-          std::min(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());
-        embeddedVertices.insert(v);
-      }
-      ++itvx;
-    }
-  }
-
-  // take good care of embedded edges
-  {
-    std::vector<GEdge *> embedded_edges = gf->getEmbeddedEdges();
-    auto ite = embedded_edges.begin();
-    while(ite != embedded_edges.end()) {
-      if(!(*ite)->isMeshDegenerated()) {
-        for(std::size_t i = 0; i < (*ite)->lines.size(); i++)
-          data.internalEdges.insert(MEdge((*ite)->lines[i]->getVertex(0),
-                                          (*ite)->lines[i]->getVertex(1)));
-      }
-      ++ite;
-    }
-  }
-
-  // take care of small edges in  order not to "pollute" the size field
-  {
-    std::vector<GEdge *> _edges = gf->edges();
-    auto ite = _edges.begin();
-    while(ite != _edges.end()) {
-      if(!(*ite)->isMeshDegenerated()) {
-        for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
-          double d = distance((*ite)->lines[i]->getVertex(0),
-                              (*ite)->lines[i]->getVertex(1));
-          double d0 = vSizesMap[(*ite)->lines[i]->getVertex(0)];
-          double d1 = vSizesMap[(*ite)->lines[i]->getVertex(1)];
-          if(d0 < .5 * d) vSizesMap[(*ite)->lines[i]->getVertex(0)] = .5 * d;
-          if(d1 < .5 * d) vSizesMap[(*ite)->lines[i]->getVertex(1)] = .5 * d;
-        }
-      }
-      ++ite;
-    }
-  }
-
-  for(auto it = vSizesMap.begin(); it != vSizesMap.end(); ++it) {
-    SPoint2 param;
-    reparamMeshVertexOnFace(it->first, gf, param);
-    // Add size of background mesh to embedded vertices. For the other nodes,
-    // use the size in vSizesMap
-    const double lcBGM = (embeddedVertices.count(it->first) > 0) ?
-                           BGM_MeshSize(gf, param[0], param[1], it->first->x(),
-                                        it->first->y(), it->first->z()) :
-                           it->second;
-    data.addVertex(it->first, param[0], param[1], it->second, lcBGM);
-  }
-  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-    double lc = 0.3333333333 *
-                (data.vSizes[data.getIndex(gf->triangles[i]->getVertex(0))] +
-                 data.vSizes[data.getIndex(gf->triangles[i]->getVertex(1))] +
-                 data.vSizes[data.getIndex(gf->triangles[i]->getVertex(2))]);
-    double lcBGM =
-      0.3333333333 *
-      (data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(0))] +
-       data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(1))] +
-       data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(2))]);
-
-    double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
-    AllTris.insert(new MTri3(gf->triangles[i], LL, nullptr, &data, gf));
-  }
-  gf->triangles.clear();
-  connectTriangles(AllTris);
-
-  return true;
-}
-
-void computeEquivalences(GFace *gf, bidimMeshData &data)
-{
-  if(data.equivalence) {
-    std::vector<MTriangle *> newT;
-    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-      MTriangle *t = gf->triangles[i];
-      MVertex *v[3];
-      for(int j = 0; j < 3; j++) {
-        v[j] = t->getVertex(j);
-        auto it = data.equivalence->find(v[j]);
-        if(it != data.equivalence->end()) { v[j] = it->second; }
-      }
-      if(v[0] != v[1] && v[0] != v[2] && v[2] != v[1])
-        newT.push_back(new MTriangle(v[0], v[1], v[2]));
-      delete t;
-    }
-    gf->triangles = newT;
-  }
-}
-
-struct equivalentTriangle {
-  MTriangle *_t;
-  MVertex *_v[3];
-  equivalentTriangle(MTriangle *t, std::map<MVertex *, MVertex *> *equivalence)
-    : _t(t)
-  {
-    for(int i = 0; i < 3; i++) {
-      MVertex *v = t->getVertex(i);
-      auto it = equivalence->find(v);
-      if(it == equivalence->end())
-        _v[i] = v;
-      else
-        _v[i] = it->second;
-    }
-    std::sort(_v, _v + 3);
-  }
-  bool operator<(const equivalentTriangle &other) const
-  {
-    for(int i = 0; i < 3; i++) {
-      if(other._v[i] > _v[i]) return true;
-      if(other._v[i] < _v[i]) return false;
-    }
-    return false;
-  }
-};
-
-bool computeEquivalentTriangles(GFace *gf,
-                                std::map<MVertex *, MVertex *> *equivalence)
-{
-  if(!equivalence) return false;
-  std::vector<MTriangle *> WTF;
-  if(!equivalence) return false;
-  std::set<equivalentTriangle> eqTs;
-  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-    equivalentTriangle et(gf->triangles[i], equivalence);
-    auto iteq = eqTs.find(et);
-    if(iteq == eqTs.end())
-      eqTs.insert(et);
-    else {
-      WTF.push_back(iteq->_t);
-      WTF.push_back(gf->triangles[i]);
-    }
-  }
-
-  if(WTF.size()) {
-    Msg::Info("%d triangles are equivalent", WTF.size());
-    for(std::size_t i = 0; i < WTF.size(); i++) {}
-    return true;
-  }
-  return false;
-}
-
-void splitEquivalentTriangles(GFace *gf, bidimMeshData &data)
-{
-  computeEquivalentTriangles(gf, data.equivalence);
-}
-
-void transferDataStructure(GFace *gf,
-                           std::set<MTri3 *, compareTri3Ptr> &AllTris,
-                           bidimMeshData &data)
-{
-  while(1) {
-    if(AllTris.begin() == AllTris.end()) break;
-    MTri3 *worst = *AllTris.begin();
-    if(worst->isDeleted())
-      delete worst->tri();
-    else
-      gf->triangles.push_back(worst->tri());
-    delete worst;
-    AllTris.erase(AllTris.begin());
-  }
-
-  // make sure all the triangles are oriented in the same way in
-  // parameter space (it would be nicer to change the actual algorithm
-  // to ensure that we create correctly-oriented triangles in the
-  // first place)
-
-  // if BL triangles are considered, then all that is WRONG !
-
-  if(gf->triangles.size() > 1) {
-    bool BL = !gf->getColumns()->_toFirst.empty();
-
-    double n1[3], n2[3];
-    MTriangle *t = gf->triangles[0];
-    MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1), *v2 = t->getVertex(2);
-
-    if(!BL) {
-      int index0 = data.getIndex(v0);
-      int index1 = data.getIndex(v1);
-      int index2 = data.getIndex(v2);
-      normal3points(data.Us[index0], data.Vs[index0], 0., data.Us[index1],
-                    data.Vs[index1], 0., data.Us[index2], data.Vs[index2], 0.,
-                    n1);
-    }
-    else {
-      // BL --> PLANAR FACES !!!
-      normal3points(v0->x(), v0->y(), v0->z(), v1->x(), v1->y(), v1->z(),
-                    v2->x(), v2->y(), v2->z(), n1);
-    }
-    for(std::size_t j = 1; j < gf->triangles.size(); j++) {
-      t = gf->triangles[j];
-      v0 = t->getVertex(0);
-      v1 = t->getVertex(1);
-      v2 = t->getVertex(2);
-      if(!BL) {
-        int index0 = data.getIndex(v0);
-        int index1 = data.getIndex(v1);
-        int index2 = data.getIndex(v2);
-        normal3points(data.Us[index0], data.Vs[index0], 0., data.Us[index1],
-                      data.Vs[index1], 0., data.Us[index2], data.Vs[index2], 0.,
-                      n2);
-      }
-      else {
-        // BL --> PLANAR FACES !!!
-        normal3points(v0->x(), v0->y(), v0->z(), v1->x(), v1->y(), v1->z(),
-                      v2->x(), v2->y(), v2->z(), n2);
-      }
-      // orient the bignou
-      if(prosca(n1, n2) < 0.0) t->reverse();
-    }
-  }
-  splitEquivalentTriangles(gf, data);
-  computeEquivalences(gf, data);
 }
 
 template <class T>
@@ -1686,8 +1412,7 @@ void quadsToTriangles(GFace *gf, double minqual)
   // WARNING: First quad element is replaced by one of the two triangles,
   // without taking care of if it is the truly the first one or not.
 
-  //  std::map<MElement*,MElement*> _toFirst;
-  std::map<MElement *, std::vector<MElement *>> newElemColumns;
+  blElemColumns newElemColumns;
 
   for(auto it = _columns->_elemColumns.begin();
       it != _columns->_elemColumns.end(); it++) {
@@ -1741,4 +1466,44 @@ void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
                    "layers together. Keeping them non-simplicial...");
     if(numNoSplit == 0 && numSplit > 0) quadsToTriangles(gf, 10000);
   }
+}
+
+void computeElementShapes(GFace *gf, double &worst, double &avg,
+                                 double &best, int &nT, int &greaterThan)
+{
+  worst = 1.e22;
+  avg = 0.0;
+  best = 0.0;
+  nT = 0;
+  greaterThan = 0;
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    MTriangle *t = gf->triangles[i];
+    const MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1),
+                  *v2 = t->getVertex(2);
+    // Same quantity as qmTriangle::gamma (2 * inradius / circumradius), in
+    // the algebraically equivalent form 4 |u x v|^2 / (a b c (a + b + c)):
+    // one cross product and three square roots instead of three vector
+    // normalizations plus three cross-product norms. Values agree to
+    // roundoff (max observed difference ~1e-14).
+    const double u1x = v1->x() - v0->x(), u1y = v1->y() - v0->y(),
+                 u1z = v1->z() - v0->z();
+    const double u2x = v2->x() - v0->x(), u2y = v2->y() - v0->y(),
+                 u2z = v2->z() - v0->z();
+    const double u3x = v2->x() - v1->x(), u3y = v2->y() - v1->y(),
+                 u3z = v2->z() - v1->z();
+    const double cx = u1y * u2z - u1z * u2y, cy = u1z * u2x - u1x * u2z,
+                 cz = u1x * u2y - u1y * u2x;
+    const double c2 = cx * cx + cy * cy + cz * cz;
+    const double la = std::sqrt(u1x * u1x + u1y * u1y + u1z * u1z);
+    const double lb = std::sqrt(u2x * u2x + u2y * u2y + u2z * u2z);
+    const double lc = std::sqrt(u3x * u3x + u3y * u3y + u3z * u3z);
+    const double den = la * lb * lc * (la + lb + lc);
+    const double q = (den > 0.) ? 4. * c2 / den : 0.;
+    if(q > .9) greaterThan++;
+    avg += q;
+    worst = std::min(worst, q);
+    best = std::max(best, q);
+    nT++;
+  }
+  if(nT) avg /= nT;
 }
