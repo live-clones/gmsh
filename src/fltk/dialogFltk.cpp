@@ -38,6 +38,7 @@
 #include "colorbarWindow.h"
 #include <FL/Fl_Tree.H>
 #include "Tree.h"
+#include "Layout.h"
 #include "dialogFltk.h"
 #include "menuFltk.h"
 #include "FlGui.h"
@@ -127,10 +128,6 @@ namespace {
     }
     return out;
   }
-
-  // What a pane on a grid needs to show everything, trailing labels included:
-  // they run past their column, but not past the window.
-  int _gridWidth(const std::vector<Ui::Field> &fields, int grid);
 
   // How wide a field's widget has to be. Alone on its line an input gets the
   // usual width, otherwise a narrower one so that several fit. A choice gets
@@ -463,45 +460,6 @@ namespace {
     return width;
   }
 
-  int _gridWidth(const std::vector<Ui::Field> &fields, int grid)
-  {
-    std::vector<int> column = _gridColumns(fields, grid);
-    int widest = 0, at = 0, which = 0;
-    for(std::size_t k = 0; k < fields.size(); k++) {
-      const Ui::Field &f = fields[k];
-      // what a spacer pushes to the right end of a line does not start at a
-      // column: the line only has to be as wide as what is really on it
-      bool loose = k && fields[k].sameRow &&
-                   fields[k - 1].kind == Ui::Spacer;
-      if(!f.sameRow) {
-        which = 0;
-        at = 0;
-      }
-      else if(loose) {
-        // it goes on from where the field before the spacer ended
-      }
-      else if(!f.packed) {
-        which++;
-        at = 0;
-        for(int c = 0; c < which && c < grid; c++) at += column[(std::size_t)c];
-      }
-      // a spacer takes at least what it asks for, and what follows it comes
-      // after that: a row ending in one is as wide as all of them together
-      if(f.kind == Ui::Spacer) {
-        at += _packedWidth(f) + WB;
-        continue;
-      }
-      int end = at + _packedWidth(f);
-      if(end > widest) widest = end;
-      // what follows it on the same line starts where it ends, whether it is
-      // packed against it or pushed to the right end by a spacer
-      bool more = k + 1 < fields.size() && fields[k + 1].sameRow;
-      if(more && (f.packed || fields[k + 1].kind == Ui::Spacer))
-        at += _packedWidth(f) + WB;
-    }
-    return widest;
-  }
-
   // how much of a line the packed fields take, spacing included
   int _packedTotal(const std::vector<Ui::Field> &fields, std::size_t from,
                    std::size_t to)
@@ -537,22 +495,59 @@ namespace {
     return columns * columnW + _packedTotal(fields, from, to);
   }
 
-  // What the fields need, labels included. The windows this replaces sized
-  // themselves by hand; here the description does not say how wide anything is,
-  // so it is measured.
-  int _neededWidth(const std::vector<Ui::Field> &fields)
+  // What the solver of src/gui/Layout.h is told about this toolkit, in em.
+  // The kinds that size themselves are measured by _packedWidth() and
+  // _fieldWidth() so that the window is measured exactly as it is placed;
+  // both go when the placing does (plan §2.4.3).
+  Ui::Metrics _metrics()
   {
-    int widest = 0;
-    std::size_t i = 0;
-    while(i < fields.size()) {
-      std::size_t last = i + 1;
-      while(last < fields.size() && fields[last].sameRow) last++;
-      int columnW = 0;
-      int row = _rowWidth(fields, i, last, columnW);
-      if(row > widest) widest = row;
-      i = last;
-    }
-    return widest;
+    const double em = FL_NORMAL_SIZE;
+    Ui::Metrics m;
+    m.field = IW / em;
+    m.gap = WB / em;
+    m.labelGap = 2 * WB / em;
+    m.column = WB / em;
+    m.after = 0.;
+    m.arrow = 2.;
+    m.offer = 0.;
+    m.textWidth = [em](const std::string &s) {
+      fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+      return (int)fl_width(_escaped(s).c_str()) / em;
+    };
+    m.naturalWidth = [em](const Ui::Field &f, bool packed) -> double {
+      bool self = f.disclosure || f.kind == Ui::Label ||
+                  f.kind == Ui::Action || f.kind == Ui::Menu ||
+                  f.kind == Ui::Check;
+      if(packed) {
+        if(self || f.kind == Ui::Direction || f.kind == Ui::Color ||
+           (f.kind == Ui::Choice && f.multiple))
+          return _packedWidth(f) / em;
+        return -1.;
+      }
+      // the swatch, the disc and the map have a width of their own, unless
+      // they say one
+      if(!self && f.widthEm <= 0. &&
+         (f.kind == Ui::Color || f.kind == Ui::Direction ||
+          f.kind == Ui::ColorMap))
+        self = true;
+      if(!self) return -1.;
+      // a plain line and a button carry their text inside
+      fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+      int label = (f.kind == Ui::Label || f.kind == Ui::Menu ||
+                   f.kind == Ui::Action) ?
+                    0 :
+                    (int)fl_width(f.label.c_str());
+      return (_fieldWidth(f, 1) + label + 2 * WB) / em;
+    };
+    return m;
+  }
+
+  // What a list of fields needs, in pixels: the solver says it in em. What
+  // it adds up is whole pixels, so the nearest one is the one meant.
+  int _neededWidth(const std::vector<Ui::Field> &fields, int columns)
+  {
+    double em = Ui::neededWidth(fields, columns, _metrics());
+    return (int)(em * FL_NORMAL_SIZE + 0.5);
   }
 
   // How tall a pane is, so that all of them fit whichever one is shown. The
@@ -1335,25 +1330,21 @@ void dialogFltk::build(Ui::FormRef dialog)
                       FL_NORMAL_SIZE);
   width += aside;
   for(const auto &q : _panel.panes) {
-    int need = 0;
-    if(q.columns > 0)
-      need = _gridWidth(q.fields, q.columns) + 2 * WB;
-    else
-      need = _neededWidth(q.fields) + 2 * WB;
+    int need = _neededWidth(q.fields, q.columns) + 2 * WB;
     if(need + aside > width) width = need + aside;
     // and for what stands beside its button
     if(q.beside.size()) {
-      int line = _neededWidth(q.beside) + 2 * WB + aside +
+      int line = _neededWidth(q.beside, 0) + 2 * WB + aside +
                  (q.buttonLabel.size() ? BB + WB : 0);
       if(line > width) width = line;
     }
   }
   {
-    int need = _neededWidth(_panel.header) + 2 * WB + aside;
+    int need = _neededWidth(_panel.header, 0) + 2 * WB + aside;
     if(need > width) width = need;
   }
   {
-    int need = _neededWidth(_panel.footer) + 2 * WB + aside;
+    int need = _neededWidth(_panel.footer, 0) + 2 * WB + aside;
     // when the buttons share the last line of the footer, they need their room
     // on it too
     if(_panel.buttonsInFooter)

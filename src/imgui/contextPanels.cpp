@@ -13,6 +13,7 @@
 
 #include "uiSources.h"
 #include "Tree.h"
+#include "Layout.h"
 #include "fieldWidget.h"
 #include "menuActions.h"
 #include "GmshConfig.h"
@@ -1270,11 +1271,66 @@ namespace {
            (float)columns;
   }
 
+  // What the solver of src/gui/Layout.h is told about this toolkit, in em.
+  // The kinds that size themselves are measured by _packedWidth() and the
+  // row walk of _rowWidth() so that the window is measured exactly as it is
+  // placed; both go when the placing does (plan §2.4.4).
+  Ui::Metrics _metrics(float item)
+  {
+    const ImGuiStyle &style = ImGui::GetStyle();
+    const double em = ImGui::GetFontSize();
+    Ui::Metrics m;
+    m.field = item / em;
+    m.gap = style.ItemSpacing.x / em;
+    m.labelGap = style.ItemInnerSpacing.x / em;
+    m.column = style.ItemSpacing.x / em;
+    m.after = style.ItemSpacing.x / em;
+    m.arrow = 0.;
+    m.offer = (ImGui::GetFrameHeight() + style.ItemSpacing.x) / em;
+    m.textWidth = [em](const std::string &s) {
+      return ImGui::CalcTextSize(s.c_str()).x / em;
+    };
+    m.naturalWidth = [em, item](const Ui::Field &f, bool packed) -> double {
+      if(packed) {
+        if(f.kind == Ui::Label || f.kind == Ui::Action ||
+           f.kind == Ui::Menu || f.kind == Ui::Color ||
+           f.kind == Ui::Direction || f.kind == Ui::Check ||
+           (f.kind == Ui::Choice && f.multiple))
+          return _packedWidth(f, item) / em;
+        return -1.;
+      }
+      const ImGuiStyle &style = ImGui::GetStyle();
+      if(f.kind == Ui::List || f.kind == Ui::Hierarchy) {
+        // one that says how wide it is takes that; otherwise wide enough for
+        // a loop of a few entities spelled out. Its label is not counted,
+        // as the row walk this reproduces did not count it.
+        return (f.widthEm > 0. ? f.widthEm * em : item * 2.5) / em;
+      }
+      if(f.kind == Ui::Label) {
+        double w = f.widthEm > 0. ? f.widthEm * em :
+                   f.wraps        ? item :
+                                    ImGui::CalcTextSize(f.getText().c_str()).x;
+        return w / em;
+      }
+      if(f.kind == Ui::Action || f.kind == Ui::Menu)
+        return (ImGui::CalcTextSize(f.label.c_str()).x +
+                2.f * style.FramePadding.x) /
+               em;
+      if(f.kind == Ui::Check)
+        return (ImGui::GetFrameHeight() + style.ItemInnerSpacing.x +
+                ImGui::CalcTextSize(f.label.c_str()).x) /
+               em;
+      return -1.;
+    };
+    return m;
+  }
+
   // The width the dialog needs, folded parts included: a window that grows
   // sideways when one unfolds a section is a window that will not sit still.
   float _neededWidth(const Ui::Form &panel, float item)
   {
-    float widest = 0.f;
+    Ui::Metrics m = _metrics(item);
+    double widest = 0.;
     std::vector<std::pair<const std::vector<Ui::Field> *, int> > lists;
     for(const auto &q : panel.panes) {
       lists.push_back(std::make_pair(&q.fields, q.columns));
@@ -1284,50 +1340,10 @@ namespace {
     }
     lists.push_back(std::make_pair(&panel.header, 0));
     lists.push_back(std::make_pair(&panel.footer, 0));
-    for(const auto &entry : lists) {
-      const std::vector<Ui::Field> *fields = entry.first;
-      if(entry.second > 0) {
-        // the columns together, and whatever the last label of a row adds
-        std::vector<float> column = _gridColumns(*fields, entry.second, item);
-        float total = 0.f, at = 0.f;
-        int which = 0;
-        for(std::size_t k = 0; k < fields->size(); k++) {
-          const Ui::Field &f = (*fields)[k];
-          // what a spacer pushes to the right end of a line does not start at
-          // a column: the line only has to be as wide as what is on it
-          bool loose = k && f.sameRow &&
-                       (*fields)[k - 1].kind == Ui::Spacer;
-          if(!f.sameRow) { which = 0; at = 0.f; }
-          else if(loose) {
-            // it goes on from where the field before the spacer ended
-          }
-          else if(!f.packed) {
-            which++;
-            at = 0.f;
-            for(int c = 0; c < which && c < entry.second; c++)
-              at += column[(std::size_t)c];
-          }
-          if(f.kind == Ui::Spacer) continue;
-          // the same spacing the placement leaves after each of them
-          float end = at + _packedWidth(f, item) + ImGui::GetStyle().ItemSpacing.x;
-          if(end > total) total = end;
-          bool more = k + 1 < fields->size() && (*fields)[k + 1].sameRow;
-          if(more && (f.packed || (*fields)[k + 1].kind == Ui::Spacer))
-            at += _packedWidth(f, item) + ImGui::GetStyle().ItemSpacing.x;
-        }
-        if(total > widest) widest = total;
-        continue;
-      }
-      std::size_t i = 0;
-      while(i < fields->size()) {
-        std::size_t last = i + 1;
-        while(last < fields->size() && (*fields)[last].sameRow) last++;
-        float w = _rowWidth(*fields, i, last, item);
-        if(w > widest) widest = w;
-        i = last;
-      }
-    }
-    return widest;
+    for(const auto &entry : lists)
+      widest = std::max(widest,
+                        Ui::neededWidth(*entry.first, entry.second, m));
+    return (float)(widest * ImGui::GetFontSize());
   }
 
   void _fields(const std::vector<Ui::Field> &fields, float item,
