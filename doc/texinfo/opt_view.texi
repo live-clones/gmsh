@@ -621,8 +621,13 @@ Saturate the view values to custom min and max (1: true, 0: false)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.ScaleThreshold
+Value below which a symmetric logarithmic scale is linear (0: automatic, four decades below the largest value)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.ScaleType
-Value scale type (1: linear, 2: logarithmic, 3: double logarithmic)@*
+Value scale type (1: linear, 2: logarithmic, 3: symmetric logarithmic, logarithmic on both sides of zero and linear in between)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
