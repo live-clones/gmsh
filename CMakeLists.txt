@@ -2535,6 +2535,15 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
                ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
   endif()
+  # The layout solver of src/gui has neither a toolkit nor Gmsh in it, so it
+  # is the one part of the interfaces a test can hold to its word without a
+  # screen: src/gui/LayoutTest.cpp says what it promises.
+  if(HAVE_GUI)
+    add_executable(gui_layout src/gui/LayoutTest.cpp src/gui/Layout.cpp
+                   src/gui/Form.cpp src/gui/Menu.cpp)
+    target_include_directories(gui_layout PRIVATE src/gui)
+    add_test(NAME gui_layout COMMAND gui_layout)
+  endif()
   # enable this once we have worked out the path issues on the build machines
   if(0 AND ENABLE_BUILD_DYNAMIC)
     find_package(PythonInterp)
