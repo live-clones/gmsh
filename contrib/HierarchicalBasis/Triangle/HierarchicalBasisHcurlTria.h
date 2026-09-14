@@ -39,69 +39,79 @@
  */
 class HierarchicalBasisHcurlTria : public HierarchicalBasisHcurl {
 private:
-    int _pf; // face function order
-    std::array<int, 3> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches the edge 0 order)
-        
-    // affine coordinate lambda_j j=1..3
-    static double _affineCoordinate(int const &j, double const &u, double const &v);
+  int _pf; // face function order
+  std::array<int, 3> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
+                                  // the edge 0 order)
 
-    // edgeBasis=[phie0_{0},...phie0_{pe0},phie1_{0},...phie1_{pe1}...; edge-based
-    // bubble functions ] faceBasis=[ genuine bubble functions]
-    virtual void generateHcurlBasis(double const &u, double const &v, double const &w,
-                                    std::vector<std::vector<double> > &edgeBasis,
-                                    std::vector<std::vector<double> > &faceBasis,
-                                    std::vector<std::vector<double> > &bubbleBasis);
-    
-    virtual void generateCurlBasis(double const &u, double const &v, double const &w,
-                                   std::vector<std::vector<double> > &edgeBasis,
-                                   std::vector<std::vector<double> > &faceBasis,
-                                   std::vector<std::vector<double> > &bubbleBasis);
+  // affine coordinate lambda_j j=1..3
+  static double _affineCoordinate(int const &j, double const &u,
+                                  double const &v);
 
-    static double dotProduct(const std::vector<double> &u, const std::vector<double> &v);
-    
-    virtual void orientOneFace(double const &u, double const &v, double const &w,
-                               int const &flag1, int const &flag2, int const &flag3,
-                               int const &faceNumber, std::vector<std::vector<double> > &faceFunctions,
-                               std::string typeFunction);
+  // edgeBasis=[phie0_{0},...phie0_{pe0},phie1_{0},...phie1_{pe1}...; edge-based
+  // bubble functions ] faceBasis=[ genuine bubble functions]
+  virtual void
+  generateHcurlBasis(double const &u, double const &v, double const &w,
+                     std::vector<std::vector<double>> &edgeBasis,
+                     std::vector<std::vector<double>> &faceBasis,
+                     std::vector<std::vector<double>> &bubbleBasis);
+
+  virtual void generateCurlBasis(double const &u, double const &v,
+                                 double const &w,
+                                 std::vector<std::vector<double>> &edgeBasis,
+                                 std::vector<std::vector<double>> &faceBasis,
+                                 std::vector<std::vector<double>> &bubbleBasis);
+
+  static double dotProduct(const std::vector<double> &u,
+                           const std::vector<double> &v);
+
+  virtual void orientOneFace(double const &u, double const &v, double const &w,
+                             int const &flag1, int const &flag2,
+                             int const &flag3, int const &faceNumber,
+                             std::vector<std::vector<double>> &faceFunctions,
+                             std::string typeFunction);
 
 public:
-    HierarchicalBasisHcurlTria(int order);
-    
-    virtual ~HierarchicalBasisHcurlTria() = default;
-    
-    virtual unsigned int getNumberOfOrientations() const;
-    
-    virtual void generateBasis(double const &u, double const &v, double const &w,
-                               std::vector<std::vector<double> > &vertexBasis,
-                               std::vector<std::vector<double> > &edgeBasis,
-                               std::vector<std::vector<double> > &faceBasis,
-                               std::vector<std::vector<double> > &bubbleBasis,
-                               std::string typeFunction) {
-        if(typeFunction == "HcurlLegendre") {
-            generateHcurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-        }
-        else if("CurlHcurlLegendre" == typeFunction) {
-            generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
-        }
-        else {
-            throw std::runtime_error("unknown typeFunction");
-        }
+  HierarchicalBasisHcurlTria(int order);
+
+  virtual ~HierarchicalBasisHcurlTria() = default;
+
+  virtual unsigned int getNumberOfOrientations() const;
+
+  virtual void generateBasis(double const &u, double const &v, double const &w,
+                             std::vector<std::vector<double>> &vertexBasis,
+                             std::vector<std::vector<double>> &edgeBasis,
+                             std::vector<std::vector<double>> &faceBasis,
+                             std::vector<std::vector<double>> &bubbleBasis,
+                             std::string typeFunction)
+  {
+    if(typeFunction == "HcurlLegendre") {
+      generateHcurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
-  
-    virtual void orientEdgeFunctionsForNegativeFlag(std::vector<std::vector<double> > &edgeFunctions);
+    else if("CurlHcurlLegendre" == typeFunction) {
+      generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
+    }
+    else {
+      throw std::runtime_error("unknown typeFunction");
+    }
+  }
 
-    virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                            std::vector<std::vector<double> > &edgeBasis,
-                            const std::vector<std::vector<double> > &eTablePositiveFlag,
-                            const std::vector<std::vector<double> > &eTableNegativeFlag);
-    
-    virtual void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-                            const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
-                            const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
-                            std::vector<std::vector<double> > &fTableCopy);
+  virtual void orientEdgeFunctionsForNegativeFlag(
+    std::vector<std::vector<double>> &edgeFunctions);
 
-    virtual void getKeysInfo(std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo);
+  virtual void
+  orientEdge(int const &flagOrientation, int const &edgeNumber,
+             std::vector<std::vector<double>> &edgeBasis,
+             const std::vector<std::vector<double>> &eTablePositiveFlag,
+             const std::vector<std::vector<double>> &eTableNegativeFlag);
 
+  virtual void orientFace(
+    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
+    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
+    std::vector<std::vector<double>> &fTableCopy);
+
+  virtual void getKeysInfo(std::vector<int> &functionTypeInfo,
+                           std::vector<int> &orderInfo);
 };
 
 #endif

@@ -30,79 +30,86 @@
 
 class HierarchicalBasisH1Line : public HierarchicalBasisH1 {
 private:
-    int _pe; //  edge function order in  direction u
+  int _pe; //  edge function order in  direction u
 
-    static double _affineCoordinate(int j, double u); // affine coordinate lambda_j, j={1,2}
+  static double
+  _affineCoordinate(int j, double u); // affine coordinate lambda_j, j={1,2}
 
-    void generateGradientBasis(double const &u, double const &v, double const &w,
-                               std::vector<std::vector<double> > &gradientVertex,
-                               std::vector<std::vector<double> > &gradientEdge,
-                               std::vector<std::vector<double> > &gradientFace,
-                               std::vector<std::vector<double> > &gradientBubble);
-    
-    void orientOneFace(double const &u, double const &v, double const &w,
-                       int const &flag1, int const &flag2, int const &flag3,
-                       int const &faceNumber, std::vector<double> &faceBasis, std::string typeFunction = "H1Legendre") override {
-        /* No operation needed for line basis */
-    }
-    void orientOneFace(double const &u, double const &v, double const &w,
-                       int const &flag1, int const &flag2, int const &flag3,
-                       int const &faceNumber, std::vector<std::vector<double> > &faceFunctions,
-                       std::string typeFunction = "GradH1Legendre") override {
-        /* No operation needed for line basis */
-    }
+  void generateGradientBasis(double const &u, double const &v, double const &w,
+                             std::vector<std::vector<double>> &gradientVertex,
+                             std::vector<std::vector<double>> &gradientEdge,
+                             std::vector<std::vector<double>> &gradientFace,
+                             std::vector<std::vector<double>> &gradientBubble);
+
+  void orientOneFace(double const &u, double const &v, double const &w,
+                     int const &flag1, int const &flag2, int const &flag3,
+                     int const &faceNumber, std::vector<double> &faceBasis,
+                     std::string typeFunction = "H1Legendre") override
+  { /* No operation needed for line basis */ }
+  void orientOneFace(double const &u, double const &v, double const &w,
+                     int const &flag1, int const &flag2, int const &flag3,
+                     int const &faceNumber,
+                     std::vector<std::vector<double>> &faceFunctions,
+                     std::string typeFunction = "GradH1Legendre") override
+  { /* No operation needed for line basis */ }
 
 public:
-    HierarchicalBasisH1Line(int pe);
-    ~HierarchicalBasisH1Line() override = default;
-    
-    virtual unsigned int getNumberOfOrientations() const override;
-  
-    // vertexBasis = [v0,v1]
-    // edgeBasis   = [phie_{2},...,phie_{pe}]
-  
-    void generateBasis(double const &u, double const &v, double const &w,
-                       std::vector<double> &vertexBasis,
-                       std::vector<double> &edgeBasis,
-                       std::vector<double> &faceBasis,
-                       std::vector<double> &bubbleBasis,
-                       std::string typeFunction) override;
-    
-    void generateBasis(double const &u, double const &v, double const &w,
-                       std::vector<std::vector<double> > &vertexBasis,
-                       std::vector<std::vector<double> > &edgeBasis,
-                       std::vector<std::vector<double> > &faceBasis,
-                       std::vector<std::vector<double> > &bubbleBasis,
-                       std::string typeFunction) override {
-        generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis, bubbleBasis);
-    }
+  HierarchicalBasisH1Line(int pe);
+  ~HierarchicalBasisH1Line() override = default;
 
-    void orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions) override;
-    void orientEdgeFunctionsForNegativeFlag(std::vector<std::vector<double> > &edgeFunctions) override;
+  virtual unsigned int getNumberOfOrientations() const override;
 
-    void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                    std::vector<double> &edgeFunctions,
-                    const std::vector<double> &eTablePositiveFlag,
-                    const std::vector<double> &eTableNegativeFlag) override;
-    void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                    std::vector<std::vector<double> > &edgeBasis,
-                    const std::vector<std::vector<double> > &eTablePositiveFlag,
-                    const std::vector<std::vector<double> > &eTableNegativeFlag) override;
-   
-    void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-                   const std::vector<double> &quadFaceFunctionsAllOrientation,
-                   const std::vector<double> &triFaceFunctionsAllOrientation,
-                   std::vector<double> &fTableCopy) override {
-        /* No operation needed for line basis */
-    }
-    void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-                   const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
-                   const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
-                   std::vector<std::vector<double> > &fTableCopy) override {
-       /* No operation needed for line basis */
-    }
+  // vertexBasis = [v0,v1]
+  // edgeBasis   = [phie_{2},...,phie_{pe}]
 
-    void getKeysInfo(std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo) override;
+  void generateBasis(double const &u, double const &v, double const &w,
+                     std::vector<double> &vertexBasis,
+                     std::vector<double> &edgeBasis,
+                     std::vector<double> &faceBasis,
+                     std::vector<double> &bubbleBasis,
+                     std::string typeFunction) override;
+
+  void generateBasis(double const &u, double const &v, double const &w,
+                     std::vector<std::vector<double>> &vertexBasis,
+                     std::vector<std::vector<double>> &edgeBasis,
+                     std::vector<std::vector<double>> &faceBasis,
+                     std::vector<std::vector<double>> &bubbleBasis,
+                     std::string typeFunction) override
+  {
+    generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
+                          bubbleBasis);
+  }
+
+  void orientEdgeFunctionsForNegativeFlag(
+    std::vector<double> &edgeFunctions) override;
+  void orientEdgeFunctionsForNegativeFlag(
+    std::vector<std::vector<double>> &edgeFunctions) override;
+
+  void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                  std::vector<double> &edgeFunctions,
+                  const std::vector<double> &eTablePositiveFlag,
+                  const std::vector<double> &eTableNegativeFlag) override;
+  void orientEdge(
+    int const &flagOrientation, int const &edgeNumber,
+    std::vector<std::vector<double>> &edgeBasis,
+    const std::vector<std::vector<double>> &eTablePositiveFlag,
+    const std::vector<std::vector<double>> &eTableNegativeFlag) override;
+
+  void orientFace(int const &flag1, int const &flag2, int const &flag3,
+                  int const &faceNumber,
+                  const std::vector<double> &quadFaceFunctionsAllOrientation,
+                  const std::vector<double> &triFaceFunctionsAllOrientation,
+                  std::vector<double> &fTableCopy) override
+  { /* No operation needed for line basis */ }
+  void orientFace(
+    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
+    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
+    std::vector<std::vector<double>> &fTableCopy) override
+  { /* No operation needed for line basis */ }
+
+  void getKeysInfo(std::vector<int> &functionTypeInfo,
+                   std::vector<int> &orderInfo) override;
 };
 
 #endif

@@ -41,100 +41,116 @@
  *  e6={3, 4},  e7={3, 5},  e8={4, 5}
  *
  * Oriented Surfaces:
- *   s3={0, 1, 2},      s4={3, 4, 5},       s0={0, 1, 3, 4},        s1={0, 2, 3,5}        s2={1,2,4,5}
+ *   s3={0, 1, 2},      s4={3, 4, 5},       s0={0, 1, 3, 4},        s1={0, 2,
+ * 3,5}        s2={1,2,4,5}
  *
- * Local (directional) orders on mesh faces are not allowed to exceed the minimum
- * of the (appropriate directional) orders of approximation associated with the interior
- * of the adjacent elements. Local orders of approximation on mesh edges are limited
- * by the minimum of all (appropriate directional) orders corresponding to faces sharing that edge
+ * Local (directional) orders on mesh faces are not allowed to exceed the
+ * minimum of the (appropriate directional) orders of approximation associated
+ * with the interior of the adjacent elements. Local orders of approximation on
+ * mesh edges are limited by the minimum of all (appropriate directional) orders
+ * corresponding to faces sharing that edge
  *
  */
 
 class HierarchicalBasisH1Pri : public HierarchicalBasisH1 {
 private:
-    std::array<int, 2> _pb;//    _pb[0] : bubble function order in  direction uv
+  std::array<int, 2> _pb; //    _pb[0] : bubble function order in  direction uv
                           //    _pb[1] : bubble function order in  direction w
-    std::array<int, 9> _pOrderEdge;     // Edge functions order (pOrderEdge[0] matches the order
-                      // of the edge 0)
-    
-    std::array<std::array<int, 3>, 2> _pOrderQuadFace; /* _pOrderQuadFace[0] : Quad Face functions order in direction u
-                                                        * (_pOrderQuadFace[0][i] corresponds to the u-order of face i)
-                                                        * _pOrderQuadFace[1] : Quad Face functions order in direction v
-                                                        * (_pOrderQuadFace[1][i] corresponds to the v-order of face i)
-                                                        */
-    std::array<int, 2> _pOrderTriFace; // Tri Face Functions order
-  
-    // affine coordinate lambda j=1..5
-    static double _affineCoordinate(const int &j, const double &u, const double &v, const double &w);
-    
-    void generateGradientBasis(double const &u, double const &v, double const &w,
-                               std::vector<std::vector<double> > &gradientVertex,
-                               std::vector<std::vector<double> > &gradientEdge,
-                               std::vector<std::vector<double> > &gradientFace,
-                               std::vector<std::vector<double> > &gradientBubble);
-  
-    void orientOneFace(double const &u, double const &v, double const &w,
-                               int const &flag1, int const &flag2, int const &flag3,
-                               int const &faceNumber, std::vector<double> &faceBasis,
-                               std::string typeFunction = "H1Legendre") override;
-  
-    void orientOneFace(double const &u, double const &v, double const &w,
-                               int const &flag1, int const &flag2, int const &flag3,
-                               int const &faceNumber, std::vector<std::vector<double> > &faceFunctions,
-                               std::string typeFunction = "GradH1Legendre") override;
+  std::array<int, 9> _pOrderEdge; // Edge functions order (pOrderEdge[0] matches
+                                  // the order of the edge 0)
+
+  std::array<std::array<int, 3>, 2>
+    _pOrderQuadFace; /* _pOrderQuadFace[0] : Quad Face functions order in
+                      * direction u
+                      * (_pOrderQuadFace[0][i] corresponds to the u-order of
+                      * face i) _pOrderQuadFace[1] : Quad Face functions order
+                      * in direction v
+                      * (_pOrderQuadFace[1][i] corresponds to the v-order of
+                      * face i)
+                      */
+  std::array<int, 2> _pOrderTriFace; // Tri Face Functions order
+
+  // affine coordinate lambda j=1..5
+  static double _affineCoordinate(const int &j, const double &u,
+                                  const double &v, const double &w);
+
+  void generateGradientBasis(double const &u, double const &v, double const &w,
+                             std::vector<std::vector<double>> &gradientVertex,
+                             std::vector<std::vector<double>> &gradientEdge,
+                             std::vector<std::vector<double>> &gradientFace,
+                             std::vector<std::vector<double>> &gradientBubble);
+
+  void orientOneFace(double const &u, double const &v, double const &w,
+                     int const &flag1, int const &flag2, int const &flag3,
+                     int const &faceNumber, std::vector<double> &faceBasis,
+                     std::string typeFunction = "H1Legendre") override;
+
+  void orientOneFace(double const &u, double const &v, double const &w,
+                     int const &flag1, int const &flag2, int const &flag3,
+                     int const &faceNumber,
+                     std::vector<std::vector<double>> &faceFunctions,
+                     std::string typeFunction = "GradH1Legendre") override;
 
 public:
-    HierarchicalBasisH1Pri(int order);
-    ~HierarchicalBasisH1Pri() override = default;
-    
-    unsigned int getNumberOfOrientations() const override;
-  
-    // vertexBasis=[v0,...,v5]
-    // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
-    // faceBasis=[QuadFace\phif2_{2,2},...,phif2_{2,pF2_2},...,phif2_{pF2_1,2},...,phief2_{pF2_1,pF2_2},phif3_{2,2}...,
-    //            TriFace\phif0_{1,1},...,phif0_{1,pF0-2},phif0_{2,1}...,phif0_{2,pF0-3},...,phief0_{pF-2,1},phif1_{1,1}...]
-    // bubbleBasis=[phieb_{1,1,1},...]   1<=n1,n2;n1+n2<=pb1-1; 2<=n3<pb2
-  
-    void generateBasis(double const &u, double const &v, double const &w,
-                               std::vector<double> &vertexBasis,
-                               std::vector<double> &edgeBasis,
-                               std::vector<double> &faceBasis,
-                               std::vector<double> &bubbleBasis,
-                               std::string typeFunction) override;
+  HierarchicalBasisH1Pri(int order);
+  ~HierarchicalBasisH1Pri() override = default;
 
-    void generateBasis(double const &u, double const &v, double const &w,
-                               std::vector<std::vector<double> > &vertexBasis,
-                               std::vector<std::vector<double> > &edgeBasis,
-                               std::vector<std::vector<double> > &faceBasis,
-                               std::vector<std::vector<double> > &bubbleBasis,
-                               std::string typeFunction) override {
-        generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis, bubbleBasis);
-    }
+  unsigned int getNumberOfOrientations() const override;
 
-    void orientEdgeFunctionsForNegativeFlag(std::vector<double> &edgeFunctions) override;
-  
-    void orientEdgeFunctionsForNegativeFlag(std::vector<std::vector<double> > &edgeFunctions) override;
+  // vertexBasis=[v0,...,v5]
+  // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
+  // faceBasis=[QuadFace\phif2_{2,2},...,phif2_{2,pF2_2},...,phif2_{pF2_1,2},...,phief2_{pF2_1,pF2_2},phif3_{2,2}...,
+  //            TriFace\phif0_{1,1},...,phif0_{1,pF0-2},phif0_{2,1}...,phif0_{2,pF0-3},...,phief0_{pF-2,1},phif1_{1,1}...]
+  // bubbleBasis=[phieb_{1,1,1},...]   1<=n1,n2;n1+n2<=pb1-1; 2<=n3<pb2
 
-    void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                            std::vector<double> &edgeFunctions,
-                            const std::vector<double> &eTablePositiveFlag,
-                            const std::vector<double> &eTableNegativeFlag) override;
+  void generateBasis(double const &u, double const &v, double const &w,
+                     std::vector<double> &vertexBasis,
+                     std::vector<double> &edgeBasis,
+                     std::vector<double> &faceBasis,
+                     std::vector<double> &bubbleBasis,
+                     std::string typeFunction) override;
 
-    void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                            std::vector<std::vector<double> > &edgeBasis,
-                            const std::vector<std::vector<double> > &eTablePositiveFlag,
-                            const std::vector<std::vector<double> > &eTableNegativeFlag) override;
-      
-    void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-                            const std::vector<double> &quadFaceFunctionsAllOrientation,
-                            const std::vector<double> &triFaceFunctionsAllOrientation,
-                            std::vector<double> &fTableCopy) override;
-  
-    void orientFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-                            const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
-                            const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
-                            std::vector<std::vector<double> > &fTableCopy) override;
-  
-    void getKeysInfo(std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo) override;
+  void generateBasis(double const &u, double const &v, double const &w,
+                     std::vector<std::vector<double>> &vertexBasis,
+                     std::vector<std::vector<double>> &edgeBasis,
+                     std::vector<std::vector<double>> &faceBasis,
+                     std::vector<std::vector<double>> &bubbleBasis,
+                     std::string typeFunction) override
+  {
+    generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
+                          bubbleBasis);
+  }
+
+  void orientEdgeFunctionsForNegativeFlag(
+    std::vector<double> &edgeFunctions) override;
+
+  void orientEdgeFunctionsForNegativeFlag(
+    std::vector<std::vector<double>> &edgeFunctions) override;
+
+  void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                  std::vector<double> &edgeFunctions,
+                  const std::vector<double> &eTablePositiveFlag,
+                  const std::vector<double> &eTableNegativeFlag) override;
+
+  void orientEdge(
+    int const &flagOrientation, int const &edgeNumber,
+    std::vector<std::vector<double>> &edgeBasis,
+    const std::vector<std::vector<double>> &eTablePositiveFlag,
+    const std::vector<std::vector<double>> &eTableNegativeFlag) override;
+
+  void orientFace(int const &flag1, int const &flag2, int const &flag3,
+                  int const &faceNumber,
+                  const std::vector<double> &quadFaceFunctionsAllOrientation,
+                  const std::vector<double> &triFaceFunctionsAllOrientation,
+                  std::vector<double> &fTableCopy) override;
+
+  void orientFace(
+    int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
+    const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
+    const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
+    std::vector<std::vector<double>> &fTableCopy) override;
+
+  void getKeysInfo(std::vector<int> &functionTypeInfo,
+                   std::vector<int> &orderInfo) override;
 };
 #endif

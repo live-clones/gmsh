@@ -55,11 +55,11 @@ double HierarchicalBasisHcurlBrick::_affineCoordinate(const int &j,
 
 void HierarchicalBasisHcurlBrick::generateHcurlBasis(
   double const &u, double const &v, double const &w,
-  std::vector<std::vector<double> > &edgeBasis,
-  std::vector<std::vector<double> > &faceBasis,
-  std::vector<std::vector<double> > &bubbleBasis)
+  std::vector<std::vector<double>> &edgeBasis,
+  std::vector<std::vector<double>> &faceBasis,
+  std::vector<std::vector<double>> &bubbleBasis)
 {
-  std::vector<std::vector<double> > lobattoVector(3);
+  std::vector<std::vector<double>> lobattoVector(3);
   lobattoVector[0] = std::vector<double>(_pb1);
   lobattoVector[1] = std::vector<double>(_pb2);
   lobattoVector[2] = std::vector<double>(_pb3);
@@ -72,7 +72,7 @@ void HierarchicalBasisHcurlBrick::generateHcurlBasis(
   for(int it = 2; it <= _pb3 + 1; it++) {
     lobattoVector[2][it - 2] = OrthogonalPoly::EvalLobatto(it, w);
   }
-  std::vector<std::vector<double> > legendreVector(3);
+  std::vector<std::vector<double>> legendreVector(3);
   legendreVector[0] = std::vector<double>(_pb1 + 1);
   legendreVector[1] = std::vector<double>(_pb2 + 1);
   legendreVector[2] = std::vector<double>(_pb3 + 1);
@@ -259,9 +259,9 @@ void HierarchicalBasisHcurlBrick::generateHcurlBasis(
 
 void HierarchicalBasisHcurlBrick::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &edgeFunctions,
-  const std::vector<std::vector<double> > &eTablePositiveFlag,
-  const std::vector<std::vector<double> > &eTableNegativeFlag)
+  std::vector<std::vector<double>> &edgeFunctions,
+  const std::vector<std::vector<double>> &eTablePositiveFlag,
+  const std::vector<std::vector<double>> &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -289,7 +289,7 @@ void HierarchicalBasisHcurlBrick::orientEdge(
   }
 }
 void HierarchicalBasisHcurlBrick::orientEdgeFunctionsForNegativeFlag(
-  std::vector<std::vector<double> > &edgeFunctions)
+  std::vector<std::vector<double>> &edgeFunctions)
 {
   int constant1 = 0;
   int constant2 = 0;
@@ -311,7 +311,7 @@ void HierarchicalBasisHcurlBrick::orientEdgeFunctionsForNegativeFlag(
 void HierarchicalBasisHcurlBrick::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
+  std::vector<std::vector<double>> &faceFunctions, std::string typeFunction)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -606,9 +606,9 @@ void HierarchicalBasisHcurlBrick::orientOneFace(
 }
 void HierarchicalBasisHcurlBrick::orientFace(
   int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
-  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
-  std::vector<std::vector<double> > &fTableCopy)
+  const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double>> &fTableCopy)
 {
   int iterator = 0;
   for(int i = 0; i < faceNumber; i++) {
@@ -630,15 +630,15 @@ void HierarchicalBasisHcurlBrick::orientFace(
 
 void HierarchicalBasisHcurlBrick::generateCurlBasis(
   double const &u, double const &v, double const &w,
-  std::vector<std::vector<double> > &edgeBasis,
-  std::vector<std::vector<double> > &faceBasis,
-  std::vector<std::vector<double> > &bubbleBasis)
+  std::vector<std::vector<double>> &edgeBasis,
+  std::vector<std::vector<double>> &faceBasis,
+  std::vector<std::vector<double>> &bubbleBasis)
 {
-  std::vector<std::vector<double> > lobattoVector(3);
+  std::vector<std::vector<double>> lobattoVector(3);
   lobattoVector[0] = std::vector<double>(_pb1);
   lobattoVector[1] = std::vector<double>(_pb2);
   lobattoVector[2] = std::vector<double>(_pb3);
-  std::vector<std::vector<double> > dlobattoVector(3);
+  std::vector<std::vector<double>> dlobattoVector(3);
   dlobattoVector[0] = std::vector<double>(_pb1);
   dlobattoVector[1] = std::vector<double>(_pb2);
   dlobattoVector[2] = std::vector<double>(_pb3);
@@ -655,7 +655,7 @@ void HierarchicalBasisHcurlBrick::generateCurlBasis(
     dlobattoVector[2][it - 2] = OrthogonalPoly::EvalDLobatto(it, w);
   }
 
-  std::vector<std::vector<double> > legendreVector(3);
+  std::vector<std::vector<double>> legendreVector(3);
   legendreVector[0] = std::vector<double>(_pb1 + 1);
   legendreVector[1] = std::vector<double>(_pb2 + 1);
   legendreVector[2] = std::vector<double>(_pb3 + 1);
@@ -684,7 +684,7 @@ void HierarchicalBasisHcurlBrick::generateCurlBasis(
   dlambda[3] = -0.5;
   dlambda[4] = 0.5;
   dlambda[5] = -0.5;
-  std::vector<std::vector<double> > curlProduct(12, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> curlProduct(12, std::vector<double>(3, 0));
   curlProduct[0][1] = lambda[3] * dlambda[5];
   curlProduct[0][2] = -dlambda[3] * lambda[5];
   curlProduct[5][1] = lambda[2] * dlambda[5];

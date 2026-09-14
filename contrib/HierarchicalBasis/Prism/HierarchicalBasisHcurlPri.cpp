@@ -17,29 +17,26 @@ HierarchicalBasisHcurlPri::HierarchicalBasisHcurlPri(int order)
   _numEdge = 9;
   if(order < 2) { _numTriFace = 0; }
   else {
-      _numTriFace = 2;
+    _numTriFace = 2;
   }
-    _numQuadFace = 3;
-    _numVertexFunction = 0;
-    _numEdgeFunction = 9 * order + 9;
-    _numQuadFaceFunction = 6 * order * (order + 1);
-    if(order == 0) {
-        _numTriFaceFunction = 0;
-    }
-    else {
-        _numTriFaceFunction = 6 * (order - 1) + 2 * (order - 1) * (order - 2);
-    }
-    _numBubbleFunction = 3 * (order - 1) * order + (order - 1) * (order - 2) * order
-                                                 + (order - 1) * order * (order + 1) / 2;
-    
-    _pb.fill(order);
-    _pOrderTriFace.fill(order);
-    // Initialize all face orders uniformly in both u and v directions
-    for (int dir = 0; dir < 2; ++dir) {
-        _pOrderQuadFace[dir].fill(order);
-    }
-    // Initialize all edge orders uniformly
-    _pOrderEdge.fill(order);
+  _numQuadFace = 3;
+  _numVertexFunction = 0;
+  _numEdgeFunction = 9 * order + 9;
+  _numQuadFaceFunction = 6 * order * (order + 1);
+  if(order == 0) { _numTriFaceFunction = 0; }
+  else {
+    _numTriFaceFunction = 6 * (order - 1) + 2 * (order - 1) * (order - 2);
+  }
+  _numBubbleFunction = 3 * (order - 1) * order +
+                       (order - 1) * (order - 2) * order +
+                       (order - 1) * order * (order + 1) / 2;
+
+  _pb.fill(order);
+  _pOrderTriFace.fill(order);
+  // Initialize all face orders uniformly in both u and v directions
+  for(int dir = 0; dir < 2; ++dir) { _pOrderQuadFace[dir].fill(order); }
+  // Initialize all edge orders uniformly
+  _pOrderEdge.fill(order);
 }
 
 HierarchicalBasisHcurlPri::~HierarchicalBasisHcurlPri() {}
@@ -67,9 +64,7 @@ double HierarchicalBasisHcurlPri::_affineCoordinate(const int &j,
 double
 HierarchicalBasisHcurlPri::dotProduct(const std::vector<double> &u1,
                                       const std::vector<double> &u2) // in 2D
-{
-  return u1[0] * u2[0] + u1[1] * u2[1];
-}
+{ return u1[0] * u2[0] + u1[1] * u2[1]; }
 
 void HierarchicalBasisHcurlPri::matrixVectorProductForMapping(
   const double &a, const std::vector<double> &u, std::vector<double> &result)
@@ -80,9 +75,9 @@ void HierarchicalBasisHcurlPri::matrixVectorProductForMapping(
 }
 void HierarchicalBasisHcurlPri::generateHcurlBasis(
   double const &u, double const &v, double const &w,
-  std::vector<std::vector<double> > &edgeBasis,
-  std::vector<std::vector<double> > &faceBasis,
-  std::vector<std::vector<double> > &bubbleBasis)
+  std::vector<std::vector<double>> &edgeBasis,
+  std::vector<std::vector<double>> &faceBasis,
+  std::vector<std::vector<double>> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -111,8 +106,8 @@ void HierarchicalBasisHcurlPri::generateHcurlBasis(
   std::vector<double> n3 = std::vector<double>(3, 0);
   n3[0] = 1;
   // Whitney functions
-  std::vector<std::vector<double> > psie_0(3, std::vector<double>(3, 0));
-  std::vector<std::vector<double> > psie_1(3, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> psie_0(3, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> psie_1(3, std::vector<double>(3, 0));
   for(int i = 0; i < 3; i++) {
     psie_0[0][i] = lambda3 * n2[i] / dotProduct(n2, t1) +
                    lambda2 * n3[i] / dotProduct(n3, t1);
@@ -134,7 +129,7 @@ void HierarchicalBasisHcurlPri::generateHcurlBasis(
   double subl2l1 = lambda2 - lambda1;
   std::vector<double> sub(4, 0);
   sub[0] = subl3l2, sub[1] = subl1l3, sub[2] = subl1l2, sub[3] = subl2l1;
-  std::vector<std::vector<double> > legendreVector(4);
+  std::vector<std::vector<double>> legendreVector(4);
   legendreVector[0] = std::vector<double>(
     std::max(
       std::max(std::max(std::max(std::max(_pOrderEdge[0], _pOrderEdge[6]),
@@ -151,9 +146,10 @@ void HierarchicalBasisHcurlPri::generateHcurlBasis(
                _pOrderTriFace[1] - 1),
       _pb[0] - 1),
     0);
-  legendreVector[2] = std::vector<double>(
-    std::max(std::max(_pOrderEdge[1], _pOrderEdge[7]), _pOrderQuadFace[0][1] + 1),
-    0);
+  legendreVector[2] =
+    std::vector<double>(std::max(std::max(_pOrderEdge[1], _pOrderEdge[7]),
+                                 _pOrderQuadFace[0][1] + 1),
+                        0);
 
   legendreVector[3] = std::vector<double>(
     std::max(std::max(std::max(_pOrderTriFace[0] - 1, _pOrderTriFace[1] - 1),
@@ -441,9 +437,9 @@ void HierarchicalBasisHcurlPri::generateHcurlBasis(
 
 void HierarchicalBasisHcurlPri::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
-  std::vector<std::vector<double> > &edgeFunctions,
-  const std::vector<std::vector<double> > &eTablePositiveFlag,
-  const std::vector<std::vector<double> > &eTableNegativeFlag)
+  std::vector<std::vector<double>> &edgeFunctions,
+  const std::vector<std::vector<double>> &eTablePositiveFlag,
+  const std::vector<std::vector<double>> &eTableNegativeFlag)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -471,7 +467,7 @@ void HierarchicalBasisHcurlPri::orientEdge(
   }
 }
 void HierarchicalBasisHcurlPri::orientEdgeFunctionsForNegativeFlag(
-  std::vector<std::vector<double> > &edgeFunctions)
+  std::vector<std::vector<double>> &edgeFunctions)
 {
   int constant1 = 0;
   int constant2 = 0;
@@ -493,13 +489,14 @@ void HierarchicalBasisHcurlPri::orientEdgeFunctionsForNegativeFlag(
 void HierarchicalBasisHcurlPri::orientOneFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
+  std::vector<std::vector<double>> &faceFunctions, std::string typeFunction)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
       int iterator = 0;
       for(int k = 0; k < faceNumber; k++) {
-        iterator = iterator + (_pOrderQuadFace[0][k] + 1) * _pOrderQuadFace[1][k] +
+        iterator = iterator +
+                   (_pOrderQuadFace[0][k] + 1) * _pOrderQuadFace[1][k] +
                    (_pOrderQuadFace[1][k] + 1) * _pOrderQuadFace[0][k];
       }
       if(flag3 == 1) {
@@ -824,7 +821,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
           break;
         }
         std::vector<double> lambda(3);
-        std::vector<std::vector<double> > dlambda(3, std::vector<double>(3, 0));
+        std::vector<std::vector<double>> dlambda(3, std::vector<double>(3, 0));
         lambda[0] = _affineCoordinate(2, uc, vc, wc);
         lambda[1] = _affineCoordinate(3, uc, vc, wc);
         lambda[2] = _affineCoordinate(1, uc, vc, wc);
@@ -972,7 +969,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
           break;
         }
         std::vector<double> lambda(3);
-        std::vector<std::vector<double> > dlambda(3, std::vector<double>(3, 0));
+        std::vector<std::vector<double>> dlambda(3, std::vector<double>(3, 0));
         lambda[0] = _affineCoordinate(2, uc, vc, wc);
         lambda[1] = _affineCoordinate(3, uc, vc, wc);
         lambda[2] = _affineCoordinate(1, uc, vc, wc);
@@ -1037,7 +1034,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
         sub[0] = lambda[1] - lambda[0];
         sub[1] = lambda[2] - lambda[1];
         sub[2] = lambda[0] - lambda[2];
-        std::vector<std::vector<double> > dsub(3, std::vector<double>(3, 0));
+        std::vector<std::vector<double>> dsub(3, std::vector<double>(3, 0));
         for(int p = 0; p < 3; p++) {
           dsub[0][p] = dlambda[1][p] - dlambda[0][p];
           dsub[1][p] = dlambda[2][p] - dlambda[1][p];
@@ -1197,9 +1194,9 @@ void HierarchicalBasisHcurlPri::orientOneFace(
 }
 void HierarchicalBasisHcurlPri::orientFace(
   int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-  const std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
-  const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
-  std::vector<std::vector<double> > &fTableCopy)
+  const std::vector<std::vector<double>> &quadFaceFunctionsAllOrientation,
+  const std::vector<std::vector<double>> &triFaceFunctionsAllOrientation,
+  std::vector<std::vector<double>> &fTableCopy)
 {
   if(faceNumber < 3) {
     int iterator = 0;
@@ -1250,9 +1247,9 @@ void HierarchicalBasisHcurlPri::matrixVectorProductForCurlMapping(
 
 void HierarchicalBasisHcurlPri::generateCurlBasis(
   double const &u, double const &v, double const &w,
-  std::vector<std::vector<double> > &edgeBasis,
-  std::vector<std::vector<double> > &faceBasis,
-  std::vector<std::vector<double> > &bubbleBasis)
+  std::vector<std::vector<double>> &edgeBasis,
+  std::vector<std::vector<double>> &faceBasis,
+  std::vector<std::vector<double>> &bubbleBasis)
 {
   //***
   // to map onto the reference domain of gmsh:
@@ -1283,8 +1280,8 @@ void HierarchicalBasisHcurlPri::generateCurlBasis(
   std::vector<double> n3 = std::vector<double>(3, 0);
   n3[0] = 1;
   // Whitney functions
-  std::vector<std::vector<double> > psie_0(3, std::vector<double>(3, 0));
-  std::vector<std::vector<double> > psie_1(3, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> psie_0(3, std::vector<double>(3, 0));
+  std::vector<std::vector<double>> psie_1(3, std::vector<double>(3, 0));
   for(int i = 0; i < 3; i++) {
     psie_0[0][i] = lambda3 * n2[i] / dotProduct(n2, t1) +
                    lambda2 * n3[i] / dotProduct(n3, t1);
@@ -1307,8 +1304,8 @@ void HierarchicalBasisHcurlPri::generateCurlBasis(
   double subl2l1 = lambda2 - lambda1;
   std::vector<double> sub(4, 0);
   sub[0] = subl3l2, sub[1] = subl1l3, sub[2] = subl1l2, sub[3] = subl2l1;
-  std::vector<std::vector<double> > legendreVector(4);
-  std::vector<std::vector<double> > dlegendreVector(4);
+  std::vector<std::vector<double>> legendreVector(4);
+  std::vector<std::vector<double>> dlegendreVector(4);
   legendreVector[0] = std::vector<double>(
     std::max(
       std::max(std::max(std::max(std::max(_pOrderEdge[0], _pOrderEdge[6]),
@@ -1341,13 +1338,15 @@ void HierarchicalBasisHcurlPri::generateCurlBasis(
                _pOrderTriFace[1] - 1),
       _pb[0] - 1),
     0);
-  legendreVector[2] = std::vector<double>(
-    std::max(std::max(_pOrderEdge[1], _pOrderEdge[7]), _pOrderQuadFace[0][1] + 1),
-    0);
+  legendreVector[2] =
+    std::vector<double>(std::max(std::max(_pOrderEdge[1], _pOrderEdge[7]),
+                                 _pOrderQuadFace[0][1] + 1),
+                        0);
 
-  dlegendreVector[2] = std::vector<double>(
-    std::max(std::max(_pOrderEdge[1], _pOrderEdge[7]), _pOrderQuadFace[0][1] + 1),
-    0);
+  dlegendreVector[2] =
+    std::vector<double>(std::max(std::max(_pOrderEdge[1], _pOrderEdge[7]),
+                                 _pOrderQuadFace[0][1] + 1),
+                        0);
 
   legendreVector[3] = std::vector<double>(
     std::max(std::max(std::max(_pOrderTriFace[0] - 1, _pOrderTriFace[1] - 1),
@@ -1378,7 +1377,7 @@ void HierarchicalBasisHcurlPri::generateCurlBasis(
   std::vector<double> curlpsie_0(3, 1);
   curlpsie_0[2] = -1;
   std::vector<double> curlpsie_1(3, 0);
-  std::vector<std::vector<double> > dsubtraction(4, std::vector<double>(2, 0));
+  std::vector<std::vector<double>> dsubtraction(4, std::vector<double>(2, 0));
   dsubtraction[0][0] = 1;
   dsubtraction[0][1] = 0.5;
   dsubtraction[1][0] = -0.5;

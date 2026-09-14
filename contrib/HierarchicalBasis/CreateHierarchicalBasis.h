@@ -9,6 +9,7 @@
 #include <string>
 class HierarchicalBasis;
 
-HierarchicalBasis* CreateHierarchicalBasis(const std::string &fsName, int familyType, int fsOrder);
+HierarchicalBasis *CreateHierarchicalBasis(const std::string &fsName,
+                                           int familyType, int fsOrder);
 
 #endif // CREATE_HIERARCHICAL_BASIS_H
