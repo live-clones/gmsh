@@ -1591,10 +1591,11 @@ StringXNumber MeshOptions_Number[] = {
       "inserted midpoints do not obey the packing exclusion or cross field "
       "(non-positive: preserve packed points, no intrinsic long-edge splitting)" },
   { F|O, "OptimizeQuadsPillowLayers" , opt_mesh_optimize_quads_pillow_layers, 0 ,
-    "Attempt a complete quadrilateral ring around holes after quad "
-      "optimization and open an admissible new ring with local Winslow "
-      "smoothing; 1 optimizes the complete affected stars and larger values "
-      "add neighboring element layers (0: disabled)" },
+    "Attempt a complete quadrilateral ring around holes with OptimizeQuadHoleRings "
+      "(or legacy OptimizeQuads) and open it with local Winslow smoothing; "
+      "1 optimizes the complete affected stars and larger values add neighboring "
+      "element layers (0: disabled). The dedicated ring pass permits shape/size "
+      "specification failures while preserving physical validity and CAD fit" },
   { F|O, "Pack3D" , opt_mesh_pack_3d, 1 ,
     "Deprecated compatibility option, fixed to 1: PACK always uses "
       "tangent-frame propagation and oriented exclusion cubes in 3D" },

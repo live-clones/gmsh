@@ -4,6 +4,7 @@
 
 #include "smallCavityOptimizer.h"
 #include "quadGeometryGuard.h"
+#include "quadCadDistance.h"
 
 #include "BackgroundMeshTools.h"
 #include "Field.h"
@@ -12883,13 +12884,241 @@ namespace QuadOptimizer {
       return ringElements.size() == loop.size();
     }
 
+    // This ledger belongs only to the explicit ring pass. Unknown elements
+    // elsewhere on the face do not veto a local ring, but every replaced and
+    // inserted element must have complete CAD coverage. The immutable initial
+    // limits prevent successive rings from accumulating the local allowance.
+    struct HoleRingCadGuard {
+      GFace *face;
+      const SmallCavityOptimizerOptions &options;
+      CadDistance::Contribution current;
+      double initialMean = 0., initialMaximum = 0.;
+      std::size_t physicalNormalQueries = 0, physicalNormalCovered = 0;
+
+      double target(const Point &xyz, const UV &uv) const
+      {
+        return edgeLengthCriteria(face, uv, xyz, options).target;
+      }
+
+      CadDistance::Contribution sample(MElement *element,
+                                      const std::vector<UV> &uv) const
+      {
+        return CadDistance::sampleElement(face, element, uv,
+          [&](const Point &xyz, const UV &parameter) {
+            return target(xyz, parameter);
+          });
+      }
+
+      HoleRingCadGuard(GFace *face_, const SmallCavityOptimizerOptions &options_,
+                       const std::vector<MElement *> &elements)
+        : face(face_), options(options_)
+      {
+        for(MElement *element : elements) {
+          std::vector<UV> uv;
+          if(!CadDistance::elementParameters(face, element, uv)) continue;
+          const auto value = sample(element, uv);
+          if(value.complete()) current += value;
+        }
+        if(current.sampledArea > 0.)
+          initialMean = current.normalizedSquaredDistanceIntegral /
+                        current.sampledArea;
+        initialMaximum = current.maximumNormalizedDistance;
+      }
+
+      CadDistance::Contribution replaced(const CadDistance::Contribution &before,
+                                         const CadDistance::Contribution &after) const
+      {
+        auto next = current;
+        next.sampledArea += after.sampledArea - before.sampledArea;
+        next.squaredDistanceIntegral +=
+          after.squaredDistanceIntegral - before.squaredDistanceIntegral;
+        next.normalizedSquaredDistanceIntegral +=
+          after.normalizedSquaredDistanceIntegral -
+          before.normalizedSquaredDistanceIntegral;
+        return next;
+      }
+
+      bool admissible(const CadDistance::Contribution &before,
+                       const CadDistance::Contribution &after) const
+      {
+        if(!before.complete() || !after.complete()) return false;
+        const auto next = replaced(before, after);
+        return next.sampledArea > 0. &&
+          std::isfinite(next.normalizedSquaredDistanceIntegral) &&
+          after.normalizedSquaredDistanceIntegral / after.sampledArea <=
+            before.normalizedSquaredDistanceIntegral / before.sampledArea +
+            options.maximumNormalizedCadRegression + 1.e-15 &&
+          after.maximumNormalizedDistance <= before.maximumNormalizedDistance +
+            options.maximumCadDistanceIncreaseRatio + 1.e-14 &&
+          next.normalizedSquaredDistanceIntegral / next.sampledArea <=
+            initialMean + options.maximumNormalizedCadRegression + 1.e-14 &&
+          after.maximumNormalizedDistance <= initialMaximum +
+            options.maximumCadDistanceIncreaseRatio + 1.e-14;
+      }
+
+      // Match the final Fast split/merge predicate: do not introduce a quad
+      // with a clearly excessive diagonal when the other one fits the CAD.
+      bool admissibleQuad(MQuadrangle &quad, const std::vector<UV> &uv) const
+      {
+        const double eta = quad.etaShapeMeasure();
+        const double sicn = quad.minSICNShapeMeasure();
+        if(!std::isfinite(eta) || !(eta > 0.) ||
+           !std::isfinite(sicn) || !(sicn > 0.)) return false;
+        if(options.finalSplitCadDistanceRatio < 0.) return true;
+        double distance[2] = {0., 0.};
+        for(int diagonal = 0; diagonal < 2; ++diagonal) {
+          const MVertex *a = quad.getVertex(diagonal);
+          const MVertex *b = quad.getVertex(diagonal + 2);
+          for(const double t : {.25, .5, .75}) {
+            const Point xyz = {{(1. - t) * a->x() + t * b->x(),
+                                (1. - t) * a->y() + t * b->y(),
+                                (1. - t) * a->z() + t * b->z()}};
+            const UV guess = {{(1. - t) * uv[diagonal][0] + t * uv[diagonal + 2][0],
+                               (1. - t) * uv[diagonal][1] + t * uv[diagonal + 2][1]}};
+            try {
+              const double h = target(xyz, guess);
+              const GPoint projected = face->closestPointFromTrustedGuess(
+                SPoint3(xyz[0], xyz[1], xyz[2]), guess.data());
+              if(!(h > 0.) || !std::isfinite(h) || !projected.succeeded())
+                return false;
+              const double d = std::hypot(projected.x() - xyz[0],
+                projected.y() - xyz[1], projected.z() - xyz[2]) / h;
+              if(!std::isfinite(d)) return false;
+              distance[diagonal] = std::max(distance[diagonal], d);
+            }
+            catch(...) { return false; }
+          }
+        }
+        const double low = std::min(distance[0], distance[1]);
+        const double high = std::max(distance[0], distance[1]);
+        return !(high > options.finalSplitCadDistanceRatio &&
+                 low <= options.finalSplitCadDistanceRatio && low <= .5 * high);
+      }
+    };
+
+    bool holeRingPatchFollowsNormals(
+      HoleRingCadGuard &guard, const std::vector<UV> &uv,
+      const std::vector<Point> &positions,
+      const std::vector<std::array<std::size_t, 3>> &triangles,
+      const std::vector<std::array<std::size_t, 4>> &quadrangles,
+      const std::vector<MVertex *> &localVertices,
+      std::size_t existingQuadrangleCount = std::numeric_limits<std::size_t>::max(),
+      double fraction = 0.)
+    {
+      GFace *face = guard.face;
+      const auto &options = guard.options;
+      HoleRingCadGuard *ringGuard = &guard;
+      const std::size_t existingVertexCount = localVertices.size();
+      auto followsElement = [&](const auto &indices, std::size_t cell) {
+        std::size_t queries = 0, zero = 0, negative = 0;
+        UV firstUnavailable = {{0., 0.}}, firstOpposed = {{0., 0.}};
+        std::vector<std::vector<std::size_t>> tri, quad;
+        (indices.size() == 3 ? tri : quad).emplace_back(
+          indices.begin(), indices.end());
+        const bool follows = GeometryGuard::indexedPatchFollowsNormals(
+          [&](const UV &parameter, const Point &jacobian,
+              double norm, double scale2) {
+            const std::size_t sample = queries;
+            ++queries;
+            int sign = sampledPhysicalJacobianFaceNormalSign(
+              face, parameter, jacobian, norm, scale2);
+            // A coarse hole edge is a physical chord: its interpolated UV
+            // can lie outside the fine trimmed chart. Resolve an unknown
+            // normal on the same physical sample, never an opposed normal.
+            // Keep the physical Jacobian's original non-degeneracy guard.
+            if(sign == 0 && face->geomType() == GEntity::DiscreteSurface &&
+               std::isfinite(norm) && norm > 1.e-12 * std::max(
+                 scale2, std::numeric_limits<double>::min())) {
+              ++ringGuard->physicalNormalQueries;
+              Point sampleXyz = {{0., 0., 0.}};
+              double weight[4] = {0., 0., 0., 0.};
+              if(indices.size() == 3 && sample < 4) {
+                static const double triangleWeight[4][3] = {
+                  {1. / 3., 1. / 3., 1. / 3.},
+                  {.98, .01, .01}, {.01, .98, .01}, {.01, .01, .98}};
+                std::copy(triangleWeight[sample], triangleWeight[sample] + 3,
+                          weight);
+              }
+              else if(indices.size() == 4 && sample < 8) {
+                constexpr double g = 0.57735026918962576451;
+                constexpr double c = 1. - 1.e-6;
+                static const UV samples[8] = {
+                  {-g, -g}, {g, -g}, {g, g}, {-g, g},
+                  {-c, -c}, {c, -c}, {c, c}, {-c, c}};
+                const double xi = samples[sample][0], eta = samples[sample][1];
+                weight[0] = .25 * (1. - xi) * (1. - eta);
+                weight[1] = .25 * (1. + xi) * (1. - eta);
+                weight[2] = .25 * (1. + xi) * (1. + eta);
+                weight[3] = .25 * (1. - xi) * (1. + eta);
+              }
+              for(std::size_t i = 0; i < indices.size(); ++i)
+                for(int d = 0; d < 3; ++d)
+                  sampleXyz[d] += weight[i] * positions[indices[i]][d];
+              try {
+                SVector3 normal;
+                const GPoint projected = static_cast<discreteFace *>(face)->
+                  closestPointLibOL(SPoint3(sampleXyz[0], sampleXyz[1],
+                                            sampleXyz[2]),
+                                    &normal, parameter.data());
+                const double h = ringGuard->target(sampleXyz, parameter);
+                const double normalNorm = normal.norm();
+                const double distance = std::hypot(
+                  projected.x() - sampleXyz[0], projected.y() - sampleXyz[1],
+                  projected.z() - sampleXyz[2]);
+                const double product = jacobian[0] * normal.x() +
+                  jacobian[1] * normal.y() + jacobian[2] * normal.z();
+                if(projected.succeeded() && h > 0. && std::isfinite(h) &&
+                   std::isfinite(normalNorm) && normalNorm > 0. &&
+                   std::isfinite(distance) &&
+                   distance <= options.maximumCadDistanceIncreaseRatio * h &&
+                   std::isfinite(product)) {
+                  ++ringGuard->physicalNormalCovered;
+                  sign = product > 1.e-10 * norm * normalNorm ? 1 : -1;
+                }
+              }
+              catch(...) {}
+            }
+            if(sign == 0 && zero++ == 0) firstUnavailable = parameter;
+            if(sign < 0 && negative++ == 0) firstOpposed = parameter;
+            return sign;
+          }, uv, positions, tri, quad);
+        const std::size_t expected = indices.size() == 3 ? 4 : 8;
+        if(follows && !zero && !negative && queries == expected) return true;
+        if(options.verbose > 1) {
+          std::size_t nodes[4] = {0, 0, 0, 0};
+          for(std::size_t i = 0; i < indices.size(); ++i)
+            if(indices[i] < existingVertexCount)
+              nodes[i] = localVertices[indices[i]]->getNum();
+          Msg::Info("OptimizeQuadHoleRings face=%d fraction=%g %s[%zu] "
+                    "ring=%d normalQueries=%zu/%zu zero=%zu negative=%zu "
+                    "guard=%d nodes=[%zu,%zu,%zu,%zu] "
+                    "firstUnavailableUV=[%.17g,%.17g] "
+                    "firstOpposedUV=[%.17g,%.17g]",
+                    face->tag(), fraction, indices.size() == 3 ? "T" : "Q",
+                    cell, int(indices.size() == 4 && cell >= existingQuadrangleCount),
+                    queries, expected, zero, negative, int(follows),
+                    nodes[0], nodes[1], nodes[2], nodes[3],
+                    firstUnavailable[0], firstUnavailable[1],
+                    firstOpposed[0], firstOpposed[1]);
+        }
+        return false;
+      };
+      for(std::size_t i = 0; i < triangles.size(); ++i)
+        if(!followsElement(triangles[i], i)) return false;
+      for(std::size_t i = 0; i < quadrangles.size(); ++i)
+        if(!followsElement(quadrangles[i], i)) return false;
+
+      return true;
+    }
+
     bool tryPillowHole(GFace *face, const BoundaryLoop &boundary,
                        int neighborLayers,
                        FaceHalfEdgeTopology &topology,
                        const SmallCavityOptimizerOptions &options,
                        SmallCavityOptimizerResult &result,
                        std::size_t &insertedQuadrangles,
-                       bool &alreadyPillowed)
+                       bool &alreadyPillowed,
+                       HoleRingCadGuard *ringGuard = nullptr)
     {
       insertedQuadrangles = 0;
       alreadyPillowed = false;
@@ -12915,6 +13144,21 @@ namespace QuadOptimizer {
            return protectedVertices.find(vertex) != protectedVertices.end();
          }))
         return false;
+      if(ringGuard) {
+        const std::set<MVertex *> boundaryVertices(loop.begin(), loop.end());
+        for(GEdge *curve : face->getEmbeddedEdges())
+          for(MLine *line : curve->lines)
+            if(boundaryVertices.count(line->getVertex(0)) ||
+               boundaryVertices.count(line->getVertex(1))) {
+              // The annular rewrite duplicates every hole vertex in the old
+              // cells. A curve ending here would require a cut ring to keep
+              // its 1D/2D incidence; do not silently detach that constraint.
+              if(options.verbose)
+                Msg::Info("OptimizeQuadHoleRings face=%d rejected: embedded "
+                          "curve %d meets hole boundary", face->tag(), curve->tag());
+              return false;
+            }
+      }
 
       std::set<MElement *> selected;
       // Replacing a boundary vertex affects its complete element star, not
@@ -13221,6 +13465,81 @@ namespace QuadOptimizer {
       }
       const SizeScore beforePillowSize =
         existingSizeScore(originalPatch, options, false);
+      CadDistance::Contribution beforeCad, acceptedCad;
+      if(ringGuard) {
+        for(MElement *element : originalPatch.elements) {
+          std::vector<UV> parameter;
+          if(!CadDistance::elementParameters(face, element, parameter))
+            return false;
+          const auto value = ringGuard->sample(element, parameter);
+          if(!value.complete()) return false;
+          beforeCad += value;
+        }
+      }
+
+      auto admissibleRingPatch = [&](const std::vector<UV> &uv,
+                                      const std::vector<Point> &positions,
+                                      CadDistance::Contribution &cad,
+                                      double fraction) {
+        if(!ringGuard) return true;
+        auto reject = [&](const char *reason) {
+          if(options.verbose > 1)
+            Msg::Info("OptimizeQuadHoleRings face=%d rejected trial: %s",
+                      face->tag(), reason);
+          return false;
+        };
+        if(!holeRingPatchFollowsNormals(*ringGuard, uv, positions,
+             triangles, quadrangles, localVertices,
+             existingQuadrangleCount, fraction)) return false;
+
+        auto auditElement = [&](const auto &indices) {
+          std::vector<MVertex> vertices;
+          std::vector<MVertex *> pointers;
+          std::vector<UV> parameter;
+          vertices.reserve(indices.size());
+          for(const std::size_t index : indices) {
+            const Point &p = positions[index];
+            // Explicit existing tag: temporary audit objects must not consume
+            // global mesh tags or become classified mesh vertices.
+            vertices.emplace_back(p[0], p[1], p[2], face, 1);
+            pointers.push_back(&vertices.back());
+            parameter.push_back(uv[index]);
+          }
+          std::unique_ptr<MElement> element;
+          if(indices.size() == 3)
+            element.reset(new MTriangle(pointers, 1));
+          else
+            element.reset(new MQuadrangle(pointers, 1));
+          if(!evaluateElementQuality(element.get()).topologicallyValid)
+            return reject("degenerate or invalid physical element");
+          if(indices.size() == 4 && !ringGuard->admissibleQuad(
+               *static_cast<MQuadrangle *>(element.get()), parameter))
+            return reject("quad Jacobian or diagonal CAD guard");
+          const auto value = ringGuard->sample(element.get(), parameter);
+          if(!value.complete()) return reject("incomplete chord CAD coverage");
+          cad += value;
+          return true;
+        };
+        for(const auto &triangle : triangles)
+          if(!auditElement(triangle)) return false;
+        for(const auto &quadrangle : quadrangles)
+          if(!auditElement(quadrangle)) return false;
+        // A structural ring may contain thin or skewed elements. Report those
+        // shape/size failures, while retaining physical validity and CAD fit.
+        if(!ringGuard->admissible(beforeCad, cad)) {
+          if(options.verbose > 1)
+            Msg::Info("OptimizeQuadHoleRings face=%d CAD mean=%.6g->%.6g "
+                      "max=%.6g->%.6g initialMean=%.6g initialMax=%.6g",
+                      face->tag(), beforeCad.normalizedSquaredDistanceIntegral /
+                        beforeCad.sampledArea,
+                      cad.normalizedSquaredDistanceIntegral / cad.sampledArea,
+                      beforeCad.maximumNormalizedDistance,
+                      cad.maximumNormalizedDistance,
+                      ringGuard->initialMean, ringGuard->initialMaximum);
+          return reject("local or cumulative CAD-distance limit");
+        }
+        return true;
+      };
 
       std::vector<Point> xyz;
       bool acceptedGeometry = false;
@@ -13346,7 +13665,7 @@ namespace QuadOptimizer {
               valid = false;
               break;
             }
-            if(q >= existingQuadrangleCount &&
+            if(!ringGuard && q >= existingQuadrangleCount &&
                !quality.passesAbsoluteSpecifications)
               ++pillowSpecificationFailures;
           }
@@ -13359,6 +13678,10 @@ namespace QuadOptimizer {
           valid = false;
         if(!valid || pillowSpecificationFailures != 0) {
           rejectedByQuality = true;
+          if(ringGuard && options.verbose > 1)
+            Msg::Info("OptimizeQuadHoleRings face=%d fraction=%g rejected: "
+                      "UV/physical orientation, convexity or mapping",
+                      face->tag(), fraction);
           continue;
         }
         double minimumRadial = std::numeric_limits<double>::infinity();
@@ -13368,12 +13691,16 @@ namespace QuadOptimizer {
             minimumRadial,
             distance(trialXyz[old], trialXyz[duplicateIndex[oldVertex]]));
         }
-        if(!(minimumRadial > .05 * meanBoundaryEdge)) {
+        // The explicit structural pass permits thin rings. Its complete
+        // physical-Jacobian guard supplies the numerical non-degeneracy test;
+        // retain the historical thickness/quality floor for legacy callers.
+        if(!(minimumRadial > 0.) || !std::isfinite(minimumRadial) ||
+           (!ringGuard && !(minimumRadial > .05 * meanBoundaryEdge))) {
           rejectedByQuality = true;
           continue;
         }
         SizeScore size;
-        if(options.enforceSizeMap) {
+        if(options.enforceSizeMap && !ringGuard) {
           size = surfacePatchSizeScore(
             face, trialPoints, trialXyz, triangles, quadrangles, fixed,
             options);
@@ -13383,6 +13710,12 @@ namespace QuadOptimizer {
             continue;
           }
         }
+        CadDistance::Contribution candidateCad;
+        if(!admissibleRingPatch(trialPoints, trialXyz, candidateCad, fraction)) {
+          rejectedByQuality = true;
+          continue;
+        }
+        acceptedCad = candidateCad;
         points = std::move(trialPoints);
         xyz = std::move(trialXyz);
         acceptedGeometry = true;
@@ -13465,6 +13798,8 @@ namespace QuadOptimizer {
         movedVertices.push_back(localVertices[i]);
       }
       topology.synchronizeGeometry(movedVertices);
+      if(ringGuard)
+        ringGuard->current = ringGuard->replaced(beforeCad, acceptedCad);
       insertedQuadrangles = loop.size();
       return true;
     }
@@ -13472,7 +13807,8 @@ namespace QuadOptimizer {
     void pillowFaceHoles(GFace *face,
                          const SmallCavityOptimizerOptions &options,
                          SmallCavityOptimizerResult &result,
-                         FaceHalfEdgeTopology &topology)
+                         FaceHalfEdgeTopology &topology,
+                         HoleRingCadGuard *ringGuard = nullptr)
     {
       if(!topology.manifold()) return;
       std::vector<BoundaryLoop> loops;
@@ -13519,7 +13855,7 @@ namespace QuadOptimizer {
         bool alreadyPillowed = false;
         if(!tryPillowHole(face, hole, options.pillowNeighborLayers,
                           topology, options, result, inserted,
-                          alreadyPillowed)) {
+                          alreadyPillowed, ringGuard)) {
           if(alreadyPillowed) {
             ++result.pillowHolesAlreadyPresent;
             if(options.verbose)
@@ -13542,7 +13878,295 @@ namespace QuadOptimizer {
       }
     }
 
+
+    // Delete only a free vertex outside the certified ring. All surviving
+    // coordinates and all ring cells stay exact; the full retired-vertex star
+    // is the transaction, including any neighbors outside the search rows.
+    bool tryHoleRingTriangleCollapse(
+      GFace *face, MVertex *removed, MVertex *retained,
+      const std::set<MVertex *> &protectedVertices,
+      FaceHalfEdgeTopology &topology, HoleRingCadGuard &cad,
+      QuadHoleRingResult &result)
+    {
+      const auto &options = cad.options;
+      auto reject = [&](const char *reason) {
+        if(options.verbose > 1)
+          Msg::Info("OptimizeQuadHoleRings face=%d collapse %zu->%zu "
+                    "rejected: %s", face->tag(), removed->getNum(),
+                    retained->getNum(), reason);
+        return false;
+      };
+      if(removed->onWhat() != face || protectedVertices.count(removed))
+        return reject("retired vertex belongs to a ring or fixed constraint");
+      const auto edgeElements = topology.incidentElements(
+        canonicalEdge(removed, retained));
+      if(edgeElements.size() != 2 ||
+         std::any_of(edgeElements.begin(), edgeElements.end(),
+                     [](MElement *e) { return e->getNumPrimaryVertices() != 3; }))
+        return false;
+      const auto before = topology.incidentElements(removed);
+      if(before.empty() || before.size() > 128 ||
+         touchesBoundaryLayerElementData(face, before))
+        return reject("unsupported or protected vertex star");
+
+      GFaceMeshDiff diff;
+      diff.gf = diff.before.gf = diff.after.gf = face;
+      diff.before.elements = before;
+      diff.before.intVertices = {removed};
+      std::size_t removedTriangles = 0;
+      CadDistance::Contribution beforeCad, afterCad;
+      std::vector<MVertex *> vertices;
+      std::unordered_map<MVertex *, std::size_t> index;
+      std::vector<UV> uv;
+      std::vector<Point> xyz;
+      std::vector<std::array<std::size_t, 3>> triangles;
+      Pattern quadrangles;
+      auto signedArea = [](const std::vector<UV> &points) {
+        double area = 0.;
+        for(std::size_t i = 1; i + 1 < points.size(); ++i)
+          area += (points[i][0] - points[0][0]) *
+                    (points[i + 1][1] - points[0][1]) -
+                  (points[i][1] - points[0][1]) *
+                    (points[i + 1][0] - points[0][0]);
+        return area;
+      };
+      for(MElement *element : before) {
+        const std::size_t n = element->getNumPrimaryVertices();
+        if(n != 3 && n != 4) return reject("unsupported element type");
+        std::vector<UV> oldUv;
+        if(!CadDistance::elementParameters(face, element, oldUv))
+          return reject("unavailable original parameters");
+        const auto originalCad = cad.sample(element, oldUv);
+        if(!originalCad.complete())
+          return reject("incomplete original CAD coverage");
+        beforeCad += originalCad;
+        std::vector<MVertex *> nodes;
+        for(std::size_t i = 0; i < n; ++i) {
+          MVertex *vertex = element->getVertex(static_cast<int>(i));
+          nodes.push_back(vertex == removed ? retained : vertex);
+        }
+        const std::set<MVertex *> unique(nodes.begin(), nodes.end());
+        if(unique.size() != n) {
+          if(n != 3 || unique.size() != 2 ||
+             std::find(edgeElements.begin(), edgeElements.end(), element) ==
+               edgeElements.end())
+            return reject("contraction would delete a quad or another cell");
+          ++removedTriangles;
+          continue;
+        }
+        std::array<std::size_t, 4> indices = {{0, 0, 0, 0}};
+        std::vector<UV> parameters;
+        for(std::size_t i = 0; i < n; ++i) {
+          const auto added = index.emplace(nodes[i], vertices.size());
+          indices[i] = added.first->second;
+          if(added.second) {
+            UV parameter;
+            if(!vertexParameter(face, nodes[i], parameter))
+              return reject("unavailable surviving parameters");
+            vertices.push_back(nodes[i]);
+            uv.push_back(parameter);
+            xyz.push_back({nodes[i]->x(), nodes[i]->y(), nodes[i]->z()});
+          }
+          parameters.push_back(uv[indices[i]]);
+        }
+        const double oldArea = signedArea(oldUv), area = signedArea(parameters);
+        if(!std::isfinite(oldArea) || !std::isfinite(area) || oldArea == 0. ||
+           area == 0. || std::signbit(oldArea) != std::signbit(area))
+          return reject("reversed or degenerate UV cell");
+        MElement *replacement = n == 3 ?
+          static_cast<MElement *>(new MTriangle(nodes)) :
+          static_cast<MElement *>(new MQuadrangle(nodes));
+        diff.after.elements.push_back(replacement);
+        replacement->setPartition(element->getPartition());
+        replacement->setVisibility(element->getVisibility());
+        if(n == 3) triangles.push_back({indices[0], indices[1], indices[2]});
+        else quadrangles.push_back(indices);
+        if(!evaluateElementQuality(replacement).topologicallyValid)
+          return reject("degenerate physical cell");
+        if(n == 4 && !cad.admissibleQuad(
+             *static_cast<MQuadrangle *>(replacement), parameters))
+          return reject("quad Jacobian or diagonal CAD guard");
+        const auto value = cad.sample(replacement, parameters);
+        if(!value.complete()) return reject("incomplete candidate CAD coverage");
+        afterCad += value;
+      }
+      if(removedTriangles != 2 || diff.after.elements.empty()) return false;
+      if(!quadrangles.empty() &&
+         !candidateQuadranglesAreNonConcave(quadrangles, uv, xyz))
+        return reject("non-convex or folded candidate quad");
+      if(!replacementElementsPreserveSurfaceOrientation(
+           face, before, diff.after.elements, vertices, uv, xyz) ||
+         !holeRingPatchFollowsNormals(cad, uv, xyz, triangles, quadrangles,
+                                      vertices))
+        return reject("incomplete or opposed physical-normal samples");
+      if(!cad.admissible(beforeCad, afterCad))
+        return reject("local or cumulative CAD-distance limit");
+      FaceRewriteTransaction transaction(topology, diff);
+      if(!transaction) return reject("cell-complex or ownership guard");
+      const std::size_t removedTag = removed->getNum();
+      const std::size_t retainedTag = retained->getNum();
+      if(!transaction.execute()) return false;
+      cad.current = cad.replaced(beforeCad, afterCad);
+      // The parameter cache is keyed by MVertex pointers; do not keep a
+      // retired pointer available for reuse by a later mesh operation.
+      clearFaceGeometryCaches();
+      ++result.acceptedCollapses;
+      result.trianglesRemoved += removedTriangles;
+      if(options.verbose)
+        Msg::Info("OptimizeQuadHoleRings face=%d accepted collapse %zu->%zu: "
+                  "%zu triangles removed, quad count and ring cells preserved",
+                  face->tag(), removedTag, retainedTag, removedTriangles);
+      return true;
+    }
+
+    void collapseTrianglesOutsideHoleRings(
+      GFace *face, FaceHalfEdgeTopology &topology, HoleRingCadGuard &cad,
+      QuadHoleRingResult &result)
+    {
+      std::vector<BoundaryLoop> loops;
+      if(!collectBoundaryLoops(face, topology, loops)) return;
+      std::map<Edge, std::vector<MElement *>> edgeElements;
+      for(const auto &entry : topology.edges()) edgeElements[entry.first] = entry.second;
+      std::set<MElement *> ringElements;
+      std::set<MVertex *> protectedVertices = topology.protectedVertices(face);
+      for(const BoundaryLoop &boundary : loops) {
+        protectedVertices.insert(boundary.vertices.begin(), boundary.vertices.end());
+        auto loop = boundary.vertices;
+        std::unordered_map<MVertex *, UV> parameters;
+        if(!orientLoopWithDomainOnLeft(face, loop, edgeElements, parameters)) continue;
+        double area = 0.;
+        for(std::size_t i = 0; i < loop.size(); ++i) {
+          const auto &a = parameters.at(loop[i]);
+          const auto &b = parameters.at(loop[(i + 1) % loop.size()]);
+          area += a[0] * b[1] - a[1] * b[0];
+        }
+        if(!std::isfinite(area) || area >= -1.e-14 ||
+           !hasCompletePillowLayer(loop, topology, edgeElements)) continue;
+        for(std::size_t i = 0; i < loop.size(); ++i)
+          ringElements.insert(edgeElements.at(
+            canonicalEdge(loop[i], loop[(i + 1) % loop.size()])).front());
+      }
+      if(ringElements.empty()) return;
+      for(MElement *element : ringElements)
+        for(int i = 0; i < 4; ++i) protectedVertices.insert(element->getVertex(i));
+      auto protectCurves = [&](const std::vector<GEdge *> &curves) {
+        for(GEdge *curve : curves) if(curve)
+          for(MLine *line : curve->lines) if(line)
+            for(int i = 0; i < 2; ++i) protectedVertices.insert(line->getVertex(i));
+      };
+      protectCurves(face->edges());
+      protectCurves(face->getEmbeddedEdges());
+      for(GVertex *vertex : face->getEmbeddedVertices()) if(vertex)
+        protectedVertices.insert(vertex->mesh_vertices.begin(), vertex->mesh_vertices.end());
+
+      // Every accepted TT contraction removes exactly two triangles. Rebuild
+      // the small search neighborhood after each commit; there is no pass cap
+      // that could leave an admissible move for the next identical invocation.
+      while(topology.manifold() && topology.elementCount(3) >= 2) {
+        std::set<MElement *> selected = ringElements, frontier = ringElements;
+        for(int layer = 0; layer < cad.options.pillowNeighborLayers; ++layer) {
+          std::set<MElement *> next;
+          for(MElement *element : frontier)
+            for(MElement *neighbor : topology.neighbors(element))
+              if(!selected.count(neighbor)) next.insert(neighbor);
+          selected.insert(next.begin(), next.end());
+          frontier = std::move(next);
+          if(frontier.empty()) break;
+        }
+        std::set<Edge> candidateSet;
+        for(MElement *element : selected) {
+          if(element->getNumPrimaryVertices() != 3) continue;
+          for(int i = 0; i < 3; ++i) {
+            const Edge edge = canonicalEdge(element->getVertex(i),
+                                            element->getVertex((i + 1) % 3));
+            const auto adjacent = topology.incidentElements(edge);
+            if(adjacent.size() == 2 &&
+               adjacent[0]->getNumPrimaryVertices() == 3 &&
+               adjacent[1]->getNumPrimaryVertices() == 3)
+              candidateSet.insert(edge);
+          }
+        }
+        std::vector<Edge> candidates(candidateSet.begin(), candidateSet.end());
+        for(Edge &edge : candidates)
+          if(canonicalVertexGeometryKey(edge.second) < canonicalVertexGeometryKey(edge.first))
+            std::swap(edge.first, edge.second);
+        std::sort(candidates.begin(), candidates.end(), [](const Edge &a, const Edge &b) {
+          const auto a0 = canonicalVertexGeometryKey(a.first), b0 = canonicalVertexGeometryKey(b.first);
+          if(a0 != b0) return a0 < b0;
+          return canonicalVertexGeometryKey(a.second) < canonicalVertexGeometryKey(b.second);
+        });
+        bool accepted = false;
+        for(const Edge &edge : candidates) {
+          for(int direction = 0; direction < 2; ++direction) {
+            ++result.collapseCandidates;
+            if(tryHoleRingTriangleCollapse(face,
+                 direction ? edge.second : edge.first,
+                 direction ? edge.first : edge.second,
+                 protectedVertices, topology, cad, result)) {
+              accepted = true;
+              break;
+            }
+          }
+          if(accepted) break;
+        }
+        if(!accepted) break;
+      }
+    }
+
   } // namespace
+
+  QuadHoleRingResult insertQuadHoleRings(
+    GFace *face, const SmallCavityOptimizerOptions &options)
+  {
+    QuadHoleRingResult result;
+    if(!face || options.pillowNeighborLayers < 0 || !validSizeOptions(options) ||
+       !std::isfinite(options.maximumNormalizedCadRegression) ||
+       options.maximumNormalizedCadRegression < 0. ||
+       !std::isfinite(options.maximumCadDistanceIncreaseRatio) ||
+       options.maximumCadDistanceIncreaseRatio < 0.) {
+      result.success = false;
+      return result;
+    }
+    if(options.pillowNeighborLayers == 0) return result;
+    clearFaceGeometryCaches();
+    const auto elements = surfaceElements(face);
+    if(elements.empty()) return result;
+    if(std::any_of(elements.begin(), elements.end(), [](MElement *element) {
+         return !element || element->getNumVertices() !=
+                              element->getNumPrimaryVertices();
+       })) {
+      result.skippedInvalidInputCellComplex = true;
+      Msg::Warning("OptimizeQuadHoleRings: skipping face %d with non-linear "
+                   "mesh elements", face->tag());
+      return result;
+    }
+    if(!face->haveParametrization() ||
+       !isRegularOrientedSurfaceCellComplex(face)) {
+      result.skippedInvalidInputCellComplex = true;
+      Msg::Warning("OptimizeQuadHoleRings: skipping face %d without a "
+                   "regular parameterized surface cell complex", face->tag());
+      return result;
+    }
+    FaceHalfEdgeTopology topology(elements);
+    std::vector<BoundaryLoop> loops;
+    if(!collectBoundaryLoops(face, topology, loops) || loops.size() < 2)
+      return result;
+    HoleRingCadGuard cad(face, options, elements);
+    SmallCavityOptimizerResult local;
+    pillowFaceHoles(face, options, local, topology, &cad);
+    result.visited = local.pillowHolesVisited;
+    result.alreadyPresent = local.pillowHolesAlreadyPresent;
+    result.accepted = local.pillowHolesAccepted;
+    result.insertedQuadrangles = local.pillowQuadranglesInserted;
+    collapseTrianglesOutsideHoleRings(face, topology, cad, result);
+    result.physicalNormalQueries = cad.physicalNormalQueries;
+    result.physicalNormalCovered = cad.physicalNormalCovered;
+    result.rejected = result.visited - result.alreadyPresent - result.accepted;
+    if((result.accepted || result.acceptedCollapses) &&
+       options.invalidateVertexArrays)
+      face->model()->deleteVertexArrays();
+    return result;
+  }
 
   static TerminalTriangleRecombinationResult
   recombineRemainingTrianglePairsWithTopology(

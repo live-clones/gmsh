@@ -43,6 +43,29 @@ optimizer; zero inherits `Mesh.PackTargetSize`, then the active size field.
 `Mesh.PackSizemapMethod = 3` and `Mesh.PackScalingOnTriangulation = 0.75`
 configure the shared guiding-field implementation independently of Quadqs.
 The default intrinsic split factor remains zero: no extra midpoint insertion.
+`Mesh.OptimizeQuadsPillowLayers` enables the separate
+`gmsh::model::mesh::optimize("OptimizeQuadHoleRings")` pass after Fast cleanup.
+Zero disables it; one includes each affected vertex star in the local Winslow
+solve, and larger values add neighboring element layers. This number controls
+the smoothing support, not the number of rings. Each hole receives at most one
+complete quadrilateral ring. Existing complete rings are recognized, including
+after MSH reload. The pass then attempts local contractions of edges shared by
+two triangles near the rings. Each accepted contraction reduces the triangle
+count without losing quadrangles and preserves ring vertices and all
+boundary/embedded constraints.
+Fast itself continues to bypass this operator.
+
+The dedicated ring pass keeps boundary and embedded vertices fixed, proves the
+replacement topology before committing, and requires complete physical-normal
+sampling, non-folding, convexity and bounded local/cumulative CAD distance.
+For discrete faces, an unavailable UV normal can be resolved at the same
+physical sample using the exact nearest support triangle, within 0.1 times
+the local target size. A reliable opposed UV normal is never replaced by this
+fallback. Its attempted/covered query counts are reported for candidate trials.
+It deliberately permits shape and edge-size specification failures, including
+large aspect ratios in thin rings. These failures remain visible in its final
+quality report. It runs no legacy rewrites, global smoothing or final splitting
+that could immediately remove the requested ring.
 For example, surface quads with target size 4:
 
 ```sh

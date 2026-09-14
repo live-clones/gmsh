@@ -180,6 +180,43 @@ namespace QuadOptimizer {
     // per-pattern diagnostics inside the half-edge optimizer.
     options.verbose = std::max(0, Msg::GetVerbosity() -
                                     (options.fastInteractiveCleanUp ? 5 : 4));
+    if(how == "OptimizeQuadHoleRings") {
+      QuadHoleRingResult total;
+      std::size_t faces = 0, skipped = 0;
+      options.invalidateVertexArrays = false;
+      for(GFace *face : m->getFaces()) {
+        if(face->triangles.empty() && face->quadrangles.empty()) continue;
+        ++faces;
+        const QuadHoleRingResult result = insertQuadHoleRings(face, options);
+        total.success = total.success && result.success;
+        total.visited += result.visited;
+        total.alreadyPresent += result.alreadyPresent;
+        total.accepted += result.accepted;
+        total.rejected += result.rejected;
+        total.insertedQuadrangles += result.insertedQuadrangles;
+        total.collapseCandidates += result.collapseCandidates;
+        total.acceptedCollapses += result.acceptedCollapses;
+        total.trianglesRemoved += result.trianglesRemoved;
+        total.physicalNormalQueries += result.physicalNormalQueries;
+        total.physicalNormalCovered += result.physicalNormalCovered;
+        skipped += result.skippedInvalidInputCellComplex;
+      }
+      if(total.accepted || total.acceptedCollapses) m->deleteVertexArrays();
+      Msg::Info("OptimizeQuadHoleRings: faces=%zu visited=%zu already=%zu "
+                "accepted=%zu rejected=%zu insertedQuads=%zu skippedFaces=%zu "
+                "physicalNormalCoverage=%zu/%zu "
+                "collapses=%zu/%zu trianglesRemoved=%zu",
+                faces, total.visited, total.alreadyPresent, total.accepted,
+                total.rejected, total.insertedQuadrangles, skipped,
+                total.physicalNormalCovered, total.physicalNormalQueries,
+                total.acceptedCollapses, total.collapseCandidates,
+                total.trianglesRemoved);
+      if(!total.success) Msg::Error("OptimizeQuadHoleRings failed");
+      if(reportQuadQuality && Msg::GetVerbosity() >= 4)
+        PrintQuadMeshQualitySummary(how.c_str(),
+          summarizeQuadMeshQuality(m, options));
+      return;
+    }
     const QuadOptimizer::AllFacesOptimizerResult result =
       options.fastInteractiveCleanUp ?
         QuadOptimizer::optimizeSmallQuadCavitiesAllFacesV2(options) :
