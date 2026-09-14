@@ -8,6 +8,13 @@
 #include "Context.h"
 #include "OS.h"
 #include "GModel.h"
+#include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <fstream>
+#include <map>
+#include <set>
+#include <utility>
 #include "MQuadrangle.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
@@ -109,6 +116,91 @@ int meshCombine3D(GRegion *gr)
   ccs.selectCellsGreedy(cellTypes);
   Msg::Info("%d Hexes selected", ccs.nbSelectedHexes());
   //	ccs.saveMSH("hexdom.msh",cellTypes);
+
+  // Cavity database export, opt-in via GMSH_CAVITY_DB=<path to append to>:
+  // extract the leftover-tet cavities (regions selectCellsGreedy could
+  // not combine), classify which are topological balls (closed, single-
+  // component, genus-0 boundary), and append their combinatorial
+  // signature (boundary vertex valences + boundary edge graph) to a
+  // shared text database, for cross-geometry shape matching later.
+  if(const char *dbPath = getenv("GMSH_CAVITY_DB")) {
+    using namespace HXTCombine;
+    const std::vector<bool> &leftover = ccs.selectedTets();
+    unsigned int nbTets = tm4c.nbTets();
+    std::vector<int> comp(nbTets, -1);
+    std::ofstream db(dbPath, std::ios::app);
+
+    for(unsigned int seed = 0; seed < nbTets; seed++) {
+      if(!leftover[seed] || comp[seed] != -1) continue;
+      std::vector<unsigned int> tets;
+      std::vector<unsigned int> stack(1, seed);
+      comp[seed] = (int)seed + 1; // any non -1 marker unique enough here
+      while(!stack.empty()) {
+        unsigned int t = stack.back();
+        stack.pop_back();
+        tets.push_back(t);
+        for(unsigned int lf = 0; lf < 4; lf++) {
+          if(tm4c.isOnBoundary(t, lf)) continue;
+          unsigned int nb = tm4c.adjacentTet(t, lf);
+          if(leftover[nb] && comp[nb] == -1) {
+            comp[nb] = (int)seed + 1;
+            stack.push_back(nb);
+          }
+        }
+      }
+      if(tets.size() <= 1) continue; // a lone tet is never combinable
+
+      std::set<std::array<VertexIndex, 3> > bndFaces;
+      std::set<VertexIndex> bndVerts;
+      std::map<std::pair<VertexIndex, VertexIndex>, int> edgeCount;
+      for(unsigned int t : tets) {
+        for(unsigned int lf = 0; lf < 4; lf++) {
+          bool isCavityBoundary =
+            tm4c.isOnBoundary(t, lf) || !leftover[tm4c.adjacentTet(t, lf)];
+          if(!isCavityBoundary) continue;
+          VertexIndex v0 = tm4c.vertex(t, Tet::facetVertex[lf][0]);
+          VertexIndex v1 = tm4c.vertex(t, Tet::facetVertex[lf][1]);
+          VertexIndex v2 = tm4c.vertex(t, Tet::facetVertex[lf][2]);
+          std::array<VertexIndex, 3> face = {v0, v1, v2};
+          std::sort(face.begin(), face.end());
+          bndFaces.insert(face);
+          bndVerts.insert(v0); bndVerts.insert(v1); bndVerts.insert(v2);
+          VertexIndex e[3][2] = {{v0, v1}, {v1, v2}, {v0, v2}};
+          for(auto &ed : e) {
+            VertexIndex a = ed[0], b = ed[1];
+            if(a > b) std::swap(a, b);
+            edgeCount[{a, b}]++;
+          }
+        }
+      }
+      int V = (int)bndVerts.size();
+      int F = (int)bndFaces.size();
+      int E = (int)edgeCount.size();
+      bool manifold = true;
+      for(auto &kv : edgeCount)
+        if(kv.second != 2) manifold = false;
+      bool isBall = manifold && (V - E + F == 2);
+      if(!isBall) continue;
+
+      std::map<VertexIndex, int> localId;
+      int nextId = 0;
+      for(VertexIndex v : bndVerts) localId[v] = nextId++;
+
+      db << "CAVITY V=" << V << " T=" << tets.size() << "\n";
+      db << "VALENCE";
+      std::map<VertexIndex, int> valence;
+      for(auto &kv : edgeCount) {
+        valence[kv.first.first]++;
+        valence[kv.first.second]++;
+      }
+      for(VertexIndex v : bndVerts) db << " " << valence[v];
+      db << "\n";
+      for(auto &kv : edgeCount)
+        db << "EDGE " << localId[kv.first.first] << " "
+           << localId[kv.first.second] << "\n";
+    }
+    db.close();
+  }
   // ----------------- C R E A T I N G  V O L U M E    E L E M E N T S
   // --------------------
   for(auto t : gr->tetrahedra) delete t;
