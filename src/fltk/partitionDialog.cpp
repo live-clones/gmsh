@@ -125,7 +125,7 @@ void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
     val = static_cast<unsigned>(dlg->inputNumPartition->value());
   }
 
-  dlg->choiceMetisAlg->value((val <= 8) ? 0 : 1);
+  //dlg->choiceMetisAlg->value((val <= 8) ? 0 : 1);
 }
 
 void partition_defaults_cb(Fl_Widget *widget, void *data)

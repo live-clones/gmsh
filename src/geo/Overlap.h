@@ -11,6 +11,8 @@
 
 #include "OverlapEntities.h"
 
+class OverlapManager;
+
 // Overlap collection: for each partition,
 // we store all covered entities (of other partitions) with the subset of
 // elements to use. Can be multiple layers if built accordingly
@@ -29,27 +31,39 @@ void extendOverlapCollection(GModel *const model,
 // Read an overlap collection and modify the GModel to add overlap entities.
 // No new elements are created but these entities will point to underlying
 // elements of their covered partitionEntity. Does not handle any boundary.
+// Overlap data is stored in the provided OverlapManager.
 template <int dim>
-void buildOverlapEntities(GModel *const model,
+void buildOverlapEntities(GModel *const model, OverlapManager &mgr,
                           const OverlapCollection<dim> &overlaps);
 
-// For each entity, identify the boundary (set of MEdge/MFace) of the overlap
-// patch. This includes all parts of the patch, including the interface between
-// the inner and overlap. These boundaries are computed per parent entity, so a
-// physical interface will be a boundary.
+// For each partition, identify the boundary (set of MEdge/MFace) of the
+// overlap patch. This includes all parts of the patch, including the interface
+// between the inner and overlap. Facets are counted partition-wise (across
+// parent entities), so a physical interface strictly inside the patch is NOT
+// part of the boundary; results are still grouped by the parent entity of the
+// adjacent element.
 template <int dim>
-OveralBoundariesMesh<dim>
+OverlapBoundariesMesh<dim>
 findBoundaryOfOverlapEntities(const OverlapCollection<dim> &overlaps);
 
 /**
- * Robustness wrt to deep overlaps:
- * for inner partitions, if it's an interface, we look af whether it is an
- * internal interface or not
- * TODO: create entities, add correct elem type. Orientation of the elements ?
+ * Create the boundary entities of the overlap patches and register them in
+ * the manager, in three classes:
+ * - "overlap of boundary": facets on a one-sided dim-1 entity (outer physical
+ *   boundary), grouped by that entity — the physical BC extends there;
+ * - "inner boundary on interface": facets on a two-sided dim-1 entity (an
+ *   internal material interface), grouped by that entity — artificial, the
+ *   domain continues on the other side, but the interface identity is kept so
+ *   the solver can impose an interface-aware transmission condition;
+ * - "inner boundary": facets on a partition interface not involving the
+ *   overlap's partition (robustness for deep overlaps on thin partitions), or
+ *   on no existing entity at all — artificial transmission boundary.
+ * Facets on an interface involving the partition itself are not duplicated:
+ * the existing interface entity already represents them.
+ * TODO: check the orientation of the created boundary elements.
  */
-
 template <int dim>
-void overlapBuildBoundaries(GModel *const model,
+void overlapBuildBoundaries(GModel *const model, OverlapManager &mgr,
                             const OverlapCollection<dim> &overlaps);
 
 /**
@@ -57,23 +71,14 @@ void overlapBuildBoundaries(GModel *const model,
  */
 
 template <int dim>
-std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                   std::unordered_set<MElement *, MElementPtrHash,
-                                      MElementPtrEqual>,
-                   GEntityPtrFullHash, GEntityPtrFullEqual>
-findCoveredEntitiesAndElementsToSave(GModel *const model, int partition);
+CoveredElementsMap<dim>
+findCoveredEntitiesAndElementsToSave(GModel *const model,
+                                     const std::vector<int> &partitions);
 
 template <int dim>
-std::unordered_map<GEntity *,
-                   std::unordered_set<MVertex *, MVertexPtrHash,
-                                      MVertexPtrEqual>,
-                   GEntityPtrFullHash, GEntityPtrFullEqual>
-findNonOwnedVerticesToSave(
-  GModel *const model, int partition,
-  const std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
-                           std::unordered_set<MElement *, MElementPtrHash,
-                                              MElementPtrEqual>,
-                           GEntityPtrFullHash, GEntityPtrFullEqual>
-    &coveredEntities);
+EntityToVerticesMap
+findNonOwnedVerticesToSave(GModel *const model,
+                           const std::vector<int> &partitions,
+                           const CoveredElementsMap<dim> &coveredEntities);
 
 #endif

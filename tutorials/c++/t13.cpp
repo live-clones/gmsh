@@ -41,6 +41,12 @@ int main(int argc, char **argv)
     gmsh::onelab::getNumber("Parameters/Angle for surface detection", n);
     double angle = n[0];
 
+    // The `oldSurfaceTags` and `newSurfaceTags` vectors map the old surface
+    // tags to the new surface tags, ie. `oldSurfaceTags[i]` corresponds to
+    // `newSurfaceTags[i]`. Removed surface tags are not returned, only old
+    // surfaces that map to one or more new surfaces are returned.
+    std::vector<int> oldSurfaceTags, newSurfaceTags;
+
     // For complex geometries, patches can be too complex, too elongated or too
     // large to be parametrized; setting the following option will force the
     // creation of patches that are amenable to reparametrization:
@@ -54,7 +60,9 @@ int main(int argc, char **argv)
     // Force curves to be split on given angle:
     double curveAngle = 180;
 
-    gmsh::model::mesh::classifySurfaces(angle * M_PI / 180., includeBoundary,
+    gmsh::model::mesh::classifySurfaces(angle * M_PI / 180.,
+                                        oldSurfaceTags, newSurfaceTags,
+                                        includeBoundary,
                                         forceParametrizablePatches,
                                         curveAngle * M_PI / 180.);
 

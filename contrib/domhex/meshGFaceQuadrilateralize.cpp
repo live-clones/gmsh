@@ -7,7 +7,7 @@
 #include "GmshMessage.h"
 #include "Numeric.h"
 #include "GFace.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFaceBDS.h"
 #include "BDS.h"

@@ -125,7 +125,10 @@ div.example { margin-left: 0em; }
 div.smallexample { margin-left: 0em; }
 
 @media screen and (max-width: 500px) {
-  body { padding: 10px; }
+  body {
+  /* padding: 10px; */ /* use this when there is no news */
+    padding: 50px 10px; /* NEWS use this when the news banner is present */
+  }
   h1 { font-size: 145%; }
   h2 { font-size: 140%; }
   ul { padding-left: 1.5em; }

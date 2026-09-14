@@ -37,8 +37,10 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_NurbsConvert.hxx>
+#include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepFill_CurveConstraint.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
@@ -49,7 +51,6 @@
 #include <BRepOffsetAPI_MakeOffset.hxx>
 #include <BRepOffsetAPI_MakePipe.hxx>
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
-#include <BRepOffsetAPI_Sewing.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCone.hxx>
@@ -4099,28 +4100,25 @@ bool OCC_Internals::booleanOperator(
   }
   else {
     // otherwise, try to preserve the numbering of the input shapes that did not
-    // change, or that were replaced by a single shape. Entities must be
-    // processed in ascending dimension order so that lower-dimensional boundary
-    // entities get their tags preserved before higher-dimensional entities can
-    // claim them via recursive _unbind.
-    bool sorted = std::is_sorted(
-      inDimTags.begin(), inDimTags.end(),
-      [](const auto &a, const auto &b) { return a.first < b.first; });
-    std::vector<std::size_t> dimOrder;
-    if(!sorted) {
-      Msg::Warning("Reordering %d entities by ascending dimension for boolean "
-                   "tag preservation; provide entities in ascending dimension "
-                   "order to avoid this overhead", (int)inDimTags.size());
-      dimOrder.resize(inDimTags.size());
-      std::iota(dimOrder.begin(), dimOrder.end(), 0);
-      std::stable_sort(dimOrder.begin(), dimOrder.end(),
-                       [&inDimTags](auto a, auto b) {
-                         return inDimTags[a].first < inDimTags[b].first;
-                       });
-    }
+    // change, or that were replaced by a single shape.
+    // Two-pass: first mark unmodified entities for preservation, then
+    // unbind/rebind in descending dimension order so that _unbind safety
+    // checks don't block on still-bound parent entities.
     _toPreserve.clear();
-    for(std::size_t ii = 0; ii < inDimTags.size(); ii++) {
-      std::size_t i = sorted ? ii : dimOrder[ii];
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
+      if(!mapDeleted[i] && mapModified[i].Extent() == 0) {
+        _toPreserve.insert(
+          std::make_pair(inDimTags[i].first, inDimTags[i].second));
+      }
+    }
+    std::vector<std::size_t> order(inDimTags.size());
+    std::iota(order.begin(), order.end(), 0);
+    std::stable_sort(order.begin(), order.end(),
+      [&](std::size_t a, std::size_t b) {
+        return inDimTags[a].first > inDimTags[b].first;
+      });
+    for(std::size_t idx = 0; idx < order.size(); idx++) {
+      std::size_t i = order[idx];
       int dim = inDimTags[i].first;
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
@@ -4133,8 +4131,7 @@ bool OCC_Internals::booleanOperator(
         }
         Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
-      else if(mapModified[i].Extent() == 0) { // not modified
-        _toPreserve.insert(std::make_pair(dim, tag));
+      else if(mapModified[i].Extent() == 0) { // not modified (handled in pass 1)
         Msg::Debug("BOOL (%d,%d) not modified", dim, tag);
       }
       else if(mapModified[i].Extent() == 1) { // replaced by single one
@@ -4176,7 +4173,10 @@ bool OCC_Internals::booleanOperator(
     std::pair<int, int> dimTag(dim, tag);
     std::vector<std::pair<int, int>> dimTags;
     if(mapModified[i].Extent() == 0) { // not modified
-      if(_isBound(dim, tag)) dimTags.push_back(dimTag);
+      if(_isBound(dim, mapOriginal[i])) {
+        int t = _find(dim, mapOriginal[i]);
+        dimTags.push_back(std::make_pair(dim, t));
+      }
     }
     else {
       NCollection_List<TopoDS_Shape>::Iterator it(mapModified[i]);
@@ -4949,6 +4949,48 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
   return true;
 }
 
+bool OCC_Internals::bindShapes(
+  const std::map<std::pair<int, int>, TopoDS_Shape> &dimTagShape)
+{
+  // check first that all the requested tags are available: binding only part of
+  // the shapes would lead to an inconsistent numbering
+  for(auto &s : dimTagShape) {
+    int dim = s.first.first, tag = s.first.second;
+    TopAbs_ShapeEnum type = (dim == 3) ? TopAbs_SOLID :
+                            (dim == 2) ? TopAbs_FACE :
+                            (dim == 1) ? TopAbs_EDGE :
+                                         TopAbs_VERTEX;
+    if(dim < 0 || dim > 3 || s.second.IsNull() ||
+       s.second.ShapeType() != type) {
+      Msg::Info("Cannot bind shape to OpenCASCADE entity of dimension %d and "
+                "tag %d",
+                dim, tag);
+      return false;
+    }
+    if(_isBound(dim, tag) && !_find(dim, tag).IsSame(s.second)) {
+      Msg::Info("OpenCASCADE entity of dimension %d and tag %d already exists",
+                dim, tag);
+      return false;
+    }
+    if(_isBound(dim, s.second) && _find(dim, s.second) != tag) {
+      Msg::Info("OpenCASCADE shape is already bound to entity of dimension %d "
+                "and tag %d",
+                dim, _find(dim, s.second));
+      return false;
+    }
+  }
+
+  // bind by increasing dimension, so that the sub-shapes that are explicitly
+  // listed are already bound (with their own tag) when the shapes of higher
+  // dimension are bound recursively; this leaves the recursive binding of the
+  // wires and the shells (which have no explicit tag) exactly as in a regular
+  // import
+  for(auto &s : dimTagShape)
+    _bind(s.second, s.first.first, s.first.second, true);
+
+  return true;
+}
+
 void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
 {
   std::ofstream file(fileName);
@@ -4957,15 +4999,9 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
     return;
   }
 
-  // TODO: In addition to saving physical group tags and mesh sizes at points
-  // (see below), we could further extend the XAO output by dumping
-  // OCCAttributes (extrusion constraints, ...).
-
-  // We could also save the entity tag; for reading back this info we would then
-  // either need to change/write a custom importShapes/synchronize() where tags
-  // are explicitly given; or modify the bound tags in OCC_Internals so that
-  // synchronize() can be used as-is; or add a "renumberEntities" function in
-  // GModel.
+  // TODO: In addition to saving entity tags, physical group tags and mesh sizes
+  // at points (see below), we could further extend the XAO output by dumping
+  // the remaining OCCAttributes (extrusion constraints, ...).
 
   file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
   file << "<XAO version=\"1.0\" author=\"Gmsh\">" << std::endl;
@@ -5031,6 +5067,10 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
       file << "        <" << label << " index=\"" << index << "\" name=\""
            << name << "\" reference=\"" << p.first << "\"";
 #if 1
+      // Gmsh XAO extension: also save the entity tag, so that XAO can be used
+      // to serialize OCC models without losing the entity numbering
+      file << " tag=\"" << p.second->tag() << "\"";
+
       // Gmsh XAO extension: also save the prescribed mesh size at the vertex
       if(dim == 0) {
         double lc =
@@ -5545,12 +5585,28 @@ bool OCC_Internals::getClosestEntities(
       return false;
     }
     TopoDS_Shape shape = _find(e.first, e.second);
-    BRepExtrema_DistShapeShape dist(vertex, shape);
-    if(dist.IsDone() && dist.NbSolution() > 0) {
-      gp_Pnt p2 = dist.PointOnShape2(1);
-      std::tuple<int, int, double, double, double> t{e.first, e.second, p2.X(),
-                                                     p2.Y(), p2.Z()};
-      d.insert(std::make_pair(dist.Value(), t));
+    // BRepExtrema_DistShapeShape.InnerSolution() does not seem to work
+    // reliably: manually check if point is inside first, in which case we
+    // return a zero distance
+    bool inside = false;
+    if(e.first == 3) {
+      BRepClass3d_SolidClassifier solidClassifier(shape);
+      solidClassifier.Perform(aPnt, CTX::instance()->geom.tolerance);
+      const TopAbs_State state = solidClassifier.State();
+      inside = (state == TopAbs_IN || state == TopAbs_ON);
+    }
+    if(inside) {
+      std::tuple<int, int, double, double, double> t{e.first, e.second, x, y, z};
+      d.insert(std::make_pair(0., t));
+    }
+    else {
+      BRepExtrema_DistShapeShape dist(vertex, shape);
+      if(dist.IsDone() && dist.NbSolution() > 0) {
+        gp_Pnt p2 = dist.PointOnShape2(1);
+        std::tuple<int, int, double, double, double> t{e.first, e.second, p2.X(),
+                                                       p2.Y(), p2.Z()};
+        d.insert(std::make_pair(dist.Value(), t));
+      }
     }
   }
 
@@ -6143,7 +6199,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   if(sewFaces) {
     Msg::Info(" - Sewing faces");
 
-    BRepOffsetAPI_Sewing sewedObj(tolerance);
+    BRepBuilderAPI_Sewing sewedObj(tolerance);
 
     for(exp0.Init(myshape, TopAbs_FACE); exp0.More(); exp0.Next()) {
       TopoDS_Face face = TopoDS::Face(exp0.Current());
@@ -6688,121 +6744,107 @@ int GModel::readOCCXAO(const std::string &fn)
   else {
     BRepTools::Read(mainShape, fn.c_str(), aBuilder);
   }
+  NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> mainMap;
+  TopExp::MapShapes(mainShape, mainMap);
+
+  // parse the topology before importing the shape: this allows to bind the
+  // subshapes to the entity tags stored in the file (a Gmsh XAO extension)
+  // before the import, so that importShapes() and synchronize() can be used
+  // as-is
+  struct xaoEntity {
+    int index, reference, tag;
+    double meshSize;
+    std::string name;
+  };
+  std::vector<xaoEntity> topo[4];
+  bool haveTags = true;
+  for(int dim = 0; dim <= 3; dim++) {
+    std::string labels = (dim == 3) ? "solids" :
+                         (dim == 2) ? "faces" :
+                         (dim == 1) ? "edges" :
+                                      "vertices";
+    std::string label = (dim == 3) ? "solid" :
+                        (dim == 2) ? "face" :
+                        (dim == 1) ? "edge" :
+                                     "vertex";
+    XMLElement *entityList = topology->FirstChildElement(labels.c_str());
+    if(!entityList) continue;
+    XMLElement *entity = entityList->FirstChildElement(label.c_str());
+    while(entity) {
+      xaoEntity e = {0, 0, 0, MAX_LC, ""};
+      if(entity->QueryIntAttribute("index", &e.index) != XML_SUCCESS ||
+         entity->QueryIntAttribute("reference", &e.reference) != XML_SUCCESS) {
+        Msg::Error("Missing index or reference for %s", label.c_str());
+      }
+      else if(e.reference < 1 || e.reference > mainMap.Extent()) {
+        Msg::Error("Invalid XAO reference %d for %s", e.reference,
+                   label.c_str());
+      }
+      else {
+        const char *name = nullptr;
+        if(entity->QueryAttribute("name", &name) == XML_SUCCESS && strlen(name))
+          e.name = name;
+        // Gmsh XAO extension: Gmsh saves the mesh size at vertices when
+        // creating XAO files
+        if(dim == 0) entity->QueryDoubleAttribute("meshsize", &e.meshSize);
+        // Gmsh XAO extension: Gmsh saves the entity tag when creating XAO files
+        if(entity->QueryIntAttribute("tag", &e.tag) != XML_SUCCESS ||
+           e.tag <= 0)
+          haveTags = false;
+        topo[dim].push_back(e);
+      }
+      entity = entity->NextSiblingElement(label.c_str());
+    }
+  }
+
+  // Gmsh XAO extension: restore the entity tags stored in the file, by binding
+  // the subshapes to their tags before the import; this is done all-or-nothing,
+  // as a partial renumbering would be worse than the default one
+  if(haveTags) {
+    std::map<std::pair<int, int>, TopoDS_Shape> dimTagShape;
+    for(int dim = 0; dim <= 3 && haveTags; dim++) {
+      for(auto &e : topo[dim]) {
+        if(getEntityByTag(dim, e.tag)) {
+          Msg::Warning("Model entity of dimension %d and tag %d already exists",
+                       dim, e.tag);
+          haveTags = false;
+          break;
+        }
+        dimTagShape[std::make_pair(dim, e.tag)] = mainMap.FindKey(e.reference);
+      }
+    }
+    if(haveTags) haveTags = _occ_internals->bindShapes(dimTagShape);
+    if(!haveTags)
+      Msg::Warning("Entity tags stored in '%s' will not be preserved",
+                   fn.c_str());
+  }
+
   std::vector<std::pair<int, int>> outDimTags;
   _occ_internals->importShapes(&mainShape, false, outDimTags);
   _occ_internals->synchronize(this);
   snapVertices();
-  NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> mainMap;
-  TopExp::MapShapes(mainShape, mainMap);
+
   std::map<int, GEntity *> entities[4];
-
-  XMLElement *vertices = topology->FirstChildElement("vertices");
-  if(vertices) {
-    XMLElement *vertex = vertices->FirstChildElement("vertex");
-    while(vertex) {
-      int index = 0, ref = 0;
-      if(vertex->QueryIntAttribute("index", &index) != XML_SUCCESS ||
-         vertex->QueryIntAttribute("reference", &ref) != XML_SUCCESS) {
-        Msg::Error("Missing index or reference for vertex");
+  for(int dim = 0; dim <= 3; dim++) {
+    for(auto &e : topo[dim]) {
+      TopoDS_Shape subShape = mainMap.FindKey(e.reference);
+      GEntity *ge = nullptr;
+      switch(dim) {
+      case 0: ge = getVertexForOCCShape(&subShape); break;
+      case 1: ge = getEdgeForOCCShape(&subShape); break;
+      case 2: ge = getFaceForOCCShape(&subShape); break;
+      case 3: ge = getRegionForOCCShape(&subShape); break;
       }
-      else {
-        TopoDS_Shape subShape = mainMap.FindKey(ref);
-        GVertex *gv = getVertexForOCCShape(&subShape);
-        if(gv) {
-          entities[0][index] = gv;
-          const char *name = nullptr;
-          if(vertex->QueryAttribute("name", &name) == XML_SUCCESS)
-            if(strlen(name)) setElementaryName(0, gv->tag(), name);
-          // Gmsh XAO extension: Gmsh saves the mesh size at vertices when
-          // creating XAO files
-          double lc;
-          if(vertex->QueryDoubleAttribute("meshsize", &lc) == XML_SUCCESS) {
-            gv->setPrescribedMeshSizeAtVertex(lc);
-          }
-        }
-        else {
-          Msg::Error("Could not find model point for XAO reference %d", ref);
-        }
+      if(!ge) {
+        Msg::Error("Could not find model entity of dimension %d for XAO "
+                   "reference %d",
+                   dim, e.reference);
+        continue;
       }
-      vertex = vertex->NextSiblingElement("vertex");
-    }
-  }
-
-  XMLElement *edges = topology->FirstChildElement("edges");
-  if(edges) {
-    XMLElement *edge = edges->FirstChildElement("edge");
-    while(edge) {
-      int index = 0, ref = 0;
-      if(edge->QueryIntAttribute("index", &index) != XML_SUCCESS ||
-         edge->QueryIntAttribute("reference", &ref) != XML_SUCCESS) {
-        Msg::Error("Missing index or reference for edge");
-      }
-      else {
-        TopoDS_Shape subShape = mainMap.FindKey(ref);
-        GEdge *ge = getEdgeForOCCShape(&subShape);
-        if(ge) {
-          entities[1][index] = ge;
-          const char *name = nullptr;
-          if(edge->QueryAttribute("name", &name) == XML_SUCCESS)
-            if(strlen(name)) setElementaryName(1, ge->tag(), name);
-        }
-        else {
-          Msg::Error("Could not find model curve for XAO reference %d", ref);
-        }
-      }
-      edge = edge->NextSiblingElement("edge");
-    }
-  }
-
-  XMLElement *faces = topology->FirstChildElement("faces");
-  if(faces) {
-    XMLElement *face = faces->FirstChildElement("face");
-    while(face) {
-      int index = 0, ref = 0;
-      if(face->QueryIntAttribute("index", &index) != XML_SUCCESS ||
-         face->QueryIntAttribute("reference", &ref) != XML_SUCCESS) {
-        Msg::Error("Missing index or reference for face");
-      }
-      else {
-        TopoDS_Shape subShape = mainMap.FindKey(ref);
-        GFace *gf = getFaceForOCCShape(&subShape);
-        if(gf) {
-          entities[2][index] = gf;
-          const char *name = nullptr;
-          if(face->QueryAttribute("name", &name) == XML_SUCCESS)
-            if(strlen(name)) setElementaryName(2, gf->tag(), name);
-        }
-        else {
-          Msg::Error("Could not find model surface for XAO reference %d", ref);
-        }
-      }
-      face = face->NextSiblingElement("face");
-    }
-  }
-
-  XMLElement *solids = topology->FirstChildElement("solids");
-  if(solids) {
-    XMLElement *solid = solids->FirstChildElement("solid");
-    while(solid) {
-      int index = 0, ref = 0;
-      if(solid->QueryIntAttribute("index", &index) != XML_SUCCESS ||
-         solid->QueryIntAttribute("reference", &ref) != XML_SUCCESS) {
-        Msg::Error("Missing index or reference for solid");
-      }
-      else {
-        TopoDS_Shape subShape = mainMap.FindKey(ref);
-        GRegion *gr = getRegionForOCCShape(&subShape);
-        if(gr) {
-          entities[3][index] = gr;
-          const char *name = nullptr;
-          if(solid->QueryAttribute("name", &name) == XML_SUCCESS)
-            if(strlen(name)) setElementaryName(3, gr->tag(), name);
-        }
-        else {
-          Msg::Error("Could not find model volume for XAO reference %d", ref);
-        }
-      }
-      solid = solid->NextSiblingElement("solid");
+      entities[dim][e.index] = ge;
+      if(e.name.size()) setElementaryName(dim, ge->tag(), e.name);
+      if(dim == 0 && e.meshSize != MAX_LC)
+        static_cast<GVertex *>(ge)->setPrescribedMeshSizeAtVertex(e.meshSize);
     }
   }
 

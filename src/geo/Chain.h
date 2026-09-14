@@ -12,13 +12,12 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "Context.h"
+#include "GmshConfig.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewOptions.h"
 #endif
-
-#if defined(HAVE_KBIPACK)
 
 void updateFltk();
 std::string convertInt(int number);
@@ -518,7 +517,5 @@ int Chain<C>::addToModel(GModel *m, bool post, int physicalNumRequest) const
 
   return physicalNum;
 }
-
-#endif
 
 #endif
