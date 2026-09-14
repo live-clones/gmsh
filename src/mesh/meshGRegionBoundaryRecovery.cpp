@@ -13,7 +13,7 @@
 #if defined(HAVE_TETGENBR)
 
 #include "meshGRegion.h"
-#include "meshGRegionDelaunayInsertion.h"
+#include "meshGRegionDelaunay.h"
 #include "robustPredicates.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -233,9 +233,10 @@ namespace tetgenBR {
     }
 
     std::vector<MTetrahedron *> tets;
+    std::vector<std::int64_t> tetNeighbors;
 
-    delaunayMeshIn3D(_vertices,
-                     tets); // will add 8 MVertices at the end of _vertices
+    // will add 8 MVertices at the end of _vertices
+    delaunayMeshIn3D(_vertices, tets, false, &tetNeighbors);
     if(Msg::GetErrorCount()) return 0;
 
     Msg::Debug("Points have been tetrahedralized");
@@ -294,62 +295,22 @@ namespace tetgenBR {
     }
 
     {
-      tetrahedron *ver2tetarray;
-      triface tetloop, checktet, prevchktet;
+      triface tetloop, checktet;
       triface hulltet, face1, face2;
       tetrahedron tptr;
       point p[4], q[3];
       REAL ori; //, attrib, volume;
-      int bondflag;
-      int t1ver;
-      int idx, k;
+      int t1ver; // used by the fsymself() macro
+      int k;
 
       Msg::Info("Reconstructing mesh...");
 
-      // Allocate an array that maps each vertex to its adjacent tets.
-      ver2tetarray = new tetrahedron[_vertices.size() + in->firstnumber];
       for(std::size_t i = 0; i < _vertices.size() + in->firstnumber; i++) {
         setpointtype(idx2verlist[i], VOLVERTEX); // initial type.
-        ver2tetarray[i] = nullptr;
       }
 
-#if 0
-      /*  N E W   V E R S I O N	  */
-      std::vector<triface> ts( tets.size() );
-      for(std::size_t i = 0; i < tets.size(); i++) {
-	point p[4];
-	// index tetrahedra in order to have access to neighbors ids.
-	tets[i]->tet()->forceNum(i+1);
-	p[0] = idx2verlist[tets[i]->getVertex(0)->getIndex()];
-	p[1] = idx2verlist[tets[i]->getVertex(1)->getIndex()];
-	p[2] = idx2verlist[tets[i]->getVertex(2)->getIndex()];
-	p[3] = idx2verlist[tets[i]->getVertex(3)->getIndex()];
-	setvertices(ts[i], p[0], p[1], p[2], p[3]);
-      }
-          // we can make this in parallel, iterations are totally independent
-      for (uint64_t i = 0; i < tets.size(); i++) {
-	triface tf1 = ts[i];
-
-	for (tf1.ver=0; tf1.ver<4; tf1.ver++){
-	  uint64_t neigh = tets[i]->getNeigh(tf1.ver)->tet()->getNum() - 1;
-	  triface tf2 = ts[neigh];
-	  int iface2 = tf1.ver;
-
-	  int face2[3] = {
-	    tets[i]->getVertex(faces_tetra(tf1.ver),0)->getIndex(),
-	    tets[i]->getVertex(faces_tetra(tf1.ver),1)->getIndex(),
-	    tets[i]->getVertex(faces_tetra(tf1.ver),2)->getIndex()};
-
-	  tf2.ver = computeTetGenVersion2(faces2[0], face2, iface2);
-	  bond(tf1,tf2);
-	}
-      }
-
-#else
-
-      /*  N E W   V E R S I O N	  */
-
-      // Create the tetrahedra and connect those that share a common face.
+      // Create the tetrahedra.
+      std::vector<triface> ts(tets.size());
       for(std::size_t i = 0; i < tets.size(); i++) {
         // Get the four vertices.
         for(int j = 0; j < 4; j++) {
@@ -371,84 +332,78 @@ namespace tetgenBR {
         // Create a new tetrahedron.
         maketetrahedron(&tetloop); // tetloop.ver = 11.
         setvertices(tetloop, p[0], p[1], p[2], p[3]);
-        // Try connecting this tet to others that share the common faces.
-        for(tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++) {
-          p[3] = oppo(tetloop);
-          // Look for other tets having this vertex.
-          idx = pointmark(p[3]) - in->firstnumber;
-          tptr = ver2tetarray[idx];
-          // Link the current tet to the next one in the stack.
-          tetloop.tet[8 + tetloop.ver] = tptr;
-          // Push the current tet onto the stack.
-          ver2tetarray[idx] = encode(tetloop);
-          decode(tptr, checktet);
-          if(checktet.tet != nullptr) {
-            p[0] = org(tetloop); // a
-            p[1] = dest(tetloop); // b
-            p[2] = apex(tetloop); // c
-            prevchktet = tetloop;
-            do {
-              q[0] = org(checktet); // a'
-              q[1] = dest(checktet); // b'
-              q[2] = apex(checktet); // c'
-              // Check the three faces at 'd' in 'checktet'.
-              bondflag = 0;
-              for(int j = 0; j < 3; j++) {
-                // Go to the face [b',a',d], or [c',b',d], or [a',c',d].
-                esym(checktet, face2);
-                if(face2.tet[face2.ver & 3] == nullptr) {
-                  k = ((j + 1) % 3);
-                  if(q[k] == p[0]) { // b', c', a' = a
-                    if(q[j] == p[1]) { // a', b', c' = b
-                      // [#,#,d] is matched to [b,a,d].
-                      esym(tetloop, face1);
-                      bond(face1, face2);
-                      bondflag++;
-                    }
-                  }
-                  if(q[k] == p[1]) { // b',c',a' = b
-                    if(q[j] == p[2]) { // a',b',c' = c
-                      // [#,#,d] is matched to [c,b,d].
-                      enext(tetloop, face1);
-                      esymself(face1);
-                      bond(face1, face2);
-                      bondflag++;
-                    }
-                  }
-                  if(q[k] == p[2]) { // b',c',a' = c
-                    if(q[j] == p[0]) { // a',b',c' = a
-                      // [#,#,d] is matched to [a,c,d].
-                      eprev(tetloop, face1);
-                      esymself(face1);
-                      bond(face1, face2);
-                      bondflag++;
-                    }
-                  }
-                }
-                else {
-                  bondflag++;
-                }
-                enextself(checktet);
-              } // j
-              // Go to the next tet in the link.
-              tptr = checktet.tet[8 + checktet.ver];
-              if(bondflag == 3) {
-                // All three faces at d in 'checktet' have been connected.
-                // It can be removed from the link.
-                prevchktet.tet[8 + prevchktet.ver] = tptr;
-              }
-              else {
-                // Bakup the previous tet in the link.
-                prevchktet = checktet;
-              }
-              decode(tptr, checktet);
-            } while(checktet.tet != nullptr);
-          } // if(checktet.tet != nullptr)
-        } // for(tetloop.ver = 0; ...
-      } // i
+        ts[i] = tetloop;
+      }
 
-      // Remember a tet of the mesh.
+      // Remember a tet of the mesh, in the state the former version-scanning
+      // code left it in.
+      tetloop.ver = 4;
       recenttet = tetloop;
+
+      // Connect the tetrahedra that share a common face, using the
+      // adjacencies computed by the initial Delaunay triangulation instead
+      // of rediscovering them through per-vertex tet lists. For each pair,
+      // the case analysis replicates the former code (with the later tet
+      // playing the role of the tet whose creation triggered the scan), so
+      // that the face bonds - including their edge versions - are identical.
+      for(std::size_t i = 0; i < ts.size(); i++) {
+        for(int kf = 0; kf < 4; kf++) {
+          const std::int64_t nj = tetNeighbors[4 * i + kf];
+          if(nj < 0 || (std::size_t)nj <= i) continue;
+          triface L = ts[nj]; // created later
+          triface E = ts[i]; // created earlier
+          bool bonded = false;
+          for(L.ver = 0; L.ver < 4 && !bonded; L.ver++) {
+            point d = oppo(L);
+            int vE = -1;
+            for(E.ver = 0; E.ver < 4; E.ver++) {
+              if(oppo(E) == d) {
+                vE = E.ver;
+                break;
+              }
+            }
+            if(vE < 0) continue;
+            E.ver = vE;
+            p[0] = org(L); // a
+            p[1] = dest(L); // b
+            p[2] = apex(L); // c
+            q[0] = org(E); // a'
+            q[1] = dest(E); // b'
+            q[2] = apex(E); // c'
+            checktet = E;
+            for(int j = 0; j < 3 && !bonded; j++) {
+              // Go to the face [b',a',d], or [c',b',d], or [a',c',d].
+              esym(checktet, face2);
+              if(face2.tet[face2.ver & 3] == nullptr) {
+                k = ((j + 1) % 3);
+                if(q[k] == p[0] && q[j] == p[1]) {
+                  // [#,#,d] is matched to [b,a,d].
+                  esym(L, face1);
+                  bond(face1, face2);
+                  bonded = true;
+                }
+                else if(q[k] == p[1] && q[j] == p[2]) {
+                  // [#,#,d] is matched to [c,b,d].
+                  enext(L, face1);
+                  esymself(face1);
+                  bond(face1, face2);
+                  bonded = true;
+                }
+                else if(q[k] == p[2] && q[j] == p[0]) {
+                  // [#,#,d] is matched to [a,c,d].
+                  eprev(L, face1);
+                  esymself(face1);
+                  bond(face1, face2);
+                  bonded = true;
+                }
+              }
+              enextself(checktet);
+            } // j
+          } // L.ver
+        } // kf
+      } // i
+      ts.clear();
+      tetNeighbors.clear();
 
       // Create hull tets, create the point-to-tet map, and clean up the
       //   temporary spaces used in each tet.
@@ -496,11 +451,9 @@ namespace tetgenBR {
 
       hullsize = tetrahedrons->items - hullsize;
 
-      delete[] ver2tetarray;
       for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
       tets.clear(); // Release all memory in this vector.
     }
-#endif
 
       std::vector<GFace *> const &f_list = _gr->faces();
       std::vector<GEdge *> const &e_list = _gr->embeddedEdges();

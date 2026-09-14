@@ -3,7 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Matti Pellikka <matti.pellikka@microsoft.com>.
+// Contributor(s): Matti Pellikka (initial implementation)
 
 #include <stdlib.h>
 #include <string>
@@ -15,8 +15,6 @@
 #include "Chain.h"
 #include "fullMatrix.h"
 #include "HomologyPostProcessing.h"
-
-#if defined(HAVE_KBIPACK)
 
 StringXNumber HomologyPostProcessingOptions_Number[] = {
   {GMSH_FULLRC, "ApplyBoundaryOperatorToResults", nullptr, 0}};
@@ -316,5 +314,3 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
 
   return nullptr;
 }
-
-#endif

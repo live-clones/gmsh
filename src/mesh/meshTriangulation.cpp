@@ -19,7 +19,7 @@
 #include "meshTriangulation.h"
 #include "SBoundingBox3d.h"
 #include "robustPredicates.h"
-#include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceDelaunay.h"
 #include "qualityMeasures.h"
 #include "Numeric.h"
 #include "SPoint3.h"

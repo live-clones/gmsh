@@ -2667,11 +2667,13 @@ class ExtendField : public Field {
   std::set<GEntity*> _entities;
   std::map<GEntity*, search> _searchCurves, _searchSurfaces;
   double _sizeMax, _ratio;
+  bool _embedded;
 public:
   ExtendField()
   {
     _sizeMax = MAX_LC;
     _ratio = 1.2;
+    _embedded = true;
     options["SurfacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of model surfaces on which to apply the field",
       &updateNeeded);
@@ -2682,6 +2684,8 @@ public:
       _sizeMax, "Mesh size away from boundaries");
     options["Ratio"] = new FieldOptionDouble(
       _ratio, "Element size growth ratio (>= 1)");
+    options["IncludeEmbedded"] = new FieldOptionBool(
+      _embedded, "Include embedded entities", &updateNeeded);
   }
   ~ExtendField() {}
   const char *getName() { return "Extend"; }
@@ -2695,7 +2699,8 @@ public:
            "  F = min(SizeMax, (Sum_i w_i) / (Sum_i w_i / s_i)),\n\n"
            "with w_i = 1 / d_i^2 and s_i = SizeBnd_i + (Ratio - 1) * d_i, "
            "where SizeBnd_i denotes the size of the closest element to P "
-           "on the i-th boundary entity.";
+           "on the i-th boundary entity. Treat embedded entities as part of "
+           "the boundary if IncludeEmbedded is set.";
   }
   void recomputeCurves()
   {
@@ -2703,10 +2708,15 @@ public:
     for(auto ge : _entities) {
       if(ge->dim() != 2) continue;
       GFace *gf = static_cast<GFace*>(ge);
-      for(auto ge : gf->edges()) {
-        auto &s = _searchCurves[ge];
+      std::vector<GEdge *> edges = gf->edges();
+      if(_embedded) {
+        std::vector<GEdge *> emb = gf->embeddedEdges();
+        edges.insert(edges.end(), emb.begin(), emb.end());
+      }
+      for(auto ged : edges) {
+        auto &s = _searchCurves[ged];
         if(s.sizes.empty()) {
-          for(auto e : ge->lines) {
+          for(auto e : ged->lines) {
             s.sizes.push_back(e->getEdge(0).length());
             s.pc.pts.push_back(e->barycenter());
           }
@@ -2725,7 +2735,12 @@ public:
     for(auto ge : _entities) {
       if(ge->dim() != 3) continue;
       GRegion *gr = static_cast<GRegion*>(ge);
-      for(auto gf : gr->faces()) {
+      std::vector<GFace *> faces = gr->faces();
+      if(_embedded) {
+        std::vector<GFace *> emb = gr->embeddedFaces();
+        faces.insert(faces.end(), emb.begin(), emb.end());
+      }
+      for(auto gf : faces) {
         auto &s = _searchSurfaces[gf];
         if(s.sizes.empty()) {
           for(auto e : gf->triangles) {
@@ -2802,6 +2817,14 @@ public:
 
     double pt[3] = {X, Y, Z};
     std::vector<GEntity *> bnd = ge->boundaryEntities();
+    if(_embedded && ge->dim() == 2) {
+      std::vector<GEdge *> emb = static_cast<GFace*>(ge)->embeddedEdges();
+      for(auto e : emb) bnd.push_back(e);
+    }
+    if(_embedded && ge->dim() == 3) {
+      std::vector<GFace *> emb = static_cast<GRegion*>(ge)->embeddedFaces();
+      for(auto e : emb) bnd.push_back(e);
+    }
     std::vector<double> sbnd(bnd.size(), 0.), dbnd(bnd.size(), 0.);
     for(std::size_t i = 0; i < bnd.size(); i++) {
       nanoflann::KNNResultSet<double> res(1);

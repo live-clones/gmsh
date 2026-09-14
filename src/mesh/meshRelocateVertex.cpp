@@ -442,16 +442,18 @@ void RelocateVertices(GFace *gf, int niter, double tol)
   std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);
 
-  v2t_cont adj;
-  buildVertexToElement(gf->triangles, adj);
-  buildVertexToElement(gf->quadrangles, adj);
+  VertexToElementCSR adj;
+  adj.add(gf->triangles);
+  adj.add(gf->quadrangles);
+  adj.finalize();
+  std::vector<MElement *> lt;
   for(int i = 0; i < niter; i++) {
-    auto it = adj.begin();
-    while(it != adj.end()) {
-      if(vs.find(it->first) == vs.end()) {
-        relocateVertex(gf, it->first, it->second, tol);
+    for(std::size_t j = 0; j < adj.numVertices(); j++) {
+      MVertex *v = adj.vertex(j);
+      if(vs.find(v) == vs.end()) {
+        lt.assign(adj.elements(j), adj.elements(j) + adj.numElements(j));
+        relocateVertex(gf, v, lt, tol);
       }
-      ++it;
     }
   }
 }

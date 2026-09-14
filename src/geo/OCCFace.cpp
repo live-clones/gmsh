@@ -34,6 +34,7 @@
 #include <Geom_ToroidalSurface.hxx>
 #include <IntTools_Context.hxx>
 #include <ShapeAnalysis.hxx>
+#include <BRep_Tool.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <Standard_Version.hxx>
 #include <TopExp_Explorer.hxx>
@@ -179,7 +180,13 @@ void OCCFace::_setup()
     vmin -= vtol;
     vmax += vtol;
   }
-  _projector.Init(_occface, umin, umax, vmin, vmax);
+  _projectorBounds[0] = umin;
+  _projectorBounds[1] = umax;
+  _projectorBounds[2] = vmin;
+  _projectorBounds[3] = vmax;
+  _projectors.resize(std::max(1, Msg::GetMaxThreads()), nullptr);
+  _localProjectors.resize(_projectors.size());
+  _tolerance = BRep_Tool::Tolerance(_s);
 
   if(OCCFace::geomType() == GEntity::Sphere) {
     gp_Sphere sphere = surface.Sphere();
@@ -287,22 +294,96 @@ GPoint OCCFace::point(double par1, double par2) const
   return GPoint(val.X(), val.Y(), val.Z(), this, pp);
 }
 
-bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
+// The two projectors below are stateful (they store the result of the last
+// projection), so each thread needs its own. They are created the first time a
+// given thread projects on this surface. If we end up with more threads than we
+// prepared for, the caller's own projector is used instead of a cached one:
+// slower, but always correct.
+
+GeomAPI_ProjectPointOnSurf &
+OCCFace::_projector(GeomAPI_ProjectPointOnSurf &fallback) const
+{
+  std::size_t t = (std::size_t)Msg::GetThreadNum();
+  if(t >= _projectors.size()) {
+    fallback.Init(_occface, _projectorBounds[0], _projectorBounds[1],
+                  _projectorBounds[2], _projectorBounds[3]);
+    return fallback;
+  }
+  if(!_projectors[t]) {
+    _projectors[t] = new GeomAPI_ProjectPointOnSurf();
+    _projectors[t]->Init(_occface, _projectorBounds[0], _projectorBounds[1],
+                         _projectorBounds[2], _projectorBounds[3]);
+  }
+  return *_projectors[t];
+}
+
+const Handle(ShapeAnalysis_Surface) & OCCFace::_localProjector() const
+{
+  static const Handle(ShapeAnalysis_Surface) null;
+  std::size_t t = (std::size_t)Msg::GetThreadNum();
+  if(t >= _localProjectors.size()) return null;
+  if(_localProjectors[t].IsNull())
+    _localProjectors[t] = new ShapeAnalysis_Surface(_occface);
+  return _localProjectors[t];
+}
+
+bool OCCFace::_project(const double p[3], double uv[2], double xyz[3],
+                       const double *initialGuess) const
 {
   gp_Pnt pnt(p[0], p[1], p[2]);
-  _projector.Perform(pnt);
-  if(!_projector.NbPoints()) {
+
+  // when we know where the projection should land, start a local Newton search
+  // from there instead of searching the whole surface: GeomAPI_ProjectPointOnSurf
+  // samples a grid over the full parameter range for every single point, which
+  // is very slow on B-splines. NextValueOfUV() falls back on the global search
+  // by itself if the local search does not converge.
+  const Handle(ShapeAnalysis_Surface) &localProjector = _localProjector();
+  if(initialGuess && CTX::instance()->geom.occFastProjection &&
+     !localProjector.IsNull()) {
+    try {
+      gp_Pnt2d uvGuess(initialGuess[0], initialGuess[1]);
+      // a local search can only be trusted if it ends up at least as close to
+      // the point as the guess it started from: if it does not, either the
+      // guess was meaningless (some callers pass an uninitialized one) or the
+      // Newton iteration converged to another part of the surface
+      double dGuess = localProjector->Value(uvGuess).Distance(pnt);
+      gp_Pnt2d uvLoc = localProjector->NextValueOfUV(uvGuess, pnt, _tolerance);
+      gp_Pnt res = localProjector->Value(uvLoc);
+      if(res.Distance(pnt) <= dGuess + _tolerance) {
+        uv[0] = uvLoc.X();
+        uv[1] = uvLoc.Y();
+        if(xyz) {
+          xyz[0] = res.X();
+          xyz[1] = res.Y();
+          xyz[2] = res.Z();
+        }
+        return true;
+      }
+      Msg::Debug("OCC local projection rejected on surface %d, falling back "
+                 "on the global search", tag());
+      // fall through to the global search below
+    } catch(Standard_Failure &err) {
+      Msg::Debug("OCC local projection failed on surface %d: %s", tag(),
+                 err.GetMessageString());
+      // fall through to the global search below
+    }
+  }
+
+  GeomAPI_ProjectPointOnSurf ownProjector;
+  GeomAPI_ProjectPointOnSurf &projector = _projector(ownProjector);
+  projector.Perform(pnt);
+  if(!projector.NbPoints()) {
     Msg::Debug("Projection of point (%g, %g, %g) on surface %d failed", p[0],
                p[1], p[2], tag());
     return false;
   }
-  _projector.LowerDistanceParameters(uv[0], uv[1]);
+  projector.LowerDistanceParameters(uv[0], uv[1]);
 
   if(uv[0] < _umin || uv[0] > _umax || uv[1] < _vmin || uv[1] > _vmax)
     Msg::Debug("Point projection is out of surface parameter bounds");
 
   if(xyz) {
-    pnt = _projector.NearestPoint();
+    pnt = projector.NearestPoint();
     xyz[0] = pnt.X();
     xyz[1] = pnt.Y();
     xyz[2] = pnt.Z();
@@ -319,7 +400,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
     return GFace::closestPoint(qp, initialGuess);
 #endif
   double uv[2], xyz[3];
-  if(_project(qp.data(), uv, xyz))
+  if(_project(qp.data(), uv, xyz, initialGuess))
     return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
   else {
     return GFace::closestPoint(qp, initialGuess);
