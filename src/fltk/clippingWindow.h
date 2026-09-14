@@ -21,13 +21,14 @@ public:
   Fl_Multi_Browser *browser;
   Fl_Value_Input *plane[4];
   Fl_Value_Input *box[6];
-  Fl_Check_Button *butt[3];
+  Fl_Check_Button *butt[4];
   Fl_Group *group[2];
   void fillBoxValuesFromPlaneValues();
 
 public:
   clippingWindow(int deltaFontSize = 0);
   ~clippingWindow() { Fl::delete_widget(win); }
+  void activateButtons();
   void resetBrowser();
   void show();
 };

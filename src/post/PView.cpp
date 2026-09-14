@@ -13,6 +13,10 @@
 #include "SmoothData.h"
 #include "adaptiveData.h"
 #include "GmshMessage.h"
+#include "GmshConfig.h"
+#if defined(HAVE_OPENGL)
+#include "glyphList.h"
+#endif
 
 int PView::_globalTag = 1;
 std::vector<PView *> PView::list;
@@ -33,6 +37,7 @@ void PView::_init(int tag)
   _aliasOf = -1;
   _eye = SPoint3(0., 0., 0.);
   va_points = va_lines = va_triangles = va_vectors = va_ellipses = nullptr;
+  va_clip_lines = va_clip_triangles = nullptr;
   normals = nullptr;
 
   for(std::size_t i = 0; i < list.size(); i++) {
@@ -179,6 +184,10 @@ void PView::addStep(GModel *model,
 PView::~PView()
 {
   deleteVertexArrays();
+#if defined(HAVE_OPENGL)
+  // the glyphs kept for this view go with it
+  glyphCache::clear(this);
+#endif
   if(normals) delete normals;
   if(_options) delete _options;
 
@@ -207,6 +216,14 @@ int PView::getGlobalTag() { return _globalTag; }
 
 void PView::setGlobalTag(int tag) { _globalTag = tag; }
 
+void PView::deleteClipVertexArrays()
+{
+  if(va_clip_lines) delete va_clip_lines;
+  va_clip_lines = nullptr;
+  if(va_clip_triangles) delete va_clip_triangles;
+  va_clip_triangles = nullptr;
+}
+
 void PView::deleteVertexArrays()
 {
   if(va_points) delete va_points;
@@ -219,6 +236,7 @@ void PView::deleteVertexArrays()
   va_vectors = nullptr;
   if(va_ellipses) delete va_ellipses;
   va_ellipses = nullptr;
+  deleteClipVertexArrays();
 }
 
 void PView::setOptions(PViewOptions *val)

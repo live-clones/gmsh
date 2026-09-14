@@ -90,6 +90,11 @@ public:
     return MFace(_v[faces_tetra(num, 0)], _v[faces_tetra(num, 1)],
                  _v[faces_tetra(num, 2)]);
   }
+  virtual int getFaceCorners(int num, MVertex *v[4]) const
+  {
+    for(int i = 0; i < 3; i++) v[i] = _v[faces_tetra(num, i)];
+    return 3;
+  }
   virtual bool getFaceInfo(const MFace &face, int &ithFace, int &sign,
                            int &rot) const;
   virtual int getNumFacesRep(bool curved) { return 4; }
