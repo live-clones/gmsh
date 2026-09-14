@@ -335,7 +335,7 @@ static void _getFullPeriodicKeys(
     diffKey = 0;
     struct KeyXYZ *foundKey;
     for(unsigned j = 0; j < entityKeys.size(); j++) {
-      if((el + 1) * nbrKeysPerElement <= j) el++;
+      if((el + 1) * nbrKeysPerElement <= (int)j) el++;
 
       struct KeyXYZ *Key = new KeyXYZ();
       Key->x = coord[3 * j + 0];
