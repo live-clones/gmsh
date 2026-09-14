@@ -22,6 +22,7 @@
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
+#include "glImmediate.h"
 #include "visibilityWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
@@ -30,6 +31,29 @@
 #include "gl2ppm.h"
 #include "gl2yuv.h"
 #include "gl2pgf.h"
+#endif
+
+#if defined(HAVE_FLTK)
+// gl2ps needs OpenGL feedback mode, which a core profile has none of: draw
+// with the fixed function pipeline while the file is written
+class drawTheOldWayWhileExporting {
+private:
+  bool _switched;
+
+public:
+  drawTheOldWayWhileExporting() : _switched(false)
+  {
+    if(!CTX::instance()->shaders) return;
+    _switched = true;
+    opt_general_shaders(0, GMSH_SET, 0.);
+    // the context is only recreated when next drawn into
+    drawContext::global()->drawCurrentOpenglWindow(true);
+  }
+  ~drawTheOldWayWhileExporting()
+  {
+    if(_switched) opt_general_shaders(0, GMSH_SET, 1.);
+  }
+};
 #endif
 
 int GetFileFormatFromExtension(const std::string &ext, double *version)
@@ -190,31 +214,85 @@ std::string GetKnownFileFormats(bool onlyMeshFormats)
 }
 
 #if defined(HAVE_FLTK)
+// the size of the picture: Print.Width and Print.Height, with the missing one
+// scaled from the window
+static void printSize(int &width, int &height)
+{
+  width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+  height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+  if(CTX::instance()->print.width <= 0 && CTX::instance()->print.height <= 0)
+    return;
+  if(CTX::instance()->print.width <= 0){
+    double w = width * CTX::instance()->print.height / (double)height;
+    width = (int)w;
+    height = CTX::instance()->print.height;
+  }
+  else if(CTX::instance()->print.height <= 0){
+    double h = height * CTX::instance()->print.width / (double)width;
+    height = (int)h;
+    width = CTX::instance()->print.width;
+  }
+  else{
+    width = CTX::instance()->print.width;
+    height = CTX::instance()->print.height;
+  }
+}
+
+// average blocks of k x k pixels of `from' into `to', k times smaller
+static void downsample(PixelBuffer *from, PixelBuffer *to, int k)
+{
+  int nc = to->getNumComp(), w = to->getWidth(), h = to->getHeight();
+  int fw = from->getWidth();
+  const unsigned char *src = (const unsigned char *)from->getPixels();
+  unsigned char *dst = (unsigned char *)to->getPixels();
+  for(int j = 0; j < h; j++)
+    for(int i = 0; i < w; i++)
+      for(int c = 0; c < nc; c++) {
+        unsigned int sum = 0;
+        for(int jj = 0; jj < k; jj++)
+          for(int ii = 0; ii < k; ii++)
+            sum += src[((j * k + jj) * fw + i * k + ii) * nc + c];
+        dst[(j * w + i) * nc + c] = (unsigned char)((sum + k * k / 2) / (k * k));
+      }
+}
+
 static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 {
   openglWindow *newg = nullptr;
 
+  // a picture of any size is drawn into a buffer of its own (a window could
+  // not be larger than the screen), and possibly at a multiple of its size,
+  // averaged down
+  int ss = std::max(1, CTX::instance()->print.supersampling);
+  if(type != GL_UNSIGNED_BYTE) ss = 1;
+  if(!CTX::instance()->batch &&
+     (CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0 ||
+      ss > 1)) {
+    int width, height;
+    printSize(width, height);
+    PixelBuffer *big = new PixelBuffer(width * ss, height * ss, format, type);
+    if(FlGui::instance()->getCurrentOpenglWindow()->printTo(
+         width * ss, height * ss, ss, format, type, big->getPixels())) {
+      if(ss == 1) return big;
+      PixelBuffer *small = new PixelBuffer(width, height, format, type);
+      downsample(big, small, ss);
+      delete big;
+      return small;
+    }
+    delete big;
+  }
+
   if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
-    GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
-    GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
-    if(CTX::instance()->print.width <= 0){
-      double w = width * CTX::instance()->print.height / (double)height;
-      width = (int)w;
-      height = CTX::instance()->print.height;
-    }
-    else if(CTX::instance()->print.height <= 0){
-      double h = height * CTX::instance()->print.width / (double)width;
-      height = (int)h;
-      width = CTX::instance()->print.width;
-    }
-    else{
-      width = CTX::instance()->print.width;
-      height = CTX::instance()->print.height;
-    }
-    newg = new openglWindow(100, 100, width, height);
-    int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-    if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-    newg->mode(mode);
+    int width, height;
+    printSize(width, height);
+    // the size is in pixels, the window's in the units of the widget toolkit,
+    // which a high resolution display scales
+    double hr = FlGui::instance()->getCurrentOpenglWindow()
+                  ->getDrawContext()->highResolutionPixelFactor();
+    newg = new openglWindow(100, 100, (int)(width / hr + 0.5),
+                            (int)(height / hr + 0.5));
+    // the same visual (hence pipeline) as the windows on screen
+    newg->mode(openglWindowMode());
     newg->end();
     newg->getDrawContext()->copyViewAttributes
       (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
@@ -281,6 +359,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 }
 #endif
 
+#if defined(HAVE_MPEG_ENCODE)
 static void ChangePrintParameter(int frame)
 {
   double first = CTX::instance()->print.parameterFirst;
@@ -293,6 +372,7 @@ static void ChangePrintParameter(int frame)
   opt_print_parameter(0, GMSH_SET | GMSH_GUI, v);
   ParseString(CTX::instance()->print.parameterCommand, true);
 }
+#endif
 
 void CreateOutputFile(const std::string &fileName, int format,
                       bool status)
@@ -619,6 +699,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         error = true;
         break;
       }
+      drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
       GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
@@ -658,18 +739,18 @@ void CreateOutputFile(const std::string &fileName, int format,
           double modelview[16], projection[16];
           glGetDoublev(GL_PROJECTION_MATRIX, projection);
           glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-          glMatrixMode(GL_PROJECTION);
-          glLoadIdentity();
+          gmshMatrixMode(GMSH_PROJECTION);
+          gmshLoadIdentity();
           glOrtho((double)pixel_viewport[0], (double)pixel_viewport[2],
                   (double)pixel_viewport[1], (double)pixel_viewport[3], -1., 1.);
-          glMatrixMode(GL_MODELVIEW);
-          glLoadIdentity();
+          gmshMatrixMode(GMSH_MODELVIEW);
+          gmshLoadIdentity();
           glRasterPos2d(0, 0);
           gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, buffer.getPixels());
-          glMatrixMode(GL_PROJECTION);
-          glLoadMatrixd(projection);
-          glMatrixMode(GL_MODELVIEW);
-          glLoadMatrixd(modelview);
+          gmshMatrixMode(GMSH_PROJECTION);
+          gmshLoadMatrix(projection);
+          gmshMatrixMode(GMSH_MODELVIEW);
+          gmshLoadMatrix(modelview);
         }
         else{
           drawContext::global()->drawCurrentOpenglWindow(true);
@@ -695,6 +776,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         error = true;
         break;
       }
+      drawTheOldWayWhileExporting noShaders;
       std::string base = SplitFileName(name)[1];
       GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
@@ -732,6 +814,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
 
+      drawTheOldWayWhileExporting noShaders;
       // fill pixel buffer without colorbar and axes
       int restoreGeneralAxis = (int) opt_general_axes(0, GMSH_GET, 0);
       int restoreSmallAxis = (int) opt_general_small_axes(0, GMSH_GET, 0);
