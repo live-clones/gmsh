@@ -65,8 +65,9 @@ namespace glShader {
   // the specular colour and exponent of the material
   void setMaterial(double shine, double shineExponent);
   // the lighting model: 0 the fixed function one, 1 studio, 2 the shadow
-  // catcher of the studio model (only the shadow is drawn)
-  void setShading(int model);
+  // catcher of the studio model (only the shadow is drawn), and the factor
+  // on the light of the lit surfaces
+  void setShading(int model, double brightness = 1.);
   // the studio light: the key direction and the model's up axis, in eye
   // coordinates, the size of a texel of the shadow maps in eye coordinates,
   // and the dome direction of the current sample (or none), for the ambient

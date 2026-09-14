@@ -331,6 +331,8 @@ public:
   // studio (linear light, hemisphere ambient, soft key light, no specular,
   // shadows) with the floor normal to x, y or z
   int shading;
+  // a factor on the light of the lit surfaces, in either shading
+  double brightness;
   // angular radius (degrees) of the studio light, which sets the softness of
   // its shadow, the offset of the floor from the bottom of the model along
   // its normal (relative to the size of the bounds), and the number of

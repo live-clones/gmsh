@@ -416,9 +416,12 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
   opt_general_shading(0, GMSH_SET, o->general.choice[8]->value());
+  // light 0's W means nothing to studio shading
+  o->activate("shaders");
   opt_general_studio_samples(0, GMSH_SET, o->general.value[33]->value());
   opt_general_studio_floor_offset(0, GMSH_SET, o->general.value[34]->value());
   opt_general_studio_light_spread(0, GMSH_SET, o->general.value[35]->value());
+  opt_general_brightness(0, GMSH_SET, o->general.value[36]->value());
 
   if((opt_general_gamepad(0, GMSH_GET, 0) != o->general.butt[19]->value()) ||
      (opt_general_camera_mode(0, GMSH_GET, 0) !=
@@ -1926,14 +1929,22 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[4]->align(FL_ALIGN_RIGHT);
       general.value[4]->callback(general_options_ok_cb, (void *)"light_value");
 
-      general.value[13] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW,
-                                             BH, "Light position divisor");
+      general.value[13] =
+        new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW / 2, BH);
       general.value[13]->tooltip("General.Light0W");
       general.value[13]->minimum(0.);
       general.value[13]->maximum(1.);
       if(CTX::instance()->inputScrolling) general.value[13]->step(0.01);
-      general.value[13]->align(FL_ALIGN_RIGHT);
       general.value[13]->callback(general_options_ok_cb);
+      general.value[36] =
+        new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 2 * BH, IW / 2, BH,
+                           "Light proximity and brightness");
+      general.value[36]->tooltip("General.Brightness");
+      general.value[36]->minimum(0);
+      general.value[36]->maximum(10);
+      if(CTX::instance()->inputScrolling) general.value[36]->step(0.05);
+      general.value[36]->align(FL_ALIGN_RIGHT);
+      general.value[36]->callback(general_options_ok_cb);
 
       general.sphere = new spherePositionWidget(L + width - 2 * BH - 2 * WB,
                                                 2 * WB + 1 * BH, 2 * BH);
@@ -1962,6 +1973,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.choice[8]->menu(menu_shading_mode);
       general.choice[8]->align(FL_ALIGN_RIGHT);
       general.choice[8]->callback(general_options_ok_cb);
+
 
       general.value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW / 3, BH);
       general.value[33]->tooltip("General.StudioSamples");
@@ -4312,6 +4324,11 @@ void optionWindow::activate(const char *what)
     drawContext::global()->draw();
   }
   else if(!strcmp(what, "shaders")) {
+    // studio shading takes the direction of light 0 alone
+    if(general.butt[3]->value() && general.choice[8]->value())
+      general.value[13]->deactivate();
+    else
+      general.value[13]->activate();
     if(general.butt[3]->value()) {
       general.choice[8]->activate();
       general.value[33]->activate();
