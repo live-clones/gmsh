@@ -95,9 +95,11 @@ public:
   void fill(int offscreen)
   {
     if(!offscreen) {
-      // workaround double buffering issues by redrawing twice
+      // workaround double buffering issues by redrawing twice: what is read
+      // may be either frame, so both have to be the picture - the second
+      // puts back the studio frames the first accumulated
       drawContext::global()->drawCurrentOpenglWindow(true);
-      drawContext::global()->drawCurrentOpenglWindow(true);
+      drawContext::global()->drawCurrentOpenglWindow(true, true);
       glFinish();
       glPixelStorei(GL_PACK_ALIGNMENT, 1);
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

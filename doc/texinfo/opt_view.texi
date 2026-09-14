@@ -7,18 +7,18 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesFormatX
-Number format for X-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for X-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesFormatY
-Number format for Y-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for Y-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesFormatZ
-Number format for Z-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for Z-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesLabelX
@@ -72,8 +72,8 @@ Default value: @code{""}@*
 Saved in: @code{-}
 
 @item View.NumberFormat
-Number format (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple0
@@ -201,18 +201,18 @@ Minimum Z-axis coordinate@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.AxesTicsX
-Number of tics on the X-axis@*
+@item View.AxesTicksX
+Number of ticks on the X-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.AxesTicsY
-Number of tics on the Y-axis@*
+@item View.AxesTicksY
+Number of ticks on the Y-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.AxesTicsZ
-Number of tics on the Z-axis@*
+@item View.AxesTicksZ
+Number of ticks on the Z-axis (about that many, when the labels are placed at round values)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -234,11 +234,6 @@ Saved in: @code{General.OptionsFileName}
 @item View.Closed
 Close the subtree containing this view@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item View.ColormapAlpha
-Colormap alpha channel value (used only if != 1)@*
-Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ColormapAlphaPower
@@ -267,7 +262,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ColormapNumber
-Default colormap number (0: black, 1: vis5d, 2: jet, 3: lucie, 4: rainbow, 5: emc2000, 6: incadescent, 7: hot, 8: pink, 9: grayscale, 10: french, 11: hsv, 12: spectrum, 13: bone, 14: spring, 15: summer, 16: autumm, 17: winter, 18: cool, 19: copper, 20: magma, 21: inferno, 22: plasma, 23: viridis, 24: turbo)@*
+Default colormap number (0: black, 1: vis5d, 2: jet, 3: lucie, 4: rainbow, 5: emc2000, 6: incadescent, 7: hot, 8: pink, 9: grayscale, 10: french, 11: hsv, 12: spectrum, 13: bone, 14: spring, 15: summer, 16: autumm, 17: winter, 18: cool, 19: copper, 20: magma, 21: inferno, 22: plasma, 23: viridis, 24: turbo, 25: cool to warm, 26: fast)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -392,8 +387,8 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.DrawSkinOnly
-Draw only the skin of 3D scalar views?@*
-Default value: @code{0}@*
+Draw only the boundary faces of 3D views?@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.DrawStrings
@@ -429,11 +424,6 @@ Saved in: @code{General.OptionsFileName}
 @item View.ExternalView
 Index of the view used to color vector fields (-1: self)@*
 Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item View.FakeTransparency
-Use fake transparency (cheaper than the real thing, but incorrect)@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ForceNumComponents
@@ -730,6 +720,11 @@ Saved in: @code{-}
 Element (3,3) of the 3x3 coordinate transformation matrix@*
 Default value: @code{1}@*
 Saved in: @code{-}
+
+@item View.Transparency
+Opacity factor applied to the colormap (1: unchanged, 0: fully transparent)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
 
 @item View.Type
 Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)@*
