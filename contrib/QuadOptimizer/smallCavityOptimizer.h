@@ -520,4 +520,29 @@ namespace QuadOptimizer {
     const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions(),
     int maximumThreads = 0);
 
+  struct QuadHoleRingResult {
+    bool success = true;
+    bool skippedInvalidInputCellComplex = false;
+    std::size_t visited = 0, alreadyPresent = 0, accepted = 0, rejected = 0;
+    std::size_t insertedQuadrangles = 0;
+    std::size_t collapseCandidates = 0, acceptedCollapses = 0;
+    std::size_t trianglesRemoved = 0;
+    // Across candidate trials: unavailable UV normals resolved by a bounded
+    // closest-point query on the immutable discrete support.
+    std::size_t physicalNormalQueries = 0, physicalNormalCovered = 0;
+  };
+
+  // Insert at most one complete ring per hole, without running the legacy
+  // rewrite catalog. Boundary/embedded vertices stay fixed. Every changed
+  // patch passes complete physical-normal sampling, non-folding and bounded
+  // local/cumulative CAD-distance checks before its transaction. Shape and
+  // edge-size specifications are reported but do not veto structural rings.
+  // Nearby TT contractions then remove triangles at fixed surviving XYZ,
+  // preserving every ring cell and every quad. Strict triangle reduction
+  // makes this cleanup terminate at a deterministic local fixed point.
+  // pillowNeighborLayers enlarges the smoothing support, not the ring count.
+  GMSH_API QuadHoleRingResult insertQuadHoleRings(
+    GFace *face,
+    const SmallCavityOptimizerOptions &options = SmallCavityOptimizerOptions());
+
 } // namespace QuadOptimizer
