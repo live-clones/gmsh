@@ -65,27 +65,10 @@
 #include "Triangle/HierarchicalBasisHcurlTria.h"
 #include "Tetrahedron/HierarchicalBasisHcurlTetra.h"
 #include "Prism/HierarchicalBasisHcurlPri.h"
-#else
-#include "CreateHierarchicalBasis.h"
-#include "Utils.h"
-#include "HierarchicalBasisH1Quad.h"
-#include "HierarchicalBasisH1Tria.h"
-#include "HierarchicalBasisH1Line.h"
-#include "HierarchicalBasisH1Brick.h"
-#include "HierarchicalBasisH1Tetra.h"
-#include "HierarchicalBasisH1Pri.h"
-#include "HierarchicalBasisH1Point.h"
-#include "HierarchicalBasisHcurlLine.h"
-#include "HierarchicalBasisHcurlQuad.h"
-#include "HierarchicalBasisHcurlBrick.h"
-#include "HierarchicalBasisHcurlTria.h"
-#include "HierarchicalBasisHcurlTetra.h"
-#include "HierarchicalBasisHcurlPri.h"
 #endif
 
 #include "Overlap.h"
 #include "rtree.h"
-#include "getPeriodicKeys.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -787,9 +770,7 @@ GMSH_API void gmsh::model::getEntityType(const int dim, const int tag,
 // will be deprecated
 GMSH_API void gmsh::model::getType(const int dim, const int tag,
                                    std::string &entityType)
-{
-  gmsh::model::getEntityType(dim, tag, entityType);
-}
+{ gmsh::model::getEntityType(dim, tag, entityType); }
 
 GMSH_API void gmsh::model::getEntityProperties(const int dim, const int tag,
                                                std::vector<int> &integers,
@@ -1413,7 +1394,7 @@ gmsh::model::mesh::partition(const int numPart,
 }
 
 GMSH_API int gmsh::model::mesh::createOverlaps(const int layers,
-                                                const bool createBoundaries)
+                                               const bool createBoundaries)
 {
   if(!_checkInit()) return -1;
   return GModel::current()->createOverlaps(layers, createBoundaries);
@@ -1493,7 +1474,6 @@ static const auto &_getOverlapOfBoundaries(const OverlapManager &mgr)
                   "Unsupported dimension for boundary overlaps");
   }
 }
-
 
 // dim is model dimension, so we look for entities of dimension dim-1
 template <int dim>
@@ -1705,10 +1685,8 @@ GMSH_API void gmsh::model::mesh::getOverlapInterfaceBoundary(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(const int dim,
-                                                          const int tag,
-                                                          int &parentTag,
-                                                          const int overlapIndex)
+GMSH_API void gmsh::model::mesh::getBoundaryOverlapParent(
+  const int dim, const int tag, int &parentTag, const int overlapIndex)
 {
   if(!_checkInit()) return;
   GModel *model = GModel::current();
@@ -1818,8 +1796,8 @@ GMSH_API void gmsh::model::mesh::getOverlapOverlappedEntity(
     }
   }
   // Check for boundary overlaps (partitionEdge / partitionFace stored in
-  // _overlapOfBoundaries maps). These are partition entities at dim = modelDim-1
-  // that overlap a boundary entity.
+  // _overlapOfBoundaries maps). These are partition entities at dim =
+  // modelDim-1 that overlap a boundary entity.
   if(dim == 1) {
     partitionEdge *pe = dynamic_cast<partitionEdge *>(entity);
     if(pe) {
@@ -1876,15 +1854,14 @@ GMSH_API void gmsh::model::mesh::unpartition()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::writePartitions(
-  const std::string &fileName, const std::vector<int> &partitions)
+GMSH_API void
+gmsh::model::mesh::writePartitions(const std::string &fileName,
+                                   const std::vector<int> &partitions)
 {
   if(!_checkInit()) return;
   if(!GModel::current()->writeMSHPartitions(
-       fileName, partitions,
-       CTX::instance()->mesh.mshFileVersion,
-       CTX::instance()->mesh.binary,
-       CTX::instance()->mesh.saveAll,
+       fileName, partitions, CTX::instance()->mesh.mshFileVersion,
+       CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.saveParametric,
        CTX::instance()->mesh.scalingFactor))
     Msg::Error("Could not write partitions to file '%s'", fileName.c_str());
@@ -1909,7 +1886,8 @@ GMSH_API void gmsh::model::mesh::recombine()
 
 GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
                                           const bool force, const int niter,
-                                          const vectorpair &dimTags, double quality)
+                                          const vectorpair &dimTags,
+                                          double quality)
 {
   if(!_checkInit()) return;
   if(dimTags.size()) {
@@ -2299,11 +2277,9 @@ gmsh::model::mesh::setNode(const std::size_t nodeTag,
   if(parametricCoord.size() >= 2) v->setParameter(1, parametricCoord[1]);
 }
 
-GMSH_API void
-gmsh::model::mesh::setNodes(const std::vector<std::size_t> &nodeTags,
-                            const std::vector<double> &coord,
-                            const std::vector<double> &parametricCoord,
-                            const int dim, const int tag)
+GMSH_API void gmsh::model::mesh::setNodes(
+  const std::vector<std::size_t> &nodeTags, const std::vector<double> &coord,
+  const std::vector<double> &parametricCoord, const int dim, const int tag)
 {
   if(!_checkInit()) return;
   if(coord.size() != 3 * nodeTags.size()) {
@@ -2326,7 +2302,8 @@ gmsh::model::mesh::setNodes(const std::vector<std::size_t> &nodeTags,
   else if(parametricCoord.size()) {
     if(parametricCoord.size() != (std::size_t)dim * nodeTags.size()) {
       Msg::Error("Wrong number of parametric coordinates (%d, expected 0 or "
-                 "%d x %d)", parametricCoord.size(), dim, nodeTags.size());
+                 "%d x %d)",
+                 parametricCoord.size(), dim, nodeTags.size());
       return;
     }
     numPar = dim;
@@ -3377,368 +3354,451 @@ GMSH_API void gmsh::model::mesh::getJacobian(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType,
-                                                   const std::vector<double> &localCoord,
-                                                   const std::string &functionSpaceType,
-                                                   int &numComponents,
-                                                   std::vector<double> &basisFunctions,
-                                                   int &numOrientations,
-                                                   const std::vector<int> &wantedOrientations) {
-    
-    if(!_checkInit()) {
-        return;
-    }
-    numComponents = 0;
-    basisFunctions.clear();
-    std::string fsName = ""; // Name of function Space
-    int fsOrder = 0; // Order of function Space
-    if(!_getFunctionSpaceInfo(functionSpaceType, fsName, fsOrder, numComponents)) {
-        Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
-        return;
-    }
-    
-    const std::size_t numberOfGaussPoints = localCoord.size() / 3;
-    const int familyType = ElementType::getParentType(elementType); // TYPE_PNT ....
-
-    if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
-    // Check if there is no error in wantedOrientations
-        const std::size_t maxOrientation = 1;
-        validateWantedOrientations(wantedOrientations, maxOrientation, fsName, familyType);
-
-        const nodalBasis *basis = nullptr; // class nodalBasis : numOrientations = maxOrientation = 1;
-    
-        if(numComponents) {
-            if(fsOrder == -1) { // isoparametric
-                basis = BasisFactory::getNodalBasis(elementType);
-            }
-            else {
-                int newType = ElementType::getType(familyType, fsOrder, false);
-                basis = BasisFactory::getNodalBasis(newType);
-            }
-        }
-        if(basis) {
-            const std::size_t n = basis->getNumShapeFunctions();
-            basisFunctions.resize(n * numComponents * numberOfGaussPoints, 0.);
-            double s[1256], ds[1256][3];
-            for(std::size_t i = 0; i < numberOfGaussPoints; i++) {
-                double u = localCoord[i * 3];
-                double v = localCoord[i * 3 + 1];
-                double w = localCoord[i * 3 + 2];
-                switch(numComponents) {
-                    case 1:
-                        basis->f(u, v, w, s);
-                        for(std::size_t j = 0; j < n; j++) {
-                            basisFunctions[n * i + j] = s[j];
-                        }
-                        break;
-                    case 3:
-                        basis->df(u, v, w, ds);
-                        for(std::size_t j = 0; j < n; j++) {
-                            basisFunctions[n * 3 * i + 3 * j] = ds[j][0];
-                            basisFunctions[n * 3 * i + 3 * j + 1] = ds[j][1];
-                            basisFunctions[n * 3 * i + 3 * j + 2] = ds[j][2];
-                        }
-                        break;
-                }
-            }
-        }
-        numOrientations = maxOrientation;
-    }
-
-// TODO #if defined(HAVE_HIERARCHICAL_BASIS)
-
-    else { // Hierarchical type
-        
-        HierarchicalBasis *basis = CreateHierarchicalBasis(fsName, familyType, fsOrder);
-        if (!basis) {
-            Msg::Error("Unable to create hierarchical basis for function space '%s' with element type %d", fsName.c_str(), familyType);
-            return;
-        }
-#if defined(HAVE_HIERARCHICAL_BASIS)
-        const std::size_t vSize = basis->getNumVertexFunction();
-        const std::size_t bSize = basis->getNumBubbleFunction();
-        const std::size_t eSize = basis->getNumEdgeFunction();
-        const std::size_t quadfSize = basis->getNumQuadFaceFunction();
-        const std::size_t trifSize = basis->getNumTriFaceFunction();
-        const std::size_t fSize = trifSize + quadfSize;
-#else
-        const std::size_t vSize = basis->getnVertexFunction();
-        const std::size_t bSize = basis->getnBubbleFunction();
-        const std::size_t eSize = basis->getnEdgeFunction();
-        const std::size_t quadfSize = basis->getnQuadFaceFunction();
-        const std::size_t trifSize = basis->getnTriFaceFunction();
-        const std::size_t fSize = trifSize + quadfSize;
-#endif
-        const std::size_t maxOrientation = basis->getNumberOfOrientations();
-        numOrientations = maxOrientation;
-        const std::size_t numFunctionsPerElement = vSize + bSize + eSize + fSize;
-        const unsigned int numVertices = ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-        
-        basisFunctions.resize(
-                              (wantedOrientations.size() == 0 ? maxOrientation : wantedOrientations.size())
-                              * numberOfGaussPoints * numFunctionsPerElement * numComponents);
-        
-        // Check if there is no error in wantedOrientations
-        validateWantedOrientations(wantedOrientations, maxOrientation, fsName, familyType);
-        
-        std::vector<MVertex *> vertices(numVertices);
-        for(unsigned int i = 0; i < numVertices; ++i) {
-            vertices[i] = new MVertex(0., 0., 0., nullptr, i + 1);
-        }
-        MElement *element = nullptr;
-        switch(familyType) {
-            case TYPE_HEX:
-                element = new MHexahedron(vertices);
-                break;
-            case TYPE_PRI:
-                element = new MPrism(vertices);
-                break;
-            case TYPE_TET:
-                element = new MTetrahedron(vertices);
-                break;
-            case TYPE_QUA:
-                element = new MQuadrangle(vertices);
-                break;
-            case TYPE_TRI:
-                element = new MTriangle(vertices);
-                break;
-            case TYPE_LIN:
-                element = new MLine(vertices);
-                break;
-            case TYPE_PNT:
-                element = new MPoint(vertices);
-                break;
-            default:
-                Msg::Error("Unknown familyType %i for basis function type %s", familyType, fsName.c_str());
-                return;
-        }
-        
-        switch(numComponents) {
-            case 1: {
-                // Vertex functions of one element
-                std::vector<std::vector<double>> vTable(numberOfGaussPoints, std::vector<double>(vSize));
-                // edge functions of one element
-                std::vector<std::vector<double>> eTable(numberOfGaussPoints, std::vector<double>(eSize));
-                // face functions of one element
-                std::vector<std::vector<double>> fTable(numberOfGaussPoints, std::vector<double>(fSize));
-                // bubble functions of one element
-                std::vector<std::vector<double>> bTable(numberOfGaussPoints, std::vector<double>(bSize));
-                
-                for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                    const double u = localCoord[3 * q];
-                    const double v = localCoord[3 * q + 1];
-                    const double w = localCoord[3 * q + 2];
-#if defined(HAVE_HIERARCHICAL_BASIS)
-                    basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q], bTable[q],fsName);
-#else
-                    basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q], bTable[q]);
-#endif
-                }
-                // compute only one time the value of the edge basis functions for each possible orientations
-                std::vector<std::vector<double>> eTableNegativeFlag(eTable);
-                if(eSize != 0) {
-                    for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                        basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag[q]);
-                    }
-                }
-                
-                // compute only one time the value of the face basis functions for each possible orientations
-                std::vector<std::vector<double>> quadFaceFunctionsAllOrientations(numberOfGaussPoints,
-                                                                                  std::vector<double>(quadfSize * 8, 0));
-                std::vector<std::vector<double>> triFaceFunctionsAllOrientations(numberOfGaussPoints,
-                                                                                 std::vector<double>(trifSize * 6, 0));
-                if(fSize != 0) {
-                    for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                        const double u = localCoord[3 * q];
-                        const double v = localCoord[3 * q + 1];
-                        const double w = localCoord[3 * q + 2];
-#if defined(HAVE_HIERARCHICAL_BASIS)
-                        basis->addAllOrientedFaceFunctions(u, v, w, fTable[q],
-                                                           quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q], fsName);
-#else
-                        basis->addAllOrientedFaceFunctions(u, v, w, fTable[q],
-                                                           quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q]);
-#endif
-                    }
-                }
-                
-                std::vector<std::vector<double>> eTableCopy(numberOfGaussPoints, std::vector<double>(eSize, 0)); // use eTableCopy to orient the edges
-                std::vector<std::vector<double>> fTableCopy(numberOfGaussPoints, std::vector<double>(fSize, 0)); // use fTableCopy to orient the faces
-                
-                unsigned int iOrientationIndex = 0;
-                for(unsigned int iOrientation = 0; iOrientation < maxOrientation; ++iOrientation) {
-                    // To obtain "iOrientationIndex" begin :
-                    if(wantedOrientations.size() != 0) {
-                        auto it = std::find(wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
-                        if(it != wantedOrientations.end()) {
-                            iOrientationIndex = &(*it) - &wantedOrientations[0];
-                        }
-                        else {
-                            updateElementVerticesWithNextPermutation(vertices, element);
-                            continue;
-                        }
-                    }
-                    else {
-                        iOrientationIndex = iOrientation;
-                    }
-                    
-                    if(eSize != 0) {
-                        for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
-                            MEdge edge = element->getEdge(iEdge);
-                            MEdge edgeSolin = element->getEdgeSolin(iEdge);
-                            const int orientationFlag = (edge.getMinVertex() != edgeSolin.getVertex(0) ? -1 : 1);
-                            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                                basis->orientEdge(orientationFlag, iEdge, eTableCopy[q], eTable[q], eTableNegativeFlag[q]);
-                            }
-                        }
-                    }
-                    
-                    if(fSize != 0) {
-                        for(int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
-                            MFace face = element->getFaceSolin(iFace);
-                            std::vector<int> faceOrientationFlag(3);
-                            face.getOrientationFlagForFace(faceOrientationFlag);
-                            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                                basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1], faceOrientationFlag[2], iFace, quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q], fTableCopy[q]);
-                            }
-                        }
-                    }
-                    
-                    const std::size_t offsetOrientation = iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement;
-                    for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                        const std::size_t offsetGP = q * numFunctionsPerElement;
-                        for(unsigned int i = 0; i < vSize; ++i) {
-                            basisFunctions[offsetOrientation + offsetGP + i] = vTable[q][i];
-                        }
-                        unsigned int offset = vSize;
-                        for(unsigned int i = 0; i < eSize; ++i) {
-                            basisFunctions[offsetOrientation + offsetGP + offset + i] = eTableCopy[q][i];
-                        }
-                        offset += eSize;
-                        for(unsigned int i = 0; i < fSize; ++i) {
-                            basisFunctions[offsetOrientation + offsetGP + offset + i] = fTableCopy[q][i];
-                        }
-                        offset += fSize;
-                        for(unsigned int i = 0; i < bSize; ++i) {
-                            basisFunctions[offsetOrientation + offsetGP + offset + i] = bTable[q][i];
-                        }
-                    }
-                    updateElementVerticesWithNextPermutation(vertices, element);
-                }
-                break;
-            }
-                
-            case 3: {
-                std::vector<std::vector<std::vector<double>>> vTable(numberOfGaussPoints, std::vector<std::vector<double>>(vSize, std::vector<double>(3, 0.))); // Vertex functions of one element
-                std::vector<std::vector<std::vector<double>>> eTable(numberOfGaussPoints, std::vector<std::vector<double>>(eSize, std::vector<double>(3, 0.))); // edge functions of one element
-                std::vector<std::vector<std::vector<double>>> fTable(numberOfGaussPoints, std::vector<std::vector<double>>(fSize, std::vector<double>(3, 0.))); // face functions of one element
-                std::vector<std::vector<std::vector<double>>> bTable(numberOfGaussPoints, std::vector<std::vector<double>>(bSize, std::vector<double>(3, 0.))); // bubble functions of one element
-                
-                for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                    const double u = localCoord[3 * q];
-                    const double v = localCoord[3 * q + 1];
-                    const double w = localCoord[3 * q + 2];
-                    basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q], bTable[q], fsName);
-                }
-                // compute only one time the value of the edge basis functions for each possible orientations
-                std::vector<std::vector<std::vector<double>>> eTableNegativeFlag(eTable);
-                if(eSize != 0) {
-                    for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                        basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag[q]);
-                    }
-                }
-                // compute only one time the value of the face basis functions for each possible orientations
-                std::vector<std::vector<std::vector<double>>> quadFaceFunctionsAllOrientations(numberOfGaussPoints, std::vector<std::vector<double>>(quadfSize * 8, std::vector<double>(3, 0.)));
-                std::vector<std::vector<std::vector<double>>> triFaceFunctionsAllOrientations(numberOfGaussPoints, std::vector<std::vector<double>>(trifSize * 6, std::vector<double>(3, 0.)));
-                if(fSize != 0) {
-                    for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                        const double u = localCoord[3 * q];
-                        const double v = localCoord[3 * q + 1];
-                        const double w = localCoord[3 * q + 2];
-                        basis->addAllOrientedFaceFunctions(u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q], fsName);
-                    }
-                }
-                
-                std::vector<std::vector<std::vector<double>>> eTableCopy(numberOfGaussPoints, std::vector<std::vector<double>>(eSize, std::vector<double>(3, 0.))); // use eTableCopy to orient the edges
-                std::vector<std::vector<std::vector<double>>> fTableCopy(numberOfGaussPoints, std::vector<std::vector<double>>(fSize, std::vector<double>(3, 0.))); // use fTableCopy to orient the faces
-                
-                unsigned int iOrientationIndex = 0;
-                for(unsigned int iOrientation = 0; iOrientation < maxOrientation; ++iOrientation) {
-                    if(wantedOrientations.size() != 0) {
-                        auto it = std::find(wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
-                        if(it != wantedOrientations.end()) {
-                            iOrientationIndex = &(*it) - &wantedOrientations[0];
-                        }
-                        else {
-                            updateElementVerticesWithNextPermutation(vertices, element);
-                            continue;
-                        }
-                    }
-                    else {
-                        iOrientationIndex = iOrientation;
-                    }
-                    
-                    if(eSize != 0) {
-                        for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
-                            MEdge edge = element->getEdge(iEdge);
-                            MEdge edgeSolin = element->getEdgeSolin(iEdge);
-                            const int orientationFlag = (edge.getMinVertex() != edgeSolin.getVertex(0) ? -1 : 1);
-                            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                                basis->orientEdge(orientationFlag, iEdge, eTableCopy[q], eTable[q], eTableNegativeFlag[q]);
-                            }
-                        }
-                    }
-                    
-                    if(fSize != 0) {
-                        for(int iFace = 0; iFace < basis->getNumTriFace() + basis->getNumQuadFace(); ++iFace) {
-                            MFace face = element->getFaceSolin(iFace);
-                            std::vector<int> faceOrientationFlag(3);
-                            face.getOrientationFlagForFace(faceOrientationFlag);
-                            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                                basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1], faceOrientationFlag[2], iFace, quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q], fTableCopy[q]);
-                            }
-                        }
-                    }
-                    
-                    const std::size_t offsetOrientation = iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement * 3;
-                    for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
-                        const std::size_t offsetGP = q * numFunctionsPerElement * 3;
-                        for(unsigned int i = 0; i < vSize; ++i) {
-                            basisFunctions[offsetOrientation + offsetGP + 3 * i] = vTable[q][i][0];
-                            basisFunctions[offsetOrientation + offsetGP + 3 * i + 1] = vTable[q][i][1];
-                            basisFunctions[offsetOrientation + offsetGP + 3 * i + 2] = vTable[q][i][2];
-                        }
-                        unsigned int offset = 3 * vSize;
-                        for(unsigned int i = 0; i < eSize; ++i) {
-                            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i] = eTableCopy[q][i][0];
-                            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 1] = eTableCopy[q][i][1];
-                            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 2] = eTableCopy[q][i][2];
-                        }
-                        offset += 3 * eSize;
-                        for(unsigned int i = 0; i < fSize; ++i) {
-                            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i] = fTableCopy[q][i][0];
-                            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 1] = fTableCopy[q][i][1];
-                            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 2] = fTableCopy[q][i][2];
-                        }
-                        offset += 3 * fSize;
-                        for(unsigned int i = 0; i < bSize; ++i) {
-                            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i] = bTable[q][i][0];
-                            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 1] = bTable[q][i][1];
-                            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 2] = bTable[q][i][2];
-                        }
-                    }
-                    updateElementVerticesWithNextPermutation(vertices, element);
-                }
-                break;
-            }
-        }
-        for(unsigned int i = 0; i < numVertices; ++i) {
-            delete vertices[i];
-        }
-        delete element;
-        delete basis;
-    }
+static void
+_validateWantedOrientations(const std::vector<int> &wantedOrientations,
+                            int maxOrientation, const std::string &fsName,
+                            const int familyType)
+{
+  if(wantedOrientations.empty()) { return; }
+  if(wantedOrientations.size() > static_cast<size_t>(maxOrientation)) {
+    Msg::Error("Asking for more orientation that there exist (max allowed: %d)",
+               maxOrientation);
     return;
+  }
+  std::unordered_set<int> uniqueOrientations;
+  for(int ori : wantedOrientations) {
+    if(ori < 0 || ori >= maxOrientation) {
+      Msg::Error(
+        "Orientation %d does not exist for function space named '%s' on %s",
+        ori, fsName.c_str(),
+        ElementType::nameOfParentType(familyType, true).c_str());
+      return;
+    }
+
+    if(!uniqueOrientations.insert(ori).second) {
+      Msg::Error("Duplicate wanted orientation %d found", ori);
+      return;
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getBasisFunctions(
+  const int elementType, const std::vector<double> &localCoord,
+  const std::string &functionSpaceType, int &numComponents,
+  std::vector<double> &basisFunctions, int &numOrientations,
+  const std::vector<int> &wantedOrientations)
+{
+  if(!_checkInit()) { return; }
+  numComponents = 0;
+  basisFunctions.clear();
+  std::string fsName = ""; // Name of function Space
+  int fsOrder = 0; // Order of function Space
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, fsOrder,
+                            numComponents)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    return;
+  }
+
+  const std::size_t numberOfGaussPoints = localCoord.size() / 3;
+  const int familyType =
+    ElementType::getParentType(elementType); // TYPE_PNT ....
+
+  if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
+    // Check if there is no error in wantedOrientations
+    const std::size_t maxOrientation = 1;
+    _validateWantedOrientations(wantedOrientations, maxOrientation, fsName,
+                                familyType);
+
+    const nodalBasis *basis =
+      nullptr; // class nodalBasis : numOrientations = maxOrientation = 1;
+
+    if(numComponents) {
+      if(fsOrder == -1) { // isoparametric
+        basis = BasisFactory::getNodalBasis(elementType);
+      }
+      else {
+        int newType = ElementType::getType(familyType, fsOrder, false);
+        basis = BasisFactory::getNodalBasis(newType);
+      }
+    }
+    if(basis) {
+      const std::size_t n = basis->getNumShapeFunctions();
+      basisFunctions.resize(n * numComponents * numberOfGaussPoints, 0.);
+      double s[1256], ds[1256][3];
+      for(std::size_t i = 0; i < numberOfGaussPoints; i++) {
+        double u = localCoord[i * 3];
+        double v = localCoord[i * 3 + 1];
+        double w = localCoord[i * 3 + 2];
+        switch(numComponents) {
+        case 1:
+          basis->f(u, v, w, s);
+          for(std::size_t j = 0; j < n; j++) {
+            basisFunctions[n * i + j] = s[j];
+          }
+          break;
+        case 3:
+          basis->df(u, v, w, ds);
+          for(std::size_t j = 0; j < n; j++) {
+            basisFunctions[n * 3 * i + 3 * j] = ds[j][0];
+            basisFunctions[n * 3 * i + 3 * j + 1] = ds[j][1];
+            basisFunctions[n * 3 * i + 3 * j + 2] = ds[j][2];
+          }
+          break;
+        }
+      }
+    }
+    numOrientations = maxOrientation;
+  }
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
+
+  else { // Hierarchical type
+
+    HierarchicalBasis *basis =
+      CreateHierarchicalBasis(fsName, familyType, fsOrder);
+    if(!basis) {
+      Msg::Error("Unable to create hierarchical basis for function space '%s' "
+                 "with element type %d",
+                 fsName.c_str(), familyType);
+      return;
+    }
+    const std::size_t vSize = basis->getNumVertexFunction();
+    const std::size_t bSize = basis->getNumBubbleFunction();
+    const std::size_t eSize = basis->getNumEdgeFunction();
+    const std::size_t quadfSize = basis->getNumQuadFaceFunction();
+    const std::size_t trifSize = basis->getNumTriFaceFunction();
+    const std::size_t fSize = trifSize + quadfSize;
+    const std::size_t maxOrientation = basis->getNumberOfOrientations();
+    numOrientations = maxOrientation;
+    const std::size_t numFunctionsPerElement = vSize + bSize + eSize + fSize;
+    const unsigned int numVertices =
+      ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
+
+    basisFunctions.resize(
+      (wantedOrientations.size() == 0 ? maxOrientation :
+                                        wantedOrientations.size()) *
+      numberOfGaussPoints * numFunctionsPerElement * numComponents);
+
+    // Check if there is no error in wantedOrientations
+    _validateWantedOrientations(wantedOrientations, maxOrientation, fsName,
+                                familyType);
+
+    std::vector<MVertex *> vertices(numVertices);
+    for(unsigned int i = 0; i < numVertices; ++i) {
+      vertices[i] = new MVertex(0., 0., 0., nullptr, i + 1);
+    }
+    MElement *element = nullptr;
+    switch(familyType) {
+    case TYPE_HEX: element = new MHexahedron(vertices); break;
+    case TYPE_PRI: element = new MPrism(vertices); break;
+    case TYPE_TET: element = new MTetrahedron(vertices); break;
+    case TYPE_QUA: element = new MQuadrangle(vertices); break;
+    case TYPE_TRI: element = new MTriangle(vertices); break;
+    case TYPE_LIN: element = new MLine(vertices); break;
+    case TYPE_PNT: element = new MPoint(vertices); break;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
+      return;
+    }
+
+    switch(numComponents) {
+    case 1: {
+      // Vertex functions of one element
+      std::vector<std::vector<double>> vTable(numberOfGaussPoints,
+                                              std::vector<double>(vSize));
+      // edge functions of one element
+      std::vector<std::vector<double>> eTable(numberOfGaussPoints,
+                                              std::vector<double>(eSize));
+      // face functions of one element
+      std::vector<std::vector<double>> fTable(numberOfGaussPoints,
+                                              std::vector<double>(fSize));
+      // bubble functions of one element
+      std::vector<std::vector<double>> bTable(numberOfGaussPoints,
+                                              std::vector<double>(bSize));
+
+      for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+        const double u = localCoord[3 * q];
+        const double v = localCoord[3 * q + 1];
+        const double w = localCoord[3 * q + 2];
+        basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q],
+                             bTable[q], fsName);
+      }
+      // compute only one time the value of the edge basis functions for each
+      // possible orientations
+      std::vector<std::vector<double>> eTableNegativeFlag(eTable);
+      if(eSize != 0) {
+        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+          basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag[q]);
+        }
+      }
+
+      // compute only one time the value of the face basis functions for each
+      // possible orientations
+      std::vector<std::vector<double>> quadFaceFunctionsAllOrientations(
+        numberOfGaussPoints, std::vector<double>(quadfSize * 8, 0));
+      std::vector<std::vector<double>> triFaceFunctionsAllOrientations(
+        numberOfGaussPoints, std::vector<double>(trifSize * 6, 0));
+      if(fSize != 0) {
+        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+          const double u = localCoord[3 * q];
+          const double v = localCoord[3 * q + 1];
+          const double w = localCoord[3 * q + 2];
+          basis->addAllOrientedFaceFunctions(
+            u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q],
+            triFaceFunctionsAllOrientations[q], fsName);
+        }
+      }
+
+      std::vector<std::vector<double>> eTableCopy(
+        numberOfGaussPoints,
+        std::vector<double>(eSize, 0)); // use eTableCopy to orient the edges
+      std::vector<std::vector<double>> fTableCopy(
+        numberOfGaussPoints,
+        std::vector<double>(fSize, 0)); // use fTableCopy to orient the faces
+
+      unsigned int iOrientationIndex = 0;
+      for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
+          ++iOrientation) {
+        // To obtain "iOrientationIndex" begin :
+        if(wantedOrientations.size() != 0) {
+          auto it = std::find(wantedOrientations.begin(),
+                              wantedOrientations.end(), iOrientation);
+          if(it != wantedOrientations.end()) {
+            iOrientationIndex = &(*it) - &wantedOrientations[0];
+          }
+          else {
+            updateElementVerticesWithNextPermutation(vertices, element);
+            continue;
+          }
+        }
+        else {
+          iOrientationIndex = iOrientation;
+        }
+
+        if(eSize != 0) {
+          for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
+            MEdge edge = element->getEdge(iEdge);
+            MEdge edgeSolin = element->getEdgeSolin(iEdge);
+            const int orientationFlag =
+              (edge.getMinVertex() != edgeSolin.getVertex(0) ? -1 : 1);
+            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+              basis->orientEdge(orientationFlag, iEdge, eTableCopy[q],
+                                eTable[q], eTableNegativeFlag[q]);
+            }
+          }
+        }
+
+        if(fSize != 0) {
+          for(int iFace = 0;
+              iFace < basis->getNumTriFace() + basis->getNumQuadFace();
+              ++iFace) {
+            MFace face = element->getFaceSolin(iFace);
+            std::vector<int> faceOrientationFlag(3);
+            face.getOrientationFlagForFace(faceOrientationFlag);
+            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1],
+                                faceOrientationFlag[2], iFace,
+                                quadFaceFunctionsAllOrientations[q],
+                                triFaceFunctionsAllOrientations[q],
+                                fTableCopy[q]);
+            }
+          }
+        }
+
+        const std::size_t offsetOrientation =
+          iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement;
+        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+          const std::size_t offsetGP = q * numFunctionsPerElement;
+          for(unsigned int i = 0; i < vSize; ++i) {
+            basisFunctions[offsetOrientation + offsetGP + i] = vTable[q][i];
+          }
+          unsigned int offset = vSize;
+          for(unsigned int i = 0; i < eSize; ++i) {
+            basisFunctions[offsetOrientation + offsetGP + offset + i] =
+              eTableCopy[q][i];
+          }
+          offset += eSize;
+          for(unsigned int i = 0; i < fSize; ++i) {
+            basisFunctions[offsetOrientation + offsetGP + offset + i] =
+              fTableCopy[q][i];
+          }
+          offset += fSize;
+          for(unsigned int i = 0; i < bSize; ++i) {
+            basisFunctions[offsetOrientation + offsetGP + offset + i] =
+              bTable[q][i];
+          }
+        }
+        updateElementVerticesWithNextPermutation(vertices, element);
+      }
+      break;
+    }
+
+    case 3: {
+      std::vector<std::vector<std::vector<double>>> vTable(
+        numberOfGaussPoints,
+        std::vector<std::vector<double>>(
+          vSize,
+          std::vector<double>(3, 0.))); // Vertex functions of one element
+      std::vector<std::vector<std::vector<double>>> eTable(
+        numberOfGaussPoints,
+        std::vector<std::vector<double>>(
+          eSize, std::vector<double>(3, 0.))); // edge functions of one element
+      std::vector<std::vector<std::vector<double>>> fTable(
+        numberOfGaussPoints,
+        std::vector<std::vector<double>>(
+          fSize, std::vector<double>(3, 0.))); // face functions of one element
+      std::vector<std::vector<std::vector<double>>> bTable(
+        numberOfGaussPoints,
+        std::vector<std::vector<double>>(
+          bSize,
+          std::vector<double>(3, 0.))); // bubble functions of one element
+
+      for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+        const double u = localCoord[3 * q];
+        const double v = localCoord[3 * q + 1];
+        const double w = localCoord[3 * q + 2];
+        basis->generateBasis(u, v, w, vTable[q], eTable[q], fTable[q],
+                             bTable[q], fsName);
+      }
+      // compute only one time the value of the edge basis functions for each
+      // possible orientations
+      std::vector<std::vector<std::vector<double>>> eTableNegativeFlag(eTable);
+      if(eSize != 0) {
+        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+          basis->orientEdgeFunctionsForNegativeFlag(eTableNegativeFlag[q]);
+        }
+      }
+      // compute only one time the value of the face basis functions for each
+      // possible orientations
+      std::vector<std::vector<std::vector<double>>>
+        quadFaceFunctionsAllOrientations(
+          numberOfGaussPoints, std::vector<std::vector<double>>(
+                                 quadfSize * 8, std::vector<double>(3, 0.)));
+      std::vector<std::vector<std::vector<double>>>
+        triFaceFunctionsAllOrientations(
+          numberOfGaussPoints, std::vector<std::vector<double>>(
+                                 trifSize * 6, std::vector<double>(3, 0.)));
+      if(fSize != 0) {
+        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+          const double u = localCoord[3 * q];
+          const double v = localCoord[3 * q + 1];
+          const double w = localCoord[3 * q + 2];
+          basis->addAllOrientedFaceFunctions(
+            u, v, w, fTable[q], quadFaceFunctionsAllOrientations[q],
+            triFaceFunctionsAllOrientations[q], fsName);
+        }
+      }
+
+      std::vector<std::vector<std::vector<double>>> eTableCopy(
+        numberOfGaussPoints,
+        std::vector<std::vector<double>>(
+          eSize,
+          std::vector<double>(3, 0.))); // use eTableCopy to orient the edges
+      std::vector<std::vector<std::vector<double>>> fTableCopy(
+        numberOfGaussPoints,
+        std::vector<std::vector<double>>(
+          fSize,
+          std::vector<double>(3, 0.))); // use fTableCopy to orient the faces
+
+      unsigned int iOrientationIndex = 0;
+      for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
+          ++iOrientation) {
+        if(wantedOrientations.size() != 0) {
+          auto it = std::find(wantedOrientations.begin(),
+                              wantedOrientations.end(), iOrientation);
+          if(it != wantedOrientations.end()) {
+            iOrientationIndex = &(*it) - &wantedOrientations[0];
+          }
+          else {
+            updateElementVerticesWithNextPermutation(vertices, element);
+            continue;
+          }
+        }
+        else {
+          iOrientationIndex = iOrientation;
+        }
+
+        if(eSize != 0) {
+          for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
+            MEdge edge = element->getEdge(iEdge);
+            MEdge edgeSolin = element->getEdgeSolin(iEdge);
+            const int orientationFlag =
+              (edge.getMinVertex() != edgeSolin.getVertex(0) ? -1 : 1);
+            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+              basis->orientEdge(orientationFlag, iEdge, eTableCopy[q],
+                                eTable[q], eTableNegativeFlag[q]);
+            }
+          }
+        }
+
+        if(fSize != 0) {
+          for(int iFace = 0;
+              iFace < basis->getNumTriFace() + basis->getNumQuadFace();
+              ++iFace) {
+            MFace face = element->getFaceSolin(iFace);
+            std::vector<int> faceOrientationFlag(3);
+            face.getOrientationFlagForFace(faceOrientationFlag);
+            for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+              basis->orientFace(faceOrientationFlag[0], faceOrientationFlag[1],
+                                faceOrientationFlag[2], iFace,
+                                quadFaceFunctionsAllOrientations[q],
+                                triFaceFunctionsAllOrientations[q],
+                                fTableCopy[q]);
+            }
+          }
+        }
+
+        const std::size_t offsetOrientation =
+          iOrientationIndex * numberOfGaussPoints * numFunctionsPerElement * 3;
+        for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
+          const std::size_t offsetGP = q * numFunctionsPerElement * 3;
+          for(unsigned int i = 0; i < vSize; ++i) {
+            basisFunctions[offsetOrientation + offsetGP + 3 * i] =
+              vTable[q][i][0];
+            basisFunctions[offsetOrientation + offsetGP + 3 * i + 1] =
+              vTable[q][i][1];
+            basisFunctions[offsetOrientation + offsetGP + 3 * i + 2] =
+              vTable[q][i][2];
+          }
+          unsigned int offset = 3 * vSize;
+          for(unsigned int i = 0; i < eSize; ++i) {
+            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i] =
+              eTableCopy[q][i][0];
+            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 1] =
+              eTableCopy[q][i][1];
+            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 2] =
+              eTableCopy[q][i][2];
+          }
+          offset += 3 * eSize;
+          for(unsigned int i = 0; i < fSize; ++i) {
+            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i] =
+              fTableCopy[q][i][0];
+            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 1] =
+              fTableCopy[q][i][1];
+            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 2] =
+              fTableCopy[q][i][2];
+          }
+          offset += 3 * fSize;
+          for(unsigned int i = 0; i < bSize; ++i) {
+            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i] =
+              bTable[q][i][0];
+            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 1] =
+              bTable[q][i][1];
+            basisFunctions[offsetOrientation + offsetGP + offset + 3 * i + 2] =
+              bTable[q][i][2];
+          }
+        }
+        updateElementVerticesWithNextPermutation(vertices, element);
+      }
+      break;
+    }
+    }
+    for(unsigned int i = 0; i < numVertices; ++i) { delete vertices[i]; }
+    delete element;
+    delete basis;
+  }
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
@@ -4152,8 +4212,7 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
 
-// TODO #if defined(HAVE_HIERARCHICAL_BASIS)
-
+#if defined(HAVE_HIERARCHICAL_BASIS)
   HierarchicalBasis *basis(nullptr);
   if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
     switch(familyType) {
@@ -4210,8 +4269,10 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
       return;
     }
   }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  else
+#endif
+    if(fsName == "IsoParametric" || fsName == "Lagrange" ||
+       fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *nodalB(nullptr);
     if(order == -1) { // isoparametric
       nodalB = BasisFactory::getNodalBasis(elementType);
@@ -4261,14 +4322,7 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   int eSize = basis->getNumEdgeFunction();
   int quadFSize = basis->getNumQuadFaceFunction();
   int triFSize = basis->getNumTriFaceFunction();
-#else
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int quadFSize = basis->getnQuadFaceFunction();
-  int triFSize = basis->getnTriFaceFunction();
-#endif
-    int fSize = quadFSize + triFSize;
+  int fSize = quadFSize + triFSize;
   int numDofsPerElement = vSize + bSize + eSize + fSize;
   int numberQuadFaces = basis->getNumQuadFace();
   int numberTriFaces = basis->getNumTriFace();
@@ -4402,6 +4456,7 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
       }
     }
   }
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::getKeysForElement(
@@ -4425,9 +4480,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     Msg::Error("Unknown element %zu", elementTag);
     return;
   }
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
   int elementType = e->getTypeForMSH();
   int familyType = ElementType::getParentType(elementType);
-
   HierarchicalBasis *basis(nullptr);
   if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
     switch(familyType) {
@@ -4484,8 +4540,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       return;
     }
   }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  else
+#endif
+  if(fsName == "IsoParametric" || fsName == "Lagrange" ||
+     fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     typeKeys.reserve(e->getNumVertices());
     entityKeys.reserve(e->getNumVertices());
     if(returnCoord) { coord.reserve(3 * e->getNumVertices()); }
@@ -4511,13 +4569,6 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   int eSize = basis->getNumEdgeFunction();
   int quadFSize = basis->getNumQuadFaceFunction();
   int triFSize = basis->getNumTriFaceFunction();
-#else
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int quadFSize = basis->getnQuadFaceFunction();
-  int triFSize = basis->getnTriFaceFunction();
-#endif
   int fSize = quadFSize + triFSize;
   int numberQuadFaces = basis->getNumQuadFace();
   int numberTriFaces = basis->getNumTriFace();
@@ -4639,6 +4690,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       }
     }
   }
+#endif
 }
 
 GMSH_API int
@@ -4654,10 +4706,9 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return 0;
   }
+
+#if defined(HAVE_HIERARCHICAL_BASIS)
   int familyType = ElementType::getParentType(elementType);
-
-// TODO #if defined(HAVE_HIERARCHICAL_BASIS)
-
   if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
     HierarchicalBasis *basis(nullptr);
     switch(familyType) {
@@ -4687,19 +4738,11 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
                  fsName.c_str());
       return 0;
     }
-#if defined(HAVE_HIERARCHICAL_BASIS)
     int vSize = basis->getNumVertexFunction();
     int bSize = basis->getNumBubbleFunction();
     int eSize = basis->getNumEdgeFunction();
     int quadFSize = basis->getNumQuadFaceFunction();
     int triFSize = basis->getNumTriFaceFunction();
-#else
-    int vSize = basis->getnVertexFunction();
-    int bSize = basis->getnBubbleFunction();
-    int eSize = basis->getnEdgeFunction();
-    int quadFSize = basis->getnQuadFaceFunction();
-    int triFSize = basis->getnTriFaceFunction();
-#endif
     numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
     delete basis;
   }
@@ -4729,24 +4772,18 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
                  fsName.c_str());
       return 0;
     }
-#if defined(HAVE_HIERARCHICAL_BASIS)
     int vSize = basis->getNumVertexFunction();
     int bSize = basis->getNumBubbleFunction();
     int eSize = basis->getNumEdgeFunction();
     int quadFSize = basis->getNumQuadFaceFunction();
     int triFSize = basis->getNumTriFaceFunction();
-#else
-    int vSize = basis->getnVertexFunction();
-    int bSize = basis->getnBubbleFunction();
-    int eSize = basis->getnEdgeFunction();
-    int quadFSize = basis->getnQuadFaceFunction();
-    int triFSize = basis->getnTriFaceFunction();
-#endif
     numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
     delete basis;
   }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  else
+#endif
+    if(fsName == "IsoParametric" || fsName == "Lagrange" ||
+       fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *basis(nullptr);
     if(basisOrder == -1) { // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
@@ -4788,7 +4825,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
     return;
   }
 
-// TODO #if defined(HAVE_HIERARCHICAL_BASIS)
+#if defined(HAVE_HIERARCHICAL_BASIS)
 
   HierarchicalBasis *basis(nullptr);
   int familyType = ElementType::getParentType(elementType);
@@ -4847,8 +4884,10 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
       return;
     }
   }
-  else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
-          fsName == "GradIsoParametric" || fsName == "GradLagrange") {
+  else
+#endif
+    if(fsName == "IsoParametric" || fsName == "Lagrange" ||
+       fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *basis(nullptr);
     if(basisOrder == -1) { // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
@@ -4888,13 +4927,6 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   int eSize = basis->getNumEdgeFunction();
   int quadFSize = basis->getNumQuadFaceFunction();
   int triFSize = basis->getNumTriFaceFunction();
-#else
-  int vSize = basis->getnVertexFunction();
-  int bSize = basis->getnBubbleFunction();
-  int eSize = basis->getnEdgeFunction();
-  int quadFSize = basis->getnQuadFaceFunction();
-  int triFSize = basis->getnTriFaceFunction();
-#endif
   int numDofsPerElement = vSize + bSize + eSize + quadFSize + triFSize;
   std::vector<int> functionTypeInfo(numDofsPerElement);
   std::vector<int> orderInfo(numDofsPerElement);
@@ -4910,6 +4942,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
       infoKeys[const1 + j] = std::make_pair(functionTypeInfo[j], orderInfo[j]);
     }
   }
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::getBarycenters(
@@ -5107,7 +5140,6 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     }
   }
 }
-
 
 GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   const int elementType, const int faceType, std::vector<std::size_t> &nodeTags,
@@ -5887,15 +5919,14 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
 }
 
+#include "getPeriodicKeys.hpp"
 
 GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const int elementType, const std::string &functionSpaceType, const int tag,
   int &tagMaster, std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
   std::vector<std::size_t> &entityKeys,
-  std::vector<std::size_t> &entityKeysMaster, 
-  std::vector<double> &coord,
-  std::vector<double> &coordMaster, 
-  std::vector<int> &orientationSign,
+  std::vector<std::size_t> &entityKeysMaster, std::vector<double> &coord,
+  std::vector<double> &coordMaster, std::vector<int> &orientationSign,
   const bool returnCoord)
 {
   if(!_checkInit()) return;
@@ -5925,16 +5956,10 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
 
   tagMaster = ge->getMeshMaster()->tag();
 
-  getFullPeriodicKeys(ge,
-                      elementType,
-                      fsName,order, numComponents,
-                      tag,tagMaster,
-                      dim,
-                      typeKeys,typeKeysMaster,
-                      entityKeys,entityKeysMaster,
-                      coord,coordMaster, 
-                      orientationSign,
-                      returnCoord);
+  _getFullPeriodicKeys(ge, elementType, fsName, order, numComponents, tag,
+                       tagMaster, dim, typeKeys, typeKeysMaster, entityKeys,
+                       entityKeysMaster, coord, coordMaster, orientationSign,
+                       returnCoord);
 }
 
 GMSH_API void
@@ -6017,10 +6042,11 @@ GMSH_API void gmsh::model::mesh::importStl()
   }
 }
 
-GMSH_API void gmsh::model::mesh::classifySurfaces(const double angle,
-  std::vector<int> &oldSurfaceTags, std::vector<int> &newSurfaceTags,
-  const bool boundary, const bool forReparametrization,
-  const double curveAngle, const bool exportDiscrete)
+GMSH_API void gmsh::model::mesh::classifySurfaces(
+  const double angle, std::vector<int> &oldSurfaceTags,
+  std::vector<int> &newSurfaceTags, const bool boundary,
+  const bool forReparametrization, const double curveAngle,
+  const bool exportDiscrete)
 {
   if(!_checkInit()) return;
   std::map<int, std::vector<int>> splitMap;
@@ -6656,9 +6682,7 @@ GMSH_API void gmsh::model::geo::mirror(const vectorpair &dimTags,
 GMSH_API void gmsh::model::geo::symmetrize(const vectorpair &dimTags,
                                            const double a, const double b,
                                            const double c, const double d)
-{
-  gmsh::model::geo::mirror(dimTags, a, b, c, d);
-}
+{ gmsh::model::geo::mirror(dimTags, a, b, c, d); }
 
 GMSH_API void gmsh::model::geo::copy(const vectorpair &dimTags,
                                      vectorpair &outDimTags)
@@ -7473,9 +7497,7 @@ GMSH_API void gmsh::model::occ::mirror(const vectorpair &dimTags,
 GMSH_API void gmsh::model::occ::symmetrize(const vectorpair &dimTags,
                                            const double a, const double b,
                                            const double c, const double d)
-{
-  gmsh::model::occ::mirror(dimTags, a, b, c, d);
-}
+{ gmsh::model::occ::mirror(dimTags, a, b, c, d); }
 
 GMSH_API void
 gmsh::model::occ::affineTransform(const vectorpair &dimTags,
@@ -8751,8 +8773,7 @@ GMSH_API void gmsh::algorithm::refineTetrahedra(
   const std::vector<std::size_t> &tetraIn, std::vector<double> &steiner,
   std::vector<std::size_t> &tetraOut)
 {
-  if(!_checkInit())
-    return;
+  if(!_checkInit()) return;
 
 #if defined(HAVE_MESH)
   refineTetrahedraHxt(coord, sizeAtNode, tetraIn, steiner, tetraOut);
