@@ -120,7 +120,7 @@ void CTX::init()
 
 CTX *CTX::_instance = nullptr;
 
-CTX *CTX::instance()
+CTX *CTX::_create()
 {
   if(!_instance) _instance = new CTX();
   return _instance;
