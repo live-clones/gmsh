@@ -34,7 +34,7 @@ GEntity::~GEntity()
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _meshMaster(this), _visible(1), _selection(0),
     _onlySomeElementsVisible(1), _obb(nullptr), va_lines(nullptr),
-    va_triangles(nullptr), va_clip_lines(nullptr),
+    va_triangles(nullptr), va_pick_triangles(nullptr), va_clip_lines(nullptr),
     va_clip_triangles(nullptr)
 {
   // default color when none is explicitly specified - don't change this, as it
@@ -49,6 +49,8 @@ void GEntity::deleteVertexArrays()
   va_lines = nullptr;
   if(va_triangles) delete va_triangles;
   va_triangles = nullptr;
+  if(va_pick_triangles) delete va_pick_triangles;
+  va_pick_triangles = nullptr;
   deleteClipVertexArrays();
 }
 

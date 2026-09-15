@@ -673,6 +673,25 @@ public:
   }
 };
 
+void GModel::fillPickVertexArray(GFace *f)
+{
+  if(f->va_pick_triangles) return;
+  int num = (int)(f->triangles.size() + 2 * f->quadrangles.size() +
+                  2 * f->polygons.size());
+  f->va_pick_triangles = new VertexArray(3, num + 100);
+  // the edges are not wanted: nothing goes in this one
+  VertexArray lines(2, 100);
+  if(CTX::instance()->mesh.triangles)
+    addElementsInArrays(f, &lines, f->va_pick_triangles, f->triangles, false,
+                        true);
+  if(CTX::instance()->mesh.quadrangles)
+    addElementsInArrays(f, &lines, f->va_pick_triangles, f->quadrangles,
+                        false, true);
+  addElementsInArrays(f, &lines, f->va_pick_triangles, f->polygons, false,
+                      true);
+  f->va_pick_triangles->finalize();
+}
+
 class initMeshGRegion {
 private:
   bool _curved;
