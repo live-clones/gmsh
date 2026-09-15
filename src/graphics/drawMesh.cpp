@@ -650,9 +650,11 @@ public:
     drawArrays(_ctx, f, f->va_triangles, GL_TRIANGLES,
                CTX::instance()->mesh.light);
 
-    // a picking pass draws the faces even when only the edges are shown, so
-    // that the surface is picked anywhere on its mesh
-    if(select && !CTX::instance()->mesh.surfaceFaces) {
+    // a picking pass draws the faces when only the edges are shown, so that
+    // the surface is picked anywhere on its mesh - and not when nothing of
+    // it is shown, which must pick nothing
+    if(select && CTX::instance()->mesh.surfaceEdges &&
+       !CTX::instance()->mesh.surfaceFaces) {
       f->model()->fillPickVertexArray(f);
       drawArrays(_ctx, f, f->va_pick_triangles, GL_TRIANGLES, false);
     }
