@@ -506,22 +506,7 @@ void openglWindow::draw()
 
 }
 
-void openglWindow::_cameraMatrices()
-{
-  Camera *cam = &(_ctx->camera);
-  if(!cam->on) cam->init();
-  cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
-  double frustum[16], jitter[16], proj[16];
-  glMatrix::frustum(cam->glFleft, cam->glFright, cam->glFbottom, cam->glFtop,
-                    cam->glFnear, cam->glFfar * cam->Lc, frustum);
-  _ctx->studioJitter(jitter);
-  glMatrix::multiply(jitter, frustum, proj);
-  gmshMatrixMode(GMSH_PROJECTION);
-  gmshLoadMatrix(proj);
-  gmshMatrixMode(GMSH_MODELVIEW);
-  cameraView(cam, 0., 0., 0., _frameView);
-  gmshLoadMatrix(_frameView);
-}
+void openglWindow::_cameraMatrices() { _ctx->initCameraMatrices(_frameView); }
 
 // The accumulation of the studio shading: after a frame, while the view is
 // still, the timer asks for more frames with the light, the dome and the
