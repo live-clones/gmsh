@@ -3,16 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// The 3D scene of the Dear ImGui interface: what draws the model, and what one
-// picks in it.
-//
-// It is the whole of what is left outside src/common/Gui.cpp, and it is the
-// only thing either interface still answers for itself. GuiScene.h says why:
-// every one of these speaks Gmsh -- picking answers with model entities, the
-// capture with a pixel buffer, the draw context is the drawing itself -- so
-// none of it belongs in the toolkit contract of src/gui/Backend.h. It is a
-// chantier of its own, to be rewritten rather than adapted, and until then it
-// keeps the shape it has always had.
+// The 3D scene of the Dear ImGui interface: what draws the model, and
+// what one picks in it. See GuiScene.h.
 
 #include "GmshConfig.h"
 
@@ -134,7 +126,7 @@ namespace ImGuiScene {
 
   void abortSelection()
   {
-    if(!Gui::available()) return;
+    if(!Gui::instance().available()) return;
     sceneView *p = appWindow::instance()->currentPane();
     if(p) {
       p->quitSelection = 1;
@@ -144,7 +136,7 @@ namespace ImGuiScene {
 
   void setAddPointMode(bool on)
   {
-    if(!Gui::available()) return;
+    if(!Gui::instance().available()) return;
     appWindow *app = appWindow::instance();
     for(int i = 0; i < app->numPanes(); i++)
       if(app->pane(i)) app->pane(i)->addPointMode = on;
@@ -152,7 +144,7 @@ namespace ImGuiScene {
 
   void sceneSettingChanged(const std::string &what)
   {
-    if(!Gui::available()) return;
+    if(!Gui::instance().available()) return;
     if(what == "background_image") {
       appWindow *app = appWindow::instance();
       for(int i = 0; i < app->numPanes(); i++)
@@ -166,24 +158,24 @@ namespace ImGuiScene {
 
   drawContext *getCurrentDrawContext()
   {
-    if(!Gui::available()) return nullptr;
+    if(!Gui::instance().available()) return nullptr;
     return appWindow::instance()->currentDrawContext();
   }
 
   void getCurrentPixelSize(int &width, int &height)
   {
     width = height = 0;
-    if(Gui::available()) appWindow::instance()->currentPixelSize(width, height);
+    if(Gui::instance().available()) appWindow::instance()->currentPixelSize(width, height);
   }
 
   void setCurrentOpenglWindow(int which)
   {
-    if(Gui::available()) appWindow::instance()->setCurrentPane(which);
+    if(Gui::instance().available()) appWindow::instance()->setCurrentPane(which);
   }
 
   void showAllInEveryWindow()
   {
-    if(!Gui::available()) return;
+    if(!Gui::instance().available()) return;
     for(int i = 0; i < appWindow::instance()->numPanes(); i++)
       if(sceneView *pane = appWindow::instance()->pane(i))
         if(drawContext *ctx = pane->getDrawContext()) ctx->showAll();
@@ -191,7 +183,7 @@ namespace ImGuiScene {
 
   void splitCurrentOpenglWindow(char how, double ratio)
   {
-    if(Gui::available()) appWindow::instance()->splitCurrentPane(how, ratio);
+    if(Gui::instance().available()) appWindow::instance()->splitCurrentPane(how, ratio);
   }
 
   void copyCurrentOpenglWindowToClipboard()
@@ -202,7 +194,7 @@ namespace ImGuiScene {
   PixelBuffer *createCompositePixelBuffer(unsigned int format,
                                           unsigned int type)
   {
-    if(!Gui::available()) return nullptr;
+    if(!Gui::instance().available()) return nullptr;
     appWindow *app = appWindow::instance();
 
     int width = 0, height = 0;
@@ -237,12 +229,12 @@ namespace ImGuiScene {
 
   void beginGraphicCapture(int &width, int &height, bool composite)
   {
-    if(Gui::available()) appWindow::instance()->beginCapture(width, height, composite);
+    if(Gui::instance().available()) appWindow::instance()->beginCapture(width, height, composite);
   }
 
   void endGraphicCapture()
   {
-    if(Gui::available()) appWindow::instance()->endCapture();
+    if(Gui::instance().available()) appWindow::instance()->endCapture();
   }
 
   // --- interactive selection
@@ -256,7 +248,7 @@ namespace ImGuiScene {
     _selectedElements.clear();
     _selectedPoints.clear();
     _selectedViews.clear();
-    if(!Gui::available()) return 'q';
+    if(!Gui::instance().available()) return 'q';
     sceneView *p = appWindow::instance()->currentPane();
     if(!p) return 'q';
     return p->selectEntity(type, _selectedVertices, _selectedEdges,
@@ -279,7 +271,7 @@ namespace {
   struct offering {
     offering()
     {
-      Gui::SceneOps ops;
+      GuiSceneOps ops;
 #define GUI_SCENE_TAKE(name, args, call) ops.name = name;
       GUI_SCENE_VOID(GUI_SCENE_TAKE)
 #undef GUI_SCENE_TAKE
@@ -316,9 +308,9 @@ void appWindow::orientPanes(const std::string &what, bool reverse, bool sync)
   Scene::orientViews(panes, what, reverse, sync);
 }
 
-// Stepping the animation from the frame loop rather than from a blocking loop
-// as the FLTK interface does: an immediate-mode frame is not re-entrant, and
-// there is a frame going by anyway. Whether it is time is animationTick()'s.
+// stepping the animation from the frame loop rather than from a blocking
+// loop: an immediate-mode frame is not re-entrant, and there is a frame
+// going by anyway; whether it is time is animationTick()'s
 void appWindow::_stepAnimation()
 {
   if(_animating) animationTick();

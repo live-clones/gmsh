@@ -2,7 +2,7 @@ Comparing the dialogs, four ways
 ================================
 
 Every interface of this tree is built from one declaration now
-(src/common/GuiDialogs.h). The question this answers is whether that
+(the dialogs of src/gui/Gui.h). The question this answers is whether that
 declaration still says what the windows it replaced said, and the only honest
 way to ask it is to photograph them all and look.
 

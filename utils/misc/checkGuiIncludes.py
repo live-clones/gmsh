@@ -6,8 +6,8 @@
 
 """What the interfaces may include, checked.
 
-src/gui/Backend.h states two rules and nothing enforces them: the vocabulary
-of src/gui includes nothing of Gmsh and names no toolkit, and an interface --
+src/ui/Backend.h states two rules and nothing enforces them: the vocabulary
+of src/ui includes nothing of Gmsh and names no toolkit, and an interface --
 src/fltk, src/imgui, src/browser -- builds widgets from that vocabulary and
 never reaches into Gmsh. This is the check. It reads the quoted #include
 lines of every file of those four directories and complains about any header
@@ -15,8 +15,8 @@ that is not on the list of what the directory may see.
 
 What a directory may see:
 
-  src/gui        its own headers, and nothing else;
-  src/browser    its own, src/gui, OS.h and GmshConfig.h;
+  src/ui        its own headers, and nothing else;
+  src/browser    its own, src/ui, OS.h and GmshConfig.h;
   src/imgui      the same, the Dear ImGui headers, and src/scene, which is
                  the contract of the 3D scene and a chantier of its own;
   src/fltk       the same as the browser (FLTK's own headers come in angle
@@ -56,51 +56,33 @@ SCENE = {
 # What still breaks the rule, and which part of the plan takes it away. The
 # plan is gmsh-imgui-plan.md, beside this tree; its sections are cited.
 TOLERATED = {
-    # --- Dear ImGui: the settings it reads off CTX and the calls it makes
-    # into the facade (1.3), and the export options it writes by hand (1.4c)
+    # --- Dear ImGui: the calls it makes into the facade (1.3)
     # what is left is the draw context of the scene, which this window
     # installs and hands to its panes: the scene, not the interface
     "src/imgui/appWindow.cpp": {"drawContext.h"},
     "src/imgui/contextPanels.cpp": {
         "Gui.h", "GuiActions.h", "GmshMessage.h", "GmshDefines.h",
         "drawContext.h"},
-    "src/imgui/exportDialog.cpp": {
-        "Gui.h", "GmshDefines.h", "Context.h", "Options.h"},
     # --- FLTK: an adapter over the interface that was, until 1.4 makes it a
     # backend like the two others
     "src/fltk/CreateFileFltk.cpp": {"drawContext.h", "PixelBuffer.h",
                                     "Context.h"},
     "src/fltk/FlGui.cpp": {
-        "Gui.h", "GuiDialogs.h", "GuiStatus.h", "GmshMessage.h", "GModel.h",
-        "OpenFile.h", "Options.h", "CommandLine.h", "Context.h",
-        "StringUtils.h", "PixelBuffer.h", "3M.h"},
+        "Gui.h", "GmshMessage.h", "OpenFile.h", "Options.h",
+        "Context.h", "PixelBuffer.h", "3M.h"},
     "src/fltk/FlGui.h": {"SPoint2.h"},
     "src/fltk/extraDialogs.cpp": {
         "GmshDefines.h", "OpenFile.h", "CreateFile.h", "Options.h",
         "drawContext.h", "GModel.h", "Context.h", "PView.h"},
+    # the file chooser: where to start, and the position it is remembered at
     "src/fltk/fileDialogs.cpp": {
-        "GmshMessage.h", "GmshDefines.h", "StringUtils.h", "GuiDialogs.h",
-        "CreateFile.h", "Options.h", "Context.h", "GModel.h", "PView.h",
-        "PViewOptions.h"},
+        "GmshMessage.h", "StringUtils.h", "Context.h", "GModel.h"},
     "src/fltk/graphicWindow.cpp": {"Gui.h", "3M.h"},
     "src/fltk/inputRange.h": {"Context.h"},
     "src/fltk/menuFltk.cpp": {"GuiMenus.h"},
     "src/fltk/menuFltk.h": {"GuiMenus.h"},
-    "src/fltk/onelabGroup.cpp": {
-        "GmshMessage.h", "onelab.h", "gmshLocalNetworkClient.h",
-        "GuiModules.h", "GuiActions.h", "GuiOnelab.h", "GuiMenus.h",
-        "GmshGlobal.h", "Context.h", "GModel.h", "GmshDefines.h", "Options.h",
-        "StringUtils.h", "onelabUtils.h", "OpenFile.h", "CreateFile.h",
-        "drawContext.h", "PView.h", "PViewOptions.h"},
-    "src/fltk/onelabGroup.h": {"onelab.h"},
-    "src/fltk/solverButton.cpp": {"GmshMessage.h", "Options.h", "GuiMenus.h",
-                                  "GuiActions.h"},
     "src/fltk/touchBar.mm": {"GuiActions.h", "drawContext.h", "Options.h",
                              "PView.h"},
-    "src/fltk/viewButton.cpp": {
-        "GuiDialogs.h", "drawContext.h", "Context.h", "GModel.h", "PView.h",
-        "PViewData.h", "PViewOptions.h", "Options.h", "OpenFile.h",
-        "GuiMenus.h", "GuiActions.h", "Field.h"},
 }
 
 INCLUDE = re.compile(r'\s*#\s*include\s+"([^"]+)"')
@@ -121,15 +103,15 @@ def sources_of(directory):
 
 
 def check(root):
-    gui = headers_of(os.path.join(root, "src", "gui"))
+    ui = headers_of(os.path.join(root, "src", "ui"))
     scene = headers_of(os.path.join(root, "src", "scene"))
     problems = []
-    for name in ("gui", "browser", "imgui", "fltk"):
+    for name in ("ui", "browser", "imgui", "fltk"):
         directory = os.path.join(root, "src", name)
         own = headers_of(directory)
         allowed = set(own)
-        if name != "gui":
-            allowed |= gui | ALWAYS
+        if name != "ui":
+            allowed |= ui | ALWAYS
         if name == "imgui":
             allowed |= scene
         for path in sources_of(directory):

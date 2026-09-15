@@ -1303,7 +1303,7 @@ namespace tetgenBR {
 #if defined(HAVE_POST)
         new PView("Boundary mesh issue", x, y, z, val);
 #if defined(HAVE_GUI)
-        if(Gui::available()) Gui::updateViews(true, true);
+        if(Gui::instance().available()) Gui::instance().updateViews(true, true);
         drawContext::global()->draw();
 #endif
 #endif

@@ -20,10 +20,8 @@
 #include "Backend.h"
 #include "menuFltk.h"
 
-// One button of the status bar, bound to what src/common/GuiStatus.h says it
-// is. It reads the description at every draw rather than being told, so a
-// button that says whether the mouse picks cannot be left showing the wrong
-// thing by an option changed from a script.
+// one button of the status bar, bound to what the description says it
+// is; it reads the description at every draw rather than being told
 class statusButtonFltk : public Fl_Button {
 public:
   Ui::BarButton what;
@@ -74,16 +72,16 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  // the buttons of the status bar, in the order src/common/GuiStatus.h
+  // the buttons of the status bar, in the order src/gui/GuiStatus.h
   // describes them
   std::vector<statusButtonFltk *> _butt;
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;
-  // What is about to be forgotten -- the width of a tree being folded away,
-  // the height of a console being hidden, where a tree stood as a window of
-  // its own -- is said to the host, which keeps it with the settings; it is
-  // read back from there when the thing is shown again.
+  // what is about to be forgotten -- the width of a tree being folded
+  // away, the height of a console being hidden, where a tree stood as a
+  // window of its own -- is said to the host, and read back from the
+  // settings when the thing is shown again
   void _forgetting(const Ui::Backend::Layout &what);
 
 public:
@@ -134,8 +132,7 @@ public:
   void showHideMessages();
   void addMessage(const char *msg);
   void clearMessages();
-  // what the browser holds, in the order it holds it: writing it to a file is
-  // done once, in messagesSave()
+  // what the browser holds, in the order it holds it
   void messageLines(std::vector<std::string> &lines);
   void copySelectedMessagesToClipboard();
   void setMessageFontSize(int size);
@@ -145,9 +142,7 @@ public:
 
 void file_quit_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
-// what Gui::orientViews() and Gui::setMouseSelection() come down to here: the
-// views the status bar acts upon, and the pointers it changes, are the
-// interface's
+// the views the status bar acts upon, and the pointers it changes
 void fltkOrientViews(const std::string &what, bool reverse, bool sync);
 void fltkSetMouseSelection(bool on);
 // the scenes of the window holding a view, or the view alone
@@ -155,9 +150,8 @@ std::vector<sceneView *> fltkViewsBeside(sceneViewFltk *view);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
 
-// The actions the shared menu description names: the file chooser and the
-// windows are the one part of a menu entry that is genuinely toolkit business.
-// false for an action it does not know
+// the actions the menu description names; false for an action it does
+// not know
 bool fltkWindowAction(const std::string &what);
 
 #endif

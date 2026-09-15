@@ -79,9 +79,8 @@ SHOTS = []
 # is the same colour.
 STACKED_POS = (260, 460)
 STACKED = {"arrow"}
-# every form the interface has, by the name it is made under -- see the
-# GMSH_DIALOG_FORM lines of src/common/GuiDialogs.cpp -- which is what Dear
-# ImGui keys its saved layout on
+# every dialog the interface has, by its name -- the Gui:: objects of
+# src/gui/Gui*.h -- which is what Dear ImGui keys its saved layout on
 FORMS = ["elementary", "physical", "transform", "mesh", "partition",
          "highOrder", "manipulator", "statistics", "clipping", "options",
          "gamepad", "visibility", "plugins", "fields", "classify",
@@ -206,7 +205,7 @@ shot("classify", "detected", [M], 18, 2, geo=model("facets.stl"),
 shot("partition", "", [M], 14, 2)
 # and the same dialog with its advanced half unfolded
 shot("partition", "advanced", [M], 14, 2,
-     press={"released": (368, 120), "fltk": (398, 104), "imgui": (352, 104)},
+     press={"released": (368, 120), "fltk": (398, 79), "imgui": (352, 82)},
      pressName=["Advanced"])
 
 # and the ones the Tools menu raises
@@ -981,6 +980,44 @@ def category_rows(img, want):
     return [starts[0] + step * (k + .5) for k in range(want)]
 
 
+def settle(take, seconds=3.0, gap=0.2):
+    """Wait until two pictures taken `gap` apart are the same: the window has
+    finished drawing, however loaded the machine is. A fixed delay is not
+    enough when twenty of these run at once -- a click sent while the option
+    window is still laying itself out is lost, and the picture is of the
+    page that was there before, which nothing else notices."""
+    end = time.time() + seconds
+    before = take()
+    while time.time() < end:
+        time.sleep(gap)
+        after = take()
+        if before is not None and after is not None and \
+           after.size == before.size and after.tobytes() == before.tobytes():
+            return after
+        before = after
+    return before
+
+
+def selected_row(img, build):
+    """Where the highlighted row of the category list is, read off the
+    picture, or None when no row of the list is highlighted. This is what
+    says whether the click on a category landed: the window stays on the
+    page it was showing when it does not, and nothing else notices."""
+    if img is None:
+        return None
+    band = {"released": (0, 0, 128), "fltk": (0, 0, 128),
+            "imgui": (196, 222, 253)}.get(build)
+    if band is None:
+        return None
+    px = img.convert("RGB").load()
+    right = min(90, img.width)
+    rows = [y for y in range(0, min(img.height, 260))
+            if sum(1 for x in range(4, right) if px[x, y] == band) >= 30]
+    if not rows:
+        return None
+    return (rows[0] + rows[-1]) / 2.
+
+
 def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
     """Photograph every tab of every category of the option window.
 
@@ -1006,15 +1043,35 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
     for k, (category, tabs) in enumerate(OPTION_TABS):
         if only and not only.startswith(category.lower()):
             continue
+        # let the window finish drawing first, and only then ask where it
+        # is: FLTK shows it and moves it, and a click aimed at where it was
+        # lands on whatever is there now
+        settle(lambda: _dialog_picture(dpy, "options", build, win, ww, wh))
         where = _dialog_geometry(dpy, "options", build, win, wx, wy)
         if not where:
             failures.append("options: no window to sweep")
             return failures
         dx, dy, dw, dh = where
         row = rows[k] if k < len(rows) else first + k * step
-        click(dpy, dx + 45, dy + int(round(row)))
-        time.sleep(0.6)
-        picture = _dialog_picture(dpy, "options", build, win, ww, wh)
+        # Click, then read off the picture that the row is the highlighted
+        # one; a click sent while the window is busy is lost, and the page
+        # that was there before gets photographed under this category's
+        # name. Not a matter of waiting longer: it happens with the machine
+        # loaded by twenty of these, and rarely, so it is checked and redone.
+        picture = None
+        for attempt in range(4):
+            click(dpy, dx + 45, dy + int(round(row)))
+            time.sleep(0.6)
+            picture = settle(
+                lambda: _dialog_picture(dpy, "options", build, win, ww, wh))
+            got = selected_row(picture, build)
+            if got is None or abs(got - row) <= 8:
+                break
+            print("NOTE %s %s: clicked row %d, highlighted row at %d; again"
+                  % (build, category, int(round(row)), int(round(got))))
+            where = _dialog_geometry(dpy, "options", build, win, wx, wy)
+            if not where: break
+            dx, dy = where[0], where[1]
         if picture is None:
             failures.append("options-%s: nothing to photograph" % category)
             continue
@@ -1035,7 +1092,8 @@ def sweep_options(dpy, build, out, win, wx, wy, ww, wh, only=None):
             dx, dy = where[0], where[1]
             click(dpy, dx + x, dy + tabRow)
             time.sleep(0.4)
-            shot = _dialog_picture(dpy, "options", build, win, ww, wh)
+            shot = settle(
+                lambda: _dialog_picture(dpy, "options", build, win, ww, wh))
             if shot is None:
                 failures.append("options-%s-%s: nothing to photograph"
                                 % (category, name))
@@ -1193,16 +1251,22 @@ def _dialog_picture(dpy, dialog, build, win, ww, wh):
 # What the page cannot do yet it does not pretend to: there is no file chooser
 # and no popped-up menu, so those shots come out blank and the sheet says so.
 
+# ...and one port per display, so that several pages may be photographed at
+# once: the parallel bench runs a dozen of these side by side
 BROWSER_PORT = 8130
+
+
+def browser_port(display):
+    return BROWSER_PORT + display
 # The word every request has to carry, so that no page anyone visits can drive
 # a Gmsh listening on this machine. Gmsh makes one up when nothing says which;
 # here it is said, so that both sides of the bench know it.
 BROWSER_TOKEN = "guicompare"
 
 
-def keyed_url(path):
+def keyed_url(path, port=BROWSER_PORT):
     return "http://127.0.0.1:%d%s%sk=%s" % (
-        BROWSER_PORT, path, "&" if "?" in path else "?", BROWSER_TOKEN)
+        port, path, "&" if "?" in path else "?", BROWSER_TOKEN)
 # the browser window, which holds the tree, the scene and the dialogs at once,
 # so it is larger than the 900x700 the other interfaces are photographed at
 PAGE = (1500, 1000)
@@ -1267,7 +1331,7 @@ def start_browser(home, port):
     env.pop("WAYLAND_DISPLAY", None)
     return subprocess.Popen(
         [BROWSER, "--ozone-platform=x11",
-         "--app=" + keyed_url("/"),
+         "--app=" + keyed_url("/", port),
          "--user-data-dir=" + profile,
          "--no-first-run", "--no-default-browser-check",
          "--disable-session-crashed-bubble", "--disable-background-networking",
@@ -1474,7 +1538,7 @@ def photograph_browser(dpy, args, specs):
         print("MISS " + why)
         failures.append(why)
 
-    port = BROWSER_PORT
+    port = browser_port(args.display)
     chrome = None
     held = None
     try:
@@ -1500,10 +1564,12 @@ def photograph_browser(dpy, args, specs):
                 else:
                     os.environ["GMSH_BROWSER_PORT"] = old
                 if not browser_wait(port):
+                    # stopped before it is read: a driver still running
+                    # never closes what it writes, and the read never ends
+                    stop_driver(proc)
                     err = proc.stderr.read().decode(errors="replace")[-400:]
                     missing("%s: the page never answered. %s"
                                     % (name, err))
-                    stop_driver(proc)
                     continue
                 if chrome is None:
                     chrome = start_browser(args.home, port)
@@ -1708,7 +1774,8 @@ def browser_scene(port, home):
     # "force": a picture only comes back when the scene has changed since the
     # last one, and what this wants is the picture, not the news
     try:
-        with urllib.request.urlopen(keyed_url("/scene?force"), timeout=20) as r:
+        with urllib.request.urlopen(keyed_url("/scene?force", port),
+                                    timeout=20) as r:
             said = r.read()
     except Exception:
         return None
@@ -1758,11 +1825,15 @@ def photograph(dpy, args, specs):
         if not held:
             proc = start_driver(args.lib, args.home, spec["branches"],
                                 spec.get("geo"), spec.get("context"))
-            main_win = wait_for(dpy, lambda n: "Gmsh" in n)
+            # a minute rather than the usual wait: with twenty of these
+            # starting at once, an interface can take that long to come up
+            main_win = wait_for(dpy, lambda n: "Gmsh" in n, seconds=60.)
             if not main_win:
+                # stopped before it is read: a driver still running never
+                # closes what it writes, and the read never ends
+                stop_driver(proc)
                 err = proc.stderr.read().decode(errors="replace")[-400:]
                 failures.append("%s: no main window. %s" % (name, err))
-                stop_driver(proc)
                 continue
             held = (key, proc, main_win)
             time.sleep(1.0)
@@ -2061,7 +2132,7 @@ def main():
                  else "1400x1000x24"):
         dpy = display.Display()
         if args.sweep_options and args.build == "browser":
-            port = BROWSER_PORT
+            port = browser_port(args.display)
             os.environ["GMSH_BROWSER_PORT"] = str(port)
             os.environ["GMSH_BROWSER_TOKEN"] = BROWSER_TOKEN
             proc = start_driver(args.lib, args.home, [], model("view.pos"))
@@ -2092,7 +2163,7 @@ def main():
             proc = start_driver(args.lib, args.home, [],
                                 model("view.pos") if wants_view else None)
             try:
-                main_win = wait_for(dpy, lambda n: "Gmsh" in n)
+                main_win = wait_for(dpy, lambda n: "Gmsh" in n, seconds=60.)
                 if not main_win:
                     print("FAIL sweep: no main window")
                     return 1

@@ -41,7 +41,6 @@ void messageConsole::lines(std::vector<std::string> &out) const
 
 static ImVec4 _colorForLevel(int level)
 {
-  // these follow the colors of the FLTK message browser
   switch(level) {
   case Ui::Backend::Error: return ImVec4(0.90f, 0.30f, 0.30f, 1.f);
   case Ui::Backend::Warning: return ImVec4(0.95f, 0.75f, 0.25f, 1.f);

@@ -14,9 +14,9 @@
 #include <string>
 #include <vector>
 
-// The message console, i.e. the Dear ImGui counterpart of messageBrowser: the
-// lines that Msg::Info(), Msg::Warning() etc. send to the GUI, with a regular
-// expression filter and the usual copy/save/clear actions.
+// The message console: the lines that Msg::Info(), Msg::Warning() etc.
+// send to the GUI, with a regular expression filter and the usual
+// copy/save/clear actions.
 
 class messageConsole {
 private:

@@ -15,17 +15,11 @@
 
 // The drawing functions of the 3D scene, in plain OpenGL.
 //
-// Everything here is the scene's rather than a chrome's, with one exception,
-// and it is a wooden leg: the strings drawn in the scene are textured quads
-// taken from the Dear ImGui font atlas, at the current OpenGL raster position
-// -- what glRasterPos() + gl_draw() does in the FLTK backend. So this
-// directory needs a Dear ImGui context to exist, even one holding no window
-// at all, and a chrome that pairs with this scene drags that in behind it.
-//
-// It is left as it is on purpose. Text in the scene is the worst part of the
-// drawing and it will not be improved a piece at a time; the scene is a
-// chantier of its own, to be rewritten rather than patched, and until someone
-// does that this is what there is.
+// One exception to plain OpenGL: the strings drawn in the scene are
+// textured quads taken from the Dear ImGui font atlas, at the current
+// OpenGL raster position. So this directory needs a Dear ImGui context to
+// exist, even one holding no window at all, and an interface that pairs
+// with this scene drags that in behind it.
 
 class drawContextGL : public drawContextGlobal {
 private:

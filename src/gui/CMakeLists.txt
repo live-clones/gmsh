@@ -4,10 +4,35 @@
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
-  Backend.cpp
-  Form.cpp
-  Layout.cpp
-  Menu.cpp
+  Gui.cpp
+  GuiDialog.cpp
+  GuiScene.cpp
+  GuiModules.cpp
+  GuiActions.cpp
+  GuiActionsGeo.cpp
+  GuiMenus.cpp
+  GuiElementary.cpp
+  GuiPhysical.cpp
+  GuiTransform.cpp
+  GuiMeshContext.cpp
+  GuiPartition.cpp
+  GuiHighOrder.cpp
+  GuiManipulator.cpp
+  GuiStatistics.cpp
+  GuiClipping.cpp
+  GuiGamepad.cpp
+  GuiOptions.cpp
+  GuiVisibility.cpp
+  GuiPlugins.cpp
+  GuiFields.cpp
+  GuiHelp.cpp
+  GuiClassify.cpp
+  GuiOnelab.cpp
+  GuiPrompts.cpp
+  GuiStatus.cpp
+  GuiFiles.cpp
+  GuiExport.cpp
+  VisibilityList.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

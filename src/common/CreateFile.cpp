@@ -20,7 +20,6 @@
 
 #if defined(HAVE_GUI)
 #include "Gui.h"
-#include "GuiActions.h"
 #include "PixelBuffer.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
@@ -471,7 +470,7 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_JPEG:
   case FORMAT_PNG:
     {
-      if(!Gui::available()){
+      if(!Gui::instance().available()){
         Msg::Error("Creating '%s' requires a graphical interface context",
                    name.c_str());
         break;
@@ -484,7 +483,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
 
-      PixelBuffer *buffer = Gui::createCompositePixelBuffer
+      PixelBuffer *buffer = Gui::instance().createCompositePixelBuffer
         ((format == FORMAT_PNG) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE);
 
       if(format == FORMAT_PPM)
@@ -515,7 +514,7 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_SVG:
   case FORMAT_TIKZ:
     {
-      if(!Gui::available()){
+      if(!Gui::instance().available()){
         Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
         break;
       }
@@ -528,8 +527,8 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       std::string base = SplitFileName(name)[1];
       int width, height;
-      Gui::getCurrentPixelSize(width, height);
-      Gui::beginGraphicCapture(width, height,
+      Gui::instance().getCurrentPixelSize(width, height);
+      Gui::instance().beginGraphicCapture(width, height,
                                CTX::instance()->print.compositeWindows);
       GLint pixel_viewport[4] = {0, 0, width, height};
 
@@ -586,7 +585,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         res = gl2psEndPage();
       }
 
-      Gui::endGraphicCapture();
+      Gui::instance().endGraphicCapture();
       fclose(fp);
       drawContext::global()->draw();
     }
@@ -594,7 +593,7 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_TEX:
     {
-      if(!Gui::available()){
+      if(!Gui::instance().available()){
         Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
         break;
       }
@@ -607,8 +606,8 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       std::string base = SplitFileName(name)[1];
       int width, height;
-      Gui::getCurrentPixelSize(width, height);
-      Gui::beginGraphicCapture(width, height, false);
+      Gui::instance().getCurrentPixelSize(width, height);
+      Gui::instance().beginGraphicCapture(width, height, false);
       GLfloat width_desired_in_mm = CTX::instance()->print.texWidthInMm;
       GLfloat scaling = 1.;
       if(width_desired_in_mm > 0) {
@@ -632,14 +631,14 @@ void CreateOutputFile(const std::string &fileName, int format,
         CTX::instance()->print.text = oldtext;
         res = gl2psEndPage();
       }
-      Gui::endGraphicCapture();
+      Gui::instance().endGraphicCapture();
       fclose(fp);
     }
     break;
 
   case FORMAT_PGF:
     {
-      if(!Gui::available()){
+      if(!Gui::instance().available()){
         Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
         break;
       }
@@ -659,8 +658,8 @@ void CreateOutputFile(const std::string &fileName, int format,
           }
         }
       }
-      PixelBuffer *buffer = Gui::createCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
-      drawContext *ctx = Gui::getCurrentDrawContext();
+      PixelBuffer *buffer = Gui::instance().createCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
+      drawContext *ctx = Gui::instance().getCurrentDrawContext();
       int width = buffer ? buffer->getWidth() : 0;
       int height = buffer ? buffer->getHeight() : 0;
       GLint pixel_viewport[4] = {0, 0, width, height};
@@ -678,7 +677,7 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_MPEG:
   case FORMAT_MPEG_PREVIEW:
     {
-      if(!Gui::available()){
+      if(!Gui::instance().available()){
         Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
         break;
       }

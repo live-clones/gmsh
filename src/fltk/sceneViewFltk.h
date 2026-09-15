@@ -23,20 +23,11 @@
 class drawContext;
 
 // A 3D view of the model, held by FLTK: an Fl_Gl_Window that owns one
-// sceneView of src/scene and does nothing to it but hold it.
-//
-// Which is the point. There used to be two scenes -- this one, written by
-// hand as openglWindow, and the one in src/scene written for the Dear ImGui
-// interface from it -- and two scenes mean the newer is exercised by whoever
-// uses the newer interface and by nobody else. What draws the model, what
-// picks in it, what the lasso does, what a double click runs, what the wheel
-// zooms: all of it is said once now, and the interface that gets used every
-// day is what proves it.
-//
-// So what is left here is what a window is for and a scene is not: the OpenGL
-// context, the translation of FLTK events into the paneInput one turn of a
-// scene expects, the guard against drawing while already drawing, the shape
-// of the pointer, and the little window a tooltip is drawn in.
+// sceneView of src/scene and does nothing to it but hold it. What is here
+// is what a window is for and a scene is not: the OpenGL context, the
+// translation of FLTK events into the paneInput one turn of a scene
+// expects, the guard against drawing while already drawing, the shape of
+// the pointer, and the little window a tooltip is drawn in.
 
 // The tooltip, which FLTK has no widget for over a GL window: a borderless
 // window that follows the pointer. It came from openglWindow.h unchanged.

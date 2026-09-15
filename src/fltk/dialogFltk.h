@@ -17,18 +17,17 @@
 
 #include "Form.h"
 
-// The FLTK side of a described form: it builds the window that
-// contextWindow.cpp used to build by hand, one widget per declared field,
-// each bound to the variable the description points at. It knows the forms
+// The FLTK side of a described form: one widget per declared field, each
+// bound to the variable the description points at. It knows the forms
 // only as Form.h says them.
 
 class dialogFltk {
 public:
-  dialogFltk() : _win(nullptr), _pane(0), _forcePane(false) {}
+  dialogFltk() : _which(nullptr), _pane(0), _win(nullptr), _forcePane(false) {}
   ~dialogFltk();
-  // build the window of the given form, or build it again when what it shows
-  // depends on the model
-  void build(Ui::FormRef form);
+  // build the window of the given dialog, or build it again when what it
+  // shows depends on the model
+  void build(const Ui::Form &form);
   // show it on the pane it is on, bringing the widgets up to date
   void show();
   void hide();
@@ -36,23 +35,21 @@ public:
   Fl_Window *window() { return _win; }
   // push the values and the enabling into the widgets
   void refresh();
-  // The same, but building the window again first when what it offers has
-  // changed shape rather than only value: the plugin window shows the options
-  // of the plugin one picks, the size-field window those of the field.
+  // the same, but building the window again first when what it offers has
+  // changed shape rather than only value
   void reshape();
-  // which pane is showing: the interface keeps it, since a click on a tab is
-  // what changes it, and the description asks when it wants to know
-  int pane() const { return _pane; }
-  void setPane(int pane)
-  {
-    _pane = pane;
-    _forcePane = true;
-  }
+  // which pane is showing, by its label; a pane named before the window is
+  // built is kept for it
+  std::string pane() const;
+  void setPane(const std::string &pane);
 
 private:
-  Ui::FormRef _which;
+  const Ui::Form *_which;
   Ui::Form _panel;
   int _pane;
+  std::string _paneWanted;
+  // the rank of a pane of the form being shown, or -1
+  int _paneNamed(const std::string &label) const;
   // the shape the window was built for; see _signature()
   std::string _signatureBuilt;
   // the panes of this one are not tabbed and are longer than the window: they
@@ -72,8 +69,16 @@ private:
   struct bound {
     Ui::Field field;
     Fl_Widget *widget;
+    // the box its name is written on when it has buttons after it, and
+    // those buttons: moved with it
+    Fl_Widget *labelBox = nullptr;
+    std::vector<Fl_Widget *> trailing;
     int pane; // -1 for the footer
+    int index; // which field of its list
     int row; // within its pane
+    // where the solver put it, in pixels from the top of its list: what
+    // _relayout() moves it by when the lists above it fold away
+    int top = 0;
     // the colour map widget sets this when it has been drawn on, which is
     // how it says the view has to be drawn again
     bool changed = false;
@@ -87,6 +92,7 @@ private:
   // the rule under each section, when the description asks for one
   std::vector<Fl_Widget *> _separators;
   std::vector<Fl_Widget *> _buttons;
+  std::vector<std::function<bool()> > _buttonsEnabled;
   // how wide the column of side fields is, 0 when there is none
   int _sideWidth = 0;
   // whether the buttons share the last line of the footer, see build()
@@ -101,20 +107,34 @@ private:
   struct paneButton {
     Fl_Widget *widget;
     int pane;
-    int row;
+    int top; // in pixels from the top of the pane, as for a bound field
   };
+  // what each pane of a form that is not tabbed came to, in pixels, once
+  // its fields were placed: what _relayout() stacks
+  std::vector<int> _paneHeights;
+  // where each pane's list was placed from, and how wide it may reach: what
+  // _relayout() places it again with when a field of it is folded away
+  struct paneRoom {
+    int x, w, grid;
+  };
+  std::vector<paneRoom> _paneRooms;
   std::vector<paneButton> _paneButtons;
-  // Put the visible parts back where they belong and resize the window. A pane
-  // that folds away must not cost a rebuild: destroying the window makes it
-  // blink and come back somewhere else, and deleting widgets from inside the
-  // callback of one of them is how FLTK crashes.
+  // put the visible parts back where they belong and resize the window: a
+  // pane that folds away must not cost a rebuild, which makes the window
+  // blink and is unsafe from inside a widget's callback
   void _relayout();
 
   // the pane must only be forced when it has just been asked for: forcing it
   // at every refresh would undo the tab the user just clicked
   bool _forcePane;
+  // `folded` makes a widget for every field, hidden or not, so that
+  // _relayout() can show one later without building again
   void _addFields(const std::vector<Ui::Field> &fields, int x, int &y,
-                  int w, int pane, int grid = 0);
+                  int w, int pane, int grid = 0, bool folded = false);
+  // what the last list _addFields() placed came to, in pixels
+  int _placedHeight = 0;
+  // and what the footer came to, for _relayout()
+  int _footerHeight = 0;
   static void _tabCallback(Fl_Widget *w, void *data);
   static void _fieldCallback(Fl_Widget *w, void *data);
   static void _buttonCallback(Fl_Widget *w, void *data);
@@ -122,23 +142,20 @@ private:
   static void _tick(void *data);
 };
 
-// The dialogs, by the form each was built for. A dialog is built the first
-// time it is asked for; `create` false asks for it only if it already exists,
-// which is what the callers that merely want to know whether it is up need --
-// building a window while a group is open would make it a child of that
-// group.
-// `pane` is the one to open on when the dialog is built here and now: a
-// window built on one pane and moved to another draws its row of tabs a
-// little differently, so what is known is said before the widgets exist.
-dialogFltk *fltkDialog(Ui::FormRef which, bool create = true, int pane = -1);
-// the form is gone: so is its window
-void fltkDropDialog(Ui::FormRef which);
+// The dialogs, by name. A dialog is built the first time it is asked for;
+// `create` false asks for it only if it already exists -- building a
+// window while a group is open would make it a child of that group.
+// `pane` is the one to open on when the dialog is built here and now.
+dialogFltk *fltkDialog(const Ui::Form &which, bool create = true,
+                       const std::string &pane = "");
+// the dialog is gone: so is its window
+void fltkDropDialog(const Ui::Form &which);
 // every dialog that has been built, whatever it shows
 void fltkEachDialog(const std::function<void(dialogFltk *)> &what);
 
-// The interface is being taken down: from now on, hiding a dialog is not the
-// user closing it, and whatever a dialog undoes when it closes is not to be
-// undone -- there is no view left to draw it into.
+// the interface is being taken down: from now on, hiding a dialog is not
+// the user closing it, and whatever it undoes when it closes is not to be
+// undone
 void fltkDialogsClosingDown();
 
 #endif

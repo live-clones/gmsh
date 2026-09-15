@@ -3,17 +3,12 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// The menu bar of the Dear ImGui interface. It mirrors, entry for entry, the
-// bar_table[] of src/fltk/graphicWindow.cpp: same menus in the same order, same
-// labels, same separators and same shortcuts, so that the two interfaces can be
-// described by one manual. Anything that is not in the FLTK menu bar does not
-// belong here either -- the geometry and mesh commands, for instance, live in
-// the modules panel, which is where the FLTK tree puts them.
+// The menu bar of the Dear ImGui interface, built from the description.
 //
 // Every entry does nothing more than queue an action with
 // appWindow::postAction(): the action then runs outside of the Dear ImGui
-// frame, which is what allows it to open a blocking dialog, ask a question or
-// start an interactive selection.
+// frame, which is what allows it to open a blocking dialog, ask a
+// question or start an interactive selection.
 
 #include "uiSources.h"
 #include "GmshConfig.h"
@@ -97,11 +92,8 @@ void appWindow::_drawMenuBar()
   ImGui::End();
 }
 
-// --- the "Window" menu
-//
-// The FLTK interface iconifies, resizes or raises a set of real windows; here
-// there is only one, and the panels live inside it, so each of these acts on
-// the GLFW window of the application.
+// --- the "Window" menu: there is one window, and the panels live inside
+// it, so each of these acts on the GLFW window of the application
 
 void appWindow::_windowMinimize() { glfwIconifyWindow(_window); }
 

@@ -27,15 +27,13 @@ class fileBrowser;
 class drawContext;
 
 // The main window of the Dear ImGui interface: it owns the GLFW window and its
-// OpenGL context, the Dear ImGui context, and everything drawn inside. This is
-// the counterpart of FlGui + mainWindow + graphicWindow.
+// OpenGL context, the Dear ImGui context, and everything drawn inside.
 //
 // One frame() does, in this order: poll the events, build the Dear ImGui
 // widgets, render the 3D scene into the central node of the dock space, then
-// submit the Dear ImGui draw lists on top. The scene is therefore drawn
-// directly into the main framebuffer, with no intermediate frame buffer object,
-// which keeps the whole rendering path in plain OpenGL 1.x + GLU, exactly as in
-// the FLTK backend.
+// submit the Dear ImGui draw lists on top. The scene is drawn directly into
+// the main framebuffer, with no intermediate frame buffer object, which keeps
+// the whole rendering path in plain OpenGL 1.x + GLU.
 
 // what came in from another thread, drained by the frame loop; the backend
 // holds it, since it is the backend that was asked to carry it
@@ -117,21 +115,21 @@ private:
   void _deletePaneTree(paneNode *node);
   messageConsole *_console;
 
-  // status bar
-  // the message and the progress live in src/common/GuiStatus.h, which both
-  // bars read; only what is written into the 3D view is ours
+  // status bar: the message and the progress are the description's; only
+  // what is written into the 3D view is ours
   std::string _statusGl;
 
   bool _showConsole;
   bool _showModules;
-  // The forms, by the number each was handed out under: what each is made
-  // of, and what this window keeps about it between two frames. A map and
-  // not an array, since how many there are is nobody's to count.
+  // The dialogs, by name: the one that describes each, and what this window
+  // keeps about it between two frames. A map and not an array, since how
+  // many there are is nobody's to count.
   struct dialogState {
     // what Dear ImGui knows the window by, from one run to the next: its
     // saved layout is keyed on it
     std::string name;
-    std::function<Ui::Form()> describe;
+    // the form, which outlives everything kept here and is read as it is
+    const Ui::Form *form = nullptr;
     // shown, and whether it has just been asked for and must be brought
     // forward
     bool show = false, focus = false;
@@ -143,18 +141,15 @@ private:
     // the widest it has ever needed to be: one that grows and shrinks
     // sideways as one goes through its categories will not sit still
     float widest = 0.f;
-    // how tall the panes beside the side column came out last frame, for
-    // the column to be given exactly that on the next
-    float sideRoom = 0.f;
     // the pane it has just been asked to show, -1 once it has been
     int wantedPane = -1;
+    // the same by its label, asked before the form had panes to find it in
+    std::string wantedLabel;
     // the pane it is on: what the last frame drew, and what a tab the user
     // picked is told from one that came up because it was asked for
     int pane = 0;
   };
-  std::map<unsigned, dialogState> _dialogs;
-  unsigned _lastDialog;
-  // the FLTK interface has three separate help windows, and so does this one
+  std::map<const Ui::Form *, dialogState> _dialogs;
   std::string _solverButton0, _solverButton1;
 
   // scale factor of the display, so that the interface has the same physical
@@ -205,11 +200,6 @@ private:
 
   fileBrowser *_browser;
 
-  // state of the per-format export options dialog
-  bool _exportActive, _exportDone, _exportAccepted;
-  int _exportFormat;
-  std::string _exportFileName;
-  void _drawExportDialog();
   void _drawMenuBar();
   void _applyStyle(float scale);
   // how much the backend already enlarges what Dear ImGui draws
@@ -217,8 +207,6 @@ private:
   // whether panels can be dragged out of the main window
   static bool _detachablePanels();
   bool _reportedDetachable;
-  // category the options panel opens on, so that the quick access menu can
-  // jump straight to the right one
   // the animation runs from the frame loop, see _stepAnimation()
   bool _animating;
   std::string _tooltip;
@@ -228,8 +216,8 @@ private:
   std::string _fontFile;
   void _drawModulesPanel();
   void _walkModules(const std::string &path, int depth);
-  // Branches the API has asked to unfold or fold, by the path the FLTK tree
-  // names them with ("0Modules/Geometry/..."). A request waits until the
+  // Branches the API has asked to unfold or fold, by path
+  // ("0Modules/Geometry/..."). A request waits until the
   // branch is actually drawn, so that unfolding a whole chain in one go works
   // whatever was open before.
   std::map<std::string, bool> _treeWanted;
@@ -249,14 +237,16 @@ public:
   }
 
 private:
-  void _drawDialog(unsigned which);
+  void _drawDialog(const Ui::Form *which);
+  // what is kept about that dialog, made on first sight
+  dialogState &_dialog(const Ui::Form &which);
   void _handleShortcuts();
 
   void _buildDockSpace(int &sceneX, int &sceneY, int &sceneW, int &sceneH);
   void _drawPanels(int &sceneX, int &sceneY, int &sceneW, int &sceneH);
   void _drawStatusBar();
-  // "Window" menu: the counterpart of the FLTK window_cb(). The geometry saved
-  // here is what "Zoom" and "Enter Full Screen" restore.
+  // "Window" menu; the geometry saved here is what "Zoom" and "Enter Full
+  // Screen" restore
   void _windowMinimize();
   void _windowZoom();
   void _windowFullScreen();
@@ -346,8 +336,6 @@ public:
   void endCapture();
 
 
-  // scale factor currently applied to the interface (1 on a standard display,
-  // 2 on a "retina" one, 1.5 with a 150% desktop scaling, ...)
   // transient text shown next to the pointer, cleared when set to empty
   void setTooltip(const std::string &text) { _tooltip = text; }
 
@@ -362,9 +350,8 @@ public:
   // split the current pane in two ('h' or 'v'), or bring everything back to a
   // single pane ('u')
   void splitCurrentPane(char how, double ratio);
-  // open another graphic window, as "Window > New Window" does in FLTK
+  // open another graphic window
   void newGraphicWindow();
-  // the panels the menus show and hide, see Gui::Panel
   // "minimize", "zoom" or "fullscreen"
   void windowAction(const std::string &what);
   int numPanes() const { return (int)_panes.size(); }
@@ -394,20 +381,14 @@ public:
   bool fileDialog(int mode, const std::string &title,
                   const std::vector<fileBrowser::format> &formats,
                   std::string &fileName, int *chosenFormat);
-  // ask for the options of the given output format; returns false if the user
-  // cancelled. Like the other blocking dialogs, only from a posted action
-  bool exportOptionsDialog(int format, const std::string &fileName);
-
-  // The forms, as the backend hands them out: see Ui::Backend::createForm().
+  // The dialogs, as the backend is told of them: see Ui::Backend::showForm().
   // What one is made of is asked again at every frame it is drawn.
-  Ui::FormRef createDialog(const std::string &name,
-                           const std::function<Ui::Form()> &describe);
-  void destroyDialog(Ui::FormRef which);
-  void showDialog(Ui::FormRef which);
-  void hideDialog(Ui::FormRef which);
-  bool dialogVisible(Ui::FormRef which) const;
-  int dialogPane(Ui::FormRef which) const;
-  void setDialogPane(Ui::FormRef which, int pane);
+  void showDialog(const Ui::Form &which);
+  void hideDialog(const Ui::Form &which);
+  void dropDialog(const Ui::Form &which);
+  bool dialogVisible(const Ui::Form &which) const;
+  std::string dialogPane(const Ui::Form &which) const;
+  void setDialogPane(const Ui::Form &which, const std::string &pane);
 };
 
 #endif

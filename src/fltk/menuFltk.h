@@ -17,9 +17,8 @@
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Item.H>
 
-// The FLTK side of the menu description of src/common/GuiMenus.h: it flattens
-// the description into the Fl_Menu_Item[] that Fl_Menu_Bar wants, which is what
-// bar_table[] and sysbar_table[] used to be, written by hand.
+// The FLTK side of the menu description: it flattens the description into
+// the Fl_Menu_Item[] that Fl_Menu_Bar wants.
 
 // Build, or build again, the menu bar of the main window. The table it returns
 // stays valid until the next call, and only until then: pass it to menu()
@@ -40,9 +39,7 @@ void fltkMenuRefresh();
 void fltkMenuPopup(const std::vector<Ui::MenuItem> &tree, int x, int y,
                    const std::string &key = "");
 
-// A button that drops a menu built from a shared description. It replaces the
-// Fl_Menu_Button the view and solver buttons of the modules tree carried, whose
-// entries were written out here rather than described.
+// a button that drops a menu built from a description
 class popupButtonFltk : public Fl_Button {
 public:
   std::function<std::vector<Ui::MenuItem>()> what;
@@ -61,13 +58,6 @@ public:
     return Fl_Button::handle(event);
   }
 };
-
-// Walk the shared description of the modules tree and hand each leaf to add(),
-// with the "0Modules/..." path the FLTK tree wants. The entries stay valid
-// until the next call.
-void fltkModulesBuild(
-  const std::function<void(const std::string &path, Fl_Callback *cb,
-                           void *data)> &add);
 
 // A menu bar that refreshes itself before it opens. The check marks of the
 // entries that show and hide a panel would otherwise show the state the panel

@@ -656,8 +656,8 @@ namespace onelabUtils {
     onelabUtils::initializeLoop("3");
 
 #if defined(HAVE_GUI)
-    if(Gui::available() && onelab::server::instance()->getChanged())
-      Gui::rebuildTree(false);
+    if(Gui::instance().available() && onelab::server::instance()->getChanged())
+      Gui::instance().rebuildTree(false);
 #endif
   }
 
@@ -677,8 +677,8 @@ namespace onelabUtils {
     onelab::server::instance()->set(n);
 
 #if defined(HAVE_GUI)
-    if(Gui::available() && onelab::server::instance()->getChanged())
-      Gui::rebuildTree(false);
+    if(Gui::instance().available() && onelab::server::instance()->getChanged())
+      Gui::instance().rebuildTree(false);
 #endif
     return ret;
   }
@@ -695,7 +695,7 @@ namespace onelabUtils {
     if(redraw) {
     // don't delete the widgets, as this is called in widget callbacks
 #if defined(HAVE_GUI)
-      Gui::updateViews(true, false);
+      Gui::instance().updateViews(true, false);
       drawContext::global()->draw();
 #endif
     }
@@ -782,7 +782,7 @@ namespace onelabUtils {
     }
 
 #if defined(HAVE_GUI)
-    Gui::rebuildTree(true);
+    Gui::instance().rebuildTree(true);
 #endif
   }
 
@@ -813,7 +813,7 @@ namespace onelabUtils {
         strings[0].setChoices(names);
         onelab::server::instance()->set(strings[0]);
 #if defined(HAVE_GUI)
-        Gui::rebuildTree(true);
+        Gui::instance().rebuildTree(true);
 #endif
       }
     }

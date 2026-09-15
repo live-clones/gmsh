@@ -20,7 +20,6 @@ set(SRC
     extraDialogs.cpp
 
     inputValue.cpp
-    viewButton.cpp solverButton.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

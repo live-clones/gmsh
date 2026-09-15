@@ -14,15 +14,10 @@
 
 #include "Form.h"
 
-// The widget one line of the modules tree carries, made from what the
-// description says the line holds: the value itself, then the little buttons
-// hung after it -- the range of a number, its loop, the plots it is reported
-// in, the menu of a file. It is the same shape the window this reproduces
-// gives them, an input followed by three narrow buttons, said once instead of
-// built into a widget of its own.
-//
-// The field is copied and kept: FLTK hands a widget a pointer when it calls
-// back, and what it points at has to outlive the line.
+// The widget one line of the modules tree carries: the value itself, then
+// the little buttons hung after it. The field is copied and kept: FLTK
+// hands a widget a pointer when it calls back, and what it points at has
+// to outlive the line.
 
 Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
                         double labelRatio, const Ui::Colour &highlight,

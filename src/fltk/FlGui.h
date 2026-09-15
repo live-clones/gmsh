@@ -11,22 +11,18 @@
 #include <atomic>
 #include "SPoint2.h"
 #include "Backend.h"
+#include "fltkMetrics.h"
 
-#define GMSH_WINDOW_BOX FL_FLAT_BOX
-#define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
-#define GMSH_SIMPLE_TOP_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 2)
-
-#define IW (10 * FL_NORMAL_SIZE) // input field width
-#define BB (7 * FL_NORMAL_SIZE) // width of a button with internal label
-#define BH (2 * FL_NORMAL_SIZE + 1) // button height
-#define WB (5) // window border
+// The state of the FLTK interface, held by its backend: the windows, the
+// tree, what the user has picked in the scene, and the lock the threads
+// share. What the interface does is the backend's, in BackendFltk.cpp; what
+// is here is what the windows of this interface reach for in each other.
 
 class graphicWindow;
 class sceneViewFltk;
 
-// Say to the 3D scene of src/scene who is holding it, once the windows it is
-// drawn in exist: it asks its holder for a redraw, for the shape of the
-// pointer, for which view is the current one. Defined in SceneFltk.cpp.
+// say to the 3D scene who is holding it, once the windows it is drawn in
+// exist; defined in SceneFltk.cpp
 void fltkInstallSceneHost();
 class onelabWindow;
 class onelabGroup;
@@ -43,10 +39,7 @@ class PView;
 class FlGui {
 private:
   static FlGui *_instance;
-  static std::string _openedThroughMacFinder;
-  static bool _finishedProcessingCommandLine;
   static std::atomic<int> _locked;
-  bool _quitShouldExit;
 
 public:
   std::vector<GVertex *> selectedVertices;
@@ -74,7 +67,6 @@ public:
   static void destroy();
   // check if the GUI is available
   static bool available();
-  // run the GUI until there's no window left
   // check if there are any pending events, and process them (if rateLimited is
   // set, only perform the check if one has not been made in the last 1 /
   // General.FltkRefreshRate seconds)
@@ -86,28 +78,12 @@ public:
   // lock/unlock child threads
   static void lock();
   static void unlock();
-  // trigger event loop in main thread
-  static void awake(const std::string &action);
-  // is locked
   static int locked();
-  // is a file opened through the Mac Finder?
-  static void setOpenedThroughMacFinder(const std::string &name);
-  static std::string getOpenedThroughMacFinder();
-  static void setFinishedProcessingCommandLine();
-  static bool getFinishedProcessingCommandLine();
-  // test application-level keyboard shortcuts
-  int testGlobalShortcuts(int event);
   // The keys of the application, from Menu::keys(), for the key FLTK is
   // reporting. The 3D view calls it on its own key events, so that the arrows
-  // step the animation rather than move the focus, which is what FLTK would
-  // do with them; everything else reaches it as a shortcut nothing else took.
+  // step the animation rather than move the focus; everything else reaches
+  // it as a shortcut nothing else took.
   int runKeys();
-  // set the title of the graphic windows
-  void setGraphicTitle(const std::string &title);
-  // update the GUI when views get modified, added or deleted
-  void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets);
-  // reset the visibility window
-  void resetVisibility();
   // where the windows ended up, for the option file
   Ui::Backend::Layout windowLayout();
   // get the last opengl window that received an event
@@ -123,30 +99,14 @@ public:
   void copyCurrentOpenglWindowToClipboard();
   // select an entity in the most recent graphic window
   char selectEntity(int type);
-  // display status message
-  void setStatus(const std::string &msg, bool opengl = false);
-  // redisplay last status message
-  void setLastStatus(int col = -1);
-  // display status message and update progress bar
-  void setProgress(const std::string &msg, double val, double min, double max);
   // add line in message console
   void addMessage(const char *msg);
   // save messages to file
   void messageLines(std::vector<std::string> &lines);
   // rebuild the tree
   void rebuildTree(bool deleteWidgets);
-  // toggles the module open or closed based on its current state
-  // open module in tree
-  void openModule(const std::string &name);
-  // open tree item
-  void openTreeItem(const std::string &name);
-  // close tree item
-  void closeTreeItem(const std::string &name);
   // apply color scheme to widgets
   void applyColorScheme(bool redraw = false);
-  // should the quit callback exit the app, or just close all windows?
-  bool quitShouldExit() { return _quitShouldExit; }
-  // show onelab context window for the given entity
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

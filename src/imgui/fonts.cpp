@@ -3,16 +3,11 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// Finding a font for the interface.
-//
-// Dear ImGui embeds a single bitmap font, which is crisp at its native size but
-// blurry as soon as the display scale is not 1 -- and it is 1.8 on a typical
-// desktop today. Gmsh therefore looks for a real TrueType font on the system
-// and loads that instead, falling back on the embedded one when it finds
-// nothing. Set GMSH_GUI_FONT to a .ttf file to choose explicitly.
-//
-// This also fixes the text drawn in the 3D scene, which is rendered from the
-// same atlas by drawContextGL.
+// Finding a font for the interface: the embedded bitmap font is blurry as
+// soon as the display scale is not 1, so a TrueType font of the system is
+// looked for, falling back on the embedded one. GMSH_GUI_FONT names a
+// .ttf file explicitly. The text of the 3D scene is rendered from the
+// same atlas.
 
 #include "GmshConfig.h"
 

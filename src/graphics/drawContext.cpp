@@ -859,9 +859,9 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
 
   // The viewport of this view, not the one OpenGL happens to have set: the
   // pointer moves outside of any drawing, and in an interface where several
-  // views share one context -- src/imgui -- what is left in the OpenGL state is
-  // whoever drew last, or the whole window. The stored viewport is also what
-  // the model and projection matrices below were computed for.
+  // views share one context what is left in the OpenGL state is whoever drew
+  // last, or the whole window. The stored viewport is also what the model and
+  // projection matrices below were computed for.
   GLint vp[4] = {0, 0, (GLint)(viewport[2] * fact), (GLint)(viewport[3] * fact)};
 
   winy = vp[3] - winy;

@@ -13,7 +13,7 @@ set(SRC
 )
 
 # And the part that is held by GLFW rather than by a widget: the window of its
-# own that a chrome drawing no scene pairs with, and the text engine that
+# own that a interface drawing no scene pairs with, and the text engine that
 # takes its glyphs from the Dear ImGui font atlas. Both want a Dear ImGui
 # context to exist, even one holding no window, which is why they are not the
 # scene itself -- an interface built without them still has one.

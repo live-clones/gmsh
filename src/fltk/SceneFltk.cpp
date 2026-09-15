@@ -3,16 +3,6 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// The 3D scene of the FLTK interface: what draws the model, and what one
-// picks in it.
-//
-// It is the whole of what is left outside src/common/Gui.cpp, and it is the
-// only thing either interface still answers for itself. GuiScene.h says why:
-// every one of these speaks Gmsh -- picking answers with model entities, the
-// capture with a pixel buffer, the draw context is the drawing itself -- so
-// none of it belongs in the toolkit contract of src/gui/Backend.h. It is a
-// chantier of its own, to be rewritten rather than adapted, and until then it
-// keeps the shape it has always had.
 
 #include "GmshConfig.h"
 
@@ -48,15 +38,7 @@
 PixelBuffer *GetCompositePixelBufferFltk(GLenum format, GLenum type);
 
 // The 3D scene of the FLTK interface: what draws the model, and what one
-// picks in it.
-//
-// It is the whole of what is left outside src/common/Gui.cpp, and it is the
-// only thing either interface still answers for itself. GuiScene.h says why:
-// every one of these speaks Gmsh -- picking answers with model entities, the
-// capture with a pixel buffer, the draw context is the drawing itself -- so
-// none of it belongs in the toolkit contract of src/gui/Backend.h. It is a
-// chantier of its own, to be rewritten rather than adapted, and until then it
-// keeps the shape it has always had.
+// picks in it. See GuiScene.h.
 
 namespace FltkScene {
 
@@ -70,7 +52,7 @@ namespace FltkScene {
   }
   bool sceneMoved() { return false; }
   void sceneResize(int width, int height) {}
-  // every view hears it, as every view always has
+  // every view hears it
   bool sceneKey(char key)
   {
     bool taken = false;
@@ -102,16 +84,16 @@ namespace FltkScene {
 
   void orientViews(const std::string &what, bool reverse, bool sync)
   {
-    if(Gui::available()) fltkOrientViews(what, reverse, sync);
+    if(Gui::instance().available()) fltkOrientViews(what, reverse, sync);
   }
 
   void setMouseSelection(bool on)
   {
-    if(Gui::available()) fltkSetMouseSelection(on);
+    if(Gui::instance().available()) fltkSetMouseSelection(on);
   }
 
   // While the animation plays, this interface runs a loop of its own and
-  // pumps the events itself; Gui::toggleAnimation() starts and stops it.
+  // pumps the events itself; Gui::instance().toggleAnimation() starts and stops it.
   // Whether it is time for the next step is animationTick()'s.
   bool _playing = false, _stop = false;
 
@@ -119,7 +101,7 @@ namespace FltkScene {
 
   void toggleAnimation()
   {
-    if(!Gui::available()) return;
+    if(!Gui::instance().available()) return;
     if(_playing) {
       _stop = true;
       return;
@@ -156,10 +138,10 @@ namespace FltkScene {
   void sceneSettingChanged(const std::string &what)
   {
     if(what == "font_engine") {
-      // The engine that draws the text of the scene, swapped under the draw
-      // context: FLTK's own, Cairo, or textures made of strings. It is done
-      // whether or not a window is up yet, as it always was, since the
-      // option is read before the first one is made.
+      // the engine that draws the text of the scene, swapped under the draw
+      // context: FLTK's own, Cairo, or textures made of strings; done whether
+      // or not a window is up yet, since the option is read before the first
+      // one is made
       drawContextGlobal *old = drawContext::global();
       if(!old || old->getName() != CTX::instance()->glFontEngine) {
 #if defined(HAVE_CAIRO)
@@ -214,7 +196,7 @@ namespace FltkScene {
 
   void showAllInEveryWindow()
   {
-    if(!Gui::available()) return;
+    if(!Gui::instance().available()) return;
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
         FlGui::instance()->graph[i]->gl[j]->getDrawContext()->showAll();
@@ -288,8 +270,7 @@ namespace FltkScene {
   void installHost()
   {
     Scene::Host held;
-    // another picture is wanted: every window that shows one draws again,
-    // which is what the draw context of this interface has always done
+    // another picture is wanted: every window that shows one draws again
     held.redraw = []() { drawContext::global()->draw(); };
     held.check = [](bool rateLimited) { FlGui::check(rateLimited); };
     held.wait = [](double seconds, bool force) {
@@ -341,7 +322,7 @@ namespace {
   struct offering {
     offering()
     {
-      Gui::SceneOps ops;
+      GuiSceneOps ops;
 #define GUI_SCENE_TAKE(name, args, call) ops.name = name;
       GUI_SCENE_VOID(GUI_SCENE_TAKE)
 #undef GUI_SCENE_TAKE

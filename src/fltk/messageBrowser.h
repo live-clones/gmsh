@@ -11,7 +11,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
-#include "FlGui.h"
+#include "fltkMetrics.h"
 #include <algorithm>
 #include <string>
 #include <regex>

@@ -8,12 +8,8 @@
 
 #include <string>
 
-// What is left of the little windows this file used to hold: the ones that
-// belong to a widget rather than to the application. The chooser of one
-// option, the arrow editor and the two command choosers are described once in
-// src/common/GuiPrompts.cpp now and built by both interfaces; these two are
-// opened by the ONELAB range widgets of the FLTK module tree, which is FLTK's
-// own and has no counterpart to share them with.
+// the two little windows the ONELAB range widgets of the module tree
+// open
 
 int simpleTextDisplay(const char *title, const std::string &text);
 int simpleTextEditor(const char *title, const std::string &help,

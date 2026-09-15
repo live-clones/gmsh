@@ -3,15 +3,10 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// The keys, wherever the pointer is.
-//
-// They are read off the one list the interfaces share, Sources::keys -- the
-// shortcuts of the menus and after them the keys of the 3D view -- so that
-// what a key does is said once. This file used to be a second copy of the
-// FLTK list, written by hand, and the two had drifted: 'm' folded the mesh
-// module in one and hid the console in the other. What is left here is Dear
-// ImGui's way of saying which key was struck, and the one thing that is this
-// window's rather than the application's: Escape leaves full screen.
+// The keys, wherever the pointer is: read off Sources::keys, so that what
+// a key does is said once. What is here is Dear ImGui's way of saying
+// which key was struck, and the one thing that is this window's rather
+// than the application's: Escape leaves full screen.
 
 #include "uiSources.h"
 #include "GmshConfig.h"

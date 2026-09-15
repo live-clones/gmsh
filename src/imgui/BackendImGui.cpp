@@ -194,16 +194,6 @@ namespace {
       return true;
     }
 
-    int formatOptionsDialog(int format,
-                            const std::string &fileName) override
-    {
-      if(!appWindow::available()) return Cancelled;
-      // this interface asks in a window of its own and writes nothing
-      return appWindow::instance()->exportOptionsDialog(format, fileName) ?
-               GoAhead :
-               Cancelled;
-    }
-
     void applyColorScheme(bool dark) override
     {
       if(appWindow::available()) appWindow::instance()->applyStyle();
@@ -215,20 +205,7 @@ namespace {
     // has to be kept in step: what is here is what to show and what is
     // showing, and a request for a frame.
 
-    Ui::FormRef createForm(const std::string &name,
-                           const std::function<Ui::Form()> &describe) override
-    {
-      return appWindow::available() ?
-               appWindow::instance()->createDialog(name, describe) :
-               Ui::FormRef();
-    }
-
-    void destroyForm(Ui::FormRef form) override
-    {
-      if(appWindow::available()) appWindow::instance()->destroyDialog(form);
-    }
-
-    void showForm(Ui::FormRef form, bool show) override
+    void showForm(const Ui::Form &form, bool show) override
     {
       if(!appWindow::available()) return;
       if(show)
@@ -237,22 +214,27 @@ namespace {
         appWindow::instance()->hideDialog(form);
     }
 
-    bool formVisible(Ui::FormRef form) override
+    bool formVisible(const Ui::Form &form) override
     {
       return appWindow::available() &&
              appWindow::instance()->dialogVisible(form);
     }
 
-    int formPane(Ui::FormRef form) override
+    std::string formPane(const Ui::Form &form) override
     {
       return appWindow::available() ?
-               appWindow::instance()->dialogPane(form) : 0;
+               appWindow::instance()->dialogPane(form) : "";
     }
 
-    void setFormPane(Ui::FormRef form, int pane) override
+    void setFormPane(const Ui::Form &form, const std::string &pane) override
     {
       if(appWindow::available())
         appWindow::instance()->setDialogPane(form, pane);
+    }
+
+    void dropForm(const Ui::Form &form) override
+    {
+      if(appWindow::available()) appWindow::instance()->dropDialog(form);
     }
 
     void showConsole(bool show) override
@@ -390,9 +372,8 @@ const Ui::Backend::Sources &imguiSources()
   return _the ? _the->sources() : none;
 }
 
-// The one this file offers, made once. Saying so here rather than being asked
-// for by name from the shared side is what lets every chrome that was compiled
-// in be there at once, and lets the choice be a word one types.
+// the one this file offers, made once: every interface that was compiled
+// in is there at once, and the choice is a word one types
 namespace {
   struct offeringImGui {
     offeringImGui()

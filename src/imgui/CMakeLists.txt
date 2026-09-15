@@ -12,7 +12,6 @@ set(SRC
   menuBar.cpp
   shortcuts.cpp
   modulesPanel.cpp
-  exportDialog.cpp
   contextPanels.cpp
   fonts.cpp
   toolkit.cpp

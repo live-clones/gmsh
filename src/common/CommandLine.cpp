@@ -371,7 +371,7 @@ std::vector<std::string> GetBuildInfo()
   s.push_back(std::string("Build host    : ") + GMSH_HOST);
   s.push_back(std::string("Build options :") + GMSH_CONFIG_OPTIONS);
 #if defined(HAVE_GUI)
-  s.push_back(std::string("GUI toolkit   : ") + Gui::toolkitVersion());
+  s.push_back(std::string("GUI toolkit   : ") + Gui::instance().toolkitVersion());
 #endif
 #if defined(HAVE_PETSC)
   {

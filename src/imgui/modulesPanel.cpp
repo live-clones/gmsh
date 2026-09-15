@@ -3,10 +3,9 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// The module tree, counterpart of onelabGroup: the Geometry, Mesh, Solver and
-// Post-processing modules, the post-processing views with their visibility, and
-// the ONELAB parameters of the solvers. The actions it triggers all live in
-// GuiActions.cpp and are shared with the FLTK interface.
+// The module tree: the commands, the post-processing views with their
+// visibility, and the ONELAB parameters of the solvers, read from the
+// description.
 
 #include "GmshConfig.h"
 
@@ -36,9 +35,9 @@
 
 #endif
 
-// Down the model, asking for the children of what is open rather than being
-// handed the whole tree. The modules are open and everything below them
-// closed, as the FLTK tree leaves it after its first build.
+// down the model, asking for the children of what is open rather than
+// being handed the whole tree; the modules are open and everything below
+// them closed at first
 void appWindow::_walkModules(const std::string &path, int depth)
 {
   const Ui::Tree &tree = imguiSources().tree;
@@ -69,8 +68,8 @@ void appWindow::_walkModules(const std::string &path, int depth)
     ImGui::PushID(child.c_str());
     bool enabled = node.enabled ? node.enabled() : true;
     ImGui::BeginDisabled(!enabled);
-    // A line the description gives a widget to. Half the width is the widget
-    // and the rest is its name, as the tree this reproduces splits them.
+    // a line the description gives a widget to: half the width is the widget
+    // and the rest is its name
     if(node.hasField) {
       drawField(node.field, ImGui::GetContentRegionAvail().x * .5f);
       // a switch that says nothing itself is followed by the line's own name,
@@ -87,8 +86,7 @@ void appWindow::_walkModules(const std::string &path, int depth)
     if(node.tooltip.size() &&
        ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
       ImGui::SetTooltip("%s", node.tooltip.c_str());
-    // what the line carries, which the FLTK tree drops on the little arrow
-    // beside it and this one on a right click
+    // the menu the line carries, on a right click
     if(node.menu && ImGui::BeginPopupContextItem("##line")) {
       static std::vector<Ui::MenuItem> menu;
       menu = node.menu();
@@ -110,10 +108,6 @@ void appWindow::_drawModulesPanel()
     return;
   }
 
-  // Everything the tree holds comes from the description now: the commands,
-  // the solvers, the views, and what a solver has published. The parameters
-  // sit beside the commands rather than under them, which is where the tree
-  // this reproduces puts them.
   {
     // the buttons at the bottom take a line, and the tree has the rest
     float footer = ImGui::GetFrameHeightWithSpacing() +

@@ -154,7 +154,7 @@ int buildBackgroundField(
 
 #if defined(HAVE_GUI)
   view->getOptions()->visible = 0;
-  if(Gui::available()) Gui::updateViews(true, true);
+  if(Gui::instance().available()) Gui::instance().updateViews(true, true);
 #endif
 
   /* singularities */
@@ -2350,7 +2350,7 @@ int quadqsCleanup(GModel *gm)
   PView *view = PView::getViewByName("guiding_field");
   delete view;
 #if defined(HAVE_GUI)
-  if(Gui::available()) Gui::updateViews(true, true);
+  if(Gui::instance().available()) Gui::instance().updateViews(true, true);
 #endif
 #endif
   return 0;

@@ -62,7 +62,7 @@ public:
         return 1; // process has been killed or we stopped listening
       int ret = 0;
 #if defined(HAVE_GUI)
-      if(Gui::available()) {
+      if(Gui::instance().available()) {
         // if GUI available, check if there is data and return immediately (we
         // will wait for GUI events later - see below)
         ret = Select(0, 0, socket);
@@ -75,7 +75,7 @@ public:
 #endif
       if(ret == 0) { // nothing available
 #if defined(HAVE_GUI)
-        if(Gui::available()) {
+        if(Gui::instance().available()) {
           if(timeout < 0) {
             // if asked, refresh the onelab GUI, but no more than every 1/4th of
             // a second
@@ -87,13 +87,13 @@ public:
                 ps[0].setVisible(false);
                 ps[0].setValue("");
                 onelab::server::instance()->set(ps[0]);
-                if(Gui::available()) Gui::onelabAction("refresh");
+                if(Gui::instance().available()) Gui::instance().onelabAction("refresh");
               }
               lastRefresh = start;
             }
           }
           // wait at most waitint seconds and respond to FLTK events if ready
-          if(Gui::ready()) Gui::wait(waitint);
+          if(Gui::instance().ready()) Gui::instance().wait(waitint);
         }
 #endif
         // return to caller (we will be back here soon again)
@@ -299,8 +299,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
         set(p);
         if(p.getName() == getName() + "/Progress") {
 #if defined(HAVE_GUI)
-          if(Gui::available())
-            Gui::setProgress(p.getLabel().c_str(), p.getValue(), p.getMin(),
+          if(Gui::instance().available())
+            Gui::instance().setProgress(p.getLabel().c_str(), p.getValue(), p.getMin(),
                              p.getMax());
 #endif
         }
@@ -435,9 +435,9 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       onelab::server::instance()->setChanged(changedBeforeMerge, "Gmsh");
 #if defined(HAVE_GUI)
       drawContext::global()->draw();
-      if(Gui::available() && n != PView::list.size()) {
-        Gui::rebuildTree(true);
-        Gui::openModule("Post-processing");
+      if(Gui::instance().available() && n != PView::list.size()) {
+        Gui::instance().rebuildTree(true);
+        Gui::instance().openModule("Post-processing");
       }
 #endif
     }
@@ -464,8 +464,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     PView::fillVertexArray(this, length, &message[0], swap);
 #endif
 #if defined(HAVE_GUI)
-    if(Gui::available())
-      Gui::updateViews(n != (int)PView::list.size(), true);
+    if(Gui::instance().available())
+      Gui::instance().updateViews(n != (int)PView::list.size(), true);
     drawContext::global()->draw();
 #endif
   } break;
@@ -663,7 +663,7 @@ bool gmshLocalNetworkClient::kill()
     if(KillProcess(getPid())) {
       Msg::Info("Killed '%s' (pid %d)", _name.c_str(), getPid());
 #if defined(HAVE_GUI)
-      if(Gui::available()) Gui::setProgress("Killed", 0, 0, 0);
+      if(Gui::instance().available()) Gui::instance().setProgress("Killed", 0, 0, 0);
 #endif
       setPid(-1);
       return true;

@@ -229,8 +229,8 @@ int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
   gmsh_yyviewindex = old_yyviewindex;
 
 #if defined(HAVE_GUI) && defined(HAVE_POST)
-  if(Gui::available()) {
-    Gui::updateViews(true, false);
+  if(Gui::instance().available()) {
+    Gui::instance().updateViews(true, false);
   }
 #endif
 
@@ -562,13 +562,13 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   if(importPhysicalsInOnelab) Msg::ImportPhysicalGroupsInOnelab();
 
 #if defined(HAVE_GUI) && defined(HAVE_POST)
-  if(Gui::available()) {
+  if(Gui::instance().available()) {
     // go directly to the first non-empty step after the one that is requested
     for(std::size_t i = numViewsBefore; i < PView::list.size(); i++)
       opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                         PView::list[i]->getData()->getFirstNonEmptyTimeStep(
                           opt_view_timestep(i, GMSH_GET, 0)));
-    Gui::updateViews(numViewsBefore != (int)PView::list.size(), false);
+    Gui::instance().updateViews(numViewsBefore != (int)PView::list.size(), false);
   }
 #endif
 
@@ -716,10 +716,10 @@ void ClearProject()
   GModel::current()->setFileName(base + CTX::instance()->defaultFileName);
   GModel::current()->setName("");
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    Gui::resetVisibility();
-    Gui::updateViews(true, true);
-    Gui::updateFields();
+  if(Gui::instance().available()) {
+    Gui::instance().resetVisibility();
+    Gui::instance().updateViews(true, true);
+    Gui::instance().updateFields();
     GModel::current()->setSelection(0);
   }
 #endif
@@ -781,7 +781,7 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
   }
   CTX::instance()->recentFiles.resize(10);
 #if defined(HAVE_GUI)
-  if(Gui::available()) Gui::fillRecentHistoryMenu();
+  if(Gui::instance().available()) Gui::instance().fillRecentHistoryMenu();
 #endif
 
   // close the files that might have been left open by ParseFile
@@ -797,11 +797,11 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
     GModel::current()->addAutomaticExtrusionConstraints({10}, {1}, true, {});
 
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    Gui::watchFile();
-    Gui::resetVisibility();
-    Gui::updateViews(true, false);
-    Gui::updateFields();
+  if(Gui::instance().available()) {
+    Gui::instance().watchFile();
+    Gui::instance().resetVisibility();
+    Gui::instance().updateViews(true, false);
+    Gui::instance().updateFields();
     GModel::current()->setSelection(0);
   }
 #endif
@@ -817,16 +817,16 @@ void OpenProjectMacFinder(const char *fileName)
     return;
   }
 #if defined(HAVE_GUI)
-  if(!Gui::available() || !Gui::getFinishedProcessingCommandLine()) {
+  if(!Gui::instance().available() || !Gui::instance().getFinishedProcessingCommandLine()) {
     // Gmsh is not ready: will open the file later
-    Gui::setOpenedThroughMacFinder(name);
+    Gui::instance().setOpenedThroughMacFinder(name);
   }
   else {
     // Gmsh is running
     OpenProject(name);
     drawContext::global()->draw();
     if(CTX::instance()->launchSolverAtStartup >= 0)
-      Gui::startSolver(CTX::instance()->launchSolverAtStartup);
+      Gui::instance().startSolver(CTX::instance()->launchSolverAtStartup);
   }
 #endif
 }

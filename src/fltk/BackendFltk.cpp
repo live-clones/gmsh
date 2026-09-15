@@ -73,8 +73,7 @@ namespace {
     int runLoop() override
     {
 #if defined(HAVE_TOUCHBAR)
-      // the bar of buttons a MacBook offers over its keyboard, which this
-      // interface fills; it was set up in a run() nothing called any more
+      // the bar of buttons a MacBook offers over its keyboard
       updateTouchBar();
 #endif
       return Fl::run();
@@ -110,8 +109,7 @@ namespace {
 
     void copyText(const std::string &text) override
     {
-      // both of them: the selection buffer and the clipboard proper, as the
-      // window this replaces does
+      // both the selection buffer and the clipboard proper
       Fl::copy(text.c_str(), (int)text.size(), 0);
       Fl::copy(text.c_str(), (int)text.size(), 1);
     }
@@ -199,8 +197,8 @@ namespace {
         simpleTextDisplay(question.c_str(), value);
         return false;
       }
-      // a question with a shape to its answer gets the little editor that
-      // says the shape, which is what the window this reproduces uses
+      // a question with a shape to its answer gets the little editor that says
+      // the shape
       if(hint.size())
         return simpleTextEditor(question.c_str(), hint.c_str(), value);
       const char *ret = fl_input("%s", value.c_str(), question.c_str());
@@ -243,14 +241,6 @@ namespace {
       return true;
     }
 
-    int formatOptionsDialog(int format, const std::string &fileName) override
-    {
-      // each format has a little window of its own saying what it takes; the
-      // three that choose *which* file to write rather than how write it
-      // themselves and say so
-      return fltkFormatOptions(format, fileName);
-    }
-
     void applyColorScheme(bool dark) override
     {
       _dark = dark;
@@ -259,38 +249,13 @@ namespace {
 
     // --- the things that are described
 
-    Ui::FormRef createForm(const std::string &name,
-                           const std::function<Ui::Form()> &describe) override
-    {
-      // the name is not yet used here: where a window was left is remembered
-      // by the option file, one position for all of them
-      // handed out once and never again, so that a form that is gone is a
-      // number nobody answers to; nothing is built until it is shown
-      Ui::FormRef form(++_lastForm);
-      _forms[form.id] = describe;
-      return form;
-    }
-
-    void destroyForm(Ui::FormRef form) override
-    {
-      fltkDropDialog(form);
-      _forms.erase(form.id);
-    }
-
-    const std::function<Ui::Form()> &formDescription(Ui::FormRef form) const
-    {
-      static const std::function<Ui::Form()> none;
-      auto it = _forms.find(form.id);
-      return it == _forms.end() ? none : it->second;
-    }
-
-    void showForm(Ui::FormRef form, bool show) override
+    void showForm(const Ui::Form &form, bool show) override
     {
       dialogFltk *d = fltkDialog(form, false);
       if(!d) {
         // built here and now, on the pane that was asked for meanwhile
-        int pane = -1;
-        auto it = _paneWanted.find(form.id);
+        std::string pane;
+        auto it = _paneWanted.find(&form);
         if(it != _paneWanted.end()) {
           pane = it->second;
           _paneWanted.erase(it);
@@ -304,43 +269,49 @@ namespace {
         d->hide();
     }
 
-    bool formVisible(Ui::FormRef form) override
+    bool formVisible(const Ui::Form &form) override
     {
       // only if it is already there: asking is not a reason to build it
       dialogFltk *d = fltkDialog(form, false);
       return d && d->shown();
     }
 
-    int formPane(Ui::FormRef form) override
+    std::string formPane(const Ui::Form &form) override
     {
       dialogFltk *d = fltkDialog(form, false);
       // a pane asked for before the window exists is kept for it
       if(!d) {
-        auto it = _paneWanted.find(form.id);
-        return it == _paneWanted.end() ? 0 : it->second;
+        auto it = _paneWanted.find(&form);
+        return it == _paneWanted.end() ? "" : it->second;
       }
       return d->pane();
     }
 
-    void setFormPane(Ui::FormRef form, int pane) override
+    void setFormPane(const Ui::Form &form, const std::string &pane) override
     {
       dialogFltk *d = fltkDialog(form, false);
       if(d)
         d->setPane(pane);
       else
-        _paneWanted[form.id] = pane;
+        _paneWanted[&form] = pane;
     }
 
-    void refreshForm(Ui::FormRef form) override
+    void reloadForm(const Ui::Form &form) override
     {
       dialogFltk *d = fltkDialog(form, false);
       if(d && d->shown()) d->refresh();
     }
 
-    void rebuildForm(Ui::FormRef form) override
+    void rebuildForm(const Ui::Form &form) override
     {
       dialogFltk *d = fltkDialog(form, false);
       if(d && d->shown()) d->reshape();
+    }
+
+    void dropForm(const Ui::Form &form) override
+    {
+      fltkDropDialog(form);
+      _paneWanted.erase(&form);
     }
 
     void showConsole(bool show) override
@@ -386,12 +357,6 @@ namespace {
         FlGui::instance()->onelab->show();
     }
 
-    bool treeItemClosedByHand(const std::string &name) override
-    {
-      if(!FlGui::available() || !FlGui::instance()->onelab) return false;
-      return FlGui::instance()->onelab->isManuallyClosed(name);
-    }
-
     void refreshMenus() override
     {
       if(FlGui::available())
@@ -408,7 +373,7 @@ namespace {
                              const std::string &button1) override
     {
       if(FlGui::available() && FlGui::instance()->onelab)
-        FlGui::instance()->onelab->setButtonMode(button0, button1);
+        FlGui::instance()->onelab->rebuildFooter();
     }
 
     void drawTooltip(const std::string &text) override
@@ -448,11 +413,8 @@ namespace {
     Sources _sources;
     Host _host;
     bool _dark = false;
-    // the forms handed out, by number, and what each is made of
-    std::map<unsigned, std::function<Ui::Form()> > _forms;
-    unsigned _lastForm = 0;
-    // the pane asked for on a form whose window has not been built yet
-    std::map<unsigned, int> _paneWanted;
+    // the pane asked for on a dialog whose window has not been built yet
+    std::map<const Ui::Form *, std::string> _paneWanted;
     std::mutex _mutex;
     std::vector<std::function<void()> > _posted;
 
@@ -475,10 +437,8 @@ namespace {
 // what the interface was given, for the files that build from it
 const Ui::Backend::Sources &fltkSources()
 {
-  // Answered before the interface was given anything, which is not something
-  // that happens but is not worth throwing over either: the settings come
-  // out at their defaults, and no call site has to ask whether they are
-  // there.
+  // answered before the interface was given anything: the settings come out
+  // at their defaults
   static Ui::Backend::Sources none = []() {
     Ui::Backend::Sources empty;
     empty.settings = []() { return Ui::Backend::Settings(); };
@@ -494,15 +454,8 @@ const Ui::Backend::Host &fltkHost()
   return _the ? _the->host() : none;
 }
 
-const std::function<Ui::Form()> &fltkFormDescription(Ui::FormRef form)
-{
-  static const std::function<Ui::Form()> none;
-  return _the ? _the->formDescription(form) : none;
-}
-
-// The one this file offers, made once. Saying so here rather than being asked
-// for by name from the shared side is what lets every chrome that was compiled
-// in be there at once, and lets the choice be a word one types.
+// the one this file offers, made once: every interface that was compiled
+// in is there at once, and the choice is a word one types
 namespace {
   struct offeringFltk {
     offeringFltk()

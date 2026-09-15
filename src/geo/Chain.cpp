@@ -21,7 +21,7 @@
 void updateFltk()
 {
 #if defined(HAVE_GUI)
-  if(Gui::available()) Gui::updateViews(true, true);
+  if(Gui::instance().available()) Gui::instance().updateViews(true, true);
 #endif
 }
 

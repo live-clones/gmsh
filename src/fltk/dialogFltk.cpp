@@ -9,6 +9,7 @@
 #if defined(HAVE_FLTK)
 
 #include <algorithm>
+#include <cmath>
 #include <deque>
 #include <map>
 #include <string>
@@ -41,7 +42,7 @@
 #include "Layout.h"
 #include "dialogFltk.h"
 #include "menuFltk.h"
-#include "FlGui.h"
+#include "fltkMetrics.h"
 #include "paletteWindow.h"
 
 // While the interface is being taken down every window is hidden in turn, and
@@ -51,10 +52,9 @@ static bool _closingDown = false;
 
 void fltkDialogsClosingDown() { _closingDown = true; }
 
-// A window that tells the description it has gone. FLTK calls the callback of
-// a window only when the user closes it; a dialog that leaves something
-// behind -- the ONELAB context window highlights the entity it is about --
-// has to hear about every way of hiding it.
+// a window that tells the description it has gone: FLTK calls the
+// callback of a window only when the user closes it, and a dialog that
+// leaves something behind has to hear about every way of hiding it
 class dialogWindow : public paletteWindow {
 public:
   std::function<void()> closed;
@@ -75,34 +75,17 @@ namespace {
   // together
   int _proseRows(const Ui::Field &f);
 
+  Ui::Metrics _metrics();
+
   int _rows(const std::vector<Ui::Field> &fields)
   {
-    int rows = 0;
-    for(std::size_t i = 0; i < fields.size(); i++) {
-      if(fields[i].sameRow && i) continue;
-      if(fields[i].visible && !fields[i].visible()) continue;
-      // a list, a tree, a colour map and a line that wraps are worth as many
-      // lines as they show
-      // a page of prose is worth the lines it says, which are lines of text
-      if(fields[i].kind == Ui::Prose) rows += _proseRows(fields[i]);
-      else
-        rows += (fields[i].kind == Ui::List ||
-                 fields[i].kind == Ui::Hierarchy ||
-                 fields[i].kind == Ui::ColorMap ||
-                 (fields[i].kind == Ui::Label && fields[i].wraps)) ?
-                  fields[i].rows :
-                  1;
-    }
-    return rows;
+    return Ui::neededRows(fields, _metrics());
   }
 
-  // FLTK reads "&" in a label as the mark of a keyboard shortcut and does not
-  // draw it. A label is text here, so an ampersand has to be doubled to come
-  // out as one -- "Colours & light" is a tab, not a shortcut.
-  // ...and only those widgets: a plain box, a group, a tab and a line of a
-  // tree draw what they are given. FLTK says which -- the menus, the buttons
-  // and the inputs read the ampersand; nothing else does -- and doubling it
-  // for the others would put two of them on the screen.
+  // FLTK reads "&" in a label as the mark of a keyboard shortcut and does
+  // not draw it, so an ampersand has to be doubled -- but only in the
+  // widgets that read it: the menus, the buttons and the inputs; a box, a
+  // group, a tab and a line of a tree draw what they are given
   std::string _escaped(const std::string &label);
   const std::string &_plain(const std::string &label) { return label; }
 
@@ -116,9 +99,8 @@ namespace {
     return out;
   }
 
-  // An entry of a menu goes through the same reading, and "/" opens a submenu
-  // there, "\\" escapes the next character: a choice named "Volume and surface"
-  // is safe, one named "1/2" would not be.
+  // an entry of a menu goes through the same reading, and "/" opens a
+  // submenu there, "\\" escapes the next character
   std::string _escapedMenu(const std::string &label)
   {
     std::string out;
@@ -129,12 +111,11 @@ namespace {
     return out;
   }
 
-  // How wide a field's widget has to be. Alone on its line an input gets the
-  // usual width, otherwise a narrower one so that several fit. A choice gets
-  // the same as an input: sizing it to the longest thing it offers makes it
-  // wider than the fields above and below it, and their labels no longer line
-  // up. The windows this replaces give a choice a plain IW too, and let a long
-  // entry be clipped; one that really needs more says so with widthEm.
+  // How wide a field's widget has to be. Alone on its line an input gets
+  // the usual width, otherwise a narrower one so that several fit. A choice
+  // gets the same as an input rather than the width of its longest entry,
+  // so that the labels line up; one that really needs more says so with
+  // widthEm.
   // Where a word one may follow was drawn, so that a click can find it again
   struct proseSpot {
     int x, y, w, h;
@@ -142,14 +123,10 @@ namespace {
   };
 
   // Lay a page of prose out in a column, and draw it if asked to. Measuring
-  // it and drawing it are the same walk, which is the only way the window can
-  // be exactly as tall as what it has to say.
-  //
-  // The window this replaces uses an Fl_Help_View and writes HTML into it.
-  // That is not done here: a page whose lines are words, some of them
-  // centred, some of them items of a list, is a dozen calls to draw, and
-  // FLTK cannot be given the page of a view whose window has not been shown
-  // -- do it and the windows made afterwards never open.
+  // it and drawing it are the same walk, which is the only way the window
+  // can be exactly as tall as what it has to say. Drawn by hand rather than
+  // through an Fl_Help_View: FLTK cannot be given the page of a view whose
+  // window has not been shown, and the windows made afterwards never open.
   int _layProse(const std::vector<Ui::Line> &page, int x, int y, int w,
                 bool paint, std::vector<proseSpot> *spots)
   {
@@ -248,7 +225,7 @@ namespace {
     return at - y + margin;
   }
 
-  // The page one reads, drawn by hand: see _layProse().
+  // the page one reads, drawn by hand: see _layProse()
   class proseView : public Fl_Widget {
   public:
     std::vector<Ui::Line> page;
@@ -277,10 +254,8 @@ namespace {
     }
   };
 
-  // How tall a page of prose is, in the rows everything else is measured in:
-  // it is laid out, and what that comes to is turned into rows. Saying it in
-  // lines would be guessing -- how many rows a line takes depends on how wide
-  // the column is.
+  // how tall a page of prose is, in rows: it is laid out, since how many
+  // rows a line takes depends on how wide the column is
   int _proseRows(const Ui::Field &f)
   {
     if(!f.prose) return 1;
@@ -294,25 +269,22 @@ namespace {
     if(f.disclosure) return BB;
     if(f.kind == Ui::Spacer) return 0;
     if(f.kind == Ui::Action || f.kind == Ui::Menu) {
-      // a button is as wide as the text it carries inside, never narrower
-      // than an ordinary one
+      // a button is as wide as the text it carries inside, never narrower than
+      // an ordinary one
       fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
       int need = (int)fl_width(_escaped(f.label).c_str()) + 2 * FL_NORMAL_SIZE;
       return (need > BB) ? need : BB;
     }
     if(f.kind == Ui::Label) {
       // one that says how wide it is takes that; one that wraps and does not
-      // takes the width of an ordinary field, whatever it says
+      // takes the width of an ordinary field
       if(f.widthEm > 0.) return (int)(f.widthEm * FL_NORMAL_SIZE);
       if(f.wraps) return IW;
       fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
       return (int)fl_width(f.getText().c_str()) + FL_NORMAL_SIZE;
     }
     if(f.kind == Ui::Check) return (int)(1.5 * FL_NORMAL_SIZE);
-    // A field that says how wide it is takes that, whatever kind it is:
-    // nothing about a line of text says how wide the list holding it should
-    // be, and the menu of a window that is one menu wide is as wide as the
-    // window.
+    // a field that says how wide it is takes that, whatever kind it is
     if(f.widthEm > 0.) return (int)(f.widthEm * FL_NORMAL_SIZE);
     // a swatch says what it is by its colour; it needs no room for text
     if(f.kind == Ui::Color) return (int)(3. * FL_NORMAL_SIZE);
@@ -321,17 +293,14 @@ namespace {
     // a colour map takes the pane it is in
     if(f.kind == Ui::ColorMap) return IW;
     int usual = (columns == 1) ? IW : IW / 2;
-    // A dropdown keeps its arrow inside the box, at the right end, and the
-    // text has to fit beside it. One sharing a line takes the arrow on top of
-    // its share rather than out of its text, which is what the windows this
-    // replaces do -- alone on its line it has room to spare already.
+    // a dropdown sharing a line takes its arrow on top of its share rather
+    // than out of its text; alone on its line it has room already
     if(f.kind == Ui::Choice && !f.multiple && columns > 1)
       usual += 2 * FL_NORMAL_SIZE;
     return usual;
   }
 
-  // What a packed field needs: its own text and no more. It takes the width it
-  // asks for rather than a share of the line.
+  // what a packed field needs: its own text and no more
   int _packedWidth(const Ui::Field &f)
   {
     fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
@@ -339,7 +308,7 @@ namespace {
       return (int)((f.widthEm > 0. ? f.widthEm : 2.) * FL_NORMAL_SIZE);
     if(f.disclosure) return BB;
     if(f.kind == Ui::Label) {
-      // one that says how wide it is takes that: a column of keys is a column
+      // one that says how wide it is takes that
       if(f.widthEm > 0.) return (int)(f.widthEm * FL_NORMAL_SIZE);
       return f.wraps ? IW : (int)fl_width(f.getText().c_str()) + WB;
     }
@@ -361,144 +330,9 @@ namespace {
     return w + (int)fl_width(_escaped(f.label).c_str()) + 2 * WB;
   }
 
-  // Whether the field at k shares its cell with the one after it: consecutive
-  // fields that declare a share of a field's width are one cell, and all but
-  // the last of them sit flush against the next, so that the cell measures
-  // exactly what one field would.
-  bool _sharesCell(const std::vector<Ui::Field> &fields, std::size_t k,
-                   std::size_t to)
-  {
-    return fields[k].widthShare > 0. && k + 1 < to &&
-           fields[k + 1].widthShare > 0.;
-  }
-
-  // how far the next field starts from this one, when this one is packed
-  int _packedStep(const std::vector<Ui::Field> &fields, std::size_t k,
-                  std::size_t to)
-  {
-    if(_sharesCell(fields, k, to)) return (int)(fields[k].widthShare * IW);
-    return _packedWidth(fields[k]) + WB;
-  }
-
-  // Where the columns of a pane laid out on a grid start, and how wide each
-  // of them is: a column is as wide as the widest thing in it, its label
-  // included, and not as wide as the widest thing in the pane.
-  std::vector<int> _gridColumns(const std::vector<Ui::Field> &fields,
-                                int grid)
-  {
-    std::vector<int> width((std::size_t)grid, 0);
-    int column = 0;
-    for(std::size_t k = 0; k < fields.size(); k++) {
-      const Ui::Field &f = fields[k];
-      if(!f.sameRow)
-        column = 0;
-      else if(!f.packed)
-        column++;
-      if(column >= grid) column = grid - 1;
-      if(f.kind == Ui::Spacer) continue;
-      if(f.visible && !f.visible()) continue;
-      // What follows it inside the same column adds to it. Its label only
-      // needs room if another column follows on the same row: the label of
-      // the last field of a row runs on into the space no one else uses,
-      // which is what keeps the columns as narrow as the window this
-      // replaces has them.
-      // where the line this field is on ends, so that the cells packed
-      // against it can be stepped over the way they are placed
-      std::size_t end = k + 1;
-      while(end < fields.size() && fields[end].sameRow) end++;
-      int need = 0;
-      std::size_t j = k;
-      bool more = false;
-      while(j < fields.size() && (j == k || (fields[j].sameRow && fields[j].packed))) {
-        bool last = !(j + 1 < fields.size() && fields[j + 1].sameRow &&
-                      fields[j + 1].packed);
-        need += last ? _packedWidth(fields[j]) : _packedStep(fields, j, end);
-        j++;
-      }
-      if(j < fields.size() && fields[j].sameRow) more = true;
-      if(!more) {
-        // Take the last of them back off: its label runs on into the space no
-        // one else uses. One that carries its text inside comes off whole --
-        // a line of a pane that is nothing but a switch is as wide as the
-        // switch says, and that is no reason to push the second column of
-        // every other line across.
-        const Ui::Field &l = fields[j - 1];
-        fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
-        if(l.kind == Ui::Check || l.kind == Ui::Action ||
-           l.kind == Ui::Menu || l.kind == Ui::Label ||
-           l.kind == Ui::Direction ||
-           (l.kind == Ui::Choice && l.multiple))
-          need -= _packedWidth(l);
-        else
-          need -= (int)fl_width(_escaped(l.label).c_str()) + 2 * WB;
-      }
-      if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
-    }
-    return width;
-  }
-
-  // How much room the labels that come before their field take, column by
-  // column: they are written to the left of the field, and the fields of a
-  // column line up when every one of them starts after the widest of them.
-  std::vector<int> _gridLabelsBefore(const std::vector<Ui::Field> &fields,
-                                     int grid)
-  {
-    std::vector<int> width((std::size_t)(grid > 0 ? grid : 1), 0);
-    int column = 0;
-    fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
-    for(std::size_t k = 0; k < fields.size(); k++) {
-      const Ui::Field &f = fields[k];
-      if(!f.sameRow)
-        column = 0;
-      else if(!f.packed)
-        column++;
-      if(column >= (int)width.size()) column = (int)width.size() - 1;
-      if(!f.labelBefore || f.label.empty()) continue;
-      int need = (int)fl_width(_escaped(f.label).c_str()) + WB;
-      if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
-    }
-    return width;
-  }
-
-  // how much of a line the packed fields take, spacing included
-  int _packedTotal(const std::vector<Ui::Field> &fields, std::size_t from,
-                   std::size_t to)
-  {
-    int total = 0;
-    for(std::size_t k = from; k < to; k++)
-      if(fields[k].packed || fields[k].kind == Ui::Spacer)
-        total += _packedStep(fields, k, to);
-    return total;
-  }
-
-  // the width one line needs, labels included
-  int _rowWidth(const std::vector<Ui::Field> &fields, std::size_t from,
-                std::size_t to, int &columnW)
-  {
-    fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
-    int columns = 0;
-    for(std::size_t k = from; k < to; k++)
-      if(!fields[k].packed && fields[k].kind != Ui::Spacer) columns++;
-    columnW = 0;
-    for(std::size_t k = from; k < to; k++) {
-      if(fields[k].packed || fields[k].kind == Ui::Spacer) continue;
-      if(fields[k].visible && !fields[k].visible()) continue;
-      // a plain line and a button carry their text inside
-      int label = (fields[k].kind == Ui::Label ||
-                   fields[k].kind == Ui::Menu ||
-                   fields[k].kind == Ui::Action) ?
-                    0 :
-                    (int)fl_width(fields[k].label.c_str());
-      int need = _fieldWidth(fields[k], columns) + label + 3 * WB;
-      if(need > columnW) columnW = need;
-    }
-    return columns * columnW + _packedTotal(fields, from, to);
-  }
-
-  // What the solver of src/gui/Layout.h is told about this toolkit, in em.
-  // The kinds that size themselves are measured by _packedWidth() and
-  // _fieldWidth() so that the window is measured exactly as it is placed;
-  // both go when the placing does (plan §2.4.3).
+  // what the solver of Layout.h is told about this toolkit, in em: the
+  // kinds that size themselves are measured by _packedWidth() and
+  // _fieldWidth(), the solver holds the rest
   Ui::Metrics _metrics()
   {
     const double em = FL_NORMAL_SIZE;
@@ -510,50 +344,60 @@ namespace {
     m.after = 0.;
     m.arrow = 2.;
     m.offer = 0.;
+    m.row = BH / em;
+    // FLTK places at whole pixels
+    m.pixel = 1. / em;
+    m.widgetWidth = [em](const Ui::Field &f) -> double {
+      // a swatch is worth the swatch alone; its name stands beside it
+      if(f.kind == Ui::Color) return _fieldWidth(f, 1) / em;
+      // a button in the flow of the fields is never narrower than an ordinary
+      // one; packed against its neighbours it is as wide as the word on it
+      if((f.kind == Ui::Action || f.kind == Ui::Menu) && !f.packed &&
+         f.widthEm <= 0. && f.widthShare <= 0.)
+        return _fieldWidth(f, 1) / em;
+      bool self = f.disclosure || f.kind == Ui::Label ||
+                  f.kind == Ui::Action || f.kind == Ui::Menu ||
+                  f.kind == Ui::Check || f.kind == Ui::Direction ||
+                  (f.kind == Ui::Choice && f.multiple);
+      return self ? _packedWidth(f) / em : -1.;
+    };
+    // the little buttons after a field take their width from the font
+    m.trailingWidth = [em](const Ui::Button &t) {
+      return (t.label == ":" ? FL_NORMAL_SIZE - 2 : FL_NORMAL_SIZE + 6) / em;
+    };
+    m.naturalHeight = [](const Ui::Field &f) -> double {
+      return f.kind == Ui::Prose ? _proseRows(f) : -1.;
+    };
     m.textWidth = [em](const std::string &s) {
       fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
       return (int)fl_width(_escaped(s).c_str()) / em;
     };
-    m.naturalWidth = [em](const Ui::Field &f, bool packed) -> double {
-      bool self = f.disclosure || f.kind == Ui::Label ||
-                  f.kind == Ui::Action || f.kind == Ui::Menu ||
-                  f.kind == Ui::Check;
-      if(packed) {
-        if(self || f.kind == Ui::Direction || f.kind == Ui::Color ||
-           (f.kind == Ui::Choice && f.multiple))
-          return _packedWidth(f) / em;
-        return -1.;
-      }
-      // the swatch, the disc and the map have a width of their own, unless
-      // they say one
-      if(!self && f.widthEm <= 0. &&
-         (f.kind == Ui::Color || f.kind == Ui::Direction ||
-          f.kind == Ui::ColorMap))
-        self = true;
-      if(!self) return -1.;
-      // a plain line and a button carry their text inside
-      fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
-      int label = (f.kind == Ui::Label || f.kind == Ui::Menu ||
-                   f.kind == Ui::Action) ?
-                    0 :
-                    (int)fl_width(f.label.c_str());
-      return (_fieldWidth(f, 1) + label + 2 * WB) / em;
-    };
     return m;
   }
 
-  // What a list of fields needs, in pixels: the solver says it in em. What
-  // it adds up is whole pixels, so the nearest one is the one meant.
-  int _neededWidth(const std::vector<Ui::Field> &fields, int columns)
+  // what a list of fields needs, in pixels; the solver says it in em, and
+  // the nearest whole pixel is the one meant
+  // With every field counted, folded or not, when asked: a window that
+  // grows sideways when a part of it is unfolded is a window that will not
+  // sit still. Not in a tabbed dialog, whose hidden fields are the other
+  // half of an alternative rather than a part folded away.
+  int _neededWidth(const std::vector<Ui::Field> &fields, int columns,
+                   bool folded = false)
   {
-    double em = Ui::neededWidth(fields, columns, _metrics());
+    double em;
+    if(folded) {
+      std::vector<Ui::Field> all = fields;
+      for(auto &f : all) f.visible = nullptr;
+      em = Ui::neededWidth(all, columns, _metrics());
+    }
+    else
+      em = Ui::neededWidth(fields, columns, _metrics());
     return (int)(em * FL_NORMAL_SIZE + 0.5);
   }
 
   // How tall a pane is, so that all of them fit whichever one is shown. The
-  // button of a pane sits at its bottom right and is not given a line of its
-  // own: with a pane full of fields it shares the last one, as the window this
-  // replaces has it.
+  // button of a pane sits at its bottom right and shares the last line when
+  // the pane is full of fields.
   // the rows of a pane: its own fields, then each section with its heading
   std::size_t _paneRows(const Ui::Pane &q)
   {
@@ -577,9 +421,9 @@ namespace {
     return (int)most * BH + 2 * WB;
   }
 
-  // What the window is made of, as opposed to what it holds: the dialog is only
-  // built again when this changes, so that re-opening it does not destroy a
-  // window that is already on screen and put a new one somewhere else.
+  // what the window is made of, as opposed to what it holds: the dialog is
+  // only built again when this changes, so that re-opening it does not
+  // destroy a window that is already on screen
   std::string _signature(const Ui::Form &p)
   {
     std::string s = p.title + (p.tabbed ? "|t" : "|f");
@@ -588,8 +432,7 @@ namespace {
     for(const auto &q : p.panes) {
       s += "|" + q.label + (q.separatorAfter ? "-" : "") + ":" + q.buttonLabel;
       for(const auto &f : q.fields)
-        s += "/" + f.label + (char)('0' + f.kind) + (f.sameRow ? "=" : "") +
-             ((f.visible && !f.visible()) ? "-" : "");
+        s += "/" + f.label + (char)('0' + f.kind) + (f.sameRow ? "=" : "");
     }
     for(const auto &f : p.footer)
       s += "//" + f.label + (char)('0' + f.kind) + (f.sameRow ? "=" : "");
@@ -609,9 +452,8 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
   dialogFltk *d = (dialogFltk *)data;
   for(auto &b : d->_fields) {
     if(b.widget != w) continue;
-    // A copy, not the field itself: what the field does may build the dialog
-    // again -- picking a plugin changes the options shown -- and that is the
-    // end of the list this is walking.
+    // a copy, not the field itself: what the field does may build the dialog
+    // again, and that is the end of the list this is walking
     Ui::Field f = b.field;
     switch(f.kind) {
     case Ui::Text:
@@ -622,8 +464,6 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       break;
     case Ui::Integer:
     case Ui::Number:
-      // an input and a slider are both valuators, which is all that is asked
-      // of them here
       f.setNumber(((Fl_Valuator *)w)->value());
       break;
     case Ui::Check:
@@ -641,8 +481,8 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
       f.setVector(x, y, z);
     } break;
     case Ui::Hierarchy: {
-      // A line has just been picked or let go: say which, by where it is in
-      // the list the description gave. The item carries that place.
+      // a line has just been picked or let go: say which, by where it is in
+      // the list the description gave
       Fl_Tree *tree = (Fl_Tree *)w;
       Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
       if(!item || !f.hierarchy) break;
@@ -665,6 +505,7 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
           if(&m->menu()[k] == item) f.choose(k, true);
     } break;
     case Ui::Label:
+    case Ui::Prose:
     case Ui::Output:
     case Ui::Action:
     case Ui::Spacer: break;
@@ -712,13 +553,12 @@ void dialogFltk::_fieldCallback(Fl_Widget *w, void *data)
     if(f.changed) f.changed();
     break;
   }
-  // picking in one field can change what the others are: the plugin window
-  // shows the options of the plugin one picks
+  // picking in one field can change what the others are
   d->reshape();
 }
 
-// the user clicked a tab: the description must follow, or the next refresh
-// would put the pane it remembers back
+// the user clicked a tab: the description must follow, or the next
+// refresh would put the pane it remembers back
 void dialogFltk::_tabCallback(Fl_Widget *w, void *data)
 {
   dialogFltk *d = (dialogFltk *)data;
@@ -753,9 +593,9 @@ void dialogFltk::_tabCallback(Fl_Widget *w, void *data)
   d->refresh();
 }
 
-// What a button of a dialog carries: the dialog it belongs to, so that it can
-// be built again when what it did changed its shape, and the thing to do. The
-// description owns the action; the window owns a copy of it.
+// what a button of a dialog carries: the dialog it belongs to, so that it
+// can be built again when what it did changed its shape, and a copy of
+// the thing to do
 struct buttonAction {
   dialogFltk *dialog;
   std::function<void()> what;
@@ -766,15 +606,14 @@ void dialogFltk::_buttonCallback(Fl_Widget *w, void *data)
   buttonAction *a = (buttonAction *)data;
   if(!a) return;
   if(a->what) a->what();
-  // what it did may have changed the shape of the dialog: a field deleted is
-  // one option fewer to show
+  // what it did may have changed the shape of the dialog
   if(a->dialog) a->dialog->reshape();
 }
 
 namespace {
 
-  // The little buttons of the fields, kept while the widgets that point at
-  // them are alive: FLTK hands a widget a void* when it calls back.
+  // the little buttons of the fields, kept while the widgets that point at
+  // them are alive: FLTK hands a widget a void* when it calls back
   std::deque<Ui::Button> &_kept()
   {
     static std::deque<Ui::Button> kept;
@@ -797,471 +636,283 @@ namespace {
 
 } // namespace
 
-void dialogFltk::_addFields(const std::vector<Ui::Field> &fields, int x,
-                            int &y, int w, int pane, int grid)
+void dialogFltk::_addFields(const std::vector<Ui::Field> &given, int x,
+                            int &y, int w, int pane, int grid, bool folded)
 {
-  int row = 0;
-  // The fields are laid out in rows: a field that asks to share the line of the
-  // one before it does, and the row is divided evenly between them. It is not
-  // the pixel arithmetic the windows this replaces used, but it keeps the
-  // grouping they expressed.
-  std::size_t i = 0;
-  bool wasValues = false;
-  while(i < fields.size()) {
-    std::size_t last = i + 1;
-    while(last < fields.size() && fields[last].sameRow) last++;
-    // A line that only does something is set apart from the values above it:
-    // pressed by mistake it acts, where a value typed by mistake is only
-    // typed, and the windows this reproduces leave that much room.
-    bool acts = true;
-    for(std::size_t k = i; k < last; k++)
-      if(fields[k].kind != Ui::Action && fields[k].kind != Ui::Menu &&
-         fields[k].kind != Ui::Spacer)
-        acts = false;
-    if(acts && wasValues) y += WB;
-    wasValues = !acts;
-    int columns = 0, spacers = 0;
-    for(std::size_t k = i; k < last; k++) {
-      if(fields[k].kind == Ui::Spacer)
-        spacers++;
-      else if(!fields[k].packed)
-        columns++;
-    }
-    int columnW = 0;
-    _rowWidth(fields, i, last, columnW);
-    // A pane laid out on a grid puts every field at the left of its column,
-    // the same columns for every row, and lets it take the width it needs.
-    // That is what the windows this replaces do, and it is what makes the
-    // rows of one pane line up with each other.
-    // A packed field takes the width it needs, from where it stands; a spacer
-    // eats what is left, which is what pushes whatever follows it to the right.
-    // With no spacer, the columns share the slack, as they always have.
-    int packed = _packedTotal(fields, i, last);
-    int slack = w - x - WB - packed - columns * columnW;
-    if(slack < 0) slack = 0;
-    if(!spacers && columns) columnW += slack / columns;
-    int spacerW = spacers ? slack / spacers : 0;
-    int at = x;
-    // on a grid, where a field goes is where its column starts
-    std::vector<int> gridW;
-    std::vector<int> before = _gridLabelsBefore(fields, grid);
-    int gridColumn = 0; // the column the next field goes in, on this row
-    if(grid > 0) {
-      gridW = _gridColumns(fields, grid);
-      columns = grid;
-    }
-
-    for(std::size_t k = i; k < last; k++) {
-      const Ui::Field &f = fields[k];
-      if(f.visible && !f.visible()) continue;
-      if(f.kind == Ui::Spacer) {
-        if(grid > 0) {
-          // What a spacer pushes to the right end of a line is not in a
-          // column: it is against the right edge, which is where the window
-          // this reproduces puts the buttons and switches it sets apart. The
-          // columns are for what comes before it.
-          int tail = -WB;
-          for(std::size_t j = k + 1; j < last; j++) {
-            if(fields[j].kind == Ui::Spacer) continue;
-            if(fields[j].visible && !fields[j].visible()) continue;
-            tail += _packedWidth(fields[j]) + WB;
-          }
-          int least = at + _packedWidth(f) + WB;
-          at = std::max(w - WB - tail, least);
-        }
-        else
-          at += _packedWidth(f) + WB + spacerW;
-        continue;
-      }
-      int fieldW = _fieldWidth(f, (grid > 0) ? 1 : (columns ? columns : 1));
-      if(f.widthEm > 0.) fieldW = (int)(f.widthEm * FL_NORMAL_SIZE);
-      if(f.widthShare > 0.) fieldW = (int)(f.widthShare * IW);
-      // A button carries its text inside, so a packed one is as wide as that
-      // text and no wider -- which is also the room the line was measured to
-      // leave it. Given the width of an ordinary button it would overlap the
-      // one after it, and the last of a row would be cut off by the edge.
-      if(f.packed && (f.kind == Ui::Action || f.kind == Ui::Menu))
-        fieldW = _packedWidth(f);
-      // On a grid, a cell is a field and whatever is packed against it; the
-      // first field of a line begins one, and every field after it that is
-      // not packed begins the next. A field that begins a cell goes where its
-      // column starts, wherever what precedes it on the line happened to end
-      // -- except what a spacer has pushed to the right end of the line,
-      // which is where the spacer left it.
-      bool loose = k > i && fields[k - 1].kind == Ui::Spacer;
-      if(grid > 0) {
-        if(k == i)
-          gridColumn = 0;
-        else if(!f.packed)
-          gridColumn++;
-        if(gridColumn >= grid) gridColumn = grid - 1;
-      }
-      int fx = at;
-      if(grid > 0 && !loose && (k == i || !f.packed)) {
-        fx = x;
-        for(int c = 0; c < gridColumn && c < grid; c++) fx += gridW[(std::size_t)c];
-      }
-      // A label that comes before its field is written outside it, to its
-      // left: the field starts after the widest such label of its column, so
-      // that the fields line up and the labels end against them.
-      if(f.labelBefore && f.label.size())
-        fx += before[(std::size_t)(grid > 0 ? gridColumn : 0)];
-      // a field of the column down the side is as wide as that column,
-      // unless it says how wide it is: the plugins are a list of names and a
-      // list of views side by side there
-      if(pane == -2 && f.widthEm <= 0.) fieldW = w - fx - WB;
-      // and what follows it on the line goes on from where it ends
-      if(grid > 0)
-        at = fx + (f.packed ? _packedStep(fields, k, last) :
-                              _packedWidth(f) + WB);
-      else if(f.packed)
-        at += _packedStep(fields, k, last);
-      else
-        at += columnW;
-      // The little buttons a field hangs after it -- the range of a value,
-      // its loop, the plots it is reported in, the menu of a file. They take
-      // their width from the font, as the compound widget this reproduces
-      // gives them, and the field gives up the room.
-      std::vector<int> trailingW;
-      for(const auto &t : f.trailing) {
-        int wide = t.label == ":" ? FL_NORMAL_SIZE - 2 : FL_NORMAL_SIZE + 6;
-        trailingW.push_back(wide);
-        fieldW -= wide;
-      }
-      // nothing runs into the edge: the last column of a grid ends where
-      // every other line ends, not against the frame
-      if(fx + fieldW > w - WB) fieldW = w - WB - fx;
-      if(fieldW < FL_NORMAL_SIZE) fieldW = FL_NORMAL_SIZE;
-
-      Fl_Widget *widget = nullptr;
-      switch(f.kind) {
-      case Ui::Text:
-        if(f.dynamicChoices) {
-          // what one may want to type, without being held to it
-          Fl_Input_Choice *c =
-            new Fl_Input_Choice(fx, y, fieldW, BH);
-          // The group has to answer to everything, since picking from the
-          // menu goes through it; it is the input inside it that is told to
-          // wait until one has finished typing.
-          c->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-          if(f.commitsWhenDone)
-            c->input()->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-          widget = c;
-        }
-        else {
-          Fl_Input *in = new Fl_Input(fx, y, fieldW, BH);
-          in->when(f.commitsWhenDone ?
-                     (FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY) :
-                     FL_WHEN_CHANGED);
-          widget = in;
-        }
-        break;
-      case Ui::Integer:
-      case Ui::Number: {
-        // one the description says is dragged as well as typed: the number
-        // and the scale are one widget, the number written at its left end
-        if(f.slider && f.maximum > f.minimum) {
-          Fl_Value_Slider *v = new Fl_Value_Slider(fx, y, fieldW, BH);
-          v->type(FL_HOR_SLIDER);
-          v->textsize(FL_NORMAL_SIZE);
-          v->bounds(f.minimum, f.maximum);
-          if(f.step > 0.) v->step(f.step);
-          v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
-          widget = v;
-          break;
-        }
-        Fl_Value_Input *v =
-          new Fl_Value_Input(fx, y, fieldW, BH);
-        v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-        // a value the solver may act upon: the input inside the widget waits
-        // until one has finished typing before it says so
-        if(f.commitsWhenDone)
-          v->input.when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-        if(f.maximum > f.minimum) {
-          v->minimum(f.minimum);
-          v->maximum(f.maximum);
-        }
-        // the arrows only step where Gmsh is set up for them
-        if(f.step > 0. && fltkSources().settings().inputScrolling)
-          v->step(f.step);
-        widget = v;
-      } break;
-      case Ui::Check:
-        if(f.disclosure)
-          // the arrow says which way the fold goes; refresh() sets it
-          widget = new Fl_Toggle_Button(fx, y, fieldW, BH);
-        else
-          widget = new Fl_Check_Button(
-            fx, y, f.packed ? _packedWidth(f) : columnW - WB, BH,
-            nullptr);
-        break;
-      case Ui::Choice:
-        if(f.multiple) {
-          // several switches behind one button, which is how the window this
-          // replaces offers the element and field types
-          Fl_Menu_Button *m = new Fl_Menu_Button(fx, y, fieldW, BH);
-          widget = m;
-        }
-        else
-          widget = new Fl_Choice(fx, y, fieldW, BH);
-        break;
-      case Ui::Label: {
-        // a rule across the pane, and the line written under it
-        // (a line that wraps is worth as many lines as it says)
-        if(f.rule) {
-          Fl_Box *line = new Fl_Box(fx, y, w - fx - WB, 2);
-          line->box(FL_ENGRAVED_FRAME);
-          line->labeltype(FL_NO_LABEL);
-        }
-        // it says what it says and no more, on a grid where a column follows
-        // it; on its own line it runs to the edge, as a caption does
-        // A paragraph is set in from the top of the box it is written in:
-        // laid against it, the first line touches the frame around it, which
-        // no window does.
-        int inset = (f.wraps && f.rows > 1) ? WB / 2 : 0;
-        Fl_Box *b = new Fl_Box(fx, y + (f.rule ? 1 : 0) + inset,
-                               (grid > 0 && !f.wraps) ? fieldW : w - fx - WB,
-                               ((f.wraps && f.rows > 1) ? f.rows * BH : BH) -
-                                 inset);
-        b->align((f.heading ? FL_ALIGN_CENTER : FL_ALIGN_LEFT) |
-                 FL_ALIGN_INSIDE |
-                 (f.wraps ? FL_ALIGN_WRAP | FL_ALIGN_TOP : 0));
-        // the name of what the panes are about, as the window this replaces
-        // writes it
-        if(f.heading) b->labelfont(FL_HELVETICA_BOLD);
-        widget = b;
-      } break;
-      case Ui::Output: {
-        Fl_Output *o = new Fl_Output(fx, y, fieldW, BH);
-        widget = o;
-      } break;
-      case Ui::Prose: {
-        // the page one reads; what is written on it is set in refresh()
-        widget = new proseView(fx, y, fieldW, _proseRows(f) * BH);
-      } break;
-    case Ui::List: {
-        // one it only shows, one it chooses from, one or several at a time
-        int tall = f.rows * BH;
-        if(!f.rows) {
-          // As tall as there is room for: the whole of the column or of the
-          // pane it is in, less whatever comes under it.
-          int under = 0;
-          for(std::size_t j = last; j < fields.size(); j++) {
-            if(fields[j].sameRow) continue;
-            if(fields[j].visible && !fields[j].visible()) continue;
-            under++;
-          }
-          tall = (pane == -2) ? _sideHeight - (y - WB) - under * BH :
-                                _paneBottom - y - WB - under * BH;
-          if(tall < BH) tall = BH;
-        }
-        // as wide as it says, or as what is left of the line
-        int wide = (f.widthEm > 0. || f.widthShare > 0.) ? fieldW :
-                                                           w - fx - WB;
-        Fl_Browser_ *br;
-        if(!f.choose)
-          br = new Fl_Select_Browser(fx, y, wide, tall);
-        else if(f.multiple)
-          br = new Fl_Multi_Browser(fx, y, wide, tall);
-        else
-          br = new Fl_Hold_Browser(fx, y, wide, tall);
-        // a list whose lines are columns says how wide each of them is; the
-        // widths have to outlive this call, as the browser keeps the array
-        if(f.columnsEm.size()) {
-          std::vector<int> *widths = new std::vector<int>;
-          for(double em : f.columnsEm)
-            widths->push_back((int)(em * FL_NORMAL_SIZE));
-          widths->push_back(0); // the last column takes what is left
-          ((Fl_Browser *)br)->column_widths(widths->data());
-          ((Fl_Browser *)br)->column_char('\t');
-        }
-        // A list down the side of a window is not a box inside it: the
-        // windows this reproduces draw it with nothing but a rule on its
-        // right, running the whole height of the window.
-        if(pane == -2) {
-          br->box(GMSH_SIMPLE_RIGHT_BOX);
-          br->color(FL_BACKGROUND_COLOR);
-        }
-        br->callback(_fieldCallback, this);
-        widget = br;
-      } break;
-      case Ui::Color: {
-        // the swatch is the widget; its label sits to its right like any other
-        Fl_Button *b = new Fl_Button(fx, y, fieldW, BH);
-        b->box(FL_DOWN_BOX);
-        widget = b;
-      } break;
-      case Ui::Action: {
-        Fl_Button *b = new Fl_Button(fx, y, fieldW, BH);
-        // the description owns the action; the window owns a copy of it
-        b->callback(_buttonCallback, new buttonAction{this, f.changed});
-        widget = b;
-      } break;
-      case Ui::Menu: {
-        // a button that drops what one may do; the items are put in when the
-        // dialog is refreshed, as they are made then
-        Fl_Menu_Button *m = new Fl_Menu_Button(fx, y, fieldW, BH);
-        widget = m;
-      } break;
-      case Ui::Direction:
-        // It is drawn over the lines that follow it rather than pushing them
-        // down: the rows under it are half a pane wide, and the window this
-        // reproduces has the disc beside them.
-        widget = new spherePositionWidget(fx, y, f.rows * BH);
-        break;
-      case Ui::Hierarchy: {
-        // as tall as there is room for, like a list that fills its pane
-        int tall = f.rows * BH;
-        if(!f.rows) {
-          int under = 0;
-          for(std::size_t j = last; j < fields.size(); j++) {
-            if(fields[j].sameRow) continue;
-            if(fields[j].visible && !fields[j].visible()) continue;
-            under++;
-          }
-          tall = _paneBottom - y - WB - under * BH;
-          if(tall < BH) tall = BH;
-        }
-        Fl_Tree *tree = new Fl_Tree(fx, y, w - fx - WB, tall);
-        tree->selectmode(FL_TREE_SELECT_MULTI);
-        tree->callback(_fieldCallback, this);
-        tree->when(FL_WHEN_CHANGED);
-        widget = tree;
-      } break;
-      case Ui::ColorMap: {
-        // the widget the window this reproduces already has, given the whole
-        // of its pane
-        int tall = f.rows ? f.rows * BH : _paneBottom - y - WB;
-        if(tall < BH) tall = BH;
-        colorbarWindow *bar =
-          new colorbarWindow(fx, y, w - fx - WB, tall);
-        bar->end();
-        widget = bar;
-      } break;
-      }
-      if(!widget) continue;
-      // A widget keeps the pointer it is given rather than the text, so the
-      // label cannot be a temporary: copy_label() takes a copy of its own.
-      // A line the dialog says carries its text in the label, which refresh()
-      // rewrites at every turn; every other kind keeps the one it declares --
-      // a value one only reads has a label like any other field.
-      if(f.label.size() && f.kind != Ui::Label)
-        widget->copy_label(_escaped(f.label).c_str());
-      // The inputs and the choices carry their label to their right, as every
-      // Gmsh window does. A check button is different: it draws its label
-      // inside, next to the box, and FL_ALIGN_RIGHT would throw it off.
-      // a menu of switches carries its label inside, as a button does
-      if(f.kind != Ui::Check && f.kind != Ui::Label &&
-         f.kind != Ui::Action && f.kind != Ui::Menu &&
-         f.kind != Ui::Direction &&
-         f.kind != Ui::ColorMap && f.kind != Ui::Hierarchy &&
-         !(f.kind == Ui::Choice && f.multiple))
-        widget->align(f.labelBefore ? FL_ALIGN_LEFT : FL_ALIGN_RIGHT);
-      // A field to be looked at twice, in red. On a button whose face is dark
-      // it is the face that is coloured, as red text on it would not be read;
-      // on a light one it is the text, which is what Gmsh has always done.
-      if(f.alert) {
-        if(f.kind == Ui::Action && fltkSources().settings().darkScheme)
-          widget->color(FL_DARK_RED);
-        else
-          widget->labelcolor(FL_DARK_RED);
-      }
-      if(f.tooltip.size()) widget->copy_tooltip(f.tooltip.c_str());
-      widget->callback(_fieldCallback, this);
-      // and the little buttons after it, which the label then follows
-      int at = fx + fieldW;
-      for(std::size_t t = 0; t < f.trailing.size(); t++) {
-        _kept().push_back(f.trailing[t]);
-        Ui::Button *button = &_kept().back();
-        Fl_Button *made = new Fl_Button(at, y, trailingW[t], BH);
-        at += trailingW[t];
-        if(button->glyph.size())
-          made->copy_label(("@-1gmsh_" + button->glyph).c_str());
-        else if(button->label.size())
-          made->copy_label(button->label.c_str());
-        else if(button->menu)
-          made->copy_label("@2>");
-        if(button->tooltip.size())
-          made->copy_tooltip(button->tooltip.c_str());
-        made->callback(button->menu ? _trailingMenu : _trailingPressed,
-                       button);
-        if(button->on && button->on()) made->color(FL_GREEN);
-      }
-      // A field that carries buttons gives up its name to them: FLTK draws a
-      // name to the right of the widget it belongs to, which is where they
-      // are. It goes on a box of its own after them, as the compound widget
-      // this reproduces places it.
-      if(f.trailing.size() && f.label.size() && !f.labelBefore) {
-        widget->label(nullptr);
-        fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
-        int labelW = (int)fl_width(_escaped(f.label).c_str()) + WB;
-        Fl_Box *say = new Fl_Box(at, y, labelW, BH);
-        say->copy_label(_escaped(f.label).c_str());
-        say->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-      }
-      bound b;
-      b.field = f;
-      b.widget = widget;
-      b.pane = pane;
-      b.row = row;
-      _fields.push_back(b);
-    }
-    // a list is as tall as the lines it shows, and what follows it comes
-    // under it rather than over it
-    int tall = 1;
-    for(std::size_t k = i; k < last; k++) {
-      if(fields[k].kind != Ui::List && fields[k].kind != Ui::Hierarchy &&
-         fields[k].kind != Ui::ColorMap &&
-         !(fields[k].kind == Ui::Label && fields[k].wraps))
-        continue;
-      if(fields[k].rows > tall) tall = fields[k].rows;
-      if(!fields[k].rows) {
-        // one that fills what it is in: what follows it is at the bottom
-        int under = 0;
-        for(std::size_t j = last; j < fields.size(); j++) {
-          if(fields[j].sameRow) continue;
-          if(fields[j].visible && !fields[j].visible()) continue;
-          under++;
-        }
-        int fill = (pane == -2) ? _sideHeight - (y - WB) - under * BH :
-                                  _paneBottom - y - WB - under * BH;
-        if(fill > tall * BH) tall = fill / BH;
-      }
-    }
-    y += tall * BH;
-    row += tall;
-    i = last;
+  std::vector<Ui::Field> all;
+  if(folded) {
+    all = given;
+    for(auto &f : all) f.visible = nullptr;
   }
+  const std::vector<Ui::Field> &fields = folded ? all : given;
+  // the solver says where everything goes, in em from (x, y), and this
+  // makes the widgets there; the room is how far a line may reach, how deep
+  // a field that fills what is left may go, and whether this is the column
+  // down the side
+  const double em = FL_NORMAL_SIZE;
+  Ui::Metrics m = _metrics();
+  Ui::Room room;
+  room.width = (w - x - WB) / em;
+  room.height = ((pane == -2) ? _sideHeight : _paneBottom - y - WB) / em;
+  room.wide = pane == -2;
+  Ui::Placed placed = Ui::place(fields, grid, m, room);
+  // the solver adds up whole pixels; the nearest one is the one meant
+  auto px = [em](double v) { return (int)std::floor(v * em + 0.5); };
+
+  for(const auto &p : placed.fields) {
+    const Ui::Field &f = fields[p.index];
+    int fx = x + px(p.widget.x), fy = y + px(p.widget.y);
+    int fieldW = px(p.widget.w), fieldH = px(p.widget.h);
+
+    Fl_Widget *widget = nullptr;
+    switch(f.kind) {
+    case Ui::Text:
+      if(f.dynamicChoices) {
+        // what one may want to type, without being held to it
+        Fl_Input_Choice *c = new Fl_Input_Choice(fx, fy, fieldW, BH);
+        // the group has to answer to everything, since picking from the menu
+        // goes through it; the input inside it is told to wait until one has
+        // finished typing
+        c->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+        if(f.commitsWhenDone)
+          c->input()->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+        widget = c;
+      }
+      else {
+        Fl_Input *in = new Fl_Input(fx, fy, fieldW, BH);
+        in->when(f.commitsWhenDone ? (FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY) :
+                                     FL_WHEN_CHANGED);
+        widget = in;
+      }
+      break;
+    case Ui::Integer:
+    case Ui::Number: {
+      // the number and the scale are one widget, the number written at its left
+      // end
+      if(f.slider && f.maximum > f.minimum) {
+        Fl_Value_Slider *v = new Fl_Value_Slider(fx, fy, fieldW, BH);
+        v->type(FL_HOR_SLIDER);
+        v->textsize(FL_NORMAL_SIZE);
+        v->bounds(f.minimum, f.maximum);
+        if(f.step > 0.) v->step(f.step);
+        v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
+        widget = v;
+        break;
+      }
+      Fl_Value_Input *v = new Fl_Value_Input(fx, fy, fieldW, BH);
+      v->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+      // the input inside the widget waits until one has finished typing before
+      // it says so
+      if(f.commitsWhenDone)
+        v->input.when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+      if(f.maximum > f.minimum) {
+        v->minimum(f.minimum);
+        v->maximum(f.maximum);
+      }
+      // the arrows only step where Gmsh is set up for them
+      if(f.step > 0. && fltkSources().settings().inputScrolling)
+        v->step(f.step);
+      widget = v;
+    } break;
+    case Ui::Check:
+      if(f.disclosure)
+        // the arrow says which way the fold goes; refresh() sets it
+        widget = new Fl_Toggle_Button(fx, fy, fieldW, BH);
+      else
+        widget = new Fl_Check_Button(fx, fy, fieldW, BH, nullptr);
+      break;
+    case Ui::Choice:
+      if(f.multiple) {
+        // several switches behind one button
+        Fl_Menu_Button *mb = new Fl_Menu_Button(fx, fy, fieldW, BH);
+        widget = mb;
+      }
+      else
+        widget = new Fl_Choice(fx, fy, fieldW, BH);
+      break;
+    case Ui::Label: {
+      // a rule across the pane, and the line written under it
+      if(f.rule) {
+        Fl_Box *line = new Fl_Box(fx, fy, w - fx - WB, 2);
+        line->box(FL_ENGRAVED_FRAME);
+        line->labeltype(FL_NO_LABEL);
+      }
+      // a paragraph is set in from the top of the box it is written in, or the
+      // first line touches the frame
+      int inset = (f.wraps && f.rows > 1) ? WB / 2 : 0;
+      Fl_Box *b = new Fl_Box(fx, fy + (f.rule ? 1 : 0) + inset, fieldW,
+                             fieldH - inset);
+      b->align((f.heading ? FL_ALIGN_CENTER : FL_ALIGN_LEFT) |
+               FL_ALIGN_INSIDE | (f.wraps ? FL_ALIGN_WRAP | FL_ALIGN_TOP : 0));
+      if(f.heading) b->labelfont(FL_HELVETICA_BOLD);
+      widget = b;
+    } break;
+    case Ui::Output: {
+      Fl_Output *o = new Fl_Output(fx, fy, fieldW, BH);
+      widget = o;
+    } break;
+    case Ui::Prose: {
+      // the page one reads; what is written on it is set in refresh()
+      widget = new proseView(fx, fy, fieldW, fieldH);
+    } break;
+    case Ui::List: {
+      // one it only shows, one it chooses from, one or several at a time
+      Fl_Browser_ *br;
+      if(!f.choose)
+        br = new Fl_Select_Browser(fx, fy, fieldW, fieldH);
+      else if(f.multiple)
+        br = new Fl_Multi_Browser(fx, fy, fieldW, fieldH);
+      else
+        br = new Fl_Hold_Browser(fx, fy, fieldW, fieldH);
+      // a list whose lines are columns says how wide each of them is; the widths
+      // have to outlive this call, as the browser keeps the array
+      if(f.columnsEm.size()) {
+        std::vector<int> *widths = new std::vector<int>;
+        for(double wide : f.columnsEm)
+          widths->push_back((int)(wide * FL_NORMAL_SIZE));
+        widths->push_back(0); // the last column takes what is left
+        ((Fl_Browser *)br)->column_widths(widths->data());
+        ((Fl_Browser *)br)->column_char('\t');
+      }
+      // a list down the side of a window is not a box inside it: nothing but a
+      // rule on its right, running the whole height of the window
+      if(pane == -2) {
+        br->box(GMSH_SIMPLE_RIGHT_BOX);
+        br->color(FL_BACKGROUND_COLOR);
+      }
+      br->callback(_fieldCallback, this);
+      widget = br;
+    } break;
+    case Ui::Color: {
+      Fl_Button *b = new Fl_Button(fx, fy, fieldW, BH);
+      b->box(FL_DOWN_BOX);
+      widget = b;
+    } break;
+    case Ui::Action: {
+      Fl_Button *b = new Fl_Button(fx, fy, fieldW, BH);
+      // the description owns the action; the window owns a copy of it
+      b->callback(_buttonCallback, new buttonAction{this, f.changed});
+      widget = b;
+    } break;
+    case Ui::Menu: {
+      // the items are put in when the dialog is refreshed, as they are made
+      // then
+      Fl_Menu_Button *mb = new Fl_Menu_Button(fx, fy, fieldW, BH);
+      widget = mb;
+    } break;
+    case Ui::Direction:
+      // drawn over the lines that follow it rather than pushing them down
+      widget = new spherePositionWidget(fx, fy, fieldH);
+      break;
+    case Ui::Hierarchy: {
+      Fl_Tree *tree = new Fl_Tree(fx, fy, fieldW, fieldH);
+      tree->selectmode(FL_TREE_SELECT_MULTI);
+      tree->callback(_fieldCallback, this);
+      tree->when(FL_WHEN_CHANGED);
+      widget = tree;
+    } break;
+    case Ui::ColorMap: {
+      // given the whole of its pane
+      colorbarWindow *bar = new colorbarWindow(fx, fy, fieldW, fieldH);
+      bar->end();
+      widget = bar;
+    } break;
+    case Ui::Spacer: break;
+    }
+    if(!widget) continue;
+    // a widget keeps the pointer it is given rather than the text, so
+    // copy_label(); a Label carries its text in the label, which refresh()
+    // rewrites at every turn
+    if(f.label.size() && f.kind != Ui::Label)
+      widget->copy_label(_escaped(f.label).c_str());
+    // the inputs and the choices carry their label to their right; a check
+    // button and a menu of switches draw it inside, and FL_ALIGN_RIGHT would
+    // throw it off
+    if(f.kind != Ui::Check && f.kind != Ui::Label && f.kind != Ui::Action &&
+       f.kind != Ui::Menu && f.kind != Ui::Direction &&
+       f.kind != Ui::ColorMap && f.kind != Ui::Hierarchy &&
+       !(f.kind == Ui::Choice && f.multiple))
+      widget->align(f.labelBefore ? FL_ALIGN_LEFT : FL_ALIGN_RIGHT);
+    // a field to be looked at twice, in red: on a button whose face is dark it
+    // is the face that is coloured, on a light one the text
+    if(f.alert) {
+      if(f.kind == Ui::Action && fltkSources().settings().darkScheme)
+        widget->color(FL_DARK_RED);
+      else
+        widget->labelcolor(FL_DARK_RED);
+    }
+    if(f.tooltip.size()) widget->copy_tooltip(f.tooltip.c_str());
+    widget->callback(_fieldCallback, this);
+    bound b;
+    // and the little buttons after it, which the label then follows
+    for(std::size_t t = 0; t < f.trailing.size() && t < p.trailing.size();
+        t++) {
+      _kept().push_back(f.trailing[t]);
+      Ui::Button *button = &_kept().back();
+      Fl_Button *made =
+        new Fl_Button(x + px(p.trailing[t].x), fy, px(p.trailing[t].w), BH);
+      b.trailing.push_back(made);
+      if(button->glyph.size())
+        made->copy_label(("@-1gmsh_" + button->glyph).c_str());
+      else if(button->label.size())
+        made->copy_label(button->label.c_str());
+      else if(button->menu)
+        made->copy_label("@2>");
+      if(button->tooltip.size()) made->copy_tooltip(button->tooltip.c_str());
+      made->callback(button->menu ? _trailingMenu : _trailingPressed, button);
+      if(button->on && button->on()) made->color(FL_GREEN);
+    }
+    // a field that carries buttons has its name drawn after them, on a box of
+    // its own: FLTK draws a name to the right of the widget it belongs to
+    if(p.label.w > 0. && !f.labelBefore) {
+      widget->label(nullptr);
+      Fl_Box *say = new Fl_Box(x + px(p.label.x), fy, px(p.label.w), BH);
+      say->copy_label(_escaped(f.label).c_str());
+      say->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+      b.labelBox = say;
+    }
+    b.field = given[p.index];
+    b.widget = widget;
+    b.pane = pane;
+    b.index = (int)p.index;
+    b.row = (int)p.row;
+    b.top = px(p.widget.y);
+    _fields.push_back(b);
+  }
+  _placedHeight = px(placed.height);
+  y += _placedHeight;
 }
 
-// What a dialog offers can change with what one picks in it. Rebuild it when
-// its shape has really changed -- and only then: rebuilding a window that is
-// already up makes it blink -- keeping it where the user left it rather than
-// where a window of that dialog opens.
+// Rebuild the dialog when its shape has really changed -- and only then:
+// rebuilding a window that is already up makes it blink -- keeping it
+// where the user left it.
 void dialogFltk::reshape()
 {
-  if(!_which.valid()) return;
-  Ui::Form now = fltkFormDescription(_which)();
+  if(!_which) return;
+  Ui::Form now = *_which;
   if(_win && _signature(now) == _signatureBuilt) {
     _panel = now;
     refresh();
     return;
   }
-  int x = _win ? _win->x() : -1, y = _win ? _win->y() : -1;
-  build(_which);
-  if(_win && x >= 0) _win->position(x, y);
+  build(*_which);
   refresh();
 }
 
-void dialogFltk::build(Ui::FormRef dialog)
+void dialogFltk::build(const Ui::Form &form)
 {
-  bool wasShown = shown();
-  if(_win) {
-    // it is not going away, it is being built again: what it undoes when it
-    // closes must not be undone here
-    if(dialogWindow *w = dynamic_cast<dialogWindow *>(_win)) w->closed = nullptr;
-    Fl::delete_widget(_win);
-    _win = nullptr;
+  // Built again, the window stays: it keeps its place and its focus, and
+  // only what is inside it is made anew. The old widgets are taken out at
+  // once and deleted when the event that asked for this is over -- one of
+  // them may be the button whose callback is running.
+  bool again = _win != nullptr;
+  if(again) {
+    while(_win->children()) {
+      Fl_Widget *w = _win->child(0);
+      _win->remove(w);
+      w->hide();
+      Fl::delete_widget(w);
+    }
   }
   _tabs.clear();
   _groups.clear();
@@ -1272,31 +923,39 @@ void dialogFltk::build(Ui::FormRef dialog)
   _sections.clear();
   _separators.clear();
   _buttons.clear();
+  _buttonsEnabled.clear();
   _paneButtons.clear();
+  _paneHeights.clear();
+  _paneRooms.clear();
 
-  _which = dialog;
-  _panel = fltkFormDescription(dialog)();
+  _which = &form;
+  _panel = form;
   _signatureBuilt = _signature(_panel);
+  // the pane named before there was a form to find it in
+  if(_paneWanted.size()) {
+    int i = _paneNamed(_paneWanted);
+    if(i >= 0) _pane = i;
+    _paneWanted.clear();
+  }
   // a window that has just been built has no tab of its own yet
   _forcePane = true;
 
-  // one long form rather than tabs: every pane is laid out, one after another
-  // only a first guess: _relayout() gives the window its real height once it
-  // knows which panes show
+  // one long form rather than tabs: every pane is laid out, one after
+  // another; only a first guess, _relayout() gives the window its real
+  // height once it knows which panes show
   std::vector<bool> visible;
   for(const auto &q : _panel.panes)
     visible.push_back(!q.visible || q.visible());
 
   int formH = 0;
-  // A form longer than a window is worth scrolls, as a pane of a tabbed dialog
-  // does: the keyboard and mouse reference is a page, not a form one fills.
+  // a form longer than a window scrolls
   _formScrolls = false;
   _formFills = false;
   if(!_panel.tabbed) {
     for(std::size_t i = 0; i < _panel.panes.size(); i++) {
       if(_panel.panes[i].scrolling) _formScrolls = true;
-      // and one that holds a field taking whatever is left of it -- a listing
-      // -- has a height of its own rather than one counted in rows
+      // and one that holds a field taking whatever is left of it has a height
+      // of its own rather than one counted in rows
       for(const auto &f : _panel.panes[i].fields)
         if((f.kind == Ui::List || f.kind == Ui::Hierarchy) && !f.rows)
           _formFills = true;
@@ -1308,9 +967,8 @@ void dialogFltk::build(Ui::FormRef dialog)
     }
     formH += WB;
   }
-  // What it is worth at least: a field that fills what is left of the form --
-  // the listing of the current options is one long list -- counts for no rows
-  // at all, so without this the window would be as tall as its two checks.
+  // what it is worth at least: a field that fills what is left of the form
+  // counts for no rows at all
   if(!_panel.tabbed && _panel.leastRows > 0 && formH < _panel.leastRows * BH)
     formH = _panel.leastRows * BH;
   // and what of it is shown at once, when it is longer than that
@@ -1319,9 +977,8 @@ void dialogFltk::build(Ui::FormRef dialog)
      formShown > _panel.leastRows * BH)
     formShown = _panel.leastRows * BH;
 
-  // wide enough for the busiest row of every pane, and never so narrow that a
-  // dialog with little in it looks starved. It used to be the width of the
-  // widest window this replaces, which made every one of them that wide.
+  // wide enough for the busiest row of every pane, and never so narrow
+  // that a dialog with little in it looks starved
   int width = 20 * FL_NORMAL_SIZE;
   // the column of side fields is beside the panes, not part of what they need
   int aside = _panel.side.empty() ?
@@ -1330,7 +987,7 @@ void dialogFltk::build(Ui::FormRef dialog)
                       FL_NORMAL_SIZE);
   width += aside;
   for(const auto &q : _panel.panes) {
-    int need = _neededWidth(q.fields, q.columns) + 2 * WB;
+    int need = _neededWidth(q.fields, q.columns, !_panel.tabbed) + 2 * WB;
     if(need + aside > width) width = need + aside;
     // and for what stands beside its button
     if(q.beside.size()) {
@@ -1361,9 +1018,8 @@ void dialogFltk::build(Ui::FormRef dialog)
       if(need > width) width = need;
     }
   }
-  // and wide enough for the row of tabs itself: a window that fits what its
-  // panes hold but not their names hides the last of them behind a pulldown.
-  // They are one row there, so it is their total that has to fit.
+  // and wide enough for the row of tabs itself, or the last of them hides
+  // behind a pulldown
   if(_panel.tabbed) {
     fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
     std::map<std::string, int> rows;
@@ -1374,14 +1030,13 @@ void dialogFltk::build(Ui::FormRef dialog)
     }
     for(const auto &row : rows) {
       // and the room FLTK keeps at the end of the row for the arrow it offers
-      // when the tabs do not fit, which is exactly what is being avoided here
+      // when the tabs do not fit
       int need = row.second + aside + 2 * WB + 2 * FL_NORMAL_SIZE;
       if(need > width) width = need;
     }
   }
-  // A dialog whose panes change -- the option window shows another category --
-  // keeps the width the widest of them asked for: one that grows and shrinks
-  // sideways as one goes through it is one that will not sit still.
+  // a dialog whose panes change keeps the width the widest of them asked
+  // for, so that it sits still
   if(width > _widestSeen)
     _widestSeen = width;
   else
@@ -1402,18 +1057,25 @@ void dialogFltk::build(Ui::FormRef dialog)
   int height = (_panel.tabbed ? paneH + tabRows * BH : formShown) + headerH +
                footerH + buttonH + 2 * WB;
 
-  // A window created while a group is open becomes a child of that group, and
-  // the window that was being built is wrecked. Nothing says a dialog is only
-  // ever built at a quiet moment, so make sure of it here.
+  // a window created while a group is open becomes a child of that group
   Fl_Group *previous = Fl_Group::current();
   Fl_Group::current(nullptr);
 
-  dialogWindow *win = new dialogWindow(
-    width, height, fltkSources().settings().nonModalWindows,
-    _panel.title.c_str());
-  win->closed = _panel.closed;
-  _win = win;
-  _win->box(GMSH_WINDOW_BOX);
+  if(again) {
+    _win->size(width, height);
+    _win->copy_label(_panel.title.c_str());
+    if(dialogWindow *w = dynamic_cast<dialogWindow *>(_win))
+      w->closed = _panel.closed;
+    _win->begin();
+  }
+  else {
+    dialogWindow *win = new dialogWindow(
+      width, height, fltkSources().settings().nonModalWindows,
+      _panel.title.c_str());
+    win->closed = _panel.closed;
+    _win = win;
+    _win->box(GMSH_WINDOW_BOX);
+  }
 
   // the column of side fields, down the whole left edge, as wide as the panel
   // says it has to be
@@ -1458,21 +1120,26 @@ void dialogFltk::build(Ui::FormRef dialog)
         y += BH;
       }
       _sections.push_back(b);
-      int rows = _rows(q.fields);
       // a form that scrolls ends before its scrollbar, or what it puts at its
       // right edge is drawn under it
       _addFields(q.fields, 2 * WB, y,
-                 width - (form ? Fl::scrollbar_size() : 0), (int)i, q.columns);
+                 width - (form ? Fl::scrollbar_size() : 0), (int)i, q.columns,
+                 true);
+      _paneRooms.push_back({2 * WB, width - (form ? Fl::scrollbar_size() : 0),
+                            q.columns});
+      int placed = _placedHeight;
       if(q.buttonLabel.size()) {
         // at the right of the line, or at its far left when it stands apart
         int bx = q.buttonApart ? 2 * WB : width - BB - 2 * WB;
         Fl_Button *pb = new Fl_Button(bx, y, BB, BH);
         pb->copy_label(_escaped(q.buttonLabel).c_str());
         pb->callback(_buttonCallback, new buttonAction{this, q.button});
-        _paneButtons.push_back({pb, (int)i, rows});
+        _paneButtons.push_back({pb, (int)i, placed});
         y += BH;
+        placed += BH;
       }
-      // the rule the windows this replaces draw between their groups
+      _paneHeights.push_back(placed);
+      // the rule between two groups
       Fl_Box *line = nullptr;
       if(q.separatorAfter) {
         // as much room above the rule as below it, or a button ending the
@@ -1489,18 +1156,16 @@ void dialogFltk::build(Ui::FormRef dialog)
       form->end();
       y = form->y() + form->h();
     }
-    // A field that fills the form ends at the bottom of the form, whatever the
-    // rows above it came to; what follows the form has to start under that and
-    // not under the rows, or the buttons are drawn over the last of it.
+    // a field that fills the form ends at the bottom of the form: what
+    // follows has to start under that and not under the rows
     if(_formFills && y < _paneBottom) y = _paneBottom;
     y += WB;
   }
 
   if(_panel.tabbed) {
-    // The panes of a dialog with more of them than fit across one row are
-    // gathered into families, and the rows of tabs are nested: which family
-    // first, then which member of it. A pane that belongs to no family keeps a
-    // tab of its own in the first row.
+    // the panes of a dialog with more of them than fit across one row are
+    // gathered into families, and the rows of tabs are nested; a pane that
+    // belongs to no family keeps a tab of its own in the first row
     struct entry {
       std::string family;
       std::vector<std::size_t> panes;
@@ -1547,7 +1212,6 @@ void dialogFltk::build(Ui::FormRef dialog)
         scroll->type(Fl_Scroll::VERTICAL);
         scroll->box(FL_FLAT_BOX);
       }
-      // the pane ends where its group does, not where the window does -- and
       // one that scrolls ends before its scrollbar, or what it puts at its
       // right edge is drawn under it
       int right = width - 2 * WB - (q.scrolling ? Fl::scrollbar_size() : 0);
@@ -1576,9 +1240,8 @@ void dialogFltk::build(Ui::FormRef dialog)
                    width - (q.buttonLabel.size() ? BB + WB : 0), (int)i);
       }
       if(q.buttonLabel.size()) {
-        // at the bottom right of the pane, with the same margin under it as
-        // around everything else -- or at the bottom left, for the one that
-        // stands apart from what the pane does
+        // at the bottom right of the pane, or at the bottom left for the one that
+        // stands apart
         int bx = q.buttonApart ? 2 * WB : width - BB - 2 * WB;
         Fl_Button *b = new Fl_Button(bx, top + height - BH - WB, BB, BH);
         // a widget keeps the pointer it is given rather than the text, so the
@@ -1636,6 +1299,7 @@ void dialogFltk::build(Ui::FormRef dialog)
     y += WB;
     int footerTop = y;
     _addFields(_panel.footer, _sideWidth + 2 * WB, y, width, -1);
+    _footerHeight = _placedHeight;
     buttonY = _mergedButtons ? footerTop : y;
   }
 
@@ -1656,22 +1320,24 @@ void dialogFltk::build(Ui::FormRef dialog)
       w->copy_label(_escaped(b.label).c_str());
       w->callback(_buttonCallback, new buttonAction{this, b.action});
       _buttons.push_back(w);
+      _buttonsEnabled.push_back(b.enabled);
     }
     y += BH + WB;
   }
 
-  const Ui::Backend::Settings set = fltkSources().settings();
-  _win->position(set.dialogX, set.dialogY);
+  if(!again) {
+    const Ui::Backend::Settings set = fltkSources().settings();
+    _win->position(set.dialogX, set.dialogY);
+  }
   _win->end();
   Fl_Group::current(previous);
 
   refresh();
-  if(wasShown) _win->show();
+  _win->redraw();
 }
 
-// A dialog that watches something rather than holding it -- the gamepad,
-// whose lights follow the pad -- asks to be refreshed on a timer. FLTK draws
-// only when something happens, so something has to happen.
+// a dialog that watches something asks to be refreshed on a timer: FLTK
+// draws only when something happens
 void dialogFltk::_tick(void *data)
 {
   dialogFltk *d = (dialogFltk *)data;
@@ -1682,13 +1348,12 @@ void dialogFltk::_tick(void *data)
 
 namespace {
 
-  // The paths of the lines, kept while the tree that points at them is alive:
-  // an Fl_Tree item carries a void*, so what it points at has to outlive it.
+  // the paths of the lines, kept while the tree that points at them is
+  // alive: an Fl_Tree item carries a void*
   std::deque<std::string> _treePaths;
 
-  // Down the model, unfolding as it goes: each child of a line becomes an
-  // item under it, and the item remembers which line of the description it
-  // stands for.
+  // down the model, unfolding as it goes: the item remembers which line of
+  // the description it stands for
   void _addBranch(Fl_Tree *tree, Fl_Tree_Item *parent, const Ui::Tree &said,
                   const std::string &path)
   {
@@ -1708,6 +1373,13 @@ namespace {
 
 void dialogFltk::refresh()
 {
+  for(std::size_t i = 0; i < _buttons.size() && i < _buttonsEnabled.size(); i++) {
+    if(!_buttonsEnabled[i]) continue;
+    if(_buttonsEnabled[i]())
+      _buttons[i]->activate();
+    else
+      _buttons[i]->deactivate();
+  }
   if(!_panel.tabbed) _relayout();
 
   int shownPane = _pane;
@@ -1798,14 +1470,11 @@ void dialogFltk::refresh()
       ((spherePositionWidget *)b.widget)->setValue(x, y, z);
     } break;
     case Ui::Hierarchy: {
-      // The lines, in order, each one a child of the last line shallower than
-      // it. Rebuilt only when they have changed: an Fl_Tree that is built
-      // again forgets what was open.
       Fl_Tree *tree = (Fl_Tree *)b.widget;
       if(!f.hierarchy) break;
       const Ui::Tree &said = *f.hierarchy;
-      // Rebuilt only when the shape has changed: an Fl_Tree that is built
-      // again forgets what was open.
+      // rebuilt only when the shape has changed: an Fl_Tree that is built again
+      // forgets what was open
       std::string signature = std::to_string(said.generation ?
                                                said.generation() : 0);
       if(signature != b.was) {
@@ -1929,15 +1598,53 @@ void dialogFltk::refresh()
 
 void dialogFltk::_relayout()
 {
-  // A form that scrolls has nothing that folds: moving its panes about inside
-  // the box it scrolls in would only fight with the box. Neither has one whose
-  // fields are as tall as the window is: what is laid out in rows here is not
-  // what says how tall it is.
+  // a form that scrolls has nothing that folds, and neither has one whose
+  // fields are as tall as the window is
   if(!_win || _panel.tabbed || _formScrolls || _formFills) return;
 
   std::vector<bool> visible;
   for(const auto &q : _panel.panes)
     visible.push_back(!q.visible || q.visible());
+
+  // The fields of a pane, placed again with what is folded away taking no
+  // room: each widget goes where the solver now puts it, or hides.
+  const double em = FL_NORMAL_SIZE;
+  auto px = [em](double v) { return (int)std::floor(v * em + 0.5); };
+  Ui::Metrics m = _metrics();
+  for(std::size_t i = 0; i < _panel.panes.size() && i < _paneRooms.size(); i++) {
+    const Ui::Pane &q = _panel.panes[i];
+    Ui::Room room;
+    room.width = (_paneRooms[i].w - _paneRooms[i].x - WB) / em;
+    room.height = 1e6;
+    Ui::Placed placed = Ui::place(q.fields, _paneRooms[i].grid, m, room);
+    std::map<int, const Ui::PlacedField *> at;
+    for(const auto &p : placed.fields) at[(int)p.index] = &p;
+    for(auto &b : _fields) {
+      if(b.pane != (int)i) continue;
+      auto found = at.find(b.index);
+      if(found == at.end()) {
+        b.widget->hide();
+        if(b.labelBox) b.labelBox->hide();
+        for(auto *t : b.trailing) t->hide();
+        continue;
+      }
+      const Ui::PlacedField &p = *found->second;
+      int x = _paneRooms[i].x;
+      b.top = px(p.widget.y);
+      b.widget->resize(x + px(p.widget.x), b.widget->y(), px(p.widget.w),
+                       b.widget->h());
+      if(b.labelBox)
+        b.labelBox->resize(x + px(p.label.x), b.labelBox->y(), px(p.label.w),
+                           b.labelBox->h());
+      for(std::size_t t = 0; t < b.trailing.size() && t < p.trailing.size(); t++)
+        b.trailing[t]->resize(x + px(p.trailing[t].x), b.trailing[t]->y(),
+                              px(p.trailing[t].w), b.trailing[t]->h());
+    }
+    int height = px(placed.height);
+    for(const auto &pb : _paneButtons)
+      if(pb.pane == (int)i) height += BH;
+    if(i < _paneHeights.size()) _paneHeights[i] = height;
+  }
 
   // where each pane starts, once the folded ones take no room
   std::vector<int> top(_panel.panes.size(), 0);
@@ -1953,9 +1660,7 @@ void dialogFltk::_relayout()
         _sections[i]->hide();
     }
     top[i] = y;
-    if(visible[i])
-      y += (_rows(_panel.panes[i].fields) +
-            (_panel.panes[i].buttonLabel.size() ? 1 : 0)) * BH;
+    if(visible[i] && i < _paneHeights.size()) y += _paneHeights[i];
     if(i < _separators.size() && _separators[i]) {
       if(visible[i]) {
         y += WB;
@@ -1970,21 +1675,30 @@ void dialogFltk::_relayout()
   y += WB;
   int footerTop = y;
   int buttonTop = footerTop;
-  y += _rows(_panel.footer) * BH;
+  y += _panel.footer.size() ? _footerHeight : 0;
   if(!_mergedButtons) buttonTop = y;
 
   for(auto &b : _fields) {
     int at = (b.pane < 0) ? footerTop : top[b.pane];
-    bool show = (b.pane < 0) || visible[b.pane];
-    b.widget->position(b.widget->x(), at + b.row * BH);
-    if(show)
+    bool show = ((b.pane < 0) || visible[b.pane]) &&
+                !(b.field.visible && !b.field.visible());
+    b.widget->position(b.widget->x(), at + b.top);
+    if(b.labelBox) b.labelBox->position(b.labelBox->x(), at + b.top);
+    for(auto *t : b.trailing) t->position(t->x(), at + b.top);
+    if(show) {
       b.widget->show();
-    else
+      if(b.labelBox) b.labelBox->show();
+      for(auto *t : b.trailing) t->show();
+    }
+    else {
       b.widget->hide();
+      if(b.labelBox) b.labelBox->hide();
+      for(auto *t : b.trailing) t->hide();
+    }
   }
 
   for(auto &b : _paneButtons) {
-    b.widget->position(b.widget->x(), top[b.pane] + b.row * BH);
+    b.widget->position(b.widget->x(), top[b.pane] + b.top);
     if(visible[b.pane])
       b.widget->show();
     else
@@ -2003,12 +1717,12 @@ void dialogFltk::_relayout()
 
 void dialogFltk::show()
 {
-  // What the dialog offers can depend on the model, so it may have to be built
-  // again -- but only when its shape really changed: rebuilding a window that
-  // is already up makes it blink and come back somewhere else.
-  Ui::Form now = fltkFormDescription(_which)();
+  // built again only when its shape really changed: rebuilding a window
+  // that is already up makes it blink and come back somewhere else
+  if(!_which) return;
+  Ui::Form now = *_which;
   if(!_win || _signature(now) != _signatureBuilt)
-    build(_which);
+    build(*_which);
   else
     _panel = now;
   if(!_win) return;
@@ -2028,34 +1742,59 @@ void dialogFltk::hide()
 
 bool dialogFltk::shown() const { return _win && _win->shown(); }
 
+int dialogFltk::_paneNamed(const std::string &label) const
+{
+  for(std::size_t i = 0; i < _panel.panes.size(); i++)
+    if(_panel.panes[i].label == label) return (int)i;
+  return -1;
+}
+
+std::string dialogFltk::pane() const
+{
+  if(!_win) return _paneWanted;
+  if(_pane >= 0 && _pane < (int)_panel.panes.size())
+    return _panel.panes[_pane].label;
+  return "";
+}
+
+void dialogFltk::setPane(const std::string &pane)
+{
+  int i = _win ? _paneNamed(pane) : -1;
+  if(i < 0) {
+    _paneWanted = pane;
+    return;
+  }
+  _pane = i;
+  _forcePane = true;
+}
+
 namespace {
-  // A map rather than anything counted: how many forms there are is nobody's
-  // to say, and a map keeps the addresses steady, which the widgets that
-  // were built for one of them rely on.
-  std::map<unsigned, dialogFltk> &_dialogs()
+  // a map keeps the addresses steady, which the widgets built for a dialog
+  // rely on
+  std::map<const Ui::Form *, dialogFltk> &_dialogs()
   {
-    static std::map<unsigned, dialogFltk> dialogs;
+    static std::map<const Ui::Form *, dialogFltk> dialogs;
     return dialogs;
   }
 } // namespace
 
-dialogFltk *fltkDialog(Ui::FormRef which, bool create, int pane)
+dialogFltk *fltkDialog(const Ui::Form &which, bool create,
+                       const std::string &pane)
 {
-  if(!which.valid() || !fltkFormDescription(which)) return nullptr;
-  std::map<unsigned, dialogFltk> &dialogs = _dialogs();
-  auto it = dialogs.find(which.id);
+  std::map<const Ui::Form *, dialogFltk> &dialogs = _dialogs();
+  auto it = dialogs.find(&which);
   if(it == dialogs.end()) {
     if(!create) return nullptr;
-    it = dialogs.emplace(which.id, dialogFltk()).first;
-    if(pane >= 0) it->second.setPane(pane);
+    it = dialogs.emplace(&which, dialogFltk()).first;
+    if(pane.size()) it->second.setPane(pane);
     it->second.build(which);
   }
   return &it->second;
 }
 
-void fltkDropDialog(Ui::FormRef which)
+void fltkDropDialog(const Ui::Form &which)
 {
-  _dialogs().erase(which.id);
+  _dialogs().erase(&which);
 }
 
 void fltkEachDialog(const std::function<void(dialogFltk *)> &what)

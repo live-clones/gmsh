@@ -89,12 +89,11 @@ void file_quit_cb(Fl_Widget *w, void *data)
 
 void help_about_cb(Fl_Widget *w, void *data)
 {
-  Gui::showPanel(Gui::PanelAbout, true);
+  Gui::instance().showPanel(Gui::PanelAbout, true);
 }
 
-// The menu description of src/common/GuiMenus.h names these actions rather than
-// naming FLTK callbacks, because the file chooser and the windows are the one
-// part of a menu entry that is genuinely toolkit business.
+// the menu description names these actions: the file chooser and the
+// windows are the one part of a menu entry that is toolkit business
 
 
 bool fltkWindowAction(const std::string &what)
@@ -139,9 +138,8 @@ std::vector<sceneView *> fltkViewsBeside(sceneViewFltk *view)
   return views;
 }
 
-// The views the status bar acts upon are the panes of the graphic window the
-// pointer is over, which is what makes this the interface's; what is done
-// to them is the scene's.
+// the views the status bar acts upon are the panes of the graphic window
+// the pointer is over; what is done to them is the scene's
 void fltkOrientViews(const std::string &what, bool reverse, bool sync)
 {
   Scene::orientViews(
@@ -149,10 +147,8 @@ void fltkOrientViews(const std::string &what, bool reverse, bool sync)
     reverse, sync);
 }
 
-// Picking with the mouse, on or off. The option is set by whoever asks;
-// turning it off puts the pointer back to what it was, and it is the
-// interface that has the pointers, which is why Gui::setMouseSelection()
-// comes here.
+// picking with the mouse, on or off: turning it off puts the pointer
+// back to what it was
 void fltkSetMouseSelection(bool on)
 {
   if(!on)
@@ -270,10 +266,8 @@ public:
   }
 };
 
-// The rest of the status bar: the last message and the progress of whatever is
-// running, both read from src/common/GuiStatus.h as it draws rather than
-// pushed into the widget -- which is what keeps the two bars saying the same
-// thing.
+// the rest of the status bar: the last message and the progress of
+// whatever is running, read from the description as it draws
 class mainWindowProgress : public Fl_Progress {
 public:
   mainWindowProgress(int x, int y, int w, int h, const char *l = nullptr)
@@ -318,9 +312,9 @@ public:
 graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   : _autoScrollMessages(true)
 {
-  // What the window is to be made of, as the settings say it. Clamped to
-  // the screen here and not written back: what the window turned out to be
-  // is asked of it when the option file is written, see layout().
+  // what the window is to be made of, as the settings say it; clamped to
+  // the screen here and not written back -- what the window turned out to
+  // be is asked of it when the option file is written, see layout()
   const Ui::Backend::Settings settings = fltkSources().settings();
 
   int mh = main ? BH : 0; // menu bar height
@@ -494,10 +488,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
 
-  // The buttons, as src/common/GuiStatus.h describes them: what they say,
-  // what they do, and what they say about themselves. They used to be twelve
-  // of them built here by hand, indexed in the order they happened to be
-  // declared rather than the order they are drawn in.
+  // the buttons, as the description says them
   {
     std::vector<Ui::BarButton> wanted =
       fltkSources().barButtons ? fltkSources().barButtons() :
@@ -511,8 +502,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
       button->copy_label(button->shown().c_str());
       button->copy_tooltip(b.tooltip.c_str());
       if(b.action) {
-        // Shift and Control are read when it is pressed, not described: what
-        // they mean is the button's business
+        // Shift and Control are read when it is pressed: what they mean is the
+        // button's business
         button->callback(
           [](Fl_Widget *w, void *) {
             statusButtonFltk *b = (statusButtonFltk *)w;
@@ -802,9 +793,8 @@ void graphicWindow::refreshStatusButtons()
   for(auto *b : _butt) b->refresh();
 }
 
-// What a button of the status bar is worth right now, asked of the description
-// rather than remembered: an option changed from a script cannot leave it
-// showing the wrong thing.
+// what a button of the status bar is worth right now, asked of the
+// description rather than remembered
 void statusButtonFltk::refresh()
 {
   std::string text = shown();
@@ -816,8 +806,7 @@ void statusButtonFltk::refresh()
     else
       deactivate();
   }
-  // it is worth looking at: red, as the bar this reproduces paints the one
-  // that says the mouse does not pick
+  // it is worth looking at: red
   Fl_Color want = (what.alert && what.alert()) ? FL_RED : FL_BACKGROUND_COLOR;
   if(color() != want) color(want);
 }
@@ -991,8 +980,7 @@ void graphicWindow::changeMessageFontSize(int incr)
 
 void graphicWindow::fillRecentHistoryMenu()
 {
-  // the recent files are read while the menu description is built, so there is
-  // nothing to patch in place any more: the menu is simply built again
+  // the recent files are read while the menu is built: build it again
   Menu::invalidate();
 #if defined(__APPLE__)
   if(fltkSources().settings().systemMenuBar) {

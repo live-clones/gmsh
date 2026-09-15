@@ -11,10 +11,6 @@
 #if defined(HAVE_BROWSER)
 
 // The page. It asks for the state, draws it, and posts back what was done.
-//
-// It is as plain as it can be on purpose: what is being tried out is whether
-// the descriptions of src/gui survive being written down and sent, not whether
-// a web page can be made to look like Gmsh.
 
 static const char *const browserPage = R"PAGE(<!doctype html>
 <meta charset="utf-8">
@@ -26,8 +22,7 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  /* A form control does not inherit the font it sits in: left alone it draws
     at whatever the browser likes, and a width said in ems then comes out
     wrong by that much. */
- /* A field is as wide as it says, frame included -- which is what the width
-    of a widget means in the windows this reproduces. Without it two halves of
+ /* A field is as wide as it says, frame included. Without it two halves of
     a value come out wider than the one field they are meant to fill, and
     nothing lines up with the line above. */
  input,select,button,textarea{font:inherit;box-sizing:border-box}
@@ -105,8 +100,8 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .aside .list{border:none}
  .form .aside .line{padding:2px 4px}
  .form .aside .cell{flex:1 1 auto}
- /* A button down the side column takes the column: what it says is not what
-    says how wide it is there, as the windows this reproduces have it. */
+ /* a button down the side column takes the column: what it says is not
+    what says how wide it is there */
  .form .aside .cell.act{flex:1 1 auto}
  .form .aside .cell.act>button,.form .aside .drops,
  .form .aside .drops>button{width:100%}
@@ -135,15 +130,14 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .tabs.family{border-bottom:none;padding-bottom:0}
  .tabs.family .tab{background:#e4e4e4}
  .tabs.family .tab.on{background:#eee;font-weight:600}
- /* as narrow as the tabs of the windows this reproduces: a row of eight of
-    them decides how wide the window is, and nine pixels of air apiece put a
-    third of a window between the first tab and the last */
+ /* narrow tabs: a row of eight of them decides how wide the window is, and
+    nine pixels of air apiece put a third of a window between the first tab
+    and the last */
  .tab{padding:3px 5px;border:1px solid #ccc;border-bottom:none;background:#eee;
       cursor:default}
  .tab.on{background:#fff;font-weight:600}
- /* A line of a pane. What shares a line is what the description says shares
-    one, which is most of the layout it carries: these windows are two and
-    three columns wide in places. */
+ /* a line of a pane: what shares a line is what the description says
+    shares one */
  .line{display:flex;align-items:center;gap:8px;padding:2px 8px;flex-wrap:wrap}
  .line.ruled{border-top:1px solid #ddd;margin-top:4px;padding-top:5px}
  /* the lines of a pane laid out on columns, all of them on one grid: a
@@ -151,9 +145,8 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .line.grid{display:grid;align-items:center;column-gap:8px;row-gap:4px;
             align-content:start}
  /* A cell takes the width it needs and no more, its label running on as far
-    as it must: a window is then as wide as its widest line, which is how the
-    ones this reproduces are sized. Sharing the line evenly is what the grid
-    of a pane laid out on columns is for. */
+    as it must: a window is then as wide as its widest line. Sharing the line
+    evenly is what the grid of a pane laid out on columns is for. */
  .cell{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0}
  .cell.packed{flex:0 0 auto}
  .cell.run{gap:0}
@@ -177,29 +170,26 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .line.grows>.cell>.list:only-child{position:absolute;top:0;left:0;right:0;
                                     bottom:0;height:auto;max-height:none;
                                     min-height:0}
- /* The colour map of a view: it fills the tab it is given, as the widget
-    of the window this reproduces fills its own, and it is drawn rather than
-    built out of elements -- four curves over two hundred and fifty entries
-    is not a thing to make elements of. */
+ /* The colour map of a view fills the tab it is given, and is drawn rather
+    than built out of elements: four curves over two hundred and fifty
+    entries is not a thing to make elements of. */
  /* The canvas is taken out of the flow and stretched over its cell. In the
     flow it would size itself from its own height attribute, which draw() sets
     from the height it was given -- so it grew to whatever it had last asked
     for and overran the window. Out of the flow it can only ever be as tall as
     the room its cell was given. */
- /* A colour fills its field rather than sitting in a corner of it: the
-    windows this reproduces write the name of what it colours on the swatch
-    itself, and the swatch is the width of a value. */
- /* The swatch is the colour, edge to edge, the way the other two draw it --
-    not a colour band adrift in a box. What the browser wraps around the
-    colour of an <input type=color> is padding of its own, and it has to be
-    taken back before the field says what it is worth. */
+ /* A colour fills its field rather than sitting in a corner of it, and the
+    swatch is the width of a value. */
+ /* The swatch is the colour, edge to edge: what the browser wraps around
+    the colour of an <input type=color> is padding of its own, and it has to
+    be taken back before the field says what it is worth. */
  .cell input.swatch{padding:0;height:1.55em;cursor:pointer;
                     border:1px solid #767676;background:none}
  .cell input.swatch::-webkit-color-swatch-wrapper{padding:0}
  .cell input.swatch::-webkit-color-swatch{border:none}
  .cell input.swatch::-moz-color-swatch{border:none}
- /* flat, with no box around it: the widget this reproduces is a circle drawn
-    on the background of the window and nothing else */
+ /* flat, with no box around it: a circle drawn on the background of the
+    window and nothing else */
  .disc{display:block;flex:0 0 auto;background:none;border:none}
  .cell.map{position:relative;flex:1 1 auto;min-width:0;min-height:8em}
  .cmap{position:absolute;top:0;left:0;right:0;bottom:0;
@@ -207,27 +197,25 @@ static const char *const browserPage = R"PAGE(<!doctype html>
  .cell.run>.cell{gap:0}
  .cell.packed label{flex:0 0 auto}
  /* a row of values with a button after them is not columns of equal width:
-    the button goes to the end of the line, as these windows draw it */
+    the button goes to the end of the line */
  .line.packed .cell.act{margin-left:auto}
  .cell.gap{flex:1 1 auto;min-width:8px}
  /* What shares a line shares the width of one field, rather than each
     taking a whole one: two little numbers under one label are two halves of
-    a value, not two values. It is the rule the windows this reproduces are
-    laid out by. */
- /* Ten of the font's own size, which is how wide a field is in the windows
-    this reproduces, divided by however many share the line. */
+    a value, not two values. */
+ /* ten of the font's own size, divided by however many share the line */
  .cell input,.cell select{width:calc(10em / var(--n, 1));min-width:0}
  /* A dropdown keeps its arrow inside the box. Alone on its line it has a
     whole field's width and room to spare for it; sharing one it takes the
-    arrow on top of its share, as the windows this reproduces do -- and only
-    then, or it would never line up with the fields above and below it. */
+    arrow on top of its share -- and only then, or it would never line up
+    with the fields above and below it. */
  .cell select{width:calc(10em / var(--n, 1) + var(--arrow, 0em))}
  /* the number and the scale it is dragged along, as one thing */
  .slid{display:inline-flex;align-items:center;gap:0;width:10em}
  .slid input[type=text],.slid input:not([type]){width:2.9em;flex:0 0 auto}
  .slid input[type=range]{flex:1 1 auto;min-width:0;width:auto;margin:0 0 0 2px}
  /* the label runs on rather than wrapping: a window grows to hold what it
-    says, as the ones this reproduces do */
+    says */
  .cell label{flex:0 1 auto;min-width:0;white-space:nowrap}
  /* A button in the flow of the fields starts where its share of the line
     starts, so that two columns of them line up; one on a line of its own --
@@ -279,9 +267,8 @@ static const char *const browserPage = R"PAGE(<!doctype html>
       background:#ffffe1;color:#111;border:1px solid #999;padding:2px 5px;
       font:11px system-ui;white-space:pre-line;box-shadow:0 2px 6px #0004}
  #tip:empty{display:none}
- /* A window that must be answered before anything else goes on: it is drawn
-    over the whole page, and the page under it cannot be reached -- which is
-    what the windows this reproduces do by stopping Gmsh where it stands. */
+ /* a window that must be answered before anything else goes on: it is
+    drawn over the whole page, and the page under it cannot be reached */
  #ask{position:fixed;top:0;left:0;right:0;bottom:0;background:#0006;
       display:flex;align-items:center;justify-content:center;z-index:1000}
  #ask:empty{display:none}
@@ -310,14 +297,12 @@ static const char *const browserPage = R"PAGE(<!doctype html>
 <div id="foot"><span id="buttons"></span><span id="status"></span></div>
 <div id="ask"></div>
 <script>
-// The page draws what Gmsh says it is showing, and posts back what was done.
-//
-// The one thing it must not do is redraw something that is being used: the
-// hover a menu is held open by, and the field one is typing in, both live in
-// the DOM. So every part of the page is drawn again only when that part has
-// changed, and each part remembers what it was last given. A chrome that was
-// pushed to would be told what changed; this one has to work it out, which is
-// the price of asking rather than being told.
+// The page draws what Gmsh says it is showing, and posts back what was
+// done. The one thing it must not do is redraw something that is being
+// used: the hover a menu is held open by, and the field one is typing
+// in, both live in the DOM. So every part of the page is drawn again only
+// when that part has changed, and each part remembers what it was last
+// given.
 // The word that came in the address. Everything asked of Gmsh carries it:
 // without it, any page anyone happens to visit could drive this one.
 const KEY = new URLSearchParams(location.search).get('k') || '';
@@ -451,9 +436,8 @@ function field(f) {
     return box;
   }
   if(f.kind === 'menu') {
-    // A button that drops what one may do, not a choice of what a value is:
-    // it is as wide as the word on it, and it says so with an arrow, which is
-    // what the button this reproduces looks like.
+    // a button that drops what one may do, not a choice of what a value is:
+    // as wide as the word on it, with an arrow
     const holder = document.createElement('span');
     holder.className = 'drops';
     const button = document.createElement('button');
@@ -482,9 +466,8 @@ function field(f) {
   if(f.kind === 'list') {
     const box = document.createElement('div');
     box.className = 'list';
-    // as tall as it says: zero means as tall as the window will allow
-    // As tall as it says. Nought means as tall as the window allows, which
-    // is what is left of it rather than a height the window grows to.
+    // as tall as it says; nought means as tall as the window allows, which is
+    // what is left of it rather than a height the window grows to
     if(f.rows) box.style.height = (f.rows * 1.45) + 'em';
     (f.items || []).forEach((label, i) => {
       const line = document.createElement('div');
@@ -510,8 +493,8 @@ function field(f) {
   }
   let input;
   if(f.kind === 'colour') {
-    // A colour is shown as a colour, the way the windows this reproduces show
-    // it, and picked with whatever the browser offers for one.
+    // a colour is shown as a colour, and picked with whatever the browser
+    // offers for one
     input = document.createElement('input');
     input.type = 'color';
     input.className = 'swatch';
@@ -537,9 +520,8 @@ function field(f) {
                                  encodeURIComponent(input.value));
   }
   else if(f.slider) {
-    // A value one drags along a scale as well as types: the number at the
-    // left end and the scale beside it, as one thing, which is how the window
-    // this reproduces draws it.
+    // a value one drags along a scale as well as types: the number at the
+    // left end and the scale beside it, as one thing
     const holder = document.createElement('span');
     holder.className = 'slid';
     const said = document.createElement('input');
@@ -566,10 +548,9 @@ function field(f) {
   }
   return input;
 }
-// The disc one drags to say which way the light comes from. FLTK has a widget
-// for it and Dear ImGui draws one; here it is drawn too, from the same three
-// numbers, and the same direction is worked out from the same drag -- third
-// component and all, which is derived rather than dragged.
+// the disc one drags to say which way the light comes from, drawn from
+// the three numbers, and the same direction worked out from the drag,
+// third component and all
 function disc(f) {
   const side = Math.round((f.rows || 2) * 1.45 * 13);
   const canvas = document.createElement('canvas');
@@ -577,8 +558,7 @@ function disc(f) {
   canvas.width = canvas.height = side;
   canvas.style.width = canvas.style.height = side + 'px';
   let x = +f.x || 0, y = +f.y || 0, z = +f.z || 0;
-  // what is drawn is the direction, not the three numbers: the widget this
-  // reproduces normalises them as it takes them
+  // what is drawn is the direction, not the three numbers
   const length = Math.sqrt(x * x + y * y + z * z);
   if(length) { x /= length; y /= length; z /= length; }
 
@@ -613,10 +593,8 @@ function disc(f) {
 
 // --- the colour map of a view
 //
-// What it answers to, in the words the widget of the window this reproduces
-// has always used. It is written here rather than worked out from the keys
-// the description gives, because it is a page one reads: it says what the
-// mouse does as well, and mouse buttons are not parameters.
+// What it answers to, written here rather than worked out from the keys
+// the description gives, because it is a page one reads.
 const MAP_KEYS = [
   ['0, 1, 2, 3, ..., 9', 'Select predefined colormap 0...9'],
   ['Ctrl+0, ..., Ctrl+9', 'Select predefined colormap 10...19'],
@@ -640,9 +618,8 @@ const MAP_KEYS = [
 // crossed rather than leaving the entries between two frames untouched
 let mapFrom = -1;
 
-// Hue, saturation and value from red, green and blue, each nought to 255.
-// The same arithmetic as Ui::toHsv, so that the curves this draws are the
-// curves the other two interfaces draw.
+// hue, saturation and value from red, green and blue, each nought to
+// 255: the same arithmetic as Ui::toHsv
 function toHsv(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   const most = Math.max(r, g, b), least = Math.min(r, g, b);
@@ -700,13 +677,12 @@ function colourMap(f) {
     g.fillStyle = style.backgroundColor || '#fff';
     g.fillRect(0, 0, wide, tall);
     if(size < 2) return;
-    // the same three heights the other two interfaces measure off the bottom
+    // the three heights measured off the bottom
     const labelY = tall - 5;
     const markerY = labelY - 2 * lineHeight;
     const wedgeY = markerY - lineHeight;
     const indexToX = i => wide * i / (size - 1);
     const valueToY = v => wedgeY * (1 - v / 255);
-    // the four channels, in their own colours
     const inks = ['#f00', '#0f0', '#00f', ink];
     for(let channel = 0; channel < 4; channel++) {
       g.strokeStyle = inks[channel];
@@ -718,7 +694,6 @@ function colourMap(f) {
       }
       g.stroke();
     }
-    // the wedge of colours, a column of the picture at a time
     for(let x = 0; x < wide; x++) {
       let i = Math.floor(x * size / wide);
       if(i < 0) i = 0; if(i >= size) i = size - 1;
@@ -726,8 +701,7 @@ function colourMap(f) {
       g.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
       g.fillRect(x, wedgeY, 1, lineHeight);
     }
-    // What it answers to, until it is drawn on: the widget of the window this
-    // reproduces shows it and forgets it at the first click, and so does this.
+    // what it answers to, until it is drawn on
     if(f.keys) {
       const small = Math.min(lineHeight * 0.85, (wedgeY - 12) / 18);
       const step = small + 1;
@@ -748,8 +722,8 @@ function colourMap(f) {
     g.fillText(most, wide - g.measureText(most).width - 10, labelY - lineHeight);
   }
 
-  // Drawing on it: a button per channel, as that widget has it, and the
-  // entries between the last frame and this one are all given the value.
+  // drawing on it: a button per channel, and the entries between the last
+  // frame and this one are all given the value
   function paint(e, first) {
     const box = canvas.getBoundingClientRect();
     const tall = box.height, wide = box.width;
@@ -774,14 +748,11 @@ function colourMap(f) {
   canvas.onmousemove = e => { if(e.buttons) paint(e, false); };
   canvas.onmouseup = () => { mapFrom = -1; };
   canvas.onmouseleave = () => { mapFrom = -1; };
-  // the widget takes the keys while the pointer is over it, which is how the
-  // window this reproduces has it
+  // the widget takes the keys while the pointer is over it
   canvas.onmouseenter = () => canvas.focus();
 
-  // Which key was struck, and nothing more: what one is worth -- a ready made
-  // map, the turn to hue and saturation, one of the eight numbers the map is
-  // computed from -- is worked out where the description is, so that this
-  // interface cannot come to disagree with the other two about it.
+  // which key was struck, and nothing more: what one is worth is worked
+  // out where the description is
   canvas.onkeydown = e => {
     const said = shortcutSaid(e);
     if(!said) return;
@@ -831,9 +802,9 @@ function cell(f) {
     return box;
   }
   if(f.kind === 'check' && f.fold) {
-    // A switch that opens what is under it is not a check box: the windows
-    // this reproduces draw it as a button at the end of its line, carrying an
-    // arrow that points at what pressing it would do.
+    // a switch that opens what is under it is not a check box: a button at
+    // the end of its line, carrying an arrow that points at what pressing it
+    // would do
     const b = document.createElement('button');
     b.className = 'disclose';
     b.textContent = f.label + (f.value === '1' ? ' \u25b4' : ' \u25be');
@@ -864,12 +835,10 @@ function cell(f) {
     return box;
   }
   if(f.kind === 'list' || f.kind === 'hierarchy') {
-    // a list takes the line it is on: what names it, if anything does, is
-    // written beside it and takes only what it needs
-    //
-    // How wide it says it is goes on the cell as well: a list that fills its
-    // line is stretched over the cell and out of the flow, so its own width
-    // is no longer what anything is measured from.
+    // a list takes the line it is on: what names it is written beside it and
+    // takes only what it needs; how wide it says it is goes on the cell as
+    // well, since a list that fills its line is stretched over the cell and
+    // out of the flow
     if(f.em) box.style.minWidth = f.em + 'em';
     box.appendChild(what);
     if(f.label) { say.style.flex = '0 0 auto'; box.appendChild(say); }
@@ -877,8 +846,7 @@ function cell(f) {
   }
   if(f.before) {
     // its label comes first, and those of a pane line up: what follows them
-    // starts at the same place on every line, as it does in the windows this
-    // reproduces
+    // starts at the same place on every line
     box.classList.add('before');
     if(f.label) box.appendChild(say);
     box.appendChild(what);
@@ -962,16 +930,10 @@ function lines(fields, into, columns) {
       }
     }
 
-    // A line whose fields each take a column of the pane goes on the grid,
-    // beside the lines before and after it rather than in a box of its own.
-    //
-    // A line holding a run of packed fields goes on it too, the run counting
-    // as one column. Left off the grid it lined up with nothing: the three
     // rows of the transformation matrix are each a run of three numbers, and
     // the name after the run -- X, Y +, Z -- is not the same width on all
-    // three, so what followed it started at a different place on every row.
-    // On the grid the column is as wide as the widest of them and the rows
-    // line up, which is what the windows this reproduces do.
+    // three; on the grid the column is as wide as the widest of them and the
+    // rows line up
     if(columns > 1 && !fills && !row[0].rule) {
       if(!grid) {
         grid = document.createElement('div');
@@ -990,10 +952,9 @@ function lines(fields, into, columns) {
         }
         grid.appendChild(one);
       }
-      // The last field of a line runs on to the end of the grid: what is
+      // the last field of a line runs on to the end of the grid: what is
       // written beside it takes the room no other column uses, rather than
-      // making the column it sits in as wide as itself. It is what keeps the
-      // columns as narrow as the windows this reproduces have them.
+      // making the column it sits in as wide as itself
       grid.lastChild.style.gridColumnEnd = '-1';
       continue;
     }
@@ -1007,6 +968,7 @@ function lines(fields, into, columns) {
 function does(label, what) {
   const b = document.createElement('button');
   b.textContent = label;
+  if(what.enabled === false) b.disabled = true;
   b.onclick = () => post('/do', 'id=' + what.buttonId + '&h=' + what.buttonH);
   return b;
 }
@@ -1178,12 +1140,8 @@ function drawForms(forms) {
     if(!at.docked) h.onmousedown = e => grab(e, card, at);
     card.appendChild(h);
     // The tabs. A window with more panes than fit across one row wears two
-    // rows of them: which family first, then which member of it -- the same
-    // grouping the description gives the other interfaces.
-    // The column down the side runs the whole height of the window, beside
-    // the tabs rather than inside them -- which is where the windows this
-    // reproduces put it: a browser at (0, 0), the width of the column and the
-    // height of the whole thing, with a rule down its right.
+    // rows of them: which family first, then which member of it. The column
+    // down the side runs the whole height of the window.
     const body = document.createElement('div'); body.className = 'body';
     if(form.leastRows > 0)
       body.style.minHeight = (form.leastRows * 2.1) + 'em';
@@ -1227,8 +1185,8 @@ function drawForms(forms) {
       }
       const shown = grouped && openFamily ? openFamily.panes
                                           : form.tabs.map((t, i) => i);
-      // a pane that belongs to no family is named in the row above: a second
-      // row saying the same word again is not what these windows wear
+      // a pane that belongs to no family is named in the row above: no
+      // second row saying the same word again
       if(!(grouped && openFamily && !openFamily.name)) {
       const row = document.createElement('div'); row.className = 'tabs';
       for(const i of shown) {
@@ -1254,8 +1212,7 @@ function drawForms(forms) {
     }
     rest.appendChild(main);
     // what the window says under its panes, and what it does: the fields on
-    // the line of the button come before it, as the windows this reproduces
-    // put them
+    // the line of the button come before it
     const pane = form.panes[form.panes.length - 1];
     const beside = pane ? pane.beside : [];
     if(beside.length || (pane && pane.button)) {
@@ -1364,8 +1321,7 @@ function drawButtons(buttons) {
 // everything else and sends the answer back; until it does, nothing else it
 // posts is listened to.
 
-// What a chooser offers, matched the way the choosers of the other
-// interfaces match it: "*", "?" and a list in braces.
+// what a chooser offers: "*", "?" and a list in braces
 function matches(name, pattern) {
   if(!pattern) return true;
   let rule = '';
@@ -1667,11 +1623,9 @@ async function refresh() {
     return false;
   }
 }
-// The keys of the application: what a picking listens for, the digits that
-// mesh, the Alt keys that turn an option. The page says which key was struck
-// and with what held, as the browser names them, and nothing more: what a key
-// is worth is decided where the other interfaces decide it, so that the page
-// cannot come to disagree with them.
+// the keys of the application: the page says which key was struck and
+// with what held, as the browser names them, and nothing more; what a key
+// is worth is decided where the description is
 window.addEventListener('keydown', e => {
   if(typing() || e.repeat) return;
   if(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph'].includes(e.key)) return;

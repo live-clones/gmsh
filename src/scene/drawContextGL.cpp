@@ -19,11 +19,9 @@
 #include "GmshMessage.h"
 #include "Context.h"
 
-// The PostScript font names Gmsh has always exposed through
-// General.GraphicsFont. Dear ImGui ships with a single embedded font, so they
-// currently all resolve to it; the index is nevertheless kept and saved in the
-// option files, so that .geo scripts and .gmsh-options written by the FLTK
-// build keep working.
+// the PostScript font names of General.GraphicsFont; the embedded font is
+// the only one, so they all resolve to it, but the index is kept and
+// saved in the option files
 static const char *_fontNames[] = {
   "Times-Roman",  "Times-Bold",       "Times-Italic",      "Times-BoldItalic",
   "Helvetica",    "Helvetica-Bold",   "Helvetica-Oblique", "Helvetica-BoldOblique",
@@ -78,8 +76,8 @@ int drawContextGL::getFontSize()
 {
   if(CTX::instance()->fontSize > 0) return CTX::instance()->fontSize;
 
-  // same heuristic as the FLTK backend: pick a size from the height of the
-  // primary monitor, falling back on its DPI
+  // pick a size from the height of the primary monitor, falling back on
+  // its DPI
   int h = 0;
   if(GLFWmonitor *monitor = glfwGetPrimaryMonitor()) {
     if(const GLFWvidmode *mode = glfwGetVideoMode(monitor)) h = mode->height;

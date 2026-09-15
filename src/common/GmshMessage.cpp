@@ -333,9 +333,9 @@ void Msg::StopProgressMeter()
   _progressMeterCurrent = -1;
   _progressMeterTotal = 0;
 #if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::setProgress("", 0, 0, 1);
-    Gui::check(true);
+  if(Gui::instance().available()){
+    Gui::instance().setProgress("", 0, 0, 1);
+    Gui::instance().check(true);
   }
 #endif
 }
@@ -517,10 +517,10 @@ void Msg::Error(const char *fmt, ...)
     if(_callback) (*_callback)("Error", str);
     if(_client) _client->Error(str);
 #if defined(HAVE_GUI)
-    if(Gui::available()){
-      Gui::addMessage(std::string("Error   : ") + str, Gui::MessageError);
-      Gui::setLastStatus(Gui::StatusColorError);
-      Gui::check(true);
+    if(Gui::instance().available()){
+      Gui::instance().addMessage(std::string("Error   : ") + str, Gui::MessageError);
+      Gui::instance().setLastStatus(Gui::StatusColorError);
+      Gui::instance().check(true);
     }
 #endif
     if(CTX::instance()->terminal){
@@ -538,7 +538,7 @@ void Msg::Error(const char *fmt, ...)
 
   if(CTX::instance()->abortOnError == 2) {
 #if defined(HAVE_GUI)
-    if(Gui::available()) return; // don't throw if GUI is running
+    if(Gui::instance().available()) return; // don't throw if GUI is running
 #endif
     throw std::runtime_error(_lastError);
   }
@@ -571,11 +571,11 @@ void Msg::Warning(const char *fmt, ...)
   if(_client) _client->Warning(str);
 
 #if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::addMessage(std::string("Warning : ") + str, Gui::MessageWarning);
+  if(Gui::instance().available()){
+    Gui::instance().addMessage(std::string("Warning : ") + str, Gui::MessageWarning);
     if(_firstWarning.empty()) _firstWarning = str;
-    Gui::setLastStatus();
-    Gui::check(true);
+    Gui::instance().setLastStatus();
+    Gui::instance().check(true);
   }
 #endif
 
@@ -624,9 +624,9 @@ void Msg::Info(const char *fmt, ...)
   if(_client) _client->Info(str);
 
 #if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::addMessage(std::string("Info    : ") + str, Gui::MessageInfo);
-    Gui::check(true);
+  if(Gui::instance().available()){
+    Gui::instance().addMessage(std::string("Info    : ") + str, Gui::MessageInfo);
+    Gui::instance().check(true);
   }
 #endif
 
@@ -667,9 +667,9 @@ void Msg::Direct(const char *fmt, ...)
   if(_client) _client->Info(str);
 
 #if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::addMessage(str, Gui::MessageDirect);
-    Gui::check(true);
+  if(Gui::instance().available()){
+    Gui::instance().addMessage(str, Gui::MessageDirect);
+    Gui::instance().check(true);
   }
 #endif
 
@@ -722,12 +722,12 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   if(log && _client) _client->Info(str);
 
 #if defined(HAVE_GUI)
-  if(Gui::available()){
+  if(Gui::instance().available()){
     if(!log || GetVerbosity() > 4)
-      Gui::setStatus(str);
+      Gui::instance().setStatus(str);
     if(log){
-      Gui::addMessage(std::string("Info    : ") + str, Gui::MessageInfo);
-      Gui::check(true);
+      Gui::instance().addMessage(std::string("Info    : ") + str, Gui::MessageInfo);
+      Gui::instance().check(true);
     }
   }
 #endif
@@ -752,16 +752,16 @@ void Msg::StatusGl(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(Gui::available())
-    Gui::setStatus(str, true);
+  if(Gui::instance().available())
+    Gui::instance().setStatus(str, true);
 #endif
 }
 
 void Msg::SetWindowTitle(const std::string &title)
 {
 #if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::setGraphicTitle(title);
+  if(Gui::instance().available()){
+    Gui::instance().setGraphicTitle(title);
   }
 #endif
 }
@@ -782,8 +782,8 @@ void Msg::Debug(const char *fmt, ...)
   if(_client) _client->Info(str);
 
 #if defined(HAVE_GUI)
-  if(Gui::available()){
-    Gui::addMessage(std::string("Debug   : ") + str, Gui::MessageDebug);
+  if(Gui::instance().available()){
+    Gui::instance().addMessage(std::string("Debug   : ") + str, Gui::MessageDebug);
   }
 #endif
 
@@ -822,9 +822,9 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     if(_client) _client->Progress(str2);
 
 #if defined(HAVE_GUI)
-    if(Gui::available() && GetVerbosity() > 4){
-      Gui::setProgress(str, (n > N - 1) ? 0 : n, 0, N);
-      Gui::check(true);
+    if(Gui::instance().available() && GetVerbosity() > 4){
+      Gui::instance().setProgress(str, (n > N - 1) ? 0 : n, 0, N);
+      Gui::instance().check(true);
     }
 #endif
     if(log && _logFile) fprintf(_logFile, "%s\n", str2);
@@ -868,7 +868,7 @@ void Msg::ResetErrorCounter()
   _warningCount = 0; _errorCount = 0;
   _firstWarning.clear(); _firstError.clear(); _lastError.clear();
 #if defined(HAVE_GUI)
-  if(Gui::available()) Gui::setLastStatus();
+  if(Gui::instance().available()) Gui::instance().setLastStatus();
 #endif
 }
 
@@ -885,15 +885,15 @@ void Msg::PrintErrorCounter(const char *title)
   sprintf(err, "%5d error%s", GetErrorCount(), GetErrorCount() == 1 ? "" : "s");
 
 #if defined(HAVE_GUI)
-  if(Gui::available()){
+  if(Gui::instance().available()){
     int level = GetErrorCount() ? Gui::MessageError : Gui::MessageWarning;
-    Gui::addMessage(prefix + line, level);
-    Gui::addMessage(prefix + title, level);
-    Gui::addMessage(prefix + warn, level);
-    Gui::addMessage(prefix + err, level);
-    Gui::addMessage(prefix + help, level);
-    Gui::addMessage(prefix + line, level);
-    if(GetErrorCount()) Gui::beep();
+    Gui::instance().addMessage(prefix + line, level);
+    Gui::instance().addMessage(prefix + title, level);
+    Gui::instance().addMessage(prefix + warn, level);
+    Gui::instance().addMessage(prefix + err, level);
+    Gui::instance().addMessage(prefix + help, level);
+    Gui::instance().addMessage(prefix + line, level);
+    if(GetErrorCount()) Gui::instance().beep();
   }
 #endif
 
@@ -918,11 +918,11 @@ double Msg::GetValue(const char *text, double defaultval)
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
 #if defined(HAVE_GUI)
-  if(Gui::available()){
+  if(Gui::instance().available()){
     char defaultstr[256];
     sprintf(defaultstr, "%.16g", defaultval);
     std::string val = defaultstr;
-    if(!Gui::inputDialog(text, val))
+    if(!Gui::instance().inputDialog(text, val))
       return defaultval;
     else
       return atof(val.c_str());
@@ -945,9 +945,9 @@ std::string Msg::GetString(const char *text, const std::string &defaultval)
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
 #if defined(HAVE_GUI)
-  if(Gui::available()){
+  if(Gui::instance().available()){
     std::string val = defaultval;
-    if(!Gui::inputDialog(text, val))
+    if(!Gui::instance().inputDialog(text, val))
       return defaultval;
     else
       return val;
@@ -971,8 +971,8 @@ int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
 #if defined(HAVE_GUI)
-  if(Gui::available())
-    return Gui::questionDialog(question, zero ? zero : "", one ? one : "",
+  if(Gui::instance().available())
+    return Gui::instance().questionDialog(question, zero ? zero : "", one ? one : "",
                                two ? two : "");
 #endif
 
@@ -1588,9 +1588,9 @@ void Msg::ImportPhysicalGroupsInOnelab()
     }
 
 #if defined(HAVE_GUI)
-    if(Gui::available()){
-      Gui::resetVisibility();
-      Gui::rebuildTree(false);
+    if(Gui::instance().available()){
+      Gui::instance().resetVisibility();
+      Gui::instance().rebuildTree(false);
     }
 #endif
   }

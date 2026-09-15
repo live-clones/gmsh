@@ -3,10 +3,9 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// The Dear ImGui side of the dialog description of src/common/GuiDialogs.h: one
-// window per dialog, one widget per declared field, each bound to the variable
-// the description points at. The FLTK interface builds the same description
-// into the windows contextWindow.cpp used to hold.
+// The Dear ImGui side of the dialogs: one window per dialog, one widget
+// per declared field, each bound to the variable the description points
+// at.
 
 #include <algorithm>
 #include <map>
@@ -47,7 +46,6 @@ namespace {
     }
   }
 
-  // what a bounded field will accept
   double clamped(const Ui::Field &f, double v)
   {
     if(f.maximum <= f.minimum) return v;
@@ -55,16 +53,13 @@ namespace {
   }
 
   // Turn the value that was just drawn, by one step per notch of the wheel,
-  // while the pointer is over it. This is what the arrows of an InputInt would
-  // do, without spending two thirds of a narrow field on them; a step is
-  // declared by the same fields that can be slid with the mouse in FLTK.
-  // Claiming the wheel for the hovered field also keeps it from reaching the
-  // window under it, and has to be done on every frame it is hovered.
+  // while the pointer is over it: what the arrows of an InputInt would do,
+  // without spending two thirds of a narrow field on them. Claiming the
+  // wheel for the hovered field also keeps it from reaching the window
+  // under it, and has to be done on every frame it is hovered.
   // Whether a value may be slid at all: the setting that says so, which
-  // decides both the dragging and the decimals a value is shown to.
-  //
-  // Read once a frame and not once a field: this is asked for every value of
-  // every panel, and what it answers cannot change halfway through a frame.
+  // decides both the dragging and the decimals a value is shown to. Read
+  // once a frame and not once a field.
   bool _sliding()
   {
     static int frame = -1;
@@ -87,14 +82,9 @@ namespace {
     return true;
   }
 
-  // What a channel of a colour map is worth at one entry, and what setting it
-  // does to that entry: red, green and blue, or hue, saturation and value,
-  // and the alpha over both -- the same four the widget of the window this
-  // reproduces draws.
-  // Whether one of the shortcuts a description gives is being pressed. It is
-  // how the keys of the colour map are reached: the window this reproduces
-  // has eight numbers on eight keys, and writing them out again here is what
-  // let this interface advertise them in its help without having any of them.
+  // what a channel of a colour map is worth at one entry, and what setting
+  // it does to that entry: red, green and blue, or hue, saturation and
+  // value, and the alpha over both
   bool _pressed(const Ui::Shortcut &s)
   {
     if(s.empty()) return false;
@@ -159,8 +149,8 @@ namespace {
     map.setColour(i, c);
   }
 
-  // whether the map is still showing what it answers to, which it stops doing
-  // at the first click, as that widget does
+  // whether the map is still showing what it answers to, which it stops
+  // doing at the first click
   bool _mapHelp = true;
 
   // where the last stroke left off, so that a drag fills in the entries it
@@ -177,16 +167,13 @@ namespace {
     return from;
   }
 
-  // How wide the disc of a direction is: as tall as the lines it hangs over,
-  // and square.
   float _discSide(const Ui::Field &f)
   {
     return (float)f.rows * ImGui::GetFrameHeightWithSpacing() -
            ImGui::GetStyle().ItemSpacing.y;
   }
 
-  // Down a described tree, drawing what is unfolded. It asks for the children
-  // of a line only when that line is open, which is what the model is for.
+  // down a described tree, drawing what is unfolded
   bool _branch(const Ui::Tree &said, const std::string &path, bool &changed)
   {
     if(!said.children) return false;
@@ -225,8 +212,7 @@ namespace {
     if(!f.prose) return;
     float room = width > 0.f ? width : ImGui::GetContentRegionAvail().x;
     float left = ImGui::GetCursorPosX();
-    // one run of words as it is really written, once the line has been cut
-    // where it had to be
+    // one run of words, once the line has been cut where it had to be
     struct piece {
       std::string text;
       const Ui::Words *from;
@@ -307,30 +293,25 @@ namespace {
     }
   }
 
-  // one field of a pane, bound to whatever the description points at: a
-  // variable of ours or a Gmsh option, which the accessors hide
-  // `column` says this is the column down the side of a window rather than a
-  // pane of it. A button there takes the width of the column, as the windows
-  // this reproduces draw it -- New, Delete and Visualize down the side of the
-  // size fields window are as wide as the browser above them, whatever is
-  // written on them.
+  // one field of a pane, bound to whatever the description points at;
+  // `column` says this is the column down the side of a window rather than
+  // a pane of it, where a button takes the width of the column
   void _field(const Ui::Field &f, float width, float tall = 0.f,
               float indent = 0.f, bool column = false)
   {
     bool enabled = f.enabled ? f.enabled() : true;
     ImGui::BeginDisabled(!enabled);
-    // A label that comes before its field rather than after it: it is written
-    // here and hidden from the widget, which keeps it as its identity -- that
-    // is what Dear ImGui reads a name beginning with two hashes as.
-    // A field that carries little buttons after it keeps its name for itself
-    // too: the buttons go between the value and the name, as the tree this
-    // reproduces places them, so the name is written once they are drawn.
+    // A label that comes before its field rather than after it is written
+    // here and hidden from the widget, which keeps it as its identity: a name
+    // beginning with two hashes. A field that carries little buttons after it
+    // keeps its name for itself too: the buttons go between the value and the
+    // name, so the name is written once they are drawn.
     bool nameAfterButtons = !f.trailing.empty() && !f.labelBefore;
     std::string name =
       (f.labelBefore || nameAfterButtons) ? "##" + f.label : f.label;
     if(f.labelBefore && f.label.size()) {
       // written to the left of the field, which starts after the widest such
-      // label of its column so that the fields line up
+      // label of its column
       float x = ImGui::GetCursorPosX();
       ImGui::TextUnformatted(f.label.c_str());
       ImGui::SameLine(x + (indent > 0.f ?
@@ -339,10 +320,8 @@ namespace {
                                ImGui::GetStyle().ItemSpacing.x));
     }
     bool changed = false;
-    // A field to be looked at twice: red, as the window this reproduces has
-    // the one button that undoes everything. A button is red in the face,
-    // with its text turned pale so that it can still be read; anything else
-    // has only its text to say it with.
+    // a field to be looked at twice: red; a button is red in the face, with
+    // its text turned pale so that it can still be read
     int painted = 0;
     if(f.alert) {
       if(f.kind == Ui::Action) {
@@ -363,7 +342,6 @@ namespace {
     switch(f.kind) {
     case Ui::Prose: _prose(f, width); break;
     case Ui::Label:
-      // a line that runs on over several lines rather than being cut off
       if(f.wraps) {
         ImGui::PushTextWrapPos(ImGui::GetCursorPosX() +
                                (width > 0.f ?
@@ -374,7 +352,7 @@ namespace {
         break;
       }
       // a rule across the pane, and the line written under it: it takes no
-      // line of its own, as it takes none in the window this reproduces
+      // line of its own
       if(f.rule) {
         ImVec2 at = ImGui::GetCursorScreenPos();
         ImGui::GetWindowDrawList()->AddLine(
@@ -382,8 +360,8 @@ namespace {
                                      at.y),
           ImGui::GetColorU32(ImGuiCol_Separator));
       }
-      // the name of what the panes are about is written across them; Dear
-      // ImGui has the one font, so it says it by where it stands
+      // a heading: Dear ImGui has the one font, so it says it by where it
+      // stands
       if(f.heading) {
         std::string text = f.getText();
         float room = ImGui::GetContentRegionAvail().x;
@@ -396,15 +374,14 @@ namespace {
       ImGui::TextUnformatted(f.getText().c_str());
       break;
     case Ui::Output: {
-      // a value one reads: an input that will not take anything
+      // a value one reads
       std::string value = f.getText();
       ImGui::SetNextItemWidth(width);
       ImGui::InputText(name.c_str(), &value,
                        ImGuiInputTextFlags_ReadOnly);
     } break;
     case Ui::Action:
-      // as wide as its text, unless the description says how wide it is: a
-      // button that lines up with the values above it says so
+      // as wide as its text, unless the description says how wide it is
       if(ImGui::Button(name.c_str(),
                        ImVec2((column || f.widthShare > 0. || f.widthEm > 0.) ?
                                 width : 0.f,
@@ -412,15 +389,12 @@ namespace {
         changed = true;
       break;
     case Ui::Menu: {
-      // a button that drops what one may do, made when it is opened
       float w = (column || f.widthShare > 0. || f.widthEm > 0.) ? width :
                   ImGui::CalcTextSize(f.label.c_str()).x +
                     2.f * ImGui::GetStyle().FramePadding.x;
-      // the arrow is added below, and the column has already been measured
       if(column) w -= ImGui::GetFontSize() * 1.2f;
       std::string id = "##menu" + f.label;
-      // room for the arrow that says it drops something, which is what the
-      // button this reproduces draws at its right end
+      // room for the arrow that says it drops something
       float arrow = ImGui::GetFontSize() * 1.2f;
       if(w > 0.f)
         w += arrow;
@@ -430,7 +404,6 @@ namespace {
       if(ImGui::Button(name.c_str(), ImVec2(w, 0.f)))
         ImGui::OpenPopup(id.c_str());
       {
-        // the arrow itself: a small filled triangle inside the right end
         ImVec2 lo = ImGui::GetItemRectMin(), hi = ImGui::GetItemRectMax();
         float mid = (lo.y + hi.y) * 0.5f;
         float x = hi.x - arrow * 0.55f - ImGui::GetStyle().FramePadding.x;
@@ -460,15 +433,13 @@ namespace {
                   tall > 0.f ? tall : -FLT_MIN);
       if(ImGui::BeginListBox(id.c_str(), size)) {
         if(f.dynamicChoices) {
-          // a list one chooses from
           std::vector<std::string> labels;
           std::vector<int> values;
           f.dynamicChoices(labels, values);
           for(std::size_t i = 0; i < labels.size(); i++) {
             bool on = f.chosen ? f.chosen((int)i) : false;
             ImGui::PushID((int)i);
-            // a line that is columns is picked as one line and written as
-            // several, each where its column starts
+            // a line that is columns is picked as one line and written as several
             std::string shown = labels[i];
             if(f.columnsEm.size()) shown = "##" + std::to_string(i);
             if(ImGui::Selectable(shown.c_str(), on) && f.choose) {
@@ -502,7 +473,7 @@ namespace {
           }
         }
         else if(f.list) {
-          // a list one only shows: a line one clicks is one to be rid of
+          // a line one clicks is one to be rid of
           for(std::size_t i = 0; i < f.list->size(); i++) {
             std::string label = f.itemLabel ? f.itemLabel((int)i)
                                             : std::to_string((*f.list)[i]);
@@ -541,7 +512,6 @@ namespace {
         changed = true;
       }
       if(f.dynamicChoices) {
-        // what one may want to type, without being held to it
         std::vector<std::string> labels;
         std::vector<int> values;
         _dynamic(f, labels, values);
@@ -581,8 +551,6 @@ namespace {
     } break;
     case Ui::Number: {
       double value = f.getNumber();
-      // one the description says is dragged as well as typed: the number is
-      // written inside the scale, as the window this reproduces writes it
       if(f.slider && f.maximum > f.minimum) {
         float said = (float)value;
         ImGui::SetNextItemWidth(width);
@@ -594,13 +562,11 @@ namespace {
         break;
       }
       // a rotation that has been turned back to nothing comes out as negative
-      // zero, which "%g" prints as "-0"; FLTK shows it as the nothing it is
+      // zero, which "%g" prints as "-0"
       if(value == 0.) value = 0.;
-      // As many decimals as the step it is dragged by, which is what FLTK
-      // works out from that step: a length that moves by hundredths is shown
-      // to hundredths, whatever it happens to hold.
-      // FLTK writes a plain "0" for nothing, whatever the step says, and what
-      // the two interfaces show has to be the same thing
+      // as many decimals as the step it is dragged by: a length that moves by
+      // hundredths is shown to hundredths; a plain "0" for nothing, whatever
+      // the step says
       char how[8] = "%g";
       if(value != 0. && f.step > 0. && f.step < 1. && _sliding()) {
         int digits = 0;
@@ -651,10 +617,9 @@ namespace {
       }
     } break;
     case Ui::ColorMap: {
-      // The colour map of a view, drawn as the widget of the window this
-      // reproduces draws it: the four channels over the whole height, the
-      // wedge of colours under them, and the value of the marker below that.
-      // What is drawn on it is drawn into the table itself.
+      // the colour map of a view: the four channels over the whole height, the
+      // wedge of colours under them, and the value of the marker below that;
+      // what is drawn on it is drawn into the table itself
       std::string name;
       double least = 0., most = 0.;
       const Ui::ColourMap &map = f.map;
@@ -676,7 +641,6 @@ namespace {
       float markerY = labelY - 2.f * lineHeight;
       float wedgeY = markerY - lineHeight;
       int size = entries;
-      // where an entry of the table is, and what an ordinate is worth
       auto indexToX = [&](int i) {
         return at.x + wide * (float)i / (float)(size - 1);
       };
@@ -688,7 +652,6 @@ namespace {
       ImDrawList *into = ImGui::GetWindowDrawList();
       into->AddRectFilled(at, ImVec2(at.x + wide, at.y + tall),
                           ImGui::GetColorU32(ImGuiCol_FrameBg));
-      // the four channels, in their own colours
       const ImU32 inks[4] = {IM_COL32(255, 0, 0, 255), IM_COL32(0, 255, 0, 255),
                              IM_COL32(0, 0, 255, 255),
                              ImGui::GetColorU32(ImGuiCol_Text)};
@@ -708,9 +671,7 @@ namespace {
                             ImVec2(at.x + x + 1.f, at.y + wedgeY + lineHeight),
                             IM_COL32(c.r, c.g, c.b, 255));
       }
-      // What it answers to, until it is drawn on -- the widget of the window
-      // this reproduces shows it and forgets it at the first click, and so
-      // does this one.
+      // what it answers to, until it is drawn on
       if(_mapHelp) {
         static const char *const keys[][2] = {
           {"0, 1, 2, 3, ..., 9", "Select predefined colormap 0...9"},
@@ -730,9 +691,8 @@ namespace {
           {"p, Ctrl+p", "Modify alpha channel power law"},
           {"b, Ctrl+b", "Modify gamma correction"},
           {"h", "Show this help message"}};
-        // in a slightly smaller hand than the rest, as that widget writes
-        // it, and small enough that the seventeen lines stand clear of the
-        // wedge whatever the pane is worth
+        // in a slightly smaller hand, so that the seventeen lines stand clear of
+        // the wedge whatever the pane is worth
         ImU32 ink = ImGui::GetColorU32(ImGuiCol_Text);
         float small = std::min(ImGui::GetFontSize() * .85f,
                                (wedgeY - 12.f) / 18.f);
@@ -746,7 +706,6 @@ namespace {
                         keys[i][1]);
         }
       }
-      // and what the value under the marker is
       char says[64];
       snprintf(says, sizeof(says), "%g", least);
       into->AddText(ImVec2(at.x + 10.f, at.y + labelY - lineHeight),
@@ -756,8 +715,8 @@ namespace {
       into->AddText(ImVec2(at.x + wide - wide2.x - 10.f,
                            at.y + labelY - lineHeight),
                     ImGui::GetColorU32(ImGuiCol_Text), says);
-      // Drawing on it: a button per channel, as that widget has it, and the
-      // entries between the last one and this one are all given the value.
+      // drawing on it: a button per channel, and the entries between the last
+      // one and this one are all given the value
       if(active) {
         _mapHelp = false;
         ImVec2 mouse = ImGui::GetIO().MousePos;
@@ -776,7 +735,7 @@ namespace {
       }
       else
         _mapFrom(-1);
-      // and the keys that widget answers to, while the pointer is over it
+      // the keys, while the pointer is over it
       if(hovered) {
         // the presets: the digits, the digits with Control, then the first
         // five function keys, which is the order they are numbered in
@@ -798,7 +757,6 @@ namespace {
         }
         if(ImGui::IsKeyPressed(ImGuiKey_H)) _mapHelp = !_mapHelp;
         if(ImGui::IsKeyPressed(ImGuiKey_R)) {
-          // back to the one it is on, not to the first
           if(map.preset) map.choosePreset(map.preset());
           changed = true;
         }
@@ -810,13 +768,10 @@ namespace {
           changed = true;
         }
         // and the eight numbers the map is computed from, on the keys the
-        // description gives them, which is how this interface comes to have
-        // the ones its help has always advertised.
-        //
-        // The map owns the arrows while the pointer is over it: without this
-        // Dear ImGui also walks its own keyboard focus with them, so pressing
-        // Left both translates the map and lights up whatever tab happens to
-        // be next. The window this reproduces moves nothing.
+        // description gives them. The map owns the arrows while the pointer is
+        // over it: without this Dear ImGui also walks its own keyboard focus with
+        // them, so pressing Left both translates the map and lights up whatever
+        // tab happens to be next.
         ImGuiID owner = ImGui::GetItemID();
         ImGui::SetKeyOwner(ImGuiKey_LeftArrow, owner);
         ImGui::SetKeyOwner(ImGuiKey_RightArrow, owner);
@@ -838,9 +793,8 @@ namespace {
       }
     } break;
     case Ui::Hierarchy: {
-      // The tree it shows, walked as it is unfolded: a line with children
-      // folds, one without is picked, and picking a line that folds picks
-      // everything under it, which the description says rather than this.
+      // a line with children folds, one without is picked; picking a line that
+      // folds picks everything under it, which the description says
       if(!f.hierarchy) break;
       const Ui::Tree &said = *f.hierarchy;
       ImVec2 size(width > 0.f ? width : -FLT_MIN,
@@ -851,14 +805,11 @@ namespace {
       ImGui::EndChild();
     } break;
     case Ui::Direction: {
-      // The disc the FLTK spherePositionWidget draws: a circle, and the point
-      // one drags over it. Dear ImGui has nothing of the sort, so the panel
-      // draws it -- and works out the same direction from the same drag,
-      // including the way that widget derives the third component.
+      // the disc one drags a point over to give a direction: Dear ImGui has
+      // nothing of the sort, so the panel draws it, and derives the third
+      // component from the drag
       double x = 0., y = 0., z = 0.;
       f.getVector(x, y, z);
-      // what is drawn is the direction, not the three numbers: the widget
-      // this reproduces normalises them as it takes them
       double length = sqrt(x * x + y * y + z * z);
       if(length) {
         x /= length;
@@ -890,8 +841,6 @@ namespace {
       ImDrawList *into = ImGui::GetWindowDrawList();
       ImU32 ink = ImGui::GetColorU32(enabled ? ImGuiCol_Text :
                                                ImGuiCol_TextDisabled);
-      // no box around it: the widget this reproduces is flat and the colour
-      // of what is behind it, so what one sees is the circle alone
       into->AddCircle(middle, radius, ink);
       ImVec2 point((float)(middle.x + radius * x),
                    (float)(middle.y - radius * y));
@@ -907,9 +856,9 @@ namespace {
         }
       }
       else {
-        // A fold, not a setting: a button carrying an arrow that says which way
-        // it goes, as the window this replaces draws it. Dear ImGui has no
-        // arrow in its font, so it draws the triangle itself.
+        // a fold, not a setting: a button carrying an arrow that says which way
+        // it goes; Dear ImGui has no arrow in its font, so it draws the triangle
+        // itself
         const ImGuiStyle &style = ImGui::GetStyle();
         ImVec2 text = ImGui::CalcTextSize(name.c_str());
         float arrow = ImGui::GetFrameHeight() * 0.6f;
@@ -930,10 +879,8 @@ namespace {
     } break;
     case Ui::Choice: {
       if(f.multiple) {
-        // Several switches behind one button, which is how the window this
-        // reproduces offers the element and field types. A button and a popup
-        // rather than a combo: a combo would draw an arrow for a value it does
-        // not have.
+        // several switches behind one button: a button and a popup rather than a
+        // combo, which would draw an arrow for a value it does not have
         std::vector<std::string> labels;
         std::vector<int> values;
         _dynamic(f, labels, values);
@@ -955,7 +902,6 @@ namespace {
       std::vector<std::string> labels;
       std::vector<int> values;
       _dynamic(f, labels, values);
-      // a choice stands either for its own text or for a number
       bool byText = values.empty();
       std::string current = byText ? f.getText() : "";
       double value = byText ? 0. : f.getNumber();
@@ -991,7 +937,6 @@ namespace {
       ImGui::SameLine(0.f, ImGui::GetStyle().ItemInnerSpacing.x);
       ImGui::PushID((int)t + 1);
       if(b.menu) {
-        // a button that drops a list rather than doing something
         if(ImGui::ArrowButton("##drop", ImGuiDir_Down)) ImGui::OpenPopup("##m");
         if(ImGui::BeginPopup("##m")) {
           std::vector<Ui::MenuItem> menu = b.menu();
@@ -1035,46 +980,31 @@ namespace {
     }
   }
 
-  // how many lines a list of fields takes, once those that share one are put
-  // together
+  Ui::Metrics _metrics(float item);
+
   int _rows(const std::vector<Ui::Field> &fields)
   {
-    int rows = 0;
-    for(std::size_t i = 0; i < fields.size(); i++) {
-      if(fields[i].sameRow && i) continue;
-      // a list is worth as many lines as it shows
-      if(fields[i].visible && !fields[i].visible()) continue;
-      rows += (fields[i].kind == Ui::List ||
-               fields[i].kind == Ui::Hierarchy ||
-               (fields[i].kind == Ui::Label && fields[i].wraps)) ?
-                fields[i].rows :
-                1;
-    }
-    return rows;
+    return Ui::neededRows(fields, _metrics(10.f * ImGui::GetFontSize()));
   }
 
-  // What a packed field needs: its own text and no more. It takes the width it
-  // asks for rather than a share of the line.
-  // what a field asks for when it is not given a share of the line
+  // what a packed field needs: its own text and no more
   float _packedWidth(const Ui::Field &f, float item)
   {
     const ImGuiStyle &style = ImGui::GetStyle();
     if(f.kind == Ui::Spacer)
       return (float)(f.widthEm > 0. ? f.widthEm : 2.) * ImGui::GetFontSize();
-    // a line that wraps takes the width it is given, whatever it says; one
-    // that says how wide it is takes that, so that a column of keys is one
+    // a line that wraps takes the width it is given, whatever it says
     if(f.kind == Ui::Label) {
       if(f.widthEm > 0.) return (float)f.widthEm * ImGui::GetFontSize();
       return f.wraps ? item : ImGui::CalcTextSize(f.getText().c_str()).x;
     }
     if(f.kind == Ui::Action || f.kind == Ui::Menu) {
-      // one that says how wide it is takes that, the text being inside it
       if(f.widthShare > 0.) return (float)f.widthShare * item;
       if(f.widthEm > 0.) return (float)f.widthEm * ImGui::GetFontSize();
       return ImGui::CalcTextSize(f.label.c_str()).x +
              2.f * style.FramePadding.x;
     }
-    // a swatch says what it is by its colour; it needs no room for text
+    // a swatch needs no room for text
     if(f.kind == Ui::Color)
       return ImGui::GetFrameHeight() * 1.6f + style.ItemInnerSpacing.x +
              ImGui::CalcTextSize(f.label.c_str()).x;
@@ -1085,7 +1015,6 @@ namespace {
       if(f.disclosure) w += 2.f * style.FramePadding.x;
       return w;
     }
-    // a menu of switches carries its label inside, as a button does
     if(f.kind == Ui::Choice && f.multiple)
       return f.widthShare > 0. ? (float)f.widthShare * item :
              f.widthEm > 0.    ? (float)f.widthEm * ImGui::GetFontSize() :
@@ -1097,184 +1026,7 @@ namespace {
            ImGui::CalcTextSize(f.label.c_str()).x;
   }
 
-  // Whether the field at k shares its cell with the one after it: consecutive
-  // fields that declare a share of a field's width are one cell, and all but
-  // the last of them sit flush against the next, so that the cell measures
-  // exactly what one field would.
-  bool _sharesCell(const std::vector<Ui::Field> &fields, std::size_t k,
-                   std::size_t to)
-  {
-    return fields[k].widthShare > 0. && k + 1 < to &&
-           fields[k + 1].widthShare > 0.;
-  }
-
-  // how far the next field starts from this one, when this one is packed
-  float _packedStep(const std::vector<Ui::Field> &fields, std::size_t k,
-                    std::size_t to, float item)
-  {
-    if(_sharesCell(fields, k, to)) return (float)fields[k].widthShare * item;
-    return _packedWidth(fields[k], item) + ImGui::GetStyle().ItemSpacing.x;
-  }
-
-  // How much room the labels that come before their field take, column by
-  // column: the fields of a column line up when every one of them starts
-  // after the widest of those labels.
-  std::vector<float> _labelsBefore(const std::vector<Ui::Field> &fields,
-                                   int grid)
-  {
-    std::vector<float> width((std::size_t)(grid > 0 ? grid : 1), 0.f);
-    int column = 0;
-    for(std::size_t k = 0; k < fields.size(); k++) {
-      const Ui::Field &f = fields[k];
-      if(!f.sameRow)
-        column = 0;
-      else if(!f.packed)
-        column++;
-      if(column >= (int)width.size()) column = (int)width.size() - 1;
-      if(!f.labelBefore || f.label.empty()) continue;
-      float need = ImGui::CalcTextSize(f.label.c_str()).x +
-                   ImGui::GetStyle().ItemSpacing.x;
-      if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
-    }
-    return width;
-  }
-
-  // Where the columns of a pane laid out on a grid start: a column is as wide
-  // as the widest thing in it, and the label of the last field of a row runs
-  // on past its column into the space no one else uses -- which is what keeps
-  // the columns as narrow as the window this reproduces has them.
-  std::vector<float> _gridColumns(const std::vector<Ui::Field> &fields,
-                                  int grid, float item)
-  {
-    const ImGuiStyle &style = ImGui::GetStyle();
-    std::vector<float> width((std::size_t)grid, 0.f);
-    int column = 0;
-    for(std::size_t k = 0; k < fields.size(); k++) {
-      const Ui::Field &f = fields[k];
-      if(!f.sameRow)
-        column = 0;
-      else if(!f.packed)
-        column++;
-      if(column >= grid) column = grid - 1;
-      if(f.kind == Ui::Spacer) continue;
-      // where the line this field is on ends, so that the cells packed
-      // against it can be stepped over the way they are placed
-      std::size_t end = k + 1;
-      while(end < fields.size() && fields[end].sameRow) end++;
-      float need = 0.f;
-      std::size_t j = k;
-      while(j < fields.size() &&
-            (j == k || (fields[j].sameRow && fields[j].packed))) {
-        bool last = !(j + 1 < fields.size() && fields[j + 1].sameRow &&
-                      fields[j + 1].packed);
-        need += last ? _packedWidth(fields[j], item) + style.ItemSpacing.x :
-                       _packedStep(fields, j, end, item);
-        j++;
-      }
-      if(!(j < fields.size() && fields[j].sameRow)) {
-        // the last of them runs on into the space no one else uses, and one
-        // that carries its text inside comes off whole
-        const Ui::Field &l = fields[j - 1];
-        if(l.kind == Ui::Check || l.kind == Ui::Action ||
-           l.kind == Ui::Menu || l.kind == Ui::Label ||
-           l.kind == Ui::Direction ||
-           (l.kind == Ui::Choice && l.multiple))
-          need -= _packedWidth(l, item) + style.ItemSpacing.x;
-        else
-          need -= ImGui::CalcTextSize(l.label.c_str()).x +
-                  style.ItemInnerSpacing.x;
-      }
-      if(need > width[(std::size_t)column]) width[(std::size_t)column] = need;
-    }
-    return width;
-  }
-
-  float _packedTotal(const std::vector<Ui::Field> &fields, std::size_t from,
-                     std::size_t to, float item)
-  {
-    float total = 0.f;
-    for(std::size_t k = from; k < to; k++)
-      if(fields[k].packed || fields[k].kind == Ui::Spacer)
-        total += _packedStep(fields, k, to, item);
-    return total;
-  }
-
-  // the width the widest column of a row needs
-  float _rowNeed(const std::vector<Ui::Field> &fields, std::size_t from,
-                 std::size_t to, float item);
-
-  // How wide a row is, item and label together. It has to be measured, since
-  // the description does not say how wide anything is.
-  float _rowWidth(const std::vector<Ui::Field> &fields, std::size_t from,
-                  std::size_t to, float item)
-  {
-    const ImGuiStyle &style = ImGui::GetStyle();
-    int columns = 0;
-    for(std::size_t k = from; k < to; k++)
-      if(!fields[k].packed && fields[k].kind != Ui::Spacer) columns++;
-    // what is left of the row is divided evenly, so every column has to be as
-    // wide as the one that needs the most
-    float widest = 0.f;
-    for(std::size_t k = from; k < to; k++) {
-      const Ui::Field &f = fields[k];
-      if(f.packed || f.kind == Ui::Spacer) continue;
-      float here = 0.f;
-      if(f.kind == Ui::List || f.kind == Ui::Hierarchy) {
-        // one that says how wide it is takes that; otherwise wide enough for
-        // a loop of a few entities spelled out
-        here = f.widthEm > 0. ? (float)f.widthEm * ImGui::GetFontSize() :
-                                item * 2.5f;
-      }
-      else if(f.kind == Ui::Label) {
-        // one that says how wide it is takes that; one that wraps and does
-        // not takes the width it is given, whatever it says
-        here = f.widthEm > 0. ? (float)f.widthEm * ImGui::GetFontSize() :
-               f.wraps        ? item :
-                                ImGui::CalcTextSize(f.getText().c_str()).x;
-      }
-      else if(f.kind == Ui::Action || f.kind == Ui::Menu) {
-        here = ImGui::CalcTextSize(f.label.c_str()).x +
-               2.f * style.FramePadding.x;
-      }
-      else if(f.kind == Ui::Check) {
-        here = ImGui::GetFrameHeight() + style.ItemInnerSpacing.x +
-               ImGui::CalcTextSize(f.label.c_str()).x;
-      }
-      else {
-        // One that says how wide it is takes that; otherwise a field sharing
-        // its line gets half the usual width, as in the FLTK dialogs, or
-        // three columns of full-width inputs would be absurd.
-        here = (f.widthEm > 0. ? (float)f.widthEm * ImGui::GetFontSize() :
-                columns > 1    ? item * 0.5f :
-                                 item) +
-               style.ItemInnerSpacing.x +
-               ImGui::CalcTextSize(f.label.c_str()).x;
-        // the button that offers what one may type
-        if(f.kind == Ui::Text && f.dynamicChoices)
-          here += ImGui::GetFrameHeight() + style.ItemSpacing.x;
-      }
-      here += style.ItemSpacing.x;
-      if(here > widest) widest = here;
-    }
-    return widest * (float)columns + _packedTotal(fields, from, to, item);
-  }
-
-  float _rowNeed(const std::vector<Ui::Field> &fields, std::size_t from,
-                 std::size_t to, float item)
-  {
-    int columns = 0;
-    for(std::size_t k = from; k < to; k++)
-      if(!fields[k].packed && fields[k].kind != Ui::Spacer) columns++;
-    if(!columns) return 0.f;
-    return (_rowWidth(fields, from, to, item) -
-            _packedTotal(fields, from, to, item)) /
-           (float)columns;
-  }
-
-  // What the solver of src/gui/Layout.h is told about this toolkit, in em.
-  // The kinds that size themselves are measured by _packedWidth() and the
-  // row walk of _rowWidth() so that the window is measured exactly as it is
-  // placed; both go when the placing does (plan §2.4.4).
+  // what the solver of Layout.h is told about this toolkit, in em
   Ui::Metrics _metrics(float item)
   {
     const ImGuiStyle &style = ImGui::GetStyle();
@@ -1287,46 +1039,32 @@ namespace {
     m.after = style.ItemSpacing.x / em;
     m.arrow = 0.;
     m.offer = (ImGui::GetFrameHeight() + style.ItemSpacing.x) / em;
+    m.row = ImGui::GetFrameHeightWithSpacing() / em;
+    // a field sharing its cell gives a spacing back, so that two frames that
+    // touch do not read as one box
+    m.courtesy = style.ItemSpacing.x / em;
+    m.framePad = style.FramePadding.x / em;
+    m.widgetWidth = [em, item](const Ui::Field &f) -> double {
+      bool self = f.disclosure || f.kind == Ui::Label ||
+                  f.kind == Ui::Action || f.kind == Ui::Menu ||
+                  f.kind == Ui::Check || f.kind == Ui::Direction ||
+                  (f.kind == Ui::Choice && f.multiple);
+      // a swatch is worth the swatch alone
+      if(f.kind == Ui::Color)
+        return ImGui::GetFrameHeight() * 1.6f / em;
+      return self ? _packedWidth(f, item) / em : -1.;
+    };
+    // the little buttons after a field are drawn in the flow of the line
+    // rather than out of its width
+    m.trailingWidth = [](const Ui::Button &) { return 0.; };
     m.textWidth = [em](const std::string &s) {
       return ImGui::CalcTextSize(s.c_str()).x / em;
-    };
-    m.naturalWidth = [em, item](const Ui::Field &f, bool packed) -> double {
-      if(packed) {
-        if(f.kind == Ui::Label || f.kind == Ui::Action ||
-           f.kind == Ui::Menu || f.kind == Ui::Color ||
-           f.kind == Ui::Direction || f.kind == Ui::Check ||
-           (f.kind == Ui::Choice && f.multiple))
-          return _packedWidth(f, item) / em;
-        return -1.;
-      }
-      const ImGuiStyle &style = ImGui::GetStyle();
-      if(f.kind == Ui::List || f.kind == Ui::Hierarchy) {
-        // one that says how wide it is takes that; otherwise wide enough for
-        // a loop of a few entities spelled out. Its label is not counted,
-        // as the row walk this reproduces did not count it.
-        return (f.widthEm > 0. ? f.widthEm * em : item * 2.5) / em;
-      }
-      if(f.kind == Ui::Label) {
-        double w = f.widthEm > 0. ? f.widthEm * em :
-                   f.wraps        ? item :
-                                    ImGui::CalcTextSize(f.getText().c_str()).x;
-        return w / em;
-      }
-      if(f.kind == Ui::Action || f.kind == Ui::Menu)
-        return (ImGui::CalcTextSize(f.label.c_str()).x +
-                2.f * style.FramePadding.x) /
-               em;
-      if(f.kind == Ui::Check)
-        return (ImGui::GetFrameHeight() + style.ItemInnerSpacing.x +
-                ImGui::CalcTextSize(f.label.c_str()).x) /
-               em;
-      return -1.;
     };
     return m;
   }
 
-  // The width the dialog needs, folded parts included: a window that grows
-  // sideways when one unfolds a section is a window that will not sit still.
+  // the width the dialog needs, folded parts included, so that it sits
+  // still
   float _neededWidth(const Ui::Form &panel, float item)
   {
     Ui::Metrics m = _metrics(item);
@@ -1349,37 +1087,47 @@ namespace {
   void _fields(const std::vector<Ui::Field> &fields, float item,
                int grid = 0, float reserve = 0.f, bool column = false);
 
-  // What a pane holds: its own fields, then the sections under them, each with
-  // its label as a heading. A long one scrolls rather than making the window as
-  // tall as it is.
-  // `lines` is what the tallest pane is worth, so that a pane that is shorter
-  // can be padded and its button land at the bottom right like the others'
-  void _paneBody(const Ui::Pane &q, float width, bool boxed, int lines = 0,
+  // what a list of fields comes to on screen, as the solver places it
+  float _listHeight(const std::vector<Ui::Field> &fields, int columns,
+                    float item)
+  {
+    Ui::Room room;
+    room.width = 1.e6;
+    return (float)(Ui::place(fields, columns, _metrics(item), room).height *
+                   ImGui::GetFontSize());
+  }
+
+  float _paneHeight(const Ui::Pane &q, float item)
+  {
+    float h = _listHeight(q.fields, q.columns, item);
+    for(const auto &section : q.sections)
+      h += (section.label.size() ? ImGui::GetFrameHeightWithSpacing() : 0.f) +
+           _listHeight(section.fields, section.columns, item);
+    return h;
+  }
+
+  // what a pane holds; `tallest` is what the tallest pane is worth, so that
+  // every tab is the same height
+  void _paneBody(const Ui::Pane &q, float width, bool boxed, float tallest = 0.f,
                  appWindow *window = nullptr, float reserve = 0.f)
   {
     // In a dialog that is given a size rather than following its contents,
     // every pane is a box of the same height, and what does not fit in it
-    // scrolls inside it -- the tab one is looking at, not the window, and not
-    // the tallest tab there is. It is how the window this reproduces has it:
-    // a group per tab, an Fl_Scroll for the one that holds the colours.
-    // the button of the pane, and whatever stands beside it, keep the last
-    // line of the box: they belong to the pane, not to what scrolls in it
+    // scrolls inside it -- the tab one is looking at, not the window.
+    // The button of the pane, and whatever stands beside it, keep the last
+    // line of the box: they belong to the pane, not to what scrolls in it.
     float foot = (boxed && (q.buttonLabel.size() || q.beside.size())) ?
                    ImGui::GetFrameHeightWithSpacing() : 0.f;
-    // A button that stands apart cannot share the last line of the pane the
-    // way one at the right can: at the left it would land on the field there.
-    // It takes a line of its own, so the box gives up one more -- and what the
-    // panel puts under the pane keeps the line it had.
+    // a button that stands apart cannot share the last line of the pane: at
+    // the left it would land on the field there
     if(boxed && q.buttonApart && q.buttonLabel.size())
       foot += ImGui::GetFrameHeightWithSpacing();
-    // and what the panel keeps under the pane: its footer, its buttons
     foot += reserve;
     if(boxed && !ImGui::BeginChild("##pane", ImVec2(0.f, -foot),
                                    ImGuiChildFlags_None)) {
       ImGui::EndChild();
       return;
     }
-    // a pane with a button at its foot leaves it a line of its own
     _fields(q.fields, width, q.columns,
             q.buttonLabel.size() ? ImGui::GetFrameHeightWithSpacing() : 0.f);
     for(std::size_t i = 0; i < q.sections.size(); i++) {
@@ -1390,27 +1138,20 @@ namespace {
       _fields(section.fields, width, section.columns);
       ImGui::PopID();
     }
-    // what scrolls ends here; the line below it does not
     if(boxed) ImGui::EndChild();
-    // The pane is padded to the height of the tallest one, so that its button
+    // the pane is padded to the height of the tallest one, so that its button
     // lands at the bottom right and the window does not change size from one
-    // tab to the next. In a box that line is already kept for it, above; in a
-    // pane that follows its contents the button shares the last line when the
-    // pane is already as tall as the tallest.
-    if(lines > 0) {
-      // a pane that holds a list filling what is left is already as tall as
-      // it can be: there is nothing to pad
+    // tab to the next
+    if(tallest > 0.f) {
+      // a pane that holds a list filling what is left is already as tall as it
+      // can be
       bool fills = false;
       for(const auto &f : q.fields)
         if((f.kind == Ui::List || f.kind == Ui::Hierarchy) && !f.rows)
           fills = true;
-      int mine = _rows(q.fields);
-      int pad = (fills || boxed) ? 0 :
-                lines - mine -
-                  ((q.buttonLabel.size() || q.beside.size()) ? 1 : 0);
-      if(pad > 0)
-        ImGui::Dummy(ImVec2(0.f, pad * ImGui::GetFrameHeightWithSpacing()));
-      // what stands on that line to the left of the button
+      float mine = _listHeight(q.fields, q.columns, width);
+      float pad = (fills || boxed) ? 0.f : tallest - mine;
+      if(pad > 0.f) ImGui::Dummy(ImVec2(0.f, pad));
       bool started = false;
       if(q.beside.size()) {
         ImGui::PushID("beside");
@@ -1423,223 +1164,92 @@ namespace {
         const char *label = q.buttonLabel.c_str();
         float w = ImGui::CalcTextSize(label).x +
                   2.f * ImGui::GetStyle().FramePadding.x;
-        // On the last line of the pane when there is room for it there, and
-        // on one of its own when the pane is already full. A pane that is a
-        // box has been given that line above, under the box: putting the
-        // button on the same line as the box would put it level with the top
-        // of it, which is where it used to land.
-        if(pad == 0 && !started && !q.buttonApart && !boxed) ImGui::SameLine();
         ImGui::SetCursorPosX(q.buttonApart ?
                                ImGui::GetCursorStartPos().x :
                                ImGui::GetContentRegionMax().x - w);
         if(ImGui::Button(label, ImVec2(w, 0.f))) {
           std::function<void()> what = q.button;
-          // an action that may open a dialog of its own has to wait for the
-          // frame to end, as everything else the panels do
+          // an action that may open a dialog of its own has to wait for the frame
+          // to end
           if(what && window) window->postAction(what);
         }
       }
     }
   }
 
-  // A list of fields, laid out in rows: those that ask to share the line of the
-  // one before them do, and the row is divided evenly between them. Placing
-  // each one at the start of its column is what turns a row of three values
-  // into a column of a grid -- letting Dear ImGui put them one after another
-  // leaves the headings of a table nowhere near what they head.
+  // a list of fields, where the solver of Layout.h says each goes: in em
+  // from where the cursor stands
   void _fields(const std::vector<Ui::Field> &fields, float item, int grid,
                float reserve, bool column)
   {
-    std::size_t i = 0;
-    while(i < fields.size()) {
-      std::size_t last = i + 1;
-      while(last < fields.size() && fields[last].sameRow) last++;
-      const ImGuiStyle &style = ImGui::GetStyle();
-      int columns = 0, spacers = 0;
-      for(std::size_t k = i; k < last; k++) {
-        if(fields[k].kind == Ui::Spacer)
-          spacers++;
-        else if(!fields[k].packed)
-          columns++;
+    const float em = ImGui::GetFontSize();
+    Ui::Metrics m = _metrics(item);
+    const ImVec2 top = ImGui::GetCursorPos();
+    Ui::Room room;
+    // the right edge of the content, from where the list starts
+    room.width = (ImGui::GetContentRegionMax().x - top.x) / em;
+    room.height = (ImGui::GetContentRegionAvail().y - reserve) / em;
+    room.wide = column;
+    Ui::Placed placed = Ui::place(fields, grid, m, room);
+    // where the lowest thing drawn ends: a page of prose is as tall as its
+    // words come to, which the solver was not told
+    float bottom = top.y;
+    for(const auto &p : placed.fields) {
+      const Ui::Field &f = fields[p.index];
+      float fx = top.x + (float)p.widget.x * em;
+      float fy = top.y + (float)p.widget.y * em;
+      // a label that comes before its field is written where the solver kept
+      // its room
+      float indent = 0.f;
+      if(f.labelBefore && f.label.size() && p.label.w > 0.) {
+        fx = top.x + (float)p.label.x * em;
+        indent = (float)(p.widget.x - p.label.x) * em;
       }
-      // A packed field takes the width it needs, from where it stands; a spacer
-      // eats what is left, which is what pushes whatever follows it to the
-      // right. With no spacer, the columns share the slack.
-      float total = ImGui::GetContentRegionMax().x;
-      float packed = _packedTotal(fields, i, last, item);
-      float columnW = _rowNeed(fields, i, last, item);
-      float slack = total - packed - columnW * (float)columns;
-      if(slack < 0.f) slack = 0.f;
-      if(!spacers && columns) columnW += slack / (float)columns;
-      float spacerW = spacers ? slack / (float)spacers : 0.f;
-      // A pane laid out on a grid puts every field at the left of its column,
-      // the same columns for every row, and lets it take the width it needs:
-      // it is what makes the rows of one pane line up with each other.
-      std::vector<float> gridW;
-      std::vector<float> before = _labelsBefore(fields, grid);
-      if(grid > 0) {
-        columns = grid;
-        gridW = _gridColumns(fields, grid, item);
-      }
-      // SameLine() counts from the edge of the window, not from where the
-      // content starts, so the row begins where the cursor already is: an `at`
-      // starting at zero puts every field after the first one padding-width
-      // too far left, and the labels of a row no longer line up with those of
-      // the rows around it
-      // SameLine() counts from the edge of the window and adds the offset of
-      // the group the fields may be inside -- the one that holds the panes
-      // beside the column of side fields. Counting that offset here too would
-      // put every field after the first one a side column further right.
-      const float inset = ImGui::GetCurrentWindow()->DC.GroupOffset.x;
-      float at = ImGui::GetCursorPosX() - inset;
-      const float start = at;
-      int gridColumn = 0; // the column the next field goes in, on this row
-      bool first = true;
-      // where the row ends once the fields that hang over the ones under it
-      // are left out of the reckoning
-      float bottom = -1.f;
-      for(std::size_t k = i; k < last; k++) {
-        const Ui::Field &f = fields[k];
-        if(f.visible && !f.visible()) continue;
-        if(f.kind == Ui::Spacer) {
-          if(grid > 0) {
-            // What a spacer pushes to the right end of a line is not in a
-            // column: it is against the right edge, which is where the window
-            // this reproduces puts the buttons and switches it sets apart.
-            float tail = -style.ItemSpacing.x;
-            for(std::size_t j = k + 1; j < last; j++) {
-              if(fields[j].kind == Ui::Spacer) continue;
-              if(fields[j].visible && !fields[j].visible()) continue;
-              tail += _packedWidth(fields[j], item) + style.ItemSpacing.x;
-            }
-            float least = at + _packedWidth(f, item) + style.ItemSpacing.x;
-            // SameLine() counts from the edge of the window and adds the
-            // offset of the group the fields are inside; the right edge is
-            // where the content region ends
-            at = std::max(total - inset - tail, least);
-          }
-          else
-            at += _packedWidth(f, item) + style.ItemSpacing.x + spacerW;
-          continue;
-        }
-        float here = item;
-        // a colour map is not a field either: it takes the whole of its pane
-        if(f.kind == Ui::ColorMap)
-          here = 0.f;
-        // a list or a tree is not a field with a label beside it: it takes
-        // its whole share of the line, or its contents are cut off
-        else if(f.kind == Ui::List || f.kind == Ui::Hierarchy)
-          // one that says how wide it is takes that: the plugins are a list
-          // of names and a list of views side by side
-          here = f.widthEm > 0. ?
-                   (float)f.widthEm * ImGui::GetFontSize() :
-                   (columns ? columnW - style.ItemSpacing.x : -FLT_MIN);
-        else if(f.widthShare > 0.)
-          here = (float)f.widthShare * item;
-        else if(f.widthEm > 0.)
-          here = (float)f.widthEm * ImGui::GetFontSize();
-        else if(grid > 0)
-          here = item; // its own width; the column only says where it starts
-        else if(!f.packed && columns > 1) {
-          // A widget carries its label to its right, so on a crowded row it has
-          // to give the label room or the two columns overlap.
-          float label = ImGui::CalcTextSize(f.label.c_str()).x +
-                        2.f * style.ItemInnerSpacing.x;
-          here = std::min(item * 0.5f,
-                          std::max(3.f * ImGui::GetFontSize(), columnW - label));
-        }
-        // Two frames that touch read as one box: a field that shares its
-        // cell gives the gap back out of its own width, so that the cell
-        // still measures exactly one field but the eye can tell its halves
-        // apart. FLTK draws a border around each and needs no such thing.
-        //
-        // What it gives is a courtesy, and it stops well short of what it is
-        // written in: two halves of a value are sixty pixels apiece and eight
-        // of them cost nothing, but the nine boxes that map the components of
-        // a field are a seventh of one and eight pixels leave a box with no
-        // room for its digit. Never more than a quarter of the cell, and
-        // never so much that one character no longer fits inside the frame.
-        if(_sharesCell(fields, k, last)) {
-          float give = std::min(style.ItemSpacing.x, here * .25f);
-          float least = ImGui::CalcTextSize("0").x + 2.f * style.FramePadding.x;
-          if(here - give < least) give = std::max(0.f, here - least);
-          here -= give;
-        }
-        // On a grid, a cell is a field and whatever is packed against it;
-        // the first field of a line begins one, and every field after it
-        // that is not packed begins the next. A field that begins a cell
-        // goes where its column starts, wherever what precedes it on the
-        // line happened to end -- except what a spacer has pushed to the
-        // right end, which is where the spacer left it.
-        bool loose = k > i && fields[k - 1].kind == Ui::Spacer;
-        if(grid > 0) {
-          if(k == i)
-            gridColumn = 0;
-          else if(!f.packed)
-            gridColumn++;
-          if(gridColumn >= grid) gridColumn = grid - 1;
-        }
-        float fx = at;
-        if(grid > 0 && !loose && (k == i || !f.packed)) {
-          fx = start;
-          for(int c = 0; c < gridColumn && c < grid; c++)
-            fx += gridW[(std::size_t)c];
-        }
-        if(!first) ImGui::SameLine(fx);
-        first = false;
-        // and what follows it on the line goes on from where it ends
-        if(grid > 0)
-          at = fx + (f.packed ? _packedStep(fields, k, last, item) :
-                                _packedWidth(f, item) + style.ItemSpacing.x);
-        else
-          at += f.packed ? _packedStep(fields, k, last, item) : columnW;
-        // Dear ImGui builds a widget's identity from its label, so the nine
-        // unlabelled boxes of a grid would all be the same widget: hovering
-        // and typing would go to whichever it saw first. Where the field
-        // stands in its list says which one it is.
-        // a list that fills what it is in leaves room for the lines under it
-        float tall = 0.f;
-        if((f.kind == Ui::List || f.kind == Ui::Hierarchy) && !f.rows) {
-          int below = 0;
-          for(std::size_t j = last; j < fields.size(); j++) {
-            if(fields[j].sameRow) continue;
-            if(fields[j].visible && !fields[j].visible()) continue;
-            below++;
-          }
-          tall = ImGui::GetContentRegionAvail().y - reserve -
-                 (float)below * ImGui::GetFrameHeightWithSpacing();
-          if(tall < ImGui::GetFrameHeight()) tall = ImGui::GetFrameHeight();
-        }
-        ImGui::PushID((int)k);
-        _field(f, here, tall,
-               before[(std::size_t)(grid > 0 ? gridColumn : 0)], column);
-        ImGui::PopID();
-        // A direction is drawn over the lines that follow it rather than
-        // making its own line that tall: the cursor goes back to where the
-        // rest of the row left it.
-        if(f.kind != Ui::Direction)
-          bottom = ImGui::GetCursorPosY();
-        else if(bottom >= 0.f)
-          ImGui::SetCursorPosY(bottom);
-      }
-      i = last;
+      ImGui::SetCursorPos(ImVec2(fx, fy));
+      float tall = 0.f;
+      if((f.kind == Ui::List || f.kind == Ui::Hierarchy) && !f.rows)
+        tall = (float)p.widget.h * em;
+      // Dear ImGui builds a widget's identity from its label, so the nine
+      // unlabelled boxes of a grid would all be the same widget: hovering
+      // and typing would go to whichever it saw first. Where the field
+      // stands in its list says which one it is.
+      // a line of text on a line of framed fields sits on their baseline,
+      // not on the top of the line
+      if(f.kind == Ui::Label || (f.labelBefore && f.label.size()))
+        ImGui::AlignTextToFramePadding();
+      ImGui::PushID((int)p.index);
+      _field(f, (float)p.widget.w * em, tall, indent, column);
+      ImGui::PopID();
+      if(f.kind != Ui::Direction)
+        bottom = std::max(bottom, ImGui::GetCursorPosY());
     }
+    // What follows the list starts under it: under what the solver placed,
+    // or under what was really drawn, whichever is lower. Said with an item
+    // of no width standing on the last line rather than by moving the
+    // cursor alone: Dear ImGui grows a window to what is submitted in it,
+    // not to where the cursor was left -- and whoever asks for the same
+    // line next, as the button of a pane does, gets the last line.
+    if(placed.fields.empty()) return;
+    float end = std::max(top.y + (float)placed.height * em, bottom);
+    ImGui::SetCursorPos(
+      ImVec2(top.x, end - ImGui::GetFrameHeightWithSpacing()));
+    ImGui::Dummy(ImVec2(0.f, ImGui::GetFrameHeight()));
   }
 
 } // namespace
 
-// what a line of the tree draws, when the line carries a value
 void drawField(const Ui::Field &f, float width) { _field(f, width); }
 
-void appWindow::_drawDialog(unsigned which)
+void appWindow::_drawDialog(const Ui::Form *which)
 {
   auto found = _dialogs.find(which);
   if(found == _dialogs.end() || !found->second.show) return;
   // a reference into a map stays good while the entry does, and drawing a
-  // dialog never removes one: whatever a widget does is posted for later
+  // dialog never removes one
   dialogState &state = found->second;
 
-  Ui::Form panel = state.describe ? state.describe() : Ui::Form();
+  Ui::Form panel = state.form ? *state.form : Ui::Form();
+  state.name = panel.id;
   std::string title = panel.title;
   // the title is the identity of the window, so it must not change under Dear
   // ImGui -- the physical dialog renames itself -- and it is what the saved
@@ -1651,37 +1261,43 @@ void appWindow::_drawDialog(unsigned which)
     state.focus = false;
     ImGui::SetNextWindowFocus();
   }
-  // A dialog is worth exactly what it holds: it is not resized by hand and it
-  // follows its contents, so that folding a part away shrinks it instead of
-  // leaving a hole. Docked, Dear ImGui gives it the size of the node and
-  // ignores this, which is what one wants there.
-  // What one ordinary field is worth: ten times the font size, which is what
-  // the windows this reproduces call IW. A field of a fixed number of pixels
-  // would be a different field at every size of type.
+  // A dialog is worth exactly what it holds: it is not resized by hand and
+  // it follows its contents, so that folding a part away shrinks it instead
+  // of leaving a hole. Docked, Dear ImGui gives it the size of the node and
+  // ignores this.
+  // What one ordinary field is worth: ten times the font size. A field of a
+  // fixed number of pixels would be a different field at every size of
+  // type.
   float width = 10.f * ImGui::GetFontSize();
-  // how many lines the tallest pane that does not scroll takes: the ones that
-  // do are given as many, and scroll the rest
-  int most = panel.leastRows;
-  for(const auto &q : panel.panes) {
-    if(q.scrolling) continue;
-    int n = _rows(q.fields);
-    for(const auto &section : q.sections)
-      n += (section.label.size() ? 1 : 0) + _rows(section.fields);
-    if(n > most) most = n;
-  }
-  if(most < 1) most = 12;
-  // ...unless it says how tall it is to be, or one of its panes scrolls: both
-  // say the opposite -- it is given a size and keeps it, whichever pane is up
+  // A dialog says how tall it is to be, or one of its panes scrolls: both
+  // say the opposite of following its contents -- it is given a size and
+  // keeps it, whichever pane is up.
   bool scrolls = panel.leastRows > 0;
   for(const auto &q : panel.panes)
     if(q.scrolling) scrolls = true;
-  // A form of several panes -- the keyboard and mouse reference is three --
-  // is one long page: the window itself scrolls it. One of a single pane is a
-  // box that scrolls, so that what fills it stops above the footer.
+  // a form of several panes is one long page: the window itself scrolls
+  // it; one of a single pane is a box that scrolls, so that what fills it
+  // stops above the footer
   bool wholeScrolls = scrolls && !panel.tabbed && panel.panes.size() != 1;
-  // The dialog keeps the width its widest row needs, whichever pane is up and
-  // whichever section is folded away: a window that grows sideways as one uses
-  // it is a window that will not sit still.
+  // What the tallest pane that does not scroll comes to, the line of its
+  // button included when it is a box that keeps that line under itself:
+  // the ones that scroll are given as much, and scroll the rest.
+  float most = panel.leastRows * ImGui::GetFrameHeightWithSpacing();
+  for(const auto &q : panel.panes) {
+    if(q.scrolling) continue;
+    float need = _paneHeight(q, width);
+    if(scrolls && !wholeScrolls) {
+      if(q.buttonLabel.size() || q.beside.size())
+        need += ImGui::GetFrameHeightWithSpacing();
+      if(q.buttonApart && q.buttonLabel.size())
+        need += ImGui::GetFrameHeightWithSpacing();
+    }
+    most = std::max(most, need);
+  }
+  if(most < ImGui::GetFrameHeightWithSpacing())
+    most = 12.f * ImGui::GetFrameHeightWithSpacing();
+  // the dialog keeps the width its widest row needs, whichever pane is up
+  // and whichever section is folded away
   float need = 0.f;
   {
     need = _neededWidth(panel, width) +
@@ -1698,18 +1314,40 @@ void appWindow::_drawDialog(unsigned which)
     // a scrollbar as soon as they are taller, and that takes width too
     if(scrolls) need += ImGui::GetStyle().ScrollbarSize;
   }
+  // What the panel keeps under the panes and does not scroll with them: its
+  // footer, and its buttons unless they share the footer's last line. A pane
+  // that scrolls has to stop above it, which is what its box is given a
+  // negative height for -- and a pane that does not scroll has nothing to
+  // leave room for, since the window follows what it holds.
+  bool merged = panel.buttonsInFooter && panel.footer.size() &&
+                panel.buttons.size();
+  float underPanes = 0.f;
+  if(!wholeScrolls) {
+    if(panel.footer.size())
+      underPanes += (float)_rows(panel.footer) *
+                      ImGui::GetFrameHeightWithSpacing() +
+                    ImGui::GetStyle().ItemSpacing.y + 1.f;
+    if(panel.buttons.size() && !merged)
+      underPanes += ImGui::GetFrameHeightWithSpacing();
+  }
   float tall = 0.f;
   if(scrolls) {
-    // The rows of the tallest pane, and what stands around them: the row of
-    // tabs, the title bar, the padding above and below, and a line of slack
-    // -- a window that is a pixel short of its contents shows a scrollbar,
-    // and one that is a line too tall shows nothing at all.
+    // The tallest pane, and what stands around it: the title bar, the
+    // padding above and below, the rows of tabs, the header, what the
+    // window keeps under the panes, and a line of slack -- a window that
+    // is a pixel short of its contents shows a scrollbar, and one that is
+    // a line too tall shows nothing at all.
     const ImGuiStyle &style = ImGui::GetStyle();
-    tall = (float)(most + 2 + _rows(panel.header)) *
+    int tabRows = 0;
+    if(panel.tabbed) {
+      tabRows = 1;
+      for(const auto &q : panel.panes)
+        if(q.group.size()) tabRows = 2;
+    }
+    tall = most + ImGui::GetFrameHeight() + 2.f * style.WindowPadding.y +
+           (float)(tabRows + _rows(panel.header) + 1) *
              ImGui::GetFrameHeightWithSpacing() +
-           ImGui::GetFrameHeight() + 2.f * style.WindowPadding.y;
-    // A category with fewer rows than the last is a shorter window, as it is
-    // in the window this reproduces, which builds itself again for it.
+           underPanes;
     if(tall != state.estimatedHeight) {
       state.estimatedHeight = tall;
       state.sized = false;
@@ -1737,35 +1375,40 @@ void appWindow::_drawDialog(unsigned which)
     return;
   }
 
-  // the column of side fields, down the left of everything else
   if(panel.side.size()) {
     float w = (float)(panel.sideEm > 0. ? panel.sideEm : 8.) *
               ImGui::GetFontSize();
-    // as tall as what is beside it, so that a list can fill it; the fields
-    // under such a list keep their own line at the bottom
+    // As tall as what is beside it, so that a list can fill it: the rows
+    // of tabs, the header, the tallest pane and the footer -- what the
+    // solver says each of them takes, added up here the way they are drawn
+    // below. Not the buttons of the window: they stand under the column
+    // and what is beside it, on a line of their own.
     float tall = 0.f;
     for(const auto &f : panel.side)
       if(f.kind == Ui::List && !f.rows) {
-        // As tall as the panes beside it, counted in the lines they are
-        // measured in -- which is all a window that follows its contents can
-        // be asked, since it has not been given a height yet at this point.
-        tall = most * ImGui::GetFrameHeightWithSpacing();
-        // But a window that was given a height knows what is left of it, and
-        // what is left is what the column should have: counting lines was
-        // only ever a guess at the same thing, and it guessed short, which
-        // left the list stopping well above the foot of the window.
-        if(scrolls) {
-          float keep = (float)(_rows(panel.footer) +
-                               (panel.buttons.empty() ? 0 : 1)) *
-                       ImGui::GetFrameHeightWithSpacing();
-          float room = ImGui::GetContentRegionAvail().y - keep;
-          if(room > tall) tall = room;
+        int tabRows = 0;
+        if(panel.tabbed && panel.panes.size() > 1) {
+          tabRows = 1;
+          for(const auto &q : panel.panes)
+            if(q.group.size()) tabRows = 2;
         }
-        // A window that follows its contents has none of that to go on, but
-        // it has what the panes beside the column came to last frame, which
-        // is what the column is meant to match.
-        else if(state.sideRoom > tall)
-          tall = state.sideRoom;
+        tall = most + (float)tabRows * ImGui::GetFrameHeight() +
+               _listHeight(panel.header, 0, width) +
+               _listHeight(panel.footer, 0, width) +
+               (panel.footer.size() ? ImGui::GetStyle().ItemSpacing.y + 1.f :
+                                      0.f);
+        // A window that was given a height knows what is left of it, and
+        // the column has that, less the footer and the buttons under the
+        // panes: what the solver adds up is for a window that follows its
+        // contents and has no height to give yet.
+        if(scrolls) {
+          float keep = _listHeight(panel.footer, 0, width) +
+                       ((panel.buttons.size() && !merged) ?
+                          ImGui::GetFrameHeightWithSpacing() :
+                          0.f);
+          tall = std::max(ImGui::GetFrameHeight(),
+                          ImGui::GetContentRegionAvail().y - keep);
+        }
       }
     if(ImGui::BeginChild("##side", ImVec2(w, tall),
                          tall > 0.f ? ImGuiChildFlags_None :
@@ -1778,33 +1421,13 @@ void appWindow::_drawDialog(unsigned which)
     ImGui::BeginGroup();
   }
 
-  // what the panes are about, over the whole width of them
   if(panel.header.size()) {
     ImGui::PushID("header");
     _fields(panel.header, width);
     ImGui::PopID();
   }
 
-  // What the panel keeps under the panes and does not scroll with them: its
-  // footer, and its buttons unless they share the footer's last line. A pane
-  // that scrolls has to stop above it, which is what its box is given a
-  // negative height for -- and a pane that does not scroll has nothing to
-  // leave room for, since the window follows what it holds.
-  bool merged = panel.buttonsInFooter && panel.footer.size() &&
-                panel.buttons.size();
-  float underPanes = 0.f;
-  if(!wholeScrolls) {
-    if(panel.footer.size())
-      underPanes += (float)_rows(panel.footer) *
-                      ImGui::GetFrameHeightWithSpacing() +
-                    // and the rule drawn above it
-                    ImGui::GetStyle().ItemSpacing.y + 1.f;
-    if(panel.buttons.size() && !merged)
-      underPanes += ImGui::GetFrameHeightWithSpacing();
-  }
-
   if(!panel.tabbed) {
-    // one long form: the panes follow one another as titled sections
     for(std::size_t i = 0; i < panel.panes.size(); i++) {
       const Ui::Pane &q = panel.panes[i];
       if(q.visible && !q.visible()) continue;
@@ -1813,8 +1436,8 @@ void appWindow::_drawDialog(unsigned which)
       _paneBody(q, width, scrolls && !wholeScrolls, 0, nullptr, underPanes);
       ImGui::PopID();
       if(q.buttonLabel.size()) {
-        // against the right edge, where the window this replaces puts it --
-        // unless it is one that stands apart, which goes to the far left
+        // against the right edge, unless it is one that stands apart, which goes
+        // to the far left
         float w = ImGui::CalcTextSize(q.buttonLabel.c_str()).x +
                   2.f * ImGui::GetStyle().FramePadding.x;
         ImGui::SetCursorPosX(q.buttonApart ?
@@ -1826,8 +1449,8 @@ void appWindow::_drawDialog(unsigned which)
         }
       }
       if(q.separatorAfter) {
-        // A titled section opens with a rule of its own here, which the rule
-        // asked for would only double. FLTK draws no such thing, and keeps it.
+        // a titled section opens with a rule of its own here, which the rule
+        // asked for would only double
         bool titled = false;
         for(std::size_t j = i + 1; j < panel.panes.size(); j++) {
           const Ui::Pane &next = panel.panes[j];
@@ -1848,13 +1471,9 @@ void appWindow::_drawDialog(unsigned which)
     // takes a frame, so clearing the request straight away would leave the
     // family right and the member wrong.
     int wanted = state.wantedPane;
-    // and the height of the tallest pane, for the same reason
-    int most = 0;
-    for(const auto &q : panel.panes) {
-      int n = _rows(q.fields);
-      if(n > most) most = n;
-    }
-    // one pane of a family, wherever the rows of tabs put it
+    float most = 0.f;
+    for(const auto &q : panel.panes)
+      most = std::max(most, _listHeight(q.fields, q.columns, width));
     auto drawPane = [&](std::size_t i) {
       // The user moved to this pane: it may have something to start, which is
       // how moving to the Line tab of the elementary window asks for a start
@@ -1956,19 +1575,10 @@ void appWindow::_drawDialog(unsigned which)
     ImGui::PopID();
   }
 
-  if(panel.side.size()) {
-    ImGui::EndGroup();
-    // What everything beside the column came to, for the column to be given
-    // exactly that on the next frame. The whole group and not the panes
-    // alone: the three checks the clipping window puts under its tabs are its
-    // footer, and the browser it reproduces runs its column past them to the
-    // foot of the window.
-    state.sideRoom = ImGui::GetItemRectSize().y;
-  }
+  if(panel.side.size()) ImGui::EndGroup();
 
   if(panel.buttons.size()) {
-    // gathered at the right in the order they were declared, so that the last
-    // one ends against the edge; those that stand apart go to the far left
+    // gathered at the right, those that stand apart at the far left
     const ImGuiStyle &style = ImGui::GetStyle();
     auto widthOf = [&style](const Ui::Button &b) {
       return ImGui::CalcTextSize(b.label.c_str()).x + 2.f * style.FramePadding.x;
@@ -1988,9 +1598,12 @@ void appWindow::_drawDialog(unsigned which)
         if(!first) ImGui::SameLine();
       }
       else if(!opened) {
-        // a one-line footer keeps the buttons on its own line, as the window
-        // this replaces does: "Memory usage: ..." and Update share one
-        if(first && !merged)
+        // a one-line footer keeps the buttons on its own line: the footer ends
+        // under its last line, so that line is one up
+        if(first && merged)
+          ImGui::SetCursorPos(ImVec2(rx, ImGui::GetCursorPosY() -
+                                           ImGui::GetFrameHeightWithSpacing()));
+        else if(first)
           ImGui::SetCursorPosX(rx);
         else
           ImGui::SameLine(rx);
@@ -1999,10 +1612,13 @@ void appWindow::_drawDialog(unsigned which)
       else
         ImGui::SameLine();
       first = false;
+      bool enabled = b.enabled ? b.enabled() : true;
+      ImGui::BeginDisabled(!enabled);
       if(ImGui::Button(b.label.c_str(), ImVec2(widthOf(b), 0.f))) {
         std::function<void()> what = b.action;
         if(what) postAction(what);
       }
+      ImGui::EndDisabled();
     }
   }
 
@@ -2014,69 +1630,79 @@ void appWindow::_drawDialog(unsigned which)
   if(!state.show && panel.closed) postAction(panel.closed);
 }
 
-Ui::FormRef appWindow::createDialog(const std::string &name,
-                                    const std::function<Ui::Form()> &describe)
+appWindow::dialogState &appWindow::_dialog(const Ui::Form &which)
 {
-  // handed out once and never again, so that a form that is gone is a number
-  // nobody answers to; nothing is drawn until it is shown
-  Ui::FormRef which(++_lastDialog);
-  _dialogs[which.id].name = name;
-  _dialogs[which.id].describe = describe;
-  return which;
+  dialogState &state = _dialogs[&which];
+  state.name = which.id;
+  state.form = &which;
+  return state;
 }
 
-void appWindow::destroyDialog(Ui::FormRef which)
+void appWindow::dropDialog(const Ui::Form &which)
 {
-  _dialogs.erase(which.id);
+  _dialogs.erase(&which);
 }
 
-void appWindow::hideDialog(Ui::FormRef which)
+void appWindow::hideDialog(const Ui::Form &which)
 {
-  auto it = _dialogs.find(which.id);
+  auto it = _dialogs.find(&which);
   if(it == _dialogs.end()) return;
   dialogState &state = it->second;
   bool was = state.show;
   state.show = false;
   state.sized = false;
-  // hidden from a menu rather than by its cross, which is the same thing to
-  // whatever the dialog undoes when it goes
-  if(was && state.describe) {
-    Ui::Form panel = state.describe();
+  // hidden from a menu rather than by its cross: what the dialog undoes
+  // when it goes is undone all the same
+  if(was && state.form) {
+    Ui::Form panel = *state.form;
     if(panel.closed) postAction(panel.closed);
   }
 }
 
-bool appWindow::dialogVisible(Ui::FormRef which) const
+bool appWindow::dialogVisible(const Ui::Form &which) const
 {
-  auto it = _dialogs.find(which.id);
+  auto it = _dialogs.find(&which);
   return it != _dialogs.end() && it->second.show;
 }
 
-void appWindow::showDialog(Ui::FormRef which)
+void appWindow::showDialog(const Ui::Form &which)
 {
-  auto it = _dialogs.find(which.id);
-  if(it == _dialogs.end()) return;
-  dialogState &state = it->second;
+  dialogState &state = _dialog(which);
   state.show = true;
   state.focus = true;
-  // the pane it is on, forced once: a tab bar that was not drawn for a while
-  // may have forgotten it
+  // the pane asked for while the form had no panes yet
+  if(state.wantedLabel.size()) {
+    for(std::size_t i = 0; i < which.panes.size(); i++)
+      if(which.panes[i].label == state.wantedLabel) state.pane = (int)i;
+    state.wantedLabel.clear();
+  }
+  // the pane it is on, forced once: a tab bar that was not drawn for a
+  // while may have forgotten it
   state.wantedPane = state.pane;
 }
 
-int appWindow::dialogPane(Ui::FormRef which) const
+std::string appWindow::dialogPane(const Ui::Form &which) const
 {
-  auto it = _dialogs.find(which.id);
-  return it == _dialogs.end() ? 0 : it->second.pane;
+  auto it = _dialogs.find(&which);
+  if(it == _dialogs.end() || !it->second.form) return "";
+  const Ui::Form &panel = *it->second.form;
+  int pane = it->second.pane;
+  if(pane >= 0 && pane < (int)panel.panes.size())
+    return panel.panes[pane].label;
+  return it->second.wantedLabel;
 }
 
-void appWindow::setDialogPane(Ui::FormRef which, int pane)
+void appWindow::setDialogPane(const Ui::Form &which, const std::string &pane)
 {
-  auto it = _dialogs.find(which.id);
-  if(it == _dialogs.end() || pane < 0) return;
-  it->second.pane = pane;
-  // to be forced when the dialog is next drawn, whether it is up or not
-  if(it->second.show) it->second.wantedPane = pane;
+  dialogState &state = _dialog(which);
+  const Ui::Form &panel = which;
+  for(std::size_t i = 0; i < panel.panes.size(); i++) {
+    if(panel.panes[i].label != pane) continue;
+    state.pane = (int)i;
+    if(state.show) state.wantedPane = (int)i;
+    return;
+  }
+  state.wantedLabel = pane;
 }
 
 #endif

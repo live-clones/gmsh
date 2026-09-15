@@ -25,7 +25,7 @@
 #include <FL/Fl_Text_Editor.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Preferences.H>
-#include "FlGui.h"
+#include "fltkMetrics.h"
 #include "inputValue.h"
 #include "paletteWindow.h"
 #include "GmshDefines.h"
@@ -37,11 +37,7 @@
 #include "Context.h"
 #include "PView.h"
 
-// What is left of this file: the two little windows the ONELAB range widgets
-// of the FLTK module tree open, which is FLTK's own. The chooser of one
-// option, the arrow editor and the two command choosers were the rest of it;
-// they are described once in src/common/GuiPrompts.cpp now, and both
-// interfaces build them.
+// the two little windows the ONELAB range widgets of the module tree open
 
 int simpleTextDisplay(const char *title, const std::string &text)
 {

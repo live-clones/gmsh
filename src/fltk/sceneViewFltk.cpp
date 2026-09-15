@@ -30,10 +30,8 @@ namespace {
     return all;
   }
 
-  // The gamepad, asked on a timer rather than as an event: there is none to
-  // wait for. The scene says how often, and does the rest; what is the
-  // window's is that only the view the pointer was last in moves, as it
-  // always has.
+  // the gamepad, asked on a timer rather than as an event: there is none to
+  // wait for; only the view the pointer was last in moves
   void _gamepad(void *data)
   {
     sceneViewFltk *view = (sceneViewFltk *)data;
@@ -153,9 +151,8 @@ paneInput sceneViewFltk::_input(int event) const
   in.alt = Fl::event_state(FL_ALT) ? true : false;
   in.super = Fl::event_state(FL_META) ? true : false;
 
-  // The buttons are numbered as the scene numbers them, which is how Dear
-  // ImGui does: 0 left, 1 right, 2 middle. FLTK numbers them 1 left, 2
-  // middle, 3 right.
+  // the buttons are numbered as the scene numbers them: 0 left, 1 right,
+  // 2 middle; FLTK numbers them 1 left, 2 middle, 3 right
   auto which = [](int button) {
     return button == 1 ? 0 : (button == 3 ? 1 : 2);
   };
@@ -175,8 +172,7 @@ paneInput sceneViewFltk::_input(int event) const
     if(Fl::event_state(FL_BUTTON2)) in.dragging[2] = true;
     break;
   case FL_MOUSEWHEEL:
-    // FLTK counts down as positive and the scene counts up, as Dear ImGui
-    // reports it
+    // FLTK counts down as positive and the scene counts up
     in.wheel = -Fl::event_dy();
     break;
   default: break;
@@ -199,7 +195,7 @@ int sceneViewFltk::handle(int event)
 
   case FL_PUSH:
     setLastHandled(this);
-    take_focus(); // the keyboard follows the click, as it always has
+    take_focus(); // the keyboard follows the click
     // fall through
   case FL_RELEASE:
   case FL_DRAG:

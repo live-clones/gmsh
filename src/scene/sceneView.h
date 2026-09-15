@@ -21,17 +21,18 @@ class GRegion;
 class MElement;
 class PView;
 
-// One 3D view of the model: the Dear ImGui counterpart of openglWindow.
+// One 3D view of the model.
 //
 // A pane owns a rectangle of a platform window, into which the scene is
-// rendered with glViewport()/glScissor(). There are two kinds. The panes that
-// tile the central node of the dock space are drawn straight into the main
-// framebuffer, before the Dear ImGui draw lists are submitted: Dear ImGui
-// leaves that node transparent, so the scene shows through. The panes of the
-// extra graphic windows that "Window > New Window" creates live inside a Dear
-// ImGui window of their own, which may end up in another platform window, so
-// they are drawn from a draw callback instead -- that is the only way to have
-// custom OpenGL run in the right framebuffer.
+// rendered with glViewport()/glScissor(). There are two kinds. The panes
+// that tile the central node of the dock space are drawn straight into the
+// main framebuffer, before the Dear ImGui draw lists are submitted: Dear
+// ImGui leaves that node transparent, so the scene shows through. The
+// panes of the extra graphic windows that "Window > New Window" creates
+// live inside a Dear ImGui window of their own, which may end up in
+// another platform window, so they are drawn from a draw callback instead
+// -- that is the only way to have custom OpenGL run in the right
+// framebuffer.
 
 // What the pointer and the modifier keys are doing, as one frame of the pane
 // sees it. The panes of the main window get it from Dear ImGui; the extra
@@ -171,8 +172,7 @@ public:
   // Whether there was a picking or a lasso to take it.
   bool key(char what);
 
-  // blocking entity selection, as FlGui::selectEntity(); returns 'q', 'l', 'r',
-  // 'u' or 'e'
+  // blocking entity selection; returns 'q', 'l', 'r', 'u' or 'e'
   char selectEntity(int type, std::vector<GVertex *> &vertices,
                     std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
                     std::vector<GRegion *> &regions,

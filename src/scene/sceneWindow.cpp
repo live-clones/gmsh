@@ -27,21 +27,15 @@
 #include "OS.h"
 #include "PixelBuffer.h"
 
-// The 3D scene in a window of its own.
+// The 3D scene in a window of its own: what an interface that does not
+// hold a scene pairs with. It is the same sceneView the Dear ImGui
+// interface puts in the panes of its dock space; only what holds it
+// differs, which is the whole point of Scene::Host. What is here is the
+// holding: a GLFW window, the events it reports, and the answers
+// GuiScene.h asks for.
 //
-// It is what a chrome that does not hold a scene pairs with: a browser showing
-// the panels of the interface over a socket, two interfaces teed together to
-// be compared, anything being tried out. None of them knows about OpenGL, and
-// none of them should have to draw a model before it can be looked at.
-//
-// It is the same sceneView the Dear ImGui interface puts in the panes of its
-// dock space; only what holds it differs, which is the whole point of
-// Scene::Host. What is here is the holding: a GLFW window, the events it
-// reports, and the answers GuiScene.h asks for.
-//
-// The Dear ImGui context it makes holds no window at all. It is there for the
-// font atlas the scene draws its text from -- the wooden leg written down in
-// drawContextGL.h.
+// The Dear ImGui context it makes holds no window at all. It is there for
+// the font atlas the scene draws its text from, see drawContextGL.h.
 
 namespace {
 
@@ -60,20 +54,18 @@ namespace {
     // Whether the picture is worth drawing again. Reading a framebuffer back
     // and turning it into a bitmap is by far the most expensive thing this
     // file does, and asking for it two and a half times a second when nothing
-    // has moved is the whole of what a chrome showing pictures costs.
+    // has moved is the whole of what a interface showing pictures costs.
     bool changed = true;
     // How big the picture is wanted. A window nobody looks at cannot be
     // relied on to change size -- there is no compositor to ask -- so the
     // picture is drawn at the wanted size inside a window made large enough,
     // rather than by resizing the window.
     int wantW = 0, wantH = 0;
-    // what is being picked, said over the view
     std::string tooltip;
     // the hand, made once and put on the window while the pointer is over
     // something that can be clicked
     GLFWcursor *hand = nullptr;
     bool handOn = false;
-    // and what the last picking answered
     std::vector<GVertex *> vertices;
     std::vector<GEdge *> edges;
     std::vector<GFace *> faces;
@@ -97,7 +89,6 @@ namespace {
     in.super = (mods & GLFW_MOD_SUPER) != 0;
   }
 
-  // GLFW numbers the buttons left, right, middle, and so does paneInput
   int _button(int glfwButton)
   {
     switch(glfwButton) {
@@ -147,8 +138,7 @@ namespace {
     standalone &it = _it();
     if(action != GLFW_PRESS || !it.view) return;
     _modifiers(it.input, mods);
-    // the keys an interactive selection answers to, as in the interfaces that
-    // hold the scene themselves
+    // the keys an interactive selection answers to
     if(!it.view->selectionMode) return;
     switch(key) {
     case GLFW_KEY_E: it.view->endSelection = 1; break;
@@ -191,8 +181,8 @@ namespace {
     return k;
   }
 
-  // Bring it up, once. Failing is not fatal: a chrome that has no scene is
-  // still a chrome, and it says so and carries on.
+  // bring it up, once; failing is not fatal, the interface carries on
+  // without a scene
   bool _open()
   {
     standalone &it = _it();
@@ -249,15 +239,13 @@ namespace {
     glfwSetScrollCallback(it.window, _scroll);
     glfwSetKeyCallback(it.window, _key);
 
-    // and what the scene needs of whoever holds it, which here is this file
     Scene::Host held;
-    // what everything in Gmsh calls when the picture is out of date
     held.redraw = []() { _it().changed = true; };
-    // A picking waits here, so this is what keeps the interface answering
-    // while it does: the chrome is pumped, not the scene -- pumping the scene
-    // would be pumping the loop one is already inside.
-    held.check = [](bool rateLimited) { Gui::pumpChrome(rateLimited); };
-    held.wait = [](double seconds, bool force) { Gui::pumpChrome(false); };
+    // a picking waits here, so this is what keeps the interface answering
+    // while it does: the interface is pumped, not the scene, which would be
+    // pumping the loop one is already inside
+    held.check = [](bool rateLimited) { Gui::instance().pumpChrome(rateLimited); };
+    held.wait = [](double seconds, bool force) { Gui::instance().pumpChrome(false); };
     // what a capture asks for: the scene drawn, and the buffers left alone,
     // since glReadPixels() reads the one a swap would have thrown away
     held.drawCurrent = []() { _drawFrame(false); };
@@ -269,7 +257,7 @@ namespace {
     // point five pixels wide is guesswork.
     held.tooltip = [](const std::string &text) {
       _it().tooltip = text;
-      Gui::drawTooltip(text);
+      Gui::instance().drawTooltip(text);
     };
     held.cursor = [](Scene::Cursor kind) {
       standalone &one = _it();
@@ -287,7 +275,6 @@ namespace {
     return true;
   }
 
-  // One frame: the size the window is, what the pointer did, and the scene.
   void _drawFrame(bool swap)
   {
     standalone &it = _it();
@@ -344,7 +331,7 @@ namespace WindowScene {
     if(!_open()) return;
     standalone &it = _it();
     if(glfwWindowShouldClose(it.window)) {
-      // the window is gone; the chrome carries on without a scene
+      // the window is gone; the interface carries on without a scene
       glfwHideWindow(it.window);
       return;
     }
@@ -381,10 +368,8 @@ namespace WindowScene {
 
   void setCurrentOpenglWindow(int which) {}
 
-  // one window: there is nothing another could be hiding
   void showAllInEveryWindow() {}
 
-  // one window, which is not split
   void splitCurrentOpenglWindow(char how, double ratio) {}
 
   void copyCurrentOpenglWindowToClipboard() {}
@@ -402,7 +387,7 @@ namespace WindowScene {
     return buffer;
   }
 
-  // --- and the same picture, for a chrome that cannot draw one
+  // --- and the same picture, for an interface that cannot draw one
 
   void sceneResize(int width, int height)
   {
@@ -428,9 +413,8 @@ namespace WindowScene {
   std::string scenePicture(int &width, int &height, bool always)
   {
     if(!_open()) return "";
-    // Nothing to say when nothing has moved: whoever is showing the picture
-    // already has this one. It is the difference between a chrome that costs
-    // nothing while it sits there and one that costs an eighth of a core.
+    // nothing to say when nothing has moved: whoever is showing the picture
+    // already has this one
     if(!always && !_it().changed) return "";
     _it().changed = false;
     PixelBuffer *shot = createCompositePixelBuffer(GL_RGB,
@@ -464,7 +448,6 @@ namespace WindowScene {
       char *row = at + 54 + (std::size_t)stride * y;
       const unsigned char *from = pixels + (std::size_t)width * 3 * y;
       for(int x = 0; x < width; x++) {
-        // a bitmap says blue, green, red
         row[3 * x + 0] = (char)from[3 * x + 2];
         row[3 * x + 1] = (char)from[3 * x + 1];
         row[3 * x + 2] = (char)from[3 * x + 0];
@@ -550,10 +533,8 @@ namespace WindowScene {
     pumpScene(false);
   }
 
-  // the option is set by whoever asks; there is no pointer here to put back
   void setMouseSelection(bool on) {}
 
-  // one window that shows what it is told to: nothing plays here
   void toggleAnimation() {}
   bool animating() { return false; }
 
@@ -634,7 +615,7 @@ namespace {
   struct offering {
     offering()
     {
-      Gui::SceneOps ops;
+      GuiSceneOps ops;
 #define GUI_SCENE_TAKE(name, args, call) ops.name = name;
       GUI_SCENE_VOID(GUI_SCENE_TAKE)
 #undef GUI_SCENE_TAKE

@@ -29,27 +29,14 @@
 #include <unistd.h>
 #endif
 
-// The chrome in a web page.
+// The interface in a web page: the descriptions are written down and sent
+// to another process, which holds no pointers -- what a menu entry does
+// and what a field is worth are given a number here and called back by
+// that number. The 3D scene is drawn in a window of its own, from
+// src/scene, and the page shows pictures of it.
 //
-// It is a demonstration and a test of the structure, and it says so: what is
-// being found out is whether the descriptions of src/gui survive being written
-// down and sent to another process. Three things had to be true for this to
-// work at all, and all three are properties of the arrangement rather than of
-// this file:
-//
-//   the descriptions are handed over rather than fetched, so that asking for
-//   one across a boundary is possible at all -- that is Sources;
-//
-//   what a menu entry does and what a field is worth are reached through the
-//   description, so they can be given a number here and called back by that
-//   number from a page that holds no pointers;
-//
-//   and the 3D scene is not the chrome's, so a chrome that cannot draw one
-//   still shows the model -- in a window of its own, from src/scene.
-//
-// What it is not: a good interface. It polls twice a second, it draws no 3D,
-// and a value is written back a whole field at a time. Something meant to be
-// used would push over a socket and send what changed.
+// It polls twice a second, and a value is written back a whole field at
+// a time.
 
 namespace {
 
@@ -168,8 +155,7 @@ namespace {
 
     void postFromThread(const std::function<void()> &what) override
     {
-      // there is no other thread here: a page asks, and the answer is written
-      // between two turns of the loop
+      // there is no other thread here
       what();
     }
 
@@ -239,36 +225,44 @@ namespace {
 
     void refreshBar() override {}
 
-    // --- the forms, by the number each was handed out under
+    // --- the forms, by the name of their dialog
 
-    Ui::FormRef createForm(const std::string &name,
-                           const std::function<Ui::Form()> &describe) override
+    void showForm(const Ui::Form &which, bool show) override
     {
-      Ui::FormRef form(++_lastForm);
-      _forms[form.id].name = name;
-      _forms[form.id].describe = describe;
-      return form;
+      formState &state = _state(which);
+      state.shown = show;
+      if(state.wantedLabel.size()) {
+        for(std::size_t i = 0; i < which.panes.size(); i++)
+          if(which.panes[i].label == state.wantedLabel) state.pane = (int)i;
+        state.wantedLabel.clear();
+      }
     }
-    void destroyForm(Ui::FormRef form) override { _forms.erase(form.id); }
-    void showForm(Ui::FormRef form, bool show) override
+    bool formVisible(const Ui::Form &which) override
     {
-      auto it = _forms.find(form.id);
-      if(it != _forms.end()) it->second.shown = show;
-    }
-    bool formVisible(Ui::FormRef form) override
-    {
-      auto it = _forms.find(form.id);
+      auto it = _forms.find(&which);
       return it != _forms.end() && it->second.shown;
     }
-    int formPane(Ui::FormRef form) override
+    std::string formPane(const Ui::Form &which) override
     {
-      auto it = _forms.find(form.id);
-      return it == _forms.end() ? 0 : it->second.pane;
+      auto it = _forms.find(&which);
+      if(it == _forms.end()) return "";
+      const Ui::Form &form = which;
+      int pane = it->second.pane;
+      return (pane >= 0 && pane < (int)form.panes.size()) ?
+               form.panes[pane].label : it->second.wantedLabel;
     }
-    void setFormPane(Ui::FormRef form, int pane) override
+    void setFormPane(const Ui::Form &which, const std::string &pane) override
     {
-      auto it = _forms.find(form.id);
-      if(it != _forms.end()) it->second.pane = pane;
+      const Ui::Form &form = which;
+      formState &state = _state(which);
+      for(std::size_t i = 0; i < form.panes.size(); i++)
+        if(form.panes[i].label == pane) { state.pane = (int)i; return; }
+      // asked before the form had panes to find it in
+      state.wantedLabel = pane;
+    }
+    void dropForm(const Ui::Form &which) override
+    {
+      _forms.erase(&which);
     }
     void drawTooltip(const std::string &text) override { _tip = text; }
     void showConsole(bool show) override { _console = show; }
@@ -300,7 +294,6 @@ namespace {
 
     bool supports(const std::string &what) override
     {
-      // one page: nothing to split, bring to the front, or detach
       return false;
     }
 
@@ -310,28 +303,39 @@ namespace {
     int _port = 0;
     bool _going = true;
     bool _console = false;
-    // what the scene says is under the pointer, said next to it
+    // what the scene says is under the pointer
     std::string _tip;
-    // and where the page says it has put its windows
+    // where the page says it has put its windows
     std::string _where;
     // the word that has to come with every request
     std::string _token;
     // what was last said down the event stream, and when; and when the page
-    // last asked for something, which is what says whether anything is going
-    // on at all
+    // last asked for something
     std::string _told;
     bool _toldScene = false;
     double _lastTold = 0.;
     double _lastAsked = 0.;
-    // what each form is made of, whether it is up, and which pane it is on
+    // the dialog each form is of, whether it is up, and which pane it is on
     struct formState {
-      std::string name;
-      std::function<Ui::Form()> describe;
+      const Ui::Form *form = nullptr;
       bool shown = false;
       int pane = 0;
+      std::string wantedLabel;
     };
-    std::map<unsigned, formState> _forms;
-    unsigned _lastForm = 0;
+    std::map<const Ui::Form *, formState> _forms;
+    // the one the page names by its id
+    std::map<const Ui::Form *, formState>::iterator _formNamed(const std::string &id)
+    {
+      for(auto it = _forms.begin(); it != _forms.end(); ++it)
+        if(it->first->id == id) return it;
+      return _forms.end();
+    }
+    formState &_state(const Ui::Form &which)
+    {
+      formState &state = _forms[&which];
+      state.form = &which;
+      return state;
+    }
     std::vector<std::string> _messages;
     // What the page may ask for, by number: rebuilt every time the state is
     // written, since a description is only true at the moment it is drawn.
@@ -347,22 +351,15 @@ namespace {
     std::vector<unsigned> _actionNames;
     std::vector<Ui::Field> _fields;
     std::vector<unsigned> _fieldNames;
-    // Which branches of the tree are unfolded. It is the chrome's to keep --
-    // it is what the user did, not what the model says -- and it is what lets
-    // the children of a branch be asked for only when they are wanted, which
-    // is what a described tree is a model rather than a list for.
-    // Whether the colour map is showing what it answers to. The widget of
-    // the window this reproduces shows it and forgets it at the first click,
-    // and it is kept here rather than in the page so that anything driving
-    // the page from outside can ask for it the way it asks for everything
-    // else.
+    // which branches of the tree are unfolded: the interface's to keep, and
+    // what lets the children of a branch be asked for only when they are
+    // wanted
     bool _mapHelp = true;
     std::map<std::string, bool> _open;
 
-    // What the page is being asked, when something has stopped Gmsh to ask
-    // it. Everything a modal window of the other interfaces holds fits here:
-    // which kind it is, what it says, what it starts from, and what came
-    // back.
+    // what the page is being asked, when something has stopped Gmsh to ask
+    // it: which kind it is, what it says, what it starts from, and what came
+    // back
     struct Asking {
       bool open = false;
       std::string kind; // "file", "value" or "question"
@@ -481,7 +478,6 @@ namespace {
       return out + "]}";
     }
 
-    // what the page is being asked, written into the state
     std::string _ask()
     {
       if(!_asking.open) return "null";
@@ -569,7 +565,6 @@ namespace {
       std::string::size_type end = body.find('&', at);
       std::string raw = body.substr(at, end == std::string::npos ?
                                           std::string::npos : end - at);
-      // what the page escaped
       std::string out;
       for(std::size_t i = 0; i < raw.size(); i++) {
         if(raw[i] == '+')
@@ -596,7 +591,6 @@ namespace {
       return h;
     }
 
-    // hand out a number for something to do, with what it was
     std::string _actionId(const std::function<void()> &what,
                           const std::string &called)
     {
@@ -606,10 +600,9 @@ namespace {
              ",\"h\":" + std::to_string(_actionNames.back());
     }
 
-    // One channel of one entry of a colour map. Red, green and blue unless
+    // one channel of one entry of a colour map: red, green and blue unless
     // the map is being shown as hue, saturation and value, and the fourth is
-    // the alpha either way -- which is what Ui::ColourMap says, and what the
-    // other two interfaces do with it.
+    // the alpha either way
     static int _channelOf(const Ui::ColourMap &map, int i, int channel,
                           bool hsv)
     {
@@ -650,7 +643,6 @@ namespace {
              ",\"h\":" + std::to_string(_fieldNames.back());
     }
 
-    // and what the page sent back: the same thing, or nothing at all
     std::function<void()> *_actionAsked(const Browser::Ask &ask)
     {
       int id = atoi(_valueOf(ask.body, "id").c_str());
@@ -709,7 +701,6 @@ namespace {
         type = "text/plain";
         return "no";
       }
-      // something is going on: look more often for a while
       if(ask.path != "/scene" && ask.path.compare(0, 6, "/scene") != 0 &&
          ask.path.compare(0, 7, "/events") != 0)
         _lastAsked = TimeOfDay();
@@ -772,9 +763,11 @@ namespace {
         return _where;
       }
       if(path == "/close") {
-        Ui::FormRef form((unsigned)atoi(_valueOf(ask.body, "form").c_str()));
-        showForm(form, false);
-        if(_host.formWasClosed) _host.formWasClosed(form);
+        auto it = _formNamed(_valueOf(ask.body, "form"));
+        if(it == _forms.end()) return "{}";
+        it->second.shown = false;
+        if(_host.formWasClosed && it->second.form)
+          _host.formWasClosed(*it->second.form);
         return "{}";
       }
       if(path == "/key") {
@@ -799,9 +792,7 @@ namespace {
         return "{}";
       }
       if(path == "/state") return _state();
-      // What may be picked from, while a chooser is up: a directory read.
       if(path == "/files") return _files(_valueOf(ask.body, "dir"));
-      // and the answer to whatever stopped Gmsh to ask
       if(path == "/answer") {
         if(!_asking.open) return "{}";
         _asking.said = _valueOf(ask.body, "ok") == "1";
@@ -835,11 +826,10 @@ namespace {
         return "{\"did\":true}";
       }
       if(path == "/map") {
-        // What was done to a colour map. Painting a channel over a run of
-        // entries, choosing one of the ready made maps, turning it round to
-        // hue and saturation, or moving one of the numbers it is computed
-        // from -- which is done through adjust(), so that this interface and
-        // the other two cannot come to disagree about what a key is worth.
+        // what was done to a colour map: painting a channel over a run of
+        // entries, choosing one of the ready made maps, turning it round to hue
+        // and saturation, or moving one of the numbers it is computed from,
+        // through adjust()
         Ui::Field *f = _fieldAsked(ask);
         if(!f || f->kind != Ui::ColorMap || f->map.empty()) return "{}";
         const Ui::ColourMap &map = f->map;
@@ -862,11 +852,9 @@ namespace {
           _mapHelp = false;
         }
         else if(op == "press") {
-          // A key, said the way Ui::Shortcut::label() says it. What it is
-          // worth is worked out here rather than in the page: the page tells
-          // which key was struck and nothing more, so it cannot come to
-          // disagree with the other two interfaces about what one does -- and
-          // anything driving the page from outside presses the same keys.
+          // a key, said the way Ui::Shortcut::label() says it: the page tells which
+          // key was struck and nothing more, and what it is worth is worked out
+          // here
           const std::string k = _valueOf(ask.body, "k");
           int presets = map.numPresets ? map.numPresets() : 0;
           int preset = -1;
@@ -890,7 +878,6 @@ namespace {
             return "{}";
           }
           else if(k == "R") {
-            // back to the one it is on, not to the first
             if(map.choosePreset && map.preset) map.choosePreset(map.preset());
           }
           else if(k == "Ctrl+C") {
@@ -944,17 +931,16 @@ namespace {
         return "{}";
       }
       if(path == "/pane") {
-        Ui::FormRef form((unsigned)atoi(_valueOf(ask.body, "form").c_str()));
         int pane = atoi(_valueOf(ask.body, "i").c_str());
-        auto it = _forms.find(form.id);
+        auto it = _formNamed(_valueOf(ask.body, "form"));
         if(it == _forms.end()) return "{}";
         bool moved = it->second.pane != pane;
         it->second.pane = pane;
         // the user picked this pane: it may have something to start, which is
         // how moving to the Line tab of the elementary window asks for a start
         // point rather than leaving the tool that was running
-        if(moved && it->second.describe) {
-          Ui::Form said = it->second.describe();
+        if(moved && it->second.form) {
+          const Ui::Form &said = *it->second.form;
           if(pane >= 0 && pane < (int)said.panes.size() &&
              said.panes[pane].chosen)
             said.panes[pane].chosen();
@@ -971,8 +957,6 @@ namespace {
       case Ui::Integer:
       case Ui::Number: f.setNumber(atof(said.c_str())); break;
       case Ui::Direction: {
-        // "x,y,z", worked out from the drag by the page the way the widget
-        // this reproduces works it out
         double x = 0., y = 0., z = 0.;
         if(sscanf(said.c_str(), "%lf,%lf,%lf", &x, &y, &z) == 3)
           f.setVector(x, y, z);
@@ -1098,11 +1082,9 @@ namespace {
         return out + "}";
       }
       if(f.kind == Ui::ColorMap) {
-        // The colour map of a view. What goes down is what it takes to *draw*
-        // one -- the entries themselves, and the numbers it is computed from
-        // with the keys that move them -- rather than a picture of it: the
-        // page draws the wedge and the four channels the way the other two
-        // interfaces draw them, from the same description.
+        // the colour map of a view: what goes down is what it takes to draw one
+        // -- the entries themselves, and the numbers it is computed from with the
+        // keys that move them -- rather than a picture of it
         const Ui::ColourMap &map = f.map;
         if(map.empty()) {
           out += ",\"empty\":true";
@@ -1139,10 +1121,9 @@ namespace {
           }
         }
         out += ",\"entries\":\"" + said + "\"";
-        // The eight numbers the map is computed from, each with the keys that
-        // raise and lower it. The page presses them by their place in this
-        // list and lets the description do the arithmetic, so that it cannot
-        // come to disagree with the other two about what a key does.
+        // the eight numbers the map is computed from, each with the keys that
+        // raise and lower it; the page presses them by their place in this list
+        // and lets the description do the arithmetic
         out += ",\"knobs\":[";
         std::vector<Ui::ColourMap::Parameter> knobs =
           map.parameters ? map.parameters() :
@@ -1161,9 +1142,8 @@ namespace {
         return out + "}";
       }
       if(f.kind == Ui::Direction) {
-        // The disc one drags to say where the light comes from. What goes
-        // down is the direction itself; the page draws the circle and the
-        // point on it, as the other two do, and there is nothing else to say.
+        // the disc one drags to say where the light comes from: what goes down is
+        // the direction itself, and the page draws the circle and the point on it
         double x = 0., y = 0., z = 0.;
         f.getVector(x, y, z);
         out += ",\"x\":" + std::to_string(x);
@@ -1173,19 +1153,15 @@ namespace {
         return out + "}";
       }
       if(f.kind == Ui::Hierarchy) {
-        // A field that is a tree of its own -- the visibility window shows
-        // the model entity under entity -- said the way the modules tree is
-        // said, since it is the same kind of thing.
+        // a field that is a tree of its own, said the way the modules tree is
+        // said
         out += ",\"lines\":";
         out += f.hierarchy ? _treeOf(*f.hierarchy) : "[]";
         out += _fieldId(f);
         return out + "}";
       }
       if(f.kind == Ui::List || f.kind == Ui::Menu) {
-        // What it holds and which of them are on. It is what the option
-        // window puts down its left side -- the categories it is showing --
-        // and what the visibility panel lists. A menu is the same thing shut:
-        // a list of what one may pick, none of it on.
+        // what it holds and which of them are on
         std::vector<std::string> labels;
         std::vector<int> values;
         if(f.dynamicChoices)
@@ -1206,9 +1182,8 @@ namespace {
             first = false;
           }
         out += "]";
-        // the widths of its columns, when its lines are columns rather than
-        // plain text: the entities the visibility panel lists are a kind, a
-        // number and a name, and they line up under what names them
+        // the widths of its columns, when its lines are columns rather than plain
+        // text
         if(f.columnsEm.size()) {
           out += ",\"cols\":[";
           for(std::size_t i = 0; i < f.columnsEm.size(); i++)
@@ -1222,9 +1197,7 @@ namespace {
       if(f.kind == Ui::Check)
         said = f.getFlag() ? "1" : "0";
       else if(f.kind == Ui::Color) {
-        // What it is worth is a colour and not a word, so it goes down as one
-        // -- the page had been showing an empty box where the windows this
-        // reproduces show the colour itself.
+        // what it is worth is a colour and not a word, so it goes down as one
         Ui::Colour c = f.getColour();
         char hex[16];
         snprintf(hex, sizeof(hex), "#%02x%02x%02x", c.r, c.g, c.b);
@@ -1247,10 +1220,9 @@ namespace {
           labels = f.choices;
           values = f.values;
         }
-        // A choice that says what each of its entries stands for is on the
-        // one whose value it holds, and not on the one whose text it holds:
-        // what a page shows is the text either way, and it is read back the
-        // same way. This is the rule the other interfaces follow.
+        // a choice that says what each of its entries stands for is on the one
+        // whose value it holds, and not on the one whose text it holds: what a
+        // page shows is the text either way, and it is read back the same way
         if(values.size()) {
           int at = (int)f.getNumber();
           said.clear();
@@ -1267,9 +1239,8 @@ namespace {
       return out + "}";
     }
 
-    // The layout a field carries, which is most of what a description says
-    // about how a window looks: what shares a line, what is written before
-    // rather than after, what has a rule over it.
+    // the layout a field carries: what shares a line, what is written before
+    // rather than after, what has a rule over it
     std::string _layout(const Ui::Field &f)
     {
       std::string out;
@@ -1340,8 +1311,7 @@ namespace {
         out += "{\"label\":" + _quoted(section.label);
         out += ",\"columns\":" + std::to_string(section.columns);
         out += ",\"fields\":" + _fieldList(section.fields);
-        // a section acts as well as holds: the high-order window generates
-        // from one of its sections and regularizes from the other
+        // a section may act as well as hold
         out += ",\"button\":" + _quoted(section.buttonLabel);
         if(section.button) {
           _actions.push_back(section.button);
@@ -1365,13 +1335,13 @@ namespace {
       return out + "}";
     }
 
-    std::string _form(unsigned which, const formState &state)
+    std::string _form(const std::string &which, const formState &state)
     {
-      Ui::Form form = state.describe ? state.describe() : Ui::Form();
+      Ui::Form form = state.form ? *state.form : Ui::Form();
       int pane = state.pane;
-      std::string out = "{\"id\":" + std::to_string(which);
-      // and what it is known by, for anything driving the page from outside
-      out += ",\"name\":" + _quoted(state.name);
+      // the name is what the page and anything driving it know the form by
+      std::string out = "{\"id\":" + _quoted(which);
+      out += ",\"name\":" + _quoted(which);
       out += ",\"title\":" + _quoted(form.title);
       out += ",\"pane\":" + std::to_string(pane);
       out += ",\"tabbed\":";
@@ -1417,6 +1387,8 @@ namespace {
         const auto &b = form.buttons[i];
         if(i) out += ",";
         out += "{\"label\":" + _quoted(b.label);
+        out += ",\"enabled\":";
+        out += (b.enabled && !b.enabled()) ? "false" : "true";
         out += _actionId(b.action, "button:" + b.label) + "}";
       }
       return out + "]}";
@@ -1429,8 +1401,8 @@ namespace {
       Ui::Node node = tree.node(path);
       bool branch = !tree.children(path).empty();
       auto said = _open.find(path);
-      // the commands are unfolded to begin with, as they are in the tree this
-      // stands in for; everything under them is folded
+      // the commands are unfolded to begin with; everything under them is
+      // folded
       bool open = said != _open.end() ? said->second : (depth < 1);
       std::string label = node.label;
       if(label.empty() && !node.hasField)
@@ -1522,7 +1494,7 @@ namespace {
         if(!it.second.shown) continue;
         if(!first) out += ",";
         first = false;
-        out += _form(it.first, it.second);
+        out += _form(it.first->id, it.second);
       }
       out += "],\"status\":";
       Ui::BarMessage said;
@@ -1543,9 +1515,8 @@ namespace {
 
 } // namespace
 
-// The one this file offers, made once. Saying so here rather than being asked
-// for by name from the shared side is what lets every chrome that was compiled
-// in be there at once, and lets the choice be a word one types.
+// the one this file offers, made once: every interface that was compiled
+// in is there at once, and the choice is a word one types
 namespace {
   struct offeringBrowser {
     offeringBrowser()

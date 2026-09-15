@@ -15,7 +15,7 @@
 
 // The smallest HTTP server that will do.
 //
-// No thread: the chrome owns the loop, so the socket is looked at from it and
+// No thread: the interface owns the loop, so the socket is looked at from it and
 // nothing is ever touched from two places at once.
 //
 // The page is told rather than asked to ask. It opens one connection that is

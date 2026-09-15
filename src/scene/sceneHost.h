@@ -15,18 +15,11 @@
 
 class sceneView;
 
-// What the 3D scene needs of whoever is holding it.
-//
-// Drawing the model with OpenGL and picking in it is not a widget toolkit's
-// business, and this directory does none of it; but a scene does have to ask
-// for another frame, and it does have to know how big a pixel is. Nine things,
-// all of them the holder's, so that the same scene can be held by an interface
-// that draws it inside a pane of its own -- which is what the Dear ImGui one
-// does -- or by a window that holds nothing else, which is what a chrome
-// running somewhere else pairs with.
-//
-// It is the same shape as Ui::Backend::Host, and for the same reason: a piece
-// meant to be reused says what it needs rather than reaching for it.
+// What the 3D scene needs of whoever is holding it: another frame, how
+// big a pixel is, and a few more. Nine things, all of them the holder's,
+// so that the same scene can be held by an interface that draws it inside
+// a pane of its own or by a window that holds nothing else. The same
+// shape as Ui::Backend::Host, and for the same reason.
 
 namespace Scene {
 

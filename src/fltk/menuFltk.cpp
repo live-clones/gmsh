@@ -68,7 +68,7 @@ namespace {
       key = tolower(s.key);
     int mods = 0;
     // FL_COMMAND is FL_CTRL everywhere but on macOS, where it is the Command
-    // key: the pair of tables this replaces spelled that out twice
+    // key
     if(s.mods & Ui::ModCommand) mods |= FL_COMMAND;
     if(s.mods & Ui::ModShift) mods |= FL_SHIFT;
     if(s.mods & Ui::ModAlt) mods |= FL_ALT;
@@ -110,59 +110,6 @@ namespace {
   }
 
 } // namespace
-
-namespace {
-
-  // The modules tree has a store of its own: both it and the menu bar are alive
-  // at the same time.
-  // What the tree holds, kept while its widgets are alive: Fl_Tree carries a
-  // void* to each line, so the thing it points at has to outlive the walk.
-  struct fltkModules {
-    std::vector<Ui::Node> byId;
-  };
-
-  fltkModules _modules;
-
-  void _dispatchModule(Fl_Widget *, void *data)
-  {
-    std::size_t id = (std::size_t)(intptr_t)data;
-    if(!id || id > _modules.byId.size()) return;
-    const Ui::Node &node = _modules.byId[id - 1];
-    if(node.pressed) node.pressed();
-  }
-
-  // Down the model, asking for the children of what is open rather than being
-  // handed the whole of it. A line with children is a branch and Fl_Tree makes
-  // it as the path of a child names it; a line without is one to press.
-  void _walkModules(
-    const Ui::Tree &tree, const std::string &path,
-    const std::function<void(const std::string &, Fl_Callback *, void *)> &add)
-  {
-    for(const auto &child : tree.children(path)) {
-      if(!tree.children(child).empty()) {
-        _walkModules(tree, child, add);
-        continue;
-      }
-      Ui::Node node = tree.node(child);
-      // A line that carries a widget or a menu of its own -- a solver, a view,
-      // a parameter -- is one this interface still builds itself: it cannot
-      // put a described field on a line of its tree yet.
-      if(node.hasField || node.menu) continue;
-      _modules.byId.push_back(node);
-      add(child, (Fl_Callback *)_dispatchModule,
-          (void *)(intptr_t)_modules.byId.size());
-    }
-  }
-
-} // namespace
-
-void fltkModulesBuild(
-  const std::function<void(const std::string &path, Fl_Callback *cb,
-                           void *data)> &add)
-{
-  _modules.byId.clear();
-  _walkModules(fltkSources().tree, "0Modules", add);
-}
 
 namespace {
 

@@ -51,7 +51,7 @@ opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT}
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
-opt(BROWSER "Enable the browser chrome: the panels in a web page, the model in a\n     window of its own (a demonstration, and a way of trying the structure)" OFF)
+opt(BROWSER "Enable the browser interface: the panels in a web page, the model in\n     a window of its own" OFF)
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GLFW_WAYLAND "Enable the native Wayland backend of GLFW (Linux only, used by ENABLE_IMGUI)" ${DEFAULT})
@@ -616,6 +616,7 @@ if(ENABLE_TCMALLOC)
   endif()
 endif()
 
+add_subdirectory(src/ui)
 add_subdirectory(src/gui)
 add_subdirectory(src/common)
 add_subdirectory(src/numeric)
@@ -711,7 +712,7 @@ endif()
 
 # GLFW, Dear ImGui and the 3D scene, wanted by the Dear ImGui interface and by
 # anything else that shows the model in a window of its own -- the browser
-# chrome does, since it has no way of drawing one itself
+# interface does, since it has no way of drawing one itself
 if(ENABLE_IMGUI OR ENABLE_BROWSER)
   # GLFW provides the window and the OpenGL context; use the upstream
   # CMakeLists, which selects the platform backend (X11, Wayland, Cocoa, Win32)
@@ -808,11 +809,10 @@ if(HAVE_FLTK OR HAVE_IMGUI OR HAVE_BROWSER)
 endif()
 
 # Which 3D scene runs is decided at the same time as which interface does:
-# each says it is there under the name of the chrome it belongs to, and the one
-# in a window of its own serves whichever chrome has none. When none of them is
-# compiled in, src/common/GuiScene.cpp answers for them -- the scene is a
-# chantier of its own and must not be the thing that stops a new interface from
-# linking.
+# each says it is there under the name of the interface it belongs to, and the
+# one in a window of its own serves whichever interface has none. When none of
+# them is compiled in, src/gui/GuiScene.cpp answers for them, so that the scene
+# is never what stops an interface from linking.
 
 if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
   STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
@@ -1684,7 +1684,7 @@ set(GMSH_SRC ${GMSH_SRC};api/gmshc.cpp)
 # force full warnings to encourage everybody to write clean(er) code
 check_cxx_compiler_flag("-Wall" WALL)
 if(WALL AND NOT MSVC)
-  file(GLOB_RECURSE WALL_SRC src/common/*.cpp src/fltk/*.cpp FunctionSpace/*.cpp
+  file(GLOB_RECURSE WALL_SRC src/common/*.cpp src/ui/*.cpp src/gui/*.cpp src/fltk/*.cpp FunctionSpace/*.cpp
        src/geo/*.cpp src/graphics/*.cpp src/mesh/*.cpp src/numeric/*.cpp src/parser/*.cpp
        src/plugin/*.cpp src/post/*.cpp src/solver/*.cpp)
   set(WF "-Wall")
@@ -1892,7 +1892,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(src/gui src/scene src/browser src/common src/fltk src/imgui src/geo src/graphics src/mesh
+include_directories(src/ui src/gui src/scene src/browser src/common src/fltk src/imgui src/geo src/graphics src/mesh
                     src/solver src/numeric src/parser src/plugin src/post api
                     contrib/stb
                     ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
@@ -2525,7 +2525,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
   endif()
-  # What the interfaces may include, as src/gui/Backend.h states it: the
+  # What the interfaces may include, as src/ui/Backend.h states it: the
   # check is a script, and the list of what still breaks the rule is in it.
   if(HAVE_GUI)
     find_program(GMSH_PYTHON3 NAMES python3 python)
@@ -2535,13 +2535,13 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
                ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
   endif()
-  # The layout solver of src/gui has neither a toolkit nor Gmsh in it, so it
+  # The layout solver of src/ui has neither a toolkit nor Gmsh in it, so it
   # is the one part of the interfaces a test can hold to its word without a
-  # screen: src/gui/LayoutTest.cpp says what it promises.
+  # screen: src/ui/LayoutTest.cpp says what it promises.
   if(HAVE_GUI)
-    add_executable(gui_layout src/gui/LayoutTest.cpp src/gui/Layout.cpp
-                   src/gui/Form.cpp src/gui/Menu.cpp)
-    target_include_directories(gui_layout PRIVATE src/gui)
+    add_executable(gui_layout src/ui/LayoutTest.cpp src/ui/Layout.cpp
+                   src/ui/Form.cpp src/ui/Menu.cpp)
+    target_include_directories(gui_layout PRIVATE src/ui)
     add_test(NAME gui_layout COMMAND gui_layout)
   endif()
   # enable this once we have worked out the path issues on the build machines

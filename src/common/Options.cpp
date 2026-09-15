@@ -45,18 +45,10 @@
 
 #if defined(HAVE_GUI)
 #include "Gui.h"
-#include "GuiDialogs.h"
 // the view options reach the draw context of the window that has the focus
 #include "drawContext.h"
 #endif
 
-// What is left of FLTK here: the tree of the views, which that interface
-// still builds by hand. It goes with the ONELAB tree of the plan.
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#include "onelabGroup.h"
-#include "viewButton.h"
-#endif
 
 // The tables of DefaultOptions.h, indexed by category name. They describe every
 // option (name, setter, default value, level and help string), which is what
@@ -650,7 +642,7 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
                   std::vector<std::string> *vec)
 {
 #if defined(HAVE_GUI)
-  if(Gui::available()) Gui::storeCurrentWindowsInfo();
+  if(Gui::instance().available()) Gui::instance().storeCurrentWindowsInfo();
 #endif
 
   FILE *file;
@@ -1134,8 +1126,8 @@ std::string opt_general_background_image_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) {
 #if defined(HAVE_GUI)
-    if(CTX::instance()->bgImageFileName != val && Gui::available())
-      Gui::sceneSettingChanged("background_image");
+    if(CTX::instance()->bgImageFileName != val && Gui::instance().available())
+      Gui::instance().sceneSettingChanged("background_image");
 #endif
     CTX::instance()->bgImageFileName = val;
   }
@@ -1312,7 +1304,7 @@ std::string opt_general_graphics_font(OPT_ARGS_STR)
 #if defined(HAVE_GUI)
   // the fonts there are belong to whichever draw context is drawing the
   // scene; in a batch run nothing is, and the name is kept as it was given
-  if(Gui::available()) {
+  if(Gui::instance().available()) {
     drawContextGlobal *dc = drawContext::global();
     int index = dc->getFontIndex(CTX::instance()->glFont.c_str());
     if(action & GMSH_SET) {
@@ -1328,7 +1320,7 @@ std::string opt_general_graphics_font_title(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->glFontTitle = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
+  if(Gui::instance().available()) {
     drawContextGlobal *dc = drawContext::global();
     int index = dc->getFontIndex(CTX::instance()->glFontTitle.c_str());
     if(action & GMSH_SET) {
@@ -1345,10 +1337,8 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
   if(action & GMSH_SET) CTX::instance()->glFontEngine = val;
 
 #if defined(HAVE_GUI)
-  // Which engine draws the text of the scene is the scene's to change: done
-  // here, with the FLTK engines named, it replaced the draw context of
-  // whichever scene was running -- and took the Dear ImGui one down with it.
-  if(action & GMSH_SET) Gui::sceneSettingChanged("font_engine");
+  // which engine draws the text of the scene is the scene's to change
+  if(action & GMSH_SET) Gui::instance().sceneSettingChanged("font_engine");
 #endif
 
   return CTX::instance()->glFontEngine;
@@ -1706,8 +1696,8 @@ std::string opt_post_double_clicked_graph_point_command(OPT_ARGS_STR)
 #if defined(HAVE_GUI)
 int _gui_action_valid(int action, int num)
 {
-  if(!Gui::available()) return 0;
-  return (action & GMSH_GUI) && (num == Dialog::optionsView());
+  if(!Gui::instance().available()) return 0;
+  return (action & GMSH_GUI) && (num == Gui::instance().options.view);
 }
 #endif
 
@@ -1718,19 +1708,8 @@ std::string opt_view_name(OPT_ARGS_STR)
   if(!data) return "";
   if(action & GMSH_SET) {
     data->setName(val);
-#if defined(HAVE_FLTK)
-    // change name in GUI for the view and its aliases
-    if(FlGui::available()) {
-      for(int i = 0; i < (int)PView::list.size(); i++) {
-        if((i == num || PView::list[i]->getAliasOf() == view->getTag() ||
-            PView::list[i]->getTag() == view->getAliasOf()) &&
-           FlGui::instance()->onelab->getViewButton(i)) {
-          FlGui::instance()->onelab->getViewButton(i)->copy_label(
-            data->getName());
-          FlGui::instance()->onelab->getViewButton(i)->redraw();
-        }
-      }
-    }
+#if defined(HAVE_GUI)
+    if(Gui::instance().available()) Gui::instance().updateViews(true, false);
 #endif
   }
   return data->getName();
@@ -2136,7 +2115,7 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->guiColorScheme = (int)val;
 #if defined(HAVE_GUI)
-  if(action & GMSH_SET && Gui::available()) { Gui::applyColorScheme(true); }
+  if(action & GMSH_SET && Gui::instance().available()) { Gui::instance().applyColorScheme(true); }
 #endif
   return CTX::instance()->guiColorScheme;
 }
@@ -2196,8 +2175,8 @@ double opt_general_graphics_size0(OPT_ARGS_NUM)
     if(CTX::instance()->glSize[0] <= 0) CTX::instance()->glSize[0] = 600;
   }
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI))
-    Gui::setSceneSize(CTX::instance()->glSize[0], -1);
+  if(Gui::instance().available() && (action & GMSH_GUI))
+    Gui::instance().setSceneSize(CTX::instance()->glSize[0], -1);
 #endif
   return CTX::instance()->glSize[0];
 }
@@ -2209,8 +2188,8 @@ double opt_general_graphics_size1(OPT_ARGS_NUM)
     if(CTX::instance()->glSize[1] <= 0) CTX::instance()->glSize[1] = 600;
   }
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI))
-    Gui::setSceneSize(-1, CTX::instance()->glSize[1]);
+  if(Gui::instance().available() && (action & GMSH_GUI))
+    Gui::instance().setSceneSize(-1, CTX::instance()->glSize[1]);
 #endif
   return CTX::instance()->glSize[1];
 }
@@ -2271,8 +2250,8 @@ double opt_general_message_fontsize(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->msgFontSize = (int)val;
 #if defined(HAVE_GUI)
-    if(Gui::available() && (action & GMSH_GUI))
-      Gui::setConsoleFontSize(CTX::instance()->msgFontSize);
+    if(Gui::instance().available() && (action & GMSH_GUI))
+      Gui::instance().setConsoleFontSize(CTX::instance()->msgFontSize);
 #endif
   }
   return CTX::instance()->msgFontSize;
@@ -2282,8 +2261,8 @@ double opt_general_detached_menu(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->detachedMenu = (int)val; }
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI))
-    Gui::detachTree(CTX::instance()->detachedMenu ? true : false);
+  if(Gui::instance().available() && (action & GMSH_GUI))
+    Gui::instance().detachTree(CTX::instance()->detachedMenu ? true : false);
 #endif
   return CTX::instance()->detachedMenu;
 }
@@ -2301,8 +2280,8 @@ double opt_general_menu_size0(OPT_ARGS_NUM)
     if(CTX::instance()->menuSize[0] < 0) CTX::instance()->menuSize[0] = 0;
   }
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI))
-    Gui::setTreeWidth(CTX::instance()->menuSize[0]);
+  if(Gui::instance().available() && (action & GMSH_GUI))
+    Gui::instance().setTreeWidth(CTX::instance()->menuSize[0]);
 #endif
   return CTX::instance()->menuSize[0];
 }
@@ -2508,8 +2487,8 @@ double opt_general_rotation0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpRotation[0] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->r[0] = val;
       return ctx->r[0];
     }
@@ -2522,8 +2501,8 @@ double opt_general_rotation1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpRotation[1] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->r[1] = val;
       return ctx->r[1];
     }
@@ -2536,8 +2515,8 @@ double opt_general_rotation2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpRotation[2] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->r[2] = val;
       return ctx->r[2];
     }
@@ -2568,8 +2547,8 @@ double opt_general_quaternion0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[0] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->quaternion[0] = val;
       return ctx->quaternion[0];
     }
@@ -2582,8 +2561,8 @@ double opt_general_quaternion1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[1] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->quaternion[1] = val;
       return ctx->quaternion[1];
     }
@@ -2596,8 +2575,8 @@ double opt_general_quaternion2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[2] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->quaternion[2] = val;
       return ctx->quaternion[2];
     }
@@ -2610,8 +2589,8 @@ double opt_general_quaternion3(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[3] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->quaternion[3] = val;
       return ctx->quaternion[3];
     }
@@ -2624,8 +2603,8 @@ double opt_general_translation0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[0] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->t[0] = val;
       return ctx->t[0];
     }
@@ -2638,8 +2617,8 @@ double opt_general_translation1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[1] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->t[1] = val;
       return ctx->t[1];
     }
@@ -2652,8 +2631,8 @@ double opt_general_translation2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[2] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->t[2] = val;
       return ctx->t[2];
     }
@@ -2666,8 +2645,8 @@ double opt_general_scale0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpScale[0] = val ? val : 1.0;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->s[0] = val ? val : 1.0;
       return ctx->s[0];
     }
@@ -2680,8 +2659,8 @@ double opt_general_scale1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpScale[1] = val ? val : 1.0;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->s[1] = val ? val : 1.0;
       return ctx->s[1];
     }
@@ -2694,8 +2673,8 @@ double opt_general_scale2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpScale[2] = val ? val : 1.0;
 #if defined(HAVE_GUI)
-  if(Gui::available()) {
-    if(drawContext *ctx = Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available()) {
+    if(drawContext *ctx = Gui::instance().getCurrentDrawContext()) {
       if(action & GMSH_SET) ctx->s[2] = val ? val : 1.0;
       return ctx->s[2];
     }
@@ -2787,8 +2766,8 @@ double opt_general_tooltips(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->tooltips = (int)val;
 #if defined(HAVE_GUI)
-    if(Gui::available())
-      Gui::enableTooltips(CTX::instance()->tooltips ? true : false);
+    if(Gui::instance().available())
+      Gui::instance().enableTooltips(CTX::instance()->tooltips ? true : false);
 #endif
   }
   return CTX::instance()->tooltips;
@@ -2804,7 +2783,7 @@ double opt_general_orthographic(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->ortho = (int)val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI))
+  if(Gui::instance().available() && (action & GMSH_GUI))
     Msg::StatusBar(false, CTX::instance()->ortho ? "Orthographic projection" :
                                                    "Perspective projection");
 #endif
@@ -2815,12 +2794,12 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mouseSelection = (int)val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     Msg::StatusBar(false, CTX::instance()->mouseSelection ?
                             "Mouse selection ON" :
                             "Mouse selection OFF");
     // the button that says so asks this option when it is drawn
-    Gui::refreshBar();
+    Gui::instance().refreshBar();
   }
 #endif
   return CTX::instance()->mouseSelection;
@@ -3041,7 +3020,7 @@ double opt_general_double_buffer(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->db = (int)val;
 #if defined(HAVE_GUI)
-    if(Gui::available()) Gui::sceneSettingChanged("buffering");
+    if(Gui::instance().available()) Gui::instance().sceneSettingChanged("buffering");
 #endif
   }
   return CTX::instance()->db;
@@ -3052,7 +3031,7 @@ double opt_general_antialiasing(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->antialiasing = (int)val;
 #if defined(HAVE_GUI)
-    if(Gui::available()) Gui::sceneSettingChanged("buffering");
+    if(Gui::instance().available()) Gui::instance().sceneSettingChanged("buffering");
 #endif
   }
   return CTX::instance()->antialiasing;
@@ -3285,10 +3264,9 @@ double opt_general_clip0a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][0] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[0][0];
@@ -3298,10 +3276,9 @@ double opt_general_clip0b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][1] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[0][1];
@@ -3311,10 +3288,9 @@ double opt_general_clip0c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][2] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[0][2];
@@ -3324,10 +3300,9 @@ double opt_general_clip0d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][3] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[0][3];
@@ -3337,10 +3312,9 @@ double opt_general_clip1a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][0] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[1][0];
@@ -3350,10 +3324,9 @@ double opt_general_clip1b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][1] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[1][1];
@@ -3363,10 +3336,9 @@ double opt_general_clip1c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][2] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[1][2];
@@ -3376,10 +3348,9 @@ double opt_general_clip1d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][3] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[1][3];
@@ -3389,10 +3360,9 @@ double opt_general_clip2a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][0] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[2][0];
@@ -3402,10 +3372,9 @@ double opt_general_clip2b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][1] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[2][1];
@@ -3415,10 +3384,9 @@ double opt_general_clip2c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][2] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[2][2];
@@ -3428,10 +3396,9 @@ double opt_general_clip2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][3] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[2][3];
@@ -3441,10 +3408,9 @@ double opt_general_clip3a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][0] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[3][0];
@@ -3454,10 +3420,9 @@ double opt_general_clip3b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][1] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[3][1];
@@ -3467,10 +3432,9 @@ double opt_general_clip3c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][2] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[3][2];
@@ -3480,10 +3444,9 @@ double opt_general_clip3d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][3] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[3][3];
@@ -3493,10 +3456,9 @@ double opt_general_clip4a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][0] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[4][0];
@@ -3506,10 +3468,9 @@ double opt_general_clip4b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][1] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[4][1];
@@ -3519,10 +3480,9 @@ double opt_general_clip4c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][2] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[4][2];
@@ -3532,10 +3492,9 @@ double opt_general_clip4d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][3] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[4][3];
@@ -3545,10 +3504,9 @@ double opt_general_clip5a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][0] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[5][0];
@@ -3558,10 +3516,9 @@ double opt_general_clip5b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][1] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[5][1];
@@ -3571,10 +3528,9 @@ double opt_general_clip5c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][2] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[5][2];
@@ -3584,10 +3540,9 @@ double opt_general_clip5d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][3] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
-    // the dialog is showing one of these planes: bring it up to date
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingRead();
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipPlane[5][3];
@@ -3597,9 +3552,9 @@ double opt_general_clip_whole_elements(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipWholeElements = (int)val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingStore().wholeElements = CTX::instance()->clipWholeElements != 0;
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipWholeElements;
@@ -3610,10 +3565,10 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->clipOnlyDrawIntersectingVolume = (int)val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingStore().onlyDrawIntersecting =
       CTX::instance()->clipOnlyDrawIntersectingVolume != 0;
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipOnlyDrawIntersectingVolume;
@@ -3623,9 +3578,9 @@ double opt_general_clip_only_volume(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipOnlyVolume = (int)val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI)) {
+  if(Gui::instance().available() && (action & GMSH_GUI)) {
     clippingStore().onlyVolume = CTX::instance()->clipOnlyVolume != 0;
-    Gui::refreshForm(Dialog::clipping());
+    Gui::instance().clipping.reload();
   }
 #endif
   return CTX::instance()->clipOnlyVolume;
@@ -3826,9 +3781,9 @@ double opt_geometry_transform(OPT_ARGS_NUM)
       CTX::instance()->geom.useTransform = 0;
   }
 #if defined(HAVE_GUI)
-  if(Gui::available() && Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available() && Gui::instance().getCurrentDrawContext()) {
     if(action & GMSH_SET) {
-      drawContext *ctx = Gui::getCurrentDrawContext();
+      drawContext *ctx = Gui::instance().getCurrentDrawContext();
       if(CTX::instance()->geom.useTransform == 1) {
         drawTransform *tr = new drawTransformScaled(
           CTX::instance()->geom.transform, CTX::instance()->geom.offset);
@@ -3849,9 +3804,9 @@ static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
 {
   if(action & GMSH_SET) CTX::instance()->geom.transform[ii][jj] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available() && Gui::instance().getCurrentDrawContext()) {
     if(action & GMSH_SET) {
-      drawContext *ctx = Gui::getCurrentDrawContext();
+      drawContext *ctx = Gui::instance().getCurrentDrawContext();
       drawTransform *tr = ctx->getTransform();
       if(tr)
         tr->setMatrix(CTX::instance()->geom.transform,
@@ -3911,9 +3866,9 @@ static double _opt_geometry_offset(OPT_ARGS_NUM, int ii, int nn)
 {
   if(action & GMSH_SET) CTX::instance()->geom.offset[ii] = val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && Gui::getCurrentDrawContext()) {
+  if(Gui::instance().available() && Gui::instance().getCurrentDrawContext()) {
     if(action & GMSH_SET) {
-      drawContext *ctx = Gui::getCurrentDrawContext();
+      drawContext *ctx = Gui::instance().getCurrentDrawContext();
       drawTransform *tr = ctx->getTransform();
       if(tr)
         tr->setMatrix(CTX::instance()->geom.transform,
@@ -4356,8 +4311,8 @@ double opt_geometry_clip(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.clip = (int)val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI))
-    Gui::refreshForm(Dialog::clipping());
+  if(Gui::instance().available() && (action & GMSH_GUI))
+    Gui::instance().clipping.reload();
 #endif
   return CTX::instance()->geom.clip;
 }
@@ -5705,7 +5660,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
       CTX::instance()->mesh.colorCarousel = 0;
   }
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI))
+  if(Gui::instance().available() && (action & GMSH_GUI))
     drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->mesh.colorCarousel;
@@ -5873,8 +5828,8 @@ double opt_mesh_clip(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.clip = (int)val;
 #if defined(HAVE_GUI)
-  if(Gui::available() && (action & GMSH_GUI))
-    Gui::refreshForm(Dialog::clipping());
+  if(Gui::instance().available() && (action & GMSH_GUI))
+    Gui::instance().clipping.reload();
 #endif
   return CTX::instance()->mesh.clip;
 }
@@ -6109,7 +6064,7 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
       CTX::instance()->post.animCycle = 0;
   }
 #if defined(HAVE_GUI)
-  if(Gui::available()) Gui::refreshBar();
+  if(Gui::instance().available()) Gui::instance().refreshBar();
 #endif
   return CTX::instance()->post.animCycle;
 }
@@ -6205,7 +6160,7 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
   GET_VIEWd(0.);
   if(!data) return 1;
 #if defined(HAVE_GUI)
-  if(Gui::available()) Gui::refreshBar();
+  if(Gui::instance().available()) Gui::instance().refreshBar();
 #endif
   return data->getNumTimeSteps();
 #else
@@ -6768,10 +6723,11 @@ double opt_view_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) { opt->visible = (int)val; }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI) && num >= 0 &&
-     FlGui::instance()->onelab->getViewButton(num))
-    FlGui::instance()->onelab->getViewButton(num)->value(opt->visible);
+#if defined(HAVE_GUI)
+  // the switch of the view in the tree reads the option; it only has to be
+  // read again
+  if(Gui::instance().available() && (action & GMSH_GUI) && num >= 0)
+    Gui::instance().rebuildTree(false);
 #endif
   return opt->visible;
 #else
@@ -7856,9 +7812,15 @@ double opt_view_closed(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) { opt->closed = (int)val; }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI) && num >= 0) {
-    FlGui::instance()->onelab->openCloseViewButton(num);
+#if defined(HAVE_GUI)
+  // the branch of the tree that holds the view folds or unfolds with it
+  if(Gui::instance().available() && (action & GMSH_GUI) && num >= 0) {
+    std::string path = "0Modules/Post-processing";
+    if(opt->group.size()) path += "/" + opt->group;
+    if(opt->closed)
+      Gui::instance().closeTreeItem(path);
+    else
+      Gui::instance().openTreeItem(path);
   }
 #endif
   return opt->closed;

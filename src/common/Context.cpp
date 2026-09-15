@@ -68,11 +68,16 @@ void CTX::init()
 
   geom.autoExtrude = 0; // FIXME: temporary for auto-extrude testing
 
-  // default font of the graphic window, before InitOptions() resolves
-  // General.GraphicsFont through drawContextGlobal::getFontEnum(); 0 is
-  // FL_HELVETICA in the FLTK build and the first font of the atlas in the
-  // ImGui one
-  glFontEnum = 0;
+  // default fonts of the graphic window, until Gui::instance().create() resolves
+  // General.GraphicsFont and General.GraphicsFontTitle through
+  // drawContextGlobal::getFontEnum(): the options are read before any draw
+  // context exists to name them
+  glFontEnum = glFontEnumTitle = 0;
+  // General.HeavyVisualization has no entry in DefaultOptions.h, so nothing
+  // else sets it: the option window showed whatever memory held (unchecked
+  // on one machine, checked on another), and the element drawing code reads
+  // it without HAVE_VISUDEV
+  heavyVisu = 0;
   forcedBBox = 0;
   hideUnselected = 0;
   numWindows = numTiles = 1;

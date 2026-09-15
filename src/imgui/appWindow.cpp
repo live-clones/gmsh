@@ -93,7 +93,6 @@ static bool _initGlfw()
                  "'any'", want);
   }
 
-  // let GLFW choose first, then try the backends one by one
   platforms[num++] = {"default", GLFW_ANY_PLATFORM};
 #if defined(GLFW_PLATFORM_X11)
   if(!want || !strcmp(want, "any")) platforms[num++] = {"X11", GLFW_PLATFORM_X11};
@@ -128,10 +127,8 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
     _paneRoot(nullptr), _uiScale(0.f),
     _uiScaleOverride(0.f), _styleScale(0.f), _reportedDetachable(false),
     _animating(false), _zoomed(false), _fullscreen(false), _savedX(0), _savedY(0), _savedW(0), _savedH(0), _captureW(0), _captureH(0), _captureComposite(false), _modalDepth(0),
-    _browser(nullptr), _exportActive(false), _exportDone(false),
-    _exportAccepted(false), _exportFormat(-1)
+    _browser(nullptr)
 {
-  _lastDialog = 0;
   glfwSetErrorCallback(_glfwErrorCallback);
   if(!_initGlfw()) return;
 
@@ -176,11 +173,9 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   ImGuiIO &io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-  // Let a panel dragged out of the main window become a window of its own, the
-  // way the palette windows of the FLTK interface are. Dear ImGui drops the
-  // flag by itself when the backend cannot do it -- which is the case on
-  // Wayland, whose protocol has no client-side window positioning -- so it is
-  // always safe to ask for it here; _detachablePanels() reports what we got.
+  // let a panel dragged out of the main window become a window of its own;
+  // Dear ImGui drops the flag by itself when the backend cannot do it, as
+  // on Wayland, so it is always safe to ask for it here
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
   // the layout is saved next to the other Gmsh configuration files
   static std::string iniFile = set.homeDir + ".gmsh-imgui.ini";
@@ -202,10 +197,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   ImGui_ImplGlfw_InitForOpenGL(_window, true);
   ImGui_ImplOpenGL2_Init();
 
-  // What the scene of src/scene needs of whoever holds it. This interface
-  // holds it inside panes of its own dock space; a chrome running somewhere
-  // else pairs it with a window that holds nothing but the scene, and fills
-  // the same nine in.
+  // what the scene needs of whoever holds it
   {
     Scene::Host held;
     held.redraw = []() {
@@ -262,7 +254,7 @@ appWindow::appWindow(int argc, char **argv, bool quitShouldExit)
   _instance = this;
 
   // Only now can messages reach the console: Toolkit::report(Toolkit::Info, ) checks
-  // Gui::available(), which tests _instance, and in a GUI build nothing goes to
+  // Gui::instance().available(), which tests _instance, and in a GUI build nothing goes to
   // the terminal. Everything the interface wants to say about how it started up
   // is therefore said here.
   switch(glfwGetPlatform()) {
@@ -490,7 +482,7 @@ static void _extraKey(GLFWwindow *w, int key, int, int action, int mods)
   appWindow::extraView *v = appWindow::instance()->findExtraView(w);
   if(!v) return;
   _extraModifiers(v->input, mods);
-  // the keys that drive an interactive selection, as in the main window
+  // the keys that drive an interactive selection
   if(!v->pane->selectionMode) return;
   switch(key) {
   case GLFW_KEY_E: v->pane->endSelection = 1; break;
@@ -813,8 +805,7 @@ void appWindow::applyStyle()
 
 void appWindow::_processAwakeActions()
 {
-  // what came in from a thread that is not the one drawing; what it means is
-  // the caller's, and is said once in src/common/Gui.cpp
+  // what came in from a thread that is not the one drawing
   drainPostedFromThread();
 }
 
@@ -845,7 +836,6 @@ void appWindow::_buildDockSpace(int &sceneX, int &sceneY, int &sceneW,
   ImGui::DockSpace(rootId, ImVec2(0.f, 0.f),
                    ImGuiDockNodeFlags_PassthruCentralNode);
 
-  // first run: put the message console at the bottom
   static bool firstTime = true;
   if(firstTime) {
     firstTime = false;
@@ -867,7 +857,6 @@ void appWindow::_buildDockSpace(int &sceneX, int &sceneY, int &sceneW,
 
   ImGui::End();
 
-  // the central node is where the scene goes
   ImGuiDockNode *central = ImGui::DockBuilderGetCentralNode(rootId);
   if(central) {
     sceneX = (int)(central->Pos.x - viewport->Pos.x);
@@ -921,7 +910,6 @@ void appWindow::_handleInput()
   // Dear ImGui does not capture the mouse over the pass-through central node,
   // so this is where the scene gets its events
   if(io.WantCaptureMouse || _modalDepth > 0) {
-    // what the pointer was hovering over is no longer under it
     if(io.WantCaptureMouse) setTooltip("");
     return;
   }
@@ -962,9 +950,8 @@ void appWindow::_runPendingActions()
   }
 }
 
-// Everything the interface draws around the 3D view: the dock space, the two
-// bars and the panels. Full screen skips it altogether, which is what leaves
-// nothing but the view, as in the FLTK interface.
+// everything the interface draws around the 3D view: the dock space, the
+// two bars and the panels; full screen skips it altogether
 void appWindow::_drawPanels(int &sceneX, int &sceneY, int &sceneW, int &sceneH)
 {
   _buildDockSpace(sceneX, sceneY, sceneW, sceneH);
@@ -977,10 +964,10 @@ void appWindow::_drawPanels(int &sceneX, int &sceneY, int &sceneW, int &sceneH)
   _drawTooltip();
   _drawMenuBar();
   _drawModulesPanel();
-  // by number, off a copy: drawing one may ask for another to be made
-  std::vector<unsigned> dialogs;
+  // by name, off a copy: drawing one may ask for another to be made
+  std::vector<const Ui::Form *> dialogs;
   for(const auto &it : _dialogs) dialogs.push_back(it.first);
-  for(unsigned which : dialogs) _drawDialog(which);
+  for(const Ui::Form *which : dialogs) _drawDialog(which);
   _drawStatusBar();
 }
 
@@ -1037,12 +1024,9 @@ void appWindow::frame()
 
   int sx = 0, sy = 0, sw = 1, sh = 1;
 
-  // Full screen keeps nothing but the 3D view, as the FLTK interface does:
-  // there it shows a graphic window of its own and hides everything else, so
-  // here the dock space, the two bars and the panels are simply not drawn.
-  // Nothing has to be saved and restored, because nothing is changed: Ctrl+F
-  // again brings the interface back exactly as it was, which is the one thing
-  // an immediate-mode interface makes easy.
+  // full screen keeps nothing but the 3D view: the dock space, the two bars
+  // and the panels are simply not drawn, and Ctrl+F again brings the
+  // interface back exactly as it was
   if(_fullscreen) {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     sw = (int)viewport->Size.x;
@@ -1055,10 +1039,8 @@ void appWindow::frame()
   _stepAnimation();
   _drawModal();
   _browser->draw();
-  _drawExportDialog();
 
   if(_fullscreen) {
-    // one view, filling the window
     sceneView *p = _fullScreenPane();
     if(p) p->setRect(sx, sy, sw, sh);
   }
@@ -1135,10 +1117,9 @@ void appWindow::frame()
   _inFrame = false;
 }
 
-// The picking actions report what is under the pointer through
-// Gui::drawTooltip(); the FLTK interface has a small window following the mouse
-// for that, here it is a plain Dear ImGui tooltip. The action clears it by
-// passing an empty text when it is done.
+// the picking actions report what is under the pointer through
+// Gui::instance().drawTooltip(), a plain Dear ImGui tooltip here; the action clears
+// it by passing an empty text when it is done
 void appWindow::_drawTooltip()
 {
   if(_tooltip.empty()) return;
@@ -1179,7 +1160,7 @@ void appWindow::_drawModal()
       }
     }
     else {
-      // same order as fl_choice(): button 0 on the right, then 1, then 2
+      // button 0 on the right, then 1, then 2
       for(int i = 2; i >= 0; i--) {
         if(_modal.choices[i].empty()) continue;
         if(ImGui::Button(_modal.choices[i].c_str())) {

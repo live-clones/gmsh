@@ -28,9 +28,8 @@
 
 namespace {
 
-  // What each widget of the tree is bound to. A widget is given a pointer
-  // when it calls back, so the field has to outlive the line; a deque keeps
-  // the addresses steady as more are added.
+  // what each widget of the tree is bound to: a widget is given a pointer
+  // when it calls back, so the field has to outlive the line
   std::deque<Ui::Field> _bound;
   std::deque<std::string> _labels;
   std::deque<Ui::Button> _buttons;
@@ -100,18 +99,17 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
                         double labelRatio, const Ui::Colour &highlight,
                         Fl_Color background)
 {
-  // A switch and a button carry their name inside themselves and take the
+  // a switch and a button carry their name inside themselves and take the
   // whole line; everything else takes the share labelRatio gives it and has
-  // its name written to the right of it, which is where the group ends.
+  // its name written to the right
   bool nameInside = f.kind == Ui::Check || f.kind == Ui::Action;
   int lineW = nameInside ? w : (int)(w * labelRatio);
   Fl_Group *line = new Fl_Group(x, y, lineW, h);
   _bound.push_back(f);
   Ui::Field *bound = &_bound.back();
 
-  // the little buttons take their width from the font, as the widget this
-  // reproduces gives them: a narrow one for the range, two wider ones for the
-  // loop and the plots
+  // the little buttons take their width from the font: a narrow one for the
+  // range, two wider ones for the loop and the plots
   int room = 0;
   std::vector<int> widths;
   for(const auto &b : f.trailing) {
@@ -119,8 +117,8 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
     widths.push_back(wide);
     room += wide;
   }
-  // the value takes the share of the line the tree gives it and its name has
-  // the rest, which is what the widget this reproduces does
+  // the value takes the share of the line the tree gives it and its name
+  // has the rest
   int valueW = lineW - room;
   if(valueW < FL_NORMAL_SIZE) valueW = FL_NORMAL_SIZE;
 
@@ -197,9 +195,8 @@ Fl_Group *fltkTreeField(const Ui::Field &f, int x, int y, int w, int h,
   } break;
   }
 
-  // The name goes on the line rather than on the widget: the little buttons
-  // sit between them, and a name belonging to the widget would be drawn under
-  // them.
+  // the name goes on the line rather than on the widget: the little
+  // buttons sit between them
   if(f.label.size()) {
     if(nameInside)
       widget->copy_label(f.label.c_str());

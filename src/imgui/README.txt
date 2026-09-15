@@ -6,7 +6,7 @@ This directory contains the Dear ImGui frontend, enabled with
 ENABLE_IMGUI=ON turns ENABLE_FLTK off.
 
 The rest of Gmsh never talks to this directory directly: everything goes
-through the toolkit-independent interface declared in src/common/Gui.h, which
+through the toolkit-independent interface declared in src/gui/Gui.h, which
 is implemented here by Gui.cpp (and by src/fltk/GuiFltk.cpp for the FLTK
 build).
 
@@ -145,7 +145,7 @@ forward has to wait for the next frame -- the tree runs its action outside of
 one, where SetWindowFocus() has nothing to act on -- so it goes through a
 pending flag and SetNextWindowFocus().
 
-Those selections live in src/common/GuiActionsGeo.cpp and are shared with the
+Those selections live in src/gui/GuiActionsGeo.cpp and are shared with the
 FLTK interface -- geometryActOnSelection(), geometryAddCurve(),
 geometryAddSurfaceVolume(), geometryBoolean(), geometryFillet(),
 geometrySplitCurve(), meshDefineEmbedded(), meshDefineTransfinite(). Their
@@ -155,8 +155,9 @@ have always let one change a value between two applications without starting the
 selection over, and reading the parameters again at each 'e' keeps that true in
 both interfaces.
 
-The four context dialogs are declared once as well, in src/common/GuiDialogs.h
-and GuiDialogs.cpp, and built by both interfaces: contextPanels.cpp turns the
+The four context dialogs are declared once as well, in src/gui/GuiElementary,
+GuiPhysical, GuiTransform and GuiMeshContext, and built by both interfaces:
+contextPanels.cpp turns the
 description into Dear ImGui windows, src/fltk/dialogFltk.cpp into the windows
 contextWindow.cpp used to build by hand.
 
@@ -228,7 +229,7 @@ window itself scroll. A panel of a single pane is a box that scrolls instead, so
 that a list filling it -- the listing of the current options -- stops above the
 footer rather than pushing it out of the window.
 
-The per-entity ONELAB window (src/common/GuiOnelab.cpp) holds no fields of its
+The per-entity ONELAB window (src/gui/GuiOnelab.cpp) holds no fields of its
 own either: it makes one per parameter instantiated from the "ONELAB
 Context/<Dim> Template/..." templates, for whichever entity was double-clicked.
 Its fields are bound to a place in that list rather than to a name, so that
@@ -446,7 +447,7 @@ drawContext::setDrawGeomTransientFunction(); the preview and the snapping both
 live in GuiActionsGeo.cpp, so the two interfaces show the same thing.
 
 The menu bar is not written here at all. It is declared once, in
-src/common/GuiMenus.h and GuiMenus.cpp, and both interfaces build it from that
+src/gui/GuiMenus.h and GuiMenus.cpp, and both interfaces build it from that
 one description: menuBar.cpp walks it every frame, and src/fltk/menuFltk.cpp
 flattens it into the Fl_Menu_Item[] that Fl_Menu_Bar wants, which is what
 bar_table[] and sysbar_table[] used to be by hand.
@@ -557,7 +558,7 @@ the keyboard shortcuts, the option editor
 (optionsPanel.cpp) and the raster graphic output files (PNG, JPEG, PPM, GIF,
 YUV).
 
-The actions themselves live in src/common/GuiActions.cpp and are shared with the
+The actions themselves live in src/gui/GuiActions.cpp and are shared with the
 FLTK interface: this directory only decides how they are presented.
 
 The option editor has two layers. What an option looks like cannot be deduced

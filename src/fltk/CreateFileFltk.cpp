@@ -5,7 +5,7 @@
 
 // FLTK-specific part of the graphic output file creation: grabbing the pixels
 // of the graphic window(s). Called from CreateFile.cpp through
-// Gui::createCompositePixelBuffer().
+// Gui::instance().createCompositePixelBuffer().
 
 #include "GmshConfig.h"
 

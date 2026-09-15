@@ -16,7 +16,6 @@
 #include "sceneHost.h"
 #include "Gui.h"
 #include "GuiActions.h"
-#include "GuiDialogs.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "Context.h"
@@ -202,7 +201,6 @@ void sceneView::draw(double pixelFactor, int windowHeight)
   }
   if(addPointMode) {
     // the point that is being placed, drawn between the 3D and the 2D passes
-    // exactly as the FLTK backend does
     glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
     glPointSize(CTX::instance()->geom.pointSize *
                 _ctx->highResolutionPixelFactor());
@@ -217,7 +215,7 @@ void sceneView::draw(double pixelFactor, int windowHeight)
 
   glDisable(GL_SCISSOR_TEST);
 
-  // FIXME: this should not be done here, but the FLTK backend does the same
+  // FIXME: this should not be done here
   _ctx->camera.update();
 }
 
@@ -230,8 +228,7 @@ bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
                         std::vector<SPoint2> &points,
                         std::vector<PView *> &views)
 {
-  // see the comment in openglWindow::_select(): GL_SELECT passes are skipped
-  // altogether when mouse selection is off
+  // GL_SELECT passes are skipped altogether when mouse selection is off
   if(!CTX::instance()->mouseSelection) return false;
   return _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices, edges,
                       faces, regions, elements, points, views);
@@ -255,9 +252,9 @@ void sceneView::_lassoZoom()
   drawContext::global()->draw();
 }
 
-// What is under the pointer: the same query the FLTK interface runs on FL_MOVE.
-// It says what the entity is, and what a double click on it would do, either in
-// a tooltip or in the status bar depending on General.Tooltips.
+// what is under the pointer: what the entity is, and what a double click
+// on it would do, either in a tooltip or in the status bar depending on
+// General.Tooltips
 void sceneView::_hover()
 {
   std::vector<GVertex *> vertices;
@@ -390,9 +387,9 @@ void sceneView::handleMouse(const paneInput &in)
 {
   double mx = in.x, my = in.y;
 
-  // pane-local coordinates, with y measured from the top, as in the FLTK
-  // backend; mx and my come in the space the pane origin is expressed in, which
-  // is not the space the pane rectangle lives in
+  // pane-local coordinates, with y measured from the top; mx and my come in
+  // the space the pane origin is expressed in, which is not the space the
+  // pane rectangle lives in
   double lx = mx - _originX - _x, ly = my - _originY - _y;
 
   bool shift = in.shift, ctrl = in.ctrl, alt = in.alt;
@@ -417,7 +414,7 @@ void sceneView::handleMouse(const paneInput &in)
     }
     if(Scene::host().redraw) Scene::host().redraw();
     // the window that says where the view is looking from has to follow it
-    Gui::refreshForm(Dialog::manipulator());
+    Gui::instance().manipulator.reload();
   }
 
   // --- placing a new entity: the pointer drives its coordinates, unless the
@@ -612,7 +609,7 @@ void sceneView::handleMouse(const paneInput &in)
     CTX::instance()->post.draw = 0;
   }
   if(Scene::host().redraw) Scene::host().redraw();
-  Gui::refreshForm(Dialog::manipulator());
+  Gui::instance().manipulator.reload();
   _prev.set(_ctx, (int)lx, (int)ly);
 }
 
@@ -647,7 +644,7 @@ void sceneView::_handleDoubleClick(double lx, double ly)
     if(!hits[i].hit || hits[i].command->empty()) continue;
     CTX::instance()->geom.doubleClickedEntityTag = hits[i].tag;
     if(*hits[i].command == "ONELAB")
-      Dialog::showOnelabContext(hits[i].dim, hits[i].tag);
+      Gui::instance().onelabContext.show(hits[i].dim, hits[i].tag);
     else
       ParseString(*hits[i].command, true);
     return;

@@ -397,16 +397,16 @@ int GmshGUI(int argc, char **argv)
 {
 #if defined(HAVE_GUI) && defined(HAVE_POST)
   // create the GUI
-  Gui::create(argc, argv);
+  Gui::instance().create(argc, argv);
 
   StartupMessage();
 
   // display GUI immediately for quick launch time
-  Gui::check();
+  Gui::instance().check();
 
-  if(Gui::getOpenedThroughMacFinder().size() &&
+  if(Gui::instance().getOpenedThroughMacFinder().size() &&
      CTX::instance()->files.empty()) {
-    OpenProject(Gui::getOpenedThroughMacFinder());
+    OpenProject(Gui::instance().getOpenedThroughMacFinder());
   }
   else {
     OpenProject(GModel::current()->getFileName());
@@ -428,22 +428,22 @@ int GmshGUI(int argc, char **argv)
     }
   }
 
-  Gui::setFinishedProcessingCommandLine();
+  Gui::instance().setFinishedProcessingCommandLine();
 
   if(CTX::instance()->post.combineTime) {
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
                    CTX::instance()->post.combineCopyOptions);
-    Gui::updateViews(true, true);
+    Gui::instance().updateViews(true, true);
   }
 
   // init first context
   switch(CTX::instance()->initialContext) {
-  case 1: Gui::openModule("Geometry"); break;
-  case 2: Gui::openModule("Mesh"); break;
-  case 3: Gui::openModule("Solver"); break;
-  case 4: Gui::openModule("Post-processing"); break;
+  case 1: Gui::instance().openModule("Geometry"); break;
+  case 2: Gui::instance().openModule("Mesh"); break;
+  case 3: Gui::instance().openModule("Solver"); break;
+  case 4: Gui::instance().openModule("Post-processing"); break;
   default: // automatic
-    if(PView::list.size()) Gui::openModule("Post-processing");
+    if(PView::list.size()) Gui::instance().openModule("Post-processing");
     break;
   }
 
@@ -479,10 +479,10 @@ int GmshGUI(int argc, char **argv)
   }
 
   // launch solver (if requested) and fill onelab tree
-  Gui::startSolver(CTX::instance()->launchSolverAtStartup);
+  Gui::instance().startSolver(CTX::instance()->launchSolverAtStartup);
 
   // loop
-  return Gui::run();
+  return Gui::instance().run();
 
 #else
   Msg::Error("GmshGUI unavailable: please recompile with FLTK or ImGui support");

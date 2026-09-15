@@ -18,22 +18,17 @@
 #include "drawContextFltkCairo.h"
 #include "graphicWindow.h"
 #include "Gui.h"
-#include "GuiDialogs.h"
-#include "GuiStatus.h"
 #include "dialogFltk.h"
 #include "uiSources.h"
 #include "onelabGroup.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"
 #include "GmshMessage.h"
-#include "GModel.h"
 #include "OS.h"
 #include "OpenFile.h"
 #include "XpmIcon.h"
 #include "Options.h"
-#include "CommandLine.h"
 #include "Context.h"
-#include "StringUtils.h"
 #include "PixelBuffer.h"
 
 #if defined(HAVE_TOUCHBAR)
@@ -45,8 +40,6 @@
 #endif
 
 FlGui *FlGui::_instance = nullptr;
-std::string FlGui::_openedThroughMacFinder = "";
-bool FlGui::_finishedProcessingCommandLine = false;
 std::atomic<int> FlGui::_locked(0);
 
 // check (now!) if there are any pending events, and process them
@@ -96,43 +89,11 @@ void FlGui::unlock()
 
 int FlGui::locked() { return _locked; }
 
-static void awake_cb(void *data)
-{
-  if(data) FlGui::instance()->updateViews(true, false);
-}
-
-void FlGui::awake(const std::string &action)
-{
-  if(action.empty())
-    Fl::awake(awake_cb, nullptr);
-  else
-    Fl::awake(awake_cb, (void *)"update");
-}
-
-void FlGui::setOpenedThroughMacFinder(const std::string &name)
-{
-  _openedThroughMacFinder = name;
-}
-
-std::string FlGui::getOpenedThroughMacFinder()
-{
-  return _openedThroughMacFinder;
-}
-
-void FlGui::setFinishedProcessingCommandLine()
-{
-  _finishedProcessingCommandLine = true;
-}
-
-bool FlGui::getFinishedProcessingCommandLine()
-{
-  return _finishedProcessingCommandLine;
-}
-
 static int globalShortcut(int event)
 {
-  if(!FlGui::available()) return 0;
-  return FlGui::instance()->testGlobalShortcuts(event);
+  // we only handle shortcuts here
+  if(!FlGui::available() || event != FL_SHORTCUT) return 0;
+  return FlGui::instance()->runKeys();
 }
 
 static void simple_right_box_draw(int x, int y, int w, int h, Fl_Color c)
@@ -396,7 +357,8 @@ void FlGui::applyColorScheme(bool redraw)
   Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
 
   if(redraw && available()) {
-    updateViews(true, true);
+    // the tree carries the colour of its lines: built again
+    Gui::instance().updateViews(true, true);
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
     }
@@ -434,7 +396,6 @@ static void default_fatal_error_handler(const char *fmt, ...)
 
 FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
              void (*error_handler)(const char *fmt, ...))
-  : _quitShouldExit(quitShouldExit)
 {
   if(error_handler) {
     Fl::error = error_handler;
@@ -478,13 +439,9 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // add global shortcuts
   Fl::add_handler(globalShortcut);
 
-  // The draw context that writes in the scene, with the engine the option
-  // asks for. It used to be installed by the option itself, as a side effect
-  // of being read at start-up, which is what also had it replace the draw
-  // context of whichever other scene was running; the scene installs its
-  // own now. global() is never null -- it makes a dummy that draws nothing
-  // -- so the fallback asks it what it is rather than whether it is.
-  Gui::sceneSettingChanged("font_engine");
+  // the draw context that writes in the scene, with the engine the option
+  // asks for
+  Gui::instance().sceneSettingChanged("font_engine");
   if(drawContext::global()->getName() == "None")
     drawContext::setGlobal(new drawContextFltk);
 
@@ -575,8 +532,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     g->getWindow()->show();
     graph.push_back(g);
   }
-  setGraphicTitle(GModel::current()->getFileName());
-
   // create window that will be used for fullscreen display
   fullscreen = new sceneViewFltk(100, 100, 100, 100);
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
@@ -593,7 +548,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
-  if(CTX::instance()->showOptionsOnStartup) Dialog::show(Dialog::options(), -1);
+  if(CTX::instance()->showOptionsOnStartup) Gui::instance().options.show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
 
 #if defined(HAVE_TOUCHBAR)
@@ -626,23 +581,9 @@ bool FlGui::available() { return _instance != nullptr; }
 FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
                        void (*error_handler)(const char *fmt, ...))
 {
-  if(!_instance) {
-    _instance = new FlGui(argc, argv, quitShouldExit, error_handler);
-    // set all options in the new GUI
-    InitOptionsGUI(0);
-    // say welcome!
-    Msg::ResetErrorCounter();
-    Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
-    // log the following for bug reports
-    Msg::Direct("-------------------------------------------------------");
-    PrintBuildInfo();
-    Msg::Direct("-------------------------------------------------------");
-    // update views (in case the GUI is created after some data has been loaded)
-    _instance->updateViews(true, true);
-    // set global bounding box in CTX (necessary if we run the gui without any
-    // model/post-processing data)
-    SetBoundingBox();
-  }
+  // only the windows: what the application does once an interface is up is
+  // Gui::instance().create()'s
+  if(!_instance) _instance = new FlGui(argc, argv, quitShouldExit, error_handler);
   return _instance;
 }
 
@@ -705,19 +646,8 @@ namespace {
 
 } // namespace
 
-int FlGui::testGlobalShortcuts(int event)
-{
-  // we only handle shortcuts here
-  if(event != FL_SHORTCUT) return 0;
-  return runKeys();
-}
-
-// The keys, read off the one list the interfaces share. What was four
-// hundred lines of Fl::test_shortcut() here -- and a second copy of them in
-// the Dear ImGui interface, which had drifted -- is the description now,
-// Menu::keys(); what is left here is FLTK's way of saying which key was
-// struck, and the one thing that is this window's rather than the
-// application's: Escape leaves full screen.
+// the keys, read off the one list the interfaces share; what is left here
+// is FLTK's own reading of a key event
 int FlGui::runKeys()
 {
   if(Fl::event_key() == FL_Escape && fullscreen && fullscreen->shown()) {
@@ -738,48 +668,6 @@ int FlGui::runKeys()
   updateTouchBar();
 #endif
   return status;
-}
-
-void FlGui::setGraphicTitle(const std::string &title)
-{
-  for(std::size_t i = 0; i < graph.size(); i++) {
-    std::ostringstream sstream;
-    if(title.empty())
-      sstream << "Gmsh";
-    else if(!i)
-      sstream << "Gmsh - " << title;
-    else
-      sstream << "Gmsh - " << title << " [" << i << "]";
-    graph[i]->setTitle(sstream.str());
-  }
-}
-
-void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
-{
-  for(std::size_t i = 0; i < graph.size(); i++)
-    graph[i]->refreshStatusButtons();
-  if(numberOfViewsHasChanged) {
-    if(onelab) onelab->rebuildTree(deleteWidgets);
-    // and the per-entity parameters, which are described once and read what
-    // the server holds: a parameter the solver added is a field more, so the
-    // window may have to be built again and not only read again
-    if(dialogFltk *d = fltkDialog(Dialog::onelabContext(), false))
-      if(d->shown()) d->reshape();
-    // the option window is described once and reads what it shows, views
-    // included: it wants nothing when their number changes
-    Gui::refreshForm(Dialog::options());
-    // and the size-field window offers the views a field may be drawn on
-    Gui::updateFields();
-    Gui::refreshForm(Dialog::clipping());
-    statisticsRefresh(false);
-  }
-}
-
-void FlGui::resetVisibility()
-{
-  Gui::refreshForm(Dialog::visibility());
-  Gui::refreshForm(Dialog::currentOptions());
-  statisticsRefresh(false);
 }
 
 sceneViewFltk *FlGui::getCurrentOpenglWindow()
@@ -883,51 +771,13 @@ char FlGui::selectEntity(int type)
     selectedElements, selectedPoints, selectedViews);
 }
 
-void FlGui::setStatus(const std::string &msg, bool opengl)
-{
-  if(Msg::GetThreadNum() > 0) return;
-  if(!opengl) {
-    // the text, and what is appended to it when something has gone wrong, are
-    // worked out once in src/common/GuiStatus.cpp and read by both bars
-    StatusBar::setMessage(msg);
-    for(std::size_t i = 0; i < graph.size(); i++)
-      graph[i]->getProgress()->redraw();
-  }
-  else {
-    sceneViewFltk *gl = getCurrentOpenglWindow();
-    std::vector<std::string> m = SplitString(msg, '\n');
-    if(m.size() > 0) gl->scene()->screenMessage[0] = m[0];
-    if(m.size() > 1) gl->scene()->screenMessage[1] = m[1];
-    if(m.size() > 2)
-      Msg::Debug("Ignoring extra lines of status message: %s", msg.c_str());
-    drawContext::global()->draw();
-  }
-}
-
-void FlGui::setLastStatus(int color)
-{
-  if(Msg::GetThreadNum() > 0) return;
-  StatusBar::setColour(color);
-  for(std::size_t i = 0; i < graph.size(); i++)
-    graph[i]->getProgress()->redraw();
-}
-
-void FlGui::setProgress(const std::string &msg, double val, double min,
-                        double max)
-{
-  if(Msg::GetThreadNum() > 0) return;
-  StatusBar::setProgress(val, min, max);
-  setStatus(msg);
-}
-
-// Where the windows ended up, for the option file: said rather than written
-// into the options, which are the application's to keep.
+// where the windows ended up, for the option file
 Ui::Backend::Layout FlGui::windowLayout()
 {
   Ui::Backend::Layout l;
   if(graph.empty()) return l;
   l = graph[0]->layout();
-  // the context dialogs share one remembered position, as they always have
+  // the context dialogs share one remembered position
   bool placed = false;
   fltkEachDialog([&placed, &l](dialogFltk *d) {
     if(placed || !d->shown()) return;
@@ -1033,27 +883,4 @@ void FlGui::messageLines(std::vector<std::string> &lines)
 void FlGui::rebuildTree(bool deleteWidgets)
 {
   if(onelab) onelab->rebuildTree(deleteWidgets);
-  if(dialogFltk *d = fltkDialog(Dialog::onelabContext(), false))
-    if(d->shown()) d->reshape();
 }
-
-void FlGui::openModule(const std::string &name)
-{
-  if(!onelab) return;
-  if(!onelab->isManuallyClosed("0Modules/" + name))
-    onelab->openTreeItem("0Modules/" + name);
-}
-
-void FlGui::openTreeItem(const std::string &name)
-{
-  if(!onelab) return;
-  onelab->openTreeItem(name);
-}
-
-void FlGui::closeTreeItem(const std::string &name)
-{
-  if(!onelab) return;
-  onelab->closeTreeItem(name);
-}
-
-
