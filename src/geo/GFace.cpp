@@ -11,7 +11,7 @@
 #include "GEdge.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-#include "MElementCut.h"
+#include "MPolygon.h"
 #include "VertexArray.h"
 #include "fullMatrix.h"
 #include "Numeric.h"
