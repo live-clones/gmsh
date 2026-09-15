@@ -1214,7 +1214,7 @@ GMSH_API void gmsh::model::getClosestPoint(const int dim, const int tag,
     GEdge *ge = static_cast<GEdge *>(entity);
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
-      double t;
+      double t = 0.;
       GPoint pp = ge->closestPoint(p, t);
       closestCoord.push_back(pp.x());
       closestCoord.push_back(pp.y());
