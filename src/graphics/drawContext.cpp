@@ -1864,18 +1864,27 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
       break;
     }
 
-  // give each dimension its own depth range, lower dimensions in front, so
-  // that a point or a curve can be picked through a surface, as with the
-  // selection buffer; a marker standing for an entity goes in front of all
-  // of them
-  int d = front ? 0 : ((type < 0) ? 4 : (type > 4 ? 4 : type));
   // pending immediate mode primitives belong to the previous object, its
   // depth range and its masks
   gmshFlushImmediate();
   GLboolean on = skip ? GL_FALSE : GL_TRUE;
   glColorMask(on, on, on, on);
   glDepthMask(on);
-  glDepthRange(0.2 * d, 0.2 * d + 0.2);
+  // What is closest to the viewer is picked, and among what lies at the same
+  // depth the lowest dimension: a point or a curve, a pixel or two wide, is
+  // drawn a little closer than the surface it lies on (the depth range
+  // scaled by a step per dimension, see _fillPickCache() for the step), so
+  // that it wins over that surface as with the selection buffer, but not
+  // over a surface in front of it, which the selection buffer's rule - the
+  // lowest dimension under the cursor, wherever it is - let it do. A marker
+  // standing for an entity (a volume's) goes in front of everything, as it
+  // sits inside what it stands for.
+  if(front)
+    glDepthRange(0., 0.2);
+  else if(type >= 0 && type <= 3)
+    glDepthRange(0., 1. - (3 - type) * _pickDepthStep);
+  else
+    glDepthRange(0., 1.);
 }
 
 void drawContext::unsetPickColor()
@@ -1936,6 +1945,29 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   gmshPushMatrix();
   initProjection();
   initPosition(false);
+  // the step between the dimensions of setPickColor(): a hundredth of the
+  // depth the model spans in the window per dimension, a few units of the
+  // depth buffer at least, as a scale of the range (which cannot be shifted)
+  // at the middle of that span
+  {
+    CTX *c = CTX::instance();
+    double zmin = 1., zmax = 0.;
+    for(int i = 0; i < 8; i++) {
+      double p[4] = {(i & 1) ? c->max[0] : c->min[0],
+                     (i & 2) ? c->max[1] : c->min[1],
+                     (i & 4) ? c->max[2] : c->min[2], 1.};
+      double e[4], q[4];
+      glMatrix::transform(gmshMatrix(GMSH_MODELVIEW), p, e);
+      glMatrix::transform(gmshMatrix(GMSH_PROJECTION), e, q);
+      if(q[3] == 0.) continue;
+      double z = 0.5 * (q[2] / q[3] + 1.);
+      zmin = std::min(zmin, z);
+      zmax = std::max(zmax, z);
+    }
+    double extent = std::max(zmax - zmin, 0.);
+    double zmid = std::max(0.05, 0.5 * (zmin + zmax));
+    _pickDepthStep = std::max(0.01 * extent, 4. / 16777215.) / zmid;
+  }
   drawGeom();
   if(mesh) drawMesh();
   if(post) drawPost();
