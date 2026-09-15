@@ -130,11 +130,21 @@ public:
   // elements if ent < 0
   virtual int getNumElements(int step = -1, int ent = -1) { return 0; }
 
+  // cheap "does this view have any elements?" test (counting them walks
+  // every entity of a model-based view)
+  virtual bool hasElements() { return getNumElements() > 0; }
+
   // return the geometrical dimension of the ele-th element in the ent-th entity
   virtual int getDimension(int step, int ent, int ele) { return 0; }
 
   // return the number of nodes of the ele-th element in the ent-th entity
   virtual int getNumNodes(int step, int ent, int ele) { return 0; }
+  // a stable identifier for a node of an element, the same for the elements
+  // sharing it; 0 if the data has no node topology
+  virtual std::size_t getNodeId(int step, int ent, int ele, int nod)
+  {
+    return 0;
+  }
 
   // get/set the coordinates and tag of the nod-th node from the ele-th element
   // in the ent-th entity (if the node has a tag, getNode returns it)
@@ -206,6 +216,10 @@ public:
   virtual bool skipEntity(int step, int ent) { return false; }
   virtual bool skipElement(int step, int ent, int ele,
                            bool checkVisibility = false, int samplingRate = 1);
+
+  // can the accessors be called concurrently on different elements of the same
+  // data? They cannot when they go through a cache of the last element
+  virtual bool isThreadSafe() { return false; }
 
   // check if the data has the given step/partition/etc.
   virtual bool hasTimeStep(int step)

@@ -7,6 +7,7 @@
 #include "OctreePost.h"
 #include "CutBox.h"
 #include "Context.h"
+#include "glyphList.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -39,7 +40,7 @@ GMSH_Plugin *GMSH_RegisterCutBoxPlugin() { return new GMSH_CutBoxPlugin(); }
 void GMSH_CutBoxPlugin::draw(void *context)
 {
 #if defined(HAVE_OPENGL)
-  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   double p[3];
   drawContext *ctx = (drawContext *)context;
 
@@ -59,104 +60,110 @@ void GMSH_CutBoxPlugin::draw(void *context)
   }
 
   if(CutBoxOptions_Number[15].def) {
-    glBegin(GL_LINES);
+    gmshBegin(GL_LINES);
     // UV
     for(int i = 0; i < getNbU(); ++i) {
       getPoint(i, 0, 0, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(i, getNbV() - 1, 0, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
 
       getPoint(i, 0, getNbW() - 1, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(i, getNbV() - 1, getNbW() - 1, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
     }
     for(int i = 0; i < getNbV(); ++i) {
       getPoint(0, i, 0, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU() - 1, i, 0, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
 
       getPoint(0, i, getNbW() - 1, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU() - 1, i, getNbW() - 1, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
     }
     // UW
     for(int i = 0; i < getNbU(); ++i) {
       getPoint(i, 0, 0, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(i, 0, getNbW() - 1, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
 
       getPoint(i, getNbV() - 1, 0, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(i, getNbV() - 1, getNbW() - 1, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
     }
     for(int i = 0; i < getNbW(); ++i) {
       getPoint(0, 0, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU() - 1, 0, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
 
       getPoint(0, getNbV() - 1, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU() - 1, getNbV() - 1, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
     }
     // VW
     for(int i = 0; i < getNbV(); ++i) {
       getPoint(0, i, 0, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(0, i, getNbW() - 1, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
 
       getPoint(getNbU() - 1, i, 0, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU() - 1, i, getNbW() - 1, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
     }
     for(int i = 0; i < getNbW(); ++i) {
       getPoint(0, 0, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(0, getNbV() - 1, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
 
       getPoint(getNbU() - 1, 0, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU() - 1, getNbV() - 1, i, p);
-      glVertex3d(p[0], p[1], p[2]);
+      gmshVertex3d(p[0], p[1], p[2]);
     }
 
-    glEnd();
+    gmshEnd();
   }
   else {
+    glyphList g;
+    unsigned int col = glyphCurrentColor();
+    double ps = CTX::instance()->pointSize;
+    g.reserve(GLYPH_SPHERE, 2 * (getNbU() * getNbV() + getNbU() * getNbW() +
+                                 getNbV() * getNbW()));
     for(int i = 0; i < getNbU(); ++i) {
       for(int j = 0; j < getNbV(); ++j) {
         getPoint(i, j, 0, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
         getPoint(i, j, getNbW() - 1, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
       }
     }
     for(int i = 0; i < getNbU(); ++i) {
       for(int j = 0; j < getNbW(); ++j) {
         getPoint(i, 0, j, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
         getPoint(i, getNbV() - 1, j, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
       }
     }
     for(int i = 0; i < getNbV(); ++i) {
       for(int j = 0; j < getNbW(); ++j) {
         getPoint(0, i, j, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
         getPoint(getNbU() - 1, i, j, p);
-        ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
+        g.addSphere(ctx, ps, p[0], p[1], p[2], col);
       }
     }
+    g.draw(ctx, 1);
   }
 #endif
 }
