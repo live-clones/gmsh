@@ -1567,6 +1567,26 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   }
 }
 
+void drawContext::initCameraMatrices(double view[16])
+{
+  if(!camera.on) camera.init();
+  camera.giveViewportDimension(viewport[2], viewport[3]);
+  double frustum[16], jitter[16], proj[16];
+  glMatrix::frustum(camera.glFleft, camera.glFright, camera.glFbottom,
+                    camera.glFtop, camera.glFnear, camera.glFfar * camera.Lc,
+                    frustum);
+  studioJitter(jitter);
+  glMatrix::multiply(jitter, frustum, proj);
+  gmshMatrixMode(GMSH_PROJECTION);
+  gmshLoadMatrix(proj);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  double eye[3] = {camera.position.x, camera.position.y, camera.position.z};
+  double target[3] = {camera.target.x, camera.target.y, camera.target.z};
+  double up[3] = {camera.up.x, camera.up.y, camera.up.z};
+  glMatrix::lookAt(eye, target, up, view);
+  gmshLoadMatrix(view);
+}
+
 void drawContext::studioJitter(double m[16])
 {
   glMatrix::identity(m);
@@ -1944,7 +1964,16 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
 
   gmshPushMatrix();
   initProjection();
-  initPosition(false);
+  // in camera mode the projection and the modelview are the camera's, which
+  // initProjection() and initPosition() know nothing of: the pass used to
+  // draw with the rotation of the ordinary mode under whatever projection
+  // the last frame had left, and found nothing
+  if(CTX::instance()->camera) {
+    double view[16];
+    initCameraMatrices(view);
+  }
+  else
+    initPosition(false);
   // the step between the dimensions of setPickColor(): a hundredth of the
   // depth the model spans in the window per dimension, a few units of the
   // depth buffer at least, as a scale of the range (which cannot be shifted)
