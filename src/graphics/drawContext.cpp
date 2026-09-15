@@ -385,6 +385,11 @@ void gmshBindVertexArray(VertexArray *va, bool normals, bool colors)
   _boundColors = colors;
 
   if(useShaders()) {
+    // the attributes are recorded in the program's vertex array object,
+    // which must be bound first: on the first frame of a context nothing has
+    // bound it yet, and a core profile drops attributes set with none bound,
+    // so the first array drawn came out with neither colours nor normals
+    if(!glShader::use()) return;
     glApi::EnableVertexAttribArray(glShader::ATTRIB_VERTEX);
     glApi::VertexAttribPointer(glShader::ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE,
                                0, vaVertexPointer(va));
