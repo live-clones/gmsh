@@ -4154,6 +4154,47 @@ gmsh::model::mesh::addFaces(const int faceType,
   }
 }
 
+#if defined(HAVE_HIERARCHICAL_BASIS)
+namespace {
+
+HierarchicalBasis *createH1Basis(int familyType, int order, const std::string &fsName)
+{
+  switch(familyType) {
+  case TYPE_HEX: return new HierarchicalBasisH1Brick(order);
+  case TYPE_PRI: return new HierarchicalBasisH1Pri(order);
+  case TYPE_TET: return new HierarchicalBasisH1Tetra(order);
+  case TYPE_QUA: return new HierarchicalBasisH1Quad(order);
+  case TYPE_TRI: return new HierarchicalBasisH1Tria(order);
+  case TYPE_LIN: return new HierarchicalBasisH1Line(order);
+  case TYPE_PNT: return new HierarchicalBasisH1Point();
+  default: 
+    Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
+    return nullptr;
+  }
+}
+
+HierarchicalBasis *createHcurlBasis(int familyType, int order, const std::string &fsName)
+{
+  switch(familyType) {
+  case TYPE_HEX: return new HierarchicalBasisHcurlBrick(order);
+  case TYPE_PRI: return new HierarchicalBasisHcurlPri(order);
+  case TYPE_TET: return new HierarchicalBasisHcurlTetra(order);
+  case TYPE_QUA: return new HierarchicalBasisHcurlQuad(order);
+  case TYPE_TRI: return new HierarchicalBasisHcurlTria(order);
+  case TYPE_LIN: return new HierarchicalBasisHcurlLine(order);
+  default: 
+    Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
+    return nullptr;
+  }
+}
+
+} // namespace
+#endif
+
+
+
 GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
                                          const std::string &functionSpaceType,
                                          std::vector<int> &typeKeys,
@@ -4179,64 +4220,22 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   int familyType = ElementType::getParentType(elementType);
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
-  HierarchicalBasis *basis(nullptr);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(order);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(order);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+
+  HierarchicalBasis *basis = nullptr;
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre")
+  {
+    basis = createH1Basis(familyType, order, fsName);
+    if(!basis) return;
   }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(order);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(order);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre")
+  {
+    basis = createHcurlBasis(familyType, order, fsName);
+    if(!basis) return;
   }
   else
 #endif
+
+
     if(fsName == "IsoParametric" || fsName == "Lagrange" ||
        fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *nodalB(nullptr);
@@ -4446,68 +4445,24 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     Msg::Error("Unknown element %zu", elementTag);
     return;
   }
-
 #if defined(HAVE_HIERARCHICAL_BASIS)
   int elementType = e->getTypeForMSH();
   int familyType = ElementType::getParentType(elementType);
-  HierarchicalBasis *basis(nullptr);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(order);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(order);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+
+  HierarchicalBasis *basis = nullptr;
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre")
+  {
+    basis = createH1Basis(familyType, order, fsName);
+    if(!basis) return;
   }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(order);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(order);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(order);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(order);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre")
+  {
+    basis = createHcurlBasis(familyType, order, fsName);
+    if(!basis) return;
   }
   else
 #endif
+
   if(fsName == "IsoParametric" || fsName == "Lagrange" ||
      fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     typeKeys.reserve(e->getNumVertices());
@@ -4659,6 +4614,18 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
 #endif
 }
 
+#if defined(HAVE_HIERARCHICAL_BASIS)
+  int _getNumberOfKeysForHierarchicalBasis(HierarchicalBasis *basis){
+    int vSize = basis->getNumVertexFunction();
+    int bSize = basis->getNumBubbleFunction();
+    int eSize = basis->getNumEdgeFunction();
+    int quadFSize = basis->getNumQuadFaceFunction();
+    int triFSize = basis->getNumTriFaceFunction();
+    int numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
+    return numberOfKeys;
+  }
+#endif
+
 GMSH_API int
 gmsh::model::mesh::getNumberOfKeys(const int elementType,
                                    const std::string &functionSpaceType)
@@ -4675,75 +4642,20 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
   int familyType = ElementType::getParentType(elementType);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    HierarchicalBasis *basis(nullptr);
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(basisOrder);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(basisOrder);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return 0;
-    }
-    int vSize = basis->getNumVertexFunction();
-    int bSize = basis->getNumBubbleFunction();
-    int eSize = basis->getNumEdgeFunction();
-    int quadFSize = basis->getNumQuadFaceFunction();
-    int triFSize = basis->getNumTriFaceFunction();
-    numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
+
+  HierarchicalBasis *basis = nullptr;
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre")
+  {
+    basis = createH1Basis(familyType, basisOrder, fsName);
+    if(!basis) return 0;
+    numberOfKeys=_getNumberOfKeysForHierarchicalBasis(basis);
     delete basis;
   }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    HierarchicalBasis *basis(nullptr);
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(basisOrder);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(basisOrder);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return 0;
-    }
-    int vSize = basis->getNumVertexFunction();
-    int bSize = basis->getNumBubbleFunction();
-    int eSize = basis->getNumEdgeFunction();
-    int quadFSize = basis->getNumQuadFaceFunction();
-    int triFSize = basis->getNumTriFaceFunction();
-    numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
+  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre")
+  {
+    basis = createHcurlBasis(familyType, basisOrder, fsName);
+    if(!basis) return 0;
+    numberOfKeys=_getNumberOfKeysForHierarchicalBasis(basis);
     delete basis;
   }
   else
@@ -4792,66 +4704,22 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   }
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
-
-  HierarchicalBasis *basis(nullptr);
   int familyType = ElementType::getParentType(elementType);
-  if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisH1Pri(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisH1Tetra(basisOrder);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(basisOrder);
-    } break;
-    case TYPE_PNT: {
-      basis = new HierarchicalBasisH1Point();
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+
+  HierarchicalBasis *basis = nullptr;
+  if(fsName == "H1Legendre" || fsName == "GradH1Legendre")
+  {
+    basis = createH1Basis(familyType, basisOrder, fsName);
+    if(!basis) return;
   }
-  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
-    switch(familyType) {
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisHcurlQuad(basisOrder);
-    } break;
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisHcurlBrick(basisOrder);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisHcurlTria(basisOrder);
-    } break;
-    case TYPE_TET: {
-      basis = new HierarchicalBasisHcurlTetra(basisOrder);
-    } break;
-    case TYPE_PRI: {
-      basis = new HierarchicalBasisHcurlPri(basisOrder);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisHcurlLine(basisOrder);
-    } break;
-    default:
-      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-                 fsName.c_str());
-      return;
-    }
+  else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre")
+  {
+    basis = createHcurlBasis(familyType, basisOrder, fsName);
+    if(!basis) return;
   }
   else
 #endif
+
     if(fsName == "IsoParametric" || fsName == "Lagrange" ||
        fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *basis(nullptr);
