@@ -55,6 +55,7 @@ opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
+opt(HIERARCHICAL_BASIS "Enable hierarchical basis functions" ${DEFAULT})
 opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
@@ -110,6 +111,7 @@ opt(WINSLOWUNTANGLER "Enable WinslowUntangler extensions (requires ALGLIB)" ${DE
 opt(WRAP_JAVA "Generate SWIG Java wrappers for private API" OFF)
 opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by public API)" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
+
 
 set(GMSH_MAJOR_VERSION 5)
 set(GMSH_MINOR_VERSION 0)
@@ -966,6 +968,13 @@ if(HAVE_MESH)
     set_config_option(HAVE_BOUNDARY_LAYERS "BoundaryLayers")
   endif()
 
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis
+    AND ENABLE_HIERARCHICAL_BASIS)
+    add_subdirectory(contrib/HierarchicalBasis)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis)
+    set_config_option(HAVE_HIERARCHICAL_BASIS "HierarchicalBasis")
+  endif()
+
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND ENABLE_DOMHEX)
     add_subdirectory(contrib/domhex)
     include_directories(contrib/domhex)
@@ -1049,8 +1058,7 @@ if(HAVE_MESH)
     endif()
   endif()
 
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools
-     AND ENABLE_QUADMESHINGTOOLS)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools AND ENABLE_QUADMESHINGTOOLS)
     set_config_option(HAVE_QUADMESHINGTOOLS "QuadMeshingTools")
     add_subdirectory(contrib/QuadMeshingTools)
     include_directories(BEFORE contrib/QuadMeshingTools)

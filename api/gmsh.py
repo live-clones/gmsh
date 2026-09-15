@@ -5122,11 +5122,13 @@ class model:
             Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
             `entityKeyMaster') corresponding to the entity `tag' and the key pairs
             (`typeKey', `entityKey') for the elements of type `elementType' and
-            function space type `functionSpaceType'. If `returnCoord' is set, the
-            `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
-            basis functions for sorting purposes.
+            function space type `functionSpaceType'. `orientationSign' contains the
+            correction between each key and keyMaster to match basisFunction
+            evaluation. If `returnCoord' is set, the `coord' and `coordMaster' vectors
+            contain the x, y, z coordinates locating basis functions for sorting
+            purposes.
 
-            Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster'.
+            Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster', `orientationSign'.
 
             Types:
             - `elementType': integer
@@ -5139,6 +5141,7 @@ class model:
             - `entityKeysMaster': vector of sizes
             - `coord': vector of doubles
             - `coordMaster': vector of doubles
+            - `orientationSign': vector of integers
             - `returnCoord': boolean
             """
             api_tagMaster_ = c_int()
@@ -5148,6 +5151,7 @@ class model:
             api_entityKeysMaster_, api_entityKeysMaster_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_coordMaster_, api_coordMaster_n_ = POINTER(c_double)(), c_size_t()
+            api_orientationSign_, api_orientationSign_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetPeriodicKeys(
                 c_int(elementType),
@@ -5160,6 +5164,7 @@ class model:
                 byref(api_entityKeysMaster_), byref(api_entityKeysMaster_n_),
                 byref(api_coord_), byref(api_coord_n_),
                 byref(api_coordMaster_), byref(api_coordMaster_n_),
+                byref(api_orientationSign_), byref(api_orientationSign_n_),
                 c_int(bool(returnCoord)),
                 byref(ierr))
             if ierr.value != 0:
@@ -5171,7 +5176,8 @@ class model:
                 _ovectorsize(api_entityKeys_, api_entityKeys_n_.value),
                 _ovectorsize(api_entityKeysMaster_, api_entityKeysMaster_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value),
-                _ovectordouble(api_coordMaster_, api_coordMaster_n_.value))
+                _ovectordouble(api_coordMaster_, api_coordMaster_n_.value),
+                _ovectorint(api_orientationSign_, api_orientationSign_n_.value))
         get_periodic_keys = getPeriodicKeys
 
         @staticmethod

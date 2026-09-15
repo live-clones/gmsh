@@ -1871,9 +1871,11 @@ namespace gmsh { // Top-level functions
       // Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
       // `entityKeyMaster') corresponding to the entity `tag' and the key pairs
       // (`typeKey', `entityKey') for the elements of type `elementType' and
-      // function space type `functionSpaceType'. If `returnCoord' is set, the
-      // `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
-      // basis functions for sorting purposes.
+      // function space type `functionSpaceType'. `orientationSign' contains the
+      // correction between each key and keyMaster to match basisFunction
+      // evaluation. If `returnCoord' is set, the `coord' and `coordMaster' vectors
+      // contain the x, y, z coordinates locating basis functions for sorting
+      // purposes.
       GMSH_API void getPeriodicKeys(const int elementType,
                                     const std::string & functionSpaceType,
                                     const int tag,
@@ -1884,6 +1886,7 @@ namespace gmsh { // Top-level functions
                                     std::vector<std::size_t> & entityKeysMaster,
                                     std::vector<double> & coord,
                                     std::vector<double> & coordMaster,
+                                    std::vector<int> & orientationSign,
                                     const bool returnCoord = true);
 
       // gmsh::model::mesh::importStl
