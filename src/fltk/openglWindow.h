@@ -101,10 +101,14 @@ private:
   void _stepPick(int direction, bool rateLimited);
   void _drawScreenMessage();
   void _drawBorder();
-  // the accumulation of the studio frames: whether this draw is one of them
-  // (asked for by the timer), the modelview of this frame, and the modelview
-  // and window size the last one was drawn with
-  bool _studioTimer;
+  // The accumulation of the studio frames: whether the timer asked for the
+  // next draw, whether this draw is one of them, the modelview of this
+  // frame, and the modelview and window size the last one was drawn with.
+  // Whether a draw is the timer's is not read from the damage bits, which
+  // FLTK sets all of before calling draw() on Windows (the UNDEFINED swap
+  // type of Fl_Gl_Window::flush(); macOS and X11 keep them): the timer sets
+  // the flag, and any other request for a redraw clears it.
+  bool _studioAsked, _studioTimer;
   double _frameView[16], _studioModel[16];
   int _studioW, _studioH;
   bool _again = false;
@@ -144,6 +148,12 @@ protected:
 public:
   int pixel_w();
   int pixel_h();
+  // a redraw asked for by anyone but the studio timer draws a plain frame
+  void redraw()
+  {
+    _studioAsked = false;
+    Fl_Gl_Window::redraw();
+  }
   time_t rawtime, prev_rawtime;
   double response_frequency;
   int addPointMode;
