@@ -980,8 +980,16 @@ void drawContext::drawMesh()
       if(status >= 0 && needPerEntityPass(this, 0, false, false))
         std::for_each(m->firstVertex(), m->lastVertex(),
                       drawMeshGVertex(this));
+      // The merged draws set the two-sided lighting themselves, as the
+      // per-entity draws do: it was left to whatever the previous pass had
+      // set, and once an entity was selected or hovered the pass over the
+      // curves, which turns it off, ran before the merged faces, which
+      // then lit their back faces no more and went dark.
       if(status >= 1) {
-        if(merge) drawMergedArray(this, ma.lines[1], GL_LINES, false);
+        if(merge) {
+          gmshLightTwoSide(false);
+          drawMergedArray(this, ma.lines[1], GL_LINES, false);
+        }
         _mergedLines = (merge && ma.lines[1]);
         if(needPerEntityPass(this, 1, _mergedLines, false))
           std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
@@ -990,9 +998,11 @@ void drawContext::drawMesh()
       }
       if(status >= 2) {
         if(merge) {
+          gmshLightTwoSide(false);
           drawMergedArray(this, ma.lines[2], GL_LINES,
                           CTX::instance()->mesh.light &&
                             CTX::instance()->mesh.lightLines);
+          gmshLightTwoSide(CTX::instance()->mesh.lightTwoSide);
           drawMergedArray(this, ma.triangles[2], GL_TRIANGLES,
                           CTX::instance()->mesh.light);
         }
@@ -1009,9 +1019,11 @@ void drawContext::drawMesh()
                      c->mesh.clip;
       if(status >= 3) {
         if(merge && !cutOnly) {
+          gmshLightTwoSide(false);
           drawMergedArray(this, ma.lines[3], GL_LINES,
                           CTX::instance()->mesh.light &&
                             (CTX::instance()->mesh.lightLines > 1));
+          gmshLightTwoSide(CTX::instance()->mesh.lightTwoSide);
           drawMergedArray(this, ma.triangles[3], GL_TRIANGLES,
                           CTX::instance()->mesh.light);
         }
