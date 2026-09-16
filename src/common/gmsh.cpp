@@ -38,6 +38,9 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "MVertexRTree.h"
 #include "ExtrudeParams.h"
 #include "StringUtils.h"
@@ -2480,6 +2483,8 @@ _getEntitiesForElementTypes(int dim, int tag,
         typeEnt[f->triangles.front()->getTypeForMSH()].push_back(ge);
       if(f->quadrangles.size())
         typeEnt[f->quadrangles.front()->getTypeForMSH()].push_back(ge);
+      if(f->polygons.size())
+        typeEnt[f->polygons.front()->getTypeForMSH()].push_back(ge);
       break;
     }
     case 3: {
@@ -2494,6 +2499,8 @@ _getEntitiesForElementTypes(int dim, int tag,
         typeEnt[r->pyramids.front()->getTypeForMSH()].push_back(ge);
       if(r->trihedra.size())
         typeEnt[r->trihedra.front()->getTypeForMSH()].push_back(ge);
+      if(r->polyhedra.size())
+        typeEnt[r->polyhedra.front()->getTypeForMSH()].push_back(ge);
       break;
     }
     }
