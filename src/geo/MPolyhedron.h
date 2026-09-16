@@ -112,8 +112,21 @@ public:
   // as vertices of the tetrahedra (computed when needed if given empty)
   void setPolygonsAndTetrahedra(const std::vector<MVertex *> &borderVertices,
                                 const std::vector<int> &borderOffset,
-                                const std::vector<MVertex *> &simplicesVertices);
+                                const std::vector<MVertex *> &simplicesVertices)
+  {
+    setPolygons(borderVertices, borderOffset);
+    setTetrahedra(simplicesVertices);
+  }
+  void setPolygons(const std::vector<MVertex *> &borderVertices,
+                   const std::vector<int> &borderOffset);
+  void setTetrahedra(const std::vector<MVertex *> &simplicesVertices);
   bool hasGivenTetrahedra() const { return _givenTetrahedra; }
+  // keep the computed sub-tetrahedralization as if it had been given
+  void createTetrahedra()
+  {
+    _ensureTetrahedra();
+    _givenTetrahedra = true;
+  }
   int getNumPolygons() const
   {
     return _polygonStarts.empty() ? 0 : (int)_polygonStarts.size() - 1;

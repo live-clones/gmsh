@@ -102,6 +102,12 @@ public:
   // computed when needed
   void setTriangles(const std::vector<MVertex *> &simplices);
   bool hasGivenTriangles() const { return _givenTriangles; }
+  // keep the computed sub-triangulation as if it had been given
+  void createTriangles()
+  {
+    _ensureTriangles();
+    _givenTriangles = true;
+  }
   int getNumTriangles() const
   {
     _ensureTriangles();

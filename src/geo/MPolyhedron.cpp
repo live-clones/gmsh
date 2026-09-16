@@ -20,37 +20,46 @@ MPolyhedron::MPolyhedron(const std::vector<MVertex *> &vertices, int num,
   _numBoundary = _vertices.size();
 }
 
-void MPolyhedron::setPolygonsAndTetrahedra(
-  const std::vector<MVertex *> &borderVertices,
-  const std::vector<int> &borderOffset,
-  const std::vector<MVertex *> &simplicesVertices)
+void MPolyhedron::setPolygons(const std::vector<MVertex *> &borderVertices,
+                              const std::vector<int> &borderOffset)
 {
-  _vertices.resize(_numBoundary);
   std::unordered_map<MVertex *, int> indices;
-  for(std::size_t i = 0; i < _vertices.size(); i++)
-    indices[_vertices[i]] = (int)i;
-  auto index = [&](MVertex *v) {
-    auto it = indices.find(v);
-    if(it == indices.end()) {
-      it = indices.insert({v, (int)_vertices.size()}).first;
-      _vertices.push_back(v);
-    }
-    return it->second;
-  };
-
+  for(std::size_t i = 0; i < _numBoundary; i++) indices[_vertices[i]] = (int)i;
   _polygons.resize(borderVertices.size());
-  for(std::size_t i = 0; i < borderVertices.size(); i++)
-    _polygons[i] = index(borderVertices[i]);
+  for(std::size_t i = 0; i < borderVertices.size(); i++) {
+    auto it = indices.find(borderVertices[i]);
+    if(it == indices.end()) {
+      Msg::Error("Face node %zu is not a node of polyhedron %zu",
+                 borderVertices[i]->getNum(), getNum());
+      _polygons[i] = 0;
+    }
+    else
+      _polygons[i] = it->second;
+  }
   _polygonStarts = borderOffset;
   _computeEdges();
+}
 
+void MPolyhedron::setTetrahedra(const std::vector<MVertex *> &simplicesVertices)
+{
+  // drop the interior nodes of a previous sub-tetrahedralization
+  _vertices.resize(_numBoundary);
   _tetrahedra.clear();
   _triangles.clear();
   _givenTetrahedra = !simplicesVertices.empty();
   if(!_givenTetrahedra) return;
+  std::unordered_map<MVertex *, int> indices;
+  for(std::size_t i = 0; i < _vertices.size(); i++)
+    indices[_vertices[i]] = (int)i;
   _tetrahedra.resize(simplicesVertices.size());
-  for(std::size_t i = 0; i < simplicesVertices.size(); i++)
-    _tetrahedra[i] = index(simplicesVertices[i]);
+  for(std::size_t i = 0; i < simplicesVertices.size(); i++) {
+    auto it = indices.find(simplicesVertices[i]);
+    if(it == indices.end()) {
+      it = indices.insert({simplicesVertices[i], (int)_vertices.size()}).first;
+      _vertices.push_back(simplicesVertices[i]);
+    }
+    _tetrahedra[i] = it->second;
+  }
   // orient the tetrahedra positively
   for(std::size_t i = 0; i < _tetrahedra.size(); i += 4) {
     MTetrahedron t(_vertices[_tetrahedra[i]], _vertices[_tetrahedra[i + 1]],
