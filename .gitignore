@@ -25,3 +25,4 @@ cmake-build-*
 # Python virtual environment
 venv/
 .venv/
+benchmarks/io_msh/polytopes_out.msh

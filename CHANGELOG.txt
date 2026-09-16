@@ -1,4 +1,6 @@
-(Work-in-progress): improved performance of default 2D and 3D meshing
+(Work-in-progress): new $Polytopes section in the MSH4 format for polygons and
+polyhedra, which replaces the old polygon/polyhedron elements, levelset
+commands and Plugin(CutMesh); improved performance of default 2D and 3D meshing
 algorithms; improved graphics performance; new shader rendering pipeline with
 order-independent transparency and studio shading; new capping visualization
 mode in clipping tool; improved colorbars and 2D plots; new faster homology
